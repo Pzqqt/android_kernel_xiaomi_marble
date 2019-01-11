@@ -13457,7 +13457,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       int channel)
 {
 	uint32_t num_ch = 0;
-	u8 valid_ch[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	u8 valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
 	u32 indx = 0;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	uint8_t fValidChannel = false, count = 0;
@@ -13465,7 +13465,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 	bool value;
 	struct hdd_context *hdd_ctx;
 
-	num_ch = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	num_ch = CFG_VALID_CHANNEL_LIST_LEN;
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
@@ -18329,8 +18329,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	mac_handle = hdd_ctx->mac_handle;
 	if (NULL !=
 		params->chandef.chan) {
-		uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-		uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+		uint32_t numChans = CFG_VALID_CHANNEL_LIST_LEN;
+		uint8_t validChan[CFG_VALID_CHANNEL_LIST_LEN];
 		int indx;
 
 		/* Get channel number */

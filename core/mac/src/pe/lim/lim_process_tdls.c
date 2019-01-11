@@ -212,8 +212,8 @@ static void populate_dot11f_tdls_offchannel_params(
 				tDot11fIESuppChannels *suppChannels,
 				tDot11fIESuppOperatingClasses *suppOperClasses)
 {
-	uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t numChans = CFG_VALID_CHANNEL_LIST_LEN;
+	uint8_t validChan[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t i;
 	uint8_t valid_count = 0;
 	uint8_t chanOffset;

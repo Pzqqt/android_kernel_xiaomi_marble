@@ -2365,7 +2365,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	uint32_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t chan_list[CFG_VALID_CHANNEL_LIST_LEN] = {0};
 	uint8_t num_channels  = 0, i, buf[256] = {0};
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
@@ -2425,9 +2425,9 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 		nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_MAX_CHANNELS]);
 
-	if (maxChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (maxChannels > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("Max channels %d exceeded Valid channel list len %d",
-			maxChannels, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			maxChannels, CFG_VALID_CHANNEL_LIST_LEN);
 		return -EINVAL;
 	}
 
@@ -2615,7 +2615,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 	uint8_t bkt_index, j, num_channels, total_channels = 0;
 	uint32_t expected_buckets;
 	uint32_t expected_channels;
-	uint32_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t chan_list[CFG_VALID_CHANNEL_LIST_LEN] = {0};
 	uint32_t extscan_active_min_chn_time;
 	uint32_t min_dwell_time_active_bucket;
 	uint32_t max_dwell_time_active_bucket;

@@ -215,7 +215,7 @@ enum csr_diagwlan_status_eventreason {
 
 struct csr_channel {
 	uint8_t numChannels;
-	uint8_t channelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t channelList[CFG_VALID_CHANNEL_LIST_LEN];
 };
 
 struct scan_profile       {
@@ -459,7 +459,7 @@ struct csr_scanstruct {
 	struct scan_profile scanProfile;
 	tSirScanType curScanType;
 	struct csr_channel channels11d;
-	struct channel_power defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	struct channel_power defaultPowerTable[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
 	struct csr_channel base_channels;  /* The channel base to work on */
 	tDblLinkList channelPowerInfoList24;
@@ -625,7 +625,7 @@ struct csr_roam_session {
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get WNI_CFG_VALID_CHANNEL_LIST and not alloc memory all time
 	 */
-	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	int32_t sPendingCommands;   /* 0 means CSR is ok to low power */
 #ifdef FEATURE_WLAN_WAPI
 	uint16_t NumBkidCache;
@@ -733,7 +733,7 @@ struct csr_roamstruct {
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get WNI_CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
-	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
 	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */

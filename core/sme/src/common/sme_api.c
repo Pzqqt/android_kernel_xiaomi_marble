@@ -1466,7 +1466,7 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, tpSirPlmReq pPlmReq)
 	QDF_STATUS status;
 	bool ret = false;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t ch_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t count, valid_count = 0;
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
@@ -1722,7 +1722,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	tpCsrChannelInfo curchnl_list_info = NULL;
-	uint8_t oldChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
+	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
 	uint8_t newChannelList[128] = { 0 };
 	uint8_t i = 0, j = 0;
 
@@ -7134,8 +7134,8 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
-	uint8_t oldChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
-	uint8_t newChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
+	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
+	uint8_t newChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
 	uint8_t i = 0, j = 0;
 	tCsrChannelInfo *chan_info;
 
@@ -8573,7 +8573,7 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
-	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
+	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (mac->scan.defaultPowerTable[i].chan_num == chanId) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
 				mac->scan.defaultPowerTable[i].tx_power);
@@ -9533,10 +9533,10 @@ QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
 					  uint8_t *pNumChannels)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t chanList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t chanList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t numChannels = 0;
 	uint8_t i = 0;
-	uint32_t totValidChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	uint32_t totValidChannels = CFG_VALID_CHANNEL_LIST_LEN;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	if (!aValidChannels || !pNumChannels) {

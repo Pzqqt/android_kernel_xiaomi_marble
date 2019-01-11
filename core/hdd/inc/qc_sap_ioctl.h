@@ -33,7 +33,7 @@ typedef uint8_t qcmacaddr[QCSAP_ADDR_LEN];
 
 struct channel_list_info {
 	uint8_t num_channels;
-	uint8_t channels[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t channels[CFG_VALID_CHANNEL_LIST_LEN];
 };
 
 #ifdef __linux__

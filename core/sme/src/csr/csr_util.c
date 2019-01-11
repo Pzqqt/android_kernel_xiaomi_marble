@@ -6047,7 +6047,7 @@ bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 
 	/* Look for the channel in the list */
 	for (i = 0; (i < numChannels) &&
-	     (i < WNI_CFG_VALID_CHANNEL_LIST_LEN); i++) {
+	     (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
 		if (pChannelList[i] == channel)
 			return true;
 	}

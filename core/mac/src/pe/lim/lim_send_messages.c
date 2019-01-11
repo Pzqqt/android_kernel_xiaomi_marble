@@ -597,7 +597,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	struct obss_ht40_scanind *ht40_obss_scanind;
 	uint32_t channelnum;
 	struct scheduler_msg msg = {0};
-	uint8_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t chan_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t channel24gnum, count;
 
 	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
@@ -628,7 +628,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 			mac_ctx->scan.countryCodeCurrent,
 			session->currentOperChannel,
 			session->ch_width);
-	channelnum = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	channelnum = CFG_VALID_CHANNEL_LIST_LEN;
 	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
 			chan_list, &channelnum) != QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve Valid channel list");

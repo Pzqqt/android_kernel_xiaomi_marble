@@ -6672,13 +6672,13 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		}
 		buf = extra;
 		/*
-		 * Maximum channels = WNI_CFG_VALID_CHANNEL_LIST_LEN.
+		 * Maximum channels = CFG_VALID_CHANNEL_LIST_LEN.
 		 * Maximum buffer needed = 5 * number of channels.
 		 * Check ifsufficient buffer is available and then
 		 * proceed to fill the buffer.
 		 */
 		if (WE_MAX_STR_LEN <
-		    (5 * WNI_CFG_VALID_CHANNEL_LIST_LEN)) {
+		    (5 * CFG_VALID_CHANNEL_LIST_LEN)) {
 			hdd_err("Insufficient Buffer to populate channel list");
 			return -EINVAL;
 		}

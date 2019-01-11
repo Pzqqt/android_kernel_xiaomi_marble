@@ -118,7 +118,7 @@ typedef struct sSapAcsChannelInfo {
  */
 struct sap_avoid_channels_info {
 	bool       present;
-	uint8_t    channels[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t    channels[CFG_VALID_CHANNEL_LIST_LEN];
 };
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 

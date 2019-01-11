@@ -1234,7 +1234,7 @@ hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
 
 	v = kstrtos32(buf, 10, &tempInt);
 	if ((v < 0) ||
-	    (tempInt <= 0) || (tempInt > WNI_CFG_VALID_CHANNEL_LIST_LEN))
+	    (tempInt <= 0) || (tempInt > CFG_VALID_CHANNEL_LIST_LEN))
 		return -EINVAL;
 
 	*pNumChannels = tempInt;
@@ -1314,7 +1314,7 @@ static int
 hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 				    const char *command)
 {
-	uint8_t channel_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t num_chan = 0;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1331,9 +1331,9 @@ hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 			 TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
 			 adapter->session_id, num_chan));
 
-	if (num_chan > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("number of channels (%d) supported exceeded max (%d)",
-			 num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			 num_chan, CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1380,7 +1380,7 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 				    const char *command)
 {
 	const uint8_t *value;
-	uint8_t channel_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t channel;
 	uint8_t num_chan;
 	int i;
@@ -1393,9 +1393,9 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 	value = command + 20;
 
 	num_chan = *value++;
-	if (num_chan > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("number of channels (%d) supported exceeded max (%d)",
-			  num_chan, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			  num_chan, CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -1735,7 +1735,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		if (content < 0)
 			return QDF_STATUS_E_FAILURE;
 
-		content = QDF_MIN(content, WNI_CFG_VALID_CHANNEL_LIST_LEN);
+		content = QDF_MIN(content, CFG_VALID_CHANNEL_LIST_LEN);
 		pPlmRequest->plmNumCh = content;
 		hdd_debug("numch: %d", pPlmRequest->plmNumCh);
 
@@ -3374,7 +3374,7 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 					  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t ChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t numChannels = 0;
 	uint8_t j = 0;
 	char extra[128] = { 0 };
@@ -5369,7 +5369,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t ChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t numChannels = 0;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
@@ -5379,10 +5379,10 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 		hdd_err("Failed to parse channel list information");
 		goto exit;
 	}
-	if (numChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (numChannels > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("number of channels (%d) supported exceeded max (%d)",
 			  numChannels,
-			  WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			  CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}

@@ -725,7 +725,7 @@ static int8_t csr_find_channel_pwr(struct channel_power *
 	uint8_t i;
 	/* TODO: if defaultPowerTable is guaranteed to be in ascending */
 	/* order of channel numbers, we can employ binary search */
-	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
+	for (i = 0; i < CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (pdefaultPowerTable[i].chan_num == ChannelNum)
 			return pdefaultPowerTable[i].tx_power;
 	}
@@ -1768,8 +1768,8 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	uint8_t inNumChannels = numChannels;
 	uint8_t *inPtr = pChannelList;
 	uint8_t i = 0;
-	uint8_t ChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t tmpChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t tmpChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t mergedOutputNumOfChannels = 0;
 
 	tpCsrChannelInfo currChannelListInfo
@@ -2859,8 +2859,8 @@ QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac)
 		sme_err("failed to get channels");
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		if (num20MHzChannelsFound > WNI_CFG_VALID_CHANNEL_LIST_LEN)
-			num20MHzChannelsFound = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		if (num20MHzChannelsFound > CFG_VALID_CHANNEL_LIST_LEN)
+			num20MHzChannelsFound = CFG_VALID_CHANNEL_LIST_LEN;
 		mac->scan.numChannelsDefault = num20MHzChannelsFound;
 		/* Move the channel list to the global data */
 		/* structure -- this will be used as the scan list */
@@ -2901,7 +2901,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 		return status;
 
 	if (ps11dinfo->Channels.numChannels
-	    && (WNI_CFG_VALID_CHANNEL_LIST_LEN >=
+	    && (CFG_VALID_CHANNEL_LIST_LEN >=
 		ps11dinfo->Channels.numChannels)) {
 		mac->scan.base_channels.numChannels =
 			ps11dinfo->Channels.numChannels;
@@ -2928,7 +2928,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 	/* need to add the max power channel list */
 	pChanInfo =
 		qdf_mem_malloc(sizeof(tSirMacChanInfo) *
-			       WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			       CFG_VALID_CHANNEL_LIST_LEN);
 	if (pChanInfo != NULL) {
 		pChanInfoStart = pChanInfo;
 		for (index = 0; index < ps11dinfo->Channels.numChannels;
@@ -2990,7 +2990,7 @@ QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
 
 	pChanInfo =
 		qdf_mem_malloc(sizeof(tSirMacChanInfo) *
-			       WNI_CFG_VALID_CHANNEL_LIST_LEN);
+			       CFG_VALID_CHANNEL_LIST_LEN);
 	if (pChanInfo != NULL) {
 		pChanInfoStart = pChanInfo;
 

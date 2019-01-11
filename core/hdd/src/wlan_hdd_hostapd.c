@@ -3474,7 +3474,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	num_ch = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	num_ch = CFG_VALID_CHANNEL_LIST_LEN;
 
 	if ((QDF_SAP_MODE != adapter->device_mode) &&
 	    (QDF_P2P_GO_MODE != adapter->device_mode)) {

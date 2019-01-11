@@ -872,7 +872,7 @@ static int oem_chan_info_req_handler(struct hdd_context *hdd_ctx,
 
 	/* message length contains list of channel ids */
 	if ((!msg_hdr->length) ||
-			(WNI_CFG_VALID_CHANNEL_LIST_LEN < msg_hdr->length)) {
+			(CFG_VALID_CHANNEL_LIST_LEN < msg_hdr->length)) {
 		hdd_err("Invalid length (%d) in channel info request",
 				msg_hdr->length);
 		send_oem_err_rsp_nlink_msg(pid, OEM_ERR_INVALID_MESSAGE_LENGTH);

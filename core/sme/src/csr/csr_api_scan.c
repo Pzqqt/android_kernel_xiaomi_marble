@@ -639,7 +639,7 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
 
 	if (ch_lst->numChannels) {
 		tempNumChannels = CSR_MIN(ch_lst->numChannels,
-					  WNI_CFG_VALID_CHANNEL_LIST_LEN);
+					  CFG_VALID_CHANNEL_LIST_LEN);
 		for (i = 0; i < tempNumChannels; i++) {
 			tmp_ch_lst.channelList[num_ch] = ch_lst->channelList[i];
 			num_ch++;
@@ -748,8 +748,8 @@ static void csr_get_channel_power_info(struct mac_context *mac,
 static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 {
 	host_log_802_11d_pkt_type *p11dLog;
-	struct channel_power chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t nChnInfo = WNI_CFG_VALID_CHANNEL_LIST_LEN, nTmp;
+	struct channel_power chnPwrInfo[CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t nChnInfo = CFG_VALID_CHANNEL_LIST_LEN, nTmp;
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
 				 LOG_WLAN_80211D_C);
@@ -769,13 +769,13 @@ static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 				&mac_ctx->scan.channelPowerInfoList24,
 				&nChnInfo, chnPwrInfo);
 	nTmp = nChnInfo;
-	nChnInfo = WNI_CFG_VALID_CHANNEL_LIST_LEN - nTmp;
+	nChnInfo = CFG_VALID_CHANNEL_LIST_LEN - nTmp;
 	csr_get_channel_power_info(mac_ctx,
 				&mac_ctx->scan.channelPowerInfoList5G,
 				&nChnInfo, &chnPwrInfo[nTmp]);
 	for (nTmp = 0; nTmp < p11dLog->numChannel; nTmp++) {
 		for (nChnInfo = 0;
-		     nChnInfo < WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		     nChnInfo < CFG_VALID_CHANNEL_LIST_LEN;
 		     nChnInfo++) {
 			if (p11dLog->Channels[nTmp] ==
 			    chnPwrInfo[nChnInfo].chan_num) {
@@ -843,12 +843,12 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 
 	max_ch_idx =
 		(mac->scan.base_channels.numChannels <
-		WNI_CFG_VALID_CHANNEL_LIST_LEN) ?
+		CFG_VALID_CHANNEL_LIST_LEN) ?
 		mac->scan.base_channels.numChannels :
-		WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		CFG_VALID_CHANNEL_LIST_LEN;
 
 	chan_info = qdf_mem_malloc(sizeof(tSirMacChanInfo) *
-				   WNI_CFG_VALID_CHANNEL_LIST_LEN);
+				   CFG_VALID_CHANNEL_LIST_LEN);
 	if (NULL == chan_info)
 		return;
 
@@ -860,7 +860,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 		if (!tmp_bool)
 			continue;
 
-		if (count >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+		if (count >= CFG_VALID_CHANNEL_LIST_LEN) {
 			sme_warn("count: %d exceeded", count);
 			break;
 		}
@@ -1533,7 +1533,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 	uint8_t *p_buf = NULL;
 
 	/* allocate maximum space for all channels */
-	dataLen = WNI_CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
+	dataLen = CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
 	p_buf = qdf_mem_malloc(dataLen);
 	if (!p_buf)
 		return;

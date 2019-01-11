@@ -4591,8 +4591,8 @@ void lim_add_channel_status_info(struct mac_context *p_mac,
 bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t channel)
 {
 	uint8_t index;
-	uint32_t validChannelListLen = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t validChannelListLen = CFG_VALID_CHANNEL_LIST_LEN;
+	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	bool ok = false;
 
 	if (policy_mgr_is_chan_ok_for_dnbs(mac->psoc, channel, &ok)) {

@@ -281,7 +281,7 @@ typedef struct tagCsrEseCckmIe {
 
 typedef struct sCsrChannel_ {
 	uint8_t numChannels;
-	uint8_t channelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t channelList[CFG_VALID_CHANNEL_LIST_LEN];
 } sCsrChannel;
 
 typedef struct tagCsrScanResultFilter {
@@ -344,7 +344,7 @@ typedef struct tagCsr11dinfo {
 	sCsrChannel Channels;
 	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN + 1];
 	/* max power channel list */
-	sCsrChnPower ChnPower[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	sCsrChnPower ChnPower[CFG_VALID_CHANNEL_LIST_LEN];
 } tCsr11dinfo;
 
 typedef enum {

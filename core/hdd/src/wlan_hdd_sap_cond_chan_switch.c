@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,7 +98,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 	uint32_t i;
 	QDF_STATUS status;
 	uint32_t weight_len = 0;
-	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	uint32_t len = CFG_VALID_CHANNEL_LIST_LEN;
 	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t pcl_weights[QDF_MAX_NUM_CHAN] = {0};
 	mac_handle_t mac_handle;

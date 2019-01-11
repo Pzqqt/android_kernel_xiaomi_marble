@@ -524,7 +524,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(struct mac_context 
 	if (!pOutputChannelList)
 		return QDF_STATUS_E_INVAL;
 
-	if (inputNumOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (inputNumOfChannels > CFG_VALID_CHANNEL_LIST_LEN) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Input Channels %d",
 			  __func__, inputNumOfChannels);
@@ -585,13 +585,13 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 	if (!pOutputChannelList)
 		return QDF_STATUS_E_INVAL;
 
-	if (inputNumOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (inputNumOfChannels > CFG_VALID_CHANNEL_LIST_LEN) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Input Channels %d",
 			  __func__, inputNumOfChannels);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (outputNumOfChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+	if (outputNumOfChannels >= CFG_VALID_CHANNEL_LIST_LEN) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Output Channels %d",
 			  __func__, outputNumOfChannels);
@@ -616,7 +616,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 				numChannels++;
 			}
 		}
-		if (numChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
+		if (numChannels >= CFG_VALID_CHANNEL_LIST_LEN) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: Merge Neighbor channel list reached Max limit %d",
 				__func__, numChannels);
