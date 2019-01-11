@@ -47,7 +47,6 @@
 #define CFG_MAX_TX_POWER_5_LEN      128
 #define CFG_POWER_USAGE_MAX_LEN      4
 
-#define CFG_VALID_CHANNEL_LIST_LEN 100
 #define CFG_VALID_CHANNEL_LIST_STRING_LEN (CFG_VALID_CHANNEL_LIST_LEN * 4)
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
