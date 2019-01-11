@@ -91,7 +91,7 @@ ifeq ($(CONFIG_ARCH_QCS405), y)
 	CONFIG_WLAN_SYNC_TSF_PLUS_NOIRQ := y
 	CONFIG_RX_PERFORMANCE := y
 endif
-
+CONFIG_WLAN_FEATURE_MBSSID := y
 #Flag to enable Legacy Fast Roaming2(LFR2)
 CONFIG_QCACLD_WLAN_LFR2 := y
 #Flag to enable Legacy Fast Roaming3(LFR3)
