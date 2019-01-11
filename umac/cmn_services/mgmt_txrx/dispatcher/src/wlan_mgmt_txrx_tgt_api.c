@@ -991,8 +991,10 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	while (rx_handler->next) {
 		copy_buf = qdf_nbuf_clone(buf);
 
-		if (!copy_buf)
+		if (!copy_buf) {
+			rx_handler = rx_handler->next;
 			continue;
+		}
 
 		rx_handler->rx_cb(psoc, peer, copy_buf,
 					mgmt_rx_params, frm_type);
