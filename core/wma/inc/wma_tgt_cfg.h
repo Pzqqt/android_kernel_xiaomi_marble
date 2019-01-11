@@ -164,7 +164,6 @@ struct board_info {
  * @lpss_support: lpass support
  * @egap_support: enhanced green ap support
  * @nan_datapath_enabled: nan data path support
- * @bool is_ra_rate_limit_enabled: RA filter support
  * @he_cap: HE capability received from FW
  * @dfs_cac_offload: dfs and cac timer offloaded
  * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
@@ -190,9 +189,6 @@ struct wma_tgt_cfg {
 #endif
 	uint8_t ap_arpns_support;
 	uint32_t fine_time_measurement_cap;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	bool is_ra_rate_limit_enabled;
-#endif
 #ifdef WLAN_FEATURE_NAN
 	bool nan_datapath_enabled;
 #endif

@@ -1176,10 +1176,6 @@ typedef struct {
 	bool suitable_ap_hb_failure;
 	uint32_t suitable_ap_hb_failure_rssi;
 	ibss_power_save_params wma_ibss_power_save_params;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	bool IsRArateLimitEnabled;
-	uint16_t RArateLimitInterval;
-#endif
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif

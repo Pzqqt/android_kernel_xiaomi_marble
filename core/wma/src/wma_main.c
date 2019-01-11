@@ -3339,9 +3339,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->active_mc_bc_apf_mode =
 		ucfg_pmo_get_active_mc_bc_apf_mode(wma_handle->psoc);
 	wma_handle->link_stats_results = NULL;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
-#endif /* FEATURE_WLAN_RA_FILTERING */
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->is_lpass_enabled = cds_cfg->is_lpass_enabled;
 #endif
@@ -5413,26 +5410,6 @@ static void wma_update_target_ext_vht_cap(struct target_psoc_info *tgt_hdl,
 		vht_cap->vht_mu_bformee, vht_cap->vht_max_ampdu_len_exp);
 }
 
-/**
- * wma_update_ra_rate_limit() - update wma config
- * @wma_handle: wma handle
- * @cfg: target config
- *
- * Return: none
- */
-#ifdef FEATURE_WLAN_RA_FILTERING
-static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
-				     struct wma_tgt_cfg *cfg)
-{
-	cfg->is_ra_rate_limit_enabled = wma_handle->IsRArateLimitEnabled;
-}
-#else
-static void wma_update_ra_rate_limit(tp_wma_handle wma_handle,
-				     struct wma_tgt_cfg *cfg)
-{
-}
-#endif
-
 static void
 wma_update_sar_version(struct wlan_psoc_host_service_ext_param *param,
 		       struct wma_tgt_cfg *cfg)
@@ -5632,7 +5609,6 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
 	tgt_cfg.dfs_cac_offload = wma_handle->is_dfs_offloaded;
 	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
-	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
 	wma_update_hdd_band_cap(target_if_get_phy_capability(tgt_hdl),
 				&tgt_cfg);
 	wma_update_sar_version(service_ext_param, &tgt_cfg);
@@ -5715,25 +5691,6 @@ static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 
 	policy_mgr_init_dbs_config(psoc, scan_config, fw_config);
 }
-
-/**
- * wma_update_ra_limit() - update ra limit based on apf filter
- *  enabled or not
- * @handle: wma handle
- *
- * Return: none
- */
-#ifdef FEATURE_WLAN_RA_FILTERING
-static void wma_update_ra_limit(tp_wma_handle wma_handle)
-{
-	if (ucfg_pmo_is_apf_enabled(wma_handle->psoc))
-		wma_handle->IsRArateLimitEnabled = false;
-}
-#else
-static void wma_update_ra_limit(tp_wma_handle handle)
-{
-}
-#endif
 
 static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 {
@@ -5957,8 +5914,6 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 */
 	wma_handle->ap_arpns_support =
 		wmi_service_enabled(wmi_handle, wmi_service_ap_arpns_offload);
-
-	wma_update_ra_limit(wma_handle);
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_csa_offload)) {
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);

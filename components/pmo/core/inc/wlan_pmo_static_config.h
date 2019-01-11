@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,27 +63,6 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev);
  */
 void pmo_register_action_frame_patterns(
 		struct wlan_objmgr_vdev *vdev);
-
-/**
- * pmo_update_target_service(): API to update wmi target service info to PMO.
- * @psoc: objmgr psoc
- * @wmi_service: wmi service number
- * @value: true when wmi service is enabled in firmware otherwise false.
- *
- * Return void
- */
-void pmo_update_target_service(struct wlan_objmgr_psoc *psoc,
-	WMI_SERVICE service, bool value);
-
-/**
- * pmo_update_ra_limit() - update ra limit based on apf filter
- *  enabled or not
- * @psoc: objmgr psoc
- * @apf_enabled: true when apf service is enabled else false
- *
- * Return: none
- */
-void pmo_update_ra_limit(struct wlan_objmgr_psoc *psoc, bool apf_enabled);
 
 /**
  * pmo_set_wow_event_bitmap() - Assign bitmask with wow event

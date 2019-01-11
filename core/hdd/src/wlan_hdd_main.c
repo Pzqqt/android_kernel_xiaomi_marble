@@ -1745,28 +1745,6 @@ static int hdd_generate_macaddr_auto(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-/**
- * hdd_update_ra_rate_limit() - Update RA rate limit from target
- *  configuration to cfg_ini in HDD
- * @hdd_ctx: Pointer to hdd_ctx
- * @cfg: target configuration
- *
- * Return: None
- */
-#ifdef FEATURE_WLAN_RA_FILTERING
-static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
-				     struct wma_tgt_cfg *cfg)
-{
-	ucfg_fwol_set_is_rate_limit_enabled(hdd_ctx->psoc,
-					    cfg->is_ra_rate_limit_enabled);
-}
-#else
-static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
-				     struct wma_tgt_cfg *cfg)
-{
-}
-#endif
-
 static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_cfg *cfg)
 {
@@ -2009,7 +1987,6 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		  hdd_ctx->current_antenna_mode);
 
 	hdd_ctx->rcpi_enabled = cfg->rcpi_enabled;
-	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
 	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
 							&value);
@@ -9741,34 +9718,6 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 }
 #endif
 
-#ifdef FEATURE_WLAN_RA_FILTERING
-/**
- * hdd_ra_populate_cds_config() - Populate RA filtering cds configuration
- * @cds_cfg: CDS Configuration
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
-			      struct hdd_context *hdd_ctx)
-{
-	bool is_rate_limit_enabled;
-	QDF_STATUS status;
-
-	status = ucfg_fwol_get_is_rate_limit_enabled(hdd_ctx->psoc,
-						     &is_rate_limit_enabled);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-
-	cds_cfg->is_ra_ratelimit_enabled = is_rate_limit_enabled;
-}
-#else
-static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
-			     struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
 /**
  * hdd_update_cds_config() - API to update cds configuration parameters
  * @hdd_ctx: HDD Context
@@ -9852,7 +9801,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->bandcapability = band_capability;
 	cds_cfg->num_vdevs = hdd_ctx->config->num_vdevs;
 
-	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_lpass_populate_cds_config(cds_cfg, hdd_ctx);
 	cds_init_ini_config(cds_cfg);
@@ -14327,37 +14275,6 @@ int hdd_update_config(struct hdd_context *hdd_ctx)
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_RA_FILTERING
-/**
- * hdd_ra_populate_cds_config() - Populate RA filtering cds configuration
- * @psoc_cfg: pmo psoc Configuration
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: none
- */
-static inline void hdd_ra_populate_pmo_config(
-			struct pmo_psoc_cfg *psoc_cfg,
-			struct hdd_context *hdd_ctx)
-{
-	bool is_rate_limit_enabled;
-	QDF_STATUS status;
-
-	status = ucfg_fwol_get_is_rate_limit_enabled(hdd_ctx->psoc,
-						     &is_rate_limit_enabled);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-
-	psoc_cfg->ra_ratelimit_enable =
-		is_rate_limit_enabled;
-}
-#else
-static inline void hdd_ra_populate_pmo_config(
-			struct cds_config_info *cds_cfg,
-			struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
 /**
  * hdd_update_pmo_config - API to update pmo configuration parameters
  * @hdd_ctx: HDD context
@@ -14390,7 +14307,6 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 					     &psoc_cfg.sta_max_li_mod_dtim);
 
 
-	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
 
 	status = ucfg_pmo_update_psoc_config(hdd_ctx->psoc, &psoc_cfg);
