@@ -1638,9 +1638,8 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 	struct pe_session *pPeSessionEntry = NULL;
 
 	/* Get the Session Id based on Sta Id */
-	pPeSessionEntry =
-		pe_find_session_by_sta_id(mac, pPeStats->staId, &sessionId);
-
+	pPeSessionEntry = pe_find_session_by_bssid(mac, pPeStats->bssid.bytes,
+						   &sessionId);
 	/* Fill the Session Id */
 	if (NULL != pPeSessionEntry) {
 		/* Fill the Session Id */
