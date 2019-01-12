@@ -2974,6 +2974,31 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 
 	wma_set_vdev_mgmt_rate(wma_handle, self_sta_req->session_id);
 
+	if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) {
+		/*
+		 * Enable / disable trigger access for a AP vdev's peers.
+		 * For a STA mode vdev this will enable/disable triggered
+		 * access and enable/disable Multi User mode of operation.
+		 * A value of 0 in a given bit disables corresponding mode.
+		 * bit | hemu mode
+		 * ---------------
+		 *  0  | HE SUBFEE
+		 *  1  | HE SUBFER
+		 *  2  | HE MUBFEE
+		 *  3  | HE MUBFER
+		 *  4  | DL OFDMA, for AP its DL Tx OFDMA for Sta its Rx OFDMA
+		 *  5  | UL OFDMA, for AP its Tx OFDMA trigger for Sta its
+		 *                 Rx OFDMA trigger receive & UL response
+		 *  6  | UL MUMIMO
+		 */
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
+					 self_sta_req->session_id,
+					 WMI_VDEV_PARAM_SET_HEMU_MODE,
+					 0x37);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_SET_HEMU_MODE");
+	}
+
 	/* Initialize roaming offload state */
 	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
 	    (self_sta_req->sub_type == 0)) {
