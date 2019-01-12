@@ -23,7 +23,7 @@
 #ifndef _WLAN_CFG80211_CRYPTO_H_
 #define _WLAN_CFG80211_CRYPTO_H_
 #include <net/cfg80211.h>
-
+#include "wlan_crypto_global_def.h"
 #ifdef CONFIG_CRYPTO_COMPONENT
 /**
  * wlan_cfg80211_set_default_key() - to set the default key to be used
@@ -49,24 +49,26 @@ static inline int wlan_cfg80211_set_default_key(struct wlan_objmgr_vdev *vdev,
  * wlan_cfg80211_store_key() - Store the key
  * @vdev: VDEV Object pointer
  * @key_index: Index to be set as the default
- * @pairwise: denotes if the key is pairwise or group key
+ * @key_type: denotes if the key is pairwise or group key
  * @mac_addr: BSSID for which the key is to be set
  * @key_params: Params received from the kernel
  *
  * Return: Zero for success and negative for failure.
  */
 int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
-			    uint8_t key_index, bool pairwise,
+			    uint8_t key_index,
+			    enum wlan_crypto_key_type key_type,
 			    const u8 *mac_addr, struct key_params *params);
 
 /**
  * wlan_cfg80211_crypto_add_key() - Add key for the specified vdev
  * @vdev: vdev object
- * @pairwise: denotes if the add key request is for pairwise or group key
+ * @key_type: denotes if the add key request is for pairwise or group key
  * @key_index: Index of the key that needs to be added
  *
  * Return: Zero on Success, negative value on failure
  */
-int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev, bool pairwise,
+int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev,
+				 enum wlan_crypto_key_type key_type,
 				 uint8_t key_index);
 #endif

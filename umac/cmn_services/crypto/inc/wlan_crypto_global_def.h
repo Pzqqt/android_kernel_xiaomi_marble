@@ -28,6 +28,7 @@
 #include "wlan_crypto_fils_def.h"
 #endif
 #include <wlan_objmgr_cmn.h>
+#include <wlan_cmn_ieee80211.h>
 
 #define WLAN_CRYPTO_TID_SIZE         (17)
 #define WLAN_CRYPTO_RSC_SIZE         (16)

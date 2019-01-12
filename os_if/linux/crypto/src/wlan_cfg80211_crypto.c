@@ -28,13 +28,13 @@
 #include "wlan_cfg80211_crypto.h"
 #include <wlan_cfg80211.h>
 
-static void wlan_cfg80211_translate_key(uint8_t key_index, bool pairwise,
+static void wlan_cfg80211_translate_key(struct wlan_objmgr_vdev *vdev,
+					uint8_t key_index,
+					enum wlan_crypto_key_type key_type,
 					const u8 *mac_addr,
 					struct key_params *params,
 					struct wlan_crypto_key *crypto_key)
 {
-	static const struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BCAST_INIT;
-
 	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
 	crypto_key->keylen = params->key_len;
 	crypto_key->keyix = key_index;
@@ -42,19 +42,25 @@ static void wlan_cfg80211_translate_key(uint8_t key_index, bool pairwise,
 	qdf_mem_copy(&crypto_key->keyrsc[0], params->seq, params->seq_len);
 
 	crypto_key->cipher_type = osif_nl_to_crypto_cipher_type(params->cipher);
-	if (pairwise) {
-		crypto_key->flags |= PAIRWISE_USAGE;
-		qdf_mem_copy(&crypto_key->macaddr, mac_addr,
-			     QDF_MAC_ADDR_SIZE);
+	if (key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) {
+		qdf_mem_copy(&crypto_key->macaddr, mac_addr, QDF_MAC_ADDR_SIZE);
 	} else {
-		crypto_key->flags |= GROUP_USAGE;
-		qdf_mem_copy(&crypto_key->macaddr, &bcast_mac,
-			     QDF_MAC_ADDR_SIZE);
+		if ((vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE) ||
+		    (vdev->vdev_mlme.vdev_opmode == QDF_P2P_CLIENT_MODE))
+			qdf_mem_copy(&crypto_key->macaddr, mac_addr,
+				     QDF_MAC_ADDR_SIZE);
+		else
+			qdf_mem_copy(&crypto_key->macaddr,
+				     vdev->vdev_mlme.macaddr,
+				     QDF_MAC_ADDR_SIZE);
 	}
+	cfg80211_debug("key_type %d, opmode %d, mac %pM", key_type,
+		       vdev->vdev_mlme.vdev_opmode, crypto_key->macaddr);
 }
 
 int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
-			    uint8_t key_index, bool pairwise,
+			    uint8_t key_index,
+			    enum wlan_crypto_key_type key_type,
 			    const u8 *mac_addr, struct key_params *params)
 {
 	struct wlan_crypto_key *crypto_key = NULL;
@@ -70,7 +76,7 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 		cfg80211_err("Key params is NULL");
 		return -EINVAL;
 	}
-	if (pairwise && !mac_addr) {
+	if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) && !mac_addr) {
 		cfg80211_err("mac_addr is NULL for pairwise Key");
 		return -EINVAL;
 	}
@@ -106,13 +112,14 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
-	wlan_cfg80211_translate_key(key_index, pairwise, mac_addr,
+	wlan_cfg80211_translate_key(vdev, key_index, key_type, mac_addr,
 				    params, crypto_key);
 
 	return 0;
 }
 
-int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev, bool pairwise,
+int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev,
+				 enum wlan_crypto_key_type key_type,
 				 uint8_t key_index)
 {
 	struct wlan_crypto_key *crypto_key;
@@ -123,7 +130,7 @@ int wlan_cfg80211_crypto_add_key(struct wlan_objmgr_vdev *vdev, bool pairwise,
 		cfg80211_err("Crypto KEY is NULL");
 		return -EINVAL;
 	}
-	status  = ucfg_crypto_set_key_req(vdev, crypto_key, pairwise);
+	status  = ucfg_crypto_set_key_req(vdev, crypto_key, key_type);
 
 	return qdf_status_to_os_return(status);
 }

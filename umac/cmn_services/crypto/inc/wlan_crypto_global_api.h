@@ -684,12 +684,13 @@ static inline int omac1_aes_256(const uint8_t *key, const uint8_t *data,
  * ucfg_crypto_set_key_req() - Set key request to UCFG
  * @vdev: vdev object
  * @req: key request information
- * @pairwise: indicates the type of key to be set, unicast or group key
+ * @key_type: indicates the type of key to be set, unicast or group key
  *
  * Return: None
  */
 QDF_STATUS ucfg_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
-				   struct wlan_crypto_key *req, bool pairwise);
+				   struct wlan_crypto_key *req,
+				   enum wlan_crypto_key_type key_type);
 
 /**
  * wlan_crypto_get_default_key_idx() - Get the default key index
@@ -766,12 +767,13 @@ struct wlan_crypto_key *wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev,
  * wlan_crypto_set_key_req() - Set key request
  * @vdev: vdev object
  * @req: key request information
- * @pairwise: indicates the type of key to be set, unicast or group key
+ * @key_type: indicates the type of key to be set, unicast or group key
  *
  * Return: QDF status
  */
 QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
-				   struct wlan_crypto_key *req, bool pairwise);
+				   struct wlan_crypto_key *req,
+				   enum wlan_crypto_key_type key_type);
 #else
 static inline void wlan_crypto_update_set_key_peer(
 						struct wlan_objmgr_vdev *vdev,
@@ -794,9 +796,10 @@ wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev, uint8_t key_index)
 	return NULL;
 }
 
-static inline QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
-						 struct wlan_crypto_key *req,
-						 bool pairwise)
+static inline
+QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_crypto_key *req,
+				   enum wlan_crypto_key_type key_type)
 {
 	return QDF_STATUS_SUCCESS;
 }

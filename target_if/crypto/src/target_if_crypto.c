@@ -119,7 +119,7 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	uint8_t peer_id;
 	uint8_t def_tx_idx;
 	void *pdev_wmi_handle;
-	bool pairwise = false;
+	bool pairwise;
 	QDF_STATUS status;
 
 	pdev = wlan_vdev_get_pdev(vdev);
@@ -146,11 +146,17 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (key_type != WLAN_CRYPTO_KEY_TYPE_UNICAST)
+	params.key_flags = req->flags;
+	if (key_type != WLAN_CRYPTO_KEY_TYPE_UNICAST) {
 		pairwise = false;
+		params.key_flags |= GROUP_USAGE;
+
+	} else {
+		pairwise = true;
+		params.key_flags |= PAIRWISE_USAGE;
+	}
 	qdf_mem_copy(&params.key_rsc_ctr,
 		     &req->keyrsc[0], sizeof(uint64_t));
-	params.key_flags = req->flags;
 	txrx_vdev = (struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 				(struct cdp_pdev *)txrx_pdev, params.vdev_id);
 	peer = cdp_peer_find_by_addr(soc, txrx_pdev, req->macaddr, &peer_id);
@@ -160,7 +166,12 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!peer) {
+	target_if_debug("key_type %d, mac: %02x:%02x:%02x:%02x:%02x:%02x",
+			key_type, req->macaddr[0], req->macaddr[1],
+			req->macaddr[2], req->macaddr[3], req->macaddr[4],
+			req->macaddr[5]);
+
+	if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) && !peer) {
 		target_if_err("Invalid peer");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -190,12 +201,14 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 					  &req->keyval[0],
 					  req->keylen);
 	params.key_len = req->keylen;
-	/* Set PN check & security type in data path */
-	cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
-	cdp_set_key(soc, peer, pairwise,
-		    (uint32_t *)(req->keyval +
-		    WLAN_CRYPTO_IV_SIZE +
-		    WLAN_CRYPTO_MIC_LEN));
+	if (peer) {
+		/* Set PN check & security type in data path */
+		cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
+		cdp_set_key(soc, peer, pairwise, (uint32_t *)(req->keyval +
+			    WLAN_CRYPTO_IV_SIZE + WLAN_CRYPTO_MIC_LEN));
+	} else {
+		target_if_info("peer not found");
+	}
 
 	target_if_debug("vdev_id:%d, key: idx:%d,len:%d", params.vdev_id,
 			params.key_idx, params.key_len);

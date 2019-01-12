@@ -25,7 +25,8 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_crypto_global_api.h>
 QDF_STATUS ucfg_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
-				   struct wlan_crypto_key *req, bool pairwise)
+				   struct wlan_crypto_key *req,
+				   enum wlan_crypto_key_type key_type)
 {
 	/*
 	 * It is the job of dispatcher to decide whether the
@@ -37,6 +38,6 @@ QDF_STATUS ucfg_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 	 * Hence the request handler is directly called from
 	 * here.
 	 */
-	return wlan_crypto_set_key_req(vdev, req, pairwise);
+	return wlan_crypto_set_key_req(vdev, req, key_type);
 }
 

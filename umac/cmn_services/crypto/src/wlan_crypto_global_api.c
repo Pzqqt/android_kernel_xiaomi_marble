@@ -4004,13 +4004,13 @@ struct wlan_crypto_key *wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_crypto_key *req,
-				   bool pairwise)
+				   enum wlan_crypto_key_type key_type)
 {
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (psoc && WLAN_CRYPTO_TX_OPS_SET_KEY(psoc))
-		WLAN_CRYPTO_TX_OPS_SET_KEY(psoc)(vdev, req, pairwise);
+		WLAN_CRYPTO_TX_OPS_SET_KEY(psoc)(vdev, req, key_type);
 	else
 		return QDF_STATUS_E_FAILURE;
 
