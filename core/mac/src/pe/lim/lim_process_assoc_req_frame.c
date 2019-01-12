@@ -915,8 +915,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session, struct mac_context 
 	 * Clear the buffers so that frame parser knows that there isn't a
 	 * previously decoded IE in these buffers
 	 */
-	qdf_mem_set((uint8_t *) &dot11f_ie_rsn, sizeof(dot11f_ie_rsn), 0);
-	qdf_mem_set((uint8_t *) &dot11f_ie_wpa, sizeof(dot11f_ie_wpa), 0);
+	qdf_mem_zero((uint8_t *) &dot11f_ie_rsn, sizeof(dot11f_ie_rsn));
+	qdf_mem_zero((uint8_t *) &dot11f_ie_wpa, sizeof(dot11f_ie_wpa));
 	pe_err("RSN enabled auth, Re/Assoc req from STA: "
 		MAC_ADDRESS_STR, MAC_ADDR_ARRAY(hdr->sa));
 

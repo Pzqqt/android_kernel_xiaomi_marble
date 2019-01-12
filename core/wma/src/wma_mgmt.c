@@ -1937,8 +1937,8 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	qdf_mem_copy(params.peer_mac, key_params->peer_mac, IEEE80211_ADDR_LEN);
 
 #ifdef FEATURE_WLAN_WAPI
-	qdf_mem_set(params.tx_iv, 16, 0);
-	qdf_mem_set(params.rx_iv, 16, 0);
+	qdf_mem_zero(params.tx_iv, 16);
+	qdf_mem_zero(params.rx_iv, 16);
 #endif
 	params.key_txmic_len = 0;
 	params.key_rxmic_len = 0;
@@ -2256,7 +2256,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 			     sizeof(tSetBssKeyParams));
 	}
 
-	qdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_zero(&key_params, sizeof(key_params));
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
@@ -2379,9 +2379,9 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 		return;
 	}
 
-	qdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_zero(&key_params, sizeof(key_params));
 	opmode = cdp_get_opmode(soc, txrx_vdev);
-	qdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_zero(&key_params, sizeof(key_params));
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
@@ -2507,7 +2507,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 			}
 		}
 	}
-	qdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_zero(&key_params, sizeof(key_params));
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;

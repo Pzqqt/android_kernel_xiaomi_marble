@@ -103,20 +103,20 @@ static void pe_init_beacon_params(struct mac_context *mac,
 	pe_session->beaconParams.gHTObssMode = 0;
 
 	/* Number of legacy STAs associated */
-	qdf_mem_set((void *)&pe_session->gLim11bParams,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLim11aParams,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLim11gParams,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLimNonGfParams,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLimHt20Params,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLimLsigTxopParams,
-		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&pe_session->gLimOlbcParams,
-		    sizeof(tLimProtStaParams), 0);
+	qdf_mem_zero((void *)&pe_session->gLim11bParams,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLim11aParams,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLim11gParams,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLimNonGfParams,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLimHt20Params,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLimLsigTxopParams,
+		    sizeof(tLimProtStaParams));
+	qdf_mem_zero((void *)&pe_session->gLimOlbcParams,
+		    sizeof(tLimProtStaParams));
 }
 
 /*
@@ -499,15 +499,15 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 	if (eSIR_INFRASTRUCTURE_MODE == bss_type) {
 		if (filter->num_sta_sessions)
 			filter->num_sta_sessions--;
-		qdf_mem_set(&filter->sta_bssid[session_id],
-			    sizeof(tSirMacAddr), 0);
+		qdf_mem_zero(&filter->sta_bssid[session_id],
+			    sizeof(tSirMacAddr));
 		pe_debug("Cleared STA Filter for session %d", session_id);
 	} else if (eSIR_IBSS_MODE == bss_type) {
 		if (filter->num_ibss_sessions)
 			filter->num_ibss_sessions--;
 		filter->ibss_ssid[session_id].length = 0;
-		qdf_mem_set(&filter->ibss_ssid[session_id].ssId,
-			    SIR_MAC_MAX_SSID_LENGTH, 0);
+		qdf_mem_zero(&filter->ibss_ssid[session_id].ssId,
+			    SIR_MAC_MAX_SSID_LENGTH);
 		pe_debug("Cleared IBSS Filter for session %d", session_id);
 	} else if (eSIR_INFRA_AP_MODE == bss_type) {
 		if (filter->num_sap_sessions)
@@ -582,7 +582,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	}
 
 	session_ptr = &mac->lim.gpSession[i];
-	qdf_mem_set((void *)session_ptr, sizeof(struct pe_session), 0);
+	qdf_mem_zero((void *)session_ptr, sizeof(struct pe_session));
 	/* Allocate space for Station Table for this session. */
 	session_ptr->dph.dphHashTable.pHashTable =
 		qdf_mem_malloc(sizeof(tpDphHashNode) * (numSta + 1));
@@ -627,8 +627,8 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->htRecommendedTxWidthSet = 0;
 	session_ptr->htSecondaryChannelOffset = 0;
 #ifdef FEATURE_WLAN_TDLS
-	qdf_mem_set(session_ptr->peerAIDBitmap,
-		    sizeof(session_ptr->peerAIDBitmap), 0);
+	qdf_mem_zero(session_ptr->peerAIDBitmap,
+		    sizeof(session_ptr->peerAIDBitmap));
 	session_ptr->tdls_prohibited = false;
 	session_ptr->tdls_chan_swit_prohibited = false;
 #endif

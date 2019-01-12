@@ -477,7 +477,7 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
 {
 	struct ethhdr *eh = (struct ethhdr *)skb->data;
 
-	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	qdf_mem_zero(skb->cb, sizeof(skb->cb));
 
 	/* check destination mac address is broadcast/multicast */
 	if (is_broadcast_ether_addr((uint8_t *)eh))

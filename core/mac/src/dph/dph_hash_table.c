@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -228,7 +228,7 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 	pnext = pStaDs->next;
 
 	/* Clear the STA node except for the next pointer */
-	qdf_mem_set((uint8_t *)pStaDs, sizeof(tDphHashNode), 0);
+	qdf_mem_zero((uint8_t *)pStaDs, sizeof(tDphHashNode));
 	pStaDs->next = pnext;
 
 	/* Initialize the assocId */

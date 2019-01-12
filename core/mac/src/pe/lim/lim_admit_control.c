@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -683,7 +683,7 @@ QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac, uint8_t *pAddr,
 	}
 	/* fill in a schedule if requested */
 	if (pSch != NULL) {
-		qdf_mem_set((uint8_t *) pSch, sizeof(*pSch), 0);
+		qdf_mem_zero((uint8_t *) pSch, sizeof(*pSch));
 		pSch->svcStartTime = pAddts->tspec.svcStartTime;
 		pSch->svcInterval = svcInterval;
 		pSch->maxSvcDuration = (uint16_t) pSch->svcInterval;    /* use SP = SI */
@@ -787,8 +787,8 @@ QDF_STATUS lim_admit_control_delete_sta(struct mac_context *mac, uint16_t assocI
    -------------------------------------------------------------*/
 QDF_STATUS lim_admit_control_init(struct mac_context *mac)
 {
-	qdf_mem_set(mac->lim.tspecInfo,
-		    LIM_NUM_TSPEC_MAX * sizeof(tLimTspecInfo), 0);
+	qdf_mem_zero(mac->lim.tspecInfo,
+		    LIM_NUM_TSPEC_MAX * sizeof(tLimTspecInfo));
 	return QDF_STATUS_SUCCESS;
 }
 

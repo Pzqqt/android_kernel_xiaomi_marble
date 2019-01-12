@@ -31,7 +31,7 @@ void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId)
 
 	if (NULL != pSession) {
 		/* Clean up the context */
-		qdf_mem_set(&pSession->ftSmeContext, sizeof(tftSMEContext), 0);
+		qdf_mem_zero(&pSession->ftSmeContext, sizeof(tftSMEContext));
 
 		pSession->ftSmeContext.pUsrCtx =
 			qdf_mem_malloc(sizeof(tFTRoamCallbackUsrCtx));

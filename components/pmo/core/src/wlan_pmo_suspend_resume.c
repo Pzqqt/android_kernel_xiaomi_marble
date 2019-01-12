@@ -302,8 +302,8 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 		enable_configured = false;
 		disable_configured = false;
 
-		qdf_mem_set(enable_mask,  sizeof(uint32_t) * BM_LEN, 0);
-		qdf_mem_set(disable_mask, sizeof(uint32_t) * BM_LEN, 0);
+		qdf_mem_zero(enable_mask,  sizeof(uint32_t) * BM_LEN);
+		qdf_mem_zero(disable_mask, sizeof(uint32_t) * BM_LEN);
 
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 		if (!vdev)

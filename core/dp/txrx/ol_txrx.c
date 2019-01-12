@@ -1190,7 +1190,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 	/*
 	 * Initialize rx PN check characteristics for different security types.
 	 */
-	qdf_mem_set(&pdev->rx_pn[0], sizeof(pdev->rx_pn), 0);
+	qdf_mem_zero(&pdev->rx_pn[0], sizeof(pdev->rx_pn));
 
 	/* TKIP: 48-bit TSC, CCMP: 48-bit PN */
 	pdev->rx_pn[htt_sec_type_tkip].len =

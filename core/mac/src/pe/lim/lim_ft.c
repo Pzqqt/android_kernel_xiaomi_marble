@@ -51,8 +51,7 @@ extern void lim_send_set_sta_key_req(struct mac_context *mac,
 void lim_ft_open(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (pe_session)
-		qdf_mem_set(&pe_session->ftPEContext, sizeof(tftPEContext),
-			    0);
+		qdf_mem_zero(&pe_session->ftPEContext, sizeof(tftPEContext));
 }
 
 void lim_ft_cleanup_all_ft_sessions(struct mac_context *mac)
@@ -107,7 +106,7 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
 	}
 
 	/* The session is being deleted, cleanup the contents */
-	qdf_mem_set(&pe_session->ftPEContext, sizeof(tftPEContext), 0);
+	qdf_mem_zero(&pe_session->ftPEContext, sizeof(tftPEContext));
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

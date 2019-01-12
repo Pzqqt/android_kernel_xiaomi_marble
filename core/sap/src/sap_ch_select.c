@@ -1555,8 +1555,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 		ieLen = GET_IE_LEN_IN_BSS(
 				pScanResult->BssDescriptor.length);
-		qdf_mem_set((uint8_t *) pBeaconStruct,
-				   sizeof(tSirProbeRespBeacon), 0);
+		qdf_mem_zero((uint8_t *) pBeaconStruct,
+				   sizeof(tSirProbeRespBeacon));
 
 
 		if ((sir_parse_beacon_ie

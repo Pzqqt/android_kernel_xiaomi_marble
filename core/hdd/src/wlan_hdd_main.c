@@ -8198,7 +8198,7 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 		}
 
 		tbytes = 0;
-		qdf_mem_set(temp_str, 0, sizeof(temp_str));
+		qdf_mem_zero(temp_str, sizeof(temp_str));
 		for (i = WLAN_CONTROL_PATH; i < WLAN_REASON_TYPE_MAX; i++) {
 			if (adapter->queue_oper_stats[i].pause_count == 0)
 				continue;
@@ -10211,10 +10211,10 @@ int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
 void hdd_free_mac_address_lists(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Resetting MAC address lists");
-	qdf_mem_set(hdd_ctx->provisioned_mac_addr,
-		    sizeof(hdd_ctx->provisioned_mac_addr), 0);
-	qdf_mem_set(hdd_ctx->derived_mac_addr,
-		    sizeof(hdd_ctx->derived_mac_addr), 0);
+	qdf_mem_zero(hdd_ctx->provisioned_mac_addr,
+		    sizeof(hdd_ctx->provisioned_mac_addr));
+	qdf_mem_zero(hdd_ctx->derived_mac_addr,
+		    sizeof(hdd_ctx->derived_mac_addr));
 	hdd_ctx->num_provisioned_addr = 0;
 	hdd_ctx->num_derived_addr = 0;
 	hdd_ctx->provisioned_intf_addr_mask = 0;

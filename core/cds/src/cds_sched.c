@@ -125,8 +125,8 @@ static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
 	char new_mask_str[10];
 	char old_mask_str[10];
 
-	qdf_mem_set(new_mask_str, sizeof(new_mask_str), 0);
-	qdf_mem_set(new_mask_str, sizeof(old_mask_str), 0);
+	qdf_mem_zero(new_mask_str, sizeof(new_mask_str));
+	qdf_mem_zero(new_mask_str, sizeof(old_mask_str));
 
 	cpumap_print_to_pagebuf(false, old_mask_str, old_mask);
 	cpumap_print_to_pagebuf(false, new_mask_str, new_mask);

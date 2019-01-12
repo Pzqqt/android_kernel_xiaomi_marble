@@ -47,8 +47,8 @@ void lim_set_cfg_protection(struct mac_context *mac, struct pe_session *pesessio
 	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-			qdf_mem_set((void *)&pesessionEntry->cfgProtection,
-				    sizeof(tCfgProtection), 0);
+			qdf_mem_zero((void *)&pesessionEntry->cfgProtection,
+				    sizeof(tCfgProtection));
 		else {
 			pe_debug("frm11a = %d, from11b = %d, frm11g = %d, "
 				   "ht20 = %d, nongf = %d, lsigTxop = %d, "
@@ -69,8 +69,8 @@ void lim_set_cfg_protection(struct mac_context *mac, struct pe_session *pesessio
 
 		if (mac->lim.gLimProtectionControl ==
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-			qdf_mem_set((void *)&mac->lim.cfgProtection,
-				    sizeof(tCfgProtection), 0);
+			qdf_mem_zero((void *)&mac->lim.cfgProtection,
+				    sizeof(tCfgProtection));
 		else {
 			val = mlme_cfg->sap_protection_cfg.protection_enabled;
 

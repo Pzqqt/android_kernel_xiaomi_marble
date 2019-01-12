@@ -712,7 +712,7 @@ void csr_apply_channel_power_info_wrapper(struct mac_context *mac)
 	csr_apply_channel_power_info_to_fw(mac,
 		&mac->scan.base_channels, mac->scan.countryCodeCurrent);
 	/* clear the 11d channel list */
-	qdf_mem_set(&mac->scan.channels11d, sizeof(mac->scan.channels11d), 0);
+	qdf_mem_zero(&mac->scan.channels11d, sizeof(mac->scan.channels11d));
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,7 +90,7 @@ void lim_ft_cleanup_pre_auth_info(struct mac_context *mac,
 	}
 
 	/* The session is being deleted, cleanup the contents */
-	qdf_mem_set(&pe_session->ftPEContext, sizeof(tftPEContext), 0);
+	qdf_mem_zero(&pe_session->ftPEContext, sizeof(tftPEContext));
 
 	/* Delete the session created while handling pre-auth response */
 	if (pReAssocSessionEntry) {

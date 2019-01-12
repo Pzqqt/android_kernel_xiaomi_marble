@@ -2112,7 +2112,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 
 		WMA_LOGD("%s: remote ibss peer %pM key clearing\n", __func__,
 			 peer_addr);
-		qdf_mem_set(&key_info, sizeof(key_info), 0);
+		qdf_mem_zero(&key_info, sizeof(key_info));
 		key_info.smesessionId = vdev_id;
 		qdf_mem_copy(key_info.peer_macaddr.bytes, peer_addr,
 				IEEE80211_ADDR_LEN);
@@ -4539,7 +4539,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	/* clear leftover ibss keys on bss peer */
 
 	WMA_LOGD("%s: ibss bss key clearing", __func__);
-	qdf_mem_set(&key_info, sizeof(key_info), 0);
+	qdf_mem_zero(&key_info, sizeof(key_info));
 	key_info.smesessionId = vdev_id;
 	key_info.numKeys = SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
 	qdf_mem_copy(&wma->ibsskey_info, &key_info, sizeof(tSetBssKeyParams));

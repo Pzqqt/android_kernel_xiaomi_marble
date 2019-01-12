@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -419,7 +419,7 @@ QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 
 	qdf_create_work(0, &ipa_ctx->uc_rm_work.work,
 			wlan_ipa_uc_rm_notify_defer, ipa_ctx);
-	qdf_mem_set(&create_params, 0, sizeof(create_params));
+	qdf_mem_zero(&create_params, sizeof(create_params));
 	create_params.name = QDF_IPA_RM_RESOURCE_WLAN_PROD;
 	create_params.reg_params.user_data = ipa_ctx;
 	create_params.reg_params.notify_cb = wlan_ipa_rm_notify;
@@ -431,7 +431,7 @@ QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 		goto setup_rm_fail;
 	}
 
-	qdf_mem_set(&create_params, 0, sizeof(create_params));
+	qdf_mem_zero(&create_params, sizeof(create_params));
 	create_params.name = QDF_IPA_RM_RESOURCE_WLAN_CONS;
 	create_params.request_resource = wlan_ipa_rm_cons_request;
 	create_params.release_resource = wlan_ipa_rm_cons_release;

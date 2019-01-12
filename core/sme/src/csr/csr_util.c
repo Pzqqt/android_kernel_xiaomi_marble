@@ -4257,7 +4257,7 @@ uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 		if (!fWapiMatch)
 			break;
 
-		qdf_mem_set(pWapiIe, sizeof(tCsrWapiIe), 0);
+		qdf_mem_zero(pWapiIe, sizeof(tCsrWapiIe));
 
 		pWapiIe->IeHeader.ElementID = DOT11F_EID_WAPI;
 
@@ -5726,7 +5726,7 @@ void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProf
 			pProfile->ChannelInfo.ChannelList = NULL;
 		}
 		csr_free_fils_profile_info(pProfile);
-		qdf_mem_set(pProfile, sizeof(struct csr_roam_profile), 0);
+		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));
 	}
 }
 

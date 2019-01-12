@@ -1214,8 +1214,8 @@ static void lim_decide_short_preamble(struct mac_context *mac_ctx,
 		 * enable short preamble
 		 * reset the cache
 		 */
-		qdf_mem_set((uint8_t *) &session_entry->gLimNoShortParams,
-				sizeof(tLimNoShortParams), 0);
+		qdf_mem_zero((uint8_t *) &session_entry->gLimNoShortParams,
+				sizeof(tLimNoShortParams));
 		if (lim_enable_short_preamble(mac_ctx, true,
 			beacon_params, session_entry) != QDF_STATUS_SUCCESS)
 			pe_err("Cannot enable short preamble");
@@ -1272,9 +1272,9 @@ lim_decide_short_slot(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			 * enable short slot time
 			 * reset the cache
 			 */
-			qdf_mem_set((uint8_t *) &session_entry->
+			qdf_mem_zero((uint8_t *) &session_entry->
 				gLimNoShortSlotParams,
-				sizeof(tLimNoShortSlotParams), 0);
+				sizeof(tLimNoShortSlotParams));
 			beacon_params->fShortSlotTime = true;
 			beacon_params->paramChangeBitmap |=
 				PARAM_SHORT_SLOT_TIME_CHANGED;
@@ -1305,9 +1305,9 @@ lim_decide_short_slot(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			 * enable short slot time
 			 * reset the cache
 			 */
-			qdf_mem_set(
+			qdf_mem_zero(
 				(uint8_t *) &mac_ctx->lim.gLimNoShortSlotParams,
-				sizeof(tLimNoShortSlotParams), 0);
+				sizeof(tLimNoShortSlotParams));
 			/*in case of AP set SHORT_SLOT_TIME to enable*/
 			if (LIM_IS_AP_ROLE(session_entry)) {
 				beacon_params->fShortSlotTime = true;
@@ -1544,7 +1544,7 @@ lim_populate_own_rate_set(struct mac_context *mac_ctx,
 	 * put the result in pSupportedRates
 	 */
 
-	qdf_mem_set((uint8_t *) rates, sizeof(tSirSupportedRates), 0);
+	qdf_mem_zero((uint8_t *) rates, sizeof(tSirSupportedRates));
 	for (i = 0; i < temp_rate_set.numRates; i++) {
 		min = 0;
 		val = 0xff;
@@ -1685,7 +1685,7 @@ lim_populate_peer_rate_set(struct mac_context *mac,
 		uint8_t aRateIndex = 0;
 		uint8_t bRateIndex = 0;
 
-		qdf_mem_set((uint8_t *) pRates, sizeof(tSirSupportedRates), 0);
+		qdf_mem_zero((uint8_t *) pRates, sizeof(tSirSupportedRates));
 		for (i = 0; i < tempRateSet.numRates; i++) {
 			min = 0;
 			val = 0xff;
@@ -1944,7 +1944,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	}
 
 	rates = &sta_ds->supportedRates;
-	qdf_mem_set((uint8_t *) rates, sizeof(tSirSupportedRates), 0);
+	qdf_mem_zero((uint8_t *) rates, sizeof(tSirSupportedRates));
 	for (i = 0; (i < temp_rate_set2.numRates &&
 			 i < SIR_MAC_RATESET_EID_MAX); i++) {
 		for (j = 0; (j < temp_rate_set.numRates &&
@@ -3280,7 +3280,7 @@ QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct)
 {
-	qdf_mem_set((uint8_t *) beaconStruct, sizeof(tSirProbeRespBeacon), 0);
+	qdf_mem_zero((uint8_t *) beaconStruct, sizeof(tSirProbeRespBeacon));
 
 	pe_debug("The IE's being received are:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,

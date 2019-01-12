@@ -241,7 +241,7 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 		qdf_get_time_of_the_day_in_hr_min_sec_usec(auth_time,
 							   time_buffer_size);
 	else
-		qdf_mem_set(auth_time, 0x00, time_buffer_size);
+		qdf_mem_zero(auth_time, time_buffer_size);
 
 }
 
@@ -269,7 +269,7 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 		qdf_get_time_of_the_day_in_hr_min_sec_usec(connect_time,
 							   time_buffer_size);
 	else
-		qdf_mem_set(connect_time, 0x00, time_buffer_size);
+		qdf_mem_zero(connect_time, time_buffer_size);
 
 }
 

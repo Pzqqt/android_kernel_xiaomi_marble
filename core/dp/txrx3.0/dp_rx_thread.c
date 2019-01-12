@@ -84,7 +84,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 	uint32_t total_queued = 0;
 	uint32_t temp = 0;
 
-	qdf_mem_set(nbuf_queued_string, 0, sizeof(nbuf_queued_string));
+	qdf_mem_zero(nbuf_queued_string, sizeof(nbuf_queued_string));
 
 	for (reo_ring_num = 0; reo_ring_num < DP_RX_TM_MAX_REO_RINGS;
 	     reo_ring_num++) {
@@ -473,7 +473,7 @@ static QDF_STATUS dp_rx_tm_thread_init(struct dp_rx_thread *rx_thread,
 	char thread_name[15];
 	QDF_STATUS qdf_status;
 
-	qdf_mem_set(thread_name, 0, sizeof(thread_name));
+	qdf_mem_zero(thread_name, sizeof(thread_name));
 
 	if (!rx_thread) {
 		dp_err("rx_thread is null!");

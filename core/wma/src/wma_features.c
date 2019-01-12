@@ -329,7 +329,7 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	if (!psnr_req_bkp)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_set(psnr_req_bkp, sizeof(tAniGetSnrReq), 0);
+	qdf_mem_zero(psnr_req_bkp, sizeof(tAniGetSnrReq));
 	psnr_req_bkp->staId = psnr_req->staId;
 	psnr_req_bkp->pDevContext = psnr_req->pDevContext;
 	psnr_req_bkp->snrCallback = psnr_req->snrCallback;

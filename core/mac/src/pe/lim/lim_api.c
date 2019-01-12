@@ -77,8 +77,8 @@
 
 static void __lim_init_bss_vars(struct mac_context *mac)
 {
-	qdf_mem_set((void *)mac->lim.gpSession,
-		    sizeof(*mac->lim.gpSession) * mac->lim.maxBssId, 0);
+	qdf_mem_zero((void *)mac->lim.gpSession,
+		    sizeof(*mac->lim.gpSession) * mac->lim.maxBssId);
 
 	/* This is for testing purposes only, be default should always be off */
 	mac->lim.gpLimMlmSetKeysReq = NULL;
@@ -101,8 +101,8 @@ static void __lim_init_stats_vars(struct mac_context *mac)
 	mac->lim.gLimHeartBeatApMacIndex = 0;
 
 	/* Statistics to keep track of no. beacons rcvd in heart beat interval */
-	qdf_mem_set(mac->lim.gLimHeartBeatBeaconStats,
-		    sizeof(mac->lim.gLimHeartBeatBeaconStats), 0);
+	qdf_mem_zero(mac->lim.gLimHeartBeatBeaconStats,
+		    sizeof(mac->lim.gLimHeartBeatBeaconStats));
 
 #ifdef WLAN_DEBUG
 	/* Debug counters */
@@ -112,7 +112,7 @@ static void __lim_init_stats_vars(struct mac_context *mac)
 	mac->lim.numLearn = 0;
 	mac->lim.numLearnIgnore = 0;
 	mac->lim.numSme = 0;
-	qdf_mem_set(mac->lim.numMAC, sizeof(mac->lim.numMAC), 0);
+	qdf_mem_zero(mac->lim.numMAC, sizeof(mac->lim.numMAC));
 	mac->lim.gLimNumAssocReqDropInvldState = 0;
 	mac->lim.gLimNumAssocReqDropACRejectTS = 0;
 	mac->lim.gLimNumAssocReqDropACRejectSta = 0;
@@ -153,9 +153,9 @@ static void __lim_init_states(struct mac_context *mac)
 	 * when SME_START_BSS_REQ is received.
 	 */
 
-	qdf_mem_set(&mac->lim.gLimNoShortParams, sizeof(tLimNoShortParams), 0);
-	qdf_mem_set(&mac->lim.gLimNoShortSlotParams,
-		    sizeof(tLimNoShortSlotParams), 0);
+	qdf_mem_zero(&mac->lim.gLimNoShortParams, sizeof(tLimNoShortParams));
+	qdf_mem_zero(&mac->lim.gLimNoShortSlotParams,
+		    sizeof(tLimNoShortSlotParams));
 
 	mac->lim.gLimPhyMode = 0;
 	mac->lim.gLimProbeRespDisableFlag = 0; /* control over probe resp */
@@ -167,15 +167,15 @@ static void __lim_init_vars(struct mac_context *mac)
 
 
 	/* Deferred Queue Parameters */
-	qdf_mem_set(&mac->lim.gLimDeferredMsgQ, sizeof(tSirAddtsReq), 0);
+	qdf_mem_zero(&mac->lim.gLimDeferredMsgQ, sizeof(tSirAddtsReq));
 
 	/* addts request if any - only one can be outstanding at any time */
-	qdf_mem_set(&mac->lim.gLimAddtsReq, sizeof(tSirAddtsReq), 0);
+	qdf_mem_zero(&mac->lim.gLimAddtsReq, sizeof(tSirAddtsReq));
 	mac->lim.gLimAddtsSent = 0;
 	mac->lim.gLimAddtsRspTimerCount = 0;
 
 	/* protection related config cache */
-	qdf_mem_set(&mac->lim.cfgProtection, sizeof(tCfgProtection), 0);
+	qdf_mem_zero(&mac->lim.cfgProtection, sizeof(tCfgProtection));
 	mac->lim.gLimProtectionControl = 0;
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 
@@ -190,11 +190,11 @@ static void __lim_init_vars(struct mac_context *mac)
 	mac->lim.pDialogueTokenHead = NULL;
 	mac->lim.pDialogueTokenTail = NULL;
 
-	qdf_mem_set(&mac->lim.tspecInfo,
-		    sizeof(tLimTspecInfo) * LIM_NUM_TSPEC_MAX, 0);
+	qdf_mem_zero(&mac->lim.tspecInfo,
+		    sizeof(tLimTspecInfo) * LIM_NUM_TSPEC_MAX);
 
 	/* admission control policy information */
-	qdf_mem_set(&mac->lim.admitPolicyInfo, sizeof(tLimAdmitPolicyInfo), 0);
+	qdf_mem_zero(&mac->lim.admitPolicyInfo, sizeof(tLimAdmitPolicyInfo));
 }
 
 static void __lim_init_assoc_vars(struct mac_context *mac)
@@ -207,19 +207,18 @@ static void __lim_init_assoc_vars(struct mac_context *mac)
 	/* / MAC level Pre-authentication related globals */
 	mac->lim.gLimPreAuthChannelNumber = 0;
 	mac->lim.gLimPreAuthType = eSIR_OPEN_SYSTEM;
-	qdf_mem_set(&mac->lim.gLimPreAuthPeerAddr, sizeof(tSirMacAddr), 0);
+	qdf_mem_zero(&mac->lim.gLimPreAuthPeerAddr, sizeof(tSirMacAddr));
 	mac->lim.gLimNumPreAuthContexts = 0;
-	qdf_mem_set(&mac->lim.gLimPreAuthTimerTable, sizeof(tLimPreAuthTable),
-		    0);
+	qdf_mem_zero(&mac->lim.gLimPreAuthTimerTable, sizeof(tLimPreAuthTable));
 
 	/* Place holder for Pre-authentication node list */
 	mac->lim.pLimPreAuthList = NULL;
 
 	/* One cache for each overlap and associated case. */
-	qdf_mem_set(mac->lim.protStaOverlapCache,
-		    sizeof(tCacheParams) * LIM_PROT_STA_OVERLAP_CACHE_SIZE, 0);
-	qdf_mem_set(mac->lim.protStaCache,
-		    sizeof(tCacheParams) * LIM_PROT_STA_CACHE_SIZE, 0);
+	qdf_mem_zero(mac->lim.protStaOverlapCache,
+		    sizeof(tCacheParams) * LIM_PROT_STA_OVERLAP_CACHE_SIZE);
+	qdf_mem_zero(mac->lim.protStaCache,
+		    sizeof(tCacheParams) * LIM_PROT_STA_CACHE_SIZE);
 
 	mac->lim.pe_session = NULL;
 	mac->lim.reAssocRetryAttempt = 0;

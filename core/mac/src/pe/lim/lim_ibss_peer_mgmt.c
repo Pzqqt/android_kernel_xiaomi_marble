@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -603,7 +603,7 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 	 * even though all the nodes are capable of doing CB.
 	 * so it is decided to leave the self HT capabilties intact. This may change if some issues are found in interop.
 	 */
-	qdf_mem_set((void *)&mlmStartReq, sizeof(mlmStartReq), 0);
+	qdf_mem_zero((void *)&mlmStartReq, sizeof(mlmStartReq));
 
 	qdf_mem_copy(mlmStartReq.bssId, pHdr->bssId, sizeof(tSirMacAddr));
 	mlmStartReq.rateSet.numRates =
@@ -683,7 +683,7 @@ void lim_ibss_init(struct mac_context *mac)
 	mac->lim.gLimNumIbssPeers = 0;
 
 	/* ibss info - params for which ibss to join while coalescing */
-	qdf_mem_set(&mac->lim.ibssInfo, sizeof(tAniSirLimIbss), 0);
+	qdf_mem_zero(&mac->lim.ibssInfo, sizeof(tAniSirLimIbss));
 } /*** end lim_ibss_init() ***/
 
 /**
@@ -972,7 +972,7 @@ lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_ses
 	tSirMacAddr *pPeerAddr = (tSirMacAddr *) pBody;
 	tUpdateBeaconParams beaconParams;
 
-	qdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
+	qdf_mem_zero((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams));
 
 	if (pBody == 0) {
 		pe_err("Invalid IBSS AddSta");
@@ -1302,7 +1302,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	infoLen = sizeof(tSirMacAddr) + sizeof(tSirMacChanNum) +
 		  sizeof(uint8_t) + pBeacon->ssId.length + 1;
 
-	qdf_mem_set((void *)&newBssInfo, sizeof(newBssInfo), 0);
+	qdf_mem_zero((void *)&newBssInfo, sizeof(newBssInfo));
 	qdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, QDF_MAC_ADDR_SIZE);
 	newBssInfo.channelNumber = (tSirMacChanNum) pAddBss->currentOperChannel;
 	qdf_mem_copy((uint8_t *) &newBssInfo.ssId,
@@ -1455,7 +1455,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 	tpDphHashNode pStaDs;
 	tUpdateBeaconParams beaconParams;
 
-	qdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
+	qdf_mem_zero((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams));
 
 	sir_copy_mac_addr(currentBssId, pe_session->bssId);
 

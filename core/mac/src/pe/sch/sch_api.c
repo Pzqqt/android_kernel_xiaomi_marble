@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -338,7 +338,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 	}
 
 	/* Paranoia: */
-	qdf_mem_set(pFrame2Hal, nBytes, 0);
+	qdf_mem_zero(pFrame2Hal, nBytes);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame2Hal, SIR_MAC_MGMT_FRAME,

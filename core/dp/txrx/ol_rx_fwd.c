@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -120,7 +120,7 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 		}
 
 	/* Clear the msdu control block as it will be re-interpreted */
-	qdf_mem_set(msdu->cb, sizeof(msdu->cb), 0);
+	qdf_mem_zero(msdu->cb, sizeof(msdu->cb));
 	/* update any cb field expected by OL_TX_SEND */
 
 	msdu = OL_TX_SEND(vdev, msdu);

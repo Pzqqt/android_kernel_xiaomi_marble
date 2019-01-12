@@ -63,7 +63,7 @@
 QDF_STATUS sys_init_globals(struct mac_context *mac)
 {
 
-	qdf_mem_set((uint8_t *) &mac->sys, sizeof(mac->sys), 0);
+	qdf_mem_zero((uint8_t *) &mac->sys, sizeof(mac->sys));
 
 	mac->sys.gSysEnableLinkMonitorMode = 0;
 

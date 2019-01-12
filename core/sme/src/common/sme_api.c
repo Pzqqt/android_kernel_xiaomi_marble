@@ -466,11 +466,11 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac)
 
 	/* memset to zero */
 	if (pRetCmd) {
-		qdf_mem_set((uint8_t *)&pRetCmd->command,
-			    sizeof(pRetCmd->command), 0);
-		qdf_mem_set((uint8_t *)&pRetCmd->sessionId,
-			    sizeof(pRetCmd->sessionId), 0);
-		qdf_mem_set((uint8_t *)&pRetCmd->u, sizeof(pRetCmd->u), 0);
+		qdf_mem_zero((uint8_t *)&pRetCmd->command,
+			    sizeof(pRetCmd->command));
+		qdf_mem_zero((uint8_t *)&pRetCmd->sessionId,
+			    sizeof(pRetCmd->sessionId));
+		qdf_mem_zero((uint8_t *)&pRetCmd->u, sizeof(pRetCmd->u));
 	}
 
 	return pRetCmd;
@@ -1012,7 +1012,7 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 		mac_ctx->mlme_cfg->lfr.enable_5g_band_pref = true;
 		break;
 	case REASON_ROAM_SET_SSID_ALLOWED:
-		qdf_mem_set(&roam_params_dst->ssid_allowed_list, 0,
+		qdf_mem_zero(&roam_params_dst->ssid_allowed_list,
 				sizeof(tSirMacSSid) * MAX_SSID_ALLOWED_LIST);
 		roam_params_dst->num_ssid_allowed_list =
 			roam_params_src->num_ssid_allowed_list;
@@ -1025,7 +1025,7 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 		}
 		break;
 	case REASON_ROAM_SET_FAVORED_BSSID:
-		qdf_mem_set(&roam_params_dst->bssid_favored, 0,
+		qdf_mem_zero(&roam_params_dst->bssid_favored,
 			sizeof(tSirMacAddr) * MAX_BSSID_FAVORED);
 		roam_params_dst->num_bssid_favored =
 			roam_params_src->num_bssid_favored;
@@ -1038,7 +1038,7 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 		}
 		break;
 	case REASON_ROAM_SET_BLACKLIST_BSSID:
-		qdf_mem_set(&roam_params_dst->bssid_avoid_list, 0,
+		qdf_mem_zero(&roam_params_dst->bssid_avoid_list,
 			QDF_MAC_ADDR_SIZE * MAX_BSSID_AVOID_LIST);
 		roam_params_dst->num_bssid_avoid_list =
 			roam_params_src->num_bssid_avoid_list;
@@ -1519,8 +1519,8 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, tpSirPlmReq pPlmReq)
 	} /* End of for () */
 
 	/* Copying back the valid channel list to plm struct */
-	qdf_mem_set((void *)pPlmReq->plmChList,
-		    pPlmReq->plmNumCh, 0);
+	qdf_mem_zero((void *)pPlmReq->plmChList,
+		    pPlmReq->plmNumCh);
 	if (valid_count)
 		qdf_mem_copy(pPlmReq->plmChList, ch_list,
 			     valid_count);
@@ -2578,7 +2578,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	if (!scan_filter)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_mem_set(&first_ap_profile, sizeof(tSirBssDescription), 0);
+	qdf_mem_zero(&first_ap_profile, sizeof(tSirBssDescription));
 	if (NULL == profile) {
 		scan_filter->EncryptionType.numEntries = 1;
 		scan_filter->EncryptionType.encryptionType[0]
@@ -9067,7 +9067,7 @@ QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&mac->sme)) {
-		qdf_mem_set(&msg, sizeof(msg), 0);
+		qdf_mem_zero(&msg, sizeof(msg));
 		msg.type = WMA_SET_THERMAL_LEVEL;
 		msg.bodyval = level;
 
@@ -13734,7 +13734,7 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 	if (!pmk_cache)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_set(pmk_cache, sizeof(*pmk_cache), 0);
+	qdf_mem_zero(pmk_cache, sizeof(*pmk_cache));
 
 	pmk_cache->vdev_id = session_id;
 
