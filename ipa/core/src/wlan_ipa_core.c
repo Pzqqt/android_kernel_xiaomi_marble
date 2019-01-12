@@ -229,7 +229,7 @@ static void wlan_ipa_send_pkt_to_tl(
 
 	skb = QDF_IPA_RX_DATA_SKB(ipa_tx_desc);
 
-	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	qdf_mem_zero(skb->cb, sizeof(skb->cb));
 
 	/* Store IPA Tx buffer ownership into SKB CB */
 	qdf_nbuf_ipa_owned_set(skb);
@@ -663,7 +663,7 @@ static void wlan_ipa_forward(struct wlan_ipa_priv *ipa_ctx,
 	if (ipa_ctx->suspended) {
 		qdf_spin_unlock_bh(&ipa_ctx->pm_lock);
 		ipa_info_rl("Tx in suspend, put in queue");
-		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		qdf_mem_zero(skb->cb, sizeof(skb->cb));
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
 		pm_tx_cb->exception = true;
 		pm_tx_cb->iface_context = iface_ctx;
@@ -911,7 +911,7 @@ static void __wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	 * progress.
 	 */
 	if (ipa_ctx->suspended) {
-		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		qdf_mem_zero(skb->cb, sizeof(skb->cb));
 		pm_tx_cb = (struct wlan_ipa_pm_tx_cb *)skb->cb;
 		pm_tx_cb->iface_context = iface_context;
 		pm_tx_cb->ipa_tx_desc = ipa_tx_desc;
@@ -1094,8 +1094,9 @@ static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
 				ipa_ctx->assoc_stas_map[idx].is_reserved =
 					false;
 				ipa_ctx->assoc_stas_map[idx].sta_id = 0xFF;
-				qdf_mem_set(&ipa_ctx->assoc_stas_map[idx].
-					    mac_addr, 0, QDF_NET_ETH_LEN);
+				qdf_mem_zero(
+					&ipa_ctx->assoc_stas_map[idx].mac_addr,
+					QDF_NET_ETH_LEN);
 				return sta_found;
 			}
 		}

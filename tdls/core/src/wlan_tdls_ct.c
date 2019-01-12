@@ -229,8 +229,8 @@ static void tdls_ct_sampling_tx_rx(struct tdls_vdev_priv_obj *tdls_vdev,
 	qdf_mem_copy(mac_table, tdls_vdev->ct_peer_table,
 	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries);
 
-	qdf_mem_set(tdls_vdev->ct_peer_table,
-	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries, 0);
+	qdf_mem_zero(tdls_vdev->ct_peer_table,
+	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries);
 
 	tdls_vdev->valid_mac_entries = 0;
 

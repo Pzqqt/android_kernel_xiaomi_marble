@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,7 +66,7 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 			continue;
 		}
 		qdf_spin_lock_bh(&temp_ctx->pmo_vdev_lock);
-		qdf_mem_set(&(op_list->mc_addr[i].bytes), 0,
+		qdf_mem_zero(&(op_list->mc_addr[i].bytes),
 			QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(&(op_list->mc_addr[i].bytes),
 			ip->mc_addr[i].bytes, QDF_MAC_ADDR_SIZE);
