@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,14 +53,12 @@ QDF_STATUS wlan_sm_dispatch(struct wlan_sm *sm, uint16_t event,
 		if (event < sm->num_event_names)
 			event_name = sm->event_names[event];
 
-		sm_engine_debug("%s: current state %s[%d] event %s[%d]",
-				sm->name, sm->state_info[state].name, state,
-				event_name ? event_name : "UNKNOWN_EVENT",
-				event);
+		sm_engine_nofl_debug("%s: %s, %s", sm->name,
+				     sm->state_info[state].name,
+				     event_name ? event_name : "UNKNOWN_EVENT");
 	} else {
-		sm_engine_debug("%s: current state %s[%d] event %d",
-				sm->name, sm->state_info[state].name, state,
-				event);
+		sm_engine_nofl_debug("%s: %s ev [%d]", sm->name,
+				     sm->state_info[state].name, event);
 	}
 
 	if (state != WLAN_SM_ENGINE_STATE_NONE) {
@@ -144,15 +142,11 @@ void wlan_sm_transition_to(struct wlan_sm *sm, uint8_t state)
 	else
 		new_sub_st = 0;
 
-	sm_engine_debug("%s: transition(state) %s[%d] => %s[%d]",
-			sm->name, state_info[old_state].name, old_state,
-			state_info[new_state].name, new_state);
-	sm_engine_debug("%s: transition(sub_state) %s[%d] => %s[%d]",
-			sm->name,
-			ol_sub_st ? state_info[ol_sub_st].name : "IDLE",
-			ol_sub_st,
-			new_sub_st ? state_info[new_sub_st].name : "IDLE",
-			new_sub_st);
+	sm_engine_nofl_debug("%s: %s > %s, %s > %s", sm->name,
+			     state_info[old_state].name,
+			     state_info[new_state].name,
+			     ol_sub_st ? state_info[ol_sub_st].name : "IDLE",
+			     new_sub_st ? state_info[new_sub_st].name : "IDLE");
 
 	/*
 	 * call the exit function(s) of the current state hierarchy
@@ -178,8 +172,9 @@ void wlan_sm_transition_to(struct wlan_sm *sm, uint8_t state)
 		cur_state = state_info[cur_state].initial_substate;
 
 		if (cur_state != WLAN_SM_ENGINE_STATE_NONE)
-			sm_engine_debug("%s: Entering Initial sub state %s",
-					sm->name, state_info[cur_state].name);
+			sm_engine_nofl_debug("%s: Initial sub state %s",
+					     sm->name,
+					     state_info[cur_state].name);
 	}
 	qdf_atomic_set(&sm->in_state_transition, 0);
 }

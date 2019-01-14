@@ -1698,7 +1698,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_START,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"START-START_PROGRESS",
+		"ST-START_PROG",
 		mlme_vdev_subst_start_start_progress_entry,
 		mlme_vdev_subst_start_start_progress_exit,
 		mlme_vdev_subst_start_start_progress_event
@@ -1708,7 +1708,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_START,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"START-RESTART_PROGRESS",
+		"ST-RESTART_PROG",
 		mlme_vdev_subst_start_restart_progress_entry,
 		mlme_vdev_subst_start_restart_progress_exit,
 		mlme_vdev_subst_start_restart_progress_event
@@ -1718,7 +1718,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_START,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"START-CONN_PROGRESS",
+		"ST-CONN_PROG",
 		mlme_vdev_subst_start_conn_progress_entry,
 		mlme_vdev_subst_start_conn_progress_exit,
 		mlme_vdev_subst_start_conn_progress_event
@@ -1728,7 +1728,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_START,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"START-DISCONN_PROGRESS",
+		"ST-DISCONN_PROG",
 		mlme_vdev_subst_start_disconn_progress_entry,
 		mlme_vdev_subst_start_disconn_progress_exit,
 		mlme_vdev_subst_start_disconn_progress_event
@@ -1738,7 +1738,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_SUSPEND,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"SUSPEND-SUSPEND_DOWN",
+		"SP-SUSPEND_DOWN",
 		mlme_vdev_subst_suspend_suspend_down_entry,
 		mlme_vdev_subst_suspend_suspend_down_exit,
 		mlme_vdev_subst_suspend_suspend_down_event
@@ -1748,7 +1748,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_SUSPEND,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"SUSPEND-SUSPEND_RESTART",
+		"SP-SUSPEND_RESTART",
 		mlme_vdev_subst_suspend_suspend_restart_entry,
 		mlme_vdev_subst_suspend_suspend_restart_exit,
 		mlme_vdev_subst_suspend_suspend_restart_event
@@ -1758,7 +1758,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_SUSPEND,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"SUSPEND-HOST_RESTART",
+		"SP-HOST_RESTART",
 		mlme_vdev_subst_suspend_host_restart_entry,
 		mlme_vdev_subst_suspend_host_restart_exit,
 		mlme_vdev_subst_suspend_host_restart_event
@@ -1768,7 +1768,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_SUSPEND,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"SUSPEND-CSA_RESTART",
+		"SP-CSA_RESTART",
 		mlme_vdev_subst_suspend_csa_restart_entry,
 		mlme_vdev_subst_suspend_csa_restart_exit,
 		mlme_vdev_subst_suspend_csa_restart_event
@@ -1778,7 +1778,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_STOP,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"STOP-STOP_PROGRESS",
+		"STOP-STOP_PROG",
 		mlme_vdev_subst_stop_stop_progress_entry,
 		mlme_vdev_subst_stop_stop_progress_exit,
 		mlme_vdev_subst_stop_stop_progress_event
@@ -1788,7 +1788,7 @@ struct wlan_sm_state_info sm_info[] = {
 		(uint8_t)WLAN_VDEV_S_STOP,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
-		"STOP-DOWN_PROGRESS",
+		"STOP-DOWN_PROG",
 		mlme_vdev_subst_stop_down_progress_entry,
 		mlme_vdev_subst_stop_down_progress_exit,
 		mlme_vdev_subst_stop_down_progress_event
