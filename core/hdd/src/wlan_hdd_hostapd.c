@@ -2793,6 +2793,16 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	if (ret)
 		return ret;
 
+	/*
+	 * If sta connection is in progress do not allow SAP channel change from
+	 * user space as it may change the HW mode requirement, for which sta is
+	 * trying to connect.
+	 */
+	if (hdd_get_sta_connection_in_progress(hdd_ctx)) {
+		hdd_err("STA connection is in progress");
+		return -EBUSY;
+	}
+
 	ret = hdd_validate_channel_and_bandwidth(adapter,
 						target_channel, target_bw);
 	if (ret) {
