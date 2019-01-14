@@ -1156,4 +1156,20 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss);
  * Return: true on success, else false
  */
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_override_all_ps() - overrides to disables all the powersave features.
+ * @hdd_ctx: Pointer to HDD context.
+ * Overrides below powersave ini configurations.
+ * gEnableImps=0
+ * gEnableBmps=0
+ * gRuntimePM=0
+ * gWlanAutoShutdown = 0
+ * gEnableSuspend=0
+ * gEnablePowerSaveOffload=0
+ * gEnableWoW=0
+ *
+ * Return: None
+ */
+void hdd_override_all_ps(struct hdd_context *hdd_ctx);
 #endif

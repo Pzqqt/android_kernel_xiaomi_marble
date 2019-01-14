@@ -1183,21 +1183,7 @@ static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
 }
 #endif
 
-/**
- * hdd_override_all_ps() - overrides to disables all the powersave features.
- * @hdd_ctx: Pointer to HDD context.
- * Overrides below powersave ini configurations.
- * gEnableImps=0
- * gEnableBmps=0
- * gRuntimePM=0
- * gWlanAutoShutdown = 0
- * gEnableSuspend=0
- * gEnablePowerSaveOffload=0
- * gEnableWoW=0
- *
- * Return: None
- */
-static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
+void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 
@@ -1316,8 +1302,6 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 
 	/* Loop through the registry table and apply all these configs */
 	qdf_status = hdd_apply_cfg_ini(hdd_ctx, cfg_ini_table, i);
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
-		hdd_override_all_ps(hdd_ctx);
 
 config_exit:
 	release_firmware(fw);

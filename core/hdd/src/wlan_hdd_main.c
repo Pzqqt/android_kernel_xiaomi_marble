@@ -9115,6 +9115,9 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->action_oui_enable = 0;
 		hdd_err("Ignore action oui ini, since no action_oui component");
 	}
+
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+		hdd_override_all_ps(hdd_ctx);
 }
 
 #ifdef ENABLE_MTRACE_LOG
