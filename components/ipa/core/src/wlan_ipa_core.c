@@ -764,15 +764,24 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	struct wlan_ipa_iface_context *iface_context;
 	uint8_t fw_desc;
 
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err("Module transition in progress");
+	ipa_ctx = (struct wlan_ipa_priv *)priv;
+	if (!ipa_ctx) {
+		if (evt == IPA_RECEIVE) {
+			skb = (qdf_nbuf_t)data;
+			dev_kfree_skb_any(skb);
+		}
 		return;
 	}
 
-	ipa_ctx = (struct wlan_ipa_priv *)priv;
-
-	if (!ipa_ctx)
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err_rl("Module transition in progress");
+		if (evt == IPA_RECEIVE) {
+			skb = (qdf_nbuf_t)data;
+			ipa_ctx->ipa_rx_internal_drop_count++;
+			dev_kfree_skb_any(skb);
+		}
 		return;
+	}
 
 	switch (evt) {
 	case IPA_RECEIVE:
@@ -876,14 +885,16 @@ static void __wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	qdf_nbuf_t skb;
 	struct wlan_ipa_pm_tx_cb *pm_tx_cb = NULL;
 
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err("Module transition in progress");
-		return;
-	}
-
 	iface_context = (struct wlan_ipa_iface_context *)priv;
 	ipa_tx_desc = (qdf_ipa_rx_data_t *)data;
 	ipa_ctx = iface_context->ipa_ctx;
+
+	if (qdf_is_module_state_transitioning()) {
+		ipa_err_rl("Module transition in progress");
+		ipa_free_skb(ipa_tx_desc);
+		iface_context->stats.num_tx_drop++;
+		return;
+	}
 
 	if (evt != IPA_RECEIVE) {
 		ipa_err_rl("Event is not IPA_RECEIVE");
