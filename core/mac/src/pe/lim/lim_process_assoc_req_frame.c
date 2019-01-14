@@ -125,23 +125,28 @@ static void lim_convert_supported_channels(struct mac_context *mac_ctx,
  * @mac_ctx: Pointer to Global MAC structure
  * @hdr: A pointer to the MAC header
  * @sessionid - session id for which session is initiated
+ * @dup_entry: pointer for duplicate entry found
  *
  * This function is called by lim_process_assoc_req_frame() to check if STA
  * entry already exists in any of the PE entries of the AP. If it exists, deauth
  * will be sent on that session and the STA deletion will happen. After this,
- * the ASSOC request will be processed
+ * the ASSOC request will be processed. If the STA is already in deleting phase
+ * this will return failure so that assoc req will be rejected till STA is
+ * deleted.
  *
- * Return: True if duplicate entry found; FALSE otherwise.
+ * Return: QDF_STATUS.
  */
-static bool lim_check_sta_in_pe_entries(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
-				 uint16_t sessionid)
+static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
+					      tpSirMacMgmtHdr hdr,
+					       uint16_t sessionid,
+					       bool *dup_entry)
 {
 	uint8_t i;
 	uint16_t assoc_id = 0;
 	tpDphHashNode sta_ds = NULL;
 	struct pe_session *session = NULL;
-	bool dup_entry = false;
 
+	*dup_entry = false;
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if ((&mac_ctx->lim.gpSession[i] != NULL) &&
 		    (mac_ctx->lim.gpSession[i].valid) &&
@@ -155,6 +160,20 @@ static bool lim_check_sta_in_pe_entries(struct mac_context *mac_ctx, tpSirMacMgm
 				    (sessionid != session->peSessionId))
 #endif
 			    ) {
+				if (sta_ds->mlmStaContext.mlmState ==
+				    eLIM_MLM_WT_DEL_STA_RSP_STATE ||
+				    sta_ds->mlmStaContext.mlmState ==
+				    eLIM_MLM_WT_DEL_BSS_RSP_STATE ||
+				    sta_ds->sta_deletion_in_progress) {
+					pe_debug(
+					"Deletion is in progress (%d) for peer:%pM in mlmState %d",
+					sta_ds->sta_deletion_in_progress,
+					sta_ds->staAddr,
+					sta_ds->mlmStaContext.mlmState);
+					*dup_entry = true;
+					return QDF_STATUS_E_AGAIN;
+				}
+				sta_ds->sta_deletion_in_progress = true;
 				pe_err("Sending Disassoc and Deleting existing STA entry:"
 					   MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(session->selfMacAddr));
@@ -172,12 +191,13 @@ static bool lim_check_sta_in_pe_entries(struct mac_context *mac_ctx, tpSirMacMgm
 				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
 				lim_send_sme_disassoc_ind(mac_ctx, sta_ds,
 					session);
-				dup_entry = true;
+				*dup_entry = true;
 				break;
 			}
 		}
 	}
-	return dup_entry;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1889,6 +1909,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	tpDphHashNode sta_ds = NULL;
 	tpSirAssocReq assoc_req;
 	bool dup_entry = false;
+	QDF_STATUS status;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
 
@@ -1973,8 +1994,23 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 		}
 	}
 
-	dup_entry = lim_check_sta_in_pe_entries(mac_ctx, hdr,
-						session->peSessionId);
+	status = lim_check_sta_in_pe_entries(mac_ctx, hdr, session->peSessionId,
+					     &dup_entry);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Reject assoc as duplicate entry is present and is already being deleted, assoc will be accepted once deletion is completed");
+		/*
+		 * This mean that the duplicate entry is present on other vdev
+		 * and is already being deleted, so reject the assoc and lets
+		 * peer try again to connect, once peer is deleted from
+		 * other vdev.
+		 */
+		lim_send_assoc_rsp_mgmt_frame(
+				mac_ctx,
+				eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				1, hdr->sa,
+				sub_type, 0, session);
+		return;
+	}
 
 	/* Get pointer to Re/Association Request frame body */
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
