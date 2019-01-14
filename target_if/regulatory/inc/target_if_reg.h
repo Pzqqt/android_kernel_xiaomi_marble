@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -19,10 +19,19 @@
 
 /**
  * DOC: target_if_reg.h
- * This file contains regulatory target interface
+ * This file contains regulatory target interfaces.
  */
 #ifndef __TARGET_IF_REG_H__
 #define __TARGET_IF_REG_H__
+
+/**
+ * tgt_if_regulatory_modify_freq_range() - Modify low and high freq ranges based
+ * on wireless mode.
+ * @psoc: psoc pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_register_regulatory_tx_ops() - register regulatory tx ops
@@ -30,8 +39,8 @@
  * @tx_ops: tx_ops pointer
  * Return: Success or Failure
  */
-QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
-						*tx_ops);
+QDF_STATUS target_if_register_regulatory_tx_ops(
+		struct wlan_lmac_if_tx_ops *tx_ops);
 
 /**
  * target_if_reg_set_offloaded_info() - populate regulatory offloaded info
@@ -42,8 +51,11 @@ QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
 QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc);
 
 /**
- * tgt_if_regulatory_modify_freq_range() - Modify low and high freq ranges based
- * on wireless mode.
+ * target_if_regulatory_get_rx_ops() - Get regdb rx ops
+ * @psoc: Pointer to psoc object
+ *
+ * Return: Reg rx_ops
  */
-QDF_STATUS tgt_if_regulatory_modify_freq_range(struct wlan_objmgr_psoc *psoc);
+struct wlan_lmac_if_reg_rx_ops *
+target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc);
 #endif /* __TARGET_IF_REG_H__ */
