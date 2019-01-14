@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1312,7 +1312,20 @@ static inline
 void target_if_spectral_set_rxchainmask(struct wlan_objmgr_pdev *pdev,
 					uint8_t spectral_rx_chainmask)
 {
+	struct wlan_objmgr_psoc *psoc = NULL;
 	struct target_if_spectral *spectral = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is NULL");
+		return;
+	}
+
+	if (psoc->soc_cb.rx_ops.sptrl_rx_ops.
+	    sptrlro_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return;
+	}
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	spectral->params.ss_chn_mask = spectral_rx_chainmask;

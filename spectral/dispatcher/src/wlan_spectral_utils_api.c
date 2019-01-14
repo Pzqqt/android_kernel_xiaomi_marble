@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -182,6 +182,8 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	sptrl_rx_ops->sptrlro_vdev_get_ch_width = spectral_vdev_get_ch_width;
 	sptrl_rx_ops->sptrlro_vdev_get_sec20chan_freq_mhz =
 	    spectral_vdev_get_sec20chan_freq_mhz;
+	sptrl_rx_ops->sptrlro_spectral_is_feature_disabled =
+		wlan_spectral_is_feature_disabled;
 }
 
 void

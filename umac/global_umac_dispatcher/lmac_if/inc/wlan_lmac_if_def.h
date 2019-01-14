@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1019,6 +1019,7 @@ struct wlan_lmac_if_sa_api_rx_ops {
  * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
  *
  * @sptrlro_get_target_handle: Get Spectral handle for target/LMAC private data
+ * @sptrlro_spectral_is_feature_disabled: Check if spectral feature is disabled
  */
 struct wlan_lmac_if_sptrl_rx_ops {
 	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
@@ -1028,6 +1029,8 @@ struct wlan_lmac_if_sptrl_rx_ops {
 	int (*sptrlro_vdev_get_sec20chan_freq_mhz)(
 			struct wlan_objmgr_vdev *vdev,
 			uint16_t *sec20chan_freq);
+	bool (*sptrlro_spectral_is_feature_disabled)(
+			struct wlan_objmgr_psoc *psoc);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
