@@ -1694,9 +1694,16 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		qdf_mutex_acquire(&ipa_ctx->event_lock);
 
 		if (!ipa_ctx->sta_connected) {
+			struct wlan_ipa_iface_context *iface;
+
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			ipa_err("%s: Evt: %d, STA already disconnected",
 				msg_ex->name, QDF_IPA_MSG_META_MSG_TYPE(&meta));
+
+			iface = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
+			if (iface && (iface->dev == net_dev))
+				wlan_ipa_cleanup_iface(iface);
+
 			return QDF_STATUS_E_INVAL;
 		}
 
