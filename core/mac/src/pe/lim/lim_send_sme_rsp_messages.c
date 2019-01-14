@@ -1898,11 +1898,12 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
-
 	/*
 	 * on receiving channel switch announcement from AP, delete all
 	 * TDLS peers before leaving BSS and proceed for channel switch
 	 */
+
+	lim_update_tdls_set_state_for_fw(session_entry, false);
 	lim_delete_tdls_peers(mac_ctx, session_entry);
 
 	lim_ch_switch = &session_entry->gLimChannelSwitch;

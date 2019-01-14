@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -221,6 +221,8 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 				 * from AP, delete all TDLS peers before
 				 * leaving BSS and proceed for channel switch
 				 */
+				lim_update_tdls_set_state_for_fw(session_entry,
+								 false);
 				lim_delete_tdls_peers(mac_ctx, session_entry);
 
 				lim_update_channel_switch(mac_ctx,

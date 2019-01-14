@@ -4148,6 +4148,11 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 			(ePhyChanBondState) pHTInfo->secondaryChannelOffset;
 		pe_session->htRecommendedTxWidthSet =
 			(uint8_t) pHTInfo->recommendedTxWidthSet;
+
+		/* Before restarting vdev, delete the tdls peers */
+		lim_update_tdls_set_state_for_fw(pe_session, false);
+		lim_delete_tdls_peers(mac, pe_session);
+
 		lim_ht_switch_chnl_req(pe_session);
 
 		/* In case of IBSS, if STA should update HT Info IE in its beacons. */

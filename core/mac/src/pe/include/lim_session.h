@@ -366,6 +366,7 @@ struct pe_session {
 	uint32_t peerAIDBitmap[2];
 	bool tdls_prohibited;
 	bool tdls_chan_swit_prohibited;
+	bool tdls_send_set_state_disable;
 #endif
 	bool fWaitForProbeRsp;
 	bool fIgnoreCapsChange;

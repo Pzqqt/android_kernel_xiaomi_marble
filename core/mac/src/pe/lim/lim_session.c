@@ -632,6 +632,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->tdls_prohibited = false;
 	session_ptr->tdls_chan_swit_prohibited = false;
 #endif
+	lim_update_tdls_set_state_for_fw(session_ptr, true);
 	session_ptr->fWaitForProbeRsp = 0;
 	session_ptr->fIgnoreCapsChange = 0;
 	session_ptr->ignore_assoc_disallowed = mac->ignore_assoc_disallowed;
