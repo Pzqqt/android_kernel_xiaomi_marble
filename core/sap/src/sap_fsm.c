@@ -2919,7 +2919,7 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	/* country code */
 	if (pconfig_params->countryCode[0])
 		qdf_mem_copy(profile->countryCode, pconfig_params->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
+			     CFG_COUNTRY_CODE_LEN);
 	profile->ieee80211d = pconfig_params->ieee80211d;
 	/* wps config info */
 	profile->wps_state = pconfig_params->wps_state;

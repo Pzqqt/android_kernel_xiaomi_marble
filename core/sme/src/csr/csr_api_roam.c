@@ -646,9 +646,9 @@ QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2)
 	mac->scan.domainIdCurrent = 0;
 
 	qdf_mem_copy(mac->scan.countryCodeCurrent,
-		     mac->scan.countryCodeDefault, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeDefault, CFG_COUNTRY_CODE_LEN);
 	qdf_mem_copy(mac->scan.countryCodeElected,
-		     mac->scan.countryCodeDefault, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeDefault, CFG_COUNTRY_CODE_LEN);
 	status = csr_get_channel_and_power_list(mac);
 
 	return status;
@@ -660,7 +660,7 @@ QDF_STATUS csr_set_channels(struct mac_context *mac, tCsrConfigParam *pParam)
 	uint8_t index = 0;
 
 	qdf_mem_copy(pParam->Csr11dinfo.countryCode,
-		     mac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeCurrent, CFG_COUNTRY_CODE_LEN);
 	for (index = 0; index < mac->scan.base_channels.numChannels;
 	     index++) {
 		pParam->Csr11dinfo.Channels.channelList[index] =
@@ -2912,7 +2912,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 	/* legacy maintenance */
 
 	qdf_mem_copy(mac->scan.countryCodeDefault, ps11dinfo->countryCode,
-		     WNI_CFG_COUNTRY_CODE_LEN);
+		     CFG_COUNTRY_CODE_LEN);
 
 	/* Tush: at csropen get this initialized with default,
 	 * during csr reset if this already set with some value
@@ -2920,7 +2920,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 	 */
 	if (0 == mac->scan.countryCodeCurrent[0]) {
 		qdf_mem_copy(mac->scan.countryCodeCurrent,
-			     ps11dinfo->countryCode, WNI_CFG_COUNTRY_CODE_LEN);
+			     ps11dinfo->countryCode, CFG_COUNTRY_CODE_LEN);
 	}
 	/* need to add the max power channel list */
 	pChanInfo =
@@ -10390,7 +10390,7 @@ csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
 		 * of the criteria.
 		 */
 		qdf_mem_copy(scan_fltr->countryCode, profile->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
+			     CFG_COUNTRY_CODE_LEN);
 	}
 	scan_fltr->mdid = profile->mdid;
 	qdf_mem_copy(scan_fltr->bssid_hint.bytes,

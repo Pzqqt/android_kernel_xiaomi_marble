@@ -5262,12 +5262,12 @@ sme_handle_generic_change_country_code(struct mac_context *mac_ctx,
 		    ('0' != msg->countryCode[1]))
 			qdf_mem_copy(mac_ctx->scan.countryCode11d,
 				     msg->countryCode,
-				     WNI_CFG_COUNTRY_CODE_LEN);
+				     CFG_COUNTRY_CODE_LEN);
 	}
 
 	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent,
 		     msg->countryCode,
-		     WNI_CFG_COUNTRY_CODE_LEN);
+		     CFG_COUNTRY_CODE_LEN);
 
 	/* get the channels based on new cc */
 	status = csr_get_channel_and_power_list(mac_ctx);

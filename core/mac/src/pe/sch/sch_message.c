@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,8 +141,8 @@ sch_get_params(struct mac_context *mac,
 	uint32_t *prf;
 	struct wlan_mlme_edca_params *edca_params;
 	QDF_STATUS status;
-	uint8_t country_code_str[WNI_CFG_COUNTRY_CODE_LEN];
-	uint32_t country_code_len = WNI_CFG_COUNTRY_CODE_LEN;
+	uint8_t country_code_str[CFG_COUNTRY_CODE_LEN];
+	uint32_t country_code_len = CFG_COUNTRY_CODE_LEN;
 	uint32_t ani_l[] = {edca_ani_acbe_local, edca_ani_acbk_local,
 			    edca_ani_acvi_local, edca_ani_acvo_local};
 

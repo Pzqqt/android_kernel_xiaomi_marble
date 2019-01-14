@@ -392,10 +392,10 @@ static bool put_wifi_interface_info(tpSirWifiInterfaceInfo stats,
 		    QDF_MAC_ADDR_SIZE, stats->bssid.bytes) ||
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_AP_COUNTRY_STR,
-		    WNI_CFG_COUNTRY_CODE_LEN, stats->apCountryStr) ||
+		    CFG_COUNTRY_CODE_LEN, stats->apCountryStr) ||
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_COUNTRY_STR,
-		    WNI_CFG_COUNTRY_CODE_LEN, stats->countryStr)) {
+		    CFG_COUNTRY_CODE_LEN, stats->countryStr)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 	}
@@ -588,10 +588,10 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	}
 
 	qdf_mem_copy(pInfo->countryStr,
-		     mac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeCurrent, CFG_COUNTRY_CODE_LEN);
 
 	qdf_mem_copy(pInfo->apCountryStr,
-		     mac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeCurrent, CFG_COUNTRY_CODE_LEN);
 
 	return true;
 }
