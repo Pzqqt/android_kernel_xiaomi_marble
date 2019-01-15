@@ -1550,14 +1550,15 @@ static void qdf_dp_add_record(enum QDF_DP_TRACE_ID code, uint8_t pdev_id,
 
 /**
  * qdf_log_icmpv6_pkt() - log ICMPv6 packet
- * @session_id: vdev_id
+ * @vdev_id: ID of the vdev
  * @skb: skb pointer
  * @dir: direction
+ * @pdev_id: ID of the pdev
  *
  * Return: true/false
  */
-static bool qdf_log_icmpv6_pkt(uint8_t session_id, struct sk_buff *skb,
-			    enum qdf_proto_dir dir, uint8_t pdev_id)
+static bool qdf_log_icmpv6_pkt(uint8_t vdev_id, struct sk_buff *skb,
+			       enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	enum qdf_proto_subtype subtype;
 
@@ -1576,7 +1577,7 @@ static bool qdf_log_icmpv6_pkt(uint8_t session_id, struct sk_buff *skb,
 
 		DPTRACE(qdf_dp_trace_proto_pkt(
 			QDF_DP_TRACE_ICMPv6_PACKET_RECORD,
-			session_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
+			vdev_id, (skb->data + QDF_NBUF_SRC_MAC_OFFSET),
 			(skb->data + QDF_NBUF_DEST_MAC_OFFSET),
 			QDF_PROTO_TYPE_ICMPv6, subtype, dir, pdev_id, false));
 
@@ -1610,14 +1611,15 @@ static bool qdf_log_icmpv6_pkt(uint8_t session_id, struct sk_buff *skb,
 
 /**
  * qdf_log_icmp_pkt() - log ICMP packet
- * @session_id: vdev_id
+ * @vdev_id: ID of the vdev
  * @skb: skb pointer
  * @dir: direction
+ * @pdev_id: ID of the pdev
  *
  * Return: true/false
  */
-static bool qdf_log_icmp_pkt(uint8_t session_id, struct sk_buff *skb,
-			    enum qdf_proto_dir dir, uint8_t pdev_id)
+static bool qdf_log_icmp_pkt(uint8_t vdev_id, struct sk_buff *skb,
+			     enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	enum qdf_proto_subtype proto_subtype;
 
@@ -1633,7 +1635,7 @@ static bool qdf_log_icmp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_ICMP_PACKET_RECORD,
-					       session_id,
+					       vdev_id,
 					       skb->data +
 					       QDF_NBUF_SRC_MAC_OFFSET,
 					       skb->data +
@@ -1654,14 +1656,14 @@ static bool qdf_log_icmp_pkt(uint8_t session_id, struct sk_buff *skb,
 
 /**
  * qdf_log_eapol_pkt() - log EAPOL packet
- * @session_id: vdev_id
+ * @vdev_id: ID of the vdev
  * @skb: skb pointer
  * @dir: direction
- * @pdev_id: pdev_id
+ * @pdev_id: ID of the pdev
  *
  * Return: true/false
  */
-static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
+static bool qdf_log_eapol_pkt(uint8_t vdev_id, struct sk_buff *skb,
 			      enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	enum qdf_proto_subtype subtype;
@@ -1679,7 +1681,7 @@ static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_EAPOL_PACKET_RECORD,
-					       session_id,
+					       vdev_id,
 					       skb->data +
 					       QDF_NBUF_SRC_MAC_OFFSET,
 					       skb->data +
@@ -1711,14 +1713,14 @@ static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 
 /**
  * qdf_log_dhcp_pkt() - log DHCP packet
- * @session_id: vdev_id
+ * @vdev_id: ID of the vdev
  * @skb: skb pointer
  * @dir: direction
- * @pdev_id: pdev_id
+ * @pdev_id: ID of the pdev
  *
  * Return: true/false
  */
-static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
+static bool qdf_log_dhcp_pkt(uint8_t vdev_id, struct sk_buff *skb,
 			     enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
@@ -1736,7 +1738,7 @@ static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_DHCP_PACKET_RECORD,
-					       session_id,
+					       vdev_id,
 					       skb->data +
 					       QDF_NBUF_SRC_MAC_OFFSET,
 					       skb->data +
@@ -1772,14 +1774,14 @@ static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 
 /**
  * qdf_log_arp_pkt() - log ARP packet
- * @session_id: vdev_id
+ * @vdev_id: ID of the vdev
  * @skb: skb pointer
  * @dir: direction
- * @pdev_id: pdev_id
+ * @pdev_id: ID of the pdev
  *
  * Return: true/false
  */
-static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
+static bool qdf_log_arp_pkt(uint8_t vdev_id, struct sk_buff *skb,
 			    enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	enum qdf_proto_subtype proto_subtype;
@@ -1797,7 +1799,7 @@ static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
 		DPTRACE(qdf_dp_trace_proto_pkt(QDF_DP_TRACE_ARP_PACKET_RECORD,
-					       session_id,
+					       vdev_id,
 					       skb->data +
 					       QDF_NBUF_SRC_MAC_OFFSET,
 					       skb->data +
@@ -1817,29 +1819,20 @@ static bool qdf_log_arp_pkt(uint8_t session_id, struct sk_buff *skb,
 }
 
 
-/**
- * qdf_dp_trace_log_pkt() - log packet type enabled through iwpriv
- * @session_id: vdev_id
- * @skb: skb pointer
- * @dir: direction
- * @pdev_id: pdev_id
- *
- * Return: true: some protocol was logged, false: no protocol was logged.
- */
-bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
+bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
 			  enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	if (!qdf_dp_get_proto_bitmap())
 		return false;
-	if (qdf_log_arp_pkt(session_id, skb, dir, pdev_id))
+	if (qdf_log_arp_pkt(vdev_id, skb, dir, pdev_id))
 		return true;
-	if (qdf_log_dhcp_pkt(session_id, skb, dir, pdev_id))
+	if (qdf_log_dhcp_pkt(vdev_id, skb, dir, pdev_id))
 		return true;
-	if (qdf_log_eapol_pkt(session_id, skb, dir, pdev_id))
+	if (qdf_log_eapol_pkt(vdev_id, skb, dir, pdev_id))
 		return true;
-	if (qdf_log_icmp_pkt(session_id, skb, dir, pdev_id))
+	if (qdf_log_icmp_pkt(vdev_id, skb, dir, pdev_id))
 		return true;
-	if (qdf_log_icmpv6_pkt(session_id, skb, dir, pdev_id))
+	if (qdf_log_icmpv6_pkt(vdev_id, skb, dir, pdev_id))
 		return true;
 	return false;
 }

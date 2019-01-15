@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -632,8 +632,18 @@ void qdf_dp_set_no_of_record(uint32_t val);
 #define QDF_DP_TRACE_RECORD_INFO_LIVE (0x1)
 #define QDF_DP_TRACE_RECORD_INFO_THROTTLED (0x1 << 1)
 
-bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
-				enum qdf_proto_dir dir, uint8_t pdev_id);
+/**
+ * qdf_dp_trace_log_pkt() - log packet type enabled through iwpriv
+ * @vdev_id: vdev_id
+ * @skb: skb pointer
+ * @dir: direction
+ * @pdev_id: pdev_id
+ *
+ * Return: true: some protocol was logged, false: no protocol was logged.
+ */
+bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
+			  enum qdf_proto_dir dir, uint8_t pdev_id);
+
 void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 				uint16_t time_limit, uint8_t verbosity,
 				uint8_t proto_bitmap);
@@ -835,8 +845,8 @@ void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 			       enum qdf_proto_subtype subtype);
 #else
 static inline
-bool qdf_dp_trace_log_pkt(uint8_t session_id, struct sk_buff *skb,
-				enum qdf_proto_dir dir, uint8_t pdev_id)
+bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
+			  enum qdf_proto_dir dir, uint8_t pdev_id)
 {
 	return false;
 }
