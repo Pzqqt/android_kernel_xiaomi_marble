@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,8 +27,7 @@
 #include <qdf_types.h>
 #include <i_qdf_timer.h>
 
-/* Platform timer object */
-typedef __qdf_timer_t qdf_timer_t;
+typedef struct __qdf_timer_t qdf_timer_t;
 
 /**
  * qdf_timer_init() - initialize a timer
@@ -53,22 +52,23 @@ qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer, qdf_timer_func_t func,
 }
 
 /**
- * qdf_timer_start() - start a one-shot timer
- * @timer: Timer object pointer
+ * qdf_timer_start() - start a timer
+ * @timer: timer to start
  * @msec: Expiration period in milliseconds
  *
  * Return: none
  */
-static inline void
-qdf_timer_start(qdf_timer_t *timer, int msec)
+static inline void qdf_timer_start(qdf_timer_t *timer, int msec)
 {
 	__qdf_timer_start(timer, msec);
 }
 
 /**
- * qdf_timer_mod() - modify existing timer to new timeout value
- * @timer: Timer object pointer
+ * qdf_timer_mod() - modify the timeout on a timer
+ * @timer: timer to modify
  * @msec: Expiration period in milliseconds
+ *
+ * If @timer is not active, it will be activated.
  *
  * Return: none
  */
@@ -78,39 +78,40 @@ static inline void qdf_timer_mod(qdf_timer_t *timer, int msec)
 }
 
 /**
- * qdf_timer_stop() - cancel qdf timer
- * @timer: Timer object pointer
+ * qdf_timer_stop() - cancel a timer
+ * @timer: timer to cancel
  *
- * return: bool TRUE Timer was cancelled and deactived
- * FALSE Timer was cancelled but already got fired.
+ * Note! The timer callback may be executing when this function call returns.
+ * If you want to ensure that it is not, use qdf_timer_sync_cancel() instead.
  *
- * The function will return after any running timer completes.
+ * Return: true if @timer was deactivated, false if @timer was not active
  */
 static inline bool qdf_timer_stop(qdf_timer_t *timer)
 {
 	return __qdf_timer_stop(timer);
 }
 
-
 /**
  * qdf_timer_sync_cancel - Cancel a timer synchronously
- * The function will return after any running timer completes.
- * @timer: timer object pointer
+ * @timer: timer to cancel
  *
- * return: bool TRUE timer was cancelled and deactived
- * FALSE timer was not cancelled
+ * If the timer callback is already running, this function blocks until it
+ * completes.
+ *
+ * Return: true if @timer was deactivated, false if @timer was not active
  */
 static inline bool qdf_timer_sync_cancel(qdf_timer_t *timer)
 {
 	return __qdf_timer_sync_cancel(timer);
 }
 
-
 /**
- * qdf_timer_free() - free qdf timer
- * @timer: Timer object pointer
+ * qdf_timer_free() - free a timer
+ * @timer: timer to free
  *
- * The function will return after any running timer completes.
+ * If the timer callback is already running, this function blocks until it
+ * completes.
+ *
  * Return: none
  */
 static inline void qdf_timer_free(qdf_timer_t *timer)

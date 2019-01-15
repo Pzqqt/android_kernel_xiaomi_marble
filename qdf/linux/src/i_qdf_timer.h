@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,119 +38,68 @@
 	__setup_timer((timer), (fn), (data), TIMER_DEFERRABLE)
 #endif
 
-/* timer data type */
-typedef struct timer_list __qdf_timer_t;
+struct __qdf_timer_t {
+	struct timer_list os_timer;
+};
 
-typedef void (*__qdf_dummy_timer_func_t)(unsigned long arg);
+typedef void (*__legacy_timer_callback_t)(unsigned long arg);
 
-/**
- * __qdf_timer_init() - initialize a softirq timer
- * @timer: Pointer to timer object
- * @func: Function pointer
- * @arg: Argument
- * @type: deferrable or non deferrable timer type
- *
- * Timer type QDF_TIMER_TYPE_SW means its a deferrable sw timer which will
- * not cause CPU wake upon expiry
- * Timer type QDF_TIMER_TYPE_WAKE_APPS means its a non-deferrable timer which
- * will cause CPU wake up on expiry
- *
- * Return: QDF_STATUS
- */
-static inline QDF_STATUS __qdf_timer_init(struct timer_list *timer,
+static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
 					  qdf_timer_func_t func, void *arg,
 					  QDF_TIMER_TYPE type)
 {
-	bool is_on_stack = object_is_on_stack(timer);
-	__qdf_dummy_timer_func_t callback = (__qdf_dummy_timer_func_t)func;
+	struct timer_list *os_timer = &timer->os_timer;
+	bool is_on_stack = object_is_on_stack(os_timer);
+	__legacy_timer_callback_t callback = (__legacy_timer_callback_t)func;
 	unsigned long ctx = (unsigned long)arg;
 
 	if (type == QDF_TIMER_TYPE_SW) {
 		if (is_on_stack)
-			setup_deferrable_timer_on_stack(timer, callback, ctx);
+			setup_deferrable_timer_on_stack(os_timer, callback,
+							ctx);
 		else
-			setup_deferrable_timer(timer, callback, ctx);
+			setup_deferrable_timer(os_timer, callback, ctx);
 	} else {
 		if (is_on_stack)
-			setup_timer_on_stack(timer, callback, ctx);
+			setup_timer_on_stack(os_timer, callback, ctx);
 		else
-			setup_timer(timer, callback, ctx);
+			setup_timer(os_timer, callback, ctx);
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * __qdf_timer_start() - start a qdf softirq timer
- * @timer: Pointer to timer object
- * @delay: Delay in milliseconds
- *
- * Return: None
- */
-static inline void __qdf_timer_start(struct timer_list *timer, uint32_t delay)
+static inline void __qdf_timer_start(struct __qdf_timer_t *timer, uint32_t msec)
 {
-	timer->expires = jiffies + msecs_to_jiffies(delay);
-	add_timer(timer);
+	struct timer_list *os_timer = &timer->os_timer;
+
+	os_timer->expires = jiffies + msecs_to_jiffies(msec);
+	add_timer(os_timer);
 }
 
-/**
- * __qdf_timer_mod() - modify a timer
- * @timer: Pointer to timer object
- * @delay: Delay in milliseconds
- *
- * Return: None
- */
-static inline void __qdf_timer_mod(struct timer_list *timer, uint32_t delay)
+static inline void __qdf_timer_mod(struct __qdf_timer_t *timer, uint32_t msec)
 {
-	mod_timer(timer, jiffies + msecs_to_jiffies(delay));
+	mod_timer(&timer->os_timer, jiffies + msecs_to_jiffies(msec));
 }
 
-/**
- * __qdf_timer_stop() - cancel a timer
- * @timer: Pointer to timer object
- *
- * Return: true if timer was cancelled and deactived,
- * false if timer was cancelled but already got fired.
- */
-static inline bool __qdf_timer_stop(struct timer_list *timer)
+static inline bool __qdf_timer_stop(struct __qdf_timer_t *timer)
 {
-	if (likely(del_timer(timer)))
-		return 1;
-	else
-		return 0;
+	return !!del_timer(&timer->os_timer);
 }
 
-/**
- * __qdf_timer_free() - free a qdf timer
- * @timer: Pointer to timer object
- *
- * Return: None
- */
-static inline void __qdf_timer_free(struct timer_list *timer)
+static inline void __qdf_timer_free(struct __qdf_timer_t *timer)
 {
-	del_timer_sync(timer);
+	struct timer_list *os_timer = &timer->os_timer;
 
-	if (object_is_on_stack(timer))
-		destroy_timer_on_stack(timer);
+	del_timer_sync(os_timer);
+
+	if (object_is_on_stack(os_timer))
+		destroy_timer_on_stack(os_timer);
 }
 
-/**
- * __qdf_sostirq_timer_sync_cancel() - Synchronously canel a timer
- * @timer: Pointer to timer object
- *
- * Synchronization Rules:
- * 1. caller must make sure timer function will not use
- *    qdf_set_timer to add iteself again.
- * 2. caller must not hold any lock that timer function
- *    is likely to hold as well.
- * 3. It can't be called from interrupt context.
- *
- * Return: true if timer was cancelled and deactived,
- * false if timer was cancelled but already got fired.
- */
-static inline bool __qdf_timer_sync_cancel(struct timer_list *timer)
+static inline bool __qdf_timer_sync_cancel(struct __qdf_timer_t *timer)
 {
-	return del_timer_sync(timer);
+	return del_timer_sync(&timer->os_timer);
 }
 
-#endif /*_QDF_TIMER_PVT_H*/
+#endif /* _I_QDF_TIMER_H */
