@@ -1809,6 +1809,16 @@ QDF_STATUS
 wlan_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
+ * wlan_mlme_set_vht_for_24ghz() - Enables/disables VHT for 24 ghz
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
  * wlan_mlme_get_vendor_vht_for_24ghz() - nables/disables vendor VHT for 24 ghz
  * @psoc: psoc context
  * @value: data to be set
