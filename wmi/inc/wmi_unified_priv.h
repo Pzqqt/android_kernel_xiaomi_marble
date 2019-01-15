@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -987,9 +987,6 @@ QDF_STATUS (*send_enable_specific_fw_logs_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_wifi_start_log *start_log);
 
 QDF_STATUS (*send_flush_logs_to_fw_cmd)(wmi_unified_t wmi_handle);
-
-QDF_STATUS (*send_set_ssid_hotlist_cmd)(wmi_unified_t wmi_handle,
-		     struct ssid_hotlist_request_params *request);
 
 QDF_STATUS (*send_unit_test_cmd)(wmi_unified_t wmi_handle,
 				 struct wmi_unit_test_cmd *wmi_utest);

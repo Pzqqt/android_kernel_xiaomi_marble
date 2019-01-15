@@ -1740,26 +1740,6 @@ QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl)
 }
 
 /**
- * wmi_unified_set_ssid_hotlist_cmd() - Handle an SSID hotlist set request
- * @wmi_hdl: wmi handle
- * @request: SSID hotlist set request
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS
-wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
-		     struct ssid_hotlist_request_params *request)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_set_ssid_hotlist_cmd)
-		return wmi_handle->ops->send_set_ssid_hotlist_cmd(wmi_handle,
-				  request);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-/**
  * wmi_unified_fw_test_cmd() - send fw test command to fw.
  * @wmi_hdl: wmi handle
  * @wmi_fwtest: fw test command

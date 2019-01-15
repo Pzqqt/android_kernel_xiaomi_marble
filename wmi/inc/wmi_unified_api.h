@@ -778,9 +778,6 @@ QDF_STATUS wmi_unified_enable_specific_fw_logs_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl);
 
-QDF_STATUS wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
-		     struct ssid_hotlist_request_params *request);
-
 QDF_STATUS wmi_unified_unit_test_cmd(void *wmi_hdl,
 			       struct wmi_unit_test_cmd *wmi_utest);
 

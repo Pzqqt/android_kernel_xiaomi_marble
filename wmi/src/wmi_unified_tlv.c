@@ -7081,97 +7081,6 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_set_ssid_hotlist_cmd_tlv() - Handle an SSID hotlist set request
- * @wmi_handle: wmi handle
- * @request: SSID hotlist set request
- *
- * Return: QDF_STATUS enumeration
- */
-static QDF_STATUS
-send_set_ssid_hotlist_cmd_tlv(wmi_unified_t wmi_handle,
-		     struct ssid_hotlist_request_params *request)
-{
-	wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint32_t len;
-	uint32_t array_size;
-	uint8_t *buf_ptr;
-
-	/* length of fixed portion */
-	len = sizeof(*cmd);
-
-	/* length of variable portion */
-	array_size =
-		request->ssid_count * sizeof(wmi_extscan_hotlist_ssid_entry);
-	len += WMI_TLV_HDR_SIZE + array_size;
-
-	wmi_buf = wmi_buf_alloc(wmi_handle, len);
-	if (!wmi_buf) {
-		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-	cmd = (wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *)
-						buf_ptr;
-	WMITLV_SET_HDR
-		(&cmd->tlv_header,
-		 WMITLV_TAG_STRUC_wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param,
-		 WMITLV_GET_STRUCT_TLVLEN
-			(wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param));
-
-	cmd->request_id = request->request_id;
-	cmd->requestor_id = 0;
-	cmd->vdev_id = request->session_id;
-	cmd->table_id = 0;
-	cmd->lost_ap_scan_count = request->lost_ssid_sample_size;
-	cmd->total_entries = request->ssid_count;
-	cmd->num_entries_in_page = request->ssid_count;
-	cmd->first_entry_index = 0;
-
-	buf_ptr += sizeof(*cmd);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, array_size);
-
-	if (request->ssid_count) {
-		wmi_extscan_hotlist_ssid_entry *entry;
-		int i;
-
-		buf_ptr += WMI_TLV_HDR_SIZE;
-		entry = (wmi_extscan_hotlist_ssid_entry *)buf_ptr;
-		for (i = 0; i < request->ssid_count; i++) {
-			WMITLV_SET_HDR
-				(entry,
-				 WMITLV_TAG_ARRAY_STRUC,
-				 WMITLV_GET_STRUCT_TLVLEN
-					(wmi_extscan_hotlist_ssid_entry));
-			entry->ssid.ssid_len = request->ssids[i].ssid.length;
-			qdf_mem_copy(entry->ssid.ssid,
-				     request->ssids[i].ssid.mac_ssid,
-				     request->ssids[i].ssid.length);
-			entry->band = request->ssids[i].band;
-			entry->min_rssi = request->ssids[i].rssi_low;
-			entry->max_rssi = request->ssids[i].rssi_high;
-			entry++;
-		}
-		cmd->mode = WMI_EXTSCAN_MODE_START;
-	} else {
-		cmd->mode = WMI_EXTSCAN_MODE_STOP;
-	}
-
-	wmi_mtrace(WMI_EXTSCAN_CONFIGURE_HOTLIST_SSID_MONITOR_CMDID,
-		   cmd->vdev_id, 0);
-	if (wmi_unified_cmd_send
-		(wmi_handle, wmi_buf, len,
-		 WMI_EXTSCAN_CONFIGURE_HOTLIST_SSID_MONITOR_CMDID)) {
-		WMI_LOGE("%s: failed to send command", __func__);
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * send_fw_test_cmd_tlv() - send fw test command to fw.
  * @wmi_handle: wmi handle
  * @wmi_fwtest: fw test command
@@ -11331,7 +11240,6 @@ struct wmi_ops tlv_ops =  {
 	.send_enable_specific_fw_logs_cmd =
 		 send_enable_specific_fw_logs_cmd_tlv,
 	.send_flush_logs_to_fw_cmd = send_flush_logs_to_fw_cmd_tlv,
-	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
 	.send_unit_test_cmd = send_unit_test_cmd_tlv,
 #ifdef FEATURE_WLAN_APF
 	.send_set_active_apf_mode_cmd = wmi_send_set_active_apf_mode_cmd_tlv,
