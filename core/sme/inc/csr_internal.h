@@ -593,7 +593,7 @@ struct csr_roam_session {
 	uint8_t cJoinAttemps;
 	/*
 	 * This may or may not have the up-to-date valid channel list. It is
-	 * used to get WNI_CFG_VALID_CHANNEL_LIST and not alloc memory all time
+	 * used to get CFG_VALID_CHANNEL_LIST and not alloc memory all time
 	 */
 	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	int32_t sPendingCommands;   /* 0 means CSR is ok to low power */
@@ -701,7 +701,7 @@ struct csr_roamstruct {
 	enum csr_roam_substate curSubState[CSR_ROAM_SESSION_MAX];
 	/*
 	 * This may or may not have the up-to-date valid channel list. It is
-	 * used to get WNI_CFG_VALID_CHANNEL_LIST and not alloc mem all time
+	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
 	tSirMacChanNum validChannelList[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numValidChannels;       /* total number of channels in CFG */

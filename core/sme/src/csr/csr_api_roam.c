@@ -12564,10 +12564,9 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannel
 	uint8_t num_chan_temp = 0;
 	int i;
 
-	if (!QDF_IS_STATUS_SUCCESS(wlan_cfg_get_str(mac,
-					WNI_CFG_VALID_CHANNEL_LIST,
-					(uint8_t *) pChannels, pNumChan)))
-		return QDF_STATUS_E_FAILURE;
+	*pNumChan = (uint32_t)mac->mlme_cfg->reg.valid_channel_list_num;
+	qdf_mem_copy(pChannels, mac->mlme_cfg->reg.valid_channel_list,
+		     *pNumChan);
 
 	for (i = 0; i < *pNumChan; i++) {
 		if (!wlan_reg_is_dsrc_chan(mac->pdev, pChannels[i])) {

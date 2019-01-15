@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -938,7 +938,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	    ((pBeaconReq->channelInfo.channelNum == 255)
 	     && (pBeaconReq->channelList.numChannels == 0))) {
 		/* Add all the channel in the regulatory domain. */
-		wlan_cfg_get_str_len(mac, WNI_CFG_VALID_CHANNEL_LIST, &len);
+		len = mac->mlme_cfg->reg.valid_channel_list_num;
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (!pSmeRrmContext->channelList.ChannelList)
 			return QDF_STATUS_E_NOMEM;

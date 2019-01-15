@@ -211,15 +211,9 @@ static void populate_dot11f_tdls_offchannel_params(
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 
-	if (wlan_cfg_get_str(mac, WNI_CFG_VALID_CHANNEL_LIST,
-			     validChan, &numChans) != QDF_STATUS_SUCCESS) {
-		/**
-		 * Could not get Valid channel list from CFG.
-		 * Log error.
-		 */
-		pe_err("could not retrieve Valid channel list");
-		return;
-	}
+	numChans = mac->mlme_cfg->reg.valid_channel_list_num;
+	qdf_mem_copy(validChan, mac->mlme_cfg->reg.valid_channel_list,
+		     mac->mlme_cfg->reg.valid_channel_list_num);
 
 	if (IS_5G_CH(pe_session->currentOperChannel))
 		band = BAND_5G;

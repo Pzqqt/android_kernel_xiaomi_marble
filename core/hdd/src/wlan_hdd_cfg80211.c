@@ -13463,7 +13463,6 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 	uint32_t num_ch = 0;
 	u8 valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
 	u32 indx = 0;
-	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	uint8_t fValidChannel = false, count = 0;
 	QDF_STATUS status;
 	bool value;
@@ -13487,11 +13486,8 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
-		if (0 != sme_cfg_get_str(mac_handle, WNI_CFG_VALID_CHANNEL_LIST,
-					 valid_ch, &num_ch)) {
-			hdd_err("failed to get valid channel list");
-			return QDF_STATUS_E_FAILURE;
-		}
+		ucfg_mlme_get_valid_channel_list(hdd_ctx->psoc, valid_ch,
+						 &num_ch);
 		for (indx = 0; indx < num_ch; indx++) {
 			if (channel == valid_ch[indx])
 				break;
@@ -18395,12 +18391,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 			chandef.
 			chan->
 			center_freq);
-
-		if (0 != sme_cfg_get_str(mac_handle, WNI_CFG_VALID_CHANNEL_LIST,
-					 validChan, &numChans)) {
-			hdd_err("No valid channel list");
-			return -EOPNOTSUPP;
-		}
+		ucfg_mlme_get_valid_channel_list(hdd_ctx->psoc, validChan,
+						 &numChans);
 
 		for (indx = 0; indx < numChans; indx++) {
 			if (channelNum == validChan[indx])

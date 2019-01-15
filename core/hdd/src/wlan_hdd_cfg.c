@@ -269,13 +269,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT,
 		     CFG_CHANGE_CHANNEL_BANDWIDTH_MIN,
 		     CFG_CHANGE_CHANNEL_BANDWIDTH_MAX),
-
-	REG_VARIABLE(CFG_REMOVE_TIME_STAMP_SYNC_CMD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, remove_time_stamp_sync_cmd,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_DEFAULT,
-		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_MIN,
-		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_MAX),
 };
 
 
@@ -1503,8 +1496,6 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 {
 	bool status = true;
-	struct hdd_config *config = hdd_ctx->config;
-	mac_handle_t mac_handle;
 
 	/*
 	 * During the initialization both 2G and 5G capabilities should be same.
@@ -1514,16 +1505,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	if (0 != hdd_update_he_cap_in_cfg(hdd_ctx)) {
 		status = false;
 		hdd_err("Couldn't set HE CAP in cfg");
-	}
-
-	mac_handle = hdd_ctx->mac_handle;
-
-	if (sme_cfg_set_int(mac_handle,
-				WNI_CFG_REMOVE_TIME_SYNC_CMD,
-				config->remove_time_stamp_sync_cmd)
-				== QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_REMOVE_TIME_SYNC_CMD to CFG");
 	}
 
 	return status;

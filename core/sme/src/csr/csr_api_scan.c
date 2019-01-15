@@ -49,6 +49,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_utility.h>
 #include "wlan_reg_services_api.h"
+#include "sch_api.h"
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint8_t *pChannelList,
@@ -1493,7 +1494,6 @@ static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint8_t *pChannelList,
 					   uint8_t NumChannels)
 {
-	uint32_t dataLen = sizeof(uint8_t) * NumChannels;
 	QDF_STATUS status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -1501,8 +1501,9 @@ static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 		  __func__, NumChannels);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			   pChannelList, NumChannels);
-	cfg_set_str(mac, WNI_CFG_VALID_CHANNEL_LIST, pChannelList,
-			dataLen);
+	qdf_mem_copy(mac->mlme_cfg->reg.valid_channel_list, pChannelList,
+		     NumChannels);
+	mac->mlme_cfg->reg.valid_channel_list_num = NumChannels;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "Scan offload is enabled, update default chan list");
@@ -1646,8 +1647,16 @@ static void csr_set_cfg_country_code(struct mac_context *mac,
 		 */
 		cc[1] = 'R';
 	}
-	cfg_set_str(mac, WNI_CFG_COUNTRY_CODE, cc, CFG_COUNTRY_CODE_LEN);
 
+	/*
+	 * country code is moved to mlme component, and it is limited to call
+	 * legacy api, so required to call sch_edca_profile_update_all if
+	 * overwrite country code in mlme component
+	 */
+	qdf_mem_copy(mac->mlme_cfg->reg.country_code, cc, CFG_COUNTRY_CODE_LEN);
+	mac->mlme_cfg->reg.country_code_len = CFG_COUNTRY_CODE_LEN;
+	sme_debug("CFG_COUNTRY_CODE changed");
+	sch_edca_profile_update_all(mac);
 	/*
 	 * Need to let HALPHY know about the current domain so it can apply some
 	 * domain-specific settings (TX filter...)
@@ -1657,17 +1666,11 @@ static void csr_set_cfg_country_code(struct mac_context *mac,
 QDF_STATUS csr_get_country_code(struct mac_context *mac, uint8_t *pBuf,
 				uint8_t *pbLen)
 {
-	QDF_STATUS status;
-	uint32_t len;
-
 	if (pBuf && pbLen && (*pbLen >= CFG_COUNTRY_CODE_LEN)) {
-		len = *pbLen;
-		status = wlan_cfg_get_str(mac, WNI_CFG_COUNTRY_CODE, pBuf,
-					&len);
-		if (status == QDF_STATUS_SUCCESS) {
-			*pbLen = (uint8_t) len;
-			return QDF_STATUS_SUCCESS;
-		}
+		*pbLen = mac->mlme_cfg->reg.country_code_len;
+		qdf_mem_copy(pBuf, mac->mlme_cfg->reg.country_code,
+			     (uint32_t)*pbLen);
+		return QDF_STATUS_SUCCESS;
 	}
 
 	return QDF_STATUS_E_INVAL;

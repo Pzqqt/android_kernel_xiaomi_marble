@@ -139,4 +139,12 @@ void sch_beacon_process_for_ap(struct mac_context *mac_ctx,
 			       uint8_t *rx_pkt_info,
 			       tSchBeaconStruct *bcn);
 
+/**
+ * sch_edca_profile_update_all() - update edca profile for all sessions
+ * @pmac: pointer to mac structure
+ *
+ * return: None
+ */
+void sch_edca_profile_update_all(struct mac_context *pmac);
+
 #endif

@@ -628,13 +628,9 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 			mac_ctx->scan.countryCodeCurrent,
 			session->currentOperChannel,
 			session->ch_width);
-	channelnum = CFG_VALID_CHANNEL_LIST_LEN;
-	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
-			chan_list, &channelnum) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve Valid channel list");
-		qdf_mem_free(ht40_obss_scanind);
-		return QDF_STATUS_E_FAILURE;
-	}
+	channelnum = mac_ctx->mlme_cfg->reg.valid_channel_list_num;
+	qdf_mem_copy(chan_list, mac_ctx->mlme_cfg->reg.valid_channel_list,
+		     channelnum);
 	/* Extract 24G channel list */
 	channel24gnum = 0;
 	for (count = 0; count < channelnum &&

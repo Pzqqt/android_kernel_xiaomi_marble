@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -577,6 +577,24 @@
 			0, \
 			"Enable disable beacon reception stats")
 
+/*
+ * <ini>
+ * gRemoveTimeStampSyncCmd - Enable/Disable to remove time stamp sync cmd
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the removal of time stamp sync cmd
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_REMOVE_TIME_STAMP_SYNC_CMD CFG_INI_BOOL( \
+	"gRemoveTimeStampSyncCmd", \
+	0, \
+	"Enable to remove time stamp sync cmd")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -601,6 +619,7 @@
 	CFG(CFG_CRASH_FW_TIMEOUT) \
 	CFG(CFG_DROPPED_PKT_DISCONNECT_THRESHOLD) \
 	CFG(CFG_ITO_REPEAT_COUNT) \
-	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS)
+	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS) \
+	CFG(CFG_REMOVE_TIME_STAMP_SYNC_CMD)
 
 #endif /* __CFG_MLME_GENERIC_H */

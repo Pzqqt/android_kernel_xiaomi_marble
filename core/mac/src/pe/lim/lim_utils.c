@@ -4601,14 +4601,9 @@ bool lim_is_channel_valid_for_channel_switch(struct mac_context *mac, uint8_t ch
 		return false;
 	}
 
-	if (wlan_cfg_get_str(mac, WNI_CFG_VALID_CHANNEL_LIST,
-			     (uint8_t *) validChannelList,
-			     (uint32_t *) &validChannelListLen) !=
-			QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve valid channel list");
-		return false;
-	}
-
+	validChannelListLen = mac->mlme_cfg->reg.valid_channel_list_num;
+	qdf_mem_copy(validChannelList, mac->mlme_cfg->reg.valid_channel_list,
+		     mac->mlme_cfg->reg.valid_channel_list_num);
 	for (index = 0; index < validChannelListLen; index++) {
 		if (validChannelList[index] != channel)
 			continue;

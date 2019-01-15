@@ -1161,8 +1161,11 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
-				chan_list, list_len);
+	*list_len = (uint32_t)mac_ctx->mlme_cfg->reg.valid_channel_list_num;
+	qdf_mem_copy(chan_list, mac_ctx->mlme_cfg->reg.valid_channel_list,
+		     *list_len);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

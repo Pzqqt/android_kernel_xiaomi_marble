@@ -753,7 +753,7 @@ void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
 /*
  * csr_apply_channel_and_power_list() -
- *  HDD calls this function to set the WNI_CFG_VALID_CHANNEL_LIST base on the
+ *  HDD calls this function to set the CFG_VALID_CHANNEL_LIST base on the
  * band/mode settings. This function must be called after CFG is downloaded
  * and all the band/mode setting already passed into CSR.
 

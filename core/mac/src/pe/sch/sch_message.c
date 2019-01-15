@@ -78,7 +78,7 @@ void sch_set_beacon_interval(struct mac_context *mac,
 	mac->sch.beacon_interval = (uint16_t) bi;
 }
 
-static void sch_edca_profile_update_all(struct mac_context *pmac)
+void sch_edca_profile_update_all(struct mac_context *pmac)
 {
 	uint32_t i;
 	struct pe_session *psession_entry;
@@ -111,11 +111,6 @@ void sch_process_message(struct mac_context *mac, struct scheduler_msg *pSchMsg)
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
 		switch (pSchMsg->bodyval) {
-		case WNI_CFG_COUNTRY_CODE:
-			pe_debug("sch: WNI_CFG_COUNTRY_CODE changed");
-			sch_edca_profile_update_all(mac);
-			break;
-
 		default:
 			pe_err("Cfg param %d indication not handled",
 				pSchMsg->bodyval);
@@ -163,9 +158,10 @@ sch_get_params(struct mac_context *mac,
 			     edca_etsi_acvi_bcast, edca_etsi_acvo_bcast};
 	edca_params = &mac->mlme_cfg->edca_params;
 
-	if (wlan_cfg_get_str(mac, WNI_CFG_COUNTRY_CODE, country_code_str,
-			     &country_code_len) == QDF_STATUS_SUCCESS &&
-	    cds_is_etsi_europe_country(country_code_str)) {
+	country_code_len = (uint32_t)mac->mlme_cfg->reg.country_code_len;
+	qdf_mem_copy(country_code_str, mac->mlme_cfg->reg.country_code,
+		     country_code_len);
+	if (cds_is_etsi_europe_country(country_code_str)) {
 		val = WNI_CFG_EDCA_PROFILE_ETSI_EUROPE;
 		pe_debug("switch to ETSI EUROPE profile country code %c%c",
 			 country_code_str[0], country_code_str[1]);
