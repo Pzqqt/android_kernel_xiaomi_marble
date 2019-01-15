@@ -4843,7 +4843,7 @@ static QDF_STATUS send_link_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_request_stats_cmd_fixed_param));
 	cmd->stats_id = WMI_REQUEST_VDEV_RATE_STAT;
-	cmd->vdev_id = link_status->session_id;
+	cmd->vdev_id = link_status->vdev_id;
 	wmi_mtrace(WMI_REQUEST_STATS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_REQUEST_STATS_CMDID)) {

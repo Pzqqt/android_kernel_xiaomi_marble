@@ -713,8 +713,15 @@ QDF_STATUS wmi_unified_snr_request_cmd(void *wmi_hdl);
 
 QDF_STATUS wmi_unified_snr_cmd(void *wmi_hdl, uint8_t vdev_id);
 
-QDF_STATUS wmi_unified_link_status_req_cmd(void *wmi_hdl,
-				 struct link_status_params *link_status);
+/**
+ * wmi_unified_link_status_req_cmd() - process link status request from UMAC
+ * @wmi_handle: wmi handle
+ * @params: get link status params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_link_status_req_cmd(wmi_unified_t wmi_handle,
+					   struct link_status_params *params);
 
 #ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,

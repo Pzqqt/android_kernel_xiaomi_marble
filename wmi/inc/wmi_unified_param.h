@@ -2432,16 +2432,10 @@ struct ll_stats_get_params {
 
 /**
  * struct link_status_params - link stats parameter
- * @msg_type: message type is same as the request type
- * @msg_len: length of the entire request
- * @link_status: wme ts spec flag
- * @session_id: wsm ts spec flag
+ * @vdev_id: ID of the vdev for which link status is desired
  */
 struct link_status_params {
-	uint16_t msg_type;
-	uint16_t msg_len;
-	uint8_t link_status;
-	uint8_t session_id;
+	uint8_t vdev_id;
 };
 
 /**

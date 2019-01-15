@@ -1414,18 +1414,16 @@ QDF_STATUS wmi_unified_snr_cmd(void *wmi_hdl, uint8_t vdev_id)
 /**
  * wmi_unified_link_status_req_cmd() - process link status request from UMAC
  * @wmi_handle: wmi handle
- * @link_status: get link params
+ * @params: get link status params
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_link_status_req_cmd(void *wmi_hdl,
-				 struct link_status_params *link_status)
+QDF_STATUS wmi_unified_link_status_req_cmd(wmi_unified_t wmi_handle,
+					   struct link_status_params *params)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_link_status_req_cmd)
 		return wmi_handle->ops->send_link_status_req_cmd(wmi_handle,
-			    link_status);
+								 params);
 
 	return QDF_STATUS_E_FAILURE;
 }
