@@ -368,7 +368,7 @@ void wma_process_link_status_req(tp_wma_handle wma,
 	}
 
 	iface->plink_status_req = pGetLinkStatus;
-	cmd.session_id = pGetLinkStatus->sessionId;
+	cmd.vdev_id = pGetLinkStatus->sessionId;
 	if (wmi_unified_link_status_req_cmd(wma->wmi_handle, &cmd)) {
 		WMA_LOGE("Failed to send WMI link  status request to fw");
 		iface->plink_status_req = NULL;
