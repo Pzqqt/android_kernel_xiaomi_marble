@@ -1815,6 +1815,33 @@ static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 	hdd_ctx->sar_version = cfg->sar_version;
 }
 
+static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
+{
+	uint32_t chip_mode;
+	QDF_STATUS status;
+	bool b24ghz_band;
+
+	status = wlan_reg_get_chip_mode(hdd_ctx->pdev, &chip_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get chip mode");
+		return;
+	}
+	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &b24ghz_band);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get 2g vht mode");
+		return;
+	}
+
+	b24ghz_band = b24ghz_band &&
+		      (chip_mode & WMI_HOST_REGDMN_MODE_11AC_VHT20);
+	status = ucfg_mlme_set_vht_for_24ghz(hdd_ctx->psoc, b24ghz_band);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to update 2g vht mode");
+		return;
+	}
+	hdd_debug("2g vht20: %d", b24ghz_band);
+}
+
 void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
@@ -2031,6 +2058,11 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	 * Update txBFCsnValue and NumSoundingDim values to vhtcap in wiphy
 	 */
 	hdd_update_wiphy_vhtcap(hdd_ctx);
+
+	/*
+	 * Update 2g vht capability
+	 */
+	hdd_update_vhtcap_2g(hdd_ctx);
 
 	hdd_ctx->wmi_max_len = cfg->wmi_max_len;
 
