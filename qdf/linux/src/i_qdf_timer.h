@@ -33,14 +33,49 @@
 #include <linux/sched/task_stack.h>
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
-#define setup_deferrable_timer(timer, fn, data)                                \
-	__setup_timer((timer), (fn), (data), TIMER_DEFERRABLE)
-#endif
-
 struct __qdf_timer_t {
 	struct timer_list os_timer;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+	qdf_timer_func_t callback;
+	void *context;
+#endif
 };
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+static inline void __os_timer_shim(struct timer_list *os_timer)
+{
+	struct __qdf_timer_t *timer = from_timer(timer, os_timer, os_timer);
+
+	timer->callback(timer->context);
+}
+
+static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
+					  qdf_timer_func_t func, void *arg,
+					  QDF_TIMER_TYPE type)
+{
+	struct timer_list *os_timer = &timer->os_timer;
+	uint32_t flags = 0;
+
+	timer->callback = func;
+	timer->context = arg;
+
+	if (type == QDF_TIMER_TYPE_SW)
+		flags |= TIMER_DEFERRABLE;
+
+	if (object_is_on_stack(os_timer))
+		timer_setup_on_stack(os_timer, __os_timer_shim, flags);
+	else
+		timer_setup(os_timer, __os_timer_shim, flags);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 9, 0)
+#define setup_deferrable_timer(timer, fn, data) \
+	__setup_timer((timer), (fn), (data), TIMER_DEFERRABLE)
+#endif
 
 typedef void (*__legacy_timer_callback_t)(unsigned long arg);
 
@@ -68,6 +103,7 @@ static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* KERNEL_VERSION(4, 15, 0)*/
 
 static inline void __qdf_timer_start(struct __qdf_timer_t *timer, uint32_t msec)
 {
