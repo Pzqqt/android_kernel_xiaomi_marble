@@ -1960,6 +1960,7 @@ static int __iw_get_channel_list(struct net_device *dev,
 	struct hdd_adapter *hostapd_adapter = (netdev_priv(dev));
 	struct channel_list_info *channel_list =
 					(struct channel_list_info *) extra;
+	bool enable_dfs_scan = true;
 	enum band_info cur_band = BAND_ALL;
 	struct hdd_context *hdd_ctx;
 	int ret;
@@ -1993,9 +1994,10 @@ static int __iw_get_channel_list(struct net_device *dev,
 
 	if (cur_band != BAND_2G)
 		band_end_channel = MAX_5GHZ_CHANNEL;
-
+	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						&enable_dfs_scan);
 	if (hostapd_adapter->device_mode == QDF_STA_MODE &&
-	    hdd_ctx->config->enableDFSChnlScan) {
+	    enable_dfs_scan) {
 		is_dfs_mode_enabled = true;
 	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE) {
 		if (QDF_STATUS_SUCCESS != ucfg_mlme_get_dfs_master_capability(

@@ -187,21 +187,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gEnableDFSChnlScan - Enable DFS channel scan
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable DFS channel
- * scan
- */
-#define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
-#define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
-#define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
-#define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
-
-/*
- * <ini>
  * gEnableDFSPnoChnlScan - enable dfs channels in PNO scan
  * @Min: 0
  * @Max: 1
@@ -585,27 +570,6 @@ enum hdd_dot11_mode {
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MIN                  1
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                  (4294967295UL)
 #define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT              3000
-
-/*
- * gEnableDFSChnlScan - enable dfs channel scan.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable dfs channels in scan, enabling this
- * will enable driver to include dfs channels in its scan list.
- * Related: NA
- *
- * Supported Feature: DFS, Scan
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_DFS_CHNL_SCAN_NAME              "gEnableDFSChnlScan"
-#define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
-#define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
-#define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
 
 /*
  * <ini>
@@ -1007,7 +971,6 @@ struct hdd_config {
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif
-	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;

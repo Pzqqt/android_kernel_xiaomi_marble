@@ -4739,6 +4739,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	bool bval = false, ap_obss_prot = false, sap_uapsd = true;
+	bool enable_dfs_scan = true;
 
 	hdd_enter();
 
@@ -4964,9 +4965,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			ret = -EINVAL;
 			goto error;
 		}
+		ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+							&enable_dfs_scan);
 
 		/* reject SAP if DFS channel scan is not allowed */
-		if (!(hdd_ctx->config->enableDFSChnlScan) &&
+		if (!(enable_dfs_scan) &&
 		    (CHANNEL_STATE_DFS ==
 		     wlan_reg_get_channel_state(hdd_ctx->pdev,
 						pConfig->channel))) {
