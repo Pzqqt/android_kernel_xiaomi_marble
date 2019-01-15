@@ -729,7 +729,7 @@ struct dfs_nolelem {
 	uint32_t       nol_chwidth;
 	unsigned long  nol_start_ticks;
 	uint32_t       nol_timeout_ms;
-	os_timer_t     nol_timer;
+	qdf_timer_t    nol_timer;
 	struct dfs_nolelem *nol_next;
 } qdf_packed;
 
@@ -1066,9 +1066,9 @@ struct wlan_dfs {
 	uint8_t        wlan_dfstest_ieeechan;
 	uint32_t       wlan_dfs_cac_time;
 	uint32_t       wlan_dfstesttime;
-	os_timer_t     wlan_dfswaittimer;
-	os_timer_t     wlan_dfstesttimer;
-	os_timer_t     wlan_dfs_debug_timer;
+	qdf_timer_t    wlan_dfswaittimer;
+	qdf_timer_t    wlan_dfstesttimer;
+	qdf_timer_t    wlan_dfs_debug_timer;
 	enum dfs_bangradar_types dfs_bangradar_type;
 	bool           is_radar_found_on_secondary_seg;
 	bool           dfs_radar_found_for_fo;
@@ -1084,7 +1084,7 @@ struct wlan_dfs {
 	uint8_t        dfs_precac_inter_chan;
 #endif
 	uint8_t        dfs_pre_cac_timeout_channel_change:1;
-	os_timer_t     wlan_dfs_task_timer;
+	qdf_timer_t    wlan_dfs_task_timer;
 	int            dur_multiplier;
 	uint16_t       wlan_dfs_isdfsregdomain;
 	int            wlan_dfs_false_rssi_thres;
@@ -1103,13 +1103,13 @@ struct wlan_dfs {
 	bool           update_nol;
 	uint32_t       dfs_seq_num;
 	int            dfs_nol_event[DFS_CHAN_MAX];
-	os_timer_t     dfs_nol_timer;
+	qdf_timer_t    dfs_nol_timer;
 
 	TAILQ_HEAD(, dfs_nolelem) dfs_nol_free_list;
 	qdf_work_t     dfs_nol_elem_free_work;
 
-	os_timer_t     dfs_cac_timer;
-	os_timer_t     dfs_cac_valid_timer;
+	qdf_timer_t    dfs_cac_timer;
+	qdf_timer_t    dfs_cac_valid_timer;
 	int            dfs_cac_timeout_override;
 	uint8_t        dfs_enable:1,
 				   dfs_cac_timer_running:1,
@@ -1117,7 +1117,7 @@ struct wlan_dfs {
 				   dfs_ignore_cac:1,
 				   dfs_cac_valid:1;
 	uint32_t       dfs_cac_valid_time;
-	os_timer_t     dfs_precac_timer;
+	qdf_timer_t    dfs_precac_timer;
 	int            dfs_precac_timeout_override;
 	uint8_t        dfs_num_precac_freqs;
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
@@ -1142,7 +1142,7 @@ struct wlan_dfs {
 	bool dfs_use_nol_subchannel_marking;
 	uint8_t        dfs_spoof_test_done:1;
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
-	os_timer_t     dfs_host_wait_timer;
+	qdf_timer_t    dfs_host_wait_timer;
 	uint32_t       dfs_average_pri;
 	uint32_t       dfs_average_duration;
 	uint32_t       dfs_average_sidx;

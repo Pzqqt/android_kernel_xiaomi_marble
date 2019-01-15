@@ -852,7 +852,7 @@ struct target_if_spectral {
 	int                                     send_single_packet;
 	int                                     spectral_sent_msg;
 	int                                     classify_scan;
-	os_timer_t                              classify_timer;
+	qdf_timer_t                             classify_timer;
 	struct spectral_config                  params;
 	bool                                    params_valid;
 	struct spectral_classifier_params       classifier_params;

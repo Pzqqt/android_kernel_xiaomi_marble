@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -45,8 +45,8 @@
 struct dfs_precac_entry {
 	TAILQ_ENTRY(dfs_precac_entry) pe_list;
 	uint8_t             vht80_freq;
-	os_timer_t          precac_nol_timer;
-	struct wlan_dfs      *dfs;
+	qdf_timer_t         precac_nol_timer;
+	struct wlan_dfs     *dfs;
 };
 
 /**

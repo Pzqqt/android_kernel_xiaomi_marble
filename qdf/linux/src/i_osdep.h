@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,8 +42,6 @@
 #define    be16toh(_x)    be16_to_cpu(_x)
 #define    be32toh(_x)    be32_to_cpu(_x)
 #define    htobe32(_x)    cpu_to_be32(_x)
-
-typedef struct timer_list os_timer_t;
 
 #ifdef CONFIG_SMP
 /* Undo the one provided by the kernel to debug spin locks */
@@ -132,7 +130,7 @@ typedef struct {
 #ifdef USE_SOFTINTR
 	void *_task;
 #else
-	os_timer_t _timer;
+	qdf_timer_t _timer;
 #endif
 	os_mesg_handler_t handler;
 	void *ctx;
