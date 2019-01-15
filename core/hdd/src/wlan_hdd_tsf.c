@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,8 +146,13 @@ static QDF_STATUS hdd_tsf_set_gpio(struct hdd_context *hdd_ctx)
 
 bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd)
 {
-	return (hdd && (hdd->config) &&
-		(hdd->config->tsf_ptp_options));
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return !!tsf_ptp_options;
+	else
+		return false;
 }
 
 bool hdd_tsf_is_tx_set(struct hdd_context *hdd)
