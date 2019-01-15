@@ -1625,11 +1625,11 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 static void csr_set_cfg_country_code(struct mac_context *mac,
 				     uint8_t *countryCode)
 {
-	uint8_t cc[WNI_CFG_COUNTRY_CODE_LEN];
+	uint8_t cc[CFG_COUNTRY_CODE_LEN];
 	/* v_REGDOMAIN_t DomainId */
 
 	sme_debug("Setting Country Code in Cfg %s", countryCode);
-	qdf_mem_copy(cc, countryCode, WNI_CFG_COUNTRY_CODE_LEN);
+	qdf_mem_copy(cc, countryCode, CFG_COUNTRY_CODE_LEN);
 
 	/*
 	 * Don't program the bogus country codes that we created for Korea in
@@ -1646,7 +1646,7 @@ static void csr_set_cfg_country_code(struct mac_context *mac,
 		 */
 		cc[1] = 'R';
 	}
-	cfg_set_str(mac, WNI_CFG_COUNTRY_CODE, cc, WNI_CFG_COUNTRY_CODE_LEN);
+	cfg_set_str(mac, WNI_CFG_COUNTRY_CODE, cc, CFG_COUNTRY_CODE_LEN);
 
 	/*
 	 * Need to let HALPHY know about the current domain so it can apply some
@@ -1660,7 +1660,7 @@ QDF_STATUS csr_get_country_code(struct mac_context *mac, uint8_t *pBuf,
 	QDF_STATUS status;
 	uint32_t len;
 
-	if (pBuf && pbLen && (*pbLen >= WNI_CFG_COUNTRY_CODE_LEN)) {
+	if (pBuf && pbLen && (*pbLen >= CFG_COUNTRY_CODE_LEN)) {
 		len = *pbLen;
 		status = wlan_cfg_get_str(mac, WNI_CFG_COUNTRY_CODE, pBuf,
 					&len);
@@ -2447,7 +2447,7 @@ static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
 			  pFilter->mcEncryptionType.encryptionType[i]);
 	}
 	qdf_mem_copy(filter->country, pFilter->countryCode,
-		     WNI_CFG_COUNTRY_CODE_LEN);
+		     CFG_COUNTRY_CODE_LEN);
 
 	if (pFilter->bWPSAssociation || pFilter->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;

@@ -6723,8 +6723,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		QDF_STATUS status;
 		uint8_t i, len;
 		char *buf;
-		uint8_t ubuf[WNI_CFG_COUNTRY_CODE_LEN];
-		uint8_t ubuf_len = WNI_CFG_COUNTRY_CODE_LEN;
+		uint8_t ubuf[CFG_COUNTRY_CODE_LEN];
+		uint8_t ubuf_len = CFG_COUNTRY_CODE_LEN;
 		struct channel_list_info channel_list;
 
 		memset(&channel_list, 0, sizeof(channel_list));

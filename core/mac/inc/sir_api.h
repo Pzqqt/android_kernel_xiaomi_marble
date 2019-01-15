@@ -57,6 +57,8 @@ struct mac_context;
 /* / Max supported channel list */
 #define SIR_MAX_SUPPORTED_CHANNEL_LIST      96
 #define CFG_VALID_CHANNEL_LIST_LEN              100
+#define CFG_COUNTRY_CODE_LEN 3
+
 
 #define SIR_MDIE_ELEMENT_ID         54
 #define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
@@ -1455,7 +1457,7 @@ typedef struct sAniGetSnrReq {
 typedef struct sAniGenericChangeCountryCodeReq {
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
-	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN];  /* 3 char country code */
+	uint8_t countryCode[CFG_COUNTRY_CODE_LEN];  /* 3 char country code */
 } tAniGenericChangeCountryCodeReq, *tpAniGenericChangeCountryCodeReq;
 
 /**
@@ -3731,9 +3733,9 @@ typedef struct {
 	/* bssid */
 	struct qdf_mac_addr bssid;
 	/* country string advertised by AP */
-	uint8_t apCountryStr[WNI_CFG_COUNTRY_CODE_LEN];
+	uint8_t apCountryStr[CFG_COUNTRY_CODE_LEN];
 	/* country string for this association */
-	uint8_t countryStr[WNI_CFG_COUNTRY_CODE_LEN];
+	uint8_t countryStr[CFG_COUNTRY_CODE_LEN];
 } tSirWifiInterfaceInfo, *tpSirWifiInterfaceInfo;
 
 /* channel information */
