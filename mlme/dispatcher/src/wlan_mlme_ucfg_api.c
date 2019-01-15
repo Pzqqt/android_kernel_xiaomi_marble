@@ -1456,6 +1456,32 @@ ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+ucfg_mlme_get_valid_channel_list(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *channel_list,
+				 uint32_t *channel_list_num)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	qdf_size_t valid_channel_list_num = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
+				      channel_list,
+				      CFG_VALID_CHANNEL_LIST_LEN,
+				      &valid_channel_list_num);
+		*channel_list_num = (uint8_t)valid_channel_list_num;
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*channel_list_num = (uint32_t)mlme_obj->cfg.reg.valid_channel_list_num;
+	qdf_mem_copy(channel_list, mlme_obj->cfg.reg.valid_channel_list,
+		     *channel_list_num);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 QDF_STATUS
 ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)

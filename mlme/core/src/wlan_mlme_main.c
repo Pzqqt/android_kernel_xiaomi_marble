@@ -357,6 +357,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->enabled_11d = cfg_get(psoc, CFG_11D_SUPPORT_ENABLED);
 	gen->enable_beacon_reception_stats =
 		cfg_get(psoc, CFG_ENABLE_BEACON_RECEPTION_STATS);
+	gen->enable_remove_time_stamp_sync_cmd =
+		cfg_get(psoc, CFG_REMOVE_TIME_STAMP_SYNC_CMD);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
@@ -2055,6 +2057,8 @@ static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
+	qdf_size_t valid_channel_list_num = 0;
+
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
 	reg->etsi13_srd_chan_in_master_mode =
 			cfg_get(psoc, CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE);
@@ -2062,6 +2066,14 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_RESTART_BEACONING_ON_CH_AVOID);
 	reg->indoor_channel_support = cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT);
 	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
+	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
+			      reg->valid_channel_list,
+			      CFG_VALID_CHANNEL_LIST_LEN,
+			      &valid_channel_list_num);
+	reg->valid_channel_list_num = (uint8_t)valid_channel_list_num;
+	qdf_str_lcopy(reg->country_code, cfg_default(CFG_COUNTRY_CODE),
+		      sizeof(reg->country_code));
+	reg->country_code_len = (uint8_t)sizeof(reg->country_code);
 }
 
 static void

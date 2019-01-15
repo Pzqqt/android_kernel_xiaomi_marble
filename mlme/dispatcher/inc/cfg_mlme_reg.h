@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,8 @@
 
 #ifndef CFG_MLME_REG_H__
 #define CFG_MLME_REG_H__
+
+#define VALID_CHANNEL_LIST_DEFAULT "36, 40, 44, 48, 52, 56, 60, 64, 1, 6, 11, 34, 38, 42, 46, 2, 3, 4,  5, 7, 8, 9, 10, 12, 13, 14, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 149, 151, 153, 155, 157, 159, 161, 50, 54, 58, 62, 240, 242, 244, 246, 248, 250, 252"
 
 /*
  * <ini>
@@ -156,11 +158,49 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"set the 11d scan interval in FW")
 
+ /*
+  * valid_chan_list - Configure valid channel list
+  * @Min: 0
+  * @Max: 256
+  * @Default: 64
+  *
+  * This ini is used to configure the data max number of pre-auth
+  *
+  * Usage: Internal
+  *
+  */
+#define CFG_VALID_CHANNEL_LIST CFG_INI_STRING( \
+		 "valid_chan_list", \
+		 0, \
+		 CFG_VALID_CHANNEL_LIST_STRING_LEN, \
+		 VALID_CHANNEL_LIST_DEFAULT, \
+		 "valid channel list")
+
+ /*
+  * max_num_pre_auth - Configure max number of pre-auth
+  * @Min: 0
+  * @Max: 256
+  * @Default: 64
+  *
+  * This ini is used to configure the data max number of pre-auth
+  *
+  * Usage: Internal
+  *
+  */
+#define CFG_COUNTRY_CODE CFG_INI_STRING( \
+		 "country_code", \
+		 0, \
+		 CFG_COUNTRY_CODE_LEN, \
+		 "", \
+		 "country code")
+
 #define CFG_REG_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
 	CFG(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
-	CFG(CFG_SCAN_11D_INTERVAL)
+	CFG(CFG_SCAN_11D_INTERVAL) \
+	CFG(CFG_VALID_CHANNEL_LIST) \
+	CFG(CFG_COUNTRY_CODE)
 
 #endif /* CFG_MLME_REG_H__ */

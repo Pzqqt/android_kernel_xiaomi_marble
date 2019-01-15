@@ -989,6 +989,7 @@ struct wlan_mlme_chainmask {
  * @enabled_11h: enable 11h flag
  * @enabled_11d: enable 11d flag
  * @enable_beacon_reception_stats: enable beacon reception stats
+ * @enable_remove_time_stamp_sync_cmd: Enable remove time stamp sync cmd
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1016,6 +1017,7 @@ struct wlan_mlme_generic {
 	bool enabled_11d;
 	bool enable_deauth_to_disassoc_map;
 	bool enable_beacon_reception_stats;
+	bool enable_remove_time_stamp_sync_cmd;
 };
 
 /*
@@ -1893,6 +1895,10 @@ struct wlan_mlme_mwc {
  * @restart_beaconing_on_ch_avoid: restart beaconing on ch avoid
  * @indoor_channel_support: indoor channel support
  * @scan_11d_interval: scan 11d interval
+ * @valid_channel_list: array for valid channel list
+ * @valid_channel_list_num: valid channel list number
+ * @country_code: country code
+ * @country_code_len: country code length
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -1901,6 +1907,10 @@ struct wlan_mlme_reg {
 		restart_beaconing_on_ch_avoid;
 	bool indoor_channel_support;
 	uint32_t scan_11d_interval;
+	uint8_t valid_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t valid_channel_list_num;
+	uint8_t country_code[CFG_COUNTRY_CODE_LEN + 1];
+	uint8_t country_code_len;
 };
 
 /**
