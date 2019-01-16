@@ -6620,9 +6620,10 @@ dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 	int32_t hw_headp = -1;
 	int32_t hw_tailp = -1;
 	const char *ring_name;
-	struct hal_soc *hal_soc = (struct hal_soc *)soc->hal_soc;
+	struct hal_soc *hal_soc;
 
 	if (soc && srng && srng->hal_srng) {
+		hal_soc = (struct hal_soc *)soc->hal_soc;
 		ring_name = dp_srng_get_str_from_hal_ring_type(ring_type);
 
 		hal_get_sw_hptp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
