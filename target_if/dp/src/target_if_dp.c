@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +40,7 @@ target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_pdev *pdev,
 		return;
 	}
 
-	qdf_mem_set(&param, sizeof(param), 0);
+	qdf_mem_zero(&param, sizeof(param));
 
 	/* TODO: Need bit definitions for ring number and hash based routing
 	 * fields in common wmi header file

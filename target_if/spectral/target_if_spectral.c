@@ -110,7 +110,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	if (!vdev)
 		return QDF_STATUS_E_NOENT;
 
-	qdf_mem_set(&sparam, sizeof(sparam), 0);
+	qdf_mem_zero(&sparam, sizeof(sparam));
 
 	sparam.vdev_id = wlan_vdev_get_id(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
@@ -171,7 +171,7 @@ target_if_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 	if (!vdev)
 		return QDF_STATUS_E_NOENT;
 
-	qdf_mem_set(&param, sizeof(param), 0);
+	qdf_mem_zero(&param, sizeof(param));
 
 	param.vdev_id = wlan_vdev_get_id(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
