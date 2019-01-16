@@ -98,7 +98,9 @@ struct adm_ctl {
 	int num_ec_ref_rx_chans;
 	int ec_ref_rx_bit_width;
 	int ec_ref_rx_sampling_rate;
-
+	int num_ec_ref_rx_chans_downmixed;
+	uint16_t ec_ref_chmixer_weights[PCM_FORMAT_MAX_NUM_CHANNEL_V8]
+						[PCM_FORMAT_MAX_NUM_CHANNEL_V8];
 	int native_mode;
 };
 
@@ -2716,6 +2718,98 @@ static int adm_arrange_mch_ep2_map_v8(
 
 	return rc;
 }
+
+static int adm_copp_set_ec_ref_mfc_cfg(int port_id, int copp_idx,
+					int sample_rate, int bps,
+					int in_channels, int out_channels)
+{
+	struct audproc_mfc_param_media_fmt mfc_cfg;
+	struct param_hdr_v3 param_hdr;
+	u16 *chmixer_params = NULL;
+	int rc = 0, i  = 0, j = 0, param_index = 0, param_size = 0;
+	struct adm_device_endpoint_payload ep_payload = {0, 0, 0, {0}};
+
+	memset(&mfc_cfg, 0, sizeof(mfc_cfg));
+	memset(&ep_payload, 0, sizeof(ep_payload));
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AUDPROC_MODULE_ID_MFC_EC_REF;
+	param_hdr.instance_id = INSTANCE_ID_0;
+
+	pr_debug("%s: port_id %d copp_idx %d SR %d, BW %d in_ch %d out_ch %d\n",
+			__func__, port_id, copp_idx, sample_rate,
+			bps, in_channels, out_channels);
+
+	/* 1. Update Media Format */
+	param_hdr.param_id = AUDPROC_PARAM_ID_MFC_OUTPUT_MEDIA_FORMAT;
+	param_hdr.param_size = sizeof(mfc_cfg);
+
+	mfc_cfg.sampling_rate = sample_rate;
+	mfc_cfg.bits_per_sample = bps;
+	mfc_cfg.num_channels = out_channels;
+
+	ep_payload.dev_num_channel = out_channels;
+	rc = adm_arrange_mch_ep2_map_v8(&ep_payload, out_channels);
+	if (rc < 0) {
+		pr_err("%s: unable to get map for out channels=%d\n",
+				__func__, out_channels);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < out_channels; i++)
+		mfc_cfg.channel_type[i] = (uint16_t) ep_payload.dev_channel_mapping[i];
+
+
+	rc = adm_pack_and_set_one_pp_param(port_id, copp_idx,
+				param_hdr, (uint8_t *) &mfc_cfg);
+	if (rc) {
+		pr_err("%s: Failed to set media format, err %d\n", __func__, rc);
+		return rc;
+	}
+
+	/* 2. Send Channel Mixer params */
+	param_size =  2 * (4 + out_channels + in_channels + (out_channels * in_channels));
+	param_size = round_up(param_size, 4);
+	param_hdr.param_id = DEFAULT_CHMIXER_PARAM_ID_COEFF;
+	param_hdr.param_size = param_size;
+
+	pr_debug("%s: chmixer param sz = %d\n", __func__, param_size);
+	chmixer_params = kzalloc(param_size, GFP_KERNEL);
+	if (!chmixer_params) {
+		return -ENOMEM;
+	}
+	param_index = 2; /* param[0] and [1] represents chmixer rule(always 0) */
+	chmixer_params[param_index++] = out_channels;
+	chmixer_params[param_index++] = in_channels;
+
+	/* output channel map is same as one set in media format */
+	for (i = 0; i < out_channels; i++)
+		chmixer_params[param_index++] = ep_payload.dev_channel_mapping[i];
+
+	/* input channel map should be same as one set for ep2 during copp open */
+	ep_payload.dev_num_channel = in_channels;
+	rc = adm_arrange_mch_ep2_map_v8(&ep_payload, in_channels);
+	if (rc < 0) {
+		pr_err("%s: unable to get in channal map\n", __func__);
+		goto exit;
+	}
+	for (i = 0; i < in_channels; i++)
+		chmixer_params[param_index++] = ep_payload.dev_channel_mapping[i];
+
+	for (i = 0; i < out_channels; i++)
+		for (j = 0; j < in_channels; j++)
+		chmixer_params[param_index++] = this_adm.ec_ref_chmixer_weights[i][j];
+
+	rc = adm_pack_and_set_one_pp_param(port_id, copp_idx,
+					   param_hdr, (uint8_t *) chmixer_params);
+	if (rc)
+		pr_err("%s: Failed to set chmixer params, err %d\n", __func__, rc);
+
+exit:
+	kfree(chmixer_params);
+	return rc;
+}
+
 /**
  * adm_open -
  *        command to send ADM open
@@ -2750,6 +2844,7 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	int tmp_port = q6audio_get_port_id(port_id);
 	void *adm_params = NULL;
 	int param_size;
+	int num_ec_ref_rx_chans = this_adm.num_ec_ref_rx_chans;
 
 	pr_debug("%s:port %#x path:%d rate:%d mode:%d perf_mode:%d,topo_id %d\n",
 		 __func__, port_id, path, rate, channel_mode, perf_mode,
@@ -3137,6 +3232,23 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 		}
 	}
 	atomic_inc(&this_adm.copp.cnt[port_idx][copp_idx]);
+
+	/*
+	 * Configure MFC(in ec_ref path) if chmixing param is applicable and set.
+	 * Except channels and channel maps the media format config for this module
+	 * should match with the COPP(EP1) config values.
+	 */
+	if (path != ADM_PATH_PLAYBACK &&
+		this_adm.num_ec_ref_rx_chans_downmixed != 0 &&
+		num_ec_ref_rx_chans != this_adm.num_ec_ref_rx_chans_downmixed) {
+		ret = adm_copp_set_ec_ref_mfc_cfg(port_id, copp_idx,
+				rate, bit_width, num_ec_ref_rx_chans,
+				this_adm.num_ec_ref_rx_chans_downmixed);
+		this_adm.num_ec_ref_rx_chans_downmixed = 0;
+		if (ret)
+			pr_err("%s: set EC REF MFC cfg failed, err %d\n", __func__, ret);
+	}
+
 	return copp_idx;
 }
 EXPORT_SYMBOL(adm_open);
@@ -3423,6 +3535,52 @@ void adm_num_ec_ref_rx_chans(int num_chans)
 		__func__, this_adm.num_ec_ref_rx_chans);
 }
 EXPORT_SYMBOL(adm_num_ec_ref_rx_chans);
+
+/**
+ * adm_num_ec_rx_ref_chans_downmixed -
+ *        Update EC ref num of channels(downmixed) to be fed to EC algo
+ *
+ */
+void adm_num_ec_ref_rx_chans_downmixed(int num_chans)
+{
+	this_adm.num_ec_ref_rx_chans_downmixed = num_chans;
+	pr_debug("%s: num_ec_ref_rx_chans_downmixed:%d\n",
+		__func__, this_adm.num_ec_ref_rx_chans_downmixed);
+}
+EXPORT_SYMBOL(adm_num_ec_ref_rx_chans_downmixed);
+
+/**
+ * adm_ec_ref_chmixer_weights -
+ *        Update MFC(in ec ref) Channel Mixer Weights to be used
+ *        for downmixing rx channels before feeding them to EC algo
+ * @out_channel_idx: index of output channel to which weightages are applicable
+ * @weights:         pointer to array having input weightages
+ * @count:           array sizeof pointer weights, max supported value is
+ *                   PCM_FORMAT_MAX_NUM_CHANNEL_V8
+ * Returns 0 on success or error on failure
+ */
+int adm_ec_ref_chmixer_weights(int out_channel_idx,
+				uint16_t *weights, int count)
+{
+	int i = 0;
+
+	if (weights == NULL || count <= 0 || out_channel_idx < 0 ||
+		count > PCM_FORMAT_MAX_NUM_CHANNEL_V8 ||
+		out_channel_idx >= PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
+		pr_err("%s: invalid weightages count(%d) ch_idx(%d)",
+				__func__, count, out_channel_idx);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < count; i++) {
+		this_adm.ec_ref_chmixer_weights[out_channel_idx][i] = weights[i];
+		pr_debug("%s: out ch idx :%d, weight[%d] = %d\n",
+			__func__, out_channel_idx, i, weights[i]);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(adm_ec_ref_chmixer_weights);
 
 /**
  * adm_ec_ref_rx_bit_width -

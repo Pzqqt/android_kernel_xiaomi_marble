@@ -843,6 +843,12 @@ struct audproc_softvolume_params {
 /* Param ID of Channel Mixer used by AUDPROC_MODULE_ID_MFC */
 #define AUDPROC_CHMIXER_PARAM_ID_COEFF                      0x00010342
 
+/*
+ * ID of the Media Format Converter (MFC) module present in EC REF COPP.
+ * This module supports the all param IDs supported by AUDPROC_MODULE_ID_MFC.
+ */
+#define AUDPROC_MODULE_ID_MFC_EC_REF                        0x0001092C
+
 
 struct adm_cmd_set_pp_params_v5 {
 	struct apr_hdr hdr;
