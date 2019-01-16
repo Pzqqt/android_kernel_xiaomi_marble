@@ -172,7 +172,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			      uint8_t channel,
 			      tSirMacAddr self_macaddr,
 			      uint32_t dot11mode,
-			      uint16_t *additional_ielen, uint8_t *additional_ie)
+			      uint16_t *additional_ielen,
+			      uint8_t *additional_ie)
 {
 	tDot11fProbeRequest pr;
 	uint32_t status, bytes, payload;
@@ -195,9 +196,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (additional_ielen)
 		addn_ielen = *additional_ielen;
 
-	/* The probe req should not send 11ac capabilieties if band is 2.4GHz,
-	 * unless enableVhtFor24GHz is enabled in INI. So if enableVhtFor24GHz
-	 * is false and dot11mode is 11ac set it to 11n.
+	/*
+	 * The probe req should not send 11ac capabilities if band is
+	 * 2.4GHz, unless gEnableVhtFor24GHzBand is enabled in INI. So
+	 * if gEnableVhtFor24GHzBand is false and dot11mode is 11ac
+	 * set it to 11n.
 	 */
 	if (channel <= SIR_11B_CHANNEL_END &&
 	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
