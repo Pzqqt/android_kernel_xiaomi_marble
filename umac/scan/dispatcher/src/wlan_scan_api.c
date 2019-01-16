@@ -164,3 +164,14 @@ void wlan_scan_cfg_get_conc_min_resttime(struct wlan_objmgr_psoc *psoc,
 
 	*rest_time = scan_obj->scan_def.conc_min_rest_time;
 }
+
+bool wlan_scan_is_snr_monitor_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return cfg_default(CFG_ENABLE_SNR_MONITORING);
+
+	return scan_obj->scan_def.scan_f_chan_stat_evnt;
+}

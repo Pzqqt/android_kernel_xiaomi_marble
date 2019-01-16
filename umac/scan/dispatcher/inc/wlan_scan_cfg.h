@@ -1058,20 +1058,65 @@
  *
  * Supported Feature: DFS P2P
  *
- * Usage: Internal/External
+ * Usage: External
  *
- * </ini>
+ * <ini>
  */
 #define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH CFG_INI_BOOL( \
 	"gSkipDfsChannelInP2pSearch", \
 	1, \
 	"skip dfs channel in p2p search")
 
+/*
+ * <ini>
+ * gEnableConnectedScan - Will enable or disable scan in connected state
+ * This ini is used to enable or disable the scanning in
+ * Connected state
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#define CFG_ENABLE_CONNECTED_SCAN CFG_INI_BOOL( \
+				"gEnableConnectedScan", \
+				true, \
+				"Enable/disable scan in connected state")
+
+/*
+ * <ini>
+ * gEnableSNRMonitoring - Enables SNR Monitoring
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default snr monitor
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SNR_MONITORING CFG_INI_BOOL(\
+			"gEnableSNRMonitoring",\
+			false,\
+			"Enable/Disable SNR Monitoring")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_ENABLE_DFS_SCAN) \
+	CFG(CFG_ENABLE_CONNECTED_SCAN) \
 	CFG(CFG_INITIAL_NO_DFS_SCAN) \
 	CFG(CFG_ACTIVE_MAX_2G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
@@ -1091,6 +1136,7 @@
 	CFG(CFG_STA_SCAN_BURST_DURATION) \
 	CFG(CFG_P2P_SCAN_BURST_DURATION) \
 	CFG(CFG_GO_SCAN_BURST_DURATION) \
+	CFG(CFG_ENABLE_SNR_MONITORING) \
 	CFG(CFG_AP_SCAN_BURST_DURATION) \
 	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH) \
 	CFG_SCAN_PNO

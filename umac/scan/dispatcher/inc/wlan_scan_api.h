@@ -145,4 +145,13 @@ void wlan_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_scan_cfg_get_conc_min_resttime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *rest_time);
+
+/**
+ * wlan_scan_is_snr_monitor_enabled() - API to get SNR monitoring enabled or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: enable/disable snr monitor mode.
+ */
+bool wlan_scan_is_snr_monitor_enabled(struct wlan_objmgr_psoc *psoc);
+
 #endif

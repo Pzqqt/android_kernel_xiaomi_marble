@@ -319,6 +319,7 @@ struct extscan_def_config {
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
  * @max_active_scans_allowed: maximum number of active parallel scan allowed
  *                            per psoc
+ * @enable_connected_scan: enable scans after connection
  * @scan_priority: default scan priority
  * @adaptive_dwell_time_mode: adaptive dwell mode with connection
  * @adaptive_dwell_time_mode_nc: adaptive dwell mode without connection
@@ -402,6 +403,7 @@ struct scan_default_params {
 	uint8_t p2p_scan_burst_duration;
 	uint8_t go_scan_burst_duration;
 	uint8_t ap_scan_burst_duration;
+	bool enable_connected_scan;
 	enum scan_priority scan_priority;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode_nc;

@@ -970,4 +970,24 @@ ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc)
 }
 
 #endif /* FEATURE_WLAN_SCAN_PNO */
+
+/**
+ * ucfg_scan_is_connected_scan_enabled() - API to get scan enabled after connect
+ * @psoc: pointer to psoc object
+ *
+ * Return: value.
+ */
+bool ucfg_scan_is_connected_scan_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_is_snr_monitor_enabled() - API to get SNR monitoring enabled or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: value.
+ */
+static inline
+bool ucfg_scan_is_snr_monitor_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_scan_is_snr_monitor_enabled(psoc);
+}
 #endif
