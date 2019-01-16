@@ -2726,7 +2726,7 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx,
 }
 #endif /* REMOVE_PKT_LOG */
 
-#ifdef FEATURE_SG
+#if defined(FEATURE_SG) && !defined(CONFIG_HL_SUPPORT)
 /**
  * hdd_set_sg_flags() - enable SG flag in the network device
  * @hdd_ctx: HDD context
