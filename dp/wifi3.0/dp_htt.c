@@ -2360,65 +2360,65 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 
 	switch (tlv_type) {
 	case HTT_PPDU_STATS_COMMON_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_common_tlv));
 		dp_process_ppdu_stats_common_tlv(pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMMON_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_user_common_tlv));
 		dp_process_ppdu_stats_user_common_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_RATE_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_user_rate_tlv));
 		dp_process_ppdu_stats_user_rate_tlv(pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_enq_mpdu_bitmap_64_tlv));
 		dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_enq_mpdu_bitmap_256_tlv));
 		dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 				sizeof(htt_ppdu_stats_user_cmpltn_common_tlv));
 		dp_process_ppdu_stats_user_cmpltn_common_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv));
 		dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv));
 		dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 			sizeof(htt_ppdu_stats_user_compltn_ack_ba_status_tlv));
 		dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 			sizeof(htt_ppdu_stats_usr_common_array_tlv_v));
 		dp_process_ppdu_stats_user_common_array_tlv(
 				pdev, tag_buf, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV:
-		qdf_assert_always(tlv_len ==
+		qdf_assert_always(tlv_len >=
 			sizeof(htt_ppdu_stats_flush_tlv));
 		dp_process_ppdu_stats_user_compltn_flush_tlv(
 				pdev, tag_buf);
