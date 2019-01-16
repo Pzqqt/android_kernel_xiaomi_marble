@@ -508,7 +508,7 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 #endif
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
-
+		sme_join_rsp->uapsd_mask = session_entry->gUapsdPerAcBitmask;
 		/* Send supported NSS 1x1 to SME */
 		sme_join_rsp->supported_nss_1x1 =
 			session_entry->supported_nss_1x1;
