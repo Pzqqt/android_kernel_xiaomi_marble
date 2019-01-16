@@ -3565,4 +3565,47 @@ ucfg_mlme_set_obss_detection_offload_enabled(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_obss_color_collision_offload_enabled(
 		struct wlan_objmgr_psoc *psoc, uint8_t value);
+
+/**
+ * ucfg_mlme_get_channel_bonding_24ghz() - get channel bonding mode of 24ghz
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_channel_bonding_24ghz(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
+
+/**
+ * ucfg_mlme_set_channel_bonding_24ghz() - set channel bonding mode for 24ghz
+ * @psoc:   pointer to psoc object
+ * @value:  channel bonding mode
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_channel_bonding_24ghz(struct wlan_objmgr_psoc *psoc,
+				    uint32_t value);
+/**
+ * ucfg_mlme_get_channel_bonding_5ghz() - get channel bonding mode of 5ghz
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
+				   uint32_t *value);
+
+/**
+ * ucfg_mlme_set_channel_bonding_5ghz() - set channel bonding mode for 5ghz
+ * @psoc:   pointer to psoc object
+ * @value:    channel bonding mode
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
+				   uint32_t value);
 #endif /* _WLAN_MLME_UCFG_API_H_ */
