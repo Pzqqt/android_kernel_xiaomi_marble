@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -99,7 +99,7 @@ QDF_STATUS scheduler_enable(void)
 	/* create the scheduler thread */
 	sched_ctx->sch_thread = qdf_create_thread(scheduler_thread, sched_ctx,
 						  "scheduler_thread");
-	if (IS_ERR(sched_ctx->sch_thread)) {
+	if (!sched_ctx->sch_thread) {
 		sched_err("Failed to create scheduler thread");
 		return QDF_STATUS_E_RESOURCES;
 	}
