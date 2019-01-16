@@ -1095,8 +1095,6 @@ typedef struct sSirMacRRMEnabledCap {
 #define EDCA_AC_BK 1
 #define EDCA_AC_VI 2
 #define EDCA_AC_VO 3
-#define AC_MGMT_LO 4
-#define AC_MGMT_HI 5
 #define MAX_NUM_AC 4
 
 /* access categories */
