@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -150,8 +150,8 @@ qdf_export_symbol(wlan_global_lmac_if_open);
  */
 QDF_STATUS wlan_global_lmac_if_close(struct wlan_objmgr_psoc *psoc)
 {
-	qdf_mem_set(&psoc->soc_cb.tx_ops, sizeof(psoc->soc_cb.tx_ops), 0);
-	qdf_mem_set(&psoc->soc_cb.rx_ops, sizeof(psoc->soc_cb.rx_ops), 0);
+	qdf_mem_zero(&psoc->soc_cb.tx_ops, sizeof(psoc->soc_cb.tx_ops));
+	qdf_mem_zero(&psoc->soc_cb.rx_ops, sizeof(psoc->soc_cb.rx_ops));
 
 	return QDF_STATUS_SUCCESS;
 }
