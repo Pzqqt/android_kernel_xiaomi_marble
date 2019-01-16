@@ -4301,6 +4301,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	QDF_STATUS status;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
+	uint32_t channel_bonding_mode;
 
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);
@@ -4358,8 +4359,10 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 			 * supplicant after OBSS scan and if 2.4 Ghz channel
 			 * bonding is set in INI
 			 */
+			ucfg_mlme_get_channel_bonding_24ghz(
+				hdd_ctx->psoc, &channel_bonding_mode);
 			if (sap_cfg->ch_width_orig >= eHT_CHANNEL_WIDTH_40MHZ &&
-			   hdd_ctx->config->nChannelBondingMode24GHz)
+			    channel_bonding_mode)
 				sap_cfg->ch_width_orig =
 					eHT_CHANNEL_WIDTH_40MHZ;
 			else

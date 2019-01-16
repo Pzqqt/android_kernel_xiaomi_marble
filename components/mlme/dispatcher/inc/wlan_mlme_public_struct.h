@@ -893,11 +893,16 @@ struct wlan_mlme_rates {
  * @enable_hcf: enable HCF feature
  * @enable_rsn: enable RSN for connection
  * @enable_short_preamble_11g: enable short preamble for 11g
+ * @enable_short_slot_time_11g
+ * @enable_ampdu: enable AMPDU feature
+ * @enable_mcc: enable MCC feature
+ * @mcc_rts_cts_prot: RTS-CTS protection in MCC
+ * @mcc_bcast_prob_rsp: broadcast Probe Response in MCC
  * @channel_bonding_mode: channel bonding mode
  * @enable_block_ack: enable block ack feature
- * @enable_ampdu: Enable AMPDU feature
+ * @channel_bonding_mode_24ghz: configures Channel Bonding in 24 GHz
+ * @channel_bonding_mode_5ghz:  configures Channel Bonding in 5 GHz
  */
-
 struct wlan_mlme_feature_flag {
 	bool accept_short_slot_assoc;
 	bool enable_hcf;
@@ -910,6 +915,8 @@ struct wlan_mlme_feature_flag {
 	uint8_t mcc_bcast_prob_rsp;
 	uint32_t channel_bonding_mode;
 	uint32_t enable_block_ack;
+	uint32_t channel_bonding_mode_24ghz;
+	uint32_t channel_bonding_mode_5ghz;
 };
 
 /*

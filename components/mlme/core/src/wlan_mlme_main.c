@@ -906,6 +906,10 @@ static void mlme_init_feature_flag_in_cfg(
 	feature_flags->mcc_bcast_prob_rsp = cfg_get(psoc,
 						    CFG_FW_MCC_BCAST_PROB_RESP);
 	feature_flags->enable_mcc = cfg_get(psoc, CFG_MCC_FEATURE);
+	feature_flags->channel_bonding_mode_24ghz =
+			cfg_get(psoc, CFG_CHANNEL_BONDING_MODE_24GHZ);
+	feature_flags->channel_bonding_mode_5ghz =
+			cfg_get(psoc, CFG_CHANNEL_BONDING_MODE_5GHZ);
 }
 
 static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,

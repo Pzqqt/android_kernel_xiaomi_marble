@@ -63,20 +63,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DOT11_MODE_MIN,
 		     CFG_DOT11_MODE_MAX),
 
-	REG_VARIABLE(CFG_CHANNEL_BONDING_MODE_24GHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nChannelBondingMode24GHz,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_CHANNEL_BONDING_MODE_DEFAULT,
-		     CFG_CHANNEL_BONDING_MODE_MIN,
-		     CFG_CHANNEL_BONDING_MODE_MAX),
-
-	REG_VARIABLE(CFG_CHANNEL_BONDING_MODE_5GHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nChannelBondingMode5GHz,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_CHANNEL_BONDING_MODE_DEFAULT,
-		     CFG_CHANNEL_BONDING_MODE_MIN,
-		     CFG_CHANNEL_BONDING_MODE_MAX),
-
 	REG_VARIABLE(CFG_AP_ENABLE_PROTECTION_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apProtEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1743,6 +1729,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool roam_scan_enabled;
 	bool enable_dfs_scan = true;
+	uint32_t channel_bonding_mode;
+
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
 #endif
@@ -1776,10 +1764,14 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		smeConfig->csrConfig.channelBondingMode24GHz = 0;
 		smeConfig->csrConfig.channelBondingMode5GHz = 0;
 	} else {
+		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+						    &channel_bonding_mode);
 		smeConfig->csrConfig.channelBondingMode24GHz =
-			pConfig->nChannelBondingMode24GHz;
+			channel_bonding_mode;
+		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
+						   &channel_bonding_mode);
 		smeConfig->csrConfig.channelBondingMode5GHz =
-			pConfig->nChannelBondingMode5GHz;
+			channel_bonding_mode;
 	}
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.

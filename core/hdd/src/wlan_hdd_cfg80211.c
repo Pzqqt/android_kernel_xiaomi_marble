@@ -9380,6 +9380,8 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 {
 	uint8_t ch_width;
 	QDF_STATUS status;
+	uint32_t channel_bonding_mode;
+
 	sap_config->channel = channel_list->pri_ch;
 
 	sap_config->ch_params.center_freq_seg0 =
@@ -9397,10 +9399,10 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 			hdd_err("Failed to set channel_width");
 		sap_config->ch_width_orig = ch_width;
 	} else {
-		sap_config->ch_width_orig =
-			hdd_ctx->config->nChannelBondingMode24GHz ?
-			eHT_CHANNEL_WIDTH_40MHZ :
-			eHT_CHANNEL_WIDTH_20MHZ;
+		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+						    &channel_bonding_mode);
+		sap_config->ch_width_orig = channel_bonding_mode ?
+			eHT_CHANNEL_WIDTH_40MHZ : eHT_CHANNEL_WIDTH_20MHZ;
 	}
 	sap_config->acs_cfg.pri_ch = channel_list->pri_ch;
 	sap_config->acs_cfg.ch_width = channel_list->chan_width;
@@ -12841,10 +12843,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		wiphy->iface_combinations = wlan_hdd_iface_combination;
 	}
 
-	if (!pCfg->nChannelBondingMode5GHz)
-		wlan_hdd_band_5_ghz.ht_cap.cap &=
-			~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
-
 	/*
 	 * In case of static linked driver at the time of driver unload,
 	 * module exit doesn't happens. Module cleanup helps in cleaning
@@ -13003,6 +13001,7 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 {
 	struct mlme_ht_capabilities_info ht_cap_info = {0};
 	QDF_STATUS status;
+	uint32_t channel_bonding_mode;
 
 	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status)
@@ -13033,6 +13032,11 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 
 	if (!ht_cap_info.short_gi_40_mhz)
 		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_40;
+
+	ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc, &channel_bonding_mode);
+	if (!channel_bonding_mode)
+		wlan_hdd_band_5_ghz.ht_cap.cap &=
+			~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 }
 
 /**
@@ -15736,6 +15740,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	uint8_t wmm_mode = 0;
 	uint8_t value = 0;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t channel_bonding_mode;
 
 	hdd_enter();
 
@@ -16004,10 +16009,14 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		 * cb mode. So, restoring the default INI params before starting
 		 * interfaces such as sta, cli etc.,
 		 */
+		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
+						   &channel_bonding_mode);
 		sme_config->csrConfig.channelBondingMode5GHz =
-			hdd_ctx->config->nChannelBondingMode5GHz;
+			channel_bonding_mode;
+		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+						    &channel_bonding_mode);
 		sme_config->csrConfig.channelBondingMode24GHz =
-			hdd_ctx->config->nChannelBondingMode24GHz;
+			channel_bonding_mode;
 		sme_update_config(mac_handle, sme_config);
 		qdf_mem_free(sme_config);
 		/*

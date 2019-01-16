@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,6 +158,56 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Enable/Disable MCC feature.")
 
+/*
+ * <ini>
+ * gChannelBondingMode24GHz - Configures Channel Bonding in 24 GHz
+ * @Min: 0
+ * @Max: 10
+ * @Default: 0
+ *
+ * This ini is used to set default channel bonding mode 24GHZ
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_CHANNEL_BONDING_MODE_24GHZ CFG_INI_UINT( \
+	"gChannelBondingMode24GHz", \
+	0, \
+	10, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Configures Channel Bonding in 24 GHz")
+
+/*
+ * <ini>
+ * gChannelBondingMode5GHz - Configures Channel Bonding in 5 GHz
+ * @Min: 0
+ * @Max: 10
+ * @Default: 0
+ *
+ * This ini is used to set default channel bonding mode 5GHZ
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_CHANNEL_BONDING_MODE_5GHZ CFG_INI_UINT( \
+	"gChannelBondingMode5GHz", \
+	0, \
+	10, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Configures Channel Bonding in 5 GHz")
+
 #define CFG_FEATURE_FLAG_ALL \
 	CFG(CFG_ACCEPT_SHORT_SLOT_ASSOC_ONLY) \
 	CFG(CFG_HCF_ENABLED) \
@@ -169,7 +219,9 @@
 	CFG(CFG_11G_SHORT_SLOT_TIME_ENABLED) \
 	CFG(CFG_CHANNEL_BONDING_MODE) \
 	CFG(CFG_BLOCK_ACK_ENABLED) \
-	CFG(CFG_ENABLE_AMPDUPS)
+	CFG(CFG_ENABLE_AMPDUPS) \
+	CFG(CFG_CHANNEL_BONDING_MODE_24GHZ) \
+	CFG(CFG_CHANNEL_BONDING_MODE_5GHZ)
 
 #endif /* __CFG_MLME_FEATURE_FLAG_H */
 

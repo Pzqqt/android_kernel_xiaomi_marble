@@ -1534,3 +1534,66 @@ ucfg_mlme_set_obss_color_collision_offload_enabled(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_channel_bonding_24ghz(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_CHANNEL_BONDING_MODE_24GHZ);
+		return QDF_STATUS_E_INVAL;
+	}
+	*val = mlme_obj->cfg.feature_flags.channel_bonding_mode_24ghz;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_channel_bonding_24ghz(struct wlan_objmgr_psoc *psoc,
+				    uint32_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.feature_flags.channel_bonding_mode_24ghz = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
+				   uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_CHANNEL_BONDING_MODE_5GHZ);
+		return QDF_STATUS_E_INVAL;
+	}
+	*value = mlme_obj->cfg.feature_flags.channel_bonding_mode_5ghz;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
+				   uint32_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.feature_flags.channel_bonding_mode_5ghz = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+

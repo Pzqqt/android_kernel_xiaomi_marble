@@ -117,52 +117,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gChannelBondingMode24GHz - Configures Channel Bonding in 24 GHz
- * @Min: 0
- * @Max: 10
- * @Default: 0
- *
- * This ini is used to set default channel bonding mode 24GHZ
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_CHANNEL_BONDING_MODE_24GHZ_NAME    "gChannelBondingMode24GHz"
-#define CFG_CHANNEL_BONDING_MODE_MIN           WNI_CFG_CHANNEL_BONDING_MODE_STAMIN
-#define CFG_CHANNEL_BONDING_MODE_MAX           WNI_CFG_CHANNEL_BONDING_MODE_STAMAX
-#define CFG_CHANNEL_BONDING_MODE_DEFAULT       WNI_CFG_CHANNEL_BONDING_MODE_STADEF
-
-/*
- * <ini>
- * gChannelBondingMode5GHz - Configures Channel Bonding in 5 GHz
- * @Min: 0
- * @Max: 10
- * @Default: 0
- *
- * This ini is used to set default channel bonding mode 5GHZ
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_CHANNEL_BONDING_MODE_5GHZ_NAME     "gChannelBondingMode5GHz"
-#define CFG_CHANNEL_BONDING_MODE_MIN           WNI_CFG_CHANNEL_BONDING_MODE_STAMIN
-#define CFG_CHANNEL_BONDING_MODE_MAX           WNI_CFG_CHANNEL_BONDING_MODE_STAMAX
-#define CFG_CHANNEL_BONDING_MODE_DEFAULT       WNI_CFG_CHANNEL_BONDING_MODE_STADEF
-
-/*
- * <ini>
  * gEnableDFSPnoChnlScan - enable dfs channels in PNO scan
  * @Min: 0
  * @Max: 1
@@ -851,8 +805,6 @@ struct hdd_config {
 	/* Config parameters */
 	bool enable_connected_scan;
 	enum hdd_dot11_mode dot11Mode;
-	uint32_t nChannelBondingMode24GHz;
-	uint32_t nChannelBondingMode5GHz;
 	bool apProtEnabled;
 
 #ifdef FEATURE_WLAN_DYNAMIC_CVM

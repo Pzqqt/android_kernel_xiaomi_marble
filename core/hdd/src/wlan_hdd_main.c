@@ -7594,6 +7594,7 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy;
 	int ret_val;
+	uint32_t channel_bonding_mode;
 
 	wiphy = hdd_ctx->wiphy;
 
@@ -7624,9 +7625,11 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 	wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
 	wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
 #endif
+	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+					    &channel_bonding_mode);
 	if (hdd_ctx->obss_scan_offload) {
 		hdd_debug("wmi_service_obss_scan supported");
-	} else if (hdd_ctx->config->nChannelBondingMode24GHz) {
+	} else if (channel_bonding_mode) {
 		hdd_debug("enable wpa_supp obss_scan");
 		wiphy->features |= NL80211_FEATURE_NEED_OBSS_SCAN;
 	}
@@ -14466,6 +14469,7 @@ QDF_STATUS hdd_update_score_config(
 	QDF_STATUS status;
 	struct wlan_mlme_nss_chains vdev_ini_cfg;
 	bool bval = false;
+	uint32_t channel_bonding_mode;
 
 	qdf_mem_zero(&vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
 	/* Populate the nss chain params from ini for this vdev type */
@@ -14478,8 +14482,12 @@ QDF_STATUS hdd_update_score_config(
 
 	sme_update_score_config(hdd_ctx->mac_handle, score_config);
 
-	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
-	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
+	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
+					    &channel_bonding_mode);
+	score_config->cb_mode_24G = channel_bonding_mode;
+	ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
+					   &channel_bonding_mode);
+	score_config->cb_mode_5G = channel_bonding_mode;
 
 	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
 	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||

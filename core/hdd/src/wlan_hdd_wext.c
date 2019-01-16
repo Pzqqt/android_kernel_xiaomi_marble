@@ -3698,20 +3698,23 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 	int retval = 0;
 	uint8_t band_capability;
 	QDF_STATUS status;
+	uint32_t channel_bonding_mode;
 
 	if (!mac_handle)
 		return -EINVAL;
 
 	old_phymode = sme_get_phy_mode(mac_handle);
 
+	ucfg_mlme_get_channel_bonding_24ghz(phddctx->psoc,
+					    &channel_bonding_mode);
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-	    sme_get_cb_phy_state_from_cb_ini_value(phddctx->config->
-						   nChannelBondingMode24GHz))
+	    sme_get_cb_phy_state_from_cb_ini_value(channel_bonding_mode))
 		ch_bond24 = true;
 
+	ucfg_mlme_get_channel_bonding_5ghz(phddctx->psoc,
+					   &channel_bonding_mode);
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-	    sme_get_cb_phy_state_from_cb_ini_value(phddctx->config->
-						   nChannelBondingMode5GHz))
+	    sme_get_cb_phy_state_from_cb_ini_value(channel_bonding_mode))
 		ch_bond5g = true;
 
 	status = wlan_mlme_get_band_capability(phddctx->psoc, &band_capability);
@@ -3979,10 +3982,12 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		sme_update_config(mac_handle, sme_config);
 
 		phddctx->config->dot11Mode = hdd_dot11mode;
-		phddctx->config->nChannelBondingMode24GHz =
-			sme_config->csrConfig.channelBondingMode24GHz;
-		phddctx->config->nChannelBondingMode5GHz =
-			sme_config->csrConfig.channelBondingMode5GHz;
+		ucfg_mlme_set_channel_bonding_24ghz(
+			phddctx->psoc,
+			sme_config->csrConfig.channelBondingMode24GHz);
+		ucfg_mlme_set_channel_bonding_5ghz(
+			phddctx->psoc,
+			sme_config->csrConfig.channelBondingMode5GHz);
 		if (hdd_update_config_cfg(phddctx) == false) {
 			hdd_err("could not update config_dat");
 			retval = -EIO;
@@ -3992,8 +3997,10 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		if (band_5g) {
 			struct ieee80211_supported_band *band;
 
+			ucfg_mlme_get_channel_bonding_5ghz(
+					phddctx->psoc, &channel_bonding_mode);
 			band = phddctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
-			if (phddctx->config->nChannelBondingMode5GHz)
+			if (channel_bonding_mode)
 				band->ht_cap.cap |=
 					IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 			else
@@ -4052,6 +4059,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 	uint32_t bonding_mode;
 	tSmeConfigParams *sme_config;
 	mac_handle_t mac_handle;
+	uint32_t channel_bonding_mode;
 
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle)
@@ -4067,13 +4075,15 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 
 	case eHT_CHANNEL_WIDTH_40MHZ:
 	case eHT_CHANNEL_WIDTH_80MHZ:
+		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
+						   &channel_bonding_mode);
 		bonding_state = csr_convert_cb_ini_value_to_phy_cb_state(
-			hdd_ctx->config->nChannelBondingMode5GHz);
+			channel_bonding_mode);
 
 		if (bonding_state == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE)
 			return -EINVAL;
 
-		bonding_mode = hdd_ctx->config->nChannelBondingMode5GHz;
+		bonding_mode = channel_bonding_mode;
 		break;
 
 	default:
