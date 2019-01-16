@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -223,7 +223,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 		status = QDF_STATUS_E_NOMEM;
 		goto done;
 	}
-	qdf_mem_set(data_buf, orig_nbytes, 0);
+	qdf_mem_zero(data_buf, orig_nbytes);
 	qdf_mem_dma_sync_single_for_device(scn->qdf_dev, CE_data_base,
 				       orig_nbytes, DMA_FROM_DEVICE);
 
