@@ -40,9 +40,9 @@ dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
 {
 	params->u.upd_queue_params.update_svld = 1;
 	params->u.upd_queue_params.svld = valid;
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Setting SSN valid bit to %d",
-				__func__, valid);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: Setting SSN valid bit to %d",
+		  __func__, valid);
 }
 #else
 static inline void
@@ -73,13 +73,13 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 
 	max_peers = soc->max_peers;
 	/* allocate the peer ID -> peer object map */
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"\n<=== cfg max peer id %d ====>", max_peers);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "\n<=== cfg max peer id %d ====>", max_peers);
 	peer_map_size = max_peers * sizeof(soc->peer_id_to_obj_map[0]);
 	soc->peer_id_to_obj_map = qdf_mem_malloc(peer_map_size);
 	if (!soc->peer_id_to_obj_map) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: peer map memory allocation failed", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: peer map memory allocation failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -461,11 +461,11 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
-		__func__, peer, hw_peer_id, vdev_id, mac_addr[0],
-		mac_addr[1], mac_addr[2], mac_addr[3],
-		mac_addr[4], mac_addr[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		  "%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
+		  __func__, peer, hw_peer_id, vdev_id, mac_addr[0],
+		  mac_addr[1], mac_addr[2], mac_addr[3],
+		  mac_addr[4], mac_addr[5]);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -488,8 +488,8 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 			mac_addr, peer_type, ast_hash);
 		}
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"AST entry not found");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "AST entry not found");
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -558,8 +558,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 	vdev = peer->vdev;
 	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			FL("Peers vdev is NULL"));
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Peers vdev is NULL"));
 		QDF_ASSERT(0);
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return ret;
@@ -692,8 +692,8 @@ add_ast_entry:
 
 	if (!ast_entry) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			FL("fail to allocate ast_entry"));
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("fail to allocate ast_entry"));
 		QDF_ASSERT(0);
 		return ret;
 	}
@@ -1286,17 +1286,17 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	/* check if there's already a peer object with this MAC address */
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr,
 		0 /* is aligned */, vdev_id);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
-		__func__, peer, peer_id, vdev_id, peer_mac_addr[0],
-		peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
-		peer_mac_addr[4], peer_mac_addr[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		  "%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x",
+		  __func__, peer, peer_id, vdev_id, peer_mac_addr[0],
+		  peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
+		  peer_mac_addr[4], peer_mac_addr[5]);
 
 	if (peer) {
 		/* peer's ref count was already incremented by
 		 * peer_find_hash_find
 		 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "%s: ref_cnt: %d", __func__,
 			   qdf_atomic_read(&peer->ref_cnt));
 		if (!soc->peer_id_to_obj_map[peer_id])
@@ -1345,16 +1345,16 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 	struct dp_peer *peer = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_map_event (soc:%pK): peer_id %di, hw_peer_id %d, peer_mac "
-		"%02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d", soc, peer_id,
-		hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
-		peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
-		peer_mac_addr[5], vdev_id);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "peer_map_event (soc:%pK): peer_id %di, hw_peer_id %d, peer_mac %02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d",
+		  soc, peer_id,
+		  hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
+		  peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
+		  peer_mac_addr[5], vdev_id);
 
 	if ((hw_peer_id < 0) ||
 	    (hw_peer_id >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"invalid hw_peer_id: %d", hw_peer_id);
 		qdf_assert_always(0);
 	}
@@ -1438,9 +1438,9 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
 	 * in peer_id_to_obj_map will be NULL.
 	 */
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Received unmap event for invalid peer_id"
-			" %u", __func__, peer_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Received unmap event for invalid peer_id %u",
+			  __func__, peer_id);
 		return;
 	}
 
@@ -1536,11 +1536,11 @@ static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
 		(reo_status->rx_queue_status.header.status !=
 		HAL_REO_CMD_DRAIN)) {
 		/* Should not happen normally. Just print error for now */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc update failed(%d): tid %d",
-			__func__,
-			reo_status->rx_queue_status.header.status,
-			rx_tid->tid);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx tid HW desc update failed(%d): tid %d",
+			  __func__,
+			  reo_status->rx_queue_status.header.status,
+			  rx_tid->tid);
 	}
 }
 
@@ -1638,11 +1638,11 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 		HAL_REO_CMD_SUCCESS) &&
 		(reo_status->fl_cache_status.header.status !=
 		HAL_REO_CMD_DRAIN)) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc flush failed(%d): tid %d",
-			__func__,
-			reo_status->rx_queue_status.header.status,
-			freedesc->rx_tid.tid);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx tid HW desc flush failed(%d): tid %d",
+			  __func__,
+			  reo_status->rx_queue_status.header.status,
+			  freedesc->rx_tid.tid);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: hw_qdesc_paddr: %pK, tid:%d", __func__,
@@ -1739,9 +1739,9 @@ try_desc_alloc:
 		qdf_mem_malloc(rx_tid->hw_qdesc_alloc_size);
 
 	if (!rx_tid->hw_qdesc_vaddr_unaligned) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc alloc failed: tid %d",
-			__func__, tid);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx tid HW desc alloc failed: tid %d",
+			  __func__, tid);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -1756,9 +1756,9 @@ try_desc_alloc:
 					hw_qdesc_align - 1);
 
 		if (!rx_tid->hw_qdesc_vaddr_unaligned) {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Rx tid HW desc alloc failed: tid %d",
-				__func__, tid);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Rx tid HW desc alloc failed: tid %d",
+				  __func__, tid);
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -1766,10 +1766,10 @@ try_desc_alloc:
 			rx_tid->hw_qdesc_vaddr_unaligned,
 			hw_qdesc_align);
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Total Size %d Aligned Addr %pK",
-			__func__, rx_tid->hw_qdesc_alloc_size,
-			hw_qdesc_vaddr);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Total Size %d Aligned Addr %pK",
+			  __func__, rx_tid->hw_qdesc_alloc_size,
+			  hw_qdesc_vaddr);
 
 	} else {
 		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned;
@@ -1812,9 +1812,9 @@ try_desc_alloc:
 			rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 			goto try_desc_alloc;
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc alloc failed (lowmem): tid %d",
-			__func__, tid);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Rx tid HW desc alloc failed (lowmem): tid %d",
+				  __func__, tid);
 			err = QDF_STATUS_E_NOMEM;
 			goto error;
 		}
@@ -1875,11 +1875,11 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	} else if (reo_status->rx_queue_status.header.status !=
 		HAL_REO_CMD_SUCCESS) {
 		/* Should not happen normally. Just print error for now */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: Rx tid HW desc deletion failed(%d): tid %d",
-			__func__,
-			reo_status->rx_queue_status.header.status,
-			freedesc->rx_tid.tid);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx tid HW desc deletion failed(%d): tid %d",
+			  __func__,
+			  reo_status->rx_queue_status.header.status,
+			  freedesc->rx_tid.tid);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
@@ -1953,9 +1953,9 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			 *
 			 * Here invoke desc_free function directly to do clean up.
 			 */
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to send REO cmd to flush cache: tid %d",
-				__func__, rx_tid->tid);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: fail to send REO cmd to flush cache: tid %d",
+				  __func__, rx_tid->tid);
 			qdf_mem_zero(&reo_status, sizeof(reo_status));
 			reo_status.fl_cache_status.header.status = 0;
 			dp_reo_desc_free(soc, (void *)desc, &reo_status);
@@ -1980,9 +1980,9 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 		qdf_mem_malloc(sizeof(*freedesc));
 
 	if (!freedesc) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s: malloc failed for freedesc: tid %d",
-			__func__, tid);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: malloc failed for freedesc: tid %d",
+			  __func__, tid);
 		return -ENOMEM;
 	}
 
@@ -2013,9 +2013,9 @@ static void dp_peer_setup_remaining_tids(struct dp_peer *peer)
 
 	for (tid = 1; tid < DP_MAX_TIDS-1; tid++) {
 		dp_rx_tid_setup_wifi3(peer, tid, 1, 0);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"Setting up TID %d for peer %pK peer->local_id %d",
-			tid, peer, peer->local_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "Setting up TID %d for peer %pK peer->local_id %d",
+			  tid, peer, peer->local_id);
 	}
 }
 #else
@@ -2194,7 +2194,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	struct dp_rx_tid *rx_tid = NULL;
 
 	if (!peer || peer->delete_in_progress) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Peer is NULL!\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2205,7 +2205,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d addba rsp tx completion failed!",
 			 __func__, tid);
 		return QDF_STATUS_SUCCESS;
@@ -2214,7 +2214,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	rx_tid->num_addba_rsp_success++;
 	if (rx_tid->ba_status == DP_RX_BA_INACTIVE) {
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d hw qdesc is not in IN_PROGRESS",
 			__func__, tid);
 		return QDF_STATUS_E_FAILURE;
@@ -2222,7 +2222,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 
 	if (!qdf_atomic_read(&peer->is_default_route_set)) {
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: default route is not set for peer: %pM",
 			  __func__, peer->mac_addr.raw);
 		return QDF_STATUS_E_FAILURE;
@@ -2271,7 +2271,7 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	struct dp_rx_tid *rx_tid = NULL;
 
 	if (!peer || peer->delete_in_progress) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Peer is NULL!\n", __func__);
 		return;
 	}
@@ -2350,7 +2350,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	struct dp_rx_tid *rx_tid = NULL;
 
 	if (!peer || peer->delete_in_progress) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Peer is NULL!\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2364,7 +2364,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		peer->active_ba_session_cnt--;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Rx Tid- %d hw qdesc is already setup",
 			__func__, tid);
 		return QDF_STATUS_E_FAILURE;
@@ -2465,7 +2465,7 @@ int dp_delba_tx_completion_wifi3(void *peer_handle,
 	struct dp_rx_tid *rx_tid = NULL;
 
 	if (!peer || peer->delete_in_progress) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Peer is NULL!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2513,13 +2513,12 @@ void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,
 		qdf_nbuf_t msdu = msdu_list;
 
 		msdu_list = qdf_nbuf_next(msdu_list);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			"discard rx %pK from partly-deleted peer %pK "
-			"(%02x:%02x:%02x:%02x:%02x:%02x)",
-			msdu, peer,
-			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "discard rx %pK from partly-deleted peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)",
+			  msdu, peer,
+			  peer->mac_addr.raw[0], peer->mac_addr.raw[1],
+			  peer->mac_addr.raw[2], peer->mac_addr.raw[3],
+			  peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 		qdf_nbuf_free(msdu);
 	}
 }
@@ -2604,7 +2603,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 
 			if (pn_size) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
+				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s PN set for TID:%d pn:%x:%x:%x:%x",
 					  __func__, i, rx_pn[3], rx_pn[2],
@@ -2619,8 +2618,8 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 			dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
 				dp_rx_tid_update_cb, rx_tid);
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-				"PN Check not setup for TID :%d ", i);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  "PN Check not setup for TID :%d ", i);
 		}
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	}
@@ -2638,20 +2637,19 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 
 	peer = dp_peer_find_by_id(soc, peer_id);
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"Couldn't find peer from ID %d - skipping security inits",
-			peer_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Couldn't find peer from ID %d - skipping security inits",
+			  peer_id);
 		return;
 	}
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"sec spec for peer %pK (%02x:%02x:%02x:%02x:%02x:%02x): "
-		"%s key of type %d",
-		peer,
-		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		peer->mac_addr.raw[4], peer->mac_addr.raw[5],
-		is_unicast ? "ucast" : "mcast",
-		sec_type);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "sec spec for peer %pK (%02x:%02x:%02x:%02x:%02x:%02x): %s key of type %d",
+		  peer,
+		  peer->mac_addr.raw[0], peer->mac_addr.raw[1],
+		  peer->mac_addr.raw[2], peer->mac_addr.raw[3],
+		  peer->mac_addr.raw[4], peer->mac_addr.raw[5],
+		  is_unicast ? "ucast" : "mcast",
+		  sec_type);
 	sec_index = is_unicast ? dp_sec_ucast : dp_sec_mcast;
 	peer->security[sec_index].sec_type = sec_type;
 #ifdef notyet /* TODO: See if this is required for defrag support */
@@ -2852,8 +2850,8 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 
 	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, DP_VDEV_ALL);
 	if (NULL == peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"Failed to find peer for: [%pM]", peer_mac);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to find peer for: [%pM]", peer_mac);
 		return QDF_STATUS_E_FAILURE;
 	}
 	peer->state = state;
@@ -2893,20 +2891,20 @@ struct cdp_vdev *dp_get_vdev_by_sta_id(struct cdp_pdev *pdev_handle,
 	struct dp_peer *peer = NULL;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "Invalid sta id passed");
 		return NULL;
 	}
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PDEV not found for sta_id [%d]", sta_id);
 		return NULL;
 	}
 
 	peer = dp_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PEER [%d] not found", sta_id);
 		return NULL;
 	}
@@ -3066,12 +3064,12 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 
 	peer = dp_peer_find_by_id(soc, peer_id);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"soc %pK peer_id %d", soc, peer_id);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "soc %pK peer_id %d", soc, peer_id);
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"peer not found ");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "peer not found ");
 		return CDP_INVALID_VDEV_ID;
 	}
 
@@ -3141,7 +3139,7 @@ void dp_set_michael_key(struct cdp_peer *peer_handle,
 	uint8_t sec_index = is_unicast ? 1 : 0;
 
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "peer not found ");
 		return;
 	}
