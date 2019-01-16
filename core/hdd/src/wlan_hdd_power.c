@@ -1378,9 +1378,6 @@ static void hdd_is_interface_down_during_ssr(struct hdd_context *hdd_ctx)
 		adapter = pnext;
 	}
 
-	if (!wlansap_is_gp_sap_ctx_empty())
-		QDF_DEBUG_PANIC("gp_sap_ctx leak");
-
 	hdd_exit();
 }
 

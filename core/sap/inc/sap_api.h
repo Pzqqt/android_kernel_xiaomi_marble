@@ -800,14 +800,6 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 				    ePhyChanBondState chanBondState);
 
 /**
- * wlansap_is_gp_sap_ctx_empty() - This API checks if gp_sap_ctx
- * is empty
- *
- * Return: TRUE if empty, FALSE otherwise
- */
-bool wlansap_is_gp_sap_ctx_empty(void);
-
-/**
  * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
  * in nol list
  * @sap_ctx: SAP context pointer

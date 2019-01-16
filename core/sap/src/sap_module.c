@@ -369,23 +369,6 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 					      chanBondState);
 }
 
-bool wlansap_is_gp_sap_ctx_empty(void)
-{
-	int8_t i;
-	bool is_empty = TRUE;
-
-	qdf_mutex_acquire(&sap_context_lock);
-	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		if (NULL != gp_sap_ctx[i]) {
-			is_empty = FALSE;
-			break;
-		}
-	}
-	qdf_mutex_release(&sap_context_lock);
-
-	return is_empty;
-}
-
 static QDF_STATUS wlansap_mark_leaking_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t *leakage_adjusted_lst,
 		uint8_t chan_bw)
