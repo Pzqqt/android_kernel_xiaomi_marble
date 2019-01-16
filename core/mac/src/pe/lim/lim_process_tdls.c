@@ -692,7 +692,7 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 	nss = QDF_MIN(nss, mac->user_configured_nss);
 	if (IS_DOT11_MODE_HT(selfDot11Mode)) {
 		/* Include HT Capability IE */
-		populate_dot11f_ht_caps(mac, NULL, htCap);
+		populate_dot11f_ht_caps(mac, pe_session, htCap);
 		val_len = SIZE_OF_SUPPORTED_MCS_SET;
 		wlan_mlme_get_cfg_str(&htCap->supportedMCSSet[0],
 				      &mac->mlme_cfg->rates.supported_mcs_set,
@@ -714,8 +714,9 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 		 * 11.21.1 General: The channel width of the TDLS direct link on
 		 * the base channel shall not exceed the channel width of the
 		 * BSS to which the TDLS peer STAs are associated.
+		 * Select supportedChannelWidthSet based on channel bonding
+		 * settings for each band
 		 */
-		htCap->supportedChannelWidthSet = 1;
 	} else {
 		htCap->present = 0;
 	}
