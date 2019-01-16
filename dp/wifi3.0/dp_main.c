@@ -5513,7 +5513,7 @@ static QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
@@ -5616,7 +5616,7 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
 		pdev->mo_data_filter);
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -5659,7 +5659,7 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 		}
 	}
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 0;
@@ -5786,7 +5786,7 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
 		pdev->mo_data_filter);
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
@@ -5846,7 +5846,7 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 		}
 	}
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 0;
@@ -6124,9 +6124,9 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		return;
 	}
 
-	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
-	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
-	qdf_mem_set(&(pdev->stats.tx_i), sizeof(pdev->stats.tx_i), 0x0);
+	qdf_mem_zero(&pdev->stats.tx, sizeof(pdev->stats.tx));
+	qdf_mem_zero(&pdev->stats.rx, sizeof(pdev->stats.rx));
+	qdf_mem_zero(&pdev->stats.tx_i, sizeof(pdev->stats.tx_i));
 
 	if (pdev->mcopy_mode)
 		DP_UPDATE_STATS(pdev, pdev->invalid_peer);
@@ -7580,7 +7580,7 @@ dp_ppdu_ring_reset(struct dp_pdev *pdev)
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	int mac_id;
 
-	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+	qdf_mem_zero(&(htt_tlv_filter), sizeof(htt_tlv_filter));
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -8133,7 +8133,7 @@ static void dp_txrx_reset_peer_stats(struct cdp_peer *peer_handle)
 
 	qdf_assert(peer);
 
-	qdf_mem_set(&peer->stats, sizeof(peer->stats), 0);
+	qdf_mem_zero(&peer->stats, sizeof(peer->stats));
 }
 
 /* dp_txrx_get_vdev_stats - Update buffer with cdp_vdev_stats

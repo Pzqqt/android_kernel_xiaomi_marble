@@ -1696,7 +1696,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	msdu_info->exception_fw = 1;
 
-	qdf_mem_set(meta_data, sizeof(struct htt_tx_msdu_desc_ext2_t), 0);
+	qdf_mem_zero(meta_data, sizeof(struct htt_tx_msdu_desc_ext2_t));
 
 	meta_data->host_tx_desc_pool = 1;
 	meta_data->update_peer_cache = 1;
@@ -1874,7 +1874,7 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 	struct dp_tx_msdu_info_s msdu_info;
 
-	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 
 	msdu_info.tid = tx_exc_metadata->tid;
 
@@ -2049,8 +2049,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	uint16_t peer_id = HTT_INVALID_PEER;
 	qdf_nbuf_t nbuf_mesh = NULL;
 
-	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
-	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
+	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
+	qdf_mem_zero(&seg_info, sizeof(seg_info));
 
 	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
 
@@ -2220,7 +2220,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	qdf_assert(vdev);
 
-	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
@@ -3915,7 +3915,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	uint8_t empty_entry_mac[DP_MAC_ADDR_LEN] = {0};
 	QDF_STATUS status;
 
-	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
+	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 

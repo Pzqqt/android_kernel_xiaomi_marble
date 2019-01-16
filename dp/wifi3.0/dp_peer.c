@@ -2668,7 +2668,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 
 #ifdef notyet /* TODO: Check if this is required for wifi3.0 */
 	if (sec_type != cdp_sec_type_wapi) {
-		qdf_mem_set(peer->tids_last_pn_valid, _EXT_TIDS, 0x00);
+		qdf_mem_zero(peer->tids_last_pn_valid, _EXT_TIDS);
 	} else {
 		for (i = 0; i < DP_MAX_TIDS; i++) {
 			/*

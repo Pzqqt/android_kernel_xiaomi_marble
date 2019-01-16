@@ -3288,8 +3288,8 @@ htt_htc_soc_attach(struct htt_soc *soc)
 	QDF_STATUS status;
 	struct dp_soc *dpsoc = soc->dp_soc;
 
-	qdf_mem_set(&connect, sizeof(connect), 0);
-	qdf_mem_set(&response, sizeof(response), 0);
+	qdf_mem_zero(&connect, sizeof(connect));
+	qdf_mem_zero(&response, sizeof(response));
 
 	connect.pMetaData = NULL;
 	connect.MetaDataLength = 0;

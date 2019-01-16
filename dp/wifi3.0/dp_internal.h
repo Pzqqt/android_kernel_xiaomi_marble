@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,10 +73,10 @@ while (0)
 		fmt, ## args)
 
 #define DP_STATS_INIT(_handle) \
-	qdf_mem_set(&((_handle)->stats), sizeof((_handle)->stats), 0x0)
+	qdf_mem_zero(&((_handle)->stats), sizeof((_handle)->stats))
 
 #define DP_STATS_CLR(_handle) \
-	qdf_mem_set(&((_handle)->stats), sizeof((_handle)->stats), 0x0)
+	qdf_mem_zero(&((_handle)->stats), sizeof((_handle)->stats))
 
 #ifndef DISABLE_DP_STATS
 #define DP_STATS_INC(_handle, _field, _delta) \
