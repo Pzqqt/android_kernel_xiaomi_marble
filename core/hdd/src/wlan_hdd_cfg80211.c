@@ -11446,6 +11446,7 @@ static int hdd_post_get_chain_rssi_rsp(struct hdd_context *hdd_ctx,
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
 		(sizeof(result->chain_rssi) + NLA_HDRLEN) +
+		(sizeof(result->chain_evm) + NLA_HDRLEN) +
 		(sizeof(result->ant_id) + NLA_HDRLEN) +
 		NLMSG_HDRLEN);
 
@@ -11455,15 +11456,22 @@ static int hdd_post_get_chain_rssi_rsp(struct hdd_context *hdd_ctx,
 	}
 
 	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_CHAIN_RSSI,
-			sizeof(result->chain_rssi),
-			result->chain_rssi)) {
+		    sizeof(result->chain_rssi),
+		    result->chain_rssi)) {
+		hdd_err("put fail");
+		goto nla_put_failure;
+	}
+
+	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_CHAIN_EVM,
+		    sizeof(result->chain_evm),
+		    result->chain_evm)) {
 		hdd_err("put fail");
 		goto nla_put_failure;
 	}
 
 	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_ANTENNA_INFO,
-			sizeof(result->ant_id),
-			result->ant_id)) {
+		    sizeof(result->ant_id),
+		    result->ant_id)) {
 		hdd_err("put fail");
 		goto nla_put_failure;
 	}

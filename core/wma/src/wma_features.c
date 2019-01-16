@@ -5535,6 +5535,8 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 		return -EINVAL;
 	}
 
+	qdf_mem_zero(&chain_rssi_result, sizeof(chain_rssi_result));
+
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->macaddr, macaddr);
 	WMA_LOGD(FL("macaddr: " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(macaddr));
 
@@ -5542,24 +5544,31 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	chain_rssi_result.num_chains_valid = event->num_chains_valid;
 
 	qdf_mem_copy(chain_rssi_result.chain_rssi, event->chain_rssi,
-				sizeof(event->chain_rssi));
-	for (i = 0; i < event->num_chains_valid; i++) {
-		WMA_LOGD(FL("chain_rssi: %d, ant_id: %d"),
-			 event->chain_rssi[i], event->ant_id[i]);
+		     sizeof(event->chain_rssi));
+
+	qdf_mem_copy(chain_rssi_result.chain_evm, event->chain_evm,
+		     sizeof(event->chain_evm));
+
+	qdf_mem_copy(chain_rssi_result.ant_id, event->ant_id,
+		     sizeof(event->ant_id));
+
+	for (i = 0; i < chain_rssi_result.num_chains_valid; i++) {
+		WMA_LOGD(FL("chain_rssi: %d, chain_evm: %d,ant_id: %d"),
+			 chain_rssi_result.chain_rssi[i],
+			 chain_rssi_result.chain_evm[i],
+			 chain_rssi_result.ant_id[i]);
+
 		if (!wmi_service_enabled(wma->wmi_handle,
 					 wmi_service_hw_db2dbm_support)) {
 			if (chain_rssi_result.chain_rssi[i] !=
 			    WMA_INVALID_PER_CHAIN_SNR)
 				chain_rssi_result.chain_rssi[i] +=
-							WMA_TGT_NOISE_FLOOR_DBM;
+						WMA_TGT_NOISE_FLOOR_DBM;
 			else
 				chain_rssi_result.chain_rssi[i] =
 						WMA_INVALID_PER_CHAIN_RSSI;
 		}
 	}
-
-	qdf_mem_copy(chain_rssi_result.ant_id, event->ant_id,
-				sizeof(event->ant_id));
 
 	pmac->sme.get_chain_rssi_cb(pmac->sme.get_chain_rssi_context,
 				&chain_rssi_result);

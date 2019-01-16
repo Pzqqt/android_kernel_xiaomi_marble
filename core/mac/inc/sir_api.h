@@ -5989,12 +5989,14 @@ struct sir_rssi_disallow_lst {
  * struct chain_rssi_result - chain rssi result
  * num_chains_valid: valid chain num
  * @chain_rssi: chain rssi result as dBm unit
+ * @chain_evm: error vector magnitude
  * @ant_id: antenna id
  */
 #define CHAIN_MAX_NUM 8
 struct chain_rssi_result {
 	uint32_t num_chains_valid;
 	uint32_t chain_rssi[CHAIN_MAX_NUM];
+	int32_t chain_evm[CHAIN_MAX_NUM];
 	uint32_t ant_id[CHAIN_MAX_NUM];
 };
 
