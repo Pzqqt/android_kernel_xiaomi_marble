@@ -35,6 +35,9 @@
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
+#ifdef THREAD_PERFORMANCE
+#include <linux/sched/types.h>
+#endif
 
 /* Milli seconds to delay SSR thread when an Entry point is Active */
 #define SSR_WAIT_SLEEP_TIME 200
@@ -407,6 +410,12 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
+#ifdef THREAD_PERFORMANCE
+	struct sched_param param;
+
+	param.sched_priority = 99;
+#endif
+
 	cds_debug("Opening the CDS Scheduler");
 	/* Sanity checks */
 	if ((p_cds_context == NULL) || (pSchedContext == NULL)) {
@@ -453,6 +462,9 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		goto OL_RX_THREAD_START_FAILURE;
 
 	}
+#ifdef THREAD_PERFORMANCE
+	sched_setscheduler(pSchedContext->ol_rx_thread, SCHED_RR, &param);
+#endif
 	wake_up_process(pSchedContext->ol_rx_thread);
 	cds_debug("CDS OL RX thread Created");
 	wait_for_completion_interruptible(&pSchedContext->ol_rx_start_event);
