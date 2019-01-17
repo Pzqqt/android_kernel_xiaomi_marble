@@ -9337,6 +9337,9 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 	if (!reg_caps)
 		return QDF_STATUS_E_INVAL;
 
+	if (reg_caps->num_phy > param_buf->num_hal_reg_caps)
+		return QDF_STATUS_E_INVAL;
+
 	if (phy_idx >= reg_caps->num_phy)
 		return QDF_STATUS_E_INVAL;
 
