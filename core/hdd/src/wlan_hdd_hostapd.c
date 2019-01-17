@@ -35,6 +35,7 @@
 #include <cds_api.h>
 #include <cds_sched.h>
 #include <linux/etherdevice.h>
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <qc_sap_ioctl.h>
 #include <wlan_hdd_hostapd.h>
@@ -453,15 +454,22 @@ static int __hdd_hostapd_open(struct net_device *dev)
  *
  * Return: 0 on success, error number otherwise
  */
-static int hdd_hostapd_open(struct net_device *dev)
+static int hdd_hostapd_open(struct net_device *net_dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __hdd_hostapd_open(dev);
+	errno = __hdd_hostapd_open(net_dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -519,15 +527,22 @@ static int __hdd_hostapd_stop(struct net_device *dev)
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_hostapd_stop(struct net_device *dev)
+int hdd_hostapd_stop(struct net_device *net_dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __hdd_hostapd_stop(dev);
+	errno = __hdd_hostapd_stop(net_dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
 }
 
 /**

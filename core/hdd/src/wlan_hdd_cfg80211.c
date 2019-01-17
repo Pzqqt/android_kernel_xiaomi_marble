@@ -13774,6 +13774,29 @@ err:
 	return errno;
 }
 
+static int _wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
+					   struct net_device *net_dev,
+					   enum nl80211_iftype type,
+					   u32 *flags,
+					   struct vif_params *params)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	cds_ssr_protect(__func__);
+	errno = __wlan_hdd_cfg80211_change_iface(wiphy, net_dev, type,
+						 flags, params);
+	cds_ssr_unprotect(__func__);
+
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
+}
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 /**
  * wlan_hdd_cfg80211_change_iface() - change interface cfg80211 op
@@ -13791,14 +13814,8 @@ static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					  u32 *flags,
 					  struct vif_params *params)
 {
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret =
-		__wlan_hdd_cfg80211_change_iface(wiphy, ndev, type, flags, params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
+	return _wlan_hdd_cfg80211_change_iface(wiphy, ndev, type,
+					       flags, params);
 }
 #else
 static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
@@ -13806,14 +13823,8 @@ static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					  enum nl80211_iftype type,
 					  struct vif_params *params)
 {
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_change_iface(wiphy, ndev, type,
+	return _wlan_hdd_cfg80211_change_iface(wiphy, ndev, type,
 					       &params->flags, params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
 }
 #endif /* KERNEL_VERSION(4, 12, 0) */
 

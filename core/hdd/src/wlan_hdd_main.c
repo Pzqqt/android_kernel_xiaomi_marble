@@ -26,7 +26,6 @@
 /* Include Files */
 #include <wbuff.h>
 #include "cfg_ucfg_api.h"
-#include "wlan_dsc.h"
 #include <wlan_hdd_includes.h>
 #include <cds_api.h>
 #include <cds_sched.h>
@@ -2197,15 +2196,22 @@ static int __hdd_mon_open(struct net_device *dev)
  *
  * Return: 0 for success; non-zero for failure
  */
-static int hdd_mon_open(struct net_device *dev)
+static int hdd_mon_open(struct net_device *net_dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __hdd_mon_open(dev);
+	errno = __hdd_mon_open(net_dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
@@ -3156,15 +3162,22 @@ err_hdd_hdd_init_deinit_lock:
  *
  * Return: 0 for success; non-zero for failure
  */
-static int hdd_open(struct net_device *dev)
+static int hdd_open(struct net_device *net_dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __hdd_open(dev);
+	errno = __hdd_open(net_dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -3267,15 +3280,22 @@ static int __hdd_stop(struct net_device *dev)
  *
  * Return: 0 for success and error number for failure
  */
-static int hdd_stop(struct net_device *dev)
+static int hdd_stop(struct net_device *net_dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __hdd_stop(dev);
+	errno = __hdd_stop(net_dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
