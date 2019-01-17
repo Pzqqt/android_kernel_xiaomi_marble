@@ -360,6 +360,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					drop_mpdu = true;
 					qdf_nbuf_free(msdu);
 					msdu = NULL;
+					dp_pdev->mon_last_linkdesc_paddr =
+						buf_info.paddr;
 					goto next_msdu;
 				}
 
