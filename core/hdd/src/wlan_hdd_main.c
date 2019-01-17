@@ -5274,13 +5274,21 @@ void hdd_close_adapter(struct hdd_context *hdd_ctx,
 void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
+	struct hdd_vdev_sync *vdev_sync;
 
 	hdd_enter();
 
 	while (QDF_IS_STATUS_SUCCESS(hdd_remove_front_adapter(hdd_ctx,
 							      &adapter))) {
+		vdev_sync = hdd_vdev_sync_unregister(adapter->dev);
+		if (vdev_sync)
+			hdd_vdev_sync_wait_for_ops(vdev_sync);
+
 		wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 		__hdd_close_adapter(hdd_ctx, adapter, rtnl_held);
+
+		if (vdev_sync)
+			hdd_vdev_sync_destroy(vdev_sync);
 	}
 
 	hdd_exit();
@@ -9284,20 +9292,13 @@ static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
 {
 	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
-	QDF_STATUS status;
 	int errno;
 
-	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "idle restart");
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_info("unable to start 'idle restart'; status:%u", status);
-		return qdf_status_to_os_return(status);
-	}
+	QDF_BUG(rtnl_is_locked());
 
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (!errno)
 		hdd_psoc->state = psoc_state_active;
-
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 
 	return errno;
 }
@@ -9608,114 +9609,6 @@ err_free_hdd_context:
 
 err_out:
 	return ERR_PTR(ret);
-}
-
-#ifdef WLAN_OPEN_P2P_INTERFACE
-/**
- * hdd_open_p2p_interface - Open P2P interface
- * @hdd_ctx: HDD context
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter;
-	bool p2p_dev_addr_admin;
-	bool is_p2p_locally_administered = false;
-
-	cfg_p2p_get_device_addr_admin(hdd_ctx->psoc, &p2p_dev_addr_admin);
-
-	if (p2p_dev_addr_admin) {
-		if (hdd_ctx->num_provisioned_addr &&
-		    !(hdd_ctx->provisioned_mac_addr[0].bytes[0] & 0x02)) {
-			hdd_ctx->p2p_device_address =
-					hdd_ctx->provisioned_mac_addr[0];
-
-			/*
-			 * Generate the P2P Device Address.  This consists of
-			 * the device's primary MAC address with the locally
-			 * administered bit set.
-			 */
-
-			hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
-			is_p2p_locally_administered = true;
-		} else if (!(hdd_ctx->derived_mac_addr[0].bytes[0] & 0x02)) {
-			hdd_ctx->p2p_device_address =
-						hdd_ctx->derived_mac_addr[0];
-			/*
-			 * Generate the P2P Device Address.  This consists of
-			 * the device's primary MAC address with the locally
-			 * administered bit set.
-			 */
-			hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
-			is_p2p_locally_administered = true;
-		}
-	}
-	if (!is_p2p_locally_administered) {
-		uint8_t *p2p_dev_addr;
-
-		p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx,
-						      QDF_P2P_DEVICE_MODE);
-		if (!p2p_dev_addr) {
-			hdd_err("Failed to get MAC address for new p2p device");
-			return QDF_STATUS_E_INVAL;
-		}
-
-		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
-			     p2p_dev_addr, QDF_MAC_ADDR_SIZE);
-	}
-
-	adapter = hdd_open_adapter(hdd_ctx, QDF_P2P_DEVICE_MODE, "p2p%d",
-				   hdd_ctx->p2p_device_address.bytes,
-				   NET_NAME_UNKNOWN, true);
-	if (!adapter) {
-		hdd_err("Failed to open p2p interface");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-static inline QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
-static QDF_STATUS hdd_open_ocb_interface(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter;
-
-	adapter = hdd_open_adapter(hdd_ctx, QDF_OCB_MODE, "wlanocb%d",
-				   wlan_hdd_get_intf_addr(hdd_ctx,
-							  QDF_OCB_MODE),
-				   NET_NAME_UNKNOWN, true);
-	if (!adapter) {
-		hdd_err("Failed to open 802.11p interface");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS hdd_open_concurrent_interface(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter;
-
-	if (qdf_str_eq(hdd_ctx->config->enable_concurrent_sta, ""))
-		return QDF_STATUS_SUCCESS;
-
-	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE,
-				   hdd_ctx->config->enable_concurrent_sta,
-				   wlan_hdd_get_intf_addr(hdd_ctx,
-							  QDF_STA_MODE),
-				   NET_NAME_UNKNOWN, true);
-	if (!adapter) {
-		hdd_err("Failed to open concurrent station interface");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -11747,12 +11640,151 @@ static QDF_STATUS wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
 }
 #endif
 
+static QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
+					    enum QDF_OPMODE op_mode,
+					    const char *iface_name,
+					    uint8_t *mac_addr_bytes)
+{
+	struct hdd_vdev_sync *vdev_sync;
+	struct hdd_adapter *adapter;
+	QDF_STATUS status;
+	int errno;
+
+	QDF_BUG(rtnl_is_locked());
+	dsc_psoc_assert_trans_protected(hdd_ctx->hdd_psoc->dsc_psoc);
+
+	errno = hdd_vdev_sync_create(hdd_ctx->wiphy, &vdev_sync);
+	if (errno)
+		return qdf_status_from_os_return(errno);
+
+	adapter = hdd_open_adapter(hdd_ctx, op_mode, iface_name,
+				   mac_addr_bytes, NET_NAME_UNKNOWN, true);
+	if (!adapter) {
+		status = QDF_STATUS_E_INVAL;
+		goto destroy_sync;
+	}
+
+	hdd_vdev_sync_register(adapter->dev, vdev_sync);
+
+	return QDF_STATUS_SUCCESS;
+
+destroy_sync:
+	hdd_vdev_sync_destroy(vdev_sync);
+
+	return status;
+}
+
+#ifdef WLAN_OPEN_P2P_INTERFACE
+/**
+ * hdd_open_p2p_interface - Open P2P interface
+ * @hdd_ctx: HDD context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	bool p2p_dev_addr_admin;
+	bool is_p2p_locally_administered = false;
+
+	cfg_p2p_get_device_addr_admin(hdd_ctx->psoc, &p2p_dev_addr_admin);
+
+	if (p2p_dev_addr_admin) {
+		if (hdd_ctx->num_provisioned_addr &&
+		    !(hdd_ctx->provisioned_mac_addr[0].bytes[0] & 0x02)) {
+			hdd_ctx->p2p_device_address =
+					hdd_ctx->provisioned_mac_addr[0];
+
+			/*
+			 * Generate the P2P Device Address.  This consists of
+			 * the device's primary MAC address with the locally
+			 * administered bit set.
+			 */
+
+			hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
+			is_p2p_locally_administered = true;
+		} else if (!(hdd_ctx->derived_mac_addr[0].bytes[0] & 0x02)) {
+			hdd_ctx->p2p_device_address =
+						hdd_ctx->derived_mac_addr[0];
+			/*
+			 * Generate the P2P Device Address.  This consists of
+			 * the device's primary MAC address with the locally
+			 * administered bit set.
+			 */
+			hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
+			is_p2p_locally_administered = true;
+		}
+	}
+	if (!is_p2p_locally_administered) {
+		uint8_t *p2p_dev_addr;
+
+		p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx,
+						      QDF_P2P_DEVICE_MODE);
+		if (!p2p_dev_addr) {
+			hdd_err("Failed to get MAC address for new p2p device");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
+			     p2p_dev_addr, QDF_MAC_ADDR_SIZE);
+	}
+
+	status = hdd_open_adapter_no_trans(hdd_ctx, QDF_P2P_DEVICE_MODE,
+					   "p2p%d",
+					   hdd_ctx->p2p_device_address.bytes);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to open p2p interface");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static QDF_STATUS hdd_open_ocb_interface(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	uint8_t *mac_addr;
+
+	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_OCB_MODE);
+	status = hdd_open_adapter_no_trans(hdd_ctx, QDF_OCB_MODE,
+					   "wlanocb%d", mac_addr);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to open 802.11p interface");
+
+	return status;
+}
+
+static QDF_STATUS hdd_open_concurrent_interface(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	const char *iface_name;
+	uint8_t *mac_addr;
+
+	if (qdf_str_eq(hdd_ctx->config->enable_concurrent_sta, ""))
+		return QDF_STATUS_SUCCESS;
+
+	iface_name = hdd_ctx->config->enable_concurrent_sta;
+	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_STA_MODE);
+	status = hdd_open_adapter_no_trans(hdd_ctx, QDF_STA_MODE,
+					   iface_name, mac_addr);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to open concurrent station interface");
+
+	return status;
+}
+
 static QDF_STATUS
 hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter;
 	enum dot11p_mode dot11p_mode;
 	QDF_STATUS status;
+	uint8_t *mac_addr;
 
 	ucfg_mlme_get_dot11p_mode(hdd_ctx->psoc, &dot11p_mode);
 
@@ -11760,12 +11792,11 @@ hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
 	if (dot11p_mode == CFG_11P_STANDALONE)
 		return hdd_open_ocb_interface(hdd_ctx);
 
-	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE, "wlan%d",
-				   wlan_hdd_get_intf_addr(hdd_ctx,
-							  QDF_STA_MODE),
-				   NET_NAME_UNKNOWN, true);
-	if (!adapter)
-		return QDF_STATUS_E_INVAL;
+	mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_STA_MODE);
+	status = hdd_open_adapter_no_trans(hdd_ctx, QDF_STA_MODE,
+					   "wlan%d", mac_addr);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	/* opening concurrent STA is best effort, continue on error */
 	hdd_open_concurrent_interface(hdd_ctx);
@@ -11791,27 +11822,19 @@ err_close_adapters:
 
 static QDF_STATUS hdd_open_adapters_for_ftm_mode(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter;
+	uint8_t *mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_FTM_MODE);
 
-	adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
-				   wlan_hdd_get_intf_addr(hdd_ctx,
-							  QDF_FTM_MODE),
-				   NET_NAME_UNKNOWN, true);
-
-	return adapter ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
+	return hdd_open_adapter_no_trans(hdd_ctx, QDF_FTM_MODE,
+					 "wlan%d", mac_addr);
 }
 
 static QDF_STATUS
 hdd_open_adapters_for_monitor_mode(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter;
+	uint8_t *mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_MONITOR_MODE);
 
-	adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
-				   wlan_hdd_get_intf_addr(hdd_ctx,
-							  QDF_MONITOR_MODE),
-				   NET_NAME_UNKNOWN, true);
-
-	return adapter ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
+	return hdd_open_adapter_no_trans(hdd_ctx, QDF_MONITOR_MODE,
+					 "wlan%d", mac_addr);
 }
 
 static QDF_STATUS hdd_open_adapters_for_epping_mode(struct hdd_context *hdd_ctx)

@@ -24,6 +24,7 @@
  *
  */
 
+#include "wlan_hdd_dsc.h"
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_hostapd.h>
 #include <net/cfg80211.h>
@@ -739,6 +740,42 @@ close_adapter:
 	return ERR_PTR(-EINVAL);
 }
 
+static struct wireless_dev *
+_wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
+			   const char *name,
+			   unsigned char name_assign_type,
+			   enum nl80211_iftype type,
+			   u32 *flags,
+			   struct vif_params *params)
+{
+	struct wireless_dev *wdev;
+	struct hdd_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = hdd_vdev_sync_create_with_trans(wiphy, &vdev_sync);
+	if (errno)
+		return ERR_PTR(errno);
+
+	cds_ssr_protect(__func__);
+	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					   type, flags, params);
+	cds_ssr_unprotect(__func__);
+
+	if (IS_ERR_OR_NULL(wdev))
+		goto destroy_sync;
+
+	hdd_vdev_sync_register(wdev->netdev, vdev_sync);
+	hdd_vdev_sync_trans_stop(vdev_sync);
+
+	return wdev;
+
+destroy_sync:
+	hdd_vdev_sync_trans_stop(vdev_sync);
+	hdd_vdev_sync_destroy(vdev_sync);
+
+	return wdev;
+}
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
@@ -746,27 +783,10 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       enum nl80211_iftype type,
 					       struct vif_params *params)
 {
-	struct wireless_dev *wdev;
-
-	cds_ssr_protect(__func__);
-	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
-					   type, &params->flags, params);
-	cds_ssr_unprotect(__func__);
-
-	return wdev;
+	return _wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					  type, &params->flags, params);
 }
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)) || defined(WITH_BACKPORTS)
-/**
- * wlan_hdd_add_virtual_intf() - Add virtual interface wrapper
- * @wiphy: wiphy pointer
- * @name: User-visible name of the interface
- * @name_assign_type: the name of assign type of the netdev
- * @nl80211_iftype: (virtual) interface types
- * @flags: monitor mode configuration flags (not used)
- * @vif_params: virtual interface parameters (not used)
- *
- * Return: the pointer of wireless dev, otherwise ERR_PTR.
- */
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
 					       unsigned char name_assign_type,
@@ -774,41 +794,18 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       u32 *flags,
 					       struct vif_params *params)
 {
-	struct wireless_dev *wdev;
-
-	cds_ssr_protect(__func__);
-	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
-					   type, flags, params);
-	cds_ssr_unprotect(__func__);
-	return wdev;
-
+	return _wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					  type, flags, params);
 }
 #else
-/**
- * wlan_hdd_add_virtual_intf() - Add virtual interface wrapper
- * @wiphy: wiphy pointer
- * @name: User-visible name of the interface
- * @nl80211_iftype: (virtual) interface types
- * @flags: monitor mode configuration flags (not used)
- * @vif_params: virtual interface parameters (not used)
- *
- * Return: the pointer of wireless dev, otherwise ERR_PTR.
- */
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
 					       enum nl80211_iftype type,
 					       u32 *flags,
 					       struct vif_params *params)
 {
-	struct wireless_dev *wdev;
-	unsigned char name_assign_type = 0;
-
-	cds_ssr_protect(__func__);
-	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
-					   type, flags, params);
-	cds_ssr_unprotect(__func__);
-	return wdev;
-
+	return _wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					  type, flags, params);
 }
 #endif
 
@@ -866,13 +863,24 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
-	int ret;
+	int errno;
+	struct hdd_vdev_sync *vdev_sync;
+
+	errno = hdd_vdev_sync_trans_start_wait(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	hdd_vdev_sync_unregister(wdev->netdev);
+	hdd_vdev_sync_wait_for_ops(vdev_sync);
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_del_virtual_intf(wiphy, wdev);
+	errno = __wlan_hdd_del_virtual_intf(wiphy, wdev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	hdd_vdev_sync_trans_stop(vdev_sync);
+	hdd_vdev_sync_destroy(vdev_sync);
+
+	return errno;
 }
 
 /**

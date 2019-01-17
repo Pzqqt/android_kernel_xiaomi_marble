@@ -212,7 +212,8 @@ struct hdd_vdev_sync *hdd_vdev_sync_unregister(struct net_device *net_dev)
 
 	hdd_vdev_sync_lock();
 	vdev_sync = hdd_vdev_sync_lookup(net_dev);
-	vdev_sync->net_dev = NULL;
+	if (vdev_sync)
+		vdev_sync->net_dev = NULL;
 	hdd_vdev_sync_unlock();
 
 	return vdev_sync;
