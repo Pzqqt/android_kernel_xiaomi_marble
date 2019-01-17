@@ -145,36 +145,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * max_scan_count - Set maximum number of scans
- * @Min: 1
- * @Max: 8
- * @Default: 4
- *
- * This ini is used to set the maximum number of
- * scans that host can queue at firmware.
- * Rome firmware support 8 scan queue size and 4
- * are reserved for internal scan requests like
- * roaming. So host can send 4 scan requests.
- * In iHelium, there is no constraint in number of
- * scan queue size at firmware but the current use
- * cases needs support of maximum of 4 scan request
- * from host.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MAX_SCAN_COUNT_NAME           "max_scan_count"
-#define CFG_MAX_SCAN_COUNT_MIN            (1)
-#define CFG_MAX_SCAN_COUNT_MAX            (8)
-#define CFG_MAX_SCAN_COUNT_DEFAULT        (4)
-
-/*
- * <ini>
  * extscan_adaptive_dwell_mode - Enable adaptive dwell mode
  * during ext scan
  * @Min: 0
@@ -506,7 +476,6 @@ struct hdd_config {
 	bool enable_mac_spoofing;
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
-	uint8_t max_scan_count;
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif

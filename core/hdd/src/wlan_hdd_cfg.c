@@ -121,13 +121,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
 
-	REG_VARIABLE(CFG_MAX_SCAN_COUNT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, max_scan_count,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_SCAN_COUNT_DEFAULT,
-		     CFG_MAX_SCAN_COUNT_MIN,
-		     CFG_MAX_SCAN_COUNT_MAX),
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	REG_VARIABLE(CFG_ENABLE_LFR_SUBNET_DETECTION, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_lfr_subnet_detection,

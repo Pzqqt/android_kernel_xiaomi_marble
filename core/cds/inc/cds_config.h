@@ -58,7 +58,6 @@ enum cfg_sub_20_channel_width {
  * @dfs_pri_multiplier: dfs radar pri multiplier
  * @uc_offload_enabled: IPA Micro controller data path offload enable flag
  * @enable_rxthread: Rx processing in thread from TXRX
- * @max_scan: Maximum number of parallel scans
  * @tx_flow_stop_queue_th: Threshold to stop queue in percentage
  * @tx_flow_start_queue_offset: Start queue offset in percentage
  * @enable_dp_rx_threads: enable dp rx threads
@@ -87,7 +86,6 @@ struct cds_config_info {
 	uint8_t reorder_offload;
 	uint8_t uc_offload_enabled;
 	bool enable_rxthread;
-	uint8_t max_scan;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	uint32_t tx_flow_stop_queue_th;
 	uint32_t tx_flow_start_queue_offset;

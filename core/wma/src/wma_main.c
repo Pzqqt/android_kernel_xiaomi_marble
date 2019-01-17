@@ -70,6 +70,7 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "target_if.h"
+#include "target_if_scan.h"
 #include "wlan_global_lmac_if_api.h"
 #include "target_if_pmo.h"
 #include "wma_he.h"
@@ -247,7 +248,7 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->rx_timeout_pri[2] = CFG_TGT_RX_TIMEOUT_LO_PRI;
 	tgt_cfg->rx_timeout_pri[3] = CFG_TGT_RX_TIMEOUT_HI_PRI;
 	tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE;
-	tgt_cfg->scan_max_pending_req = wma_handle->max_scan;
+	tgt_cfg->scan_max_pending_req = WLAN_MAX_ACTIVE_SCANS_ALLOWED;
 	tgt_cfg->bmiss_offload_max_vdev =
 			CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV;
 	tgt_cfg->roam_offload_max_vdev = CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV;
@@ -3282,8 +3283,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	target_psoc_set_htc_hdl(tgt_psoc_info, htc_handle);
 	wma_handle->cds_context = cds_context;
 	wma_handle->qdf_dev = qdf_dev;
-	wma_handle->max_scan = cds_cfg->max_scan;
-
 	/* Register Converged Event handlers */
 	init_deinit_register_tgt_psoc_ev_handlers(psoc);
 

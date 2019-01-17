@@ -9948,7 +9948,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();
-	cds_cfg->max_scan = hdd_ctx->config->max_scan_count;
 
 	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);

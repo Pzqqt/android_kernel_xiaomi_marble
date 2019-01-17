@@ -1048,7 +1048,6 @@ struct wma_valid_channels {
  *   tracked on a per-vdev basis via the struct sir_vdev_wow_stats
  *   wow_stats in struct wma_txrx_node
  * @ocb_config_req: OCB request context
- * @max_scan:  maximum scan requests than can be queued
  * @self_gen_frm_pwr: Self-generated frame power
  * @tx_chain_mask_cck: Is the CCK tx chain mask enabled
  * @service_ready_ext_timer: Timer for service ready extended.  Note
@@ -1187,7 +1186,6 @@ typedef struct {
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_unspecified_wake_count;
 	struct sir_ocb_config *ocb_config_req;
-	uint8_t max_scan;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
 	qdf_mc_timer_t service_ready_ext_timer;
