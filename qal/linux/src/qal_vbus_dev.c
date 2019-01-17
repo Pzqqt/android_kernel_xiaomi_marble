@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,6 +88,7 @@ qal_vbus_disable_devclk(struct qdf_dev_clk *clk)
 qdf_export_symbol(qal_vbus_disable_devclk);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
 QDF_STATUS
 qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
 			struct qdf_vbus_rstctl **rstctl)
@@ -97,7 +98,8 @@ qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
 	if (!pfhndl || !state)
 		return QDF_STATUS_E_INVAL;
 
-	rsctl = reset_control_get_optional((struct device *)pfhndl, state);
+	rsctl = reset_control_get_optional_exclusive((struct device *)pfhndl,
+						     state);
 
 	if (!rsctl)
 		return QDF_STATUS_E_FAILURE;
@@ -106,6 +108,27 @@ qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
+			struct qdf_vbus_rstctl **rstctl)
+{
+	struct reset_control *rsctl;
+
+	if (!pfhndl || !state)
+		return QDF_STATUS_E_INVAL;
+
+	rsctl = reset_control_get_optional((struct device *)pfhndl,
+					   state);
+
+	if (!rsctl)
+		return QDF_STATUS_E_FAILURE;
+
+	*rstctl = (struct qdf_vbus_rstctl *)rsctl;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #else
 QDF_STATUS
 qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
