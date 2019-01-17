@@ -1577,15 +1577,15 @@ lim_drop_unprotected_action_frame(struct mac_context *mac, struct pe_session *pe
 				  tpSirMacMgmtHdr pHdr, uint8_t category)
 {
 	uint16_t aid;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	bool rmfConnection = false;
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
-		pStaDs =
+		sta =
 			dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 					      &pe_session->dph.dphHashTable);
-		if (pStaDs != NULL)
-			if (pStaDs->rmfEnabled)
+		if (sta != NULL)
+			if (sta->rmfEnabled)
 				rmfConnection = true;
 	} else if (pe_session->limRmfEnabled)
 		rmfConnection = true;

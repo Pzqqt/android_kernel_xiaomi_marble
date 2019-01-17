@@ -394,7 +394,7 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac, uint8_t *,
 						void *body);
 
 void lim_process_assoc_req_frame(struct mac_context *, uint8_t *, uint8_t, struct pe_session *);
-void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
+void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
 			    struct pe_session *pe_session);
 
 void lim_process_assoc_rsp_frame(struct mac_context *, uint8_t *, uint8_t, struct pe_session *);

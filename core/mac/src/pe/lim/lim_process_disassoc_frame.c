@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,7 +52,7 @@
  ***LOGIC:
  *
  ***ASSUMPTIONS:
- * DPH drops packets for STA with 'valid' bit in pStaDs set to '0'.
+ * DPH drops packets for STA with 'valid' bit in sta set to '0'.
  *
  ***NOTE:
  *
@@ -67,7 +67,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	uint8_t *pBody;
 	uint16_t aid, reasonCode;
 	tpSirMacMgmtHdr pHdr;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	uint32_t frame_len;
 	int32_t frame_rssi;
 
@@ -168,11 +168,11 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	 * Extract 'associated' context for STA, if any.
 	 * This is maintained by DPH and created by LIM.
 	 */
-	pStaDs =
+	sta =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 				      &pe_session->dph.dphHashTable);
 
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		/**
 		 * Disassociating STA is not associated.
 		 * Log error.
@@ -280,34 +280,34 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if ((pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
-	    (pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
-	    pStaDs->sta_deletion_in_progress) {
+	if ((sta->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
+	    (sta->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
+	    sta->sta_deletion_in_progress) {
 		/**
 		 * Already in the process of deleting context for the peer
 		 * and received Disassociation frame. Log and Ignore.
 		 */
 		pe_debug("Deletion is in progress (%d) for peer:%pM in mlmState %d",
-			 pStaDs->sta_deletion_in_progress, pHdr->sa,
-			 pStaDs->mlmStaContext.mlmState);
+			 sta->sta_deletion_in_progress, pHdr->sa,
+			 sta->mlmStaContext.mlmState);
 		return;
 	}
-	pStaDs->sta_deletion_in_progress = true;
+	sta->sta_deletion_in_progress = true;
 	lim_disassoc_tdls_peers(mac, pe_session, pHdr->sa);
-	if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) {
+	if (sta->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) {
 		/**
 		 * Requesting STA is in some 'transient' state?
 		 * Log error.
 		 */
-		if (pStaDs->mlmStaContext.mlmState ==
+		if (sta->mlmStaContext.mlmState ==
 		    eLIM_MLM_WT_ASSOC_CNF_STATE)
-			pStaDs->mlmStaContext.updateContext = 1;
+			sta->mlmStaContext.updateContext = 1;
 
 		pe_err("received Disassoc frame from peer that is in state: %X, addr "MAC_ADDRESS_STR,
-			pStaDs->mlmStaContext.mlmState,
+			sta->mlmStaContext.mlmState,
 			       MAC_ADDR_ARRAY(pHdr->sa));
 
-	} /* if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
+	} /* if (sta->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
 	lim_perform_disassoc(mac, frame_rssi, reasonCode,
 			     pe_session, pHdr->sa);

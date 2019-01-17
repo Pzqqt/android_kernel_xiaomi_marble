@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,7 +94,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *, void *, struct pe_session *);
 void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *, void *, struct pe_session *);
 void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 					  struct pe_session *pe_session);
-void lim_ibss_decide_protection_on_delete(struct mac_context *mac, tpDphHashNode pStaDs,
+void lim_ibss_decide_protection_on_delete(struct mac_context *mac, tpDphHashNode sta,
 					  tpUpdateBeaconParams pBeaconParams,
 					  struct pe_session *pe_session);
 void lim_ibss_heart_beat_handle(struct mac_context *mac, struct pe_session *pe_session);

@@ -203,7 +203,7 @@ void lim_release_peer_idx(struct mac_context *, uint16_t, struct pe_session *);
 void lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		tpUpdateBeaconParams pBeaconParams, struct pe_session *);
 void lim_decide_ap_protection_on_delete(struct mac_context *mac,
-		tpDphHashNode pStaDs,
+		tpDphHashNode sta,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *pe_session);
 
@@ -383,11 +383,11 @@ lim_get_mgmt_staid(struct mac_context *mac, uint16_t *staid,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline int lim_select_cb_mode(tDphHashNode *pStaDs,
+static inline int lim_select_cb_mode(tDphHashNode *sta,
 		struct pe_session *pe_session, uint8_t channel,
 		uint8_t chan_bw)
 {
-	if (pStaDs->mlmStaContext.vhtCapability && chan_bw) {
+	if (sta->mlmStaContext.vhtCapability && chan_bw) {
 		if (channel == 36 || channel == 52 || channel == 100 ||
 				channel == 116 || channel == 149) {
 			return PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW - 1;
@@ -403,7 +403,7 @@ static inline int lim_select_cb_mode(tDphHashNode *pStaDs,
 		} else if (channel == 165) {
 			return PHY_SINGLE_CHANNEL_CENTERED;
 		}
-	} else if (pStaDs->mlmStaContext.htCapability) {
+	} else if (sta->mlmStaContext.htCapability) {
 		if (channel == 40 || channel == 48 || channel == 56 ||
 			channel == 64 || channel == 104 || channel == 112 ||
 			channel == 120 || channel == 128 || channel == 136 ||

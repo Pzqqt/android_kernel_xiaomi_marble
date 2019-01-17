@@ -177,7 +177,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
 		struct pe_session *pe_session)
 {
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
 
@@ -188,21 +188,21 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 	smesessionId = pe_session->smeSessionId;
 	smetransactionId = pe_session->transactionId;
 	if (resultCode != eSIR_SME_SUCCESS) {
-		pStaDs =
+		sta =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 					   &pe_session->dph.dphHashTable);
-		if (pStaDs != NULL) {
-			pStaDs->mlmStaContext.disassocReason =
+		if (sta != NULL) {
+			sta->mlmStaContext.disassocReason =
 				eSIR_MAC_UNSPEC_FAILURE_REASON;
-			pStaDs->mlmStaContext.cleanupTrigger =
+			sta->mlmStaContext.cleanupTrigger =
 				eLIM_JOIN_FAILURE;
-			pStaDs->mlmStaContext.resultCode = resultCode;
-			pStaDs->mlmStaContext.protStatusCode = protStatusCode;
-			lim_cleanup_rx_path(mac, pStaDs, pe_session);
+			sta->mlmStaContext.resultCode = resultCode;
+			sta->mlmStaContext.protStatusCode = protStatusCode;
+			lim_cleanup_rx_path(mac, sta, pe_session);
 			/* Cleanup if add bss failed */
 			if (pe_session->add_bss_failed) {
 				dph_delete_hash_entry(mac,
-					 pStaDs->staAddr, pStaDs->assocId,
+					 sta->staAddr, sta->assocId,
 					 &pe_session->dph.dphHashTable);
 				goto error;
 			}
@@ -350,7 +350,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		struct scheduler_msg *limMsgQ, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	tpAddStaParams pAddStaParams = NULL;
 	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
@@ -367,10 +367,10 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		goto end;
 	}
 
-	pStaDs = dph_add_hash_entry(mac, pAddBssParams->bssId,
+	sta = dph_add_hash_entry(mac, pAddBssParams->bssId,
 					DPH_STA_HASH_INDEX_PEER,
 					&pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for");
 		lim_print_mac_addr(mac, pAddBssParams->staContext.staMac,
@@ -435,9 +435,9 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pe_session->bssIdx = (uint8_t) pAddBssParams->bssIdx;
 
 	/* Success, handle below */
-	pStaDs->bssId = pAddBssParams->bssIdx;
+	sta->bssId = pAddBssParams->bssIdx;
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
-	pStaDs->staIndex = pAddBssParams->staContext.staIdx;
+	sta->staIndex = pAddBssParams->staContext.staIdx;
 
 	rrm_cache_mgmt_tx_power(mac, pAddBssParams->txMgmtPower,
 			pe_session);

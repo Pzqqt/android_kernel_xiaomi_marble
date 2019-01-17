@@ -219,51 +219,51 @@ ibss_sta_caps_update(struct mac_context *mac,
 		     tLimIbssPeerNode *pPeerNode, struct pe_session *pe_session)
 {
 	uint16_t peerIdx;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 
 	pPeerNode->beaconHBCount++;     /* Update beacon count. */
 
 	/* if the peer node exists, update its qos capabilities */
-	pStaDs = dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
+	sta = dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 				       &pe_session->dph.dphHashTable);
-	if (pStaDs == NULL)
+	if (sta == NULL)
 		return;
 
 	/* Update HT Capabilities */
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode)) {
-		pStaDs->mlmStaContext.htCapability = pPeerNode->htCapable;
+		sta->mlmStaContext.htCapability = pPeerNode->htCapable;
 		if (pPeerNode->htCapable) {
-			pStaDs->htGreenfield = pPeerNode->htGreenfield;
-			pStaDs->htSupportedChannelWidthSet =
+			sta->htGreenfield = pPeerNode->htGreenfield;
+			sta->htSupportedChannelWidthSet =
 				pPeerNode->htSupportedChannelWidthSet;
-			pStaDs->htSecondaryChannelOffset =
+			sta->htSecondaryChannelOffset =
 				pPeerNode->htSecondaryChannelOffset;
-			pStaDs->htMIMOPSState = pPeerNode->htMIMOPSState;
-			pStaDs->htMaxAmsduLength = pPeerNode->htMaxAmsduLength;
-			pStaDs->htAMpduDensity = pPeerNode->htAMpduDensity;
-			pStaDs->htDsssCckRate40MHzSupport =
+			sta->htMIMOPSState = pPeerNode->htMIMOPSState;
+			sta->htMaxAmsduLength = pPeerNode->htMaxAmsduLength;
+			sta->htAMpduDensity = pPeerNode->htAMpduDensity;
+			sta->htDsssCckRate40MHzSupport =
 				pPeerNode->htDsssCckRate40MHzSupport;
-			pStaDs->htShortGI20Mhz = pPeerNode->htShortGI20Mhz;
-			pStaDs->htShortGI40Mhz = pPeerNode->htShortGI40Mhz;
-			pStaDs->htMaxRxAMpduFactor =
+			sta->htShortGI20Mhz = pPeerNode->htShortGI20Mhz;
+			sta->htShortGI40Mhz = pPeerNode->htShortGI40Mhz;
+			sta->htMaxRxAMpduFactor =
 				pPeerNode->htMaxRxAMpduFactor;
 			/* In the future, may need to check for "delayedBA" */
 			/* For now, it is IMMEDIATE BA only on ALL TID's */
-			pStaDs->baPolicyFlag = 0xFF;
-			pStaDs->htLdpcCapable = pPeerNode->htLdpcCapable;
+			sta->baPolicyFlag = 0xFF;
+			sta->htLdpcCapable = pPeerNode->htLdpcCapable;
 		}
 	}
 	if (IS_DOT11_MODE_VHT(pe_session->dot11mode)) {
-		pStaDs->mlmStaContext.vhtCapability = pPeerNode->vhtCapable;
+		sta->mlmStaContext.vhtCapability = pPeerNode->vhtCapable;
 		if (pPeerNode->vhtCapable) {
-			pStaDs->vhtSupportedChannelWidthSet =
+			sta->vhtSupportedChannelWidthSet =
 				pPeerNode->vhtSupportedChannelWidthSet;
 
 			/* If in 11AC mode and if session requires 11AC mode, consider peer's */
 			/* max AMPDU length factor */
-			pStaDs->htMaxRxAMpduFactor =
+			sta->htMaxRxAMpduFactor =
 				pPeerNode->VHTCaps.maxAMPDULenExp;
-			pStaDs->vhtLdpcCapable =
+			sta->vhtLdpcCapable =
 				(uint8_t) pPeerNode->VHTCaps.ldpcCodingCap;
 		}
 	}
@@ -273,25 +273,25 @@ ibss_sta_caps_update(struct mac_context *mac,
 	/* set. so let's check for edcaParam in addition to the qos capability */
 	if (pPeerNode->capabilityInfo.qos && (pe_session->limQosEnabled)
 	    && pPeerNode->edcaPresent) {
-		pStaDs->qosMode = 1;
-		pStaDs->wmeEnabled = 0;
-		if (!pStaDs->lleEnabled) {
-			pStaDs->lleEnabled = 1;
-			/* dphSetACM(mac, pStaDs); */
+		sta->qosMode = 1;
+		sta->wmeEnabled = 0;
+		if (!sta->lleEnabled) {
+			sta->lleEnabled = 1;
+			/* dphSetACM(mac, sta); */
 		}
 		return;
 	}
 	/* peer is not 11e capable now but was 11e enabled earlier */
-	else if (pStaDs->lleEnabled) {
-		pStaDs->qosMode = 0;
-		pStaDs->lleEnabled = 0;
+	else if (sta->lleEnabled) {
+		sta->qosMode = 0;
+		sta->lleEnabled = 0;
 	}
 	/* peer is wme capable but is not wme enabled yet */
 	if (pPeerNode->wmeInfoPresent && pe_session->limWmeEnabled) {
-		pStaDs->qosMode = 1;
-		pStaDs->lleEnabled = 0;
-		if (!pStaDs->wmeEnabled) {
-			pStaDs->wmeEnabled = 1;
+		sta->qosMode = 1;
+		sta->lleEnabled = 0;
+		if (!sta->wmeEnabled) {
+			sta->wmeEnabled = 1;
 		}
 		return;
 	}
@@ -300,31 +300,31 @@ ibss_sta_caps_update(struct mac_context *mac,
 	   was advertising WMM param where we were not honouring that. CR# 210756
 	 */
 	if (pPeerNode->wmeEdcaPresent && pe_session->limWmeEnabled) {
-		pStaDs->qosMode = 1;
-		pStaDs->lleEnabled = 0;
-		if (!pStaDs->wmeEnabled) {
-			pStaDs->wmeEnabled = 1;
+		sta->qosMode = 1;
+		sta->lleEnabled = 0;
+		if (!sta->wmeEnabled) {
+			sta->wmeEnabled = 1;
 		}
 		return;
 	}
 	/* peer is not wme capable now but was wme enabled earlier */
-	else if (pStaDs->wmeEnabled) {
-		pStaDs->qosMode = 0;
-		pStaDs->wmeEnabled = 0;
+	else if (sta->wmeEnabled) {
+		sta->qosMode = 0;
+		sta->wmeEnabled = 0;
 	}
 
 }
 
 static void
 ibss_sta_rates_update(struct mac_context *mac,
-		      tpDphHashNode pStaDs,
+		      tpDphHashNode sta,
 		      tLimIbssPeerNode *peer, struct pe_session *pe_session)
 {
-	lim_populate_matching_rate_set(mac, pStaDs, &peer->supportedRates,
+	lim_populate_matching_rate_set(mac, sta, &peer->supportedRates,
 				       &peer->extendedRates,
 				       peer->supportedMCSSet, pe_session,
 				       &peer->VHTCaps, NULL);
-	pStaDs->mlmStaContext.capabilityInfo = peer->capabilityInfo;
+	sta->mlmStaContext.capabilityInfo = peer->capabilityInfo;
 } /*** end ibss_sta_info_update() ***/
 
 /**
@@ -341,7 +341,7 @@ ibss_sta_rates_update(struct mac_context *mac,
  ***NOTE:
  *
  * @param  mac   - Pointer to Global MAC structure
- * @param  pStaDs - Pointer to DPH node
+ * @param  sta - Pointer to DPH node
  * @param  peer  - Pointer to IBSS peer node
  *
  * @return None
@@ -349,12 +349,12 @@ ibss_sta_rates_update(struct mac_context *mac,
 
 static void
 ibss_sta_info_update(struct mac_context *mac,
-		     tpDphHashNode pStaDs,
+		     tpDphHashNode sta,
 		     tLimIbssPeerNode *peer, struct pe_session *pe_session)
 {
-	pStaDs->staType = STA_ENTRY_PEER;
+	sta->staType = STA_ENTRY_PEER;
 	ibss_sta_caps_update(mac, peer, pe_session);
-	ibss_sta_rates_update(mac, pStaDs, peer, pe_session);
+	ibss_sta_rates_update(mac, sta, peer, pe_session);
 } /*** end ibss_sta_info_update() ***/
 
 static void ibss_coalesce_free(struct mac_context *mac)
@@ -463,14 +463,14 @@ ibss_dph_entry_add(struct mac_context *mac,
 		   tpDphHashNode *ppSta, struct pe_session *pe_session)
 {
 	uint16_t peerIdx;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 
 	*ppSta = NULL;
 
-	pStaDs =
+	sta =
 		dph_lookup_hash_entry(mac, peerAddr, &peerIdx,
 				      &pe_session->dph.dphHashTable);
-	if (pStaDs != NULL) {
+	if (sta != NULL) {
 		/* Trying to add context for already existing STA in IBSS */
 		pe_err("STA exists already");
 		lim_print_mac_addr(mac, peerAddr, LOGE);
@@ -484,19 +484,19 @@ ibss_dph_entry_add(struct mac_context *mac,
 	 */
 	peerIdx = lim_assign_peer_idx(mac, pe_session);
 
-	pStaDs =
+	sta =
 		dph_get_hash_entry(mac, peerIdx, &pe_session->dph.dphHashTable);
-	if (pStaDs) {
-		(void)lim_del_sta(mac, pStaDs, false /*asynchronous */,
+	if (sta) {
+		(void)lim_del_sta(mac, sta, false /*asynchronous */,
 				  pe_session);
-		lim_delete_dph_hash_entry(mac, pStaDs->staAddr, peerIdx,
+		lim_delete_dph_hash_entry(mac, sta->staAddr, peerIdx,
 					  pe_session);
 	}
 
-	pStaDs =
+	sta =
 		dph_add_hash_entry(mac, peerAddr, peerIdx,
 				   &pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for peerIdx/aid: %d MACaddr:",
 			       peerIdx);
@@ -504,7 +504,7 @@ ibss_dph_entry_add(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*ppSta = pStaDs;
+	*ppSta = sta;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -705,7 +705,7 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 			       struct pe_session *pe_session)
 {
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	uint16_t peerIdx;
 
 	pCurrNode = pTempNode = mac->lim.gLimIbssPeerList;
@@ -719,18 +719,18 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 		 * Since it is called to remove all peers, just delete from dph,
 		 * no need to do any beacon related params i.e., dont call lim_delete_dph_hash_entry
 		 */
-		pStaDs =
+		sta =
 			dph_lookup_hash_entry(mac, pCurrNode->peerMacAddr, &peerIdx,
 					      &pe_session->dph.dphHashTable);
-		if (pStaDs) {
+		if (sta) {
 
 			ibss_status_chg_notify(mac, pCurrNode->peerMacAddr,
-					       pStaDs->staIndex,
+					       sta->staIndex,
 					       eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					       pe_session->smeSessionId);
-			lim_del_sta(mac, pStaDs, false, pe_session);
+			lim_del_sta(mac, sta, false, pe_session);
 			lim_release_peer_idx(mac, peerIdx, pe_session);
-			dph_delete_hash_entry(mac, pStaDs->staAddr, peerIdx,
+			dph_delete_hash_entry(mac, sta->staAddr, peerIdx,
 					      &pe_session->dph.dphHashTable);
 		}
 
@@ -874,7 +874,7 @@ lim_ibss_update_protection_params(struct mac_context *mac,
    \return None
    -------------------------------------------------------------*/
 static void
-lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode sta,
 			   tpUpdateBeaconParams pBeaconParams,
 			   struct pe_session *pe_session)
 {
@@ -885,8 +885,8 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode pStaDs,
 
 	pBeaconParams->paramChangeBitmap = 0;
 
-	if (NULL == pStaDs) {
-		pe_err("pStaDs is NULL");
+	if (NULL == sta) {
+		pe_err("sta is NULL");
 		return;
 	}
 
@@ -901,8 +901,8 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode pStaDs,
 			 * Beacon with HT IE but not ERP IE.  So the absence of ERP IE
 			 * in the Beacon is not enough to conclude that STA is 11b.
 			 */
-			if ((pStaDs->erpEnabled == eHAL_CLEAR) &&
-			    (!pStaDs->mlmStaContext.htCapability)) {
+			if ((sta->erpEnabled == eHAL_CLEAR) &&
+			    (!sta->mlmStaContext.htCapability)) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llB;
 				pe_err("Enable protection from 11B");
 				lim_ibss_set_protection(mac, true,
@@ -911,7 +911,7 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode pStaDs,
 			}
 		}
 	}
-	lim_ibss_update_protection_params(mac, pStaDs->staAddr, protStaCacheType,
+	lim_ibss_update_protection_params(mac, sta->staAddr, protStaCacheType,
 					  pe_session);
 	return;
 }
@@ -966,7 +966,7 @@ QDF_STATUS
 lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_session)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	tLimIbssPeerNode *pPeerNode;
 	tLimMlmStates prevState;
 	tSirMacAddr *pPeerAddr = (tSirMacAddr *) pBody;
@@ -985,30 +985,30 @@ lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_ses
 	pPeerNode = ibss_peer_find(mac, *pPeerAddr);
 	if (NULL != pPeerNode) {
 		retCode =
-			ibss_dph_entry_add(mac, *pPeerAddr, &pStaDs,
+			ibss_dph_entry_add(mac, *pPeerAddr, &sta,
 					   pe_session);
 		if (QDF_STATUS_SUCCESS == retCode) {
-			prevState = pStaDs->mlmStaContext.mlmState;
-			pStaDs->erpEnabled = pPeerNode->erpIePresent;
+			prevState = sta->mlmStaContext.mlmState;
+			sta->erpEnabled = pPeerNode->erpIePresent;
 
-			ibss_sta_info_update(mac, pStaDs, pPeerNode,
+			ibss_sta_info_update(mac, sta, pPeerNode,
 					     pe_session);
 			pe_debug("initiating ADD STA for the IBSS peer");
 			retCode =
-				lim_add_sta(mac, pStaDs, false, pe_session);
+				lim_add_sta(mac, sta, false, pe_session);
 			if (retCode != QDF_STATUS_SUCCESS) {
 				pe_err("ibss-sta-add failed (reason %x)",
 					       retCode);
 				lim_print_mac_addr(mac, *pPeerAddr, LOGE);
-				pStaDs->mlmStaContext.mlmState = prevState;
-				dph_delete_hash_entry(mac, pStaDs->staAddr,
-						      pStaDs->assocId,
+				sta->mlmStaContext.mlmState = prevState;
+				dph_delete_hash_entry(mac, sta->staAddr,
+						      sta->assocId,
 						      &pe_session->dph.
 						      dphHashTable);
 			} else {
 				if (mac->lim.gLimProtectionControl !=
 				    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-					lim_ibss_decide_protection(mac, pStaDs,
+					lim_ibss_decide_protection(mac, sta,
 								   &beaconParams,
 								   pe_session);
 
@@ -1208,7 +1208,7 @@ skip_event:
 QDF_STATUS
 lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_session)
 {
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	uint16_t peerIdx;
 	tpAddStaParams pAddStaParams = (tpAddStaParams) msg;
 
@@ -1218,10 +1218,10 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pStaDs =
+	sta =
 		dph_lookup_hash_entry(mac, pAddStaParams->staMac, &peerIdx,
 				      &pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		pe_err("IBSS: ADD_STA_RSP for unknown MAC addr: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(pAddStaParams->staMac));
 		qdf_mem_free(pAddStaParams);
@@ -1238,15 +1238,15 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pStaDs->bssId = pAddStaParams->bssIdx;
-	pStaDs->staIndex = pAddStaParams->staIdx;
-	pStaDs->valid = 1;
-	pStaDs->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	sta->bssId = pAddStaParams->bssIdx;
+	sta->staIndex = pAddStaParams->staIdx;
+	sta->valid = 1;
+	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 
 	pe_debug("IBSS: sending IBSS_NEW_PEER msg to SME!");
 
 	ibss_status_chg_notify(mac, pAddStaParams->staMac,
-			       pStaDs->staIndex,
+			       sta->staIndex,
 			       eWNI_SME_IBSS_NEW_PEER_IND,
 			       pe_session->smeSessionId);
 
@@ -1452,7 +1452,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 	uint16_t peerIdx;
 	tSirMacAddr currentBssId;
 	tLimIbssPeerNode *pPeerNode;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	tUpdateBeaconParams beaconParams;
 
 	qdf_mem_zero((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams));
@@ -1549,14 +1549,14 @@ lim_ibss_coalesce(struct mac_context *mac,
 		}
 		ibss_peer_add(mac, pPeerNode);
 
-		pStaDs =
+		sta =
 			dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 					      &pe_session->dph.dphHashTable);
-		if (pStaDs != NULL) {
+		if (sta != NULL) {
 			/* / DPH node already exists for the peer */
 			pe_warn("DPH Node present for just learned peer");
 			lim_print_mac_addr(mac, pPeerNode->peerMacAddr, LOGD);
-			ibss_sta_info_update(mac, pStaDs, pPeerNode,
+			ibss_sta_info_update(mac, sta, pPeerNode,
 					     pe_session);
 			return QDF_STATUS_SUCCESS;
 		}
@@ -1568,12 +1568,12 @@ lim_ibss_coalesce(struct mac_context *mac,
 			return retCode;
 		}
 		/* Decide protection mode */
-		pStaDs =
+		sta =
 			dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 					      &pe_session->dph.dphHashTable);
 		if (mac->lim.gLimProtectionControl !=
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-			lim_ibss_decide_protection(mac, pStaDs, &beaconParams,
+			lim_ibss_decide_protection(mac, sta, &beaconParams,
 						   pe_session);
 
 		if (beaconParams.paramChangeBitmap) {

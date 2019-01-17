@@ -387,13 +387,13 @@ typedef struct sAniSirLim {
 	uint32_t numSme, numMAC[4][16];
 
 	/* Debug counter to track number of Assoc Req frame drops */
-	/* when received in pStaDs->mlmState other than LINK_ESTABLISED */
+	/* when received in sta->mlmState other than LINK_ESTABLISED */
 	uint32_t gLimNumAssocReqDropInvldState;
 	/* counters to track rejection of Assoc Req due to Admission Control */
 	uint32_t gLimNumAssocReqDropACRejectTS;
 	uint32_t gLimNumAssocReqDropACRejectSta;
 	/* Debug counter to track number of Reassoc Req frame drops */
-	/* when received in pStaDs->mlmState other than LINK_ESTABLISED */
+	/* when received in sta->mlmState other than LINK_ESTABLISED */
 	uint32_t gLimNumReassocReqDropInvldState;
 	/* Debug counter to track number of Hash Miss event that */
 	/* will not cause a sending of de-auth/de-associate frame */

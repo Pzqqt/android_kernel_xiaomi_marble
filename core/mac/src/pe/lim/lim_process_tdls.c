@@ -993,18 +993,18 @@ static void populate_dotf_tdls_vht_aid(struct mac_context *mac, uint32_t selfDot
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 
 			uint16_t aid;
-			tpDphHashNode pStaDs;
+			tpDphHashNode sta;
 
-			pStaDs =
+			sta =
 				dph_lookup_hash_entry(mac, peerMac.bytes, &aid,
 						      &pe_session->dph.
 						      dphHashTable);
-			if (NULL != pStaDs) {
+			if (NULL != sta) {
 				Aid->present = 1;
 				Aid->assocId = aid | LIM_AID_MASK;      /* set bit 14 and 15 1's */
 			} else {
 				Aid->present = 0;
-				pe_err("pStaDs is NULL for "
+				pe_err("sta is NULL for "
 					   MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(peerMac.bytes));
 			}
@@ -2405,7 +2405,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx, tpDphHashNode s
  * update HASH node entry info
  */
 static void lim_tdls_update_hash_node_info(struct mac_context *mac,
-					   tDphHashNode *pStaDs,
+					   tDphHashNode *sta,
 					   tSirTdlsAddStaReq *pTdlsAddStaReq,
 					   struct pe_session *pe_session)
 {
@@ -2423,10 +2423,10 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 	}
 	htCaps = &htCap;
 	if (htCaps->present) {
-		pStaDs->mlmStaContext.htCapability = 1;
-		pStaDs->htGreenfield = htCaps->greenField;
+		sta->mlmStaContext.htCapability = 1;
+		sta->htGreenfield = htCaps->greenField;
 		/*
-		 * pStaDs->htSupportedChannelWidthSet should have the base
+		 * sta->htSupportedChannelWidthSet should have the base
 		 * channel capability. The htSupportedChannelWidthSet of the
 		 * TDLS link on base channel should be less than or equal to
 		 * channel width of STA-AP link. So take this setting from the
@@ -2435,34 +2435,34 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 		pe_debug("supportedChannelWidthSet: 0x%x htSupportedChannelWidthSet: 0x%x",
 				htCaps->supportedChannelWidthSet,
 				pe_session->htSupportedChannelWidthSet);
-		pStaDs->htSupportedChannelWidthSet =
+		sta->htSupportedChannelWidthSet =
 				(htCaps->supportedChannelWidthSet <
 				 pe_session->htSupportedChannelWidthSet) ?
 				htCaps->supportedChannelWidthSet :
 				pe_session->htSupportedChannelWidthSet;
-		pe_debug("pStaDs->htSupportedChannelWidthSet: 0x%x",
-				pStaDs->htSupportedChannelWidthSet);
+		pe_debug("sta->htSupportedChannelWidthSet: 0x%x",
+				sta->htSupportedChannelWidthSet);
 
-		pStaDs->htMIMOPSState = htCaps->mimoPowerSave;
-		pStaDs->htMaxAmsduLength = htCaps->maximalAMSDUsize;
-		pStaDs->htAMpduDensity = htCaps->mpduDensity;
-		pStaDs->htDsssCckRate40MHzSupport = htCaps->dsssCckMode40MHz;
-		pStaDs->htShortGI20Mhz = htCaps->shortGI20MHz;
-		pStaDs->htShortGI40Mhz = htCaps->shortGI40MHz;
-		pStaDs->htMaxRxAMpduFactor = htCaps->maxRxAMPDUFactor;
+		sta->htMIMOPSState = htCaps->mimoPowerSave;
+		sta->htMaxAmsduLength = htCaps->maximalAMSDUsize;
+		sta->htAMpduDensity = htCaps->mpduDensity;
+		sta->htDsssCckRate40MHzSupport = htCaps->dsssCckMode40MHz;
+		sta->htShortGI20Mhz = htCaps->shortGI20MHz;
+		sta->htShortGI40Mhz = htCaps->shortGI40MHz;
+		sta->htMaxRxAMpduFactor = htCaps->maxRxAMPDUFactor;
 		lim_fill_rx_highest_supported_rate(mac,
-						   &pStaDs->supportedRates.
+						   &sta->supportedRates.
 						   rxHighestDataRate,
 						   htCaps->supportedMCSSet);
-		pStaDs->baPolicyFlag = 0xFF;
-		pStaDs->ht_caps = pTdlsAddStaReq->htCap.hc_cap;
+		sta->baPolicyFlag = 0xFF;
+		sta->ht_caps = pTdlsAddStaReq->htCap.hc_cap;
 	} else {
-		pStaDs->mlmStaContext.htCapability = 0;
+		sta->mlmStaContext.htCapability = 0;
 	}
 	lim_tdls_populate_dot11f_vht_caps(mac, pTdlsAddStaReq, &vhtCap);
 	pVhtCaps = &vhtCap;
 	if (pVhtCaps->present) {
-		pStaDs->mlmStaContext.vhtCapability = 1;
+		sta->mlmStaContext.vhtCapability = 1;
 
 		/*
 		 * 11.21.1 General: The channel width of the TDLS direct
@@ -2471,27 +2471,27 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 		 * associated.
 		 */
 		if (pe_session->ch_width)
-			pStaDs->vhtSupportedChannelWidthSet =
+			sta->vhtSupportedChannelWidthSet =
 					pe_session->ch_width - 1;
 		else
-			pStaDs->vhtSupportedChannelWidthSet =
+			sta->vhtSupportedChannelWidthSet =
 					pe_session->ch_width;
 
 		pe_debug("vhtSupportedChannelWidthSet: %hu htSupportedChannelWidthSet: %hu",
-			pStaDs->vhtSupportedChannelWidthSet,
-			pStaDs->htSupportedChannelWidthSet);
+			sta->vhtSupportedChannelWidthSet,
+			sta->htSupportedChannelWidthSet);
 
-		pStaDs->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
-		pStaDs->vhtBeamFormerCapable = 0;
+		sta->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
+		sta->vhtBeamFormerCapable = 0;
 		pVhtCaps_txbf = (tDot11fIEVHTCaps *) (&pTdlsAddStaReq->vhtCap);
 		pVhtCaps_txbf->suBeamformeeCap = 0;
 		pVhtCaps_txbf->suBeamFormerCap = 0;
 		pVhtCaps_txbf->muBeamformerCap = 0;
 		pVhtCaps_txbf->muBeamformeeCap = 0;
-		pStaDs->vht_caps = pTdlsAddStaReq->vhtCap.vhtCapInfo;
+		sta->vht_caps = pTdlsAddStaReq->vhtCap.vhtCapInfo;
 	} else {
-		pStaDs->mlmStaContext.vhtCapability = 0;
-		pStaDs->vhtSupportedChannelWidthSet =
+		sta->mlmStaContext.vhtCapability = 0;
+		sta->vhtSupportedChannelWidthSet =
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 	}
 
@@ -2500,31 +2500,31 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 	 * own channel bonding state is enabled
 	 */
 	if (pe_session->htSupportedChannelWidthSet) {
-		cbMode = lim_select_cb_mode(pStaDs, pe_session,
+		cbMode = lim_select_cb_mode(sta, pe_session,
 				    pe_session->currentOperChannel,
-				    pStaDs->vhtSupportedChannelWidthSet);
+				    sta->vhtSupportedChannelWidthSet);
 
-		if (pStaDs->mlmStaContext.vhtCapability)
-			pStaDs->htSecondaryChannelOffset =
+		if (sta->mlmStaContext.vhtCapability)
+			sta->htSecondaryChannelOffset =
 					lim_get_htcb_state(cbMode);
 		else
-			pStaDs->htSecondaryChannelOffset = cbMode;
+			sta->htSecondaryChannelOffset = cbMode;
 	}
 	/* Lets enable QOS parameter */
-	pStaDs->qosMode = (pTdlsAddStaReq->capability & CAPABILITIES_QOS_OFFSET)
+	sta->qosMode = (pTdlsAddStaReq->capability & CAPABILITIES_QOS_OFFSET)
 				|| pTdlsAddStaReq->htcap_present;
-	pStaDs->wmeEnabled = 1;
-	pStaDs->lleEnabled = 0;
+	sta->wmeEnabled = 1;
+	sta->lleEnabled = 0;
 	/*  TDLS Dummy AddSTA does not have qosInfo , is it OK ??
 	 */
-	pStaDs->qos.capability.qosInfo =
+	sta->qos.capability.qosInfo =
 		(*(tSirMacQosInfoStation *) &pTdlsAddStaReq->uapsd_queues);
 
 	/* populate matching rate set */
 
 	/* TDLS Dummy AddSTA does not have HTCap,VHTCap,Rates info , is it OK ??
 	 */
-	lim_tdls_populate_matching_rate_set(mac, pStaDs,
+	lim_tdls_populate_matching_rate_set(mac, sta,
 					    pTdlsAddStaReq->supported_rates,
 					    pTdlsAddStaReq->
 					    supported_rates_length,
@@ -2534,7 +2534,7 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 
 	/*  TDLS Dummy AddSTA does not have right capability , is it OK ??
 	 */
-	pStaDs->mlmStaContext.capabilityInfo =
+	sta->mlmStaContext.capabilityInfo =
 		(*(tSirMacCapabilityInfo *) &pTdlsAddStaReq->capability);
 
 	return;
@@ -2547,26 +2547,26 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 					    tSirTdlsAddStaReq *pAddStaReq,
 					    struct pe_session *pe_session)
 {
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint16_t aid = 0;
 
-	pStaDs = dph_lookup_hash_entry(mac, pAddStaReq->peermac.bytes, &aid,
+	sta = dph_lookup_hash_entry(mac, pAddStaReq->peermac.bytes, &aid,
 				       &pe_session->dph.dphHashTable);
 
-	if (pStaDs && pAddStaReq->tdlsAddOper == TDLS_OPER_ADD) {
+	if (sta && pAddStaReq->tdlsAddOper == TDLS_OPER_ADD) {
 		pe_err("TDLS entry for peer: "MAC_ADDRESS_STR " already exist, cannot add new entry",
 			MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pStaDs && pStaDs->staType != STA_ENTRY_TDLS_PEER) {
+	if (sta && sta->staType != STA_ENTRY_TDLS_PEER) {
 		pe_err("Non TDLS entry for peer: "MAC_ADDRESS_STR " already exist",
 			MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	if (NULL == pStaDs) {
+	if (NULL == sta) {
 		aid = lim_assign_peer_idx(mac, pe_session);
 
 		if (!aid) {
@@ -2580,33 +2580,33 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 
 		pe_debug("Aid: %d, for peer: " MAC_ADDRESS_STR,
 			aid, MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
-		pStaDs =
+		sta =
 			dph_get_hash_entry(mac, aid,
 					   &pe_session->dph.dphHashTable);
 
-		if (pStaDs) {
-			(void)lim_del_sta(mac, pStaDs, false /*asynchronous */,
+		if (sta) {
+			(void)lim_del_sta(mac, sta, false /*asynchronous */,
 					  pe_session);
-			lim_delete_dph_hash_entry(mac, pStaDs->staAddr, aid,
+			lim_delete_dph_hash_entry(mac, sta->staAddr, aid,
 						  pe_session);
 		}
 
-		pStaDs = dph_add_hash_entry(mac, pAddStaReq->peermac.bytes,
+		sta = dph_add_hash_entry(mac, pAddStaReq->peermac.bytes,
 					 aid, &pe_session->dph.dphHashTable);
 
-		if (NULL == pStaDs) {
+		if (NULL == sta) {
 			pe_err("add hash entry failed");
 			QDF_ASSERT(0);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
-	lim_tdls_update_hash_node_info(mac, pStaDs, pAddStaReq, pe_session);
+	lim_tdls_update_hash_node_info(mac, sta, pAddStaReq, pe_session);
 
-	pStaDs->staType = STA_ENTRY_TDLS_PEER;
+	sta->staType = STA_ENTRY_TDLS_PEER;
 
 	status =
-		lim_add_sta(mac, pStaDs,
+		lim_add_sta(mac, sta,
 			    (pAddStaReq->tdlsAddOper ==
 			     TDLS_OPER_UPDATE) ? true : false, pe_session);
 
@@ -2627,21 +2627,21 @@ static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint16_t peerIdx = 0;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 
-	pStaDs = dph_lookup_hash_entry(mac, peerMac.bytes, &peerIdx,
+	sta = dph_lookup_hash_entry(mac, peerMac.bytes, &peerIdx,
 				       &pe_session->dph.dphHashTable);
 
-	if (pStaDs) {
+	if (sta) {
 		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR,
-			 MAC_ADDR_ARRAY(pStaDs->staAddr));
+			 MAC_ADDR_ARRAY(sta->staAddr));
 
 		pe_debug("STA type: %x, sta idx: %x resp_reqd: %d",
-			 pStaDs->staType,
-			 pStaDs->staIndex,
+			 sta->staType,
+			 sta->staIndex,
 			 resp_reqd);
 
-		status = lim_del_sta(mac, pStaDs, resp_reqd, pe_session);
+		status = lim_del_sta(mac, sta, resp_reqd, pe_session);
 	} else {
 		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR" not found",
 			 MAC_ADDR_ARRAY(peerMac.bytes));
@@ -2657,7 +2657,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(struct mac_context *mac,
 						uint8_t sessionId,
 						tSirMacAddr peerMac,
 						uint8_t updateSta,
-						tDphHashNode *pStaDs, uint8_t status)
+						tDphHashNode *sta, uint8_t status)
 {
 	struct scheduler_msg msg = { 0 };
 	struct tdls_add_sta_rsp *add_sta_rsp;
@@ -2671,8 +2671,8 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(struct mac_context *mac,
 
 	add_sta_rsp->session_id = sessionId;
 	add_sta_rsp->status_code = status;
-	if (pStaDs) {
-		add_sta_rsp->sta_id = pStaDs->staIndex;
+	if (sta) {
+		add_sta_rsp->sta_id = sta->staIndex;
 	}
 	if (peerMac) {
 		qdf_mem_copy(add_sta_rsp->peermac.bytes,
@@ -2706,7 +2706,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 {
 	tAddStaParams *pAddStaParams = (tAddStaParams *) msg;
 	uint8_t status = QDF_STATUS_SUCCESS;
-	tDphHashNode *pStaDs = NULL;
+	tDphHashNode *sta = NULL;
 	uint16_t aid = 0;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
@@ -2721,22 +2721,22 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 		goto add_sta_error;
 	}
 
-	pStaDs = dph_lookup_hash_entry(mac, pAddStaParams->staMac, &aid,
+	sta = dph_lookup_hash_entry(mac, pAddStaParams->staMac, &aid,
 				       &pe_session->dph.dphHashTable);
-	if (NULL == pStaDs) {
-		pe_err("pStaDs is NULL ");
+	if (NULL == sta) {
+		pe_err("sta is NULL ");
 		status = QDF_STATUS_E_FAILURE;
 		goto add_sta_error;
 	}
 
-	pStaDs->bssId = pAddStaParams->bssIdx;
-	pStaDs->staIndex = pAddStaParams->staIdx;
-	pStaDs->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
-	pStaDs->valid = 1;
+	sta->bssId = pAddStaParams->bssIdx;
+	sta->staIndex = pAddStaParams->staIdx;
+	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	sta->valid = 1;
 add_sta_error:
 	status = lim_send_sme_tdls_add_sta_rsp(mac, pe_session->smeSessionId,
 					       pAddStaParams->staMac,
-					       pAddStaParams->updateSta, pStaDs,
+					       pAddStaParams->updateSta, sta,
 					       status);
 	qdf_mem_free(pAddStaParams);
 	return status;
@@ -2929,7 +2929,7 @@ lim_tdls_send_mgmt_error:
 static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(struct mac_context *mac,
 						uint8_t sessionId,
 						struct qdf_mac_addr peerMac,
-						tDphHashNode *pStaDs, uint8_t status)
+						tDphHashNode *sta, uint8_t status)
 {
 	struct scheduler_msg msg = { 0 };
 	struct tdls_del_sta_rsp *del_sta_rsp;
@@ -2943,8 +2943,8 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(struct mac_context *mac,
 
 	del_sta_rsp->session_id = sessionId;
 	del_sta_rsp->status_code = status;
-	if (pStaDs) {
-		del_sta_rsp->sta_id = pStaDs->staIndex;
+	if (sta) {
+		del_sta_rsp->sta_id = sta->staIndex;
 	} else
 		del_sta_rsp->sta_id = STA_INVALID_IDX;
 

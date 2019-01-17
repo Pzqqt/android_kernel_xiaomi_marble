@@ -904,12 +904,12 @@ error:
    reason code.
 
    \param mac - global mac structure
-   \param pStaDs - station dph hash node
+   \param sta - station dph hash node
    \return none
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 			  struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -925,15 +925,15 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 	pSirSmeDisassocInd->sessionId = pe_session->smeSessionId;
 	pSirSmeDisassocInd->transactionId = pe_session->transactionId;
 	pSirSmeDisassocInd->statusCode = eSIR_SME_DEAUTH_STATUS;
-	pSirSmeDisassocInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
+	pSirSmeDisassocInd->reasonCode = sta->mlmStaContext.disassocReason;
 
 	qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 
-	qdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes, pStaDs->staAddr,
+	qdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes, sta->staAddr,
 		     QDF_MAC_ADDR_SIZE);
 
-	pSirSmeDisassocInd->staId = pStaDs->staIndex;
+	pSirSmeDisassocInd->staId = sta->staIndex;
 
 	mmhMsg.type = eWNI_SME_DISASSOC_IND;
 	mmhMsg.bodyptr = pSirSmeDisassocInd;
@@ -943,7 +943,7 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			 pe_session->peSessionId, mmhMsg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_IND_EVENT, pe_session,
-			      0, (uint16_t) pStaDs->mlmStaContext.disassocReason);
+			      0, (uint16_t) sta->mlmStaContext.disassocReason);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
@@ -958,12 +958,12 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
    reason code.
 
    \param mac - global mac structure
-   \param pStaDs - station dph hash node
+   \param sta - station dph hash node
    \return none
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 			struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -980,24 +980,24 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 	pSirSmeDeauthInd->transactionId = pe_session->transactionId;
 	if (eSIR_INFRA_AP_MODE == pe_session->bssType) {
 		pSirSmeDeauthInd->statusCode =
-			(tSirResultCodes) pStaDs->mlmStaContext.cleanupTrigger;
+			(tSirResultCodes) sta->mlmStaContext.cleanupTrigger;
 	} else {
 		/* Need to indicatet he reascon code over the air */
 		pSirSmeDeauthInd->statusCode =
-			(tSirResultCodes) pStaDs->mlmStaContext.disassocReason;
+			(tSirResultCodes) sta->mlmStaContext.disassocReason;
 	}
 	/* BSSID */
 	qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	/* peerMacAddr */
-	qdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, pStaDs->staAddr,
+	qdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, sta->staAddr,
 		     QDF_MAC_ADDR_SIZE);
-	pSirSmeDeauthInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
+	pSirSmeDeauthInd->reasonCode = sta->mlmStaContext.disassocReason;
 
-	pSirSmeDeauthInd->staId = pStaDs->staIndex;
+	pSirSmeDeauthInd->staId = sta->staIndex;
 	if (eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON ==
-		pStaDs->mlmStaContext.disassocReason)
-		pSirSmeDeauthInd->rssi = pStaDs->del_sta_ctx_rssi;
+		sta->mlmStaContext.disassocReason)
+		pSirSmeDeauthInd->rssi = sta->del_sta_ctx_rssi;
 
 	mmhMsg.type = eWNI_SME_DEAUTH_IND;
 	mmhMsg.bodyptr = pSirSmeDeauthInd;
@@ -1006,7 +1006,7 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, mmhMsg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DEAUTH_IND_EVENT, pe_session,
-			      0, pStaDs->mlmStaContext.cleanupTrigger);
+			      0, sta->mlmStaContext.cleanupTrigger);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
@@ -1028,21 +1028,21 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
  * NA
  *
  * @param  mac   - Pointer to global MAC structure
- * @param  pStaDs - Pointer to internal STA Datastructure
+ * @param  sta - Pointer to internal STA Datastructure
  * @param  pe_session - Pointer to the session entry
  * @param  reasonCode - Reason for TDLS sta deletion
  * @return None
  */
 void
-lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
 			      struct pe_session *pe_session, uint16_t reasonCode)
 {
 	struct tdls_event_info info;
 
 	pe_debug("Delete TDLS Peer "MAC_ADDRESS_STR "with reason code: %d",
-			MAC_ADDR_ARRAY(pStaDs->staAddr), reasonCode);
+			MAC_ADDR_ARRAY(sta->staAddr), reasonCode);
 	info.vdev_id = pe_session->smeSessionId;
-	qdf_mem_copy(info.peermac.bytes, pStaDs->staAddr, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(info.peermac.bytes, sta->staAddr, QDF_MAC_ADDR_SIZE);
 	info.message_type = TDLS_PEER_DISCONNECTED;
 	info.peer_reason = TDLS_DISCONNECTED_PEER_DELETE;
 

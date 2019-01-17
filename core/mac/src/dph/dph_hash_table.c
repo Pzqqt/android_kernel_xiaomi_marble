@@ -215,7 +215,7 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 {
 	uint32_t val;
 
-	tpDphHashNode pStaDs, pnext;
+	tpDphHashNode sta, pnext;
 	uint16_t staIdx = STA_INVALID_IDX;
 
 	if (assocId >= hash_table->size) {
@@ -223,39 +223,39 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 		return NULL;
 	}
 
-	pStaDs = get_node(mac, (uint8_t) assocId, hash_table);
-	staIdx = pStaDs->staIndex;
-	pnext = pStaDs->next;
+	sta = get_node(mac, (uint8_t) assocId, hash_table);
+	staIdx = sta->staIndex;
+	pnext = sta->next;
 
 	/* Clear the STA node except for the next pointer */
-	qdf_mem_zero((uint8_t *)pStaDs, sizeof(tDphHashNode));
-	pStaDs->next = pnext;
+	qdf_mem_zero((uint8_t *)sta, sizeof(tDphHashNode));
+	sta->next = pnext;
 
 	/* Initialize the assocId */
-	pStaDs->assocId = assocId;
+	sta->assocId = assocId;
 	if (true == validStaIdx)
-		pStaDs->staIndex = staIdx;
+		sta->staIndex = staIdx;
 	else
-		pStaDs->staIndex = STA_INVALID_IDX;
+		sta->staIndex = STA_INVALID_IDX;
 
 	/* Initialize STA mac address */
-	qdf_mem_copy(pStaDs->staAddr, staAddr, sizeof(tSirMacAddr));
+	qdf_mem_copy(sta->staAddr, staAddr, sizeof(tSirMacAddr));
 
 	/* Initialize fragmentation threshold */
 	if (wlan_mlme_get_frag_threshold(mac->psoc, &val) !=
 					 QDF_STATUS_SUCCESS)
 		pe_warn("could not retrieve fragmentation threshold");
 	else
-		pStaDs->fragSize = (uint16_t) val;
+		sta->fragSize = (uint16_t) val;
 
-	pStaDs->added = 1;
-	pStaDs->encPolicy = ENC_POLICY_NULL;
-	pStaDs->is_disassoc_deauth_in_progress = 0;
-	pStaDs->last_assoc_received_time = 0;
-	pStaDs->last_disassoc_deauth_received_time = 0;
-	pStaDs->sta_deletion_in_progress = false;
-	pStaDs->valid = 1;
-	return pStaDs;
+	sta->added = 1;
+	sta->encPolicy = ENC_POLICY_NULL;
+	sta->is_disassoc_deauth_in_progress = 0;
+	sta->last_assoc_received_time = 0;
+	sta->last_disassoc_deauth_received_time = 0;
+	sta->sta_deletion_in_progress = false;
+	sta->valid = 1;
+	return sta;
 }
 
 /* --------------------------------------------------------------------- */

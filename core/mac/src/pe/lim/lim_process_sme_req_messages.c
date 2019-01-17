@@ -2287,7 +2287,7 @@ sendDisassoc:
    from HDD or upper layer application.
 
    \param mac - global mac structure
-   \param pStaDs - station dph hash node
+   \param sta - station dph hash node
    \return none
    \sa
    ----------------------------------------------------------------- */
@@ -2295,7 +2295,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	tSirSmeDisassocCnf smeDisassocCnf;
 	uint16_t aid;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 	uint32_t *msg = NULL;
@@ -2387,10 +2387,10 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	if ((pe_session->limSmeState == eLIM_SME_WT_DISASSOC_STATE) ||
 	    (pe_session->limSmeState == eLIM_SME_WT_DEAUTH_STATE) ||
 	    LIM_IS_AP_ROLE(pe_session)) {
-		pStaDs = dph_lookup_hash_entry(mac,
+		sta = dph_lookup_hash_entry(mac,
 				smeDisassocCnf.peer_macaddr.bytes, &aid,
 				&pe_session->dph.dphHashTable);
-		if (pStaDs == NULL) {
+		if (sta == NULL) {
 			pe_err("DISASSOC_CNF for a STA with no context, addr= "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes));
@@ -2405,13 +2405,13 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 			return;
 		}
 
-		if ((pStaDs->mlmStaContext.mlmState ==
+		if ((sta->mlmStaContext.mlmState ==
 				eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
-			(pStaDs->mlmStaContext.mlmState ==
+			(sta->mlmStaContext.mlmState ==
 				eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
 			pe_err("No need of cleanup for addr:" MAC_ADDRESS_STR "as MLM state is %d",
 				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes),
-				pStaDs->mlmStaContext.mlmState);
+				sta->mlmStaContext.mlmState);
 			status = lim_prepare_disconnect_done_ind(mac, &msg,
 						pe_session->smeSessionId,
 						eSIR_SME_SUCCESS,
@@ -2425,7 +2425,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 
 		/* Delete FT session if there exists one */
 		lim_ft_cleanup_pre_auth_info(mac, pe_session);
-		lim_cleanup_rx_path(mac, pStaDs, pe_session);
+		lim_cleanup_rx_path(mac, sta, pe_session);
 
 		lim_clean_up_disassoc_deauth_req(mac,
 				 (char *)&smeDisassocCnf.peer_macaddr, 0);
@@ -3319,7 +3319,7 @@ end:
 
 static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgBuf)
 {
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	tSirMacAddr peerMac;
 	tpSirAddtsReq pSirAddts;
 	uint32_t timeout;
@@ -3367,16 +3367,16 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 		goto send_failure_addts_rsp;
 	}
 
-	pStaDs =
+	sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
 
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		pe_err("Cannot find AP context for addts req");
 		goto send_failure_addts_rsp;
 	}
 
-	if ((!pStaDs->valid) || (pStaDs->mlmStaContext.mlmState !=
+	if ((!sta->valid) || (sta->mlmStaContext.mlmState !=
 	    eLIM_MLM_LINK_ESTABLISHED_STATE)) {
 		pe_err("AddTs received in invalid MLM state");
 		goto send_failure_addts_rsp;
@@ -3386,13 +3386,13 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 	pSirAddts->req.wmeTspecPresent = 0;
 	pSirAddts->req.lleTspecPresent = 0;
 
-	if ((pStaDs->wsmEnabled) &&
+	if ((sta->wsmEnabled) &&
 	    (pSirAddts->req.tspec.tsinfo.traffic.accessPolicy !=
 	     SIR_MAC_ACCESSPOLICY_EDCA))
 		pSirAddts->req.wsmTspecPresent = 1;
-	else if (pStaDs->wmeEnabled)
+	else if (sta->wmeEnabled)
 		pSirAddts->req.wmeTspecPresent = 1;
-	else if (pStaDs->lleEnabled)
+	else if (sta->lleEnabled)
 		pSirAddts->req.lleTspecPresent = 1;
 	else {
 		pe_warn("ADDTS_REQ ignore - qos is disabled");
@@ -3470,7 +3470,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	uint8_t ac;
 	struct mac_ts_info *pTsinfo;
 	tpSirDeltsReq pDeltsReq = (tpSirDeltsReq) pMsgBuf;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 	uint32_t status = QDF_STATUS_SUCCESS;
@@ -3548,12 +3548,12 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	lim_set_active_edca_params(mac, pe_session->gLimEdcaParams,
 				   pe_session);
 
-	pStaDs =
+	sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
-	if (pStaDs != NULL) {
+	if (sta != NULL) {
 		lim_send_edca_params(mac, pe_session->gLimEdcaParamsActive,
-				     pStaDs->bssId, false);
+				     sta->bssId, false);
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		pe_err("Self entry missing in Hash Table");
@@ -4081,7 +4081,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 	struct scheduler_msg msg = {0};
 	tUpdateVHTOpMode *pHtOpMode = NULL;
 	uint16_t staId = 0;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 
 	pe_debug("received Set HT 20/40 mode message");
 	if (pMsgBuf == NULL) {
@@ -4136,12 +4136,12 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 
 	/* update OP Mode for each associated peer */
 	for (staId = 0; staId < pe_session->dph.dphHashTable.size; staId++) {
-		pStaDs = dph_get_hash_entry(mac, staId,
+		sta = dph_get_hash_entry(mac, staId,
 				&pe_session->dph.dphHashTable);
-		if (NULL == pStaDs)
+		if (NULL == sta)
 			continue;
 
-		if (pStaDs->valid && pStaDs->htSupportedChannelWidthSet) {
+		if (sta->valid && sta->htSupportedChannelWidthSet) {
 			pHtOpMode = qdf_mem_malloc(sizeof(tUpdateVHTOpMode));
 			if (!pHtOpMode)
 				return;
@@ -4150,7 +4150,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 				 PHY_SINGLE_CHANNEL_CENTERED) ?
 				eHT_CHANNEL_WIDTH_20MHZ : eHT_CHANNEL_WIDTH_40MHZ;
 			pHtOpMode->staId = staId;
-			qdf_mem_copy(pHtOpMode->peer_mac, &pStaDs->staAddr,
+			qdf_mem_copy(pHtOpMode->peer_mac, &sta->staAddr,
 				     sizeof(tSirMacAddr));
 			pHtOpMode->smesessionId = sessionId;
 

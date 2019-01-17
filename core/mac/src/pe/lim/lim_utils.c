@@ -1196,7 +1196,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			 struct pe_session *pe_session)
 {
 	uint16_t tmpAid;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	enum band_info rfBand = BAND_UNKNOWN;
 	uint32_t phyMode;
 	tLimProtStaCacheType protStaCacheType =
@@ -1205,11 +1205,11 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 
 	pBeaconParams->paramChangeBitmap = 0;
 	/* check whether to enable protection or not */
-	pStaDs =
+	sta =
 		dph_lookup_hash_entry(mac, peerMacAddr, &tmpAid,
 				      &pe_session->dph.dphHashTable);
-	if (NULL == pStaDs) {
-		pe_err("pStaDs is NULL");
+	if (NULL == sta) {
+		pe_err("sta is NULL");
 		return;
 	}
 	lim_get_rf_band_new(mac, &rfBand, pe_session);
@@ -1220,7 +1220,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		if (true == pe_session->htCapability) {
 			/* we are 11N and 11A station is joining. */
 			/* protection from 11A required. */
-			if (false == pStaDs->mlmStaContext.htCapability) {
+			if (false == sta->mlmStaContext.htCapability) {
 				lim_update_11a_protection(mac, true, false,
 							 pBeaconParams,
 							 pe_session);
@@ -1234,7 +1234,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		if ((phyMode == WNI_CFG_PHY_MODE_11G) &&
 		    (false == pe_session->htCapability)) {
 
-			if (pStaDs->erpEnabled == eHAL_CLEAR) {
+			if (sta->erpEnabled == eHAL_CLEAR) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llB;
 				/* enable protection */
 				pe_debug("Enabling protection from 11B");
@@ -1246,8 +1246,8 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		/* HT station. */
 		if (true == pe_session->htCapability) {
 			/* check if we need protection from 11b station */
-			if ((pStaDs->erpEnabled == eHAL_CLEAR) &&
-			    (!pStaDs->mlmStaContext.htCapability)) {
+			if ((sta->erpEnabled == eHAL_CLEAR) &&
+			    (!sta->mlmStaContext.htCapability)) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llB;
 				/* enable protection */
 				pe_debug("Enabling protection from 11B");
@@ -1256,7 +1256,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 							 pe_session);
 			}
 			/* station being joined is non-11b and non-ht ==> 11g device */
-			else if (!pStaDs->mlmStaContext.htCapability) {
+			else if (!sta->mlmStaContext.htCapability) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llG;
 				/* enable protection */
 				lim_enable_ht_protection_from11g(mac, true, false,
@@ -1270,8 +1270,8 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	}
 	/* we are HT and HT station is joining. This code is common for both the bands. */
 	if ((true == pe_session->htCapability) &&
-	    (true == pStaDs->mlmStaContext.htCapability)) {
-		if (!pStaDs->htGreenfield) {
+	    (true == sta->mlmStaContext.htCapability)) {
+		if (!sta->htGreenfield) {
 			lim_enable_ht_non_gf_protection(mac, true, false,
 							pBeaconParams,
 							pe_session);
@@ -1279,7 +1279,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		}
 		/* Station joining is HT 20Mhz */
 		if ((eHT_CHANNEL_WIDTH_20MHZ ==
-		pStaDs->htSupportedChannelWidthSet) &&
+		sta->htSupportedChannelWidthSet) &&
 		(eHT_CHANNEL_WIDTH_20MHZ !=
 		 pe_session->htSupportedChannelWidthSet)){
 			protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_HT20;
@@ -1287,7 +1287,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 						   pBeaconParams, pe_session);
 		}
 		/* Station joining does not support LSIG TXOP Protection */
-		if (!pStaDs->htLsigTXOPProtection) {
+		if (!sta->htLsigTXOPProtection) {
 			lim_enable_ht_lsig_txop_protection(mac, false, false,
 							   pBeaconParams,
 							   pe_session);
@@ -5492,13 +5492,13 @@ lim_set_protected_bit(struct mac_context *mac,
 		      tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr)
 {
 	uint16_t aid;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
 
-		pStaDs = dph_lookup_hash_entry(mac, peer, &aid,
+		sta = dph_lookup_hash_entry(mac, peer, &aid,
 					       &pe_session->dph.dphHashTable);
-		if (pStaDs != NULL) {
+		if (sta != NULL) {
 			/* rmfenabled will be set at the time of addbss.
 			 * but sometimes EAP auth fails and keys are not
 			 * installed then if we send any management frame
@@ -5506,7 +5506,7 @@ lim_set_protected_bit(struct mac_context *mac,
 			 * firmware crashes. so check for keys are
 			 * installed or not also before setting the bit
 			 */
-			if (pStaDs->rmfEnabled && pStaDs->is_key_installed)
+			if (sta->rmfEnabled && sta->is_key_installed)
 				pMacHdr->fc.wep = 1;
 		}
 	} else if (pe_session->limRmfEnabled &&

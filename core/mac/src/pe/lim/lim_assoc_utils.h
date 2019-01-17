@@ -95,9 +95,9 @@ void lim_post_reassoc_failure(struct mac_context *,
 bool lim_is_reassoc_in_progress(struct mac_context *, struct pe_session *);
 
 void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
-		tpDphHashNode pStaDs, struct pe_session *pe_session);
+		tpDphHashNode sta, struct pe_session *pe_session);
 void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
-		   tpDphHashNode pStaDs, struct pe_session *pe_session);
+		   tpDphHashNode sta, struct pe_session *pe_session);
 void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 	      tLimMlmReassocReq *pMlmReassocReq, struct pe_session *pe_session);
 QDF_STATUS lim_add_ft_sta_self(struct mac_context *mac, uint16_t assocId,
@@ -112,10 +112,10 @@ static inline void lim_post_reassoc_failure(struct mac_context *mac_ctx,
 			      struct pe_session *pe_session)
 {}
 static inline void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
-		tpDphHashNode pStaDs, struct pe_session *pe_session)
+		tpDphHashNode sta, struct pe_session *pe_session)
 {}
 static inline void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
-		   tpDphHashNode pStaDs, struct pe_session *pe_session)
+		   tpDphHashNode sta, struct pe_session *pe_session)
 {}
 static inline void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 	      tLimMlmReassocReq *pMlmReassocReq, struct pe_session *pe_session)
@@ -159,7 +159,7 @@ void lim_update_re_assoc_globals(struct mac_context *mac,
 				 struct pe_session *pe_session);
 
 void lim_update_assoc_sta_datas(struct mac_context *mac,
-				tpDphHashNode pStaDs, tpSirAssocRsp pAssocRsp,
+				tpDphHashNode sta, tpSirAssocRsp pAssocRsp,
 				struct pe_session *pe_session);
 
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
@@ -169,7 +169,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updateEntry,
 					     struct pe_session *pe_session);
 
-void lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode pStaDs,
+void lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				      tSirResultCodes statusCode, struct pe_session *);
 QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac, uint8_t *pIE,
 					  uint16_t ieLen,

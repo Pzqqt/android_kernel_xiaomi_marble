@@ -782,7 +782,7 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint32_t len;
 	struct scheduler_msg msg = {0};
 	tSirSmeAssocInd *pSirSmeAssocInd;
-	tpDphHashNode pStaDs = 0;
+	tpDphHashNode sta = 0;
 	struct pe_session *pe_session;
 
 	if (pMsgBuf == NULL) {
@@ -811,19 +811,19 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 	msg.type = eWNI_SME_ASSOC_IND;
 	msg.bodyptr = pSirSmeAssocInd;
 	msg.bodyval = 0;
-	pStaDs = dph_get_hash_entry(mac,
+	sta = dph_get_hash_entry(mac,
 				    ((tpLimMlmAssocInd) pMsgBuf)->aid,
 				    &pe_session->dph.dphHashTable);
-	if (!pStaDs) {
+	if (!sta) {
 		pe_err("MLM AssocInd: Station context no longer valid (aid %d)",
 			((tpLimMlmAssocInd) pMsgBuf)->aid);
 		qdf_mem_free(pSirSmeAssocInd);
 
 		return;
 	}
-	pSirSmeAssocInd->staId = pStaDs->staIndex;
-	pSirSmeAssocInd->reassocReq = pStaDs->mlmStaContext.subType;
-	pSirSmeAssocInd->timingMeasCap = pStaDs->timingMeasCap;
+	pSirSmeAssocInd->staId = sta->staIndex;
+	pSirSmeAssocInd->reassocReq = sta->mlmStaContext.subType;
+	pSirSmeAssocInd->timingMeasCap = sta->timingMeasCap;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pe_session->peSessionId, msg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -1716,7 +1716,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 				     struct pe_session *pe_session)
 {
 	tpDeleteBssParams pDelBssParams = (tpDeleteBssParams) limMsgQ->bodyptr;
-	tpDphHashNode pStaDs =
+	tpDphHashNode sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
@@ -1736,20 +1736,20 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
 		}
-		if (pStaDs == NULL) {
+		if (sta == NULL) {
 			pe_err("DPH Entry for STA 1 missing");
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
 		}
 		if (eLIM_MLM_WT_DEL_BSS_RSP_STATE !=
-		    pStaDs->mlmStaContext.mlmState) {
+		    sta->mlmStaContext.mlmState) {
 			pe_err("Received unexpected WMA_DEL_BSS_RSP in state %X",
-				       pStaDs->mlmStaContext.mlmState);
+				       sta->mlmStaContext.mlmState);
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
 		}
-		pe_debug("STA AssocID %d MAC",	pStaDs->assocId);
-		       lim_print_mac_addr(mac, pStaDs->staAddr, LOGD);
+		pe_debug("STA AssocID %d MAC",	sta->assocId);
+		       lim_print_mac_addr(mac, sta->staAddr, LOGD);
 	} else {
 		pe_err("DEL BSS failed!");
 		statusCode = eSIR_SME_STOP_BSS_FAILURE;
@@ -1759,23 +1759,23 @@ end:
 		qdf_mem_free(pDelBssParams);
 		limMsgQ->bodyptr = NULL;
 	}
-	if (pStaDs == NULL)
+	if (sta == NULL)
 		return;
 	if ((LIM_IS_STA_ROLE(pe_session)) &&
 	    (pe_session->limSmeState !=
 			eLIM_SME_WT_DISASSOC_STATE &&
 	    pe_session->limSmeState !=
 			eLIM_SME_WT_DEAUTH_STATE) &&
-	    pStaDs->mlmStaContext.cleanupTrigger !=
+	    sta->mlmStaContext.cleanupTrigger !=
 			eLIM_JOIN_FAILURE) {
 		/** The Case where the DelBss is invoked from
 		 *  context of other than normal DisAssoc / Deauth OR
 		 *  as part of Join Failure.
 		 */
-		lim_handle_del_bss_in_re_assoc_context(mac, pStaDs, pe_session);
+		lim_handle_del_bss_in_re_assoc_context(mac, sta, pe_session);
 		return;
 	}
-	lim_prepare_and_send_del_sta_cnf(mac, pStaDs, statusCode, pe_session);
+	lim_prepare_and_send_del_sta_cnf(mac, sta, statusCode, pe_session);
 	return;
 }
 
@@ -2062,53 +2062,53 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				    struct pe_session *pe_session)
 {
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 
 	if (NULL == pAddStaParams) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
 
-	pStaDs =
+	sta =
 		dph_get_hash_entry(mac, pAddStaParams->assocId,
 				   &pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		pe_err("DPH Entry for STA %X missing", pAddStaParams->assocId);
 		goto end;
 	}
 
-	if (eLIM_MLM_WT_ADD_STA_RSP_STATE != pStaDs->mlmStaContext.mlmState) {
+	if (eLIM_MLM_WT_ADD_STA_RSP_STATE != sta->mlmStaContext.mlmState) {
 		pe_err("Received unexpected WMA_ADD_STA_RSP in state %X",
-			pStaDs->mlmStaContext.mlmState);
+			sta->mlmStaContext.mlmState);
 		goto end;
 	}
 	if (QDF_STATUS_SUCCESS != pAddStaParams->status) {
 		pe_err("Error! rcvd delSta rsp from HAL with status %d",
 			       pAddStaParams->status);
-		lim_reject_association(mac, pStaDs->staAddr,
-				       pStaDs->mlmStaContext.subType,
-				       true, pStaDs->mlmStaContext.authType,
-				       pStaDs->assocId, true,
+		lim_reject_association(mac, sta->staAddr,
+				       sta->mlmStaContext.subType,
+				       true, sta->mlmStaContext.authType,
+				       sta->assocId, true,
 				       eSIR_MAC_UNSPEC_FAILURE_STATUS,
 				       pe_session);
 		goto end;
 	}
-	pStaDs->bssId = pAddStaParams->bssIdx;
-	pStaDs->staIndex = pAddStaParams->staIdx;
-	pStaDs->nss = pAddStaParams->nss;
+	sta->bssId = pAddStaParams->bssIdx;
+	sta->staIndex = pAddStaParams->staIdx;
+	sta->nss = pAddStaParams->nss;
 	/* if the AssocRsp frame is not acknowledged, then keep alive timer will take care of the state */
-	pStaDs->valid = 1;
-	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_ASSOC_CNF_STATE;
+	sta->valid = 1;
+	sta->mlmStaContext.mlmState = eLIM_MLM_WT_ASSOC_CNF_STATE;
 	pe_debug("AddStaRsp Success.STA AssocID %d staId %d MAC",
-		pStaDs->assocId, pStaDs->staIndex);
-	lim_print_mac_addr(mac, pStaDs->staAddr, LOGD);
+		sta->assocId, sta->staIndex);
+	lim_print_mac_addr(mac, sta->staAddr, LOGD);
 
 	/* For BTAMP-AP, the flow sequence shall be:
 	 * 1) PE sends eWNI_SME_ASSOC_IND to SME
 	 * 2) PE receives eWNI_SME_ASSOC_CNF from SME
 	 * 3) BTAMP-AP sends Re/Association Response to BTAMP-STA
 	 */
-	lim_send_mlm_assoc_ind(mac, pStaDs, pe_session);
+	lim_send_mlm_assoc_ind(mac, sta, pe_session);
 	/* fall though to reclaim the original Add STA Response message */
 end:
 	if (0 != limMsgQ->bodyptr) {
@@ -2405,18 +2405,18 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 	tpAddBssParams pAddBssParams = (tpAddBssParams) msg->bodyptr;
 	tAniAuthType cfgAuthType, authMode;
 	tLimMlmAuthReq *pMlmAuthReq;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 
 	if (NULL == pAddBssParams) {
 		pe_err("Invalid body pointer in message");
 		goto joinFailure;
 	}
 	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
-		pStaDs = dph_add_hash_entry(mac_ctx,
+		sta = dph_add_hash_entry(mac_ctx,
 				pAddBssParams->staContext.staMac,
 				DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-		if (pStaDs == NULL) {
+		if (sta == NULL) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac_ctx,
@@ -2425,9 +2425,9 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		}
 		session_entry->bssIdx = (uint8_t) pAddBssParams->bssIdx;
 		/* Success, handle below */
-		pStaDs->bssId = pAddBssParams->bssIdx;
+		sta->bssId = pAddBssParams->bssIdx;
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
-		pStaDs->staIndex = pAddBssParams->staContext.staIdx;
+		sta->staIndex = pAddBssParams->staContext.staIdx;
 		/* Trigger Authentication with AP */
 		cfgAuthType = mac_ctx->mlme_cfg->wep_params.auth_type;
 

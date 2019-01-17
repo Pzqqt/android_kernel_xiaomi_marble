@@ -342,7 +342,7 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 			       uint8_t *sendProbeReq, tpSirMacMgmtHdr pMh)
 {
 	uint32_t bi;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	QDF_STATUS status;
 
 	/*
@@ -431,7 +431,7 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 	}
 	lim_update_short_slot(mac_ctx, bcn, beaconParams, session);
 
-	pStaDs = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
+	sta = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				    &session->dph.dphHashTable);
 	if ((bcn->wmeEdcaPresent && session->limWmeEnabled) ||
 	    (bcn->edcaPresent && session->limQosEnabled)) {
@@ -442,13 +442,13 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 							 session);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				pe_err("EDCA parameter processing error");
-			} else if (pStaDs != NULL) {
+			} else if (sta != NULL) {
 				/* If needed, downgrade the EDCA parameters */
 				lim_set_active_edca_params(mac_ctx,
 					session->gLimEdcaParams, session);
 				lim_send_edca_params(mac_ctx,
 					session->gLimEdcaParamsActive,
-					pStaDs->bssId, false);
+					sta->bssId, false);
 			} else {
 				pe_err("Self Entry missing in Hash Table");
 			}
@@ -720,7 +720,7 @@ sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 				    tUpdateBeaconParams *beaconParams,
 				    uint8_t *sendProbeReq, tpSirMacMgmtHdr pMh)
 {
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	uint16_t aid;
 	uint8_t cb_mode;
 
@@ -733,14 +733,14 @@ sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 	} else
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
 	/* check for VHT capability */
-	pStaDs = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
+	sta = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
 			&session->dph.dphHashTable);
-	if ((NULL == pStaDs) || ((NULL != pStaDs) &&
-					(STA_INVALID_IDX == pStaDs->staIndex)))
+	if ((NULL == sta) || ((NULL != sta) &&
+					(STA_INVALID_IDX == sta->staIndex)))
 		return;
-	sch_bcn_update_opmode_change(mac_ctx, pStaDs, session, bcn, pMh,
+	sch_bcn_update_opmode_change(mac_ctx, sta, session, bcn, pMh,
 				     cb_mode);
-	sch_bcn_update_he_ies(mac_ctx, pStaDs, session, bcn, pMh);
+	sch_bcn_update_he_ies(mac_ctx, sta, session, bcn, pMh);
 	return;
 }
 

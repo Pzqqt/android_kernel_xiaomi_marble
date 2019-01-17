@@ -539,22 +539,22 @@ lim_check_rx_wpa_ie_match(struct mac_context *mac, tDot11fIEWPA *rx_wpaie,
  * NA
  *
  * @param mac    Pointer to Global MAC structure
- * @param pStaDs  Pointer to the per STA data structure
+ * @param sta  Pointer to the per STA data structure
  *                initialized by LIM and maintained at DPH
  *
  * @return None
  */
 
 QDF_STATUS
-lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 		    struct pe_session *pe_session)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pe_debug("Cleanup Rx Path for AID: %d"
 		"pe_session->limSmeState: %d, mlmState: %d",
-		pStaDs->assocId, pe_session->limSmeState,
-		pStaDs->mlmStaContext.mlmState);
+		sta->assocId, pe_session->limSmeState,
+		sta->mlmStaContext.mlmState);
 
 	pe_session->isCiscoVendorAP = false;
 
@@ -568,40 +568,40 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode pStaDs,
 					mac->lim.gLimAddtsRspTimerCount);
 	}
 
-	if (pStaDs->mlmStaContext.mlmState == eLIM_MLM_WT_ASSOC_CNF_STATE) {
+	if (sta->mlmStaContext.mlmState == eLIM_MLM_WT_ASSOC_CNF_STATE) {
 		lim_deactivate_and_change_per_sta_id_timer(mac, eLIM_CNF_WAIT_TIMER,
-							   pStaDs->assocId);
+							   sta->assocId);
 
-		if (!pStaDs->mlmStaContext.updateContext) {
+		if (!sta->mlmStaContext.updateContext) {
 			/**
 			 * There is no context at Polaris to delete.
 			 * Release our assigned AID back to the free pool
 			 */
 			if (LIM_IS_AP_ROLE(pe_session)) {
-				lim_del_sta(mac, pStaDs, false, pe_session);
-				lim_release_peer_idx(mac, pStaDs->assocId,
+				lim_del_sta(mac, sta, false, pe_session);
+				lim_release_peer_idx(mac, sta->assocId,
 						     pe_session);
 			}
-			lim_delete_dph_hash_entry(mac, pStaDs->staAddr,
-						  pStaDs->assocId, pe_session);
+			lim_delete_dph_hash_entry(mac, sta->staAddr,
+						  sta->assocId, pe_session);
 
 			return retCode;
 		}
 	}
 	/* delete all tspecs associated with this sta. */
-	lim_admit_control_delete_sta(mac, pStaDs->assocId);
+	lim_admit_control_delete_sta(mac, sta->assocId);
 
 	/**
 	 * Make STA hash entry invalid at eCPU so that DPH
 	 * does not process any more data packets and
 	 * releases those BDs
 	 */
-	pStaDs->valid = 0;
+	sta->valid = 0;
 	lim_send_sme_tsm_ie_ind(mac, pe_session, 0, 0, 0);
 	/* Any roaming related changes should be above this line */
 	if (lim_is_roam_synch_in_progress(pe_session))
 		return QDF_STATUS_SUCCESS;
-	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
+	sta->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
 	if (LIM_IS_STA_ROLE(pe_session)) {
 		MTRACE(mac_trace
@@ -620,11 +620,11 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode pStaDs,
 	if (!pe_session->add_bss_failed) {
 		if (pe_session->limSmeState == eLIM_SME_JOIN_FAILURE_STATE) {
 			retCode =
-				lim_del_bss(mac, pStaDs, pe_session->bssIdx,
+				lim_del_bss(mac, sta, pe_session->bssIdx,
 					    pe_session);
 		} else
 			retCode = lim_del_sta(mac,
-					 pStaDs, true, pe_session);
+					 sta, true, pe_session);
 	}
 
 	return retCode;
@@ -2558,7 +2558,7 @@ lim_add_sta(struct mac_context *mac_ctx,
  * NA
  *
  * @param  mac    - Pointer to Global MAC structure
- * @param  pStaDs  - Pointer to the STA datastructure created by
+ * @param  sta  - Pointer to the STA datastructure created by
  *                   LIM and maintained by DPH
  * @param  fRespReqd - flag to indicate whether the delete is synchronous (true)
  *                   or not (false)
@@ -2567,7 +2567,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 QDF_STATUS
 lim_del_sta(struct mac_context *mac,
-	    tpDphHashNode pStaDs, bool fRespReqd, struct pe_session *pe_session)
+	    tpDphHashNode sta, bool fRespReqd, struct pe_session *pe_session)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
 	struct scheduler_msg msgQ = {0};
@@ -2586,8 +2586,8 @@ lim_del_sta(struct mac_context *mac,
 	 */
 	if (!policy_mgr_is_hw_dbs_2x2_capable(mac->psoc) &&
 		LIM_IS_AP_ROLE(pe_session) &&
-		(pStaDs->staType == STA_ENTRY_PEER) &&
-		!pStaDs->mlmStaContext.vhtCapability &&
+		(sta->staType == STA_ENTRY_PEER) &&
+		!sta->mlmStaContext.vhtCapability &&
 		(pe_session->nss == 2)) {
 		pe_session->ht_client_cnt--;
 		if (pe_session->ht_client_cnt == 0) {
@@ -2609,31 +2609,31 @@ lim_del_sta(struct mac_context *mac,
 
 #ifdef FEATURE_WLAN_TDLS
 	if (LIM_IS_STA_ROLE(pe_session) &&
-	    (pStaDs->staType != STA_ENTRY_TDLS_PEER))
+	    (sta->staType != STA_ENTRY_TDLS_PEER))
 #else
 	if (LIM_IS_STA_ROLE(pe_session))
 #endif
 		pDelStaParams->staIdx = pe_session->staId;
 
 	else
-		pDelStaParams->staIdx = pStaDs->staIndex;
+		pDelStaParams->staIdx = sta->staIndex;
 
-	pDelStaParams->assocId = pStaDs->assocId;
-	pStaDs->valid = 0;
+	pDelStaParams->assocId = sta->assocId;
+	sta->valid = 0;
 
 	if (!fRespReqd)
 		pDelStaParams->respReqd = 0;
 	else {
-		if (!(IS_TDLS_PEER(pStaDs->staType))) {
+		if (!(IS_TDLS_PEER(sta->staType))) {
 			/* when lim_del_sta is called from processSmeAssocCnf
 			 * then mlmState is already set properly. */
 			if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
-				GET_LIM_STA_CONTEXT_MLM_STATE(pStaDs)) {
+				GET_LIM_STA_CONTEXT_MLM_STATE(sta)) {
 				MTRACE(mac_trace
 					(mac, TRACE_CODE_MLM_STATE,
 					 pe_session->peSessionId,
 					 eLIM_MLM_WT_DEL_STA_RSP_STATE));
-				SET_LIM_STA_CONTEXT_MLM_STATE(pStaDs,
+				SET_LIM_STA_CONTEXT_MLM_STATE(sta,
 					eLIM_MLM_WT_DEL_STA_RSP_STATE);
 			}
 			if (LIM_IS_STA_ROLE(pe_session)) {
@@ -2659,9 +2659,9 @@ lim_del_sta(struct mac_context *mac,
 	pDelStaParams->sessionId = pe_session->peSessionId;
 	pDelStaParams->smesessionId = pe_session->smeSessionId;
 
-	pDelStaParams->staType = pStaDs->staType;
+	pDelStaParams->staType = sta->staType;
 	qdf_mem_copy((uint8_t *) pDelStaParams->staMac,
-		     (uint8_t *) pStaDs->staAddr, sizeof(tSirMacAddr));
+		     (uint8_t *) sta->staAddr, sizeof(tSirMacAddr));
 
 	pDelStaParams->status = QDF_STATUS_SUCCESS;
 	msgQ.type = WMA_DELETE_STA_REQ;
@@ -2673,7 +2673,7 @@ lim_del_sta(struct mac_context *mac,
 		 "for STAID: %X and AssocID: %d MAC : "
 		 MAC_ADDRESS_STR, pDelStaParams->sessionId,
 		pDelStaParams->staIdx, pDelStaParams->assocId,
-		MAC_ADDR_ARRAY(pStaDs->staAddr));
+		MAC_ADDR_ARRAY(sta->staAddr));
 
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
@@ -2705,7 +2705,7 @@ lim_del_sta(struct mac_context *mac,
  * NA
  *
  * @param  mac    - Pointer to Global MAC structure
- * @param  pStaDs  - Pointer to the STA datastructure created by
+ * @param  sta  - Pointer to the STA datastructure created by
  *                   LIM and maintained by DPH
  * @return retCode - Indicates success or failure return code
  */
@@ -2919,13 +2919,13 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
  ***NOTE:
  *
  * @param  mac - Pointer to Global MAC structure
- * @param  pStaDs - Pointer to a sta descriptor
+ * @param  sta - Pointer to a sta descriptor
  * @return None
  */
 
 void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 {
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 	struct pe_session *pe_session = NULL;
 
 	pe_session = pe_find_session_by_session_id(mac,
@@ -2934,25 +2934,25 @@ void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
-	pStaDs = dph_get_hash_entry(mac, staId, &pe_session->dph.dphHashTable);
+	sta = dph_get_hash_entry(mac, staId, &pe_session->dph.dphHashTable);
 
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		pe_err("No STA context in SIR_LIM_CNF_WAIT_TIMEOUT");
 		return;
 	}
 
-	switch (pStaDs->mlmStaContext.mlmState) {
+	switch (sta->mlmStaContext.mlmState) {
 	case eLIM_MLM_WT_ASSOC_CNF_STATE:
 		pe_debug("Did not receive Assoc Cnf in eLIM_MLM_WT_ASSOC_CNF_STATE sta Assoc id %d",
-				pStaDs->assocId);
-		lim_print_mac_addr(mac, pStaDs->staAddr, LOGD);
+				sta->assocId);
+		lim_print_mac_addr(mac, sta->staAddr, LOGD);
 
 		if (LIM_IS_AP_ROLE(pe_session)) {
-			lim_reject_association(mac, pStaDs->staAddr,
-					       pStaDs->mlmStaContext.subType,
+			lim_reject_association(mac, sta->staAddr,
+					       sta->mlmStaContext.subType,
 					       true,
-					       pStaDs->mlmStaContext.authType,
-					       pStaDs->assocId, true,
+					       sta->mlmStaContext.authType,
+					       sta->assocId, true,
 					       eSIR_MAC_UNSPEC_FAILURE_STATUS,
 					       pe_session);
 		}
@@ -2960,7 +2960,7 @@ void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 
 	default:
 		pe_warn("Received CNF_WAIT_TIMEOUT in state %d",
-			pStaDs->mlmStaContext.mlmState);
+			sta->mlmStaContext.mlmState);
 	}
 }
 
@@ -3314,13 +3314,13 @@ QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac,
  * NA
  *
  * @param  mac    - Pointer to Global MAC structure
- * @param  pStaDs  - Pointer to the STA datastructure created by
+ * @param  sta  - Pointer to the STA datastructure created by
  *                   LIM and maintained by DPH
  * @return retCode - Indicates success or failure return code
  */
 
 QDF_STATUS
-lim_del_bss(struct mac_context *mac, tpDphHashNode pStaDs, uint16_t bssIdx,
+lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bssIdx,
 	    struct pe_session *pe_session)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
@@ -3335,10 +3335,10 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode pStaDs, uint16_t bssIdx,
 
 	/* DPH was storing the AssocID in staID field, */
 	/* staID is actually assigned by HAL when AddSTA message is sent. */
-	if (pStaDs != NULL) {
-		pDelBssParams->bssIdx = pStaDs->bssId;
-		pStaDs->valid = 0;
-		pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
+	if (sta != NULL) {
+		pDelBssParams->bssIdx = sta->bssId;
+		sta->valid = 0;
+		sta->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
 	} else
 		pDelBssParams->bssIdx = bssIdx;
 	pe_session->limMlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
@@ -3530,7 +3530,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	struct scheduler_msg msgQ = {0};
 	tpAddBssParams pAddBssParams = NULL;
 	uint32_t retCode;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 	uint8_t chanWidthSupp = 0;
 	bool is_vht_cap_in_vendor_ie = false;
 	tDot11fIEVHTCaps *vht_caps = NULL;
@@ -3727,10 +3727,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	pAddBssParams->staContext.listenInterval = listen_interval;
 
 	/* Fill Assoc id from the dph table */
-	pStaDs = dph_lookup_hash_entry(mac, pAddBssParams->staContext.bssId,
+	sta = dph_lookup_hash_entry(mac, pAddBssParams->staContext.bssId,
 				&pAddBssParams->staContext.assocId,
 				&pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
+	if (sta == NULL) {
 		pe_err("Couldn't get assoc id for " "MAC ADDR: "
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(
@@ -3773,7 +3773,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						    vendor_vht_ie.VHTCaps))) {
 			pAddBssParams->staContext.vhtCapable = 1;
 			pAddBssParams->staContext.vhtSupportedRxNss =
-				pStaDs->vhtSupportedRxNss;
+				sta->vhtSupportedRxNss;
 			if (pAssocRsp->VHTCaps.present)
 				vht_caps = &pAssocRsp->VHTCaps;
 			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
@@ -3951,12 +3951,12 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		pAddBssParams->staContext.wmmEnabled = 0;
 
 	/* Update the rates */
-	pStaDs = dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
+	sta = dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				&pe_session->dph.dphHashTable);
-	if (pStaDs != NULL) {
+	if (sta != NULL) {
 		qdf_mem_copy((uint8_t *) &pAddBssParams->staContext.
 				supportedRates,
-				(uint8_t *)&pStaDs->supportedRates,
+				(uint8_t *)&sta->supportedRates,
 				sizeof(tSirSupportedRates));
 	} else
 		pe_err("could not Update the supported rates");
@@ -4546,7 +4546,7 @@ returnFailure:
  * lim_prepare_and_send_del_sta_cnf() - prepares and send del sta cnf
  *
  * @mac:          mac global context
- * @pStaDs:        sta dph node
+ * @sta:        sta dph node
  * @statusCode:    status code
  * @pe_session: session context
  *
@@ -4556,7 +4556,7 @@ returnFailure:
  * Return: void
  */
 void
-lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode pStaDs,
+lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				 tSirResultCodes statusCode,
 				 struct pe_session *pe_session)
 {
@@ -4564,19 +4564,19 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode pStaDs,
 	struct qdf_mac_addr sta_dsaddr;
 	tLimMlmStaContext mlmStaContext;
 
-	if (pStaDs == NULL) {
-		pe_err("pStaDs is NULL");
+	if (sta == NULL) {
+		pe_err("sta is NULL");
 		return;
 	}
-	staDsAssocId = pStaDs->assocId;
+	staDsAssocId = sta->assocId;
 	qdf_mem_copy((uint8_t *) sta_dsaddr.bytes,
-		     pStaDs->staAddr, QDF_MAC_ADDR_SIZE);
+		     sta->staAddr, QDF_MAC_ADDR_SIZE);
 
-	mlmStaContext = pStaDs->mlmStaContext;
+	mlmStaContext = sta->mlmStaContext;
 	if (LIM_IS_AP_ROLE(pe_session))
-		lim_release_peer_idx(mac, pStaDs->assocId, pe_session);
+		lim_release_peer_idx(mac, sta->assocId, pe_session);
 
-	lim_delete_dph_hash_entry(mac, pStaDs->staAddr, pStaDs->assocId,
+	lim_delete_dph_hash_entry(mac, sta->staAddr, sta->assocId,
 				  pe_session);
 
 	if (LIM_IS_STA_ROLE(pe_session)) {

@@ -63,8 +63,8 @@
 #define GET_LIM_MLM_STATE(mac)                 (mac->lim.gLimMlmState)
 #define SET_LIM_MLM_STATE(mac, state)          (mac->lim.gLimMlmState = state)
 /*tpdphHashNode mlmStaContext*/
-#define GET_LIM_STA_CONTEXT_MLM_STATE(pStaDs)   (pStaDs->mlmStaContext.mlmState)
-#define SET_LIM_STA_CONTEXT_MLM_STATE(pStaDs, state)  (pStaDs->mlmStaContext.mlmState = state)
+#define GET_LIM_STA_CONTEXT_MLM_STATE(sta)   (sta->mlmStaContext.mlmState)
+#define SET_LIM_STA_CONTEXT_MLM_STATE(sta, state)  (sta->mlmStaContext.mlmState = state)
 #define LIM_IS_CONNECTION_ACTIVE(pe_session)  (pe_session->LimRxedBeaconCntDuringHB)
 /*mac->lim.gLimProcessDefdMsgs*/
 #define GET_LIM_PROCESS_DEFD_MESGS(mac) (mac->lim.gLimProcessDefdMsgs)
@@ -207,12 +207,12 @@ static inline tLimSmeStates lim_get_sme_state(struct mac_context *mac)
 
 extern void lim_received_hb_handler(struct mac_context *, uint8_t, struct pe_session *);
 /* / Function that triggers STA context deletion */
-extern void lim_trigger_sta_deletion(struct mac_context *mac, tpDphHashNode pStaDs,
+extern void lim_trigger_sta_deletion(struct mac_context *mac, tpDphHashNode sta,
 				     struct pe_session *pe_session);
 
 #ifdef FEATURE_WLAN_TDLS
 /* Function that sends TDLS Del Sta indication to SME */
-extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode pStaDs,
+extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
 					  struct pe_session *pe_session,
 					  uint16_t reasonCode);
 /**

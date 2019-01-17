@@ -92,7 +92,7 @@ void lim_update_re_assoc_globals(struct mac_context *mac, tpSirAssocRsp pAssocRs
 /**
  * @lim_handle_del_bss_in_re_assoc_context() - DEL BSS during reassociation
  * @mac: Global MAC Context
- * @pStaDs: Station Hash entry
+ * @sta: Station Hash entry
  * @pe_session: PE Session
  *
  * While Processing the ReAssociation Response Frame in STA,
@@ -107,7 +107,7 @@ void lim_update_re_assoc_globals(struct mac_context *mac, tpSirAssocRsp pAssocRs
  * Return: None
  */
 void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
-		tpDphHashNode pStaDs, struct pe_session *pe_session)
+		tpDphHashNode sta, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	tpSirBssDescription bss_desc;
@@ -122,7 +122,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 	case eLIM_SME_WT_REASSOC_STATE:
 	{
 		tpSirAssocRsp assocRsp;
-		tpDphHashNode pStaDs;
+		tpDphHashNode sta;
 		QDF_STATUS retStatus = QDF_STATUS_SUCCESS;
 		tpSchBeaconStruct beacon_struct;
 
@@ -143,11 +143,11 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 		 * Add an entry for AP to hash table
 		 * maintained by DPH module
 		 */
-		pStaDs = dph_add_hash_entry(mac,
+		sta = dph_add_hash_entry(mac,
 				pe_session->limReAssocbssId,
 				DPH_STA_HASH_INDEX_PEER,
 				&pe_session->dph.dphHashTable);
-		if (pStaDs == NULL) {
+		if (sta == NULL) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac,
@@ -164,7 +164,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 		 */
 		assocRsp =
 			(tpSirAssocRsp) pe_session->limAssocResponseData;
-		lim_update_assoc_sta_datas(mac, pStaDs, assocRsp,
+		lim_update_assoc_sta_datas(mac, sta, assocRsp,
 			pe_session);
 		lim_update_re_assoc_globals(mac, assocRsp, pe_session);
 		bss_desc = &pe_session->pLimReAssocReq->bssDescription;
@@ -225,7 +225,7 @@ error:
 /**
  * @lim_handle_add_bss_in_re_assoc_context() - ADD BSS during reassociation
  * @mac: Global MAC Context
- * @pStaDs: Station Hash entry
+ * @sta: Station Hash entry
  * @pe_session: PE Session
  *
  * While Processing the ReAssociation Response Frame in STA,
@@ -240,7 +240,7 @@ error:
  * Return: None
  */
 void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
-		tpDphHashNode pStaDs, struct pe_session *pe_session)
+		tpDphHashNode sta, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	/** Skipped the DeleteDPH Hash Entry as we need it for the new BSS*/
@@ -252,7 +252,7 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 	switch (pe_session->limSmeState) {
 	case eLIM_SME_WT_REASSOC_STATE: {
 		tpSirAssocRsp assocRsp;
-		tpDphHashNode pStaDs;
+		tpDphHashNode sta;
 		QDF_STATUS retStatus = QDF_STATUS_SUCCESS;
 		tSchBeaconStruct *pBeaconStruct;
 
@@ -266,10 +266,10 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 			goto Error;
 		}
 		/* Get the AP entry from DPH hash table */
-		pStaDs =
+		sta =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 					   &pe_session->dph.dphHashTable);
-		if (pStaDs == NULL) {
+		if (sta == NULL) {
 			pe_err("Fail to get STA PEER entry from hash");
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -283,7 +283,7 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 		 */
 		assocRsp =
 			(tpSirAssocRsp) pe_session->limAssocResponseData;
-		lim_update_assoc_sta_datas(mac, pStaDs, assocRsp,
+		lim_update_assoc_sta_datas(mac, sta, assocRsp,
 					   pe_session);
 		lim_update_re_assoc_globals(mac, assocRsp, pe_session);
 		lim_extract_ap_capabilities(mac,

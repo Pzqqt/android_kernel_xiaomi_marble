@@ -2989,7 +2989,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 	uint32_t val = 0;
 #ifdef FEATURE_WLAN_TDLS
 	uint16_t aid;
-	tpDphHashNode pStaDs;
+	tpDphHashNode sta;
 #endif
 	uint8_t smeSessionId = 0;
 
@@ -3075,7 +3075,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 #ifdef FEATURE_WLAN_TDLS
-	pStaDs =
+	sta =
 		dph_lookup_hash_entry(mac, peer, &aid,
 				      &pe_session->dph.dphHashTable);
 #endif
@@ -3130,8 +3130,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 				 pe_session->peSessionId,
 				 pMacHdr->fc.subType));
 #ifdef FEATURE_WLAN_TDLS
-		if ((NULL != pStaDs)
-		    && (STA_ENTRY_TDLS_PEER == pStaDs->staType)) {
+		if ((NULL != sta)
+		    && (STA_ENTRY_TDLS_PEER == sta->staType)) {
 			/* Queue Disassociation frame in high priority WQ */
 			lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 						      pe_session,

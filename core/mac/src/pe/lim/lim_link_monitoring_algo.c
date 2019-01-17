@@ -357,7 +357,7 @@ void
 lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 			   tSirMacReasonCodes reasonCode)
 {
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode sta = NULL;
 
 	/* tear down the following pe_session */
 	struct pe_session *pe_session;
@@ -379,11 +379,11 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 	/* Announce loss of link to Roaming algorithm */
 	/* and cleanup by sending SME_DISASSOC_REQ to SME */
 
-	pStaDs =
+	sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
 
-	if (pStaDs != NULL) {
+	if (sta != NULL) {
 		tLimMlmDeauthInd mlmDeauthInd;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -391,12 +391,12 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 		lim_delete_tdls_peers(mac, pe_session);
 #endif
 
-		pStaDs->mlmStaContext.disassocReason = reasonCode;
-		pStaDs->mlmStaContext.cleanupTrigger =
+		sta->mlmStaContext.disassocReason = reasonCode;
+		sta->mlmStaContext.cleanupTrigger =
 			eLIM_LINK_MONITORING_DEAUTH;
 		/* / Issue Deauth Indication to SME. */
 		qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
-			     pStaDs->staAddr, sizeof(tSirMacAddr));
+			     sta->staAddr, sizeof(tSirMacAddr));
 
 	/*
 	* if deauth_before_connection is enabled and reasoncode is
@@ -415,16 +415,16 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 
 		pe_debug("HB Failure on MAC "
 			MAC_ADDRESS_STR" Store it on Index %d",
-			MAC_ADDR_ARRAY(pStaDs->staAddr), apCount);
+			MAC_ADDR_ARRAY(sta->staAddr), apCount);
 
 		sir_copy_mac_addr(mac->lim.gLimHeartBeatApMac[apCount],
-							pStaDs->staAddr);
+							sta->staAddr);
 	}
 
 		mlmDeauthInd.reasonCode =
-			(uint8_t) pStaDs->mlmStaContext.disassocReason;
+			(uint8_t) sta->mlmStaContext.disassocReason;
 		mlmDeauthInd.deauthTrigger =
-			pStaDs->mlmStaContext.cleanupTrigger;
+			sta->mlmStaContext.cleanupTrigger;
 
 		if (LIM_IS_STA_ROLE(pe_session))
 			lim_post_sme_message(mac, LIM_MLM_DEAUTH_IND,
@@ -435,7 +435,7 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 					WLAN_LOG_REASON_HB_FAILURE,
 					false, false);
 
-		lim_send_sme_deauth_ind(mac, pStaDs, pe_session);
+		lim_send_sme_deauth_ind(mac, sta, pe_session);
 	}
 } /*** lim_tear_down_link_with_ap() ***/
 
