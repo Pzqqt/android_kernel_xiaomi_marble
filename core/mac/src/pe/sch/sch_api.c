@@ -36,8 +36,6 @@
 #include "sir_mac_prop_exts.h"
 #include "sir_common.h"
 
-#include "cfg_api.h"
-
 #include "lim_api.h"
 
 #include "sch_api.h"
@@ -47,34 +45,6 @@
 #include "lim_utils.h"
 
 #include "wma_types.h"
-
-/* -------------------------------------------------------------------- */
-/* */
-/*                          Static Variables */
-/* */
-/* -------------------------------------------------------------------- */
-/**
- * sch_post_message
- *
- * FUNCTION:
- * Post the beacon message to the scheduler message queue
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param pMsg pointer to message
- * @return None
- */
-
-QDF_STATUS sch_post_message(struct mac_context *mac, struct scheduler_msg *pMsg)
-{
-	sch_process_message(mac, pMsg);
-
-	return QDF_STATUS_SUCCESS;
-}
 
 QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 			       uint16_t size, struct pe_session *pe_session,

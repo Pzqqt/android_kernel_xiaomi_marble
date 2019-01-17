@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,6 @@
  *
  */
 /* Standard include files */
-#include "cfg_api.h"             /* cfg_cleanup */
 #include "lim_api.h"             /* lim_cleanup */
 #include "sir_types.h"
 #include "sys_entry_func.h"
@@ -93,7 +92,6 @@ QDF_STATUS mac_stop(mac_handle_t mac_handle)
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	pe_stop(mac);
-	cfg_cleanup(mac);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -141,12 +139,6 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 	if (cds_cfg->driver_type)
 		mac->gDriverType = QDF_DRIVER_TYPE_MFG;
 
-	status = cfg_init(mac);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to init legacy CFG; status:%u", status);
-		goto release_psoc_ref;
-	}
-
 	sys_init_globals(mac);
 
 	/* FW: 0 to 2047 and Host: 2048 to 4095 */
@@ -157,13 +149,10 @@ QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 	status = pe_open(mac, cds_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to open PE; status:%u", status);
-		goto deinit_cfg;
+		goto release_psoc_ref;
 	}
 
 	return QDF_STATUS_SUCCESS;
-
-deinit_cfg:
-	cfg_de_init(mac);
 
 release_psoc_ref:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_MAC_ID);
@@ -183,9 +172,6 @@ QDF_STATUS mac_close(mac_handle_t mac_handle)
 		return QDF_STATUS_E_FAILURE;
 
 	pe_close(mac);
-
-	/* Call routine to free-up all CFG data structures */
-	cfg_de_init(mac);
 
 	if (mac->pdev) {
 		wlan_objmgr_pdev_release_ref(mac->pdev, WLAN_LEGACY_MAC_ID);

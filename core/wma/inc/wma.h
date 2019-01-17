@@ -28,7 +28,6 @@
 #include "wmi_unified.h"
 #include "wmi_version.h"
 #include "qdf_types.h"
-#include "cfg_api.h"
 #include "qdf_status.h"
 #include "cds_sched.h"
 #include "cds_config.h"
@@ -2189,28 +2188,6 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 	}
 
 	return iface->in_bmps || wma->in_imps;
-}
-
-/**
- * wma_vdev_get_cfg_int - Get cfg integer value
- * @cfg_id: cfg item number
- * @value: fill the out value
- *
- * Note caller must verify return status before using value
- *
- * Return: QDF_STATUS_SUCCESS when got item from cfg else QDF_STATUS_E_FAILURE
- */
-static inline
-QDF_STATUS wma_vdev_get_cfg_int(int cfg_id, int *value)
-{
-	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
-
-	*value = 0;
-
-	if (!mac)
-		return QDF_STATUS_E_FAILURE;
-
-	return wlan_cfg_get_int(mac, cfg_id, value);
 }
 
 /**

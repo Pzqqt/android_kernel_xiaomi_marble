@@ -25,9 +25,6 @@
 #include "sys_wrapper.h"
 #include "wlan_vdev_mlme_api.h"
 
-QDF_STATUS cfg_init(struct mac_context *);
-void cfg_de_init(struct mac_context *);
-
 /**
  * sir_swap_u16()
  *

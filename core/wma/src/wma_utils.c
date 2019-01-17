@@ -32,7 +32,6 @@
 #include "ani_global.h"
 #include "wmi_unified.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
@@ -3476,31 +3475,6 @@ int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		return -EINVAL;
 	return 0;
-}
-
-/**
- * wma_wni_cfg_dnld() - cfg download request
- * @handle: wma handle
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	void *mac = cds_get_context(QDF_MODULE_ID_PE);
-
-	WMA_LOGD("%s: Enter", __func__);
-
-	if (NULL == mac) {
-		WMA_LOGE("%s: Invalid context", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	process_cfg_download_req(mac);
-
-	WMA_LOGD("%s: Exit", __func__);
-	return qdf_status;
 }
 
 #define BIG_ENDIAN_MAX_DEBUG_BUF   500

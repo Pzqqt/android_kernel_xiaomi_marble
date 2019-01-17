@@ -34,7 +34,6 @@
 #include "ani_global.h"
 #include "wmi_unified.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #if defined(CONFIG_HL_SUPPORT)
 #include "wlan_tgt_def_config_hl.h"
 #else
@@ -3649,8 +3648,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					wma_vdev_get_vdev_dp_handle);
 	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
-	pmo_register_get_cfg_int_callback(wma_handle->psoc,
-					  wma_vdev_get_cfg_int);
 	pmo_register_get_dtim_period_callback(wma_handle->psoc,
 					      wma_vdev_get_dtim_period);
 	pmo_register_get_beacon_interval_callback(wma_handle->psoc,
@@ -4798,7 +4795,6 @@ QDF_STATUS wma_close(void)
 
 	pmo_unregister_get_beacon_interval_callback(wma_handle->psoc);
 	pmo_unregister_get_dtim_period_callback(wma_handle->psoc);
-	pmo_unregister_get_cfg_int_callback(wma_handle->psoc);
 	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc);
 	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc);
@@ -8312,11 +8308,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 #endif /* FEATURE_WLAN_ESE */
 	case WNI_CFG_DNLD_REQ:
 		WMA_LOGD("McThread: WNI_CFG_DNLD_REQ");
-		qdf_status = wma_wni_cfg_dnld(wma_handle);
-		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			cds_wma_complete_cback();
-		else
-			WMA_LOGD("config download failure");
+		cds_wma_complete_cback();
 		break;
 	case WMA_ADD_STA_SELF_REQ:
 		txrx_vdev_handle =

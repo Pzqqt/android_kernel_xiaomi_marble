@@ -32,7 +32,6 @@
 #include "wni_api.h"
 #include "sir_common.h"
 #include "sir_debug.h"
-#include "cfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"
@@ -959,14 +958,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG)
 		return QDF_STATUS_SUCCESS;
 
-	/*
-	 * If the Message to be handled is for CFG Module call the CFG Msg
-	 * Handler and for all the other cases post it to LIM
-	 */
-	if (SIR_CFG_PARAM_UPDATE_IND != msg->type && IS_CFG_MSG(msg->type))
-		cfg_process_mb_msg(mac_ctx, msg->bodyptr);
-	else
-		lim_message_processor(mac_ctx, msg);
+	lim_message_processor(mac_ctx, msg);
 
 	return QDF_STATUS_SUCCESS;
 }

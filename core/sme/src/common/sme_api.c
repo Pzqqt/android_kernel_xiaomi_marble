@@ -42,7 +42,6 @@
 #include "sap_api.h"
 #include "mac_trace.h"
 #include "cds_regdomain.h"
-#include "cfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"
 #include "sch_api.h"
@@ -3236,74 +3235,6 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 		pParam->snr_monitor_enabled = mac->snr_monitor_enabled;
 		sme_release_global_lock(&mac->sme);
 	}
-
-	return status;
-}
-
-/**
- * sme_cfg_set_int() - Sets the cfg parameter value.
- * @mac_handle:	Opaque handle to the global MAC context.
- * @cfg_id:	Configuration parameter ID.
- * @value:	value to be saved in the cfg parameter.
- *
- * This function sets the string value in cfg parameter.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_cfg_set_int(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint32_t value)
-{
-	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (QDF_STATUS_SUCCESS != cfg_set_int(pmac, cfg_id, value))
-		status = QDF_STATUS_E_FAILURE;
-
-	return status;
-}
-
-/**
- * sme_cfg_get_int() -  Gets the cfg parameter value.
- * @mac_handle:	Opaque handle to the global MAC context.
- * @cfg_id:	Configuration parameter ID.
- * @cfg_value:	Pointer to variable in which cfg value
- *		will be saved.
- *
- * This function gets the value of the cfg parameter.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_cfg_get_int(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint32_t *cfg_value)
-{
-	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(pmac, cfg_id, cfg_value))
-		status = QDF_STATUS_E_FAILURE;
-
-	return status;
-}
-
-/**
- * sme_cfg_get_str() - Gets the cfg parameter string.
- * @mac_handle:	Opaque handle to the global MAC context.
- * @cfg_id:	Configuration parameter ID.
- * @str:	Pointer to the string buffer.
- * @length:	Pointer to length of the string.
- *
- * This function gets the string value of the cfg parameter.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_cfg_get_str(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint8_t *str, uint32_t *length)
-{
-	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_str(pmac, cfg_id, str, length))
-		status = QDF_STATUS_E_INVAL;
 
 	return status;
 }

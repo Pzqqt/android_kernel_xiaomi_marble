@@ -30,7 +30,6 @@
 /* Standard include files */
 /* Application Specific include files */
 #include "lim_api.h"
-#include "cfg_api.h"
 #include "wma.h"
 #include "sme_power_save_api.h"
 /* Locally used Defines */
@@ -54,32 +53,6 @@ QDF_STATUS wma_post_ctrl_msg(struct mac_context *mac, struct scheduler_msg *pMsg
 		return QDF_STATUS_E_FAILURE;
 	else
 		return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_post_cfg_msg() - Posts MNT messages to gSirMntMsgQ
- * @mac: MAC parameters structure
- * @pMsg: A pointer to the msg
- *
- * Return: Success or Failure
- */
-
-static QDF_STATUS wma_post_cfg_msg(struct mac_context *mac,
-				   struct scheduler_msg *pMsg)
-{
-	QDF_STATUS rc = QDF_STATUS_SUCCESS;
-
-	do {
-		/*
-		 *For Windows based MAC, instead of posting message to different
-		 * queues we will call the handler routines directly
-		 */
-
-		cfg_process_mb_msg(mac, (tSirMbMsg *) pMsg->bodyptr);
-		rc = QDF_STATUS_SUCCESS;
-	} while (0);
-
-	return rc;
 }
 
 /**
@@ -116,10 +89,6 @@ QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 
 	case SIR_LIM_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
 		status = lim_post_msg_api(mac, &msg);
-		break;
-
-	case SIR_CFG_MSG_TYPES_BEGIN:   /* Posts a message to the CFG MsgQ */
-		status = wma_post_cfg_msg(mac, &msg);
 		break;
 
 	case SIR_SME_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */

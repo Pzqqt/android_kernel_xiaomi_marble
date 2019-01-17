@@ -595,12 +595,6 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 				      const tCsrEseBeaconReq *pEseBcnReq);
 QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, tpSirPlmReq pPlm);
 #endif /*FEATURE_WLAN_ESE */
-QDF_STATUS sme_cfg_set_int(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint32_t value);
-QDF_STATUS sme_cfg_get_int(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint32_t *cfg_value);
-QDF_STATUS sme_cfg_get_str(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint8_t *str, uint32_t *length);
 QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 tCsrRoamModifyProfileFields *

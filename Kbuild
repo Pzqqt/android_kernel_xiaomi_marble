@@ -283,11 +283,6 @@ MAC_INC := 	-I$(WLAN_ROOT)/$(MAC_INC_DIR) \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/lim \
 		-I$(WLAN_ROOT)/$(MAC_SRC_DIR)/pe/nan
 
-MAC_CFG_OBJS := $(MAC_SRC_DIR)/cfg/cfg_api.o \
-		$(MAC_SRC_DIR)/cfg/cfg_param_name.o \
-		$(MAC_SRC_DIR)/cfg/cfg_proc_msg.o \
-		$(MAC_SRC_DIR)/cfg/cfg_send_msg.o
-
 MAC_DPH_OBJS :=	$(MAC_SRC_DIR)/dph/dph_hash_table.o
 
 MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \

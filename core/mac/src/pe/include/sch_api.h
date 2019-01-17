@@ -52,10 +52,6 @@ void sch_edca_profile_update(struct mac_context *mac,
 QDF_STATUS sch_set_fixed_beacon_fields(struct mac_context *mac,
 				       struct pe_session *pe_session);
 
-/* / Process the scheduler messages */
-void sch_process_message(struct mac_context *mac,
-			 struct scheduler_msg *pSchMsg);
-
 /**
  * sch_process_pre_beacon_ind() - Process the PreBeacon Indication from the Lim
  * @mac: pointer to mac structure
@@ -67,10 +63,6 @@ void sch_process_message(struct mac_context *mac,
 QDF_STATUS sch_process_pre_beacon_ind(struct mac_context *mac,
 				      struct scheduler_msg *msg,
 				      enum sir_bcn_update_reason reason);
-
-/* / Post a message to the scheduler message queue */
-QDF_STATUS sch_post_message(struct mac_context *mac,
-			    struct scheduler_msg *pMsg);
 
 void sch_beacon_process(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			struct pe_session *pe_session);

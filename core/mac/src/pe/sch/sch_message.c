@@ -21,7 +21,6 @@
 
 #include "wni_cfg.h"
 #include "ani_global.h"
-#include "cfg_api.h"
 #include "lim_api.h"
 #include "lim_send_messages.h"
 
@@ -88,39 +87,6 @@ void sch_edca_profile_update_all(struct mac_context *pmac)
 		if (psession_entry->valid)
 			sch_edca_profile_update(pmac, psession_entry);
 	}
-}
-
-/* -------------------------------------------------------------------- */
-/**
- * sch_process_message
- *
- * FUNCTION:
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-void sch_process_message(struct mac_context *mac, struct scheduler_msg *pSchMsg)
-{
-	switch (pSchMsg->type) {
-	case SIR_CFG_PARAM_UPDATE_IND:
-		switch (pSchMsg->bodyval) {
-		default:
-			pe_err("Cfg param %d indication not handled",
-				pSchMsg->bodyval);
-		}
-		break;
-
-	default:
-		pe_err("Unknown message in schMsgQ type %d", pSchMsg->type);
-	}
-
 }
 
 /**

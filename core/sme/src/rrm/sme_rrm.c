@@ -25,7 +25,6 @@
 #include "ani_global.h"
 #include "sme_inside.h"
 #include "sme_api.h"
-#include "cfg_api.h"
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #include "host_diag_core_event.h"
