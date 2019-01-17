@@ -323,11 +323,11 @@ QDF_STATUS scheduler_deregister_wma_legacy_handler(void);
 
 /**
  * scheduler_mc_timer_callback() - timer callback, gets called at time out
- * @data: unsigned long, holds the timer object.
+ * @timer: holds the mc timer object.
  *
  * Return: None
  */
-void scheduler_mc_timer_callback(unsigned long data);
+void scheduler_mc_timer_callback(qdf_mc_timer_t *timer);
 
 /**
  * scheduler_get_queue_size() - Get the current size of the scheduler queue

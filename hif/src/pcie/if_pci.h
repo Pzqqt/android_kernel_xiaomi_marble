@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,7 +128,7 @@ struct hif_pci_softc {
 	struct hif_pci_pm_stats pm_stats;
 	struct work_struct pm_work;
 	spinlock_t runtime_lock;
-	struct timer_list runtime_timer;
+	qdf_timer_t runtime_timer;
 	struct list_head prevent_suspend_list;
 	unsigned long runtime_timer_expires;
 	qdf_runtime_lock_t prevent_linkdown_lock;

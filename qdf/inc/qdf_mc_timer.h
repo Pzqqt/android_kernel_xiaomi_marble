@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -293,7 +293,8 @@ void qdf_timer_module_deinit(void);
  * Return: None
  */
 void qdf_get_time_of_the_day_in_hr_min_sec_usec(char *tbuf, int len);
-void qdf_register_mc_timer_callback(void (*callback) (unsigned long data));
+
+void qdf_register_mc_timer_callback(void (*callback) (qdf_mc_timer_t *data));
 
 /**
  * qdf_timer_set_multiplier() - set the global QDF timer scalar value

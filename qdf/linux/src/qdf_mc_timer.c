@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,11 +60,12 @@ qdf_export_symbol(qdf_timer_get_multiplier);
 static unsigned int persistent_timer_count;
 static qdf_mutex_t persistent_timer_count_lock;
 
-static void (*scheduler_timer_callback) (unsigned long data);
-void qdf_register_mc_timer_callback(void (*callback) (unsigned long data))
+static void (*scheduler_timer_callback)(qdf_mc_timer_t *);
+void qdf_register_mc_timer_callback(void (*callback) (qdf_mc_timer_t *))
 {
 	scheduler_timer_callback = callback;
 }
+
 qdf_export_symbol(qdf_register_mc_timer_callback);
 
 /* Function declarations and documenation */
@@ -273,6 +274,51 @@ void qdf_mc_timer_manager_exit(void)
 qdf_export_symbol(qdf_mc_timer_manager_exit);
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
+static void __os_mc_timer_shim(struct timer_list *os_timer)
+{
+	qdf_mc_timer_platform_t *platform_info_ptr =
+				qdf_container_of(os_timer,
+						 qdf_mc_timer_platform_t,
+						 timer);
+	qdf_mc_timer_t *timer = qdf_container_of(platform_info_ptr,
+						 qdf_mc_timer_t,
+						 platform_info);
+
+	scheduler_timer_callback(timer);
+}
+
+static void qdf_mc_timer_setup(qdf_mc_timer_t *timer,
+			       QDF_TIMER_TYPE timer_type)
+{
+	uint32_t flags = 0;
+
+	if (QDF_TIMER_TYPE_SW == timer_type)
+		flags |= TIMER_DEFERRABLE;
+
+	timer_setup(&timer->platform_info.timer,
+		    __os_mc_timer_shim, flags);
+}
+#else
+static void __os_mc_timer_shim(unsigned long data)
+{
+	qdf_mc_timer_t *timer = (qdf_mc_timer_t *)data;
+
+	scheduler_timer_callback(timer);
+}
+
+static void qdf_mc_timer_setup(qdf_mc_timer_t *timer,
+			       QDF_TIMER_TYPE timer_type)
+{
+	if (QDF_TIMER_TYPE_SW == timer_type)
+		init_timer_deferrable(&timer->platform_info.timer);
+	else
+		init_timer(&timer->platform_info.timer);
+
+	timer->platform_info.timer.function = __os_mc_timer_shim;
+	timer->platform_info.timer.data = (unsigned long)timer;
+}
+#endif
 /**
  * qdf_mc_timer_init() - initialize a QDF timer
  * @timer: Pointer to timer object
@@ -351,12 +397,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 	 * with arguments passed or with default values
 	 */
 	qdf_spinlock_create(&timer->platform_info.spinlock);
-	if (QDF_TIMER_TYPE_SW == timer_type)
-		init_timer_deferrable(&(timer->platform_info.timer));
-	else
-		init_timer(&(timer->platform_info.timer));
-	timer->platform_info.timer.function = scheduler_timer_callback;
-	timer->platform_info.timer.data = (unsigned long)timer;
+	qdf_mc_timer_setup(timer, timer_type);
 	timer->callback = callback;
 	timer->user_data = user_data;
 	timer->type = timer_type;
@@ -384,12 +425,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 	 * with arguments passed or with default values
 	 */
 	qdf_spinlock_create(&timer->platform_info.spinlock);
-	if (QDF_TIMER_TYPE_SW == timer_type)
-		init_timer_deferrable(&(timer->platform_info.timer));
-	else
-		init_timer(&(timer->platform_info.timer));
-	timer->platform_info.timer.function = scheduler_timer_callback;
-	timer->platform_info.timer.data = (unsigned long)timer;
+	qdf_mc_timer_setup(timer, timer_type);
 	timer->callback = callback;
 	timer->user_data = user_data;
 	timer->type = timer_type;

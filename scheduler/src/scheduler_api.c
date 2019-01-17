@@ -569,9 +569,8 @@ static QDF_STATUS scheduler_msg_flush_noop(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-void scheduler_mc_timer_callback(unsigned long data)
+void scheduler_mc_timer_callback(qdf_mc_timer_t *timer)
 {
-	qdf_mc_timer_t *timer = (qdf_mc_timer_t *)data;
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
