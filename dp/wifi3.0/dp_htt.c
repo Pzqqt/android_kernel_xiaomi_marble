@@ -65,22 +65,54 @@ do {                                                             \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
 
 /**
- * Bitmap of HTT PPDU TLV types for Sniffer mode
+ * Bitmap of HTT PPDU TLV types for Sniffer mode bitmap 64
  */
-#define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP \
-	(1 << HTT_PPDU_STATS_COMMON_TLV) | \
+#define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64 \
+	((1 << HTT_PPDU_STATS_COMMON_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_RATE_TLV) | \
 	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV)
+	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV))
+
+/**
+ * Bitmap of HTT PPDU TLV types for Sniffer mode bitmap 256
+ */
+#define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_256 \
+	((1 << HTT_PPDU_STATS_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_RATE_TLV) | \
+	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV))
 
 #define HTT_FRAMECTRL_DATATYPE 0x08
 #define HTT_PPDU_DESC_MAX_DEPTH 16
 #define DP_SCAN_PEER_ID 0xFFFF
+
+/*
+ * dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap() - Get ppdu stats tlv
+ * bitmap for sniffer mode
+ * @bitmap: received bitmap
+ *
+ * Return: expected bitmap value, returns zero if doesn't match with
+ * either 64-bit Tx window or 256-bit window tlv bitmap
+ */
+
+static inline int
+dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap)
+{
+	if (bitmap == (HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64))
+		return HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64;
+	else if (bitmap == (HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_256))
+		return HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_256;
+
+	return 0;
+}
 
 /*
  * dp_tx_stats_update() - Update per-peer statistics
@@ -2500,7 +2532,9 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		if (ppdu_info->is_ampdu)
-			tlv_bitmap_expected = HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP;
+			tlv_bitmap_expected =
+				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
+					ppdu_info->tlv_bitmap);
 	}
 	for (i = 0; i < ppdu_desc->num_users; i++) {
 
@@ -2733,14 +2767,17 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		if (ppdu_info->is_ampdu)
-			tlv_bitmap_expected = HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP;
+			tlv_bitmap_expected =
+				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
+					ppdu_info->tlv_bitmap);
 	}
 
 	/**
 	 * Once all the TLVs for a given PPDU has been processed,
 	 * return PPDU status to be delivered to higher layer
 	 */
-	if (ppdu_info->tlv_bitmap == tlv_bitmap_expected)
+	if (ppdu_info->tlv_bitmap != 0 &&
+	    ppdu_info->tlv_bitmap == tlv_bitmap_expected)
 		return ppdu_info;
 
 	return NULL;
