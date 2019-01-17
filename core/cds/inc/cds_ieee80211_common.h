@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1611,6 +1611,7 @@ enum {
 #define WME_AC_BK                          1    /* background */
 #define WME_AC_VI                          2    /* video */
 #define WME_AC_VO                          3    /* voice */
+#define WME_AC_NUM                         4
 
 /* WCN IE */
 #define WCN_OUI                     0xf25000    /* Microsoft OUI */
