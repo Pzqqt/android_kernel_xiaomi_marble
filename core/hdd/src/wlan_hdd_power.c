@@ -50,7 +50,6 @@
 
 #include <linux/semaphore.h>
 #include <wlan_hdd_hostapd.h>
-#include "cfg_api.h"
 
 #include <linux/inetdevice.h>
 #include <wlan_hdd_cfg.h>

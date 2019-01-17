@@ -21,7 +21,6 @@
 #include "ani_global.h"
 #include "sir_api.h"
 #include "sir_params.h"
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "sch_api.h"
 #include "utils_api.h"

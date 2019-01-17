@@ -33,7 +33,6 @@
 #include "ani_global.h"
 #include "wmi_unified.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"

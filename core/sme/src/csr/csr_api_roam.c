@@ -38,7 +38,6 @@
 #include "cds_regdomain.h"
 #include "cds_utils.h"
 #include "sir_types.h"
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"

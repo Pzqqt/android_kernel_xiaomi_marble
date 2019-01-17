@@ -32,7 +32,6 @@
 
 #include "sir_common.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 
 #include "utils_api.h"
 #include "lim_utils.h"

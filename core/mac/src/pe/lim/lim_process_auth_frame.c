@@ -32,7 +32,6 @@
 #include "wni_api.h"
 #include "wni_cfg.h"
 #include "ani_global.h"
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "utils_api.h"
 #include "lim_utils.h"

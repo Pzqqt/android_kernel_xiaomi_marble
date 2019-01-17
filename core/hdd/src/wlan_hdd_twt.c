@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,6 @@
 #include "wlan_hdd_twt.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_cfg.h"
-#include "cfg_api.h"
 #include "sme_api.h"
 #include "wma_twt.h"
 

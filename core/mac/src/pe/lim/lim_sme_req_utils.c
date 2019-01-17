@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,6 @@
 
 #include "wni_api.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include "sir_api.h"
 #include "sch_api.h"
 #include "utils_api.h"

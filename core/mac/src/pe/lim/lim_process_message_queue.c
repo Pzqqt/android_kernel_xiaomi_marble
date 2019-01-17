@@ -31,7 +31,6 @@
 #include "wma_types.h"
 
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include "sir_common.h"
 #include "utils_api.h"
 #include "lim_types.h"

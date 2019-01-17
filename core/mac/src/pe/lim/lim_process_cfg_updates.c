@@ -30,7 +30,6 @@
 
 #include "wni_cfg.h"
 #include "sir_mac_prot_def.h"
-#include "cfg_api.h"
 #include "lim_types.h"
 #include "lim_utils.h"
 #include "lim_prop_exts_utils.h"

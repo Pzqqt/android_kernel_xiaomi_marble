@@ -28,7 +28,6 @@
  *
  */
 #include "lim_send_messages.h"
-#include "cfg_api.h"
 #include "lim_trace.h"
 #include "wlan_reg_services_api.h"
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */

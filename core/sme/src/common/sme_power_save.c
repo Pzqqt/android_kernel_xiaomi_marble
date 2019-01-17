@@ -27,7 +27,6 @@
 #include "wma.h"
 #include "wma_internal.h"
 #include "wmm_apsd.h"
-#include "cfg_api.h"
 #include "csr_inside_api.h"
 
 /**

@@ -30,7 +30,6 @@
 
 #include "wni_cfg.h"
 #include "ani_global.h"
-#include "cfg_api.h"
 #include "sch_api.h"
 #include "utils_api.h"
 #include "lim_types.h"

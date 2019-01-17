@@ -28,7 +28,6 @@
 #include "sir_common.h"
 
 #include "wni_cfg.h"
-#include "cfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"

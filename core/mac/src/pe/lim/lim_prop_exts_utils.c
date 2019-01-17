@@ -34,7 +34,6 @@
 #include "sir_common.h"
 #include "sir_debug.h"
 #include "utils_api.h"
-#include "cfg_api.h"
 #include "lim_api.h"
 #include "lim_types.h"
 #include "lim_utils.h"

@@ -84,7 +84,6 @@
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_green_ap.h>
-#include "cfg_api.h"
 #include "qwlan_version.h"
 #include "wma_types.h"
 #include "wlan_hdd_tdls.h"

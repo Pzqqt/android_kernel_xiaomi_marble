@@ -29,7 +29,6 @@
  *
  */
 #include "cds_api.h"
-#include "cfg_api.h"
 #include "sch_api.h"
 #include "dph_global.h"
 #include "lim_api.h"

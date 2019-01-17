@@ -51,7 +51,6 @@
 #include <linux/mmc/sdio_func.h>
 #include "wlan_hdd_p2p.h"
 #include <wlan_hdd_ipa.h>
-#include "cfg_api.h"
 #include "wni_cfg.h"
 #include "wlan_hdd_misc.h"
 #include <cds_utils.h>

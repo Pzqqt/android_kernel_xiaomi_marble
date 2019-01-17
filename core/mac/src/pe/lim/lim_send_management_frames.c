@@ -27,7 +27,6 @@
 #include "sir_api.h"
 #include "ani_global.h"
 #include "sir_mac_prot_def.h"
-#include "cfg_api.h"
 #include "utils_api.h"
 #include "lim_types.h"
 #include "lim_utils.h"

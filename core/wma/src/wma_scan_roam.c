@@ -33,7 +33,6 @@
 #include "ani_global.h"
 #include "wmi_unified.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_cfg.h>
 

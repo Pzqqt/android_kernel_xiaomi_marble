@@ -29,7 +29,6 @@
  */
 #include "sys_def.h"
 #include "lim_api.h"
-#include "cfg_api.h"             /* wlan_cfg_get_int() */
 #include "lim_trace.h"
 #include "lim_send_sme_rsp_messages.h"
 #include "lim_types.h"

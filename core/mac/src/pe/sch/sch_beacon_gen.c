@@ -37,7 +37,6 @@
 #include "lim_api.h"
 
 #include "wma_if.h"
-#include "cfg_api.h"
 #include "sch_api.h"
 
 #include "parser_api.h"

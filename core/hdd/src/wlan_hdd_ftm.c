@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,7 +38,6 @@
 #include "wlan_hdd_lpass.h"
 #include "qwlan_version.h"
 #include "wma_types.h"
-#include "cfg_api.h"
 
 #ifdef QCA_WIFI_FTM
 

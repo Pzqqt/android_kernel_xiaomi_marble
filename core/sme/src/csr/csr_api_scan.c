@@ -35,7 +35,6 @@
 #include "cds_reg_service.h"
 #include "wma_types.h"
 #include "cds_utils.h"
-#include "cfg_api.h"
 #include "wma.h"
 
 #include "wlan_policy_mgr_api.h"

@@ -32,7 +32,6 @@
 
 #include "sir_api.h"
 #include "sir_debug.h"
-#include "cfg_api.h"
 
 #include "lim_types.h"
 

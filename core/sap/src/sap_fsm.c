@@ -46,7 +46,6 @@
 #include "cds_reg_service.h"
 #include "qdf_util.h"
 #include "wlan_policy_mgr_api.h"
-#include "cfg_api.h"
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_utility.h>
