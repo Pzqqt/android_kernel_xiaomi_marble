@@ -31,7 +31,6 @@
 #include "cds_api.h"
 #include "wni_cfg.h"
 
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "lim_api.h"
 #include "utils_api.h"
@@ -867,8 +866,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 					rx_pkt_info, session, &bssIdx,
 					&beaconParams, &sendProbeReq, pMh);
 	/* Obtain the Max Tx power for the current regulatory  */
-	regMax = cfg_get_regulatory_max_transmit_power(mac_ctx,
-					session->currentOperChannel);
+	regMax = lim_get_regulatory_max_transmit_power(
+				mac_ctx, session->currentOperChannel);
 
 	local_constraint = regMax;
 

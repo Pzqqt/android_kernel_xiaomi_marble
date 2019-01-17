@@ -30,7 +30,6 @@
 #include "cds_api.h"
 #include "wni_api.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include "sir_api.h"
 #include "sch_api.h"
 #include "utils_api.h"
@@ -710,7 +709,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		session->gLimPhyMode = sme_start_bss_req->nwType;
 
 		session->maxTxPower =
-			cfg_get_regulatory_max_transmit_power(mac_ctx,
+			lim_get_regulatory_max_transmit_power(mac_ctx,
 				session->currentOperChannel);
 		/* Store the dot 11 mode in to the session Table */
 		session->dot11mode = sme_start_bss_req->dot11mode;
@@ -1623,7 +1622,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		session->limCurrentBssCaps =
 			session->pLimJoinReq->bssDescription.capabilityInfo;
 
-		reg_max = cfg_get_regulatory_max_transmit_power(mac_ctx,
+		reg_max = lim_get_regulatory_max_transmit_power(mac_ctx,
 				session->currentOperChannel);
 		local_power_constraint = reg_max;
 
@@ -1940,7 +1939,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	session_entry->limReassocBssCaps =
 		session_entry->pLimReAssocReq->bssDescription.capabilityInfo;
-	reg_max = cfg_get_regulatory_max_transmit_power(mac_ctx,
+	reg_max = lim_get_regulatory_max_transmit_power(mac_ctx,
 			session_entry->currentOperChannel);
 	local_pwr_constraint = reg_max;
 
@@ -1975,8 +1974,8 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	qdf_mem_copy(mlm_reassoc_req->peerMacAddr,
 		     session_entry->limReAssocbssId, sizeof(tSirMacAddr));
 
-	if (cfg_get_capability_info(mac_ctx, &caps, session_entry) !=
-			QDF_STATUS_SUCCESS)
+	if (lim_get_capability_info(mac_ctx, &caps, session_entry) !=
+	    QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve Capabilities value");
 
 	lim_update_caps_info_for_bss(mac_ctx, &caps,
@@ -5247,8 +5246,8 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	}
 	ch_change_req = (tpSirChanChangeRequest)msg_buf;
 
-	max_tx_pwr = cfg_get_regulatory_max_transmit_power(mac_ctx,
-			ch_change_req->targetChannel);
+	max_tx_pwr = lim_get_regulatory_max_transmit_power(
+				mac_ctx, ch_change_req->targetChannel);
 
 	if ((ch_change_req->messageType != eWNI_SME_CHANNEL_CHANGE_REQ) ||
 			(max_tx_pwr == WMA_MAX_TXPOWER_INVALID)) {

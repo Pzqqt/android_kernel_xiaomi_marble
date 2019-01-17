@@ -30,7 +30,6 @@
 
 #include "sir_api.h"
 #include "sir_debug.h"
-#include "cfg_api.h"
 
 #include "lim_types.h"
 #include "lim_scan_result_utils.h"
@@ -1687,4 +1686,28 @@ static inline void lim_copy_set_key_req_mac_addr(struct qdf_mac_addr *dst,
 {
 }
 #endif
+
+/**
+ * lim_get_regulatory_max_transmit_power() - Get regulatory max transmit
+ * power on given channel
+ * @mac:     pointer to mac data
+ * @channel: channel number
+ *
+ * Return:  int8_t - power
+ */
+int8_t lim_get_regulatory_max_transmit_power(struct mac_context *mac,
+					     uint8_t channel);
+
+/**
+ * lim_get_capability_info() - Get capability information
+ * @mac:        pointer to mac data
+ * @pcap:       pointer to return capability information
+ * @pe_session: pointer to pe session
+ *
+ * Return:  SUCCESS on successful get capability information
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pCap,
+				   struct pe_session *pe_session);
+
 #endif /* __LIM_UTILS_H */

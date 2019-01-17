@@ -657,7 +657,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->shortSlotTimeSupported = true;
 	}
 
-	regMax = cfg_get_regulatory_max_transmit_power(mac,
+	regMax = lim_get_regulatory_max_transmit_power(mac,
 						       ft_session->
 						       currentOperChannel);
 	localPowerConstraint = regMax;

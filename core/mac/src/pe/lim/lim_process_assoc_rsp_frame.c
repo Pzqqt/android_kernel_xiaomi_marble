@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,6 @@
 #include "wni_api.h"
 #include "wni_cfg.h"
 #include "ani_global.h"
-#include "cfg_api.h"
 #include "sch_api.h"
 
 #include "utils_api.h"
@@ -684,7 +683,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
+	if (lim_get_capability_info(mac_ctx, &caps, session_entry)
 		!= QDF_STATUS_SUCCESS) {
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);

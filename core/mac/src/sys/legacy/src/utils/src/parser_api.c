@@ -30,7 +30,6 @@
 #include "sir_api.h"
 #include "ani_global.h"
 #include "parser_api.h"
-#include "cfg_api.h"
 #include "lim_utils.h"
 #include "utils_parser.h"
 #include "lim_ser_des_utils.h"
@@ -154,7 +153,7 @@ populate_dot11f_capabilities(struct mac_context *mac,
 	uint16_t cfg;
 	QDF_STATUS nSirStatus;
 
-	nSirStatus = cfg_get_capability_info(mac, &cfg, pe_session);
+	nSirStatus = lim_get_capability_info(mac, &cfg, pe_session);
 	if (QDF_STATUS_SUCCESS != nSirStatus) {
 		pe_err("Failed to retrieve the Capabilities bitfield from CFG status: %d",
 			   nSirStatus);
@@ -1642,8 +1641,8 @@ populate_dot11f_tpc_report(struct mac_context *mac,
 			nSirStatus);
 		return QDF_STATUS_E_FAILURE;
 	}
-	tx_power = cfg_get_regulatory_max_transmit_power(mac,
-				pe_session->currentOperChannel);
+	tx_power = lim_get_regulatory_max_transmit_power(
+				mac, pe_session->currentOperChannel);
 	pDot11f->tx_power = tx_power;
 	pDot11f->link_margin = 0;
 	pDot11f->present = 1;

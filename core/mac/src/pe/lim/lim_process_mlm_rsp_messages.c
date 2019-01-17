@@ -18,7 +18,6 @@
 
 #include "wni_api.h"
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include "sir_api.h"
 #include "sch_api.h"
 #include "utils_api.h"
@@ -351,7 +350,7 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 	val = sizeof(tSirMacAddr);
 	sir_copy_mac_addr(assoc_req->peerMacAddr, session_entry->bssId);
 
-	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
+	if (lim_get_capability_info(mac_ctx, &caps, session_entry)
 			!= QDF_STATUS_SUCCESS)
 		/* Could not get Capabilities value from CFG.*/
 		pe_err("could not retrieve Capabilities value");

@@ -26,7 +26,6 @@
 #include "ani_global.h"
 #include "sir_api.h"
 #include "sir_params.h"
-#include "cfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"
@@ -608,7 +607,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	qdf_mem_copy(reassoc_req->peerMacAddr,
 		     session->bssId, sizeof(tSirMacAddr));
 
-	if (cfg_get_capability_info(mac, &caps, session) !=
+	if (lim_get_capability_info(mac, &caps, session) !=
 			QDF_STATUS_SUCCESS) {
 		/**
 		 * Could not get Capabilities value

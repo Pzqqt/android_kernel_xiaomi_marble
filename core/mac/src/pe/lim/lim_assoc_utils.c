@@ -34,7 +34,6 @@
 #include "sir_common.h"
 
 #include "wni_cfg.h"
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 
 #include "sch_api.h"
@@ -4686,9 +4685,8 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 	int8_t localMaxTxPower;
 	uint8_t local_pwr_constraint;
 
-	localMaxTxPower =
-		cfg_get_regulatory_max_transmit_power(mac,
-						      pe_session->currentOperChannel);
+	localMaxTxPower = lim_get_regulatory_max_transmit_power(
+					mac, pe_session->currentOperChannel);
 
 	local_pwr_constraint = mac->mlme_cfg->power.local_power_constraint;
 	localMaxTxPower -= (int8_t)local_pwr_constraint;

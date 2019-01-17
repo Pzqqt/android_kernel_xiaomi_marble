@@ -24,7 +24,6 @@
 #include "ani_global.h"
 #include "wni_cfg.h"
 #include "sir_api.h"
-#include "cfg_api.h"
 #include "cfg_ucfg_api.h"
 
 #include "sch_api.h"
@@ -292,7 +291,8 @@ static bool lim_chk_capab(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 {
 	uint16_t temp;
 
-	if (cfg_get_capability_info(mac_ctx, &temp, session) != QDF_STATUS_SUCCESS) {
+	if (lim_get_capability_info(mac_ctx, &temp, session) !=
+	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve Capabilities");
 		return false;
 	}

@@ -8283,3 +8283,162 @@ void lim_ndi_mlme_vdev_up_transition(struct pe_session *session)
 {
 }
 #endif
+
+/**
+ * lim_get_dot11d_transmit_power() - regulatory max transmit power
+ * @mac: pointer to mac data
+ * @channel: channel number
+ *
+ * Return:  int8_t - power
+ */
+static int8_t
+lim_get_dot11d_transmit_power(struct mac_context *mac, uint8_t channel)
+{
+	uint32_t cfg_length = 0;
+	int8_t max_tx_pwr = 0;
+	uint8_t *country_info = NULL;
+	uint8_t count = 0;
+	uint8_t first_channel;
+	uint8_t maxChannels;
+
+	if (WLAN_REG_IS_5GHZ_CH(channel))
+		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
+	else if (WLAN_REG_IS_24GHZ_CH(channel))
+		cfg_length = mac->mlme_cfg->power.max_tx_power_24.len;
+	else
+		return max_tx_pwr;
+
+	country_info = qdf_mem_malloc(cfg_length);
+	if (!country_info)
+		goto error;
+
+	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+		qdf_mem_copy(country_info,
+			     mac->mlme_cfg->power.max_tx_power_5.data,
+			     cfg_length);
+	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		qdf_mem_copy(country_info,
+			     mac->mlme_cfg->power.max_tx_power_24.data,
+			     cfg_length);
+	}
+
+	/* Identify the channel and maxtxpower */
+	while (count <= (cfg_length - (sizeof(tSirMacChanInfo)))) {
+		first_channel = country_info[count++];
+		maxChannels = country_info[count++];
+		max_tx_pwr = country_info[count++];
+
+		if ((channel >= first_channel) &&
+		    (channel < (first_channel + maxChannels))) {
+			break;
+		}
+	}
+
+error:
+	if (country_info)
+		qdf_mem_free(country_info);
+
+	return max_tx_pwr;
+}
+
+int8_t lim_get_regulatory_max_transmit_power(struct mac_context *mac,
+					     uint8_t channel)
+{
+	return lim_get_dot11d_transmit_power(mac, channel);
+}
+
+QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
+				   struct pe_session *pe_session)
+{
+	uint32_t val = 0;
+	tpSirMacCapabilityInfo pcap_info;
+
+	*pcap = 0;
+	pcap_info = (tpSirMacCapabilityInfo)pcap;
+
+	if (LIM_IS_IBSS_ROLE(pe_session))
+		pcap_info->ibss = 1;     /* IBSS bit */
+	else if (LIM_IS_AP_ROLE(pe_session) ||
+		LIM_IS_STA_ROLE(pe_session))
+		pcap_info->ess = 1;      /* ESS bit */
+	else if (LIM_IS_P2P_DEVICE_ROLE(pe_session) ||
+		LIM_IS_NDI_ROLE(pe_session)) {
+		pcap_info->ess = 0;
+		pcap_info->ibss = 0;
+	} else
+		pe_warn("can't get capability, role is UNKNOWN!!");
+
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		val = pe_session->privacy;
+	} else {
+		/* PRIVACY bit */
+		val = mac->mlme_cfg->wep_params.is_privacy_enabled;
+	}
+	if (val)
+		pcap_info->privacy = 1;
+
+	/* Short preamble bit */
+	if (mac->mlme_cfg->ht_caps.short_preamble)
+		pcap_info->shortPreamble =
+			mac->mlme_cfg->ht_caps.short_preamble;
+
+	/* PBCC bit */
+	pcap_info->pbcc = 0;
+
+	/* Channel agility bit */
+	pcap_info->channelAgility = 0;
+	/* If STA/AP operating in 11B mode, don't set rest of the
+	 * capability info bits.
+	 */
+	if (pe_session->dot11mode == WNI_CFG_DOT11_MODE_11B)
+		return QDF_STATUS_SUCCESS;
+
+	/* Short slot time bit */
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		pcap_info->shortSlotTime = pe_session->shortSlotTimeSupported;
+	} else {
+		/* When in STA mode, we need to check if short slot is
+		 * enabled as well as check if the current operating
+		 * mode is short slot time and then decide whether to
+		 * enable short slot or not. It is safe to check both
+		 * cfg values to determine short slot value in this
+		 * funcn since this funcn is always used after assoc
+		 * when these cfg values are already set based on
+		 * peer's capability. Even in case of IBSS, its value
+		 * is set to correct value either in delBSS as part of
+		 * deleting the previous IBSS or in start BSS as part
+		 * of coalescing
+		 */
+		if (mac->mlme_cfg->feature_flags.enable_short_slot_time_11g) {
+			pcap_info->shortSlotTime =
+				pe_session->shortSlotTimeSupported;
+		}
+	}
+
+	/* Spectrum Management bit */
+	if (!LIM_IS_IBSS_ROLE(pe_session) && pe_session->lim11hEnable) {
+		if (mac->mlme_cfg->gen.enabled_11h)
+			pcap_info->spectrumMgt = 1;
+	}
+	/* QoS bit */
+	if (mac->mlme_cfg->wmm_params.qos_enabled)
+		pcap_info->qos = 1;
+
+	/* APSD bit */
+	if (mac->mlme_cfg->scoring.apsd_enabled)
+		pcap_info->apsd = 1;
+
+	pcap_info->rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+	pe_debug("RRM: %d", pcap_info->rrm);
+	/* DSSS-OFDM */
+	/* FIXME : no config defined yet. */
+
+	/* Block ack bit */
+	val = mac->mlme_cfg->feature_flags.enable_block_ack;
+	pcap_info->delayedBA =
+		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
+	pcap_info->immediateBA =
+		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_IMMEDIATE) & 1);
+
+	return QDF_STATUS_SUCCESS;
+}

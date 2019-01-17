@@ -34,7 +34,6 @@
 
 #include "wni_cfg.h"
 #include "sys_def.h"
-#include "cfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"
@@ -599,7 +598,7 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 				beaconInterval;
 			pSirSmeRsp->bssType = pe_session->bssType;
 
-			if (cfg_get_capability_info
+			if (lim_get_capability_info
 				    (mac, &pSirSmeRsp->bssDescription.capabilityInfo,
 				    pe_session)
 			    != QDF_STATUS_SUCCESS)

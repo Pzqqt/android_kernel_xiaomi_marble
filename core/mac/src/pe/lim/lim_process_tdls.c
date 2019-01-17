@@ -53,7 +53,6 @@
 #include "sir_api.h"
 #include "ani_global.h"
 #include "sir_mac_prot_def.h"
-#include "cfg_api.h"
 #include "utils_api.h"
 #include "lim_types.h"
 #include "lim_utils.h"
@@ -821,8 +820,8 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 				  &tdlsDisRsp.LinkIdentifier,
 				  peer_mac, TDLS_RESPONDER);
 
-	if (cfg_get_capability_info(mac, &caps, pe_session)
-		!= QDF_STATUS_SUCCESS) {
+	if (lim_get_capability_info(mac, &caps, pe_session) !=
+	    QDF_STATUS_SUCCESS) {
 		/*
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
@@ -1130,7 +1129,8 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 				  &tdlsSetupReq.LinkIdentifier, peer_mac,
 				  TDLS_INITIATOR);
 
-	if (cfg_get_capability_info(mac, &caps, pe_session) != QDF_STATUS_SUCCESS) {
+	if (lim_get_capability_info(mac, &caps, pe_session) !=
+	    QDF_STATUS_SUCCESS) {
 		/*
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
@@ -1589,7 +1589,8 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 				  &tdlsSetupRsp.LinkIdentifier, peer_mac,
 				  TDLS_RESPONDER);
 
-	if (cfg_get_capability_info(mac, &caps, pe_session) != QDF_STATUS_SUCCESS) {
+	if (lim_get_capability_info(mac, &caps, pe_session) !=
+	    QDF_STATUS_SUCCESS) {
 		/*
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
