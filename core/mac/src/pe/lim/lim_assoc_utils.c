@@ -2726,13 +2726,10 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	 * mechanisms and will not change. If it does change, it is the
 	 * responsibility of SME to evict the selfSta and reissue a new AddStaSelf
 	 * command.*/
-	uint32_t selfStaDot11Mode = 0, selfTxWidth = 0;
+	uint32_t selfStaDot11Mode = 0;
 
 	selfStaDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
-	wlan_cfg_get_int(mac, WNI_CFG_HT_CAP_INFO_SUPPORTED_CHAN_WIDTH_SET,
-			 &selfTxWidth);
-	pe_debug("cfgDot11Mode: %d selfTxWidth: %d",
-		(int)selfStaDot11Mode, (int)selfTxWidth);
+	pe_debug("cfgDot11Mode: %d", (int)selfStaDot11Mode);
 	pe_debug("Roam Channel Bonding Mode %d",
 		(int)mac->roam.configParam.uCfgDot11Mode);
 
