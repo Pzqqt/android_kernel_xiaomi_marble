@@ -605,36 +605,6 @@ typedef enum {
 		WMI_HOST_AC_VO)
 
 /**
- * struct vdev_create_params - vdev create cmd parameter
- * @if_id: interface id
- * @type: interface type
- * @subtype: interface subtype
- * @nss_2g: NSS for 2G
- * @nss_5g: NSS for 5G
- * @pdev_id: pdev id on pdev for this vdev
- * @mbssid-flags: MBSS IE flags indicating vdev type
- * @vdevid_trans: id of transmitting vdev for MBSS IE
- */
-struct vdev_create_params {
-	uint8_t if_id;
-	uint32_t type;
-	uint32_t subtype;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
-	uint32_t pdev_id;
-	uint32_t mbssid_flags;
-	uint8_t vdevid_trans;
-};
-
-/**
- * struct vdev_delete_params - vdev delete cmd parameter
- * @if_id: interface id
- */
-struct vdev_delete_params {
-	uint8_t if_id;
-};
-
-/**
  * struct channel_param - Channel parameters with all
  *			info required by target.
  * @chan_id: channel id
@@ -681,6 +651,47 @@ struct channel_param {
 };
 
 /**
+ * struct mac_ssid - mac ssid structure
+ * @length:
+ * @mac_ssid[WMI_MAC_MAX_SSID_LENGTH]:
+ */
+struct mac_ssid {
+	uint8_t length;
+	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
+} qdf_packed;
+
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
+/**
+ * struct vdev_create_params - vdev create cmd parameter
+ * @if_id: interface id
+ * @type: interface type
+ * @subtype: interface subtype
+ * @nss_2g: NSS for 2G
+ * @nss_5g: NSS for 5G
+ * @pdev_id: pdev id on pdev for this vdev
+ * @mbssid-flags: MBSS IE flags indicating vdev type
+ * @vdevid_trans: id of transmitting vdev for MBSS IE
+ */
+struct vdev_create_params {
+	uint8_t if_id;
+	uint32_t type;
+	uint32_t subtype;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
+	uint32_t pdev_id;
+	uint32_t mbssid_flags;
+	uint8_t vdevid_trans;
+};
+
+/**
+ * struct vdev_delete_params - vdev delete cmd parameter
+ * @if_id: interface id
+ */
+struct vdev_delete_params {
+	uint8_t if_id;
+};
+
+/**
  * struct vdev_stop_params - vdev stop cmd parameter
  * @vdev_id: vdev id
  */
@@ -713,16 +724,6 @@ struct vdev_up_params {
 struct vdev_down_params {
 	uint8_t vdev_id;
 };
-
-/**
- * struct mac_ssid - mac ssid structure
- * @length:
- * @mac_ssid[WMI_MAC_MAX_SSID_LENGTH]:
- */
-struct mac_ssid {
-	uint8_t length;
-	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
-} qdf_packed;
 
 /**
  * enum wmi_bcn_tx_rate_code - beacon tx rate code
@@ -799,6 +800,7 @@ struct vdev_scan_nac_rssi_params {
 	uint32_t chan_num;
 	uint32_t action; /* WMI_FILTER_NAC_RSSI_ACTION */
 };
+#endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 
 /**
  * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
@@ -873,6 +875,7 @@ struct hidden_ssid_vdev_restart_params {
 #endif
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct vdev_set_params - vdev set cmd parameter
  * @if_id: vdev id
@@ -894,6 +897,7 @@ struct sifs_trigger_param {
 	uint32_t if_id;
 	uint32_t param_value;
 };
+#endif
 
 /**
  * struct peer_delete_params - peer delete cmd parameter
@@ -903,6 +907,7 @@ struct peer_delete_params {
 	uint8_t vdev_id;
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct peer_flush_params - peer flush cmd parameter
  * @peer_tid_bitmap: peer tid bitmap
@@ -912,6 +917,7 @@ struct peer_flush_params {
 	uint32_t peer_tid_bitmap;
 	uint8_t vdev_id;
 };
+#endif
 
 /**
  * struct peer_set_params - peer set cmd parameter
@@ -1071,6 +1077,7 @@ struct pdev_params {
 	uint32_t param_value;
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct beacon_tmpl_params - beacon template cmd parameter
  * @vdev_id: vdev id
@@ -1116,6 +1123,7 @@ struct beacon_params {
 	bool is_bitctl_reqd;
 	bool is_high_latency;
 };
+#endif
 
 /**
  * struct fd_params - FD cmd parameter
@@ -1301,6 +1309,7 @@ struct peer_assoc_params {
 	struct wmi_host_ppe_threshold peer_ppet;
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct sta_ps_params - sta ps cmd parameter
  * @vdev_id: vdev id
@@ -1312,6 +1321,7 @@ struct sta_ps_params {
 	uint32_t param;
 	uint32_t value;
 };
+#endif
 
 /**
  * struct ap_ps_params - ap ps cmd parameter
@@ -1347,6 +1357,7 @@ struct scan_chan_list_params {
 	struct channel_param ch_param[1];
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct multiple_vdev_restart_params - Multiple vdev restart cmd parameter
  * @pdev_id: Pdev identifier
@@ -1366,6 +1377,7 @@ struct multiple_vdev_restart_params {
 	struct channel_param ch_param;
 	uint32_t vdev_ids[WMI_HOST_PDEV_MAX_VDEVS];
 };
+#endif
 /**
  * struct fw_hang_params - fw hang command parameters
  * @type: 0:unused 1: ASSERT, 2:not respond detect command, 3:simulate ep-full
@@ -2922,6 +2934,7 @@ typedef struct {
 	/* add new members here */
 } wmi_host_ext_resource_config;
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct set_neighbour_rx_params - Neighbour RX params
  * @vdev_id: vdev id
@@ -2935,6 +2948,7 @@ struct set_neighbour_rx_params {
 	uint32_t action;
 	uint32_t type;
 };
+#endif
 
 /**
  * struct set_fwtest_params - FW test params
@@ -2946,6 +2960,7 @@ struct set_fwtest_params {
 	uint32_t value;
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct set_custom_aggr_size_params - custom aggr size params
  * @vdev_id      : vdev id
@@ -2964,6 +2979,7 @@ struct set_custom_aggr_size_params {
 		 tx_ac_enable:1,
 		 reserved:26;
 };
+#endif
 
 /**
  * enum wmi_host_custom_aggr_type_t: custon aggregate type
@@ -3031,6 +3047,7 @@ struct peer_chan_width_switch_params {
 	struct peer_chan_width_switch_info *chan_width_peer_list;
 };
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct config_ratemask_params - ratemask config parameters
  * @vdev_id: vdev id
@@ -3046,6 +3063,7 @@ struct config_ratemask_params {
 	uint32_t higher32;
 	uint32_t lower32_2;
 };
+#endif
 
 /**
  * struct config_fils_params - FILS config params
@@ -7193,6 +7211,7 @@ struct coex_config_params {
 #define WMI_HOST_PDEV_ID_1   1
 #define WMI_HOST_PDEV_ID_2   2
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct tbttoffset_params - Tbttoffset event params
  * @vdev_id: Virtual AP device identifier
@@ -7202,6 +7221,7 @@ struct tbttoffset_params {
 	uint32_t vdev_id;
 	uint32_t tbttoffset;
 };
+#endif
 
 /**
  * struct wmi_host_ready_ev_param - Data revieved in ready event
