@@ -231,10 +231,20 @@ static void reg_modify_chan_list_for_indoor_channels(
 	enum channel_enum chan_enum;
 	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
 
-	if (pdev_priv_obj->indoor_chan_enabled)
-		return;
+	if (!pdev_priv_obj->indoor_chan_enabled) {
+		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+			if (REGULATORY_CHAN_INDOOR_ONLY &
+			    chan_list[chan_enum].chan_flags) {
+				chan_list[chan_enum].state =
+					CHANNEL_STATE_DFS;
+				chan_list[chan_enum].chan_flags |=
+					REGULATORY_CHAN_NO_IR;
+			}
+		}
+	}
 
-	if (!pdev_priv_obj->force_ssc_disable_indoor_channel) {
+	if (pdev_priv_obj->force_ssc_disable_indoor_channel &&
+	    pdev_priv_obj->sap_state) {
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 			if (REGULATORY_CHAN_INDOOR_ONLY &
 			    chan_list[chan_enum].chan_flags) {
@@ -242,26 +252,6 @@ static void reg_modify_chan_list_for_indoor_channels(
 					CHANNEL_STATE_DISABLE;
 				chan_list[chan_enum].chan_flags |=
 					REGULATORY_CHAN_DISABLED;
-			}
-		}
-	} else {
-		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-			if (pdev_priv_obj->sap_state) {
-				if (REGULATORY_CHAN_INDOOR_ONLY &
-					chan_list[chan_enum].chan_flags) {
-					chan_list[chan_enum].state =
-						CHANNEL_STATE_DISABLE;
-					chan_list[chan_enum].chan_flags |=
-						REGULATORY_CHAN_DISABLED;
-				}
-			} else {
-				if (REGULATORY_CHAN_INDOOR_ONLY &
-					chan_list[chan_enum].chan_flags) {
-					chan_list[chan_enum].state =
-						CHANNEL_STATE_DFS;
-					chan_list[chan_enum].chan_flags |=
-						REGULATORY_CHAN_NO_IR;
-				}
 			}
 		}
 	}
@@ -725,12 +715,18 @@ QDF_STATUS reg_process_master_chan_list(
 			reg_err("pdev is NULL");
 			return QDF_STATUS_E_FAILURE;
 		}
-		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 
 		if (tx_ops->set_country_failed)
 			tx_ops->set_country_failed(pdev);
 
-		return QDF_STATUS_E_FAILURE;
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+
+		if (regulat_info->status_code != REG_CURRENT_ALPHA2_NOT_FOUND)
+			return QDF_STATUS_E_FAILURE;
+
+		soc_reg->new_user_ctry_pending[phy_id] = false;
+		soc_reg->new_11d_ctry_pending[phy_id] = false;
+		soc_reg->world_country_pending[phy_id] = true;
 	}
 
 	mas_chan_list = soc_reg->mas_chan_params[phy_id].mas_chan_list;

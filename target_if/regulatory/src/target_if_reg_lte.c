@@ -22,6 +22,8 @@
  * This file contains regulatory target LTE interface
  */
 
+#ifdef CONFIG_LTE_COEX
+
 #include "target_if_reg_lte.h"
 
 /**
@@ -104,3 +106,4 @@ QDF_STATUS tgt_if_regulatory_unregister_ch_avoid_event_handler(
 	return wmi_unified_unregister_event(wmi_handle,
 			wmi_wlan_freq_avoid_event_id);
 }
+#endif
