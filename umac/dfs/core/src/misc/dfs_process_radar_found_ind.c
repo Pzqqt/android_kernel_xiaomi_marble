@@ -361,9 +361,13 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 						uint8_t *channels,
 						uint32_t freq_center)
 {
-	int i;
+	int i, j;
+	uint8_t num_radar_subchans;
 	uint32_t flag;
 	int32_t sidx;
+	uint8_t candidate_subchan;
+	uint8_t cur_subchans[NUM_CHANNELS_160MHZ];
+	uint8_t n_cur_subchans;
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	struct freqs_offsets freq_offset;
 
@@ -409,13 +413,25 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 		return 0;
 	}
 
-	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
-		channels[i] = utils_dfs_freq_to_chan(freq_offset.freq[i]);
-		dfs_info(dfs, WLAN_DEBUG_DFS, "offset=%d, channel=%d",
-			 i, channels[i]);
-	}
+	n_cur_subchans = dfs_get_bonding_channels(dfs, curchan,
+						  radar_found->segment_id,
+						  cur_subchans);
 
-	return i;
+	for (i = 0, num_radar_subchans = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
+		candidate_subchan = utils_dfs_freq_to_chan(freq_offset.freq[i]);
+		for (j = 0; j < n_cur_subchans; j++) {
+			if (cur_subchans[j] == candidate_subchan) {
+				channels[num_radar_subchans++] =
+						candidate_subchan;
+				dfs_info(dfs, WLAN_DEBUG_DFS,
+					 "offset=%d, channel=%d",
+					 num_radar_subchans,
+					 channels[num_radar_subchans - 1]);
+				break;
+			}
+		}
+	}
+	return num_radar_subchans;
 }
 
 uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
