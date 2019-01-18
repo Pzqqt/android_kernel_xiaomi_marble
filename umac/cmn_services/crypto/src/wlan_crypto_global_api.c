@@ -316,7 +316,7 @@ static
 QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 				 struct wlan_crypto_pmksa *pmksa)
 {
-	uint8_t i, first_available_slot;
+	uint8_t i, first_available_slot = 0;
 	uint8_t slot_found = 0;
 
 	/* find the empty slot or slot with same bssid */
