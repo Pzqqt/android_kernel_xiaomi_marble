@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -601,18 +601,24 @@ static void hdd_soc_remove(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_psoc *hdd_psoc;
+	QDF_STATUS status;
 
 	if (!hdd_ctx) {
 		hdd_warn_rl("previous probe was not successful");
 		return;
 	}
-	hdd_psoc = hdd_ctx->hdd_psoc;
 
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-	/* remove is triggered by rmmod, so assert we are protected by rmmod */
-	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
+	hdd_psoc = hdd_ctx->hdd_psoc;
+	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "remove");
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to remove WLAN SoC; status:%d", status);
+		return;
+	}
+
 	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
 
 	cds_set_driver_loaded(false);
@@ -640,7 +646,7 @@ static void hdd_soc_remove(struct device *dev)
 	cds_set_unload_in_progress(false);
 
 	hdd_psoc->state = psoc_state_deinit;
-	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 
 	hdd_psoc_ctx_destroy(&hdd_psoc);
 

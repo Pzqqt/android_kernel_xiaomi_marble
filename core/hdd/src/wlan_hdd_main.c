@@ -701,47 +701,6 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 	return 0;
 }
 
-/**
- * hdd_wait_for_recovery_completion() - Wait for cds recovery completion
- *
- * Block the unloading of the driver (or) interface up until the
- * cds recovery is completed
- *
- * Return: true for recovery completion else false
- */
-static bool hdd_wait_for_recovery_completion(void)
-{
-	int retry = 0;
-
-	/* Wait for recovery to complete */
-	while (cds_is_driver_recovering()) {
-		if (retry == HDD_MOD_EXIT_SSR_MAX_RETRIES/2)
-			hdd_err("Recovery in progress; wait here!!!");
-
-		if (g_is_system_reboot_triggered) {
-			hdd_info("System Reboot happening ignore unload!!");
-			return false;
-		}
-
-		msleep(1000);
-		if (retry++ == HDD_MOD_EXIT_SSR_MAX_RETRIES) {
-			hdd_err("SSR never completed, error");
-			/*
-			 * Trigger the bug_on in the internal builds, in the
-			 * customer builds self-recovery will be enabled
-			 * in those cases just return error.
-			 */
-			if (cds_is_self_recovery_enabled())
-				return false;
-			QDF_BUG(0);
-		}
-	}
-
-	hdd_info("Recovery completed successfully!");
-	return true;
-}
-
-
 static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 				    unsigned long state, void *data)
 {
@@ -13610,6 +13569,17 @@ static void hdd_driver_unload(void)
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
+	if (g_is_system_reboot_triggered) {
+		hdd_info("System rebooting; Skipping unload");
+		return;
+	}
+
+	if (hdd_ctx)
+		hdd_psoc_idle_timer_stop(hdd_ctx);
+
+	/* trigger SoC remove */
+	wlan_hdd_unregister_driver();
+
 	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver, "unload");
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -13619,11 +13589,6 @@ static void hdd_driver_unload(void)
 
 	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
 
-	if (!hdd_wait_for_recovery_completion()) {
-		dsc_driver_trans_stop(hdd_driver->dsc_driver);
-		return;
-	}
-
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
@@ -13631,10 +13596,6 @@ static void hdd_driver_unload(void)
 		hdd_warn("External threads are still active attempting "
 			 "driver unload anyway");
 
-	if (hdd_ctx)
-		hdd_psoc_idle_timer_stop(hdd_ctx);
-
-	wlan_hdd_unregister_driver();
 	pld_deinit();
 	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
