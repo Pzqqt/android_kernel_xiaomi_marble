@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -619,6 +619,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	if (qdf_atomic_dec_and_test
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt)) {
 		bool peer_id_matched = false;
+		bool added = false;
 		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
 		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 			if (peer->peer_ids[i] == peer_id) {
@@ -629,10 +630,20 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 		}
 		if (pdev->enable_peer_unmap_conf_support && peer_id_matched) {
 			for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-				if (peer->map_unmap_peer_ids[i] ==
-							HTT_INVALID_PEER) {
-					peer->map_unmap_peer_ids[i] = peer_id;
+				if (peer->map_unmap_peer_ids[i] == peer_id) {
+					added = true;
 					break;
+				}
+			}
+
+			if (!added) {
+				for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
+					if (peer->map_unmap_peer_ids[i] ==
+					    HTT_INVALID_PEER) {
+						peer->map_unmap_peer_ids[i] =
+									peer_id;
+						break;
+					}
 				}
 			}
 		}
