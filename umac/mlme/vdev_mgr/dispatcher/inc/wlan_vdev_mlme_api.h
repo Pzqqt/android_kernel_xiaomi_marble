@@ -22,7 +22,9 @@
 #define _WLAN_VDEV_MLME_API_H_
 
 /**
- * wlan_vdev_mlme_get_cmpt_obj - Returns MLME component object
+ * wlan_vdev_mlme_get_cmpt_obj - Retrieves MLME component object
+ * from VDEV object
+ * @vdev: pointer to vdev object
  *
  * Retrieves MLME component object from VDEV object
  *
@@ -32,7 +34,19 @@
 struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(
 						struct wlan_objmgr_vdev *vdev);
 /**
+ * wlan_vdev_mlme_set_ext_hdl - Sets legacy handle
+ * @vdev: pointer to vdev object
+ * @ext_hdl: pointer to legacy handle
+ *
+ * Sets Legacy handle to MLME component object
+ *
+ * Return:
+ */
+void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl);
+
+/**
  * wlan_vdev_mlme_get_ext_hdl - Returns legacy handle
+ * @vdev: pointer to vdev object
  *
  * Retrieves legacy handle from vdev mlme component object
  *

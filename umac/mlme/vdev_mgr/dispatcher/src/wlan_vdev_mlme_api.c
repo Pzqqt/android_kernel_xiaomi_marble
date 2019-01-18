@@ -44,6 +44,22 @@ struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *vdev)
 	return vdev_mlme;
 }
 
+void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	if (!ext_hdl) {
+		mlme_err("Invalid input");
+		return;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (vdev_mlme)
+		vdev_mlme->ext_vdev_ptr = ext_hdl;
+}
+
+qdf_export_symbol(wlan_vdev_mlme_set_ext_hdl);
+
 void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
