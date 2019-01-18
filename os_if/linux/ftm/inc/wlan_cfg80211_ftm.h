@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,7 +69,15 @@ int wlan_cfg80211_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E errno otherwise
  */
+#ifdef QCA_WIFI_FTM_NL80211
 QDF_STATUS wlan_cfg80211_ftm_rx_event(struct wlan_objmgr_pdev *pdev,
 					uint8_t *data, uint32_t len);
-
+#else
+static inline QDF_STATUS
+wlan_cfg80211_ftm_rx_event(struct wlan_objmgr_pdev *pdev,
+			   uint8_t *data, uint32_t len)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif
