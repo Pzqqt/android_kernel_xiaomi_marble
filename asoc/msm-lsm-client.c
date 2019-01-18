@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/err.h>
@@ -1050,7 +1050,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		if (ses_data_v2.app_id != LSM_VOICE_WAKEUP_APP_ID_V2) {
 			dev_err(rtd->dev,
 				"%s:Invalid App id %d for Listen client\n",
-			       __func__, session_data.app_id);
+			       __func__, ses_data_v2.app_id);
 			rc = -EINVAL;
 			break;
 		}
