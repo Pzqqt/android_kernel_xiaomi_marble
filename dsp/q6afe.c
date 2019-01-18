@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/debugfs.h>
@@ -7282,7 +7281,16 @@ int afe_set_lpass_internal_digital_codec_clock(u16 port_id,
 
 	return ret;
 }
-
+/**
+ * afe_enable_lpass_core_shared_clock -
+ *      Configures the core clk on LPASS.
+ *      Need on targets where lpass provides
+ *      clocks
+ * @port_id: afe port id
+ * @enable: enable or disable clk
+ *
+ * Returns success or failure of call.
+ */
 int afe_enable_lpass_core_shared_clock(u16 port_id, u32 enable)
 {
 	struct afe_param_id_lpass_core_shared_clk_cfg clk_cfg;
@@ -7321,7 +7329,16 @@ int afe_enable_lpass_core_shared_clock(u16 port_id, u32 enable)
 	mutex_unlock(&this_afe.afe_cmd_lock);
 	return ret;
 }
+EXPORT_SYMBOL(afe_enable_lpass_core_shared_clock);
 
+/**
+ * q6afe_check_osr_clk_freq -
+ *   Gets supported OSR CLK frequencies
+ *
+ * @freq: frequency to check
+ *
+ * Returns success if freq is supported.
+ */
 int q6afe_check_osr_clk_freq(u32 freq)
 {
 	int ret = 0;
@@ -7346,6 +7363,7 @@ int q6afe_check_osr_clk_freq(u32 freq)
 	}
 	return ret;
 }
+EXPORT_SYMBOL(q6afe_check_osr_clk_freq);
 
 int afe_get_sp_th_vi_ftm_data(struct afe_sp_th_vi_get_param *th_vi)
 {
