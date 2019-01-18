@@ -782,14 +782,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
-		scm_nofl_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %d  ssid:%.*s, rssi: %d pdev_id = %d",
-			       (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
-			       "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
-			       scan_entry->tsf_delta, scan_entry->seq_num,
-			       scan_entry->ssid.length, scan_entry->ssid.ssid,
-			       scan_entry->rssi_raw,
-			       wlan_objmgr_pdev_get_pdev_id(pdev));
-
 		if (scan_obj->drop_bcn_on_chan_mismatch &&
 			scan_entry->channel_mismatch) {
 			scm_debug("Drop frame, as channel mismatch Received for from BSSID: %pM Seq Num: %d",
@@ -799,6 +791,15 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			qdf_mem_free(scan_node);
 			continue;
 		}
+
+		scm_nofl_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %d  ssid:%.*s, rssi: %d channel %d pdev_id = %d",
+			       (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
+			       "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
+			       scan_entry->tsf_delta, scan_entry->seq_num,
+			       scan_entry->ssid.length, scan_entry->ssid.ssid,
+			       scan_entry->rssi_raw,
+			       scan_entry->channel.chan_idx,
+			       wlan_objmgr_pdev_get_pdev_id(pdev));
 
 		if (scan_obj->cb.update_beacon)
 			scan_obj->cb.update_beacon(pdev, scan_entry);
