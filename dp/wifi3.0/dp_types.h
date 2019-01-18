@@ -1008,6 +1008,8 @@ struct dp_soc {
 	bool is_peer_map_unmap_v2;
 	/* Per peer per Tid ba window size support */
 	uint8_t per_tid_basize_max_tid;
+	/* Soc level flag to enable da_war */
+	uint8_t da_war_enabled;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1472,9 +1474,6 @@ struct dp_vdev {
 
 	/* MEC enabled */
 	bool mec_enabled;
-
-	/* DA WAR enable flag */
-	bool da_war_enabled;
 
 	/* WDS Aging timer period */
 	uint32_t wds_aging_timer_val;

@@ -7949,7 +7949,7 @@ static uint32_t dp_get_vdev_param(struct cdp_vdev *vdev_handle,
 		val = vdev->mec_enabled;
 		break;
 	case CDP_ENABLE_DA_WAR:
-		val = vdev->da_war_enabled;
+		val = vdev->pdev->soc->da_war_enabled;
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -7990,7 +7990,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "da_war_enable %d for vdev(%p) id(%d)\n",
 			  val, vdev, vdev->vdev_id);
-		vdev->da_war_enabled = val;
+		vdev->pdev->soc->da_war_enabled = val;
+		dp_wds_flush_ast_table_wifi3(((struct cdp_soc_t *)
+					     vdev->pdev->soc));
 		break;
 	case CDP_ENABLE_NAWDS:
 		vdev->nawds_enabled = val;

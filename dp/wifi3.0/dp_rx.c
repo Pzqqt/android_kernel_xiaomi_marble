@@ -385,6 +385,9 @@ dp_rx_da_learn(struct dp_soc *soc,
 	if (qdf_unlikely(ta_peer->vdev->opmode != wlan_op_mode_ap))
 		return;
 
+	if (!soc->da_war_enabled)
+		return;
+
 	if (qdf_unlikely(!hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
 			 !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
 		dp_peer_add_ast(soc,
@@ -1763,8 +1766,7 @@ done:
 			       htt_cmn_pkt_type_ethernet) &&
 		    qdf_likely(!vdev->mesh_vdev)) {
 			/* WDS Destination Address Learning */
-			if (vdev->da_war_enabled)
-				dp_rx_da_learn(soc, rx_tlv_hdr, peer, nbuf);
+			dp_rx_da_learn(soc, rx_tlv_hdr, peer, nbuf);
 
 			/* WDS Source Port Learning */
 			if (vdev->wds_enabled)
