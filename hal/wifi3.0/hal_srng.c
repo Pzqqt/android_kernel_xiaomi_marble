@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -311,6 +311,8 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 			__func__);
 		goto fail1;
 	}
+	qdf_mem_zero(hal->shadow_rdptr_mem_vaddr,
+		     sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX);
 
 	hal->shadow_wrptr_mem_vaddr =
 		(uint32_t *)qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev,
@@ -322,6 +324,8 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 			__func__);
 		goto fail2;
 	}
+	qdf_mem_zero(hal->shadow_wrptr_mem_vaddr,
+		sizeof(*(hal->shadow_wrptr_mem_vaddr)) * HAL_MAX_LMAC_RINGS);
 
 	for (i = 0; i < HAL_SRNG_ID_MAX; i++) {
 		hal->srng_list[i].initialized = 0;
