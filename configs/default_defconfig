@@ -88,7 +88,7 @@ endif
 ifeq ($(CONFIG_ARCH_QCS405), y)
 	CONFIG_WLAN_SYNC_TSF_PLUS := y
 	CONFIG_WLAN_SYNC_TSF_PLUS_NOIRQ := y
-	CONFIG_THREAD_PERFORMANCE := y
+	CONFIG_RX_PERFORMANCE := y
 endif
 
 #Flag to enable Legacy Fast Roaming2(LFR2)

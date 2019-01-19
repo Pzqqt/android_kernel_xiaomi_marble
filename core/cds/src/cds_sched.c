@@ -35,7 +35,7 @@
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
-#ifdef THREAD_PERFORMANCE
+#ifdef RX_PERFORMANCE
 #include <linux/sched/types.h>
 #endif
 
@@ -410,7 +410,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
-#ifdef THREAD_PERFORMANCE
+#ifdef RX_PERFORMANCE
 	struct sched_param param;
 
 	param.sched_priority = 99;
@@ -462,7 +462,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		goto OL_RX_THREAD_START_FAILURE;
 
 	}
-#ifdef THREAD_PERFORMANCE
+#ifdef RX_PERFORMANCE
 	sched_setscheduler(pSchedContext->ol_rx_thread, SCHED_RR, &param);
 #endif
 	wake_up_process(pSchedContext->ol_rx_thread);
@@ -733,6 +733,10 @@ static int cds_ol_rx_thread(void *arg)
 	p_cds_sched_context pSchedContext = (p_cds_sched_context) arg;
 	bool shutdown = false;
 	int status;
+#ifdef RX_PERFORMANCE
+	int i;
+	unsigned long pref_cpu = 0;
+#endif
 
 #ifdef RX_THREAD_PRIORITY
 	struct sched_param scheduler_params = {0};
@@ -745,6 +749,21 @@ static int cds_ol_rx_thread(void *arg)
 
 #ifdef MSM_PLATFORM
 	set_wake_up_idle(true);
+#endif
+
+#ifdef RX_PERFORMANCE
+	/*
+	 * Find the available cpu core other than cpu 0 and
+	 * bind the thread
+	 */
+	for_each_online_cpu(i) {
+		if (i == 0)
+			continue;
+		pref_cpu = i;
+		break;
+	}
+	if (pref_cpu != 0 && (!cds_set_cpus_allowed_ptr(current, pref_cpu)))
+		affine_cpu = pref_cpu;
 #endif
 
 	complete(&pSchedContext->ol_rx_start_event);
