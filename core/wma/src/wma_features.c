@@ -3094,7 +3094,7 @@ void wma_add_ts_req(tp_wma_handle wma, struct add_ts_param *msg)
 	msg->status = QDF_STATUS_SUCCESS;
 	if (wma_set_tsm_interval(msg) == QDF_STATUS_SUCCESS) {
 
-		cmd.sme_session_id = msg->sme_session_id;
+		cmd.vdev_id = msg->vdev_id;
 		cmd.tspec.tsinfo.traffic.userPrio =
 			TID_TO_WME_AC(msg->tspec.tsinfo.traffic.userPrio);
 		cmd.tspec.mediumTime = msg->tspec.mediumTime;

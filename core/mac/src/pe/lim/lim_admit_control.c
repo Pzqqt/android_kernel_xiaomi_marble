@@ -839,7 +839,7 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE,
 		     sizeof(struct mac_tspec_ie));
 	pAddTsParam->sessionId = sessionId;
-	pAddTsParam->sme_session_id = pe_session->smeSessionId;
+	pAddTsParam->vdev_id = pe_session->smeSessionId;
 
 #ifdef FEATURE_WLAN_ESE
 	pAddTsParam->tsm_interval = tsm_interval;
