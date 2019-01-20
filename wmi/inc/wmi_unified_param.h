@@ -2334,7 +2334,7 @@ struct mac_tspec_ie {
  * @sessionId: session id
  * @tsm_interval: TSM interval period passed from UMAC to WMI
  * @setRICparams: RIC parameters
- * @sme_session_id: sme session id
+ * @vdev_id: vdev id
  */
 struct add_ts_param {
 	uint16_t staIdx;
@@ -2348,7 +2348,10 @@ struct add_ts_param {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t setRICparams;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+	union {
 	uint8_t sme_session_id;
+	uint8_t vdev_id;
+	};
 };
 
 /**

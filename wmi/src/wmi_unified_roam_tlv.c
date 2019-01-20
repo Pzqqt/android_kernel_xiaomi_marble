@@ -712,9 +712,9 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_ric_request_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_ric_request_fixed_param));
 	if (is_add_ts)
-		cmd->vdev_id = ((struct add_ts_param *) msg)->sme_session_id;
+		cmd->vdev_id = ((struct add_ts_param *)msg)->vdev_id;
 	else
-		cmd->vdev_id = ((struct del_ts_params *) msg)->sessionId;
+		cmd->vdev_id = ((struct del_ts_params *)msg)->sessionId;
 	cmd->num_ric_request = 1;
 	cmd->is_add_ric = is_add_ts;
 
