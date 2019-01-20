@@ -1586,7 +1586,7 @@ static QDF_STATUS send_del_ts_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
  * @aggr_qos_rsp_msg - combined struct for all ADD_TS requests.
  *
  * A function to handle WMI_AGGR_QOS_REQ. This will send out
- * ADD_TS requestes to firmware in loop for all the ACs with
+ * ADD_TS requests to firmware in loop for all the ACs with
  * active flow.
  *
  * Return: CDF status

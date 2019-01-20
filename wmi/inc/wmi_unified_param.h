@@ -2397,28 +2397,28 @@ struct mac_tspec_ie {
 
 /**
  * struct add_ts_param - ADDTS related parameters
- * @staIdx: station index
- * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
- * @tspec: tspec value
- * @status: CDF status
- * @sessionId: session id
- * @tsm_interval: TSM interval period passed from UMAC to WMI
- * @setRICparams: RIC parameters
  * @vdev_id: vdev id
+ * @sta_idx: station index
+ * @tspec_idx: TSPEC handle uniquely identifying a TSPEC for a STA in a BSS
+ * @tspec: tspec value
+ * @status: QDF status
+ * @pe_session_id: protocol engine session id
+ * @tsm_interval: TSM interval period passed from UMAC to WMI
+ * @set_ric_params: Should RIC parameters be set?
  */
 struct add_ts_param {
-	uint16_t staIdx;
-	uint16_t tspecIdx;
+	uint8_t vdev_id;
+	uint16_t sta_idx;
+	uint16_t tspec_idx;
 	struct mac_tspec_ie tspec;
 	QDF_STATUS status;
-	uint8_t sessionId;
+	uint8_t pe_session_id;
 #ifdef FEATURE_WLAN_ESE
 	uint16_t tsm_interval;
 #endif /* FEATURE_WLAN_ESE */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t setRICparams;
+	bool set_ric_params;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-	uint8_t vdev_id;
 };
 
 /**
