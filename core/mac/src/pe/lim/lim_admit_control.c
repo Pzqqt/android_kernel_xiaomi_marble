@@ -834,11 +834,11 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 	if (!pAddTsParam)
 		return QDF_STATUS_E_NOMEM;
 
-	pAddTsParam->staIdx = staIdx;
-	pAddTsParam->tspecIdx = tspecIdx;
+	pAddTsParam->sta_idx = staIdx;
+	pAddTsParam->tspec_idx = tspecIdx;
 	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE,
 		     sizeof(struct mac_tspec_ie));
-	pAddTsParam->sessionId = sessionId;
+	pAddTsParam->pe_session_id = sessionId;
 	pAddTsParam->vdev_id = pe_session->smeSessionId;
 
 #ifdef FEATURE_WLAN_ESE
@@ -847,7 +847,7 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (mac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    pe_session->is11Rconnection)
-		pAddTsParam->setRICparams = 1;
+		pAddTsParam->set_ric_params = true;
 #endif
 
 	msg.type = WMA_ADD_TS_REQ;
@@ -969,11 +969,12 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 
 	/* 090803: Use pe_find_session_by_session_id() to obtain the PE session context */
 	/* from the sessionId in the Rsp Msg from HAL */
-	pe_session = pe_find_session_by_session_id(mac, pAddTsRspMsg->sessionId);
+	pe_session = pe_find_session_by_session_id(mac,
+						   pAddTsRspMsg->pe_session_id);
 
 	if (!pe_session) {
 		pe_err("Session does Not exist with given sessionId: %d",
-			       pAddTsRspMsg->sessionId);
+			       pAddTsRspMsg->pe_session_id);
 		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
 				       pe_session, pAddTsRspMsg->tspec,
 				       mac->lim.gLimAddtsReq.sessionId);
@@ -1000,14 +1001,14 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 
 		/* Delete TSPEC */
 		/* 090803: Pull the hash table from the session */
-		pSta = dph_lookup_assoc_id(mac, pAddTsRspMsg->staIdx, &assocId,
+		pSta = dph_lookup_assoc_id(mac, pAddTsRspMsg->sta_idx, &assocId,
 					   &pe_session->dph.dphHashTable);
 		if (pSta)
 			lim_admit_control_delete_ts(mac, assocId,
 						    &pAddTsRspMsg->tspec.tsinfo,
 						    NULL,
 						    (uint8_t *) &pAddTsRspMsg->
-						    tspecIdx);
+						    tspec_idx);
 
 		/* Send SME_ADDTS_RSP */
 		/* 090803: Use the smesessionId and smetransactionId from the PE session context */

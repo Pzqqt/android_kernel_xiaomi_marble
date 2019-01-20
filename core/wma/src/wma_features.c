@@ -3066,7 +3066,7 @@ void wma_add_ts_req(tp_wma_handle wma, struct add_ts_param *msg)
 			msg->status = QDF_STATUS_E_FAILURE;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (msg->setRICparams == true)
+		if (msg->set_ric_params)
 			wma_set_ric_req(wma, msg, true);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

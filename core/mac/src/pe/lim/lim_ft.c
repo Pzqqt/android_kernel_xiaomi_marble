@@ -890,23 +890,24 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 		if ((((1 << i) & pAggrQosRspMsg->tspecIdx)) &&
 		    (pAggrQosRspMsg->status[i] != QDF_STATUS_SUCCESS)) {
 			sir_copy_mac_addr(peerMacAddr, pe_session->bssId);
-			addTsParam.staIdx = pAggrQosRspMsg->staIdx;
-			addTsParam.sessionId = pAggrQosRspMsg->sessionId;
+			addTsParam.sta_idx = pAggrQosRspMsg->staIdx;
+			addTsParam.pe_session_id = pAggrQosRspMsg->sessionId;
 			addTsParam.tspec = pAggrQosRspMsg->tspec[i];
-			addTsParam.tspecIdx = pAggrQosRspMsg->tspecIdx;
+			addTsParam.tspec_idx = pAggrQosRspMsg->tspecIdx;
 			lim_send_delts_req_action_frame(mac, peerMacAddr, rspReqd,
 							&addTsParam.tspec.tsinfo,
 							&addTsParam.tspec,
 							pe_session);
 			pSta =
-				dph_lookup_assoc_id(mac, addTsParam.staIdx, &assocId,
+				dph_lookup_assoc_id(mac, addTsParam.sta_idx,
+						    &assocId,
 						    &pe_session->dph.dphHashTable);
 			if (pSta) {
 				lim_admit_control_delete_ts(mac, assocId,
 							    &addTsParam.tspec.
 							    tsinfo, NULL,
 							    (uint8_t *) &
-							    addTsParam.tspecIdx);
+							    addTsParam.tspec_idx);
 			}
 		}
 	}
