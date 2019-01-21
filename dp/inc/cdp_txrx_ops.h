@@ -663,10 +663,6 @@ struct cdp_me_ops {
 
 	int (*mcast_notify)(struct cdp_pdev *pdev,
 			u_int8_t vdev_id, qdf_nbuf_t msdu);
-
-	uint16_t (*tx_me_find_ast_entry)(struct cdp_vdev *vdev,
-					 uint8_t *da_mac_addr,
-					 uint8_t *ra_mac_addr);
 };
 
 struct cdp_mon_ops {
