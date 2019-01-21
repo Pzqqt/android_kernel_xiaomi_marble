@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,7 +38,9 @@
 /**
  * qdf_ht_declare() - declare a new qdf_ht
  * @name: variable name of the hashtable to declare
- * @bits: number of hash bits to use; buckets=2^bits
+ * @bits: number of hash bits to use; buckets=2^bits; Needs to be a compile
+ *        time constant
+ *
  */
 #define qdf_ht_declare(name, bits) __qdf_ht_declare(name, bits)
 

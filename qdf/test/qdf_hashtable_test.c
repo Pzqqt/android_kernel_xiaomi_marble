@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,9 @@
 #include "qdf_hashtable_test.h"
 #include "qdf_trace.h"
 
+/* 16 buckets */
+#define QDF_HT_HASH_BITS 4
+
 struct qdf_ht_test_item {
 	struct qdf_ht_entry entry;
 	uintptr_t key;
@@ -27,12 +30,12 @@ struct qdf_ht_test_item {
 
 static uint32_t qdf_ht_test_single(void)
 {
-	const int bits = 4; /* 16 buckets */
+	const int bits = QDF_HT_HASH_BITS;
 	struct qdf_ht_test_item item = { .key = (uintptr_t)&bits };
 	struct qdf_ht_test_item *cursor;
 	int i, count;
 
-	qdf_ht_declare(ht, bits);
+	qdf_ht_declare(ht, QDF_HT_HASH_BITS);
 
 	qdf_ht_init(ht);
 	qdf_ht_add(ht, &item.entry, item.key);
