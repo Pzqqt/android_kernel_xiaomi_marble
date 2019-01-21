@@ -1775,29 +1775,52 @@ static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 
 static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 {
-	uint32_t chip_mode;
+	uint32_t chip_mode = 0;
 	QDF_STATUS status;
-	bool b24ghz_band;
+	bool b2g_vht_cfg = false;
+	bool b2g_vht_target = false;
+	struct wma_caps_per_phy caps_per_phy;
+	struct wmi_unified *wmi_handle;
 
-	status = wlan_reg_get_chip_mode(hdd_ctx->pdev, &chip_mode);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get chip mode");
+	wmi_handle = get_wmi_unified_hdl_from_psoc(hdd_ctx->psoc);
+	if (!wmi_handle) {
+		hdd_err("wmi handle is NULL");
 		return;
 	}
-	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &b24ghz_band);
+
+	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &b2g_vht_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get 2g vht mode");
 		return;
 	}
+	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
+		status = wma_get_caps_for_phyidx_hwmode(&caps_per_phy,
+							HW_MODE_DBS_NONE,
+							CDS_BAND_ALL);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failed to get phy caps");
+			return;
+		}
+		if (caps_per_phy.vht_2g)
+			b2g_vht_target = true;
+	} else {
+		status = wlan_reg_get_chip_mode(hdd_ctx->pdev, &chip_mode);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failed to get chip mode");
+			return;
+		}
+		b2g_vht_target =
+		(chip_mode & WMI_HOST_REGDMN_MODE_11AC_VHT20_2G) ?
+		true : false;
+	}
 
-	b24ghz_band = b24ghz_band &&
-		      (chip_mode & WMI_HOST_REGDMN_MODE_11AC_VHT20);
-	status = ucfg_mlme_set_vht_for_24ghz(hdd_ctx->psoc, b24ghz_band);
+	b2g_vht_cfg = b2g_vht_cfg && b2g_vht_target;
+	hdd_debug("vht 2g target: %d, cfg: %d", b2g_vht_target, b2g_vht_cfg);
+	status = ucfg_mlme_set_vht_for_24ghz(hdd_ctx->psoc, b2g_vht_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to update 2g vht mode");
 		return;
 	}
-	hdd_debug("2g vht20: %d", b24ghz_band);
 }
 
 void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
@@ -2017,9 +2040,6 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	 */
 	hdd_update_wiphy_vhtcap(hdd_ctx);
 
-	/*
-	 * Update 2g vht capability
-	 */
 	hdd_update_vhtcap_2g(hdd_ctx);
 
 	hdd_ctx->wmi_max_len = cfg->wmi_max_len;

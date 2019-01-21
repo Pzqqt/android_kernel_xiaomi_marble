@@ -2314,12 +2314,9 @@ ucfg_mlme_get_vht_enable_gid(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 /**
- * ucfg_mlme_get_vht_for_24ghz() - Enables/disables vht for 24ghz
+ * ucfg_mlme_get_vht_for_24ghz() - Get mlme cfg of vht for 24ghz
  * @psoc: psoc context
- * @value: data to be set
- *
- * Inline UCFG API to be used by HDD/OSIF callers to get the
- * ignore_peer_ht_opmode flag value
+ * @value: data to get
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
  */
@@ -2334,9 +2331,6 @@ ucfg_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value)
  * @psoc: psoc context
  * @value: data to be set
  *
- * Inline UCFG API to be used by HDD/OSIF callers to set the
- * ignore_peer_ht_opmode flag value
- *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
  */
 static inline QDF_STATUS
@@ -2346,12 +2340,9 @@ ucfg_mlme_set_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool value)
 }
 
 /**
- * ucfg_mlme_get_vendor_vht_for_24ghz() - Enables/disables vendor vht for 24ghz
+ * ucfg_mlme_get_vendor_vht_for_24ghz() - Get mlme cfg of vendor vht for 24ghz
  * @psoc: psoc context
  * @value: data to be set
- *
- * Inline UCFG API to be used by HDD/OSIF callers to get the
- * ignore_peer_ht_opmode flag value
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
  */
