@@ -17354,7 +17354,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx;
 	int status, result = 0;
 	mac_handle_t mac_handle;
-	uint32_t wait_time = WLAN_WAIT_TIME_DISCONNECT;
+	uint32_t wait_time = SME_DISCONNECT_TIMEOUT;
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -17771,7 +17771,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	eConnectionState prev_conn_state;
 	mac_handle_t mac_handle;
-	uint32_t wait_time = WLAN_WAIT_TIME_DISCONNECT;
+	uint32_t wait_time = SME_DISCONNECT_TIMEOUT;
 
 	hdd_enter();
 
@@ -18496,7 +18496,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	 * all set to proceed further
 	 */
 	rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
-			msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
+			msecs_to_jiffies(SME_DISCONNECT_TIMEOUT));
 	if (!rc) {
 		hdd_err("Failed to disconnect, timed out");
 		return -ETIMEDOUT;
@@ -18793,7 +18793,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 							qdf_wait_for_event_completion(
 							 &hapd_state->
 							 qdf_sta_disassoc_event,
-							 SME_CMD_TIMEOUT_VALUE);
+							 SME_PEER_DISCONNECT_TIMEOUT);
 						if (!QDF_IS_STATUS_SUCCESS(
 								qdf_status))
 							hdd_warn("Deauth wait time expired");
@@ -18853,7 +18853,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			qdf_status = qdf_wait_for_event_completion(
 					&hapd_state->
 					qdf_sta_disassoc_event,
-					SME_CMD_TIMEOUT_VALUE);
+					SME_PEER_DISCONNECT_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_warn("Deauth wait time expired");
 

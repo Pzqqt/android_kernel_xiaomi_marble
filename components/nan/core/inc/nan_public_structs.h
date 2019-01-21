@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,8 @@ struct wlan_objmgr_vdev;
 #define NAN_CH_INFO_MAX_CHANNELS 4
 
 #define NAN_PSEUDO_VDEV_ID CFG_TGT_NUM_VDEV
+
+#define NAN_SER_CMD_TIMEOUT 4000
 
 /**
  * enum nan_discovery_msg_type - NAN msg type

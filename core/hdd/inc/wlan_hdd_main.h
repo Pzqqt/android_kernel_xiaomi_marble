@@ -208,15 +208,6 @@ enum hdd_driver_flags {
 	ACS_IN_PROGRESS,
 };
 
-/** Maximum time(ms)to wait for disconnect to complete **/
-/*  This value should be larger than the timeout used by WMA to wait for
- *  stop vdev response from FW
- */
-#ifdef QCA_WIFI_3_0_EMU
-#define WLAN_WAIT_TIME_DISCONNECT  7000
-#else
-#define WLAN_WAIT_TIME_DISCONNECT  7000
-#endif
 #define WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS  1000
 #define WLAN_WAIT_TIME_STOP_ROAM  4000
 #define WLAN_WAIT_TIME_STATS       800
@@ -230,9 +221,6 @@ enum hdd_driver_flags {
 
 /* Scan Req Timeout */
 #define WLAN_WAIT_TIME_SCAN_REQ 100
-
-#define WLAN_WAIT_TIME_ANTENNA_MODE_REQ 3000
-#define WLAN_WAIT_TIME_SET_DUAL_MAC_CFG 1500
 
 #define WLAN_WAIT_TIME_APF     1000
 

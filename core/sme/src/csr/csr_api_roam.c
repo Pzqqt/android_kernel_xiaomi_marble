@@ -19350,6 +19350,56 @@ static uint32_t csr_get_monotonous_number(struct mac_context *mac_ctx)
 	return cmd_id;
 }
 
+static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
+{
+	switch (cmd->cmd_type) {
+	case WLAN_SER_CMD_VDEV_DISCONNECT:
+	case WLAN_SER_CMD_FORCE_IBSS_LEAVE:
+	case WLAN_SER_CMD_WM_STATUS_CHANGE:
+		cmd->cmd_timeout_duration = SME_CMD_VDEV_DISCONNECT_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_VDEV_START_BSS:
+		cmd->cmd_timeout_duration = SME_CMD_VDEV_START_BSS_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_VDEV_STOP_BSS:
+		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_FORCE_DISASSOC_STA:
+	case WLAN_SER_CMD_FORCE_DEAUTH_STA:
+		cmd->cmd_timeout_duration = SME_CMD_PEER_DISCONNECT_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_DEL_STA_SESSION:
+		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP:
+	case WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP:
+	case WLAN_SER_CMD_SME_ISSUE_DISASSOC_FOR_HANDOFF:
+	case WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP:
+	case WLAN_SER_CMD_SME_ISSUE_FT_REASSOC:
+	case WLAN_SER_CMD_PERFORM_PRE_AUTH:
+		cmd->cmd_timeout_duration = SME_CMD_ROAM_CMD_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_ADDTS:
+	case WLAN_SER_CMD_DELTS:
+		cmd->cmd_timeout_duration = SME_CMD_ADD_DEL_TS_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_SET_HW_MODE:
+	case WLAN_SER_CMD_NSS_UPDATE:
+	case WLAN_SER_CMD_SET_DUAL_MAC_CONFIG:
+	case WLAN_SER_CMD_SET_ANTENNA_MODE:
+		cmd->cmd_timeout_duration = SME_CMD_POLICY_MGR_CMD_TIMEOUT;
+		break;
+	case WLAN_SER_CMD_VDEV_CONNECT:
+		/* fallthrough to use def MAX value */
+	default:
+		cmd->cmd_timeout_duration = SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
+		break;
+	}
+
+	sme_debug("cmd_type %d, timeout %d", cmd->cmd_type,
+		  cmd->cmd_timeout_duration);
+}
+
 QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
 		uint8_t high_priority)
@@ -19388,17 +19438,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 	}
 	cmd->umac_cmd = sme_cmd;
 
-	/*
-	 * For START BSS and STOP BSS commands for SAP, the command timeout
-	 * is set to 10 seconds. For all other commands its 30 seconds
-	 */
-	if ((cmd->vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE) &&
-	    (cmd->cmd_type == WLAN_SER_CMD_VDEV_STOP_BSS))
-		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
-	else if (cmd->cmd_type == WLAN_SER_CMD_DEL_STA_SESSION)
-		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
-	else
-		cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
+	csr_fill_cmd_timeout(cmd);
 
 	cmd->cmd_cb = sme_ser_cmd_callback;
 	cmd->is_high_priority = high_priority;

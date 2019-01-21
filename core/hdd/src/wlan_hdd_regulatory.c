@@ -850,7 +850,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 			lrc = wait_for_completion_timeout(
 					&adapter->disconnect_comp_var,
 					msecs_to_jiffies(
-						WLAN_WAIT_TIME_DISCONNECT));
+						SME_DISCONNECT_TIMEOUT));
 
 			if (lrc == 0) {
 				hdd_err("Timeout while waiting for csr_roam_disconnect");

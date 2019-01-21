@@ -51,8 +51,6 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
  * to make sure we have space for these cmds + some additional cmds.
  */
 #define SME_TOTAL_COMMAND                (HAL_NUM_STA * 3)
-/* default sme timeout is set to 30 secs */
-#define SME_DEFAULT_CMD_TIMEOUT  30000
 
 typedef struct sGenericQosCmd {
 	struct sme_qos_wmmtspecinfo tspecInfo;

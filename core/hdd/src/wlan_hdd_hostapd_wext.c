@@ -2139,7 +2139,7 @@ __iw_softap_stopbss(struct net_device *dev,
 			status =
 				qdf_wait_for_event_completion(&hostapd_state->
 					qdf_stop_bss_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_STOP_BSS_TIMEOUT);
 
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("wait for single_event failed!!");

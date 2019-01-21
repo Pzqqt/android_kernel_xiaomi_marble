@@ -6615,7 +6615,7 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 	struct osif_request *request = NULL;
 	static const struct osif_request_params request_params = {
 		.priv_size = 0,
-		.timeout_ms = WLAN_WAIT_TIME_ANTENNA_MODE_REQ,
+		.timeout_ms = SME_POLICY_MGR_CMD_TIMEOUT,
 	};
 
 	switch (mode) {

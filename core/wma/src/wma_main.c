@@ -9250,7 +9250,7 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 	 * In error condition, release the wake lock right away
 	 */
 	wma_acquire_wakelock(&wma_handle->wmi_cmd_rsp_wake_lock,
-			     WMA_VDEV_PLCY_MGR_CMD_TIMEOUT);
+			     WMA_VDEV_PLCY_MGR_WAKE_LOCK_TIMEOUT);
 	status = wmi_unified_pdev_set_dual_mac_config_cmd(
 				wma_handle->wmi_handle,
 				(struct policy_mgr_dual_mac_config *)msg);

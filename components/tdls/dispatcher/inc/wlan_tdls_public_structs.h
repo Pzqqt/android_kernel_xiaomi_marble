@@ -51,8 +51,8 @@ struct wlan_objmgr_psoc;
 
 #define AC_PRIORITY_NUM                 4
 
-/* default tdls serialize timeout is set to 10 secs */
-#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT 10000
+/* default tdls serialize timeout is set to 4 secs */
+#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT 4000
 
 /** Maximum time(ms) to wait for tdls add sta to complete **/
 #define WAIT_TIME_TDLS_ADD_STA  (TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT + 1000)

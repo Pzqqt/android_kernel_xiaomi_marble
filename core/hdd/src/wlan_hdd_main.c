@@ -5463,7 +5463,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 				rc = wait_for_completion_timeout(
 					&adapter->disconnect_comp_var,
 					msecs_to_jiffies
-						(WLAN_WAIT_TIME_DISCONNECT));
+						(SME_DISCONNECT_TIMEOUT));
 				if (!rc)
 					hdd_warn("disconn_comp_var wait fail");
 			}
@@ -5583,7 +5583,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 						qdf_stop_bss_event);
 				status = qdf_wait_for_event_completion(
 					&hostapd_state->qdf_stop_bss_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_STOP_BSS_TIMEOUT);
 				if (QDF_IS_STATUS_ERROR(status))
 					hdd_err("failure waiting for wlansap_stop_bss %d",
 						status);
@@ -12756,7 +12756,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 							sap_context)) {
 			qdf_status = qdf_wait_for_event_completion(&hostapd_state->
 					qdf_stop_bss_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_STOP_BSS_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				mutex_unlock(&hdd_ctx->sap_lock);
 				hdd_err("SAP Stop Failed");
@@ -12828,7 +12828,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 
 	hdd_debug("Waiting for SAP to start");
 	qdf_status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_START_BSS_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("SAP Start failed");
 		goto end;
@@ -14817,7 +14817,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 			qdf_status =
 				qdf_wait_for_event_completion(&hostapd_state->
 					qdf_stop_bss_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_STOP_BSS_TIMEOUT);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("SAP Stop Failed");
@@ -14851,7 +14851,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		hdd_info("Waiting for SAP to start");
 		qdf_status =
 			qdf_wait_for_event_completion(&hostapd_state->qdf_event,
-					SME_CMD_START_STOP_BSS_TIMEOUT);
+					SME_CMD_START_BSS_TIMEOUT);
 		wlansap_reset_sap_config_add_ie(sap_config,
 				eUPDATE_IE_ALL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
