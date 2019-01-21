@@ -593,6 +593,14 @@ static void ucfg_scan_req_update_concurrency_params(
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
 	}
 
+	/*
+	 * If scan req for SAP (ACS Sacn) use dwell_time_active_def as dwell
+	 * time for 2g channels instead of dwell_time_active_2g
+	 */
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE) {
+		req->scan_req.dwell_time_active_2g = 0;
+	}
+
 	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
 		/*
 		 * Decide burst_duration and dwell_time_active based on
