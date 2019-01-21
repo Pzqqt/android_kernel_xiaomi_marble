@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/debugfs.h>
@@ -74,6 +73,11 @@ enum {
 	Q6AFE_MSM_SPKR_PROCESSING = 0,
 	Q6AFE_MSM_SPKR_CALIBRATION,
 	Q6AFE_MSM_SPKR_FTM_MODE
+};
+
+enum {
+	APTX_AD_48 = 0,
+	APTX_AD_44_1 = 1
 };
 
 struct wlock {
@@ -3541,6 +3545,29 @@ static int q6afe_send_dec_config(u16 port_id,
 			goto exit;
 		}
 		break;
+	case ASM_MEDIA_FMT_APTX_ADAPTIVE:
+		if (!cfg->abr_dec_cfg.is_abr_enabled) {
+			pr_debug("%s: sending aptx adaptive congestion buffer size to dsp\n",
+				__func__);
+			param_hdr.param_id =
+				AFE_DECODER_PARAM_ID_CONGESTION_BUFFER_SIZE;
+			param_hdr.param_size =
+			   sizeof(struct avs_dec_congestion_buffer_param_t);
+			dec_buffer_id_param.version = 0;
+			dec_buffer_id_param.max_nr_buffers  = 226;
+			dec_buffer_id_param.pre_buffer_size = 226;
+			ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &dec_buffer_id_param);
+			if (ret) {
+				pr_err("%s: aptx adaptive congestion buffer size for port 0x%x failed %d\n",
+					__func__, port_id, ret);
+				goto exit;
+			}
+			break;
+		}
+		/* fall through for abr enabled case */
 	default:
 		pr_debug("%s:sending AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION to DSP payload\n",
 			  __func__);
@@ -3561,7 +3588,7 @@ static int q6afe_send_dec_config(u16 port_id,
 		break;
 	}
 
-	pr_debug("%s:Sending AFE_API_VERSION_PORT_MEDIA_TYPE to DSP", __func__);
+	pr_debug("%s: Send AFE_API_VERSION_PORT_MEDIA_TYPE to DSP\n", __func__);
 	param_hdr.module_id = AFE_MODULE_PORT;
 	param_hdr.param_id = AFE_PARAM_ID_PORT_MEDIA_TYPE;
 	param_hdr.param_size = sizeof(struct afe_port_media_type_t);
@@ -3575,6 +3602,15 @@ static int q6afe_send_dec_config(u16 port_id,
 		media_type.sample_rate =
 			cfg->data.sbc_config.sample_rate;
 		break;
+	case ASM_MEDIA_FMT_APTX_ADAPTIVE:
+		if (!cfg->abr_dec_cfg.is_abr_enabled) {
+			media_type.sample_rate =
+			(cfg->data.aptx_ad_config.sample_rate == APTX_AD_44_1) ?
+				AFE_PORT_SAMPLE_RATE_44_1K :
+				AFE_PORT_SAMPLE_RATE_48K;
+			break;
+		}
+		/* fall through for abr enabled case */
 	default:
 		media_type.sample_rate =
 			afe_config.slim_sch.sample_rate;
@@ -3600,11 +3636,19 @@ static int q6afe_send_dec_config(u16 port_id,
 		goto exit;
 	}
 
-	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2) {
+	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2 &&
+		format != ASM_MEDIA_FMT_APTX_ADAPTIVE) {
 		pr_debug("%s:Unsuppported dec format. Ignore AFE config %u\n",
 				__func__, format);
 		goto exit;
 	}
+
+	if (format == ASM_MEDIA_FMT_APTX_ADAPTIVE &&
+		cfg->abr_dec_cfg.is_abr_enabled) {
+		pr_debug("%s: Ignore AFE config for abr case\n", __func__);
+		goto exit;
+	}
+
 	pr_debug("%s: sending AFE_DECODER_PARAM_ID_DEC_MEDIA_FMT to DSP payload\n",
 		  __func__);
 	param_hdr.module_id = AFE_MODULE_ID_DECODER;
@@ -3623,9 +3667,10 @@ static int q6afe_send_dec_config(u16 port_id,
 
 	switch (cfg->format) {
 	case ASM_MEDIA_FMT_AAC_V2:
+	case ASM_MEDIA_FMT_APTX_ADAPTIVE:
 		param_hdr.param_size = sizeof(struct afe_dec_media_fmt_t);
 
-		pr_debug("%s:send AFE_DECODER_PARAM_ID DEC_MEDIA_FMT to DSP payload\n",
+		pr_debug("%s:send AVS_DECODER_PARAM_ID DEC_MEDIA_FMT to DSP payload\n",
 			 __func__);
 		param_hdr.param_id = AVS_DECODER_PARAM_ID_DEC_MEDIA_FMT;
 		dec_media_fmt.dec_media_config = cfg->data;
@@ -3634,7 +3679,7 @@ static int q6afe_send_dec_config(u16 port_id,
 						param_hdr,
 						(u8 *) &dec_media_fmt);
 		if (ret) {
-			pr_err("%s: AFE_DECODER_PARAM_ID DEC_MEDIA_FMT for port 0x%x failed %d\n",
+			pr_err("%s: AVS_DECODER_PARAM_ID DEC_MEDIA_FMT for port 0x%x failed %d\n",
 				__func__, port_id, ret);
 			goto exit;
 		}
