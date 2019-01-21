@@ -4533,12 +4533,10 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 {
 	struct dp_ast_entry *ast_entry, *temp_ast_entry;
 
-	qdf_spin_lock_bh(&soc->ast_lock);
 	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry)
 		dp_peer_del_ast(soc, ast_entry);
 
 	peer->self_ast_entry = NULL;
-	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #else
 static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
@@ -4634,9 +4632,10 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		qdf_atomic_init(&peer->is_default_route_set);
 		dp_peer_cleanup(vdev, peer);
 
-		peer->delete_in_progress = false;
-
+		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
+		peer->delete_in_progress = false;
+		qdf_spin_unlock_bh(&soc->ast_lock);
 
 		if ((vdev->opmode == wlan_op_mode_sta) &&
 		    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
@@ -8874,8 +8873,10 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 		return;
 	}
 
+	qdf_spin_lock_bh(&soc->ast_lock);
 	peer->delete_in_progress = true;
 	dp_peer_delete_ast_entries(soc, peer);
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #endif
 

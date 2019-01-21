@@ -550,14 +550,18 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
 
-	if (peer->delete_in_progress)
+	qdf_spin_lock_bh(&soc->ast_lock);
+	if (peer->delete_in_progress) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
 		return ret;
+	}
 
 	vdev = peer->vdev;
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("Peers vdev is NULL"));
 		QDF_ASSERT(0);
+		qdf_spin_unlock_bh(&soc->ast_lock);
 		return ret;
 	}
 
@@ -568,7 +572,6 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		  __func__, pdev->pdev_id, vdev->vdev_id, type, flags,
 		  peer->mac_addr.raw, peer, mac_addr);
 
-	qdf_spin_lock_bh(&soc->ast_lock);
 
 	/* If AST entry already exists , just return from here
 	 * ast entry with same mac address can exist on different radios
