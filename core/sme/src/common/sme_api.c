@@ -4066,6 +4066,14 @@ sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 	max_supported_nss = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2 ?
 			    MAX_VDEV_NSS : 1;
 
+	/*
+	 * If target supports Antenna sharing, set NSS to 1 for 2.4GHz band for
+	 * NDI vdev.
+	 */
+	if (device_mode == QDF_NDI_MODE && mac_ctx->lteCoexAntShare &&
+	    band == NSS_CHAINS_BAND_2GHZ)
+		max_supported_nss = NSS_1x1_MODE;
+
 	/* If the fw doesn't support two chains, num rf chains can max be 1 */
 	vdev_ini_cfg->num_rx_chains[band] =
 		QDF_MIN(GET_VDEV_NSS_CHAIN(
