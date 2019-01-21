@@ -278,7 +278,7 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 	cmd.umac_cmd = msg->bodyptr;
 	cmd.source = WLAN_UMAC_COMP_NAN;
 	cmd.is_high_priority = false;
-	cmd.cmd_timeout_duration = 30000 /* 30 sec for now. TBD */;
+	cmd.cmd_timeout_duration = NAN_SER_CMD_TIMEOUT;
 	nan_debug("cmd_type: %d", cmd.cmd_type);
 	cmd.is_blocking = true;
 
