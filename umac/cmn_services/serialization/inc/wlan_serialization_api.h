@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -617,12 +617,8 @@ enum wlan_serialization_cmd_type {
 	WLAN_SER_CMD_SCAN,
 	/* all non-scan command below */
 	WLAN_SER_CMD_NONSCAN,
-	WLAN_SER_CMD_FORCE_DISASSOC,
-	WLAN_SER_CMD_HDD_ISSUED,
-	WLAN_SER_CMD_FORCE_DISASSOC_MIC_FAIL,
 	WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP,
 	WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP,
-	WLAN_SER_CMD_FORCE_DEAUTH,
 	WLAN_SER_CMD_SME_ISSUE_DISASSOC_FOR_HANDOFF,
 	WLAN_SER_CMD_SME_ISSUE_ASSOC_TO_SIMILAR_AP,
 	WLAN_SER_CMD_FORCE_IBSS_LEAVE,
