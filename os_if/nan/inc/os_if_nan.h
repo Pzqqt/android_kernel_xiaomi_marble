@@ -29,6 +29,16 @@
 #include "nan_ucfg_api.h"
 
 /**
+ * struct ndi_find_vdev_filter - find vdev filter object. this can be extended
+ * @ifname:           interface name of vdev
+ * @found_vdev:       found vdev object matching one or more of above params
+ */
+struct ndi_find_vdev_filter {
+	char *ifname;
+	struct wlan_objmgr_vdev *found_vdev;
+};
+
+/**
  * os_if_nan_process_ndp_cmd: os_if api to handle nan request message
  * @psoc: pointer to psoc object
  * @data: request data. contains vendor cmd tlvs

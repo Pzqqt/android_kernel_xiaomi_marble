@@ -37,7 +37,7 @@
 #include "wlan_utility.h"
 #include "wlan_osif_request_manager.h"
 
-#define NAN_CMD_MAX_SIZE 300
+#define NAN_CMD_MAX_SIZE 2048
 
 /* NLA policy */
 static const struct nla_policy
@@ -169,6 +169,106 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	},
 };
 
+/**
+ * os_if_get_ndi_vdev_by_ifname_cb() - callback function to return vdev object
+ * from psoc matching given interface name
+ * @psoc: psoc object
+ * @obj: object used to iterate the callback function
+ * @arg: return argument which will be filled by the function
+ *
+ * Return : NULL
+ */
+static void os_if_get_ndi_vdev_by_ifname_cb(struct wlan_objmgr_psoc *psoc,
+					    void *obj, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = obj;
+	struct ndi_find_vdev_filter *filter = arg;
+	struct vdev_osif_priv *osif_priv;
+
+	if (filter->found_vdev)
+		return;
+
+	wlan_vdev_obj_lock(vdev);
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		wlan_vdev_obj_unlock(vdev);
+		return;
+	}
+
+	if (!osif_priv->wdev) {
+		wlan_vdev_obj_unlock(vdev);
+		return;
+	}
+
+	if (!qdf_str_cmp(osif_priv->wdev->netdev->name, filter->ifname))
+		filter->found_vdev = vdev;
+
+	wlan_vdev_obj_unlock(vdev);
+}
+
+/**
+ * os_if_get_ndi_vdev_by_ifname() - function to return vdev object from psoc
+ * matching given interface name
+ * @psoc: psoc object
+ * @ifname: interface name
+ *
+ * This function returns vdev object from psoc by interface name. If found this
+ * will also take reference with given ref_id
+ *
+ * Return : vdev object if found, NULL otherwise
+ */
+static struct wlan_objmgr_vdev *
+os_if_get_ndi_vdev_by_ifname(struct wlan_objmgr_psoc *psoc, char *ifname)
+{
+	QDF_STATUS status;
+	struct ndi_find_vdev_filter filter = {0};
+
+	filter.ifname = ifname;
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
+				     os_if_get_ndi_vdev_by_ifname_cb,
+				     &filter, 0, WLAN_NAN_ID);
+
+	if (!filter.found_vdev)
+		return NULL;
+
+	status = wlan_objmgr_vdev_try_get_ref(filter.found_vdev, WLAN_NAN_ID);
+	if (QDF_IS_STATUS_ERROR(status))
+		return NULL;
+
+	return filter.found_vdev;
+}
+
+/**
+ * os_if_ndi_get_if_name() - get vdev's interface name
+ * @vdev: VDEV object
+ *
+ * API to get vdev's interface name
+ *
+ * Return: vdev's interface name
+ */
+static const uint8_t *os_if_ndi_get_if_name(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv;
+
+	wlan_vdev_obj_lock(vdev);
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
+	if (!osif_priv->wdev) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
+	wlan_vdev_obj_unlock(vdev);
+
+	return osif_priv->wdev->netdev->name;
+}
+
 static int __os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 					  char *iface_name,
 					  struct nlattr **tb)
@@ -181,7 +281,7 @@ static int __os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 
 	cfg80211_debug("enter");
 
-	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	nan_vdev = os_if_get_ndi_vdev_by_ifname(psoc, iface_name);
 	if (nan_vdev) {
 		cfg80211_err("NAN data interface %s is already present",
 			     iface_name);
@@ -264,7 +364,7 @@ static int osif_net_dev_from_ifname(struct wlan_objmgr_psoc *psoc,
 	struct net_device *net_dev;
 	int errno;
 
-	vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	vdev = os_if_get_ndi_vdev_by_ifname(psoc, iface_name);
 	if (!vdev)
 		return -EINVAL;
 
@@ -348,7 +448,7 @@ static int __os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
-	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	nan_vdev = os_if_get_ndi_vdev_by_ifname(psoc, iface_name);
 	if (!nan_vdev) {
 		cfg80211_err("Nan datapath interface is not present");
 		return -EINVAL;
@@ -365,7 +465,7 @@ static int __os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 				     nan_vdev, 1, WLAN_NAN_ID);
 
 	/*
-	 * wlan_util_get_vdev_by_ifname increments ref count
+	 * os_if_get_ndi_vdev_by_ifname increments ref count
 	 * decrement here since vdev returned by that api is not used any more
 	 */
 	wlan_objmgr_vdev_release_ref(nan_vdev, WLAN_NAN_ID);
@@ -519,7 +619,7 @@ static int __os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *nan_vdev;
 	struct nan_datapath_initiator_req req = {0};
 
-	nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name, WLAN_NAN_ID);
+	nan_vdev = os_if_get_ndi_vdev_by_ifname(psoc, iface_name);
 	if (!nan_vdev) {
 		cfg80211_err("NAN data interface %s not available", iface_name);
 		return -EINVAL;
@@ -695,8 +795,7 @@ static int __os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 
 	if (req.ndp_rsp == NAN_DATAPATH_RESPONSE_ACCEPT) {
 		/* Check for an existing NAN interface */
-		nan_vdev = wlan_util_get_vdev_by_ifname(psoc, iface_name,
-							WLAN_NAN_ID);
+		nan_vdev = os_if_get_ndi_vdev_by_ifname(psoc, iface_name);
 		if (!nan_vdev) {
 			cfg80211_err("NAN data iface %s not available",
 				     iface_name);
@@ -1214,7 +1313,7 @@ static inline uint32_t osif_ndp_get_ndp_req_ind_len(
 static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 				struct nan_datapath_indication_event *event)
 {
-	uint8_t *ifname;
+	const uint8_t *ifname;
 	uint16_t data_len;
 	qdf_size_t ifname_len;
 	uint32_t ndp_qos_config;
@@ -1240,7 +1339,7 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	ifname = wlan_util_vdev_get_if_name(vdev);
+	ifname = os_if_ndi_get_if_name(vdev);
 	if (!ifname) {
 		cfg80211_err("ifname is null");
 		return;
@@ -1450,7 +1549,7 @@ static void
 os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 			      struct nan_datapath_confirm_event *ndp_confirm)
 {
-	uint8_t *ifname;
+	const uint8_t *ifname;
 	uint32_t data_len;
 	QDF_STATUS status;
 	qdf_size_t ifname_len;
@@ -1463,7 +1562,7 @@ os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	ifname = wlan_util_vdev_get_if_name(vdev);
+	ifname = os_if_ndi_get_if_name(vdev);
 	if (!ifname) {
 		cfg80211_err("ifname is null");
 		return;
@@ -2065,7 +2164,7 @@ static void os_if_ndp_sch_update_ind_handler(struct wlan_objmgr_vdev *vdev,
 					     void *ind)
 {
 	int idx = 0;
-	uint8_t *ifname;
+	const uint8_t *ifname;
 	QDF_STATUS status;
 	uint32_t data_len;
 	uint8_t ifname_len;
@@ -2079,7 +2178,7 @@ static void os_if_ndp_sch_update_ind_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	ifname = wlan_util_vdev_get_if_name(vdev);
+	ifname = os_if_ndi_get_if_name(vdev);
 	if (!ifname) {
 		cfg80211_err("ifname is null");
 		return;
