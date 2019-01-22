@@ -818,6 +818,29 @@ static inline void hal_tx_comp_desc_sync(void *hw_desc,
 }
 
 /**
+ * hal_dump_comp_desc() - dump tx completion descriptor
+ * @hal_desc: hardware descriptor pointer
+ *
+ * This function will print tx completion descriptor
+ *
+ * Return: none
+ */
+static inline void hal_dump_comp_desc(void *hw_desc)
+{
+	struct hal_tx_desc_comp_s *comp =
+				(struct hal_tx_desc_comp_s *)hw_desc;
+	uint32_t i;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_FATAL,
+		  "Current tx completion descriptor is");
+
+	for (i = 0; i < HAL_TX_COMPLETION_DESC_LEN_DWORDS; i++) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_FATAL,
+			  "DWORD[i] = 0x%x", comp->desc[i]);
+	}
+}
+
+/**
  * hal_tx_comp_get_htt_desc() - Read the HTT portion of WBM Descriptor
  * @hal_desc: Hardware (WBM) descriptor pointer
  * @htt_desc: Software HTT descriptor pointer

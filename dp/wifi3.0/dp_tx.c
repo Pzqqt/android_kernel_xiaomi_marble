@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3372,9 +3372,11 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 				(buffer_src != HAL_TX_COMP_RELEASE_SOURCE_FW)) {
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_FATAL,
-					"Tx comp release_src != TQM | FW");
-
+				  QDF_TRACE_LEVEL_FATAL,
+				  "Tx comp release_src != TQM | FW but from %d",
+				  buffer_src);
+			hal_dump_comp_desc(tx_comp_hal_desc);
+			DP_STATS_INC(soc, tx.invalid_release_source, 1);
 			qdf_assert_always(0);
 		}
 

@@ -592,7 +592,8 @@ struct dp_soc_stats {
 		uint32_t desc_in_use;
 		/* tqm_release_reason == FW removed */
 		uint32_t dropped_fw_removed;
-
+		/* tx completion release_src != TQM or FW */
+		uint32_t invalid_release_source;
 	} tx;
 
 	/* SOC level RX stats */

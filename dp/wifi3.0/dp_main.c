@@ -6967,7 +6967,8 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 			soc->stats.tx.tcl_ring_full[0],
 			soc->stats.tx.tcl_ring_full[1],
 			soc->stats.tx.tcl_ring_full[2]);
-
+	DP_PRINT_STATS("Tx invalid completion release = %d",
+		       soc->stats.tx.invalid_release_source);
 }
 /**
  * dp_print_soc_rx_stats: Print SOC level Rx stats
