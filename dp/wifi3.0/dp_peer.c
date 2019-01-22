@@ -592,7 +592,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
 
 		if (ast_entry) {
-			if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
+			if ((type == CDP_TXRX_AST_TYPE_MEC) &&
+			    (ast_entry->type == CDP_TXRX_AST_TYPE_MEC))
 				ast_entry->is_active = TRUE;
 
 			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) &&

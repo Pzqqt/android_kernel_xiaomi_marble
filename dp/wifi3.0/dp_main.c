@@ -2816,6 +2816,8 @@ out:
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
+	dp_soc_wds_attach(soc);
+
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 	return 0;
 fail1:
@@ -9641,7 +9643,6 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
 
 	qdf_spinlock_create(&soc->peer_ref_mutex);
 	qdf_spinlock_create(&soc->ast_lock);
-	dp_soc_wds_attach(soc);
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
 	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);
