@@ -6782,7 +6782,10 @@ static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
 
 	qdf_mem_copy(peer_he, rcvd_he, sizeof(*peer_he));
 
-	peer_he->fragmentation &= session_he->fragmentation;
+	peer_he->fragmentation = QDF_MIN(session_he->fragmentation,
+					 peer_he->fragmentation);
+
+	peer_he->ldpc_coding &= session_he->ldpc_coding;
 
 	if (session_he->tx_stbc_lt_80mhz && peer_he->rx_stbc_lt_80mhz)
 		peer_he->rx_stbc_lt_80mhz = 1;
