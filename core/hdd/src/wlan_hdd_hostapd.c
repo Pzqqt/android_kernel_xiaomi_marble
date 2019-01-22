@@ -5734,8 +5734,15 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	 */
 	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
-	if (adapter->device_mode == QDF_SAP_MODE)
+	if (adapter->device_mode == QDF_SAP_MODE) {
 		wlan_hdd_del_station(adapter);
+		mac_handle = hdd_ctx->mac_handle;
+		status = sme_roam_del_pmkid_from_cache(mac_handle,
+						       adapter->vdev_id,
+						       NULL, true);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_debug("Cannot flush PMKIDCache");
+	}
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
