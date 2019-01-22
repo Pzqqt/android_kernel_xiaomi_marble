@@ -1416,9 +1416,12 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			goto free;
 		}
-	} else if ((auth_alg == eSIR_AUTH_TYPE_SAE) &&
-		   (LIM_IS_STA_ROLE(pe_session))) {
-		lim_process_sae_auth_frame(mac_ctx, rx_pkt_info, pe_session);
+	} else if (auth_alg == eSIR_AUTH_TYPE_SAE) {
+		if (LIM_IS_STA_ROLE(pe_session) ||
+		    (LIM_IS_AP_ROLE(pe_session) &&
+		     mac_ctx->mlme_cfg->sap_cfg.sap_sae_enabled))
+			lim_process_sae_auth_frame(mac_ctx, rx_pkt_info,
+						   pe_session);
 		goto free;
 	} else if ((sir_convert_auth_frame2_struct(mac_ctx, body_ptr,
 				frame_len, rx_auth_frame) != QDF_STATUS_SUCCESS)
