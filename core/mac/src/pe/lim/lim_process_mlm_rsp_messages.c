@@ -756,6 +756,7 @@ lim_fill_assoc_ind_params(struct mac_context *mac_ctx,
 		sme_assoc_ind->HTCaps = assoc_ind->ht_caps;
 	if (assoc_ind->vht_caps.present)
 		sme_assoc_ind->VHTCaps = assoc_ind->vht_caps;
+	sme_assoc_ind->capability_info = assoc_ind->capabilityInfo;
 }
 
 /**

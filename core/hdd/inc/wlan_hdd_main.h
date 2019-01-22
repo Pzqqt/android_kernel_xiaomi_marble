@@ -913,6 +913,7 @@ enum dhcp_nego_status {
  * @vht_caps: VHT capabilities of current station
  * @reason_code: Disconnection reason code for current station
  * @rssi: RSSI of the current station reported from F/W
+ * @capability: Capability information of current station
  */
 struct hdd_station_info {
 	bool in_use;
@@ -956,6 +957,7 @@ struct hdd_station_info {
 	int8_t rssi;
 	enum dhcp_phase dhcp_phase;
 	enum dhcp_nego_status dhcp_nego_status;
+	uint16_t capability;
 };
 
 /**

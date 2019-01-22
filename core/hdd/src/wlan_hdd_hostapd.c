@@ -1413,6 +1413,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		return;
 	}
 
+	qdf_mem_copy(&stainfo->capability, &event->capability_info,
+		     sizeof(uint16_t));
 	stainfo->freq = cds_chan_to_freq(event->chan_info.chan_id);
 	stainfo->sta_type = event->staType;
 	stainfo->dot11_mode =
