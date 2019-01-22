@@ -645,7 +645,8 @@
 #define SIR_MAX_BEACON_SIZE    512
 #define SIR_MAX_PROBE_RESP_SIZE 512
 
-/* / Status Code (present in Management response frames) enum */
+/* Status Code (present in Management response frames) enum */
+/* (IEEE Std 802.11-2016, 9.4.1.9, Table 9-46) */
 
 typedef enum eSirMacStatusCodes {
 	eSIR_MAC_SUCCESS_STATUS = 0,    /* Reserved */
@@ -723,9 +724,8 @@ typedef enum eSirMacStatusCodes {
 	eSIR_MAC_DEST_STA_NOT_QSTA_STATUS = 50, /* The Destination STA is not a QoS STA */
 	eSIR_MAC_INVALID_LISTEN_INTERVAL_STATUS = 51,   /* Association denied because the ListenInterval is too large */
 
-	eSIR_MAC_DSSS_CCK_RATE_MUST_SUPPORT_STATUS = 52,        /* FIXME: */
-	eSIR_MAC_DSSS_CCK_RATE_NOT_SUPPORT_STATUS = 53,
-	eSIR_MAC_PSMP_CONTROLLED_ACCESS_ONLY_STATUS = 54,
+	eSIR_MAC_INVALID_FT_ACTION_FRAME_COUNT = 52,
+	eSIR_MAC_INVALID_PMKID = 53,
 #ifdef FEATURE_WLAN_ESE
 	eSIR_MAC_ESE_UNSPECIFIED_QOS_FAILURE_STATUS = 200,      /* ESE-Unspecified, QoS related failure in (Re)Assoc response frames */
 	eSIR_MAC_ESE_TSPEC_REQ_REFUSED_STATUS = 201,    /* ESE-TSPEC request refused due to AP's policy configuration in AddTs Rsp, (Re)Assoc Rsp. */
