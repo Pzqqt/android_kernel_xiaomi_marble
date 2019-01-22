@@ -254,7 +254,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	 * Where as wlan_cfg80211_mgmt_tx requires roc and requires approval
 	 * from policy manager.
 	 */
-	if ((adapter->device_mode == QDF_STA_MODE) &&
+	if ((adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_SAP_MODE) &&
 	    (type == SIR_MAC_MGMT_FRAME &&
 	    sub_type == SIR_MAC_MGMT_AUTH)) {
 		qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_SME,
