@@ -4801,12 +4801,16 @@ void lim_send_mgmt_frame_tx(struct mac_context *mac_ctx,
 	QDF_STATUS qdf_status;
 	uint8_t *frame;
 	void *packet;
+	tpSirMacMgmtHdr mac_hdr;
 
 	msg_len = mb_msg->msg_len - sizeof(*mb_msg);
 	pe_debug("sending fc->type: %d fc->subType: %d",
 		fc->type, fc->subType);
 
 	sme_session_id = mb_msg->session_id;
+	mac_hdr = (tpSirMacMgmtHdr)mb_msg->data;
+
+	lim_add_mgmt_seq_num(mac_ctx, mac_hdr);
 
 	qdf_status = cds_packet_alloc((uint16_t) msg_len, (void **)&frame,
 				 (void **)&packet);
