@@ -12816,39 +12816,39 @@ void sme_update_vdev_type_nss(mac_handle_t mac_handle, uint8_t max_supp_nss,
 
 	vdev_nss->sta = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						STA_NSS_CHAINS_SHIFT));
 	vdev_nss->sap = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						SAP_NSS_CHAINS_SHIFT));
 	vdev_nss->p2p_go = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						P2P_GO_NSS_CHAINS_SHIFT));
 	vdev_nss->p2p_cli = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						P2P_CLI_CHAINS_SHIFT));
 	vdev_nss->p2p_dev = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						P2P_DEV_NSS_CHAINS_SHIFT));
 	vdev_nss->ibss = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						IBSS_NSS_CHAINS_SHIFT));
 	vdev_nss->tdls = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						TDLS_NSS_CHAINS_SHIFT));
 	vdev_nss->ocb = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						OCB_NSS_CHAINS_SHIFT));
 	vdev_nss->nan = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
 						nss_chains_ini_cfg->
-							num_rx_chains[band],
+							rx_nss[band],
 						NAN_NSS_CHAIN_SHIFT));
 
 	sme_debug("band %d NSS:sta %d sap %d cli %d go %d dev %d ibss %d tdls %d ocb %d nan %d",
