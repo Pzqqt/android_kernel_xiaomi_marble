@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,6 +131,16 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev);
 int wma_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 			 int sval2, int vpdev);
+
+/**
+ * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
+ * @chan: channel number
+ * @chan_width: maximum channel width possible
+ * @phy_mode: PHY Mode
+ *
+ * Return: None
+ */
+void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width, uint32_t *phy_mode);
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
 

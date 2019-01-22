@@ -3120,16 +3120,7 @@ struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
 	return wma_handle->psoc;
 }
 
-/**
- * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
- * @chan: channel number
- * @chan_width: maximum channel width possible
- * @phy_mode: PHY Mode
- *
- * Return: None
- */
-static void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
-				uint32_t *phy_mode)
+void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width, uint32_t *phy_mode)
 {
 	uint32_t dot11_mode;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);

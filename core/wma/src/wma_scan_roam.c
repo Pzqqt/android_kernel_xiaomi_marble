@@ -46,6 +46,7 @@
 
 #include "cds_utils.h"
 #include "wlan_policy_mgr_api.h"
+#include <wlan_utility.h>
 
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
@@ -2399,6 +2400,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
 	tpSirBssDescription  bss_desc_ptr = NULL;
+	uint8_t channel;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;
 	tSirRoamOffloadScanReq *roam_req;
@@ -2591,6 +2593,18 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	if (roam_synch_ind_ptr->join_rsp)
 		wma->interfaces[synch_event->vdev_id].chan_width =
 			roam_synch_ind_ptr->join_rsp->vht_channel_width;
+	/*
+	 * update phy_mode in wma to avoid mismatch in phymode between host and
+	 * firmware. The phymode stored in interface[vdev_id].chanmode is sent
+	 * to firmware as part of opmode update during either - vht opmode
+	 * action frame received or during opmode change detected while
+	 * processing beacon. Any mismatch of this value with firmware phymode
+	 * results in firmware assert.
+	 */
+	channel = wlan_freq_to_chan(wma->interfaces[synch_event->vdev_id].mhz);
+	wma_get_phy_mode_cb(channel,
+			    wma->interfaces[synch_event->vdev_id].chan_width,
+			    &wma->interfaces[synch_event->vdev_id].chanmode);
 
 	wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
 		roam_synch_ind_ptr, bss_desc_ptr, SIR_ROAM_SYNCH_COMPLETE);
