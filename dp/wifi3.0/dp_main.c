@@ -4374,11 +4374,13 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 /**
  * dp_vdev_flush_peers() - Forcibily Flush peers of vdev
  * @vdev: Datapath VDEV handle
+ * @unmap_only: Flag to indicate "only unmap"
  *
  * Return: void
  */
-static void dp_vdev_flush_peers(struct dp_vdev *vdev)
+static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 {
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *peer;
@@ -4406,7 +4408,9 @@ static void dp_vdev_flush_peers(struct dp_vdev *vdev)
 		if (peer) {
 			dp_info("peer: %pM is getting flush",
 				peer->mac_addr.raw);
-			dp_peer_delete_wifi3(peer, 0);
+
+			if (!unmap_only)
+				dp_peer_delete_wifi3(peer, 0);
 			/*
 			 * we need to call dp_peer_unref_del_find_by_id()
 			 * to remove additional ref count incremented
@@ -4459,9 +4463,8 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	 * this will free all references held due to missing
 	 * unmap commands from Target
 	 */
-	if ((hif_get_target_status(soc->hif_handle) == TARGET_STATUS_RESET) ||
-	    !hif_is_target_ready(HIF_GET_SOFTC(soc->hif_handle)))
-		dp_vdev_flush_peers(vdev);
+	if (!hif_is_target_ready(HIF_GET_SOFTC(soc->hif_handle)))
+		dp_vdev_flush_peers((struct cdp_vdev *)vdev, false);
 
 	/*
 	 * Use peer_ref_mutex while accessing peer_list, in case
@@ -9037,6 +9040,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 		dp_peer_ast_entry_del_by_pdev,
 	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
+	.txrx_vdev_flush_peers = dp_vdev_flush_peers,
 	.txrx_soc_detach = dp_soc_detach_wifi3,
 	.txrx_soc_deinit = dp_soc_deinit_wifi3,
 	.txrx_soc_init = dp_soc_init_wifi3,

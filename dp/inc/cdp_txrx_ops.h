@@ -133,6 +133,8 @@ struct cdp_cmn_ops {
 
 	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);
 
+	void (*txrx_vdev_flush_peers)(struct cdp_vdev *vdev, bool unmap_only);
+
 	QDF_STATUS (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
 					    uint8_t smart_monitor);
 	void (*txrx_peer_delete_sync)(void *peer,
