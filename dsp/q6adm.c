@@ -1317,12 +1317,22 @@ static int adm_process_get_param_response(u32 opcode, u32 idx, u32 *payload,
 	switch (opcode) {
 	case ADM_CMDRSP_GET_PP_PARAMS_V5:
 		struct_size = sizeof(struct adm_cmd_rsp_get_pp_params_v5);
+		if (payload_size < struct_size) {
+			pr_err("%s: payload size %d < expected size %d\n",
+				__func__, payload_size, struct_size);
+			break;
+		}
 		v5_rsp = (struct adm_cmd_rsp_get_pp_params_v5 *) payload;
 		data_size = v5_rsp->param_hdr.param_size;
 		param_data = v5_rsp->param_data;
 		break;
 	case ADM_CMDRSP_GET_PP_PARAMS_V6:
 		struct_size = sizeof(struct adm_cmd_rsp_get_pp_params_v6);
+		if (payload_size < struct_size) {
+			pr_err("%s: payload size %d < expected size %d\n",
+				__func__, payload_size, struct_size);
+			break;
+		}
 		v6_rsp = (struct adm_cmd_rsp_get_pp_params_v6 *) payload;
 		data_size = v6_rsp->param_hdr.param_size;
 		param_data = v6_rsp->param_data;
@@ -1518,6 +1528,11 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 			return 0;
 		}
 		if (data->opcode == APR_BASIC_RSP_RESULT) {
+			if (data->payload_size < (2 * sizeof(uint32_t))) {
+				pr_err("%s: Invalid payload size %d\n", __func__,
+					data->payload_size);
+				return 0;
+			}
 			pr_debug("%s: APR_BASIC_RSP_RESULT id 0x%x\n",
 				__func__, payload[0]);
 			if (payload[1] != 0) {
@@ -1644,9 +1659,14 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 		case ADM_CMDRSP_DEVICE_OPEN_V5:
 		case ADM_CMDRSP_DEVICE_OPEN_V6:
 		case ADM_CMDRSP_DEVICE_OPEN_V8: {
-			struct adm_cmd_rsp_device_open_v5 *open =
-			(struct adm_cmd_rsp_device_open_v5 *)data->payload;
-
+			struct adm_cmd_rsp_device_open_v5 *open = NULL;
+			if (data->payload_size <
+				sizeof(struct adm_cmd_rsp_device_open_v5)) {
+				pr_err("%s: Invalid payload size %d\n", __func__,
+					data->payload_size);
+				return 0;
+			}
+			open = (struct adm_cmd_rsp_device_open_v5 *)data->payload;
 			if (open->copp_id == INVALID_COPP_ID) {
 				pr_err("%s: invalid coppid rxed %d\n",
 					__func__, open->copp_id);
