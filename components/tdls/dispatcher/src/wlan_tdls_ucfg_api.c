@@ -1023,7 +1023,8 @@ QDF_STATUS ucfg_set_tdls_offchannel(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_OFFCHANNEL;
-	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("post set tdls offchannel msg fail");
 		goto dec_ref;
@@ -1064,7 +1065,8 @@ QDF_STATUS ucfg_set_tdls_offchan_mode(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_OFFCHANMODE;
-	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("post set offchanmode msg fail");
 		goto dec_ref;
@@ -1105,7 +1107,8 @@ QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_SECOFFCHANOFFSET;
-	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("post set secoffchan offset msg fail");
 		goto dec_ref;

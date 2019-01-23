@@ -2439,7 +2439,8 @@ p2p_set_mac_filter(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
 	msg.type = P2P_SET_RANDOM_MAC;
 	msg.bodyptr = set_filter_req;
 	msg.callback = p2p_process_cmd;
-	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_P2P, QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_OS_IF, &msg);
 	if (status != QDF_STATUS_SUCCESS)
 		qdf_mem_free(set_filter_req);
 

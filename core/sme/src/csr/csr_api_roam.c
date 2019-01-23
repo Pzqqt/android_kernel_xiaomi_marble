@@ -19857,7 +19857,8 @@ QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 	/* Serialize the req through MC thread */
 	message.bodyval = session_id;
 	message.type    = eWNI_SME_CSA_RESTART_REQ;
-	status = scheduler_post_msg(QDF_MODULE_ID_PE, &message);
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("scheduler_post_msg failed!(err=%d)", status);
 		status = QDF_STATUS_E_FAILURE;

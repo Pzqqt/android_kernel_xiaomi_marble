@@ -8090,7 +8090,8 @@ static inline void lim_send_csa_restart_resp(struct mac_context *mac_ctx,
 	msg.bodyptr = NULL;
 	msg.bodyval = session->smeSessionId;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &msg);
 }
 
 QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
@@ -8133,7 +8134,8 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	msg.type = SIR_HAL_SEND_AP_VDEV_UP;
 	msg.bodyval = session->smeSessionId;
 
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &msg);
 
 	return status;
 }

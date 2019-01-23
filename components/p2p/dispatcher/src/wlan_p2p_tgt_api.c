@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -170,7 +170,8 @@ tgt_p2p_add_mac_addr_status_event_cb(struct wlan_objmgr_psoc *psoc,
 	msg.type = P2P_EVENT_ADD_MAC_RSP;
 	msg.bodyptr = mac_filter_rsp;
 	msg.callback = p2p_process_evt;
-	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_P2P, QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(mac_filter_rsp);
 
