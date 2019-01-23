@@ -475,7 +475,7 @@ static void
 dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
 	void (*send_complete_part2)(
-		void *soc, A_STATUS status, qdf_nbuf_t msdu);
+		void *soc, QDF_STATUS status, qdf_nbuf_t msdu);
 	struct htt_soc *soc =  (struct htt_soc *) context;
 	struct dp_htt_htc_pkt *htt_pkt;
 	qdf_nbuf_t netbuf;
@@ -3271,14 +3271,14 @@ dp_htt_hif_t2h_hp_callback (void *context, qdf_nbuf_t nbuf, uint8_t pipe_id)
  * htt_htc_soc_attach() - Register SOC level HTT instance with HTC
  * @htt_soc:	HTT SOC handle
  *
- * Return: 0 on success; error code on failure
+ * Return: QDF_STATUS
  */
-static int
+static QDF_STATUS
 htt_htc_soc_attach(struct htt_soc *soc)
 {
 	struct htc_service_connect_req connect;
 	struct htc_service_connect_resp response;
-	A_STATUS status;
+	QDF_STATUS status;
 	struct dp_soc *dpsoc = soc->dp_soc;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);
@@ -3312,8 +3312,8 @@ htt_htc_soc_attach(struct htt_soc *soc)
 
 	status = htc_connect_service(soc->htc_soc, &connect, &response);
 
-	if (status != A_OK)
-		return QDF_STATUS_E_FAILURE;
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
 
 	soc->htc_endpoint = response.Endpoint;
 
@@ -3321,7 +3321,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
 	dp_hif_update_pipe_callback(soc->dp_soc, (void *)soc,
 		dp_htt_hif_t2h_hp_callback, DP_HTT_T2H_HP_PIPE);
 
-	return 0; /* success */
+	return QDF_STATUS_SUCCESS; /* success */
 }
 
 /*
