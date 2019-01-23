@@ -4622,3 +4622,17 @@ QDF_STATUS wmi_unified_extract_obss_color_collision_info(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_CFR_ENABLE
+QDF_STATUS wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
+						 struct peer_cfr_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_cfr_capture_cmd)
+		return wmi_handle->ops->send_peer_cfr_capture_cmd(wmi_hdl,
+								  param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_CFR_ENABLE */

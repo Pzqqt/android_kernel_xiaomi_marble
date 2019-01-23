@@ -1565,7 +1565,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_HE_SR = 401,
 	OL_ATH_PARAM_HE_UL_PPDU_DURATION = 402,
 	OL_ATH_PARAM_HE_UL_RU_ALLOCATION = 403,
-
+	OL_ATH_PARAM_PERIODIC_CFR_CAPTURE = 404,
 };
 
 /* Enumeration of PDEV Configuration parameter */

@@ -1896,6 +1896,10 @@ QDF_STATUS
 QDF_STATUS (*send_peer_del_all_wds_entries_cmd)(wmi_unified_t wmi_handle,
 		struct peer_del_all_wds_entries_params *param);
 
+#ifdef WLAN_CFR_ENABLE
+QDF_STATUS (*send_peer_cfr_capture_cmd)(wmi_unified_t wmi_handle,
+					struct peer_cfr_params *param);
+#endif
 };
 
 /* Forward declartion for psoc*/

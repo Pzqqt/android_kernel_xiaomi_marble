@@ -1730,4 +1730,18 @@ enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
 		enum wlan_crypto_cipher_type crypto_cipher);
 
 #endif
+
+#ifdef WLAN_CFR_ENABLE
+/**
+ * wmi_unified_send_peer_cfr_capture_cmd() - WMI function to start CFR capture
+ * for a peer
+ * @wmi_hdl: WMI handle
+ * @param: configuration params for capture
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
+				      struct peer_cfr_params *param);
+#endif /* WLAN_CFR_ENABLE */
 #endif /* _WMI_UNIFIED_API_H_ */
