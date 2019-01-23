@@ -1945,12 +1945,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif
-	case WNI_CFG_SET_CNF:
-	case WNI_CFG_DNLD_CNF:
-	case WNI_CFG_GET_RSP:
-	case WNI_CFG_ADD_GRP_ADDR_CNF:
-	case WNI_CFG_DEL_GRP_ADDR_CNF:
-		break;
 	case eWNI_SME_ADDTS_RSP:
 	case eWNI_SME_DELTS_RSP:
 	case eWNI_SME_DELTS_IND:

@@ -220,44 +220,10 @@ void sys_process_mmh_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 	}
 
 	switch (pMsg->type) {
-	/*
-	 * Following messages are routed to SYS
-	 */
-	case WNI_CFG_DNLD_REQ:
-	case WNI_CFG_DNLD_CNF:
-		/* Forward this message to the SYS module */
-		targetMQ = QDF_MODULE_ID_SYS;
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			"Handling for the Message ID %d is removed in SYS",
-			pMsg->type);
-		QDF_ASSERT(0);
-		break;
-
-		/*
-		 * Following messages are routed to HAL
-		 */
-	case WNI_CFG_DNLD_RSP:
-		/* Forward this message to the HAL module */
-		targetMQ = QDF_MODULE_ID_WMA;
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			"Handling for the Message ID %d is removed as no HAL",
-			pMsg->type);
-
-		QDF_ASSERT(0);
-		break;
-
-	case WNI_CFG_GET_REQ:
 	case eWNI_SME_SYS_READY_IND:
 		/* Forward this message to the PE module */
 		targetMQ = QDF_MODULE_ID_PE;
 		break;
-
-	case WNI_CFG_GET_RSP:
-	case WNI_CFG_SET_CNF:
-		/* Forward this message to the SME module */
-		targetMQ = QDF_MODULE_ID_SME;
-		break;
-
 	default:
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
 				&& (pMsg->type <= eWNI_SME_MSG_TYPES_END)) {

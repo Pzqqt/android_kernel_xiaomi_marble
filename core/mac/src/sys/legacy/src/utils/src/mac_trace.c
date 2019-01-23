@@ -502,7 +502,6 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 #ifdef FEATURE_WLAN_ESE
 		CASE_RETURN_STRING(WMA_SET_PLM_REQ);
 #endif
-		CASE_RETURN_STRING(WMA_CONFIG_PARAM_UPDATE_REQ);
 		CASE_RETURN_STRING(WMA_RATE_UPDATE_IND);
 		CASE_RETURN_STRING(WMA_INIT_BAD_PEER_TX_CTL_INFO_CMD);
 #ifdef FEATURE_WLAN_TDLS
@@ -718,35 +717,6 @@ uint8_t *mac_trace_get_lim_msg_string(uint16_t lim_msg)
 		CASE_RETURN_STRING(LIM_MLM_SETKEYS_CNF);
 		CASE_RETURN_STRING(LIM_MLM_LINK_TEST_STOP_REQ);
 		CASE_RETURN_STRING(LIM_MLM_PURGE_STA_IND);
-	default:
-		return (uint8_t *) "UNKNOWN";
-		break;
-	}
-}
-
-/**
- * mac_trace_get_cfg_msg_string() - Get the msg
- * @cfg_msg: message type in numeric form
- *
- * This function will return a string equivalent of the message.
- *
- * Return: String equivalent of the message type.
- **/
-uint8_t *mac_trace_get_cfg_msg_string(uint16_t cfg_msg)
-{
-	switch (cfg_msg) {
-		CASE_RETURN_STRING(WNI_CFG_PARAM_UPDATE_IND);
-		CASE_RETURN_STRING(WNI_CFG_DNLD_REQ);
-		CASE_RETURN_STRING(WNI_CFG_DNLD_CNF);
-		CASE_RETURN_STRING(WNI_CFG_GET_RSP);
-		CASE_RETURN_STRING(WNI_CFG_SET_CNF);
-		CASE_RETURN_STRING(WNI_CFG_GET_ATTRIB_RSP);
-		CASE_RETURN_STRING(WNI_CFG_ADD_GRP_ADDR_CNF);
-		CASE_RETURN_STRING(WNI_CFG_DEL_GRP_ADDR_CNF);
-		CASE_RETURN_STRING(SIR_CFG_PARAM_UPDATE_IND);
-		CASE_RETURN_STRING(SIR_CFG_DOWNLOAD_COMPLETE_IND);
-		CASE_RETURN_STRING(WNI_CFG_DNLD_RSP);
-		CASE_RETURN_STRING(WNI_CFG_GET_REQ);
 	default:
 		return (uint8_t *) "UNKNOWN";
 		break;

@@ -55,7 +55,6 @@ static inline void mac_trace(struct mac_context *mac_ctx, uint8_t code,
 #define eLOG_NODROP_MISSED_BEACON_SCENARIO 0
 #define eLOG_PROC_DEAUTH_FRAME_SCENARIO 1
 
-uint8_t *mac_trace_get_cfg_msg_string(uint16_t cfgMsg);
 uint8_t *mac_trace_get_lim_msg_string(uint16_t limMsg);
 uint8_t *mac_trace_get_sme_msg_string(uint16_t smeMsg);
 uint8_t *mac_trace_get_info_log_string(uint16_t infoLog);

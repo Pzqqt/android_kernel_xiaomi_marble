@@ -171,8 +171,7 @@ enum sir_roam_op_code {
  */
 enum {
 	SIR_HAL_MODULE_ID = 0x10,
-	SIR_CFG_MODULE_ID = 0x12,
-	SIR_LIM_MODULE_ID,
+	SIR_LIM_MODULE_ID = 0x13,
 	SIR_SME_MODULE_ID,
 };
 

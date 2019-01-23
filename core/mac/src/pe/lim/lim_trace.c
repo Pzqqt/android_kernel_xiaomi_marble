@@ -221,23 +221,6 @@ void lim_trace_dump(void *mac, tp_qdf_trace_record pRecord,
 			mac_trace_get_lim_msg_string((uint16_t) pRecord->data),
 			pRecord->data);
 		break;
-	case TRACE_CODE_TX_CFG_MSG:
-		pe_debug("%04d %012llu %s S%d %-14s %-30s(0x%x) ", recIndex,
-			pRecord->qtime, pRecord->time, pRecord->session,
-			"TX CFG Msg:",
-			mac_trace_get_cfg_msg_string((uint16_t) pRecord->data),
-			pRecord->data);
-		break;
-	case TRACE_CODE_RX_CFG_MSG:
-		pe_debug("%04d %012llu %s S%d %-14s %-30s(0x%x) ", recIndex,
-			pRecord->qtime, pRecord->time, pRecord->session,
-			LIM_TRACE_GET_DEFRD_OR_DROPPED(
-			pRecord->data) ? "Def/Drp LIM Msg:" : "RX CFG Msg:",
-			mac_trace_get_cfg_msg_string(
-				(uint16_t)MAC_TRACE_GET_MSG_ID(pRecord->data)),
-			pRecord->data);
-		break;
-
 	case TRACE_CODE_TIMER_ACTIVATE:
 		pe_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)", recIndex,
 			pRecord->qtime, pRecord->time, pRecord->session,
@@ -285,9 +268,6 @@ void mac_trace_msg_tx(struct mac_context *mac, uint8_t session, uint32_t data)
 	case SIR_WMA_MODULE_ID:
 		mac_trace(mac, TRACE_CODE_TX_WMA_MSG, session, data);
 		break;
-	case SIR_CFG_MODULE_ID:
-		mac_trace(mac, TRACE_CODE_TX_CFG_MSG, session, data);
-		break;
 	default:
 		mac_trace(mac, module_id, session, data);
 		break;
@@ -312,9 +292,6 @@ void mac_trace_msg_rx(struct mac_context *mac, uint8_t session, uint32_t data)
 		break;
 	case SIR_WMA_MODULE_ID:
 		mac_trace(mac, TRACE_CODE_RX_WMA_MSG, session, data);
-		break;
-	case SIR_CFG_MODULE_ID:
-		mac_trace(mac, TRACE_CODE_RX_CFG_MSG, session, data);
 		break;
 	default:
 		mac_trace(mac, module_id, session, data);

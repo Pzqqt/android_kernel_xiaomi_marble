@@ -1499,8 +1499,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		 * and when crash happens we loose critical trace logs
 		 * if these are also logged
 		 */
-		if (msg->type != SIR_CFG_PARAM_UPDATE_IND &&
-		    msg->type != SIR_BB_XPORT_MGMT_MSG &&
+		if (msg->type != SIR_BB_XPORT_MGMT_MSG &&
 		    msg->type != WMA_RX_SCAN_EVENT)
 			MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION,
 				LIM_TRACE_MAKE_RXMSG(msg->type,
@@ -1511,20 +1510,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 
 	case SIR_LIM_UPDATE_BEACON:
 		lim_update_beacon(mac_ctx);
-		break;
-	case SIR_CFG_PARAM_UPDATE_IND:
-		if (!lim_is_system_in_scan_state(mac_ctx))
-			break;
-		/* System is in DFS (Learn) mode.
-		 * Defer processing this message
-		 */
-		if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
-			if (!(mac_ctx->lim.deferredMsgCnt & 0xF))
-				QDF_TRACE(QDF_MODULE_ID_PE, LOGE,
-					FL("Unable to Defer Msg"));
-			lim_log_session_states(mac_ctx);
-			lim_print_msg_name(mac_ctx, LOGE, msg->type);
-		}
 		break;
 	case WMA_SWITCH_CHANNEL_RSP:
 		lim_process_switch_channel_rsp(mac_ctx, msg->bodyptr);
