@@ -1366,8 +1366,15 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			 */
 			qdf_mem_copy(new_frame, frame, 36);
 			/* Copy the new ie generated from MBSSID profile*/
+			hdr = (struct wlan_frame_hdr *)new_frame;
+			qdf_mem_copy(hdr->i_addr2, new_bssid,
+				     QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(hdr->i_addr3, new_bssid,
+				     QDF_MAC_ADDR_SIZE);
+			/* Copy the new ie generated from MBSSID profile*/
 			qdf_mem_copy(new_frame +
-					offsetof(struct wlan_bcn_frame, ie),
+					offsetof(struct wlan_bcn_frame, ie) +
+					sizeof(struct wlan_frame_hdr),
 					new_ie, new_ie_len);
 			status = util_scan_gen_scan_entry(pdev, new_frame,
 							  new_frame_len,
@@ -1395,8 +1402,7 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 					 struct mgmt_rx_event_params *rx_param,
 					 qdf_list_t *scan_list)
 {
-	return util_scan_gen_scan_entry(pdev, frame, frame_len,
-					frm_subtype, rx_param, scan_list);
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -1418,6 +1424,10 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		sizeof(struct wlan_frame_hdr) -
 		offsetof(struct wlan_bcn_frame, ie));
 
+	status = util_scan_gen_scan_entry(pdev, frame, frame_len,
+					  frm_subtype, rx_param,
+					  scan_list);
+
 	/*
 	 * IF MBSSID IE is present in the beacon then
 	 * scan component will create a new entry for
@@ -1428,10 +1438,7 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 		status = util_scan_parse_mbssid(pdev, frame, frame_len,
 						frm_subtype, rx_param,
 						scan_list);
-	else
-		status = util_scan_gen_scan_entry(pdev, frame, frame_len,
-						  frm_subtype, rx_param,
-						  scan_list);
+
 	if (QDF_IS_STATUS_ERROR(status)) {
 		scm_err_rl("Failed to create a scan entry");
 	}
