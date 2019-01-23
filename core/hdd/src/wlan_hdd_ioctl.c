@@ -5292,9 +5292,10 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 				(int)txRate,
 				(int)sta_ctx->ibss_peer_info.
 				peerInfoParams[0].rssi);
+		length = QDF_MIN(priv_data->total_len, length + 1);
 
 		/* Copy the data back into buffer */
-		if (copy_to_user(priv_data->buf, &extra, length + 1)) {
+		if (copy_to_user(priv_data->buf, &extra, length)) {
 			hdd_err("copy data to user buffer failed GETIBSSPEERINFO command");
 			ret = -EFAULT;
 			goto exit;
