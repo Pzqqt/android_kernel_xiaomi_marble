@@ -484,6 +484,16 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 					  uint8_t session_id);
 
 /**
+ * wlan_mlme_get_listen_interval() - Get listen interval
+ * @psoc: pointer to psoc object
+ * @value: Pointer to value that needs to be filled by MLME
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_listen_interval(struct wlan_objmgr_psoc *psoc,
+					     int *value);
+
+/**
  * wlan_mlme_set_sap_listen_interval() - Set the sap listen interval
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller

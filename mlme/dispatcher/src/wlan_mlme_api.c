@@ -1511,6 +1511,20 @@ wlan_mlme_get_ts_acm_value_for_ac(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_mlme_get_listen_interval(struct wlan_objmgr_psoc *psoc,
+					     int *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*value = mlme_obj->cfg.sap_cfg.listen_interval;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_set_sap_listen_interval(struct wlan_objmgr_psoc *psoc,
 					     int value)
 {

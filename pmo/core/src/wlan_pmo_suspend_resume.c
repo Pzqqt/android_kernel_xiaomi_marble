@@ -35,6 +35,9 @@
 #include <wlan_scan_ucfg_api.h>
 #include "cds_api.h"
 #include "wlan_pmo_static_config.h"
+#include "wlan_mlme_ucfg_api.h"
+#include "cfg_mlme_sap.h"
+#include "cfg_ucfg_api.h"
 
 /**
  * pmo_core_get_vdev_dtim_period() - Get vdev dtim period
@@ -109,7 +112,7 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 	uint32_t max_mod_dtim;
 	uint32_t beacon_interval_mod;
 	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
-	struct pmo_psoc_priv_obj *psoc_priv = pmo_vdev_get_psoc_priv(vdev);
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 
 	if (psoc_cfg->sta_dynamic_dtim) {
 		*listen_interval = psoc_cfg->sta_dynamic_dtim;
@@ -148,15 +151,12 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 				pmo_core_get_vdev_dtim_period(vdev));
 		}
 	} else {
-		int cfg_value = 0;
 		/* Get Listen Interval */
-		if ((psoc_priv->get_cfg_int) &&
-			(psoc_priv->get_cfg_int(PMO_CFG_LISTEN_INTERVAL,
-				&cfg_value) != QDF_STATUS_SUCCESS)) {
+		if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_listen_interval(psoc,
+							    listen_interval))) {
 			pmo_err("Failed to get value for listen interval");
-			cfg_value = PMO_DEFAULT_LISTEN_INTERVAL;
+			*listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
 		}
-		*listen_interval = cfg_value;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -173,10 +173,10 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	uint32_t listen_interval = PMO_DEFAULT_LISTEN_INTERVAL;
 	QDF_STATUS ret;
 	uint8_t vdev_id;
 	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
+	uint32_t listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
 
 	vdev_id = pmo_vdev_get_id(vdev);
 	if (PMO_VDEV_IN_STA_MODE(opmode) &&
@@ -435,17 +435,15 @@ static void pmo_core_set_vdev_resume_dtim(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id;
 	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
 	int32_t cfg_data_val = 0;
-	struct pmo_psoc_priv_obj *psoc_priv = pmo_vdev_get_psoc_priv(vdev);
 
 	vdev_id = pmo_vdev_get_id(vdev);
 	if ((PMO_VDEV_IN_STA_MODE(opmode)) &&
 	    (pmo_core_vdev_get_restore_dtim(vdev))) {
 		/* Get Listen Interval */
-		if ((psoc_priv->get_cfg_int) &&
-			(psoc_priv->get_cfg_int(PMO_CFG_LISTEN_INTERVAL,
-				&cfg_data_val) != QDF_STATUS_SUCCESS)) {
+		if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_listen_interval(psoc,
+							      &cfg_data_val))) {
 			pmo_err("Failed to get value for listen interval");
-			cfg_data_val = PMO_DEFAULT_LISTEN_INTERVAL;
+			cfg_data_val = cfg_default(CFG_LISTEN_INTERVAL);
 		}
 
 		ret = pmo_tgt_vdev_update_param_req(vdev,
@@ -1285,11 +1283,12 @@ out:
 QDF_STATUS pmo_core_config_listen_interval(struct wlan_objmgr_vdev *vdev,
 					   uint32_t new_li)
 {
-	uint32_t listen_interval;
 	QDF_STATUS status;
+	uint8_t vdev_id;
+	uint32_t listen_interval;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct pmo_psoc_priv_obj *psoc_ctx;
-	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 
 	pmo_enter();
 
@@ -1312,16 +1311,17 @@ QDF_STATUS pmo_core_config_listen_interval(struct wlan_objmgr_vdev *vdev,
 	vdev_ctx->dyn_listen_interval = new_li;
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-	listen_interval = new_li ? new_li : PMO_DEFAULT_LISTEN_INTERVAL;
+	listen_interval = new_li ? new_li : cfg_default(CFG_LISTEN_INTERVAL);
 
 	if (!new_li) {
 		/* Configure default LI as we do on resume */
 		pmo_psoc_with_ctx(pmo_vdev_get_psoc(vdev), psoc_ctx) {
-			if (psoc_ctx->get_cfg_int &&
-			   (QDF_STATUS_SUCCESS != psoc_ctx->get_cfg_int(
-							PMO_CFG_LISTEN_INTERVAL,
-							&listen_interval))) {
+			if (QDF_IS_STATUS_ERROR(
+				ucfg_mlme_get_listen_interval(psoc,
+							   &listen_interval))) {
 				pmo_err("Failed to get listen interval");
+				listen_interval =
+					       cfg_default(CFG_LISTEN_INTERVAL);
 			}
 		}
 	}
