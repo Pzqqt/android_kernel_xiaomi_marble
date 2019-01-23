@@ -46,7 +46,6 @@
  * @txrx_hdl: txrx pdev handle
  * @pause_bitmap_notifier: registered callback to update pause bitmap value
  * @pmo_get_pause_bitmap: registered callback to get pause bitmap value
- * @get_cfg_int: register callback to get integer from cfg
  * @get_dtim_period: register callback to get dtim period from mlme
  * @get_beacon_interval: register callback to get beacon interval from mlme
  * @lock: spin lock for pmo psoc
@@ -64,7 +63,6 @@ struct pmo_psoc_priv_obj {
 	pmo_get_pause_bitmap get_pause_bitmap;
 	pmo_get_vdev_dp_handle get_vdev_dp_handle;
 	pmo_is_device_in_low_pwr_mode is_device_in_low_pwr_mode;
-	pmo_get_cfg_int get_cfg_int;
 	pmo_get_dtim_period get_dtim_period;
 	pmo_get_beacon_interval get_beacon_interval;
 	qdf_spinlock_t lock;
@@ -136,15 +134,5 @@ struct pmo_vdev_priv_obj {
 	qdf_spinlock_t pmo_vdev_lock;
 };
 
-/**
- * enum pmo_cfg_int_type: Mapping for Mac config param ID's
- * @PMO_CFG_DTIM_PERIOD: CFG ID for Dtim Period value
- * @PMO_CFG_LISTEN_INTERVAL: CFG ID for Listen Interval value
- */
-enum pmo_cfg_int_type {
-	PMO_CFG_DTIM_PERIOD = 0x5,
-	PMO_CFG_LISTEN_INTERVAL = 0x26,
-};
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
-
 #endif /* end  of _WLAN_PMO_PRIV_STRUCT_H_ */
