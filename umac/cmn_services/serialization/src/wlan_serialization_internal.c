@@ -585,7 +585,10 @@ wlan_serialization_timer_cb_mc_ctx(void *arg)
 	msg.bodyval = 0;
 	msg.flush_callback = wlan_serialization_mc_flush_noop;
 
-	if (scheduler_post_msg(QDF_MODULE_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
+	if (scheduler_post_message(QDF_MODULE_ID_SERIALIZATION,
+				   QDF_MODULE_ID_SERIALIZATION,
+				   QDF_MODULE_ID_SYS, &msg) ==
+							QDF_STATUS_SUCCESS)
 		return;
 
 	ser_err("Could not enqueue timer to timer queue");
