@@ -451,7 +451,7 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 		}
 		filter->num_ibss_sessions++;
 		filter->ibss_ssid[session_id].length = ibss_ssid->length;
-		qdf_mem_copy(&filter->ibss_ssid[session_id].length,
+		qdf_mem_copy(&filter->ibss_ssid[session_id].ssId,
 			     ibss_ssid->ssId,
 			     ibss_ssid->length);
 		pe_debug("Set filter for IBSS session %d ssid %s",
