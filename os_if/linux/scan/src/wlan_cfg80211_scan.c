@@ -1947,10 +1947,10 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_free(bss_data.mgmt);
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0))
 /*
- * wlan_scan_wiphy_set_max_sched_scans() - set maximum number of scheduled scans to
- * wiphy.
+ * wlan_scan_wiphy_set_max_sched_scans() - set maximum number of scheduled scans
+ * to wiphy.
  * @wiphy: pointer to wiphy
  * @max_scans: max num scans to be configured
  *

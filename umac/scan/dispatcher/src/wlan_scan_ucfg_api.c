@@ -230,10 +230,12 @@ bool ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev)
 
 static QDF_STATUS
 wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
-		     struct pno_def_config *pno_def)
+		     struct wlan_scan_obj *scan_obj)
 {
 	struct nlo_mawc_params *mawc_cfg;
+	struct pno_def_config *pno_def;
 
+	pno_def = &scan_obj->pno_cfg;
 	qdf_wake_lock_create(&pno_def->pno_wake_lock, "wlan_pno_wl");
 	mawc_cfg = &pno_def->mawc_params;
 	pno_def->channel_prediction = cfg_get(psoc, CFG_PNO_CHANNEL_PREDICTION);
@@ -271,9 +273,9 @@ wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
 }
 
 static QDF_STATUS
-wlan_pno_global_deinit(struct pno_def_config *pno_def)
+wlan_pno_global_deinit(struct wlan_scan_obj *scan_obj)
 {
-	qdf_wake_lock_destroy(&pno_def->pno_wake_lock);
+	qdf_wake_lock_destroy(&scan_obj->pno_cfg.pno_wake_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -388,12 +390,13 @@ ucfg_scan_register_pno_cb(struct wlan_objmgr_psoc *psoc,
 
 static inline QDF_STATUS
 wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
-		     struct pno_def_config *pno_def)
+		     struct wlan_scan_obj *scan_obj)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
 static inline QDF_STATUS
-wlan_pno_global_deinit(struct pno_def_config *pno_def)
+wlan_pno_global_deinit(struct wlan_scan_obj *scan_obj)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1010,7 +1013,7 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	/* init extscan */
 	wlan_extscan_global_init(psoc, scan_obj);
 
-	return wlan_pno_global_init(psoc, &scan_obj->pno_cfg);
+	return wlan_pno_global_init(psoc, scan_obj);
 }
 
 static void
@@ -1019,7 +1022,7 @@ wlan_scan_global_deinit(struct wlan_objmgr_psoc *psoc)
 	struct wlan_scan_obj *scan_obj;
 
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	wlan_pno_global_deinit(&scan_obj->pno_cfg);
+	wlan_pno_global_deinit(scan_obj);
 	wlan_extscan_global_deinit();
 }
 

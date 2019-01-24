@@ -228,6 +228,7 @@ struct scan_vdev_obj {
 	bool first_scan_done;
 };
 
+#ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * struct pno_def_config - def configuration for PNO
  * @pno_offload_enabled: flag to check if PNO offload is enabled/disabled
@@ -267,6 +268,7 @@ struct pno_def_config {
 	struct cb_handler pno_cb;
 	struct nlo_mawc_params mawc_params;
 };
+#endif
 
 /**
  * struct extscan_def_config - def configuration for EXTSCAN
@@ -492,7 +494,9 @@ struct wlan_scan_obj {
 	struct scan_requester_info requesters[WLAN_MAX_REQUESTORS];
 	struct global_scan_ev_handlers global_evhandlers;
 	struct pdev_scan_info pdev_info[WLAN_UMAC_MAX_PDEVS];
+#ifdef FEATURE_WLAN_SCAN_PNO
 	struct pno_def_config pno_cfg;
+#endif
 #ifdef FEATURE_WLAN_EXTSCAN
 	struct extscan_def_config extscan_cfg;
 #endif
