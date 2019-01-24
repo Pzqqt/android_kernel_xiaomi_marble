@@ -164,6 +164,17 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 								0x01, 0x01);
 	snd_soc_component_update_bits(component, WCD938X_HPH_L_TEST,
 								0x01, 0x01);
+	snd_soc_component_update_bits(component,
+				      WCD938X_HPH_NEW_INT_RDAC_GAIN_CTL,
+				      0xF0, 0x00);
+	snd_soc_component_update_bits(component,
+				      WCD938X_HPH_NEW_INT_RDAC_HD2_CTL_L_NEW,
+				      0x1F, 0x15);
+	snd_soc_component_update_bits(component,
+				      WCD938X_HPH_NEW_INT_RDAC_HD2_CTL_R_NEW,
+				      0x1F, 0x15);
+	snd_soc_component_update_bits(component, WCD938X_HPH_REFBUFF_UHQA_CTL,
+				      0xC0, 0x80);
 
 	return 0;
 }
@@ -1240,11 +1251,52 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
+int wcd938x_tx_channel_config(struct snd_soc_component *component,
+			      int channel, int mode)
+{
+	int reg = WCD938X_ANA_TX_CH2, mask = 0, val = 0;
+	int ret = 0;
+
+	switch (channel) {
+	case 0:
+		reg = WCD938X_ANA_TX_CH2;
+		mask = 0x40;
+		break;
+	case 1:
+		reg = WCD938X_ANA_TX_CH2;
+		mask = 0x20;
+		break;
+	case 2:
+		reg = WCD938X_ANA_TX_CH4;
+		mask = 0x40;
+		break;
+	case 3:
+		reg = WCD938X_ANA_TX_CH4;
+		mask = 0x20;
+		break;
+	default:
+		pr_err("%s: Invalid channel num %d\n", __func__, channel);
+		ret = -EINVAL;
+		break;
+	}
+
+	if (!mode)
+		val = 0x00;
+	else
+		val = mask;
+
+	if (!ret)
+		snd_soc_component_update_bits(component, reg, mask, val);
+
+	return ret;
+}
+
 static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 			      struct snd_kcontrol *kcontrol, int event)
 {
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1255,20 +1307,14 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_REQ_CTL, 0x02, 0x02);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x40, 0x40);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x20, 0x20);
+		ret = wcd938x_tx_channel_config(component, w->shift, 1);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x30, 0x30);
 		snd_soc_component_update_bits(component,
 				WCD938X_ANA_TX_CH1, 0x80, 0x80);
 		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x40, 0x00);
-		snd_soc_component_update_bits(component,
 				WCD938X_ANA_TX_CH2, 0x80, 0x80);
-		snd_soc_component_update_bits(component,
-				WCD938X_ANA_TX_CH2, 0x20, 0x00);
+		ret |= wcd938x_tx_channel_config(component, w->shift, 0);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component,
@@ -1283,7 +1329,7 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x00);
 		break;
 	};
-	return 0;
+	return ret;
 }
 
 int wcd938x_micbias_control(struct snd_soc_component *component,
@@ -1952,13 +1998,13 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER_E("ADC1 REQ", SND_SOC_NOPM, 0, 0,
 				NULL, 0, wcd938x_enable_req,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("ADC2 REQ", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("ADC2 REQ", SND_SOC_NOPM, 1, 0,
 				NULL, 0, wcd938x_enable_req,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("ADC3 REQ", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("ADC3 REQ", SND_SOC_NOPM, 2, 0,
 				NULL, 0, wcd938x_enable_req,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-	SND_SOC_DAPM_MIXER_E("ADC4 REQ", SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_MIXER_E("ADC4 REQ", SND_SOC_NOPM, 3, 0,
 				NULL, 0, wcd938x_enable_req,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
