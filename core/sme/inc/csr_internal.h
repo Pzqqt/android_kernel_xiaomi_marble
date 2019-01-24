@@ -60,7 +60,7 @@
 #define CSR_MAX_NUM_COUNTRY_CODE  100
 #define CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx) \
 	( \
-	  ((((mac_ctx)->mlme_cfg->lfr.roaming_dfs_channel) == \
+	  ((((mac_ctx)->mlme_cfg->lfr.roaming_dfs_channel) != \
 	    ROAMING_DFS_CHANNEL_DISABLED) ? true : false) \
 	)
 #define CSR_IS_SELECT_5GHZ_MARGIN(mac) \

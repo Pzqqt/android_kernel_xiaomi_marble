@@ -2044,7 +2044,7 @@ csr_fetch_ch_lst_from_received_list(struct mac_context *mac_ctx,
 
 	ch_lst = curr_ch_lst_info->ChannelList;
 	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
-		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
 			 ROAMING_DFS_CHANNEL_DISABLED) ||
 		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
@@ -17248,7 +17248,7 @@ csr_fetch_ch_lst_from_ini(struct mac_context *mac_ctx,
 		if (!csr_check_band_channel_match(band, *ch_lst))
 			continue;
 		/* Allow DFS channels only if the DFS roaming is enabled */
-		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
 			 ROAMING_DFS_CHANNEL_DISABLED) ||
 		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
@@ -17330,7 +17330,7 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 			 sizeof(unsafe_chan));
 	for (i = 0; i < mac_ctx->scan.occupiedChannels[session_id].numChannels;
 	     i++) {
-		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
 			 ROAMING_DFS_CHANNEL_DISABLED) ||
 		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
@@ -17440,7 +17440,7 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 			continue;
 		}
 
-		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel ==
 			 ROAMING_DFS_CHANNEL_DISABLED) ||
 		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
