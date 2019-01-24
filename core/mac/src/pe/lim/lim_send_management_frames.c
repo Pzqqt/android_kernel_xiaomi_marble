@@ -4728,14 +4728,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		pe_err("wma_tx_frame FAILED! Status [%d]",
 			qdf_status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		/*
-		 * wma_tx_frame free memory in certain cases, free pkt_ptr
-		 * only if not freed already.
-		 */
-		if (pkt_ptr)
-			cds_packet_free((void *)pkt_ptr);
-		return qdf_status;
+		return QDF_STATUS_E_FAILURE;
 	} else {
 		return QDF_STATUS_SUCCESS;
 	}
