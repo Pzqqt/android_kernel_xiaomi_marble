@@ -649,7 +649,6 @@ QDF_STATUS sme_dhcp_start_ind(mac_handle_t mac_handle,
 QDF_STATUS sme_dhcp_stop_ind(mac_handle_t mac_handle,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
-void sme_get_recovery_stats(mac_handle_t mac_handle);
 QDF_STATUS sme_neighbor_report_request(mac_handle_t mac_handle,
 		 uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,

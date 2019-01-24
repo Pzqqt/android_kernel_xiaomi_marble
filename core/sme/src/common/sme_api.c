@@ -61,8 +61,6 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 
-static tSelfRecoveryStats g_self_recovery_stats;
-
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
 static void sme_disconnect_connected_sessions(struct mac_context *mac);
@@ -7903,27 +7901,6 @@ int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
 	return template_length;
 }
 #endif
-
-void sme_get_recovery_stats(mac_handle_t mac_handle)
-{
-	uint8_t i;
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		  "Self Recovery Stats");
-	for (i = 0; i < MAX_ACTIVE_CMD_STATS; i++) {
-		if (eSmeNoCommand !=
-		    g_self_recovery_stats.activeCmdStats[i].command) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "timestamp %llu: command 0x%0X: reason %d: session %d",
-				  g_self_recovery_stats.activeCmdStats[i].
-				  timestamp,
-				g_self_recovery_stats.activeCmdStats[i].command,
-				 g_self_recovery_stats.activeCmdStats[i].reason,
-				  g_self_recovery_stats.activeCmdStats[i].
-				  sessionId);
-		}
-	}
-}
 
 QDF_STATUS sme_notify_modem_power_state(mac_handle_t mac_handle, uint32_t value)
 {

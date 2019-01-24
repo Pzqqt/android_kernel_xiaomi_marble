@@ -2435,12 +2435,6 @@ cppflags-y += -DATH_SUPPORT_WRAP=0
 cppflags-y += -DQCA_HOST2FW_RXBUF_RING
 #endof dummy flags
 
-# Enable lock of serialization component to avoid race condition issues
-cppflags-y += -DWLAN_CMD_SERIALIZATION_LOCKING
-
-#CONFIG_SERIALIZATION_V1: Don't use enhancements to serialization component
-#No CONFIG_SERIALIZATION_V1: Use enhancements to serialization component
-
 ccflags-$(CONFIG_ENABLE_SIZE_OPTIMIZE) += -Os
 
 # DFS component

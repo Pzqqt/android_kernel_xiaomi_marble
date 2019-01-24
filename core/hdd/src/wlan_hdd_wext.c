@@ -2136,7 +2136,6 @@
  */
 #define WE_IBSS_GET_PEER_INFO_ALL 10
 /* Sub ioctls 11 to 16 are not used */
-#define WE_GET_RECOVERY_STAT       17
 #define WE_GET_FW_PROFILE_DATA     18
 /*
  * <ioctl>
@@ -7176,11 +7175,6 @@ static int __iw_setnone_getnone(struct net_device *dev,
 
 	mac_handle = hdd_ctx->mac_handle;
 	switch (sub_cmd) {
-
-	case WE_GET_RECOVERY_STAT:
-		sme_get_recovery_stats(mac_handle);
-		break;
-
 	case WE_GET_FW_PROFILE_DATA:
 		ret = wma_cli_set_command(adapter->session_id,
 				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
@@ -10498,11 +10492,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 0,
 	 "ibssPeerInfoAll"},
-
-	{WE_GET_RECOVERY_STAT,
-	 0,
-	 0,
-	 "getRecoverStat"},
 
 	{WE_GET_FW_PROFILE_DATA,
 	 0,
