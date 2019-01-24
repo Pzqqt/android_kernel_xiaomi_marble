@@ -61,6 +61,9 @@ enum ol_txrx_fc_limit_id {
 	TXRX_FC_MAX
 };
 
+#define TXRX_RFS_ENABLE_PEER_ID_UNMAP_COUNT    3
+#define TXRX_RFS_DISABLE_PEER_ID_UNMAP_COUNT   1
+
 ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
 						 u8 *peer_addr,
 						 u8 *peer_id,

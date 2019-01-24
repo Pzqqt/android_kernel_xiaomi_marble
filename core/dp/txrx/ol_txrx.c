@@ -773,6 +773,13 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 	pdev->tid_to_ac[OL_TX_NUM_TIDS + OL_TX_VDEV_DEFAULT_MGMT] =
 		OL_TX_SCHED_WRR_ADV_CAT_MCAST_MGMT;
 
+	if (ol_cfg_is_flow_steering_enabled(pdev->ctrl_pdev))
+		pdev->peer_id_unmap_ref_cnt =
+			TXRX_RFS_ENABLE_PEER_ID_UNMAP_COUNT;
+	else
+		pdev->peer_id_unmap_ref_cnt =
+			TXRX_RFS_DISABLE_PEER_ID_UNMAP_COUNT;
+
 	ol_txrx_debugfs_init(pdev);
 
 	return (struct cdp_pdev *)pdev;
@@ -2193,10 +2200,6 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 
-	if (pdev->enable_peer_unmap_conf_support)
-		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
-			peer->map_unmap_peer_ids[i] = HTT_INVALID_PEER;
-
 	qdf_spinlock_create(&peer->peer_info_lock);
 	qdf_spinlock_create(&peer->bufq_info.bufq_lock);
 
@@ -2835,45 +2838,6 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id)
 }
 
 /**
- * ol_txrx_send_peer_unmap_conf() - send peer unmap conf cmd to FW
- * @pdev: pdev_handle
- * @peer: peer_handle
- *
- * Return: None
- */
-static inline void
-ol_txrx_send_peer_unmap_conf(ol_txrx_pdev_handle pdev,
-			     ol_txrx_peer_handle peer)
-{
-	int i;
-	int peer_cnt = 0;
-	uint16_t peer_ids[MAX_NUM_PEER_ID_PER_PEER];
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
-
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER &&
-	     peer_cnt < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		if (peer->map_unmap_peer_ids[i] == HTT_INVALID_PEER)
-			continue;
-		peer_ids[peer_cnt++] = peer->map_unmap_peer_ids[i];
-		peer->map_unmap_peer_ids[i] = HTT_INVALID_PEER;
-	}
-
-	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
-
-	if (peer->peer_unmap_sync_cb && peer_cnt) {
-		ol_txrx_dbg("send unmap conf cmd [%d]", peer_cnt);
-		status = peer->peer_unmap_sync_cb(
-				DEBUG_INVALID_VDEV_ID,
-				peer_cnt, peer_ids);
-		if (status != QDF_STATUS_SUCCESS)
-			ol_txrx_err("unable to send unmap conf cmd [%d]",
-				    peer_cnt);
-	}
-}
-
-/**
  * ol_txrx_peer_free_tids() - free tids for the peer
  * @peer: peer handle
  *
@@ -3088,10 +3052,6 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 				  "(No Maps received)" : "");
 
 		ol_txrx_peer_tx_queue_free(pdev, peer);
-
-		/* send peer unmap conf cmd to fw for unmapped peer_ids */
-		if (pdev->enable_peer_unmap_conf_support)
-			ol_txrx_send_peer_unmap_conf(pdev, peer);
 
 		/* Remove mappings from peer_id to peer object */
 		ol_txrx_peer_clear_map_peer(pdev, peer);
@@ -3341,11 +3301,14 @@ static void ol_txrx_peer_detach_sync(void *ppeer,
 				     uint32_t bitmap)
 {
 	ol_txrx_peer_handle peer = ppeer;
+	ol_txrx_pdev_handle pdev = peer->vdev->pdev;
 
 	ol_txrx_info_high("%s peer %pK, peer->ref_cnt %d", __func__,
 			  peer, qdf_atomic_read(&peer->ref_cnt));
 
-	peer->peer_unmap_sync_cb = peer_unmap_sync;
+	if (!pdev->peer_unmap_sync_cb)
+		pdev->peer_unmap_sync_cb = peer_unmap_sync;
+
 	ol_txrx_peer_detach(peer, bitmap);
 }
 

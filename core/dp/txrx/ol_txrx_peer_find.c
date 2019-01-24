@@ -471,6 +471,45 @@ void ol_txrx_peer_find_detach(struct ol_txrx_pdev_t *pdev)
 	ol_txrx_peer_find_hash_detach(pdev);
 }
 
+/**
+ * ol_txrx_peer_unmap_conf_handler() - send peer unmap conf cmd to FW
+ * @pdev: pdev_handle
+ * @peer_id: peer_id
+ *
+ * Return: None
+ */
+static inline void
+ol_txrx_peer_unmap_conf_handler(ol_txrx_pdev_handle pdev,
+				uint16_t peer_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (peer_id == HTT_INVALID_PEER) {
+		ol_txrx_err(
+		   "invalid peer ID %d\n", peer_id);
+		return;
+	}
+
+	qdf_atomic_inc(&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt);
+
+	if (qdf_atomic_read(
+		&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt) ==
+		pdev->peer_id_unmap_ref_cnt) {
+		ol_txrx_dbg("send unmap conf cmd: peer_id[%d] unmap_cnt[%d]",
+			    peer_id, pdev->peer_id_unmap_ref_cnt);
+		status = pdev->peer_unmap_sync_cb(
+				DEBUG_INVALID_VDEV_ID,
+				1, &peer_id);
+
+		if (status != QDF_STATUS_SUCCESS)
+			ol_txrx_err("unable to send unmap conf cmd [%d]",
+				    peer_id);
+
+		qdf_atomic_init(
+			&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt);
+	}
+}
+
 /*=== function definitions for message handling =============================*/
 
 #if defined(CONFIG_HL_SUPPORT)
@@ -585,6 +624,11 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 
 	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
 
+	/* send peer unmap conf cmd to fw for unmapped peer_ids */
+	if (pdev->enable_peer_unmap_conf_support &&
+	    pdev->peer_unmap_sync_cb)
+		ol_txrx_peer_unmap_conf_handler(pdev, peer_id);
+
 	if (qdf_atomic_read(
 		&pdev->peer_id_to_obj_map[peer_id].del_peer_id_ref_cnt)) {
 		/* This peer_id belongs to a peer already deleted */
@@ -618,33 +662,11 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 
 	if (qdf_atomic_dec_and_test
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt)) {
-		bool peer_id_matched = false;
-		bool added = false;
 		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
 		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 			if (peer->peer_ids[i] == peer_id) {
 				peer->peer_ids[i] = HTT_INVALID_PEER;
-				peer_id_matched = true;
 				break;
-			}
-		}
-		if (pdev->enable_peer_unmap_conf_support && peer_id_matched) {
-			for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-				if (peer->map_unmap_peer_ids[i] == peer_id) {
-					added = true;
-					break;
-				}
-			}
-
-			if (!added) {
-				for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-					if (peer->map_unmap_peer_ids[i] ==
-					    HTT_INVALID_PEER) {
-						peer->map_unmap_peer_ids[i] =
-									peer_id;
-						break;
-					}
-				}
 			}
 		}
 	}
