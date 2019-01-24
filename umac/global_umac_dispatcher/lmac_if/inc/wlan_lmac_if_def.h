@@ -443,6 +443,8 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
  * struct wlan_lmac_if_direct_buf_rx_tx_ops - structire of direct buf rx txops
  * @direct_buf_rx_module_register: Registration API callback for modules
  *                                 to register with direct buf rx framework
+ * @direct_buf_rx_module_unregister: Unregistration API to clean up module
+ *                                   specific resources in DBR
  * @direct_buf_rx_register_events: Registration of WMI events for direct
  *                                 buffer rx framework
  * @direct_buf_rx_unregister_events: Unregistraton of WMI events for direct
@@ -454,6 +456,8 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
 			int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
 				struct direct_buf_rx_data *dbr_data));
+	QDF_STATUS (*direct_buf_rx_module_unregister)(
+			struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
 	QDF_STATUS (*direct_buf_rx_register_events)(
 			struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*direct_buf_rx_unregister_events)(

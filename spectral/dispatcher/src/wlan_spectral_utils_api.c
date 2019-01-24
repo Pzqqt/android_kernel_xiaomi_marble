@@ -239,3 +239,21 @@ QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 	status = tgt_spectral_register_to_dbr(pdev);
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS spectral_register_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	return tgt_spectral_register_to_dbr(pdev);
+}
+
+qdf_export_symbol(spectral_register_dbr);
+
+QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	QDF_STATUS status;
+
+	status = tgt_spectral_unregister_to_dbr(pdev);
+
+	return status;
+}
+
+qdf_export_symbol(spectral_unregister_dbr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -296,9 +296,32 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+
+	if (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074)
+		if (dbr_tx_ops->direct_buf_rx_module_unregister)
+			return dbr_tx_ops->direct_buf_rx_module_unregister
+				(pdev, 0);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #else
 QDF_STATUS
 tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }

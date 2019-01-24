@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -232,4 +232,14 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 			int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
 				struct direct_buf_rx_data *dbr_data));
 
+/**
+ * target_if_direct_buf_rx_module_unregister() - Function to unregister to
+ *                                               direct buffer rx module
+ * @pdev: pointer to pdev object
+ * @mod_id: module id indicating the module using direct buffer rx framework
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS target_if_direct_buf_rx_module_unregister(
+			struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
 #endif /* _TARGET_IF_DIRECT_BUF_RX_MAIN_H_ */

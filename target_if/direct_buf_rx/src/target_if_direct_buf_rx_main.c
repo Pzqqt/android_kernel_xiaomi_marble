@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -728,6 +728,48 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 	return status;
 }
 
+QDF_STATUS target_if_direct_buf_rx_module_unregister(
+			struct wlan_objmgr_pdev *pdev, uint8_t mod_id)
+{
+	QDF_STATUS status;
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+
+	if (!pdev) {
+		direct_buf_rx_err("pdev context passed is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (mod_id >= DBR_MODULE_MAX) {
+		direct_buf_rx_err("Invalid module id");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj
+			(pdev,
+			 WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	if (!dbr_pdev_obj) {
+		direct_buf_rx_err("dir buf rx object is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	direct_buf_rx_info("Dbr pdev obj %pK", dbr_pdev_obj);
+
+	if (!dbr_pdev_obj->dbr_mod_param) {
+		direct_buf_rx_err("dbr_pdev_obj->dbr_mod_param is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (mod_id >= dbr_pdev_obj->num_modules) {
+		direct_buf_rx_err("Module %d not supported in target", mod_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = target_if_deinit_dbr_ring(pdev, dbr_pdev_obj, mod_id);
+
+	return status;
+}
+
 static void *target_if_dbr_vaddr_lookup(
 			struct direct_buf_rx_module_param *mod_param,
 			qdf_dma_addr_t paddr, uint32_t cookie)
@@ -989,7 +1031,8 @@ static QDF_STATUS target_if_dbr_deinit_srng(
 	dbr_buf_pool = mod_param->dbr_buf_pool;
 	direct_buf_rx_info("dbr buf pool %pK", dbr_buf_pool);
 	target_if_dbr_deinit_ring(pdev, mod_param);
-	qdf_mem_free(dbr_buf_pool);
+	if (mod_param->dbr_buf_pool)
+		qdf_mem_free(dbr_buf_pool);
 	mod_param->dbr_buf_pool = NULL;
 
 	return QDF_STATUS_SUCCESS;
@@ -1011,9 +1054,11 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 	direct_buf_rx_info("mod_param %pK", mod_param);
 	direct_buf_rx_info("dbr_ring_cap %pK", mod_param->dbr_ring_cap);
 	target_if_dbr_deinit_srng(pdev, mod_param);
-	qdf_mem_free(mod_param->dbr_ring_cap);
+	if (mod_param->dbr_ring_cap)
+		qdf_mem_free(mod_param->dbr_ring_cap);
 	mod_param->dbr_ring_cap = NULL;
-	qdf_mem_free(mod_param->dbr_ring_cfg);
+	if (mod_param->dbr_ring_cfg)
+		qdf_mem_free(mod_param->dbr_ring_cfg);
 	mod_param->dbr_ring_cfg = NULL;
 
 	return QDF_STATUS_SUCCESS;

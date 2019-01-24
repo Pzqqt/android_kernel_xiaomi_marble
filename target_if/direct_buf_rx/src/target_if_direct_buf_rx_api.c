@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,6 +166,8 @@ void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	tx_ops->dbr_tx_ops.direct_buf_rx_module_register =
 				target_if_direct_buf_rx_module_register;
+	tx_ops->dbr_tx_ops.direct_buf_rx_module_unregister =
+				target_if_direct_buf_rx_module_unregister;
 	tx_ops->dbr_tx_ops.direct_buf_rx_register_events =
 				target_if_direct_buf_rx_register_events;
 	tx_ops->dbr_tx_ops.direct_buf_rx_unregister_events =

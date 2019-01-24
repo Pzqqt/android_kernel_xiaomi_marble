@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -153,6 +153,29 @@ spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
  *         QDF_STATUS_E_FAILURE upon failure
  */
 QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * spectral_register_dbr() - register Spectral event handler with DDMA
+ * @pdev:  pointer to pdev object
+ *
+ * API to register event handler with Direct DMA
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+
+QDF_STATUS spectral_register_dbr(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * spectral_unregister_dbr() - unregister Spectral event handler with DDMA
+ * @pdev:  pointer to pdev object
+ *
+ * API to unregister event handler with Direct DMA
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful unregistration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev);
 
 #ifdef DIRECT_BUF_RX_ENABLE
 /**

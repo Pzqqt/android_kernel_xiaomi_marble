@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -232,13 +232,22 @@ tgt_spectral_process_report(struct wlan_objmgr_pdev *pdev,
 			    void *payload);
 
 /**
- * tgt_spectral_register_to_dbr() - Register to direct dma
+ * tgt_spectral_register_to_dbr() - Register to direct DMA
  * @pdev: Pointer to pdev object
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_spectral_unregister_to_dbr() - Register to direct DMA
+ * @pdev: Pointer to pdev object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_spectral_unregister_to_dbr(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_spectral_get_target_type() - Get target type
