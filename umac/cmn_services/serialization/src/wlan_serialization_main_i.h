@@ -23,59 +23,6 @@
 #ifndef __WLAN_SERIALIZATION_MAIN_I_H
 #define __WLAN_SERIALIZATION_MAIN_I_H
 
-#ifdef CONFIG_SERIALIZATION_V1
-/* Include files */
-#include "wlan_objmgr_cmn.h"
-#include "wlan_objmgr_psoc_obj.h"
-#include "wlan_objmgr_pdev_obj.h"
-#include "qdf_mc_timer.h"
-
-#define WLAN_SERIALIZATION_MAX_GLOBAL_POOL_CMDS 24
-#define WLAN_SERIALIZATION_MAX_ACTIVE_CMDS 1
-#define WLAN_SERIALIZATION_MAX_ACTIVE_SCAN_CMDS 8
-
-#define serialization_alert(params...) \
-	QDF_TRACE_FATAL(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_err(params...) \
-	QDF_TRACE_ERROR(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_warn(params...) \
-	QDF_TRACE_WARN(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_info(params...) \
-	QDF_TRACE_INFO(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_debug(params...) \
-	QDF_TRACE_DEBUG(QDF_MODULE_ID_SERIALIZATION, params)
-
-#define serialization_nofl_alert(params...) \
-	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_nofl_err(params...) \
-	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_nofl_warn(params...) \
-	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_nofl_info(params...) \
-	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
-#define serialization_nofl_debug(params...) \
-	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
-
-#define serialization_enter() \
-	QDF_TRACE_ENTER(QDF_MODULE_ID_SERIALIZATION, "enter")
-#define serialization_exit() \
-	QDF_TRACE_EXIT(QDF_MODULE_ID_SERIALIZATION, "exit")
-
-/**
- * struct serialization_legacy_callback - to handle legacy serialization cb
- *
- * @serialization_purge_cmd_list: function ptr to be filled by serialization
- *				  module
- *
- * Some of the legacy modules wants to call API to purge the commands in
- * order to handle backward compatibility.
- */
-struct serialization_legacy_callback {
-	void (*serialization_purge_cmd_list) (struct wlan_objmgr_psoc *,
-		struct wlan_objmgr_vdev *, bool, bool, bool, bool, bool);
-};
-#else /*New serialization code*/
-/* Include files */
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -125,5 +72,4 @@ struct serialization_legacy_callback {
 					     struct wlan_objmgr_vdev *,
 					     bool, bool, bool, bool, bool);
 };
-#endif
 #endif
