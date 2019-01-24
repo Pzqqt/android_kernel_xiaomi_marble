@@ -3226,11 +3226,64 @@ static int  msm_dai_q6_afe_dec_cfg_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_dai_q6_afe_feedback_dec_cfg_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	u32 format_size = 0;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	format_size = sizeof(dai_data->dec_config.format);
+	memcpy(ucontrol->value.bytes.data,
+		&dai_data->dec_config.format,
+		format_size);
+
+	pr_debug("%s: abr_dec_cfg for %d format\n",
+			__func__, dai_data->dec_config.format);
+	memcpy(ucontrol->value.bytes.data + format_size,
+		&dai_data->dec_config.abr_dec_cfg,
+		sizeof(struct afe_imc_dec_enc_info));
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_feedback_dec_cfg_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	u32 format_size = 0;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memset(&dai_data->dec_config, 0x0,
+		sizeof(struct afe_dec_config));
+	format_size = sizeof(dai_data->dec_config.format);
+	memcpy(&dai_data->dec_config.format,
+		ucontrol->value.bytes.data,
+		format_size);
+
+	pr_debug("%s: abr_dec_cfg for %d format\n",
+			__func__, dai_data->dec_config.format);
+	memcpy(&dai_data->dec_config.abr_dec_cfg,
+		ucontrol->value.bytes.data + format_size,
+		sizeof(struct afe_imc_dec_enc_info));
+	dai_data->dec_config.abr_dec_cfg.is_abr_enabled = true;
+	return 0;
+}
+
 static int msm_dai_q6_afe_dec_cfg_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 	u32 format_size = 0;
+	int ret = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3247,20 +3300,23 @@ static int msm_dai_q6_afe_dec_cfg_get(struct snd_kcontrol *kcontrol,
 			&dai_data->dec_config.data,
 			sizeof(struct asm_aac_dec_cfg_v2_t));
 		break;
+	case DEC_FMT_APTX_ADAPTIVE:
+		memcpy(ucontrol->value.bytes.data + format_size,
+			&dai_data->dec_config.data,
+			sizeof(struct asm_aptx_ad_dec_cfg_t));
+		break;
 	case DEC_FMT_SBC:
 	case DEC_FMT_MP3:
 		/* No decoder specific data available */
 		break;
 	default:
-		pr_debug("%s: Default decoder config for %d format: Expect abr_dec_cfg\n",
+		pr_err("%s: Invalid format %d\n",
 				__func__, dai_data->dec_config.format);
-		memcpy(ucontrol->value.bytes.data + format_size,
-			&dai_data->dec_config.abr_dec_cfg,
-			sizeof(struct afe_abr_dec_cfg_t));
-
+		ret = -EINVAL;
 		break;
 	}
-	return 0;
+
+	return ret;
 }
 
 static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
@@ -3268,6 +3324,7 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 	u32 format_size = 0;
+	int ret = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3293,15 +3350,19 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 			ucontrol->value.bytes.data + format_size,
 			sizeof(struct asm_sbc_dec_cfg_t));
 		break;
-	default:
-		pr_debug("%s: Default decoder config for %d format: Expect abr_dec_cfg\n",
-				__func__, dai_data->dec_config.format);
-		memcpy(&dai_data->dec_config.abr_dec_cfg,
+	case DEC_FMT_APTX_ADAPTIVE:
+		memcpy(&dai_data->dec_config.data,
 			ucontrol->value.bytes.data + format_size,
-			sizeof(struct afe_abr_dec_cfg_t));
+			sizeof(struct asm_aptx_ad_dec_cfg_t));
+		break;
+	default:
+		pr_err("%s: Invalid format %d\n",
+				__func__, dai_data->dec_config.format);
+		ret = -EINVAL;
 		break;
 	}
-	return 0;
+
+	return ret;
 }
 
 static const struct snd_kcontrol_new afe_dec_config_controls[] = {
@@ -3311,8 +3372,8 @@ static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = "SLIM_7_TX Decoder Config",
 		.info = msm_dai_q6_afe_dec_cfg_info,
-		.get = msm_dai_q6_afe_dec_cfg_get,
-		.put = msm_dai_q6_afe_dec_cfg_put,
+		.get = msm_dai_q6_afe_feedback_dec_cfg_get,
+		.put = msm_dai_q6_afe_feedback_dec_cfg_put,
 	},
 	{
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
