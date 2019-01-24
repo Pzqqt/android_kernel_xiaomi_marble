@@ -5164,6 +5164,67 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 }
 
 /*
+ * dp_cp_peer_del_resp_handler - Handle the peer delete response
+ * @soc_hdl: Datapath SOC handle
+ * @vdev_hdl: virtual device object
+ * @mac_addr: Mac address of the peer
+ *
+ * Return: void
+ */
+static void dp_cp_peer_del_resp_handler(struct cdp_soc_t *soc_hdl,
+					struct cdp_vdev *vdev_hdl,
+					uint8_t *mac_addr)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_ast_entry  *ast_entry = NULL;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+	txrx_ast_free_cb cb = NULL;
+	void *cookie;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+
+	if (soc->ast_override_support)
+		ast_entry =
+			dp_peer_ast_hash_find_by_pdevid(soc, mac_addr,
+							vdev->pdev->pdev_id);
+	else
+		ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
+
+	/* in case of qwrap we have multiple BSS peers
+	 * with same mac address
+	 *
+	 * AST entry for this mac address will be created
+	 * only for one peer hence it will be NULL here
+	 */
+	if (!ast_entry || ast_entry->peer || !ast_entry->delete_in_progress) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return;
+	}
+
+	if (ast_entry->is_mapped)
+		soc->ast_table[ast_entry->ast_idx] = NULL;
+
+	DP_STATS_INC(soc, ast.deleted, 1);
+	dp_peer_ast_hash_remove(soc, ast_entry);
+
+	cb = ast_entry->callback;
+	cookie = ast_entry->cookie;
+	ast_entry->callback = NULL;
+	ast_entry->cookie = NULL;
+
+	soc->num_ast_entries--;
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	if (cb) {
+		cb(soc->ctrl_psoc,
+		   soc,
+		   cookie,
+		   CDP_TXRX_AST_DELETED);
+	}
+	qdf_mem_free(ast_entry);
+}
+
+/*
  * dp_set_vdev_tx_encap_type() - set the encap type of the vdev
  * @vdev_handle: virtual device object
  * @htt_pkt_type: type of pkt
@@ -9804,6 +9865,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_vdev_pcp_tid_map = dp_set_vdev_pcp_tid_map_wifi3,
 	.set_vdev_tidmap_prty = dp_set_vdev_tidmap_prty_wifi3,
 	.set_vdev_tidmap_tbl_id = dp_set_vdev_tidmap_tbl_id_wifi3,
+
+	.txrx_cp_peer_del_response = dp_cp_peer_del_resp_handler,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

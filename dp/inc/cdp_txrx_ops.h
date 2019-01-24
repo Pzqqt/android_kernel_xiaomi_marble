@@ -99,6 +99,10 @@ struct cdp_cmn_ops {
 	void (*txrx_peer_setup)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
 
+	void (*txrx_cp_peer_del_response)
+		(ol_txrx_soc_handle soc, struct cdp_vdev *vdev_hdl,
+		 uint8_t *peer_mac_addr);
+
 	void (*txrx_peer_teardown)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
 

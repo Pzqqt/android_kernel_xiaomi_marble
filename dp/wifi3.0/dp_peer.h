@@ -145,6 +145,9 @@ void dp_peer_free_hmwds_cb(void *ctrl_psoc,
 			   void *cookie,
 			   enum cdp_ast_free_status status);
 
+void dp_peer_ast_hash_remove(struct dp_soc *soc,
+			     struct dp_ast_entry *ase);
+
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -
  * Returns vdev object given the vdev id

@@ -360,8 +360,8 @@ static inline void dp_peer_ast_hash_add(struct dp_soc *soc,
  *
  * Return: None
  */
-static inline void dp_peer_ast_hash_remove(struct dp_soc *soc,
-		struct dp_ast_entry *ase)
+void dp_peer_ast_hash_remove(struct dp_soc *soc,
+			     struct dp_ast_entry *ase)
 {
 	unsigned index;
 	struct dp_ast_entry *tmpase;
@@ -823,8 +823,12 @@ add_ast_entry:
  */
 void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
-	struct dp_peer *peer = ast_entry->peer;
-	uint16_t peer_id = peer->peer_ids[0];
+	struct dp_peer *peer;
+
+	if (!ast_entry)
+		return;
+
+	peer =  ast_entry->peer;
 
 	dp_peer_ast_send_wds_del(soc, ast_entry);
 
@@ -836,7 +840,7 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	 * if peer_id is invalid we did not get the peer map event
 	 * for the peer free ast entry from here only in this case
 	 */
-	if (soc->is_peer_map_unmap_v2 && (peer_id != HTT_INVALID_PEER)) {
+	if (soc->is_peer_map_unmap_v2) {
 
 		/*
 		 * For HM_SEC and SELF type we do not receive unmap event
@@ -853,10 +857,10 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	 */
 	if (ast_entry->is_mapped)
 		soc->ast_table[ast_entry->ast_idx] = NULL;
-	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
-	if (ast_entry == peer->self_ast_entry)
-		peer->self_ast_entry = NULL;
+	/* SELF and STATIC entries are removed in teardown itself */
+	if (ast_entry->next_hop)
+		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	DP_STATS_INC(soc, ast.deleted, 1);
 	dp_peer_ast_hash_remove(soc, ast_entry);
@@ -1051,6 +1055,13 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
 						    ast_entry->mac_addr.raw,
 						    ast_entry->type);
+	}
+
+	/* Remove SELF and STATIC entries in teardown itself */
+	if (!ast_entry->next_hop) {
+		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+		peer->self_ast_entry = NULL;
+		ast_entry->peer = NULL;
 	}
 
 	ast_entry->delete_in_progress = true;
@@ -1503,54 +1514,27 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
 
 	/* If V2 Peer map messages are enabled AST entry has to be freed here
 	 */
-	if (soc->is_peer_map_unmap_v2) {
+	if (soc->is_peer_map_unmap_v2 && is_wds) {
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		ast_entry = dp_peer_ast_list_find(soc, peer,
 						  mac_addr);
-
-		if (!ast_entry) {
-			/* in case of qwrap we have multiple BSS peers
-			 * with same mac address
-			 *
-			 * AST entry for this mac address will be created
-			 * only for one peer
-			 */
-			if (peer->vdev->proxysta_vdev) {
-				qdf_spin_unlock_bh(&soc->ast_lock);
-				goto peer_unmap;
-			}
-
-			/* Ideally we should not enter this case where
-			 * ast_entry is not present in host table and
-			 * we received a unmap event
-			 */
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-				  "%s:%d AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u\n",
-				  __func__, __LINE__, peer, peer->peer_ids[0],
-				  peer->mac_addr.raw, mac_addr, vdev_id,
-				  is_wds);
-
-			qdf_spin_unlock_bh(&soc->ast_lock);
-
-			if (!is_wds)
-				goto peer_unmap;
-
-			return;
-		}
 		qdf_spin_unlock_bh(&soc->ast_lock);
 
-		/* Reuse the AST entry if delete_in_progress
-		 * not set
-		 */
-		if (ast_entry->delete_in_progress)
+		if (ast_entry) {
 			dp_peer_ast_free_entry(soc, ast_entry);
-
-		if (is_wds)
 			return;
+		}
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s:%d AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u\n",
+			  __func__, __LINE__, peer, peer->peer_ids[0],
+			  peer->mac_addr.raw, mac_addr, vdev_id,
+			  is_wds);
+
+		return;
 	}
 
-peer_unmap:
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"peer_unmap_event (soc:%pK) peer_id %d peer %pK",
 		soc, peer_id, peer);
