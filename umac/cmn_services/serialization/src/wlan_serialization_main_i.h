@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,6 +110,8 @@ struct serialization_legacy_callback {
 #define ser_exit() \
 	QDF_TRACE_EXIT(QDF_MODULE_ID_SERIALIZATION, "exit")
 
+#define ser_err_no_fl(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SERIALIZATION, params)
 /**
  * struct serialization_legacy_callback - to handle legacy serialization cb
  * @serialization_purge_cmd_list: function ptr to be filled by serialization

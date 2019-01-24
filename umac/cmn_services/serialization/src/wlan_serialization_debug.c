@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,13 +52,13 @@ static void wlan_ser_print_queues(
 	if (node_type == WLAN_SER_PDEV_NODE)
 		is_pdev_queue = true;
 
-	ser_err(WLAN_SER_LINE);
-	ser_err("%s %s Queue", (is_pdev_queue) ? "PDEV" : "VDEV",
-		(is_active_queue ? "Active" : "Pending"));
+	ser_err_no_fl(WLAN_SER_LINE);
+	ser_err_no_fl("%s %s Queue", (is_pdev_queue) ? "PDEV" : "VDEV",
+		      (is_active_queue ? "Active" : "Pending"));
 
-	ser_err(WLAN_SER_LINE);
-	ser_err("|CMD_TYPE|CMD_ID|BLOCKING|PRIORITY|");
-	ser_err(WLAN_SER_LINE);
+	ser_err_no_fl(WLAN_SER_LINE);
+	ser_err_no_fl("|CMD_TYPE|CMD_ID|BLOCKING|PRIORITY|");
+	ser_err_no_fl(WLAN_SER_LINE);
 
 	queuelen = wlan_serialization_list_size(queue);
 	while (queuelen--) {
@@ -77,8 +77,8 @@ static void wlan_ser_print_queues(
 				struct wlan_serialization_command_list,
 				vdev_node);
 
-	ser_err("|%8u|%6u|%8u|%8u|",
-		cmd_list->cmd.cmd_type,
+	ser_err_no_fl("|%8u|%6u|%8u|%8u|",
+		      cmd_list->cmd.cmd_type,
 		cmd_list->cmd.cmd_id,
 		cmd_list->cmd.is_blocking,
 		cmd_list->cmd.is_high_priority);
@@ -125,11 +125,11 @@ static void wlan_ser_print_all_history(
 	if (!history_info->index)
 		return;
 
-	ser_err(WLAN_SER_LINE WLAN_SER_LINE);
-	ser_err("Queue Commands History");
-	ser_err(WLAN_SER_LINE WLAN_SER_LINE);
-	ser_err(WLAN_SER_HISTORY_HEADER);
-	ser_err(WLAN_SER_LINE WLAN_SER_LINE);
+	ser_err_no_fl(WLAN_SER_LINE WLAN_SER_LINE);
+	ser_err_no_fl("Queue Commands History");
+	ser_err_no_fl(WLAN_SER_LINE WLAN_SER_LINE);
+	ser_err_no_fl(WLAN_SER_HISTORY_HEADER);
+	ser_err_no_fl(WLAN_SER_LINE WLAN_SER_LINE);
 
 	for (idx = 0; idx < history_info->index; idx++) {
 		data = &history_info->data[idx];
@@ -143,7 +143,8 @@ static void wlan_ser_print_all_history(
 			if (vdev_id != data->vdev_id)
 				continue;
 		}
-		ser_err("%8d|%6d|%7d|%8d|%8d|%6s|%7s|%17s|",
+		ser_err_no_fl(
+			"%8d|%6d|%7d|%8d|%8d|%6s|%7s|%17s|",
 			data->cmd_type,
 			data->cmd_id,
 			data->vdev_id,
@@ -176,7 +177,7 @@ QDF_STATUS wlan_ser_print_history(
 	 * Print scan pdev queues
 	 */
 	case SER_PDEV_QUEUE_COMP_SCAN:
-		ser_err("Serialization SCAN Queues(LIVE)");
+		ser_err_no_fl("Serialization SCAN Queues(LIVE)");
 		pdev_q = &ser_pdev->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 		wlan_ser_print_pdev_queue(pdev_q, WLAN_SER_PDEV_NODE);
 		break;
@@ -185,7 +186,7 @@ QDF_STATUS wlan_ser_print_history(
 	 */
 	case SER_PDEV_QUEUE_COMP_NON_SCAN:
 		pdev_q = &ser_pdev->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-		ser_err("Serialization NON SCAN Queues(LIVE)");
+		ser_err_no_fl("Serialization NON SCAN Queues(LIVE)");
 		switch (sub_val) {
 		/*
 		 * Print non scan pdev queues
