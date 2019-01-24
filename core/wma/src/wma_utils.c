@@ -827,8 +827,9 @@ wma_fill_tx_stats(struct sir_wifi_ll_ext_stats *ll_stats,
 	struct sir_wifi_tx *tx_stats;
 	struct sir_wifi_ll_ext_peer_stats *peer_stats;
 	uint32_t *tx_mpdu_aggr, *tx_succ_mcs, *tx_fail_mcs, *tx_delay;
-	uint32_t len, dst_len, tx_mpdu_aggr_array_len, tx_succ_mcs_array_len,
-		 tx_fail_mcs_array_len, tx_delay_array_len;
+	uint32_t len, dst_len, param_len, tx_mpdu_aggr_array_len,
+		 tx_succ_mcs_array_len, tx_fail_mcs_array_len,
+		 tx_delay_array_len;
 
 	result = *buf;
 	dst_len = *buf_length;
@@ -845,49 +846,57 @@ wma_fill_tx_stats(struct sir_wifi_ll_ext_stats *ll_stats,
 
 	len = fix_param->num_peer_ac_tx_stats *
 		WLAN_MAX_AC * tx_mpdu_aggr_array_len * sizeof(uint32_t);
-	if (len <= dst_len && param_buf->tx_mpdu_aggr) {
+	param_len = param_buf->num_tx_mpdu_aggr * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->tx_mpdu_aggr) {
 		tx_mpdu_aggr = (uint32_t *)result;
 		qdf_mem_copy(tx_mpdu_aggr, param_buf->tx_mpdu_aggr, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("TX_MPDU_AGGR invalid arg, %d, %d"), len, dst_len);
+		WMA_LOGE(FL("TX_MPDU_AGGR invalid arg, %d, %d, %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = fix_param->num_peer_ac_tx_stats * WLAN_MAX_AC *
 		tx_succ_mcs_array_len * sizeof(uint32_t);
-	if (len <= dst_len && param_buf->tx_succ_mcs) {
+	param_len = param_buf->num_tx_succ_mcs * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->tx_succ_mcs) {
 		tx_succ_mcs = (uint32_t *)result;
 		qdf_mem_copy(tx_succ_mcs, param_buf->tx_succ_mcs, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("TX_SUCC_MCS invalid arg, %d, %d"), len, dst_len);
+		WMA_LOGE(FL("TX_SUCC_MCS invalid arg, %d, %d, %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = fix_param->num_peer_ac_tx_stats * WLAN_MAX_AC *
 		tx_fail_mcs_array_len * sizeof(uint32_t);
-	if (len <= dst_len && param_buf->tx_fail_mcs) {
+	param_len = param_buf->num_tx_fail_mcs * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->tx_fail_mcs) {
 		tx_fail_mcs = (uint32_t *)result;
 		qdf_mem_copy(tx_fail_mcs, param_buf->tx_fail_mcs, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("TX_FAIL_MCS invalid arg, %d, %d"), len, dst_len);
+		WMA_LOGE(FL("TX_FAIL_MCS invalid arg, %d, %d %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = fix_param->num_peer_ac_tx_stats *
 		WLAN_MAX_AC * tx_delay_array_len * sizeof(uint32_t);
-	if (len <= dst_len && param_buf->tx_ppdu_delay) {
+	param_len = param_buf->num_tx_ppdu_delay * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->tx_ppdu_delay) {
 		tx_delay = (uint32_t *)result;
 		qdf_mem_copy(tx_delay, param_buf->tx_ppdu_delay, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("TX_DELAY invalid arg, %d, %d"), len, dst_len);
+		WMA_LOGE(FL("TX_DELAY invalid arg, %d, %d, %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -981,7 +990,8 @@ wma_fill_rx_stats(struct sir_wifi_ll_ext_stats *ll_stats,
 	wmi_peer_ac_rx_stats *wmi_peer_rx;
 	struct sir_wifi_rx *rx_stats;
 	struct sir_wifi_ll_ext_peer_stats *peer_stats;
-	uint32_t len, dst_len, rx_mpdu_aggr_array_len, rx_mcs_array_len;
+	uint32_t len, dst_len, param_len,
+		 rx_mpdu_aggr_array_len, rx_mcs_array_len;
 
 	rx_mpdu_aggr_array_len = fix_param->rx_mpdu_aggr_array_len;
 	ll_stats->rx_mpdu_aggr_array_len = rx_mpdu_aggr_array_len;
@@ -994,25 +1004,29 @@ wma_fill_rx_stats(struct sir_wifi_ll_ext_stats *ll_stats,
 	dst_len = *buf_length;
 	len = sizeof(uint32_t) * (fix_param->num_peer_ac_rx_stats *
 				  WLAN_MAX_AC * rx_mpdu_aggr_array_len);
-	if (len <= dst_len && param_buf->rx_mpdu_aggr) {
+	param_len = param_buf->num_rx_mpdu_aggr * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->rx_mpdu_aggr) {
 		rx_mpdu_aggr = (uint32_t *)result;
 		qdf_mem_copy(rx_mpdu_aggr, param_buf->rx_mpdu_aggr, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("RX_MPDU_AGGR invalid arg %d, %d"), len, dst_len);
+		WMA_LOGE(FL("RX_MPDU_AGGR invalid arg %d, %d, %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = sizeof(uint32_t) * (fix_param->num_peer_ac_rx_stats *
 				  WLAN_MAX_AC * rx_mcs_array_len);
-	if (len <= dst_len && param_buf->rx_mcs) {
+	param_len = param_buf->num_rx_mcs * sizeof(uint32_t);
+	if (len <= dst_len && len <= param_len && param_buf->rx_mcs) {
 		rx_mcs = (uint32_t *)result;
 		qdf_mem_copy(rx_mcs, param_buf->rx_mcs, len);
 		result += len;
 		dst_len -= len;
 	} else {
-		WMA_LOGE(FL("RX_MCS invalid arg %d, %d"), len, dst_len);
+		WMA_LOGE(FL("RX_MCS invalid arg %d, %d, %d"),
+			 len, dst_len, param_len);
 		return QDF_STATUS_E_FAILURE;
 	}
 
