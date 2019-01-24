@@ -254,6 +254,9 @@ struct adm_cmd_matrix_map_routings_v5 {
 /* Sample rate is 16000 Hz.*/
 #define ADM_CMD_COPP_OPEN_SAMPLE_RATE_16K 16000
 
+/* Sample rate is 32000 Hz.*/
+#define ADM_CMD_COPP_OPEN_SAMPLE_RATE_32K 32000
+
 /* Sample rate is 48000 Hz.*/
 #define ADM_CMD_COPP_OPEN_SAMPLE_RATE_48K 48000
 
@@ -5082,6 +5085,7 @@ struct afe_param_id_lpass_core_shared_clk_cfg {
 #define VPM_TX_DM_RFECNS_COPP_TOPOLOGY			0x00010F86
 #define ADM_CMD_COPP_OPEN_TOPOLOGY_ID_DTS_HPX		0x10015002
 #define ADM_CMD_COPP_OPEN_TOPOLOGY_ID_AUDIOSPHERE	0x10028000
+#define VPM_TX_DM_FLUENCE_EF_COPP_TOPOLOGY		0x10000005
 
 /* Memory map regions command payload used by the
  * #ASM_CMD_SHARED_MEM_MAP_REGIONS ,#ADM_CMD_SHARED_MEM_MAP_REGIONS
