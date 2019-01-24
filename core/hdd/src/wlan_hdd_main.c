@@ -5378,15 +5378,9 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter)
 {
-	return hdd_stop_adapter_ext(hdd_ctx, adapter, 0);
-}
-
-QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
-				struct hdd_adapter *adapter,
-				enum hdd_adapter_stop_flag_t flag)
-{
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_station_ctx *sta_ctx;
+	struct sap_context *sap_ctx;
 	struct csr_roam_profile *roam_profile;
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
@@ -5539,8 +5533,11 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 
 		ucfg_ipa_flush(hdd_ctx->pdev);
 
-		if (!(flag & HDD_IN_CAC_WORK_TH_CONTEXT))
+		/* don't flush pre-cac destroy if we are destroying pre-cac */
+		sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+		if (!wlan_sap_is_pre_cac_context(sap_ctx))
 			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
+
 		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:

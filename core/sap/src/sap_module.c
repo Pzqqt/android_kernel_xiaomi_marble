@@ -1518,6 +1518,11 @@ QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool wlan_sap_is_pre_cac_context(struct sap_context *context)
+{
+	return context && context->is_pre_cac_on;
+}
+
 /**
  * wlan_sap_is_pre_cac_active() - Checks if pre cac in in progress
  * @handle: Global MAC handle
@@ -1529,6 +1534,7 @@ QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
 bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
 {
 	struct mac_context *mac = NULL;
+	struct sap_ctx_list *ctx_list;
 	int i;
 
 	mac = MAC_CONTEXT(handle);
@@ -1538,12 +1544,12 @@ bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
 		return false;
 	}
 
+	ctx_list = mac->sap.sapCtxList;
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		struct sap_context *context =
-			mac->sap.sapCtxList[i].sap_context;
-		if (context && context->is_pre_cac_on)
+		if (wlan_sap_is_pre_cac_context(ctx_list[i].sap_context))
 			return true;
 	}
+
 	return false;
 }
 

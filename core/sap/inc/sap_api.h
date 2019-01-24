@@ -643,15 +643,15 @@ typedef struct sSapDfsInfo {
 	uint16_t reduced_beacon_interval;
 } tSapDfsInfo;
 
-typedef struct tagSapCtxList {
+struct sap_ctx_list {
 	void *sap_context;
 	enum QDF_OPMODE sapPersona;
-} tSapCtxList, tpSapCtxList;
+};
 
 typedef struct tagSapStruct {
 	/* Information Required for SAP DFS Master mode */
 	tSapDfsInfo SapDfsInfo;
-	tSapCtxList sapCtxList[SAP_MAX_NUM_SESSION];
+	struct sap_ctx_list sapCtxList[SAP_MAX_NUM_SESSION];
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -881,6 +881,14 @@ QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
  */
 QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
 						bool status);
+
+/**
+ * wlan_sap_is_pre_cac_context() - checks if @context is for a pre-cac adapter
+ * @context: the SAP context to check
+ *
+ * Return: true if @context is for a pre-cac adapter
+ */
+bool wlan_sap_is_pre_cac_context(struct sap_context *context);
 
 bool wlan_sap_is_pre_cac_active(mac_handle_t handle);
 QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id);
