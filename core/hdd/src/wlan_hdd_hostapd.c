@@ -1042,24 +1042,17 @@ static int wlan_hdd_set_pre_cac_complete_status(struct hdd_adapter *ap_adapter,
 
 /**
  * __wlan_hdd_sap_pre_cac_failure() - Process the pre cac failure
- * @data: AP adapter
+ * @adapter: AP adapter
  *
  * Deletes the pre cac adapter
  *
  * Return: None
  */
-static void __wlan_hdd_sap_pre_cac_failure(void *data)
+static void __wlan_hdd_sap_pre_cac_failure(struct hdd_adapter *adapter)
 {
-	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter();
-
-	adapter = (struct hdd_adapter *) data;
-	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
-		hdd_err("SAP Pre CAC adapter invalid");
-		return;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (wlan_hdd_validate_context(hdd_ctx)) {
@@ -1070,6 +1063,8 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_close_adapter(hdd_ctx, adapter, false);
+
+	hdd_exit();
 }
 
 /**
@@ -1082,33 +1077,41 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
  */
 void wlan_hdd_sap_pre_cac_failure(void *data)
 {
+	struct hdd_adapter *adapter = data;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = osif_vdev_sync_trans_start_wait(adapter->dev, &vdev_sync);
+	if (errno)
+		return;
+
+	osif_vdev_sync_unregister(adapter->dev);
+	osif_vdev_sync_wait_for_ops(vdev_sync);
+
 	cds_ssr_protect(__func__);
 	__wlan_hdd_sap_pre_cac_failure(data);
 	cds_ssr_unprotect(__func__);
+
+	osif_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
 }
 
 /**
- * wlan_hdd_sap_pre_cac_success() - Process the pre cac result
- * @data: AP adapter
+ * __wlan_hdd_sap_pre_cac_success() - Process the pre cac result
+ * @adapter: AP adapter
  *
  * Deletes the pre cac adapter and moves the existing SAP to the pre cac
  * channel
  *
  * Return: None
  */
-static void wlan_hdd_sap_pre_cac_success(void *data)
+static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 {
-	struct hdd_adapter *adapter, *ap_adapter;
+	struct hdd_adapter *ap_adapter;
 	int i;
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter();
-
-	adapter = (struct hdd_adapter *) data;
-	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
-		hdd_err("SAP Pre CAC adapter invalid");
-		return;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
@@ -1116,11 +1119,9 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 		return;
 	}
 
-	cds_ssr_protect(__func__);
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_close_adapter(hdd_ctx, adapter, false);
-	cds_ssr_unprotect(__func__);
 
 	/* Prepare to switch AP from 2.4GHz channel to the pre CAC channel */
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
@@ -1141,6 +1142,29 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 		hdd_err("failed to change channel");
 		wlan_hdd_set_pre_cac_complete_status(ap_adapter, false);
 	}
+
+	hdd_exit();
+}
+
+static void wlan_hdd_sap_pre_cac_success(void *data)
+{
+	struct hdd_adapter *adapter = data;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = osif_vdev_sync_trans_start_wait(adapter->dev, &vdev_sync);
+	if (errno)
+		return;
+
+	osif_vdev_sync_unregister(adapter->dev);
+	osif_vdev_sync_wait_for_ops(vdev_sync);
+
+	cds_ssr_protect(__func__);
+	__wlan_hdd_sap_pre_cac_success(adapter);
+	cds_ssr_unprotect(__func__);
+
+	osif_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
 }
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE

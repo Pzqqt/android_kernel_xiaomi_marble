@@ -23,13 +23,14 @@
  *
  */
 
-#include <wlan_hdd_includes.h>
+#include <cds_utils.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include <linux/if_ether.h>
-#include <cds_utils.h>
+#include "osif_sync.h"
 #include <qdf_str.h>
+#include <wlan_hdd_includes.h>
 #include <wlan_hdd_sap_cond_chan_switch.h>
 
 /**
@@ -150,18 +151,21 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 }
 
 /**
- * wlan_hdd_request_pre_cac() - Start pre CAC in the driver
+ * __wlan_hdd_request_pre_cac() - Start pre CAC in the driver
+ * @hdd_ctx: the HDD context to operate against
  * @channel: Channel option provided by userspace
+ * @out_adapter: out parameter for the newly created pre-cac adapter
  *
  * Sets the driver to the required hardware mode and start an adapter for
  * pre CAC which will mimic an AP.
  *
  * Return: Zero on success, non-zero value on error
  */
-int wlan_hdd_request_pre_cac(uint8_t channel)
+static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
+				      uint8_t channel,
+				      struct hdd_adapter **out_adapter)
 {
 	uint8_t pre_cac_chan = 0, *mac_addr;
-	struct hdd_context *hdd_ctx;
 	int ret;
 	struct hdd_adapter *ap_adapter, *pre_cac_adapter;
 	struct hdd_ap_ctx *hdd_ap_ctx;
@@ -174,10 +178,6 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	struct ieee80211_channel *chan;
 	mac_handle_t mac_handle;
 	bool val;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (wlan_hdd_validate_context(hdd_ctx) != 0)
-		return -EINVAL;
 
 	if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
 		hdd_err("pre cac not allowed in concurrency");
@@ -373,6 +373,8 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 
 	ap_adapter->pre_cac_chan = pre_cac_chan;
 
+	*out_adapter = pre_cac_adapter;
+
 	return 0;
 
 stop_close_pre_cac_adapter:
@@ -390,6 +392,33 @@ release_intf_addr_and_return_failure:
 	 */
 	wlan_hdd_release_intf_addr(hdd_ctx, mac_addr);
 	return -EINVAL;
+}
+
+int wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx, uint8_t channel)
+{
+	struct hdd_adapter *adapter;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = osif_vdev_sync_create_with_trans(hdd_ctx->parent_dev,
+						 &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_request_pre_cac(hdd_ctx, channel, &adapter);
+	if (errno)
+		goto destroy_sync;
+
+	osif_vdev_sync_register(adapter->dev, vdev_sync);
+	osif_vdev_sync_trans_stop(vdev_sync);
+
+	return 0;
+
+destroy_sync:
+	osif_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -498,7 +527,7 @@ __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	 * If channel is zero, any channel in the available outdoor regulatory
 	 * domain will be selected.
 	 */
-	ret = wlan_hdd_request_pre_cac(chans[0]);
+	ret = wlan_hdd_request_pre_cac(hdd_ctx, chans[0]);
 	if (ret) {
 		hdd_err("pre cac request failed with reason:%d", ret);
 		return ret;
