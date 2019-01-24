@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,7 +125,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_atf_cfg_enable(psoc, tgt_hdl, event);
 
-	target_if_qwrap_cfg_enable(psoc, tgt_hdl, event);
+	if (!wmi_service_enabled(wmi_handle, wmi_service_ext_msg))
+		target_if_qwrap_cfg_enable(psoc, tgt_hdl, event);
 
 	target_if_lteu_cfg_enable(psoc, tgt_hdl, event);
 
@@ -271,6 +272,8 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (legacy_callback)
 		legacy_callback(wmi_service_ready_ext_event_id,
 				scn_handle, event, data_len);
+
+	target_if_qwrap_cfg_enable(psoc, tgt_hdl, event);
 
 	info->wlan_res_cfg.num_vdevs = (target_psoc_get_num_radios(tgt_hdl) *
 					info->wlan_res_cfg.num_vdevs);
