@@ -2942,6 +2942,13 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_S 21
     #define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_M 0x200000
 
+    /*
+     * If this BIT is set, then the target should use peer_tid_ext to analyze
+     * per peer per tid extended configurations
+     */
+    #define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_S 22
+    #define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_M 0x400000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3189,6 +3196,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), HTT_PEER_STATS, (value))
 #define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), HTT_PEER_STATS)
+
+#define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), PEER_TID_EXT, (value))
+#define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), PEER_TID_EXT)
 
 
 typedef struct {
@@ -16000,6 +16012,15 @@ typedef enum {
     WMI_PEER_TID_SW_RETRY_NO_RETRY = 0xFFFFFFFF,
 } WMI_PEER_TID_CONFIG_SW_RETRY_THRESHOLD;
 
+/*
+ * values for tid_config_supported_bitmap field,
+ * in wmi_peer_tid_configurations_cmd structure.
+ */
+typedef enum {
+      /* Used to indicate that disable_rts_cts field is valid */
+      WMI_PEER_TID_DISABLE_RTS_CTS_VALID = 0x00000001,
+} WMI_PEER_TID_EXT_CONFIG_VALID_BITMAP;
+
 /**
  * Command format for the TID configuration
  */
@@ -16043,6 +16064,15 @@ typedef struct {
      * tx rate to use during each retransmission.
      */
     A_UINT32 sw_retry_threshold;
+
+    /*--- Start of extended structure ---*/
+    /* Bitmap to indicate which fields in the extended structure are valid.
+     * Bitmap values correspond to enum WMI_PEER_TID_EXT_CONFIG_VALID_BITMAP
+     */
+    A_UINT32 tid_config_supported_bitmap;
+
+    /* Knob to enable/disable RTS/CTS per TID */
+    A_UINT32 disable_rts_cts;
 } wmi_peer_tid_configurations_cmd_fixed_param;
 
 /* The below enable/disable macros are used for both per peer CFR capture
