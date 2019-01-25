@@ -1460,6 +1460,10 @@ QDF_STATUS (*extract_swba_tim_info)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_swba_noa_info)(wmi_unified_t wmi_handle, void *evt_buf,
 	    uint32_t idx, wmi_host_p2p_noa_info *p2p_desc);
 
+QDF_STATUS (*extract_swba_quiet_info)(wmi_unified_t wmi_handle, void *evt_buf,
+				      uint32_t idx,
+				      wmi_host_quiet_info *quiet_info);
+
 #ifdef CONVERGED_P2P_ENABLE
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 QDF_STATUS (*extract_p2p_lo_stop_ev_param)(wmi_unified_t wmi_handle,

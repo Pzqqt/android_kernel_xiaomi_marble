@@ -5755,6 +5755,22 @@ typedef struct {
 } wmi_host_tim_info;
 
 /**
+ * struct wmi_host_quiet_info - Quiet info in SWBA event
+ * @vdev_id: vdev_id for quiet info structure
+ * @tbttcount: quiet start tbtt count
+ * @period: Beacon interval between quiets
+ * @duration: TUs of each quiet
+ * @offset: TUs from TBTT to quiet start
+ */
+typedef struct {
+	uint32_t vdev_id;
+	uint32_t tbttcount;
+	uint32_t period;
+	uint32_t duration;
+	uint32_t offset;
+} wmi_host_quiet_info;
+
+/**
  * struct wmi_host_p2p_noa_descriptor - NoA desc in SWBA event
  * @type_count: Absence count
  * @duration: NoA duration
