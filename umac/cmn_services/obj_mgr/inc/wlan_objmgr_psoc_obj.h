@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -208,21 +208,14 @@ struct wlan_objmgr_psoc_regulatory {
  * @dot11_mode: Phy mode
  * @skip_dfs_chnl_in_p2p_search: Skip Dfs Channel in case of P2P
  *                             Search
- * @indoor_channel_support: Enable/disable sap on indoor channel
- * @optimize_chan_avoid_event: Optimize channel avoidance
- *                           indication coming from firmware
  * @band_capability: Preferred band (0:Both,  1:2G only,  2:5G only)
- * @dual_mac_feature_disable: Disable Dual MAC feature
  */
 struct wlan_objmgr_psoc_user_config {
 	bool is_11d_support_enabled;
 	bool is_11h_support_enabled;
 	uint8_t dot11_mode;
 	bool skip_dfs_chnl_in_p2p_search;
-	bool indoor_channel_support;
-	bool optimize_chan_avoid_event;
 	uint8_t band_capability;
-	uint32_t dual_mac_feature_disable;
 };
 
 /**
@@ -1469,21 +1462,6 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc);
  * Return: None
  */
 void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc);
-
-/**
-* wlan_objmgr_psoc_get_dual_mac_disable () - get user config
-* data for DBS disable
-* @psoc: psoc object pointer
-*
-* Return: Disable or Enable
-*/
-static inline uint32_t wlan_objmgr_psoc_get_dual_mac_disable(
-		struct wlan_objmgr_psoc *psoc)
-{
-	if (psoc == NULL)
-		return 0;
-	return psoc->soc_nif.user_config.dual_mac_feature_disable;
-}
 
 /**
 * wlan_objmgr_psoc_get_band_capability () - get user config
