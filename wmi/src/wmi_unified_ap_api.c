@@ -494,6 +494,28 @@ QDF_STATUS wmi_extract_swba_tim_info(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_swba_quiet_info() - extract swba quiet info from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index to bcn info
+ * @param quiet_info: Pointer to hold quiet info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_swba_quiet_info(void *wmi_hdl, void *evt_buf,
+				       uint32_t idx,
+				       wmi_host_quiet_info *quiet_info)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_swba_quiet_info)
+		return wmi_handle->ops->extract_swba_quiet_info(wmi_handle,
+								evt_buf, idx,
+								quiet_info);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_swba_noa_info() - extract swba NoA information from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer

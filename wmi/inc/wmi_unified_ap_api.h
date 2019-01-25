@@ -124,6 +124,10 @@ QDF_STATUS wmi_extract_swba_num_vdevs(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_swba_tim_info(void *wmi_hdl, void *evt_buf,
 		 uint32_t idx, wmi_host_tim_info *tim_info);
 
+QDF_STATUS wmi_extract_swba_quiet_info(void *wmi_hdl, void *evt_buf,
+				       uint32_t idx,
+				       wmi_host_quiet_info *quiet_info);
+
 QDF_STATUS wmi_extract_swba_noa_info(void *wmi_hdl, void *evt_buf,
 			uint32_t idx, wmi_host_p2p_noa_info *p2p_desc);
 
