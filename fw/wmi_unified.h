@@ -5824,6 +5824,8 @@ typedef struct {
     A_UINT32 ant_id[WMI_MAX_CHAINS];
     /** mac address of diversity peer */
     wmi_mac_addr macaddr;
+    /* EVM value for stream0 and stream1 20Mhz, dB units */
+    A_INT32 chain_evm[WMI_MAX_CHAINS];
 } wmi_pdev_div_rssi_antid_event_fixed_param;
 
 typedef struct {
