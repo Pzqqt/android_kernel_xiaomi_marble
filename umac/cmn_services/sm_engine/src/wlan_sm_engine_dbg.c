@@ -1,19 +1,17 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -60,10 +58,35 @@ void wlan_sm_history_delete(struct wlan_sm *sm)
 	qdf_spinlock_destroy(&sm->history.sm_history_lock);
 }
 
+static void wlan_sm_print_history_entry(struct wlan_sm *sm,
+					struct wlan_sm_history_info *ent,
+					uint16_t i)
+{
+	const char *event_name = NULL;
+
+	if (sm->event_names) {
+		if (ent->event_type < sm->num_event_names)
+			event_name = sm->event_names[ent->event_type];
+
+		sm_engine_nofl_info(" (%d) trace_type: %d, event:%s[%d]", i,
+				    ent->trace_type,
+				    event_name ? event_name : "UNKNOWN_EVENT",
+				    ent->event_type);
+	} else {
+		sm_engine_nofl_info(" (%d) trace_type: %d, event: %d", i,
+				    ent->trace_type, ent->event_type);
+	}
+
+	sm_engine_nofl_info(" (%d) initial state :%s[%d], final state: %s[%d]",
+			    i, sm->state_info[ent->initial_state].name,
+			    ent->initial_state,
+			    sm->state_info[ent->final_state].name,
+			    ent->final_state);
+}
+
 void wlan_sm_print_history(struct wlan_sm *sm)
 {
 	struct wlan_sm_history *p_sm_history = &sm->history;
-	struct wlan_sm_history_info *p_memento;
 	uint16_t i;
 
 	/*
@@ -71,15 +94,10 @@ void wlan_sm_print_history(struct wlan_sm *sm)
 	 * Save a pointer to next write location and increment pointer.
 	 */
 	qdf_spin_lock_bh(&p_sm_history->sm_history_lock);
-	sm_engine_info(" SM History index is %d", p_sm_history->index);
-	for (i = 0; i < WLAN_SM_ENGINE_HISTORY_SIZE; i++) {
-		p_memento = &p_sm_history->data[i];
-		sm_engine_info(" (%d) trace_type: %d, event: %d", i,
-			       p_memento->trace_type, p_memento->event_type);
-		sm_engine_info(" (%d) initial state : %d, final state: %d", i,
-			       p_memento->initial_state,
-			       p_memento->final_state);
-	}
+	sm_engine_nofl_info("%s: SM History index is %d",
+			    sm->name, p_sm_history->index);
+	for (i = 0; i < WLAN_SM_ENGINE_HISTORY_SIZE; i++)
+		wlan_sm_print_history_entry(sm, &p_sm_history->data[i], i);
 
 	qdf_spin_unlock_bh(&p_sm_history->sm_history_lock);
 }
