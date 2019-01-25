@@ -9695,7 +9695,9 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 	    !add_key)
 		return QDF_STATUS_E_INVAL;
 
-	return ucfg_crypto_set_key_req(vdev, crypto_key, unicast);
+	return ucfg_crypto_set_key_req(vdev, crypto_key, (unicast ?
+				       WLAN_CRYPTO_KEY_TYPE_UNICAST :
+				       WLAN_CRYPTO_KEY_TYPE_GROUP));
 }
 
 QDF_STATUS csr_roam_issue_set_context_req_helper(

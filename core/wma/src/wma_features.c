@@ -5732,6 +5732,9 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 		return;
 	}
 	iface = &wma->interfaces[session_id];
+	if (!iface)
+		wma_info("iface not found for session id %d", session_id);
+
 	wma_reset_ipn(iface, key_index);
 	if (iface && pairwise)
 		iface->ucast_key_cipher =

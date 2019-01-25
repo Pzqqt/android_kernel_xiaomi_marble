@@ -13991,7 +13991,8 @@ static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
-	errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+	errno = wlan_cfg80211_crypto_add_key(vdev, WLAN_CRYPTO_KEY_TYPE_GROUP,
+					     key_index);
 	if (errno) {
 		hdd_err("add_ibss_key failed, errno: %d", errno);
 		hdd_objmgr_put_vdev(adapter);
@@ -14000,7 +14001,8 @@ static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
 	/* Save the keys here and call set_key for setting
 	 * the PTK after peer joins the IBSS network
 	 */
-	wlan_cfg80211_store_key(vdev, key_index, true, mac_addr, params);
+	wlan_cfg80211_store_key(vdev, key_index, WLAN_CRYPTO_KEY_TYPE_UNICAST,
+				mac_addr, params);
 	hdd_objmgr_put_vdev(adapter);
 	adapter->session.station.ibss_enc_key_installed = 1;
 
@@ -14019,7 +14021,11 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 	if (!vdev)
 		return -EINVAL;
 	if (hostapd_state->bss_state == BSS_START)
-		errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+		errno =
+		wlan_cfg80211_crypto_add_key(vdev, (pairwise ?
+					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					     WLAN_CRYPTO_KEY_TYPE_GROUP),
+					     key_index);
 	hdd_objmgr_put_vdev(adapter);
 
 	return errno;
@@ -14054,7 +14060,10 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
-	errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+	errno = wlan_cfg80211_crypto_add_key(vdev, (pairwise ?
+					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					     WLAN_CRYPTO_KEY_TYPE_GROUP),
+					     key_index);
 	hdd_objmgr_put_vdev(adapter);
 	if (!errno && adapter->send_mode_change) {
 		wlan_hdd_send_mode_change_event();
@@ -14077,6 +14086,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	bool key_already_installed = false, ft_mode = false;
 	enum wlan_crypto_cipher_type cipher;
 	int errno;
+	struct qdf_mac_addr mac_address;
 
 	hdd_enter();
 
@@ -14112,8 +14122,19 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
-	errno = wlan_cfg80211_store_key(vdev, key_index, pairwise, mac_addr,
-					params);
+	if (!pairwise && ((adapter->device_mode == QDF_STA_MODE) ||
+	    (adapter->device_mode == QDF_P2P_CLIENT_MODE))) {
+		qdf_mem_copy(mac_address.bytes,
+			     adapter->session.station.conn_info.bssId.bytes,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		qdf_mem_copy(mac_address.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+	}
+	errno = wlan_cfg80211_store_key(vdev, key_index,
+					(pairwise ?
+					WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					WLAN_CRYPTO_KEY_TYPE_GROUP),
+					mac_address.bytes, params);
 	hdd_objmgr_put_vdev(adapter);
 	if (errno)
 		return errno;
@@ -14735,8 +14756,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	}
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-		ret = wlan_cfg80211_crypto_add_key(adapter->vdev, unicast,
-						   key_index);
+		ret =
+		wlan_cfg80211_crypto_add_key(adapter->vdev, (unicast ?
+					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
+					     WLAN_CRYPTO_KEY_TYPE_GROUP),
+					     key_index);
 	}
 
 	return ret;

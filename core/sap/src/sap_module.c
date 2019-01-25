@@ -1390,7 +1390,8 @@ static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return ucfg_crypto_set_key_req(sap_ctx->vdev, crypto_key, true);
+	return ucfg_crypto_set_key_req(sap_ctx->vdev, crypto_key,
+				       WLAN_CRYPTO_KEY_TYPE_UNICAST);
 }
 #else
 static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
