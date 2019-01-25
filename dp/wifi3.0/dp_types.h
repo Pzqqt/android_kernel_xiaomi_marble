@@ -609,8 +609,11 @@ struct dp_soc_stats {
 			uint32_t invalid_vdev;
 			/* Invalid PDEV error count */
 			uint32_t invalid_pdev;
+
 			/* Invalid sa_idx or da_idx*/
 			uint32_t invalid_sa_da_idx;
+			/* MSDU DONE failures */
+			uint32_t msdu_done_fail;
 			/* Invalid PEER Error count */
 			struct cdp_pkt_info rx_invalid_peer;
 			/* Invalid PEER ID count */
@@ -619,6 +622,8 @@ struct dp_soc_stats {
 			uint32_t hal_ring_access_fail;
 			/* RX DMA error count */
 			uint32_t rxdma_error[HAL_RXDMA_ERR_MAX];
+			/* RX REO DEST Desc Invalid Magic count */
+			uint32_t rx_desc_invalid_magic;
 			/* REO Error count */
 			uint32_t reo_error[HAL_REO_ERR_MAX];
 			/* HAL REO ERR Count */

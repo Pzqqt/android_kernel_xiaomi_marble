@@ -56,6 +56,7 @@
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
 #define RX_BUFFER_RESERVATION   0
+#define RX_BUFFER_SIZE 2048
 
 #define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff
 #define DP_PEER_METADATA_PEER_ID_SHIFT	0
@@ -394,7 +395,6 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 
 	new->nbuf = NULL;
 	new->in_use = 0;
-	new->unmapped = 0;
 
 	((union dp_rx_desc_list_elem_t *)new)->next = *head;
 	*head = (union dp_rx_desc_list_elem_t *)new;
@@ -991,4 +991,45 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 				void *ring_desc, struct dp_rx_desc *rx_desc);
 
 void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
+#ifdef RX_DESC_DEBUG_CHECK
+/**
+ * dp_rx_desc_check_magic() - check the magic value in dp_rx_desc
+ * @rx_desc: rx descriptor pointer
+ *
+ * Return: true, if magic is correct, else false.
+ */
+static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
+{
+	if (qdf_unlikely(rx_desc->magic != DP_RX_DESC_MAGIC))
+		return false;
+
+	rx_desc->magic = 0;
+	return true;
+}
+
+/**
+ * dp_rx_desc_prep() - prepare rx desc
+ * @rx_desc: rx descriptor pointer to be prepared
+ * @nbuf: nbuf to be associated with rx_desc
+ *
+ * Return: none
+ */
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->magic = DP_RX_DESC_MAGIC;
+	rx_desc->nbuf = nbuf;
+}
+
+#else
+
+static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
+{
+	return true;
+}
+
+static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+{
+	rx_desc->nbuf = nbuf;
+}
+#endif /* RX_DESC_DEBUG_CHECK */
 #endif /* _DP_RX_H */

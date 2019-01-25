@@ -6859,10 +6859,14 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			soc->stats.rx.err.rx_invalid_peer.num);
 	DP_PRINT_STATS("HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
+	DP_PRINT_STATS("MSDU Done failures = %d",
+		       soc->stats.rx.err.msdu_done_fail);
 	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);
 	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
 	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos);
+	DP_PRINT_STATS("RX DESC invalid magic: %u",
+		       soc->stats.rx.err.rx_desc_invalid_magic);
 	DP_PRINT_STATS("RX DUP DESC: %d",
 		       soc->stats.rx.err.hal_reo_dest_dup);
 	DP_PRINT_STATS("RX REL DUP DESC: %d",
@@ -6873,8 +6877,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 				DP_RXDMA_ERR_LENGTH - index,
 				" %d", soc->stats.rx.err.rxdma_error[i]);
 	}
-	DP_PRINT_STATS("RXDMA Error (0-31):%s",
-			rxdma_error);
+	DP_PRINT_STATS("RXDMA Error (0-31):%s", rxdma_error);
 
 	index = 0;
 	for (i = 0; i < HAL_REO_ERR_MAX; i++) {
@@ -6882,8 +6885,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 				DP_REO_ERR_LENGTH - index,
 				" %d", soc->stats.rx.err.reo_error[i]);
 	}
-	DP_PRINT_STATS("REO Error(0-14):%s",
-			reo_error);
+	DP_PRINT_STATS("REO Error(0-14):%s", reo_error);
 }
 
 /**

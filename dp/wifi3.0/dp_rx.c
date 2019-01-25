@@ -30,19 +30,6 @@
 #include "dp_rx_mon.h"
 #include "dp_ipa.h"
 
-#ifdef RX_DESC_DEBUG_CHECK
-static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
-{
-	rx_desc->magic = DP_RX_DESC_MAGIC;
-	rx_desc->nbuf = nbuf;
-}
-#else
-static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
-{
-	rx_desc->nbuf = nbuf;
-}
-#endif
-
 #ifdef CONFIG_WIN
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
@@ -93,7 +80,7 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 	dp_rx_desc_dump(rx_desc);
 	hal_srng_dump_ring_desc(hal_soc, hal_ring, ring_desc);
 	hal_srng_dump_ring(hal_soc, hal_ring);
-	qdf_assert_always(rx_desc->in_use);
+	qdf_assert_always(0);
 }
 
 /*
@@ -208,7 +195,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		}
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
-				    QDF_DMA_BIDIRECTIONAL);
+					  QDF_DMA_BIDIRECTIONAL);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 			qdf_nbuf_free(rx_netbuf);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
@@ -232,12 +219,16 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		count++;
 
 		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-								rxdma_srng);
+							 rxdma_srng);
 		qdf_assert_always(rxdma_ring_entry);
 
 		next = (*desc_list)->next;
 
 		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
+
+		/* rx_desc.in_use should be zero at this time*/
+		qdf_assert_always((*desc_list)->rx_desc.in_use == 0);
+
 		(*desc_list)->rx_desc.in_use = 1;
 
 		dp_verbose_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
@@ -1597,6 +1588,14 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		 */
 		if (qdf_unlikely(!rx_desc->in_use)) {
 			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
+			dp_err("Reaping rx_desc not in use!");
+			dp_rx_dump_info_and_assert(soc, hal_ring,
+						   ring_desc, rx_desc);
+		}
+
+		if (qdf_unlikely(!dp_rx_desc_check_magic(rx_desc))) {
+			dp_err("Invalid rx_desc cookie=%d", rx_buf_cookie);
+			DP_STATS_INC(soc, rx.err.rx_desc_invalid_magic, 1);
 			dp_rx_dump_info_and_assert(soc, hal_ring,
 						   ring_desc, rx_desc);
 		}
@@ -1610,6 +1609,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		 */
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
 					QDF_DMA_BIDIRECTIONAL);
+		rx_desc->unmapped = 1;
 
 		core_id = smp_processor_id();
 		DP_STATS_INC(soc, rx.ring_packets[core_id][ring_id], 1);
@@ -1702,12 +1702,15 @@ done:
 		dp_rx_save_tid_ts(nbuf, tid, rx_pdev->delay_stats_flag);
 		tid_stats = &rx_pdev->stats.tid_stats.tid_rx_stats[tid];
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					FL("MSDU DONE failure"));
+			dp_err("MSDU DONE failure");
+			DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);
 			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
 					QDF_TRACE_LEVEL_INFO);
 			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
-			qdf_assert(0);
+			qdf_nbuf_free(nbuf);
+			qdf_assert_always(0);
+			nbuf = next;
+			continue;
 		}
 
 		tid_stats->msdu_cnt++;

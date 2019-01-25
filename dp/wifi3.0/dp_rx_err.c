@@ -32,22 +32,6 @@
 #include "dp_rx_defrag.h"
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 
-#ifdef RX_DESC_DEBUG_CHECK
-static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
-{
-	if (qdf_unlikely(rx_desc->magic != DP_RX_DESC_MAGIC)) {
-		return false;
-	}
-	rx_desc->magic = 0;
-	return true;
-}
-#else
-static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
-{
-	return true;
-}
-#endif
-
 /**
  * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
  *			      back on same vap or a different vap.
