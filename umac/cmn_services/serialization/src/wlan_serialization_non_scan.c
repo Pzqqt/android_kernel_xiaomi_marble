@@ -260,7 +260,7 @@ wlan_ser_move_non_scan_pending_to_active(
 	if (!qsize) {
 		wlan_serialization_release_lock(
 			&pdev_queue->pdev_queue_lock);
-		ser_err("Pending Queue is empty");
+		ser_debug("Pending Queue is empty");
 		goto error;
 	}
 
