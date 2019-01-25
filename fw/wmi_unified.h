@@ -5520,6 +5520,32 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SUB_CHANNEL_MARKING,
 
+    /*
+     * Enable/Disable/Set MGMT_TTL in milliseconds.
+     * non_zero - Enable, with the specified value
+     * 0 - Disable
+     */
+    WMI_PDEV_PARAM_SET_MGMT_TTL,
+
+    /*
+     * Enable/Disable/Set PROBE_RESP_TTL in milliseconds.
+     * non_zero - Enable, with the specified value
+     * 0 - Disable
+     */
+    WMI_PDEV_PARAM_SET_PROBE_RESP_TTL,
+
+    /*
+     * TBTT_CTRL_CFG
+     * BITS 0 - 2 (refer to WMI_TBTT_CTRL_CFG enum)
+     *   0  - DEFAULT -> HW_TBTT
+     *   1  - SW_TBTT -> HW_TBTT disabled,
+     *        software would truncate BURST near TBTT
+     *   2  - IGNORE_TBTT
+     *
+     * BITS 3 - 31 Reserved, must be set to 0x0
+     */
+    WMI_PDEV_PARAM_SET_TBTT_CTRL,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -5533,6 +5559,28 @@ typedef struct {
     /** parameter value */
     A_UINT32 param_value;
 } wmi_pdev_set_param_cmd_fixed_param;
+
+/* param values for WMI_PDEV_PARAM_SET_TBTT_CTRL's TBTT_CTRL_CFG bit-field */
+typedef enum {
+    WMI_TBTT_CTRL_HW_TRUNCATE = 0,
+    WMI_TBTT_CTRL_SW_TRUNCATE,
+    WMI_TBTT_CTRL_IGNORE_TBTT,
+
+    WMI_TBTT_CTRL_MAX = 0x7,
+} WMI_TBTT_CTRL_CFG;
+
+/** MACRO to set / get TBTT_CTRL_CFG bit-field within
+ *  WMI_PDEV_PARAM_SET_TBTT_CTRL:
+ *      bits 0~2 : TBTT_CTRL_CFG
+ *      bits 3~31: Reserved (set to 0x0)
+ */
+#define WMI_PDEV_PARAM_TBTT_CTRL_CFG_S  0
+#define WMI_PDEV_PARAM_TBTT_CTRL_CFG    0x00000007
+
+#define WMI_PDEV_PARAM_GET_TBTT_CTRL_CFG(word32) \
+    WMI_F_MS(word32, WMI_PDEV_PARAM_TBTT_CTRL_CFG)
+#define WMI_PDEV_PARAM_SET_TBTT_CTRL_CFG(word32, value) \
+    WMI_F_RMW(word32,value,WMI_PDEV_PARAM_TBTT_CTRL_CFG)
 
 /** MACRO define to set / get 11b and 11ag mode TX chain number:
  *  bit 0~15 : 11b mode TX chain number.
