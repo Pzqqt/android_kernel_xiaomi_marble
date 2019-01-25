@@ -9903,16 +9903,10 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	struct wlan_objmgr_psoc_user_config *user_config;
 	bool skip_dfs_in_p2p_search = false;
 	uint8_t band_capability;
-	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 	QDF_STATUS status;
 	bool value = false;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
-	if (QDF_IS_STATUS_ERROR(status))
-		return -EIO;
-
-	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
-						      &dual_mac_feature);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EIO;
 
