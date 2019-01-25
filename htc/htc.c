@@ -742,6 +742,7 @@ QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 				HTC_SETUP_COMPLETE_FLAGS_ENABLE_BUNDLE_RECV;
 			hif_set_bundle_mode(target->hif_dev, true,
 				HTC_MAX_MSG_PER_BUNDLE_RX);
+			pSetupComp->MaxMsgsPerBundledRecv = HTC_MAX_MSG_PER_BUNDLE_RX;
 		}
 
 		SET_HTC_PACKET_INFO_TX(pSendPacket,
