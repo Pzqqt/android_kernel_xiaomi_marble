@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -642,6 +642,16 @@
  *
  * </ini>
  */
+#ifdef RX_PERFORMANCE
+#define CFG_DP_RX_THREAD_CPU_MASK \
+		CFG_INI_UINT( \
+		"RX_THREAD_CPU_AFFINITY_MASK", \
+		0, \
+		0xFF, \
+		0x02, \
+		CFG_VALUE_OR_DEFAULT, \
+		"CPU mask to affine Rx_thread")
+#else
 #define CFG_DP_RX_THREAD_CPU_MASK \
 		CFG_INI_UINT( \
 		"RX_THREAD_CPU_AFFINITY_MASK", \
@@ -650,6 +660,7 @@
 		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"CPU mask to affine Rx_thread")
+#endif
 
 /*
  * <ini>

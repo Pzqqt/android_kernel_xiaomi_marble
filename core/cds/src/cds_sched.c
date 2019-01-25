@@ -35,7 +35,7 @@
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
-#ifdef THREAD_PERFORMANCE
+#ifdef RX_PERFORMANCE
 #include <linux/sched/types.h>
 #endif
 
@@ -388,6 +388,35 @@ static void cds_cpu_before_offline_cb(void *context, uint32_t cpu)
 {
 	cds_cpu_hotplug_notify(cpu, false);
 }
+
+#ifdef RX_PERFORMANCE
+/**
+ * cds_set_ol_rx_thread_scheduler - set ol_rx_thread scheduler
+ * @psched_context: Pointer to a previously allocated buffer big
+ *
+ * Return: None
+ */
+static void cds_set_ol_rx_thread_scheduler(p_cds_sched_context psched_context)
+{
+	struct sched_param param;
+
+	if (!psched_context) {
+		cds_err("Null params being passed");
+		return;
+	}
+	if (!psched_context->ol_rx_thread) {
+		cds_alert("CDS OL RX Thread is NULL");
+		return;
+	}
+	param.sched_priority = 99;
+	sched_setscheduler(psched_context->ol_rx_thread, SCHED_RR, &param);
+}
+#else
+static void cds_set_ol_rx_thread_scheduler(p_cds_sched_context psched_context)
+{
+}
+#endif /* RX_PERFORMANCE */
+
 #endif /* QCA_CONFIG_SMP */
 
 /**
@@ -410,12 +439,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
-#ifdef THREAD_PERFORMANCE
-	struct sched_param param;
-
-	param.sched_priority = 99;
-#endif
-
 	cds_debug("Opening the CDS Scheduler");
 	/* Sanity checks */
 	if ((p_cds_context == NULL) || (pSchedContext == NULL)) {
@@ -462,9 +485,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 		goto OL_RX_THREAD_START_FAILURE;
 
 	}
-#ifdef THREAD_PERFORMANCE
-	sched_setscheduler(pSchedContext->ol_rx_thread, SCHED_RR, &param);
-#endif
+	cds_set_ol_rx_thread_scheduler(pSchedContext);
 	wake_up_process(pSchedContext->ol_rx_thread);
 	cds_debug("CDS OL RX thread Created");
 	wait_for_completion_interruptible(&pSchedContext->ol_rx_start_event);
