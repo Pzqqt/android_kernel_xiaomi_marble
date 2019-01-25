@@ -19913,6 +19913,18 @@ typedef struct {
     A_UINT32 qtimer_low;
     /* high 32 bits of qtimer */
     A_UINT32 qtimer_high;
+    /*
+     * tsf_id: TSF ID for the current vdev
+     * This field should be ignored unless the tsf_id_valid flag is set.
+     */
+    A_UINT32 tsf_id;
+    A_UINT32 tsf_id_valid;
+    /*
+     * mac_id: MAC identifier
+     * This field should be ignored unless the mac_id_valid flag is set.
+     */
+    A_UINT32 mac_id;
+    A_UINT32 mac_id_valid;
 } wmi_vdev_tsf_report_event_fixed_param;
 
 /* ie_id values:
