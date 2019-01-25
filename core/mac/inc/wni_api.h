@@ -225,13 +225,6 @@ enum eWniMsgTypes {
 	eWNI_SME_MSG_TYPES_END
 };
 
-#define WNI_CFG_MSG_TYPES_BEGIN        0x1200
-
-/*---------------------------------------------------------------------*/
-/* CFG to HDD message types                                            */
-/*---------------------------------------------------------------------*/
-#define WNI_CFG_DNLD_REQ               (WNI_CFG_MSG_TYPES_BEGIN | 0x01)
-
 typedef struct sAniCfgTxRateCtrs {
 /* add the rate counters here */
 	unsigned long TxFrames_1Mbps;

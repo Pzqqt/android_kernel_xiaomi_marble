@@ -1226,8 +1226,6 @@ typedef struct {
 	bool fw_therm_throt_support;
 } t_wma_handle, *tp_wma_handle;
 
-extern void cds_wma_complete_cback(void);
-
 /**
  * wma_vdev_nss_chain_params_send() - send vdev nss chain params to fw.
  * @vdev_id: vdev_id

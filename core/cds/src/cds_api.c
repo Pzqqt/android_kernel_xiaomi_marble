@@ -814,24 +814,11 @@ QDF_STATUS cds_pre_enable(void)
 		cdp_pkt_log_con_service(soc, gp_cds_context->pdev_txrx_ctx,
 					scn);
 
-	/* Reset wma wait event */
-	qdf_event_reset(&gp_cds_context->wma_complete_event);
-
 	/*call WMA pre start */
 	status = wma_pre_start();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to WMA prestart");
 		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Need to update time out of complete */
-	status = qdf_wait_for_event_completion(
-					&gp_cds_context->wma_complete_event,
-					CDS_WMA_TIMEOUT);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cds_err("Failed to wait for WMA complete; status:%u", status);
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-		goto exit_with_status;
 	}
 
 	status = htc_start(gp_cds_context->htc_ctx);
@@ -1581,25 +1568,6 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context)
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
-
-/**
- * cds_wma_complete_cback() - wma complete callback
- *
- * Return: none
- */
-void cds_wma_complete_cback(void)
-{
-	if (!gp_cds_context) {
-		cds_err("invalid gp_cds_context");
-		return;
-	}
-
-	if (qdf_event_set(&gp_cds_context->wma_complete_event) !=
-	    QDF_STATUS_SUCCESS) {
-		cds_err("qdf_event_set failed");
-		return;
-	}
-} /* cds_wma_complete_cback() */
 
 /**
  * cds_get_vdev_types() - get vdev type

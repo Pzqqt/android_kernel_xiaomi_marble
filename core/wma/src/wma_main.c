@@ -3737,7 +3737,6 @@ QDF_STATUS wma_pre_start(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
-	struct scheduler_msg wma_msg = { 0 };
 	void *htc_handle;
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -3772,18 +3771,6 @@ QDF_STATUS wma_pre_start(void)
 
 	WMA_LOGD("WMA --> wmi_unified_connect_htc_service - success");
 
-	/* Trigger the CFG DOWNLOAD */
-	wma_msg.type = WNI_CFG_DNLD_REQ;
-	wma_msg.bodyptr = NULL;
-	wma_msg.bodyval = 0;
-
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
-					    QDF_MODULE_ID_WMA,
-					    QDF_MODULE_ID_WMA, &wma_msg);
-	if (QDF_STATUS_SUCCESS != qdf_status) {
-		QDF_ASSERT(0);
-		qdf_status = QDF_STATUS_E_FAILURE;
-	}
 end:
 	WMA_LOGD("%s: Exit", __func__);
 	return qdf_status;
@@ -8305,10 +8292,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_process_tsm_stats_req(wma_handle, (void *)msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_ESE */
-	case WNI_CFG_DNLD_REQ:
-		WMA_LOGD("McThread: WNI_CFG_DNLD_REQ");
-		cds_wma_complete_cback();
-		break;
 	case WMA_ADD_STA_SELF_REQ:
 		txrx_vdev_handle =
 			wma_vdev_attach(wma_handle,
