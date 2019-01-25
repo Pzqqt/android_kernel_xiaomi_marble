@@ -3131,11 +3131,6 @@ void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 }
-#else
-static inline
-void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
-		      tPmkidCacheInfo *pmk_cache)
-{}
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
