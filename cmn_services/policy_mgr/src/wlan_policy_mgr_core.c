@@ -133,8 +133,9 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
 		struct wlan_objmgr_psoc *psoc)
 {
 	bool is_disabled = false;
-	enum dbs_support dbs_type = wlan_objmgr_psoc_get_dual_mac_disable(psoc);
+	uint8_t dbs_type = DISABLE_DBS_CXN_AND_SCAN;
 
+	policy_mgr_get_dual_mac_feature(psoc, &dbs_type);
 	/*
 	 * If DBS support for connection is disabled through INI then assume
 	 * that DBS is not supported, so that policy manager takes

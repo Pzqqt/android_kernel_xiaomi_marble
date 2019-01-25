@@ -609,6 +609,7 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 		uint32_t scan_config, uint32_t fw_config)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t dual_mac_feature;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -618,11 +619,11 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 	pm_ctx->dual_mac_cfg.cur_scan_config = 0;
 	pm_ctx->dual_mac_cfg.cur_fw_mode_config = 0;
 
+	dual_mac_feature = pm_ctx->cfg.dual_mac_feature;
 	/* If dual mac features are disabled in the INI, we
 	 * need not proceed further
 	 */
-	if (DISABLE_DBS_CXN_AND_SCAN ==
-			wlan_objmgr_psoc_get_dual_mac_disable(psoc)) {
+	if (dual_mac_feature == DISABLE_DBS_CXN_AND_SCAN) {
 		policy_mgr_err("Disabling dual mac capabilities");
 		/* All capabilities are initialized to 0. We can return */
 		goto done;
@@ -3132,12 +3133,13 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 
 bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc)
 {
-	if ((DISABLE_DBS_CXN_AND_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
-	    (ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
-	    (ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
+
+	policy_mgr_get_dual_mac_feature(psoc, &dual_mac_feature);
+	if ((dual_mac_feature == DISABLE_DBS_CXN_AND_SCAN) ||
+	    (dual_mac_feature == ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN) ||
+	    (dual_mac_feature ==
+	     ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN) ||
 	     !policy_mgr_is_hw_dbs_capable(psoc))
 		return false;
 
