@@ -9269,41 +9269,6 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 }
 #endif /* FEATURE_RUNTIME_PM */
 
-static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
-	int timeout = SUSPEND_DRAIN_WAIT;
-	int drain_wait_delay = 50; /* 50 ms */
-
-	/* Abort if there are any pending TX packets */
-	while (dp_get_tx_pending(opaque_pdev) > 0) {
-		qdf_sleep(drain_wait_delay);
-		if (timeout <= 0) {
-			dp_err("TX frames are pending, abort suspend");
-			return QDF_STATUS_E_TIMEOUT;
-		}
-		timeout = timeout - drain_wait_delay;
-	}
-
-
-	if (soc->intr_mode == DP_INTR_POLL)
-		qdf_timer_stop(&soc->int_timer);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
-	struct dp_soc *soc = pdev->soc;
-
-	if (soc->intr_mode == DP_INTR_POLL)
-		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
 	.tx_non_std = dp_tx_non_std,
@@ -9351,6 +9316,40 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	.ipa_set_perf_level = dp_ipa_set_perf_level
 };
 #endif
+
+static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+	int timeout = SUSPEND_DRAIN_WAIT;
+	int drain_wait_delay = 50; /* 50 ms */
+
+	/* Abort if there are any pending TX packets */
+	while (dp_get_tx_pending(opaque_pdev) > 0) {
+		qdf_sleep(drain_wait_delay);
+		if (timeout <= 0) {
+			dp_err("TX frames are pending, abort suspend");
+			return QDF_STATUS_E_TIMEOUT;
+		}
+		timeout = timeout - drain_wait_delay;
+	}
+
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_stop(&soc->int_timer);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	if (soc->intr_mode == DP_INTR_POLL)
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 static struct cdp_bus_ops dp_ops_bus = {
 	.bus_suspend = dp_bus_suspend,
