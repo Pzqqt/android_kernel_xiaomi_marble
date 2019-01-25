@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,7 +27,7 @@
 #ifdef CONFIG_MCL
 #define SCHEDULER_CORE_MAX_MESSAGES 1000
 #else
-#define SCHEDULER_CORE_MAX_MESSAGES 2000
+#define SCHEDULER_CORE_MAX_MESSAGES 4000
 #define WLAN_SCHED_REDUCTION_LIMIT 32
 #endif
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 6
