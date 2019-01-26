@@ -3112,6 +3112,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 					session_entry);
 		goto end;
 	} else {
+		uint8_t add_pre_auth_context = true;
 		/*
 		 * SME_ASSOC_CNF status is non-success, so STA is not allowed
 		 * to be associated since the HAL sta entry is created for
@@ -3128,9 +3129,15 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 			 assoc_cnf.mac_status_code);
 		if (assoc_cnf.mac_status_code)
 			mac_status_code = assoc_cnf.mac_status_code;
+		if (assoc_cnf.mac_status_code == eSIR_MAC_INVALID_PMKID ||
+		    assoc_cnf.mac_status_code ==
+			eSIR_MAC_AUTH_ALGO_NOT_SUPPORTED_STATUS)
+			add_pre_auth_context = false;
+
 		lim_reject_association(mac_ctx, sta_ds->staAddr,
 				       sta_ds->mlmStaContext.subType,
-				       true, sta_ds->mlmStaContext.authType,
+				       add_pre_auth_context,
+				       sta_ds->mlmStaContext.authType,
 				       sta_ds->assocId, true,
 				       mac_status_code,
 				       session_entry);
