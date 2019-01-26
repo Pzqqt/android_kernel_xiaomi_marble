@@ -83,6 +83,10 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	switch (nan_msg_hdr->msg_id) {
 	case NAN_MSG_ID_ENABLE_RSP:
 		nan_evt_info = event->event_info;
+		if (!nan_evt_info) {
+			WMI_LOGE(FL("Fail: NAN enable rsp event info Null"));
+			return QDF_STATUS_E_INVAL;
+		}
 		evt_params->evt_type = nan_event_id_enable_rsp;
 		evt_params->mac_id = nan_evt_info->mac_id;
 		evt_params->is_nan_enable_success = (nan_evt_info->status == 0);
