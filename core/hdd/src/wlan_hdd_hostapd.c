@@ -2734,6 +2734,39 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 }
 
 /**
+ * hdd_is_any_sta_connecting() - check if any sta is connecting
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if any sta is connecting
+ */
+static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_station_ctx *sta_ctx;
+
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return false;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if ((adapter->device_mode == QDF_STA_MODE) ||
+		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
+		    (adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
+			if (sta_ctx->conn_info.connState ==
+			    eConnectionState_Connecting) {
+				hdd_debug("vdev_id %d: connecting",
+					  adapter->session_id);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * hdd_softap_set_channel_change() -
  * This function to support SAP channel change with CSA IE
  * set in the beacons.
@@ -2768,7 +2801,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * user space as it may change the HW mode requirement, for which sta is
 	 * trying to connect.
 	 */
-	if (hdd_get_sta_connection_in_progress(hdd_ctx)) {
+	if (hdd_is_any_sta_connecting(hdd_ctx)) {
 		hdd_err("STA connection is in progress");
 		return -EBUSY;
 	}
