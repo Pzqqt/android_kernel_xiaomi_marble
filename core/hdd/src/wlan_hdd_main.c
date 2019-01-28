@@ -9963,7 +9963,8 @@ static inline void hdd_release_rtnl_lock(void) { }
 /* MAX iwpriv command support */
 #define PKTLOG_SET_BUFF_SIZE	3
 #define PKTLOG_CLEAR_BUFF	4
-#define MAX_PKTLOG_SIZE		16
+/* Set Maximum pktlog file size to 64MB */
+#define MAX_PKTLOG_SIZE		64
 
 /**
  * hdd_pktlog_set_buff_size() - set pktlog buffer size
@@ -10059,7 +10060,8 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx, uint32_t set_value,
 			hdd_err("invalid pktlog size %d", set_value2);
 			return -EINVAL;
 		} else if (set_value2 > MAX_PKTLOG_SIZE) {
-			hdd_err("Pktlog buff size is too large. max value is 16MB.\n");
+			hdd_err_rl("Pktlog size is large. max value is %uMB.",
+				   MAX_PKTLOG_SIZE);
 			return -EINVAL;
 		}
 		return hdd_pktlog_set_buff_size(hdd_ctx, set_value2);
