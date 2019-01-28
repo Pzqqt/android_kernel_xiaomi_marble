@@ -114,8 +114,6 @@ static int q6asm_memory_map_regions(struct audio_client *ac, int dir,
 static int q6asm_memory_unmap_regions(struct audio_client *ac, int dir);
 static void q6asm_reset_buf_state(struct audio_client *ac);
 
-static int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
-				bool use_back_flavor);
 void *q6asm_mmap_apr_reg(void);
 
 static int q6asm_is_valid_session(struct apr_client_data *data, void *priv);
@@ -5420,7 +5418,16 @@ fail_cmd:
 }
 EXPORT_SYMBOL(q6asm_enc_cfg_blk_pcm_native);
 
-static int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
+/*
+ * q6asm_map_channels:
+ *     Provide default asm channel mapping for given channel count.
+ *
+ * @channel_mapping: buffer pointer to write back channel maps.
+ * @channels: channel count for which channel map is required.
+ * @use_back_flavor: use back channels instead of surround channels.
+ * Returns 0 for success, -EINVAL for unsupported channel count.
+ */
+int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
 		bool use_back_flavor)
 {
 	u8 *lchannel_mapping;
@@ -5528,6 +5535,7 @@ static int q6asm_map_channels(u8 *channel_mapping, uint32_t channels,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(q6asm_map_channels);
 
 /**
  * q6asm_enable_sbrps -

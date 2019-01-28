@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #ifndef __Q6_ADM_V2_H__
 #define __Q6_ADM_V2_H__
@@ -77,6 +77,12 @@ struct msm_pcm_channel_mixer {
 	bool enable;
 	int rule;
 	int channel_weight[ADM_MAX_CHANNELS][ADM_MAX_CHANNELS];
+	int port_idx;
+	int input_channel;
+	uint16_t in_ch_map[ADM_MAX_CHANNELS];
+	uint16_t out_ch_map[ADM_MAX_CHANNELS];
+	bool override_in_ch_map;
+	bool override_out_ch_map;
 };
 
 int srs_trumedia_open(int port_id, int copp_idx, __s32 srs_tech_id,
