@@ -343,6 +343,11 @@ struct hal_hw_txrx_ops {
 				void *wbm_er_info);
 	void (*hal_rx_dump_mpdu_start_tlv)(void *mpdustart,
 						uint8_t dbg_level);
+
+	void (*hal_tx_set_pcp_tid_map)(void *hal_soc, uint8_t *map);
+	void (*hal_tx_update_pcp_tid_map)(void *hal_soc, uint8_t pcp,
+					  uint8_t id);
+	void (*hal_tx_set_tidmap_prty)(void *hal_soc, uint8_t prio);
 };
 
 /**

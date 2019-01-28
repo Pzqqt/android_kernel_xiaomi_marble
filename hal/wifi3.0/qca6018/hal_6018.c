@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -139,6 +139,10 @@ struct hal_hw_txrx_ops qca6018_hal_hw_txrx_ops = {
 	hal_rx_status_get_tlv_info_generic,
 	hal_rx_wbm_err_info_get_generic,
 	hal_rx_dump_mpdu_start_tlv_generic,
+
+	hal_tx_set_pcp_tid_map_generic,
+	hal_tx_update_pcp_tid_generic,
+	hal_tx_update_tidmap_prty_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_6018[] = {

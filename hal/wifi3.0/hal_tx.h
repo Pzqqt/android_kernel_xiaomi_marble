@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,6 +84,8 @@ do {                                            \
 #define HTT_META_HEADER_LEN_BYTES 64
 #define HAL_TX_EXT_DESC_WITH_META_DATA \
 	(HTT_META_HEADER_LEN_BYTES + HAL_TX_EXTENSION_DESC_LEN_BYTES)
+
+#define HAL_TX_NUM_PCP_PER_REGISTER 8
 
 /* Length of WBM release ring without the status words */
 #define HAL_TX_COMPLETION_DESC_BASE_LEN 12
@@ -989,5 +991,47 @@ static inline void hal_tx_desc_set_buf_addr(void *desc, dma_addr_t paddr,
 	hal_soc->ops->hal_tx_desc_set_buf_addr(desc, paddr, pool_id,
 						desc_id, type);
 
+}
+
+/**
+ * hal_tx_set_pcp_tid_map_default() - Configure default PCP to TID map table
+ *
+ * @soc: HAL SoC context
+ * @map: PCP-TID mapping table
+ *
+ * Return: void
+ */
+static inline void hal_tx_set_pcp_tid_map_default(struct hal_soc *hal_soc,
+						  uint8_t *map)
+{
+	hal_soc->ops->hal_tx_set_pcp_tid_map(hal_soc, map);
+}
+
+/**
+ * hal_tx_update_pcp_tid_map() - Update PCP to TID map table
+ *
+ * @soc: HAL SoC context
+ * @pcp: pcp value
+ * @tid: tid no
+ *
+ * Return: void
+ */
+static inline void hal_tx_update_pcp_tid_map(struct hal_soc *hal_soc,
+					     uint8_t pcp, uint8_t tid)
+{
+	hal_soc->ops->hal_tx_update_pcp_tid_map(hal_soc, tid, tid);
+}
+
+/**
+ * hal_tx_set_tidmap_prty() - Configure TIDmap priority
+ *
+ * @soc: HAL SoC context
+ * @val: priority value
+ *
+ * Return: void
+ */
+static inline void hal_tx_set_tidmap_prty(struct hal_soc *hal_soc, uint8_t val)
+{
+	hal_soc->ops->hal_tx_set_tidmap_prty(hal_soc, val);
 }
 #endif /* HAL_TX_H */

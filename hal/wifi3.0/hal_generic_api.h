@@ -1919,7 +1919,6 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 			  mpdu_info->mpdu_qos_control_field,
 			  mpdu_info->mpdu_ht_control_field);
 }
-#endif
 
 /**
  * hal_tx_desc_set_search_type - Set the search type value
@@ -1968,3 +1967,89 @@ static void hal_tx_desc_set_search_index_generic(void *desc,
 {
 }
 #endif
+
+/**
+ * hal_tx_set_pcp_tid_map_generic() - Configure default PCP to TID map table
+ * @soc: HAL SoC context
+ * @map: PCP-TID mapping table
+ *
+ * PCP are mapped to 8 TID values using TID values programmed
+ * in one set of mapping registers PCP_TID_MAP_<0 to 6>
+ * The mapping register has TID mapping for 8 PCP values
+ *
+ * Return: none
+ */
+static void hal_tx_set_pcp_tid_map_generic(void *hal_soc, uint8_t *map)
+{
+	uint32_t addr, value;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	addr = HWIO_TCL_R0_PCP_TID_MAP_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
+
+	value = (map[0] |
+		(map[1] << HWIO_TCL_R0_PCP_TID_MAP_PCP_1_SHFT) |
+		(map[2] << HWIO_TCL_R0_PCP_TID_MAP_PCP_2_SHFT) |
+		(map[3] << HWIO_TCL_R0_PCP_TID_MAP_PCP_3_SHFT) |
+		(map[4] << HWIO_TCL_R0_PCP_TID_MAP_PCP_4_SHFT) |
+		(map[5] << HWIO_TCL_R0_PCP_TID_MAP_PCP_5_SHFT) |
+		(map[6] << HWIO_TCL_R0_PCP_TID_MAP_PCP_6_SHFT) |
+		(map[7] << HWIO_TCL_R0_PCP_TID_MAP_PCP_7_SHFT));
+
+	HAL_REG_WRITE(soc, addr, (value & HWIO_TCL_R0_PCP_TID_MAP_RMSK));
+}
+
+/**
+ * hal_tx_update_pcp_tid_generic() - Update the pcp tid map table with
+ *					value received from user-space
+ * @soc: HAL SoC context
+ * @pcp: pcp value
+ * @tid : tid value
+ *
+ * Return: void
+ */
+static
+void hal_tx_update_pcp_tid_generic(void *hal_soc, uint8_t pcp, uint8_t tid)
+{
+	uint32_t addr, value, regval;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	addr = HWIO_TCL_R0_PCP_TID_MAP_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
+
+	value = (uint32_t)tid << (HAL_TX_BITS_PER_TID * pcp);
+
+	/* Read back previous PCP TID config and update
+	 * with new config.
+	 */
+	regval = HAL_REG_READ(soc, addr);
+	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * pcp));
+	regval |= value;
+
+	HAL_REG_WRITE(soc, addr,
+		      (regval & HWIO_TCL_R0_PCP_TID_MAP_RMSK));
+}
+
+/**
+ * hal_tx_update_tidmap_prty_generic() - Update the tid map priority
+ * @soc: HAL SoC context
+ * @val: priority value
+ *
+ * Return: void
+ */
+static
+void hal_tx_update_tidmap_prty_generic(void *hal_soc, uint8_t value)
+{
+	uint32_t addr;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	addr = HWIO_TCL_R0_TID_MAP_PRTY_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
+
+	HAL_REG_WRITE(soc, addr,
+		      (value & HWIO_TCL_R0_TID_MAP_PRTY_RMSK));
+}
+#endif /* _HAL_GENERIC_API_H_ */

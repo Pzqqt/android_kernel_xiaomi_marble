@@ -140,6 +140,10 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_status_get_tlv_info_generic,
 	hal_rx_wbm_err_info_get_generic,
 	hal_rx_dump_mpdu_start_tlv_generic,
+
+	hal_tx_set_pcp_tid_map_generic,
+	hal_tx_update_pcp_tid_generic,
+	hal_tx_update_tidmap_prty_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

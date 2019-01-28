@@ -158,6 +158,22 @@ static uint8_t default_dscp_tid_map[DSCP_TID_MAP_MAX] = {
 	7, 7, 7, 7, 7, 7, 7, 7,
 };
 
+/**
+ * default_pcp_tid_map - Default PCP-TID mapping
+ *
+ * PCP     TID
+ * 000      0
+ * 001      1
+ * 010      2
+ * 011      3
+ * 100      4
+ * 101      5
+ * 110      6
+ * 111      7
+ */
+static uint8_t default_pcp_tid_map[PCP_TID_MAP_MAX] = {
+	0, 1, 2, 3, 4, 5, 6, 7,
+};
 /*
  * struct dp_rate_debug
  *
@@ -3015,6 +3031,25 @@ dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 	}
 }
 
+/**
+ * dp_pcp_tid_map_setup(): Initialize the pcp-tid maps
+ * @pdev - DP_PDEV handle
+ *
+ * Return: void
+ */
+static inline void
+dp_pcp_tid_map_setup(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc)
+		return;
+
+	qdf_mem_copy(soc->pcp_tid_map, default_pcp_tid_map,
+		     sizeof(default_pcp_tid_map));
+	hal_tx_set_pcp_tid_map_default(soc->hal_soc, default_pcp_tid_map);
+}
+
 #ifdef IPA_OFFLOAD
 /**
  * dp_setup_ipa_rx_refill_buf_ring - Setup second Rx refill buffer ring
@@ -3192,7 +3227,6 @@ void  dp_iterate_update_peer_list(void *pdev_hdl)
 {
 }
 #endif
-
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @ctrl_pdev: Opaque PDEV object
@@ -3389,6 +3423,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	dp_local_peer_id_pool_init(pdev);
 
 	dp_dscp_tid_map_setup(pdev);
+	dp_pcp_tid_map_setup(pdev);
 
 	/* Rx monitor mode specific init */
 	if (dp_rx_pdev_mon_attach(pdev)) {
@@ -4378,6 +4413,7 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		  FL("nss-wifi<0> nss config is enabled"));
 }
+
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
@@ -9528,6 +9564,97 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(void *pdev_handle,
 }
 #endif
 
+/**
+ * dp_set_pdev_pcp_tid_map_wifi3(): update pcp tid map in pdev
+ * @vdev: DP_PDEV handle
+ * @pcp: pcp value
+ * @tid: tid value passed by the user
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS dp_set_pdev_pcp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
+						uint8_t pcp, uint8_t tid)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+
+	soc->pcp_tid_map[pcp] = tid;
+
+	hal_tx_update_pcp_tid_map(soc->hal_soc, pcp, tid);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_set_pdev_tidmap_prty_wifi3(): update tidmap priority in pdev
+ * @vdev: DP_PDEV handle
+ * @prio: tidmap priority value passed by the user
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS dp_set_pdev_tidmap_prty_wifi3(struct cdp_pdev *pdev_handle,
+						uint8_t prio)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+
+	soc->tidmap_prty = prio;
+
+	hal_tx_set_tidmap_prty(soc->hal_soc, prio);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_set_vdev_pcp_tid_map_wifi3(): update pcp tid map in vdev
+ * @vdev: DP_VDEV handle
+ * @pcp: pcp value
+ * @tid: tid value passed by the user
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS dp_set_vdev_pcp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
+						uint8_t pcp, uint8_t tid)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	vdev->pcp_tid_map[pcp] = tid;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_set_vdev_tidmap_tbl_id_wifi3(): update tidmapi tbl id in vdev
+ * @vdev: DP_VDEV handle
+ * @mapid: map_id value passed by the user
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS dp_set_vdev_tidmap_tbl_id_wifi3(struct cdp_vdev *vdev_handle,
+						  uint8_t mapid)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	vdev->tidmap_tbl_id = mapid;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_set_vdev_tidmap_prty_wifi3(): update tidmap priority in vdev
+ * @vdev: DP_VDEV handle
+ * @prio: tidmap priority value passed by the user
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS dp_set_vdev_tidmap_prty_wifi3(struct cdp_vdev *vdev_handle,
+						uint8_t prio)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	vdev->tidmap_prty = prio;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -9616,6 +9743,12 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_rate_stats_ctx = dp_soc_get_rate_stats_ctx,
 	.txrx_peer_flush_rate_stats = dp_peer_flush_rate_stats,
 	.txrx_flush_rate_stats_request = dp_flush_rate_stats_req,
+
+	.set_pdev_pcp_tid_map = dp_set_pdev_pcp_tid_map_wifi3,
+	.set_pdev_tidmap_prty = dp_set_pdev_tidmap_prty_wifi3,
+	.set_vdev_pcp_tid_map = dp_set_vdev_pcp_tid_map_wifi3,
+	.set_vdev_tidmap_prty = dp_set_vdev_tidmap_prty_wifi3,
+	.set_vdev_tidmap_tbl_id = dp_set_vdev_tidmap_tbl_id_wifi3,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

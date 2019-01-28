@@ -88,10 +88,10 @@
 #define DEFAULT_HW_PEER_ID 0xffff
 
 #define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
-
-
 /* Maximum retries for Delba per tid per peer */
 #define DP_MAX_DELBA_RETRY 3
+
+#define PCP_TID_MAP_MAX 8
 
 #ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
@@ -1024,6 +1024,11 @@ struct dp_soc {
 	struct cdp_soc_rate_stats_ctx *rate_stats_ctx;
 	/* rdk rate statistics control flag */
 	bool wlanstats_enabled;
+
+	/* 8021p PCP-TID map values */
+	uint8_t pcp_tid_map[PCP_TID_MAP_MAX];
+	/* TID map priority value */
+	uint8_t tidmap_prty;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1568,6 +1573,15 @@ struct dp_vdev {
 
 	/* Capture timestamp of previous rx packet delivered */
 	uint64_t prev_rx_deliver_tstamp;
+
+	/* 8021p PCP-TID mapping table ID */
+	uint8_t tidmap_tbl_id;
+
+	/* 8021p PCP-TID map values */
+	uint8_t pcp_tid_map[PCP_TID_MAP_MAX];
+
+	/* TIDmap priority */
+	uint8_t tidmap_prty;
 };
 
 
