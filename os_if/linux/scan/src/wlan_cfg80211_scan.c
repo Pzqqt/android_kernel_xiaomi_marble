@@ -1255,6 +1255,20 @@ static inline void wlan_cfg80211_update_scan_policy_type_flags(
 }
 #endif
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+static bool
+wlan_cfg80211_allow_simultaneous_scan(struct wlan_objmgr_psoc *psoc)
+{
+	return policy_mgr_is_scan_simultaneous_capable(psoc);
+}
+#else
+static bool
+wlan_cfg80211_allow_simultaneous_scan(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
+}
+#endif
+
 int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		       struct cfg80211_scan_request *request,
 		       struct scan_params *params)
@@ -1280,6 +1294,24 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		cfg80211_err("Invalid psoc object");
 		return -EINVAL;
 	}
+
+	/* Get NL global context from objmgr*/
+	osif_priv = wlan_pdev_get_ospriv(pdev);
+	if (!osif_priv) {
+		cfg80211_err("Invalid osif priv object");
+		return -EINVAL;
+	}
+
+	/*
+	 * If a scan is already going on i.e the qdf_list ( scan que) is not
+	 * empty, and the simultaneous scan is disabled, dont allow 2nd scan
+	 */
+	if (!wlan_cfg80211_allow_simultaneous_scan(psoc) &&
+	    !qdf_list_empty(&osif_priv->osif_scan->scan_req_q)) {
+		cfg80211_err("Simultaneous scan disabled, reject scan");
+		return -EINVAL;
+	}
+
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		cfg80211_err("Failed to allocate scan request memory");
@@ -1288,8 +1320,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	/* Initialize the scan global params */
 	ucfg_scan_init_default_params(vdev, req);
 
-	/* Get NL global context from objmgr*/
-	osif_priv = wlan_pdev_get_ospriv(pdev);
 	req_id = osif_priv->osif_scan->req_id;
 	scan_id = ucfg_scan_get_scan_id(psoc);
 	if (!scan_id) {
@@ -1297,6 +1327,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		qdf_mem_free(req);
 		return -EINVAL;
 	}
+
 	/* fill the scan request structure */
 	req->vdev = vdev;
 	req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
