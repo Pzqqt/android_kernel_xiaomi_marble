@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2015, 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2015, 2017-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_MSM_AUDIO_ION_H
@@ -8,6 +8,7 @@
 #include <dsp/q6asm-v2.h>
 #include <sound/pcm.h>
 #include <linux/msm_ion.h>
+#include <linux/dma-mapping.h>
 
 enum {
 	MSM_AUDIO_ION_INV_CACHES = 0,
@@ -26,4 +27,7 @@ int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op);
 
 u32 msm_audio_populate_upper_32_bits(dma_addr_t pa);
 int msm_audio_ion_get_smmu_info(struct device **cb_dev, u64 *smmu_sid);
+
+int msm_audio_ion_dma_map(dma_addr_t *phys_addr, dma_addr_t *iova_base,
+			u32 size, enum dma_data_direction dir);
 #endif /* _LINUX_MSM_AUDIO_ION_H */
