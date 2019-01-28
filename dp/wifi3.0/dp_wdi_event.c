@@ -137,11 +137,7 @@ dp_wdi_event_handler(
 	 *  Subscribers must do the sanity based on the requirements
 	 */
 	event_index = event - WDI_EVENT_BASE;
-	if (!(txrx_pdev->wdi_event_list[event_index]) &&
-		(event == WDI_EVENT_RX_DESC)) {
-		/* WDI_EVEN_RX_DESC is indicated for RX_LITE also */
-		event_index = WDI_EVENT_LITE_RX - WDI_EVENT_BASE;
-	}
+
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];
 
 	/* Find the subscriber */

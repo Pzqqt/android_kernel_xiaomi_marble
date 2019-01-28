@@ -235,7 +235,7 @@ wdi_pktlog_subscribe(struct cdp_pdev *cdp_pdev, int32_t log_state)
 	if ((log_state & ATH_PKTLOG_TX) ||
 	    (log_state  & ATH_PKTLOG_RCFIND) ||
 	    (log_state & ATH_PKTLOG_RCUPDATE) ||
-	    (log_state & ATH_PKTLOG_RX)) {
+	    (log_state & ATH_PKTLOG_SW_EVENT)) {
 		if (cdp_wdi_event_sub(soc,
 				      cdp_pdev,
 				      &PKTLOG_OFFLOAD_SUBSCRIBER,
@@ -246,8 +246,8 @@ wdi_pktlog_subscribe(struct cdp_pdev *cdp_pdev, int32_t log_state)
 
 	if (log_state & ATH_PKTLOG_RX) {
 		if (cdp_wdi_event_sub(soc, cdp_pdev,
-				      &PKTLOG_RX_SUBSCRIBER,
-				      WDI_EVENT_RX_DESC)) {
+					&PKTLOG_RX_SUBSCRIBER,
+					WDI_EVENT_RX_DESC)) {
 			return A_ERROR;
 		}
 	}
@@ -465,7 +465,7 @@ wdi_pktlog_unsubscribe(struct cdp_pdev *pdev, uint32_t log_state)
 	if ((log_state & ATH_PKTLOG_TX) ||
 	    (log_state  & ATH_PKTLOG_RCFIND) ||
 	    (log_state & ATH_PKTLOG_RCUPDATE) ||
-	    (log_state & ATH_PKTLOG_RX)) {
+	    (log_state & ATH_PKTLOG_SW_EVENT)) {
 		if (cdp_wdi_event_unsub(soc,
 					pdev,
 					&PKTLOG_OFFLOAD_SUBSCRIBER,
@@ -557,6 +557,39 @@ int pktlog_disable(struct hif_opaque_softc *scn)
 	return 0;
 }
 
+#ifdef HELIUMPLUS
+/**
+ * pktlog_callback_registration() - Register pktlog handlers based on
+ *                                  on callback type
+ * @callback_type: pktlog full or lite registration
+ *
+ * Return: None
+ */
+static void pktlog_callback_registration(uint8_t callback_type)
+{
+	if (callback_type == PKTLOG_DEFAULT_CALLBACK_REGISTRATION) {
+		PKTLOG_TX_SUBSCRIBER.callback = pktlog_callback;
+		PKTLOG_RX_SUBSCRIBER.callback = pktlog_callback;
+		PKTLOG_RX_REMOTE_SUBSCRIBER.callback = pktlog_callback;
+		PKTLOG_RCFIND_SUBSCRIBER.callback = pktlog_callback;
+		PKTLOG_RCUPDATE_SUBSCRIBER.callback = pktlog_callback;
+		PKTLOG_SW_EVENT_SUBSCRIBER.callback = pktlog_callback;
+	}
+}
+#else
+static void pktlog_callback_registration(uint8_t callback_type)
+{
+	if (callback_type == PKTLOG_DEFAULT_CALLBACK_REGISTRATION) {
+		PKTLOG_RX_SUBSCRIBER.callback = lit_pktlog_callback;
+		PKTLOG_LITE_T2H_SUBSCRIBER.callback = lit_pktlog_callback;
+		PKTLOG_OFFLOAD_SUBSCRIBER.callback = pktlog_callback;
+	} else if (callback_type == PKTLOG_LITE_CALLBACK_REGISTRATION) {
+		PKTLOG_LITE_T2H_SUBSCRIBER.callback = lit_pktlog_callback;
+		PKTLOG_LITE_RX_SUBSCRIBER.callback = lit_pktlog_callback;
+	}
+}
+#endif
+
 void pktlog_init(struct hif_opaque_softc *scn)
 {
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
@@ -589,18 +622,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	pl_info->start_time_per = 0;
 	pl_dev->vendor_cmd_send = false;
 
-	if (pl_dev->callback_type == PKTLOG_DEFAULT_CALLBACK_REGISTRATION) {
-		PKTLOG_TX_SUBSCRIBER.callback = pktlog_callback;
-		PKTLOG_RX_SUBSCRIBER.callback = pktlog_callback;
-		PKTLOG_RX_REMOTE_SUBSCRIBER.callback = pktlog_callback;
-		PKTLOG_RCFIND_SUBSCRIBER.callback = pktlog_callback;
-		PKTLOG_RCUPDATE_SUBSCRIBER.callback = pktlog_callback;
-		PKTLOG_SW_EVENT_SUBSCRIBER.callback = pktlog_callback;
-	} else if (pl_dev->callback_type == PKTLOG_LITE_CALLBACK_REGISTRATION) {
-		PKTLOG_LITE_T2H_SUBSCRIBER.callback = lit_pktlog_callback;
-		PKTLOG_LITE_RX_SUBSCRIBER.callback = lit_pktlog_callback;
-		PKTLOG_OFFLOAD_SUBSCRIBER.callback = pktlog_callback;
-	}
+	pktlog_callback_registration(pl_dev->callback_type);
 }
 
 static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
@@ -764,7 +786,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 }
 
 #define ONE_MEGABYTE (1024 * 1024)
-#define MAX_ALLOWED_PKTLOG_SIZE (16 * ONE_MEGABYTE)
+#define MAX_ALLOWED_PKTLOG_SIZE (64 * ONE_MEGABYTE)
 
 static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 {
