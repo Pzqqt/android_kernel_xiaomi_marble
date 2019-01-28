@@ -185,6 +185,27 @@ static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
 }
 #endif
 
+#ifndef QCN7605_SUPPORT
+static int htt_t2h_adjust_bus_target_delta(struct htt_pdev_t *pdev,
+					   int32_t htt_credit_delta)
+{
+	if (pdev->cfg.is_high_latency && !pdev->cfg.default_tx_comp_req) {
+		HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
+		qdf_atomic_add(htt_credit_delta,
+			       &pdev->htt_tx_credit.target_delta);
+		htt_credit_delta = htt_tx_credit_update(pdev);
+		HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
+	}
+	return htt_credit_delta;
+}
+#else
+static int htt_t2h_adjust_bus_target_delta(struct htt_pdev_t *pdev,
+					   int32_t htt_credit_delta)
+{
+	return htt_credit_delta;
+}
+#endif
+
 #define MAX_TARGET_TX_CREDIT    204800
 
 /* Target to host Msg/event  handler  for low priority messages*/
@@ -471,16 +492,8 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				old_credit, htt_credit_delta);
 			break;
 		}
-
-		if (pdev->cfg.is_high_latency &&
-		    !pdev->cfg.default_tx_comp_req) {
-			HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
-			qdf_atomic_add(htt_credit_delta,
-				       &pdev->htt_tx_credit.target_delta);
-			htt_credit_delta = htt_tx_credit_update(pdev);
-			HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
-		}
-
+		htt_credit_delta =
+		htt_t2h_adjust_bus_target_delta(pdev, htt_credit_delta);
 		htt_tx_group_credit_process(pdev, msg_word);
 		ol_tx_credit_completion_handler(pdev->txrx_pdev,
 						htt_credit_delta);

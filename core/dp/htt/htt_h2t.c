@@ -41,6 +41,8 @@
 #include <wdi_ipa.h>            /* HTT host->target WDI IPA msg defs */
 #include <ol_txrx_htt_api.h>    /* ol_tx_completion_handler, htt_tx_status */
 #include <ol_htt_tx_api.h>
+#include <ol_txrx_types.h>
+#include <ol_tx_send.h>
 
 #include <htt_internal.h>
 #include <wlan_policy_mgr_api.h>
@@ -72,6 +74,30 @@ htt_h2t_send_complete_free_netbuf(void *pdev, QDF_STATUS status,
 	qdf_nbuf_free(netbuf);
 }
 
+#ifndef QCN7605_SUPPORT
+static void htt_t2h_adjust_bus_target_delta(struct htt_pdev_t *pdev)
+{
+	int32_t credit_delta;
+
+	if (pdev->cfg.is_high_latency && !pdev->cfg.default_tx_comp_req) {
+		HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
+		qdf_atomic_add(1, &pdev->htt_tx_credit.bus_delta);
+		credit_delta = htt_tx_credit_update(pdev);
+		HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
+
+		if (credit_delta)
+			ol_tx_credit_completion_handler(pdev->txrx_pdev,
+							credit_delta);
+	}
+}
+#else
+static void htt_t2h_adjust_bus_target_delta(struct htt_pdev_t *pdev)
+{
+	/* UNPAUSE OS Q */
+	ol_tx_flow_ct_unpause_os_q(pdev->txrx_pdev);
+}
+#endif
+
 void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
 	void (*send_complete_part2)(void *pdev, QDF_STATUS status,
@@ -91,19 +117,7 @@ void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 				    htt_pkt->msdu_id);
 	}
 
-	if (pdev->cfg.is_high_latency && !pdev->cfg.default_tx_comp_req) {
-		int32_t credit_delta;
-
-		HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
-		qdf_atomic_add(1, &pdev->htt_tx_credit.bus_delta);
-		credit_delta = htt_tx_credit_update(pdev);
-		HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
-
-		if (credit_delta)
-			ol_tx_credit_completion_handler(pdev->txrx_pdev,
-							credit_delta);
-	}
-
+	htt_t2h_adjust_bus_target_delta(pdev);
 	/* free the htt_htc_pkt / HTC_PACKET object */
 	htt_htc_pkt_free(pdev, htt_pkt);
 }
