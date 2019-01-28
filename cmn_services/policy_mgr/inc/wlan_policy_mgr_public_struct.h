@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -351,6 +351,10 @@ enum policy_mgr_pcl_type {
  * @PM_IBSS_5_2x2:  IBSS connection using 2x2@5 Ghz
  * @PM_NAN_DISC_24_1x1:  NAN Discovery using 1x1@2.4 Ghz
  * @PM_NAN_DISC_24_2x2:  NAN Discovery using 2x2@2.4 Ghz
+ * @PM_NDI_24_1x1:  NAN Datapath using 1x1@2.4 Ghz
+ * @PM_NDI_24_2x2:  NAN Datapath using 2x2@2.4 Ghz
+ * @PM_NDI_5_1x1:  NAN Datapath using 1x1@5 Ghz
+ * @PM_NDI_5_2x2:  NAN Datapath using 2x2@5 Ghz
  * @PM_MAX_ONE_CONNECTION_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -379,6 +383,10 @@ enum policy_mgr_one_connection_mode {
 	PM_IBSS_5_2x2,
 	PM_NAN_DISC_24_1x1,
 	PM_NAN_DISC_24_2x2,
+	PM_NDI_24_1x1,
+	PM_NDI_24_2x2,
+	PM_NDI_5_1x1,
+	PM_NDI_5_2x2,
 
 	PM_MAX_ONE_CONNECTION_MODE
 };
@@ -568,6 +576,18 @@ enum policy_mgr_one_connection_mode {
  *			1x1
  * @PM_STA_STA_DBS_2x2: STA & STA connection on DBS using 2x2
  * @PM_STA_STA_SBS_5_1x1: STA & STA connection on 5G SBS using 1x1
+ * @PM_STA_NAN_DISC_SCC_24_1x1: NAN & STA connection on SCC using 1x1 on 2.4 GHz
+ * @PM_STA_NAN_DISC_SCC_24_2x2: NAN & STA connection on SCC using 2x2 on 2.4 GHz
+ * @PM_STA_NAN_DISC_MCC_24_1x1: NAN & STA connection on MCC using 1x1 on 2.4 GHz
+ * @PM_STA_NAN_DISC_MCC_24_2x2: NAN & STA connection on MCC using 2x2 on 2.4 GHz
+ * @PM_STA_NAN_DISC_DBS_1x1: NAN & STA connection on DBS using 1x1
+ * @PM_STA_NAN_DISC_DBS_2x2: NAN & STA connection on DBS using 2x2
+ * @PM_NAN_DISC_NDI_SCC_24_1x1: NAN & NDI connection on SCC using 1x1 on 2.4 GHz
+ * @PM_NAN_DISC_NDI_SCC_24_2x2: NAN & NDI connection on SCC using 2x2 on 2.4 GHz
+ * @PM_NAN_DISC_NDI_MCC_24_1x1: NAN & NDI connection on MCC using 1x1 on 2.4 GHz
+ * @PM_NAN_DISC_NDI_MCC_24_2x2: NAN & NDI connection on MCC using 2x2 on 2.4 GHz
+ * @PM_NAN_DISC_NDI_DBS_1x1: NAN & NDI connection on DBS using 1x1
+ * @PM_NAN_DISC_NDI_DBS_2x2: NAN & NDI connection on DBS using 2x2
  *
  * These are generic IDs that identify the various roles in the
  * software system
@@ -677,6 +697,18 @@ enum policy_mgr_two_connection_mode {
 	PM_STA_STA_DBS_1x1,
 	PM_STA_STA_DBS_2x2,
 	PM_STA_STA_SBS_5_1x1,
+	PM_STA_NAN_DISC_SCC_24_1x1,
+	PM_STA_NAN_DISC_SCC_24_2x2,
+	PM_STA_NAN_DISC_MCC_24_1x1,
+	PM_STA_NAN_DISC_MCC_24_2x2,
+	PM_STA_NAN_DISC_DBS_1x1,
+	PM_STA_NAN_DISC_DBS_2x2,
+	PM_NAN_DISC_NDI_SCC_24_1x1,
+	PM_NAN_DISC_NDI_SCC_24_2x2,
+	PM_NAN_DISC_NDI_MCC_24_1x1,
+	PM_NAN_DISC_NDI_MCC_24_2x2,
+	PM_NAN_DISC_NDI_DBS_1x1,
+	PM_NAN_DISC_NDI_DBS_2x2,
 
 	PM_MAX_TWO_CONNECTION_MODE
 };
@@ -762,6 +794,7 @@ enum policy_mgr_band {
  *        vdev change, then DBS hw mode may needs to change from one DBS mode
  *        to the other DBS mode. This reason code indicates such condition.
  * @POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY: NAN Discovery related
+ * @POLICY_MGR_UPDATE_REASON_NDP_UPDATE: NAN Datapath related update
  */
 enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN,
@@ -777,6 +810,7 @@ enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_PRE_CAC,
 	POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE,
 	POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY,
+	POLICY_MGR_UPDATE_REASON_NDP_UPDATE,
 };
 
 /**
