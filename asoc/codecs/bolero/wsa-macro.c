@@ -192,6 +192,7 @@ struct wsa_macro_priv {
 	u16 prim_int_users[WSA_MACRO_RX1 + 1];
 	u16 wsa_mclk_users;
 	u16 swr_clk_users;
+	bool dapm_mclk_enable;
 	bool reset_swr;
 	unsigned int vi_feed_value;
 	struct mutex mclk_lock;
@@ -870,9 +871,14 @@ static int wsa_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		ret = wsa_macro_mclk_enable(wsa_priv, 1, true);
+		if (ret)
+			wsa_priv->dapm_mclk_enable = false;
+		else
+			wsa_priv->dapm_mclk_enable = true;
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		wsa_macro_mclk_enable(wsa_priv, 0, true);
+		if (wsa_priv->dapm_mclk_enable)
+			wsa_macro_mclk_enable(wsa_priv, 0, true);
 		break;
 	default:
 		dev_err(wsa_priv->dev,
