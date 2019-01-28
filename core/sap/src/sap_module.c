@@ -845,7 +845,14 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			  "%s: Invalid SAP Context", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-
+	if (qdf_mem_cmp(sap_ctx->bssid.bytes, peer_sta_mac,
+			QDF_MAC_ADDR_SIZE) == 0) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "requested peer mac is" MAC_ADDRESS_STR
+			  "our own SAP BSSID. Do not blacklist or whitelist this BSSID",
+			  MAC_ADDR_ARRAY(peer_sta_mac));
+		return QDF_STATUS_E_FAULT;
+	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Modify ACL entered\n" "Before modification of ACL\n"
 		  "size of accept and deny lists %d %d", sap_ctx->nAcceptMac,

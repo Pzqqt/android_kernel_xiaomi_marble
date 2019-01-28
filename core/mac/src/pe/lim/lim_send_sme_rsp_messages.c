@@ -1267,9 +1267,8 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	}
 
 	/*Delete the PE session  created */
-	if (pe_session != NULL) {
+	if (pe_session && LIM_IS_STA_ROLE(pe_session))
 		pe_delete_session(mac, pe_session);
-	}
 
 	lim_send_sme_disassoc_deauth_ntf(mac, QDF_STATUS_SUCCESS,
 					 (uint32_t *) pMsg);
