@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -704,6 +704,13 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 							1,
 							&desc_list,
 							&tail);
+			/*
+			 * No free descriptors available
+			 */
+			if (qdf_unlikely(num_alloc_desc == 0)) {
+				work_done++;
+				break;
+			}
 
 			rx_desc = &desc_list->rx_desc;
 		}
