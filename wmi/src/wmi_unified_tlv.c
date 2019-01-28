@@ -7873,6 +7873,8 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 
 	uint32_t wireless_modes = 0;
 
+	WMI_LOGD("Target wireless mode: 0x%x", target_wireless_mode);
+
 	if (target_wireless_mode & REGDMN_MODE_11A)
 		wireless_modes |= WMI_HOST_REGDMN_MODE_11A;
 
@@ -7893,6 +7895,9 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 
 	if (target_wireless_mode & REGDMN_MODE_108A)
 		wireless_modes |= WMI_HOST_REGDMN_MODE_108A;
+
+	if (target_wireless_mode & REGDMN_MODE_11AC_VHT20_2G)
+		wireless_modes |= WMI_HOST_REGDMN_MODE_11AC_VHT20_2G;
 
 	if (target_wireless_mode & REGDMN_MODE_XR)
 		wireless_modes |= WMI_HOST_REGDMN_MODE_XR;
