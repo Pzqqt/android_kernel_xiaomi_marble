@@ -1091,4 +1091,46 @@ void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf);
 QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data);
 #endif
+/**
+ * lim_process_assoc_cleanup() - frees up resources used in function
+ * lim_process_assoc_req_frame()
+ * @mac_ctx: pointer to Global MAC structure
+ * @session: pointer to pe session entry
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @sta_ds: station dph entry
+ * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
+ *
+ * Frees up resources used in function lim_process_assoc_req_frame
+ *
+ * Return: void
+ */
+void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
+			       struct pe_session *session,
+			       tpSirAssocReq assoc_req,
+			       tpDphHashNode sta_ds,
+			       bool assoc_req_copied);
+
+/**
+ * lim_send_assoc_ind_to_sme() - Initialize PE data structures and send assoc
+ *				 indication to SME.
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pe session entry
+ * @sub_type: Indicates whether it is Association Request(=0) or Reassociation
+ *            Request(=1) frame
+ * @hdr: A pointer to the MAC header
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @pmf_connection: flag indicating pmf connection
+ * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
+ * @dup_entry: flag indicating if duplicate entry found
+ *
+ * Return: void
+ */
+bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
+			       struct pe_session *session,
+			       uint8_t sub_type,
+			       tpSirMacMgmtHdr hdr,
+			       tpSirAssocReq assoc_req,
+			       bool pmf_connection,
+			       bool *assoc_req_copied,
+			       bool dup_entry);
 #endif /* __LIM_TYPES_H */

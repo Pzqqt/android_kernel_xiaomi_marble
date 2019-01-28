@@ -311,6 +311,7 @@ static void lim_external_auth_add_pre_auth_node(struct mac_context *mac_ctx,
 	auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 	auth_node->seq_num = ((mac_hdr->seqControl.seqNumHi << 4) |
 			      (mac_hdr->seqControl.seqNumLo));
+	auth_node->assoc_req.present = false;
 	lim_add_pre_auth_node(mac_ctx, auth_node);
 }
 

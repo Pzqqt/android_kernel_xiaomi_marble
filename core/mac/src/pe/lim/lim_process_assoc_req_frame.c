@@ -1828,25 +1828,11 @@ static bool lim_update_sta_ctx(struct mac_context *mac_ctx, struct pe_session *s
 	return true;
 }
 
-/**
- * lim_process_assoc_cleanup() - frees up resources used in function
- * lim_process_assoc_req_frame()
- * @mac_ctx: pointer to Global MAC structure
- * @session: pointer to pe session entry
- * @assoc_req: pointer to ASSOC/REASSOC Request frame
- * @sta_ds: station dph entry
- * @tmp_assoc_req: pointer to tmp ASSOC/REASSOC Request frame
- * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
- *
- * Frees up resources used in function lim_process_assoc_req_frame
- *
- * Return: void
- */
-static void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
-				      struct pe_session *session,
-				      tpSirAssocReq assoc_req,
-				      tpDphHashNode sta_ds,
-				      bool *assoc_req_copied)
+void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
+			       struct pe_session *session,
+			       tpSirAssocReq assoc_req,
+			       tpDphHashNode sta_ds,
+			       bool assoc_req_copied)
 {
 	tpSirAssocReq tmp_assoc_req;
 
@@ -1859,7 +1845,7 @@ static void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 
 		qdf_mem_free(assoc_req);
 		/* to avoid double free */
-		if (*assoc_req_copied && session->parsedAssocReq)
+		if (assoc_req_copied && session->parsedAssocReq)
 			session->parsedAssocReq[sta_ds->assocId] = NULL;
 	}
 
@@ -1884,8 +1870,7 @@ static void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 }
 
 /**
- * lim_send_assoc_ind_to_sme() - Initialize PE data structures and send assoc
- *				 indication to SME.
+ * lim_defer_sme_indication() - Defer assoc indication to SME
  * @mac_ctx: Pointer to Global MAC structure
  * @session: pe session entry
  * @sub_type: Indicates whether it is Association Request(=0) or Reassociation
@@ -1896,18 +1881,44 @@ static void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
  * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
  * @dup_entry: flag indicating if duplicate entry found
  *
- * This function is called to process RE/ASSOC Request frame.
+ * Defer Initialization of PE data structures and wait for an external event.
+ * lim_send_assoc_ind_to_sme() will be called to initialize PE data structures
+ * when the expected event is received.
  *
- * @Return: void
+ * Return: void
  */
-static bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
-				      struct pe_session *session,
-				      uint8_t sub_type,
-				      tpSirMacMgmtHdr hdr,
-				      tpSirAssocReq assoc_req,
-				      bool pmf_connection,
-				      bool *assoc_req_copied,
-				      bool dup_entry)
+static void lim_defer_sme_indication(struct mac_context *mac_ctx,
+				     struct pe_session *session,
+				     uint8_t sub_type,
+				     tpSirMacMgmtHdr hdr,
+				     struct sSirAssocReq *assoc_req,
+				     bool pmf_connection,
+				     bool assoc_req_copied,
+				     bool dup_entry,
+				     struct sDphHashNode *sta_ds)
+{
+	struct tLimPreAuthNode *sta_pre_auth_ctx;
+	/* Extract pre-auth context for the STA, if any. */
+	sta_pre_auth_ctx = lim_search_pre_auth_list(mac_ctx, hdr->sa);
+	sta_pre_auth_ctx->assoc_req.present = true;
+	sta_pre_auth_ctx->assoc_req.sub_type = sub_type;
+	qdf_mem_copy(&sta_pre_auth_ctx->assoc_req.hdr, hdr,
+		     sizeof(tSirMacMgmtHdr));
+	sta_pre_auth_ctx->assoc_req.assoc_req = assoc_req;
+	sta_pre_auth_ctx->assoc_req.pmf_connection = pmf_connection;
+	sta_pre_auth_ctx->assoc_req.assoc_req_copied = assoc_req_copied;
+	sta_pre_auth_ctx->assoc_req.dup_entry = dup_entry;
+	sta_pre_auth_ctx->assoc_req.sta_ds = sta_ds;
+}
+
+bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
+			       struct pe_session *session,
+			       uint8_t sub_type,
+			       tpSirMacMgmtHdr hdr,
+			       tpSirAssocReq assoc_req,
+			       bool pmf_connection,
+			       bool *assoc_req_copied,
+			       bool dup_entry)
 {
 	uint16_t peer_idx;
 	struct tLimPreAuthNode *sta_pre_auth_ctx;
@@ -2044,6 +2055,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	uint32_t phy_mode;
 	tHalBitVal qos_mode;
 	tpSirMacMgmtHdr hdr;
+	struct tLimPreAuthNode *sta_pre_auth_ctx;
 	tSirMacCapabilityInfo local_cap;
 	tpDphHashNode sta_ds = NULL;
 	tpSirAssocReq assoc_req;
@@ -2265,6 +2277,28 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 				assoc_req, sub_type, &pmf_connection))
 		goto error;
 
+	/* Extract pre-auth context for the STA, if any. */
+	sta_pre_auth_ctx = lim_search_pre_auth_list(mac_ctx, hdr->sa);
+
+	/* SAE authentication is offloaded to hostapd. Hostapd sends
+	 * authentication status to driver after completing SAE
+	 * authentication (after sending out 4/4 SAE auth frame).
+	 * There is a possible race condition where driver gets
+	 * assoc request from SAE station before getting authentication
+	 * status from hostapd. Don't reject the association in such
+	 * cases and defer the processing of assoc request frame by caching
+	 * the frame and process it when the auth status is received.
+	 */
+	if (sta_pre_auth_ctx &&
+	    sta_pre_auth_ctx->authType == eSIR_AUTH_TYPE_SAE &&
+	    sta_pre_auth_ctx->mlmState == eLIM_MLM_WT_SAE_AUTH_STATE) {
+		pe_debug("Received assoc request frame while SAE authentication is in progress; Defer association request handling till SAE auth status is received");
+		lim_defer_sme_indication(mac_ctx, session, sub_type, hdr,
+					 assoc_req, pmf_connection,
+					 assoc_req_copied, dup_entry, sta_ds);
+		return;
+	}
+
 	/* Send assoc indication to SME */
 	if (!lim_send_assoc_ind_to_sme(mac_ctx, session, sub_type, hdr,
 				       assoc_req, pmf_connection,
@@ -2275,7 +2309,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 
 error:
 	lim_process_assoc_cleanup(mac_ctx, session, assoc_req, sta_ds,
-				  &assoc_req_copied);
+				  assoc_req_copied);
 	return;
 }
 
