@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -299,7 +299,6 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 }
 #endif /* QCA_WIFI_3_0_ADRASTEA */
 
-#ifdef CONFIG_MCL
 #ifdef WLAN_MAX_LOGS_PER_SEC
 static qdf_time_t __log_window_end_ticks;
 static qdf_atomic_t __log_window_count;
@@ -365,9 +364,6 @@ log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
 		break;
 	}
 }
-#else
-#define log_to_console(level, timestamp, msg)
-#endif
 
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {
@@ -942,7 +938,7 @@ int wlan_logging_sock_init_svc(void)
 	spin_lock_init(&gwlan_logging.spin_lock);
 	spin_lock_init(&gwlan_logging.pkt_stats_lock);
 
-	gwlan_logging.log_to_console = true;
+	gwlan_logging.log_to_console = false;
 	gwlan_logging.num_buf = MAX_LOGMSG_COUNT;
 	gwlan_logging.buffer_length = MAX_LOGMSG_LENGTH;
 
