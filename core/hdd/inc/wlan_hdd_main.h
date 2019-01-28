@@ -477,6 +477,7 @@ struct hdd_tx_rx_stats {
 	__u32 rx_aggregated;
 	__u32 rx_non_aggregated;
 	__u32 rx_gro_flushes;
+	/* Dynamic GRO disable/enable, flush may be required for UDP GRO */
 	__u32 rx_gro_force_flushes;
 
 	/* txflow stats */

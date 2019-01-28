@@ -1592,12 +1592,10 @@ QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
 {
 	struct napi_struct *napi_to_use = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	bool gro_disabled_temp = false;
 	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 
 	if (!adapter->hdd_ctx->enable_dp_rx_threads) {
 		hdd_dp_err_rl("gro not supported without DP RX thread!");
-		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 
@@ -1607,28 +1605,11 @@ QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
 
 	if (!napi_to_use) {
 		hdd_dp_err_rl("no napi to use for GRO!");
-		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 
-	gro_disabled_temp =
-		qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput);
-
-	if (!gro_disabled_temp) {
-		/* nothing to do */
-	} else {
-		/*
-		 * GRO is disabled temporarily, but there is a pending
-		 * gro_list, flush it.
-		 */
-		if (napi_to_use->gro_list) {
-			QDF_NBUF_CB_RX_FLUSH_IND(skb) = 1;
-			adapter->hdd_stats.tx_rx_stats.rx_gro_force_flushes++;
-		} else {
-			status = QDF_STATUS_E_FAILURE;
-			return status;
-		}
-	}
+	if (qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput))
+		return status;
 
 	status = hdd_gro_rx_bh_disable(adapter, napi_to_use, skb);
 
