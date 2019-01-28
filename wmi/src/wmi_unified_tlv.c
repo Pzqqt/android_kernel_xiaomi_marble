@@ -2118,22 +2118,12 @@ static inline void copy_peer_flags_tlv(
 }
 #endif
 
-#ifdef CONFIG_MCL
-static inline void copy_peer_mac_addr_tlv(
-		wmi_peer_assoc_complete_cmd_fixed_param * cmd,
-		struct peer_assoc_params *param)
-{
-	qdf_mem_copy(&cmd->peer_macaddr, &param->peer_macaddr,
-			sizeof(param->peer_macaddr));
-}
-#else
 static inline void copy_peer_mac_addr_tlv(
 		wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 		struct peer_assoc_params *param)
 {
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
 }
-#endif
 
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function

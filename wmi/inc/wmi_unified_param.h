@@ -1187,7 +1187,6 @@ typedef struct {
 
 /**
  * struct peer_assoc_params - peer assoc cmd parameter
- * @peer_macaddr: peer mac address
  * @vdev_id: vdev id
  * @peer_new_assoc: peer association type
  * @peer_associd: peer association id
@@ -1243,7 +1242,6 @@ typedef struct {
  * @peer_ppet: Peer HE PPET info
  */
 struct peer_assoc_params {
-	wmi_host_mac_addr peer_macaddr;
 	uint32_t vdev_id;
 	uint32_t peer_new_assoc;
 	uint32_t peer_associd;
@@ -1289,8 +1287,8 @@ struct peer_assoc_params {
 	bool safe_mode_enabled;
 	bool amsdu_disable;
 	/* Use common structure */
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 #endif
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];
 	bool he_flag;
 	bool twt_requester;
 	bool twt_responder;
