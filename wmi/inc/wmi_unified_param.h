@@ -7618,4 +7618,25 @@ struct wmi_obss_color_collision_info {
 	uint32_t obss_color_bitmap_bit32to63;
 };
 
+#ifdef WMI_AP_SUPPORT
+/**
+ * struct vap_pcp_tid_map_params - PCP tid map params
+ * @vdev_id: vdev id
+ * @pcp_to_tid_map: pointer to arry of pcp to tid map table
+ */
+struct vap_pcp_tid_map_params {
+	uint32_t vdev_id;
+	uint32_t *pcp_to_tid_map;
+};
+
+/**
+ * struct vap_tidmap_prec_params - tidmap precedence params
+ * @vdev_id: vdev id
+ * @map_precedence: precedence of tid mapping
+ */
+struct vap_tidmap_prec_params {
+	uint32_t vdev_id;
+	uint32_t map_precedence;
+};
+#endif
 #endif /* _WMI_UNIFIED_PARAM_H_ */
