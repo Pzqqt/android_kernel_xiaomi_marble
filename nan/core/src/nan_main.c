@@ -204,11 +204,10 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 	tx_ops->nan_datapath_req_tx(in_req, req_type);
 }
 
-static QDF_STATUS nan_serialized_cb(void *cmd,
+static QDF_STATUS nan_serialized_cb(struct wlan_serialization_command *ser_cmd,
 				    enum wlan_serialization_cb_reason reason)
 {
 	void *req;
-	struct wlan_serialization_command *ser_cmd = cmd;
 
 	if (!ser_cmd || !ser_cmd->umac_cmd) {
 		nan_alert("cmd or umac_cmd is null");

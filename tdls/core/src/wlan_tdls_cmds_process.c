@@ -823,8 +823,7 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	vdev = req->vdev;
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_ADD_PEER;
 	cmd.cmd_id = 0;
-	cmd.cmd_cb = (wlan_serialization_cmd_callback)
-		tdls_add_peer_serialize_callback;
+	cmd.cmd_cb = tdls_add_peer_serialize_callback;
 	cmd.umac_cmd = req;
 	cmd.source = WLAN_UMAC_COMP_TDLS;
 	cmd.is_high_priority = false;
@@ -1039,8 +1038,7 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	vdev = req->vdev;
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_ADD_PEER;
 	cmd.cmd_id = 0;
-	cmd.cmd_cb = (wlan_serialization_cmd_callback)
-		tdls_update_peer_serialize_callback;
+	cmd.cmd_cb = tdls_update_peer_serialize_callback;
 	cmd.umac_cmd = req;
 	cmd.source = WLAN_UMAC_COMP_TDLS;
 	cmd.is_high_priority = false;
@@ -1193,8 +1191,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_DEL_PEER;
 	cmd.cmd_id = 0;
-	cmd.cmd_cb = (wlan_serialization_cmd_callback)
-		tdls_del_peer_serialize_callback;
+	cmd.cmd_cb = tdls_del_peer_serialize_callback;
 	cmd.umac_cmd = req;
 	cmd.source = WLAN_UMAC_COMP_TDLS;
 	cmd.is_high_priority = false;

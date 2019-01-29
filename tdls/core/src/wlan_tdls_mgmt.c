@@ -404,8 +404,7 @@ QDF_STATUS tdls_process_mgmt_req(
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_SEND_MGMT;
 	/* Cmd Id not applicable for non scan cmds */
 	cmd.cmd_id = 0;
-	cmd.cmd_cb = (wlan_serialization_cmd_callback)
-		tdls_send_mgmt_serialize_callback;
+	cmd.cmd_cb = tdls_send_mgmt_serialize_callback;
 	cmd.umac_cmd = tdls_mgmt_req;
 	cmd.source = WLAN_UMAC_COMP_TDLS;
 	cmd.is_high_priority = false;
