@@ -1341,7 +1341,7 @@ ol_attach_fail:
  *
  * Return: 0 - success 1 - failure
  */
-static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
+static int ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
