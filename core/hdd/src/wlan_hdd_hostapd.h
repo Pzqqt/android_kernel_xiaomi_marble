@@ -151,6 +151,19 @@ bool hdd_sap_create_ctx(struct hdd_adapter *adapter);
  * Return: true or false based on overall success or failure
  */
 bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter);
+/**
+ * hdd_sap_destroy_ctx_all() - Wrapper API to destroy all SAP context
+ * @adapter: pointer to adapter
+ * @is_ssr: true if SSR is in progress
+ *
+ * This wrapper API can be called to destroy all the sap context.
+ * if is_ssr is true, it will return as sap_ctx will be used when
+ * restart sap.
+ *
+ * Return: none
+ */
+void hdd_sap_destroy_ctx_all(struct hdd_context *hdd_ctx, bool is_ssr);
+
 int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
 void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);

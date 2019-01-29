@@ -3147,6 +3147,22 @@ bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter)
 	return true;
 }
 
+void hdd_sap_destroy_ctx_all(struct hdd_context *hdd_ctx, bool is_ssr)
+{
+	struct hdd_adapter *adapter;
+
+	/* sap_ctx is not destroyed as it will be leveraged for sap restart */
+	if (is_ssr)
+		return;
+
+	hdd_debug("destroying all the sap context");
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_SAP_MODE)
+			hdd_sap_destroy_ctx(adapter);
+	}
+}
+
 QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 {
 	struct hdd_hostapd_state *phostapdBuf;
