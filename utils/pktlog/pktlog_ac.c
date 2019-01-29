@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,7 +83,6 @@ void pktlog_set_callback_regtype(
 	pl_dev->callback_type = callback_type;
 }
 
-#ifdef CONFIG_MCL
 struct pktlog_dev_t *get_pktlog_handle(void)
 {
 	struct cdp_pdev *pdev_txrx_handle =
@@ -100,15 +99,6 @@ void *get_txrx_context(void)
 {
 	return cds_get_context(QDF_MODULE_ID_TXRX);
 }
-
-#else
-/* TODO: Need to use WIN implementation to return pktlog_dev handle */
-static inline struct pktlog_dev_t *get_pktlog_handle(void)
-{
-	return NULL;
-}
-static struct pktlog_dev_t *get_txrx_context(void) { }
-#endif
 
 static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 				    WMI_CMD_ID cmd_id, bool ini_triggered,
