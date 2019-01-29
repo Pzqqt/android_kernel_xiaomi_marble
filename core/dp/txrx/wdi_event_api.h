@@ -37,11 +37,11 @@ struct ol_txrx_pdev_t;
  * @param pdev - the event physical device, that maintains the event lists
  * @param event_cb_sub - the callback and context for the event subscriber
  * @param event - which event's notifications are being subscribed to
- * @return error code, or A_OK for success
+ * @return error code, or 0 for success
  */
-A_STATUS wdi_event_sub(struct cdp_pdev *ppdev,
-		       void *event_cb_sub,
-		       uint32_t event);
+int wdi_event_sub(struct cdp_pdev *ppdev,
+		  void *event_cb_sub,
+		  uint32_t event);
 
 /**
  * @brief Unsubscribe from a specified WDI event.
@@ -83,10 +83,10 @@ static inline A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev)
 	return A_OK;
 }
 
-static inline A_STATUS wdi_event_sub(struct cdp_pdev *ppdev, void *event_cb_sub,
-				     uint32_t event)
+static inline int wdi_event_sub(struct cdp_pdev *ppdev, void *event_cb_sub,
+				uint32_t event)
 {
-	return A_OK;
+	return 0;
 }
 
 static inline int wdi_event_unsub(struct cdp_pdev *ppdev,
