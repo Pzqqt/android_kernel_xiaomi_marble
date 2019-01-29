@@ -486,7 +486,17 @@ wma_reset_passpoint_network_list(tp_wma_handle wma,
 				 struct wifi_passpoint_req_param *params);
 #endif
 
-QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
+/**
+ * wma_scan_probe_setoui() - set scan probe OUI
+ * @wma: wma handle
+ * @set_oui: OUI parameters
+ *
+ * set scan probe OUI parameters in firmware
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
+				 struct scan_mac_oui *set_oui);
 
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 

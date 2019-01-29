@@ -3288,7 +3288,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 					 const void *data,
 					 int data_len)
 {
-	tpSirScanMacOui pReqMsg = NULL;
+	struct scan_mac_oui scan_mac_oui = { {0} };
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI_MAX + 1];
 	QDF_STATUS status;
@@ -3324,45 +3324,39 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
-	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg)
-		return -ENOMEM;
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI]) {
 		hdd_err("attr mac oui failed");
-		goto fail;
+		return -EINVAL;
 	}
 
 	len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI]);
-	if (len != sizeof(pReqMsg->oui)) {
+	if (len != sizeof(scan_mac_oui.oui)) {
 		hdd_err("attr mac oui invalid size %d expected %zu",
-			len, sizeof(pReqMsg->oui));
-		goto fail;
+			len, sizeof(scan_mac_oui.oui));
+		return -EINVAL;
 	}
 
-	nla_memcpy(&pReqMsg->oui[0],
+	nla_memcpy(scan_mac_oui.oui,
 		   tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI],
-		   sizeof(pReqMsg->oui));
+		   sizeof(scan_mac_oui.oui));
 
-	/* populate pReqMsg for mac addr randomization */
-	pReqMsg->vdev_id = adapter->session_id;
-	pReqMsg->enb_probe_req_sno_randomization = true;
+	/* populate rest of scan_mac_oui for mac addr randomization */
+	scan_mac_oui.vdev_id = adapter->session_id;
+	scan_mac_oui.enb_probe_req_sno_randomization = true;
 
-	hdd_debug("Oui (%02x:%02x:%02x), vdev_id = %d", pReqMsg->oui[0],
-		  pReqMsg->oui[1], pReqMsg->oui[2], pReqMsg->vdev_id);
+	hdd_debug("Oui (%02x:%02x:%02x), vdev_id = %d",
+		  scan_mac_oui.oui[0], scan_mac_oui.oui[1],
+		  scan_mac_oui.oui[2], scan_mac_oui.vdev_id);
 
-	hdd_update_ie_whitelist_attr(&pReqMsg->ie_whitelist, hdd_ctx);
+	hdd_update_ie_whitelist_attr(&scan_mac_oui.ie_whitelist, hdd_ctx);
 
 	mac_handle = hdd_ctx->mac_handle;
-	status = sme_set_scanning_mac_oui(mac_handle, pReqMsg);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	status = sme_set_scanning_mac_oui(mac_handle, &scan_mac_oui);
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_set_scanning_mac_oui failed(err=%d)", status);
-		goto fail;
-	}
-	return 0;
-fail:
-	qdf_mem_free(pReqMsg);
-	return -EINVAL;
+
+	return qdf_status_to_os_return(status);
 }
 
 /**

@@ -10427,38 +10427,37 @@ QDF_STATUS sme_get_temperature(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * sme_set_scanning_mac_oui() -
- * SME API to set scanning mac oui
- *
- * mac_handle
- * pScanMacOui: Scanning Mac Oui (input 3 bytes)
- * Return QDF_STATUS
- */
 QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t mac_handle,
-				    tSirScanMacOui *pScanMacOui)
+				    struct scan_mac_oui *scan_mac_oui)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
+	struct scan_mac_oui *bodyptr;
+
+	/* per contract must make a copy of the params when messaging */
+	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
+	if (!bodyptr)
+		return QDF_STATUS_E_NOMEM;
+	*bodyptr = *scan_mac_oui;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Serialize the req through MC thread */
-		message.bodyptr = pScanMacOui;
+		message.bodyptr = bodyptr;
 		message.type = WMA_SET_SCAN_MAC_OUI_REQ;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("Msg post Set Scan Mac OUI failed"));
-			status = QDF_STATUS_E_FAILURE;
-		}
+		status = scheduler_post_message(QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_WMA,
+						&message);
 		sme_release_global_lock(&mac->sme);
 	}
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("failure: %d", status);
+		qdf_mem_free(bodyptr);
+	}
+
 	return status;
 }
 

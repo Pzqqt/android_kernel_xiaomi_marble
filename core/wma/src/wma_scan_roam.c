@@ -4820,37 +4820,17 @@ wma_reset_passpoint_network_list(tp_wma_handle wma,
 
 #endif
 
-/**
- * wma_scan_probe_setoui() - set scan probe OUI
- * @wma: wma handle
- * @psetoui: OUI parameters
- *
- * set scan probe OUI parameters in firmware
- *
- * Return: QDF status
- */
-QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
+QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
+				 struct scan_mac_oui *set_oui)
 {
-	struct scan_mac_oui set_oui;
-
-	qdf_mem_zero(&set_oui, sizeof(struct scan_mac_oui));
-
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	qdf_mem_copy(set_oui.oui, psetoui->oui,
-				WMI_WIFI_SCANNING_MAC_OUI_LENGTH);
-
-	set_oui.vdev_id = psetoui->vdev_id;
-	set_oui.enb_probe_req_sno_randomization =
-				psetoui->enb_probe_req_sno_randomization;
-	set_oui.ie_whitelist = psetoui->ie_whitelist;
-
-	return wmi_unified_scan_probe_setoui_cmd(wma->wmi_handle,
-						&set_oui);
+	return wmi_unified_scan_probe_setoui_cmd(wma->wmi_handle, set_oui);
 }
+
 /**
  * wma_roam_better_ap_handler() - better ap event handler
  * @wma: wma handle

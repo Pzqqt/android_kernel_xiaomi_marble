@@ -1253,8 +1253,16 @@ QDF_STATUS sme_get_temperature(mac_handle_t mac_handle,
 		void *tempContext,
 		void (*pCallbackfn)(int temperature,
 			void *pContext));
+
+/**
+ * sme_set_scanning_mac_oui() - SME API to set scanning mac oui
+ * @mac_handle: MAC Handle
+ * @scan_mac_oui: Scanning Mac Oui
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t mac_handle,
-		tSirScanMacOui *pScanMacOui);
+				    struct scan_mac_oui *scan_mac_oui);
 
 #ifdef DHCP_SERVER_OFFLOAD
 QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,

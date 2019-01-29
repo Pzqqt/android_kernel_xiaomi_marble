@@ -87,7 +87,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 /* Periodic Tx pattern offload feature */
 #define PERIODIC_TX_PTRN_MAX_SIZE 1536
 #define MAXNUM_PERIODIC_TX_PTRNS 6
-#define WIFI_SCANNING_MAC_OUI_LENGTH 3
 
 
 /* FW response timeout values in milli seconds */
@@ -3579,13 +3578,6 @@ struct rso_cmd_status {
 	uint32_t vdev_id;
 	bool status;
 };
-
-typedef struct {
-	uint8_t oui[WIFI_SCANNING_MAC_OUI_LENGTH];
-	uint32_t vdev_id;
-	bool enb_probe_req_sno_randomization;
-	struct probe_req_whitelist_attr ie_whitelist;
-} tSirScanMacOui, *tpSirScanMacOui;
 
 enum {
 	SIR_AP_RX_DATA_OFFLOAD             = 0x00,
