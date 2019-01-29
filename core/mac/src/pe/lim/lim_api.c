@@ -1174,7 +1174,7 @@ static QDF_STATUS pe_handle_probe_req_frames(struct mac_context *mac_ctx,
 static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 			struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params,
-			uint32_t frm_type)
+			enum mgmt_frame_type frm_type)
 {
 	struct mac_context *mac;
 	tpSirMacMgmtHdr mHdr;
@@ -1275,8 +1275,7 @@ void pe_register_mgmt_rx_frm_callback(struct mac_context *mac_ctx)
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
 
 	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
-	frm_cb_info.mgmt_rx_cb = (mgmt_frame_rx_callback)
-				pe_handle_mgmt_frame;
+	frm_cb_info.mgmt_rx_cb = pe_handle_mgmt_frame;
 
 	status = wlan_mgmt_txrx_register_rx_cb(mac_ctx->psoc,
 					 WLAN_UMAC_COMP_MLME, &frm_cb_info, 1);
@@ -1292,8 +1291,7 @@ void pe_deregister_mgmt_rx_frm_callback(struct mac_context *mac_ctx)
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
 
 	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
-	frm_cb_info.mgmt_rx_cb = (mgmt_frame_rx_callback)
-				pe_handle_mgmt_frame;
+	frm_cb_info.mgmt_rx_cb = pe_handle_mgmt_frame;
 
 	status = wlan_mgmt_txrx_deregister_rx_cb(mac_ctx->psoc,
 					 WLAN_UMAC_COMP_MLME, &frm_cb_info, 1);
