@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,11 +54,11 @@ A_STATUS wdi_event_sub(struct cdp_pdev *ppdev,
  * @param pdev - the event physical device with the list of event subscribers
  * @param event_cb_sub - the event subscription object
  * @param event - which event is being unsubscribed
- * @return error code, or A_OK for success
+ * @return error code, or 0 for success
  */
-A_STATUS wdi_event_unsub(struct cdp_pdev *ppdev,
-			 void *event_cb_sub,
-			 uint32_t event);
+int wdi_event_unsub(struct cdp_pdev *ppdev,
+		    void *event_cb_sub,
+		    uint32_t event);
 
 
 void wdi_event_handler(enum WDI_EVENT event,
@@ -89,11 +89,11 @@ static inline A_STATUS wdi_event_sub(struct cdp_pdev *ppdev, void *event_cb_sub,
 	return A_OK;
 }
 
-static inline A_STATUS wdi_event_unsub(struct cdp_pdev *ppdev,
-				       void *event_cb_sub,
-				       uint32_t event)
+static inline int wdi_event_unsub(struct cdp_pdev *ppdev,
+				  void *event_cb_sub,
+				  uint32_t event)
 {
-	return A_OK;
+	return 0;
 }
 #endif /* WDI_EVENT_ENABLE */
 
