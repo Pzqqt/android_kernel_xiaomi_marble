@@ -32,7 +32,7 @@
 #include "wlan_serialization_rules_i.h"
 #include "wlan_serialization_utils_i.h"
 
-QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS wlan_serialization_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wlan_ser_psoc_obj *ser_soc_obj =
@@ -56,7 +56,7 @@ error:
 	return status;
 }
 
-QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS wlan_serialization_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t pdev_count;
 	struct wlan_ser_psoc_obj *ser_soc_obj =
@@ -71,6 +71,8 @@ QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc)
 	pdev_count = wlan_psoc_get_pdev_count(psoc);
 	ser_soc_obj->max_active_cmds = WLAN_SER_MAX_ACTIVE_SCAN_CMDS +
 					(pdev_count * WLAN_SER_MAX_VDEVS);
+
+	ser_debug("max_active_cmds %d", ser_soc_obj->max_active_cmds);
 
 	ser_soc_obj->timers =
 		qdf_mem_malloc(sizeof(struct wlan_serialization_timer) *

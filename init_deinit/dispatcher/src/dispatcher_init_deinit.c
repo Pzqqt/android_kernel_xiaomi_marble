@@ -855,9 +855,6 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
 		goto scan_psoc_open_fail;
 
-	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_open(psoc))
-		goto serialization_psoc_open_fail;
-
 	if (QDF_STATUS_SUCCESS != cp_stats_psoc_open(psoc))
 		goto cp_stats_psoc_open_fail;
 
@@ -884,8 +881,6 @@ regulatory_psoc_open_fail:
 atf_psoc_open_fail:
 	cp_stats_psoc_close(psoc);
 cp_stats_psoc_open_fail:
-	wlan_serialization_psoc_close(psoc);
-serialization_psoc_open_fail:
 	ucfg_scan_psoc_close(psoc);
 scan_psoc_open_fail:
 	wlan_mgmt_txrx_psoc_close(psoc);
@@ -907,8 +902,6 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == cp_stats_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_psoc_close(psoc));
-
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_close(psoc));
@@ -919,8 +912,11 @@ qdf_export_symbol(dispatcher_psoc_close);
 
 QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_enable(psoc))
+	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_enable(psoc))
 		goto out;
+
+	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_enable(psoc))
+		goto serialization_psoc_enable_fail;
 
 	if (QDF_STATUS_SUCCESS != sa_api_psoc_enable(psoc))
 		goto sa_api_psoc_enable_fail;
@@ -964,7 +960,8 @@ cp_stats_psoc_enable_fail:
 	sa_api_psoc_disable(psoc);
 sa_api_psoc_enable_fail:
 	ucfg_scan_psoc_disable(psoc);
-
+serialization_psoc_enable_fail:
+	wlan_serialization_psoc_disable(psoc);
 out:
 	return QDF_STATUS_E_FAILURE;
 }
@@ -989,6 +986,8 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_BUG(QDF_STATUS_SUCCESS == sa_api_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_disable(psoc));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_psoc_disable(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }

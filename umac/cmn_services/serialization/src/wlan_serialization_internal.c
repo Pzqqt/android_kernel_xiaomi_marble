@@ -773,7 +773,13 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 			       qdf_timer_mod(&ser_timer->timer,
 			       cmd->cmd_timeout_duration);
 
-		ser_debug("starting timer for cmd: type[%d] id[%d] high_priority[%d] blocking[%d]",
+		ser_debug("Started timer for cmd: type[%d] id[%d] high_priority[%d] blocking[%d]",
+			  cmd->cmd_type,
+			  cmd->cmd_id,
+			  cmd->is_high_priority,
+			  cmd->is_blocking);
+	} else {
+		ser_err("Failed to start timer for cmd: type[%d] id[%d] high_priority[%d] blocking[%d]",
 			  cmd->cmd_type,
 			  cmd->cmd_id,
 			  cmd->is_high_priority,

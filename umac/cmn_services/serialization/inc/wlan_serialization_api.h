@@ -440,18 +440,18 @@ QDF_STATUS wlan_serialization_init(void);
 QDF_STATUS wlan_serialization_deinit(void);
 
 /**
- * @wlan_serialization_psoc_open() - Serialization component open routine
+ * @wlan_serialization_psoc_enable() - Serialization component enable routine
  *
  * Return - QDF Status
  */
-QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS wlan_serialization_psoc_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * @wlan_serialization_psoc_close() - Serialization component close routine
+ * @wlan_serialization_psoc_disable() - Serialization component disable routine
  *
  * Return - QDF Status
  */
-QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS wlan_serialization_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_serialization_vdev_scan_status() - Return the status of the vdev scan
