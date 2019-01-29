@@ -252,7 +252,7 @@ static int hncm_exec_migrate_to(struct qca_napi_data *napid, uint8_t ctx_id,
 	int status = 0;
 	int ind;
 
-	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, napi_ce, didx);
+	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, ctx_id, didx);
 
 	exec_ctx = hif_exec_get_ctx(&napid->hif_softc->osc, ctx_id);
 	if (exec_ctx == NULL)
@@ -402,8 +402,6 @@ int hif_exec_cpu_migrate(struct qca_napi_data *napid, int cpu, int action)
 				/* find a destination CPU */
 				dind = hncm_dest_cpu(napid, action);
 				if (dind >= 0) {
-					NAPI_DEBUG("Migrating NAPI ce%d to %d",
-						   i, dind);
 					rc = hncm_exec_migrate_to(napid, i,
 								  dind);
 				} else {
