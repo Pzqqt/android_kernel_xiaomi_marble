@@ -36,28 +36,28 @@
 	(((value) >> SIR_MAC_PROP_CAPABILITY_ ## bitname) & 1)
 
 #define IS_DOT11_MODE_HT(dot11Mode) \
-	(((dot11Mode == WNI_CFG_DOT11_MODE_11N) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11N_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
+	(((dot11Mode == MLME_DOT11_MODE_11N) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11N_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AC) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AC_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_VHT(dot11Mode) \
-	(((dot11Mode == WNI_CFG_DOT11_MODE_11AC) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
+	(((dot11Mode == MLME_DOT11_MODE_11AC) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AC_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_HE(dot11Mode) \
-	(((dot11Mode == WNI_CFG_DOT11_MODE_11AX) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AX_ONLY) || \
-	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
+	(((dot11Mode == MLME_DOT11_MODE_11AX) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_11AX_ONLY) || \
+	  (dot11Mode ==  MLME_DOT11_MODE_ALL)) ? true:false)
 
 #define IS_DOT11_MODE_11B(dot11Mode)  \
-	((dot11Mode == WNI_CFG_DOT11_MODE_11B) ? true:false)
+	((dot11Mode == MLME_DOT11_MODE_11B) ? true:false)
 
 #define IS_BSS_VHT_CAPABLE(vhtCaps) \
 	((vhtCaps).present && \

@@ -142,10 +142,10 @@ static void lim_check_he_ldpc_cap(struct pe_session *session,
 		session->he_capable = false;
 		pe_err("LDPC check failed for HE operation");
 		if (session->vhtCapability) {
-			session->dot11mode = WNI_CFG_DOT11_MODE_11AC;
+			session->dot11mode = MLME_DOT11_MODE_11AC;
 			pe_debug("Update dot11mode to 11ac");
 		} else {
-			session->dot11mode = WNI_CFG_DOT11_MODE_11N;
+			session->dot11mode = MLME_DOT11_MODE_11N;
 			pe_debug("Update dot11mode to 11N");
 		}
 	}

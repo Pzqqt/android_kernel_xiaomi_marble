@@ -1559,12 +1559,12 @@ populate_dot11f_rates_tdls(struct mac_context *p_mac,
 		curr_oper_channel, self_dot11mode);
 
 	if ((curr_oper_channel <= SIR_11B_CHANNEL_END) &&
-	    ((self_dot11mode == WNI_CFG_DOT11_MODE_ALL) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11A) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11AC) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B))) {
+	    ((self_dot11mode == MLME_DOT11_MODE_ALL) ||
+	    (self_dot11mode == MLME_DOT11_MODE_11A) ||
+	    (self_dot11mode == MLME_DOT11_MODE_11AC) ||
+	    (self_dot11mode == MLME_DOT11_MODE_11N) ||
+	    (self_dot11mode == MLME_DOT11_MODE_11G) ||
+	    (self_dot11mode == MLME_DOT11_MODE_11B))) {
 		num_rates = p_mac->mlme_cfg->rates.supported_11b.len;
 		wlan_mlme_get_cfg_str((uint8_t *)&temp_rateset.rate,
 				      &p_mac->mlme_cfg->rates.supported_11b,

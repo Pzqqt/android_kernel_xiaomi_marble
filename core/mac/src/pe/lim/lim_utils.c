@@ -8365,7 +8365,7 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 	/* If STA/AP operating in 11B mode, don't set rest of the
 	 * capability info bits.
 	 */
-	if (pe_session->dot11mode == WNI_CFG_DOT11_MODE_11B)
+	if (pe_session->dot11mode == MLME_DOT11_MODE_11B)
 		return QDF_STATUS_SUCCESS;
 
 	/* Short slot time bit */

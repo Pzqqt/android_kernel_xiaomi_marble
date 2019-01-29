@@ -496,9 +496,9 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 
 	if (bss_desc->channelId <= 14 &&
 		!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-		WNI_CFG_DOT11_MODE_11AC == dot11mode) {
+		MLME_DOT11_MODE_11AC == dot11mode) {
 		/* Need to disable VHT operation in 2.4 GHz band */
-		dot11mode = WNI_CFG_DOT11_MODE_11N;
+		dot11mode = MLME_DOT11_MODE_11N;
 	}
 	qdf_mem_free(ies_local);
 	return dot11mode;

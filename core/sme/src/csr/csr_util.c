@@ -1555,64 +1555,64 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(struct mac_context *mac,
 	case eCSR_CFG_DOT11_MODE_AUTO:
 		sme_debug("eCSR_CFG_DOT11_MODE_AUTO");
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
-			ret = WNI_CFG_DOT11_MODE_11AX;
+			ret = MLME_DOT11_MODE_11AX;
 		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
-			ret = WNI_CFG_DOT11_MODE_11AC;
+			ret = MLME_DOT11_MODE_11AC;
 		else
-			ret = WNI_CFG_DOT11_MODE_11N;
+			ret = MLME_DOT11_MODE_11N;
 		break;
 	case eCSR_CFG_DOT11_MODE_11A:
-		ret = WNI_CFG_DOT11_MODE_11A;
+		ret = MLME_DOT11_MODE_11A;
 		break;
 	case eCSR_CFG_DOT11_MODE_11B:
-		ret = WNI_CFG_DOT11_MODE_11B;
+		ret = MLME_DOT11_MODE_11B;
 		break;
 	case eCSR_CFG_DOT11_MODE_11G:
-		ret = WNI_CFG_DOT11_MODE_11G;
+		ret = MLME_DOT11_MODE_11G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11N:
-		ret = WNI_CFG_DOT11_MODE_11N;
+		ret = MLME_DOT11_MODE_11N;
 		break;
 	case eCSR_CFG_DOT11_MODE_11G_ONLY:
-		ret = WNI_CFG_DOT11_MODE_11G_ONLY;
+		ret = MLME_DOT11_MODE_11G_ONLY;
 		break;
 	case eCSR_CFG_DOT11_MODE_11N_ONLY:
-		ret = WNI_CFG_DOT11_MODE_11N_ONLY;
+		ret = MLME_DOT11_MODE_11N_ONLY;
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC_ONLY:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
-			ret = WNI_CFG_DOT11_MODE_11AC_ONLY;
+			ret = MLME_DOT11_MODE_11AC_ONLY;
 		else
-			ret = WNI_CFG_DOT11_MODE_11N;
+			ret = MLME_DOT11_MODE_11N;
 		break;
 	case eCSR_CFG_DOT11_MODE_11AC:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
-			ret = WNI_CFG_DOT11_MODE_11AC;
+			ret = MLME_DOT11_MODE_11AC;
 		else
-			ret = WNI_CFG_DOT11_MODE_11N;
+			ret = MLME_DOT11_MODE_11N;
 		break;
 	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
-			ret = WNI_CFG_DOT11_MODE_11AX_ONLY;
+			ret = MLME_DOT11_MODE_11AX_ONLY;
 		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
-			ret = WNI_CFG_DOT11_MODE_11AC;
+			ret = MLME_DOT11_MODE_11AC;
 		else
-			ret = WNI_CFG_DOT11_MODE_11N;
+			ret = MLME_DOT11_MODE_11N;
 		break;
 	case eCSR_CFG_DOT11_MODE_11AX:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
-			ret = WNI_CFG_DOT11_MODE_11AX;
+			ret = MLME_DOT11_MODE_11AX;
 		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
-			ret = WNI_CFG_DOT11_MODE_11AC;
+			ret = MLME_DOT11_MODE_11AC;
 		else
-			ret = WNI_CFG_DOT11_MODE_11N;
+			ret = MLME_DOT11_MODE_11N;
 		break;
 	default:
 		sme_warn("doesn't expect %d as csrDo11Mode", csrDot11Mode);
 		if (BAND_2G == mac->mlme_cfg->gen.band)
-			ret = WNI_CFG_DOT11_MODE_11G;
+			ret = MLME_DOT11_MODE_11G;
 		else
-			ret = WNI_CFG_DOT11_MODE_11A;
+			ret = MLME_DOT11_MODE_11A;
 		break;
 	}
 
@@ -5815,8 +5815,8 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 }
 
 /* This function use the parameters to decide the CFG value. */
-/* CSR never sets WNI_CFG_DOT11_MODE_ALL to the CFG */
-/* So PE should not see WNI_CFG_DOT11_MODE_ALL when it gets the CFG value */
+/* CSR never sets MLME_DOT11_MODE_ALL to the CFG */
+/* So PE should not see MLME_DOT11_MODE_ALL when it gets the CFG value */
 enum csr_cfgdot11mode
 csr_get_cfg_dot11_mode_from_csr_phy_mode(struct csr_roam_profile *pProfile,
 					 eCsrPhyMode phyMode,

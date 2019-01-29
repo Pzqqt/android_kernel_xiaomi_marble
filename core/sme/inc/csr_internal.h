@@ -84,7 +84,7 @@
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
 
-/* Used to determine what to set to the WNI_CFG_DOT11_MODE */
+/* Used to determine what to set to the MLME_DOT11_MODE */
 enum csr_cfgdot11mode {
 	eCSR_CFG_DOT11_MODE_ABG,
 	eCSR_CFG_DOT11_MODE_11A,

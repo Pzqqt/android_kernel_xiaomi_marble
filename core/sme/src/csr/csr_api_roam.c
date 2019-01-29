@@ -6007,37 +6007,37 @@ static eCsrPhyMode csr_roamdot11mode_to_phymode(uint8_t dot11mode)
 	eCsrPhyMode phymode = eCSR_DOT11_MODE_abg;
 
 	switch (dot11mode) {
-	case WNI_CFG_DOT11_MODE_ALL:
+	case MLME_DOT11_MODE_ALL:
 		phymode = eCSR_DOT11_MODE_abg;
 		break;
-	case WNI_CFG_DOT11_MODE_11A:
+	case MLME_DOT11_MODE_11A:
 		phymode = eCSR_DOT11_MODE_11a;
 		break;
-	case WNI_CFG_DOT11_MODE_11B:
+	case MLME_DOT11_MODE_11B:
 		phymode = eCSR_DOT11_MODE_11b;
 		break;
-	case WNI_CFG_DOT11_MODE_11G:
+	case MLME_DOT11_MODE_11G:
 		phymode = eCSR_DOT11_MODE_11g;
 		break;
-	case WNI_CFG_DOT11_MODE_11N:
+	case MLME_DOT11_MODE_11N:
 		phymode = eCSR_DOT11_MODE_11n;
 		break;
-	case WNI_CFG_DOT11_MODE_11G_ONLY:
+	case MLME_DOT11_MODE_11G_ONLY:
 		phymode = eCSR_DOT11_MODE_11g_ONLY;
 		break;
-	case WNI_CFG_DOT11_MODE_11N_ONLY:
+	case MLME_DOT11_MODE_11N_ONLY:
 		phymode = eCSR_DOT11_MODE_11n_ONLY;
 		break;
-	case WNI_CFG_DOT11_MODE_11AC:
+	case MLME_DOT11_MODE_11AC:
 		phymode = eCSR_DOT11_MODE_11ac;
 		break;
-	case WNI_CFG_DOT11_MODE_11AC_ONLY:
+	case MLME_DOT11_MODE_11AC_ONLY:
 		phymode = eCSR_DOT11_MODE_11ac_ONLY;
 		break;
-	case WNI_CFG_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11AX:
 		phymode = eCSR_DOT11_MODE_11ax;
 		break;
-	case WNI_CFG_DOT11_MODE_11AX_ONLY:
+	case MLME_DOT11_MODE_11AX_ONLY:
 		phymode = eCSR_DOT11_MODE_11ax_ONLY;
 		break;
 	default:
@@ -14448,9 +14448,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 							    uCfgDot11Mode);
 		if (pBssDescription->channelId <= 14 &&
 		    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-		    dot11mode == WNI_CFG_DOT11_MODE_11AC) {
+		    dot11mode == MLME_DOT11_MODE_11AC) {
 			/* Need to disable VHT operation in 2.4 GHz band */
-			dot11mode = WNI_CFG_DOT11_MODE_11N;
+			dot11mode = MLME_DOT11_MODE_11N;
 		}
 
 		if (IS_5G_CH(pBssDescription->channelId))
@@ -14564,10 +14564,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (mac->roam.configParam.is_force_1x1 &&
 		    mac->lteCoexAntShare &&
 		    is_vendor_ap_present &&
-		    (dot11mode == WNI_CFG_DOT11_MODE_ALL ||
-		     dot11mode == WNI_CFG_DOT11_MODE_11AC ||
-		     dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
-			dot11mode = WNI_CFG_DOT11_MODE_11N;
+		    (dot11mode == MLME_DOT11_MODE_ALL ||
+		     dot11mode == MLME_DOT11_MODE_11AC ||
+		     dot11mode == MLME_DOT11_MODE_11AC_ONLY))
+			dot11mode = MLME_DOT11_MODE_11N;
 
 		csr_join_req->supported_nss_1x1 = pSession->supported_nss_1x1;
 		csr_join_req->vdev_nss = pSession->vdev_nss;
@@ -19668,9 +19668,9 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 					param.uCfgDot11Mode);
 	if (IS_24G_CH(msg->targetChannel) &&
 	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-	    (msg->dot11mode == WNI_CFG_DOT11_MODE_11AC ||
-	    msg->dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
-		msg->dot11mode = WNI_CFG_DOT11_MODE_11N;
+	    (msg->dot11mode == MLME_DOT11_MODE_11AC ||
+	    msg->dot11mode == MLME_DOT11_MODE_11AC_ONLY))
+		msg->dot11mode = MLME_DOT11_MODE_11N;
 	msg->nw_type = param.sirNwType;
 	msg->center_freq_seg_0 = ch_params->center_freq_seg0;
 	msg->center_freq_seg_1 = ch_params->center_freq_seg1;

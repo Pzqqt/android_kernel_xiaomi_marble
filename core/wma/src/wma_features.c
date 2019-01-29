@@ -687,44 +687,44 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
 	if (WLAN_REG_IS_24GHZ_CH(chan)) {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
 		     (CH_WIDTH_10MHZ == chan_width)) &&
-		    ((WNI_CFG_DOT11_MODE_11B == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11G == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11N == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_ALL == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AX == dot11_mode)))
+		    ((MLME_DOT11_MODE_11B == dot11_mode) ||
+		     (MLME_DOT11_MODE_11G == dot11_mode) ||
+		     (MLME_DOT11_MODE_11N == dot11_mode) ||
+		     (MLME_DOT11_MODE_ALL == dot11_mode) ||
+		     (MLME_DOT11_MODE_11AC == dot11_mode) ||
+		     (MLME_DOT11_MODE_11AX == dot11_mode)))
 			phymode = MODE_11G;
 		else {
 			switch (dot11_mode) {
-			case WNI_CFG_DOT11_MODE_11B:
+			case MLME_DOT11_MODE_11B:
 				if ((bw_val == 20) || (bw_val == 40))
 					phymode = MODE_11B;
 				break;
-			case WNI_CFG_DOT11_MODE_11G:
+			case MLME_DOT11_MODE_11G:
 				if ((bw_val == 20) || (bw_val == 40))
 					phymode = MODE_11G;
 				break;
-			case WNI_CFG_DOT11_MODE_11G_ONLY:
+			case MLME_DOT11_MODE_11G_ONLY:
 				if ((bw_val == 20) || (bw_val == 40))
 					phymode = MODE_11GONLY;
 				break;
-			case WNI_CFG_DOT11_MODE_11N:
-			case WNI_CFG_DOT11_MODE_11N_ONLY:
+			case MLME_DOT11_MODE_11N:
+			case MLME_DOT11_MODE_11N_ONLY:
 				if (bw_val == 20)
 					phymode = MODE_11NG_HT20;
 				else if (bw_val == 40)
 					phymode = MODE_11NG_HT40;
 				break;
-			case WNI_CFG_DOT11_MODE_ALL:
-			case WNI_CFG_DOT11_MODE_11AC:
-			case WNI_CFG_DOT11_MODE_11AC_ONLY:
+			case MLME_DOT11_MODE_ALL:
+			case MLME_DOT11_MODE_11AC:
+			case MLME_DOT11_MODE_11AC_ONLY:
 				if (bw_val == 20)
 					phymode = MODE_11AC_VHT20_2G;
 				else if (bw_val == 40)
 					phymode = MODE_11AC_VHT40_2G;
 				break;
-			case WNI_CFG_DOT11_MODE_11AX:
-			case WNI_CFG_DOT11_MODE_11AX_ONLY:
+			case MLME_DOT11_MODE_11AX:
+			case MLME_DOT11_MODE_11AX_ONLY:
 				if (20 == bw_val)
 					phymode = MODE_11AX_HE20_2G;
 				else if (40 == bw_val)
@@ -739,28 +739,28 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
 	else {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
 		     (CH_WIDTH_10MHZ == chan_width)) &&
-		    ((WNI_CFG_DOT11_MODE_11A == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11N == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_ALL == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AC == dot11_mode) ||
-		     (WNI_CFG_DOT11_MODE_11AX == dot11_mode)))
+		    ((MLME_DOT11_MODE_11A == dot11_mode) ||
+		     (MLME_DOT11_MODE_11N == dot11_mode) ||
+		     (MLME_DOT11_MODE_ALL == dot11_mode) ||
+		     (MLME_DOT11_MODE_11AC == dot11_mode) ||
+		     (MLME_DOT11_MODE_11AX == dot11_mode)))
 			phymode = MODE_11A;
 		else {
 			switch (dot11_mode) {
-			case WNI_CFG_DOT11_MODE_11A:
+			case MLME_DOT11_MODE_11A:
 				if (0 < bw_val)
 					phymode = MODE_11A;
 				break;
-			case WNI_CFG_DOT11_MODE_11N:
-			case WNI_CFG_DOT11_MODE_11N_ONLY:
+			case MLME_DOT11_MODE_11N:
+			case MLME_DOT11_MODE_11N_ONLY:
 				if (bw_val == 20)
 					phymode = MODE_11NA_HT20;
 				else if (40 <= bw_val)
 					phymode = MODE_11NA_HT40;
 				break;
-			case WNI_CFG_DOT11_MODE_ALL:
-			case WNI_CFG_DOT11_MODE_11AC:
-			case WNI_CFG_DOT11_MODE_11AC_ONLY:
+			case MLME_DOT11_MODE_ALL:
+			case MLME_DOT11_MODE_11AC:
+			case MLME_DOT11_MODE_11AC_ONLY:
 				if (bw_val == 20)
 					phymode = MODE_11AC_VHT20;
 				else if (bw_val == 40)
@@ -772,8 +772,8 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
 				else if (chan_width == CH_WIDTH_80P80MHZ)
 					phymode = MODE_11AC_VHT80_80;
 				break;
-			case WNI_CFG_DOT11_MODE_11AX:
-			case WNI_CFG_DOT11_MODE_11AX_ONLY:
+			case MLME_DOT11_MODE_11AX:
+			case MLME_DOT11_MODE_11AX_ONLY:
 				if (20 == bw_val)
 					phymode = MODE_11AX_HE20;
 				else if (40 == bw_val)

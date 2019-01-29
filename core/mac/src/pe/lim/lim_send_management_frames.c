@@ -203,9 +203,9 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 */
 	if (channel <= SIR_11B_CHANNEL_END &&
 	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-	    (WNI_CFG_DOT11_MODE_11AC == dot11mode ||
-	     WNI_CFG_DOT11_MODE_11AC_ONLY == dot11mode))
-		dot11mode = WNI_CFG_DOT11_MODE_11N;
+	    (MLME_DOT11_MODE_11AC == dot11mode ||
+	     MLME_DOT11_MODE_11AC_ONLY == dot11mode))
+		dot11mode = MLME_DOT11_MODE_11N;
 	/*
 	 * session context may or may not be present, when probe request needs
 	 * to be sent out. Following cases exist:
@@ -237,7 +237,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Don't include 11b rate if it is a P2P serach or probe request is
 	 * sent by P2P Client
 	 */
-	if ((WNI_CFG_DOT11_MODE_11B != dot11mode) && (p2pie != NULL) &&
+	if ((MLME_DOT11_MODE_11B != dot11mode) && (p2pie != NULL) &&
 	    ((pesession != NULL) &&
 	      (QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
 		/*
@@ -250,7 +250,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_supp_rates(mac_ctx, channel,
 					   &pr.SuppRates, pesession);
 
-		if (WNI_CFG_DOT11_MODE_11B != dot11mode) {
+		if (MLME_DOT11_MODE_11B != dot11mode) {
 			populate_dot11f_ext_supp_rates1(mac_ctx, channel,
 							&pr.ExtSuppRates);
 		}
@@ -612,7 +612,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_country(mac_ctx, &frm->Country, pe_session);
 	populate_dot11f_edca_param_set(mac_ctx, &frm->EDCAParamSet, pe_session);
 
-	if (pe_session->dot11mode != WNI_CFG_DOT11_MODE_11B)
+	if (pe_session->dot11mode != MLME_DOT11_MODE_11B)
 		populate_dot11f_erp_info(mac_ctx, &frm->ERPInfo, pe_session);
 
 	populate_dot11f_ext_supp_rates(mac_ctx,

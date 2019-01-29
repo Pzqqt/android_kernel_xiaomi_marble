@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,9 +53,9 @@ static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
 	req.chan = cds_freq_to_chan(config->channels[0].chan_freq);
 	req.vdev_id = msg->vdev_id;
 	if (cds_chan_to_band(req.chan) == CDS_BAND_2GHZ)
-		req.dot11_mode = WNI_CFG_DOT11_MODE_11G;
+		req.dot11_mode = MLME_DOT11_MODE_11G;
 	else
-		req.dot11_mode = WNI_CFG_DOT11_MODE_11A;
+		req.dot11_mode = MLME_DOT11_MODE_11A;
 
 	req.preferred_rx_streams = 2;
 	req.preferred_tx_streams = 2;

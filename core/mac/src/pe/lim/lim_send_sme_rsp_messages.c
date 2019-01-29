@@ -2072,12 +2072,12 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	}
 
 	if (WLAN_REG_IS_24GHZ_CH(csa_params->channel) &&
-	    (session_entry->dot11mode == WNI_CFG_DOT11_MODE_11A))
-		session_entry->dot11mode = WNI_CFG_DOT11_MODE_11G;
+	    (session_entry->dot11mode == MLME_DOT11_MODE_11A))
+		session_entry->dot11mode = MLME_DOT11_MODE_11G;
 	else if (WLAN_REG_IS_5GHZ_CH(csa_params->channel) &&
-		 ((session_entry->dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-		 (session_entry->dot11mode == WNI_CFG_DOT11_MODE_11G_ONLY)))
-		session_entry->dot11mode = WNI_CFG_DOT11_MODE_11A;
+		 ((session_entry->dot11mode == MLME_DOT11_MODE_11G) ||
+		 (session_entry->dot11mode == MLME_DOT11_MODE_11G_ONLY)))
+		session_entry->dot11mode = MLME_DOT11_MODE_11A;
 
 	/* Send RSO Stop to FW before triggering the vdev restart for CSA */
 	if (mac_ctx->lim.stop_roaming_callback)

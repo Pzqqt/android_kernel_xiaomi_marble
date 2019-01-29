@@ -1501,12 +1501,12 @@ lim_populate_own_rate_set(struct mac_context *mac_ctx,
 	 * Include 11b rates only when the device configured in
 	 *  auto, 11a/b/g or 11b_only
 	 */
-	if ((self_sta_dot11mode == WNI_CFG_DOT11_MODE_ALL) ||
-	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11A) ||
-	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11AC) ||
-	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
-	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11B)) {
+	if ((self_sta_dot11mode == MLME_DOT11_MODE_ALL) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11A) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11AC) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11N) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11G) ||
+	    (self_sta_dot11mode == MLME_DOT11_MODE_11B)) {
 		val_len = mac_ctx->mlme_cfg->rates.supported_11b.len;
 		wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set.rate,
 				      &mac_ctx->mlme_cfg->rates.supported_11b,
@@ -1647,10 +1647,10 @@ lim_populate_peer_rate_set(struct mac_context *mac,
 		pe_err("more than SIR_MAC_RATESET_EID_MAX rates");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if ((pe_session->dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-		(pe_session->dot11mode == WNI_CFG_DOT11_MODE_11A) ||
-		(pe_session->dot11mode == WNI_CFG_DOT11_MODE_11AC) ||
-		(pe_session->dot11mode == WNI_CFG_DOT11_MODE_11N)) {
+	if ((pe_session->dot11mode == MLME_DOT11_MODE_11G) ||
+		(pe_session->dot11mode == MLME_DOT11_MODE_11A) ||
+		(pe_session->dot11mode == MLME_DOT11_MODE_11AC) ||
+		(pe_session->dot11mode == MLME_DOT11_MODE_11N)) {
 		if (pe_session->extRateSet.numRates <=
 		    SIR_MAC_RATESET_EID_MAX) {
 			qdf_mem_copy((uint8_t *) tempRateSet2.rate,

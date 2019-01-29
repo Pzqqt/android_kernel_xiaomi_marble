@@ -445,7 +445,7 @@ static bool lim_chk_11g_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			     uint8_t sub_type)
 {
 	if (LIM_IS_AP_ROLE(session) &&
-	    (session->dot11mode == WNI_CFG_DOT11_MODE_11G_ONLY) &&
+	    (session->dot11mode == MLME_DOT11_MODE_11G_ONLY) &&
 	    (assoc_req->HTCaps.present)) {
 		pe_err("SOFTAP was in 11G only mode, rejecting legacy STA: "
 				MAC_ADDRESS_STR,
@@ -475,7 +475,7 @@ static bool lim_chk_11n_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			     uint8_t sub_type)
 {
 	if (LIM_IS_AP_ROLE(session) &&
-	    (session->dot11mode == WNI_CFG_DOT11_MODE_11N_ONLY) &&
+	    (session->dot11mode == MLME_DOT11_MODE_11N_ONLY) &&
 	    (!assoc_req->HTCaps.present)) {
 		pe_err("SOFTAP was in 11N only mode, rejecting legacy STA: "
 				MAC_ADDRESS_STR,
@@ -515,7 +515,7 @@ static bool lim_chk_11ac_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		vht_caps = NULL;
 
 	if (LIM_IS_AP_ROLE(session) &&
-		(session->dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY) &&
+		(session->dot11mode == MLME_DOT11_MODE_11AC_ONLY) &&
 		((vht_caps == NULL) || ((vht_caps != NULL) && (!vht_caps->present)))) {
 		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
@@ -544,7 +544,7 @@ static bool lim_chk_11ax_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      uint8_t sub_type)
 {
 	if (LIM_IS_AP_ROLE(session) &&
-		(session->dot11mode == WNI_CFG_DOT11_MODE_11AX_ONLY) &&
+		(session->dot11mode == MLME_DOT11_MODE_11AX_ONLY) &&
 		 !assoc_req->he_cap.present) {
 		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,

@@ -438,7 +438,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 					 session);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	if (session->dot11mode != WNI_CFG_DOT11_MODE_11B)
+	if (session->dot11mode != MLME_DOT11_MODE_11B)
 		populate_dot11f_erp_info(mac_ctx, &bcn_2->ERPInfo, session);
 
 	if (session->htCapability) {
