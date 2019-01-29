@@ -1201,8 +1201,13 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
-	if (soc->rx.flags.defrag_timeout_check)
-		dp_rx_defrag_waitlist_flush(soc);
+	if (soc->rx.flags.defrag_timeout_check) {
+		uint32_t now_ms =
+			qdf_system_ticks_to_msecs(qdf_system_ticks());
+
+		if (now_ms >= soc->rx.defrag.next_flush_ms)
+			dp_rx_defrag_waitlist_flush(soc);
+	}
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_reaped[mac_id]) {

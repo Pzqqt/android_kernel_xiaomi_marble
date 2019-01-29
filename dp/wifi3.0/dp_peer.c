@@ -2086,12 +2086,14 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 		qdf_spin_lock_bh(&rx_tid->tid_lock);
-		if (peer->rx_tid[tid].hw_qdesc_vaddr_unaligned != NULL) {
-			dp_rx_tid_delete_wifi3(peer, tid);
-
+		if (!peer->bss_peer) {
 			/* Cleanup defrag related resource */
 			dp_rx_defrag_waitlist_remove(peer, tid);
 			dp_rx_reorder_flush_frag(peer, tid);
+		}
+
+		if (peer->rx_tid[tid].hw_qdesc_vaddr_unaligned) {
+			dp_rx_tid_delete_wifi3(peer, tid);
 
 			tid_delete_mask |= (1 << tid);
 		}

@@ -2803,6 +2803,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	TAILQ_INIT(&soc->rx.defrag.waitlist);
 	soc->rx.defrag.timeout_ms =
 		wlan_cfg_get_rx_defrag_min_timeout(soc_cfg_ctx);
+	soc->rx.defrag.next_flush_ms = 0;
 	soc->rx.flags.defrag_timeout_check =
 		wlan_cfg_get_defrag_timeout_check(soc_cfg_ctx);
 	qdf_spinlock_create(&soc->rx.defrag.defrag_lock);

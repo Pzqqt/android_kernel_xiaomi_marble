@@ -898,6 +898,7 @@ struct dp_soc {
 		struct {
 			TAILQ_HEAD(, dp_rx_tid) waitlist;
 			uint32_t timeout_ms;
+			uint32_t next_flush_ms;
 			qdf_spinlock_t defrag_lock;
 		} defrag;
 		struct {
