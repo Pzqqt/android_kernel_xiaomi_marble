@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -184,21 +184,22 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_6290(void *rx_tlv_hdr,
 			     &ru_details_channel_0,
 			     sizeof(ppdu_info->rx_status.he_RU));
 
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_20)
+		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_20) {
 			ppdu_info->rx_status.he_sig_b_common_known |=
 				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_40)
+		}
+		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_40) {
 			ppdu_info->rx_status.he_sig_b_common_known |=
 				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU1;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_80)
+		}
+		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_80) {
 			ppdu_info->rx_status.he_sig_b_common_known |=
 				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU2;
-
-		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_160)
+		}
+		if (ppdu_info->rx_status.bw >= HAL_FULL_RX_BW_160) {
 			ppdu_info->rx_status.he_sig_b_common_known |=
 				QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU3;
+		}
 			break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
