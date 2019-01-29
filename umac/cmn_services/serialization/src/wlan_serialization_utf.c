@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@ wlan_ser_utf_add_cmd(struct wlan_serialization_command *cmd)
 
 	cmd->cmd_timeout_duration = WLAN_SER_UTF_TEST_CMD_TIMEOUT_MS;
 	cmd->source = WLAN_UMAC_COMP_SERIALIZATION;
-	cmd->cmd_cb = (wlan_serialization_cmd_callback)wlan_ser_utf_cb;
+	cmd->cmd_cb = wlan_ser_utf_cb;
 
 	status = wlan_serialization_request(cmd);
 	ser_debug("ADD : cmd_type:%d %9s %s status: %s",

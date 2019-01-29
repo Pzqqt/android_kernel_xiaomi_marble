@@ -999,8 +999,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 
 	cmd.cmd_type = WLAN_SER_CMD_SCAN;
 	cmd.cmd_id = req->scan_req.scan_id;
-	cmd.cmd_cb = (wlan_serialization_cmd_callback)
-		scm_scan_serialize_callback;
+	cmd.cmd_cb = scm_scan_serialize_callback;
 	cmd.umac_cmd = req;
 	cmd.source = WLAN_UMAC_COMP_SCAN;
 	cmd.is_high_priority = false;

@@ -98,6 +98,8 @@ union wlan_serialization_rules_info {
 	struct wlan_serialization_scan_info scan_info;
 };
 
+struct wlan_serialization_command;
+
 /**
  * wlan_serialization_cmd_callback() - Callback registered by the component
  * @wlan_cmd: Command passed by the component for serialization
@@ -110,8 +112,9 @@ union wlan_serialization_rules_info {
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-typedef QDF_STATUS (*wlan_serialization_cmd_callback)(void *wlan_cmd,
-				 enum wlan_serialization_cb_reason reason);
+typedef QDF_STATUS
+(*wlan_serialization_cmd_callback)(struct wlan_serialization_command *wlan_cmd,
+				   enum wlan_serialization_cb_reason reason);
 
 /**
  * wlan_serialization_comp_info_cb() - callback to fill the rules information
