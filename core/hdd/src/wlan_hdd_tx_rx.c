@@ -1962,6 +1962,18 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	return status;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0))
+static bool hdd_is_gratuitous_arp_unsolicited_na(struct sk_buff *skb)
+{
+	return false;
+}
+#else
+static bool hdd_is_gratuitous_arp_unsolicited_na(struct sk_buff *skb)
+{
+	return cfg80211_is_gratuitous_arp_unsolicited_na(skb);
+}
+#endif
+
 QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			     qdf_nbuf_t rxBuf)
 {
@@ -2029,7 +2041,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((sta_ctx->conn_info.proxyARPService) &&
-			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
+		    hdd_is_gratuitous_arp_unsolicited_na(skb)) {
 			uint32_t rx_dropped;
 
 			rx_dropped = ++adapter->hdd_stats.tx_rx_stats.
