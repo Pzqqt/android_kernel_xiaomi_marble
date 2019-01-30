@@ -8466,6 +8466,7 @@ static QDF_STATUS extract_chan_info_event_non_tlv(wmi_unified_t wmi_handle,
 	chan_info->noise_floor = chan_info_ev->noise_floor;
 	chan_info->rx_clear_count = chan_info_ev->rx_clear_count;
 	chan_info->cycle_count = chan_info_ev->cycle_count;
+	chan_info->my_bss_rx_cycle_count = chan_info_ev->my_bss_rx_cycle_count;
 	chan_info->rx_11b_mode_data_duration =
 			chan_info_ev->rx_11b_mode_data_duration;
 	/* ONLY NON-TLV */
