@@ -1499,27 +1499,19 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				 &csr_roaminfo->peerMac);
 		reassoc_complete->staId = csr_roaminfo->staId;
 		reassoc_complete->statusCode = csr_roaminfo->statusCode;
-		reassoc_complete->iesLen = csr_roaminfo->rsnIELen;
-		qdf_mem_copy(reassoc_complete->ies, csr_roaminfo->prsnIE,
-			     csr_roaminfo->rsnIELen);
 
-#ifdef FEATURE_WLAN_WAPI
-		if (csr_roaminfo->wapiIELen) {
-			uint8_t len = reassoc_complete->iesLen;
-
-			reassoc_complete->iesLen += csr_roaminfo->wapiIELen;
-			qdf_mem_copy(&reassoc_complete->ies[len],
-				     csr_roaminfo->pwapiIE,
-				     csr_roaminfo->wapiIELen);
+		if (csr_roaminfo->assocReqLength < ASSOC_REQ_IE_OFFSET) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid assoc request length:%d"),
+				  csr_roaminfo->assocReqLength);
+			return QDF_STATUS_E_INVAL;
 		}
-#endif
-		if (csr_roaminfo->addIELen) {
-			uint8_t len = reassoc_complete->iesLen;
+		reassoc_complete->ies_len = (csr_roaminfo->assocReqLength -
+					    ASSOC_REQ_IE_OFFSET);
+		reassoc_complete->ies = (csr_roaminfo->assocReqPtr +
+					 ASSOC_REQ_IE_OFFSET);
 
-			reassoc_complete->iesLen += csr_roaminfo->addIELen;
-			qdf_mem_copy(&reassoc_complete->ies[len],
-				     csr_roaminfo->paddIE,
-				     csr_roaminfo->addIELen);
+		if (csr_roaminfo->addIELen) {
 			if (wlan_get_vendor_ie_ptr_from_oui(
 			    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
 			    csr_roaminfo->paddIE, csr_roaminfo->addIELen)) {

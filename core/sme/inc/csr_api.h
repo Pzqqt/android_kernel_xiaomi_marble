@@ -1210,6 +1210,8 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	/* Extended capabilities of STA */
 	uint8_t              ecsa_capable;
 
+	uint32_t ies_len;
+	uint8_t *ies;
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;
 	tSirMacCapabilityInfo capability_info;

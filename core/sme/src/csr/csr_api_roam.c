@@ -9622,6 +9622,7 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		qdf_mem_copy(&roam_info->chan_info,
 			     &pUpperLayerAssocCnf->chan_info,
 			     sizeof(struct oem_channel_info));
+
 		roam_info->ampdu = pUpperLayerAssocCnf->ampdu;
 		roam_info->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
 		roam_info->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
@@ -9642,6 +9643,13 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 					pUpperLayerAssocCnf->capability_info;
 
 		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
+			if (pUpperLayerAssocCnf->ies_len > 0) {
+				roam_info->assocReqLength =
+						pUpperLayerAssocCnf->ies_len;
+				roam_info->assocReqPtr =
+						pUpperLayerAssocCnf->ies;
+			}
+
 			mac->roam.roamSession[sessionId].connectState =
 				eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
 			roam_info->fReassocReq =
@@ -9650,6 +9658,8 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 						       roam_info, 0,
 						       eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
+			if (pUpperLayerAssocCnf->ies)
+				qdf_mem_free(pUpperLayerAssocCnf->ies);
 		}
 	}
 	break;
@@ -15634,6 +15644,21 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 		if (pAssocInd->VHTCaps.present)
 			pMsg->vht_caps = pAssocInd->VHTCaps;
 		pMsg->capability_info = pAssocInd->capability_info;
+		if (pAssocInd->assocReqPtr) {
+			if (pAssocInd->assocReqLength < MAX_ASSOC_REQ_IE_LEN) {
+				pMsg->ies = qdf_mem_malloc(
+						pAssocInd->assocReqLength);
+				if (pMsg->ies == NULL) {
+					qdf_mem_free(pMsg);
+					return QDF_STATUS_E_NOMEM;
+				}
+				pMsg->ies_len = pAssocInd->assocReqLength;
+				qdf_mem_copy(pMsg->ies , pAssocInd->assocReqPtr,
+					     pMsg->ies_len);
+			} else {
+				sme_err("Assoc Ie length is too long");
+			}
+		}
 
 		msgQ.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
 		msgQ.bodyptr = pMsg;
