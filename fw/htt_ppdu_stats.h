@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -368,6 +368,32 @@ enum HTT_PPDU_STATS_BW {
 };
 typedef enum HTT_PPDU_STATS_BW HTT_PPDU_STATS_BW;
 
+enum HTT_PPDU_STATS_SEQ_TYPE {
+    HTT_SEQTYPE_SU              = 0,
+    HTT_SEQTYPE_AC_MU_MIMO      = 1,
+    HTT_SEQTYPE_AX_MU_MIMO      = 2,
+    HTT_SEQTYPE_MU_OFDMA        = 3,
+    HTT_SEQTYPE_UL_TRIG         = 4,
+    HTT_SEQTYPE_BURST_BCN       = 5,
+    HTT_SEQTYPE_UL_BSR_RESP     = 6,
+    HTT_SEQTYPE_UL_BSR_TRIG     = 7,
+    HTT_SEQTYPE_UL_RESP         = 8,
+};
+typedef enum HTT_PPDU_STATS_SEQ_TYPE HTT_PPDU_STATS_SEQ_TYPE;
+
+#define HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_M     0x00ff0000
+#define HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_S             16
+
+#define HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_PPDU_SEQ_TYPE_S)); \
+     } while (0)
+
 #define HTT_PPDU_STATS_COMMON_TLV_BW_M     0x000f0000
 #define HTT_PPDU_STATS_COMMON_TLV_BW_S             16
 
@@ -426,15 +452,18 @@ typedef struct {
     /* BIT [ 7 :   0]   :- frame_type - HTT_STATS_FTYPE
      * BIT [ 15:   8]   :- queue_type - HTT_TX_QUEUE_TYPE
      * BIT [ 19:  16]   :- bw - HTT_PPDU_STATS_BW
-     * BIT [ 31:  20]   :- reserved
+     * BIT [ 27:  20]   :- ppdu_seq_type - HTT_PPDU_STATS_SEQ_TYPE
+     * BIT [ 31:  28]   :- reserved
      */
     union {
         A_UINT32 bw__queue_type__frame_type;
+        A_UINT32 ppdu_seq_type__bw__queue_type__frame_type;
         struct {
             A_UINT32 frame_type:     8,
                      queue_type:     8,
                      bw:             4,
-                     reserved0:     12;
+                     ppdu_seq_type:  8,
+                     reserved0:      4;
         };
     };
     A_UINT32 chain_mask;
