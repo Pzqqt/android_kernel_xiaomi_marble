@@ -28,7 +28,6 @@ ifeq ($(CONFIG_DEBUG_FS), y)
 endif
 
 # Features gets enabled on slub debug
-CONFIG_FEATURE_PKTLOG := y
 CONFIG_WLAN_DEBUG_CRASH_INJECT := y
 CONFIG_FEATURE_MEMDUMP_ENABLE := y
 
