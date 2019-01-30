@@ -8473,6 +8473,10 @@ static QDF_STATUS extract_chan_info_event_non_tlv(wmi_unified_t wmi_handle,
 	chan_info->chan_tx_pwr_range = chan_info_ev->chan_tx_pwr_range;
 	chan_info->chan_tx_pwr_tp = chan_info_ev->chan_tx_pwr_tp;
 	chan_info->rx_frame_count = chan_info_ev->rx_frame_count;
+	chan_info->tx_frame_count = chan_info_ev->tx_frame_count;
+	chan_info->rx_clear_ext20_count = chan_info_ev->rx_clear_ext20_count;
+	chan_info->rx_clear_ext40_count = chan_info_ev->rx_clear_ext40_count;
+	chan_info->rx_clear_ext80_count = chan_info_ev->rx_clear_ext80_count;
 
 	return QDF_STATUS_SUCCESS;
 }
