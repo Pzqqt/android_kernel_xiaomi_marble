@@ -352,12 +352,13 @@ typedef struct {
  * In host-based implementation of the rate-control feature, this struture is used to
  * create the payload for HTT message/s from target to host.
  */
-
-#if (NUM_SPATIAL_STREAM > 3)
-  #define A_RATEMASK A_UINT64
-#else
-  #define A_RATEMASK A_UINT32
-#endif
+#ifndef CONFIG_MOVE_RC_STRUCT_TO_MACCORE
+  #if (NUM_SPATIAL_STREAM > 3)
+    #define A_RATEMASK A_UINT64
+  #else
+    #define A_RATEMASK A_UINT32
+  #endif
+#endif /* CONFIG_MOVE_RC_STRUCT_TO_MACCORE */
 
 typedef A_UINT8 A_RATE;
 typedef A_UINT8 A_RATECODE;
