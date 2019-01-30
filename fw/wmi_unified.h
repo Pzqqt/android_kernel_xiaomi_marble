@@ -5546,6 +5546,17 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SET_TBTT_CTRL,
 
+    /*
+     * BITS0 ~1 (refer to enum)
+     * 0 - default --> always update
+     * 1 - ignore to update
+     * 2 - update if larger than threshould
+     * 3 - update if less or equal than threshould
+     *
+     * BITS 2 ~ 31 Threshould
+     */
+    WMI_PDEV_PARAM_NAV_OVERRIDE_CONFIG,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
