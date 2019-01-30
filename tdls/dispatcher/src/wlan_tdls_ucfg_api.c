@@ -224,8 +224,6 @@ static QDF_STATUS tdls_object_init_params(
 
 static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 {
-	uint8_t sta_idx;
-	uint32_t feature;
 
 	tdls_object_init_params(soc_obj);
 	soc_obj->connected_peer_count = 0;
@@ -233,22 +231,6 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 	soc_obj->tdls_teardown_peers_cnt = 0;
 	soc_obj->tdls_nss_teardown_complete = false;
 	soc_obj->tdls_nss_transition_mode = TDLS_NSS_TRANSITION_S_UNKNOWN;
-
-	feature = soc_obj->tdls_configs.tdls_feature_flags;
-	if (TDLS_IS_BUFFER_STA_ENABLED(feature) ||
-	    TDLS_IS_SLEEP_STA_ENABLED(feature) ||
-	    TDLS_IS_OFF_CHANNEL_ENABLED(feature))
-		soc_obj->max_num_tdls_sta =
-			WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM;
-		else
-			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
-
-	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
-		soc_obj->tdls_conn_info[sta_idx].sta_id = INVALID_TDLS_PEER_ID;
-		soc_obj->tdls_conn_info[sta_idx].session_id = 255;
-		qdf_mem_zero(&soc_obj->tdls_conn_info[sta_idx].peer_mac,
-			     QDF_MAC_ADDR_SIZE);
-	}
 	soc_obj->enable_tdls_connection_tracker = false;
 	soc_obj->tdls_external_peer_count = 0;
 	soc_obj->tdls_disable_in_progress = false;
@@ -288,6 +270,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	struct tdls_soc_priv_obj *soc_obj;
 	uint32_t tdls_feature_flags;
 	struct policy_mgr_tdls_cbacks tdls_pm_call_backs;
+	uint8_t sta_idx;
 
 	tdls_debug("tdls update config ");
 	if (!psoc || !req) {
@@ -346,6 +329,20 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 		soc_obj->tdls_current_mode = TDLS_SUPPORT_IMP_MODE;
 
 	soc_obj->tdls_last_mode = soc_obj->tdls_current_mode;
+	if (TDLS_IS_BUFFER_STA_ENABLED(tdls_feature_flags) ||
+	    TDLS_IS_SLEEP_STA_ENABLED(tdls_feature_flags) ||
+	    TDLS_IS_OFF_CHANNEL_ENABLED(tdls_feature_flags))
+		soc_obj->max_num_tdls_sta =
+			WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM;
+		else
+			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
+
+	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
+		soc_obj->tdls_conn_info[sta_idx].sta_id = INVALID_TDLS_PEER_ID;
+		soc_obj->tdls_conn_info[sta_idx].session_id = 255;
+		qdf_mem_zero(&soc_obj->tdls_conn_info[sta_idx].peer_mac,
+			     QDF_MAC_ADDR_SIZE);
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
