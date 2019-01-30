@@ -16046,6 +16046,16 @@ typedef enum {
     WMI_PEER_TID_CONFIG_RATE_CONTROL_AUTO,
     /** Fixed rate control */
     WMI_PEER_TID_CONFIG_RATE_CONTROL_FIXED_RATE,
+    /** Set the Default lowest rate (6Mbps in 5GHZ and 1Mbps in 2GHZ) */
+    WMI_PEER_TID_CONFIG_RATE_CONTROL_DEFAULT_LOWEST_RATE,
+    /**
+     * Set the highest rate cap allowed for this TID.
+     * Rate cap is specified in rate code format,
+     * i.e. NSS and MCS combined as shown below:
+     * b'5-b'4 indicate the NSS (0 - 1x1, 1 - 2x2, 2 - 3x3, 3 - 4x4)
+     * b'3-b'0 indicate the MCS
+     */
+    WMI_PEER_TID_CONFIG_RATE_UPPER_CAP,
 } WMI_PEER_TID_CONFIG_RATE_CONTROL;
 
 /**
