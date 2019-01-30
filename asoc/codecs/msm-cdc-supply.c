@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -357,7 +357,7 @@ EXPORT_SYMBOL(msm_cdc_enable_static_supplies);
 
 /*
  * msm_cdc_init_supplies:
- *	Initialize codec static supplies with regulator get
+ *	Initialize codec static supplies
  *
  * @dev: pointer to codec device
  * @supplies: pointer to regulator bulk data
@@ -370,6 +370,29 @@ int msm_cdc_init_supplies(struct device *dev,
 			  struct regulator_bulk_data **supplies,
 			  struct cdc_regulator *cdc_vreg,
 			  int num_supplies)
+{
+	return msm_cdc_init_supplies_v2(dev, supplies, cdc_vreg,
+					num_supplies, false);
+}
+EXPORT_SYMBOL(msm_cdc_init_supplies);
+
+/*
+ * msm_cdc_init_supplies_v2:
+ *	Initialize codec static supplies.
+ *	Initialize codec dynamic supplies based on vote_regulator_on_demand
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @vote_regulator_on_demand: initialize codec dynamic supplies at runtime
+ *
+ * Return error code if supply init is failed
+ */
+int msm_cdc_init_supplies_v2(struct device *dev,
+			  struct regulator_bulk_data **supplies,
+			  struct cdc_regulator *cdc_vreg,
+			  int num_supplies, u32 vote_regulator_on_demand)
 {
 	struct regulator_bulk_data *vsup;
 	int rc;
@@ -413,6 +436,9 @@ int msm_cdc_init_supplies(struct device *dev,
 		if (regulator_count_voltages(vsup[i].consumer) < 0)
 			continue;
 
+		if (cdc_vreg[i].ondemand && vote_regulator_on_demand)
+			continue;
+
 		rc = regulator_set_voltage(vsup[i].consumer,
 					   cdc_vreg[i].min_uV,
 					   cdc_vreg[i].max_uV);
@@ -437,7 +463,7 @@ int msm_cdc_init_supplies(struct device *dev,
 err_supply:
 	return rc;
 }
-EXPORT_SYMBOL(msm_cdc_init_supplies);
+EXPORT_SYMBOL(msm_cdc_init_supplies_v2);
 
 /*
  * msm_cdc_get_power_supplies:

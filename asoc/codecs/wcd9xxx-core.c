@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -97,6 +97,65 @@ static int wcd9xxx_slim_device_up(struct slim_device *sldev);
 static int wcd9xxx_slim_device_down(struct slim_device *sldev);
 
 struct wcd9xxx_i2c wcd9xxx_modules[MAX_WCD9XXX_DEVICE];
+
+/*
+ * wcd9xxx_vote_ondemand_regulator: Initialize codec dynamic supplies
+ *
+ * @wcd9xxx: Pointer to wcd9xxx structure
+ * @wcd9xxx_pdata: Pointer to wcd9xxx_pdata structure
+ * @supply_name: supply parameter to initialize regulator
+ * @enable: flag to initialize/uninitialize supply
+ *
+ * Return error code if supply init is failed
+ */
+int wcd9xxx_vote_ondemand_regulator(struct wcd9xxx *wcd9xxx,
+				    struct wcd9xxx_pdata *pdata,
+				    const char *supply_name,
+				    bool enable)
+{
+	int i, rc, index = -EINVAL;
+
+	pr_debug("%s: enable %d\n", __func__, enable);
+
+	for (i = 0; i < wcd9xxx->num_of_supplies; ++i) {
+		if (pdata->regulator[i].ondemand &&
+		    wcd9xxx->supplies[i].supply &&
+		    !strcmp(wcd9xxx->supplies[i].supply, supply_name)) {
+			index = i;
+			break;
+		}
+	}
+
+	if (index < 0) {
+		pr_err("%s: no matching regulator found\n", __func__);
+		return -EINVAL;
+	}
+
+	if (enable) {
+		rc = regulator_set_voltage(wcd9xxx->supplies[index].consumer,
+					   pdata->regulator[index].min_uV,
+					   pdata->regulator[index].max_uV);
+		if (rc) {
+			pr_err("%s: set regulator voltage failed for %s, err:%d\n",
+				__func__, supply_name, rc);
+			return rc;
+		}
+		rc = regulator_set_load(wcd9xxx->supplies[index].consumer,
+					pdata->regulator[index].optimum_uA);
+		if (rc < 0) {
+			pr_err("%s: set regulator optimum mode failed for %s, err:%d\n",
+				__func__, supply_name, rc);
+			return rc;
+		}
+	} else {
+		regulator_set_voltage(wcd9xxx->supplies[index].consumer, 0,
+				      pdata->regulator[index].max_uV);
+		regulator_set_load(wcd9xxx->supplies[index].consumer, 0);
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(wcd9xxx_vote_ondemand_regulator);
 
 static int wcd9xxx_slim_multi_reg_write(struct wcd9xxx *wcd9xxx,
 					const void *data, size_t count)
@@ -1069,9 +1128,10 @@ static int wcd9xxx_i2c_probe(struct i2c_client *client,
 			wcd9xxx->mclk_rate = pdata->mclk_rate;
 
 		wcd9xxx->num_of_supplies = pdata->num_supplies;
-		ret = msm_cdc_init_supplies(wcd9xxx->dev, &wcd9xxx->supplies,
-					    pdata->regulator,
-					    pdata->num_supplies);
+		ret = msm_cdc_init_supplies_v2(wcd9xxx->dev, &wcd9xxx->supplies,
+					       pdata->regulator,
+					       pdata->num_supplies,
+					       pdata->vote_regulator_on_demand);
 		if (!wcd9xxx->supplies) {
 			dev_err(wcd9xxx->dev, "%s: Cannot init wcd supplies\n",
 				__func__);
@@ -1327,9 +1387,10 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	}
 
 	wcd9xxx->num_of_supplies = pdata->num_supplies;
-	ret = msm_cdc_init_supplies(&slim->dev, &wcd9xxx->supplies,
-				    pdata->regulator,
-				    pdata->num_supplies);
+	ret = msm_cdc_init_supplies_v2(&slim->dev, &wcd9xxx->supplies,
+				       pdata->regulator,
+				       pdata->num_supplies,
+				       pdata->vote_regulator_on_demand);
 	if (!wcd9xxx->supplies) {
 		dev_err(wcd9xxx->dev, "%s: Cannot init wcd supplies\n",
 			__func__);

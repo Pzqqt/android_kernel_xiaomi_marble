@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __MFD_WCD9XXX_PDATA_H__
@@ -193,6 +193,7 @@ struct wcd9xxx_pdata {
 	u32 ecpp_dmic_sample_rate;
 	u32 dmic_clk_drv;
 	u16 use_pinctrl;
+	u32 vote_regulator_on_demand;
 };
 
 #endif

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -413,6 +413,14 @@ struct wcd9xxx_pdata *wcd9xxx_populate_dt_data(struct device *dev)
 	}
 
 	pdata->dmic_clk_drv = dmic_clk_drive;
+
+	rc = of_property_read_u32(dev->of_node,
+					"qcom,vote-dynamic-supply-on-demand",
+					&pdata->vote_regulator_on_demand);
+	if (rc)
+		dev_dbg(dev, "%s No entry for %s property in node %s\n",
+				__func__, "qcom,vote-dynamic-supply-on-demand",
+				dev->of_node->full_name);
 
 	return pdata;
 
