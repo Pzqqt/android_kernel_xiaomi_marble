@@ -1069,10 +1069,6 @@ static inline void csr_roaming_report_diag_event(
 bool csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
 QDF_STATUS csr_get_channels_and_power(struct mac_context *mac);
 
-void csr_nonscan_pending_ll_unlock(struct mac_context *mac_ctx);
-void csr_nonscan_active_ll_unlock(struct mac_context *mac_ctx);
-void csr_nonscan_pending_ll_lock(struct mac_context *mac_ctx);
-void csr_nonscan_active_ll_lock(struct mac_context *mac_ctx);
 bool csr_nonscan_active_ll_is_list_empty(
 			struct mac_context *mac_ctx,
 			bool inter_locked);
@@ -1096,17 +1092,8 @@ tListElem *csr_nonscan_pending_ll_remove_head(
 			bool inter_locked);
 uint32_t csr_nonscan_pending_ll_count(
 			struct mac_context *mac_ctx);
-void csr_nonscan_pending_ll_insert_head(
-			struct mac_context *mac_ctx,
-		tListElem *entry, bool inter_locked);
-void csr_nonscan_pending_ll_insert_tail(
-			struct mac_context *mac_ctx,
-		tListElem *entry, bool inter_locked);
 uint32_t csr_nonscan_active_ll_count(
 			struct mac_context *mac_ctx);
-void csr_nonscan_active_ll_insert_head(
-			struct mac_context *mac_ctx,
-		tListElem *entry, bool inter_locked);
 tListElem *csr_nonscan_pending_ll_next(
 			struct mac_context *mac_ctx,
 		tListElem *entry, bool inter_locked);

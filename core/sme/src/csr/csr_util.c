@@ -433,37 +433,6 @@ void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx)
 					  true, true, true);
 }
 
-void csr_nonscan_active_ll_insert_head(struct mac_context *mac_ctx,
-				       tListElem *entry, bool inter_locked)
-{
-}
-
-void csr_nonscan_pending_ll_insert_head(struct mac_context *mac_ctx,
-					tListElem *entry, bool inter_locked)
-{
-}
-
-void csr_nonscan_pending_ll_insert_tail(struct mac_context *mac_ctx,
-					tListElem *entry, bool inter_locked)
-{
-}
-
-void csr_nonscan_pending_ll_unlock(struct mac_context *mac_ctx)
-{
-}
-
-void csr_nonscan_active_ll_unlock(struct mac_context *mac_ctx)
-{
-}
-
-void csr_nonscan_pending_ll_lock(struct mac_context *mac_ctx)
-{
-}
-
-void csr_nonscan_active_ll_lock(struct mac_context *mac_ctx)
-{
-}
-
 uint32_t csr_nonscan_active_ll_count(struct mac_context *mac_ctx)
 {
 	return wlan_serialization_get_active_list_count(mac_ctx->psoc, false);

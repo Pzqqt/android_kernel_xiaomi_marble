@@ -2999,7 +2999,6 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 		sme_err("failed to open list");
 		return;
 	}
-	csr_nonscan_pending_ll_lock(mac_ctx);
 	entry = csr_nonscan_pending_ll_peek_head(mac_ctx, LL_ACCESS_NOLOCK);
 	while (entry) {
 		next_entry = csr_nonscan_pending_ll_next(mac_ctx, entry,
@@ -3044,7 +3043,6 @@ static void csr_roam_remove_duplicate_pending_cmd_from_list(
 		}
 		entry = next_entry;
 	}
-	csr_nonscan_pending_ll_unlock(mac_ctx);
 
 	while ((entry = csr_ll_remove_head(&local_list, LL_ACCESS_NOLOCK))) {
 		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
@@ -3074,11 +3072,8 @@ void csr_roam_remove_duplicate_command(struct mac_context *mac_ctx,
 			uint32_t session_id, tSmeCmd *command,
 			enum csr_roam_reason roam_reason)
 {
-	/* Always lock active list before locking pending lists */
-	csr_nonscan_active_ll_lock(mac_ctx);
 	csr_roam_remove_duplicate_pending_cmd_from_list(mac_ctx,
 		session_id, command, roam_reason);
-	csr_nonscan_active_ll_unlock(mac_ctx);
 }
 
 /**
@@ -8524,7 +8519,6 @@ bool is_disconnect_pending(struct mac_context *pmac,
 	tSmeCmd *command = NULL;
 	bool disconnect_cmd_exist = false;
 
-	csr_nonscan_pending_ll_lock(pmac);
 	entry = csr_nonscan_pending_ll_peek_head(pmac, LL_ACCESS_NOLOCK);
 	while (entry) {
 		next_entry = csr_nonscan_pending_ll_next(pmac,
@@ -8538,7 +8532,7 @@ bool is_disconnect_pending(struct mac_context *pmac,
 		}
 		entry = next_entry;
 	}
-	csr_nonscan_pending_ll_unlock(pmac);
+
 	return disconnect_cmd_exist;
 }
 
@@ -8763,8 +8757,6 @@ bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 	tListElem *pEntry;
 	tSmeCmd *pCommand = NULL;
 
-	/* alwasy lock active list before locking pending list */
-	csr_nonscan_active_ll_lock(mac);
 	pEntry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_NOLOCK);
 	if (pEntry) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -8774,7 +8766,6 @@ bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 		}
 	}
 	if (false == fRet) {
-		csr_nonscan_pending_ll_lock(mac);
 		pEntry = csr_nonscan_pending_ll_peek_head(mac,
 					 LL_ACCESS_NOLOCK);
 		while (pEntry) {
@@ -8787,9 +8778,7 @@ bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 			pEntry = csr_nonscan_pending_ll_next(mac, pEntry,
 							LL_ACCESS_NOLOCK);
 		}
-		csr_nonscan_pending_ll_unlock(mac);
 	}
-	csr_nonscan_active_ll_unlock(mac);
 
 	return fRet;
 }

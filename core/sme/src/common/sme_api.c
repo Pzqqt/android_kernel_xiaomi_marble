@@ -428,7 +428,6 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac)
 		} /* if(pTempCmd) */
 
 		/* dump what is in the pending queue */
-		csr_nonscan_pending_ll_lock(mac);
 		pEntry =
 			csr_nonscan_pending_ll_peek_head(mac,
 					 LL_ACCESS_NOLOCK);
@@ -447,7 +446,6 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac)
 			pEntry = csr_nonscan_pending_ll_next(mac, pEntry,
 					    LL_ACCESS_NOLOCK);
 		}
-		csr_nonscan_pending_ll_unlock(mac);
 
 		if (mac->mlme_cfg->gen.fatal_event_trigger)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,

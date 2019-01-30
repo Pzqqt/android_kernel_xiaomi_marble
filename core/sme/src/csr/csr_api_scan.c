@@ -83,15 +83,11 @@ static QDF_STATUS csr_ll_scan_purge_result(struct mac_context *mac,
 	tListElem *pEntry;
 	struct tag_csrscan_result *pBssDesc;
 
-	csr_ll_lock(pList);
-
 	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
 					Link);
 		csr_free_scan_result_entry(mac, pBssDesc);
 	}
-
-	csr_ll_unlock(pList);
 
 	return status;
 }
@@ -508,7 +504,6 @@ static void csr_purge_channel_power(struct mac_context *mac,
 	struct csr_channel_powerinfo *pChannelSet;
 	tListElem *pEntry;
 
-	csr_ll_lock(pChannelList);
 	/*
 	 * Remove the channel sets from the learned list and put them
 	 * in the free list
@@ -520,7 +515,6 @@ static void csr_purge_channel_power(struct mac_context *mac,
 		if (pChannelSet)
 			qdf_mem_free(pChannelSet);
 	}
-	csr_ll_unlock(pChannelList);
 }
 
 /*
@@ -1296,7 +1290,6 @@ tCsrScanResultInfo *csr_scan_result_get_first(struct mac_context *mac,
 				(struct scan_result_list *) hScanResult;
 
 	if (pResultList) {
-		csr_ll_lock(&pResultList->List);
 		pEntry = csr_ll_peek_head(&pResultList->List, LL_ACCESS_NOLOCK);
 		if (pEntry) {
 			pResult = GET_BASE_ADDR(pEntry, struct
@@ -1304,7 +1297,6 @@ tCsrScanResultInfo *csr_scan_result_get_first(struct mac_context *mac,
 			pRet = &pResult->Result;
 		}
 		pResultList->pCurEntry = pEntry;
-		csr_ll_unlock(&pResultList->List);
 	}
 
 	return pRet;
@@ -1322,7 +1314,6 @@ tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 	if (!pResultList)
 		return NULL;
 
-	csr_ll_lock(&pResultList->List);
 	if (NULL == pResultList->pCurEntry)
 		pEntry = csr_ll_peek_head(&pResultList->List, LL_ACCESS_NOLOCK);
 	else
@@ -1335,7 +1326,7 @@ tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 		pRet = &pResult->Result;
 	}
 	pResultList->pCurEntry = pEntry;
-	csr_ll_unlock(&pResultList->List);
+
 	return pRet;
 }
 
@@ -1736,7 +1727,6 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 		return status;
 	}
 
-	csr_nonscan_pending_ll_lock(mac);
 	pEntry = csr_nonscan_pending_ll_peek_head(mac, LL_ACCESS_NOLOCK);
 
 	/*
@@ -1757,7 +1747,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 			status = QDF_STATUS_SUCCESS;
 		}
 	}
-	csr_nonscan_pending_ll_unlock(mac);
+
 
 	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
@@ -2805,8 +2795,6 @@ static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
 	   !qdf_list_size(&mac_ctx->roam.rssi_disallow_bssid))
 		return;
 
-	csr_ll_lock(&scan_list->List);
-
 	cur_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
 	while (cur_entry) {
 		scan_res = GET_BASE_ADDR(cur_entry, struct tag_csrscan_result,
@@ -2824,8 +2812,6 @@ static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
 		cur_entry = next_entry;
 		next_entry = NULL;
 	}
-	csr_ll_unlock(&scan_list->List);
-
 }
 
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
@@ -3073,7 +3059,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			return;
 	scan_list = results;
-	csr_ll_lock(&scan_list->List);
 	scan_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
 	while (scan_entry) {
 		bss_desc = GET_BASE_ADDR(scan_entry, struct tag_csrscan_result,
@@ -3099,7 +3084,6 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		scan_entry = csr_ll_next(&scan_list->List, scan_entry,
 				     LL_ACCESS_NOLOCK);
 	}
-	csr_ll_unlock(&scan_list->List);
 
 	csr_scan_result_purge(mac_ctx, scan_list);
 }
