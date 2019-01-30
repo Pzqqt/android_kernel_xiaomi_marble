@@ -3636,6 +3636,7 @@ static QDF_STATUS send_peer_rate_report_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+#ifdef CONFIG_MCL
 /**
  * send_bcn_buf_ll_cmd_tlv() - prepare and send beacon buffer to fw for LL
  * @wmi_handle: wmi handle
@@ -3678,6 +3679,7 @@ static QDF_STATUS send_bcn_buf_ll_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+#endif /* CONFIG_MCL */
 
 /**
  * send_process_update_edca_param_cmd_tlv() - update EDCA params
@@ -5209,7 +5211,7 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#if !defined(REMOVE_PKT_LOG)
+#if !defined(REMOVE_PKT_LOG) && defined(CONFIG_MCL)
 /**
  * send_pktlog_wmi_send_cmd_tlv() - send pktlog enable/disable command to target
  * @wmi_handle: wmi handle
@@ -5292,7 +5294,7 @@ wmi_send_failed:
 	wmi_buf_free(buf);
 	return QDF_STATUS_E_FAILURE;
 }
-#endif /* REMOVE_PKT_LOG */
+#endif /* !REMOVE_PKT_LOG &&  CONFIG_MCL*/
 
 /**
  * send_stats_ext_req_cmd_tlv() - request ext stats from fw

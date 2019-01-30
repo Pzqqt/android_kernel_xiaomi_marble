@@ -1612,6 +1612,7 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 }
 qdf_export_symbol(wmi_get_max_msg_len);
 
+#ifdef CONFIG_MCL
 #ifndef WMI_CMD_STRINGS
 static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 {
@@ -1620,7 +1621,6 @@ static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 
 #endif
 
-#ifdef CONFIG_MCL
 static inline void wmi_log_cmd_id(uint32_t cmd_id, uint32_t tag)
 {
 	WMI_LOGD("Send WMI command:%s command_id:%d htc_tag:%d\n",
