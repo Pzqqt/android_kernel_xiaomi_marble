@@ -344,6 +344,7 @@ unlock:
 static void voice_mhi_map_pcie_and_send(struct work_struct *work)
 {
 	dma_addr_t iova, phys_addr;
+	uint32_t mem_size;
 	struct device *md;
 
 	mutex_lock(&voice_mhi_lcl.mutex);
@@ -355,8 +356,9 @@ static void voice_mhi_map_pcie_and_send(struct work_struct *work)
 	}
 
 	phys_addr = voice_mhi_lcl.dev_info.phys_addr.base;
+	mem_size = voice_mhi_lcl.dev_info.iova_pcie.size;
 	if (md) {
-		iova = dma_map_resource(md->parent, phys_addr, PAGE_SIZE,
+		iova = dma_map_resource(md->parent, phys_addr, mem_size,
 					DMA_BIDIRECTIONAL, 0);
 		if (dma_mapping_error(md->parent, iova)) {
 			pr_err("%s: dma_mapping_error\n", __func__);
@@ -523,6 +525,7 @@ static int voice_mhi_probe(struct platform_device *pdev)
 		voice_mhi_lcl.dev_info.phys_addr.base = phys_addr;
 		voice_mhi_lcl.dev_info.iova_adsp.base = iova;
 		voice_mhi_lcl.dev_info.iova_adsp.size = mem_size;
+		voice_mhi_lcl.dev_info.iova_pcie.size = mem_size;
 		VOICE_MHI_STATE_SET(voice_mhi_lcl.voice_mhi_state,
 				VOICE_MHI_ADSP_UP);
 
