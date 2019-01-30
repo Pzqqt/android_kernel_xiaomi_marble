@@ -11,7 +11,7 @@
 #include <linux/delay.h>
 #include "dsi_pll.h"
 #include "pll_drv.h"
-#include <dt-bindings/clock/mdss-10nm-pll-clk.h>
+#include <dt-bindings/clock/mdss-7nm-pll-clk.h>
 
 #define VCO_DELAY_USEC 1
 
@@ -182,6 +182,7 @@
 #define PHY_CMN_CLK_CFG1	0x014
 #define PHY_CMN_RBUF_CTRL	0x01C
 #define PHY_CMN_CTRL_0		0x024
+#define PHY_CMN_CTRL_2		0x02C
 #define PHY_CMN_CTRL_3		0x030
 #define PHY_CMN_PLL_CNTRL	0x03C
 #define PHY_CMN_GLBL_DIGTOP_SPARE4 0x128
@@ -196,6 +197,43 @@
 #define SSC_START		BIT(6)
 #define SSC_START_MUX		BIT(7)
 
+/* Dynamic Refresh Control Registers */
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL0		(0x014)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL1		(0x018)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL2		(0x01C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL3		(0x020)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL4		(0x024)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL5		(0x028)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL6		(0x02C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL7		(0x030)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL8		(0x034)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL9		(0x038)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL10		(0x03C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL11		(0x040)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL12		(0x044)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL13		(0x048)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL14		(0x04C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL15		(0x050)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL16		(0x054)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL17		(0x058)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL18		(0x05C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL19		(0x060)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL20		(0x064)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL21		(0x068)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL22		(0x06C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL23		(0x070)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL24		(0x074)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL25		(0x078)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL26		(0x07C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL27		(0x080)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL28		(0x084)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL29		(0x088)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL30		(0x08C)
+#define DSI_DYNAMIC_REFRESH_PLL_CTRL31		(0x090)
+#define DSI_DYNAMIC_REFRESH_PLL_UPPER_ADDR	(0x094)
+#define DSI_DYNAMIC_REFRESH_PLL_UPPER_ADDR2	(0x098)
+
+#define DSI_PHY_TO_PLL_OFFSET	(0x500)
 enum {
 	DSI_PLL_0,
 	DSI_PLL_1,
@@ -554,6 +592,7 @@ static void dsi_pll_calc_dec_frac(struct dsi_pll_7nm *pll,
 	regs->frac_div_start_low = (frac & 0xff);
 	regs->frac_div_start_mid = (frac & 0xff00) >> 8;
 	regs->frac_div_start_high = (frac & 0x30000) >> 16;
+	regs->pll_prop_gain_rate = 10;
 }
 
 static void dsi_pll_calc_ssc(struct dsi_pll_7nm *pll,
@@ -889,6 +928,7 @@ static int vco_7nm_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	rsc->vco_current_rate = rate;
 	rsc->vco_ref_clk_rate = vco->ref_clk_rate;
+	rsc->dfps_trigger = false;
 
 	rc = mdss_pll_resource_enable(rsc, true);
 	if (rc) {
@@ -913,6 +953,289 @@ static int vco_7nm_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	/* flush, ensure all register writes are done*/
 	wmb();
+
+	mdss_pll_resource_enable(rsc, false);
+
+	return 0;
+}
+
+static int dsi_pll_read_stored_trim_codes(struct mdss_pll_resources *pll_res,
+					  unsigned long vco_clk_rate)
+{
+	int i;
+	bool found = false;
+
+	if (!pll_res->dfps)
+		return -EINVAL;
+
+	for (i = 0; i < pll_res->dfps->vco_rate_cnt; i++) {
+		struct dfps_codes_info *codes_info =
+			&pll_res->dfps->codes_dfps[i];
+
+		pr_debug("valid=%d vco_rate=%d, code %d %d %d\n",
+			codes_info->is_valid, codes_info->clk_rate,
+			codes_info->pll_codes.pll_codes_1,
+			codes_info->pll_codes.pll_codes_2,
+			codes_info->pll_codes.pll_codes_3);
+
+		if (vco_clk_rate != codes_info->clk_rate &&
+				codes_info->is_valid)
+			continue;
+
+		pll_res->cache_pll_trim_codes[0] =
+			codes_info->pll_codes.pll_codes_1;
+		pll_res->cache_pll_trim_codes[1] =
+			codes_info->pll_codes.pll_codes_2;
+		pll_res->cache_pll_trim_codes[2] =
+			codes_info->pll_codes.pll_codes_3;
+		found = true;
+		break;
+	}
+
+	if (!found)
+		return -EINVAL;
+
+	pr_debug("trim_code_0=0x%x trim_code_1=0x%x trim_code_2=0x%x\n",
+			pll_res->cache_pll_trim_codes[0],
+			pll_res->cache_pll_trim_codes[1],
+			pll_res->cache_pll_trim_codes[2]);
+
+	return 0;
+}
+
+static void shadow_dsi_pll_dynamic_refresh_7nm(struct dsi_pll_7nm *pll,
+						struct mdss_pll_resources *rsc)
+{
+	u32 data;
+	u32 offset = DSI_PHY_TO_PLL_OFFSET;
+	u32 upper_addr = 0;
+	u32 upper_addr2 = 0;
+	struct dsi_pll_regs *reg = &pll->reg_setup;
+
+	data = MDSS_PLL_REG_R(rsc->phy_base, PHY_CMN_CLK_CFG1);
+	data &= ~BIT(5);
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL0,
+			   PHY_CMN_CLK_CFG1, PHY_CMN_PLL_CNTRL, data, 0);
+	upper_addr |= (upper_8_bit(PHY_CMN_CLK_CFG1) << 0);
+	upper_addr |= (upper_8_bit(PHY_CMN_PLL_CNTRL) << 1);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL1,
+			   PHY_CMN_RBUF_CTRL,
+			   (PLL_CORE_INPUT_OVERRIDE + offset),
+			   0, 0x12);
+	upper_addr |= (upper_8_bit(PHY_CMN_RBUF_CTRL) << 2);
+	upper_addr |= (upper_8_bit(PLL_CORE_INPUT_OVERRIDE + offset) << 3);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL2,
+			   (PLL_DECIMAL_DIV_START_1 + offset),
+			   (PLL_FRAC_DIV_START_LOW_1 + offset),
+			   reg->decimal_div_start, reg->frac_div_start_low);
+	upper_addr |= (upper_8_bit(PLL_DECIMAL_DIV_START_1 + offset) << 4);
+	upper_addr |= (upper_8_bit(PLL_FRAC_DIV_START_LOW_1 + offset) << 5);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL3,
+			   (PLL_FRAC_DIV_START_MID_1 + offset),
+			   (PLL_FRAC_DIV_START_HIGH_1 + offset),
+			   reg->frac_div_start_mid, reg->frac_div_start_high);
+	upper_addr |= (upper_8_bit(PLL_FRAC_DIV_START_MID_1 + offset) << 6);
+	upper_addr |= (upper_8_bit(PLL_FRAC_DIV_START_HIGH_1 + offset) << 7);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL4,
+			   (PLL_SYSTEM_MUXES + offset),
+			   (PLL_PLL_LOCKDET_RATE_1 + offset),
+			   0xc0, 0x40);
+	upper_addr |= (upper_8_bit(PLL_SYSTEM_MUXES + offset) << 8);
+	upper_addr |= (upper_8_bit(PLL_PLL_LOCKDET_RATE_1 + offset) << 9);
+
+	data = MDSS_PLL_REG_R(rsc->pll_base, PLL_PLL_OUTDIV_RATE) & 0x03;
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL5,
+			   (PLL_PLL_OUTDIV_RATE + offset),
+			   (PLL_PLL_LOCK_DELAY + offset),
+			   data, 0x06);
+
+	upper_addr |= (upper_8_bit(PLL_PLL_OUTDIV_RATE + offset) << 10);
+	upper_addr |= (upper_8_bit(PLL_PLL_LOCK_DELAY + offset) << 11);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL6,
+			   (PLL_CMODE_1 + offset),
+			   (PLL_CLOCK_INVERTERS_1 + offset),
+			   0x10, reg->pll_clock_inverters);
+	upper_addr |=
+		(upper_8_bit(PLL_CMODE_1 + offset) << 12);
+	upper_addr |= (upper_8_bit(PLL_CLOCK_INVERTERS_1 + offset) << 13);
+
+	data = MDSS_PLL_REG_R(rsc->pll_base, PLL_VCO_CONFIG_1);
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL7,
+			   (PLL_ANALOG_CONTROLS_FIVE_1 + offset),
+			   (PLL_VCO_CONFIG_1 + offset),
+			   0x01, data);
+	upper_addr |= (upper_8_bit(PLL_ANALOG_CONTROLS_FIVE_1 + offset) << 14);
+	upper_addr |= (upper_8_bit(PLL_VCO_CONFIG_1 + offset) << 15);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL8,
+			   (PLL_ANALOG_CONTROLS_FIVE + offset),
+			   (PLL_DSM_DIVIDER + offset), 0x01, 0);
+	upper_addr |= (upper_8_bit(PLL_ANALOG_CONTROLS_FIVE + offset) << 16);
+	upper_addr |= (upper_8_bit(PLL_DSM_DIVIDER + offset) << 17);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL9,
+			   (PLL_FEEDBACK_DIVIDER + offset),
+			   (PLL_CALIBRATION_SETTINGS + offset), 0x4E, 0x40);
+	upper_addr |= (upper_8_bit(PLL_FEEDBACK_DIVIDER + offset) << 18);
+	upper_addr |= (upper_8_bit(PLL_CALIBRATION_SETTINGS + offset) << 19);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL10,
+			   (PLL_BAND_SEL_CAL_SETTINGS_THREE + offset),
+			   (PLL_FREQ_DETECT_SETTINGS_ONE + offset), 0xBA, 0x0C);
+	upper_addr |= (upper_8_bit(PLL_BAND_SEL_CAL_SETTINGS_THREE + offset)
+		       << 20);
+	upper_addr |= (upper_8_bit(PLL_FREQ_DETECT_SETTINGS_ONE + offset)
+		       << 21);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL11,
+			   (PLL_OUTDIV + offset),
+			   (PLL_CORE_OVERRIDE + offset), 0, 0);
+	upper_addr |= (upper_8_bit(PLL_OUTDIV + offset) << 22);
+	upper_addr |= (upper_8_bit(PLL_CORE_OVERRIDE + offset) << 23);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL12,
+			   (PLL_PLL_DIGITAL_TIMERS_TWO + offset),
+			   (PLL_PLL_PROP_GAIN_RATE_1 + offset),
+			    0x08, reg->pll_prop_gain_rate);
+	upper_addr |= (upper_8_bit(PLL_PLL_DIGITAL_TIMERS_TWO + offset) << 24);
+	upper_addr |= (upper_8_bit(PLL_PLL_PROP_GAIN_RATE_1 + offset) << 25);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL13,
+			   (PLL_PLL_BAND_SEL_RATE_1 + offset),
+			   (PLL_PLL_INT_GAIN_IFILT_BAND_1 + offset),
+			    0xC0, 0x82);
+	upper_addr |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 26);
+	upper_addr |= (upper_8_bit(PLL_PLL_INT_GAIN_IFILT_BAND_1 + offset)
+		       << 27);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL14,
+			   (PLL_PLL_FL_INT_GAIN_PFILT_BAND_1 + offset),
+			   (PLL_PLL_LOCK_OVERRIDE + offset),
+			    0x4c, 0x80);
+	upper_addr |= (upper_8_bit(PLL_PLL_FL_INT_GAIN_PFILT_BAND_1 + offset)
+		       << 28);
+	upper_addr |= (upper_8_bit(PLL_PLL_LOCK_OVERRIDE + offset) << 29);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL15,
+			   (PLL_PFILT + offset),
+			   (PLL_IFILT + offset),
+			    0x2f, 0x3f);
+	upper_addr |= (upper_8_bit(PLL_PFILT + offset) << 30);
+	upper_addr |= (upper_8_bit(PLL_IFILT + offset) << 31);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL16,
+			   (PLL_FREQ_TUNE_ACCUM_INIT_HIGH + offset),
+			   (PLL_FREQ_TUNE_ACCUM_INIT_MID + offset),
+			   rsc->cache_pll_trim_codes[0], rsc->cache_pll_trim_codes[1] );
+	upper_addr2 |= (upper_8_bit(PLL_FREQ_TUNE_ACCUM_INIT_HIGH + offset) << 0);
+	upper_addr2 |= (upper_8_bit(PLL_FREQ_TUNE_ACCUM_INIT_MID + offset) << 1);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL17,
+			   (PLL_PLL_BAND_SEL_RATE_1 + offset),
+			   ( PLL_PLL_BAND_SEL_RATE_1+ offset),
+			   rsc->cache_pll_trim_codes[2], rsc->cache_pll_trim_codes[2]);
+	upper_addr2 |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 0);
+	upper_addr2 |= (upper_8_bit(PLL_PLL_BAND_SEL_RATE_1 + offset) << 1);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL18,
+			   (PLL_SYSTEM_MUXES + offset),
+			   (PLL_CALIBRATION_SETTINGS + offset),
+			    0xc0, 0x40);
+	upper_addr2 |= (upper_8_bit(PLL_BAND_SEL_CAL + offset) << 2);
+	upper_addr2 |= (upper_8_bit(PLL_CALIBRATION_SETTINGS + offset) << 3);
+	data = MDSS_PLL_REG_R(rsc->phy_base, PHY_CMN_CLK_CFG0);
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL27,
+			   PHY_CMN_CTRL_2, PHY_CMN_CLK_CFG0, 0x40, data);
+	if (rsc->slave)
+		MDSS_DYN_PLL_REG_W(rsc->slave->dyn_pll_base,
+				   DSI_DYNAMIC_REFRESH_PLL_CTRL10,
+				   PHY_CMN_CLK_CFG0, PHY_CMN_CTRL_0,
+				   data, 0x7f);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL28,
+			   PHY_CMN_PLL_CNTRL, PHY_CMN_PLL_CNTRL, 0x01, 0x01);
+
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL29,
+			   PHY_CMN_PLL_CNTRL, PHY_CMN_PLL_CNTRL, 0x01, 0x01);
+
+	data = MDSS_PLL_REG_R(rsc->phy_base, PHY_CMN_CLK_CFG1) | BIT(5);
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL30,
+			   PHY_CMN_CLK_CFG1, PHY_CMN_RBUF_CTRL, data, 0x01);
+	MDSS_DYN_PLL_REG_W(rsc->dyn_pll_base, DSI_DYNAMIC_REFRESH_PLL_CTRL31,
+			   PHY_CMN_CLK_CFG1, PHY_CMN_CLK_CFG1, data, data);
+
+	if (rsc->slave) {
+		data = MDSS_PLL_REG_R(rsc->slave->phy_base, PHY_CMN_CLK_CFG1) |
+			BIT(5);
+
+		MDSS_DYN_PLL_REG_W(rsc->slave->dyn_pll_base,
+				   DSI_DYNAMIC_REFRESH_PLL_CTRL30,
+				   PHY_CMN_CLK_CFG1, PHY_CMN_RBUF_CTRL,
+				   data, 0x01);
+		MDSS_DYN_PLL_REG_W(rsc->slave->dyn_pll_base,
+				   DSI_DYNAMIC_REFRESH_PLL_CTRL31,
+				   PHY_CMN_CLK_CFG1, PHY_CMN_CLK_CFG1,
+				   data, data);
+	}
+
+	MDSS_PLL_REG_W(rsc->dyn_pll_base,
+		DSI_DYNAMIC_REFRESH_PLL_UPPER_ADDR, upper_addr);
+	MDSS_PLL_REG_W(rsc->dyn_pll_base,
+		DSI_DYNAMIC_REFRESH_PLL_UPPER_ADDR2, upper_addr2);
+	wmb(); /* commit register writes */
+}
+
+static int shadow_vco_7nm_set_rate(struct clk_hw *hw, unsigned long rate,
+			unsigned long parent_rate)
+{
+	int rc;
+	struct dsi_pll_7nm *pll;
+	struct dsi_pll_vco_clk *vco = to_vco_clk_hw(hw);
+	struct mdss_pll_resources *rsc = vco->priv;
+
+	if (!rsc) {
+		pr_err("pll resource not found\n");
+		return -EINVAL;
+	}
+
+	pll = rsc->priv;
+	if (!pll) {
+		pr_err("pll configuration not found\n");
+		return -EINVAL;
+	}
+
+	rc = dsi_pll_read_stored_trim_codes(rsc, rate);
+	if (rc) {
+		pr_err("cannot find pll codes rate=%ld\n", rate);
+		return -EINVAL;
+	}
+	pr_debug("ndx=%d, rate=%lu\n", rsc->index, rate);
+
+	rc = mdss_pll_resource_enable(rsc, true);
+	if (rc) {
+		pr_err("failed to enable mdss dsi pll(%d), rc=%d\n",
+		       rsc->index, rc);
+		return rc;
+	}
+
+	rsc->vco_current_rate = rate;
+	rsc->vco_ref_clk_rate = vco->ref_clk_rate;
+
+	dsi_pll_setup_config(pll, rsc);
+
+	dsi_pll_calc_dec_frac(pll, rsc);
+
+	/* program dynamic refresh control registers */
+	shadow_dsi_pll_dynamic_refresh_7nm(pll, rsc);
+
+	/* update cached vco rate */
+	rsc->vco_cached_rate = rate;
+	rsc->dfps_trigger = true;
 
 	mdss_pll_resource_enable(rsc, false);
 
@@ -1002,7 +1325,7 @@ static int dsi_pll_enable(struct dsi_pll_vco_clk *vco)
 	phy_reg_update_bits_sub(rsc, PHY_CMN_CLK_CFG1, 0x03, rsc->cached_cfg1);
 	if (rsc->slave)
 		phy_reg_update_bits_sub(rsc->slave, PHY_CMN_CLK_CFG1,
-				0x03, rsc->cached_cfg1);
+				0x03, rsc->slave->cached_cfg1);
 	wmb(); /* ensure dsiclk_sel is always programmed before pll start */
 
 	/* Start PLL */
@@ -1057,6 +1380,7 @@ static void dsi_pll_disable(struct dsi_pll_vco_clk *vco)
 	}
 
 	rsc->handoff_resources = false;
+	rsc->dfps_trigger = false;
 
 	pr_debug("stop PLL (%d)\n", rsc->index);
 
@@ -1108,16 +1432,22 @@ static void vco_7nm_unprepare(struct clk_hw *hw)
 	/*
 	 * During unprepare in continuous splash use case we want driver
 	 * to pick all dividers instead of retaining bootloader configurations.
+	 * Also handle the usecases when dynamic refresh gets triggered while
+	 * handoff_resources flag is still set. For video mode, this flag does
+	 * not get cleared until first suspend. Whereas for command mode, it
+	 * doesnt get cleared until first idle power collapse. We need to make
+	 * sure that we save and restore the divider settings when dynamic FPS
+	 * is triggered.
 	 */
-	if (!pll->handoff_resources) {
+	if (!pll->handoff_resources || pll->dfps_trigger) {
 		pll->cached_cfg0 = MDSS_PLL_REG_R(pll->phy_base,
-							PHY_CMN_CLK_CFG0);
+						  PHY_CMN_CLK_CFG0);
 		pll->cached_outdiv = MDSS_PLL_REG_R(pll->pll_base,
-							PLL_PLL_OUTDIV_RATE);
+						    PLL_PLL_OUTDIV_RATE);
 		pr_debug("cfg0=%d,cfg1=%d, outdiv=%d\n", pll->cached_cfg0,
-					pll->cached_cfg1, pll->cached_outdiv);
+			 pll->cached_cfg1, pll->cached_outdiv);
 
-		pll->vco_cached_rate = clk_hw_get_rate(hw);
+		pll->vco_cached_rate = clk_get_rate(hw->clk);
 	}
 
 	/*
@@ -1127,9 +1457,14 @@ static void vco_7nm_unprepare(struct clk_hw *hw)
 	 * does not change.For such usecases, we need to ensure that the cached
 	 * value is programmed prior to PLL being locked
 	 */
-	if (pll->handoff_resources)
+	if (pll->handoff_resources) {
 		pll->cached_cfg1 = MDSS_PLL_REG_R(pll->phy_base,
-							PHY_CMN_CLK_CFG1);
+						  PHY_CMN_CLK_CFG1);
+		if (pll->slave)
+			pll->slave->cached_cfg1 =
+				MDSS_PLL_REG_R(pll->slave->phy_base,
+					       PHY_CMN_CLK_CFG1);
+	}
 
 	dsi_pll_disable(vco);
 	mdss_pll_resource_enable(pll, false);
@@ -1171,6 +1506,9 @@ static int vco_7nm_prepare(struct clk_hw *hw)
 			pll->cached_cfg1);
 		MDSS_PLL_REG_W(pll->phy_base, PHY_CMN_CLK_CFG0,
 					pll->cached_cfg0);
+		if (pll->slave)
+			MDSS_PLL_REG_W(pll->slave->phy_base, PHY_CMN_CLK_CFG0,
+				       pll->cached_cfg0);
 		MDSS_PLL_REG_W(pll->pll_base, PLL_PLL_OUTDIV_RATE,
 					pll->cached_outdiv);
 	}
@@ -1253,6 +1591,14 @@ static void pixel_clk_set_div_sub(struct mdss_pll_resources *pll, int div)
 	reg_val &= ~0xF0;
 	reg_val |= (div << 4);
 	MDSS_PLL_REG_W(pll->phy_base, PHY_CMN_CLK_CFG0, reg_val);
+
+	/*
+	 * cache the current parent index for cases where parent
+	 * is not changing but rate is changing. In that case
+	 * clock framework won't call parent_set and hence dsiclk_sel
+	 * bit won't be programmed. e.g. dfps update use case.
+	 */
+	pll->cached_cfg0 = reg_val;
 }
 
 static int pixel_clk_set_div(void *context, unsigned int reg, unsigned int div)
@@ -1372,6 +1718,12 @@ static const struct clk_ops clk_ops_vco_7nm = {
 	.unprepare = vco_7nm_unprepare,
 };
 
+static const struct clk_ops clk_ops_shadow_vco_7nm = {
+	.recalc_rate = vco_7nm_recalc_rate,
+	.set_rate = shadow_vco_7nm_set_rate,
+	.round_rate = vco_7nm_round_rate,
+};
+
 static struct regmap_bus mdss_mux_regmap_bus = {
 	.reg_write = mdss_set_mux_sel,
 	.reg_read = mdss_get_mux_sel,
@@ -1445,6 +1797,18 @@ static struct dsi_pll_vco_clk dsi0pll_vco_clk = {
 	},
 };
 
+static struct dsi_pll_vco_clk dsi0pll_shadow_vco_clk = {
+	.ref_clk_rate = 19200000UL,
+	.min_rate = 1000000000UL,
+	.max_rate = 3500000000UL,
+	.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_vco_clk",
+			.parent_names = (const char *[]){"bi_tcxo"},
+			.num_parents = 1,
+			.ops = &clk_ops_shadow_vco_7nm,
+	},
+};
+
 static struct dsi_pll_vco_clk dsi1pll_vco_clk = {
 	.ref_clk_rate = 19200000UL,
 	.min_rate = 1000000000UL,
@@ -1457,6 +1821,18 @@ static struct dsi_pll_vco_clk dsi1pll_vco_clk = {
 	},
 };
 
+static struct dsi_pll_vco_clk dsi1pll_shadow_vco_clk = {
+	.ref_clk_rate = 19200000UL,
+	.min_rate = 1000000000UL,
+	.max_rate = 3500000000UL,
+	.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_vco_clk",
+			.parent_names = (const char *[]){"bi_tcxo"},
+			.num_parents = 1,
+			.ops = &clk_ops_shadow_vco_7nm,
+	},
+};
+
 static struct clk_regmap_div dsi0pll_pll_out_div = {
 	.reg = PLL_PLL_OUTDIV_RATE,
 	.shift = 0,
@@ -1466,6 +1842,23 @@ static struct clk_regmap_div dsi0pll_pll_out_div = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_pll_out_div",
 			.parent_names = (const char *[]){"dsi0pll_vco_clk"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
+static struct clk_regmap_div dsi0pll_shadow_pll_out_div = {
+	.reg = PLL_PLL_OUTDIV_RATE,
+	.shift = 0,
+	.width = 2,
+	.flags = CLK_DIVIDER_POWER_OF_TWO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_pll_out_div",
+			.parent_names = (const char *[]){
+				"dsi0pll_shadow_vco_clk"},
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_regmap_div_ops,
@@ -1489,6 +1882,23 @@ static struct clk_regmap_div dsi1pll_pll_out_div = {
 	},
 };
 
+static struct clk_regmap_div dsi1pll_shadow_pll_out_div = {
+	.reg = PLL_PLL_OUTDIV_RATE,
+	.shift = 0,
+	.width = 2,
+	.flags = CLK_DIVIDER_POWER_OF_TWO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_pll_out_div",
+			.parent_names = (const char *[]){
+				"dsi1pll_shadow_vco_clk"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
 static struct clk_regmap_div dsi0pll_bitclk_src = {
 	.shift = 0,
 	.width = 4,
@@ -1497,6 +1907,22 @@ static struct clk_regmap_div dsi0pll_bitclk_src = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_bitclk_src",
 			.parent_names = (const char *[]){"dsi0pll_pll_out_div"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
+static struct clk_regmap_div dsi0pll_shadow_bitclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_bitclk_src",
+			.parent_names = (const char *[]){
+				"dsi0pll_shadow_pll_out_div"},
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_regmap_div_ops,
@@ -1519,6 +1945,22 @@ static struct clk_regmap_div dsi1pll_bitclk_src = {
 	},
 };
 
+static struct clk_regmap_div dsi1pll_shadow_bitclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_bitclk_src",
+			.parent_names = (const char *[]){
+				"dsi1pll_shadow_pll_out_div"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
 static struct clk_fixed_factor dsi0pll_post_vco_div = {
 	.div = 4,
 	.mult = 1,
@@ -1526,7 +1968,17 @@ static struct clk_fixed_factor dsi0pll_post_vco_div = {
 		.name = "dsi0pll_post_vco_div",
 		.parent_names = (const char *[]){"dsi0pll_pll_out_div"},
 		.num_parents = 1,
-		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi0pll_shadow_post_vco_div = {
+	.div = 4,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi0pll_shadow_post_vco_div",
+		.parent_names = (const char *[]){"dsi0pll_shadow_pll_out_div"},
+		.num_parents = 1,
 		.ops = &clk_fixed_factor_ops,
 	},
 };
@@ -1538,7 +1990,17 @@ static struct clk_fixed_factor dsi1pll_post_vco_div = {
 		.name = "dsi1pll_post_vco_div",
 		.parent_names = (const char *[]){"dsi1pll_pll_out_div"},
 		.num_parents = 1,
-		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi1pll_shadow_post_vco_div = {
+	.div = 4,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi1pll_shadow_post_vco_div",
+		.parent_names = (const char *[]){"dsi1pll_shadow_pll_out_div"},
+		.num_parents = 1,
 		.ops = &clk_fixed_factor_ops,
 	},
 };
@@ -1549,6 +2011,18 @@ static struct clk_fixed_factor dsi0pll_byteclk_src = {
 	.hw.init = &(struct clk_init_data){
 		.name = "dsi0pll_byteclk_src",
 		.parent_names = (const char *[]){"dsi0pll_bitclk_src"},
+		.num_parents = 1,
+		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi0pll_shadow_byteclk_src = {
+	.div = 8,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi0pll_shadow_byteclk_src",
+		.parent_names = (const char *[]){"dsi0pll_shadow_bitclk_src"},
 		.num_parents = 1,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &clk_fixed_factor_ops,
@@ -1567,12 +2041,35 @@ static struct clk_fixed_factor dsi1pll_byteclk_src = {
 	},
 };
 
+static struct clk_fixed_factor dsi1pll_shadow_byteclk_src = {
+	.div = 8,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi1pll_shadow_byteclk_src",
+		.parent_names = (const char *[]){"dsi1pll_shadow_bitclk_src"},
+		.num_parents = 1,
+		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
 static struct clk_fixed_factor dsi0pll_post_bit_div = {
 	.div = 2,
 	.mult = 1,
 	.hw.init = &(struct clk_init_data){
 		.name = "dsi0pll_post_bit_div",
 		.parent_names = (const char *[]){"dsi0pll_bitclk_src"},
+		.num_parents = 1,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
+static struct clk_fixed_factor dsi0pll_shadow_post_bit_div = {
+	.div = 2,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi0pll_shadow_post_bit_div",
+		.parent_names = (const char *[]){"dsi0pll_shadow_bitclk_src"},
 		.num_parents = 1,
 		.ops = &clk_fixed_factor_ops,
 	},
@@ -1589,15 +2086,28 @@ static struct clk_fixed_factor dsi1pll_post_bit_div = {
 	},
 };
 
+static struct clk_fixed_factor dsi1pll_shadow_post_bit_div = {
+	.div = 2,
+	.mult = 1,
+	.hw.init = &(struct clk_init_data){
+		.name = "dsi1pll_shadow_post_bit_div",
+		.parent_names = (const char *[]){"dsi1pll_shadow_bitclk_src"},
+		.num_parents = 1,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
 static struct clk_regmap_mux dsi0pll_byteclk_mux = {
 	.shift = 0,
 	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0_phy_pll_out_byteclk",
-			.parent_names = (const char *[]){"dsi0pll_byteclk_src"},
-			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.parent_names = (const char *[]){"dsi0pll_byteclk_src",
+				"dsi0pll_shadow_byteclk_src"},
+			.num_parents = 2,
+			.flags = (CLK_SET_RATE_PARENT |
+					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -1609,9 +2119,11 @@ static struct clk_regmap_mux dsi1pll_byteclk_mux = {
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1_phy_pll_out_byteclk",
-			.parent_names = (const char *[]){"dsi1pll_byteclk_src"},
-			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.parent_names = (const char *[]){"dsi1pll_byteclk_src",
+				"dsi1pll_shadow_byteclk_src"},
+			.num_parents = 2,
+			.flags = (CLK_SET_RATE_PARENT |
+					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -1628,6 +2140,24 @@ static struct clk_regmap_mux dsi0pll_pclk_src_mux = {
 					"dsi0pll_post_bit_div",
 					"dsi0pll_pll_out_div",
 					"dsi0pll_post_vco_div"},
+			.num_parents = 4,
+			.ops = &clk_regmap_mux_closest_ops,
+		},
+	},
+};
+
+static struct clk_regmap_mux dsi0pll_shadow_pclk_src_mux = {
+	.reg = PHY_CMN_CLK_CFG1,
+	.shift = 0,
+	.width = 2,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_pclk_src_mux",
+			.parent_names = (const char *[]){
+				"dsi0pll_shadow_bitclk_src",
+				"dsi0pll_shadow_post_bit_div",
+				"dsi0pll_shadow_pll_out_div",
+				"dsi0pll_shadow_post_vco_div"},
 			.num_parents = 4,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
@@ -1651,6 +2181,24 @@ static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 	},
 };
 
+static struct clk_regmap_mux dsi1pll_shadow_pclk_src_mux = {
+	.reg = PHY_CMN_CLK_CFG1,
+	.shift = 0,
+	.width = 2,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_pclk_src_mux",
+			.parent_names = (const char *[]){
+				"dsi1pll_shadow_bitclk_src",
+				"dsi1pll_shadow_post_bit_div",
+				"dsi1pll_shadow_pll_out_div",
+				"dsi1pll_shadow_post_vco_div"},
+			.num_parents = 4,
+			.ops = &clk_regmap_mux_closest_ops,
+		},
+	},
+};
+
 static struct clk_regmap_div dsi0pll_pclk_src = {
 	.shift = 0,
 	.width = 4,
@@ -1660,6 +2208,22 @@ static struct clk_regmap_div dsi0pll_pclk_src = {
 			.name = "dsi0pll_pclk_src",
 			.parent_names = (const char *[]){
 					"dsi0pll_pclk_src_mux"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
+static struct clk_regmap_div dsi0pll_shadow_pclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi0pll_shadow_pclk_src",
+			.parent_names = (const char *[]){
+					"dsi0pll_shadow_pclk_src_mux"},
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_regmap_div_ops,
@@ -1683,15 +2247,33 @@ static struct clk_regmap_div dsi1pll_pclk_src = {
 	},
 };
 
+static struct clk_regmap_div dsi1pll_shadow_pclk_src = {
+	.shift = 0,
+	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dsi1pll_shadow_pclk_src",
+			.parent_names = (const char *[]){
+				"dsi1pll_shadow_pclk_src_mux"},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_regmap_div_ops,
+		},
+	},
+};
+
 static struct clk_regmap_mux dsi0pll_pclk_mux = {
 	.shift = 0,
 	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0_phy_pll_out_dsiclk",
-			.parent_names = (const char *[]){"dsi0pll_pclk_src"},
-			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.parent_names = (const char *[]){"dsi0pll_pclk_src",
+				"dsi0pll_shadow_pclk_src"},
+			.num_parents = 2,
+			.flags = (CLK_SET_RATE_PARENT |
+					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -1703,9 +2285,11 @@ static struct clk_regmap_mux dsi1pll_pclk_mux = {
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1_phy_pll_out_dsiclk",
-			.parent_names = (const char *[]){"dsi1pll_pclk_src"},
-			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.parent_names = (const char *[]){"dsi1pll_pclk_src",
+				"dsi1pll_shadow_pclk_src"},
+			.num_parents = 2,
+			.flags = (CLK_SET_RATE_PARENT |
+					CLK_SET_RATE_NO_REPARENT),
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -1722,6 +2306,14 @@ static struct clk_hw *mdss_dsi_pllcc_7nm[] = {
 	[PCLK_SRC_MUX_0_CLK] = &dsi0pll_pclk_src_mux.clkr.hw,
 	[PCLK_SRC_0_CLK] = &dsi0pll_pclk_src.clkr.hw,
 	[PCLK_MUX_0_CLK] = &dsi0pll_pclk_mux.clkr.hw,
+	[SHADOW_VCO_CLK_0] = &dsi0pll_shadow_vco_clk.hw,
+	[SHADOW_PLL_OUT_DIV_0_CLK] = &dsi0pll_shadow_pll_out_div.clkr.hw,
+	[SHADOW_BITCLK_SRC_0_CLK] = &dsi0pll_shadow_bitclk_src.clkr.hw,
+	[SHADOW_BYTECLK_SRC_0_CLK] = &dsi0pll_shadow_byteclk_src.hw,
+	[SHADOW_POST_BIT_DIV_0_CLK] = &dsi0pll_shadow_post_bit_div.hw,
+	[SHADOW_POST_VCO_DIV_0_CLK] = &dsi0pll_shadow_post_vco_div.hw,
+	[SHADOW_PCLK_SRC_MUX_0_CLK] = &dsi0pll_shadow_pclk_src_mux.clkr.hw,
+	[SHADOW_PCLK_SRC_0_CLK] = &dsi0pll_shadow_pclk_src.clkr.hw,
 	[VCO_CLK_1] = &dsi1pll_vco_clk.hw,
 	[PLL_OUT_DIV_1_CLK] = &dsi1pll_pll_out_div.clkr.hw,
 	[BITCLK_SRC_1_CLK] = &dsi1pll_bitclk_src.clkr.hw,
@@ -1732,6 +2324,14 @@ static struct clk_hw *mdss_dsi_pllcc_7nm[] = {
 	[PCLK_SRC_MUX_1_CLK] = &dsi1pll_pclk_src_mux.clkr.hw,
 	[PCLK_SRC_1_CLK] = &dsi1pll_pclk_src.clkr.hw,
 	[PCLK_MUX_1_CLK] = &dsi1pll_pclk_mux.clkr.hw,
+	[SHADOW_VCO_CLK_1] = &dsi1pll_shadow_vco_clk.hw,
+	[SHADOW_PLL_OUT_DIV_1_CLK] = &dsi1pll_shadow_pll_out_div.clkr.hw,
+	[SHADOW_BITCLK_SRC_1_CLK] = &dsi1pll_shadow_bitclk_src.clkr.hw,
+	[SHADOW_BYTECLK_SRC_1_CLK] = &dsi1pll_shadow_byteclk_src.hw,
+	[SHADOW_POST_BIT_DIV_1_CLK] = &dsi1pll_shadow_post_bit_div.hw,
+	[SHADOW_POST_VCO_DIV_1_CLK] = &dsi1pll_shadow_post_vco_div.hw,
+	[SHADOW_PCLK_SRC_MUX_1_CLK] = &dsi1pll_shadow_pclk_src_mux.clkr.hw,
+	[SHADOW_PCLK_SRC_1_CLK] = &dsi1pll_shadow_pclk_src.clkr.hw,
 };
 
 int dsi_pll_clock_register_7nm(struct platform_device *pdev,
@@ -1742,6 +2342,12 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 	struct clk_onecell_data *clk_data;
 	int num_clks = ARRAY_SIZE(mdss_dsi_pllcc_7nm);
 	struct regmap *rmap;
+
+	if (!pdev || !pdev->dev.of_node ||
+		!pll_res || !pll_res->pll_base || !pll_res->phy_base) {
+		pr_err("Invalid params\n");
+		return -EINVAL;
+	}
 
 	ndx = pll_res->index;
 
@@ -1755,12 +2361,13 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 	pll_res->priv = &plls[ndx];
 	pll_res->vco_delay = VCO_DELAY_USEC;
 
-	clk_data = devm_kzalloc(&pdev->dev, sizeof(*clk_data), GFP_KERNEL);
+	clk_data = devm_kzalloc(&pdev->dev, sizeof(struct clk_onecell_data),
+					GFP_KERNEL);
 	if (!clk_data)
 		return -ENOMEM;
 
-	clk_data->clks = devm_kcalloc(&pdev->dev, num_clks,
-				sizeof(struct clk *), GFP_KERNEL);
+	clk_data->clks = devm_kzalloc(&pdev->dev, (num_clks *
+				sizeof(struct clk *)), GFP_KERNEL);
 	if (!clk_data->clks)
 		return -ENOMEM;
 
@@ -1768,18 +2375,20 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 
 	/* Establish client data */
 	if (ndx == 0) {
-
 		rmap = devm_regmap_init(&pdev->dev, &pll_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi0pll_pll_out_div.clkr.regmap = rmap;
+		dsi0pll_shadow_pll_out_div.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &bitclk_src_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi0pll_bitclk_src.clkr.regmap = rmap;
+		dsi0pll_shadow_bitclk_src.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi0pll_pclk_src.clkr.regmap = rmap;
+		dsi0pll_shadow_pclk_src.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &mdss_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
@@ -1788,18 +2397,21 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi0pll_pclk_src_mux.clkr.regmap = rmap;
+		dsi0pll_shadow_pclk_src_mux.clkr.regmap = rmap;
+
 		rmap = devm_regmap_init(&pdev->dev, &mdss_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi0pll_byteclk_mux.clkr.regmap = rmap;
 
 		dsi0pll_vco_clk.priv = pll_res;
+		dsi0pll_shadow_vco_clk.priv = pll_res;
 
 		if (dsi_pll_7nm_is_hw_revision_v4_1(pll_res)) {
 			dsi0pll_vco_clk.min_rate = 600000000;
 			dsi0pll_vco_clk.max_rate = 5000000000;
 		}
 
-		for (i = VCO_CLK_0; i <= PCLK_MUX_0_CLK; i++) {
+		for (i = VCO_CLK_0; i <= SHADOW_PCLK_SRC_0_CLK; i++) {
 			clk = devm_clk_register(&pdev->dev,
 						mdss_dsi_pllcc_7nm[i]);
 			if (IS_ERR(clk)) {
@@ -1814,20 +2426,21 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 
 		rc = of_clk_add_provider(pdev->dev.of_node,
 				of_clk_src_onecell_get, clk_data);
-
-
 	} else {
 		rmap = devm_regmap_init(&pdev->dev, &pll_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi1pll_pll_out_div.clkr.regmap = rmap;
+		dsi1pll_shadow_pll_out_div.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &bitclk_src_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi1pll_bitclk_src.clkr.regmap = rmap;
+		dsi1pll_shadow_bitclk_src.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi1pll_pclk_src.clkr.regmap = rmap;
+		dsi1pll_shadow_pclk_src.clkr.regmap = rmap;
 
 		rmap = devm_regmap_init(&pdev->dev, &mdss_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
@@ -1836,17 +2449,21 @@ int dsi_pll_clock_register_7nm(struct platform_device *pdev,
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi1pll_pclk_src_mux.clkr.regmap = rmap;
+		dsi1pll_shadow_pclk_src_mux.clkr.regmap = rmap;
+
 		rmap = devm_regmap_init(&pdev->dev, &mdss_mux_regmap_bus,
 				pll_res, &dsi_pll_7nm_config);
 		dsi1pll_byteclk_mux.clkr.regmap = rmap;
+
 		dsi1pll_vco_clk.priv = pll_res;
+		dsi1pll_shadow_vco_clk.priv = pll_res;
 
 		if (dsi_pll_7nm_is_hw_revision_v4_1(pll_res)) {
 			dsi1pll_vco_clk.min_rate = 600000000;
 			dsi1pll_vco_clk.max_rate = 5000000000;
 		}
 
-		for (i = VCO_CLK_1; i <= PCLK_MUX_1_CLK; i++) {
+		for (i = VCO_CLK_1; i <= SHADOW_PCLK_SRC_1_CLK; i++) {
 			clk = devm_clk_register(&pdev->dev,
 						mdss_dsi_pllcc_7nm[i]);
 			if (IS_ERR(clk)) {
