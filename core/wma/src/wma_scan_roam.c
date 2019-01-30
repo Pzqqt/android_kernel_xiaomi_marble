@@ -2261,7 +2261,8 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	}
 
 	chan = (wmi_channel *) param_buf->chan;
-	roam_synch_ind_ptr->chan_freq = chan->mhz;
+	if (chan)
+		roam_synch_ind_ptr->chan_freq = chan->mhz;
 	key = (wmi_key_material *) param_buf->key;
 	if (key != NULL) {
 		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
