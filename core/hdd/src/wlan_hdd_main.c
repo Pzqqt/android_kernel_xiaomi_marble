@@ -3736,28 +3736,6 @@ static void hdd_set_multicast_list(struct net_device *dev)
 	cds_ssr_unprotect(__func__);
 }
 
-/**
- * hdd_select_queue() - used by Linux OS to decide which queue to use first
- * @dev:	Pointer to the WLAN device.
- * @skb:	Pointer to OS packet (sk_buff).
- *
- * This function is registered with the Linux OS for network
- * core to decide which queue to use first.
- *
- * Return: ac, Queue Index/access category corresponding to UP in IP header
- */
-static uint16_t hdd_select_queue(struct net_device *dev, struct sk_buff *skb
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0))
-			  , void *accel_priv
-#endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-			  , select_queue_fallback_t fallback
-#endif
-)
-{
-	return hdd_wmm_select_queue(dev, skb);
-}
-
 static const struct net_device_ops wlan_drv_ops = {
 	.ndo_open = hdd_open,
 	.ndo_stop = hdd_stop,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1745,48 +1745,6 @@ uint16_t hdd_get_queue_index(uint16_t up, bool is_eapol)
 }
 #endif
 
-
-/**
- * hdd_hostapd_select_queue() - Function which will classify the packet
- *       according to linux qdisc expectation.
- *
- * @dev: [in] pointer to net_device structure
- * @skb: [in] pointer to os packet
- *
- * Return: Qdisc queue index
- */
-uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0))
-				  , void *accel_priv
-#endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-				  , select_queue_fallback_t fallback
-#endif
-
-)
-{
-	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
-	uint16_t queueIndex;
-	struct hdd_adapter *adapter = (struct hdd_adapter *) netdev_priv(dev);
-	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
-	bool is_eapol = false;
-	int status = 0;
-
-	status = wlan_hdd_validate_context(hddctx);
-
-	if (status != 0) {
-		skb->priority = SME_QOS_WMM_UP_BE;
-		return HDD_LINUX_AC_BE;
-	}
-
-	/* Get the user priority from IP header */
-	hdd_wmm_classify_pkt(adapter, skb, &up, &is_eapol);
-	skb->priority = up;
-	queueIndex = hdd_get_queue_index(skb->priority, is_eapol);
-
-	return queueIndex;
-}
-
 /**
  * hdd_wmm_select_queue() - Function which will classify the packet
  *       according to linux qdisc expectation.
@@ -1796,7 +1754,8 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
  *
  * Return: Qdisc queue index
  */
-uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
+static uint16_t hdd_wmm_select_queue(struct net_device *dev,
+				     struct sk_buff *skb)
 {
 	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
@@ -1836,6 +1795,18 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 	queueIndex = hdd_get_queue_index(skb->priority, is_crtical);
 
 	return queueIndex;
+}
+
+uint16_t hdd_select_queue(struct net_device *dev, struct sk_buff *skb
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0))
+			  , void *accel_priv
+#endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
+			  , select_queue_fallback_t fallback
+#endif
+)
+{
+	return hdd_wmm_select_queue(dev, skb);
 }
 
 /**

@@ -3085,7 +3085,7 @@ const struct net_device_ops net_ops_struct = {
 	.ndo_set_mac_address = hdd_hostapd_set_mac_address,
 	.ndo_do_ioctl = hdd_ioctl,
 	.ndo_change_mtu = hdd_hostapd_change_mtu,
-	.ndo_select_queue = hdd_hostapd_select_queue,
+	.ndo_select_queue = hdd_select_queue,
 };
 
 void hdd_set_ap_ops(struct net_device *dev)
