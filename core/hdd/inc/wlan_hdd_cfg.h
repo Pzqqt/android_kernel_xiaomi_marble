@@ -173,35 +173,6 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX      (4)
 #define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (1)
 
-#ifdef FEATURE_LFR_SUBNET_DETECTION
-/*
- * <ini>
- * gLFRSubnetDetectionEnable - Enable LFR3 subnet detection
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * Enable IP subnet detection during legacy fast roming version 3. Legacy fast
- * roaming could roam across IP subnets without host processors' knowledge.
- * This feature enables firmware to wake up the host processor if it
- * successfully determines change in the IP subnet. Change in IP subnet could
- * potentially cause disruption in IP connnectivity if IP address is not
- * refreshed.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_LFR_SUBNET_DETECTION    "gLFRSubnetDetectionEnable"
-#define CFG_ENABLE_LFR_SUBNET_MIN          (0)
-#define CFG_ENABLE_LFR_SUBNET_MAX          (1)
-#define CFG_ENABLE_LFR_SUBNET_DEFAULT      (1)
-#endif /* FEATURE_LFR_SUBNET_DETECTION */
-
 /*
  * <ini>
  * gDot11Mode - SAP phy mode
@@ -460,9 +431,6 @@ struct hdd_config {
 	bool enable_mac_spoofing;
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
-#ifdef FEATURE_LFR_SUBNET_DETECTION
-	bool enable_lfr_subnet_detection;
-#endif
 	bool apf_enabled;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	uint16_t sap_tx_leakage_threshold;

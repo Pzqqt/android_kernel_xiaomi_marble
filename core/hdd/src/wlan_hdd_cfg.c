@@ -121,15 +121,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
 
-#ifdef FEATURE_LFR_SUBNET_DETECTION
-	REG_VARIABLE(CFG_ENABLE_LFR_SUBNET_DETECTION, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_lfr_subnet_detection,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_LFR_SUBNET_DEFAULT,
-		     CFG_ENABLE_LFR_SUBNET_MIN,
-		     CFG_ENABLE_LFR_SUBNET_MAX),
-#endif
-
 	REG_VARIABLE(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, extscan_adaptive_dwell_mode,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
