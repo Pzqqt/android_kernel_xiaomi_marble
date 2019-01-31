@@ -256,6 +256,15 @@ static void dsi_catalog_phy_4_0_init(struct dsi_phy_hw *phy)
 	phy->ops.phy_lane_reset = dsi_phy_hw_v4_0_lane_reset;
 	phy->ops.toggle_resync_fifo = dsi_phy_hw_v4_0_toggle_resync_fifo;
 	phy->ops.reset_clk_en_sel = dsi_phy_hw_v4_0_reset_clk_en_sel;
+
+	phy->ops.dyn_refresh_ops.dyn_refresh_config =
+		dsi_phy_hw_v4_0_dyn_refresh_config;
+	phy->ops.dyn_refresh_ops.dyn_refresh_pipe_delay =
+		dsi_phy_hw_v4_0_dyn_refresh_pipe_delay;
+	phy->ops.dyn_refresh_ops.dyn_refresh_helper =
+		dsi_phy_hw_v4_0_dyn_refresh_helper;
+	phy->ops.dyn_refresh_ops.cache_phy_timings =
+		dsi_phy_hw_v4_0_cache_phy_timings;
 }
 
 /**
