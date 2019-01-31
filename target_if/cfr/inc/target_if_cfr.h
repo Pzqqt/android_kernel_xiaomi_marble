@@ -1,0 +1,92 @@
+/*
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
+
+#define PEER_CFR_CAPTURE_ENABLE   1
+#define PEER_CFR_CAPTURE_DISABLE  0
+
+/**
+ * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ *
+ * Return: Registration status for necessary handlers
+ */
+int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_cfr_deinit_pdev() - De-inits corresponding pdev and handlers.
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ *
+ * Return: De-registration status for necessary handlers
+ */
+int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_cfr_tx_ops_register() - Registers tx ops for cfr module
+ * @tx_ops - pointer to tx_ops structure.
+ */
+void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops);
+
+/**
+ * target_if_cfr_enable_cfr_timer() - Enables cfr timer
+ * @pdev: pointer to pdev object
+ * @cfr_timer: Amount of time this timer has to run
+ *
+ * Return: status of timer
+ */
+int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
+				   uint32_t cfr_timer);
+
+/**
+ * target_if_cfr_pdev_set_param() - Function to set params for cfr config
+ * @pdev: pointer to pdev object
+ * @param_id: param id which has to be set
+ * @param_value: value of param being set
+ *
+ * Return: success/failure of setting param
+ */
+int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
+				 uint32_t param_id, uint32_t param_value);
+/**
+ * target_if_cfr_start_capture() - Function to start cfr capture for a peer
+ * @pdev: pointer to pdev object
+ * @peer: pointer to peer object
+ * @cfr_params: capture parameters for this peer
+ *
+ * Return: success/failure status of start capture
+ */
+int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
+				struct wlan_objmgr_peer *peer,
+				struct cfr_capture_params *cfr_params);
+/**
+ * target_if_cfr_stop_capture() - Function to stop cfr capture for a peer
+ * @pdev: pointer to pdev object
+ * @peer: pointer to peer object
+ *
+ * Return: success/failure status of stop capture
+ */
+int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_objmgr_peer *peer);
