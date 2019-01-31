@@ -833,6 +833,16 @@ static QDF_STATUS wlan_mgmt_txrx_rx_handler_list_copy(
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool
+mgmt_rx_is_bssid_valid(struct qdf_mac_addr *mac_addr)
+{
+	if (qdf_is_macaddr_group(mac_addr) ||
+	    qdf_is_macaddr_zero(mac_addr))
+		return false;
+
+	return true;
+}
+
 QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			struct wlan_objmgr_psoc *psoc,
 			qdf_nbuf_t buf,
@@ -850,6 +860,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	u_int8_t *data, *ivp = NULL;
 	uint16_t buflen;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool is_from_addr_valid, is_bssid_valid;
 
 	if (!buf) {
 		mgmt_txrx_err("buffer passed is NULL");
@@ -879,6 +890,31 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			mgmt_type);
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	is_from_addr_valid = mgmt_rx_is_bssid_valid((struct qdf_mac_addr *)
+							      wh->i_addr2);
+	is_bssid_valid = mgmt_rx_is_bssid_valid((struct qdf_mac_addr *)
+							      wh->i_addr3);
+
+	if (!is_from_addr_valid && !is_bssid_valid) {
+		mgmt_txrx_debug_rl("from addr %pM bssid addr %pM both not valid, dropping them",
+				   wh->i_addr2, wh->i_addr3);
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((mgmt_subtype == MGMT_SUBTYPE_BEACON ||
+	     mgmt_subtype == MGMT_SUBTYPE_PROBE_RESP) &&
+	    !(is_from_addr_valid && is_bssid_valid)) {
+		mgmt_txrx_debug_rl("from addr %pM bssid addr %pM not valid, modifying them",
+				   wh->i_addr2, wh->i_addr3);
+		if (!is_from_addr_valid)
+			qdf_mem_copy(wh->i_addr2, wh->i_addr3,
+				     IEEE80211_ADDR_LEN);
+		else
+			qdf_mem_copy(wh->i_addr3, wh->i_addr2,
+				     IEEE80211_ADDR_LEN);
 	}
 
 	/* mpdu_data_ptr is pointer to action header */
