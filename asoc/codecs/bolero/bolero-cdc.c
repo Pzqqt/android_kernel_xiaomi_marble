@@ -464,6 +464,46 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
 
+static void bolero_fs_gen_enable(struct bolero_priv *priv, bool enable)
+{
+	if (enable) {
+		if (++priv->clk_users == 1) {
+			mutex_unlock(&priv->clk_lock);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
+				0x01, 0x01);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
+				0x01, 0x01);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
+				0x02, 0x02);
+			mutex_lock(&priv->clk_lock);
+		}
+	} else {
+		if (priv->clk_users <= 0) {
+			dev_err(priv->dev,
+				"%s:clock already disabled\n",
+				__func__);
+			priv->clk_users = 0;
+			return;
+		}
+		if (--priv->clk_users == 0) {
+			mutex_unlock(&priv->clk_lock);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
+				0x02, 0x00);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
+				0x01, 0x00);
+			regmap_update_bits(priv->regmap,
+				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
+				0x01, 0x00);
+			mutex_lock(&priv->clk_lock);
+		}
+	}
+}
+
 /**
  * bolero_request_clock - request for clock enable/disable
  *
@@ -510,6 +550,7 @@ int bolero_request_clock(struct device *dev, u16 macro_id,
 				macro_id, mclk_mux0_macro);
 			goto err;
 		}
+		bolero_fs_gen_enable(priv, enable);
 		break;
 	case MCLK_MUX1:
 		mclk_mux1_macro =  bolero_mclk_mux_tbl[macro_id][MCLK_MUX1];
@@ -527,6 +568,7 @@ int bolero_request_clock(struct device *dev, u16 macro_id,
 			if (enable)
 				goto err;
 		}
+		bolero_fs_gen_enable(priv, enable);
 		/*
 		 * need different return value as ret variable
 		 * is used to track mclk_mux0 enable success or fail
