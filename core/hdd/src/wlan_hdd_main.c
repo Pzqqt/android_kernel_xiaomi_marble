@@ -9268,37 +9268,32 @@ void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
  */
 static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 {
-	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
-	QDF_STATUS status;
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
 
 	hdd_enter();
 
-	status = dsc_psoc_trans_start(hdd_psoc->dsc_psoc, "idle shutdown");
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_info("psoc busy, abort idle shutdown; status:%u", status);
-		return;
+	errno = hdd_psoc_sync_trans_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno) {
+		hdd_info("psoc busy, abort idle shutdown; errno:%d", errno);
+		goto exit;
 	}
+
+	hdd_psoc_sync_wait_for_ops(psoc_sync);
 
 	QDF_BUG(!hdd_wlan_stop_modules(hdd_ctx, false));
 
-	hdd_psoc->state = psoc_state_idle;
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+	hdd_psoc_sync_trans_stop(psoc_sync);
 
+exit:
 	hdd_exit();
 }
 
 int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
 {
-	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
-	int errno;
-
 	QDF_BUG(rtnl_is_locked());
 
-	errno = hdd_wlan_start_modules(hdd_ctx, false);
-	if (!errno)
-		hdd_psoc->state = psoc_state_active;
-
-	return errno;
+	return hdd_wlan_start_modules(hdd_ctx, false);
 }
 
 /**
@@ -11645,7 +11640,6 @@ static QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
 	int errno;
 
 	QDF_BUG(rtnl_is_locked());
-	dsc_psoc_assert_trans_protected(hdd_ctx->hdd_psoc->dsc_psoc);
 
 	errno = hdd_vdev_sync_create(hdd_ctx->wiphy, &vdev_sync);
 	if (errno)

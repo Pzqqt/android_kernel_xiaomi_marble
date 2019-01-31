@@ -1598,25 +1598,6 @@ struct hdd_driver {
 
 struct hdd_driver *hdd_driver_get(void);
 
-enum hdd_psoc_state {
-	psoc_state_uninit,
-	psoc_state_deinit,
-	psoc_state_active, /* historically "ENABLED" */
-	psoc_state_idle, /* historically "CLOSED" */
-};
-
-/**
- * struct hdd_psoc - HDD psoc-level context information
- * @hdd_driver: pointer to parent HDD driver context
- * @dsc_psoc: driver synchronization psoc context handle
- * @state: the current stable state of the psoc
- */
-struct hdd_psoc {
-	struct hdd_driver *hdd_driver;
-	struct dsc_psoc *dsc_psoc;
-	enum hdd_psoc_state state;
-};
-
 /**
  * struct hdd_dynamic_mac - hdd structure to handle dynamic mac address changes
  * @dynamic_mac: Dynamicaly configured mac, this contains the mac on which
@@ -1635,7 +1616,6 @@ struct hdd_dynamic_mac {
 
 /**
  * struct hdd_context - hdd shared driver and psoc/device context
- * @hdd_psoc: hdd psoc context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
@@ -1643,7 +1623,6 @@ struct hdd_dynamic_mac {
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  */
 struct hdd_context {
-	struct hdd_psoc *hdd_psoc;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	mac_handle_t mac_handle;

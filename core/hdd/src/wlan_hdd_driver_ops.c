@@ -26,6 +26,7 @@
 #include "hif.h"
 #include "htc.h"
 #include "epping_main.h"
+#include "wlan_hdd_dsc.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
 #include "wlan_logging_sock_svc.h"
@@ -356,56 +357,6 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
-static QDF_STATUS hdd_psoc_ctx_create(struct hdd_psoc **out_hdd_psoc)
-{
-	QDF_STATUS status;
-	struct hdd_driver *hdd_driver = hdd_driver_get();
-	struct hdd_psoc *hdd_psoc;
-
-	QDF_BUG(out_hdd_psoc);
-	if (!out_hdd_psoc)
-		return QDF_STATUS_E_INVAL;
-
-	hdd_psoc = qdf_mem_malloc(sizeof(*hdd_psoc));
-	if (!hdd_psoc)
-		return QDF_STATUS_E_NOMEM;
-
-	hdd_psoc->hdd_driver = hdd_driver;
-	hdd_psoc->state = psoc_state_uninit;
-
-	status = dsc_psoc_create(hdd_driver->dsc_driver, &hdd_psoc->dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		goto free_ctx;
-
-	*out_hdd_psoc = hdd_psoc;
-
-	return QDF_STATUS_SUCCESS;
-
-free_ctx:
-	qdf_mem_free(hdd_psoc);
-
-	return status;
-}
-
-static void hdd_psoc_ctx_destroy(struct hdd_psoc **out_hdd_psoc)
-{
-	struct hdd_psoc *hdd_psoc;
-
-	QDF_BUG(out_hdd_psoc);
-	if (!out_hdd_psoc)
-		return;
-
-	hdd_psoc = *out_hdd_psoc;
-	QDF_BUG(hdd_psoc);
-	if (!hdd_psoc)
-		return;
-
-	*out_hdd_psoc = NULL;
-
-	dsc_psoc_destroy(&hdd_psoc->dsc_psoc);
-	qdf_mem_free(hdd_psoc);
-}
-
 static void hdd_soc_load_lock(struct device *dev, int load_op)
 {
 	mutex_lock(&hdd_init_deinit_lock);
@@ -420,6 +371,69 @@ static void hdd_soc_load_unlock(struct device *dev)
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
+}
+
+static int __hdd_soc_probe(struct device *dev,
+			   void *bdev,
+			   const struct hif_bus_id *bid,
+			   enum qdf_bus_type bus_type)
+{
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+	int errno;
+
+	hdd_info("probing driver");
+
+	hdd_soc_load_lock(dev, HDD_DRV_OP_PROBE);
+	cds_set_load_in_progress(true);
+	cds_set_driver_in_bad_state(false);
+	cds_set_recovery_in_progress(false);
+
+	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
+	if (errno)
+		goto unlock;
+
+	hdd_ctx = hdd_context_create(dev);
+	if (IS_ERR(hdd_ctx)) {
+		errno = PTR_ERR(hdd_ctx);
+		goto assert_fail_count;
+	}
+
+	errno = hdd_wlan_startup(hdd_ctx);
+	if (errno)
+		goto hdd_context_destroy;
+
+	status = hdd_psoc_create_vdevs(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		errno = qdf_status_to_os_return(status);
+		goto wlan_exit;
+	}
+
+	probe_fail_cnt = 0;
+	cds_set_driver_loaded(true);
+	cds_set_load_in_progress(false);
+	hdd_start_complete(0);
+
+	hdd_soc_load_unlock(dev);
+
+	return 0;
+
+wlan_exit:
+	hdd_wlan_exit(hdd_ctx);
+
+hdd_context_destroy:
+	hdd_context_destroy(hdd_ctx);
+
+assert_fail_count:
+	probe_fail_cnt++;
+	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
+	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
+
+unlock:
+	cds_set_load_in_progress(false);
+	hdd_soc_load_unlock(dev);
+
+	return check_for_probe_defer(errno);
 }
 
 /**
@@ -439,87 +453,71 @@ static int hdd_soc_probe(struct device *dev,
 			 const struct hif_bus_id *bid,
 			 enum qdf_bus_type bus_type)
 {
-	struct hdd_context *hdd_ctx;
-	struct hdd_psoc *hdd_psoc;
-	QDF_STATUS status;
+	struct dsc_driver *dsc_driver = hdd_driver_get()->dsc_driver;
+	struct hdd_psoc_sync *psoc_sync;
 	int errno;
 
 	hdd_info("probing driver");
 
-	status = hdd_psoc_ctx_create(&hdd_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_create_with_trans(dsc_driver, &psoc_sync);
+	if (errno)
+		return errno;
 
-	status = dsc_psoc_trans_start(hdd_psoc->dsc_psoc, "probe");
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to start transition; probe, status:%u", status);
-		errno = qdf_status_to_os_return(status);
-		goto free_psoc;
-	}
+	hdd_psoc_sync_register(dev, psoc_sync);
+	errno = __hdd_soc_probe(dev, bdev, bid, bus_type);
+	if (errno)
+		goto destroy_sync;
 
-	hdd_soc_load_lock(dev, HDD_DRV_OP_PROBE);
-	cds_set_load_in_progress(true);
+	hdd_psoc_sync_trans_stop(psoc_sync);
+
+	return 0;
+
+destroy_sync:
+	hdd_psoc_sync_unregister(dev);
+	hdd_psoc_sync_wait_for_ops(psoc_sync);
+
+	hdd_psoc_sync_trans_stop(psoc_sync);
+	hdd_psoc_sync_destroy(psoc_sync);
+
+	return errno;
+}
+
+static int __hdd_soc_recovery_reinit(struct device *dev,
+				     void *bdev,
+				     const struct hif_bus_id *bid,
+				     enum qdf_bus_type bus_type)
+{
+	int errno;
+
+	hdd_info("re-probing driver");
+
+	hdd_soc_load_lock(dev, HDD_DRV_OP_REINIT);
 	cds_set_driver_in_bad_state(false);
-
-	/*
-	 * Set Recovery in progress flag to flase
-	 * as probe is started which ensures that FW is ready
-	 */
-	cds_set_recovery_in_progress(false);
 
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
 	if (errno)
 		goto unlock;
 
-	hdd_ctx = hdd_context_create(dev);
-	if (IS_ERR(hdd_ctx)) {
-		errno = PTR_ERR(hdd_ctx);
+	errno = hdd_wlan_re_init();
+	if (errno) {
+		re_init_fail_cnt++;
 		goto assert_fail_count;
 	}
 
-	hdd_ctx->hdd_psoc = hdd_psoc;
-
-	errno = hdd_wlan_startup(hdd_ctx);
-	if (errno)
-		goto hdd_context_destroy;
-
-	status = hdd_psoc_create_vdevs(hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		errno = qdf_status_to_os_return(status);
-		goto wlan_exit;
-	}
-
-	probe_fail_cnt = 0;
-	cds_set_driver_loaded(true);
-	cds_set_load_in_progress(false);
-	hdd_start_complete(0);
+	re_init_fail_cnt = 0;
+	cds_set_recovery_in_progress(false);
 
 	hdd_soc_load_unlock(dev);
-
-	hdd_psoc->state = psoc_state_active;
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 
 	return 0;
 
-wlan_exit:
-	hdd_wlan_exit(hdd_ctx);
-
-hdd_context_destroy:
-	hdd_context_destroy(hdd_ctx);
-
 assert_fail_count:
-	probe_fail_cnt++;
-	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
-	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
+	hdd_err("consecutive reinit failures:%u", re_init_fail_cnt);
+	QDF_BUG(re_init_fail_cnt < SSR_MAX_FAIL_CNT);
 
 unlock:
-	cds_set_load_in_progress(false);
+	cds_set_driver_in_bad_state(true);
 	hdd_soc_load_unlock(dev);
-
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
-
-free_psoc:
-	hdd_psoc_ctx_destroy(&hdd_psoc);
 
 	return check_for_probe_defer(errno);
 }
@@ -546,80 +544,34 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 				   const struct hif_bus_id *bid,
 				   enum qdf_bus_type bus_type)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
+	struct hdd_psoc_sync *psoc_sync;
 	int errno;
 
-	hdd_info("re-probing driver");
-
 	/* SSR transition is initiated at the beginning of soc shutdown */
-	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
-
-	hdd_soc_load_lock(dev, HDD_DRV_OP_REINIT);
-	cds_set_driver_in_bad_state(false);
-
-	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
+	errno = hdd_psoc_sync_trans_resume(dev, &psoc_sync);
+	QDF_BUG(!errno);
 	if (errno)
-		goto unlock;
+		return errno;
 
-	errno = hdd_wlan_re_init();
-	if (errno) {
-		re_init_fail_cnt++;
-		goto assert_fail_count;
-	}
+	errno = __hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
+	if (errno)
+		return errno;
 
-	re_init_fail_cnt = 0;
-	cds_set_recovery_in_progress(false);
-
-	hdd_soc_load_unlock(dev);
-
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+	hdd_psoc_sync_trans_stop(psoc_sync);
 
 	return 0;
-
-assert_fail_count:
-	hdd_err("consecutive reinit failures:%u", re_init_fail_cnt);
-	QDF_BUG(re_init_fail_cnt < SSR_MAX_FAIL_CNT);
-
-unlock:
-	cds_set_driver_in_bad_state(true);
-	hdd_soc_load_unlock(dev);
-
-	return check_for_probe_defer(errno);
 }
 
-/**
- * hdd_soc_remove() - perform SoC remove
- * @dev: the kernel device being removed
- *
- * A SoC remove indicates the attached SoC hardware is about to go away and
- * needs to be cleaned up.
- *
- * Return: void
- */
-static void hdd_soc_remove(struct device *dev)
+static void __hdd_soc_remove(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc *hdd_psoc;
-	QDF_STATUS status;
 
-	if (!hdd_ctx) {
-		hdd_warn_rl("previous probe was not successful");
+	QDF_BUG(hdd_ctx);
+	if (!hdd_ctx)
 		return;
-	}
 
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
-
-	hdd_psoc = hdd_ctx->hdd_psoc;
-	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "remove");
-	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to remove WLAN SoC; status:%d", status);
-		return;
-	}
-
-	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
@@ -645,12 +597,35 @@ static void hdd_soc_remove(struct device *dev)
 	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
 
-	hdd_psoc->state = psoc_state_deinit;
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
-
-	hdd_psoc_ctx_destroy(&hdd_psoc);
-
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
+}
+
+/**
+ * hdd_soc_remove() - perform SoC remove
+ * @dev: the kernel device being removed
+ *
+ * A SoC remove indicates the attached SoC hardware is about to go away and
+ * needs to be cleaned up.
+ *
+ * Return: void
+ */
+static void hdd_soc_remove(struct device *dev)
+{
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
+
+	/* by design, this will fail to lookup if we never probed the SoC */
+	errno = hdd_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	if (errno)
+		return;
+
+	hdd_psoc_sync_unregister(dev);
+	hdd_psoc_sync_wait_for_ops(psoc_sync);
+
+	__hdd_soc_remove(dev);
+
+	hdd_psoc_sync_trans_stop(psoc_sync);
+	hdd_psoc_sync_destroy(psoc_sync);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -723,24 +698,9 @@ static void hdd_psoc_shutdown_notify(struct hdd_context *hdd_ctx)
 	hdd_send_hang_reason();
 }
 
-/**
- * hdd_soc_recovery_shutdown() - perform PDR/SSR SoC shutdown
- *
- * When communication with firmware breaks down, a SoC recovery process kicks in
- * with two phases: shutdown and reinit.
- *
- * SSR shutdown is similar to a 'remove' but without communication with
- * firmware. The idea is to retain as much SoC configuration as possible, so it
- * can be re-initialized to the same state after a reset. This is completely
- * transparent from a userspace point of view.
- *
- * Return: void
- */
-static void hdd_soc_recovery_shutdown(void)
+static void __hdd_soc_recovery_shutdown(void)
 {
 	struct hdd_context *hdd_ctx;
-	struct hdd_psoc *hdd_psoc;
-	QDF_STATUS status;
 	void *hif_ctx;
 
 	/* recovery starts via firmware down indication; ensure we got one */
@@ -754,16 +714,6 @@ static void hdd_soc_recovery_shutdown(void)
 
 	/* cancel/flush any pending/active idle shutdown work */
 	hdd_psoc_idle_timer_stop(hdd_ctx);
-
-	hdd_psoc = hdd_ctx->hdd_psoc;
-	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "ssr");
-	if (QDF_IS_STATUS_ERROR(status)) {
-		/* If SSR races with e.g. Remove, aborting SSR is expected */
-		hdd_info("Aborting SSR; status:%u", status);
-		return;
-	}
-
-	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
 
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(HDD_DRV_OP_SHUTDOWN);
@@ -804,13 +754,40 @@ static void hdd_soc_recovery_shutdown(void)
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
-	/* SSR transition is concluded at the end of soc re-init */
-
 	return;
 
 unlock:
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
+}
+
+/**
+ * hdd_soc_recovery_shutdown() - perform PDR/SSR SoC shutdown
+ * @dev: the device to shutdown
+ *
+ * When communication with firmware breaks down, a SoC recovery process kicks in
+ * with two phases: shutdown and reinit.
+ *
+ * SSR shutdown is similar to a 'remove' but without communication with
+ * firmware. The idea is to retain as much SoC configuration as possible, so it
+ * can be re-initialized to the same state after a reset. This is completely
+ * transparent from a userspace point of view.
+ *
+ * Return: void
+ */
+static void hdd_soc_recovery_shutdown(struct device *dev)
+{
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = hdd_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	QDF_BUG(!errno);
+	if (errno)
+		return;
+
+	hdd_psoc_sync_wait_for_ops(psoc_sync);
+
+	__hdd_soc_recovery_shutdown();
 
 	/* SSR transition is concluded at the end of soc re-init */
 }
@@ -1523,7 +1500,7 @@ static void wlan_hdd_pld_shutdown(struct device *dev,
 {
 	hdd_enter();
 
-	hdd_soc_recovery_shutdown();
+	hdd_soc_recovery_shutdown(dev);
 
 	hdd_exit();
 }
