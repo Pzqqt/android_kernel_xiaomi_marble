@@ -27,7 +27,11 @@
 #include <qdf_types.h>
 #include <i_qdf_timer.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 typedef struct __qdf_timer_t qdf_timer_t;
+#else
+typedef __qdf_timer_t qdf_timer_t;
+#endif
 
 /**
  * qdf_timer_init() - initialize a timer
