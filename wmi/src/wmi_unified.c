@@ -1651,6 +1651,18 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 }
 #endif
 
+static inline void wmi_unified_debug_dump(wmi_unified_t wmi_handle)
+{
+	wmi_nofl_err("Endpoint ID = %d, Tx Queue Depth = %d, soc_id = %u, target type = %s",
+		     wmi_handle->wmi_endpoint_id,
+		     htc_get_tx_queue_depth(wmi_handle->htc_handle,
+					    wmi_handle->wmi_endpoint_id),
+		     wmi_handle->soc->soc_idx,
+		     (wmi_handle->target_type ==
+		      WMI_TLV_TARGET ? "WMI_TLV_TARGET" :
+						"WMI_NON_TLV_TARGET"));
+}
+
 QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 				   uint32_t len, uint32_t cmd_id,
 				   const char *func, uint32_t line)
@@ -1706,6 +1718,7 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		wmi_nofl_err("%s:%d, MAX %d WMI Pending cmds reached",
 			     func, line, wmi_handle->wmi_max_cmds);
+		wmi_unified_debug_dump(wmi_handle);
 		QDF_BUG(0);
 		return QDF_STATUS_E_BUSY;
 	}
