@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,12 +140,12 @@ void fwdbg_set_report_size(struct common_dbglog_handle *dbg_handle,
 
 }
 
-int fwdbg_smartlog_init(struct common_dbglog_handle *dbg_handle, void *soc)
+int fwdbg_smartlog_init(struct common_dbglog_handle *dbg_handle, void *icp)
 {
 	struct dbglog_info *dbg_info = handle2info(dbg_handle);
 
 	if (dbg_info->ops->smartlog_init)
-		return dbg_info->ops->smartlog_init(soc);
+		return dbg_info->ops->smartlog_init(icp);
 
 	return 0;
 }

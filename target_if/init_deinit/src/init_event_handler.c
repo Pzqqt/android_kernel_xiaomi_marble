@@ -177,7 +177,6 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		target_if_debug("Wait for EXT message");
 	}
 
-	target_if_smart_log_enable(psoc, tgt_hdl, event);
 exit:
 	return err_code;
 }

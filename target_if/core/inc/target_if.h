@@ -279,9 +279,6 @@ struct target_ops {
 		 struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_hdl,
 		 uint8_t *evt_buf);
-	void (*smart_log_enable)
-		(struct wlan_objmgr_psoc *psoc,
-		 struct target_psoc_info *tgt_info, uint8_t *event);
 	void (*eapol_minrate_enable)
 		(struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_info, uint8_t *event);
@@ -2117,25 +2114,6 @@ static inline int32_t target_psoc_get_num_hw_modes
 		return -EINVAL;
 
 	return tgt_hdl->info.service_ext_param.num_hw_modes;
-}
-
-/**
- * target_if_smart_log enable() - Enable Smart Logs
- * @psoc:  psoc object
- * @tgt_hdl: target_psoc_info pointer
- * @evt_buf: Service ready Event buffer received from FW
- *
- * API to enable Smart Logs
- *
- * Return: none
- */
-static inline void target_if_smart_log_enable
-				(struct wlan_objmgr_psoc *psoc,
-					struct target_psoc_info *tgt_hdl,
-					uint8_t *evt_buf)
-{
-	if ((tgt_hdl->tif_ops) && (tgt_hdl->tif_ops->smart_log_enable))
-		tgt_hdl->tif_ops->smart_log_enable(psoc, tgt_hdl, evt_buf);
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,11 +172,11 @@ void fwdbg_set_report_size(struct common_dbglog_handle *dbg_handle,
 /**
  * fwdbg_smartlog_init() - initialize smart logging feature
  * @dbg_handle: Debug module handle
- * @soc: soc handler
+ * @ic: ic handler
  *
  * Return: 0 Success
  */
-int fwdbg_smartlog_init(struct common_dbglog_handle *dbg_handle, void *soc);
+int fwdbg_smartlog_init(struct common_dbglog_handle *dbg_handle, void *icp);
 
 /**
  * fwdbg_smartlog_deinit() - uninitializes smart logging feature
@@ -199,5 +199,4 @@ void fwdbg_smartlog_deinit(struct common_dbglog_handle *dbg_handle, void *sc);
 ssize_t fwdbg_smartlog_dump(struct common_dbglog_handle *dbg_handle,
 			    struct device *dev,
 			    struct device_attribute *attr, char *buf);
-
 #endif /* _FW_DBGLOG_API_H_ */

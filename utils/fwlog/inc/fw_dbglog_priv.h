@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,7 @@ void (*dbglog_module_log_enable)(ol_scn_t scn,
 void (*dbglog_init)(void *scn);
 void (*dbglog_set_report_size)(ol_scn_t scn, uint16_t size);
 void (*dbglog_free)(void *soc);
-int  (*smartlog_init)(void *sc);
+int  (*smartlog_init)(void *icp);
 void (*smartlog_deinit)(void *sc);
 ssize_t (*smartlog_dump)(struct device *dev,
 			 struct device_attribute *attr, char *buf);
