@@ -2030,6 +2030,12 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		goto err;
 	}
 
+	if (qdf_is_macaddr_group((struct qdf_mac_addr *)peer_addr) ||
+	    qdf_is_macaddr_zero((struct qdf_mac_addr *)peer_addr)) {
+		WMA_LOGE("Invalid peer address received reject it");
+		goto err;
+	}
+
 	/*
 	 * Check if peer with same MAC exist on other Vdev, If so avoid
 	 * adding this peer, as it will cause FW to crash.
