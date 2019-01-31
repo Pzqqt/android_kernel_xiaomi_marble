@@ -1,0 +1,160 @@
+/*
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include <target_if_cfr.h>
+#include <wlan_tgt_def_config.h>
+#include <target_type.h>
+#include <hif_hw_version.h>
+#include <ol_if_athvar.h>
+#include <target_if.h>
+#include <wlan_lmac_if_def.h>
+#include <wlan_osif_priv.h>
+#include <wlan_mlme_dispatcher.h>
+#include <init_deinit_lmac.h>
+#include <wlan_cfr_utils_api.h>
+#include <target_if_cfr_8074v2.h>
+
+int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_objmgr_peer *peer)
+{
+	struct peer_cfr_params param = {0};
+	struct common_wmi_handle *pdev_wmi_handle = NULL;
+	struct wlan_objmgr_vdev *vdev = {0};
+	int retv = 0;
+
+	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	vdev = wlan_peer_get_vdev(peer);
+
+	qdf_mem_set(&param, sizeof(param), 0);
+
+	param.request = PEER_CFR_CAPTURE_DISABLE;
+	param.macaddr = wlan_peer_get_macaddr(peer);
+	param.vdev_id = wlan_vdev_get_id(vdev);
+
+	retv = wmi_unified_send_peer_cfr_capture_cmd(pdev_wmi_handle, &param);
+
+	return retv;
+}
+
+int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
+				struct wlan_objmgr_peer *peer,
+				struct cfr_capture_params *cfr_params)
+{
+	struct peer_cfr_params param = {0};
+	struct common_wmi_handle *pdev_wmi_handle = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	int retv = 0;
+
+	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	vdev = wlan_peer_get_vdev(peer);
+	qdf_mem_set(&param, sizeof(param), 0);
+
+	param.request = PEER_CFR_CAPTURE_ENABLE;
+	param.macaddr = wlan_peer_get_macaddr(peer);
+	param.vdev_id = wlan_vdev_get_id(vdev);
+
+	param.periodicity = cfr_params->period;
+	param.bandwidth = cfr_params->bandwidth;
+	param.capture_method = cfr_params->method;
+
+	retv = wmi_unified_send_peer_cfr_capture_cmd(pdev_wmi_handle, &param);
+
+	return retv;
+}
+
+int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
+				 uint32_t param_id, uint32_t param_value)
+{
+	struct pdev_params pparam;
+	uint32_t pdev_id;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	if (pdev_id < 0)
+		return -EINVAL;
+
+	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	pparam.param_id = param_id;
+	pparam.param_value = param_value;
+
+	return wmi_unified_pdev_param_send(lmac_get_pdev_wmi_handle(pdev),
+					   &pparam, pdev_id);
+}
+
+int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
+				   uint32_t cfr_timer)
+{
+	int retval;
+
+	if (!cfr_timer) {
+		retval =
+	target_if_cfr_pdev_set_param(pdev,
+				     wmi_pdev_param_per_peer_prd_cfr_enable,
+				     WMI_HOST_PEER_CFR_TIMER_DISABLE);
+	} else {
+		retval =
+	target_if_cfr_pdev_set_param(pdev,
+				     wmi_pdev_param_per_peer_prd_cfr_enable,
+				     WMI_HOST_PEER_CFR_TIMER_ENABLE);
+	}
+
+	return retval;
+}
+
+int target_if_cfr_get_target_type(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t target_type = 0;
+	struct wlan_lmac_if_target_tx_ops *target_type_tx_ops;
+
+	target_type_tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+
+	if (target_type_tx_ops->tgt_get_tgt_type)
+		target_type = target_type_tx_ops->tgt_get_tgt_type(psoc);
+
+	return target_type;
+}
+
+int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_objmgr_pdev *pdev)
+{
+	if (target_if_cfr_get_target_type(psoc) == TARGET_TYPE_QCA8074V2)
+		return cfr_8074v2_init_pdev(psoc, pdev);
+	else
+		return -EINVAL;
+}
+
+int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_pdev *pdev)
+{
+	if (target_if_cfr_get_target_type(psoc) == TARGET_TYPE_QCA8074V2)
+		return cfr_8074v2_deinit_pdev(psoc, pdev);
+	return 0;
+}
+
+void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	tx_ops->cfr_tx_ops.cfr_init_pdev =
+		target_if_cfr_init_pdev;
+	tx_ops->cfr_tx_ops.cfr_deinit_pdev =
+		target_if_cfr_deinit_pdev;
+	tx_ops->cfr_tx_ops.cfr_enable_cfr_timer =
+		target_if_cfr_enable_cfr_timer;
+	tx_ops->cfr_tx_ops.cfr_start_capture =
+		target_if_cfr_start_capture;
+	tx_ops->cfr_tx_ops.cfr_stop_capture =
+		target_if_cfr_stop_capture;
+}
