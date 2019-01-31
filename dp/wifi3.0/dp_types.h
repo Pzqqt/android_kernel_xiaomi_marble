@@ -711,6 +711,8 @@ struct dp_soc_stats {
 			uint32_t hal_reo_dest_dup;
 			/* HAL WBM RELEASE Duplicate count */
 			uint32_t hal_wbm_rel_dup;
+			/* HAL RXDMA error Duplicate count */
+			uint32_t hal_rxdma_err_dup;
 		} err;
 
 		/* packet count per core - per ring */

@@ -1438,7 +1438,7 @@ static inline void hal_srng_dump_ring(struct hal_soc *hal, void *hal_ring)
 
 		desc = &srng->ring_base_vaddr[tp - srng->entry_size];
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP,
-				   QDF_TRACE_LEVEL_FATAL,
+				   QDF_TRACE_LEVEL_DEBUG,
 				   desc, (srng->entry_size << 2));
 
 		tp -= srng->entry_size;

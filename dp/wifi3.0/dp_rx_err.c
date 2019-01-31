@@ -1554,6 +1554,26 @@ done:
 }
 
 /**
+ * dup_desc_dbg() - dump and assert if duplicate rx desc found
+ *
+ * @soc: core DP main context
+ * @rxdma_dst_ring_desc: void pointer to monitor link descriptor buf addr info
+ * @rx_desc: void pointer to rx descriptor
+ *
+ * Return: void
+ */
+static void dup_desc_dbg(struct dp_soc *soc,
+			 void *rxdma_dst_ring_desc,
+			 void *rx_desc)
+{
+	DP_STATS_INC(soc, rx.err.hal_rxdma_err_dup, 1);
+	dp_rx_dump_info_and_assert(soc,
+				   soc->rx_rel_ring.hal_srng,
+				   rxdma_dst_ring_desc,
+				   rx_desc);
+}
+
+/**
  * dp_rx_err_mpdu_pop() - extract the MSDU's from link descs
  *
  * @soc: core DP main context
@@ -1585,6 +1605,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	void *ring_desc;
 
 	msdu = 0;
 
@@ -1629,6 +1650,25 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 							msdu_list.sw_cookie[i]);
 					qdf_assert_always(rx_desc);
 					msdu = rx_desc->nbuf;
+					/*
+					 * this is a unlikely scenario
+					 * where the host is reaping
+					 * a descriptor which
+					 * it already reaped just a while ago
+					 * but is yet to replenish
+					 * it back to HW.
+					 * In this case host will dump
+					 * the last 128 descriptors
+					 * including the software descriptor
+					 * rx_desc and assert.
+					 */
+					ring_desc = rxdma_dst_ring_desc;
+					if (qdf_unlikely(!rx_desc->in_use)) {
+						dup_desc_dbg(soc,
+							     ring_desc,
+							     rx_desc);
+						continue;
+					}
 
 					qdf_nbuf_unmap_single(soc->osdev, msdu,
 						QDF_DMA_FROM_DEVICE);
