@@ -145,6 +145,8 @@ int adm_set_multi_ch_map(char *channel_map, int path);
 
 int adm_get_multi_ch_map(char *channel_map, int path);
 
+void adm_set_port_multi_ch_map(char *channel_map, int port_id);
+
 int adm_validate_and_get_port_index(int port_id);
 
 int adm_get_default_copp_idx(int port_id);
