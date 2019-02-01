@@ -2486,22 +2486,21 @@ int wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 					struct wireless_dev *wdev,
 					const void *data, int data_len)
 {
-	int ret = 0;
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
 
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_extscan_get_valid_channels(wiphy, wdev, data,
-			data_len);
+	errno = __wlan_hdd_cfg80211_extscan_get_valid_channels(wiphy, wdev,
+							       data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	dsc_psoc_op_stop(dsc_psoc);
+	hdd_psoc_sync_op_stop(psoc_sync);
 
-	return ret;
+	return errno;
 }
 
 /**

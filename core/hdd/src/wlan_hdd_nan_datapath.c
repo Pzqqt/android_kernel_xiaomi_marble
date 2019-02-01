@@ -408,20 +408,21 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	struct wireless_dev *wdev, const void *data, int data_len)
 {
-	int ret;
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
 
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_process_ndp_cmd(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_process_ndp_cmd(wiphy, wdev,
+						    data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	dsc_psoc_op_stop(dsc_psoc);
-	return ret;
+	hdd_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -95,21 +95,20 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 				  int data_len)
 
 {
-	int ret;
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+	struct hdd_psoc_sync *psoc_sync;
+	int errno;
 
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_nan_request(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_nan_request(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	dsc_psoc_op_stop(dsc_psoc);
+	hdd_psoc_sync_op_stop(psoc_sync);
 
-	return ret;
+	return errno;
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,28 +58,26 @@ static ssize_t show_driver_version(struct kobject *kobj,
 				   struct kobj_attribute *attr,
 				   char *buf)
 {
-	ssize_t ret_val;
-	int ret;
-	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct dsc_psoc *dsc_psoc;
+	struct hdd_psoc_sync *psoc_sync;
+	ssize_t length;
+	int errno;
 
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		hdd_err("hdd ctx is invalid");
-		return ret;
-	}
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret_val = __show_driver_version(buf);
+	length = __show_driver_version(buf);
 	cds_ssr_unprotect(__func__);
-	dsc_psoc_op_stop(dsc_psoc);
-	return ret_val;
+
+	hdd_psoc_sync_op_stop(psoc_sync);
+
+	return length;
 }
 
 static ssize_t __show_fw_version(struct hdd_context *hdd_ctx,
@@ -108,28 +106,26 @@ static ssize_t show_fw_version(struct kobject *kobj,
 			       struct kobj_attribute *attr,
 			       char *buf)
 {
-	ssize_t ret_val;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	int ret;
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc;
+	struct hdd_psoc_sync *psoc_sync;
+	ssize_t length;
+	int errno;
 
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		hdd_err("hdd ctx is invalid");
-		return ret;
-	}
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret_val = __show_fw_version(hdd_ctx, buf);
+	length = __show_fw_version(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
-	dsc_psoc_op_stop(dsc_psoc);
-	return ret_val;
+
+	hdd_psoc_sync_op_stop(psoc_sync);
+
+	return length;
 };
 
 struct power_stats_priv {
@@ -263,28 +259,26 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 				       struct kobj_attribute *attr,
 				       char *buf)
 {
-	ssize_t ret_val;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	int ret;
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc;
+	struct hdd_psoc_sync *psoc_sync;
+	ssize_t length;
+	int errno;
 
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		hdd_err("hdd ctx is invalid");
-		return ret;
-	}
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
-	status = dsc_psoc_op_start(dsc_psoc);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret_val = __show_device_power_stats(hdd_ctx, buf);
+	length = __show_device_power_stats(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
-	dsc_psoc_op_stop(dsc_psoc);
-	return ret_val;
+
+	hdd_psoc_sync_op_stop(psoc_sync);
+
+	return length;
 }
 
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
