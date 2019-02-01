@@ -4988,6 +4988,7 @@ typedef enum {
 	wmi_pdev_param_ul_ppdu_duration,
 	wmi_pdev_param_equal_ru_allocation_enable,
 	wmi_pdev_param_per_peer_prd_cfr_enable,
+	wmi_pdev_param_nav_override_config,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
