@@ -15502,9 +15502,6 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac, tpSirSmeAssocInd
 		/* aid */
 		pMsg->aid = pAssocInd->aid;
 
-		/* alternateChannelId */
-		pMsg->alternateChannelId = 11;
-
 		msg.type = pMsg->messageType;
 		msg.bodyval = 0;
 		msg.bodyptr = pMsg;
@@ -15554,9 +15551,6 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 		pBuf = (uint8_t *)&pMsg->aid;
 		wTmp = pAssocInd->staId;
 		qdf_mem_copy(pBuf, &wTmp, sizeof(uint16_t));
-		/* alternateChannelId */
-		pBuf = (uint8_t *)&pMsg->alternateChannelId;
-		*pBuf = 11;
 		/*
 		 * Instead of copying roam Info,just copy WmmEnabled,
 		 * RsnIE information.
