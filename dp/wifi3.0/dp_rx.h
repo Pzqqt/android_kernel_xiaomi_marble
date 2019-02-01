@@ -1012,12 +1012,15 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
  * @rx_desc: rx descriptor pointer to be prepared
  * @nbuf: nbuf to be associated with rx_desc
  *
+ * Note: assumption is that we are associating a nbuf which is mapped
+ *
  * Return: none
  */
 static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 {
 	rx_desc->magic = DP_RX_DESC_MAGIC;
 	rx_desc->nbuf = nbuf;
+	rx_desc->unmapped = 0;
 }
 
 #else
@@ -1030,6 +1033,7 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
 static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 {
 	rx_desc->nbuf = nbuf;
+	rx_desc->unmapped = 0;
 }
 #endif /* RX_DESC_DEBUG_CHECK */
 #endif /* _DP_RX_H */
