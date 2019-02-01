@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,6 +39,7 @@ static void hal_setup_link_idle_list_generic(void *hal_soc,
 	uint32_t *prev_buf_link_ptr = NULL;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 	uint32_t reg_scatter_buf_size, reg_tot_scatter_buf_size;
+	uint32_t val;
 
 	/* Link the scatter buffers */
 	for (i = 0; i < num_scatter_bufs; i++) {
@@ -146,9 +147,17 @@ static void hal_setup_link_idle_list_generic(void *hal_soc,
 		SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		2*num_entries);
 
-	/* Enable the SRNG */
+	/* Set RING_ID_DISABLE */
+	val = HAL_SM(HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC, RING_ID_DISABLE, 1);
+
+	/*
+	 * SRNG_ENABLE bit is not available in HWK v1 (QCA8074v1). Hence
+	 * check the presence of the bit before toggling it.
+	 */
+#ifdef HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC_SRNG_ENABLE_BMSK
+	val |= HAL_SM(HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC, SRNG_ENABLE, 1);
+#endif
 	HAL_REG_WRITE(soc,
-		HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC_ADDR(
-		SEQ_WCSS_UMAC_WBM_REG_OFFSET),
-		0x40);
+		      HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC_ADDR(SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      val);
 }
