@@ -274,6 +274,9 @@
  *	legacy blob encapsulated within an attribute and can be extended with
  *	additional vendor attributes that can enhance the NAN command
  *	interface.
+ * @QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE: Sub command to get firmware state.
+ *	The returned firmware state is specified in the attribute
+ *	QCA_WLAN_VENDOR_ATTR_FW_STATE.
  *
  */
 
@@ -483,6 +486,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT = 171,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT = 174,
+	QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE = 177,
 };
 
 enum qca_wlan_vendor_tos {
@@ -1261,6 +1265,12 @@ enum qca_wlan_vendor_attr {
 	 * in user space.
 	 */
 	QCA_WLAN_VENDOR_ATTR_CHAIN_EVM = 41,
+	/*
+	 * Used in QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE command to report
+	 * wlan firmware current state. FW state is an unsigned 8 bit value,
+	 * one of the values in enum qca_wlan_vendor_attr_fw_state.
+	 */
+	QCA_WLAN_VENDOR_ATTR_FW_STATE = 42,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_AFTER_LAST,
@@ -4742,6 +4752,18 @@ enum qca_wlan_vendor_attr_dmg_rf_sector_type {
 	QCA_WLAN_VENDOR_ATTR_DMG_RF_SECTOR_TYPE_RX,
 	QCA_WLAN_VENDOR_ATTR_DMG_RF_SECTOR_TYPE_TX,
 	QCA_WLAN_VENDOR_ATTR_DMG_RF_SECTOR_TYPE_MAX
+};
+
+/**
+ * enum qca_wlan_vendor_attr_fw_state - State of firmware
+ *
+ * @QCA_WLAN_VENDOR_ATTR_FW_STATE_ERROR: FW is in bad state
+ * @QCA_WLAN_VENDOR_ATTR_FW_STATE_ACTIVE: FW is active
+ */
+enum qca_wlan_vendor_attr_fw_state {
+	QCA_WLAN_VENDOR_ATTR_FW_STATE_ERROR,
+	QCA_WLAN_VENDOR_ATTR_FW_STATE_ACTIVE,
+	QCA_WLAN_VENDOR_ATTR_FW_STATE_MAX
 };
 
 /**
