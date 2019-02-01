@@ -1111,6 +1111,7 @@ struct hdd_context;
  * struct hdd_adapter - hdd vdev/net_device context
  * @vdev: object manager vdev context
  * @vdev_lock: lock to protect vdev context access
+ * @vdev_id: Unique identifier assigned to the vdev
  * @event_flags: a bitmap of hdd_adapter_flags
  */
 struct hdd_adapter {
@@ -1127,6 +1128,10 @@ struct hdd_adapter {
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	qdf_spinlock_t vdev_lock;
+	union {
+	uint8_t vdev_id;
+	uint8_t session_id;
+	};
 
 	void *txrx_vdev;
 
@@ -1170,8 +1175,6 @@ struct hdd_adapter {
 
 	/* estimated link speed */
 	uint32_t estimated_linkspeed;
-
-	uint8_t session_id;
 
 	/* QDF event for session close */
 	qdf_event_t qdf_session_close_event;
