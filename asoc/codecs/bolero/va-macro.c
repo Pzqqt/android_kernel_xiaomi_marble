@@ -107,7 +107,9 @@ struct va_macro_priv {
 	s32 dmic_6_7_clk_cnt;
 	u16 dmic_clk_div;
 	u16 va_mclk_users;
+	u16 mclk_mux_sel;
 	char __iomem *va_io_base;
+	char __iomem *va_island_mode_muxsel;
 	struct regulator *micb_supply;
 	u32 micb_voltage;
 	u32 micb_current;
@@ -139,7 +141,6 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 {
 	struct regmap *regmap = dev_get_regmap(va_priv->dev->parent, NULL);
 	int ret = 0;
-	u16 mclk_mux_sel = MCLK_MUX0;
 
 	if (regmap == NULL) {
 		dev_err(va_priv->dev, "%s: regmap is NULL\n", __func__);
@@ -150,21 +151,11 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 		__func__, mclk_enable, dapm, va_priv->va_mclk_users);
 
 	mutex_lock(&va_priv->mclk_lock);
-	if (of_property_read_u16(va_priv->dev->of_node,
-				 "qcom,va-clk-mux-select", &mclk_mux_sel))
-		dev_dbg(va_priv->dev,
-			"%s: could not find %s entry in dt, use default\n",
-			__func__, "qcom,va-clk-mux-select");
-	if (mclk_mux_sel != MCLK_MUX0 && mclk_mux_sel != MCLK_MUX1) {
-		dev_err(va_priv->dev, "%s: mclk_mux_sel: %d is invalid\n",
-			__func__, mclk_mux_sel);
-		return -EINVAL;
-	}
-
 	if (mclk_enable) {
 		if (va_priv->va_mclk_users == 0) {
 			ret = bolero_request_clock(va_priv->dev,
-						VA_MACRO, mclk_mux_sel, true);
+						VA_MACRO,
+						va_priv->mclk_mux_sel, true);
 			if (ret < 0) {
 				dev_err(va_priv->dev,
 					"%s: va request clock en failed\n",
@@ -205,7 +196,8 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
 			bolero_request_clock(va_priv->dev,
-					VA_MACRO, mclk_mux_sel, false);
+					VA_MACRO,
+					va_priv->mclk_mux_sel, false);
 		}
 	}
 exit:
@@ -289,7 +281,11 @@ static int va_macro_mclk_ctrl(struct device *dev, bool enable)
 			dev_err(dev, "%s:va mclk enable failed\n", __func__);
 			goto exit;
 		}
+		if (va_priv->mclk_mux_sel == MCLK_MUX1)
+			iowrite32(0x1, va_priv->va_island_mode_muxsel);
 	} else {
+		if (va_priv->mclk_mux_sel == MCLK_MUX1)
+			iowrite32(0x0, va_priv->va_island_mode_muxsel);
 		clk_disable_unprepare(va_priv->va_core_clk);
 	}
 
@@ -1611,8 +1607,9 @@ static int va_macro_probe(struct platform_device *pdev)
 {
 	struct macro_ops ops;
 	struct va_macro_priv *va_priv;
-	u32 va_base_addr, sample_rate = 0;
+	u32 va_base_addr, sample_rate = 0, island_sel = 0;
 	char __iomem *va_io_base;
+	char __iomem *va_muxsel_io = NULL;
 	struct clk *va_core_clk;
 	bool va_without_decimation = false;
 	const char *micb_supply_str = "va-vdd-micb-supply";
@@ -1621,6 +1618,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
+	u16 mclk_mux_sel = MCLK_MUX0;
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -1658,6 +1656,44 @@ static int va_macro_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	va_priv->va_io_base = va_io_base;
+
+	ret = of_property_read_u16(va_priv->dev->of_node,
+				   "qcom,va-clk-mux-select", &mclk_mux_sel);
+	if (ret) {
+		dev_dbg(&pdev->dev,
+			"%s: could not find %s entry in dt, use default\n",
+			__func__, "qcom,va-clk-mux-select");
+	} else {
+		if (mclk_mux_sel != MCLK_MUX0 && mclk_mux_sel != MCLK_MUX1) {
+			dev_err(&pdev->dev,
+				"%s: mclk_mux_sel: %d is invalid\n",
+				__func__, mclk_mux_sel);
+			return -EINVAL;
+		}
+	}
+	va_priv->mclk_mux_sel = mclk_mux_sel;
+
+	if (va_priv->mclk_mux_sel == MCLK_MUX1) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   "qcom,va-island-mode-muxsel",
+					   &island_sel);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: could not find %s entry in dt\n",
+				__func__, "qcom,va-island-mode-muxsel");
+			return ret;
+		} else {
+			va_muxsel_io = devm_ioremap(&pdev->dev,
+						    island_sel, 0x4);
+			if (!va_muxsel_io) {
+				dev_err(&pdev->dev,
+					"%s: ioremap failed for island_sel\n",
+					__func__);
+				return -ENOMEM;
+			}
+		}
+		va_priv->va_island_mode_muxsel = va_muxsel_io;
+	}
 	/* Register MCLK for va macro */
 	va_core_clk = devm_clk_get(&pdev->dev, "va_core_clk");
 	if (IS_ERR(va_core_clk)) {
