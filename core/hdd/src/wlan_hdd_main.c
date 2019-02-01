@@ -11641,7 +11641,7 @@ static QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
 
 	QDF_BUG(rtnl_is_locked());
 
-	errno = hdd_vdev_sync_create(hdd_ctx->wiphy, &vdev_sync);
+	errno = hdd_vdev_sync_create(hdd_ctx->parent_dev, &vdev_sync);
 	if (errno)
 		return qdf_status_from_os_return(errno);
 

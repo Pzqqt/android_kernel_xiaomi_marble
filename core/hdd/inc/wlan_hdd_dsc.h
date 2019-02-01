@@ -38,14 +38,6 @@ void hdd_dsc_init(void);
 void hdd_dsc_deinit(void);
 
 /**
- * hdd_dsc_psoc_from_wiphy() - get dsc psoc from wiphy
- * @wiphy: Pointer to wireless hardware description
- *
- * Return: dsc_psoc on success, NULL on failure
- */
-struct dsc_psoc *hdd_dsc_psoc_from_wiphy(struct wiphy *wiphy);
-
-/**
  * struct hdd_psoc_sync - opaque synchronization handle for a psoc
  */
 struct hdd_psoc_sync;
@@ -208,28 +200,28 @@ struct hdd_vdev_sync;
 
 /**
  * hdd_vdev_sync_create() - create a vdev synchronization context
- * @wiphy: parent wiphy to the vdev
+ * @dev: parent device to the vdev
  * @out_vdev_sync: out parameter for the new synchronization context
  *
  * Return: Errno
  */
 qdf_must_check int
-hdd_vdev_sync_create(struct wiphy *wiphy, struct hdd_vdev_sync **out_vdev_sync);
+hdd_vdev_sync_create(struct device *dev, struct hdd_vdev_sync **out_vdev_sync);
 
 /**
  * hdd_vdev_sync_create_with_trans() - create a vdev synchronization context
- * @wiphy: parent wiphy to the vdev
+ * @dev: parent device to the vdev
  * @out_vdev_sync: out parameter for the new synchronization context
  *
  * For protecting the net_device creation process.
  *
  * Return: Errno
  */
-#define hdd_vdev_sync_create_with_trans(wiphy, out_vdev_sync) \
-	__hdd_vdev_sync_create_with_trans(wiphy, out_vdev_sync, __func__)
+#define hdd_vdev_sync_create_with_trans(dev, out_vdev_sync) \
+	__hdd_vdev_sync_create_with_trans(dev, out_vdev_sync, __func__)
 
 qdf_must_check int
-__hdd_vdev_sync_create_with_trans(struct wiphy *wiphy,
+__hdd_vdev_sync_create_with_trans(struct device *dev,
 				  struct hdd_vdev_sync **out_vdev_sync,
 				  const char *desc);
 

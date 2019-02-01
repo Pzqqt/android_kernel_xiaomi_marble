@@ -374,23 +374,32 @@ static void hdd_vdev_sync_put(struct hdd_vdev_sync *vdev_sync)
 	qdf_mem_zero(vdev_sync, sizeof(*vdev_sync));
 }
 
-int hdd_vdev_sync_create(struct wiphy *wiphy,
+static QDF_STATUS hdd_vdev_dsc_create(struct device *dev,
+				      struct dsc_vdev **out_dsc_vdev)
+{
+	struct hdd_psoc_sync *psoc_sync;
+
+	hdd_psoc_sync_lock_assert();
+
+	psoc_sync = hdd_psoc_sync_lookup(dev);
+	if (!psoc_sync)
+		return QDF_STATUS_E_INVAL;
+
+	return dsc_vdev_create(psoc_sync->dsc_psoc, out_dsc_vdev);
+}
+
+int hdd_vdev_sync_create(struct device *dev,
 			 struct hdd_vdev_sync **out_vdev_sync)
 {
-	QDF_STATUS status;
-	struct dsc_psoc *dsc_psoc;
 	struct hdd_vdev_sync *vdev_sync;
+	QDF_STATUS status;
 
-	QDF_BUG(wiphy);
-	if (!wiphy)
+	QDF_BUG(dev);
+	if (!dev)
 		return -EINVAL;
 
 	QDF_BUG(out_vdev_sync);
 	if (!out_vdev_sync)
-		return -EINVAL;
-
-	dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
-	if (!dsc_psoc)
 		return -EINVAL;
 
 	hdd_vdev_sync_lock();
@@ -399,7 +408,9 @@ int hdd_vdev_sync_create(struct wiphy *wiphy,
 	if (!vdev_sync)
 		return -ENOMEM;
 
-	status = dsc_vdev_create(dsc_psoc, &vdev_sync->dsc_vdev);
+	hdd_psoc_sync_lock();
+	status = hdd_vdev_dsc_create(dev, &vdev_sync->dsc_vdev);
+	hdd_psoc_sync_unlock();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto sync_put;
 
@@ -415,7 +426,7 @@ sync_put:
 	return qdf_status_to_os_return(status);
 }
 
-int __hdd_vdev_sync_create_with_trans(struct wiphy *wiphy,
+int __hdd_vdev_sync_create_with_trans(struct device *dev,
 				      struct hdd_vdev_sync **out_vdev_sync,
 				      const char *desc)
 {
@@ -423,7 +434,7 @@ int __hdd_vdev_sync_create_with_trans(struct wiphy *wiphy,
 	QDF_STATUS status;
 	int errno;
 
-	errno = hdd_vdev_sync_create(wiphy, &vdev_sync);
+	errno = hdd_vdev_sync_create(dev, &vdev_sync);
 	if (errno)
 		return errno;
 
@@ -593,25 +604,5 @@ void hdd_dsc_deinit(void)
 {
 	hdd_vdev_sync_lock_destroy();
 	hdd_psoc_sync_lock_destroy();
-}
-
-struct dsc_psoc *hdd_dsc_psoc_from_wiphy(struct wiphy *wiphy)
-{
-	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_psoc_sync *psoc_sync;
-	struct dsc_psoc *dsc_psoc = NULL;
-
-	if (!hdd_ctx)
-		return NULL;
-
-	hdd_psoc_sync_lock();
-
-	psoc_sync = hdd_psoc_sync_lookup(hdd_ctx->parent_dev);
-	if (psoc_sync)
-		dsc_psoc = psoc_sync->dsc_psoc;
-
-	hdd_psoc_sync_unlock();
-
-	return dsc_psoc;
 }
 
