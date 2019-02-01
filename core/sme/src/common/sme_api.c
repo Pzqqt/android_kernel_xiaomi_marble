@@ -15022,3 +15022,17 @@ QDF_STATUS sme_update_hidden_ssid_status_cb(mac_handle_t mac_handle,
 
 	return status;
 }
+
+QDF_STATUS sme_update_owe_info(struct mac_context *mac,
+			       struct assoc_ind *assoc_ind)
+{
+	QDF_STATUS status;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_update_owe_info(mac, assoc_ind);
+		sme_release_global_lock(&mac->sme);
+	}
+
+	return status;
+}

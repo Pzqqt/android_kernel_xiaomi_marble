@@ -1466,4 +1466,14 @@ csr_get_channel_status(struct mac_context *mac, uint32_t channel_id);
  * Return: none
  */
 void csr_clear_channel_status(struct mac_context *mac);
+
+/**
+ * csr_update_owe_info() - Update OWE info
+ * @mac: mac context
+ * @assoc_ind: assoc ind
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_update_owe_info(struct mac_context *mac,
+			       struct assoc_ind *assoc_ind);
 #endif

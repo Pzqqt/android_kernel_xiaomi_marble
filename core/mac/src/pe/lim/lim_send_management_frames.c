@@ -1307,6 +1307,9 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	bytes += sizeof(tSirMacMgmtHdr) + payload;
 
+	if (sta)
+		bytes += sta->mlmStaContext.owe_ie_len;
+
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1351,6 +1354,12 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	if (addn_ie_len && addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN)
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     &add_ie[0], addn_ie_len);
+
+	if (sta && sta->mlmStaContext.owe_ie_len)
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload
+			     + addn_ie_len,
+			     sta->mlmStaContext.owe_ie,
+			     sta->mlmStaContext.owe_ie_len);
 
 	if ((BAND_5G ==
 		lim_get_rf_band(pe_session->currentOperChannel)) ||

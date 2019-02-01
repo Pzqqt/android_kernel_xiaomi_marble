@@ -1118,6 +1118,9 @@ struct assoc_ind {
 	tDot11fIEVHTCaps VHTCaps;
 	tSirMacCapabilityInfo capability_info;
 	bool is_sae_authenticated;
+	const uint8_t *owe_ie;
+	uint32_t owe_ie_len;
+	uint16_t owe_status;
 };
 
 /**
@@ -1140,6 +1143,8 @@ struct assoc_cnf {
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
 	tSirMacStatusCodes mac_status_code;
+	uint8_t *owe_ie;
+	uint32_t owe_ie_len;
 };
 
 /* / Enum definition for  Wireless medium status change codes */

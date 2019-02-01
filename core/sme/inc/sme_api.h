@@ -3260,4 +3260,13 @@ QDF_STATUS sme_set_thermal_mgmt(mac_handle_t mac_handle,
 QDF_STATUS sme_update_hidden_ssid_status_cb(mac_handle_t mac_handle,
 					    hidden_ssid_cb cb);
 
+/**
+ * sme_update_owe_info() - Update OWE info
+ * @mac: mac context
+ * @assoc_ind: assoc ind
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_owe_info(struct mac_context *mac,
+			       struct assoc_ind *assoc_ind);
 #endif /* #if !defined( __SME_API_H ) */
