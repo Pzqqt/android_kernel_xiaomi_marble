@@ -410,8 +410,19 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 							      cmd,
 							      is_active_cmd);
 
+	/* Here command removal can fail for 2 reasons
+	 * 1. The cmd is not present
+	 * 2. The command had not returned from activation
+	 *    and will not be removed now.
+	 *
+	 *  In the second case, we should not flag it as error
+	 *  since it will removed after the activation completes.
+	 */
+
 	if (vdev_status != QDF_STATUS_SUCCESS) {
-		ser_err("Failed to remove cmd from vdev active/pending queue");
+		status = vdev_status;
+		if (vdev_status != QDF_STATUS_E_PENDING)
+			ser_err("Failed to remove cmd from vdev queue");
 		goto error;
 	}
 

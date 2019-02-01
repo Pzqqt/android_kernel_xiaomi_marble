@@ -93,7 +93,7 @@ wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 					  WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD);
 
 	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, cmd)) {
-		mlme_err("Cmd already exist in the active queue");
+		mlme_debug("Cmd already exist in the active queue");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
@@ -177,7 +177,7 @@ wlan_vdev_mlme_ser_disconnect(struct wlan_serialization_command *cmd)
 					  WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD);
 
 	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, cmd)) {
-		mlme_err("Cmd already exist in the active queue");
+		mlme_debug("Cmd already exist in the active queue");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 

@@ -294,6 +294,7 @@ void wlan_serialization_remove_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd_info)
 {
 	QDF_STATUS status;
+	enum wlan_serialization_cmd_status ser_status;
 	struct wlan_serialization_command cmd = {0};
 
 	ser_enter();
@@ -316,8 +317,11 @@ void wlan_serialization_remove_cmd(
 	cmd.source = cmd_info->requestor;
 	cmd.vdev = cmd_info->vdev;
 
-	if (wlan_serialization_dequeue_cmd(&cmd, SER_REMOVE, true) !=
-			WLAN_SER_CMD_IN_ACTIVE_LIST) {
+	ser_status = wlan_serialization_dequeue_cmd(
+			&cmd, SER_REMOVE, true);
+
+	if (ser_status != WLAN_SER_CMD_IN_ACTIVE_LIST) {
+		if (ser_status != WLAN_SER_CMD_MARKED_FOR_ACTIVATION)
 		ser_err("Can't dequeue requested cmd_id[%d] type[%d]",
 			cmd.cmd_id, cmd.cmd_type);
 	}
