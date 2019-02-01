@@ -218,6 +218,8 @@ error:
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(wlan_ser_print_history);
+
 void wlan_ser_update_cmd_history(
 		struct wlan_serialization_pdev_queue *pdev_queue,
 		struct wlan_serialization_command *cmd,
