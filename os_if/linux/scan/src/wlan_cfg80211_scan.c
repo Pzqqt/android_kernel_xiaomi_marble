@@ -1984,16 +1984,11 @@ void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 		wiphy->max_sched_scan_ie_len = SCAN_MAX_IE_LENGTH;
 		wiphy->max_sched_scan_plans = SCAN_PNO_MAX_PLAN_REQUEST;
 
-		/*
-		 * Exception: Using cfg_get() here because these two
-		 * schedule scan params are used only at this place
-		 * to copy to wiphy structure
-		 */
 		wiphy->max_sched_scan_plan_interval =
-			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
+			ucfg_scan_get_max_sched_scan_plan_interval(psoc);
 
 		wiphy->max_sched_scan_plan_iterations =
-			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
+			ucfg_scan_get_max_sched_scan_plan_iterations(psoc);
 	}
 }
 #endif

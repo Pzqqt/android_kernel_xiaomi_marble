@@ -640,6 +640,14 @@ void ucfg_scan_set_bt_activity(struct wlan_objmgr_psoc *psoc,
 bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_scan_is_mac_spoofing_enabled() - API to check if mac spoofing is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if enabled else false.
+ */
+bool ucfg_scan_is_mac_spoofing_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_scan_cfg_set_active_dwelltime() - API to set scan active dwelltime
  * @psoc: pointer to psoc object
  * @dwell_time: scan active dwell time
@@ -876,6 +884,27 @@ uint32_t ucfg_scan_get_scan_timer_repeat_value(struct wlan_objmgr_psoc *psoc);
  * Return: slow_scan_multiplier value
  */
 uint32_t ucfg_scan_get_slow_scan_multiplier(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_get_max_sched_scan_plan_interval() - API to get maximum scheduled
+ * scan plan interval
+ * @psoc: pointer to psoc object
+ *
+ * Return: max_sched_scan_plan_interval value.
+ */
+uint32_t
+ucfg_scan_get_max_sched_scan_plan_interval(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_get_max_sched_scan_plan_iterations() - API to get maximum scheduled
+ * scan plan iterations
+ * @psoc: pointer to psoc object
+ *
+ * Return: value.
+ */
+uint32_t
+ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline
 bool ucfg_scan_is_pno_offload_enabled(struct wlan_objmgr_psoc *psoc)
@@ -917,5 +946,18 @@ uint32_t ucfg_scan_get_slow_scan_multiplier(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
+
+static inline uint32_t
+ucfg_scan_get_max_sched_scan_plan_interval(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
 #endif /* FEATURE_WLAN_SCAN_PNO */
 #endif

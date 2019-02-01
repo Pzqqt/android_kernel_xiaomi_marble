@@ -255,6 +255,10 @@ wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_PNO_SLOW_SCAN_MULTIPLIER);
 	pno_def->scan_backoff_multiplier =
 			cfg_get(psoc, CFG_SCAN_BACKOFF_MULTIPLIER);
+	pno_def->max_sched_scan_plan_interval =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
+	pno_def->max_sched_scan_plan_iterations =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
 
 	mawc_cfg->enable = cfg_get(psoc, CFG_MAWC_NLO_ENABLED);
 	mawc_cfg->exp_backoff_ratio =
@@ -1505,7 +1509,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.burst_duration = SCAN_BURST_DURATION;
 	scan_obj->scan_def.max_scan_time = SCAN_MAX_SCAN_TIME;
 	scan_obj->scan_def.num_probes = cfg_get(psoc, CFG_SCAN_NUM_PROBES);
-	scan_obj->scan_def.scan_cache_aging_time = SCAN_CACHE_AGING_TIME;
+	scan_obj->scan_def.scan_cache_aging_time =
+			(cfg_get(psoc, CFG_SCAN_AGING_TIME) * 1000);
 	scan_obj->scan_def.max_bss_per_pdev = SCAN_MAX_BSS_PDEV;
 	scan_obj->scan_def.scan_priority = SCAN_PRIORITY;
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
@@ -1513,8 +1518,9 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE);
 	scan_obj->scan_def.adaptive_dwell_time_mode_nc =
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE_NC);
-	scan_obj->scan_def.is_bssid_hint_priority =
-			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
+	scan_obj->scan_def.enable_mac_spoofing =
+			cfg_get(psoc, CFG_ENABLE_MAC_ADDR_SPOOFING);
+
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
 	scan_obj->scan_def.scan_f_ofdm_rates = true;
@@ -1997,10 +2003,8 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	}
 
 	scan_def = &scan_obj->scan_def;
-	scan_def->scan_cache_aging_time = scan_cfg->scan_cache_aging_time;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
-	scan_def->enable_mac_spoofing = scan_cfg->enable_mac_spoofing;
 	scan_def->sta_miracast_mcc_rest_time =
 				scan_cfg->sta_miracast_mcc_rest_time;
 
@@ -2338,6 +2342,19 @@ bool ucfg_scan_wake_lock_in_user_scan(struct wlan_objmgr_psoc *psoc)
 	return scan_obj->scan_def.use_wake_lock_in_user_scan;
 }
 
+bool ucfg_scan_is_mac_spoofing_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return cfg_default(CFG_ENABLE_MAC_ADDR_SPOOFING);
+	}
+
+	return scan_obj->scan_def.enable_mac_spoofing;
+}
+
 QDF_STATUS
 ucfg_scan_set_global_config(struct wlan_objmgr_psoc *psoc,
 			       enum scan_config config, uint32_t val)
@@ -2493,4 +2510,33 @@ uint32_t ucfg_scan_get_slow_scan_multiplier(struct wlan_objmgr_psoc *psoc)
 		}
 		return scan_obj->pno_cfg.slow_scan_multiplier;
 }
+
+uint32_t
+ucfg_scan_get_max_sched_scan_plan_interval(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return cfg_default(CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
+	}
+
+	return scan_obj->pno_cfg.max_sched_scan_plan_interval;
+}
+
+uint32_t
+ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return cfg_default(CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
+	}
+
+	return scan_obj->pno_cfg.max_sched_scan_plan_iterations;
+}
+
 #endif

@@ -1281,18 +1281,14 @@ struct pno_scan_req_params {
 
 /**
  * struct scan_user_cfg - user configuration required for for scan
- * @scan_cache_aging_time: default scan cache aging time
  * @is_snr_monitoring_enabled: whether snr monitoring enabled or not
  * @ie_whitelist: probe req IE whitelist attrs
- * @enable_mac_spoofing: enable mac address spoof in scan
  * @sta_miracast_mcc_rest_time: sta miracast mcc rest time
  * @score_config: scoring logic configuration
  */
 struct scan_user_cfg {
-	uint32_t scan_cache_aging_time;
 	bool is_snr_monitoring_enabled;
 	struct probe_req_whitelist_attr ie_whitelist;
-	bool enable_mac_spoofing;
 	uint32_t sta_miracast_mcc_rest_time;
 	struct scoring_config score_config;
 };

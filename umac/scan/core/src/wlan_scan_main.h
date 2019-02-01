@@ -137,12 +137,6 @@ struct probe_time_dwell_time {
 #endif
 
 #define SCAN_TIMEOUT_GRACE_PERIOD 10
-/* scan age time in millisec */
-#ifdef QCA_WIFI_NAPIER_EMULATION
-#define SCAN_CACHE_AGING_TIME (90 * 1000)
-#else
-#define SCAN_CACHE_AGING_TIME (30 * 1000)
-#endif
 #define SCAN_MAX_BSS_PDEV 100
 #define SCAN_PRIORITY SCAN_PRIORITY_LOW
 
@@ -248,6 +242,8 @@ struct scan_vdev_obj {
  * @scan_support_enabled: PNO scan support enabled/disabled
  * @scan_timer_repeat_value: PNO scan timer repeat value
  * @slow_scan_multiplier: PNO slow scan timer multiplier
+ * @max_sched_scan_plan_interval: PNO scan interval
+ * @max_sched_scan_plan_iterations: PNO scan number of iterations
  * @scan_backoff_multiplier: Scan banckoff multiplier
  * @pno_wake_lock: pno wake lock
  * @pno_cb: callback to call on PNO completion
@@ -264,6 +260,8 @@ struct pno_def_config {
 	bool scan_support_enabled;
 	uint32_t scan_timer_repeat_value;
 	uint32_t slow_scan_multiplier;
+	uint32_t max_sched_scan_plan_interval;
+	uint32_t max_sched_scan_plan_iterations;
 	uint8_t scan_backoff_multiplier;
 	qdf_wake_lock_t pno_wake_lock;
 	struct cb_handler pno_cb;

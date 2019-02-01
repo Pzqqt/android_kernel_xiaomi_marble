@@ -856,6 +856,60 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"data inactivity time on bss channel")
 
+/*
+ * <ini>
+ * gEnableMacAddrSpoof - Enable mac address randomization feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable mac address randomization for scan.
+ *
+ * Supported Feature: SCAN
+ *
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_MAC_ADDR_SPOOFING CFG_INI_BOOL( \
+		"gEnableMacAddrSpoof", \
+		true, \
+		"Enable mac spoofing")
+
+/*
+ * <ini>
+ * gScanAgingTime - Set scan aging time
+ * @Min: 0
+ * @Max: 200
+ * @Default: 30
+ *
+ * This ini is used to set scan aging timeout value
+ * in secs. For example after 30 secs the bss results
+ * greater than 30secs age will be flushed.
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#ifdef QCA_WIFI_NAPIER_EMULATION
+#define CFG_SCAN_AGING_TIME_DEFAULT (90)
+#else
+#define CFG_SCAN_AGING_TIME_DEFAULT (30)
+#endif
+
+#define CFG_SCAN_AGING_TIME CFG_INI_UINT( \
+			"gScanAgingTime", \
+			0, \
+			200, \
+			CFG_SCAN_AGING_TIME_DEFAULT, \
+			CFG_VALUE_OR_DEFAULT, \
+			"scan aging time")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
@@ -885,5 +939,7 @@
 	CFG(CFG_MAWC_NLO_EXP_BACKOFF_RATIO) \
 	CFG(CFG_MAWC_NLO_INIT_SCAN_INTERVAL) \
 	CFG(CFG_MAWC_NLO_MAX_SCAN_INTERVAL) \
+	CFG(CFG_ENABLE_MAC_ADDR_SPOOFING) \
+	CFG(CFG_SCAN_AGING_TIME) \
 	CFG_SCAN_PNO
 #endif /* __CONFIG_SCAN_H */
