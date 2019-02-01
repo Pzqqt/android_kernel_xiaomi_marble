@@ -224,6 +224,22 @@ endif
 ifeq ($(CONFIG_WLAN_SYSFS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs.o
 endif
+
+###### OSIF_SYNC ########
+SYNC_DIR := os_if/sync
+SYNC_INC_DIR := $(SYNC_DIR)/inc
+SYNC_SRC_DIR := $(SYNC_DIR)/src
+
+SYNC_INC := \
+	-I$(WLAN_ROOT)/$(SYNC_INC_DIR) \
+	-I$(WLAN_ROOT)/$(SYNC_SRC_DIR) \
+
+SYNC_OBJS := \
+	$(SYNC_SRC_DIR)/osif_sync.o \
+	$(SYNC_SRC_DIR)/osif_driver_sync.o \
+	$(SYNC_SRC_DIR)/osif_psoc_sync.o \
+	$(SYNC_SRC_DIR)/osif_vdev_sync.o \
+
 ########### Driver Synchronization Core (DSC) ###########
 DSC_DIR := components/dsc
 DSC_INC_DIR := $(DSC_DIR)/inc
@@ -1682,6 +1698,7 @@ endif
 LINUX_INC :=	-Iinclude
 
 INCS :=		$(HDD_INC) \
+		$(SYNC_INC) \
 		$(DSC_INC) \
 		$(EPPING_INC) \
 		$(LINUX_INC) \
@@ -1782,6 +1799,7 @@ INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
 
 OBJS :=		$(HDD_OBJS) \
+		$(SYNC_OBJS) \
 		$(DSC_OBJS) \
 		$(MAC_OBJS) \
 		$(SAP_OBJS) \
