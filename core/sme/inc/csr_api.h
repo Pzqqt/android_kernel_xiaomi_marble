@@ -1186,7 +1186,6 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	tSirMacAddr bssId;      /* Self BSSID */
 	tSirMacAddr peerMacAddr;
 	uint16_t aid;
-	tSirMacAddr alternateBssId;
 	uint8_t alternateChannelId;
 	uint8_t wmmEnabledSta;  /* set to true if WMM enabled STA */
 	tSirRSNie rsnIE;        /* RSN IE received from peer */

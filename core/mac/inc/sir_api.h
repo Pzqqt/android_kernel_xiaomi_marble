@@ -1141,7 +1141,6 @@ typedef struct sSirSmeAssocCnf {
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
-	struct qdf_mac_addr alternate_bssid;
 	uint8_t alternateChannelId;
 } tSirSmeAssocCnf, *tpSirSmeAssocCnf;
 

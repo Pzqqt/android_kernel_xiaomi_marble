@@ -15501,9 +15501,7 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac, tpSirSmeAssocInd
 			     QDF_MAC_ADDR_SIZE);
 		/* aid */
 		pMsg->aid = pAssocInd->aid;
-		/* alternateBssId */
-		qdf_mem_copy(pMsg->alternate_bssid.bytes, pAssocInd->bssId,
-			     QDF_MAC_ADDR_SIZE);
+
 		/* alternateChannelId */
 		pMsg->alternateChannelId = 11;
 
@@ -15556,10 +15554,6 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 		pBuf = (uint8_t *)&pMsg->aid;
 		wTmp = pAssocInd->staId;
 		qdf_mem_copy(pBuf, &wTmp, sizeof(uint16_t));
-		/* alternateBssId */
-		pBuf = (uint8_t *)&pMsg->alternateBssId;
-		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
-			sizeof(tSirMacAddr));
 		/* alternateChannelId */
 		pBuf = (uint8_t *)&pMsg->alternateChannelId;
 		*pBuf = 11;
