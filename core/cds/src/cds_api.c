@@ -1781,9 +1781,11 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		return;
 	}
 
-	ret = pld_collect_rddm(qdf->dev);
-	if (ret < 0)
-		QDF_DEBUG_PANIC("Fail to collect FW ramdump %d", ret);
+	if (!in_interrupt() && !irqs_disabled()) {
+		ret = pld_collect_rddm(qdf->dev);
+		if (ret < 0)
+			QDF_DEBUG_PANIC("Fail to collect FW ramdump %d", ret);
+	}
 
 	/* if *wlan* recovery is disabled, crash here for debugging */
 	if (!cds_is_self_recovery_enabled()) {
