@@ -71,13 +71,9 @@ mlme_vdev_validate_basic_params_cb(struct vdev_mlme_obj *vdev_mlme,
 			 wlan_vdev_get_id(vdev));
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (wlan_util_pdev_vdevs_deschan_match(pdev, vdev, WLAN_MLME_SB_ID) !=
-						QDF_STATUS_SUCCESS) {
-		mlme_err("(vdev-id:%d) Channel is not matching with other vdev",
-			 wlan_vdev_get_id(vdev));
-		QDF_BUG(0);
-		return QDF_STATUS_E_FAILURE;
-	}
+
+	/* it checks the channels across pdev, notifies with prints */
+	wlan_util_pdev_vdevs_deschan_match(pdev, vdev, WLAN_MLME_SB_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
