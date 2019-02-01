@@ -54,10 +54,6 @@
 #define MAX_RECEPTION_TYPES 4
 
 #define MAX_TRANSMIT_TYPES	9
-#define SU_TX			0
-#define MUMIMO_TX		1
-#define MUOFDMA_TX		2
-#define MUMIMO_OFDMA_TX		3
 
 #define MAX_USER_POS		8
 #define MAX_MU_GROUP_ID		64

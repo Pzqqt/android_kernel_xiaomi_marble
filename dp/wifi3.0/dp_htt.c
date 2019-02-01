@@ -179,7 +179,8 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	if (soc->process_tx_status)
 		return;
 
-	if (ppdu->mu_group_id <= MAX_MU_GROUP_ID && ppdu->ppdu_type != SU_TX) {
+	if (ppdu->mu_group_id <= MAX_MU_GROUP_ID &&
+	    ppdu->ppdu_type != HTT_PPDU_STATS_PPDU_TYPE_SU) {
 		if (unlikely(!(ppdu->mu_group_id & (MAX_MU_GROUP_ID - 1))))
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				  "mu_group_id out of bound!!\n");
@@ -188,28 +189,28 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 				     (ppdu->user_pos + 1));
 	}
 
-	if (ppdu->ppdu_type == MUOFDMA_TX ||
-	    ppdu->ppdu_type == MUMIMO_OFDMA_TX) {
+	if (ppdu->ppdu_type == HTT_PPDU_STATS_PPDU_TYPE_MU_OFDMA ||
+	    ppdu->ppdu_type == HTT_PPDU_STATS_PPDU_TYPE_MU_MIMO_OFDMA) {
 		DP_STATS_UPD(peer, tx.ru_tones, ppdu->ru_tones);
 		DP_STATS_UPD(peer, tx.ru_start, ppdu->ru_start);
 		switch (ppdu->ru_tones) {
 		case RU_26:
-			DP_STATS_INC(peer, tx.ru_loc[0], 1);
+			DP_STATS_INC(peer, tx.ru_loc[0], num_msdu);
 		break;
 		case RU_52:
-			DP_STATS_INC(peer, tx.ru_loc[1], 1);
+			DP_STATS_INC(peer, tx.ru_loc[1], num_msdu);
 		break;
 		case RU_106:
-			DP_STATS_INC(peer, tx.ru_loc[2], 1);
+			DP_STATS_INC(peer, tx.ru_loc[2], num_msdu);
 		break;
 		case RU_242:
-			DP_STATS_INC(peer, tx.ru_loc[3], 1);
+			DP_STATS_INC(peer, tx.ru_loc[3], num_msdu);
 		break;
 		case RU_484:
-			DP_STATS_INC(peer, tx.ru_loc[4], 1);
+			DP_STATS_INC(peer, tx.ru_loc[4], num_msdu);
 		break;
 		case RU_996:
-			DP_STATS_INC(peer, tx.ru_loc[5], 1);
+			DP_STATS_INC(peer, tx.ru_loc[5], num_msdu);
 		break;
 		}
 	}
