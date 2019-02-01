@@ -10804,6 +10804,13 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		} else {
 			roam_info->fAuthRequired = true;
 		}
+		if (csr_akm_type == eCSR_AUTH_TYPE_OWE) {
+			roam_info->owe_pending_assoc_ind = qdf_mem_malloc(
+							    sizeof(*pAssocInd));
+			if (roam_info->owe_pending_assoc_ind)
+				qdf_mem_copy(roam_info->owe_pending_assoc_ind,
+					     pAssocInd, sizeof(*pAssocInd));
+		}
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 					roam_info, 0, eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_IND);
@@ -10833,18 +10840,20 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		}
 	}
 
-	/* Send Association completion message to PE */
-	status = csr_send_assoc_cnf_msg(mac_ctx, pAssocInd, status,
-					mac_status_code);
-	/*
-	 * send a message to CSR itself just to avoid the EAPOL frames going
-	 * OTA before association response
-	 */
-	if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile) &&
-	    roam_info->statusCode != eSIR_SME_ASSOC_REFUSED) {
-		roam_info->fReassocReq = pAssocInd->reassocReq;
-		status = csr_send_assoc_ind_to_upper_layer_cnf_msg(mac_ctx,
-						pAssocInd, status, sessionId);
+	if (csr_akm_type != eCSR_AUTH_TYPE_OWE) {
+		/* Send Association completion message to PE */
+		status = csr_send_assoc_cnf_msg(mac_ctx, pAssocInd, status,
+						mac_status_code);
+		/*
+		 * send a message to CSR itself just to avoid the EAPOL frames
+		 * going OTA before association response
+		 */
+		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile) &&
+		    roam_info->statusCode != eSIR_SME_ASSOC_REFUSED) {
+			roam_info->fReassocReq = pAssocInd->reassocReq;
+			status = csr_send_assoc_ind_to_upper_layer_cnf_msg(
+					mac_ctx, pAssocInd, status, sessionId);
+		}
 	}
 
 	qdf_mem_free(roam_info);

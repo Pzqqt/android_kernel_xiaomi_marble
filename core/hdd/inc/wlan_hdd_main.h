@@ -3640,4 +3640,29 @@ QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event);
  */
 void hdd_hidden_ssid_enable_roaming(hdd_handle_t hdd_handle, uint8_t vdev_id);
 
+/**
+ * hdd_send_update_owe_info_event - Send update OWE info event
+ * @adapter: Pointer to adapter
+ * @sta_addr: MAC address of peer STA
+ * @owe_ie: OWE IE
+ * @owe_ie_len: Length of OWE IE
+ *
+ * Send update OWE info event to hostapd
+ *
+ * Return: none
+ */
+#ifdef CFG80211_EXTERNAL_DH_UPDATE_SUPPORT
+void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
+				    uint8_t sta_addr[],
+				    uint8_t *owe_ie,
+				    uint32_t owe_ie_len);
+#else
+static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
+						  uint8_t sta_addr[],
+						  uint8_t *owe_ie,
+						  uint32_t owe_ie_len)
+{
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

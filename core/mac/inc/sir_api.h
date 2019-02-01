@@ -1120,6 +1120,16 @@ struct assoc_ind {
 	bool is_sae_authenticated;
 };
 
+/**
+ * struct owe_assoc_ind - owe association indication
+ * @node : List entry element
+ * @assoc_ind: pointer to assoc ind
+ */
+struct owe_assoc_ind {
+	qdf_list_node_t node;
+	struct assoc_ind *assoc_ind;
+};
+
 /* / Definition for Association confirm */
 /* / ---> MAC */
 struct assoc_cnf {

@@ -2440,6 +2440,16 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_debug("%s", maxAssocExceededEvent);
 		break;
 	case eSAP_STA_ASSOC_IND:
+		if (pSapEvent->sapevt.sapAssocIndication.owe_ie) {
+			hdd_send_update_owe_info_event(adapter,
+			      pSapEvent->sapevt.sapAssocIndication.staMac.bytes,
+			      pSapEvent->sapevt.sapAssocIndication.owe_ie,
+			      pSapEvent->sapevt.sapAssocIndication.owe_ie_len);
+			qdf_mem_free(
+				   pSapEvent->sapevt.sapAssocIndication.owe_ie);
+			pSapEvent->sapevt.sapAssocIndication.owe_ie = NULL;
+			pSapEvent->sapevt.sapAssocIndication.owe_ie_len = 0;
+		}
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_DISCONNECT_ALL_P2P_CLIENT:

@@ -242,6 +242,67 @@ struct sap_context *sap_create_ctx(void)
 	return sap_ctx;
 } /* sap_create_ctx */
 
+static QDF_STATUS wlansap_owe_init(struct sap_context *sap_ctx)
+{
+	qdf_list_create(&sap_ctx->owe_pending_assoc_ind_list, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void wlansap_owe_cleanup(struct sap_context *sap_ctx)
+{
+	struct mac_context *mac;
+	struct owe_assoc_ind *owe_assoc_ind;
+	struct assoc_ind *assoc_ind = NULL;
+	qdf_list_node_t *node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+
+	if (!sap_ctx) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid SAP context");
+		return;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
+		return;
+	}
+
+	if (QDF_STATUS_SUCCESS !=
+	    qdf_list_peek_front(&sap_ctx->owe_pending_assoc_ind_list,
+				&node)) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP,
+				"Failed to find assoc ind list");
+		return;
+	}
+
+	while (node) {
+		qdf_list_peek_next(&sap_ctx->owe_pending_assoc_ind_list,
+				   node, &next_node);
+		owe_assoc_ind = qdf_container_of(node, struct owe_assoc_ind,
+						 node);
+		status = qdf_list_remove_node(
+					   &sap_ctx->owe_pending_assoc_ind_list,
+					   node);
+		if (status == QDF_STATUS_SUCCESS) {
+			assoc_ind = owe_assoc_ind->assoc_ind;
+			qdf_mem_free(owe_assoc_ind);
+			/* TODO: disassoc OWE STA */
+			qdf_mem_free(assoc_ind);
+		} else {
+			QDF_TRACE_ERROR(QDF_MODULE_ID_SAP,
+					"Failed to remove assoc ind");
+		}
+		node = next_node;
+		next_node = NULL;
+	}
+}
+
+static void wlansap_owe_deinit(struct sap_context *sap_ctx)
+{
+	qdf_list_destroy(&sap_ctx->owe_pending_assoc_ind_list);
+}
+
 QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			 enum QDF_OPMODE mode,
 			 uint8_t *addr, uint32_t session_id, bool reinit)
@@ -294,6 +355,15 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			ucfg_scan_register_requester(mac->psoc, "SAP",
 					sap_scan_event_callback, sap_ctx);
 
+	if (!reinit) {
+		status = wlansap_owe_init(sap_ctx);
+		if (QDF_STATUS_SUCCESS != status) {
+			QDF_TRACE_ERROR(QDF_MODULE_ID_SAP,
+					"OWE init failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -310,6 +380,9 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
+
+	wlansap_owe_cleanup(sap_ctx);
+	wlansap_owe_deinit(sap_ctx);
 
 	mac = sap_get_mac_context();
 	if (!mac) {

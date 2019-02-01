@@ -1342,6 +1342,101 @@ static void sap_handle_acs_scan_event(struct sap_context *sap_context,
 }
 #endif
 
+#define DH_OUI_TYPE      "\x20"
+#define DH_OUI_TYPE_SIZE (1)
+/**
+ * sap_fill_owe_ie_in_assoc_ind() - Fill OWE IE in assoc indication
+ * Function to fill OWE IE in assoc indication
+ * @assoc_ind: SAP STA association indication
+ * @sme_assoc_ind: SME association indication
+ *
+ * This function is to get OWE IEs (RSN IE, DH IE etc) from assoc request
+ * and fill them in association indication.
+ *
+ * Return: true for success and false for failure
+ */
+static bool sap_fill_owe_ie_in_assoc_ind(tSap_StationAssocIndication *assoc_ind,
+					 struct assoc_ind *sme_assoc_ind)
+{
+	uint32_t owe_ie_len, rsn_ie_len, dh_ie_len;
+	const uint8_t *rsn_ie, *dh_ie;
+
+	rsn_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_RSN,
+					  assoc_ind->assocReqPtr,
+					  assoc_ind->assocReqLength);
+	if (!rsn_ie) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "RSN IE is not present");
+		return false;
+	}
+	rsn_ie_len = rsn_ie[1] + 2;
+	if (rsn_ie_len < DOT11F_IE_RSN_MIN_LEN ||
+	    rsn_ie_len > DOT11F_IE_RSN_MAX_LEN) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid RSN IE len %d",
+				rsn_ie_len);
+		return false;
+	}
+
+	dh_ie = wlan_get_ext_ie_ptr_from_ext_id(DH_OUI_TYPE, DH_OUI_TYPE_SIZE,
+					   assoc_ind->assocReqPtr,
+					   (uint16_t)assoc_ind->assocReqLength);
+	if (!dh_ie) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "DH IE is not present");
+		return false;
+	}
+	dh_ie_len = dh_ie[1] + 2;
+	if (dh_ie_len < DOT11F_IE_DH_PARAMETER_ELEMENT_MIN_LEN ||
+	    dh_ie_len > DOT11F_IE_DH_PARAMETER_ELEMENT_MAX_LEN) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid DH IE len %d",
+				dh_ie_len);
+		return false;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+		  FL("rsn_ie_len = %d, dh_ie_len = %d"), rsn_ie_len, dh_ie_len);
+
+	owe_ie_len = rsn_ie_len + dh_ie_len;
+	assoc_ind->owe_ie = qdf_mem_malloc(owe_ie_len);
+	if (!assoc_ind->owe_ie)
+		return false;
+
+	qdf_mem_copy(assoc_ind->owe_ie, rsn_ie, rsn_ie_len);
+	qdf_mem_copy(assoc_ind->owe_ie + rsn_ie_len, dh_ie, dh_ie_len);
+	assoc_ind->owe_ie_len = owe_ie_len;
+
+	return true;
+}
+
+/**
+ * sap_save_owe_pending_assoc_ind() - Save pending assoc indication
+ * Function to save pending assoc indication in SAP context
+ * @sap_ctx: SAP context
+ * @sme_assoc_ind: SME association indication
+ *
+ * This function is to save pending assoc indication in linked list
+ * in SAP context.
+ *
+ * Return: true for success and false for failure
+ */
+static bool sap_save_owe_pending_assoc_ind(struct sap_context *sap_ctx,
+				       struct assoc_ind *sme_assoc_ind)
+{
+	struct owe_assoc_ind *assoc_ind;
+	QDF_STATUS status;
+
+	assoc_ind = qdf_mem_malloc(sizeof(*assoc_ind));
+	if (!assoc_ind)
+		return false;
+	assoc_ind->assoc_ind = sme_assoc_ind;
+	status = qdf_list_insert_back(&sap_ctx->owe_pending_assoc_ind_list,
+				      &assoc_ind->node);
+	if (QDF_STATUS_SUCCESS != status) {
+		qdf_mem_free(assoc_ind);
+		return false;
+	}
+
+	return true;
+}
+
 /**
  * sap_signal_hdd_event() - send event notification
  * @sap_ctx: Sap Context
@@ -1413,6 +1508,29 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			assoc_ind->negotiatedMCEncryptionType =
 			    csr_roaminfo->u.pConnectedProfile->mcEncryptionType;
 			assoc_ind->fAuthRequired = csr_roaminfo->fAuthRequired;
+		}
+		if (csr_roaminfo->owe_pending_assoc_ind) {
+			if (!sap_fill_owe_ie_in_assoc_ind(assoc_ind,
+					 csr_roaminfo->owe_pending_assoc_ind)) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("Failed to fill OWE IE"));
+				qdf_mem_free(csr_roaminfo->
+					     owe_pending_assoc_ind);
+				csr_roaminfo->owe_pending_assoc_ind = NULL;
+				return QDF_STATUS_E_INVAL;
+			}
+			if (!sap_save_owe_pending_assoc_ind(sap_ctx,
+					 csr_roaminfo->owe_pending_assoc_ind)) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("Failed to save assoc ind"));
+				qdf_mem_free(csr_roaminfo->
+					     owe_pending_assoc_ind);
+				csr_roaminfo->owe_pending_assoc_ind = NULL;
+				return QDF_STATUS_E_INVAL;
+			}
+			csr_roaminfo->owe_pending_assoc_ind = NULL;
 		}
 		break;
 	case eSAP_START_BSS_EVENT:
