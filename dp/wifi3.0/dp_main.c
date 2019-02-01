@@ -4720,7 +4720,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 		goto free_vdev;
 
 	if (wlan_op_mode_sta == vdev->opmode)
-		dp_peer_delete_wifi3(vdev->vap_bss_peer, 0);
+		dp_peer_delete_wifi3(vdev->vap_self_peer, 0);
 
 	/*
 	 * If Target is hung, flush all peers before detaching vdev
@@ -5023,11 +5023,20 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
-	if (memcmp(peer->mac_addr.raw, vdev->mac_addr.raw, 6) == 0) {
+	if (qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
+			QDF_MAC_ADDR_SIZE) == 0 &&
+			(wlan_op_mode_sta != vdev->opmode)) {
 		dp_info("vdev bss_peer!!");
 		peer->bss_peer = 1;
 		vdev->vap_bss_peer = peer;
 	}
+
+	if (wlan_op_mode_sta == vdev->opmode &&
+	    qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
+			QDF_MAC_ADDR_SIZE) == 0) {
+		vdev->vap_self_peer = peer;
+	}
+
 	for (i = 0; i < DP_MAX_TIDS; i++)
 		qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 

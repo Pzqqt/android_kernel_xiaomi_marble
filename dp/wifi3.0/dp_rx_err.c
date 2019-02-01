@@ -805,13 +805,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		qdf_nbuf_set_next(nbuf, NULL);
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
-		if (qdf_unlikely(peer->bss_peer)) {
-			dp_info_rl("received pkt with same src MAC");
-			DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
-					 qdf_nbuf_len(nbuf));
-			goto drop_nbuf;
-		}
-
 		if (vdev->osif_rx) {
 			qdf_nbuf_set_next(nbuf, NULL);
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,

@@ -1446,13 +1446,11 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 					   hw_peer_id, vdev_id);
 
 		if (peer) {
-			/*
-			 * For every peer Map message search and set if bss_peer
-			 */
-			if (!(qdf_mem_cmp(peer->mac_addr.raw,
-					  peer->vdev->mac_addr.raw,
-					  QDF_MAC_ADDR_SIZE))) {
-				dp_info("vdev bss_peer!!!!");
+			if (wlan_op_mode_sta == peer->vdev->opmode &&
+			    qdf_mem_cmp(peer->mac_addr.raw,
+					peer->vdev->mac_addr.raw,
+					QDF_MAC_ADDR_SIZE) != 0) {
+				dp_info("STA vdev bss_peer!!!!");
 				peer->bss_peer = 1;
 				peer->vdev->vap_bss_peer = peer;
 			}
@@ -2186,7 +2184,7 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
 		qdf_spin_lock_bh(&rx_tid->tid_lock);
-		if (!peer->bss_peer) {
+		if (!peer->bss_peer && peer->vdev->opmode != wlan_op_mode_sta) {
 			/* Cleanup defrag related resource */
 			dp_rx_defrag_waitlist_remove(peer, tid);
 			dp_rx_reorder_flush_frag(peer, tid);

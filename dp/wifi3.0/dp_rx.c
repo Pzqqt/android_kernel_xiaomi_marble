@@ -2088,21 +2088,6 @@ done:
 			continue;
 		}
 
-		if (qdf_unlikely(peer && peer->bss_peer)) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_ERROR,
-				FL("received pkt with same src MAC"));
-			tid_stats->fail_cnt[MEC_DROP]++;
-			DP_STATS_INC_PKT(peer, rx.mec_drop, 1, msdu_len);
-
-			/* Drop & free packet */
-			qdf_nbuf_free(nbuf);
-			/* Statistics */
-			nbuf = next;
-			dp_peer_unref_del_find_by_id(peer);
-			continue;
-		}
-
 		if (qdf_unlikely(peer && (peer->nawds_enabled) &&
 				 (qdf_nbuf_is_da_mcbc(nbuf)) &&
 				 (hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) ==

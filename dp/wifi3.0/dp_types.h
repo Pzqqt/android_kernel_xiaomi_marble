@@ -1768,6 +1768,8 @@ struct dp_vdev {
 
 	/* TIDmap priority */
 	uint8_t tidmap_prty;
+	/* Self Peer in STA mode */
+	struct dp_peer *vap_self_peer;
 };
 
 
