@@ -217,7 +217,7 @@ typedef struct sLimMlmAssocInd {
 	tSirMacCapabilityInfo capabilityInfo;
 	bool spectrumMgtIndicator;
 	struct power_cap_info powerCap;
-	tSirSupChnl supportedChannels;
+	struct supported_channels supportedChannels;
 	uint8_t sessionId;
 
 	bool WmmStaInfoPresent;

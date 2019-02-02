@@ -454,10 +454,10 @@ struct power_cap_info {
 };
 
 /* / Supported Channel info used in 11H */
-typedef struct sSirSupChnl {
+struct supported_channels {
 	uint8_t numChnl;
 	uint8_t channelList[SIR_MAX_SUPPORTED_CHANNEL_LIST];
-} tSirSupChnl, *tpSirSupChnl;
+};
 
 typedef enum eSirNwType {
 	eSIR_11A_NW_TYPE,
@@ -979,7 +979,7 @@ typedef struct sSirSmeJoinReq {
 	struct rrm_config_param rrm_config;
 	bool spectrumMgtIndicator;
 	struct power_cap_info powerCap;
-	tSirSupChnl supportedChannels;
+	struct supported_channels supportedChannels;
 	bool enable_bcast_probe_rsp;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct cds_fils_connection_info fils_con_info;
@@ -1099,7 +1099,7 @@ typedef struct sSirSmeAssocInd {
 	/* spectrumMgtIndicator flag is set */
 	bool spectrumMgtIndicator;
 	struct power_cap_info powerCap;
-	tSirSupChnl supportedChannels;
+	struct supported_channels supportedChannels;
 	bool wmmEnabledSta; /* if present - STA is WMM enabled */
 	bool reassocReq;
 	/* Required for indicating the frames to upper layer */
