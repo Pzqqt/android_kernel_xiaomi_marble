@@ -1310,7 +1310,7 @@ void pe_deregister_mgmt_rx_frm_callback(struct mac_context *mac_ctx)
  * (function documentation in lim_api.h)
  */
 void pe_register_callbacks_with_wma(struct mac_context *mac,
-				    tSirSmeReadyReq *ready_req)
+				    struct sme_ready_req *ready_req)
 {
 	QDF_STATUS status;
 

@@ -449,10 +449,11 @@ __lim_is_defered_msg_for_radar(struct mac_context *mac_ctx,
  *         false-Posting to HAL successful, so HAL will consume the buffer.
  */
 
-static bool __lim_process_sme_sys_ready_ind(struct mac_context *mac, uint32_t *pMsgBuf)
+static bool __lim_process_sme_sys_ready_ind(struct mac_context *mac,
+					    uint32_t *pMsgBuf)
 {
 	struct scheduler_msg msg = {0};
-	tSirSmeReadyReq *ready_req = (tSirSmeReadyReq *) pMsgBuf;
+	struct sme_ready_req *ready_req = (struct sme_ready_req *) pMsgBuf;
 
 	msg.type = WMA_SYS_READY_IND;
 	msg.reserved = 0;

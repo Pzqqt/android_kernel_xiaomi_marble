@@ -1104,7 +1104,7 @@ static void sme_process_ready_to_ext_wow(struct mac_context *mac,
  */
 QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle)
 {
-	tSirSmeReadyReq *msg;
+	struct sme_ready_req *msg;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 

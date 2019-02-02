@@ -366,7 +366,7 @@ typedef struct sSirSmeRsp {
 } tSirSmeRsp, *tpSirSmeRsp;
 
 /* / Definition for indicating all modules ready on STA */
-typedef struct sSirSmeReadyReq {
+struct sme_ready_req {
 	uint16_t messageType;   /* eWNI_SME_SYS_READY_IND */
 	uint16_t length;
 	uint16_t transactionId;
@@ -375,7 +375,7 @@ typedef struct sSirSmeReadyReq {
 	void *stop_roaming_cb;
 	QDF_STATUS (*sme_msg_cb)(struct mac_context *mac,
 				 struct scheduler_msg *msg);
-} tSirSmeReadyReq, *tpSirSmeReadyReq;
+};
 
 /**
  * struct s_sir_set_hw_mode - Set HW mode request
