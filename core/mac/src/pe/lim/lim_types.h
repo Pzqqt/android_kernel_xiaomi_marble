@@ -216,7 +216,7 @@ typedef struct sLimMlmAssocInd {
 	tSirAddie addIE;        /* additional IE received from the peer, which possibly includes WSC IE and/or P2P IE. */
 	tSirMacCapabilityInfo capabilityInfo;
 	bool spectrumMgtIndicator;
-	tSirMacPowerCapInfo powerCap;
+	struct power_cap_info powerCap;
 	tSirSupChnl supportedChannels;
 	uint8_t sessionId;
 

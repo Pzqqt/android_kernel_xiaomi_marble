@@ -448,10 +448,10 @@ typedef enum eSirBssType {
 } tSirBssType;
 
 /* / Power Capability info used in 11H */
-typedef struct sSirMacPowerCapInfo {
+struct power_cap_info {
 	uint8_t minTxPower;
 	uint8_t maxTxPower;
-} tSirMacPowerCapInfo, *tpSirMacPowerCapInfo;
+};
 
 /* / Supported Channel info used in 11H */
 typedef struct sSirSupChnl {
@@ -978,7 +978,7 @@ typedef struct sSirSmeJoinReq {
 	bool isOSENConnection;
 	struct rrm_config_param rrm_config;
 	bool spectrumMgtIndicator;
-	tSirMacPowerCapInfo powerCap;
+	struct power_cap_info powerCap;
 	tSirSupChnl supportedChannels;
 	bool enable_bcast_probe_rsp;
 #ifdef WLAN_FEATURE_FILS_SK
@@ -1098,7 +1098,7 @@ typedef struct sSirSmeAssocInd {
 	/* powerCap & supportedChannels are present only when */
 	/* spectrumMgtIndicator flag is set */
 	bool spectrumMgtIndicator;
-	tSirMacPowerCapInfo powerCap;
+	struct power_cap_info powerCap;
 	tSirSupChnl supportedChannels;
 	bool wmmEnabledSta; /* if present - STA is WMM enabled */
 	bool reassocReq;
