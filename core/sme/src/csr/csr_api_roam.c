@@ -14961,10 +14961,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 					       pBssDescription->channelId,
 					       mac->mlme_cfg->ht_caps.
 					       ht_cap_info.adv_coding_cap);
-		qdf_mem_copy(&csr_join_req->htConfig,
-				&pSession->htConfig, sizeof(tSirHTConfig));
-		qdf_mem_copy(&csr_join_req->vht_config, &pSession->vht_config,
-				sizeof(pSession->vht_config));
+		csr_join_req->htConfig = pSession->htConfig;
+		csr_join_req->vht_config = pSession->vht_config;
 		sme_debug("ht capability 0x%x VHT capability 0x%x",
 			(unsigned int)(*(uint32_t *) &csr_join_req->htConfig),
 			(unsigned int)(*(uint32_t *) &csr_join_req->
@@ -15794,12 +15792,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 				       mac->mlme_cfg->ht_caps.
 				       ht_cap_info.adv_coding_cap);
 
-	qdf_mem_copy(&pMsg->vht_config,
-		     &pSession->vht_config,
-		     sizeof(pSession->vht_config));
-	qdf_mem_copy(&pMsg->htConfig,
-		     &pSession->htConfig,
-		     sizeof(tSirHTConfig));
+	pMsg->vht_config = pSession->vht_config;
+	pMsg->htConfig = pSession->htConfig;
 
 	value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
 	pMsg->vht_config.su_beam_formee =

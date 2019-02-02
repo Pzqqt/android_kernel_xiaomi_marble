@@ -656,7 +656,7 @@ struct csr_roam_session {
 	tCsrEseCckmIe suppCckmIeInfo;
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
-	tSirHTConfig htConfig;
+	struct ht_config htConfig;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
