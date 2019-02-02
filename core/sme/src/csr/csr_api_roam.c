@@ -14058,12 +14058,12 @@ static QDF_STATUS csr_set_ldpc_exception(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (usr_cfg_rx_ldpc && wma_is_rx_ldpc_supported_for_channel(channel)) {
-		session->htConfig.ht_rx_ldpc = 1;
+		session->ht_config.ht_rx_ldpc = 1;
 		session->vht_config.ldpc_coding = 1;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LDPC enable for chnl[%d]", channel);
 	} else {
-		session->htConfig.ht_rx_ldpc = 0;
+		session->ht_config.ht_rx_ldpc = 0;
 		session->vht_config.ldpc_coding = 0;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LDPC disable for chnl[%d]", channel);
@@ -14961,10 +14961,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 					       pBssDescription->channelId,
 					       mac->mlme_cfg->ht_caps.
 					       ht_cap_info.adv_coding_cap);
-		csr_join_req->htConfig = pSession->htConfig;
+		csr_join_req->ht_config = pSession->ht_config;
 		csr_join_req->vht_config = pSession->vht_config;
 		sme_debug("ht capability 0x%x VHT capability 0x%x",
-			(unsigned int)(*(uint32_t *) &csr_join_req->htConfig),
+			(unsigned int)(*(uint32_t *) &csr_join_req->ht_config),
 			(unsigned int)(*(uint32_t *) &csr_join_req->
 			vht_config));
 
@@ -15793,7 +15793,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 				       ht_cap_info.adv_coding_cap);
 
 	pMsg->vht_config = pSession->vht_config;
-	pMsg->htConfig = pSession->htConfig;
+	pMsg->ht_config = pSession->ht_config;
 
 	value = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
 	pMsg->vht_config.su_beam_formee =
@@ -15804,8 +15804,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->vht_config.mu_beam_formee = 0;
 
 	sme_debug("ht capability 0x%x VHT capability 0x%x",
-			 (uint32_t)(*(uint32_t *) &pMsg->htConfig),
-			 (uint32_t)(*(uint32_t *) &pMsg->vht_config));
+		  (*(uint32_t *) &pMsg->ht_config),
+		  (*(uint32_t *) &pMsg->vht_config));
 #ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;
@@ -16177,11 +16177,11 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	}
 
 	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
-	session->htConfig.ht_rx_ldpc = ht_cap_info->adv_coding_cap;
-	session->htConfig.ht_tx_stbc = ht_cap_info->tx_stbc;
-	session->htConfig.ht_rx_stbc = ht_cap_info->rx_stbc;
-	session->htConfig.ht_sgi20 = ht_cap_info->short_gi_20_mhz;
-	session->htConfig.ht_sgi40 = ht_cap_info->short_gi_40_mhz;
+	session->ht_config.ht_rx_ldpc = ht_cap_info->adv_coding_cap;
+	session->ht_config.ht_tx_stbc = ht_cap_info->tx_stbc;
+	session->ht_config.ht_rx_stbc = ht_cap_info->rx_stbc;
+	session->ht_config.ht_sgi20 = ht_cap_info->short_gi_20_mhz;
+	session->ht_config.ht_sgi40 = ht_cap_info->short_gi_40_mhz;
 
 	session->vht_config.max_mpdu_len = vht_cap_info->ampdu_len;
 	session->vht_config.supported_channel_widthset =

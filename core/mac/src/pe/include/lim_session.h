@@ -377,7 +377,7 @@ struct pe_session {
 	uint8_t max_amsdu_num;
 	uint8_t isCoalesingInIBSSAllowed;
 
-	struct ht_config htConfig;
+	struct ht_config ht_config;
 	struct sir_vht_config vht_config;
 	/*
 	 * Place holder for StartBssReq message

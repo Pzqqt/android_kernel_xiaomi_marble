@@ -466,9 +466,7 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 			pe_err("Invalid bss type");
 
 		ft_session->limPrevSmeState = ft_session->limSmeState;
-		qdf_mem_copy(&(ft_session->htConfig),
-			     &(pe_session->htConfig),
-			     sizeof(pe_session->htConfig));
+		ft_session->ht_config = pe_session->ht_config;
 		ft_session->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 
 		if (IS_5G_CH(pe_session->ftPEContext.pFTPreAuthReq->

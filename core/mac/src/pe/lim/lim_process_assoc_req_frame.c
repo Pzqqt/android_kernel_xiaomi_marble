@@ -1470,7 +1470,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		/* assoc_req will be copied to session->parsedAssocReq later */
 		ht_cap_ie = ((uint8_t *) &assoc_req->HTCaps) + 1;
 
-		if (session->htConfig.ht_sgi20) {
+		if (session->ht_config.ht_sgi20) {
 			sta_ds->htShortGI20Mhz =
 				(uint8_t)assoc_req->HTCaps.shortGI20MHz;
 		} else {
@@ -1479,7 +1479,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			sta_ds->htShortGI20Mhz = 0;
 		}
 
-		if (session->htConfig.ht_sgi40) {
+		if (session->ht_config.ht_sgi40) {
 			sta_ds->htShortGI40Mhz =
 				(uint8_t)assoc_req->HTCaps.shortGI40MHz;
 		} else {

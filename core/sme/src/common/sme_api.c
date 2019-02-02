@@ -8006,15 +8006,15 @@ int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t session_id,
 	}
 	switch (ht_capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		return pSession->htConfig.ht_rx_ldpc;
+		return pSession->ht_config.ht_rx_ldpc;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		return pSession->htConfig.ht_tx_stbc;
+		return pSession->ht_config.ht_tx_stbc;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		return pSession->htConfig.ht_rx_stbc;
+		return pSession->ht_config.ht_rx_stbc;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
-		return pSession->htConfig.ht_sgi20;
+		return pSession->ht_config.ht_sgi20;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		return pSession->htConfig.ht_sgi40;
+		return pSession->ht_config.ht_sgi40;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "invalid ht capability");
@@ -8042,21 +8042,21 @@ int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
 
 	switch (htCapab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		pSession->htConfig.ht_rx_ldpc = value;
+		pSession->ht_config.ht_rx_ldpc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		pSession->htConfig.ht_tx_stbc = value;
+		pSession->ht_config.ht_tx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		pSession->htConfig.ht_rx_stbc = value;
+		pSession->ht_config.ht_rx_stbc = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
 		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
-		pSession->htConfig.ht_sgi20 = value;
+		pSession->ht_config.ht_sgi20 = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
 		value = value ? 1 : 0; /* HT SGI can be only 1 or 0 */
-		pSession->htConfig.ht_sgi40 = value;
+		pSession->ht_config.ht_sgi40 = value;
 		break;
 	}
 
@@ -10991,7 +10991,7 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			if (CSR_IS_SESSION_VALID(mac_ctx, i)) {
 				csr_session = &mac_ctx->roam.roamSession[i];
-				csr_session->htConfig.ht_tx_stbc =
+				csr_session->ht_config.ht_tx_stbc =
 					ht_cap_info->tx_stbc;
 			}
 		}

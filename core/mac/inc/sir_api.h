@@ -597,7 +597,7 @@ typedef struct sSirSmeStartBssReq {
 	tSirNwType nwType;      /* Indicates 11a/b/g */
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
-	struct ht_config htConfig;
+	struct ht_config ht_config;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
@@ -954,7 +954,7 @@ typedef struct sSirSmeJoinReq {
 	bool isFastRoamIniFeatureEnabled;
 
 	uint8_t txLdpcIniFeatureEnabled;
-	struct ht_config htConfig;
+	struct ht_config ht_config;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;

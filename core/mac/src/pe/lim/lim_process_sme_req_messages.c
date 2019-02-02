@@ -671,16 +671,9 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		}
 		/* Store the session related params in newly created session */
 		session->pLimStartBssReq = sme_start_bss_req;
-
 		session->transactionId = sme_start_bss_req->transactionId;
-
-		qdf_mem_copy(&(session->htConfig),
-			     &(sme_start_bss_req->htConfig),
-			     sizeof(session->htConfig));
-
-		qdf_mem_copy(&(session->vht_config),
-			     &(sme_start_bss_req->vht_config),
-			     sizeof(session->vht_config));
+		session->ht_config = sme_start_bss_req->ht_config;
+		session->vht_config = sme_start_bss_req->vht_config;
 
 		sir_copy_mac_addr(session->selfMacAddr,
 				  sme_start_bss_req->self_macaddr.bytes);
@@ -1383,12 +1376,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		session->beaconParams.beaconInterval =
 			bss_desc->beaconInterval;
 
-		qdf_mem_copy(&(session->htConfig), &(sme_join_req->htConfig),
-			sizeof(session->htConfig));
-
-		qdf_mem_copy(&(session->vht_config),
-			&(sme_join_req->vht_config),
-			sizeof(session->vht_config));
+		session->ht_config = sme_join_req->ht_config;
+		session->vht_config = sme_join_req->vht_config;
 
 		/* Copying of bssId is already done, while creating session */
 		sir_copy_mac_addr(session->selfMacAddr,
@@ -3772,19 +3761,19 @@ static void lim_process_sme_update_config(struct mac_context *mac_ctx,
 
 	switch (msg->capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		pe_session->htConfig.ht_rx_ldpc = msg->value;
+		pe_session->ht_config.ht_rx_ldpc = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		pe_session->htConfig.ht_tx_stbc = msg->value;
+		pe_session->ht_config.ht_tx_stbc = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		pe_session->htConfig.ht_rx_stbc = msg->value;
+		pe_session->ht_config.ht_rx_stbc = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ:
-		pe_session->htConfig.ht_sgi20 = msg->value;
+		pe_session->ht_config.ht_sgi20 = msg->value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
-		pe_session->htConfig.ht_sgi40 = msg->value;
+		pe_session->ht_config.ht_sgi40 = msg->value;
 		break;
 	}
 
