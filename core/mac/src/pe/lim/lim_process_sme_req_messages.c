@@ -4271,7 +4271,8 @@ static void __lim_process_sme_register_mgmt_frame_req(struct mac_context *mac_ct
 		uint32_t *msg_buf)
 {
 	QDF_STATUS qdf_status;
-	tpSirRegisterMgmtFrame sme_req = (tpSirRegisterMgmtFrame)msg_buf;
+	struct register_mgmt_frame *sme_req =
+					(struct register_mgmt_frame *)msg_buf;
 	struct mgmt_frm_reg_info *lim_mgmt_regn = NULL;
 	struct mgmt_frm_reg_info *next = NULL;
 	bool match = false;

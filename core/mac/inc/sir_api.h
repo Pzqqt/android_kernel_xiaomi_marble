@@ -344,7 +344,7 @@ struct supported_rates {
 #endif
 };
 
-typedef struct sSirRegisterMgmtFrame {
+struct register_mgmt_frame {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;
@@ -352,7 +352,7 @@ typedef struct sSirRegisterMgmtFrame {
 	uint16_t frameType;
 	uint16_t matchLen;
 	uint8_t matchData[1];
-} tSirRegisterMgmtFrame, *tpSirRegisterMgmtFrame;
+};
 
 /* / Generic type for sending a response message */
 /* / with result code to host software */

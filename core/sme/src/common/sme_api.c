@@ -4629,7 +4629,7 @@ QDF_STATUS sme_register_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		tSirRegisterMgmtFrame *pMsg;
+		struct register_mgmt_frame *pMsg;
 		uint16_t len;
 		struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
 							sessionId);
@@ -4648,7 +4648,7 @@ QDF_STATUS sme_register_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		len = sizeof(tSirRegisterMgmtFrame) + matchLen;
+		len = sizeof(*pMsg) + matchLen;
 
 		pMsg = qdf_mem_malloc(len);
 		if (NULL == pMsg)
@@ -4690,7 +4690,7 @@ QDF_STATUS sme_deregister_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 			 0));
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		tSirRegisterMgmtFrame *pMsg;
+		struct register_mgmt_frame *pMsg;
 		uint16_t len;
 		struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
 							sessionId);
@@ -4709,7 +4709,7 @@ QDF_STATUS sme_deregister_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		len = sizeof(tSirRegisterMgmtFrame) + matchLen;
+		len = sizeof(*pMsg) + matchLen;
 
 		pMsg = qdf_mem_malloc(len);
 		if (NULL == pMsg)
