@@ -7455,7 +7455,7 @@ static QDF_STATUS lim_populate_he_mcs_per_bw(struct mac_context *mac_ctx,
 }
 
 QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
-				   tpSirSupportedRates rates,
+				   struct supported_rates *rates,
 				   tDot11fIEhe_cap *peer_he_caps,
 				   struct pe_session *session_entry, uint8_t nss)
 {

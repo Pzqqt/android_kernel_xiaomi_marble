@@ -1320,22 +1320,11 @@ lim_decide_short_slot(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	}
 }
 
-/**
- * lim_populate_vht_mcs_set - function to populate vht mcs rate set
- * @mac_ctx: pointer to global mac structure
- * @rates: pointer to supported rate set
- * @peer_vht_caps: pointer to peer vht capabilities
- * @session_entry: pe session entry
- *
- * Populates vht mcs rate set based on peer and self capabilities
- *
- * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
- */
 QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
-				       tpSirSupportedRates rates,
-				       tDot11fIEVHTCaps *peer_vht_caps,
-				       struct pe_session *session_entry,
-				       uint8_t nss)
+				    struct supported_rates *rates,
+				    tDot11fIEVHTCaps *peer_vht_caps,
+				    struct pe_session *session_entry,
+				    uint8_t nss)
 {
 	uint32_t self_sta_dot11mode = 0;
 	uint16_t mcs_map_mask = MCSMAPMASK1x1;
@@ -1454,34 +1443,13 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_populate_own_rate_set() - comprises the basic and extended rates read
- *                                from CFG
- * @mac_ctx: pointer to global mac structure
- * @rates: pointer to supported rates
- * @supported_mcs_set: pointer to supported mcs rates
- * @basic_only: update only basic rates if set true
- * @session_entry: pe session entry
- * @vht_caps: pointer to vht capability
- *
- * This function is called by limProcessAssocRsp() or
- * lim_add_staInIBSS()
- * - It creates a combined rate set of 12 rates max which
- *   comprises the basic and extended rates read from CFG
- * - It sorts the combined rate Set and copy it in the
- *   rate array of the pSTA descriptor
- * - It sets the erpEnabled bit of the STA descriptor
- * ERP bit is set iff the dph PHY mode is 11G and there is at least
- * an A rate in the supported or extended rate sets
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
- */
-QDF_STATUS
-lim_populate_own_rate_set(struct mac_context *mac_ctx,
-		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
-		uint8_t basic_only, struct pe_session *session_entry,
-		struct sDot11fIEVHTCaps *vht_caps,
-		struct sDot11fIEhe_cap *he_caps)
+QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
+				     struct supported_rates *rates,
+				     uint8_t *supported_mcs_set,
+				     uint8_t basic_only,
+				     struct pe_session *session_entry,
+				     struct sDot11fIEVHTCaps *vht_caps,
+				     struct sDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1543,7 +1511,7 @@ lim_populate_own_rate_set(struct mac_context *mac_ctx,
 	 * put the result in pSupportedRates
 	 */
 
-	qdf_mem_zero((uint8_t *) rates, sizeof(tSirSupportedRates));
+	qdf_mem_zero(rates, sizeof(*rates));
 	for (i = 0; i < temp_rate_set.numRates; i++) {
 		min = 0;
 		val = 0xff;
@@ -1616,21 +1584,25 @@ lim_populate_own_rate_set(struct mac_context *mac_ctx,
  *
  * Return: None
  */
-static void lim_calculate_he_nss(tpSirSupportedRates rates, struct pe_session *session)
+static void lim_calculate_he_nss(struct supported_rates *rates,
+				 struct pe_session *session)
 {
 	HE_GET_NSS(rates->rx_he_mcs_map_lt_80, session->nss);
 }
 #else
-static void lim_calculate_he_nss(tpSirSupportedRates rates, struct pe_session *session)
+static void lim_calculate_he_nss(struct supported_rates *rates,
+				 struct pe_session *session)
 {
 }
 #endif
 
-QDF_STATUS
-lim_populate_peer_rate_set(struct mac_context *mac,
-		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
-		uint8_t basicOnly, struct pe_session *pe_session,
-		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEhe_cap *he_caps)
+QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
+				      struct supported_rates *pRates,
+				      uint8_t *pSupportedMCSSet,
+				      uint8_t basicOnly,
+				      struct pe_session *pe_session,
+				      tDot11fIEVHTCaps *pVHTCaps,
+				      tDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet tempRateSet;
 	tSirMacRateSet tempRateSet2;
@@ -1684,7 +1656,7 @@ lim_populate_peer_rate_set(struct mac_context *mac,
 		uint8_t aRateIndex = 0;
 		uint8_t bRateIndex = 0;
 
-		qdf_mem_zero((uint8_t *) pRates, sizeof(tSirSupportedRates));
+		qdf_mem_zero(pRates, sizeof(*pRates));
 		for (i = 0; i < tempRateSet.numRates; i++) {
 			min = 0;
 			val = 0xff;
@@ -1824,7 +1796,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	uint32_t i, j, val, min, is_arate;
 	uint32_t phy_mode;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET];
-	tpSirSupportedRates rates;
+	struct supported_rates *rates;
 	uint8_t a_rate_index = 0;
 	uint8_t b_rate_index = 0;
 	qdf_size_t val_len;
@@ -1943,7 +1915,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	}
 
 	rates = &sta_ds->supportedRates;
-	qdf_mem_zero((uint8_t *) rates, sizeof(tSirSupportedRates));
+	qdf_mem_zero(rates, sizeof(*rates));
 	for (i = 0; (i < temp_rate_set2.numRates &&
 			 i < SIR_MAC_RATESET_EID_MAX); i++) {
 		for (j = 0; (j < temp_rate_set.numRates &&
@@ -2155,9 +2127,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 		     sizeof(add_sta_params->capab_info));
 
 	/* Copy legacy rates */
-	qdf_mem_copy((uint8_t *) &add_sta_params->supportedRates,
-		     (uint8_t *) &sta_ds->supportedRates,
-		     sizeof(tSirSupportedRates));
+	qdf_mem_copy(&add_sta_params->supportedRates,
+		     &sta_ds->supportedRates,
+		     sizeof(sta_ds->supportedRates));
 
 	add_sta_params->assocId = sta_ds->assocId;
 
@@ -3950,10 +3922,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	sta = dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				&pe_session->dph.dphHashTable);
 	if (sta != NULL) {
-		qdf_mem_copy((uint8_t *) &pAddBssParams->staContext.
-				supportedRates,
-				(uint8_t *)&sta->supportedRates,
-				sizeof(tSirSupportedRates));
+		qdf_mem_copy(&pAddBssParams->staContext.supportedRates,
+			     &sta->supportedRates,
+			     sizeof(sta->supportedRates));
 	} else
 		pe_err("could not Update the supported rates");
 	pAddBssParams->staContext.encryptType = pe_session->encryptType;
@@ -4704,15 +4675,6 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/** -------------------------------------------------------------
-   \fn     lim_fill_rx_highest_supported_rate
-   \brief  Fills in the Rx Highest Supported Data Rate field from
- \       the 'supported MCS set' field in HT capability element.
-   \param  struct mac_context *   mac
-   \param  tpSirSupportedRates  pRates
-   \param  uint8_t*  pSupportedMCSSet
-   \return none
-   -------------------------------------------------------------*/
 void lim_fill_rx_highest_supported_rate(struct mac_context *mac,
 					uint16_t *rxHighestRate,
 					uint8_t *pSupportedMCSSet)

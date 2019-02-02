@@ -2225,7 +2225,8 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure.
  */
 static QDF_STATUS
-lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx, tpDphHashNode stads,
+lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
+				    tpDphHashNode stads,
 				    uint8_t *supp_rate_set,
 				    uint8_t supp_rates_len,
 				    uint8_t *supp_mcs_set,
@@ -2237,7 +2238,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx, tpDphHashNode s
 	tSirMacRateSet temp_rate_set2;
 	uint32_t phymode;
 	uint8_t mcsSet[SIZE_OF_SUPPORTED_MCS_SET];
-	tpSirSupportedRates rates;
+	struct supported_rates *rates;
 	uint8_t a_rateindex = 0;
 	uint8_t b_rateindex = 0;
 	uint8_t nss;
@@ -2328,7 +2329,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx, tpDphHashNode s
 	temp_rate_set.numRates = supp_rates_len;
 
 	rates = &stads->supportedRates;
-	qdf_mem_zero((uint8_t *) rates, sizeof(tSirSupportedRates));
+	qdf_mem_zero(rates, sizeof(*rates));
 
 	for (i = 0; i < temp_rate_set2.numRates; i++) {
 		for (j = 0; j < temp_rate_set.numRates; j++) {

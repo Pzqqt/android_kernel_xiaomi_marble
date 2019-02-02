@@ -57,20 +57,43 @@ void lim_reject_association(struct mac_context *, tSirMacAddr, uint8_t,
 			    enum eSirMacStatusCodes, struct pe_session *);
 
 QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
-					 tpSirSupportedRates pRates,
-					 uint8_t *pSupportedMCSSet,
-					 uint8_t basicOnly,
-					 struct pe_session *pe_session,
-					 tDot11fIEVHTCaps *pVHTCaps,
-					 tDot11fIEhe_cap *he_caps);
+				      struct supported_rates *pRates,
+				      uint8_t *pSupportedMCSSet,
+				      uint8_t basicOnly,
+				      struct pe_session *pe_session,
+				      tDot11fIEVHTCaps *pVHTCaps,
+				      tDot11fIEhe_cap *he_caps);
 
-QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac,
-					tpSirSupportedRates pRates,
-					uint8_t *pSupportedMCSSet,
-					uint8_t basicOnly,
-					struct pe_session *pe_session,
-					tDot11fIEVHTCaps *pVHTCaps,
-					tDot11fIEhe_cap *he_caps);
+/**
+ * lim_populate_own_rate_set() - comprises the basic and extended rates read
+ *                                from CFG
+ * @mac_ctx: pointer to global mac structure
+ * @rates: pointer to supported rates
+ * @supported_mcs_set: pointer to supported mcs rates
+ * @basic_only: update only basic rates if set true
+ * @session_entry: pe session entry
+ * @vht_caps: pointer to vht capability
+ * @he_caps: pointer to HE capability
+ *
+ * This function is called by limProcessAssocRsp() or
+ * lim_add_staInIBSS()
+ * - It creates a combined rate set of 12 rates max which
+ *   comprises the basic and extended rates read from CFG
+ * - It sorts the combined rate Set and copy it in the
+ *   rate array of the pSTA descriptor
+ * - It sets the erpEnabled bit of the STA descriptor
+ * ERP bit is set iff the dph PHY mode is 11G and there is at least
+ * an A rate in the supported or extended rate sets
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
+ */
+QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
+				     struct supported_rates *rates,
+				     uint8_t *supported_mcs_set,
+				     uint8_t basic_only,
+				     struct pe_session *session_entry,
+				     struct sDot11fIEVHTCaps *vht_caps,
+				     struct sDot11fIEhe_cap *he_caps);
 
 QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 					  tpDphHashNode sta_ds,
@@ -190,7 +213,18 @@ QDF_STATUS lim_is_dot11h_supported_channels_valid(struct mac_context *mac,
 QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 							tSirAssocReq *assoc,
 							struct pe_session *);
-/* API to fill in RX Highest Supported data Rate */
+/**
+ * lim_fill_rx_highest_supported_rate() - Fill highest rx rate
+ * @mac: Global MAC context
+ * @rxHighestRate: location to store the highest rate
+ * @pSupportedMCSSet: location of the 'supported MCS set' field in HT
+ *                    capability element
+ *
+ * Fills in the Rx Highest Supported Data Rate field from
+ * the 'supported MCS set' field in HT capability element.
+ *
+ * Return: void
+ */
 void lim_fill_rx_highest_supported_rate(struct mac_context *mac,
 					uint16_t *rxHighestRate,
 					uint8_t *pSupportedMCSSet);
@@ -211,10 +245,22 @@ static inline void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
 {}
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac,
-				       tpSirSupportedRates pRates,
-				       tDot11fIEVHTCaps *pPeerVHTCaps,
-				       struct pe_session *pe_session,
-				       uint8_t nss);
+/**
+ * lim_populate_vht_mcs_set - function to populate vht mcs rate set
+ * @mac_ctx: pointer to global mac structure
+ * @rates: pointer to supported rate set
+ * @peer_vht_caps: pointer to peer vht capabilities
+ * @session_entry: pe session entry
+ * @nss: number of spatial streams
+ *
+ * Populates vht mcs rate set based on peer and self capabilities
+ *
+ * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
+				    struct supported_rates *rates,
+				    tDot11fIEVHTCaps *peer_vht_caps,
+				    struct pe_session *session_entry,
+				    uint8_t nss);
 
 #endif /* __LIM_ASSOC_UTILS_H */

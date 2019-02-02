@@ -320,7 +320,7 @@ typedef struct sap_AssocMacAddr_s {
 	uint8_t ShortGI40Mhz;
 	uint8_t ShortGI20Mhz;
 	uint8_t Support40Mhz;
-	tSirSupportedRates supportedRates;
+	struct supported_rates supportedRates;
 } tSap_AssocMacAddr, *tpSap_AssocMacAddr;
 
 /*struct corresponding to SAP_ASSOC_STA_CALLBACK_EVENT */

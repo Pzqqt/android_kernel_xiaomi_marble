@@ -134,7 +134,7 @@ typedef struct sDphHashNode {
 	/*
 	 * All the legacy and airgo supported rates.
 	 */
-	tSirSupportedRates supportedRates;
+	struct supported_rates supportedRates;
 	/* MIMO Power Save */
 	tSirMacHTMIMOPowerSaveState htMIMOPSState;
 	uint8_t htGreenfield:1;

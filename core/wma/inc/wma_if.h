@@ -242,7 +242,7 @@ typedef struct {
 	uint8_t fDsssCckMode40Mhz;
 	uint8_t fShortGI40Mhz;
 	uint8_t fShortGI20Mhz;
-	tSirSupportedRates supportedRates;
+	struct supported_rates supportedRates;
 	/*
 	 * Following parameters are for returning status and station index from
 	 * HAL to PE via response message. HAL does not read them.

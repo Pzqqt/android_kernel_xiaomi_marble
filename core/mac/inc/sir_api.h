@@ -292,9 +292,10 @@ struct rrm_config_param {
 };
 
 /*
- * although in tSirSupportedRates each IE is 16bit but PE only passes IEs in 8
- * bits with MSB=1 for basic rates. change the mask for bit0-7 only so HAL gets
- * correct basic rates for setting response rates.
+ * although in struct supported_rates each IE is 16bit but PE only
+ * passes IEs in 8 bits with MSB=1 for basic rates. change the mask
+ * for bit0-7 only so HAL gets correct basic rates for setting
+ * response rates.
  */
 #define IERATE_BASICRATE_MASK     0x80
 #define IERATE_RATE_MASK          0x7f
@@ -302,7 +303,7 @@ struct rrm_config_param {
 
 const char *lim_bss_type_to_string(const uint16_t bss_type);
 /**
- * struct sSirSupportedRates - stores rates/MCS supported
+ * struct supported_rates - stores rates/MCS supported
  * @llbRates: 11b rates in unit of 500kbps
  * @llaRates: 11a rates in unit of 500kbps
  * @supportedMCSSet: supported basic MCS, 0-76 bits used, remaining reserved
@@ -324,7 +325,7 @@ const char *lim_bss_type_to_string(const uint16_t bss_type);
  * @he_tx_mcs: Indicates the Maximum MCS(HE) that can be transmitted for each
  *              number of spacial streams
  */
-typedef struct sSirSupportedRates {
+struct supported_rates {
 	uint16_t llbRates[SIR_NUM_11B_RATES];
 	uint16_t llaRates[SIR_NUM_11A_RATES];
 	uint8_t supportedMCSSet[SIR_MAC_MAX_SUPPORTED_MCS_SET];
@@ -341,7 +342,7 @@ typedef struct sSirSupportedRates {
 	uint16_t rx_he_mcs_map_80_80;
 	uint16_t tx_he_mcs_map_80_80;
 #endif
-} tSirSupportedRates, *tpSirSupportedRates;
+};
 
 typedef struct sSirRegisterMgmtFrame {
 	uint16_t messageType;

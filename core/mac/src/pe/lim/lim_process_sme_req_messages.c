@@ -2843,9 +2843,9 @@ static void lim_process_sme_get_assoc_sta_info(struct mac_context *mac_ctx,
 			assoc_sta_tmp->assocId = (uint8_t) sta_ds->assocId;
 			assoc_sta_tmp->staId = (uint8_t) sta_ds->staIndex;
 
-			qdf_mem_copy((uint8_t *)&assoc_sta_tmp->supportedRates,
-				     (uint8_t *)&sta_ds->supportedRates,
-				     sizeof(tSirSupportedRates));
+			qdf_mem_copy(&assoc_sta_tmp->supportedRates,
+				     &sta_ds->supportedRates,
+				     sizeof(sta_ds->supportedRates));
 			assoc_sta_tmp->ShortGI40Mhz = sta_ds->htShortGI40Mhz;
 			assoc_sta_tmp->ShortGI20Mhz = sta_ds->htShortGI20Mhz;
 			assoc_sta_tmp->Support40Mhz =

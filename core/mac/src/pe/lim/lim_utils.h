@@ -1126,19 +1126,22 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx, struct pe_session *s
 			       uint8_t vdev_id);
 
 /**
- * lim_populate_he_mcs_set - function to populate HE mcs rate set
+ * lim_populate_he_mcs_set() - function to populate HE mcs rate set
  * @mac_ctx: pointer to global mac structure
  * @rates: pointer to supported rate set
  * @peer_vht_caps: pointer to peer HE capabilities
  * @session_entry: pe session entry
+ * @nss: number of spatial streams
  *
  * Populates HE mcs rate set based on peer and self capabilities
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
-		tpSirSupportedRates rates, tDot11fIEhe_cap *peer_he_caps,
-		struct pe_session *session_entry, uint8_t nss);
+				   struct supported_rates *rates,
+				   tDot11fIEhe_cap *peer_he_caps,
+				   struct pe_session *session_entry,
+				   uint8_t nss);
 
 #else
 static inline void lim_add_he_cap(tpAddStaParams add_sta_params,
@@ -1263,10 +1266,12 @@ static inline QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
-				tpSirSupportedRates rates,
-				tDot11fIEhe_cap *peer_he_caps,
-				struct pe_session *session_entry, uint8_t nss)
+static inline
+QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
+				   struct supported_rates *rates,
+				   tDot11fIEhe_cap *peer_he_caps,
+				   struct pe_session *session_entry,
+				   uint8_t nss)
 {
 	return QDF_STATUS_SUCCESS;
 }
