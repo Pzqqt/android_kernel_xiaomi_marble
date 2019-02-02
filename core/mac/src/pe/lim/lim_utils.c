@@ -6985,7 +6985,7 @@ void lim_decide_he_op(struct mac_context *mac_ctx, tpAddBssParams add_bss,
 }
 
 void lim_copy_bss_he_cap(struct pe_session *session,
-			 tpSirSmeStartBssReq sme_start_bss_req)
+			 struct start_bss_req *sme_start_bss_req)
 {
 	qdf_mem_copy(&(session->he_config), &(sme_start_bss_req->he_config),
 		     sizeof(session->he_config));

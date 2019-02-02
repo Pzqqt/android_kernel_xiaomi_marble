@@ -133,7 +133,7 @@ struct pe_session {
 	tSirBssType bssType;
 	uint8_t operMode;       /* AP - 0; STA - 1 ; */
 	tSirNwType nwType;
-	tpSirSmeStartBssReq pLimStartBssReq;    /* handle to smestart bss req */
+	struct start_bss_req *pLimStartBssReq; /* handle to start bss req */
 	tpSirSmeJoinReq pLimJoinReq;    /* handle to sme join req */
 	tpSirSmeJoinReq pLimReAssocReq; /* handle to sme reassoc req */
 	tpLimMlmJoinReq pLimMlmJoinReq; /* handle to MLM join Req */

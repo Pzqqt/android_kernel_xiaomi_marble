@@ -555,7 +555,7 @@ struct add_ie_params {
  */
 /* ***** NOTE: Please make sure all codes are updated if inserting field into
  * this structure..********** */
-typedef struct sSirSmeStartBssReq {
+struct start_bss_req {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP Support */
@@ -616,7 +616,7 @@ typedef struct sSirSmeStartBssReq {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 
-} tSirSmeStartBssReq, *tpSirSmeStartBssReq;
+};
 
 #define GET_IE_LEN_IN_BSS(lenInBss) (lenInBss + sizeof(lenInBss) - \
 				    ((uintptr_t)OFFSET_OF(tSirBssDescription,\

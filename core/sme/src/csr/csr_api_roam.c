@@ -2310,15 +2310,15 @@ static void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
  *
  * Return: None
  */
-static void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
-			struct csr_roam_session *session)
+static void csr_start_bss_copy_he_cap(struct start_bss_req *req,
+				      struct csr_roam_session *session)
 {
 	qdf_mem_copy(&req->he_config, &session->he_config,
 		     sizeof(session->he_config));
 }
 
 void csr_update_session_he_cap(struct mac_context *mac_ctx,
-			struct csr_roam_session *session)
+			       struct csr_roam_session *session)
 {
 	tDot11fIEhe_cap *he_cap = &session->he_config;
 	he_cap->present = true;
@@ -2344,13 +2344,15 @@ void csr_update_session_he_cap(struct mac_context *mac_ctx,
 #else
 #define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)   /* no op */
 
-static inline void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
-			struct csr_roam_session *session)
+static inline
+void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
+			      struct csr_roam_session *session)
 {
 }
 
-static inline void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
-			struct csr_roam_session *session)
+static inline
+void csr_start_bss_copy_he_cap(struct start_bss_req *req,
+			       struct csr_roam_session *session)
 {
 }
 
@@ -15713,7 +15715,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 					 struct csr_roamstart_bssparams *pParam,
 					 tSirBssDescription *pBssDesc)
 {
-	tSirSmeStartBssReq *pMsg;
+	struct start_bss_req *pMsg;
 	uint16_t wTmp;
 	uint32_t value = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -15725,13 +15727,13 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 
 	pSession->joinFailStatusCode.statusCode = eSIR_SME_SUCCESS;
 	pSession->joinFailStatusCode.reasonCode = 0;
-	pMsg = qdf_mem_malloc(sizeof(tSirSmeStartBssReq));
+	pMsg = qdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg)
 		return QDF_STATUS_E_NOMEM;
 
 	pMsg->messageType = eWNI_SME_START_BSS_REQ;
 	pMsg->sessionId = sessionId;
-	pMsg->length = sizeof(tSirSmeStartBssReq);
+	pMsg->length = sizeof(*pMsg);
 	pMsg->transactionId = 0;
 	qdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
 	/* selfMacAddr */

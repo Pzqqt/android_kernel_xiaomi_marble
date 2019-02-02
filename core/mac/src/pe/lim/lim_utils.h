@@ -946,7 +946,7 @@ void lim_add_bss_he_cfg(tpAddBssParams add_bss, struct pe_session *session);
  * Return: None
  */
 void lim_copy_bss_he_cap(struct pe_session *session,
-		tpSirSmeStartBssReq sme_start_bss_req);
+			 struct start_bss_req *sme_start_bss_req);
 
 /**
  * lim_copy_join_req_he_cap() - Copy HE capability to PE session from Join req
@@ -1193,8 +1193,9 @@ static inline void lim_decide_he_op(struct mac_context *mac_ctx,
 {
 }
 
-static inline void lim_copy_bss_he_cap(struct pe_session *session,
-				tpSirSmeStartBssReq sme_start_bss_req)
+static inline
+void lim_copy_bss_he_cap(struct pe_session *session,
+			 struct start_bss_req *sme_start_bss_req)
 {
 }
 

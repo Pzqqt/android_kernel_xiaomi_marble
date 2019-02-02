@@ -490,8 +490,9 @@ static bool __lim_process_sme_sys_ready_ind(struct mac_context *mac,
  * Return: None.
  */
 static void
-lim_configure_ap_start_bss_session(struct mac_context *mac_ctx, struct pe_session *session,
-			tpSirSmeStartBssReq sme_start_bss_req)
+lim_configure_ap_start_bss_session(struct mac_context *mac_ctx,
+				   struct pe_session *session,
+				   struct start_bss_req *sme_start_bss_req)
 {
 	session->limSystemRole = eLIM_AP_ROLE;
 	session->privacy = sme_start_bss_req->privacy;
@@ -570,7 +571,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	uint32_t val = 0;
 	tSirMacChanNum channel_number;
 	tLimMlmStartReq *mlm_start_req = NULL;
-	tpSirSmeStartBssReq sme_start_bss_req = NULL;
+	struct start_bss_req *sme_start_bss_req = NULL;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	/* Flag Used in case of IBSS to Auto generate BSSID. */
 	uint32_t auto_gen_bssid = false;
@@ -593,13 +594,13 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	pe_debug("Received START_BSS_REQ");
-	size = sizeof(tSirSmeStartBssReq);
+	size = sizeof(*sme_start_bss_req);
 	sme_start_bss_req = qdf_mem_malloc(size);
 	if (!sme_start_bss_req) {
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto free;
 	}
-	qdf_mem_copy(sme_start_bss_req, msg_buf, sizeof(tSirSmeStartBssReq));
+	qdf_mem_copy(sme_start_bss_req, msg_buf, size);
 	sme_session_id = sme_start_bss_req->sessionId;
 	sme_transaction_id = sme_start_bss_req->transactionId;
 

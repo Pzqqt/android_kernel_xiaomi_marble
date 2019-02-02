@@ -355,22 +355,8 @@ end:
 	return valid;
 } /*** end lim_is_bss_descr_valid_in_sme_req_message() ***/
 
-/**
- * lim_is_sme_start_bss_req_valid() - To validate sme start bss request
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @start_bss_req: Pointer to received SME_START_BSS_REQ message
- *
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_START_BSS_REQ message from application.
- *
- * Return: true when received SME_START_BSS_REQ is formatted correctly false
- *         otherwise
- */
-
-uint8_t
-lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
-			       tpSirSmeStartBssReq start_bss_req)
+bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
+				    struct start_bss_req *start_bss_req)
 {
 	uint8_t i = 0;
 	tSirMacRateSet *opr_rates = &start_bss_req->operationalRateSet;
