@@ -673,19 +673,19 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	 * the message from SME to PE.
 	 */
 	addn_ie_present =
-		(pe_session->addIeParams.probeRespDataLen != 0);
+		(pe_session->add_ie_params.probeRespDataLen != 0);
 
 	if (addn_ie_present) {
 
 		add_ie = qdf_mem_malloc(
-				pe_session->addIeParams.probeRespDataLen);
+				pe_session->add_ie_params.probeRespDataLen);
 		if (!add_ie)
 			goto err_ret;
 
 		qdf_mem_copy(add_ie,
-			     pe_session->addIeParams.probeRespData_buff,
-			     pe_session->addIeParams.probeRespDataLen);
-		addn_ie_len = pe_session->addIeParams.probeRespDataLen;
+			     pe_session->add_ie_params.probeRespData_buff,
+			     pe_session->add_ie_params.probeRespDataLen);
+		addn_ie_len = pe_session->add_ie_params.probeRespDataLen;
 
 		if (QDF_STATUS_SUCCESS != lim_get_addn_ie_for_probe_resp(mac_ctx,
 					add_ie, &addn_ie_len, preq_p2pie)) {
@@ -1255,15 +1255,15 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	lim_obss_send_detection_cfg(mac_ctx, pe_session, false);
 
 	if (assoc_req != NULL) {
-		addn_ie_len = pe_session->addIeParams.assocRespDataLen;
+		addn_ie_len = pe_session->add_ie_params.assocRespDataLen;
 
 		/* Nonzero length indicates Assoc rsp IE available */
 		if (addn_ie_len > 0 &&
 		    addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN &&
 		    (bytes + addn_ie_len) <= SIR_MAX_PACKET_SIZE) {
 			qdf_mem_copy(add_ie,
-				pe_session->addIeParams.assocRespData_buff,
-				pe_session->addIeParams.assocRespDataLen);
+				pe_session->add_ie_params.assocRespData_buff,
+				pe_session->add_ie_params.assocRespDataLen);
 
 			qdf_mem_zero((uint8_t *) &extracted_ext_cap,
 				    sizeof(extracted_ext_cap));

@@ -7496,7 +7496,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 #endif
 	pDstProfile->mdid = pSrcProfile->mdid;
-	pDstProfile->addIeParams = pSrcProfile->addIeParams;
+	pDstProfile->add_ie_params = pSrcProfile->add_ie_params;
 
 	update_profile_fils_info(pDstProfile, pSrcProfile);
 
@@ -13378,25 +13378,25 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 	pParam->mfpRequired = (0 != pProfile->MFPRequired);
 #endif
 
-	pParam->addIeParams.probeRespDataLen =
-		pProfile->addIeParams.probeRespDataLen;
-	pParam->addIeParams.probeRespData_buff =
-		pProfile->addIeParams.probeRespData_buff;
+	pParam->add_ie_params.probeRespDataLen =
+		pProfile->add_ie_params.probeRespDataLen;
+	pParam->add_ie_params.probeRespData_buff =
+		pProfile->add_ie_params.probeRespData_buff;
 
-	pParam->addIeParams.assocRespDataLen =
-		pProfile->addIeParams.assocRespDataLen;
-	pParam->addIeParams.assocRespData_buff =
-		pProfile->addIeParams.assocRespData_buff;
+	pParam->add_ie_params.assocRespDataLen =
+		pProfile->add_ie_params.assocRespDataLen;
+	pParam->add_ie_params.assocRespData_buff =
+		pProfile->add_ie_params.assocRespData_buff;
 
 	if (CSR_IS_IBSS(pProfile)) {
-		pParam->addIeParams.probeRespBCNDataLen =
+		pParam->add_ie_params.probeRespBCNDataLen =
 			pProfile->nWPAReqIELength;
-		pParam->addIeParams.probeRespBCNData_buff = pProfile->pWPAReqIE;
+		pParam->add_ie_params.probeRespBCNData_buff = pProfile->pWPAReqIE;
 	} else {
-		pParam->addIeParams.probeRespBCNDataLen =
-			pProfile->addIeParams.probeRespBCNDataLen;
-		pParam->addIeParams.probeRespBCNData_buff =
-			pProfile->addIeParams.probeRespBCNData_buff;
+		pParam->add_ie_params.probeRespBCNDataLen =
+			pProfile->add_ie_params.probeRespBCNDataLen;
+		pParam->add_ie_params.probeRespBCNData_buff =
+			pProfile->add_ie_params.probeRespBCNData_buff;
 	}
 
 	if (pProfile->csrPersona == QDF_SAP_MODE)
@@ -15833,13 +15833,10 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 					       pParam->operationChn);
 	}
 
-	qdf_mem_copy(&pMsg->addIeParams,
-		     &pParam->addIeParams,
-		     sizeof(pParam->addIeParams));
+	pMsg->add_ie_params = pParam->add_ie_params;
 	pMsg->obssEnabled = mac->roam.configParam.obssEnabled;
 	pMsg->sap_dot11mc = pParam->sap_dot11mc;
-	pMsg->vendor_vht_sap =
-			mac->roam.configParam.vendor_vht_sap;
+	pMsg->vendor_vht_sap = mac->roam.configParam.vendor_vht_sap;
 	pMsg->cac_duration_ms = pParam->cac_duration_ms;
 	pMsg->dfs_regdomain = pParam->dfs_regdomain;
 	pMsg->beacon_tx_rate = pParam->beacon_tx_rate;
@@ -15847,7 +15844,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	return umac_send_mb_message_to_mac(pMsg);
 }
 
-QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac, uint32_t sessionId)
+QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
+					uint32_t sessionId)
 {
 	tSirSmeStopBssReq *pMsg;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);

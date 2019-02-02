@@ -155,8 +155,8 @@ static uint32_t lim_remove_p2p_ie_from_add_ie(struct mac_context *mac,
 					      uint8_t *addIeWoP2pIe,
 					      uint32_t *addnIELenWoP2pIe)
 {
-	uint32_t left = pe_session->addIeParams.probeRespDataLen;
-	uint8_t *ptr = pe_session->addIeParams.probeRespData_buff;
+	uint32_t left = pe_session->add_ie_params.probeRespDataLen;
+	uint8_t *ptr = pe_session->add_ie_params.probeRespData_buff;
 	uint8_t elem_id, elem_len;
 	uint32_t offset = 0;
 	uint8_t eid = 0xDD;
@@ -212,7 +212,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 	uint16_t addn_ielen = 0;
 
 	/* Check if probe response IE is present or not */
-	addnIEPresent = (pe_session->addIeParams.probeRespDataLen != 0);
+	addnIEPresent = (pe_session->add_ie_params.probeRespDataLen != 0);
 	if (addnIEPresent) {
 		/*
 		* probe response template should not have P2P IE.
@@ -224,7 +224,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 		* by the FW, may also have P2P IE which will fail
 		* P2P cert case 6.1.3
 		*/
-		addIeWoP2pIe = qdf_mem_malloc(pe_session->addIeParams.
+		addIeWoP2pIe = qdf_mem_malloc(pe_session->add_ie_params.
 						probeRespDataLen);
 		if (NULL == addIeWoP2pIe) {
 			pe_err("FAILED to alloc memory when removing P2P IE");

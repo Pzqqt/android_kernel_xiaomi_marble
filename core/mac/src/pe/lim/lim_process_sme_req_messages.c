@@ -644,29 +644,29 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		if (QDF_NDI_MODE != sme_start_bss_req->bssPersona) {
 			/* Probe resp add ie */
 			lim_start_bss_update_add_ie_buffer(mac_ctx,
-				&session->addIeParams.probeRespData_buff,
-				&session->addIeParams.probeRespDataLen,
-				sme_start_bss_req->addIeParams.
+				&session->add_ie_params.probeRespData_buff,
+				&session->add_ie_params.probeRespDataLen,
+				sme_start_bss_req->add_ie_params.
 					probeRespData_buff,
-				sme_start_bss_req->addIeParams.
+				sme_start_bss_req->add_ie_params.
 					probeRespDataLen);
 
 			/* Probe Beacon add ie */
 			lim_start_bss_update_add_ie_buffer(mac_ctx,
-				&session->addIeParams.probeRespBCNData_buff,
-				&session->addIeParams.probeRespBCNDataLen,
-				sme_start_bss_req->addIeParams.
+				&session->add_ie_params.probeRespBCNData_buff,
+				&session->add_ie_params.probeRespBCNDataLen,
+				sme_start_bss_req->add_ie_params.
 					probeRespBCNData_buff,
-				sme_start_bss_req->addIeParams.
+				sme_start_bss_req->add_ie_params.
 					probeRespBCNDataLen);
 
 			/* Assoc resp IE */
 			lim_start_bss_update_add_ie_buffer(mac_ctx,
-				&session->addIeParams.assocRespData_buff,
-				&session->addIeParams.assocRespDataLen,
-				sme_start_bss_req->addIeParams.
+				&session->add_ie_params.assocRespData_buff,
+				&session->add_ie_params.assocRespDataLen,
+				sme_start_bss_req->add_ie_params.
 					assocRespData_buff,
-				sme_start_bss_req->addIeParams.
+				sme_start_bss_req->add_ie_params.
 					assocRespDataLen);
 		}
 		/* Store the session related params in newly created session */
@@ -3094,17 +3094,17 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 
 	if (!LIM_IS_NDI_ROLE(pe_session)) {
 		/* Free the buffer allocated in START_BSS_REQ */
-		qdf_mem_free(pe_session->addIeParams.probeRespData_buff);
-		pe_session->addIeParams.probeRespDataLen = 0;
-		pe_session->addIeParams.probeRespData_buff = NULL;
+		qdf_mem_free(pe_session->add_ie_params.probeRespData_buff);
+		pe_session->add_ie_params.probeRespDataLen = 0;
+		pe_session->add_ie_params.probeRespData_buff = NULL;
 
-		qdf_mem_free(pe_session->addIeParams.assocRespData_buff);
-		pe_session->addIeParams.assocRespDataLen = 0;
-		pe_session->addIeParams.assocRespData_buff = NULL;
+		qdf_mem_free(pe_session->add_ie_params.assocRespData_buff);
+		pe_session->add_ie_params.assocRespDataLen = 0;
+		pe_session->add_ie_params.assocRespData_buff = NULL;
 
-		qdf_mem_free(pe_session->addIeParams.probeRespBCNData_buff);
-		pe_session->addIeParams.probeRespBCNDataLen = 0;
-		pe_session->addIeParams.probeRespBCNData_buff = NULL;
+		qdf_mem_free(pe_session->add_ie_params.probeRespBCNData_buff);
+		pe_session->add_ie_params.probeRespBCNDataLen = 0;
+		pe_session->add_ie_params.probeRespBCNData_buff = NULL;
 
 		/*
 		 * lim_del_bss is also called as part of coalescing,
@@ -5528,7 +5528,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 				modify_add_ies->updateType);
 		goto end;
 	}
-	add_ie_params = &session_entry->addIeParams;
+	add_ie_params = &session_entry->add_ie_params;
 	switch (modify_add_ies->updateType) {
 	case eUPDATE_IE_PROBE_RESP:
 		/* Probe resp */
@@ -5608,7 +5608,7 @@ static void lim_process_update_add_ies(struct mac_context *mac_ctx,
 			 MAC_ADDR_ARRAY(update_ie->bssid.bytes));
 		goto end;
 	}
-	addn_ie = &session_entry->addIeParams;
+	addn_ie = &session_entry->add_ie_params;
 	/* if len is 0, upper layer requested freeing of buffer */
 	if (0 == update_ie->ieBufferlength) {
 		switch (update_add_ies->updateType) {

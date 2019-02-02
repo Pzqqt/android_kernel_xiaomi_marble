@@ -301,8 +301,8 @@ populate_dot11f_chan_switch_wrapper(struct mac_context *mac,
 	 */
 	ie_ptr = wlan_get_ie_ptr_from_eid(
 			DOT11F_EID_VHT_TRANSMIT_POWER_ENV,
-			pe_session->addIeParams.probeRespBCNData_buff,
-			pe_session->addIeParams.probeRespBCNDataLen);
+			pe_session->add_ie_params.probeRespBCNData_buff,
+			pe_session->add_ie_params.probeRespBCNDataLen);
 	if (ie_ptr) {
 		/* Ignore EID field */
 		pDot11f->vht_transmit_power_env.present = 1;

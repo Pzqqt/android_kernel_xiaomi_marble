@@ -1017,20 +1017,20 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	}
 
 	/* Must free the buffer before peSession invalid */
-	if (NULL != session->addIeParams.probeRespData_buff) {
-		qdf_mem_free(session->addIeParams.probeRespData_buff);
-		session->addIeParams.probeRespData_buff = NULL;
-		session->addIeParams.probeRespDataLen = 0;
+	if (NULL != session->add_ie_params.probeRespData_buff) {
+		qdf_mem_free(session->add_ie_params.probeRespData_buff);
+		session->add_ie_params.probeRespData_buff = NULL;
+		session->add_ie_params.probeRespDataLen = 0;
 	}
-	if (NULL != session->addIeParams.assocRespData_buff) {
-		qdf_mem_free(session->addIeParams.assocRespData_buff);
-		session->addIeParams.assocRespData_buff = NULL;
-		session->addIeParams.assocRespDataLen = 0;
+	if (NULL != session->add_ie_params.assocRespData_buff) {
+		qdf_mem_free(session->add_ie_params.assocRespData_buff);
+		session->add_ie_params.assocRespData_buff = NULL;
+		session->add_ie_params.assocRespDataLen = 0;
 	}
-	if (NULL != session->addIeParams.probeRespBCNData_buff) {
-		qdf_mem_free(session->addIeParams.probeRespBCNData_buff);
-		session->addIeParams.probeRespBCNData_buff = NULL;
-		session->addIeParams.probeRespBCNDataLen = 0;
+	if (NULL != session->add_ie_params.probeRespBCNData_buff) {
+		qdf_mem_free(session->add_ie_params.probeRespBCNData_buff);
+		session->add_ie_params.probeRespBCNData_buff = NULL;
+		session->add_ie_params.probeRespBCNDataLen = 0;
 	}
 #ifdef WLAN_FEATURE_11W
 	if (QDF_TIMER_STATE_RUNNING ==

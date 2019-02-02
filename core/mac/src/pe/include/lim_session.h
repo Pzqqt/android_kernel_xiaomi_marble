@@ -437,7 +437,7 @@ struct pe_session {
 
 	bool isCiscoVendorAP;
 
-	struct add_ie_params addIeParams;
+	struct add_ie_params add_ie_params;
 
 	uint8_t *pSchProbeRspTemplate;
 	/* Beginning portion of the beacon frame to be written to TFP */

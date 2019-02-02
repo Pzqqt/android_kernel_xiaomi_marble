@@ -542,9 +542,9 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 
 	}
 
-	addnie_present = (session->addIeParams.probeRespBCNDataLen != 0);
+	addnie_present = (session->add_ie_params.probeRespBCNDataLen != 0);
 	if (addnie_present) {
-		addn_ielen = session->addIeParams.probeRespBCNDataLen;
+		addn_ielen = session->add_ie_params.probeRespBCNDataLen;
 		addn_ie = qdf_mem_malloc(addn_ielen);
 		if (!addn_ie) {
 			qdf_mem_free(bcn_1);
@@ -553,7 +553,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			return QDF_STATUS_E_NOMEM;
 		}
 		qdf_mem_copy(addn_ie,
-			session->addIeParams.probeRespBCNData_buff,
+			session->add_ie_params.probeRespBCNData_buff,
 			addn_ielen);
 
 		qdf_mem_zero((uint8_t *)&extracted_extcap,

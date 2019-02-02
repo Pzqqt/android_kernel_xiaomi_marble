@@ -816,7 +816,7 @@ struct csr_roam_profile {
 	struct mobility_domain_info mdid;
 	enum QDF_OPMODE csrPersona;
 	/* addIe params */
-	struct add_ie_params addIeParams;
+	struct add_ie_params add_ie_params;
 	uint16_t beacon_tx_rate;
 	tSirMacRateSet  supported_rates;
 	tSirMacRateSet  extended_rates;

@@ -607,7 +607,7 @@ typedef struct sSirSmeStartBssReq {
 	bool pmfRequired;
 #endif
 
-	struct add_ie_params addIeParams;
+	struct add_ie_params add_ie_params;
 
 	bool obssEnabled;
 	uint8_t sap_dot11mc;
