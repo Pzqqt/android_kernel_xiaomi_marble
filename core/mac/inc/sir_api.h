@@ -469,12 +469,6 @@ typedef enum eSirNwType {
 	eSIR_DONOT_USE_NW_TYPE = SIR_MAX_ENUM_SIZE
 } tSirNwType;
 
-/* / Definition for new iBss peer info */
-typedef struct sSirNewIbssPeerInfo {
-	struct qdf_mac_addr peerAddr;
-	uint16_t aid;
-} tSirNewIbssPeerInfo, *tpSirNewIbssPeerInfo;
-
 /* HT configuration values */
 typedef struct sSirHtConfig {
 	/* Enable/Disable receiving LDPC coded packets */
@@ -1150,9 +1144,7 @@ typedef enum eSirSmeStatusChangeCode {
 	eSIR_SME_LEAVING_BSS,
 	eSIR_SME_IBSS_ACTIVE,
 	eSIR_SME_IBSS_INACTIVE,
-	eSIR_SME_IBSS_PEER_DEPARTED,
 	eSIR_SME_RADAR_DETECTED,
-	eSIR_SME_IBSS_NEW_PEER,
 	eSIR_SME_AP_CAPS_CHANGED,
 } tSirSmeStatusChangeCode;
 
@@ -1175,7 +1167,7 @@ typedef struct sSirSmeApNewCaps {
  * Table below indicates what information is passed for each of
  * the Wireless Media status change notifications:
  *
- * Status Change code           Status change info
+ * Status Change code               Status change info
  * ----------------------------------------------------------------------
  * eSIR_SME_DEAUTH_FROM_PEER        Reason code received in DEAUTH frame
  * eSIR_SME_DISASSOC_FROM_PEER      Reason code received in DISASSOC frame
@@ -1189,7 +1181,6 @@ typedef struct sSirSmeApNewCaps {
  * eSIR_SME_IBSS_INACTIVE           Indicates that only this STA is left
  *                                  in IBSS
  * eSIR_SME_RADAR_DETECTED          Indicates that radar is detected
- * eSIR_SME_IBSS_NEW_PEER           Indicates that a new peer is detected
  * eSIR_SME_AP_CAPS_CHANGED         Indicates that capabilities of the AP
  *                                  that STA is currently associated with
  *                                  have changed.
@@ -1203,18 +1194,21 @@ typedef struct sSirSmeWmStatusChangeNtf {
 	tSirSmeStatusChangeCode statusChangeCode;
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 	union {
-		uint16_t deAuthReasonCode;      /* eSIR_SME_DEAUTH_FROM_PEER */
+		/* eSIR_SME_DEAUTH_FROM_PEER */
+		uint16_t deAuthReasonCode;
 		/* eSIR_SME_DISASSOC_FROM_PEER */
 		uint16_t disassocReasonCode;
 		/* none for eSIR_SME_LOST_LINK_WITH_PEER */
-		uint8_t newChannelId;   /* eSIR_SME_CHANNEL_SWITCH */
-		tSirSmeNewBssInfo newBssInfo;   /* eSIR_SME_JOINED_NEW_BSS */
+		/* eSIR_SME_CHANNEL_SWITCH */
+		uint8_t newChannelId;
+		/* eSIR_SME_JOINED_NEW_BSS */
+		tSirSmeNewBssInfo newBssInfo;
 		/* none for eSIR_SME_LEAVING_BSS */
 		/* none for eSIR_SME_IBSS_ACTIVE */
 		/* none for eSIR_SME_IBSS_INACTIVE */
-		/* eSIR_SME_IBSS_NEW_PEER */
-		tSirNewIbssPeerInfo newIbssPeerInfo;
-		tSirSmeApNewCaps apNewCaps;     /* eSIR_SME_AP_CAPS_CHANGED */
+		/* none for eSIR_SME_RADAR_DETECTED */
+		/* eSIR_SME_AP_CAPS_CHANGED */
+		tSirSmeApNewCaps apNewCaps;
 	} statusChangeInfo;
 } tSirSmeWmStatusChangeNtf, *tpSirSmeWmStatusChangeNtf;
 
