@@ -6896,7 +6896,7 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *session)
 {
-	tSirAddIeParams *add_ie = &session->addIeParams;
+	struct add_ie_params *add_ie = &session->addIeParams;
 	tDot11fIEhe_cap *he_cap = &session->he_config;
 	struct he_cap_network_endian *he_cap_from_ie;
 	uint8_t extracted_buff[DOT11F_IE_HE_CAP_MAX_LEN + 2];
@@ -6936,7 +6936,7 @@ void lim_decide_he_op(struct mac_context *mac_ctx, tpAddBssParams add_bss,
 	uint8_t color;
 	struct he_ops_network_endian *he_ops_from_ie;
 	tDot11fIEhe_op *he_ops = &add_bss->he_op;
-	tSirAddIeParams *add_ie = &session->addIeParams;
+	struct add_ie_params *add_ie = &session->addIeParams;
 	uint8_t extracted_buff[DOT11F_IE_HE_OP_MAX_LEN + 2];
 	QDF_STATUS status;
 

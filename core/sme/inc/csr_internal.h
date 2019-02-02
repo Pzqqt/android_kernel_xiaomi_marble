@@ -267,7 +267,7 @@ struct csr_roamstart_bssparams {
 	bool mfpCapable;
 	bool mfpRequired;
 #endif
-	tSirAddIeParams addIeParams;
+	struct add_ie_params addIeParams;
 	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;
 	uint32_t cac_duration_ms;

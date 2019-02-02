@@ -7496,8 +7496,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 #endif
 	pDstProfile->mdid = pSrcProfile->mdid;
-	qdf_mem_copy(&pDstProfile->addIeParams, &pSrcProfile->addIeParams,
-			sizeof(tSirAddIeParams));
+	pDstProfile->addIeParams = pSrcProfile->addIeParams;
 
 	update_profile_fils_info(pDstProfile, pSrcProfile);
 

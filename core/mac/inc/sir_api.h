@@ -529,14 +529,14 @@ struct sir_vht_config {
 };
 
 
-typedef struct sSirAddIeParams {
+struct add_ie_params {
 	uint16_t probeRespDataLen;
 	uint8_t *probeRespData_buff;
 	uint16_t assocRespDataLen;
 	uint8_t *assocRespData_buff;
 	uint16_t probeRespBCNDataLen;
 	uint8_t *probeRespBCNData_buff;
-} tSirAddIeParams, *tpSirAddIeParams;
+};
 
 /* / Definition for kick starting BSS */
 /* / ---> MAC */
@@ -607,7 +607,7 @@ typedef struct sSirSmeStartBssReq {
 	bool pmfRequired;
 #endif
 
-	tSirAddIeParams addIeParams;
+	struct add_ie_params addIeParams;
 
 	bool obssEnabled;
 	uint8_t sap_dot11mc;

@@ -5499,7 +5499,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint8_t session_id;
 	bool ret = false;
-	tSirAddIeParams *add_ie_params;
+	struct add_ie_params *add_ie_params;
 
 	if (msg_buf == NULL) {
 		pe_err("msg_buf is NULL");
@@ -5588,7 +5588,7 @@ static void lim_process_update_add_ies(struct mac_context *mac_ctx,
 	tpSirUpdateIEsInd update_add_ies = (tpSirUpdateIEsInd)msg_buf;
 	uint8_t session_id;
 	struct pe_session *session_entry;
-	tSirAddIeParams *addn_ie;
+	struct add_ie_params *addn_ie;
 	uint16_t new_length = 0;
 	uint8_t *new_ptr = NULL;
 	tSirUpdateIE *update_ie;
