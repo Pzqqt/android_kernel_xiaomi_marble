@@ -1550,7 +1550,7 @@ send_plm_start:
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS sme_tsm_ie_ind(struct mac_context *mac,
-				 tSirSmeTsmIEInd *pSmeTsmIeInd)
+				 struct tsm_ie_ind *pSmeTsmIeInd)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info roam_info = { 0 };

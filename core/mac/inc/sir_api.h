@@ -784,10 +784,11 @@ struct tsm_ie {
 	uint16_t msmt_interval;
 };
 
-typedef struct sSirSmeTsmIEInd {
+struct tsm_ie_ind {
 	struct tsm_ie tsm_ie;
 	uint8_t sessionId;
-} tSirSmeTsmIEInd, *tpSirSmeTsmIEInd;
+};
+
 typedef struct sAniTrafStrmMetrics {
 	uint16_t UplinkPktQueueDly;
 	uint16_t UplinkPktQueueDlyHist[4];

@@ -4743,16 +4743,17 @@ void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t fr
    \param  measurementInterval - measurement interval
    \return none
    -------------------------------------------------------------*/
-void lim_send_sme_tsm_ie_ind(struct mac_context *mac, struct pe_session *pe_session,
+void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
+			     struct pe_session *pe_session,
 			     uint8_t tid, uint8_t state, uint16_t measInterval)
 {
 	struct scheduler_msg mmhMsg = {0};
-	tpSirSmeTsmIEInd pSirSmeTsmIeInd = NULL;
+	struct tsm_ie_ind *pSirSmeTsmIeInd = NULL;
 
 	if (!mac || !pe_session)
 		return;
 
-	pSirSmeTsmIeInd = qdf_mem_malloc(sizeof(tSirSmeTsmIEInd));
+	pSirSmeTsmIeInd = qdf_mem_malloc(sizeof(*pSirSmeTsmIeInd));
 	if (!pSirSmeTsmIeInd)
 		return;
 
