@@ -315,32 +315,22 @@ fail:
 }
 
 /**
- * __lim_is_sme_assoc_cnf_valid()
+ * __lim_is_sme_assoc_cnf_valid() -- Validate ASSOC_CNF message
+ * @assoc_cnf: Pointer to Received ASSOC_CNF message
  *
- ***FUNCTION:
  * This function is called by __lim_process_sme_assoc_cnf_new() upon
  * receiving SME_ASSOC_CNF.
  *
- ***LOGIC:
- * Message validity checks are performed in this function
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  pMeasReq  Pointer to Received ASSOC_CNF message
- * @return true      When received SME_ASSOC_CNF is formatted
- *                   correctly
- *         false     otherwise
+ * Return: true when received SME_ASSOC_CNF is formatted correctly
+ *         false otherwise
  */
-
-static inline uint8_t __lim_is_sme_assoc_cnf_valid(tpSirSmeAssocCnf pAssocCnf)
+static bool __lim_is_sme_assoc_cnf_valid(struct assoc_cnf *assoc_cnf)
 {
-	if (qdf_is_macaddr_group(&pAssocCnf->peer_macaddr))
+	if (qdf_is_macaddr_group(&assoc_cnf->peer_macaddr))
 		return false;
-	else
-		return true;
-} /*** end __lim_is_sme_assoc_cnf_valid() ***/
+
+	return true;
+}
 
 /**
  * __lim_get_sme_join_req_size_for_alloc()
@@ -3176,7 +3166,7 @@ void lim_process_sme_del_bss_rsp(struct mac_context *mac,
 void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_type,
 				uint32_t *msg_buf)
 {
-	tSirSmeAssocCnf assoc_cnf;
+	struct assoc_cnf assoc_cnf;
 	tpDphHashNode sta_ds = NULL;
 	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
@@ -3187,7 +3177,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 		goto end;
 	}
 
-	qdf_mem_copy(&assoc_cnf, msg_buf, sizeof(struct sSirSmeAssocCnf));
+	qdf_mem_copy(&assoc_cnf, msg_buf, sizeof(assoc_cnf));
 	if (!__lim_is_sme_assoc_cnf_valid(&assoc_cnf)) {
 		pe_err("Received invalid SME_RE(ASSOC)_CNF message");
 		goto end;

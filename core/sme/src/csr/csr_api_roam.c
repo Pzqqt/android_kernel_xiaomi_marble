@@ -15484,16 +15484,16 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 				  QDF_STATUS Halstatus)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeAssocCnf *pMsg;
+	struct assoc_cnf *pMsg;
 	struct scheduler_msg msg = { 0 };
 
 	sme_debug("Posting eWNI_SME_ASSOC_CNF to LIM.HalStatus: %d", Halstatus);
 	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeAssocCnf));
-		if (NULL == pMsg)
+		pMsg = qdf_mem_malloc(sizeof(*pMsg));
+		if (!pMsg)
 			return QDF_STATUS_E_NOMEM;
 		pMsg->messageType = eWNI_SME_ASSOC_CNF;
-		pMsg->length = sizeof(tSirSmeAssocCnf);
+		pMsg->length = sizeof(*pMsg);
 		if (QDF_IS_STATUS_SUCCESS(Halstatus))
 			pMsg->statusCode = eSIR_SME_SUCCESS;
 		else

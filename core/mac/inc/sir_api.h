@@ -1131,14 +1131,14 @@ struct assoc_ind {
 
 /* / Definition for Association confirm */
 /* / ---> MAC */
-typedef struct sSirSmeAssocCnf {
+struct assoc_cnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
-} tSirSmeAssocCnf, *tpSirSmeAssocCnf;
+};
 
 /* / Enum definition for  Wireless medium status change codes */
 typedef enum eSirSmeStatusChangeCode {
