@@ -887,7 +887,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint32_t dot11Mode;
 	uint8_t proxyARPService;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tCsrRoamHTProfile HTProfile;
+	tCsrRoamHTProfile ht_profile;
 #endif
 #ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */

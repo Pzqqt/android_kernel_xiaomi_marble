@@ -932,13 +932,13 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 		if (*sap_ch == 0) {
 			*sap_ch = session->connectedProfile.operationChannel;
 			csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.HTProfile,
+				&session->connectedProfile.ht_profile,
 				*sap_ch, sap_cfreq, sap_hbw);
 		} else if (*sap_ch !=
 				session->connectedProfile.operationChannel) {
 			*intf_ch = session->connectedProfile.operationChannel;
 			csr_get_ch_from_ht_profile(mac_ctx,
-					&session->connectedProfile.HTProfile,
+					&session->connectedProfile.ht_profile,
 					*intf_ch, intf_cfreq, intf_hbw);
 		}
 	} else if (*sap_ch == 0 &&
@@ -946,7 +946,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 					QDF_SAP_MODE)) {
 		*sap_ch = session->connectedProfile.operationChannel;
 		csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.HTProfile,
+				&session->connectedProfile.ht_profile,
 				*sap_ch, sap_cfreq, sap_hbw);
 	}
 }
@@ -1012,7 +1012,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) {
 			intf_ch = session->connectedProfile.operationChannel;
 			csr_get_ch_from_ht_profile(mac_ctx,
-				&session->connectedProfile.HTProfile,
+				&session->connectedProfile.ht_profile,
 				intf_ch, &intf_cfreq, &intf_hbw);
 			sme_debug("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d",
 				i, intf_ch, intf_cfreq, intf_hbw);

@@ -715,7 +715,7 @@ typedef struct sSirSmeStartBssRsp {
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
 	uint32_t staId;         /* Station ID for Self */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	struct ht_profile HTProfile;
+	struct ht_profile ht_profile;
 #endif
 	tSirBssDescription bssDescription;      /* Peer BSS description */
 } tSirSmeStartBssRsp, *tpSirSmeStartBssRsp;
@@ -1034,7 +1034,7 @@ typedef struct sSirSmeJoinRsp {
 	uint32_t max_rate_flags;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	struct ht_profile HTProfile;
+	struct ht_profile ht_profile;
 #endif
 	bool supported_nss_1x1;
 	tDot11fIEHTCaps ht_caps;

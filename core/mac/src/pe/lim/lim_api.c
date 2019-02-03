@@ -1902,7 +1902,7 @@ void lim_fill_join_rsp_ht_caps(struct pe_session *session,
 	if (session->cc_switch_mode == QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		return;
 
-	ht_profile = &join_rsp->HTProfile;
+	ht_profile = &join_rsp->ht_profile;
 	ht_profile->htSupportedChannelWidthSet =
 		session->htSupportedChannelWidthSet;
 	ht_profile->htRecommendedTxWidthSet =

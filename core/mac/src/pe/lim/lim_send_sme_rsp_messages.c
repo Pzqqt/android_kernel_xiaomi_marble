@@ -291,7 +291,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (session_entry->cc_switch_mode !=
 				QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-			ht_profile = &sme_join_rsp->HTProfile;
+			ht_profile = &sme_join_rsp->ht_profile;
 			ht_profile->htSupportedChannelWidthSet =
 				session_entry->htSupportedChannelWidthSet;
 			ht_profile->htRecommendedTxWidthSet =
@@ -634,22 +634,22 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 			if (pe_session->cc_switch_mode
 			    != QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-				pSirSmeRsp->HTProfile.
+				pSirSmeRsp->ht_profile.
 				htSupportedChannelWidthSet =
 					pe_session->htSupportedChannelWidthSet;
-				pSirSmeRsp->HTProfile.htRecommendedTxWidthSet =
+				pSirSmeRsp->ht_profile.htRecommendedTxWidthSet =
 					pe_session->htRecommendedTxWidthSet;
-				pSirSmeRsp->HTProfile.htSecondaryChannelOffset =
+				pSirSmeRsp->ht_profile.htSecondaryChannelOffset =
 					pe_session->htSecondaryChannelOffset;
-				pSirSmeRsp->HTProfile.dot11mode =
+				pSirSmeRsp->ht_profile.dot11mode =
 					pe_session->dot11mode;
-				pSirSmeRsp->HTProfile.htCapability =
+				pSirSmeRsp->ht_profile.htCapability =
 					pe_session->htCapability;
-				pSirSmeRsp->HTProfile.vhtCapability =
+				pSirSmeRsp->ht_profile.vhtCapability =
 					pe_session->vhtCapability;
-				pSirSmeRsp->HTProfile.apCenterChan =
+				pSirSmeRsp->ht_profile.apCenterChan =
 					pe_session->ch_center_freq_seg0;
-				pSirSmeRsp->HTProfile.apChanWidth =
+				pSirSmeRsp->ht_profile.apChanWidth =
 					pe_session->ch_width;
 			}
 #endif

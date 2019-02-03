@@ -6536,8 +6536,8 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 			mac_ctx->roam.configParam.doBMPSWorkaround = 1;
 		}
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-		dst_profile = &session->connectedProfile.HTProfile;
-		src_profile = &start_bss_rsp->HTProfile;
+		dst_profile = &session->connectedProfile.ht_profile;
+		src_profile = &start_bss_rsp->ht_profile;
 		if (mac_ctx->roam.configParam.cc_switch_mode
 				!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 			csr_roam_copy_ht_profile(dst_profile, src_profile);
@@ -6995,8 +6995,8 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 				roam_info.tdls_chan_swit_prohibited);
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-			src_profile = &join_rsp->HTProfile;
-			dst_profile = &conn_profile->HTProfile;
+			src_profile = &join_rsp->ht_profile;
+			dst_profile = &conn_profile->ht_profile;
 			if (mac_ctx->roam.configParam.cc_switch_mode
 				!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 				csr_roam_copy_ht_profile(dst_profile,
@@ -20889,8 +20889,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		roam_synch_data->join_rsp->vht_channel_width;
 	csr_roam_fill_tdls_info(mac_ctx, roam_info, roam_synch_data->join_rsp);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	src_profile = &roam_synch_data->join_rsp->HTProfile;
-	dst_profile = &conn_profile->HTProfile;
+	src_profile = &roam_synch_data->join_rsp->ht_profile;
+	dst_profile = &conn_profile->ht_profile;
 	if (mac_ctx->roam.configParam.cc_switch_mode
 			!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		csr_roam_copy_ht_profile(dst_profile,
