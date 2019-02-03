@@ -562,14 +562,14 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 
 	uint16_t size = 0;
 	struct scheduler_msg mmhMsg = {0};
-	tSirSmeStartBssRsp *pSirSmeRsp;
+	struct start_bss_rsp *pSirSmeRsp;
 	uint16_t ieLen;
 	uint16_t ieOffset, curLen;
 
 	pe_debug("Sending message: %s with reasonCode: %s",
 		       lim_msg_str(msgType), lim_result_code_str(resultCode));
 
-	size = sizeof(tSirSmeStartBssRsp);
+	size = sizeof(struct start_bss_rsp);
 
 	if (pe_session == NULL) {
 		pSirSmeRsp = qdf_mem_malloc(size);
@@ -586,7 +586,7 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 		pSirSmeRsp = qdf_mem_malloc(size);
 		if (!pSirSmeRsp)
 			return;
-		size = sizeof(tSirSmeStartBssRsp);
+		size = sizeof(struct start_bss_rsp);
 		if (resultCode == eSIR_SME_SUCCESS) {
 
 			sir_copy_mac_addr(pSirSmeRsp->bssDescription.bssId,

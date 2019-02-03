@@ -705,7 +705,7 @@ struct ht_profile {
 /* / Definition for response message to previously */
 /* / issued start BSS request */
 /* / MAC ---> */
-typedef struct sSirSmeStartBssRsp {
+struct start_bss_rsp {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_RSP */
 	uint16_t length;
 	uint8_t sessionId;
@@ -718,7 +718,7 @@ typedef struct sSirSmeStartBssRsp {
 	struct ht_profile ht_profile;
 #endif
 	tSirBssDescription bssDescription;      /* Peer BSS description */
-} tSirSmeStartBssRsp, *tpSirSmeStartBssRsp;
+};
 
 typedef struct sSirChannelList {
 	uint8_t numChannels;

@@ -6355,7 +6355,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	struct csr_roam_session *session;
 	tSirBssDescription *bss_desc = NULL;
 	struct csr_roam_info roam_info;
-	tSirSmeStartBssRsp *start_bss_rsp = NULL;
+	struct start_bss_rsp *start_bss_rsp = NULL;
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 	tDot11fBeaconIEs *ies_ptr = NULL;
@@ -6384,7 +6384,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	 */
 	sme_debug("receives start BSS ok indication");
 	status = QDF_STATUS_E_FAILURE;
-	start_bss_rsp = (tSirSmeStartBssRsp *) context;
+	start_bss_rsp = (struct start_bss_rsp *) context;
 	qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
 	if (CSR_IS_IBSS(profile))
 		session->connectState = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
@@ -7135,7 +7135,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 	host_log_ibss_pkt_type *ibss_log;
-	tSirSmeStartBssRsp  *start_bss_rsp = NULL;
+	struct start_bss_rsp  *start_bss_rsp = NULL;
 
 	if (!session) {
 		sme_err("session %d not found ", session_id);
@@ -7161,7 +7161,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 		}
 #endif
 		ibss_log = NULL;
-		start_bss_rsp = (tSirSmeStartBssRsp *)context;
+		start_bss_rsp = (struct start_bss_rsp *)context;
 		qdf_mem_zero(&roam_info, sizeof(roam_info));
 		roam_status = eCSR_ROAM_IBSS_IND;
 		roam_result = eCSR_ROAM_RESULT_IBSS_STARTED;
@@ -9405,9 +9405,9 @@ static void csr_roam_roaming_state_deauth_rsp_processor(struct mac_context *mac,
 	}
 }
 
-static void csr_roam_roaming_state_start_bss_rsp_processor(struct mac_context *mac,
-							   tSirSmeStartBssRsp *
-							   pSmeStartBssRsp)
+static void
+csr_roam_roaming_state_start_bss_rsp_processor(struct mac_context *mac,
+					struct start_bss_rsp *pSmeStartBssRsp)
 {
 	enum csr_roamcomplete_result result;
 
@@ -9504,7 +9504,7 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		if (CSR_IS_ROAM_SUBSTATE_START_BSS_REQ(mac,
 						       pSmeRsp->sessionId))
 			csr_roam_roaming_state_start_bss_rsp_processor(mac,
-						(tSirSmeStartBssRsp *) pSmeRsp);
+					(struct start_bss_rsp *)pSmeRsp);
 		break;
 	/* In case CSR issues STOP_BSS, we need to tell HDD about peer departed
 	 * because PE is removing them
