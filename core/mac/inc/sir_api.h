@@ -847,10 +847,12 @@ struct ese_bcn_report_rsp {
 
 #define TSRS_11AG_RATE_6MBPS   0xC
 #define TSRS_11B_RATE_5_5MBPS  0xB
-typedef struct sSirMacESETSRSIE {
+
+struct ese_tsrs_ie {
 	uint8_t tsid;
 	uint8_t rates[8];
-} tSirMacESETSRSIE;
+};
+
 typedef struct sSirMacESETSMIE {
 	uint8_t tsid;
 	uint8_t state;
@@ -1575,7 +1577,7 @@ typedef struct sSirAddtsReqInfo {
 	tSirTclasInfo tclasInfo[SIR_MAC_TCLASIE_MAXNUM];
 	uint8_t tclasProc;
 #if defined(FEATURE_WLAN_ESE)
-	tSirMacESETSRSIE tsrsIE;
+	struct ese_tsrs_ie tsrsIE;
 	uint8_t tsrsPresent:1;
 #endif
 	uint8_t wmeTspecPresent:1;

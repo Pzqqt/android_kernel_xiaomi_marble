@@ -891,7 +891,7 @@ QDF_STATUS populate_dot11f_ese_cckm_opaque(struct mac_context *mac,
 					tDot11fIEESECckmOpaque *pDot11f);
 
 void populate_dot11_tsrsie(struct mac_context *mac,
-			tSirMacESETSRSIE *pOld,
+			struct ese_tsrs_ie *pOld,
 			tDot11fIEESETrafStrmRateSet *pDot11f,
 			uint8_t rate_length);
 void populate_dot11f_re_assoc_tspec(struct mac_context *mac,

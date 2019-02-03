@@ -267,7 +267,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 
 			if (pe_session->pLimReAssocReq->eseTspecInfo.
 			    numTspecs) {
-				tSirMacESETSRSIE tsrs_ie;
+				struct ese_tsrs_ie tsrs_ie;
 
 				tsrs_ie.tsid = 0;
 				tsrs_ie.rates[0] = rate;
