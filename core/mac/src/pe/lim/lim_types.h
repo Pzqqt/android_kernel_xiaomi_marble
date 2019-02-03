@@ -227,7 +227,7 @@ typedef struct sLimMlmAssocInd {
 	uint8_t *beaconPtr;
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
-	tSirSmeChanInfo chan_info;
+	struct oem_channel_info chan_info;
 	bool ampdu;
 	bool sgi_enable;
 	bool tx_stbc;

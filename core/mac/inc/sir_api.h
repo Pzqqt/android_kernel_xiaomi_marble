@@ -1056,7 +1056,7 @@ struct join_rsp {
 	uint8_t frames[1];
 };
 
-typedef struct sSirSmeChanInfo {
+struct oem_channel_info {
 	uint8_t chan_id;
 	uint32_t mhz;
 	uint32_t band_center_freq1;
@@ -1068,7 +1068,7 @@ typedef struct sSirSmeChanInfo {
 	uint32_t rate_flags;
 	uint8_t sec_ch_offset;
 	enum phy_ch_width ch_width;
-} tSirSmeChanInfo, *tpSirSmeChanInfo;
+};
 
 enum sir_sme_phy_mode {
 	SIR_SME_PHY_MODE_LEGACY = 0,
@@ -1110,7 +1110,7 @@ typedef struct sSirSmeAssocInd {
 
 	/* Timing measurement capability */
 	uint8_t timingMeasCap;
-	tSirSmeChanInfo chan_info;
+	struct oem_channel_info chan_info;
 	bool ampdu;
 	bool sgi_enable;
 	bool tx_stbc;

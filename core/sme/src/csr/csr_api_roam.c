@@ -9621,7 +9621,7 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 			pUpperLayerAssocCnf->timingMeasCap;
 		qdf_mem_copy(&roam_info->chan_info,
 			     &pUpperLayerAssocCnf->chan_info,
-			     sizeof(tSirSmeChanInfo));
+			     sizeof(struct oem_channel_info));
 		roam_info->ampdu = pUpperLayerAssocCnf->ampdu;
 		roam_info->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
 		roam_info->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
@@ -10579,7 +10579,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	roam_info_ptr->ecsa_capable = pAssocInd->ecsa_capable;
 	qdf_mem_copy(&roam_info_ptr->chan_info,
 		     &pAssocInd->chan_info,
-		     sizeof(tSirSmeChanInfo));
+		     sizeof(struct oem_channel_info));
 
 	if (pAssocInd->HTCaps.present)
 		qdf_mem_copy(&roam_info_ptr->ht_caps,
@@ -15585,7 +15585,7 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 		/* chan_info */
 		pBuf = (uint8_t *)&pMsg->chan_info;
 		qdf_mem_copy((void *)pBuf, &pAssocInd->chan_info,
-			sizeof(tSirSmeChanInfo));
+			sizeof(struct oem_channel_info));
 		/* ampdu */
 		pBuf = (uint8_t *)&pMsg->ampdu;
 		*((bool *)pBuf) = pAssocInd->ampdu;

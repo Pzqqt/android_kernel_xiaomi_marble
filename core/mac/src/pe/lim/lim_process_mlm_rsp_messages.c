@@ -736,7 +736,7 @@ lim_fill_assoc_ind_params(struct mac_context *mac_ctx,
 			assoc_ind->supportedChannels.numChnl);
 	}
 	qdf_mem_copy(&sme_assoc_ind->chan_info, &assoc_ind->chan_info,
-		sizeof(tSirSmeChanInfo));
+		sizeof(struct oem_channel_info));
 	/* Fill in WmmInfo */
 	sme_assoc_ind->wmmEnabledSta = assoc_ind->WmmStaInfoPresent;
 	sme_assoc_ind->ampdu = assoc_ind->ampdu;

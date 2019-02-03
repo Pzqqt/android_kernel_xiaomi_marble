@@ -267,7 +267,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	uint32_t statusCode;
 	bool wmmEnabled;
 	uint8_t timingMeasCap;
-	tSirSmeChanInfo chan_info;
+	struct oem_channel_info chan_info;
 	bool ampdu;
 	bool sgi_enable;
 	bool tx_stbc;

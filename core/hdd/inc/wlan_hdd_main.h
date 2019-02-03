@@ -3101,7 +3101,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 					uint8_t peer_status,
 					uint8_t peer_timing_meas_cap,
 					uint8_t sessionId,
-					tSirSmeChanInfo *chan_info,
+					struct oem_channel_info *chan_info,
 					enum QDF_OPMODE dev_mode)
 {
 	struct wifi_pos_ch_info ch_info;
@@ -3134,7 +3134,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 					uint8_t peer_status,
 					uint8_t peer_timing_meas_cap,
 					uint8_t sessionId,
-					tSirSmeChanInfo *chan_info,
+					struct oem_channel_info *chan_info,
 					enum QDF_OPMODE dev_mode)
 {
 	hdd_send_peer_status_ind_to_oem_app(peer_mac, peer_status,

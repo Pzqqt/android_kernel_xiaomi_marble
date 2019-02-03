@@ -1357,7 +1357,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSap_Event sap_ap_event = {0};
 	struct mac_context *mac_ctx;
-	tSirSmeChanInfo *chaninfo;
+	struct oem_channel_info *chaninfo;
 	tSap_StationAssocIndication *assoc_ind;
 	tSap_StartBssCompleteEvent *bss_complete;
 	struct sap_ch_selected_s *acs_selected;

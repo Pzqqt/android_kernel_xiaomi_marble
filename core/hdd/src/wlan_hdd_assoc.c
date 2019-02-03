@@ -1353,7 +1353,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 #endif
 	if (eConnectionState_Associated == sta_ctx->conn_info.connState) {
-		tSirSmeChanInfo chan_info = {0};
+		struct oem_channel_info chan_info = {0};
 
 		if (!pCsrRoamInfo || !pCsrRoamInfo->pBssDesc) {
 			hdd_warn("STA in associated state but pCsrRoamInfo is null");

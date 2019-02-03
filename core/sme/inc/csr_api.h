@@ -1137,7 +1137,7 @@ struct csr_roam_info {
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
 	uint8_t subnet_change_status;
 #endif
-	tSirSmeChanInfo chan_info;
+	struct oem_channel_info chan_info;
 	uint8_t target_channel;
 
 #ifdef WLAN_FEATURE_NAN
@@ -1194,7 +1194,7 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	uint8_t reassocReq;     /* set to true if reassoc */
 	/* Timing and fine Timing measurement capability clubbed together */
 	uint8_t timingMeasCap;
-	tSirSmeChanInfo chan_info;
+	struct oem_channel_info chan_info;
 	uint8_t target_channel;
 	bool ampdu;
 	bool sgi_enable;

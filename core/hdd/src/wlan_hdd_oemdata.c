@@ -682,7 +682,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,
 					 uint8_t sessionId,
-					 tSirSmeChanInfo *chan_info,
+					 struct oem_channel_info *chan_info,
 					 enum QDF_OPMODE dev_mode)
 {
 	struct sk_buff *skb;
