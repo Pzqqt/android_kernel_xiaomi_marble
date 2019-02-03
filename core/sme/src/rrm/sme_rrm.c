@@ -363,8 +363,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		}
 
 		bss_counter += j;
-		if (!result_arr || !cur_result
-		|| (bss_counter >= SIR_BCN_REPORT_MAX_BSS_DESC)) {
+		if (!result_arr || !cur_result || (bss_counter >= bss_count)) {
 			cur_result = NULL;
 			sme_err("Reached to the max/last BSS in cur_result list");
 		} else {
