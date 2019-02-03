@@ -6093,7 +6093,7 @@ static void csr_roam_synch_clean_up(struct mac_context *mac, uint8_t session_id)
  * Return: None
  */
 static void csr_roam_copy_ht_profile(tCsrRoamHTProfile *dst_profile,
-		tSirSmeHTProfile *src_profile)
+		struct ht_profile *src_profile)
 {
 	dst_profile->phymode =
 		csr_roamdot11mode_to_phymode(src_profile->dot11mode);
@@ -6363,7 +6363,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	QDF_STATUS status;
 	host_log_ibss_pkt_type *ibss_log;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile *src_profile = NULL;
+	struct ht_profile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
 #endif
 
@@ -6725,7 +6725,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	struct tag_csrscan_result *scan_res = NULL;
 	sme_qos_csr_event_indType ind_qos;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile *src_profile = NULL;
+	struct ht_profile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
 #endif
 	tCsrRoamConnectedProfile *conn_profile = NULL;
@@ -20613,7 +20613,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	uint32_t pmkid_index;
 	uint16_t len;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile *src_profile = NULL;
+	struct ht_profile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
 #endif
 

@@ -211,7 +211,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	tpSirSmeJoinReq join_reassoc_req = NULL;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile *ht_profile;
+	struct ht_profile *ht_profile;
 #endif
 	if (result_code == eSIR_SME_SUCCESS) {
 		if (session_entry->beacon != NULL) {

@@ -691,7 +691,7 @@ struct bss_description {
 typedef struct bss_description tSirBssDescription, *tpSirBssDescription;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-typedef struct sSirSmeHTProfile {
+struct ht_profile {
 	uint8_t dot11mode;
 	uint8_t htCapability;
 	uint8_t htSupportedChannelWidthSet;
@@ -700,7 +700,7 @@ typedef struct sSirSmeHTProfile {
 	uint8_t vhtCapability;
 	uint8_t apCenterChan;
 	uint8_t apChanWidth;
-} tSirSmeHTProfile;
+};
 #endif
 /* / Definition for response message to previously */
 /* / issued start BSS request */
@@ -715,7 +715,7 @@ typedef struct sSirSmeStartBssRsp {
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
 	uint32_t staId;         /* Station ID for Self */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile HTProfile;
+	struct ht_profile HTProfile;
 #endif
 	tSirBssDescription bssDescription;      /* Peer BSS description */
 } tSirSmeStartBssRsp, *tpSirSmeStartBssRsp;
@@ -1034,7 +1034,7 @@ typedef struct sSirSmeJoinRsp {
 	uint32_t max_rate_flags;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	tSirSmeHTProfile HTProfile;
+	struct ht_profile HTProfile;
 #endif
 	bool supported_nss_1x1;
 	tDot11fIEHTCaps ht_caps;

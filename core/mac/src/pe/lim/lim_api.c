@@ -1885,9 +1885,10 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
  *
  * Return: None
  */
-void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp join_rsp)
+void lim_fill_join_rsp_ht_caps(struct pe_session *session,
+			       tpSirSmeJoinRsp join_rsp)
 {
-	tSirSmeHTProfile *ht_profile;
+	struct ht_profile *ht_profile;
 
 	if (session == NULL) {
 		pe_err("Invalid Session");
