@@ -831,17 +831,18 @@ typedef struct sAniGetTsmStatsRsp {
 	void *tsmStatsReq;      /* tsm stats request backup */
 } tAniGetTsmStatsRsp, *tpAniGetTsmStatsRsp;
 
-typedef struct sSirEseBcnReportBssInfo {
+struct ese_bcn_report_bss_info {
 	tBcnReportFields bcnReportFields;
 	uint8_t ieLen;
 	uint8_t *pBuf;
-} tSirEseBcnReportBssInfo, *tpSirEseBcnReportBssInfo;
+};
 
 typedef struct sSirEseBcnReportRsp {
 	uint16_t measurementToken;
 	uint8_t flag;        /* Flag to report measurement done and more data */
 	uint8_t numBss;
-	tSirEseBcnReportBssInfo bcnRepBssInfo[SIR_BCN_REPORT_MAX_BSS_DESC];
+	struct ese_bcn_report_bss_info
+				bcnRepBssInfo[SIR_BCN_REPORT_MAX_BSS_DESC];
 } tSirEseBcnReportRsp, *tpSirEseBcnReportRsp;
 
 #define TSRS_11AG_RATE_6MBPS   0xC
