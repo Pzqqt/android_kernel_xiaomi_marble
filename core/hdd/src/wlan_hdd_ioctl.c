@@ -1489,7 +1489,7 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
 /**
  * hdd_parse_plm_cmd() - HDD Parse Plm command
  * @pValue:	Pointer to input data
- * @pPlmRequest:Pointer to output struct tpSirPlmReq
+ * @pPlmRequest:Pointer to output struct plm_req
  *
  * This function parses the plm command passed in the format
  * CCXPLMREQ<space><enable><space><dialog_token><space>
@@ -1500,7 +1500,8 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
  *
  * Return: 0 for success non-zero for failure
  */
-static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
+static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue,
+				    struct plm_req *pPlmRequest)
 {
 	uint8_t *cmdPtr = NULL;
 	int count, content = 0, ret = 0;
@@ -5637,9 +5638,9 @@ static int drv_cmd_ccx_plm_req(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpSirPlmReq pPlmRequest = NULL;
+	struct plm_req *pPlmRequest = NULL;
 
-	pPlmRequest = qdf_mem_malloc(sizeof(tSirPlmReq));
+	pPlmRequest = qdf_mem_malloc(sizeof(struct plm_req));
 	if (NULL == pPlmRequest) {
 		ret = -ENOMEM;
 		goto exit;

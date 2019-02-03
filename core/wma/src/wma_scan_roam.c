@@ -3257,7 +3257,7 @@ send_resp:
  *
  * Return: QDF status
  */
-QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
+QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm)
 {
 	struct plm_req_params params = {0};
 	uint32_t num_channels;
@@ -3327,7 +3327,7 @@ QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
  *
  * Return: QDF status
  */
-QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
+QDF_STATUS wma_plm_stop(tp_wma_handle wma, const struct plm_req *plm)
 {
 	struct plm_req_params params = {0};
 	QDF_STATUS status;
@@ -3373,15 +3373,15 @@ QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 }
 
 /**
- * wma_config_plm()- config PLM
+ * wma_config_plm() - config PLM
  * @wma: wma handle
  * @plm: plm request parameters
  *
  * Return: none
  */
-void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
+void wma_config_plm(tp_wma_handle wma, struct plm_req *plm)
 {
-	QDF_STATUS ret = 0;
+	QDF_STATUS ret;
 
 	if (NULL == plm || NULL == wma)
 		return;
@@ -3394,12 +3394,6 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
 	if (ret)
 		WMA_LOGE("%s: PLM %s failed %d", __func__,
 			 plm->enable ? "start" : "stop", ret);
-
-	/* SME expects WMA to free tpSirPlmReq memory after
-	 * processing PLM request.
-	 */
-	qdf_mem_free(plm);
-	plm = NULL;
 }
 #endif
 

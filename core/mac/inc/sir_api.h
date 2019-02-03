@@ -873,7 +873,7 @@ typedef struct sEsePEContext {
 	tEseTSMContext tsm;
 } tEsePEContext, *tpEsePEContext;
 
-typedef struct sSirPlmReq {
+struct plm_req {
 	uint16_t diag_token;    /* Dialog token */
 	uint16_t meas_token;    /* measurement token */
 	uint16_t numBursts;     /* total number of bursts */
@@ -889,7 +889,7 @@ typedef struct sSirPlmReq {
 	uint8_t plmChList[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t sessionId;
 	bool enable;
-} tSirPlmReq, *tpSirPlmReq;
+};
 
 #endif /* FEATURE_WLAN_ESE */
 

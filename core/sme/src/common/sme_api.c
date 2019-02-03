@@ -1452,7 +1452,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, tpSirPlmReq pPlmReq)
+QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *pPlmReq)
 {
 	QDF_STATUS status;
 	bool ret = false;

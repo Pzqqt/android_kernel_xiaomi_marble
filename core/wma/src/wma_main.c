@@ -8436,7 +8436,8 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case WMA_SET_PLM_REQ:
-		wma_config_plm(wma_handle, (tpSirPlmReq) msg->bodyptr);
+		wma_config_plm(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 #endif
 	case WMA_GET_STATISTICS_REQ:

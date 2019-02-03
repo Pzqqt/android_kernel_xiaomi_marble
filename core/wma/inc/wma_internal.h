@@ -1123,9 +1123,9 @@ void wma_add_ts_req(tp_wma_handle wma, struct add_ts_param *msg);
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg);
-QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
-QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
-void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
+QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm);
+QDF_STATUS wma_plm_stop(tp_wma_handle wma, const struct plm_req *plm);
+void wma_config_plm(tp_wma_handle wma, struct plm_req *plm);
 #endif
 
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
