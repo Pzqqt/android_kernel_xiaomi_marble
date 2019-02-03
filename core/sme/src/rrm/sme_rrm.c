@@ -277,8 +277,8 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	tCsrScanResultInfo *cur_result = NULL;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	struct csr_roam_info roam_info;
-	tSirEseBcnReportRsp bcn_rpt_rsp;
-	tpSirEseBcnReportRsp bcn_report = &bcn_rpt_rsp;
+	struct ese_bcn_report_rsp bcn_rpt_rsp;
+	struct ese_bcn_report_rsp *bcn_report = &bcn_rpt_rsp;
 	tpCsrEseBeaconReqParams cur_meas_req = NULL;
 	uint8_t i = 0, j = 0;
 	tBcnReportFields *bcn_rpt_fields;
@@ -296,7 +296,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	if (result_arr)
 		cur_result = result_arr[bss_counter];
 
-	qdf_mem_zero(&bcn_rpt_rsp, sizeof(tSirEseBcnReportRsp));
+	qdf_mem_zero(&bcn_rpt_rsp, sizeof(bcn_rpt_rsp));
 	do {
 		cur_meas_req = NULL;
 		for (i = 0; i < rrm_ctx->eseBcnReqInfo.numBcnReqIe; i++) {

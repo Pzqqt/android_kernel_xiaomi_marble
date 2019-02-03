@@ -1098,7 +1098,7 @@ struct csr_roam_info {
 	struct tsm_ie tsm_ie;
 	uint32_t timestamp[2];
 	uint16_t tsmRoamDelay;
-	tSirEseBcnReportRsp *pEseBcnReportRsp;
+	struct ese_bcn_report_rsp *pEseBcnReportRsp;
 #endif
 	void *pRemainCtx;
 	uint32_t roc_scan_id;

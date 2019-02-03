@@ -837,13 +837,13 @@ struct ese_bcn_report_bss_info {
 	uint8_t *pBuf;
 };
 
-typedef struct sSirEseBcnReportRsp {
+struct ese_bcn_report_rsp {
 	uint16_t measurementToken;
 	uint8_t flag;        /* Flag to report measurement done and more data */
 	uint8_t numBss;
 	struct ese_bcn_report_bss_info
 				bcnRepBssInfo[SIR_BCN_REPORT_MAX_BSS_DESC];
-} tSirEseBcnReportRsp, *tpSirEseBcnReportRsp;
+};
 
 #define TSRS_11AG_RATE_6MBPS   0xC
 #define TSRS_11B_RATE_5_5MBPS  0xB
