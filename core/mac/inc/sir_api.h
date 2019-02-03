@@ -853,11 +853,12 @@ struct ese_tsrs_ie {
 	uint8_t rates[8];
 };
 
-typedef struct sSirMacESETSMIE {
+struct ese_tsm_ie {
 	uint8_t tsid;
 	uint8_t state;
 	uint16_t msmt_interval;
-} tSirMacESETSMIE;
+};
+
 typedef struct sTSMStats {
 	uint8_t tid;
 	struct qdf_mac_addr bssid;
@@ -865,7 +866,7 @@ typedef struct sTSMStats {
 } tTSMStats, *tpTSMStats;
 typedef struct sEseTSMContext {
 	uint8_t tid;
-	tSirMacESETSMIE tsmInfo;
+	struct ese_tsm_ie tsmInfo;
 	tTrafStrmMetrics tsmMetrics;
 } tEseTSMContext, *tpEseTSMContext;
 typedef struct sEsePEContext {
@@ -1597,7 +1598,7 @@ typedef struct sSirAddtsRspInfo {
 	uint8_t tclasProc;
 	tSirMacScheduleIE schedule;
 #ifdef FEATURE_WLAN_ESE
-	tSirMacESETSMIE tsmIE;
+	struct ese_tsm_ie tsmIE;
 	uint8_t tsmPresent:1;
 #endif
 	uint8_t wmeTspecPresent:1;

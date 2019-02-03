@@ -759,7 +759,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 		session->eseContext.tsm.tid =
 			addts.tspec.tsinfo.traffic.userPrio;
 		qdf_mem_copy(&session->eseContext.tsm.tsmInfo,
-			     &addts.tsmIE, sizeof(tSirMacESETSMIE));
+			     &addts.tsmIE, sizeof(struct ese_tsm_ie));
 		lim_send_sme_tsm_ie_ind(mac_ctx, session, addts.tsmIE.tsid,
 					addts.tsmIE.state,
 					addts.tsmIE.msmt_interval);

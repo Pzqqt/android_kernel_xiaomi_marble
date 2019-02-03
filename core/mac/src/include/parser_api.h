@@ -380,7 +380,7 @@ typedef struct sSirAssocRsp {
 #ifdef FEATURE_WLAN_ESE
 	uint8_t num_tspecs;
 	tDot11fIEWMMTSPEC TSPECInfo[SIR_ESE_MAX_TSPEC_IES];
-	tSirMacESETSMIE tsmIE;
+	struct ese_tsm_ie tsmIE;
 #endif
 
 	uint8_t suppRatesPresent;

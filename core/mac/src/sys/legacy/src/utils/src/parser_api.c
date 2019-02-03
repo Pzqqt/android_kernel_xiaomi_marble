@@ -2921,7 +2921,7 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		pAssocRsp->tsmPresent = 1;
 		qdf_mem_copy(&pAssocRsp->tsmIE.tsid,
 				&ar->ESETrafStrmMet.tsid,
-				sizeof(tSirMacESETSMIE));
+				sizeof(struct ese_tsm_ie));
 	}
 #endif
 
@@ -4341,7 +4341,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 			pAddTs->tsmPresent = 1;
 			qdf_mem_copy(&pAddTs->tsmIE.tsid,
 				     &addts.ESETrafStrmMet.tsid,
-				     sizeof(tSirMacESETSMIE));
+				     sizeof(struct ese_tsm_ie));
 		}
 #endif
 		if (addts.Schedule.present) {
@@ -4406,7 +4406,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 			pAddTs->tsmPresent = 1;
 			qdf_mem_copy(&pAddTs->tsmIE.tsid,
 				     &wmmaddts.ESETrafStrmMet.tsid,
-				     sizeof(tSirMacESETSMIE));
+				     sizeof(struct ese_tsm_ie));
 		}
 #endif
 
