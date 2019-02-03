@@ -10533,12 +10533,12 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info_ptr = NULL;
-	tSirSmeAssocInd *pAssocInd;
+	struct assoc_ind *pAssocInd;
 	struct csr_roam_info roam_info;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));
 	sme_debug("Receive WNI_SME_ASSOC_IND from SME");
-	pAssocInd = (tSirSmeAssocInd *) msg_ptr;
+	pAssocInd = (struct assoc_ind *) msg_ptr;
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 				(struct qdf_mac_addr *) pAssocInd->bssId,
 				&sessionId);
@@ -15479,8 +15479,9 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 	return status;
 }
 
-QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac, tpSirSmeAssocInd
-				pAssocInd, QDF_STATUS Halstatus)
+QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
+				  struct assoc_ind *pAssocInd,
+				  QDF_STATUS Halstatus)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeAssocCnf *pMsg;
@@ -15517,7 +15518,7 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac, tpSirSmeAssocInd
 }
 
 QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
-						     tpSirSmeAssocInd pAssocInd,
+						     struct assoc_ind *pAssocInd,
 						     QDF_STATUS Halstatus,
 						     uint8_t sessionId)
 {

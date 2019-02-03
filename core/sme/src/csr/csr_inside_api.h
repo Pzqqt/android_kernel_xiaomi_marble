@@ -311,15 +311,15 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
 					tpSirSmeDisassocInd pDisassocInd);
 QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 				      tpSirSmeDeauthInd pDeauthInd);
-QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac, tpSirSmeAssocInd
-				pAssocInd,
+QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
+				  struct assoc_ind *pAssocInd,
 				  QDF_STATUS status);
 QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
-						     tpSirSmeAssocInd pAssocInd,
+						     struct assoc_ind *pAssocInd,
 						     QDF_STATUS Halstatus,
 						     uint8_t sessionId);
 QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac,
-					uint32_t sessionId,
+					 uint32_t sessionId,
 					 eCsrRoamBssType bssType,
 					 struct csr_roamstart_bssparams *pParam,
 					 tSirBssDescription *pBssDesc);

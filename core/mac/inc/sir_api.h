@@ -1078,7 +1078,7 @@ enum sir_sme_phy_mode {
 
 /* / Definition for Association indication from peer */
 /* / MAC ---> */
-typedef struct sSirSmeAssocInd {
+struct assoc_ind {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_IND */
 	uint16_t length;
 	uint8_t sessionId;
@@ -1127,7 +1127,7 @@ typedef struct sSirSmeAssocInd {
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEVHTCaps VHTCaps;
 	tSirMacCapabilityInfo capability_info;
-} tSirSmeAssocInd, *tpSirSmeAssocInd;
+};
 
 /* / Definition for Association confirm */
 /* / ---> MAC */

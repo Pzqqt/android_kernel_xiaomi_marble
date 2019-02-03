@@ -678,10 +678,10 @@ void lim_process_mlm_assoc_cnf(struct mac_context *mac_ctx,
 
 static void
 lim_fill_assoc_ind_params(struct mac_context *mac_ctx,
-	tpLimMlmAssocInd assoc_ind, tSirSmeAssocInd *sme_assoc_ind,
+	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
 	struct pe_session *session_entry)
 {
-	sme_assoc_ind->length = sizeof(tSirSmeAssocInd);
+	sme_assoc_ind->length = sizeof(struct assoc_ind);
 	sme_assoc_ind->sessionId = session_entry->smeSessionId;
 
 	/* Required for indicating the frames to upper layer */
@@ -781,7 +781,7 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	uint32_t len;
 	struct scheduler_msg msg = {0};
-	tSirSmeAssocInd *pSirSmeAssocInd;
+	struct assoc_ind *pSirSmeAssocInd;
 	tpDphHashNode sta = 0;
 	struct pe_session *pe_session;
 
@@ -797,7 +797,7 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 		return;
 	}
 	/* / Inform Host of STA association */
-	len = sizeof(tSirSmeAssocInd);
+	len = sizeof(struct assoc_ind);
 	pSirSmeAssocInd = qdf_mem_malloc(len);
 	if (NULL == pSirSmeAssocInd) {
 		pe_err("call to AllocateMemory failed for eWNI_SME_ASSOC_IND");
