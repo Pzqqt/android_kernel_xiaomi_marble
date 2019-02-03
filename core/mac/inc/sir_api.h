@@ -785,7 +785,7 @@ struct tsm_ie {
 };
 
 typedef struct sSirSmeTsmIEInd {
-	struct tsm_ie tsmIe;
+	struct tsm_ie tsm_ie;
 	uint8_t sessionId;
 } tSirSmeTsmIEInd, *tpSirSmeTsmIEInd;
 typedef struct sAniTrafStrmMetrics {

@@ -1556,9 +1556,9 @@ static QDF_STATUS sme_tsm_ie_ind(struct mac_context *mac,
 	struct csr_roam_info roam_info = { 0 };
 	uint32_t SessionId = pSmeTsmIeInd->sessionId;
 
-	roam_info.tsmIe.tsid = pSmeTsmIeInd->tsmIe.tsid;
-	roam_info.tsmIe.state = pSmeTsmIeInd->tsmIe.state;
-	roam_info.tsmIe.msmt_interval = pSmeTsmIeInd->tsmIe.msmt_interval;
+	roam_info.tsm_ie.tsid = pSmeTsmIeInd->tsm_ie.tsid;
+	roam_info.tsm_ie.state = pSmeTsmIeInd->tsm_ie.state;
+	roam_info.tsm_ie.msmt_interval = pSmeTsmIeInd->tsm_ie.msmt_interval;
 	/* forward the tsm ie information to HDD */
 	csr_roam_call_callback(mac, SessionId, &roam_info, 0,
 			       eCSR_ROAM_TSM_IE_IND, 0);

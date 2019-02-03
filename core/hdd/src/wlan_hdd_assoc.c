@@ -4878,9 +4878,9 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_ROAM_TSM_IE_IND:
 		if (roam_info)
-			hdd_indicate_tsm_ie(adapter, roam_info->tsmIe.tsid,
-				    roam_info->tsmIe.state,
-				    roam_info->tsmIe.msmt_interval);
+			hdd_indicate_tsm_ie(adapter, roam_info->tsm_ie.tsid,
+				    roam_info->tsm_ie.state,
+				    roam_info->tsm_ie.msmt_interval);
 		break;
 
 	case eCSR_ROAM_CCKM_PREAUTH_NOTIFY:

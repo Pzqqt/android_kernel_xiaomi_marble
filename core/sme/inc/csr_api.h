@@ -1095,7 +1095,7 @@ struct csr_roam_info {
 	uint32_t dtimPeriod;
 #ifdef FEATURE_WLAN_ESE
 	bool isESEAssoc;
-	struct tsm_ie tsmIe;
+	struct tsm_ie tsm_ie;
 	uint32_t timestamp[2];
 	uint16_t tsmRoamDelay;
 	tSirEseBcnReportRsp *pEseBcnReportRsp;

@@ -4757,9 +4757,9 @@ void lim_send_sme_tsm_ie_ind(struct mac_context *mac, struct pe_session *pe_sess
 		return;
 
 	pSirSmeTsmIeInd->sessionId = pe_session->smeSessionId;
-	pSirSmeTsmIeInd->tsmIe.tsid = tid;
-	pSirSmeTsmIeInd->tsmIe.state = state;
-	pSirSmeTsmIeInd->tsmIe.msmt_interval = measInterval;
+	pSirSmeTsmIeInd->tsm_ie.tsid = tid;
+	pSirSmeTsmIeInd->tsm_ie.state = state;
+	pSirSmeTsmIeInd->tsm_ie.msmt_interval = measInterval;
 
 	mmhMsg.type = eWNI_SME_TSM_IE_IND;
 	mmhMsg.bodyptr = pSirSmeTsmIeInd;
