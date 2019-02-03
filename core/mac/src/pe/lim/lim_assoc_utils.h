@@ -235,13 +235,27 @@ void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t fr
 					     struct pe_session *pe_session);
 #endif
 
+/**
+ * lim_send_sme_tsm_ie_ind() - Send TSM IE information to SME
+ * @mac: Global MAC context
+ * @pe_session: PE session context
+ * @tid: traffic id
+ * @state: tsm state (enabled/disabled)
+ * @measurement_interval: measurement interval
+ *
+ * Return: void
+ */
 #ifdef FEATURE_WLAN_ESE
-void lim_send_sme_tsm_ie_ind(struct mac_context *mac, struct pe_session *pe_session,
-			     uint8_t tid, uint8_t state, uint16_t measInterval);
+void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
+			     struct pe_session *pe_session,
+			     uint8_t tid, uint8_t state,
+			     uint16_t measurement_interval);
 #else
-static inline void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
-	struct pe_session *pe_session, uint8_t tid,
-	uint8_t state, uint16_t measInterval)
+static inline
+void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
+			     struct pe_session *pe_session,
+			     uint8_t tid, uint8_t state,
+			     uint16_t measurement_interval)
 {}
 #endif /* FEATURE_WLAN_ESE */
 

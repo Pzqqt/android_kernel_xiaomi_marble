@@ -4733,40 +4733,30 @@ void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t fr
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-/** -------------------------------------------------------------
-   \fn     lim_send_sme_tsm_ie_ind
-   \brief  Forwards the TSM IE information to SME.
-   \param  struct mac_context *   mac
-   \param  pe_session - PE session context
-   \param  tid - traffic id
-   \param  state - tsm state (enabled/disabled)
-   \param  measurementInterval - measurement interval
-   \return none
-   -------------------------------------------------------------*/
 void lim_send_sme_tsm_ie_ind(struct mac_context *mac,
 			     struct pe_session *pe_session,
-			     uint8_t tid, uint8_t state, uint16_t measInterval)
+			     uint8_t tid, uint8_t state,
+			     uint16_t measurement_interval)
 {
-	struct scheduler_msg mmhMsg = {0};
-	struct tsm_ie_ind *pSirSmeTsmIeInd = NULL;
+	struct scheduler_msg msg = {0};
+	struct tsm_ie_ind *tsm_ie_ind;
 
 	if (!mac || !pe_session)
 		return;
 
-	pSirSmeTsmIeInd = qdf_mem_malloc(sizeof(*pSirSmeTsmIeInd));
-	if (!pSirSmeTsmIeInd)
+	tsm_ie_ind = qdf_mem_malloc(sizeof(*tsm_ie_ind));
+	if (!tsm_ie_ind)
 		return;
 
-	pSirSmeTsmIeInd->sessionId = pe_session->smeSessionId;
-	pSirSmeTsmIeInd->tsm_ie.tsid = tid;
-	pSirSmeTsmIeInd->tsm_ie.state = state;
-	pSirSmeTsmIeInd->tsm_ie.msmt_interval = measInterval;
+	tsm_ie_ind->sessionId = pe_session->smeSessionId;
+	tsm_ie_ind->tsm_ie.tsid = tid;
+	tsm_ie_ind->tsm_ie.state = state;
+	tsm_ie_ind->tsm_ie.msmt_interval = measurement_interval;
 
-	mmhMsg.type = eWNI_SME_TSM_IE_IND;
-	mmhMsg.bodyptr = pSirSmeTsmIeInd;
-	mmhMsg.bodyval = 0;
+	msg.type = eWNI_SME_TSM_IE_IND;
+	msg.bodyptr = tsm_ie_ind;
+	msg.bodyval = 0;
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
-	return;
+	lim_sys_process_mmh_msg_api(mac, &msg);
 }
 #endif /* FEATURE_WLAN_ESE */
