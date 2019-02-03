@@ -1349,7 +1349,7 @@ QDF_STATUS rrm_cleanup(struct mac_context *mac)
  * Return: None
  */
 void lim_update_rrm_capability(struct mac_context *mac_ctx,
-			       tpSirSmeJoinReq join_req)
+			       struct join_req *join_req)
 {
 	mac_ctx->rrm.rrmPEContext.rrmEnable = join_req->rrm_config.rrm_enabled;
 	qdf_mem_copy(&mac_ctx->rrm.rrmPEContext.rrmEnabledCaps,

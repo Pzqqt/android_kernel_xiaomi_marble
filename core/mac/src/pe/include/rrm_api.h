@@ -82,5 +82,5 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 			       tpSirBeaconReportXmitInd beacon_xmit_ind);
 
 void lim_update_rrm_capability(struct mac_context *mac_ctx,
-			       tpSirSmeJoinReq join_req);
+			       struct join_req *join_req);
 #endif

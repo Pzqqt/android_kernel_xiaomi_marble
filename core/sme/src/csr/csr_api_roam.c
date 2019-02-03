@@ -2296,8 +2296,8 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
  *
  * Return: None
  */
-static void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
-		struct csr_roam_session *session)
+static void csr_join_req_copy_he_cap(struct join_req *csr_join_req,
+				     struct csr_roam_session *session)
 {
 	qdf_mem_copy(&csr_join_req->he_config, &session->he_config,
 		     sizeof(session->he_config));
@@ -2345,7 +2345,7 @@ void csr_update_session_he_cap(struct mac_context *mac_ctx,
 #define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)   /* no op */
 
 static inline
-void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
+void csr_join_req_copy_he_cap(struct join_req *csr_join_req,
 			      struct csr_roam_session *session)
 {
 }
@@ -14102,7 +14102,7 @@ bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
  */
 static void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
 				  tDot11fBeaconIEs *ies,
-				  tSirSmeJoinReq *csr_join_req)
+				  struct join_req *csr_join_req)
 {
 	sme_debug("mgmt encryption type %d MFPe %d MFPr %d",
 		 profile->mgmt_encryption_type,
@@ -14122,7 +14122,7 @@ static void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
 #else
 static inline void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
 					 tDot11fBeaconIEs *pIes,
-					 tSirSmeJoinReq *csr_join_req)
+					 struct join_req *csr_join_req)
 {
 }
 #endif
@@ -14136,7 +14136,7 @@ static inline void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
  * Return: None
  */
 static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
-					    tSirSmeJoinReq *csr_join_req)
+					    struct join_req *csr_join_req)
 {
 	if (!profile->fils_con_info)
 		return;
@@ -14152,7 +14152,7 @@ static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
 }
 #else
 static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
-					    tSirSmeJoinReq *csr_join_req)
+					    struct join_req *csr_join_req)
 { }
 #endif
 
@@ -14164,7 +14164,7 @@ static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
  *
  * Return: None
  */
-static void csr_update_sae_config(tSirSmeJoinReq *csr_join_req,
+static void csr_update_sae_config(struct join_req *csr_join_req,
 	struct mac_context *mac, struct csr_roam_session *session)
 {
 	tPmkidCacheInfo pmkid_cache;
@@ -14181,7 +14181,7 @@ static void csr_update_sae_config(tSirSmeJoinReq *csr_join_req,
 		MAC_ADDR_ARRAY(csr_join_req->bssDescription.bssId));
 }
 #else
-static void csr_update_sae_config(tSirSmeJoinReq *csr_join_req,
+static void csr_update_sae_config(struct join_req *csr_join_req,
 	struct mac_context *mac, struct csr_roam_session *session)
 { }
 #endif
@@ -14319,9 +14319,9 @@ static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
- * Both sides will access the data structure "tSirSmeJoinReq".
- * The rule is, while the components of "tSirSmeJoinReq" can be accessed in the
- * regular way like tSirSmeJoinReq.assocType, this guideline stops at component
+ * Both sides will access the data structure "struct join_req".
+ * The rule is, while the components of "struct join_req" can be accessed in the
+ * regular way like struct join_req.assocType, this guideline stops at component
  * tSirRSNie;
  * any acces to the components after tSirRSNie is forbidden because the space
  * from tSirRSNie is squeezed with the component "tSirBssDescription" and since
@@ -14342,7 +14342,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint32_t dw_tmp, dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
 	uint8_t txBFCsnValue = 0;
-	tSirSmeJoinReq *csr_join_req;
+	struct join_req *csr_join_req;
 	tSirMacCapabilityInfo *pAP_capabilityInfo;
 	bool fTmp;
 	int8_t pwrLimit = 0;
@@ -14383,16 +14383,16 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		qdf_mem_copy(&pSession->joinFailStatusCode.bssId,
 		       &pBssDescription->bssId, sizeof(tSirMacAddr));
 		/*
-		 * the tSirSmeJoinReq which includes a single
+		 * the struct join_req which includes a single
 		 * bssDescription. it includes a single uint32_t for the
 		 * IE fields, but the length field in the bssDescription
 		 * needs to be interpreted to determine length of IE fields
-		 * So, take the size of the tSirSmeJoinReq, subtract  size of
+		 * So, take the size of the struct join_req, subtract  size of
 		 * bssDescription, add the number of bytes indicated by the
 		 * length field of the bssDescription, add the size of length
 		 * field because it not included in the length field.
 		 */
-		msgLen = sizeof(tSirSmeJoinReq) - sizeof(*pBssDescription) +
+		msgLen = sizeof(struct join_req) - sizeof(*pBssDescription) +
 				pBssDescription->length +
 				sizeof(pBssDescription->length) +
 				/*

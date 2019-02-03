@@ -6992,7 +6992,7 @@ void lim_copy_bss_he_cap(struct pe_session *session,
 }
 
 void lim_copy_join_req_he_cap(struct pe_session *session,
-			      tpSirSmeJoinReq sme_join_req)
+			      struct join_req *sme_join_req)
 {
 	qdf_mem_copy(&(session->he_config), &(sme_join_req->he_config),
 		     sizeof(session->he_config));

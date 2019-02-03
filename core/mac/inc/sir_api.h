@@ -900,7 +900,7 @@ struct plm_req {
 /* / The Serdes function is the same and its */
 /* / shared with REASSOC. So if we add a field */
 /*  here and dont add it in REASSOC REQ. It will BREAK!!! REASSOC. */
-typedef struct sSirSmeJoinReq {
+struct join_req {
 	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
 	uint16_t length;
 	uint8_t sessionId;
@@ -996,10 +996,10 @@ typedef struct sSirSmeJoinReq {
 	tSirBssDescription bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
-	 * tSirSmeJoinReq as it has ieFields followed after this bss
+	 * join_req as it has ieFields followed after this bss
 	 * description. Adding a variable after this corrupts the ieFields
 	 */
-} tSirSmeJoinReq, *tpSirSmeJoinReq;
+};
 
 /* / Definition for response message to previously issued join request */
 /* / MAC ---> */

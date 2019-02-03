@@ -1115,7 +1115,7 @@ void lim_get_random_bssid(struct mac_context *mac, uint8_t *data)
  * Return: None
  */
 static void lim_update_sae_config(struct pe_session *session,
-		tpSirSmeJoinReq sme_join_req)
+				  struct join_req *sme_join_req)
 {
 	session->sae_pmk_cached = sme_join_req->sae_pmk_cached;
 
@@ -1125,7 +1125,7 @@ static void lim_update_sae_config(struct pe_session *session,
 }
 #else
 static inline void lim_update_sae_config(struct pe_session *session,
-		tpSirSmeJoinReq sme_join_req)
+					 struct join_req *sme_join_req)
 {}
 #endif
 
@@ -1241,7 +1241,7 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 static void
 __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
-	tpSirSmeJoinReq sme_join_req = NULL;
+	struct join_req *sme_join_req = NULL;
 	tLimMlmJoinReq *mlm_join_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	uint32_t val = 0;
@@ -1756,11 +1756,11 @@ uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
  */
 
 static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
-		uint32_t *msg_buf)
+					  uint32_t *msg_buf)
 {
 	uint16_t caps;
 	uint32_t val;
-	tpSirSmeJoinReq reassoc_req = NULL;
+	struct join_req *reassoc_req;
 	tLimMlmReassocReq *mlm_reassoc_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	struct pe_session *session_entry = NULL;
@@ -1778,10 +1778,9 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
 	}
-	(void)qdf_mem_copy((void *)reassoc_req, (void *)msg_buf, size);
+	qdf_mem_copy(reassoc_req, msg_buf, size);
 
-	if (!lim_is_sme_join_req_valid(mac_ctx,
-				(tpSirSmeJoinReq)reassoc_req)) {
+	if (!lim_is_sme_join_req_valid(mac_ctx, reassoc_req)) {
 		/*
 		 * Received invalid eWNI_SME_REASSOC_REQ
 		 */

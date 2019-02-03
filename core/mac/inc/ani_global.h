@@ -516,17 +516,7 @@ typedef struct sAniSirLim {
 #endif
 	/* ////////////////////////////////////////     MISC RELATED END /////////////////////////////////////////// */
 
-	/* ////////////////////////////////////////     ASSOC RELATED START /////////////////////////////////////////// */
-	/* Place holder for JoinReq message */
-	/* received by SME state machine */
-	/* tpSirSmeJoinReq       gpLimJoinReq; */
-
-	/* Place holder for ReassocReq message */
-	/* received by SME state machine */
-	/* tpSirSmeReassocReq    gpLimReassocReq;  sep23 review */
-
-	/* Current Authentication type used at STA */
-	/* tAniAuthType        gLimCurrentAuthType; */
+	/* ASSOC RELATED START */
 
 	/* Place holder for current authentication request */
 	/* being handled */
@@ -553,7 +543,7 @@ typedef struct sAniSirLim {
 	tCacheParams protStaOverlapCache[LIM_PROT_STA_OVERLAP_CACHE_SIZE];
 	tCacheParams protStaCache[LIM_PROT_STA_CACHE_SIZE];
 
-	/* ////////////////////////////////////////     ASSOC RELATED END /////////////////////////////////////////// */
+	/* ASSOC RELATED END */
 
 	/* //////////////////////////////  HT RELATED           ////////////////////////////////////////// */
 	/* */

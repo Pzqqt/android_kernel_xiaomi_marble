@@ -453,27 +453,8 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 	return true;
 }
 
-/**
- * lim_is_sme_join_req_valid()
- *
- ***FUNCTION:
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_JOIN_REQ message from application.
- *
- ***LOGIC:
- * Message validity checks are performed in this function
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac       Pointer to Global MAC structure
- * @param  pJoinReq   Pointer to received SME_JOIN_REQ message
- * @return true  when received SME_JOIN_REQ is formatted correctly
- *         false otherwise
- */
-
-uint8_t lim_is_sme_join_req_valid(struct mac_context *mac, tpSirSmeJoinReq pJoinReq)
+uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
+				  struct join_req *pJoinReq)
 {
 	uint8_t valid = true;
 

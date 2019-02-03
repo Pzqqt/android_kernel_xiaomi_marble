@@ -957,7 +957,7 @@ void lim_copy_bss_he_cap(struct pe_session *session,
  * Return: None
  */
 void lim_copy_join_req_he_cap(struct pe_session *session,
-			tpSirSmeJoinReq sme_join_req);
+			      struct join_req *sme_join_req);
 
 /**
  * lim_log_he_op() - Print HE Operation
@@ -1200,7 +1200,7 @@ void lim_copy_bss_he_cap(struct pe_session *session,
 }
 
 static inline void lim_copy_join_req_he_cap(struct pe_session *session,
-			tpSirSmeJoinReq sme_join_req)
+			struct join_req *sme_join_req)
 {
 }
 

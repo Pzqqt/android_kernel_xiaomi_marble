@@ -208,7 +208,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	uint16_t bss_ie_len;
 	void *bss_ies;
 	bool is_vendor_ap_1_present;
-	tpSirSmeJoinReq join_reassoc_req = NULL;
+	struct join_req *join_reassoc_req = NULL;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	struct ht_profile *ht_profile;

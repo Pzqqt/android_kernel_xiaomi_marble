@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,7 +88,8 @@ QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
  *
  * Return: None
  */
-void lim_update_fils_config(struct pe_session *session, tpSirSmeJoinReq sme_join_req);
+void lim_update_fils_config(struct pe_session *session,
+			    struct join_req *sme_join_req);
 
 /**
  * lim_create_fils_auth_data()- This API creates the fils auth data
@@ -231,8 +232,9 @@ static inline bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 	return true;
 }
 
-static inline void
-lim_update_fils_config(struct pe_session *session, tpSirSmeJoinReq sme_join_req)
+static inline
+void lim_update_fils_config(struct pe_session *session,
+			    struct join_req *sme_join_req)
 { }
 
 static inline uint32_t lim_create_fils_auth_data(struct mac_context *mac_ctx,

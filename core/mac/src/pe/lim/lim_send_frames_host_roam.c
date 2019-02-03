@@ -183,7 +183,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	/*
 	 * The join request *should* contain zero or one of the WPA and RSN
 	 * IEs.  The payload send along with the request is a
-	 * 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie':
+	 * 'struct join_req'; the IE portion is held inside a 'tSirRSNie':
 	 *
 	 *     typedef struct sSirRSNie
 	 *     {
@@ -636,7 +636,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 		populate_dot11f_rrm_ie(mac, &frm->RRMEnabledCap, pe_session);
 	/* The join request *should* contain zero or one of the WPA and RSN */
 	/* IEs.  The payload send along with the request is a */
-	/* 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie': */
+	/* 'struct join_req'; the IE portion is held inside a 'tSirRSNie': */
 
 	/*     typedef struct sSirRSNie */
 	/*     { */

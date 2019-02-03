@@ -1721,7 +1721,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	/*
 	 * The join request *should* contain zero or one of the WPA and RSN
 	 * IEs.  The payload send along with the request is a
-	 * 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie':
+	 * 'struct join_req'; the IE portion is held inside a 'tSirRSNie':
 	 *     typedef struct sSirRSNie
 	 *     {
 	 *         uint16_t       length;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1106,16 +1106,8 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 	return true;
 }
 
-/**
- * lim_update_fils_config()- This API update fils session info to csr config
- * from join request.
- * @session: PE session
- * @sme_join_req: pointer to join request
- *
- * Return: None
- */
 void lim_update_fils_config(struct pe_session *session,
-		tpSirSmeJoinReq sme_join_req)
+			    struct join_req *sme_join_req)
 {
 	struct pe_fils_session *csr_fils_info;
 	struct cds_fils_connection_info *fils_config_info;
