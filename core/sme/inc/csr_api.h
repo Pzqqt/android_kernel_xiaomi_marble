@@ -1424,11 +1424,11 @@ typedef void (*csr_link_status_callback)(uint8_t status, void *context);
 #ifdef FEATURE_WLAN_TDLS
 void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 			     struct csr_roam_info *roam_info,
-			     tpSirSmeJoinRsp join_rsp);
+			     struct join_rsp *join_rsp);
 #else
 static inline void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 					   struct csr_roam_info *roam_info,
-					   tpSirSmeJoinRsp join_rsp)
+					   struct join_rsp *join_rsp)
 {}
 #endif
 

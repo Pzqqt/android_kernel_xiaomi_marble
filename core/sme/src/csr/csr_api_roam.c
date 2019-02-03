@@ -6562,7 +6562,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
  */
 static QDF_STATUS populate_fils_params_join_rsp(struct mac_context *mac_ctx,
 						struct csr_roam_info *roam_info,
-						tSirSmeJoinRsp *join_rsp)
+						struct join_rsp *join_rsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct fils_join_rsp_params *roam_fils_info,
@@ -6646,7 +6646,7 @@ static void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 					uint32_t session_id,
 					struct csr_roam_info *roam_info,
 					tSirBssDescription *bss_desc,
-					tSirSmeJoinRsp *join_rsp)
+					struct join_rsp *join_rsp)
 {
 	tSirMacAddr bcast_mac = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	QDF_STATUS status;
@@ -6696,7 +6696,7 @@ static inline void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 					     uint32_t session_id,
 					     struct csr_roam_info *roam_info,
 					     tSirBssDescription *bss_desc,
-					     tSirSmeJoinRsp *join_rsp)
+					     struct join_rsp *join_rsp)
 {}
 #endif
 
@@ -6732,7 +6732,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	tDot11fBeaconIEs *ies_ptr = NULL;
 	struct csr_roam_info roam_info;
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
-	tSirSmeJoinRsp *join_rsp = (tSirSmeJoinRsp *) context;
+	struct join_rsp *join_rsp = context;
 	uint32_t len;
 	struct bss_info bss_info;
 
@@ -8537,7 +8537,7 @@ bool is_disconnect_pending(struct mac_context *pmac,
 }
 
 static void csr_roam_join_rsp_processor(struct mac_context *mac,
-					tSirSmeJoinRsp *pSmeJoinRsp)
+					struct join_rsp *pSmeJoinRsp)
 {
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
@@ -8946,7 +8946,7 @@ csr_roaming_state_config_cnf_processor(struct mac_context *mac_ctx,
 }
 
 static void csr_roam_roaming_state_reassoc_rsp_processor(struct mac_context *mac,
-						tpSirSmeJoinRsp pSmeJoinRsp)
+						struct join_rsp *pSmeJoinRsp)
 {
 	enum csr_roamcomplete_result result;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
@@ -9456,13 +9456,13 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		if (CSR_IS_ROAM_SUBSTATE_JOIN_REQ(mac, pSmeRsp->sessionId))
 			/* We sent a JOIN_REQ */
 			csr_roam_join_rsp_processor(mac,
-						    (tSirSmeJoinRsp *) pSmeRsp);
+						    (struct join_rsp *)pSmeRsp);
 		break;
 	case eWNI_SME_REASSOC_RSP:
 		/* or the Reassociation response message... */
 		if (CSR_IS_ROAM_SUBSTATE_REASSOC_REQ(mac, pSmeRsp->sessionId))
 			csr_roam_roaming_state_reassoc_rsp_processor(mac,
-						(tpSirSmeJoinRsp) pSmeRsp);
+						(struct join_rsp *)pSmeRsp);
 		break;
 	case eWNI_SME_STOP_BSS_RSP:
 		/* or the Stop Bss response message... */
@@ -20558,7 +20558,7 @@ fail:
  */
 void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 			     struct csr_roam_info *roam_info,
-			     tpSirSmeJoinRsp join_rsp)
+			     struct join_rsp *join_rsp)
 {
 	roam_info->tdls_prohibited = join_rsp->tdls_prohibited;
 	roam_info->tdls_chan_swit_prohibited =

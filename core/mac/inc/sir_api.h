@@ -1003,7 +1003,7 @@ struct join_req {
 
 /* / Definition for response message to previously issued join request */
 /* / MAC ---> */
-typedef struct sSirSmeJoinRsp {
+struct join_rsp {
 	uint16_t messageType;   /* eWNI_SME_JOIN_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1054,7 +1054,7 @@ typedef struct sSirSmeJoinRsp {
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
 	uint8_t frames[1];
-} tSirSmeJoinRsp, *tpSirSmeJoinRsp;
+};
 
 typedef struct sSirSmeChanInfo {
 	uint8_t chan_id;
@@ -3153,7 +3153,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint16_t next_erp_seq_num;
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
 	void *add_bss_params;
-	tpSirSmeJoinRsp join_rsp;
+	struct join_rsp *join_rsp;
 	uint16_t aid;
 	struct sir_hw_mode_trans_ind hw_mode_trans_ind;
 	uint8_t nss;

@@ -353,10 +353,12 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *, uint32_t, uint32_t *)
  */
 void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp rsp);
+void lim_fill_join_rsp_ht_caps(struct pe_session *session,
+			       struct join_rsp *rsp);
 #else
-static inline void lim_fill_join_rsp_ht_caps(struct pe_session *session,
-	tpSirSmeJoinRsp rsp)
+static inline
+void lim_fill_join_rsp_ht_caps(struct pe_session *session,
+			       struct join_rsp *rsp)
 {}
 #endif
 QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,

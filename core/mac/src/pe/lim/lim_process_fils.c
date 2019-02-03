@@ -1233,7 +1233,7 @@ uint32_t lim_create_fils_auth_data(struct mac_context *mac_ctx,
 
 void populate_fils_connect_params(struct mac_context *mac_ctx,
 				  struct pe_session *session,
-				  tpSirSmeJoinRsp sme_join_rsp)
+				  struct join_rsp *sme_join_rsp)
 {
 	struct fils_join_rsp_params *fils_join_rsp;
 	struct pe_fils_session *fils_info = session->fils_info;

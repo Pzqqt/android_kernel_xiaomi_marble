@@ -56,10 +56,6 @@
 #include "lim_process_fils.h"
 #include "wma.h"
 
-static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
-	struct pe_session *session_entry, tSirResultCodes result_code,
-	tpSirSmeJoinRsp sme_join_rsp);
-
 /**
  * lim_send_sme_rsp() - Send Response to upper layers
  * @mac_ctx:          Pointer to Global MAC structure
@@ -165,21 +161,21 @@ uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx, tpDphHashNode sta_d
 
 /**
  * lim_send_sme_join_reassoc_rsp_after_resume() - Send Response to SME
- * @mac_ctx          Pointer to Global MAC structure
- * @status           Resume link status
- * @ctx              context passed while calling resmune link.
- *                   (join response to be sent)
+ * @mac_ctx:      Pointer to Global MAC structure
+ * @status:       Resume link status
+ * @sme_join_rsp: Join response to be sent
  *
  * This function is called to send Join/Reassoc rsp
  * message to SME after the resume link.
  *
  * Return: None
  */
-static void lim_send_sme_join_reassoc_rsp_after_resume(struct mac_context *mac_ctx,
-	QDF_STATUS status, uint32_t *ctx)
+static void
+lim_send_sme_join_reassoc_rsp_after_resume(struct mac_context *mac_ctx,
+					   QDF_STATUS status,
+					   struct join_rsp *sme_join_rsp)
 {
 	struct scheduler_msg msg = {0};
-	tpSirSmeJoinRsp sme_join_rsp = (tpSirSmeJoinRsp) ctx;
 
 	msg.type = sme_join_rsp->messageType;
 	msg.bodyptr = sme_join_rsp;
@@ -202,8 +198,9 @@ static void lim_send_sme_join_reassoc_rsp_after_resume(struct mac_context *mac_c
  * Return: None
  */
 static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
-	struct pe_session *session_entry, tSirResultCodes result_code,
-	tpSirSmeJoinRsp sme_join_rsp)
+				       struct pe_session *session_entry,
+				       tSirResultCodes result_code,
+				       struct join_rsp *sme_join_rsp)
 {
 	uint16_t bss_ie_len;
 	void *bss_ies;
@@ -377,7 +374,8 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
  *
  * Return: None
  */
-static void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
+static void lim_add_bss_info(tpDphHashNode sta_ds,
+			     struct join_rsp *sme_join_rsp)
 {
 	struct parsed_ies *parsed_ies = &sta_ds->parsed_ies;
 
@@ -394,14 +392,14 @@ static void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
+static void lim_update_fils_seq_num(struct join_rsp *sme_join_rsp,
 				    struct pe_session *session_entry)
 {
 	sme_join_rsp->fils_seq_num =
 		session_entry->fils_info->sequence_number;
 }
 #else
-static inline void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
+static inline void lim_update_fils_seq_num(struct join_rsp *sme_join_rsp,
 					   struct pe_session *session_entry)
 {}
 #endif
@@ -429,7 +427,7 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	struct pe_session *session_entry, uint8_t sme_session_id,
 	uint16_t sme_transaction_id)
 {
-	tpSirSmeJoinRsp sme_join_rsp;
+	struct join_rsp *sme_join_rsp;
 	uint32_t rsp_len;
 	tpDphHashNode sta_ds = NULL;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -445,7 +443,7 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
 	if (session_entry == NULL) {
-		rsp_len = sizeof(tSirSmeJoinRsp);
+		rsp_len = sizeof(*sme_join_rsp);
 		sme_join_rsp = qdf_mem_malloc(rsp_len);
 		if (!sme_join_rsp)
 			return;
@@ -460,7 +458,7 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 #ifdef FEATURE_WLAN_ESE
 			session_entry->tspecLen +
 #endif
-			sizeof(tSirSmeJoinRsp) - sizeof(uint8_t);
+			sizeof(*sme_join_rsp) - sizeof(uint8_t);
 		sme_join_rsp = qdf_mem_malloc(rsp_len);
 		if (!sme_join_rsp)
 			return;
@@ -525,7 +523,7 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	sme_join_rsp->transactionId = sme_transaction_id;
 
 	lim_send_sme_join_reassoc_rsp_after_resume(mac_ctx, QDF_STATUS_SUCCESS,
-			(uint32_t *)sme_join_rsp);
+						   sme_join_rsp);
 }
 
 /**

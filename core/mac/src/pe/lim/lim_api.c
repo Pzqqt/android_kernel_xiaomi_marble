@@ -1886,7 +1886,7 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
  * Return: None
  */
 void lim_fill_join_rsp_ht_caps(struct pe_session *session,
-			       tpSirSmeJoinRsp join_rsp)
+			       struct join_rsp *join_rsp)
 {
 	struct ht_profile *ht_profile;
 
@@ -2321,7 +2321,7 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	lim_init_tdls_data(mac_ctx, ft_session_ptr);
 	join_rsp_len = ft_session_ptr->RICDataLen +
-			sizeof(tSirSmeJoinRsp) - sizeof(uint8_t);
+			sizeof(struct join_rsp) - sizeof(uint8_t);
 
 #ifdef FEATURE_WLAN_ESE
 	join_rsp_len += ft_session_ptr->tspecLen;

@@ -131,7 +131,7 @@ static inline void lim_increase_fils_sequence_number(struct pe_session *session_
  */
 void populate_fils_connect_params(struct mac_context *mac_ctx,
 				  struct pe_session *session,
-				  tpSirSmeJoinRsp sme_join_rsp);
+				  struct join_rsp *sme_join_rsp);
 
 /**
  * aead_encrypt_assoc_req() - Encrypt FILS IE's in assoc request
@@ -250,7 +250,7 @@ static inline bool lim_is_fils_connection(struct pe_session *pe_session)
 
 static inline void populate_fils_connect_params(struct mac_context *mac_ctx,
 						struct pe_session *session,
-						tpSirSmeJoinRsp sme_join_rsp)
+						struct join_rsp *sme_join_rsp)
 { }
 
 static inline QDF_STATUS aead_encrypt_assoc_req(struct mac_context *mac_ctx,
