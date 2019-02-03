@@ -778,13 +778,14 @@ typedef struct sESETspecTspecInfo {
 	tTspecInfo tspec[SIR_ESE_MAX_TSPEC_IES];
 } tESETspecInfo;
 
-typedef struct sSirTsmIE {
+struct tsm_ie {
 	uint8_t tsid;
 	uint8_t state;
 	uint16_t msmt_interval;
-} tSirTsmIE, *tpSirTsmIE;
+};
+
 typedef struct sSirSmeTsmIEInd {
-	tSirTsmIE tsmIe;
+	struct tsm_ie tsmIe;
 	uint8_t sessionId;
 } tSirSmeTsmIEInd, *tpSirSmeTsmIEInd;
 typedef struct sAniTrafStrmMetrics {
