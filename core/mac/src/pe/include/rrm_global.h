@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,7 +58,7 @@ typedef struct sSirBeaconReportReqInd {
 	uint8_t fMeasurementtype[SIR_ESE_MAX_MEAS_IE_REQS];
 	tAniSSID ssId;          /* May be wilcard. */
 	uint16_t uDialogToken;
-	tSirChannelList channelList;    /* From AP channel report. */
+	struct report_channel_list channelList;    /* From AP channel report. */
 	tRrmMsgReqSource msgSource;
 } tSirBeaconReportReqInd, *tpSirBeaconReportReqInd;
 

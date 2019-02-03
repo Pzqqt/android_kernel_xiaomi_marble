@@ -720,10 +720,10 @@ struct start_bss_rsp {
 	tSirBssDescription bssDescription;      /* Peer BSS description */
 };
 
-typedef struct sSirChannelList {
+struct report_channel_list {
 	uint8_t numChannels;
 	uint8_t channelNumber[SIR_ESE_MAX_MEAS_IE_REQS];
-} tSirChannelList, *tpSirChannelList;
+};
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 struct oem_data_req {
