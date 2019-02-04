@@ -735,7 +735,7 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 {
 
 	uint8_t *pBuf;
-	tSirSmeDisassocRsp *pSirSmeDisassocRsp;
+	struct disassoc_rsp *pSirSmeDisassocRsp;
 	tSirSmeDisassocInd *pSirSmeDisassocInd;
 	uint32_t *pMsg = NULL;
 	bool failure = false;
@@ -796,7 +796,7 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		 * host triggered disassociation
 		 */
 
-		pSirSmeDisassocRsp = qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
+		pSirSmeDisassocRsp = qdf_mem_malloc(sizeof(struct disassoc_rsp));
 		if (!pSirSmeDisassocRsp) {
 			failure = true;
 			goto error;
@@ -804,7 +804,7 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pe_debug("send eWNI_SME_DISASSOC_RSP with retCode: %d for " MAC_ADDRESS_STR,
 			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocRsp->messageType = eWNI_SME_DISASSOC_RSP;
-		pSirSmeDisassocRsp->length = sizeof(tSirSmeDisassocRsp);
+		pSirSmeDisassocRsp->length = sizeof(struct disassoc_rsp);
 		/* sessionId */
 		pBuf = (uint8_t *) &pSirSmeDisassocRsp->sessionId;
 		*pBuf = smesessionId;

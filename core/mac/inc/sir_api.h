@@ -1234,7 +1234,7 @@ struct disassoc_req {
 };
 
 /* / Definition for Disassociation response */
-typedef struct sSirSmeDisassocRsp {
+struct disassoc_rsp {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1242,7 +1242,7 @@ typedef struct sSirSmeDisassocRsp {
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t staId;
-} tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
+};
 
 /* / Definition for Disassociation indication from peer */
 typedef struct sSirSmeDisassocInd {

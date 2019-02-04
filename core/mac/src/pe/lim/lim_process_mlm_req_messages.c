@@ -1236,7 +1236,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 	struct pe_session *session;
 	extern bool send_disassoc_frame;
 	tLimMlmStates mlm_state;
-	tSirSmeDisassocRsp *sme_disassoc_rsp;
+	struct disassoc_rsp *sme_disassoc_rsp;
 
 	if (QDF_STATUS_SUCCESS != suspend_status)
 		pe_err("Suspend Status is not success %X",
@@ -1274,7 +1274,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 			 * disassociation
 			 */
 			sme_disassoc_rsp =
-				qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
+				qdf_mem_malloc(sizeof(*sme_disassoc_rsp));
 			if (!sme_disassoc_rsp) {
 				qdf_mem_free(mlm_disassocreq);
 				return;
@@ -1286,7 +1286,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 					mlm_disassocreq->peer_macaddr.bytes));
 
 			sme_disassoc_rsp->messageType = eWNI_SME_DISASSOC_RSP;
-			sme_disassoc_rsp->length = sizeof(tSirSmeDisassocRsp);
+			sme_disassoc_rsp->length = sizeof(*sme_disassoc_rsp);
 			sme_disassoc_rsp->sessionId =
 					mlm_disassocreq->sessionId;
 			sme_disassoc_rsp->transactionId = 0;

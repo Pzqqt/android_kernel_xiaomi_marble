@@ -493,7 +493,7 @@ static QDF_STATUS csr_roam_issue_set_key_command(struct mac_context *mac,
 static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
 						 tSirBssDescription *pBssDesc);
 static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
-					   tSirSmeDisassocRsp *pRsp);
+					   struct disassoc_rsp *pRsp);
 static void csr_init_operating_classes(struct mac_context *mac);
 
 static void csr_add_len_of_social_channels(struct mac_context *mac,
@@ -9227,7 +9227,7 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 
 static
 void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
-						   tSirSmeDisassocRsp *pSmeRsp)
+						   struct disassoc_rsp *pSmeRsp)
 {
 	tScanResultHandle hBSSList;
 	struct csr_roam_info *roamInfo;
@@ -9238,7 +9238,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 	uint32_t sessionId;
 	struct csr_roam_session *pSession;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
-	tSirSmeDisassocRsp SmeDisassocRsp;
+	struct disassoc_rsp SmeDisassocRsp;
 
 	csr_ser_des_unpack_diassoc_rsp((uint8_t *) pSmeRsp, &SmeDisassocRsp);
 	sessionId = SmeDisassocRsp.sessionId;
@@ -9486,7 +9486,7 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 				  mac_trace_getcsr_roam_sub_state(
 				  mac->roam.curSubState[pSmeRsp->sessionId]));
 			csr_roam_roaming_state_disassoc_rsp_processor(mac,
-						(tSirSmeDisassocRsp *) pSmeRsp);
+						(struct disassoc_rsp *) pSmeRsp);
 		}
 		break;
 	case eWNI_SME_DEAUTH_RSP:
@@ -11027,7 +11027,7 @@ csr_roam_chk_lnk_disassoc_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	 * session id is invalid here so cant use it to access the array
 	 * curSubstate as index
 	 */
-	tSirSmeDisassocRsp *pDisassocRsp = (tSirSmeDisassocRsp *) msg_ptr;
+	struct disassoc_rsp *pDisassocRsp = (struct disassoc_rsp *) msg_ptr;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));
 	sme_debug("eWNI_SME_DISASSOC_RSP from SME ");
@@ -19526,8 +19526,8 @@ QDF_STATUS csr_roam_update_config(struct mac_context *mac_ctx, uint8_t session_i
  * The rest is conditionally defined of (WNI_POLARIS_FW_PRODUCT == AP)
  * and not used
  */
-static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf, tSirSmeDisassocRsp
-									*pRsp)
+static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
+					   struct disassoc_rsp *pRsp)
 {
 	if (pBuf && pRsp) {
 		pBuf += 4;      /* skip type and length */
