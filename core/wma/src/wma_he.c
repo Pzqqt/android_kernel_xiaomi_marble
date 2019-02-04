@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -221,6 +221,12 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
 	he_cap->ul_2x996_tone_ru_supp = WMI_HECAP_MAC_UL2X996RU_GET(mac_cap[1]);
 	he_cap->om_ctrl_ul_mu_data_dis_rx =
 		WMI_HECAP_MAC_OMCULMUDDIS_GET(mac_cap[1]);
+	he_cap->he_dynamic_smps =
+		WMI_HECAP_MAC_DYNSMPWRSAVE_GET(mac_cap[1]);
+	he_cap->punctured_sounding_supp =
+		WMI_HECAP_MAC_PUNCSOUNDING_GET(mac_cap[1]);
+	he_cap->ht_vht_trg_frm_rx_supp =
+		WMI_HECAP_MAC_HTVHTTRIGRX_GET(mac_cap[1]);
 	/* HE PHY capabilities */
 	chan_width = WMI_HECAP_PHY_CBW_GET(phy_cap);
 	he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(chan_width, 0);
@@ -238,9 +244,10 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
 		WMI_HECAP_PHY_MIDAMBLETXRXMAXNSTS_GET(phy_cap);
 	he_cap->he_4x_ltf_3200_gi_ndp = WMI_HECAP_PHY_LTFGIFORNDP_GET(phy_cap);
 	he_cap->rx_stbc_lt_80mhz = WMI_HECAP_PHY_RXSTBC_GET(phy_cap);
-	he_cap->tx_stbc_lt_80mhz = WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
+	he_cap->tb_ppdu_tx_stbc_lt_80mhz = WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
 	he_cap->rx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap);
-	he_cap->tx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
+	he_cap->tb_ppdu_tx_stbc_gt_80mhz =
+		WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
 
 	he_cap->doppler = (WMI_HECAP_PHY_RXDOPPLER_GET(phy_cap) << 1) |
 				WMI_HECAP_PHY_TXDOPPLER(phy_cap);
@@ -273,7 +280,8 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
 	he_cap->he_ltf_800_gi_4x =
 			WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(phy_cap);
 	he_cap->max_nc = WMI_HECAP_PHY_MAXNC_GET(phy_cap);
-	he_cap->tx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
+	he_cap->tb_ppdu_tx_stbc_gt_80mhz =
+		WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
 	he_cap->rx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap);
 	he_cap->er_he_ltf_800_gi_4x =
 			WMI_HECAP_PHY_ERSU4X800NSECGI_GET(phy_cap);
@@ -407,8 +415,6 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	he_cap->ops_supp = QDF_MIN(he_cap->ops_supp, new_cap->ops_supp);
 	he_cap->amsdu_in_ampdu = QDF_MIN(he_cap->amsdu_in_ampdu,
 			new_cap->amsdu_in_ampdu);
-	he_cap->reserved1 = QDF_MIN(he_cap->reserved1,
-			new_cap->reserved1);
 
 	he_cap->chan_width_0 = he_cap->chan_width_0 | new_cap->chan_width_0;
 	he_cap->chan_width_1 = he_cap->chan_width_1 | new_cap->chan_width_1;
@@ -434,8 +440,9 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	he_cap->he_4x_ltf_3200_gi_ndp =
 		QDF_MIN(he_cap->he_4x_ltf_3200_gi_ndp,
 				new_cap->he_4x_ltf_3200_gi_ndp);
-	he_cap->tx_stbc_lt_80mhz = QDF_MIN(he_cap->tx_stbc_lt_80mhz,
-			new_cap->tx_stbc_lt_80mhz);
+	he_cap->tb_ppdu_tx_stbc_lt_80mhz = QDF_MIN(
+			he_cap->tb_ppdu_tx_stbc_lt_80mhz,
+			new_cap->tb_ppdu_tx_stbc_lt_80mhz);
 	he_cap->rx_stbc_lt_80mhz = QDF_MIN(he_cap->rx_stbc_lt_80mhz,
 			new_cap->rx_stbc_lt_80mhz);
 	he_cap->doppler = QDF_MIN(he_cap->doppler,
@@ -582,6 +589,12 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 		 he_cap->ul_2x996_tone_ru_supp);
 	WMA_LOGD("\tOM ctrl UL MU data dis rx supp: 0x%01x",
 		 he_cap->om_ctrl_ul_mu_data_dis_rx);
+	WMA_LOGD("\tHE dynamic SMPS supp: 0x%01x",
+		 he_cap->he_dynamic_smps);
+	WMA_LOGD("\tPunctured sounding supp: 0x%01x",
+		 he_cap->punctured_sounding_supp);
+	WMA_LOGD("\tHT VHT Trigger frame Rx supp: 0x%01x",
+		 he_cap->ht_vht_trg_frm_rx_supp);
 
 	/* HE PHY capabilities */
 	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
@@ -599,7 +612,8 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\tMidamble Tx Rx MAX NSTS: 0x%02x",
 		 he_cap->midamble_tx_rx_max_nsts);
 	WMA_LOGD("\tLTF and GI for NDP: 0x%02x", he_cap->he_4x_ltf_3200_gi_ndp);
-	WMA_LOGD("\tSTBC Tx support <= 80M: 0x%01x", he_cap->tx_stbc_lt_80mhz);
+	WMA_LOGD("\tTB PPDU STBC Tx support <= 80M: 0x%01x",
+		 he_cap->tb_ppdu_tx_stbc_lt_80mhz);
 	WMA_LOGD("\tSTBC Rx support <= 80M: 0x%01x", he_cap->rx_stbc_lt_80mhz);
 	WMA_LOGD("\tDoppler support: 0x%02x", he_cap->doppler);
 	WMA_LOGD("\tUL MU: 0x%02x", he_cap->ul_mu);
@@ -634,7 +648,8 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
 
 	WMA_LOGD("\tMax NC: 0x%01x", he_cap->max_nc);
-	WMA_LOGD("\tstbc Tx gt 80mhz: 0x%01x", he_cap->tx_stbc_gt_80mhz);
+	WMA_LOGD("\tTB PPDU stbc Tx gt 80mhz: 0x%01x",
+		 he_cap->tb_ppdu_tx_stbc_gt_80mhz);
 	WMA_LOGD("\tstbc Rx gt 80mhz: 0x%01x", he_cap->rx_stbc_gt_80mhz);
 	WMA_LOGD("\ter_he_ltf_800_gi_4x: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
 	WMA_LOGD("\the_ppdu_20_in_40Mhz_2G: 0x%01x",
@@ -1128,6 +1143,11 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_MAC_UL2X996RU_SET(mac_cap[1], he_cap->ul_2x996_tone_ru_supp);
 	WMI_HECAP_MAC_OMCULMUDDIS_SET(mac_cap[1],
 				      he_cap->om_ctrl_ul_mu_data_dis_rx);
+	WMI_HECAP_MAC_DYNSMPWRSAVE_SET(mac_cap[1], he_cap->he_dynamic_smps);
+	WMI_HECAP_MAC_PUNCSOUNDING_SET(mac_cap[1],
+				       he_cap->punctured_sounding_supp);
+	WMI_HECAP_MAC_HTVHTTRIGRX_SET(mac_cap[1],
+				      he_cap->ht_vht_trg_frm_rx_supp);
 	qdf_mem_copy(peer->peer_he_cap_macinfo, mac_cap, sizeof(mac_cap));
 
 	/* HE PHY capabilities */
@@ -1145,7 +1165,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_LTFGIFORNDP_SET(phy_cap, he_cap->he_4x_ltf_3200_gi_ndp);
 
 	WMI_HECAP_PHY_RXSTBC_SET(phy_cap, he_cap->rx_stbc_lt_80mhz);
-	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, he_cap->tx_stbc_lt_80mhz);
+	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, he_cap->tb_ppdu_tx_stbc_lt_80mhz);
 
 	temp = he_cap->doppler & 0x1;
 	WMI_HECAP_PHY_RXDOPPLER_SET(phy_cap, temp);
@@ -1185,7 +1205,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_MAXNC_SET(phy_cap, he_cap->max_nc);
 
 	WMI_HECAP_PHY_STBCRXGT80_SET(phy_cap, he_cap->rx_stbc_gt_80mhz);
-	WMI_HECAP_PHY_STBCTXGT80_SET(phy_cap, he_cap->tx_stbc_gt_80mhz);
+	WMI_HECAP_PHY_STBCTXGT80_SET(phy_cap, he_cap->tb_ppdu_tx_stbc_gt_80mhz);
 
 	WMI_HECAP_PHY_ERSU4X800NSECGI_SET(phy_cap, he_cap->er_he_ltf_800_gi_4x);
 	WMI_HECAP_PHY_HEPPDU20IN40MHZ2G_SET(phy_cap,

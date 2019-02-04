@@ -2883,7 +2883,9 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       he_sub_ch_sel_tx_supp:1;
       ul_2x996_tone_ru_supp:1;
       om_ctrl_ul_mu_data_dis_rx:1;
-      reserved1:3;
+      he_dynamic_smps:1;
+      punctured_sounding_supp:1;
+      ht_vht_trg_frm_rx_supp:1;
     }
     {
       reserved2:1;
@@ -2900,7 +2902,7 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       he_1x_ltf_800_gi_ppdu:1;
       midamble_tx_rx_max_nsts:2;
       he_4x_ltf_3200_gi_ndp:1;
-      tx_stbc_lt_80mhz:1;
+      tb_ppdu_tx_stbc_lt_80mhz:1;
       rx_stbc_lt_80mhz:1;
       doppler:2;
       ul_mu:2;
@@ -2928,7 +2930,7 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       power_boost:1;
       he_ltf_800_gi_4x:1;
       max_nc:3;
-      tx_stbc_gt_80mhz:1;
+      tb_ppdu_tx_stbc_gt_80mhz:1;
       rx_stbc_gt_80mhz:1;
     }
     {

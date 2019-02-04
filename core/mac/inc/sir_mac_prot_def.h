@@ -1981,7 +1981,9 @@ struct he_cap_network_endian {
 	uint16_t he_sub_ch_sel_tx_supp:1;
 	uint16_t ul_2x996_tone_ru_supp:1;
 	uint16_t om_ctrl_ul_mu_data_dis_rx:1;
-	uint16_t reserved1:3;
+	uint16_t he_dynamic_smps:1;
+	uint16_t punctured_sounding_supp:1;
+	uint16_t ht_vht_trg_frm_rx_supp:1;
 
 	uint32_t reserved2:1;
 	uint32_t chan_width:7;
@@ -1991,7 +1993,7 @@ struct he_cap_network_endian {
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
 	uint32_t midamble_tx_rx_max_nsts:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
-	uint32_t tx_stbc_lt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_lt_80mhz:1;
 	uint32_t rx_stbc_lt_80mhz:1;
 	uint32_t doppler:2;
 	uint32_t ul_mu:2;
@@ -2018,7 +2020,7 @@ struct he_cap_network_endian {
 	uint32_t power_boost:1;
 	uint32_t he_ltf_800_gi_4x:1;
 	uint32_t max_nc:3;
-	uint32_t tx_stbc_gt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_gt_80mhz:1;
 	uint32_t rx_stbc_gt_80mhz:1;
 
 	uint16_t er_he_ltf_800_gi_4x:1;
@@ -2099,7 +2101,9 @@ struct he_capability_info {
 	uint32_t twt_request:1;
 	uint32_t htc_he:1;
 
-	uint16_t reserved1:3;
+	uint16_t ht_vht_trg_frm_rx_supp:1;
+	uint16_t punctured_sounding_supp:1;
+	uint16_t he_dynamic_smps:1;
 	uint16_t om_ctrl_ul_mu_data_dis_rx:1;
 	uint16_t ul_2x996_tone_ru_supp:1;
 	uint16_t he_sub_ch_sel_tx_supp:1;
@@ -2119,7 +2123,7 @@ struct he_capability_info {
 	uint32_t ul_mu:2;
 	uint32_t doppler:2;
 	uint32_t rx_stbc_lt_80mhz:1;
-	uint32_t tx_stbc_lt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_lt_80mhz:1;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
 	uint32_t midamble_tx_rx_max_nsts:2;
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
@@ -2130,7 +2134,7 @@ struct he_capability_info {
 	uint32_t reserved2:1;
 
 	uint32_t rx_stbc_gt_80mhz:1;
-	uint32_t tx_stbc_gt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_gt_80mhz:1;
 	uint32_t max_nc:3;
 	uint32_t he_ltf_800_gi_4x:1;
 	uint32_t power_boost:1;
@@ -2209,7 +2213,9 @@ struct he_capability_info {
 	uint16_t he_sub_ch_sel_tx_supp:1;
 	uint16_t ul_2x996_tone_ru_supp:1;
 	uint16_t om_ctrl_ul_mu_data_dis_rx:1;
-	uint16_t reserved1:3;
+	uint16_t he_dynamic_smps:1;
+	uint16_t punctured_sounding_supp:1;
+	uint16_t ht_vht_trg_frm_rx_supp:1;
 
 	uint32_t reserved2:1;
 	uint32_t chan_width:7;
@@ -2219,7 +2225,7 @@ struct he_capability_info {
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
 	uint32_t midamble_tx_rx_max_nsts:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
-	uint32_t tx_stbc_lt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_lt_80mhz:1;
 	uint32_t rx_stbc_lt_80mhz:1;
 	uint32_t doppler:2;
 	uint32_t ul_mu:2;
@@ -2246,7 +2252,7 @@ struct he_capability_info {
 	uint32_t power_boost:1;
 	uint32_t he_ltf_800_gi_4x:1;
 	uint32_t max_nc:3;
-	uint32_t tx_stbc_gt_80mhz:1;
+	uint32_t tb_ppdu_tx_stbc_gt_80mhz:1;
 	uint32_t rx_stbc_gt_80mhz:1;
 
 	uint16_t er_he_ltf_800_gi_4x:1;

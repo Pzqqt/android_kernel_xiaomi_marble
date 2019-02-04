@@ -11523,13 +11523,13 @@ int sme_update_he_tx_stbc_cap(mac_handle_t mac_handle, uint8_t session_id,
 		return -EINVAL;
 	}
 	if (he_cap_val <= 1)
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_stbc_lt_80mhz =
-		he_cap_val;
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tb_ppdu_tx_stbc_lt_80mhz
+			= he_cap_val;
 	else
 		return -EINVAL;
 	if (he_cap_val <= 1)
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_stbc_gt_80mhz =
-		he_cap_val;
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tb_ppdu_tx_stbc_gt_80mhz
+			= he_cap_val;
 	else
 		return -EINVAL;
 	csr_update_session_he_cap(mac_ctx, session);

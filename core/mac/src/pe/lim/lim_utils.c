@@ -6787,25 +6787,25 @@ static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
 
 	peer_he->ldpc_coding &= session_he->ldpc_coding;
 
-	if (session_he->tx_stbc_lt_80mhz && peer_he->rx_stbc_lt_80mhz)
+	if (session_he->tb_ppdu_tx_stbc_lt_80mhz && peer_he->rx_stbc_lt_80mhz)
 		peer_he->rx_stbc_lt_80mhz = 1;
 	else
 		peer_he->rx_stbc_lt_80mhz = 0;
 
-	if (session_he->rx_stbc_lt_80mhz && peer_he->tx_stbc_lt_80mhz)
-		peer_he->tx_stbc_lt_80mhz = 1;
+	if (session_he->rx_stbc_lt_80mhz && peer_he->tb_ppdu_tx_stbc_lt_80mhz)
+		peer_he->tb_ppdu_tx_stbc_lt_80mhz = 1;
 	else
-		peer_he->tx_stbc_lt_80mhz = 0;
+		peer_he->tb_ppdu_tx_stbc_lt_80mhz = 0;
 
-	if (session_he->tx_stbc_gt_80mhz && peer_he->rx_stbc_gt_80mhz)
+	if (session_he->tb_ppdu_tx_stbc_gt_80mhz && peer_he->rx_stbc_gt_80mhz)
 		peer_he->rx_stbc_gt_80mhz = 1;
 	else
 		peer_he->rx_stbc_gt_80mhz = 0;
 
-	if (session_he->rx_stbc_gt_80mhz && peer_he->tx_stbc_gt_80mhz)
-		peer_he->tx_stbc_gt_80mhz = 1;
+	if (session_he->rx_stbc_gt_80mhz && peer_he->tb_ppdu_tx_stbc_gt_80mhz)
+		peer_he->tb_ppdu_tx_stbc_gt_80mhz = 1;
 	else
-		peer_he->tx_stbc_gt_80mhz = 0;
+		peer_he->tb_ppdu_tx_stbc_gt_80mhz = 0;
 
 	/* Tx Doppler is first bit and Rx Doppler is second bit */
 	if (session_he->doppler) {
@@ -7089,6 +7089,12 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap)
 		 he_cap->ul_2x996_tone_ru_supp);
 	pe_debug("\tOM ctrl UL MU data dis rx supp: 0x%01x",
 		 he_cap->om_ctrl_ul_mu_data_dis_rx);
+	pe_debug("\tHE dynamic SMPS supp: 0x%01x",
+		 he_cap->he_dynamic_smps);
+	pe_debug("\tPunctured sounding supp: 0x%01x",
+		 he_cap->punctured_sounding_supp);
+	pe_debug("\tHT VHT Trigger frame Rx supp: 0x%01x",
+		 he_cap->ht_vht_trg_frm_rx_supp);
 	/* HE PHY capabilities */
 	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
 			he_cap->chan_width_1, he_cap->chan_width_2,
@@ -7108,7 +7114,7 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tLTF and GI for NDP: 0x%02x",
 			he_cap->he_4x_ltf_3200_gi_ndp);
 	pe_debug("\tSTBC Tx support (<= 80MHz): 0x%01x",
-		 he_cap->tx_stbc_lt_80mhz);
+		 he_cap->tb_ppdu_tx_stbc_lt_80mhz);
 	pe_debug("\tSTBC Rx support (<= 80MHz): 0x%01x",
 		 he_cap->rx_stbc_lt_80mhz);
 	pe_debug("\tDoppler support: 0x%02x", he_cap->doppler);
@@ -7147,7 +7153,7 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tPower boost factor: 0x%01x", he_cap->power_boost);
 	pe_debug("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
 	pe_debug("\tSTBC Tx support (> 80MHz): 0x%01x",
-		 he_cap->tx_stbc_gt_80mhz);
+		 he_cap->tb_ppdu_tx_stbc_gt_80mhz);
 	pe_debug("\tSTBC Rx support (> 80MHz): 0x%01x",
 		 he_cap->rx_stbc_gt_80mhz);
 	pe_debug("\tMax Nc: 0x%03x", he_cap->max_nc);
@@ -7311,7 +7317,6 @@ void lim_set_he_caps(struct mac_context *mac, struct pe_session *session, uint8_
 		he_cap->ops_supp = dot11_cap.ops_supp;
 		he_cap->ndp_feedback_supp = dot11_cap.ndp_feedback_supp;
 		he_cap->amsdu_in_ampdu = dot11_cap.amsdu_in_ampdu;
-		he_cap->reserved1 = dot11_cap.reserved1;
 
 		he_cap->chan_width = HE_CH_WIDTH_COMBINE(dot11_cap.chan_width_0,
 				dot11_cap.chan_width_1, dot11_cap.chan_width_2,
@@ -7325,9 +7330,11 @@ void lim_set_he_caps(struct mac_context *mac, struct pe_session *session, uint8_
 		he_cap->midamble_tx_rx_max_nsts =
 			dot11_cap.midamble_tx_rx_max_nsts;
 		he_cap->he_4x_ltf_3200_gi_ndp = dot11_cap.he_4x_ltf_3200_gi_ndp;
-		he_cap->tx_stbc_lt_80mhz = dot11_cap.tx_stbc_lt_80mhz;
+		he_cap->tb_ppdu_tx_stbc_lt_80mhz =
+			dot11_cap.tb_ppdu_tx_stbc_lt_80mhz;
 		he_cap->rx_stbc_lt_80mhz = dot11_cap.rx_stbc_lt_80mhz;
-		he_cap->tx_stbc_gt_80mhz = dot11_cap.tx_stbc_gt_80mhz;
+		he_cap->tb_ppdu_tx_stbc_gt_80mhz =
+			dot11_cap.tb_ppdu_tx_stbc_gt_80mhz;
 		he_cap->rx_stbc_gt_80mhz = dot11_cap.rx_stbc_gt_80mhz;
 		he_cap->doppler = dot11_cap.doppler;
 		he_cap->ul_mu = dot11_cap.ul_mu;
