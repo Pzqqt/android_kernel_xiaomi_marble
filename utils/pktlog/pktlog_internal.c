@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1160,6 +1160,8 @@ A_STATUS process_sw_event(void *pdev, void *data)
 		     ((char *)fw_data->data + sizeof(struct ath_pktlog_hdr)),
 		     pl_hdr.size);
 
+	cds_pkt_stats_to_logger_thread(&pl_hdr, NULL, sw_event.sw_event);
+
 	return A_OK;
 }
 
@@ -1239,6 +1241,8 @@ A_STATUS process_sw_event(void *pdev, void *data)
 	qdf_mem_copy(sw_event.sw_event,
 		     ((char *)fw_data->data + sizeof(struct ath_pktlog_hdr)),
 		     pl_hdr.size);
+
+	cds_pkt_stats_to_logger_thread(&pl_hdr, NULL, sw_event.sw_event);
 
 	return A_OK;
 }
