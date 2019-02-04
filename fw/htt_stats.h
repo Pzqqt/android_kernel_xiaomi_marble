@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -393,11 +393,25 @@ typedef enum {
      } while (0)
 
 typedef struct {
-    /* BIT [11 :  0]   :- tag
-     * BIT [23 : 12]   :- length
-     * BIT [31 : 24]   :- reserved
-     */
-    A_UINT32 tag__length;
+    union {
+        /* BIT [11 :  0]   :- tag
+         * BIT [23 : 12]   :- length
+         * BIT [31 : 24]   :- reserved
+         */
+        A_UINT32 tag__length;
+        /*
+         * The following struct is not endian-portable.
+         * It is suitable for use within the target, which is known to be
+         * little-endian.
+         * The host should use the above endian-portable macros to access
+         * the tag and length bitfields in an endian-neutral manner.
+         */
+        struct {
+            A_UINT32 tag:      12, /* BIT [11 :  0] */
+                     length:   12, /* BIT [23 : 12] */
+                     reserved:  8; /* BIT [31 : 24] */
+        };
+    };
 } htt_tlv_hdr_t;
 
 #define HTT_STATS_MAX_STRING_SZ32            4

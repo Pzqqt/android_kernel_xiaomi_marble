@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -10332,6 +10332,27 @@ enum htt_dbg_ext_stats_status {
 #define HTT_T2H_PPDU_STATS_PPDU_ID_GET(word) \
     (((word) & HTT_T2H_PPDU_STATS_PPDU_ID_M) >> \
     HTT_T2H_PPDU_STATS_PPDU_ID_S)
+
+/* htt_t2h_ppdu_stats_ind_hdr_t
+ * This struct contains the fields within the header of the
+ * HTT_T2H_PPDU_STATS_IND message, preceding the type-specific
+ * stats info.
+ * This struct assumes little-endian layout, and thus is only
+ * suitable for use within processors known to be little-endian
+ * (such as the target).
+ * In contrast, the above macros provide endian-portable methods
+ * to get and set the bitfields within this PPDU_STATS_IND header.
+ */
+typedef struct {
+    A_UINT32 msg_type:      8, /* bits  7:0 */
+             mac_id:        2, /* bits  9:8 */
+             pdev_id:       2, /* bits 11:10 */
+             reserved1:     4, /* bits 15:12 */
+             payload_size: 16; /* bits 31:16 */
+    A_UINT32 ppdu_id;
+    A_UINT32 timestamp_us;
+    A_UINT32 reserved2;
+} htt_t2h_ppdu_stats_ind_hdr_t;
 
 /**
  * @brief target -> host extended statistics upload
