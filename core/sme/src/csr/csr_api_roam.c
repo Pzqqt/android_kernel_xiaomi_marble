@@ -15410,10 +15410,10 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
 					struct disassoc_ind *pDisassocInd)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeDisassocCnf *pMsg;
+	struct disassoc_cnf *pMsg;
 
 	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeDisassocCnf));
+		pMsg = qdf_mem_malloc(sizeof(*pMsg));
 		if (NULL == pMsg)
 			status = QDF_STATUS_E_NOMEM;
 		else
@@ -15422,7 +15422,7 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
 			break;
 		pMsg->messageType = eWNI_SME_DISASSOC_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
-		pMsg->length = sizeof(tSirSmeDisassocCnf);
+		pMsg->length = sizeof(*pMsg);
 		pMsg->sme_session_id = pDisassocInd->sessionId;
 		qdf_copy_macaddr(&pMsg->peer_macaddr,
 				 &pDisassocInd->peer_macaddr);
@@ -15448,10 +15448,10 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 				      tpSirSmeDeauthInd pDeauthInd)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeDeauthCnf *pMsg;
+	struct deauth_cnf *pMsg;
 
 	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeDeauthCnf));
+		pMsg = qdf_mem_malloc(sizeof(*pMsg));
 		if (NULL == pMsg)
 			status = QDF_STATUS_E_NOMEM;
 		else
@@ -15460,7 +15460,7 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 			break;
 		pMsg->messageType = eWNI_SME_DEAUTH_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
-		pMsg->length = sizeof(tSirSmeDeauthCnf);
+		pMsg->length = sizeof(*pMsg);
 		pMsg->sme_session_id = pDeauthInd->sessionId;
 		qdf_copy_macaddr(&pMsg->bssid, &pDeauthInd->bssid);
 		status = QDF_STATUS_SUCCESS;

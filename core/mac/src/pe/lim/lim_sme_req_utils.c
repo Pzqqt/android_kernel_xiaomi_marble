@@ -520,33 +520,11 @@ bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
 	return true;
 } /*** end lim_is_sme_disassoc_req_valid() ***/
 
-/**
- * lim_is_sme_disassoc_cnf_valid()
- *
- ***FUNCTION:
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_DISASSOC_CNF message from application.
- *
- ***LOGIC:
- * Message validity checks are performed in this function
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac         Pointer to Global MAC structure
- * @param  pDisassocCnf Pointer to received SME_DISASSOC_REQ message
- * @return true         When received SME_DISASSOC_CNF is formatted
- *                      correctly
- *         false        otherwise
- */
-
-uint8_t
-lim_is_sme_disassoc_cnf_valid(struct mac_context *mac,
-			      tpSirSmeDisassocCnf pDisassocCnf,
-			      struct pe_session *pe_session)
+bool lim_is_sme_disassoc_cnf_valid(struct mac_context *mac,
+				   struct disassoc_cnf *disassoc_cnf,
+				   struct pe_session *pe_session)
 {
-	if (qdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
+	if (qdf_is_macaddr_group(&disassoc_cnf->peer_macaddr))
 		return false;
 
 	return true;

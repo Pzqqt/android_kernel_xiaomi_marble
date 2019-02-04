@@ -1259,15 +1259,14 @@ struct disassoc_ind {
 
 /* / Definition for Disassociation confirm */
 /* / MAC ---> */
-typedef struct sSirSmeDisassocCnf {
+struct disassoc_cnf {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_CNF */
 	uint16_t length;
 	uint8_t sme_session_id;
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
-} tSirSmeDisassocCnf, *tpSirSmeDisassocCnf,
-	tSirSmeDeauthCnf, *tpSirSmeDeauthCnf;
+};
 
 /**
  * struct sir_sme_discon_done_ind  - disconnect done indiaction
@@ -1321,6 +1320,16 @@ typedef struct sSirSmeDeauthInd {
 	uint32_t reasonCode;
 	int8_t rssi;
 } tSirSmeDeauthInd, *tpSirSmeDeauthInd;
+
+/* / Definition for Deauthetication confirm */
+struct deauth_cnf {
+	uint16_t messageType;   /* eWNI_SME_DEAUTH_CNF */
+	uint16_t length;
+	uint8_t sme_session_id;
+	tSirResultCodes statusCode;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peer_macaddr;
+};
 
 /* / Definition for stop BSS request message */
 typedef struct sSirSmeStopBssReq {

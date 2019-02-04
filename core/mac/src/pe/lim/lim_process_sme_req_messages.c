@@ -2272,7 +2272,7 @@ sendDisassoc:
    ----------------------------------------------------------------- */
 void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 {
-	tSirSmeDisassocCnf smeDisassocCnf;
+	struct disassoc_cnf smeDisassocCnf;
 	uint16_t aid;
 	tpDphHashNode sta;
 	struct pe_session *pe_session;
@@ -2280,8 +2280,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint32_t *msg = NULL;
 	QDF_STATUS status;
 
-	qdf_mem_copy(&smeDisassocCnf, pMsgBuf,
-			sizeof(struct sSirSmeDisassocCnf));
+	qdf_mem_copy(&smeDisassocCnf, pMsgBuf, sizeof(smeDisassocCnf));
 
 	pe_session = pe_find_session_by_bssid(mac,
 				smeDisassocCnf.bssid.bytes,
@@ -4745,12 +4744,11 @@ static void lim_process_disconnect_sta(struct pe_session *session,
 static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 					 struct scheduler_msg *msg)
 {
-	tSirSmeDisassocCnf sme_disassoc_cnf;
+	struct disassoc_cnf sme_disassoc_cnf;
 	struct pe_session *session;
 	uint8_t session_id;
 
-	qdf_mem_copy(&sme_disassoc_cnf, msg->bodyptr,
-		     sizeof(struct sSirSmeDisassocCnf));
+	qdf_mem_copy(&sme_disassoc_cnf, msg->bodyptr, sizeof(sme_disassoc_cnf));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   sme_disassoc_cnf.bssid.bytes,

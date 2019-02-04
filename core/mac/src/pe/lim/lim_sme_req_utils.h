@@ -84,7 +84,21 @@ bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
 uint8_t lim_is_sme_deauth_req_valid(struct mac_context *, tpSirSmeDeauthReq, struct pe_session *);
 uint8_t lim_is_sme_set_context_req_valid(struct mac_context *, tpSirSmeSetContextReq);
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);
-uint8_t lim_is_sme_disassoc_cnf_valid(struct mac_context *, tpSirSmeDisassocCnf,
-				      struct pe_session *);
+
+/**
+ * lim_is_sme_disassoc_cnf_valid() - Validate disassoc cnf message
+ * @mac: Pointer to Global MAC structure
+ * @disassoc_cnf: Pointer to received SME_DISASSOC_CNF message
+ * @pe_session: Pointer to the PE session
+ *
+ * This function is called by lim_process_sme_req_messages() upon
+ * receiving SME_DISASSOC_CNF message from application.
+ *
+ * Return: true  When received SME_DISASSOC_CNF is formatted correctly
+ *         false otherwise
+ */
+bool lim_is_sme_disassoc_cnf_valid(struct mac_context *mac,
+				   struct disassoc_cnf *disassoc_cnf,
+				   struct pe_session *pe_session);
 
 #endif /* __LIM_SME_REQ_UTILS_H */
