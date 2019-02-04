@@ -378,6 +378,16 @@ PREPACK64 struct host_interest_s {
 #define HI_OPTION_SDIO_CRASH_DUMP_ENHANCEMENT_HOST 0x400 /* HOST to support using BMI dump FW memory when hit assert */
 #define HI_OPTION_SDIO_CRASH_DUMP_ENHANCEMENT_FW   0x800 /* FW to support using BMI dump FW memory when hit assert */
 
+/* USB_RESET_RESUME
+ * The host will set this flag, based on platform configuration specs.
+ * The target will check this flag at the time USB becomes suspended.
+ * If the flag is set, the target will invoke its reset / resume code.
+ * If the flag is not set, the target will do nothing, other than wait.
+ */
+#define HI_OPTION_USB_RESET_RESUME  0x1000
+#define USB_RESET_RESUME() \
+    (HOST_INTEREST->hi_option_flag2 & HI_OPTION_USB_RESET_RESUME)
+
 #define GPIO_WAKEUP_ENABLED() \
     (HOST_INTEREST->hi_option_flag2 & HT_OPTION_GPIO_WAKEUP_SUPPORT)
 
