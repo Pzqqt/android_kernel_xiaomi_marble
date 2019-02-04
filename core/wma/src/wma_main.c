@@ -3313,7 +3313,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		WMA_LOGE("%s: Failed to get self_gen_frm_pwr", __func__);
 	wma_handle->self_gen_frm_pwr = self_gen_frm_pwr;
 
-	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
+	cds_cfg->max_bssid = WLAN_MAX_VDEVS;
 
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;

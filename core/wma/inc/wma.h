@@ -64,8 +64,6 @@
 #define WMA_MAC_TO_PDEV_MAP(x) ((x) + (1))
 #define WMA_PDEV_TO_MAC_MAP(x) ((x) - (1))
 
-#define WMA_MAX_SUPPORTED_BSS     SIR_MAX_SUPPORTED_BSS
-
 #define WMA_MAX_MGMT_MPDU_LEN 2000
 
 #define MAX_PRINT_FAILURE_CNT 50
@@ -656,12 +654,9 @@ struct wma_version_info {
  * @wow_enable_cmd_sent: is wow enable command sent to fw
  * @deauth_enable: is deauth wakeup enable/disable
  * @disassoc_enable: is disassoc wakeup enable/disable
- * @gtk_pdev_enable: is GTK based wakeup enable/disable
  * @gtk_err_enable: is GTK error wakeup enable/disable
- * @lphb_cache: lphb cache
  *
- * This structure stores wow patterns and
- * wow related parameters in host.
+ * This structure stores wow patterns and wow related parameters in host.
  */
 struct wma_wow {
 	bool magic_ptrn_enable;
@@ -669,7 +664,7 @@ struct wma_wow {
 	bool wow_enable_cmd_sent;
 	bool deauth_enable;
 	bool disassoc_enable;
-	bool gtk_err_enable[WMA_MAX_SUPPORTED_BSS];
+	bool gtk_err_enable[WLAN_MAX_VDEVS];
 };
 
 #ifdef WLAN_FEATURE_11W
