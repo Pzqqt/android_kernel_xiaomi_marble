@@ -6937,6 +6937,12 @@ typedef struct {
     A_UINT32 num_peer_extd_stats;
     /** number of extd2 peer stats event structures (wmi_peer_extd2_stats) */
     A_UINT32 num_peer_extd2_stats;
+    /** last_event
+     * The most significant bit is set to 1 to indicate whether the last_event
+     * field contains valid data.  The least significant bit is set to 1 to
+     * indicate this is the final WMI_STATS_EVENT in a series.
+     */
+    A_UINT32 last_event;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
