@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,6 +42,8 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_OS_IF, params)
 #define cfg80211_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_OS_IF, params)
+#define cfg80211_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_OS_IF, params)
 
 #define COMMON_VENDOR_COMMANDS						\
 { 									\
