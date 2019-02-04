@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,6 +211,21 @@
 				"he_om_ctrl_ul_mu_dis_rx", \
 				0, \
 				"He Om Ctrl Ul My Dis Rx")
+
+#define CFG_HE_DYNAMIC_SMPS CFG_BOOL( \
+				"he_dynamic_smps", \
+				0, \
+				"He Dyanmic SMPS")
+
+#define CFG_HE_PUNCTURED_SOUNDING CFG_BOOL( \
+				"he_punctured_sounding", \
+				0, \
+				"He Punctured Sounding")
+
+#define CFG_HE_HT_VHT_TRG_FRM_RX CFG_BOOL( \
+				"ht_vht_trg_frm_rx", \
+				0, \
+				"HT VHT Trigger frame Rx")
 
 #define CFG_HE_CHAN_WIDTH CFG_UINT( \
 				"he_chan_width", \

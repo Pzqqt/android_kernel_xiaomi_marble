@@ -1002,6 +1002,12 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_default(CFG_HE_UL_2X996_RU);
 	he_caps->dot11_he_cap.om_ctrl_ul_mu_data_dis_rx =
 			cfg_default(CFG_HE_OM_CTRL_UL_MU_DIS_RX);
+	he_caps->dot11_he_cap.he_dynamic_smps =
+			cfg_default(CFG_HE_DYNAMIC_SMPS);
+	he_caps->dot11_he_cap.punctured_sounding_supp =
+			cfg_default(CFG_HE_PUNCTURED_SOUNDING);
+	he_caps->dot11_he_cap.ht_vht_trg_frm_rx_supp =
+			cfg_default(CFG_HE_HT_VHT_TRG_FRM_RX);
 	he_caps->dot11_he_cap.rx_pream_puncturing =
 			cfg_default(CFG_HE_RX_PREAM_PUNC);
 	he_caps->dot11_he_cap.device_class =
@@ -1013,7 +1019,7 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_default(CFG_HE_MIDAMBLE_RX_MAX_NSTS);
 	he_caps->dot11_he_cap.he_4x_ltf_3200_gi_ndp =
 			cfg_default(CFG_HE_LTF_NDP);
-	he_caps->dot11_he_cap.tx_stbc_lt_80mhz =
+	he_caps->dot11_he_cap.tb_ppdu_tx_stbc_lt_80mhz =
 			cfg_default(CFG_HE_TX_STBC_LT80);
 	he_caps->dot11_he_cap.rx_stbc_lt_80mhz =
 			cfg_default(CFG_HE_RX_STBC_LT80);
@@ -1049,7 +1055,7 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	he_caps->dot11_he_cap.power_boost = cfg_default(CFG_HE_POWER_BOOST);
 	he_caps->dot11_he_cap.he_ltf_800_gi_4x = cfg_default(CFG_HE_4x_LTF_GI);
 	he_caps->dot11_he_cap.max_nc = cfg_default(CFG_HE_MAX_NC);
-	he_caps->dot11_he_cap.tx_stbc_gt_80mhz =
+	he_caps->dot11_he_cap.tb_ppdu_tx_stbc_gt_80mhz =
 			cfg_default(CFG_HE_TX_STBC_GT80);
 	he_caps->dot11_he_cap.rx_stbc_gt_80mhz =
 			cfg_default(CFG_HE_RX_STBC_GT80);

@@ -584,6 +584,12 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					he_cap->ul_2x996_tone_ru_supp;
 	mlme_obj->cfg.he_caps.dot11_he_cap.om_ctrl_ul_mu_data_dis_rx =
 					he_cap->om_ctrl_ul_mu_data_dis_rx;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_dynamic_smps =
+					he_cap->he_dynamic_smps;
+	mlme_obj->cfg.he_caps.dot11_he_cap.punctured_sounding_supp =
+					he_cap->punctured_sounding_supp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ht_vht_trg_frm_rx_supp =
+					he_cap->ht_vht_trg_frm_rx_supp;
 
 	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
 					 he_cap->chan_width_1,
@@ -632,13 +638,13 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 		mlme_obj->cfg.he_caps.dot11_he_cap.rx_stbc_gt_80mhz = 0;
 	}
 	if (mlme_obj->cfg.vht_caps.vht_cap_info.tx_stbc) {
-		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_lt_80mhz =
-					he_cap->tx_stbc_lt_80mhz;
-		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_gt_80mhz =
-					he_cap->tx_stbc_gt_80mhz;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tb_ppdu_tx_stbc_lt_80mhz =
+					he_cap->tb_ppdu_tx_stbc_lt_80mhz;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tb_ppdu_tx_stbc_gt_80mhz =
+					he_cap->tb_ppdu_tx_stbc_gt_80mhz;
 	} else {
-		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_lt_80mhz = 0;
-		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_gt_80mhz = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tb_ppdu_tx_stbc_lt_80mhz = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tb_ppdu_tx_stbc_gt_80mhz = 0;
 	}
 
 	if (cfg_in_range(CFG_HE_DOPPLER, he_cap->doppler))
