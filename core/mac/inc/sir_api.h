@@ -1193,7 +1193,7 @@ struct ap_new_caps {
  */
 
 /* / Definition for Wireless medium status change notification */
-typedef struct sSirSmeWmStatusChangeNtf {
+struct wm_status_change_ntf {
 	uint16_t messageType;   /* eWNI_SME_WM_STATUS_CHANGE_NTF */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1216,7 +1216,7 @@ typedef struct sSirSmeWmStatusChangeNtf {
 		/* eSIR_SME_AP_CAPS_CHANGED */
 		struct ap_new_caps apNewCaps;
 	} statusChangeInfo;
-} tSirSmeWmStatusChangeNtf, *tpSirSmeWmStatusChangeNtf;
+};
 
 /* Definition for Disassociation request */
 typedef struct sSirSmeDisassocReq {

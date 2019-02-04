@@ -1294,10 +1294,10 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 	uint32_t *status_change_info, uint16_t info_len, uint8_t session_id)
 {
 	struct scheduler_msg msg = {0};
-	tSirSmeWmStatusChangeNtf *wm_status_change_ntf;
+	struct wm_status_change_ntf *wm_status_change_ntf;
 	uint32_t max_info_len;
 
-	wm_status_change_ntf = qdf_mem_malloc(sizeof(tSirSmeWmStatusChangeNtf));
+	wm_status_change_ntf = qdf_mem_malloc(sizeof(*wm_status_change_ntf));
 	if (!wm_status_change_ntf)
 		return;
 
@@ -1324,7 +1324,7 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 		wm_status_change_ntf->messageType =
 			eWNI_SME_WM_STATUS_CHANGE_NTF;
 		wm_status_change_ntf->statusChangeCode = status_change_code;
-		wm_status_change_ntf->length = sizeof(tSirSmeWmStatusChangeNtf);
+		wm_status_change_ntf->length = sizeof(*wm_status_change_ntf);
 		wm_status_change_ntf->sessionId = session_id;
 		if (info_len <= max_info_len && status_change_info) {
 			qdf_mem_copy(

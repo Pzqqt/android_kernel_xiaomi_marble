@@ -11165,7 +11165,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info_ptr = NULL;
-	tSirSmeWmStatusChangeNtf *pStatusChangeMsg;
+	struct wm_status_change_ntf *pStatusChangeMsg;
 	struct csr_roam_info roam_info;
 	struct ap_new_caps *pApNewCaps;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
@@ -11174,7 +11174,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 	eRoamCmdStatus roamStatus = eCSR_ROAM_FAILED;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));
-	pStatusChangeMsg = (tSirSmeWmStatusChangeNtf *) msg_ptr;
+	pStatusChangeMsg = (struct wm_status_change_ntf *) msg_ptr;
 	switch (pStatusChangeMsg->statusChangeCode) {
 	case eSIR_SME_IBSS_ACTIVE:
 		sessionId = csr_find_ibss_session(mac_ctx);
