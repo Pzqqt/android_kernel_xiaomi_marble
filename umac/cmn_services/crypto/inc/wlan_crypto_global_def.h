@@ -124,7 +124,7 @@ typedef enum wlan_crypto_cipher_type {
 	WLAN_CRYPTO_CIPHER_WEP_40          = 15,
 	WLAN_CRYPTO_CIPHER_WEP_104         = 16,
 	WLAN_CRYPTO_CIPHER_NONE            = 17,
-	WLAN_CRYPTO_CIPHER_MAX             = WLAN_CRYPTO_CIPHER_NONE,
+	WLAN_CRYPTO_CIPHER_MAX             = (WLAN_CRYPTO_CIPHER_NONE + 1),
 	WLAN_CRYPTO_CIPHER_INVALID,
 } wlan_crypto_cipher_type;
 
