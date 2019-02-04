@@ -46,8 +46,8 @@ QDF_STATUS pe_allocate_dph_node_array_buffer(void)
 {
 	uint32_t buf_size;
 
-	buf_size = SIR_MAX_SUPPORTED_BSS * (SIR_SAP_MAX_NUM_PEERS + 1)
-		   * sizeof(struct sDphHashNode);
+	buf_size = WLAN_MAX_VDEVS * (SIR_SAP_MAX_NUM_PEERS + 1) *
+		sizeof(struct sDphHashNode);
 	g_dph_node_array = qdf_mem_malloc(buf_size);
 	if (!g_dph_node_array)
 		return QDF_STATUS_E_NOMEM;
@@ -69,7 +69,7 @@ struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
 
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 static struct sDphHashNode
-	g_dph_node_array[SIR_MAX_SUPPORTED_BSS][SIR_SAP_MAX_NUM_PEERS + 1];
+	g_dph_node_array[WLAN_MAX_VDEVS][SIR_SAP_MAX_NUM_PEERS + 1];
 
 static inline
 struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
@@ -431,7 +431,7 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 	session_id = session->peSessionId;
 	bssid = &session->bssId;
 
-	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+	if (session_id >= WLAN_MAX_VDEVS) {
 		pe_err("Invalid session_id %d of type %d",
 			session_id, bss_type);
 		return;
@@ -488,7 +488,7 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 	bss_type = session->bssType;
 	session_id = session->peSessionId;
 
-	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+	if (session_id >= WLAN_MAX_VDEVS) {
 		pe_err("Invalid session_id %d of type %d",
 			session_id, bss_type);
 		return;
@@ -536,7 +536,7 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 	bss_type = session->bssType;
 	session_id = session->peSessionId;
 
-	if (session_id >= SIR_MAX_SUPPORTED_BSS) {
+	if (session_id >= WLAN_MAX_VDEVS) {
 		pe_err("Invalid session_id %d of type %d",
 			session_id, bss_type);
 		return;

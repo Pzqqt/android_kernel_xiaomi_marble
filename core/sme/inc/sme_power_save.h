@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,12 +83,11 @@ struct ps_params {
 
 /**
  * struct ps_global_info - global struct for Power save information
- * @ps_enabled: Power Save is enabled or not in ini
- * @ps_params:  maintain power save state and USAPD params
+ * @ps_params: maintain power save state and USAPD params
+ * @remain_in_power_active_till_dhcp: remain in Power active till DHCP completes
  */
 struct ps_global_info {
-	struct ps_params ps_params[SIR_MAX_SUPPORTED_BSS];
-	/* Remain in Power active till DHCP completes */
+	struct ps_params ps_params[WLAN_MAX_VDEVS];
 	bool remain_in_power_active_till_dhcp;
 };
 

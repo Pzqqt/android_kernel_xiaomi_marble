@@ -740,7 +740,6 @@ struct vdev_type_nss {
 
 /**
  * struct mgmt_beacon_probe_filter
- * @bcn_filter_lock: Spinlock for the filter structure
  * @num_sta_sessions: Number of active PE STA sessions
  * @sta_bssid: Array of PE STA session's peer BSSIDs
  * @num_ibss_sessions: Number of active PE IBSS sessions
@@ -753,11 +752,11 @@ struct vdev_type_nss {
  */
 struct mgmt_beacon_probe_filter {
 	uint8_t num_sta_sessions;
-	tSirMacAddr sta_bssid[SIR_MAX_SUPPORTED_BSS];
+	tSirMacAddr sta_bssid[WLAN_MAX_VDEVS];
 	uint8_t num_ibss_sessions;
-	tSirMacSSid ibss_ssid[SIR_MAX_SUPPORTED_BSS];
+	tSirMacSSid ibss_ssid[WLAN_MAX_VDEVS];
 	uint8_t num_sap_sessions;
-	uint8_t sap_channel[SIR_MAX_SUPPORTED_BSS];
+	uint8_t sap_channel[WLAN_MAX_VDEVS];
 };
 
 /**

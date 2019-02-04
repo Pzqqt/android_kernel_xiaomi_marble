@@ -1078,7 +1078,7 @@ static bool pe_filter_bcn_probe_frame(struct mac_context *mac_ctx,
 	 * STA BSSIDs, allow the frame
 	 */
 	if (filter->num_sta_sessions) {
-		for (session_id = 0; session_id < SIR_MAX_SUPPORTED_BSS;
+		for (session_id = 0; session_id < WLAN_MAX_VDEVS;
 		     session_id++) {
 			if (sir_compare_mac_addr(filter->sta_bssid[session_id],
 			    hdr->bssId)) {
@@ -1114,7 +1114,7 @@ static bool pe_filter_bcn_probe_frame(struct mac_context *mac_ctx,
 			     &ssid_ie[2],
 			     bcn_ssid.length);
 
-		for (session_id = 0; session_id < SIR_MAX_SUPPORTED_BSS;
+		for (session_id = 0; session_id < WLAN_MAX_VDEVS;
 		     session_id++) {
 			if (filter->ibss_ssid[session_id].length ==
 			    bcn_ssid.length &&

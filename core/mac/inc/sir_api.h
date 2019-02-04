@@ -48,15 +48,12 @@ struct mac_context;
 #include "wlan_policy_mgr_api.h"
 #include "wlan_tdls_public_structs.h"
 
-#define SIR_MAX_SUPPORTED_BSS WLAN_MAX_VDEVS
-
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
 /* / Max supported channel list */
 #define SIR_MAX_SUPPORTED_CHANNEL_LIST      96
 #define CFG_VALID_CHANNEL_LIST_LEN              100
 #define CFG_COUNTRY_CODE_LEN 3
-
 
 #define SIR_MDIE_ELEMENT_ID         54
 #define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */

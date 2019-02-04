@@ -807,7 +807,7 @@ QDF_STATUS sme_ps_open(mac_handle_t mac_handle)
 
 	uint32_t i;
 
-	for (i = 0; i < SIR_MAX_SUPPORTED_BSS; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (QDF_STATUS_SUCCESS != sme_ps_open_per_session(mac_handle,
 								  i)) {
 			sme_err("PMC Init Failed for session: %d", i);
