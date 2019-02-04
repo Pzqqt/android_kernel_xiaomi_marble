@@ -1575,7 +1575,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 	tLimMlmDeauthReq *mlm_deauth_req;
 	tLimMlmDeauthCnf mlm_deauth_cnf;
 	struct pe_session *session;
-	tSirSmeDeauthRsp *sme_deauth_rsp;
+	struct deauth_rsp *sme_deauth_rsp;
 
 	if (QDF_STATUS_SUCCESS != suspend_status)
 		pe_err("Suspend Status is not success %X",
@@ -1624,7 +1624,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 				 * deauthentication
 				 */
 				sme_deauth_rsp =
-				    qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
+				    qdf_mem_malloc(sizeof(*sme_deauth_rsp));
 				if (!sme_deauth_rsp) {
 					qdf_mem_free(mlm_deauth_req);
 					return;
@@ -1638,7 +1638,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 				sme_deauth_rsp->messageType =
 						eWNI_SME_DEAUTH_RSP;
 				sme_deauth_rsp->length =
-						sizeof(tSirSmeDeauthRsp);
+						sizeof(*sme_deauth_rsp);
 				sme_deauth_rsp->statusCode =
 						eSIR_SME_DEAUTH_STATUS;
 				sme_deauth_rsp->sessionId =

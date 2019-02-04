@@ -9379,7 +9379,7 @@ POST_ROAM_FAILURE:
 }
 
 static void csr_roam_roaming_state_deauth_rsp_processor(struct mac_context *mac,
-						tSirSmeDeauthRsp *pSmeRsp)
+						struct deauth_rsp *pSmeRsp)
 {
 	tSirResultCodes statusCode;
 	/* No one is sending eWNI_SME_DEAUTH_REQ to PE. */
@@ -9496,7 +9496,7 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 					pSmeRsp->sessionId,
 					eSmeCommandWmStatusChange);
 			csr_roam_roaming_state_deauth_rsp_processor(mac,
-						(tSirSmeDeauthRsp *) pSmeRsp);
+						(struct deauth_rsp *) pSmeRsp);
 		}
 		break;
 	case eWNI_SME_START_BSS_RSP:
@@ -10992,7 +10992,7 @@ csr_roam_chk_lnk_deauth_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info_ptr = NULL;
-	tSirSmeDeauthRsp *pDeauthRsp = (tSirSmeDeauthRsp *) msg_ptr;
+	struct deauth_rsp *pDeauthRsp = (struct deauth_rsp *) msg_ptr;
 	struct csr_roam_info roam_info;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));

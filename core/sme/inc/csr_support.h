@@ -228,7 +228,7 @@ bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
 bool csr_is_infra_bss_desc(tSirBssDescription *pSirBssDesc);
 bool csr_is_ibss_bss_desc(tSirBssDescription *pSirBssDesc);
 bool csr_is_privacy(tSirBssDescription *pSirBssDesc);
-tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp);
+tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,

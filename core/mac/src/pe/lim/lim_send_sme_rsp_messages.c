@@ -1175,7 +1175,7 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			uint16_t smetransactionId)
 {
 	uint8_t *pBuf;
-	tSirSmeDeauthRsp *pSirSmeDeauthRsp;
+	struct deauth_rsp *pSirSmeDeauthRsp;
 	tSirSmeDeauthInd *pSirSmeDeauthInd;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
@@ -1189,13 +1189,14 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		 * Deauthentication response to host triggered
 		 * deauthentication.
 		 */
-		pSirSmeDeauthRsp = qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
+		pSirSmeDeauthRsp = qdf_mem_malloc(sizeof(*pSirSmeDeauthRsp));
 		if (!pSirSmeDeauthRsp)
 			return;
-		pe_debug("send eWNI_SME_DEAUTH_RSP with retCode: %d for" MAC_ADDRESS_STR,
-			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
+		pe_debug("send eWNI_SME_DEAUTH_RSP with retCode: %d for "
+			 MAC_ADDRESS_STR,
+			 reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthRsp->messageType = eWNI_SME_DEAUTH_RSP;
-		pSirSmeDeauthRsp->length = sizeof(tSirSmeDeauthRsp);
+		pSirSmeDeauthRsp->length = sizeof(*pSirSmeDeauthRsp);
 		pSirSmeDeauthRsp->statusCode = reasonCode;
 		pSirSmeDeauthRsp->sessionId = smesessionId;
 		pSirSmeDeauthRsp->transactionId = smetransactionId;

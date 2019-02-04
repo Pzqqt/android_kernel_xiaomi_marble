@@ -1296,14 +1296,14 @@ struct deauth_req {
 };
 
 /* / Definition for Deauthetication response */
-typedef struct sSirSmeDeauthRsp {
+struct deauth_rsp {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peer_macaddr;
-} tSirSmeDeauthRsp, *tpSirSmeDeauthRsp;
+};
 
 /* / Definition for Deauthetication indication from peer */
 typedef struct sSirSmeDeauthInd {

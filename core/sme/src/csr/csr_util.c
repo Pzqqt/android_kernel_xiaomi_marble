@@ -5758,7 +5758,7 @@ void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 	}
 }
 
-tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
+tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 {
 	uint8_t *pBuffer = (uint8_t *) pSmeRsp;
 	uint32_t ret;
