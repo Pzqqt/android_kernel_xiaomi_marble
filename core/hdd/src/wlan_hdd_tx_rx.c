@@ -142,7 +142,7 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 					     WLAN_NETIF_PRIORITY_QUEUE_ON,
 					     WLAN_DATA_FLOW_CONTROL_PRIORITY);
 		cdp_hl_fc_set_os_queue_status(soc,
-					      adapter->session_id,
+					      adapter->vdev_id,
 					      WLAN_NETIF_PRIORITY_QUEUE_ON);
 	}
 	if (np_qpaused) {
@@ -150,7 +150,7 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 					     WLAN_WAKE_NON_PRIORITY_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
 		cdp_hl_fc_set_os_queue_status(soc,
-					      adapter->session_id,
+					      adapter->vdev_id,
 					      WLAN_WAKE_NON_PRIORITY_QUEUE);
 	}
 }
@@ -329,7 +329,7 @@ void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		adapter->tx_flow_timer_initialized = true;
 	}
 	cdp_fc_register(cds_get_context(QDF_MODULE_ID_SOC),
-		adapter->session_id, flow_control_fp, adapter,
+		adapter->vdev_id, flow_control_fp, adapter,
 		flow_control_is_pause_fp);
 }
 
@@ -342,7 +342,7 @@ void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 {
 	cdp_fc_deregister(cds_get_context(QDF_MODULE_ID_SOC),
-			adapter->session_id);
+			adapter->vdev_id);
 	if (adapter->tx_flow_timer_initialized == true) {
 		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
 		qdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
@@ -420,7 +420,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 uint32_t hdd_txrx_get_tx_ack_count(struct hdd_adapter *adapter)
 {
 	return cdp_get_tx_ack_stats(cds_get_context(QDF_MODULE_ID_SOC),
-				    adapter->session_id);
+				    adapter->vdev_id);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2060,7 +2060,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
-		qdf_dp_trace_log_pkt(adapter->session_id, skb, QDF_RX,
+		qdf_dp_trace_log_pkt(adapter->vdev_id, skb, QDF_RX,
 				     QDF_TRACE_DEFAULT_PDEV_ID);
 
 		DPTRACE(qdf_dp_trace(skb,

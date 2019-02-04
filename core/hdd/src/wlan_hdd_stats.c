@@ -558,7 +558,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		if (eConnectionState_Connecting ==
 		    sta_ctx->conn_info.connState) {
 			hdd_err("Session ID %d, Connection is in progress",
-				adapter->session_id);
+				adapter->vdev_id);
 			pInfo->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
@@ -1301,7 +1301,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING]);
 
-	LinkLayerStatsSetReq.staId = adapter->session_id;
+	LinkLayerStatsSetReq.staId = adapter->vdev_id;
 
 	hdd_debug("LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering = %d",
 		LinkLayerStatsSetReq.reqId, LinkLayerStatsSetReq.staId,
@@ -1435,14 +1435,14 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 
 	get_req.reqId = req_id;
 	get_req.paramIdMask = req_mask;
-	get_req.staId = adapter->session_id;
+	get_req.staId = adapter->vdev_id;
 
 	rtnl_lock();
 	errno = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
 	rtnl_unlock();
 	if (errno)
 		hdd_err("Send LL stats req failed, id:%u, mask:%d, session:%d",
-			req_id, req_mask, adapter->session_id);
+			req_id, req_mask, adapter->vdev_id);
 
 	hdd_exit();
 
@@ -1519,9 +1519,9 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK]);
 
-	LinkLayerStatsGetReq.staId = adapter->session_id;
+	LinkLayerStatsGetReq.staId = adapter->vdev_id;
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	ret = wlan_hdd_send_ll_stats_req(hdd_ctx, &LinkLayerStatsGetReq);
@@ -1637,7 +1637,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 	 */
 	LinkLayerStatsClearReq.reqId = 1;
 
-	LinkLayerStatsClearReq.staId = adapter->session_id;
+	LinkLayerStatsClearReq.staId = adapter->vdev_id;
 
 	hdd_debug("LL_STATS_CLEAR reqId = %d, staId = %d, statsClearReqMask = 0x%X, stopReq = %d",
 		LinkLayerStatsClearReq.reqId,
@@ -1728,7 +1728,7 @@ void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter)
 		WIFI_STATS_IFACE_ALL_PEER;
 	link_layer_stats_clear_req.stopReq = 0;
 	link_layer_stats_clear_req.reqId = 1;
-	link_layer_stats_clear_req.staId = adapter->session_id;
+	link_layer_stats_clear_req.staId = adapter->vdev_id;
 	sme_ll_stats_clear_req(mac_handle, &link_layer_stats_clear_req);
 }
 
@@ -2825,7 +2825,7 @@ set_thresh:
 
 set_period:
 	hdd_info("send period to target");
-	errno = wma_cli_set_command(adapter->session_id,
+	errno = wma_cli_set_command(adapter->vdev_id,
 				    WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD,
 				    period, PDEV_CMD);
 	if (errno) {
@@ -2896,7 +2896,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	stats_ext_req.request_data_len = data_len;
 	stats_ext_req.request_data = (void *)data;
 
-	status = sme_stats_ext_request(adapter->session_id, &stats_ext_req);
+	status = sme_stats_ext_request(adapter->vdev_id, &stats_ext_req);
 
 	if (QDF_STATUS_SUCCESS != status)
 		ret_val = -EINVAL;
@@ -4338,7 +4338,7 @@ void hdd_wlan_fill_per_chain_rssi_stats(struct station_info *sinfo,
 			sinfo->signal_avg = sinfo->chain_signal_avg[i];
 
 		hdd_debug("RSSI for chain %d, vdev_id %d is %d",
-			  i, adapter->session_id, sinfo->chain_signal_avg[i]);
+			  i, adapter->vdev_id, sinfo->chain_signal_avg[i]);
 
 		if (!rssi_stats_valid && sinfo->chain_signal_avg[i])
 			rssi_stats_valid = true;
@@ -4393,7 +4393,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_GET_STA,
-		   adapter->session_id, 0);
+		   adapter->vdev_id, 0);
 
 	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_debug("Not associated");
@@ -4601,7 +4601,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	if (adapter->device_mode == QDF_SAP_MODE)
@@ -4787,7 +4787,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_get_operation_channel(hdd_ctx->mac_handle, &channel,
-				  adapter->session_id);
+				  adapter->vdev_id);
 	opfreq = wlan_reg_chan_to_freq(hdd_ctx->pdev, channel);
 
 	mutex_lock(&hdd_ctx->chan_info_lock);
@@ -5097,7 +5097,7 @@ static int __wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
 	cookie = osif_request_cookie(request);
 
 	rcpi_req->mac_addr = mac_addr;
-	rcpi_req->session_id = adapter->session_id;
+	rcpi_req->session_id = adapter->vdev_id;
 	rcpi_req->measurement_type = measurement_type;
 	rcpi_req->rcpi_callback = wlan_hdd_get_rcpi_cb;
 	rcpi_req->rcpi_context = cookie;
@@ -5644,7 +5644,7 @@ int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,
 
 	qdf_mem_copy(&rssi_req.peer_macaddr, macaddress,
 		     QDF_MAC_ADDR_SIZE);
-	rssi_req.sessionid = adapter->session_id;
+	rssi_req.sessionid = adapter->vdev_id;
 	status = sme_get_peer_info(adapter->hdd_ctx->mac_handle,
 				   rssi_req,
 				   cookie,
@@ -5753,7 +5753,7 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 
 	qdf_mem_copy(&peer_info_req.peer_macaddr, &macaddress,
 		     QDF_MAC_ADDR_SIZE);
-	peer_info_req.sessionid = adapter->session_id;
+	peer_info_req.sessionid = adapter->vdev_id;
 	peer_info_req.reset_after_request = 0;
 	status = sme_get_peer_info_ext(adapter->hdd_ctx->mac_handle,
 				       &peer_info_req,
@@ -5853,7 +5853,7 @@ QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter)
 				    eCSR_HDD, SME_GLOBAL_CLASSA_STATS,
 				    hdd_get_class_a_statistics_cb,
 				    sta_ctx->conn_info.staId[0],
-				    cookie, adapter->session_id);
+				    cookie, adapter->vdev_id);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_warn("Unable to retrieve Class A statistics");
 		goto return_cached_results;
@@ -6039,7 +6039,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 				    hdd_get_station_statistics_cb,
 				    sta_ctx->conn_info.staId[0],
 				    cookie,
-				    adapter->session_id);
+				    adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to retrieve statistics, status %d", status);
 		goto put_request;
@@ -6172,7 +6172,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 		total_rx_delv = 0;
 		total_rx_refused = 0;
 		stats = &adapter->hdd_stats.tx_rx_stats;
-		hdd_debug("adapter: %u", adapter->session_id);
+		hdd_debug("adapter: %u", adapter->vdev_id);
 		for (; i < NUM_CPUS; i++) {
 			total_rx_pkt += stats->rx_packets[i];
 			total_rx_dropped += stats->rx_dropped[i];

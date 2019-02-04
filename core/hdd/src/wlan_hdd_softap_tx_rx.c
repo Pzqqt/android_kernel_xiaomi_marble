@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -910,7 +910,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
-		qdf_dp_trace_log_pkt(adapter->session_id,
+		qdf_dp_trace_log_pkt(adapter->vdev_id,
 				     skb, QDF_RX, QDF_TRACE_DEFAULT_PDEV_ID);
 		DPTRACE(qdf_dp_trace(skb,
 			QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
@@ -984,7 +984,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 			if (ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 					  adapter->device_mode,
 					  adapter->sta_info[sta_id].sta_id,
-					  adapter->session_id,
+					  adapter->vdev_id,
 					  WLAN_IPA_CLIENT_DISCONNECT,
 					  adapter->sta_info[sta_id].sta_mac.
 					  bytes) != QDF_STATUS_SUCCESS)
@@ -1051,12 +1051,12 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->session_id),
+		(struct cdp_pdev *)pdev, adapter->vdev_id),
 		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	adapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,
-					adapter->session_id);
+					adapter->vdev_id);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
 	qdf_status = cdp_peer_register(soc,
@@ -1194,7 +1194,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 				      adapter->dev,
 				      adapter->device_mode,
 				      ap_ctx->broadcast_sta_id,
-				      adapter->session_id,
+				      adapter->vdev_id,
 				      WLAN_IPA_AP_DISCONNECT,
 				      adapter->dev->dev_addr) !=
 		    QDF_STATUS_SUCCESS)
