@@ -65,8 +65,22 @@ uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *
 uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 				  struct join_req *pJoinReq);
 
-uint8_t lim_is_sme_disassoc_req_valid(struct mac_context *, tpSirSmeDisassocReq,
-				      struct pe_session *);
+/**
+ * lim_is_sme_disassoc_req_valid() - Validate disassoc req message
+ * @mac: Pointer to Global MAC structure
+ * @disassoc_req: Pointer to received SME_DISASSOC_REQ message
+ * @pe_session: Pointer to the PE session
+ *
+ * This function is called by lim_process_sme_req_messages() upon
+ * receiving SME_DISASSOC_REQ message from application.
+ *
+ * Return: true  When received SME_DISASSOC_REQ is formatted correctly
+ *         false otherwise
+ */
+bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
+				   struct disassoc_req *disassoc_req,
+				   struct pe_session *pe_session);
+
 uint8_t lim_is_sme_deauth_req_valid(struct mac_context *, tpSirSmeDeauthReq, struct pe_session *);
 uint8_t lim_is_sme_set_context_req_valid(struct mac_context *, tpSirSmeSetContextReq);
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);

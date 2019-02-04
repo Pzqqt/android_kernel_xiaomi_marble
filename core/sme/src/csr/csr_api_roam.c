@@ -15223,21 +15223,22 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 }
 
 /* */
-QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessionId,
+QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
+					uint32_t sessionId,
 					tSirMacAddr bssId, uint16_t reasonCode)
 {
-	tSirSmeDisassocReq *pMsg;
+	struct disassoc_req *pMsg;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId))
 		return QDF_STATUS_E_FAILURE;
 
-	pMsg = qdf_mem_malloc(sizeof(tSirSmeDisassocReq));
+	pMsg = qdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg)
 		return QDF_STATUS_E_NOMEM;
 
 	pMsg->messageType = eWNI_SME_DISASSOC_REQ;
-	pMsg->length = sizeof(tSirSmeDisassocReq);
+	pMsg->length = sizeof(*pMsg);
 	pMsg->sessionId = sessionId;
 	pMsg->transactionId = 0;
 	if ((pSession->pCurRoamProfile != NULL)

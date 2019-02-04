@@ -2062,7 +2062,7 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pM
 	uint16_t disassocTrigger, reasonCode;
 	tLimMlmDisassocReq *pMlmDisassocReq;
 	tSirResultCodes retCode = eSIR_SME_SUCCESS;
-	tSirSmeDisassocReq smeDisassocReq;
+	struct disassoc_req smeDisassocReq;
 	struct pe_session *pe_session = NULL;
 	uint8_t sessionId;
 	uint8_t smesessionId;
@@ -2073,7 +2073,7 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pM
 		return;
 	}
 
-	qdf_mem_copy(&smeDisassocReq, pMsgBuf, sizeof(tSirSmeDisassocReq));
+	qdf_mem_copy(&smeDisassocReq, pMsgBuf, sizeof(struct disassoc_req));
 	smesessionId = smeDisassocReq.sessionId;
 	smetransactionId = smeDisassocReq.transactionId;
 	if (!lim_is_sme_disassoc_req_valid(mac,
@@ -4766,11 +4766,11 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 					 struct scheduler_msg *msg)
 {
-	tSirSmeDisassocReq disassoc_req;
+	struct disassoc_req disassoc_req;
 	struct pe_session *session;
 	uint8_t session_id;
 
-	qdf_mem_copy(&disassoc_req, msg->bodyptr, sizeof(tSirSmeDisassocReq));
+	qdf_mem_copy(&disassoc_req, msg->bodyptr, sizeof(struct disassoc_req));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   disassoc_req.bssid.bytes,

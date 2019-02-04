@@ -509,34 +509,12 @@ end:
 	return valid;
 } /*** end lim_is_sme_join_req_valid() ***/
 
-/**
- * lim_is_sme_disassoc_req_valid()
- *
- ***FUNCTION:
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_DISASSOC_REQ message from application.
- *
- ***LOGIC:
- * Message validity checks are performed in this function
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac         Pointer to Global MAC structure
- * @param  pDisassocReq Pointer to received SME_DISASSOC_REQ message
- * @return true         When received SME_DISASSOC_REQ is formatted
- *                      correctly
- *         false        otherwise
- */
-
-uint8_t
-lim_is_sme_disassoc_req_valid(struct mac_context *mac,
-			      tpSirSmeDisassocReq pDisassocReq,
-			      struct pe_session *pe_session)
+bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
+				   struct disassoc_req *disassoc_req,
+				   struct pe_session *pe_session)
 {
-	if (qdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
-	    !qdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
+	if (qdf_is_macaddr_group(&disassoc_req->peer_macaddr) &&
+	    !qdf_is_macaddr_broadcast(&disassoc_req->peer_macaddr))
 		return false;
 
 	return true;

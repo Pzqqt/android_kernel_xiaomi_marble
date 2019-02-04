@@ -1219,7 +1219,7 @@ struct wm_status_change_ntf {
 };
 
 /* Definition for Disassociation request */
-typedef struct sSirSmeDisassocReq {
+struct disassoc_req {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1231,7 +1231,7 @@ typedef struct sSirSmeDisassocReq {
 	/* This will be set in while handing off from one AP to other */
 	uint8_t doNotSendOverTheAir;
 	bool process_ho_fail;
-} qdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
+};
 
 /* / Definition for Disassociation response */
 typedef struct sSirSmeDisassocRsp {
