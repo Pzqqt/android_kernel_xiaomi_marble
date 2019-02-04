@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -423,6 +423,8 @@ static QDF_STATUS tdls_process_reset_all_peers(struct wlan_objmgr_vdev *vdev)
 		tdls_decrement_peer_count(tdls_soc);
 		tdls_soc->tdls_conn_info[staidx].sta_id = INVALID_TDLS_PEER_ID;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;
+		tdls_soc->tdls_conn_info[staidx].index =
+					INVALID_TDLS_PEER_INDEX;
 
 		qdf_mem_zero(&tdls_soc->tdls_conn_info[staidx].peer_mac,
 			     sizeof(struct qdf_mac_addr));

@@ -79,6 +79,8 @@ struct wlan_objmgr_psoc;
 #define TDLS_TEARDOWN_PEER_UNSPEC_REASON 26
 
 #define INVALID_TDLS_PEER_ID 0xFF
+#define INVALID_TDLS_PEER_INDEX 0xFF
+
 #define TDLS_STA_INDEX_CHECK(sta_id) \
 	(((sta_id) >= 0) && ((sta_id) < 0xFF))
 
