@@ -94,10 +94,12 @@
  * @session_id: session id
  * @sta_id: sta id
  * @peer_mac: peer address
+ * @index: index to store array offset.
  */
 struct tdls_conn_info {
 	uint8_t session_id;
 	uint8_t sta_id;
+	uint8_t index;
 	struct qdf_mac_addr peer_mac;
 };
 
@@ -125,16 +127,6 @@ struct tdls_conn_tracker_mac_table {
 	uint32_t tx_packet_cnt;
 	uint32_t rx_packet_cnt;
 	uint32_t peer_timestamp_ms;
-};
-
-/**
- * struct tdls_ct_idle_peer_data - connection tracker idle peer info
- * @vdev: vdev object
- * @tdls_info: tdls connection info
- */
-struct tdls_ct_idle_peer_data {
-	struct wlan_objmgr_vdev *vdev;
-	struct tdls_conn_info *tdls_info;
 };
 
 /**
@@ -229,7 +221,6 @@ struct tdls_soc_priv_obj {
 	uint16_t tdls_update_peer_state;
 	uint16_t tdls_del_all_peers;
 	uint32_t tdls_update_dp_vdev_flags;
-	struct tdls_ct_idle_peer_data tdls_idle_peer_data;
 	qdf_spinlock_t tdls_ct_spinlock;
 };
 

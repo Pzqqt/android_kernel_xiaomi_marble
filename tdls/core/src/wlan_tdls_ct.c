@@ -562,11 +562,11 @@ static struct tdls_conn_info *
 tdls_get_conn_info(struct tdls_soc_priv_obj *tdls_soc, uint8_t idx)
 {
 	uint8_t sta_idx;
-
 	/* check if there is available index for this new TDLS STA */
 	for (sta_idx = 0; sta_idx < WLAN_TDLS_STA_MAX_NUM; sta_idx++) {
 		if (idx == tdls_soc->tdls_conn_info[sta_idx].sta_id) {
 			tdls_debug("tdls peer with sta_idx %u exists", idx);
+			tdls_soc->tdls_conn_info[sta_idx].index = sta_idx;
 			return &tdls_soc->tdls_conn_info[sta_idx];
 		}
 	}
@@ -576,17 +576,12 @@ tdls_get_conn_info(struct tdls_soc_priv_obj *tdls_soc, uint8_t idx)
 }
 
 static void
-tdls_ct_process_idle_handler(
-			struct tdls_ct_idle_peer_data *tdls_idle_peer_data)
+tdls_ct_process_idle_handler(struct wlan_objmgr_vdev *vdev,
+			     struct tdls_conn_info *tdls_info)
 {
-	struct tdls_conn_info *tdls_info;
 	struct tdls_peer *curr_peer;
-	struct wlan_objmgr_vdev *vdev;
 	struct tdls_vdev_priv_obj *tdls_vdev_obj;
 	struct tdls_soc_priv_obj *tdls_soc_obj;
-
-	vdev = tdls_idle_peer_data->vdev;
-	tdls_info = tdls_idle_peer_data->tdls_info;
 
 	if (QDF_STATUS_SUCCESS != tdls_get_vdev_objects(vdev, &tdls_vdev_obj,
 						   &tdls_soc_obj))
@@ -637,22 +632,29 @@ tdls_ct_process_idle_handler(
 
 void tdls_ct_idle_handler(void *user_data)
 {
-	struct tdls_ct_idle_peer_data *tdls_idle_peer_data;
 	struct wlan_objmgr_vdev *vdev;
+	struct tdls_conn_info *tdls_info;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+	uint32_t idx;
 
-	tdls_idle_peer_data = (struct tdls_ct_idle_peer_data *) user_data;
-
-	if (NULL == tdls_idle_peer_data ||
-	    NULL == tdls_idle_peer_data->vdev ||
-	    NULL == tdls_idle_peer_data->tdls_info)
+	tdls_info = (struct tdls_conn_info *)user_data;
+	if (!tdls_info)
 		return;
 
-	vdev = tdls_idle_peer_data->vdev;
-	if (QDF_STATUS_SUCCESS != wlan_objmgr_vdev_try_get_ref(vdev,
-							WLAN_TDLS_NB_ID))
+	idx = tdls_info->index;
+	if (tdls_info->index == INVALID_TDLS_PEER_INDEX)
 		return;
 
-	tdls_ct_process_idle_handler(tdls_idle_peer_data);
+	tdls_soc_obj = qdf_container_of(tdls_info, struct tdls_soc_priv_obj,
+					tdls_conn_info[idx]);
+
+	vdev = tdls_get_vdev(tdls_soc_obj->soc, WLAN_TDLS_NB_ID);
+	if (!vdev) {
+		tdls_err("Unable to fetch the vdev");
+		return;
+	}
+
+	tdls_ct_process_idle_handler(vdev, tdls_info);
 	wlan_objmgr_vdev_release_ref(vdev,
 				     WLAN_TDLS_NB_ID);
 }
@@ -729,12 +731,10 @@ static void tdls_ct_process_connected_link(
 			uint8_t sta_id = (uint8_t)curr_peer->sta_id;
 			struct tdls_conn_info *tdls_info;
 			tdls_info = tdls_get_conn_info(tdls_soc, sta_id);
-			tdls_soc->tdls_idle_peer_data.tdls_info = tdls_info;
-			tdls_soc->tdls_idle_peer_data.vdev = tdls_vdev->vdev;
 			qdf_mc_timer_init(&curr_peer->peer_idle_timer,
 					  QDF_TIMER_TYPE_SW,
 					  tdls_ct_idle_handler,
-					  &tdls_soc->tdls_idle_peer_data);
+					  (void *)tdls_info);
 			curr_peer->is_peer_idle_timer_initialised = true;
 		}
 		if (QDF_TIMER_STATE_RUNNING !=
@@ -1286,6 +1286,8 @@ void tdls_disable_offchan_and_teardown_links(
 		tdls_decrement_peer_count(tdls_soc);
 		tdls_soc->tdls_conn_info[staidx].sta_id = INVALID_TDLS_PEER_ID;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;
+		tdls_soc->tdls_conn_info[staidx].index =
+						INVALID_TDLS_PEER_INDEX;
 
 		qdf_mem_zero(&tdls_soc->tdls_conn_info[staidx].peer_mac,
 			     sizeof(struct qdf_mac_addr));
