@@ -481,7 +481,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -490,9 +490,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_SCAN,
-		   adapter->session_id, request->n_channels);
+		   adapter->vdev_id, request->n_channels);
 
-	if (!sme_is_session_id_valid(hdd_ctx->mac_handle, adapter->session_id))
+	if (!sme_is_session_id_valid(hdd_ctx->mac_handle, adapter->vdev_id))
 		return -EINVAL;
 
 	qdf_status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
@@ -1243,7 +1243,7 @@ int wlan_hdd_scan_abort(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
-			adapter->session_id, INVALID_SCAN_ID, true);
+			adapter->vdev_id, INVALID_SCAN_ID, true);
 
 	return 0;
 }
@@ -1277,7 +1277,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	if (adapter->device_mode != QDF_STA_MODE) {
@@ -1352,7 +1352,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1495,7 +1495,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 		return;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);

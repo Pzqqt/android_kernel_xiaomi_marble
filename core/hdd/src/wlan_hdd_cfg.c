@@ -1776,7 +1776,7 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 
 	if (!hdd_is_vdev_in_conn_state(adapter)) {
 		hdd_debug("Vdev (id %d) not in connected/started state, cannot accept command",
-				adapter->session_id);
+				adapter->vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1786,7 +1786,7 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 	if (QDF_IS_STATUS_ERROR(
 		sme_nss_chains_update(mac_handle,
 				      &user_cfg,
-				      adapter->session_id)))
+				      adapter->vdev_id)))
 		return QDF_STATUS_E_FAILURE;
 
 	/* Check TDLS status and update antenna mode */
@@ -1954,7 +1954,7 @@ skip_ht_cap_update:
 		status = false;
 		hdd_err("Could not get MCS SET from CFG");
 	}
-	sme_update_he_cap_nss(mac_handle, adapter->session_id, nss);
+	sme_update_he_cap_nss(mac_handle, adapter->vdev_id, nss);
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
 
 	if (QDF_STATUS_SUCCESS != sme_update_nss(mac_handle, nss))

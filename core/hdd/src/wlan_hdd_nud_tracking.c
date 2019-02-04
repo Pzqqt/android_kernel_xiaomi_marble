@@ -255,7 +255,7 @@ static void __hdd_nud_failure_work(void *data)
 	qdf_mutex_release(&adapter->disconnection_status_lock);
 
 	hdd_debug("Disconnecting STA with session id: %d",
-		  adapter->session_id);
+		  adapter->vdev_id);
 	/* Issue Disconnect */
 	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH);
 	if (0 != status) {

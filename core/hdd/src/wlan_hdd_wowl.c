@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -104,7 +104,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	int i, empty_slot, len, offset;
 	QDF_STATUS status;
 	const char *temp;
-	uint8_t sessionId = adapter->session_id;
+	uint8_t sessionId = adapter->vdev_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t num_filters;
 	bool invalid_ptrn = false;
@@ -321,7 +321,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 {
 	struct pmo_wow_add_pattern localPattern;
 	QDF_STATUS qdf_ret_status;
-	uint8_t session_id = adapter->session_id;
+	uint8_t session_id = adapter->vdev_id;
 	uint16_t pattern_len, mask_len, i;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {

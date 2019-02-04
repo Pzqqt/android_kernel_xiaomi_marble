@@ -472,12 +472,12 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_TDLS_MGMT,
-		   adapter->session_id, action_code);
+		   adapter->vdev_id, action_code);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -623,7 +623,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	cfg_tdls_get_support_enable(hdd_ctx->psoc, &tdls_support);
@@ -635,7 +635,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_TDLS_OPER,
-		   adapter->session_id, oper);
+		   adapter->vdev_id, oper);
 
 	if (NULL == peer) {
 		hdd_err("Invalid arguments");

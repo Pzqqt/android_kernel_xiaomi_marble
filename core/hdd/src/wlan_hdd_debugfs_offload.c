@@ -1,9 +1,5 @@
-
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,7 +66,7 @@ wlan_hdd_mc_addr_list_info_debugfs(struct hdd_context *hdd_ctx,
 	}
 
 	status = ucfg_pmo_get_mc_addr_list(hdd_ctx->psoc,
-					   adapter->session_id,
+					   adapter->vdev_id,
 					   &mc_addr_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret = scnprintf(buf, buf_avail_len,

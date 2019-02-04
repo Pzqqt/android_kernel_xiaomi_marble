@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -184,7 +184,7 @@ hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
 		return -EINVAL;
 	}
 
-	encrypt_decrypt_params->vdev_id = adapter->session_id;
+	encrypt_decrypt_params->vdev_id = adapter->vdev_id;
 	hdd_debug("vdev_id: %d", encrypt_decrypt_params->vdev_id);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION]) {

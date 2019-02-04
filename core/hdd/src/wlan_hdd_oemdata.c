@@ -97,10 +97,10 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	data_cap->allowed_dwell_time_max = neighbor_scan_max_chan_time;
 	data_cap->curr_dwell_time_min =
 		sme_get_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
-						    adapter->session_id);
+						    adapter->vdev_id);
 	data_cap->curr_dwell_time_max =
 		sme_get_neighbor_scan_max_chan_time(hdd_ctx->mac_handle,
-						    adapter->session_id);
+						    adapter->vdev_id);
 	data_cap->supported_bands = band_capability;
 
 	/* request for max num of channels */
@@ -223,7 +223,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 		deviceMode = buf++;
 		vdevId = buf++;
 		*deviceMode = adapter->device_mode;
-		*vdevId = adapter->session_id;
+		*vdevId = adapter->vdev_id;
 		(*numInterfaces)++;
 		hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
 			  *numInterfaces, *deviceMode,

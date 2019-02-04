@@ -145,7 +145,7 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	/* Disable NAN Discovery if enabled */
@@ -191,7 +191,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_cfg80211_cancel_roc(adapter->vdev, cookie);
@@ -237,7 +237,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -262,7 +262,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			   wlan_vdev_get_id(adapter->vdev), 0);
 
 		qdf_status = sme_send_mgmt_tx(hdd_ctx->mac_handle,
-					      adapter->session_id, buf, len);
+					      adapter->vdev_id, buf, len);
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			return 0;
@@ -326,7 +326,7 @@ static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_cfg80211_mgmt_tx_cancel(adapter->vdev, cookie);
@@ -413,7 +413,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	}
 	noa.interval = MS_TO_TU_MUS(interval);
 	noa.count = count;
-	noa.vdev_id = adapter->session_id;
+	noa.vdev_id = adapter->vdev_id;
 
 	hdd_debug("P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
 		  "interval %d count %d single noa duration %d "
@@ -524,7 +524,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 		noa.interval = 0;
 		noa.count = 0;
 		noa.ps_selection = P2P_POWER_SAVE_TYPE_OPPORTUNISTIC;
-		noa.vdev_id = adapter->session_id;
+		noa.vdev_id = adapter->vdev_id;
 
 		hdd_debug("P2P_PS_ATTR: oppPS %d ctWindow %d duration %d interval %d count %d single noa duration %d PsSelection %x",
 			noa.opp_ps, noa.ct_window,
@@ -551,7 +551,7 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 	noa.count = pappnoa->count;
 	noa.single_noa_duration = pappnoa->single_noa_duration;
 	noa.ps_selection = pappnoa->psSelection;
-	noa.vdev_id = adapter->session_id;
+	noa.vdev_id = adapter->vdev_id;
 
 	return wlan_hdd_set_power_save(adapter, &noa);
 }
@@ -655,11 +655,11 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
-	if (adapter && !wlan_hdd_validate_session_id(adapter->session_id)) {
+	if (adapter && !wlan_hdd_validate_session_id(adapter->vdev_id)) {
 		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
-					adapter->session_id, INVALID_SCAN_ID,
+					adapter->vdev_id, INVALID_SCAN_ID,
 					false);
 			hdd_debug("Abort Scan while adding virtual interface");
 		}
@@ -831,7 +831,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
-		   adapter->session_id, adapter->device_mode);
+		   adapter->vdev_id, adapter->device_mode);
 
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
@@ -997,11 +997,11 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 	if (hdd_is_qos_action_frame(pb_frames, frm_len))
 		sme_update_dsc_pto_up_mapping(hdd_ctx->mac_handle,
 					      adapter->dscp_to_up_map,
-					      adapter->session_id);
+					      adapter->vdev_id);
 
 	/* Indicate Frame Over Normal Interface */
 	hdd_debug("Indicate Frame over NL80211 sessionid : %d, idx :%d",
-		   adapter->session_id, adapter->dev->ifindex);
+		   adapter->vdev_id, adapter->dev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
 	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr,
@@ -1297,7 +1297,7 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 
 
 		set_value = set_second_connection_operating_channel(
-			hdd_ctx, set_value, adapter->session_id);
+			hdd_ctx, set_value, adapter->vdev_id);
 
 
 		ret = wlan_hdd_send_p2p_quota(adapter, set_value);

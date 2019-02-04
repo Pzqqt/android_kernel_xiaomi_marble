@@ -204,8 +204,8 @@ static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
 {
 	int ret;
 
-	ret = wma_cli_set_command((int)adapter->session_id,
-			(int)GEN_PARAM_RESET_TSF_GPIO, adapter->session_id,
+	ret = wma_cli_set_command((int)adapter->vdev_id,
+			(int)GEN_PARAM_RESET_TSF_GPIO, adapter->vdev_id,
 			GEN_CMD);
 
 	if (ret != 0) {
@@ -296,9 +296,9 @@ static enum hdd_tsf_op_result hdd_capture_tsf_internal(
 
 	buf[0] = TSF_RETURN;
 	init_completion(&tsf_sync_get_completion_evt);
-	ret = wma_cli_set_command((int)adapter->session_id,
+	ret = wma_cli_set_command((int)adapter->vdev_id,
 				  (int)GEN_PARAM_CAPTURE_TSF,
-				  adapter->session_id, GEN_CMD);
+				  adapter->vdev_id, GEN_CMD);
 	if (QDF_STATUS_SUCCESS != ret) {
 		hdd_err("cap tsf fail");
 		buf[0] = TSF_CAPTURE_FAIL;

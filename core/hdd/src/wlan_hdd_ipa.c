@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,7 +158,7 @@ void hdd_ipa_set_tx_flow_info(void)
 				adapter->tx_flow_hi_watermark_offset =
 				   hdd_ctx->config->tx_flow_hi_watermark_offset;
 				cdp_fc_ll_set_tx_pause_q_depth(soc,
-						adapter->session_id,
+						adapter->vdev_id,
 						hdd_ctx->config->
 						tx_flow_max_queue_depth);
 				hdd_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
@@ -184,7 +184,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					adapter->
 					tx_flow_hi_watermark_offset = 0;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
-						adapter->session_id,
+						adapter->vdev_id,
 						hdd_ctx->config->
 						tx_hbw_flow_max_queue_depth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",

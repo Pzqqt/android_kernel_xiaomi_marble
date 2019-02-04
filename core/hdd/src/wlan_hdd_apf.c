@@ -264,7 +264,7 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 
 	apf_set_offload.current_length = prog_len;
 	nla_memcpy(apf_set_offload.program, tb[APF_PROGRAM], prog_len);
-	apf_set_offload.session_id = adapter->session_id;
+	apf_set_offload.session_id = adapter->vdev_id;
 
 	hdd_debug("APF set instructions");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -327,7 +327,7 @@ hdd_enable_disable_apf(struct hdd_adapter *adapter, bool apf_enable)
 	hdd_enter();
 
 	status = sme_set_apf_enable_disable(hdd_adapter_get_mac_handle(adapter),
-					    adapter->session_id, apf_enable);
+					    adapter->vdev_id, apf_enable);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Unable to post sme apf enable/disable message (status-%d)",
 				status);
@@ -361,7 +361,7 @@ hdd_apf_write_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	hdd_enter();
 
 
-	write_mem_params.vdev_id = adapter->session_id;
+	write_mem_params.vdev_id = adapter->vdev_id;
 	if (adapter->apf_context.apf_enabled) {
 		hdd_err("Cannot get/set when APF interpreter is enabled");
 		return -EINVAL;
@@ -513,7 +513,7 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 		return -EINVAL;
 	}
 
-	read_mem_params.vdev_id = adapter->session_id;
+	read_mem_params.vdev_id = adapter->vdev_id;
 
 	/* Read APF work memory offset */
 	if (!tb[APF_CURRENT_OFFSET]) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -283,7 +283,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	adapter->vdev = vdev;
-	adapter->session_id = wlan_vdev_get_id(vdev);
+	adapter->vdev_id = wlan_vdev_get_id(vdev);
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
 
 	return 0;
@@ -306,7 +306,7 @@ int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	vdev = adapter->vdev;
 	adapter->vdev = NULL;
-	adapter->session_id = HDD_SESSION_ID_INVALID;
+	adapter->vdev_id = HDD_SESSION_ID_INVALID;
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
 
 	QDF_BUG(vdev);

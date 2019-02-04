@@ -331,7 +331,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 */
 	status = policy_mgr_update_and_wait_for_connection_update(
 					hdd_ctx->psoc,
-					ap_adapter->session_id,
+					ap_adapter->vdev_id,
 					pre_cac_chan,
 					POLICY_MGR_UPDATE_REASON_PRE_CAC);
 	if (QDF_IS_STATUS_ERROR(status)) {

@@ -210,11 +210,11 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_NONE;
 
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
-	status = sme_roam_connect(mac_handle, adapter->session_id,
+	status = sme_roam_connect(mac_handle, adapter->vdev_id,
 				  roam_profile, &roam_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("NDI sme_RoamConnect session %d failed with status %d -> NotConnected",
-			adapter->session_id, status);
+			adapter->vdev_id, status);
 		/* change back to NotConnected */
 		hdd_conn_set_connection_state(adapter,
 					      eConnectionState_NotConnected);
@@ -324,7 +324,7 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 					NAN_DATAPATH_RSP_STATUS_SUCCESS);
 			hdd_debug("posting ndi create status: %d to umac",
 				success);
-			os_if_nan_post_ndi_create_rsp(psoc, adapter->session_id,
+			os_if_nan_post_ndi_create_rsp(psoc, adapter->vdev_id,
 							success);
 			return;
 		case eCSR_ROAM_RESULT_NDI_DELETE_RSP:
@@ -332,7 +332,7 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 					NAN_DATAPATH_RSP_STATUS_SUCCESS);
 			hdd_debug("posting ndi delete status: %d to umac",
 				success);
-			os_if_nan_post_ndi_delete_rsp(psoc, adapter->session_id,
+			os_if_nan_post_ndi_delete_rsp(psoc, adapter->vdev_id,
 							success);
 			return;
 		default:
@@ -461,7 +461,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 		hdd_err("unable to get vht_enable2x2");
 
 	sme_set_pdev_ht_vht_ies(mac_handle, bval);
-	sme_set_vdev_ies_per_band(mac_handle, adapter->session_id);
+	sme_set_vdev_ies_per_band(mac_handle, adapter->vdev_id);
 
 	hdd_roam_profile_init(adapter);
 	hdd_register_wext(wlan_dev);
@@ -484,7 +484,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
 
-	ret_val = wma_cli_set_command((int)adapter->session_id,
+	ret_val = wma_cli_set_command((int)adapter->vdev_id,
 			(int)WMI_PDEV_PARAM_BURST_ENABLE,
 			(int)HDD_ENABLE_SIFS_BURST_DEFAULT,
 			PDEV_CMD);

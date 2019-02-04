@@ -162,7 +162,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 					   pAc->wmmAcTspecInfo.ts_info.tid,
 					   pAc->wmmAcTspecInfo.ts_info.up,
 					   service_interval, suspension_interval,
-					   direction, psb, adapter->session_id,
+					   direction, psb, adapter->vdev_id,
 					   hdd_ctx->config->DelayedTriggerFrmInt);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -201,7 +201,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 		status =
 			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							     (adapter))->conn_info.staId[0],
-						    acType, adapter->session_id);
+						    acType, adapter->vdev_id);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to disable U-APSD for AC=%d", acType);
@@ -1370,7 +1370,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	if (qosInfo.ts_info.ack_policy ==
 	    SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK) {
 		if (!sme_qos_is_ts_info_ack_policy_valid(mac_handle, &qosInfo,
-							 adapter->session_id)) {
+							 adapter->vdev_id)) {
 			qosInfo.ts_info.ack_policy =
 				SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		}
@@ -1382,7 +1382,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_setup_req(mac_handle,
-				      adapter->session_id,
+				      adapter->vdev_id,
 				      &qosInfo,
 				      hdd_wmm_sme_callback,
 				      pQosContext,
@@ -2051,7 +2051,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				adapter))->conn_info.staId[0],
 				SME_AC_VO, 7, 7, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
-				adapter->session_id,
+				adapter->vdev_id,
 				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
@@ -2076,7 +2076,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				adapter))->conn_info.staId[0],
 				SME_AC_VI, 5, 5, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
-				adapter->session_id,
+				adapter->vdev_id,
 				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
@@ -2101,7 +2101,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				adapter))->conn_info.staId[0],
 				SME_AC_BK, 2, 2, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
-				adapter->session_id,
+				adapter->vdev_id,
 				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
@@ -2126,7 +2126,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				adapter))->conn_info.staId[0],
 				SME_AC_BE, 3, 3, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
-				adapter->session_id,
+				adapter->vdev_id,
 				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
@@ -2134,7 +2134,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 	status = sme_update_dsc_pto_up_mapping(hdd_ctx->mac_handle,
 					       adapter->dscp_to_up_map,
-					       adapter->session_id);
+					       adapter->vdev_id);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_wmm_init(adapter);
@@ -2214,7 +2214,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			if (!roam_info->fReassocReq &&
 			    !sme_neighbor_roam_is11r_assoc(
 						mac_handle,
-						adapter->session_id) &&
+						adapter->vdev_id) &&
 			    !sme_roam_is_ese_assoc(roam_info)) {
 				adapter->hdd_wmm_status.wmmAcStatus[ac].
 					wmmAcTspecValid = false;
@@ -2396,7 +2396,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_setup_req(mac_handle,
-				      adapter->session_id,
+				      adapter->vdev_id,
 				      pTspec,
 				      hdd_wmm_sme_callback,
 				      pQosContext,
@@ -2509,7 +2509,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		 handle, qosFlowId, acType, pQosContext);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	smeStatus = sme_qos_release_req(mac_handle, adapter->session_id,
+	smeStatus = sme_qos_release_req(mac_handle, adapter->vdev_id,
 					qosFlowId);
 
 	hdd_debug("SME flow %d released, SME status %d", qosFlowId, smeStatus);

@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
- *
- * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -144,7 +141,7 @@ wmi_roam_scan_stats_res *hdd_get_roam_scan_stats(struct hdd_context *hdd_ctx,
 
 	status = sme_get_roam_scan_stats(hdd_ctx->mac_handle,
 					 hdd_roam_scan_stats_cb,
-					 context, adapter->session_id);
+					 context, adapter->vdev_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("roam scan stats request failed");
 		goto cleanup;

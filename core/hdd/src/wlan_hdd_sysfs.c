@@ -363,7 +363,7 @@ static ssize_t __show_beacon_reception_stats(struct device *dev, char *buf)
 	cookie = osif_request_cookie(request);
 
 	status = sme_beacon_debug_stats_req(hdd_ctx->mac_handle,
-					    adapter->session_id,
+					    adapter->vdev_id,
 					   hdd_beacon_debugstats_cb,
 					   cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {

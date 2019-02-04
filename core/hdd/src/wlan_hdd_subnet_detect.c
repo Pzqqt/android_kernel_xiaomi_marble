@@ -147,7 +147,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 
 	req.max_retries = 3;
 	req.timeout = 100;   /* in milliseconds */
-	req.session_id = adapter->session_id;
+	req.session_id = adapter->vdev_id;
 
 	hdd_debug("Configuring gateway for session %d", req.session_id);
 	hdd_debug("mac:%pM, ipv4:%pI4 (type %d), ipv6:%pI6c (type %d)",

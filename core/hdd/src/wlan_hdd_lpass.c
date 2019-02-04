@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -107,7 +107,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -135,7 +135,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 
 	sme_get_country_code(hdd_ctx->mac_handle, data->country_code, &buflen);
 	data->is_on = is_on;
-	data->vdev_id = adapter->session_id;
+	data->vdev_id = adapter->vdev_id;
 	data->vdev_mode = adapter->device_mode;
 	if (sta_ctx) {
 		data->is_connected = is_connected;

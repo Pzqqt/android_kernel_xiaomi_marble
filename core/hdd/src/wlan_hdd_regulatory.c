@@ -812,7 +812,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	mac_handle = hdd_ctx->mac_handle;
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
-				adapter->session_id, INVALID_SCAN_ID, false);
+				adapter->vdev_id, INVALID_SCAN_ID, false);
 		connectedBand = hdd_conn_get_connected_band(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
 
@@ -837,7 +837,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 			status = sme_roam_disconnect(
 					mac_handle,
-					adapter->session_id,
+					adapter->vdev_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
 
 			if (QDF_STATUS_SUCCESS != status) {

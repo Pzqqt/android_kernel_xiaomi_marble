@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,7 +240,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->session_id),
+		(struct cdp_pdev *)pdev, adapter->vdev_id),
 		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
@@ -488,7 +488,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 	}
 
 	/* Identify the vdev interface */
-	config->vdev_id = adapter->session_id;
+	config->vdev_id = adapter->vdev_id;
 
 	/* Release all the mac addresses used for OCB */
 	for (i = 0; i < adapter->ocb_mac_addr_count; i++) {
@@ -852,7 +852,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	    config->channels, nla_data(channel_array), channel_count);
 
 	/* Identify the vdev interface */
-	config->vdev_id = adapter->session_id;
+	config->vdev_id = adapter->vdev_id;
 
 	/* Release all the mac addresses used for OCB */
 	for (i = 0; i < adapter->ocb_mac_addr_count; i++) {
@@ -980,7 +980,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1021,7 +1021,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	utc->vdev_id = adapter->session_id;
+	utc->vdev_id = adapter->vdev_id;
 	qdf_mem_copy(utc->utc_time, nla_data(utc_attr), SIZE_UTC_TIME);
 	qdf_mem_copy(utc->time_error, nla_data(time_error_attr),
 		SIZE_UTC_TIME_ERROR);
@@ -1093,7 +1093,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1103,7 +1103,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	timing_advert->vdev_id = adapter->session_id;
+	timing_advert->vdev_id = adapter->vdev_id;
 
 	/* Parse the netlink message */
 	if (wlan_cfg80211_nla_parse(tb,
@@ -1210,7 +1210,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1220,7 +1220,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
-	timing_advert->vdev_id = adapter->session_id;
+	timing_advert->vdev_id = adapter->vdev_id;
 
 	/* Parse the netlink message */
 	if (wlan_cfg80211_nla_parse(tb,
@@ -1392,7 +1392,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1404,7 +1404,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	}
 	cookie = osif_request_cookie(request);
 
-	tsf_request.vdev_id = adapter->session_id;
+	tsf_request.vdev_id = adapter->vdev_id;
 	status = ucfg_ocb_get_tsf_timer(adapter->vdev, &tsf_request,
 					hdd_ocb_get_tsf_timer_callback,
 					cookie);
@@ -1615,7 +1615,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1655,7 +1655,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	}
 	cookie = osif_request_cookie(request);
 
-	dcc_request.vdev_id = adapter->session_id;
+	dcc_request.vdev_id = adapter->vdev_id;
 	dcc_request.channel_count = channel_count;
 	dcc_request.request_array_len = request_array_len;
 	dcc_request.request_array = request_array;
@@ -1750,7 +1750,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1770,7 +1770,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (ucfg_ocb_dcc_clear_stats(adapter->vdev, adapter->session_id,
+	if (ucfg_ocb_dcc_clear_stats(adapter->vdev, adapter->vdev_id,
 		nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_BITMAP])) !=
 			QDF_STATUS_SUCCESS) {
@@ -1881,7 +1881,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!wma_is_vdev_up(adapter->session_id)) {
+	if (!wma_is_vdev_up(adapter->vdev_id)) {
 		hdd_err("The device has not been started");
 		return -EINVAL;
 	}
@@ -1927,7 +1927,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	cookie = osif_request_cookie(request);
 
 	/* Copy the parameters to the request structure. */
-	dcc_request.vdev_id = adapter->session_id;
+	dcc_request.vdev_id = adapter->vdev_id;
 	dcc_request.channel_count = channel_count;
 	dcc_request.dcc_ndl_chan_list_len = ndl_channel_array_len;
 	dcc_request.dcc_ndl_chan_list = ndl_channel_array;

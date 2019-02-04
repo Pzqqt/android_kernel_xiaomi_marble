@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -138,7 +138,7 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 
 	ucfg_scan_cfg_get_conc_max_resttime(hdd_ctx->psoc, &rest_conc_time);
 	status = sme_send_limit_off_channel_params(hdd_ctx->mac_handle,
-					adapter->session_id,
+					adapter->vdev_id,
 					is_tos_active,
 					max_off_chan_time,
 					rest_conc_time,

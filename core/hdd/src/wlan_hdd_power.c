@@ -257,7 +257,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 		}
 
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->session_id);
+		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 		schedule_work(&adapter->ipv6_notifier_work);
 	}
 
@@ -410,7 +410,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 		goto out;
 
 	ns_req->psoc = psoc;
-	ns_req->vdev_id = adapter->session_id;
+	ns_req->vdev_id = adapter->vdev_id;
 	ns_req->trigger = trigger;
 	ns_req->count = 0;
 
@@ -719,7 +719,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 
 	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
 	ucfg_mlme_get_sta_keep_alive_period(hdd_ctx->psoc, &req.timePeriod);
-	req.sessionId = adapter->session_id;
+	req.sessionId = adapter->vdev_id;
 
 	hdd_debug("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",
 		 req.hostIpv4Addr[0], req.hostIpv4Addr[1],
@@ -783,7 +783,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
-		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->session_id,
+		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->vdev_id,
 				     roam_profile, ifa->ifa_local);
 exit:
 	hdd_exit();
@@ -842,7 +842,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			goto exit;
 		}
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->session_id);
+		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 
 		if (!ucfg_pmo_is_arp_offload_enabled(hdd_ctx->psoc)) {
 			hdd_debug("Offload not enabled");
@@ -918,7 +918,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 		goto out;
 
 	arp_req->psoc = psoc;
-	arp_req->vdev_id = adapter->session_id;
+	arp_req->vdev_id = adapter->vdev_id;
 	arp_req->trigger = trigger;
 
 	ifa = hdd_get_ipv4_local_interface(adapter);
@@ -989,7 +989,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 		goto out;
 
 	status = ucfg_pmo_enable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
-							  adapter->session_id,
+							  adapter->vdev_id,
 							  trigger);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to enable mc list; status:%d", status);
@@ -1013,7 +1013,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 		goto out;
 
 	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
-							   adapter->session_id,
+							   adapter->vdev_id,
 							   trigger);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to disable mc list; status:%d", status);
@@ -1046,14 +1046,14 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 
 	/* disable mc list first because the mc list is cached in PMO */
 	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
-							   adapter->session_id,
+							   adapter->vdev_id,
 							   trigger);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to disable mc list; status:%d", status);
 
 flush_mc_list:
 	status = ucfg_pmo_flush_mc_addr_list(hdd_ctx->psoc,
-					     adapter->session_id);
+					     adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to flush mc list; status:%d", status);
 
@@ -1080,7 +1080,7 @@ static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 
 	if (connState == eConnectionState_Associated ||
 			connState == eConnectionState_IbssConnected)
-		*conn_state_mask |= (1 << adapter->session_id);
+		*conn_state_mask |= (1 << adapter->vdev_id);
 }
 
 /**
@@ -1113,7 +1113,7 @@ hdd_suspend_wlan(void)
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->session_id))
+		if (wlan_hdd_validate_session_id(adapter->vdev_id))
 			continue;
 
 		/* stop all TX queues before suspend */
@@ -1172,7 +1172,7 @@ static int hdd_resume_wlan(void)
 
 	/*loop through all adapters. Concurrency */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->session_id))
+		if (wlan_hdd_validate_session_id(adapter->vdev_id))
 			continue;
 
 		/* Disable supported OffLoads */
@@ -1343,7 +1343,7 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE) &&
 		    adapter->scan_info.default_scan_ies) {
 			sme_set_default_scan_ie(hdd_ctx->mac_handle,
-				      adapter->session_id,
+				      adapter->vdev_id,
 				      adapter->scan_info.default_scan_ies,
 				      adapter->scan_info.default_scan_ies_len);
 		}
@@ -1492,7 +1492,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		    QDF_P2P_CLIENT_MODE == adapter->device_mode) {
 			hdd_debug("Disabling Auto Power save timer");
 			status = sme_ps_disable_auto_ps_timer(mac_handle,
-						adapter->session_id);
+						adapter->vdev_id);
 			if (status != QDF_STATUS_SUCCESS)
 				goto end;
 		}
@@ -1507,13 +1507,13 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 			 */
 			if (timeout) {
 				status = sme_ps_enable_auto_ps_timer(mac_handle,
-							    adapter->session_id,
+							    adapter->vdev_id,
 							    timeout);
 				if (status != QDF_STATUS_SUCCESS)
 					goto end;
 			} else {
 				status = sme_ps_enable_disable(mac_handle,
-						adapter->session_id,
+						adapter->vdev_id,
 						SME_PS_ENABLE);
 				if (status != QDF_STATUS_SUCCESS)
 					goto end;
@@ -1529,7 +1529,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		 * this means we are disconnected
 		 */
 		status = sme_ps_disable_auto_ps_timer(mac_handle,
-					adapter->session_id);
+					adapter->vdev_id);
 
 		if (status != QDF_STATUS_SUCCESS)
 			goto end;
@@ -1537,7 +1537,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
 		if (is_bmps_enabled)
 			status = sme_ps_enable_disable(mac_handle,
-						       adapter->session_id,
+						       adapter->vdev_id,
 						       SME_PS_DISABLE);
 	}
 
@@ -1733,7 +1733,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * until CAC is done for a SoftAP which is in started state.
 	 */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->session_id))
+		if (wlan_hdd_validate_session_id(adapter->vdev_id))
 			continue;
 
 		if (QDF_SAP_MODE == adapter->device_mode) {
@@ -1774,7 +1774,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		scan_info = &adapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming(mac_handle,
-		    adapter->session_id) ||
+		    adapter->vdev_id) ||
 		    hdd_is_roaming_in_progress(hdd_ctx)) {
 			hdd_err("Roaming in progress, do not allow suspend");
 			wlan_hdd_inc_suspend_stats(hdd_ctx,
@@ -1783,15 +1783,15 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		}
 
 		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
-				adapter->session_id, INVALID_SCAN_ID, false);
+				adapter->vdev_id, INVALID_SCAN_ID, false);
 	}
 
 	/* flush any pending powersave timers */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->session_id))
+		if (wlan_hdd_validate_session_id(adapter->vdev_id))
 			continue;
 
-		sme_ps_timer_flush_sync(mac_handle, adapter->session_id);
+		sme_ps_timer_flush_sync(mac_handle, adapter->vdev_id);
 	}
 
 	/*
@@ -1893,7 +1893,7 @@ static void hdd_stop_dhcp_ind(struct hdd_adapter *adapter)
 	hdd_debug("DHCP stop indicated through power save");
 	sme_dhcp_stop_ind(hdd_ctx->mac_handle, adapter->device_mode,
 			  adapter->mac_addr.bytes,
-			  adapter->session_id);
+			  adapter->vdev_id);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 }
@@ -1917,7 +1917,7 @@ static void hdd_start_dhcp_ind(struct hdd_adapter *adapter)
 				    WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	sme_dhcp_start_ind(hdd_ctx->mac_handle, adapter->device_mode,
 			   adapter->mac_addr.bytes,
-			   adapter->session_id);
+			   adapter->vdev_id);
 }
 
 /**
@@ -1951,12 +1951,12 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->session_id))
+	if (wlan_hdd_validate_session_id(adapter->vdev_id))
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
-		   adapter->session_id, timeout);
+		   adapter->vdev_id, timeout);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -2146,7 +2146,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return status;
 
 	/* Validate adapter sessionId */
-	status = wlan_hdd_validate_session_id(adapter->session_id);
+	status = wlan_hdd_validate_session_id(adapter->vdev_id);
 	if (status)
 		return status;
 
@@ -2172,7 +2172,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
-		   adapter->session_id, adapter->device_mode);
+		   adapter->vdev_id, adapter->device_mode);
 
 	wlan_hdd_get_tx_power(adapter, dbm);
 	hdd_debug("power: %d", *dbm);
@@ -2231,7 +2231,7 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 			qpower = PS_LEGACY_DEEPSLEEP;
 		hdd_info("Qpower disabled, %d", qpower);
 	}
-	status = wma_set_qpower_config(adapter->session_id, qpower);
+	status = wma_set_qpower_config(adapter->vdev_id, qpower);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed to configure qpower: %d", status);
 		return -EINVAL;
