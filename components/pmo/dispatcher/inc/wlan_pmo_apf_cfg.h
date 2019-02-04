@@ -85,7 +85,7 @@
  * </ini>
  */
 #define CFG_ACTIVE_MC_BC_APF_MODE CFG_INI_UINT( \
-	"gActiveUcBpfMode", \
+	"gActiveMcBcBpfMode", \
 	ACTIVE_APF_DISABLED, \
 	ACTIVE_APF_ENABLED, \
 	ACTIVE_APF_DISABLED, \
