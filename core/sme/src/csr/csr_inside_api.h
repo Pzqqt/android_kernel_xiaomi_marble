@@ -308,7 +308,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessio
 QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac, uint32_t sessionId,
 				      tSirMacAddr bssId, uint16_t reasonCode);
 QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
-					tpSirSmeDisassocInd pDisassocInd);
+					struct disassoc_ind *pDisassocInd);
 QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 				      tpSirSmeDeauthInd pDeauthInd);
 QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,

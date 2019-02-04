@@ -736,7 +736,7 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 
 	uint8_t *pBuf;
 	struct disassoc_rsp *pSirSmeDisassocRsp;
-	tSirSmeDisassocInd *pSirSmeDisassocInd;
+	struct disassoc_ind *pSirSmeDisassocInd;
 	uint32_t *pMsg = NULL;
 	bool failure = false;
 	struct pe_session *session = NULL;
@@ -850,7 +850,8 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		 * frame reception from peer entity or due to
 		 * loss of link with peer entity.
 		 */
-		pSirSmeDisassocInd = qdf_mem_malloc(sizeof(tSirSmeDisassocInd));
+		pSirSmeDisassocInd =
+				qdf_mem_malloc(sizeof(*pSirSmeDisassocInd));
 		if (!pSirSmeDisassocInd) {
 			failure = true;
 			goto error;
@@ -858,7 +859,7 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pe_debug("send eWNI_SME_DISASSOC_IND with retCode: %d for " MAC_ADDRESS_STR,
 			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
-		pSirSmeDisassocInd->length = sizeof(tSirSmeDisassocInd);
+		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 
 		/* Update SME session Id and Transaction Id */
 		pSirSmeDisassocInd->sessionId = smesessionId;
@@ -910,14 +911,14 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 			  struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
-	tSirSmeDisassocInd *pSirSmeDisassocInd;
+	struct disassoc_ind *pSirSmeDisassocInd;
 
-	pSirSmeDisassocInd = qdf_mem_malloc(sizeof(tSirSmeDisassocInd));
+	pSirSmeDisassocInd = qdf_mem_malloc(sizeof(*pSirSmeDisassocInd));
 	if (!pSirSmeDisassocInd)
 		return;
 
 	pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
-	pSirSmeDisassocInd->length = sizeof(tSirSmeDisassocInd);
+	pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 
 	pSirSmeDisassocInd->sessionId = pe_session->smeSessionId;
 	pSirSmeDisassocInd->transactionId = pe_session->transactionId;

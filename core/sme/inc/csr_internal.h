@@ -319,7 +319,7 @@ struct wmstatus_changecmd {
 	enum csr_roam_wmstatus_changetypes Type;
 	union {
 		tSirSmeDeauthInd DeauthIndMsg;
-		tSirSmeDisassocInd DisassocIndMsg;
+		struct disassoc_ind DisassocIndMsg;
 	} u;
 
 };

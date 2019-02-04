@@ -10675,7 +10675,7 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	struct csr_roam_session *session;
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
-	tSirSmeDisassocInd *pDisassocInd;
+	struct disassoc_ind *pDisassocInd;
 	tSmeCmd *cmd;
 
 	cmd = qdf_mem_malloc(sizeof(*cmd));
@@ -10687,7 +10687,7 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	 * then we need to take action immediately and not wait till the
 	 * the WmStatusChange requests is pushed and processed
 	 */
-	pDisassocInd = (tSirSmeDisassocInd *) msg_ptr;
+	pDisassocInd = (struct disassoc_ind *)msg_ptr;
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 				&pDisassocInd->bssid, &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -12092,7 +12092,7 @@ QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeDeauthInd *pDeauthIndMsg = NULL;
-	tSirSmeDisassocInd *pDisassocIndMsg = NULL;
+	struct disassoc_ind *pDisassocIndMsg = NULL;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_LOSTLINK;
 	struct csr_roam_info roamInfo;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -12104,7 +12104,7 @@ QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 	qdf_mem_zero(&roamInfo, sizeof(struct csr_roam_info));
 	if (eWNI_SME_DISASSOC_IND == type) {
 		result = eCSR_ROAM_RESULT_DISASSOC_IND;
-		pDisassocIndMsg = (tSirSmeDisassocInd *) pSirMsg;
+		pDisassocIndMsg = (struct disassoc_ind *)pSirMsg;
 		pSession->roamingStatusCode = pDisassocIndMsg->statusCode;
 		pSession->joinFailStatusCode.reasonCode =
 			pDisassocIndMsg->reasonCode;
@@ -15407,7 +15407,7 @@ QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac, uint32_t sessionI
 }
 
 QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
-					tpSirSmeDisassocInd pDisassocInd)
+					struct disassoc_ind *pDisassocInd)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeDisassocCnf *pMsg;

@@ -1245,7 +1245,7 @@ struct disassoc_rsp {
 };
 
 /* / Definition for Disassociation indication from peer */
-typedef struct sSirSmeDisassocInd {
+struct disassoc_ind {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Session Identifier */
@@ -1255,7 +1255,7 @@ typedef struct sSirSmeDisassocInd {
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t staId;
 	uint32_t reasonCode;
-} tSirSmeDisassocInd, *tpSirSmeDisassocInd;
+};
 
 /* / Definition for Disassociation confirm */
 /* / MAC ---> */
