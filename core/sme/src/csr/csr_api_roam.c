@@ -15366,22 +15366,22 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 }
 #endif
 
-QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac, uint32_t sessionId,
+QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac,
+				      uint32_t sessionId,
 				      tSirMacAddr bssId, uint16_t reasonCode)
 {
-	tSirSmeDeauthReq *pMsg;
+	struct deauth_req *pMsg;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId))
 		return QDF_STATUS_E_FAILURE;
 
-	pMsg = qdf_mem_malloc(sizeof(tSirSmeDeauthReq));
-	if (NULL == pMsg)
+	pMsg = qdf_mem_malloc(sizeof(*pMsg));
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_zero(pMsg, sizeof(tSirSmeDeauthReq));
 	pMsg->messageType = eWNI_SME_DEAUTH_REQ;
-	pMsg->length = sizeof(tSirSmeDeauthReq);
+	pMsg->length = sizeof(*pMsg);
 	pMsg->sessionId = sessionId;
 	pMsg->transactionId = 0;
 

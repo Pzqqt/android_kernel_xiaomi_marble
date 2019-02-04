@@ -2428,14 +2428,14 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 {
 	uint16_t deauth_trigger, reason_code;
 	tLimMlmDeauthReq *mlm_deauth_req;
-	tSirSmeDeauthReq sme_deauth_req;
+	struct deauth_req sme_deauth_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionId */
 	uint8_t sme_session_id;
 	uint16_t sme_transaction_id;
 
-	qdf_mem_copy(&sme_deauth_req, msg_buf, sizeof(tSirSmeDeauthReq));
+	qdf_mem_copy(&sme_deauth_req, msg_buf, sizeof(sme_deauth_req));
 	sme_session_id = sme_deauth_req.sessionId;
 	sme_transaction_id = sme_deauth_req.transactionId;
 
@@ -4783,11 +4783,11 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 				       struct scheduler_msg *msg)
 {
-	tSirSmeDeauthReq sme_deauth_req;
+	struct deauth_req sme_deauth_req;
 	struct pe_session *session;
 	uint8_t session_id;
 
-	qdf_mem_copy(&sme_deauth_req, msg->bodyptr, sizeof(tSirSmeDeauthReq));
+	qdf_mem_copy(&sme_deauth_req, msg->bodyptr, sizeof(sme_deauth_req));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   sme_deauth_req.bssid.bytes,

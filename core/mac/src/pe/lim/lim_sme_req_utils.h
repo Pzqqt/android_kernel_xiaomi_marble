@@ -81,7 +81,22 @@ bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
 				   struct disassoc_req *disassoc_req,
 				   struct pe_session *pe_session);
 
-uint8_t lim_is_sme_deauth_req_valid(struct mac_context *, tpSirSmeDeauthReq, struct pe_session *);
+/**
+ * lim_is_sme_deauth_req_valid() - Validate deauth req message
+ * @mac: Pointer to Global MAC structure
+ * @disassoc_req: Pointer to received SME_DEAUTH_REQ message
+ * @pe_session: Pointer to the PE session
+ *
+ * This function is called by lim_process_sme_req_messages() upon
+ * receiving SME_DEAUTH_REQ message from application.
+ *
+ * Return: true  When received SME_DEAUTH_REQ is formatted correctly
+ *         false otherwise
+ */
+bool lim_is_sme_deauth_req_valid(struct mac_context *mac,
+				 struct deauth_req *deauth_req,
+				 struct pe_session *pe_session);
+
 uint8_t lim_is_sme_set_context_req_valid(struct mac_context *, tpSirSmeSetContextReq);
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);
 

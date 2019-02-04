@@ -1284,9 +1284,8 @@ struct sir_sme_discon_done_ind {
 	tSirMacAddr        peer_mac;
 };
 
-
 /* / Definition for Deauthetication request */
-typedef struct sSirSmeDeauthReq {
+struct deauth_req {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1294,7 +1293,7 @@ typedef struct sSirSmeDeauthReq {
 	struct qdf_mac_addr bssid;      /* AP BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
-} tSirSmeDeauthReq, *tpSirSmeDeauthReq;
+};
 
 /* / Definition for Deauthetication response */
 typedef struct sSirSmeDeauthRsp {
