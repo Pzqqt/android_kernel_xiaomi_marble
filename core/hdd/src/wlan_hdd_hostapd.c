@@ -1729,7 +1729,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hostapd_state->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
 
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 
 		status = policy_mgr_set_chan_switch_complete_evt(
 						hdd_ctx->psoc);
@@ -1939,7 +1939,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_debug("Sent CAC start to user space");
 		}
 
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -2529,7 +2529,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		return QDF_STATUS_SUCCESS;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
 		hdd_debug("Channel change indication from peer for channel %d",
-				pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
+			  pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
 		if (hdd_softap_set_channel_change(dev,
 			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan,
 			 CH_WIDTH_MAX, false))
@@ -2549,6 +2549,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		INIT_WORK(&adapter->sap_stop_bss_work,
 			  hdd_stop_sap_due_to_invalid_channel);
 		schedule_work(&adapter->sap_stop_bss_work);
+		return QDF_STATUS_SUCCESS;
+
+	case eSAP_CHANNEL_CHANGE_RESP:
+		hdd_debug("Channel change rsp status = %d",
+			  pSapEvent->sapevt.ch_change_rsp_status);
+		/*
+		 * Set the ch_switch_in_progress flag to zero and also enable
+		 * roaming once channel change process (success/failure)
+		 * is completed
+		 */
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+		wlan_hdd_enable_roaming(adapter);
 		return QDF_STATUS_SUCCESS;
 
 	default:
@@ -2832,7 +2844,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	}
 
 	/*
-	 * Set the dfs_radar_found flag to mimic channel change
+	 * Set the ch_switch_in_progress flag to mimic channel change
 	 * when a radar is found. This will enable synchronizing
 	 * SAP and HDD states similar to that of radar indication.
 	 * Suspend the netif queues to stop queuing Tx frames
@@ -2840,7 +2852,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * once the channel change is completed and SAP will
 	 * post eSAP_START_BSS_EVENT success event to HDD.
 	 */
-	if (qdf_atomic_inc_return(&adapter->dfs_radar_found) > 1) {
+	if (qdf_atomic_inc_return(&adapter->ch_switch_in_progress) > 1) {
 		hdd_err("Channel switch in progress!!");
 		return -EBUSY;
 	}
@@ -2864,14 +2876,14 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 				target_channel,
 				adapter->session_id)) {
 		hdd_err("Channel switch failed due to concurrency check failure");
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		return -EINVAL;
 	}
 
 	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("clear event failed");
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		return -EINVAL;
 	}
 
@@ -2880,9 +2892,24 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 						      &scc_on_lte_coex);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("can't get STA-SAP SCC on lte coex channel setting");
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		return -EINVAL;
 	}
+
+	/*
+	 * Reject channel change req  if reassoc in progress on any adapter.
+	 * sme_is_any_session_in_middle_of_roaming is for LFR2 and
+	 * hdd_is_roaming_in_progress is for LFR3
+	 */
+	if (sme_is_any_session_in_middle_of_roaming(hdd_ctx->mac_handle) ||
+	    hdd_is_roaming_in_progress(hdd_ctx)) {
+		hdd_info("Channel switch not allowed as reassoc in progress");
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+		return -EINVAL;
+	}
+	/* Disable Roaming on all adapters before doing channel change */
+	wlan_hdd_disable_roaming(adapter);
+
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
@@ -2900,7 +2927,13 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		 * radar found flag and also restart the netif
 		 * queues.
 		 */
-		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+
+		/*
+		 * If Posting of the Channel Change request fails
+		 * enable roaming on all adapters
+		 */
+		wlan_hdd_enable_roaming(adapter);
 
 		ret = -EINVAL;
 	}
@@ -3351,7 +3384,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	spin_lock_init(&adapter->pause_map_lock);
 	adapter->start_time = adapter->last_time = qdf_system_ticks();
 
-	qdf_atomic_init(&adapter->dfs_radar_found);
+	qdf_atomic_init(&adapter->ch_switch_in_progress);
 
 	return adapter;
 }

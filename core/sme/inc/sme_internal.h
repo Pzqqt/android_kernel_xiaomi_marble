@@ -227,6 +227,13 @@ typedef void (*rso_cmd_status_cb)(hdd_handle_t hdd_handle,
  */
 typedef void (*lost_link_info_cb)(hdd_handle_t hdd_handle,
 				  struct sir_lost_link_info *lost_link_info);
+/**
+ * typedef hidden_ssid_cb - hidden ssid rsp callback fun
+ * @hdd_handle: HDD handle registered with SME
+ * @vdev_id: Vdev Id
+ */
+typedef void (*hidden_ssid_cb)(hdd_handle_t hdd_handle,
+				uint8_t vdev_id);
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, sir_md_evt *event);
@@ -323,6 +330,9 @@ typedef struct tagSmeStruct {
 	md_host_evt_cb md_host_evt_cb;
 	void *md_ctx;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+	/* hidden ssid rsp callback */
+	hidden_ssid_cb hidden_ssid_cb;
+
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

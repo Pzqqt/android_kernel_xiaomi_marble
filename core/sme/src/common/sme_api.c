@@ -2247,6 +2247,12 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			mac->sme.bt_activity_info_cb(mac->hdd_handle,
 						      pMsg->bodyval);
 		break;
+	case eWNI_SME_HIDDEN_SSID_RESTART_RSP:
+		if (mac->sme.hidden_ssid_cb)
+			mac->sme.hidden_ssid_cb(mac->hdd_handle, pMsg->bodyval);
+		else
+			sme_err("callback is NULL");
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -15020,3 +15026,18 @@ QDF_STATUS sme_set_thermal_mgmt(mac_handle_t mac_handle,
 	return qdf_status;
 }
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
+QDF_STATUS sme_update_hidden_ssid_status_cb(mac_handle_t mac_handle,
+					    hidden_ssid_cb cb)
+{
+	QDF_STATUS status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.hidden_ssid_cb = cb;
+		sme_release_global_lock(&mac->sme);
+	}
+
+	return status;
+}

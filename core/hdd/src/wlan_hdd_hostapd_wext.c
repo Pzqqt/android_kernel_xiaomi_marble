@@ -549,11 +549,29 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		QDF_STATUS status;
 
+		/*
+		 * Reject hidden ssid param update  if reassoc in progress on
+		 * any adapter. sme_is_any_session_in_middle_of_roaming is for
+		 * LFR2 and hdd_is_roaming_in_progress is for LFR3
+		 */
+		if (hdd_is_roaming_in_progress(hdd_ctx) ||
+		    sme_is_any_session_in_middle_of_roaming(mac_handle)) {
+			hdd_info("Reassociation in progress");
+			return -EINVAL;
+		}
+
+		/*
+		 * Disable Roaming on all adapters before start of
+		 * start of Hidden ssid connection
+		 */
+		wlan_hdd_disable_roaming(adapter);
+
 		status = sme_update_session_param(mac_handle,
 				adapter->session_id,
 				SIR_PARAM_SSID_HIDDEN, set_value);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("QCSAP_PARAM_HIDE_SSID failed");
+			wlan_hdd_enable_roaming(adapter);
 			return -EIO;
 		}
 		break;

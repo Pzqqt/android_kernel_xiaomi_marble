@@ -3197,4 +3197,13 @@ QDF_STATUS sme_set_thermal_mgmt(mac_handle_t mac_handle,
 				uint16_t lower_thresh_deg,
 				uint16_t higher_thresh_deg);
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
+/**
+ * sme_update_hidden_ssid_status_cb() - cb fun to update hidden ssid stats
+ * @mac_handle: mac handler
+ * @cb: cb of type hidden_ssid_cb
+ */
+QDF_STATUS sme_update_hidden_ssid_status_cb(mac_handle_t mac_handle,
+					    hidden_ssid_cb cb);
+
 #endif /* #if !defined( __SME_API_H ) */

@@ -1736,6 +1736,15 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			     sap_ctx->sessionId, sap_ctx->self_mac_addr,
 			     sap_ctx->channel);
 		break;
+
+	case eSAP_CHANNEL_CHANGE_RESP:
+		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_RESP;
+		sap_ap_event.sapevt.ch_change_rsp_status = (QDF_STATUS)context;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "In %s, SAP event callback event = %s",
+			 __func__, "eSAP_CHANNEL_CHANGE_RESP");
+		break;
+
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("SAP Unknown callback event = %d"),

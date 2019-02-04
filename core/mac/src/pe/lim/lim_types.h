@@ -546,7 +546,7 @@ void lim_send_deauth_mgmt_frame(struct mac_context *, uint16_t, tSirMacAddr, str
 				bool waitForAck);
 
 void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
-		struct scheduler_msg *msg);
+					    struct scheduler_msg *msg);
 
 tSirResultCodes lim_mlm_add_bss(struct mac_context *, tLimMlmStartReq *,
 				struct pe_session *pe_session);
