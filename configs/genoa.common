@@ -189,9 +189,8 @@ CONFIG_CFG_NUM_OF_ADDITIONAL_FW_PEERS := 0
 # Number of TDLS peers that each Tdls vdev can track
 CONFIG_CFG_NUM_OF_TDLS_CONN_TABLE_ENTRIES := 4
 
-#Number of BSS sessions at a time, used for allocating memory should never be
-#less then number of vdevs - INI
-CONFIG_SIR_MAX_SUPPORTED_BSS := 3
+# Number of vdevs supported at one time, used for allocating memory
+CONFIG_WLAN_MAX_VDEVS := 3
 
 #Number of STA sessions max connected to our SAP, used for allocating memory
 #should never be less then number of max peers - INI

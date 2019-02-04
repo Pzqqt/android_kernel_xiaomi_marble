@@ -48,9 +48,7 @@ struct mac_context;
 #include "wlan_policy_mgr_api.h"
 #include "wlan_tdls_public_structs.h"
 
-#ifndef SIR_MAX_SUPPORTED_BSS
-#define SIR_MAX_SUPPORTED_BSS 5
-#endif
+#define SIR_MAX_SUPPORTED_BSS WLAN_MAX_VDEVS
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
