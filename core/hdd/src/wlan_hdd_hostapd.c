@@ -3194,6 +3194,13 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	if (0 != ret)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed: %d", ret);
 
+	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+			cfg_dp_enable_ip_tcp_udp_checksum_offload))
+		adapter->dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	adapter->dev->features |= NETIF_F_RXCSUM;
+
+	hdd_set_tso_flags(hdd_ctx, adapter->dev);
+
 	if (!reinit) {
 		adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
 		wlan_hdd_undo_acs(adapter);
@@ -3313,11 +3320,6 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	dev->mtu = HDD_DEFAULT_MTU;
 	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
-			cfg_dp_enable_ip_tcp_udp_checksum_offload))
-		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-	dev->features |= NETIF_F_RXCSUM;
-
 	qdf_mem_copy(dev->dev_addr, (void *)macAddr,
 		     sizeof(tSirMacAddr));
 	qdf_mem_copy(adapter->mac_addr.bytes,
@@ -3328,7 +3330,6 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	dev->ieee80211_ptr = &adapter->wdev;
 	adapter->wdev.wiphy = hdd_ctx->wiphy;
 	adapter->wdev.netdev = dev;
-	hdd_set_tso_flags(hdd_ctx, dev);
 
 	qdf_status = qdf_event_create(
 			&adapter->qdf_session_open_event);

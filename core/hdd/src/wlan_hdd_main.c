@@ -3794,9 +3794,7 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS qdf_status;
-	void *soc;
 
-	soc = cds_get_context(QDF_MODULE_ID_SOC);
 	/* cfg80211 initialization and registration */
 	dev = alloc_netdev_mq(sizeof(*adapter), name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
@@ -3842,12 +3840,6 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
-	if (cdp_cfg_get(soc,
-			cfg_dp_enable_ip_tcp_udp_checksum_offload))
-		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-	dev->features |= NETIF_F_RXCSUM;
-
-	hdd_set_tso_flags(hdd_ctx, dev);
 	hdd_set_station_ops(adapter->dev);
 
 	hdd_dev_setup_destructor(dev);
@@ -4339,6 +4331,13 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 			cfg_dp_lro_enable) &&
 			!(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
 		adapter->dev->features |= NETIF_F_LRO;
+
+	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+			cfg_dp_enable_ip_tcp_udp_checksum_offload))
+		adapter->dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	adapter->dev->features |= NETIF_F_RXCSUM;
+
+	hdd_set_tso_flags(hdd_ctx, adapter->dev);
 
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
