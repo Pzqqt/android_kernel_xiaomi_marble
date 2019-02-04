@@ -3108,7 +3108,7 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 		stats->txflow_unpause_cnt);
 
 	len += cdp_stats(cds_get_context(QDF_MODULE_ID_SOC),
-			 adapter->session_id, &buffer[len], (buf_len - len));
+			 adapter->vdev_id, &buffer[len], (buf_len - len));
 	*length = len + 1;
 }
 
@@ -3327,7 +3327,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 		break;
 	case CDP_DISCONNECT_STATS:
 		sme_display_disconnect_stats(hdd_ctx->mac_handle,
-					     adapter->session_id);
+					     adapter->vdev_id);
 		break;
 	default:
 		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
@@ -3460,7 +3460,7 @@ int hdd_get_ldpc(struct hdd_adapter *adapter, int *value)
 	int ret;
 
 	hdd_enter();
-	ret = sme_get_ht_config(mac_handle, adapter->session_id,
+	ret = sme_get_ht_config(mac_handle, adapter->vdev_id,
 				WNI_CFG_HT_CAP_INFO_ADVANCE_CODING);
 	if (ret < 0) {
 		hdd_err("Failed to get LDPC value");
@@ -3503,12 +3503,12 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		hdd_err("Failed to set VHT LDPC capability info");
 		return -EIO;
 	}
-	ret = sme_update_ht_config(mac_handle, adapter->session_id,
+	ret = sme_update_ht_config(mac_handle, adapter->vdev_id,
 				   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
 				   value);
 	if (ret)
 		hdd_err("Failed to set LDPC value");
-	ret = sme_update_he_ldpc_supp(mac_handle, adapter->session_id, value);
+	ret = sme_update_he_ldpc_supp(mac_handle, adapter->vdev_id, value);
 	if (ret)
 		hdd_err("Failed to set HE LDPC value");
 
@@ -3528,7 +3528,7 @@ int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 	int ret;
 
 	hdd_enter();
-	ret = sme_get_ht_config(mac_handle, adapter->session_id,
+	ret = sme_get_ht_config(mac_handle, adapter->vdev_id,
 				WNI_CFG_HT_CAP_INFO_TX_STBC);
 	if (ret < 0) {
 		hdd_err("Failed to get TX STBC value");
@@ -3568,12 +3568,12 @@ int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 			return -EINVAL;
 		}
 	}
-	ret = sme_update_ht_config(mac_handle, adapter->session_id,
+	ret = sme_update_ht_config(mac_handle, adapter->vdev_id,
 				   WNI_CFG_HT_CAP_INFO_TX_STBC,
 				   value);
 	if (ret)
 		hdd_err("Failed to set TX STBC value");
-	ret = sme_update_he_tx_stbc_cap(mac_handle, adapter->session_id, value);
+	ret = sme_update_he_tx_stbc_cap(mac_handle, adapter->vdev_id, value);
 	if (ret)
 		hdd_err("Failed to set HE TX STBC value");
 
@@ -3593,7 +3593,7 @@ int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value)
 	int ret;
 
 	hdd_enter();
-	ret = sme_get_ht_config(mac_handle, adapter->session_id,
+	ret = sme_get_ht_config(mac_handle, adapter->vdev_id,
 				WNI_CFG_HT_CAP_INFO_RX_STBC);
 	if (ret < 0) {
 		hdd_err("Failed to get RX STBC value");
@@ -3633,13 +3633,13 @@ int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 			return -EINVAL;
 		}
 	}
-	ret = sme_update_ht_config(mac_handle, adapter->session_id,
+	ret = sme_update_ht_config(mac_handle, adapter->vdev_id,
 				   WNI_CFG_HT_CAP_INFO_RX_STBC,
 				   value);
 	if (ret)
 		hdd_err("Failed to set RX STBC value");
 
-	ret = sme_update_he_rx_stbc_cap(mac_handle, adapter->session_id, value);
+	ret = sme_update_he_rx_stbc_cap(mac_handle, adapter->vdev_id, value);
 	if (ret)
 		hdd_err("Failed to set HE RX STBC value");
 
@@ -3748,7 +3748,7 @@ static int wlan_get_wlm_stats(struct hdd_adapter *adapter, uint32_t bitmask,
 		return -ENOMEM;
 	}
 	cookie = osif_request_cookie(request);
-	errno = wma_wlm_stats_req(adapter->session_id, bitmask,
+	errno = wma_wlm_stats_req(adapter->vdev_id, bitmask,
 				  params.priv_size,
 				  wlan_get_wlm_stats_cb, cookie);
 	if (errno) {
@@ -4124,7 +4124,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		    chwidth == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE) {
 			sme_config->csrConfig.obssEnabled = false;
 			status = sme_set_ht2040_mode(mac_handle,
-						     adapter->session_id,
+						     adapter->vdev_id,
 						     eHT_CHAN_HT20, false);
 			if (status == QDF_STATUS_E_FAILURE) {
 				hdd_err("Failed to disable OBSS");
@@ -4135,7 +4135,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			   chwidth == WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
 			sme_config->csrConfig.obssEnabled = true;
 			status = sme_set_ht2040_mode(mac_handle,
-						     adapter->session_id,
+						     adapter->vdev_id,
 						     eHT_CHAN_HT20, true);
 			if (status == QDF_STATUS_E_FAILURE) {
 				hdd_err("Failed to enable OBSS");
@@ -4231,7 +4231,7 @@ static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
 	if (ret)
 		return ret;
 
-	ret = wma_cli_set_command(adapter->session_id,
+	ret = wma_cli_set_command(adapter->vdev_id,
 				  WMI_PDEV_PARAM_PDEV_RESET,
 				  value, PDEV_CMD);
 
@@ -4284,7 +4284,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 		return -ENOMEM;
 	}
 
-	errno = wma_cli_set_command(adapter->session_id, WMI_VDEV_PARAM_CHWIDTH,
+	errno = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_CHWIDTH,
 				    ch_width, VDEV_CMD);
 	if (errno)
 		goto free_config;
@@ -4341,22 +4341,22 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	case 1:
 		/* Enable PowerSave */
 		sme_save_usr_ps_cfg(mac_handle, true);
-		sme_ps_enable_disable(mac_handle, adapter->session_id,
+		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_ENABLE);
 		return 0;
 	case 2:
 		/* Disable PowerSave */
 		sme_save_usr_ps_cfg(mac_handle, false);
-		sme_ps_enable_disable(mac_handle, adapter->session_id,
+		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_DISABLE);
 		return 0;
 	case 3:
 		/* Enable UASPD */
-		sme_ps_uapsd_enable(mac_handle, adapter->session_id);
+		sme_ps_uapsd_enable(mac_handle, adapter->vdev_id);
 		return 0;
 	case 4:
 		/* Disable UASPD */
-		sme_ps_uapsd_disable(mac_handle, adapter->session_id);
+		sme_ps_uapsd_disable(mac_handle, adapter->vdev_id);
 		return 0;
 	default:
 		hdd_err("Invalid value %d", value);
@@ -4418,7 +4418,7 @@ static int hdd_we_set_tx_power(struct hdd_adapter *adapter, int value)
 	if (!mac_handle)
 		return -EINVAL;
 
-	status = sme_set_tx_power(mac_handle, adapter->session_id,
+	status = sme_set_tx_power(mac_handle, adapter->vdev_id,
 				  sta_ctx->conn_info.bssId,
 				  adapter->device_mode, value);
 
@@ -4615,11 +4615,11 @@ static int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi)
 
 	if (sgi & HDD_AUTO_RATE_SGI)
 		errno = sme_set_auto_rate_he_sgi(mac_handle,
-						 adapter->session_id,
+						 adapter->vdev_id,
 						 sgi);
 	else
 		errno = sme_update_ht_config(mac_handle,
-					     adapter->session_id,
+					     adapter->vdev_id,
 					     WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
 					     sgi);
 	if (errno)
@@ -4661,7 +4661,7 @@ static int hdd_we_set_rtscts(struct hdd_adapter *adapter, int rtscts)
 		return -EINVAL;
 	}
 
-	errno = wma_cli_set_command(adapter->session_id,
+	errno = wma_cli_set_command(adapter->vdev_id,
 				    WMI_VDEV_PARAM_ENABLE_RTSCTS,
 				    rtscts, VDEV_CMD);
 	if (errno) {
@@ -4710,7 +4710,7 @@ static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
 	hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
 		  rate_code, rix, preamble, nss);
 
-	errno = wma_cli_set_command(adapter->session_id,
+	errno = wma_cli_set_command(adapter->vdev_id,
 				    WMI_VDEV_PARAM_FIXED_RATE,
 				    rate_code, VDEV_CMD);
 	if (errno)
@@ -4736,7 +4736,7 @@ static int hdd_we_set_vht_rate(struct hdd_adapter *adapter, int rate_code)
 	hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
 		  rate_code, rix, preamble, nss);
 
-	errno = wma_cli_set_command(adapter->session_id,
+	errno = wma_cli_set_command(adapter->vdev_id,
 				    WMI_VDEV_PARAM_FIXED_RATE,
 				    rate_code, VDEV_CMD);
 	if (errno)
@@ -4749,7 +4749,7 @@ static int hdd_we_set_ampdu(struct hdd_adapter *adapter, int ampdu)
 {
 	hdd_debug("AMPDU %d", ampdu);
 
-	return wma_cli_set_command(adapter->session_id,
+	return wma_cli_set_command(adapter->vdev_id,
 				   GEN_VDEV_PARAM_AMPDU,
 				   ampdu, GEN_CMD);
 }
@@ -4773,7 +4773,7 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 	else
 		sme_set_amsdu(mac_handle, false);
 
-	errno = wma_cli_set_command(adapter->session_id,
+	errno = wma_cli_set_command(adapter->vdev_id,
 				    GEN_VDEV_PARAM_AMSDU,
 				    amsdu, GEN_CMD);
 	if (errno) {
@@ -4826,7 +4826,7 @@ static int hdd_we_set_green_tx_param(struct hdd_adapter *adapter,
 	int errno;
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, GTX_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, GTX_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -4905,7 +4905,7 @@ static int hdd_we_packet_power_save(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, PPS_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, PPS_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -4993,7 +4993,7 @@ static int hdd_we_set_qpower(struct hdd_adapter *adapter,
 	int errno;
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, QPOWER_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, QPOWER_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -5049,7 +5049,7 @@ static int hdd_we_set_pdev(struct hdd_adapter *adapter,
 	int errno;
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, PDEV_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, PDEV_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -5156,7 +5156,7 @@ static int hdd_we_set_vdev(struct hdd_adapter *adapter,
 	int errno;
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, VDEV_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, VDEV_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -5269,7 +5269,7 @@ static int hdd_we_set_dbg(struct hdd_adapter *adapter,
 	int errno;
 
 	hdd_debug("%s %d", id_string, value);
-	errno = wma_cli_set_command(adapter->session_id, id, value, DBG_CMD);
+	errno = wma_cli_set_command(adapter->vdev_id, id, value, DBG_CMD);
 	if (errno)
 		hdd_err("Failed to set firmware, errno %d", errno);
 
@@ -5348,7 +5348,7 @@ static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
 	QDF_STATUS status;
 
 	hdd_debug("Set Channel %d Session ID %d mode %d", channel,
-		  adapter->session_id, adapter->device_mode);
+		  adapter->vdev_id, adapter->device_mode);
 
 	if (!hdd_ctx->mac_handle)
 		return -EINVAL;
@@ -5365,7 +5365,7 @@ static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
 	}
 
 	status = sme_ext_change_channel(hdd_ctx->mac_handle, channel,
-					adapter->session_id);
+					adapter->vdev_id);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Error in change channel status %d", status);
 
@@ -5474,7 +5474,7 @@ static int hdd_we_motion_det_start_stop(struct hdd_adapter *adapter, int value)
 		hdd_err("Invalid value %d in mt_start", value);
 		return -EINVAL;
 	}
-	motion_det.vdev_id = adapter->session_id;
+	motion_det.vdev_id = adapter->vdev_id;
 	motion_det.enable = value;
 
 	if (!value)
@@ -5503,7 +5503,7 @@ static int hdd_we_motion_det_base_line_start_stop(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	motion_det_base_line.vdev_id = adapter->session_id;
+	motion_det_base_line.vdev_id = adapter->vdev_id;
 	motion_det_base_line.enable = value;
 	sme_motion_det_base_line_enable(hdd_ctx->mac_handle,
 					&motion_det_base_line);
@@ -5939,7 +5939,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 			callbackInfo.timeout = 5000; /* 5 seconds */
 			sme_neighbor_report_request(
 					hdd_ctx->mac_handle,
-					adapter->session_id,
+					adapter->vdev_id,
 					&neighborReq,
 					&callbackInfo);
 		} else {
@@ -6080,7 +6080,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_HT_MCS:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_HT_MCS");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_HT_MCS,
 					     GTX_CMD);
 		break;
@@ -6089,7 +6089,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_VHT_MCS:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_VHT_MCS");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_VHT_MCS,
 					     GTX_CMD);
 		break;
@@ -6098,7 +6098,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_USRCFG:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_USR_CFG");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_USR_CFG,
 					     GTX_CMD);
 		break;
@@ -6107,7 +6107,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_THRE:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_THRE");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_THRE,
 					     GTX_CMD);
 		break;
@@ -6116,7 +6116,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_MARGIN:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_MARGIN");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_MARGIN,
 					     GTX_CMD);
 		break;
@@ -6125,7 +6125,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_STEP:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_STEP");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_STEP,
 					     GTX_CMD);
 		break;
@@ -6134,7 +6134,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_MINTPC:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_MINTPC");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_MINTPC,
 					     GTX_CMD);
 		break;
@@ -6143,7 +6143,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_GTX_BWMASK:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_GTX_BW_MASK");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_GTX_BW_MASK,
 					     GTX_CMD);
 		break;
@@ -6170,7 +6170,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_SHORT_GI:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_SGI");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_SGI,
 					     VDEV_CMD);
 		break;
@@ -6179,7 +6179,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_RTSCTS:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_ENABLE_RTSCTS");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_ENABLE_RTSCTS,
 					     VDEV_CMD);
 		break;
@@ -6188,7 +6188,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_CHWIDTH:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_CHWIDTH");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_CHWIDTH,
 					     VDEV_CMD);
 		break;
@@ -6197,7 +6197,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ANI_EN_DIS:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_ENABLE");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_ANI_ENABLE,
 					     PDEV_CMD);
 		break;
@@ -6206,7 +6206,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ANI_POLL_PERIOD:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_POLL_PERIOD");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_ANI_POLL_PERIOD,
 					     PDEV_CMD);
 		break;
@@ -6215,7 +6215,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ANI_LISTEN_PERIOD:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_LISTEN_PERIOD");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,
 					     PDEV_CMD);
 		break;
@@ -6224,7 +6224,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ANI_OFDM_LEVEL:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_OFDM_LEVEL");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
 					     PDEV_CMD);
 		break;
@@ -6233,7 +6233,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ANI_CCK_LEVEL:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_CCK_LEVEL");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_ANI_CCK_LEVEL,
 					     PDEV_CMD);
 		break;
@@ -6242,7 +6242,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_DYNAMIC_BW:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_ANI_CCK_LEVEL");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_DYNAMIC_BW,
 					     PDEV_CMD);
 		break;
@@ -6251,7 +6251,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_11N_RATE:
 	{
 		hdd_debug("GET WMI_VDEV_PARAM_FIXED_RATE");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_FIXED_RATE,
 					     VDEV_CMD);
 		break;
@@ -6260,7 +6260,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_AMPDU:
 	{
 		hdd_debug("GET AMPDU");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     GEN_VDEV_PARAM_AMPDU,
 					     GEN_CMD);
 		break;
@@ -6269,7 +6269,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_AMSDU:
 	{
 		hdd_debug("GET AMSDU");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     GEN_VDEV_PARAM_AMSDU,
 					     GEN_CMD);
 		break;
@@ -6278,7 +6278,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_ROAM_SYNCH_DELAY:
 	{
 		hdd_debug("GET ROAM SYNCH DELAY");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     GEN_VDEV_ROAM_SYNCH_DELAY,
 					     GEN_CMD);
 		break;
@@ -6287,7 +6287,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_TX_CHAINMASK:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_TX_CHAIN_MASK");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_TX_CHAIN_MASK,
 					     PDEV_CMD);
 		break;
@@ -6296,7 +6296,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_RX_CHAINMASK:
 	{
 		hdd_debug("GET WMI_PDEV_PARAM_RX_CHAIN_MASK");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					     PDEV_CMD);
 		break;
@@ -6307,7 +6307,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		uint8_t txpow2g = 0;
 
 		hdd_debug("GET WMI_PDEV_PARAM_TXPOWER_LIMIT2G");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
 					     PDEV_CMD);
 		ucfg_mlme_get_current_tx_power_level(hdd_ctx->psoc, &txpow2g);
@@ -6320,7 +6320,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		uint8_t txpow5g = 0;
 
 		hdd_debug("GET WMI_PDEV_PARAM_TXPOWER_LIMIT5G");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
 					     PDEV_CMD);
 		ucfg_mlme_get_current_tx_power_level(hdd_ctx->psoc, &txpow5g);
@@ -6331,7 +6331,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_PAID_MATCH:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_PAID_MATCH");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_PAID_MATCH,
 					     PPS_CMD);
 		break;
@@ -6340,7 +6340,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_GID_MATCH:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_GID_MATCH");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_GID_MATCH,
 					     PPS_CMD);
 		break;
@@ -6349,7 +6349,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_EARLY_TIM_CLEAR:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_EARLY_TIM_CLEAR");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_EARLY_TIM_CLEAR,
 					     PPS_CMD);
 		break;
@@ -6358,7 +6358,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_EARLY_DTIM_CLEAR:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_EARLY_DTIM_CLEAR");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_EARLY_DTIM_CLEAR,
 					     PPS_CMD);
 		break;
@@ -6367,7 +6367,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_EOF_PAD_DELIM:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_EOF_PAD_DELIM");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_EOF_PAD_DELIM,
 					     PPS_CMD);
 		break;
@@ -6376,7 +6376,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_MACADDR_MISMATCH:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_MACADDR_MISMATCH");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_MACADDR_MISMATCH,
 					     PPS_CMD);
 		break;
@@ -6385,7 +6385,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_DELIM_CRC_FAIL:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_DELIM_CRC_FAIL");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_DELIM_CRC_FAIL,
 					     PPS_CMD);
 		break;
@@ -6394,7 +6394,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_PPS_GID_NSTS_ZERO:
 	{
 		hdd_debug("GET WMI_VDEV_PPS_GID_NSTS_ZERO");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_GID_NSTS_ZERO,
 					     PPS_CMD);
 		break;
@@ -6404,7 +6404,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	{
 
 		hdd_debug("GET WMI_VDEV_PPS_RSSI_CHECK");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PPS_RSSI_CHECK,
 					     PPS_CMD);
 		break;
@@ -6413,7 +6413,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_QPOWER_MAX_PSPOLL_COUNT:
 	{
 		hdd_debug("WE_GET_QPOWER_MAX_PSPOLL_COUNT");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_STA_PS_PARAM_QPOWER_PSPOLL_COUNT,
 					     QPOWER_CMD);
 		break;
@@ -6422,7 +6422,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_QPOWER_MAX_TX_BEFORE_WAKE:
 	{
 		hdd_debug("WE_GET_QPOWER_MAX_TX_BEFORE_WAKE");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_STA_PS_PARAM_QPOWER_MAX_TX_BEFORE_WAKE,
 					     QPOWER_CMD);
 		break;
@@ -6431,7 +6431,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL:
 	{
 		hdd_debug("WE_GET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_STA_PS_PARAM_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL,
 					     QPOWER_CMD);
 		break;
@@ -6440,7 +6440,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL:
 	{
 		hdd_debug("WE_GET_QPOWER_MAX_PSPOLL_COUNT");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL,
 					     QPOWER_CMD);
 		break;
@@ -6456,13 +6456,13 @@ static int __iw_setnone_getint(struct net_device *dev,
 	}
 	case WE_GET_DCM:
 		hdd_debug("GET WMI_VDEV_PARAM_HE_DCM");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_HE_DCM,
 					     VDEV_CMD);
 		break;
 	case WE_GET_RANGE_EXT:
 		hdd_debug("GET WMI_VDEV_PARAM_HE_RANGE_EXT");
-		*value = wma_cli_get_command(adapter->session_id,
+		*value = wma_cli_get_command(adapter->vdev_id,
 					     WMI_VDEV_PARAM_HE_RANGE_EXT,
 					     VDEV_CMD);
 		break;
@@ -6689,7 +6689,7 @@ static int hdd_get_sta_cxn_info(struct hdd_context *hdd_ctx,
 {
 	QDF_STATUS status;
 
-	status = sme_get_sta_cxn_info(hdd_ctx->mac_handle, adapter->session_id,
+	status = sme_get_sta_cxn_info(hdd_ctx->mac_handle, adapter->vdev_id,
 				      extra, WE_MAX_STR_LEN);
 	if (status != QDF_STATUS_SUCCESS)
 		qdf_scnprintf(extra, WE_MAX_STR_LEN,
@@ -6857,13 +6857,13 @@ static int __iw_get_char_setnone(struct net_device *dev,
 						  (sta_ctx->conn_info.connState),
 					  mac_trace_get_neighbour_roam_state
 						  (sme_get_neighbor_roam_state
-							  (mac_handle, useAdapter->session_id)),
+							  (mac_handle, useAdapter->vdev_id)),
 					  mac_trace_getcsr_roam_state
 						  (sme_get_current_roam_state
-							  (mac_handle, useAdapter->session_id)),
+							  (mac_handle, useAdapter->vdev_id)),
 					  mac_trace_getcsr_roam_sub_state
 						  (sme_get_current_roam_sub_state
-							  (mac_handle, useAdapter->session_id))
+							  (mac_handle, useAdapter->vdev_id))
 					  );
 			len += buf;
 			adapter_num++;
@@ -7357,7 +7357,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	mac_handle = hdd_ctx->mac_handle;
 	switch (sub_cmd) {
 	case WE_GET_FW_PROFILE_DATA:
-		ret = wma_cli_set_command(adapter->session_id,
+		ret = wma_cli_set_command(adapter->vdev_id,
 				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 				0, DBG_CMD);
 		break;
@@ -7375,7 +7375,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 			adapter->session.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields modProfileFields;
 
-		sme_get_modify_profile_fields(mac_handle, adapter->session_id,
+		sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,
 					      &modProfileFields);
 		if (roaming_offload_enabled(hdd_ctx)) {
 			qdf_mem_copy(bssid,
@@ -7384,7 +7384,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 			hdd_wma_send_fastreassoc_cmd(adapter,
 						     bssid, operating_ch);
 		} else {
-			sme_roam_reassoc(mac_handle, adapter->session_id,
+			sme_roam_reassoc(mac_handle, adapter->vdev_id,
 					 NULL, modProfileFields, &roamId, 1);
 		}
 		return 0;
@@ -7400,7 +7400,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 			hdd_err("mac_handle context is NULL");
 			return -EINVAL;
 		}
-		sme_ht40_stop_obss_scan(mac_handle, adapter->session_id);
+		sme_ht40_stop_obss_scan(mac_handle, adapter->vdev_id);
 		break;
 
 	default:
@@ -7477,7 +7477,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 		hdd_err("unknown cmd %d", cmd);
 		return;
 	}
-	policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc, adapter->session_id,
+	policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc, adapter->vdev_id,
 				    mac0_ss, mac0_bw, mac1_ss, mac1_bw,
 				    mac0_band_cap, dbs, HW_MODE_AGILE_DFS_NONE,
 				    HW_MODE_SBS_NONE,
@@ -7588,7 +7588,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		policy_mgr_current_connections_update(
 			hdd_ctx->psoc,
-			adapter->session_id, apps_args[0],
+			adapter->vdev_id, apps_args[0],
 			POLICY_MGR_UPDATE_REASON_UT);
 	}
 	break;
@@ -7844,7 +7844,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			hdd_err("Too Many/Few args %d", apps_args[1]);
 			return -EINVAL;
 		}
-		status = sme_send_unit_test_cmd(adapter->session_id,
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
 						apps_args[0],
 						apps_args[1],
 						&apps_args[2]);
@@ -7924,7 +7924,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		if (QDF_STATUS_SUCCESS !=
 			sme_process_mac_pwr_dbg_cmd(mac_handle,
-						    adapter->session_id,
+						    adapter->vdev_id,
 						    &mac_pwr_dbg_args)) {
 			return -EINVAL;
 		}
@@ -7956,7 +7956,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	case WE_SET_TXRX_STATS:
 	{
 		ret = cds_get_datapath_handles(&soc, &pdev, &vdev,
-					       adapter->session_id);
+					       adapter->vdev_id);
 
 		if (ret != 0) {
 			hdd_err("Invalid handles");
@@ -7990,7 +7990,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return -EINVAL;
 		}
 
-		motion_det_cfg.vdev_id = adapter->session_id;
+		motion_det_cfg.vdev_id = adapter->vdev_id;
 		motion_det_cfg.time_t1 = apps_args[0];
 		motion_det_cfg.time_t2 = apps_args[1];
 		motion_det_cfg.n1 = apps_args[2];
@@ -8018,7 +8018,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return -EINVAL;
 		}
 
-		motion_det_base_line_cfg.vdev_id = adapter->session_id;
+		motion_det_base_line_cfg.vdev_id = adapter->vdev_id;
 		motion_det_base_line_cfg.bl_time_t = apps_args[0];
 		motion_det_base_line_cfg.bl_packet_gap = apps_args[1];
 		motion_det_base_line_cfg.bl_n = apps_args[2];
@@ -8502,7 +8502,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	hdd_debug("called with Ie of length = %d", wrqu->data.length);
 
 	/* Pass the received FT IEs to SME */
-	sme_set_ft_ies(hdd_ctx->mac_handle, adapter->session_id,
+	sme_set_ft_ies(hdd_ctx->mac_handle, adapter->vdev_id,
 		       extra, wrqu->data.length);
 	hdd_exit();
 	return 0;
@@ -8642,7 +8642,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_host_offload(hdd_ctx->mac_handle,
-				 adapter->session_id, &offloadRequest)) {
+				 adapter->vdev_id, &offloadRequest)) {
 		hdd_err("Failure to execute host offload request");
 		return -EINVAL;
 	}
@@ -8733,7 +8733,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_keep_alive(hdd_ctx->mac_handle,
-			       adapter->session_id, request)) {
+			       adapter->vdev_id, request)) {
 		hdd_err("Failure to execute Keep Alive");
 		return -EINVAL;
 	}
@@ -8867,7 +8867,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		hdd_ctx->user_configured_pkt_filter_rules &=
 					~(1 << request->filter_id);
 
-	ret = wlan_hdd_set_filter(hdd_ctx, request, adapter->session_id);
+	ret = wlan_hdd_set_filter(hdd_ctx, request, adapter->vdev_id);
 
 	qdf_mem_free(request);
 	hdd_exit();
@@ -8974,7 +8974,7 @@ static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 				    SME_GLOBAL_CLASSD_STATS,
 				    hdd_statistics_cb,
 				    sta_ctx->conn_info.staId[0],
-				    cookie, adapter->session_id);
+				    cookie, adapter->vdev_id);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_warn("Unable to retrieve SME statistics");
@@ -9606,7 +9606,7 @@ int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 		return 0;
 	}
-	ret = wma_cli_set2_command(adapter->session_id,
+	ret = wma_cli_set2_command(adapter->vdev_id,
 				   GEN_PARAM_CRASH_INJECT,
 				   v1, v2, GEN_CMD);
 	return ret;
@@ -9654,7 +9654,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_SET_SMPS_PARAM:
 		hdd_debug("WE_SET_SMPS_PARAM val %d %d", value[1], value[2]);
-		ret = wma_cli_set_command(adapter->session_id,
+		ret = wma_cli_set_command(adapter->vdev_id,
 					  WMI_STA_SMPS_PARAM_CMDID,
 					  value[1] << WMA_SMPS_PARAM_VALUE_S
 					      | value[2],
@@ -9666,14 +9666,14 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	case WE_ENABLE_FW_PROFILE:
 		hdd_err("WE_ENABLE_FW_PROFILE: %d %d",
 		       value[1], value[2]);
-		ret = wma_cli_set2_command(adapter->session_id,
+		ret = wma_cli_set2_command(adapter->vdev_id,
 				 WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
 					value[1], value[2], DBG_CMD);
 		break;
 	case WE_SET_FW_PROFILE_HIST_INTVL:
 		hdd_err("WE_SET_FW_PROFILE_HIST_INTVL: %d %d",
 		       value[1], value[2]);
-		ret = wma_cli_set2_command(adapter->session_id,
+		ret = wma_cli_set2_command(adapter->vdev_id,
 					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					value[1], value[2], DBG_CMD);
 		break;

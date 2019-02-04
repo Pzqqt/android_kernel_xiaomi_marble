@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,8 +74,8 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 
 	hdd_enter_dev(dev);
 
-	if (wlan_hdd_validate_session_id(adapter->session_id)) {
-		hdd_err("invalid session id: %d", adapter->session_id);
+	if (wlan_hdd_validate_session_id(adapter->vdev_id)) {
+		hdd_err("invalid session id: %d", adapter->vdev_id);
 		return -EINVAL;
 	}
 
@@ -104,7 +104,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	}
 
 	req.request_id = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	req.session_id = adapter->session_id;
+	req.session_id = adapter->vdev_id;
 	control = nla_get_u32(tb[PARAM_CONTROL]);
 
 	if (control == QCA_WLAN_RSSI_MONITORING_START) {
