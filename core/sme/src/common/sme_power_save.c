@@ -323,20 +323,20 @@ QDF_STATUS sme_ps_process_command(struct mac_context *mac_ctx, uint32_t session_
  * sme_enable_sta_ps_check(): Checks if it is ok to enable power save or not.
  * @mac_ctx: global mac context
  * @session_id: session id
- * @command: power save cmd of type enum sme_ps_cmd
  *
- *Pre Condition for enabling sta mode power save
- *1) Sta Mode Ps should be enabled in ini file.
- *2) Session should be in infra mode and in connected state.
+ * Pre Condition for enabling sta mode power save
+ * 1) Sta Mode Ps should be enabled in ini file.
+ * 2) Session should be in infra mode and in connected state.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx, uint32_t session_id)
+QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx,
+				   uint32_t session_id)
 {
 	struct wlan_mlme_powersave *powersave_params;
 
-	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
-	if (session_id >= CSR_ROAM_SESSION_MAX)
+	QDF_BUG(session_id < WLAN_MAX_VDEVS);
+	if (session_id >= WLAN_MAX_VDEVS)
 		return QDF_STATUS_E_INVAL;
 
 	/* Check if Sta Ps is enabled. */
@@ -408,8 +408,8 @@ QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 	struct sEnablePsParams *req;
 	t_wma_handle *wma;
 
-	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
-	if (session_id >= CSR_ROAM_SESSION_MAX)
+	QDF_BUG(session_id < WLAN_MAX_VDEVS);
+	if (session_id >= WLAN_MAX_VDEVS)
 		return QDF_STATUS_E_INVAL;
 
 	status = sme_enable_sta_ps_check(mac_ctx, session_id);
@@ -868,7 +868,7 @@ QDF_STATUS sme_ps_close(mac_handle_t mac_handle)
 {
 	uint32_t i;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
+	for (i = 0; i < WLAN_MAX_VDEVS; i++)
 		sme_ps_close_per_session(mac_handle, i);
 
 	return QDF_STATUS_SUCCESS;

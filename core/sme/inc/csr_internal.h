@@ -45,16 +45,13 @@
 /* session ID invalid */
 #define CSR_SESSION_ID_INVALID    0xFF
 /* No of sessions to be supported, and a session is for Infra, IBSS or BT-AMP */
-#define CSR_ROAM_SESSION_MAX      SIR_MAX_SUPPORTED_BSS
 #define CSR_IS_SESSION_VALID(mac, sessionId) \
-	(((sessionId) < CSR_ROAM_SESSION_MAX) && \
-	 ((mac)->roam.roamSession[(sessionId)].sessionActive))
+	((sessionId) < WLAN_MAX_VDEVS && \
+	 (mac)->roam.roamSession[(sessionId)].sessionActive)
 
 #define CSR_GET_SESSION(mac, sessionId) \
-	( \
-	  (sessionId < CSR_ROAM_SESSION_MAX) ? \
-	  (&(mac)->roam.roamSession[(sessionId)]) : NULL \
-	)
+	(sessionId < WLAN_MAX_VDEVS ? \
+	 &(mac)->roam.roamSession[(sessionId)] : NULL)
 
 #define CSR_IS_SESSION_ANY(sessionId) (sessionId == SME_SESSION_ID_ANY)
 #define CSR_MAX_NUM_COUNTRY_CODE  100
@@ -456,8 +453,8 @@ struct csr_scanstruct {
 	bool fDropScanCmd;      /* true means we don't accept scan commands */
 
 	/* This includes all channels on which candidate APs are found */
-	struct csr_channel occupiedChannels[CSR_ROAM_SESSION_MAX];
-	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];
+	struct csr_channel occupiedChannels[WLAN_MAX_VDEVS];
+	int8_t roam_candidate_count[WLAN_MAX_VDEVS];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
 	wlan_scan_requester requester_id;
@@ -697,8 +694,8 @@ struct csr_roam_session {
 struct csr_roamstruct {
 	uint32_t nextRoamId;
 	struct csr_config configParam;
-	enum csr_roam_state curState[CSR_ROAM_SESSION_MAX];
-	enum csr_roam_substate curSubState[CSR_ROAM_SESSION_MAX];
+	enum csr_roam_state curState[WLAN_MAX_VDEVS];
+	enum csr_roam_substate curSubState[WLAN_MAX_VDEVS];
 	/*
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
@@ -719,7 +716,7 @@ struct csr_roamstruct {
 	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
-	tCsrNeighborRoamControlInfo neighborRoamInfo[CSR_ROAM_SESSION_MAX];
+	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];
 	uint8_t isFastRoamIniFeatureEnabled;
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;

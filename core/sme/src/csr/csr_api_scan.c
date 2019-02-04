@@ -449,7 +449,7 @@ static bool csr_scan_flush_denied(struct mac_context *mac)
 {
 	uint8_t sessionId;
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
 		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
 			if (csr_neighbor_middle_of_roaming(mac, sessionId))
 				return 1;

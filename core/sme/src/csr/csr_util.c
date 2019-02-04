@@ -573,8 +573,8 @@ bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
 static bool csr_is_conn_state(struct mac_context *mac_ctx, uint32_t session_id,
 			      eCsrConnectState state)
 {
-	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
-	if (session_id >= CSR_ROAM_SESSION_MAX)
+	QDF_BUG(session_id < WLAN_MAX_VDEVS);
+	if (session_id >= WLAN_MAX_VDEVS)
 		return false;
 
 	return mac_ctx->roam.roamSession[session_id].connectState == state;
@@ -663,19 +663,17 @@ static bool csr_is_conn_state_ap(struct mac_context *mac, uint32_t sessionId)
 bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 {
 	uint32_t i;
-	bool fRc = false;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i) &&
-		    (csr_is_conn_state_infra(mac, i)
-		     || csr_is_conn_state_ibss(mac, i)
-		     || csr_is_conn_state_ap(mac, i))) {
-			fRc = true;
-			break;
+		    (csr_is_conn_state_infra(mac, i) ||
+		     csr_is_conn_state_ibss(mac, i) ||
+		     csr_is_conn_state_ap(mac, i))) {
+			return true;
 		}
 	}
 
-	return fRc;
+	return false;
 }
 
 uint8_t csr_get_infra_operation_channel(struct mac_context *mac, uint8_t sessionId)
@@ -726,7 +724,7 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 	uint8_t i = 0;
 	enum QDF_OPMODE persona;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 		session = CSR_GET_SESSION(mac_ctx, i);
@@ -1000,7 +998,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	sme_debug("sap_ch:%d sap_phymode:%d sap_cch:%d sap_hbw:%d chb:%d",
 		sap_ch, sap_phymode, sap_cch, sap_hbw, chb);
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 
@@ -1106,7 +1104,7 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 	uint32_t i;
 	bool fRc = true;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i)
 		    && !csr_is_conn_state_disconnected(mac, i)) {
 			fRc = false;
@@ -1122,7 +1120,7 @@ uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 	uint32_t i;
 	uint8_t connected_session = CSR_SESSION_ID_INVALID;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, i)
 		    && csr_is_conn_state_connected_infra(mac_ctx, i)) {
 			connected_session = i;
@@ -1141,7 +1139,7 @@ bool csr_is_concurrent_session_running(struct mac_context *mac)
 
 	bool fRc = false;
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
 		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
 			connectState =
 				mac->roam.roamSession[sessionId].connectState;
@@ -1167,7 +1165,7 @@ bool csr_is_infra_ap_started(struct mac_context *mac)
 	uint32_t sessionId;
 	bool fRc = false;
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
 		if (CSR_IS_SESSION_VALID(mac, sessionId) &&
 				(csr_is_conn_state_connected_infra_ap(mac,
 					sessionId))) {
@@ -2154,7 +2152,7 @@ static QDF_STATUS csr_update_mcc_p2p_beacon_interval(struct mac_context *mac_ctx
 	if (!mac_ctx->roam.configParam.fenableMCCMode)
 		return QDF_STATUS_E_FAILURE;
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		/*
 		 * If GO in MCC support different beacon interval,
 		 * change the BI of the P2P-GO
@@ -2472,7 +2470,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
 	if (!mac_ctx->roam.configParam.fenableMCCMode)
 		return QDF_STATUS_E_FAILURE;
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (cur_session_id == session_id)
 			continue;
 
@@ -6173,7 +6171,7 @@ bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
 	if (channel == 0)
 		return false;
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 			session = CSR_GET_SESSION(mac_ctx, session_id);
 			if (NULL == session->pCurRoamProfile)

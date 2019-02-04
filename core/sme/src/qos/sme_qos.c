@@ -68,7 +68,7 @@
 #define SME_QOS_SEARCH_KEY_INDEX_4       8      /* ac + direction */
 #define SME_QOS_SEARCH_KEY_INDEX_5       0x10   /* ac + tspec_mask */
 /* special value for searching any Session Id */
-#define SME_QOS_SEARCH_SESSION_ID_ANY    CSR_ROAM_SESSION_MAX
+#define SME_QOS_SEARCH_SESSION_ID_ANY    WLAN_MAX_VDEVS
 #define SME_QOS_ACCESS_POLICY_EDCA       1
 #define SME_QOS_MAX_TID                  255
 #define SME_QOS_TSPEC_IE_LENGTH          61
@@ -465,7 +465,7 @@ static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
 {
 	uint32_t buf_size;
 
-	buf_size = CSR_ROAM_SESSION_MAX * sizeof(struct sme_qos_sessioninfo);
+	buf_size = WLAN_MAX_VDEVS * sizeof(struct sme_qos_sessioninfo);
 	sme_qos_cb.sessionInfo = qdf_mem_malloc(buf_size);
 	if (!sme_qos_cb.sessionInfo)
 		return QDF_STATUS_E_NOMEM;
@@ -492,7 +492,7 @@ static inline void sme_qos_free_control_block_buffer(void)
 
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
-struct sme_qos_sessioninfo sessionInfo[CSR_ROAM_SESSION_MAX];
+struct sme_qos_sessioninfo sessionInfo[WLAN_MAX_VDEVS];
 struct sme_qos_wmmtspecinfo def_QoSInfo[SME_QOS_EDCA_AC_MAX];
 
 static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
@@ -553,7 +553,7 @@ QDF_STATUS sme_qos_open(struct mac_context *mac)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; ++sessionId) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; ++sessionId) {
 		pSession = &sme_qos_cb.sessionInfo[sessionId];
 		pSession->sessionId = sessionId;
 		/* initialize the session's per-AC information */
@@ -596,7 +596,7 @@ QDF_STATUS sme_qos_close(struct mac_context *mac)
 	/* close the flow list */
 	csr_ll_close(&sme_qos_cb.flow_list);
 	/* shut down all of the sessions */
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; ++sessionId) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; ++sessionId) {
 		pSession = &sme_qos_cb.sessionInfo[sessionId];
 		if (pSession == NULL)
 			continue;
@@ -3843,7 +3843,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked on session %d for AC %d",
 		  __func__, __LINE__, sessionId, ac);
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: sessionId(%d) is invalid",
@@ -4554,7 +4554,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("invoked on session %d"), sessionid);
 
-	if (CSR_ROAM_SESSION_MAX <= sessionid) {
+	if (sessionid >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("invoked on session %d"), sessionid);
 		return status;
@@ -7026,7 +7026,7 @@ static bool sme_qos_is_uapsd_active(void)
 	struct sme_qos_sessioninfo *pSession;
 	uint8_t sessionId;
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; ++sessionId) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; ++sessionId) {
 		pSession = &sme_qos_cb.sessionInfo[sessionId];
 		if ((pSession->sessionActive) && (pSession->apsdMask))
 			return true;

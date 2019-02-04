@@ -16,7 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "sme_api.h"
 #include "qdf_lock.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
@@ -323,7 +322,7 @@ struct hdd_vdev_sync {
 	bool in_use;
 };
 
-static struct hdd_vdev_sync __hdd_vdev_sync_arr[CSR_ROAM_SESSION_MAX];
+static struct hdd_vdev_sync __hdd_vdev_sync_arr[WLAN_MAX_VDEVS];
 static qdf_spinlock_t __hdd_vdev_sync_lock;
 
 #define hdd_vdev_sync_lock_create() qdf_spinlock_create(&__hdd_vdev_sync_lock)

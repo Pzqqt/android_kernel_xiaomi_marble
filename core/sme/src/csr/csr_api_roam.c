@@ -509,10 +509,9 @@ static struct csr_roam_session *csr_roam_roam_session;
 static QDF_STATUS csr_roam_init_globals(struct mac_context *mac)
 {
 	uint32_t buf_size;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 
-	buf_size = CSR_ROAM_SESSION_MAX
-		   * sizeof(struct csr_roam_session);
+	buf_size = WLAN_MAX_VDEVS * sizeof(struct csr_roam_session);
 
 	csr_roam_roam_session = qdf_mem_malloc(buf_size);
 	if (csr_roam_roam_session) {
@@ -533,7 +532,7 @@ static inline void csr_roam_free_globals(void)
 }
 
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
-static struct csr_roam_session csr_roam_roam_session[CSR_ROAM_SESSION_MAX];
+static struct csr_roam_session csr_roam_roam_session[WLAN_MAX_VDEVS];
 
 /* Initialize global variables */
 static QDF_STATUS csr_roam_init_globals(struct mac_context *mac)
@@ -554,7 +553,7 @@ static void csr_roam_de_init_globals(struct mac_context *mac)
 {
 	uint8_t i;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (mac->roam.roamSession[i].pCurRoamProfile)
 			csr_release_profile(mac,
 					    mac->roam.roamSession[i].
@@ -604,7 +603,7 @@ QDF_STATUS csr_open(struct mac_context *mac)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
+		for (i = 0; i < WLAN_MAX_VDEVS; i++)
 			csr_roam_state_change(mac, eCSR_ROAMING_STATE_STOP, i);
 
 		init_config_param(mac);
@@ -1223,7 +1222,7 @@ QDF_STATUS csr_start(struct mac_context *mac)
 	uint32_t i;
 
 	do {
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
+		for (i = 0; i < WLAN_MAX_VDEVS; i++)
 			csr_roam_state_change(mac, eCSR_ROAMING_STATE_IDLE, i);
 
 		status = csr_roam_start(mac);
@@ -1231,7 +1230,7 @@ QDF_STATUS csr_start(struct mac_context *mac)
 			break;
 
 		mac->roam.sPendingCommands = 0;
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
+		for (i = 0; i < WLAN_MAX_VDEVS; i++)
 			status = csr_neighbor_roam_init(mac, i);
 		csr_init_tl_stats(mac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1258,19 +1257,19 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 	 * sure memory and vdev ref are freed.
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		csr_roam_close_session(mac, sessionId, true);
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		csr_neighbor_roam_close(mac, sessionId);
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		if (CSR_IS_SESSION_VALID(mac, sessionId))
 			csr_scan_flush_result(mac);
 
 	/* Reset the domain back to the deault */
 	mac->scan.domainIdCurrent = mac->scan.domainIdDefault;
 
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
 		csr_roam_state_change(mac, eCSR_ROAMING_STATE_STOP, sessionId);
 		csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
 					 sessionId);
@@ -1371,7 +1370,7 @@ static QDF_STATUS csr_roam_open(struct mac_context *mac)
 	struct csr_roam_session *pSession;
 
 	do {
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			pSession = CSR_GET_SESSION(mac, i);
 			pSession->roamingTimerInfo.mac = mac;
 			pSession->roamingTimerInfo.session_id =
@@ -1409,7 +1408,7 @@ static QDF_STATUS csr_roam_close(struct mac_context *mac)
 	 * sure memory and vdev ref are freed.
 	 */
 	csr_purge_pdev_all_ser_cmd_list(mac);
-	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
+	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		csr_roam_close_session(mac, sessionId, true);
 
 	qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
@@ -1580,7 +1579,7 @@ static void csr_release_command_set_hw_mode(struct mac_context *mac,
 void csr_roam_substate_change(struct mac_context *mac,
 		enum csr_roam_substate NewSubstate, uint32_t sessionId)
 {
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid no of concurrent sessions %d",
 			  sessionId);
 		return;
@@ -2908,7 +2907,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 	 * Otherwise they will be applied later
 	 */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		for (index = 0; index < CSR_ROAM_SESSION_MAX; index++) {
+		for (index = 0; index < WLAN_MAX_VDEVS; index++) {
 			if ((CSR_IS_SESSION_VALID(mac, index))
 			    && CSR_IS_ROAM_STOP(mac, index)) {
 				applyConfig = false;
@@ -8954,7 +8953,7 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(struct mac_context *mac
 	uint32_t roamId = 0;
 	struct csr_roam_session *csr_session;
 
-	if (pSmeJoinRsp->sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (pSmeJoinRsp->sessionId >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid session ID received %d",
 			 pSmeJoinRsp->sessionId);
 		return;
@@ -11908,7 +11907,7 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 	spin_lock(&mac->roam.roam_state_lock);
 	if (CSR_IS_WAIT_FOR_KEY(mac, session_id)) {
 		/* Change the substate so command queue is unblocked. */
-		if (CSR_ROAM_SESSION_MAX > session_id)
+		if (session_id < WLAN_MAX_VDEVS)
 			mac->roam.curSubState[session_id] =
 						eCSR_ROAM_SUBSTATE_NONE;
 		spin_unlock(&mac->roam.roam_state_lock);
@@ -16431,7 +16430,7 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t i;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i)) {
 			if (qdf_is_macaddr_equal(bssid,
 				    &mac->roam.roamSession[i].connectedProfile.
@@ -16455,7 +16454,7 @@ static uint32_t csr_find_ibss_session(struct mac_context *mac)
 	uint32_t i, nRet = CSR_SESSION_ID_INVALID;
 	struct csr_roam_session *pSession;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i)) {
 			pSession = CSR_GET_SESSION(mac, i);
 			if (pSession->pCurRoamProfile
@@ -18578,7 +18577,7 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 	tpCsrNeighborRoamControlInfo roam_info;
 	uint8_t i;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		session = CSR_GET_SESSION(mac_ctx, i);
 		if (!session || !CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
@@ -20128,7 +20127,7 @@ csr_find_session_by_type(struct mac_context *mac_ctx, enum QDF_OPMODE type)
 	uint32_t i, session_id = CSR_SESSION_ID_INVALID;
 	struct csr_roam_session *session_ptr;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 

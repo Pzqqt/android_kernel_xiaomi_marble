@@ -145,7 +145,7 @@ void csr_neighbor_roam_purge_preauth_failed_list(struct mac_context *mac_ctx)
 	tpCsrNeighborRoamControlInfo neigh_roam_info = NULL;
 	tpCsrPreauthFailListInfo fail_list;
 
-	for (j = 0; j < CSR_ROAM_SESSION_MAX; j++) {
+	for (j = 0; j < WLAN_MAX_VDEVS; j++) {
 		neigh_roam_info = &mac_ctx->roam.neighborRoamInfo[j];
 		fail_list = &neigh_roam_info->FTRoamInfo.preAuthFailList;
 		num_mac_addr = fail_list->numMACAddress;

@@ -1168,7 +1168,7 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	tpCsr11rAssocNeighborInfo pFTRoamInfo = NULL;
 
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[i];
 		pFTRoamInfo = &pNeighborRoamInfo->FTRoamInfo;
 

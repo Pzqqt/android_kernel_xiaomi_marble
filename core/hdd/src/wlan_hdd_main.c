@@ -1088,7 +1088,7 @@ int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func)
 		return -EINVAL;
 	}
 
-	if (session_id >= CSR_ROAM_SESSION_MAX) {
+	if (session_id >= WLAN_MAX_VDEVS) {
 		hdd_err("bad session Id:%u (via %s)", session_id, func);
 		return -EINVAL;
 	}
@@ -1956,11 +1956,10 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	qdf_mem_copy(&hdd_ctx->hw_bd_info, &cfg->hw_bd_info,
 		     sizeof(cfg->hw_bd_info));
 
-	if (cfg->max_intf_count > CSR_ROAM_SESSION_MAX) {
+	if (cfg->max_intf_count > WLAN_MAX_VDEVS) {
 		hdd_err("fw max vdevs (%u) > host max vdevs (%u); using %u",
-			cfg->max_intf_count, CSR_ROAM_SESSION_MAX,
-			CSR_ROAM_SESSION_MAX);
-		hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
+			cfg->max_intf_count, WLAN_MAX_VDEVS, WLAN_MAX_VDEVS);
+		hdd_ctx->max_intf_count = WLAN_MAX_VDEVS;
 	} else {
 		hdd_ctx->max_intf_count = cfg->max_intf_count;
 	}
@@ -8226,7 +8225,7 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	uint32_t comb_log_str_size;
 	struct hdd_adapter *adapter = NULL;
 
-	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * CSR_ROAM_SESSION_MAX) + 1;
+	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * WLAN_MAX_VDEVS) + 1;
 	comb_log_str = qdf_mem_malloc(comb_log_str_size);
 	if (!comb_log_str)
 		return;
@@ -9009,7 +9008,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 	}
 
 	if (SME_SESSION_ID_ANY == frame_ind->sessionId) {
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			adapter =
 				hdd_get_adapter_by_sme_session_id(hdd_ctx, i);
 			if (adapter)
@@ -9187,7 +9186,7 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	int ret;
 
 	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
-	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
+	hdd_ctx->max_intf_count = WLAN_MAX_VDEVS;
 
 	init_completion(&hdd_ctx->mc_sus_event_var);
 	init_completion(&hdd_ctx->ready_to_suspend);

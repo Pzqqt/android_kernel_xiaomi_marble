@@ -654,7 +654,7 @@ static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\n active command sessionid %d", active_session_id);
 	}
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac, session_id)) {
 			connect_state =
 				mac->roam.roamSession[session_id].connectState;
@@ -1717,7 +1717,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	uint8_t newChannelList[128] = { 0 };
 	uint8_t i = 0, j = 0;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -5251,7 +5251,7 @@ static void sme_disconnect_connected_sessions(struct mac_context *mac_ctx)
 	uint8_t session_id, found = false;
 	uint8_t curr_ch;
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (!csr_is_session_client_and_connected(mac_ctx, session_id))
 			continue;
 		found = false;
@@ -5784,7 +5784,7 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -5821,7 +5821,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 			&mac->roam.neighborRoamInfo[session_id];
 
-	if (session_id >= CSR_ROAM_SESSION_MAX) {
+	if (session_id >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid sme session id: %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5976,7 +5976,7 @@ QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6019,7 +6019,7 @@ QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_SET_SCANCTRL, NO_SESSION, 0));
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6527,7 +6527,7 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6613,7 +6613,7 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6667,7 +6667,7 @@ QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6716,7 +6716,7 @@ QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6761,7 +6761,7 @@ uint16_t sme_get_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return 0;
@@ -6783,7 +6783,7 @@ uint32_t sme_get_neighbor_roam_state(mac_handle_t mac_handle, uint8_t sessionId)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return 0;
@@ -6914,7 +6914,7 @@ uint16_t sme_get_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return 0;
@@ -6945,7 +6945,7 @@ QDF_STATUS sme_set_neighbor_scan_period(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -6991,7 +6991,7 @@ uint16_t sme_get_neighbor_scan_period(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return 0;
@@ -7040,7 +7040,7 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 	uint8_t i = 0, j = 0;
 	tCsrChannelInfo *chan_info;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -7116,7 +7116,7 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -9173,7 +9173,7 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle, uint8_t sessionId,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (sessionId >= CSR_ROAM_SESSION_MAX) {
+	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid sme session id: %d"), sessionId);
 		return QDF_STATUS_E_INVAL;
@@ -10825,7 +10825,7 @@ bool sme_is_any_session_in_middle_of_roaming(mac_handle_t mac_handle)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t session_id;
 
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id) &&
 		    csr_neighbor_middle_of_roaming(mac_ctx, session_id))
 			return true;
@@ -10988,7 +10988,7 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 		/* get the HT capability info*/
 		ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
 
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			if (CSR_IS_SESSION_VALID(mac_ctx, i)) {
 				csr_session = &mac_ctx->roam.roamSession[i];
 				csr_session->htConfig.ht_tx_stbc =
