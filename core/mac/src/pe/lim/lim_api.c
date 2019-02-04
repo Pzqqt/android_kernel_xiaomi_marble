@@ -1645,7 +1645,7 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 				     struct pe_session *pe_session)
 {
 	uint8_t len;
-	tSirSmeApNewCaps apNewCaps;
+	struct ap_new_caps apNewCaps;
 	uint8_t newChannel;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool security_caps_matched = true;
@@ -1772,7 +1772,7 @@ QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    struct pe_session *pe_session)
 {
 
-	tSirSmeApNewCaps apNewCaps;
+	struct ap_new_caps apNewCaps;
 	uint32_t nShortSlot;
 	uint32_t phyMode;
 

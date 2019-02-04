@@ -1307,7 +1307,7 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 
 	switch (status_change_code) {
 	case eSIR_SME_AP_CAPS_CHANGED:
-		max_info_len = sizeof(tSirSmeApNewCaps);
+		max_info_len = sizeof(struct ap_new_caps);
 		break;
 	case eSIR_SME_JOINED_NEW_BSS:
 		max_info_len = sizeof(struct new_bss_info);

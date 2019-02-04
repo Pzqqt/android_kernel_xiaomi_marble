@@ -11167,7 +11167,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 	struct csr_roam_info *roam_info_ptr = NULL;
 	tSirSmeWmStatusChangeNtf *pStatusChangeMsg;
 	struct csr_roam_info roam_info;
-	tSirSmeApNewCaps *pApNewCaps;
+	struct ap_new_caps *pApNewCaps;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
 	tSirMacAddr Broadcastaddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	struct new_bss_info *pNewBss;

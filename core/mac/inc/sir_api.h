@@ -1161,13 +1161,13 @@ struct new_bss_info {
 	tSirMacSSid ssId;
 };
 
-typedef struct sSirSmeApNewCaps {
+struct ap_new_caps {
 	uint16_t capabilityInfo;
 	struct qdf_mac_addr bssId;
 	uint8_t channelId;
 	uint8_t reserved[3];
 	tSirMacSSid ssId;
-} tSirSmeApNewCaps, *tpSirSmeApNewCaps;
+};
 
 /**
  * Table below indicates what information is passed for each of
@@ -1214,7 +1214,7 @@ typedef struct sSirSmeWmStatusChangeNtf {
 		/* none for eSIR_SME_IBSS_INACTIVE */
 		/* none for eSIR_SME_RADAR_DETECTED */
 		/* eSIR_SME_AP_CAPS_CHANGED */
-		tSirSmeApNewCaps apNewCaps;
+		struct ap_new_caps apNewCaps;
 	} statusChangeInfo;
 } tSirSmeWmStatusChangeNtf, *tpSirSmeWmStatusChangeNtf;
 
