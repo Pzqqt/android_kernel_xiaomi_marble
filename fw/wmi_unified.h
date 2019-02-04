@@ -6844,33 +6844,9 @@ typedef struct {
      */
     A_UINT32 req_interval;
 /*
- * This TLV is followed by another TLV of array of struct
- *   size of(struct wmi_wlm_link_stats);
+ * This TLV is followed by an A_UINT32 array TLV carrying an opaque payload.
  */
 } wmi_wlm_stats_event_fixed_param;
-
-/** wlan latency manager stats report */
-typedef struct {
-    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_wlm_link_stats */
-    /** average beacon rssi in dbm */
-    A_INT32 bcn_rssi;
-    /** scan period, in units of percentage of req_interval */
-    A_UINT32 scan_period;
-    /** power on period, in units of percentage of req_interval */
-    A_UINT32 pwr_on_period;
-    /** congestion level, in units of percentage of req_interval */
-    A_UINT32 congestion_level;
-    /** total phy_err count within req_interval */
-    A_UINT32 phy_err;
-    /** total mpdu_err count within req_interval */
-    A_UINT32 mpdu_err;
-    /** last TX rate in Mbps to bss peer */
-    A_UINT32 last_tx_rate;
-    /** num_ac - how many elements of the ac_stats array contain valid data */
-    A_UINT32 num_ac;
-    /** wmm ac stats */
-    wmi_wmm_ac_stats ac_stats[WLAN_MAX_AC];
-} wmi_wlm_link_stats;
 
 /** Suspend option */
 enum {
