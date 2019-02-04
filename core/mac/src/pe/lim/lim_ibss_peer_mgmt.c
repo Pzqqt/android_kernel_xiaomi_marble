@@ -1286,7 +1286,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 					  struct pe_session *pe_session)
 {
 	uint8_t infoLen;
-	tSirSmeNewBssInfo newBssInfo;
+	struct new_bss_info newBssInfo;
 
 	tpAddBssParams pAddBss = (tpAddBssParams) msg;
 

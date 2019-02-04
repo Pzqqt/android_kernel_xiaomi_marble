@@ -1154,12 +1154,12 @@ typedef enum eSirSmeStatusChangeCode {
 	eSIR_SME_AP_CAPS_CHANGED,
 } tSirSmeStatusChangeCode;
 
-typedef struct sSirSmeNewBssInfo {
+struct new_bss_info {
 	struct qdf_mac_addr bssId;
 	uint8_t channelNumber;
 	uint8_t reserved;
 	tSirMacSSid ssId;
-} tSirSmeNewBssInfo, *tpSirSmeNewBssInfo;
+};
 
 typedef struct sSirSmeApNewCaps {
 	uint16_t capabilityInfo;
@@ -1208,7 +1208,7 @@ typedef struct sSirSmeWmStatusChangeNtf {
 		/* eSIR_SME_CHANNEL_SWITCH */
 		uint8_t newChannelId;
 		/* eSIR_SME_JOINED_NEW_BSS */
-		tSirSmeNewBssInfo newBssInfo;
+		struct new_bss_info newBssInfo;
 		/* none for eSIR_SME_LEAVING_BSS */
 		/* none for eSIR_SME_IBSS_ACTIVE */
 		/* none for eSIR_SME_IBSS_INACTIVE */

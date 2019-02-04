@@ -394,7 +394,7 @@ static QDF_STATUS csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionI
 				      bool *pfSameIbss);
 static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *mac,
 							   uint32_t sessionId,
-							   tSirSmeNewBssInfo *
+							   struct new_bss_info *
 							   pNewBss);
 static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
 						  uint8_t primaryChn,
@@ -11132,7 +11132,7 @@ csr_roam_chk_lnk_pbs_probe_req_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static void
 csr_roam_diag_joined_new_bss(struct mac_context *mac_ctx,
-				     tSirSmeNewBssInfo *pNewBss)
+				     struct new_bss_info *pNewBss)
 {
 	host_log_ibss_pkt_type *pIbssLog;
 	uint32_t bi;
@@ -11170,7 +11170,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 	tSirSmeApNewCaps *pApNewCaps;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
 	tSirMacAddr Broadcastaddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	tSirSmeNewBssInfo *pNewBss;
+	struct new_bss_info *pNewBss;
 	eRoamCmdStatus roamStatus = eCSR_ROAM_FAILED;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));
@@ -13559,7 +13559,7 @@ static QDF_STATUS csr_roam_start_ibss(struct mac_context *mac, uint32_t sessionI
 
 static void csr_roam_update_connected_profile_from_new_bss(struct mac_context *mac,
 							   uint32_t sessionId,
-						tSirSmeNewBssInfo *pNewBss)
+						struct new_bss_info *pNewBss)
 {
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
