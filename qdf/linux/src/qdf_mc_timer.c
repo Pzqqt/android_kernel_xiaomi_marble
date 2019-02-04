@@ -35,12 +35,7 @@
 #define LINUX_INVALID_TIMER_COOKIE 0xfeedface
 #define TMR_INVALID_ID (0)
 
-/* qdf timer multiplier */
-#ifdef QCA_WIFI_NAPIER_EMULATION
-static uint32_t g_qdf_timer_multiplier = 100;
-#else
 static uint32_t g_qdf_timer_multiplier = 1;
-#endif
 
 inline void qdf_timer_set_multiplier(uint32_t multiplier)
 {

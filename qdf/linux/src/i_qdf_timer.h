@@ -28,10 +28,14 @@
 #include <linux/delay.h>
 #include <linux/timer.h>
 #include <linux/jiffies.h>
+#include "qdf_mc_timer.h"
 #include <qdf_types.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
 #include <linux/sched/task_stack.h>
 #endif
+
+#define qdf_msecs_to_jiffies(msec) \
+	(qdf_timer_get_multiplier() * msecs_to_jiffies(msec))
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 struct __qdf_timer_t {
@@ -77,13 +81,13 @@ static inline void __qdf_timer_start(struct __qdf_timer_t *timer, uint32_t msec)
 {
 	struct timer_list *os_timer = &timer->os_timer;
 
-	os_timer->expires = jiffies + msecs_to_jiffies(msec);
+	os_timer->expires = jiffies + qdf_msecs_to_jiffies(msec);
 	add_timer(os_timer);
 }
 
 static inline void __qdf_timer_mod(struct __qdf_timer_t *timer, uint32_t msec)
 {
-	mod_timer(&timer->os_timer, jiffies + msecs_to_jiffies(msec));
+	mod_timer(&timer->os_timer, jiffies + qdf_msecs_to_jiffies(msec));
 }
 
 static inline bool __qdf_timer_stop(struct __qdf_timer_t *timer)
@@ -140,13 +144,13 @@ static inline QDF_STATUS __qdf_timer_init(__qdf_timer_t *os_timer,
 
 static inline void __qdf_timer_start(__qdf_timer_t *timer, uint32_t msec)
 {
-	timer->expires = jiffies + msecs_to_jiffies(msec);
+	timer->expires = jiffies + qdf_msecs_to_jiffies(msec);
 	add_timer(timer);
 }
 
 static inline void __qdf_timer_mod(__qdf_timer_t *timer, uint32_t msec)
 {
-	mod_timer(timer, jiffies + msecs_to_jiffies(msec));
+	mod_timer(timer, jiffies + qdf_msecs_to_jiffies(msec));
 }
 
 static inline bool __qdf_timer_stop(__qdf_timer_t *timer)
