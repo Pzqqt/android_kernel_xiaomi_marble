@@ -669,7 +669,7 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
 	struct osif_scan_pdev *osif_scan;
 
 	scan_req = qdf_mem_malloc(sizeof(*scan_req));
-	if (NULL == scan_req) {
+	if (!scan_req) {
 		cfg80211_alert("malloc failed for Scan req");
 		return -ENOMEM;
 	}
@@ -683,11 +683,15 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
 	scan_req->dev = req->wdev->netdev;
 
 	qdf_mutex_acquire(&osif_scan->scan_req_q_lock);
-	status = qdf_list_insert_back(&osif_scan->scan_req_q,
-					&scan_req->node);
+	if (qdf_list_size(&osif_scan->scan_req_q) < WLAN_MAX_SCAN_COUNT)
+		status = qdf_list_insert_back(&osif_scan->scan_req_q,
+					      &scan_req->node);
+	else
+		status = QDF_STATUS_E_RESOURCES;
 	qdf_mutex_release(&osif_scan->scan_req_q_lock);
-	if (QDF_STATUS_SUCCESS != status) {
-		cfg80211_err("Failed to enqueue Scan Req");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_debug_rl("Failed to enqueue Scan Req as max scan %d already queued",
+			          qdf_list_size(&osif_scan->scan_req_q));
 		qdf_mem_free(scan_req);
 		return -EINVAL;
 	}
@@ -1342,6 +1346,14 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_id = scan_id;
 	req->scan_req.scan_req_id = req_id;
 
+	/* Enqueue the scan request */
+	ret = wlan_scan_request_enqueue(pdev, request, params->source,
+					req->scan_req.scan_id);
+	if (ret) {
+		qdf_mem_free(req);
+		return ret;
+	}
+
 	/* Update scan policy type flags according to cfg scan request */
 	wlan_cfg80211_update_scan_policy_type_flags(request,
 					     &req->scan_req);
@@ -1429,7 +1441,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 #endif
 		if (!chl) {
 			ret = -ENOMEM;
-			goto end;
+			goto err;
 		}
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
@@ -1451,7 +1463,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 					qdf_mem_free(chl);
 					chl = NULL;
 					ret = -EINVAL;
-					goto end;
+					goto err;
 				}
 				if (!ok)
 					continue;
@@ -1477,9 +1489,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	}
 	if (!num_chan) {
 		cfg80211_err("Received zero non-dsrc channels");
-		qdf_mem_free(req);
 		ret = -EINVAL;
-		goto end;
+		goto err;
 	}
 	req->scan_req.chan_list.num_chan = num_chan;
 
@@ -1491,8 +1502,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		if (!req->scan_req.extraie.ptr) {
 			cfg80211_err("Failed to allocate memory");
 			ret = -ENOMEM;
-			qdf_mem_free(req);
-			goto end;
+			goto err;
 		}
 		req->scan_req.extraie.len = request->ie_len;
 		qdf_mem_copy(req->scan_req.extraie.ptr, request->ie,
@@ -1503,8 +1513,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		if (!req->scan_req.extraie.ptr) {
 			cfg80211_err("Failed to allocate memory");
 			ret = -ENOMEM;
-			qdf_mem_free(req);
-			goto end;
+			goto err;
 		}
 		req->scan_req.extraie.len = params->default_ie.len;
 		qdf_mem_copy(req->scan_req.extraie.ptr, params->default_ie.ptr,
@@ -1522,10 +1531,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
 		ucfg_scan_flush_results(pdev, NULL);
-
-	/* Enqueue the scan request */
-	wlan_scan_request_enqueue(pdev, request, params->source,
-				  req->scan_req.scan_id);
 
 	/*
 	 * Acquire wakelock to handle the case where APP's send scan to connect.
@@ -1554,9 +1559,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 				&osif_priv->osif_scan->scan_wake_lock);
 		}
 	}
-	ret = qdf_status_to_os_return(qdf_status);
 
-end:
+	return qdf_status_to_os_return(qdf_status);
+
+err:
+	qdf_mem_free(req);
+	wlan_scan_request_dequeue(pdev, scan_id, &request,
+				  &params->source, &netdev);
 	return ret;
 }
 
