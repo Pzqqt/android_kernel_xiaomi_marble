@@ -658,6 +658,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_SET_THERMAL_THROTTLE_CFG    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 409)
 #define SIR_HAL_SET_THERMAL_MGMT            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 410)
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
+#define SIR_HAL_SEND_PEER_UNMAP_CONF        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 411)
+
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* LIM message types */

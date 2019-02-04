@@ -501,12 +501,18 @@ ol_txrx_peer_unmap_conf_handler(ol_txrx_pdev_handle pdev,
 				DEBUG_INVALID_VDEV_ID,
 				1, &peer_id);
 
-		if (status != QDF_STATUS_SUCCESS)
+		if (status == QDF_STATUS_SUCCESS ||
+		    status == QDF_STATUS_E_BUSY) {
+			qdf_atomic_init(
+			&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt);
+		} else {
+			qdf_atomic_set(
+			&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt,
+			OL_TXRX_INVALID_PEER_UNMAP_COUNT);
 			ol_txrx_err("unable to send unmap conf cmd [%d]",
 				    peer_id);
+		}
 
-		qdf_atomic_init(
-			&pdev->peer_id_to_obj_map[peer_id].peer_id_unmap_cnt);
 	}
 }
 

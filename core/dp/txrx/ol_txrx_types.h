@@ -529,6 +529,7 @@ struct ol_tx_flow_pool_t {
 
 #endif
 
+#define OL_TXRX_INVALID_PEER_UNMAP_COUNT 0xF
 /*
  * struct ol_txrx_peer_id_map - Map of firmware peer_ids to peers on host
  * @peer: Pointer to peer object

@@ -8302,6 +8302,12 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_ADD_STA_REQ:
 		wma_add_sta(wma_handle, (tpAddStaParams) msg->bodyptr);
 		break;
+	case WMA_SEND_PEER_UNMAP_CONF:
+		wma_peer_unmap_conf_send(
+			wma_handle,
+			(struct send_peer_unmap_conf_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_SET_BSSKEY_REQ:
 		wma_set_bsskey(wma_handle, (tpSetBssKeyParams) msg->bodyptr);
 		break;

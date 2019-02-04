@@ -605,6 +605,9 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			   uint8_t vdev_id, void *peer,
 			   bool roam_synch_in_progress);
 
+QDF_STATUS wma_peer_unmap_conf_send(tp_wma_handle wma,
+				    struct send_peer_unmap_conf_params *msg);
+
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  struct cdp_vdev *vdev,
 			  uint8_t peer_addr[IEEE80211_ADDR_LEN],

@@ -994,6 +994,18 @@ struct del_sta_self_rsp_params {
 };
 
 /**
+ * struct send_peer_unmap_conf_params - Send Peer Unmap Conf param
+ * @vdev_id: vdev ID
+ * @peer_id_cnt: peer_id count
+ * @peer_id_list: list of peer IDs
+ */
+struct send_peer_unmap_conf_params {
+	uint8_t vdev_id;
+	uint32_t peer_id_cnt;
+	uint16_t *peer_id_list;
+};
+
+/**
  * struct tHalHiddenSsidVdevRestart - hidden ssid vdev restart params
  * @ssidHidden: is hidden ssid or not
  * @sessionId: session id
