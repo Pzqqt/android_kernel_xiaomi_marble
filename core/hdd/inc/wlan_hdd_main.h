@@ -1130,10 +1130,7 @@ struct hdd_adapter {
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	qdf_spinlock_t vdev_lock;
-	union {
 	uint8_t vdev_id;
-	uint8_t session_id;
-	};
 
 	void *txrx_vdev;
 
