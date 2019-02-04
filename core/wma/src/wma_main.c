@@ -7585,7 +7585,7 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 		return;
 	}
 	if (!wma_is_vdev_valid(req_buf->vdev_id)) {
-		WMA_LOGE("vdev id not active or not valid");
+		WMA_LOGE("vdev id:%d is not active", req_buf->vdev_id);
 		return;
 	}
 
@@ -7617,7 +7617,7 @@ static void wma_get_arp_req_stats(WMA_HANDLE handle,
 		return;
 	}
 	if (!wma_is_vdev_valid(req_buf->vdev_id)) {
-		WMA_LOGE("vdev id not active or not valid");
+		WMA_LOGE("vdev id:%d is not active", req_buf->vdev_id);
 		return;
 	}
 

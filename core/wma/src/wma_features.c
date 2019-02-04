@@ -3036,11 +3036,16 @@ void wma_del_ts_req(tp_wma_handle wma, struct del_ts_params *msg)
 }
 
 void wma_aggr_qos_req(tp_wma_handle wma,
-		      struct aggr_add_ts_param *pAggrQosRspMsg)
+		      struct aggr_add_ts_param *aggr_qos_rsp_msg)
 {
-	wmi_unified_aggr_qos_cmd(wma->wmi_handle, pAggrQosRspMsg);
+	if (!wma_is_vdev_valid(aggr_qos_rsp_msg->vdev_id)) {
+		WMA_LOGE("%s: vdev id:%d is not active ", __func__,
+			 aggr_qos_rsp_msg->vdev_id);
+		return;
+	}
+	wmi_unified_aggr_qos_cmd(wma->wmi_handle, aggr_qos_rsp_msg);
 	/* send response to upper layers from here only. */
-	wma_send_msg_high_priority(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
+	wma_send_msg_high_priority(wma, WMA_AGGR_QOS_RSP, aggr_qos_rsp_msg, 0);
 }
 
 #ifdef FEATURE_WLAN_ESE

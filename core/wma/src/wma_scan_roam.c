@@ -4829,6 +4829,12 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!wma_is_vdev_valid(set_oui->vdev_id)) {
+		WMA_LOGE("%s: vdev_id: %d is not active", __func__,
+			 set_oui->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	return wmi_unified_scan_probe_setoui_cmd(wma->wmi_handle, set_oui);
 }
 

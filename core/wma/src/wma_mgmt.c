@@ -2599,6 +2599,10 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	vdev_id = edca_params->bssIdx;
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: vdev id:%d is not active ", __func__, vdev_id);
+		goto fail;
+	}
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
 		switch (ac) {
@@ -2706,6 +2710,11 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
 	uint16_t p2p_ie_len = 0;
 	uint64_t adjusted_tsf_le;
 	struct ieee80211_frame *wh;
+
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: vdev id:%d is not active ", __func__, vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	WMA_LOGD("Send beacon template for vdev %d", vdev_id);
 
