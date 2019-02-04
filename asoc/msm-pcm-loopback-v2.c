@@ -809,6 +809,11 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	if (chmixer_pspd->enable) {
 		if (session_type == SESSION_TYPE_RX &&
 			!chmixer_pspd->override_in_ch_map) {
+			if (chmixer_pspd->input_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
+				pr_err("%s: Invalid channel count %d\n",
+					__func__, chmixer_pspd->input_channel);
+				return -EINVAL;
+			}
 			q6asm_map_channels(asm_ch_map,
 				chmixer_pspd->input_channel, false);
 			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
@@ -817,6 +822,11 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 			reset_override_in_ch_map = true;
 		} else if (session_type == SESSION_TYPE_TX &&
 			!chmixer_pspd->override_out_ch_map) {
+			if (chmixer_pspd->output_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
+				pr_err("%s: Invalid channel count %d\n",
+					__func__, chmixer_pspd->output_channel);
+				return -EINVAL;
+			}
 			q6asm_map_channels(asm_ch_map,
 				chmixer_pspd->output_channel, false);
 			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
