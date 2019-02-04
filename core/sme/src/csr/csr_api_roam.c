@@ -10824,12 +10824,12 @@ csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	struct csr_roam_session *session;
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
-	tSirSmeDeauthInd *pDeauthInd;
+	struct deauth_ind *pDeauthInd;
 	struct csr_roam_info roam_info;
 
 	qdf_mem_zero(&roam_info, sizeof(roam_info));
 	sme_debug("DEAUTHENTICATION Indication from MAC");
-	pDeauthInd = (tpSirSmeDeauthInd) msg_ptr;
+	pDeauthInd = (struct deauth_ind *)msg_ptr;
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 						   &pDeauthInd->bssid,
 						   &sessionId);
@@ -12091,7 +12091,7 @@ QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 			      uint32_t type, tSirSmeRsp *pSirMsg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeDeauthInd *pDeauthIndMsg = NULL;
+	struct deauth_ind *pDeauthIndMsg = NULL;
 	struct disassoc_ind *pDisassocIndMsg = NULL;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_LOSTLINK;
 	struct csr_roam_info roamInfo;
@@ -12113,7 +12113,7 @@ QDF_STATUS csr_roam_lost_link(struct mac_context *mac, uint32_t sessionId,
 				 &pDisassocIndMsg->peer_macaddr);
 	} else if (eWNI_SME_DEAUTH_IND == type) {
 		result = eCSR_ROAM_RESULT_DEAUTH_IND;
-		pDeauthIndMsg = (tSirSmeDeauthInd *) pSirMsg;
+		pDeauthIndMsg = (struct deauth_ind *)pSirMsg;
 		pSession->roamingStatusCode = pDeauthIndMsg->statusCode;
 		pSession->joinFailStatusCode.reasonCode =
 			pDeauthIndMsg->reasonCode;
@@ -15445,7 +15445,7 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(struct mac_context *mac,
 }
 
 QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
-				      tpSirSmeDeauthInd pDeauthInd)
+				      struct deauth_ind *pDeauthInd)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct deauth_cnf *pMsg;

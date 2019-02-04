@@ -318,7 +318,7 @@ struct setkey_cmd {
 struct wmstatus_changecmd {
 	enum csr_roam_wmstatus_changetypes Type;
 	union {
-		tSirSmeDeauthInd DeauthIndMsg;
+		struct deauth_ind DeauthIndMsg;
 		struct disassoc_ind DisassocIndMsg;
 	} u;
 

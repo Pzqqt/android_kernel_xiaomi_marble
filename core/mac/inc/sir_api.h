@@ -1306,7 +1306,7 @@ struct deauth_rsp {
 };
 
 /* / Definition for Deauthetication indication from peer */
-typedef struct sSirSmeDeauthInd {
+struct deauth_ind {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP */
@@ -1318,7 +1318,7 @@ typedef struct sSirSmeDeauthInd {
 	uint16_t staId;
 	uint32_t reasonCode;
 	int8_t rssi;
-} tSirSmeDeauthInd, *tpSirSmeDeauthInd;
+};
 
 /* / Definition for Deauthetication confirm */
 struct deauth_cnf {

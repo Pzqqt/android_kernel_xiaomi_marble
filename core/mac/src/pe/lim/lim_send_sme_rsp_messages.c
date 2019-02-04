@@ -965,14 +965,14 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 			struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
-	tSirSmeDeauthInd *pSirSmeDeauthInd;
+	struct deauth_ind *pSirSmeDeauthInd;
 
-	pSirSmeDeauthInd = qdf_mem_malloc(sizeof(tSirSmeDeauthInd));
+	pSirSmeDeauthInd = qdf_mem_malloc(sizeof(*pSirSmeDeauthInd));
 	if (!pSirSmeDeauthInd)
 		return;
 
 	pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
-	pSirSmeDeauthInd->length = sizeof(tSirSmeDeauthInd);
+	pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 
 	pSirSmeDeauthInd->sessionId = pe_session->smeSessionId;
 	pSirSmeDeauthInd->transactionId = pe_session->transactionId;
@@ -980,7 +980,7 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 		pSirSmeDeauthInd->statusCode =
 			(tSirResultCodes) sta->mlmStaContext.cleanupTrigger;
 	} else {
-		/* Need to indicatet he reascon code over the air */
+		/* Need to indicate the reason code over the air */
 		pSirSmeDeauthInd->statusCode =
 			(tSirResultCodes) sta->mlmStaContext.disassocReason;
 	}
@@ -1176,7 +1176,7 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 {
 	uint8_t *pBuf;
 	struct deauth_rsp *pSirSmeDeauthRsp;
-	tSirSmeDeauthInd *pSirSmeDeauthInd;
+	struct deauth_ind *pSirSmeDeauthInd;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 	uint32_t *pMsg = NULL;
@@ -1228,13 +1228,14 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		 * frame reception from peer entity or due to
 		 * loss of link with peer entity.
 		 */
-		pSirSmeDeauthInd = qdf_mem_malloc(sizeof(tSirSmeDeauthInd));
+		pSirSmeDeauthInd = qdf_mem_malloc(sizeof(*pSirSmeDeauthInd));
 		if (!pSirSmeDeauthInd)
 			return;
-		pe_debug("send eWNI_SME_DEAUTH_IND with retCode: %d for " MAC_ADDRESS_STR,
-			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
+		pe_debug("send eWNI_SME_DEAUTH_IND with retCode: %d for "
+			 MAC_ADDRESS_STR,
+			 reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
-		pSirSmeDeauthInd->length = sizeof(tSirSmeDeauthInd);
+		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
 
 		/* sessionId */
