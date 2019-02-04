@@ -1126,6 +1126,12 @@ static __iw_softap_setparam(struct net_device *dev,
 				(int)WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
 				set_value, PDEV_CMD);
 		break;
+	case QCSAP_SET_BTCOEX_MODE:
+		ret =  wlan_hdd_set_btcoex_mode(adapter, set_value);
+		break;
+	case QCSAP_SET_BTCOEX_LOW_RSSI_THRESHOLD:
+		ret =  wlan_hdd_set_btcoex_rssi_threshold(adapter, set_value);
+		break;
 	default:
 		hdd_err("Invalid setparam command %d value %d",
 		       sub_cmd, set_value);
@@ -3058,6 +3064,18 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		"ch_avoid"
 	}
 #endif
+	,
+	{
+		QCSAP_SET_BTCOEX_MODE,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_btc_mode"
+	}
+	,
+	{
+		QCSAP_SET_BTCOEX_LOW_RSSI_THRESHOLD,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "set_btc_rssi"
+	}
 	,
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 	{

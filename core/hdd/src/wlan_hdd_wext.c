@@ -1108,6 +1108,49 @@
 #define WE_MOTION_DET_BASE_LINE_START_STOP      98
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
+/*
+ * setBTCoexMode - Set BTCoexMode
+ *
+ * @INPUT: set_value.
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to set the BT COex operating mode
+ * Allowed values are 0 (TDD) , 1 (FDD) , 2 (Hybrid)
+ *
+ * @E.g: iwpriv wlan0 setBTCoexMode <value>
+ * iwpriv wlan0 setBTCoexMode 2
+ *
+ * Supported Feature: N/A
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
+#define WE_SET_BTCOEX_MODE	99
+
+/*
+ * setBTCRSSIThreshold - Set the Set WLAN low RSSI threshold for BTCOex
+ *
+ * @INPUT: set_value.
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to change  WLAN low RSSI threshold for BTC mode
+ * switching where the COex mode changes from TDD to Hybrid mode
+ * Allowed values are from -100 to 0
+ *
+ * @E.g: iwpriv wlan0 setBTCRSSIThreshold <value>
+ * iwpriv wlan0 setBTCRSSIThreshold -70
+ *
+ * Supported Feature: N/A
+ *
+ * Usage: Internal/External
+ *
+ * </ioctl>
+ */
+#define WE_SET_BTCOEX_RSSI_THRESHOLD	100
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
 #define WE_GET_11D_STATE     1
@@ -5512,6 +5555,47 @@ static int hdd_we_motion_det_base_line_start_stop(struct hdd_adapter *adapter,
 }
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
+int wlan_hdd_set_btcoex_mode(struct hdd_adapter *adapter, int value)
+{
+	struct coex_config_params coex_cfg_params = {0};
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_BTC_MODE;
+	coex_cfg_params.config_arg1 = value;
+	coex_cfg_params.vdev_id     = adapter->vdev_id;
+
+	if (value < cfg_min(CFG_BTC_MODE) || value > cfg_max(CFG_BTC_MODE)) {
+		hdd_err_rl("Invalid value %d", value);
+		return -EINVAL;
+	}
+
+	if (QDF_IS_STATUS_ERROR(sme_send_coex_config_cmd(&coex_cfg_params))) {
+		hdd_err_rl("Failed to send coex BTC mode");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int wlan_hdd_set_btcoex_rssi_threshold(struct hdd_adapter *adapter, int value)
+{
+	struct coex_config_params coex_cfg_params = {0};
+
+	coex_cfg_params.config_type =  WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD;
+	coex_cfg_params.config_arg1 = value;
+	coex_cfg_params.vdev_id     = adapter->vdev_id;
+
+	if (value < cfg_min(CFG_WLAN_LOW_RSSI_THRESHOLD) ||
+	    value > cfg_max(CFG_WLAN_LOW_RSSI_THRESHOLD)) {
+		hdd_err_rl("Invalid value %d", value);
+		return -EINVAL;
+	}
+
+	if (QDF_IS_STATUS_ERROR(sme_send_coex_config_cmd(&coex_cfg_params))) {
+		hdd_err_rl("Failed to send coex BTC RSSI Threshold");
+		return -EINVAL;
+	}
+	return 0;
+}
 typedef int (*setint_getnone_fn)(struct hdd_adapter *adapter, int value);
 static const setint_getnone_fn setint_getnone_cb[] = {
 	[WE_SET_11D_STATE] = hdd_we_set_11d_state,
@@ -5615,6 +5699,8 @@ static const setint_getnone_fn setint_getnone_cb[] = {
 	[WE_MOTION_DET_BASE_LINE_START_STOP] =
 				hdd_we_motion_det_base_line_start_stop,
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+	[WE_SET_BTCOEX_MODE] = wlan_hdd_set_btcoex_mode,
+	[WE_SET_BTCOEX_RSSI_THRESHOLD] = wlan_hdd_set_btcoex_rssi_threshold,
 };
 
 static setint_getnone_fn hdd_get_setint_getnone_cb(int param)
@@ -10102,6 +10188,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "set_thermal_cfg"},
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
+	{WE_SET_BTCOEX_MODE,
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	0, "set_btc_mode" },
+	{WE_SET_BTCOEX_RSSI_THRESHOLD,
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	0, "set_btc_rssi" },
 	{WE_TXRX_FWSTATS_RESET,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,

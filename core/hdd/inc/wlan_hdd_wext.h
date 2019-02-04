@@ -274,6 +274,28 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
  * Return: 0 on success, negative errno value on error
  */
 int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode);
+/**
+ * wlan_hdd_update_btcoex_mode() - set BTCoex Mode
+ * @adapter: adapter being modified
+ * @value: new BTCoex mode for the adapter
+ *
+ * This function is called to set a BTCoex Operation Mode
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int wlan_hdd_set_btcoex_mode(struct hdd_adapter *adapter, int value);
+
+/**
+ * wlan_hdd_set_btcoex_rssi_threshold() - set RSSI threshold
+ * @adapter: adapter being modified
+ * @value: new RSSI Threshold for the adapter
+ *
+ * This function is called to set a new RSSI threshold for
+ * change of Coex operating mode from TDD to FDD
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int wlan_hdd_set_btcoex_rssi_threshold(struct hdd_adapter *adapter, int value);
 
 struct iw_request_info;
 
