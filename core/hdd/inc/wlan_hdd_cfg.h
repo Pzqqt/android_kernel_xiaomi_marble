@@ -392,7 +392,6 @@ struct hdd_config {
 	uint32_t iface_change_wait_time;
 	uint8_t multicast_host_fw_msgs;
 	enum hdd_wext_control private_wext_control;
-	uint32_t timer_multiplier;
 	bool enablefwprint;
 	uint8_t enable_fw_log;
 

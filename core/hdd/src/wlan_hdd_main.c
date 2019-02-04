@@ -9439,7 +9439,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 						 CFG_MULTICAST_HOST_FW_MSGS);
 
 	config->private_wext_control = cfg_get(psoc, CFG_PRIVATE_WEXT_CONTROL);
-	config->timer_multiplier = cfg_get(psoc, CFG_TIMER_MULTIPLIER);
 	config->enablefwprint = cfg_get(psoc, CFG_ENABLE_FW_UART_PRINT);
 	config->enable_fw_log = cfg_get(psoc, CFG_ENABLE_FW_LOG);
 	config->operating_channel = cfg_get(psoc, CFG_OPERATING_CHANNEL);
@@ -9546,9 +9545,8 @@ struct hdd_context *hdd_context_create(struct device *dev)
 
 	hdd_cfg_params_init(hdd_ctx);
 
-	hdd_debug("setting timer multiplier: %u",
-		  hdd_ctx->config->timer_multiplier);
-	qdf_timer_set_multiplier(hdd_ctx->config->timer_multiplier);
+	qdf_timer_set_multiplier(cfg_get(hdd_ctx->psoc, CFG_TIMER_MULTIPLIER));
+	hdd_debug("set timer multiplier: %u", qdf_timer_get_multiplier());
 
 	cds_set_fatal_event(cfg_get(hdd_ctx->psoc,
 				    CFG_ENABLE_FATAL_EVENT_TRIGGER));
@@ -15100,7 +15098,7 @@ void hdd_start_driver_ops_timer(int drv_op)
 
 	hdd_drv_ops_task = current;
 	qdf_timer_start(&hdd_drv_ops_inactivity_timer,
-		HDD_OPS_INACTIVITY_TIMEOUT * qdf_timer_get_multiplier());
+			HDD_OPS_INACTIVITY_TIMEOUT);
 }
 
 /**
