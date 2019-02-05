@@ -15853,7 +15853,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 					uint32_t sessionId)
 {
-	tSirSmeStopBssReq *pMsg;
+	struct stop_bss_req *pMsg;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (!pSession) {
@@ -15861,12 +15861,12 @@ QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pMsg = qdf_mem_malloc(sizeof(tSirSmeStopBssReq));
+	pMsg = qdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg)
 		return QDF_STATUS_E_NOMEM;
 	pMsg->messageType = eWNI_SME_STOP_BSS_REQ;
 	pMsg->sessionId = sessionId;
-	pMsg->length = sizeof(tSirSmeStopBssReq);
+	pMsg->length = sizeof(*pMsg);
 	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
 	qdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);

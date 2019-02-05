@@ -2996,16 +2996,16 @@ static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 static void
 __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 {
-	tSirSmeStopBssReq stopBssReq;
+	struct stop_bss_req stop_bss_req;
 	tLimSmeStates prevState;
 	struct pe_session *pe_session;
 	uint8_t smesessionId;
 	uint8_t sessionId;
 	uint16_t smetransactionId;
 
-	qdf_mem_copy(&stopBssReq, pMsgBuf, sizeof(tSirSmeStopBssReq));
-	smesessionId = stopBssReq.sessionId;
-	smetransactionId = stopBssReq.transactionId;
+	qdf_mem_copy(&stop_bss_req, pMsgBuf, sizeof(stop_bss_req));
+	smesessionId = stop_bss_req.sessionId;
+	smetransactionId = stop_bss_req.transactionId;
 
 	if (!lim_is_sme_stop_bss_req_valid(pMsgBuf)) {
 		pe_warn("received invalid SME_STOP_BSS_REQ message");
@@ -3017,7 +3017,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	}
 
 	pe_session = pe_find_session_by_bssid(mac,
-				stopBssReq.bssid.bytes,
+				stop_bss_req.bssid.bytes,
 				&sessionId);
 	if (pe_session == NULL) {
 		pe_err("session does not exist for given BSSID");
@@ -3053,7 +3053,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 		lim_wpspbc_close(mac, pe_session);
 
 	pe_debug("RECEIVED STOP_BSS_REQ with reason code=%d",
-		stopBssReq.reasonCode);
+		stop_bss_req.reasonCode);
 
 	prevState = pe_session->limSmeState;
 	pe_session->limPrevSmeState = prevState;
@@ -3072,7 +3072,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	    !LIM_IS_NDI_ROLE(pe_session)) {
 		tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-		if (stopBssReq.reasonCode == eSIR_SME_MIC_COUNTER_MEASURES)
+		if (stop_bss_req.reasonCode == eSIR_SME_MIC_COUNTER_MEASURES)
 			/* Send disassoc all stations associated thru TKIP */
 			__lim_counter_measures(mac, pe_session);
 		else
