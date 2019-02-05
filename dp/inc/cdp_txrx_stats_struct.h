@@ -1567,6 +1567,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_BW_REDUCE = 400,
 	/* Enable/disable Spatial Reuse */
 	OL_ATH_PARAM_HE_SR = 401,
+	OL_ATH_PARAM_HE_UL_PPDU_DURATION = 402,
 };
 
 /* Enumeration of PDEV Configuration parameter */

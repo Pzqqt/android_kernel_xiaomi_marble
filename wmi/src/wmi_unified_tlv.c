@@ -11947,6 +11947,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 				WMI_PDEV_PARAM_SET_UL_BSR_TRIG_INTERVAL;
 	pdev_param[wmi_pdev_param_sub_channel_marking] =
 				WMI_PDEV_PARAM_SUB_CHANNEL_MARKING;
+	pdev_param[wmi_pdev_param_ul_ppdu_duration] =
+				WMI_PDEV_PARAM_SET_UL_PPDU_DURATION;
 }
 
 /**
