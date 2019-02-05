@@ -1463,11 +1463,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	QDF_STATUS qdf_status;
 	struct scheduler_msg new_msg = {0};
 
-#ifdef FEATURE_WLAN_TDLS
-	uint8_t session_id;
-	tSirTdlsInd *tdls_ind = NULL;
-	tpDphHashNode sta_ds = NULL;
-#endif
 	if (msg == NULL) {
 		pe_err("Message pointer is Null");
 		QDF_ASSERT(0);
@@ -1652,36 +1647,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-#ifdef FEATURE_WLAN_TDLS
-	case SIR_HAL_TDLS_IND:
-		tdls_ind = (tpSirTdlsInd) msg->bodyptr;
-		session_entry = pe_find_session_by_sta_id(mac_ctx,
-			tdls_ind->staIdx, &session_id);
-		if (session_entry == NULL) {
-			pe_debug("No session exist for given bssId");
-				qdf_mem_free(msg->bodyptr);
-				msg->bodyptr = NULL;
-				return;
-			}
-		sta_ds = dph_get_hash_entry(mac_ctx, tdls_ind->assocId,
-			&session_entry->dph.dphHashTable);
-			if (sta_ds == NULL) {
-				pe_debug("No sta_ds exist for given staId");
-				qdf_mem_free(msg->bodyptr);
-				msg->bodyptr = NULL;
-				return;
-			}
-
-			if (STA_ENTRY_TDLS_PEER == sta_ds->staType) {
-				pe_err("rcvd TDLS IND from FW with RC %d",
-					tdls_ind->reasonCode);
-				lim_send_sme_tdls_del_sta_ind(mac_ctx, sta_ds,
-					session_entry, tdls_ind->reasonCode);
-			}
-			qdf_mem_free(msg->bodyptr);
-			msg->bodyptr = NULL;
-		break;
-#endif
 	case SIR_HAL_P2P_NOA_ATTR_IND:
 		session_entry = &mac_ctx->lim.gpSession[0];
 		pe_debug("Received message Noa_ATTR %x",

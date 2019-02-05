@@ -378,8 +378,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 /* / PE <-> HAL TDLS messages */
 #define SIR_HAL_TDLS_LINK_ESTABLISH_REQ     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 143)
 #define SIR_HAL_TDLS_LINK_ESTABLISH_REQ_RSP (SIR_HAL_ITC_MSG_TYPES_BEGIN + 144)
-#define SIR_HAL_TDLS_IND                    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 145)
 #endif
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 145) is unused */
 
 #define SIR_HAL_STOP_SCAN_OFFLOAD_REQ      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 146)
 #define SIR_HAL_RX_SCAN_EVENT              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 147)
