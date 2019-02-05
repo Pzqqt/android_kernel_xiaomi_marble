@@ -81,6 +81,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
+	uint32_t go_num;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 			p2p_soc_obj->soc, roc_ctx->vdev_id,
@@ -98,6 +99,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	}
 
 	ucfg_scan_init_default_params(vdev, req);
+
 	roc_ctx->scan_id = ucfg_scan_get_scan_id(p2p_soc_obj->soc);
 	req->vdev = vdev;
 	req->scan_req.scan_id = roc_ctx->scan_id;
@@ -110,6 +112,25 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 	req->scan_req.num_bssid = 1;
 	qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
+
+	if (req->scan_req.dwell_time_passive < P2P_MAX_ROC_DURATION) {
+		go_num = policy_mgr_mode_specific_connection_count(
+				p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
+		p2p_debug("present go number:%d", go_num);
+		if (go_num)
+			req->scan_req.dwell_time_passive *=
+					P2P_ROC_DURATION_MULTI_GO_PRESENT;
+		else
+			req->scan_req.dwell_time_passive *=
+					P2P_ROC_DURATION_MULTI_GO_ABSENT;
+		/* this is to protect too huge value if some customers
+		 * give a higher value from supplicant
+		 */
+		if (req->scan_req.dwell_time_passive > P2P_MAX_ROC_DURATION)
+			req->scan_req.dwell_time_passive = P2P_MAX_ROC_DURATION;
+	}
+	p2p_debug("FW requested roc duration is:%d for chan: %d",
+		  req->scan_req.dwell_time_passive, roc_ctx->chan);
 
 	status = ucfg_scan_start(req);
 
@@ -347,7 +368,6 @@ static void p2p_roc_timeout(void *pdata)
 static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
 {
 	QDF_STATUS status;
-	uint32_t go_num;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
 	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, tx ctx:%pK, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
@@ -368,20 +388,6 @@ static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
 	}
 
 	roc_ctx->roc_state = ROC_STATE_REQUESTED;
-	if (roc_ctx->duration < P2P_MAX_ROC_DURATION) {
-		go_num = policy_mgr_mode_specific_connection_count(
-				p2p_soc_obj->soc, PM_P2P_GO_MODE, NULL);
-		p2p_debug("present go number:%d", go_num);
-		if (go_num)
-			roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_PRESENT;
-		else
-			roc_ctx->duration *= P2P_ROC_DURATION_MULTI_GO_ABSENT;
-		/* this is to protect too huge value if some customers
-		 * give a higher value from supplicant
-		 */
-		if (roc_ctx->duration > P2P_MAX_ROC_DURATION)
-			roc_ctx->duration = P2P_MAX_ROC_DURATION;
-	}
 	status = p2p_scan_start(roc_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		qdf_mc_timer_destroy(&roc_ctx->roc_timer);
