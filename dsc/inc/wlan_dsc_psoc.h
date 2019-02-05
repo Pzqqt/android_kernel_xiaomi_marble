@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 #define __WLAN_DSC_PSOC_H
 
 #include "qdf_status.h"
+#include "wlan_dsc_driver.h"
 
 /**
  * struct dsc_psoc - opaque dsc psoc context
