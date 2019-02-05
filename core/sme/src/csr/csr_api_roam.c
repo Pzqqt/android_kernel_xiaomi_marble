@@ -15646,7 +15646,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 					   uint8_t *pKey, uint8_t paeRole,
 					   uint8_t *pKeyRsc)
 {
-	tSirSmeSetContextReq *pMsg;
+	struct set_context_req *pMsg;
 	struct scheduler_msg msg = {0};
 	uint16_t msgLen;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -15661,7 +15661,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 		 * Below we'll add in the size for each key set. Since we only
 		 * support up to one key, we always allocate memory for 1 key.
 		 */
-		msgLen = sizeof(struct sSirSmeSetContextReq);
+		msgLen = sizeof(*pMsg);
 
 		pMsg = qdf_mem_malloc(msgLen);
 		if (NULL == pMsg)

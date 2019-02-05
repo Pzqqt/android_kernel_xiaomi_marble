@@ -97,7 +97,20 @@ bool lim_is_sme_deauth_req_valid(struct mac_context *mac,
 				 struct deauth_req *deauth_req,
 				 struct pe_session *pe_session);
 
-uint8_t lim_is_sme_set_context_req_valid(struct mac_context *, tpSirSmeSetContextReq);
+/**
+ * lim_is_sme_set_context_req_valid() - Validate set context req message
+ * @mac: Pointer to Global MAC structure
+ * @dset_context_req: Pointer to received SME_SET_CONTEXT_REQ message
+ *
+ * This function is called by lim_process_sme_req_messages() upon
+ * receiving SME_SET_CONTEXT_REQ message from application.
+ *
+ * Return: true  when received SME_SET_CONTEXT_REQ is formatted correctly
+ *         false otherwise
+ */
+bool lim_is_sme_set_context_req_valid(struct mac_context *,
+				      struct set_context_req *set_context_req);
+
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);
 
 /**

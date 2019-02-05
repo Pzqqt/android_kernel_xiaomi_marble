@@ -1380,7 +1380,7 @@ struct missed_beacon_ind {
 
 /* / Definition for Set Context request */
 /* / ---> MAC */
-typedef struct sSirSmeSetContextReq {
+struct set_context_req {
 	uint16_t messageType;   /* eWNI_SME_SET_CONTEXT_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
@@ -1388,7 +1388,7 @@ typedef struct sSirSmeSetContextReq {
 	struct qdf_mac_addr peer_macaddr;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	tSirKeyMaterial keyMaterial;
-} tSirSmeSetContextReq, *tpSirSmeSetContextReq;
+};
 
 /* / Definition for Set Context response */
 /* / MAC ---> */

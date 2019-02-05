@@ -2625,9 +2625,10 @@ send_deauth:
  */
 
 static void
-__lim_process_sme_set_context_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
+__lim_process_sme_set_context_req(struct mac_context *mac_ctx,
+				  uint32_t *msg_buf)
 {
-	tpSirSmeSetContextReq set_context_req;
+	struct set_context_req *set_context_req;
 	tLimMlmSetKeysReq *mlm_set_key_req;
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionID */
@@ -2639,11 +2640,11 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx, uint32_t *msg_buf
 		return;
 	}
 
-	set_context_req = qdf_mem_malloc(sizeof(struct sSirSmeSetContextReq));
+	set_context_req = qdf_mem_malloc(sizeof(*set_context_req));
 	if (!set_context_req)
 		return;
 	qdf_mem_copy(set_context_req, msg_buf,
-			sizeof(struct sSirSmeSetContextReq));
+			sizeof(*set_context_req));
 	sme_session_id = set_context_req->sessionId;
 	sme_transaction_id = set_context_req->transactionId;
 

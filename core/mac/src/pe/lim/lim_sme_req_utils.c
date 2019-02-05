@@ -541,75 +541,55 @@ bool lim_is_sme_deauth_req_valid(struct mac_context *mac,
 	return true;
 } /*** end lim_is_sme_deauth_req_valid() ***/
 
-/**
- * lim_is_sme_set_context_req_valid()
- *
- ***FUNCTION:
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_SET_CONTEXT_REQ message from application.
- *
- ***LOGIC:
- * Message validity checks are performed in this function
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  pMsg - Pointer to received SME_SET_CONTEXT_REQ message
- * @return true  when received SME_SET_CONTEXT_REQ is formatted correctly
- *         false otherwise
- */
-
-uint8_t
-lim_is_sme_set_context_req_valid(struct mac_context *mac,
-				 tpSirSmeSetContextReq pSetContextReq)
+bool lim_is_sme_set_context_req_valid(struct mac_context *mac,
+				      struct set_context_req *set_context_req)
 {
 	uint8_t i = 0;
 	uint8_t valid = true;
-	tpSirKeys pKey = pSetContextReq->keyMaterial.key;
+	tpSirKeys key = set_context_req->keyMaterial.key;
 
-	if ((pSetContextReq->keyMaterial.edType != eSIR_ED_WEP40) &&
-	    (pSetContextReq->keyMaterial.edType != eSIR_ED_WEP104) &&
-	    (pSetContextReq->keyMaterial.edType != eSIR_ED_NONE) &&
+	if ((set_context_req->keyMaterial.edType != eSIR_ED_WEP40) &&
+	    (set_context_req->keyMaterial.edType != eSIR_ED_WEP104) &&
+	    (set_context_req->keyMaterial.edType != eSIR_ED_NONE) &&
 #ifdef FEATURE_WLAN_WAPI
-	    (pSetContextReq->keyMaterial.edType != eSIR_ED_WPI) &&
+	    (set_context_req->keyMaterial.edType != eSIR_ED_WPI) &&
 #endif
-	    !pSetContextReq->keyMaterial.numKeys) {
+	    !set_context_req->keyMaterial.numKeys) {
 		/**
 		 * No keys present in case of TKIP or CCMP
 		 * Log error.
 		 */
 		pe_warn("No keys present in SME_SETCONTEXT_REQ for edType: %d",
-			pSetContextReq->keyMaterial.edType);
+			set_context_req->keyMaterial.edType);
 
 		valid = false;
 		goto end;
 	}
 
-	if (pSetContextReq->keyMaterial.numKeys &&
-	    (pSetContextReq->keyMaterial.edType == eSIR_ED_NONE)) {
+	if (set_context_req->keyMaterial.numKeys &&
+	    (set_context_req->keyMaterial.edType == eSIR_ED_NONE)) {
 		/**
 		 * Keys present in case of no ED policy
 		 * Log error.
 		 */
 		pe_warn("Keys present in SME_SETCONTEXT_REQ for edType: %d",
-			pSetContextReq->keyMaterial.edType);
+			set_context_req->keyMaterial.edType);
 
 		valid = false;
 		goto end;
 	}
 
-	if (pSetContextReq->keyMaterial.edType >= eSIR_ED_NOT_IMPLEMENTED) {
+	if (set_context_req->keyMaterial.edType >= eSIR_ED_NOT_IMPLEMENTED) {
 		/**
 		 * Invalid edType in the message
 		 * Log error.
 		 */
 		pe_warn("Invalid edType: %d in SME_SETCONTEXT_REQ",
-			pSetContextReq->keyMaterial.edType);
+			set_context_req->keyMaterial.edType);
 
 		valid = false;
 		goto end;
-	} else if (pSetContextReq->keyMaterial.edType > eSIR_ED_NONE) {
+	} else if (set_context_req->keyMaterial.edType > eSIR_ED_NONE) {
 		bool privacy;
 
 		privacy = mac->mlme_cfg->wep_params.is_privacy_enabled;
@@ -622,39 +602,39 @@ lim_is_sme_set_context_req_valid(struct mac_context *mac,
 			 * yet advertising WPA IE
 			 */
 			pe_debug("Privacy is not enabled, yet non-None EDtype: %d in SME_SETCONTEXT_REQ",
-				       pSetContextReq->keyMaterial.edType);
+				       set_context_req->keyMaterial.edType);
 		}
 	}
 
-	for (i = 0; i < pSetContextReq->keyMaterial.numKeys; i++) {
-		if (((pSetContextReq->keyMaterial.edType == eSIR_ED_WEP40) &&
-		     (pKey->keyLength != 5)) ||
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_WEP104) &&
-		     (pKey->keyLength != 13)) ||
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_TKIP) &&
-		     (pKey->keyLength != 32)) ||
+	for (i = 0; i < set_context_req->keyMaterial.numKeys; i++) {
+		if (((set_context_req->keyMaterial.edType == eSIR_ED_WEP40) &&
+		     (key->keyLength != 5)) ||
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_WEP104) &&
+		     (key->keyLength != 13)) ||
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_TKIP) &&
+		     (key->keyLength != 32)) ||
 #ifdef FEATURE_WLAN_WAPI
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_WPI) &&
-		     (pKey->keyLength != 32)) ||
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_WPI) &&
+		     (key->keyLength != 32)) ||
 #endif
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_GCMP) &&
-		     (pKey->keyLength != 16)) ||
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_GCMP_256) &&
-		     (pKey->keyLength != 32)) ||
-		    ((pSetContextReq->keyMaterial.edType == eSIR_ED_CCMP) &&
-		     (pKey->keyLength != 16))) {
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_GCMP) &&
+		     (key->keyLength != 16)) ||
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_GCMP_256) &&
+		     (key->keyLength != 32)) ||
+		    ((set_context_req->keyMaterial.edType == eSIR_ED_CCMP) &&
+		     (key->keyLength != 16))) {
 			/**
 			 * Invalid key length for a given ED type
 			 * Log error.
 			 */
 			pe_warn("Invalid keyLength: %d for edType: %d in SME_SETCONTEXT_REQ",
-				pKey->keyLength,
-				pSetContextReq->keyMaterial.edType);
+				key->keyLength,
+				set_context_req->keyMaterial.edType);
 
 			valid = false;
 			goto end;
 		}
-		pKey++;
+		key++;
 	}
 
 end:
