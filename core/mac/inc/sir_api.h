@@ -1519,11 +1519,6 @@ enum tx_rate_info {
 #endif
 /**********************PE Statistics end*************************/
 
-typedef struct sSirP2PNoaStart {
-	uint32_t status;
-	uint32_t bssIdx;
-} tSirP2PNoaStart, *tpSirP2PNoaStart;
-
 typedef struct sSirTdlsInd {
 	uint16_t status;
 	uint16_t assocId;
