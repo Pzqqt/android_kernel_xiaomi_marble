@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -90,8 +90,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	     (tgt_info->target_type == TARGET_TYPE_QCA6018)))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
-		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
-			  __func__, offset, memtype, count);
+		HIF_DBG("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
+			__func__, offset, memtype, count);
 		rv = pld_athdiag_read(scn->qdf_dev->dev,
 				      offset, memtype, count,
 				      (uint8_t *)read_buffer);
@@ -166,8 +166,8 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	      (tgt_info->target_type == TARGET_TYPE_QCA6018)))) {
 		memtype = ((uint32_t)(*pos) & 0xff000000) >> 24;
 		offset = (uint32_t)(*pos) & 0xffffff;
-		HIF_TRACE("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
-			  __func__, offset, memtype, count);
+		HIF_DBG("%s: offset 0x%x memtype 0x%x, datalen %zu\n",
+			__func__, offset, memtype, count);
 		rv = pld_athdiag_write(scn->qdf_dev->dev,
 				      offset, memtype, count,
 				      (uint8_t *)write_buffer);
