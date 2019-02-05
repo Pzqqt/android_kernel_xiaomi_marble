@@ -27,7 +27,7 @@
 
 #include "wlan_hdd_ext_scan.h"
 #include "wlan_hdd_regulatory.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include "cds_utils.h"
 #include "cds_sched.h"
 #include <qca_vendor.h>

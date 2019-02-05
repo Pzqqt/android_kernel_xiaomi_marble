@@ -19,5 +19,34 @@
 #ifndef ____OSIF_PSOC_SYNC_H
 #define ____OSIF_PSOC_SYNC_H
 
+#include "linux/device.h"
+#include "qdf_status.h"
+#include "wlan_dsc_vdev.h"
+
+/**
+ * osif_psoc_sync_init() - global initializer
+ *
+ * Return: None
+ */
+void osif_psoc_sync_init(void);
+
+/**
+ * osif_psoc_sync_deinit() - global de-initializer
+ *
+ * Return: None
+ */
+void osif_psoc_sync_deinit(void);
+
+/**
+ * osif_psoc_sync_dsc_vdev_create() - create a dsc_vdev and attach it to a
+ *	dsc_psoc keyed by @dev
+ * @dev: the device to key off of
+ * @out_dsc_vdev: output pointer parameter for the new dsc_vdev
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_psoc_sync_dsc_vdev_create(struct device *dev,
+					  struct dsc_vdev **out_dsc_vdev);
+
 #endif /* ____OSIF_PSOC_SYNC_H */
 

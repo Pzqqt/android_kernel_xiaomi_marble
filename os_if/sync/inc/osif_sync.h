@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,20 @@
 #include "osif_driver_sync.h"
 #include "osif_psoc_sync.h"
 #include "osif_vdev_sync.h"
+
+/**
+ * hdd_dsc_init() - global initializer for HDD DSC
+ *
+ * Return: None
+ */
+void hdd_dsc_init(void);
+
+/**
+ * hdd_dsc_deinit() - global deinitializer for HDD DSC
+ *
+ * Return: None
+ */
+void hdd_dsc_deinit(void);
 
 #endif /* __OSIF_SYNC_H */
 

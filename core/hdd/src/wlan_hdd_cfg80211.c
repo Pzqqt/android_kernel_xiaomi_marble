@@ -118,7 +118,7 @@
 #include <wlan_hdd_sar_limits.h>
 #include <wlan_hdd_ota_test.h>
 #include "wlan_policy_mgr_ucfg.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"

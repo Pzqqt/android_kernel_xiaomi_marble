@@ -19,5 +19,19 @@
 #ifndef ____OSIF_VDEV_SYNC_H
 #define ____OSIF_VDEV_SYNC_H
 
+/**
+ * osif_vdev_sync_init() - global initializer
+ *
+ * Return: None
+ */
+void osif_vdev_sync_init(void);
+
+/**
+ * osif_vdev_sync_deinit() - global de-initializer
+ *
+ * Return: None
+ */
+void osif_vdev_sync_deinit(void);
+
 #endif /* ____OSIF_VDEV_SYNC_H */
 

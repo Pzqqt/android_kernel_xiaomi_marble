@@ -24,7 +24,7 @@
  *
  */
 
-#include "wlan_hdd_dsc.h"
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_hostapd.h>
 #include <net/cfg80211.h>

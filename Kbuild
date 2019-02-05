@@ -53,7 +53,6 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_cfg80211.o \
 		$(HDD_SRC_DIR)/wlan_hdd_data_stall_detection.o \
 		$(HDD_SRC_DIR)/wlan_hdd_driver_ops.o \
-		$(HDD_SRC_DIR)/wlan_hdd_dsc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ext_scan.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ftm.o \
 		$(HDD_SRC_DIR)/wlan_hdd_hostapd.o \

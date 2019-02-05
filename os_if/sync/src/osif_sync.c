@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,5 +16,19 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "__osif_psoc_sync.h"
+#include "__osif_vdev_sync.h"
 #include "osif_sync.h"
+
+void hdd_dsc_init(void)
+{
+	osif_psoc_sync_init();
+	osif_vdev_sync_init();
+}
+
+void hdd_dsc_deinit(void)
+{
+	osif_vdev_sync_deinit();
+	osif_psoc_sync_deinit();
+}
 

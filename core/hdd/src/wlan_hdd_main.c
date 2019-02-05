@@ -40,7 +40,7 @@
 #include <dbglog_host.h>
 #include <wlan_logging_sock_svc.h>
 #include <wlan_roam_debug.h>
-#include "wlan_hdd_dsc.h"
+#include "osif_sync.h"
 #include <wlan_hdd_wowl.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_wext.h>

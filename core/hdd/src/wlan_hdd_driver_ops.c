@@ -26,7 +26,7 @@
 #include "hif.h"
 #include "htc.h"
 #include "epping_main.h"
-#include "wlan_hdd_dsc.h"
+#include "osif_sync.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
 #include "wlan_logging_sock_svc.h"

@@ -34,7 +34,7 @@
 #include "wlan_hdd_p2p.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_scan.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_power.h"
 #include "wma_api.h"

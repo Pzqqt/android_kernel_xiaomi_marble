@@ -34,7 +34,7 @@
 #include <wlan_osif_request_manager.h>
 #include <qdf_mem.h>
 #include <sir_api.h>
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 
 #define MAX_PSOC_ID_SIZE 10
 

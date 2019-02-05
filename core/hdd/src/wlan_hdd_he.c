@@ -25,7 +25,7 @@
 
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_he.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include "wma_he.h"
 #include "wlan_utility.h"
 #include "wlan_mlme_ucfg_api.h"

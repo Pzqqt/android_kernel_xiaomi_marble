@@ -30,7 +30,7 @@
 #include "sme_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_nan.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include <qca_vendor.h>
 #include "cfg_nan_api.h"
 #include "os_if_nan.h"

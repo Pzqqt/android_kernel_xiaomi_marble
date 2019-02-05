@@ -28,7 +28,7 @@
 #include <linux/etherdevice.h>
 #include "wlan_hdd_includes.h"
 #include "wlan_hdd_p2p.h"
-#include <wlan_hdd_dsc.h>
+#include "osif_sync.h"
 #include "wma_api.h"
 #include "wlan_hdd_assoc.h"
 #include "sme_nan_datapath.h"
