@@ -2299,7 +2299,7 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 			      uint32_t *data, struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = { 0 };
-	tSirSmeSwitchChannelInd *pSirSmeSwitchChInd;
+	struct switch_channel_ind *pSirSmeSwitchChInd;
 
 	pe_session->currentOperChannel = pe_session->currentReqChannel;
 
@@ -2311,12 +2311,12 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 	}
 
 	mmhMsg.type = eWNI_SME_SWITCH_CHL_IND;
-	pSirSmeSwitchChInd = qdf_mem_malloc(sizeof(tSirSmeSwitchChannelInd));
+	pSirSmeSwitchChInd = qdf_mem_malloc(sizeof(*pSirSmeSwitchChInd));
 	if (!pSirSmeSwitchChInd)
 		return;
 
 	pSirSmeSwitchChInd->messageType = eWNI_SME_SWITCH_CHL_IND;
-	pSirSmeSwitchChInd->length = sizeof(tSirSmeSwitchChannelInd);
+	pSirSmeSwitchChInd->length = sizeof(*pSirSmeSwitchChInd);
 	pSirSmeSwitchChInd->newChannelId =
 		pe_session->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = pe_session->smeSessionId;

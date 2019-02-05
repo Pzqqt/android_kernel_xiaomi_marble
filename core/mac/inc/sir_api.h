@@ -1351,7 +1351,7 @@ typedef struct sSirSmeStopBssRsp {
 
 /* / Definition for Channel Switch indication for station */
 /* / MAC ---> */
-typedef struct sSirSmeSwitchChannelInd {
+struct switch_channel_ind {
 	uint16_t messageType;   /* eWNI_SME_SWITCH_CHL_IND */
 	uint16_t length;
 	uint8_t sessionId;
@@ -1359,7 +1359,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	struct ch_params chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	QDF_STATUS status;
-} tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
+};
 
 /* / Definition for MIC failure indication */
 /* / MAC ---> */

@@ -10907,14 +10907,14 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	uint16_t ie_len;
 	QDF_STATUS status;
-	tpSirSmeSwitchChannelInd pSwitchChnInd;
+	struct switch_channel_ind *pSwitchChnInd;
 	struct csr_roam_info roamInfo;
 	tSirMacDsParamSetIE *ds_params_ie;
 	tDot11fIEHTInfo *ht_info_ie;
 
 	/* in case of STA, the SWITCH_CHANNEL originates from its AP */
 	sme_debug("eWNI_SME_SWITCH_CHL_IND from SME");
-	pSwitchChnInd = (tpSirSmeSwitchChannelInd) msg_ptr;
+	pSwitchChnInd = (struct switch_channel_ind *)msg_ptr;
 	/* Update with the new channel id. The channel id is hidden in the
 	 * statusCode.
 	 */
