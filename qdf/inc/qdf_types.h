@@ -38,6 +38,7 @@
 #ifdef TSOSEG_DEBUG
 #include <qdf_atomic.h>
 #endif
+#include "qdf_status.h"
 
 /* Preprocessor definitions and constants */
 #define QDF_MAX_SGLIST 4

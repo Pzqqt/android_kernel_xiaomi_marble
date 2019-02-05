@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,6 @@
 #include <linux/io.h>
 
 #include <qdf_types.h>
-#include <qdf_status.h>
 #include <asm/byteorder.h>
 
 #if LINUX_VERSION_CODE  <= KERNEL_VERSION(3, 3, 8)
@@ -61,12 +60,10 @@ typedef wait_queue_head_t __qdf_wait_queue_head_t;
 
 /* Generic compiler-dependent macros if defined by the OS */
 #define __qdf_wait_queue_interruptible(wait_queue, condition) \
-		wait_event_interruptible(wait_queue, condition)
+	wait_event_interruptible(wait_queue, condition)
 
-#define __qdf_wait_queue_timeout( \
-			wait_queue, condition, timeout) \
-		wait_event_timeout(wait_queue, condition,\
-			 timeout)
+#define __qdf_wait_queue_timeout(wait_queue, condition, timeout) \
+	wait_event_timeout(wait_queue, condition, timeout)
 
 
 #define __qdf_init_waitqueue_head(_q) init_waitqueue_head(_q)
@@ -75,126 +72,10 @@ typedef wait_queue_head_t __qdf_wait_queue_head_t;
 
 #define __qdf_wake_up(_q) wake_up(_q)
 
-
 #define __qdf_wake_up_completion(_q) wake_up_completion(_q)
 
 #define __qdf_unlikely(_expr)   unlikely(_expr)
 #define __qdf_likely(_expr)     likely(_expr)
-
-/**
- * __qdf_status_to_os_return() - translates qdf_status types to linux return types
- * @status: status to translate
- *
- * Translates error types that linux may want to handle specially.
- *
- * return: 0 or the linux error code that most closely matches the QDF_STATUS.
- * defaults to -1 (EPERM)
- */
-static inline int __qdf_status_to_os_return(QDF_STATUS status)
-{
-	switch (status) {
-	case QDF_STATUS_SUCCESS:
-		return 0;
-	case QDF_STATUS_E_RESOURCES:
-		return -EBUSY;
-	case QDF_STATUS_E_NOMEM:
-		return -ENOMEM;
-	case QDF_STATUS_E_AGAIN:
-		return -EAGAIN;
-	case QDF_STATUS_E_INVAL:
-		return -EINVAL;
-	case QDF_STATUS_E_FAULT:
-		return -EFAULT;
-	case QDF_STATUS_E_ALREADY:
-		return -EALREADY;
-	case QDF_STATUS_E_BADMSG:
-		return -EBADMSG;
-	case QDF_STATUS_E_BUSY:
-		return -EBUSY;
-	case QDF_STATUS_E_CANCELED:
-		return -ECANCELED;
-	case QDF_STATUS_E_ABORTED:
-		return -ECONNABORTED;
-	case QDF_STATUS_E_PERM:
-		return -EPERM;
-	case QDF_STATUS_E_EXISTS:
-		return -EEXIST;
-	case QDF_STATUS_E_NOENT:
-		return -ENOENT;
-	case QDF_STATUS_E_E2BIG:
-		return -E2BIG;
-	case QDF_STATUS_E_NOSPC:
-		return -ENOSPC;
-	case QDF_STATUS_E_ADDRNOTAVAIL:
-		return -EADDRNOTAVAIL;
-	case QDF_STATUS_E_ENXIO:
-		return -ENXIO;
-	case QDF_STATUS_E_NETDOWN:
-		return -ENETDOWN;
-	case QDF_STATUS_E_IO:
-		return -EIO;
-	case QDF_STATUS_E_NETRESET:
-		return -ENETRESET;
-	case QDF_STATUS_E_PENDING:
-		return -EINPROGRESS;
-	case QDF_STATUS_E_TIMEOUT:
-		return -ETIMEDOUT;
-	default:
-		return -EPERM;
-	}
-}
-
-static inline QDF_STATUS __qdf_status_from_os_return(int rc)
-{
-	switch (rc) {
-	case 0:
-		return QDF_STATUS_SUCCESS;
-	case -ENOMEM:
-		return QDF_STATUS_E_NOMEM;
-	case -EAGAIN:
-		return QDF_STATUS_E_AGAIN;
-	case -EINVAL:
-		return QDF_STATUS_E_INVAL;
-	case -EFAULT:
-		return QDF_STATUS_E_FAULT;
-	case -EALREADY:
-		return QDF_STATUS_E_ALREADY;
-	case -EBADMSG:
-		return QDF_STATUS_E_BADMSG;
-	case -EBUSY:
-		return QDF_STATUS_E_BUSY;
-	case -ECANCELED:
-		return QDF_STATUS_E_CANCELED;
-	case -ECONNABORTED:
-		return QDF_STATUS_E_ABORTED;
-	case -EPERM:
-		return QDF_STATUS_E_PERM;
-	case -EEXIST:
-		return QDF_STATUS_E_EXISTS;
-	case -ENOENT:
-		return QDF_STATUS_E_NOENT;
-	case -E2BIG:
-		return QDF_STATUS_E_E2BIG;
-	case -ENOSPC:
-		return QDF_STATUS_E_NOSPC;
-	case -EADDRNOTAVAIL:
-		return QDF_STATUS_E_ADDRNOTAVAIL;
-	case -ENXIO:
-		return QDF_STATUS_E_ENXIO;
-	case -ENETDOWN:
-		return QDF_STATUS_E_NETDOWN;
-	case -EIO:
-		return QDF_STATUS_E_IO;
-	case -ENETRESET:
-		return QDF_STATUS_E_NETRESET;
-	case -EINPROGRESS:
-		return QDF_STATUS_E_PENDING;
-	case -ETIMEDOUT:
-		return QDF_STATUS_E_TIMEOUT;
-	default:
-		return QDF_STATUS_E_PERM;
-	}
-}
 
 /**
  * __qdf_set_bit() - set bit in address

@@ -24,8 +24,6 @@
 #if !defined(__I_QDF_TYPES_H)
 #define __I_QDF_TYPES_H
 
-#include <qdf_status.h>
-
 #ifndef __KERNEL__
 #define __iomem
 #endif

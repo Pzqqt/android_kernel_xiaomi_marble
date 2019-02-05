@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +22,7 @@
  * Basic status codes/definitions used by QDF
  */
 
-#if !defined(__QDF_STATUS_H)
+#ifndef __QDF_STATUS_H
 #define __QDF_STATUS_H
 
 /**
@@ -139,4 +139,21 @@ typedef enum {
 #define QDF_IS_STATUS_SUCCESS(status) (QDF_STATUS_SUCCESS == (status))
 #define QDF_IS_STATUS_ERROR(status) (QDF_STATUS_SUCCESS != (status))
 
-#endif /* if !defined __QDF_STATUS_H */
+/**
+ * qdf_status_to_os_return() - map a QDF_STATUS into an OS specific return code
+ * @status: QDF_STATUS to map
+ *
+ * Return: an OS specific error code
+ */
+int qdf_status_to_os_return(QDF_STATUS status);
+
+/**
+ * qdf_status_from_os_return() - map an OS specific return code to a QDF_STATUS
+ * @rc: the input return code to map
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_status_from_os_return(int rc);
+
+#endif /* __QDF_STATUS_H */
+

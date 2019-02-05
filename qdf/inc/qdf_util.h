@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -121,28 +121,6 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 #define qdf_ewma_tx_lag_read(tx_lag) \
 	 __qdf_ewma_tx_lag_read(tx_lag)
-
-/**
- * qdf_status_to_os_return - returns the status to OS.
- * @status: enum QDF_STATUS
- *
- * returns: int status success/failure
- */
-static inline int qdf_status_to_os_return(QDF_STATUS status)
-{
-	return __qdf_status_to_os_return(status);
-}
-
-/**
- * qdf_status_from_os_return() - map OS specific return code to a QDF_STATUS
- * @rc: the input return code to map
- *
- * Return: QDF_STATUS
- */
-static inline QDF_STATUS qdf_status_from_os_return(int rc)
-{
-	return __qdf_status_from_os_return(rc);
-}
 
 /**
  * qdf_set_bit() - set bit in address
