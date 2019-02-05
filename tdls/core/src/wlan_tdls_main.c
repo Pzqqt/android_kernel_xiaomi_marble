@@ -39,6 +39,98 @@
  */
 static struct tdls_soc_priv_obj *tdls_soc_global;
 
+#ifdef WLAN_DEBUG
+/**
+ * tdls_get_cmd_type_str() - parse cmd to string
+ * @cmd_type: tdls cmd type
+ *
+ * This function parse tdls cmd to string.
+ *
+ * Return: command string
+ */
+static char *tdls_get_cmd_type_str(enum tdls_command_type cmd_type)
+{
+	switch (cmd_type) {
+	case TDLS_CMD_TX_ACTION:
+		return "TDLS_CMD_TX_ACTION";
+	case TDLS_CMD_ADD_STA:
+		return "TDLS_CMD_ADD_STA";
+	case TDLS_CMD_CHANGE_STA:
+		return "TDLS_CMD_CHANGE_STA";
+	case TDLS_CMD_ENABLE_LINK:
+		return "TDLS_CMD_ENABLE_LINK";
+	case TDLS_CMD_DISABLE_LINK:
+		return "TDLS_CMD_DISABLE_LINK";
+	case TDLS_CMD_CONFIG_FORCE_PEER:
+		return "TDLS_CMD_CONFIG_FORCE_PEER";
+	case TDLS_CMD_REMOVE_FORCE_PEER:
+		return "TDLS_CMD_REMOVE_FORCE_PEER";
+	case TDLS_CMD_STATS_UPDATE:
+		return "TDLS_CMD_STATS_UPDATE";
+	case TDLS_CMD_CONFIG_UPDATE:
+		return "TDLS_CMD_CONFIG_UPDATE";
+	case TDLS_CMD_SET_RESPONDER:
+		return "TDLS_CMD_SET_RESPONDER";
+	case TDLS_CMD_SCAN_DONE:
+		return "TDLS_CMD_SCAN_DONE";
+	case TDLS_NOTIFY_STA_CONNECTION:
+		return "TDLS_NOTIFY_STA_CONNECTION";
+	case TDLS_NOTIFY_STA_DISCONNECTION:
+		return "TDLS_NOTIFY_STA_DISCONNECTION";
+	case TDLS_CMD_SET_TDLS_MODE:
+		return "TDLS_CMD_SET_TDLS_MODE";
+	case TDLS_CMD_SESSION_DECREMENT:
+		return "TDLS_CMD_SESSION_DECREMENT";
+	case TDLS_CMD_SESSION_INCREMENT:
+		return "TDLS_CMD_SESSION_INCREMENT";
+	case TDLS_CMD_TEARDOWN_LINKS:
+		return "TDLS_CMD_TEARDOWN_LINKS";
+	case TDLS_NOTIFY_RESET_ADAPTERS:
+		return "TDLS_NOTIFY_RESET_ADAPTERS";
+	case TDLS_CMD_ANTENNA_SWITCH:
+		return "TDLS_CMD_ANTENNA_SWITCH";
+
+	default:
+		return "Invalid TDLS command";
+	}
+}
+
+/**
+ * tdls_get_event_type_str() - parase event to string
+ * @event_type: tdls event type
+ *
+ * This function parse tdls event to string.
+ *
+ * Return: event string
+ */
+static char *tdls_get_event_type_str(enum tdls_event_type event_type)
+{
+	switch (event_type) {
+	case TDLS_SHOULD_DISCOVER:
+		return "TDLS_SHOULD_DISCOVER";
+	case TDLS_SHOULD_TEARDOWN:
+		return "TDLS_SHOULD_TEARDOWN";
+	case TDLS_PEER_DISCONNECTED:
+		return "TDLS_PEER_DISCONNECTED";
+	case TDLS_CONNECTION_TRACKER_NOTIFY:
+		return "TDLS_CONNECTION_TRACKER_NOTIFY";
+
+	default:
+		return "Invalid TDLS event";
+	}
+}
+#else
+static char *tdls_get_cmd_type_str(enum tdls_command_type cmd_type)
+{
+	return "";
+}
+
+static char *tdls_get_event_type_str(enum tdls_event_type event_type)
+{
+	return "";
+}
+#endif
+
 QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 					     void *arg_list)
 {
@@ -469,7 +561,8 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	tdls_debug("TDLS process command: %d", msg->type);
+	tdls_debug("TDLS process command: %s(%d)",
+		   tdls_get_cmd_type_str(msg->type), msg->type);
 
 	switch (msg->type) {
 	case TDLS_CMD_TX_ACTION:
@@ -568,7 +661,10 @@ QDF_STATUS tdls_process_evt(struct scheduler_msg *msg)
 	}
 	event = &notify->event;
 
-	tdls_debug("evt type: %d", event->message_type);
+	tdls_debug("evt type: %s(%d)",
+		   tdls_get_event_type_str(event->message_type),
+		   event->message_type);
+
 	switch (event->message_type) {
 	case TDLS_SHOULD_DISCOVER:
 		tdls_process_should_discover(vdev, event);
