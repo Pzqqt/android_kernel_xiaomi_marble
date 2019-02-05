@@ -1901,6 +1901,7 @@ struct wlan_mlme_mwc {
  * @valid_channel_list_num: valid channel list number
  * @country_code: country code
  * @country_code_len: country code length
+ * @enable_11d_in_world_mode: Whether to enable 11d scan in world mode or not
  */
 struct wlan_mlme_reg {
 	uint32_t self_gen_frm_pwr;
@@ -1913,6 +1914,7 @@ struct wlan_mlme_reg {
 	uint8_t valid_channel_list_num;
 	uint8_t country_code[CFG_COUNTRY_CODE_LEN + 1];
 	uint8_t country_code_len;
+	bool enable_11d_in_world_mode;
 };
 
 /**

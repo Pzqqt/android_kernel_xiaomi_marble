@@ -3504,6 +3504,18 @@ ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 					     bool *value);
 
 /**
+ * ucfg_mlme_get_11d_in_world_mode  - get whether 11d is enabled in world mode
+ * in master mode
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_11d_in_world_mode(struct wlan_objmgr_psoc *psoc,
+				bool *value);
+
+/**
  * ucfg_mlme_restart_beaconing_on_ch_avoid() - get restart beaconing on ch avoid
  * @psoc:   pointer to psoc object
  * @value:  pointer to the value which will be filled for the caller
