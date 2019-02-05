@@ -11450,7 +11450,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
 static void
 csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
 			  struct csr_roam_session *session,
-			  tSirSmeSetContextRsp *pRsp)
+			  struct set_context_rsp *pRsp)
 {
 	WLAN_HOST_DIAG_EVENT_DEF(setKeyEvent,
 				 host_event_wlan_security_payload_type);
@@ -11480,6 +11480,13 @@ csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
 		setKeyEvent.status = WLAN_SECURITY_STATUS_FAILURE;
 	WLAN_HOST_DIAG_EVENT_REPORT(&setKeyEvent, EVENT_WLAN_SECURITY);
 }
+#else /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
+static void
+csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
+			  struct csr_roam_session *session,
+			  struct set_context_rsp *pRsp)
+{
+}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 
 static void
@@ -11491,7 +11498,7 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	struct csr_roam_info *roam_info_ptr = NULL;
 	struct csr_roam_info roam_info;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
-	tSirSmeSetContextRsp *pRsp = (tSirSmeSetContextRsp *) msg_ptr;
+	struct set_context_rsp *pRsp = (struct set_context_rsp *)msg_ptr;
 
 
 	if (!pRsp) {
@@ -11506,9 +11513,9 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		sme_err("session %d not found", sessionId);
 		return;
 	}
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+
 	csr_roam_diag_set_ctx_rsp(mac_ctx, session, pRsp);
-#endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
+
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sessionId)) {
 		csr_roam_stop_wait_for_key_timer(mac_ctx);
 		/* We are done with authentication, whethere succeed or not */

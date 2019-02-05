@@ -1392,14 +1392,14 @@ struct set_context_req {
 
 /* / Definition for Set Context response */
 /* / MAC ---> */
-typedef struct sSirSmeSetContextRsp {
+struct set_context_rsp {
 	uint16_t messageType;   /* eWNI_SME_SET_CONTEXT_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peer_macaddr;
-} tSirSmeSetContextRsp, *tpSirSmeSetContextRsp;
+};
 
 /*******************PE Statistics*************************/
 

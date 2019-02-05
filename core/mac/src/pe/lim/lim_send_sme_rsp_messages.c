@@ -1377,28 +1377,29 @@ void
 lim_send_sme_set_context_rsp(struct mac_context *mac,
 			     struct qdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
-			     struct pe_session *pe_session, uint8_t smesessionId,
+			     struct pe_session *pe_session,
+			     uint8_t smesessionId,
 			     uint16_t smetransactionId)
 {
 	struct scheduler_msg mmhMsg = {0};
-	tSirSmeSetContextRsp *pSirSmeSetContextRsp;
+	struct set_context_rsp *set_context_rsp;
 
-	pSirSmeSetContextRsp = qdf_mem_malloc(sizeof(tSirSmeSetContextRsp));
-	if (!pSirSmeSetContextRsp)
+	set_context_rsp = qdf_mem_malloc(sizeof(*set_context_rsp));
+	if (!set_context_rsp)
 		return;
 
-	pSirSmeSetContextRsp->messageType = eWNI_SME_SETCONTEXT_RSP;
-	pSirSmeSetContextRsp->length = sizeof(tSirSmeSetContextRsp);
-	pSirSmeSetContextRsp->statusCode = resultCode;
+	set_context_rsp->messageType = eWNI_SME_SETCONTEXT_RSP;
+	set_context_rsp->length = sizeof(*set_context_rsp);
+	set_context_rsp->statusCode = resultCode;
 
-	qdf_copy_macaddr(&pSirSmeSetContextRsp->peer_macaddr, &peer_macaddr);
+	qdf_copy_macaddr(&set_context_rsp->peer_macaddr, &peer_macaddr);
 
 	/* Update SME session and transaction Id */
-	pSirSmeSetContextRsp->sessionId = smesessionId;
-	pSirSmeSetContextRsp->transactionId = smetransactionId;
+	set_context_rsp->sessionId = smesessionId;
+	set_context_rsp->transactionId = smetransactionId;
 
 	mmhMsg.type = eWNI_SME_SETCONTEXT_RSP;
-	mmhMsg.bodyptr = pSirSmeSetContextRsp;
+	mmhMsg.bodyptr = set_context_rsp;
 	mmhMsg.bodyval = 0;
 	if (NULL == pe_session) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
