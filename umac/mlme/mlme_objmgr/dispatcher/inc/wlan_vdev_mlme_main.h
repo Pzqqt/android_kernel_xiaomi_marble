@@ -21,6 +21,21 @@
 #ifndef _WLAN_VDEV_MLME_MAIN_H_
 #define _WLAN_VDEV_MLME_MAIN_H_
 
+#include <wlan_objmgr_psoc_obj.h>
+#include <wlan_lmac_if_def.h>
+
+/**
+ * wlan_mlme_get_lmac_tx_ops() - get tx ops
+ * @psoc: pointer to psoc obj
+ *
+ * Return: pointer to tx ops
+ */
+static inline struct wlan_lmac_if_mlme_tx_ops *
+wlan_mlme_get_lmac_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	return &psoc->soc_cb.tx_ops.mops;
+}
+
 #ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * enum wlan_vdev_state - VDEV state

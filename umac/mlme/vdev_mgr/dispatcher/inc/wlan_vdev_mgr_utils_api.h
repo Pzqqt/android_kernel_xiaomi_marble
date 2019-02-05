@@ -68,7 +68,7 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 /**
  * wlan_util_vdev_get_param() – common MLME API to get common
  * parameters of vdev_mlme object
- * @vdev_mlme: pointer to vdev_mlme object
+ * @vdev: pointer to vdev object
  * @param_id: param id for which the value should be set
  * @param_value: value that should bem set to the parameter
  *

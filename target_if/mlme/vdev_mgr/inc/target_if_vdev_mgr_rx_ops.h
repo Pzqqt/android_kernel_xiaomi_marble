@@ -30,6 +30,30 @@
 #include <wlan_lmac_if_def.h>
 
 /**
+ * target_if_vdev_mgr_is_driver_unloading: API to driver unload status
+ *
+ * Return: TRUE or FALSE
+ */
+static inline bool target_if_vdev_mgr_is_driver_unloading(void)
+{
+	return false;
+}
+
+/**
+ * target_if_vdev_mgr_is_panic_on_bug: API to get panic on bug
+ *
+ * Return: TRUE or FALSE
+ */
+static inline bool target_if_vdev_mgr_is_panic_on_bug(void)
+{
+#ifdef PANIC_ON_BUG
+	return true;
+#else
+	return false;
+#endif
+}
+
+/**
  * target_if_vdev_mgr_get_rx_ops() - get rx ops
  * @psoc: pointer to psoc object
  *

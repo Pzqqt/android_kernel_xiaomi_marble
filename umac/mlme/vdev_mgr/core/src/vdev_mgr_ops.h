@@ -172,7 +172,7 @@ QDF_STATUS vdev_mgr_config_ratemask_cmd_send(
 				uint32_t lower32_2);
 
 /**
- * vdev_mgr_beacon_stop() – MLME API to stop beacn
+ * vdev_mgr_beacon_stop() – MLME API to stop beacon
  * @mlme_obj: pointer to vdev_mlme_obj
  *
  * Return: QDF_STATUS - Success or Failure
@@ -180,7 +180,7 @@ QDF_STATUS vdev_mgr_config_ratemask_cmd_send(
 QDF_STATUS vdev_mgr_beacon_stop(struct vdev_mlme_obj *mlme_obj);
 
 /**
- * vdev_mgr_beacon_free() – MLME API to free beacn
+ * vdev_mgr_beacon_free() – MLME API to free beacon
  * @mlme_obj: pointer to vdev_mlme_obj
  *
  * Return: QDF_STATUS - Success or Failure

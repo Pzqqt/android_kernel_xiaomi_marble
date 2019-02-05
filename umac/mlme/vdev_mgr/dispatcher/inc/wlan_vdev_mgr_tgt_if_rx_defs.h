@@ -29,8 +29,11 @@
 #include <qdf_timer.h>
 
 #define START_RESPONSE_BIT  0x1
-#define STOP_RESPONSE_BIT   0x2
-#define DELETE_RESPONSE_BIT 0x3
+#define RESTART_RESPONSE_BIT  0x2
+#define STOP_RESPONSE_BIT   0x3
+#define DELETE_RESPONSE_BIT 0x4
+#define RESPONSE_BIT_MAX (START_RESPONSE_BIT | RESTART_RESPONSE_BIT |\
+			  STOP_RESPONSE_BIT | DELETE_RESPONSE_BIT)
 
 #define START_RESPONSE_TIMER 6000 /* 6 seconds */
 #define STOP_RESPONSE_TIMER  2000 /* 2 seconds */
@@ -40,10 +43,14 @@
  * struct vdev_response_timer - vdev mgmt response ops timer
  * @rsp_timer: VDEV MLME mgmt response timer
  * @rsp_status: variable to check response status
+ * @expire_time: time to expire timer
+ * @timer_status: status of timer
  */
 struct vdev_response_timer {
 	qdf_timer_t rsp_timer;
 	unsigned long rsp_status;
+	uint32_t expire_time;
+	QDF_STATUS timer_status;
 };
 
 /**

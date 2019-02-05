@@ -33,19 +33,6 @@
 #include <include/wlan_vdev_mlme.h>
 
 /**
- * tgt_vdev_mgr_rsp_timer_mgmt() – API to handle response timer, responsible
- * for initializing and freeing
- * @vdev: pointer to vdev
- * @rsp_timer: response timer
- * @init: flag to indicate whether to init/free
- *
- * Return: QDF_STATUS - Success or Failure
- */
-QDF_STATUS tgt_vdev_mgr_rsp_timer_mgmt(
-				struct wlan_objmgr_vdev *vdev,
-				qdf_timer_t *rsp_timer, bool init);
-
-/**
  * tgt_vdev_mgr_create_send() – API to send create command
  * @mlme_obj: pointer to vdev_mlme_obj
  * @param: pointer to vdev_create_params

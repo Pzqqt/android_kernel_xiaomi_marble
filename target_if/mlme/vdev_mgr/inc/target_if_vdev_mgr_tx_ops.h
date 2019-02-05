@@ -32,6 +32,15 @@
 #include <wlan_lmac_if_def.h>
 
 /**
+ * target_if_vdev_mgr_wmi_handle_get() - API to get wmi handle from vdev
+ * @vdev: pointer to vdev
+ *
+ * Return: pointer to wmi_unified handle or NULL
+ */
+struct wmi_unified *target_if_vdev_mgr_wmi_handle_get(
+					struct wlan_objmgr_vdev *vdev);
+
+/**
  * target_if_vdev_mgr_get_tx_ops() - get tx ops
  * @psoc: pointer to psoc obj
  *
@@ -42,19 +51,6 @@ target_if_vdev_mgr_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
 	return &psoc->soc_cb.tx_ops.mops;
 }
-
-/**
- * target_if_rsp_timer_mgmt() - function to handle response timer
- * @vdev: pointer to vdev object
- * @rsp_timer: pointer to response timer
- * @init: timer init status
- *
- * Return: status of operation.
- */
-QDF_STATUS target_if_vdev_mgr_rsp_timer_mgmt(
-					struct wlan_objmgr_vdev *vdev,
-					qdf_timer_t *rsp_timer,
-					bool init);
 
 /**
  * target_if_vdev_mgr_vdev_mlme_register_tx_ops() - define mlme lmac

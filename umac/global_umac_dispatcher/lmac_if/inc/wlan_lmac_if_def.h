@@ -187,7 +187,10 @@ struct wlan_lmac_if_ftm_tx_ops {
  * @get_wifi_iface_id: function to get wifi interface id
  * @vdev_mlme_attach: function to register events
  * @vdev_mlme_detach: function to unregister events
- * @vdev_mlme_rsp_timer_mgmt: function to manage vdev response timer
+ * @vdev_mgr_rsp_timer_init: function to initialize vdev response timer
+ * @vdev_mgr_rsp_timer_deinit: function to free vdev response timer
+ * @vdev_mgr_rsp_timer_mod: function to timer_mod vdev response timer
+ * @vdev_mgr_rsp_timer_stop: function to stop vdev response timer
  * @vdev_create_send: function to send vdev create
  * @vdev_start_send: function to send vdev start
  * @vdev_up_send: function to send vdev up
@@ -207,7 +210,6 @@ struct wlan_lmac_if_ftm_tx_ops {
  * @vdev_bcn_miss_offload_send: function to send beacon miss offload
  * @vdev_sta_ps_param_send: function to sent STA power save config
  * @target_is_pre_lithium: function to get target type status
- * @vdev_mgr_resp_timer_mgmt: function to manage response timer
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	void (*scan_sta_power_events)(struct wlan_objmgr_pdev *pdev,
@@ -215,12 +217,23 @@ struct wlan_lmac_if_mlme_tx_ops {
 	void (*scan_connection_lost)(struct wlan_objmgr_pdev *pdev);
 	void (*scan_end)(struct wlan_objmgr_pdev *pdev);
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	QDF_STATUS (*vdev_mlme_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*vdev_mlme_detach)(struct wlan_objmgr_psoc *psoc);
-	QDF_STATUS (*vdev_mlme_rsp_timer_mgmt)(struct wlan_objmgr_vdev *vdev,
-					       qdf_timer_t *rsp_timer,
-					       bool flag);
+#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
+	QDF_STATUS (*vdev_mgr_rsp_timer_init)(
+					struct wlan_objmgr_vdev *vdev,
+					qdf_timer_t *rsp_timer);
+	QDF_STATUS (*vdev_mgr_rsp_timer_deinit)(
+					struct wlan_objmgr_vdev *vdev,
+					qdf_timer_t *rsp_timer);
+	QDF_STATUS (*vdev_mgr_rsp_timer_mod)(
+					struct wlan_objmgr_vdev *vdev,
+					struct vdev_response_timer *vdev_rsp,
+					int mseconds);
+	QDF_STATUS (*vdev_mgr_rsp_timer_stop)(
+					struct wlan_objmgr_vdev *vdev,
+					struct vdev_response_timer *vdev_rsp,
+					uint8_t clear_bit);
 	QDF_STATUS (*vdev_create_send)(struct wlan_objmgr_vdev *vdev,
 				       struct vdev_create_params *param);
 	QDF_STATUS (*vdev_start_send)(struct wlan_objmgr_vdev *vdev,
@@ -264,10 +277,7 @@ struct wlan_lmac_if_mlme_tx_ops {
 	QDF_STATUS (*vdev_bcn_miss_offload_send)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_sta_ps_param_send)(struct wlan_objmgr_vdev *vdev,
 					     struct sta_ps_params *param);
-	QDF_STATUS (*target_is_pre_lithium)(struct wlan_objmgr_psoc *psoc);
-	QDF_STATUS (*vdev_mgr_resp_timer_mgmt)(struct wlan_objmgr_vdev *vdev,
-					     qdf_timer_t *rsp_timer,
-					     bool init);
+	bool (*target_is_pre_lithium)(struct wlan_objmgr_psoc *psoc);
 #endif
 };
 
@@ -1359,7 +1369,6 @@ struct wlan_lmac_if_dfs_rx_ops {
  * @mlme_response_timeout_cb: function to trigger on response time expiry
  * @mlme_start_response: function to handle vdev start response
  * @mlme_stop_response: function to handle vdev stop response
- * @mlme_delete_response: function to handle vdev delete response
  * @mlme_offload_bcn_tx_status_event_handle: function to get offload beacon tx
  * status
  * @mlme_tbttoffset_update_handle: function to handle tbttoffset event
@@ -1425,7 +1434,6 @@ struct wlan_lmac_if_mlme_rx_ops {
 #ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	struct vdev_response_timer *(*vdev_mgr_get_response_timer_info)(
 					struct wlan_objmgr_vdev *vdev);
-	void (*vdev_mgr_response_timeout_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_mgr_start_response)(
 					struct wlan_objmgr_psoc *psoc,
 					struct vdev_start_response *rsp);

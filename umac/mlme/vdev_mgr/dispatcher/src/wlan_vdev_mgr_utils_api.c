@@ -25,6 +25,7 @@
 #include <wlan_vdev_mgr_utils_api.h>
 #include <wlan_vdev_mgr_tgt_if_tx_api.h>
 #include <cdp_txrx_cmn_struct.h>
+#include <wlan_mlme_dbg.h>
 
 enum wlan_op_mode
 wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev)

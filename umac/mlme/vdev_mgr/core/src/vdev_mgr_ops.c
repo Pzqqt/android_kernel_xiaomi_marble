@@ -44,13 +44,13 @@ static QDF_STATUS vdev_mgr_create_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		QDF_ASSERT(0);
+		mlme_err("PDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -73,7 +73,7 @@ QDF_STATUS vdev_mgr_create_send(struct vdev_mlme_obj *mlme_obj)
 	struct vdev_create_params param = {0};
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -102,13 +102,13 @@ static QDF_STATUS vdev_mgr_start_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
-		QDF_ASSERT(0);
+		mlme_err("PDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -191,7 +191,7 @@ QDF_STATUS vdev_mgr_start_send(
 	struct vdev_start_params param = {0};
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -215,7 +215,7 @@ static QDF_STATUS vdev_mgr_delete_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -229,7 +229,7 @@ QDF_STATUS vdev_mgr_delete_send(struct vdev_mlme_obj *mlme_obj)
 	struct vdev_delete_params param;
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -252,7 +252,7 @@ static QDF_STATUS vdev_mgr_stop_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -267,7 +267,7 @@ QDF_STATUS vdev_mgr_stop_send(struct vdev_mlme_obj *mlme_obj)
 	struct vdev_stop_params param = {0};
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -350,13 +350,13 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -391,7 +391,7 @@ static QDF_STATUS vdev_mgr_down_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -406,7 +406,7 @@ QDF_STATUS vdev_mgr_down_send(struct vdev_mlme_obj *mlme_obj)
 	struct vdev_down_params param = {0};
 
 	if (!mlme_obj) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV_MLME is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -431,7 +431,7 @@ static QDF_STATUS vdev_mgr_peer_flush_tids_param_update(
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
-		QDF_ASSERT(0);
+		mlme_err("VDEV is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -449,7 +449,7 @@ QDF_STATUS vdev_mgr_peer_flush_tids_send(struct vdev_mlme_obj *mlme_obj,
 	struct peer_flush_params param = {0};
 
 	if (!mlme_obj || !mac) {
-		QDF_ASSERT(0);
+		mlme_err("Invalid input");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -502,3 +502,5 @@ QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
 
 	return tgt_vdev_mgr_multiple_vdev_restart_send(pdev, &param);
 }
+
+qdf_export_symbol(vdev_mgr_multiple_restart_send);

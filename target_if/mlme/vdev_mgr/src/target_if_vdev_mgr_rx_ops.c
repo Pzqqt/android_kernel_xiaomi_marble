@@ -29,6 +29,7 @@
 #include <wlan_mlme_dbg.h>
 #include <target_if.h>
 #include <qdf_platform.h>
+#include <wlan_vdev_mlme_main.h>
 
 void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 {
@@ -36,13 +37,19 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
 	struct vdev_response_timer *vdev_rsp;
+	struct crash_inject param;
+	struct wmi_unified *wmi_handle;
+	struct vdev_start_response start_rsp = {0};
+	struct vdev_stop_response stop_rsp = {0};
+	struct vdev_delete_response del_rsp = {0};
+	uint8_t vdev_id;
 
-	mlme_debug("Response timer expired for VDEV %d",
-		   wlan_vdev_get_id(vdev));
+	vdev_id = wlan_vdev_get_id(vdev);
+	mlme_debug("Response timer expired for VDEV %d", vdev_id);
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return;
 	}
 
@@ -52,21 +59,65 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 		return;
 	}
 
-	if (qdf_is_recovering()) {
-		mlme_debug("Recovery in progress");
+	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
+	if (!qdf_atomic_test_bit(START_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
+	    !qdf_atomic_test_bit(RESTART_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
+	    !qdf_atomic_test_bit(STOP_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
+	    !qdf_atomic_test_bit(DELETE_RESPONSE_BIT, &vdev_rsp->rsp_status)) {
+		mlme_debug("No response bit is set, ignoring actions");
 		return;
 	}
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	qdf_atomic_clear_bit(START_RESPONSE_BIT, &vdev_rsp->rsp_status);
-	qdf_atomic_clear_bit(STOP_RESPONSE_BIT, &vdev_rsp->rsp_status);
-	qdf_atomic_clear_bit(DELETE_RESPONSE_BIT, &vdev_rsp->rsp_status);
+	if (target_if_vdev_mgr_is_driver_unloading() || qdf_is_recovering() ||
+	    qdf_is_fw_down()) {
+		/* this ensures stop timer will not be done in target_if */
+		vdev_rsp->timer_status = QDF_STATUS_E_TIMEOUT;
+		if (qdf_atomic_test_bit(START_RESPONSE_BIT,
+					&vdev_rsp->rsp_status) ||
+		    qdf_atomic_test_bit(RESTART_RESPONSE_BIT,
+					&vdev_rsp->rsp_status)) {
+			start_rsp.vdev_id = wlan_vdev_get_id(vdev);
+			start_rsp.status = WMI_HOST_VDEV_START_TIMEOUT;
+			if (qdf_atomic_test_bit(START_RESPONSE_BIT,
+						&vdev_rsp->rsp_status))
+				start_rsp.resp_type =
+					WMI_HOST_VDEV_START_RESP_EVENT;
+			else
+				start_rsp.resp_type =
+					WMI_HOST_VDEV_RESTART_RESP_EVENT;
 
-	if (rx_ops->vdev_mgr_response_timeout_cb)
-		rx_ops->vdev_mgr_response_timeout_cb(vdev);
+			rx_ops->vdev_mgr_start_response(psoc, &start_rsp);
+		}
 
-	/* Implementation need to be done based on build type */
-	QDF_ASSERT(0);
+		if (qdf_atomic_test_bit(STOP_RESPONSE_BIT,
+					&vdev_rsp->rsp_status)) {
+			stop_rsp.vdev_id = wlan_vdev_get_id(vdev);
+			rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
+		}
+
+		if (qdf_atomic_test_bit(DELETE_RESPONSE_BIT,
+					&vdev_rsp->rsp_status)) {
+			del_rsp.vdev_id = wlan_vdev_get_id(vdev);
+			rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
+		}
+
+		return;
+	}
+
+	if (target_if_vdev_mgr_is_panic_on_bug()) {
+		mlme_err("VDEV_%d: Panic on bug enabled, rsp status:%d",
+			 vdev_id, vdev_rsp->rsp_status);
+		QDF_BUG(0);
+	} else {
+		mlme_err("VDEV_%d: Trigger Self recovery, rsp status%d",
+			 vdev_id, vdev_rsp->rsp_status);
+		wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
+
+		qdf_mem_set(&param, sizeof(param), 0);
+		/* RECOVERY_SIM_SELF_RECOVERY*/
+		param.type = 0x08;
+		wmi_crash_inject(wmi_handle, &param);
+	}
 }
 
 static int target_if_vdev_mgr_start_response_handler(
@@ -88,7 +139,7 @@ static int target_if_vdev_mgr_start_response_handler(
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -143,7 +194,7 @@ static int target_if_vdev_mgr_stop_response_handler(
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -176,13 +227,11 @@ static int target_if_vdev_mgr_delete_response_handler(
 						uint32_t datalen)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
 	struct vdev_delete_response rsp = {0};
 	struct wmi_host_vdev_delete_resp vdev_del_resp;
-	struct vdev_response_timer *vdev_rsp;
 
 	if (!scn || !data) {
 		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
@@ -191,7 +240,7 @@ static int target_if_vdev_mgr_delete_response_handler(
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -213,23 +262,9 @@ static int target_if_vdev_mgr_delete_response_handler(
 		return -EINVAL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-						    vdev_del_resp.vdev_id,
-						    WLAN_MLME_SB_ID);
-	if (!vdev) {
-		QDF_ASSERT(0);
-		return -EINVAL;
-	}
-
 	rsp.vdev_id = vdev_del_resp.vdev_id;
 	status = rx_ops->vdev_mgr_delete_response(psoc, &rsp);
 
-	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
-	if (vdev_rsp && QDF_IS_STATUS_SUCCESS(status))
-		target_if_vdev_mgr_rsp_timer_mgmt(vdev, &vdev_rsp->rsp_timer,
-						  false);
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
 	return qdf_status_to_os_return(status);
 }
 
@@ -250,7 +285,7 @@ static int target_if_vdev_mgr_offload_bcn_tx_status_handler(
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -296,7 +331,7 @@ static int target_if_vdev_mgr_tbttoffset_update_handler(
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -339,7 +374,7 @@ static int target_if_vdev_mgr_ext_tbttoffset_update_handler(
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return -EINVAL;
 	}
 
@@ -373,7 +408,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -383,7 +418,6 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 		return QDF_STATUS_E_INVAL;
 	}
 
-#if CMN_VDEV_MGR_TGT_IF_ENABLE_PHASE /* to be implemented in next phase */
 	retval = wmi_unified_register_event_handler(
 				wmi_handle,
 				wmi_vdev_stopped_event_id,
@@ -408,31 +442,6 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 	if (retval)
 		mlme_err("failed to register for start response");
 
-	retval = wmi_unified_register_event_handler(
-			wmi_handle,
-			wmi_offload_bcn_tx_status_event_id,
-			target_if_vdev_mgr_offload_bcn_tx_status_handler,
-			WMI_RX_UMAC_CTX);
-	if (retval)
-		mlme_err("failed to register for bcn tx status response");
-
-	retval = wmi_unified_register_event_handler(
-				wmi_handle,
-				wmi_tbttoffset_update_event_id,
-				target_if_vdev_mgr_tbttoffset_update_handler,
-				WMI_RX_UMAC_CTX);
-	if (retval)
-		mlme_err("failed to register for tbttoffset update");
-
-	retval = wmi_unified_register_event_handler(
-			wmi_handle,
-			wmi_ext_tbttoffset_update_event_id,
-			target_if_vdev_mgr_ext_tbttoffset_update_handler,
-			WMI_RX_UMAC_CTX);
-	if (retval)
-		mlme_err("failed to register for ext tbttoffset update");
-#endif
-
 	return qdf_status_from_os_return(retval);
 }
 
@@ -442,7 +451,7 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
-		QDF_ASSERT(0);
+		mlme_err("PSOC is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -452,7 +461,6 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 		return QDF_STATUS_E_INVAL;
 	}
 
-#if CMN_VDEV_MGR_TGT_IF_ENABLE_PHASE
 	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_vdev_stopped_event_id);
 
@@ -461,18 +469,6 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 
 	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_vdev_start_resp_event_id);
-
-	wmi_unified_unregister_event_handler(wmi_handle,
-					     wmi_tbttoffset_update_event_id);
-
-	wmi_unified_unregister_event_handler(
-				wmi_handle,
-				wmi_ext_tbttoffset_update_event_id);
-
-	wmi_unified_unregister_event_handler(
-				wmi_handle,
-				wmi_offload_bcn_tx_status_event_id);
-#endif
 
 	return QDF_STATUS_SUCCESS;
 }

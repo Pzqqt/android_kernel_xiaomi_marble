@@ -159,6 +159,7 @@ static void mlme_scan_serialization_comp_info_cb(
 QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_tx_ops *tx_ops;
 
 	status = wlan_serialization_register_comp_info_cb
 			(psoc,
@@ -170,12 +171,18 @@ QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		return status;
 	}
 
+	/* Register for WMI events into target_if rx  */
+	tx_ops = wlan_mlme_get_lmac_tx_ops(psoc);
+	if (tx_ops && tx_ops->vdev_mlme_attach)
+		tx_ops->vdev_mlme_attach(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_tx_ops *tx_ops;
 
 	status = wlan_serialization_deregister_comp_info_cb
 						(psoc,
@@ -185,6 +192,11 @@ QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		mlme_err("Serialize scan cmd deregister failed");
 		return status;
 	}
+
+	/* Unregister WMI events  */
+	tx_ops = wlan_mlme_get_lmac_tx_ops(psoc);
+	if (tx_ops && tx_ops->vdev_mlme_detach)
+		tx_ops->vdev_mlme_detach(psoc);
 
 	return QDF_STATUS_SUCCESS;
 }

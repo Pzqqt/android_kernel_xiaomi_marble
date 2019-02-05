@@ -156,6 +156,17 @@ void ucfg_wlan_vdev_mgr_get_param_ssid(struct wlan_objmgr_vdev *vdev,
 				       uint8_t *ssid_len);
 
 /**
+ * ucfg_wlan_vdev_mgr_get_param_bssid() – ucfg MLME API to
+ * get bssid from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @bssid: pointer to store the bssid
+ *
+ */
+void ucfg_wlan_vdev_mgr_get_param_bssid(
+				struct wlan_objmgr_vdev *vdev,
+				uint8_t *bssid);
+
+/**
  * ucfg_wlan_vdev_mgr_get_beacon_buffer() – ucfg MLME API to
  * get beacon buffer from mlme vdev mgr component
  * @vdev: pointer to vdev object

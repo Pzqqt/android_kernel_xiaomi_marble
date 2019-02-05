@@ -287,6 +287,7 @@ typedef enum {
 	WLAN_MLME_SER_IF_ID        = 46,
 	WLAN_SCHEDULER_ID          = 47,
 	WLAN_CFR_ID                = 48,
+	WLAN_VDEV_TARGET_IF_ID     = 49,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
