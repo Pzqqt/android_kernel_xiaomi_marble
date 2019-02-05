@@ -570,12 +570,13 @@ struct cdp_peer_stats {
  * @last_peer_tx_rate: peer tx rate for last transmission
  * @peer_tx_rate: tx rate for current transmission
  * @peer_rssi: current rssi value of peer
- * @rssi_changed: denotes rssi is changed
  * @tx_packet_count: tx packet count
  * @rx_packet_count: rx packet count
  * @tx_byte_count: tx byte count
  * @rx_byte_count: rx byte count
  * @per: per error rate
+ * @ack_rssi: RSSI of the last ack received
+ * @rssi_changed: denotes rssi is changed
  */
 struct cdp_interface_peer_stats {
 	void  *peer_hdl;
@@ -587,6 +588,7 @@ struct cdp_interface_peer_stats {
 	uint32_t tx_byte_count;
 	uint32_t rx_byte_count;
 	uint32_t per;
+	uint32_t ack_rssi;
 	uint8_t  rssi_changed;
 };
 
