@@ -80,25 +80,6 @@ struct hdd_context;
 #define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
 #define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
 
-/*
- * <ini>
- * enable_11d_in_world_mode - enable 11d in world mode
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini enables 11d in world mode, irrespective of value of
- * g11dSupportEnabled
- *
- * Usage: External
- *
- * </ini>
- */
- #define CFG_ENABLE_11D_IN_WORLD_MODE_NAME "enable_11d_in_world_mode"
- #define CFG_ENABLE_11D_IN_WORLD_MODE_MIN     (0)
- #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
- #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
-
 enum hdd_dot11_mode {
 	eHDD_DOT11_MODE_AUTO = 0,       /* covers all things we support */
 	eHDD_DOT11_MODE_abg,    /* 11a/b/g only, no HT, no proprietary */
@@ -378,8 +359,6 @@ struct hdd_config {
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	bool tx_orphan_enable;
-
-	bool enable_11d_in_world_mode;
 	bool is_11k_offload_supported;
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];

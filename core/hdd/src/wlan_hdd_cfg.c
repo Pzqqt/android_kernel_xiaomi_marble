@@ -107,13 +107,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MIN,
 		CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_11D_IN_WORLD_MODE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_11d_in_world_mode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT,
-		     CFG_ENABLE_11D_IN_WORLD_MODE_MIN,
-		     CFG_ENABLE_11D_IN_WORLD_MODE_MAX),
-
 	REG_VARIABLE(CFG_CHANGE_CHANNEL_BANDWIDTH_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, enable_change_channel_bandwidth,

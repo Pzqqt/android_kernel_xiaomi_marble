@@ -2067,6 +2067,8 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	reg->restart_beaconing_on_ch_avoid =
 			cfg_get(psoc, CFG_RESTART_BEACONING_ON_CH_AVOID);
 	reg->indoor_channel_support = cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT);
+	reg->enable_11d_in_world_mode = cfg_get(psoc,
+						CFG_ENABLE_11D_IN_WORLD_MODE);
 	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
 	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
 			      reg->valid_channel_list,

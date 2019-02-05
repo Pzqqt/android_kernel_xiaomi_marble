@@ -54,6 +54,25 @@
 
 /*
  * <ini>
+ * enable_11d_in_world_mode - enable 11d in world mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini enables 11d in world mode, irrespective of value of
+ * g11dSupportEnabled
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_11D_IN_WORLD_MODE CFG_INI_BOOL( \
+	"enable_11d_in_world_mode", \
+	0, \
+	"enable 11d in world mode")
+
+/*
+ * <ini>
  * etsi13_srd_chan_in_master_mode - Enable/disable ETSI SRD channels in
  * master mode PCL and ACS functionality
  * @Min: 0
@@ -196,6 +215,7 @@
 
 #define CFG_REG_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
+	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \
 	CFG(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
