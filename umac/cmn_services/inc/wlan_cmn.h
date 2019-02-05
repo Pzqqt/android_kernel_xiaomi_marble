@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,16 +26,34 @@
 
 /* Max no of UMAC components */
 #define WLAN_UMAC_MAX_COMPONENTS WLAN_UMAC_COMP_ID_MAX
+
 /* Max no. of radios, a pSoc/Device can support */
+#ifdef WLAN_MAX_PDEVS
+#define WLAN_UMAC_MAX_PDEVS WLAN_MAX_PDEVS
+#else
 #define WLAN_UMAC_MAX_PDEVS 3
+#endif
+
 /* Max no. of VDEV per PSOC */
+#ifdef WLAN_PSOC_MAX_VDEVS
+#define WLAN_UMAC_PSOC_MAX_VDEVS WLAN_PSOC_MAX_VDEVS
+#else
 #define WLAN_UMAC_PSOC_MAX_VDEVS 51
+#endif
+
 /* Max no. of VDEVs, a PDEV can support */
+#ifdef WLAN_PDEV_MAX_VDEVS
+#define WLAN_UMAC_PDEV_MAX_VDEVS WLAN_PDEV_MAX_VDEVS
+#else
 #define WLAN_UMAC_PDEV_MAX_VDEVS 17
+#endif
+
 /* Max no. of Peers, a device can support */
 #define WLAN_UMAC_PSOC_MAX_PEERS (1024 + WLAN_UMAC_PSOC_MAX_VDEVS)
+
 /* Max no. of Temporary Peers, a pdev can support */
 #define WLAN_MAX_PDEV_TEMP_PEERS 128
+
 /* Max no. of Temporary Peers, a psoc can support */
 #define WLAN_MAX_PSOC_TEMP_PEERS \
 		(WLAN_MAX_PDEV_TEMP_PEERS * WLAN_UMAC_MAX_PDEVS)
@@ -44,10 +62,11 @@
 #define WLAN_SSID_MAX_LEN 32
 
 /* Max sequence number */
-#define WLAN_MAX_SEQ_NUM    4096
+#define WLAN_MAX_SEQ_NUM 4096
 
 /* Max no. of peers for STA vap */
 #define WLAN_UMAC_MAX_STA_PEERS 2
+
 /* Max vdev_id */
 #define WLAN_UMAC_VDEV_ID_MAX 0xFF
 
