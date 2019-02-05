@@ -1845,23 +1845,12 @@ void lim_send_heart_beat_timeout_ind(struct mac_context *mac,
 	}
 }
 
-/**
- * lim_ps_offload_handle_missed_beacon_ind(): handles missed beacon indication
- * @mac : global mac context
- * @pMsg: message
- *
- * This function process the SIR_HAL_MISSED_BEACON_IND
- * message from HAL, to do active AP probing.
- *
- * Return: void
- */
 void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
-					     struct scheduler_msg *pMsg)
+					     struct scheduler_msg *msg)
 {
-	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
-		(tpSirSmeMissedBeaconInd) pMsg->bodyptr;
+	struct missed_beacon_ind *missed_beacon_ind = msg->bodyptr;
 	struct pe_session *pe_session =
-		pe_find_session_by_bss_idx(mac, pSirMissedBeaconInd->bssIdx);
+		pe_find_session_by_bss_idx(mac, missed_beacon_ind->bssIdx);
 
 	if (!pe_session) {
 		pe_err("session does not exist for given BSSId");
@@ -1874,7 +1863,6 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 
 	/*  Do AP probing immediately */
 	lim_send_heart_beat_timeout_ind(mac, pe_session);
-	return;
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

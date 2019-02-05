@@ -1372,11 +1372,11 @@ struct mic_failure_ind {
 	tSirMicFailureInfo info;
 };
 
-typedef struct sSirSmeMissedBeaconInd {
+struct missed_beacon_ind {
 	uint16_t messageType;   /* eWNI_SME_MISSED_BEACON_IND */
 	uint16_t length;
 	uint8_t bssIdx;
-} tSirSmeMissedBeaconInd, *tpSirSmeMissedBeaconInd;
+};
 
 /* / Definition for Set Context request */
 /* / ---> MAC */

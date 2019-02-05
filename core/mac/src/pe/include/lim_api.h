@@ -242,8 +242,19 @@ QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    tpUpdateBeaconParams pBeaconParams,
 				    struct pe_session *);
 
+/**
+ * lim_ps_offload_handle_missed_beacon_ind() - handle missed beacon indication
+ * @mac: global mac context
+ * @msg: message
+ *
+ * This function process the SIR_HAL_MISSED_BEACON_IND
+ * message from HAL, to do active AP probing.
+ *
+ * Return: void
+ */
 void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
-					     struct scheduler_msg *pMsg);
+					     struct scheduler_msg *msg);
+
 void lim_send_heart_beat_timeout_ind(struct mac_context *mac, struct pe_session *pe_session);
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint8_t *pRxPacketInfo,

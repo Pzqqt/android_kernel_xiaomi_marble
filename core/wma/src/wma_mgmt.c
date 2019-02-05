@@ -3151,25 +3151,22 @@ void wma_set_keepalive_req(tp_wma_handle wma,
  */
 void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 {
-	tSirSmeMissedBeaconInd *beacon_miss_ind;
+	struct missed_beacon_ind *beacon_miss_ind;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	beacon_miss_ind = (tSirSmeMissedBeaconInd *) qdf_mem_malloc
-				  (sizeof(tSirSmeMissedBeaconInd));
-
-	if (NULL == beacon_miss_ind) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	beacon_miss_ind = qdf_mem_malloc(sizeof(*beacon_miss_ind));
+	if (!beacon_miss_ind)
 		return;
-	}
+
 	if (mac && mac->sme.tx_queue_cb)
 		mac->sme.tx_queue_cb(mac->hdd_handle, vdev_id,
 				     WLAN_STOP_ALL_NETIF_QUEUE,
 				     WLAN_CONTROL_PATH);
 	beacon_miss_ind->messageType = WMA_MISSED_BEACON_IND;
-	beacon_miss_ind->length = sizeof(tSirSmeMissedBeaconInd);
+	beacon_miss_ind->length = sizeof(*beacon_miss_ind);
 	beacon_miss_ind->bssIdx = vdev_id;
 
-	wma_send_msg(wma, WMA_MISSED_BEACON_IND, (void *)beacon_miss_ind, 0);
+	wma_send_msg(wma, WMA_MISSED_BEACON_IND, beacon_miss_ind, 0);
 	if (!wmi_service_enabled(wma->wmi_handle,
 				 wmi_service_hw_db2dbm_support))
 		rssi += WMA_TGT_NOISE_FLOOR_DBM;
