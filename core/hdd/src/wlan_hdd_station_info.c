@@ -97,10 +97,20 @@
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_REMOTE_CH_WIDTH
 #define REMOTE_SGI_ENABLE\
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_REMOTE_SGI_ENABLE
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
-	#define REMOTE_PAD\
+#define REMOTE_PAD\
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_PAD
-#endif
+#define REMOTE_RX_RETRY_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_REMOTE_RX_RETRY_COUNT
+#define REMOTE_RX_BC_MC_COUNT \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_REMOTE_RX_BC_MC_COUNT
+
+/*
+ * MSB of rx_mc_bc_cnt indicates whether FW supports rx_mc_bc_cnt
+ * feature or not, if first bit is 1 it indictes that FW supports this
+ * feature, if it is 0 it indicates FW doesn't support this feature
+ */
+#define HDD_STATION_INFO_RX_MC_BC_COUNT (1 << 31)
+
 
 static const struct nla_policy
 hdd_get_station_policy[STATION_MAX + 1] = {
@@ -1016,8 +1026,12 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 			(sizeof(stainfo->ch_width) + NLA_HDRLEN) +
 			(sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
 			(sizeof(stainfo->rx_rate) + NLA_HDRLEN) +
-			(sizeof(stainfo->support_mode) + NLA_HDRLEN);
+			(sizeof(stainfo->support_mode) + NLA_HDRLEN) +
 
+			(sizeof(stainfo->rx_mc_bc_cnt) +
+			 NLA_HDRLEN) +
+			(sizeof(stainfo->rx_retry_cnt) +
+			 NLA_HDRLEN);
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
@@ -1056,6 +1070,26 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 	if (nla_put_u32(skb, WLAN802_11_MODE, stainfo->dot11_mode)) {
 		hdd_err("dot11 mode put fail");
 		goto fail;
+	}
+
+	if (!(stainfo->rx_mc_bc_cnt & HDD_STATION_INFO_RX_MC_BC_COUNT)) {
+		hdd_debug("rx mc bc count is not supported by FW");
+	}
+
+	else if (nla_put_u32(skb, REMOTE_RX_BC_MC_COUNT,
+			     (stainfo->rx_mc_bc_cnt &
+			      (~HDD_STATION_INFO_RX_MC_BC_COUNT)))) {
+		hdd_err("rx mc bc put fail");
+		goto fail;
+	}
+
+	/* Currently rx_retry count is not supported */
+	if (stainfo->rx_retry_cnt) {
+		if (nla_put_u32(skb, REMOTE_RX_RETRY_COUNT,
+				stainfo->rx_retry_cnt)) {
+			hdd_err("rx retry count put fail");
+			goto fail;
+		}
 	}
 
 	qdf_mem_zero(stainfo, sizeof(*stainfo));

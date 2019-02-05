@@ -1179,6 +1179,7 @@ struct csr_roam_info {
 	int tx_rate;
 	int rx_rate;
 	tSirMacCapabilityInfo capability_info;
+	uint32_t rx_mc_bc_cnt;
 #ifdef WLAN_FEATURE_SAE
 	struct sir_sae_info *sae_info;
 #endif

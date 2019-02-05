@@ -2322,6 +2322,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			cache_stainfo->rssi = disassoc_comp->rssi;
 			cache_stainfo->tx_rate = disassoc_comp->tx_rate;
 			cache_stainfo->rx_rate = disassoc_comp->rx_rate;
+			cache_stainfo->rx_mc_bc_cnt =
+						disassoc_comp->rx_mc_bc_cnt;
 			cache_stainfo->reason_code = disassoc_comp->reason_code;
 			cache_stainfo->disassoc_ts = qdf_system_ticks();
 		}

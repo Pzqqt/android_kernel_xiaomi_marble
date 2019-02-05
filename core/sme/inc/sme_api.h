@@ -2122,17 +2122,6 @@ QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
 				uint32_t param_val);
 
 /**
- * sme_get_peer_stats() - sme api to post peer info request
- * @mac: mac handle
- * @req: peer info request struct send to wma
- *
- * Return: QDF_STATUS_SUCCESS or non-zero on failure
- */
-
-QDF_STATUS sme_get_peer_stats(struct mac_context *mac,
-			      struct sir_peer_info_req req);
-
-/**
  * sme_get_peer_info() - sme api to get peer info
  * @mac_handle: Opaque handle to the global MAC context
  * @req: peer info request struct send to wma

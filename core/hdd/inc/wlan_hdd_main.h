@@ -896,6 +896,13 @@ enum dhcp_nego_status {
  * @capability: Capability information of current station
  * @support_mode: Max supported mode of a station currently
  * connected to sap
+ * @rx_retry_cnt: Number of rx retries received from current station
+ *                Currently this feature is not supported from FW
+ * @rx_mc_bc_cnt: Multicast broadcast packet count received from
+ *                current station
+ * MSB of rx_mc_bc_cnt indicates whether FW supports rx_mc_bc_cnt
+ * feature or not, if first bit is 1 it indicates that FW supports this
+ * feature, if it is 0 it indicates FW doesn't support this feature
  */
 struct hdd_station_info {
 	bool in_use;
@@ -941,6 +948,8 @@ struct hdd_station_info {
 	enum dhcp_nego_status dhcp_nego_status;
 	uint16_t capability;
 	uint8_t support_mode;
+	uint32_t rx_retry_cnt;
+	uint32_t rx_mc_bc_cnt;
 };
 
 /**
