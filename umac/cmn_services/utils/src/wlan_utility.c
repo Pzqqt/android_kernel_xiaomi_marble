@@ -381,7 +381,8 @@ QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2)
 {
-	if (!qdf_mem_cmp(chan1, chan2, sizeof(struct wlan_channel)))
+	if ((chan1->ch_ieee == chan2->ch_ieee) &&
+	    (chan1->ch_freq_seg2 == chan2->ch_freq_seg2))
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;
@@ -432,12 +433,7 @@ static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev, void *object,
 							ch_filter->vdev);
 		if (wlan_chan_eq(vdev_chan, iter_vdev_chan)
 						!= QDF_STATUS_SUCCESS) {
-			if (!((vdev_chan->ch_ieee == iter_vdev_chan->ch_ieee) &&
-			      (vdev_chan->ch_freq_seg2 ==
-						iter_vdev_chan->ch_freq_seg2) &&
-			      (vdev_chan->ch_phymode ==
-						iter_vdev_chan->ch_phymode)))
-				ch_filter->flag = 1;
+			ch_filter->flag = 1;
 
 			qdf_nofl_err("==> iter vdev id: %d: ieee %d, mode %d",
 				     wlan_vdev_get_id(comp_vdev),
