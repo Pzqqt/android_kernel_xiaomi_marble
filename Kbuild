@@ -555,6 +555,7 @@ QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_net_if.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_status.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_vfs.o \
