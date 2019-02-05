@@ -1364,13 +1364,13 @@ struct switch_channel_ind {
 /* / Definition for MIC failure indication */
 /* / MAC ---> */
 /* / MAC reports this each time a MIC failure occures on Rx TKIP packet */
-typedef struct sSirSmeMicFailureInd {
+struct mic_failure_ind {
 	uint16_t messageType;   /* eWNI_SME_MIC_FAILURE_IND */
 	uint16_t length;
 	uint8_t sessionId;
 	struct qdf_mac_addr bssId;
 	tSirMicFailureInfo info;
-} tSirSmeMicFailureInd, *tpSirSmeMicFailureInd;
+};
 
 typedef struct sSirSmeMissedBeaconInd {
 	uint16_t messageType;   /* eWNI_SME_MISSED_BEACON_IND */

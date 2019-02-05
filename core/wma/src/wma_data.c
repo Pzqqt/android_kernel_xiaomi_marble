@@ -3044,7 +3044,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	       uint64_t *pn, uint8_t key_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	tpSirSmeMicFailureInd mic_err_ind;
+	struct mic_failure_ind *mic_err_ind;
 	struct ether_header *eth_hdr;
 	struct scheduler_msg cds_msg = {0};
 
@@ -3190,7 +3190,7 @@ wma_indicate_err(
 	case OL_RX_ERR_TKIP_MIC:
 	{
 		tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-		tpSirSmeMicFailureInd mic_err_ind;
+		struct mic_failure_ind *mic_err_ind;
 		struct scheduler_msg cds_msg = {0};
 		uint8_t vdev_id;
 

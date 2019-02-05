@@ -11083,23 +11083,20 @@ csr_roam_chk_lnk_mic_fail_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	QDF_STATUS status;
-	struct csr_roam_info *roam_info_ptr = NULL;
 	struct csr_roam_info roam_info;
-	tpSirSmeMicFailureInd pMicInd = (tpSirSmeMicFailureInd) msg_ptr;
+	struct mic_failure_ind *mic_ind = (struct mic_failure_ind *)msg_ptr;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_MIC_ERROR_UNICAST;
 
-	qdf_mem_zero(&roam_info, sizeof(roam_info));
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-				&pMicInd->bssId, &sessionId);
+				&mic_ind->bssId, &sessionId);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
-		roam_info.u.pMICFailureInfo = &pMicInd->info;
-		roam_info_ptr = &roam_info;
-		if (pMicInd->info.multicast)
+		qdf_mem_zero(&roam_info, sizeof(roam_info));
+		roam_info.u.pMICFailureInfo = &mic_ind->info;
+		if (mic_ind->info.multicast)
 			result = eCSR_ROAM_RESULT_MIC_ERROR_GROUP;
 		else
 			result = eCSR_ROAM_RESULT_MIC_ERROR_UNICAST;
-		csr_roam_call_callback(mac_ctx, sessionId, roam_info_ptr, 0,
+		csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 				       eCSR_ROAM_MIC_ERROR_IND, result);
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR

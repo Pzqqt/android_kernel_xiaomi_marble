@@ -370,7 +370,7 @@ typedef enum {
 	eCSR_ROAM_LOSTLINK_DETECTED,
 	/*
 	 * TKIP MIC error detected, callback gets a pointer
-	 * to tpSirSmeMicFailureInd
+	 * to struct mic_failure_ind
 	 */
 	eCSR_ROAM_MIC_ERROR_IND,
 	/* IBSS indications. */
