@@ -690,7 +690,8 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 	qdf_mem_zero(req, sizeof(*req));
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
-						    session_id, WLAN_OSIF_ID);
+						    session_id,
+						    WLAN_LEGACY_MAC_ID);
 	if (vdev == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("vdev object is NULL"));
@@ -706,7 +707,7 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 
 	req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
 	if (!req->scan_req.scan_id) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 		qdf_mem_free(req);
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid scan ID"));
@@ -730,7 +731,7 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 		/* Don't free req here, ucfg_scan_start will do free */
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Issue scan req failed"));
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 	return status;
 }
 
