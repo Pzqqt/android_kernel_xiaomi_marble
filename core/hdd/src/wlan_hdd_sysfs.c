@@ -59,7 +59,7 @@ static ssize_t show_driver_version(struct kobject *kobj,
 				   char *buf)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	ssize_t length;
 	int errno;
 
@@ -67,7 +67,7 @@ static ssize_t show_driver_version(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
 	if (errno)
 		return errno;
 
@@ -75,7 +75,7 @@ static ssize_t show_driver_version(struct kobject *kobj,
 	length = __show_driver_version(buf);
 	cds_ssr_unprotect(__func__);
 
-	hdd_psoc_sync_op_stop(psoc_sync);
+	osif_psoc_sync_op_stop(psoc_sync);
 
 	return length;
 }
@@ -107,7 +107,7 @@ static ssize_t show_fw_version(struct kobject *kobj,
 			       char *buf)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	ssize_t length;
 	int errno;
 
@@ -115,7 +115,7 @@ static ssize_t show_fw_version(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
 	if (errno)
 		return errno;
 
@@ -123,7 +123,7 @@ static ssize_t show_fw_version(struct kobject *kobj,
 	length = __show_fw_version(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
 
-	hdd_psoc_sync_op_stop(psoc_sync);
+	osif_psoc_sync_op_stop(psoc_sync);
 
 	return length;
 };
@@ -260,7 +260,7 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 				       char *buf)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	ssize_t length;
 	int errno;
 
@@ -268,7 +268,7 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	errno = hdd_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
 	if (errno)
 		return errno;
 
@@ -276,7 +276,7 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 	length = __show_device_power_stats(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
 
-	hdd_psoc_sync_op_stop(psoc_sync);
+	osif_psoc_sync_op_stop(psoc_sync);
 
 	return length;
 }

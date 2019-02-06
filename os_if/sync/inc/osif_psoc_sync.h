@@ -24,23 +24,23 @@
 #include "qdf_types.h"
 
 /**
- * struct hdd_psoc_sync - opaque synchronization handle for a psoc
+ * struct osif_psoc_sync - opaque synchronization handle for a psoc
  */
-struct hdd_psoc_sync;
+struct osif_psoc_sync;
 
 /**
- * hdd_psoc_sync_create() - create a psoc synchronization context
+ * osif_psoc_sync_create() - create a psoc synchronization context
  * @dsc_driver: parent dsc_driver to the psoc
  * @out_psoc_sync: out parameter for the new synchronization context
  *
  * Return: Errno
  */
 qdf_must_check int
-hdd_psoc_sync_create(struct dsc_driver *dsc_driver,
-		     struct hdd_psoc_sync **out_psoc_sync);
+osif_psoc_sync_create(struct dsc_driver *dsc_driver,
+		      struct osif_psoc_sync **out_psoc_sync);
 
 /**
- * hdd_psoc_sync_create_with_trans() - create a psoc synchronization context
+ * osif_psoc_sync_create_with_trans() - create a psoc synchronization context
  * @dsc_driver: parent dsc_driver to the psoc
  * @out_psoc_sync: out parameter for the new synchronization context
  *
@@ -48,58 +48,58 @@ hdd_psoc_sync_create(struct dsc_driver *dsc_driver,
  *
  * Return: Errno
  */
-#define hdd_psoc_sync_create_with_trans(dsc_driver, out_psoc_sync) \
-	__hdd_psoc_sync_create_with_trans(dsc_driver, out_psoc_sync, __func__)
+#define osif_psoc_sync_create_with_trans(dsc_driver, out_psoc_sync) \
+	__osif_psoc_sync_create_with_trans(dsc_driver, out_psoc_sync, __func__)
 
 qdf_must_check int
-__hdd_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
-				  struct hdd_psoc_sync **out_psoc_sync,
-				  const char *desc);
+__osif_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
+				   struct osif_psoc_sync **out_psoc_sync,
+				   const char *desc);
 
 /**
- * hdd_psoc_sync_destroy() - destroy a psoc synchronization context
+ * osif_psoc_sync_destroy() - destroy a psoc synchronization context
  * @psoc_sync: the context to destroy
  *
  * Return: none
  */
-void hdd_psoc_sync_destroy(struct hdd_psoc_sync *psoc_sync);
+void osif_psoc_sync_destroy(struct osif_psoc_sync *psoc_sync);
 
 /**
- * hdd_psoc_sync_register() - register a psoc for operations/transitions
+ * osif_psoc_sync_register() - register a psoc for operations/transitions
  * @dev: the device to use as the operation/transition lookup key
  * @psoc_sync: the psoc synchronization context to register
  *
  * Return: none
  */
-void hdd_psoc_sync_register(struct device *dev,
-			    struct hdd_psoc_sync *psoc_sync);
+void osif_psoc_sync_register(struct device *dev,
+			     struct osif_psoc_sync *psoc_sync);
 
 /**
- * hdd_psoc_sync_unregister() - unregister a psoc for operations/transitions
+ * osif_psoc_sync_unregister() - unregister a psoc for operations/transitions
  * @dev: the device originally used to register the psoc_sync context
  *
  * Return: the psoc synchronization context that was registered for @dev
  */
-struct hdd_psoc_sync *hdd_psoc_sync_unregister(struct device *dev);
+struct osif_psoc_sync *osif_psoc_sync_unregister(struct device *dev);
 
 /**
- * hdd_psoc_sync_trans_start() - attempt to start a transition on @dev
+ * osif_psoc_sync_trans_start() - attempt to start a transition on @dev
  * @dev: the device to transition
  * @out_psoc_sync: out parameter for the synchronization context registered with
  *	@dev, populated on success
  *
  * Return: Errno
  */
-#define hdd_psoc_sync_trans_start(dev, out_psoc_sync) \
-	__hdd_psoc_sync_trans_start(dev, out_psoc_sync, __func__)
+#define osif_psoc_sync_trans_start(dev, out_psoc_sync) \
+	__osif_psoc_sync_trans_start(dev, out_psoc_sync, __func__)
 
 qdf_must_check int
-__hdd_psoc_sync_trans_start(struct device *dev,
-			    struct hdd_psoc_sync **out_psoc_sync,
-			    const char *desc);
+__osif_psoc_sync_trans_start(struct device *dev,
+			     struct osif_psoc_sync **out_psoc_sync,
+			     const char *desc);
 
 /**
- * hdd_psoc_sync_trans_start_wait() - attempt to start a transition on @dev,
+ * osif_psoc_sync_trans_start_wait() - attempt to start a transition on @dev,
  *	blocking if a conflicting transition is in flight
  * @dev: the device to transition
  * @out_psoc_sync: out parameter for the synchronization context registered with
@@ -107,77 +107,77 @@ __hdd_psoc_sync_trans_start(struct device *dev,
  *
  * Return: Errno
  */
-#define hdd_psoc_sync_trans_start_wait(dev, out_psoc_sync) \
-	__hdd_psoc_sync_trans_start_wait(dev, out_psoc_sync, __func__)
+#define osif_psoc_sync_trans_start_wait(dev, out_psoc_sync) \
+	__osif_psoc_sync_trans_start_wait(dev, out_psoc_sync, __func__)
 
 qdf_must_check int
-__hdd_psoc_sync_trans_start_wait(struct device *dev,
-				 struct hdd_psoc_sync **out_psoc_sync,
-				 const char *desc);
+__osif_psoc_sync_trans_start_wait(struct device *dev,
+				  struct osif_psoc_sync **out_psoc_sync,
+				  const char *desc);
 
 /**
- * hdd_psoc_sync_trans_resume() - resume a transition on @dev
+ * osif_psoc_sync_trans_resume() - resume a transition on @dev
  * @dev: the device under transition
  * @out_psoc_sync: out parameter for the synchronization context registered with
  *	@dev, populated on success
  *
  * Return: Errno
  */
-int hdd_psoc_sync_trans_resume(struct device *dev,
-			       struct hdd_psoc_sync **out_psoc_sync);
+int osif_psoc_sync_trans_resume(struct device *dev,
+				struct osif_psoc_sync **out_psoc_sync);
 
 /**
- * hdd_psoc_sync_trans_stop() - stop a transition associated with @psoc_sync
+ * osif_psoc_sync_trans_stop() - stop a transition associated with @psoc_sync
  * @psoc_sync: the synchonization context tracking the transition
  *
  * Return: none
  */
-void hdd_psoc_sync_trans_stop(struct hdd_psoc_sync *psoc_sync);
+void osif_psoc_sync_trans_stop(struct osif_psoc_sync *psoc_sync);
 
 /**
- * hdd_psoc_sync_assert_trans_protected() - assert that @dev is currently
+ * osif_psoc_sync_assert_trans_protected() - assert that @dev is currently
  *	protected by a transition
  * @dev: the device to check
  *
  * Return: none
  */
-void hdd_psoc_sync_assert_trans_protected(struct device *dev);
+void osif_psoc_sync_assert_trans_protected(struct device *dev);
 
 /**
- * hdd_psoc_sync_op_start() - attempt to start an operation on @dev
+ * osif_psoc_sync_op_start() - attempt to start an operation on @dev
  * @dev: the device to operate against
  * @out_psoc_sync: out parameter for the synchronization context registered with
  *	@dev, populated on success
  *
  * Return: Errno
  */
-#define hdd_psoc_sync_op_start(dev, out_psoc_sync) \
-	__hdd_psoc_sync_op_start(dev, out_psoc_sync, __func__)
+#define osif_psoc_sync_op_start(dev, out_psoc_sync) \
+	__osif_psoc_sync_op_start(dev, out_psoc_sync, __func__)
 
 qdf_must_check int
-__hdd_psoc_sync_op_start(struct device *dev,
-			 struct hdd_psoc_sync **out_psoc_sync,
-			 const char *func);
+__osif_psoc_sync_op_start(struct device *dev,
+			  struct osif_psoc_sync **out_psoc_sync,
+			  const char *func);
 
 /**
- * hdd_psoc_sync_op_stop() - stop an operation associated with @psoc_sync
+ * osif_psoc_sync_op_stop() - stop an operation associated with @psoc_sync
  * @psoc_sync: the synchonization context tracking the operation
  *
  * Return: none
  */
-#define hdd_psoc_sync_op_stop(dev) \
-	__hdd_psoc_sync_op_stop(dev, __func__)
+#define osif_psoc_sync_op_stop(dev) \
+	__osif_psoc_sync_op_stop(dev, __func__)
 
-void __hdd_psoc_sync_op_stop(struct hdd_psoc_sync *psoc_sync,
-			     const char *func);
+void __osif_psoc_sync_op_stop(struct osif_psoc_sync *psoc_sync,
+			      const char *func);
 
 /**
- * hdd_psoc_sync_wait_for_ops() - wait until all @psoc_sync operations complete
+ * osif_psoc_sync_wait_for_ops() - wait until all @psoc_sync operations complete
  * @psoc_sync: the synchonization context tracking the operations
  *
  * Return: None
  */
-void hdd_psoc_sync_wait_for_ops(struct hdd_psoc_sync *psoc_sync);
+void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *psoc_sync);
 
 #endif /* __OSIF_PSOC_SYNC_H */
 

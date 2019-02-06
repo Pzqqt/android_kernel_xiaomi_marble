@@ -454,30 +454,30 @@ static int hdd_soc_probe(struct device *dev,
 			 enum qdf_bus_type bus_type)
 {
 	struct dsc_driver *dsc_driver = hdd_driver_get()->dsc_driver;
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
 	hdd_info("probing driver");
 
-	errno = hdd_psoc_sync_create_with_trans(dsc_driver, &psoc_sync);
+	errno = osif_psoc_sync_create_with_trans(dsc_driver, &psoc_sync);
 	if (errno)
 		return errno;
 
-	hdd_psoc_sync_register(dev, psoc_sync);
+	osif_psoc_sync_register(dev, psoc_sync);
 	errno = __hdd_soc_probe(dev, bdev, bid, bus_type);
 	if (errno)
 		goto destroy_sync;
 
-	hdd_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
 
 	return 0;
 
 destroy_sync:
-	hdd_psoc_sync_unregister(dev);
-	hdd_psoc_sync_wait_for_ops(psoc_sync);
+	osif_psoc_sync_unregister(dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
-	hdd_psoc_sync_trans_stop(psoc_sync);
-	hdd_psoc_sync_destroy(psoc_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 
 	return errno;
 }
@@ -544,11 +544,11 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 				   const struct hif_bus_id *bid,
 				   enum qdf_bus_type bus_type)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
 	/* SSR transition is initiated at the beginning of soc shutdown */
-	errno = hdd_psoc_sync_trans_resume(dev, &psoc_sync);
+	errno = osif_psoc_sync_trans_resume(dev, &psoc_sync);
 	QDF_BUG(!errno);
 	if (errno)
 		return errno;
@@ -557,7 +557,7 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 	if (errno)
 		return errno;
 
-	hdd_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
 
 	return 0;
 }
@@ -611,21 +611,21 @@ static void __hdd_soc_remove(struct device *dev)
  */
 static void hdd_soc_remove(struct device *dev)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
 	/* by design, this will fail to lookup if we never probed the SoC */
-	errno = hdd_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
 	if (errno)
 		return;
 
-	hdd_psoc_sync_unregister(dev);
-	hdd_psoc_sync_wait_for_ops(psoc_sync);
+	osif_psoc_sync_unregister(dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	__hdd_soc_remove(dev);
 
-	hdd_psoc_sync_trans_stop(psoc_sync);
-	hdd_psoc_sync_destroy(psoc_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -777,15 +777,15 @@ unlock:
  */
 static void hdd_soc_recovery_shutdown(struct device *dev)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
-	errno = hdd_psoc_sync_trans_start_wait(dev, &psoc_sync);
+	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
 	QDF_BUG(!errno);
 	if (errno)
 		return;
 
-	hdd_psoc_sync_wait_for_ops(psoc_sync);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	__hdd_soc_recovery_shutdown();
 

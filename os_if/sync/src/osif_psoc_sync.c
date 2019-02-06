@@ -28,35 +28,36 @@
 #include "wlan_dsc_vdev.h"
 
 /**
- * struct hdd_psoc_sync - a psoc synchronization context
+ * struct osif_psoc_sync - a psoc synchronization context
  * @dev: the device used as a lookup key
  * @dsc_psoc: the dsc_psoc used for synchronization
  * @in_use: indicates if the context is being used
  */
-struct hdd_psoc_sync {
+struct osif_psoc_sync {
 	struct device *dev;
 	struct dsc_psoc *dsc_psoc;
 	bool in_use;
 };
 
-static struct hdd_psoc_sync __hdd_psoc_sync_arr[WLAN_MAX_PSOCS];
-static qdf_spinlock_t __hdd_psoc_sync_lock;
+static struct osif_psoc_sync __osif_psoc_sync_arr[WLAN_MAX_PSOCS];
+static qdf_spinlock_t __osif_psoc_sync_lock;
 
-#define hdd_psoc_sync_lock_create() qdf_spinlock_create(&__hdd_psoc_sync_lock)
-#define hdd_psoc_sync_lock_destroy() qdf_spinlock_destroy(&__hdd_psoc_sync_lock)
-#define hdd_psoc_sync_lock() qdf_spin_lock_bh(&__hdd_psoc_sync_lock)
-#define hdd_psoc_sync_unlock() qdf_spin_unlock_bh(&__hdd_psoc_sync_lock)
-#define hdd_psoc_sync_lock_assert() \
-	QDF_BUG(qdf_spin_is_locked(&__hdd_psoc_sync_lock))
+#define osif_psoc_sync_lock_create() qdf_spinlock_create(&__osif_psoc_sync_lock)
+#define osif_psoc_sync_lock_destroy() \
+	qdf_spinlock_destroy(&__osif_psoc_sync_lock)
+#define osif_psoc_sync_lock() qdf_spin_lock_bh(&__osif_psoc_sync_lock)
+#define osif_psoc_sync_unlock() qdf_spin_unlock_bh(&__osif_psoc_sync_lock)
+#define osif_psoc_sync_lock_assert() \
+	QDF_BUG(qdf_spin_is_locked(&__osif_psoc_sync_lock))
 
-static struct hdd_psoc_sync *hdd_psoc_sync_lookup(struct device *dev)
+static struct osif_psoc_sync *osif_psoc_sync_lookup(struct device *dev)
 {
 	int i;
 
-	hdd_psoc_sync_lock_assert();
+	osif_psoc_sync_lock_assert();
 
-	for (i = 0; i < QDF_ARRAY_SIZE(__hdd_psoc_sync_arr); i++) {
-		struct hdd_psoc_sync *psoc_sync = __hdd_psoc_sync_arr + i;
+	for (i = 0; i < QDF_ARRAY_SIZE(__osif_psoc_sync_arr); i++) {
+		struct osif_psoc_sync *psoc_sync = __osif_psoc_sync_arr + i;
 
 		if (psoc_sync->dev == dev)
 			return psoc_sync;
@@ -65,14 +66,14 @@ static struct hdd_psoc_sync *hdd_psoc_sync_lookup(struct device *dev)
 	return NULL;
 }
 
-static struct hdd_psoc_sync *hdd_psoc_sync_get(void)
+static struct osif_psoc_sync *osif_psoc_sync_get(void)
 {
 	int i;
 
-	hdd_psoc_sync_lock_assert();
+	osif_psoc_sync_lock_assert();
 
-	for (i = 0; i < QDF_ARRAY_SIZE(__hdd_psoc_sync_arr); i++) {
-		struct hdd_psoc_sync *psoc_sync = __hdd_psoc_sync_arr + i;
+	for (i = 0; i < QDF_ARRAY_SIZE(__osif_psoc_sync_arr); i++) {
+		struct osif_psoc_sync *psoc_sync = __osif_psoc_sync_arr + i;
 
 		if (!psoc_sync->in_use) {
 			psoc_sync->in_use = true;
@@ -83,18 +84,18 @@ static struct hdd_psoc_sync *hdd_psoc_sync_get(void)
 	return NULL;
 }
 
-static void hdd_psoc_sync_put(struct hdd_psoc_sync *psoc_sync)
+static void osif_psoc_sync_put(struct osif_psoc_sync *psoc_sync)
 {
-	hdd_psoc_sync_lock_assert();
+	osif_psoc_sync_lock_assert();
 
 	qdf_mem_zero(psoc_sync, sizeof(*psoc_sync));
 }
 
-int hdd_psoc_sync_create(struct dsc_driver *dsc_driver,
-			 struct hdd_psoc_sync **out_psoc_sync)
+int osif_psoc_sync_create(struct dsc_driver *dsc_driver,
+			  struct osif_psoc_sync **out_psoc_sync)
 {
 	QDF_STATUS status;
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 
 	QDF_BUG(dsc_driver);
 	if (!dsc_driver)
@@ -104,9 +105,9 @@ int hdd_psoc_sync_create(struct dsc_driver *dsc_driver,
 	if (!out_psoc_sync)
 		return -EINVAL;
 
-	hdd_psoc_sync_lock();
-	psoc_sync = hdd_psoc_sync_get();
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	psoc_sync = osif_psoc_sync_get();
+	osif_psoc_sync_unlock();
 	if (!psoc_sync)
 		return -ENOMEM;
 
@@ -119,22 +120,22 @@ int hdd_psoc_sync_create(struct dsc_driver *dsc_driver,
 	return 0;
 
 sync_put:
-	hdd_psoc_sync_lock();
-	hdd_psoc_sync_put(psoc_sync);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	osif_psoc_sync_put(psoc_sync);
+	osif_psoc_sync_unlock();
 
 	return qdf_status_to_os_return(status);
 }
 
-int __hdd_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
-				      struct hdd_psoc_sync **out_psoc_sync,
-				      const char *desc)
+int __osif_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
+				       struct osif_psoc_sync **out_psoc_sync,
+				       const char *desc)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	QDF_STATUS status;
 	int errno;
 
-	errno = hdd_psoc_sync_create(dsc_driver, &psoc_sync);
+	errno = osif_psoc_sync_create(dsc_driver, &psoc_sync);
 	if (errno)
 		return errno;
 
@@ -147,12 +148,12 @@ int __hdd_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
 	return 0;
 
 sync_destroy:
-	hdd_psoc_sync_destroy(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
 
 	return qdf_status_to_os_return(status);
 }
 
-void hdd_psoc_sync_destroy(struct hdd_psoc_sync *psoc_sync)
+void osif_psoc_sync_destroy(struct osif_psoc_sync *psoc_sync)
 {
 	QDF_BUG(psoc_sync);
 	if (!psoc_sync)
@@ -160,56 +161,57 @@ void hdd_psoc_sync_destroy(struct hdd_psoc_sync *psoc_sync)
 
 	dsc_psoc_destroy(&psoc_sync->dsc_psoc);
 
-	hdd_psoc_sync_lock();
-	hdd_psoc_sync_put(psoc_sync);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	osif_psoc_sync_put(psoc_sync);
+	osif_psoc_sync_unlock();
 }
 
-void hdd_psoc_sync_register(struct device *dev,
-			    struct hdd_psoc_sync *psoc_sync)
+void osif_psoc_sync_register(struct device *dev,
+			     struct osif_psoc_sync *psoc_sync)
 {
 	QDF_BUG(dev);
 	QDF_BUG(psoc_sync);
 	if (!psoc_sync)
 		return;
 
-	hdd_psoc_sync_lock();
+	osif_psoc_sync_lock();
 	psoc_sync->dev = dev;
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_unlock();
 }
 
-struct hdd_psoc_sync *hdd_psoc_sync_unregister(struct device *dev)
+struct osif_psoc_sync *osif_psoc_sync_unregister(struct device *dev)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 
 	QDF_BUG(dev);
 	if (!dev)
 		return NULL;
 
-	hdd_psoc_sync_lock();
-	psoc_sync = hdd_psoc_sync_lookup(dev);
+	osif_psoc_sync_lock();
+	psoc_sync = osif_psoc_sync_lookup(dev);
 	if (psoc_sync)
 		psoc_sync->dev = NULL;
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_unlock();
 
 	return psoc_sync;
 }
 
 typedef QDF_STATUS (*psoc_start_func)(struct dsc_psoc *, const char *);
 
-static int __hdd_psoc_sync_start_callback(struct device *dev,
-					  struct hdd_psoc_sync **out_psoc_sync,
-					  const char *desc,
-					  psoc_start_func psoc_start_cb)
+static int
+__osif_psoc_sync_start_callback(struct device *dev,
+				struct osif_psoc_sync **out_psoc_sync,
+				const char *desc,
+				psoc_start_func psoc_start_cb)
 {
 	QDF_STATUS status;
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 
-	hdd_psoc_sync_lock_assert();
+	osif_psoc_sync_lock_assert();
 
 	*out_psoc_sync = NULL;
 
-	psoc_sync = hdd_psoc_sync_lookup(dev);
+	psoc_sync = osif_psoc_sync_lookup(dev);
 	if (!psoc_sync)
 		return -EAGAIN;
 
@@ -222,30 +224,30 @@ static int __hdd_psoc_sync_start_callback(struct device *dev,
 	return 0;
 }
 
-int __hdd_psoc_sync_trans_start(struct device *dev,
-				struct hdd_psoc_sync **out_psoc_sync,
-				const char *desc)
+int __osif_psoc_sync_trans_start(struct device *dev,
+				 struct osif_psoc_sync **out_psoc_sync,
+				 const char *desc)
 {
 	int errno;
 
-	hdd_psoc_sync_lock();
-	errno = __hdd_psoc_sync_start_callback(dev, out_psoc_sync, desc,
-					       dsc_psoc_trans_start);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	errno = __osif_psoc_sync_start_callback(dev, out_psoc_sync, desc,
+						dsc_psoc_trans_start);
+	osif_psoc_sync_unlock();
 
 	return errno;
 }
 
-int __hdd_psoc_sync_trans_start_wait(struct device *dev,
-				     struct hdd_psoc_sync **out_psoc_sync,
-				     const char *desc)
+int __osif_psoc_sync_trans_start_wait(struct device *dev,
+				      struct osif_psoc_sync **out_psoc_sync,
+				      const char *desc)
 {
 	int errno;
 
-	hdd_psoc_sync_lock();
-	errno = __hdd_psoc_sync_start_callback(dev, out_psoc_sync, desc,
-					       dsc_psoc_trans_start_wait);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	errno = __osif_psoc_sync_start_callback(dev, out_psoc_sync, desc,
+						dsc_psoc_trans_start_wait);
+	osif_psoc_sync_unlock();
 
 	return errno;
 }
@@ -257,82 +259,82 @@ static QDF_STATUS __assert_trans_cb(struct dsc_psoc *dsc_psoc, const char *desc)
 	return QDF_STATUS_SUCCESS;
 }
 
-int hdd_psoc_sync_trans_resume(struct device *dev,
-			       struct hdd_psoc_sync **out_psoc_sync)
+int osif_psoc_sync_trans_resume(struct device *dev,
+				struct osif_psoc_sync **out_psoc_sync)
 {
 	int errno;
 
-	hdd_psoc_sync_lock();
-	errno = __hdd_psoc_sync_start_callback(dev, out_psoc_sync, NULL,
-					       __assert_trans_cb);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	errno = __osif_psoc_sync_start_callback(dev, out_psoc_sync, NULL,
+						__assert_trans_cb);
+	osif_psoc_sync_unlock();
 
 	return errno;
 }
 
-void hdd_psoc_sync_trans_stop(struct hdd_psoc_sync *psoc_sync)
+void osif_psoc_sync_trans_stop(struct osif_psoc_sync *psoc_sync)
 {
 	dsc_psoc_trans_stop(psoc_sync->dsc_psoc);
 }
 
-void hdd_psoc_sync_assert_trans_protected(struct device *dev)
+void osif_psoc_sync_assert_trans_protected(struct device *dev)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 
-	hdd_psoc_sync_lock();
+	osif_psoc_sync_lock();
 
-	psoc_sync = hdd_psoc_sync_lookup(dev);
+	psoc_sync = osif_psoc_sync_lookup(dev);
 	QDF_BUG(psoc_sync);
 	if (psoc_sync)
 		dsc_psoc_assert_trans_protected(psoc_sync->dsc_psoc);
 
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_unlock();
 }
 
-int __hdd_psoc_sync_op_start(struct device *dev,
-			     struct hdd_psoc_sync **out_psoc_sync,
-			     const char *func)
+int __osif_psoc_sync_op_start(struct device *dev,
+			      struct osif_psoc_sync **out_psoc_sync,
+			      const char *func)
 {
 	int errno;
 
-	hdd_psoc_sync_lock();
-	errno = __hdd_psoc_sync_start_callback(dev, out_psoc_sync, func,
-					       _dsc_psoc_op_start);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_lock();
+	errno = __osif_psoc_sync_start_callback(dev, out_psoc_sync, func,
+						_dsc_psoc_op_start);
+	osif_psoc_sync_unlock();
 
 	return errno;
 }
 
-void __hdd_psoc_sync_op_stop(struct hdd_psoc_sync *psoc_sync,
-			     const char *func)
+void __osif_psoc_sync_op_stop(struct osif_psoc_sync *psoc_sync,
+			      const char *func)
 {
 	_dsc_psoc_op_stop(psoc_sync->dsc_psoc, func);
 }
 
-void hdd_psoc_sync_wait_for_ops(struct hdd_psoc_sync *psoc_sync)
+void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *psoc_sync)
 {
 	dsc_psoc_wait_for_ops(psoc_sync->dsc_psoc);
 }
 
 void osif_psoc_sync_init(void)
 {
-	hdd_psoc_sync_lock_create();
+	osif_psoc_sync_lock_create();
 }
 
 void osif_psoc_sync_deinit(void)
 {
-	hdd_psoc_sync_lock_destroy();
+	osif_psoc_sync_lock_destroy();
 }
 
 static QDF_STATUS
 __osif_psoc_sync_dsc_vdev_create(struct device *dev,
 				 struct dsc_vdev **out_dsc_vdev)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 
-	hdd_psoc_sync_lock_assert();
+	osif_psoc_sync_lock_assert();
 
-	psoc_sync = hdd_psoc_sync_lookup(dev);
+	psoc_sync = osif_psoc_sync_lookup(dev);
 	if (!psoc_sync)
 		return QDF_STATUS_E_INVAL;
 
@@ -344,9 +346,9 @@ QDF_STATUS osif_psoc_sync_dsc_vdev_create(struct device *dev,
 {
 	QDF_STATUS status;
 
-	hdd_psoc_sync_lock();
+	osif_psoc_sync_lock();
 	status = __osif_psoc_sync_dsc_vdev_create(dev, out_dsc_vdev);
-	hdd_psoc_sync_unlock();
+	osif_psoc_sync_unlock();
 
 	return status;
 }

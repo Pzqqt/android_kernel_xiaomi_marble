@@ -9266,22 +9266,22 @@ void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
  */
 static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 {
-	struct hdd_psoc_sync *psoc_sync;
+	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
 	hdd_enter();
 
-	errno = hdd_psoc_sync_trans_start(hdd_ctx->parent_dev, &psoc_sync);
+	errno = osif_psoc_sync_trans_start(hdd_ctx->parent_dev, &psoc_sync);
 	if (errno) {
 		hdd_info("psoc busy, abort idle shutdown; errno:%d", errno);
 		goto exit;
 	}
 
-	hdd_psoc_sync_wait_for_ops(psoc_sync);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
 
 	QDF_BUG(!hdd_wlan_stop_modules(hdd_ctx, false));
 
-	hdd_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
 
 exit:
 	hdd_exit();
