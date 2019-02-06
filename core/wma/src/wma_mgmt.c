@@ -345,7 +345,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	void *peer;
 	struct cdp_pdev *pdev;
 	tpDeleteStaContext del_sta_ctx;
-	tpSirIbssPeerInactivityInd p_inactivity;
+	struct ibss_peer_inactivity_ind *inactivity;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -378,19 +378,17 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 
 	switch (kickout_event->reason) {
 	case WMI_PEER_STA_KICKOUT_REASON_IBSS_DISCONNECT:
-		p_inactivity = (tpSirIbssPeerInactivityInd)
-					qdf_mem_malloc(sizeof(
-						tSirIbssPeerInactivityInd));
-		if (!p_inactivity) {
+		inactivity = qdf_mem_malloc(sizeof(*inactivity));
+		if (!inactivity) {
 			WMA_LOGE("QDF MEM Alloc Failed for tSirIbssPeerInactivity");
 			return -ENOMEM;
 		}
 
-		p_inactivity->staIdx = peer_id;
-		qdf_mem_copy(p_inactivity->peer_addr.bytes, macaddr,
+		inactivity->staIdx = peer_id;
+		qdf_mem_copy(inactivity->peer_addr.bytes, macaddr,
 			     IEEE80211_ADDR_LEN);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
-			     (void *)p_inactivity, 0);
+			     inactivity, 0);
 		goto exit_handler;
 #ifdef FEATURE_WLAN_TDLS
 	case WMI_PEER_STA_KICKOUT_REASON_TDLS_DISCONNECT:

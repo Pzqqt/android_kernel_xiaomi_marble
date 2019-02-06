@@ -1697,11 +1697,11 @@ typedef struct sSmeIbssPeerInd {
 	/* Beacon will be appended for new Peer indication. */
 } tSmeIbssPeerInd, *tpSmeIbssPeerInd;
 
-typedef struct sSirIbssPeerInactivityInd {
+struct ibss_peer_inactivity_ind {
 	uint8_t bssIdx;
 	uint8_t staIdx;
 	struct qdf_mac_addr peer_addr;
-} tSirIbssPeerInactivityInd, *tpSirIbssPeerInactivityInd;
+};
 
 /**
  * struct lim_channel_status

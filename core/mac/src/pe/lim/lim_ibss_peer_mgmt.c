@@ -1784,27 +1784,27 @@ void lim_ibss_decide_protection_on_delete(struct mac_context *mac_ctx,
 	}
 }
 
-/** -----------------------------------------------------------------
-   \fn __lim_ibss_peer_inactivity_handler
-   \brief Internal function. Deletes FW indicated peer which is inactive
- \
-   \param  struct mac_context *   mac
-   \param  struct pe_session *      pe_session
-   \param  tpSirIbssPeerInactivityInd peerInactivityInd
-   \return None
-   -----------------------------------------------------------------*/
+/**
+ * __lim_ibss_peer_inactivity_handler() - Handle inactive IBSS peer
+ * @mac: Global MAC context
+ * @pe_session: PE session
+ * @ind: IBSS peer inactivity indication
+ *
+ * Internal function. Deletes FW indicated peer which is inactive
+ *
+ * Return: None
+ */
 static void
 __lim_ibss_peer_inactivity_handler(struct mac_context *mac,
 				   struct pe_session *pe_session,
-				   tpSirIbssPeerInactivityInd peerInactivityInd)
+				   struct ibss_peer_inactivity_ind *ind)
 {
 	if (pe_session->limMlmState != eLIM_MLM_BSS_STARTED_STATE) {
 		return;
 	}
 
 	/* delete the peer for which heartbeat is observed */
-	lim_ibss_delete_peer(mac, pe_session,
-					  peerInactivityInd->peer_addr.bytes);
+	lim_ibss_delete_peer(mac, pe_session, ind->peer_addr.bytes);
 }
 
 /** -------------------------------------------------------------
@@ -1825,8 +1825,7 @@ void lim_process_ibss_peer_inactivity(struct mac_context *mac, void *buf)
 	 */
 	uint8_t i;
 
-	tSirIbssPeerInactivityInd *peerInactivityInd =
-		(tSirIbssPeerInactivityInd *) buf;
+	struct ibss_peer_inactivity_ind *peerInactivityInd = buf;
 
 	/*
 	 * If IBSS is not started or heartbeat offload is not enabled
