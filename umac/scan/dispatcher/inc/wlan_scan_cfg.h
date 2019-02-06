@@ -910,6 +910,38 @@
 			CFG_SCAN_AGING_TIME_DEFAULT, \
 			CFG_VALUE_OR_DEFAULT, \
 			"scan aging time")
+/*
+ * <ini>
+ * extscan_adaptive_dwell_mode  Enable adaptive dwell mode
+ * during ext scan
+ * @Min: 0
+ * @Max: 4
+ * @Default: 1
+ *
+ * This ini will set the algo used in dwell time optimization
+ * during ext scan. see enum scan_dwelltime_adaptive_mode.
+ * Acceptable values for this:
+ * 0: Default (Use firmware default mode)
+ * 1: Conservative optimization
+ * 2: Moderate optimization
+ * 3: Aggressive optimization
+ * 4: Static
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE CFG_INI_UINT( \
+			"extscan_adaptive_dwell_mode", \
+			0, \
+			4, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"ext scan adaptive dwell mode")
 
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
@@ -931,6 +963,7 @@
 	CFG(CFG_IDLE_TIME_CONC) \
 	CFG(CFG_ENABLE_MAC_ADDR_SPOOFING) \
 	CFG(CFG_SCAN_AGING_TIME) \
+	CFG(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */

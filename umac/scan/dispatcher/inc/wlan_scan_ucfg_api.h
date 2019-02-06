@@ -648,6 +648,16 @@ bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc);
 bool ucfg_scan_is_mac_spoofing_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_scan_get_extscan_adaptive_dwell_mode() - API to get the adaptive dwell
+ * mode during ext scan
+ * @psoc: pointer to psoc object
+ *
+ * Return: value of type enum scan_dwelltime_adaptive_mode
+ */
+enum scan_dwelltime_adaptive_mode
+ucfg_scan_get_extscan_adaptive_dwell_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_scan_cfg_set_active_dwelltime() - API to set scan active dwelltime
  * @psoc: pointer to psoc object
  * @dwell_time: scan active dwell time

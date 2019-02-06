@@ -990,6 +990,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE_NC);
 	scan_obj->scan_def.enable_mac_spoofing =
 			cfg_get(psoc, CFG_ENABLE_MAC_ADDR_SPOOFING);
+	scan_obj->scan_def.extscan_adaptive_dwell_mode =
+			cfg_get(psoc, CFG_ADAPTIVE_EXTSCAN_DWELL_MODE);
 
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
@@ -1823,6 +1825,20 @@ bool ucfg_scan_is_mac_spoofing_enabled(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return scan_obj->scan_def.enable_mac_spoofing;
+}
+
+enum scan_dwelltime_adaptive_mode
+ucfg_scan_get_extscan_adaptive_dwell_mode(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return cfg_default(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE);
+	}
+
+	return scan_obj->scan_def.extscan_adaptive_dwell_mode;
 }
 
 QDF_STATUS
