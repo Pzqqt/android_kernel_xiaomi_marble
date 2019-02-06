@@ -140,8 +140,6 @@ typedef enum {
 	eSAP_STA_SET_KEY_EVENT,
 	/* Event sent whenever there is MIC failure detected */
 	eSAP_STA_MIC_FAILURE_EVENT,
-	/* Event sent when user called wlansap_get_assoc_stations */
-	eSAP_ASSOC_STA_CALLBACK_EVENT,
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
@@ -314,29 +312,6 @@ typedef struct sap_StationMICFailureEvent_s {
 
 } tSap_StationMICFailureEvent;
 
-/*Structure to return MAC address of associated stations */
-typedef struct sap_AssocMacAddr_s {
-	struct qdf_mac_addr staMac; /* Associated station's MAC address */
-	uint8_t assocId;            /* Associated station's Association ID */
-	uint8_t staId;              /* Allocated station Id */
-	uint8_t ShortGI40Mhz;
-	uint8_t ShortGI20Mhz;
-	uint8_t Support40Mhz;
-	struct supported_rates supportedRates;
-} tSap_AssocMacAddr, *tpSap_AssocMacAddr;
-
-/*struct corresponding to SAP_ASSOC_STA_CALLBACK_EVENT */
-typedef struct sap_AssocStaListEvent_s {
-	QDF_MODULE_ID module;
-	/* module id that was passed in wlansap_get_assoc_stations API */
-	uint8_t noOfAssocSta;           /* Number of associated stations */
-	tpSap_AssocMacAddr pAssocStas;
-	/*
-	 * Pointer to pre allocated memory to obtain list of
-	 * associated stations passed in wlansap_get_assoc_stations API
-	 */
-} tSap_AssocStaListEvent;
-
 typedef struct sap_WPSPBCProbeReqEvent_s {
 	uint8_t status;
 	/* module id that was passed in wlansap_get_assoc_stations API */
@@ -417,8 +392,6 @@ typedef struct sap_Event_s {
 		tSap_StationSetKeyCompleteEvent sapStationSetKeyCompleteEvent;
 		/*SAP_STA_MIC_FAILURE_EVENT */
 		tSap_StationMICFailureEvent sapStationMICFailureEvent;
-		/*SAP_ASSOC_STA_CALLBACK_EVENT */
-		tSap_AssocStaListEvent sapAssocStaListEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
 		tSap_SendActionCnf sapActionCnf;

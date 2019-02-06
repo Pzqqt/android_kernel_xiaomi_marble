@@ -1633,7 +1633,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t staId;
 	QDF_STATUS qdf_status;
 	bool bAuthRequired = true;
-	tpSap_AssocMacAddr pAssocStasArray = NULL;
 	char unknownSTAEvent[IW_CUSTOM_MAX + 1];
 	char maxAssocExceededEvent[IW_CUSTOM_MAX + 1];
 	uint8_t we_custom_start_event[64];
@@ -2365,26 +2364,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_debug("WPS PBC probe req");
 		return QDF_STATUS_SUCCESS;
 
-	case eSAP_ASSOC_STA_CALLBACK_EVENT:
-		pAssocStasArray =
-			pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas;
-		if (pSapEvent->sapevt.sapAssocStaListEvent.noOfAssocSta != 0) {
-			for (i = 0;
-			     i <
-			     pSapEvent->sapevt.sapAssocStaListEvent.
-			     noOfAssocSta; i++) {
-				hdd_info("Associated Sta Num %d:assocId=%d, staId=%d, staMac="
-					 MAC_ADDRESS_STR, i + 1,
-					 pAssocStasArray->assocId,
-					 pAssocStasArray->staId,
-					 MAC_ADDR_ARRAY(pAssocStasArray->staMac.
-							bytes));
-				pAssocStasArray++;
-			}
-		}
-		qdf_mem_free(pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas);
-		pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas = NULL;
-		return QDF_STATUS_SUCCESS;
 	case eSAP_UNKNOWN_STA_JOIN:
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
 			 "JOIN_UNKNOWN_STA-%02x:%02x:%02x:%02x:%02x:%02x",
