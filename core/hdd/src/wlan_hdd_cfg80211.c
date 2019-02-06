@@ -15434,7 +15434,7 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 				    sec_ch, ch_params);
 
 	if (adapter->device_mode == QDF_STA_MODE &&
-	    hdd_ctx->config->enable_change_channel_bandwidth) {
+	    ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc)) {
 		connstate = station_ctx->conn_info.connState;
 		if (!(eConnectionState_Associated == connstate ||
 		      eConnectionState_Connecting == connstate)) {

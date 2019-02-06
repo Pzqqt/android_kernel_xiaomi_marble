@@ -996,6 +996,8 @@ struct wlan_mlme_chainmask {
  * @enabled_11d: enable 11d flag
  * @enable_beacon_reception_stats: enable beacon reception stats
  * @enable_remove_time_stamp_sync_cmd: Enable remove time stamp sync cmd
+ * @enable_change_channel_bandwidth: enable/disable change channel bw in mission
+ * mode
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1024,6 +1026,7 @@ struct wlan_mlme_generic {
 	bool enable_deauth_to_disassoc_map;
 	bool enable_beacon_reception_stats;
 	bool enable_remove_time_stamp_sync_cmd;
+	bool enable_change_channel_bandwidth;
 };
 
 /*

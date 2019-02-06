@@ -98,36 +98,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * extscan_adaptive_dwell_mode - Enable adaptive dwell mode
- * during ext scan
- * @Min: 0
- * @Max: 4
- * @Default: 1
- *
- * This ini will set the algo used in dwell time optimization
- * during ext scan. see enum scan_dwelltime_adaptive_mode.
- * Acceptable values for this:
- * 0: Default (Use firmware default mode)
- * 1: Conservative optimization
- * 2: Moderate optimization
- * 3: Aggressive optimization
- * 4: Static
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME     "extscan_adaptive_dwell_mode"
-#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MIN      (0)
-#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_MAX      (4)
-#define CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_DEFAULT  (1)
-
-/*
- * <ini>
  * gDot11Mode - SAP phy mode
  * @Min: 0
  * @Max: 12 (11ax)
@@ -224,34 +194,6 @@ enum hdd_dot11_mode {
 #endif
 
 /*
- * <ini>
- * gEnableChangeChannelBandWidth - Enable/Disable change
- * channel&bandwidth in the mission mode
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * 0 - not allow change channel&bandwidth by setMonChan
- * 1 - allow change channel&bandwidth by setMonChan
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_NAME    "gEnableChangeChannelBandWidth"
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_MIN     (0)
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_MAX     (1)
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT (1)
-#else
-#define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT (0)
-#endif
-
-/*
  * Type declarations
  */
 
@@ -277,7 +219,6 @@ struct hdd_config {
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool apf_enabled;
-	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	bool tx_orphan_enable;
@@ -285,7 +226,6 @@ struct hdd_config {
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
 	bool is_unit_test_framework_enabled;
-	bool enable_change_channel_bandwidth;
 
 	/* HDD converged ini items are listed below this*/
 	bool bug_on_reinit_failure;

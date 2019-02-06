@@ -6432,7 +6432,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 		return -EINVAL;
 	}
 	if (adapter->device_mode == QDF_STA_MODE &&
-	    hdd_ctx->config->enable_change_channel_bandwidth) {
+	    ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc)) {
 		connstate = sta_ctx->conn_info.connState;
 		if (eConnectionState_Associated == connstate ||
 		    eConnectionState_Connecting == connstate) {
@@ -6473,7 +6473,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	roam_profile.phyMode = ch_info->phy_mode;
 	roam_profile.ch_params.ch_width = bandwidth;
 	hdd_select_cbmode(adapter, chan, &roam_profile.ch_params);
-	if (hdd_ctx->config->enable_change_channel_bandwidth &&
+	if (ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc) &&
 	    (!sme_find_session_by_bssid(mac_handle, adapter->mac_addr.bytes))) {
 		status = sme_create_mon_session(mac_handle,
 						adapter->mac_addr.bytes,

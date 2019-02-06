@@ -3150,7 +3150,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 				nla_get_u32(tb[id]));
 
 	params->extscan_adaptive_dwell_mode =
-		hdd_ctx->config->extscan_adaptive_dwell_mode;
+		ucfg_scan_get_extscan_adaptive_dwell_mode(hdd_ctx->psoc);
 
 	hdd_debug("Configuration flags: %u",
 		  params->configuration_flags);
