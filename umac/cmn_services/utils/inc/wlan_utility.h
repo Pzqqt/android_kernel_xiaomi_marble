@@ -32,16 +32,6 @@
 #define TGT_IS_VALID_SNR(x)     ((x) >= 0 && (x) < TGT_MAX_SNR)
 #define TGT_IS_VALID_RSSI(x)    ((x) != 0xFF)
 
-/**
- * struct wlan_find_vdev_filter - find vdev filter object. this can be extended
- * @ifname:           interface name of vdev
- * @found_vdev:       found vdev object matching one or more of above params
- */
-struct wlan_find_vdev_filter {
-	char *ifname;
-	struct wlan_objmgr_vdev *found_vdev;
-};
-
 #ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * struct wlan_vdev_ch_check_filter - vdev chan check filter object
@@ -154,33 +144,6 @@ bool wlan_is_emulation_platform(uint32_t phy_version);
 uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id,
 				 wlan_objmgr_ref_dbgid dbg_id);
-
-/**
- * wlan_util_get_vdev_by_ifname() - function to return vdev object from psoc
- * matching given interface name
- * @psoc: psoc object
- * @ifname: interface name
- * @ref_id: object manager ref id
- *
- * This function returns vdev object from psoc by interface name. If found this
- * will also take reference with given ref_id
- *
- * Return : vdev object if found, NULL otherwise
- */
-struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
-				struct wlan_objmgr_psoc *psoc, char *ifname,
-				wlan_objmgr_ref_dbgid ref_id);
-
-/**
- * wlan_util_vdev_get_if_name() - get vdev's interface name
- * @vdev: VDEV object
- *
- * API to get vdev's interface name
- *
- * Return:
- * @id: vdev's interface name
- */
-uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_util_is_vdev_active() - Check for vdev active
