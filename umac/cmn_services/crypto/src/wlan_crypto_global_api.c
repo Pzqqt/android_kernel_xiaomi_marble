@@ -317,13 +317,13 @@ QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 				 struct wlan_crypto_pmksa *pmksa)
 {
 	uint8_t i, first_available_slot = 0;
-	uint8_t slot_found = 0;
+	bool slot_found = false;
 
 	/* find the empty slot or slot with same bssid */
 	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
 		if (!crypto_params->pmksa[i]) {
 			if (!slot_found) {
-				slot_found = 1;
+				slot_found = true;
 				first_available_slot = i;
 			}
 			continue;
