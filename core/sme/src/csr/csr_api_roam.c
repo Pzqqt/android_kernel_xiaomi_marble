@@ -15284,7 +15284,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 						uint32_t sessionId)
 {
-	tpSirChangeBIParams pMsg;
+	struct change_bi_params *pMsg;
 	uint16_t len = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -15303,7 +15303,7 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 		false;
 
 	/* Create the message and send to lim */
-	len = sizeof(tSirChangeBIParams);
+	len = sizeof(*pMsg);
 	pMsg = qdf_mem_malloc(len);
 	if (NULL == pMsg)
 		status = QDF_STATUS_E_NOMEM;

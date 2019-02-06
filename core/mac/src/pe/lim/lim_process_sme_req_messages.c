@@ -3886,9 +3886,10 @@ static void __lim_process_sme_session_update(struct mac_context *mac_ctx,
 /*
    Update the beacon Interval dynamically if beaconInterval is different in MCC
  */
-static void __lim_process_sme_change_bi(struct mac_context *mac, uint32_t *pMsgBuf)
+static void __lim_process_sme_change_bi(struct mac_context *mac,
+					uint32_t *pMsgBuf)
 {
-	tpSirChangeBIParams pChangeBIParams;
+	struct change_bi_params *pChangeBIParams;
 	struct pe_session *pe_session;
 	uint8_t sessionId = 0;
 	tUpdateBeaconParams beaconParams;
@@ -3901,7 +3902,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac, uint32_t *pMsgB
 	}
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
-	pChangeBIParams = (tpSirChangeBIParams) pMsgBuf;
+	pChangeBIParams = (struct change_bi_params *)pMsgBuf;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pChangeBIParams->bssid.bytes,
@@ -3942,7 +3943,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac, uint32_t *pMsgB
 	}
 
 	return;
-} /*** end __lim_process_sme_change_bi(struct mac_context *mac, uint32_t *pMsgBuf) ***/
+} /*** end __lim_process_sme_change_bi() ***/
 
 #ifdef QCA_HT_2040_COEX
 static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,

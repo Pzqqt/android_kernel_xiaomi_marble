@@ -1927,13 +1927,13 @@ struct sir_create_session {
 };
 
 /* Beacon Interval */
-typedef struct sSirChangeBIParams {
+struct change_bi_params {
 	uint16_t messageType;
 	uint16_t length;
 	uint16_t beaconInterval;        /* Beacon Interval */
 	struct qdf_mac_addr bssid;
 	uint8_t sessionId;      /* Session ID */
-} tSirChangeBIParams, *tpSirChangeBIParams;
+};
 
 #ifdef QCA_HT_2040_COEX
 typedef struct sSirSetHT2040Mode {
