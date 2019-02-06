@@ -11499,6 +11499,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_ndp_end_rsp_event_id] = WMI_NDP_END_RSP_EVENTID;
 	event_ids[wmi_ndl_schedule_update_event_id] =
 					WMI_NDL_SCHEDULE_UPDATE_EVENTID;
+	event_ids[wmi_ndp_event_id] = WMI_NDP_EVENTID;
 
 	event_ids[wmi_oem_response_event_id] = WMI_OEM_RESPONSE_EVENTID;
 	event_ids[wmi_peer_stats_info_event_id] = WMI_PEER_STATS_INFO_EVENTID;

@@ -293,6 +293,47 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/**
+ * send_terminate_all_ndps_cmd_tlv() - send NDP Terminate for all NDP's
+ * associated with the given vdev id
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_terminate_all_ndps_cmd_tlv(wmi_unified_t wmi_handle,
+						  uint32_t vdev_id)
+{
+	wmi_ndp_cmd_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t len;
+	QDF_STATUS status;
+
+	WMI_LOGD(FL("Enter"));
+
+	len = sizeof(*cmd);
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_ndp_cmd_param *)wmi_buf_data(wmi_buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header, WMITLV_TAG_STRUC_wmi_ndp_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_ndp_cmd_param));
+
+	cmd->vdev_id = vdev_id;
+	cmd->ndp_disable = 1;
+
+	wmi_mtrace(WMI_NDP_CMDID, NO_SESSION, 0);
+	status = wmi_unified_cmd_send(wmi_handle, wmi_buf, len, WMI_NDP_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("Failed to send NDP Terminate cmd: %d", status);
+		wmi_buf_free(wmi_buf);
+	}
+
+	return status;
+}
+
 static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 				struct nan_datapath_initiator_req *ndp_req)
 {
@@ -642,6 +683,31 @@ static QDF_STATUS nan_ndp_end_req_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+static QDF_STATUS
+extract_ndp_host_event_tlv(wmi_unified_t wmi_handle, uint8_t *data,
+			   struct nan_datapath_host_event *evt)
+{
+	WMI_NDP_EVENTID_param_tlvs *event;
+	wmi_ndp_event_param *fixed_params;
+
+	event = (WMI_NDP_EVENTID_param_tlvs *)data;
+	fixed_params = event->fixed_param;
+
+	evt->vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
+						     fixed_params->vdev_id,
+						     WLAN_NAN_ID);
+	if (!evt->vdev) {
+		WMI_LOGE("vdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	evt->ndp_termination_in_progress =
+		       fixed_params->ndp_termination_in_progress ? true : false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
 			uint8_t *data, struct nan_datapath_initiator_rsp *rsp)
 {
@@ -839,11 +905,13 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	}
 
 	if (fixed_params->num_ndp_channels > event->num_ndp_channel_list ||
-	    fixed_params->num_ndp_channels > event->num_nss_list) {
-		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len (%d) or NSS TLV len (%d)"),
+	    fixed_params->num_ndp_channels > event->num_nss_list ||
+	    fixed_params->num_ndp_channels > event->num_ndp_channel_info) {
+		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len(%d) or NSS TLV len(%d) or NDP Ch info(%d)"),
 			 fixed_params->num_ndp_channels,
 			 event->num_ndp_channel_list,
-			 event->num_nss_list);
+			 event->num_nss_list,
+			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -872,15 +940,21 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	}
 
 	for (i = 0; i < rsp->num_channels; i++) {
-		rsp->ch[i].channel = event->ndp_channel_list[i].mhz;
+		rsp->ch[i].freq = event->ndp_channel_list[i].mhz;
 		rsp->ch[i].nss = event->nss_list[i];
 		ch_mode = WMI_GET_CHANNEL_MODE(&event->ndp_channel_list[i]);
 		rsp->ch[i].ch_width = wmi_get_ch_width_from_phy_mode(wmi_handle,
 								     ch_mode);
-		WMI_LOGD(FL("ch: %d, ch_mode: %d, nss: %d"),
-			 rsp->ch[i].channel,
+		WMI_LOGD(FL("Freq: %d, ch_mode: %d, nss: %d"),
+			 rsp->ch[i].freq,
 			 rsp->ch[i].ch_width,
 			 rsp->ch[i].nss);
+
+		if (wmi_service_enabled(wmi_handle,
+					wmi_service_ndi_dbs_support)) {
+			rsp->ch[i].mac_id = event->ndp_channel_info[i].mac_id;
+			WMI_LOGD("mac_id: %d", rsp->ch[i].mac_id);
+		}
 	}
 
 	if (event->ndp_transport_ip_param &&
@@ -1040,11 +1114,13 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->num_ndp_instances);
 
 	if (fixed_params->num_channels > event->num_ndl_channel_list ||
-	    fixed_params->num_channels > event->num_nss_list) {
-		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len (%d) or NSS list TLV len (%d)"),
+	    fixed_params->num_channels > event->num_nss_list ||
+	    fixed_params->num_channels > event->num_ndp_channel_info) {
+		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len(%d) or NSS list TLV len(%d) or NDP Ch info(%d)"),
 			 fixed_params->num_channels,
 			 event->num_ndl_channel_list,
-			 event->num_nss_list);
+			 event->num_nss_list,
+			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
 	}
 	if (fixed_params->num_ndp_instances > event->num_ndp_instance_list) {
@@ -1084,15 +1160,21 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 	}
 
 	for (i = 0; i < ind->num_channels; i++) {
-		ind->ch[i].channel = event->ndl_channel_list[i].mhz;
+		ind->ch[i].freq = event->ndl_channel_list[i].mhz;
 		ind->ch[i].nss = event->nss_list[i];
 		ch_mode = WMI_GET_CHANNEL_MODE(&event->ndl_channel_list[i]);
 		ind->ch[i].ch_width = wmi_get_ch_width_from_phy_mode(wmi_handle,
 								     ch_mode);
-		WMI_LOGD(FL("ch: %d, ch_mode: %d, nss: %d"),
-			 ind->ch[i].channel,
+		WMI_LOGD(FL("Freq: %d, ch_mode: %d, nss: %d"),
+			 ind->ch[i].freq,
 			 ind->ch[i].ch_width,
 			 ind->ch[i].nss);
+
+		if (wmi_service_enabled(wmi_handle,
+					wmi_service_ndi_dbs_support)) {
+			ind->ch[i].mac_id = event->ndp_channel_info[i].mac_id;
+			WMI_LOGD("mac_id: %d", ind->ch[i].mac_id);
+		}
 	}
 
 	for (i = 0; i < fixed_params->num_ndp_instances; i++)
@@ -1109,6 +1191,7 @@ void wmi_nan_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_nan_req_cmd = send_nan_req_cmd_tlv;
 	ops->send_nan_disable_req_cmd = send_nan_disable_req_cmd_tlv;
 	ops->extract_nan_event_rsp = extract_nan_event_rsp_tlv;
+	ops->send_terminate_all_ndps_req_cmd = send_terminate_all_ndps_cmd_tlv;
 	ops->send_ndp_initiator_req_cmd = nan_ndp_initiator_req_tlv;
 	ops->send_ndp_responder_req_cmd = nan_ndp_responder_req_tlv;
 	ops->send_ndp_end_req_cmd = nan_ndp_end_req_tlv;
@@ -1119,4 +1202,5 @@ void wmi_nan_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_ndp_end_rsp = extract_ndp_end_rsp_tlv;
 	ops->extract_ndp_end_ind = extract_ndp_end_ind_tlv;
 	ops->extract_ndp_sch_update = extract_ndp_sch_update_tlv;
+	ops->extract_ndp_host_event = extract_ndp_host_event_tlv;
 }

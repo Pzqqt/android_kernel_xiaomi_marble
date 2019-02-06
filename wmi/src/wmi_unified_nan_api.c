@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,6 +75,17 @@ QDF_STATUS wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
 	if (wmi_handle->ops->send_ndp_responder_req_cmd)
 		return wmi_handle->ops->send_ndp_responder_req_cmd(wmi_handle,
 								   req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_terminate_all_ndps_req_cmd(wmi_unified_t wmi_handle,
+						  uint32_t vdev_id)
+{
+	if (wmi_handle->ops->send_terminate_all_ndps_req_cmd)
+		return wmi_handle->ops->send_terminate_all_ndps_req_cmd(
+								     wmi_handle,
+								     vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -162,3 +173,12 @@ QDF_STATUS wmi_extract_ndp_sch_update(wmi_unified_t wmi_handle, uint8_t *data,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_ndp_host_event(wmi_unified_t wmi_handle, uint8_t *data,
+				      struct nan_datapath_host_event *evt)
+{
+	if (wmi_handle->ops->extract_ndp_host_event)
+		return wmi_handle->ops->extract_ndp_host_event(wmi_handle,
+							       data, evt);
+
+	return QDF_STATUS_E_FAILURE;
+}
