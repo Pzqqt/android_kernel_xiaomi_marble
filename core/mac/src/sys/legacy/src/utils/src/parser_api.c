@@ -805,7 +805,8 @@ static void lim_log_operating_mode(struct mac_context *mac,
 #endif /* DUMP_MGMT_CNTNTS */
 }
 
-static void lim_log_qos_map_set(struct mac_context *mac, tSirQosMapSet *pQosMapSet)
+static void lim_log_qos_map_set(struct mac_context *mac,
+				struct qos_map_set *pQosMapSet)
 {
 	uint8_t i;
 
@@ -4502,7 +4503,7 @@ QDF_STATUS
 sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 					    uint8_t *pFrame,
 					    uint32_t nFrame,
-					    tSirQosMapSet *pQosMapSet)
+					    struct qos_map_set *pQosMapSet)
 {
 	tDot11fQosMapConfigure mapConfigure;
 	uint32_t status;

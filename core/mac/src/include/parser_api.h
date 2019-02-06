@@ -400,7 +400,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEVHTOperation VHTOperation;
 	tDot11fIEExtCap ExtCap;
-	tSirQosMapSet QosMapSet;
+	struct qos_map_set QosMapSet;
 #ifdef WLAN_FEATURE_11W
 	tDot11fIETimeoutInterval TimeoutInterval;
 #endif
@@ -625,7 +625,7 @@ sir_convert_delts_req2_struct(struct mac_context *mac,
 QDF_STATUS
 sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 					uint8_t *pFrame, uint32_t nFrame,
-					tSirQosMapSet *pQosMapSet);
+					struct qos_map_set *pQosMapSet);
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS

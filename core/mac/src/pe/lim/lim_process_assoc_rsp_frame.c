@@ -838,9 +838,11 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 
 	if (assoc_rsp->QosMapSet.present)
 		qdf_mem_copy(&session_entry->QosMapSet,
-			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));
+			     &assoc_rsp->QosMapSet,
+			     sizeof(struct qos_map_set));
 	else
-		qdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
+		qdf_mem_zero(&session_entry->QosMapSet,
+			     sizeof(struct qos_map_set));
 
 	if (assoc_rsp->obss_scanparams.present)
 		lim_update_obss_scanparams(session_entry,

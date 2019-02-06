@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,7 +89,7 @@ QDF_STATUS convert_p2p_opaque(struct mac_context *, tSirAddie *,
 QDF_STATUS convert_wfd_opaque(struct mac_context *, tSirAddie *,
 			      tDot11fIEWFDIEOpaque *);
 #endif
-void convert_qos_mapset_frame(struct mac_context *, tSirQosMapSet *,
+void convert_qos_mapset_frame(struct mac_context *, struct qos_map_set *,
 			      tDot11fIEQosMapSet *);
 
 #endif

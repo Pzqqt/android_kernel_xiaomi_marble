@@ -450,7 +450,7 @@ struct pe_session {
 	uint16_t schBeaconOffsetEnd;
 	bool isOSENConnection;
 	/*  DSCP to UP mapping for HS 2.0 */
-	tSirQosMapSet QosMapSet;
+	struct qos_map_set QosMapSet;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool bRoamSynchInProgress;

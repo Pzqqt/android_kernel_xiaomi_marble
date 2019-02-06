@@ -1679,12 +1679,12 @@ typedef struct sSirAggrQosRsp {
 } tSirAggrQosRsp, *tpSirAggrQosRsp;
 
 
-typedef struct sSirQosMapSet {
+struct qos_map_set {
 	uint8_t present;
 	uint8_t num_dscp_exceptions;
 	uint8_t dscp_exceptions[21][2];
 	uint8_t dscp_range[8][2];
-} tSirQosMapSet, *tpSirQosMapSet;
+};
 
 typedef struct sSmeIbssPeerInd {
 	uint16_t mesgType;
