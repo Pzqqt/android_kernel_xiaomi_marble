@@ -5270,21 +5270,21 @@ void hdd_close_adapter(struct hdd_context *hdd_ctx,
 void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
-	struct hdd_vdev_sync *vdev_sync;
+	struct osif_vdev_sync *vdev_sync;
 
 	hdd_enter();
 
 	while (QDF_IS_STATUS_SUCCESS(hdd_remove_front_adapter(hdd_ctx,
 							      &adapter))) {
-		vdev_sync = hdd_vdev_sync_unregister(adapter->dev);
+		vdev_sync = osif_vdev_sync_unregister(adapter->dev);
 		if (vdev_sync)
-			hdd_vdev_sync_wait_for_ops(vdev_sync);
+			osif_vdev_sync_wait_for_ops(vdev_sync);
 
 		wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 		__hdd_close_adapter(hdd_ctx, adapter, rtnl_held);
 
 		if (vdev_sync)
-			hdd_vdev_sync_destroy(vdev_sync);
+			osif_vdev_sync_destroy(vdev_sync);
 	}
 
 	hdd_exit();
@@ -11632,14 +11632,14 @@ static QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
 					    const char *iface_name,
 					    uint8_t *mac_addr_bytes)
 {
-	struct hdd_vdev_sync *vdev_sync;
+	struct osif_vdev_sync *vdev_sync;
 	struct hdd_adapter *adapter;
 	QDF_STATUS status;
 	int errno;
 
 	QDF_BUG(rtnl_is_locked());
 
-	errno = hdd_vdev_sync_create(hdd_ctx->parent_dev, &vdev_sync);
+	errno = osif_vdev_sync_create(hdd_ctx->parent_dev, &vdev_sync);
 	if (errno)
 		return qdf_status_from_os_return(errno);
 
@@ -11650,12 +11650,12 @@ static QDF_STATUS hdd_open_adapter_no_trans(struct hdd_context *hdd_ctx,
 		goto destroy_sync;
 	}
 
-	hdd_vdev_sync_register(adapter->dev, vdev_sync);
+	osif_vdev_sync_register(adapter->dev, vdev_sync);
 
 	return QDF_STATUS_SUCCESS;
 
 destroy_sync:
-	hdd_vdev_sync_destroy(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
 
 	return status;
 }
@@ -12928,7 +12928,7 @@ int hdd_init(void)
 	QDF_STATUS status;
 	int ret;
 
-	hdd_dsc_init();
+	osif_sync_init();
 
 	status = cds_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -12955,7 +12955,7 @@ int hdd_init(void)
 	return 0;
 
 deinit_dsc:
-	hdd_dsc_deinit();
+	osif_sync_deinit();
 
 	return ret;
 }
@@ -12979,7 +12979,7 @@ void hdd_deinit(void)
 	wlan_destroy_bug_report_lock();
 	cds_deinit();
 
-	hdd_dsc_deinit();
+	osif_sync_deinit();
 }
 
 #ifdef QCA_WIFI_NAPIER_EMULATION

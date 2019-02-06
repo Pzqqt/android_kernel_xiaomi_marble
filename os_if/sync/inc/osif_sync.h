@@ -24,18 +24,18 @@
 #include "osif_vdev_sync.h"
 
 /**
- * hdd_dsc_init() - global initializer for HDD DSC
+ * osif_sync_init() - global initializer
  *
  * Return: None
  */
-void hdd_dsc_init(void);
+void osif_sync_init(void);
 
 /**
- * hdd_dsc_deinit() - global deinitializer for HDD DSC
+ * osif_sync_deinit() - global de-initializer
  *
  * Return: None
  */
-void hdd_dsc_deinit(void);
+void osif_sync_deinit(void);
 
 #endif /* __OSIF_SYNC_H */
 

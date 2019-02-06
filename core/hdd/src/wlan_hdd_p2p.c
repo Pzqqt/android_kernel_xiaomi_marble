@@ -749,10 +749,10 @@ _wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 			   struct vif_params *params)
 {
 	struct wireless_dev *wdev;
-	struct hdd_vdev_sync *vdev_sync;
+	struct osif_vdev_sync *vdev_sync;
 	int errno;
 
-	errno = hdd_vdev_sync_create_with_trans(wiphy_dev(wiphy), &vdev_sync);
+	errno = osif_vdev_sync_create_with_trans(wiphy_dev(wiphy), &vdev_sync);
 	if (errno)
 		return ERR_PTR(errno);
 
@@ -764,14 +764,14 @@ _wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (IS_ERR_OR_NULL(wdev))
 		goto destroy_sync;
 
-	hdd_vdev_sync_register(wdev->netdev, vdev_sync);
-	hdd_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_register(wdev->netdev, vdev_sync);
+	osif_vdev_sync_trans_stop(vdev_sync);
 
 	return wdev;
 
 destroy_sync:
-	hdd_vdev_sync_trans_stop(vdev_sync);
-	hdd_vdev_sync_destroy(vdev_sync);
+	osif_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
 
 	return wdev;
 }
@@ -864,21 +864,21 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
 	int errno;
-	struct hdd_vdev_sync *vdev_sync;
+	struct osif_vdev_sync *vdev_sync;
 
-	errno = hdd_vdev_sync_trans_start_wait(wdev->netdev, &vdev_sync);
+	errno = osif_vdev_sync_trans_start_wait(wdev->netdev, &vdev_sync);
 	if (errno)
 		return errno;
 
-	hdd_vdev_sync_unregister(wdev->netdev);
-	hdd_vdev_sync_wait_for_ops(vdev_sync);
+	osif_vdev_sync_unregister(wdev->netdev);
+	osif_vdev_sync_wait_for_ops(vdev_sync);
 
 	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_del_virtual_intf(wiphy, wdev);
 	cds_ssr_unprotect(__func__);
 
-	hdd_vdev_sync_trans_stop(vdev_sync);
-	hdd_vdev_sync_destroy(vdev_sync);
+	osif_vdev_sync_trans_stop(vdev_sync);
+	osif_vdev_sync_destroy(vdev_sync);
 
 	return errno;
 }

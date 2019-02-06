@@ -20,13 +20,13 @@
 #include "__osif_vdev_sync.h"
 #include "osif_sync.h"
 
-void hdd_dsc_init(void)
+void osif_sync_init(void)
 {
 	osif_psoc_sync_init();
 	osif_vdev_sync_init();
 }
 
-void hdd_dsc_deinit(void)
+void osif_sync_deinit(void)
 {
 	osif_vdev_sync_deinit();
 	osif_psoc_sync_deinit();
