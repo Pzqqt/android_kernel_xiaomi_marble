@@ -408,19 +408,12 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	struct wireless_dev *wdev, const void *data, int data_len)
 {
-	struct osif_psoc_sync *psoc_sync;
 	int errno;
-
-	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
-	if (errno)
-		return errno;
 
 	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_process_ndp_cmd(wiphy, wdev,
 						    data, data_len);
 	cds_ssr_unprotect(__func__);
-
-	osif_psoc_sync_op_stop(psoc_sync);
 
 	return errno;
 }

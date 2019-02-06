@@ -157,11 +157,19 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 				      int data_len)
 
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_nan_ext_request(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_nan_ext_request(wiphy, wdev,
+						    data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
