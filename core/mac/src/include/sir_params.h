@@ -527,9 +527,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_ROAM_INVOKE                  (SIR_HAL_ITC_MSG_TYPES_BEGIN + 227)
 #endif
 
-#ifdef FEATURE_WLAN_TDLS
-#define SIR_HAL_TDLS_SET_OFFCHAN_MODE        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 228)
-#endif
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 228) is unused */
 
 #define SIR_HAL_SET_MAS                    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 229)
 #define SIR_HAL_SET_MIRACAST               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 230)

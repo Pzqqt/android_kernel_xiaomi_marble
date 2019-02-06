@@ -4046,57 +4046,6 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 }
 
 /**
- * wma_set_tdls_offchan_mode() - set tdls off channel mode
- * @handle: wma handle
- * @chan_switch_params: Pointer to tdls channel switch parameter structure
- *
- * This function sets tdls off channel mode
- *
- * Return: 0 on success; Negative errno otherwise
- */
-QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE handle,
-			      tdls_chan_switch_params *chan_switch_params)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct tdls_channel_switch_params params = {0};
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (!wma_handle || !wma_handle->wmi_handle) {
-		WMA_LOGE(FL(
-			    "WMA is closed, can not issue tdls off channel cmd"
-			 ));
-		ret = -EINVAL;
-		goto end;
-	}
-
-	if (wma_is_roam_synch_in_progress(wma_handle,
-					  chan_switch_params->vdev_id)) {
-		WMA_LOGE("%s: roaming in progress, reject offchan mode cmd!",
-			 __func__);
-		ret = -EPERM;
-		goto end;
-	}
-
-	params.vdev_id = chan_switch_params->vdev_id;
-	params.tdls_off_ch_bw_offset =
-			chan_switch_params->tdls_off_ch_bw_offset;
-	params.tdls_off_ch = chan_switch_params->tdls_off_ch;
-	params.tdls_sw_mode = chan_switch_params->tdls_sw_mode;
-	params.oper_class = chan_switch_params->oper_class;
-	params.is_responder = chan_switch_params->is_responder;
-	qdf_mem_copy(params.peer_mac_addr, chan_switch_params->peer_mac_addr,
-		     IEEE80211_ADDR_LEN);
-
-	ret = wmi_unified_set_tdls_offchan_mode_cmd(wma_handle->wmi_handle,
-							&params);
-
-end:
-	if (chan_switch_params)
-		qdf_mem_free(chan_switch_params);
-	return ret;
-}
-
-/**
  * wma_update_tdls_peer_state() - update TDLS peer state
  * @handle: wma handle
  * @peerStateParams: TDLS peer state params

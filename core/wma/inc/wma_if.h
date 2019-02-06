@@ -1022,25 +1022,6 @@ typedef struct sTdlsPeerStateParams {
 	bool resp_reqd;
 } tTdlsPeerStateParams;
 
-/**
- * struct tdls_chan_switch_params - channel switch parameter structure
- * @vdev_id: vdev ID
- * @peer_mac_addr: Peer mac address
- * @tdls_off_ch_bw_offset: Target off-channel bandwitdh offset
- * @tdls_off_ch: Target Off Channel
- * @oper_class: Operating class for target channel
- * @is_responder: Responder or initiator
- */
-typedef struct tdls_chan_switch_params_struct {
-	uint32_t    vdev_id;
-	tSirMacAddr peer_mac_addr;
-	uint16_t    tdls_off_ch_bw_offset;
-	uint8_t     tdls_off_ch;
-	uint8_t     tdls_sw_mode;
-	uint8_t     oper_class;
-	uint8_t     is_responder;
-} tdls_chan_switch_params;
-
 #endif /* FEATURE_WLAN_TDLS */
 
 /**

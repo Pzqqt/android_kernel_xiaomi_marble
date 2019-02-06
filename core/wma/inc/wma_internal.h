@@ -1256,17 +1256,6 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 
 int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			       tTdlsPeerStateParams *peerStateParams);
-/**
- * wma_set_tdls_offchan_mode() - set tdls off channel mode
- * @handle: wma handle
- * @chan_switch_params: Pointer to tdls channel switch parameter structure
- *
- * This function sets tdls off channel mode
- *
- * Return: 0 on success; negative errno otherwise
- */
-QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE wma_handle,
-			      tdls_chan_switch_params *chan_switch_params);
 #endif
 
 void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id);
