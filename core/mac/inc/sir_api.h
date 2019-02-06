@@ -1746,17 +1746,6 @@ struct lim_scan_channel_status {
 		 channel_status_list[SIR_MAX_SUPPORTED_CHANNEL_LIST];
 };
 
-typedef struct sSirSmeGetAssocSTAsReq {
-	uint16_t messageType;   /* eWNI_SME_GET_ASSOC_STAS_REQ */
-	uint16_t length;
-	struct qdf_mac_addr bssid;      /* BSSID */
-	uint16_t modId;
-	void *pUsrContext;
-	void *pSapEventCallback;
-	/* Pointer to allocated mem passed in wlansap_get_assoc_stations API */
-	void *pAssocStasArray;
-} tSirSmeGetAssocSTAsReq, *tpSirSmeGetAssocSTAsReq;
-
 typedef struct sSmeMaxAssocInd {
 	uint16_t mesgType;      /* eWNI_SME_MAX_ASSOC_EXCEEDED */
 	uint16_t mesgLen;

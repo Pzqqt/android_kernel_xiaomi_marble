@@ -2755,109 +2755,6 @@ end:
 }
 
 /**
- * lim_process_sme_get_assoc_sta_info() - process sme assoc sta req
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: pointer to the SME message buffer
- *
- * This function is called to process SME_GET_ASSOC_STAS_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-
-static void lim_process_sme_get_assoc_sta_info(struct mac_context *mac_ctx,
-					       uint32_t *msg_buf)
-{
-	tSirSmeGetAssocSTAsReq get_assoc_stas_req;
-	tpDphHashNode sta_ds = NULL;
-	struct pe_session *session_entry = NULL;
-	tSap_Event sap_event;
-	tpWLAN_SAPEventCB sap_event_cb = NULL;
-	tpSap_AssocMacAddr assoc_sta_tmp = NULL;
-	uint8_t session_id = CSR_SESSION_ID_INVALID;
-	uint8_t assoc_id = 0;
-	uint8_t sta_cnt = 0;
-
-	if (msg_buf == NULL) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	qdf_mem_copy(&get_assoc_stas_req, msg_buf,
-				sizeof(struct sSirSmeGetAssocSTAsReq));
-	/*
-	 * Get Associated stations from PE.
-	 * Find PE session Entry
-	 */
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-			get_assoc_stas_req.bssid.bytes,
-			&session_id);
-	if (session_entry == NULL) {
-		pe_err("session does not exist for given bssId");
-		goto lim_assoc_sta_end;
-	}
-
-	if (!LIM_IS_AP_ROLE(session_entry)) {
-		pe_err("Received unexpected message in state %X, in role %X",
-			session_entry->limSmeState,
-			GET_LIM_SYSTEM_ROLE(session_entry));
-		goto lim_assoc_sta_end;
-	}
-	/* Retrieve values obtained in the request message */
-	sap_event_cb = (tpWLAN_SAPEventCB)get_assoc_stas_req.pSapEventCallback;
-	assoc_sta_tmp = (tpSap_AssocMacAddr)get_assoc_stas_req.pAssocStasArray;
-
-	if (NULL == assoc_sta_tmp)
-		goto lim_assoc_sta_end;
-	for (assoc_id = 0; assoc_id < session_entry->dph.dphHashTable.size;
-		assoc_id++) {
-		sta_ds = dph_get_hash_entry(mac_ctx, assoc_id,
-				&session_entry->dph.dphHashTable);
-		if (NULL == sta_ds)
-			continue;
-		if (sta_ds->valid) {
-			qdf_mem_copy((uint8_t *) &assoc_sta_tmp->staMac,
-					(uint8_t *) &sta_ds->staAddr,
-					 QDF_MAC_ADDR_SIZE);
-			assoc_sta_tmp->assocId = (uint8_t) sta_ds->assocId;
-			assoc_sta_tmp->staId = (uint8_t) sta_ds->staIndex;
-
-			qdf_mem_copy(&assoc_sta_tmp->supportedRates,
-				     &sta_ds->supportedRates,
-				     sizeof(sta_ds->supportedRates));
-			assoc_sta_tmp->ShortGI40Mhz = sta_ds->htShortGI40Mhz;
-			assoc_sta_tmp->ShortGI20Mhz = sta_ds->htShortGI20Mhz;
-			assoc_sta_tmp->Support40Mhz =
-				sta_ds->htDsssCckRate40MHzSupport;
-
-			pe_debug("dph Station Number = %d",
-				sta_cnt + 1);
-			pe_debug("MAC = " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(sta_ds->staAddr));
-			pe_debug("Association Id: %d Station Index: %d",
-				sta_ds->assocId, sta_ds->staIndex);
-			assoc_sta_tmp++;
-			sta_cnt++;
-		}
-	}
-lim_assoc_sta_end:
-	/*
-	 * Call hdd callback with sap event to send the list of
-	 * associated stations from PE
-	 */
-	if (sap_event_cb != NULL) {
-		sap_event.sapHddEventCode = eSAP_ASSOC_STA_CALLBACK_EVENT;
-		sap_event.sapevt.sapAssocStaListEvent.module =
-			QDF_MODULE_ID_PE;
-		sap_event.sapevt.sapAssocStaListEvent.noOfAssocSta = sta_cnt;
-		sap_event.sapevt.sapAssocStaListEvent.pAssocStas =
-			(tpSap_AssocMacAddr)get_assoc_stas_req.pAssocStasArray;
-		sap_event_cb(&sap_event, get_assoc_stas_req.pUsrContext);
-	}
-}
-
-/**
  * __lim_counter_measures()
  *
  * FUNCTION:
@@ -4958,9 +4855,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		bufConsumed = false;
 		break;
 #endif /* FEATURE_WLAN_ESE */
-	case eWNI_SME_GET_ASSOC_STAS_REQ:
-		lim_process_sme_get_assoc_sta_info(mac, pMsgBuf);
-		break;
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 		__lim_process_sme_session_update(mac, pMsgBuf);
 		break;
