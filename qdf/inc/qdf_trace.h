@@ -723,7 +723,8 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 			       uint8_t info);
 
 /**
- * qdf_dp_display_proto_pkt() - display proto packet
+ * qdf_dp_display_proto_pkt_debug() - display proto packet only
+ * for debug.
  * @record: dptrace record
  * @index: index
  * @pdev_id: pdev id for the mgmt pkt
@@ -731,9 +732,24 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
  *
  * Return: none
  */
-void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
+void qdf_dp_display_proto_pkt_debug(struct qdf_dp_trace_record_s *record,
 			      uint16_t index, uint8_t pdev_id,
 			      uint8_t info);
+
+/**
+ * qdf_dp_display_proto_pkt_always() - display proto packets all
+ * the time.
+ * @record: dptrace record
+ * @index: index
+ * @pdev_id: pdev id for the mgmt pkt
+ * @info: info used to display pkt (live mode, throttling)
+ *
+ * Return: none
+ */
+void qdf_dp_display_proto_pkt_always(struct qdf_dp_trace_record_s *record,
+			      uint16_t index, uint8_t pdev_id,
+			      uint8_t info);
+
 /**
  * qdf_dp_display_data_pkt_record() - Displays a data packet in DP trace
  * @record: pointer to a record in DP trace

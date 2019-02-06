@@ -917,10 +917,11 @@ void qdf_dp_trace_init(bool live_mode_config, uint8_t thresh,
 						qdf_dp_display_ptr_record;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_EAPOL_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_DHCP_PACKET_RECORD] =
+						qdf_dp_display_proto_pkt_always;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ARP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ICMP_PACKET_RECORD] =
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_ICMPv6_PACKET_RECORD] =
-						qdf_dp_display_proto_pkt;
+						qdf_dp_display_proto_pkt_debug;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_MGMT_PACKET_RECORD] =
 					qdf_dp_display_mgmt_pkt;
 	qdf_dp_trace_cb_table[QDF_DP_TRACE_EVENT_RECORD] =
@@ -1931,8 +1932,8 @@ void qdf_dp_trace_record_event(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 qdf_export_symbol(qdf_dp_trace_record_event);
 
 
-void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
-			      uint16_t index, uint8_t pdev_id, uint8_t info)
+void qdf_dp_display_proto_pkt_debug(struct qdf_dp_trace_record_s *record,
+				    uint16_t index, uint8_t pdev_id, uint8_t info)
 {
 	int loc;
 	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
@@ -1952,7 +1953,27 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 		      qdf_dp_dir_to_str(buf->dir),
 		      QDF_MAC_ADDR_ARRAY(buf->da.bytes));
 }
-qdf_export_symbol(qdf_dp_display_proto_pkt);
+qdf_export_symbol(qdf_dp_display_proto_pkt_debug);
+
+void qdf_dp_display_proto_pkt_always(struct qdf_dp_trace_record_s *record,
+			      uint16_t index, uint8_t pdev_id, uint8_t info)
+{
+	int loc;
+	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
+	struct qdf_dp_trace_proto_buf *buf =
+		(struct qdf_dp_trace_proto_buf *)record->data;
+
+	qdf_mem_zero(prepend_str, sizeof(prepend_str));
+	loc = qdf_dp_trace_fill_meta_str(prepend_str, sizeof(prepend_str),
+					 index, info, record);
+	qdf_info("%s [%d] [%s] SA: "QDF_MAC_ADDR_STR " %s DA: "
+		 QDF_MAC_ADDR_STR, prepend_str,
+		 buf->vdev_id, qdf_dp_subtype_to_str(buf->subtype),
+		 QDF_MAC_ADDR_ARRAY(buf->sa.bytes),
+		 qdf_dp_dir_to_str(buf->dir),
+		 QDF_MAC_ADDR_ARRAY(buf->da.bytes));
+}
+qdf_export_symbol(qdf_dp_display_proto_pkt_always);
 
 void qdf_dp_trace_proto_pkt(enum QDF_DP_TRACE_ID code, uint8_t vdev_id,
 		uint8_t *sa, uint8_t *da, enum qdf_proto_type type,
