@@ -1393,8 +1393,6 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	pdev = peer->vdev->pdev;
 	rx_tid = &peer->rx_tid[tid];
 
-	rx_reorder_array_elem = peer->rx_tid[tid].array;
-
 	mpdu_sequence_control_valid =
 		hal_rx_get_mpdu_sequence_control_valid(rx_desc->rx_buf_start);
 
@@ -1432,6 +1430,16 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	 * need to get from the 802.11 header
 	 */
 	fragno = dp_rx_frag_get_mpdu_frag_number(rx_desc->rx_buf_start);
+
+	rx_reorder_array_elem = peer->rx_tid[tid].array;
+	if (!rx_reorder_array_elem) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Rcvd Fragmented pkt before peer_tid is setup");
+		qdf_nbuf_free(frag);
+		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
+		*rx_bfs = 1;
+		goto end;
+	}
 
 	/*
 	 * !more_frag: no more fragments to be delivered

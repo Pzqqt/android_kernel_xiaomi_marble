@@ -2027,11 +2027,6 @@ void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer)
 
 		rx_tid->defrag_waitlist_elem.tqe_next = NULL;
 		rx_tid->defrag_waitlist_elem.tqe_prev = NULL;
-
-#ifdef notyet /* TODO: See if this is required for exception handling */
-		/* invalid sequence number */
-		peer->tids_last_seq[tid] = 0xffff;
-#endif
 	}
 
 	peer->active_ba_session_cnt = 0;
