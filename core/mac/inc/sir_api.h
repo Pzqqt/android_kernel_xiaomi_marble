@@ -1955,16 +1955,6 @@ typedef struct sSirWPSPBCSession {
 	uint32_t timestamp;
 } tSirWPSPBCSession;
 
-typedef struct sSirSmeGetWPSPBCSessionsReq {
-	uint16_t messageType;   /* eWNI_SME_GET_WPSPBC_SESSION_REQ */
-	uint16_t length;
-	void *pUsrContext;
-	void *pSapEventCallback;
-	struct qdf_mac_addr bssid;      /* BSSID */
-	/* MAC Address of STA in WPS Session to be removed */
-	struct qdf_mac_addr remove_mac;
-} tSirSmeGetWPSPBCSessionsReq, *tpSirSmeGetWPSPBCSessionsReq;
-
 typedef struct sSirWPSPBCProbeReq {
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t probeReqIELen;
