@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -267,15 +267,19 @@ static QDF_STATUS policy_mgr_modify_pcl_based_on_dnbs(
 	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
 	uint8_t weight_list[QDF_MAX_NUM_CHAN];
 	bool ok;
-	int ret;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
+	if (*pcl_len_org > QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
+		return status;
+	}
 	for (i = 0; i < *pcl_len_org; i++) {
-		ret = policy_mgr_is_chan_ok_for_dnbs(psoc, pcl_list_org[i],
-						&ok);
+		status = policy_mgr_is_chan_ok_for_dnbs(psoc, pcl_list_org[i],
+							&ok);
 
-		if (QDF_IS_STATUS_ERROR(ret)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			policy_mgr_err("Not able to check DNBS eligibility");
-			return ret;
+			return status;
 		}
 		if (ok) {
 			pcl_list[pcl_len] = pcl_list_org[i];
@@ -283,8 +287,8 @@ static QDF_STATUS policy_mgr_modify_pcl_based_on_dnbs(
 		}
 	}
 
-	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
-	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_zero(pcl_list_org, *pcl_len_org);
+	qdf_mem_zero(weight_list_org, *pcl_len_org);
 	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
 	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
 	*pcl_len_org = pcl_len;
@@ -342,6 +346,10 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
 	}
+	if (*pcl_len_org > QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	for (i = 0; i < *pcl_len_org; i++) {
 		if (!wlan_reg_is_disable_ch(pm_ctx->pdev, pcl_list_org[i])) {
@@ -350,8 +358,8 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 		}
 	}
 
-	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
-	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_zero(pcl_list_org, *pcl_len_org);
+	qdf_mem_zero(weight_list_org, *pcl_len_org);
 	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
 	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
 	*pcl_len_org = pcl_len;
@@ -382,6 +390,10 @@ policy_mgr_modify_sap_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
 	if (is_etsi13_srd_chan_allowed_in_mas_mode)
 		return QDF_STATUS_SUCCESS;
 
+	if (*pcl_len_org > QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
+		return QDF_STATUS_E_FAILURE;
+	}
 	for (i = 0; i < *pcl_len_org; i++) {
 		if (wlan_reg_is_etsi13_srd_chan(pm_ctx->pdev,
 						pcl_list_org[i]))
@@ -390,8 +402,8 @@ policy_mgr_modify_sap_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
 		weight_list[pcl_len++] = weight_list_org[i];
 	}
 
-	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
-	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_zero(pcl_list_org, *pcl_len_org);
+	qdf_mem_zero(weight_list_org, *pcl_len_org);
 	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
 	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
 	*pcl_len_org = pcl_len;
