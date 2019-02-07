@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(__CDS_SCHED_H)
+#ifndef __CDS_SCHED_H
 #define __CDS_SCHED_H
 
 /**=========================================================================
@@ -42,20 +42,10 @@
 #include "cds_config.h"
 #include "qdf_cpuhp.h"
 
-#define TX_POST_EVENT               0x001
-#define TX_SUSPEND_EVENT            0x002
-#define MC_POST_EVENT               0x001
 #define MC_SUSPEND_EVENT            0x002
 #define RX_POST_EVENT               0x001
 #define RX_SUSPEND_EVENT            0x002
-#define TX_SHUTDOWN_EVENT           0x010
-#define MC_SHUTDOWN_EVENT           0x010
 #define RX_SHUTDOWN_EVENT           0x010
-#define WD_POST_EVENT               0x001
-#define WD_SHUTDOWN_EVENT           0x002
-#define WD_CHIP_RESET_EVENT         0x004
-#define WD_WLAN_SHUTDOWN_EVENT      0x008
-#define WD_WLAN_REINIT_EVENT        0x010
 
 #ifdef QCA_CONFIG_SMP
 /*
@@ -527,4 +517,4 @@ void cds_shutdown_notifier_call(void);
  */
 void cds_resume_rx_thread(void);
 
-#endif /* #if !defined __CDS_SCHED_H */
+#endif /* #ifndef __CDS_SCHED_H */

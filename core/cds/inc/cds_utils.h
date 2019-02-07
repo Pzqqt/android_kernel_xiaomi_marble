@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(__CDS_UTILS_H)
+#ifndef __CDS_UTILS_H
 #define __CDS_UTILS_H
 
 /**=========================================================================
@@ -41,14 +41,9 @@
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
    ------------------------------------------------------------------------*/
-#define CDS_DIGEST_SHA1_SIZE    (20)
-#define CDS_DIGEST_MD5_SIZE     (16)
-
 #define CDS_24_GHZ_BASE_FREQ   (2407)
 #define CDS_5_GHZ_BASE_FREQ    (5000)
-#define CDS_24_GHZ_CHANNEL_6   (6)
 #define CDS_24_GHZ_CHANNEL_1   (1)
-#define CDS_5_GHZ_CHANNEL_36   (36)
 #define CDS_24_GHZ_CHANNEL_14  (14)
 #define CDS_24_GHZ_CHANNEL_15  (15)
 #define CDS_24_GHZ_CHANNEL_27  (27)
@@ -165,4 +160,4 @@ void cds_copy_hlp_info(struct qdf_mac_addr *input_dst_mac,
 		       struct qdf_mac_addr *output_src_mac,
 		       uint16_t *output_hlp_data_len,
 		       uint8_t *output_hlp_data);
-#endif /* #if !defined __CDS_UTILS_H */
+#endif /* #ifndef __CDS_UTILS_H */

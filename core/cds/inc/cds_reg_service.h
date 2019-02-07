@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined __CDS_REG_SERVICE_H
+#ifndef __CDS_REG_SERVICE_H
 #define __CDS_REG_SERVICE_H
 
 /**=========================================================================
@@ -33,7 +33,6 @@
 
 #define CDS_COUNTRY_CODE_LEN  2
 #define CDS_MAC_ADDRESS_LEN 6
-#define CDS_SBS_SEPARATION_THRESHOLD 100
 #define HT40PLUS_2G_FCC_CH_END       7
 #define HT40PLUS_2G_EURJAP_CH_END    9
 #define HT40MINUS_2G_CH_START        5
