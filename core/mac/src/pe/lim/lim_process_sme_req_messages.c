@@ -3949,7 +3949,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 					      uint32_t *pMsgBuf)
 {
-	tpSirSetHT2040Mode pSetHT2040Mode;
+	struct set_ht2040_mode *pSetHT2040Mode;
 	struct pe_session *pe_session;
 	uint8_t sessionId = 0;
 	struct scheduler_msg msg = {0};
@@ -3963,7 +3963,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 		return;
 	}
 
-	pSetHT2040Mode = (tpSirSetHT2040Mode) pMsgBuf;
+	pSetHT2040Mode = (struct set_ht2040_mode *) pMsgBuf;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pSetHT2040Mode->bssid.bytes,

@@ -15333,7 +15333,7 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 			       ePhyChanBondState cbMode, bool obssEnabled)
 {
-	tpSirSetHT2040Mode pMsg;
+	struct set_ht2040_mode *pMsg;
 	uint16_t len = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -15344,14 +15344,14 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 	}
 
 	/* Create the message and send to lim */
-	len = sizeof(tSirSetHT2040Mode);
+	len = sizeof(struct set_ht2040_mode);
 	pMsg = qdf_mem_malloc(len);
 	if (NULL == pMsg)
 		status = QDF_STATUS_E_NOMEM;
 	else
 		status = QDF_STATUS_SUCCESS;
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_mem_zero(pMsg, sizeof(tSirSetHT2040Mode));
+		qdf_mem_zero(pMsg, sizeof(struct set_ht2040_mode));
 		pMsg->messageType = eWNI_SME_SET_HT_2040_MODE;
 		pMsg->length = len;
 
