@@ -4088,7 +4088,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	/* peer capability info is valid only when peer state is connected */
-	if (WMA_TDLS_PEER_STATE_CONNECTED != peerStateParams->peerState) {
+	if (TDLS_PEER_STATE_CONNECTED != peerStateParams->peerState) {
 		qdf_mem_zero(&peerStateParams->peerCap,
 			     sizeof(tTdlsPeerCapParams));
 	}
@@ -4137,7 +4137,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	/* in case of teardown, remove peer from fw */
-	if (WMA_TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
+	if (TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
 		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 		if (peer_mac_addr == NULL) {
 			WMA_LOGE("peer_mac_addr is NULL");

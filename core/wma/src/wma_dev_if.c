@@ -5816,7 +5816,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
+	peerStateParams->peerState = TDLS_PEER_STATE_TEARDOWN;
 	peerStateParams->vdevId = del_sta->smesessionId;
 	peerStateParams->resp_reqd = del_sta->respReqd;
 	qdf_mem_copy(&peerStateParams->peerMacAddr,

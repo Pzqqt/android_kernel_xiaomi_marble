@@ -628,22 +628,6 @@ typedef struct {
 
 #ifdef FEATURE_WLAN_TDLS
 /**
- * enum WMA_TdlsPeerState - TDLS PEER state
- * @WMA_TDLS_PEER_STATE_PEERING: peer is making connection
- * @WMA_TDLS_PEER_STATE_CONNECTED: peer is connected
- * @WMA_TDLS_PEER_STATE_TEARDOWN: peer is teardown
- * @WMA_TDLS_PEER_ADD_MAC_ADDR: add peer into connection table
- * @WMA_TDLS_PEER_REMOVE_MAC_ADDR: remove peer from connection table
- */
-enum WMA_TdlsPeerState {
-	WMA_TDLS_PEER_STATE_PEERING,
-	WMA_TDLS_PEER_STATE_CONNECTED,
-	WMA_TDLS_PEER_STATE_TEARDOWN,
-	WMA_TDLS_PEER_ADD_MAC_ADDR,
-	WMA_TDLS_PEER_REMOVE_MAC_ADDR,
-};
-
-/**
  * enum wma_tdls_off_chan_mode - modes for WMI_TDLS_SET_OFFCHAN_MODE_CMDID
  * @WMA_TDLS_ENABLE_OFFCHANNEL: enable off channel
  * @WMA_TDLS_DISABLE_OFFCHANNEL: disable off channel
