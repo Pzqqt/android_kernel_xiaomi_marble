@@ -2632,8 +2632,8 @@ struct wcd938x_pdata *wcd938x_populate_dt_data(struct device *dev)
 		return NULL;
 	}
 
-	pdata->rx_slave = of_parse_phandle(dev->of_node, "qcom,rx-swr-slave", 0);
-	pdata->tx_slave = of_parse_phandle(dev->of_node, "qcom,tx-swr-slave", 0);
+	pdata->rx_slave = of_parse_phandle(dev->of_node, "qcom,rx-slave", 0);
+	pdata->tx_slave = of_parse_phandle(dev->of_node, "qcom,tx-slave", 0);
 
 	wcd938x_dt_parse_micbias_info(dev, &pdata->micbias);
 
@@ -2755,7 +2755,7 @@ static int wcd938x_add_slave_components(struct device *dev,
 
 	np = dev->of_node;
 
-	rx_node = of_parse_phandle(np, "qcom,rx-swr-slave", 0);
+	rx_node = of_parse_phandle(np, "qcom,rx-slave", 0);
 	if (!rx_node) {
 		dev_err(dev, "%s: Rx-slave node not defined\n", __func__);
 		return -ENODEV;
@@ -2766,7 +2766,7 @@ static int wcd938x_add_slave_components(struct device *dev,
 			wcd938x_compare_of,
 			rx_node);
 
-	tx_node = of_parse_phandle(np, "qcom,tx-swr-slave", 0);
+	tx_node = of_parse_phandle(np, "qcom,tx-slave", 0);
 	if (!tx_node) {
 		dev_err(dev, "%s: Tx-slave node not defined\n", __func__);
 			return -ENODEV;
