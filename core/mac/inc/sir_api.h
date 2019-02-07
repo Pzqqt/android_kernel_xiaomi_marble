@@ -2007,7 +2007,7 @@ struct sir_host_offload_req {
 #define SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
 
 /* Keep Alive request. */
-typedef struct sSirKeepAliveReq {
+struct keep_alive_req {
 	uint8_t packetType;
 	uint32_t timePeriod;
 	tSirIpv4Addr hostIpv4Addr;
@@ -2015,7 +2015,7 @@ typedef struct sSirKeepAliveReq {
 	struct qdf_mac_addr dest_macaddr;
 	struct qdf_mac_addr bssid;
 	uint8_t sessionId;
-} tSirKeepAliveReq, *tpSirKeepAliveReq;
+};
 
 typedef struct sSirSmeMgmtFrameInd {
 	uint16_t frame_len;

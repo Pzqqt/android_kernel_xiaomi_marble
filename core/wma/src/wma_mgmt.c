@@ -3124,7 +3124,7 @@ send_rsp:
  * Return: none
  */
 void wma_set_keepalive_req(tp_wma_handle wma,
-			   tSirKeepAliveReq *keepalive)
+			   struct keep_alive_req *keepalive)
 {
 	WMA_LOGD("KEEPALIVE:PacketType:%d", keepalive->packetType);
 	wma_set_sta_keep_alive(wma, keepalive->sessionId,

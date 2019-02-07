@@ -4500,9 +4500,9 @@ QDF_STATUS sme_set_host_offload(mac_handle_t mac_handle, uint8_t sessionId,
  * Return QDF_STATUS
  */
 QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t session_id,
-			      tpSirKeepAliveReq request)
+			      struct keep_alive_req *request)
 {
-	tpSirKeepAliveReq request_buf;
+	struct keep_alive_req *request_buf;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, session_id);
@@ -4515,12 +4515,12 @@ QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t session_id,
 				FL("Session not Found"));
 		return QDF_STATUS_E_FAILURE;
 	}
-	request_buf = qdf_mem_malloc(sizeof(tSirKeepAliveReq));
+	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
 
 	qdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
-	qdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
+	qdf_mem_copy(request_buf, request, sizeof(*request_buf));
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"buff TP %d input TP %d ", request_buf->timePeriod,

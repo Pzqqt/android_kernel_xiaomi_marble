@@ -788,7 +788,7 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id);
 void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info);
 
 void wma_set_keepalive_req(tp_wma_handle wma,
-				  tSirKeepAliveReq *keepalive);
+				  struct keep_alive_req *keepalive);
 
 void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id,
 			     int32_t rssi);

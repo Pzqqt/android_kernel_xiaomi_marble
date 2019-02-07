@@ -8431,8 +8431,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				     (tpMaxTxPowerParams) msg->bodyptr);
 		break;
 	case WMA_SET_KEEP_ALIVE:
-		wma_set_keepalive_req(wma_handle,
-				      (tSirKeepAliveReq *) msg->bodyptr);
+		wma_set_keepalive_req(wma_handle, msg->bodyptr);
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case WMA_SET_PLM_REQ:

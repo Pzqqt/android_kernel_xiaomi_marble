@@ -685,7 +685,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 	int exit_code;
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *sta_ctx;
-	tSirKeepAliveReq req = {
+	struct keep_alive_req req = {
 		.packetType = SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP,
 		.dest_macaddr = QDF_MAC_ADDR_BCAST_INIT,
 	};

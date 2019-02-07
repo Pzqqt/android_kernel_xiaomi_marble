@@ -664,7 +664,7 @@ QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId);
 QDF_STATUS sme_set_host_offload(mac_handle_t mac_handle, uint8_t sessionId,
 		struct sir_host_offload_req *pRequest);
 QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t sessionId,
-		tpSirKeepAliveReq pRequest);
+		struct keep_alive_req *pRequest);
 QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
 				     uint32_t *pChannel,
 				     uint8_t sessionId);

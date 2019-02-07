@@ -8763,7 +8763,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 				     union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tpSirKeepAliveReq request = (tpSirKeepAliveReq) extra;
+	struct keep_alive_req *request = (struct keep_alive_req *)extra;
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -8792,7 +8792,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 
 	/* Debug display of request components. */
 	hdd_debug("Set Keep Alive Request : TimePeriod %d size %zu",
-		request->timePeriod, sizeof(tSirKeepAliveReq));
+		request->timePeriod, sizeof(struct keep_alive_req));
 
 	switch (request->packetType) {
 	case WLAN_KEEP_ALIVE_NULL_PKT:
@@ -10916,7 +10916,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 "getWlanStats"},
 
 	{WLAN_SET_KEEPALIVE_PARAMS,
-	 IW_PRIV_TYPE_BYTE | sizeof(tSirKeepAliveReq) |
+	 IW_PRIV_TYPE_BYTE | sizeof(struct keep_alive_req) |
 	 IW_PRIV_SIZE_FIXED,
 	 0,
 	 "setKeepAlive"},
