@@ -121,14 +121,14 @@ enum tdls_peer_capab {
 /**
  * enum tdls_peer_state - tdls peer state
  * @TDLS_PEER_STATE_PEERING: tdls connection in progress
- * @TDLS_PEER_STATE_CONNCTED: tdls peer is connected
+ * @TDLS_PEER_STATE_CONNECTED: tdls peer is connected
  * @TDLS_PEER_STATE_TEARDOWN: tdls peer is tear down
  * @TDLS_PEER_ADD_MAC_ADDR: add peer mac into connection table
  * @TDLS_PEER_REMOVE_MAC_ADDR: remove peer mac from connection table
  */
 enum tdls_peer_state {
 	TDLS_PEER_STATE_PEERING,
-	TDLS_PEER_STATE_CONNCTED,
+	TDLS_PEER_STATE_CONNECTED,
 	TDLS_PEER_STATE_TEARDOWN,
 	TDLS_PEER_ADD_MAC_ADDR,
 	TDLS_PEER_REMOVE_MAC_ADDR

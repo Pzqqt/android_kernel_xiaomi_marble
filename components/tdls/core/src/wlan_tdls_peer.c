@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -484,7 +484,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 
 	qdf_mem_copy(peer_param->peer_macaddr,
 		     peer->peer_mac.bytes, QDF_MAC_ADDR_SIZE);
-	peer_param->peer_state = TDLS_PEER_STATE_CONNCTED;
+	peer_param->peer_state = TDLS_PEER_STATE_CONNECTED;
 	peer_param->peer_cap.is_peer_responder = peer->is_responder;
 	peer_param->peer_cap.peer_uapsd_queue = peer->uapsd_queues;
 	peer_param->peer_cap.peer_max_sp = peer->max_sp;
