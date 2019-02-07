@@ -4405,26 +4405,37 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	for (i = 0; i < j ; i++) {
-		peer = dp_peer_find_by_id(soc, peer_ids[i]);
-		if (peer) {
-			dp_info("peer: %pM is getting flush",
-				peer->mac_addr.raw);
+		if (unmap_only) {
+			peer = __dp_peer_find_by_id(soc, peer_ids[i]);
 
-			if (!unmap_only)
+			if (peer) {
+				dp_rx_peer_unmap_handler(soc, peer_ids[i],
+							 vdev->vdev_id,
+							 peer->mac_addr.raw,
+							 0);
+			}
+		} else {
+			peer = dp_peer_find_by_id(soc, peer_ids[i]);
+
+			if (peer) {
+				dp_info("peer: %pM is getting flush",
+					peer->mac_addr.raw);
+
 				dp_peer_delete_wifi3(peer, 0);
-			/*
-			 * we need to call dp_peer_unref_del_find_by_id()
-			 * to remove additional ref count incremented
-			 * by dp_peer_find_by_id() call.
-			 *
-			 * Hold the ref count while executing
-			 * dp_peer_delete_wifi3() call.
-			 *
-			 */
-			dp_peer_unref_del_find_by_id(peer);
-			dp_rx_peer_unmap_handler(soc, peer_ids[i],
-						 vdev->vdev_id,
-						 peer->mac_addr.raw, 0);
+				/*
+				 * we need to call dp_peer_unref_del_find_by_id
+				 * to remove additional ref count incremented
+				 * by dp_peer_find_by_id() call.
+				 *
+				 * Hold the ref count while executing
+				 * dp_peer_delete_wifi3() call.
+				 *
+				 */
+				dp_peer_unref_del_find_by_id(peer);
+				dp_rx_peer_unmap_handler(soc, peer_ids[i],
+							 vdev->vdev_id,
+							 peer->mac_addr.raw, 0);
+			}
 		}
 	}
 
