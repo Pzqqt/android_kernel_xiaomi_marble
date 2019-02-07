@@ -666,7 +666,7 @@ struct csr_roam_session {
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
 	uint8_t RoamKeyMgmtOffloadEnabled;
-	roam_offload_synch_ind *roam_synch_data;
+	struct roam_offload_synch_ind *roam_synch_data;
 	struct pmkid_mode_bits pmkid_modes;
 #endif
 	tftSMEContext ftSmeContext;
@@ -1047,18 +1047,18 @@ csr_roam_update_add_ies(struct mac_context *mac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(
 		struct mac_context *mac,
-		struct sSirSmeRoamOffloadSynchInd *roam_synch_ind_ptr,
+		struct roam_offload_synch_ind *roam_synch_ind_ptr,
 		tpSirBssDescription  bss_desc_ptr);
 void csr_process_ho_fail_ind(struct mac_context *mac, void *pMsgBuf);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
-		roam_offload_synch_ind *roam_synch_ind_ptr,
+		struct roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum csr_diagwlan_status_eventreason reason);
 #else
 static inline void csr_roaming_report_diag_event(
 		struct mac_context *mac_ctx,
-		roam_offload_synch_ind *roam_synch_ind_ptr,
+		struct roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum csr_diagwlan_status_eventreason reason)
 {}
 #endif

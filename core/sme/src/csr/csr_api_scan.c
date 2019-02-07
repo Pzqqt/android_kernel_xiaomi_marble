@@ -1850,7 +1850,7 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(struct mac_context *mac,
-				roam_offload_synch_ind *roam_sync_ind_ptr,
+				struct roam_offload_synch_ind *roam_sync_ind_ptr,
 				tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t length = 0;

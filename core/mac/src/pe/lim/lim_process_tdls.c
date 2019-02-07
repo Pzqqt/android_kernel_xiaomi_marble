@@ -1074,7 +1074,7 @@ wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 }
 #endif
 
-void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		   struct pe_session *ft_session_ptr)
 {
 	roam_sync_ind_ptr->join_rsp->tdls_prohibited =

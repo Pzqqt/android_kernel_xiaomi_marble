@@ -2077,7 +2077,7 @@ static void wma_free_roam_synch_frame_ind(struct wma_txrx_node *iface)
  * Return: None
  */
 static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
-				roam_offload_synch_ind *roam_synch_ind_ptr,
+				struct roam_offload_synch_ind *roam_synch_ind_ptr,
 				struct wma_txrx_node *iface)
 {
 	uint8_t *bcn_probersp_ptr;
@@ -2086,7 +2086,7 @@ static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
 
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
-		sizeof(roam_offload_synch_ind);
+		sizeof(struct roam_offload_synch_ind);
 	bcn_probersp_ptr = (uint8_t *) roam_synch_ind_ptr +
 		roam_synch_ind_ptr->beaconProbeRespOffset;
 	roam_synch_ind_ptr->beaconProbeRespLength =
@@ -2099,7 +2099,7 @@ static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
 
 	/* ReAssoc Rsp data */
 	roam_synch_ind_ptr->reassocRespOffset =
-		sizeof(roam_offload_synch_ind) +
+		sizeof(struct roam_offload_synch_ind) +
 		roam_synch_ind_ptr->beaconProbeRespLength;
 	roam_synch_ind_ptr->reassocRespLength =
 		iface->roam_synch_frame_ind.reassoc_rsp_len;
@@ -2113,7 +2113,7 @@ static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
 
 	/* ReAssoc Req data */
 	roam_synch_ind_ptr->reassoc_req_offset =
-		sizeof(roam_offload_synch_ind) +
+		sizeof(struct roam_offload_synch_ind) +
 		roam_synch_ind_ptr->beaconProbeRespLength +
 		roam_synch_ind_ptr->reassocRespLength;
 	roam_synch_ind_ptr->reassoc_req_length =
@@ -2142,7 +2142,7 @@ static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
  * Return: None
  */
 static void wma_fill_data_synch_event(tp_wma_handle wma,
-				roam_offload_synch_ind *roam_synch_ind_ptr,
+				struct roam_offload_synch_ind *roam_synch_ind_ptr,
 				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
 	uint8_t *bcn_probersp_ptr;
@@ -2154,7 +2154,7 @@ static void wma_fill_data_synch_event(tp_wma_handle wma,
 
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
-		sizeof(roam_offload_synch_ind);
+		sizeof(struct roam_offload_synch_ind);
 	bcn_probersp_ptr = (uint8_t *) roam_synch_ind_ptr +
 		roam_synch_ind_ptr->beaconProbeRespOffset;
 	roam_synch_ind_ptr->beaconProbeRespLength =
@@ -2163,7 +2163,7 @@ static void wma_fill_data_synch_event(tp_wma_handle wma,
 		     roam_synch_ind_ptr->beaconProbeRespLength);
 	/* ReAssoc Rsp data */
 	roam_synch_ind_ptr->reassocRespOffset =
-		sizeof(roam_offload_synch_ind) +
+		sizeof(struct roam_offload_synch_ind) +
 		roam_synch_ind_ptr->beaconProbeRespLength;
 	roam_synch_ind_ptr->reassocRespLength = synch_event->reassoc_rsp_len;
 	reassoc_rsp_ptr = (uint8_t *) roam_synch_ind_ptr +
@@ -2174,7 +2174,7 @@ static void wma_fill_data_synch_event(tp_wma_handle wma,
 
 	/* ReAssoc Req data */
 	roam_synch_ind_ptr->reassoc_req_offset =
-		sizeof(roam_offload_synch_ind) +
+		sizeof(struct roam_offload_synch_ind) +
 		roam_synch_ind_ptr->beaconProbeRespLength +
 		roam_synch_ind_ptr->reassocRespLength;
 	roam_synch_ind_ptr->reassoc_req_length = synch_event->reassoc_req_len;
@@ -2198,7 +2198,7 @@ static void wma_fill_data_synch_event(tp_wma_handle wma,
  * Return: Success or Failure
  */
 static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
-				roam_offload_synch_ind *roam_synch_ind_ptr,
+				struct roam_offload_synch_ind *roam_synch_ind_ptr,
 				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
 {
 	wmi_roam_synch_event_fixed_param *synch_event;
@@ -2332,7 +2332,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
  * Return: None
  */
 static void wma_roam_update_vdev(tp_wma_handle wma,
-				 roam_offload_synch_ind *roam_synch_ind_ptr)
+				 struct roam_offload_synch_ind *roam_synch_ind_ptr)
 {
 	tDeleteBssParams *del_bss_params;
 	tDeleteStaParams *del_sta_params;
@@ -2401,7 +2401,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	tp_wma_handle wma = (tp_wma_handle) handle;
-	roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
+	struct roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
 	tpSirBssDescription  bss_desc_ptr = NULL;
 	uint8_t channel;
 	uint16_t ie_len = 0;
@@ -2500,7 +2500,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 				      roam_synch_frame_ind.reassoc_rsp_len;
 
 		roam_synch_data_len = bcn_probe_rsp_len + reassoc_rsp_len +
-			reassoc_req_len + sizeof(roam_offload_synch_ind);
+			reassoc_req_len + sizeof(struct roam_offload_synch_ind);
 
 		WMA_LOGD("Updated synch payload: LEN bcn:%d, req:%d, rsp:%d",
 			bcn_probe_rsp_len,
@@ -2533,7 +2533,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 			 sizeof(wmi_key_material) + sizeof(uint32_t)))
 			goto cleanup_label;
 
-		roam_synch_data_len += sizeof(roam_offload_synch_ind);
+		roam_synch_data_len += sizeof(struct roam_offload_synch_ind);
 	}
 
 	WMA_LOGD("synch payload: LEN bcn:%d, req:%d, rsp:%d",
@@ -4923,7 +4923,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_ROAM_EVENTID_param_tlvs *param_buf;
 	wmi_roam_event_fixed_param *wmi_event;
-	struct sSirSmeRoamOffloadSynchInd *roam_synch_data;
+	struct roam_offload_synch_ind *roam_synch_data;
 	enum sir_roam_op_code op_code = {0};
 
 	param_buf = (WMI_ROAM_EVENTID_param_tlvs *) event_buf;

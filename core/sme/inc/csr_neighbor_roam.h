@@ -359,11 +359,11 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 #endif /* FEATURE_WLAN_ESE */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
-	roam_offload_synch_ind *roam_synch_data,
+	struct roam_offload_synch_ind *roam_synch_data,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
 #else
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
-	roam_offload_synch_ind *roam_synch_data,
+	struct roam_offload_synch_ind *roam_synch_data,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;

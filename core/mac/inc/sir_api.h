@@ -3100,7 +3100,7 @@ typedef struct {
 	uint8_t event_data[];
 } tSirNanEvent, *tpSirNanEvent;
 
-typedef struct sSirSmeRoamOffloadSynchInd {
+struct roam_offload_synch_ind {
 	uint16_t messageType;   /*eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
 	uint16_t length;
 	uint16_t beaconProbeRespOffset;
@@ -3136,7 +3136,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	struct qdf_mac_addr src_mac;
 	uint16_t hlp_data_len;
 	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
-} roam_offload_synch_ind;
+};
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 typedef struct sSirSmeRoamOffloadSynchCnf {

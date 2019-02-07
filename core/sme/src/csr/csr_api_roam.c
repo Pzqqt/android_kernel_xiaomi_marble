@@ -19941,7 +19941,7 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
  * Return: None
  */
 void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
-		roam_offload_synch_ind *roam_synch_ind_ptr,
+		struct roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum csr_diagwlan_status_eventreason reason)
 {
 	WLAN_HOST_DIAG_EVENT_DEF(roam_connection,
@@ -20583,7 +20583,7 @@ void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 
 #if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
-				      roam_offload_synch_ind *roam_synch_data)
+				      struct roam_offload_synch_ind *roam_synch_data)
 {
 	struct fils_join_rsp_params *roam_fils_info;
 
@@ -20604,13 +20604,13 @@ static void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
 #else
 static inline
 void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
-				      roam_offload_synch_ind *roam_synch_data)
+				      struct roam_offload_synch_ind *roam_synch_data)
 {}
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
-		roam_offload_synch_ind *roam_synch_data,
+		struct roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription bss_desc, enum sir_roam_op_code reason)
 {
 	uint8_t session_id = roam_synch_data->roamedVdevId;
@@ -21015,7 +21015,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
  * Return: Success or Failure.
  */
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac_ctx,
-		roam_offload_synch_ind *roam_synch_data,
+		struct roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
 	QDF_STATUS status;

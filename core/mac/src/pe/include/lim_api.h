@@ -225,10 +225,10 @@ extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode
  *
  * Return: None
  */
-void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		   struct pe_session *ft_session_ptr);
 #else
-static inline void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
+static inline void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		   struct pe_session *ft_session_ptr)
 {
 }
@@ -261,11 +261,11 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint32_t subType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
+	struct roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
 #else
 static inline QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
+	struct roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;

@@ -1933,7 +1933,7 @@ static void sir_parse_bcn_fixed_fields(struct mac_context *mac_ctx,
 
 static QDF_STATUS
 lim_roam_fill_bss_descr(struct mac_context *mac,
-			roam_offload_synch_ind *roam_offload_synch_ind_ptr,
+			struct roam_offload_synch_ind *roam_offload_synch_ind_ptr,
 			tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t ie_len = 0;
@@ -2090,7 +2090,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
  * Return: None
  */
 static void lim_copy_and_free_hlp_data_from_session(struct pe_session *session_ptr,
-				    roam_offload_synch_ind *roam_sync_ind_ptr)
+				    struct roam_offload_synch_ind *roam_sync_ind_ptr)
 {
 	if (session_ptr->hlp_data && session_ptr->hlp_data_len) {
 		cds_copy_hlp_info(&session_ptr->dst_mac,
@@ -2109,7 +2109,7 @@ static void lim_copy_and_free_hlp_data_from_session(struct pe_session *session_p
 #else
 static inline void lim_copy_and_free_hlp_data_from_session(
 					struct pe_session *session_ptr,
-					roam_offload_synch_ind
+					struct roam_offload_synch_ind
 					*roam_sync_ind_ptr)
 {}
 #endif
@@ -2128,7 +2128,7 @@ static inline void lim_copy_and_free_hlp_data_from_session(
  * Return: Success or Failure status
  */
 QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	roam_offload_synch_ind *roam_sync_ind_ptr,
+	struct roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
 	struct pe_session *session_ptr;
