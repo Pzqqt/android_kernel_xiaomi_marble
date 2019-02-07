@@ -5241,7 +5241,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint8_t peer_id;
 	QDF_STATUS status;
 	int32_t ret;
-	tTdlsPeerStateParams *peerStateParams;
+	struct tdls_peer_update_state *peer_state;
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -5304,17 +5304,17 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		WMA_LOGD("%s: addSta, after calling cdp_local_peer_id, staIdx: %d, staMac: %pM",
 			 __func__, add_sta->staIdx, add_sta->staMac);
 
-		peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
-		if (!peerStateParams) {
+		peer_state = qdf_mem_malloc(sizeof(*peer_state));
+		if (!peer_state) {
 			add_sta->status = QDF_STATUS_E_NOMEM;
 			goto send_rsp;
 		}
 
-		peerStateParams->peerState = WMI_TDLS_PEER_STATE_PEERING;
-		peerStateParams->vdevId = add_sta->smesessionId;
-		qdf_mem_copy(&peerStateParams->peerMacAddr,
+		peer_state->peer_state = WMI_TDLS_PEER_STATE_PEERING;
+		peer_state->vdev_id = add_sta->smesessionId;
+		qdf_mem_copy(&peer_state->peer_macaddr,
 			     &add_sta->staMac, sizeof(tSirMacAddr));
-		wma_update_tdls_peer_state(wma, peerStateParams);
+		wma_update_tdls_peer_state(wma, peer_state);
 	} else {
 		/* its a change sta request * */
 		peer =
@@ -5800,12 +5800,12 @@ send_del_rsp:
  */
 static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 {
-	tTdlsPeerStateParams *peerStateParams;
+	struct tdls_peer_update_state *peer_state;
 	struct wma_target_req *msg;
 	int status;
 
-	peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
-	if (!peerStateParams) {
+	peer_state = qdf_mem_malloc(sizeof(*peer_state));
+	if (!peer_state) {
 		del_sta->status = QDF_STATUS_E_NOMEM;
 		goto send_del_rsp;
 	}
@@ -5816,17 +5816,17 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	peerStateParams->peerState = TDLS_PEER_STATE_TEARDOWN;
-	peerStateParams->vdevId = del_sta->smesessionId;
-	peerStateParams->resp_reqd = del_sta->respReqd;
-	qdf_mem_copy(&peerStateParams->peerMacAddr,
+	peer_state->peer_state = TDLS_PEER_STATE_TEARDOWN;
+	peer_state->vdev_id = del_sta->smesessionId;
+	peer_state->resp_reqd = del_sta->respReqd;
+	qdf_mem_copy(&peer_state->peer_macaddr,
 		     &del_sta->staMac, sizeof(tSirMacAddr));
 
 	WMA_LOGD("%s: sending tdls_peer_state for peer mac: %pM, peerState: %d",
-		 __func__, peerStateParams->peerMacAddr,
-		 peerStateParams->peerState);
+		 __func__, peer_state->peer_macaddr,
+		 peer_state->peer_state);
 
-	status = wma_update_tdls_peer_state(wma, peerStateParams);
+	status = wma_update_tdls_peer_state(wma, peer_state);
 
 	if (status < 0) {
 		WMA_LOGE("%s: wma_update_tdls_peer_state returned failure",

@@ -3989,12 +3989,12 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 /**
  * wma_update_tdls_peer_state() - update TDLS peer state
  * @handle: wma handle
- * @peerStateParams: TDLS peer state params
+ * @peer_state: TDLS peer state params
  *
  * Return: 0 for success or error code
  */
 int wma_update_tdls_peer_state(WMA_HANDLE handle,
-			       tTdlsPeerStateParams *peerStateParams)
+			       struct tdls_peer_update_state *peer_state)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint32_t i;
@@ -4002,9 +4002,12 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	uint8_t peer_id;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct tdls_peer_params *peer_cap;
 	uint8_t *peer_mac_addr;
 	int ret = 0;
 	uint32_t *ch_mhz = NULL;
+	size_t ch_mhz_len;
+	uint8_t chan_id;
 	bool restore_last_peer = false;
 	QDF_STATUS qdf_status;
 
@@ -4021,32 +4024,31 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	if (wma_is_roam_synch_in_progress(wma_handle,
-					  peerStateParams->vdevId)) {
+					  peer_state->vdev_id)) {
 		WMA_LOGE("%s: roaming in progress, reject peer update cmd!",
 			 __func__);
 		ret = -EPERM;
 		goto end_tdls_peer_state;
 	}
 
-	/* peer capability info is valid only when peer state is connected */
-	if (TDLS_PEER_STATE_CONNECTED != peerStateParams->peerState) {
-		qdf_mem_zero(&peerStateParams->peerCap,
-			     sizeof(tTdlsPeerCapParams));
-	}
+	peer_cap = &peer_state->peer_cap;
 
-	if (peerStateParams->peerCap.peerChanLen) {
-		ch_mhz = qdf_mem_malloc(sizeof(uint32_t) *
-				peerStateParams->peerCap.peerChanLen);
+	/* peer capability info is valid only when peer state is connected */
+	if (TDLS_PEER_STATE_CONNECTED != peer_state->peer_state)
+		qdf_mem_zero(peer_cap, sizeof(*peer_cap));
+
+	if (peer_cap->peer_chanlen) {
+		ch_mhz_len = sizeof(*ch_mhz) * peer_cap->peer_chanlen;
+		ch_mhz = qdf_mem_malloc(ch_mhz_len);
 		if (!ch_mhz) {
 			ret = -ENOMEM;
 			goto end_tdls_peer_state;
 		}
-	}
 
-	for (i = 0; i < peerStateParams->peerCap.peerChanLen; ++i) {
-		ch_mhz[i] =
-			cds_chan_to_freq(peerStateParams->peerCap.peerChan[i].
-					 chanId);
+		for (i = 0; i < peer_cap->peer_chanlen; ++i) {
+			chan_id = peer_cap->peer_chan[i].chan_id;
+			ch_mhz[i] = cds_chan_to_freq(chan_id);
+		}
 	}
 
 	/* Make sure that peer exists before sending peer state cmd*/
@@ -4058,19 +4060,19 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	peer = cdp_peer_find_by_addr(soc,
-			pdev,
-			peerStateParams->peerMacAddr,
-			&peer_id);
+				     pdev,
+				     peer_state->peer_macaddr,
+				     &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s: Failed to get peer handle using peer mac %pM",
-				__func__, peerStateParams->peerMacAddr);
+				__func__, peer_state->peer_macaddr);
 		ret = -EIO;
 		goto end_tdls_peer_state;
 	}
 
 	if (wmi_unified_update_tdls_peer_state_cmd(wma_handle->wmi_handle,
-			 (void *)peerStateParams,
-			 ch_mhz)) {
+						   peer_state,
+						   ch_mhz)) {
 		WMA_LOGE("%s: failed to send tdls peer update state command",
 			 __func__);
 		ret = -EIO;
@@ -4078,7 +4080,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	/* in case of teardown, remove peer from fw */
-	if (TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
+	if (TDLS_PEER_STATE_TEARDOWN == peer_state->peer_state) {
 		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 		if (peer_mac_addr == NULL) {
 			WMA_LOGE("peer_mac_addr is NULL");
@@ -4092,9 +4094,9 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		WMA_LOGD("%s: calling wma_remove_peer for peer " MAC_ADDRESS_STR
 			 " vdevId: %d", __func__,
 			 MAC_ADDR_ARRAY(peer_mac_addr),
-			 peerStateParams->vdevId);
+			 peer_state->vdev_id);
 		qdf_status = wma_remove_peer(wma_handle, peer_mac_addr,
-				peerStateParams->vdevId, peer, false);
+					     peer_state->vdev_id, peer, false);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			WMA_LOGE(FL("wma_remove_peer failed"));
 			ret = -EINVAL;
@@ -4108,8 +4110,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 end_tdls_peer_state:
 	if (ch_mhz)
 		qdf_mem_free(ch_mhz);
-	if (peerStateParams)
-		qdf_mem_free(peerStateParams);
+	if (peer_state)
+		qdf_mem_free(peer_state);
 	return ret;
 }
 #endif /* FEATURE_WLAN_TDLS */

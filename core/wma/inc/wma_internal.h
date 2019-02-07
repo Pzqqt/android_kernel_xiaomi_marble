@@ -1272,9 +1272,8 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 #endif
 
 #ifdef FEATURE_WLAN_TDLS
-
 int wma_update_tdls_peer_state(WMA_HANDLE handle,
-			       tTdlsPeerStateParams *peerStateParams);
+			       struct tdls_peer_update_state *peer_state);
 #endif
 
 void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id);

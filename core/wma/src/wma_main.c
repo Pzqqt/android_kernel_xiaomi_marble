@@ -8449,8 +8449,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 
 #ifdef FEATURE_WLAN_TDLS
 	case WMA_UPDATE_TDLS_PEER_STATE:
-		wma_update_tdls_peer_state(wma_handle,
-				(tTdlsPeerStateParams *) msg->bodyptr);
+		wma_update_tdls_peer_state(wma_handle, msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_TDLS */
 	case WMA_ADD_PERIODIC_TX_PTRN_IND:
