@@ -1390,8 +1390,8 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 		dev_dbg(rtd->dev, "%s: Starting LSM client session\n",
 			__func__);
 		if (!prtd->lsm_client->started) {
-			ret = q6lsm_start(prtd->lsm_client, true);
-			if (!ret) {
+			rc = q6lsm_start(prtd->lsm_client, true);
+			if (!rc) {
 				prtd->lsm_client->started = true;
 				dev_dbg(rtd->dev, "%s: LSM client session started\n",
 					 __func__);
@@ -1407,19 +1407,19 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			if (prtd->lsm_client->lab_enable) {
 				atomic_set(&prtd->read_abort, 1);
 				if (prtd->lsm_client->lab_started) {
-					ret = q6lsm_stop_lab(prtd->lsm_client);
-					if (ret)
+					rc = q6lsm_stop_lab(prtd->lsm_client);
+					if (rc)
 						dev_err(rtd->dev,
-							"%s: stop lab failed ret %d\n",
-							__func__, ret);
+							"%s: stop lab failed rc %d\n",
+							__func__, rc);
 					prtd->lsm_client->lab_started = false;
 				}
 			}
-			ret = q6lsm_stop(prtd->lsm_client, true);
-			if (!ret)
+			rc = q6lsm_stop(prtd->lsm_client, true);
+			if (!rc)
 				dev_dbg(rtd->dev,
 					"%s: LSM client session stopped %d\n",
-					__func__, ret);
+					__func__, rc);
 			prtd->lsm_client->started = false;
 		}
 		break;
@@ -2593,6 +2593,25 @@ static int msm_lsm_close(struct snd_pcm_substream *substream)
 
 	dev_dbg(rtd->dev, "%s\n", __func__);
 	if (prtd->lsm_client->started) {
+		if (prtd->lsm_client->lab_enable) {
+			atomic_set(&prtd->read_abort, 1);
+			if (prtd->lsm_client->lab_started) {
+				ret = q6lsm_stop_lab(prtd->lsm_client);
+				if (ret)
+					dev_err(rtd->dev,
+						"%s: stop lab failed ret %d\n",
+						__func__, ret);
+				prtd->lsm_client->lab_started = false;
+			}
+			if (prtd->lsm_client->lab_buffer) {
+				ret = msm_lsm_lab_buffer_alloc(prtd,
+						LAB_BUFFER_DEALLOC);
+				if (ret)
+					dev_err(rtd->dev,
+						"%s: lab buffer dealloc failed ret %d\n",
+						__func__, ret);
+			}
+		}
 		ret = q6lsm_stop(prtd->lsm_client, true);
 		if (ret)
 			dev_err(rtd->dev,
