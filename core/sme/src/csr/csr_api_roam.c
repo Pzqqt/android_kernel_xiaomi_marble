@@ -2019,7 +2019,7 @@ static void
 csr_fetch_ch_lst_from_received_list(struct mac_context *mac_ctx,
 				    tpCsrNeighborRoamControlInfo roam_info,
 				    tpCsrChannelInfo curr_ch_lst_info,
-				    tSirRoamOffloadScanReq *req_buf)
+				    struct roam_offload_scan_req *req_buf)
 {
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
@@ -17078,7 +17078,7 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
  */
 #ifdef FEATURE_WLAN_ESE
 static
-void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
+void csr_update_roam_scan_ese_params(struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
 {
 	if (csr_is_auth_type_ese(req_buf->ConnectedNetwork.authentication)) {
@@ -17094,7 +17094,7 @@ void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
 }
 #else
 static inline
-void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
+void csr_update_roam_scan_ese_params(struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
 {
 }
@@ -17111,7 +17111,7 @@ void csr_update_roam_scan_ese_params(tSirRoamOffloadScanReq *req_buf,
  */
 static void
 csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
-				     tSirRoamOffloadScanReq *req_buf,
+				     struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
 {
 	qdf_mem_copy(req_buf->PSK_PMK, session->psk_pmk,
@@ -17192,7 +17192,7 @@ csr_check_band_channel_match(enum band_info band, uint8_t channel)
 static QDF_STATUS
 csr_fetch_ch_lst_from_ini(struct mac_context *mac_ctx,
 			  tpCsrNeighborRoamControlInfo roam_info,
-			  tSirRoamOffloadScanReq *req_buf)
+			  struct roam_offload_scan_req *req_buf)
 {
 	enum band_info band;
 	uint8_t i = 0;
@@ -17286,7 +17286,7 @@ static void
 csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 				   uint8_t session_id,
 				   uint8_t reason,
-				   tSirRoamOffloadScanReq *req_buf,
+				   struct roam_offload_scan_req *req_buf,
 				   tpCsrNeighborRoamControlInfo roam_info)
 {
 	uint8_t i = 0;
@@ -17369,7 +17369,7 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
  */
 static QDF_STATUS
 csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
-		       tSirRoamOffloadScanReq *req_buf,
+		       struct roam_offload_scan_req *req_buf,
 		       uint8_t session_id)
 {
 	QDF_STATUS status;
@@ -17475,7 +17475,7 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
  *
  * Return: roam offload scan request packet buffer
  */
-static tSirRoamOffloadScanReq *
+static struct roam_offload_scan_req *
 csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 				     uint8_t command,
 				     uint8_t session_id,
@@ -17487,7 +17487,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	uint8_t i, j, dot11_mode;
 	bool ese_neighbor_list_recvd = false;
 	uint8_t ch_cache_str[128] = { 0 };
-	tSirRoamOffloadScanReq *req_buf = NULL;
+	struct roam_offload_scan_req *req_buf = NULL;
 	tpCsrChannelInfo curr_ch_lst_info =
 		&roam_info->roamChannelInfo.currentChannelListInfo;
 #ifdef FEATURE_WLAN_ESE
@@ -17501,7 +17501,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		|| (roam_info->isESEAssoc == false);
 #endif /* FEATURE_WLAN_ESE */
 
-	req_buf = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
+	req_buf = qdf_mem_malloc(sizeof(struct roam_offload_scan_req));
 	if (!req_buf)
 		return NULL;
 
@@ -17759,10 +17759,11 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
  *
  * Return: none
  */
-static void csr_update_11k_offload_params(struct mac_context *mac_ctx,
-					  struct csr_roam_session *session,
-					  tSirRoamOffloadScanReq *req_buffer,
-					  bool enabled)
+static void
+csr_update_11k_offload_params(struct mac_context *mac_ctx,
+			      struct csr_roam_session *session,
+			      struct roam_offload_scan_req *req_buffer,
+			      bool enabled)
 {
 	struct wmi_11k_offload_params *params = &req_buffer->offload_11k_params;
 	struct csr_config *csr_config = &mac_ctx->roam.configParam;
@@ -17906,8 +17907,8 @@ QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
  *
  * Return: None
  */
-static void check_allowed_ssid_list(tSirRoamOffloadScanReq *req_buffer,
-		struct roam_ext_params *roam_params)
+static void check_allowed_ssid_list(struct roam_offload_scan_req *req_buffer,
+				    struct roam_ext_params *roam_params)
 {
 	int i = 0;
 	bool match = false;
@@ -18074,13 +18075,14 @@ static bool csr_is_RSO_cmd_allowed(struct mac_context *mac_ctx,
  * csr_roam_send_rso_cmd() - API to send RSO command to PE
  * @mac_ctx: Pointer to global MAC structure
  * @session_id: Session ID
- * @request_buf: Pointer to tSirRoamOffloadScanReq
+ * @request_buf: Pointer to struct roam_offload_scan_req
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
-					uint8_t session_id,
-					tSirRoamOffloadScanReq *request_buf)
+static QDF_STATUS
+csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
+		      uint8_t session_id,
+		      struct roam_offload_scan_req *request_buf)
 {
 	QDF_STATUS status;
 
@@ -18106,8 +18108,9 @@ static QDF_STATUS csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
  * Return: None
  */
 static void csr_append_assoc_ies(struct mac_context *mac_ctx,
-				tSirRoamOffloadScanReq *req_buf, uint8_t ie_id,
-				uint8_t ie_len, uint8_t *ie_data)
+				 struct roam_offload_scan_req *req_buf,
+				 uint8_t ie_id, uint8_t ie_len,
+				 uint8_t *ie_data)
 {
 	tSirAddie *assoc_ie = &req_buf->assoc_ie;
 
@@ -18135,8 +18138,9 @@ static void csr_append_assoc_ies(struct mac_context *mac_ctx,
  * Return: None
  */
 static void ese_populate_addtional_ies(struct mac_context *mac_ctx,
-				struct csr_roam_session *session,
-				tSirRoamOffloadScanReq *req_buf) {
+				       struct csr_roam_session *session,
+				       struct roam_offload_scan_req *req_buf)
+{
 
 	uint8_t tspec_ie_hdr[SIR_MAC_OUI_WME_HDR_MIN]
 			= { 0x00, 0x50, 0xf2, 0x02, 0x02, 0x01 };
@@ -18166,9 +18170,10 @@ static void ese_populate_addtional_ies(struct mac_context *mac_ctx,
 
 }
 #else
-static inline void ese_populate_addtional_ies(
-	struct mac_context *mac_ctx,
-	struct csr_roam_session *session, tSirRoamOffloadScanReq *req_buf) {
+static void ese_populate_addtional_ies(struct mac_context *mac_ctx,
+				       struct csr_roam_session *session,
+				       struct roam_offload_scan_req *req_buf)
+{
 }
 #endif
 /**
@@ -18181,7 +18186,7 @@ static inline void ese_populate_addtional_ies(
  */
 static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 					struct csr_roam_session *session,
-					tSirRoamOffloadScanReq *req_buf)
+					struct roam_offload_scan_req *req_buf)
 {
 	bool power_caps_populated = false;
 	uint32_t csr_11henable;
@@ -18425,7 +18430,7 @@ static uint32_t copy_all_before_char(char *str, uint32_t str_len,
  */
 static void csr_update_fils_params_rso(struct mac_context *mac,
 		struct csr_roam_session *session,
-		tSirRoamOffloadScanReq *req_buffer)
+		struct roam_offload_scan_req *req_buffer)
 {
 	struct roam_fils_params *roam_fils_params;
 	struct cds_fils_connection_info *fils_info;
@@ -18482,7 +18487,7 @@ static void csr_update_fils_params_rso(struct mac_context *mac,
 #else
 static inline void csr_update_fils_params_rso(struct mac_context *mac,
 		struct csr_roam_session *session,
-		tSirRoamOffloadScanReq *req_buffer)
+		struct roam_offload_scan_req *req_buffer)
 {}
 #endif
 
@@ -18494,7 +18499,7 @@ static inline void csr_update_fils_params_rso(struct mac_context *mac,
  * Return: None
  */
 static void csr_update_score_params(struct mac_context *mac_ctx,
-				    tSirRoamOffloadScanReq *req_buffer)
+				    struct roam_offload_scan_req *req_buffer)
 {
 	struct scoring_param *req_score_params;
 	struct rssi_scoring *req_rssi_score;
@@ -18612,7 +18617,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		      uint8_t command, uint8_t reason)
 {
 	uint8_t *state = NULL;
-	tSirRoamOffloadScanReq *req_buf;
+	struct roam_offload_scan_req *req_buf;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	tpCsrNeighborRoamControlInfo roam_info =

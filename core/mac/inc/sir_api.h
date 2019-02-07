@@ -2264,7 +2264,7 @@ struct mawc_params {
 	uint8_t mawc_roam_rssi_low_adjust;
 };
 
-typedef struct sSirRoamOffloadScanReq {
+struct roam_offload_scan_req {
 	uint16_t message_type;
 	uint16_t length;
 	bool RoamScanOffloadEnabled;
@@ -2345,7 +2345,7 @@ typedef struct sSirRoamOffloadScanReq {
 	/* bss load triggered roam related params */
 	bool bss_load_trig_enabled;
 	struct wmi_bss_load_config bss_load_config;
-} tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
+};
 
 typedef struct sSirRoamOffloadScanRsp {
 	uint8_t sessionId;

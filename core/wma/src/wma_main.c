@@ -8486,11 +8486,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_ROAM_SCAN_OFFLOAD_REQ:
-		/*
-		 * Main entry point or roaming directives from CSR.
-		 */
-		wma_process_roaming_config(wma_handle,
-				(tSirRoamOffloadScanReq *) msg->bodyptr);
+		wma_process_roaming_config(wma_handle, msg->bodyptr);
 		break;
 
 	case WMA_RATE_UPDATE_IND:

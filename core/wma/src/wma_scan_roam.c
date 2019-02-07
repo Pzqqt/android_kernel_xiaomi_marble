@@ -194,7 +194,7 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 }
 
 QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
-		tSirRoamOffloadScanReq *roam_req)
+		struct roam_offload_scan_req *roam_req)
 {
 	struct wmi_mawc_roam_params *params;
 	QDF_STATUS status;
@@ -241,7 +241,7 @@ QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
  */
 static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
 					   struct roam_offload_scan_params
-					   *params, tSirRoamOffloadScanReq
+					   *params, struct roam_offload_scan_req
 					   *roam_req)
 {
 	struct roam_fils_params *dst_fils_params, *src_fils_params;
@@ -277,7 +277,7 @@ static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
 static inline void wma_roam_scan_fill_fils_params(
 					tp_wma_handle wma_handle,
 					struct roam_offload_scan_params *params,
-					tSirRoamOffloadScanReq *roam_req)
+					struct roam_offload_scan_req *roam_req)
 
 { }
 #endif
@@ -297,7 +297,7 @@ static inline void wma_roam_scan_fill_fils_params(
 static void wma_roam_scan_offload_set_params(
 				tp_wma_handle wma_handle,
 				struct roam_offload_scan_params *params,
-				tSirRoamOffloadScanReq *roam_req)
+				struct roam_offload_scan_req *roam_req)
 {
 	params->auth_mode = WMI_AUTH_NONE;
 	if (!roam_req)
@@ -346,7 +346,7 @@ static void wma_roam_scan_offload_set_params(
 static void wma_roam_scan_offload_set_params(
 				tp_wma_handle wma_handle,
 				struct roam_offload_scan_params *params,
-				tSirRoamOffloadScanReq *roam_req)
+				struct roam_offload_scan_req *roam_req)
 {}
 #endif
 
@@ -366,7 +366,7 @@ static void wma_roam_scan_offload_set_params(
 QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
-				      tSirRoamOffloadScanReq *roam_req,
+				      struct roam_offload_scan_req *roam_req,
 				      uint32_t mode, uint32_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -419,17 +419,9 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	return status;
 }
 
-/**
- * wma_roam_scan_offload_rssi_threshold() - set scan offload rssi threashold
- * @wma_handle: wma handle
- * @roam_req:   Roaming request buffer
- *
- * Send WMI_ROAM_SCAN_RSSI_THRESHOLD TLV to firmware
- *
- * Return: QDF status
- */
-QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-	tSirRoamOffloadScanReq *roam_req)
+QDF_STATUS
+wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req)
 {
 	struct roam_offload_scan_rssi_params params = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -835,14 +827,22 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
  * Return: if LFR2.0, then return WMI_AUTH_CCKM for backward compatibility
  *         if LFR3.0 then return the appropriate auth type
  */
-static uint32_t wma_roam_scan_get_cckm_mode(tSirRoamOffloadScanReq *roam_req,
-		uint32_t auth_mode)
+static
+uint32_t wma_roam_scan_get_cckm_mode(struct roam_offload_scan_req *roam_req,
+				     uint32_t auth_mode)
 {
 	if (roam_req->roam_offload_enabled)
 		return auth_mode;
 	else
 		return WMI_AUTH_CCKM;
 
+}
+#else
+static
+uint32_t wma_roam_scan_get_cckm_mode(struct roam_offload_scan_req *roam_req,
+				     uint32_t auth_mode)
+{
+	return WMI_AUTH_CCKM;
 }
 #endif
 /**
@@ -854,8 +854,9 @@ static uint32_t wma_roam_scan_get_cckm_mode(tSirRoamOffloadScanReq *roam_req,
  *
  * Return: none
  */
-static void wma_roam_scan_fill_ap_profile(tSirRoamOffloadScanReq *roam_req,
-					  struct ap_profile *profile)
+static void
+wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
+			      struct ap_profile *profile)
 {
 	uint32_t rsn_authmode;
 
@@ -1041,7 +1042,7 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
  */
 void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				    struct mac_context *mac,
-				    tSirRoamOffloadScanReq *roam_req,
+				    struct roam_offload_scan_req *roam_req,
 				    wmi_start_scan_cmd_fixed_param *
 				    scan_params)
 {
@@ -1197,7 +1198,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
  * Return: QDF status
  */
 static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
-				tSirRoamOffloadScanReq *roam_req)
+				struct roam_offload_scan_req *roam_req)
 {
 	struct ap_profile_params ap_profile;
 	bool db2dbm_enabled;
@@ -1238,7 +1239,7 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
  *         parameters to the firmware, otherwise failure.
  */
 static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
-				       tSirRoamOffloadScanReq *roam_req)
+				       struct roam_offload_scan_req *roam_req)
 {
 	int i;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1425,8 +1426,9 @@ QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-static QDF_STATUS wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
-					    tSirRoamOffloadScanReq *roam_req)
+static QDF_STATUS
+wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
+			  struct roam_offload_scan_req *roam_req)
 {
 	struct wmi_btm_config *params;
 	QDF_STATUS status;
@@ -1535,7 +1537,7 @@ QDF_STATUS wma_send_offload_11k_params(WMA_HANDLE handle,
  * Return: QDF status
  */
 QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
-				     tSirRoamOffloadScanReq *roam_req)
+				     struct roam_offload_scan_req *roam_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_start_scan_cmd_fixed_param scan_params;
@@ -1566,9 +1568,10 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		intr = &wma_handle->interfaces[roam_req->sessionId];
 		intr->delay_before_vdev_stop = roam_req->delay_before_vdev_stop;
 		/*
-		 * Scan/Roam threshold parameters are translated from fields of
-		 * tSirRoamOffloadScanReq to WMITLV values sent to Rome firmware
-		 * some of these parameters are configurable in qcom_cfg.ini
+		 * Scan/Roam threshold parameters are translated from
+		 * fields of struct roam_offload_scan_req to WMITLV
+		 * values sent to Rome firmware some of these
+		 * parameters are configurable in qcom_cfg.ini
 		 */
 
 		/* First param is positive rssi value to trigger rssi based scan
@@ -2403,7 +2406,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	uint8_t channel;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;
-	tSirRoamOffloadScanReq *roam_req;
+	struct roam_offload_scan_req *roam_req;
 	qdf_time_t roam_synch_received = qdf_get_system_timestamp();
 	uint32_t roam_synch_data_len;
 	A_UINT32 bcn_probe_rsp_len;
@@ -2622,7 +2625,7 @@ cleanup_label:
 		if (roam_synch_ind_ptr)
 			wma->csr_roam_synch_cb((struct mac_context *)wma->mac_context,
 				roam_synch_ind_ptr, NULL, SIR_ROAMING_ABORT);
-		roam_req = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
+		roam_req = qdf_mem_malloc(sizeof(struct roam_offload_scan_req));
 		if (roam_req && synch_event) {
 			roam_req->Command = ROAM_SCAN_OFFLOAD_STOP;
 			roam_req->reason = REASON_ROAM_SYNCH_FAILED;
@@ -2793,7 +2796,7 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					roam_offload_param *
 					roam_offload_params,
-					tSirRoamOffloadScanReq *roam_req)
+					struct roam_offload_scan_req *roam_req)
 {
 	qdf_size_t val_len;
 	struct mac_context *mac = NULL;

@@ -209,7 +209,7 @@ bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
  * Return: None
  */
 void lim_update_fils_rik(struct pe_session *pe_session,
-			 tSirRoamOffloadScanReq *req_buffer);
+			 struct roam_offload_scan_req *req_buffer);
 #else
 static inline bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 		struct pe_session *pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
@@ -279,6 +279,6 @@ static inline bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 }
 
 static inline void lim_update_fils_rik(struct pe_session *pe_session,
-				       tSirRoamOffloadScanReq *req_buffer)
+				       struct roam_offload_scan_req *req_buffer)
 { }
 #endif

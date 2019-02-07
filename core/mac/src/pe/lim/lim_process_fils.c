@@ -1804,7 +1804,7 @@ QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 }
 
 void lim_update_fils_rik(struct pe_session *pe_session,
-			 tSirRoamOffloadScanReq *req_buffer)
+			 struct roam_offload_scan_req *req_buffer)
 {
 	struct pe_fils_session *pe_fils_info = pe_session->fils_info;
 	struct roam_fils_params *roam_fils_params =

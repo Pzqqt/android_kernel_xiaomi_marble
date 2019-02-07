@@ -236,13 +236,13 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					roam_offload_param *
 					roam_offload_params,
-					tSirRoamOffloadScanReq *roam_req);
+					struct roam_offload_scan_req *roam_req);
 #endif
 
 QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
-				      tSirRoamOffloadScanReq *roam_req,
+				      struct roam_offload_scan_req *roam_req,
 				      uint32_t mode, uint32_t vdev_id);
 
 /**
@@ -256,10 +256,20 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
  * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
-		tSirRoamOffloadScanReq *roam_req);
+		struct roam_offload_scan_req *roam_req);
 
-QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-					     tSirRoamOffloadScanReq *roam_req);
+/**
+ * wma_roam_scan_offload_rssi_threshold() - set scan offload rssi threashold
+ * @wma_handle: wma handle
+ * @roam_req:   Roaming request buffer
+ *
+ * Send WMI_ROAM_SCAN_RSSI_THRESHOLD TLV to firmware
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req);
 
 QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_period,
@@ -284,7 +294,7 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 
 void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				    struct mac_context *mac,
-				    tSirRoamOffloadScanReq *roam_req,
+				    struct roam_offload_scan_req *roam_req,
 				    wmi_start_scan_cmd_fixed_param *
 				    scan_params);
 
@@ -515,11 +525,6 @@ static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
 		uint8_t vdev_id)
 {
 	return false;
-}
-static inline uint32_t wma_roam_scan_get_cckm_mode(
-		struct sSirRoamOffloadScanReq *roam_req, uint32_t auth_mode)
-{
-	return WMI_AUTH_CCKM;
 }
 #endif
 

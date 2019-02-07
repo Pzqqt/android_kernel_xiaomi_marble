@@ -3716,11 +3716,11 @@ static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
 	struct pe_session *pe_session;
 	struct scheduler_msg wma_msg = {0};
 	QDF_STATUS status;
-	tSirRoamOffloadScanReq *req_buffer;
+	struct roam_offload_scan_req *req_buffer;
 	uint16_t local_ie_len;
 	uint8_t *local_ie_buf;
 
-	req_buffer = (tSirRoamOffloadScanReq *)msg_buf;
+	req_buffer = (struct roam_offload_scan_req *)msg_buf;
 	pe_session = pe_find_session_by_sme_session_id(mac_ctx,
 					req_buffer->sessionId);
 

@@ -6221,7 +6221,7 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 {
 	struct scheduler_msg wma_msg = {0};
 	QDF_STATUS status;
-	tSirRoamOffloadScanReq *req;
+	struct roam_offload_scan_req *req;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	tpCsrNeighborRoamControlInfo roam_info;
 	struct csr_roam_session *session;
