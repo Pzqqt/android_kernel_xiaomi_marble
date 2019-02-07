@@ -825,7 +825,7 @@ static const struct snd_soc_component_driver bolero = {
 static void bolero_add_child_devices(struct work_struct *work)
 {
 	struct bolero_priv *priv;
-	bool wcd937x_node = false;
+	bool split_codec = false;
 	struct platform_device *pdev;
 	struct device_node *node;
 	int ret = 0, count = 0;
@@ -849,9 +849,12 @@ static void bolero_add_child_devices(struct work_struct *work)
 	priv->child_count = 0;
 
 	for_each_available_child_of_node(priv->dev->of_node, node) {
-		wcd937x_node = false;
-		if (strnstr(node->name, "wcd937x", strlen("wcd937x")) != NULL)
-			wcd937x_node = true;
+		split_codec = false;
+		if (of_find_property(node, "qcom,split-codec", NULL)) {
+			split_codec = true;
+			dev_dbg(priv->dev, "%s: split codec slave exists\n",
+				__func__);
+		}
 
 		strlcpy(plat_dev_name, node->name,
 				(BOLERO_CDC_STRING_LEN - 1));
@@ -866,7 +869,7 @@ static void bolero_add_child_devices(struct work_struct *work)
 		pdev->dev.parent = priv->dev;
 		pdev->dev.of_node = node;
 
-		if (wcd937x_node) {
+		if (split_codec) {
 			priv->dev->platform_data = platdata;
 			priv->wcd_dev = &pdev->dev;
 		}
