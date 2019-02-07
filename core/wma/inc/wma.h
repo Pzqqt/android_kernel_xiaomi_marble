@@ -875,8 +875,8 @@ struct wma_txrx_node {
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	uint8_t wep_default_key_idx;
-	tSirHostOffloadReq arp_offload_req;
-	tSirHostOffloadReq ns_offload_req;
+	struct sir_host_offload_req arp_offload_req;
+	struct sir_host_offload_req ns_offload_req;
 #ifndef QCA_SUPPORT_CP_STATS
 	struct sir_vdev_wow_stats wow_stats;
 #endif

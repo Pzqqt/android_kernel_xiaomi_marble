@@ -8650,7 +8650,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct host_offload_req *pRequest = (struct host_offload_req *) extra;
-	tSirHostOffloadReq offloadRequest;
+	struct sir_host_offload_req offloadRequest;
 	struct hdd_context *hdd_ctx;
 	int ret;
 

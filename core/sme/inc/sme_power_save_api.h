@@ -46,12 +46,12 @@ void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
 
 QDF_STATUS sme_ps_start_uapsd(mac_handle_t mac_handle, uint32_t session_id);
 QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
-				   tpSirHostOffloadReq request,
+				   struct sir_host_offload_req *request,
 				   uint8_t session_id);
 
 #ifdef WLAN_NS_OFFLOAD
 QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
-				 tpSirHostOffloadReq request,
+				 struct sir_host_offload_req *request,
 				 uint8_t session_id);
 
 #endif /* WLAN_NS_OFFLOAD */

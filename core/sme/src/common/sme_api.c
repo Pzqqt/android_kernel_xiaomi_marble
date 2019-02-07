@@ -4466,7 +4466,7 @@ QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId)
  * Return QDF_STATUS
  */
 QDF_STATUS sme_set_host_offload(mac_handle_t mac_handle, uint8_t sessionId,
-				tpSirHostOffloadReq request)
+				struct sir_host_offload_req *request)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;

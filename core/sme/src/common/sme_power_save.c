@@ -614,10 +614,10 @@ QDF_STATUS sme_ps_start_uapsd(mac_handle_t mac_handle, uint32_t session_id)
  *            QDF_STATUS_SUCCESS  Request accepted.
  */
 QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
-				   tpSirHostOffloadReq request,
+				   struct sir_host_offload_req *request,
 				   uint8_t session_id)
 {
-	tpSirHostOffloadReq request_buf;
+	struct sir_host_offload_req *request_buf;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -635,13 +635,13 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	request_buf = qdf_mem_malloc(sizeof(tSirHostOffloadReq));
+	request_buf = qdf_mem_malloc(sizeof(struct sir_host_offload_req));
 	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
 
 	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
-	qdf_mem_copy(request_buf, request, sizeof(tSirHostOffloadReq));
+	qdf_mem_copy(request_buf, request, sizeof(struct sir_host_offload_req));
 
 	msg.type = WMA_SET_HOST_OFFLOAD;
 	msg.reserved = 0;
@@ -672,11 +672,11 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
  *		QDF_STATUS_SUCCESS  Request accepted.
  */
 QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
-				 tpSirHostOffloadReq request,
+				 struct sir_host_offload_req *request,
 				 uint8_t session_id)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	tpSirHostOffloadReq request_buf;
+	struct sir_host_offload_req *request_buf;
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 

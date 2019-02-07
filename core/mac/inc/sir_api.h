@@ -1991,7 +1991,7 @@ typedef struct sSirSmeProbeReqInd {
 #define SIR_OFFLOAD_DISABLE                         0
 #define SIR_OFFLOAD_ENABLE                          1
 
-typedef struct sSirHostOffloadReq {
+struct sir_host_offload_req {
 	uint8_t offloadType;
 	uint8_t enableOrDisable;
 	uint32_t num_ns_offload_count;
@@ -2000,7 +2000,7 @@ typedef struct sSirHostOffloadReq {
 		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	} params;
 	struct qdf_mac_addr bssid;
-} tSirHostOffloadReq, *tpSirHostOffloadReq;
+};
 
 /* Packet Types. */
 #define SIR_KEEP_ALIVE_NULL_PKT              1
