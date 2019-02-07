@@ -11461,6 +11461,7 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 		omi_data.ch_bw = session->connectedProfile.vht_channel_width;
 
 	omi_data.ul_mu_dis = mac_ctx->he_om_ctrl_cfg_ul_mu_dis;
+	omi_data.ul_mu_data_dis = mac_ctx->he_om_ctrl_ul_mu_data_dis;
 	omi_data.omi_in_vht = 0x1;
 	omi_data.omi_in_he = 0x1;
 
@@ -11536,6 +11537,10 @@ int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
 			mac_ctx->he_om_ctrl_cfg_tx_nsts_set = true;
 			mac_ctx->he_om_ctrl_cfg_tx_nsts = cfg_val;
 			break;
+		case QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DATA_DISABLE:
+			sme_debug("Set OM ctrl UL MU data dis to %d", cfg_val);
+			mac_ctx->he_om_ctrl_ul_mu_data_dis = cfg_val;
+			break;
 		default:
 			sme_debug("Invalid OMI param %d", param);
 			return -EINVAL;
@@ -11555,6 +11560,7 @@ void sme_reset_he_om_ctrl(mac_handle_t mac_handle)
 	mac_ctx->he_om_ctrl_cfg_ul_mu_dis = false;
 	mac_ctx->he_om_ctrl_cfg_tx_nsts_set = false;
 	mac_ctx->he_om_ctrl_cfg_tx_nsts = 0;
+	mac_ctx->he_om_ctrl_ul_mu_data_dis = false;
 }
 
 int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,

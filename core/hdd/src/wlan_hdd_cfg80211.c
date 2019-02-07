@@ -5303,6 +5303,7 @@ qca_wlan_vendor_attr_he_omi_tx_policy [QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW] =        {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DISABLE] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_TX_NSTS] =      {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DATA_DISABLE] = {.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -7100,6 +7101,16 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 							adapter->vdev_id,
 							cmd_id, cfg_val);
 			}
+
+			cmd_id = QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DATA_DISABLE;
+			if (tb2[cmd_id]) {
+				cfg_val = nla_get_u8(tb2[cmd_id]);
+				ret_val = sme_set_he_om_ctrl_param(
+							hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							cmd_id, cfg_val);
+			}
+
 		}
 		if (ret_val) {
 			sme_reset_he_om_ctrl(hdd_ctx->mac_handle);
