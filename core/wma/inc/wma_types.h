@@ -626,19 +626,6 @@ typedef struct {
 	uint32_t param_vp_dev;
 } wma_cli_set_cmd_t;
 
-#ifdef FEATURE_WLAN_TDLS
-/**
- * enum wma_tdls_off_chan_mode - modes for WMI_TDLS_SET_OFFCHAN_MODE_CMDID
- * @WMA_TDLS_ENABLE_OFFCHANNEL: enable off channel
- * @WMA_TDLS_DISABLE_OFFCHANNEL: disable off channel
- */
-enum wma_tdls_off_chan_mode {
-	WMA_TDLS_ENABLE_OFFCHANNEL,
-	WMA_TDLS_DISABLE_OFFCHANNEL
-};
-
-#endif /* FEATURE_WLAN_TDLS */
-
 enum rateid {
 	RATEID_1MBPS = 0,
 	RATEID_2MBPS,
