@@ -1788,7 +1788,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		if (roam_req->reason ==
 		    REASON_OS_REQUESTED_ROAMING_NOW) {
 			struct scheduler_msg cds_msg = {0};
-			tSirRoamOffloadScanRsp *scan_offload_rsp;
+			struct roam_offload_scan_rsp *scan_offload_rsp;
 
 			scan_offload_rsp =
 				qdf_mem_malloc(sizeof(*scan_offload_rsp));

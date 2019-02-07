@@ -1009,11 +1009,11 @@ QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 		uint8_t channel);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
-		tpSirRoamOffloadScanRsp scanOffloadRsp);
+		struct roam_offload_scan_rsp *scanOffloadRsp);
 #else
 static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 		struct mac_context *mac,
-		tpSirRoamOffloadScanRsp scanOffloadRsp)
+		struct roam_offload_scan_rsp *scanOffloadRsp)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

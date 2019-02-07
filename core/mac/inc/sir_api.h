@@ -2347,10 +2347,10 @@ struct roam_offload_scan_req {
 	struct wmi_bss_load_config bss_load_config;
 };
 
-typedef struct sSirRoamOffloadScanRsp {
+struct roam_offload_scan_rsp {
 	uint8_t sessionId;
 	uint32_t reason;
-} tSirRoamOffloadScanRsp, *tpSirRoamOffloadScanRsp;
+};
 
 /*---------------------------------------------------------------------------
    Packet Filtering Parameters

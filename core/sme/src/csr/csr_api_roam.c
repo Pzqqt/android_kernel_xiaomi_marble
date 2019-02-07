@@ -18929,9 +18929,9 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	return status;
 }
 
-QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
-					  tpSirRoamOffloadScanRsp
-						scanOffloadRsp)
+QDF_STATUS
+csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
+			       struct roam_offload_scan_rsp *scanOffloadRsp)
 {
 	switch (scanOffloadRsp->reason) {
 	case 0:
