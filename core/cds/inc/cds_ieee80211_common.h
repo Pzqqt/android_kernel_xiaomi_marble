@@ -1287,18 +1287,6 @@ enum {
 #define IEEE80211_CHANSWITCHANN_BYTES        5
 #define IEEE80211_EXTCHANSWITCHANN_BYTES     6
 
-/* TODO -> Need to Check Redefinition Error used in only UMAC */
-#if 0
-struct ieee80211_tim_ie {
-	uint8_t tim_ie;         /* IEEE80211_ELEMID_TIM */
-	uint8_t tim_len;
-	uint8_t tim_count;      /* DTIM count */
-	uint8_t tim_period;     /* DTIM period */
-	uint8_t tim_bitctl;     /* bitmap control */
-	uint8_t tim_bitmap[1];  /* variable-length bitmap */
-} __packed;
-#endif
-
 /* Country IE channel triplet */
 struct country_ie_triplet {
 	union {
@@ -1342,18 +1330,6 @@ struct ieee80211_erp_ie {
 	uint8_t len;
 	uint8_t value;
 } __packed;
-
-/* TODO -> Need to Check Redefinition Error used in only UMAC */
-#if 0
-struct ieee80211_quiet_ie {
-	uint8_t ie;             /* IEEE80211_ELEMID_QUIET */
-	uint8_t len;
-	uint8_t tbttcount;      /* quiet start */
-	uint8_t period;         /* beacon intervals between quiets */
-	uint16_t duration;      /* TUs of each quiet */
-	uint16_t offset;        /* TUs of from TBTT of quiet start */
-} __packed;
-#endif
 
 struct ieee80211_channelswitch_ie {
 	uint8_t ie;             /* IEEE80211_ELEMID_CHANSWITCHANN */
@@ -1971,18 +1947,6 @@ struct ieee80211_ie_timeout_interval {
 	uint8_t interval_type;
 	uint32_t value;
 } __packed;
-
-/* TODO -> Need to Check Redefinition Error used in only UMAC */
-#if 0
-/* Management MIC information element (IEEE 802.11w) */
-struct ieee80211_mmie {
-	uint8_t element_id;
-	uint8_t length;
-	uint16_t key_id;
-	uint8_t sequence_number[6];
-	uint8_t mic[8];
-} __packed;
-#endif
 
 /*
  * 802.11n Secondary Channel Offset element
