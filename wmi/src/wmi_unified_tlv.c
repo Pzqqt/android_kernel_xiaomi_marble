@@ -11691,6 +11691,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT;
 	wmi_service[wmi_service_wlm_stats_support] =
 			WMI_SERVICE_WLM_STATS_REQUEST;
+	wmi_service[wmi_service_ul_ru26_allowed] = WMI_SERVICE_UL_RU26_ALLOWED;
 }
 #ifndef CONFIG_MCL
 

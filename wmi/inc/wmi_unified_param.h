@@ -5196,6 +5196,7 @@ typedef enum {
 	wmi_service_nan_disable_support,
 	wmi_service_hw_db2dbm_support,
 	wmi_service_wlm_stats_support,
+	wmi_service_ul_ru26_allowed,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
