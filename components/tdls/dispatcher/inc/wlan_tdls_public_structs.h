@@ -927,36 +927,6 @@ enum tspec_dir_type {
 };
 
 /**
- * struct sta_uapsd_params - uapsd auto trig params
- * @wmm_ac: WMM access category from 0 to 3
- * @user_priority: User priority to use in trigger frames
- * @service_interval: service interval
- * @suspend_interval: suspend interval
- * @delay_interval: delay interval
- */
-struct sta_uapsd_params {
-	uint32_t wmm_ac;
-	uint32_t user_priority;
-	uint32_t service_interval;
-	uint32_t suspend_interval;
-	uint32_t delay_interval;
-};
-
-/**
- * struct sta_uapsd_trig_params - uapsd trigger parameter
- * @vdevid: vdev id
- * @peer_addr: peer address
- * @auto_triggerparam: trigger parameters
- * @num_ac: no of access category
- */
-struct sta_uapsd_trig_params {
-	uint32_t vdevid;
-	uint8_t peer_addr[QDF_MAC_ADDR_SIZE];
-	struct sta_uapsd_params *auto_triggerparam;
-	uint32_t num_ac;
-};
-
-/**
  * struct tdls_event_info - firmware tdls event
  * @vdev_id: vdev id
  * @peermac: peer mac address
