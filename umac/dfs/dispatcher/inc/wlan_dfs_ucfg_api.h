@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -124,7 +124,8 @@ struct dfs_to_mlme {
 			struct wlan_objmgr_pdev *pdev);
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 	QDF_STATUS (*mlme_precac_chan_change_csa)(struct wlan_objmgr_pdev *pdev,
-						  uint8_t ch_ieee);
+						  uint8_t des_chan,
+						  enum wlan_phymode des_mode);
 #endif
 	QDF_STATUS (*mlme_nol_timeout_notification)(
 			struct wlan_objmgr_pdev *pdev);

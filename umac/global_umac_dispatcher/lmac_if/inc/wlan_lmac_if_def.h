@@ -1291,8 +1291,9 @@ struct wlan_lmac_if_dfs_rx_ops {
 						       uint32_t value);
 	QDF_STATUS (*dfs_get_precac_intermediate_chan)(struct wlan_objmgr_pdev *pdev,
 						       int *buff);
-	QDF_STATUS (*dfs_decide_precac_preferred_chan)(struct wlan_objmgr_pdev *pdev,
-						       uint8_t *pref_chan);
+	bool (*dfs_decide_precac_preferred_chan)(struct wlan_objmgr_pdev *pdev,
+						 uint8_t *pref_chan,
+						 enum wlan_phymode mode);
 	enum precac_chan_state (*dfs_get_precac_chan_state)(struct wlan_objmgr_pdev *pdev,
 							    uint8_t precac_chan);
 #endif

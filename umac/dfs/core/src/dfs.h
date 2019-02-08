@@ -929,9 +929,12 @@ struct dfs_event_log {
  * @dfs_precac_primary_freq:         Primary freq.
  * @dfs_precac_timer_running:        Precac timer running.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
- * @dfs_precac_preferred_chan:       Channel to change after precac.
  * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
  *                                   doing precac.
+ * @dfs_autoswitch_des_chan:         Desired channel which has to be used
+ *                                   after precac.
+ * @dfs_autoswitch_des_mode:         Desired PHY mode which has to be used
+ *                                   after precac.
  * @dfs_pre_cac_timeout_channel_change: Channel change due to precac timeout.
  * @wlan_dfs_task_timer:             Dfs wait timer.
  * @dur_multiplier:                  Duration multiplier.
@@ -1076,8 +1079,9 @@ struct wlan_dfs {
 	uint8_t        dfs_precac_timer_running;
 	uint8_t        dfs_defer_precac_channel_change;
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
-	uint8_t        dfs_precac_preferred_chan;
 	uint8_t        dfs_precac_inter_chan;
+	uint8_t        dfs_autoswitch_des_chan;
+	enum wlan_phymode dfs_autoswitch_des_mode;
 #endif
 	uint8_t        dfs_pre_cac_timeout_channel_change:1;
 	qdf_timer_t    wlan_dfs_task_timer;

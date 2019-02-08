@@ -223,14 +223,19 @@ static inline bool dfs_is_precac_done(struct wlan_dfs *dfs,
  *                                      precac status of configured
  *                                      DFS channel.
  * @dfs: Pointer to wlan_dfs structure.
- * @pref_chan: Congigired DFS channel.
+ * @pref_chan: Configured DFS channel.
+ * @mode: Configured PHY mode.
  *
- * Return: void.
+ * Return: True if intermediate channel needs to configure. False otherwise.
  */
-void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs, uint8_t *pref_chan);
+bool
+dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
+				  uint8_t *pref_chan,
+				  enum wlan_phymode mode);
 #else
 static inline void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
-						    uint8_t *pref_chan)
+						    uint8_t *pref_chan,
+						    enum wlan_phymode mode)
 {
 }
 #endif
@@ -443,17 +448,18 @@ bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
 						struct dfs_channel *chan);
 
 /**
- * dfs_is_ht80_80_chan_in_precac_done_list() - Is precac done on a VHT80+80
- *                                             channel.
- *@dfs: Pointer to wlan_dfs structure.
- *@chan: Pointer to dfs_channel for which preCAC done is checked.
+ * dfs_is_ht8080_ht160_chan_in_precac_done_list() - Is precac done on
+ *                                                  VHT80+80 or VHT160
+ *                                                  channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to dfs_channel for which preCAC done is checked.
  *
  * Return:
  * * True:  If channel is present in precac-done list.
  * * False: If channel is not present in precac-done list.
  */
-bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
-					     struct dfs_channel *chan);
+bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
+						  struct dfs_channel *chan);
 
 /**
  * dfs_mark_precac_dfs() - Mark the precac channel as radar.

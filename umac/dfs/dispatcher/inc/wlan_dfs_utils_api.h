@@ -171,17 +171,18 @@ QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev);
 /**
  * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
  * @pdev: Pointer to DFS pdev object.
- * @ch_ieee: Pointer to channel number
-
+ * @ch_ieee: Pointer to channel number.
+ * @mode: Configured PHY mode.
+ *
  * Wrapper function for dfs_decide_precac_preferred_chan(). This
  * function called from outside of dfs component.
  *
- * Return:
- * * QDF_STATUS_E_FAILURE: Failed to decide preferred channel.
- * * QDF_STATUS_SUCCESS: Set preferred channel successfully.
+ * Return: True if intermediate channel needs to configure. False otherwise.
  */
-QDF_STATUS utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
-					     uint8_t *ch_ieee);
+bool
+utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
+				  uint8_t *ch_ieee,
+				  enum wlan_phymode mode);
 #endif
 
 /**
