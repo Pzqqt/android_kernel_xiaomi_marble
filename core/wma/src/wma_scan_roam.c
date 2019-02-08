@@ -2260,10 +2260,10 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		wma_fill_data_synch_event(wma, roam_synch_ind_ptr, param_buf);
 	}
 
-	chan = (wmi_channel *) param_buf->chan;
+	chan = param_buf->chan;
 	if (chan)
 		roam_synch_ind_ptr->chan_freq = chan->mhz;
-	key = (wmi_key_material *) param_buf->key;
+	key = param_buf->key;
 	if (key != NULL) {
 		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
@@ -2281,8 +2281,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	else
 		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
 
-	fils_info = (wmi_roam_fils_synch_tlv_param *)
-			(param_buf->roam_fils_synch_info);
+	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
 		if ((fils_info->kek_len > SIR_KEK_KEY_LEN_FILS) ||
 		    (fils_info->pmk_len > SIR_PMK_LEN)) {
