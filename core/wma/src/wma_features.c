@@ -4179,7 +4179,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	}
 
 	if (wmi_unified_update_tdls_peer_state_cmd(wma_handle->wmi_handle,
-			 (struct tdls_peer_state_params *)peerStateParams,
+			 (void *)peerStateParams,
 			 ch_mhz)) {
 		WMA_LOGE("%s: failed to send tdls peer update state command",
 			 __func__);
