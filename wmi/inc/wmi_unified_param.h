@@ -1570,7 +1570,6 @@ struct wmi_offchan_data_tx_params {
 	bool tx_params_valid;
 };
 
-#ifndef CONVERGED_TDLS_ENABLE
 /**
  * struct sta_uapsd_params - uapsd auto trig params
  * @wmm_ac: WMM access category from 0 to 3
@@ -1600,7 +1599,6 @@ struct sta_uapsd_trig_params {
 		struct sta_uapsd_params *auto_triggerparam;
 		uint32_t num_ac;
 };
-#endif
 
 #define WMI_NUM_AC                     (4)
 #define WMI_MAX_NUM_AC 4
