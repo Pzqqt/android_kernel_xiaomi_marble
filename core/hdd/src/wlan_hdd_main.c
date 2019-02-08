@@ -1256,7 +1256,7 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 	}
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;

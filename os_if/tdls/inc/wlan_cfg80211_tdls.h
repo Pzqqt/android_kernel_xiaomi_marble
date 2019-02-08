@@ -33,7 +33,7 @@
 #include <qdf_types.h>
 #include <wlan_tdls_ucfg_api.h>
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 
 #define TDLS_VDEV_MAGIC 0x54444c53       /* "TDLS" */
 
@@ -270,7 +270,7 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
  */
 void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev);
 
-#else /* CONVERGED_TDLS_ENABLE */
+#else /* FEATURE_WLAN_TDLS */
 static inline
 QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 {
@@ -316,5 +316,5 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 {
 
 }
-#endif /* CONVERGED_TDLS_ENABLE */
+#endif /* FEATURE_WLAN_TDLS */
 #endif /* _WLAN_CFG80211_TDLS_H_ */

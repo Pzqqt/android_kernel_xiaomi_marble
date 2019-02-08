@@ -29,7 +29,7 @@
 #define CFG_P2P_ALL
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 #include "wlan_tdls_cfg.h"
 #else
 #define CFG_TDLS_ALL
