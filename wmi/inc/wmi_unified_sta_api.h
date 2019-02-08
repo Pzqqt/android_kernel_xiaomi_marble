@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,7 +168,7 @@ QDF_STATUS wmi_unified_process_set_ie_info_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_base_macaddr_indicate_cmd(void *wmi_hdl,
 						     uint8_t *custom_addr);
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 /**
  * wmi_unified_set_tdls_offchan_mode_cmd() - set tdls off channel mode
  * @wmi_handle: wmi handle
@@ -215,7 +215,7 @@ QDF_STATUS wmi_unified_update_tdls_peer_state_cmd(void *wmi_hdl,
  */
 QDF_STATUS wmi_extract_vdev_tdls_ev_param(void *wmi_hdl, void *evt_buf,
 					  struct tdls_event_info *param);
-#endif /* CONVERGED_TDLS_ENABLE */
+#endif /* FEATURE_WLAN_TDLS */
 
 /**
  * wmi_unified_send_sar_limit_cmd() - send sar limit cmd to fw

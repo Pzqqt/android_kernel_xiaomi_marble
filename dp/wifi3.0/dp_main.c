@@ -9311,7 +9311,9 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
+#ifdef FEATURE_WLAN_TDLS
 	.tx_non_std = dp_tx_non_std,
+#endif /* FEATURE_WLAN_TDLS */
 	.get_opmode = dp_get_opmode,
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_suspend = dp_runtime_suspend,

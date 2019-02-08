@@ -930,7 +930,7 @@ QDF_STATUS (*extract_encrypt_decrypt_resp_event)(wmi_unified_t wmi_handle,
 			struct disa_encrypt_decrypt_resp_params *resp);
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 QDF_STATUS (*send_set_tdls_offchan_mode_cmd)(wmi_unified_t wmi_handle,
 			      struct tdls_channel_switch_params *chan_switch_params);
 
@@ -944,7 +944,7 @@ QDF_STATUS (*send_update_tdls_peer_state_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_vdev_tdls_ev_param)(wmi_unified_t wmi_handle,
 		void *evt_buf, struct tdls_event_info *param);
-#endif /* CONVERGED_TDLS_ENABLE */
+#endif /* FEATURE_WLAN_TDLS */
 #endif /* WMI_STA_SUPPORT */
 
 QDF_STATUS (*send_stats_ext_req_cmd)(wmi_unified_t wmi_handle,
@@ -2236,7 +2236,7 @@ static inline void wmi_pmo_attach_tlv(struct wmi_unified *wmi_handle)
 }
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 void wmi_tdls_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline void wmi_tdls_attach_tlv(struct wmi_unified *wmi_handle)

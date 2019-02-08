@@ -22,7 +22,7 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_sta_param.h"
 #include "wmi_unified_sta_api.h"
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 #include <wlan_tdls_public_structs.h>
 #endif
 
@@ -505,7 +505,7 @@ static QDF_STATUS send_wlm_latency_level_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 /**
  * tdls_get_wmi_offchannel_mode - Get WMI tdls off channel mode
  * @tdls_sw_mode: tdls_sw_mode
@@ -995,7 +995,7 @@ void wmi_tdls_attach_tlv(struct wmi_unified *wmi_handle)
 		send_update_tdls_peer_state_cmd_tlv;
 	ops->extract_vdev_tdls_ev_param = extract_vdev_tdls_ev_param_tlv;
 }
-#endif /* CONVERGED_TDLS_ENABLE */
+#endif /* FEATURE_WLAN_TDLS */
 
 /*
  * send_process_set_ie_info_cmd_tlv() - Function to send IE info to firmware

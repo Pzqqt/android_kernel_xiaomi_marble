@@ -38,7 +38,7 @@
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_tgt_api.h"
 #endif
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 #include "wlan_tdls_tgt_api.h"
 #endif
 
@@ -406,7 +406,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 static QDF_STATUS
 wlan_lmac_if_umac_tdls_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {

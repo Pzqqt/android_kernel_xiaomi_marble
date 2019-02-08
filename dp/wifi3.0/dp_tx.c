@@ -1290,7 +1290,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	return;
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 /**
  * dp_tx_update_tdls_flags() - Update descriptor flags for TDLS frame
  * @tx_desc: TX descriptor
@@ -1315,7 +1315,7 @@ static void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
  * Return: None
  */
 static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
-				  struct dp_vdev *vdev)
+					 struct dp_vdev *vdev)
 {
 	struct hal_tx_completion_status ts = {0};
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
@@ -1328,6 +1328,15 @@ static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 				nbuf, ts.status);
 		return;
 	}
+}
+#else
+static inline void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
+{
+}
+
+static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
+						struct dp_vdev *vdev)
+{
 }
 #endif
 
@@ -3287,7 +3296,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 	return num_processed;
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 /**
  * dp_tx_non_std() - Allow the control-path SW to send data frames
  *

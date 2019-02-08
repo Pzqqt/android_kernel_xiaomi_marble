@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,27 +98,6 @@ struct wlm_latency_level_param {
 	uint32_t wlm_latency_flags;
 	uint16_t vdev_id;
 };
-
-#ifndef CONVERGED_TDLS_ENABLE
-/**
- * struct tdls_chan_switch_params - channel switch parameter structure
- * @vdev_id: vdev ID
- * @peer_mac_addr: Peer mac address
- * @tdls_off_ch_bw_offset: Target off-channel bandwitdh offset
- * @tdls_off_ch: Target Off Channel
- * @oper_class: Operating class for target channel
- * @is_responder: Responder or initiator
- */
-struct tdls_channel_switch_params {
-	uint32_t    vdev_id;
-	uint8_t     peer_mac_addr[IEEE80211_ADDR_LEN];
-	uint16_t    tdls_off_ch_bw_offset;
-	uint8_t     tdls_off_ch;
-	uint8_t     tdls_sw_mode;
-	uint8_t     oper_class;
-	uint8_t     is_responder;
-};
-#endif
 
 #define WMI_TDLS_MAX_SUPP_CHANNELS       128
 #define WMI_TDLS_MAX_SUPP_OPER_CLASSES   32

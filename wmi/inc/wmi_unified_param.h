@@ -25,7 +25,7 @@
 #define _WMI_UNIFIED_PARAM_H_
 
 #include <wlan_scan_public_structs.h>
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 #include <wlan_tdls_public_structs.h>
 #endif
 

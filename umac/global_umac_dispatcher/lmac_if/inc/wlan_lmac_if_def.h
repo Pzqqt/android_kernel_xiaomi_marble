@@ -64,7 +64,7 @@ struct oem_data_rsp;
 struct direct_buf_rx_data;
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 #include "wlan_tdls_public_structs.h"
 #endif
 
@@ -558,7 +558,7 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 };
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 /* fwd declarations for tdls tx ops */
 struct tdls_info;
 struct tdls_peer_update_state;
@@ -833,7 +833,7 @@ struct wlan_lmac_if_tx_ops {
 	struct wlan_lmac_if_reg_tx_ops reg_ops;
 	struct wlan_lmac_if_dfs_tx_ops dfs_tx_ops;
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 	struct wlan_lmac_if_tdls_tx_ops tdls_tx_ops;
 #endif
 
@@ -1453,7 +1453,7 @@ struct wlan_lmac_if_rx_ops {
 #endif
 	struct wlan_lmac_if_reg_rx_ops reg_rx_ops;
 	struct wlan_lmac_if_dfs_rx_ops dfs_rx_ops;
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
 #endif
 

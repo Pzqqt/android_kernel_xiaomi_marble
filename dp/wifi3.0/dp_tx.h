@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,7 +172,7 @@ qdf_nbuf_t dp_tx_send_exception(void *data_vdev, qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
 qdf_nbuf_t dp_tx_send_mesh(void *data_vdev, qdf_nbuf_t nbuf);
 
-#ifdef CONVERGED_TDLS_ENABLE
+#ifdef FEATURE_WLAN_TDLS
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 #endif
@@ -181,23 +181,6 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
 
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
-
-#ifndef CONVERGED_TDLS_ENABLE
-
-static inline void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
-{
-	return;
-}
-
-static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
-				  struct dp_vdev *vdev)
-{
-	return;
-}
-
-#endif
-
-
 
 #ifdef FEATURE_WDS
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
