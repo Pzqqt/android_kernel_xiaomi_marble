@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -269,15 +269,18 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 /**
  * scm_check_pmf_match() - Check PMF security of entry match filter
  * @filter: scan filter
+ * @db_entry: ap entry
  * @rsn: rsn IE of the scan entry
  *
  * Return: true if PMF security match else false
  */
 static bool
 scm_check_pmf_match(struct scan_filter *filter,
-	struct wlan_rsn_ie *rsn)
+		    struct scan_cache_entry *db_entry,
+		    struct wlan_rsn_ie *rsn)
 {
 	enum wlan_pmf_cap ap_pmf_cap = WLAN_PMF_DISABLED;
+	bool match = true;
 
 	if (rsn->cap & RSN_CAP_MFP_CAPABLE)
 		ap_pmf_cap = WLAN_PMF_CAPABLE;
@@ -286,12 +289,17 @@ scm_check_pmf_match(struct scan_filter *filter,
 
 	if ((filter->pmf_cap == WLAN_PMF_REQUIRED) &&
 		(ap_pmf_cap == WLAN_PMF_DISABLED))
-		return false;
+		match = false;
 	else if ((filter->pmf_cap == WLAN_PMF_DISABLED) &&
 		(ap_pmf_cap == WLAN_PMF_REQUIRED))
-		return false;
+		match = false;
 
-	return true;
+	if (!match)
+		scm_debug("%pM : PMF cap didn't match (filter %d AP %d)",
+			  db_entry->bssid.bytes, filter->pmf_cap,
+			  ap_pmf_cap);
+
+	return match;
 }
 
 /**
@@ -387,8 +395,10 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 	if (!security)
 		return false;
-	if (!util_scan_entry_rsn(db_entry))
+	if (!util_scan_entry_rsn(db_entry)) {
+		scm_debug("%pM : doesn't have RSN IE", db_entry->bssid.bytes);
 		return false;
+	}
 	status = wlan_parse_rsn_ie(util_scan_entry_rsn(db_entry), &rsn);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		scm_err("failed to parse RSN IE, status %d", status);
@@ -402,12 +412,18 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		scm_get_cipher_suite_type(security->uc_enc);
 	match = scm_is_cipher_match(rsn.pwise_cipher_suites,
 		rsn.pwise_cipher_count, WLAN_RSN_SEL(cipher_type));
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : pairwise cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	match = scm_is_rsn_mcast_cipher_match(&rsn, filter, &neg_mccipher);
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : mcast cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	/* Initializing with false as it has true value already */
 	match = false;
@@ -604,11 +620,14 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		}
 	}
 
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : akm suites didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	if (!filter->ignore_pmf_cap)
-		match = scm_check_pmf_match(filter, &rsn);
+		match = scm_check_pmf_match(filter, db_entry, &rsn);
 
 	if (match) {
 		security->auth_type = neg_auth;
@@ -696,8 +715,11 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 
 	if (!security)
 		return false;
-	if (!util_scan_entry_wpa(db_entry))
+	if (!util_scan_entry_wpa(db_entry)) {
+		scm_debug("%pM : AP doesn't have WPA IE",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	status = wlan_parse_wpa_ie(util_scan_entry_wpa(db_entry), &wpa);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -712,12 +734,18 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 		scm_get_cipher_suite_type(security->uc_enc);
 	match = scm_is_cipher_match(wpa.uc_ciphers,
 		wpa.uc_cipher_count, WLAN_WPA_SEL(cipher_type));
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : unicase cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	match = scm_is_wpa_mcast_cipher_match(&wpa, filter, &neg_mccipher);
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : mcast cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	/* Initializing with false as it has true value already */
 	match = false;
@@ -764,6 +792,9 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 		}
 	}
 
+	if (!match)
+		scm_debug("%pM : akm didn't match", db_entry->bssid.bytes);
+
 	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
@@ -793,8 +824,11 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 
 	if (!security)
 		return false;
-	if (!util_scan_entry_wapi(db_entry))
+	if (!util_scan_entry_wapi(db_entry)) {
+		scm_debug("%pM : mcast cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	wlan_parse_wapi_ie(
 		   util_scan_entry_wapi(db_entry), &wapi);
@@ -803,8 +837,11 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 		scm_get_cipher_suite_type(security->uc_enc);
 	match = scm_is_cipher_match(wapi.uc_cipher_suites,
 		wapi.uc_cipher_count, WLAN_WAPI_SEL(cipher_type));
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : unicast cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	for (i = 0; i < filter->num_of_mc_enc_type; i++) {
 		cipher_type =
@@ -815,20 +852,26 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 		if (match)
 			break;
 	}
-	if (!match)
+	if (!match) {
+		scm_debug("%pM : mcast cipher didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 	neg_mccipher = filter->mc_enc_type[i];
 
 	if (scm_is_cipher_match(wapi.akm_suites,
 	   wapi.akm_suite_count,
-	   WLAN_WAPI_SEL(WLAN_WAI_CERT_OR_SMS4)))
+	   WLAN_WAPI_SEL(WLAN_WAI_CERT_OR_SMS4))) {
 		neg_auth =
 			WLAN_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
-	else if (scm_is_cipher_match(wapi.akm_suites,
-	   wapi.akm_suite_count, WLAN_WAPI_SEL(WLAN_WAI_PSK)))
+	} else if (scm_is_cipher_match(wapi.akm_suites,
+	   wapi.akm_suite_count, WLAN_WAPI_SEL(WLAN_WAI_PSK))) {
 		neg_auth = WLAN_AUTH_TYPE_WAPI_WAI_PSK;
-	else
+	} else {
+		scm_debug("%pM : akm is not supported",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	match = false;
 	for (i = 0; i < filter->num_of_auth; i++) {
@@ -838,6 +881,9 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 		}
 	}
 
+	if (!match)
+		scm_debug("%pM : akm suite didn't match",
+			  db_entry->bssid.bytes);
 	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
@@ -1056,10 +1102,14 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->p2p_results && !db_entry->is_p2p)
 		return false;
 
-	for (i = 0; i < roam_params->num_bssid_avoid_list; i++)
+	for (i = 0; i < roam_params->num_bssid_avoid_list; i++) {
 		if (qdf_is_macaddr_equal(&roam_params->bssid_avoid_list[i],
-		   &db_entry->bssid))
+		   &db_entry->bssid)) {
+			scm_debug("%pM : Ignore as its blacklisted",
+				  db_entry->bssid.bytes);
 			return false;
+		}
+	}
 
 	match = false;
 	if (db_entry->ssid.length) {
@@ -1120,31 +1170,50 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	if (!filter->ignore_auth_enc_type &&
 	   !scm_is_security_match(filter,
-	   db_entry, security))
+	   db_entry, security)) {
+		scm_debug("%pM : Ignore as security profile didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	if (!util_is_bss_type_match(filter->bss_type,
-	   db_entry->cap_info))
+	   db_entry->cap_info)) {
+		scm_debug("%pM : Ignore as bss type didn't match cap_info %x bss_type %d",
+			  db_entry->bssid.bytes, db_entry->cap_info.value,
+			  filter->bss_type);
 		return false;
+	}
 
 	/* TODO match rate set */
 
 	if (filter->only_wmm_ap &&
 	   !db_entry->ie_list.wmeinfo &&
-	   !db_entry->ie_list.wmeparam)
+	   !db_entry->ie_list.wmeparam) {
+		scm_debug("%pM : Ignore as required wmeinfo and wme params not present",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	/* Match realm */
-	if (!scm_is_fils_config_match(filter, db_entry))
+	if (!scm_is_fils_config_match(filter, db_entry)) {
+		scm_debug("%pM :Ignore as fils config didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	cc_ie = util_scan_entry_country(db_entry);
-	if (!util_country_code_match(filter->country, cc_ie))
+	if (!util_country_code_match(filter->country, cc_ie)) {
+		scm_debug("%pM : Ignore as country %.*s didn't match",
+			  db_entry->bssid.bytes, 2, filter->country);
 		return false;
+	}
 
 	if (!util_mdie_match(filter->mobility_domain,
-	   (struct rsn_mdie *)db_entry->ie_list.mdie))
+	   (struct rsn_mdie *)db_entry->ie_list.mdie)) {
+		scm_debug("%pM : Ignore as mdie didn't match",
+			  db_entry->bssid.bytes);
 		return false;
+	}
 
 	return true;
 }
