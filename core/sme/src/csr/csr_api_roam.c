@@ -1341,10 +1341,14 @@ void csr_set_global_cfgs(struct mac_context *mac)
 	 * Once session is established we will use the session related params
 	 * stored in PE session for CB mode
 	 */
-	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE,
+	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE_5GHZ,
 			 mac->roam.configParam.channelBondingMode5GHz))
-		mac->mlme_cfg->feature_flags.channel_bonding_mode =
+		mac->mlme_cfg->feature_flags.channel_bonding_mode_5ghz =
 				mac->roam.configParam.channelBondingMode5GHz;
+	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE_24GHZ,
+			 mac->roam.configParam.channelBondingMode24GHz))
+		mac->mlme_cfg->feature_flags.channel_bonding_mode_24ghz =
+				mac->roam.configParam.channelBondingMode24GHz;
 
 	if (cfg_in_range(CFG_HEART_BEAT_THRESHOLD,
 			 mac->roam.configParam.HeartbeatThresh24))

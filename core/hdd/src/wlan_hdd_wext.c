@@ -4293,11 +4293,9 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 {
 	int errno;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ePhyChanBondState bonding_state;
 	uint32_t bonding_mode;
 	tSmeConfigParams *sme_config;
 	mac_handle_t mac_handle;
-	uint32_t channel_bonding_mode;
 
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle)
@@ -4313,15 +4311,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 
 	case eHT_CHANNEL_WIDTH_40MHZ:
 	case eHT_CHANNEL_WIDTH_80MHZ:
-		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
-						   &channel_bonding_mode);
-		bonding_state = csr_convert_cb_ini_value_to_phy_cb_state(
-			channel_bonding_mode);
-
-		if (bonding_state == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE)
-			return -EINVAL;
-
-		bonding_mode = channel_bonding_mode;
+		bonding_mode = 1;
 		break;
 
 	default:
@@ -4342,6 +4332,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 
 	sme_get_config_param(mac_handle, sme_config);
 	sme_config->csrConfig.channelBondingMode5GHz = bonding_mode;
+	sme_config->csrConfig.channelBondingMode24GHz = bonding_mode;
 	sme_update_config(mac_handle, sme_config);
 
 free_config:
