@@ -8313,31 +8313,35 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 
 	switch (ev->stats_id) {
 	case WMI_REQUEST_PEER_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_PEER_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_STAT;
 		break;
 
 	case WMI_REQUEST_AP_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_AP_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_AP_STAT;
 		break;
 
 	case WMI_REQUEST_PDEV_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_PDEV_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_PDEV_STAT;
 		break;
 
 	case WMI_REQUEST_VDEV_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_VDEV_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_STAT;
 		break;
 
 	case WMI_REQUEST_BCNFLT_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_BCNFLT_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_BCNFLT_STAT;
 		break;
 
 	case WMI_REQUEST_VDEV_RATE_STAT:
-		stats_param->stats_id = WMI_HOST_REQUEST_VDEV_RATE_STAT;
+		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_RATE_STAT;
 		break;
 
 	case WMI_REQUEST_BCN_STAT:
 		stats_param->stats_id |= WMI_HOST_REQUEST_BCN_STAT;
+		break;
+
+	case WMI_REQUEST_PEER_EXTD2_STAT:
+		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_ADV_STATS;
 		break;
 
 	default:
@@ -8366,6 +8370,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAULT;
 	}
 
+	stats_param->last_event = ev->last_event;
 	stats_param->num_pdev_stats = ev->num_pdev_stats;
 	stats_param->num_pdev_ext_stats = 0;
 	stats_param->num_vdev_stats = ev->num_vdev_stats;
@@ -8395,6 +8400,12 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 	stats_param->num_rssi_stats = rssi_event->num_per_chain_rssi_stats;
+
+	/* if peer_adv_stats is not populated */
+	if (!param_buf->num_peer_extd2_stats)
+		return QDF_STATUS_SUCCESS;
+
+	stats_param->num_peer_adv_stats = param_buf->num_peer_extd2_stats;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8752,6 +8763,46 @@ static QDF_STATUS extract_peer_stats_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_bcnflt_stats_tlv(wmi_unified_t wmi_handle,
 	void *evt_buf, uint32_t index, wmi_host_bcnflt_stats *peer_stats)
 {
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_peer_adv_stats_tlv() - extract adv peer stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param index: Index into extended peer stats
+ * @param peer_adv_stats: Pointer to hold adv peer stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_peer_adv_stats_tlv(wmi_unified_t wmi_handle,
+					     void *evt_buf,
+					     struct wmi_host_peer_adv_stats
+					     *peer_adv_stats)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_peer_extd2_stats *adv_stats;
+	int i;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+
+	adv_stats = param_buf->peer_extd2_stats;
+	if (!adv_stats) {
+		WMI_LOGD("%s: no peer_adv stats in event buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	for (i = 0; i < param_buf->num_peer_extd2_stats; i++) {
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&adv_stats[i].peer_macaddr,
+					   peer_adv_stats[i].peer_macaddr);
+		peer_adv_stats[i].fcs_count = adv_stats[i].rx_fcs_err;
+		peer_adv_stats[i].rx_bytes =
+				(uint64_t)adv_stats[i].rx_bytes_u32 <<
+				WMI_LOWER_BITS_SHIFT_32 |
+				adv_stats[i].rx_bytes_l32;
+		peer_adv_stats[i].rx_count = adv_stats[i].rx_mpdus;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -11292,6 +11343,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_bcn_stats = extract_bcn_stats_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_tlv,
 	.extract_peer_extd_stats = extract_peer_extd_stats_tlv,
+	.extract_peer_adv_stats = extract_peer_adv_stats_tlv,
 	.extract_chan_stats = extract_chan_stats_tlv,
 	.extract_profile_ctx = extract_profile_ctx_tlv,
 	.extract_profile_data = extract_profile_data_tlv,

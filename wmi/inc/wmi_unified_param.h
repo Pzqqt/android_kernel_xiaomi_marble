@@ -998,6 +998,7 @@ typedef enum {
 	WMI_HOST_REQUEST_BCN_STAT =  0x800,
 	WMI_HOST_REQUEST_BCN_STAT_RESET =  0x1000,
 	WMI_HOST_REQUEST_PEER_RETRY_STAT = 0x2000,
+	WMI_HOST_REQUEST_PEER_ADV_STATS = 0x4000,
 } wmi_host_stats_id;
 
 typedef struct {
@@ -4084,6 +4085,8 @@ struct rx_reorder_queue_remove_params {
  * @pdev_id: device id for the radio
  * @num_bcn_stats: number of beacon stats
  * @num_rssi_stats: number of rssi stats
+ * @num_peer_adv_stats: number of peer adv stats
+ * @last_event: specify if the current event is the last event
  */
 typedef struct {
 	wmi_host_stats_id stats_id;
@@ -4096,6 +4099,8 @@ typedef struct {
 	uint32_t pdev_id;
 	uint32_t num_bcn_stats;
 	uint32_t num_rssi_stats;
+	uint32_t num_peer_adv_stats;
+	uint32_t last_event;
 } wmi_host_stats_event;
 
 /**
@@ -4105,7 +4110,6 @@ typedef struct {
  * @peer_chain_rssi: peer rssi
  * @rx_duration: RX duration
  * @peer_tx_bytes: TX bytes
- * @peer_rx_bytes: RX bytes
  * @last_tx_rate_code: Tx rate code of last frame
  * @last_tx_power: Tx power latest
  * @atf_tokens_allocated: atf tokens allocated
@@ -4120,7 +4124,6 @@ typedef struct {
 	uint32_t peer_chain_rssi;
 	uint32_t rx_duration;
 	uint32_t peer_tx_bytes;
-	uint32_t peer_rx_bytes;
 	uint32_t last_tx_rate_code;
 	uint32_t last_tx_power;
 	uint32_t atf_tokens_allocated;
@@ -4129,6 +4132,20 @@ typedef struct {
 	uint32_t sgi_count;
 	uint32_t reserved[2];
 } wmi_host_peer_extd_stats;
+
+/**
+ * struct wmi_host_peer_adv_stats - peer adv stats event structure
+ * @peer_macaddr: mac address
+ * @fcs_count: fcs count
+ * @rx_bytes: rx bytes
+ * @rx_count: rx count
+ */
+struct wmi_host_peer_adv_stats {
+	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
+	uint32_t fcs_count;
+	uint64_t rx_bytes;
+	uint32_t rx_count;
+};
 
 /**
  * struct wmi_host_pdev_ext_stats - peer ext stats structure

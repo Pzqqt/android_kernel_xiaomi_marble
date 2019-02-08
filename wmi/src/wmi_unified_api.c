@@ -3601,6 +3601,25 @@ QDF_STATUS wmi_extract_peer_retry_stats(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_peer_adv_stats() - extract advance (extd2) peer stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param peer_adv_stats: Pointer to hold extended peer stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_peer_adv_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				      struct wmi_host_peer_adv_stats
+				      *peer_adv_stats)
+{
+	if (wmi_handle->ops->extract_peer_adv_stats)
+		return wmi_handle->ops->extract_peer_adv_stats(wmi_handle,
+			evt_buf, peer_adv_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_rtt_error_report_ev() - extract rtt error report from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer

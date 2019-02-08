@@ -116,7 +116,8 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define WMI_LOGP(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_FATAL, ## args)
 
-
+/* Number of bits to shift to combine 32 bit integer to 64 bit */
+#define WMI_LOWER_BITS_SHIFT_32	0x20
 
 #define PHYERROR_MAX_BUFFER_LENGTH 0x7F000000
 
@@ -1221,6 +1222,10 @@ QDF_STATUS wmi_extract_pdev_ext_stats(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_peer_extd_stats(void *wmi_hdl, void *evt_buf,
 			uint32_t index,
 			wmi_host_peer_extd_stats *peer_extd_stats);
+
+QDF_STATUS wmi_extract_peer_adv_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				      struct wmi_host_peer_adv_stats
+				      *peer_adv_stats);
 
 QDF_STATUS wmi_extract_bss_chan_info_event(void *wmi_hdl, void *evt_buf,
 			wmi_host_pdev_bss_chan_info_event *bss_chan_info);
