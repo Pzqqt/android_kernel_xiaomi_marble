@@ -1497,6 +1497,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	int i;
 	QDF_STATUS status;
 	uint8_t sta_session_id = WLAN_IPA_MAX_SESSION;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
 
 	ipa_debug("%s: EVT: %d, MAC: %pM, sta_id: %d session_id: %u",
 		 net_dev->name, type, mac_addr, sta_id, session_id);
@@ -1509,6 +1512,14 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	    (device_mode != QDF_SAP_MODE)) {
 		return QDF_STATUS_SUCCESS;
 	}
+
+	pdev = ipa_ctx->pdev;
+	psoc = wlan_pdev_get_psoc(pdev);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
+						    WLAN_IPA_ID);
+	QDF_BUG((session_id < WLAN_IPA_MAX_SESSION) && vdev);
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_IPA_ID);
 
 	if (ipa_ctx->sta_connected) {
 		iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
