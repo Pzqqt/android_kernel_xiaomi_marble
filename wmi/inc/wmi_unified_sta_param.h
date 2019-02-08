@@ -99,72 +99,7 @@ struct wlm_latency_level_param {
 	uint16_t vdev_id;
 };
 
-#define WMI_TDLS_MAX_SUPP_CHANNELS       128
-#define WMI_TDLS_MAX_SUPP_OPER_CLASSES   32
 #define WMI_2_4_GHZ_MAX_FREQ  3000
-
-/**
- * struct tdls_update_ch_params - channel parameters
- * @chanId: ID of the channel
- * @pwr: power level
- * @dfsSet: is dfs supported or not
- * @half_rate: is the channel operating at 10MHz
- * @quarter_rate: is the channel operating at 5MHz
- */
-struct tdls_update_ch_params {
-	uint8_t chanId;
-	uint8_t pwr;
-	bool dfsSet;
-	bool half_rate;
-	bool quarter_rate;
-};
-
-/**
- * struct tdls_peer_cap_params - TDLS peer capablities parameters
- * @isPeerResponder: is peer responder or not
- * @peerUapsdQueue: peer uapsd queue
- * @peerMaxSp: peer max SP value
- * @peerBuffStaSupport: peer buffer sta supported or not
- * @peerOffChanSupport: peer offchannel support
- * @peerCurrOperClass: peer current operating class
- * @selfCurrOperClass: self current operating class
- * @peerChanLen: peer channel length
- * @peerChan: peer channel list
- * @peerOperClassLen: peer operating class length
- * @peerOperClass: peer operating class
- * @prefOffChanNum: peer offchannel number
- * @prefOffChanBandwidth: peer offchannel bandwidth
- * @opClassForPrefOffChan: operating class for offchannel
- */
-struct tdls_peer_cap_params {
-	uint8_t isPeerResponder;
-	uint8_t peerUapsdQueue;
-	uint8_t peerMaxSp;
-	uint8_t peerBuffStaSupport;
-	uint8_t peerOffChanSupport;
-	uint8_t peerCurrOperClass;
-	uint8_t selfCurrOperClass;
-	uint8_t peerChanLen;
-	struct tdls_update_ch_params peerChan[WMI_TDLS_MAX_SUPP_CHANNELS];
-	uint8_t peerOperClassLen;
-	uint8_t peerOperClass[WMI_TDLS_MAX_SUPP_OPER_CLASSES];
-	uint8_t prefOffChanNum;
-	uint8_t prefOffChanBandwidth;
-	uint8_t opClassForPrefOffChan;
-};
-
-/**
- * struct tdls_peer_state_params - TDLS peer state parameters
- * @vdevId: vdev id
- * @peerMacAddr: peer mac address
- * @peerCap: peer capabality
- */
-struct tdls_peer_state_params {
-	uint32_t vdevId;
-	uint8_t peerMacAddr[IEEE80211_ADDR_LEN];
-	uint32_t peerState;
-	struct tdls_peer_cap_params peerCap;
-};
 
 /**
  * struct vdev_ie_info_param - IE info

@@ -722,14 +722,17 @@ send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_update_tdls_peer_state_cmd_tlv() - update TDLS peer state
  * @wmi_handle: wmi handle
- * @peerStateParams: TDLS peer state params
+ * @peer_state: TDLS peer state params
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
-			       struct tdls_peer_state_params *peerStateParams,
-				   uint32_t *ch_mhz)
+static QDF_STATUS
+send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
+				    struct tdls_peer_update_state *peer_state,
+				    uint32_t *ch_mhz)
 {
+	struct tdls_peer_params *in_peer_cap;
+	struct tdls_ch_params *in_chan_info;
 	wmi_tdls_peer_update_cmd_fixed_param *cmd;
 	wmi_tdls_peer_capabilities *peer_cap;
 	wmi_channel *chan_info;
@@ -739,8 +742,9 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 	int32_t len = sizeof(wmi_tdls_peer_update_cmd_fixed_param) +
 		      sizeof(wmi_tdls_peer_capabilities);
 
+	in_peer_cap = &peer_state->peer_cap;
 	len += WMI_TLV_HDR_SIZE +
-	       sizeof(wmi_channel) * peerStateParams->peerCap.peerChanLen;
+	       sizeof(wmi_channel) * in_peer_cap->peer_chanlen;
 
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
 	if (!wmi_buf) {
@@ -754,16 +758,16 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_tdls_peer_update_cmd_fixed_param));
 
-	cmd->vdev_id = peerStateParams->vdevId;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peerStateParams->peerMacAddr,
+	cmd->vdev_id = peer_state->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_state->peer_macaddr,
 				   &cmd->peer_macaddr);
 
-	cmd->peer_state = peerStateParams->peerState;
+	cmd->peer_state = peer_state->peer_state;
 
-	WMI_LOGD("%s: vdev_id: %d, peerStateParams->peerMacAddr: %pM, "
+	WMI_LOGD("%s: vdev_id: %d, peermac: %pM, "
 		 "peer_macaddr.mac_addr31to0: 0x%x, "
 		 "peer_macaddr.mac_addr47to32: 0x%x, peer_state: %d",
-		 __func__, cmd->vdev_id, peerStateParams->peerMacAddr,
+		 __func__, cmd->vdev_id, peer_state->peer_macaddr,
 		 cmd->peer_macaddr.mac_addr31to0,
 		 cmd->peer_macaddr.mac_addr47to32, cmd->peer_state);
 
@@ -773,49 +777,41 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_tdls_peer_capabilities,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_tdls_peer_capabilities));
 
-	if ((peerStateParams->peerCap.peerUapsdQueue & 0x08) >> 3)
+	if ((in_peer_cap->peer_uapsd_queue & 0x08) >> 3)
 		WMI_SET_TDLS_PEER_VO_UAPSD(peer_cap);
-	if ((peerStateParams->peerCap.peerUapsdQueue & 0x04) >> 2)
+	if ((in_peer_cap->peer_uapsd_queue & 0x04) >> 2)
 		WMI_SET_TDLS_PEER_VI_UAPSD(peer_cap);
-	if ((peerStateParams->peerCap.peerUapsdQueue & 0x02) >> 1)
+	if ((in_peer_cap->peer_uapsd_queue & 0x02) >> 1)
 		WMI_SET_TDLS_PEER_BK_UAPSD(peer_cap);
-	if (peerStateParams->peerCap.peerUapsdQueue & 0x01)
+	if (in_peer_cap->peer_uapsd_queue & 0x01)
 		WMI_SET_TDLS_PEER_BE_UAPSD(peer_cap);
 
 	/* Ack and More Data Ack are sent as 0, so no need to set
 	 * but fill SP
 	 */
-	WMI_SET_TDLS_PEER_SP_UAPSD(peer_cap,
-				   peerStateParams->peerCap.peerMaxSp);
+	WMI_SET_TDLS_PEER_SP_UAPSD(peer_cap, in_peer_cap->peer_max_sp);
 
-	peer_cap->buff_sta_support =
-		peerStateParams->peerCap.peerBuffStaSupport;
-	peer_cap->off_chan_support =
-		peerStateParams->peerCap.peerOffChanSupport;
-	peer_cap->peer_curr_operclass =
-		peerStateParams->peerCap.peerCurrOperClass;
+	peer_cap->buff_sta_support = in_peer_cap->peer_buff_sta_support;
+	peer_cap->off_chan_support = in_peer_cap->peer_off_chan_support;
+	peer_cap->peer_curr_operclass = in_peer_cap->peer_curr_operclass;
 	/* self curr operclass is not being used and so pass op class for
 	 * preferred off chan in it.
 	 */
-	peer_cap->self_curr_operclass =
-		peerStateParams->peerCap.opClassForPrefOffChan;
-	peer_cap->peer_chan_len = peerStateParams->peerCap.peerChanLen;
-	peer_cap->peer_operclass_len =
-		peerStateParams->peerCap.peerOperClassLen;
+	peer_cap->self_curr_operclass = in_peer_cap->opclass_for_prefoffchan;
+	peer_cap->peer_chan_len = in_peer_cap->peer_chanlen;
+	peer_cap->peer_operclass_len = in_peer_cap->peer_oper_classlen;
 
 	WMI_LOGD("%s: peer_operclass_len: %d",
 		 __func__, peer_cap->peer_operclass_len);
 	for (i = 0; i < WMI_TDLS_MAX_SUPP_OPER_CLASSES; i++) {
-		peer_cap->peer_operclass[i] =
-			peerStateParams->peerCap.peerOperClass[i];
+		peer_cap->peer_operclass[i] = in_peer_cap->peer_oper_class[i];
 		WMI_LOGD("%s: peer_operclass[%d]: %d",
 			 __func__, i, peer_cap->peer_operclass[i]);
 	}
 
-	peer_cap->is_peer_responder = peerStateParams->peerCap.isPeerResponder;
-	peer_cap->pref_offchan_num = peerStateParams->peerCap.prefOffChanNum;
-	peer_cap->pref_offchan_bw =
-		peerStateParams->peerCap.prefOffChanBandwidth;
+	peer_cap->is_peer_responder = in_peer_cap->is_peer_responder;
+	peer_cap->pref_offchan_num = in_peer_cap->pref_off_channum;
+	peer_cap->pref_offchan_bw = in_peer_cap->pref_off_chan_bandwidth;
 
 	WMI_LOGD
 		("%s: peer_qos: 0x%x, buff_sta_support: %d, off_chan_support: %d, "
@@ -833,10 +829,12 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_ARRAY_STRUC,
 		       sizeof(wmi_channel) *
-		       peerStateParams->peerCap.peerChanLen);
-	chan_info = (wmi_channel *) (buf_ptr + WMI_TLV_HDR_SIZE);
+		       in_peer_cap->peer_chanlen);
 
-	for (i = 0; i < peerStateParams->peerCap.peerChanLen; ++i) {
+	chan_info = (wmi_channel *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	in_chan_info = in_peer_cap->peer_chan;
+
+	for (i = 0; i < in_peer_cap->peer_chanlen; ++i) {
 		WMITLV_SET_HDR(&chan_info->tlv_header,
 			       WMITLV_TAG_STRUC_wmi_channel,
 			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
@@ -846,11 +844,11 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 
 		WMI_LOGD("%s: chan[%d] = %u", __func__, i, chan_info->mhz);
 
-		if (peerStateParams->peerCap.peerChan[i].dfsSet) {
+		if (in_chan_info->dfs_set) {
 			WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_PASSIVE);
-			WMI_LOGI("chan[%d] DFS[%d]\n",
-				 peerStateParams->peerCap.peerChan[i].chanId,
-				 peerStateParams->peerCap.peerChan[i].dfsSet);
+			WMI_LOGI("chan[%d] DFS[%d]",
+				 in_chan_info->chan_id,
+				 in_chan_info->dfs_set);
 		}
 
 		if (chan_info->mhz < WMI_2_4_GHZ_MAX_FREQ)
@@ -858,17 +856,13 @@ static QDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 		else
 			WMI_SET_CHANNEL_MODE(chan_info, MODE_11A);
 
-		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
-					     peerStateParams->peerCap.
-					     peerChan[i].pwr);
-
-		WMI_SET_CHANNEL_REG_POWER(chan_info,
-					  peerStateParams->peerCap.peerChan[i].
-					  pwr);
+		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, in_chan_info->pwr);
+		WMI_SET_CHANNEL_REG_POWER(chan_info, in_chan_info->pwr);
 		WMI_LOGD("Channel TX power[%d] = %u: %d", i, chan_info->mhz,
-			 peerStateParams->peerCap.peerChan[i].pwr);
+			 in_chan_info->pwr);
 
 		chan_info++;
+		in_chan_info++;
 	}
 
 	wmi_mtrace(WMI_TDLS_PEER_UPDATE_CMDID, cmd->vdev_id, 0);

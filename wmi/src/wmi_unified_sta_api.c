@@ -173,15 +173,13 @@ QDF_STATUS wmi_unified_update_fw_tdls_state_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_update_tdls_peer_state_cmd(void *wmi_hdl,
-			       struct tdls_peer_state_params *peerStateParams,
-				   uint32_t *ch_mhz)
+QDF_STATUS wmi_unified_update_tdls_peer_state_cmd(wmi_unified_t wmi_handle,
+				struct tdls_peer_update_state *peer_state,
+				uint32_t *ch_mhz)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_update_tdls_peer_state_cmd)
 		return wmi_handle->ops->send_update_tdls_peer_state_cmd(wmi_handle,
-			    peerStateParams, ch_mhz);
+			    peer_state, ch_mhz);
 
 	return QDF_STATUS_E_FAILURE;
 }

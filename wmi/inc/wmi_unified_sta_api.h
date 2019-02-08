@@ -197,12 +197,12 @@ QDF_STATUS wmi_unified_update_fw_tdls_state_cmd(void *wmi_hdl,
 /**
  * wmi_unified_update_tdls_peer_state_cmd() - update TDLS peer state
  * @wmi_handle: wmi handle
- * @peerStateParams: TDLS peer state params
+ * @peer_state: TDLS peer state params
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_update_tdls_peer_state_cmd(void *wmi_hdl,
-				struct tdls_peer_state_params *peerStateParams,
+QDF_STATUS wmi_unified_update_tdls_peer_state_cmd(wmi_unified_t wmi_handle,
+				struct tdls_peer_update_state *peer_state,
 				uint32_t *ch_mhz);
 
 /**
