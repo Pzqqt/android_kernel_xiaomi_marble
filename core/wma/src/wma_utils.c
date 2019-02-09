@@ -4155,6 +4155,18 @@ bool wma_is_csa_offload_enabled(void)
 	return wmi_service_enabled(wma->wmi_handle,
 				   wmi_service_csa_offload);
 }
+
+bool wma_is_mbssid_enabled(void)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return false;
+
+	return wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_infra_mbssid);
+}
+
 #ifdef FEATURE_FW_LOG_PARSING
 /**
  * wma_config_debug_module_cmd - set debug log config

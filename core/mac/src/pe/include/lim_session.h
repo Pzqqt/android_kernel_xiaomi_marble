@@ -547,6 +547,7 @@ struct pe_session {
 	bool mu_edca_present;
 	int8_t def_max_tx_pwr;
 	bool active_ba_64_session;
+	bool is_mbssid_enabled;
 #ifdef WLAN_SUPPORT_TWT
 	uint8_t peer_twt_requestor;
 	uint8_t peer_twt_responder;

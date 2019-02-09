@@ -1092,6 +1092,9 @@ populate_dot11f_ext_cap(struct mac_context *mac,
 	if (pe_session && pe_session->enable_bcast_probe_rsp)
 		p_ext_cap->fils_capability = 1;
 
+	if (pe_session && pe_session->is_mbssid_enabled)
+		p_ext_cap->multi_bssid = 1;
+
 	/* Need to calculate the num_bytes based on bits set */
 	if (pDot11f->present)
 		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);

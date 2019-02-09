@@ -1665,6 +1665,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		/* Indicate whether spectrum management is enabled */
 		session->spectrumMgtEnabled =
 			sme_join_req->spectrumMgtIndicator;
+		/* Enable MBSSID only for station */
+		session->is_mbssid_enabled = wma_is_mbssid_enabled();
 
 		/* Enable the spectrum management if this is a DFS channel */
 		if (session->country_info_present &&
