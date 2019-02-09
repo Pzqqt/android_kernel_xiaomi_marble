@@ -1827,8 +1827,6 @@ static iw_softap_set_tx_power(struct net_device *dev,
 	return errno;
 }
 
-#define IS_BROADCAST_MAC(x) (((x[0] & x[1] & x[2] & x[3] & x[4] & x[5]) == 0xff) ? 1 : 0)
-
 int
 static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 				       struct iw_request_info *info,
@@ -1888,7 +1886,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	spin_lock_bh(&adapter->sta_info_lock);
 	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
 		if ((pStaInfo[cnt].in_use) &&
-		    (!IS_BROADCAST_MAC(pStaInfo[cnt].sta_mac.bytes))) {
+		    (!qdf_is_macaddr_broadcast(&pStaInfo[cnt].sta_mac))) {
 			memcpy(&buf[maclist_index], &(pStaInfo[cnt].sta_mac),
 			       QDF_MAC_ADDR_SIZE);
 			maclist_index += QDF_MAC_ADDR_SIZE;
