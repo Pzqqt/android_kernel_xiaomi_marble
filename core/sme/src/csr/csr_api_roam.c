@@ -19983,16 +19983,17 @@ void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
  */
 void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *pMsgBuf)
 {
-	tSirSmeHOFailureInd *pSmeHOFailInd = (tSirSmeHOFailureInd *) pMsgBuf;
+	struct handoff_failure_ind *pSmeHOFailInd = pMsgBuf;
 	uint32_t sessionId;
 
-	if (pSmeHOFailInd)
-		sessionId = pSmeHOFailInd->sessionId;
-	else {
+	if (!pSmeHOFailInd) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "LFR3: Hand-Off Failure Ind is NULL");
 		return;
 	}
+
+	sessionId = pSmeHOFailInd->vdev_id;
+
 	/* Roaming is supported only on Infra STA Mode. */
 	if (!csr_roam_is_sta_mode(mac_ctx, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

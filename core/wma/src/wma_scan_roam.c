@@ -3022,15 +3022,15 @@ int wma_rssi_breached_event_handler(void *handle,
  */
 static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
-	tSirSmeHOFailureInd *ho_failure_ind;
+	struct handoff_failure_ind *ho_failure_ind;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
 
-	ho_failure_ind = qdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
+	ho_failure_ind = qdf_mem_malloc(sizeof(*ho_failure_ind));
 	if (!ho_failure_ind)
 		return;
 
-	ho_failure_ind->sessionId = vdev_id;
+	ho_failure_ind->vdev_id = vdev_id;
 	sme_msg.type = eWNI_SME_HO_FAIL_IND;
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;

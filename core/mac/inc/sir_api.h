@@ -3139,9 +3139,9 @@ struct roam_offload_synch_ind {
 };
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-typedef struct sSirSmeHOFailureInd {
-	uint8_t sessionId;
-} tSirSmeHOFailureInd, *tpSirSmeHOFailureInd;
+struct handoff_failure_ind {
+	uint8_t vdev_id;
+};
 
 struct roam_offload_synch_fail {
 	uint8_t session_id;
