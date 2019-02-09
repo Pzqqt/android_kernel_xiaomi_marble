@@ -8511,8 +8511,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_TX_POWER_LIMIT:
-		wma_process_tx_power_limits(wma_handle,
-					    (tSirTxPowerLimit *) msg->bodyptr);
+		wma_process_tx_power_limits(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SEND_ADDBA_REQ:

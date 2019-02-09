@@ -8957,13 +8957,14 @@ QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level)
  * psmetx : power limits for 2g/5g
  * Return QDF_STATUS
  */
-QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle, tSirTxPowerLimit *psmetx)
+QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle,
+			     struct tx_power_limit *psmetx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg message = {0};
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	tSirTxPowerLimit *tx_power_limit;
+	struct tx_power_limit *tx_power_limit;
 
 	tx_power_limit = qdf_mem_malloc(sizeof(*tx_power_limit));
 	if (!tx_power_limit)

@@ -1203,7 +1203,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
  * Return: QDF_STATUS_SUCCESS for success or error code.
  */
 QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
-				       tSirTxPowerLimit *ptxlim)
+				       struct tx_power_limit *ptxlim)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	int32_t ret = 0;

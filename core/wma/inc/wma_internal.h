@@ -852,7 +852,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 					    uint32_t len);
 
 QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
-				       tSirTxPowerLimit *ptxlim);
+				       struct tx_power_limit *ptxlim);
 
 void wma_update_noa(struct beacon_info *beacon,
 			   struct p2p_sub_element_noa *noa_ie);

@@ -3048,11 +3048,11 @@ typedef struct {
 	uint8_t throttle_duty_cycle_tbl[WLAN_THROTTLE_DUTY_CYCLE_LEVEL_MAX];
 } t_thermal_mgmt, *tp_thermal_mgmt;
 
-typedef struct sSirTxPowerLimit {
+struct tx_power_limit {
 	/* Thermal limits for 2g and 5g */
 	uint32_t txPower2g;
 	uint32_t txPower5g;
-} tSirTxPowerLimit;
+};
 
 enum bad_peer_thresh_levels {
 	WLAN_WMA_IEEE80211_B_LEVEL = 0,

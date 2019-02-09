@@ -10793,7 +10793,7 @@ static int hdd_init_mws_coex(struct hdd_context *hdd_ctx)
  */
 static int hdd_features_init(struct hdd_context *hdd_ctx)
 {
-	tSirTxPowerLimit hddtxlimit;
+	struct tx_power_limit hddtxlimit;
 	QDF_STATUS status;
 	int ret;
 	mac_handle_t mac_handle;
