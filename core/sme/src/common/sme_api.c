@@ -7237,17 +7237,16 @@ bool sme_is_feature_supported_by_fw(enum cap_bitmap feature)
 	return IS_FEATURE_SUPPORTED_BY_FW(feature);
 }
 
-QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle, tSirLinkSpeedInfo *lsReq,
-			      void *plsContext,
-			      void (*pCallbackfn)(tSirLinkSpeedInfo *indParam,
-						  void *pContext))
+QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle,
+			      struct link_speed_info *req,
+			      void *context,
+			      sme_link_speed_cb cb)
 {
-
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct mac_context *mac;
 	void *wma_handle;
 
-	if (!mac_handle || !pCallbackfn || !lsReq) {
+	if (!mac_handle || !cb || !req) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid parameter"));
 		return QDF_STATUS_E_FAILURE;
@@ -7267,9 +7266,9 @@ QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle, tSirLinkSpeedInfo *lsReq,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mac->sme.pLinkSpeedCbContext = plsContext;
-	mac->sme.pLinkSpeedIndCb = pCallbackfn;
-	status = wma_get_link_speed(wma_handle, lsReq);
+	mac->sme.link_speed_context = context;
+	mac->sme.link_speed_cb = cb;
+	status = wma_get_link_speed(wma_handle, req);
 	sme_release_global_lock(&mac->sme);
 	return status;
 }

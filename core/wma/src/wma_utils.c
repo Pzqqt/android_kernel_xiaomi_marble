@@ -3470,7 +3470,7 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
 	struct mac_context *mac_ctx;
-	tSirLinkSpeedInfo *ls_ind;
+	struct link_speed_info *ls_ind;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
@@ -3478,16 +3478,16 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ls_ind = qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
+	ls_ind = qdf_mem_malloc(sizeof(*ls_ind));
 	if (!ls_ind)
 		return QDF_STATUS_E_NOMEM;
 
 	ls_ind->estLinkSpeed = link_speed;
-	if (mac_ctx->sme.pLinkSpeedIndCb)
-		mac_ctx->sme.pLinkSpeedIndCb(ls_ind,
-				mac_ctx->sme.pLinkSpeedCbContext);
+	if (mac_ctx->sme.link_speed_cb)
+		mac_ctx->sme.link_speed_cb(ls_ind,
+					   mac_ctx->sme.link_speed_context);
 	else
-		WMA_LOGD("%s: pLinkSpeedIndCb is null", __func__);
+		WMA_LOGD("%s: link_speed_cb is null", __func__);
 	qdf_mem_free(ls_ind);
 
 	return QDF_STATUS_SUCCESS;

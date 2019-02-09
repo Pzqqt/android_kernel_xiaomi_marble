@@ -946,11 +946,22 @@ QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle);
 
 QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level);
 QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle, tSirTxPowerLimit *psmetx);
+
+/**
+ * sme_get_link_speed() - Retrieve current link speed
+ * @mac_handle: Global MAC handle
+ * @req: Link speed request structure
+ * @context: User context to be passed back when invoking @cb
+ * @cb: Callback function to be invoked with link speed results
+ *
+ * Return: QDF_STATUS_SUCCESS if the request was accepted, otherwise
+ * an appropriate error status.
+ */
 QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle,
-			      tSirLinkSpeedInfo *lsReq,
-			      void *plsContext,
-			      void (*pCallbackfn)(tSirLinkSpeedInfo *indParam,
-						  void *pContext));
+			      struct link_speed_info *req,
+			      void *context,
+			      sme_link_speed_cb cb);
+
 QDF_STATUS sme_modify_add_ie(mac_handle_t mac_handle,
 		tSirModifyIE *pModifyIE, eUpdateIEsType updateType);
 QDF_STATUS sme_update_add_ie(mac_handle_t mac_handle,

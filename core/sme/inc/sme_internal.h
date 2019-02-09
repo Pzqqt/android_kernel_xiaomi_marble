@@ -129,6 +129,18 @@ typedef void (*link_layer_stats_cb)(hdd_handle_t hdd_handle,
 typedef void (*ext_scan_ind_cb)(hdd_handle_t hdd_handle,
 				const uint16_t, void *);
 
+/**
+ * typedef sme_link_speed_cb - sme_get_link_speed() callback function
+ * @info: link speed information
+ * @context: user context supplied to sme_get_link_speed()
+ *
+ * This is the signature of a callback function whose addresses is
+ * passed as the asynchronous callback function to sme_get_link_speed().
+ */
+
+typedef void (*sme_link_speed_cb)(struct link_speed_info *info,
+				  void *context);
+
 typedef void (*ocb_callback)(void *context, void *response);
 typedef void (*sme_set_thermal_level_callback)(hdd_handle_t hdd_handle,
 					       u_int8_t level);
@@ -273,9 +285,8 @@ typedef struct tagSmeStruct {
 	stats_ext_cb stats_ext_cb;
 	stats_ext2_cb stats_ext2_cb;
 	/* linkspeed callback */
-	void (*pLinkSpeedIndCb)(tSirLinkSpeedInfo *indParam,
-			void *pDevContext);
-	void *pLinkSpeedCbContext;
+	sme_link_speed_cb link_speed_cb;
+	void *link_speed_context;
 	/* get peer info callback */
 	void (*pget_peer_info_ind_cb)(struct sir_peer_info_resp *param,
 		void *pcontext);

@@ -5433,11 +5433,11 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 }
 
 struct linkspeed_priv {
-	tSirLinkSpeedInfo linkspeed_info;
+	struct link_speed_info linkspeed_info;
 };
 
 static void
-hdd_get_link_speed_cb(tSirLinkSpeedInfo *linkspeed_info, void *context)
+hdd_get_link_speed_cb(struct link_speed_info *linkspeed_info, void *context)
 {
 	struct osif_request *request;
 	struct linkspeed_priv *priv;
@@ -5466,7 +5466,7 @@ int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
 	int ret;
 	QDF_STATUS status;
 	void *cookie;
-	tSirLinkSpeedInfo *linkspeed_info;
+	struct link_speed_info *linkspeed_info;
 	struct osif_request *request;
 	struct linkspeed_priv *priv;
 	static const struct osif_request_params params = {

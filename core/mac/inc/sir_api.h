@@ -2670,11 +2670,11 @@ typedef struct sSirChAvoidUpdateReq {
 } tSirChAvoidUpdateReq;
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-typedef struct sSirLinkSpeedInfo {
+struct link_speed_info {
 	/* MAC Address for the peer */
 	struct qdf_mac_addr peer_macaddr;
 	uint32_t estLinkSpeed;  /* Linkspeed from firmware */
-} tSirLinkSpeedInfo, *tpSirLinkSpeedInfo;
+};
 
 /**
  * struct sir_peer_info_req - peer info request struct

@@ -805,7 +805,8 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
+QDF_STATUS wma_get_link_speed(WMA_HANDLE handle,
+			      struct link_speed_info *pLinkSpeed)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	wmi_mac_addr peer_macaddr;

@@ -148,7 +148,8 @@ void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
 QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
 		  uint32_t param_id,
 		  uint32_t param_value, uint32_t vdev_id);
-QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed);
+QDF_STATUS wma_get_link_speed(WMA_HANDLE handle,
+			      struct link_speed_info *pLinkSpeed);
 #ifdef NOT_YET
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
 #endif
