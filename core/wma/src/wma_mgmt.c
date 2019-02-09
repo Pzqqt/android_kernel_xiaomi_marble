@@ -3851,7 +3851,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	uint8_t mic_len, hdr_len;
 
 	if ((wh)->i_fc[1] & IEEE80211_FC1_WEP) {
-		if (IEEE80211_IS_BROADCAST(wh->i_addr1) ||
+		if (QDF_IS_ADDR_BROADCAST(wh->i_addr1) ||
 		    IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 			WMA_LOGE("Encrypted BC/MC frame dropping the frame");
 			cds_pkt_return_packet(rx_pkt);
@@ -3925,7 +3925,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u"),
 		    MAC_ADDR_ARRAY(wh->i_addr3), rx_pkt->pkt_meta.tsf_delta);
 	} else {
-		if (IEEE80211_IS_BROADCAST(wh->i_addr1) ||
+		if (QDF_IS_ADDR_BROADCAST(wh->i_addr1) ||
 		    IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 			if (0 != wma_process_bip(wma_handle, iface, wh, wbuf)) {
 				cds_pkt_return_packet(rx_pkt);

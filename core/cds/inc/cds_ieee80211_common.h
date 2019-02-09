@@ -35,14 +35,6 @@
 	((_a)[0] == 0x33 &&			    \
 	 (_a)[1] == 0x33)
 
-#define IEEE80211_IS_BROADCAST(_a)		\
-	((_a)[0] == 0xff &&			    \
-	 (_a)[1] == 0xff &&			    \
-	 (_a)[2] == 0xff &&			    \
-	 (_a)[3] == 0xff &&			    \
-	 (_a)[4] == 0xff &&			    \
-	 (_a)[5] == 0xff)
-
 /* IEEE 802.11 PLCP header */
 struct ieee80211_plcp_hdr {
 	uint16_t i_sfd;

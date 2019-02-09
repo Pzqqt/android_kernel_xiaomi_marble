@@ -652,7 +652,7 @@ NOT_IP_TCP:
 				dest_addr = (uint8_t *) &(frm->i_addr3[0]); \
 			} \
 		} \
-		if (qdf_unlikely(IEEE80211_IS_BROADCAST(dest_addr))) { \
+		if (qdf_unlikely(QDF_IS_ADDR_BROADCAST(dest_addr))) { \
 			OL_TXRX_PEER_STATS_UPDATE_BASE(peer, tx_or_rx,	\
 						       bcast, msdu);	\
 		} else if (qdf_unlikely(IEEE80211_IS_MULTICAST(dest_addr))) { \
