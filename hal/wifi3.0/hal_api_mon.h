@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -119,9 +119,9 @@
 #define HAL_LEGACY_MCS7  7
 
 #define HE_GI_0_8 0
-#define HE_GI_1_6 1
-#define HE_GI_3_2 2
-#define HE_GI_0_4 3
+#define HE_GI_0_4 1
+#define HE_GI_1_6 2
+#define HE_GI_3_2 3
 
 #define HT_SGI_PRESENT 0x80
 

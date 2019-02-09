@@ -679,6 +679,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_1, CODING);
+		ppdu_info->rx_status.ldpc = (value == HAL_SU_MU_CODING_LDPC) ?
+			1 : 0;
 		value = value << QDF_MON_STATUS_CODING_SHIFT;
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
