@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1076,13 +1076,15 @@ static QDF_STATUS extract_swba_tim_info_tlv(wmi_unified_t wmi_handle,
 
 	tim_info_ev = &param_buf->tim_info[idx];
 
-	tim_info->tim_len = tim_info_ev->tim_len;
-	tim_info->tim_mcast = tim_info_ev->tim_mcast;
-	qdf_mem_copy(tim_info->tim_bitmap, tim_info_ev->tim_bitmap,
-			(sizeof(uint32_t) * WMI_TIM_BITMAP_ARRAY_SIZE));
-	tim_info->tim_changed = tim_info_ev->tim_changed;
-	tim_info->tim_num_ps_pending = tim_info_ev->tim_num_ps_pending;
-	tim_info->vdev_id = tim_info_ev->vdev_id;
+	if (tim_info_ev->tim_len != 0) {
+		tim_info->tim_len = tim_info_ev->tim_len;
+		tim_info->tim_mcast = tim_info_ev->tim_mcast;
+		qdf_mem_copy(tim_info->tim_bitmap, tim_info_ev->tim_bitmap,
+			     (sizeof(uint32_t) * WMI_TIM_BITMAP_ARRAY_SIZE));
+		tim_info->tim_changed = tim_info_ev->tim_changed;
+		tim_info->tim_num_ps_pending = tim_info_ev->tim_num_ps_pending;
+		tim_info->vdev_id = tim_info_ev->vdev_id;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1136,6 +1138,44 @@ static QDF_STATUS extract_swba_noa_info_tlv(wmi_unified_t wmi_handle,
 				p2p_noa_info->noa_descriptors[i].start_time;
 		}
 		p2p_desc->vdev_id = p2p_noa_info->vdev_id;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_swba_quiet_info_tlv() - extract swba quiet info from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param idx: Index to bcn info
+ * @param quiet_info: Pointer to hold quiet info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_swba_quiet_info_tlv(wmi_unified_t wmi_handle,
+					      void *evt_buf, uint32_t idx,
+					      wmi_host_quiet_info *quiet_info)
+{
+	WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf;
+	wmi_quiet_offload_info *quiet_info_ev;
+
+	param_buf = (WMI_HOST_SWBA_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid swba event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!param_buf->quiet_offload_info)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	quiet_info_ev = &param_buf->quiet_offload_info[idx];
+
+	if (quiet_info_ev->tbttcount != 0) {
+		quiet_info->vdev_id = quiet_info_ev->vdev_id;
+		quiet_info->tbttcount = quiet_info_ev->tbttcount;
+		quiet_info->period = quiet_info_ev->period;
+		quiet_info->duration = quiet_info_ev->duration;
+		quiet_info->offset = quiet_info_ev->offset;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -2640,6 +2680,7 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 				extract_ext_tbttoffset_num_vdevs_tlv;
 	ops->extract_swba_num_vdevs = extract_swba_num_vdevs_tlv;
 	ops->extract_swba_tim_info = extract_swba_tim_info_tlv;
+	ops->extract_swba_quiet_info = extract_swba_quiet_info_tlv;
 	ops->extract_swba_noa_info = extract_swba_noa_info_tlv;
 	ops->extract_offchan_data_tx_compl_param =
 				extract_offchan_data_tx_compl_param_tlv;
