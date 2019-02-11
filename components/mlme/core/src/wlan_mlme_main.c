@@ -1130,6 +1130,18 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 	twt_cfg->twt_congestion_timeout = cfg_get(psoc, CFG_TWT_CONGESTION_TIMEOUT);
 }
 
+#ifdef WLAN_FEATURE_SAE
+static bool is_sae_sap_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return cfg_get(psoc, CFG_IS_SAP_SAE_ENABLED);
+}
+#else
+static bool is_sae_sap_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_sap *sap_cfg)
 {
@@ -1187,6 +1199,7 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SAP_11AC_OVERRIDE);
 	sap_cfg->go_11ac_override =
 		cfg_get(psoc, CFG_GO_11AC_OVERRIDE);
+	sap_cfg->sap_sae_enabled = is_sae_sap_enabled(psoc);
 }
 
 static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
