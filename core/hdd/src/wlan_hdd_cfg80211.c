@@ -20835,13 +20835,55 @@ wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 
 #if defined(WLAN_FEATURE_SAE) && \
 	defined(CFG80211_EXTERNAL_AUTH_SUPPORT)
+#if defined(CFG80211_EXTERNAL_AUTH_AP_SUPPORT)
+/**
+ * wlan_hdd_extauth_cache_pmkid() - Extract and cache pmkid
+ * @adapter: hdd vdev/net_device context
+ * @mac_handle: Handle to the MAC
+ * @params: Pointer to external auth params.
+ *
+ * Extract the PMKID and BSS from external auth params and add to the
+ * PMKSA Cache in CSR.
+ */
+static void
+wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
+			     mac_handle_t mac_handle,
+			     struct cfg80211_external_auth_params *params)
+{
+	tPmkidCacheInfo pmk_cache;
+	QDF_STATUS result;
+	if (params->pmkid) {
+		qdf_mem_zero(&pmk_cache, sizeof(pmk_cache));
+		qdf_mem_copy(pmk_cache.BSSID.bytes, params->bssid,
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(pmk_cache.PMKID, params->pmkid,
+			     CSR_RSN_PMKID_SIZE);
+		result = sme_roam_set_pmkid_cache(mac_handle, adapter->vdev_id,
+						  &pmk_cache, 1, false);
+		if (!QDF_IS_STATUS_SUCCESS(result))
+			hdd_debug("external_auth: Failed to cache PMKID");
+	}
+}
+#else
+static void
+wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
+			     mac_handle_t mac_handle,
+			     struct cfg80211_external_auth_params *params)
+{}
+#endif
 /**
  * __wlan_hdd_cfg80211_external_auth() - Handle external auth
+ *
  * @wiphy: Pointer to wireless phy
  * @dev: net device
- * @params: Pointer to external auth params
- *
+ * @params: Pointer to external auth params.
  * Return: 0 on success, negative errno on failure
+ *
+ * Userspace sends status of the external authentication(e.g., SAE) with a peer.
+ * The message carries BSSID of the peer and auth status (WLAN_STATUS_SUCCESS/
+ * WLAN_STATUS_UNSPECIFIED_FAILURE) in params.
+ * Userspace may send PMKID in params, which can be used for
+ * further connections.
  */
 static int
 __wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
@@ -20870,6 +20912,9 @@ __wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 		  params->status, QDF_MAC_ADDR_ARRAY(params->bssid));
 	mac_handle = hdd_ctx->mac_handle;
 	qdf_mem_copy(peer_mac_addr.bytes, params->bssid, QDF_MAC_ADDR_SIZE);
+
+	wlan_hdd_extauth_cache_pmkid(adapter, mac_handle, params);
+
 	sme_handle_sae_msg(mac_handle, adapter->vdev_id, params->status,
 			   peer_mac_addr);
 
