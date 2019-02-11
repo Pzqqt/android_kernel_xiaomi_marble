@@ -91,6 +91,4 @@ typedef struct ieee80211_rx_status {
 } ieee80211_recv_status;
 #endif /* EXTERNAL_USE_ONLY */
 
-#define IEEE80211_PMKID_LEN     16
-
 #endif

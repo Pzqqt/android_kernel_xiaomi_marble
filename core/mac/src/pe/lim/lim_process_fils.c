@@ -1271,7 +1271,7 @@ void populate_fils_connect_params(struct mac_context *mac_ctx,
 			fils_info->fils_pmk_len);
 
 	qdf_mem_copy(fils_join_rsp->fils_pmkid, fils_info->fils_pmkid,
-			IEEE80211_PMKID_LEN);
+			PMKID_LEN);
 
 	fils_join_rsp->kek_len = fils_info->kek_len;
 	qdf_mem_copy(fils_join_rsp->kek, fils_info->kek, fils_info->kek_len);
