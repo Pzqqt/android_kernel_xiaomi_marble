@@ -3818,7 +3818,7 @@ static void wlan_hdd_add_extra_ie(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_cfg80211_alloc_new_beacon() - alloc beacon in ap mode
  * @adapter: Pointer to hostapd adapter
- * @ppBeacon: Pointer to pointer to beacon data
+ * @out_beacon: Location to store newly allocated beacon data
  * @params: Pointer to beacon parameters
  * @dtim_period: DTIM period
  *
@@ -3826,7 +3826,7 @@ static void wlan_hdd_add_extra_ie(struct hdd_adapter *adapter,
  */
 static int
 wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *adapter,
-				   struct hdd_beacon_data **ppBeacon,
+				   struct hdd_beacon_data **out_beacon,
 				   struct cfg80211_beacon_data *params,
 				   int dtim_period)
 {
@@ -3918,7 +3918,7 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *adapter,
 	if (assocresp_ies && assocresp_ies_len)
 		memcpy(beacon->assocresp_ies, assocresp_ies, assocresp_ies_len);
 
-	*ppBeacon = beacon;
+	*out_beacon = beacon;
 
 	adapter->session.ap.beacon = NULL;
 	qdf_mem_free(old);
