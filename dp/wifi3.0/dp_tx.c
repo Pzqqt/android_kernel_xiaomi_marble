@@ -3003,7 +3003,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 
 			if ((peer->vdev->tx_encap_type ==
 				htt_cmn_pkt_type_ethernet) &&
-				IEEE80211_IS_BROADCAST(eh->ether_dhost)) {
+				QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
 				DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
 			}
 		}

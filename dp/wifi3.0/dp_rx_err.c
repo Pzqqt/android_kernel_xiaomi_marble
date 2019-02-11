@@ -827,7 +827,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 				DP_STATS_INC_PKT(peer, rx.multicast, 1,
 						 qdf_nbuf_len(nbuf));
-				if (IEEE80211_IS_BROADCAST(eh->ether_dhost)) {
+				if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
 					DP_STATS_INC_PKT(peer, rx.bcast, 1,
 							 qdf_nbuf_len(nbuf));
 				}
@@ -959,7 +959,7 @@ process_rx:
 				(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_ethernet))) {
 		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
-		is_broadcast = (IEEE80211_IS_BROADCAST
+		is_broadcast = (QDF_IS_ADDR_BROADCAST
 				(eh->ether_dhost)) ? 1 : 0 ;
 		DP_STATS_INC_PKT(peer, rx.multicast, 1, qdf_nbuf_len(nbuf));
 		if (is_broadcast) {
