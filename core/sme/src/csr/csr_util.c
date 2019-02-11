@@ -2960,7 +2960,7 @@ static bool csr_is_auth_wpa_sae(struct mac_context *mac,
  *
  * Return: True if OUI is OSEN, false otherwise
  */
-static bool csr_is_auth_osen(tpAniSirGlobal mac,
+static bool csr_is_auth_osen(struct mac_context *mac,
 			     u8 all_suites[][CSR_RSN_OUI_SIZE],
 			     u8 suite_count, u8 oui[])
 {
