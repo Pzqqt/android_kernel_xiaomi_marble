@@ -5025,15 +5025,23 @@ static bool csr_roam_select_bss(struct mac_context *mac_ctx,
 			conc_channel = csr_get_concurrent_operation_channel(
 					mac_ctx);
 			sme_debug("csr Conc Channel: %d", conc_channel);
-			if ((conc_channel) && (conc_channel ==
-				result->BssDescriptor.channelId)) {
+
+			if (conc_channel) {
+				if ((conc_channel ==
+				   result->BssDescriptor.channelId) ||
+				   (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc)
+				   && !WLAN_REG_IS_SAME_BAND_CHANNELS(
+				   conc_channel,
+				   result->BssDescriptor.channelId))) {
 				/*
 				 * make this 0 because we do not want the below
 				 * check to pass as we don't want to connect on
 				 * other channel
 				 */
-				sme_debug("Conc chnl match: %d", conc_channel);
-				conc_channel = 0;
+					sme_debug("Conc chnl match: %d",
+								conc_channel);
+					conc_channel = 0;
+				}
 			}
 		}
 
