@@ -1127,6 +1127,7 @@ struct assoc_ind {
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEVHTCaps VHTCaps;
 	tSirMacCapabilityInfo capability_info;
+	bool is_sae_authenticated;
 };
 
 /* / Definition for Association confirm */
@@ -1138,6 +1139,7 @@ struct assoc_cnf {
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
+	tSirMacStatusCodes mac_status_code;
 };
 
 /* / Enum definition for  Wireless medium status change codes */

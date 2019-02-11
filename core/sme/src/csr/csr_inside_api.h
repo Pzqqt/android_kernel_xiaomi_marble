@@ -313,7 +313,8 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 				      struct deauth_ind *pDeauthInd);
 QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 				  struct assoc_ind *pAssocInd,
-				  QDF_STATUS status);
+				  QDF_STATUS status,
+				  tSirMacStatusCodes mac_status_code);
 QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 						     struct assoc_ind *pAssocInd,
 						     QDF_STATUS Halstatus,
@@ -967,6 +968,22 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index);
+
+/**
+ * csr_is_pmkid_found_for_peer() - check if pmkid sent by peer is present
+				   in PMK cache. Used in SAP mode.
+ * @mac: pointer to mac
+ * @session: sme session pointer
+ * @peer_mac_addr: mac address of the connecting peer
+ * @pmkid: pointer to pmkid(s) send by peer
+ * @pmkid_count: number of pmkids sent by peer
+ *
+ * Return: true if pmkid is found else false
+ */
+bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
+				 struct csr_roam_session *session,
+				 tSirMacAddr peer_mac_addr,
+				 uint8_t *pmkid, uint16_t pmkid_count);
 #ifdef WLAN_FEATURE_11AX
 void csr_update_session_he_cap(struct mac_context *mac_ctx,
 			struct csr_roam_session *session);
