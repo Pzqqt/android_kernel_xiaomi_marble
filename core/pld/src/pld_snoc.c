@@ -381,15 +381,15 @@ int pld_snoc_wlan_disable(struct device *dev, enum pld_driver_mode mode)
  */
 int pld_snoc_get_soc_info(struct device *dev, struct pld_soc_info *info)
 {
-	int ret = 0;
-	struct icnss_soc_info icnss_info;
+	int errno;
+	struct icnss_soc_info icnss_info = {0};
 
 	if (info == NULL || !dev)
 		return -ENODEV;
 
-	ret = icnss_get_soc_info(dev, &icnss_info);
-	if (0 != ret)
-		return ret;
+	errno = icnss_get_soc_info(dev, &icnss_info);
+	if (errno)
+		return errno;
 
 	info->v_addr = icnss_info.v_addr;
 	info->p_addr = icnss_info.p_addr;
