@@ -2467,15 +2467,20 @@ QDF_STATUS sme_send_mgmt_tx(mac_handle_t mac_handle, uint8_t session_id,
  * @mac_handle: The handle returned by mac_open
  * @session_id: session id
  * @sae_status: status of SAE authentication
+ * @peer_mac_addr: mac address of the peer to be authenticated
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle, uint8_t session_id,
-			      uint8_t sae_status);
+QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
+			      uint8_t session_id,
+			      uint8_t sae_status,
+			      struct qdf_mac_addr peer_mac_addr);
 #else
 static inline
-QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle, uint8_t session_id,
-			      uint8_t sae_status)
+QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
+			      uint8_t session_id,
+			      uint8_t sae_status,
+			      struct qdf_mac_addr peer_mac_addr)
 {
 	return QDF_STATUS_SUCCESS;
 }
