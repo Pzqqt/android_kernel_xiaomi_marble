@@ -9426,6 +9426,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 		return;
 	}
 
+	config->dot11Mode = cfg_get(psoc, CFG_HDD_DOT11_MODE);
 	config->bug_on_reinit_failure = cfg_get(psoc,
 						CFG_BUG_ON_REINIT_FAILURE);
 

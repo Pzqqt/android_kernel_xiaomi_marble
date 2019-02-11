@@ -56,13 +56,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CONNECTED_SCAN_MIN,
 		     CFG_ENABLE_CONNECTED_SCAN_MAX),
 
-	REG_VARIABLE(CFG_DOT11_MODE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, dot11Mode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_DOT11_MODE_DEFAULT,
-		     CFG_DOT11_MODE_MIN,
-		     CFG_DOT11_MODE_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableSNRMonitoring,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,

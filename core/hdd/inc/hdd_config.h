@@ -84,6 +84,48 @@ enum hdd_wext_control {
 			CFG_VALUE_OR_DEFAULT, \
 			"Private WEXT Control")
 
+enum hdd_dot11_mode {
+	eHDD_DOT11_MODE_AUTO = 0,       /* covers all things we support */
+	eHDD_DOT11_MODE_abg,    /* 11a/b/g only, no HT, no proprietary */
+	eHDD_DOT11_MODE_11b,
+	eHDD_DOT11_MODE_11g,
+	eHDD_DOT11_MODE_11n,
+	eHDD_DOT11_MODE_11g_ONLY,
+	eHDD_DOT11_MODE_11n_ONLY,
+	eHDD_DOT11_MODE_11b_ONLY,
+	eHDD_DOT11_MODE_11ac_ONLY,
+	eHDD_DOT11_MODE_11ac,
+	eHDD_DOT11_MODE_11a,
+	eHDD_DOT11_MODE_11ax_ONLY,
+	eHDD_DOT11_MODE_11ax,
+};
+
+/*
+ * <ini>
+ * gDot11Mode - Phymode of vdev
+ * @Min: 0 (auto)
+ * @Max: 12 (11ax)
+ * @Default: 12 (11ax)
+ *
+ * This ini is used to set Phy Mode (auto, b, g, n, etc/) Valid values are
+ * 0-12, with 0 = Auto, 12 = 11ax.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+ #define CFG_HDD_DOT11_MODE CFG_INI_UINT( \
+			"gDot11Mode", \
+			eHDD_DOT11_MODE_AUTO, \
+			eHDD_DOT11_MODE_11ax, \
+			eHDD_DOT11_MODE_11ax, \
+			CFG_VALUE_OR_DEFAULT, \
+			"dot11 mode")
+
 /*
  * <ini>
  * gInterfaceChangeWait - Interface change wait
@@ -1159,5 +1201,6 @@ enum hdd_wext_control {
 	CFG(CFG_OPERATING_CHANNEL) \
 	CFG(CFG_PRIVATE_WEXT_CONTROL) \
 	CFG(CFG_PROVISION_INTERFACE_POOL) \
-	CFG(CFG_TIMER_MULTIPLIER)
+	CFG(CFG_TIMER_MULTIPLIER) \
+	CFG(CFG_HDD_DOT11_MODE)
 #endif

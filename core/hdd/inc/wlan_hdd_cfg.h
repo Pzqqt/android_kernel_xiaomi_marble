@@ -80,45 +80,6 @@ struct hdd_context;
 #define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
 #define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
 
-enum hdd_dot11_mode {
-	eHDD_DOT11_MODE_AUTO = 0,       /* covers all things we support */
-	eHDD_DOT11_MODE_abg,    /* 11a/b/g only, no HT, no proprietary */
-	eHDD_DOT11_MODE_11b,
-	eHDD_DOT11_MODE_11g,
-	eHDD_DOT11_MODE_11n,
-	eHDD_DOT11_MODE_11g_ONLY,
-	eHDD_DOT11_MODE_11n_ONLY,
-	eHDD_DOT11_MODE_11b_ONLY,
-	eHDD_DOT11_MODE_11ac_ONLY,
-	eHDD_DOT11_MODE_11ac,
-	eHDD_DOT11_MODE_11a,
-	eHDD_DOT11_MODE_11ax_ONLY,
-	eHDD_DOT11_MODE_11ax,
-};
-
-/*
- * <ini>
- * gDot11Mode - SAP phy mode
- * @Min: 0
- * @Max: 12 (11ax)
- * @Default: 12 (11ax)
- *
- * This ini is used to set Phy Mode (auto, b, g, n, etc/) Valid values are
- * 0-12, with 0 = Auto, 12 = 11ax.
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_DOT11_MODE_NAME                    "gDot11Mode"
-#define CFG_DOT11_MODE_MIN                     eHDD_DOT11_MODE_AUTO
-#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ax
-#define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11ax
-
 /*
  * <ini>
  * gEnableSNRMonitoring - Enables SNR Monitoring
