@@ -8939,6 +8939,90 @@ QDF_STATUS send_peer_del_all_wds_entries_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_multiple_vdev_restart_req_cmd_non_tlv() - send multi vdev restart req
+ * @wmi_handle: wmi handle
+ * @param: wmi multiple vdev restart req param
+ *
+ * Send WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
+		wmi_unified_t wmi_handle,
+		struct multiple_vdev_restart_params *param)
+{
+	int i;
+	wmi_buf_t buf;
+	wmi_channel *chan_info;
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
+	struct channel_param *tchan_info;
+#else
+	struct mlme_channel_param *tchan_info;
+#endif
+	wmi_pdev_multiple_vdev_restart_request_cmd *cmd;
+	uint16_t len = sizeof(*cmd);
+
+	if (param->num_vdevs)
+		len += sizeof(uint32_t) * param->num_vdevs;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_pdev_multiple_vdev_restart_request_cmd *)wmi_buf_data(buf);
+
+	cmd->requestor_id = param->requestor_id;
+	cmd->disable_hw_ack = param->disable_hw_ack;
+	cmd->num_vdevs = param->num_vdevs;
+
+	WMI_LOGI("req_id:%d dis_hw_ack:%d num_vdevs:%d",
+		 cmd->requestor_id, cmd->disable_hw_ack, cmd->num_vdevs);
+
+	for (i = 0; i < param->num_vdevs; i++)
+		cmd->vdev_ids[i] = param->vdev_ids[i];
+
+	chan_info = &cmd->chan;
+	tchan_info = &param->ch_param;
+	chan_info->mhz = tchan_info->mhz;
+	chan_info->band_center_freq1 = tchan_info->cfreq1;
+	chan_info->band_center_freq2 = tchan_info->cfreq2;
+
+	if (tchan_info->is_chan_passive)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_PASSIVE);
+
+	if (tchan_info->dfs_set)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS);
+
+	if (tchan_info->allow_vht)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_ALLOW_VHT);
+	else  if (tchan_info->allow_ht)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_ALLOW_HT);
+
+	WMI_SET_CHANNEL_MODE(chan_info, tchan_info->phy_mode);
+	WMI_SET_CHANNEL_MIN_POWER(chan_info, tchan_info->minpower);
+	WMI_SET_CHANNEL_MAX_POWER(chan_info, tchan_info->maxpower);
+	WMI_SET_CHANNEL_REG_POWER(chan_info, tchan_info->maxregpower);
+	WMI_SET_CHANNEL_ANTENNA_MAX(chan_info, tchan_info->antennamax);
+	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
+
+	WMI_LOGI("is_chan_passive:%d dfs_set:%d allow_vht:%d allow_ht:%d",
+		 tchan_info->is_chan_passive, tchan_info->dfs_set,
+		 tchan_info->allow_vht, tchan_info->allow_ht);
+	WMI_LOGI("antennamax:%d phy_mode:%d minpower:%d maxpower:%d",
+		 tchan_info->antennamax, tchan_info->phy_mode,
+		 tchan_info->minpower, tchan_info->maxpower);
+	WMI_LOGI("maxregpower:%d reg_class_id:%d",
+		 tchan_info->maxregpower, tchan_info->reg_class_id);
+
+	return wmi_unified_cmd_send(
+			wmi_handle, buf, len,
+			WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
+}
+
+/**
  * wmi_non_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
  *
  * Return None.
@@ -9283,6 +9367,8 @@ struct wmi_ops non_tlv_ops =  {
 			send_peer_del_all_wds_entries_cmd_non_tlv,
 	.send_vdev_pcp_tid_map_cmd = send_vdev_pcp_tid_map_cmd_non_tlv,
 	.send_vdev_tidmap_prec_cmd = send_vdev_tidmap_prec_cmd_non_tlv,
+	.send_multiple_vdev_restart_req_cmd =
+			send_multiple_vdev_restart_req_cmd_non_tlv,
 };
 
 /**
@@ -9432,7 +9518,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_ext_msg] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_multiple_vdev_restart] =
-				WMI_SERVICE_UNAVAILABLE;
+				WMI_SERVICE_MULTIPLE_VDEV_RESTART;
 	wmi_service[wmi_service_peer_assoc_conf] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_egap] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_sta_pmf_offload] = WMI_SERVICE_UNAVAILABLE;
