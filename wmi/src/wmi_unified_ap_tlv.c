@@ -53,8 +53,20 @@ static QDF_STATUS send_peer_add_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 
 	wmi_mtrace(WMI_PEER_ADD_WDS_ENTRY_CMDID, cmd->vdev_id, 0);
-	return wmi_unified_cmd_send(wmi_handle, buf, len,
-			WMI_PEER_ADD_WDS_ENTRY_CMDID);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_ADD_WDS_ENTRY_CMDID)) {
+		WMI_LOGE("%s: peer %pM vdev_id %d wds %pM flag %d failed!\n",
+			 __func__, param->peer_addr, param->vdev_id,
+			 param->dest_addr, param->flags);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, wds_macaddr %pM flag %d\n",
+		 __func__, param->peer_addr, param->vdev_id,
+		 param->dest_addr, param->flags);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -84,8 +96,18 @@ static QDF_STATUS send_peer_del_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->dest_addr, &cmd->wds_macaddr);
 	cmd->vdev_id = param->vdev_id;
 	wmi_mtrace(WMI_PEER_REMOVE_WDS_ENTRY_CMDID, cmd->vdev_id, 0);
-	return wmi_unified_cmd_send(wmi_handle, buf, len,
-			WMI_PEER_REMOVE_WDS_ENTRY_CMDID);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_REMOVE_WDS_ENTRY_CMDID)) {
+		WMI_LOGE("%s: vdev_id %d wds_addr %pM failed!\n",
+			 __func__, param->vdev_id, param->dest_addr);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	WMI_LOGD("%s: vdev_id %d wds_addr %pM\n",
+		 __func__, param->vdev_id, param->dest_addr);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -123,8 +145,20 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_macaddr,
 				&cmd->peer_macaddr);
 	wmi_mtrace(WMI_PEER_UPDATE_WDS_ENTRY_CMDID, cmd->vdev_id, 0);
-	return wmi_unified_cmd_send(wmi_handle, buf, len,
-			WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_UPDATE_WDS_ENTRY_CMDID)) {
+		WMI_LOGE("%s: peer %pM vdev_id %d wds %pM flags %d failed!\n",
+			 __func__, param->peer_macaddr, param->vdev_id,
+			 param->wds_macaddr, param->flags);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMI_LOGD("%s: peer_addr %pM vdev_id %d wds_addr %pM flags %d\n",
+		 __func__, param->peer_macaddr, param->vdev_id,
+		 param->wds_macaddr, param->flags);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
