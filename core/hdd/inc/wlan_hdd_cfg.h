@@ -173,7 +173,6 @@ struct hdd_config {
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif
-	bool prevent_link_down;
 	bool fEnableSNRMonitoring;
 	bool advertiseConcurrentOperation;
 #ifdef DHCP_SERVER_OFFLOAD
