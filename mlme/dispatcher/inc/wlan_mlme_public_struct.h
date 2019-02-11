@@ -617,6 +617,7 @@ struct wlan_mlme_cfg_sap {
 	uint8_t sap_mcc_chnl_avoid;
 	bool sap_11ac_override;
 	bool go_11ac_override;
+	bool sap_sae_enabled;
 };
 
 /**

@@ -678,7 +678,38 @@
 				1, \
 				"Override bw to 11ac for P2P GO")
 
+#ifdef WLAN_FEATURE_SAE
+/*
+ *
+ * <ini>
+ * enable_sae_for_sap - Enable/Disable SAE support in driver for SAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable SAE support in driver for SAP mode
+ * Driver will process/drop the SAE authentication frames based on this config.
+ *
+ * Related: None
+ *
+ * Supported Feature: SAE
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_IS_SAP_SAE_ENABLED CFG_INI_BOOL( \
+				"enable_sae_for_sap", \
+				1, \
+				"Enable/Disable SAE support for SAP")
+
+#define CFG_SAP_SAE CFG(CFG_IS_SAP_SAE_ENABLED)
+
+#else
+#define CFG_SAP_SAE
+#endif /* WLAN_FEATURE_SAE */
+
 #define CFG_SAP_ALL \
+	CFG_SAP_SAE \
 	CFG(CFG_AP_ENABLE_RANDOM_BSSID) \
 	CFG(CFG_SSID) \
 	CFG(CFG_BEACON_INTERVAL) \
