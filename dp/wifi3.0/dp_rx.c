@@ -1396,6 +1396,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	qdf_nbuf_t deliver_list_head = NULL;
 	qdf_nbuf_t deliver_list_tail = NULL;
 	int32_t tid = 0;
+	uint32_t dst_num_valid = 0;
 
 	DP_HIST_INIT();
 	/* Debug -- Remove later */
@@ -1443,16 +1444,17 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		 * complete mpdu in one reap.
 		 */
 		if (qdf_unlikely(!ring_desc)) {
-			hal_srng_access_start_unlocked(hal_soc, hal_ring);
-			ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
-			if (!ring_desc)
+			dst_num_valid = hal_srng_dst_num_valid(hal_soc,
+							       hal_ring,
+							       true);
+			if (dst_num_valid) {
+				DP_STATS_INC(soc, rx.hp_oos, 1);
+				hal_srng_access_end_unlocked(hal_soc,
+							     hal_ring);
+				continue;
+			} else {
 				break;
-			DP_STATS_INC(soc, rx.hp_oos, 1);
-			/*
-			 * update TP here in case loop takes long,
-			 * then the ring is easily full.
-			 */
-			hal_srng_access_end_unlocked(hal_soc, hal_ring);
+			}
 		}
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);

@@ -651,7 +651,7 @@ static inline uint32_t hal_srng_dst_num_valid(void *hal_soc, void *hal_ring,
 	uint32_t tp = srng->u.dst_ring.tp;
 
 	if (sync_hw_ptr) {
-		hp = *(srng->u.dst_ring.hp_addr);
+		hp = *(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
 		srng->u.dst_ring.cached_hp = hp;
 	} else {
 		hp = srng->u.dst_ring.cached_hp;
