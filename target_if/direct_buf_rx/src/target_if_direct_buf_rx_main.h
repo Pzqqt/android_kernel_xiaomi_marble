@@ -33,10 +33,12 @@ struct direct_buf_rx_data;
 /**
  * enum DBR_MODULE - Enum containing the modules supporting direct buf rx
  * @DBR_MODULE_SPECTRAL: Module ID for Spectral
+ * @DBR_MODULE_CFR: Module ID for CFR
  * @DBR_MODULE_MAX: Max module ID
  */
 enum DBR_MODULE {
 	DBR_MODULE_SPECTRAL = 0,
+	DBR_MODULE_CFR      = 1,
 	DBR_MODULE_MAX,
 };
 

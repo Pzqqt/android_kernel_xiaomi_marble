@@ -29,6 +29,9 @@
 #ifdef WLAN_SA_API_ENABLE
 #include "target_if_sa_api.h"
 #endif
+#ifdef WLAN_CFR_ENABLE
+#include "target_if_cfr.h"
+#endif
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include "target_if_spectral.h"
 #endif
@@ -217,6 +220,12 @@ static void target_if_sa_api_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 }
 #endif /* WLAN_SA_API_ENABLE */
+
+#ifndef WLAN_CFR_ENABLE
+static void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
 
 #ifdef WLAN_SUPPORT_FILS
 static void target_if_fd_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
@@ -413,6 +422,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_atf_tx_ops_register(tx_ops);
 
 	target_if_sa_api_tx_ops_register(tx_ops);
+
+	target_if_cfr_tx_ops_register(tx_ops);
 
 	target_if_wifi_pos_tx_ops_register(tx_ops);
 

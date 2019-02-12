@@ -34,6 +34,7 @@ struct module_name {
 
 static const struct module_name g_dbr_module_name[DBR_MODULE_MAX] = {
 	[DBR_MODULE_SPECTRAL] = {"SPECTRAL"},
+	[DBR_MODULE_CFR]      = {"CFR"},
 };
 
 static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
@@ -493,7 +494,8 @@ static QDF_STATUS target_if_dbr_init_ring(struct wlan_objmgr_pdev *pdev,
 	ring_params.ring_base_paddr =
 		(qdf_dma_addr_t)dbr_ring_cfg->base_paddr_aligned;
 	ring_params.num_entries = num_entries;
-	srng = hal_srng_setup(dbr_psoc_obj->hal_soc, DIR_BUF_RX_DMA_SRC, 0,
+	srng = hal_srng_setup(dbr_psoc_obj->hal_soc, DIR_BUF_RX_DMA_SRC,
+			      mod_param->mod_id,
 			      wlan_objmgr_pdev_get_pdev_id(pdev), &ring_params);
 
 	if (!srng) {
