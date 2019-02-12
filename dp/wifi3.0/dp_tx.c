@@ -30,6 +30,7 @@
 #ifdef MESH_MODE_SUPPORT
 #include "if_meta_hdr.h"
 #endif
+#include "enet.h"
 
 #define DP_TX_QUEUE_MASK 0x3
 
@@ -1119,13 +1120,13 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 		if (qdf_unlikely(nbuf_clone)) {
 			qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
 
-			if (ether_type == htons(ETHERTYPE_8021Q)) {
+			if (ether_type == htons(ETHERTYPE_VLAN)) {
 				qdf_nbuf_pull_head(nbuf_clone,
 						sizeof(qdf_net_vlanhdr_t));
 			}
 		}
 	} else {
-		if (ether_type == htons(ETHERTYPE_8021Q)) {
+		if (ether_type == htons(ETHERTYPE_VLAN)) {
 			nbuf_clone = qdf_nbuf_clone(nbuf);
 			if (qdf_unlikely(nbuf_clone)) {
 				qdf_nbuf_pull_head(nbuf_clone,
@@ -1213,7 +1214,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
 				sizeof(*llcHdr));
 
-		if (ether_type == htons(ETHERTYPE_8021Q)) {
+		if (ether_type == htons(ETHERTYPE_VLAN)) {
 			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t) +
 				sizeof(*llcHdr);
 			ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN
@@ -1224,7 +1225,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				sizeof(*llcHdr);
 		}
 	} else {
-		if (ether_type == htons(ETHERTYPE_8021Q)) {
+		if (ether_type == htons(ETHERTYPE_VLAN)) {
 			evh = (qdf_ethervlan_header_t *) eh;
 			ether_type = evh->ether_type;
 			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t);
