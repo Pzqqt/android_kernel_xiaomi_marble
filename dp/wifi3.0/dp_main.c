@@ -77,6 +77,9 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 static void dp_ppdu_ring_reset(struct dp_pdev *pdev);
 static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
+#ifdef ENABLE_VERBOSE_DEBUG
+bool is_dp_verbose_debug_enabled;
+#endif
 
 #define DP_INTR_POLL_TIMER_MS	10
 /* Generic AST entry aging timer value */
@@ -2601,6 +2604,22 @@ static void dp_reo_frag_dst_set(struct dp_soc *soc, uint8_t *frag_dst_ring)
 	}
 }
 
+#ifdef ENABLE_VERBOSE_DEBUG
+static void dp_enable_verbose_debug(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (soc_cfg_ctx->per_pkt_trace & dp_verbose_debug_mask)
+		is_dp_verbose_debug_enabled = true;
+}
+#else
+static void dp_enable_verbose_debug(struct dp_soc *soc)
+{
+}
+#endif
+
 /*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
@@ -2625,6 +2644,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	dp_enable_verbose_debug(soc);
+
 	/* Setup SRNG rings */
 	/* Common rings */
 	if (dp_srng_setup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0, 0,
@@ -4211,6 +4233,7 @@ static int dp_soc_get_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc)
 	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
 	return wlan_cfg_get_dp_soc_nss_cfg(dsoc->wlan_cfg_ctx);
 }
+
 /*
  * dp_soc_set_nss_cfg_wifi3() - SOC set nss config
  * @txrx_soc: Datapath SOC handle

@@ -29,6 +29,11 @@
 #include "cdp_txrx_ops.h"
 #include "cdp_txrx_handle.h"
 #include "cdp_txrx_cmn_struct.h"
+
+#ifdef ENABLE_VERBOSE_DEBUG
+extern bool is_dp_verbose_debug_enabled;
+#endif
+
 /******************************************************************************
  *
  * Common Data Path Header File
@@ -40,6 +45,30 @@
 #define dp_info(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP, ## params)
 #define dp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params)
+#ifdef ENABLE_VERBOSE_DEBUG
+/**
+ * @enum verbose_debug_module:
+ * if INI "enable_verbose_debug" has to set following bit positions to enable
+ * respective module's excessive logging,
+ *
+ * @hif_verbose_debug_mask: 1st bit [0th index] is  for HIF module
+ * @hal_verbose_debug_mask: 2nd bit [1st index] is for HAL module
+ * @dp_verbose_debug_mask:  3rd bit [2nd index] is for DP module
+ */
+enum verbose_debug_module {
+	hif_vebose_debug_mask    = 1 << 0,
+	hal_verbose_debug_mask   = 1 << 1,
+	dp_verbose_debug_mask    = 1 << 2,
+};
+
+#define dp_verbose_debug(params...) \
+		if (unlikely(is_dp_verbose_debug_enabled)) \
+			do {\
+				QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params); \
+			} while (0)
+#else
+#define dp_verbose_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params)
+#endif
 
 #define dp_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_DP, params)
 #define dp_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP, params)
