@@ -1109,17 +1109,17 @@
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 /*
- * setBTCoexMode - Set BTCoexMode
+ * set_btc_mode Set BTCoexMode
  *
  * @INPUT: set_value.
  *
  * @OUTPUT: None
  *
  * This IOCTL is used to set the BT COex operating mode
- * Allowed values are 0 (TDD) , 1 (FDD) , 2 (Hybrid)
+ * Allowed values are 0(TDD), 1(FDD), 2(Hybrid)
  *
- * @E.g: iwpriv wlan0 setBTCoexMode <value>
- * iwpriv wlan0 setBTCoexMode 2
+ * @E.g: iwpriv wlan0 set_btc_mode  <value>
+ * iwpriv wlan0 set_btc_mode 2
  *
  * Supported Feature: N/A
  *
@@ -1130,18 +1130,18 @@
 #define WE_SET_BTCOEX_MODE	99
 
 /*
- * setBTCRSSIThreshold - Set the Set WLAN low RSSI threshold for BTCOex
+ * set_btc_rssi- Set WLAN low RSSI threshold for BTCOex
  *
  * @INPUT: set_value.
  *
  * @OUTPUT: None
  *
- * This IOCTL is used to change  WLAN low RSSI threshold for BTC mode
- * switching where the COex mode changes from TDD to Hybrid mode
+ * This IOCTL is used to modify the threshold at which
+ * the COex mode changes from TDD to Hybrid mode
  * Allowed values are from -100 to 0
  *
- * @E.g: iwpriv wlan0 setBTCRSSIThreshold <value>
- * iwpriv wlan0 setBTCRSSIThreshold -70
+ * @E.g: iwpriv wlan0 set_btc_rssi <value>
+ * iwpriv wlan0 set_btc_rssi -70
  *
  * Supported Feature: N/A
  *
