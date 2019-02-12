@@ -1141,8 +1141,8 @@ void *qdf_mem_malloc_fl(size_t size, const char *func, uint32_t line)
 
 	ptr = kzalloc(size, qdf_mem_malloc_flags());
 	if (!ptr) {
-		qdf_nofl_warn("Failed to malloc %zuB @ %s:%d",
-			      size, func, line);
+		qdf_nofl_err("Failed to malloc %zuB @ %s:%d",
+			     size, func, line);
 		return NULL;
 	}
 
