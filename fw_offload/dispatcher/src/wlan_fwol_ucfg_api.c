@@ -558,6 +558,27 @@ QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 	*tsf_ptp_options = fwol_obj->cfg.tsf_ptp_options;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+QDF_STATUS
+ucfg_fwol_get_tsf_irq_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *tsf_irq_host_gpio_pin)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		*tsf_irq_host_gpio_pin =
+			cfg_default(CFG_SET_TSF_IRQ_HOST_GPIO_PIN);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*tsf_irq_host_gpio_pin = fwol_obj->cfg.tsf_irq_host_gpio_pin;
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 #endif
 #else
 QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
@@ -571,6 +592,7 @@ QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
 #endif
 
 QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
@@ -594,6 +616,7 @@ bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return cfg_get(psoc, CFG_IS_SAE_ENABLED);
 }
+
 #else
 bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc)
 {

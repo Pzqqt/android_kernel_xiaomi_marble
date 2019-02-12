@@ -304,6 +304,19 @@ QDF_STATUS ucfg_fwol_get_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 				      uint32_t *tsf_gpio_pin);
 
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+/**
+ * ucfg_fwol_get_tsf_irq_host_gpio_pin() - Assigns tsf_irq_host_gpio_pin value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+
+QDF_STATUS
+ucfg_fwol_get_tsf_irq_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *tsf_irq_host_gpio_pin);
+#endif
+
 #ifdef DHCP_SERVER_OFFLOAD
 /**
  * ucfg_fwol_get_enable_dhcp_server_offload()-Assign enable_dhcp_server_offload
