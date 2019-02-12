@@ -221,6 +221,8 @@ static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 			wlan_pdev_mlme_op_clear
 					(pdev,
 					 WLAN_PDEV_OP_RESTART_INPROGRESS);
+			wlan_pdev_mlme_op_clear(pdev,
+						WLAN_PDEV_OP_MBSSID_RESTART);
 
 	} else {
 		status = QDF_STATUS_SUCCESS;
@@ -285,6 +287,10 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 	 */
 	if (!pdev_mlme->restart_pend_vdev_bmap[0] &&
 	    !pdev_mlme->restart_pend_vdev_bmap[1]) {
+
+		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_MBSSID_RESTART);
+		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_RESTART_INPROGRESS);
+
 		if (!wlan_pdev_nif_feat_cap_get(pdev,
 						WLAN_PDEV_F_MULTIVDEV_RESTART))
 			wlan_objmgr_pdev_iterate_obj_list
@@ -303,7 +309,6 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 				 pdev_mlme->start_send_vdev_arr, 0,
 				 WLAN_MLME_NB_ID);
 		}
-		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_RESTART_INPROGRESS);
 	} else {
 		mlme_restart_req_timer_start(pdev_mlme);
 	}
@@ -346,18 +351,15 @@ static QDF_STATUS mlme_vdev_restart_is_allowed(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pdev_mlme_obj *pdev_mlme;
 
-	/* compare channel (if desired channel and bss channel matches
-	 * vdevs return SUCCESS
-	 */
-	if (wlan_chan_eq(wlan_vdev_mlme_get_des_chan(vdev),
-			 wlan_vdev_mlme_get_bss_chan(vdev)) ==
-				QDF_STATUS_SUCCESS)
-		return status;
-
 	pdev_mlme = wlan_pdev_mlme_get_cmpt_obj(pdev);
 	if (!pdev_mlme) {
 		mlme_err(" PDEV MLME is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!wlan_pdev_mlme_op_get(pdev, WLAN_PDEV_OP_MBSSID_RESTART)) {
+		mlme_err(" No multivdev restart");
+		return status;
 	}
 
 	qdf_spin_lock_bh(&pdev_mlme->vdev_restart_lock);
