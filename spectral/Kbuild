@@ -185,6 +185,11 @@ ccflags-y+= -DWLAN_SA_API_ENABLE
 INCS += -I$(obj)/$(DEPTH)/umac/sa_api/dispatcher/inc
 endif
 
+ifeq ($(QCA_CFR_SUPPORT), 1)
+ccflags-y+= -DWLAN_CFR_ENABLE=1
+INCS += -I$(obj)/$(DEPTH)/component_dev/umac/cfr/dispatcher/inc
+endif
+
 ifeq ($(strip ${QCA_DFS_COMPONENT_ENABLE}),1)
 ccflags-y+= -DDFS_COMPONENT_ENABLE
 endif
