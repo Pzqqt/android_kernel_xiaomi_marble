@@ -202,13 +202,6 @@ struct ieee80211_extendedchannelswitch_ie {
 	uint8_t tbttcount;
 } __packed;
 
-/* WME stream classes */
-#define WME_AC_BE                          0    /* best effort */
-#define WME_AC_BK                          1    /* background */
-#define WME_AC_VI                          2    /* video */
-#define WME_AC_VO                          3    /* voice */
-#define WME_AC_NUM                         4
-
 /*
  * Reason codes
  *
