@@ -22,7 +22,6 @@
 #include "qdf_lock.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
-#include "qdf_util.h"
 #include "wlan_dsc_driver.h"
 #include "wlan_dsc_psoc.h"
 #include "wlan_dsc_vdev.h"

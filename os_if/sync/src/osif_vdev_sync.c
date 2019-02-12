@@ -24,7 +24,6 @@
 #include "qdf_lock.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
-#include "qdf_util.h"
 
 /**
  * struct osif_vdev_sync - a vdev synchronization context
