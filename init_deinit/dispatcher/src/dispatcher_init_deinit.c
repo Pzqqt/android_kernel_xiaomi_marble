@@ -68,6 +68,10 @@
 #include <wlan_cp_stats_utils_api.h>
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+#include <wlan_cfr_utils_api.h>
+#endif
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -79,6 +83,49 @@
  */
 
 spectral_pdev_open_handler dispatcher_spectral_pdev_open_handler_cb;
+
+#ifdef WLAN_CFR_ENABLE
+static QDF_STATUS dispatcher_init_cfr(void)
+{
+	return wlan_cfr_init();
+}
+
+static QDF_STATUS dispatcher_deinit_cfr(void)
+{
+	return wlan_cfr_deinit();
+}
+
+static QDF_STATUS dispatcher_cfr_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_cfr_pdev_open(pdev);
+}
+
+static QDF_STATUS dispatcher_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_cfr_pdev_close(pdev);
+}
+#else
+static QDF_STATUS dispatcher_init_cfr(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_deinit_cfr(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_cfr_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 
 #ifdef QCA_SUPPORT_CP_STATS
 static QDF_STATUS dispatcher_init_cp_stats(void)
@@ -597,6 +644,13 @@ static QDF_STATUS dispatcher_green_ap_pdev_open(
 {
 	return wlan_green_ap_pdev_open(pdev);
 }
+
+/* Only added this for symmetry */
+static QDF_STATUS dispatcher_green_ap_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS dispatcher_green_ap_deinit(void)
 {
 	return wlan_green_ap_deinit();
@@ -608,6 +662,12 @@ static QDF_STATUS dispatcher_green_ap_init(void)
 }
 static QDF_STATUS dispatcher_green_ap_pdev_open(
 				struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/* Only added this for symmetry */
+static QDF_STATUS dispatcher_green_ap_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -722,6 +782,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != wlan_cmn_mlme_init())
 		goto cmn_mlme_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_init_cfr())
+		goto cfr_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -733,6 +796,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_deinit_cfr();
+cfr_init_fail:
 	wlan_cmn_mlme_deinit();
 cmn_mlme_init_fail:
 	dispatcher_spectral_deinit();
@@ -783,6 +848,8 @@ QDF_STATUS dispatcher_deinit(void)
 	QDF_STATUS status;
 
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_deinit_cfr());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_cmn_mlme_deinit());
 
@@ -998,34 +1065,51 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 	QDF_STATUS status;
 
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_open(pdev))
-		goto out;
+		goto regulatory_pdev_open_fail;
 
 	status = dispatcher_spectral_pdev_open(pdev);
 	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
 		goto spectral_pdev_open_fail;
 
+	status = dispatcher_cfr_pdev_open(pdev);
+	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
+		goto cfr_pdev_open_fail;
+
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_pdev_open(pdev))
-		goto out;
+		goto mgmt_txrx_pdev_open_fail;
 	if (QDF_IS_STATUS_ERROR(dispatcher_green_ap_pdev_open(pdev)))
-		goto out;
+		goto green_ap_pdev_open_fail;
 
 	return QDF_STATUS_SUCCESS;
 
+green_ap_pdev_open_fail:
+	wlan_mgmt_txrx_pdev_close(pdev);
+mgmt_txrx_pdev_open_fail:
+	dispatcher_cfr_pdev_close(pdev);
+cfr_pdev_open_fail:
+	dispatcher_spectral_pdev_close(pdev);
 spectral_pdev_open_fail:
 	dispatcher_regulatory_pdev_close(pdev);
-
-out:
+regulatory_pdev_open_fail:
 	return QDF_STATUS_E_FAILURE;
 }
 qdf_export_symbol(dispatcher_pdev_open);
 
 QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
-	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_pdev_close(pdev));
+	QDF_STATUS status;
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_green_ap_pdev_close(pdev));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_pdev_close(pdev));
+
+	status = dispatcher_cfr_pdev_close(pdev);
+	QDF_BUG((QDF_STATUS_SUCCESS == status) ||
+		(QDF_STATUS_COMP_DISABLED == status));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_spectral_pdev_close(pdev));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_pdev_close(pdev));
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_pdev_close(pdev));
 
 	return QDF_STATUS_SUCCESS;
 }
