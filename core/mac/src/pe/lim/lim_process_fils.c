@@ -23,7 +23,6 @@
 #include <lim_prop_exts_utils.h>
 #include <lim_assoc_utils.h>
 #include <lim_session.h>
-#include <cds_ieee80211_defines.h>
 #include <qdf_crypto.h>
 #include "qdf_util.h"
 

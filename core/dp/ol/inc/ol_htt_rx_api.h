@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,6 @@
 #ifndef _OL_HTT_RX_API__H_
 #define _OL_HTT_RX_API__H_
 
-/* #include <osapi_linux.h>     / * uint16_t, etc. * / */
 #include <osdep.h>              /* uint16_t, etc. */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* bool */
@@ -37,12 +36,99 @@
 #include <htt.h>                /* HTT_RX_IND_MPDU_STATUS */
 #include <ol_htt_api.h>         /* htt_pdev_handle */
 
-#include <cds_ieee80211_defines.h>  /* ieee80211_rx_status */
+#include <cds_ieee80211_common.h>
 #include <ol_vowext_dbg_defs.h>
 
 /*================ constants and types used in the rx API ===================*/
 
 #define HTT_RSSI_INVALID 0x7fff
+
+#ifndef EXTERNAL_USE_ONLY
+
+#define IEEE80211_LSIG_LEN  3
+#define IEEE80211_HTSIG_LEN 6
+#define IEEE80211_SB_LEN    2
+
+/**
+ * struct ieee80211_rx_status - RX status
+ * @rs_numchains: Number of chains
+ * @rs_flags: Flags
+ * @rs_rssi: RSSI (noise floor adjusted)
+ * @rs_abs_rssi: Absolute RSSI
+ * @rs_datarate: Data rate received
+ * @rs_rateieee: ieee rate
+ * @rs_ratephy: Phy rate
+ * @rs_rssictl: RSSI (noise floor adjusted)
+ * @rs_rssiextn: RSSI (noise floor adjusted)
+ * @rs_isvalidrssi: rs_rssi is valid or not
+ * @rs_phymode: Phy mode
+ * @rs_freq: Received frequency
+ * @rs_tstamp: Received timestamp
+ * @rs_full_chan: Detail channel structure of recv frame.
+ *                It could be NULL if not available
+ * @rs_isaggr: Is Aggreggated?
+ * @rs_isapsd: Is APSD?
+ * @rs_noisefloor: Noise floor
+ * @rs_channel: Channel
+ * @rs_rpttstamp: txbf report time stamp
+ * @rs_cryptodecapcount: Crypto bytes decapped/demic'ed
+ * @rs_padspace: No. of padding bytes present after header
+ *               in wbuf
+ * @rs_qosdecapcount: QoS/HTC bytes decapped
+ * @rs_lsig: lsig
+ * @rs_htsig: HT sig
+ * @rs_servicebytes: Received service bytes
+ */
+struct ieee80211_rx_status {
+	int rs_numchains;
+	int rs_flags;
+	int rs_rssi;
+	int rs_abs_rssi;
+	int rs_datarate;
+	int rs_rateieee;
+	int rs_ratephy;
+
+	uint8_t rs_rssictl[IEEE80211_MAX_ANTENNA];
+	uint8_t rs_rssiextn[IEEE80211_MAX_ANTENNA];
+	uint8_t rs_isvalidrssi;
+
+	enum ieee80211_phymode rs_phymode;
+	int rs_freq;
+
+	union {
+		uint8_t data[8];
+		uint64_t tsf;
+	} rs_tstamp;
+
+	struct ieee80211_channel *rs_full_chan;
+
+	uint8_t rs_isaggr;
+	uint8_t rs_isapsd;
+	int16_t rs_noisefloor;
+	uint16_t rs_channel;
+#ifdef ATH_SUPPORT_TxBF
+	uint32_t rs_rpttstamp;
+#endif
+
+	/*
+	 * The following counts are meant to assist in stats calculation.
+	 *  These variables are incremented only in specific situations, and
+	 *  should not be relied upon for any purpose other than the original
+	 *  stats related purpose they have been introduced for.
+	 */
+
+	uint16_t rs_cryptodecapcount;
+	uint8_t rs_padspace;
+	uint8_t rs_qosdecapcount;
+
+	/* End of stats calculation related counts. */
+
+	uint8_t rs_lsig[IEEE80211_LSIG_LEN];
+	uint8_t rs_htsig[IEEE80211_HTSIG_LEN];
+	uint8_t rs_servicebytes[IEEE80211_SB_LEN];
+
+};
+#endif /* EXTERNAL_USE_ONLY */
 
 /**
  * struct ocb_rx_stats_hdr_t - RX stats header

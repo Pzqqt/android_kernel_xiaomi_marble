@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,6 @@
 #include "regtable.h"
 
 #include <cds_ieee80211_common.h>   /* ieee80211_frame, ieee80211_qoscntl */
-#include <cds_ieee80211_defines.h>  /* ieee80211_rx_status */
 #include <cds_utils.h>
 #include <wlan_policy_mgr_api.h>
 #include "ol_txrx_types.h"
