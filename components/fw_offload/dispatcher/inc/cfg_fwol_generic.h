@@ -434,6 +434,34 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"GPIO pin to toggle when capture tsf")
 
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+/* <ini>
+ * gtsf_irq_host_gpio_pin
+ * @Min: 0
+ * @Max: 254
+ * @Default: 255
+ *
+ * TSF irq GPIO pin of host platform
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SET_TSF_IRQ_HOST_GPIO_PIN CFG_INI_INT( \
+		"gtsf_irq_host_gpio_pin", \
+		0, \
+		254, \
+		255, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSF irq GPIO pin of host platform")
+
+#define __CFG_SET_TSF_IRQ_HOST_GPIO_PIN CFG(CFG_SET_TSF_IRQ_HOST_GPIO_PIN)
+#else
+#define __CFG_SET_TSF_IRQ_HOST_GPIO_PIN
+#endif
+
 #if defined(WLAN_FEATURE_TSF) && defined(WLAN_FEATURE_TSF_PLUS)
 /* <ini>
  * gtsf_ptp_options: TSF Plus feature options
@@ -464,6 +492,7 @@
 		0xf, \
 		CFG_VALUE_OR_DEFAULT, \
 		"TSF Plus feature options")
+
 #define __CFG_SET_TSF_PTP_OPT CFG(CFG_SET_TSF_PTP_OPT)
 #else
 #define __CFG_SET_TSF_PTP_OPT
@@ -655,6 +684,7 @@
 	CFG(CFG_ENABLE_FW_MODULE_LOG_LEVEL) \
 	CFG(CFG_RA_FILTER_ENABLE) \
 	CFG(CFG_SET_TSF_GPIO_PIN) \
+	__CFG_SET_TSF_IRQ_HOST_GPIO_PIN \
 	__CFG_SET_TSF_PTP_OPT \
 	CFG(CFG_LPRX) \
 	__CFG_IS_SAE_ENABLED \

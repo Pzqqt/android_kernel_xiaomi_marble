@@ -356,6 +356,32 @@ static void ucfg_fwol_init_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+/**
+ * ucfg_fwol_fetch_tsf_irq_host_gpio_pin: Populate the
+ * tsf_irq_host_gpio_pin from cfg
+ * @psoc: The global psoc handler
+ * @fwol_cfg: The cfg structure
+ *
+ * This function is used to populate the cfg value of host platform
+ * gpio pin configured to receive tsf interrupt from fw.
+ *
+ * Return: none
+ */
+static void
+ucfg_fwol_fetch_tsf_irq_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_fwol_cfg *fwol_cfg)
+{
+	fwol_cfg->tsf_irq_host_gpio_pin =
+		cfg_get(psoc, CFG_SET_TSF_IRQ_HOST_GPIO_PIN);
+}
+#else
+static void
+ucfg_fwol_fetch_tsf_irq_host_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_fwol_cfg *fwol_cfg)
+{
+}
+#endif
 /**
  * ucfg_fwol_init_sae_cfg: Populate the sae control config from cfg
  * @psoc: The global psoc handler
@@ -448,6 +474,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_init_adapt_dwelltime_in_cfg(psoc, &fwol_cfg->dwelltime_params);
 	ucfg_fwol_fetch_ra_filter(psoc, fwol_cfg);
 	ucfg_fwol_fetch_tsf_gpio_pin(psoc, fwol_cfg);
+	ucfg_fwol_fetch_tsf_irq_host_gpio_pin(psoc, fwol_cfg);
 	ucfg_fwol_fetch_dhcp_server_settings(psoc, fwol_cfg);
 
 	return status;

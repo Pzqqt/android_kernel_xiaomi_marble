@@ -36,6 +36,7 @@
 #include <cds_sched.h>
 #include <linux/etherdevice.h>
 #include "osif_sync.h"
+#include <linux/ethtool.h>
 #include <wlan_hdd_includes.h>
 #include <qc_sap_ioctl.h>
 #include "osif_sync.h"
@@ -1896,6 +1897,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						    ap_ctx->operating_channel);
 
 		hostapd_state->bss_state = BSS_START;
+		hdd_start_tsf_sync(adapter);
 
 		/* Set default key index */
 		hdd_debug("default key index %hu", ap_ctx->wep_def_key_idx);
@@ -2642,6 +2644,7 @@ stopbss:
 		 * re-enabled
 		 */
 		hostapd_state->bss_state = BSS_STOP;
+		hdd_stop_tsf_sync(adapter);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
@@ -3162,6 +3165,12 @@ sap_restart:
 }
 #endif
 
+#ifdef WLAN_FEATURE_TSF_PTP
+static const struct ethtool_ops wlan_hostapd_ethtool_ops = {
+	.get_ts_info = wlan_get_ts_info,
+};
+#endif
+
 const struct net_device_ops net_ops_struct = {
 	.ndo_open = hdd_hostapd_open,
 	.ndo_stop = hdd_hostapd_stop,
@@ -3175,10 +3184,18 @@ const struct net_device_ops net_ops_struct = {
 	.ndo_select_queue = hdd_select_queue,
 };
 
+#ifdef WLAN_FEATURE_TSF_PTP
+void hdd_set_ap_ops(struct net_device *dev)
+{
+	dev->netdev_ops = &net_ops_struct;
+	dev->ethtool_ops = &wlan_hostapd_ethtool_ops;
+}
+#else
 void hdd_set_ap_ops(struct net_device *dev)
 {
 	dev->netdev_ops = &net_ops_struct;
 }
+#endif
 
 bool hdd_sap_create_ctx(struct hdd_adapter *adapter)
 {

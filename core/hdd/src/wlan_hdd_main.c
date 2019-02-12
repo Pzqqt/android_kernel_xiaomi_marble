@@ -79,6 +79,7 @@
 #include <linux/ctype.h>
 #include <linux/compat.h>
 #include <linux/reboot.h>
+#include <linux/ethtool.h>
 #ifdef MSM_PLATFORM
 #include <soc/qcom/subsystem_restart.h>
 #endif
@@ -3743,6 +3744,12 @@ static void hdd_set_multicast_list(struct net_device *net_dev)
 	osif_vdev_sync_op_stop(vdev_sync);
 }
 
+#ifdef WLAN_FEATURE_TSF_PTP
+static const struct ethtool_ops wlan_ethtool_ops = {
+	.get_ts_info = wlan_get_ts_info,
+};
+#endif
+
 static const struct net_device_ops wlan_drv_ops = {
 	.ndo_open = hdd_open,
 	.ndo_stop = hdd_stop,
@@ -3764,6 +3771,7 @@ static const struct net_device_ops wlan_mon_drv_ops = {
 	.ndo_get_stats = hdd_get_stats,
 };
 
+#ifdef WLAN_FEATURE_TSF_PTP
 /**
  * hdd_set_station_ops() - update net_device ops for monitor mode
  * @dev: Handle to struct net_device to be updated.
@@ -3771,16 +3779,36 @@ static const struct net_device_ops wlan_mon_drv_ops = {
  */
 void hdd_set_station_ops(struct net_device *dev)
 {
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE) {
+		dev->netdev_ops = &wlan_mon_drv_ops;
+	} else {
+		dev->netdev_ops = &wlan_drv_ops;
+		dev->ethtool_ops = &wlan_ethtool_ops;
+	}
+}
+#else
+void hdd_set_station_ops(struct net_device *dev)
+{
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		dev->netdev_ops = &wlan_mon_drv_ops;
 	else
 		dev->netdev_ops = &wlan_drv_ops;
+}
+
+#endif
+#else
+#ifdef WLAN_FEATURE_TSF_PTP
+void hdd_set_station_ops(struct net_device *dev)
+{
+	dev->netdev_ops = &wlan_drv_ops;
+	dev->ethtool_ops = &wlan_ethtool_ops;
 }
 #else
 void hdd_set_station_ops(struct net_device *dev)
 {
 	dev->netdev_ops = &wlan_drv_ops;
 }
+#endif
 #endif
 
 /**

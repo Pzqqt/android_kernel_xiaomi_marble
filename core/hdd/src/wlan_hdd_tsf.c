@@ -27,6 +27,10 @@
 #include "wlan_fwol_ucfg_api.h"
 #include <qca_vendor.h>
 #include <linux/errqueue.h>
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+#include <linux/gpio.h>
+static int tsf_gpio_irq_num = -1;
+#endif
 #include "ol_txrx_api.h"
 
 static struct completion tsf_sync_get_completion_evt;
@@ -34,6 +38,16 @@ static struct completion tsf_sync_get_completion_evt;
 #define WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS 500
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
 #define WLAN_HDD_SOFTAP_INTERVEL_TIMES 100
+
+#ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef WLAN_FEATURE_TSF_PLUS_NOIRQ
+static void hdd_update_timestamp(struct hdd_adapter *adapter);
+#else
+static void
+hdd_update_timestamp(struct hdd_adapter *adapter,
+		     uint64_t target_time, uint64_t host_time);
+#endif
+#endif
 
 /**
  * enum hdd_tsf_op_result - result of tsf operation
@@ -116,6 +130,7 @@ static bool hdd_tsf_is_initialized(struct hdd_adapter *adapter)
 	return true;
 }
 
+#if defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && defined(WLAN_FEATURE_TSF_PLUS)
 /**
  * hdd_tsf_reset_gpio() - Reset TSF GPIO used for host timer sync
  * @adapter: pointer to adapter
@@ -125,7 +140,6 @@ static bool hdd_tsf_is_initialized(struct hdd_adapter *adapter)
  *
  * Return: TSF_RETURN on Success, TSF_RESET_GPIO_FAIL on failure
  */
-#if defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && defined(WLAN_FEATURE_TSF_PLUS)
 static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
 {
 	/* No GPIO Host timer sync for integrated WIFI Device */
@@ -145,7 +159,54 @@ static QDF_STATUS hdd_tsf_set_gpio(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
+{
+	int ret;
 
+	ret = wma_cli_set_command((int)adapter->vdev_id,
+				  (int)GEN_PARAM_RESET_TSF_GPIO,
+				  adapter->vdev_id,
+				  GEN_CMD);
+
+	if (ret != 0) {
+		hdd_err("tsf reset GPIO fail ");
+		ret = TSF_RESET_GPIO_FAIL;
+	} else {
+		ret = TSF_RETURN;
+	}
+	return ret;
+}
+
+/**
+ * hdd_tsf_set_gpio() - Set TSF GPIO used for host timer sync
+ * @hdd_ctx: pointer to hdd context
+ *
+ * This function check GPIO and set GPIO as IRQ to FW side on
+ * none Adrastea arch
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, others on Failure.
+ */
+static QDF_STATUS hdd_tsf_set_gpio(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	uint32_t tsf_gpio_pin = TSF_GPIO_PIN_INVALID;
+
+	status = ucfg_fwol_get_tsf_gpio_pin(hdd_ctx->psoc, &tsf_gpio_pin);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	if (tsf_gpio_pin == TSF_GPIO_PIN_INVALID)
+		return QDF_STATUS_E_INVAL;
+
+	status = sme_set_tsf_gpio(hdd_ctx->mac_handle,
+				  tsf_gpio_pin);
+
+	return status;
+}
+#endif
+
+#ifdef WLAN_FEATURE_TSF_PLUS
 bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd)
 {
 	uint32_t tsf_ptp_options;
@@ -199,51 +260,6 @@ bool hdd_tsf_is_dbg_fs_set(struct hdd_context *hdd)
 		return tsf_ptp_options & CFG_SET_TSF_DBG_FS;
 	else
 		return false;
-}
-
-#else
-static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
-{
-	int ret;
-
-	ret = wma_cli_set_command((int)adapter->vdev_id,
-			(int)GEN_PARAM_RESET_TSF_GPIO, adapter->vdev_id,
-			GEN_CMD);
-
-	if (ret != 0) {
-		hdd_err("tsf reset GPIO fail ");
-		ret = TSF_RESET_GPIO_FAIL;
-	} else {
-		ret = TSF_RETURN;
-	}
-	return ret;
-}
-
-/**
- * hdd_tsf_set_gpio() - Set TSF GPIO used for host timer sync
- * @hdd_ctx: pointer to hdd context
- *
- * This function check GPIO and set GPIO as IRQ to FW side on
- * none Adrastea arch
- *
- * Return: QDF_STATUS_SUCCESS on Success, others on Failure.
- */
-static QDF_STATUS hdd_tsf_set_gpio(struct hdd_context *hdd_ctx)
-{
-	QDF_STATUS status;
-	uint32_t tsf_gpio_pin = TSF_GPIO_PIN_INVALID;
-
-	status = ucfg_fwol_get_tsf_gpio_pin(hdd_ctx->psoc, &tsf_gpio_pin);
-	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_INVAL;
-
-	if (tsf_gpio_pin == TSF_GPIO_PIN_INVALID)
-		return QDF_STATUS_E_INVAL;
-
-	status = sme_set_tsf_gpio(hdd_ctx->mac_handle,
-				  tsf_gpio_pin);
-
-	return status;
 }
 #endif
 
@@ -387,7 +403,11 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
 /* to distinguish 32-bit overflow case, this inverval should:
  * equal or less than (1/2 * OVERFLOW_INDICATOR32 us)
  */
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+#define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 2
+#else
 #define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 10
+#endif
 #define OVERFLOW_INDICATOR32 (((int64_t)0x1) << 32)
 #define CAP_TSF_TIMER_FIX_SEC 1
 
@@ -672,6 +692,9 @@ static irqreturn_t hdd_tsf_captured_irq_handler(int irq, void *arg)
 	char *name = NULL;
 
 	if (!arg)
+		return IRQ_NONE;
+
+	if (irq != tsf_gpio_irq_num)
 		return IRQ_NONE;
 
 	hdd_ctx = (struct hdd_context *)arg;
@@ -1344,6 +1367,99 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 	return HDD_TSF_OP_SUCC;
 }
 #else
+#ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
+static
+enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
+{
+	int ret;
+	QDF_STATUS status;
+	uint32_t tsf_irq_gpio_pin = TSF_GPIO_PIN_INVALID;
+
+	if (!hdd_tsf_is_ptp_enabled(hdd_ctx)) {
+		hdd_info("To enable TSF_PLUS, set gtsf_ptp_options in ini");
+		goto fail;
+	}
+
+	status = ucfg_fwol_get_tsf_irq_host_gpio_pin(hdd_ctx->psoc,
+						     &tsf_irq_gpio_pin);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("tsf gpio irq host pin error");
+		goto fail;
+	}
+
+	if (tsf_irq_gpio_pin == TSF_GPIO_PIN_INVALID) {
+		hdd_err("gpio host pin is invalid");
+		goto fail;
+	}
+
+	ret = gpio_request(tsf_irq_gpio_pin, "wlan_tsf");
+	if (ret) {
+		hdd_err("gpio host pin is invalid");
+		goto fail;
+	}
+
+	ret = gpio_direction_input(tsf_irq_gpio_pin);
+	if (ret) {
+		hdd_err("gpio host pin is invalid");
+		goto fail_free_gpio;
+	}
+
+	tsf_gpio_irq_num = gpio_to_irq(tsf_irq_gpio_pin);
+	if (tsf_gpio_irq_num < 0) {
+		hdd_err("fail to get irq: %d", tsf_gpio_irq_num);
+		goto fail_free_gpio;
+	}
+
+	ret = request_irq(tsf_gpio_irq_num, hdd_tsf_captured_irq_handler,
+			  IRQF_SHARED | IRQF_TRIGGER_RISING, "wlan_tsf",
+			  hdd_ctx);
+
+	if (ret) {
+		hdd_err("Failed to register irq handler: %d", ret);
+		goto fail_free_gpio;
+	}
+
+	if (hdd_tsf_is_tx_set(hdd_ctx))
+		ol_register_timestamp_callback(hdd_tx_timestamp);
+
+	return HDD_TSF_OP_SUCC;
+
+fail_free_gpio:
+	gpio_free(tsf_irq_gpio_pin);
+fail:
+	tsf_gpio_irq_num = -1;
+	return HDD_TSF_OP_FAIL;
+}
+
+static
+enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	uint32_t tsf_irq_gpio_pin = TSF_GPIO_PIN_INVALID;
+
+	if (!hdd_tsf_is_ptp_enabled(hdd_ctx))
+		return HDD_TSF_OP_SUCC;
+
+	status = ucfg_fwol_get_tsf_irq_host_gpio_pin(hdd_ctx->psoc,
+						     &tsf_irq_gpio_pin);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_INVAL;
+
+	if (tsf_irq_gpio_pin == TSF_GPIO_PIN_INVALID)
+		return QDF_STATUS_E_INVAL;
+
+	if (hdd_tsf_is_tx_set(hdd_ctx))
+		ol_deregister_timestamp_callback();
+
+	if (tsf_gpio_irq_num >= 0) {
+		free_irq(tsf_gpio_irq_num, hdd_ctx);
+		tsf_gpio_irq_num = -1;
+		gpio_free(tsf_irq_gpio_pin);
+	}
+
+	return HDD_TSF_OP_SUCC;
+}
+#else
 static inline
 enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
 {
@@ -1392,6 +1508,7 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#endif
 void hdd_tsf_notify_wlan_state_change(struct hdd_adapter *adapter,
 				      eConnectionState old_state,
 				      eConnectionState new_state)
@@ -1447,6 +1564,197 @@ int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	return __hdd_indicate_tsf(adapter, buf, len);
 }
+
+#ifdef WLAN_FEATURE_TSF_PTP
+int wlan_get_ts_info(struct net_device *dev, struct ethtool_ts_info *info)
+
+{
+	struct hdd_adapter *adapter = netdev_priv(dev);
+	struct osif_vdev_sync *vdev_sync;
+	struct hdd_context *hdd_ctx;
+	int errno;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return -EINVAL;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return -EAGAIN;
+
+	info->so_timestamping = SOF_TIMESTAMPING_TX_HARDWARE |
+				 SOF_TIMESTAMPING_RX_HARDWARE |
+				 SOF_TIMESTAMPING_RAW_HARDWARE;
+	if (hdd_ctx->ptp_clock)
+		info->phc_index = ptp_clock_index(hdd_ctx->ptp_clock);
+	else
+		info->phc_index = -1;
+
+	osif_vdev_sync_op_stop(vdev_sync);
+	return 0;
+}
+
+#if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
+/**
+ * wlan_ptp_gettime() - return fw ts info to uplayer
+ * @ptp: pointer to ptp_clock_info.
+ * @ts: pointer to timespec.
+ *
+ * Return: Describe the execute result of this routine
+ */
+static int wlan_ptp_gettime(struct ptp_clock_info *ptp, struct timespec *ts)
+{
+	uint64_t host_time, target_time = 0;
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	uint32_t tsf_reg_read_enabled;
+	struct osif_psoc_sync *psoc_sync;
+	int errno, status = 0;
+
+	hdd_ctx = qdf_container_of(ptp, struct hdd_context, ptp_cinfo);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return -EINVAL;
+
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return -EAGAIN;
+
+	adapter = hdd_get_adapter(hdd_ctx, QDF_P2P_GO_MODE);
+	if (!adapter) {
+		adapter = hdd_get_adapter(hdd_ctx, QDF_P2P_CLIENT_MODE);
+		if (!adapter) {
+			adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+			if (!adapter)
+				adapter = hdd_get_adapter(hdd_ctx,
+							  QDF_STA_MODE);
+				if (!adapter) {
+					status = -EOPNOTSUPP;
+					goto end;
+				}
+		}
+	}
+
+	host_time = hdd_get_monotonic_host_time(hdd_ctx);
+	if (hdd_get_targettime_from_hosttime(adapter, host_time,
+					     &target_time)) {
+		hdd_err("get invalid target timestamp");
+		status = -EINVAL;
+		goto end;
+	}
+	*ts = ns_to_timespec(target_time * NSEC_PER_USEC);
+
+end:
+	osif_psoc_sync_op_stop(psoc_sync);
+	return status;
+}
+
+/**
+ * wlan_hdd_phc_init() - phc init
+ * @hdd_ctx: pointer to the hdd_contex.
+ *
+ * Return: NULL
+ */
+static void wlan_hdd_phc_init(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->ptp_cinfo.gettime = wlan_ptp_gettime;
+
+	hdd_ctx->ptp_clock = ptp_clock_register(&hdd_ctx->ptp_cinfo,
+						hdd_ctx->parent_dev);
+}
+
+/**
+ * wlan_hdd_phc_deinit() - phc deinit
+ * @hdd_ctx: pointer to the hdd_contex.
+ *
+ * Return: NULL
+ */
+static void wlan_hdd_phc_deinit(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->ptp_cinfo.gettime = NULL;
+
+	if (hdd_ctx->ptp_clock) {
+		ptp_clock_unregister(hdd_ctx->ptp_clock);
+		hdd_ctx->ptp_clock = NULL;
+	}
+}
+
+#else
+static int wlan_ptp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
+{
+	uint64_t host_time, target_time = 0;
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct osif_psoc_sync *psoc_sync;
+	int errno, status = 0;
+
+	hdd_ctx = qdf_container_of(ptp, struct hdd_context, ptp_cinfo);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return -EINVAL;
+
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return -EAGAIN;
+
+	adapter = hdd_get_adapter(hdd_ctx, QDF_P2P_GO_MODE);
+	if (!adapter) {
+		adapter = hdd_get_adapter(hdd_ctx, QDF_P2P_CLIENT_MODE);
+		if (!adapter) {
+			adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+			if (!adapter)
+				adapter = hdd_get_adapter(hdd_ctx,
+							  QDF_STA_MODE);
+				if (!adapter) {
+					status = -EOPNOTSUPP;
+					goto end;
+				}
+		}
+	}
+
+	host_time = hdd_get_monotonic_host_time(hdd_ctx);
+	if (hdd_get_targettime_from_hosttime(adapter, host_time,
+					     &target_time)) {
+		hdd_err("get invalid target timestamp");
+		status = -EINVAL;
+		goto end;
+	}
+	*ts = ns_to_timespec64(target_time * NSEC_PER_USEC);
+
+end:
+	osif_psoc_sync_op_stop(psoc_sync);
+	return status;
+}
+
+static void wlan_hdd_phc_init(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->ptp_cinfo.gettime64 = wlan_ptp_gettime;
+	hdd_ctx->ptp_clock = ptp_clock_register(&hdd_ctx->ptp_cinfo,
+						hdd_ctx->parent_dev);
+}
+
+static void wlan_hdd_phc_deinit(struct hdd_context *hdd_ctx)
+{
+	hdd_ctx->ptp_cinfo.gettime64 = NULL;
+
+	if (hdd_ctx->ptp_clock) {
+		ptp_clock_unregister(hdd_ctx->ptp_clock);
+		hdd_ctx->ptp_clock = NULL;
+	}
+}
+
+#endif
+#else
+
+static void wlan_hdd_phc_init(struct hdd_context *hdd_ctx)
+{
+}
+
+static void wlan_hdd_phc_deinit(struct hdd_context *hdd_ctx)
+{
+}
+#endif /* WLAN_FEATURE_TSF_PTP */
 
 /**
  * hdd_get_tsf_cb() - handle tsf callback
@@ -1516,6 +1824,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 
 	adapter->cur_tsf_sync_soc_time =
 		qdf_log_timestamp_to_usecs(tsf_sync_soc_time) * NSEC_PER_USEC;
+
 	complete(&tsf_sync_get_completion_evt);
 	hdd_update_tsf(adapter, adapter->cur_target_time);
 	hdd_info("Vdev=%u, tsf_low=%u, tsf_high=%u ptsf->soc_timer_low=%u ptsf->soc_timer_high=%u",
@@ -1550,7 +1859,7 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_TSF_MAX + 1];
 	int status, ret;
 	struct sk_buff *reply_skb;
-	uint32_t tsf_op_resp[3], tsf_cmd;
+	uint32_t tsf_op_resp[3] = {0}, tsf_cmd;
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -1699,6 +2008,8 @@ void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 	if (wlan_hdd_tsf_plus_init(hdd_ctx) != HDD_TSF_OP_SUCC)
 		goto fail;
 
+	wlan_hdd_phc_init(hdd_ctx);
+
 	return;
 
 fail:
@@ -1713,6 +2024,7 @@ void wlan_hdd_tsf_deinit(struct hdd_context *hdd_ctx)
 	if (!qdf_atomic_read(&hdd_ctx->tsf_ready_flag))
 		return;
 
+	wlan_hdd_phc_deinit(hdd_ctx);
 	wlan_hdd_tsf_plus_deinit(hdd_ctx);
 	qdf_atomic_set(&hdd_ctx->tsf_ready_flag, 0);
 	qdf_atomic_set(&hdd_ctx->cap_tsf_flag, 0);

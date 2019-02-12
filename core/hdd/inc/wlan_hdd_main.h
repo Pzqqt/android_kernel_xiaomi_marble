@@ -61,6 +61,10 @@
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
 #endif
+#ifdef WLAN_FEATURE_TSF_PTP
+#include <linux/ptp_classify.h>
+#include <linux/ptp_clock_kernel.h>
+#endif
 #include <wlan_hdd_ftm.h>
 #include "wlan_hdd_tdls.h"
 #include "wlan_hdd_tsf.h"
@@ -1806,6 +1810,10 @@ struct hdd_context {
 	qdf_atomic_t cap_tsf_flag;
 	/* the context that is capturing tsf */
 	struct hdd_adapter *cap_tsf_context;
+#endif
+#ifdef WLAN_FEATURE_TSF_PTP
+	struct ptp_clock_info ptp_cinfo;
+	struct ptp_clock *ptp_clock;
 #endif
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
