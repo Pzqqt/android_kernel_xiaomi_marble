@@ -35,10 +35,6 @@ struct ether_header {
 #define ETHERTYPE_OCB_TX   0x8151
 #define ETHERTYPE_OCB_RX   0x8152
 
-#ifndef ETHERTYPE_8021Q
-#define ETHERTYPE_8021Q 0x8100  /* 802.1Q vlan protocol */
-#endif
-
 #define ETHER_IS_MULTICAST(addr) (*(addr) & 0x01)       /* is address mcast/bcast? */
 
 #endif /* _NET_IF_UPPERPROTO_H_ */
