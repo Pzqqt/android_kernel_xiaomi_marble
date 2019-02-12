@@ -359,13 +359,10 @@ ibss_sta_info_update(struct mac_context *mac,
 
 static void ibss_coalesce_free(struct mac_context *mac)
 {
-	if (mac->lim.ibssInfo.pHdr != NULL)
-		qdf_mem_free(mac->lim.ibssInfo.pHdr);
-	if (mac->lim.ibssInfo.pBeacon != NULL)
-		qdf_mem_free(mac->lim.ibssInfo.pBeacon);
-
-	mac->lim.ibssInfo.pHdr = NULL;
-	mac->lim.ibssInfo.pBeacon = NULL;
+	qdf_mem_free(mac->lim.ibss_info.mac_hdr);
+	mac->lim.ibss_info.mac_hdr = NULL;
+	qdf_mem_free(mac->lim.ibss_info.beacon);
+	mac->lim.ibss_info.beacon = NULL;
 }
 
 /*
@@ -378,18 +375,18 @@ ibss_coalesce_save(struct mac_context *mac,
 	/* get rid of any saved info */
 	ibss_coalesce_free(mac);
 
-	mac->lim.ibssInfo.pHdr = qdf_mem_malloc(sizeof(*pHdr));
-	if (!mac->lim.ibssInfo.pHdr)
+	mac->lim.ibss_info.mac_hdr = qdf_mem_malloc(sizeof(*pHdr));
+	if (!mac->lim.ibss_info.mac_hdr)
 		return;
 
-	mac->lim.ibssInfo.pBeacon = qdf_mem_malloc(sizeof(*pBeacon));
-	if (!mac->lim.ibssInfo.pBeacon) {
+	mac->lim.ibss_info.beacon = qdf_mem_malloc(sizeof(*pBeacon));
+	if (!mac->lim.ibss_info.beacon) {
 		ibss_coalesce_free(mac);
 		return;
 	}
 
-	qdf_mem_copy(mac->lim.ibssInfo.pHdr, pHdr, sizeof(*pHdr));
-	qdf_mem_copy(mac->lim.ibssInfo.pBeacon, pBeacon, sizeof(*pBeacon));
+	qdf_mem_copy(mac->lim.ibss_info.mac_hdr, pHdr, sizeof(*pHdr));
+	qdf_mem_copy(mac->lim.ibss_info.beacon, pBeacon, sizeof(*pBeacon));
 }
 
 #ifdef CONFIG_VDEV_SM
@@ -540,9 +537,8 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 {
 	tLimMlmStartReq mlmStartReq;
 	uint32_t cfg;
-	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) mac->lim.ibssInfo.pHdr;
-	tpSchBeaconStruct pBeacon =
-		(tpSchBeaconStruct) mac->lim.ibssInfo.pBeacon;
+	tpSirMacMgmtHdr pHdr = mac->lim.ibss_info.mac_hdr;
+	tpSchBeaconStruct pBeacon = mac->lim.ibss_info.beacon;
 	qdf_size_t num_ext_rates = 0;
 	QDF_STATUS status;
 
@@ -683,7 +679,7 @@ void lim_ibss_init(struct mac_context *mac)
 	mac->lim.gLimNumIbssPeers = 0;
 
 	/* ibss info - params for which ibss to join while coalescing */
-	qdf_mem_zero(&mac->lim.ibssInfo, sizeof(tAniSirLimIbss));
+	qdf_mem_zero(&mac->lim.ibss_info, sizeof(mac->lim.ibss_info));
 } /*** end lim_ibss_init() ***/
 
 /**
@@ -1287,12 +1283,9 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 {
 	uint8_t infoLen;
 	struct new_bss_info newBssInfo;
-
-	tpAddBssParams pAddBss = (tpAddBssParams) msg;
-
-	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) mac->lim.ibssInfo.pHdr;
-	tpSchBeaconStruct pBeacon =
-		(tpSchBeaconStruct) mac->lim.ibssInfo.pBeacon;
+	tpAddBssParams pAddBss = msg;
+	tpSirMacMgmtHdr pHdr = mac->lim.ibss_info.mac_hdr;
+	tpSchBeaconStruct pBeacon = mac->lim.ibss_info.beacon;
 
 	if ((pHdr == NULL) || (pBeacon == NULL)) {
 		pe_err("Unable to handle AddBssRspWhenCoalescing (no cached BSS info)");

@@ -243,10 +243,10 @@ typedef void (*CHANGE_CHANNEL_CALLBACK)(struct mac_context *mac, QDF_STATUS stat
 					struct pe_session *pe_session);
 
 /* / LIM global definitions */
-typedef struct sAniSirLimIbss {
-	void *pHdr;
-	void *pBeacon;
-} tAniSirLimIbss;
+struct lim_ibss_info {
+	void *mac_hdr;
+	void *beacon;
+};
 
 typedef struct sDialogueToken {
 	/* bytes 0-3 */
@@ -357,7 +357,7 @@ typedef struct sAniSirLim {
 	uint32_t ibss_retry_cnt;
 
 	/* ibss info - params for which ibss to join while coalescing */
-	tAniSirLimIbss ibssInfo;
+	struct lim_ibss_info ibss_info;
 
 	/* ////////////////////////////////////////     IBSS RELATED END /////////////////////////////////////////// */
 
