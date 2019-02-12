@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -269,7 +269,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	mmie = (struct ieee80211_mmie *)(efrm - sizeof(*mmie));
 
 	/* Copy Element id */
-	mmie->element_id = IEEE80211_ELEMID_MMIE;
+	mmie->element_id = WLAN_ELEMID_MMIE;
 
 	/* Copy Length */
 	mmie->length = sizeof(*mmie) - 2;
@@ -372,7 +372,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	mmie = (struct ieee80211_mmie *)(efrm - sizeof(*mmie));
 
 	/* Check Element ID */
-	if ((mmie->element_id != IEEE80211_ELEMID_MMIE) ||
+	if ((mmie->element_id != WLAN_ELEMID_MMIE) ||
 	    (mmie->length != (sizeof(*mmie) - 2))) {
 		cds_err("IE is not Mgmt MIC IE or Invalid length");
 		/* IE is not Mgmt MIC IE or invalid length */
@@ -511,7 +511,7 @@ bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
 	mmie = (struct ieee80211_mmie_16 *)(efrm - sizeof(*mmie));
 
 	/* Check Element ID */
-	if ((mmie->element_id != IEEE80211_ELEMID_MMIE) ||
+	if ((mmie->element_id != WLAN_ELEMID_MMIE) ||
 	    (mmie->length != (sizeof(*mmie) - 2))) {
 		cds_err("IE is not Mgmt MIC IE or Invalid length");
 		/* IE is not Mgmt MIC IE or invalid length */

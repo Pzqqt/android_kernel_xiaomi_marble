@@ -18435,7 +18435,7 @@ static void ese_populate_addtional_ies(struct mac_context *mac_ctx,
 			ese_populate_wmm_tspec(&ese_tspec.tspec[j].tspec,
 				tspec_ie);
 			csr_append_assoc_ies(mac_ctx, req_buf,
-					IEEE80211_ELEMID_VENDOR,
+					WLAN_ELEMID_VENDOR,
 					DOT11F_IE_WMMTSPEC_MAX_LEN,
 					tspec_ie_buf);
 		}
@@ -18494,7 +18494,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 
 	if (csr_11henable && csr_is11h_supported(mac_ctx)) {
 		/* Append power cap IE */
-		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_PWRCAP,
+		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_PWRCAP,
 					DOT11F_IE_POWERCAPS_MAX_LEN,
 					power_cap_ie_data);
 		power_caps_populated = true;
@@ -18504,27 +18504,27 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 					&supp_chan_ie_len, true);
 
 		csr_append_assoc_ies(mac_ctx, req_buf,
-					IEEE80211_ELEMID_SUPPCHAN,
+					WLAN_ELEMID_SUPPCHAN,
 					supp_chan_ie_len, supp_chan_ie);
 	}
 
 #ifdef FEATURE_WLAN_ESE
 	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
 	if (mac_ctx->mlme_cfg->lfr.ese_enabled)
-		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
+		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_VENDOR,
 					DOT11F_IE_ESEVERSION_MAX_LEN,
 					ese_ie);
 #endif
 
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable) {
 		/* Append RRM IE */
-		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_RRM,
+		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_RRM,
 					DOT11F_IE_RRMENABLEDCAP_MAX_LEN,
 					rrm_cap_ie_data);
 		if (!power_caps_populated)
 			/* Append Power cap IE if not appended already */
 			csr_append_assoc_ies(mac_ctx, req_buf,
-					IEEE80211_ELEMID_PWRCAP,
+					WLAN_ELEMID_PWRCAP,
 					DOT11F_IE_POWERCAPS_MAX_LEN,
 					power_cap_ie_data);
 	}
@@ -18532,7 +18532,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 
 	/* Append QCN IE if g_support_qcn_ie INI is enabled */
 	if (mac_ctx->mlme_cfg->sta.qcn_ie_support)
-		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
+		csr_append_assoc_ies(mac_ctx, req_buf, WLAN_ELEMID_VENDOR,
 					DOT11F_IE_QCN_IE_MAX_LEN,
 					qcn_ie);
 }
