@@ -850,6 +850,7 @@ struct notifier_block system_reboot_notifier = {
 static int con_mode;
 
 static int con_mode_ftm;
+int con_mode_epping;
 int con_mode_monitor;
 
 /* Variable to hold connection mode including module parameter con_mode */
@@ -2829,6 +2830,27 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 				status);
 			ret = qdf_status_to_os_return(status);
 			goto hif_close;
+		}
+
+		if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
+			status = epping_open();
+			if (status) {
+				hdd_err("Failed to open in epping mode: %d",
+					status);
+				ret = -EINVAL;
+				goto cds_free;
+			}
+
+			status = epping_enable(qdf_dev->dev, false);
+			if (status) {
+				hdd_err("Failed to enable in epping mode : %d",
+					status);
+				epping_close();
+				goto cds_free;
+			}
+
+			hdd_info("epping mode enabled");
+			break;
 		}
 
 		ucfg_ipa_component_config_update(hdd_ctx->psoc);
@@ -9560,7 +9582,8 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	if (ret)
 		goto err_hdd_objmgr_destroy;
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+	    hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 		goto skip_multicast_logging;
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
@@ -11319,7 +11342,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	case DRIVER_MODULES_ENABLED:
 		hdd_info("Wlan transitioning (CLOSED <- ENABLED)");
 
-		if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE)
+		if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
+		    hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
 			break;
 
 		hdd_disable_power_management();
@@ -11343,45 +11367,48 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	hdd_sysfs_destroy_driver_root_obj();
 	hdd_debug("Closing CDS modules!");
 
-	qdf_status = cds_post_disable();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("Failed to process post CDS disable Modules! :%d",
-			qdf_status);
-		ret = -EINVAL;
-		QDF_ASSERT(0);
-	}
+	if (hdd_get_conparam() != QDF_GLOBAL_EPPING_MODE) {
+		qdf_status = cds_post_disable();
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("Failed to process post CDS disable! :%d",
+				qdf_status);
+			ret = -EINVAL;
+			QDF_ASSERT(0);
+		}
 
-	/* De-register the SME callbacks */
-	hdd_deregister_cb(hdd_ctx);
+		/* De-register the SME callbacks */
+		hdd_deregister_cb(hdd_ctx);
 
-	hdd_runtime_suspend_context_deinit(hdd_ctx);
+		hdd_runtime_suspend_context_deinit(hdd_ctx);
 
-	qdf_status = cds_dp_close(hdd_ctx->psoc);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_warn("Failed to stop CDS DP: %d", qdf_status);
-		ret = -EINVAL;
-		QDF_ASSERT(0);
-	}
+		qdf_status = cds_dp_close(hdd_ctx->psoc);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_warn("Failed to stop CDS DP: %d", qdf_status);
+			ret = -EINVAL;
+			QDF_ASSERT(0);
+		}
 
-	qdf_status = cds_close(hdd_ctx->psoc);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_warn("Failed to stop CDS: %d", qdf_status);
-		ret = -EINVAL;
-		QDF_ASSERT(0);
-	}
+		qdf_status = cds_close(hdd_ctx->psoc);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_warn("Failed to stop CDS: %d", qdf_status);
+			ret = -EINVAL;
+			QDF_ASSERT(0);
+		}
 
-	qdf_status = wbuff_module_deinit();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		hdd_err("WBUFF de-init unsuccessful; status: %d", qdf_status);
+		qdf_status = wbuff_module_deinit();
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_err("WBUFF de-init unsuccessful; status: %d",
+				qdf_status);
 
-	hdd_component_pdev_close(hdd_ctx->pdev);
+		hdd_component_pdev_close(hdd_ctx->pdev);
 
-	hdd_component_psoc_close(hdd_ctx->psoc);
-	dispatcher_pdev_close(hdd_ctx->pdev);
-	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to destroy pdev; errno:%d", ret);
-		QDF_ASSERT(0);
+		hdd_component_psoc_close(hdd_ctx->psoc);
+		dispatcher_pdev_close(hdd_ctx->pdev);
+		ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to destroy pdev; errno:%d", ret);
+			QDF_ASSERT(0);
+		}
 	}
 
 	/*
@@ -11798,29 +11825,8 @@ hdd_open_adapters_for_monitor_mode(struct hdd_context *hdd_ctx)
 
 static QDF_STATUS hdd_open_adapters_for_epping_mode(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS status;
-	qdf_device_t qdf_dev;
-
-	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	QDF_BUG(qdf_dev);
-	if (!qdf_dev)
-		return QDF_STATUS_E_INVAL;
-
-	status = epping_open();
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	if (epping_enable(qdf_dev->dev)) {
-		status = QDF_STATUS_E_INVAL;
-		goto epping_close;
-	}
-
+	epping_enable_adapter();
 	return QDF_STATUS_SUCCESS;
-
-epping_close:
-	epping_close();
-
-	return status;
 }
 
 typedef QDF_STATUS (*hdd_open_mode_handler)(struct hdd_context *hdd_ctx);
@@ -11892,6 +11898,9 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 		hdd_err("Failed to start modules; errno:%d", errno);
 		goto memdump_deinit;
 	}
+
+	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE)
+		return 0;
 
 	wlan_hdd_update_wiphy(hdd_ctx);
 
@@ -14078,6 +14087,26 @@ static int con_mode_handler_ftm(const char *kmessage,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_EPPING
+static int con_mode_handler_epping(const char *kmessage,
+				   const struct kernel_param *kp)
+{
+	int ret;
+
+	ret = param_set_int(kmessage, kp);
+
+	if (con_mode_epping != QDF_GLOBAL_EPPING_MODE) {
+		pr_err("Only EPPING mode supported!");
+		return -ENOTSUPP;
+	}
+
+	hdd_set_conparam(con_mode_epping);
+	con_mode = con_mode_epping;
+
+	return ret;
+}
+#endif
+
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 static int con_mode_handler_monitor(const char *kmessage,
 				    const struct kernel_param *kp)
@@ -15153,6 +15182,13 @@ static const struct kernel_param_ops con_mode_ftm_ops = {
 	.get = param_get_int,
 };
 
+#ifdef WLAN_FEATURE_EPPING
+static const struct kernel_param_ops con_mode_epping_ops = {
+	.set = con_mode_handler_epping,
+	.get = param_get_int,
+};
+#endif
+
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 static const struct kernel_param_ops con_mode_monitor_ops = {
 	.set = con_mode_handler_monitor,
@@ -15170,6 +15206,11 @@ module_param_cb(con_mode, &con_mode_ops, &con_mode,
 
 module_param_cb(con_mode_ftm, &con_mode_ftm_ops, &con_mode_ftm,
 		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+#ifdef WLAN_FEATURE_EPPING
+module_param_cb(con_mode_epping, &con_mode_epping_ops,
+		&con_mode_epping, 0644);
+#endif
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 module_param_cb(con_mode_monitor, &con_mode_monitor_ops, &con_mode_monitor,

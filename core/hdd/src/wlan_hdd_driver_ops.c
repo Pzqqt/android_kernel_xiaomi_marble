@@ -585,12 +585,15 @@ static void __hdd_soc_remove(struct device *dev)
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(HDD_DRV_OP_REMOVE);
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
+		hdd_wlan_stop_modules(hdd_ctx, false);
 		epping_disable();
 		epping_close();
 	} else {
 		hdd_wlan_exit(hdd_ctx);
-		hdd_context_destroy(hdd_ctx);
 	}
+
+	hdd_context_destroy(hdd_ctx);
+
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
