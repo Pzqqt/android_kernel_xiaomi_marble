@@ -3798,6 +3798,7 @@ static const struct snd_soc_dapm_widget msm_int_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Analog Mic2", NULL),
 	SND_SOC_DAPM_MIC("Analog Mic3", NULL),
 	SND_SOC_DAPM_MIC("Analog Mic4", NULL),
+	SND_SOC_DAPM_MIC("Analog Mic5", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic0", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic1", msm_dmic_event),
 	SND_SOC_DAPM_MIC("Digital Mic2", msm_dmic_event),
@@ -3863,6 +3864,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic2");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic3");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
 
 	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
@@ -5650,7 +5652,6 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	u32 wsa_max_devs;
 	u32 wsa_dev_cnt;
 	u32 codec_aux_dev_cnt = 0;
-	u32 bolero_codec = 0;
 	int i;
 	struct msm_wsa881x_dev_info *wsa881x_dev_info;
 	struct aux_codec_dev_info *aux_cdc_dev_info;
@@ -5765,76 +5766,69 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 		__func__, found);
 
 codec_aux_dev:
-	ret = of_property_read_u32(pdev->dev.of_node, "qcom,bolero-codec", &bolero_codec);
-	if (ret)
-		dev_dbg(&pdev->dev, "%s: No DT match for bolero codec\n", __func__);
+	/* Get count of aux codec device phandles for this platform */
+	codec_aux_dev_cnt = of_count_phandle_with_args(
+				pdev->dev.of_node,
+				"qcom,codec-aux-devs", NULL);
+	if (codec_aux_dev_cnt == -ENOENT) {
+		dev_warn(&pdev->dev, "%s: No aux codec defined in DT.\n",
+			 __func__);
+		goto err;
+	} else if (codec_aux_dev_cnt <= 0) {
+		dev_err(&pdev->dev,
+			"%s: Error reading aux codec device from DT, dev_cnt=%d\n",
+			__func__, codec_aux_dev_cnt);
+		ret = -EINVAL;
+		goto err;
+	}
 
-	if (bolero_codec) {
-		/* Get count of aux codec device phandles for this platform */
-		codec_aux_dev_cnt = of_count_phandle_with_args(
-					pdev->dev.of_node,
-					"qcom,codec-aux-devs", NULL);
-		if (codec_aux_dev_cnt == -ENOENT) {
-			dev_warn(&pdev->dev, "%s: No aux codec defined in DT.\n",
-				 __func__);
-			goto err;
-		} else if (codec_aux_dev_cnt <= 0) {
+	/*
+	 * Alloc mem to store phandle and index info of aux codec
+	 * if already registered with ALSA core
+	 */
+	aux_cdc_dev_info = devm_kcalloc(&pdev->dev, codec_aux_dev_cnt,
+				sizeof(struct aux_codec_dev_info),
+				GFP_KERNEL);
+	if (!aux_cdc_dev_info) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	/*
+	 * search and check whether all aux codecs are already
+	 * registered with ALSA core or not. If found a node, store
+	 * the node and the index in a local array of struct for later
+	 * use.
+	 */
+	for (i = 0; i < codec_aux_dev_cnt; i++) {
+		aux_codec_of_node = of_parse_phandle(pdev->dev.of_node,
+					    "qcom,codec-aux-devs", i);
+		if (unlikely(!aux_codec_of_node)) {
+			/* we should not be here */
 			dev_err(&pdev->dev,
-				"%s: Error reading aux codec device from DT, dev_cnt=%d\n",
-				__func__, codec_aux_dev_cnt);
+				"%s: aux codec dev node is not present\n",
+				__func__);
 			ret = -EINVAL;
 			goto err;
 		}
-
-		/*
-		 * Alloc mem to store phandle and index info of aux codec
-		 * if already registered with ALSA core
-		 */
-		aux_cdc_dev_info = devm_kcalloc(&pdev->dev, codec_aux_dev_cnt,
-					sizeof(struct aux_codec_dev_info),
-					GFP_KERNEL);
-		if (!aux_cdc_dev_info) {
-			ret = -ENOMEM;
-			goto err;
+		if (soc_find_component(aux_codec_of_node, NULL)) {
+			/* AUX codec registered with ALSA core */
+			aux_cdc_dev_info[codecs_found].of_node =
+						aux_codec_of_node;
+			aux_cdc_dev_info[codecs_found].index = i;
+			codecs_found++;
 		}
-
-		/*
-		 * search and check whether all aux codecs are already
-		 * registered with ALSA core or not. If found a node, store
-		 * the node and the index in a local array of struct for later
-		 * use.
-		 */
-		for (i = 0; i < codec_aux_dev_cnt; i++) {
-			aux_codec_of_node = of_parse_phandle(pdev->dev.of_node,
-						    "qcom,codec-aux-devs", i);
-			if (unlikely(!aux_codec_of_node)) {
-				/* we should not be here */
-				dev_err(&pdev->dev,
-					"%s: aux codec dev node is not present\n",
-					__func__);
-				ret = -EINVAL;
-				goto err;
-			}
-			if (soc_find_component(aux_codec_of_node, NULL)) {
-				/* AUX codec registered with ALSA core */
-				aux_cdc_dev_info[codecs_found].of_node =
-							aux_codec_of_node;
-				aux_cdc_dev_info[codecs_found].index = i;
-				codecs_found++;
-			}
-		}
-
-		if (codecs_found < codec_aux_dev_cnt) {
-			dev_dbg(&pdev->dev,
-				"%s: failed to find %d components. Found only %d\n",
-				__func__, codec_aux_dev_cnt, codecs_found);
-			return -EPROBE_DEFER;
-		}
-		dev_info(&pdev->dev,
-			"%s: found %d AUX codecs registered with ALSA core\n",
-			__func__, codecs_found);
-
 	}
+
+	if (codecs_found < codec_aux_dev_cnt) {
+		dev_dbg(&pdev->dev,
+			"%s: failed to find %d components. Found only %d\n",
+			__func__, codec_aux_dev_cnt, codecs_found);
+		return -EPROBE_DEFER;
+	}
+	dev_info(&pdev->dev,
+		"%s: found %d AUX codecs registered with ALSA core\n",
+		__func__, codecs_found);
 
 	card->num_aux_devs = wsa_max_devs + codec_aux_dev_cnt;
 	card->num_configs = wsa_max_devs + codec_aux_dev_cnt;
@@ -6145,17 +6139,15 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	}
 
 	msm_i2s_auxpcm_init(pdev);
-	if (strcmp(card->name, "kona-mtp-snd-card")) {
-		pdata->dmic01_gpio_p = of_parse_phandle(pdev->dev.of_node,
-						      "qcom,cdc-dmic01-gpios",
-						       0);
-		pdata->dmic23_gpio_p = of_parse_phandle(pdev->dev.of_node,
-						      "qcom,cdc-dmic23-gpios",
-						       0);
-		pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
-						      "qcom,cdc-dmic45-gpios",
-						       0);
-	}
+	pdata->dmic01_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,cdc-dmic01-gpios",
+					       0);
+	pdata->dmic23_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,cdc-dmic23-gpios",
+					       0);
+	pdata->dmic45_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,cdc-dmic45-gpios",
+					       0);
 
 	ret = msm_audio_ssr_register(&pdev->dev);
 	if (ret)
