@@ -950,7 +950,7 @@ TX_MACRO_DAPM_ENUM_EXT(tx_dmic7, BOLERO_CDC_TX_INP_MUX_ADC_MUX7_CFG0,
 			tx_macro_put_dec_enum);
 
 static const char * const smic_mux_text[] = {
-	"ZERO", "ADC0", "ADC1", "ADC2", "ADC3",
+	"ZERO", "ADC0", "ADC1", "ADC2", "ADC3", "ADC4",
 	"SWR_DMIC0", "SWR_DMIC1", "SWR_DMIC2", "SWR_DMIC3",
 	"SWR_DMIC4", "SWR_DMIC5", "SWR_DMIC6", "SWR_DMIC7"
 };
@@ -1096,6 +1096,7 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("TX SWR_ADC1"),
 	SND_SOC_DAPM_INPUT("TX SWR_ADC2"),
 	SND_SOC_DAPM_INPUT("TX SWR_ADC3"),
+	SND_SOC_DAPM_INPUT("TX SWR_ADC4"),
 	SND_SOC_DAPM_INPUT("TX SWR_DMIC0"),
 	SND_SOC_DAPM_INPUT("TX SWR_DMIC1"),
 	SND_SOC_DAPM_INPUT("TX SWR_DMIC2"),
@@ -1206,6 +1207,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX0", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX0", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX0", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX0", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX0", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX0", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX0", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1230,6 +1232,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX1", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX1", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX1", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX1", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX1", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX1", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX1", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1254,6 +1257,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX2", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX2", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX2", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX2", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX2", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX2", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX2", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1278,6 +1282,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX3", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX3", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX3", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX3", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX3", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX3", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX3", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1302,6 +1307,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX4", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX4", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX4", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX4", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX4", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX4", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX4", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1326,6 +1332,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX5", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX5", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX5", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX5", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX5", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX5", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX5", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1350,6 +1357,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX6", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX6", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX6", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX6", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX6", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX6", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX6", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1374,6 +1382,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX SMIC MUX7", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX7", "ADC2", "TX SWR_ADC2"},
 	{"TX SMIC MUX7", "ADC3", "TX SWR_ADC3"},
+	{"TX SMIC MUX7", "ADC4", "TX SWR_ADC4"},
 	{"TX SMIC MUX7", "SWR_DMIC0", "TX SWR_DMIC0"},
 	{"TX SMIC MUX7", "SWR_DMIC1", "TX SWR_DMIC1"},
 	{"TX SMIC MUX7", "SWR_DMIC2", "TX SWR_DMIC2"},
@@ -1581,6 +1590,7 @@ static int tx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC2");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC3");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC4");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC0");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC2");
