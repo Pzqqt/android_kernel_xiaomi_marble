@@ -75,6 +75,9 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
 	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
+	cdp_rx_ppdu->u.ltf_size = (ppdu_info->rx_status.he_data5 >>
+				   QDF_MON_STATUS_HE_LTF_SIZE_SHIFT) & 0x3;
+	cdp_rx_ppdu->num_mpdu = ppdu_info->com_info.mpdu_cnt_fcs_ok;
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
 	cdp_rx_ppdu->timestamp = ppdu_info->rx_status.tsft;
 	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_num;
@@ -83,7 +86,6 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
 
-	cdp_rx_ppdu->num_mpdu = ppdu_info->com_info.mpdu_cnt_fcs_ok;
 	if (ppdu_info->com_info.mpdu_cnt_fcs_ok > 1)
 		cdp_rx_ppdu->is_ampdu = 1;
 	else
