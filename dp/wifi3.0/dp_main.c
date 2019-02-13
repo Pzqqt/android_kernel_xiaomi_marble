@@ -7199,6 +7199,13 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 		return;
 	}
 
+	/* Making sure the peer is for the specific pdev */
+	if ((struct dp_pdev *)pdev_handle != peer->vdev->pdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Peer is not for this pdev\n", __func__);
+		return;
+	}
+
 	dp_print_peer_stats(peer);
 	dp_peer_rxtid_stats(peer, dp_rx_tid_stats_cb, NULL);
 }
