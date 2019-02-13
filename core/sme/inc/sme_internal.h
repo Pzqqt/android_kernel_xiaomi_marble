@@ -248,7 +248,7 @@ typedef void (*hidden_ssid_cb)(hdd_handle_t hdd_handle,
 				uint8_t vdev_id);
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
-typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, sir_md_evt *event);
+typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, struct sir_md_evt *event);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 typedef struct tagSmeStruct {

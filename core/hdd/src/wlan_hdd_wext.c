@@ -8072,7 +8072,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		struct sme_motion_det_cfg motion_det_cfg;
 
 		if (num_args != 15) {
-			hdd_err("mt_config: Invalid no of args");
+			hdd_err_rl("mt_config: Invalid no of args");
 			return -EINVAL;
 		}
 
@@ -8100,7 +8100,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		struct sme_motion_det_base_line_cfg motion_det_base_line_cfg;
 
 		if (num_args != 4) {
-			hdd_err("mt_bl_config: Invalid no of args");
+			hdd_err_rl("mt_bl_config: Invalid no of args");
 			return -EINVAL;
 		}
 
@@ -8120,7 +8120,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		QDF_STATUS status;
 
 		if (num_args != 7) {
-			hdd_err("set_thermal_cfg: Invalid no of args");
+			hdd_err_rl("set_thermal_cfg: Invalid no of args");
 			return -EINVAL;
 		}
 

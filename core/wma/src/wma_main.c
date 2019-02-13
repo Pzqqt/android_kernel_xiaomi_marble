@@ -8190,7 +8190,7 @@ static QDF_STATUS wma_set_motion_det_base_line_enable(
 	qdf_mem_zero(cmd, sizeof(*cmd));
 
 	WMITLV_SET_HDR(
-	cmd->tlv_header,
+	&cmd->tlv_header,
 	WMITLV_TAG_STRUC_wmi_motion_det_base_line_start_stop_cmd_fixed_param,
 	WMITLV_GET_STRUCT_TLVLEN(
 		wmi_motion_det_base_line_start_stop_cmd_fixed_param));

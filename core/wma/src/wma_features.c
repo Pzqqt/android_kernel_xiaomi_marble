@@ -1783,7 +1783,7 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		stats->pwr_save_fail_detected++;
 		break;
 #ifdef WLAN_FEATURE_MOTION_DETECTION
-	case WOW_REASON_WLAN_MD::
+	case WOW_REASON_WLAN_MD:
 		stats->motion_detect++;
 		break;
 	case WOW_REASON_WLAN_BL:
