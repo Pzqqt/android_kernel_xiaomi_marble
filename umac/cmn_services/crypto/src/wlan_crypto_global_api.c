@@ -3011,7 +3011,9 @@ uint8_t *wlan_crypto_build_wapiie(struct wlan_objmgr_vdev *vdev,
 	WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
 
 	/* bkid count */
-	WLAN_CRYPTO_ADDSHORT(frm, 0);
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE ||
+	    vdev->vdev_mlme.vdev_opmode == QDF_P2P_CLIENT_MODE)
+		WLAN_CRYPTO_ADDSHORT(frm, 0);
 
 	/* calculate element length */
 	iebuf[1] = frm - iebuf - 2;
