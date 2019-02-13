@@ -1024,7 +1024,8 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	he_caps->dot11_he_cap.rx_stbc_lt_80mhz =
 			cfg_default(CFG_HE_RX_STBC_LT80);
 	he_caps->dot11_he_cap.doppler = cfg_default(CFG_HE_DOPPLER);
-	he_caps->dot11_he_cap.ul_mu = cfg_default(CFG_HE_UL_MUMIMO);
+	he_caps->dot11_he_cap.ul_mu =
+			cfg_get(psoc, CFG_HE_UL_MUMIMO);
 	he_caps->dot11_he_cap.dcm_enc_tx = cfg_default(CFG_HE_DCM_TX);
 	he_caps->dot11_he_cap.dcm_enc_rx = cfg_default(CFG_HE_DCM_RX);
 	he_caps->dot11_he_cap.ul_he_mu = cfg_default(CFG_HE_MU_PPDU);

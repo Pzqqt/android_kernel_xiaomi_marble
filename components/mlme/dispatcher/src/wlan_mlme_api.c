@@ -649,8 +649,6 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 
 	if (cfg_in_range(CFG_HE_DOPPLER, he_cap->doppler))
 		mlme_obj->cfg.he_caps.dot11_he_cap.doppler = he_cap->doppler;
-	if (cfg_in_range(CFG_HE_UL_MUMIMO, he_cap->ul_mu))
-		mlme_obj->cfg.he_caps.dot11_he_cap.ul_mu = he_cap->ul_mu;
 	if (cfg_in_range(CFG_HE_DCM_TX, he_cap->dcm_enc_tx))
 		mlme_obj->cfg.he_caps.dot11_he_cap.dcm_enc_tx =
 						he_cap->dcm_enc_tx;

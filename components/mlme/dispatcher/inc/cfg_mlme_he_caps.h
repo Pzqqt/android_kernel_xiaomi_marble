@@ -295,14 +295,6 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"He Doppler")
 
-#define CFG_HE_UL_MUMIMO CFG_UINT( \
-				"he_ul_mumimo", \
-				0, \
-				3, \
-				0, \
-				CFG_VALUE_OR_DEFAULT, \
-				"He Ul Mumimo")
-
 #define CFG_HE_DCM_TX CFG_UINT( \
 				"he_dcm_tx", \
 				0, \
@@ -574,6 +566,35 @@
 /* 11AX related INI configuration */
 /*
  * <ini>
+ * he_ul_mumimo - configure ul mu capabilities
+ * @Min: 0
+ * @Max: 3
+ * @Default: 2
+ *
+ * This ini is used to configure capabilities of ul mu-mimo
+ * 0-> no support
+ * 1-> partial bandwidth support
+ * 2-> full and partial bandwidth support
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_HE_UL_MUMIMO CFG_INI_UINT( \
+				"he_ul_mumimo", \
+				0, \
+				3, \
+				2, \
+				CFG_VALUE_OR_DEFAULT, \
+				"He Ul Mumimo")
+
+/* 11AX related INI configuration */
+/*
+ * <ini>
  * he_dynamic_frag_support - configure dynamic fragmentation
  * @Min: 0
  * @Max: 3
@@ -603,7 +624,7 @@
  * enable_ul_mimo- Enable UL MIMO.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable or disable UL MIMO.
  *
@@ -617,7 +638,7 @@
  */
 #define CFG_ENABLE_UL_MIMO CFG_INI_BOOL( \
 				"enable_ul_mimo", \
-				0, \
+				1, \
 				"He Enble Ul Mimo Name")
 
 /*
@@ -625,7 +646,7 @@
  * enable_ul_ofdma- Enable UL OFDMA.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable or disable UL OFDMA.
  *
@@ -640,7 +661,7 @@
 
 #define CFG_ENABLE_UL_OFDMA CFG_INI_BOOL( \
 				"enable_ul_ofdma", \
-				0, \
+				1, \
 				"He Enable Ul Ofdma Name")
 
 /*

@@ -85,7 +85,7 @@ int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 					       &enable_ul_ofdma);
 	if (ret)
 		return ret;
-	if (val & 0x1)
+	if (val & 0x1 || (val >> 1) & 0x1)
 		val1 = enable_ul_mimo & 0x1;
 
 	if ((val >> 1) & 0x1)
