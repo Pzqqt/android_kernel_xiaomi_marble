@@ -736,7 +736,7 @@ void wlan_report_log_completion(uint32_t is_fatal,
 }
 #endif
 
-#ifdef CONFIG_MCL
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * send_flush_completion_to_user() - Indicate flush completion to the user
  * @ring_id:  Ring id of logging entities
@@ -823,7 +823,7 @@ static int wlan_logging_thread(void *Arg)
 			ret = send_filled_buffers_to_user();
 			if (-ENOMEM == ret)
 				msleep(200);
-#ifdef CONFIG_MCL
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
 			if (WLAN_LOG_INDICATOR_HOST_ONLY ==
 			   cds_get_log_indicator()) {
 				send_flush_completion_to_user(
@@ -848,7 +848,7 @@ static int wlan_logging_thread(void *Arg)
 			 */
 			if (gwlan_logging.is_flush_complete == true) {
 				gwlan_logging.is_flush_complete = false;
-#ifdef CONFIG_MCL
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
 				send_flush_completion_to_user(
 						RING_ID_DRIVER_DEBUG);
 #endif
