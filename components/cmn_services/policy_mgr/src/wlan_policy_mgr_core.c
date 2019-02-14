@@ -696,6 +696,7 @@ void policy_mgr_store_and_del_conn_info(struct wlan_objmgr_psoc *psoc,
 					 info[found_index].vdev_id,
 					 info[found_index].mode,
 					 info[found_index].vdev_id, conn_index);
+			pm_ctx->no_of_active_sessions[info->mode]--;
 			found_index++;
 			if (all_matching_cxn_to_del)
 				continue;
@@ -755,6 +756,7 @@ void policy_mgr_store_and_del_conn_info_by_vdev_id(
 	 */
 	if (*num_cxn_del == 1) {
 		*info = pm_conc_connection_list[conn_index];
+		pm_ctx->no_of_active_sessions[info->mode]--;
 		/* Deleting the connection entry */
 		policy_mgr_decr_connection_count(
 			psoc,
@@ -802,6 +804,7 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_copy(&pm_conc_connection_list[conn_index], info,
 			num_cxn_del * sizeof(*info));
+	pm_ctx->no_of_active_sessions[info->mode] += num_cxn_del;
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	policy_mgr_debug("Restored the deleleted conn info, vdev:%d, index:%d",
