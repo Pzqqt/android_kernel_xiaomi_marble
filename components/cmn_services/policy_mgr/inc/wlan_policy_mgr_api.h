@@ -625,6 +625,20 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		uint8_t channel, enum hw_mode_bandwidth bw);
 
 /**
+ * policy_mgr_nan_sap_pre_enable_conc_check() - Check if NAN+SAP SCC is
+ *                                              allowed in given ch
+ * @psoc: PSOC object information
+ * @mode: Connection mode
+ * @ch: channel to check
+ *
+ * Return: True if allowed else false
+ */
+bool
+policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t ch);
+
+/**
  * policy_mgr_allow_concurrency_csa() - Check for allowed concurrency
  * combination when channel switch
  * @psoc:	PSOC object information
@@ -2834,6 +2848,24 @@ void policy_mgr_update_user_config_sap_chan(
 			struct wlan_objmgr_psoc *psoc, uint32_t channel);
 
 /**
+ * policy_mgr_nan_sap_post_enable_conc_check() - Do concurrency operations
+ *                                               post nan/sap enable
+ * @psoc: poniter to psoc
+ *
+ * Return: void
+ **/
+void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_nan_sap_post_disable_conc_check() - Do concurrency related
+ *                                                operation post nan/sap disable
+ * @psoc: poniter to psoc
+ *
+ * Return: void
+ **/
+void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_sap_restart_required_after_sta_disconnect() - is sap restart
  * required
  * after sta disconnection
@@ -2859,6 +2891,17 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
  * Return: true or false
  */
 bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch);
+
+/**
+ * policy_mgr_nan_sap_scc_on_unsafe_ch_chk() - check whether SAP is doing SCC
+ *                                             with NAN
+ * @psoc: poniter to psoc
+ * @sap_ch: operating channel of SAP interface
+ *
+ * Return: true or false
+ */
+bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
+					     uint8_t sap_ch);
 
 /**
  * policy_mgr_get_hw_mode_from_idx() - Get HW mode based on index

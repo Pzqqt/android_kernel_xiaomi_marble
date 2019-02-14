@@ -54,6 +54,8 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
 	cfg->sta_sap_scc_on_dfs_chnl =
 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
+	cfg->nan_sap_scc_on_lte_coex_chnl =
+		cfg_get(psoc, CFG_NAN_SAP_SCC_ON_LTE_COEX_CHAN);
 	cfg->sta_sap_scc_on_lte_coex_chnl =
 		cfg_get(psoc, CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN);
 	cfg->sap_mandatory_chnl_enable =

@@ -1557,6 +1557,40 @@ enum hw_mode_bandwidth policy_mgr_get_bw(enum phy_ch_width chan_width)
 	return bw;
 }
 
+enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw)
+{
+	enum phy_ch_width ch_width = CH_WIDTH_INVALID;
+
+	switch (bw) {
+	case HW_MODE_20_MHZ:
+		ch_width = CH_WIDTH_20MHZ;
+		break;
+	case HW_MODE_40_MHZ:
+		ch_width = CH_WIDTH_40MHZ;
+		break;
+	case HW_MODE_80_MHZ:
+		ch_width = CH_WIDTH_80MHZ;
+		break;
+	case HW_MODE_160_MHZ:
+		ch_width = CH_WIDTH_160MHZ;
+		break;
+	case HW_MODE_80_PLUS_80_MHZ:
+		ch_width = CH_WIDTH_80P80MHZ;
+		break;
+	case HW_MODE_5_MHZ:
+		ch_width = CH_WIDTH_5MHZ;
+		break;
+	case HW_MODE_10_MHZ:
+		ch_width = CH_WIDTH_10MHZ;
+		break;
+	default:
+		policy_mgr_err("Invalid phy_ch_width type %d", ch_width);
+		break;
+	}
+
+	return ch_width;
+}
+
 /**
  * policy_mgr_get_sbs_channels() - provides the sbs channel(s)
  * with respect to current connection(s)
@@ -1931,6 +1965,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	*len = 0;
 	if (PM_MAX_PCL_TYPE == pcl) {
 		/* msg */
 		policy_mgr_err("pcl is invalid");

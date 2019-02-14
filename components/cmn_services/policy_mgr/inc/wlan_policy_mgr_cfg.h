@@ -456,6 +456,29 @@ CFG_INI_UINT("gEnableSAPManadatoryChanList", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 
 /*
  * <ini>
+ * g_nan_sap_scc_on_lte_coex_chan - Allow NAN+SAP SCC on LTE coex channel
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to allow NAN+SAP SCC on LTE coex channel
+ * 0 - Disallow NAN+SAP SCC on LTE coex channel
+ * 1 - Allow NAN+SAP SCC on LTE coex channel
+ *
+ * Related: Depends on gWlanMccToSccSwitchMode config.
+ *
+ * Supported Feature: Non-DBS, DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_NAN_SAP_SCC_ON_LTE_COEX_CHAN \
+CFG_INI_BOOL("g_nan_sap_scc_on_lte_coex_chan", 1, \
+	     "Allow NAN+SAP SCC on LTE coex channel")
+
+/*
+ * <ini>
  * g_sta_sap_scc_on_lte_coex_chan - Allow STA+SAP SCC on LTE coex channel
  * @Min: 0
  * @Max: 1
@@ -521,6 +544,7 @@ CFG_INI_UINT("g_mark_sap_indoor_as_disable", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 		CFG(CFG_FORCE_1X1_FEATURE)\
 		CFG(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST)\
 		CFG(CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN)\
+		CFG(CFG_NAN_SAP_SCC_ON_LTE_COEX_CHAN) \
 		CFG(CFG_MARK_INDOOR_AS_DISABLE_FEATURE)\
 		CFG(CFG_ALLOW_MCC_GO_DIFF_BI)
 #endif
