@@ -247,6 +247,16 @@ bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc);
 bool ucfg_is_ndi_dbs_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_is_nan_dbs_supported() - ucfg API to query NAN SAP support
+ * @psoc: pointer to psoc object
+ *
+ * This function returns NAN SAP support status
+ *
+ * Return: True if NAN SAP is supported, False otherwise
+ */
+bool ucfg_is_nan_sap_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_is_nan_enable_allowed() - ucfg API to query if NAN Discovery is
  * allowed
  * @psoc: pointer to psoc object

@@ -96,7 +96,8 @@ struct nan_cfg_params {
  * @tx_ops: Tx ops registered with Target IF interface
  * @rx_ops: Rx  ops registered with Target IF interface
  * @disc_state: Present NAN Discovery state
- * @nan_social_channel: NAN Social channel for discovery
+ * @nan_social_ch_2g: NAN 2G Social channel for discovery
+ * @nan_social_ch_5g: NAN 5G Social channel for discovery
  * @nan_disc_mac_id: MAC id used for NAN Discovery
  * @is_explicit_disable: Flag to indicate that NAN is being explicitly
  * disabled by driver
@@ -110,7 +111,8 @@ struct nan_psoc_priv_obj {
 	struct wlan_nan_tx_ops tx_ops;
 	struct wlan_nan_rx_ops rx_ops;
 	enum nan_disc_state disc_state;
-	uint8_t nan_social_channel;
+	uint8_t nan_social_ch_2g;
+	uint8_t nan_social_ch_5g;
 	uint8_t nan_disc_mac_id;
 	bool is_explicit_disable;
 	void *disable_context;

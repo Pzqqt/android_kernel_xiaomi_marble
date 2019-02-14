@@ -815,18 +815,21 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 
 			policy_mgr_incr_active_session(psoc, QDF_NAN_DISC_MODE,
 						       NAN_PSEUDO_VDEV_ID);
+			policy_mgr_nan_sap_post_enable_conc_check(psoc);
 
 		} else {
 			/*
 			 * State set to DISABLED OR DISABLE_IN_PROGRESS, try to
 			 * restore the single MAC mode.
 			 */
-			psoc_nan_obj->nan_social_channel = 0;
+			psoc_nan_obj->nan_social_ch_2g = 0;
+			psoc_nan_obj->nan_social_ch_5g = 0;
 			policy_mgr_check_n_start_opportunistic_timer(psoc);
 		}
 	} else {
 		/* NAN Enable has failed, restore changes */
-		psoc_nan_obj->nan_social_channel = 0;
+		psoc_nan_obj->nan_social_ch_2g = 0;
+		psoc_nan_obj->nan_social_ch_5g = 0;
 		nan_set_discovery_state(nan_event->psoc, NAN_DISC_DISABLED);
 		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	}
@@ -853,10 +856,13 @@ static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
 		policy_mgr_decr_session_set_pcl(psoc, QDF_NAN_DISC_MODE,
 						NAN_PSEUDO_VDEV_ID);
 
-		if (psoc_nan_obj->is_explicit_disable &&
-		    psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb)
-			psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb(
-						 psoc_nan_obj->disable_context);
+		if (psoc_nan_obj->is_explicit_disable) {
+			if (psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb)
+				psoc_nan_obj->cb_obj.ucfg_explicit_disable_cb(
+				psoc_nan_obj->disable_context);
+		} else {
+			policy_mgr_nan_sap_post_disable_conc_check(psoc);
+		}
 	} else {
 		/* Should not happen, NAN state can always be disabled */
 		nan_err("Cannot set NAN state to disabled!");
@@ -1063,6 +1069,13 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 		goto pre_enable_failure;
 	}
 
+	if (!policy_mgr_nan_sap_pre_enable_conc_check(psoc, PM_NAN_DISC_MODE,
+						      nan_social_channel)) {
+		nan_debug("NAN not enabled due to concurrency constraints");
+		status = QDF_STATUS_E_INVAL;
+		goto pre_enable_failure;
+	}
+
 	/* Piggyback on any available vdev for policy manager update */
 	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_NAN_ID);
 	if (!vdev) {
@@ -1147,10 +1160,8 @@ static QDF_STATUS nan_discovery_enable_req(struct nan_enable_req *req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (req->social_chan_2g)
-		psoc_nan_obj->nan_social_channel = req->social_chan_2g;
-	else
-		psoc_nan_obj->nan_social_channel = req->social_chan_5g;
+	psoc_nan_obj->nan_social_ch_2g = req->social_chan_2g;
+	psoc_nan_obj->nan_social_ch_5g = req->social_chan_5g;
 
 	tx_ops = &psoc_nan_obj->tx_ops;
 	if (!tx_ops->nan_discovery_req_tx) {
@@ -1261,10 +1272,42 @@ wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	conn_info->mhz = wlan_chan_to_freq(psoc_nan_obj->nan_social_channel);
+	/* For policy_mgr use NAN mandatory Social ch 6 */
+	conn_info->mhz = wlan_chan_to_freq(psoc_nan_obj->nan_social_ch_2g);
 	conn_info->mac_id = psoc_nan_obj->nan_disc_mac_id;
 	conn_info->chan_width = CH_WIDTH_20MHZ;
 	conn_info->type = WMI_VDEV_TYPE_NAN;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return 0;
+	}
+
+	if (nan_get_discovery_state(psoc) != NAN_DISC_ENABLED)
+		return 0;
+
+	return psoc_nan_obj->nan_social_ch_5g;
+}
+
+bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return 0;
+	}
+
+	return (psoc_nan_obj->nan_caps.nan_sap_supported &&
+		psoc_nan_obj->nan_caps.nan_dbs_supported &&
+		psoc_nan_obj->nan_caps.nan_disable_supported);
 }
