@@ -226,6 +226,10 @@ uint8_t *hdd_auth_type_str(uint32_t auth_type)
 		return "RSN PSK SHA256";
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
 		return "RSN 8021X SHA256";
+	case eCSR_AUTH_TYPE_FT_SAE:
+		return "FT SAE";
+	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
+		return "FT Suite B SHA384";
 	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
 		return "NUM OF SUPPORT AUTH TYPE";
 	case eCSR_AUTH_TYPE_FAILED:

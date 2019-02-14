@@ -5123,6 +5123,8 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		/* if FT or CCKM connection: dont send replay counter */
 		if (auth_type != eCSR_AUTH_TYPE_FT_RSN &&
 		    auth_type != eCSR_AUTH_TYPE_FT_RSN_PSK &&
+		    auth_type != eCSR_AUTH_TYPE_FT_SAE &&
+		    auth_type != eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384 &&
 		    auth_type != eCSR_AUTH_TYPE_CCKM_WPA &&
 		    auth_type != eCSR_AUTH_TYPE_CCKM_RSN &&
 		    nla_put(skb,
