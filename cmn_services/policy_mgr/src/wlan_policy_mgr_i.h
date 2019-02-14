@@ -226,6 +226,7 @@ struct sta_ap_intf_check_work_ctx {
  * @is_force_1x1_enable: Is 1x1 forced for connection
  * @sta_sap_scc_on_dfs_chnl: STA-SAP SCC on DFS channel
  * @sta_sap_scc_on_lte_coex_chnl: STA-SAP SCC on LTE Co-ex channel
+ * @nan_sap_scc_on_lte_coex_chnl: NAN-SAP SCC on LTE Co-ex channel
  * @sap_mandatory_chnl_enable: To enable/disable SAP mandatory channels
  * @mark_indoor_chnl_disable: Mark indoor channel as disable or enable
  * @dbs_selection_plcy: DBS selection policy for concurrency
@@ -247,6 +248,7 @@ struct policy_mgr_cfg {
 	uint8_t is_force_1x1_enable;
 	uint8_t sta_sap_scc_on_dfs_chnl;
 	uint8_t sta_sap_scc_on_lte_coex_chnl;
+	uint8_t nan_sap_scc_on_lte_coex_chnl;
 	uint8_t sap_mandatory_chnl_enable;
 	uint8_t mark_indoor_chnl_disable;
 	uint8_t enable_sta_cxn_5g_band;
@@ -301,6 +303,7 @@ struct policy_mgr_cfg {
  * @unsafe_channel_list: LTE coex channel avoidance list
  * @unsafe_channel_count: LTE coex channel avoidance list count
  * @sta_ap_intf_check_work_info: Info related to sta_ap_intf_check_work
+ * @nan_sap_conc_work: Info related to nan sap conc work
  * @opportunistic_update_done_evt: qdf event to synchronize host
  *                               & FW HW mode
  */
@@ -323,6 +326,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
 	qdf_work_t sta_ap_intf_check_work;
+	qdf_work_t nan_sap_conc_work;
 	uint32_t num_dbs_hw_modes;
 	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
@@ -482,6 +486,15 @@ void pm_dbs_opportunistic_timer_handler(void *data);
 enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
 		uint8_t subtype);
 enum hw_mode_bandwidth policy_mgr_get_bw(enum phy_ch_width chan_width);
+
+/**
+ * policy_mgr_get_bw() - Convert hw_mode_bandwidth to phy_ch_width
+ * @bw: Hardware mode band width used by WMI
+ *
+ * Return: phy_ch_width
+ */
+enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw);
+
 QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_pcl_type pcl,
 			uint8_t *pcl_channels, uint32_t *len,

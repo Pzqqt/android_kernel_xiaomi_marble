@@ -32,6 +32,8 @@
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
 #include "qdf_platform.h"
+#include "wlan_nan_api.h"
+#include "nan_ucfg_api.h"
 
 enum policy_mgr_conc_next_action (*policy_mgr_get_current_pref_hw_mode_ptr)
 	(struct wlan_objmgr_psoc *psoc);
@@ -462,6 +464,15 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 			break;
 		default:
 			break;
+		}
+		break;
+	case PM_NAN_DISC_MODE:
+		switch (new_conn_mode) {
+		case QDF_STA_MODE:
+		case QDF_SAP_MODE:
+			return true;
+		default:
+			return false;
 		}
 		break;
 	default:
@@ -1351,6 +1362,258 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 			 *intf_ch);
 
 	return true;
+}
+
+/**
+ * policy_mgr_is_nan_sap_unsafe_ch_scc_allowed() - Check if NAN+SAP SCC is
+ *                                               allowed in LTE COEX unsafe ch
+ * @pm_ctx: policy_mgr_psoc_priv_obj policy mgr context
+ * @ch: Channel to check
+ *
+ * Return: True if allowed else false
+ */
+static bool
+policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(struct policy_mgr_psoc_priv_obj
+					    *pm_ctx, uint8_t ch)
+{
+	if (policy_mgr_is_safe_channel(pm_ctx->psoc, ch) ||
+	    pm_ctx->cfg.nan_sap_scc_on_lte_coex_chnl)
+		return true;
+
+	return false;
+}
+
+/**
+ * policy_mgr_nan_disable_work() - qdf defer function wrapper for NAN disable
+ * @data: qdf_work data
+ *
+ * Return: None
+ */
+static void policy_mgr_nan_disable_work(void *data)
+{
+	struct wlan_objmgr_psoc *psoc = data;
+
+	ucfg_nan_disable_concurrency(psoc);
+}
+
+bool policy_mgr_nan_sap_scc_on_unsafe_ch_chk(struct wlan_objmgr_psoc *psoc,
+					     uint8_t sap_ch)
+{
+	uint8_t nan_ch_2g, nan_ch_5g;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	nan_ch_2g = policy_mgr_mode_specific_get_channel(psoc,
+							 PM_NAN_DISC_MODE);
+	if (nan_ch_2g == 0) {
+		policy_mgr_debug("No NAN+SAP SCC");
+		return false;
+	}
+	nan_ch_5g = wlan_nan_get_disc_5g_ch(psoc);
+
+	if (WLAN_REG_IS_SAME_BAND_CHANNELS(nan_ch_2g, sap_ch)) {
+		if (policy_mgr_is_force_scc(pm_ctx->psoc) &&
+		    policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(pm_ctx,
+								nan_ch_2g))
+			return true;
+	} else if (WLAN_REG_IS_SAME_BAND_CHANNELS(nan_ch_5g, sap_ch)) {
+		if (policy_mgr_is_force_scc(pm_ctx->psoc) &&
+		    policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(pm_ctx,
+								nan_ch_5g))
+			return true;
+	}
+	policy_mgr_debug("NAN+SAP unsafe ch SCC not allowed. Disabling NAN");
+	/* change context to worker since this is executed in sched thread ctx*/
+	qdf_create_work(0, &pm_ctx->nan_sap_conc_work,
+			policy_mgr_nan_disable_work, psoc);
+	qdf_sched_work(0, &pm_ctx->nan_sap_conc_work);
+
+	return false;
+}
+
+bool
+policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
+					 enum policy_mgr_con_mode mode,
+					 uint8_t ch)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t sap_ch, nan_ch_2g, nan_ch_5g;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	if (!(mode == PM_SAP_MODE || mode == PM_NAN_DISC_MODE)) {
+		policy_mgr_debug("Not NAN or SAP mode");
+		return true;
+	}
+
+	if (!ch) {
+		policy_mgr_err("Invalid channel");
+		return false;
+	}
+
+	if (!wlan_nan_get_sap_conc_support(pm_ctx->psoc)) {
+		policy_mgr_debug("NAN+SAP not supported in fw");
+		if (mode == PM_NAN_DISC_MODE)
+			return false;
+		/* Before SAP start disable NAN */
+		ucfg_nan_disable_concurrency(pm_ctx->psoc);
+	}
+	if (mode == PM_NAN_DISC_MODE) {
+		sap_ch = policy_mgr_mode_specific_get_channel(pm_ctx->psoc,
+							      PM_SAP_MODE);
+		policy_mgr_debug("SAP CH: %d NAN Ch: %d", sap_ch, ch);
+		if (WLAN_REG_IS_SAME_BAND_CHANNELS(sap_ch, ch)) {
+			if (sap_ch == ch) {
+				policy_mgr_debug("NAN+SAP SCC");
+				return true;
+			}
+
+			if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
+				policy_mgr_debug("SAP force SCC disabled");
+				return false;
+			}
+			if (!policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(pm_ctx,
+									 ch)) {
+				policy_mgr_debug("NAN+SAP unsafe ch SCC disabled");
+				return false;
+			}
+		}
+	} else if (mode == PM_SAP_MODE) {
+		nan_ch_2g =
+			policy_mgr_mode_specific_get_channel(pm_ctx->psoc,
+							     PM_NAN_DISC_MODE);
+		nan_ch_5g = wlan_nan_get_disc_5g_ch(pm_ctx->psoc);
+		policy_mgr_debug("SAP CH: %d NAN Ch: %d %d", ch, nan_ch_2g,
+				 nan_ch_5g);
+		if (WLAN_REG_IS_SAME_BAND_CHANNELS(nan_ch_2g, ch) ||
+		    WLAN_REG_IS_SAME_BAND_CHANNELS(nan_ch_5g, ch)) {
+			if (ch == nan_ch_2g || ch == nan_ch_5g) {
+				policy_mgr_debug("NAN+SAP SCC");
+				return true;
+			}
+			if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
+				policy_mgr_debug("SAP force SCC disabled");
+				ucfg_nan_disable_concurrency(pm_ctx->psoc);
+				return false;
+			}
+			if ((WLAN_REG_IS_5GHZ_CH(ch) &&
+			     !policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(
+			     pm_ctx, nan_ch_5g)) ||
+			    (WLAN_REG_IS_24GHZ_CH(ch) &&
+			     !policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(
+			     pm_ctx, nan_ch_2g))) {
+				policy_mgr_debug("NAN+SAP unsafe ch SCC disabled");
+				ucfg_nan_disable_concurrency(pm_ctx->psoc);
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct policy_mgr_conc_connection_info *sap_info = NULL;
+	uint8_t sap_ch = 0, nan_ch_2g, nan_ch_5g, i;
+	QDF_STATUS status;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context");
+		return;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (pm_conc_connection_list[i].mode == PM_SAP_MODE &&
+		    pm_conc_connection_list[i].in_use) {
+			sap_info = &pm_conc_connection_list[i];
+			sap_ch = sap_info->chan;
+			break;
+		}
+	}
+	if (sap_ch == 0)
+		return;
+	nan_ch_2g = policy_mgr_mode_specific_get_channel(psoc,
+							 PM_NAN_DISC_MODE);
+	nan_ch_5g = wlan_nan_get_disc_5g_ch(psoc);
+	if (sap_ch == nan_ch_2g || sap_ch == nan_ch_5g) {
+		policy_mgr_debug("NAN and SAP already in SCC");
+		return;
+	}
+	if (nan_ch_2g == 0)
+		return;
+
+	status = qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
+				       CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+	policy_mgr_reset_chan_switch_complete_evt(psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		policy_mgr_err("SAP Ch Switch wait fail. Force new Ch switch");
+
+	policy_mgr_debug("Force SCC for NAN+SAP Ch: %d",
+			 WLAN_REG_IS_5GHZ_CH(sap_ch) ? nan_ch_5g : nan_ch_2g);
+	if (WLAN_REG_IS_5GHZ_CH(sap_ch)) {
+		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
+						       nan_ch_5g,
+						       policy_mgr_get_ch_width(
+						       sap_info->bw),
+						       true);
+	} else {
+		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
+						       nan_ch_2g,
+						       policy_mgr_get_ch_width(
+						       sap_info->bw),
+						       true);
+	}
+}
+
+void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct policy_mgr_conc_connection_info *sap_info = NULL;
+	uint8_t sap_ch = 0, i;
+	QDF_STATUS status;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context");
+		return;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (pm_conc_connection_list[i].mode == PM_SAP_MODE &&
+		    pm_conc_connection_list[i].in_use) {
+			sap_info = &pm_conc_connection_list[i];
+			sap_ch = sap_info->chan;
+			break;
+		}
+	}
+	if (sap_ch == 0 || policy_mgr_is_safe_channel(psoc, sap_ch))
+		return;
+
+	sap_ch = policy_mgr_get_nondfs_preferred_channel(psoc, PM_SAP_MODE,
+							 false);
+	policy_mgr_debug("User/ACS orig ch: %d New SAP ch: %d",
+			 pm_ctx->user_config_sap_channel, sap_ch);
+	status = qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
+				       CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+	policy_mgr_reset_chan_switch_complete_evt(psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		policy_mgr_err("SAP Ch Switch wait fail. Force new Ch switch");
+
+	policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
+					       sap_ch,
+					       policy_mgr_get_ch_width(
+					       sap_info->bw), true);
 }
 
 static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)

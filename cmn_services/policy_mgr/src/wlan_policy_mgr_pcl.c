@@ -1516,7 +1516,8 @@ policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < pcl_len; i++) {
-		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, pcl_channels[i])) {
+		if (wlan_reg_is_dfs_ch(pm_ctx->pdev, pcl_channels[i]) ||
+		    !policy_mgr_is_safe_channel(psoc, pcl_channels[i])) {
 			continue;
 		} else {
 			channel = pcl_channels[i];
