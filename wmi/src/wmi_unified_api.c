@@ -4639,4 +4639,20 @@ QDF_STATUS wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_extract_cfr_peer_tx_event_param() - extract tx event params from event
+ */
+QDF_STATUS
+wmi_extract_cfr_peer_tx_event_param(void *wmi_hdl, void *evt_buf,
+				    wmi_cfr_peer_tx_event_param *peer_tx_event)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_cfr_peer_tx_event_param)
+		return wmi_handle->ops->extract_cfr_peer_tx_event_param(wmi_hdl,
+									evt_buf,
+									peer_tx_event);
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* WLAN_CFR_ENABLE */

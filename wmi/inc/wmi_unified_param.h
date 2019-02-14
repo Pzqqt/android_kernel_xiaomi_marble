@@ -4753,6 +4753,7 @@ typedef enum {
 	wmi_vdev_bcn_reception_stats_event_id,
 	wmi_roam_blacklist_event_id,
 	wmi_wlm_stats_event_id,
+	wmi_peer_cfr_capture_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -7639,4 +7640,65 @@ struct vap_tidmap_prec_params {
 	uint32_t map_precedence;
 };
 #endif
+
+/**
+ * struct wmi_cfr_peer_tx_event_param - CFR peer tx_event params
+ * @capture_method: CFR data capture method
+ * @vdev_id: ID of vdev to which this info belongs
+ * @mac_addr: Peer MAC address. In AP mode, it is the address of connected
+ *            peer for which CFR capture is needed. In STA mode, this is the
+ *            address of AP it is connected to.
+ * @primary_20mhz_chan: Primary 20 MHz channel frequency in MHz
+ * @bandwidth: BW of measurement
+ *             0 - 20MHz, 1 - 40MHz, 2 - 80MHz, 3 - 160MHz, 4 - 80+80MHz
+ * @phy_mode: Phy mode of channel, type - WMI_HOST_WLAN_PHY_MODE
+ * @band_center_freq1: Center frequency 1 in MHz
+ * @band_center_freq2: Center frequency 2 in MHz
+ * @spatial_streams: Number of spatial streams
+ * @correlation_info_1: Address of data from wmi_dma_buf_release_entry [31:0]
+ * @correlation_info_2:
+ *     Bits [3:0]   - Address of data from wmi_dma_buf_release_entry [35:32]
+ *     Bits [15:4]  - Reserved
+ *     Bits [31:16] - Hardware PPDU ID [15:0]
+ * @status:
+ *     Bits [1:0]   - TX status, if any. 0-OK, 1-XRETRY, 2-DROP, 3-FILTERED.
+ *     Bits [30:2]  - Reserved
+ *     Bit  [31]    - Status of the CFR capture of the peer
+ *                    1 - Successful, 0 - Unsuccessful.
+ * @timestamp_us: Timestamp in microseconds at which the CFR was captured
+ *                in the hardware. The clock used for this timestamp is private
+ *                to the target and not visible to the host. So, Host can
+ *                interpret only the relative timestamp deltas from one message
+ *                to the next, but can't interpret the absolute timestamp
+ *                from a single message
+ * @counter: Count of the current CFR capture from FW.
+ *           This is helpful to identify any drops in FW
+ * @chain_rssi: Per chain RSSI of the peer, for upto WMI_HOST_MAX_CHAINS.
+ *              Each chain's entry reports the RSSI for different bandwidths.
+ *     Bits [7:0]   - Primary 20 MHz
+ *     Bits [15:8]  - Secondary 20 MHz of 40 MHz channel (if applicable)
+ *     Bits [23:16] - Secondary 40 MHz of 80 MHz channel (if applicable)
+ *     Bits [31:24] - Secondary 80 MHz of 160 MHz channel (if applicable)
+ *     Each of these 8-bit RSSI reports is in dBm units. 0x80 means invalid.
+ *     Unused bytes within used chain_rssi indices will be 0x80.
+ *     Unused rssi_chain indices will be set to 0x80808080.
+ */
+typedef struct {
+	uint32_t capture_method;
+	uint32_t vdev_id;
+	struct qdf_mac_addr peer_mac_addr;
+	uint32_t primary_20mhz_chan;
+	uint32_t bandwidth;
+	uint32_t phy_mode;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t spatial_streams;
+	uint32_t correlation_info_1;
+	uint32_t correlation_info_2;
+	uint32_t status;
+	uint32_t timestamp_us;
+	uint32_t counter;
+	uint32_t chain_rssi[WMI_HOST_MAX_CHAINS];
+} wmi_cfr_peer_tx_event_param;
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

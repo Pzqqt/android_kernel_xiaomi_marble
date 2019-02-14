@@ -2870,6 +2870,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_SM_ENGINE] = {"SM_ENG"},
 	[QDF_MODULE_ID_CMN_MLME] = {"CMN_MLME"},
 	[QDF_MODULE_ID_BSSCOLOR] = {"BSSCOLOR"},
+	[QDF_MODULE_ID_CFR] = {"CFR"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
@@ -3323,6 +3324,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_SM_ENGINE] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_CMN_MLME] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_BSSCOLOR] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_CFR] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 

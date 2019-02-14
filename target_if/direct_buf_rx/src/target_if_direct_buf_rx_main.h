@@ -21,6 +21,7 @@
 
 #include "qdf_types.h"
 #include "qdf_status.h"
+#include <target_if_direct_buf_rx_api.h>
 
 struct wlan_objmgr_psoc;
 struct wlan_lmac_if_tx_ops;
@@ -29,18 +30,6 @@ struct direct_buf_rx_data;
 #define DBR_RING_BASE_ALIGN 8
 #define DBR_EVENT_TIMEOUT_IN_MS 1
 #define DBR_NUM_RESP_PER_EVENT 2
-
-/**
- * enum DBR_MODULE - Enum containing the modules supporting direct buf rx
- * @DBR_MODULE_SPECTRAL: Module ID for Spectral
- * @DBR_MODULE_CFR: Module ID for CFR
- * @DBR_MODULE_MAX: Max module ID
- */
-enum DBR_MODULE {
-	DBR_MODULE_SPECTRAL = 0,
-	DBR_MODULE_CFR      = 1,
-	DBR_MODULE_MAX,
-};
 
 /**
  * struct direct_buf_rx_info - direct buffer rx operation info struct

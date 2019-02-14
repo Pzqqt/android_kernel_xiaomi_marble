@@ -10940,6 +10940,59 @@ static void wmi_11ax_bss_color_attach_tlv(struct wmi_unified *wmi_handle)
 		extract_obss_color_collision_info_tlv;
 }
 
+#ifdef WLAN_CFR_ENABLE
+/**
+ * extract_cfr_peer_tx_event_param_tlv() - Extract peer cfr tx event params
+ * @wmi_handle: wmi handle
+ * @event_buf: pointer to event buffer
+ * @peer_tx_event: Pointer to hold peer cfr tx event params
+ *
+ * Return QDF_STATUS_SUCCESS on success or proper error code.
+ */
+static QDF_STATUS
+extract_cfr_peer_tx_event_param_tlv(wmi_unified_t *wmi_handle, void *evt_buf,
+				    wmi_cfr_peer_tx_event_param *peer_tx_event)
+{
+	WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *param_buf;
+	wmi_peer_cfr_capture_event_fixed_param *peer_tx_event_ev;
+
+	param_buf = (WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid cfr capture buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer_tx_event_ev = param_buf->fixed_param;
+	if (!peer_tx_event_ev) {
+		qdf_err("peer cfr capture buffer is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	peer_tx_event->capture_method = peer_tx_event_ev->capture_method;
+	peer_tx_event->vdev_id = peer_tx_event_ev->vdev_id;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_tx_event_ev->mac_addr,
+				   &peer_tx_event->peer_mac_addr.bytes[0]);
+	peer_tx_event->primary_20mhz_chan =
+		peer_tx_event_ev->chan_mhz;
+	peer_tx_event->bandwidth = peer_tx_event_ev->bandwidth;
+	peer_tx_event->phy_mode = peer_tx_event_ev->phy_mode;
+	peer_tx_event->band_center_freq1 = peer_tx_event_ev->band_center_freq1;
+	peer_tx_event->band_center_freq2 = peer_tx_event_ev->band_center_freq2;
+	peer_tx_event->spatial_streams = peer_tx_event_ev->sts_count;
+	peer_tx_event->correlation_info_1 =
+		peer_tx_event_ev->correlation_info_1;
+	peer_tx_event->correlation_info_2 =
+		peer_tx_event_ev->correlation_info_2;
+	peer_tx_event->status = peer_tx_event_ev->status;
+	peer_tx_event->timestamp_us = peer_tx_event_ev->timestamp_us;
+	peer_tx_event->counter = peer_tx_event_ev->counter;
+	qdf_mem_copy(peer_tx_event->chain_rssi, peer_tx_event_ev->chain_rssi,
+		     sizeof(peer_tx_event->chain_rssi));
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_CFR_ENABLE */
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -11195,7 +11248,8 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_CFR_ENABLE
 	.send_peer_cfr_capture_cmd =
 		send_peer_cfr_capture_cmd_tlv,
-#endif
+	.extract_cfr_peer_tx_event_param = extract_cfr_peer_tx_event_param_tlv,
+#endif /* WLAN_CFR_ENABLE */
 
 };
 
@@ -11504,6 +11558,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_VDEV_BCN_RECEPTION_STATS_EVENTID;
 	event_ids[wmi_roam_blacklist_event_id] = WMI_ROAM_BLACKLIST_EVENTID;
 	event_ids[wmi_wlm_stats_event_id] = WMI_WLM_STATS_EVENTID;
+	event_ids[wmi_peer_cfr_capture_event_id] = WMI_PEER_CFR_CAPTURE_EVENTID;
 }
 
 /**

@@ -1743,5 +1743,17 @@ enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
 QDF_STATUS
 wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
 				      struct peer_cfr_params *param);
+/**
+ * wmi_extract_cfr_peer_tx_event_param() - WMI function to extract cfr tx event
+ * for a peer
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Buffer holding event data
+ * @peer_tx_event: pointer to hold tx event data
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_extract_cfr_peer_tx_event_param(void *wmi_hdl, void *evt_buf,
+				    wmi_cfr_peer_tx_event_param *peer_tx_event);
 #endif /* WLAN_CFR_ENABLE */
 #endif /* _WMI_UNIFIED_API_H_ */
