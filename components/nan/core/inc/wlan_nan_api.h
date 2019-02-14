@@ -184,6 +184,23 @@ struct wlan_nan_rx_ops *nan_psoc_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS
 wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 			     struct policy_mgr_vdev_entry_info *conn_info);
+
+/**
+ * wlan_nan_get_disc_5g_ch: Get NAN Disc 5G channel
+ * @psoc: pointer to psoc object
+ *
+ * Return: NAN Disc 5G channel
+ */
+uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_nan_get_sap_conc_support: Get NAN+SAP conc support
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if NAN+SAP supported else false
+ */
+bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_FEATURE_NAN */
 static inline QDF_STATUS nan_init(void)
 {
@@ -210,6 +227,17 @@ wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 			     struct policy_mgr_vdev_entry_info *conn_info)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _WLAN_NAN_API_H_ */
