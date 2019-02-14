@@ -3293,7 +3293,6 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
  * @peer_unmap_sync - peer unmap sync cb.
  * @bitmap - bitmap indicating special handling of request.
  *
- *
  * Return: None
  */
 static void ol_txrx_peer_detach_sync(void *ppeer,
@@ -3310,6 +3309,23 @@ static void ol_txrx_peer_detach_sync(void *ppeer,
 		pdev->peer_unmap_sync_cb = peer_unmap_sync;
 
 	ol_txrx_peer_detach(peer, bitmap);
+}
+
+/**
+ * ol_txrx_peer_unmap_sync_cb_set() - set peer unmap sync callback
+ * @ppdev - TXRX pdev context
+ * @peer_unmap_sync - peer unmap sync callback
+ *
+ * Return: None
+ */
+static void ol_txrx_peer_unmap_sync_cb_set(
+				struct cdp_pdev *ppdev,
+				ol_txrx_peer_unmap_sync_cb peer_unmap_sync)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
+	if (!pdev->peer_unmap_sync_cb)
+		pdev->peer_unmap_sync_cb = peer_unmap_sync;
 }
 
 /**
@@ -5532,6 +5548,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_mgmt_send_ext = ol_txrx_mgmt_send_ext,
 	.txrx_mgmt_tx_cb_set = ol_txrx_mgmt_tx_cb_set,
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,
+	.txrx_peer_unmap_sync_cb_set = ol_txrx_peer_unmap_sync_cb_set,
 	.txrx_get_tx_pending = ol_txrx_get_tx_pending,
 	.flush_cache_rx_queue = ol_txrx_flush_cache_rx_queue,
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get,

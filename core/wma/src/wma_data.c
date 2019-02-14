@@ -1445,6 +1445,11 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 			wma_mgmt_tx_dload_comp_hldr,
 			wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
+	/* Register callback to send PEER_UNMAP_RESPONSE cmd*/
+	if (cdp_cfg_get_peer_unmap_conf_support(soc))
+		cdp_peer_unmap_sync_cb_set(soc, txrx_pdev,
+					   wma_peer_unmap_conf_cb);
+
 	/* Store the Mac Context */
 	wma_handle->mac_context = cds_handle->mac_context;
 
