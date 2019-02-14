@@ -4940,11 +4940,8 @@ QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 }
 #endif
 
-/* This routine will return operating channel on which other BSS is operating
- * to be used for concurrency mode. If other BSS is not up or not connected it
- * will return 0
- */
-uint8_t sme_get_concurrent_operation_channel(mac_handle_t mac_handle)
+uint8_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
+						       uint8_t vdev_id_to_skip)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -4953,9 +4950,10 @@ uint8_t sme_get_concurrent_operation_channel(mac_handle_t mac_handle)
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
-		channel = csr_get_concurrent_operation_channel(mac);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-			"%s: Other Concurrent Channel: %d", __func__, channel);
+		channel = csr_get_beaconing_concurrent_channel(mac,
+							       vdev_id_to_skip);
+		sme_info("Other Concurrent Channel: %d skipped vdev_id %d",
+			 channel, vdev_id_to_skip);
 		sme_release_global_lock(&mac->sme);
 	}
 

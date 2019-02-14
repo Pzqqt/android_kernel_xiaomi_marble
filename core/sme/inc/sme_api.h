@@ -685,7 +685,20 @@ QDF_STATUS sme_configure_app_type1_params(mac_handle_t mac_handle,
 QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 		tpSirAppType2Params wlanAppType2Params);
 #endif
-uint8_t sme_get_concurrent_operation_channel(mac_handle_t mac_handle);
+/**
+ * sme_get_beaconing_concurrent_operation_channel() - To get concurrent
+ * operating channel of beaconing interface
+ * @mac_handle: Pointer to mac context
+ * @vdev_id_to_skip: channel of which vdev id to skip
+ *
+ * This routine will return operating channel of active AP/GO channel
+ * and will skip the channel of vdev_id_to_skip.
+ * If other no reqested mode is active it will return 0
+ *
+ * Return: uint8_t
+ */
+uint8_t sme_get_beaconing_concurrent_operation_channel(mac_handle_t mac_handle,
+						       uint8_t vdev_id_to_skip);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
 					      uint16_t sap_ch,

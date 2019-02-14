@@ -708,16 +708,6 @@ bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessio
 	return false;
 }
 
-/**
- * csr_get_concurrent_operation_channel() - To get concurrent operating channel
- * @mac_ctx: Pointer to mac context
- *
- * This routine will return operating channel on FIRST BSS that is
- * active/operating to be used for concurrency mode.
- * If other BSS is not up or not connected it will return 0
- *
- * Return: uint8_t
- */
 uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 {
 	struct csr_roam_session *session = NULL;
@@ -742,6 +732,32 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 			return session->connectedProfile.operationChannel;
 
 	}
+	return 0;
+}
+
+uint8_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
+					     uint8_t vdev_id_to_skip)
+{
+	struct csr_roam_session *session = NULL;
+	uint8_t i = 0;
+	enum QDF_OPMODE persona;
+
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
+		if (i == vdev_id_to_skip)
+			continue;
+		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
+			continue;
+		session = CSR_GET_SESSION(mac_ctx, i);
+		if (NULL == session->pCurRoamProfile)
+			continue;
+		persona = session->pCurRoamProfile->csrPersona;
+		if (((persona == QDF_P2P_GO_MODE) ||
+		     (persona == QDF_SAP_MODE)) &&
+		     (session->connectState !=
+		      eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED))
+			return session->connectedProfile.operationChannel;
+	}
+
 	return 0;
 }
 

@@ -969,8 +969,32 @@ uint8_t csr_get_infra_operation_channel(struct mac_context *mac,
 							uint8_t sessionId);
 bool csr_is_session_client_and_connected(struct mac_context *mac,
 		uint8_t sessionId);
-uint8_t csr_get_concurrent_operation_channel(
-	struct mac_context *mac);
+/**
+ * csr_get_concurrent_operation_channel() - To get concurrent operating channel
+ * @mac_ctx: Pointer to mac context
+ *
+ * This routine will return operating channel on FIRST BSS that is
+ * active/operating to be used for concurrency mode.
+ * If other BSS is not up or not connected it will return 0
+ *
+ * Return: uint8_t
+ */
+uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx);
+
+/**
+ * csr_get_beaconing_concurrent_channel() - To get concurrent operating channel
+ * of beaconing interface
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id_to_skip: channel of which vdev id to skip
+ *
+ * This routine will return operating channel of active AP/GO channel
+ * and will skip the channel of vdev_id_to_skip.
+ * If other no reqested mode is active it will return 0
+ *
+ * Return: uint8_t
+ */
+uint8_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
+						 uint8_t vdev_id_to_skip);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t csr_check_concurrent_channel_overlap(
