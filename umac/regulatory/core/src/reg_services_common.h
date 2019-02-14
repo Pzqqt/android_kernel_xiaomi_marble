@@ -497,4 +497,12 @@ uint32_t reg_min_5ghz_ch_num(void);
  * Return: Maximum 5GHz channel number
  */
 uint32_t reg_max_5ghz_ch_num(void);
+
+/**
+ * reg_enable_dfs_channels() - Enable the use of DFS channels
+ * @pdev: The physical dev to enable/disable DFS channels for
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
 #endif

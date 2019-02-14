@@ -538,58 +538,6 @@ QDF_STATUS reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
-QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
-				   bool enable)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
-	struct wlan_objmgr_psoc *psoc;
-	QDF_STATUS status;
-	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("pdev reg component is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (pdev_priv_obj->dfs_enabled == enable) {
-		reg_info("dfs_enabled is already set to %d", enable);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		reg_err("psoc is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	psoc_priv_obj = reg_get_psoc_obj(psoc);
-	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
-		reg_err("psoc reg component is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	reg_info("setting dfs_enabled: %d", enable);
-
-	pdev_priv_obj->dfs_enabled = enable;
-
-	reg_compute_pdev_current_chan_list(pdev_priv_obj);
-
-	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
-
-	/* Fill the ic channel list with the updated current channel
-	 * chan list.
-	 */
-	if (reg_tx_ops->fill_umac_legacy_chanlist)
-		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
-				pdev_priv_obj->cur_chan_list);
-
-	status = reg_send_scheduler_msg_sb(psoc, pdev);
-
-	return status;
-}
-
 /**
  * reg_change_pdev_for_config() - Update user configuration in pdev private obj.
  * @psoc: Pointer to global psoc structure.

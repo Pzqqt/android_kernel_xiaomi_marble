@@ -161,14 +161,6 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country);
 QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc);
 
 /**
- * reg_enable_dfs_channels() - Enable the use of DFS channels
- * @pdev: The physical dev to enable/disable DFS channels for
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
-
-/**
  * reg_get_domain_from_country_code() - Get regdomain from country code
  * @reg_domain_ptr: Pointer to save regdomain
  * @country_alpha2: country string
@@ -319,12 +311,6 @@ static inline QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 }
 
 static inline QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
-						 bool enable)
 {
 	return QDF_STATUS_SUCCESS;
 }
