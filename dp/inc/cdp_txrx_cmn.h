@@ -799,6 +799,28 @@ cdp_mgmt_tx_cb_set(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			(pdev, type, download_cb, ota_ack_cb, ctxt);
 }
 
+static inline void
+cdp_peer_unmap_sync_cb_set(ol_txrx_soc_handle soc,
+			   struct cdp_pdev *pdev,
+			   QDF_STATUS(*unmap_resp_cb)(
+					uint8_t vdev_id,
+					uint32_t peerid_cnt,
+					uint16_t *peerid_list))
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_unmap_sync_cb_set)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_peer_unmap_sync_cb_set(pdev, unmap_resp_cb);
+}
+
 static inline int cdp_get_tx_pending(ol_txrx_soc_handle soc,
 struct cdp_pdev *pdev)
 {

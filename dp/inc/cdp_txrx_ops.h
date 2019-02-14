@@ -144,6 +144,12 @@ struct cdp_cmn_ops {
 						uint16_t *peerid_list),
 				      uint32_t bitmap);
 
+	void (*txrx_peer_unmap_sync_cb_set)(struct cdp_pdev *pdev,
+					    QDF_STATUS(*unmap_resp_cb)(
+						uint8_t vdev_id,
+						uint32_t peerid_cnt,
+						uint16_t *peerid_list));
+
 	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
 	bool (*txrx_get_vow_config_frm_pdev)(struct cdp_pdev *pdev);
 
