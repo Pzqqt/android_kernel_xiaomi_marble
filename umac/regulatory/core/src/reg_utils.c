@@ -464,8 +464,8 @@ QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
 	}
 	if (pdev_priv_obj->num_cache_channels > 0) {
 		pdev_priv_obj->num_cache_channels = 0;
-		qdf_mem_set(&pdev_priv_obj->cache_disable_chan_list,
-			    sizeof(pdev_priv_obj->cache_disable_chan_list), 0);
+		qdf_mem_zero(&pdev_priv_obj->cache_disable_chan_list,
+			     sizeof(pdev_priv_obj->cache_disable_chan_list));
 	}
 
 	for (i = 0; i < num_channels; i++) {

@@ -371,7 +371,7 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	struct freqs_offsets freq_offset;
 
-	qdf_mem_set(&freq_offset, sizeof(freq_offset), 0);
+	qdf_mem_zero(&freq_offset, sizeof(freq_offset));
 	flag = curchan->dfs_ch_flags;
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++)

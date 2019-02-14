@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -694,7 +694,7 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 	dfs_radar_summary_print(dfs, &rs);
 
 	/* Populate dfs_phy_err from rs. */
-	qdf_mem_set(e, sizeof(*e), 0);
+	qdf_mem_zero(e, sizeof(*e));
 	e->rssi = rs.rssi;
 	e->dur = rs.pulse_duration;
 	e->is_pri = 1; /* Always PRI for now */
