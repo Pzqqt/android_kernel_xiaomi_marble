@@ -2794,44 +2794,35 @@ lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	}
 }
 
-/**
- * lim_process_sme_tdls_mgmt_send_req() - send out tdls management frames
- *
- * @mac_ctx - global mac context
- * @msg - message buffer received from SME.
- *
- * Process Send Mgmt Request from SME and transmit to AP.
- *
- * Return: QDF_STATUS_SUCCESS on success, error code otherwise
- */
 QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
-						 uint32_t *msg)
+					      void *msg)
 {
-	/* get all discovery request parameters */
-	tSirTdlsSendMgmtReq *send_req = (tSirTdlsSendMgmtReq *) msg;
+	struct tdls_send_mgmt_request *send_req = msg;
 	struct pe_session *session_entry;
 	uint8_t session_id;
+	uint16_t ie_len;
 	tSirResultCodes result_code = eSIR_SME_INVALID_PARAMETERS;
 
 	pe_debug("Send Mgmt Received");
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-					 send_req->bssid.bytes, &session_id);
-	if (NULL == session_entry) {
+						 send_req->bssid.bytes,
+						 &session_id);
+	if (!session_entry) {
 		pe_err("PE Session does not exist for given sme session_id %d",
-			send_req->sessionId);
+		       send_req->session_id);
 		goto lim_tdls_send_mgmt_error;
 	}
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(session_entry)) {
 		pe_err("send mgmt received in wrong system Role: %d",
-			  GET_LIM_SYSTEM_ROLE(session_entry));
+		       GET_LIM_SYSTEM_ROLE(session_entry));
 		goto lim_tdls_send_mgmt_error;
 	}
 
 	if (lim_is_roam_synch_in_progress(session_entry)) {
 		pe_err("roaming in progress, reject mgmt! for session %d",
-		       send_req->sessionId);
+		       send_req->session_id);
 		result_code = eSIR_SME_REFUSED;
 		goto lim_tdls_send_mgmt_error;
 	}
@@ -2843,15 +2834,17 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 	if ((session_entry->limSmeState != eLIM_SME_ASSOCIATED_STATE) &&
 	    (session_entry->limSmeState != eLIM_SME_LINK_EST_STATE)) {
 		pe_err("send mgmt received in invalid LIMsme state: %d",
-			session_entry->limSmeState);
+		       session_entry->limSmeState);
 		goto lim_tdls_send_mgmt_error;
 	}
 
 	cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
 		SIR_MAC_ACTION_TX, SIR_MAC_MGMT_ACTION,
-		send_req->reqType, send_req->peer_mac.bytes);
+		send_req->req_type, send_req->peer_mac.bytes);
 
-	switch (send_req->reqType) {
+	ie_len = send_req->length - sizeof(*send_req);
+
+	switch (send_req->req_type) {
 	case SIR_MAC_TDLS_DIS_REQ:
 		pe_debug("Transmit Discovery Request Frame");
 		/* format TDLS discovery request frame and transmit it */
@@ -2864,46 +2857,50 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 		pe_debug("Transmit Discovery Response Frame");
 		/* Send a response mgmt action frame */
 		lim_send_tdls_dis_rsp_frame(mac_ctx, send_req->peer_mac,
-			send_req->dialog, session_entry, &send_req->addIe[0],
-			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
+					    send_req->dialog, session_entry,
+					    send_req->add_ie, ie_len);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_SETUP_REQ:
 		pe_debug("Transmit Setup Request Frame");
 		lim_send_tdls_link_setup_req_frame(mac_ctx,
-			send_req->peer_mac, send_req->dialog, session_entry,
-			&send_req->addIe[0],
-			(send_req->length - sizeof(tSirTdlsSendMgmtReq)),
-			send_req->ac);
+						   send_req->peer_mac,
+						   send_req->dialog,
+						   session_entry,
+						   send_req->add_ie, ie_len,
+						   send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_SETUP_RSP:
 		pe_debug("Transmit Setup Response Frame");
 		lim_send_tdls_setup_rsp_frame(mac_ctx,
-			send_req->peer_mac, send_req->dialog, session_entry,
-			send_req->statusCode, &send_req->addIe[0],
-			(send_req->length - sizeof(tSirTdlsSendMgmtReq)),
-			send_req->ac);
+					      send_req->peer_mac,
+					      send_req->dialog, session_entry,
+					      send_req->status_code,
+					      send_req->add_ie, ie_len,
+					      send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_SETUP_CNF:
 		pe_debug("Transmit Setup Confirm Frame");
 		lim_send_tdls_link_setup_cnf_frame(mac_ctx,
-			send_req->peer_mac, send_req->dialog,
-			send_req->peerCapability, session_entry,
-			&send_req->addIe[0],
-			(send_req->length - sizeof(tSirTdlsSendMgmtReq)),
-			send_req->ac);
+						   send_req->peer_mac,
+						   send_req->dialog,
+						   send_req->peer_capability,
+						   session_entry,
+						   send_req->add_ie, ie_len,
+						   send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_TEARDOWN:
 		pe_debug("Transmit Teardown Frame");
 		lim_send_tdls_teardown_frame(mac_ctx,
-			send_req->peer_mac, send_req->statusCode,
-			send_req->responder, session_entry,
-			&send_req->addIe[0],
-			(send_req->length - sizeof(tSirTdlsSendMgmtReq)),
-			send_req->ac);
+					     send_req->peer_mac,
+					     send_req->status_code,
+					     send_req->responder,
+					     session_entry,
+					     send_req->add_ie, ie_len,
+					     send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_PEER_TRAFFIC_IND:
@@ -2920,8 +2917,8 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 
 lim_tdls_send_mgmt_error:
 	lim_send_tdls_comp_mgmt_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
-		 result_code, send_req->sessionId,
-		 send_req->transactionId);
+				    result_code, send_req->session_id,
+				    send_req->transaction_id);
 
 	return QDF_STATUS_SUCCESS;
 }

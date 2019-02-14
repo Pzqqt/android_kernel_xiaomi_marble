@@ -592,8 +592,19 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 
 #ifdef FEATURE_WLAN_TDLS
 void lim_init_tdls_data(struct mac_context *, struct pe_session *);
-QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac,
-						 uint32_t *pMsgBuf);
+
+/**
+ * lim_process_sme_tdls_mgmt_send_req() - send out tdls management frames
+ * @mac_ctx: global mac context
+ * @msg: message buffer received from SME.
+ *
+ * Process Send Mgmt Request from SME and transmit to AP.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error code otherwise
+ */
+QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
+					      void *msg);
+
 QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 					       uint32_t *pMsgBuf);
 QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
