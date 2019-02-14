@@ -441,6 +441,8 @@ typedef enum {
 	eCSR_ROAM_CHANNEL_COMPLETE_IND,
 	eCSR_ROAM_CAC_COMPLETE_IND,
 	eCSR_ROAM_SAE_COMPUTE,
+	/* LFR3 Roam sync complete */
+	eCSR_ROAM_SYNCH_COMPLETE,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

@@ -4701,7 +4701,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 
 static
 QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
-				 struct csr_roam_profile *pProfile,
+				 struct csr_roam_profile *roam_profile,
 				 tSirBssDescription *pBssDesc,
 				 tDot11fBeaconIEs *pIes)
 {
@@ -4720,8 +4720,8 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 
 	sme_debug("session id: %d", sessionId);
 
-	status = csr_roam_prepare_bss_config(mac, pProfile, pBssDesc,
-			pBssConfig, pIes);
+	status = csr_roam_prepare_bss_config(mac, roam_profile, pBssDesc,
+					     pBssConfig, pIes);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		enum csr_roam_substate substate;
 
@@ -4730,11 +4730,11 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 		/* This will allow to pass cbMode during join req */
 		pSession->bssParams.cbMode = pBssConfig->cbMode;
 		/* For IBSS, we need to prepare some more information */
-		if (csr_is_bss_type_ibss(pProfile->BSSType) ||
-				CSR_IS_INFRA_AP(pProfile))
-			csr_roam_prepare_bss_params(mac, sessionId, pProfile,
-				pBssDesc, pBssConfig, pIes);
-
+		if (csr_is_bss_type_ibss(roam_profile->BSSType) ||
+				CSR_IS_INFRA_AP(roam_profile))
+			csr_roam_prepare_bss_params(mac, sessionId,
+						    roam_profile, pBssDesc,
+						    pBssConfig, pIes);
 		/*
 		 * If we are in an IBSS, then stop the IBSS...
 		 * Not worry about WDS connection for now
@@ -4749,10 +4749,10 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 			 * (roaming to a new SSID)...
 			 * Not worry about WDS connection for now
 			 */
-			if (pBssDesc && (csr_is_ibss_bss_desc(pBssDesc) ||
-				!csr_is_ssid_equal(mac,
-					pSession->pConnectBssDesc,
-					pBssDesc, pIes)))
+			if (pBssDesc &&
+			    (csr_is_ibss_bss_desc(pBssDesc) ||
+			     !csr_is_ssid_equal(mac, pSession->pConnectBssDesc,
+						pBssDesc, pIes)))
 				status = csr_roam_issue_disassociate(mac,
 						sessionId, substate, false);
 			else if (pBssDesc)
@@ -4762,23 +4762,24 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 				 * So issue the CFG sets for this new AP. Set
 				 * parameters for this Bss.
 				 */
-				status = csr_roam_set_bss_config_cfg(mac,
-						sessionId, pProfile, pBssDesc,
-						pBssConfig, pIes, false);
-		} else if (pBssDesc ||
-					CSR_IS_INFRA_AP(pProfile)) {
+				status = csr_roam_set_bss_config_cfg(
+						mac, sessionId, roam_profile,
+						pBssDesc, pBssConfig, pIes,
+						false);
+		} else if (pBssDesc || CSR_IS_INFRA_AP(roam_profile)) {
 			/*
 			 * Neither in IBSS nor in Infra. We can go ahead and set
 			 * the cfg for tne new network... nothing to stop.
 			 */
-			bool is11rRoamingFlag = false;
+			bool is_11r_roaming = false;
 
-			is11rRoamingFlag = csr_roam_is11r_assoc(mac,
-							sessionId);
+			is_11r_roaming = csr_roam_is11r_assoc(mac, sessionId);
 			/* Set parameters for this Bss. */
 			status = csr_roam_set_bss_config_cfg(mac, sessionId,
-					pProfile, pBssDesc, pBssConfig, pIes,
-					is11rRoamingFlag);
+							     roam_profile,
+							     pBssDesc,
+							     pBssConfig, pIes,
+							     is_11r_roaming);
 		}
 	} /* Success getting BSS config info */
 	qdf_mem_free(pBssConfig);
@@ -20722,6 +20723,9 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		csr_roam_offload_scan(mac_ctx, session_id,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_CONNECT);
+		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
+				       eCSR_ROAM_SYNCH_COMPLETE,
+				       eCSR_ROAM_RESULT_SUCCESS);
 		return status;
 	default:
 		sme_debug("LFR3: callback reason %d", reason);
@@ -20736,11 +20740,10 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		session->roam_synch_in_progress = false;
 		return status;
 	}
+
 	conn_profile = &session->connectedProfile;
-	csr_roam_stop_network(mac_ctx, session_id,
-		session->pCurRoamProfile,
-		bss_desc,
-		ies_local);
+	csr_roam_stop_network(mac_ctx, session_id, session->pCurRoamProfile,
+			      bss_desc, ies_local);
 	ps_global_info->remain_in_power_active_till_dhcp = false;
 	session->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
@@ -20750,7 +20753,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 	csr_scan_save_roam_offload_ap_to_scan_cache(mac_ctx, roam_synch_data,
-			bss_desc);
+						    bss_desc);
 	roam_info->sessionId = session_id;
 
 	qdf_mem_copy(&roam_info->bssid.bytes, &bss_desc->bssId,
