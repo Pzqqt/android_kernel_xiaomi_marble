@@ -18254,7 +18254,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 				       struct cfg80211_connect_params *req)
 {
 	int status;
-	u16 channel;
+	u16 channel, sap_cnt, sta_cnt;
 	const u8 *bssid = NULL;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 	const u8 *bssid_hint = req->bssid_hint;
@@ -18301,13 +18301,20 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	/*
 	 * Disable NAN Discovery if incoming connection is P2P or if a STA
-	 * connection already exists and if this is a case of STA+STA.
+	 * connection already exists and if this is a case of STA+STA
+	 * or SAP+STA concurrency
 	 */
-	if (adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	    policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
-						      PM_STA_MODE, NULL))
-		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
+	sta_cnt = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							    PM_STA_MODE, NULL);
+	sap_cnt = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							    PM_SAP_MODE, NULL);
 
+	if (adapter->device_mode == QDF_P2P_CLIENT_MODE || sap_cnt || sta_cnt) {
+		hdd_debug("Invalid NAN concurrency. SAP: %d STA: %d P2P: %d",
+			  sap_cnt, sta_cnt,
+			  (adapter->device_mode == QDF_P2P_CLIENT_MODE));
+		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
+	}
 	/*
 	 * STA+NDI concurrency gets preference over NDI+NDI. Disable
 	 * first NDI in case an NDI+NDI concurrency exists.

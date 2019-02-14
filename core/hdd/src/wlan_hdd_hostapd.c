@@ -5586,7 +5586,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
 	hdd_set_connection_in_progress(false);
-
+	policy_mgr_nan_sap_post_enable_conc_check(hdd_ctx->psoc);
 	ret = 0;
 	goto free;
 
@@ -5948,7 +5948,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel, mandt_chnl_list = 0;
 	bool sta_sap_scc_on_dfs_chan;
-	uint16_t sta_cnt;
+	uint16_t sta_cnt, sap_cnt;
 	bool val;
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
 
@@ -6026,9 +6026,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 							hdd_ctx->psoc);
-	sta_cnt =
-		policy_mgr_mode_specific_connection_count(
-					hdd_ctx->psoc, PM_STA_MODE, NULL);
+	sta_cnt = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							    PM_STA_MODE, NULL);
+	sap_cnt = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							    PM_SAP_MODE, NULL);
 
 	hdd_debug("sta_sap_scc_on_dfs_chan %u, sta_cnt %u",
 		  sta_sap_scc_on_dfs_chan, sta_cnt);
@@ -6080,9 +6081,17 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_abg;
 	}
 
-	/* Disable NAN Discovery before starting P2P GO */
-	if (adapter->device_mode == QDF_P2P_GO_MODE)
+	/* Disable NAN Disc before starting P2P GO or STA+SAP or SAP+SAP */
+	if (adapter->device_mode == QDF_P2P_GO_MODE || sta_cnt || sap_cnt) {
+		hdd_debug("Invalid NAN concurrency. SAP: %d STA: %d P2P_GO: %d",
+			  sap_cnt, sta_cnt,
+			  (adapter->device_mode == QDF_P2P_GO_MODE));
 		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
+	}
+
+	if (!policy_mgr_nan_sap_pre_enable_conc_check(hdd_ctx->psoc,
+						      PM_SAP_MODE, channel))
+		hdd_debug("NAN disabled due to concurrency constraints");
 
 	/* check if concurrency is allowed */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,

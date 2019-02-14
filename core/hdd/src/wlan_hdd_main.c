@@ -8787,11 +8787,15 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		 * If STA+SAP is doing SCC & g_sta_sap_scc_on_lte_coex_chan
 		 * is set, no need to move SAP.
 		 */
-		if (policy_mgr_is_sta_sap_scc(hdd_ctxt->psoc,
-			adapter->session.ap.operating_channel) &&
-			scc_on_lte_coex)
-			hdd_debug("SAP is allowed on SCC channel, no need to move SAP");
-		else {
+		if ((policy_mgr_is_sta_sap_scc(
+		     hdd_ctxt->psoc,
+		     adapter->session.ap.operating_channel) &&
+		     scc_on_lte_coex) ||
+		     policy_mgr_nan_sap_scc_on_unsafe_ch_chk(
+		     hdd_ctxt->psoc,
+		     adapter->session.ap.operating_channel)) {
+			hdd_debug("SAP allowed in unsafe SCC channel");
+		} else {
 			for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
 				if (adapter->session.ap.operating_channel ==
 					hdd_ctxt->unsafe_channel_list[i]) {
