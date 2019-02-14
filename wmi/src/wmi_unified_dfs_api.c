@@ -88,7 +88,7 @@ QDF_STATUS wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
 	if (pdev_idx < 0)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	qdf_mem_zero(&pparam, sizeof(pparam));
 	pparam.param_id = wmi_pdev_param_use_nol;
 	pparam.param_value = usenol;
 
@@ -108,7 +108,7 @@ wmi_send_subchan_marking_pdev_param(void *wmi_hdl,
 	if (pdev_idx < 0)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	qdf_mem_zero(&pparam, sizeof(pparam));
 	pparam.param_id = wmi_pdev_param_sub_channel_marking;
 	pparam.param_value = subchanmark;
 
