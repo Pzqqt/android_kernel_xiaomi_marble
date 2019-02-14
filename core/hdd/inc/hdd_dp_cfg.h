@@ -648,7 +648,7 @@
 		"RX_THREAD_CPU_AFFINITY_MASK", \
 		0, \
 		0xFF, \
-		0x02, \
+		0xFE, \
 		CFG_VALUE_OR_DEFAULT, \
 		"CPU mask to affine Rx_thread")
 #else

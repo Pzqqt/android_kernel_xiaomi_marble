@@ -923,9 +923,10 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		skb->protocol = eth_type_trans(skb, skb->dev);
 
 		/* hold configurable wakelock for unicast traffic */
-		if (hdd_ctx->config->rx_wakelock_timeout &&
-			skb->pkt_type != PACKET_BROADCAST &&
-			skb->pkt_type != PACKET_MULTICAST) {
+		if (!hdd_is_current_high_throughput(hdd_ctx) &&
+		    hdd_ctx->config->rx_wakelock_timeout &&
+		    skb->pkt_type != PACKET_BROADCAST &&
+		    skb->pkt_type != PACKET_MULTICAST) {
 			cds_host_diag_log_work(&hdd_ctx->rx_wake_lock,
 						   hdd_ctx->config->rx_wakelock_timeout,
 						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
