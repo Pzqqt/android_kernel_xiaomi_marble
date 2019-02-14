@@ -273,6 +273,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	bool is_frag, is_first_msdu;
 	bool drop_mpdu = false;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
+	uint64_t nbuf_paddr = 0;
 
 	msdu = 0;
 
@@ -318,21 +319,29 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			uint32_t l2_hdr_offset;
 			struct dp_rx_desc *rx_desc = NULL;
 
-			/* WAR for duplicate buffers received from HW */
-			if (qdf_unlikely(dp_pdev->mon_last_buf_cookie ==
-			    msdu_list.sw_cookie[i])) {
-				/* Skip duplicate buffer and drop subsequent
-				 * buffers in this MPDU
-				 */
-				drop_mpdu = true;
-				dp_pdev->rx_mon_stats.dup_mon_buf_cnt++;
-				continue;
-			}
 			rx_desc = dp_rx_get_mon_desc(soc,
 						     msdu_list.sw_cookie[i]);
 
 			qdf_assert_always(rx_desc);
 			msdu = rx_desc->nbuf;
+
+			if (msdu)
+				nbuf_paddr = qdf_nbuf_get_frag_paddr(msdu, 0);
+			/* WAR for duplicate buffers received from HW */
+			if (qdf_unlikely(dp_pdev->mon_last_buf_cookie ==
+				msdu_list.sw_cookie[i] ||
+				!msdu ||
+				msdu_list.paddr[i] != nbuf_paddr ||
+				!rx_desc->in_use)) {
+				/* Skip duplicate buffer and drop subsequent
+				 * buffers in this MPDU
+				 */
+				drop_mpdu = true;
+				dp_pdev->rx_mon_stats.dup_mon_buf_cnt++;
+				dp_pdev->mon_last_linkdesc_paddr =
+					buf_info.paddr;
+				continue;
+			}
 
 			if (rx_desc->unmapped == 0) {
 				qdf_nbuf_unmap_single(soc->osdev, msdu,
@@ -341,6 +350,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			}
 
 			if (drop_mpdu) {
+				dp_pdev->mon_last_linkdesc_paddr =
+					buf_info.paddr;
 				qdf_nbuf_free(msdu);
 				msdu = NULL;
 				goto next_msdu;

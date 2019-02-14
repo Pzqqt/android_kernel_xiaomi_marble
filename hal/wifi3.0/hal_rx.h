@@ -1941,6 +1941,8 @@ struct hal_rx_msdu_list {
 	struct hal_rx_msdu_desc_info msdu_info[HAL_RX_NUM_MSDU_DESC];
 	uint32_t sw_cookie[HAL_RX_NUM_MSDU_DESC];
 	uint8_t rbm[HAL_RX_NUM_MSDU_DESC];
+	/* physical address of the msdu */
+	uint64_t paddr[HAL_RX_NUM_MSDU_DESC];
 };
 
 struct hal_buf_info {
@@ -2038,8 +2040,12 @@ static inline void hal_rx_msdu_list_get(struct hal_soc *hal_soc,
 		msdu_list->sw_cookie[i] =
 			 HAL_RX_BUF_COOKIE_GET(
 				&msdu_details[i].buffer_addr_info_details);
-		 msdu_list->rbm[i] = HAL_RX_BUF_RBM_GET(
+		msdu_list->rbm[i] = HAL_RX_BUF_RBM_GET(
 				&msdu_details[i].buffer_addr_info_details);
+		msdu_list->paddr[i] = HAL_RX_BUFFER_ADDR_31_0_GET(
+			   &msdu_details[i].buffer_addr_info_details) |
+			   (uint64_t)HAL_RX_BUFFER_ADDR_39_32_GET(
+			   &msdu_details[i].buffer_addr_info_details) << 32;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] i=%d sw_cookie=%d",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
