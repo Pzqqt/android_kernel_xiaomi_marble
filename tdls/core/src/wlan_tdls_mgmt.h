@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,38 +41,6 @@
 struct tdls_rx_mgmt_event {
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 	struct tdls_rx_mgmt_frame *rx_mgmt;
-};
-
-/*
- * struct tdls_send_mgmt_request - tdls management request
- * @message_type: type of pe message
- * @length: length of the frame.
- * @session_id: session id
- * @transaction_id: transaction ID for cmd
- * @req_type: type of action frame
- * @dialog: dialog token used in the frame.
- * @status_code: status to be incuded in the frame.
- * @responder: tdls request type
- * @peer_capability: peer capability information
- * @bssid: bssid
- * @peer_mac: mac address of the peer
- * @add_ie: additional ie's to be included
- */
-struct tdls_send_mgmt_request {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;
-	uint16_t transaction_id;
-	uint8_t req_type;
-	uint8_t dialog;
-	uint16_t status_code;
-	uint8_t responder;
-	uint32_t peer_capability;
-	struct qdf_mac_addr bssid;
-	struct qdf_mac_addr peer_mac;
-	enum wifi_traffic_ac ac;
-	/* Variable length. Dont add any field after this. */
-	uint8_t add_ie[1];
 };
 
 /**
