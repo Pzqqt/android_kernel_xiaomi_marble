@@ -1562,6 +1562,9 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_ROAM_FT_OPEN_ENABLE);
 	lfr->roam_force_rssi_trigger =
 		cfg_get(psoc, CFG_LFR_ROAM_FORCE_RSSI_TRIGGER);
+	lfr->roaming_scan_policy =
+		cfg_get(psoc, CFG_ROAM_SCAN_SCAN_POLICY);
+
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
 	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);

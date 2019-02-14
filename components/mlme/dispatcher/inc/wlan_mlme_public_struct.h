@@ -1316,6 +1316,7 @@ struct bss_load_trigger {
  * @roam_trigger_reason_bitmask:    Contains roam_trigger_reasons
  * @enable_ftopen:                  Enable/disable FT open feature
  * @roam_force_rssi_trigger:        Force RSSI trigger or not
+ * @roaming_scan_policy:            Config roaming scan policy in fw
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1402,6 +1403,7 @@ struct wlan_mlme_lfr_cfg {
 	bool enable_ftopen;
 	bool roam_force_rssi_trigger;
 	struct bss_load_trigger bss_load_trig;
+	bool roaming_scan_policy;
 };
 
 /**

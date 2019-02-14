@@ -17180,6 +17180,10 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->AcUapsd.acbk_uapsd = SIR_UAPSD_GET(ACBK, session->uapsd_mask);
 	req_buf->AcUapsd.acvi_uapsd = SIR_UAPSD_GET(ACVI, session->uapsd_mask);
 	req_buf->AcUapsd.acvo_uapsd = SIR_UAPSD_GET(ACVO, session->uapsd_mask);
+
+	req_buf->roaming_scan_policy =
+			mac_ctx->mlme_cfg->lfr.roaming_scan_policy;
+
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 

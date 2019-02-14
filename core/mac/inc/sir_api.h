@@ -2345,6 +2345,7 @@ struct roam_offload_scan_req {
 	/* bss load triggered roam related params */
 	bool bss_load_trig_enabled;
 	struct wmi_bss_load_config bss_load_config;
+	bool roaming_scan_policy;
 };
 
 struct roam_offload_scan_rsp {

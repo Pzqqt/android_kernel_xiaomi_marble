@@ -2126,6 +2126,30 @@
 #define LFR_SUBNET_DETECTION_ALL
 #endif
 
+/*
+ * <ini>
+ * roaming_scan_policy - To config roaming scan policy
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to configure roaming scan behavior from HOST
+ * 0 : DBS scan
+ * 1 : Non-DBS scan
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_SCAN_SCAN_POLICY CFG_INI_BOOL( \
+		"roaming_scan_policy", \
+		0, \
+		"Config roam scan policy")
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -2203,6 +2227,7 @@
 	CFG(CFG_LFR_ROAM_SCAN_TRIGGER_REASON_BITMASK) \
 	CFG(CFG_LFR_ROAM_FT_OPEN_ENABLE) \
 	CFG(CFG_LFR_ROAM_FORCE_RSSI_TRIGGER) \
+	CFG(CFG_ROAM_SCAN_SCAN_POLICY) \
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL \
 	LFR_SUBNET_DETECTION_ALL
