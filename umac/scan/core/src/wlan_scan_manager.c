@@ -644,19 +644,24 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 				 * of channels in every transition by using
 				 * burst scan.
 				 */
-				req->scan_req.burst_duration =
-					scm_scan_get_burst_duration(
-						req->scan_req.dwell_time_active,
-						scan_obj->miracast_enabled);
+				if (scan_obj->scan_def.go_scan_burst_duration)
+					req->scan_req.burst_duration =
+						scan_obj->
+						scan_def.go_scan_burst_duration;
+				else
+					req->scan_req.burst_duration =
+						scm_scan_get_burst_duration(
+							req->scan_req.
+							dwell_time_active,
+							scan_obj->
+							miracast_enabled);
 				break;
 			}
-			if ((sta_active || p2p_cli_present) &&
-			    !req->scan_req.burst_duration) {
-				/*
-				 * Typical background scan.
-				 * Disable burst scan for now.
-				 */
-				req->scan_req.burst_duration = 0;
+			if ((sta_active || p2p_cli_present)) {
+				if (scan_obj->scan_def.sta_scan_burst_duration)
+					req->scan_req.burst_duration =
+						scan_obj->scan_def.
+						sta_scan_burst_duration;
 				break;
 			}
 
@@ -707,11 +712,17 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 			req->scan_req.dwell_time_passive =
 				req->scan_req.dwell_time_active;
 		}
-		req->scan_req.burst_duration = 0;
-		if (utils_is_dfs_ch(pdev, ap_chan))
+
+		if (scan_obj->scan_def.ap_scan_burst_duration) {
 			req->scan_req.burst_duration =
-				SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
-				req->scan_req.dwell_time_active;
+				scan_obj->scan_def.ap_scan_burst_duration;
+		} else {
+			req->scan_req.burst_duration = 0;
+			if (utils_is_dfs_ch(pdev, ap_chan))
+				req->scan_req.burst_duration =
+					SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
+					req->scan_req.dwell_time_active;
+		}
 	}
 }
 
@@ -860,22 +871,27 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 			else
 				req->scan_req.repeat_probe_time =
 					req->scan_req.dwell_time_active / 3;
-
-			req->scan_req.burst_duration =
-					BURST_SCAN_MAX_NUM_OFFCHANNELS *
-					req->scan_req.dwell_time_active;
-			if (req->scan_req.burst_duration >
-			    P2P_SCAN_MAX_BURST_DURATION) {
-				uint8_t channels =
-					P2P_SCAN_MAX_BURST_DURATION /
-					req->scan_req.dwell_time_active;
-				if (channels)
-					req->scan_req.burst_duration =
+			if (scan_obj->scan_def.p2p_scan_burst_duration) {
+				req->scan_req.burst_duration =
+					scan_obj->scan_def.
+					p2p_scan_burst_duration;
+			} else {
+				req->scan_req.burst_duration =
+						BURST_SCAN_MAX_NUM_OFFCHANNELS *
+						req->scan_req.dwell_time_active;
+				if (req->scan_req.burst_duration >
+				    P2P_SCAN_MAX_BURST_DURATION) {
+					uint8_t channels =
+						P2P_SCAN_MAX_BURST_DURATION /
+						req->scan_req.dwell_time_active;
+					if (channels)
+						req->scan_req.burst_duration =
 						channels *
 						req->scan_req.dwell_time_active;
-				else
-					req->scan_req.burst_duration =
+					else
+						req->scan_req.burst_duration =
 						P2P_SCAN_MAX_BURST_DURATION;
+				}
 			}
 			req->scan_req.scan_ev_bss_chan = false;
 		}

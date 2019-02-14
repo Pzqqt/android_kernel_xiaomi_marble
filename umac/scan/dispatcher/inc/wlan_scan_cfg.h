@@ -943,6 +943,108 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"ext scan adaptive dwell mode")
 
+/*
+ * <ini>
+ * sta_scan_burst_duration - Burst duration in case of split scan.
+ * @Min: 0
+ * @Max: 180
+ * @Default: 0
+ *
+ * This ini is used to set burst duration of sta scan requests.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_STA_SCAN_BURST_DURATION CFG_INI_UINT( \
+			"sta_scan_burst_duration", \
+			0, \
+			180, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"sta scan burst duration")
+
+/*
+ * <ini>
+ * p2p_scan_burst_duration - Burst duration in case of split scan for p2p scan.
+ * @Min: 0
+ * @Max: 180
+ * @Default: 0
+ *
+ * This ini is used to set burst duration of scan for p2p scan requests.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_P2P_SCAN_BURST_DURATION CFG_INI_UINT( \
+			"p2p_scan_burst_duration", \
+			0, \
+			180, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"p2p scan burst duration")
+/*
+ * <ini>
+ * go_scan_burst_duration - Burst duration in case of split scan when GO is
+ * active.
+ * @Min: 0
+ * @Max: 180
+ * @Default: 0
+ *
+ * This ini is used to set burst duration of scan when GO is active.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_GO_SCAN_BURST_DURATION CFG_INI_UINT( \
+			"go_scan_burst_duration", \
+			0, \
+			180, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"go scan burst duration")
+
+/*
+ * <ini>
+ * ap_scan_burst_duration - Burst duration in case of split scan when ap
+ * is active.
+ * @Min: 0
+ * @Max: 32
+ * @Default: 0
+ *
+ * This ini is used to set burst duration of scan when SAP is active.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_AP_SCAN_BURST_DURATION CFG_INI_UINT( \
+			"ap_scan_burst_duration", \
+			0, \
+			32, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"ap scan burst duration")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
@@ -964,6 +1066,10 @@
 	CFG(CFG_ENABLE_MAC_ADDR_SPOOFING) \
 	CFG(CFG_SCAN_AGING_TIME) \
 	CFG(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE) \
+	CFG(CFG_STA_SCAN_BURST_DURATION) \
+	CFG(CFG_P2P_SCAN_BURST_DURATION) \
+	CFG(CFG_GO_SCAN_BURST_DURATION) \
+	CFG(CFG_AP_SCAN_BURST_DURATION) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */

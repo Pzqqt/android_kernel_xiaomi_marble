@@ -993,6 +993,15 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.extscan_adaptive_dwell_mode =
 			cfg_get(psoc, CFG_ADAPTIVE_EXTSCAN_DWELL_MODE);
 
+	/* init burst durations */
+	scan_obj->scan_def.sta_scan_burst_duration =
+				cfg_get(psoc, CFG_STA_SCAN_BURST_DURATION);
+	scan_obj->scan_def.p2p_scan_burst_duration =
+				cfg_get(psoc, CFG_P2P_SCAN_BURST_DURATION);
+	scan_obj->scan_def.go_scan_burst_duration =
+				cfg_get(psoc, CFG_GO_SCAN_BURST_DURATION);
+	scan_obj->scan_def.ap_scan_burst_duration =
+				cfg_get(psoc, CFG_AP_SCAN_BURST_DURATION);
 	/* scan contrl flags */
 	scan_obj->scan_def.scan_f_passive = true;
 	scan_obj->scan_def.scan_f_ofdm_rates = true;
