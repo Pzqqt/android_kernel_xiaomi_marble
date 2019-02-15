@@ -1738,10 +1738,7 @@ remove_meta_hdr:
 		return NULL;
 	}
 
-	if (mhdr->flags & METAHDR_FLAG_NOQOS)
-		msdu_info->tid = HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST;
-	else
-		msdu_info->tid = qdf_nbuf_get_priority(nbuf);
+	msdu_info->tid = qdf_nbuf_get_priority(nbuf);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s , Meta hdr %0x %0x %0x %0x %0x %0x"
@@ -1987,6 +1984,9 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	if ((vdev->sec_type != cdp_sec_type_none) &&
 			(mhdr->flags & METAHDR_FLAG_NOENCRYPT))
 		no_enc_frame = 1;
+
+	if (mhdr->flags & METAHDR_FLAG_NOQOS)
+		qdf_nbuf_set_priority(nbuf, HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST);
 
 	if ((mhdr->flags & METAHDR_FLAG_INFO_UPDATED) &&
 		       !no_enc_frame) {
