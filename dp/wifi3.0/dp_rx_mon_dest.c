@@ -1245,7 +1245,7 @@ QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 	for (i = 0; i < num_link_desc_banks; i++) {
 		baseaddr = &dp_pdev->link_desc_banks[mac_for_pdev][i].
 			base_paddr_unaligned;
-		if (!soc->dp_soc_reinit) {
+		if (!dp_is_soc_reinit(soc)) {
 			dp_pdev->link_desc_banks[mac_for_pdev][i].
 				base_vaddr_unaligned =
 				qdf_mem_alloc_consistent(soc->osdev,
@@ -1290,7 +1290,7 @@ QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 		 */
 		baseaddr = &dp_pdev->link_desc_banks[mac_for_pdev][i].
 			base_paddr_unaligned;
-		if (!soc->dp_soc_reinit) {
+		if (!dp_is_soc_reinit(soc)) {
 			dp_pdev->link_desc_banks[mac_for_pdev][i].
 				base_vaddr_unaligned =
 				qdf_mem_alloc_consistent(soc->osdev,

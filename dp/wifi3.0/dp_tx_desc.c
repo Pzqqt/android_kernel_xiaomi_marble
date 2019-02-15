@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,7 +101,7 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 
 	desc_size = DP_TX_DESC_SIZE(sizeof(*tx_desc_elem));
 	tx_desc_pool->elem_size = desc_size;
-	if (!soc->dp_soc_reinit)
+	if (!dp_is_soc_reinit(soc))
 		qdf_mem_multi_pages_alloc(soc->osdev,
 					  &tx_desc_pool->desc_pages,
 					  desc_size, num_elem,
@@ -196,7 +196,7 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	soc->tx_ext_desc[pool_id].elem_size = HAL_TX_EXT_DESC_WITH_META_DATA;
 	soc->tx_ext_desc[pool_id].elem_count = num_elem;
 	memctx = qdf_get_dma_mem_context((&soc->tx_ext_desc[pool_id]), memctx);
-	if (!soc->dp_soc_reinit) {
+	if (!dp_is_soc_reinit(soc)) {
 		qdf_mem_multi_pages_alloc(soc->osdev,
 					  &soc->tx_ext_desc[pool_id].
 					  desc_pages,
@@ -220,7 +220,7 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	 */
 	soc->tx_ext_desc[pool_id].link_elem_size =
 		sizeof(struct dp_tx_ext_desc_elem_s);
-	if (!soc->dp_soc_reinit) {
+	if (!dp_is_soc_reinit(soc)) {
 		qdf_mem_multi_pages_alloc(soc->osdev,
 					  &soc->tx_ext_desc[pool_id].
 					  desc_link_pages,
@@ -341,7 +341,7 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	tso_desc_pool = &soc->tx_tso_desc[pool_id];
 	tso_desc_pool->num_free = 0;
 	desc_size = DP_TX_DESC_SIZE(sizeof(struct qdf_tso_seg_elem_t));
-	if (!soc->dp_soc_reinit)
+	if (!dp_is_soc_reinit(soc))
 		qdf_mem_multi_pages_alloc(soc->osdev,
 					  &tso_desc_pool->desc_pages,
 					  desc_size,
@@ -419,7 +419,7 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	tso_num_seg_pool = &soc->tx_tso_num_seg[pool_id];
 	tso_num_seg_pool->num_free = 0;
 	desc_size = DP_TX_DESC_SIZE(sizeof(struct qdf_tso_num_seg_elem_t));
-	if (!soc->dp_soc_reinit)
+	if (!dp_is_soc_reinit(soc))
 		qdf_mem_multi_pages_alloc(soc->osdev,
 					  &tso_num_seg_pool->desc_pages,
 					  desc_size,

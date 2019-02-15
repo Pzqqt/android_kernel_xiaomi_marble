@@ -1147,7 +1147,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
 	srng->num_entries = num_entries;
 
-	if (!soc->dp_soc_reinit) {
+	if (!dp_is_soc_reinit(soc)) {
 		srng->base_vaddr_unaligned =
 			qdf_mem_alloc_consistent(soc->osdev,
 						 soc->osdev->dev,
@@ -1269,7 +1269,7 @@ static void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 	int ring_type, int ring_num)
 {
-	if (!soc->dp_soc_reinit) {
+	if (!dp_is_soc_reinit(soc)) {
 		if (!srng->hal_srng && (srng->alloc_size == 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  FL("Ring type: %d, num:%d not setup"),
@@ -1884,7 +1884,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		total_mem_size, num_link_desc_banks);
 
 	for (i = 0; i < num_link_desc_banks; i++) {
-		if (!soc->dp_soc_reinit) {
+		if (!dp_is_soc_reinit(soc)) {
 			baseaddr = &soc->link_desc_banks[i].
 					base_paddr_unaligned;
 			soc->link_desc_banks[i].base_vaddr_unaligned =
@@ -1918,7 +1918,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		/* Allocate last bank in case total memory required is not exact
 		 * multiple of max_alloc_size
 		 */
-		if (!soc->dp_soc_reinit) {
+		if (!dp_is_soc_reinit(soc)) {
 			baseaddr = &soc->link_desc_banks[i].
 					base_paddr_unaligned;
 			soc->link_desc_banks[i].base_vaddr_unaligned =
@@ -2008,7 +2008,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 		for (i = 0; i < num_scatter_bufs; i++) {
 			baseaddr = &soc->wbm_idle_scatter_buf_base_paddr[i];
-			if (!soc->dp_soc_reinit) {
+			if (!dp_is_soc_reinit(soc)) {
 				buf_size = soc->wbm_idle_scatter_buf_size;
 				soc->wbm_idle_scatter_buf_base_vaddr[i] =
 					qdf_mem_alloc_consistent(soc->osdev,
@@ -3169,7 +3169,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = NULL;
 
-	if (soc->dp_soc_reinit)
+	if (dp_is_soc_reinit(soc))
 		pdev = soc->pdev_list[pdev_id];
 	else
 		pdev = qdf_mem_malloc(sizeof(*pdev));
@@ -3684,7 +3684,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 
-	if (soc->dp_soc_reinit) {
+	if (dp_is_soc_reinit(soc)) {
 		dp_pdev_detach(txrx_pdev, force);
 	} else {
 		dp_pdev_deinit(txrx_pdev, force);
@@ -3935,7 +3935,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
-	if (soc->dp_soc_reinit) {
+	if (dp_is_soc_reinit(soc)) {
 		dp_soc_detach(txrx_soc);
 	} else {
 		dp_soc_deinit(txrx_soc);
@@ -9816,6 +9816,17 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 		is_hw_dbs_2x2_capable(soc->ctrl_psoc);
 
 	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
+}
+
+/*
+* dp_is_soc_reinit() - Check if soc reinit is true
+* @soc: DP SoC context
+*
+* Return: true or false
+*/
+bool dp_is_soc_reinit(struct dp_soc *soc)
+{
+	return soc->dp_soc_reinit;
 }
 
 /*
