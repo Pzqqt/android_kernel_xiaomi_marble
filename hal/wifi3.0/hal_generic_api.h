@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1527,12 +1527,15 @@ static inline void hal_srng_src_hw_init_generic(void *halsoc,
 	 * pointers are not required since this ring is completely managed
 	 * by WBM HW
 	 */
+	reg_val = 0;
 	if (srng->ring_id != HAL_SRNG_WBM_IDLE_LINK) {
 		tp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
 			((unsigned long)(srng->u.src_ring.tp_addr) -
 			(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
 		SRNG_SRC_REG_WRITE(srng, TP_ADDR_LSB, tp_addr & 0xffffffff);
 		SRNG_SRC_REG_WRITE(srng, TP_ADDR_MSB, tp_addr >> 32);
+	} else {
+		reg_val |= SRNG_SM(SRNG_SRC_FLD(MISC, RING_ID_DISABLE), 1);
 	}
 
 	/* Initilaize head and tail pointers to indicate ring is empty */
@@ -1540,7 +1543,7 @@ static inline void hal_srng_src_hw_init_generic(void *halsoc,
 	SRNG_SRC_REG_WRITE(srng, TP, 0);
 	*(srng->u.src_ring.tp_addr) = 0;
 
-	reg_val = ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
+	reg_val |= ((srng->flags & HAL_SRNG_DATA_TLV_SWAP) ?
 			SRNG_SM(SRNG_SRC_FLD(MISC, DATA_TLV_SWAP_BIT), 1) : 0) |
 			((srng->flags & HAL_SRNG_RING_PTR_SWAP) ?
 			SRNG_SM(SRNG_SRC_FLD(MISC, HOST_FW_SWAP_BIT), 1) : 0) |
@@ -1559,7 +1562,6 @@ static inline void hal_srng_src_hw_init_generic(void *halsoc,
 	reg_val |= 0x40;
 
 	SRNG_SRC_REG_WRITE(srng, MISC, reg_val);
-
 }
 
 /**
