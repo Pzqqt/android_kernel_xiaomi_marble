@@ -351,17 +351,14 @@ struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
 	return vdev;
 }
 
-void __hdd_objmgr_put_vdev(struct hdd_adapter *adapter, const char *func)
+void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func)
 {
-	if (!adapter) {
-		hdd_err("Adapter is NULL (via %s)", func);
+	if (!vdev) {
+		hdd_err("VDEV is NULL (via %s)", func);
 		return;
 	}
 
-	qdf_spin_lock_bh(&adapter->vdev_lock);
-	if (adapter->vdev)
-		wlan_objmgr_vdev_release_ref(adapter->vdev, WLAN_OSIF_ID);
-	qdf_spin_unlock_bh(&adapter->vdev_lock);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 }
 
 int hdd_objmgr_set_peer_mlme_auth_state(struct wlan_objmgr_vdev *vdev,

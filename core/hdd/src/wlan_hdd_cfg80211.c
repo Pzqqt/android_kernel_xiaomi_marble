@@ -4950,7 +4950,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	if (!vdev)
 		goto end;
 	status = ucfg_pmo_cache_gtk_offload_req(vdev, gtk_req);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to cache GTK Offload");
 
@@ -5471,7 +5471,7 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 		ret_val = -EINVAL;
 		hdd_err("Invalid RESTRICT_OFFCHAN setting");
 	}
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	return ret_val;
 }
 
@@ -5814,7 +5814,7 @@ static int hdd_config_modulated_dtim(struct hdd_adapter *adapter,
 
 	status = ucfg_pmo_config_modulated_dtim(vdev, modulated_dtim);
 
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return qdf_status_to_os_return(status);
 }
@@ -5839,7 +5839,7 @@ static int hdd_config_listen_interval(struct hdd_adapter *adapter,
 
 	status = ucfg_pmo_config_listen_interval(vdev, listen_interval);
 
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return qdf_status_to_os_return(status);
 }
@@ -13924,7 +13924,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			if (!vdev)
 				return -EINVAL;
 			ret = wlan_cfg80211_tdls_update_peer(vdev, mac, params);
-			hdd_objmgr_put_vdev(adapter);
+			hdd_objmgr_put_vdev(vdev);
 #endif
 		}
 	}
@@ -14023,7 +14023,7 @@ static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
 					     key_index);
 	if (errno) {
 		hdd_err("add_ibss_key failed, errno: %d", errno);
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 		return errno;
 	}
 	/* Save the keys here and call set_key for setting
@@ -14031,7 +14031,7 @@ static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
 	 */
 	wlan_cfg80211_store_key(vdev, key_index, WLAN_CRYPTO_KEY_TYPE_UNICAST,
 				mac_addr, params);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	adapter->session.station.ibss_enc_key_installed = 1;
 
 	return 0;
@@ -14054,7 +14054,7 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
 					     key_index);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return errno;
 }
@@ -14092,7 +14092,7 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
 					     key_index);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	if (!errno && adapter->send_mode_change) {
 		wlan_hdd_send_mode_change_event();
 		adapter->send_mode_change = false;
@@ -14163,7 +14163,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 					WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					WLAN_CRYPTO_KEY_TYPE_GROUP),
 					mac_address.bytes, params);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	if (errno)
 		return errno;
 	switch (adapter->device_mode) {
@@ -15687,7 +15687,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		goto ret_status;
 	}
 	hdd_notify_teardown_tdls_links(vdev);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
@@ -15837,7 +15837,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			goto conn_failure;
 		}
 		ucfg_pmo_flush_gtk_offload_req(vdev);
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 		roam_profile->csrPersona = adapter->device_mode;
 
 		if (operatingChannel) {
@@ -16757,7 +16757,7 @@ static void hdd_set_crypto_key_mgmt_param(struct hdd_adapter *adapter)
 		HDD_SET_BIT(key_mgmt, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT);
 
 	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT, key_mgmt);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 }
 
 #else
@@ -17229,7 +17229,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	if (!vdev)
 		return -EINVAL;
 	hdd_populate_crypto_params(vdev, req);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(adapter, req->auth_type);
@@ -18103,7 +18103,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		/* First clean up the tdls peers if any */
 		hdd_notify_sta_disconnect(adapter->vdev_id,
 					  false, true, vdev);
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 
 		hdd_info("Disconnect from userspace; reason:%d (%s)",
 			 reason, hdd_ieee80211_reason_code_to_str(reason));
@@ -19028,7 +19028,7 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 			if (vdev) {
 				status = wlan_cfg80211_tdls_add_peer(vdev,
 								     mac);
-				hdd_objmgr_put_vdev(adapter);
+				hdd_objmgr_put_vdev(vdev);
 			}
 		}
 	}
@@ -19637,7 +19637,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 		goto out;
 	}
 	status = ucfg_pmo_cache_gtk_offload_req(vdev, gtk_req);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to cache GTK Offload");
 		result = qdf_status_to_os_return(status);

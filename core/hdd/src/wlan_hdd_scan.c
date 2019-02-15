@@ -688,7 +688,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		ucfg_p2p_status_scan(vdev);
 
 	status = wlan_cfg80211_scan(vdev, request, &params);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 error:
 	if (params.default_ie.ptr)
 		qdf_mem_free(params.default_ie.ptr);
@@ -1312,7 +1312,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 			ucfg_get_scan_backoff_multiplier(hdd_ctx->psoc);
 	ret = wlan_cfg80211_sched_scan_start(vdev, request,
 					     scan_backoff_multiplier);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return ret;
 }
@@ -1371,7 +1371,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 	if (!vdev)
 		return -EINVAL;
 	ret = wlan_cfg80211_sched_scan_stop(vdev);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return ret;
 }

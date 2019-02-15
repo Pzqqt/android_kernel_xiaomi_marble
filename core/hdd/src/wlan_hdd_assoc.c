@@ -3809,7 +3809,7 @@ static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 	ret = wlan_cfg80211_crypto_add_key(vdev,
 					   WLAN_CRYPTO_KEY_TYPE_UNICAST, 0);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 	if (ret != 0) {
 		hdd_err("crypto add key fail, status: %d", ret);
 		return QDF_STATUS_E_FAILURE;
@@ -3918,7 +3918,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 				return QDF_STATUS_E_FAILURE;
 			wlan_crypto_update_set_key_peer(vdev, true, 0,
 							&roam_info->peerMac);
-			hdd_objmgr_put_vdev(adapter);
+			hdd_objmgr_put_vdev(vdev);
 
 			hdd_debug("New peer joined set PTK encType=%d",
 				 encr_type);

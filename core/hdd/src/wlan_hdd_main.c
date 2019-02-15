@@ -779,7 +779,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 					adapter->vdev_id, INVALID_SCAN_ID,
 					true);
 		}
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 		cds_flush_work(&adapter->scan_block_work);
 		/* Need to clean up blocked scan request */
 		wlan_hdd_cfg80211_scan_block_cb(&adapter->scan_block_work);
@@ -4006,13 +4006,13 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 
 	status = pmo_vdev_ready(vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 		return qdf_status_to_os_return(status);
 	}
 
 	status = ucfg_reg_11d_vdev_created_update(vdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 		return qdf_status_to_os_return(status);
 	}
 
@@ -4021,7 +4021,7 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 	else
 		status = ucfg_pmo_enhanced_mc_filter_disable(vdev);
 
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	return qdf_status_to_os_return(status);
 }
@@ -4050,7 +4050,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	ucfg_pmo_del_wow_pattern(vdev);
 	status = ucfg_reg_11d_vdev_delete_update(vdev);
 	ucfg_scan_vdev_set_disable(vdev, REASON_VDEV_DOWN);
-	hdd_objmgr_put_vdev(adapter);
+	hdd_objmgr_put_vdev(vdev);
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
@@ -4256,7 +4256,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		if (!vdev)
 			goto hdd_vdev_destroy_procedure;
 		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
-		hdd_objmgr_put_vdev(adapter);
+		hdd_objmgr_put_vdev(vdev);
 	}
 
 	hdd_store_nss_chains_cfg_in_vdev(adapter);
@@ -5474,7 +5474,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			vdev = hdd_objmgr_get_vdev(adapter);
 			if (vdev) {
 				wlan_cfg80211_sched_scan_stop(vdev);
-				hdd_objmgr_put_vdev(adapter);
+				hdd_objmgr_put_vdev(vdev);
 			}
 		}
 
@@ -5616,7 +5616,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (vdev) {
 			if (policy_mgr_is_dnsc_set(vdev))
 				wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
-			hdd_objmgr_put_vdev(adapter);
+			hdd_objmgr_put_vdev(vdev);
 		}
 
 #ifdef WLAN_OPEN_SOURCE
@@ -5705,7 +5705,7 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 			vdev = hdd_objmgr_get_vdev(adapter);
 			if (vdev) {
 				wlan_cfg80211_sched_scan_stop(vdev);
-				hdd_objmgr_put_vdev(adapter);
+				hdd_objmgr_put_vdev(vdev);
 			}
 		}
 		break;
@@ -5772,7 +5772,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			vdev = hdd_objmgr_get_vdev(adapter);
 			if (vdev) {
 				hdd_notify_tdls_reset_adapter(vdev);
-				hdd_objmgr_put_vdev(adapter);
+				hdd_objmgr_put_vdev(vdev);
 			}
 			adapter->session.station.hdd_reassoc_scenario = false;
 		}

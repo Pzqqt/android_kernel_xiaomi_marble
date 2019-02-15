@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,16 +146,17 @@ struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
 					       const char *func);
 
 /**
- * hdd_objmgr_put_vdev() - Release reference of vdev from adapter
- * @adapter: hdd adapter
+ * hdd_objmgr_put_vdev() - Release reference of vdev object
+ * @vdev: pointer to vdev object
  *
- * This API releases vdev object reference from hdd adapter
+ * This API releases vdev object reference which was acquired using
+ * hdd_objmgr_get_vdev().
  *
  * Return: void
  */
-#define hdd_objmgr_put_vdev(adapter) \
-	__hdd_objmgr_put_vdev(adapter, __func__)
-void __hdd_objmgr_put_vdev(struct hdd_adapter *adapter, const char *func);
+#define hdd_objmgr_put_vdev(vdev) \
+	__hdd_objmgr_put_vdev(vdev, __func__)
+void __hdd_objmgr_put_vdev(struct wlan_objmgr_vdev *vdev, const char *func);
 
 /**
  * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
