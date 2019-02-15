@@ -32,6 +32,8 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 
+#ifdef CONVERGED_TDLS_ENABLE
+
 /**
  * ucfg_tdls_init() - TDLS module initialization API
  *
@@ -253,4 +255,63 @@ QDF_STATUS ucfg_set_tdls_offchan_mode(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
 					     int offchanoffset);
+
+#else
+
+static inline
+QDF_STATUS ucfg_tdls_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_tdls_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void ucfg_tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr,
+				 struct qdf_mac_addr *dest_mac_addr)
+{
+}
+
+static inline
+void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *mac_addr)
+{
+}
+
+static inline
+QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* CONVERGED_TDLS_ENABLE */
 #endif
