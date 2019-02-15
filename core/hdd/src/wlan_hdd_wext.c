@@ -70,6 +70,7 @@
 #include "qdf_delayed_work_test.h"
 #include "qdf_hashtable_test.h"
 #include "qdf_periodic_work_test.h"
+#include "qdf_slist_test.h"
 #include "qdf_talloc_test.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
@@ -5867,6 +5868,7 @@ struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "qdf_ht", .callback = qdf_ht_unit_test },
 	{ .name = "qdf_periodic_work",
 	  .callback = qdf_periodic_work_unit_test },
+	{ .name = "qdf_slist", .callback = qdf_slist_unit_test },
 	{ .name = "qdf_talloc", .callback = qdf_talloc_unit_test },
 	{ .name = "qdf_types", .callback = qdf_types_unit_test },
 };
