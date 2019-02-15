@@ -2772,6 +2772,9 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	/* This will indicate HAL to "allocate" a new STA index */
 	pAddStaParams->staIdx = staIdx;
 	pAddStaParams->updateSta = updateSta;
+	qdf_mem_copy(&pAddStaParams->mbssid_info,
+		     &pe_session->pLimJoinReq->bssDescription.mbssid_info,
+		     sizeof(struct scan_mbssid_info));
 
 	pAddStaParams->shortPreambleSupported =
 					mac->mlme_cfg->ht_caps.short_preamble;

@@ -5542,6 +5542,10 @@ static QDF_STATUS wma_indicate_start_success(tp_wma_handle wma,
 
 	param.vdev_id = params->smesessionId;
 	param.assoc_id = params->assocId;
+	param.profile_idx = params->mbssid_info.profile_num;
+	param.profile_num = params->mbssid_info.profile_count;
+	qdf_mem_copy(&param.trans_bssid, &params->mbssid_info.trans_bssid,
+		     QDF_MAC_ADDR_SIZE);
 	status = wma_send_vdev_up_to_fw(wma, &param, params->bssId);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",

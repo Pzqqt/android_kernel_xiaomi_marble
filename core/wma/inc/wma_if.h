@@ -178,6 +178,7 @@ struct sAniProbeRspStruct {
  * @nss: Return the number of spatial streams supported
  * @stbc_capable: stbc capable
  * @max_amsdu_num: Maximum number of MSDUs in a tx aggregate frame
+ * @mbssid_info: Multiple bssid information
  *
  * This structure contains parameter required for
  * add sta request of upper layer.
@@ -274,6 +275,7 @@ typedef struct {
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
 	uint32_t nss;
+	struct scan_mbssid_info mbssid_info;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
 	tDot11fIEhe_cap he_config;
