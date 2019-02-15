@@ -2517,19 +2517,6 @@ struct sir_antenna_mode_resp {
 	enum set_antenna_mode_status status;
 };
 
-#ifdef FEATURE_WLAN_TDLS
-/* TDLS Request struct SME-->PE */
-typedef struct sSirTdlsDelStaReq {
-	uint16_t messageType;   /* eWNI_SME_TDLS_DISCOVERY_START_REQ */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	/* For multi-session, for PE to locate peSession ID */
-	struct qdf_mac_addr bssid;
-	struct qdf_mac_addr peermac;
-} tSirTdlsDelStaReq, *tpSirSmeTdlsDelStaReq;
-#endif /* FEATURE_WLAN_TDLS */
-
 /* Reset AP Caps Changed */
 typedef struct sSirResetAPCapsChange {
 	uint16_t messageType;

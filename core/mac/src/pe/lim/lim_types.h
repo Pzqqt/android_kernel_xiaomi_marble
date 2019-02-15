@@ -618,8 +618,18 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 					    void *msg);
 
+/**
+ * lim_process_sme_tdls_del_sta_req() - process TDLS Del STA
+ * @mac_ctx: global mac context
+ * @msg: message buffer received from SME.
+ *
+ * Process TDLS Delete Station request
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error code otherwise
+ */
 QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
-					       uint32_t *pMsgBuf);
+					    void *msg);
+
 void lim_send_sme_mgmt_tx_completion(
 		struct mac_context *mac,
 		uint32_t sme_session_id,

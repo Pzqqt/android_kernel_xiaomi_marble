@@ -3019,27 +3019,23 @@ lim_tdls_add_sta_error:
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * Process Del Sta Request from SME .
- */
 QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
-					       uint32_t *pMsgBuf)
+					    void *msg)
 {
-	/* get all discovery request parameters */
-	tSirTdlsDelStaReq *pDelStaReq = (tSirTdlsDelStaReq *) pMsgBuf;
+	struct tdls_del_sta_req *del_sta_req = msg;
 	struct pe_session *pe_session;
-	uint8_t sessionId;
+	uint8_t session_id;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	pe_debug("TDLS Delete STA Request Received");
 	pe_session =
-		pe_find_session_by_bssid(mac, pDelStaReq->bssid.bytes,
-					 &sessionId);
+		pe_find_session_by_bssid(mac, del_sta_req->bssid.bytes,
+					 &session_id);
 	if (pe_session == NULL) {
-		pe_err("PE Session does not exist for given sme sessionId: %d",
-			pDelStaReq->sessionId);
-		lim_send_sme_tdls_del_sta_rsp(mac, pDelStaReq->sessionId,
-					      pDelStaReq->peermac, NULL,
+		pe_err("PE Session does not exist for given vdev id: %d",
+		       del_sta_req->session_id);
+		lim_send_sme_tdls_del_sta_rsp(mac, del_sta_req->session_id,
+					      del_sta_req->peermac, NULL,
 					      QDF_STATUS_E_FAILURE);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3047,15 +3043,15 @@ QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(pe_session)) {
 		pe_err("Del sta received in wrong system Role %d",
-			  GET_LIM_SYSTEM_ROLE(pe_session));
+		       GET_LIM_SYSTEM_ROLE(pe_session));
 		goto lim_tdls_del_sta_error;
 	}
 
 	if (lim_is_roam_synch_in_progress(pe_session)) {
 		pe_err("roaming in progress, reject del sta! for session %d",
-		       pDelStaReq->sessionId);
-		lim_send_sme_tdls_del_sta_rsp(mac, pDelStaReq->sessionId,
-					      pDelStaReq->peermac, NULL,
+		       del_sta_req->session_id);
+		lim_send_sme_tdls_del_sta_rsp(mac, del_sta_req->session_id,
+					      del_sta_req->peermac, NULL,
 					      QDF_STATUS_E_FAILURE);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3067,19 +3063,19 @@ QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 	if ((pe_session->limSmeState != eLIM_SME_ASSOCIATED_STATE) &&
 	    (pe_session->limSmeState != eLIM_SME_LINK_EST_STATE)) {
 
-		pe_err("Del Sta received in invalid LIMsme state: (%d",
-			pe_session->limSmeState);
+		pe_err("Del Sta received in invalid LIMsme state: %d",
+		       pe_session->limSmeState);
 		goto lim_tdls_del_sta_error;
 	}
 
-	status = lim_tdls_del_sta(mac, pDelStaReq->peermac,
+	status = lim_tdls_del_sta(mac, del_sta_req->peermac,
 				  pe_session, true);
 	if (status == QDF_STATUS_SUCCESS)
 		return status;
 
 lim_tdls_del_sta_error:
 	lim_send_sme_tdls_del_sta_rsp(mac, pe_session->smeSessionId,
-				      pDelStaReq->peermac, NULL, QDF_STATUS_E_FAILURE);
+				      del_sta_req->peermac, NULL, QDF_STATUS_E_FAILURE);
 
 	return status;
 }

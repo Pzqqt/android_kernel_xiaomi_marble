@@ -30,25 +30,6 @@
 	(TDLS_SETUP_CONFIRM >= action))
 
 /**
- * struct tdls_del_sta_req - TDLS Request struct TDLS module --> PE
- *                           same as sSirTdlsDelStaReq
- * @message_type: message type eWNI_SME_TDLS_DEL_STA_REQ
- * @length: message length
- * @session_id: session id
- * @transaction_id: transaction id for cmd
- * @bssid: bssid
- * @peermac: MAC address of the TDLS peer
- */
-struct tdls_del_sta_req {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;
-	uint16_t transaction_id;
-	struct qdf_mac_addr bssid;
-	struct qdf_mac_addr peermac;
-};
-
-/**
  * tdls_process_add_peer() - add TDLS peer
  * @req: TDLS add peer request
  *
