@@ -1248,4 +1248,44 @@ struct tdls_send_mgmt_request {
 	uint8_t add_ie[1];
 };
 
+/**
+ * struct tdls_add_sta_req - TDLS request struct TDLS module --> PE
+ * @message_type: eWNI_SME_TDLS_ADD_STA_REQ
+ * @length: message length
+ * @session_id: session id
+ * @transaction_id: transaction id for cmd
+ * @bssid: bssid
+ * @tdls_oper: add peer type
+ * @peermac: MAC address for TDLS peer
+ * @capability: mac capability as sSirMacCapabilityInfo
+ * @extn_capability: extent capability
+ * @supported_rates_length: rates length
+ * @supported_rates: supported rates
+ * @htcap_present: ht capability present
+ * @ht_cap: ht capability
+ * @vhtcap_present: vht capability present
+ * @vht_cap: vht capability
+ * @uapsd_queues: uapsd queue as sSirMacQosInfoStation
+ * @max_sp: maximum service period
+ */
+struct tdls_add_sta_req {
+	uint16_t message_type;
+	uint16_t length;
+	uint8_t session_id;
+	uint16_t transaction_id;
+	struct qdf_mac_addr bssid;
+	enum tdls_add_oper tdls_oper;
+	struct qdf_mac_addr peermac;
+	uint16_t capability;
+	uint8_t extn_capability[WLAN_MAC_MAX_EXTN_CAP];
+	uint8_t supported_rates_length;
+	uint8_t supported_rates[WLAN_MAC_MAX_SUPP_RATES];
+	uint8_t htcap_present;
+	struct htcap_cmn_ie ht_cap;
+	uint8_t vhtcap_present;
+	struct vhtcap vht_cap;
+	uint8_t uapsd_queues;
+	uint8_t max_sp;
+};
+
 #endif
