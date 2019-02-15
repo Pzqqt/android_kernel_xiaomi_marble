@@ -814,10 +814,11 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		key_id = mac_ctx->mlme_cfg->wep_params.wep_default_key_id;
 		val = SIR_MAC_KEY_LENGTH;
 		if (LIM_IS_AP_ROLE(pe_session)) {
-			tpSirKeys key_ptr =
-				&pe_session->WEPKeyMaterial[key_id].key[0];
-			qdf_mem_copy(defaultkey, key_ptr->key,
-					key_ptr->keyLength);
+			qdf_status = mlme_get_wep_key(pe_session->vdev,
+						      wep_params,
+						      (MLME_WEP_DEFAULT_KEY_1 +
+						       key_id), defaultkey,
+						      &val);
 		} else {
 			qdf_status = mlme_get_wep_key(pe_session->vdev,
 						      wep_params,
@@ -1419,12 +1420,11 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		val = SIR_MAC_KEY_LENGTH;
 
 		if (LIM_IS_AP_ROLE(pe_session)) {
-			tpSirKeys key_ptr;
-
-			key_ptr = &pe_session->WEPKeyMaterial[key_id].key[0];
-			qdf_mem_copy(defaultkey, key_ptr->key,
-					key_ptr->keyLength);
-			val = key_ptr->keyLength;
+			qdf_status = mlme_get_wep_key(pe_session->vdev,
+						      wep_params,
+						      (MLME_WEP_DEFAULT_KEY_1 +
+						       key_id), defaultkey,
+						      &val);
 		} else {
 			qdf_status = mlme_get_wep_key(pe_session->vdev,
 						      wep_params,

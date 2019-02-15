@@ -1659,6 +1659,54 @@ hdd_hostapd_apply_action_oui(struct hdd_context *hdd_ctx,
 		hdd_err("Failed to disable aggregation for peer");
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(adapter->vdev, 0);
+	if (!crypto_key) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "Crypto KEY is NULL");
+		return;
+	}
+	ucfg_crypto_set_key_req(adapter->vdev, crypto_key,
+				WLAN_CRYPTO_KEY_TYPE_UNICAST);
+	wma_update_set_key(adapter->vdev_id, true, 1, crypto_key->cipher_type);
+	ucfg_crypto_set_key_req(adapter->vdev, crypto_key,
+				WLAN_CRYPTO_KEY_TYPE_GROUP);
+
+	wma_update_set_key(adapter->vdev_id, true, 0, crypto_key->cipher_type);
+}
+#else
+static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
+{
+	struct hdd_ap_ctx *ap_ctx;
+	QDF_STATUS status;
+	uint8_t i;
+
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	/* Set group key / WEP key every time when BSS is restarted */
+	if (ap_ctx->group_key.keyLength) {
+		status = wlansap_set_key_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					     &ap_ctx->group_key);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("wlansap_set_key_sta failed");
+	} else {
+		for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
+			if (!ap_ctx->wep_key[i].keyLength)
+				continue;
+
+			status = wlansap_set_key_sta(WLAN_HDD_GET_SAP_CTX_PTR
+						     (adapter),
+						     &ap_ctx->wep_key[i]);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				hdd_err("set_key failed idx: %d", i);
+		}
+	}
+}
+#endif
+
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *context)
 {
@@ -1861,26 +1909,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					       adapter->vdev_id,
 					       ap_ctx->wep_def_key_idx);
 
-		/* Set group key / WEP key every time when BSS is restarted */
-		if (ap_ctx->group_key.keyLength) {
-			status = wlansap_set_key_sta(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				&ap_ctx->group_key);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				hdd_err("wlansap_set_key_sta failed");
-		} else {
-			for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
-				if (!ap_ctx->wep_key[i].keyLength)
-					continue;
-
-				status = wlansap_set_key_sta(
-					WLAN_HDD_GET_SAP_CTX_PTR
-						(adapter),
-					&ap_ctx->wep_key[i]);
-				if (!QDF_IS_STATUS_SUCCESS(status))
-					hdd_err("set_key failed idx: %d", i);
-			}
-		}
+		hdd_hostapd_set_sap_key(adapter);
 
 		/* Fill the params for sending IWEVCUSTOM Event
 		 * with SOFTAP.enabled

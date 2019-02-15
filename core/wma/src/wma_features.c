@@ -5566,6 +5566,7 @@ static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
 	struct wlan_crypto_key *crypto_key;
 	struct wlan_objmgr_vdev *vdev;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BCAST_INIT;
 
 	if (!wma) {
 		wma_err("WMA context does not exist");
@@ -5606,7 +5607,7 @@ static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
 		key_info_mc->smesessionId = session_id;
 		key_info_mc->status = QDF_STATUS_SUCCESS;
 		key_info_mc->key[0].keyLength = crypto_key->keylen;
-		qdf_mem_copy(&key_info_mc->macaddr, &crypto_key->macaddr,
+		qdf_mem_copy(&key_info_mc->macaddr, &bcast_mac,
 			     QDF_MAC_ADDR_SIZE);
 		wma_send_msg_high_priority(wma, WMA_SET_BSSKEY_RSP,
 					   key_info_mc, 0);

@@ -14265,7 +14265,8 @@ static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
 }
 
 static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
-				bool pairwise, u8 key_index)
+				bool pairwise, u8 key_index,
+				enum wlan_crypto_cipher_type cipher)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int errno = 0;
@@ -14275,12 +14276,16 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
-	if (hostapd_state->bss_state == BSS_START)
+	if (hostapd_state->bss_state == BSS_START) {
 		errno =
 		wlan_cfg80211_crypto_add_key(vdev, (pairwise ?
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
 					     key_index);
+		if (!errno)
+			wma_update_set_key(adapter->vdev_id, pairwise,
+					   key_index, cipher);
+	}
 	hdd_objmgr_put_vdev(vdev);
 
 	return errno;
@@ -14362,9 +14367,9 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	hdd_debug("converged Device_mode %s(%d)",
+	hdd_debug("converged Device_mode %s(%d) index %d, pairwise %d",
 		  qdf_opmode_str(adapter->device_mode),
-		  adapter->device_mode);
+		  adapter->device_mode, key_index, pairwise);
 	 mac_handle = hdd_ctx->mac_handle;
 
 	if (hdd_is_btk_enc_type(params->cipher))
@@ -14383,7 +14388,9 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     adapter->session.station.conn_info.bssid.bytes,
 			     QDF_MAC_ADDR_SIZE);
 	} else {
-		qdf_mem_copy(mac_address.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		if (mac_addr)
+			qdf_mem_copy(mac_address.bytes, mac_addr,
+				     QDF_MAC_ADDR_SIZE);
 	}
 	errno = wlan_cfg80211_store_key(vdev, key_index,
 					(pairwise ?
@@ -14393,6 +14400,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	hdd_objmgr_put_vdev(vdev);
 	if (errno)
 		return errno;
+	cipher = osif_nl_to_crypto_cipher_type(params->cipher);
 	switch (adapter->device_mode) {
 	case QDF_IBSS_MODE:
 		errno = wlan_hdd_add_key_ibss(adapter, pairwise, key_index,
@@ -14403,23 +14411,22 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		break;
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
-		errno = wlan_hdd_add_key_sap(adapter, pairwise, key_index);
+		errno = wlan_hdd_add_key_sap(adapter, pairwise,
+					     key_index, cipher);
 		break;
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		wlan_hdd_add_key_sta(adapter, pairwise, key_index,
-				     mac_handle, &ft_mode);
+		errno = wlan_hdd_add_key_sta(adapter, pairwise, key_index,
+					     mac_handle, &ft_mode);
 		if (ft_mode)
 			return 0;
 		break;
 	default:
 		break;
 	}
-	if (!errno) {
-		cipher = osif_nl_to_crypto_cipher_type(params->cipher);
+	if (!errno && (adapter->device_mode != QDF_SAP_MODE))
 		wma_update_set_key(adapter->vdev_id, pairwise, key_index,
 				   cipher);
-	}
 	hdd_exit();
 
 	return errno;
@@ -15010,7 +15017,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		return ret;
 	crypto_key = wlan_crypto_get_key(adapter->vdev, key_index);
 	hdd_debug("unicast %d, cipher %d", unicast, crypto_key->cipher_type);
-	if (crypto_key->cipher_type != WLAN_CRYPTO_CIPHER_WEP)
+	if (!IS_WEP_CIPHER(crypto_key->cipher_type))
 		return 0;
 	sta_ctx =  WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (unicast)
@@ -15031,6 +15038,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
 					     key_index);
+		wma_update_set_key(adapter->vdev_id, unicast, key_index,
+				   crypto_key->cipher_type);
 	}
 
 	return ret;
@@ -15108,7 +15117,6 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			tCsrKeys *Keys = &roam_profile->Keys;
 
 			hdd_debug("Default tx key index %d", key_index);
-
 			Keys->defaultIndex = (u8) key_index;
 			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 			setKey.keyId = key_index;
@@ -17447,6 +17455,38 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 	return false;
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static void wlan_hdd_cfg80211_store_wep_key(struct hdd_adapter *adapter,
+					    struct wlan_objmgr_vdev *vdev,
+					    struct cfg80211_connect_params *req)
+{
+	struct key_params params;
+
+	qdf_mem_zero(&params, sizeof(params));
+	params.cipher = req->crypto.ciphers_pairwise[0];
+	params.key_len = req->key_len;
+	params.key = req->key;
+	wlan_cfg80211_store_key(vdev, req->key_idx,
+				WLAN_CRYPTO_KEY_TYPE_UNICAST,
+				NULL, &params);
+}
+#else
+static void wlan_hdd_cfg80211_store_wep_key(struct hdd_adapter *adapter,
+					    struct wlan_objmgr_vdev *vdev,
+					    struct cfg80211_connect_params *req)
+{
+	struct csr_roam_profile *roam_profile;
+
+	roam_profile = hdd_roam_profile(adapter);
+	hdd_debug("setting default wep key, key_idx = %hu key_len %hu",
+		  req->key_idx, req->key_len);
+	qdf_mem_copy(&roam_profile->Keys.KeyMaterial[req->key_idx][0],
+		     req->key, req->key_len);
+	roam_profile->Keys.KeyLength[req->key_idx] = req->key_len;
+	roam_profile->Keys.defaultIndex = req->key_idx;
+}
+#endif /* !CRYPTO_SET_KEY_CONVERGED */
+
 /**
  * wlan_hdd_cfg80211_set_privacy() - set security parameters during connection
  * @adapter: Pointer to adapter
@@ -17475,7 +17515,6 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	if (!vdev)
 		return -EINVAL;
 	hdd_populate_crypto_params(vdev, req);
-	hdd_objmgr_put_vdev(vdev);
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(adapter, req->auth_type);
@@ -17485,7 +17524,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 
 		if (0 > status) {
 			hdd_err("Failed to set fils config");
-			return status;
+			goto release_vdev_ref;
 		}
 	}
 
@@ -17495,7 +17534,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 			wlan_hdd_set_akm_suite(adapter, req->crypto.akm_suites[0]);
 		if (0 > status) {
 			hdd_err("Failed to set akm suite");
-			return status;
+			goto release_vdev_ref;
 		}
 	}
 
@@ -17507,14 +17546,14 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 						      true);
 		if (0 > status) {
 			hdd_err("Failed to set unicast cipher type");
-			return status;
+			goto release_vdev_ref;
 		}
 	} else {
 		/*Reset previous cipher suite to none */
 		status = wlan_hdd_cfg80211_set_cipher(adapter, 0, true);
 		if (0 > status) {
 			hdd_err("Failed to set unicast cipher type");
-			return status;
+			goto release_vdev_ref;
 		}
 	}
 
@@ -17525,7 +17564,7 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 
 	if (0 > status) {
 		hdd_err("Failed to set mcast cipher type");
-		return status;
+		goto release_vdev_ref;
 	}
 #ifdef WLAN_FEATURE_11W
 	roam_profile->MFPEnabled = (req->mfp == NL80211_MFP_REQUIRED);
@@ -17537,14 +17576,12 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 			wlan_hdd_cfg80211_set_ie(adapter, req->ie, req->ie_len);
 		if (0 > status) {
 			hdd_err("Failed to parse the WPA/RSN IE");
-			return status;
+			goto release_vdev_ref;
 		}
 	}
 
 	/*incase of WEP set default key information */
 	if (req->key && req->key_len) {
-		u8 key_len = req->key_len;
-		u8 key_idx = req->key_idx;
 		u32 cipher = req->crypto.ciphers_pairwise[0];
 
 		if ((WLAN_CIPHER_SUITE_WEP40 == cipher) ||
@@ -17554,23 +17591,18 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 
 			if (key_mgmt & HDD_AUTH_KEY_MGMT_802_1X) {
 				hdd_err("Dynamic WEP not supported");
-				return -EOPNOTSUPP;
+				status = -EOPNOTSUPP;
+				goto release_vdev_ref;
 			}
 
-			if ((eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES >= key_len)
-			    && (CSR_MAX_NUM_KEY > key_idx)) {
-				hdd_debug("setting default wep key, key_idx = %hu key_len %hu",
-					   key_idx, key_len);
-				qdf_mem_copy(&roam_profile->Keys.
-					     KeyMaterial[key_idx][0],
-					     req->key, key_len);
-				roam_profile->Keys.
-					KeyLength[key_idx] = (u8) key_len;
-				roam_profile->Keys.
-					defaultIndex = (u8) key_idx;
-			}
+			if ((eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES >=
+			    req->key_len) && (CSR_MAX_NUM_KEY > req->key_idx))
+				wlan_hdd_cfg80211_store_wep_key(adapter,
+								vdev, req);
 		}
 	}
+release_vdev_ref:
+	hdd_objmgr_put_vdev(vdev);
 
 	return status;
 }

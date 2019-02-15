@@ -9790,22 +9790,19 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 	cipher = wlan_crypto_get_cipher(vdev, unicast, key_idx);
-	if (cipher == WLAN_CRYPTO_CIPHER_WEP_40 ||
-	    cipher == WLAN_CRYPTO_CIPHER_WEP_104) {
+	if (IS_WEP_CIPHER(cipher)) {
 		wep_key_idx = wlan_crypto_get_default_key_idx(vdev, !unicast);
 		crypto_key = wlan_crypto_get_key(vdev, wep_key_idx);
 	} else {
 		/* TODO: Add code for storing FILS keys in case of add_key */
 		crypto_key = wlan_crypto_get_key(vdev, key_idx);
 	}
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	sme_debug("session:%d, cipher:%d, ucast:%d, idx:%d, wep:%d, add:%d",
 		  session_id, cipher, unicast, key_idx, wep_key_idx, add_key);
-	if (cipher != WLAN_CRYPTO_CIPHER_NONE ||
-	    cipher != WLAN_CRYPTO_CIPHER_WEP_40 ||
-	    cipher != WLAN_CRYPTO_CIPHER_WEP_104 ||
-	    !add_key)
+	if (!IS_WEP_CIPHER(cipher))
 		return QDF_STATUS_E_INVAL;
 
 	return ucfg_crypto_set_key_req(vdev, crypto_key, (unicast ?

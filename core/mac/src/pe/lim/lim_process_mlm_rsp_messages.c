@@ -2979,7 +2979,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	} else {
 		lim_copy_set_key_req_mac_addr(
 				&set_key_cnf.peer_macaddr,
-				&((tpSetStaKeyParams)msg->bodyptr)->macaddr);
+				&((tpSetBssKeyParams)msg->bodyptr)->macaddr);
 	}
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
