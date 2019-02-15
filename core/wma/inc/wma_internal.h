@@ -1231,9 +1231,16 @@ static inline QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 QDF_STATUS wma_set_wisa_params(tp_wma_handle wma, struct sir_wisa_params *wisa);
 
 #ifdef DHCP_SERVER_OFFLOAD
-QDF_STATUS wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
-					  tSirDhcpSrvOffloadInfo *
-					  pDhcpSrvOffloadInfo);
+/**
+ * wma_process_dhcpserver_offload() - enable DHCP server offload
+ * @wma_handle: wma handle
+ * @params: DHCP server offload information
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
+			       struct dhcp_offload_info_params *params);
 #endif
 
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING

@@ -10466,33 +10466,26 @@ QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t mac_handle,
 }
 
 #ifdef DHCP_SERVER_OFFLOAD
-/*
- * sme_set_dhcp_srv_offload() -
- * SME API to set DHCP server offload info
- *
- * mac_handle
- * pDhcpSrvInfo : DHCP server offload info struct
- * Return QDF_STATUS
- */
-QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
-				    tSirDhcpSrvOffloadInfo *pDhcpSrvInfo)
+QDF_STATUS
+sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
+			 struct dhcp_offload_info_params *dhcp_srv_info)
 {
 	struct scheduler_msg message = {0};
-	tSirDhcpSrvOffloadInfo *pSmeDhcpSrvInfo;
+	struct dhcp_offload_info_params *payload;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	pSmeDhcpSrvInfo = qdf_mem_malloc(sizeof(*pSmeDhcpSrvInfo));
-	if (!pSmeDhcpSrvInfo)
+	payload = qdf_mem_malloc(sizeof(*payload));
+	if (!payload)
 		return QDF_STATUS_E_NOMEM;
 
-	*pSmeDhcpSrvInfo = *pDhcpSrvInfo;
+	*payload = *dhcp_srv_info;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		/* serialize the req through MC thread */
 		message.type = WMA_SET_DHCP_SERVER_OFFLOAD_CMD;
-		message.bodyptr = pSmeDhcpSrvInfo;
+		message.bodyptr = payload;
 
 		if (!QDF_IS_STATUS_SUCCESS
 			    (scheduler_post_message(QDF_MODULE_ID_SME,
@@ -10502,14 +10495,14 @@ QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s:WMA_SET_DHCP_SERVER_OFFLOAD_CMD failed",
 				  __func__);
-			qdf_mem_free(pSmeDhcpSrvInfo);
+			qdf_mem_free(payload);
 			status = QDF_STATUS_E_FAILURE;
 		}
 		sme_release_global_lock(&mac->sme);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_acquire_global_lock error!", __func__);
-		qdf_mem_free(pSmeDhcpSrvInfo);
+		qdf_mem_free(payload);
 	}
 
 	return status;

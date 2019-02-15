@@ -1290,8 +1290,16 @@ QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t mac_handle,
 				    struct scan_mac_oui *scan_mac_oui);
 
 #ifdef DHCP_SERVER_OFFLOAD
-QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
-		tSirDhcpSrvOffloadInfo * pDhcpSrvInfo);
+/**
+ * sme_set_dhcp_srv_offload() - Set DHCP server offload
+ * @mac_handle: Handle to the global MAC context
+ * @dhcp_srv_info : DHCP server offload info struct
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
+			 struct dhcp_offload_info_params *dhcp_srv_info);
 #endif /* DHCP_SERVER_OFFLOAD */
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
 QDF_STATUS sme_set_led_flashing(mac_handle_t mac_handle, uint8_t type,

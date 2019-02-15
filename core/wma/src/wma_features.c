@@ -3852,38 +3852,24 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
 
 #ifdef DHCP_SERVER_OFFLOAD
-/**
- * wma_process_dhcpserver_offload() - enable DHCP server offload
- * @wma_handle: wma handle
- * @pDhcpSrvOffloadInfo: DHCP server offload info
- *
- * Return: 0 for success or error code
- */
-QDF_STATUS wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
-					  tSirDhcpSrvOffloadInfo *
-					  pDhcpSrvOffloadInfo)
+QDF_STATUS
+wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
+			       struct dhcp_offload_info_params *params)
 {
-	struct dhcp_offload_info_params params = {0};
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	params.vdev_id = pDhcpSrvOffloadInfo->vdev_id;
-	params.dhcp_offload_enabled =
-				pDhcpSrvOffloadInfo->dhcpSrvOffloadEnabled;
-	params.dhcp_client_num = pDhcpSrvOffloadInfo->dhcpClientNum;
-	params.dhcp_srv_addr = pDhcpSrvOffloadInfo->dhcpSrvIP;
+	wmi_handle = wma_handle->wmi_handle;
+	status = wmi_unified_process_dhcpserver_offload_cmd(wmi_handle,
+							    params);
+	WMA_LOGD("Set dhcp server offload to vdev %d status %d",
+		 params->vdev_id, status);
 
-	status = wmi_unified_process_dhcpserver_offload_cmd(
-				wma_handle->wmi_handle, &params);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-
-	WMA_LOGD("Set dhcp server offload to vdevId %d",
-		 pDhcpSrvOffloadInfo->vdev_id);
 	return status;
 }
 #endif /* DHCP_SERVER_OFFLOAD */

@@ -4381,15 +4381,6 @@ typedef struct sAniGetLinkStatus {
 	uint8_t sessionId;
 } tAniGetLinkStatus, *tpAniGetLinkStatus;
 
-#ifdef DHCP_SERVER_OFFLOAD
-typedef struct {
-	uint32_t vdev_id;
-	uint32_t dhcpSrvOffloadEnabled;
-	uint32_t dhcpClientNum;
-	uint32_t dhcpSrvIP;
-} tSirDhcpSrvOffloadInfo, *tpSirDhcpSrvOffloadInfo;
-#endif /* DHCP_SERVER_OFFLOAD */
-
 /**
  * struct sir_lost_link_info - lost link information structure.
  *
