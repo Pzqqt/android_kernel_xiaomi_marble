@@ -2053,17 +2053,20 @@ void cdp_if_mgmt_drain(ol_txrx_soc_handle soc,
  * @peer_map_unmap_v2: flag indicates HTT peer map v2 is enabled in FW
  *
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static inline void
+static inline QDF_STATUS
 cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers,
 		    uint32_t max_ast_index, bool peer_map_unmap_v2)
 {
 	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
 	    soc->ops->cmn_drv_ops->txrx_peer_map_attach)
-		soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc, max_peers,
-							    max_ast_index,
-							    peer_map_unmap_v2);
+		return soc->ops->cmn_drv_ops->txrx_peer_map_attach(soc,
+							max_peers,
+							max_ast_index,
+							peer_map_unmap_v2);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

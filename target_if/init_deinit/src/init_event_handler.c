@@ -416,8 +416,13 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		max_peers = tgt_cfg->num_peers + ready_ev.num_extra_peer + 1;
 		max_ast_index = ready_ev.max_ast_index + 1;
 
-		cdp_peer_map_attach(wlan_psoc_get_dp_handle(psoc), max_peers,
-				    max_ast_index, tgt_cfg->peer_map_unmap_v2);
+		if (cdp_peer_map_attach(wlan_psoc_get_dp_handle(psoc),
+					max_peers, max_ast_index,
+					tgt_cfg->peer_map_unmap_v2) !=
+				QDF_STATUS_SUCCESS) {
+			target_if_err("DP peer map attach failed");
+			return -EINVAL;
+		}
 	}
 
 	/* Indicate to the waiting thread that the ready
