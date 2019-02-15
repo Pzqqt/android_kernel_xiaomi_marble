@@ -268,6 +268,18 @@ struct security_info {
 };
 
 /**
+ * struct scan_mbssid_info - Scan mbssid information
+ * @profile_num: profile number
+ * @profile_count: total profile count
+ * @trans_bssid: TX BSSID address
+ */
+struct scan_mbssid_info {
+	uint8_t profile_num;
+	uint8_t profile_count;
+	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
+};
+
+/**
  * struct scan_cache_entry: structure containing scan entry
  * @frm_subtype: updated from beacon/probe
  * @bssid: bssid
@@ -291,6 +303,7 @@ struct security_info {
  * @rssi_timestamp: boottime in microsec when RSSI was updated
  * @hidden_ssid_timestamp: boottime in microsec when hidden
  *                         ssid was received
+ * @mbssid_info: Multi bssid information
  * @channel: channel info on which AP is present
  * @channel_mismatch: if channel received in metadata
  *                    doesnot match the one in beacon
@@ -330,6 +343,7 @@ struct scan_cache_entry {
 	qdf_time_t scan_entry_time;
 	qdf_time_t rssi_timestamp;
 	qdf_time_t hidden_ssid_timestamp;
+	struct scan_mbssid_info mbssid_info;
 	struct channel_info channel;
 	bool channel_mismatch;
 	struct mlme_info mlme_info;
