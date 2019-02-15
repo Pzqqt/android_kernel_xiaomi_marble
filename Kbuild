@@ -1028,6 +1028,8 @@ TDLS_TARGET_IF_SRC := components/target_if/tdls/src
 TDLS_INC := -I$(WLAN_ROOT)/$(TDLS_DIR)/dispatcher/inc \
 	    -I$(WLAN_ROOT)/$(TDLS_OS_IF_INC) \
 	    -I$(WLAN_ROOT)/$(TDLS_TARGET_IF_INC)
+
+ifeq ($(CONFIG_CONVERGED_TDLS_ENABLE), y)
 TDLS_OBJS := $(TDLS_DIR)/core/src/wlan_tdls_main.o \
        $(TDLS_DIR)/core/src/wlan_tdls_cmds_process.o \
        $(TDLS_DIR)/core/src/wlan_tdls_peer.o \
@@ -1039,6 +1041,7 @@ TDLS_OBJS := $(TDLS_DIR)/core/src/wlan_tdls_main.o \
        $(TDLS_DIR)/dispatcher/src/wlan_tdls_cfg.o \
        $(TDLS_OS_IF_SRC)/wlan_cfg80211_tdls.o \
        $(TDLS_TARGET_IF_SRC)/target_if_tdls.o
+endif
 
 ########### BMI ###########
 BMI_DIR := core/bmi

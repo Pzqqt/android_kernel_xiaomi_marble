@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -270,7 +270,18 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
  */
 void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev);
 
-#else
+#else /* CONVERGED_TDLS_ENABLE */
+static inline
+QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void wlan_cfg80211_tdls_priv_deinit(struct vdev_osif_priv *osif_priv)
+{
+}
+
 static inline void
 hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *vdev)
 {
@@ -305,5 +316,5 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 {
 
 }
-#endif
-#endif
+#endif /* CONVERGED_TDLS_ENABLE */
+#endif /* _WLAN_CFG80211_TDLS_H_ */
