@@ -86,6 +86,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_crypto_global_api.h"
 #include "wlan_action_oui_ucfg_api.h"
+#include "wlan_fwol_ucfg_api.h"
 #include "nan_ucfg_api.h"
 #include <wlan_reg_services_api.h>
 
@@ -4708,16 +4709,71 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#ifdef DHCP_SERVER_OFFLOAD
+static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	tpSirDhcpSrvOffloadInfo pDhcpSrvInfo;
+	uint8_t numEntries = 0;
+	uint8_t srv_ip[IPADDR_NUM_ENTRIES];
+	uint8_t num;
+	uint32_t temp;
+	uint32_t dhcp_max_num_clients;
+	mac_handle_t mac_handle;
+	QDF_STATUS status;
+
+	pDhcpSrvInfo = qdf_mem_malloc(sizeof(*pDhcpSrvInfo));
+	if (!pDhcpSrvInfo)
+		return;
+	pDhcpSrvInfo->vdev_id = adapter->vdev_id;
+	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
+
+	status = ucfg_fwol_get_dhcp_max_num_clients(hdd_ctx->psoc,
+						    &dhcp_max_num_clients);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	pDhcpSrvInfo->dhcpClientNum = dhcp_max_num_clients;
+	hdd_string_to_u8_array(hdd_ctx->config->dhcpServerIP,
+			       srv_ip, &numEntries, IPADDR_NUM_ENTRIES);
+	if (numEntries != IPADDR_NUM_ENTRIES) {
+		hdd_err("Incorrect IP address (%s) assigned for DHCP server!", hdd_ctx->config->dhcpServerIP);
+		goto end;
+	}
+	if ((srv_ip[0] >= 224) && (srv_ip[0] <= 239)) {
+		hdd_err("Invalid IP address (%s)! It could NOT be multicast IP address!", hdd_ctx->config->dhcpServerIP);
+		goto end;
+	}
+	if (srv_ip[IPADDR_NUM_ENTRIES - 1] >= 100) {
+		hdd_err("Invalid IP address (%s)! The last field must be less than 100!", hdd_ctx->config->dhcpServerIP);
+		goto end;
+	}
+	for (num = 0; num < numEntries; num++) {
+		temp = srv_ip[num];
+		pDhcpSrvInfo->dhcpSrvIP |= (temp << (8 * num));
+	}
+	mac_handle = hdd_ctx->mac_handle;
+	if (QDF_STATUS_SUCCESS !=
+	    sme_set_dhcp_srv_offload(mac_handle, pDhcpSrvInfo)) {
+		hdd_err("sme_setDHCPSrvOffload fail!");
+		goto end;
+	}
+	hdd_debug("enable DHCP Server offload successfully!");
+end:
+	qdf_mem_free(pDhcpSrvInfo);
+}
+
 /**
- * wlan_hdd_is_dhcp_enabled: Enable DHCP offload
+ * wlan_hdd_dhcp_offload_enable: Enable DHCP offload
  * @hdd_ctx: HDD context handler
  * @adapter: Adapter pointer
  *
+ * Enables the DHCP Offload feature in firmware if it has been configured.
+ *
  * Return: None
  */
-#ifdef DHCP_SERVER_OFFLOAD
-static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
-				     struct hdd_adapter *adapter)
+static void wlan_hdd_dhcp_offload_enable(struct hdd_context *hdd_ctx,
+					 struct hdd_adapter *adapter)
 {
 	bool enable_dhcp_server_offload;
 	QDF_STATUS status;
@@ -4732,11 +4788,11 @@ static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
 		wlan_hdd_set_dhcp_server_offload(adapter);
 }
 #else
-static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
-				     struct hdd_adapter *adapter)
+static void wlan_hdd_dhcp_offload_enable(struct hdd_context *hdd_ctx,
+					 struct hdd_adapter *adapter)
 {
 }
-#endif
+#endif /* DHCP_SERVER_OFFLOAD */
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 /**
@@ -5553,7 +5609,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					    true);
 	}
 
-	wlan_hdd_is_dhcp_enabled(hdd_ctx, adapter);
+	wlan_hdd_dhcp_offload_enable(hdd_ctx, adapter);
 	ucfg_p2p_status_start_bss(adapter->vdev);
 
 	/* Check and restart SAP if it is on unsafe channel */

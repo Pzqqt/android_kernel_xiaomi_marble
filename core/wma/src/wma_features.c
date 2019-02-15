@@ -3868,7 +3868,7 @@ QDF_STATUS wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
-		return -EIO;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	params.vdev_id = pDhcpSrvOffloadInfo->vdev_id;

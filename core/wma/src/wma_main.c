@@ -8698,8 +8698,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 
 #ifdef DHCP_SERVER_OFFLOAD
 	case WMA_SET_DHCP_SERVER_OFFLOAD_CMD:
-		wma_process_dhcpserver_offload(wma_handle,
-			(tSirDhcpSrvOffloadInfo *) msg->bodyptr);
+		wma_process_dhcpserver_offload(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* DHCP_SERVER_OFFLOAD */
