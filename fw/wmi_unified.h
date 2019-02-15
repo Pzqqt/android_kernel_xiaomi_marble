@@ -22109,6 +22109,15 @@ typedef enum wmi_coex_config_type {
      *   arg5 - t_delay for high priority traffic (microsecond units)
      */
     WMI_COEX_CONFIG_THREE_WAY_DELAY_PARA   = 33,
+    /* WMI_COEX_CONFIG_THREE_WAY_COEX_START  
+     * config to set coex parameters from WLAN host to adjust priorities
+     * among wlan/bt/zb
+     * arg1 - priority level 1, the serialized coex scenorio ID will be put here
+     * arg2 - priority level 2, same parameters rules as arg1
+     * arg3 - priority level 3, same parameters rules as arg1
+     * arg4 - priority level 4, same parameters rules as arg1
+     */
+    WMI_COEX_CONFIG_THREE_WAY_COEX_START   = 34,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
