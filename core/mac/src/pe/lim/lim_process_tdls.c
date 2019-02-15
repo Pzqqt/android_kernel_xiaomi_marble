@@ -85,9 +85,6 @@
 #define MIN_VENDOR_SPECIFIC_IE_SIZE     5
 #endif
 
-static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
-		tSirTdlsAddStaReq * pAddStaReq, struct pe_session *pe_session);
-
 /*
  * TDLS data frames will go out/come in as non-qos data.
  * so, eth_890d_header will be aligned access..
@@ -2000,14 +1997,15 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* This Function is similar to populate_dot11f_ht_caps, except that the HT Capabilities
- * are considered from the AddStaReq rather from the cfg.dat as in populate_dot11f_ht_caps
+/* This Function is similar to populate_dot11f_ht_caps, except that
+ * the HT Capabilities are considered from the AddStaReq rather from
+ * the cfg.dat as in populate_dot11f_ht_caps
  */
-static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
-						      struct pe_session *pe_session,
-						      tSirTdlsAddStaReq *
-						      pTdlsAddStaReq,
-						      tDot11fIEHTCaps *pDot11f)
+static QDF_STATUS
+lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
+				 struct pe_session *pe_session,
+				 struct tdls_add_sta_req *add_sta_req,
+				 tDot11fIEHTCaps *pDot11f)
 {
 	uint32_t nCfgValue;
 	uint8_t nCfgValue8;
@@ -2021,7 +2019,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	tSirMacTxBFCapabilityInfo *pTxBFCapabilityInfo;
 	tSirMacASCapabilityInfo *pASCapabilityInfo;
 
-	nCfgValue = pTdlsAddStaReq->htCap.hc_cap;
+	nCfgValue = add_sta_req->ht_cap.hc_cap;
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 
@@ -2070,7 +2068,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 		pDot11f->shortGI40MHz,
 		pDot11f->dsssCckMode40MHz);
 
-	nCfgValue = pTdlsAddStaReq->htCap.ampdu_param;
+	nCfgValue = add_sta_req->ht_cap.ampdu_param;
 
 	nCfgValue8 = (uint8_t) nCfgValue;
 	pHTParametersInfo = (tSirMacHTParametersInfo *) &nCfgValue8;
@@ -2080,10 +2078,10 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->reserved1 = pHTParametersInfo->reserved;
 
 	pe_debug("AMPDU Param: %x", nCfgValue);
-	qdf_mem_copy(pDot11f->supportedMCSSet, pTdlsAddStaReq->htCap.mcsset,
+	qdf_mem_copy(pDot11f->supportedMCSSet, add_sta_req->ht_cap.mcsset,
 		     SIZE_OF_SUPPORTED_MCS_SET);
 
-	nCfgValue = pTdlsAddStaReq->htCap.extcap;
+	nCfgValue = add_sta_req->ht_cap.extcap;
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 
@@ -2091,7 +2089,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->transitionTime = uHTCapabilityInfo.extHtCapInfo.transitionTime;
 	pDot11f->mcsFeedback = uHTCapabilityInfo.extHtCapInfo.mcsFeedback;
 
-	nCfgValue = pTdlsAddStaReq->htCap.txbf_cap;
+	nCfgValue = add_sta_req->ht_cap.txbf_cap;
 
 	pTxBFCapabilityInfo = (tSirMacTxBFCapabilityInfo *) &nCfgValue;
 	pDot11f->txBF = pTxBFCapabilityInfo->txBF;
@@ -2116,7 +2114,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->compressedSteeringMatrixBFAntennae =
 		pTxBFCapabilityInfo->compressedSteeringMatrixBFAntennae;
 
-	nCfgValue = pTdlsAddStaReq->htCap.antenna;
+	nCfgValue = add_sta_req->ht_cap.antenna;
 
 	nCfgValue8 = (uint8_t) nCfgValue;
 
@@ -2132,7 +2130,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->rxAS = pASCapabilityInfo->rxAS;
 	pDot11f->txSoundingPPDUs = pASCapabilityInfo->txSoundingPPDUs;
 
-	pDot11f->present = pTdlsAddStaReq->htcap_present;
+	pDot11f->present = add_sta_req->htcap_present;
 
 	return QDF_STATUS_SUCCESS;
 
@@ -2140,7 +2138,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 
 static QDF_STATUS
 lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
-				  tSirTdlsAddStaReq *pTdlsAddStaReq,
+				  struct tdls_add_sta_req *add_sta_req,
 				  tDot11fIEVHTCaps *pDot11f)
 {
 	uint32_t nCfgValue = 0;
@@ -2154,9 +2152,9 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 		tSirMacVHTRxSupDataRateInfo vhtRxsupDataRateInfo;
 	} uVHTSupDataRateInfo;
 
-	pDot11f->present = pTdlsAddStaReq->vhtcap_present;
+	pDot11f->present = add_sta_req->vhtcap_present;
 
-	nCfgValue = pTdlsAddStaReq->vhtCap.vhtCapInfo;
+	nCfgValue = add_sta_req->vht_cap.vht_capinfo;
 	uVHTCapabilityInfo.nCfgValue32 = nCfgValue;
 
 	pDot11f->maxMPDULen = uVHTCapabilityInfo.vhtCapInfo.maxMPDULen;
@@ -2184,16 +2182,16 @@ lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 	pDot11f->txAntPattern = uVHTCapabilityInfo.vhtCapInfo.txAntPattern;
 	pDot11f->reserved1 = uVHTCapabilityInfo.vhtCapInfo.reserved1;
 
-	pDot11f->rxMCSMap = pTdlsAddStaReq->vhtCap.suppMcs.rxMcsMap;
+	pDot11f->rxMCSMap = add_sta_req->vht_cap.supp_mcs.rx_mcs_map;
 
-	nCfgValue = pTdlsAddStaReq->vhtCap.suppMcs.rxHighest;
+	nCfgValue = add_sta_req->vht_cap.supp_mcs.rx_highest;
 	uVHTSupDataRateInfo.nCfgValue16 = nCfgValue & 0xffff;
 	pDot11f->rxHighSupDataRate =
 		uVHTSupDataRateInfo.vhtRxsupDataRateInfo.rxSupDataRate;
 
-	pDot11f->txMCSMap = pTdlsAddStaReq->vhtCap.suppMcs.txMcsMap;
+	pDot11f->txMCSMap = add_sta_req->vht_cap.supp_mcs.tx_mcs_map;
 
-	nCfgValue = pTdlsAddStaReq->vhtCap.suppMcs.txHighest;
+	nCfgValue = add_sta_req->vht_cap.supp_mcs.tx_highest;
 	uVHTSupDataRateInfo.nCfgValue16 = nCfgValue & 0xffff;
 	pDot11f->txSupDataRate =
 		uVHTSupDataRateInfo.vhtTxSupDataRateInfo.txSupDataRate;
@@ -2409,7 +2407,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
  */
 static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 					   tDphHashNode *sta,
-					   tSirTdlsAddStaReq *pTdlsAddStaReq,
+					   struct tdls_add_sta_req *add_sta_req,
 					   struct pe_session *pe_session)
 {
 	tDot11fIEHTCaps htCap = {0,};
@@ -2419,10 +2417,11 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 	tDot11fIEVHTCaps vhtCap;
 	uint8_t cbMode;
 
-	if (pTdlsAddStaReq->tdlsAddOper == TDLS_OPER_ADD) {
+	if (add_sta_req->tdls_oper == TDLS_OPER_ADD) {
 		populate_dot11f_ht_caps(mac, pe_session, &htCap);
-	} else if (pTdlsAddStaReq->tdlsAddOper == TDLS_OPER_UPDATE) {
-		lim_tdls_populate_dot11f_ht_caps(mac, NULL, pTdlsAddStaReq, &htCap);
+	} else if (add_sta_req->tdls_oper == TDLS_OPER_UPDATE) {
+		lim_tdls_populate_dot11f_ht_caps(mac, NULL,
+						 add_sta_req, &htCap);
 	}
 	htCaps = &htCap;
 	if (htCaps->present) {
@@ -2458,11 +2457,11 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 						   rxHighestDataRate,
 						   htCaps->supportedMCSSet);
 		sta->baPolicyFlag = 0xFF;
-		sta->ht_caps = pTdlsAddStaReq->htCap.hc_cap;
+		sta->ht_caps = add_sta_req->ht_cap.hc_cap;
 	} else {
 		sta->mlmStaContext.htCapability = 0;
 	}
-	lim_tdls_populate_dot11f_vht_caps(mac, pTdlsAddStaReq, &vhtCap);
+	lim_tdls_populate_dot11f_vht_caps(mac, add_sta_req, &vhtCap);
 	pVhtCaps = &vhtCap;
 	if (pVhtCaps->present) {
 		sta->mlmStaContext.vhtCapability = 1;
@@ -2486,12 +2485,12 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 
 		sta->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
 		sta->vhtBeamFormerCapable = 0;
-		pVhtCaps_txbf = (tDot11fIEVHTCaps *) (&pTdlsAddStaReq->vhtCap);
+		pVhtCaps_txbf = (tDot11fIEVHTCaps *) (&add_sta_req->vht_cap);
 		pVhtCaps_txbf->suBeamformeeCap = 0;
 		pVhtCaps_txbf->suBeamFormerCap = 0;
 		pVhtCaps_txbf->muBeamformerCap = 0;
 		pVhtCaps_txbf->muBeamformeeCap = 0;
-		sta->vht_caps = pTdlsAddStaReq->vhtCap.vhtCapInfo;
+		sta->vht_caps = add_sta_req->vht_cap.vht_capinfo;
 	} else {
 		sta->mlmStaContext.vhtCapability = 0;
 		sta->vhtSupportedChannelWidthSet =
@@ -2514,31 +2513,29 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 			sta->htSecondaryChannelOffset = cbMode;
 	}
 	/* Lets enable QOS parameter */
-	sta->qosMode = (pTdlsAddStaReq->capability & CAPABILITIES_QOS_OFFSET)
-				|| pTdlsAddStaReq->htcap_present;
+	sta->qosMode = (add_sta_req->capability & CAPABILITIES_QOS_OFFSET)
+				|| add_sta_req->htcap_present;
 	sta->wmeEnabled = 1;
 	sta->lleEnabled = 0;
 	/*  TDLS Dummy AddSTA does not have qosInfo , is it OK ??
 	 */
 	sta->qos.capability.qosInfo =
-		(*(tSirMacQosInfoStation *) &pTdlsAddStaReq->uapsd_queues);
+		(*(tSirMacQosInfoStation *) &add_sta_req->uapsd_queues);
 
 	/* populate matching rate set */
 
 	/* TDLS Dummy AddSTA does not have HTCap,VHTCap,Rates info , is it OK ??
 	 */
 	lim_tdls_populate_matching_rate_set(mac, sta,
-					    pTdlsAddStaReq->supported_rates,
-					    pTdlsAddStaReq->
-					    supported_rates_length,
-					    (uint8_t *)pTdlsAddStaReq->
-					    htCap.mcsset,
+					    add_sta_req->supported_rates,
+					    add_sta_req->supported_rates_length,
+					    add_sta_req->ht_cap.mcsset,
 					    pe_session, pVhtCaps);
 
 	/*  TDLS Dummy AddSTA does not have right capability , is it OK ??
 	 */
 	sta->mlmStaContext.capabilityInfo =
-		(*(tSirMacCapabilityInfo *) &pTdlsAddStaReq->capability);
+		(*(tSirMacCapabilityInfo *) &add_sta_req->capability);
 
 	return;
 }
@@ -2547,7 +2544,7 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
  * Add STA for TDLS setup procedure
  */
 static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
-					    tSirTdlsAddStaReq *pAddStaReq,
+					    struct tdls_add_sta_req *pAddStaReq,
 					    struct pe_session *pe_session)
 {
 	tpDphHashNode sta = NULL;
@@ -2557,7 +2554,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 	sta = dph_lookup_hash_entry(mac, pAddStaReq->peermac.bytes, &aid,
 				       &pe_session->dph.dphHashTable);
 
-	if (sta && pAddStaReq->tdlsAddOper == TDLS_OPER_ADD) {
+	if (sta && pAddStaReq->tdls_oper == TDLS_OPER_ADD) {
 		pe_err("TDLS entry for peer: "MAC_ADDRESS_STR " already exist, cannot add new entry",
 			MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
@@ -2610,7 +2607,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 
 	status =
 		lim_add_sta(mac, sta,
-			    (pAddStaReq->tdlsAddOper ==
+			    (pAddStaReq->tdls_oper ==
 			     TDLS_OPER_UPDATE) ? true : false, pe_session);
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -2964,24 +2961,20 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(struct mac_context *mac,
 	return ret;
 }
 
-/*
- * Process Send Mgmt Request from SME and transmit to AP.
- */
 QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
-					       uint32_t *pMsgBuf)
+					    void *msg)
 {
-	/* get all discovery request parameters */
-	tSirTdlsAddStaReq *pAddStaReq = (tSirTdlsAddStaReq *) pMsgBuf;
+	struct tdls_add_sta_req *add_sta_req = msg;
 	struct pe_session *pe_session;
-	uint8_t sessionId;
+	uint8_t session_id;
 
 	pe_debug("TDLS Add STA Request Received");
 	pe_session =
-		pe_find_session_by_bssid(mac, pAddStaReq->bssid.bytes,
-					 &sessionId);
+		pe_find_session_by_bssid(mac, add_sta_req->bssid.bytes,
+					 &session_id);
 	if (pe_session == NULL) {
 		pe_err("PE Session does not exist for given sme sessionId: %d",
-			pAddStaReq->sessionId);
+		       add_sta_req->session_id);
 		goto lim_tdls_add_sta_error;
 	}
 
@@ -2994,7 +2987,7 @@ QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 
 	if (lim_is_roam_synch_in_progress(pe_session)) {
 		pe_err("roaming in progress, reject add sta! for session %d",
-		       pAddStaReq->sessionId);
+		       add_sta_req->session_id);
 		goto lim_tdls_add_sta_error;
 	}
 
@@ -3011,16 +3004,16 @@ QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 
 
 	/* To start with, send add STA request to HAL */
-	if (QDF_STATUS_E_FAILURE == lim_tdls_setup_add_sta(mac, pAddStaReq, pe_session)) {
+	if (QDF_STATUS_E_FAILURE == lim_tdls_setup_add_sta(mac, add_sta_req, pe_session)) {
 		pe_err("Add TDLS Station request failed");
 		goto lim_tdls_add_sta_error;
 	}
 	return QDF_STATUS_SUCCESS;
 lim_tdls_add_sta_error:
 	lim_send_sme_tdls_add_sta_rsp(mac,
-				      pAddStaReq->sessionId,
-				      pAddStaReq->peermac.bytes,
-				      (pAddStaReq->tdlsAddOper == TDLS_OPER_UPDATE),
+				      add_sta_req->session_id,
+				      add_sta_req->peermac.bytes,
+				      (add_sta_req->tdls_oper == TDLS_OPER_UPDATE),
 				      NULL, QDF_STATUS_E_FAILURE);
 
 	return QDF_STATUS_SUCCESS;

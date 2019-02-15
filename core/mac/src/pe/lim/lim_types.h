@@ -606,8 +606,18 @@ void lim_init_tdls_data(struct mac_context *, struct pe_session *);
 QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 					      void *msg);
 
+/**
+ * lim_process_sme_tdls_add_sta_req() - process TDLS Add STA
+ * @mac_ctx: global mac context
+ * @msg: message buffer received from SME.
+ *
+ * Process TDLS Add Station request
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error code otherwise
+ */
 QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
-					       uint32_t *pMsgBuf);
+					    void *msg);
+
 QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 					       uint32_t *pMsgBuf);
 void lim_send_sme_mgmt_tx_completion(

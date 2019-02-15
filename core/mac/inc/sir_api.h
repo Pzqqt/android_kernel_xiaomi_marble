@@ -2519,28 +2519,6 @@ struct sir_antenna_mode_resp {
 
 #ifdef FEATURE_WLAN_TDLS
 /* TDLS Request struct SME-->PE */
-typedef struct sSirTdlsAddStaReq {
-	uint16_t messageType;   /* eWNI_SME_TDLS_DISCOVERY_START_REQ */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	/* For multi-session, for PE to locate peSession ID */
-	struct qdf_mac_addr bssid;
-	enum tdls_add_oper tdlsAddOper;
-	struct qdf_mac_addr peermac;
-	uint16_t capability;
-	uint8_t extn_capability[SIR_MAC_MAX_EXTN_CAP];
-	uint8_t supported_rates_length;
-	uint8_t supported_rates[SIR_MAC_MAX_SUPP_RATES];
-	uint8_t htcap_present;
-	struct htcap_cmn_ie htCap;
-	uint8_t vhtcap_present;
-	tSirVHTCap vhtCap;
-	uint8_t uapsd_queues;
-	uint8_t max_sp;
-} tSirTdlsAddStaReq, *tpSirSmeTdlsAddStaReq;
-
-/* TDLS Request struct SME-->PE */
 typedef struct sSirTdlsDelStaReq {
 	uint16_t messageType;   /* eWNI_SME_TDLS_DISCOVERY_START_REQ */
 	uint16_t length;
