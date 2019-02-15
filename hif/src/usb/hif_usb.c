@@ -283,9 +283,7 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t pipe_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
 
-	HIF_TRACE("+%s", __func__);
 	status = hif_send_internal(device, pipe_id, NULL, wbuf, nbytes);
-	HIF_TRACE("-%s", __func__);
 	return status;
 }
 

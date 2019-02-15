@@ -512,7 +512,6 @@ void usb_hif_flush_all(struct HIF_DEVICE_USB *device)
  */
 static void usb_hif_cleanup_recv_urb(struct HIF_URB_CONTEXT *urb_context)
 {
-	HIF_TRACE("+%s", __func__);
 
 	if (urb_context->buf != NULL) {
 		qdf_nbuf_free(urb_context->buf);
@@ -520,7 +519,6 @@ static void usb_hif_cleanup_recv_urb(struct HIF_URB_CONTEXT *urb_context)
 	}
 
 	usb_hif_free_urb_to_pipe(urb_context->pipe, urb_context);
-	HIF_TRACE("-%s", __func__);
 }
 
 /**
@@ -919,8 +917,6 @@ static void usb_hif_post_recv_transfers(struct HIF_USB_PIPE *recv_pipe,
 	struct urb *urb;
 	int usb_status;
 
-	HIF_TRACE("+%s", __func__);
-
 	while (1) {
 
 		urb_context = usb_hif_alloc_urb_from_pipe(recv_pipe);
@@ -964,8 +960,6 @@ static void usb_hif_post_recv_transfers(struct HIF_USB_PIPE *recv_pipe,
 		}
 	}
 
-	HIF_TRACE("-%s", __func__);
-
 }
 
 /**
@@ -983,8 +977,6 @@ static void usb_hif_post_recv_bundle_transfers(struct HIF_USB_PIPE *recv_pipe,
 	uint32_t len;
 	struct urb *urb;
 	int usb_status;
-
-	HIF_TRACE("+%s", __func__);
 
 	while (1) {
 
@@ -1032,8 +1024,6 @@ static void usb_hif_post_recv_bundle_transfers(struct HIF_USB_PIPE *recv_pipe,
 		}
 
 	}
-
-	HIF_TRACE("-%s", __func__);
 
 }
 
