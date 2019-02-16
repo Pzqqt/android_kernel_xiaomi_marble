@@ -89,6 +89,11 @@ APRV_GLINK += apr_v3.o
 APRV_GLINK += apr_tal_rpmsg.o
 endif
 
+ifdef CONFIG_MSM_QDSP6_APRV2_VM
+APRV_GLINK += apr_vm.o
+APRV_GLINK += apr_v2.o
+endif
+
 ifdef CONFIG_WCD_DSP_GLINK
 WDSP_GLINK += wcd-dsp-glink.o
 endif
@@ -147,6 +152,7 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_MSM_QDSP6_APRV2_RPMSG) += apr_dlkm.o
 obj-$(CONFIG_MSM_QDSP6_APRV3_RPMSG) += apr_dlkm.o
+obj-$(CONFIG_MSM_QDSP6_APRV2_VM) += apr_dlkm.o
 apr_dlkm-y := $(APRV_GLINK)
 
 obj-$(CONFIG_WCD_DSP_GLINK) += wglink_dlkm.o
