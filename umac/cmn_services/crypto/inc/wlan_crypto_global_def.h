@@ -207,6 +207,9 @@ enum wlan_crypto_key_type {
 	WLAN_CRYPTO_KEY_TYPE_GROUP,
 };
 
+#define IS_WEP_CIPHER(_c)      ((_c == WLAN_CRYPTO_CIPHER_WEP) || \
+				(_c == WLAN_CRYPTO_CIPHER_WEP_40) || \
+				(_c == WLAN_CRYPTO_CIPHER_WEP_104))
 /**
  * struct wlan_crypto_pmksa - structure of crypto to contain pmkid
  * @bssid: bssid for which pmkid is saved

@@ -4465,6 +4465,8 @@ uint8_t wlan_crypto_cipher_to_wmi_cipher(
 	case WLAN_CRYPTO_CIPHER_NONE:
 		return WMI_CIPHER_NONE;
 	case WLAN_CRYPTO_CIPHER_WEP:
+	case WLAN_CRYPTO_CIPHER_WEP_40:
+	case WLAN_CRYPTO_CIPHER_WEP_104:
 		return WMI_CIPHER_WEP;
 	case WLAN_CRYPTO_CIPHER_TKIP:
 		return WMI_CIPHER_TKIP;
@@ -4494,6 +4496,8 @@ enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
 	case WLAN_CRYPTO_CIPHER_NONE:
 		return cdp_sec_type_none;
 	case WLAN_CRYPTO_CIPHER_WEP:
+	case WLAN_CRYPTO_CIPHER_WEP_40:
+	case WLAN_CRYPTO_CIPHER_WEP_104:
 		return cdp_sec_type_wep104;
 	case WLAN_CRYPTO_CIPHER_TKIP:
 		return cdp_sec_type_tkip;

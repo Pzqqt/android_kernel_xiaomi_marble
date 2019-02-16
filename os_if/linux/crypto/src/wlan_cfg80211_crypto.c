@@ -38,10 +38,23 @@ static void wlan_cfg80211_translate_key(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
 	crypto_key->keylen = params->key_len;
 	crypto_key->keyix = key_index;
+	cfg80211_debug("key_type %d, opmode %d, key_len %d, seq_len %d",
+		       key_type, vdev->vdev_mlme.vdev_opmode,
+		       params->key_len, params->seq_len);
 	qdf_mem_copy(&crypto_key->keyval[0], params->key, params->key_len);
 	qdf_mem_copy(&crypto_key->keyrsc[0], params->seq, params->seq_len);
 
 	crypto_key->cipher_type = osif_nl_to_crypto_cipher_type(params->cipher);
+	if (IS_WEP_CIPHER(crypto_key->cipher_type) && !mac_addr) {
+		/*
+		 * This is a valid scenario in case of WEP, where-in the
+		 * keys are passed by the user space during the connect request
+		 * but since we did not connect yet, so we do not know the peer
+		 * address yet.
+		 */
+		cfg80211_debug("No Mac Address to copy");
+		return;
+	}
 	if (key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) {
 		qdf_mem_copy(&crypto_key->macaddr, mac_addr, QDF_MAC_ADDR_SIZE);
 	} else {
@@ -54,8 +67,7 @@ static void wlan_cfg80211_translate_key(struct wlan_objmgr_vdev *vdev,
 				     vdev->vdev_mlme.macaddr,
 				     QDF_MAC_ADDR_SIZE);
 	}
-	cfg80211_debug("key_type %d, opmode %d, mac %pM", key_type,
-		       vdev->vdev_mlme.vdev_opmode, crypto_key->macaddr);
+	cfg80211_debug("mac %pM", crypto_key->macaddr);
 }
 
 int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
@@ -76,10 +88,6 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 		cfg80211_err("Key params is NULL");
 		return -EINVAL;
 	}
-	if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) && !mac_addr) {
-		cfg80211_err("mac_addr is NULL for pairwise Key");
-		return -EINVAL;
-	}
 	cipher_len = osif_nl_to_crypto_cipher_len(params->cipher);
 	if (cipher_len < 0 || params->key_len < cipher_len) {
 		cfg80211_err("cipher length %d less than reqd len %d",
@@ -87,6 +95,13 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 	cipher = osif_nl_to_crypto_cipher_type(params->cipher);
+	if (!IS_WEP_CIPHER(cipher)) {
+		if ((key_type == WLAN_CRYPTO_KEY_TYPE_UNICAST) &&
+		    !mac_addr) {
+			cfg80211_err("mac_addr is NULL for pairwise Key");
+			return -EINVAL;
+		}
+	}
 	status = wlan_crypto_validate_key_params(cipher, key_index,
 						 params->key_len,
 						 params->seq_len);
