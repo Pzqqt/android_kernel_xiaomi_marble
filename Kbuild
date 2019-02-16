@@ -598,6 +598,7 @@ ifeq ($(CONFIG_QDF_TEST), y)
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_delayed_work_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_periodic_work_test.o
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_ptr_hash_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_slist_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_talloc_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
@@ -607,6 +608,7 @@ cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_DELAYED_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_PERIODIC_WORK_TEST
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_PTR_HASH_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_SLIST_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TALLOC_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
