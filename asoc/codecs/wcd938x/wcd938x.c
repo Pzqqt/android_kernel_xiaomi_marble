@@ -1727,60 +1727,6 @@ static int wcd938x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int wcd938x_codec_enable_vdd_buck(struct snd_soc_dapm_widget *w,
-					 struct snd_kcontrol *kcontrol,
-					 int event)
-{
-	struct snd_soc_component *component =
-			snd_soc_dapm_to_component(w->dapm);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	struct wcd938x_pdata *pdata = NULL;
-	int ret = 0;
-
-	pdata = dev_get_platdata(wcd938x->dev);
-
-	if (!pdata) {
-		dev_err(component->dev, "%s: pdata is NULL\n", __func__);
-		return -EINVAL;
-	}
-
-	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
-		w->name, event);
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		ret = msm_cdc_enable_ondemand_supply(wcd938x->dev,
-						wcd938x->supplies,
-						pdata->regulator,
-						pdata->num_supplies,
-						"cdc-vdd-buck");
-		if (ret == -EINVAL) {
-			dev_err(component->dev, "%s: vdd buck is not enabled\n",
-				__func__);
-			return ret;
-		}
-		/*
-		 * 200us sleep is required after LDO15 is enabled as per
-		 * HW requirement
-		 */
-		usleep_range(200, 250);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		ret = msm_cdc_disable_ondemand_supply(wcd938x->dev,
-						wcd938x->supplies,
-						pdata->regulator,
-						pdata->num_supplies,
-						"cdc-vdd-buck");
-		if (ret == -EINVAL) {
-			dev_err(component->dev, "%s: vdd buck is not disabled\n",
-				__func__);
-			return 0;
-		}
-		break;
-	}
-	return 0;
-}
-
 static int wcd938x_tx_hdr_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
@@ -2128,10 +2074,6 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 				SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY("VDD_BUCK", SND_SOC_NOPM, 0, 0,
-			     wcd938x_codec_enable_vdd_buck,
-			     SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
 	SND_SOC_DAPM_SUPPLY_S("CLS_H_PORT", 1, SND_SOC_NOPM, 0, 0,
 			     wcd938x_enable_clsh,
 			     SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
@@ -2267,7 +2209,6 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"DMIC8_OUTPUT", NULL, "DMIC8_MIXER"},
 	{"DMIC8_MIXER", "Switch", "DMIC8"},
 
-	{"IN1_HPHL", NULL, "VDD_BUCK"},
 	{"IN1_HPHL", NULL, "CLS_H_PORT"},
 	{"RX1", NULL, "IN1_HPHL"},
 	{"RDAC1", NULL, "RX1"},
@@ -2275,7 +2216,6 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHL PGA", NULL, "HPHL_RDAC"},
 	{"HPHL", NULL, "HPHL PGA"},
 
-	{"IN2_HPHR", NULL, "VDD_BUCK"},
 	{"IN2_HPHR", NULL, "CLS_H_PORT"},
 	{"RX2", NULL, "IN2_HPHR"},
 	{"RDAC2", NULL, "RX2"},
@@ -2283,7 +2223,6 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHR PGA", NULL, "HPHR_RDAC"},
 	{"HPHR", NULL, "HPHR PGA"},
 
-	{"IN3_AUX", NULL, "VDD_BUCK"},
 	{"IN3_AUX", NULL, "CLS_H_PORT"},
 	{"RX3", NULL, "IN3_AUX"},
 	{"RDAC4", NULL, "RX3"},
