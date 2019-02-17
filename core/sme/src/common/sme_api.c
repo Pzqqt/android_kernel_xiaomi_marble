@@ -290,7 +290,7 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 
 	mac->sme.sme_cmd_count = SME_TOTAL_COMMAND;
 
-	status = csr_ll_open(&mac->sme.smeCmdFreeList);
+	status = csr_ll_open(&mac->sme.sme_cmd_freelist);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto end;
 
@@ -320,7 +320,7 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 			goto end;
 		}
 		mac->sme.sme_cmd_buf_addr[cmd_idx] = cmd;
-		csr_ll_insert_tail(&mac->sme.smeCmdFreeList,
+		csr_ll_insert_tail(&mac->sme.sme_cmd_freelist,
 				   &cmd->Link, LL_ACCESS_LOCK);
 	}
 
@@ -334,7 +334,7 @@ end:
 void sme_release_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd)
 {
 	sme_cmd->command = eSmeNoCommand;
-	csr_ll_insert_tail(&mac_ctx->sme.smeCmdFreeList, &sme_cmd->Link,
+	csr_ll_insert_tail(&mac_ctx->sme.sme_cmd_freelist, &sme_cmd->Link,
 			   LL_ACCESS_LOCK);
 }
 
@@ -342,7 +342,7 @@ static QDF_STATUS free_sme_cmd_list(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	csr_ll_close(&mac->sme.smeCmdFreeList);
+	csr_ll_close(&mac->sme.sme_cmd_freelist);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS)
@@ -388,11 +388,12 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac)
 	tListElem *pEntry;
 	static int sme_command_queue_full;
 
-	pEntry = csr_ll_remove_head(&mac->sme.smeCmdFreeList, LL_ACCESS_LOCK);
+	pEntry = csr_ll_remove_head(&mac->sme.sme_cmd_freelist, LL_ACCESS_LOCK);
 
-	/* If we can get another MS Msg buffer, then we are ok.  Just link */
-	/* the entry onto the linked list.  (We are using the linked list */
-	/* to keep track of tfhe message buffers). */
+	/* If we can get another MS Msg buffer, then we are ok.  Just
+	 * link the entry onto the linked list.  (We are using the
+	 * linked list to keep track of the message buffers).
+	 */
 	if (pEntry) {
 		pRetCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		/* reset when free list is available */

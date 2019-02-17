@@ -257,7 +257,7 @@ struct sme_context {
 	uint32_t sme_cmd_count;
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **sme_cmd_buf_addr;
-	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
+	tDblLinkList sme_cmd_freelist;    /* preallocated roam cmd list */
 	enum QDF_OPMODE currDeviceMode;
 	tSmePeerInfoHddCbkInfo peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
