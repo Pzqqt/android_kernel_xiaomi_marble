@@ -912,8 +912,17 @@ QDF_STATUS sme_ch_avoid_update_req(mac_handle_t mac_handle)
 }
 #endif
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+/**
+ * sme_set_auto_shutdown_cb() - Register auto shutdown evt handler
+ * @mac_handle: Handle to the global MAC context
+ * @callback_fn: callback function to be invoked when an auto shutdown
+ *               event is received
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS sme_set_auto_shutdown_cb(mac_handle_t mac_handle,
-				    void (*pCallbackfn)(void));
+				    void (*callback_fn)(void));
+
 QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t mac_handle,
 				       uint32_t timer_value);
 #endif

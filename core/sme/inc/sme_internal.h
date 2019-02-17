@@ -278,7 +278,7 @@ struct sme_context {
 					   void *callback_context);
 #endif
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-	void (*pAutoShutdownNotificationCb)(void);
+	void (*auto_shutdown_cb)(void);
 #endif
 	/* Maximum interfaces allowed by the host */
 	uint8_t max_intf_count;

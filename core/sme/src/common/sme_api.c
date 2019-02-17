@@ -2033,10 +2033,10 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 #endif
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	case eWNI_SME_AUTO_SHUTDOWN_IND:
-		if (mac->sme.pAutoShutdownNotificationCb) {
+		if (mac->sme.auto_shutdown_cb) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Auto shutdown notification"));
-			mac->sme.pAutoShutdownNotificationCb();
+			mac->sme.auto_shutdown_cb();
 		}
 		break;
 #endif
@@ -8436,18 +8436,10 @@ QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
 }
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-/*
- * sme_auto_shutdown_cb() -
- *   Used to plug in callback function for receiving auto shutdown evt
- *
- * mac_handle
- * pCallbackfn : callback function pointer should be plugged in
- * Return QDF_STATUS
- */
 QDF_STATUS sme_set_auto_shutdown_cb(mac_handle_t mac_handle,
-				    void (*pCallbackfn)(void))
+				    void (*callback_fn)(void))
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -8455,8 +8447,8 @@ QDF_STATUS sme_set_auto_shutdown_cb(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		if (NULL != pCallbackfn)
-			mac->sme.pAutoShutdownNotificationCb = pCallbackfn;
+		if (NULL != callback_fn)
+			mac->sme.auto_shutdown_cb = callback_fn;
 		sme_release_global_lock(&mac->sme);
 	}
 
