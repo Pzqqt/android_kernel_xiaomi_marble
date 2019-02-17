@@ -166,15 +166,6 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 			regcache_sync_region(regmap,
 					VA_START_OFFSET,
 					VA_MAX_OFFSET);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
-				0x01, 0x01);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
-				0x01, 0x01);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
-				0x02, 0x02);
 		}
 		va_priv->va_mclk_users++;
 	} else {
@@ -186,15 +177,6 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 		}
 		va_priv->va_mclk_users--;
 		if (va_priv->va_mclk_users == 0) {
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
-				0x02, 0x00);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
-				0x01, 0x00);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
-				0x01, 0x00);
 			bolero_request_clock(va_priv->dev,
 					VA_MACRO,
 					va_priv->mclk_mux_sel, false);
