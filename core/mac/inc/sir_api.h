@@ -3474,9 +3474,9 @@ struct wifi_passpoint_match {
 #endif /* FEATURE_WLAN_EXTSCAN */
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-typedef struct {
+struct auto_shutdown_cmd {
 	uint32_t timer_val;
-} tSirAutoShutdownCmdParams;
+};
 #endif
 
 #ifdef WLAN_POWER_DEBUGFS

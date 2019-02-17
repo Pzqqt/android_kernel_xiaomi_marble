@@ -1194,9 +1194,16 @@ QDF_STATUS wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 int wma_auto_shutdown_event_handler(void *handle, uint8_t *event,
 				    uint32_t len);
 
-QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
-					   tSirAutoShutdownCmdParams *
-					   auto_sh_cmd);
+/**
+ * wma_set_auto_shutdown_timer_req() - sets auto shutdown timer in firmware
+ * @wma_handle: wma handle
+ * @auto_sh_cmd: auto shutdown timer params
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
+				struct auto_shutdown_cmd *auto_sh_cmd);
 #endif
 
 #ifdef WLAN_FEATURE_TSF

@@ -3817,16 +3817,9 @@ int wma_auto_shutdown_event_handler(void *handle, uint8_t *event,
 	return wma_wake_reason_auto_shutdown();
 }
 
-/**
- * wma_set_auto_shutdown_timer_req() - sets auto shutdown timer in firmware
- * @wma: wma handle
- * @auto_sh_cmd: auto shutdown timer value
- *
- * Return: QDF status
- */
-QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
-						  tSirAutoShutdownCmdParams *
-						  auto_sh_cmd)
+QDF_STATUS
+wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
+				struct auto_shutdown_cmd *auto_sh_cmd)
 {
 	if (auto_sh_cmd == NULL) {
 		WMA_LOGE("%s : Invalid Autoshutdown cfg cmd", __func__);
@@ -3834,7 +3827,7 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 	}
 
 	return wmi_unified_set_auto_shutdown_timer_cmd(wma_handle->wmi_handle,
-					auto_sh_cmd->timer_val);
+						       auto_sh_cmd->timer_val);
 }
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
 

@@ -8477,12 +8477,12 @@ QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	tSirAutoShutdownCmdParams *auto_sh_cmd;
+	struct auto_shutdown_cmd *auto_sh_cmd;
 	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		auto_sh_cmd = qdf_mem_malloc(sizeof(tSirAutoShutdownCmdParams));
+		auto_sh_cmd = qdf_mem_malloc(sizeof(*auto_sh_cmd));
 		if (!auto_sh_cmd) {
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_NOMEM;
