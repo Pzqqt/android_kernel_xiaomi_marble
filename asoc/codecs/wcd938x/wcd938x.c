@@ -1386,11 +1386,15 @@ int wcd938x_micbias_control(struct snd_soc_component *component,
 			snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
 			snd_soc_component_update_bits(component,
+			       WCD938X_DIGITAL_CDC_ANA_TX_CLK_CTL, 0x01, 0x01);
+			snd_soc_component_update_bits(component,
 				WCD938X_MICB1_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_component_update_bits(component,
 				WCD938X_MICB2_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_component_update_bits(component,
 				WCD938X_MICB3_TEST_CTL_2, 0x01, 0x01);
+			snd_soc_component_update_bits(component,
+				WCD938X_MICB4_TEST_CTL_2, 0x01, 0x01);
 			snd_soc_component_update_bits(component,
 				micb_reg, 0xC0, 0x40);
 			if (post_on_event)
