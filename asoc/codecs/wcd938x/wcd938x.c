@@ -104,7 +104,7 @@ static struct regmap_irq_chip wcd938x_regmap_irq_chip = {
 	.type_base = WCD938X_DIGITAL_INTR_LEVEL_0,
 	.ack_base = WCD938X_DIGITAL_INTR_CLEAR_0,
 	.use_ack = 1,
-	.runtime_pm = true,
+	.runtime_pm = false,
 	.handle_post_irq = wcd938x_handle_post_irq,
 	.irq_drv_data = NULL,
 };
