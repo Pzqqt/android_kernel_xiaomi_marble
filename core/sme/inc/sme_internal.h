@@ -254,7 +254,7 @@ typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, struct sir_md_evt *event);
 struct sme_context {
 	eSmeState state;
 	qdf_mutex_t sme_global_lock;
-	uint32_t totalSmeCmd;
+	uint32_t sme_cmd_count;
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **pSmeCmdBufAddr;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */

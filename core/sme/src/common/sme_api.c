@@ -274,7 +274,7 @@ static void free_sme_cmds(struct mac_context *mac_ctx)
 	if (NULL == mac_ctx->sme.pSmeCmdBufAddr)
 		return;
 
-	for (idx = 0; idx < mac_ctx->sme.totalSmeCmd; idx++)
+	for (idx = 0; idx < mac_ctx->sme.sme_cmd_count; idx++)
 		qdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr[idx]);
 
 	qdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr);
@@ -288,15 +288,14 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 	uint32_t cmd_idx;
 	uint32_t sme_cmd_ptr_ary_sz;
 
-	mac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
-
+	mac->sme.sme_cmd_count = SME_TOTAL_COMMAND;
 
 	status = csr_ll_open(&mac->sme.smeCmdFreeList);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto end;
 
 	/* following pointer contains array of pointers for tSmeCmd* */
-	sme_cmd_ptr_ary_sz = sizeof(void *) * mac->sme.totalSmeCmd;
+	sme_cmd_ptr_ary_sz = sizeof(void *) * mac->sme.sme_cmd_count;
 	mac->sme.pSmeCmdBufAddr = qdf_mem_malloc(sme_cmd_ptr_ary_sz);
 	if (!mac->sme.pSmeCmdBufAddr) {
 		status = QDF_STATUS_E_NOMEM;
@@ -304,7 +303,7 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 	}
 
 	status = QDF_STATUS_SUCCESS;
-	for (cmd_idx = 0; cmd_idx < mac->sme.totalSmeCmd; cmd_idx++) {
+	for (cmd_idx = 0; cmd_idx < mac->sme.sme_cmd_count; cmd_idx++) {
 		/*
 		 * Since total size of all commands together can be huge chunk
 		 * of memory, allocate SME cmd individually. These SME CMDs are
