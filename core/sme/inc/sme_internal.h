@@ -251,7 +251,7 @@ typedef void (*hidden_ssid_cb)(hdd_handle_t hdd_handle,
 typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, struct sir_md_evt *event);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 
-typedef struct tagSmeStruct {
+struct sme_context {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
 	uint32_t totalSmeCmd;
@@ -344,6 +344,6 @@ typedef struct tagSmeStruct {
 	/* hidden ssid rsp callback */
 	hidden_ssid_cb hidden_ssid_cb;
 
-} tSmeStruct, *tpSmeStruct;
+};
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

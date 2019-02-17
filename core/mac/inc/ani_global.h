@@ -764,7 +764,7 @@ struct mac_context {
 	/* PAL/HDD handle */
 	hdd_handle_t hdd_handle;
 
-	tSmeStruct sme;
+	struct sme_context sme;
 	tSapStruct sap;
 	struct csr_scanstruct scan;
 	struct csr_roamstruct roam;

@@ -77,30 +77,20 @@ static QDF_STATUS sme_stats_ext_event(struct mac_context *mac,
 				      struct stats_ext_event *msg);
 
 /* Internal SME APIs */
-QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme)
+QDF_STATUS sme_acquire_global_lock(struct sme_context *sme)
 {
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	if (!sme)
+		return QDF_STATUS_E_INVAL;
 
-	if (psSme) {
-		if (QDF_IS_STATUS_SUCCESS
-			    (qdf_mutex_acquire(&psSme->lkSmeGlobalLock)))
-			status = QDF_STATUS_SUCCESS;
-	}
-
-	return status;
+	return qdf_mutex_acquire(&sme->lkSmeGlobalLock);
 }
 
-QDF_STATUS sme_release_global_lock(tSmeStruct *psSme)
+QDF_STATUS sme_release_global_lock(struct sme_context *sme)
 {
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	if (!sme)
+		return QDF_STATUS_E_INVAL;
 
-	if (psSme) {
-		if (QDF_IS_STATUS_SUCCESS
-			    (qdf_mutex_release(&psSme->lkSmeGlobalLock)))
-			status = QDF_STATUS_SUCCESS;
-	}
-
-	return status;
+	return qdf_mutex_release(&sme->lkSmeGlobalLock);
 }
 
 struct mac_context *sme_get_mac_context(void)
