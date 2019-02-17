@@ -3477,10 +3477,6 @@ struct wifi_passpoint_match {
 typedef struct {
 	uint32_t timer_val;
 } tSirAutoShutdownCmdParams;
-
-typedef struct {
-	uint32_t shutdown_reason;
-} tSirAutoShutdownEvtParams;
 #endif
 
 #ifdef WLAN_POWER_DEBUGFS

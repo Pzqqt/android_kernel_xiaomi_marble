@@ -2038,7 +2038,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 				  FL("Auto shutdown notification"));
 			mac->sme.pAutoShutdownNotificationCb();
 		}
-		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif
 	case eWNI_SME_DFS_RADAR_FOUND:

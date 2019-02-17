@@ -185,30 +185,17 @@ static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
  */
 static int wma_wake_reason_auto_shutdown(void)
 {
-	tSirAutoShutdownEvtParams *auto_sh_evt;
 	QDF_STATUS qdf_status;
 	struct scheduler_msg sme_msg = { 0 };
 
-	auto_sh_evt = qdf_mem_malloc(sizeof(tSirAutoShutdownEvtParams));
-	if (!auto_sh_evt)
-		return -ENOMEM;
-
-	auto_sh_evt->shutdown_reason =
-		WMI_HOST_AUTO_SHUTDOWN_REASON_TIMER_EXPIRY;
 	sme_msg.type = eWNI_SME_AUTO_SHUTDOWN_IND;
-	sme_msg.bodyptr = auto_sh_evt;
-	sme_msg.bodyval = 0;
-
 	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE("Fail to post eWNI_SME_AUTO_SHUTDOWN_IND msg to SME");
-		qdf_mem_free(auto_sh_evt);
-		return -EINVAL;
-	}
 
-	return 0;
+	return qdf_status_to_os_return(qdf_status);
 }
 #else
 static inline int wma_wake_reason_auto_shutdown(void)
