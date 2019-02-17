@@ -256,7 +256,7 @@ struct sme_context {
 	qdf_mutex_t sme_global_lock;
 	uint32_t sme_cmd_count;
 	/* following pointer contains array of pointers for tSmeCmd* */
-	void **pSmeCmdBufAddr;
+	void **sme_cmd_buf_addr;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
 	enum QDF_OPMODE currDeviceMode;
 	tSmePeerInfoHddCbkInfo peerInfoParams;

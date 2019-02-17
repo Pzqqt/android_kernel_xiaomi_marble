@@ -271,20 +271,20 @@ static void free_sme_cmds(struct mac_context *mac_ctx)
 {
 	uint32_t idx;
 
-	if (NULL == mac_ctx->sme.pSmeCmdBufAddr)
+	if (!mac_ctx->sme.sme_cmd_buf_addr)
 		return;
 
 	for (idx = 0; idx < mac_ctx->sme.sme_cmd_count; idx++)
-		qdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr[idx]);
+		qdf_mem_free(mac_ctx->sme.sme_cmd_buf_addr[idx]);
 
-	qdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr);
-	mac_ctx->sme.pSmeCmdBufAddr = NULL;
+	qdf_mem_free(mac_ctx->sme.sme_cmd_buf_addr);
+	mac_ctx->sme.sme_cmd_buf_addr = NULL;
 }
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 {
 	QDF_STATUS status;
-	tSmeCmd *pCmd;
+	tSmeCmd *cmd;
 	uint32_t cmd_idx;
 	uint32_t sme_cmd_ptr_ary_sz;
 
@@ -296,8 +296,8 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 
 	/* following pointer contains array of pointers for tSmeCmd* */
 	sme_cmd_ptr_ary_sz = sizeof(void *) * mac->sme.sme_cmd_count;
-	mac->sme.pSmeCmdBufAddr = qdf_mem_malloc(sme_cmd_ptr_ary_sz);
-	if (!mac->sme.pSmeCmdBufAddr) {
+	mac->sme.sme_cmd_buf_addr = qdf_mem_malloc(sme_cmd_ptr_ary_sz);
+	if (!mac->sme.sme_cmd_buf_addr) {
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -310,19 +310,18 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac)
 		 * moved between pending and active queues. And these freeing of
 		 * these queues just manipulates the list but does not actually
 		 * frees SME CMD pointers. Hence store each SME CMD address in
-		 * the array, sme.pSmeCmdBufAddr. This will later facilitate
+		 * the array, sme.sme_cmd_buf_addr. This will later facilitate
 		 * freeing up of all SME CMDs with just a for loop.
 		 */
-		mac->sme.pSmeCmdBufAddr[cmd_idx] =
-						qdf_mem_malloc(sizeof(tSmeCmd));
-		if (NULL == mac->sme.pSmeCmdBufAddr[cmd_idx]) {
+		cmd = qdf_mem_malloc(sizeof(*cmd));
+		if (!cmd) {
 			status = QDF_STATUS_E_NOMEM;
 			free_sme_cmds(mac);
 			goto end;
 		}
-		pCmd = (tSmeCmd *)mac->sme.pSmeCmdBufAddr[cmd_idx];
+		mac->sme.sme_cmd_buf_addr[cmd_idx] = cmd;
 		csr_ll_insert_tail(&mac->sme.smeCmdFreeList,
-				&pCmd->Link, LL_ACCESS_LOCK);
+				   &cmd->Link, LL_ACCESS_LOCK);
 	}
 
 end:
