@@ -87,6 +87,7 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 endif
 
 ifdef CONFIG_WCD9XXX_CODEC_CORE_V2
+	CORE_OBJS += wcd9xxx-core-init.o
 	CORE_OBJS += msm-cdc-pinctrl.o
 	CORE_OBJS += msm-cdc-supply.o
 endif
