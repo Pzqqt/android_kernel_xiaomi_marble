@@ -253,7 +253,7 @@ typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, struct sir_md_evt *event);
 
 struct sme_context {
 	eSmeState state;
-	qdf_mutex_t lkSmeGlobalLock;
+	qdf_mutex_t sme_global_lock;
 	uint32_t totalSmeCmd;
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **pSmeCmdBufAddr;

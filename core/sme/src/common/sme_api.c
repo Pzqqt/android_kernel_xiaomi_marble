@@ -82,7 +82,7 @@ QDF_STATUS sme_acquire_global_lock(struct sme_context *sme)
 	if (!sme)
 		return QDF_STATUS_E_INVAL;
 
-	return qdf_mutex_acquire(&sme->lkSmeGlobalLock);
+	return qdf_mutex_acquire(&sme->sme_global_lock);
 }
 
 QDF_STATUS sme_release_global_lock(struct sme_context *sme)
@@ -90,7 +90,7 @@ QDF_STATUS sme_release_global_lock(struct sme_context *sme)
 	if (!sme)
 		return QDF_STATUS_E_INVAL;
 
-	return qdf_mutex_release(&sme->lkSmeGlobalLock);
+	return qdf_mutex_release(&sme->sme_global_lock);
 }
 
 struct mac_context *sme_get_mac_context(void)
@@ -346,13 +346,13 @@ static QDF_STATUS free_sme_cmd_list(struct mac_context *mac)
 
 	csr_ll_close(&mac->sme.smeCmdFreeList);
 
-	status = qdf_mutex_acquire(&mac->sme.lkSmeGlobalLock);
+	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS)
 		goto done;
 
 	free_sme_cmds(mac);
 
-	status = qdf_mutex_release(&mac->sme.lkSmeGlobalLock);
+	status = sme_release_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS)
 		sme_err("Failed to release the lock status: %d", status);
 done:
@@ -711,7 +711,7 @@ QDF_STATUS sme_open(mac_handle_t mac_handle)
 	mac->sme.state = SME_STATE_STOP;
 	mac->sme.currDeviceMode = QDF_STA_MODE;
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
-					&mac->sme.lkSmeGlobalLock))) {
+					&mac->sme.sme_global_lock))) {
 		sme_err("Init lock failed");
 		return  QDF_STATUS_E_FAILURE;
 	}
@@ -2391,7 +2391,6 @@ QDF_STATUS sme_close(mac_handle_t mac_handle)
 	if (!mac)
 		return QDF_STATUS_E_FAILURE;
 
-	/* Note: pSession will be invalid from here on, do not access */
 	status = csr_close(mac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("csr_close failed with status: %d", status);
@@ -2418,16 +2417,13 @@ QDF_STATUS sme_close(mac_handle_t mac_handle)
 
 	free_sme_cmd_list(mac);
 
-	if (!QDF_IS_STATUS_SUCCESS
-		    (qdf_mutex_destroy(&mac->sme.lkSmeGlobalLock)))
+	status = qdf_mutex_destroy(&mac->sme.sme_global_lock);
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		fail_status = QDF_STATUS_E_FAILURE;
-
-	if (!QDF_IS_STATUS_SUCCESS(fail_status))
-		status = fail_status;
 
 	mac->sme.state = SME_STATE_STOP;
 
-	return status;
+	return fail_status;
 }
 
 /**
