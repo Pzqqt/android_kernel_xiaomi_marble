@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,8 +61,9 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command);
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
 
 void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
-			     uint32_t nFrameLength, uint8_t *pbFrames,
-			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi);
+			       uint32_t frm_len, uint8_t *pb_frames,
+			       uint8_t frame_type, uint32_t rx_chan,
+			       int8_t rx_rssi, enum rxmgmt_flags rx_flags);
 
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter);
 void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *adapter);

@@ -2017,12 +2017,24 @@ struct keep_alive_req {
 	uint8_t sessionId;
 };
 
+/**
+ * enum rxmgmt_flags - flags for received management frame.
+ * @RXMGMT_FLAG_NONE: Default value to indicate no flags are set.
+ * @RXMGMT_FLAG_EXTERNAL_AUTH: frame can be used for external authentication
+ *			       by upper layers.
+ */
+enum rxmgmt_flags {
+	RXMGMT_FLAG_NONE,
+	RXMGMT_FLAG_EXTERNAL_AUTH = 1 << 1,
+};
+
 typedef struct sSirSmeMgmtFrameInd {
 	uint16_t frame_len;
 	uint32_t rxChan;
 	uint8_t sessionId;
 	uint8_t frameType;
 	int8_t rxRssi;
+	enum rxmgmt_flags rx_flags;
 	uint8_t frameBuf[1];    /* variable */
 } tSirSmeMgmtFrameInd, *tpSirSmeMgmtFrameInd;
 

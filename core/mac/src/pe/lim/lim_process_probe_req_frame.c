@@ -454,7 +454,8 @@ lim_indicate_probe_req_to_hdd(struct mac_context *mac, uint8_t *pBd,
 				    (frameLen + sizeof(tSirMacMgmtHdr)),
 				    pe_session->smeSessionId, WMA_GET_RX_CH(pBd),
 				    pe_session,
-				    WMA_GET_RX_RSSI_NORMALIZED(pBd));
+				    WMA_GET_RX_RSSI_NORMALIZED(pBd),
+				    RXMGMT_FLAG_NONE);
 } /*** end lim_indicate_probe_req_to_hdd() ***/
 
 /**

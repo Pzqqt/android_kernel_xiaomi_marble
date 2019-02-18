@@ -291,6 +291,7 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
 	uint8_t *body_ptr;
+	enum rxmgmt_flags rx_flags = RXMGMT_FLAG_NONE;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -299,15 +300,19 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	pe_debug("Received SAE Auth frame type %d subtype %d",
 		mac_hdr->fc.type, mac_hdr->fc.subType);
 
-	if (pe_session->limMlmState != eLIM_MLM_WT_SAE_AUTH_STATE)
-		pe_err("received SAE auth response in unexpected state %x",
-				pe_session->limMlmState);
+	if (LIM_IS_STA_ROLE(pe_session) &&
+	    pe_session->limMlmState != eLIM_MLM_WT_SAE_AUTH_STATE)
+		pe_err("SAE auth response for STA in unexpected state %x",
+		       pe_session->limMlmState);
+
+	if (LIM_IS_AP_ROLE(pe_session))
+		rx_flags = RXMGMT_FLAG_EXTERNAL_AUTH;
 
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 			(uint8_t *) mac_hdr,
 			frame_len + sizeof(tSirMacMgmtHdr), 0,
 			WMA_GET_RX_CH(rx_pkt_info), pe_session,
-			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info), rx_flags);
 }
 #else
 static inline void  lim_process_sae_auth_frame(struct mac_context *mac_ctx,
