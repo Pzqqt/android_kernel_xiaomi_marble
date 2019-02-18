@@ -1766,12 +1766,12 @@ QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 			  "%s: mac is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (mac->sme.peerInfoParams.peerInfoCbk == NULL) {
+	if (mac->sme.peerInfoParams.peer_info_cb == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD callback is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	mac->sme.peerInfoParams.peerInfoCbk(mac->sme.peerInfoParams.pUserData,
+	mac->sme.peerInfoParams.peer_info_cb(mac->sme.peerInfoParams.pUserData,
 					     &pIbssPeerInfoParams->
 					     ibssPeerInfoRspParams);
 	return QDF_STATUS_SUCCESS;
@@ -7631,15 +7631,15 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 /*
  * sme_request_ibss_peer_info() -  request ibss peer info
  * @mac_handle: Opaque handle to the global MAC context
- * @pUserData : Pointer to user data
- * @peerInfoCbk : Peer info callback
- * @allPeerInfoReqd : All peer info required or not
- * @staIdx : sta index
+ * @pUserData: Pointer to user data
+ * @peer_info_cb: Peer info callback
+ * @allPeerInfoReqd: All peer info required or not
+ * @staIdx: sta index
  *
  * Return:  QDF_STATUS
  */
 QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *pUserData,
-				      pIbssPeerInfoCb peerInfoCbk,
+				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd, uint8_t staIdx)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -7650,7 +7650,7 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *pUserData,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		mac->sme.peerInfoParams.peerInfoCbk = peerInfoCbk;
+		mac->sme.peerInfoParams.peer_info_cb = peer_info_cb;
 		mac->sme.peerInfoParams.pUserData = pUserData;
 
 		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)

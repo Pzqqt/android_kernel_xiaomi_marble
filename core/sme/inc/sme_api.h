@@ -865,7 +865,7 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 #endif
 QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
 				      void *pUserData,
-				      pIbssPeerInfoCb peerInfoCbk,
+				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd,
 				      uint8_t staIdx);
 QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
