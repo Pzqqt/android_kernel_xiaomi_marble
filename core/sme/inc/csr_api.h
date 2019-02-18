@@ -1129,7 +1129,8 @@ struct csr_roam_info {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t roamSynchInProgress;
 	uint8_t synchAuthStatus;
-	uint8_t kck[SIR_KCK_KEY_LEN];
+	uint8_t kck[KCK_256BIT_KEY_LEN];
+	uint8_t kck_len;
 	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
 	uint8_t kek_len;
 	uint32_t pmk_len;
@@ -1384,9 +1385,37 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #ifdef WLAN_FEATURE_SAE
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) \
 	(eCSR_AUTH_TYPE_SAE == auth_type)
+
+#define CSR_IS_AKM_FT_SAE(auth_type) \
+	(eCSR_AUTH_TYPE_FT_SAE == (auth_type))
+
+#define CSR_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
+	(((fw_akm_bitmap) & (1 << AKM_FT_SAE)) ? true : false)
+
 #else
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) (false)
+
+#define CSR_IS_AKM_FT_SAE(auth_type) (false)
+
+#define CSR_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) (false)
 #endif
+
+#define CSR_IS_AKM_FT_SUITEB_SHA384(auth_type) \
+	(eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384 == (auth_type))
+
+#define CSR_IS_AKM_FILS(auth_type) \
+	((eCSR_AUTH_TYPE_FILS_SHA256 == auth_type) || \
+	 (eCSR_AUTH_TYPE_FILS_SHA384 == auth_type))
+
+#define CSR_IS_AKM_FT_FILS(auth_type) \
+	((eCSR_AUTH_TYPE_FT_FILS_SHA256 == (auth_type)) || \
+	 (eCSR_AUTH_TYPE_FT_FILS_SHA384 == (auth_type)))
+
+#define CSR_IS_FW_FT_SUITEB_SUPPORTED(fw_akm_bitmap) \
+	(((fw_akm_bitmap) & (1 << AKM_FT_SUITEB_SHA384))  ? true : false)
+
+#define CSR_IS_FW_FT_FILS_SUPPORTED(fw_akm_bitmap) \
+	(((fw_akm_bitmap) & (1 << AKM_FT_FILS))  ? true : false)
 
 QDF_STATUS csr_set_channels(struct mac_context *mac,
 			    struct csr_config_params *pParam);

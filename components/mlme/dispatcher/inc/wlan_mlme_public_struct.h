@@ -1268,6 +1268,14 @@ struct bss_load_trigger {
 };
 
 /*
+ * AKM suites supported by firmware for
+ * roaming
+ */
+#define AKM_FT_SAE           0
+#define AKM_FT_SUITEB_SHA384 1
+#define AKM_FT_FILS          2
+
+/*
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
  * @lfr3_roaming_offload:           Enable/disable roam offload feature
@@ -1362,6 +1370,7 @@ struct bss_load_trigger {
  * during roam_scan_inactivity_time.
  * @roam_scan_period_after_inactivity: Roam scan period after device was in
  * inactive state
+ * @fw_akm_bitmap:                  Supported Akm suites of firmware
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1459,6 +1468,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_scan_inactivity_time;
 	uint32_t roam_inactive_data_packet_count;
 	uint32_t roam_scan_period_after_inactivity;
+	uint32_t fw_akm_bitmap;
 };
 
 /**

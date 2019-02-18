@@ -5646,6 +5646,16 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 
 	tgt_cfg.max_intf_count = wlan_res_cfg->num_vdevs;
 
+	if (wmi_service_enabled(wmi_handle, wmi_service_wpa3_ft_sae_support))
+		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_SAE);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_wpa3_ft_suite_b_support))
+		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_SUITEB_SHA384);
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_ft_fils))
+		tgt_cfg.ft_akm_service_bitmap |= (1 << AKM_FT_FILS);
+
 	qdf_mem_copy(tgt_cfg.hw_macaddr.bytes, wma_handle->hwaddr,
 		     ATH_MAC_LEN);
 

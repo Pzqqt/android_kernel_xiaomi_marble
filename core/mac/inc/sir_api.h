@@ -112,8 +112,13 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_KRK_KEY_LEN 16
 #define SIR_BTK_KEY_LEN 32
 #define SIR_KCK_KEY_LEN 16
+#define KCK_192BIT_KEY_LEN 24
+#define KCK_256BIT_KEY_LEN 32
+
 #define SIR_KEK_KEY_LEN 16
 #define SIR_KEK_KEY_LEN_FILS 64
+#define KEK_256BIT_KEY_LEN 32
+
 #define SIR_REPLAY_CTR_LEN 8
 #define SIR_PMK_LEN  48
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -3000,7 +3005,8 @@ struct roam_offload_synch_ind {
 	uint8_t rssi;
 	uint8_t roamReason;
 	uint32_t chan_freq;
-	uint8_t kck[SIR_KCK_KEY_LEN];
+	uint8_t kck[KCK_256BIT_KEY_LEN];
+	uint8_t kck_len;
 	uint32_t kek_len;
 	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
 	uint32_t   pmk_len;

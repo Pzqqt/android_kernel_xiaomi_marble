@@ -306,7 +306,7 @@ static void wma_roam_scan_offload_set_params(
 	qdf_mem_copy(params->krk, roam_req->KRK, WMI_KRK_KEY_LEN);
 	qdf_mem_copy(params->btk, roam_req->BTK, WMI_BTK_KEY_LEN);
 	qdf_mem_copy(params->psk_pmk, roam_req->PSK_PMK,
-		     WMI_ROAM_SCAN_PSK_SIZE);
+		     roam_req->pmk_len);
 	params->pmk_len = roam_req->pmk_len;
 	params->roam_key_mgmt_offload_enabled =
 				roam_req->RoamKeyMgmtOffloadEnabled;
@@ -762,10 +762,18 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 		return WMI_AUTH_RSNA_FILS_SHA256;
 	case eCSR_AUTH_TYPE_FILS_SHA384:
 		return WMI_AUTH_RSNA_FILS_SHA384;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return WMI_AUTH_FT_RSNA_FILS_SHA256;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return WMI_AUTH_FT_RSNA_FILS_SHA384;
 	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA256;
 	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
 		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA384;
+	case eCSR_AUTH_TYPE_FT_SAE:
+		return WMI_AUTH_FT_RSNA_SAE;
+	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
+		return WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384;
 	default:
 		return WMI_AUTH_NONE;
 	}
@@ -2306,9 +2314,12 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	wmi_roam_synch_event_fixed_param *synch_event;
 	wmi_channel *chan;
 	wmi_key_material *key;
+	wmi_key_material_ext *key_ft;
 	struct wma_txrx_node *iface = NULL;
 	wmi_roam_fils_synch_tlv_param *fils_info;
 	int status = -EINVAL;
+	uint8_t kck_len;
+	uint8_t kek_len;
 
 	synch_event = param_buf->fixed_param;
 	roam_synch_ind_ptr->roamed_vdev_id = synch_event->vdev_id;
@@ -2368,8 +2379,11 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	chan = param_buf->chan;
 	if (chan)
 		roam_synch_ind_ptr->chan_freq = chan->mhz;
+
 	key = param_buf->key;
+	key_ft = param_buf->key_ext;
 	if (key) {
+		roam_synch_ind_ptr->kck_len = SIR_KCK_KEY_LEN;
 		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
 		roam_synch_ind_ptr->kek_len = SIR_KEK_KEY_LEN;
@@ -2377,7 +2391,32 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 			     SIR_KEK_KEY_LEN);
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
+	} else if (key_ft) {
+		/*
+		 * For AKM 00:0F:AC (FT suite-B-SHA384)
+		 * KCK-bits:192 KEK-bits:256
+		 * Firmware sends wmi_key_material_ext tlv now only if
+		 * auth is FT Suite-B SHA-384 auth. If further new suites
+		 * are added, add logic to get kck, kek bits based on
+		 * akm protocol
+		 */
+		kck_len = KCK_192BIT_KEY_LEN;
+		kek_len = KEK_256BIT_KEY_LEN;
+
+		roam_synch_ind_ptr->kek_len = kek_len;
+		qdf_mem_copy(roam_synch_ind_ptr->kek,
+			     key_ft->key_buffer, kek_len);
+
+		roam_synch_ind_ptr->kck_len = kck_len;
+		qdf_mem_copy(roam_synch_ind_ptr->kck,
+			     (key_ft->key_buffer + kek_len),
+			     kck_len);
+
+		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
+			     (key_ft->key_buffer + kek_len + kck_len),
+			     SIR_REPLAY_CTR_LEN);
 	}
+
 	if (param_buf->hw_mode_transition_fixed_param)
 		wma_process_pdev_hw_mode_trans_ind(wma,
 		    param_buf->hw_mode_transition_fixed_param,

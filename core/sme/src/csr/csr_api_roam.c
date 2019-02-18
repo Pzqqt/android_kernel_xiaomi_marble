@@ -14416,6 +14416,38 @@ csr_roam_diag_set_pmkid(struct csr_roam_session *pSession)
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * csr_update_session_psk_pmk - API to update PMK in csr session
+ * @pSession: pointer to session
+ * @pmksa: pointer to PMKSA struct
+ *
+ * Return : None
+ */
+static void
+csr_update_session_psk_pmk(struct csr_roam_session *session,
+			   tPmkidCacheInfo *pmksa)
+{
+	/* For SAE authentication, pmk will be sent over the
+	 * set PMKSA vendor command. The set PMKSA command is sent
+	 * after SAE authentication is complete, before association
+	 * completion itself. So csr_roam_session will not be having
+	 * any parameters at this point. This pmk received is not
+	 * updated to csr session and when RSO update command is sent,
+	 * empty pmk will be sent, resulting in SAE roming failure. So
+	 * copy the pmk into csr session so that correct pmk will be
+	 * sent in RSO command.
+	 */
+	qdf_mem_copy(session->psk_pmk, pmksa->pmk, pmksa->pmk_len);
+	session->pmk_len = pmksa->pmk_len;
+}
+#else
+static inline void
+csr_update_session_psk_pmk(struct csr_roam_session *session,
+			   tPmkidCacheInfo *pmksa)
+{}
+#endif
+
 /**
  * csr_update_pmk_cache - API to update PMK cache
  * @pSession: pointer to session
@@ -14447,9 +14479,12 @@ static void csr_update_pmk_cache(struct csr_roam_session *session,
 	    session->PmkidCacheInfo[cache_idx].PMKID,
 	    pmksa->PMKID, PMKID_LEN);
 
-	if (pmksa->pmk_len)
+	if (pmksa->pmk_len) {
 		qdf_mem_copy(session->PmkidCacheInfo[cache_idx].pmk,
-				pmksa->pmk, pmksa->pmk_len);
+			     pmksa->pmk, pmksa->pmk_len);
+
+		csr_update_session_psk_pmk(session, pmksa);
+	}
 
 	session->PmkidCacheInfo[cache_idx].pmk_len = pmksa->pmk_len;
 
@@ -19409,6 +19444,8 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	uint8_t i, temp_session_id;
 	uint8_t op_channel;
 	bool prev_roaming_state;
+	eCsrAuthType roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
+	uint32_t fw_akm_bitmap;
 
 	sme_debug("RSO Command %d, Session id %d, Reason %d", command,
 		   session_id, reason);
@@ -19467,28 +19504,54 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Roaming is not supported currently for FILS akm */
-	if (session->pCurRoamProfile && CSR_IS_AUTH_TYPE_FILS(
-	    session->pCurRoamProfile->AuthType.authType[0]) &&
+	if (session->pCurRoamProfile)
+		roam_profile_akm =
+			session->pCurRoamProfile->AuthType.authType[0];
+	else
+		sme_info("Roam profile is NULL");
+
+	if (CSR_IS_AKM_FILS(roam_profile_akm) &&
 	    !mac_ctx->is_fils_roaming_supported) {
 		sme_info("FILS Roaming not suppprted by fw");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	/* Roaming is not supported currently for OWE akm */
-	if (session->pCurRoamProfile &&
-	   (session->pCurRoamProfile->AuthType.authType[0] ==
-	   eCSR_AUTH_TYPE_OWE)) {
+	if (roam_profile_akm == eCSR_AUTH_TYPE_OWE) {
 		sme_info("OWE Roaming not suppprted by fw");
 		return QDF_STATUS_SUCCESS;
 	}
 
-	/* Roaming is not supported currently for SAE authentication */
-	if (session->pCurRoamProfile &&
-			CSR_IS_AUTH_TYPE_SAE(
-		session->pCurRoamProfile->AuthType.authType[0])) {
+	/* Roaming is not supported for SAE authentication */
+	if (CSR_IS_AUTH_TYPE_SAE(roam_profile_akm)) {
 		sme_info("Roaming not suppprted for SAE connection");
 		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * If fw doesn't advertise FT SAE, FT-FILS or FT-Suite-B capability,
+	 * don't support roaming to that profile
+	 */
+	fw_akm_bitmap = mac_ctx->mlme_cfg->lfr.fw_akm_bitmap;
+	if (CSR_IS_AKM_FT_SAE(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT SAE akm");
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	if (CSR_IS_AKM_FT_SUITEB_SHA384(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_SUITEB_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT Suite-B akm");
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	if (CSR_IS_AKM_FT_FILS(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_FILS_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT FILS akm");
+			return QDF_STATUS_SUCCESS;
+		}
 	}
 
 	/*
@@ -21760,9 +21823,10 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	}
 	roam_info->roamSynchInProgress = true;
 	roam_info->synchAuthStatus = roam_synch_data->authStatus;
+	roam_info->kck_len = roam_synch_data->kck_len;
 	roam_info->kek_len = roam_synch_data->kek_len;
 	roam_info->pmk_len = roam_synch_data->pmk_len;
-	qdf_mem_copy(roam_info->kck, roam_synch_data->kck, SIR_KCK_KEY_LEN);
+	qdf_mem_copy(roam_info->kck, roam_synch_data->kck, roam_info->kck_len);
 	qdf_mem_copy(roam_info->kek, roam_synch_data->kek, roam_info->kek_len);
 
 	if (roam_synch_data->pmk_len)

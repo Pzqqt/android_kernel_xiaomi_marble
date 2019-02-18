@@ -2991,10 +2991,28 @@ static bool csr_is_auth_wpa_sae(struct mac_context *mac,
 	bool is_sae_auth;
 
 	is_sae_auth = (csr_is_oui_match(mac, all_suites, suite_count,
-					csr_rsn_oui[ENUM_SAE], oui) ||
-		       csr_is_oui_match(mac, all_suites, suite_count,
-					csr_rsn_oui[ENUM_FT_SAE], oui));
+					csr_rsn_oui[ENUM_SAE], oui));
 	return is_sae_auth;
+}
+
+/*
+ * csr_is_auth_ft_sae() - check whether oui is SAE
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is FT-SAE, false otherwise
+ */
+static bool csr_is_auth_ft_sae(struct mac_context *mac,
+			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+			       uint8_t suite_count, uint8_t oui[])
+{
+	bool is_ft_sae_auth;
+
+	is_ft_sae_auth = csr_is_oui_match(mac, all_suites, suite_count,
+					  csr_rsn_oui[ENUM_FT_SAE], oui);
+	return is_ft_sae_auth;
 }
 #endif
 
@@ -3170,7 +3188,8 @@ static void csr_is_fils_auth(struct mac_context *mac_ctx,
 
 #ifdef WLAN_FEATURE_SAE
 /**
- * csr_check_sae_auth() - update negotiated auth if matches to SAE auth type
+ * csr_check_sae_auth() - update negotiated auth and oui if matches to SAE auth
+ * type
  * @mac_ctx: pointer to mac context
  * @authsuites: auth suites
  * @c_auth_suites: auth suites count
@@ -3181,18 +3200,25 @@ static void csr_is_fils_auth(struct mac_context *mac_ctx,
  *
  * Return: None
  */
-static void csr_check_sae_auth(struct mac_context *mac_ctx,
-	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
-	uint8_t authentication[], tCsrAuthList *auth_type,
-	uint8_t index, eCsrAuthType *neg_authtype)
+static void
+csr_check_sae_auth(struct mac_context *mac_ctx,
+		   uint8_t authsuites[][CSR_RSN_OUI_SIZE],
+		   uint8_t c_auth_suites,
+		   uint8_t authentication[], tCsrAuthList *auth_type,
+		   uint8_t index, eCsrAuthType *neg_authtype)
 {
 	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
-	   csr_is_auth_wpa_sae(mac_ctx, authsuites,
-	   c_auth_suites, authentication)) {
+	    csr_is_auth_ft_sae(mac_ctx, authsuites, c_auth_suites,
+			       authentication)) {
+		if (eCSR_AUTH_TYPE_FT_SAE == auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_FT_SAE;
+	}
+
+	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+	    csr_is_auth_wpa_sae(mac_ctx, authsuites,
+				c_auth_suites, authentication)) {
 		if (eCSR_AUTH_TYPE_SAE == auth_type->authType[index])
 			*neg_authtype = eCSR_AUTH_TYPE_SAE;
-		else if (eCSR_AUTH_TYPE_FT_SAE == auth_type->authType[index])
-			*neg_authtype = eCSR_AUTH_TYPE_FT_SAE;
 	}
 	sme_debug("negotiated auth type is %d", *neg_authtype);
 }

@@ -2242,7 +2242,7 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 		kek_len = csr_roam_info->fils_join_rsp->kek_len;
 	}
 
-	wlan_hdd_save_gtk_offload_params(adapter, NULL, kek, kek_len,
+	wlan_hdd_save_gtk_offload_params(adapter, NULL, 0, kek, kek_len,
 					 csr_roam_info->replay_ctr, true);
 
 	hdd_debug("Kek len %d", kek_len);
@@ -2261,7 +2261,7 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 	kek = csr_roam_info->kek;
 	kek_len = csr_roam_info->kek_len;
 
-	wlan_hdd_save_gtk_offload_params(adapter, NULL, kek, kek_len,
+	wlan_hdd_save_gtk_offload_params(adapter, NULL, 0, kek, kek_len,
 					 csr_roam_info->replay_ctr, true);
 
 	hdd_debug("Kek len %d", kek_len);

@@ -1945,6 +1945,12 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_lpass_target_config(hdd_ctx, cfg);
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
+	status = ucfg_mlme_set_fw_supported_roaming_akm(
+						hdd_ctx->psoc,
+						cfg->ft_akm_service_bitmap);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set ft akm suites bitmap");
+
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
 
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
