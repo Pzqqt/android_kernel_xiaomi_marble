@@ -1257,6 +1257,21 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	}
 }
 
+static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
+				      void *rx_tlv_hdr)
+{
+	if ((hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr) &&
+	     (hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr) >
+		wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) ||
+	    (hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
+	     (hal_rx_msdu_end_da_idx_get(soc->hal_soc,
+					 rx_tlv_hdr) >
+	      wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))))
+		return false;
+
+	return true;
+}
+
 #ifdef WDS_VENDOR_EXTENSION
 int dp_wds_rx_policy_check(
 		uint8_t *rx_tlv_hdr,
@@ -1768,6 +1783,22 @@ done:
 			/* WDS Destination Address Learning */
 			dp_rx_da_learn(soc, rx_tlv_hdr, peer, nbuf);
 
+			/* Due to HW issue, sometimes we see that the sa_idx
+			 * and da_idx are invalid with sa_valid and da_valid
+			 * bits set
+			 *
+			 * in this case we also see that value of
+			 * sa_sw_peer_id is set as 0
+			 *
+			 * Drop the packet if sa_idx and da_idx OOB or
+			 * sa_sw_peerid is 0
+			 */
+			if (!is_sa_da_idx_valid(soc, rx_tlv_hdr)) {
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				DP_STATS_INC(soc, rx.err.invalid_sa_da_idx, 1);
+				continue;
+			}
 			/* WDS Source Port Learning */
 			if (vdev->wds_enabled)
 				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr,

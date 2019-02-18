@@ -608,6 +608,8 @@ struct dp_soc_stats {
 			uint32_t invalid_vdev;
 			/* Invalid PDEV error count */
 			uint32_t invalid_pdev;
+			/* Invalid sa_idx or da_idx*/
+			uint32_t invalid_sa_da_idx;
 			/* Invalid PEER Error count */
 			struct cdp_pkt_info rx_invalid_peer;
 			/* Invalid PEER ID count */

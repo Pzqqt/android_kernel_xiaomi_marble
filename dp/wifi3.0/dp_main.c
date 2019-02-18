@@ -6566,6 +6566,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			soc->stats.rx.err.invalid_rbm);
 	DP_PRINT_STATS("Invalid Vdev = %d",
 			soc->stats.rx.err.invalid_vdev);
+	DP_PRINT_STATS("Invalid sa_idx or da_idx = %d",
+		       soc->stats.rx.err.invalid_sa_da_idx);
 	DP_PRINT_STATS("Invalid Pdev = %d",
 			soc->stats.rx.err.invalid_pdev);
 	DP_PRINT_STATS("Invalid Peer = %d",
