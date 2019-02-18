@@ -618,6 +618,28 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 				break;
 			}
 		}
+
+		if (scm_is_cipher_match(rsn.akm_suites, rsn.akm_suite_count,
+					WLAN_RSN_SEL(WLAN_AKM_FT_SAE))) {
+			if (match_any_akm || (WLAN_AUTH_TYPE_FT_SAE ==
+					      filter->auth_type[i])) {
+				neg_auth = WLAN_AUTH_TYPE_FT_SAE;
+				match = true;
+				break;
+			}
+		}
+
+		if (scm_is_cipher_match(rsn.akm_suites, rsn.akm_suite_count,
+					WLAN_RSN_SEL(
+					WLAN_AKM_FT_SUITEB_EAP_SHA384))) {
+			if (match_any_akm ||
+			    (WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384 ==
+			     filter->auth_type[i])) {
+				neg_auth = WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384;
+				match = true;
+				break;
+			}
+		}
 	}
 
 	if (!match) {
