@@ -259,7 +259,7 @@ struct sme_context {
 	void **sme_cmd_buf_addr;
 	tDblLinkList sme_cmd_freelist;    /* preallocated roam cmd list */
 	enum QDF_OPMODE curr_device_mode;
-	struct ibss_peer_info_cb_info peerInfoParams;
+	struct ibss_peer_info_cb_info peer_info_cb_info;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif

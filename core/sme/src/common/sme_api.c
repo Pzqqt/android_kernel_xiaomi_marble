@@ -1768,7 +1768,7 @@ QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 			  "%s: mac is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cb_info = &mac->sme.peerInfoParams;
+	cb_info = &mac->sme.peer_info_cb_info;
 	if (!cb_info->peer_info_cb) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD callback is null", __func__);
@@ -7649,11 +7649,13 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
 	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
+	struct ibss_peer_info_cb_info *cb_info;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		mac->sme.peerInfoParams.peer_info_cb = peer_info_cb;
-		mac->sme.peerInfoParams.peer_info_cb_context = cb_context;
+		cb_info = &mac->sme.peer_info_cb_info;
+		cb_info->peer_info_cb = peer_info_cb;
+		cb_info->peer_info_cb_context = cb_context;
 
 		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
 			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
