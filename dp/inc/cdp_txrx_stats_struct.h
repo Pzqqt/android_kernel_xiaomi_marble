@@ -528,6 +528,7 @@ struct cdp_tx_stats {
  * @rx_discard: packets discard in rx
  * @rx_ratecode: Rx rate code of last frame
  * @rx_flags: rx flags
+ * @rx_rssi_measured_time: Time at which rssi is measured
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -583,6 +584,7 @@ struct cdp_rx_stats {
 	uint32_t rx_discard;
 	uint32_t rx_ratecode;
 	uint32_t rx_flags;
+	uint32_t rx_rssi_measured_time;
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats
