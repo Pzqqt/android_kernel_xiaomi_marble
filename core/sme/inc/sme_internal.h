@@ -70,14 +70,14 @@ typedef enum eSmeState {
 #define SME_IS_READY(mac)  (SME_STATE_READY == (mac)->sme.state)
 
 /* HDD Callback function */
-typedef void (*ibss_peer_info_cb)(void *pUserData,
-					tSirPeerInfoRspParams *infoParam);
+typedef void (*ibss_peer_info_cb)(void *cb_context,
+				  tSirPeerInfoRspParams *infoParam);
 
 /* Peer info */
-typedef struct tagSmePeerInfoHddCbkInfo {
-	void *pUserData;
+struct ibss_peer_info_cb_info {
+	void *peer_info_cb_context;
 	ibss_peer_info_cb peer_info_cb;
-} tSmePeerInfoHddCbkInfo;
+};
 
 /**
  * struct stats_ext_event - stats_ext_event payload
@@ -259,7 +259,7 @@ struct sme_context {
 	void **sme_cmd_buf_addr;
 	tDblLinkList sme_cmd_freelist;    /* preallocated roam cmd list */
 	enum QDF_OPMODE curr_device_mode;
-	tSmePeerInfoHddCbkInfo peerInfoParams;
+	struct ibss_peer_info_cb_info peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;
 #endif

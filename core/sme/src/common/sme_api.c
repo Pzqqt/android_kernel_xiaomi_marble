@@ -1761,19 +1761,21 @@ QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
 					       tpSirIbssGetPeerInfoRspParams
 					       pIbssPeerInfoParams)
 {
-	if (NULL == mac) {
+	struct ibss_peer_info_cb_info *cb_info;
+
+	if (!mac) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: mac is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (mac->sme.peerInfoParams.peer_info_cb == NULL) {
+	cb_info = &mac->sme.peerInfoParams;
+	if (!cb_info->peer_info_cb) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD callback is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	mac->sme.peerInfoParams.peer_info_cb(mac->sme.peerInfoParams.pUserData,
-					     &pIbssPeerInfoParams->
-					     ibssPeerInfoRspParams);
+	cb_info->peer_info_cb(cb_info->peer_info_cb_context,
+			      &pIbssPeerInfoParams->ibssPeerInfoRspParams);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -7631,14 +7633,14 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 /*
  * sme_request_ibss_peer_info() -  request ibss peer info
  * @mac_handle: Opaque handle to the global MAC context
- * @pUserData: Pointer to user data
+ * @cb_context: Pointer to user data
  * @peer_info_cb: Peer info callback
  * @allPeerInfoReqd: All peer info required or not
  * @staIdx: sta index
  *
  * Return:  QDF_STATUS
  */
-QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *pUserData,
+QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd, uint8_t staIdx)
 {
@@ -7651,7 +7653,7 @@ QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *pUserData,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		mac->sme.peerInfoParams.peer_info_cb = peer_info_cb;
-		mac->sme.peerInfoParams.pUserData = pUserData;
+		mac->sme.peerInfoParams.peer_info_cb_context = cb_context;
 
 		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
 			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
