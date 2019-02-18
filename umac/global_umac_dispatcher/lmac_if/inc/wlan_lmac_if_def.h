@@ -1141,6 +1141,21 @@ struct wlan_lmac_if_sa_api_rx_ops {
 };
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+
+/**
+ * struct wlan_lmac_if_cfr_rx_ops - CFR south bound rx function pointers
+ * @cfr_support_set: Set the CFR support based on FW advert
+ * @cfr_info_send: Send cfr info to upper layers
+ */
+struct wlan_lmac_if_cfr_rx_ops {
+	void (*cfr_support_set)(struct wlan_objmgr_psoc *psoc, uint32_t value);
+	uint32_t (*cfr_info_send)(struct wlan_objmgr_pdev *pdev, void *head,
+				  size_t hlen, void *data, size_t dlen,
+				  void *tail, size_t tlen);
+};
+#endif
+
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 /**
  * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
@@ -1447,6 +1462,7 @@ struct wlan_lmac_if_green_ap_rx_ops {
  * @scan: scan rx ops
  * @dfs_rx_ops: dfs rx ops.
  * @cp_stats_rx_ops: cp stats rx ops
+ * @cfr_rx_ops: cfr rx ops
  *
  * Callback function tabled to be registered with lmac/wmi.
  * lmac will use the functional table to send events/frames to umac
@@ -1471,6 +1487,10 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_rx_ops sa_api_rx_ops;
+#endif
+
+#ifdef WLAN_CFR_ENABLE
+	struct wlan_lmac_if_cfr_rx_ops cfr_rx_ops;
 #endif
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

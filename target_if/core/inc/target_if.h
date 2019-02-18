@@ -225,6 +225,7 @@ struct tgt_info {
  * @set_default_tgt_config: Sets target config with default values
  * @sw_version_check: Checks the SW version
  * @smart_log_enable: Enable Smart Logs feature
+ * @cfr_support_enable: CFR support enable
  */
 struct target_ops {
 	QDF_STATUS (*ext_resource_config_enable)
@@ -280,6 +281,9 @@ struct target_ops {
 		 struct target_psoc_info *tgt_hdl,
 		 uint8_t *evt_buf);
 	void (*eapol_minrate_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*cfr_support_enable)
 		(struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_info, uint8_t *event);
 };
@@ -1685,6 +1689,24 @@ static inline void target_if_smart_antenna_enable(struct wlan_objmgr_psoc *psoc,
 	if ((tgt_hdl->tif_ops) &&
 		(tgt_hdl->tif_ops->smart_antenna_enable))
 		tgt_hdl->tif_ops->smart_antenna_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_cfr_support_enable - Enable cfr support
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable cfr support
+ *
+ * Return: none
+ */
+static inline void target_if_cfr_support_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+	    (tgt_hdl->tif_ops->cfr_support_enable))
+		tgt_hdl->tif_ops->cfr_support_enable(psoc, tgt_hdl, evt_buf);
 }
 
 /**

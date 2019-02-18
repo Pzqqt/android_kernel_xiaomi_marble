@@ -69,6 +69,10 @@
 #include <wlan_vdev_mgr_tgt_if_rx_api.h>
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+#include "wlan_cfr_tgt_api.h"
+#endif
+
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
  */
@@ -231,6 +235,25 @@ wlan_lmac_if_sa_api_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+/**
+ * wlan_lmac_if_cfr_rx_ops_register() - Function to register CFR RX ops
+ */
+static void
+wlan_lmac_if_cfr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_cfr_rx_ops *cfr_rx_ops = &rx_ops->cfr_rx_ops;
+
+	/* CFR rx ops */
+	cfr_rx_ops->cfr_support_set = tgt_cfr_support_set;
+	cfr_rx_ops->cfr_info_send  = tgt_cfr_info_send;
+}
+#else
+static void
+wlan_lmac_if_cfr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
 
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 static void
@@ -509,6 +532,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	wlan_lmac_if_cp_stats_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_sa_api_rx_ops_register(rx_ops);
+
+	wlan_lmac_if_cfr_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_crypto_rx_ops_register(rx_ops);
 	/* wifi_pos rx ops */
