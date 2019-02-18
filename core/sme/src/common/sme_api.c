@@ -708,7 +708,7 @@ QDF_STATUS sme_open(mac_handle_t mac_handle)
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	mac->sme.state = SME_STATE_STOP;
-	mac->sme.currDeviceMode = QDF_STA_MODE;
+	mac->sme.curr_device_mode = QDF_STA_MODE;
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
 					&mac->sme.sme_global_lock))) {
 		sme_err("Init lock failed");
@@ -7394,18 +7394,12 @@ ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
 	return csr_convert_cb_ini_value_to_phy_cb_state(cb_ini_value);
 }
 
-/*
- * sme_set_curr_device_mode() - Sets the current operating device mode.
- *
- * mac_handle - The handle returned by mac_open.
- * currDeviceMode - Current operating device mode.
- */
 void sme_set_curr_device_mode(mac_handle_t mac_handle,
-				enum QDF_OPMODE currDeviceMode)
+			      enum QDF_OPMODE curr_device_mode)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	mac->sme.currDeviceMode = currDeviceMode;
+	mac->sme.curr_device_mode = curr_device_mode;
 }
 
 /*

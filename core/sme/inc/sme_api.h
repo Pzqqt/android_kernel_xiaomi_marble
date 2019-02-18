@@ -408,8 +408,15 @@ QDF_STATUS sme_open_session(mac_handle_t mac_handle,
  * Other status means SME is failed to open the session.
  */
 QDF_STATUS sme_close_session(mac_handle_t mac_handle, uint8_t sessionId);
+
+/**
+ * sme_set_curr_device_mode() - Sets the current operating device mode.
+ * @mac_handle: The handle returned by mac_open.
+ * @curr_device_mode: Current operating device mode.
+ */
 void sme_set_curr_device_mode(mac_handle_t mac_handle,
-			      enum QDF_OPMODE currDeviceMode);
+			      enum QDF_OPMODE curr_device_mode);
+
 QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 				  uint8_t session_id,
 				  struct roam_ext_params *roam_params_src,

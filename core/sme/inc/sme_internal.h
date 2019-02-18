@@ -258,7 +258,7 @@ struct sme_context {
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **sme_cmd_buf_addr;
 	tDblLinkList sme_cmd_freelist;    /* preallocated roam cmd list */
-	enum QDF_OPMODE currDeviceMode;
+	enum QDF_OPMODE curr_device_mode;
 	tSmePeerInfoHddCbkInfo peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;

@@ -16043,11 +16043,11 @@ QDF_STATUS csr_issue_add_sta_for_session_req(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	csr_get_vdev_type_nss(mac, mac->sme.currDeviceMode,
-			&nss_2g, &nss_5g);
+	csr_get_vdev_type_nss(mac, mac->sme.curr_device_mode,
+			      &nss_2g, &nss_5g);
 	qdf_mem_copy(add_sta_self_req->self_mac_addr, sessionMacAddr,
-			sizeof(tSirMacAddr));
-	add_sta_self_req->curr_device_mode = mac->sme.currDeviceMode;
+		     sizeof(tSirMacAddr));
+	add_sta_self_req->curr_device_mode = mac->sme.curr_device_mode;
 	add_sta_self_req->session_id = sessionId;
 	add_sta_self_req->type = type;
 	add_sta_self_req->sub_type = subType;

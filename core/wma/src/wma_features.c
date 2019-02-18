@@ -5316,7 +5316,7 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	}
 
 	if (mac->sap.acs_with_more_param &&
-	    mac->sme.currDeviceMode == QDF_SAP_MODE) {
+	    mac->sme.curr_device_mode == QDF_SAP_MODE) {
 		param_buf = (WMI_CHAN_INFO_EVENTID_param_tlvs *) event_buf;
 		if (!param_buf)  {
 			WMA_LOGE("Invalid chan info event buffer");
