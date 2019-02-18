@@ -2611,7 +2611,7 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 	}
 	if (qdf_nbuf_push_head(netbuf, sizeof(struct meta_hdr_s)) == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"netbuf %pK offset %d", netbuf,
+			"netbuf %pK offset %lu", netbuf,
 			sizeof(struct meta_hdr_s));
 		return;
 	}
