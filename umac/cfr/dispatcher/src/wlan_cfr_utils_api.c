@@ -21,6 +21,7 @@
 #include <qdf_module.h>
 #include "../../core/inc/cfr_defs_i.h"
 #include <wlan_objmgr_global_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
 
 QDF_STATUS wlan_cfr_init(void)
 {
@@ -95,11 +96,25 @@ QDF_STATUS wlan_cfr_deinit(void)
 
 QDF_STATUS wlan_cfr_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
-	int status = QDF_STATUS_SUCCESS;
+	int status;
 
+	/* chip specific init */
 	status = tgt_cfr_init_pdev(pdev);
 
-	return status;
+	if (status != QDF_STATUS_SUCCESS) {
+		cfr_err("tgt_cfr_init_pdev failed with %d\n", status);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/* RealyFS init */
+	status = cfr_streamfs_init(pdev);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		cfr_err("cfr_streamfs_init failed with %d\n", status);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
@@ -110,7 +125,31 @@ QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev)
 	 * but this is getting added as part for new gerrit
 	 * Once we have that support we will add it.
 	 */
+	status = cfr_streamfs_remove(pdev);
+
+	return status;
+}
+
+QDF_STATUS cfr_initialize_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	int status = QDF_STATUS_SUCCESS;
+
+	/* chip specific init */
+
+	status = tgt_cfr_init_pdev(pdev);
+
+	return status;
+}
+qdf_export_symbol(cfr_initialize_pdev);
+
+QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	int status = QDF_STATUS_SUCCESS;
+
+	/* chip specific deinit */
+
 	status = tgt_cfr_deinit_pdev(pdev);
 
 	return status;
 }
+qdf_export_symbol(cfr_deinitialize_pdev);

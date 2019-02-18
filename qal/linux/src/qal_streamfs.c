@@ -23,6 +23,58 @@
 #include <qdf_module.h>
 #include <qal_streamfs.h>
 #include <relay.h>
+#include <debugfs.h>
+
+struct qal_dentry_t *
+qal_streamfs_create_dir(const char *name, struct qal_dentry_t *parent)
+{
+	struct dentry *dir = NULL;
+
+	if (!name)
+		return NULL;
+
+	dir = debugfs_create_dir(name, (struct dentry *)parent);
+
+	return (struct qal_dentry_t *)dir;
+}
+qdf_export_symbol(qal_streamfs_create_dir);
+
+struct qal_dentry_t *
+qal_streamfs_create_file(const char *name, uint16_t mode,
+			 struct qal_dentry_t *parent,
+			 struct qal_streamfs_chan_buf *buf)
+{
+	struct dentry *file = NULL;
+
+	if (!name)
+		return NULL;
+
+	file = debugfs_create_file(name, mode, (struct dentry *)parent,
+				   (struct rchan_buf *)buf,
+				   &relay_file_operations);
+
+	return (struct qal_dentry_t *)file;
+}
+qdf_export_symbol(qal_streamfs_create_file);
+
+void qal_streamfs_remove_dir_recursive(struct qal_dentry_t *d)
+{
+	debugfs_remove_recursive((struct dentry *)d);
+}
+qdf_export_symbol(qal_streamfs_remove_dir_recursive);
+
+void qal_streamfs_remove_dir(struct qal_dentry_t *d)
+{
+	debugfs_remove((struct dentry *)d);
+}
+qdf_export_symbol(qal_streamfs_remove_dir);
+
+void qal_streamfs_remove_file(struct qal_dentry_t *d)
+{
+	debugfs_remove((struct dentry *)d);
+}
+qdf_export_symbol(qal_streamfs_remove_file);
+
 
 /**
  * qal_streamfs_open() - Create streamfs channel for data trasfer

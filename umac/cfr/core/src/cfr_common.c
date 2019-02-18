@@ -19,12 +19,17 @@
 #include <cfr_defs_i.h>
 #include <qdf_types.h>
 #include <osif_private.h>
-#include <wlan_osif_priv.h>
+#include <ol_if_athvar.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_cfr_tgt_api.h>
+#include <qal_streamfs.h>
+#include <relay.h>
+#include <debugfs.h>
+#include <target_if.h>
 
 QDF_STATUS
 wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	/* CFR is per pdev; psoc doesn't contain any private object for now */
 	struct psoc_cfr *cfr_sc = NULL;
 
 	cfr_sc = (struct psoc_cfr *)qdf_mem_malloc(sizeof(struct psoc_cfr));
@@ -34,7 +39,6 @@ wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	}
 
 	cfr_sc->psoc_obj = psoc;
-	cfr_sc->is_cfr_capable = 1;
 
 	wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_CFR,
 					      (void *)cfr_sc,
@@ -75,10 +79,7 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(pa, sizeof(struct pdev_cfr));
 	pa->pdev_obj = pdev;
-	pa->is_cfr_capable = 1; /* derive for WMI Service ready capable */
-	pa->cfr_timer_enable = 0;
 
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_UMAC_COMP_CFR,
 					      (void *)pa, QDF_STATUS_SUCCESS);
@@ -122,7 +123,6 @@ wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(pe, sizeof(struct peer_cfr));
 	pe->peer_obj = peer;
 
 	/* Remaining will be populated when we give CFR capture command */
@@ -147,6 +147,157 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 						      (void *)pe);
 		qdf_mem_free(pe);
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * create_buf_file_handler() - Create streamfs buffer file
+ *  @filename: base name of files to create, NULL for buffering only
+ *  @parent: dentry of parent directory, NULL for root directory
+ *  @mode: filemode
+ *  @rchan_buf: streamfs channel buf
+ *
+ *  Returns dentry if successful, NULL otherwise.
+ */
+static struct dentry *create_buf_file_handler(const char *filename,
+					      struct dentry *parent,
+					      umode_t mode,
+					      struct rchan_buf *buf,
+					      int *is_global)
+{
+	struct qal_dentry_t *buf_file;
+	*is_global = 1;
+	buf_file = qal_streamfs_create_file(filename, mode,
+					(struct qal_dentry_t *)parent,
+					(struct qal_streamfs_chan_buf *)buf);
+
+	if (!buf_file) {
+		cfr_err("Chan buffer creation failed\n");
+		return NULL;
+	}
+
+	return (struct dentry *)buf_file;
+}
+
+/**
+ * remove_buf_file_handler() - Remove streamfs buffer file
+ *  @dentry:dentry
+ */
+static int remove_buf_file_handler(struct dentry *dentry)
+{
+	qal_streamfs_remove_file((struct qal_dentry_t *)dentry);
+
+	return 0;
+}
+
+static struct rchan_callbacks cfr_streamfs_cb = {
+	.create_buf_file = create_buf_file_handler,
+	.remove_buf_file = remove_buf_file_handler,
+};
+
+QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cfr *pa = NULL;
+	char folder[32];
+	struct net_device *pdev_netdev;
+	struct ol_ath_softc_net80211 *scn;
+	struct target_pdev_info *tgt_hdl;
+
+	if (pdev == NULL) {
+		cfr_err("PDEV is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
+
+	if (!tgt_hdl) {
+		cfr_err("target_pdev_info is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	scn = target_pdev_get_feature_ptr(tgt_hdl);
+	pdev_netdev = scn->netdev;
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+
+	if (pa == NULL) {
+		cfr_err("pdev_cfr is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!pa->is_cfr_capable) {
+		cfr_err("CFR IS NOT SUPPORTED\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	snprintf(folder, sizeof(folder), "cfr%s", pdev_netdev->name);
+
+	pa->dir_ptr = qal_streamfs_create_dir((const char *)folder, NULL);
+
+	if (!pa->dir_ptr) {
+		cfr_err("Directory create failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pa->chan_ptr = qal_streamfs_open("cfr_dump", pa->dir_ptr,
+			pa->subbuf_size, pa->num_subbufs,
+			(struct qal_streamfs_chan_callbacks *)&cfr_streamfs_cb,
+			NULL);
+
+	if (!pa->chan_ptr) {
+		cfr_err("Chan create failed");
+		qal_streamfs_remove_dir_recursive(pa->dir_ptr);
+		pa->dir_ptr = NULL;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfr_streamfs_remove(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cfr *pa = NULL;
+
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (pa) {
+		if (pa->chan_ptr) {
+			qal_streamfs_close(pa->chan_ptr);
+			pa->chan_ptr = NULL;
+		}
+
+		if (pa->dir_ptr) {
+			qal_streamfs_remove_dir_recursive(pa->dir_ptr);
+			pa->dir_ptr = NULL;
+		}
+
+	} else
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfr_streamfs_write(struct pdev_cfr *pa, const void *write_data,
+			      size_t write_len)
+{
+	if (pa->chan_ptr) {
+
+	/* write to channel buffer */
+		qal_streamfs_write(pa->chan_ptr, (const void *)write_data,
+				write_len);
+	} else
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfr_streamfs_flush(struct pdev_cfr *pa)
+{
+	if (pa->chan_ptr) {
+
+	/* Flush the data write to channel buffer */
+		qal_streamfs_flush(pa->chan_ptr);
+	} else
+		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
 }

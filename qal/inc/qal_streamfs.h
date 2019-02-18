@@ -33,6 +33,48 @@ struct qal_streamfs_chan_callbacks;
 struct qal_streamfs_chan_buf;
 
 /**
+ * qal_streamfs_create_dir() - Create streamfs directory
+ *  @name: name of directory to create
+ *  @parent: dentry of parent directory, NULL for root directory
+ *
+ *  Returns directory dentry pointer if successful, NULL otherwise.
+ */
+struct qal_dentry_t *
+qal_streamfs_create_dir(const char *name, struct qal_dentry_t *parent);
+
+/**
+ * qal_streamfs_create_file() - Create streamfs chan buffer file
+ *  @name: base name of file to create
+ *  @mode: filemode
+ *  @parent: dentry of parent directory, NULL for root directory
+ *  @buf: pointer to chan buffer
+ *
+ *  Returns file dentry pointer if successful, NULL otherwise.
+ */
+struct qal_dentry_t *
+qal_streamfs_create_file(const char *name, uint16_t mode,
+			 struct qal_dentry_t *parent,
+			 struct qal_streamfs_chan_buf *buf);
+
+/**
+ * qal_streamfs_remove_dir_recursive() - Remove streamfs directory recursive
+ *  @d: dentry of the directory
+ */
+void qal_streamfs_remove_dir_recursive(struct qal_dentry_t *d);
+
+/**
+ * qal_streamfs_remove_dir() - Remove streamfs directory
+ *  @d: dentry of the directory
+ */
+void qal_streamfs_remove_dir(struct qal_dentry_t *d);
+
+/**
+ * qal_streamfs_remove_file() - Remove streamfs chan buffer file
+ *  @d: dentry of the buffer file
+ */
+void qal_streamfs_remove_file(struct qal_dentry_t *d);
+
+/**
  * qal_streamfs_open() - Create streamfs channel for data trasfer
  *  @base_filename: base name of files to create, %NULL for buffering only
  *  @parent: dentry of parent directory, %NULL for root directory
@@ -98,9 +140,8 @@ void qal_streamfs_subbufs_consumed(struct qal_streamfs_chan *chan,
  *
  *  Writes data into the current cpu's channel buffer.
  */
-inline void qal_streamfs_write(struct qal_streamfs_chan *chan,
-							   const void *data,
-							   size_t length);
+void qal_streamfs_write(struct qal_streamfs_chan *chan, const void *data,
+			size_t length);
 
 /**
  *  qal_streamfs_buf_full - boolean, is the channel buffer full?

@@ -18,7 +18,9 @@
 
 #ifndef _WLAN_CFR_UTILS_API_H_
 #define _WLAN_CFR_UTILS_API_H_
+
 #include <wlan_objmgr_cmn.h>
+#include <qal_streamfs.h>
 
 /**
  * struct cfr_capture_params - structure to store cfr config param
@@ -43,6 +45,20 @@ struct psoc_cfr {
 };
 
 /**
+ * struct cfr_wmi_host_mem_chunk - wmi mem chunk related
+ * vaddr: pointer to virtual address
+ * paddr: physical address
+ * len: len of the mem chunk allocated
+ * req_id: reqid related to the mem chunk
+ */
+struct cfr_wmi_host_mem_chunk {
+	uint32_t *vaddr;
+	uint32_t paddr;
+	uint32_t len;
+	uint32_t req_id;
+};
+
+/**
  * struct pdev_cfr - private pdev object for cfr
  * pdev_obj: pointer to pdev object
  * is_cfr_capable: flag to determine if cfr is enabled or not
@@ -56,11 +72,14 @@ struct pdev_cfr {
 	struct wlan_objmgr_pdev *pdev_obj;
 	uint8_t is_cfr_capable;
 	uint8_t cfr_timer_enable;
-	/*
-	 * RealyFS data stucts can be here
-	 * or add RealyFS object speperately per pdev
-	 */
+	struct cfr_wmi_host_mem_chunk cfr_mem_chunk;
+	uint16_t cfr_max_sta_count;
+	uint16_t cfr_current_sta_count;
 
+	uint32_t num_subbufs;
+	uint32_t subbuf_size;
+	struct qal_streamfs_chan *chan_ptr;
+	struct qal_dentry_t *dir_ptr;
 	/*
 	 * More fileds will come for data interface
 	 * to stitch Tx completion & D-DMA completions
@@ -77,11 +96,27 @@ struct pdev_cfr {
  */
 struct peer_cfr {
 	struct wlan_objmgr_peer *peer_obj;
-	u_int8_t   request; /* start/stop */
+	u_int8_t   request;            /* start/stop */
 	u_int8_t   bandwidth;
 	u_int32_t  period;
 	u_int8_t   capture_method;
 };
+
+/**
+ * cfr_initialize_pdev() - cfr initialize pdev
+ * @pdev: Pointer to pdev_obj
+ *
+ * Return: status of cfr pdev init
+ */
+QDF_STATUS cfr_initialize_pdev(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * cfr_deinitialize_pdev() - cfr deinitialize pdev
+ * @pdev: Pointer to pdev_obj
+ *
+ * Return: status of cfr pdev deinit
+ */
+QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev);
 
 /**
  * wlan_cfr_init() - Global init for cfr.

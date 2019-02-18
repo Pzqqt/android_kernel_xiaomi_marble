@@ -452,6 +452,47 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 }
 
+#ifdef WLAN_CFR_ENABLE
+/**
+ * send_peer_cfr_capture_cmd_non_tlv() - configure cfr params in fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold peer cfr config parameter
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_cfr_capture_cmd_non_tlv(wmi_unified_t wmi_handle,
+					struct peer_cfr_params *param)
+{
+	wmi_peer_cfr_capture_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_peer_cfr_capture_cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_peer_cfr_capture_cmd *)wmi_buf_data(buf);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->macaddr, &cmd->mac_addr);
+	cmd->request = param->request;
+	cmd->vdev_id = param->vdev_id;
+	cmd->periodicity = param->periodicity;
+	cmd->bandwidth = param->bandwidth;
+	cmd->capture_method = param->capture_method;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PEER_CFR_CAPTURE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_PEER_CFR_CAPTURE_CMDID");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+#endif
+
 /**
  * send_peer_flush_tids_cmd_non_tlv() - flush peer tids packets in fw
  * @wmi_handle: wmi handle
@@ -8912,6 +8953,9 @@ struct wmi_ops non_tlv_ops =  {
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_non_tlv,
 	.send_vdev_down_cmd = send_vdev_down_cmd_non_tlv,
 	.send_peer_flush_tids_cmd = send_peer_flush_tids_cmd_non_tlv,
+#ifdef WLAN_CFR_ENABLE
+	.send_peer_cfr_capture_cmd = send_peer_cfr_capture_cmd_non_tlv,
+#endif
 	.send_peer_param_cmd = send_peer_param_cmd_non_tlv,
 	.send_vdev_up_cmd = send_vdev_up_cmd_non_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_non_tlv,
@@ -9366,6 +9410,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_host_dfs_check_support] =
 		WMI_SERVICE_HOST_DFS_CHECK_SUPPORT;
+	wmi_service[wmi_service_cfr_capture_support] =
+		WMI_SERVICE_CFR_CAPTURE_SUPPORT;
 }
 
 /**
@@ -9719,6 +9765,8 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
 	pdev_param[wmi_pdev_param_enable_peer_retry_stats] =
 		WMI_PDEV_PARAM_ENABLE_PEER_RETRY_STATS;
+	pdev_param[wmi_pdev_param_per_peer_prd_cfr_enable] =
+		WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE;
 }
 
 /**

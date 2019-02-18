@@ -78,9 +78,31 @@ int tgt_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
  * tgt_cfr_enable_cfr_timer() - API to enable cfr timer
  * @pdev: pointer to pdev_object
  * @cfr_timer: Amount of time this timer has to run. If 0, it disables timer.
- *
- * Return: success/failure of init
  */
 void
 tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer);
+
+/**
+ * tgt_cfr_support_set() - API to set cfr support
+ * @psoc: pointer to psoc_object
+ * @value: value to be set
+ */
+void tgt_cfr_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value);
+
+/**
+ * tgt_cfr_info_send() - API to send cfr info
+ * @pdev: pointer to pdev_object
+ * @head: pointer to cfr info head
+ * @hlen: head len
+ * @data: pointer to cfr info data
+ * @dlen: data len
+ * @tail: pointer to cfr info tail
+ * @tlen: tail len
+ *
+ * Return: success/failure of cfr info send
+ */
+uint32_t tgt_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
+			   size_t hlen, void *data, size_t dlen, void *tail,
+			   size_t tlen);
+
 #endif

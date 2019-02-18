@@ -24,6 +24,52 @@
 #include <wlan_cfr_tgt_api.h>
 #include <wlan_cfr_utils_api.h>
 #include <target_type.h>
+#include <cfr_defs_i.h>
+
+uint32_t tgt_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
+			   size_t hlen, void *data, size_t dlen, void *tail,
+			   size_t tlen)
+{
+	struct pdev_cfr *pa;
+	uint32_t status;
+
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+
+	if (pa == NULL) {
+		cfr_err("pdev_cfr is NULL\n");
+		return -1;
+	}
+
+	if (head)
+		status = cfr_streamfs_write(pa, (const void *)head, hlen);
+
+	if (data)
+		status = cfr_streamfs_write(pa, (const void *)data, dlen);
+
+	if (tail)
+		status = cfr_streamfs_write(pa, (const void *)tail, tlen);
+
+
+	/* finalise the write */
+	status = cfr_streamfs_flush(pa);
+
+	return status;
+}
+
+void tgt_cfr_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
+{
+	struct psoc_cfr *cfr_sc;
+
+	if (psoc == NULL)
+		return;
+
+	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					WLAN_UMAC_COMP_CFR);
+	if (cfr_sc == NULL)
+		return;
+
+	cfr_sc->is_cfr_capable = !!value;
+}
 
 static inline struct wlan_lmac_if_cfr_tx_ops *
 	wlan_psoc_get_cfr_txops(struct wlan_objmgr_psoc *psoc)
@@ -125,4 +171,5 @@ tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer)
 
 	if (cfr_tx_ops->cfr_enable_cfr_timer)
 		cfr_tx_ops->cfr_enable_cfr_timer(pdev, cfr_timer);
+
 }

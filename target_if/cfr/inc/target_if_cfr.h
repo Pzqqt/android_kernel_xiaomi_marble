@@ -23,6 +23,38 @@
 
 #define PEER_CFR_CAPTURE_ENABLE   1
 #define PEER_CFR_CAPTURE_DISABLE  0
+#define IEEE80211_ADDR_LEN        6
+
+struct cfr_metadata_version_1 {
+	u_int8_t    peer_addr[IEEE80211_ADDR_LEN];
+	u_int8_t    status;
+	u_int8_t    capture_bw;
+	u_int8_t    channel_bw;
+	u_int8_t    phy_mode;
+	u_int16_t   prim20_chan;
+	u_int16_t   center_freq1;
+	u_int16_t   center_freq2;
+	u_int8_t    capture_mode;
+	u_int8_t    capture_type;
+	u_int8_t    sts_count;
+	u_int8_t    num_rx_chain;
+	u_int32_t   timestamp;
+	u_int32_t   length;
+} __attribute__ ((__packed__));
+
+struct csi_cfr_header {
+	u_int32_t   start_magic_num;
+	u_int32_t   vendorid;
+	u_int8_t    cfr_metadata_version;
+	u_int8_t    cfr_data_version;
+	u_int8_t    chip_type;
+	u_int8_t    pltform_type;
+	u_int32_t   Reserved;
+
+	union {
+		struct cfr_metadata_version_1 meta_v1;
+	} u;
+} __attribute__ ((__packed__));
 
 /**
  * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.
@@ -90,3 +122,54 @@ int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
  */
 int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_peer *peer);
+
+/**
+ * target_if_cfr_get_target_type() - Function to get target type
+ * @psoc: pointer to psoc object
+ *
+ * Return: target type of target
+ */
+int target_if_cfr_get_target_type(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_cfr_set_cfr_support() - Function to set cfr support
+ * @psoc: pointer to psoc object
+ * @value: value to be set
+ */
+void target_if_cfr_set_cfr_support(struct wlan_objmgr_psoc *psoc,
+				   uint8_t value);
+
+/**
+ * target_if_cfr_info_send() - Function to send cfr info to upper layers
+ * @pdev: pointer to pdev object
+ * @head: pointer to cfr info head
+ * @hlen: head len
+ * @data: pointer to cfr info data
+ * @dlen: data len
+ * @tail: pointer to cfr info tail
+ * @tlen: tail len
+ */
+void target_if_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
+			     size_t hlen, void *data, size_t dlen, void *tail,
+			     size_t tlen);
+
+/**
+ * cfr_wifi2_0_init_pdev() - Function to init legacy pdev
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ *
+ * Return: success/failure status of init
+ */
+QDF_STATUS cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev);
+
+/**
+ * cfr_wifi2_0_deinit_pdev() - Function to deinit legacy pdev
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ *
+ * Return: success/failure status of deinit
+ */
+QDF_STATUS cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_objmgr_pdev *pdev);
+

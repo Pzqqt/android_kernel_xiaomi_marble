@@ -50,6 +50,13 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 	pe->period = params->period;
 	pe->capture_method = params->method;
 
+	if (params->period != 0) {
+		if (!(params->period % 10))
+			tgt_cfr_enable_cfr_timer(pdev, 1);
+		else
+			return -EINVAL;
+	}
+
 	return tgt_cfr_start_capture(pdev, peer, params);
 }
 

@@ -102,4 +102,44 @@ wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg);
  */
 QDF_STATUS
 wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg);
+
+/**
+ * cfr_streamfs_init() - stream filesystem init
+ * @pdev - pointer to pdev object
+ *
+ * Return: status of fs init
+ */
+QDF_STATUS
+cfr_streamfs_init(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * cfr_streamfs_remove() - stream filesystem remove
+ * @pdev - pointer to pdev object
+ *
+ * Return: status of fs remove
+ */
+QDF_STATUS
+cfr_streamfs_remove(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * cfr_streamfs_write() - write to stream filesystem
+ * @pa - pointer to pdev_cfr object
+ * @write_data - Pointer to data
+ * @write_len - data len
+ *
+ * Return: status of fs write
+ */
+QDF_STATUS
+cfr_streamfs_write(struct pdev_cfr *pa, const void *write_data,
+		   size_t write_len);
+
+/**
+ * cfr_streamfs_flush() - flush the write to streamfs
+ * @pa - pointer to pdev_cfr object
+ *
+ * Return: status of fs flush
+ */
+QDF_STATUS
+cfr_streamfs_flush(struct pdev_cfr *pa);
+
 #endif
