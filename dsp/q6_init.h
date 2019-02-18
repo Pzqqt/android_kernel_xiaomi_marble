@@ -30,6 +30,18 @@ static inline void msm_mdf_exit(void)
 	return;
 }
 #endif
+#ifdef CONFIG_XT_LOGGING
+int spk_params_init(void);
+void spk_params_exit(void);
+#else
+static inline int spk_params_init(void)
+{
+	return 0;
+}
+static inline void spk_params_exit(void)
+{
+}
+#endif
 
 void avtimer_exit(void);
 void msm_audio_ion_exit(void);

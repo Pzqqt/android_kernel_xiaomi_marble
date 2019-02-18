@@ -16,6 +16,7 @@
 #include <sound/pcm_params.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6afe-v2.h>
+#include <dsp/sp_params.h>
 #include <dsp/q6core.h>
 #include "msm-dai-q6-v2.h"
 #include <asoc/core.h>
@@ -10538,12 +10539,31 @@ static void msm_dai_q6_cdc_dma_shutdown(struct snd_pcm_substream *substream,
 		clear_bit(STATUS_PORT_STARTED, dai_data->hwfree_status);
 }
 
+/* all ports with same WSA requirement can use this digital mute API */
+static int msm_dai_q6_spk_digital_mute(struct snd_soc_dai *dai,
+				       int mute)
+{
+	int port_id = dai->id;
+
+	if (mute)
+		afe_get_sp_xt_logging_data(port_id);
+
+	return 0;
+}
 
 static struct snd_soc_dai_ops msm_dai_q6_cdc_dma_ops = {
 	.prepare          = msm_dai_q6_cdc_dma_prepare,
 	.hw_params        = msm_dai_q6_cdc_dma_hw_params,
 	.shutdown         = msm_dai_q6_cdc_dma_shutdown,
 	.set_channel_map = msm_dai_q6_cdc_dma_set_channel_map,
+};
+
+static struct snd_soc_dai_ops msm_dai_q6_cdc_wsa_dma_ops = {
+	.prepare          = msm_dai_q6_cdc_dma_prepare,
+	.hw_params        = msm_dai_q6_cdc_dma_hw_params,
+	.shutdown         = msm_dai_q6_cdc_dma_shutdown,
+	.set_channel_map = msm_dai_q6_cdc_dma_set_channel_map,
+	.digital_mute = msm_dai_q6_spk_digital_mute,
 };
 
 static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
@@ -10568,7 +10588,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_max = 384000,
 		},
 		.name = "WSA_CDC_DMA_RX_0",
-		.ops = &msm_dai_q6_cdc_dma_ops,
+		.ops = &msm_dai_q6_cdc_wsa_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
 		.remove = msm_dai_q6_dai_cdc_dma_remove,
@@ -10620,7 +10640,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_max = 384000,
 		},
 		.name = "WSA_CDC_DMA_RX_1",
-		.ops = &msm_dai_q6_cdc_dma_ops,
+		.ops = &msm_dai_q6_cdc_wsa_dma_ops,
 		.id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
 		.remove = msm_dai_q6_dai_cdc_dma_remove,

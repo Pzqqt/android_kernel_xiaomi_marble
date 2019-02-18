@@ -158,6 +158,9 @@ struct afe_ctl {
 	struct vad_config vad_cfg[AFE_MAX_PORTS];
 	struct work_struct afe_dc_work;
 	struct notifier_block event_notifier;
+	/* FTM spk params */
+	uint32_t initial_cal;
+	uint32_t v_vali_flag;
 };
 
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
@@ -178,6 +181,51 @@ bool afe_close_done[2] = {true, true};
 static int afe_get_cal_hw_delay(int32_t path,
 				struct audio_cal_hw_delay_entry *entry);
 static int remap_cal_data(struct cal_block_data *cal_block, int cal_index);
+
+int afe_get_spk_initial_cal(void)
+{
+	return this_afe.initial_cal;
+}
+
+void afe_get_spk_r0(int *spk_r0)
+{
+	uint16_t i = 0;
+
+	for (; i < SP_V2_NUM_MAX_SPKRS; i++)
+		spk_r0[i] = this_afe.prot_cfg.r0[i];
+}
+
+void afe_get_spk_t0(int *spk_t0)
+{
+	uint16_t i = 0;
+
+	for (; i < SP_V2_NUM_MAX_SPKRS; i++)
+		spk_t0[i] = this_afe.prot_cfg.t0[i];
+}
+
+int afe_get_spk_v_vali_flag(void)
+{
+	return this_afe.v_vali_flag;
+}
+
+void afe_get_spk_v_vali_sts(int *spk_v_vali_sts)
+{
+	uint16_t i = 0;
+
+	for (; i < SP_V2_NUM_MAX_SPKRS; i++)
+		spk_v_vali_sts[i] =
+			this_afe.th_vi_v_vali_resp.param.status[i];
+}
+
+void afe_set_spk_initial_cal(int initial_cal)
+{
+	this_afe.initial_cal = initial_cal;
+}
+
+void afe_set_spk_v_vali_flag(int v_vali_flag)
+{
+	this_afe.v_vali_flag = v_vali_flag;
+}
 
 int afe_get_topology(int port_id)
 {
@@ -7793,9 +7841,9 @@ int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib_resp)
 	memcpy(&calib_resp->res_cfg, &this_afe.calib_data.res_cfg,
 		sizeof(this_afe.calib_data.res_cfg));
 	pr_info("%s: state %s resistance %d %d\n", __func__,
-			 fbsp_state[calib_resp->res_cfg.th_vi_ca_state],
-			 calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_1],
-			 calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_2]);
+		fbsp_state[calib_resp->res_cfg.th_vi_ca_state],
+		calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_1],
+		calib_resp->res_cfg.r0_cali_q24[SP_V2_SPKR_2]);
 	ret = 0;
 fail_cmd:
 	return ret;
@@ -8223,6 +8271,7 @@ static int afe_get_cal_sp_th_vi_v_vali_param(int32_t cal_type, size_t data_size,
 			}
 		}
 	}
+	this_afe.v_vali_flag = 0;
 done:
 	return ret;
 }
@@ -8385,6 +8434,7 @@ static int afe_get_cal_fb_spkr_prot(int32_t cal_type, size_t data_size,
 		cal_data->cal_info.r0[SP_V2_SPKR_1] = -1;
 		cal_data->cal_info.r0[SP_V2_SPKR_2] = -1;
 	}
+	this_afe.initial_cal = 0;
 	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_CAL]->lock);
 	__pm_relax(&wl.ws);
 done:

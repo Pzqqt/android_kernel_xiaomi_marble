@@ -14,6 +14,7 @@ static int __init audio_q6_init(void)
 	rtac_init();
 	adm_init();
 	afe_init();
+	spk_params_init();
 	q6asm_init();
 	q6lsm_init();
 	voice_init();
@@ -37,6 +38,7 @@ static void __exit audio_q6_exit(void)
 	q6lsm_exit();
 	q6asm_exit();
 	afe_exit();
+	spk_params_exit();
 	adm_exit();
 	rtac_exit();
 	audio_cal_exit();

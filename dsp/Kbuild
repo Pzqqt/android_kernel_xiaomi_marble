@@ -91,11 +91,16 @@ ifdef CONFIG_SND_SOC_MSM_QDSP6V2_INTF
 	Q6_OBJS += msm_audio_ion.o
 	Q6_OBJS += avtimer.o
 	Q6_OBJS += q6_init.o
-
 endif
+
+ifdef CONFIG_XT_LOGGING
+	Q6_OBJS += sp_params.o
+endif
+
 ifdef CONFIG_WCD9XXX_CODEC_CORE
 	Q6_OBJS += audio_slimslave.o
 endif
+
 ifdef CONFIG_DTS_SRS_TM
 	Q6_OBJS += msm-dts-srs-tm-config.o
 endif
