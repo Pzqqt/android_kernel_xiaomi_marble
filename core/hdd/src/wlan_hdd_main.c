@@ -237,11 +237,6 @@ static char *country_code;
 static int enable_11d = -1;
 static int enable_dfs_chan_scan = -1;
 
-/*
- * spinlock for synchronizing asynchronous request/response
- * (full description of use in wlan_hdd_main.h)
- */
-DEFINE_SPINLOCK(hdd_context_lock);
 DEFINE_MUTEX(hdd_init_deinit_lock);
 
 #define WLAN_NLINK_CESIUM 30

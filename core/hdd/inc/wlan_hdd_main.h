@@ -371,39 +371,6 @@ enum hdd_driver_flags {
 /* Assigned size of driver memory dump is 4096 bytes */
 #define DRIVER_MEM_DUMP_SIZE    4096
 
-/*
- * Generic asynchronous request/response support
- *
- * Many of the APIs supported by HDD require a call to SME to
- * perform an action or to retrieve some data.  In most cases SME
- * performs the operation asynchronously, and will execute a provided
- * callback function when the request has completed.  In order to
- * synchronize this the HDD API allocates a context which is then
- * passed to SME, and which is then, in turn, passed back to the
- * callback function when the operation completes.  The callback
- * function then sets a completion variable inside the context which
- * the HDD API is waiting on.  In an ideal world the HDD API would
- * wait forever (or at least for a long time) for the response to be
- * received and for the completion variable to be set.  However in
- * most cases these HDD APIs are being invoked in the context of a
- * user space thread which has invoked either a cfg80211 API or a
- * wireless extensions ioctl and which has taken the kernel rtnl_lock.
- * Since this lock is used to synchronize many of the kernel tasks, we
- * do not want to hold it for a long time.  In addition we do not want
- * to block user space threads (such as the wpa supplicant's main
- * thread) for an extended time.  Therefore we only block for a short
- * time waiting for the response before we timeout.  This means that
- * it is possible for the HDD API to timeout, and for the callback to
- * be invoked afterwards.  In order for the callback function to
- * determine if the HDD API is still waiting, a magic value is also
- * stored in the shared context.  Only if the context has a valid
- * magic will the callback routine do any work.  In order to further
- * synchronize these activities a spinlock is used so that if any HDD
- * API timeout coincides with its callback, the operations of the two
- * threads will be serialized.
- */
-
-extern spinlock_t hdd_context_lock;
 extern struct mutex hdd_init_deinit_lock;
 
 /* MAX OS Q block time value in msec
