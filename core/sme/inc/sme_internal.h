@@ -303,8 +303,8 @@ struct sme_context {
 	int (*get_tsf_cb)(void *pcb_cxt, struct stsf *ptsf);
 	void *get_tsf_cxt;
 	/* get temperature event context and callback */
-	void *pTemperatureCbContext;
-	void (*pGetTemperatureCb)(int temperature, void *context);
+	void *temperature_cb_context;
+	void (*temperature_cb)(int temperature, void *context);
 	uint8_t miracast_value;
 	struct ps_global_info  ps_global_info;
 	rssi_threshold_breached_cb rssi_threshold_breached_cb;

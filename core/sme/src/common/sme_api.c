@@ -2117,9 +2117,9 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		break;
 	}
 	case eWNI_SME_MSG_GET_TEMPERATURE_IND:
-		if (mac->sme.pGetTemperatureCb)
-			mac->sme.pGetTemperatureCb(pMsg->bodyval,
-					mac->sme.pTemperatureCbContext);
+		if (mac->sme.temperature_cb)
+			mac->sme.temperature_cb(pMsg->bodyval,
+					mac->sme.temperature_cb_context);
 		break;
 	case eWNI_SME_SNR_IND:
 	{
@@ -10357,19 +10357,17 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
 }
 #endif
 
-/*
- * sme_get_temperature() -
- * SME API to get the pdev temperature
- *
- * mac_handle
- * temperature context
- * pCallbackfn: callback fn with response (temperature)
- * Return QDF_STATUS
+/**
+ * sme_get_temperature() - SME API to get the pdev temperature
+ * @mac_handle: Handle to global MAC context
+ * @cb_context: temperature callback context
+ * @cb: callback function with response (temperature)
+ * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_temperature(mac_handle_t mac_handle,
-			       void *tempContext,
-			       void (*pCallbackfn)(int temperature,
-						   void *pContext))
+			       void *cb_context,
+			       void (*cb)(int temperature,
+					  void *context))
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -10378,15 +10376,15 @@ QDF_STATUS sme_get_temperature(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		if ((NULL == pCallbackfn) &&
-		    (NULL == mac->sme.pGetTemperatureCb)) {
+		if ((!cb) &&
+		    (!mac->sme.temperature_cb)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"Indication Call back did not registered");
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_FAILURE;
-		} else if (NULL != pCallbackfn) {
-			mac->sme.pTemperatureCbContext = tempContext;
-			mac->sme.pGetTemperatureCb = pCallbackfn;
+		} else if (cb) {
+			mac->sme.temperature_cb_context = cb_context;
+			mac->sme.temperature_cb = cb;
 		}
 		/* serialize the req through MC thread */
 		message.bodyptr = NULL;
