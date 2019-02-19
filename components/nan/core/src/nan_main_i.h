@@ -58,9 +58,8 @@ struct scheduler_msg;
 #define nan_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_NAN, params)
 
-#ifndef MAX_PEERS
-#define MAX_PEERS 32
-#endif
+/* Maximum number of NDP instances supported on each NAN Peer */
+#define MAX_NDP_INSTANCES_PER_PEER 1
 
 /**
  * enum nan_disc_state - NAN Discovery states
@@ -121,7 +120,6 @@ struct nan_psoc_priv_obj {
  * struct nan_vdev_priv_obj - nan private vdev obj
  * @lock: lock to be acquired before reading or writing to object
  * @state: Current state of NDP
- * @active_ndp_sessions: active ndp sessions per adapter
  * @active_ndp_peers: number of active ndp peers
  * @ndp_create_transaction_id: transaction id for create req
  * @ndp_delete_transaction_id: transaction id for delete req
@@ -131,13 +129,21 @@ struct nan_psoc_priv_obj {
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
 	enum nan_datapath_state state;
-	/* idx in following array should follow conn_info.peerMacAddress */
-	uint32_t active_ndp_sessions[MAX_PEERS];
 	uint32_t active_ndp_peers;
 	uint16_t ndp_create_transaction_id;
 	uint16_t ndp_delete_transaction_id;
 	uint32_t ndi_delete_rsp_reason;
 	uint32_t ndi_delete_rsp_status;
+};
+
+/**
+ * struct nan_peer_priv_obj - nan private peer obj
+ * @lock: lock to be acquired before reading or writing to object
+ * @active_ndp_sessions: number of active ndp sessions for this peer
+ */
+struct nan_peer_priv_obj {
+	qdf_spinlock_t lock;
+	uint32_t active_ndp_sessions;
 };
 
 /**

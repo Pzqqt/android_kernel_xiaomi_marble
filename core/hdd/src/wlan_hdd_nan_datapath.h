@@ -92,7 +92,6 @@ void hdd_ndi_close(uint8_t vdev_id);
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 			       struct nan_datapath_inf_create_rsp *ndi_rsp);
 void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id);
-int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr);
 int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer);
 void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,

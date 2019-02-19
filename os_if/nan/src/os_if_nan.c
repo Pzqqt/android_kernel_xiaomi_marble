@@ -1450,41 +1450,17 @@ static void
 os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 			      struct nan_datapath_confirm_event *ndp_confirm)
 {
-	int idx = 0;
 	uint8_t *ifname;
 	uint32_t data_len;
 	QDF_STATUS status;
 	qdf_size_t ifname_len;
-	struct nan_callbacks cb_obj;
 	struct sk_buff *vendor_event;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
 
 	if (!ndp_confirm) {
 		cfg80211_err("Invalid NDP Initator response");
 		return;
-	}
-
-	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("couldn't get callbacks");
-		return;
-	}
-
-	/* ndp_confirm is called each time user generated ndp req succeeds */
-	idx = cb_obj.get_peer_idx(wlan_vdev_get_id(vdev),
-				&ndp_confirm->peer_ndi_mac_addr);
-
-	if (idx < 0)
-		cfg80211_err("can't find addr: %pM in vdev_id: %d, peer table.",
-			&ndp_confirm->peer_ndi_mac_addr,
-			wlan_vdev_get_id(vdev));
-	else if (ndp_confirm->rsp_code == NAN_DATAPATH_RESPONSE_ACCEPT) {
-		uint32_t active_sessions =
-			ucfg_nan_get_active_ndp_sessions(vdev, idx);
-		ucfg_nan_set_active_ndp_sessions(vdev, active_sessions + 1,
-						 idx);
 	}
 
 	ifname = wlan_util_vdev_get_if_name(vdev);
@@ -1695,21 +1671,11 @@ static inline uint32_t osif_ndp_get_ndp_end_ind_len(
 static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 			struct nan_datapath_end_indication_event *end_ind)
 {
-	QDF_STATUS status;
 	uint32_t data_len, i;
-	struct nan_callbacks cb_obj;
 	uint32_t *ndp_instance_array;
 	struct sk_buff *vendor_event;
-	struct wlan_objmgr_vdev *vdev_itr;
-	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
-
-	status = ucfg_nan_get_callbacks(psoc, &cb_obj);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("failed to get callbacks");
-		return;
-	}
 
 	if (!end_ind) {
 		cfg80211_err("Invalid ndp end indication");
@@ -1722,33 +1688,8 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 		cfg80211_err("Failed to allocate ndp_instance_array");
 		return;
 	}
-	for (i = 0; i < end_ind->num_ndp_ids; i++) {
-		int idx = 0;
-
+	for (i = 0; i < end_ind->num_ndp_ids; i++)
 		ndp_instance_array[i] = end_ind->ndp_map[i].ndp_instance_id;
-		vdev_itr = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-				end_ind->ndp_map[i].vdev_id, WLAN_NAN_ID);
-
-		if (vdev_itr == NULL) {
-			cfg80211_err("vdev not found for vdev_id: %d",
-				end_ind->ndp_map[i].vdev_id);
-			continue;
-		}
-
-		idx = cb_obj.get_peer_idx(wlan_vdev_get_id(vdev_itr),
-				&end_ind->ndp_map[i].peer_ndi_mac_addr);
-		if (idx < 0) {
-			cfg80211_err("can't find addr: %pM in sta_ctx.",
-				&end_ind->ndp_map[i].peer_ndi_mac_addr);
-			wlan_objmgr_vdev_release_ref(vdev_itr, WLAN_NAN_ID);
-			continue;
-		}
-		/* save the value of active sessions on each peer */
-		ucfg_nan_set_active_ndp_sessions(vdev_itr,
-				end_ind->ndp_map[i].num_active_ndp_sessions,
-				idx);
-		wlan_objmgr_vdev_release_ref(vdev_itr, WLAN_NAN_ID);
-	}
 
 	data_len = osif_ndp_get_ndp_end_ind_len(end_ind);
 	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,

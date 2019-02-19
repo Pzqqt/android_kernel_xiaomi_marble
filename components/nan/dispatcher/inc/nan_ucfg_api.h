@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,24 +62,6 @@ QDF_STATUS ucfg_nan_set_active_peers(struct wlan_objmgr_vdev *vdev,
  * Return: active ndi peer
  */
 uint32_t ucfg_nan_get_active_peers(struct wlan_objmgr_vdev *vdev);
-
-/**
- * ucfg_nan_set_active_ndp_sessions: set active ndp sessions
- * @vdev: pointer to vdev object
- *
- * Return: status of operation
- */
-QDF_STATUS ucfg_nan_set_active_ndp_sessions(struct wlan_objmgr_vdev *vdev,
-					    uint32_t val, uint8_t idx);
-
-/**
- * ucfg_nan_get_active_ndp_sessions: get active ndp sessions from vdev obj
- * @vdev: pointer to vdev object
- *
- * Return: pointer to NAN psoc private object
- */
-uint32_t ucfg_nan_get_active_ndp_sessions(struct wlan_objmgr_vdev *vdev,
-					  uint8_t idx);
 
 /**
  * ucfg_nan_set_ndp_create_transaction_id: set ndp create transaction id

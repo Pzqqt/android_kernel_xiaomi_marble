@@ -249,6 +249,81 @@ static QDF_STATUS nan_vdev_obj_destroyed_notification(
 	return status;
 }
 
+/**
+ * nan_peer_obj_created_notification() - Handler for peer object creation
+ * notification event
+ * @peer: Pointer to the PEER Object
+ * @arg_list: Pointer to private argument - NULL
+ *
+ * This function gets called from object manager when peer is being
+ * created.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS nan_peer_obj_created_notification(
+		struct wlan_objmgr_peer *peer, void *arg_list)
+{
+	struct nan_peer_priv_obj *nan_peer_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	nan_peer_obj = qdf_mem_malloc(sizeof(*nan_peer_obj));
+	if (!nan_peer_obj) {
+		nan_err("malloc failed for nan prv obj");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_spinlock_create(&nan_peer_obj->lock);
+	status = wlan_objmgr_peer_component_obj_attach(peer, WLAN_UMAC_COMP_NAN,
+						       (void *)nan_peer_obj,
+						       QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_alert("obj attach with peer failed");
+		goto nan_peer_notif_failed;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+nan_peer_notif_failed:
+
+	qdf_spinlock_destroy(&nan_peer_obj->lock);
+	qdf_mem_free(nan_peer_obj);
+	return status;
+}
+
+/**
+ * nan_peer_obj_destroyed_notification() - Handler for peer object deletion
+ * notification event
+ * @peer: Pointer to the PEER Object
+ * @arg_list: Pointer to private argument - NULL
+ *
+ * This function gets called from object manager when peer is being destroyed.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS nan_peer_obj_destroyed_notification(
+				struct wlan_objmgr_peer *peer, void *arg_list)
+{
+	struct nan_peer_priv_obj *nan_peer_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	nan_peer_obj = nan_get_peer_priv_obj(peer);
+	if (!nan_peer_obj) {
+		nan_err("nan_peer_obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	status = wlan_objmgr_peer_component_obj_detach(peer, WLAN_UMAC_COMP_NAN,
+						       nan_peer_obj);
+	if (QDF_IS_STATUS_ERROR(status))
+		nan_err("nan_peer_obj detach failed");
+
+	nan_debug("nan_peer_obj deleted with status %d", status);
+	qdf_spinlock_destroy(&nan_peer_obj->lock);
+	qdf_mem_free(nan_peer_obj);
+
+	return status;
+}
+
 QDF_STATUS nan_init(void)
 {
 	QDF_STATUS status;
@@ -270,8 +345,7 @@ QDF_STATUS nan_init(void)
 		NULL);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("wlan_objmgr_register_psoc_destroy_handler failed");
-		nan_deinit();
-		return status;
+		goto err_psoc_destroy_reg;
 	}
 
 	/* register vdev create handler functions. */
@@ -281,8 +355,7 @@ QDF_STATUS nan_init(void)
 		NULL);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("wlan_objmgr_register_psoc_create_handler failed");
-		nan_deinit();
-		return status;
+		goto err_vdev_create_reg;
 	}
 
 	/* register vdev delete handler functions. */
@@ -292,11 +365,50 @@ QDF_STATUS nan_init(void)
 		NULL);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("wlan_objmgr_register_psoc_destroy_handler failed");
-		nan_deinit();
-		return status;
+		goto err_vdev_destroy_reg;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	/* register peer create handler functions. */
+	status = wlan_objmgr_register_peer_create_handler(
+		WLAN_UMAC_COMP_NAN,
+		nan_peer_obj_created_notification,
+		NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("wlan_objmgr_register_peer_create_handler failed");
+		goto err_peer_create_reg;
+	}
+
+	/* register peer delete handler functions. */
+	status = wlan_objmgr_register_peer_destroy_handler(
+		WLAN_UMAC_COMP_NAN,
+		nan_peer_obj_destroyed_notification,
+		NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		nan_err("wlan_objmgr_register_peer_destroy_handler failed");
+	else
+		return QDF_STATUS_SUCCESS;
+
+	wlan_objmgr_unregister_peer_create_handler(WLAN_UMAC_COMP_NAN,
+					nan_peer_obj_created_notification,
+					NULL);
+err_peer_create_reg:
+	wlan_objmgr_unregister_vdev_destroy_handler(WLAN_UMAC_COMP_NAN,
+					nan_vdev_obj_destroyed_notification,
+					NULL);
+err_vdev_destroy_reg:
+	wlan_objmgr_unregister_vdev_create_handler(WLAN_UMAC_COMP_NAN,
+					nan_vdev_obj_created_notification,
+					NULL);
+err_vdev_create_reg:
+	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_NAN,
+					nan_psoc_obj_destroyed_notification,
+					NULL);
+err_psoc_destroy_reg:
+	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_NAN,
+					nan_psoc_obj_created_notification,
+					NULL);
+
+	return status;
 }
 
 QDF_STATUS nan_deinit(void)
@@ -340,6 +452,26 @@ QDF_STATUS nan_deinit(void)
 		NULL);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("wlan_objmgr_deregister_psoc_destroy_handler failed");
+		ret = status;
+	}
+
+	/* de-register peer create handler functions. */
+	status = wlan_objmgr_unregister_peer_create_handler(
+		WLAN_UMAC_COMP_NAN,
+		nan_peer_obj_created_notification,
+		NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("wlan_objmgr_unregister_peer_create_handler failed");
+		ret = status;
+	}
+
+	/* de-register peer delete handler functions. */
+	status = wlan_objmgr_unregister_peer_destroy_handler(
+		WLAN_UMAC_COMP_NAN,
+		nan_peer_obj_destroyed_notification,
+		NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("wlan_objmgr_deregister_peer_destroy_handler failed");
 		ret = status;
 	}
 

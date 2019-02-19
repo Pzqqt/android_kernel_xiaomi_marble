@@ -100,54 +100,6 @@ inline uint32_t ucfg_nan_get_active_peers(struct wlan_objmgr_vdev *vdev)
 
 	return val;
 }
-
-inline QDF_STATUS ucfg_nan_set_active_ndp_sessions(
-		struct wlan_objmgr_vdev *vdev, uint32_t val, uint8_t idx)
-{
-	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
-
-	if (!priv_obj) {
-		nan_err("priv_obj is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (idx >= MAX_PEERS) {
-		nan_err("peer_idx(%d), MAX(%d)",
-			idx, MAX_PEERS);
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	qdf_spin_lock_bh(&priv_obj->lock);
-	priv_obj->active_ndp_sessions[idx] = val;
-	qdf_spin_unlock_bh(&priv_obj->lock);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-inline uint32_t ucfg_nan_get_active_ndp_sessions(struct wlan_objmgr_vdev *vdev,
-						 uint8_t idx)
-{
-	uint32_t val;
-	struct nan_vdev_priv_obj *priv_obj = nan_get_vdev_priv_obj(vdev);
-
-	if (!priv_obj) {
-		nan_err("priv_obj is null");
-		return 0;
-	}
-
-	if (idx >= MAX_PEERS) {
-		nan_err("peer_idx(%d), MAX(%d)",
-			idx, MAX_PEERS);
-		return 0;
-	}
-
-	qdf_spin_lock_bh(&priv_obj->lock);
-	val = priv_obj->active_ndp_sessions[idx];
-	qdf_spin_unlock_bh(&priv_obj->lock);
-
-	return val;
-}
-
 inline QDF_STATUS ucfg_nan_set_ndp_create_transaction_id(
 				struct wlan_objmgr_vdev *vdev, uint16_t val)
 {
@@ -428,7 +380,6 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 	psoc_obj->cb_obj.drv_ndi_delete_rsp_handler =
 				cb_obj->drv_ndi_delete_rsp_handler;
 
-	psoc_obj->cb_obj.get_peer_idx = cb_obj->get_peer_idx;
 	psoc_obj->cb_obj.new_peer_ind = cb_obj->new_peer_ind;
 	psoc_obj->cb_obj.peer_departed_ind = cb_obj->peer_departed_ind;
 	psoc_obj->cb_obj.os_if_ndp_event_handler =

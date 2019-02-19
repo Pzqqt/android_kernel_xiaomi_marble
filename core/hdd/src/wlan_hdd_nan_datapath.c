@@ -764,15 +764,6 @@ void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 	os_if_nan_ndi_session_end(adapter->vdev);
 }
 
-int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr)
-{
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return hdd_get_peer_idx(sta_ctx, addr);
-}
-
 /**
  * hdd_ndp_new_peer_handler() - NDP new peer indication handler
  * @adapter: pointer to adapter context

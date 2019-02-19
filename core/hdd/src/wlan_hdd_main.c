@@ -2693,7 +2693,6 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.drv_ndi_delete_rsp_handler = hdd_ndi_drv_ndi_delete_rsp_handler;
 
 	cb_obj.new_peer_ind = hdd_ndp_new_peer_handler;
-	cb_obj.get_peer_idx = hdd_ndp_get_peer_idx;
 	cb_obj.peer_departed_ind = hdd_ndp_peer_departed_handler;
 
 	os_if_nan_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);

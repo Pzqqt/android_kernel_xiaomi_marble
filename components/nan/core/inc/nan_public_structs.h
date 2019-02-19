@@ -705,7 +705,6 @@ struct nan_datapath_sch_update_event {
  * @drv_ndi_create_rsp_handler: HDD callback for handling NDI interface creation
  * @drv_ndi_delete_rsp_handler: HDD callback for handling NDI interface deletion
  * @new_peer_ind: HDD callback for handling new NDP peer
- * @get_peer_idx: HDD callback for getting NDP peer index
  * @add_ndi_peer: LIM callback for adding NDP peer
  * @peer_departed_ind: HDD callback for handling departing of NDP peer
  * @ndp_delete_peers: LIM callback for deleting NDP peer
@@ -726,7 +725,6 @@ struct nan_callbacks {
 				(uint8_t, struct nan_datapath_inf_create_rsp *);
 	void (*drv_ndi_delete_rsp_handler)(uint8_t);
 	int (*new_peer_ind)(uint8_t, uint16_t, struct qdf_mac_addr *, bool);
-	int (*get_peer_idx)(uint8_t, struct qdf_mac_addr *);
 	QDF_STATUS (*add_ndi_peer)(uint32_t, struct qdf_mac_addr);
 	void (*peer_departed_ind)(uint8_t, uint16_t, struct qdf_mac_addr *,
 				  bool);
