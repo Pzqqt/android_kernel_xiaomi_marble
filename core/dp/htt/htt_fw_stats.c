@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -281,77 +281,77 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	struct wlan_dbg_rx_stats *rx = &wlan_pdev_stats->rx;
 
 	qdf_nofl_info("WAL Pdev stats:");
-	qdf_nofl_info("\n### Tx ###");
+	qdf_nofl_info("### Tx ###");
 
 	/* Num HTT cookies queued to dispatch list */
-	qdf_nofl_info("comp_queued       :\t%d", tx->comp_queued);
+	qdf_nofl_info("comp_queued       :%d", tx->comp_queued);
 	/* Num HTT cookies dispatched */
-	qdf_nofl_info("comp_delivered    :\t%d", tx->comp_delivered);
+	qdf_nofl_info("comp_delivered    :%d", tx->comp_delivered);
 	/* Num MSDU queued to WAL */
-	qdf_nofl_info("msdu_enqued       :\t%d", tx->msdu_enqued);
+	qdf_nofl_info("msdu_enqued       :%d", tx->msdu_enqued);
 	/* Num MPDU queued to WAL */
-	qdf_nofl_info("mpdu_enqued       :\t%d", tx->mpdu_enqued);
+	qdf_nofl_info("mpdu_enqued       :%d", tx->mpdu_enqued);
 	/* Num MSDUs dropped by WMM limit */
-	qdf_nofl_info("wmm_drop          :\t%d", tx->wmm_drop);
+	qdf_nofl_info("wmm_drop          :%d", tx->wmm_drop);
 	/* Num Local frames queued */
-	qdf_nofl_info("local_enqued      :\t%d", tx->local_enqued);
+	qdf_nofl_info("local_enqued      :%d", tx->local_enqued);
 	/* Num Local frames done */
-	qdf_nofl_info("local_freed       :\t%d", tx->local_freed);
+	qdf_nofl_info("local_freed       :%d", tx->local_freed);
 	/* Num queued to HW */
-	qdf_nofl_info("hw_queued         :\t%d", tx->hw_queued);
+	qdf_nofl_info("hw_queued         :%d", tx->hw_queued);
 	/* Num PPDU reaped from HW */
-	qdf_nofl_info("hw_reaped         :\t%d", tx->hw_reaped);
+	qdf_nofl_info("hw_reaped         :%d", tx->hw_reaped);
 	/* Num underruns */
-	qdf_nofl_info("mac underrun      :\t%d", tx->underrun);
+	qdf_nofl_info("mac underrun      :%d", tx->underrun);
 	/* Num underruns */
-	qdf_nofl_info("phy underrun      :\t%d", tx->phy_underrun);
+	qdf_nofl_info("phy underrun      :%d", tx->phy_underrun);
 	/* Num PPDUs cleaned up in TX abort */
-	qdf_nofl_info("tx_abort          :\t%d", tx->tx_abort);
+	qdf_nofl_info("tx_abort          :%d", tx->tx_abort);
 	/* Num MPDUs requed by SW */
-	qdf_nofl_info("mpdus_requed      :\t%d", tx->mpdus_requed);
+	qdf_nofl_info("mpdus_requed      :%d", tx->mpdus_requed);
 	/* Excessive retries */
-	qdf_nofl_info("excess retries    :\t%d", tx->tx_ko);
+	qdf_nofl_info("excess retries    :%d", tx->tx_ko);
 	/* last data rate */
-	qdf_nofl_info("last rc           :\t%d", tx->data_rc);
+	qdf_nofl_info("last rc           :%d", tx->data_rc);
 	/* scheduler self triggers */
-	qdf_nofl_info("sched self trig   :\t%d", tx->self_triggers);
+	qdf_nofl_info("sched self trig   :%d", tx->self_triggers);
 	/* SW retry failures */
-	qdf_nofl_info("ampdu retry failed:\t%d", tx->sw_retry_failure);
+	qdf_nofl_info("ampdu retry failed:%d", tx->sw_retry_failure);
 	/* ilegal phy rate errirs */
-	qdf_nofl_info("illegal rate errs :\t%d", tx->illgl_rate_phy_err);
+	qdf_nofl_info("illegal rate errs :%d", tx->illgl_rate_phy_err);
 	/* pdev continuous excessive retries  */
-	qdf_nofl_info("pdev cont xretry  :\t%d", tx->pdev_cont_xretry);
+	qdf_nofl_info("pdev cont xretry  :%d", tx->pdev_cont_xretry);
 	/* pdev continuous excessive retries  */
-	qdf_nofl_info("pdev tx timeout   :\t%d", tx->pdev_tx_timeout);
+	qdf_nofl_info("pdev tx timeout   :%d", tx->pdev_tx_timeout);
 	/* pdev resets  */
-	qdf_nofl_info("pdev resets       :\t%d", tx->pdev_resets);
+	qdf_nofl_info("pdev resets       :%d", tx->pdev_resets);
 	/* PPDU > txop duration  */
-	qdf_nofl_info("ppdu txop ovf     :\t%d", tx->txop_ovf);
+	qdf_nofl_info("ppdu txop ovf     :%d", tx->txop_ovf);
 
-	qdf_nofl_info("\n### Rx ###\n");
+	qdf_nofl_info("### Rx ###");
 	/* Cnts any change in ring routing mid-ppdu */
-	qdf_nofl_info("ppdu_route_change :\t%d", rx->mid_ppdu_route_change);
+	qdf_nofl_info("ppdu_route_change :%d", rx->mid_ppdu_route_change);
 	/* Total number of statuses processed */
-	qdf_nofl_info("status_rcvd       :\t%d", rx->status_rcvd);
+	qdf_nofl_info("status_rcvd       :%d", rx->status_rcvd);
 	/* Extra frags on rings 0-3 */
-	qdf_nofl_info("r0_frags          :\t%d", rx->r0_frags);
-	qdf_nofl_info("r1_frags          :\t%d", rx->r1_frags);
-	qdf_nofl_info("r2_frags          :\t%d", rx->r2_frags);
-	qdf_nofl_info("r3_frags          :\t%d", rx->r3_frags);
+	qdf_nofl_info("r0_frags          :%d", rx->r0_frags);
+	qdf_nofl_info("r1_frags          :%d", rx->r1_frags);
+	qdf_nofl_info("r2_frags          :%d", rx->r2_frags);
+	qdf_nofl_info("r3_frags          :%d", rx->r3_frags);
 	/* MSDUs / MPDUs delivered to HTT */
-	qdf_nofl_info("htt_msdus         :\t%d", rx->htt_msdus);
-	qdf_nofl_info("htt_mpdus         :\t%d", rx->htt_mpdus);
+	qdf_nofl_info("htt_msdus         :%d", rx->htt_msdus);
+	qdf_nofl_info("htt_mpdus         :%d", rx->htt_mpdus);
 	/* MSDUs / MPDUs delivered to local stack */
-	qdf_nofl_info("loc_msdus         :\t%d", rx->loc_msdus);
-	qdf_nofl_info("loc_mpdus         :\t%d", rx->loc_mpdus);
+	qdf_nofl_info("loc_msdus         :%d", rx->loc_msdus);
+	qdf_nofl_info("loc_mpdus         :%d", rx->loc_mpdus);
 	/* AMSDUs that have more MSDUs than the status ring size */
-	qdf_nofl_info("oversize_amsdu    :\t%d", rx->oversize_amsdu);
+	qdf_nofl_info("oversize_amsdu    :%d", rx->oversize_amsdu);
 	/* Number of PHY errors */
-	qdf_nofl_info("phy_errs          :\t%d", rx->phy_errs);
+	qdf_nofl_info("phy_errs          :%d", rx->phy_errs);
 	/* Number of PHY errors dropped */
-	qdf_nofl_info("phy_errs dropped  :\t%d", rx->phy_err_drop);
+	qdf_nofl_info("phy_errs dropped  :%d", rx->phy_err_drop);
 	/* Number of mpdu errors - FCS, MIC, ENC etc. */
-	qdf_nofl_info("mpdu_errs         :\t%d", rx->mpdu_errs);
+	qdf_nofl_info("mpdu_errs         :%d", rx->mpdu_errs);
 
 }
 
