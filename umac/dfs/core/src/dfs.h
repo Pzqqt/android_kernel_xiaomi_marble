@@ -338,10 +338,16 @@
 		WLAN_DFSNOL_UNLOCK(dfs);                    \
 	} while (0)
 
+/*
+ * Free the NOL element in a thread. This is to avoid freeing the
+ * timer object from within timer callback function . The nol element
+ * contains the timer Object.
+ */
 #define DFS_NOL_DELETE_CHAN_LOCKED(dfs, freq, chwidth)      \
 	do {                                                \
 		WLAN_DFSNOL_LOCK(dfs);                      \
 		dfs_nol_delete(dfs, freq, chwidth);         \
+		qdf_sched_work(NULL, &dfs->dfs_nol_elem_free_work); \
 		WLAN_DFSNOL_UNLOCK(dfs);                    \
 	} while (0)
 
