@@ -529,7 +529,8 @@ static inline int cdp_peer_add_ast
 }
 
 static inline void cdp_peer_reset_ast
-	(ol_txrx_soc_handle soc, uint8_t *wds_macaddr, void *vdev_hdl)
+	(ol_txrx_soc_handle soc, uint8_t *wds_macaddr, uint8_t *peer_macaddr,
+	 void *vdev_hdl)
 {
 
 	if (!soc || !soc->ops) {
@@ -542,7 +543,8 @@ static inline void cdp_peer_reset_ast
 	    !soc->ops->cmn_drv_ops->txrx_peer_reset_ast)
 		return;
 
-	soc->ops->cmn_drv_ops->txrx_peer_reset_ast(soc, wds_macaddr, vdev_hdl);
+	soc->ops->cmn_drv_ops->txrx_peer_reset_ast(soc, wds_macaddr,
+						   peer_macaddr, vdev_hdl);
 }
 
 static inline void cdp_peer_reset_ast_table

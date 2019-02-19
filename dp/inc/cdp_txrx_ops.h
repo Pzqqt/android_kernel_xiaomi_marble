@@ -402,7 +402,8 @@ struct cdp_cmn_ops {
 			void *dp_txrx_handle);
 
 	void (*txrx_peer_reset_ast)
-		(ol_txrx_soc_handle soc, uint8_t *ast_macaddr, void *vdev_hdl);
+		(ol_txrx_soc_handle soc, uint8_t *ast_macaddr,
+		 uint8_t *peer_macaddr, void *vdev_hdl);
 
 	void (*txrx_peer_reset_ast_table)(ol_txrx_soc_handle soc,
 					  void *vdev_hdl);
@@ -882,7 +883,8 @@ struct ol_if_ops {
 			uint8_t *dest_macaddr, uint8_t *peer_macaddr,
 			uint32_t flags);
 	void (*peer_del_wds_entry)(void *ol_soc_handle,
-			uint8_t *wds_macaddr);
+				   uint8_t *wds_macaddr,
+				   uint8_t type);
 	QDF_STATUS
 	(*lro_hash_config)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 			   struct cdp_lro_hash_config *rx_offld_hash);

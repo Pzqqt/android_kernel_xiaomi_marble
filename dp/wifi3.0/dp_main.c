@@ -565,25 +565,48 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
  * Return: None
  */
 static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
-				   uint8_t *wds_macaddr, void *vdev_handle)
+				   uint8_t *wds_macaddr,
+				   uint8_t *peer_mac_addr,
+				   void *vdev_handle)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry *ast_entry = NULL;
+	struct dp_ast_entry *tmp_ast_entry;
+	struct dp_peer *peer;
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
 
-	qdf_spin_lock_bh(&soc->ast_lock);
-	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, wds_macaddr,
-						    vdev->pdev->pdev_id);
+	if (!vdev)
+		return;
 
-	if (ast_entry) {
-		if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
-			(ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
-			(ast_entry->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
-			ast_entry->is_active = TRUE;
+	pdev = vdev->pdev;
+
+	if (peer_mac_addr) {
+		peer = dp_peer_find_hash_find(soc, peer_mac_addr,
+					      0, vdev->vdev_id);
+		if (!peer)
+			return;
+		qdf_spin_lock_bh(&soc->ast_lock);
+		DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, tmp_ast_entry) {
+			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
+			    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+				dp_peer_del_ast(soc, ast_entry);
 		}
-	}
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		dp_peer_unref_delete(peer);
 
-	qdf_spin_unlock_bh(&soc->ast_lock);
+	} else if (wds_macaddr) {
+		qdf_spin_lock_bh(&soc->ast_lock);
+		ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, wds_macaddr,
+							    pdev->pdev_id);
+
+		if (ast_entry) {
+			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
+			    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+				dp_peer_del_ast(soc, ast_entry);
+		}
+		qdf_spin_unlock_bh(&soc->ast_lock);
+	}
 }
 
 /*
@@ -611,13 +634,10 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
-						CDP_TXRX_AST_TYPE_STATIC) ||
-						(ase->type ==
-						CDP_TXRX_AST_TYPE_SELF) ||
-						(ase->type ==
-						CDP_TXRX_AST_TYPE_STA_BSS))
-						continue;
-					ase->is_active = TRUE;
+						CDP_TXRX_AST_TYPE_WDS_HM) ||
+					    (ase->type ==
+						CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+						dp_peer_del_ast(soc, ase);
 				}
 			}
 		}

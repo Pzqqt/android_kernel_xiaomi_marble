@@ -1012,10 +1012,11 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
 		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
 
-	if (ast_entry->next_hop &&
-	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC)
+	if (ast_entry->next_hop) {
 		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
-						    ast_entry->mac_addr.raw);
+						    ast_entry->mac_addr.raw,
+						    ast_entry->type);
+	}
 
 	ast_entry->delete_in_progress = true;
 }
