@@ -1588,6 +1588,9 @@ qdf_export_symbol(qdf_mem_set_io);
  * @num_bytes: Number of bytes to be set
  * @value: Byte set in memory
  *
+ * WARNING: parameter @num_bytes and @value are swapped comparing with
+ * standard C function "memset", please ensure correct usage of this function!
+ *
  * Return: None
  */
 void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value)
