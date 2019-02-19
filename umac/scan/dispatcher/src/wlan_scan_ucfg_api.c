@@ -715,8 +715,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all pdev scan to get complete");
 				qdf_wait_single_event(&cancel_scan_event,
-					qdf_system_msecs_to_ticks(
-					SCM_CANCEL_SCAN_WAIT_TIME));
+					SCM_CANCEL_SCAN_WAIT_TIME);
 			max_wait_iterations--;
 		}
 	} else if (cancel_vdev) {
@@ -724,8 +723,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all vdev scan to get complete");
 				qdf_wait_single_event(&cancel_scan_event,
-					qdf_system_msecs_to_ticks(
-					SCM_CANCEL_SCAN_WAIT_TIME));
+					SCM_CANCEL_SCAN_WAIT_TIME);
 			max_wait_iterations--;
 		}
 	}
