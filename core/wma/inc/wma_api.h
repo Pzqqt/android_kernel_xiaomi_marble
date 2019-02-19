@@ -158,6 +158,8 @@ uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id);
 struct wma_txrx_node *wma_get_interface_by_vdev_id(uint8_t vdev_id);
 QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 		struct policy_mgr_vdev_entry_info *conn_table_entry);
+QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
+		struct nan_datapath_channel_info *ndp_chan_info);
 
 bool wma_is_vdev_up(uint8_t vdev_id);
 

@@ -95,6 +95,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "init_cmd_api.h"
+#include "nan_ucfg_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -3150,6 +3151,22 @@ void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width, uint32_t *phy_mode)
 	*phy_mode = wma_chan_phy_mode(chan, chan_width, dot11_mode);
 }
 
+#ifdef WLAN_FEATURE_NAN
+static void
+wma_register_nan_callbacks(tp_wma_handle wma_handle)
+{
+	struct nan_callbacks cb_obj = {0};
+
+	cb_obj.update_ndi_conn = wma_ndi_update_connection_info;
+
+	ucfg_nan_register_wma_callbacks(wma_handle->psoc, &cb_obj);
+}
+#else
+static void wma_register_nan_callbacks(tp_wma_handle wma_handle)
+{
+}
+#endif
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -3667,6 +3684,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	pmo_register_get_beacon_interval_callback(wma_handle->psoc,
 						  wma_vdev_get_beacon_interval);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
+	wma_register_nan_callbacks(wma_handle);
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Failed to register wma cb with Policy Manager");

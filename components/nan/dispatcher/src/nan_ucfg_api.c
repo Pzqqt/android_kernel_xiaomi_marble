@@ -409,6 +409,21 @@ int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
+int ucfg_nan_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj)
+{
+	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_obj) {
+		nan_err("nan psoc priv object is NULL");
+		return -EINVAL;
+	}
+
+	psoc_obj->cb_obj.update_ndi_conn = cb_obj->update_ndi_conn;
+
+	return 0;
+}
+
 void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 			   struct nan_tgt_caps *nan_caps)
 {

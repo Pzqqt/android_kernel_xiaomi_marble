@@ -265,6 +265,15 @@ void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
  */
 void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_nan_register_wma_callbacks: ucfg API to register WMA callbacks
+ * @psoc: pointer to psoc object
+ * @cb_obj: Pointer to NAN callback structure
+ *
+ * Return: status of operation
+ */
+int ucfg_nan_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
+				    struct nan_callbacks *cb_obj);
 #else /* WLAN_FEATURE_NAN */
 
 static inline

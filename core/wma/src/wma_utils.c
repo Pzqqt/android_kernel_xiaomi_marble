@@ -4016,6 +4016,35 @@ QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
+				struct nan_datapath_channel_info *ndp_chan_info)
+{
+	struct wma_txrx_node *wma_iface_entry;
+
+	wma_iface_entry = wma_get_interface_by_vdev_id(vdev_id);
+	if (NULL == wma_iface_entry) {
+		WMA_LOGE("%s: can't find vdev_id %d in WMA table", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (WMI_VDEV_TYPE_NDI != wma_iface_entry->type) {
+		WMA_LOGE("%s: Given vdev id(%d) not of type NDI!",
+			 __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!ndp_chan_info) {
+		WMA_LOGE("%s: Provided chan info is NULL!", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wma_iface_entry->chan_width = ndp_chan_info->ch_width;
+	wma_iface_entry->mhz = ndp_chan_info->channel;
+	wma_iface_entry->nss = ndp_chan_info->nss;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wma_get_interface_by_vdev_id() - lookup interface entry using vdev ID
  * @vdev_id: vdev id
