@@ -29,6 +29,7 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_osif_request_manager.h"
+#include "wlan_policy_mgr_api.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -275,6 +276,9 @@ static QDF_STATUS ucfg_nan_sch_msg_flush_cb(struct scheduler_msg *msg)
 	case NDP_END_REQ:
 		vdev = ((struct nan_datapath_end_req *)msg->bodyptr)->vdev;
 		break;
+	case NDP_END_ALL:
+		vdev = ((struct nan_datapath_end_all_ndps *)msg->bodyptr)->vdev;
+		break;
 	default:
 		nan_err("Invalid NAN msg type during sch flush");
 		return QDF_STATUS_E_INVAL;
@@ -309,6 +313,9 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 		break;
 	case NDP_END_REQ:
 		len = sizeof(struct nan_datapath_end_req);
+		break;
+	case NDP_END_ALL:
+		len = sizeof(struct nan_datapath_end_all_ndps);
 		break;
 	default:
 		nan_err("in correct message req type: %d", req_type);
@@ -461,6 +468,19 @@ bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return (psoc_priv->nan_caps.nan_dbs_supported == 1);
+}
+
+bool ucfg_is_ndi_dbs_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_priv;
+
+	psoc_priv = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return false;
+	}
+
+	return (psoc_priv->nan_caps.ndi_dbs_supported == 1);
 }
 
 bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
@@ -619,16 +639,15 @@ void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 	nan_req.psoc = psoc;
 	nan_req.disable_2g_discovery = true;
 	nan_req.disable_5g_discovery = true;
+	psoc_priv->disable_context = osif_request_cookie(request);
 
 	status = ucfg_nan_discovery_req(&nan_req, NAN_DISABLE_REQ);
-
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("Unable to disable NAN Discovery");
 		osif_request_put(request);
 		return;
 	}
 
-	psoc_priv->disable_context = osif_request_cookie(request);
 	psoc_priv->is_explicit_disable = true;
 	nan_debug("Successfully sent NAN Disable request");
 
@@ -640,4 +659,114 @@ void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 		nan_debug("NAN Disabled successfully");
 	psoc_priv->is_explicit_disable = false;
 	osif_request_put(request);
+}
+
+QDF_STATUS
+ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc)
+{
+	enum nan_datapath_state curr_ndi_state;
+	struct nan_datapath_host_event *event;
+	uint32_t ndi_count, first_ndi_vdev_id;
+	struct nan_vdev_priv_obj *ndi_vdev_priv;
+	struct nan_datapath_end_all_ndps req = {0};
+	struct wlan_objmgr_vdev *ndi_vdev;
+	struct osif_request *request;
+	QDF_STATUS status;
+	int err;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(struct nan_datapath_host_event),
+		.timeout_ms = 1000,
+	};
+
+	if (!psoc) {
+		nan_err("psoc object is NULL, no action will be taken");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!ucfg_is_ndi_dbs_supported(psoc))
+		return QDF_STATUS_SUCCESS;
+
+	ndi_count = policy_mgr_mode_specific_connection_count(psoc, PM_NDI_MODE,
+							      NULL);
+	if (ndi_count < 2) {
+		nan_debug("No more than one NDI is active, nothing to do...");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * At least 2 NDI active concurrencies exist. Disable all NDP's on the
+	 * first NDI to support an incoming connection.
+	 */
+	first_ndi_vdev_id = policy_mgr_mode_specific_vdev_id(psoc, PM_NDI_MODE);
+	ndi_vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, first_ndi_vdev_id,
+							WLAN_NAN_ID);
+	if (!ndi_vdev) {
+		nan_err("Cannot obtain NDI vdev object!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ndi_vdev_priv = nan_get_vdev_priv_obj(ndi_vdev);
+	if (!ndi_vdev_priv) {
+		nan_err("ndi vdev priv object is NULL");
+		wlan_objmgr_vdev_release_ref(ndi_vdev, WLAN_NAN_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spin_lock_bh(&ndi_vdev_priv->lock);
+	curr_ndi_state = ndi_vdev_priv->state;
+	/* Nothing to do if NDI is in DELETING or DATA_END state */
+	if (curr_ndi_state == NAN_DATA_NDI_DELETING_STATE ||
+	    curr_ndi_state == NAN_DATA_END_STATE) {
+		qdf_spin_unlock_bh(&ndi_vdev_priv->lock);
+		wlan_objmgr_vdev_release_ref(ndi_vdev, WLAN_NAN_ID);
+		return QDF_STATUS_SUCCESS;
+	}
+	ndi_vdev_priv->state = NAN_DATA_END_STATE;
+	qdf_spin_unlock_bh(&ndi_vdev_priv->lock);
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		nan_err("Request allocation failure");
+		status = QDF_STATUS_E_NOMEM;
+		goto cleanup;
+	}
+	ndi_vdev_priv->disable_context = osif_request_cookie(request);
+
+	req.vdev = ndi_vdev;
+	status = ucfg_nan_req_processor(NULL, &req, NDP_END_ALL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("Unable to disable NDP's on NDI");
+		wlan_objmgr_vdev_release_ref(ndi_vdev, WLAN_NAN_ID);
+		goto cleanup;
+	}
+
+	nan_debug("Disabling all NDP's on NDI vdev id - %d", first_ndi_vdev_id);
+
+	err = osif_request_wait_for_response(request);
+	if (err) {
+		nan_err("Disabling NDP's timed out waiting for confirmation");
+		status = QDF_STATUS_E_TIMEOUT;
+		goto cleanup;
+	}
+
+	event = osif_request_priv(request);
+	if (!event->ndp_termination_in_progress) {
+		nan_err("Failed to terminate NDP's on NDI");
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+cleanup:
+	/* Restore original NDI state in case of failure */
+	qdf_spin_lock_bh(&ndi_vdev_priv->lock);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ndi_vdev_priv->state = NAN_DATA_DISCONNECTED_STATE;
+	else
+		ndi_vdev_priv->state = curr_ndi_state;
+	qdf_spin_unlock_bh(&ndi_vdev_priv->lock);
+
+	if (request)
+		osif_request_put(request);
+
+	return status;
 }

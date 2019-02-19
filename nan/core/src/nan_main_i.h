@@ -126,6 +126,7 @@ struct nan_psoc_priv_obj {
  * @ndi_delete_rsp_reason: reason code for ndi_delete rsp
  * @ndi_delete_rsp_status: status for ndi_delete rsp
  * @primary_peer_mac: Primary NDP Peer mac address for the vdev
+ * @disable_context: Disable all NDP's operation context
  */
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
@@ -136,6 +137,7 @@ struct nan_vdev_priv_obj {
 	uint32_t ndi_delete_rsp_reason;
 	uint32_t ndi_delete_rsp_status;
 	struct qdf_mac_addr primary_peer_mac;
+	void *disable_context;
 };
 
 /**

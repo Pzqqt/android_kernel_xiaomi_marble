@@ -80,6 +80,8 @@ enum nan_discovery_msg_type {
  * @NDP_NEW_PEER: ndp new peer created
  * @NDP_PEER_DEPARTED: ndp peer departed/deleted
  * @NDP_SCHEDULE_UPDATE: ndp schedule update
+ * @NDP_END_ALL: end all NDPs request
+ * @NDP_HOST_UPDATE: update host about ndp status
  */
 enum nan_datapath_msg_type {
 	NAN_DATAPATH_INF_CREATE_REQ  = 0,
@@ -98,6 +100,8 @@ enum nan_datapath_msg_type {
 	NDP_NEW_PEER                 = 13,
 	NDP_PEER_DEPARTED            = 14,
 	NDP_SCHEDULE_UPDATE          = 15,
+	NDP_END_ALL                  = 16,
+	NDP_HOST_UPDATE              = 17,
 };
 
 /**
@@ -313,14 +317,16 @@ struct peer_nan_datapath_map {
 
 /**
  * struct nan_datapath_channel_info - ndp channel and channel bandwidth
- * @channel: channel freq in mhz of the ndp connection
+ * @freq: channel freq in mhz of the ndp connection
  * @ch_width: channel width (wmi_channel_width) of the ndp connection
  * @nss: nss used for ndp connection
+ * @mac_id: MAC ID associated with the NDP channel
  */
 struct nan_datapath_channel_info {
-	uint32_t channel;
+	uint32_t freq;
 	uint32_t ch_width;
 	uint32_t nss;
+	uint8_t mac_id;
 };
 
 #define NAN_CH_INFO_MAX_LEN \
@@ -478,6 +484,15 @@ struct nan_datapath_end_req {
 	uint32_t transaction_id;
 	uint32_t num_ndp_instances;
 	uint32_t ndp_ids[NDP_NUM_INSTANCE_ID];
+};
+
+/**
+ * struct nan_datapath_end_all_ndps - Datapath termination request to end all
+ * NDPs on the given vdev
+ * @vdev: pointer to vdev object
+ */
+struct nan_datapath_end_all_ndps {
+	struct wlan_objmgr_vdev *vdev;
 };
 
 /**
@@ -690,6 +705,17 @@ struct nan_datapath_sch_update_event {
 	uint32_t num_ndp_instances;
 	struct nan_datapath_channel_info ch[NAN_CH_INFO_MAX_CHANNELS];
 	uint32_t ndp_instances[NDP_NUM_INSTANCE_ID];
+};
+
+/**
+ * struct nan_datapath_host_event - ndp host event parameters
+ * @vdev: vdev obj associated with the ndp
+ * @ndp_termination_in_progress: flag that indicates whether NDPs associated
+ * with the given vdev are being terminated
+ */
+struct nan_datapath_host_event {
+	struct wlan_objmgr_vdev *vdev;
+	bool ndp_termination_in_progress;
 };
 
 /**
