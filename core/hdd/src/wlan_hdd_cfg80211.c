@@ -17939,9 +17939,20 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	/* Disable NAN Discovery if enabled */
-	if (adapter->device_mode == QDF_P2P_CLIENT_MODE)
+	/*
+	 * Disable NAN Discovery if incoming connection is P2P or if a STA
+	 * connection already exists and if this is a case of STA+STA.
+	 */
+	if (adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	    policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+						      PM_STA_MODE, NULL))
 		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
+
+	/*
+	 * STA+NDI concurrency gets preference over NDI+NDI. Disable
+	 * first NDI in case an NDI+NDI concurrency exists.
+	 */
+	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc);
 
 	if (req->bssid)
 		bssid = req->bssid;

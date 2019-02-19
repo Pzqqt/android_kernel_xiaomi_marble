@@ -16386,6 +16386,10 @@ void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
 		*nss_2g = mac_ctx->vdev_type_nss_2g.nan;
 		*nss_5g = mac_ctx->vdev_type_nss_5g.nan;
 		break;
+	case QDF_NDI_MODE:
+		*nss_2g = mac_ctx->vdev_type_nss_2g.ndi;
+		*nss_5g = mac_ctx->vdev_type_nss_5g.ndi;
+		break;
 	default:
 		*nss_2g = 1;
 		*nss_5g = 1;

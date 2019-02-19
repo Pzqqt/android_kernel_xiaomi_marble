@@ -990,6 +990,9 @@ static uint32_t policy_mgr_dump_current_concurrency_one_connection(
 	case PM_NAN_DISC_MODE:
 		count = strlcat(cc_mode, "NAN DISC", length);
 		break;
+	case PM_NDI_MODE:
+		count = strlcat(cc_mode, "NDI", length);
+		break;
 	default:
 		policy_mgr_err("unexpected mode %d", mode);
 		break;
@@ -1047,6 +1050,12 @@ static uint32_t policy_mgr_dump_current_concurrency_two_connection(
 		count += strlcat(cc_mode, "+IBSS",
 					length);
 		break;
+	case PM_NDI_MODE:
+		count = policy_mgr_dump_current_concurrency_one_connection(
+				cc_mode, length);
+		count += strlcat(cc_mode, "+NDI",
+					length);
+		break;
 	default:
 		policy_mgr_err("unexpected mode %d", mode);
 		break;
@@ -1102,6 +1111,18 @@ static uint32_t policy_mgr_dump_current_concurrency_three_connection(
 		count = policy_mgr_dump_current_concurrency_two_connection(
 				cc_mode, length);
 		count += strlcat(cc_mode, "+IBSS",
+					length);
+		break;
+	case PM_NAN_DISC_MODE:
+		count = policy_mgr_dump_current_concurrency_two_connection(
+				cc_mode, length);
+		count += strlcat(cc_mode, "+NAN Disc",
+					length);
+		break;
+	case PM_NDI_MODE:
+		count = policy_mgr_dump_current_concurrency_two_connection(
+				cc_mode, length);
+		count += strlcat(cc_mode, "+NDI",
 					length);
 		break;
 	default:
@@ -1486,6 +1507,8 @@ enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
 		mode = PM_IBSS_MODE;
 	} else if (type == WMI_VDEV_TYPE_NAN) {
 		mode = PM_NAN_DISC_MODE;
+	} else if (type == WMI_VDEV_TYPE_NDI) {
+		mode = PM_NDI_MODE;
 	} else {
 		policy_mgr_err("Unknown type %d", type);
 	}
@@ -2432,6 +2455,21 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 					policy_mgr_err("don't allow 3rd home channel on same MAC");
 					status = false;
 				}
+			} else if ((pm_conc_connection_list[0].mode ==
+							    PM_NAN_DISC_MODE &&
+				    pm_conc_connection_list[1].mode ==
+								PM_NDI_MODE) ||
+				   (pm_conc_connection_list[0].mode ==
+								PM_NDI_MODE &&
+				    pm_conc_connection_list[1].mode ==
+							    PM_NAN_DISC_MODE)) {
+				/*
+				 * NAN + NDI are managed in Firmware by dividing
+				 * up slots. Connection on NDI is re-negotiable
+				 * and therefore a 3rd connection with the
+				 * same MAC is possible.
+				 */
+				status = true;
 			} else if (((WLAN_REG_IS_24GHZ_CH(channel)) &&
 				(WLAN_REG_IS_24GHZ_CH
 				(pm_conc_connection_list[0].chan)) &&

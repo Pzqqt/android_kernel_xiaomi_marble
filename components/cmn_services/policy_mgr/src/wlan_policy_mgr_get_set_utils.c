@@ -1767,6 +1767,9 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
 	case QDF_NAN_DISC_MODE:
 		*new_mode = PM_NAN_DISC_MODE;
 		break;
+	case QDF_NDI_MODE:
+		*new_mode = PM_NDI_MODE;
+		break;
 	default:
 		*new_mode = PM_MAX_NUM_OF_MODE;
 		status = false;
@@ -2486,6 +2489,9 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 	case QDF_NAN_DISC_MODE:
 		mode = PM_NAN_DISC_MODE;
 		break;
+	case QDF_NDI_MODE:
+		mode = PM_NDI_MODE;
+		break;
 	default:
 		policy_mgr_debug("Unsupported mode (%d)",
 				 device_mode);
@@ -2517,6 +2523,9 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
 		break;
 	case PM_NAN_DISC_MODE:
 		mode = QDF_NAN_DISC_MODE;
+		break;
+	case PM_NDI_MODE:
+		mode = QDF_NDI_MODE;
 		break;
 	default:
 		policy_mgr_debug("Unsupported policy mgr mode (%d)",

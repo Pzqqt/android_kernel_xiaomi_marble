@@ -726,6 +726,7 @@ struct vdev_type_nss {
 	uint8_t tdls;
 	uint8_t ocb;
 	uint8_t nan;
+	uint8_t ndi;
 };
 
 /**

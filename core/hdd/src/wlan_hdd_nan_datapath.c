@@ -503,11 +503,22 @@ int hdd_ndi_open(char *iface_name)
 	struct hdd_adapter *adapter;
 	struct qdf_mac_addr random_ndi_mac;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	uint8_t ndi_adapter_count = 0;
 	uint8_t *ndi_mac_addr;
 
 	hdd_enter();
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx null");
+		return -EINVAL;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (WLAN_HDD_IS_NDI(adapter))
+			ndi_adapter_count++;
+	}
+	if (ndi_adapter_count >= MAX_NDI_ADAPTERS) {
+		hdd_err("Can't allow more than %d NDI adapters",
+			MAX_NDI_ADAPTERS);
 		return -EINVAL;
 	}
 
