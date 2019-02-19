@@ -33,6 +33,9 @@
 #include "dp_tx.h"
 #include "dp_tx_desc.h"
 #include "dp_rx.h"
+#ifdef DP_RATETABLE_SUPPORT
+#include "dp_ratetable.h"
+#endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 #include "cdp_txrx_cmn_struct.h"
@@ -8098,6 +8101,21 @@ static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
 	return;
 }
 
+#ifdef DP_RATETABLE_SUPPORT
+static int dp_txrx_get_ratekbps(int preamb, int mcs,
+				int htflag, int gintval)
+{
+	return dp_getrateindex((uint32_t)gintval, (uint16_t)mcs, 1,
+			       (uint8_t)preamb, 1);
+}
+#else
+static int dp_txrx_get_ratekbps(int preamb, int mcs,
+				int htflag, int gintval)
+{
+	return 0;
+}
+#endif
+
 /* dp_txrx_get_pdev_stats - Returns cdp_pdev_stats
  * @peer_handle: DP pdev handle
  *
@@ -9242,6 +9260,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_get_peer_stats = dp_txrx_get_peer_stats,
 	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
+	.txrx_get_ratekbps = dp_txrx_get_ratekbps,
 	/* TODO */
 };
 

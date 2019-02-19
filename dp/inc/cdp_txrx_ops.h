@@ -789,6 +789,9 @@ struct cdp_host_stats_ops {
 					void *buf);
 	struct cdp_pdev_stats*
 		(*txrx_get_pdev_stats)(struct cdp_pdev *pdev);
+	int
+		(*txrx_get_ratekbps)(int preamb, int mcs,
+				     int htflag, int gintval);
 };
 
 struct cdp_wds_ops {

@@ -50,6 +50,36 @@ static inline int cdp_host_stats_get(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_host_stats_get_ratekbps: cdp call to get rate in kbps
+ * @soc: SOC handle
+ * @preamb: Preamble
+ * @mcs: Modulation and Coding scheme index
+ * @htflag: Flag to identify HT or VHT
+ * @gintval: Gaurd Interval value
+ *
+ * return: 0 for Failure, Returns rate on Success
+ */
+static inline int cdp_host_stats_get_ratekbps(ol_txrx_soc_handle soc,
+					      int preamb, int mcs,
+					      int htflag, int gintval)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_ratekbps)
+		return 0;
+
+	return soc->ops->host_stats_ops->txrx_get_ratekbps(preamb,
+							   mcs, htflag,
+							   gintval);
+}
+
+/**
  * cdp_host_stats_clr: cdp call to clear host stats
  * @vdev: vdev handle
  *
