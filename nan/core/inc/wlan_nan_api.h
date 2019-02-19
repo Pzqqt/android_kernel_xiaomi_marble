@@ -65,6 +65,26 @@ QDF_STATUS nan_psoc_enable(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS nan_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * nan_get_peer_priv_obj: get NAN priv object from peer object
+ * @peer: pointer to peer object
+ *
+ * Return: pointer to NAN peer private object
+ */
+static inline
+struct nan_peer_priv_obj *nan_get_peer_priv_obj(struct wlan_objmgr_peer *peer)
+{
+	struct nan_peer_priv_obj *obj;
+
+	if (!peer) {
+		nan_err("peer is null");
+		return NULL;
+	}
+	obj = wlan_objmgr_peer_get_comp_private_obj(peer, WLAN_UMAC_COMP_NAN);
+
+	return obj;
+}
+
+/**
  * nan_get_vdev_priv_obj: get NAN priv object from vdev object
  * @vdev: pointer to vdev object
  *
