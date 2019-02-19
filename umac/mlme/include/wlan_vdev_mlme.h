@@ -54,6 +54,8 @@ struct vdev_mlme_obj;
  * @beacon_interval: beacon interval
  * @ldpc: low density parity check value
  * @nss: number of spatial stream
+ * @nss_2g: 2.4GHz number of spatial stream
+ * @nss_5g: 5GHz number of spatial stream
  * @tsfadjust: adjusted timer sync value
  */
 struct vdev_mlme_proto_generic {
@@ -63,6 +65,8 @@ struct vdev_mlme_proto_generic {
 	uint16_t beacon_interval;
 	uint8_t ldpc;
 	uint8_t nss;
+	uint8_t nss_2g;
+	uint8_t nss_5g;
 	uint64_t tsfadjust;
 };
 

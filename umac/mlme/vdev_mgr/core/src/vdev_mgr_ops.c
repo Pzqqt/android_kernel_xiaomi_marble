@@ -19,7 +19,7 @@
 /**
  * DOC: vdev_mgr_ops.c
  *
- * This header file provides API definitions for filling data structures
+ * This file provide API definitions for filling data structures
  * and sending vdev mgmt commands to target_if/mlme
  */
 #include "vdev_mgr_ops.h"
@@ -32,7 +32,6 @@
 #include <wlan_lmac_if_api.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_dfs_tgt_api.h>
-#include "core/src/dfs.h"
 #include <wlan_vdev_mgr_ucfg_api.h>
 
 static QDF_STATUS vdev_mgr_create_param_update(
@@ -314,7 +313,7 @@ static QDF_STATUS vdev_mgr_sta_ps_param_update(
 
 	vdev = mlme_obj->vdev;
 	param->vdev_id = wlan_vdev_get_id(vdev);
-	param->param = WLAN_MLME_CFG_UAPSD;
+	param->param_id = WLAN_MLME_CFG_UAPSD;
 	param->value = mlme_obj->proto.sta.uapsd_cfg;
 	return QDF_STATUS_SUCCESS;
 }

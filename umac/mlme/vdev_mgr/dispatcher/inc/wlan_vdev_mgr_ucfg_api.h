@@ -23,8 +23,8 @@
  * for mlme ucfg and declarations for ucfg public APIs
  */
 
-#ifndef __UCFG_WLAN_VDEV_MLME_UCFG_H__
-#define __UCFG_WLAN_VDEV_MLME_UCFG_H__
+#ifndef __WLAN_VDEV_MGR_UCFG_API_H__
+#define __WLAN_VDEV_MGR_UCFG_API_H__
 
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
@@ -47,6 +47,7 @@ enum wlan_mlme_cfg_id {
 	WLAN_MLME_CFG_MUBFEE,
 	WLAN_MLME_CFG_IMLICIT_BF,
 	WLAN_MLME_CFG_SOUNDING_DIM,
+	WLAN_MLME_CFG_TXBF_CAPS,
 	WLAN_MLME_CFG_HT_CAPS,
 	WLAN_MLME_CFG_HE_OPS,
 	WLAN_MLME_CFG_RTS_THRESHOLD,
@@ -99,30 +100,92 @@ enum wlan_mlme_cfg_id {
 	WLAN_MLME_CFG_MAX
 };
 
+/**
+ * struct wlan_vdev_mgr_cfg - vdev mgr configuration
+ * @value: configuration value
+ * @tsf: tsf adjust value
+ * @trans_bssid: transmission bssid address
+ * @ssid_cfg: ssid configuration
+ */
 struct wlan_vdev_mgr_cfg {
 	union {
 		uint32_t value;
+		uint64_t tsf;
 		uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
 		struct mlme_mac_ssid ssid_cfg;
-	} u;
+	};
 };
 
+/**
+ * ucfg_wlan_vdev_mgr_set_param() – ucfg MLME API to
+ * set value into mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @param_id: param of type wlan_mlme_cfg_id
+ * @mlme_cfg: value to set into mlme vdev mgr
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS ucfg_wlan_vdev_mgr_set_param(struct wlan_objmgr_vdev *vdev,
 					enum wlan_mlme_cfg_id param_id,
 					struct wlan_vdev_mgr_cfg mlme_cfg);
 
+/**
+ * ucfg_wlan_vdev_mgr_get_param() – ucfg MLME API to
+ * get value from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @param_id: param of type wlan_mlme_cfg_id
+ * @param_value: pointer to store the value of mlme vdev mgr
+ *
+ * Return: void
+ */
 void ucfg_wlan_vdev_mgr_get_param(struct wlan_objmgr_vdev *vdev,
 				  enum wlan_mlme_cfg_id param_id,
 				  uint32_t *param_value);
 
+/**
+ * ucfg_wlan_vdev_mgr_get_param_ssid() – ucfg MLME API to
+ * get ssid from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @ssid: pointer to store the ssid
+ * @ssid_len: pointer to store the ssid length value
+ *
+ * Return: void
+ */
 void ucfg_wlan_vdev_mgr_get_param_ssid(struct wlan_objmgr_vdev *vdev,
 				       uint8_t *ssid,
 				       uint8_t *ssid_len);
 
+/**
+ * ucfg_wlan_vdev_mgr_get_beacon_buffer() – ucfg MLME API to
+ * get beacon buffer from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @buf: pointer to store the beacon buffer
+ *
+ * Return: void
+ */
 void ucfg_wlan_vdev_mgr_get_beacon_buffer(struct wlan_objmgr_vdev *vdev,
 					  qdf_nbuf_t buf);
 
+/**
+ * ucfg_wlan_vdev_mgr_get_trans_bssid() – ucfg MLME API to
+ * get transmission bssid from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @addr: pointer to store the transmission bssid
+ *
+ * Return: void
+ */
 void ucfg_wlan_vdev_mgr_get_trans_bssid(struct wlan_objmgr_vdev *vdev,
 					uint8_t *addr);
 
-#endif /* __UCFG_WLAN_VDEV_MLME_UCFG_H__ */
+/**
+ * ucfg_wlan_vdev_mgr_get_tsf_adjust() – ucfg MLME API to
+ * get tsf_adjust from mlme vdev mgr component
+ * @vdev: pointer to vdev object
+ * @tsf_adjust: pointer to store the tsf adjust value
+ *
+ * Return: void
+ */
+void ucfg_wlan_vdev_mgr_get_tsf_adjust(struct wlan_objmgr_vdev *vdev,
+				       uint64_t *tsf_adjust);
+
+#endif /* __WLAN_VDEV_MLME_UCFG_H__ */

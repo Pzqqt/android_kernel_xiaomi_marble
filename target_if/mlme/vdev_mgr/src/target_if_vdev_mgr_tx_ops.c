@@ -125,6 +125,7 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_MUBFEE:
 	case WLAN_MLME_CFG_IMLICIT_BF:
 	case WLAN_MLME_CFG_SOUNDING_DIM:
+	case WLAN_MLME_CFG_TXBF_CAPS:
 		wmi_id = wmi_vdev_param_txbf;
 		break;
 	case WLAN_MLME_CFG_HE_OPS:
@@ -162,6 +163,9 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 		break;
 	case WLAN_MLME_CFG_UAPSD:
 		wmi_id = WMI_HOST_STA_PS_PARAM_UAPSD;
+		break;
+	case WLAN_MLME_CFG_BCN_TX_RATE:
+		wmi_id = wmi_vdev_param_beacon_rate;
 		break;
 	default:
 		wmi_id = cfg_id;
@@ -782,8 +786,8 @@ static QDF_STATUS target_if_vdev_mgr_sta_ps_param_send(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	param_id = target_if_vdev_mlme_id_2_wmi(param->param);
-	param->param = param_id;
+	param_id = target_if_vdev_mlme_id_2_wmi(param->param_id);
+	param->param_id = param_id;
 
 	status = wmi_unified_sta_ps_cmd_send(wmi_handle, param);
 

@@ -59,12 +59,12 @@ enum mlme_bcn_tx_rate_code {
 /**
  * struct sta_ps_params - sta ps cmd parameter
  * @vdev_id: vdev id
- * @param: sta ps parameter
+ * @param_id: sta ps parameter
  * @value: sta ps parameter value
  */
 struct sta_ps_params {
 	uint32_t vdev_id;
-	uint32_t param;
+	uint32_t param_id;
 	uint32_t value;
 };
 

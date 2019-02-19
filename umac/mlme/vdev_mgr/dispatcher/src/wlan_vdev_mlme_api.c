@@ -44,6 +44,8 @@ struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *vdev)
 	return vdev_mlme;
 }
 
+qdf_export_symbol(wlan_vdev_mlme_get_cmpt_obj);
+
 void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl)
 {
 	struct vdev_mlme_obj *vdev_mlme;

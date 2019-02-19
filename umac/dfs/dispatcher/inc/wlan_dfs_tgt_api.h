@@ -27,6 +27,10 @@
 
 #include <wlan_dfs_public_struct.h>
 
+#define WLAN_DFS_RESET_TIME_S 7
+#define WLAN_DFS_WAIT (60 + WLAN_DFS_RESET_TIME_S) /* 60 seconds */
+#define WLAN_DFS_WAIT_MS ((WLAN_DFS_WAIT) * 1000)  /*in MS*/
+
 /* Command id to send test radar to firmware */
 #define DFS_PHYERR_OFFLOAD_TEST_SET_RADAR 0
 

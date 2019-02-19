@@ -27,6 +27,7 @@
 #include "include/wlan_vdev_mlme.h"
 #include <wlan_mlme_dbg.h>
 #include <wlan_vdev_mgr_utils_api.h>
+#include <wlan_vdev_mlme_api.h>
 
 void ucfg_wlan_vdev_mgr_get_param_ssid(
 				struct wlan_objmgr_vdev *vdev,
@@ -95,6 +96,27 @@ void ucfg_wlan_vdev_mgr_get_trans_bssid(
 }
 
 qdf_export_symbol(ucfg_wlan_vdev_mgr_get_trans_bssid);
+
+void ucfg_wlan_vdev_mgr_get_tsf_adjust(
+				struct wlan_objmgr_vdev *vdev,
+				uint64_t *tsf_adjust)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct vdev_mlme_proto *mlme_proto;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+
+	if (!vdev_mlme) {
+		mlme_err("VDEV MLME is NULL");
+		return;
+	}
+
+	mlme_proto = &vdev_mlme->proto;
+
+	*tsf_adjust = mlme_proto->generic.tsfadjust;
+}
+
+qdf_export_symbol(ucfg_wlan_vdev_mgr_get_tsf_adjust);
 
 QDF_STATUS ucfg_wlan_vdev_mgr_set_param(
 				struct wlan_objmgr_vdev *vdev,

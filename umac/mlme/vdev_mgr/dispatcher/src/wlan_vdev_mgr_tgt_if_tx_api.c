@@ -34,6 +34,7 @@
 #include <wlan_vdev_mlme_api.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_vdev_mgr_utils_api.h>
+#include <wlan_vdev_mgr_ucfg_api.h>
 
 static inline struct wlan_lmac_if_mlme_tx_ops
 *wlan_vdev_mlme_get_lmac_txops(struct wlan_objmgr_vdev *vdev)
@@ -128,12 +129,56 @@ tgt_vdev_mgr_create_end:
 	return status;
 }
 
-QDF_STATUS tgt_vdev_mgr_create_complete(struct vdev_mlme_obj *mlme_obj)
+QDF_STATUS tgt_vdev_mgr_create_complete(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE opmode;
+	struct vdev_set_params param = {0};
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	struct vdev_mlme_inactivity_params *inactivity;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	vdev = mlme_obj->vdev;
-	return QDF_STATUS_SUCCESS;
+	vdev = vdev_mlme->vdev;
+	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+	if (!txops || !txops->vdev_set_param_send) {
+		mlme_err("No Tx Ops");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	inactivity = &vdev_mlme->mgmt.inactivity_params;
+	if (opmode == QDF_SAP_MODE) {
+		param.vdev_id = wlan_vdev_get_id(vdev);
+
+		param.param_value = vdev_mlme->mgmt.rate_info.bcn_tx_rate;
+		param.param_id = WLAN_MLME_CFG_BCN_TX_RATE;
+		status = txops->vdev_set_param_send(vdev, &param);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_err("Failed to set beacon rate!");
+
+		param.param_value =
+			inactivity->keepalive_min_idle_inactive_time_secs;
+		param.param_id = WLAN_MLME_CFG_MIN_IDLE_INACTIVE_TIME;
+		status = txops->vdev_set_param_send(vdev, &param);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_err("Failed to set min idle inactive time!");
+
+		param.param_value =
+			inactivity->keepalive_max_idle_inactive_time_secs;
+		param.param_id = WLAN_MLME_CFG_MAX_IDLE_INACTIVE_TIME;
+		status = txops->vdev_set_param_send(vdev, &param);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_err("Failed to set max idle inactive time!");
+
+		param.param_value =
+			inactivity->keepalive_max_unresponsive_time_secs;
+		param.param_id = WLAN_MLME_CFG_MAX_UNRESPONSIVE_INACTIVE_TIME;
+		status = txops->vdev_set_param_send(vdev, &param);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_err("Failed to set max unresponsive inactive time!");
+	}
+
+	return status;
 }
 
 QDF_STATUS tgt_vdev_mgr_start_send(

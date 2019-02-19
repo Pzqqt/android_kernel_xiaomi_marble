@@ -189,7 +189,6 @@ struct wlan_lmac_if_ftm_tx_ops {
  * @vdev_mlme_detach: function to unregister events
  * @vdev_mlme_rsp_timer_mgmt: function to manage vdev response timer
  * @vdev_create_send: function to send vdev create
- * @vdev_create_complete: function to send WMI cfg required for create
  * @vdev_start_send: function to send vdev start
  * @vdev_up_send: function to send vdev up
  * @vdev_delete_send: function to send vdev delete
@@ -224,7 +223,6 @@ struct wlan_lmac_if_mlme_tx_ops {
 					       bool flag);
 	QDF_STATUS (*vdev_create_send)(struct wlan_objmgr_vdev *vdev,
 				       struct vdev_create_params *param);
-	QDF_STATUS (*vdev_create_complete)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_start_send)(struct wlan_objmgr_vdev *vdev,
 				      struct vdev_start_params *param);
 	QDF_STATUS (*vdev_up_send)(struct wlan_objmgr_vdev *vdev,

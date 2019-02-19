@@ -185,6 +185,8 @@
 #define WLAN_SOC_F_MBSS_IE_ENABLE      0x00800000
 	/* Spectral disable */
 #define WLAN_SOC_F_SPECTRAL_DISABLE    0x01000000
+	/* FTM testmode enable */
+#define WLAN_SOC_F_TESTMODE_ENABLE     0x02000000
 
 /* PSOC op flags */
 

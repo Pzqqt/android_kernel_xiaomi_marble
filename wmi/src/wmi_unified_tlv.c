@@ -1469,14 +1469,23 @@ static QDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_sta_powersave_param_cmd_fixed_param));
 	cmd->vdev_id = param->vdev_id;
+#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
+	cmd->param = param->param_id;
+#else
 	cmd->param = param->param;
+#endif
 	cmd->value = param->value;
 
 	wmi_mtrace(WMI_STA_POWERSAVE_PARAM_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_STA_POWERSAVE_PARAM_CMDID)) {
+#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
+		WMI_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
+			 param->vdev_id, param->param_id, param->value);
+#else
 		WMI_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
 			 param->vdev_id, param->param, param->value);
+#endif
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}

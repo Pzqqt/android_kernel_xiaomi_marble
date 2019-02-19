@@ -863,10 +863,6 @@ struct dfs_event_log {
 	int16_t   psidx_diff;
 };
 
-#define WLAN_DFS_RESET_TIME_S 7
-#define WLAN_DFS_WAIT (60 + WLAN_DFS_RESET_TIME_S) /* 60 seconds */
-#define WLAN_DFS_WAIT_MS ((WLAN_DFS_WAIT) * 1000)  /*in MS*/
-
 #define WLAN_DFS_WEATHER_CHANNEL_WAIT_MIN 10 /*10 minutes*/
 #define WLAN_DFS_WEATHER_CHANNEL_WAIT_S (WLAN_DFS_WEATHER_CHANNEL_WAIT_MIN * 60)
 #define WLAN_DFS_WEATHER_CHANNEL_WAIT_MS  \
