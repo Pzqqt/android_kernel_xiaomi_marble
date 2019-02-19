@@ -241,11 +241,12 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 	HTC_TARGET *target = (HTC_TARGET *) Context;
 	uint8_t *netdata;
 	uint32_t netlen;
-	HTC_ENDPOINT *pEndpoint;
+	HTC_ENDPOINT *pEndpoint, *currendpoint;
 	HTC_PACKET *pPacket;
 	uint16_t payloadLen;
 	uint32_t trailerlen = 0;
 	uint8_t htc_ep_id;
+	int i;
 #ifdef HTC_MSG_WAKEUP_FROM_SUSPEND_ID
 	struct htc_init_info *info;
 #endif
@@ -305,8 +306,17 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		 * than interrupt driven, this is a good point to ask HIF to
 		 * check whether it has any completed sends to handle.
 		 */
-		if (pEndpoint->ul_is_polled)
-			htc_send_complete_check(pEndpoint, 1);
+		if (pEndpoint->ul_is_polled) {
+			for (i = 0; i < ENDPOINT_MAX; i++) {
+				currendpoint = &target->endpoint[i];
+				if ((currendpoint->DL_PipeID ==
+				     pEndpoint->DL_PipeID) &&
+				    currendpoint->ul_is_polled) {
+					htc_send_complete_check(currendpoint,
+								1);
+				}
+			}
+		}
 
 		payloadLen = HTC_GET_FIELD(HtcHdr, HTC_FRAME_HDR, PAYLOADLEN);
 
