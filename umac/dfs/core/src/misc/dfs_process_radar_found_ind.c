@@ -732,7 +732,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	}
 
 	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);
-	radarfound_freq = freq_center + dfs->dfs_freq_offset;
+	radarfound_freq = freq_center + radar_found->freq_offset;
 
 	if (radar_found->segment_id == SEG_ID_SECONDARY)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
