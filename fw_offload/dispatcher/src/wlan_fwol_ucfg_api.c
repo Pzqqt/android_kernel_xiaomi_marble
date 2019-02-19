@@ -199,7 +199,7 @@ ucfg_fwol_get_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
 		fwol_init_neighbor_report_cfg(psoc, fwol_neighbor_report_cfg);
 		status =  QDF_STATUS_E_FAILURE;
 	} else {
-		fwol_neighbor_report_cfg = &fwol_obj->cfg.neighbor_report_cfg;
+		*fwol_neighbor_report_cfg = fwol_obj->cfg.neighbor_report_cfg;
 	}
 
 	return status;
