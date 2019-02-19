@@ -237,6 +237,16 @@ bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc);
 bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_is_ndi_dbs_supported() - ucfg API to query NAN Datapath DBS support
+ * @psoc: pointer to psoc object
+ *
+ * This function returns NDI DBS support status
+ *
+ * Return: True if NDI DBS is supported, False otherwise
+ */
+bool ucfg_is_ndi_dbs_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_is_nan_enable_allowed() - ucfg API to query if NAN Discovery is
  * allowed
  * @psoc: pointer to psoc object
@@ -274,6 +284,16 @@ void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc);
  */
 int ucfg_nan_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 				    struct nan_callbacks *cb_obj);
+/**
+ * ucfg_nan_check_and_disable_unsupported_ndi: ucfg API to check if NAN Datapath
+ * is active on multiple NDI's and disable the unsupported concurrencies.
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -284,6 +304,12 @@ void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 
 static inline void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 {
+}
+
+static inline QDF_STATUS
+ucfg_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */

@@ -4039,8 +4039,9 @@ QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
 	}
 
 	wma_iface_entry->chan_width = ndp_chan_info->ch_width;
-	wma_iface_entry->mhz = ndp_chan_info->channel;
+	wma_iface_entry->mhz = ndp_chan_info->freq;
 	wma_iface_entry->nss = ndp_chan_info->nss;
+	wma_iface_entry->mac_id = ndp_chan_info->mac_id;
 
 	return QDF_STATUS_SUCCESS;
 }

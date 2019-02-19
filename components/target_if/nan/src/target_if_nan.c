@@ -92,6 +92,9 @@ static QDF_STATUS target_if_ndp_event_flush_cb(struct scheduler_msg *msg)
 	case NDP_SCHEDULE_UPDATE:
 		vdev = ((struct nan_datapath_sch_update_event *)ptr)->vdev;
 		break;
+	case NDP_HOST_UPDATE:
+		vdev = ((struct nan_datapath_host_event *)ptr)->vdev;
+		break;
 	default:
 		break;
 	}
@@ -133,6 +136,9 @@ static QDF_STATUS target_if_ndp_event_dispatcher(struct scheduler_msg *msg)
 		break;
 	case NDP_SCHEDULE_UPDATE:
 		vdev = ((struct nan_datapath_sch_update_event *)ptr)->vdev;
+		break;
+	case NDP_HOST_UPDATE:
+		vdev = ((struct nan_datapath_host_event *)ptr)->vdev;
 		break;
 	default:
 		target_if_err("invalid msg type %d", msg->type);
@@ -667,6 +673,92 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 	return 0;
 }
 
+static QDF_STATUS target_if_nan_end_all_ndps_req(void *req)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	uint8_t vdev_id;
+
+	vdev = ((struct nan_datapath_end_all_ndps *)req)->vdev;
+	if (!vdev) {
+		target_if_err("vdev object is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_unified_terminate_all_ndps_req_cmd(wmi_handle, vdev_id);
+}
+
+static int target_if_ndp_host_event_handler(ol_scn_t scn, uint8_t *data,
+					    uint32_t data_len)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct scheduler_msg msg = {0};
+	struct nan_datapath_host_event *host_evt = NULL;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return -EINVAL;
+	}
+
+	host_evt = qdf_mem_malloc(sizeof(*host_evt));
+	if (!host_evt) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_host_event(wmi_handle, data, host_evt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(host_evt);
+		return -EINVAL;
+	}
+
+	if (!host_evt->vdev) {
+		target_if_err("vdev is null");
+		qdf_mem_free(host_evt);
+		return -EINVAL;
+	}
+
+	msg.bodyptr = host_evt;
+	msg.type = NDP_HOST_UPDATE;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
+	target_if_debug("NDP_HOST_UPDATE sent: %d", msg.type);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		target_if_ndp_event_flush_cb(&msg);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static QDF_STATUS target_if_nan_datapath_req(void *req, uint32_t req_type)
 {
 	/* send cmd to fw */
@@ -679,6 +771,9 @@ static QDF_STATUS target_if_nan_datapath_req(void *req, uint32_t req_type)
 		break;
 	case NDP_END_REQ:
 		target_if_nan_ndp_end_req(req);
+		break;
+	case NDP_END_ALL:
+		target_if_nan_end_all_ndps_req(req);
 		break;
 	default:
 		target_if_err("invalid req type");
@@ -933,6 +1028,15 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ret = wmi_unified_register_event_handler(handle, wmi_ndp_event_id,
+					       target_if_ndp_host_event_handler,
+					       WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		target_if_nan_deregister_events(psoc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -989,6 +1093,12 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 
 	ret = wmi_unified_unregister_event_handler(handle,
 				wmi_ndp_initiator_rsp_event_id);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle, wmi_ndp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;

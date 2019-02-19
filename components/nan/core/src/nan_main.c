@@ -124,6 +124,12 @@ void nan_release_cmd(void *in_req, uint32_t cmdtype)
 		vdev = req->vdev;
 		break;
 	}
+	case WLAN_SER_CMD_NDP_END_ALL_REQ: {
+		struct nan_datapath_end_all_ndps *req = in_req;
+
+		vdev = req->vdev;
+		break;
+	}
 	default:
 		nan_err("invalid req type: %d", cmdtype);
 		break;
@@ -170,6 +176,13 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 
 		vdev = req->vdev;
 		req_type = NDP_END_REQ;
+		break;
+	}
+	case WLAN_SER_CMD_NDP_END_ALL_REQ: {
+		struct nan_datapath_end_all_ndps *req = in_req;
+
+		vdev = req->vdev;
+		req_type = NDP_END_ALL;
 		break;
 	}
 	default:
@@ -263,6 +276,13 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 		struct nan_datapath_end_req *req = msg->bodyptr;
 
 		cmd.cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
+		cmd.vdev = req->vdev;
+		break;
+	}
+	case NDP_END_ALL: {
+		struct nan_datapath_end_all_ndps *req = msg->bodyptr;
+
+		cmd.cmd_type = WLAN_SER_CMD_NDP_END_ALL_REQ;
 		cmd.vdev = req->vdev;
 		break;
 	}
@@ -846,6 +866,35 @@ static QDF_STATUS nan_handle_schedule_update(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * nan_handle_host_update: Updates Host about NAN Datapath status, called by
+ * NAN modules's Datapath event handler.
+ *
+ * Return: status of operation
+ */
+static QDF_STATUS nan_handle_host_update(struct nan_datapath_host_event *evt)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc = wlan_vdev_get_psoc(evt->vdev);
+	if (!psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, evt->vdev,
+						     NDP_HOST_UPDATE, evt);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS nan_discovery_event_handler(struct scheduler_msg *msg)
 {
 	struct nan_event_params *nan_event;
@@ -933,6 +982,9 @@ QDF_STATUS nan_datapath_event_handler(struct scheduler_msg *pe_msg)
 		break;
 	case NDP_SCHEDULE_UPDATE:
 		nan_handle_schedule_update(pe_msg->bodyptr);
+		break;
+	case NDP_HOST_UPDATE:
+		nan_handle_host_update(pe_msg->bodyptr);
 		break;
 	default:
 		nan_alert("Unhandled NDP event: %d", pe_msg->type);

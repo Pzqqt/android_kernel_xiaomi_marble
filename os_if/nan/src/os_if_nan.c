@@ -1400,8 +1400,8 @@ static QDF_STATUS os_if_ndp_confirm_pack_ch_info(struct sk_buff *event,
 		return QDF_STATUS_E_FAULT;
 
 	for (idx = 0; idx < ndp_confirm->num_channels; idx++) {
-		cfg80211_debug("ch[%d]: freq: %d, width: %d, nss: %d",
-			       idx, ndp_confirm->ch[idx].channel,
+		cfg80211_debug("Freq[%d]: freq: %d, width: %d, nss: %d",
+			       idx, ndp_confirm->ch[idx].freq,
 			       ndp_confirm->ch[idx].ch_width,
 			       ndp_confirm->ch[idx].nss);
 		ch_element = nla_nest_start(event, idx);
@@ -1409,7 +1409,7 @@ static QDF_STATUS os_if_ndp_confirm_pack_ch_info(struct sk_buff *event,
 			return QDF_STATUS_E_FAULT;
 
 		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL,
-				ndp_confirm->ch[idx].channel))
+				ndp_confirm->ch[idx].freq))
 			return QDF_STATUS_E_FAULT;
 
 		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH,
@@ -2027,7 +2027,7 @@ static QDF_STATUS os_if_ndp_sch_update_pack_ch_info(struct sk_buff *event,
 
 	for (idx = 0; idx < sch_update->num_channels; idx++) {
 		cfg80211_debug("ch[%d]: freq: %d, width: %d, nss: %d",
-			       idx, sch_update->ch[idx].channel,
+			       idx, sch_update->ch[idx].freq,
 			       sch_update->ch[idx].ch_width,
 			       sch_update->ch[idx].nss);
 		ch_element = nla_nest_start(event, idx);
@@ -2035,7 +2035,7 @@ static QDF_STATUS os_if_ndp_sch_update_pack_ch_info(struct sk_buff *event,
 			return QDF_STATUS_E_FAULT;
 
 		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL,
-				sch_update->ch[idx].channel))
+				sch_update->ch[idx].freq))
 			return QDF_STATUS_E_FAULT;
 
 		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH,
@@ -2141,6 +2141,39 @@ ndp_sch_ind_nla_failed:
 	kfree_skb(vendor_event);
 }
 
+/**
+ * os_if_ndp_host_update_handler() - NDP Host update handler
+ * @vdev: vdev object pointer
+ * @evt: pointer to host update event
+ *
+ * Return: none
+ */
+static void os_if_ndp_host_update_handler(struct wlan_objmgr_vdev *vdev,
+					  void *evt)
+{
+	struct nan_vdev_priv_obj *vdev_nan_obj;
+	struct nan_datapath_host_event *event;
+	struct osif_request *request;
+
+	vdev_nan_obj = nan_get_vdev_priv_obj(vdev);
+	if (!vdev_nan_obj) {
+		cfg80211_err("vdev_nan_obj is NULL");
+		return;
+	}
+
+	request = osif_request_get(vdev_nan_obj->disable_context);
+	if (!request) {
+		cfg80211_debug("Obsolete request");
+		return;
+	}
+
+	event = osif_request_priv(request);
+	qdf_mem_copy(event, evt, sizeof(*event));
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
 static void os_if_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_vdev *vdev,
 					     uint32_t type, void *msg)
@@ -2178,6 +2211,9 @@ static void os_if_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
 		break;
 	case NDP_SCHEDULE_UPDATE:
 		os_if_ndp_sch_update_ind_handler(vdev, msg);
+		break;
+	case NDP_HOST_UPDATE:
+		os_if_ndp_host_update_handler(vdev, msg);
 		break;
 	default:
 		break;
