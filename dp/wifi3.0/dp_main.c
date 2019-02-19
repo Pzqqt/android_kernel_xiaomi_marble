@@ -688,21 +688,23 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	ast_entry = dp_peer_ast_hash_find_soc(soc, ast_mac_addr);
-
-	if (ast_entry && !ast_entry->delete_in_progress) {
-		ast_entry_info->type = ast_entry->type;
-		ast_entry_info->pdev_id = ast_entry->pdev_id;
-		ast_entry_info->vdev_id = ast_entry->vdev_id;
-		ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
-		qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
-			     &ast_entry->peer->mac_addr.raw[0],
-			     DP_MAC_ADDR_LEN);
+	if (!ast_entry || !ast_entry->peer) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		return true;
+		return false;
 	}
-
+	if (ast_entry->delete_in_progress && !ast_entry->callback) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return false;
+	}
+	ast_entry_info->type = ast_entry->type;
+	ast_entry_info->pdev_id = ast_entry->pdev_id;
+	ast_entry_info->vdev_id = ast_entry->vdev_id;
+	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
+		     &ast_entry->peer->mac_addr.raw[0],
+		     DP_MAC_ADDR_LEN);
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return false;
+	return true;
 }
 
 /**
@@ -731,20 +733,23 @@ static bool dp_peer_get_ast_info_by_pdevid_wifi3
 
 	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, ast_mac_addr, pdev_id);
 
-	if (ast_entry && !ast_entry->delete_in_progress) {
-		ast_entry_info->type = ast_entry->type;
-		ast_entry_info->pdev_id = ast_entry->pdev_id;
-		ast_entry_info->vdev_id = ast_entry->vdev_id;
-		ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
-		qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
-			     &ast_entry->peer->mac_addr.raw[0],
-			     DP_MAC_ADDR_LEN);
+	if (!ast_entry || !ast_entry->peer) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		return true;
+		return false;
 	}
-
+	if (ast_entry->delete_in_progress && !ast_entry->callback) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return false;
+	}
+	ast_entry_info->type = ast_entry->type;
+	ast_entry_info->pdev_id = ast_entry->pdev_id;
+	ast_entry_info->vdev_id = ast_entry->vdev_id;
+	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
+		     &ast_entry->peer->mac_addr.raw[0],
+		     DP_MAC_ADDR_LEN);
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return false;
+	return true;
 }
 
 /**

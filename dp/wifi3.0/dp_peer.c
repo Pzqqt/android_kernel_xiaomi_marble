@@ -654,6 +654,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				param->flags = flags;
 				param->vdev_id = vdev->vdev_id;
 				ast_entry->callback = dp_peer_free_hmwds_cb;
+				ast_entry->pdev_id = vdev->pdev->pdev_id;
+				ast_entry->type = type;
 				ast_entry->cookie = (void *)param;
 				if (!ast_entry->delete_in_progress)
 					dp_peer_del_ast(soc, ast_entry);
