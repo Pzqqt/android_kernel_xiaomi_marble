@@ -1324,6 +1324,68 @@ static enum policy_mgr_two_connection_mode
 	return index;
 }
 
+static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_nan_ndi(void)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+	/* SCC */
+	if (pm_conc_connection_list[0].chan ==
+		pm_conc_connection_list[1].chan) {
+		/* NAN Discovery can only be on 2.4GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_NAN_DISC_NDI_SCC_24_1x1;
+		else
+			index = PM_NAN_DISC_NDI_SCC_24_2x2;
+	/* MCC */
+	} else if (pm_conc_connection_list[0].mac ==
+		pm_conc_connection_list[1].mac) {
+		/* NAN Discovery can only be on 2.4GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_NAN_DISC_NDI_MCC_24_1x1;
+		else
+			index = PM_NAN_DISC_NDI_MCC_24_2x2;
+	/* DBS */
+	} else if (pm_conc_connection_list[0].mac !=
+			pm_conc_connection_list[1].mac) {
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_NAN_DISC_NDI_DBS_1x1;
+		else
+			index = PM_NAN_DISC_NDI_DBS_2x2;
+	}
+	return index;
+}
+
+static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_sta_nan(void)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+	/* SCC */
+	if (pm_conc_connection_list[0].chan ==
+		pm_conc_connection_list[1].chan) {
+		/* NAN Discovery can only be on 2.4GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_STA_NAN_DISC_SCC_24_1x1;
+		else
+			index = PM_STA_NAN_DISC_SCC_24_2x2;
+	/* MCC */
+	} else if (pm_conc_connection_list[0].mac ==
+		pm_conc_connection_list[1].mac) {
+		/* NAN Discovery can only be on 2.4GHz */
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_STA_NAN_DISC_MCC_24_1x1;
+		else
+			index = PM_STA_NAN_DISC_MCC_24_2x2;
+	/* DBS */
+	} else if (pm_conc_connection_list[0].mac !=
+			pm_conc_connection_list[1].mac) {
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_STA_NAN_DISC_DBS_1x1;
+		else
+			index = PM_STA_NAN_DISC_DBS_2x2;
+	}
+	return index;
+}
+
 enum policy_mgr_two_connection_mode
 		policy_mgr_get_third_connection_pcl_table_index(
 		struct wlan_objmgr_psoc *psoc)
@@ -1384,6 +1446,18 @@ enum policy_mgr_two_connection_mode
 		(PM_STA_MODE == pm_conc_connection_list[1].mode)))
 		index =
 		policy_mgr_get_third_connection_pcl_table_index_sta_sta();
+	else if (((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
+		(PM_STA_MODE == pm_conc_connection_list[1].mode)) ||
+		((PM_STA_MODE == pm_conc_connection_list[0].mode) &&
+		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
+		index =
+		policy_mgr_get_third_connection_pcl_table_index_sta_nan();
+	else if (((PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) &&
+		(PM_NDI_MODE == pm_conc_connection_list[1].mode)) ||
+		((PM_NDI_MODE == pm_conc_connection_list[0].mode) &&
+		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
+		index =
+		policy_mgr_get_third_connection_pcl_table_index_nan_ndi();
 
 	policy_mgr_debug("mode0:%d mode1:%d chan0:%d chan1:%d chain:%d index:%d",
 		pm_conc_connection_list[0].mode,

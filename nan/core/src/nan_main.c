@@ -431,16 +431,18 @@ ndi_remove_and_update_primary_connection(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (!peer && psoc_nan_obj->nan_caps.ndi_dbs_supported) {
-		/* TODO: Remove connection from policy manager tables */
+		policy_mgr_decr_session_set_pcl(psoc, QDF_NDI_MODE,
+						wlan_vdev_get_id(vdev));
 		return QDF_STATUS_SUCCESS;
 	}
 
 	if (peer_nan_obj && psoc_nan_obj->nan_caps.ndi_dbs_supported) {
 		psoc_nan_obj->cb_obj.update_ndi_conn(wlan_vdev_get_id(vdev),
 						 &peer_nan_obj->home_chan_info);
-		/* TODO: Update policy mgr with connection info */
+		policy_mgr_update_connection_info(psoc, wlan_vdev_get_id(vdev));
 		qdf_mem_copy(vdev_nan_obj->primary_peer_mac.bytes,
 			     wlan_peer_get_macaddr(peer), QDF_MAC_ADDR_SIZE);
+		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	}
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
@@ -506,10 +508,11 @@ ndi_update_ndp_session(struct wlan_objmgr_vdev *vdev,
 static QDF_STATUS nan_handle_confirm(
 				struct nan_datapath_confirm_event *confirm)
 {
-	uint8_t vdev_id;
+	uint8_t vdev_id, channel;
 	struct wlan_objmgr_psoc *psoc;
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 	struct nan_vdev_priv_obj *vdev_nan_obj;
+	QDF_STATUS status;
 
 	vdev_id = wlan_vdev_get_id(confirm->vdev);
 	psoc = wlan_vdev_get_psoc(confirm->vdev);
@@ -564,11 +567,33 @@ static QDF_STATUS nan_handle_confirm(
 		psoc_nan_obj->cb_obj.update_ndi_conn(vdev_id, &confirm->ch[0]);
 
 		if (psoc_nan_obj->nan_caps.ndi_dbs_supported) {
-			/*
-			* TODO: Update connection in Policy Manager if NDI
-			* concurrencies are supported and this is the first
-			* active NDP for the NDI.
-			*/
+			channel = wlan_freq_to_chan(confirm->ch[0].freq);
+			status = policy_mgr_reset_connection_update(psoc);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				nan_err("Policy mgr reset connection failed-%d",
+					status);
+				return status;
+			}
+
+			status = policy_mgr_current_connections_update(psoc,
+					   vdev_id, channel,
+					   POLICY_MGR_UPDATE_REASON_NDP_UPDATE);
+			if (QDF_STATUS_E_FAILURE == status) {
+				nan_err("connections update failed!!");
+				return status;
+			}
+
+			if (QDF_STATUS_SUCCESS == status) {
+				status = policy_mgr_wait_for_connection_update(
+									  psoc);
+				if (!QDF_IS_STATUS_SUCCESS(status)) {
+					nan_err("qdf wait for event failed!!");
+					return status;
+				}
+			}
+
+			policy_mgr_incr_active_session(psoc, QDF_NDI_MODE,
+						       vdev_id);
 		}
 	}
 
