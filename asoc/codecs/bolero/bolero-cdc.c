@@ -638,15 +638,14 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 	struct bolero_priv *priv = data;
 	int macro_idx;
 
-	if (priv->rsc_clk_cb)
-		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_DOWN);
-
 	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_OFF_PRE_SSR);
 	regcache_cache_only(priv->regmap, true);
 
 	mutex_lock(&priv->clk_lock);
 	priv->dev_up = false;
 	mutex_unlock(&priv->clk_lock);
+	if (priv->rsc_clk_cb)
+		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_DOWN);
 	/* call ssr event for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)

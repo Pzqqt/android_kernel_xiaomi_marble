@@ -401,7 +401,7 @@ int bolero_clk_rsc_request_clock(struct device *dev,
 	}
 
 	mutex_lock(&priv->rsc_clk_lock);
-	if (!priv->dev_up) {
+	if (!priv->dev_up && enable) {
 		dev_err_ratelimited(priv->dev, "%s: SSR is in progress..\n",
 				__func__);
 		ret = -EINVAL;
