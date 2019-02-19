@@ -224,8 +224,6 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 		goto done;
 	}
 	qdf_mem_zero(data_buf, orig_nbytes);
-	qdf_mem_dma_sync_single_for_device(scn->qdf_dev, CE_data_base,
-				       orig_nbytes, DMA_FROM_DEVICE);
 
 	remaining_bytes = orig_nbytes;
 	CE_data = CE_data_base;
