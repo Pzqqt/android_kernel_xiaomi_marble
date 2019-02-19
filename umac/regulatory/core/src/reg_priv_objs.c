@@ -240,8 +240,6 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
 	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
 
-	reg_reset_reg_rules(psoc_reg_rules);
-
 	status = wlan_objmgr_pdev_component_obj_attach(
 			pdev, WLAN_UMAC_COMP_REGULATORY, pdev_priv_obj,
 			QDF_STATUS_SUCCESS);
