@@ -125,6 +125,7 @@ struct nan_psoc_priv_obj {
  * @ndp_delete_transaction_id: transaction id for delete req
  * @ndi_delete_rsp_reason: reason code for ndi_delete rsp
  * @ndi_delete_rsp_status: status for ndi_delete rsp
+ * @primary_peer_mac: Primary NDP Peer mac address for the vdev
  */
 struct nan_vdev_priv_obj {
 	qdf_spinlock_t lock;
@@ -134,16 +135,19 @@ struct nan_vdev_priv_obj {
 	uint16_t ndp_delete_transaction_id;
 	uint32_t ndi_delete_rsp_reason;
 	uint32_t ndi_delete_rsp_status;
+	struct qdf_mac_addr primary_peer_mac;
 };
 
 /**
  * struct nan_peer_priv_obj - nan private peer obj
  * @lock: lock to be acquired before reading or writing to object
  * @active_ndp_sessions: number of active ndp sessions for this peer
+ * @home_chan_info: Home channel info for the NDP associated with the Peer
  */
 struct nan_peer_priv_obj {
 	qdf_spinlock_t lock;
 	uint32_t active_ndp_sessions;
+	struct nan_datapath_channel_info home_chan_info;
 };
 
 /**
