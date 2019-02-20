@@ -130,3 +130,26 @@ int cfr_8074v2_deinit_pdev(
 	return status;
 }
 
+#ifdef DIRECT_BUF_RX_ENABLE
+struct module_ring_params *
+target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+	struct module_ring_params *param = {0};
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+
+	if(dbr_tx_ops->direct_buf_rx_get_ring_params)
+		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,
+							  DBR_MODULE_CFR)
+	return param;
+}
+#else
+struct module_ring_params *
+target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
+{
+	return NULL;
+}
+#endif
