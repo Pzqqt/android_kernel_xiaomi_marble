@@ -8892,7 +8892,11 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case SIR_HAL_SET_DEL_PMKID_CACHE:
 		wma_set_del_pmkid_cache(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
+		if (msg->bodyptr) {
+			qdf_mem_zero(msg->bodyptr,
+				     sizeof(struct wmi_unified_pmk_cache));
+			qdf_mem_free(msg->bodyptr);
+		}
 		break;
 	case SIR_HAL_HLP_IE_INFO:
 		wma_roam_scan_send_hlp(wma_handle,

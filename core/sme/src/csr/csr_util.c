@@ -4017,6 +4017,8 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 		}
 		session->rsn_caps = RSNCapabilities;
 
+		qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
+
 #ifdef WLAN_FEATURE_11W
 		/* Advertise BIP in group cipher key management only if PMF is
 		 * enabled and AP is capable.
