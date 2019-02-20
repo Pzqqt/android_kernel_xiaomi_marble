@@ -174,5 +174,7 @@ void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 				target_if_direct_buf_rx_unregister_events;
 	tx_ops->dbr_tx_ops.direct_buf_rx_print_ring_stat =
 				target_if_direct_buf_rx_print_ring_stat;
+	tx_ops->dbr_tx_ops.direct_buf_rx_get_ring_params =
+				target_if_direct_buf_rx_get_ring_params;
 }
 qdf_export_symbol(target_if_direct_buf_rx_register_tx_ops);

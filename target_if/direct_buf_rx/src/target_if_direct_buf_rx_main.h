@@ -131,6 +131,16 @@ struct direct_buf_rx_psoc_obj {
 };
 
 /**
+ * struct module_ring_params - Direct buf ring params for module
+ * @num_bufs: Number of buffers alloted to this module
+ * @buf_size: size of buffers
+ */
+struct module_ring_params {
+	uint32_t num_bufs;
+	uint32_t buf_size;
+};
+
+/**
  * target_if_direct_buf_rx_register_events() - Register WMI events to direct
  *                                             buffer rx module
  * @psoc: pointer to psoc object
@@ -244,4 +254,17 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
  */
 QDF_STATUS target_if_direct_buf_rx_module_unregister(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
+
+/**
+ * target_if_direct_buf_rx_get_ring_params() - Function to get ring parameters
+ *                                             for module_id
+ * @pdev: pointer to pdev object
+ * @module_ring_params: pointer to store ring params
+ * @mod_id: module idindicating module using direct buffer rx framework
+ */
+QDF_STATUS
+target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
+					struct module_ring_params *param,
+					int mod_id);
+
 #endif /* _TARGET_IF_DIRECT_BUF_RX_MAIN_H_ */

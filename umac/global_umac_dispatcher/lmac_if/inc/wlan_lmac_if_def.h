@@ -66,6 +66,8 @@ struct oem_data_rsp;
 #ifdef DIRECT_BUF_RX_ENABLE
 /* forward declarations for direct buf rx */
 struct direct_buf_rx_data;
+/* Forward declaration for module_ring_params */
+struct module_ring_params;
 #endif
 
 #ifdef FEATURE_WLAN_TDLS
@@ -577,6 +579,8 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
  * @direct_buf_rx_unregister_events: Unregistraton of WMI events for direct
  *                                   buffer rx framework
  * @direct_buf_rx_print_ring_stat: Print ring status per module per pdev
+ *
+ * @direct_buf_rx_get_ring_params: Get ring parameters for module_id
  */
 struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_module_register)(
@@ -591,6 +595,10 @@ struct wlan_lmac_if_direct_buf_rx_tx_ops {
 			struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*direct_buf_rx_print_ring_stat)(
 			struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*direct_buf_rx_get_ring_params)
+		(struct wlan_objmgr_pdev *pdev,
+		 struct module_ring_params *param,
+		 int module_id);
 };
 #endif
 

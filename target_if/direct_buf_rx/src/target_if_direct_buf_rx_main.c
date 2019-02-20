@@ -1134,3 +1134,31 @@ QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
+					struct module_ring_params *param,
+					int mod_id)
+{
+	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	struct direct_buf_rx_module_param *dbr_mod_param;
+
+	if (NULL == pdev) {
+		direct_buf_rx_err("pdev context passed is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj
+			(pdev, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+
+	if (NULL == dbr_pdev_obj) {
+		direct_buf_rx_err("dir buf rx object is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dbr_mod_param = &dbr_pdev_obj->dbr_mod_param[mod_id];
+	param->num_bufs = dbr_mod_param->dbr_ring_cfg->num_ptr;
+	param->buf_size = dbr_mod_param->dbr_ring_cfg->buf_size;
+
+	return QDF_STATUS_SUCCESS;
+}
