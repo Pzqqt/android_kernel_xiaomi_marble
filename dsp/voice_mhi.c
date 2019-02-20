@@ -235,8 +235,11 @@ int voice_mhi_start(void)
 				ret = -EINVAL;
 				goto done;
 			}
+			pr_debug("%s: mhi_device_get_sync success\n", __func__);
+		} else {
+			/* For DSDA, no additional voting is needed */
+			pr_debug("%s: mhi is already voted\n", __func__);
 		}
-		pr_debug("%s: mhi_device_get_sync success\n", __func__);
 		voice_mhi_lcl.vote_count++;
 	} else {
 		/* PCIe not supported - return success*/
@@ -438,6 +441,7 @@ static void voice_mhi_pcie_down_callback(struct mhi_device *voice_mhi_dev)
 				   DMA_BIDIRECTIONAL, 0);
 
 	voice_mhi_lcl.mhi_dev = NULL;
+	voice_mhi_lcl.vote_count = 0;
 	mutex_unlock(&voice_mhi_lcl.mutex);
 }
 
