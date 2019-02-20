@@ -10468,6 +10468,8 @@ struct asm_mode_vi_proc_cfg {
 #define AFE_PARAM_ID_SP_V2_TH_VI_MODE_CFG	0x0001026B
 #define AFE_PARAM_ID_SP_V2_TH_VI_FTM_CFG	0x0001029F
 #define AFE_PARAM_ID_SP_V2_TH_VI_FTM_PARAMS	0x000102A0
+#define AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_CFG	0x000102BF
+#define AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_PARAMS	0x000102C0
 
 struct afe_sp_th_vi_mode_cfg {
 	uint32_t minor_version;
@@ -10557,6 +10559,51 @@ struct afe_sp_th_vi_get_param_resp {
 	struct afe_sp_th_vi_ftm_params param;
 } __packed;
 
+struct afe_sp_th_vi_v_vali_cfg {
+	uint32_t minor_version;
+	uint32_t wait_time_ms[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Wait time to heat up speaker before collecting statistics
+	 * for V validation mode in ms.
+	 * values 100 to 1000 ms
+	 */
+	uint32_t vali_time_ms[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * duration for which V VALIDATION statistics are collected in ms.
+	 * values 1000 to 3000 ms
+	 */
+} __packed;
+
+struct afe_sp_th_vi_v_vali_params {
+	uint32_t minor_version;
+	uint32_t vrms_q24[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Vrms value in q24 format
+	 * values [0 33554432] Q24 (0 - 2Vrms)
+	 */
+	uint32_t status[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * v-vali packet status
+	 * 0 - Failed.
+	 * 1 - Success.
+	 * 2 - Incorrect operation mode.This status is returned
+	 *     when GET_PARAM is called in non v-vali Mode
+	 * 3 - Inactive mode -- Port is not yet started.
+	 * 4 - Wait state. wait_time_ms has not yet elapsed
+	 * 5 - In progress state. ftm_time_ms has not yet elapsed.
+	 */
+} __packed;
+
+struct afe_sp_th_vi_v_vali_get_param {
+	struct param_hdr_v3 pdata;
+	struct afe_sp_th_vi_v_vali_params param;
+} __packed;
+
+struct afe_sp_th_vi_v_vali_get_param_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct afe_sp_th_vi_v_vali_params param;
+} __packed;
 
 #define AFE_MODULE_SPEAKER_PROTECTION_V2_EX_VI	0x0001026F
 #define AFE_PARAM_ID_SP_V2_EX_VI_MODE_CFG	0x000102A1
@@ -10641,6 +10688,7 @@ union afe_spkr_prot_config {
 	struct asm_mode_vi_proc_cfg mode_vi_proc_cfg;
 	struct afe_sp_th_vi_mode_cfg th_vi_mode_cfg;
 	struct afe_sp_th_vi_ftm_cfg th_vi_ftm_cfg;
+	struct afe_sp_th_vi_v_vali_cfg th_vi_v_vali_cfg;
 	struct afe_sp_ex_vi_mode_cfg ex_vi_mode_cfg;
 	struct afe_sp_ex_vi_ftm_cfg ex_vi_ftm_cfg;
 	struct afe_sp_rx_limiter_th_param limiter_th_cfg;
