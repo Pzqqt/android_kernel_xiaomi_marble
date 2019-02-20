@@ -953,9 +953,7 @@ int wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_ocb_set_config(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1074,10 +1072,8 @@ int wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_ocb_set_utc_time(wiphy, wdev,
 						     data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1198,10 +1194,8 @@ int wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_ocb_start_timing_advert(wiphy, wdev,
 							    data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1302,10 +1296,8 @@ int wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_ocb_stop_timing_advert(wiphy, wdev,
 							   data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1503,10 +1495,8 @@ int wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_ocb_get_tsf_timer(wiphy, wdev,
 						      data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1762,9 +1752,7 @@ int wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_dcc_get_stats(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1852,10 +1840,8 @@ int wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_dcc_clear_stats(wiphy, wdev,
 						    data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2042,9 +2028,7 @@ int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_dcc_update_ndl(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

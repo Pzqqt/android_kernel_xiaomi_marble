@@ -1706,10 +1706,8 @@ int wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_get_capabilities(wiphy, wdev,
 							     data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1851,10 +1849,8 @@ int wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_get_cached_results(wiphy, wdev,
 							       data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2095,10 +2091,8 @@ int wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(wiphy, wdev,
 							      data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2295,11 +2289,9 @@ int wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_set_significant_change(wiphy, wdev,
 								   data,
 								   data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -3255,9 +3247,7 @@ int wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_start(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -3373,9 +3363,7 @@ int wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_stop(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -3494,10 +3482,8 @@ int wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(wiphy, wdev,
 								data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -3616,12 +3602,10 @@ int wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_reset_significant_change(wiphy,
 								     wdev,
 								     data,
 								     data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -3951,9 +3935,7 @@ int wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_set_epno_list(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -4207,10 +4189,8 @@ int wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_set_passpoint_list(wiphy, wdev,
 						       data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -4314,10 +4294,8 @@ int wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_reset_passpoint_list(wiphy, wdev,
 							 data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
