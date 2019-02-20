@@ -4651,9 +4651,7 @@ int wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -4711,9 +4709,7 @@ int wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_dump_station(wiphy, dev, idx, mac, sinfo);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -4923,9 +4919,7 @@ int wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_dump_survey(wiphy, dev, idx, survey);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

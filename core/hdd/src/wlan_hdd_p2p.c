@@ -170,10 +170,8 @@ int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_remain_on_channel(wiphy, wdev, chan,
 						      duration, cookie);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -216,10 +214,8 @@ int wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_cancel_remain_on_channel(wiphy, wdev,
 							     cookie);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -311,8 +307,6 @@ int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
-
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 	errno = __wlan_hdd_mgmt_tx(wiphy, wdev, params->chan, params->offchan,
 				   params->wait, params->buf, params->len,
@@ -323,7 +317,6 @@ int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 				   wait, buf, len, no_cck,
 				   dont_wait_for_ack, cookie);
 #endif /* LINUX_VERSION_CODE */
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -364,9 +357,7 @@ int wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(wiphy, wdev, cookie);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

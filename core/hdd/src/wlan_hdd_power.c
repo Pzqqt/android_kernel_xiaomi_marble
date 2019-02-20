@@ -1993,10 +1993,8 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_set_power_mgmt(wiphy, dev, allow_power_save,
 						   timeout);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
