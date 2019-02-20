@@ -5492,7 +5492,6 @@ struct sir_mac_pwr_dbg_cmd {
  * @msg_type: message type
  * @length: length of message
  * @session_id: session id
- * @trans_id: transaction id
  * @peer_mac: peer mac address
  * @reason: reason for disassoc
  * @wait_for_ack: wait for acknowledgment
@@ -5501,7 +5500,6 @@ struct sir_mac_pwr_dbg_cmd {
 	uint16_t msg_type;
 	uint16_t length;
 	uint8_t session_id;
-	uint16_t trans_id;
 	uint8_t peer_mac[6];
 	uint16_t reason;
 	uint8_t wait_for_ack;

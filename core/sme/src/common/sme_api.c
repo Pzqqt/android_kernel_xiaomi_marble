@@ -12377,46 +12377,22 @@ void sme_send_disassoc_req_frame(mac_handle_t mac_handle, uint8_t session_id,
 {
 	struct sme_send_disassoc_frm_req *msg;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	A_UINT8  *buf;
-	A_UINT16 tmp;
 
-	msg = qdf_mem_malloc(sizeof(struct sme_send_disassoc_frm_req));
+	msg = qdf_mem_malloc(sizeof(*msg));
 	if (!msg)
 		return;
 
-	msg->msg_type = (uint16_t) eWNI_SME_SEND_DISASSOC_FRAME;
-
-	msg->length = (uint16_t) sizeof(struct sme_send_disassoc_frm_req);
-
-	buf = &msg->session_id;
-
-	/* session id */
-	*buf = (A_UINT8) session_id;
-	buf += sizeof(A_UINT8);
-
-	/* transaction id */
-	*buf = 0;
-	*(buf + 1) = 0;
-	buf += sizeof(A_UINT16);
-
-	/* Set the peer MAC address before sending the message to LIM */
-	qdf_mem_copy(buf, peer_mac, QDF_MAC_ADDR_SIZE);
-
-	buf += QDF_MAC_ADDR_SIZE;
-
-	/* reasoncode */
-	tmp = (uint16_t) reason;
-	qdf_mem_copy(buf, &tmp, sizeof(uint16_t));
-	buf += sizeof(uint16_t);
-
-	*buf =  wait_for_ack;
-	buf += sizeof(uint8_t);
+	msg->msg_type = eWNI_SME_SEND_DISASSOC_FRAME;
+	msg->length = sizeof(*msg);
+	msg->session_id = session_id;
+	qdf_mem_copy(msg->peer_mac, peer_mac, QDF_MAC_ADDR_SIZE);
+	msg->reason = reason;
+	msg->wait_for_ack = wait_for_ack;
 
 	qdf_status = umac_send_mb_message_to_mac(msg);
-
-	if (qdf_status != QDF_STATUS_SUCCESS)
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("cds_send_mb_message Failed"));
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		sme_err("umac_send_mb_message_to_mac failed, %d",
+			qdf_status);
 }
 
 #ifdef FEATURE_WLAN_APF
