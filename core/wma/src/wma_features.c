@@ -3917,16 +3917,6 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 }
 #endif
 
-/**
- * wma_send_regdomain_info_to_fw() - send regdomain info to fw
- * @reg_dmn: reg domain
- * @regdmn2G: 2G reg domain
- * @regdmn5G: 5G reg domain
- * @ctl2G: 2G test limit
- * @ctl5G: 5G test limit
- *
- * Return: none
- */
 void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 				   uint16_t regdmn5G, uint8_t ctl2G,
 				   uint8_t ctl5G)

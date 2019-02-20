@@ -1249,9 +1249,19 @@ QDF_STATUS
 wma_vdev_nss_chain_params_send(uint8_t vdev_id,
 			       struct wlan_mlme_nss_chains *user_cfg);
 
-extern void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
-					  uint16_t regdmn5G, uint8_t ctl2G,
-					  uint8_t ctl5G);
+/**
+ * wma_send_regdomain_info_to_fw() - send regdomain info to fw
+ * @reg_dmn: reg domain
+ * @regdmn2G: 2G reg domain
+ * @regdmn5G: 5G reg domain
+ * @ctl2G: 2G test limit
+ * @ctl5G: 5G test limit
+ *
+ * Return: none
+ */
+void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
+				   uint16_t regdmn5G, uint8_t ctl2G,
+				   uint8_t ctl5G);
 /**
  * enum frame_index - Frame index
  * @GENERIC_NODOWNLD_NOACK_COMP_INDEX: Frame index for no download comp no ack
