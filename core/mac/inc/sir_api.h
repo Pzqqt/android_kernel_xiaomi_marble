@@ -369,7 +369,6 @@ typedef struct sSirSmeRsp {
 struct sme_ready_req {
 	uint16_t messageType;   /* eWNI_SME_SYS_READY_IND */
 	uint16_t length;
-	uint16_t transactionId;
 	void *csr_roam_synch_cb;
 	void *pe_roam_synch_cb;
 	void *stop_roaming_cb;
