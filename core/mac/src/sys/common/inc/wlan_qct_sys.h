@@ -36,6 +36,8 @@
 #include <qdf_status.h>
 #include <scheduler_api.h>
 
+struct mac_context;
+
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
    -------------------------------------------------------------------------*/
@@ -83,5 +85,21 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID msg_id,
 QDF_STATUS umac_stop(void);
 
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
+
+/**
+ * sys_process_mmh_msg() - api to process an mmh message
+ * @mac: pointer to mac context
+ * @msg: pointer to message
+ *
+ * This API is used to process an mmh message.
+ *
+ * NOTE WELL: Ownership of the @msg bodyptr, if present, is always
+ * transferred, and the caller must not attempt to dereference or free
+ * the bodyptr after invoking this API.
+ *
+ * Return: none
+ */
+void sys_process_mmh_msg(struct mac_context *mac,
+			 struct scheduler_msg *msg);
 
 #endif /* WLAN_QCT_SYS_H__ */

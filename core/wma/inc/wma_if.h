@@ -1017,9 +1017,6 @@ typedef struct tHalHiddenSsidVdevRestart {
 } tHalHiddenSsidVdevRestart, *tpHalHiddenSsidVdevRestart;
 
 
-extern void sys_process_mmh_msg(struct mac_context *mac,
-				struct scheduler_msg *pMsg);
-
 /**
  * struct tDisableIntraBssFwd - intra bss forward parameters
  * @sessionId: session id

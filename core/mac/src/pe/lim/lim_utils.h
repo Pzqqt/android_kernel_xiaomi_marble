@@ -37,6 +37,7 @@
 #include "lim_trace.h"
 #include "include/wlan_vdev_mlme.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "wlan_qct_sys.h"
 
 typedef enum {
 	ONE_BYTE = 1,

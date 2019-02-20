@@ -66,6 +66,7 @@
 #include "lim_ft.h"
 #include "wlan_mlme_main.h"
 #include "qdf_util.h"
+#include "wlan_qct_sys.h"
 
 #define ASCII_SPACE_CHARACTER 0x20
 

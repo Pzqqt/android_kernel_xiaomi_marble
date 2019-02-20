@@ -194,46 +194,30 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 	return sys_mc_process_msg(msg);
 }
 
-/**
- * sys_process_mmh_msg() - this api to process mmh message
- * @mac: pointer to mac context
- * @pMsg: pointer to message
- *
- * This API is used to process mmh message
- *
- * Return: none
- */
-void sys_process_mmh_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
+void sys_process_mmh_msg(struct mac_context *mac, struct scheduler_msg *msg)
 {
-	QDF_MODULE_ID targetMQ = QDF_MODULE_ID_SYS;
+	QDF_MODULE_ID dest_module = QDF_MODULE_ID_SYS;
 
-	/*
-	 * The body of this pMsg is a tSirMbMsg
-	 * Contrary to previous generation, we cannot free it here!
-	 * It is up to the callee to free it
-	 */
-	if (NULL == pMsg) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-				"NULL Message Pointer");
+	if (!msg) {
 		QDF_ASSERT(0);
 		return;
 	}
 
-	switch (pMsg->type) {
+	switch (msg->type) {
 	case eWNI_SME_SYS_READY_IND:
 		/* Forward this message to the PE module */
-		targetMQ = QDF_MODULE_ID_PE;
+		dest_module = QDF_MODULE_ID_PE;
 		break;
 	default:
-		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
-				&& (pMsg->type <= eWNI_SME_MSG_TYPES_END)) {
-			targetMQ = QDF_MODULE_ID_SME;
+		if ((msg->type >= eWNI_SME_MSG_TYPES_BEGIN) &&
+		    (msg->type <= eWNI_SME_MSG_TYPES_END)) {
+			dest_module = QDF_MODULE_ID_SME;
 			break;
 		}
 
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			"Message of ID %d is not yet handled by SYS",
-			pMsg->type);
+			  "Message of ID %d is not yet handled by SYS",
+			  msg->type);
 		QDF_ASSERT(0);
 	}
 
@@ -242,15 +226,7 @@ void sys_process_mmh_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 	 */
 	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SYS,
 							 QDF_MODULE_ID_SYS,
-							 targetMQ,
-							 pMsg)) {
-		/*
-		 * Caller doesn't allocate memory for the pMsg.
-		 * It allocate memory for bodyptr free the mem and return
-		 */
-		if (pMsg->bodyptr)
-			qdf_mem_free(pMsg->bodyptr);
-	}
-
+							 dest_module,
+							 msg))
+		qdf_mem_free(msg->bodyptr);
 }
-

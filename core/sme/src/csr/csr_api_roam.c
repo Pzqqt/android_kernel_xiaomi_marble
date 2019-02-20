@@ -61,6 +61,7 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_public_struct.h"
 #include <wlan_crypto_global_api.h>
+#include "wlan_qct_sys.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
