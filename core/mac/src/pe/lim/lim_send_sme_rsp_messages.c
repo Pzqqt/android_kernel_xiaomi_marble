@@ -731,10 +731,9 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			  uint16_t disassocTrigger,
 			  uint16_t aid,
 			  uint8_t smesessionId,
-			  uint16_t smetransactionId, struct pe_session *pe_session)
+			  uint16_t smetransactionId,
+			  struct pe_session *pe_session)
 {
-
-	uint8_t *pBuf;
 	struct disassoc_rsp *pSirSmeDisassocRsp;
 	struct disassoc_ind *pSirSmeDisassocInd;
 	uint32_t *pMsg = NULL;
@@ -801,29 +800,16 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			failure = true;
 			goto error;
 		}
-		pe_debug("send eWNI_SME_DISASSOC_RSP with retCode: %d for " MAC_ADDRESS_STR,
-			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
+		pe_debug("send eWNI_SME_DISASSOC_RSP with retCode: %d for "
+			 MAC_ADDRESS_STR,
+			 reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocRsp->messageType = eWNI_SME_DISASSOC_RSP;
 		pSirSmeDisassocRsp->length = sizeof(struct disassoc_rsp);
-		/* sessionId */
-		pBuf = (uint8_t *) &pSirSmeDisassocRsp->sessionId;
-		*pBuf = smesessionId;
-		pBuf++;
-
-		/* transactionId */
-		lim_copy_u16(pBuf, smetransactionId);
-		pBuf += sizeof(uint16_t);
-
-		/* statusCode */
-		lim_copy_u32(pBuf, reasonCode);
-		pBuf += sizeof(tSirResultCodes);
-
-		/* peerMacAddr */
-		qdf_mem_copy(pBuf, peerMacAddr, sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
-
-		/* Clear Station Stats */
-		/* for sta, it is always 1, IBSS is handled at halInitSta */
+		pSirSmeDisassocRsp->sessionId = smesessionId;
+		pSirSmeDisassocRsp->transactionId = smetransactionId;
+		pSirSmeDisassocRsp->statusCode = reasonCode;
+		qdf_mem_copy(pSirSmeDisassocRsp->peer_macaddr.bytes,
+			     peerMacAddr, sizeof(tSirMacAddr));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 
@@ -856,24 +842,19 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			failure = true;
 			goto error;
 		}
-		pe_debug("send eWNI_SME_DISASSOC_IND with retCode: %d for " MAC_ADDRESS_STR,
-			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
+		pe_debug("send eWNI_SME_DISASSOC_IND with retCode: %d for "
+			 MAC_ADDRESS_STR,
+			 reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
-
-		/* Update SME session Id and Transaction Id */
 		pSirSmeDisassocInd->sessionId = smesessionId;
 		pSirSmeDisassocInd->transactionId = smetransactionId;
 		pSirSmeDisassocInd->reasonCode = reasonCode;
-		pBuf = (uint8_t *) &pSirSmeDisassocInd->statusCode;
-
-		lim_copy_u32(pBuf, reasonCode);
-		pBuf += sizeof(tSirResultCodes);
-
-		qdf_mem_copy(pBuf, pe_session->bssId, sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
-
-		qdf_mem_copy(pBuf, peerMacAddr, sizeof(tSirMacAddr));
+		pSirSmeDisassocInd->statusCode = reasonCode;
+		qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes,
+			     pe_session->bssId, sizeof(tSirMacAddr));
+		qdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes,
+			     peerMacAddr, sizeof(tSirMacAddr));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 		lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_IND_EVENT,
