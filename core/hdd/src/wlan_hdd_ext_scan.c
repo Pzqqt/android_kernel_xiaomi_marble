@@ -2514,10 +2514,8 @@ int wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_extscan_get_valid_channels(wiphy, wdev,
 							       data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 

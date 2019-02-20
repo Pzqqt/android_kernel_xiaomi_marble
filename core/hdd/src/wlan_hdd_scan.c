@@ -1548,9 +1548,7 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 	if (errno)
 		return;
 
-	cds_ssr_protect(__func__);
 	__wlan_hdd_cfg80211_abort_scan(wiphy, wdev);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 }

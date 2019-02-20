@@ -71,9 +71,7 @@ static ssize_t show_driver_version(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	length = __show_driver_version(buf);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
@@ -119,9 +117,7 @@ static ssize_t show_fw_version(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	length = __show_fw_version(hdd_ctx, buf);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
@@ -272,9 +268,7 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	length = __show_device_power_stats(hdd_ctx, buf);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 

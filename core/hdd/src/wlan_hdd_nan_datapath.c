@@ -406,16 +406,14 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
  * Return: 0 on success, negative errno on failure
  */
 int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
-	struct wireless_dev *wdev, const void *data, int data_len)
+				      struct wireless_dev *wdev,
+				      const void *data, int data_len)
 {
-	int errno;
-
-	cds_ssr_protect(__func__);
-	errno = __wlan_hdd_cfg80211_process_ndp_cmd(wiphy, wdev,
-						    data, data_len);
-	cds_ssr_unprotect(__func__);
-
-	return errno;
+	/* This call is intentionally not protected by op_start/op_stop, due to
+	 * the various protection needs of the callbacks dispatched within.
+	 */
+	return __wlan_hdd_cfg80211_process_ndp_cmd(wiphy, wdev,
+						   data, data_len);
 }
 
 static int update_ndi_state(struct hdd_adapter *adapter, uint32_t state)
