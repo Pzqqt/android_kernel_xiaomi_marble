@@ -619,7 +619,7 @@ enum QDF_GLOBAL_MODE {
  * implemented in qdf_trace.c
  */
 void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-		   char *str_format, ...);
+				  const char *str_format, ...);
 /**
  * qdf_vtrace_msg() - the va_list version of qdf_trace_msg
  * @module: the calling module's Id
@@ -630,7 +630,7 @@ void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
  * Return: None
  */
 void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-		    char *str_format, va_list val);
+		    const char *str_format, va_list val);
 
 #ifdef CONFIG_MCL
 

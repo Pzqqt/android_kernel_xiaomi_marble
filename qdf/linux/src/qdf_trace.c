@@ -320,7 +320,7 @@ qdf_export_symbol(qdf_snprintf);
  * Return: None
  */
 void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-		   char *str_format, ...)
+		   const char *str_format, ...)
 {
 	va_list val;
 
@@ -331,7 +331,7 @@ void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 qdf_export_symbol(qdf_trace_msg);
 
 void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-		    char *str_format, va_list val)
+		    const char *str_format, va_list val)
 {
 	qdf_trace_msg_cmn(qdf_pidx, module, level, str_format, val);
 }
