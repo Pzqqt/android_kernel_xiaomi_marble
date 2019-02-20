@@ -659,8 +659,7 @@ static int tdls_validate_setup_frames(struct tdls_soc_priv_obj *tdls_soc,
 		 tdls_soc->connected_peer_count,
 		 tdls_soc->max_num_tdls_sta);
 
-	tdls_validate->max_sta_failed = -EPERM;
-	return 0;
+	return -EPERM;
 }
 
 int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
@@ -672,13 +671,11 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
+	struct wlan_objmgr_vdev *vdev = tdls_mgmt_req->vdev;
 	struct tdls_validate_action_req *tdls_validate =
-		tdls_mgmt_req->chk_frame;
+		&tdls_mgmt_req->chk_frame;
 
-	if (!tdls_validate || !tdls_validate->vdev)
-		return -EINVAL;
-
-	if (QDF_STATUS_SUCCESS != tdls_get_vdev_objects(tdls_validate->vdev,
+	if (QDF_STATUS_SUCCESS != tdls_get_vdev_objects(vdev,
 							&tdls_vdev,
 							&tdls_soc))
 		return -ENOTSUPP;
@@ -687,15 +684,15 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 	 * STA or P2P client should be connected and authenticated before
 	 *  sending any TDLS frames
 	 */
-	if (!tdls_is_vdev_connected(tdls_validate->vdev) ||
-	    !tdls_is_vdev_authenticated(tdls_validate->vdev)) {
+	if (!tdls_is_vdev_connected(vdev) ||
+	    !tdls_is_vdev_authenticated(vdev)) {
 		tdls_err("STA is not connected or not authenticated.");
 		return -EAGAIN;
 	}
 
 	/* other than teardown frame, mgmt frames are not sent if disabled */
 	if (TDLS_TEARDOWN != tdls_validate->action_code) {
-		if (!tdls_check_is_tdls_allowed(tdls_validate->vdev)) {
+		if (!tdls_check_is_tdls_allowed(vdev)) {
 			tdls_err("TDLS not allowed, reject MGMT, action = %d",
 				tdls_validate->action_code);
 			return -EPERM;
@@ -730,7 +727,7 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 	}
 
 	/*  call hdd_wmm_is_acm_allowed() */
-	vdev_id = wlan_vdev_get_id(tdls_validate->vdev);
+	vdev_id = wlan_vdev_get_id(vdev);
 	if (!tdls_soc->tdls_wmm_cb(vdev_id)) {
 		tdls_debug("admission ctrl set to VI, send the frame with least AC (BK) for action %d",
 			   tdls_validate->action_code);
