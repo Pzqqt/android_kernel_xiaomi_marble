@@ -2687,13 +2687,22 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 
 		pr_debug("%s: open_write stream_id %d bits_per_sample %d",
 				__func__, stream_id, bits_per_sample);
-		rc = q6asm_stream_open_write_v4(prtd->audio_client,
+
+		if (q6core_get_avcs_api_version_per_service(
+					APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+					ADSP_ASM_API_VERSION_V2)
+			rc = q6asm_stream_open_write_v5(prtd->audio_client,
+				prtd->codec, bits_per_sample,
+				stream_id,
+				prtd->gapless_state.use_dsp_gapless_mode);
+		else
+			rc = q6asm_stream_open_write_v4(prtd->audio_client,
 				prtd->codec, bits_per_sample,
 				stream_id,
 				prtd->gapless_state.use_dsp_gapless_mode);
 		if (rc < 0) {
-			pr_err("%s: Session out open failed for gapless\n",
-				 __func__);
+			pr_err("%s: Session out open failed for gapless [%d]\n",
+				__func__, rc);
 			break;
 		}
 
