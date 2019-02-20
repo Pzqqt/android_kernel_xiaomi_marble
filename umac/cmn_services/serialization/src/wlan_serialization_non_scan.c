@@ -467,6 +467,8 @@ wlan_ser_cancel_non_scan_cmd(
 	qdf_list_t *vdev_queue;
 	struct wlan_serialization_pdev_queue *pdev_q;
 	uint32_t qsize;
+	uint8_t vdev_id;
+	bool is_blocking;
 	struct wlan_serialization_command_list *cmd_list = NULL;
 	struct wlan_serialization_command cmd_bkup;
 	qdf_list_node_t *nnode = NULL, *pnode = NULL;
@@ -618,6 +620,9 @@ wlan_ser_cancel_non_scan_cmd(
 		}
 		nnode = pnode;
 
+		vdev_id = wlan_vdev_get_id(cmd_bkup.vdev);
+		is_blocking = cmd_bkup.is_blocking;
+
 		wlan_ser_update_cmd_history(pdev_q, &cmd_bkup,
 					    SER_CANCEL, false, is_active_queue);
 
@@ -643,12 +648,14 @@ wlan_ser_cancel_non_scan_cmd(
 		wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 		if (is_active_queue) {
-			if (cmd_bkup.is_blocking)
+			if (is_blocking)
 				pdev_q->blocking_cmd_active = 0;
-			pdev_q->vdev_active_cmd_bitmap &=
-				 ~(1 << wlan_vdev_get_id(cmd_bkup.vdev));
+			pdev_q->vdev_active_cmd_bitmap &= ~(1 << vdev_id);
+			ser_debug("pdev_q->vdev_active_cmd_bitmap %x after reseting for vdev %d",
+				  pdev_q->vdev_active_cmd_bitmap,
+				  vdev_id);
 		} else {
-			if (cmd_bkup.is_blocking)
+			if (is_blocking)
 				pdev_q->blocking_cmd_waiting--;
 
 			status = WLAN_SER_CMD_IN_PENDING_LIST;
