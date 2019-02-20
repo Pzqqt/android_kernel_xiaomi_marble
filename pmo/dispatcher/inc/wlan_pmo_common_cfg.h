@@ -138,7 +138,7 @@
 
 /*
  * <ini>
- * gEnableDynamicDTIM - Enable/Disable modulated DTIM feature
+ * gEnableModulatedDTIM - Enable/Disable modulated DTIM feature
  * @Min: 0
  * @Max: 5
  * @Default: 0

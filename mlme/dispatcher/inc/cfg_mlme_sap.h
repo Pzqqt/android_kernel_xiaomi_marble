@@ -429,6 +429,7 @@
 			"chan switch hostapd rate enabled")
 
 /*
+ * <ini>
  * gReducedBeaconInterval - beacon interval reduced
  * @Min: 0
  * @Max: 100

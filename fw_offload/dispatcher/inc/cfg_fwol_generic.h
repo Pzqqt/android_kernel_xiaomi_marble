@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +47,8 @@
 		1, \
 		"Enable/Disable Adaptive Noise Immunity")
 
-/**
+/*
+ * <ini>
  * gSetRTSForSIFSBursting - set rts for sifs bursting
  * @Min: 0
  * @Max: 1
@@ -64,7 +65,7 @@
 		0, \
 		"Set rts for sifs bursting")
 
-/**
+/*
  * <ini>
  * gMaxMPDUsInAMPDU - max mpdus in ampdu
  * @Min: 0
@@ -85,7 +86,8 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"This ini configure max mpdus in ampdu")
 
-/**
+/*
+ * <ini>
  * arp_ac_category - ARP access category
  * @Min: 0
  * @Max: 3
@@ -114,7 +116,7 @@
 		"Override the default ARP AC configuration")
 
 /*
- * </ini>
+ * <ini>
  * gEnableFastPwrTransition - Configuration for fast power transition
  * @Min: 0
  * @Max: 2
