@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,14 +45,16 @@
 
 /*
  * <ini>
- * Max number of MSDUs per HTT RX IN ORDER INDICATION msg.
+ * maxMSDUsPerRxInd - Max number of MSDUs per HTT RX IN ORDER INDICATION msg.
  * Note that this has a direct impact on the size of source CE rings.
  * It is possible to go below 8, but would require testing; so we are
  * restricting the lower limit to 8 artificially
  *
  * It is recommended that this value is a POWER OF 2.
  *
- * Values lower than 8 are for experimental purposes only.
+ * Values lower than 8 are for experimental purposes only
+ *
+ * </ini>.
  */
 #define CFG_DP_MAX_MSDUS_PER_RXIND \
 	CFG_INI_UINT("maxMSDUsPerRxInd", \
@@ -68,6 +70,8 @@
  * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
  * WRR TX sched parameters such as skip, credit, limit, credit, disc for VO.
  * e.g., gEnableTxSchedWrrVO = 10, 9, 8, 1, 8
+ *
+ * </ini>
  */
 #define CFG_DP_ENABLE_TX_SCHED_WRR_VO \
 	CFG_INI_STRING("gEnableTxSchedWrrVO", \
@@ -82,10 +86,13 @@
  * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
  * WRR TX sched parameters such as skip, credit, limit, credit, disc for VI.
  * e.g., gEnableTxSchedWrrVI = 10, 9, 8, 1, 8
+ *
+ * </ini>
  */
 #define CFG_DP_ENABLE_TX_SCHED_WRR_VI \
 	CFG_INI_STRING("gEnableTxSchedWrrVI", \
 	0, 50, "", "Set TX sched parameters for VI")
+
 /*
  * <ini>
  * gEnableTxSchedWrrBE - Set TX sched parameters for BE
@@ -95,6 +102,8 @@
  * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
  * WRR TX sched parameters such as skip, credit, limit, credit, disc for BE.
  * e.g., gEnableTxSchedWrrBE = 10, 9, 8, 1, 8
+ *
+ * </ini>
  */
 #define CFG_DP_ENABLE_TX_SCHED_WRR_BE \
 	CFG_INI_STRING("gEnableTxSchedWrrBE", \
@@ -109,6 +118,8 @@
  * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
  * WRR TX sched parameters such as skip, credit, limit, credit, disc for BK.
  * e.g., gEnableTxSchedWrrBK = 10, 9, 8, 1, 8
+ *
+ * </ini>
  */
 #define CFG_DP_ENABLE_TX_SCHED_WRR_BK \
 	CFG_INI_STRING("gEnableTxSchedWrrBK", \
@@ -126,6 +137,8 @@
  *
  * Enable peer unmap confirmation support in the Host. Host will send
  * this support to the FW only if FW support is enabled.
+ *
+ * </ini>
  */
 #define CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT \
 		CFG_INI_BOOL("gEnablePeerUnmapConfSupport", \

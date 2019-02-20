@@ -854,7 +854,7 @@
 #ifdef FEATURE_WLAN_ESE
 /*
  * <ini>
- * UapsdMask - To setup Infra Inactivity Interval for ACs
+ * InfraInactivityInterval - To setup Infra Inactivity Interval for ACs
  * @Min: 0
  * @Max: 4294967295UL
  * @Default: 0

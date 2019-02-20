@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,6 +92,7 @@
 		"Enable/disable oce feature for SAP")
 
 /*
+ * <ini>
  * oce_enable_rssi_assoc_reject - Enable/disable rssi based assoc rejection
  * @Min: 0
  * @Max: 1

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -174,7 +174,7 @@
 			     "Set Keep Alive increment of Ping Interval")
 /*
  * <ini>
- * gExtWoWApp2KAIncPingInterval - Set TCP source port
+ * gExtWoWApp2TcpSrcPort - Set TCP source port
  * @Min: 0
  * @Max: 65535
  * @Default: 5000
@@ -190,7 +190,7 @@
  * </ini>
  */
 #define CFG_EXTWOW_TCP_SRC_PORT \
-		CFG_INI_UINT("gExtWoWApp2KAIncPingInterval", \
+		CFG_INI_UINT("gExtWoWApp2TcpSrcPort", \
 			     0, 65535, 5000, \
 			     CFG_VALUE_OR_DEFAULT, \
 			     "Set TCP source port")

@@ -507,7 +507,7 @@ enum hdd_dot11_mode {
  *
  * Usage: External
  *
- * <ini>
+ * </ini>
  */
 #define CFG_OPERATING_CHANNEL CFG_INI_UINT( \
 			"gOperatingChannel", \

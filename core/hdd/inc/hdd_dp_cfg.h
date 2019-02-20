@@ -632,7 +632,9 @@
  * <ini>
  * RX_THREAD_CPU_AFFINITY_MASK - CPU mask to affine Rx_thread
  *
- * @Default: e
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0x02
  *
  * This ini is used to set Rx_thread CPU affinity
  *
@@ -664,13 +666,11 @@
 
 /*
  * <ini>
- * RX_THREAD_CPU_AFFINITY_MASK - CPU mask to affine Rx_thread
+ * rpsRxQueueCpuMapList - RPS map for different RX queues
  *
- * @Min: 0
- * @Max: 0xFF
- * @Default: 0
+ * @Default: e
  *
- * This ini is used to set Rx_thread CPU affinity
+ * This ini is used to set RPS map for different RX queues.
  *
  * List of RPS CPU maps for different rx queues registered by WLAN driver
  * Ref - Kernel/Documentation/networking/scaling.txt
@@ -765,6 +765,8 @@
 
 /*
  * <ini>
+ * enable_multicast_replay_filter - Enable filtering of replayed multicast
+ * packets
  *
  * In a typical infrastructure setup, it is quite normal to receive
  * replayed multicast packets. These packets may cause more harm than
