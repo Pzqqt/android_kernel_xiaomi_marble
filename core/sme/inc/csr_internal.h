@@ -871,7 +871,7 @@ struct csr_roamstruct {
 		(eCsrDynamicRoaming == (pSession)->roamingReason)  ||	\
 		(eCsrReassocRoaming == (pSession)->roamingReason))
 #define CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) \
-	(mac->mlme_cfg->wmm_params.wmm_tspec_element.ts_acm_is_off = 0)
+	(mac->mlme_cfg->wmm_params.wmm_tspec_element.ts_acm_is_off)
 #define CSR_IS_LOSTLINK_ROAMING(reason) \
 	((eCsrLostlinkRoamingDisassoc == (reason)) || \
 		(eCsrLostlinkRoamingDeauth == (reason)))
