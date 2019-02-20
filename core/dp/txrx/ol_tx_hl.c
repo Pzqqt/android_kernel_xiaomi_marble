@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -358,17 +358,17 @@ static inline int ol_tx_encap_wrapper(struct ol_txrx_pdev_t *pdev,
 static bool parse_ocb_tx_header(qdf_nbuf_t msdu,
 				struct ocb_tx_ctrl_hdr_t *tx_ctrl)
 {
-	struct ether_header *eth_hdr_p;
+	qdf_ether_header_t *eth_hdr_p;
 	struct ocb_tx_ctrl_hdr_t *tx_ctrl_hdr;
 
 	/* Check if TX control header is present */
-	eth_hdr_p = (struct ether_header *)qdf_nbuf_data(msdu);
+	eth_hdr_p = (qdf_ether_header_t *)qdf_nbuf_data(msdu);
 	if (eth_hdr_p->ether_type != QDF_SWAP_U16(ETHERTYPE_OCB_TX))
 		/* TX control header is not present. Nothing to do.. */
 		return true;
 
 	/* Remove the ethernet header */
-	qdf_nbuf_pull_head(msdu, sizeof(struct ether_header));
+	qdf_nbuf_pull_head(msdu, sizeof(qdf_ether_header_t));
 
 	/* Parse the TX control header */
 	tx_ctrl_hdr = (struct ocb_tx_ctrl_hdr_t *)qdf_nbuf_data(msdu);

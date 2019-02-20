@@ -3050,7 +3050,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct mic_failure_ind *mic_err_ind;
-	struct ether_header *eth_hdr;
+	qdf_ether_header_t *eth_hdr;
 	struct scheduler_msg cds_msg = {0};
 
 	if (!wma)
@@ -3061,7 +3061,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 
 	if (qdf_nbuf_len(rx_frame) < sizeof(*eth_hdr))
 		return;
-	eth_hdr = (struct ether_header *)qdf_nbuf_data(rx_frame);
+	eth_hdr = (qdf_ether_header_t *)qdf_nbuf_data(rx_frame);
 	mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
 	if (!mic_err_ind)
 		return;

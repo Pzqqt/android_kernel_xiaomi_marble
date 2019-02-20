@@ -1161,7 +1161,7 @@ void ol_rx_ocb_prepare_rx_stats_header(struct ol_txrx_vdev_t *vdev,
 	}
 
 	if (!chan_info || !chan_info->disable_rx_stats_hdr) {
-		struct ether_header eth_header = { {0} };
+		qdf_ether_header_t eth_header = { {0} };
 		struct ocb_rx_stats_hdr_t rx_header = {0};
 
 		/*

@@ -21,17 +21,6 @@
 
 #define ETHER_ADDR_LEN    6     /* length of an Ethernet address */
 
-/*
- * Structure of a 10Mb/s Ethernet header.
- */
-#ifndef _NET_ETHERNET_H_
-struct ether_header {
-	uint8_t ether_dhost[ETHER_ADDR_LEN];
-	uint8_t ether_shost[ETHER_ADDR_LEN];
-	uint16_t ether_type;
-} __packed;
-#endif
-
 #define ETHERTYPE_OCB_TX   0x8151
 #define ETHERTYPE_OCB_RX   0x8152
 
