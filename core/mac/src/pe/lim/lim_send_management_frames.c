@@ -2589,20 +2589,27 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 				 deauth_req->deauthTrigger);
 			lim_ft_cleanup(mac_ctx, session_entry);
 		} else {
-			pe_debug("No FT Preauth Session Cleanup in role %d"
 #ifdef FEATURE_WLAN_ESE
+			pe_debug("No FT Preauth Session Cleanup in role %d"
 				 " isESE %d"
-#endif
 				 " isLFR %d"
 				 " is11r %d, Deauth reason %d Trigger = %d",
 				 session_entry->limSystemRole,
-#ifdef FEATURE_WLAN_ESE
 				 session_entry->isESEconnection,
-#endif
 				 session_entry->isFastRoamIniFeatureEnabled,
 				 session_entry->is11Rconnection,
 				 deauth_req->reasonCode,
 				 deauth_req->deauthTrigger);
+#else
+			pe_debug("No FT Preauth Session Cleanup in role %d"
+				 " isLFR %d"
+				 " is11r %d, Deauth reason %d Trigger = %d",
+				 session_entry->limSystemRole,
+				 session_entry->isFastRoamIniFeatureEnabled,
+				 session_entry->is11Rconnection,
+				 deauth_req->reasonCode,
+				 deauth_req->deauthTrigger);
+#endif
 		}
 		/* Free up buffer allocated for mlmDeauthReq */
 		qdf_mem_free(deauth_req);
