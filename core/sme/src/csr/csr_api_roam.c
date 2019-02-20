@@ -492,8 +492,6 @@ static QDF_STATUS csr_roam_issue_set_key_command(struct mac_context *mac,
 						 uint32_t roamId);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
 						 tSirBssDescription *pBssDesc);
-static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
-					   struct disassoc_rsp *pRsp);
 static void csr_init_operating_classes(struct mac_context *mac);
 
 static void csr_add_len_of_social_channels(struct mac_context *mac,
@@ -9235,7 +9233,7 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 
 static
 void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
-						   struct disassoc_rsp *pSmeRsp)
+						   struct disassoc_rsp *rsp)
 {
 	tScanResultHandle hBSSList;
 	struct csr_roam_info *roamInfo;
@@ -9246,12 +9244,9 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 	uint32_t sessionId;
 	struct csr_roam_session *pSession;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
-	struct disassoc_rsp SmeDisassocRsp;
 
-	csr_ser_des_unpack_diassoc_rsp((uint8_t *) pSmeRsp, &SmeDisassocRsp);
-	sessionId = SmeDisassocRsp.sessionId;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, "sessionId %d",
-		  sessionId);
+	sessionId = rsp->sessionId;
+	sme_debug("sessionId %d", sessionId);
 
 	if (csr_is_conn_state_infra(mac, sessionId)) {
 		mac->roam.roamSession[sessionId].connectState =
@@ -9273,7 +9268,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 		csr_roam_complete(mac, eCsrNothingToJoin, NULL, sessionId);
 	} else if (CSR_IS_ROAM_SUBSTATE_DISASSOC_FORCED(mac, sessionId) ||
 		   CSR_IS_ROAM_SUBSTATE_DISASSOC_REQ(mac, sessionId)) {
-		if (eSIR_SME_SUCCESS == SmeDisassocRsp.statusCode) {
+		if (eSIR_SME_SUCCESS == rsp->statusCode) {
 			sme_debug("CSR force disassociated successful");
 			/*
 			 * A callback to HDD will be issued from
@@ -9361,7 +9356,7 @@ POST_ROAM_FAILURE:
 		/* Disassoc due to Reassoc failure falls into this codepath */
 		csr_roam_complete(mac, eCsrJoinFailure, NULL, sessionId);
 	} else {
-		if (eSIR_SME_SUCCESS == SmeDisassocRsp.statusCode) {
+		if (eSIR_SME_SUCCESS == rsp->statusCode) {
 			/*
 			 * Successfully disassociated from the 'old' Bss.
 			 * We get Disassociate response in three conditions.
@@ -9376,9 +9371,8 @@ POST_ROAM_FAILURE:
 			 */
 			sme_debug("Disassociated successfully");
 		} else {
-			sme_err(
-				"DisassocReq failed, statusCode= 0x%08X",
-				SmeDisassocRsp.statusCode);
+			sme_err("DisassocReq failed, statusCode= 0x%08X",
+				rsp->statusCode);
 		}
 		/* We are not done yet. Get the data and continue roaming */
 		csr_roam_reissue_roam_command(mac, sessionId);
@@ -19554,32 +19548,6 @@ QDF_STATUS csr_roam_update_config(struct mac_context *mac_ctx, uint8_t session_i
 	status = umac_send_mb_message_to_mac(msg);
 
 	return status;
-}
-
-/*
- * pBuf points to the beginning of the message
- * LIM packs disassoc rsp as below,
- * messageType - 2 bytes
- * messageLength - 2 bytes
- * sessionId - 1 byte
- * transactionId - 2 bytes (uint16_t)
- * reasonCode - 4 bytes (sizeof(tSirResultCodes))
- * peerMacAddr - 6 bytes
- * The rest is conditionally defined of (WNI_POLARIS_FW_PRODUCT == AP)
- * and not used
- */
-static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
-					   struct disassoc_rsp *pRsp)
-{
-	if (pBuf && pRsp) {
-		pBuf += 4;      /* skip type and length */
-		pRsp->sessionId = *pBuf++;
-		qdf_get_u16(pBuf, (uint16_t *) &pRsp->transactionId);
-		pBuf += 2;
-		qdf_get_u32(pBuf, (uint32_t *) &pRsp->statusCode);
-		pBuf += 4;
-		qdf_mem_copy(pRsp->peer_macaddr.bytes, pBuf, QDF_MAC_ADDR_SIZE);
-	}
 }
 
 /* Returns whether a session is in QDF_STA_MODE...or not */
