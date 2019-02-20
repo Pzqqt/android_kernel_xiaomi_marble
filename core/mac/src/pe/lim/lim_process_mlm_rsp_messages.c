@@ -54,8 +54,7 @@ void lim_process_mlm_disassoc_cnf(struct mac_context *, uint32_t *);
 static void lim_process_mlm_deauth_ind(struct mac_context *, tLimMlmDeauthInd *);
 void lim_process_mlm_deauth_cnf(struct mac_context *, uint32_t *);
 void lim_process_mlm_purge_sta_ind(struct mac_context *, uint32_t *);
-void lim_get_session_info(struct mac_context *mac, uint8_t *, uint8_t *,
-				uint16_t *);
+
 /**
  * lim_process_mlm_rsp_messages()
  *

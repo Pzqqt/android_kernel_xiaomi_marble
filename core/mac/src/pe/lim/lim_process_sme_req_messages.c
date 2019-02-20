@@ -74,8 +74,6 @@
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);
 static bool __lim_process_sme_start_bss_req(struct mac_context *,
 					    struct scheduler_msg *pMsg);
-static void __lim_process_sme_join_req(struct mac_context *, uint32_t *);
-static void __lim_process_sme_reassoc_req(struct mac_context *, uint32_t *);
 static void __lim_process_sme_disassoc_req(struct mac_context *, uint32_t *);
 static void __lim_process_sme_disassoc_cnf(struct mac_context *, uint32_t *);
 static void __lim_process_sme_deauth_req(struct mac_context *, uint32_t *);
@@ -328,40 +326,6 @@ static bool __lim_is_sme_assoc_cnf_valid(struct assoc_cnf *assoc_cnf)
 		return false;
 
 	return true;
-}
-
-/**
- * __lim_get_sme_join_req_size_for_alloc()
- *
- ***FUNCTION:
- * This function is called in various places to get IE length
- * from tSirBssDescription structure
- * number being scanned.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param     pBssDescr
- * @return    Total IE length
- */
-
-static uint16_t __lim_get_sme_join_req_size_for_alloc(uint8_t *pBuf)
-{
-	uint16_t len = 0;
-
-	if (!pBuf)
-		return len;
-
-	pBuf += sizeof(uint16_t);
-	len = lim_get_u16(pBuf);
-	return len;
 }
 
 /**
@@ -1227,13 +1191,13 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
  * Return: None
  */
 static void
-__lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
+__lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 {
+	struct join_req *in_req = msg_buf;
 	struct join_req *sme_join_req = NULL;
 	tLimMlmJoinReq *mlm_join_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
 	uint32_t val = 0;
-	uint16_t n_size;
 	uint8_t session_id;
 	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0;
@@ -1266,16 +1230,12 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 
 	/* Global SME and LIM states are not defined yet for BT-AMP Support */
 	if (mac_ctx->lim.gLimSmeState == eLIM_SME_IDLE_STATE) {
-		n_size = __lim_get_sme_join_req_size_for_alloc((uint8_t *)
-				msg_buf);
-
-		sme_join_req = qdf_mem_malloc(n_size);
+		sme_join_req = qdf_mem_malloc(in_req->length);
 		if (!sme_join_req) {
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;
 		}
-		(void)qdf_mem_copy((void *)sme_join_req, (void *)msg_buf,
-			n_size);
+		qdf_mem_copy(sme_join_req, in_req, in_req->length);
 
 		if (!lim_is_sme_join_req_valid(mac_ctx, sme_join_req)) {
 			/* Received invalid eWNI_SME_JOIN_REQ */
@@ -1694,8 +1654,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	}
 
 end:
-	lim_get_session_info(mac_ctx, (uint8_t *) msg_buf,
-		&sme_session_id, &sme_transaction_id);
+	sme_session_id = in_req->sessionId;
+	sme_transaction_id = in_req->transactionId;
 
 	if (sme_join_req) {
 		qdf_mem_free(sme_join_req);
@@ -1746,10 +1706,11 @@ uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
  */
 
 static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
-					  uint32_t *msg_buf)
+					  void *msg_buf)
 {
 	uint16_t caps;
 	uint32_t val;
+	struct join_req *in_req = msg_buf;
 	struct join_req *reassoc_req;
 	tLimMlmReassocReq *mlm_reassoc_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
@@ -1759,16 +1720,17 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	uint16_t transaction_id;
 	int8_t local_pwr_constraint = 0, reg_max = 0;
 	uint32_t tele_bcn_en = 0;
-	uint16_t size;
 	QDF_STATUS status;
 
-	size = __lim_get_sme_join_req_size_for_alloc((uint8_t *)msg_buf);
-	reassoc_req = qdf_mem_malloc(size);
+	sme_session_id = in_req->sessionId;
+	transaction_id = in_req->transactionId;
+
+	reassoc_req = qdf_mem_malloc(in_req->length);
 	if (!reassoc_req) {
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
 	}
-	qdf_mem_copy(reassoc_req, msg_buf, size);
+	qdf_mem_copy(reassoc_req, in_req, in_req->length);
 
 	if (!lim_is_sme_join_req_valid(mac_ctx, reassoc_req)) {
 		/*
@@ -1779,8 +1741,6 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
-	lim_get_session_info(mac_ctx, (uint8_t *)msg_buf,
-			     &sme_session_id, &transaction_id);
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			reassoc_req->bssDescription.bssId,
@@ -2015,18 +1975,11 @@ end:
 	if (session_entry) {
 		/*
 		 * error occurred after we determined the session so extract
-		 * session and transaction info from there
+		 * session and transaction info from there, otherwise we'll
+		 * use the values already extracted from the message
 		 */
 		sme_session_id = session_entry->smeSessionId;
 		transaction_id = session_entry->transactionId;
-	} else {
-		/*
-		 * error occurred before or during the time we determined
-		 * the session so extract the session and transaction info
-		 * from the message
-		 */
-		lim_get_session_info(mac_ctx, (uint8_t *) msg_buf,
-				&sme_session_id, &transaction_id);
 	}
 	/*
 	 * Send Reassoc failure response to host
@@ -3206,11 +3159,9 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 		return;
 	}
 
-	lim_get_session_info(mac, (uint8_t *) pMsgBuf, &smesessionId,
-			     &smetransactionId);
-
 	pSirAddts = (tpSirAddtsReq) pMsgBuf;
-
+	smesessionId = pSirAddts->sessionId;
+	smetransactionId = pSirAddts->transactionId;
 	pe_session = pe_find_session_by_bssid(mac, pSirAddts->bssid.bytes,
 						 &sessionId);
 	if (pe_session == NULL) {
@@ -3350,8 +3301,8 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
 
-	lim_get_session_info(mac, (uint8_t *) pMsgBuf, &smesessionId,
-			     &smetransactionId);
+	smesessionId = pDeltsReq->sessionId;
+	smetransactionId = pDeltsReq->transactionId;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pDeltsReq->bssid.bytes,

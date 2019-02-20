@@ -37,9 +37,6 @@
 #include "lim_types.h"
 #include "lim_prop_exts_utils.h"
 
-void lim_get_session_info(struct mac_context *mac, uint8_t *,
-			  uint8_t *, uint16_t *);
-
 /* Byte String <--> uint16_t/uint32_t copy functions */
 static inline void lim_copy_u16(uint8_t *ptr, uint16_t u16Val)
 {

@@ -329,7 +329,6 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_management_frames.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_sme_rsp_messages.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_ser_des_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_session.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_session_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_sme_req_utils.o \
