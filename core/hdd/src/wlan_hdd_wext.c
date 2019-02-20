@@ -3751,9 +3751,7 @@ static int iw_get_linkspeed(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_linkspeed(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -5779,9 +5777,7 @@ static int iw_setint_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_setint_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -5849,9 +5845,7 @@ static int iw_setnone_get_threeint(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_setnone_get_threeint(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -6093,9 +6087,7 @@ static int iw_setchar_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_setchar_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -6604,9 +6596,7 @@ static int iw_setnone_getint(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_setnone_getint(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -6744,9 +6734,7 @@ int iw_set_three_ints_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_three_ints_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -7431,9 +7419,7 @@ static int iw_get_char_setnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_char_setnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -7558,9 +7544,7 @@ static int iw_setnone_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_setnone_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8265,10 +8249,8 @@ static int iw_hdd_set_var_ints_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_var_ints_getnone(dev, info, &u_priv_wrqu,
 					  (char *)&apps_args);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8299,9 +8281,7 @@ int iw_set_var_ints_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_var_ints_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8483,9 +8463,7 @@ static int iw_add_tspec(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_add_tspec(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8557,9 +8535,7 @@ static int iw_del_tspec(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_del_tspec(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8624,9 +8600,7 @@ static int iw_get_tspec(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_tspec(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8699,9 +8673,7 @@ static int iw_set_fties(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_fties(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8848,9 +8820,7 @@ static int iw_set_host_offload(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_host_offload(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -8947,9 +8917,7 @@ static int iw_set_keepalive_params(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_keepalive_params(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -9095,9 +9063,7 @@ static int iw_set_packet_filter_params(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_packet_filter_params(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -9350,9 +9316,7 @@ static int iw_get_statistics(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_statistics(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -9704,9 +9668,7 @@ static int iw_set_pno(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_pno(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -9749,9 +9711,7 @@ static int iw_set_band_config(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_band_config(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -9972,9 +9932,7 @@ static int iw_set_two_ints_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_two_ints_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

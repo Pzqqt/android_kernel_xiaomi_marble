@@ -599,9 +599,7 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_set_dot11p_channel_sched(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

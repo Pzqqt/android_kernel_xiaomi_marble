@@ -287,9 +287,7 @@ int hdd_fips_test(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_fips_test(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 

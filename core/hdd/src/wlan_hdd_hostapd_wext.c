@@ -113,9 +113,7 @@ static iw_softap_set_ini_cfg(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_set_ini_cfg(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -182,9 +180,7 @@ static iw_softap_get_ini_cfg(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_get_ini_cfg(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -326,9 +322,7 @@ static int iw_softap_set_two_ints_getnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_set_two_ints_getnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1226,9 +1220,7 @@ static int iw_softap_get_three(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_get_three(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1247,9 +1239,7 @@ static iw_softap_setparam(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_setparam(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1506,9 +1496,7 @@ static iw_softap_getparam(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_getparam(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1592,9 +1580,7 @@ int iw_softap_modify_acl(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_modify_acl(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1642,9 +1628,7 @@ static iw_softap_getchannel(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_getchannel(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1705,9 +1689,7 @@ static iw_softap_set_max_tx_power(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_set_max_tx_power(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1752,9 +1734,7 @@ static iw_softap_set_pktlog(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_set_pktlog(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1818,9 +1798,7 @@ static iw_softap_set_tx_power(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_set_tx_power(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1919,9 +1897,7 @@ static iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_getassoc_stamacaddr(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -1997,9 +1973,7 @@ static iw_softap_disassoc_sta(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_disassoc_sta(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2061,9 +2035,7 @@ static int iw_get_char_setnone(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_char_setnone(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2164,9 +2136,7 @@ int iw_get_channel_list(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_channel_list(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2233,9 +2203,7 @@ int iw_get_genie(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_genie(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2305,9 +2273,7 @@ static int iw_softap_stopbss(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_stopbss(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2352,9 +2318,7 @@ static int iw_softap_version(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_version(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2452,9 +2416,7 @@ static int iw_softap_get_sta_info(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_get_sta_info(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2521,9 +2483,7 @@ static int iw_softap_get_ba_timeout(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_softap_get_ba_timeout(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2633,9 +2593,7 @@ iw_get_softap_linkspeed(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_softap_linkspeed(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -2818,9 +2776,7 @@ iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __iw_get_peer_rssi(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
