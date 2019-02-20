@@ -1179,8 +1179,12 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
 	struct rx_desc_pool *rx_desc_pool;
 
 	rx_desc_pool = &soc->rx_desc_mon[mac_id];
-	if (rx_desc_pool->pool_size != 0)
-		dp_rx_desc_pool_free(soc, mac_id, rx_desc_pool);
+	if (rx_desc_pool->pool_size != 0) {
+		if (!dp_is_soc_reinit(soc))
+			dp_rx_desc_pool_free(soc, mac_id, rx_desc_pool);
+		else
+			dp_rx_desc_nbuf_pool_free(soc, rx_desc_pool);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

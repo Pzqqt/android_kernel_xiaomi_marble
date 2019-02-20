@@ -3677,6 +3677,11 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
  */
 static void dp_pdev_deinit_wifi3(struct cdp_pdev *txrx_pdev, int force)
 {
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	soc->dp_soc_reinit = TRUE;
+
 	dp_pdev_deinit(txrx_pdev, force);
 }
 
