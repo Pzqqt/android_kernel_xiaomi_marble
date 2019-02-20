@@ -319,7 +319,7 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 
 release_cmd:
 	/*update tdls nss infornation based on action code */
-	tdls_reset_nss(tdls_soc_obj, action_req->chk_frame->action_code);
+	tdls_reset_nss(tdls_soc_obj, action_req->chk_frame.action_code);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_internal_send_mgmt_tx_done(action_req, status);
 		tdls_release_serialization_command(action_req->vdev,
@@ -397,9 +397,9 @@ QDF_STATUS tdls_process_mgmt_req(
 	 * after the  cmd validation
 	 */
 	tdls_mgmt_req->tdls_mgmt.responder =
-			!tdls_mgmt_req->chk_frame->responder;
+			!tdls_mgmt_req->chk_frame.responder;
 	tdls_mgmt_req->tdls_mgmt.status_code =
-			tdls_mgmt_req->chk_frame->status_code;
+			tdls_mgmt_req->chk_frame.status_code;
 
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_SEND_MGMT;
 	/* Cmd Id not applicable for non scan cmds */

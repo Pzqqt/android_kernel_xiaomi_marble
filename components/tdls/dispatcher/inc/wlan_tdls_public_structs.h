@@ -975,24 +975,20 @@ struct tdls_send_mgmt {
 
 /**
  * struct tdls_validate_action_req - tdls validate mgmt request
- * @vdev: vdev object
  * @action_code: action code
  * @peer_mac: peer mac address
  * @dialog_token: dialog code
  * @status_code: status code to add
  * @len: len of the frame
  * @responder: whether to respond or not
- * @max_sta_failed: mgmt failure reason
  */
 struct tdls_validate_action_req {
-	struct wlan_objmgr_vdev *vdev;
 	uint8_t action_code;
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint8_t dialog_token;
 	uint8_t status_code;
 	size_t len;
 	int responder;
-	int max_sta_failed;
 };
 
 /**
@@ -1010,7 +1006,7 @@ struct tdls_get_all_peers {
 /**
  * struct tdls_send_action_frame_request - tdls send mgmt request
  * @vdev: vdev object
- * @chk_frame: frame validation structure
+ * @chk_frame: This struct used to validate mgmt frame
  * @session_id: session id
  * @vdev_id: vdev id
  * @cmd_buf: cmd buffer
@@ -1020,7 +1016,7 @@ struct tdls_get_all_peers {
  */
 struct tdls_action_frame_request {
 	struct wlan_objmgr_vdev *vdev;
-	struct tdls_validate_action_req *chk_frame;
+	struct tdls_validate_action_req chk_frame;
 	uint8_t session_id;
 	uint8_t vdev_id;
 	const uint8_t *cmd_buf;
