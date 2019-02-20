@@ -9448,6 +9448,30 @@ static void hdd_init_vc_mode_cfg_bitmap(struct hdd_config *config,
 }
 #endif
 
+#ifdef DHCP_SERVER_OFFLOAD
+static void
+hdd_init_dhcp_server_ip(struct hdd_context *hdd_ctx)
+{
+	uint8_t num_entries;
+
+	hdd_ctx->config->dhcp_server_ip.is_dhcp_server_ip_valid = true;
+	hdd_string_to_u8_array(cfg_get(hdd_ctx->psoc, CFG_DHCP_SERVER_IP_NAME),
+			       hdd_ctx->config->dhcp_server_ip.dhcp_server_ip,
+			       &num_entries, IPADDR_NUM_ENTRIES);
+
+	if (num_entries != IPADDR_NUM_ENTRIES) {
+		hdd_err("Incorrect IP address (%s) assigned for DHCP server!",
+			cfg_get(hdd_ctx->psoc, CFG_DHCP_SERVER_IP_NAME));
+		hdd_config->dhcp_server_ip.is_dhcp_server_ip_valid = false;
+	}
+}
+#else
+static void
+hdd_init_dhcp_server_ip(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /**
  * hdd_cfg_params_init() - Initialize hdd params in hdd_config strucuture
  * @hdd_ctx - Pointer to HDD context
@@ -9535,6 +9559,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_init_wlan_logging_params(config, psoc);
 	hdd_init_packet_log(config, psoc);
 	hdd_init_mtrace_log(config, psoc);
+	hdd_init_dhcp_server_ip(hdd_ctx);
 	hdd_dp_cfg_update(psoc, hdd_ctx);
 }
 

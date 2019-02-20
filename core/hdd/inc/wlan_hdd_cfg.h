@@ -47,11 +47,6 @@ struct hdd_context;
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (512)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
 
-#ifdef DHCP_SERVER_OFFLOAD
-#define IPADDR_NUM_ENTRIES     (4)
-#define IPADDR_STRING_LENGTH   (16)
-#endif
-
 /* Number of items that can be configured */
 #define MAX_CFG_INI_ITEMS   1024
 
@@ -102,11 +97,6 @@ struct hdd_context;
 #define CFG_ENABLE_SNR_MONITORING_MIN               (0)
 #define CFG_ENABLE_SNR_MONITORING_MAX               (1)
 #define CFG_ENABLE_SNR_MONITORING_DEFAULT           (0)
-
-#ifdef DHCP_SERVER_OFFLOAD
-#define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
-#define CFG_DHCP_SERVER_IP_DEFAULT  ""
-#endif /* DHCP_SERVER_OFFLOAD */
 
 #ifdef CONFIG_DP_TRACE
 /* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
@@ -176,7 +166,7 @@ struct hdd_config {
 	bool fEnableSNRMonitoring;
 	bool advertiseConcurrentOperation;
 #ifdef DHCP_SERVER_OFFLOAD
-	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
+	struct dhcp_server dhcp_server_ip;
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool apf_enabled;
 	uint16_t sap_tx_leakage_threshold;

@@ -62,14 +62,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_SNR_MONITORING_DEFAULT,
 		     CFG_ENABLE_SNR_MONITORING_MIN,
 		     CFG_ENABLE_SNR_MONITORING_MAX),
-
-#ifdef DHCP_SERVER_OFFLOAD
-	REG_VARIABLE_STRING(CFG_DHCP_SERVER_IP_NAME, WLAN_PARAM_String,
-			    struct hdd_config, dhcpServerIP,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_DHCP_SERVER_IP_DEFAULT),
-#endif /* DHCP_SERVER_OFFLOAD */
-
 };
 
 

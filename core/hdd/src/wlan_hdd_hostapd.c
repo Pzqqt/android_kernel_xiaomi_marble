@@ -4721,13 +4721,17 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct dhcp_offload_info_params dhcp_srv_info;
 	uint8_t num_entries = 0;
-	uint8_t srv_ip[IPADDR_NUM_ENTRIES];
+	uint8_t *srv_ip;
 	uint8_t num;
 	uint32_t temp;
 	uint32_t dhcp_max_num_clients;
 	mac_handle_t mac_handle;
 	QDF_STATUS status;
 
+	if (!hdd_ctx->config->dhcp_server_ip.is_dhcp_server_ip_valid)
+		return;
+
+	srv_ip = hdd_ctx->config->dhcp_server_ip.dhcp_server_ip;
 	dhcp_srv_info.vdev_id = adapter->vdev_id;
 	dhcp_srv_info.dhcp_offload_enabled = true;
 
@@ -4737,23 +4741,16 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 		return;
 
 	dhcp_srv_info.dhcp_client_num = dhcp_max_num_clients;
-	hdd_string_to_u8_array(hdd_ctx->config->dhcpServerIP,
-			       srv_ip, &num_entries, IPADDR_NUM_ENTRIES);
-	if (num_entries != IPADDR_NUM_ENTRIES) {
-		hdd_err("Incorrect IP address (%s) assigned for DHCP server!",
-			hdd_ctx->config->dhcpServerIP);
-		return;
-	}
 
 	if ((srv_ip[0] >= 224) && (srv_ip[0] <= 239)) {
-		hdd_err("Invalid IP address (%s)! It could NOT be multicast IP address!",
-			hdd_ctx->config->dhcpServerIP);
+		hdd_err("Invalid IP address (%d)! It could NOT be multicast IP address!",
+			srv_ip[0]);
 		return;
 	}
 
 	if (srv_ip[IPADDR_NUM_ENTRIES - 1] >= 100) {
-		hdd_err("Invalid IP address (%s)! The last field must be less than 100!",
-			hdd_ctx->config->dhcpServerIP);
+		hdd_err("Invalid IP address (%d)! The last field must be less than 100!",
+			srv_ip[IPADDR_NUM_ENTRIES - 1]);
 		return;
 	}
 

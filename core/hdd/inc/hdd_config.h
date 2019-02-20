@@ -517,6 +517,33 @@ enum hdd_dot11_mode {
 			CFG_VALUE_OR_DEFAULT, \
 			"Default Operating Channel")
 
+#ifdef DHCP_SERVER_OFFLOAD
+#define IPADDR_NUM_ENTRIES     (4)
+#define IPADDR_STRING_LENGTH   (16)
+#define CFG_DHCP_SERVER_IP_DEFAULT  ""
+
+/*
+ * struct wlan_mlme_chainmask - All chainmask related cfg items
+ * @dhcpServerIP:     Dhcp server IP address
+ * @is_dhcp_server_ip_valid:     is dhcp server valid
+ */
+struct dhcp_server {
+	uint8_t dhcp_server_ip[IPADDR_NUM_ENTRIES];
+	bool is_dhcp_server_ip_valid;
+}
+
+/*
+ * <ini>
+ * gDHCPServerIP - Dhcp server Ip name
+ * @Default:
+ *
+ * This ini is used to give the DHCP IP server name
+ */
+#define CFG_DHCP_SERVER_IP_NAME \
+	CFG_INI_STRING("gDHCPServerIP", \
+	0, IPADDR_STRING_LENGTH, CFG_DHCP_SERVER_IP_DEFAULT, "DHCP Server IP")
+#endif /* DHCP_SERVER_OFFLOAD */
+
 /*
  * <ini>
  * gNumVdevs - max number of VDEVs supported
