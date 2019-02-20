@@ -14602,7 +14602,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		if (is_vendor_ap_present) {
 			is_vendor_ap_present = csr_check_vendor_ap_3_present(
-						mac, (uint8_t *)pIes, ieLen);
+						mac,
+						vendor_ap_search_attr.ie_data,
+						ieLen);
 		}
 
 		/*
