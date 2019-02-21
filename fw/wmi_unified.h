@@ -2949,6 +2949,15 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_S 22
     #define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_M 0x400000
 
+    /*
+     * If the VIDEO_OVER_WIFI_ENABLE flag is set, the target will use a
+     * series of algorithmic adjustments to optimize Video performance
+     * by reducing latency, reducing latency jitter, and minimizing
+     * dropped packets.
+     */
+    #define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_S 23
+    #define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_M 0x800000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3201,6 +3210,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), PEER_TID_EXT, (value))
 #define WMI_RSRC_CFG_FLAG_PEER_TID_EXT_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), PEER_TID_EXT)
+
+#define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), VIDEO_OVER_WIFI_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), VIDEO_OVER_WIFI_ENABLE)
 
 
 typedef struct {
