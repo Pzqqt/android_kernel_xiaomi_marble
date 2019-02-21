@@ -1642,7 +1642,6 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 						eSIR_SME_DEAUTH_STATUS;
 				sme_deauth_rsp->sessionId =
 						mlm_deauth_req->sessionId;
-				sme_deauth_rsp->transactionId = 0;
 
 				qdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
 					     mlm_deauth_req->peer_macaddr.bytes,

@@ -1119,7 +1119,6 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthRsp->length = sizeof(*pSirSmeDeauthRsp);
 		pSirSmeDeauthRsp->statusCode = reasonCode;
 		pSirSmeDeauthRsp->sessionId = smesessionId;
-		pSirSmeDeauthRsp->transactionId = smetransactionId;
 
 		pBuf = (uint8_t *) pSirSmeDeauthRsp->peer_macaddr.bytes;
 		qdf_mem_copy(pBuf, peerMacAddr, sizeof(tSirMacAddr));
