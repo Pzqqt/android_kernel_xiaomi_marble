@@ -739,11 +739,8 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		/* PE setup the peer entry in HW upfront, right after join is completed. */
 		/* If there is a failure during rest of the assoc sequence, this context needs to be cleaned up. */
 		uint8_t smesessionId;
-		uint16_t smetransactionId;
 
 		smesessionId = pe_session->smeSessionId;
-		smetransactionId = pe_session->transactionId;
-
 		pe_session->limSmeState = eLIM_SME_JOIN_FAILURE_STATE;
 		MTRACE(mac_trace
 			       (mac, TRACE_CODE_SME_STATE, pe_session->peSessionId,
@@ -765,8 +762,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 			lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_REASSOC_RSP,
 						      mlmStaContext.resultCode,
 						      mlmStaContext.protStatusCode,
-						      pe_session, smesessionId,
-						      smetransactionId);
+						      pe_session, smesessionId);
 			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
 				pe_delete_session(mac, pe_session);
 				pe_session = NULL;
@@ -785,8 +781,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 			lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_JOIN_RSP,
 						      mlmStaContext.resultCode,
 						      mlmStaContext.protStatusCode,
-						      pe_session, smesessionId,
-						      smetransactionId);
+						      pe_session, smesessionId);
 
 			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
 				pe_delete_session(mac, pe_session);

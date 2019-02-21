@@ -1005,7 +1005,6 @@ struct join_rsp {
 	uint16_t messageType;   /* eWNI_SME_JOIN_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
 	tAniAuthType authType;
 	uint32_t vht_channel_width;

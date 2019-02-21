@@ -178,14 +178,12 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 {
 	tpDphHashNode sta = NULL;
 	uint8_t smesessionId;
-	uint16_t smetransactionId;
 
 	if (pe_session == NULL) {
 		pe_err("pe_session is NULL");
 		return;
 	}
 	smesessionId = pe_session->smeSessionId;
-	smetransactionId = pe_session->transactionId;
 	if (resultCode != eSIR_SME_SUCCESS) {
 		sta =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
@@ -217,7 +215,7 @@ error:
 		}
 	}
 	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_REASSOC_RSP, resultCode,
-		protStatusCode, pe_session, smesessionId, smetransactionId);
+		protStatusCode, pe_session, smesessionId);
 }
 
 /**
@@ -298,8 +296,7 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_REASSOC_RSP,
 					lim_mlm_reassoc_cnf->resultCode,
 					lim_mlm_reassoc_cnf->protStatusCode,
-					session, session->smeSessionId,
-					session->transactionId);
+					session, session->smeSessionId);
 	} else if (lim_mlm_reassoc_cnf->resultCode
 			== eSIR_SME_REASSOC_REFUSED) {
 		/*
@@ -314,8 +311,7 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_REASSOC_RSP,
 					lim_mlm_reassoc_cnf->resultCode,
 					lim_mlm_reassoc_cnf->protStatusCode,
-					session, session->smeSessionId,
-					session->transactionId);
+					session, session->smeSessionId);
 	} else {
 		/* Reassociation failure */
 		session->limSmeState = eLIM_SME_JOIN_FAILURE_STATE;

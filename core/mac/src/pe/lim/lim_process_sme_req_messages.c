@@ -1672,8 +1672,7 @@ end:
 	pe_debug("Send failure status on sessionid: %d with ret_code: %d",
 		sme_session_id, ret_code);
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, ret_code,
-		eSIR_MAC_UNSPEC_FAILURE_STATUS, session, sme_session_id,
-		sme_transaction_id);
+		eSIR_MAC_UNSPEC_FAILURE_STATUS, session, sme_session_id);
 }
 
 uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
@@ -1972,23 +1971,21 @@ end:
 			session_entry->pLimReAssocReq = NULL;
 	}
 
-	if (session_entry) {
+	if (session_entry)
 		/*
-		 * error occurred after we determined the session so extract
-		 * session and transaction info from there, otherwise we'll
-		 * use the values already extracted from the message
+		 * error occurred after we determined the session so
+		 * extract session id from there, otherwise we'll use
+		 * the value already extracted from the message
 		 */
 		sme_session_id = session_entry->smeSessionId;
-		transaction_id = session_entry->transactionId;
-	}
+
 	/*
 	 * Send Reassoc failure response to host
 	 * (note session_entry may be NULL, but that's OK)
 	 */
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_REASSOC_RSP,
 				      ret_code, eSIR_MAC_UNSPEC_FAILURE_STATUS,
-				      session_entry, sme_session_id,
-				      transaction_id);
+				      session_entry, sme_session_id);
 }
 
 bool send_disassoc_frame = 1;

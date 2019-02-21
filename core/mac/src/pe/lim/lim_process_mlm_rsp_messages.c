@@ -1248,7 +1248,6 @@ static void lim_join_result_callback(struct mac_context *mac, void *param,
 	join_params *link_state_params = (join_params *) param;
 	struct pe_session *session;
 	uint8_t sme_session_id;
-	uint16_t sme_trans_id;
 
 	if (!link_state_params) {
 		pe_err("Link state params is NULL");
@@ -1261,11 +1260,10 @@ static void lim_join_result_callback(struct mac_context *mac, void *param,
 		return;
 	}
 	sme_session_id = session->smeSessionId;
-	sme_trans_id = session->transactionId;
 	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_JOIN_RSP,
 				      link_state_params->result_code,
 				      link_state_params->prot_status_code,
-				      session, sme_session_id, sme_trans_id);
+				      session, sme_session_id);
 	pe_delete_session(mac, session);
 	qdf_mem_free(link_state_params);
 }
@@ -1355,8 +1353,7 @@ error:
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
 				      param->result_code,
 				      param->prot_status_code,
-				      session, session->smeSessionId,
-				      session->transactionId);
+				      session, session->smeSessionId);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1389,8 +1386,7 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 		return lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
 						     result_code,
 						     prot_status_code, session,
-						     session->smeSessionId,
-						     session->transactionId);
+						     session->smeSessionId);
 
 	param.result_code = result_code;
 	param.prot_status_code = prot_status_code;
@@ -1409,7 +1405,6 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 {
 	tpDphHashNode sta_ds = NULL;
 	uint8_t sme_session_id;
-	uint16_t sme_trans_id;
 	join_params *param = NULL;
 
 	if (session_entry == NULL) {
@@ -1417,7 +1412,6 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 		return;
 	}
 	sme_session_id = session_entry->smeSessionId;
-	sme_trans_id = session_entry->transactionId;
 	/*
 	 * When associations is failed , delete the session created
 	 * and pass NULL  to  limsendsmeJoinReassocRsp()
@@ -1480,7 +1474,7 @@ error:
 	}
 
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, result_code,
-		prot_status_code, session_entry, sme_session_id, sme_trans_id);
+		prot_status_code, session_entry, sme_session_id);
 }
 #endif
 

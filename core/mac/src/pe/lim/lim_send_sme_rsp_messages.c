@@ -403,29 +403,13 @@ static inline void lim_update_fils_seq_num(struct join_rsp *sme_join_rsp,
 					   struct pe_session *session_entry)
 {}
 #endif
-/**
- * lim_send_sme_join_reassoc_rsp() - Send Response to Upper Layers
- * @mac_ctx:            Pointer to Global MAC structure
- * @msg_type:           Indicates message type
- * @result_code:        Indicates the result of previously issued
- *                      eWNI_SME_msgType_REQ message
- * @prot_status_code:   Protocol Status Code
- * @session_entry:      PE Session Info
- * @sme_session_id:     SME Session ID
- * @sme_transaction_id: SME Transaction ID
- *
- * This function is called by lim_process_sme_req_messages() to send
- * eWNI_SME_JOIN_RSP or eWNI_SME_REASSOC_RSP messages to applications
- * above MAC Software.
- *
- * Return: None
- */
 
-void
-lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	tSirResultCodes result_code, uint16_t prot_status_code,
-	struct pe_session *session_entry, uint8_t sme_session_id,
-	uint16_t sme_transaction_id)
+void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
+				   uint16_t msg_type,
+				   tSirResultCodes result_code,
+				   uint16_t prot_status_code,
+				   struct pe_session *session_entry,
+				   uint8_t sme_session_id)
 {
 	struct join_rsp *sme_join_rsp;
 	uint32_t rsp_len;
@@ -520,7 +504,6 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	sme_join_rsp->protStatusCode = prot_status_code;
 
 	sme_join_rsp->sessionId = sme_session_id;
-	sme_join_rsp->transactionId = sme_transaction_id;
 
 	lim_send_sme_join_reassoc_rsp_after_resume(mac_ctx, QDF_STATUS_SUCCESS,
 						   sme_join_rsp);
