@@ -2740,8 +2740,7 @@ void lim_send_stop_bss_failure_resp(struct mac_context *mac_ctx,
 			  session->limSmeState));
 
 	lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,
-			 eSIR_SME_STOP_BSS_FAILURE, session->smeSessionId,
-			 session->transactionId);
+			 eSIR_SME_STOP_BSS_FAILURE, session->smeSessionId);
 }
 
 void lim_delete_all_peers(struct pe_session *session)
@@ -2858,8 +2857,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 		pe_warn("received invalid SME_STOP_BSS_REQ message");
 		/* Send Stop BSS response to host */
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP,
-				 eSIR_SME_INVALID_PARAMETERS, smesessionId,
-				 smetransactionId);
+				 eSIR_SME_INVALID_PARAMETERS, smesessionId);
 		return;
 	}
 
@@ -2869,8 +2867,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	if (pe_session == NULL) {
 		pe_err("session does not exist for given BSSID");
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP,
-				 eSIR_SME_INVALID_PARAMETERS, smesessionId,
-				 smetransactionId);
+				 eSIR_SME_INVALID_PARAMETERS, smesessionId);
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -2891,8 +2888,8 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 		lim_print_sme_state(mac, LOGE, pe_session->limSmeState);
 		/* / Send Stop BSS response to host */
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP,
-				 eSIR_SME_UNEXPECTED_REQ_RESULT_CODE, smesessionId,
-				 smetransactionId);
+				 eSIR_SME_UNEXPECTED_REQ_RESULT_CODE,
+				 smesessionId);
 		return;
 	}
 
@@ -2991,8 +2988,7 @@ void lim_process_sme_del_bss_rsp(struct mac_context *mac,
 	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);
 	lim_delete_pre_auth_list(mac);
 	lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, eSIR_SME_SUCCESS,
-			 pe_session->smeSessionId,
-			 pe_session->transactionId);
+			 pe_session->smeSessionId);
 	return;
 }
 

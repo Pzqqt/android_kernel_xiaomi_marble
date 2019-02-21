@@ -56,25 +56,8 @@
 #include "lim_process_fils.h"
 #include "wma.h"
 
-/**
- * lim_send_sme_rsp() - Send Response to upper layers
- * @mac_ctx:          Pointer to Global MAC structure
- * @msg_type:         Indicates message type
- * @result_code:       Indicates the result of previously issued
- *                    eWNI_SME_msg_type_REQ message
- *
- * This function is called by lim_process_sme_req_messages() to send
- * eWNI_SME_START_RSP, eWNI_SME_STOP_BSS_RSP
- * or eWNI_SME_SWITCH_CHL_RSP messages to applications above MAC
- * Software.
- *
- * Return: None
- */
-
-void
-lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	 tSirResultCodes result_code, uint8_t sme_session_id,
-	 uint16_t sme_transaction_id)
+void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
+		      tSirResultCodes result_code, uint8_t sme_session_id)
 {
 	struct scheduler_msg msg = {0};
 	tSirSmeRsp *sme_rsp;
@@ -89,9 +72,7 @@ lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	sme_rsp->messageType = msg_type;
 	sme_rsp->length = sizeof(tSirSmeRsp);
 	sme_rsp->statusCode = result_code;
-
 	sme_rsp->sessionId = sme_session_id;
-	sme_rsp->transactionId = sme_transaction_id;
 
 	msg.type = msg_type;
 	msg.bodyptr = sme_rsp;

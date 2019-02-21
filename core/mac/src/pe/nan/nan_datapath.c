@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -435,8 +435,7 @@ end:
 	/* Delete PE session once BSS is deleted */
 	if (NULL != session_entry) {
 		lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,
-			rc, session_entry->smeSessionId,
-			session_entry->transactionId);
+			rc, session_entry->smeSessionId);
 		pe_delete_session(mac_ctx, session_entry);
 		session_entry = NULL;
 	}

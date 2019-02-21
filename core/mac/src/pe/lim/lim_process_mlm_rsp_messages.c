@@ -1825,8 +1825,7 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 	pe_session->gLimNumOfCurrentSTAs = 0;
 end:
 	lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,
-			 pe_session->smeSessionId,
-			 pe_session->transactionId);
+			 pe_session->smeSessionId);
 	pe_delete_session(mac, pe_session);
 
 	if (pDelBss != NULL) {

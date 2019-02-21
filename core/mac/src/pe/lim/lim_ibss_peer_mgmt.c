@@ -1393,8 +1393,7 @@ end:
 	/* Delete PE session once BSS is deleted */
 	if (NULL != pe_session) {
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,
-				 pe_session->smeSessionId,
-				 pe_session->transactionId);
+				 pe_session->smeSessionId);
 		pe_delete_session(mac, pe_session);
 		pe_session = NULL;
 	}

@@ -359,8 +359,7 @@ struct register_mgmt_frame {
 typedef struct sSirSmeRsp {
 	uint16_t messageType;   /* eWNI_SME_*_RSP */
 	uint16_t length;
-	uint8_t sessionId;      /* To support BT-AMP */
-	uint16_t transactionId; /* To support BT-AMP */
+	uint8_t sessionId;
 	tSirResultCodes statusCode;
 	struct wlan_objmgr_psoc *psoc;
 } tSirSmeRsp, *tpSirSmeRsp;

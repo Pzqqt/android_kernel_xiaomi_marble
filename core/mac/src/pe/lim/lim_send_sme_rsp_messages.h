@@ -34,9 +34,25 @@
 #include "sir_api.h"
 #include "sir_mac_prot_def.h"
 
-/* Functions for sending responses to Host */
-void lim_send_sme_rsp(struct mac_context *, uint16_t, tSirResultCodes, uint8_t,
-		      uint16_t);
+/* Functions for sending responses up the stack */
+
+/**
+ * lim_send_sme_rsp() - Send Generic Response to upper layers
+ * @mac_ctx:        Pointer to Global MAC structure
+ * @msg_type:       Indicates message type
+ * @result_code:    Indicates the result of previously issued
+ *                  eWNI_SME_msg_type_REQ message
+ * @sme_session_id: SME session associated with the request
+ *
+ * This function is called by lim_process_sme_req_messages() to send
+ * eWNI_SME_START_RSP, eWNI_SME_STOP_BSS_RSP
+ * or eWNI_SME_SWITCH_CHL_RSP messages to applications above MAC
+ * Software.
+ *
+ * Return: None
+ */
+void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
+		      tSirResultCodes result_code, uint8_t sme_session_id);
 
 /**
  * lim_send_sme_start_bss_rsp() - Send Start BSS response
