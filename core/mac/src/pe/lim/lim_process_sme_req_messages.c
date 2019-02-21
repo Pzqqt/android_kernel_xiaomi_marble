@@ -2562,7 +2562,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 send_deauth:
 	lim_send_sme_deauth_ntf(mac_ctx, sme_deauth_req.peer_macaddr.bytes,
 				ret_code, deauth_trigger, 1,
-				sme_session_id, sme_transaction_id);
+				sme_session_id);
 }
 
 /**

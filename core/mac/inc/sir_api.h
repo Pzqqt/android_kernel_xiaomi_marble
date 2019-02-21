@@ -1307,7 +1307,6 @@ struct deauth_ind {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP */
-	uint16_t transactionId; /* Added for BT-AMP */
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr bssid;      /* AP BSSID */
 	struct qdf_mac_addr peer_macaddr;

@@ -99,8 +99,24 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			       uint8_t smesessionId,
 			       struct pe_session *pe_session);
 
-void lim_send_sme_deauth_ntf(struct mac_context *, tSirMacAddr, tSirResultCodes, uint16_t,
-			     uint16_t, uint8_t, uint16_t);
+/**
+ * lim_send_sme_deauth_ntf() - send deauth notice to upper layer
+ * @peerMacAddr: peer MAC addr to which deauthentication was initiated
+ * @reasonCode: the reason for Deauthetication
+ * @deauthTrigger: the trigger for Deauthetication
+ * @aid: the STAID. This parameter is present only on AP.
+ * @smesessionId: ID of the SME session associated with the notification
+ *
+ * This function is used for sending eWNI_SME_DEAUTH_RSP or
+ * eWNI_SME_DEAUTH_IND to upper layers depending on deauthentication
+ * trigger.
+ *
+ * Return: None
+ */
+void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
+			     tSirResultCodes reasonCode, uint16_t deauthTrigger,
+			     uint16_t aid, uint8_t smesessionId);
+
 void lim_send_sme_disassoc_ind(struct mac_context *, tpDphHashNode, struct pe_session *);
 void lim_send_sme_deauth_ind(struct mac_context *, tpDphHashNode,
 			     struct pe_session *pe_session);

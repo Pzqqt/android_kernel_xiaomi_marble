@@ -895,7 +895,6 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 	pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 
 	pSirSmeDeauthInd->sessionId = pe_session->smeSessionId;
-	pSirSmeDeauthInd->transactionId = pe_session->transactionId;
 	if (eSIR_INFRA_AP_MODE == pe_session->bssType) {
 		pSirSmeDeauthInd->statusCode =
 			(tSirResultCodes) sta->mlmStaContext.cleanupTrigger;
@@ -1061,38 +1060,9 @@ QDF_STATUS lim_prepare_disconnect_done_ind(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_send_sme_deauth_ntf()
- *
- ***FUNCTION:
- * This function is called by limProcessSmeMessages() to send
- * eWNI_SME_DISASSOC_RSP/IND message to host
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * This function is used for sending eWNI_SME_DEAUTH_CNF or
- * eWNI_SME_DEAUTH_IND to host depending on deauthentication trigger.
- *
- * @param peerMacAddr       Indicates the peer MAC addr to which
- *                          deauthentication was initiated
- * @param reasonCode        Indicates the reason for Deauthetication
- * @param deauthTrigger     Indicates the trigger for Deauthetication
- * @param aid               Indicates the STAID. This parameter is present
- *                          only on AP.
- *
- * @return None
- */
-void
-lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
-			tSirResultCodes reasonCode, uint16_t deauthTrigger,
-			uint16_t aid, uint8_t smesessionId,
-			uint16_t smetransactionId)
+void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
+			     tSirResultCodes reasonCode, uint16_t deauthTrigger,
+			     uint16_t aid, uint8_t smesessionId)
 {
 	uint8_t *pBuf;
 	struct deauth_rsp *pSirSmeDeauthRsp;
@@ -1157,7 +1127,6 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
 		pSirSmeDeauthInd->sessionId = smesessionId;
-		pSirSmeDeauthInd->transactionId = smetransactionId;
 		pSirSmeDeauthInd->statusCode = reasonCode;
 		qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,
 			     sizeof(tSirMacAddr));

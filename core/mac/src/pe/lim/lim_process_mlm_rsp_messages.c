@@ -1081,8 +1081,7 @@ void lim_process_mlm_deauth_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	lim_send_sme_deauth_ntf(mac, pMlmDeauthCnf->peer_macaddr.bytes,
 				resultCode,
 				pMlmDeauthCnf->deauthTrigger,
-				aid, pe_session->smeSessionId,
-				pe_session->transactionId);
+				aid, pe_session->smeSessionId);
 } /*** end lim_process_mlm_deauth_cnf() ***/
 
 /**
@@ -1157,8 +1156,7 @@ void lim_process_mlm_purge_sta_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 						resultCode,
 						pMlmPurgeStaInd->purgeTrigger,
 						pMlmPurgeStaInd->aid,
-						pe_session->smeSessionId,
-						pe_session->transactionId);
+						pe_session->smeSessionId);
 		} else
 			lim_send_sme_disassoc_ntf(mac,
 						  pMlmPurgeStaInd->peerMacAddr,
