@@ -530,7 +530,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	uint8_t session_id;
 	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0xFF;
-	uint16_t sme_transaction_id = 0xFF;
 	uint32_t chanwidth;
 	struct vdev_type_nss *vdev_type_nss;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -554,7 +553,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	}
 	qdf_mem_copy(sme_start_bss_req, msg_buf, size);
 	sme_session_id = sme_start_bss_req->sessionId;
-	sme_transaction_id = sme_start_bss_req->transactionId;
 
 	if ((mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) ||
 	    (mac_ctx->lim.gLimSmeState == eLIM_SME_IDLE_STATE)) {
@@ -624,7 +622,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		}
 		/* Store the session related params in newly created session */
 		session->pLimStartBssReq = sme_start_bss_req;
-		session->transactionId = sme_start_bss_req->transactionId;
 		session->ht_config = sme_start_bss_req->ht_config;
 		session->vht_config = sme_start_bss_req->vht_config;
 

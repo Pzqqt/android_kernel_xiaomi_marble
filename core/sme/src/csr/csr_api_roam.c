@@ -16007,7 +16007,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->messageType = eWNI_SME_START_BSS_REQ;
 	pMsg->sessionId = sessionId;
 	pMsg->length = sizeof(*pMsg);
-	pMsg->transactionId = 0;
 	qdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
 	/* selfMacAddr */
 	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->selfMacAddr);

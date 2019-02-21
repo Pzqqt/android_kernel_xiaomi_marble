@@ -556,11 +556,10 @@ struct add_ie_params {
 struct start_bss_req {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_REQ */
 	uint16_t length;
-	uint8_t sessionId;      /* Added for BT-AMP Support */
-	uint16_t transactionId; /* Added for BT-AMP Support */
-	struct qdf_mac_addr bssid;      /* Added for BT-AMP Support */
-	struct qdf_mac_addr self_macaddr;        /* Added for BT-AMP Support */
-	uint16_t beaconInterval;        /* Added for BT-AMP Support */
+	uint8_t sessionId;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr self_macaddr;
+	uint16_t beaconInterval;
 	uint8_t dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
