@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -14,6 +14,7 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/clk.h>
+#include <linux/bitops.h>
 #include <soc/snd_event.h>
 #include <linux/pm_runtime.h>
 #include <dsp/audio_notifier.h>
@@ -21,39 +22,45 @@
 #include "core.h"
 #include "pinctrl-utils.h"
 
-#define LPI_AUTO_SUSPEND_DELAY          100 /* delay in msec */
+#define LPI_AUTO_SUSPEND_DELAY           100 /* delay in msec */
 
-#define LPI_ADDRESS_SIZE			0x20000
+#define LPI_ADDRESS_SIZE                 0x20000
+#define LPI_SLEW_ADDRESS_SIZE            0x1000
 
-#define LPI_GPIO_REG_VAL_CTL			0x00
-#define LPI_GPIO_REG_DIR_CTL			0x04
+#define LPI_GPIO_REG_VAL_CTL             0x00
+#define LPI_GPIO_REG_DIR_CTL             0x04
 
-#define LPI_GPIO_REG_PULL_SHIFT			0x0
-#define LPI_GPIO_REG_PULL_MASK			0x3
+#define LPI_SLEW_REG_VAL_CTL             0x00
+#define LPI_SLEW_RATE_MAX                0x03
+#define LPI_SLEW_BITS_SIZE               0x02
+#define LPI_SLEW_OFFSET_INVALID          0xFFFFFFFF
 
-#define LPI_GPIO_REG_FUNCTION_SHIFT		0x2
-#define LPI_GPIO_REG_FUNCTION_MASK		0x3C
+#define LPI_GPIO_REG_PULL_SHIFT          0x0
+#define LPI_GPIO_REG_PULL_MASK           0x3
 
-#define LPI_GPIO_REG_OUT_STRENGTH_SHIFT		0x6
-#define LPI_GPIO_REG_OUT_STRENGTH_MASK		0x1C0
+#define LPI_GPIO_REG_FUNCTION_SHIFT      0x2
+#define LPI_GPIO_REG_FUNCTION_MASK       0x3C
 
-#define LPI_GPIO_REG_OE_SHIFT			0x9
-#define LPI_GPIO_REG_OE_MASK			0x200
+#define LPI_GPIO_REG_OUT_STRENGTH_SHIFT  0x6
+#define LPI_GPIO_REG_OUT_STRENGTH_MASK   0x1C0
 
-#define LPI_GPIO_REG_DIR_SHIFT			0x1
-#define LPI_GPIO_REG_DIR_MASK			0x2
+#define LPI_GPIO_REG_OE_SHIFT            0x9
+#define LPI_GPIO_REG_OE_MASK             0x200
 
-#define LPI_GPIO_BIAS_DISABLE			0x0
-#define LPI_GPIO_PULL_DOWN			0x1
-#define LPI_GPIO_KEEPER				0x2
-#define LPI_GPIO_PULL_UP			0x3
+#define LPI_GPIO_REG_DIR_SHIFT           0x1
+#define LPI_GPIO_REG_DIR_MASK            0x2
 
-#define LPI_GPIO_FUNC_GPIO			"gpio"
-#define LPI_GPIO_FUNC_FUNC1			"func1"
-#define LPI_GPIO_FUNC_FUNC2			"func2"
-#define LPI_GPIO_FUNC_FUNC3			"func3"
-#define LPI_GPIO_FUNC_FUNC4			"func4"
-#define LPI_GPIO_FUNC_FUNC5			"func5"
+#define LPI_GPIO_BIAS_DISABLE            0x0
+#define LPI_GPIO_PULL_DOWN               0x1
+#define LPI_GPIO_KEEPER                  0x2
+#define LPI_GPIO_PULL_UP                 0x3
+
+#define LPI_GPIO_FUNC_GPIO               "gpio"
+#define LPI_GPIO_FUNC_FUNC1              "func1"
+#define LPI_GPIO_FUNC_FUNC2              "func2"
+#define LPI_GPIO_FUNC_FUNC3              "func3"
+#define LPI_GPIO_FUNC_FUNC4              "func4"
+#define LPI_GPIO_FUNC_FUNC5              "func5"
 
 static bool lpi_dev_up;
 static struct device *lpi_dev;
@@ -70,30 +77,39 @@ enum lpi_gpio_func_index {
 
 /**
  * struct lpi_gpio_pad - keep current GPIO settings
- * @offset: Nth GPIO in supported GPIOs.
+ * @offset: stores one of gpio_offset or slew_offset at a given time.
+ * @gpio_offset: Nth GPIO in supported GPIOs.
+ * @slew_offset: Nth GPIO's position in slew register in supported GPIOs.
  * @output_enabled: Set to true if GPIO output logic is enabled.
  * @value: value of a pin
- * @base: Address base of LPI GPIO PAD.
+ * @base: stores one of gpio_base or slew_base at a given time.
+ * @gpio_base: Address base of LPI GPIO PAD.
+ * @slew_base: Address base of LPI SLEW PAD.
  * @pullup: Constant current which flow through GPIO output buffer.
  * @strength: No, Low, Medium, High
  * @function: See lpi_gpio_functions[]
  */
 struct lpi_gpio_pad {
-	u32		offset;
-	bool		output_enabled;
-	bool		value;
-	char __iomem	*base;
-	unsigned int	pullup;
-	unsigned int	strength;
-	unsigned int	function;
+	u32             offset;
+	u32             gpio_offset;
+	u32             slew_offset;
+	bool            output_enabled;
+	bool            value;
+	char __iomem    *base;
+	char __iomem    *gpio_base;
+	char __iomem    *slew_base;
+	unsigned int    pullup;
+	unsigned int    strength;
+	unsigned int    function;
 };
 
 struct lpi_gpio_state {
-	struct device	*dev;
-	struct pinctrl_dev *ctrl;
-	struct gpio_chip chip;
-	char __iomem	*base;
-	struct clk *lpass_npa_rsc_island;
+	struct device       *dev;
+	struct pinctrl_dev  *ctrl;
+	struct gpio_chip     chip;
+	char __iomem        *base;
+	struct clk          *lpass_npa_rsc_island;
+	struct mutex         slew_access_lock;
 };
 
 static const char *const lpi_gpio_groups[] = {
@@ -106,6 +122,7 @@ static const char *const lpi_gpio_groups[] = {
 
 #define LPI_TLMM_MAX_PINS 100
 static u32 lpi_offset[LPI_TLMM_MAX_PINS];
+static u32 lpi_slew_offset[LPI_TLMM_MAX_PINS];
 
 static const char *const lpi_gpio_functions[] = {
 	[LPI_GPIO_FUNC_INDEX_GPIO]	= LPI_GPIO_FUNC_GPIO,
@@ -272,7 +289,9 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 {
 	struct lpi_gpio_pad *pad;
 	unsigned int param, arg;
-	int i, ret = 0, val;
+	int i, ret = 0;
+	volatile unsigned long val;
+	struct lpi_gpio_state *state = dev_get_drvdata(pctldev->dev);
 
 	pad = pctldev->desc->pins[pin].drv_data;
 
@@ -306,12 +325,44 @@ static int lpi_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 		case PIN_CONFIG_DRIVE_STRENGTH:
 			pad->strength = arg;
 			break;
+		case PIN_CONFIG_SLEW_RATE:
+			if (pad->slew_base == NULL ||
+				pad->slew_offset == LPI_SLEW_OFFSET_INVALID) {
+				dev_dbg(pctldev->dev, "%s: invalid slew settings for pin: %d\n",
+					__func__, pin);
+				goto set_gpio;
+			}
+			if (arg > LPI_SLEW_RATE_MAX) {
+				dev_err(pctldev->dev, "%s: invalid slew rate %u for pin: %d\n",
+					__func__, arg, pin);
+				goto set_gpio;
+			}
+			pad->base = pad->slew_base;
+			pad->offset = 0;
+			mutex_lock(&state->slew_access_lock);
+			val = lpi_gpio_read(pad, LPI_SLEW_REG_VAL_CTL);
+			pad->offset = pad->slew_offset;
+			for (i = 0; i < LPI_SLEW_BITS_SIZE; i++) {
+				if (arg & 0x01)
+					set_bit(pad->offset, &val);
+				else
+					clear_bit(pad->offset, &val);
+				pad->offset++;
+				arg = arg >> 1;
+			}
+			pad->offset = 0;
+			lpi_gpio_write(pad, LPI_SLEW_REG_VAL_CTL, val);
+			mutex_unlock(&state->slew_access_lock);
+			break;
 		default:
 			ret = -EINVAL;
 			goto done;
 		}
 	}
 
+set_gpio:
+	pad->base = pad->gpio_base;
+	pad->offset = pad->gpio_offset;
 	val = lpi_gpio_read(pad, LPI_GPIO_REG_VAL_CTL);
 	val &= ~(LPI_GPIO_REG_PULL_MASK | LPI_GPIO_REG_OUT_STRENGTH_MASK |
 		 LPI_GPIO_REG_OE_MASK);
@@ -502,7 +553,8 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	struct lpi_gpio_state *state;
 	int ret, npins, i;
 	char __iomem *lpi_base;
-	u32 reg;
+	char __iomem *slew_base;
+	u32 reg, slew_reg;
 	struct clk *lpass_npa_rsc_island = NULL;
 
 	ret = of_property_read_u32(dev->of_node, "reg", &reg);
@@ -524,6 +576,16 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	ret = of_property_read_u32_array(dev->of_node,
+					 "qcom,lpi-slew-offset-tbl",
+					 lpi_slew_offset, npins);
+	if (ret < 0) {
+		for (i = 0; i < npins; i++)
+			lpi_slew_offset[i] = LPI_SLEW_OFFSET_INVALID;
+		dev_dbg(dev, "%s: error in reading lpi slew offset table: %d\n",
+			__func__, ret);
+	}
+
 	state = devm_kzalloc(dev, sizeof(*state), GFP_KERNEL);
 	if (!state)
 		return -ENOMEM;
@@ -531,6 +593,23 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, state);
 
 	state->dev = &pdev->dev;
+
+	slew_reg = 0;
+	ret = of_property_read_u32(dev->of_node, "qcom,slew-reg", &slew_reg);
+	if (!ret) {
+		slew_base = devm_ioremap(dev, slew_reg, LPI_SLEW_ADDRESS_SIZE);
+		if (slew_base == NULL) {
+			dev_err(dev,
+				"%s devm_ioremap failed for slew rate reg\n",
+				__func__);
+			ret = -ENOMEM;
+			goto err_io;
+		}
+	} else {
+		slew_base = NULL;
+		dev_dbg(dev, "error in reading lpi slew register: %d\n",
+			__func__, ret);
+	}
 
 	pindesc = devm_kcalloc(dev, npins, sizeof(*pindesc), GFP_KERNEL);
 	if (!pindesc)
@@ -566,8 +645,13 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		pindesc->number = i;
 		pindesc->name = lpi_gpio_groups[i];
 
-		pad->base = lpi_base;
-		pad->offset = lpi_offset[i];
+		pad->gpio_base = lpi_base;
+		pad->slew_base = slew_base;
+		pad->base = pad->gpio_base;
+
+		pad->gpio_offset = lpi_offset[i];
+		pad->slew_offset = lpi_slew_offset[i];
+		pad->offset = pad->gpio_offset;
 	}
 
 	state->chip = lpi_gpio_template;
@@ -577,6 +661,8 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	state->chip.label = dev_name(dev);
 	state->chip.of_gpio_n_cells = 2;
 	state->chip.can_sleep = false;
+
+	mutex_init(&state->slew_access_lock);
 
 	state->ctrl = devm_pinctrl_register(dev, pctrldesc, state);
 	if (IS_ERR(state->ctrl))
@@ -636,18 +722,23 @@ err_snd_evt:
 err_range:
 	gpiochip_remove(&state->chip);
 err_chip:
+	mutex_destroy(&state->slew_access_lock);
+err_io:
 	return ret;
 }
 
 static int lpi_pinctrl_remove(struct platform_device *pdev)
 {
 	struct lpi_gpio_state *state = platform_get_drvdata(pdev);
+
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 
 	snd_event_client_deregister(&pdev->dev);
 	audio_notifier_deregister("lpi_tlmm");
 	gpiochip_remove(&state->chip);
+	mutex_destroy(&state->slew_access_lock);
+
 	return 0;
 }
 
