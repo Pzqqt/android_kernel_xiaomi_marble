@@ -9371,7 +9371,7 @@ static struct cdp_raw_ops dp_ops_raw = {
 
 #ifdef CONFIG_WIN
 static struct cdp_pflow_ops dp_ops_pflow = {
-	/* TODO */
+	dp_pdev_tid_stats_display,
 };
 #endif /* CONFIG_WIN */
 
@@ -9942,7 +9942,7 @@ bool dp_is_soc_reinit(struct dp_soc *soc)
 */
 #ifdef WDI_EVENT_ENABLE
 int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
-	bool enable)
+		bool enable)
 {
 	struct dp_soc *soc = NULL;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};

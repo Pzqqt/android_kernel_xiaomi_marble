@@ -761,7 +761,10 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 void dp_set_michael_key(struct cdp_peer *peer_handle,
 			bool is_unicast, uint32_t *key);
-
+#ifdef CONFIG_WIN
+uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
+			enum _ol_ath_param_t param, uint32_t value, void *buff);
+#endif
 /*
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
  *
