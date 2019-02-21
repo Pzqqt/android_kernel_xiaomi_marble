@@ -1340,15 +1340,6 @@ struct stop_bss_req {
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 };
 
-/* / Definition for stop BSS response message */
-typedef struct sSirSmeStopBssRsp {
-	uint16_t messageType;   /* eWNI_SME_STOP_BSS_RSP */
-	uint16_t length;
-	tSirResultCodes statusCode;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-} tSirSmeStopBssRsp, *tpSirSmeStopBssRsp;
-
 /* / Definition for Channel Switch indication for station */
 /* / MAC ---> */
 struct switch_channel_ind {
