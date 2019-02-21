@@ -222,10 +222,10 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
 		(*desc_list)->rx_desc.in_use = 1;
 
-		dp_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
-			 rx_netbuf, qdf_nbuf_data(rx_netbuf),
-			 (unsigned long long)paddr,
-			 (*desc_list)->rx_desc.cookie);
+		dp_verbose_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
+				 rx_netbuf, qdf_nbuf_data(rx_netbuf),
+				 (unsigned long long)paddr,
+				 (*desc_list)->rx_desc.cookie);
 
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
@@ -236,8 +236,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	dp_debug("replenished buffers %d, rx desc added back to free list %u",
-		 num_req_buffers, num_desc_to_free);
+	dp_verbose_debug("replenished buffers %d, rx desc added back to free list %u",
+			 num_req_buffers, num_desc_to_free);
 
 	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, num_req_buffers,
 			(RX_BUFFER_SIZE * num_req_buffers));
@@ -922,17 +922,17 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
  */
 static void dp_rx_print_offload_info(uint8_t *rx_tlv)
 {
-	dp_debug("----------------------RX DESC LRO/GRO----------------------");
-	dp_debug("lro_eligible 0x%x", HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
-	dp_debug("pure_ack 0x%x", HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
-	dp_debug("chksum 0x%x", HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
-	dp_debug("TCP seq num 0x%x", HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
-	dp_debug("TCP ack num 0x%x", HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
-	dp_debug("TCP window 0x%x", HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
-	dp_debug("TCP protocol 0x%x", HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
-	dp_debug("TCP offset 0x%x", HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
-	dp_debug("toeplitz 0x%x", HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
-	dp_debug("---------------------------------------------------------");
+	dp_verbose_debug("----------------------RX DESC LRO/GRO----------------------");
+	dp_verbose_debug("lro_eligible 0x%x", HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
+	dp_verbose_debug("pure_ack 0x%x", HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
+	dp_verbose_debug("chksum 0x%x", HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
+	dp_verbose_debug("TCP seq num 0x%x", HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
+	dp_verbose_debug("TCP ack num 0x%x", HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
+	dp_verbose_debug("TCP window 0x%x", HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
+	dp_verbose_debug("TCP protocol 0x%x", HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
+	dp_verbose_debug("TCP offset 0x%x", HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
+	dp_verbose_debug("toeplitz 0x%x", HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
+	dp_verbose_debug("---------------------------------------------------------");
 }
 
 /**

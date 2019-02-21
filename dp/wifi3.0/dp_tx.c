@@ -1003,10 +1003,9 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
 			sec_type_map[sec_type]);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
-			__func__, length, type, (uint64_t)dma_addr,
-			tx_desc->pkt_offset, tx_desc->id);
+	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
+			 length, type, (uint64_t)dma_addr,
+			 tx_desc->pkt_offset, tx_desc->id);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
@@ -1033,8 +1032,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 
 	if (!hal_tx_desc) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s TCL ring full ring_id:%d", __func__, ring_id);
+		dp_verbose_debug("TCL ring full ring_id:%d", ring_id);
 		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
 		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
 		return QDF_STATUS_E_RESOURCES;
@@ -1877,9 +1875,7 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 	msdu_info.tid = tx_exc_metadata->tid;
 
 	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , skb %pM",
-			__func__, nbuf->data);
+	dp_verbose_debug("skb %pM", nbuf->data);
 
 	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
@@ -1946,8 +1942,7 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 	return nbuf;
 
 fail:
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"pkt send failed");
+	dp_verbose_debug("pkt send failed");
 	return nbuf;
 }
 
@@ -2055,9 +2050,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , skb %pM",
-			__func__, nbuf->data);
+	dp_verbose_debug("skb %pM", nbuf->data);
 
 	/*
 	 * Set Default Host TID value to invalid TID
@@ -2070,8 +2063,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		nbuf_mesh = dp_tx_extract_mesh_meta_data(vdev, nbuf,
 								&msdu_info);
 		if (nbuf_mesh == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					"Extracting mesh metadata failed");
+			dp_verbose_debug("Extracting mesh metadata failed");
 			return nbuf;
 		}
 		nbuf = nbuf_mesh;
@@ -2107,8 +2099,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * SW and HW descriptors.
 	 */
 	if (qdf_nbuf_is_tso(nbuf)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s TSO frame %pK", __func__, vdev);
+		dp_verbose_debug("TSO frame %pK", vdev);
 		DP_STATS_INC_PKT(vdev, tx_i.tso.tso_pkt, 1,
 				qdf_nbuf_len(nbuf));
 
@@ -2128,8 +2119,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		if (!nbuf)
 			return NULL;
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			 "%s non-TSO SG frame %pK", __func__, vdev);
+		dp_verbose_debug("non-TSO SG frame %pK", vdev);
 
 		DP_STATS_INC_PKT(vdev, tx_i.sg.sg_pkt, 1,
 				qdf_nbuf_len(nbuf));
@@ -2143,8 +2133,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
 		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "%s Mcast frm for ME %pK", __func__, vdev);
+			dp_verbose_debug("Mcast frm for ME %pK", vdev);
 
 			DP_STATS_INC_PKT(vdev,
 					tx_i.mcast_en.mcast_pkt, 1,
@@ -2163,8 +2152,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 		if (nbuf == NULL)
 			return NULL;
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s Raw frame %pK", __func__, vdev);
+		dp_verbose_debug("Raw frame %pK", vdev);
 
 		goto send_multiple;
 

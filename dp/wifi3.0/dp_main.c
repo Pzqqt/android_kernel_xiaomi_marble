@@ -1179,23 +1179,22 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		(unsigned long)srng->base_vaddr_unaligned);
 	ring_params.num_entries = num_entries;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-		  FL("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u"),
-		  ring_type, ring_num, (void *)ring_params.ring_base_vaddr,
-		  (void *)ring_params.ring_base_paddr, ring_params.num_entries);
+	dp_verbose_debug("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u",
+			 ring_type, ring_num,
+			 (void *)ring_params.ring_base_vaddr,
+			 (void *)ring_params.ring_base_paddr,
+			 ring_params.num_entries);
 
 	if (soc->intr_mode == DP_INTR_MSI) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  FL("Using MSI for ring_type: %d, ring_num %d"),
-			  ring_type, ring_num);
+		dp_verbose_debug("Using MSI for ring_type: %d, ring_num %d",
+				 ring_type, ring_num);
 
 	} else {
 		ring_params.msi_data = 0;
 		ring_params.msi_addr = 0;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  FL("Skipping MSI for ring_type: %d, ring_num %d"),
-			  ring_type, ring_num);
+		dp_verbose_debug("Skipping MSI for ring_type: %d, ring_num %d",
+				 ring_type, ring_num);
 	}
 
 	/*
@@ -1335,9 +1334,8 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					soc->tx_comp_ring[ring].hal_srng,
 					remaining_quota);
 
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "tx mask 0x%x ring %d, budget %d, work_done %d",
-				  tx_mask, ring, budget, work_done);
+			dp_verbose_debug("tx mask 0x%x ring %d, budget %d, work_done %d",
+					 tx_mask, ring, budget, work_done);
 
 			budget -= work_done;
 			if (budget <= 0)
@@ -1356,9 +1354,8 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				soc->reo_exception_ring.hal_srng,
 				remaining_quota);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"REO Exception Ring: work_done %d budget %d",
-			work_done, budget);
+		dp_verbose_debug("REO Exception Ring: work_done %d budget %d",
+				 work_done, budget);
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -1372,9 +1369,8 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		work_done = dp_rx_wbm_err_process(soc,
 				soc->rx_rel_ring.hal_srng, remaining_quota);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"WBM Release Ring: work_done %d budget %d",
-			work_done, budget);
+		dp_verbose_debug("WBM Release Ring: work_done %d budget %d",
+				 work_done, budget);
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -1392,9 +1388,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					    ring,
 					    remaining_quota);
 
-				QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					"rx mask 0x%x ring %d, work_done %d budget %d",
-					rx_mask, ring, work_done, budget);
+				dp_verbose_debug("rx mask 0x%x ring %d, work_done %d budget %d",
+						 rx_mask, ring,
+						 work_done, budget);
 
 				budget -=  work_done;
 				if (budget <= 0)
@@ -2946,9 +2942,7 @@ static int dp_rxdma_ring_setup(struct dp_soc *soc,
 	max_mac_rings = wlan_cfg_get_num_mac_rings(pdev_cfg_ctx);
 
 	for (i = 0; i < max_mac_rings; i++) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			 "%s: pdev_id %d mac_id %d",
-			 __func__, pdev->pdev_id, i);
+		dp_verbose_debug("pdev_id %d mac_id %d", pdev->pdev_id, i);
 		if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring[i],
 			RXDMA_BUF, 1, i,
 			wlan_cfg_get_rx_dma_buf_ring_size(pdev_cfg_ctx))) {
@@ -5303,8 +5297,8 @@ void dp_peer_unref_delete(void *peer_handle)
 		if (peer_id != HTT_INVALID_PEER)
 			soc->peer_id_to_obj_map[peer_id] = NULL;
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
 
 		/* remove the reference to the peer from the hash table */
 		dp_peer_find_hash_remove(soc, peer);
@@ -5328,7 +5322,7 @@ void dp_peer_unref_delete(void *peer_handle)
 				peer_list_elem);
 		} else {
 			/*Ignoring the remove operation as peer not found*/
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				  "peer:%pK not found in vdev:%pK peerlist:%pK",
 				  peer, vdev, &peer->vdev->peer_list);
 		}
