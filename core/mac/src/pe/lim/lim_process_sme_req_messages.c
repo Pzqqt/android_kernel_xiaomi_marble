@@ -3177,9 +3177,10 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 						 &sessionId);
 	if (pe_session == NULL) {
 		pe_err("Session Does not exist for given bssId");
-		lim_send_sme_addts_rsp(mac, pSirAddts->rspReqd, QDF_STATUS_E_FAILURE,
+		lim_send_sme_addts_rsp(mac, pSirAddts->rspReqd,
+				       QDF_STATUS_E_FAILURE,
 				       NULL, pSirAddts->req.tspec,
-				       smesessionId, smetransactionId);
+				       smesessionId);
 		return;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -3296,7 +3297,7 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 send_failure_addts_rsp:
 	lim_send_sme_addts_rsp(mac, pSirAddts->rspReqd, QDF_STATUS_E_FAILURE,
 			       pe_session, pSirAddts->req.tspec,
-			       smesessionId, smetransactionId);
+			       smesessionId);
 }
 
 static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgBuf)
@@ -3440,8 +3441,7 @@ void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)
 
 	lim_send_sme_addts_rsp(mac, true, eSIR_SME_ADDTS_RSP_TIMEOUT,
 			       pe_session, mac->lim.gLimAddtsReq.req.tspec,
-			       pe_session->smeSessionId,
-			       pe_session->transactionId);
+			       pe_session->smeSessionId);
 }
 
 #ifndef QCA_SUPPORT_CP_STATS

@@ -1615,7 +1615,6 @@ typedef struct sSirAddtsRsp {
 	uint16_t messageType;   /* eWNI_SME_ADDTS_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* sme sessionId  Added for BT-AMP support */
-	uint16_t transactionId; /* sme transaction Id - for BT-AMP Support */
 	uint32_t rc;            /* return code */
 	tSirAddtsRspInfo rsp;
 } tSirAddtsRsp, *tpSirAddtsRsp;

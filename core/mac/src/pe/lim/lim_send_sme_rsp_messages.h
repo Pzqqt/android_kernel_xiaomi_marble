@@ -154,11 +154,25 @@ void
 lim_send_sme_aggr_qos_rsp(struct mac_context *mac, tpSirAggrQosRsp aggrQosRsp,
 			  uint8_t smesessionId);
 
+/**
+ * lim_send_sme_addts_rsp() - sends SME ADDTS RSP
+ * @mac: global mac structure
+ * @rspReqd: is SmeAddTsRsp required
+ * @status: status code of SME_ADD_TS_RSP
+ * @pe_session: The PE session associated with the connection
+ * @tspec: The TSpec that was added
+ * @smesessionId: ID of the SME session associated with the connection
+ *
+ * This function sends a eWNI_SME_ADDTS_RSP to upper layer
+ *
+ * Return: None
+ */
 void lim_send_sme_addts_rsp(struct mac_context *mac,
 			    uint8_t rspReqd, uint32_t status,
 			    struct pe_session *pe_session,
 			    struct mac_tspec_ie tspec,
-			    uint8_t smesessionId, uint16_t smetransactionId);
+			    uint8_t smesessionId);
+
 void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 			    uint32_t status, struct pe_session *pe_session,
 			    uint8_t smesessionId, uint16_t smetransactionId);

@@ -1263,21 +1263,11 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 	mac->lim.sme_msg_callback(mac, &mmhMsg);
 } /*** end lim_send_sme_set_context_rsp() ***/
 
-/** -----------------------------------------------------------------
-   \brief lim_send_sme_addts_rsp() - sends SME ADDTS RSP
- \      This function sends a eWNI_SME_ADDTS_RSP to SME.
- \      SME only looks at rc and tspec field.
-   \param mac - global mac structure
-   \param rspReqd - is SmeAddTsRsp required
-   \param status - status code of SME_ADD_TS_RSP
-   \return tspec
-   \sa
-   ----------------------------------------------------------------- */
-void
-lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd,
-		       uint32_t status,
-		       struct pe_session *pe_session, struct mac_tspec_ie tspec,
-		       uint8_t smesessionId, uint16_t smetransactionId)
+void lim_send_sme_addts_rsp(struct mac_context *mac,
+			    uint8_t rspReqd, uint32_t status,
+			    struct pe_session *pe_session,
+			    struct mac_tspec_ie tspec,
+			    uint8_t smesessionId)
 {
 	tpSirAddtsRsp rsp;
 	struct scheduler_msg mmhMsg = {0};
@@ -1293,9 +1283,7 @@ lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd,
 	rsp->rc = status;
 	rsp->rsp.status = (enum eSirMacStatusCodes)status;
 	rsp->rsp.tspec = tspec;
-	/* Update SME session Id and transcation Id */
 	rsp->sessionId = smesessionId;
-	rsp->transactionId = smetransactionId;
 
 	mmhMsg.type = eWNI_SME_ADDTS_RSP;
 	mmhMsg.bodyptr = rsp;

@@ -745,8 +745,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 			addts.tspec.tsinfo.traffic.tsid,
 			addts.tspec.tsinfo.traffic.userPrio, addts.status);
 		lim_send_sme_addts_rsp(mac_ctx, true, addts.status, session,
-				       addts.tspec, session->smeSessionId,
-				       session->transactionId);
+				       addts.tspec, session->smeSessionId);
 
 		/* clear the addts flag */
 		mac_ctx->lim.gLimAddtsSent = false;
@@ -856,8 +855,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 					&addts.tspec, session);
 			lim_send_sme_addts_rsp(mac_ctx, true, retval,
 					session, addts.tspec,
-					session->smeSessionId,
-					session->transactionId);
+					session->smeSessionId);
 			mac_ctx->lim.gLimAddtsSent = false;
 			return;
 		}
@@ -869,13 +867,9 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 			addts.tspec.tsinfo.traffic.userPrio,
 			addts.tspec.tsinfo.traffic.tsid);
 		pe_debug("no ACM: Bypass sending WMA_ADD_TS_REQ to HAL");
-		/*
-		 * Use the smesessionId and smetransactionId from the PE
-		 * session context
-		 */
 		lim_send_sme_addts_rsp(mac_ctx, true, eSIR_SME_SUCCESS,
-			session, addts.tspec, session->smeSessionId,
-			session->transactionId);
+				       session, addts.tspec,
+				       session->smeSessionId);
 	}
 	/* clear the addts flag */
 	mac_ctx->lim.gLimAddtsSent = false;

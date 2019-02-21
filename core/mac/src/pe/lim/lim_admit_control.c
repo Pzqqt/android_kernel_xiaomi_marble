@@ -976,8 +976,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 			       pAddTsRspMsg->sessionId);
 		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
 				       pe_session, pAddTsRspMsg->tspec,
-				       mac->lim.gLimAddtsReq.sessionId,
-				       mac->lim.gLimAddtsReq.transactionId);
+				       mac->lim.gLimAddtsReq.sessionId);
 		goto end;
 	}
 
@@ -986,8 +985,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 		/* Use the smesessionId and smetransactionId from the PE session context */
 		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_SUCCESS,
 				       pe_session, pAddTsRspMsg->tspec,
-				       pe_session->smeSessionId,
-				       pe_session->transactionId);
+				       pe_session->smeSessionId);
 		goto end;
 	} else {
 		pe_debug("Received failure ADDTS response from HAL");
@@ -1015,8 +1013,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 		/* 090803: Use the smesessionId and smetransactionId from the PE session context */
 		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
 				       pe_session, pAddTsRspMsg->tspec,
-				       pe_session->smeSessionId,
-				       pe_session->transactionId);
+				       pe_session->smeSessionId);
 		goto end;
 	}
 
