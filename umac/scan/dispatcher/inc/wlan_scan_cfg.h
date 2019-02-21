@@ -464,6 +464,7 @@
  *
  * Usage: External
  *
+ * </ini>
  */
 #define CFG_TOP_K_NUM_OF_CHANNELS CFG_INI_UINT( \
 			"gTopKNumOfChannels", \

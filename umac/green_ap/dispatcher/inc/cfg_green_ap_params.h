@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,7 +25,7 @@
 
 /*
  * <ini>
- * enable_green_ap - Enable green ap feature
+ * gEnableGreenAp - Enable green ap feature
  * @Min: 0
  * @Max: 1
  * @Default: 0
@@ -48,7 +48,7 @@
 
 /*
  * <ini>
- * enable_egap - Enable the enhanced green ap feature
+ * gEnableEGAP - Enable the enhanced green ap feature
  * @Min: 0
  * @Max: 1
  * @Default: 1
@@ -70,7 +70,7 @@
 		"enable e-gap")
 /*
  * <ini>
- * egap_inact_time - configure the inactive time for EGAP
+ * gEGAPInactTime - configure the inactive time for EGAP
  * @Min: 0
  * @Max: 300000
  * @Default: 2000
@@ -95,10 +95,10 @@
 		"egap inactivity time")
 /*
  * <ini>
- * egap_wait_time - configure the wait time for EGAP
+ * gEGAPWaitTime - configure the wait time for EGAP
  * @Min: 0
- * @Max: 1
- * @Default: 0
+ * @Max: 300000
+ * @Default: 150
  *
  * This ini is used to configure the wait time for EGAP
  *
@@ -120,10 +120,10 @@
 		"egap wait time")
 /*
  * <ini>
- * egap_flag - Configure the EGAP flags
+ * gEGAPFeatures - Configure the EGAP flags
  * @Min: 0
- * @Max: 1
- * @Default: 0
+ * @Max: 15
+ * @Default: 3
  *
  * This ini is used to configure the EGAP flags
  *
