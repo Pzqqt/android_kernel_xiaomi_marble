@@ -34,15 +34,15 @@
 #include <linux/sched/task_stack.h>
 #endif
 
+typedef void (*qdf_timer_func_t)(void *);
+
 #define qdf_msecs_to_jiffies(msec) \
 	(qdf_timer_get_multiplier() * msecs_to_jiffies(msec))
 
 struct __qdf_timer_t {
 	struct timer_list os_timer;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 	qdf_timer_func_t callback;
 	void *context;
-#endif
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
@@ -81,7 +81,12 @@ static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
 	__setup_timer((timer), (fn), (data), TIMER_DEFERRABLE)
 #endif
 
-typedef void (*__legacy_timer_callback_t)(unsigned long arg);
+static inline void __os_timer_shim(unsigned long addr)
+{
+	struct __qdf_timer_t *timer = (void *)addr;
+
+	timer->callback(timer->context);
+}
 
 static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
 					  qdf_timer_func_t func, void *arg,
@@ -89,20 +94,23 @@ static inline QDF_STATUS __qdf_timer_init(struct __qdf_timer_t *timer,
 {
 	struct timer_list *os_timer = &timer->os_timer;
 	bool is_on_stack = object_is_on_stack(os_timer);
-	__legacy_timer_callback_t callback = (__legacy_timer_callback_t)func;
-	unsigned long ctx = (unsigned long)arg;
+	unsigned long addr = (unsigned long)timer;
+
+	timer->callback = func;
+	timer->context = arg;
 
 	if (type == QDF_TIMER_TYPE_SW) {
 		if (is_on_stack)
-			setup_deferrable_timer_on_stack(os_timer, callback,
-							ctx);
+			setup_deferrable_timer_on_stack(os_timer,
+							__os_timer_shim,
+							addr);
 		else
-			setup_deferrable_timer(os_timer, callback, ctx);
+			setup_deferrable_timer(os_timer, __os_timer_shim, addr);
 	} else {
 		if (is_on_stack)
-			setup_timer_on_stack(os_timer, callback, ctx);
+			setup_timer_on_stack(os_timer, __os_timer_shim, addr);
 		else
-			setup_timer(os_timer, callback, ctx);
+			setup_timer(os_timer, __os_timer_shim, addr);
 	}
 
 	return QDF_STATUS_SUCCESS;

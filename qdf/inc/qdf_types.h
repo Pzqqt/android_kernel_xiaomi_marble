@@ -265,9 +265,6 @@ typedef void (*qdf_defer_fn_t)(void *);
  */
 typedef bool (*qdf_irqlocked_func_t)(void *);
 
-/* Prototype of timer function */
-typedef void (*qdf_timer_func_t)(void *);
-
 #define qdf_offsetof(type, field) offsetof(type, field)
 
 /**
