@@ -1644,12 +1644,11 @@ typedef struct sSirAggrQosReq {
 	uint16_t messageType;   /* eWNI_SME_ADDTS_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	uint32_t timeout;       /* in ms */
 	uint8_t rspReqd;
 	tSirAggrQosReqInfo aggrInfo;
-} tSirAggrQosReq, *tpSirAggrQosReq;
+} tSirAggrQosReq;
 
 typedef struct sSirAggrQosRspInfo {
 	uint16_t tspecIdx;
