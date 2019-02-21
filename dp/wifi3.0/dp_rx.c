@@ -1431,6 +1431,33 @@ int dp_wds_rx_policy_check(
 }
 #endif
 
+#ifdef RX_DESC_DEBUG_CHECK
+/**
+ * dp_rx_desc_nbuf_sanity_check - Add sanity check to catch REO rx_desc paddr
+ *				  corruption
+ *
+ * @ring_desc: REO ring descriptor
+ * @rx_desc: Rx descriptor
+ *
+ * Return: NONE
+ */
+static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
+					   struct dp_rx_desc *rx_desc)
+{
+	struct hal_buf_info hbi;
+
+	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
+	/* Sanity check for possible buffer paddr corruption */
+	qdf_assert_always((&hbi)->paddr ==
+			  qdf_nbuf_get_frag_paddr(rx_desc->nbuf, 0));
+}
+#else
+static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
+					   struct dp_rx_desc *rx_desc)
+{
+}
+#endif
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -1557,6 +1584,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
 		qdf_assert(rx_desc);
 
+		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 		/*
 		 * this is a unlikely scenario where the host is reaping
 		 * a descriptor which it already reaped just a while ago
