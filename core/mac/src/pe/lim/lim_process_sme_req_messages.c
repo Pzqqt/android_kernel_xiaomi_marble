@@ -2368,11 +2368,9 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionId */
 	uint8_t sme_session_id;
-	uint16_t sme_transaction_id;
 
 	qdf_mem_copy(&sme_deauth_req, msg_buf, sizeof(sme_deauth_req));
 	sme_session_id = sme_deauth_req.sessionId;
-	sme_transaction_id = sme_deauth_req.transactionId;
 
 	/*
 	 * We need to get a session first but we don't even know
@@ -2407,9 +2405,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 			session_entry, 0, sme_deauth_req.reasonCode);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	/* Update SME session ID and Transaction ID */
 	session_entry->smeSessionId = sme_session_id;
-	session_entry->transactionId = sme_transaction_id;
 
 	switch (GET_LIM_SYSTEM_ROLE(session_entry)) {
 	case eLIM_STA_ROLE:
