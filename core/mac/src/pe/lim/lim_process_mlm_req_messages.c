@@ -1289,7 +1289,6 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 			sme_disassoc_rsp->length = sizeof(*sme_disassoc_rsp);
 			sme_disassoc_rsp->sessionId =
 					mlm_disassocreq->sessionId;
-			sme_disassoc_rsp->transactionId = 0;
 			sme_disassoc_rsp->statusCode = eSIR_SME_DEAUTH_STATUS;
 
 			qdf_copy_macaddr(&sme_disassoc_rsp->peer_macaddr,

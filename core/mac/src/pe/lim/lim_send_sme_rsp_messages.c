@@ -778,7 +778,6 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pSirSmeDisassocRsp->messageType = eWNI_SME_DISASSOC_RSP;
 		pSirSmeDisassocRsp->length = sizeof(struct disassoc_rsp);
 		pSirSmeDisassocRsp->sessionId = smesessionId;
-		pSirSmeDisassocRsp->transactionId = smetransactionId;
 		pSirSmeDisassocRsp->statusCode = reasonCode;
 		qdf_mem_copy(pSirSmeDisassocRsp->peer_macaddr.bytes,
 			     peerMacAddr, sizeof(tSirMacAddr));
