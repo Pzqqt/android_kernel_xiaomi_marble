@@ -74,8 +74,31 @@ QDF_STATUS lim_prepare_disconnect_done_ind(struct mac_context *mac_ctx,
 					   uint8_t session_id,
 					   tSirResultCodes reason_code,
 					   uint8_t *peer_mac_addr);
-void lim_send_sme_disassoc_ntf(struct mac_context *, tSirMacAddr, tSirResultCodes,
-			       uint16_t, uint16_t, uint8_t, uint16_t, struct pe_session *);
+
+/**
+ * lim_send_sme_disassoc_ntf() - Send disassoc notification to upper layer
+ * @mac: Global MAC context
+ * @peerMacAddr: The peer MAC addr to which disassociate was initiated
+ * @reasonCode: The reason for Disassociation
+ * @disassocTrigger: The trigger for Disassociation
+ * @aid: The STAID. This parameter is present only on AP
+ * @smesessionId: ID of the SME session associated with the event
+ * @pe_session: The PE session associated with the event
+ *
+ * This function is used for sending eWNI_SME_DISASSOC_RSP,
+ * or eWNI_SME_DISASSOC_IND to upper layer depending on
+ * disassociation trigger.
+ *
+ * Return: None
+ */
+void lim_send_sme_disassoc_ntf(struct mac_context *mac,
+			       tSirMacAddr peerMacAddr,
+			       tSirResultCodes reasonCode,
+			       uint16_t disassocTrigger,
+			       uint16_t aid,
+			       uint8_t smesessionId,
+			       struct pe_session *pe_session);
+
 void lim_send_sme_deauth_ntf(struct mac_context *, tSirMacAddr, tSirResultCodes, uint16_t,
 			     uint16_t, uint8_t, uint16_t);
 void lim_send_sme_disassoc_ind(struct mac_context *, tpDphHashNode, struct pe_session *);

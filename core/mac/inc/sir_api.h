@@ -1248,7 +1248,6 @@ struct disassoc_ind {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Session Identifier */
-	uint16_t transactionId; /* Transaction Identifier with PE */
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;

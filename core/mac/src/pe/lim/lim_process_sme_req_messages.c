@@ -2202,13 +2202,13 @@ sendDisassoc:
 					  smeDisassocReq.peer_macaddr.bytes,
 					  retCode,
 					  disassocTrigger,
-					  1, smesessionId, smetransactionId,
+					  1, smesessionId,
 					  pe_session);
 	else
 		lim_send_sme_disassoc_ntf(mac,
 					  smeDisassocReq.peer_macaddr.bytes,
 					  retCode, disassocTrigger, 1,
-					  smesessionId, smetransactionId, NULL);
+					  smesessionId, NULL);
 
 } /*** end __lim_process_sme_disassoc_req() ***/
 
@@ -3064,7 +3064,6 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 				eSIR_SME_STA_NOT_ASSOCIATED,
 				eLIM_PEER_ENTITY_DISASSOC, assoc_cnf.aid,
 				session_entry->smeSessionId,
-				session_entry->transactionId,
 				session_entry);
 		goto end;
 	}

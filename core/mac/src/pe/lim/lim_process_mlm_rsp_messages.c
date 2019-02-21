@@ -958,13 +958,13 @@ void lim_process_mlm_disassoc_cnf(struct mac_context *mac_ctx,
 				disassoc_cnf->peerMacAddr, result_code,
 				disassoc_cnf->disassocTrigger,
 				disassoc_cnf->aid, session_entry->smeSessionId,
-				session_entry->transactionId, session_entry);
+				session_entry);
 		}
 	} else if (LIM_IS_AP_ROLE(session_entry)) {
 		lim_send_sme_disassoc_ntf(mac_ctx, disassoc_cnf->peerMacAddr,
 			result_code, disassoc_cnf->disassocTrigger,
 			disassoc_cnf->aid, session_entry->smeSessionId,
-			session_entry->transactionId, session_entry);
+			session_entry);
 	}
 }
 
@@ -1166,7 +1166,6 @@ void lim_process_mlm_purge_sta_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 						  pMlmPurgeStaInd->purgeTrigger,
 						  pMlmPurgeStaInd->aid,
 						  pe_session->smeSessionId,
-						  pe_session->transactionId,
 						  pe_session);
 	} /* end switch (GET_LIM_SYSTEM_ROLE(pe_session)) */
 } /*** end lim_process_mlm_purge_sta_ind() ***/

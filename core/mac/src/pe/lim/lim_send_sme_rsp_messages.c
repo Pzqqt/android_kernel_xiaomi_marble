@@ -668,43 +668,13 @@ void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
-/**
- * lim_send_sme_disassoc_ntf()
- *
- ***FUNCTION:
- * This function is called by limProcessSmeMessages() to send
- * eWNI_SME_DISASSOC_RSP/IND message to host
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * This function is used for sending eWNI_SME_DISASSOC_CNF,
- * or eWNI_SME_DISASSOC_IND to host depending on
- * disassociation trigger.
- *
- * @param peerMacAddr       Indicates the peer MAC addr to which
- *                          disassociate was initiated
- * @param reasonCode        Indicates the reason for Disassociation
- * @param disassocTrigger   Indicates the trigger for Disassociation
- * @param aid               Indicates the STAID. This parameter is
- *                          present only on AP.
- *
- * @return None
- */
-void
-lim_send_sme_disassoc_ntf(struct mac_context *mac,
-			  tSirMacAddr peerMacAddr,
-			  tSirResultCodes reasonCode,
-			  uint16_t disassocTrigger,
-			  uint16_t aid,
-			  uint8_t smesessionId,
-			  uint16_t smetransactionId,
-			  struct pe_session *pe_session)
+void lim_send_sme_disassoc_ntf(struct mac_context *mac,
+			       tSirMacAddr peerMacAddr,
+			       tSirResultCodes reasonCode,
+			       uint16_t disassocTrigger,
+			       uint16_t aid,
+			       uint8_t smesessionId,
+			       struct pe_session *pe_session)
 {
 	struct disassoc_rsp *pSirSmeDisassocRsp;
 	struct disassoc_ind *pSirSmeDisassocInd;
@@ -819,7 +789,6 @@ lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 		pSirSmeDisassocInd->sessionId = smesessionId;
-		pSirSmeDisassocInd->transactionId = smetransactionId;
 		pSirSmeDisassocInd->reasonCode = reasonCode;
 		pSirSmeDisassocInd->statusCode = reasonCode;
 		qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes,
@@ -873,7 +842,6 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 	pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 
 	pSirSmeDisassocInd->sessionId = pe_session->smeSessionId;
-	pSirSmeDisassocInd->transactionId = pe_session->transactionId;
 	pSirSmeDisassocInd->statusCode = eSIR_SME_DEAUTH_STATUS;
 	pSirSmeDisassocInd->reasonCode = sta->mlmStaContext.disassocReason;
 
