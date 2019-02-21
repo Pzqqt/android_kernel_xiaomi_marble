@@ -194,7 +194,7 @@ void lim_send_sme_addts_rsp(struct mac_context *mac,
 
 void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 			    uint32_t status, struct pe_session *pe_session,
-			    uint8_t smesessionId, uint16_t smetransactionId);
+			    uint8_t smesessionId);
 void lim_send_sme_delts_ind(struct mac_context *mac,
 			    struct delts_req_info *delts,
 			    uint16_t aid, struct pe_session *);

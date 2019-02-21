@@ -3330,8 +3330,8 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	    lim_validate_delts_req(mac, pDeltsReq, peerMacAddr, pe_session)) {
 		pe_err("lim_validate_delts_req failed");
 		status = QDF_STATUS_E_FAILURE;
-		lim_send_sme_delts_rsp(mac, pDeltsReq, QDF_STATUS_E_FAILURE, pe_session,
-				       smesessionId, smetransactionId);
+		lim_send_sme_delts_rsp(mac, pDeltsReq, QDF_STATUS_E_FAILURE,
+				       pe_session, smesessionId);
 		return;
 	}
 
@@ -3399,7 +3399,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	/* send an sme response back */
 end:
 	lim_send_sme_delts_rsp(mac, pDeltsReq, QDF_STATUS_SUCCESS, pe_session,
-			       smesessionId, smetransactionId);
+			       smesessionId);
 }
 
 void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)

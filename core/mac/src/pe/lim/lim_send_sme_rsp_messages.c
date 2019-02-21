@@ -1287,10 +1287,9 @@ void lim_send_sme_addts_rsp(struct mac_context *mac,
 	return;
 }
 
-void
-lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t status,
-		       struct pe_session *pe_session, uint8_t smesessionId,
-		       uint16_t smetransactionId)
+void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
+			    uint32_t status, struct pe_session *pe_session,
+			    uint8_t smesessionId)
 {
 	tpSirDeltsRsp rsp;
 	struct scheduler_msg mmhMsg = {0};
@@ -1316,10 +1315,7 @@ lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t st
 
 	rsp->messageType = eWNI_SME_DELTS_RSP;
 	rsp->rc = status;
-
-	/* Update SME session Id and transcation Id */
 	rsp->sessionId = smesessionId;
-	rsp->transactionId = smetransactionId;
 
 	mmhMsg.type = eWNI_SME_DELTS_RSP;
 	mmhMsg.bodyptr = rsp;
@@ -1357,11 +1353,7 @@ lim_send_sme_delts_ind(struct mac_context *mac, struct delts_req_info *delts,
 	rsp->rc = QDF_STATUS_SUCCESS;
 	rsp->aid = aid;
 	qdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) delts, sizeof(*delts));
-
-	/* Update SME  session Id and SME transaction Id */
-
 	rsp->sessionId = pe_session->smeSessionId;
-	rsp->transactionId = pe_session->transactionId;
 
 	mmhMsg.type = eWNI_SME_DELTS_IND;
 	mmhMsg.bodyptr = rsp;
