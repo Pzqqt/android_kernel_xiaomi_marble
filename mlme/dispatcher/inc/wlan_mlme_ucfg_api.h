@@ -1062,8 +1062,23 @@ ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 			      bool val);
-#endif
+#else
+static inline QDF_STATUS
+ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool *val)
+{
+	*val = false;
 
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /**
  * ucfg_mlme_get_first_scan_bucket_threshold() - Get first scan bucket thre
  * @psoc: pointer to psoc object
