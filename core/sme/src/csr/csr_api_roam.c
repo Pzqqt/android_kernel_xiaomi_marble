@@ -14668,7 +14668,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
 		csr_join_req->sessionId = (uint8_t) sessionId;
-		csr_join_req->transactionId = 0;
 		if (pIes->SSID.present &&
 		    !csr_is_nullssid(pIes->SSID.ssid,
 				     pIes->SSID.num_ssid)) {

@@ -891,16 +891,10 @@ struct plm_req {
 
 /* / Definition for join request */
 /* / ---> MAC */
-/* / WARNING! If you add a field in JOIN REQ. */
-/* /         Make sure to add it in REASSOC REQ */
-/* / The Serdes function is the same and its */
-/* / shared with REASSOC. So if we add a field */
-/*  here and dont add it in REASSOC REQ. It will BREAK!!! REASSOC. */
 struct join_req {
 	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
 	uint16_t length;
 	uint8_t sessionId;
-	uint16_t transactionId;
 	tSirMacSSid ssId;
 	tSirMacAddr selfMacAddr;        /* self Mac address */
 	tSirBssType bsstype;    /* add new type for BT-AMP STA and AP Modules */

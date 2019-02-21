@@ -1198,7 +1198,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	uint8_t session_id;
 	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0;
-	uint16_t sme_transaction_id = 0;
 	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
 	const uint8_t *vendor_ie;
@@ -1314,9 +1313,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		/* store the smejoin req handle in session table */
 		session->pLimJoinReq = sme_join_req;
-
-		/* Store SME transaction Id in session Table */
-		session->transactionId = sme_join_req->transactionId;
 
 		/* Store beaconInterval */
 		session->beaconParams.beaconInterval =
@@ -1652,7 +1648,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 end:
 	sme_session_id = in_req->sessionId;
-	sme_transaction_id = in_req->transactionId;
 
 	if (sme_join_req) {
 		qdf_mem_free(sme_join_req);
@@ -1713,13 +1708,11 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
 	uint8_t sme_session_id;
-	uint16_t transaction_id;
 	int8_t local_pwr_constraint = 0, reg_max = 0;
 	uint32_t tele_bcn_en = 0;
 	QDF_STATUS status;
 
 	sme_session_id = in_req->sessionId;
-	transaction_id = in_req->transactionId;
 
 	reassoc_req = qdf_mem_malloc(in_req->length);
 	if (!reassoc_req) {
@@ -1829,7 +1822,6 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 			}
 
 			session_entry->smeSessionId = sme_session_id;
-			session_entry->transactionId = transaction_id;
 			mlm_reassoc_req =
 				qdf_mem_malloc(sizeof(*mlm_reassoc_req));
 			if (!mlm_reassoc_req) {
