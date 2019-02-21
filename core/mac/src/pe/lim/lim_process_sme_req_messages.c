@@ -3282,10 +3282,8 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	uint8_t sessionId;
 	uint32_t status = QDF_STATUS_SUCCESS;
 	uint8_t smesessionId;
-	uint16_t smetransactionId;
 
 	smesessionId = pDeltsReq->sessionId;
-	smetransactionId = pDeltsReq->transactionId;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pDeltsReq->bssid.bytes,

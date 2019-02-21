@@ -1616,7 +1616,6 @@ typedef struct sSirDeltsReq {
 	uint16_t messageType;   /* eWNI_SME_DELTS_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId;
 	struct qdf_mac_addr bssid;      /* BSSID */
 	uint16_t aid;           /* use 0 if macAddr is being specified */
 	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
