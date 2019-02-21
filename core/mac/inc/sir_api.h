@@ -5014,17 +5014,6 @@ struct ndp_pmk {
 };
 
 /**
- * struct ndi_create_req - ndi create request params
- * @transaction_id: unique identifier
- * @iface_name: interface name
- *
- */
-struct ndi_create_req {
-	uint32_t transaction_id;
-	char  iface_name[IFACE_NAME_SIZE];
-};
-
-/**
  * struct ndi_create_rsp - ndi create response params
  * @status: request status
  * @reason: reason if any
