@@ -16158,7 +16158,6 @@ QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 	pMsg->messageType = eWNI_SME_STOP_BSS_REQ;
 	pMsg->sessionId = sessionId;
 	pMsg->length = sizeof(*pMsg);
-	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
 	qdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);
 	return umac_send_mb_message_to_mac(pMsg);

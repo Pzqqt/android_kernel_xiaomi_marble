@@ -1336,7 +1336,6 @@ struct stop_bss_req {
 	uint16_t messageType;   /* eWNI_SME_STOP_BSS_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* tranSaction ID for cmd */
 	tSirResultCodes reasonCode;
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 };

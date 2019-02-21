@@ -2828,11 +2828,9 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	struct pe_session *pe_session;
 	uint8_t smesessionId;
 	uint8_t sessionId;
-	uint16_t smetransactionId;
 
 	qdf_mem_copy(&stop_bss_req, pMsgBuf, sizeof(stop_bss_req));
 	smesessionId = stop_bss_req.sessionId;
-	smetransactionId = stop_bss_req.transactionId;
 
 	if (!lim_is_sme_stop_bss_req_valid(pMsgBuf)) {
 		pe_warn("received invalid SME_STOP_BSS_REQ message");
@@ -2888,9 +2886,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 		       (mac, TRACE_CODE_SME_STATE, pe_session->peSessionId,
 		       pe_session->limSmeState));
 
-	/* Update SME session Id and Transaction Id */
 	pe_session->smeSessionId = smesessionId;
-	pe_session->transactionId = smetransactionId;
 
 	/* STA_IN_IBSS and NDI should NOT send Disassoc frame */
 	if (!LIM_IS_IBSS_ROLE(pe_session) &&
