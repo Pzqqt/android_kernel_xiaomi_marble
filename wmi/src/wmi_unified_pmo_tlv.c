@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1580,9 +1579,6 @@ static QDF_STATUS send_wow_delete_pattern_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = vdev_id;
 	cmd->pattern_id = ptrn_id;
 	cmd->pattern_type = WOW_BITMAP_PATTERN;
-
-	WMI_LOGI("Deleting pattern id: %d vdev id %d in fw",
-		 cmd->pattern_id, vdev_id);
 
 	wmi_mtrace(WMI_WOW_DEL_WAKE_PATTERN_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
