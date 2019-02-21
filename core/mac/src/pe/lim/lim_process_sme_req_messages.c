@@ -1996,7 +1996,8 @@ bool send_disassoc_frame = 1;
  * @return None
  */
 
-static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pMsgBuf)
+static void __lim_process_sme_disassoc_req(struct mac_context *mac,
+					   uint32_t *pMsgBuf)
 {
 	uint16_t disassocTrigger, reasonCode;
 	tLimMlmDisassocReq *pMlmDisassocReq;
@@ -2005,7 +2006,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pM
 	struct pe_session *pe_session = NULL;
 	uint8_t sessionId;
 	uint8_t smesessionId;
-	uint16_t smetransactionId;
 
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -2014,7 +2014,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pM
 
 	qdf_mem_copy(&smeDisassocReq, pMsgBuf, sizeof(struct disassoc_req));
 	smesessionId = smeDisassocReq.sessionId;
-	smetransactionId = smeDisassocReq.transactionId;
 	if (!lim_is_sme_disassoc_req_valid(mac,
 					   &smeDisassocReq,
 					   pe_session)) {
@@ -2052,10 +2051,7 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac, uint32_t *pM
 			      0, smeDisassocReq.reasonCode);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	/* Update SME session Id and SME transaction ID */
-
 	pe_session->smeSessionId = smesessionId;
-	pe_session->transactionId = smetransactionId;
 	pe_debug("ho_fail: %d ", smeDisassocReq.process_ho_fail);
 	pe_session->process_ho_fail = smeDisassocReq.process_ho_fail;
 

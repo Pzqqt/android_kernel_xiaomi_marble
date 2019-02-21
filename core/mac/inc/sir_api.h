@@ -1230,7 +1230,6 @@ struct disassoc_req {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_REQ */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
 	struct qdf_mac_addr bssid;      /* Peer BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;

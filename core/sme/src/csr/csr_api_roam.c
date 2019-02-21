@@ -15506,7 +15506,6 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 	pMsg->messageType = eWNI_SME_DISASSOC_REQ;
 	pMsg->length = sizeof(*pMsg);
 	pMsg->sessionId = sessionId;
-	pMsg->transactionId = 0;
 	if ((pSession->pCurRoamProfile != NULL)
 		&& (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
 		qdf_mem_copy(&pMsg->bssid.bytes,
