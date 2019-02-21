@@ -1222,39 +1222,12 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 
 } /*** end lim_send_sme_wm_status_change_ntf() ***/
 
-/**
- * lim_send_sme_set_context_rsp()
- *
- ***FUNCTION:
- * This function is called by limProcessSmeMessages() to send
- * eWNI_SME_SETCONTEXT_RSP message to host
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- *
- * @param mac         Pointer to Global MAC structure
- * @param peerMacAddr  Indicates the peer MAC addr to which
- *                     setContext was performed
- * @param aid          Indicates the aid corresponding to the peer MAC
- *                     address
- * @param resultCode   Indicates the result of previously issued
- *                     eWNI_SME_SETCONTEXT_RSP message
- *
- * @return None
- */
-void
-lim_send_sme_set_context_rsp(struct mac_context *mac,
-			     struct qdf_mac_addr peer_macaddr, uint16_t aid,
-			     tSirResultCodes resultCode,
-			     struct pe_session *pe_session,
-			     uint8_t smesessionId,
-			     uint16_t smetransactionId)
+void lim_send_sme_set_context_rsp(struct mac_context *mac,
+				  struct qdf_mac_addr peer_macaddr,
+				  uint16_t aid,
+				  tSirResultCodes resultCode,
+				  struct pe_session *pe_session,
+				  uint8_t smesessionId)
 {
 	struct scheduler_msg mmhMsg = {0};
 	struct set_context_rsp *set_context_rsp;
@@ -1269,9 +1242,7 @@ lim_send_sme_set_context_rsp(struct mac_context *mac,
 
 	qdf_copy_macaddr(&set_context_rsp->peer_macaddr, &peer_macaddr);
 
-	/* Update SME session and transaction Id */
 	set_context_rsp->sessionId = smesessionId;
-	set_context_rsp->transactionId = smetransactionId;
 
 	mmhMsg.type = eWNI_SME_SETCONTEXT_RSP;
 	mmhMsg.bodyptr = set_context_rsp;

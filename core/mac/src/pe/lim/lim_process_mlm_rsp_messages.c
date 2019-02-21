@@ -1228,8 +1228,7 @@ void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 				     pMlmSetKeysCnf->peer_macaddr,
 				     1,
 				     (tSirResultCodes) pMlmSetKeysCnf->resultCode,
-				     pe_session, pe_session->smeSessionId,
-				     pe_session->transactionId);
+				     pe_session, pe_session->smeSessionId);
 } /*** end lim_process_mlm_set_keys_cnf() ***/
 
 /**
@@ -2836,7 +2835,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		lim_send_sme_set_context_rsp(mac_ctx,
 					     mlm_set_key_cnf.peer_macaddr,
 					     0, eSIR_SME_INVALID_SESSION, NULL,
-					     sme_session_id, 0);
+					     sme_session_id);
 		return;
 	}
 	result_status = set_key_params->status;
@@ -2930,7 +2929,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 		msg->bodyptr = NULL;
 		lim_send_sme_set_context_rsp(mac_ctx, set_key_cnf.peer_macaddr,
 					     0, eSIR_SME_INVALID_SESSION, NULL,
-					     sme_session_id, 0);
+					     sme_session_id);
 		return;
 	}
 	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState) {

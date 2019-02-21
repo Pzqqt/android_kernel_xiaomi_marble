@@ -122,9 +122,31 @@ void lim_send_sme_deauth_ind(struct mac_context *, tpDphHashNode,
 			     struct pe_session *pe_session);
 void lim_send_sme_wm_status_change_ntf(struct mac_context *, tSirSmeStatusChangeCode,
 				       uint32_t *, uint16_t, uint8_t);
-void lim_send_sme_set_context_rsp(struct mac_context *, struct qdf_mac_addr, uint16_t,
-				  tSirResultCodes, struct pe_session *, uint8_t, uint16_t);
-void lim_handle_delete_bss_rsp(struct mac_context *mac, struct scheduler_msg *MsgQ);
+
+/**
+ * lim_send_sme_set_context_rsp() - Send set context response to upper layer
+ * @mac: Pointer to Global MAC structure
+ * @peer_macaddr: the peer MAC addr to which setContext was performed
+ * @aid: the aid corresponding to the peer MAC address
+ * @resultCode: the result of previously issued Set Context Req message
+ * @pe_session: The PE session associated with the peer
+ * @smesessionId: ID of the SME session associated with the peer
+ *
+ * This function is called to send eWNI_SME_SETCONTEXT_RSP message to
+ * upper layer
+ *
+ * Return: None
+ */
+void lim_send_sme_set_context_rsp(struct mac_context *mac,
+				  struct qdf_mac_addr peer_macaddr,
+				  uint16_t aid,
+				  tSirResultCodes resultCode,
+				  struct pe_session *pe_session,
+				  uint8_t smesessionId);
+
+void lim_handle_delete_bss_rsp(struct mac_context *mac,
+			       struct scheduler_msg *MsgQ);
+
 void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg);
 

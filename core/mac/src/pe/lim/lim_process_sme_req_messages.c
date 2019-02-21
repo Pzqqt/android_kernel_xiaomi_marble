@@ -2613,7 +2613,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 		lim_send_sme_set_context_rsp(mac_ctx,
 				set_context_req->peer_macaddr, 1,
 				eSIR_SME_INVALID_PARAMETERS, NULL,
-				sme_session_id, sme_transaction_id);
+				sme_session_id);
 		goto end;
 	}
 
@@ -2624,7 +2624,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 		lim_send_sme_set_context_rsp(mac_ctx,
 				set_context_req->peer_macaddr, 1,
 				eSIR_SME_INVALID_PARAMETERS, NULL,
-				sme_session_id, sme_transaction_id);
+				sme_session_id);
 		goto end;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -2699,8 +2699,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 		lim_send_sme_set_context_rsp(mac_ctx,
 				set_context_req->peer_macaddr, 1,
 				eSIR_SME_UNEXPECTED_REQ_RESULT_CODE,
-				session_entry, sme_session_id,
-				sme_transaction_id);
+				session_entry, sme_session_id);
 	}
 end:
 	qdf_mem_free(set_context_req);
