@@ -1218,24 +1218,11 @@ lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
-
-		/* sessionId */
-		pBuf = (uint8_t *) &pSirSmeDeauthInd->sessionId;
-		*pBuf++ = smesessionId;
-
-		/* transaction ID */
-		lim_copy_u16(pBuf, smetransactionId);
-		pBuf += sizeof(uint16_t);
-
-		/* status code */
-		lim_copy_u32(pBuf, reasonCode);
-		pBuf += sizeof(tSirResultCodes);
-
-		/* bssId */
-		qdf_mem_copy(pBuf, pe_session->bssId, sizeof(tSirMacAddr));
-		pBuf += sizeof(tSirMacAddr);
-
-		/* peerMacAddr */
+		pSirSmeDeauthInd->sessionId = smesessionId;
+		pSirSmeDeauthInd->transactionId = smetransactionId;
+		pSirSmeDeauthInd->statusCode = reasonCode;
+		qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,
+			     sizeof(tSirMacAddr));
 		qdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, peerMacAddr,
 			     QDF_MAC_ADDR_SIZE);
 
