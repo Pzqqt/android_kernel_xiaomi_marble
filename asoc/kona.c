@@ -3908,6 +3908,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		pdata->codec_root = entry;
 	}
 	bolero_info_create_codec_entry(pdata->codec_root, component);
+	bolero_register_wake_irq(component, false);
 	codec_reg_done = true;
 	return 0;
 err:
