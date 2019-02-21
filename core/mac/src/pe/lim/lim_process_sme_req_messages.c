@@ -3136,7 +3136,6 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 	struct pe_session *pe_session;
 	uint8_t sessionId;      /* PE sessionId */
 	uint8_t smesessionId;
-	uint16_t smetransactionId;
 
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -3145,7 +3144,6 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 
 	pSirAddts = (tpSirAddtsReq) pMsgBuf;
 	smesessionId = pSirAddts->sessionId;
-	smetransactionId = pSirAddts->transactionId;
 	pe_session = pe_find_session_by_bssid(mac, pSirAddts->bssid.bytes,
 						 &sessionId);
 	if (pe_session == NULL) {
