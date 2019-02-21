@@ -1206,22 +1206,19 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
-#ifdef CONFIG_MCL
+
 static inline uint32_t convert_host_pdev_param_tlv(wmi_unified_t wmi_handle,
 				uint32_t host_param)
 {
+	if (wmi_handle->soc->pdev_param) {
+		if (host_param < wmi_pdev_param_max)
+			return wmi_handle->soc->pdev_param[host_param];
+		return WMI_UNAVAILABLE_PARAM;
+	}
+
 	return host_param;
 }
-#else
-static inline uint32_t convert_host_pdev_param_tlv(wmi_unified_t wmi_handle,
-				uint32_t host_param)
-{
-	if (host_param < wmi_pdev_param_max)
-		return wmi_handle->pdev_param[host_param];
 
-	return WMI_UNAVAILABLE_PARAM;
-}
-#endif
 /**
  * send_pdev_param_cmd_tlv() - set pdev parameters
  * @wmi_handle: wmi handle
@@ -1597,22 +1594,18 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
-#ifdef CONFIG_MCL
 static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
 				uint32_t host_param)
 {
+	if (wmi_handle->soc->vdev_param) {
+		if (host_param < wmi_vdev_param_max)
+			return wmi_handle->soc->vdev_param[host_param];
+		return WMI_UNAVAILABLE_PARAM;
+	}
+
 	return host_param;
 }
-#else
-static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
-				uint32_t host_param)
-{
-	if (host_param < wmi_vdev_param_max)
-		return wmi_handle->vdev_param[host_param];
 
-	return WMI_UNAVAILABLE_PARAM;
-}
-#endif
 /**
  *  send_vdev_set_param_cmd_tlv() - WMI vdev set parameter function
  *  @param wmi_handle      : handle to WMI.
@@ -11952,7 +11945,6 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_cfr_capture_support] =
 			WMI_SERVICE_CFR_CAPTURE_SUPPORT;
 }
-#ifndef CONFIG_MCL
 
 /**
  * populate_pdev_param_tlv() - populates pdev params
@@ -12401,7 +12393,6 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_rawmode_open_war] =
 					WMI_VDEV_PARAM_RAW_IS_ENCRYPTED;
 }
-#endif
 
 /**
  * populate_target_defines_tlv() - Populate target defines and params
@@ -12409,16 +12400,14 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
  *
  * Return: None
  */
-#ifndef CONFIG_MCL
 static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
 {
-	populate_pdev_param_tlv(wmi_handle->pdev_param);
-	populate_vdev_param_tlv(wmi_handle->vdev_param);
+	if (wmi_handle->soc->pdev_param)
+		populate_pdev_param_tlv(wmi_handle->soc->pdev_param);
+	if (wmi_handle->soc->vdev_param)
+		populate_vdev_param_tlv(wmi_handle->soc->vdev_param);
+
 }
-#else
-static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
-{ }
-#endif
 
 /**
  * wmi_ocb_ut_attach() - Attach OCB test framework

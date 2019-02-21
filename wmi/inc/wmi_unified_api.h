@@ -164,6 +164,9 @@ enum wmi_rx_exec_ctx {
  *  @param osdev            : NIC device
  *  @param target_type      : type of supported wmi command
  *  @param use_cookie       : flag to indicate cookie based allocation
+ *  @param enable_vdev_pdev_param_conversion : To enable pdev vdev parametric
+ *                                             id conversion from host type to
+ *                                             target type
  *  @param ops              : handle to wmi ops
  *  @psoc                   : objmgr psoc
  *  @max_commands           : max commands
@@ -173,6 +176,7 @@ struct wmi_unified_attach_params {
 	enum wmi_target_type target_type;
 	bool use_cookie;
 	bool is_async_ep;
+	bool enable_vdev_pdev_param_conversion;
 	struct wmi_rx_ops *rx_ops;
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t max_commands;

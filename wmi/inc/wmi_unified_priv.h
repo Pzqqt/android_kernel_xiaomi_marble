@@ -2001,10 +2001,6 @@ struct wmi_unified {
 	bool use_cookie;
 	bool wmi_stopinprogress;
 	uint32_t *wmi_events;
-#ifndef CONFIG_MCL
-	uint32_t *pdev_param;
-	uint32_t *vdev_param;
-#endif
 	uint32_t *services;
 	struct wmi_soc *soc;
 	uint16_t wmi_max_cmds;
@@ -2039,10 +2035,8 @@ struct wmi_soc {
 	/* WMI service bitmap received from target */
 	uint32_t *wmi_service_bitmap;
 	uint32_t *wmi_ext_service_bitmap;
-#ifndef CONFIG_MCL
-	uint32_t pdev_param[wmi_pdev_param_max];
-	uint32_t vdev_param[wmi_vdev_param_max];
-#endif
+	uint32_t *pdev_param;
+	uint32_t *vdev_param;
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
 	uint32_t soc_idx;
