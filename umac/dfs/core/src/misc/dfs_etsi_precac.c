@@ -113,6 +113,12 @@ void dfs_mark_etsi_precac_dfs(struct wlan_dfs *dfs, uint8_t *channels,
 		return;
 	}
 
+	/*
+	 * Here, the radar affected channels are only removed from etsi-precac
+	 * done list and etsi precac required list, but not added to NOL.
+	 * They are added to NOL by the dfs_radar_add_channel_list_to_nol()
+	 * function.
+	 */
 	PRECAC_LIST_LOCK(dfs);
 	for (i = 0; i < num_channels; i++) {
 		TAILQ_FOREACH_SAFE(precac_entry, &dfs->dfs_etsiprecac_done_list,
@@ -122,8 +128,16 @@ void dfs_mark_etsi_precac_dfs(struct wlan_dfs *dfs, uint8_t *channels,
 
 		TAILQ_REMOVE(&dfs->dfs_etsiprecac_done_list,
 			     precac_entry, pe_list);
-		TAILQ_INSERT_TAIL(&dfs->dfs_etsiprecac_required_list,
-				  precac_entry, pe_list);
+		qdf_mem_free(precac_entry);
+		}
+		TAILQ_FOREACH_SAFE(precac_entry,
+				   &dfs->dfs_etsiprecac_required_list,
+				   pe_list, tmp_precac_entry) {
+					if (channels[i] != precac_entry->ieee)
+						continue;
+		TAILQ_REMOVE(&dfs->dfs_etsiprecac_required_list,
+			     precac_entry, pe_list);
+		qdf_mem_free(tmp_precac_entry);
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
@@ -282,6 +296,9 @@ void dfs_print_etsi_precaclists(struct wlan_dfs *dfs)
 			 time_added);
 	}
 	PRECAC_LIST_UNLOCK(dfs);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "NOL list of VHT20 frequencies");
+	DFS_PRINT_NOL_LOCKED(dfs);
 }
 
 void dfs_reset_etsiprecaclists(struct wlan_dfs *dfs)
