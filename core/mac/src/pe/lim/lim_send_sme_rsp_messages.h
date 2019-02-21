@@ -37,8 +37,24 @@
 /* Functions for sending responses to Host */
 void lim_send_sme_rsp(struct mac_context *, uint16_t, tSirResultCodes, uint8_t,
 		      uint16_t);
-void lim_send_sme_start_bss_rsp(struct mac_context *, uint16_t, tSirResultCodes,
-				struct pe_session *, uint8_t, uint16_t);
+
+/**
+ * lim_send_sme_start_bss_rsp() - Send Start BSS response
+ * @mac: Pointer to Global MAC structure
+ * @msgType: Indicates message type
+ * @resultCode: Indicates the result of previously issued request
+ * @pe_session: PE session associated with the BSS
+ * @smesessionId: ID of the SME session associated with the BSS
+ *
+ * This function is called to send eWNI_SME_START_BSS_RSP
+ * message to applications above MAC Software.
+ */
+void lim_send_sme_start_bss_rsp(struct mac_context *mac,
+				uint16_t msgType,
+				tSirResultCodes resultCode,
+				struct pe_session *pe_session,
+				uint8_t smesessionId);
+
 void lim_send_sme_join_reassoc_rsp(struct mac_context *, uint16_t, tSirResultCodes,
 				   uint16_t, struct pe_session *, uint8_t, uint16_t);
 

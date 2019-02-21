@@ -526,36 +526,11 @@ lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 						   sme_join_rsp);
 }
 
-/**
- * lim_send_sme_start_bss_rsp()
- *
- ***FUNCTION:
- * This function is called to send eWNI_SME_START_BSS_RSP
- * message to applications above MAC Software.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param mac         Pointer to Global MAC structure
- * @param msgType      Indicates message type
- * @param resultCode   Indicates the result of previously issued
- *                     eWNI_SME_msgType_REQ message
- *
- * @return None
- */
-
-void
-lim_send_sme_start_bss_rsp(struct mac_context *mac,
-			   uint16_t msgType, tSirResultCodes resultCode,
-			   struct pe_session *pe_session, uint8_t smesessionId,
-			   uint16_t smetransactionId)
+void lim_send_sme_start_bss_rsp(struct mac_context *mac,
+				uint16_t msgType,
+				tSirResultCodes resultCode,
+				struct pe_session *pe_session,
+				uint8_t smesessionId)
 {
 
 	uint16_t size = 0;
@@ -655,10 +630,7 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	}
 	pSirSmeRsp->messageType = msgType;
 	pSirSmeRsp->length = size;
-
-	/* Update SME session Id and transaction Id */
 	pSirSmeRsp->sessionId = smesessionId;
-	pSirSmeRsp->transactionId = smetransactionId;
 	pSirSmeRsp->statusCode = resultCode;
 	if (pe_session != NULL)
 		pSirSmeRsp->staId = pe_session->staId;       /* else it will be always zero smeRsp StaID = 0 */

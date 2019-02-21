@@ -995,7 +995,7 @@ free:
 		session = NULL;
 	}
 	lim_send_sme_start_bss_rsp(mac_ctx, eWNI_SME_START_BSS_RSP, ret_code,
-		session, sme_session_id, sme_transaction_id);
+				   session, sme_session_id);
 }
 
 /**

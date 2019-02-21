@@ -152,7 +152,6 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	struct pe_session *pe_session = NULL;
 	tLimMlmStartCnf *pLimMlmStartCnf;
 	uint8_t smesessionId;
-	uint16_t smetransactionId;
 	uint8_t channelId;
 	uint8_t send_bcon_ind = false;
 
@@ -168,7 +167,6 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 		return;
 	}
 	smesessionId = pe_session->smeSessionId;
-	smetransactionId = pe_session->transactionId;
 
 	if (pe_session->limSmeState != eLIM_SME_WT_START_BSS_STATE) {
 		/*
@@ -205,7 +203,7 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	/* Send response to Host */
 	lim_send_sme_start_bss_rsp(mac, eWNI_SME_START_BSS_RSP,
 				((tLimMlmStartCnf *)pMsgBuf)->resultCode,
-				pe_session, smesessionId, smetransactionId);
+				pe_session, smesessionId);
 	if ((pe_session != NULL) &&
 		(((tLimMlmStartCnf *) pMsgBuf)->resultCode ==
 						eSIR_SME_SUCCESS)) {

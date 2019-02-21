@@ -708,7 +708,6 @@ struct start_bss_rsp {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_RSP */
 	uint16_t length;
 	uint8_t sessionId;
-	uint16_t transactionId; /* transaction ID for cmd */
 	tSirResultCodes statusCode;
 	tSirBssType bssType;    /* Add new type for WDS mode */
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
