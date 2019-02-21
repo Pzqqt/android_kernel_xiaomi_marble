@@ -2564,7 +2564,6 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionID */
 	uint8_t sme_session_id;
-	uint16_t sme_transaction_id;
 
 	if (msg_buf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -2577,7 +2576,6 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 	qdf_mem_copy(set_context_req, msg_buf,
 			sizeof(*set_context_req));
 	sme_session_id = set_context_req->sessionId;
-	sme_transaction_id = set_context_req->transactionId;
 
 	if ((!lim_is_sme_set_context_req_valid(mac_ctx, set_context_req))) {
 		pe_warn("received invalid SME_SETCONTEXT_REQ message");

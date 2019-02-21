@@ -15964,7 +15964,6 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 		pMsg->messageType = eWNI_SME_SETCONTEXT_REQ;
 		pMsg->length = msgLen;
 		pMsg->sessionId = (uint8_t) sessionId;
-		pMsg->transactionId = 0;
 		qdf_copy_macaddr(&pMsg->peer_macaddr, &peer_macaddr);
 		qdf_copy_macaddr(&pMsg->bssid,
 				 &pSession->connectedProfile.bssid);
