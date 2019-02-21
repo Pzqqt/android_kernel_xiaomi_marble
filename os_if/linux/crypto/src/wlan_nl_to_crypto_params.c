@@ -110,45 +110,57 @@ static const struct osif_akm_type_crypto_mapping
 		.akm_suite = WLAN_AKM_SUITE_FT_OVER_SAE,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FT_SAE,
 	},
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)) || \
+#if defined(WLAN_AKM_SUITE_FT_8021X) || \
 			defined(FEATURE_WLAN_FT_IEEE8021X)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FT_8021X,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X,
 	},
 #endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)) || \
+#if defined(WLAN_AKM_SUITE_FT_PSK) || \
 			defined(FEATURE_WLAN_FT_PSK)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FT_PSK,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FT_PSK,
 	},
 #endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)) || \
+#if defined(WLAN_AKM_SUITE_8021X_SUITE_B) || \
 		defined(FEATURE_WLAN_IEEE8021X_SUITE_B)
 	{
 		.akm_suite = WLAN_AKM_SUITE_8021X_SUITE_B,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B,
 	},
+#endif
+#if defined(WLAN_AKM_SUITE_8021X_SUITE_B_192) || \
+		defined(FEATURE_WLAN_IEEE8021X_SUITE_B)
 	{
 		.akm_suite = WLAN_AKM_SUITE_8021X_SUITE_B_192,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192,
 	},
 #endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)) || \
+#if defined(WLAN_AKM_SUITE_FILS_SHA256) || \
 				defined(FEATURE_WLAN_FILS)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FILS_SHA256,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FILS_SHA256,
 	},
+#endif
+#if defined(WLAN_AKM_SUITE_FILS_SHA384) || \
+				defined(FEATURE_WLAN_FILS)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FILS_SHA384,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FILS_SHA384,
 	},
+#endif
+#if defined(WLAN_AKM_SUITE_FT_FILS_SHA256) || \
+				defined(FEATURE_WLAN_FILS)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FT_FILS_SHA256,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256,
 	},
+#endif
+#if defined(WLAN_AKM_SUITE_FT_FILS_SHA384) || \
+				defined(FEATURE_WLAN_FILS)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FT_FILS_SHA384,
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384,
@@ -204,17 +216,21 @@ static const struct osif_cipher_crypto_mapping
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CMAC,
 		.cipher_len = WLAN_CRYPTO_KEY_CCMP_LEN,
 	},
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+#ifdef WLAN_CIPHER_SUITE_BIP_GMAC_128
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_GMAC_128,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GMAC,
 		.cipher_len = WLAN_CRYPTO_KEY_GMAC_LEN,
 	},
+#endif
+#ifdef WLAN_CIPHER_SUITE_BIP_GMAC_256
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_GMAC_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GMAC_256,
 		.cipher_len = WLAN_CRYPTO_KEY_GMAC_256_LEN,
 	},
+#endif
+#ifdef WLAN_CIPHER_SUITE_BIP_CMAC_256
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_CMAC_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CMAC_256,
