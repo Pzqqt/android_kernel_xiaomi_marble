@@ -1941,6 +1941,15 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, int channel,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
+#else
+static inline
+QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
+			    struct csr_roam_profile *profile,
+			    const tSirMacAddr bssid, int channel,
+			    uint8_t vdev_id, const tSirMacAddr connected_bssid)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 /**
  * sme_congestion_register_callback() - registers congestion callback

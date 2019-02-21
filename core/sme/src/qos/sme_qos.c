@@ -33,6 +33,7 @@
 
 #include "utils_parser.h"
 #include "sme_power_save_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 /* TODO : 6Mbps as Cisco APs seem to like only this value; analysis req.   */
@@ -7464,13 +7465,35 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	QDF_STATUS status;
+	struct csr_roam_session *session;
+	tCsrRoamConnectedProfile connected_profile;
+	struct csr_roam_profile *roam_profile;
+	bool roam_offload_enable = true;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: Invoked on session %d with UAPSD mask 0x%X",
 		  __func__, __LINE__, sessionId, pModFields->uapsd_mask);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	status = csr_reassoc(mac, sessionId, pModFields, &pSession->roamID,
-				fForce);
+
+	status = ucfg_mlme_get_roaming_offload(mac->psoc, &roam_offload_enable);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+	if (roam_offload_enable) {
+		session = CSR_GET_SESSION(mac, sessionId);
+		roam_profile = session->pCurRoamProfile;
+		connected_profile = session->connectedProfile;
+		status = sme_fast_reassoc(
+			MAC_HANDLE(mac),
+			roam_profile,
+			connected_profile.bssid.bytes,
+			connected_profile.operationChannel,
+			sessionId,
+			connected_profile.bssid.bytes);
+	} else {
+		status = csr_reassoc(mac, sessionId, pModFields,
+				     &pSession->roamID, fForce);
+	}
+
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Update the state to Handoff so subsequent requests are
 		 * queued until this one is finished
