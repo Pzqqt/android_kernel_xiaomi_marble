@@ -185,9 +185,9 @@ QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev);
  *
  * API to handle spectral dbr event
  *
- * Return: status
+ * Return: true to release buf
  */
-int spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
-			       struct direct_buf_rx_data *payload);
+bool spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+				struct direct_buf_rx_data *payload);
 #endif
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

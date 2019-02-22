@@ -208,8 +208,8 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 qdf_export_symbol(wlan_register_wmi_spectral_cmd_ops);
 
 #ifdef DIRECT_BUF_RX_ENABLE
-int spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
-			       struct direct_buf_rx_data *payload)
+bool spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+				struct direct_buf_rx_data *payload)
 {
 	struct spectral_context *sc;
 
@@ -223,7 +223,9 @@ int spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 	}
 
-	return sc->sptrlc_process_spectral_report(pdev, payload);
+	sc->sptrlc_process_spectral_report(pdev, payload);
+
+	return true;
 }
 #endif
 
