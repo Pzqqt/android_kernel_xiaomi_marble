@@ -544,7 +544,6 @@ void lim_fill_ft_session(struct mac_context *mac,
 	/* Fields to be filled later */
 	ft_session->pLimJoinReq = NULL;
 	ft_session->smeSessionId = pe_session->smeSessionId;
-	ft_session->transactionId = 0;
 
 	lim_extract_ap_capabilities(mac, (uint8_t *) pbssDescription->ieFields,
 			lim_get_ielen_from_bss_description(pbssDescription),

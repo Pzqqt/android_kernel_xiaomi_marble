@@ -126,7 +126,6 @@ struct pe_session {
 		uint8_t vdev_id;
 	};
 	struct wlan_objmgr_vdev *vdev;
-	uint16_t transactionId;
 
 	/* In AP role: BSSID and selfMacAddr will be the same. */
 	/* In STA role: they will be different */
