@@ -255,9 +255,9 @@ void dfs_detach(struct wlan_dfs *dfs)
 	dfs_timer_detach(dfs);
 	if (!dfs->dfs_is_offload_enabled)
 		dfs_main_detach(dfs);
-	dfs_etsi_precac_detach(dfs);
 	dfs_zero_cac_detach(dfs);
 	dfs_nol_detach(dfs);
+	dfs_etsi_precac_detach(dfs);
 }
 
 #ifndef WLAN_DFS_STATIC_MEM_ALLOC

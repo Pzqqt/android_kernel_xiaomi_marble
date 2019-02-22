@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -83,6 +83,22 @@ static inline void dfs_reset_etsi_precac_lists(struct wlan_dfs *dfs)
 void dfs_reset_etsiprecaclists(struct wlan_dfs *dfs);
 #else
 static inline void dfs_reset_etsiprecaclists(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/**
+ * dfs_add_to_etsi_precac_required_list()- Add channel to ETSI PreCAC Required
+ * list.
+ *
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to channel to be added to ETSI PreCAC Required List.
+ */
+#if defined(QCA_SUPPORT_ETSI_PRECAC_DFS)
+void dfs_add_to_etsi_precac_required_list(struct wlan_dfs *dfs, uint8_t *chan);
+#else
+static inline void dfs_add_to_etsi_precac_required_list(struct wlan_dfs *dfs,
+							uint8_t *chan)
 {
 }
 #endif
