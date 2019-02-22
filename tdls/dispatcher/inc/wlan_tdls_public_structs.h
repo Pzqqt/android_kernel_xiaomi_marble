@@ -1164,7 +1164,6 @@ struct tdls_send_mgmt_rsp {
 
 /**
  * struct tdls_mgmt_tx_completion_ind - TDLS TX completion PE --> TDLS module
- *                           same as struct sSirMgmtTxCompletionInd
  * @session_id: session id
  * @tx_complete_status: tx complete status
  * @psoc: soc object
@@ -1177,7 +1176,6 @@ struct tdls_mgmt_tx_completion_ind {
 
 /**
  * struct tdls_add_sta_rsp - TDLS Response struct PE --> TDLS module
- *                           same as struct sSirTdlsAddStaRsp
  * @status_code: status code as tSirResultCodes
  * @peermac: MAC address of the TDLS peer
  * @session_id: session id
@@ -1198,7 +1196,6 @@ struct tdls_add_sta_rsp {
 
 /**
  * struct tdls_del_sta_rsp - TDLS Response struct PE --> TDLS module
- *                           same as sSirTdlsDelStaRsp
  * @session_id: session id
  * @status_code: status code as tSirResultCodes
  * @peermac: MAC address of the TDLS peer
