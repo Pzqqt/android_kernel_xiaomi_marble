@@ -5062,7 +5062,7 @@ QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 	}
 
 	params.request_id = req->request_id;
-	params.session_id = req->session_id;
+	params.vdev_id = req->session_id;
 	params.max_retries = req->max_retries;
 	params.timeout = req->timeout;
 	params.ipv4_addr_type = req->ipv4_addr_type;
