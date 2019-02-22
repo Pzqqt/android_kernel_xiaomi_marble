@@ -431,10 +431,9 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
  */
 QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	wmi_buf_t buf;
 	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
-	int ret;
 	int len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
@@ -452,18 +451,11 @@ QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
 	WMITLV_GET_STRUCT_TLVLEN(
 	wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
 
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
-	if (ret != EOK) {
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-error:
-	if (buf)
+	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				      WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
+
 	return status;
 }
 
@@ -476,10 +468,9 @@ error:
  */
 QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	wmi_buf_t buf;
 	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
-	int ret;
 	int len = sizeof(*cmd);
 	uint8_t *buf_ptr;
 
@@ -500,18 +491,11 @@ QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
 		WMITLV_GET_STRUCT_TLVLEN(
 				wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
 
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
-
-	if (ret != EOK) {
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-	return QDF_STATUS_SUCCESS;
-
-error:
-	if (buf)
+	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				      WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
+
 	return status;
 }
 
@@ -558,10 +542,10 @@ QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 QDF_STATUS wma_set_wisa_params(tp_wma_handle wma_handle,
 				struct sir_wisa_params *wisa)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	wmi_buf_t buf;
 	wmi_vdev_wisa_cmd_fixed_param *cmd;
-	int ret, len = sizeof(*cmd);
+	int len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf)
@@ -576,16 +560,11 @@ QDF_STATUS wma_set_wisa_params(tp_wma_handle wma_handle,
 		WMITLV_GET_STRUCT_TLVLEN(
 				wmi_vdev_wisa_cmd_fixed_param));
 
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				   WMI_VDEV_WISA_CMDID);
-	if (ret != EOK) {
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-	return QDF_STATUS_SUCCESS;
+	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				      WMI_VDEV_WISA_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_buf_free(buf);
 
-error:
-	wmi_buf_free(buf);
 	return status;
 }
 
@@ -601,7 +580,6 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	uint8_t vdev_id;
-	int status = 0;
 	wmi_peer_set_param_cmd_fixed_param peer_set_param_fp = {0};
 
 	if (!wma_handle) {
@@ -638,12 +616,8 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(ta_dhcp_ind->peerMacAddr.bytes,
 				   &peer_set_param_fp.peer_macaddr);
 
-	status = wmi_unified_process_dhcp_ind(wma_handle->wmi_handle,
-						&peer_set_param_fp);
-	if (status != EOK)
-		return QDF_STATUS_E_FAILURE;
-
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_process_dhcp_ind(wma_handle->wmi_handle,
+					    &peer_set_param_fp);
 }
 
 /**

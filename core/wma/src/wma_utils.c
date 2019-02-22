@@ -2289,6 +2289,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 void wma_config_stats_ext_threshold(tp_wma_handle wma,
 				    struct sir_ll_ext_stats_threshold *thresh)
 {
+	QDF_STATUS status;
 	uint32_t len, tag, hdr_len;
 	uint8_t *buf_ptr;
 	wmi_buf_t buf;
@@ -2422,9 +2423,9 @@ void wma_config_stats_ext_threshold(tp_wma_handle wma,
 
 	WMA_LOGA("WMA --> WMI_PDEV_SET_STATS_THRESHOLD_CMDID(0x%x), length=%d",
 		 WMI_PDEV_SET_STATS_THRESHOLD_CMDID, len);
-	if (EOK != wmi_unified_cmd_send(wma->wmi_handle,
-					buf, len,
-					WMI_PDEV_SET_STATS_THRESHOLD_CMDID))
+	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				      WMI_PDEV_SET_STATS_THRESHOLD_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
 }
 

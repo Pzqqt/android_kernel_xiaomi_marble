@@ -7172,15 +7172,14 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
-	int ret;
 
-	ret = wmi_unified_flush_logs_to_fw_cmd(wma_handle->wmi_handle);
-	if (ret != EOK)
+	status = wmi_unified_flush_logs_to_fw_cmd(wma_handle->wmi_handle);
+	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
 	status = qdf_mc_timer_start(&wma_handle->log_completion_timer,
-			WMA_LOG_COMPLETION_TIMER);
-	if (status != QDF_STATUS_SUCCESS)
+				    WMA_LOG_COMPLETION_TIMER);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to start the log completion timer");
 }
 
@@ -7546,7 +7545,7 @@ static QDF_STATUS wma_process_beacon_debug_stats_req(tp_wma_handle wma_handle,
 static void wma_set_arp_req_stats(WMA_HANDLE handle,
 				  struct set_arp_stats_params *req_buf)
 {
-	int status;
+	QDF_STATUS status;
 	struct set_arp_stats *arp_stats;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
@@ -7563,9 +7562,8 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 	arp_stats = (struct set_arp_stats *)req_buf;
 	status = wmi_unified_set_arp_stats_req(wma_handle->wmi_handle,
 					       arp_stats);
-	if (status != EOK)
-		WMA_LOGE("%s: failed to set arp stats to FW",
-			 __func__);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to set arp stats to FW");
 }
 
 /**
@@ -7578,7 +7576,7 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 static void wma_get_arp_req_stats(WMA_HANDLE handle,
 				  struct get_arp_stats_params *req_buf)
 {
-	int status;
+	QDF_STATUS status;
 	struct get_arp_stats *arp_stats;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
@@ -7595,9 +7593,8 @@ static void wma_get_arp_req_stats(WMA_HANDLE handle,
 	arp_stats = (struct get_arp_stats *)req_buf;
 	status = wmi_unified_get_arp_stats_req(wma_handle->wmi_handle,
 					       arp_stats);
-	if (status != EOK)
-		WMA_LOGE("%s: failed to send get arp stats to FW",
-			 __func__);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to send get arp stats to FW");
 }
 
 /**
@@ -7610,7 +7607,7 @@ static void wma_get_arp_req_stats(WMA_HANDLE handle,
 static void wma_set_del_pmkid_cache(WMA_HANDLE handle,
 				    struct wmi_unified_pmk_cache *pmk_cache)
 {
-	int status;
+	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
@@ -7620,7 +7617,7 @@ static void wma_set_del_pmkid_cache(WMA_HANDLE handle,
 
 	status = wmi_unified_set_del_pmkid_cache(wma_handle->wmi_handle,
 						 pmk_cache);
-	if (status != EOK)
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("failed to send set/del pmkid cmd to fw");
 }
 

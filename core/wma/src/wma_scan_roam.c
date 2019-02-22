@@ -645,22 +645,15 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 					     uint32_t bcn_rssi_weight,
 					     uint32_t hirssi_delay_btw_scans)
 {
-	int status;
-
 	if (!wma_is_vdev_valid(vdev_id)) {
-		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		wma_err("Invalid vdev id:%d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = wmi_unified_roam_scan_offload_rssi_change_cmd(
+	return wmi_unified_roam_scan_offload_rssi_change_cmd(
 				wma_handle->wmi_handle,
 				vdev_id, rssi_change_thresh,
 				bcn_rssi_weight, hirssi_delay_btw_scans);
-	if (status != EOK)
-		return QDF_STATUS_E_FAILURE;
-
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -944,7 +937,7 @@ void wma_process_set_pdev_ie_req(tp_wma_handle wma,
 void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params)
 {
-	int ret;
+	QDF_STATUS status;
 	wmi_pdev_set_ht_ie_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len;
@@ -977,9 +970,10 @@ void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 			     (uint8_t *)ie_params->ie_ptr,
 			     ie_params->ie_len);
 	}
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-					WMI_PDEV_SET_HT_CAP_IE_CMDID);
-	if (ret != EOK)
+
+	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				      WMI_PDEV_SET_HT_CAP_IE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
 }
 
@@ -996,7 +990,7 @@ void wma_process_set_pdev_ht_ie_req(tp_wma_handle wma,
 void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params)
 {
-	int ret;
+	QDF_STATUS status;
 	wmi_pdev_set_vht_ie_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len;
@@ -1029,9 +1023,10 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 				(uint8_t *)ie_params->ie_ptr,
 				ie_params->ie_len);
 	}
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-			WMI_PDEV_SET_VHT_CAP_IE_CMDID);
-	if (ret != EOK)
+
+	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				      WMI_PDEV_SET_VHT_CAP_IE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
 }
 
@@ -1953,9 +1948,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 }
 
 void wma_update_per_roam_config(WMA_HANDLE handle,
-				 struct wmi_per_roam_config_req *req_buf)
+				struct wmi_per_roam_config_req *req_buf)
 {
-	int status;
+	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
@@ -1965,10 +1960,9 @@ void wma_update_per_roam_config(WMA_HANDLE handle,
 	}
 
 	status = wmi_unified_set_per_roam_config(wma_handle->wmi_handle,
-						req_buf);
-	if (status != EOK)
-		WMA_LOGE("%s: failed to set per roam config to FW",
-			__func__);
+						 req_buf);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to set per roam config to FW");
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -5094,10 +5088,9 @@ QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
  */
 QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma, int32_t vdev_id)
 {
-
+	QDF_STATUS status;
 	wmi_buf_t buf;
 	wmi_obss_scan_disable_cmd_fixed_param *cmd;
-	int ret;
 	int len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
@@ -5113,14 +5106,12 @@ QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma, int32_t vdev_id)
 			wmi_obss_scan_disable_cmd_fixed_param));
 
 	cmd->vdev_id = vdev_id;
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				WMI_OBSS_SCAN_DISABLE_CMDID);
-	if (ret != EOK) {
+	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				      WMI_OBSS_SCAN_DISABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -5133,9 +5124,9 @@ QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma, int32_t vdev_id)
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 				struct obss_ht40_scanind *req)
 {
+	QDF_STATUS status;
 	wmi_buf_t buf;
 	wmi_obss_scan_enable_cmd_fixed_param *cmd;
-	int ret;
 	int len = 0;
 	uint8_t *buf_ptr, i;
 	uint8_t *channel_list;
@@ -5208,13 +5199,12 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 			qdf_roundup(1, sizeof(uint32_t)));
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				WMI_OBSS_SCAN_ENABLE_CMDID);
-	if (ret != EOK) {
+	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				      WMI_OBSS_SCAN_ENABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
+
+	return status;
 }
 
 int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,

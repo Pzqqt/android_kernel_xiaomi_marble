@@ -58,12 +58,12 @@
  * @wmi_handle: wmi handle
  * @param_value: parameter value
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS
  */
-static int
+static QDF_STATUS
 wma_unified_modem_power_state(wmi_unified_t wmi_handle, uint32_t param_value)
 {
-	int ret;
+	QDF_STATUS status;
 	wmi_modem_power_state_cmd_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
@@ -80,12 +80,12 @@ wma_unified_modem_power_state(wmi_unified_t wmi_handle, uint32_t param_value)
 	cmd->modem_power_state = param_value;
 	WMA_LOGD("%s: Setting cmd->modem_power_state = %u", __func__,
 		 param_value);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				     WMI_MODEM_POWER_STATE_CMDID);
-	if (ret != EOK)
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_MODEM_POWER_STATE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
 		wmi_buf_free(buf);
 
-	return ret;
+	return status;
 }
 
 /**
@@ -1544,19 +1544,19 @@ QDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
 QDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
 					tSirModemPowerStateInd *pReq)
 {
-	int32_t ret;
+	QDF_STATUS status;
 	tp_wma_handle wma = (tp_wma_handle) wma_ptr;
 
 	WMA_LOGD("%s: WMA notify Modem Power State %d", __func__, pReq->param);
 
-	ret = wma_unified_modem_power_state(wma->wmi_handle, pReq->param);
-	if (ret) {
-		WMA_LOGE("%s: Fail to notify Modem Power State %d",
-			 __func__, pReq->param);
-		return QDF_STATUS_E_FAILURE;
+	status = wma_unified_modem_power_state(wma->wmi_handle, pReq->param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Failed to notify Modem Power State %d", pReq->param);
+		return status;
 	}
 
 	WMA_LOGD("Successfully notify Modem Power State %d", pReq->param);
+
 	return QDF_STATUS_SUCCESS;
 }
 
