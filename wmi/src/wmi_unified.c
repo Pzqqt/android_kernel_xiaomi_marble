@@ -1555,8 +1555,8 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 	wmi_buf_t wmi_buf;
 
 	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
-		wmi_nofl_err("%s:%d, Invalid len:%d", func, line, len);
-		QDF_DEBUG_PANIC();
+		QDF_DEBUG_PANIC("Invalid length %u (via %s:%u)",
+				len, func, line);
 		return NULL;
 	}
 
@@ -1579,6 +1579,7 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 	 * Set the length of the buffer to match the allocation size.
 	 */
 	qdf_nbuf_set_pktlen(wmi_buf, len);
+
 	return wmi_buf;
 }
 qdf_export_symbol(wmi_buf_alloc_fl);
@@ -1666,15 +1667,14 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
-		htc_tag =
-			(uint16_t)wmi_handle->ops->wmi_set_htc_tx_tag(
-						wmi_handle, buf, cmd_id);
+		htc_tag = wmi_handle->ops->wmi_set_htc_tx_tag(wmi_handle, buf,
+							      cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
-		(!wmi_is_pm_resume_cmd(cmd_id))) {
-		wmi_nofl_err("%s:%d, Target is suspended", func, line);
-		QDF_DEBUG_PANIC();
+		   !wmi_is_pm_resume_cmd(cmd_id)) {
+		QDF_DEBUG_PANIC("Target is suspended (via %s:%u)", func, line);
 		return QDF_STATUS_E_BUSY;
 	}
+
 	if (wmi_handle->wmi_stopinprogress) {
 		wmi_nofl_err("%s:%d, WMI stop in progress", func, line);
 		return QDF_STATUS_E_INVAL;

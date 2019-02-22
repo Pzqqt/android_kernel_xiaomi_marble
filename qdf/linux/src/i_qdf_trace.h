@@ -278,12 +278,13 @@ static inline void __qdf_bug(void)
 
 /**
  * QDF_DEBUG_PANIC() - In debug builds, panic, otherwise do nothing
- * @reason: An optional reason format string, followed by args
+ * @reason_fmt: a format string containing the reason for the panic
+ * @args: zero or more printf compatible logging arguments
  *
  * Return: None
  */
-#define QDF_DEBUG_PANIC(reason...) \
-	QDF_DEBUG_PANIC_FL(__func__, __LINE__, "" reason)
+#define QDF_DEBUG_PANIC(reason_fmt, args...) \
+	QDF_DEBUG_PANIC_FL(__func__, __LINE__, reason_fmt, ## args)
 
 /**
  * QDF_DEBUG_PANIC_FL() - In debug builds, panic, otherwise do nothing
