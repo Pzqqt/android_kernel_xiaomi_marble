@@ -50,10 +50,18 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if ((params->period < 0) || (params->period > MAX_CFR_PRD) ||
-		(params->period % 10) ||
-		(!(params->period) && (pa->cfr_timer_enable))) {
-		qdf_info("Invalid period\n");
+		(params->period % 10)) {
+		cfr_err("Invalid period value: %d\n", params->period);
 		return -EINVAL;
+	}
+
+	if (!(params->period) && (pa->cfr_timer_enable)) {
+		cfr_err("Single shot capture is not allowed during periodic capture\n");
+		return -EINVAL;
+	}
+
+	if ((params->period) && !(pa->cfr_timer_enable)) {
+		cfr_err("Global periodic timer is not enabled, configure global cfr timer\n");
 	}
 
 	if (params->period) {

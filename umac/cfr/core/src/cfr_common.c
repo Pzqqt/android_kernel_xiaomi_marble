@@ -40,6 +40,7 @@ wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	qdf_mem_zero(cfr_sc, sizeof(struct psoc_cfr));
 	cfr_sc->psoc_obj = psoc;
 
 	wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_CFR,
@@ -80,7 +81,7 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		cfr_err("Failed to allocate pdev_cfr object\n");
 		return QDF_STATUS_E_NOMEM;
 	}
-
+	qdf_mem_zero(pa, sizeof(struct pdev_cfr));
 	pa->pdev_obj = pdev;
 
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_UMAC_COMP_CFR,

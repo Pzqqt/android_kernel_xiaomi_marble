@@ -37,6 +37,75 @@
 #define cfr_debug(format, args...) \
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_CFR, format, ## args)
 
+#define IEEE80211_ADDR_LEN 6
+enum cfrmetaversion {
+	CFR_META_VERSION_NONE,
+	CFR_META_VERSION_1,
+	CFR_META_VERSION_MAX = 0xFF,
+};
+
+enum cfrdataversion {
+	CFR_DATA_VERSION_NONE,
+	CFR_DATA_VERSION_1,
+	CFR_DATA_VERSION_MAX = 0xFF,
+};
+
+enum cfrplatformtype {
+	CFR_PLATFORM_TYPE_NONE,
+	CFR_PLATFORM_TYPE_MIPS,
+	CFR_PLATFORM_TYPE_ARM,
+	CFR_PLATFFORM_TYPE_MAX = 0xFF,
+};
+
+enum cfrradiotype {
+	CFR_CAPTURE_RADIO_NONE,
+	CFR_CAPTURE_RADIO_OSPREY,
+	CFR_CAPTURE_RADIO_PEAKCOCK,
+	CFR_CAPTURE_RADIO_SCORPION,
+	CFR_CAPTURE_RADIO_HONEYBEE,
+	CFR_CAPTURE_RADIO_DRAGONFLY,
+	CFR_CAPTURE_RADIO_JET,
+	CFR_CAPTURE_RADIO_PEREGRINE = 17,
+	CFR_CAPTURE_RADIO_SWIFT,
+	CFR_CAPTURE_RADIO_BEELINER,
+	CFR_CAPTURE_RADIO_CASCADE,
+	CFR_CAPTURE_RADIO_DAKOTA,
+	CFR_CAPTURE_RADIO_BESRA,
+	CFR_CAPTURE_RADIO_HKV2,
+	CFR_CAPTURE_RADIO_MAX = 0xFF,
+};
+
+struct cfr_metadata_version_1 {
+	u_int8_t    peer_addr[IEEE80211_ADDR_LEN];
+	u_int8_t    status;
+	u_int8_t    capture_bw;
+	u_int8_t    channel_bw;
+	u_int8_t    phy_mode;
+	u_int16_t   prim20_chan;
+	u_int16_t   center_freq1;
+	u_int16_t   center_freq2;
+	u_int8_t    capture_mode;
+	u_int8_t    capture_type;
+	u_int8_t    sts_count;
+	u_int8_t    num_rx_chain;
+	u_int32_t   timestamp;
+	u_int32_t   length;
+} __attribute__ ((__packed__));
+
+struct csi_cfr_header {
+	u_int32_t   start_magic_num;
+	u_int32_t   vendorid;
+	u_int8_t    cfr_metadata_version;
+	u_int8_t    cfr_data_version;
+	u_int8_t    chip_type;
+	u_int8_t    pltform_type;
+	u_int32_t   Reserved;
+
+	union {
+		struct cfr_metadata_version_1 meta_v1;
+	} u;
+} __attribute__ ((__packed__));
+
 /**
  * struct cfr_capture_params - structure to store cfr config param
  * bandwidth: bandwitdh of capture
@@ -73,6 +142,50 @@ struct cfr_wmi_host_mem_chunk {
 	uint32_t req_id;
 };
 
+struct whal_cfir_dma_hdr {
+	uint16_t
+		// 'BA'
+		tag                 : 8,
+		// '02', length of header in 4 octet units
+		length              : 6,
+		// 00
+		reserved            : 2;
+	uint16_t
+		// [16]
+		upload_done         : 1,
+		// [17:18], 0: invalid, 1: CFR, 2: CIR, 3: DebugH
+		capture_type        : 3,
+		// [19:20], 0: Legacy, 1: HT, 2: VHT, 3: HE
+		preamble_type       : 2,
+		// [21:23], 0: 1-stream, 1: 2-stream, ..., 7: 8-stream
+		nss                 : 3,
+		// [24:27], 0: invalid, 1: 1-chain, 2: 2-chain, etc.
+		num_chains          : 3,
+		// [28:30], 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160 MHz
+		upload_pkt_bw       : 3,    // [31]
+		sw_peer_id_valid    : 1;
+	uint16_t
+		sw_peer_id          : 16;   // [15:0]
+	uint16_t
+		phy_ppdu_id         : 16;   // [15:0]
+};
+
+#define MAX_LUT_ENTRIES 140 /* For HKv2 136 is max */
+
+struct look_up_table {
+	bool dbr_recv;
+	bool tx_recv;
+	uint8_t *data; /* capture payload */
+	uint32_t data_len; /* capture len */
+	uint16_t dbr_ppdu_id; /* ppdu id from dbr */
+	uint16_t tx_ppdu_id; /* ppdu id from TX event */
+	qdf_dma_addr_t dbr_address; /* capture len */
+	uint32_t tx_address1; /* capture len */
+	uint32_t tx_address2; /* capture len */
+	struct csi_cfr_header header;
+	struct whal_cfir_dma_hdr dma_hdr;
+};
+
 /**
  * struct pdev_cfr - private pdev object for cfr
  * pdev_obj: pointer to pdev object
@@ -90,15 +203,16 @@ struct pdev_cfr {
 	struct cfr_wmi_host_mem_chunk cfr_mem_chunk;
 	uint16_t cfr_max_sta_count;
 	uint16_t cfr_current_sta_count;
-
 	uint32_t num_subbufs;
 	uint32_t subbuf_size;
 	struct qal_streamfs_chan *chan_ptr;
 	struct qal_dentry_t *dir_ptr;
-	/*
-	 * More fileds will come for data interface
-	 * to stitch Tx completion & D-DMA completions
-	 */
+	struct look_up_table lut[MAX_LUT_ENTRIES];
+	uint32_t dbr_buf_size;
+	uint32_t dbr_num_bufs;
+	uint32_t tx_evt_cnt;
+	uint32_t dbr_evt_cnt;
+	uint32_t release_cnt;
 };
 
 #define PEER_CFR_CAPTURE_ENABLE   1

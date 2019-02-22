@@ -15,44 +15,19 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _TARGET_IF_CFR_H_
+#define _TARGET_IF_CFR_H_
+
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
-#define IEEE80211_ADDR_LEN        6
+#define PEER_CFR_CAPTURE_ENABLE   1
+#define PEER_CFR_CAPTURE_DISABLE  0
 
-struct cfr_metadata_version_1 {
-	u_int8_t    peer_addr[IEEE80211_ADDR_LEN];
-	u_int8_t    status;
-	u_int8_t    capture_bw;
-	u_int8_t    channel_bw;
-	u_int8_t    phy_mode;
-	u_int16_t   prim20_chan;
-	u_int16_t   center_freq1;
-	u_int16_t   center_freq2;
-	u_int8_t    capture_mode;
-	u_int8_t    capture_type;
-	u_int8_t    sts_count;
-	u_int8_t    num_rx_chain;
-	u_int32_t   timestamp;
-	u_int32_t   length;
-} __attribute__ ((__packed__));
-
-struct csi_cfr_header {
-	u_int32_t   start_magic_num;
-	u_int32_t   vendorid;
-	u_int8_t    cfr_metadata_version;
-	u_int8_t    cfr_data_version;
-	u_int8_t    chip_type;
-	u_int8_t    pltform_type;
-	u_int32_t   Reserved;
-
-	union {
-		struct cfr_metadata_version_1 meta_v1;
-	} u;
-} __attribute__ ((__packed__));
 
 /**
  * target_if_cfr_init_pdev() - Inits cfr pdev and registers necessary handlers.
@@ -170,4 +145,4 @@ QDF_STATUS cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev);
-
+#endif
