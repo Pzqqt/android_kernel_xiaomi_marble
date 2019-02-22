@@ -47,6 +47,10 @@
 #include "wlan_crypto_global_def.h"
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+#include "wlan_cfr_utils_api.h"
+#endif
+
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_dfs_ioctl.h>
 
@@ -456,6 +460,30 @@ struct wlan_lmac_if_sa_api_tx_ops {
 
 #endif
 
+#ifdef WLAN_CFR_ENABLE
+/**
+ * struct wlan_lmac_if_cfr_tx_ops - CFR specific tx function pointers
+ * @cfr_init_pdev: Initialize CFR
+ * @cfr_deinit_pdev: De-initialize CFR
+ * @cfr_enable_cfr_timer: Function to enable CFR timer
+ * @cfr_start_capture: Function to start CFR capture
+ * @cfr_stop_capture: Function to stop CFR capture
+ */
+struct wlan_lmac_if_cfr_tx_ops {
+	int (*cfr_init_pdev)(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_pdev *pdev);
+	int (*cfr_deinit_pdev)(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev);
+	int (*cfr_enable_cfr_timer)(struct wlan_objmgr_pdev *pdev,
+				    uint32_t cfr_timer);
+	int (*cfr_start_capture)(struct wlan_objmgr_pdev *pdev,
+				 struct wlan_objmgr_peer *peer,
+				 struct cfr_capture_params *params);
+	int (*cfr_stop_capture)(struct wlan_objmgr_pdev *pdev,
+				struct wlan_objmgr_peer *peer);
+};
+#endif /* WLAN_CFR_ENABLE */
+
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 struct wmi_spectral_cmd_ops;
 /**
@@ -817,6 +845,10 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef WLAN_SA_API_ENABLE
 	struct wlan_lmac_if_sa_api_tx_ops sa_api_tx_ops;
+#endif
+
+#ifdef WLAN_CFR_ENABLE
+	struct wlan_lmac_if_cfr_tx_ops cfr_tx_ops;
 #endif
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

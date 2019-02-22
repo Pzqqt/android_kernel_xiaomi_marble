@@ -415,7 +415,7 @@ void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 	}
 
 	pktlog_sethandle(&handle->pl_dev, scn);
-	pktlog_set_callback_regtype(PKTLOG_LITE_CALLBACK_REGISTRATION);
+	pktlog_set_callback_regtype(PKTLOG_DEFAULT_CALLBACK_REGISTRATION);
 
 	if (pktlogmod_init(scn)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

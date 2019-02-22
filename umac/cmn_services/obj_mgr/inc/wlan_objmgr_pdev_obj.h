@@ -117,6 +117,8 @@
 #define WLAN_PDEV_OP_MIN_RSSI_ENABLE    0x00010000
    /* PDEV VDEV restart is in progress */
 #define WLAN_PDEV_OP_RESTART_INPROGRESS 0x00020000
+   /* PDEV MBSSID VDEV restart trigger */
+#define WLAN_PDEV_OP_MBSSID_RESTART     0x00040000
 
 
 struct osif_pdev_priv;

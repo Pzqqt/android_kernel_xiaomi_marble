@@ -875,6 +875,31 @@ struct hidden_ssid_vdev_restart_params {
 #endif
 };
 
+#ifdef WLAN_CFR_ENABLE
+
+#define WMI_HOST_PEER_CFR_TIMER_ENABLE   1
+#define WMI_HOST_PEER_CFR_TIMER_DISABLE  0
+
+/**
+ * struct peer_cfr_params - peer cfr capture cmd parameter
+ * @request: enable/disable cfr capture
+ * @macaddr: macaddr of the client
+ * @vdev_id: vdev id
+ * @periodicity: cfr capture period
+ * @bandwidth: bandwidth of cfr capture
+ * @capture_method: cfr capture method/type
+ */
+struct peer_cfr_params {
+	uint32_t request;
+	uint8_t  *macaddr;
+	uint32_t vdev_id;
+	uint32_t periodicity;
+	uint32_t bandwidth;
+	uint32_t capture_method;
+};
+
+#endif /* WLAN_CFR_ENABLE */
+
 #ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
  * struct vdev_set_params - vdev set cmd parameter
@@ -4882,7 +4907,7 @@ typedef enum {
 	wmi_pdev_param_sub_channel_marking,
 	wmi_pdev_param_ul_ppdu_duration,
 	wmi_pdev_param_equal_ru_allocation_enable,
-
+	wmi_pdev_param_per_peer_prd_cfr_enable,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -5198,6 +5223,7 @@ typedef enum {
 	wmi_service_hw_db2dbm_support,
 	wmi_service_wlm_stats_support,
 	wmi_service_ul_ru26_allowed,
+	wmi_service_cfr_capture_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

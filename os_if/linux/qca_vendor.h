@@ -904,6 +904,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES_INDEX,
 };
 
 /**
@@ -2932,6 +2933,12 @@ enum qca_wlan_vendor_attr_get_logger_features {
  *	to specify negotiated rate flags i.e. ht, vht and channel width
  * @QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_FREQ: Unsigned 32bit value to
  *	specify the operating frequency
+ * @QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_MAC_ADDR: MAC Address of the peer
+ * (STA / AP ) for the connected link.
+ * @QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_STA_FLAGS: Attribute containing a
+ * &struct nl80211_sta_flag_update for the respective connected link. MAC
+ * address of the peer represented by
+ * QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_MAC_ADDR.
  * @QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_AFTER_LAST: after last
  * @QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_MAX: max value
  */
@@ -2940,6 +2947,8 @@ enum qca_wlan_vendor_attr_link_properties {
 	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_NSS = 1,
 	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_RATE_FLAGS = 2,
 	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_FREQ = 3,
+	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_MAC_ADDR  = 4,
+	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_STA_FLAGS  = 5,
 
 	/* KEEP LAST */
 	QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_AFTER_LAST,

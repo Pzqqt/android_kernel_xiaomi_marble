@@ -518,6 +518,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	QDF_STATUS m_copy_status = QDF_STATUS_SUCCESS;
 	struct cdp_pdev_mon_stats *rx_mon_stats;
 	int smart_mesh_status;
+	enum WDI_EVENT pktlog_mode = WDI_NO_VAL;
 
 	ppdu_info = &pdev->ppdu_info;
 	rx_mon_stats = &pdev->rx_mon_stats;
@@ -553,9 +554,16 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			dp_rx_process_peer_based_pktlog(soc, ppdu_info,
 							status_nbuf, mac_id);
 		} else {
-			dp_wdi_event_handler(WDI_EVENT_RX_DESC, soc,
-					     status_nbuf, HTT_INVALID_PEER,
-					     WDI_NO_VAL, mac_id);
+			if (pdev->rx_pktlog_mode == DP_RX_PKTLOG_FULL)
+				pktlog_mode = WDI_EVENT_RX_DESC;
+			else if (pdev->rx_pktlog_mode == DP_RX_PKTLOG_LITE)
+				pktlog_mode = WDI_EVENT_LITE_RX;
+
+			if (pktlog_mode != WDI_NO_VAL)
+				dp_wdi_event_handler(pktlog_mode, soc,
+						     status_nbuf,
+						     HTT_INVALID_PEER,
+						     WDI_NO_VAL, mac_id);
 		}
 
 		/* smart monitor vap and m_copy cannot co-exist */

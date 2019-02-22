@@ -10676,6 +10676,52 @@ static QDF_STATUS extract_single_phyerr_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_CFR_ENABLE
+/**
+ * send_peer_cfr_capture_cmd_tlv() - configure cfr params in fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold peer cfr config parameter
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_cfr_capture_cmd_tlv(wmi_unified_t wmi_handle,
+						struct peer_cfr_params *param)
+{
+	wmi_peer_cfr_capture_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(*cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_peer_cfr_capture_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_cfr_capture_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_peer_cfr_capture_cmd_fixed_param));
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->macaddr, &cmd->mac_addr);
+	cmd->request = param->request;
+	cmd->vdev_id = param->vdev_id;
+	cmd->periodicity = param->periodicity;
+	cmd->bandwidth = param->bandwidth;
+	cmd->capture_method = param->capture_method;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PEER_CFR_CAPTURE_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_PEER_CFR_CAPTURE_CMDID");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+#endif /* WLAN_CFR_ENABLE */
+
 /**
  * extract_esp_estimation_ev_param_tlv() - extract air time from event
  * @wmi_handle: wmi handle
@@ -11137,6 +11183,11 @@ struct wmi_ops tlv_ops =  {
 	.extract_offload_bcn_tx_status_evt = extract_offload_bcn_tx_status_evt,
 	.extract_ctl_failsafe_check_ev_param =
 		extract_ctl_failsafe_check_ev_param_tlv,
+#ifdef WLAN_CFR_ENABLE
+	.send_peer_cfr_capture_cmd =
+		send_peer_cfr_capture_cmd_tlv,
+#endif
+
 };
 
 /**
@@ -11689,6 +11740,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_WLM_STATS_REQUEST;
 	wmi_service[wmi_service_infra_mbssid] = WMI_SERVICE_INFRA_MBSSID;
 	wmi_service[wmi_service_ul_ru26_allowed] = WMI_SERVICE_UL_RU26_ALLOWED;
+	wmi_service[wmi_service_cfr_capture_support] =
+			WMI_SERVICE_CFR_CAPTURE_SUPPORT;
 }
 #ifndef CONFIG_MCL
 
@@ -11948,6 +12001,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 				WMI_PDEV_PARAM_SET_UL_PPDU_DURATION;
 	pdev_param[wmi_pdev_param_equal_ru_allocation_enable] =
 				WMI_PDEV_PARAM_EQUAL_RU_ALLOCATION_ENABLE;
+	pdev_param[wmi_pdev_param_per_peer_prd_cfr_enable] =
+				WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE;
 }
 
 /**

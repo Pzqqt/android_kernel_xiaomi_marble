@@ -1455,8 +1455,7 @@ process_pktlog_lite(void *context, void *log_data, uint16_t log_type)
 	pl_hdr.timestamp = 0;
 	log_size = pl_hdr.size;
 	rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
-						  log_size, &pl_hdr);
-
+						   log_size, &pl_hdr);
 	if (rxstat_log.rx_desc == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Rx descriptor is NULL", __func__);
