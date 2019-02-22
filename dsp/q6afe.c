@@ -345,6 +345,14 @@ static void doa_tracking_mon_afe_cb_handler(uint32_t opcode, uint32_t *payload,
 	size_t expected_size =
 		sizeof(u32) + sizeof(struct doa_tracking_mon_param);
 
+	if (payload[0]) {
+		atomic_set(&this_afe.status, payload[0]);
+		atomic_set(&this_afe.state, 0);
+		pr_err("%s: doa_tracking_mon_resp status: %d payload size %d\n",
+			__func__, payload[0], payload_size);
+		return;
+	}
+
 	switch (opcode) {
 	case AFE_PORT_CMDRSP_GET_PARAM_V2:
 		expected_size += sizeof(struct param_hdr_v1);
@@ -378,13 +386,7 @@ static void doa_tracking_mon_afe_cb_handler(uint32_t opcode, uint32_t *payload,
 		return;
 	}
 
-	if (!this_afe.doa_tracking_mon_resp.status) {
-		atomic_set(&this_afe.state, 0);
-	} else {
-		pr_debug("%s: doa_tracking_mon_resp status: %d\n", __func__,
-			 this_afe.doa_tracking_mon_resp.status);
-		atomic_set(&this_afe.state, -1);
-	}
+	atomic_set(&this_afe.state, 0);
 }
 
 static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
