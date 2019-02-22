@@ -3292,18 +3292,43 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			mi2s_tx_cfg[TERT_MI2S].channels;
 		break;
 
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0:
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_0:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				cdc_dma_rx_cfg[idx].bit_format);
+		rate->min = rate->max = cdc_dma_rx_cfg[idx].sample_rate;
+		channels->min = channels->max = cdc_dma_rx_cfg[idx].channels;
+		break;
+
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_1:
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2:
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_0:
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_3:
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_4:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
 		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
-			       cdc_dma_tx_cfg[idx].bit_format);
+				cdc_dma_tx_cfg[idx].bit_format);
 		rate->min = rate->max = cdc_dma_tx_cfg[idx].sample_rate;
 		channels->min = channels->max = cdc_dma_tx_cfg[idx].channels;
 		break;
 
-	default:
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				SNDRV_PCM_FORMAT_S32_LE);
 		rate->min = rate->max = SAMPLING_RATE_8KHZ;
+		channels->min = channels->max = msm_vi_feed_tx_ch;
+		break;
+
+	default:
+		rate->min = rate->max = SAMPLING_RATE_48KHZ;
 		break;
 	}
 
