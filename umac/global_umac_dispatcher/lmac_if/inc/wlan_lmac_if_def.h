@@ -714,6 +714,8 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_get_phymode_info:               Get phymode info.
  * @dfs_reg_ev_handler:                 Register dfs event handler.
  * @dfs_process_emulate_bang_radar_cmd: Process emulate bang radar test command.
+ * @dfs_agile_ch_cfg_cmd:               Send Agile Channel Configuration command
+ * @dfs_ocac_abort_cmd:                 Send Off-Channel CAC abort command.
  * @dfs_is_pdev_5ghz:                   Check if the given pdev is 5GHz.
  * @dfs_set_phyerr_filter_offload:      Config phyerr filter offload.
  * @dfs_send_offload_enable_cmd:        Send dfs offload enable command to fw.
@@ -752,6 +754,9 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
+	QDF_STATUS (*dfs_agile_ch_cfg_cmd)(struct wlan_objmgr_pdev *pdev,
+					   uint8_t *ch_freq);
+	QDF_STATUS (*dfs_ocac_abort_cmd)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_is_pdev_5ghz)(struct wlan_objmgr_pdev *pdev,
 			bool *is_5ghz);
 	QDF_STATUS (*dfs_set_phyerr_filter_offload)(
@@ -1229,6 +1234,9 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_set_current_channel:          Set DFS current channel.
  * @dfs_process_radar_ind:            Process radar found indication.
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
+ * @dfs_agile_precac_start:           Initiate Agile PreCAC run.
+ * @dfs_set_agile_precac_state:       Set agile precac state.
+ * @dfs_dfs_ocac_complete_ind:        Process offchan cac complete indication.
  * @dfs_stop:                         Clear dfs timers.
  * @dfs_enable_stadfs:                Enable/Disable STADFS capability.
  * @dfs_is_stadfs_enabled:            Get STADFS capability value.
@@ -1277,6 +1285,12 @@ struct wlan_lmac_if_dfs_rx_ops {
 					      uint32_t *phy_mode,
 					      bool *dfs_set_cfreq2,
 					      bool *set_agile);
+	QDF_STATUS (*dfs_agile_precac_start)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_set_agile_precac_state)(struct wlan_objmgr_pdev *pdev,
+						 int agile_precac_state);
+	QDF_STATUS
+	(*dfs_dfs_ocac_complete_ind)(struct wlan_objmgr_pdev *pdev,
+				     struct vdev_adfs_complete_status *ocac_st);
 	QDF_STATUS (*dfs_start_precac_timer)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_cancel_precac_timer)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_override_precac_timeout)(

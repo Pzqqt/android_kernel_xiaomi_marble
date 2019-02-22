@@ -381,6 +381,10 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		tgt_dfs_is_precac_timer_running;
 	dfs_rx_ops->dfs_find_vht80_chan_for_precac =
 		tgt_dfs_find_vht80_chan_for_precac;
+	dfs_rx_ops->dfs_agile_precac_start =
+		tgt_dfs_agile_precac_start;
+	dfs_rx_ops->dfs_set_agile_precac_state =
+		tgt_dfs_set_agile_precac_state;
 	dfs_rx_ops->dfs_start_precac_timer = utils_dfs_start_precac_timer;
 	dfs_rx_ops->dfs_cancel_precac_timer = utils_dfs_cancel_precac_timer;
 	dfs_rx_ops->dfs_override_precac_timeout =
@@ -392,6 +396,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	dfs_rx_ops->dfs_set_current_channel = tgt_dfs_set_current_channel;
 	dfs_rx_ops->dfs_process_radar_ind = tgt_dfs_process_radar_ind;
 	dfs_rx_ops->dfs_dfs_cac_complete_ind = tgt_dfs_cac_complete;
+	dfs_rx_ops->dfs_dfs_ocac_complete_ind = tgt_dfs_ocac_complete;
 	dfs_rx_ops->dfs_stop = tgt_dfs_stop;
 	dfs_rx_ops->dfs_enable_stadfs = tgt_dfs_enable_stadfs;
 	dfs_rx_ops->dfs_is_stadfs_enabled = tgt_dfs_is_stadfs_enabled;
