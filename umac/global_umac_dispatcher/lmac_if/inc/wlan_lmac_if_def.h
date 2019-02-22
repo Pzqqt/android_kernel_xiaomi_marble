@@ -585,8 +585,9 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_module_register)(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
-			int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
-				struct direct_buf_rx_data *dbr_data));
+			bool (*dbr_rsp_handler)
+			     (struct wlan_objmgr_pdev *pdev,
+			      struct direct_buf_rx_data *dbr_data));
 	QDF_STATUS (*direct_buf_rx_module_unregister)(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id);
 	QDF_STATUS (*direct_buf_rx_register_events)(
