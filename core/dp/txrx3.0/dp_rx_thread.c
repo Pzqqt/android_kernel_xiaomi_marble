@@ -402,8 +402,7 @@ static int dp_rx_thread_loop(void *arg)
 		dp_debug("woken up");
 
 		if (status == -ERESTARTSYS) {
-			dp_err("wait_event_interruptible returned -ERESTARTSYS");
-			QDF_DEBUG_PANIC();
+			QDF_DEBUG_PANIC("wait_event_interruptible returned -ERESTARTSYS");
 			break;
 		}
 		qdf_atomic_clear_bit(RX_POST_EVENT, &rx_thread->event_flag);
@@ -428,8 +427,8 @@ static int dp_rx_thread_loop(void *arg)
  */
 static int dp_rx_tm_thread_napi_poll(struct napi_struct *napi, int budget)
 {
-	dp_err("this napi_poll should not be polled as we don't schedule it");
-	QDF_BUG(0);
+	QDF_DEBUG_PANIC("this napi_poll should not be polled as we don't schedule it");
+
 	return 0;
 }
 

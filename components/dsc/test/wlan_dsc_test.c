@@ -51,7 +51,7 @@ static struct dsc_psoc *nth_psoc(struct dsc_driver *driver, int n)
 		return psoc;
 	}
 
-	QDF_DEBUG_PANIC();
+	QDF_DEBUG_PANIC("Failed to find nth psoc: %d", n);
 
 	return NULL;
 }
@@ -72,7 +72,7 @@ static struct dsc_vdev *nth_vdev(struct dsc_psoc *psoc, int n)
 		return vdev;
 	}
 
-	QDF_DEBUG_PANIC();
+	QDF_DEBUG_PANIC("Failed to find nth vdev: %d", n);
 
 	return NULL;
 }
