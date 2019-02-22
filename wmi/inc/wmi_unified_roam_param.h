@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,7 @@
 /**
  * struct gateway_update_req_param - gateway parameter update request
  * @request_id: request id
- * @session_id: session id
+ * @vdev_id: vdev id
  * @max_retries: Max ARP/NS retry attempts
  * @timeout: Retry interval
  * @ipv4_addr_type: on ipv4 network
@@ -37,7 +37,7 @@
  */
 struct gateway_update_req_param {
 	uint32_t     request_id;
-	uint32_t     session_id;
+	uint32_t     vdev_id;
 	uint32_t     max_retries;
 	uint32_t     timeout;
 	uint32_t     ipv4_addr_type;

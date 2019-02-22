@@ -52,7 +52,7 @@ static QDF_STATUS send_set_gateway_params_cmd_tlv(wmi_unified_t wmi_handle,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_roam_subnet_change_config_fixed_param));
 
-	cmd->vdev_id = req->session_id;
+	cmd->vdev_id = req->vdev_id;
 	qdf_mem_copy(&cmd->inet_gw_ip_v4_addr, req->ipv4_addr,
 		     QDF_IPV4_ADDR_SIZE);
 	qdf_mem_copy(&cmd->inet_gw_ip_v6_addr, req->ipv6_addr,
