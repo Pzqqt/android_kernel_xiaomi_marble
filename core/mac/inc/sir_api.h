@@ -5737,18 +5737,6 @@ struct he_capability {
 	} while (0)
 
 /**
- * struct sir_del_all_tdls_peers - delete all tdls peers
- * @msg_type: type of message
- * @msg_len: length of message
- * @bssid: bssid of peer device
- */
-struct sir_del_all_tdls_peers {
-	uint16_t msg_type;
-	uint16_t msg_len;
-	struct qdf_mac_addr bssid;
-};
-
-/**
  * struct rsp_stats - arp packet stats
  * @arp_req_enqueue: fw tx count
  * @arp_req_tx_success: tx ack count

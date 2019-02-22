@@ -3208,11 +3208,11 @@ QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
 						 uint32_t *msg_buf)
 {
-	struct sir_del_all_tdls_peers *msg;
+	struct tdls_del_all_tdls_peers *msg;
 	struct pe_session *session_entry;
 	uint8_t session_id;
 
-	msg = (struct sir_del_all_tdls_peers *)msg_buf;
+	msg = (struct tdls_del_all_tdls_peers *)msg_buf;
 	if (msg == NULL) {
 		pe_err("NULL msg");
 		return QDF_STATUS_E_FAILURE;
