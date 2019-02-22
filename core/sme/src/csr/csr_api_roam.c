@@ -10760,6 +10760,79 @@ static bool csr_is_sae_peer_allowed(struct mac_context *mac_ctx,
 	return is_allowed;
 }
 
+static QDF_STATUS
+csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
+					  struct assoc_ind *ind,
+					  QDF_STATUS status,
+					  uint8_t vdev_id)
+{
+	struct scheduler_msg msg = {0};
+	tSirSmeAssocIndToUpperLayerCnf *cnf;
+
+	cnf = qdf_mem_malloc(sizeof(*cnf));
+	if (!cnf)
+		return QDF_STATUS_E_NOMEM;
+
+	cnf->messageType = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
+	cnf->length = sizeof(*cnf);
+	cnf->sessionId = vdev_id;
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		cnf->statusCode = eSIR_SME_SUCCESS;
+	else
+		cnf->statusCode = eSIR_SME_ASSOC_REFUSED;
+	qdf_mem_copy(&cnf->bssId, &ind->bssId, sizeof(cnf->bssId));
+	qdf_mem_copy(&cnf->peerMacAddr, &ind->peerMacAddr,
+		     sizeof(cnf->peerMacAddr));
+	cnf->aid = ind->staId;
+	cnf->wmmEnabledSta = ind->wmmEnabledSta;
+	cnf->rsnIE = ind->rsnIE;
+#ifdef FEATURE_WLAN_WAPI
+	cnf->wapiIE = ind->wapiIE;
+#endif
+	cnf->addIE = ind->addIE;
+	cnf->reassocReq = ind->reassocReq;
+	cnf->timingMeasCap = ind->timingMeasCap;
+	cnf->chan_info = ind->chan_info;
+	cnf->ampdu = ind->ampdu;
+	cnf->sgi_enable = ind->sgi_enable;
+	cnf->tx_stbc = ind->tx_stbc;
+	cnf->ch_width = ind->ch_width;
+	cnf->mode = ind->mode;
+	cnf->rx_stbc = ind->rx_stbc;
+	cnf->max_supp_idx = ind->max_supp_idx;
+	cnf->max_ext_idx = ind->max_ext_idx;
+	cnf->max_mcs_idx = ind->max_mcs_idx;
+	cnf->rx_mcs_map = ind->rx_mcs_map;
+	cnf->tx_mcs_map = ind->tx_mcs_map;
+	cnf->ecsa_capable = ind->ecsa_capable;
+	if (ind->HTCaps.present)
+		cnf->ht_caps = ind->HTCaps;
+	if (ind->VHTCaps.present)
+		cnf->vht_caps = ind->VHTCaps;
+	cnf->capability_info = ind->capability_info;
+	if (ind->assocReqPtr) {
+		if (ind->assocReqLength < MAX_ASSOC_REQ_IE_LEN) {
+			cnf->ies = qdf_mem_malloc(ind->assocReqLength);
+			if (!cnf->ies) {
+				qdf_mem_free(cnf);
+				return QDF_STATUS_E_NOMEM;
+			}
+			cnf->ies_len = ind->assocReqLength;
+			qdf_mem_copy(cnf->ies, ind->assocReqPtr,
+				     cnf->ies_len);
+		} else {
+			sme_err("Assoc Ie length is too long");
+		}
+	}
+
+	msg.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
+	msg.bodyptr = cnf;
+	sys_process_mmh_msg(mac, &msg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static void
 csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
@@ -15827,142 +15900,6 @@ QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 							true);
 	} while (0);
 	return status;
-}
-
-QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
-						     struct assoc_ind *pAssocInd,
-						     QDF_STATUS Halstatus,
-						     uint8_t sessionId)
-{
-	struct scheduler_msg msgQ = {0};
-	tSirSmeAssocIndToUpperLayerCnf *pMsg;
-	uint8_t *pBuf;
-	tSirResultCodes statusCode;
-	uint16_t wTmp;
-
-	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeAssocIndToUpperLayerCnf));
-		if (NULL == pMsg)
-			return QDF_STATUS_E_NOMEM;
-
-		pMsg->messageType = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
-		pMsg->length = sizeof(tSirSmeAssocIndToUpperLayerCnf);
-
-		pMsg->sessionId = sessionId;
-
-		pBuf = (uint8_t *) &pMsg->statusCode;
-		if (QDF_IS_STATUS_SUCCESS(Halstatus))
-			statusCode = eSIR_SME_SUCCESS;
-		else
-			statusCode = eSIR_SME_ASSOC_REFUSED;
-		qdf_mem_copy(pBuf, &statusCode, sizeof(tSirResultCodes));
-		/* bssId */
-		pBuf = (uint8_t *)&pMsg->bssId;
-		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->bssId,
-			sizeof(tSirMacAddr));
-		/* peerMacAddr */
-		pBuf = (uint8_t *)&pMsg->peerMacAddr;
-		qdf_mem_copy((tSirMacAddr *)pBuf, pAssocInd->peerMacAddr,
-			sizeof(tSirMacAddr));
-		/* StaId */
-		pBuf = (uint8_t *)&pMsg->aid;
-		wTmp = pAssocInd->staId;
-		qdf_mem_copy(pBuf, &wTmp, sizeof(uint16_t));
-		/*
-		 * Instead of copying roam Info,just copy WmmEnabled,
-		 * RsnIE information.
-		 * Wmm
-		 */
-		pBuf = (uint8_t *)&pMsg->wmmEnabledSta;
-		*pBuf = pAssocInd->wmmEnabledSta;
-		/* RSN IE */
-		pBuf = (uint8_t *)&pMsg->rsnIE;
-		qdf_mem_copy((tSirRSNie *)pBuf, &pAssocInd->rsnIE,
-			sizeof(tSirRSNie));
-#ifdef FEATURE_WLAN_WAPI
-		/* WAPI IE */
-		pBuf = (uint8_t *)&pMsg->wapiIE;
-		qdf_mem_copy((tSirWAPIie *)pBuf, &pAssocInd->wapiIE,
-			sizeof(tSirWAPIie));
-#endif
-		/* Additional IE */
-		pBuf = (uint8_t *)&pMsg->addIE;
-		qdf_mem_copy((tSirAddie *)pBuf, &pAssocInd->addIE,
-			sizeof(tSirAddie));
-		/* reassocReq */
-		pBuf = (uint8_t *)&pMsg->reassocReq;
-		*pBuf = pAssocInd->reassocReq;
-		/* timingMeasCap */
-		pBuf = (uint8_t *)&pMsg->timingMeasCap;
-		*pBuf = pAssocInd->timingMeasCap;
-		/* chan_info */
-		pBuf = (uint8_t *)&pMsg->chan_info;
-		qdf_mem_copy((void *)pBuf, &pAssocInd->chan_info,
-			sizeof(struct oem_channel_info));
-		/* ampdu */
-		pBuf = (uint8_t *)&pMsg->ampdu;
-		*((bool *)pBuf) = pAssocInd->ampdu;
-		/* sgi_enable */
-		pBuf = (uint8_t *)&pMsg->sgi_enable;
-		*((bool *)pBuf) = pAssocInd->sgi_enable;
-		/* tx stbc */
-		pBuf = (uint8_t *)&pMsg->tx_stbc;
-		*((bool *)pBuf) = pAssocInd->tx_stbc;
-		/* ch_width */
-		pBuf = (uint8_t *)&pMsg->ch_width;
-		*((tSirMacHTChannelWidth *)pBuf) = pAssocInd->ch_width;
-		/* mode */
-		pBuf = (uint8_t *)&pMsg->mode;
-		*((enum sir_sme_phy_mode *)pBuf) = pAssocInd->mode;
-		/* rx stbc */
-		pBuf = (uint8_t *)&pMsg->rx_stbc;
-		*((bool *)pBuf) = pAssocInd->rx_stbc;
-		/* max supported idx */
-		pBuf = (uint8_t *)&pMsg->max_supp_idx;
-		*pBuf = pAssocInd->max_supp_idx;
-		/* max extended idx */
-		pBuf = (uint8_t *)&pMsg->max_ext_idx;
-		*pBuf = pAssocInd->max_ext_idx;
-		/* max ht mcs idx */
-		pBuf = (uint8_t *)&pMsg->max_mcs_idx;
-		*pBuf = pAssocInd->max_mcs_idx;
-		/* vht rx mcs map */
-		pBuf = (uint8_t *)&pMsg->rx_mcs_map;
-		*pBuf = pAssocInd->rx_mcs_map;
-		/* vht tx mcs map */
-		pBuf = (uint8_t *)&pMsg->tx_mcs_map;
-		*pBuf = pAssocInd->tx_mcs_map;
-
-		pBuf = (uint8_t *)&pMsg->ecsa_capable;
-		*pBuf = pAssocInd->ecsa_capable;
-
-		if (pAssocInd->HTCaps.present)
-			pMsg->ht_caps = pAssocInd->HTCaps;
-		if (pAssocInd->VHTCaps.present)
-			pMsg->vht_caps = pAssocInd->VHTCaps;
-		pMsg->capability_info = pAssocInd->capability_info;
-		if (pAssocInd->assocReqPtr) {
-			if (pAssocInd->assocReqLength < MAX_ASSOC_REQ_IE_LEN) {
-				pMsg->ies = qdf_mem_malloc(
-						pAssocInd->assocReqLength);
-				if (pMsg->ies == NULL) {
-					qdf_mem_free(pMsg);
-					return QDF_STATUS_E_NOMEM;
-				}
-				pMsg->ies_len = pAssocInd->assocReqLength;
-				qdf_mem_copy(pMsg->ies , pAssocInd->assocReqPtr,
-					     pMsg->ies_len);
-			} else {
-				sme_err("Assoc Ie length is too long");
-			}
-		}
-
-		msgQ.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
-		msgQ.bodyptr = pMsg;
-		msgQ.bodyval = 0;
-		sys_process_mmh_msg(mac, &msgQ);
-	} while (0);
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
