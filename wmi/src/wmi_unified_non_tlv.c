@@ -1115,7 +1115,8 @@ send_pdev_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 	int len = sizeof(wmi_pdev_set_param_cmd);
 
 	if ((param->param_id < wmi_pdev_param_max) &&
-		(wmi_handle->pdev_param[param->param_id]
+		wmi_handle->soc->pdev_param &&
+		(wmi_handle->soc->pdev_param[param->param_id]
 				!= WMI_UNAVAILABLE_PARAM)) {
 
 		buf = wmi_buf_alloc(wmi_handle, len);
@@ -1124,7 +1125,7 @@ send_pdev_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 			return QDF_STATUS_E_FAILURE;
 		}
 		cmd = (wmi_pdev_set_param_cmd *)wmi_buf_data(buf);
-		cmd->param_id = wmi_handle->pdev_param[param->param_id];
+		cmd->param_id = wmi_handle->soc->pdev_param[param->param_id];
 		cmd->param_value = param->param_value;
 		return wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_SET_PARAM_CMDID);
@@ -1521,7 +1522,8 @@ static QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 	int len = sizeof(wmi_vdev_set_param_cmd);
 
 	if ((param->param_id < wmi_vdev_param_max) &&
-		(wmi_handle->vdev_param[param->param_id] !=
+		wmi_handle->soc->vdev_param &&
+		(wmi_handle->soc->vdev_param[param->param_id] !=
 				WMI_UNAVAILABLE_PARAM)) {
 
 		buf = wmi_buf_alloc(wmi_handle, len);
@@ -1535,7 +1537,7 @@ static QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 #else
 		cmd->vdev_id = param->if_id;
 #endif
-		cmd->param_id = wmi_handle->vdev_param[param->param_id];
+		cmd->param_id = wmi_handle->soc->vdev_param[param->param_id];
 		cmd->param_value = param->param_value;
 		return wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_VDEV_SET_PARAM_CMDID);
@@ -10069,8 +10071,10 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 	wmi_handle->soc->svc_ids = &svc_ids[0];
 	populate_non_tlv_service(wmi_handle->services);
 	populate_non_tlv_events_id(wmi_handle->wmi_events);
-	populate_pdev_param_non_tlv(wmi_handle->pdev_param);
-	populate_vdev_param_non_tlv(wmi_handle->vdev_param);
+	if (wmi_handle->soc->pdev_param)
+		populate_pdev_param_non_tlv(wmi_handle->soc->pdev_param);
+	if (wmi_handle->soc->vdev_param)
+		populate_vdev_param_non_tlv(wmi_handle->soc->vdev_param);
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	wmi_handle->soc->buf_offset_command = 0;
