@@ -722,7 +722,6 @@ struct csr_roamstruct {
 #endif
 	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
-	uint32_t transactionId;  /* Current transaction ID for internal use. */
 	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];
 	uint8_t isFastRoamIniFeatureEnabled;
 #ifdef FEATURE_WLAN_ESE
