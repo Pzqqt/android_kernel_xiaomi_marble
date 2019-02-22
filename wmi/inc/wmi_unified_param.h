@@ -842,7 +842,7 @@ struct vdev_nss_chains {
 /**
  * struct hidden_ssid_vdev_restart_params -
  *                    vdev restart cmd parameter
- * @session_id: session id
+ * @vdev_id: ID of the vdev that needs to be restarted
  * @ssid_len: ssid length
  * @ssid: ssid
  * @flags: flags
@@ -859,7 +859,7 @@ struct vdev_nss_chains {
  *      flag to check if restart is in progress
  */
 struct hidden_ssid_vdev_restart_params {
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint32_t ssid_len;
 	uint32_t ssid[8];
 	uint32_t flags;

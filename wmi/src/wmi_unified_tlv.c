@@ -602,7 +602,7 @@ static QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle
 		       WMITLV_TAG_STRUC_wmi_channel,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
 
-	cmd->vdev_id = restart_params->session_id;
+	cmd->vdev_id = restart_params->vdev_id;
 	cmd->ssid.ssid_len = restart_params->ssid_len;
 	qdf_mem_copy(cmd->ssid.ssid,
 		     restart_params->ssid,
