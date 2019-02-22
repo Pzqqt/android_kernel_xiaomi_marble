@@ -1404,6 +1404,36 @@ struct multiple_vdev_restart_params {
 	uint32_t vdev_ids[WMI_HOST_PDEV_MAX_VDEVS];
 };
 #endif
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+/**
+ * struct vdev_adfs_ch_cfg_params - Agile dfs channel set request params
+ * @vdev_id: Vdev indentifier
+ * @ocac_mode: Off Channel CAC mode
+ * @min_duration_ms: Minimum Off channel CAC duration
+ * @max_duration_ms: Maximum Off channel CAC duration
+ * @chan_freq: channel number of precac channel
+ * @chan_width: Precac Channel width
+ * @center_freq: Center frequency of precac channel
+ */
+struct vdev_adfs_ch_cfg_params {
+	uint32_t vdev_id;
+	uint32_t ocac_mode;  /* WMI_ADFS_OCAC_MODE */
+	uint32_t min_duration_ms;
+	uint32_t max_duration_ms;
+	uint32_t chan_freq;
+	uint32_t chan_width;
+	uint32_t center_freq; /* in MHz */
+};
+
+/**
+ * struct vdev_adfs_ch_cfg_params - Agile dfs ocac abort command to stop precac.
+ * @vdev_id: Vdev indentifier
+ */
+struct vdev_adfs_abort_params {
+	uint32_t vdev_id;
+};
+#endif
 /**
  * struct fw_hang_params - fw hang command parameters
  * @type: 0:unused 1: ASSERT, 2:not respond detect command, 3:simulate ep-full
@@ -4746,6 +4776,7 @@ typedef enum {
 	wmi_twt_enable_complete_event_id,
 	wmi_apf_get_vdev_work_memory_resp_event_id,
 	wmi_roam_scan_stats_event_id,
+	wmi_vdev_ocac_complete_event_id,
 
 #ifdef OL_ATH_SMART_LOGGING
 	wmi_debug_fatal_condition_eventid,
@@ -5307,6 +5338,7 @@ struct wmi_host_fw_abi_ver {
  * @gtk_offload_max_vdev: Max vdevs for GTK offload
  * @num_msdu_desc: Number of msdu desc
  * @max_frag_entries: Max frag entries
+ * @agile_capability: Target Agile Capability
  *      End common
  * @max_peer_ext_stats: Max peer EXT stats
  * @smart_ant_cap: Smart antenna capabilities
@@ -5381,6 +5413,7 @@ typedef struct {
 	uint32_t num_msdu_desc; /* Number of msdu desc */
 	uint32_t max_frag_entries;
 	uint32_t scheduler_params;
+	uint32_t agile_capability;
 	/* End common */
 
 	/* Added for Beeliner */

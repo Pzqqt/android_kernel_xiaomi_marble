@@ -45,6 +45,22 @@ QDF_STATUS wmi_extract_dfs_cac_complete_event(void *wmi_hdl,
 }
 qdf_export_symbol(wmi_extract_dfs_cac_complete_event);
 
+QDF_STATUS
+wmi_extract_dfs_ocac_complete_event(void *wmi_hdl,
+				    uint8_t *evt_buf,
+				    struct vdev_adfs_complete_status *param)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	if (wmi_handle && wmi_handle->ops->extract_dfs_ocac_complete_event)
+		return wmi_handle->ops->extract_dfs_ocac_complete_event(
+				wmi_handle, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+qdf_export_symbol(wmi_extract_dfs_ocac_complete_event);
+
 QDF_STATUS wmi_extract_dfs_radar_detection_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct radar_found_info *radar_found,

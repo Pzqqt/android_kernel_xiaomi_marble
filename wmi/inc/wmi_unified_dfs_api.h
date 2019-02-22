@@ -41,6 +41,19 @@ QDF_STATUS wmi_extract_dfs_cac_complete_event(void *wmi_hdl,
 		uint32_t len);
 
 /**
+ * wmi_extract_dfs_ocac_complete_event() - function to handle off channel
+ *						CAC complete event
+ * @handle: wmi handle
+ * @event_buf: event buffer
+ * @vdev_adfs_complete_status: off channel cac  complete params
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS
+wmi_extract_dfs_ocac_complete_event(void *wmi_hdl, uint8_t *evt_buf,
+				    struct vdev_adfs_complete_status *param);
+
+/**
  * wmi_extract_dfs_radar_detection_event() - function to handle radar event
  * @handle: wma handle
  * @event_buf: event buffer

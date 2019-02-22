@@ -1590,7 +1590,14 @@ QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_multiple_vdev_restart_req_cmd)(wmi_unified_t wmi_handle,
 				struct multiple_vdev_restart_params *param);
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS
+(*send_adfs_ocac_abort_cmd)(wmi_unified_t wmi_handle,
+			    struct vdev_adfs_abort_params *param);
 
+QDF_STATUS (*send_adfs_ch_cfg_cmd)(wmi_unified_t wmi_handle,
+				   struct vdev_adfs_ch_cfg_params *param);
+#endif
 QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 			       struct set_fwtest_params *wmi_fwtest);
 
@@ -1715,6 +1722,11 @@ QDF_STATUS (*extract_dfs_cac_complete_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		uint32_t *vdev_id,
 		uint32_t len);
+QDF_STATUS
+(*extract_dfs_ocac_complete_event)(wmi_unified_t wmi_handle,
+				   uint8_t *evt_buf,
+				   struct vdev_adfs_complete_status *oca_stats);
+
 QDF_STATUS (*extract_dfs_radar_detection_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct radar_found_info *radar_found,

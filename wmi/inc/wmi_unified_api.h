@@ -1366,6 +1366,30 @@ QDF_STATUS wmi_unified_dfs_phyerr_offload_en_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 		uint32_t pdev_id);
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+/**
+ * wmi_unified_send_vdev_adfs_ch_cfg_cmd() - send adfs channel config command
+ * @wmi_handle: wmi handle
+ * @vdev_adfs_ch_cfg_params: adfs channel config params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_vdev_adfs_ch_cfg_cmd(void *wmi_hdl,
+				      struct vdev_adfs_ch_cfg_params *param);
+
+/**
+ * wmi_unified_send_vdev_adfs_ocac_abort_cmd() - send adfs o-cac abort command
+ * @wmi_handle: wmi handle
+ * @vdev_adfs_abort_params: adfs channel o-cac abort params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_vdev_adfs_ocac_abort_cmd(void *wmi_hdl,
+					  struct vdev_adfs_abort_params *param);
+#endif
+
 QDF_STATUS wmi_unified_set_country_cmd_send(void *wmi_hdl,
 				struct set_country *param);
 

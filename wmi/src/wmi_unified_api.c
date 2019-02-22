@@ -4167,6 +4167,34 @@ wmi_unified_dfs_phyerr_offload_en_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS
+wmi_unified_send_vdev_adfs_ch_cfg_cmd(void *wmi_hdl,
+				      struct vdev_adfs_ch_cfg_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_adfs_ch_cfg_cmd)
+		return wmi_handle->ops->send_adfs_ch_cfg_cmd(
+				wmi_handle,
+				param);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_send_vdev_adfs_ocac_abort_cmd(void *wmi_hdl,
+					  struct vdev_adfs_abort_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_adfs_ocac_abort_cmd)
+		return wmi_handle->ops->send_adfs_ocac_abort_cmd(
+				wmi_handle,
+				param);
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS
 wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 				       uint32_t pdev_id)

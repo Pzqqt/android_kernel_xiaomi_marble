@@ -7132,6 +7132,102 @@ static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+static
+QDF_STATUS send_adfs_ch_cfg_cmd_tlv(wmi_unified_t wmi_handle,
+				    struct vdev_adfs_ch_cfg_params *param)
+{
+	/* wmi_unified_cmd_send set request of agile ADFS channel*/
+	wmi_vdev_adfs_ch_cfg_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	uint16_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_adfs_ch_cfg_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_adfs_ch_cfg_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_vdev_adfs_ch_cfg_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	cmd->ocac_mode = param->ocac_mode;
+	cmd->center_freq = param->center_freq;
+	cmd->chan_freq = param->chan_freq;
+	cmd->chan_width = param->chan_width;
+	cmd->min_duration_ms = param->min_duration_ms;
+	cmd->max_duration_ms = param->max_duration_ms;
+	WMI_LOGD("%s:cmd->vdev_id: %d ,cmd->ocac_mode: %d cmd->center_freq: %d",
+		 __func__, cmd->vdev_id, cmd->ocac_mode,
+		 cmd->center_freq);
+
+	wmi_mtrace(WMI_VDEV_ADFS_CH_CFG_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_ADFS_CH_CFG_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d",
+			 __func__, ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS send_adfs_ocac_abort_cmd_tlv(wmi_unified_t wmi_handle,
+					struct vdev_adfs_abort_params *param)
+{
+	/*wmi_unified_cmd_send with ocac abort on ADFS channel*/
+	wmi_vdev_adfs_ocac_abort_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	uint16_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_adfs_ocac_abort_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	WMITLV_SET_HDR
+		(&cmd->tlv_header,
+		 WMITLV_TAG_STRUC_wmi_vdev_adfs_ocac_abort_cmd_fixed_param,
+		 WMITLV_GET_STRUCT_TLVLEN
+		 (wmi_vdev_adfs_ocac_abort_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+
+	wmi_mtrace(WMI_VDEV_ADFS_OCAC_ABORT_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_ADFS_OCAC_ABORT_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d",
+			 __func__, ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * init_cmd_send_tlv() - send initialization cmd to fw
  * @wmi_handle: wmi handle
@@ -7976,9 +8072,11 @@ static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
 	ev_param->num_extra_mac_addr = ev->num_extra_mac_addr;
 	ev_param->num_total_peer = ev->num_total_peers;
 	ev_param->num_extra_peer = ev->num_extra_peers;
-	/* Agile_cap in ready event is not supported in TLV target */
-	ev_param->agile_capability = false;
+	/* Agile_capability in ready event is supported in TLV target,
+	 * as per aDFS FR
+	 */
 	ev_param->max_ast_index = ev->max_ast_index;
+	ev_param->agile_capability = 1;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -9770,6 +9868,46 @@ static QDF_STATUS extract_dfs_cac_complete_event_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_dfs_ocac_complete_event_tlv() - extract cac complete event
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @vdev_id: vdev id
+ * @len: length of buffer
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_dfs_ocac_complete_event_tlv(wmi_unified_t wmi_handle,
+				    uint8_t *evt_buf,
+				    struct vdev_adfs_complete_status *param)
+{
+	WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID_param_tlvs *param_tlvs;
+	wmi_vdev_adfs_ocac_complete_event_fixed_param  *ocac_complete_status;
+
+	param_tlvs = (WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGE("invalid ocac complete event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!param_tlvs->fixed_param) {
+		WMI_LOGE("invalid param_tlvs->fixed_param");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ocac_complete_status = param_tlvs->fixed_param;
+	param->vdev_id = ocac_complete_status->vdev_id;
+	param->chan_freq = ocac_complete_status->chan_freq;
+	param->center_freq = ocac_complete_status->center_freq;
+	param->ocac_status = ocac_complete_status->status;
+	param->chan_width = ocac_complete_status->chan_width;
+	WMI_LOGD("processed ocac complete event vdev %d agile chan %d",
+		 param->vdev_id, param->center_freq);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_dfs_radar_detection_event_tlv() - extract radar found event
  * @wmi_handle: wma handle
  * @evt_buf: event buffer
@@ -11187,6 +11325,10 @@ struct wmi_ops tlv_ops =  {
 	.send_action_oui_cmd = send_action_oui_cmd_tlv,
 #endif
 	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
+#ifdef QCA_SUPPORT_AGILE_DFS
+	.send_adfs_ch_cfg_cmd = send_adfs_ch_cfg_cmd_tlv,
+	.send_adfs_ocac_abort_cmd = send_adfs_ocac_abort_cmd_tlv,
+#endif
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 	.extract_reg_chan_list_update_event =
 		extract_reg_chan_list_update_event_tlv,
@@ -11198,6 +11340,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_rcpi_response_event = extract_rcpi_response_event_tlv,
 #ifdef DFS_COMPONENT_ENABLE
 	.extract_dfs_cac_complete_event = extract_dfs_cac_complete_event_tlv,
+	.extract_dfs_ocac_complete_event = extract_dfs_ocac_complete_event_tlv,
 	.extract_dfs_radar_detection_event =
 		extract_dfs_radar_detection_event_tlv,
 	.extract_wlan_radar_event_info = extract_wlan_radar_event_info_tlv,
@@ -11467,6 +11610,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_pdev_fips_event_id] = WMI_PDEV_FIPS_EVENTID;
 	event_ids[wmi_pdev_csa_switch_count_status_event_id] =
 				WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID;
+	event_ids[wmi_vdev_ocac_complete_event_id] =
+				WMI_VDEV_ADFS_OCAC_COMPLETE_EVENTID;
 	event_ids[wmi_reg_chan_list_cc_event_id] = WMI_REG_CHAN_LIST_CC_EVENTID;
 	event_ids[wmi_inst_rssi_stats_event_id] = WMI_INST_RSSI_STATS_EVENTID;
 	event_ids[wmi_pdev_tpc_config_event_id] = WMI_PDEV_TPC_CONFIG_EVENTID;
