@@ -1218,7 +1218,6 @@ struct tdls_del_sta_rsp {
  * @message_type: type of pe message
  * @length: length of the frame.
  * @session_id: session id
- * @transaction_id: transaction ID for cmd
  * @req_type: type of action frame
  * @dialog: dialog token used in the frame.
  * @status_code: status to be incuded in the frame.
@@ -1232,7 +1231,6 @@ struct tdls_send_mgmt_request {
 	uint16_t message_type;
 	uint16_t length;
 	uint8_t session_id;
-	uint16_t transaction_id;
 	uint8_t req_type;
 	uint8_t dialog;
 	uint16_t status_code;
