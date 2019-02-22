@@ -267,10 +267,6 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 		   action_req->tdls_mgmt.peer_capability);
 
 	tdls_mgmt_req->session_id = action_req->session_id;
-	/* Using dialog as transactionId. This can be used to
-	 * match response with request
-	 */
-	tdls_mgmt_req->transaction_id = action_req->tdls_mgmt.dialog;
 	tdls_mgmt_req->req_type = action_req->tdls_mgmt.frame_type;
 	tdls_mgmt_req->dialog = action_req->tdls_mgmt.dialog;
 	tdls_mgmt_req->status_code = action_req->tdls_mgmt.status_code;
