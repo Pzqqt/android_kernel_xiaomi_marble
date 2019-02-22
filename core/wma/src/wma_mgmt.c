@@ -3570,7 +3570,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 		return;
 	}
 
-	params.session_id = vdev_id;
+	params.vdev_id = vdev_id;
 	params.ssid_len = intr[vdev_id].vdev_restart_params.ssid.ssid_len;
 	qdf_mem_copy(params.ssid,
 		     intr[vdev_id].vdev_restart_params.ssid.ssid,
