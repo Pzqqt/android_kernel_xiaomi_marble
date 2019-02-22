@@ -16,33 +16,30 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct whal_cfir_dma_hdr {
-	uint16_t
-		// 'BA'
-		tag                 : 8,
-		// '02', length of header in 4 octet units
-		length              : 6,
-		// 00
-		reserved            : 2;
-	uint16_t
-		// [16]
-		upload_done         : 1,
-		// [17:18], 0: invalid, 1: CFR, 2: CIR, 3: DebugH
-		capture_type        : 3,
-		// [19:20], 0: Legacy, 1: HT, 2: VHT, 3: HE
-		preamble_type       : 2,
-		// [21:23], 0: 1-stream, 1: 2-stream, ..., 7: 8-stream
-		nss                 : 3,
-		// [24:27], 0: invalid, 1: 1-chain, 2: 2-chain, etc.
-		num_chains          : 3,
-		// [28:30], 0: 20 MHz, 1: 40 MHz, 2: 80 MHz, 3: 160 MHz
-		upload_pkt_bw       : 3,    // [31]
-		sw_peer_id_valid    : 1;
-	uint16_t
-		sw_peer_id          : 16;   // [15:0]
-	uint16_t
-		phy_ppdu_id         : 16;   // [15:0]
-};
+#ifndef _TARGET_IF_CFR_8072V2_H_
+#define _TARGET_IF_CFR_8072V2_H_
+
+#define STREAMFS_MAX_SUBBUF_8S 8500
+#define STREAMFS_NUM_SUBBUF_8S 255
+#define MAX_PEERS_HKV2 10
+#define PEER_CFR_CAPTURE_EVT_STATUS_MASK 0x80000000
+#define CFR_TX_EVT_STATUS_MASK           0x00000003
+
+/* Values used for computing number of tones */
+#define TONES_IN_20MHZ  256
+#define TONES_IN_40MHZ  512
+#define TONES_IN_80MHZ  1024
+#define TONES_IN_160MHZ 2048 /* 160 MHz isn't supported yet */
+#define TONES_INVALID   0
+
+/* Status codes used by correlate and relay function */
+#define STATUS_STREAM_AND_RELEASE 0
+#define STATUS_HOLD               1
+#define STATUS_ERROR             -1
+
+/* Module IDs using corrlation function */
+#define CORRELATE_DBR_MODULE_ID   0
+#define CORRELATE_TX_EV_MODULE_ID 1
 
 /**
  * cfr_8074v2_init_pdev() - Inits cfr pdev and registers necessary handlers.
@@ -94,4 +91,5 @@ target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
  */
 int
 target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
+#endif
 
