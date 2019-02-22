@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,12 +60,16 @@ struct wlan_lmac_if_tx_ops;
  * struct direct_buf_rx_data - direct buffer rx data
  * @dbr_len: Length of the buffer DMAed
  * @vaddr: Virtual address of the buffer that has DMAed data
+ * @cookie: Cookie for the buffer rxed from target
+ * @paddr: physical address of buffer corresponding to vaddr
  * @meta_data_valid: Indicates that metadata is valid
  * @meta_data: Meta data
  */
 struct direct_buf_rx_data {
 	size_t dbr_len;
 	void *vaddr;
+	uint32_t cookie;
+	qdf_dma_addr_t paddr;
 	bool meta_data_valid;
 	struct direct_buf_rx_metadata meta_data;
 };
@@ -105,4 +109,31 @@ QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 void target_if_direct_buf_rx_register_tx_ops(
 				struct wlan_lmac_if_tx_ops *tx_ops);
 
+/**
+ * target_if_dbr_cookie_lookup() - Function to retrieve cookie from
+ *                                 buffer address(paddr)
+ * @pdev: pointer to pdev object
+ * @mod_id: module id indicating the module using direct buffer rx framework
+ * @paddr: Physical address of buffer for which cookie info is required
+ * @cookie: cookie will be returned in this param
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS target_if_dbr_cookie_lookup(struct wlan_objmgr_pdev *pdev,
+				       uint8_t mod_id, qdf_dma_addr_t paddr,
+				       uint32_t *cookie);
+
+/**
+ * target_if_dbr_buf_release() - Notify direct buf that a previously provided
+ *                               buffer can be released.
+ * @pdev: pointer to pdev object
+ * @mod_id: module id indicating the module using direct buffer rx framework
+ * @paddr: Physical address of buffer for which cookie info is required
+ * @cookie: cookie value corresponding to the paddr
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS target_if_dbr_buf_release(struct wlan_objmgr_pdev *pdev,
+				     uint8_t mod_id, qdf_dma_addr_t paddr,
+				     uint32_t cookie);
 #endif /* _TARGET_IF_DIRECT_BUF_RX_API_H_ */

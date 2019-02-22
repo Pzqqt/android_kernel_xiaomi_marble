@@ -106,8 +106,8 @@ struct direct_buf_rx_module_param {
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
-	int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
-			       struct direct_buf_rx_data *dbr_data);
+	bool (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
+				struct direct_buf_rx_data *dbr_data);
 };
 
 /**
@@ -241,8 +241,9 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS target_if_direct_buf_rx_module_register(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
-			int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
-				struct direct_buf_rx_data *dbr_data));
+			bool (*dbr_rsp_handler)
+			     (struct wlan_objmgr_pdev *pdev,
+			      struct direct_buf_rx_data *dbr_data));
 
 /**
  * target_if_direct_buf_rx_module_unregister() - Function to unregister to
