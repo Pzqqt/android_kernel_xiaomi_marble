@@ -3713,7 +3713,7 @@ err_event_init:
 err_scn_context:
 	qdf_mem_free(((struct cds_context *) cds_context)->cfg_ctx);
 	((struct cds_context *)cds_context)->cfg_ctx = NULL;
-	OS_FREE(wmi_handle);
+	qdf_mem_free(wmi_handle);
 
 err_wma_handle:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_LEGACY_WMA_ID);

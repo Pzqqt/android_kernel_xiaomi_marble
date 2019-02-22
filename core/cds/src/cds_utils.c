@@ -381,7 +381,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 
 	/* Validate IPN */
 	rx_ipn = mmie->sequence_number;
-	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) <= 0) {
+	if (qdf_mem_cmp(rx_ipn, ipn, CMAC_IPN_LEN) <= 0) {
 		/* Replay error */
 		cds_err("Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
 			  " drvr ipn %02X %02X %02X %02X %02X %02X",
@@ -438,7 +438,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 		mic[0], mic[1], mic[2], mic[3],
 		mic[4], mic[5], mic[6], mic[7]);
 
-	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) != 0) {
+	if (qdf_mem_cmp(mic, mmie->mic, CMAC_TLEN) != 0) {
 		/* MMIE MIC mismatch */
 		cds_err("BC/MC MGMT frame MMIE MIC check Failed"
 			  " rmic %02X %02X %02X %02X %02X %02X %02X %02X"

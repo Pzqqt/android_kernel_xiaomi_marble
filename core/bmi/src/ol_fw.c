@@ -18,6 +18,7 @@
 
 #include <linux/firmware.h>
 #include "ol_if_athvar.h"
+#include "qdf_time.h"
 #include "targaddrs.h"
 #include "ol_cfg.h"
 #include "cds_api.h"
@@ -1193,7 +1194,7 @@ static QDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 		BMI_ERR("Failed to read back PLL_CTRL Addr");
 		goto end;
 	}
-	OS_DELAY(100);
+	qdf_udelay(100);
 	BMI_DBG("Step 5b: %8X", reg_val);
 
 	/* ------Step 6------- */
