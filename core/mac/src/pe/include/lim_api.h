@@ -260,13 +260,32 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	struct roam_offload_synch_ind *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
+/**
+ * pe_roam_synch_callback() - Callback registered at wma, gets invoked when
+ * ROAM SYNCH event is received from firmware
+ * @mac_ctx: global mac context
+ * @roam_sync_ind_ptr: Structure with roam synch parameters
+ * @bss_desc_ptr: bss_description pointer for new bss to which the firmware has
+ * started roaming
+ * @reason: Operation to be done by the callback
+ *
+ * This is a PE level callback called from WMA to complete the roam synch
+ * propagation at PE level and also fill the BSS descriptor which will be
+ * helpful further to complete the roam synch propagation.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+pe_roam_synch_callback(struct mac_context *mac_ctx,
+		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
+		       tpSirBssDescription  bss_desc_ptr,
+		       enum sir_roam_op_code reason);
 #else
-static inline QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	struct roam_offload_synch_ind *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
+static inline QDF_STATUS
+pe_roam_synch_callback(struct mac_context *mac_ctx,
+		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
+		       tpSirBssDescription  bss_desc_ptr,
+		       enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

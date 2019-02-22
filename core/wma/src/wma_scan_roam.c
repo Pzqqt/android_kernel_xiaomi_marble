@@ -2210,7 +2210,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	int status = -EINVAL;
 
 	synch_event = param_buf->fixed_param;
-	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
+	roam_synch_ind_ptr->roamed_vdev_id = synch_event->vdev_id;
 	roam_synch_ind_ptr->authStatus = synch_event->auth_status;
 	roam_synch_ind_ptr->roamReason = synch_event->roam_reason;
 	roam_synch_ind_ptr->rssi = synch_event->rssi;
@@ -2218,7 +2218,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
 				   roam_synch_ind_ptr->bssid.bytes);
 	WMA_LOGD("%s: roamedVdevId %d authStatus %d roamReason %d rssi %d isBeacon %d",
-		__func__, roam_synch_ind_ptr->roamedVdevId,
+		__func__, roam_synch_ind_ptr->roamed_vdev_id,
 		roam_synch_ind_ptr->authStatus, roam_synch_ind_ptr->roamReason,
 		roam_synch_ind_ptr->rssi, roam_synch_ind_ptr->isBeacon);
 
@@ -2341,7 +2341,7 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	tAddStaParams *add_sta_params;
 	uint8_t vdev_id;
 
-	vdev_id = roam_synch_ind_ptr->roamedVdevId;
+	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
 	del_bss_params = qdf_mem_malloc(sizeof(*del_bss_params));
 	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
@@ -4990,7 +4990,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			wma_handle->interfaces[wmi_event->vdev_id].
 				roaming_in_progress = false;
 		}
-		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
+		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
 		wma_handle->pe_roam_synch_cb(
 				(struct mac_context *)wma_handle->mac_context,
 				roam_synch_data, NULL, op_code);
@@ -5007,7 +5007,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		if (!roam_synch_data)
 			return -ENOMEM;
 
-		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
+		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
 		wma_handle->csr_roam_synch_cb(
 				(struct mac_context *)wma_handle->mac_context,
 				roam_synch_data, NULL, SIR_ROAMING_INVOKE_FAIL);

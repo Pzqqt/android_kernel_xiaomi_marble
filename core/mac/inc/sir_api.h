@@ -3063,7 +3063,7 @@ struct roam_offload_synch_ind {
 	uint16_t reassoc_req_offset;
 	uint16_t reassoc_req_length;
 	uint8_t isBeacon;
-	uint8_t roamedVdevId;
+	uint8_t roamed_vdev_id;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr self_mac;
 	int8_t txMgmtPower;

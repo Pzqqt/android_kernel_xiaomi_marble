@@ -2112,22 +2112,11 @@ static inline void lim_copy_and_free_hlp_data_from_session(
 {}
 #endif
 
-/**
- * pe_roam_synch_callback() - PE level callback for roam synch propagation
- * @mac_ctx: MAC Context
- * @roam_sync_ind_ptr: Roam synch indication buffer pointer
- * @bss_desc: BSS Descriptor pointer
- * @reason: Reason for calling callback which decides the action to be taken.
- *
- * This is a PE level callback called from WMA to complete the roam synch
- * propagation at PE level and also fill the BSS descriptor which will be
- * helpful further to complete the roam synch propagation.
- *
- * Return: Success or Failure status
- */
-QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
-	struct roam_offload_synch_ind *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
+QDF_STATUS
+pe_roam_synch_callback(struct mac_context *mac_ctx,
+		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
+		       tpSirBssDescription  bss_desc,
+		       enum sir_roam_op_code reason)
 {
 	struct pe_session *session_ptr;
 	struct pe_session *ft_session_ptr;
@@ -2143,7 +2132,7 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
-				roam_sync_ind_ptr->roamedVdevId);
+				roam_sync_ind_ptr->roamed_vdev_id);
 	if (session_ptr == NULL) {
 		pe_err("LFR3:Unable to find session");
 		return status;
@@ -2186,10 +2175,10 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	pe_debug("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND LFR3:auth: %d vdevId: %d",
-		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
-	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
-			QDF_TRACE_LEVEL_DEBUG);
+	pe_debug("LFR3:Received ROAM_OFFLOAD_SYNCH_IND bssid %pM auth: %d vdevId: %d",
+		 roam_sync_ind_ptr->bssid.bytes, roam_sync_ind_ptr->authStatus,
+		 roam_sync_ind_ptr->roamed_vdev_id);
+
 	/*
 	 * If deauth from AP already in progress, ignore Roam Synch Indication
 	 * from firmware.
@@ -2216,7 +2205,8 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	/* Update the beacon/probe filter in mac_ctx */
 	lim_set_bcn_probe_filter(mac_ctx, ft_session_ptr, NULL, 0);
 
-	sir_copy_mac_addr(ft_session_ptr->selfMacAddr, session_ptr->selfMacAddr);
+	sir_copy_mac_addr(ft_session_ptr->selfMacAddr,
+			  session_ptr->selfMacAddr);
 	sir_copy_mac_addr(roam_sync_ind_ptr->self_mac.bytes,
 			session_ptr->selfMacAddr);
 	sir_copy_mac_addr(ft_session_ptr->limReAssocbssId, bss_desc->bssId);
@@ -2243,8 +2233,8 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 		(tpAddBssParams) ft_session_ptr->ftPEContext.pAddBssReq;
 	add_bss_params = ft_session_ptr->ftPEContext.pAddBssReq;
 	lim_delete_tdls_peers(mac_ctx, session_ptr);
-	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId,
-			&aid, &session_ptr->dph.dphHashTable);
+	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId, &aid,
+					    &session_ptr->dph.dphHashTable);
 	if (curr_sta_ds == NULL) {
 		pe_err("LFR3:failed to lookup hash entry");
 		ft_session_ptr->bRoamSynchInProgress = false;
@@ -2252,29 +2242,28 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
 	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr);
-	lim_delete_dph_hash_entry(mac_ctx, curr_sta_ds->staAddr,
-			aid, session_ptr);
+	lim_delete_dph_hash_entry(mac_ctx, curr_sta_ds->staAddr, aid,
+				  session_ptr);
 	pe_delete_session(mac_ctx, session_ptr);
 	session_ptr = NULL;
 	curr_sta_ds = dph_add_hash_entry(mac_ctx,
-			roam_sync_ind_ptr->bssid.bytes, DPH_STA_HASH_INDEX_PEER,
-			&ft_session_ptr->dph.dphHashTable);
+					 roam_sync_ind_ptr->bssid.bytes,
+					 DPH_STA_HASH_INDEX_PEER,
+					 &ft_session_ptr->dph.dphHashTable);
 	if (curr_sta_ds == NULL) {
-		pe_err("LFR3:failed to add hash entry for");
-		lim_print_mac_addr(mac_ctx,
-				add_bss_params->staContext.staMac, LOGE);
+		pe_err("LFR3:failed to add hash entry for %pM",
+		       add_bss_params->staContext.staMac);
 		ft_session_ptr->bRoamSynchInProgress = false;
 		return status;
 	}
 
-	add_bss_params->bssIdx = roam_sync_ind_ptr->roamedVdevId;
+	add_bss_params->bssIdx = roam_sync_ind_ptr->roamed_vdev_id;
 	ft_session_ptr->bssIdx = (uint8_t) add_bss_params->bssIdx;
 
 	curr_sta_ds->bssId = add_bss_params->bssIdx;
-	curr_sta_ds->staIndex =
-		add_bss_params->staContext.staIdx;
-	rrm_cache_mgmt_tx_power(mac_ctx,
-		add_bss_params->txMgmtPower, ft_session_ptr);
+	curr_sta_ds->staIndex = add_bss_params->staContext.staIdx;
+	rrm_cache_mgmt_tx_power(mac_ctx, add_bss_params->txMgmtPower,
+				ft_session_ptr);
 	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
 	mac_ctx->roam.pReassocResp =
 		qdf_mem_malloc(mac_ctx->roam.reassocRespLen);
@@ -2287,21 +2276,20 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 			roam_sync_ind_ptr->reassocRespOffset,
 			mac_ctx->roam.reassocRespLen);
 
-	pe_debug("LFR3:the reassoc resp frame data:");
+	pe_debug("LFR3: Reassoc resp frame data:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			mac_ctx->roam.pReassocResp,
 			mac_ctx->roam.reassocRespLen);
 	ft_session_ptr->bRoamSynchInProgress = true;
 
 	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
-			LIM_REASSOC, ft_session_ptr);
+				    LIM_REASSOC, ft_session_ptr);
 
 	lim_copy_and_free_hlp_data_from_session(ft_session_ptr,
 						roam_sync_ind_ptr);
 
 	roam_sync_ind_ptr->aid = ft_session_ptr->limAID;
-	curr_sta_ds->mlmStaContext.mlmState =
-		eLIM_MLM_LINK_ESTABLISHED_STATE;
+	curr_sta_ds->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	curr_sta_ds->nss = ft_session_ptr->nss;
 	roam_sync_ind_ptr->nss = ft_session_ptr->nss;
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
@@ -2311,7 +2299,7 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 #ifdef FEATURE_WLAN_ESE
 	join_rsp_len += ft_session_ptr->tspecLen;
-	pe_debug("tspecLen: %d", ft_session_ptr->tspecLen);
+	pe_debug("LFR3: tspecLen: %d", ft_session_ptr->tspecLen);
 #endif
 
 	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
@@ -2323,13 +2311,13 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	pe_debug("Session RicLength: %d", ft_session_ptr->RICDataLen);
+	pe_debug("LFR3: Session RicLength: %d", ft_session_ptr->RICDataLen);
 	if (ft_session_ptr->ricData != NULL) {
 		roam_sync_ind_ptr->join_rsp->parsedRicRspLen =
-			ft_session_ptr->RICDataLen;
+					ft_session_ptr->RICDataLen;
 		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames,
-				ft_session_ptr->ricData,
-				roam_sync_ind_ptr->join_rsp->parsedRicRspLen);
+			     ft_session_ptr->ricData,
+			     roam_sync_ind_ptr->join_rsp->parsedRicRspLen);
 		qdf_mem_free(ft_session_ptr->ricData);
 		ft_session_ptr->ricData = NULL;
 		ft_session_ptr->RICDataLen = 0;
@@ -2338,11 +2326,11 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 	if (ft_session_ptr->tspecIes != NULL) {
 		roam_sync_ind_ptr->join_rsp->tspecIeLen =
-			ft_session_ptr->tspecLen;
+					ft_session_ptr->tspecLen;
 		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames +
-				roam_sync_ind_ptr->join_rsp->parsedRicRspLen,
-				ft_session_ptr->tspecIes,
-				roam_sync_ind_ptr->join_rsp->tspecIeLen);
+			     roam_sync_ind_ptr->join_rsp->parsedRicRspLen,
+			     ft_session_ptr->tspecIes,
+			     roam_sync_ind_ptr->join_rsp->tspecIeLen);
 		qdf_mem_free(ft_session_ptr->tspecIes);
 		ft_session_ptr->tspecIes = NULL;
 		ft_session_ptr->tspecLen = 0;
@@ -2350,12 +2338,12 @@ QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 #endif
 
 	roam_sync_ind_ptr->join_rsp->vht_channel_width =
-		ft_session_ptr->ch_width;
+					ft_session_ptr->ch_width;
 	roam_sync_ind_ptr->join_rsp->staId = curr_sta_ds->staIndex;
 	roam_sync_ind_ptr->join_rsp->timingMeasCap = curr_sta_ds->timingMeasCap;
 	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
 	roam_sync_ind_ptr->join_rsp->max_rate_flags =
-		lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
+			lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
 	lim_set_tdls_flags(roam_sync_ind_ptr, ft_session_ptr);
 	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
 	lim_fill_join_rsp_ht_caps(ft_session_ptr, roam_sync_ind_ptr->join_rsp);
