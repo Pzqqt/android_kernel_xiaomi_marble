@@ -4502,7 +4502,7 @@ QDF_STATUS wma_send_apf_read_work_memory_cmd(WMA_HANDLE handle,
  *
  * This function sets tx rx aggregation sizes
  *
- * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ * Return: QDF_STATUS
  */
 QDF_STATUS wma_set_tx_rx_aggregation_size(
 	struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size)

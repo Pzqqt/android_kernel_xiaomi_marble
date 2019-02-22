@@ -2490,7 +2490,7 @@ static inline void wma_print_wmi_mgmt_event_log(uint32_t count,
  * @wma_handle: pointer to wma handle
  * @reorder_timeout: rx reorder timeout value
  *
- * Return: VOS_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS
  */
 QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	struct sir_set_rx_reorder_timeout_val *reorder_timeout);

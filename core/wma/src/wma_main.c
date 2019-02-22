@@ -7210,7 +7210,7 @@ static QDF_STATUS wma_update_wep_default_key(tp_wma_handle wma,
  * This function is used to set Tx pkt fail count threshold,
  * FW will do disconnect with station once this threshold is reached.
  *
- * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ * Return: QDF_STATUS
  */
 static QDF_STATUS wma_update_tx_fail_cnt_th(tp_wma_handle wma,
 			struct sme_tx_fail_cnt_threshold *tx_fail_cnt_th)
@@ -7249,7 +7249,7 @@ static QDF_STATUS wma_update_tx_fail_cnt_th(tp_wma_handle wma,
  * This function is used to configure the transmission retry limit at which
  * short frames needs to be retry.
  *
- * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ * Return: QDF_STATUS
  */
 static QDF_STATUS wma_update_short_retry_limit(tp_wma_handle wma,
 		struct sme_short_retry_limit *short_retry_limit_th)
@@ -7286,7 +7286,7 @@ static QDF_STATUS wma_update_short_retry_limit(tp_wma_handle wma,
  * This function is used to configure the transmission retry limit at which
  * long frames needs to be retry
  *
- * Return: VOS_STATUS_SUCCESS on success, error number otherwise
+ * Return: QDF_STATUS
  */
 static QDF_STATUS wma_update_long_retry_limit(tp_wma_handle wma,
 		struct sme_long_retry_limit  *long_retry_limit_th)
