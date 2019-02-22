@@ -43,6 +43,14 @@
 #define FORCE_WAKE_DELAY_TIMEOUT 50
 #define FORCE_WAKE_DELAY_MS 5
 
+#ifdef ENABLE_VERBOSE_DEBUG
+static inline void
+hal_set_verbose_debug(bool flag)
+{
+	is_hal_verbose_debug_enabled = flag;
+}
+#endif
+
 #ifndef QCA_WIFI_QCA6390
 static inline int hal_force_wake_request(struct hal_soc *soc)
 {

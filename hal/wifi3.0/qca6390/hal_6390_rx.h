@@ -172,69 +172,69 @@ static void hal_rx_dump_msdu_start_tlv_6390(void *msdustart, uint8_t dbg_level)
 {
 	struct rx_msdu_start *msdu_start = (struct rx_msdu_start *)msdustart;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_start tlv (1/2) - "
-			"rxpcu_mpdu_filter_in_category: %x "
-			"sw_frame_group_id: %x "
-			"phy_ppdu_id: %x "
-			"msdu_length: %x "
-			"ipsec_esp: %x "
-			"l3_offset: %x "
-			"ipsec_ah: %x "
-			"l4_offset: %x "
-			"msdu_number: %x "
-			"decap_format: %x "
-			"ipv4_proto: %x "
-			"ipv6_proto: %x "
-			"tcp_proto: %x "
-			"udp_proto: %x "
-			"ip_frag: %x "
-			"tcp_only_ack: %x "
-			"da_is_bcast_mcast: %x "
-			"ip4_protocol_ip6_next_header: %x "
-			"toeplitz_hash_2_or_4: %x "
-			"flow_id_toeplitz: %x "
-			"user_rssi: %x "
-			"pkt_type: %x "
-			"stbc: %x "
-			"sgi: %x "
-			"rate_mcs: %x "
-			"receive_bandwidth: %x "
-			"reception_type: %x "
-			"ppdu_start_timestamp: %u ",
-			msdu_start->rxpcu_mpdu_filter_in_category,
-			msdu_start->sw_frame_group_id,
-			msdu_start->phy_ppdu_id,
-			msdu_start->msdu_length,
-			msdu_start->ipsec_esp,
-			msdu_start->l3_offset,
-			msdu_start->ipsec_ah,
-			msdu_start->l4_offset,
-			msdu_start->msdu_number,
-			msdu_start->decap_format,
-			msdu_start->ipv4_proto,
-			msdu_start->ipv6_proto,
-			msdu_start->tcp_proto,
-			msdu_start->udp_proto,
-			msdu_start->ip_frag,
-			msdu_start->tcp_only_ack,
-			msdu_start->da_is_bcast_mcast,
-			msdu_start->ip4_protocol_ip6_next_header,
-			msdu_start->toeplitz_hash_2_or_4,
-			msdu_start->flow_id_toeplitz,
-			msdu_start->user_rssi,
-			msdu_start->pkt_type,
-			msdu_start->stbc,
-			msdu_start->sgi,
-			msdu_start->rate_mcs,
-			msdu_start->receive_bandwidth,
-			msdu_start->reception_type,
-			msdu_start->ppdu_start_timestamp);
+	hal_verbose_debug(
+			  "rx_msdu_start tlv (1/2) - "
+			  "rxpcu_mpdu_filter_in_category: %x "
+			  "sw_frame_group_id: %x "
+			  "phy_ppdu_id: %x "
+			  "msdu_length: %x "
+			  "ipsec_esp: %x "
+			  "l3_offset: %x "
+			  "ipsec_ah: %x "
+			  "l4_offset: %x "
+			  "msdu_number: %x "
+			  "decap_format: %x "
+			  "ipv4_proto: %x "
+			  "ipv6_proto: %x "
+			  "tcp_proto: %x "
+			  "udp_proto: %x "
+			  "ip_frag: %x "
+			  "tcp_only_ack: %x "
+			  "da_is_bcast_mcast: %x "
+			  "ip4_protocol_ip6_next_header: %x "
+			  "toeplitz_hash_2_or_4: %x "
+			  "flow_id_toeplitz: %x "
+			  "user_rssi: %x "
+			  "pkt_type: %x "
+			  "stbc: %x "
+			  "sgi: %x "
+			  "rate_mcs: %x "
+			  "receive_bandwidth: %x "
+			  "reception_type: %x "
+			  "ppdu_start_timestamp: %u ",
+			  msdu_start->rxpcu_mpdu_filter_in_category,
+			  msdu_start->sw_frame_group_id,
+			  msdu_start->phy_ppdu_id,
+			  msdu_start->msdu_length,
+			  msdu_start->ipsec_esp,
+			  msdu_start->l3_offset,
+			  msdu_start->ipsec_ah,
+			  msdu_start->l4_offset,
+			  msdu_start->msdu_number,
+			  msdu_start->decap_format,
+			  msdu_start->ipv4_proto,
+			  msdu_start->ipv6_proto,
+			  msdu_start->tcp_proto,
+			  msdu_start->udp_proto,
+			  msdu_start->ip_frag,
+			  msdu_start->tcp_only_ack,
+			  msdu_start->da_is_bcast_mcast,
+			  msdu_start->ip4_protocol_ip6_next_header,
+			  msdu_start->toeplitz_hash_2_or_4,
+			  msdu_start->flow_id_toeplitz,
+			  msdu_start->user_rssi,
+			  msdu_start->pkt_type,
+			  msdu_start->stbc,
+			  msdu_start->sgi,
+			  msdu_start->rate_mcs,
+			  msdu_start->receive_bandwidth,
+			  msdu_start->reception_type,
+			  msdu_start->ppdu_start_timestamp);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-		  "rx_msdu_start tlv (2/2) - "
-		  "sw_phy_meta_data: %x ",
-		  msdu_start->sw_phy_meta_data);
+	hal_verbose_debug(
+			  "rx_msdu_start tlv (2/2) - "
+			  "sw_phy_meta_data: %x ",
+			  msdu_start->sw_phy_meta_data);
 }
 
 /**

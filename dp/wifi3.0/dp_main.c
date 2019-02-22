@@ -2609,6 +2609,11 @@ static void dp_enable_verbose_debug(struct dp_soc *soc)
 
 	if (soc_cfg_ctx->per_pkt_trace & dp_verbose_debug_mask)
 		is_dp_verbose_debug_enabled = true;
+
+	if (soc_cfg_ctx->per_pkt_trace & hal_verbose_debug_mask)
+		hal_set_verbose_debug(true);
+	else
+		hal_set_verbose_debug(false);
 }
 #else
 static void dp_enable_verbose_debug(struct dp_soc *soc)

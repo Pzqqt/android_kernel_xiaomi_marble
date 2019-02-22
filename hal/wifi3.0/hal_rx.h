@@ -2380,111 +2380,111 @@ enum hal_rx_wbm_rxdma_push_reason {
 static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 							uint8_t dbg_level)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_attention tlv (1/2) - "
-			"rxpcu_mpdu_filter_in_category: %x "
-			"sw_frame_group_id: %x "
-			"reserved_0: %x "
-			"phy_ppdu_id: %x "
-			"first_mpdu : %x "
-			"reserved_1a: %x "
-			"mcast_bcast: %x "
-			"ast_index_not_found: %x "
-			"ast_index_timeout: %x "
-			"power_mgmt: %x "
-			"non_qos: %x "
-			"null_data: %x "
-			"mgmt_type: %x "
-			"ctrl_type: %x "
-			"more_data: %x "
-			"eosp: %x "
-			"a_msdu_error: %x "
-			"fragment_flag: %x "
-			"order: %x "
-			"cce_match: %x "
-			"overflow_err: %x "
-			"msdu_length_err: %x "
-			"tcp_udp_chksum_fail: %x "
-			"ip_chksum_fail: %x "
-			"sa_idx_invalid: %x "
-			"da_idx_invalid: %x "
-			"reserved_1b: %x "
-			"rx_in_tx_decrypt_byp: %x ",
-			rx_attn->rxpcu_mpdu_filter_in_category,
-			rx_attn->sw_frame_group_id,
-			rx_attn->reserved_0,
-			rx_attn->phy_ppdu_id,
-			rx_attn->first_mpdu,
-			rx_attn->reserved_1a,
-			rx_attn->mcast_bcast,
-			rx_attn->ast_index_not_found,
-			rx_attn->ast_index_timeout,
-			rx_attn->power_mgmt,
-			rx_attn->non_qos,
-			rx_attn->null_data,
-			rx_attn->mgmt_type,
-			rx_attn->ctrl_type,
-			rx_attn->more_data,
-			rx_attn->eosp,
-			rx_attn->a_msdu_error,
-			rx_attn->fragment_flag,
-			rx_attn->order,
-			rx_attn->cce_match,
-			rx_attn->overflow_err,
-			rx_attn->msdu_length_err,
-			rx_attn->tcp_udp_chksum_fail,
-			rx_attn->ip_chksum_fail,
-			rx_attn->sa_idx_invalid,
-			rx_attn->da_idx_invalid,
-			rx_attn->reserved_1b,
-			rx_attn->rx_in_tx_decrypt_byp);
+	hal_verbose_debug(
+			  "rx_attention tlv (1/2) - "
+			  "rxpcu_mpdu_filter_in_category: %x "
+			  "sw_frame_group_id: %x "
+			  "reserved_0: %x "
+			  "phy_ppdu_id: %x "
+			  "first_mpdu : %x "
+			  "reserved_1a: %x "
+			  "mcast_bcast: %x "
+			  "ast_index_not_found: %x "
+			  "ast_index_timeout: %x "
+			  "power_mgmt: %x "
+			  "non_qos: %x "
+			  "null_data: %x "
+			  "mgmt_type: %x "
+			  "ctrl_type: %x "
+			  "more_data: %x "
+			  "eosp: %x "
+			  "a_msdu_error: %x "
+			  "fragment_flag: %x "
+			  "order: %x "
+			  "cce_match: %x "
+			  "overflow_err: %x "
+			  "msdu_length_err: %x "
+			  "tcp_udp_chksum_fail: %x "
+			  "ip_chksum_fail: %x "
+			  "sa_idx_invalid: %x "
+			  "da_idx_invalid: %x "
+			  "reserved_1b: %x "
+			  "rx_in_tx_decrypt_byp: %x ",
+			  rx_attn->rxpcu_mpdu_filter_in_category,
+			  rx_attn->sw_frame_group_id,
+			  rx_attn->reserved_0,
+			  rx_attn->phy_ppdu_id,
+			  rx_attn->first_mpdu,
+			  rx_attn->reserved_1a,
+			  rx_attn->mcast_bcast,
+			  rx_attn->ast_index_not_found,
+			  rx_attn->ast_index_timeout,
+			  rx_attn->power_mgmt,
+			  rx_attn->non_qos,
+			  rx_attn->null_data,
+			  rx_attn->mgmt_type,
+			  rx_attn->ctrl_type,
+			  rx_attn->more_data,
+			  rx_attn->eosp,
+			  rx_attn->a_msdu_error,
+			  rx_attn->fragment_flag,
+			  rx_attn->order,
+			  rx_attn->cce_match,
+			  rx_attn->overflow_err,
+			  rx_attn->msdu_length_err,
+			  rx_attn->tcp_udp_chksum_fail,
+			  rx_attn->ip_chksum_fail,
+			  rx_attn->sa_idx_invalid,
+			  rx_attn->da_idx_invalid,
+			  rx_attn->reserved_1b,
+			  rx_attn->rx_in_tx_decrypt_byp);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_attention tlv (2/2) - "
-			"encrypt_required: %x "
-			"directed: %x "
-			"buffer_fragment: %x "
-			"mpdu_length_err: %x "
-			"tkip_mic_err: %x "
-			"decrypt_err: %x "
-			"unencrypted_frame_err: %x "
-			"fcs_err: %x "
-			"flow_idx_timeout: %x "
-			"flow_idx_invalid: %x "
-			"wifi_parser_error: %x "
-			"amsdu_parser_error: %x "
-			"sa_idx_timeout: %x "
-			"da_idx_timeout: %x "
-			"msdu_limit_error: %x "
-			"da_is_valid: %x "
-			"da_is_mcbc: %x "
-			"sa_is_valid: %x "
-			"decrypt_status_code: %x "
-			"rx_bitmap_not_updated: %x "
-			"reserved_2: %x "
-			"msdu_done: %x ",
-			rx_attn->encrypt_required,
-			rx_attn->directed,
-			rx_attn->buffer_fragment,
-			rx_attn->mpdu_length_err,
-			rx_attn->tkip_mic_err,
-			rx_attn->decrypt_err,
-			rx_attn->unencrypted_frame_err,
-			rx_attn->fcs_err,
-			rx_attn->flow_idx_timeout,
-			rx_attn->flow_idx_invalid,
-			rx_attn->wifi_parser_error,
-			rx_attn->amsdu_parser_error,
-			rx_attn->sa_idx_timeout,
-			rx_attn->da_idx_timeout,
-			rx_attn->msdu_limit_error,
-			rx_attn->da_is_valid,
-			rx_attn->da_is_mcbc,
-			rx_attn->sa_is_valid,
-			rx_attn->decrypt_status_code,
-			rx_attn->rx_bitmap_not_updated,
-			rx_attn->reserved_2,
-			rx_attn->msdu_done);
+	hal_verbose_debug(
+			  "rx_attention tlv (2/2) - "
+			  "encrypt_required: %x "
+			  "directed: %x "
+			  "buffer_fragment: %x "
+			  "mpdu_length_err: %x "
+			  "tkip_mic_err: %x "
+			  "decrypt_err: %x "
+			  "unencrypted_frame_err: %x "
+			  "fcs_err: %x "
+			  "flow_idx_timeout: %x "
+			  "flow_idx_invalid: %x "
+			  "wifi_parser_error: %x "
+			  "amsdu_parser_error: %x "
+			  "sa_idx_timeout: %x "
+			  "da_idx_timeout: %x "
+			  "msdu_limit_error: %x "
+			  "da_is_valid: %x "
+			  "da_is_mcbc: %x "
+			  "sa_is_valid: %x "
+			  "decrypt_status_code: %x "
+			  "rx_bitmap_not_updated: %x "
+			  "reserved_2: %x "
+			  "msdu_done: %x ",
+			  rx_attn->encrypt_required,
+			  rx_attn->directed,
+			  rx_attn->buffer_fragment,
+			  rx_attn->mpdu_length_err,
+			  rx_attn->tkip_mic_err,
+			  rx_attn->decrypt_err,
+			  rx_attn->unencrypted_frame_err,
+			  rx_attn->fcs_err,
+			  rx_attn->flow_idx_timeout,
+			  rx_attn->flow_idx_invalid,
+			  rx_attn->wifi_parser_error,
+			  rx_attn->amsdu_parser_error,
+			  rx_attn->sa_idx_timeout,
+			  rx_attn->da_idx_timeout,
+			  rx_attn->msdu_limit_error,
+			  rx_attn->da_is_valid,
+			  rx_attn->da_is_mcbc,
+			  rx_attn->sa_is_valid,
+			  rx_attn->decrypt_status_code,
+			  rx_attn->rx_bitmap_not_updated,
+			  rx_attn->reserved_2,
+			  rx_attn->msdu_done);
 }
 
 static inline void hal_rx_dump_mpdu_start_tlv(struct rx_mpdu_start *mpdu_start,
@@ -2520,42 +2520,42 @@ static inline void hal_rx_dump_msdu_end_tlv(struct hal_soc *hal_soc,
 static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
 							uint8_t dbg_level)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_mpdu_end tlv - "
-			"rxpcu_mpdu_filter_in_category: %x "
-			"sw_frame_group_id: %x "
-			"phy_ppdu_id: %x "
-			"unsup_ktype_short_frame: %x "
-			"rx_in_tx_decrypt_byp: %x "
-			"overflow_err: %x "
-			"mpdu_length_err: %x "
-			"tkip_mic_err: %x "
-			"decrypt_err: %x "
-			"unencrypted_frame_err: %x "
-			"pn_fields_contain_valid_info: %x "
-			"fcs_err: %x "
-			"msdu_length_err: %x "
-			"rxdma0_destination_ring: %x "
-			"rxdma1_destination_ring: %x "
-			"decrypt_status_code: %x "
-			"rx_bitmap_not_updated: %x ",
-			mpdu_end->rxpcu_mpdu_filter_in_category,
-			mpdu_end->sw_frame_group_id,
-			mpdu_end->phy_ppdu_id,
-			mpdu_end->unsup_ktype_short_frame,
-			mpdu_end->rx_in_tx_decrypt_byp,
-			mpdu_end->overflow_err,
-			mpdu_end->mpdu_length_err,
-			mpdu_end->tkip_mic_err,
-			mpdu_end->decrypt_err,
-			mpdu_end->unencrypted_frame_err,
-			mpdu_end->pn_fields_contain_valid_info,
-			mpdu_end->fcs_err,
-			mpdu_end->msdu_length_err,
-			mpdu_end->rxdma0_destination_ring,
-			mpdu_end->rxdma1_destination_ring,
-			mpdu_end->decrypt_status_code,
-			mpdu_end->rx_bitmap_not_updated);
+	hal_verbose_debug(
+			  "rx_mpdu_end tlv - "
+			  "rxpcu_mpdu_filter_in_category: %x "
+			  "sw_frame_group_id: %x "
+			  "phy_ppdu_id: %x "
+			  "unsup_ktype_short_frame: %x "
+			  "rx_in_tx_decrypt_byp: %x "
+			  "overflow_err: %x "
+			  "mpdu_length_err: %x "
+			  "tkip_mic_err: %x "
+			  "decrypt_err: %x "
+			  "unencrypted_frame_err: %x "
+			  "pn_fields_contain_valid_info: %x "
+			  "fcs_err: %x "
+			  "msdu_length_err: %x "
+			  "rxdma0_destination_ring: %x "
+			  "rxdma1_destination_ring: %x "
+			  "decrypt_status_code: %x "
+			  "rx_bitmap_not_updated: %x ",
+			  mpdu_end->rxpcu_mpdu_filter_in_category,
+			  mpdu_end->sw_frame_group_id,
+			  mpdu_end->phy_ppdu_id,
+			  mpdu_end->unsup_ktype_short_frame,
+			  mpdu_end->rx_in_tx_decrypt_byp,
+			  mpdu_end->overflow_err,
+			  mpdu_end->mpdu_length_err,
+			  mpdu_end->tkip_mic_err,
+			  mpdu_end->decrypt_err,
+			  mpdu_end->unencrypted_frame_err,
+			  mpdu_end->pn_fields_contain_valid_info,
+			  mpdu_end->fcs_err,
+			  mpdu_end->msdu_length_err,
+			  mpdu_end->rxdma0_destination_ring,
+			  mpdu_end->rxdma1_destination_ring,
+			  mpdu_end->decrypt_status_code,
+			  mpdu_end->rx_bitmap_not_updated);
 }
 
 /**
@@ -2568,15 +2568,14 @@ static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
 static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_hdr_tlv  *pkt_hdr_tlv,
 							uint8_t dbg_level)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n---------------\n"
-			"rx_pkt_hdr_tlv \n"
-			"---------------\n"
-			"phy_ppdu_id %d ",
-			pkt_hdr_tlv->phy_ppdu_id);
+	hal_verbose_debug(
+			  "\n---------------\n"
+			  "rx_pkt_hdr_tlv \n"
+			  "---------------\n"
+			  "phy_ppdu_id %d ",
+			  pkt_hdr_tlv->phy_ppdu_id);
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, dbg_level,
-			pkt_hdr_tlv->rx_pkt_hdr, 128);
+	hal_verbose_hex_dump(pkt_hdr_tlv->rx_pkt_hdr, 128);
 }
 
 /**

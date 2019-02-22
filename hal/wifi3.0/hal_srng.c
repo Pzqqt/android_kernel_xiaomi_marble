@@ -37,6 +37,10 @@ void hal_qca6390_attach(struct hal_soc *hal);
 void hal_qca6018_attach(struct hal_soc *hal);
 #endif
 
+#ifdef ENABLE_VERBOSE_DEBUG
+bool is_hal_verbose_debug_enabled;
+#endif
+
 /**
  * hal_get_srng_ring_id() - get the ring id of a descriped ring
  * @hal: hal_soc data structure
@@ -529,16 +533,12 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	if (ring_id < 0)
 		return NULL;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		  "%s: mac_id %d ring_id %d",
-		  __func__, mac_id, ring_id);
+	hal_verbose_debug("mac_id %d ring_id %d", mac_id, ring_id);
 
 	srng = hal_get_srng(hal_soc, ring_id);
 
 	if (srng->initialized) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Ring (ring_type, ring_num) already initialized",
-			  __func__);
+		hal_verbose_debug("Ring (ring_type, ring_num) already initialized");
 		return NULL;
 	}
 
