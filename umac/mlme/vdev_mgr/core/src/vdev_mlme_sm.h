@@ -41,6 +41,27 @@ QDF_STATUS mlme_vdev_sm_deliver_event(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t event_data_len,
 				      void *event_data);
 
+/**
+ * mlme_vdev_sm_print_state_event() - Prints the state/substate, event
+ * @vdev_mlme: MLME VDEV comp object
+ * @event: MLME event
+ *
+ * API to print current state/substate, events in readable format
+ *
+ * Return: void
+ */
+void mlme_vdev_sm_print_state_event(struct vdev_mlme_obj *vdev_mlme,
+				    enum wlan_vdev_sm_evt event);
+
+/**
+ * mlme_vdev_sm_print_state_event() - Prints the state/substate
+ * @vdev_mlme: MLME VDEV comp object
+ *
+ * API to print current state/substate
+ *
+ * Return: void
+ */
+void mlme_vdev_sm_print_state(struct vdev_mlme_obj *vdev_mlme);
 #ifdef SM_ENG_HIST_ENABLE
 /**
  * mlme_vdev_sm_history_print() - Prints SM history

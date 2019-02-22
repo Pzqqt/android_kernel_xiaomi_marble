@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,21 @@
 
 #define mlme_debug(format, args...) \
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_CMN_MLME, format, ## args)
+
+#define mlme_nofl_alert(format, args...) \
+		QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_CMN_MLME, format, ## args)
+
+#define mlme_nofl_err(format, args...) \
+		QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_CMN_MLME, format, ## args)
+
+#define mlme_nofl_warn(format, args...) \
+		QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_CMN_MLME, format, ## args)
+
+#define mlme_nofl_info(format, args...) \
+		QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_CMN_MLME, format, ## args)
+
+#define mlme_nofl_debug(format, args...) \
+		QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_CMN_MLME, format, ## args)
 
 #endif    /* _WLAN_MLME_DBG_H_ */
 
