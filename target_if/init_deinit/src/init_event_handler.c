@@ -400,6 +400,11 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
+	if (!ready_ev.agile_capability)
+		target_if_err("agile capability disabled in HW");
+	else
+		info->wlan_res_cfg.agile_capability = ready_ev.agile_capability;
+
 	if ((ready_ev.num_total_peer != 0) &&
 	    (info->wlan_res_cfg.num_peers != ready_ev.num_total_peer)) {
 		/* FW allocated number of peers is different than host

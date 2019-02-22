@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -55,6 +55,39 @@ QDF_STATUS target_process_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 #else
 static QDF_STATUS target_process_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#if defined(QCA_SUPPORT_AGILE_DFS)
+/**
+ * target_send_ocac_abort_cmd() - Send off channel CAC abort to target for
+ * to cancel current offchannel CAC
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS target_send_ocac_abort_cmd(struct wlan_objmgr_pdev *pdev);
+/**
+ * target_send_agile_ch_cfg_cmd() - Send agile channel to target for
+ * off channel precac.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS target_send_agile_ch_cfg_cmd(struct wlan_objmgr_pdev *pdev,
+					uint8_t *ch_freq);
+#else
+static inline QDF_STATUS
+target_send_ocac_abort_cmd(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_send_agile_ch_cfg_cmd(struct wlan_objmgr_pdev *pdev,
+			     uint8_t *ch_freq)
 {
 	return QDF_STATUS_SUCCESS;
 }

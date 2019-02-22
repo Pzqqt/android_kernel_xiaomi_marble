@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -366,6 +366,10 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	dfs_tx_ops->dfs_process_emulate_bang_radar_cmd =
 				&target_process_bang_radar_cmd;
+	dfs_tx_ops->dfs_agile_ch_cfg_cmd =
+				&target_send_agile_ch_cfg_cmd;
+	dfs_tx_ops->dfs_ocac_abort_cmd =
+				&target_send_ocac_abort_cmd;
 	dfs_tx_ops->dfs_is_pdev_5ghz = &target_if_dfs_is_pdev_5ghz;
 	dfs_tx_ops->dfs_send_offload_enable_cmd =
 		&target_send_dfs_offload_enable_cmd;
