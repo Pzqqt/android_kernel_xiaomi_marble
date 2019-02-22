@@ -335,7 +335,7 @@ static bool mlme_vdev_state_dfs_cac_wait_event(void *ctx, uint16_t event,
 		mlme_vdev_dfs_cac_timer_stop(vdev_mlme, event_data_len,
 					     event_data);
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_STOP);
-		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_DOWN,
+		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_STOP_REQ,
 					   event_data_len, event_data);
 		status = true;
 		break;
@@ -1030,7 +1030,7 @@ static bool mlme_vdev_subst_start_disconn_progress_event(void *ctx,
 	/* clean up, if any needs to be cleaned up */
 	case WLAN_VDEV_SM_EV_CONNECTION_FAIL:
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_STOP);
-		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_DOWN,
+		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_STOP_REQ,
 					   event_data_len, event_data);
 		status = true;
 		break;
@@ -1121,7 +1121,7 @@ static bool mlme_vdev_subst_suspend_suspend_down_event(void *ctx,
 	case WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE:
 		/* clean up, if any needs to be cleaned up */
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_STOP);
-		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_DOWN,
+		mlme_vdev_sm_deliver_event(vdev_mlme, WLAN_VDEV_SM_EV_STOP_REQ,
 					   event_data_len, event_data);
 		status = true;
 		break;
@@ -1459,7 +1459,7 @@ static bool mlme_vdev_subst_stop_stop_progress_event(void *ctx,
 	/* Debug framework is required to hold the events */
 
 	switch (event) {
-	case WLAN_VDEV_SM_EV_DOWN:
+	case WLAN_VDEV_SM_EV_STOP_REQ:
 		/* send vdev stop command to FW and delete BSS peer*/
 		mlme_vdev_stop_send(vdev_mlme, event_data_len, event_data);
 		status = true;
@@ -1621,6 +1621,8 @@ static const char *vdev_sm_event_names[] = {
 	"EV_CSA_COMPLETE",
 	"EV_MLME_DOWN_REQ",
 	"EV_DOWN_COMPLETE",
+	"EV_ROAM",
+	"EV_STOP_REQ",
 };
 
 struct wlan_sm_state_info sm_info[] = {

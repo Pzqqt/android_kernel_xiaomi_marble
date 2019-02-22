@@ -101,6 +101,7 @@ enum wlan_vdev_state {
  * @WLAN_VDEV_SM_EV_MLME_DOWN_REQ:       Invoke DOWN command operation
  * @WLAN_VDEV_SM_EV_DOWN_COMPLETE:       Notification of DOWN complete
  * @WLAN_VDEV_SM_EV_ROAM:                Notifiction on ROAMING
+ * @WLAN_VDEV_SM_EV_STOP_REQ:            Invoke API to initiate STOP handshake
  */
 enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_START = 0,
@@ -132,6 +133,7 @@ enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_MLME_DOWN_REQ = 26,
 	WLAN_VDEV_SM_EV_DOWN_COMPLETE = 27,
 	WLAN_VDEV_SM_EV_ROAM = 28,
+	WLAN_VDEV_SM_EV_STOP_REQ = 29,
 };
 
 #else
