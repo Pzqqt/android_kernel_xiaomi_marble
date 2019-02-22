@@ -2759,8 +2759,7 @@ add_sta_error:
 
 static void
 lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	 tSirResultCodes result_code, uint8_t sme_session_id,
-	 uint16_t sme_transaction_id)
+	 tSirResultCodes result_code, uint8_t sme_session_id)
 {
 	struct scheduler_msg msg = {0};
 	struct tdls_send_mgmt_rsp *sme_rsp;
@@ -2774,12 +2773,10 @@ lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 		return;
 
 	sme_rsp->status_code = (enum legacy_result_code)result_code;
-
 	sme_rsp->session_id = sme_session_id;
-	sme_rsp->transaction_id = sme_transaction_id;
+	sme_rsp->psoc = mac_ctx->psoc;
 
 	msg.type = msg_type;
-	sme_rsp->psoc = mac_ctx->psoc;
 	msg.bodyptr = sme_rsp;
 	msg.callback = tgt_tdls_send_mgmt_rsp;
 	status = scheduler_post_message(QDF_MODULE_ID_PE,
@@ -2914,8 +2911,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 
 lim_tdls_send_mgmt_error:
 	lim_send_tdls_comp_mgmt_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
-				    result_code, send_req->session_id,
-				    send_req->transaction_id);
+				    result_code, send_req->session_id);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -1152,15 +1152,12 @@ enum legacy_result_code {
 
 /**
  * struct tdls_send_mgmt_rsp - TDLS Response struct PE --> TDLS module
- *                           same as struct tSirSmeRsp
  * @session_id: session id
- * @transaction_id: transaction id
  * @status_code: status code as tSirResultCodes
  * @psoc: soc object
  */
 struct tdls_send_mgmt_rsp {
 	uint8_t session_id;
-	uint16_t transaction_id;
 	enum legacy_result_code status_code;
 	struct wlan_objmgr_psoc *psoc;
 };
