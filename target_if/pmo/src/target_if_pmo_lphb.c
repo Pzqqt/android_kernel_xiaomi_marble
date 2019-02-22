@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,12 +30,10 @@
 QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 			struct pmo_lphb_enable_req *ts_lphb_enable)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int status = 0;
 	wmi_hb_set_enable_cmd_fixed_param hb_enable_fp;
 	wmi_unified_t wmi_handle;
 
-	if (ts_lphb_enable == NULL) {
+	if (!ts_lphb_enable) {
 		target_if_err("LPHB Enable configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -62,27 +60,16 @@ QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_lphb_config_hbenable_cmd(wmi_handle,
-						      &hb_enable_fp);
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-	return QDF_STATUS_SUCCESS;
-error:
-
-	return qdf_status;
+	return wmi_unified_lphb_config_hbenable_cmd(wmi_handle, &hb_enable_fp);
 }
 
 QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 			struct pmo_lphb_tcp_params *ts_lphb_tcp_param)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int status = 0;
 	wmi_hb_set_tcp_params_cmd_fixed_param hb_tcp_params_fp = {0};
 	wmi_unified_t wmi_handle;
 
-	if (ts_lphb_tcp_param == NULL) {
+	if (!ts_lphb_tcp_param) {
 		target_if_err("TCP params LPHB configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -116,23 +103,13 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_lphb_config_tcp_params_cmd(wmi_handle,
-							&hb_tcp_params_fp);
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	return QDF_STATUS_SUCCESS;
-error:
-	return qdf_status;
+	return wmi_unified_lphb_config_tcp_params_cmd(wmi_handle,
+						      &hb_tcp_params_fp);
 }
 
 QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 			struct pmo_lphb_tcp_filter_req *ts_lphb_tcp_filter)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int status = 0;
 	wmi_hb_set_tcp_pkt_filter_cmd_fixed_param hb_tcp_filter_fp = {0};
 	wmi_unified_t wmi_handle;
 
@@ -164,27 +141,17 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_lphb_config_tcp_pkt_filter_cmd(wmi_handle,
-							    &hb_tcp_filter_fp);
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	return QDF_STATUS_SUCCESS;
-error:
-	return qdf_status;
+	return wmi_unified_lphb_config_tcp_pkt_filter_cmd(wmi_handle,
+							  &hb_tcp_filter_fp);
 }
 
 QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 			struct pmo_lphb_udp_params *ts_lphb_udp_param)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int status = 0;
 	wmi_hb_set_udp_params_cmd_fixed_param hb_udp_params_fp = {0};
 	wmi_unified_t wmi_handle;
 
-	if (ts_lphb_udp_param == NULL) {
+	if (!ts_lphb_udp_param) {
 		target_if_err("UDP param for LPHB configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -216,16 +183,8 @@ QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_lphb_config_udp_params_cmd(wmi_handle,
-							&hb_udp_params_fp);
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	return QDF_STATUS_SUCCESS;
-error:
-	return qdf_status;
+	return wmi_unified_lphb_config_udp_params_cmd(wmi_handle,
+						      &hb_udp_params_fp);
 }
 
 /**
@@ -238,12 +197,10 @@ error:
 QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 			struct pmo_lphb_udp_filter_req *ts_lphb_udp_filter)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int status = 0;
 	wmi_hb_set_udp_pkt_filter_cmd_fixed_param hb_udp_filter_fp = {0};
 	wmi_unified_t wmi_handle;
 
-	if (ts_lphb_udp_filter == NULL) {
+	if (!ts_lphb_udp_filter) {
 		target_if_err("LPHB UDP packet filter configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -261,9 +218,8 @@ QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	hb_udp_filter_fp.length = ts_lphb_udp_filter->length;
 	hb_udp_filter_fp.offset = ts_lphb_udp_filter->offset;
 	hb_udp_filter_fp.session = ts_lphb_udp_filter->session;
-	qdf_mem_copy((void *)&hb_udp_filter_fp.filter,
-	       (void *)&ts_lphb_udp_filter->filter,
-	       WMI_WLAN_HB_MAX_FILTER_SIZE);
+	qdf_mem_copy(&hb_udp_filter_fp.filter, &ts_lphb_udp_filter->filter,
+		     WMI_WLAN_HB_MAX_FILTER_SIZE);
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
@@ -271,16 +227,8 @@ QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_lphb_config_udp_pkt_filter_cmd(wmi_handle,
-							    &hb_udp_filter_fp);
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	return QDF_STATUS_SUCCESS;
-error:
-	return qdf_status;
+	return wmi_unified_lphb_config_udp_pkt_filter_cmd(wmi_handle,
+							  &hb_udp_filter_fp);
 }
 
 QDF_STATUS target_if_pmo_lphb_evt_handler(struct wlan_objmgr_psoc *psoc,
