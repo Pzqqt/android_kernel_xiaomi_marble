@@ -965,6 +965,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_request_wlm_stats_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_wlm_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_key_material_ext,
+    WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1580,6 +1581,7 @@ typedef enum {
     OP(WMI_VDEV_GET_MWS_COEX_IDRX_STATE_EVENTID) \
     OP(WMI_VDEV_GET_MWS_COEX_ANTENNA_SHARING_STATE_EVENTID) \
     OP(WMI_WLM_STATS_EVENTID) \
+    OP(WMI_PEER_CFR_CAPTURE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5279,6 +5281,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MOTION_DET_BASE_LINE_HOST_EVENTID);
 #define WMITLV_TABLE_WMI_ESP_ESTIMATE_EVENTID(id,op,buf,len) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_esp_estimate_event_fixed_param, wmi_esp_estimate_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_ESP_ESTIMATE_EVENTID);
+
+/* Peer CFR capture event */
+#define WMITLV_TABLE_WMI_PEER_CFR_CAPTURE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_cfr_capture_event_fixed_param, wmi_peer_cfr_capture_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CFR_CAPTURE_EVENTID);
 
 
 #ifdef __cplusplus
