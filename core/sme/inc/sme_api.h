@@ -1399,7 +1399,7 @@ QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
 
 #ifdef FEATURE_RSSI_MONITOR
 QDF_STATUS sme_set_rssi_monitoring(mac_handle_t mac_handle,
-				   struct rssi_monitor_req *input);
+				   struct rssi_monitor_param *input);
 
 /**
  * sme_set_rssi_threshold_breached_cb() - Set RSSI threshold breached callback

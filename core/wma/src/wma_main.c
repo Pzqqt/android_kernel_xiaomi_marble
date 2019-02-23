@@ -8739,8 +8739,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		/* Body ptr is NULL here */
 		break;
 	case WMA_SET_RSSI_MONITOR_REQ:
-		wma_set_rssi_monitoring(wma_handle,
-			(struct rssi_monitor_req *)msg->bodyptr);
+		wma_set_rssi_monitoring(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_PDEV_SET_PCL_TO_FW:

@@ -11692,12 +11692,12 @@ QDF_STATUS sme_set_chip_pwr_save_fail_cb(mac_handle_t mac_handle,
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS sme_set_rssi_monitoring(mac_handle_t mac_handle,
-				   struct rssi_monitor_req *input)
+				   struct rssi_monitor_param *input)
 {
 	QDF_STATUS status     = QDF_STATUS_SUCCESS;
 	struct mac_context *mac    = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	struct rssi_monitor_req *req_msg;
+	struct rssi_monitor_param *req_msg;
 
 	SME_ENTER();
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));

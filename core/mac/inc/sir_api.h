@@ -4380,22 +4380,6 @@ struct sir_guard_time_request {
 /* Max number of rates allowed in Supported Rates IE */
 #define MAX_NUM_SUPPORTED_RATES (8)
 
-/*
- * struct rssi_monitor_req - rssi monitoring
- * @request_id: request id
- * @session_id: session id
- * @min_rssi: minimum rssi
- * @max_rssi: maximum rssi
- * @control: flag to indicate start or stop
- */
-struct rssi_monitor_req {
-	uint32_t request_id;
-	uint32_t session_id;
-	int8_t   min_rssi;
-	int8_t   max_rssi;
-	bool     control;
-};
-
 /**
  * struct rssi_breach_event - rssi breached event structure
  * @request_id: request id

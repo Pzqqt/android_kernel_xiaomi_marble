@@ -2932,34 +2932,15 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #ifdef FEATURE_RSSI_MONITOR
-/**
- * wma_set_rssi_monitoring() - set rssi monitoring
- * @handle: WMA handle
- * @req: rssi monitoring request structure
- *
- * This function reads the incoming @req and fill in the destination
- * WMI structure and send down the rssi monitoring configs down to the firmware
- *
- * Return: 0 on success; error number otherwise
- */
 QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
-				   struct rssi_monitor_req *req)
+				   struct rssi_monitor_param *req)
 {
-	struct rssi_monitor_param params = {0};
-
 	if (!wma) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.request_id = req->request_id;
-	params.vdev_id = req->session_id;
-	params.min_rssi = req->min_rssi;
-	params.max_rssi = req->max_rssi;
-	params.control = req->control;
-
-	return wmi_unified_set_rssi_monitoring_cmd(wma->wmi_handle,
-						   &params);
+	return wmi_unified_set_rssi_monitoring_cmd(wma->wmi_handle, req);
 }
 
 /**

@@ -1704,12 +1704,22 @@ void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle);
 void wma_log_completion_timeout(void *data);
 
 #ifdef FEATURE_RSSI_MONITOR
+/**
+ * wma_set_rssi_monitoring() - set rssi monitoring
+ * @handle: WMA handle
+ * @req: rssi monitoring request structure
+ *
+ * This function takes the incoming @req and sends it down to the
+ * firmware
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
-				   struct rssi_monitor_req *req);
+				   struct rssi_monitor_param *req);
 #else /* FEATURE_RSSI_MONITOR */
 static inline
 QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
-				   struct rssi_monitor_req *req)
+				   struct rssi_monitor_param *req)
 {
 	return QDF_STATUS_SUCCESS;
 }

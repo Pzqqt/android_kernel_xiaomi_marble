@@ -60,7 +60,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[PARAM_MAX + 1];
-	struct rssi_monitor_req req;
+	struct rssi_monitor_param req;
 	QDF_STATUS status;
 	int ret;
 	uint32_t control;
@@ -104,7 +104,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	}
 
 	req.request_id = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	req.session_id = adapter->vdev_id;
+	req.vdev_id = adapter->vdev_id;
 	control = nla_get_u32(tb[PARAM_CONTROL]);
 
 	if (control == QCA_WLAN_RSSI_MONITORING_START) {
@@ -136,8 +136,8 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 		hdd_err("Invalid control cmd: %d", control);
 		return -EINVAL;
 	}
-	hdd_debug("Request Id: %u Session_id: %d Control: %d",
-		  req.request_id, req.session_id, req.control);
+	hdd_debug("Request Id: %u vdev id: %d Control: %d",
+		  req.request_id, req.vdev_id, req.control);
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_set_rssi_monitoring(mac_handle, &req);
