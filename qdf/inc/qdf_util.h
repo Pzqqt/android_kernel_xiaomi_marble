@@ -122,6 +122,16 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 #define qdf_ewma_tx_lag_read(tx_lag) \
 	 __qdf_ewma_tx_lag_read(tx_lag)
 
+#define qdf_ewma_rx_rssi __qdf_ewma_rx_rssi
+
+#define qdf_ewma_rx_rssi_init(rx_rssi) \
+	__qdf_ewma_rx_rssi_init(rx_rssi)
+
+#define qdf_ewma_rx_rssi_add(rx_rssi, value) \
+	__qdf_ewma_rx_rssi_add(rx_rssi, value)
+
+#define qdf_ewma_rx_rssi_read(rx_rssi) \
+	__qdf_ewma_rx_rssi_read(rx_rssi)
 /**
  * qdf_set_bit() - set bit in address
  * @nr: bit number to be set

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,7 +166,7 @@ enum DP_CMN_MODULATION_TYPE dp_getmodulation(
 
 uint32_t
 dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
-		uint8_t bw);
+		uint8_t bw, uint32_t *rix);
 
 int dp_rate_idx_to_kbps(uint8_t rate_idx, uint8_t gintval);
 

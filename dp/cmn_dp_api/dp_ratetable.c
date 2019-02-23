@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3208,12 +3208,13 @@ enum DP_CMN_MODULATION_TYPE dp_getmodulation(
  * @nss - NSS 1...8
  * preamble - preamble
  * @bw - Transmission Bandwidth
+ * @rix: rate index to be populated
  *
  * return - rate in kbps
  */
 uint32_t
 dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
-		uint8_t bw)
+		uint8_t bw, uint32_t *rix)
 {
 	uint32_t ratekbps = 0, res = RT_INVALID_INDEX; /* represents failure */
 	uint16_t rc;
@@ -3251,7 +3252,7 @@ dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
 		break;
 	}
 	if (res >= DP_RATE_TABLE_SIZE)
-		return ratekbps;
+		goto done;
 
 	if (!gi) {
 		ratekbps = dp_11abgnratetable.info[res].userratekbps;
@@ -3268,6 +3269,8 @@ dp_getrateindex(uint32_t gi, uint16_t mcs, uint8_t nss, uint8_t preamble,
 			break;
 		}
 	}
+done:
+	*rix = res;
 
 	return ratekbps;
 }

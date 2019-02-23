@@ -360,6 +360,7 @@ struct cdp_tx_stats {
  * @bar_recv_cnt: Number of bar received
  * @rssi: RSSI of received signal
  * @last_rssi: Previous rssi
+ * @avg_rssi: Average rssi
  * @rx_rate: Rx rate
  * @last_rx_rate: Previous rx rate
  * @rnd_avg_rx_rate: Rounded average rx rate
@@ -417,6 +418,7 @@ struct cdp_rx_stats {
 	uint32_t bar_recv_cnt;
 	uint32_t rssi;
 	uint32_t last_rssi;
+	uint32_t avg_rssi;
 	uint32_t rx_rate;
 	uint32_t last_rx_rate;
 	uint32_t rnd_avg_rx_rate;

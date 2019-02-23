@@ -137,6 +137,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	uint32_t ratekbps = 0;
 	uint32_t ppdu_rx_rate = 0;
 	uint32_t nss = 0;
+	uint32_t rix;
 
 	if (!peer || !ppdu)
 		return;
@@ -150,7 +151,8 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 				   ppdu->u.mcs,
 				   nss,
 				   ppdu->u.preamble,
-				   ppdu->u.bw);
+				   ppdu->u.bw,
+				   &rix);
 
 	if (!ratekbps)
 		return;

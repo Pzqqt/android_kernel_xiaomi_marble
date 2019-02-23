@@ -130,6 +130,7 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 {
 	uint32_t ratekbps = 0;
 	uint32_t ppdu_tx_rate = 0;
+	uint32_t rix;
 
 	if (!peer || !ppdu)
 		return;
@@ -139,7 +140,8 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 				   ppdu->mcs,
 				   ppdu->nss,
 				   ppdu->preamble,
-				   ppdu->bw);
+				   ppdu->bw,
+				   &rix);
 
 	DP_STATS_UPD(peer, tx.last_tx_rate, ratekbps);
 

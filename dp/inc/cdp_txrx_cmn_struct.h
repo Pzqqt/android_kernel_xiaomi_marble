@@ -38,6 +38,7 @@
 #include <cdp_txrx_mob_def.h>
 #endif /* CONFIG_WIN */
 #include <cdp_txrx_handle.h>
+#include <cdp_txrx_stats_struct.h>
 
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
 /*
@@ -143,6 +144,7 @@
 #define FILTER_DATA_NULL		0x0008
 
 QDF_DECLARE_EWMA(tx_lag, 1024, 8)
+struct cdp_stats_cookie;
 
 /*
  * DP configuration parameters
@@ -1067,12 +1069,14 @@ enum cdp_stat_update_type {
  * @avg_sojourn_msdu: average sojourn msdu time
  * @sum_sojourn_msdu: sum sojourn msdu time
  * @num_msdu: number of msdus per ppdu
+ * @cookie: cookie to be used by upper layer
  */
 struct cdp_tx_sojourn_stats {
 	uint32_t ppdu_seq_id;
 	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
 	uint32_t sum_sojourn_msdu[CDP_DATA_TID_MAX];
 	uint32_t num_msdus[CDP_DATA_TID_MAX];
+	struct cdp_stats_cookie *cookie;
 };
 
 /**
@@ -1119,6 +1123,8 @@ struct cdp_tx_sojourn_stats {
  * @tx_rate: Transmission Rate
  * @user_pos: user position
  * @mu_group_id: mu group id
+ * @rix: rate index
+ * @cookie: cookie to used by upper layer
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1173,6 +1179,8 @@ struct cdp_tx_completion_ppdu_user {
 	bool ack_rssi_valid;
 	uint32_t user_pos;
 	uint32_t mu_group_id;
+	uint32_t rix;
+	struct cdp_stats_cookie *cookie;
 };
 
 /**
@@ -1331,6 +1339,9 @@ struct cdp_tx_completion_msdu {
  * @channel: Channel informartion
  * @lsig_A: L-SIG in 802.11 PHY header
  * @frame_ctrl: frame control field
+ * @rix: rate index
+ * @rssi_chain: rssi chain per nss per bw
+ * @cookie: cookie to used by upper layer
  */
 struct cdp_rx_indication_ppdu {
 	uint32_t ppdu_id;
@@ -1338,6 +1349,7 @@ struct cdp_rx_indication_ppdu {
 		 num_mpdu:9,
 		 reserved:6;
 	uint32_t num_msdu;
+	uint32_t num_bytes;
 	uint16_t udp_msdu_count;
 	uint16_t tcp_msdu_count;
 	uint16_t other_msdu_count;
@@ -1363,6 +1375,7 @@ struct cdp_rx_indication_ppdu {
 				 ppdu_type:5;
 		};
 	} u;
+	uint32_t rix;
 	uint32_t lsig_a;
 	uint32_t rssi;
 	uint64_t timestamp;
@@ -1378,6 +1391,8 @@ struct cdp_rx_indication_ppdu {
 	uint8_t rx_ratecode;
 	uint8_t fcs_error_mpdus;
 	uint16_t frame_ctrl;
+	uint32_t rssi_chain[SS_COUNT][MAX_BW];
+	struct cdp_stats_cookie *cookie;
 };
 
 /**
@@ -1490,5 +1505,19 @@ enum cdp_dp_cfg {
 	cfg_dp_reorder_offload_supported,
 	cfg_dp_ce_classify_enable,
 	cfg_dp_disable_intra_bss_fwd,
+};
+
+/**
+ * struct cdp_peer_cookie - cookie used when creating peer
+ * @peer_id: peer id
+ * @mac_addr: MAC address of peer
+ * @cookie: cookie to be used by consumer
+ * @ctx: context passed to be used by consumer
+ */
+struct cdp_peer_cookie {
+	uint8_t peer_id;
+	uint8_t mac_addr[CDP_MAC_ADDR_LEN];
+	uint8_t cookie;
+	struct cdp_stats_cookie *ctx;
 };
 #endif
