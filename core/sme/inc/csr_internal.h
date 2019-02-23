@@ -567,8 +567,15 @@ struct csr_disconnect_stats {
 	uint32_t peer_kickout;
 };
 
+/**
+ * struct csr_roam_session - CSR per-vdev context
+ * @vdev_id: ID of the vdev for which this entry is applicable
+ */
 struct csr_roam_session {
-	uint8_t sessionId;      /* Session ID */
+	union {
+		uint8_t sessionId;
+		uint8_t vdev_id;
+	};
 	bool sessionActive;     /* true if it is used */
 
 	/* For BT-AMP station, this serve as BSSID for self-BSS. */
