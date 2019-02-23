@@ -202,7 +202,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_h
 		      WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_roam_scan_rssi_threshold_fixed_param));
 	/* fill in threshold values */
-	rssi_threshold_fp->vdev_id = roam_req->session_id;
+	rssi_threshold_fp->vdev_id = roam_req->vdev_id;
 	rssi_threshold_fp->roam_scan_rssi_thresh = roam_req->rssi_thresh;
 	rssi_threshold_fp->roam_rssi_thresh_diff = roam_req->rssi_thresh_diff;
 	rssi_threshold_fp->hirssi_scan_max_count =

@@ -72,7 +72,7 @@ struct rssi_monitor_param {
  * @hi_rssi_scan_rssi_delta: 5G scan rssi change threshold value
  * @hi_rssi_scan_rssi_ub: 5G scan upper bound
  * @raise_rssi_thresh_5g: flag to determine penalty and boost thresholds
- * @session_id: vdev id
+ * @vdev_id: vdev id
  * @penalty_threshold_5g: RSSI threshold below which 5GHz RSSI is penalized
  * @boost_threshold_5g: RSSI threshold above which 5GHz RSSI is favored
  * @raise_factor_5g: factor by which 5GHz RSSI is boosted
@@ -105,7 +105,7 @@ struct roam_offload_scan_rssi_params {
 	uint32_t hi_rssi_scan_rssi_delta;
 	int32_t hi_rssi_scan_rssi_ub;
 	int raise_rssi_thresh_5g;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint32_t penalty_threshold_5g;
 	uint32_t boost_threshold_5g;
 	uint8_t raise_factor_5g;
