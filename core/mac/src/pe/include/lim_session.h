@@ -110,11 +110,21 @@ struct obss_detection_cfg {
 	uint8_t obss_ht_20mhz_detect_mode;
 };
 
+/**
+ * struct pe_session - per-vdev PE context
+ * @available: true if the entry is available, false if it is in use
+ * @peSessionId: unique ID assigned to the entry
+ * @vdev_id: ID of the vdev for which this entry is applicable
+ * @vdev: the actual vdev for which this entry is applicable
+ */
 struct pe_session {
 	/* To check session table is in use or free */
 	uint8_t available;
 	uint16_t peSessionId;
-	uint8_t smeSessionId;
+	union {
+		uint8_t smeSessionId;
+		uint8_t vdev_id;
+	};
 	struct wlan_objmgr_vdev *vdev;
 	uint16_t transactionId;
 
