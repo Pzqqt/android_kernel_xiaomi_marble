@@ -3057,7 +3057,7 @@ bool hdd_is_any_interface_open(struct hdd_context *hdd_ctx);
  * @peer_mac: MAC address of peer
  * @peer_status: ePeerConnected or ePeerDisconnected
  * @peer_timing_meas_cap: 0: RTT/RTT2, 1: RTT3. Default is 0
- * @sessionId: SME session id, i.e. vdev_id
+ * @vdev_id: ID of the underlying vdev
  * @chan_info: operating channel information
  * @dev_mode: dev mode for which indication is sent
  *
@@ -3067,7 +3067,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 					struct qdf_mac_addr *peer_mac,
 					uint8_t peer_status,
 					uint8_t peer_timing_meas_cap,
-					uint8_t sessionId,
+					uint8_t vdev_id,
 					struct oem_channel_info *chan_info,
 					enum QDF_OPMODE dev_mode)
 {
@@ -3075,8 +3075,8 @@ static inline void hdd_send_peer_status_ind_to_app(
 
 	if (!chan_info) {
 		os_if_wifi_pos_send_peer_status(peer_mac, peer_status,
-					peer_timing_meas_cap, sessionId,
-					NULL, dev_mode);
+						peer_timing_meas_cap, vdev_id,
+						NULL, dev_mode);
 		return;
 	}
 
@@ -3092,7 +3092,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 	ch_info.sec_ch_offset = chan_info->sec_ch_offset;
 	ch_info.ch_width = chan_info->ch_width;
 	os_if_wifi_pos_send_peer_status(peer_mac, peer_status,
-					peer_timing_meas_cap, sessionId,
+					peer_timing_meas_cap, vdev_id,
 					&ch_info, dev_mode);
 }
 #else
@@ -3100,12 +3100,12 @@ static inline void hdd_send_peer_status_ind_to_app(
 					struct qdf_mac_addr *peer_mac,
 					uint8_t peer_status,
 					uint8_t peer_timing_meas_cap,
-					uint8_t sessionId,
+					uint8_t vdev_id,
 					struct oem_channel_info *chan_info,
 					enum QDF_OPMODE dev_mode)
 {
 	hdd_send_peer_status_ind_to_oem_app(peer_mac, peer_status,
-			peer_timing_meas_cap, sessionId, chan_info, dev_mode);
+			peer_timing_meas_cap, vdev_id, chan_info, dev_mode);
 }
 #endif /* WIFI_POS_CONVERGENCE */
 
