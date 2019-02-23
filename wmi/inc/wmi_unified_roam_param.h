@@ -50,14 +50,14 @@ struct gateway_update_req_param {
 /**
  * struct rssi_monitor_param - rssi monitoring
  * @request_id: request id
- * @session_id: session id
+ * @vdev_id: vdev id
  * @min_rssi: minimum rssi
  * @max_rssi: maximum rssi
  * @control: flag to indicate start or stop
  */
 struct rssi_monitor_param {
 	uint32_t request_id;
-	uint32_t session_id;
+	uint32_t vdev_id;
 	int8_t   min_rssi;
 	int8_t   max_rssi;
 	bool     control;

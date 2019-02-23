@@ -119,7 +119,7 @@ static QDF_STATUS send_set_rssi_monitoring_cmd_tlv(wmi_unified_t wmi_handle,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_rssi_breach_monitor_config_fixed_param));
 
-	cmd->vdev_id = req->session_id;
+	cmd->vdev_id = req->vdev_id;
 	cmd->request_id = req->request_id;
 	cmd->lo_rssi_reenable_hysteresis = 0;
 	cmd->hi_rssi_reenable_histeresis = 0;
