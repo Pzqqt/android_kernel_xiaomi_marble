@@ -1135,6 +1135,15 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_ulofdma_mpdu_ok;       /* mpdu level */
     A_UINT32 rx_ulofdma_mpdu_fail;     /* mpdu level */
     A_INT8   rx_ul_fd_rssi[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS];/* dBm unit */
+    /* per_chain_rssi_pkt_type:
+     * This field shows what type of rx frame the per-chain RSSI was computed
+     * on, by recording the frame type and sub-type as bit-fields within this
+     * field:
+     * BIT [3 : 0]    :- IEEE80211_FC0_TYPE
+     * BIT [7 : 4]    :- IEEE80211_FC0_SUBTYPE
+     * BIT [31 : 8]   :- Reserved
+     */
+    A_UINT32  per_chain_rssi_pkt_type;
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -2960,6 +2969,15 @@ typedef struct {
      */
     A_INT32 rx_pilot_evm_dB_mean[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
     A_INT8  rx_ul_fd_rssi[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_MAX_OFDMA_NUM_USER]; /* dBm units */
+    /* per_chain_rssi_pkt_type:
+     * This field shows what type of rx frame the per-chain RSSI was computed
+     * on, by recording the frame type and sub-type as bit-fields within this
+     * field:
+     * BIT [3 : 0]    :- IEEE80211_FC0_TYPE
+     * BIT [7 : 4]    :- IEEE80211_FC0_SUBTYPE
+     * BIT [31 : 8]   :- Reserved
+     */
+    A_UINT32  per_chain_rssi_pkt_type;
 } htt_rx_pdev_rate_stats_tlv;
 
 
