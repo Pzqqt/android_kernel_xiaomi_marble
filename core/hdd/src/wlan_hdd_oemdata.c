@@ -666,29 +666,17 @@ static int oem_process_get_cap_req_msg(void)
 	return 0;
 }
 
-/**
- * hdd_send_peer_status_ind_to_oem_app() -
- * Function to send peer status to a registered application
- * @peerMac: MAC address of peer
- * @peerStatus: ePeerConnected or ePeerDisconnected
- * @peerTimingMeasCap: 0: RTT/RTT2, 1: RTT3. Default is 0
- * @sessionId: SME session id, i.e. vdev_id
- * @chan_info: operating channel information
- * @dev_mode: dev mode for which indication is sent
- *
- * Return: none
- */
-void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
-					 uint8_t peerStatus,
-					 uint8_t peerTimingMeasCap,
-					 uint8_t sessionId,
+void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
+					 uint8_t peer_status,
+					 uint8_t peer_capability,
+					 uint8_t vdev_id,
 					 struct oem_channel_info *chan_info,
 					 enum QDF_OPMODE dev_mode)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
-	struct peer_status_info *pPeerInfo;
+	tAniMsgHdr *ani_hdr;
+	struct peer_status_info *peer_info;
 
 	if (!p_hdd_ctx) {
 		hdd_err("HDD Ctx is null");
@@ -704,7 +692,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 	}
 
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) +
-				    sizeof(*pPeerInfo)),
+				    sizeof(*peer_info)),
 			GFP_KERNEL);
 	if (skb == NULL)
 		return;
@@ -714,62 +702,52 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_PEER_STATUS_IND;
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_PEER_STATUS_IND;
 
-	aniHdr->length = sizeof(*pPeerInfo);
-	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
+	ani_hdr->length = sizeof(*peer_info);
+	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
 
-	pPeerInfo = (struct peer_status_info *) ((char *)aniHdr + sizeof(tAniMsgHdr));
-
-	qdf_mem_copy(pPeerInfo->peer_mac_addr, peerMac->bytes,
-		     sizeof(peerMac->bytes));
-	pPeerInfo->peer_status = peerStatus;
-	pPeerInfo->vdev_id = sessionId;
-	pPeerInfo->peer_capability = peerTimingMeasCap;
-	pPeerInfo->reserved0 = 0;
+	peer_info = (struct peer_status_info *) ((char *)ani_hdr + sizeof(tAniMsgHdr));
+	qdf_mem_zero(peer_info, sizeof(*peer_info));
+	qdf_mem_copy(peer_info->peer_mac_addr, peer_mac->bytes,
+		     sizeof(peer_mac->bytes));
+	peer_info->peer_status = peer_status;
+	peer_info->vdev_id = vdev_id;
+	peer_info->peer_capability = peer_capability;
 	/* Set 0th bit of reserved0 for STA mode */
 	if (QDF_STA_MODE == dev_mode)
-		pPeerInfo->reserved0 |= 0x01;
+		peer_info->reserved0 |= 0x01;
 
 	if (chan_info) {
-		pPeerInfo->peer_chan_info.chan_id = chan_info->chan_id;
-		pPeerInfo->peer_chan_info.reserved0 = 0;
-		pPeerInfo->peer_chan_info.mhz = chan_info->mhz;
-		pPeerInfo->peer_chan_info.band_center_freq1 =
+		peer_info->peer_chan_info.chan_id = chan_info->chan_id;
+		peer_info->peer_chan_info.reserved0 = 0;
+		peer_info->peer_chan_info.mhz = chan_info->mhz;
+		peer_info->peer_chan_info.band_center_freq1 =
 			chan_info->band_center_freq1;
-		pPeerInfo->peer_chan_info.band_center_freq2 =
+		peer_info->peer_chan_info.band_center_freq2 =
 			chan_info->band_center_freq2;
-		pPeerInfo->peer_chan_info.info = chan_info->info;
-		pPeerInfo->peer_chan_info.reg_info_1 = chan_info->reg_info_1;
-		pPeerInfo->peer_chan_info.reg_info_2 = chan_info->reg_info_2;
-	} else {
-		pPeerInfo->peer_chan_info.chan_id = 0;
-		pPeerInfo->peer_chan_info.reserved0 = 0;
-		pPeerInfo->peer_chan_info.mhz = 0;
-		pPeerInfo->peer_chan_info.band_center_freq1 = 0;
-		pPeerInfo->peer_chan_info.band_center_freq2 = 0;
-		pPeerInfo->peer_chan_info.info = 0;
-		pPeerInfo->peer_chan_info.reg_info_1 = 0;
-		pPeerInfo->peer_chan_info.reg_info_2 = 0;
+		peer_info->peer_chan_info.info = chan_info->info;
+		peer_info->peer_chan_info.reg_info_1 = chan_info->reg_info_1;
+		peer_info->peer_chan_info.reg_info_2 = chan_info->reg_info_2;
 	}
-	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
+	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_info("sending peer " MAC_ADDRESS_STR
-		  " status(%d), peerTimingMeasCap(%d), vdevId(%d), chanId(%d)"
+		  " status(%d), peer_capability(%d), vdevId(%d), chanId(%d)"
 		  " to oem app pid(%d), center freq 1 (%d), center freq 2 (%d),"
 		  " info (0x%x), frequency (%d),reg info 1 (0x%x),"
 		  " reg info 2 (0x%x)",
-		  MAC_ADDR_ARRAY(peerMac->bytes),
-		  peerStatus, peerTimingMeasCap,
-		  sessionId, pPeerInfo->peer_chan_info.chan_id,
+		  MAC_ADDR_ARRAY(peer_mac->bytes),
+		  peer_status, peer_capability,
+		  vdev_id, peer_info->peer_chan_info.chan_id,
 		  p_hdd_ctx->oem_pid,
-		  pPeerInfo->peer_chan_info.band_center_freq1,
-		  pPeerInfo->peer_chan_info.band_center_freq2,
-		  pPeerInfo->peer_chan_info.info,
-		  pPeerInfo->peer_chan_info.mhz,
-		  pPeerInfo->peer_chan_info.reg_info_1,
-		  pPeerInfo->peer_chan_info.reg_info_2);
+		  peer_info->peer_chan_info.band_center_freq1,
+		  peer_info->peer_chan_info.band_center_freq2,
+		  peer_info->peer_chan_info.info,
+		  peer_info->peer_chan_info.mhz,
+		  peer_info->peer_chan_info.reg_info_1,
+		  peer_info->peer_chan_info.reg_info_2);
 
 	(void)nl_srv_ucast_oem(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
 }

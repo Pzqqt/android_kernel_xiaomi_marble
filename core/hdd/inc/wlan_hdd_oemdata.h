@@ -167,10 +167,22 @@ struct oem_get_capability_rsp {
 	struct sme_oem_capability cap;
 };
 
-void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
-					 uint8_t peerStatus,
-					 uint8_t peerTimingMeasCap,
-					 uint8_t sessionId,
+/**
+ * hdd_send_peer_status_ind_to_oem_app() -
+ * Function to send peer status to a registered application
+ * @peer_mac: MAC address of peer
+ * @peer_status: ePeerConnected or ePeerDisconnected
+ * @peer_capability: 0: RTT/RTT2, 1: RTT3. Default is 0
+ * @vdev_id: vdev_id
+ * @chan_info: operating channel information
+ * @dev_mode: dev mode for which indication is sent
+ *
+ * Return: none
+ */
+void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
+					 uint8_t peer_status,
+					 uint8_t peer_capability,
+					 uint8_t vdev_id,
 					 struct oem_channel_info *chan_info,
 					 enum QDF_OPMODE dev_mode);
 
