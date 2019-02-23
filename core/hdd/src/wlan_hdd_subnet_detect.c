@@ -75,7 +75,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1];
-	struct gateway_param_update_req req = { 0 };
+	struct gateway_update_req_param req = { 0 };
 	int ret;
 	QDF_STATUS status;
 	bool subnet_detection_enabled;
@@ -148,9 +148,9 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 
 	req.max_retries = 3;
 	req.timeout = 100;   /* in milliseconds */
-	req.session_id = adapter->vdev_id;
+	req.vdev_id = adapter->vdev_id;
 
-	hdd_debug("Configuring gateway for session %d", req.session_id);
+	hdd_debug("Configuring gateway for session %d", req.vdev_id);
 	hdd_debug("mac:%pM, ipv4:%pI4 (type %d), ipv6:%pI6c (type %d)",
 		  req.gw_mac_addr.bytes,
 		  req.ipv4_addr, req.ipv4_addr_type,

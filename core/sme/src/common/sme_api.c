@@ -11978,11 +11978,11 @@ QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg)
  * This routine will update gateway parameters to WMA
  */
 QDF_STATUS sme_gateway_param_update(mac_handle_t mac_handle,
-				    struct gateway_param_update_req *gw_params)
+				    struct gateway_update_req_param *gw_params)
 {
 	QDF_STATUS qdf_status;
 	struct scheduler_msg message = {0};
-	struct gateway_param_update_req *request_buf;
+	struct gateway_update_req_param *request_buf;
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (!request_buf)

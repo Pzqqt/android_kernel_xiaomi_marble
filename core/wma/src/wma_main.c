@@ -8783,8 +8783,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_GW_PARAM_UPDATE_REQ:
-		wma_set_gateway_params(wma_handle,
-			(struct gateway_param_update_req *)msg->bodyptr);
+		wma_set_gateway_params(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS:

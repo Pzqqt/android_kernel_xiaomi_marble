@@ -1750,12 +1750,24 @@ QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 		A_UINT32 val, A_UINT32 *module_id_bitmap,
 		A_UINT32 bitmap_len);
+
 #ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * wma_set_gateway_params() - set gateway parameters
+ * @wma: WMA handle
+ * @req: gateway update request parameter structure
+ *
+ * This function takes the incoming @req and sends it down to the
+ * firmware
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
-					struct gateway_param_update_req *req);
+				  struct gateway_update_req_param *req);
 #else
-static inline QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
-					struct gateway_param_update_req *req)
+static inline
+QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+				  struct gateway_update_req_param *req)
 {
 	return QDF_STATUS_SUCCESS;
 }

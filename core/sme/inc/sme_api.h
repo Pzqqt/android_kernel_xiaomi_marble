@@ -1528,7 +1528,7 @@ sme_get_opclass(mac_handle_t mac_handle, uint8_t channel, uint8_t bw_offset,
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 QDF_STATUS sme_gateway_param_update(mac_handle_t mac_handle,
-				struct gateway_param_update_req *request);
+				struct gateway_update_req_param *request);
 #endif
 
 void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,

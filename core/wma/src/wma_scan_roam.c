@@ -5041,41 +5041,15 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 }
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
-/**
- * wma_set_gateway_params() - set gateway parameters
- * @wma: WMA handle
- * @req: gateway parameter update request structure
- *
- * This function reads the incoming @req and fill in the destination
- * WMI structure and sends down the gateway configs down to the firmware
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
-					struct gateway_param_update_req *req)
+				  struct gateway_update_req_param *req)
 {
-	struct gateway_update_req_param params = {0};
-
 	if (!wma) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.request_id = req->request_id;
-	params.vdev_id = req->session_id;
-	params.max_retries = req->max_retries;
-	params.timeout = req->timeout;
-	params.ipv4_addr_type = req->ipv4_addr_type;
-	params.ipv6_addr_type = req->ipv6_addr_type;
-	qdf_mem_copy(&params.gw_mac_addr, &req->gw_mac_addr,
-			sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params.ipv4_addr, req->ipv4_addr,
-				QDF_IPV4_ADDR_SIZE);
-	qdf_mem_copy(params.ipv6_addr, req->ipv6_addr,
-				QDF_IPV6_ADDR_SIZE);
-
-	return wmi_unified_set_gateway_params_cmd(wma->wmi_handle,
-							&params);
+	return wmi_unified_set_gateway_params_cmd(wma->wmi_handle, req);
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
 
