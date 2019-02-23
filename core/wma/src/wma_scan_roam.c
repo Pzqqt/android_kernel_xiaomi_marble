@@ -458,7 +458,7 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 				     WMA_NOISE_FLOOR_DBM_DEFAULT;
 
 	/* fill in threshold values */
-	params.session_id = roam_req->sessionId;
+	params.vdev_id = roam_req->sessionId;
 	params.rssi_thresh = rssi_thresh;
 	params.rssi_thresh_diff = rssi_thresh_diff & 0x000000ff;
 	params.hi_rssi_scan_max_count = hirssi_scan_max_count;
