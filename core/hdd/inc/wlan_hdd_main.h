@@ -2143,15 +2143,19 @@ int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func);
 int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func);
 
 /**
- * wlan_hdd_validate_session_id() - ensure the given session Id is valid
- * @session_id: the session Id to validate
+ * wlan_hdd_validate_vdev_id() - ensure the given vdev Id is valid
+ * @vdev_id: the vdev Id to validate
  *
  * Return: Errno
  */
-#define wlan_hdd_validate_session_id(session_id) \
-	__wlan_hdd_validate_session_id(session_id, __func__)
+#define wlan_hdd_validate_vdev_id(vdev_id) \
+	__wlan_hdd_validate_vdev_id(vdev_id, __func__)
 
-int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func);
+int __wlan_hdd_validate_vdev_id(uint8_t vdev_id, const char *func);
+
+/* legacy interface to be replaced */
+#define wlan_hdd_validate_session_id(session_id) \
+	wlan_hdd_validate_vdev_id(session_id)
 
 /**
  * hdd_is_valid_mac_address() - validate MAC address

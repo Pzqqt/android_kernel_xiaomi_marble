@@ -1074,18 +1074,18 @@ int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func)
 		return -EAGAIN;
 	}
 
-	return __wlan_hdd_validate_session_id(adapter->vdev_id, func);
+	return __wlan_hdd_validate_vdev_id(adapter->vdev_id, func);
 }
 
-int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func)
+int __wlan_hdd_validate_vdev_id(uint8_t vdev_id, const char *func)
 {
-	if (session_id == CSR_SESSION_ID_INVALID) {
+	if (vdev_id == CSR_SESSION_ID_INVALID) {
 		hdd_debug_rl("adapter is not up (via %s)", func);
 		return -EINVAL;
 	}
 
-	if (session_id >= WLAN_MAX_VDEVS) {
-		hdd_err("bad session Id:%u (via %s)", session_id, func);
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		hdd_err("bad vdev Id:%u (via %s)", vdev_id, func);
 		return -EINVAL;
 	}
 
@@ -2074,7 +2074,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 		     ap_ctx->operating_channel))) {
 			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
 				true;
-			hdd_info("tx blocked for session: %d",
+			hdd_info("tx blocked for vdev: %d",
 				adapter->vdev_id);
 			if (adapter->txrx_vdev)
 				cdp_fc_vdev_flush(
