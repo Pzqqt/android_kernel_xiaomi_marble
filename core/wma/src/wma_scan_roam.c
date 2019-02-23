@@ -2953,7 +2953,7 @@ QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 	}
 
 	params.request_id = req->request_id;
-	params.session_id = req->session_id;
+	params.vdev_id = req->session_id;
 	params.min_rssi = req->min_rssi;
 	params.max_rssi = req->max_rssi;
 	params.control = req->control;
