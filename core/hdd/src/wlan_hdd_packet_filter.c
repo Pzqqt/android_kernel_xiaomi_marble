@@ -102,7 +102,7 @@ int hdd_disable_default_pkt_filters(struct hdd_adapter *adapter)
 
 int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 				struct pkt_filter_cfg *request,
-				uint8_t sessionId)
+				uint8_t vdev_id)
 {
 	struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req = NULL;
 	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param = NULL;
@@ -215,7 +215,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 
 		status= ucfg_pmo_set_pkt_filter(hdd_ctx->psoc,
 						pmo_set_pkt_fltr_req,
-						sessionId);
+						vdev_id);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failure to execute Set Filter");
 			status = QDF_STATUS_E_INVAL;
@@ -238,7 +238,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 		pmo_clr_pkt_fltr_param->filter_id = request->filter_id;
 		status = ucfg_pmo_clear_pkt_filter(hdd_ctx->psoc,
 						   pmo_clr_pkt_fltr_param,
-						   sessionId);
+						   vdev_id);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failure to execute Clear Filter");
 			status = QDF_STATUS_E_INVAL;
