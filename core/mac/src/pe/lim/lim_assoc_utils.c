@@ -2424,7 +2424,11 @@ lim_add_sta(struct mac_context *mac_ctx,
 	if (STA_ENTRY_TDLS_PEER == sta_ds->staType) {
 		add_sta_params->ht_caps = sta_ds->ht_caps;
 		add_sta_params->vht_caps = sta_ds->vht_caps;
-
+		if (add_sta_params->vhtCapable) {
+			add_sta_params->maxAmpduSize =
+				SIR_MAC_GET_VHT_MAX_AMPDU_EXPO(
+						sta_ds->vht_caps);
+		}
 		pe_debug("Sta type is TDLS_PEER, ht_caps: 0x%x, vht_caps: 0x%x",
 			  add_sta_params->ht_caps,
 			  add_sta_params->vht_caps);
