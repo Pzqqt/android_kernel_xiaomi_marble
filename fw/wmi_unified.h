@@ -1304,6 +1304,9 @@ typedef enum {
     /* Event to report the switch count in BSS color of one or more VDEVs */
     WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID,
 
+    /* Event to send cold boot calibration data */
+    WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -25973,6 +25976,23 @@ typedef struct {
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX      0x00000003
 #define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX_S    0
 
+/**
+ *  wmi_cold_boot_cal_data config flags
+ *  BIT 0     : 1 means more data will come, 0 means last event
+ *  BIT 1-31  : Reserved
+ */
+#define WMI_COLD_BOOT_CAL_DATA_SET_IS_MORE_DATA(flags, val)      WMI_SET_BITS(flags, 0, 1, val)
+#define WMI_COLD_BOOT_CAL_DATA_GET_IS_MORE_DATA(flags)           WMI_GET_BITS(flags, 0, 1)
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_cold_boot_cal_data_fixed_param */
+    A_UINT32 data_len; /** length in byte of data[]. */
+    A_UINT32 flags; /** config flags : Only 0th bit is used, bit 1-31 are reserved */
+/* Following this structure is the TLV:
+ *      A_UINT8 data[]; <-- length in byte given by field data_len.
+ * This data array contains cold boot data calibration raw data.
+ */
+} wmi_cold_boot_cal_data_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
