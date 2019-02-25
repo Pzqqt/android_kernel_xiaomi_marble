@@ -670,7 +670,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	uint8_t align_pad;
 	uint8_t is_exception = 0;
 	uint8_t htt_hdr_size;
-	struct ether_header *eh;
+	qdf_ether_header_t *eh;
 	struct dp_tx_desc_s *tx_desc;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -764,7 +764,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	}
 
 	if (qdf_unlikely(vdev->nawds_enabled)) {
-		eh = (struct ether_header *) qdf_nbuf_data(nbuf);
+		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
 			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 			is_exception = 1;
@@ -1060,7 +1060,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
  */
 static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
-	struct ether_header *eh = NULL;
+	qdf_ether_header_t *eh = NULL;
 	uint16_t   ether_type;
 	qdf_llc_t *llcHdr;
 	qdf_nbuf_t nbuf_clone = NULL;
@@ -1071,10 +1071,10 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 		return false;
 
 	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
-		eh = (struct ether_header *) qdf_nbuf_data(nbuf);
+		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		ether_type = eh->ether_type;
 		llcHdr = (qdf_llc_t *)(nbuf->data +
-					sizeof(struct ether_header));
+					sizeof(qdf_ether_header_t));
 	} else {
 		qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
 		/* For encrypted packets don't do any classification */
@@ -1176,7 +1176,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint8_t tos = 0, dscp_tid_override = 0;
 	uint8_t *hdr_ptr, *L3datap;
 	uint8_t is_mcast = 0;
-	struct ether_header *eh = NULL;
+	qdf_ether_header_t *eh = NULL;
 	qdf_ethervlan_header_t *evh = NULL;
 	uint16_t   ether_type;
 	qdf_llc_t *llcHdr;
@@ -1192,9 +1192,9 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return;
 
 	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
-		eh = (struct ether_header *) nbuf->data;
+		eh = (qdf_ether_header_t *)nbuf->data;
 		hdr_ptr = eh->ether_dhost;
-		L3datap = hdr_ptr + sizeof(struct ether_header);
+		L3datap = hdr_ptr + sizeof(qdf_ether_header_t);
 	} else {
 		qdf_dot3_qosframe_t *qos_wh =
 			(qdf_dot3_qosframe_t *) nbuf->data;
@@ -1206,7 +1206,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	is_mcast = DP_FRAME_IS_MULTICAST(hdr_ptr);
 	ether_type = eh->ether_type;
 
-	llcHdr = (qdf_llc_t *)(nbuf->data + sizeof(struct ether_header));
+	llcHdr = (qdf_llc_t *)(nbuf->data + sizeof(qdf_ether_header_t));
 	/*
 	 * Check if packet is dot3 or eth2 type.
 	 */
@@ -1221,7 +1221,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					+ sizeof(*llcHdr) +
 					sizeof(qdf_net_vlanhdr_t));
 		} else {
-			L3datap = hdr_ptr + sizeof(struct ether_header) +
+			L3datap = hdr_ptr + sizeof(qdf_ether_header_t) +
 				sizeof(*llcHdr);
 		}
 	} else {
@@ -1784,7 +1784,7 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = vdev->pdev->soc;
 	struct dp_ast_entry *ast_entry = NULL;
-	struct ether_header *eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 	uint16_t peer_id = HTT_INVALID_PEER;
 
 	struct dp_peer *sa_peer = NULL;
@@ -1871,7 +1871,7 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 		struct cdp_tx_exception_metadata *tx_exc_metadata)
 {
-	struct ether_header *eh = NULL;
+	qdf_ether_header_t *eh = NULL;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 	struct dp_tx_msdu_info_s msdu_info;
 
@@ -1879,7 +1879,7 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 
 	msdu_info.tid = tx_exc_metadata->tid;
 
-	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s , skb %pM",
 			__func__, nbuf->data);
@@ -2043,7 +2043,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
  */
 qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 {
-	struct ether_header *eh = NULL;
+	qdf_ether_header_t *eh = NULL;
 	struct dp_tx_msdu_info_s msdu_info;
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
@@ -2053,7 +2053,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
 	qdf_mem_zero(&seg_info, sizeof(seg_info));
 
-	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s , skb %pM",
@@ -2140,7 +2140,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 #ifdef ATH_SUPPORT_IQUE
 	/* Mcast to Ucast Conversion*/
 	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
-		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
 		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2208,11 +2208,11 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	struct dp_peer *sa_peer = NULL;
 	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_soc *soc = NULL;
-	struct ether_header *eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 #ifdef WDS_VENDOR_EXTENSION
 	int is_mcast = 0, is_ucast = 0;
 	int num_peers_3addr = 0;
-	struct ether_header *eth_hdr = (struct ether_header *)(qdf_nbuf_data(nbuf));
+	qdf_ether_header_t *eth_hdr = (qdf_ether_header_t *)(qdf_nbuf_data(nbuf));
 	struct ieee80211_frame_addr4 *wh = (struct ieee80211_frame_addr4 *)(qdf_nbuf_data(nbuf));
 #endif
 
@@ -2927,8 +2927,8 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	uint32_t length;
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
-	struct ether_header *eh =
-		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
+	qdf_ether_header_t *eh =
+		(qdf_ether_header_t *)qdf_nbuf_data(tx_desc->nbuf);
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -3893,7 +3893,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 {
 	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
 	struct dp_pdev *pdev = vdev->pdev;
-	struct ether_header *eh;
+	qdf_ether_header_t *eh;
 	uint8_t *data;
 	uint16_t len;
 
@@ -3920,7 +3920,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
-	eh = (struct ether_header *) nbuf;
+	eh = (qdf_ether_header_t *)nbuf;
 	qdf_mem_copy(srcmac, eh->ether_shost, DP_MAC_ADDR_LEN);
 
 	len = qdf_nbuf_len(nbuf);

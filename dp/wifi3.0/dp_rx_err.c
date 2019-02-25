@@ -651,7 +651,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint16_t msdu_len;
 	struct dp_vdev *vdev;
 	uint8_t tid;
-	struct ether_header *eh;
+	qdf_ether_header_t *eh;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
 			hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr));
@@ -823,7 +823,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 						rx_tlv_hdr) &&
 					 (vdev->rx_decap_type ==
 					  htt_cmn_pkt_type_ethernet))) {
-				eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+				eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
 				DP_STATS_INC_PKT(peer, rx.multicast, 1,
 						 qdf_nbuf_len(nbuf));
@@ -858,7 +858,7 @@ dp_rx_process_err_unencrypted(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
 	struct dp_vdev *vdev;
-	struct ether_header *eh;
+	qdf_ether_header_t *eh;
 	bool is_broadcast;
 
 	/*
@@ -958,7 +958,7 @@ process_rx:
 	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
 				(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_ethernet))) {
-		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		is_broadcast = (QDF_IS_ADDR_BROADCAST
 				(eh->ether_dhost)) ? 1 : 0 ;
 		DP_STATS_INC_PKT(peer, rx.multicast, 1, qdf_nbuf_len(nbuf));

@@ -1167,7 +1167,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	uint16_t peer_id;
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
 	struct dp_vdev *vdev = peer->vdev;
-	struct ether_header *eh;
+	qdf_ether_header_t *eh;
 	uint16_t msdu_len = qdf_nbuf_len(nbuf);
 
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
@@ -1182,7 +1182,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 
 	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
-		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
 		if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
 			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
