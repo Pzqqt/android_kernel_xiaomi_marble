@@ -100,7 +100,7 @@ hdd_get_num_wow_filters(struct hdd_context *hdd_ctx, uint8_t *num_filters)
  */
 bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
-	struct pmo_wow_add_pattern localPattern;
+	struct pmo_wow_add_pattern wow_pattern;
 	int i, empty_slot, len, offset;
 	QDF_STATUS status;
 	const char *temp;
@@ -153,15 +153,15 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		}
 
 		/* Extract the pattern size */
-		localPattern.pattern_size =
+		wow_pattern.pattern_size =
 			(hex_to_bin(ptrn[0]) * 0x10) + hex_to_bin(ptrn[1]);
 
 		/* Extract the pattern mask size */
-		localPattern.pattern_mask_size =
+		wow_pattern.pattern_mask_size =
 			(hex_to_bin(ptrn[3]) * 0x10) + hex_to_bin(ptrn[4]);
 
-		if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE
-		    || localPattern.pattern_mask_size >
+		if (wow_pattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE
+		    || wow_pattern.pattern_mask_size >
 		    WOWL_PTRN_MASK_MAX_SIZE) {
 			hdd_err("Invalid length specified. Skip!");
 			invalid_ptrn = true;
@@ -170,7 +170,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		}
 
 		/* compute the offset of tokenizer after the pattern */
-		offset = 5 + 2 * localPattern.pattern_size + 1;
+		offset = 5 + 2 * wow_pattern.pattern_size + 1;
 		if ((offset >= len) ||
 		    (ptrn[offset] != WOWL_INTRA_PTRN_TOKENIZER)) {
 			hdd_err("Malformed pattern string..skip!");
@@ -180,7 +180,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		}
 
 		/* compute the end of pattern sring */
-		offset = offset + 2 * localPattern.pattern_mask_size;
+		offset = offset + 2 * wow_pattern.pattern_mask_size;
 		if (offset + 1 != len) {
 			/* offset begins with 0 */
 			hdd_err("Malformed pattern string...skip!");
@@ -195,8 +195,8 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		ptrn += 6;
 
 		/* Extract the pattern */
-		for (i = 0; i < localPattern.pattern_size; i++) {
-			localPattern.pattern[i] =
+		for (i = 0; i < wow_pattern.pattern_size; i++) {
+			wow_pattern.pattern[i] =
 				(hex_to_bin(ptrn[0]) * 0x10) +
 				hex_to_bin(ptrn[1]);
 			ptrn += 2;      /* skip to next byte */
@@ -206,8 +206,8 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		ptrn++;
 
 		/* Extract the pattern Mask */
-		for (i = 0; i < localPattern.pattern_mask_size; i++) {
-			localPattern.pattern_mask[i] =
+		for (i = 0; i < wow_pattern.pattern_mask_size; i++) {
+			wow_pattern.pattern_mask[i] =
 				(hex_to_bin(ptrn[0]) * 0x10) +
 				hex_to_bin(ptrn[1]);
 			ptrn += 2;      /* skip to next byte */
@@ -222,12 +222,12 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 
 		memcpy(g_hdd_wowl_ptrns[empty_slot], temp, len);
 		g_hdd_wowl_ptrns[empty_slot][len] = '\0';
-		localPattern.pattern_id = empty_slot;
-		localPattern.pattern_byte_offset = 0;
+		wow_pattern.pattern_id = empty_slot;
+		wow_pattern.pattern_byte_offset = 0;
 
 		/* Register the pattern downstream */
 		status = ucfg_pmo_add_wow_user_pattern(
-					adapter->vdev, &localPattern);
+					adapter->vdev, &wow_pattern);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			/* Add failed, so invalidate the local storage */
 			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
@@ -236,7 +236,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			g_hdd_wowl_ptrns[empty_slot] = NULL;
 		}
 
-		dump_hdd_wowl_ptrn(&localPattern);
+		dump_hdd_wowl_ptrn(&wow_pattern);
 
 next_ptrn:
 		if (*ptrn == WOWL_INTER_PTRN_TOKENIZER) {
@@ -317,7 +317,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 			       uint8_t pattern_offset, char *pattern_buf,
 			       char *pattern_mask)
 {
-	struct pmo_wow_add_pattern localPattern;
+	struct pmo_wow_add_pattern wow_pattern;
 	QDF_STATUS qdf_ret_status;
 	uint16_t pattern_len, mask_len, i;
 
@@ -345,19 +345,19 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 		return false;
 	}
 
-	localPattern.pattern_id = pattern_idx;
-	localPattern.pattern_byte_offset = pattern_offset;
-	localPattern.pattern_size = pattern_len;
+	wow_pattern.pattern_id = pattern_idx;
+	wow_pattern.pattern_byte_offset = pattern_offset;
+	wow_pattern.pattern_size = pattern_len;
 
-	if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE) {
+	if (wow_pattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE) {
 		hdd_err("WoW pattern size (%d) greater than max (%d)",
-			localPattern.pattern_size,
+			wow_pattern.pattern_size,
 			PMO_WOWL_BCAST_PATTERN_MAX_SIZE);
 		return false;
 	}
 	/* Extract the pattern */
-	for (i = 0; i < localPattern.pattern_size; i++) {
-		localPattern.pattern[i] =
+	for (i = 0; i < wow_pattern.pattern_size; i++) {
+		wow_pattern.pattern[i] =
 			(hex_to_bin(pattern_buf[0]) << 4) +
 			hex_to_bin(pattern_buf[1]);
 
@@ -366,26 +366,26 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	}
 
 	/* Get pattern mask size by pattern length */
-	localPattern.pattern_mask_size = pattern_len >> 3;
+	wow_pattern.pattern_mask_size = pattern_len >> 3;
 	if (pattern_len % 8)
-		localPattern.pattern_mask_size += 1;
+		wow_pattern.pattern_mask_size += 1;
 
 	mask_len = strlen(pattern_mask);
 	if ((mask_len % 2)
-	    || (localPattern.pattern_mask_size != (mask_len >> 1))) {
+	    || (wow_pattern.pattern_mask_size != (mask_len >> 1))) {
 		hdd_err("Malformed WoW pattern mask!");
 
 		return false;
 	}
-	if (localPattern.pattern_mask_size > WOWL_PTRN_MASK_MAX_SIZE) {
+	if (wow_pattern.pattern_mask_size > WOWL_PTRN_MASK_MAX_SIZE) {
 		hdd_err("WoW pattern mask size (%d) greater than max (%d)",
-			localPattern.pattern_mask_size,
+			wow_pattern.pattern_mask_size,
 			WOWL_PTRN_MASK_MAX_SIZE);
 		return false;
 	}
 	/* Extract the pattern mask */
-	for (i = 0; i < localPattern.pattern_mask_size; i++) {
-		localPattern.pattern_mask[i] =
+	for (i = 0; i < wow_pattern.pattern_mask_size; i++) {
+		wow_pattern.pattern_mask[i] =
 			(hex_to_bin(pattern_mask[0]) << 4) +
 			hex_to_bin(pattern_mask[1]);
 
@@ -395,7 +395,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 
 	/* Register the pattern downstream */
 	qdf_ret_status = ucfg_pmo_add_wow_user_pattern(
-				adapter->vdev, &localPattern);
+				adapter->vdev, &wow_pattern);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("pmo_wow_user_pattern failed with error code (%d).",
 			  qdf_ret_status);
@@ -409,7 +409,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 		g_hdd_wowl_ptrns_count++;
 	}
 
-	dump_hdd_wowl_ptrn(&localPattern);
+	dump_hdd_wowl_ptrn(&wow_pattern);
 
 	return true;
 }
