@@ -864,7 +864,7 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 			    uint8_t *hostv4addr, uint8_t *destv4addr,
 			    uint8_t *destmac)
 {
-	struct sta_params params;
+	struct sta_keep_alive_params params;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -882,12 +882,11 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 	params.vdev_id = vdev_id;
 	params.method = method;
 	params.timeperiod = timeperiod;
-	params.hostv4addr = hostv4addr;
-	params.destv4addr = destv4addr;
-	params.destmac = destmac;
+	qdf_mem_copy(params.hostv4addr, hostv4addr, QDF_IPV4_ADDR_SIZE);
+	qdf_mem_copy(params.destv4addr, destv4addr, QDF_IPV4_ADDR_SIZE);
+	qdf_mem_copy(params.destmac, destmac, QDF_MAC_ADDR_SIZE);
 
-	wmi_unified_set_sta_keep_alive_cmd(wma->wmi_handle,
-						&params);
+	wmi_unified_set_sta_keep_alive_cmd(wma->wmi_handle, &params);
 	WMA_LOGD("%s: Exit", __func__);
 }
 
