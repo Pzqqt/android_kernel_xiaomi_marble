@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,7 +172,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 		       uint32_t address, bool compressed)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
-	int status = EOK;
+	int status = 0;
 	const char *filename;
 	const struct firmware *fw_entry;
 	uint32_t fw_entry_size;
@@ -405,7 +405,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 					board_data_size),
 					board_ext_data_size, ol_ctx);
 
-			if (status != EOK)
+			if (status)
 				goto end;
 
 			/* Record extended board Data initialized */
@@ -439,7 +439,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 			status = bmi_sign_stream_start(address,
 						(uint8_t *)fw_entry->data,
 						bin_off, ol_ctx);
-			if (status != EOK) {
+			if (status) {
 				BMI_ERR("unable to start sign stream");
 				status = -EINVAL;
 				goto end;
@@ -485,7 +485,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 			status = bmi_sign_stream_start(0,
 					(uint8_t *)fw_entry->data +
 					bin_off, bin_len, ol_ctx);
-			if (status != EOK)
+			if (status)
 				BMI_ERR("sign stream error");
 		}
 	}
@@ -505,7 +505,7 @@ release_fw:
 		}
 	}
 
-	if (status != EOK)
+	if (status)
 		BMI_ERR("%s, BMI operation failed: %d", __func__, __LINE__);
 	else
 		BMI_INFO("transferring file: %s size %d bytes done!",
@@ -1362,7 +1362,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 						address, false);
 	}
 
-	if (status == EOK) {
+	if (!status) {
 		/* Record the fact that Board Data is initialized */
 		param = 1;
 		bmi_write_memory(
@@ -1379,7 +1379,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		status = ol_transfer_bin_file(ol_ctx, ATH_OTP_FILE,
 					      address, true);
 		/* Execute the OTP code only if entry found and downloaded */
-		if (status == EOK) {
+		if (!status) {
 			uint16_t board_id = 0xffff;
 			/* get board id */
 			param = 0x10;
@@ -1405,7 +1405,7 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 
 		/* Flash is either not available or invalid */
 		if (ol_transfer_bin_file(ol_ctx, ATH_BOARD_DATA_FILE,
-					 address, false) != EOK) {
+					 address, false)) {
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -1420,8 +1420,8 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		bmi_execute(address, &param, ol_ctx);
 	}
 
-	if (ol_transfer_bin_file(ol_ctx, ATH_SETUP_FILE,
-		BMI_SEGMENTED_WRITE_ADDR, true) == EOK) {
+	if (!ol_transfer_bin_file(ol_ctx, ATH_SETUP_FILE,
+				  BMI_SEGMENTED_WRITE_ADDR, true)) {
 		param = 0;
 		bmi_execute(address, &param, ol_ctx);
 	}
@@ -1431,14 +1431,14 @@ QDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	 */
 	address = BMI_SEGMENTED_WRITE_ADDR;
 	if (ol_transfer_bin_file(ol_ctx, ATH_FIRMWARE_FILE,
-				address, true) != EOK) {
+				 address, true)) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Apply the patches */
 	if (ol_check_dataset_patch(scn, &address)) {
-		if ((ol_transfer_bin_file(ol_ctx, ATH_PATCH_FILE, address,
-					  false)) != EOK) {
+		if (ol_transfer_bin_file(ol_ctx, ATH_PATCH_FILE, address,
+					 false)) {
 			return QDF_STATUS_E_FAILURE;
 		}
 		bmi_write_memory(hif_hia_item_address(target_type,

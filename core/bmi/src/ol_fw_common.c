@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,7 +105,7 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 	status = hif_get_config_item(scn,
 				HIF_DEVICE_GET_BLOCK_SIZE,
 				blocksizes, sizeof(blocksizes));
-	if (status != EOK) {
+	if (status) {
 		BMI_ERR("Failed to get block size info from HIF layer");
 		goto exit;
 	}
@@ -123,7 +123,7 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 				4,
 				ol_ctx);
 
-	if (status != EOK) {
+	if (status) {
 		BMI_ERR("BMIWriteMemory for IO block size failed");
 		goto exit;
 	}
@@ -138,7 +138,7 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 				4,
 				ol_ctx);
 
-		if (status != EOK) {
+		if (status) {
 			BMI_ERR("BMI write for yield limit failed\n");
 			goto exit;
 		}
@@ -150,7 +150,7 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 			(uint8_t *)&param,
 			4,
 			ol_ctx);
-	if (status != EOK) {
+	if (status) {
 		BMI_ERR("BMIReadMemory for hi_acs_flags failed");
 		goto exit;
 	}
