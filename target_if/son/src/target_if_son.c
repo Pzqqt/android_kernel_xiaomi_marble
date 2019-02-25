@@ -40,7 +40,7 @@ int8_t son_ol_sanitize_util_invtl(struct wlan_objmgr_pdev *pdev,
 				  u_int32_t *sample_period,
 				  u_int32_t *num_of_sample)
 {
-	return EOK;
+	return 0;
 }
 
 QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
@@ -67,12 +67,12 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 
 int son_ol_lmac_create(struct wlan_objmgr_pdev *pdev)
 {
-	return EOK;
+	return 0;
 }
 
 int son_ol_lmac_destroy(struct wlan_objmgr_pdev *pdev)
 {
-	return EOK;
+	return 0;
 
 }
 
@@ -131,24 +131,24 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 			    u_int8_t *macaddr,
 			    struct wlan_objmgr_vdev *vdev)
 {
-	return EOK;
+	return QDF_STATUS_SUCCESS;
 }
 int8_t son_ol_sanitize_util_invtl(struct wlan_objmgr_pdev *pdev,
 				  u_int32_t *sample_period,
 				  u_int32_t *num_of_sample)
 {
-	return EOK;
+	return 0;
 }
 
 int son_ol_lmac_create(struct wlan_objmgr_pdev *pdev)
 {
-	return EOK;
+	return 0;
 }
 
 
 int son_ol_lmac_destroy(struct wlan_objmgr_pdev *pdev)
 {
-	return EOK;
+	return 0;
 
 }
 

@@ -2767,12 +2767,12 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
  * @wmi_handle: handle to WMI.
  * @pdev_idx: Pdev index
  *
- * @Return: status.
+ * @Return: QDF_STATUS
  */
-static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
-						uint32_t pdev_idx)
+static QDF_STATUS wmi_connect_pdev_htc_service(struct wmi_soc *soc,
+					       uint32_t pdev_idx)
 {
-	int status;
+	QDF_STATUS status;
 	struct htc_service_connect_resp response;
 	struct htc_service_connect_req connect;
 
@@ -2794,14 +2794,11 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 
 	/* connect to control service */
 	connect.service_id = soc->svc_ids[pdev_idx];
-	status = htc_connect_service(soc->htc_handle, &connect,
-				&response);
+	status = htc_connect_service(soc->htc_handle, &connect, &response);
 
-
-	if (status != EOK) {
-		WMI_LOGE
-			("Failed to connect to WMI CONTROL service status:%d\n",
-			status);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("Failed to connect to WMI CONTROL service status:%d\n",
+			 status);
 		return status;
 	}
 
@@ -2811,7 +2808,7 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 	soc->wmi_endpoint_id[pdev_idx] = response.Endpoint;
 	soc->max_msg_len[pdev_idx] = response.MaxMsgLength;
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

@@ -429,7 +429,7 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 	/* connect to service */
 	connect.service_id = WMI_DATA_BE_SVC;
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
-	if (status != EOK) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "Failed to connect to Endpoint Ping BE service status:%d\n",
 			   status);
@@ -443,7 +443,7 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 #if defined(HIF_PCI) || defined(HIF_USB) || defined(HIF_SNOC)
 	connect.service_id = WMI_DATA_BK_SVC;
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
-	if (status != EOK) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "Failed to connect to Endpoint Ping BK service status:%d\n",
 			   status);
