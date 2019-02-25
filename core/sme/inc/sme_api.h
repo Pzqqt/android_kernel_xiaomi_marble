@@ -2184,6 +2184,24 @@ QDF_STATUS sme_get_chain_rssi(mac_handle_t mac_handle,
 			      get_chain_rssi_callback callback,
 			      void *context);
 
+#ifdef FEATURE_FW_STATE
+/**
+ * sme_get_fw_state() - Get fw state
+ * @mac_handle: Opaque handle to the global MAC context
+ * @callback: Callback function to be called with the result
+ * @context: Opaque context to be used by the caller to associate the
+ *   request with the response
+ *
+ * This function constructs the cds message and fill in message type,
+ * post the same to WDA.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_get_fw_state(mac_handle_t mac_handle,
+			    fw_state_callback callback,
+			    void *context);
+#endif /* FEATURE_FW_STATE */
+
 /**
  * sme_get_valid_channels() - sme api to get valid channels for
  * current regulatory domain

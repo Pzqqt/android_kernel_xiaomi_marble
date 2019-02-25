@@ -33,6 +33,7 @@
 #include "wma_if.h"
 #include "wma.h"
 #include "wma_fips_api.h"
+#include "wma_fw_state.h"
 #include "qdf_trace.h"
 #include "sme_trace.h"
 #include "qdf_types.h"
@@ -75,6 +76,8 @@ static QDF_STATUS sme_process_channel_change_resp(struct mac_context *mac,
 
 static QDF_STATUS sme_stats_ext_event(struct mac_context *mac,
 				      struct stats_ext_event *msg);
+
+static QDF_STATUS sme_fw_state_resp(struct mac_context *mac);
 
 /* Internal SME APIs */
 QDF_STATUS sme_acquire_global_lock(struct sme_context *sme)
@@ -2106,6 +2109,9 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			mac->sme.pget_peer_info_ext_ind_cb(pMsg->bodyptr,
 				mac->sme.pget_peer_info_ext_cb_context);
 		qdf_mem_free(pMsg->bodyptr);
+		break;
+	case eWNI_SME_FW_STATUS_IND:
+		status = sme_fw_state_resp(mac);
 		break;
 	case eWNI_SME_CSA_OFFLOAD_EVENT:
 		if (pMsg->bodyptr) {
@@ -9166,6 +9172,53 @@ static QDF_STATUS sme_stats_ext_event(struct mac_context *mac,
 }
 
 #endif
+
+#ifdef FEATURE_FW_STATE
+QDF_STATUS sme_get_fw_state(mac_handle_t mac_handle,
+			    fw_state_callback callback,
+			    void *context)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	tp_wma_handle wma_handle;
+
+	SME_ENTER();
+
+	mac_ctx->sme.fw_state_cb = callback;
+	mac_ctx->sme.fw_state_context = context;
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	status = wma_get_fw_state(wma_handle);
+
+	SME_EXIT();
+	return status;
+}
+
+/**
+ * sme_fw_state_resp() - eWNI_SME_FW_STATUS_IND processor
+ * @mac: Global MAC context
+
+ * This callback function called when SME received eWNI_SME_FW_STATUS_IND
+ * response from WMA
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sme_fw_state_resp(struct mac_context *mac)
+{
+	if (mac->sme.fw_state_cb)
+		mac->sme.fw_state_cb(mac->sme.fw_state_context);
+	mac->sme.fw_state_cb = NULL;
+	mac->sme.fw_state_context = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else /* FEATURE_FW_STATE */
+static QDF_STATUS sme_fw_state_resp(struct mac_context *mac)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* FEATURE_FW_STATE */
 
 /*
  * sme_update_dfs_scan_mode() -

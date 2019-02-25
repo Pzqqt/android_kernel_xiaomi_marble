@@ -225,6 +225,10 @@ ifeq ($(CONFIG_WLAN_SYSFS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs.o
 endif
 
+ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_fw_state.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -1650,6 +1654,9 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_TWT), y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_twt.o
 endif
+ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
+WMA_OBJS +=	$(WMA_SRC_DIR)/wma_fw_state.o
+endif
 ############## PLD ##########
 PLD_DIR := core/pld
 PLD_INC_DIR := $(PLD_DIR)/inc
@@ -2496,6 +2503,9 @@ cppflags-$(CONFIG_TARGET_11D_SCAN) += -DTARGET_11D_SCAN
 
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 cppflags-$(CONFIG_WLAN_DYNAMIC_CVM) += -DFEATURE_WLAN_DYNAMIC_CVM
+
+#Flag to enable get firmware state feature
+cppflags-$(CONFIG_QCACLD_FEATURE_FW_STATE) += -DFEATURE_FW_STATE
 
 ifdef CONFIG_MAX_LOGS_PER_SEC
 ccflags-y += -DWLAN_MAX_LOGS_PER_SEC=$(CONFIG_MAX_LOGS_PER_SEC)

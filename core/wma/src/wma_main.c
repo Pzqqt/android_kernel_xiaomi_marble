@@ -67,6 +67,7 @@
 #include "cdp_txrx_misc.h"
 #include "wma_fips_api.h"
 #include "wma_nan_datapath.h"
+#include "wma_fw_state.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "target_if.h"
@@ -3459,6 +3460,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wmi_get_arp_stats_req_id,
 					   wma_get_arp_stats_handler,
 					   WMA_RX_SERIALIZER_CTX);
+
+	/* register for fw state response event */
+	wma_register_fw_state_events(wma_handle->wmi_handle);
 
 	/* register for peer info response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

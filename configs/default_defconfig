@@ -116,6 +116,9 @@ CONFIG_QCACLD_FEATURE_APF := y
 #Flag to enable SARv1 -> SARv2 conversion
 CONFIG_WLAN_FEATURE_SARV1_TO_SARV2 := n
 
+#Flag to enable get firmware state
+CONFIG_QCACLD_FEATURE_FW_STATE := y
+
 ifeq ($(CONFIG_ARCH_MSM8998), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 endif

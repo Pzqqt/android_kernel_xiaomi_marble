@@ -194,6 +194,15 @@ struct chain_rssi_result;
 typedef void (*get_chain_rssi_callback)(void *context,
 					struct chain_rssi_result *data);
 
+#ifdef FEATURE_FW_STATE
+/**
+ * typedef fw_state_callback - get firmware state callback
+ * @context: Opaque context that the client can use to associate the
+ *    callback with the request
+ */
+typedef void (*fw_state_callback)(void *context);
+#endif /* FEATURE_FW_STATE */
+
 typedef void (*tx_queue_cb)(hdd_handle_t hdd_handle, uint32_t vdev_id,
 			    enum netif_action_type action,
 			    enum netif_reason_type reason);
@@ -330,6 +339,10 @@ struct sme_context {
 	void (*get_arp_stats_cb)(void *, struct rsp_stats *, void *);
 	get_chain_rssi_callback get_chain_rssi_cb;
 	void *get_chain_rssi_context;
+#ifdef FEATURE_FW_STATE
+	fw_state_callback fw_state_cb;
+	void *fw_state_context;
+#endif /* FEATURE_FW_STATE */
 	tx_queue_cb tx_queue_cb;
 	twt_enable_cb twt_enable_cb;
 	twt_disable_cb twt_disable_cb;
