@@ -2879,7 +2879,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	int    rc;
 	struct ol_txrx_vdev_t *vdev;
 	struct ol_txrx_pdev_t *pdev;
-	bool ref_silent = false;
+	bool ref_silent = true;
 	int access_list = 0;
 	uint32_t err_code = 0;
 
