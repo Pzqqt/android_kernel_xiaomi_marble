@@ -776,6 +776,7 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_copy(mlme_obj->cfg.he_caps.he_ppet_5g, wma_cfg->ppet_5g,
 		     HE_MAX_PPET_SIZE);
 
+	mlme_obj->cfg.he_caps.he_cap_orig = mlme_obj->cfg.he_caps.dot11_he_cap;
 	return status;
 }
 #endif
