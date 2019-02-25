@@ -481,7 +481,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -1283,7 +1283,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	if (adapter->device_mode != QDF_STA_MODE) {
@@ -1363,7 +1363,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1516,7 +1516,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 		return;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);

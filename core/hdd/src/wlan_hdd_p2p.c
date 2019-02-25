@@ -145,7 +145,7 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	/* Disable NAN Discovery if enabled */
@@ -194,7 +194,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_cfg80211_cancel_roc(adapter->vdev, cookie);
@@ -244,7 +244,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -338,7 +338,7 @@ static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	status = wlan_cfg80211_mgmt_tx_cancel(adapter->vdev, cookie);
@@ -672,7 +672,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
-	if (adapter && !wlan_hdd_validate_session_id(adapter->vdev_id)) {
+	if (adapter && !wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
 		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,

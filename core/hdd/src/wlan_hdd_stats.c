@@ -1527,7 +1527,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	LinkLayerStatsGetReq.staId = adapter->vdev_id;
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	ret = wlan_hdd_send_ll_stats_req(hdd_ctx, &LinkLayerStatsGetReq);
@@ -4622,7 +4622,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	if (adapter->device_mode == QDF_SAP_MODE)

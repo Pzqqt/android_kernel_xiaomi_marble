@@ -74,7 +74,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 
 	hdd_enter_dev(dev);
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id)) {
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id)) {
 		hdd_err("invalid session id: %d", adapter->vdev_id);
 		return -EINVAL;
 	}

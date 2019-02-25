@@ -107,7 +107,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);

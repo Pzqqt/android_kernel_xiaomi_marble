@@ -1113,7 +1113,7 @@ hdd_suspend_wlan(void)
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->vdev_id))
+		if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 			continue;
 
 		/* stop all TX queues before suspend */
@@ -1172,7 +1172,7 @@ static int hdd_resume_wlan(void)
 
 	/*loop through all adapters. Concurrency */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->vdev_id))
+		if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 			continue;
 
 		/* Disable supported OffLoads */
@@ -1731,7 +1731,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * until CAC is done for a SoftAP which is in started state.
 	 */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->vdev_id))
+		if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 			continue;
 
 		if (QDF_SAP_MODE == adapter->device_mode) {
@@ -1786,7 +1786,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	/* flush any pending powersave timers */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (wlan_hdd_validate_session_id(adapter->vdev_id))
+		if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 			continue;
 
 		sme_ps_timer_flush_sync(mac_handle, adapter->vdev_id);
@@ -1947,7 +1947,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->vdev_id))
+	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
@@ -2145,7 +2145,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return status;
 
 	/* Validate adapter sessionId */
-	status = wlan_hdd_validate_session_id(adapter->vdev_id);
+	status = wlan_hdd_validate_vdev_id(adapter->vdev_id);
 	if (status)
 		return status;
 
