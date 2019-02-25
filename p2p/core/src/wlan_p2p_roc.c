@@ -100,6 +100,12 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 
 	ucfg_scan_init_default_params(vdev, req);
 
+	if (!roc_ctx->duration) {
+		roc_ctx->duration = P2P_ROC_DEFAULT_DURATION;
+		p2p_debug("use default duration %d",
+			  P2P_ROC_DEFAULT_DURATION);
+	}
+
 	roc_ctx->scan_id = ucfg_scan_get_scan_id(p2p_soc_obj->soc);
 	req->vdev = vdev;
 	req->scan_req.scan_id = roc_ctx->scan_id;

@@ -2804,6 +2804,11 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		}
 	}
 
+	if (!tx_ctx->duration) {
+		tx_ctx->duration = P2P_ACTION_FRAME_DEFAULT_WAIT;
+		p2p_debug("use default wait %d",
+			  P2P_ACTION_FRAME_DEFAULT_WAIT);
+	}
 	status = p2p_roc_req_for_tx_action(tx_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to request roc before off chan tx");
