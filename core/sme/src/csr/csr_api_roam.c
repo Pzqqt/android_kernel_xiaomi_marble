@@ -9794,7 +9794,6 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 		wep_key_idx = wlan_crypto_get_default_key_idx(vdev, !unicast);
 		crypto_key = wlan_crypto_get_key(vdev, wep_key_idx);
 	} else {
-		/* TODO: Add code for storing FILS keys in case of add_key */
 		crypto_key = wlan_crypto_get_key(vdev, key_idx);
 	}
 
@@ -9810,6 +9809,41 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 				       WLAN_CRYPTO_KEY_TYPE_GROUP));
 }
 
+static QDF_STATUS csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
+					  bool unicast, uint8_t key_id,
+					  uint16_t key_length, uint8_t *key,
+					  tSirMacAddr *bssid)
+{
+	struct wlan_crypto_key *crypto_key = NULL;
+	uint8_t key_index = 0;
+	QDF_STATUS status;
+
+	if (unicast)
+		key_index = 0;
+	else
+		key_index = 1;
+	crypto_key = wlan_crypto_get_key(vdev, key_index);
+	if (!crypto_key) {
+		crypto_key = qdf_mem_malloc(sizeof(*crypto_key));
+		if (!crypto_key)
+			return QDF_STATUS_E_INVAL;
+		status = wlan_crypto_save_key(vdev, key_index, crypto_key);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("Failed to save key");
+			qdf_mem_free(crypto_key);
+			return QDF_STATUS_E_INVAL;
+		}
+	}
+	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
+	crypto_key->keylen = key_length;
+	crypto_key->keyix = key_index;
+	sme_debug("key_len %d, unicast %d", key_length, unicast);
+	qdf_mem_copy(&crypto_key->keyval[0], key, key_length);
+	qdf_mem_copy(crypto_key->macaddr, bssid, QDF_MAC_ADDR_SIZE);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS csr_roam_issue_set_context_req_helper(
 					struct mac_context *mac_ctx,
 					uint32_t session_id,
@@ -9821,6 +9855,19 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 					uint8_t key_id, uint16_t key_length,
 					uint8_t *key, uint8_t pae_role)
 {
+	enum wlan_crypto_cipher_type cipher;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, session_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("VDEV object not found for session_id %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	cipher = wlan_crypto_get_cipher(vdev, unicast, key_id);
+	if (cipher == WLAN_CRYPTO_CIPHER_FILS_AEAD)
+		csr_roam_store_fils_key(vdev, unicast, key_id, key_length,
+					key, bssid);
 	return csr_roam_issue_set_context_req(mac_ctx, session_id, addkey,
 					      unicast, key_id);
 }
