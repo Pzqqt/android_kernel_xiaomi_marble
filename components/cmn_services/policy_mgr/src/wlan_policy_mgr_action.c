@@ -1238,15 +1238,21 @@ static bool policy_mgr_is_restart_sap_allowed(
 {
 	uint32_t sta_ap_bit_mask = QDF_STA_MASK | QDF_SAP_MASK;
 	uint32_t sta_go_bit_mask = QDF_STA_MASK | QDF_P2P_GO_MASK;
+	uint32_t ap_present, go_present;
+
+	ap_present = policy_mgr_mode_specific_connection_count(
+				psoc, PM_SAP_MODE, NULL);
+	go_present = policy_mgr_mode_specific_connection_count(
+				psoc, PM_P2P_GO_MODE, NULL);
 
 	if ((mcc_to_scc_switch == QDF_MCC_TO_SCC_SWITCH_DISABLE) ||
 		!policy_mgr_concurrent_open_sessions_running(psoc) ||
-		!(((policy_mgr_get_concurrency_mode(psoc) & sta_ap_bit_mask)
-			== sta_ap_bit_mask) ||
+		!((ap_present && ((policy_mgr_get_concurrency_mode(psoc) &
+		     sta_ap_bit_mask) == sta_ap_bit_mask)) ||
 		((mcc_to_scc_switch ==
-		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
-		((policy_mgr_get_concurrency_mode(psoc) & sta_go_bit_mask)
-			== sta_go_bit_mask)))) {
+		  QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		  && go_present && ((policy_mgr_get_concurrency_mode(psoc) &
+		  sta_go_bit_mask) == sta_go_bit_mask)))) {
 		policy_mgr_debug("MCC switch disabled or not concurrent STA/SAP, STA/GO");
 		return false;
 	}
