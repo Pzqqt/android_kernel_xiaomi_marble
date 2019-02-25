@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,7 +249,6 @@ struct pmo_wow {
  * @pattern: pattern byte stream
  * @pattern_mask_size: pattern mask size
  * @pattern_mask: pattern mask
- * @session_id: session id
  */
 struct pmo_wow_add_pattern {
 	uint8_t pattern_id;
@@ -258,7 +257,6 @@ struct pmo_wow_add_pattern {
 	uint8_t pattern[PMO_WOWL_BCAST_PATTERN_MAX_SIZE];
 	uint8_t pattern_mask_size;
 	uint8_t pattern_mask[PMO_WOWL_BCAST_PATTERN_MAX_SIZE];
-	uint8_t session_id;
 };
 
 /**

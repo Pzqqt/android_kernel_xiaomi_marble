@@ -104,7 +104,6 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	int i, empty_slot, len, offset;
 	QDF_STATUS status;
 	const char *temp;
-	uint8_t sessionId = adapter->vdev_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t num_filters;
 	bool invalid_ptrn = false;
@@ -225,7 +224,6 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		g_hdd_wowl_ptrns[empty_slot][len] = '\0';
 		localPattern.pattern_id = empty_slot;
 		localPattern.pattern_byte_offset = 0;
-		localPattern.session_id = sessionId;
 
 		/* Register the pattern downstream */
 		status = ucfg_pmo_add_wow_user_pattern(
@@ -321,7 +319,6 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 {
 	struct pmo_wow_add_pattern localPattern;
 	QDF_STATUS qdf_ret_status;
-	uint8_t session_id = adapter->vdev_id;
 	uint16_t pattern_len, mask_len, i;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -351,7 +348,6 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	localPattern.pattern_id = pattern_idx;
 	localPattern.pattern_byte_offset = pattern_offset;
 	localPattern.pattern_size = pattern_len;
-	localPattern.session_id = session_id;
 
 	if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE) {
 		hdd_err("WoW pattern size (%d) greater than max (%d)",

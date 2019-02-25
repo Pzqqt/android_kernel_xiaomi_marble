@@ -95,7 +95,7 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 	pmo_set_wow_default_ptrn(vdev_ctx, 0);
 
 	pmo_debug("Add user passed wow pattern id %d vdev id %d",
-		  ptrn->pattern_id, ptrn->session_id);
+		  ptrn->pattern_id, wlan_vdev_get_id(vdev));
 	/*
 	 * Convert received pattern mask value from bit representation
 	 * to byte representation.
