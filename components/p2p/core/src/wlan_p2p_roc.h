@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,7 @@
 #define P2P_ROC_DURATION_MULTI_GO_PRESENT   6
 #define P2P_ROC_DURATION_MULTI_GO_ABSENT    10
 #define P2P_ACTION_FRAME_DEFAULT_WAIT       200
+#define P2P_ROC_DEFAULT_DURATION            200
 
 struct wlan_objmgr_vdev;
 struct scan_event;
