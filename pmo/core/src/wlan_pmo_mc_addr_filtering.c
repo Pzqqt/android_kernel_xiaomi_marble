@@ -31,7 +31,7 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 	struct pmo_mc_addr_list_params *ip)
 {
 	struct pmo_mc_addr_list *op_list;
-	int i;
+	int i, j = 0;
 	static const uint8_t ipv6_rs[] = {
 		0x33, 0x33, 0x00, 0x00, 0x00, 0x02};
 	struct pmo_vdev_priv_obj *temp_ctx;
@@ -66,12 +66,14 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 			continue;
 		}
 		qdf_spin_lock_bh(&temp_ctx->pmo_vdev_lock);
-		qdf_mem_zero(&(op_list->mc_addr[i].bytes),
-			QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(&(op_list->mc_addr[i].bytes),
-			ip->mc_addr[i].bytes, QDF_MAC_ADDR_SIZE);
+		qdf_mem_zero(&op_list->mc_addr[j].bytes,
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&op_list->mc_addr[j].bytes,
+			     ip->mc_addr[i].bytes, QDF_MAC_ADDR_SIZE);
 		qdf_spin_unlock_bh(&temp_ctx->pmo_vdev_lock);
-		pmo_debug("mlist[%pM] = ", op_list->mc_addr[i].bytes);
+		pmo_debug("Index = %d, mlist[%pM]",
+			  j, op_list->mc_addr[i].bytes);
+		j++;
 	}
 }
 
