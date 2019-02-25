@@ -788,7 +788,7 @@ static QDF_STATUS target_if_vdev_mgr_multiple_vdev_restart_req_cmd(
 						pdev,
 						param->vdev_ids[vdev_id],
 						WLAN_VDEV_TARGET_IF_ID);
-			iv(vdev) {
+			if (vdev) {
 				vdev_rsp =
 				rx_ops->vdev_mgr_get_response_timer_info(vdev);
 				if (vdev_rsp)
