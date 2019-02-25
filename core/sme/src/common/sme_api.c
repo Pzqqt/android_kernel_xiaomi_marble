@@ -14625,6 +14625,51 @@ void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 	mac_ctx->is_usr_cfg_amsdu_enabled = enable;
 }
 
+#ifdef WLAN_FEATURE_11AX
+void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_debug("No session for id %d", vdev_id);
+		return;
+	}
+	sme_debug("set HE testbed defaults");
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.amsdu_in_ampdu = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.omi_a_ctrl = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_20_in_160_80p80Mhz = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_20_in_40Mhz_2G = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_80_in_160_80p80Mhz = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dcm_enc_tx = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dcm_enc_rx = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.max_nc = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.trigger_frm_mac_pad =
+					QCA_WLAN_HE_16US_OF_PROCESS_TIME;
+	csr_update_session_he_cap(mac_ctx, session);
+}
+
+void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_err("No session for id %d", vdev_id);
+		return;
+	}
+	sme_debug("reset HE caps");
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap =
+		mac_ctx->mlme_cfg->he_caps.he_cap_orig;
+	csr_update_session_he_cap(mac_ctx, session);
+}
+#endif
+
 uint8_t sme_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 			uint8_t *nss, uint8_t *mcs_rate_flags)
 {

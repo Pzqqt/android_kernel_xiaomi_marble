@@ -823,6 +823,7 @@ struct wlan_mlme_qos {
  */
 struct wlan_mlme_he_caps {
 	tDot11fIEhe_cap dot11_he_cap;
+	tDot11fIEhe_cap he_cap_orig;
 	uint8_t he_ppet_2g[MLME_HE_PPET_LEN];
 	uint8_t he_ppet_5g[MLME_HE_PPET_LEN];
 	uint32_t he_ops_basic_mcs_nss;

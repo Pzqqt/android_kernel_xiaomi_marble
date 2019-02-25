@@ -5359,6 +5359,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_NESTED},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SET_HE_TESTBED_DEFAULTS]
+			= {.type = NLA_U8},
 };
 
 /**
@@ -7140,6 +7142,18 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		sme_update_he_htc_he_supp(hdd_ctx->mac_handle,
 					  adapter->vdev_id,
 					  (cfg_val ? true : false));
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SET_HE_TESTBED_DEFAULTS;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Configure HE testbed defaults %d", cfg_val);
+		if (!cfg_val)
+			sme_reset_he_caps(hdd_ctx->mac_handle,
+					  adapter->vdev_id);
+		else
+			sme_set_he_testbed_def(hdd_ctx->mac_handle,
+					       adapter->vdev_id);
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU;

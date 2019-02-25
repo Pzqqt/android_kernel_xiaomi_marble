@@ -2988,6 +2988,19 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
  */
 void sme_set_amsdu(mac_handle_t mac_handle, bool enable);
 
+#ifdef WLAN_FEATURE_11AX
+void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id);
+void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id);
+#else
+static inline void sme_set_he_testbed_def(mac_handle_t mac_handle,
+					  uint8_t vdev_id)
+{
+}
+static inline void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+}
+#endif
+
 /**
  * sme_get_mcs_idx() - gets mcs index
  * @max_rate: max rate
