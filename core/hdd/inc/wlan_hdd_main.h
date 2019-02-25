@@ -2154,10 +2154,6 @@ int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func);
 
 int __wlan_hdd_validate_vdev_id(uint8_t vdev_id, const char *func);
 
-/* legacy interface to be replaced */
-#define wlan_hdd_validate_session_id(session_id) \
-	wlan_hdd_validate_vdev_id(session_id)
-
 /**
  * hdd_is_valid_mac_address() - validate MAC address
  * @mac_addr:	Pointer to the input MAC address
