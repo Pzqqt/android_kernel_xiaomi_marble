@@ -47,15 +47,16 @@ QDF_STATUS wmi_unified_set_sta_sa_query_param_cmd(void *wmi_hdl,
 
 /**
  * wmi_unified_set_sta_keep_alive_cmd() - set sta keep alive parameters
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @params: sta keep alive parameter
  *
  * This function sets keep alive related parameters in fw.
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_set_sta_keep_alive_cmd(void *wmi_hdl,
-					      struct sta_params *params);
+QDF_STATUS
+wmi_unified_set_sta_keep_alive_cmd(wmi_unified_t wmi_handle,
+				   struct sta_keep_alive_params *params);
 
 /**
  * wmi_unified_vdev_set_gtx_cfg_cmd() - set GTX params

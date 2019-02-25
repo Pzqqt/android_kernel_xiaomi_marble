@@ -24,7 +24,7 @@
 #define _WMI_UNIFIED_STA_PARAM_H_
 
 /**
- * struct sta_params - sta keep alive parameters
+ * struct sta_keep_alive_params - sta keep alive parameters
  * @vdev_id: vdev id
  * @method: keep alive method
  * @timeperiod: time to keep alive
@@ -32,13 +32,13 @@
  * @destv4addr: destination ipv4 address
  * @destmac: destination mac address
  */
-struct sta_params {
+struct sta_keep_alive_params {
 	uint8_t vdev_id;
 	uint32_t method;
 	uint32_t timeperiod;
-	uint8_t *hostv4addr;
-	uint8_t *destv4addr;
-	uint8_t *destmac;
+	uint8_t hostv4addr[QDF_IPV4_ADDR_SIZE];
+	uint8_t destv4addr[QDF_IPV4_ADDR_SIZE];
+	uint8_t destmac[QDF_MAC_ADDR_SIZE];
 };
 
 /**

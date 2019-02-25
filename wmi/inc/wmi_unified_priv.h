@@ -887,7 +887,7 @@ QDF_STATUS (*send_vdev_set_gtx_cfg_cmd)(wmi_unified_t wmi_handle,
 				  struct wmi_gtx_config *gtx_info);
 
 QDF_STATUS (*send_set_sta_keep_alive_cmd)(wmi_unified_t wmi_handle,
-				struct sta_params *params);
+					  struct sta_keep_alive_params *params);
 
 QDF_STATUS (*send_set_sta_sa_query_param_cmd)(wmi_unified_t wmi_handle,
 					uint8_t vdev_id, uint32_t max_retries,

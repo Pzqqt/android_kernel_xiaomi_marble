@@ -85,8 +85,9 @@ static QDF_STATUS send_set_sta_sa_query_param_cmd_tlv(wmi_unified_t wmi_handle,
  *
  * Return: CDF status
  */
-static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
-						  struct sta_params *params)
+static QDF_STATUS
+send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
+				struct sta_keep_alive_params *params)
 {
 	wmi_buf_t buf;
 	WMI_STA_KEEPALIVE_CMD_fixed_param *cmd;
@@ -112,8 +113,8 @@ static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->interval = params->timeperiod;
 	cmd->enable = (params->timeperiod) ? 1 : 0;
 	cmd->vdev_id = params->vdev_id;
-	WMI_LOGD("Keep Alive: vdev_id:%d interval:%u method:%d", params->vdev_id,
-		 params->timeperiod, params->method);
+	WMI_LOGD("Keep Alive: vdev_id:%d interval:%u method:%d",
+		 params->vdev_id, params->timeperiod, params->method);
 	arp_rsp = (WMI_STA_KEEPALVE_ARP_RESPONSE *) (buf_ptr + sizeof(*cmd));
 	WMITLV_SET_HDR(&arp_rsp->tlv_header,
 		       WMITLV_TAG_STRUC_WMI_STA_KEEPALVE_ARP_RESPONSE,
@@ -122,22 +123,13 @@ static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 	if ((params->method == WMI_KEEP_ALIVE_UNSOLICIT_ARP_RSP) ||
 	    (params->method ==
 	     WMI_STA_KEEPALIVE_METHOD_GRATUITOUS_ARP_REQUEST)) {
-		if ((NULL == params->hostv4addr) ||
-			(NULL == params->destv4addr) ||
-			(NULL == params->destmac)) {
-			WMI_LOGE("%s: received null pointer, hostv4addr:%pK "
-				 "destv4addr:%pK destmac:%pK ", __func__,
-				 params->hostv4addr, params->destv4addr,
-				 params->destmac);
-			wmi_buf_free(buf);
-			return QDF_STATUS_E_FAILURE;
-		}
 		cmd->method = params->method;
 		qdf_mem_copy(&arp_rsp->sender_prot_addr, params->hostv4addr,
-			     WMI_IPV4_ADDR_LEN);
+			     QDF_IPV4_ADDR_SIZE);
 		qdf_mem_copy(&arp_rsp->target_prot_addr, params->destv4addr,
-			     WMI_IPV4_ADDR_LEN);
-		WMI_CHAR_ARRAY_TO_MAC_ADDR(params->destmac, &arp_rsp->dest_mac_addr);
+			     QDF_IPV4_ADDR_SIZE);
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(params->destmac,
+					   &arp_rsp->dest_mac_addr);
 	} else {
 		cmd->method = WMI_STA_KEEPALIVE_METHOD_NULL_FRAME;
 	}

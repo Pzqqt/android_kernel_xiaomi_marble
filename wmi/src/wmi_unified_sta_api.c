@@ -37,11 +37,10 @@ QDF_STATUS wmi_unified_set_sta_sa_query_param_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_set_sta_keep_alive_cmd(void *wmi_hdl,
-					      struct sta_params *params)
+QDF_STATUS
+wmi_unified_set_sta_keep_alive_cmd(wmi_unified_t wmi_handle,
+				   struct sta_keep_alive_params *params)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_sta_keep_alive_cmd)
 		return wmi_handle->ops->send_set_sta_keep_alive_cmd(wmi_handle,
 								    params);
