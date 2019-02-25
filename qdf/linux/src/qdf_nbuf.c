@@ -625,8 +625,6 @@ static void qdf_nbuf_map_leaks_print(void)
 
 void qdf_nbuf_map_check_for_leaks(void)
 {
-	qdf_flex_mem_release(&qdf_nbuf_map_pool);
-
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
 	if (!hash_empty(qdf_nbuf_map_ht))
 		qdf_nbuf_map_leaks_print();

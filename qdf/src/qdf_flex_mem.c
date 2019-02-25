@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,7 @@
 #include "qdf_lock.h"
 #include "qdf_mem.h"
 #include "qdf_module.h"
+#include "qdf_talloc.h"
 #include "qdf_trace.h"
 #include "qdf_util.h"
 
@@ -31,7 +32,7 @@ qdf_flex_mem_seg_alloc(struct qdf_flex_mem_pool *pool)
 	size_t total_size = sizeof(struct qdf_flex_mem_segment) +
 		pool->item_size * QDF_FM_BITMAP_BITS;
 
-	seg = qdf_mem_malloc(total_size);
+	seg = qdf_talloc(pool, total_size);
 	if (!seg)
 		return NULL;
 
@@ -56,10 +57,19 @@ qdf_export_symbol(qdf_flex_mem_init);
 
 void qdf_flex_mem_deinit(struct qdf_flex_mem_pool *pool)
 {
-	qdf_flex_mem_release(pool);
-	QDF_BUG(!qdf_list_size(&pool->seg_list));
+	struct qdf_flex_mem_segment *seg, *next;
 
 	qdf_spinlock_destroy(&pool->lock);
+
+	qdf_list_for_each_del(&pool->seg_list, seg, next, node) {
+		QDF_BUG(!seg->used_bitmap);
+		if (seg->used_bitmap)
+			continue;
+
+		qdf_list_remove_node(&pool->seg_list, &seg->node);
+		if (seg->dynamic)
+			qdf_tfree(seg);
+	}
 }
 qdf_export_symbol(qdf_flex_mem_deinit);
 
@@ -118,9 +128,8 @@ static void qdf_flex_mem_seg_free(struct qdf_flex_mem_pool *pool,
 	if (qdf_list_size(&pool->seg_list) <= pool->reduction_limit)
 		return;
 
-
 	qdf_list_remove_node(&pool->seg_list, &seg->node);
-	qdf_mem_free(seg);
+	qdf_tfree(seg);
 }
 
 static void __qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)
@@ -165,33 +174,4 @@ void qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr)
 	qdf_spin_unlock_bh(&pool->lock);
 }
 qdf_export_symbol(qdf_flex_mem_free);
-
-static void __qdf_flex_mem_release(struct qdf_flex_mem_pool *pool)
-{
-	struct qdf_flex_mem_segment *seg;
-	struct qdf_flex_mem_segment *next;
-
-	qdf_list_for_each_del(&pool->seg_list, seg, next, node) {
-		if (!seg->dynamic)
-			continue;
-
-		if (seg->used_bitmap != 0)
-			continue;
-
-		qdf_list_remove_node(&pool->seg_list, &seg->node);
-		qdf_mem_free(seg);
-	}
-}
-
-void qdf_flex_mem_release(struct qdf_flex_mem_pool *pool)
-{
-	QDF_BUG(pool);
-	if (!pool)
-		return;
-
-	qdf_spin_lock_bh(&pool->lock);
-	__qdf_flex_mem_release(pool);
-	qdf_spin_unlock_bh(&pool->lock);
-}
-qdf_export_symbol(qdf_flex_mem_release);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,15 +129,5 @@ void *qdf_flex_mem_alloc(struct qdf_flex_mem_pool *pool);
  * Return: None
  */
 void qdf_flex_mem_free(struct qdf_flex_mem_pool *pool, void *ptr);
-
-/**
- * qdf_flex_mem_release() - release unused segments
- * @pool: the pool to operate against
- *
- * This function physically releases as much unused pool memory as possible.
- *
- * Return: None
- */
-void qdf_flex_mem_release(struct qdf_flex_mem_pool *pool);
 
 #endif /* __QDF_FLEX_MEM_H */
