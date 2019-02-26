@@ -4877,14 +4877,14 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
 
 /* Function header is left blank intentionally */
 static int hdd_parse_setrmcrate_command(uint8_t *command,
-					uint32_t *pRate,
+					uint32_t *rate,
 					enum tx_rate_info *tx_flags)
 {
 	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
-	*pRate = 0;
+	*rate = 0;
 	*tx_flags = 0;
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
@@ -4922,19 +4922,19 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 	case 48:
 	case 54:
 		*tx_flags = TX_RATE_LEGACY;
-		*pRate = tempInt * 10;
+		*rate = tempInt * 10;
 		break;
 	case 65:
 		*tx_flags = TX_RATE_HT20;
-		*pRate = tempInt * 10;
+		*rate = tempInt * 10;
 		break;
 	case 72:
 		*tx_flags = TX_RATE_HT20 | TX_RATE_SGI;
-		*pRate = 722;
+		*rate = 722;
 		break;
 	}
 
-	hdd_debug("Rate: %d", *pRate);
+	hdd_debug("Rate: %d", *rate);
 
 	return 0;
 }
