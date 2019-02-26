@@ -49,19 +49,6 @@
 #include "hdd_dp_cfg.h"
 
 struct reg_table_entry g_registry_table[] = {
-	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_connected_scan,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_CONNECTED_SCAN_DEFAULT,
-		     CFG_ENABLE_CONNECTED_SCAN_MIN,
-		     CFG_ENABLE_CONNECTED_SCAN_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fEnableSNRMonitoring,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_ENABLE_SNR_MONITORING_DEFAULT,
-		     CFG_ENABLE_SNR_MONITORING_MIN,
-		     CFG_ENABLE_SNR_MONITORING_MAX),
 };
 
 
@@ -1396,8 +1383,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.sta_roam_policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
 	smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
-
-	smeConfig->snr_monitor_enabled = hdd_ctx->config->fEnableSNRMonitoring;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))

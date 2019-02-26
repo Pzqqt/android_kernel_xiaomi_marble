@@ -67,6 +67,7 @@
 #ifdef WLAN_FEATURE_NAN
 #include "target_if_nan.h"
 #endif
+#include "wlan_scan_api.h"
 #include <wlan_crypto_global_api.h>
 
 /**
@@ -5243,6 +5244,7 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	struct scan_chan_info buf;
 	struct mac_context *mac = NULL;
 	struct lim_channel_status *channel_status;
+	bool snr_monitor_enabled;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -5254,8 +5256,9 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("%s: monitor:%d", __func__, mac->snr_monitor_enabled);
-	if (mac->snr_monitor_enabled && mac->chan_info_cb) {
+	snr_monitor_enabled = wlan_scan_is_snr_monitor_enabled(mac->psoc);
+	WMA_LOGD("%s: monitor:%d", __func__, snr_monitor_enabled);
+	if (snr_monitor_enabled && mac->chan_info_cb) {
 		param_buf =
 			(WMI_CHAN_INFO_EVENTID_param_tlvs *)event_buf;
 		if (!param_buf) {

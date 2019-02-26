@@ -796,7 +796,6 @@ struct mac_context {
 	uint32_t rx_packet_drop_counter;
 	enum auth_tx_ack_status auth_ack_status;
 	uint8_t user_configured_nss;
-	bool snr_monitor_enabled;
 	bool ignore_assoc_disallowed;
 	uint32_t peer_rssi;
 	uint32_t peer_txrate;

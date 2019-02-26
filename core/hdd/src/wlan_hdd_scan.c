@@ -468,6 +468,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	bool self_recovery;
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS qdf_status;
+	bool enable_connected_scan;
 
 	hdd_enter();
 
@@ -501,10 +502,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EIO;
 	}
 
+	enable_connected_scan = ucfg_scan_is_connected_scan_enabled(
+							hdd_ctx->psoc);
 	if ((eConnectionState_Associated ==
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 						conn_info.conn_state) &&
-	    (!hdd_ctx->config->enable_connected_scan)) {
+	    (!enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		if (wlan_hdd_enqueue_blocked_scan_request(dev, request, source))
 			return -EAGAIN;
@@ -1275,6 +1278,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	int ret;
 	bool pno_offload_enabled;
 	uint8_t scan_backoff_multiplier;
+	bool enable_connected_scan;
 
 	hdd_enter();
 
@@ -1302,10 +1306,12 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	enable_connected_scan = ucfg_scan_is_connected_scan_enabled(
+							hdd_ctx->psoc);
 	if ((eConnectionState_Associated ==
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 							conn_info.conn_state) &&
-	    (!hdd_ctx->config->enable_connected_scan)) {
+	    (!enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		return -EBUSY;
 	}

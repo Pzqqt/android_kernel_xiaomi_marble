@@ -51,52 +51,6 @@ struct hdd_context;
 #define MAX_CFG_INI_ITEMS   1024
 
 /* Defines for all of the things we read from the configuration (registry). */
-/*
- * <ini>
- * gEnableConnectedScan - Will enable or disable scan in connected state
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable the scanning in
- * Connected state
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * <ini>
- */
-
-#define CFG_ENABLE_CONNECTED_SCAN_NAME        "gEnableConnectedScan"
-#define CFG_ENABLE_CONNECTED_SCAN_MIN         (0)
-#define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
-#define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
-
-/*
- * <ini>
- * gEnableSNRMonitoring - Enables SNR Monitoring
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default snr monitor
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_SNR_MONITORING_NAME              "gEnableSNRMonitoring"
-#define CFG_ENABLE_SNR_MONITORING_MIN               (0)
-#define CFG_ENABLE_SNR_MONITORING_MAX               (1)
-#define CFG_ENABLE_SNR_MONITORING_DEFAULT           (0)
 
 #ifdef CONFIG_DP_TRACE
 /* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
@@ -153,7 +107,6 @@ struct hdd_config {
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
 
 	/* Config parameters */
-	bool enable_connected_scan;
 	enum hdd_dot11_mode dot11Mode;
 
 #ifdef FEATURE_WLAN_DYNAMIC_CVM

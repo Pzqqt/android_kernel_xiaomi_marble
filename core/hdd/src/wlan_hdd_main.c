@@ -14507,12 +14507,11 @@ static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
 static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct scan_user_cfg scan_cfg = {0};
-	struct hdd_config *cfg = hdd_ctx->config;
+	struct scan_user_cfg scan_cfg;
 	QDF_STATUS status;
 	uint32_t mcast_mcc_rest_time = 0;
 
-	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
+	qdf_mem_zero(&scan_cfg, sizeof(scan_cfg));
 	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
 							  &mcast_mcc_rest_time);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

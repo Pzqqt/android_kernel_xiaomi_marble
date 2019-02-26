@@ -917,8 +917,6 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle, tpSmeConfigParams
 	if (csr_is_all_session_disconnected(mac))
 		csr_set_global_cfgs(mac);
 
-	mac->snr_monitor_enabled = pSmeConfigParams->snr_monitor_enabled;
-
 	return status;
 }
 
@@ -3236,7 +3234,6 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 		qdf_mem_copy(&pParam->rrmConfig,
 				&mac->rrm.rrmSmeContext.rrmConfig,
 				sizeof(mac->rrm.rrmSmeContext.rrmConfig));
-		pParam->snr_monitor_enabled = mac->snr_monitor_enabled;
 		sme_release_global_lock(&mac->sme);
 	}
 
