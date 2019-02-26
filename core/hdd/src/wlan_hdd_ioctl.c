@@ -1187,7 +1187,7 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
 /**
  * hdd_parse_channellist() - HDD Parse channel list
  * @command: Pointer to input channel list
- * @pChannelList: Pointer to local output array to record
+ * @channel_list: Pointer to local output array to record
  *                channel list
  * @pNumChannels: Pointer to number of roam scan channels
  *
@@ -1204,7 +1204,7 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_channellist(const uint8_t *command, uint8_t *pChannelList,
+hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		      uint8_t *pNumChannels)
 {
 	const uint8_t *inPtr = command;
@@ -1285,10 +1285,10 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *pChannelList,
 		    (tempInt > WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
 			return -EINVAL;
 		}
-		pChannelList[j] = tempInt;
+		channel_list[j] = tempInt;
 
 		hdd_debug("Channel %d added to preferred channel list",
-			  pChannelList[j]);
+			  channel_list[j]);
 	}
 
 	return 0;
