@@ -1081,8 +1081,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			(intf_hfreq > sap_lfreq && intf_hfreq < sap_hfreq))))
 			intf_ch = 0;
 	} else if (intf_ch && sap_ch != intf_ch &&
-		((cc_switch_mode == QDF_MCC_TO_SCC_SWITCH_FORCE) ||
-		 policy_mgr_is_force_scc(mac_ctx->psoc))) {
+		  (policy_mgr_is_force_scc(mac_ctx->psoc))) {
 		if (!((intf_ch <= 14 && sap_ch <= 14) ||
 			(intf_ch > 14 && sap_ch > 14))) {
 			if (policy_mgr_is_dbs_enable(mac_ctx->psoc) ||
