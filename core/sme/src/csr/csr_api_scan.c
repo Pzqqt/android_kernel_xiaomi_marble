@@ -2809,9 +2809,13 @@ static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
 					Link);
 		next_entry = csr_ll_next(&scan_list->List,
 						cur_entry, LL_ACCESS_NOLOCK);
+
+		qdf_mutex_acquire(&mac_ctx->roam.rssi_disallow_bssid_lock);
 		remove = csr_remove_ap_due_to_rssi(
 			&mac_ctx->roam.rssi_disallow_bssid,
 			&scan_res->Result.BssDescriptor);
+		qdf_mutex_release(&mac_ctx->roam.rssi_disallow_bssid_lock);
+
 		if (remove) {
 			csr_ll_remove_entry(&scan_list->List,
 				cur_entry, LL_ACCESS_NOLOCK);
