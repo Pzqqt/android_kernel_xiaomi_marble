@@ -440,6 +440,7 @@ struct hdd_tx_rx_stats {
 	__u32 rx_dropped[NUM_CPUS];
 	__u32 rx_delivered[NUM_CPUS];
 	__u32 rx_refused[NUM_CPUS];
+	qdf_atomic_t rx_usolict_arp_n_mcast_drp;
 	/* rx gro */
 	__u32 rx_aggregated;
 	__u32 rx_non_aggregated;

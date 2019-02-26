@@ -3108,7 +3108,7 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 			"\n[dropped]    BK %u, BE %u, VI %u, VO %u"
 			"\n[classified] BK %u, BE %u, VI %u, VO %u"
 			"\n\nReceive[%lu] - "
-			"packets %u, dropped %u, delivered %u, refused %u\n"
+			"packets %u, dropped %u, unsolict_arp_n_mcast_drp %u, delivered %u, refused %u\n"
 			"GRO - agg %u non-agg %u flushes(%u %u) disabled(conc %u low-tput %u)\n",
 			qdf_system_ticks(),
 			stats->tx_called,
@@ -3123,7 +3123,9 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 			stats->tx_classified_ac[SME_AC_VI],
 			stats->tx_classified_ac[SME_AC_VO],
 			qdf_system_ticks(),
-			total_rx_pkt, total_rx_dropped, total_rx_delv,
+			total_rx_pkt, total_rx_dropped,
+			qdf_atomic_read(&stats->rx_usolict_arp_n_mcast_drp),
+			total_rx_delv,
 			total_rx_refused,
 			stats->rx_aggregated, stats->rx_non_aggregated,
 			stats->rx_gro_flushes,

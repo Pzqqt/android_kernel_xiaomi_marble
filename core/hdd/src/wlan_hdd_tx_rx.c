@@ -2042,18 +2042,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((sta_ctx->conn_info.proxyARPService) &&
 		    hdd_is_gratuitous_arp_unsolicited_na(skb)) {
-			uint32_t rx_dropped;
-
-			rx_dropped = ++adapter->hdd_stats.tx_rx_stats.
-							rx_dropped[cpu_index];
-			/* rate limit error messages to 1/8th */
-			if ((rx_dropped & 0x07) == 0)
-				QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA count=%u",
-					  __func__, rx_dropped);
-			/* Remove SKB from internal tracking table before submitting
-			 * it to stack
+			qdf_atomic_inc(&adapter->hdd_stats.tx_rx_stats.
+						rx_usolict_arp_n_mcast_drp);
+			/* Remove SKB from internal tracking table before
+			 * submitting it to stack.
 			 */
 			qdf_nbuf_free(skb);
 			continue;
@@ -2092,9 +2084,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		/* Check & drop replayed mcast packets (for IPV6) */
 		if (hdd_ctx->config->multicast_replay_filter &&
 				hdd_is_mcast_replay(skb)) {
-			++adapter->hdd_stats.tx_rx_stats.rx_dropped[cpu_index];
-			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Dropping multicast replay pkt", __func__);
+			qdf_atomic_inc(&adapter->hdd_stats.tx_rx_stats.
+						rx_usolict_arp_n_mcast_drp);
 			qdf_nbuf_free(skb);
 			continue;
 		}
