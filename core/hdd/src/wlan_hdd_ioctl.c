@@ -242,7 +242,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 
 /**
  * hdd_get_ibss_peer_info_cb() - IBSS peer Info request callback
- * @UserData: Adapter private data
+ * @context: callback context (adapter supplied by caller)
  * @peer_info: Peer info response
  *
  * This is an asynchronous callback function from SME when the peer info
@@ -251,10 +251,10 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
  * Return: 0 for success non-zero for failure
  */
 void
-hdd_get_ibss_peer_info_cb(void *pUserData,
+hdd_get_ibss_peer_info_cb(void *context,
 			  tSirPeerInfoRspParams *peer_info)
 {
-	struct hdd_adapter *adapter = (struct hdd_adapter *) pUserData;
+	struct hdd_adapter *adapter = context;
 	struct hdd_station_ctx *sta_ctx;
 	uint8_t i;
 

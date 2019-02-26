@@ -864,7 +864,7 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 				      uint32_t sessionId);
 #endif
 QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
-				      void *pUserData,
+				      void *cb_context,
 				      ibss_peer_info_cb peer_info_cb,
 				      bool allPeerInfoReqd,
 				      uint8_t staIdx);
