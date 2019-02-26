@@ -201,7 +201,6 @@ struct p2p_param {
 	uint32_t go_keepalive_period;
 	uint32_t go_link_monitor_period;
 	bool p2p_device_addr_admin;
-	bool skip_dfs_channel_p2p_search;
 };
 
 /**

@@ -9913,7 +9913,6 @@ exit:
 static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc_user_config *user_config;
-	bool skip_dfs_in_p2p_search = false;
 	uint8_t band_capability;
 	QDF_STATUS status;
 	bool value = false;
@@ -9937,9 +9936,6 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Invalid 11h_enable flag");
 	user_config->is_11h_support_enabled = value;
-	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->psoc,
-						&skip_dfs_in_p2p_search);
-	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;
 	user_config->band_capability = band_capability;
 	wlan_objmgr_psoc_set_user_config(hdd_ctx->psoc, user_config);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,20 +86,3 @@ cfg_p2p_get_device_addr_admin(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-cfg_p2p_get_skip_dfs_channel_p2p_search(struct wlan_objmgr_psoc *psoc,
-					bool *enable)
-{
-	struct p2p_soc_priv_obj *p2p_soc_obj;
-
-	p2p_soc_obj = wlan_psoc_get_p2p_object(psoc);
-	if (!p2p_soc_obj) {
-		*enable = false;
-		p2p_err("p2p psoc null");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	*enable = p2p_soc_obj->param.skip_dfs_channel_p2p_search;
-
-	return QDF_STATUS_SUCCESS;
-}
