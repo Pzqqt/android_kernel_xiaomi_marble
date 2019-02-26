@@ -370,7 +370,7 @@ hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staIdx)
 /* Function header is left blank intentionally */
 static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *command,
-			     struct qdf_mac_addr *pPeerMacAddr)
+			     struct qdf_mac_addr *peer_macaddr)
 {
 	uint8_t *inPtr = command;
 	size_t in_ptr_len = strlen(command);
@@ -397,12 +397,12 @@ hdd_parse_get_ibss_peer_info(uint8_t *command,
 		return QDF_STATUS_E_FAILURE;
 
 	sscanf(inPtr, "%2x:%2x:%2x:%2x:%2x:%2x",
-	       (unsigned int *)&pPeerMacAddr->bytes[0],
-	       (unsigned int *)&pPeerMacAddr->bytes[1],
-	       (unsigned int *)&pPeerMacAddr->bytes[2],
-	       (unsigned int *)&pPeerMacAddr->bytes[3],
-	       (unsigned int *)&pPeerMacAddr->bytes[4],
-	       (unsigned int *)&pPeerMacAddr->bytes[5]);
+	       (unsigned int *)&peer_macaddr->bytes[0],
+	       (unsigned int *)&peer_macaddr->bytes[1],
+	       (unsigned int *)&peer_macaddr->bytes[2],
+	       (unsigned int *)&peer_macaddr->bytes[3],
+	       (unsigned int *)&peer_macaddr->bytes[4],
+	       (unsigned int *)&peer_macaddr->bytes[5]);
 
 	return QDF_STATUS_SUCCESS;
 }

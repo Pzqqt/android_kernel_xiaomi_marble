@@ -2071,7 +2071,6 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
  * @staId: station identifier
- * @pPeerMacAddress: peer MAC address
  * @pBssDesc: pointer to BSS description
  *
  * Return: QDF_STATUS enumeration
