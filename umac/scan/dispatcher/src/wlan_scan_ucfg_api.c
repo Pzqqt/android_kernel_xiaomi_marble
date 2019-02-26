@@ -950,6 +950,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 				!cfg_get(psoc, CFG_INITIAL_NO_DFS_SCAN);
 	scan_obj->scan_def.allow_dfs_chan_in_scan =
 				cfg_get(psoc, CFG_ENABLE_DFS_SCAN);
+	scan_obj->scan_def.skip_dfs_chan_in_p2p_search =
+				cfg_get(psoc, CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH);
 	scan_obj->scan_def.use_wake_lock_in_user_scan =
 				cfg_get(psoc, CFG_ENABLE_WAKE_LOCK_IN_SCAN);
 	scan_obj->scan_def.active_dwell_2g =

@@ -218,7 +218,6 @@ struct wlan_objmgr_psoc_user_config {
 	bool is_11d_support_enabled;
 	bool is_11h_support_enabled;
 	uint8_t dot11_mode;
-	bool skip_dfs_chnl_in_p2p_search;
 	uint8_t band_capability;
 };
 

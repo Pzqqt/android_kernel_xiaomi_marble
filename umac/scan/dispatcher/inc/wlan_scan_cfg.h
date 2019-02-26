@@ -1046,6 +1046,27 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"ap scan burst duration")
 
+/*
+ * <ini>
+ * gSkipDfsChannelInP2pSearch - Skip DFS Channel in case of P2P Search
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to disable(skip) dfs channel in p2p search.
+ * Related: None.
+ *
+ * Supported Feature: DFS P2P
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH CFG_INI_BOOL( \
+	"gSkipDfsChannelInP2pSearch", \
+	1, \
+	"skip dfs channel in p2p search")
+
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
@@ -1071,6 +1092,7 @@
 	CFG(CFG_P2P_SCAN_BURST_DURATION) \
 	CFG(CFG_GO_SCAN_BURST_DURATION) \
 	CFG(CFG_AP_SCAN_BURST_DURATION) \
+	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH) \
 	CFG_SCAN_PNO
 
 #endif /* __CONFIG_SCAN_H */
