@@ -2452,8 +2452,8 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint32_t *tmp_ptr;
 	wmi_ssid *ssid = NULL;
 	wmi_mac_addr *bssid;
-	int len = sizeof(*cmd);
-	uint8_t extraie_len_with_pad = 0;
+	size_t len = sizeof(*cmd);
+	uint16_t extraie_len_with_pad = 0;
 	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
 
