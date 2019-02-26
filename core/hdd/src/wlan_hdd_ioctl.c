@@ -2726,7 +2726,6 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 	tSirRateUpdateInd rateUpdate = {0};
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_config *pConfig;
 	bool bval = false;
 
 	if (hdd_ctx == NULL) {
@@ -2742,7 +2741,6 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 		hdd_err("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode");
 		return -EINVAL;
 	}
-	pConfig = hdd_ctx->config;
 
 	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
