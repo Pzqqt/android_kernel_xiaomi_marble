@@ -2250,4 +2250,98 @@ static inline uint32_t cdp_cfg_get(ol_txrx_soc_handle soc, enum cdp_dp_cfg cfg)
 
 	return soc->ops->cmn_drv_ops->txrx_get_cfg(soc, cfg);
 }
+
+/**
+ * cdp_soc_set_rate_stats_ctx() - set rate stats context in soc
+ * @soc: opaque soc handle
+ * @ctx: rate stats context
+ *
+ * Return: void
+ */
+static inline void
+cdp_soc_set_rate_stats_ctx(ol_txrx_soc_handle soc, void *ctx)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_rate_stats_ctx)
+		return;
+
+	soc->ops->cmn_drv_ops->set_rate_stats_ctx((struct cdp_soc_t *)soc,
+						  ctx);
+}
+
+/**
+ * cdp_soc_get_rate_stats_ctx() - get rate stats context in soc
+ * @soc: opaque soc handle
+ *
+ * Return: void
+ */
+static inline void*
+cdp_soc_get_rate_stats_ctx(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->get_rate_stats_ctx)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->get_rate_stats_ctx(soc);
+}
+
+/**
+ * cdp_peer_flush_rate_stats() - flush peer rate statistics
+ * @soc: opaque soc handle
+ * @pdev: pdev handle
+ * @buf: stats buffer
+ */
+static inline void
+cdp_peer_flush_rate_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+			  void *buf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_flush_rate_stats)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_peer_flush_rate_stats(soc, pdev, buf);
+}
+
+/**
+ * cdp_flush_rate_stats_request() - request flush rate statistics
+ * @soc: opaque soc handle
+ * @pdev: pdev handle
+ */
+static inline void
+cdp_flush_rate_stats_request(struct cdp_soc_t *soc, struct cdp_pdev *pdev)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_flush_rate_stats_request)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_flush_rate_stats_request(soc, pdev);
+}
 #endif /* _CDP_TXRX_CMN_H_ */

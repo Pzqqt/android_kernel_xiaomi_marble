@@ -439,6 +439,13 @@ struct cdp_cmn_ops {
 
 	bool (*get_dp_capabilities)(struct cdp_soc_t *soc,
 				    enum cdp_capabilities dp_caps);
+	void (*set_rate_stats_ctx)(struct cdp_soc_t *soc, void *ctx);
+	void* (*get_rate_stats_ctx)(struct cdp_soc_t *soc);
+	void (*txrx_peer_flush_rate_stats)(struct cdp_soc_t *soc,
+					   struct cdp_pdev *pdev,
+					   void *buf);
+	void (*txrx_flush_rate_stats_request)(struct cdp_soc_t *soc,
+					      struct cdp_pdev *pdev);
 };
 
 struct cdp_ctrl_ops {
@@ -792,6 +799,9 @@ struct cdp_host_stats_ops {
 	int
 		(*txrx_get_ratekbps)(int preamb, int mcs,
 				     int htflag, int gintval);
+	void
+		(*configure_rate_stats)(struct cdp_soc_t *soc,
+					uint8_t val);
 };
 
 struct cdp_wds_ops {

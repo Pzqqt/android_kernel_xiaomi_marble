@@ -673,6 +673,30 @@ cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
 }
 
 /**
+ * @brief confgure rate stats at soc
+ *
+ * @param soc - opaque soc handle
+ * @param vap - capabilities
+ * @return - void
+ */
+static inline void
+cdp_soc_configure_rate_stats(ol_txrx_soc_handle soc, uint8_t val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->configure_rate_stats)
+		return;
+
+	return soc->ops->host_stats_ops->configure_rate_stats(soc, val);
+}
+
+/**
  * @brief Parse the stats header and get the payload from the message.
  *
  * @param pdev - the physical device object
