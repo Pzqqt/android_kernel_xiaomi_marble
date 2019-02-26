@@ -2652,7 +2652,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 /**
  * hdd_parse_get_cckm_ie() - HDD Parse and fetch the CCKM IE
  * @command: Pointer to input data
- * @pCckmIe: Pointer to output cckm Ie
+ * @cckm_ie: Pointer to output cckm Ie
  * @cckm_ie_len: Pointer to output cckm ie length
  *
  * This function parses the SETCCKM IE command
@@ -2660,7 +2660,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
+static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 				 uint8_t *cckm_ie_len)
 {
 	uint8_t *in_ptr = command;
@@ -2700,8 +2700,8 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	 * For example, if N = 18, then (18 + 1) / 2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1) / 2 = 10 bytes
 	 */
-	*pCckmIe = qdf_mem_malloc((*cckm_ie_len + 1) / 2);
-	if (NULL == *pCckmIe) {
+	*cckm_ie = qdf_mem_malloc((*cckm_ie_len + 1) / 2);
+	if (NULL == *cckm_ie) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
@@ -2714,7 +2714,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	for (i = 0, j = 0; j < *cckm_ie_len; j += 2) {
 		tempByte = (hex_to_bin(in_ptr[j]) << 4) |
 			   (hex_to_bin(in_ptr[j + 1]));
-		(*pCckmIe)[i++] = tempByte;
+		(*cckm_ie)[i++] = tempByte;
 	}
 	*cckm_ie_len = i;
 	return 0;
