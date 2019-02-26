@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -565,9 +565,6 @@ static QDF_STATUS p2p_object_init_params(
 			cfg_get(psoc, CFG_GO_LINK_MONITOR_PERIOD);
 	p2p_soc_obj->param.p2p_device_addr_admin =
 			cfg_get(psoc, CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED);
-	p2p_soc_obj->param.skip_dfs_channel_p2p_search =
-			cfg_get(psoc, CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH);
-
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,17 +60,5 @@ cfg_p2p_get_go_link_monitor_period(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 cfg_p2p_get_device_addr_admin(struct wlan_objmgr_psoc *psoc,
 			      bool *enable);
-
-/**
- * cfg_p2p_get_skip_dfs_channel_p2p_search() - get skip dfs channel
- * in p2p search
- * @psoc:        pointer to psoc object
- * @enable:      enable/disable skip dfs channel in p2p search
- *
- * This function gets enable/disable skip dfs channel in p2p search
- */
-QDF_STATUS
-cfg_p2p_get_skip_dfs_channel_p2p_search(struct wlan_objmgr_psoc *psoc,
-					bool *enable);
 
 #endif /* _WLAN_P2P_CFG_API_H_ */

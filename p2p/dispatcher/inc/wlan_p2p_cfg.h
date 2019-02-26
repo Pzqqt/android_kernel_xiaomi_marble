@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,31 +98,9 @@
 	1, \
 	"derive the P2P MAC address from the primary MAC address")
 
-/*
- * <ini>
- * gSkipDfsChannelInP2pSearch - Skip DFS Channel in case of P2P Search
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to disable(skip) dfs channel in p2p search.
- * Related: None.
- *
- * Supported Feature: DFS P2P
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH CFG_INI_BOOL( \
-	"gSkipDfsChannelInP2pSearch", \
-	1, \
-	"skip dfs channel in p2p search")
-
 #define CFG_P2P_ALL \
 	CFG(CFG_GO_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_GO_LINK_MONITOR_PERIOD) \
-	CFG(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED) \
-	CFG(CFG_ENABLE_SKIP_DFS_IN_P2P_SEARCH)
+	CFG(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED)
 
 #endif
