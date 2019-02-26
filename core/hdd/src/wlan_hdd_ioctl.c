@@ -530,7 +530,7 @@ error:
  * @command: Pointer to input data
  * @pTargetApBssid: Pointer to target Ap bssid
  * @pChannel: Pointer to the Target AP channel
- * @pDwellTime: Pointer to the time to stay off-channel
+ * @dwell_time: Pointer to the time to stay off-channel
  *              after transmitting action frame
  * @pBuf: Pointer to data
  * @pBufLen: Pointer to data length
@@ -543,7 +543,7 @@ error:
 static int
 hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *pTargetApBssid,
-				    uint8_t *pChannel, uint8_t *pDwellTime,
+				    uint8_t *pChannel, uint8_t *dwell_time,
 				    uint8_t **pBuf, uint8_t *pBufLen)
 {
 	const uint8_t *inPtr = command;
@@ -580,7 +580,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	if (v < 0 || tempInt < 0)
 		return -EINVAL;
 
-	*pDwellTime = tempInt;
+	*dwell_time = tempInt;
 
 	/* point to the next argument */
 	inPtr = strnchr(inPtr, strlen(inPtr), SPACE_ASCII_VALUE);
