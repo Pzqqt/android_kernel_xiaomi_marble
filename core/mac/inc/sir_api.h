@@ -869,24 +869,6 @@ typedef struct sEsePEContext {
 	tEseTSMContext tsm;
 } tEsePEContext, *tpEsePEContext;
 
-struct plm_req {
-	uint16_t diag_token;    /* Dialog token */
-	uint16_t meas_token;    /* measurement token */
-	uint16_t numBursts;     /* total number of bursts */
-	uint16_t burstInt;      /* burst interval in seconds */
-	uint16_t measDuration;  /* in TU's,STA goes off-ch */
-	/* no of times the STA should cycle through PLM ch list */
-	uint8_t burstLen;
-	int8_t  desiredTxPwr; /* desired tx power */
-	struct qdf_mac_addr mac_addr;    /* MC dest addr */
-	/* no of channels */
-	uint8_t plmNumCh;
-	/* channel numbers */
-	uint8_t plmChList[CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t sessionId;
-	bool enable;
-};
-
 #endif /* FEATURE_WLAN_ESE */
 
 /* / Definition for join request */

@@ -1504,7 +1504,7 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
  * Return: 0 for success non-zero for failure
  */
 static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
-				    struct plm_req *req)
+				    struct plm_req_params *req)
 {
 	uint8_t *in_ptr = NULL;
 	int count, content = 0, ret = 0;
@@ -1598,8 +1598,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		if (content < 0)
 			return QDF_STATUS_E_FAILURE;
 
-		req->numBursts = content;
-		hdd_debug("num burst %d", req->numBursts);
+		req->num_bursts = content;
+		hdd_debug("num bursts %d", req->num_bursts);
 		in_ptr = strpbrk(in_ptr, " ");
 
 		if (NULL == in_ptr)
@@ -1621,8 +1621,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		if (content <= 0)
 			return QDF_STATUS_E_FAILURE;
 
-		req->burstInt = content;
-		hdd_debug("burst Int %d", req->burstInt);
+		req->burst_int = content;
+		hdd_debug("burst int %d", req->burst_int);
 		in_ptr = strpbrk(in_ptr, " ");
 
 		if (NULL == in_ptr)
@@ -1644,8 +1644,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		if (content <= 0)
 			return QDF_STATUS_E_FAILURE;
 
-		req->measDuration = content;
-		hdd_debug("measDur %d", req->measDuration);
+		req->meas_duration = content;
+		hdd_debug("meas duration %d", req->meas_duration);
 		in_ptr = strpbrk(in_ptr, " ");
 
 		if (NULL == in_ptr)
@@ -1667,8 +1667,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		if (content <= 0)
 			return QDF_STATUS_E_FAILURE;
 
-		req->burstLen = content;
-		hdd_debug("burstLen %d", req->burstLen);
+		req->burst_len = content;
+		hdd_debug("burst len %d", req->burst_len);
 		in_ptr = strpbrk(in_ptr, " ");
 
 		if (NULL == in_ptr)
@@ -1690,9 +1690,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		if (content <= 0)
 			return QDF_STATUS_E_FAILURE;
 
-		req->desiredTxPwr = content;
-		hdd_debug("desiredTxPwr %d",
-			   req->desiredTxPwr);
+		req->desired_tx_pwr = content;
+		hdd_debug("desired tx pwr %d", req->desired_tx_pwr);
 
 		for (count = 0; count < QDF_MAC_ADDR_SIZE; count++) {
 			in_ptr = strpbrk(in_ptr, " ");
@@ -1716,8 +1715,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			req->mac_addr.bytes[count] = content;
 		}
 
-		hdd_debug("MC addr " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(req->mac_addr.bytes));
+		hdd_debug("MAC addr " MAC_ADDRESS_STR,
+			  MAC_ADDR_ARRAY(req->mac_addr.bytes));
 
 		in_ptr = strpbrk(in_ptr, " ");
 
@@ -1741,11 +1740,11 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			return QDF_STATUS_E_FAILURE;
 
 		content = QDF_MIN(content, CFG_VALID_CHANNEL_LIST_LEN);
-		req->plmNumCh = content;
-		hdd_debug("numch: %d", req->plmNumCh);
+		req->plm_num_ch = content;
+		hdd_debug("num ch: %d", req->plm_num_ch);
 
 		/* Channel numbers */
-		for (count = 0; count < req->plmNumCh; count++) {
+		for (count = 0; count < req->plm_num_ch; count++) {
 			in_ptr = strpbrk(in_ptr, " ");
 
 			if (NULL == in_ptr)
@@ -1765,8 +1764,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			    content > WNI_CFG_CURRENT_CHANNEL_STAMAX)
 				return QDF_STATUS_E_FAILURE;
 
-			req->plmChList[count] = content;
-			hdd_debug(" ch- %d", req->plmChList[count]);
+			req->plm_ch_list[count] = content;
+			hdd_debug(" ch- %d", req->plm_ch_list[count]);
 		}
 	}
 	/* If PLM START */
@@ -5579,11 +5578,11 @@ exit:
 
 /**
  * drv_cmd_ccx_plm_req() - Set ESE PLM request
- * @adapter:     Pointer to the HDD adapter
- * @hdd_ctx:     Pointer to the HDD context
- * @command:     Driver command string
+ * @adapter: Pointer to the HDD adapter
+ * @hdd_ctx: Pointer to the HDD context
+ * @command: Driver command string
  * @command_len: Driver command string length
- * @priv_data:   Private data coming with the driver command. Unused here
+ * @priv_data: Private data coming with the driver command. Unused here
  *
  * This function handles driver command that sets the ESE PLM request
  *
@@ -5595,36 +5594,21 @@ static int drv_cmd_ccx_plm_req(struct hdd_adapter *adapter,
 			       uint8_t command_len,
 			       struct hdd_priv_data *priv_data)
 {
-	int ret = 0;
-	uint8_t *value = command;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct plm_req *req = NULL;
+	QDF_STATUS status;
+	struct plm_req_params *req;
 
-	req = qdf_mem_malloc(sizeof(struct plm_req));
-	if (NULL == req) {
-		ret = -ENOMEM;
-		goto exit;
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return -ENOMEM;
+
+	status = hdd_parse_plm_cmd(command, req);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		req->vdev_id = adapter->vdev_id;
+		status = sme_set_plm_request(hdd_ctx->mac_handle, req);
 	}
+	qdf_mem_free(req);
 
-	status = hdd_parse_plm_cmd(value, req);
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(req);
-		req = NULL;
-		ret = -EINVAL;
-		goto exit;
-	}
-	req->sessionId = adapter->vdev_id;
-
-	status = sme_set_plm_request(hdd_ctx->mac_handle, req);
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(req);
-		req = NULL;
-		ret = -EINVAL;
-		goto exit;
-	}
-
-exit:
-	return ret;
+	return qdf_status_to_os_return(status);
 }
 
 /**

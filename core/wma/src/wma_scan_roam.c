@@ -3276,27 +3276,23 @@ send_resp:
 /**
  * wma_plm_start() - plm start request
  * @wma: wma handle
- * @plm: plm request parameters
+ * @params: plm request parameters
  *
  * This function request FW to start PLM.
  *
  * Return: QDF status
  */
-QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm)
+static QDF_STATUS wma_plm_start(tp_wma_handle wma,
+				struct plm_req_params *params)
 {
-	struct plm_req_params params = {0};
 	uint32_t num_channels;
 	uint32_t *channel_list = NULL;
 	uint32_t i;
 	QDF_STATUS status;
 
-	if (NULL == plm || NULL == wma) {
-		WMA_LOGE("%s: input pointer is NULL ", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
 	WMA_LOGD("PLM Start");
 
-	num_channels =  plm->plmNumCh;
+	num_channels =  params->plm_num_ch;
 
 	if (num_channels) {
 		channel_list = qdf_mem_malloc(sizeof(uint32_t) * num_channels);
@@ -3304,41 +3300,23 @@ QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm)
 			return QDF_STATUS_E_FAILURE;
 
 		for (i = 0; i < num_channels; i++) {
-			channel_list[i] = plm->plmChList[i];
+			channel_list[i] = params->plm_ch_list[i];
 
 			if (channel_list[i] < WMA_NLO_FREQ_THRESH)
 				channel_list[i] =
 					cds_chan_to_freq(channel_list[i]);
 		}
 	}
-
-	params.diag_token = plm->diag_token;
-	params.meas_token = plm->meas_token;
-	params.num_bursts = plm->numBursts;
-	params.burst_int = plm->burstInt;
-	params.meas_duration = plm->measDuration;
-	params.burst_len = plm->burstLen;
-	params.desired_tx_pwr = plm->desiredTxPwr;
-	params.plm_num_ch = plm->plmNumCh;
-	params.vdev_id = plm->sessionId;
-	params.enable = plm->enable;
-	qdf_mem_copy(&params.mac_addr, &plm->mac_addr,
-			sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params.plm_ch_list, plm->plmChList,
-				WMI_CFG_VALID_CHANNEL_LIST_LEN);
-
-	status = wmi_unified_plm_start_cmd(wma->wmi_handle,
-				&params, channel_list);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(channel_list);
-		return status;
-	}
-
+	status = wmi_unified_plm_start_cmd(wma->wmi_handle, params,
+					   channel_list);
 	qdf_mem_free(channel_list);
-	wma->interfaces[plm->sessionId].plm_in_progress = true;
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	wma->interfaces[params->vdev_id].plm_in_progress = true;
 
 	WMA_LOGD("Plm start request sent successfully for vdev %d",
-		 plm->sessionId);
+		 params->vdev_id);
 
 	return status;
 }
@@ -3346,53 +3324,32 @@ QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm)
 /**
  * wma_plm_stop() - plm stop request
  * @wma: wma handle
- * @plm: plm request parameters
+ * @params: plm request parameters
  *
  * This function request FW to stop PLM.
  *
  * Return: QDF status
  */
-QDF_STATUS wma_plm_stop(tp_wma_handle wma, const struct plm_req *plm)
+static QDF_STATUS wma_plm_stop(tp_wma_handle wma,
+			       struct plm_req_params *params)
 {
-	struct plm_req_params params = {0};
 	QDF_STATUS status;
 
-	if (NULL == plm || NULL == wma) {
-		WMA_LOGE("%s: input pointer is NULL ", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (false == wma->interfaces[plm->sessionId].plm_in_progress) {
+	if (!wma->interfaces[params->vdev_id].plm_in_progress) {
 		WMA_LOGE("No active plm req found, skip plm stop req");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("PLM Stop");
 
-	params.diag_token = plm->diag_token;
-	params.meas_token = plm->meas_token;
-	params.num_bursts = plm->numBursts;
-	params.burst_int = plm->burstInt;
-	params.meas_duration = plm->measDuration;
-	params.burst_len = plm->burstLen;
-	params.desired_tx_pwr = plm->desiredTxPwr;
-	params.plm_num_ch = plm->plmNumCh;
-	params.vdev_id = plm->sessionId;
-	params.enable = plm->enable;
-	qdf_mem_copy(&params.mac_addr, &plm->mac_addr,
-			sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params.plm_ch_list, plm->plmChList,
-				WMI_CFG_VALID_CHANNEL_LIST_LEN);
-
-	status = wmi_unified_plm_stop_cmd(wma->wmi_handle,
-						&params);
+	status = wmi_unified_plm_stop_cmd(wma->wmi_handle, params);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	wma->interfaces[plm->sessionId].plm_in_progress = false;
+	wma->interfaces[params->vdev_id].plm_in_progress = false;
 
 	WMA_LOGD("Plm stop request sent successfully for vdev %d",
-		 plm->sessionId);
+		 params->vdev_id);
 
 	return status;
 }
@@ -3400,25 +3357,25 @@ QDF_STATUS wma_plm_stop(tp_wma_handle wma, const struct plm_req *plm)
 /**
  * wma_config_plm() - config PLM
  * @wma: wma handle
- * @plm: plm request parameters
+ * @params: plm request parameters
  *
  * Return: none
  */
-void wma_config_plm(tp_wma_handle wma, struct plm_req *plm)
+void wma_config_plm(tp_wma_handle wma, struct plm_req_params *params)
 {
 	QDF_STATUS ret;
 
-	if (NULL == plm || NULL == wma)
+	if (!params || !wma)
 		return;
 
-	if (plm->enable)
-		ret = wma_plm_start(wma, plm);
+	if (params->enable)
+		ret = wma_plm_start(wma, params);
 	else
-		ret = wma_plm_stop(wma, plm);
+		ret = wma_plm_stop(wma, params);
 
 	if (ret)
 		WMA_LOGE("%s: PLM %s failed %d", __func__,
-			 plm->enable ? "start" : "stop", ret);
+			 params->enable ? "start" : "stop", ret);
 }
 #endif
 

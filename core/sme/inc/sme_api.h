@@ -627,8 +627,10 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *req);
+QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
+			       struct plm_req_params *req);
 #endif /*FEATURE_WLAN_ESE */
+
 QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 tCsrRoamModifyProfileFields *
