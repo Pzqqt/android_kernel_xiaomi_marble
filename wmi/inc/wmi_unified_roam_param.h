@@ -232,7 +232,7 @@ struct roam_scan_filter_params {
  * @mac_addr: MC dest addr
  * @plm_num_ch: channel numbers
  * @plm_ch_list: channel list
- * @session_id: session id
+ * @vdev_id: vdev id
  * @enable:  enable/disable
  */
 struct plm_req_params {
@@ -249,7 +249,7 @@ struct plm_req_params {
 	uint8_t plm_num_ch;
 	/* channel numbers */
 	uint8_t plm_ch_list[WMI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t session_id;
+	uint8_t vdev_id;
 	bool enable;
 };
 

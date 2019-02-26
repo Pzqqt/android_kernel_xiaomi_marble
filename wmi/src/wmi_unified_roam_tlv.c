@@ -564,7 +564,7 @@ static QDF_STATUS send_plm_stop_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 				(wmi_vdev_plmreq_stop_cmd_fixed_param));
 
-	cmd->vdev_id = plm->session_id;
+	cmd->vdev_id = plm->vdev_id;
 
 	cmd->meas_token = plm->meas_token;
 	WMI_LOGD("vdev %d meas token %d", cmd->vdev_id, cmd->meas_token);
@@ -619,7 +619,7 @@ static QDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_vdev_plmreq_start_cmd_fixed_param));
 
-	cmd->vdev_id = plm->session_id;
+	cmd->vdev_id = plm->vdev_id;
 
 	cmd->meas_token = plm->meas_token;
 	cmd->dialog_token = plm->diag_token;
