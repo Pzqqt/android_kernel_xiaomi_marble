@@ -5530,10 +5530,10 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint8_t *value = command;
-	uint8_t *cckmIe = NULL;
+	uint8_t *cckm_ie = NULL;
 	uint8_t cckm_ie_len = 0;
 
-	ret = hdd_parse_get_cckm_ie(value, &cckmIe, &cckm_ie_len);
+	ret = hdd_parse_get_cckm_ie(value, &cckm_ie, &cckm_ie_len);
 	if (ret) {
 		hdd_err("Failed to parse cckm ie data");
 		goto exit;
@@ -5542,19 +5542,19 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 	if (cckm_ie_len > DOT11F_IE_RSN_MAX_LEN) {
 		hdd_err("CCKM Ie input length is more than max[%d]",
 			  DOT11F_IE_RSN_MAX_LEN);
-		if (NULL != cckmIe) {
-			qdf_mem_free(cckmIe);
-			cckmIe = NULL;
+		if (NULL != cckm_ie) {
+			qdf_mem_free(cckm_ie);
+			cckm_ie = NULL;
 		}
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	sme_set_cckm_ie(hdd_ctx->mac_handle, adapter->vdev_id,
-			cckmIe, cckm_ie_len);
-	if (NULL != cckmIe) {
-		qdf_mem_free(cckmIe);
-		cckmIe = NULL;
+			cckm_ie, cckm_ie_len);
+	if (NULL != cckm_ie) {
+		qdf_mem_free(cckm_ie);
+		cckm_ie = NULL;
 	}
 
 exit:
