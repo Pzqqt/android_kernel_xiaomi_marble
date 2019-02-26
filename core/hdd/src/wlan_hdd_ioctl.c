@@ -4278,7 +4278,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t channel = 0;
-	tSirMacAddr targetApBssid;
+	tSirMacAddr bssid;
 	uint32_t roamId = INVALID_ROAM_ID;
 	tCsrRoamModifyProfileFields modProfileFields;
 	tCsrHandoffRequest handoffInfo;
@@ -4301,7 +4301,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	ret = hdd_parse_reassoc_command_v1_data(value, targetApBssid,
+	ret = hdd_parse_reassoc_command_v1_data(value, bssid,
 						&channel);
 	if (ret) {
 		hdd_err("Failed to parse reassoc command data");
@@ -4314,14 +4314,13 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
 	 */
-	if (!qdf_mem_cmp(targetApBssid,
-				    sta_ctx->conn_info.bssId.bytes,
-				    QDF_MAC_ADDR_SIZE)) {
+	if (!qdf_mem_cmp(bssid, sta_ctx->conn_info.bssId.bytes,
+			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
-			hdd_wma_send_fastreassoc_cmd(adapter,
-				targetApBssid,
-				sta_ctx->conn_info.operationChannel);
+			channel = sta_ctx->conn_info.operationChannel;
+			hdd_wma_send_fastreassoc_cmd(adapter, bssid,
+						     channel);
 		} else {
 			sme_get_modify_profile_fields(mac_handle,
 				adapter->vdev_id,
@@ -4340,14 +4339,13 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	}
 
 	if (roaming_offload_enabled(hdd_ctx)) {
-		hdd_wma_send_fastreassoc_cmd(adapter,
-					targetApBssid, (int)channel);
+		hdd_wma_send_fastreassoc_cmd(adapter, bssid, (int)channel);
 		goto exit;
 	}
 	/* Proceed with reassoc */
 	handoffInfo.channel = channel;
 	handoffInfo.src = FASTREASSOC;
-	qdf_mem_copy(handoffInfo.bssid.bytes, targetApBssid,
+	qdf_mem_copy(handoffInfo.bssid.bytes, bssid,
 		     sizeof(tSirMacAddr));
 	sme_handoff_request(mac_handle, adapter->vdev_id,
 			    &handoffInfo);
