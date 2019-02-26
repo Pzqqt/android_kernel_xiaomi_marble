@@ -272,6 +272,7 @@ struct msm_dai_q6_tdm_dai_data {
 	struct afe_clk_set clk_set; /* hold LPASS clock config. */
 	union afe_port_group_config group_cfg; /* hold tdm group config */
 	struct afe_tdm_port_config port_cfg; /* hold tdm config */
+	struct afe_param_id_tdm_lane_cfg lane_cfg; /* hold tdm lane config */
 };
 
 /* MI2S format field for AFE_PORT_CMD_I2S_CONFIG command
@@ -336,6 +337,11 @@ static const struct soc_enum tdm_config_enum[] = {
 static DEFINE_MUTEX(tdm_mutex);
 
 static atomic_t tdm_group_ref[IDX_GROUP_TDM_MAX];
+
+static struct afe_param_id_tdm_lane_cfg tdm_lane_cfg = {
+	AFE_GROUP_DEVICE_ID_QUINARY_TDM_RX,
+	0x0,
+};
 
 /* cache of group cfg per parent node */
 static struct afe_param_id_group_device_tdm_cfg tdm_group_cfg = {
@@ -6590,6 +6596,24 @@ static int msm_dai_tdm_q6_probe(struct platform_device *pdev)
 	} else
 		dev_dbg(&pdev->dev, "%s: clk attribute not found\n", __func__);
 
+	/* extract tdm lane cfg to static */
+	tdm_lane_cfg.port_id = tdm_group_cfg.group_id;
+	tdm_lane_cfg.lane_mask = AFE_LANE_MASK_INVALID;
+	if (of_find_property(pdev->dev.of_node,
+			"qcom,msm-cpudai-tdm-lane-mask", NULL)) {
+		rc = of_property_read_u16(pdev->dev.of_node,
+			"qcom,msm-cpudai-tdm-lane-mask",
+			&tdm_lane_cfg.lane_mask);
+		if (rc) {
+			dev_err(&pdev->dev, "%s: value for tdm lane mask not found %s\n",
+				__func__, "qcom,msm-cpudai-tdm-lane-mask");
+			goto rtn;
+		}
+		dev_dbg(&pdev->dev, "%s: tdm lane mask from DT file %d\n",
+			__func__, tdm_lane_cfg.lane_mask);
+	} else
+		dev_dbg(&pdev->dev, "%s: tdm lane mask not found\n", __func__);
+
 	/* extract tdm clk src master/slave info into static */
 	rc = of_property_read_u32(pdev->dev.of_node,
 		"qcom,msm-cpudai-tdm-clk-internal",
@@ -7696,7 +7720,7 @@ static int msm_dai_q6_dai_tdm_remove(struct snd_soc_dai *dai)
 
 		if (atomic_read(group_ref) == 0) {
 			rc = afe_port_group_enable(group_id,
-				NULL, false);
+				NULL, false, NULL);
 			if (rc < 0) {
 				dev_err(dai->dev, "fail to disable AFE group 0x%x\n",
 					group_id);
@@ -8066,7 +8090,17 @@ static int msm_dai_q6_tdm_hw_params(struct snd_pcm_substream *substream,
 	 * NOTE: group config is set to the same as slot config.
 	 */
 	tdm_group->bit_width = tdm_group->slot_width;
-	tdm_group->num_channels = tdm_group->nslots_per_frame;
+
+	/*
+	 * for multi lane scenario
+	 * Total number of active channels = number of active lanes * number of active slots.
+	 */
+	if (dai_data->lane_cfg.lane_mask != AFE_LANE_MASK_INVALID)
+		tdm_group->num_channels = tdm_group->nslots_per_frame
+			* num_of_bits_set(dai_data->lane_cfg.lane_mask);
+	else
+		tdm_group->num_channels = tdm_group->nslots_per_frame;
+
 	tdm_group->sample_rate = dai_data->rate;
 
 	pr_debug("%s: TDM GROUP:\n"
@@ -8091,6 +8125,10 @@ static int msm_dai_q6_tdm_hw_params(struct snd_pcm_substream *substream,
 		tdm_group->port_id[5],
 		tdm_group->port_id[6],
 		tdm_group->port_id[7]);
+	pr_debug("%s: TDM GROUP ID 0x%x lane mask 0x%x:\n",
+		__func__,
+		tdm_group->group_id,
+		dai_data->lane_cfg.lane_mask);
 
 	/*
 	 * update tdm config param
@@ -8246,7 +8284,8 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 			 */
 			if (dai_data->num_group_ports > 1) {
 				rc = afe_port_group_enable(group_id,
-					&dai_data->group_cfg, true);
+					&dai_data->group_cfg, true,
+					&dai_data->lane_cfg);
 				if (rc < 0) {
 					dev_err(dai->dev,
 					"%s: fail to enable AFE group 0x%x\n",
@@ -8261,7 +8300,7 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 		if (rc < 0) {
 			if (atomic_read(group_ref) == 0) {
 				afe_port_group_enable(group_id,
-					NULL, false);
+					NULL, false, NULL);
 			}
 			if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
 				msm_dai_q6_tdm_set_clk(dai_data,
@@ -8318,7 +8357,7 @@ static void msm_dai_q6_tdm_shutdown(struct snd_pcm_substream *substream,
 
 		if (atomic_read(group_ref) == 0) {
 			rc = afe_port_group_enable(group_id,
-				NULL, false);
+				NULL, false, NULL);
 			if (rc < 0) {
 				dev_err(dai->dev, "%s: fail to disable AFE group 0x%x\n",
 					__func__, group_id);
@@ -10223,7 +10262,7 @@ static int msm_dai_q6_tdm_dev_probe(struct platform_device *pdev)
 	dai_data->group_cfg.tdm_cfg = tdm_group_cfg;
 	/* copy static num group ports per parent node */
 	dai_data->num_group_ports = num_tdm_group_ports;
-
+	dai_data->lane_cfg = tdm_lane_cfg;
 
 	dev_set_drvdata(&pdev->dev, dai_data);
 
