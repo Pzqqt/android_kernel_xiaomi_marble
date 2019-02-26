@@ -1346,6 +1346,11 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
 
+	if (!netbuf) {
+		pr_err("%s: Invalid netbuf.\n", __func__);
+		return;
+	}
+
 	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
 		return;
