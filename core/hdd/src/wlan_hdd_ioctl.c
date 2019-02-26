@@ -2504,7 +2504,7 @@ done:
 /**
  * hdd_parse_ese_beacon_req() - Parse ese beacon request
  * @command: Pointer to data
- * @pEseBcnReq:	Output pointer to store parsed ie information
+ * @req:	Output pointer to store parsed ie information
  *
  * This function parses the ese beacon request passed in the format
  * CCXBEACONREQ<space><Number of fields><space><Measurement token>
@@ -2521,7 +2521,7 @@ done:
  * Return: 0 for success non-zero for failure
  */
 static int hdd_parse_ese_beacon_req(uint8_t *command,
-				    tCsrEseBeaconReq *pEseBcnReq)
+				    tCsrEseBeaconReq *req)
 {
 	uint8_t *inPtr = command;
 	uint8_t input = 0;
@@ -2553,11 +2553,11 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 		return -EINVAL;
 
 	input = QDF_MIN(input, SIR_ESE_MAX_MEAS_IE_REQS);
-	pEseBcnReq->numBcnReqIe = input;
+	req->numBcnReqIe = input;
 
-	hdd_debug("Number of Bcn Req Ie fields: %d", pEseBcnReq->numBcnReqIe);
+	hdd_debug("Number of Bcn Req Ie fields: %d", req->numBcnReqIe);
 
-	for (j = 0; j < (pEseBcnReq->numBcnReqIe); j++) {
+	for (j = 0; j < (req->numBcnReqIe); j++) {
 		for (i = 0; i < 4; i++) {
 			/*
 			 * inPtr pointing to the beginning of 1st space
@@ -2595,7 +2595,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 						  tempInt);
 					return -EINVAL;
 				}
-				pEseBcnReq->bcnReq[j].measurementToken =
+				req->bcnReq[j].measurementToken =
 					tempInt;
 				break;
 
@@ -2607,7 +2607,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 						  tempInt);
 					return -EINVAL;
 				}
-				pEseBcnReq->bcnReq[j].channel = tempInt;
+				req->bcnReq[j].channel = tempInt;
 				break;
 
 			case 2: /* Scan mode */
@@ -2617,33 +2617,33 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 						  tempInt);
 					return -EINVAL;
 				}
-				pEseBcnReq->bcnReq[j].scanMode = tempInt;
+				req->bcnReq[j].scanMode = tempInt;
 				break;
 
 			case 3: /* Measurement duration */
 				if ((!tempInt
-				     && (pEseBcnReq->bcnReq[j].scanMode !=
+				     && (req->bcnReq[j].scanMode !=
 					 eSIR_BEACON_TABLE)) ||
-				    (pEseBcnReq->bcnReq[j].scanMode ==
+				    (req->bcnReq[j].scanMode ==
 						eSIR_BEACON_TABLE)) {
 					hdd_err("Invalid Measurement Duration: %u",
 						  tempInt);
 					return -EINVAL;
 				}
-				pEseBcnReq->bcnReq[j].measurementDuration =
+				req->bcnReq[j].measurementDuration =
 					tempInt;
 				break;
 			}
 		}
 	}
 
-	for (j = 0; j < pEseBcnReq->numBcnReqIe; j++) {
+	for (j = 0; j < req->numBcnReqIe; j++) {
 		hdd_debug("Index: %d Measurement Token: %u Channel: %u Scan Mode: %u Measurement Duration: %u",
 			  j,
-			  pEseBcnReq->bcnReq[j].measurementToken,
-			  pEseBcnReq->bcnReq[j].channel,
-			  pEseBcnReq->bcnReq[j].scanMode,
-			  pEseBcnReq->bcnReq[j].measurementDuration);
+			  req->bcnReq[j].measurementToken,
+			  req->bcnReq[j].channel,
+			  req->bcnReq[j].scanMode,
+			  req->bcnReq[j].measurementDuration);
 	}
 
 	return 0;

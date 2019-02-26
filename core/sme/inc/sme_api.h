@@ -599,7 +599,7 @@ QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle,
 		uint8_t *pCckmIe, uint8_t cckmIeLen);
 QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 				      const uint8_t sessionId,
-				      const tCsrEseBeaconReq *pEseBcnReq);
+				      const tCsrEseBeaconReq *in_req);
 QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *pPlm);
 #endif /*FEATURE_WLAN_ESE */
 QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,

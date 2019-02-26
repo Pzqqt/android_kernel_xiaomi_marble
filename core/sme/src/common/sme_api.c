@@ -1606,7 +1606,7 @@ QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle, uint8_t sessionId,
  * sme_set_ese_beacon_request() - set ese beacon request
  * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: session id
- * @pEseBcnReq: Ese beacon report
+ * @in_req: Ese beacon report request
  *
  * function to set ESE beacon request parameters
  *
@@ -1614,12 +1614,12 @@ QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle, uint8_t sessionId,
  */
 QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 				      const uint8_t sessionId,
-				      const tCsrEseBeaconReq *pEseBcnReq)
+				      const tCsrEseBeaconReq *in_req)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tpSirBeaconReportReqInd pSmeBcnReportReq = NULL;
-	tCsrEseBeaconReqParams *pBeaconReq = NULL;
+	const tCsrEseBeaconReqParams *pBeaconReq = NULL;
 	uint8_t counter = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
@@ -1630,7 +1630,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 	}
 
 	/* Store the info in RRM context */
-	qdf_mem_copy(&pSmeRrmContext->eseBcnReqInfo, pEseBcnReq,
+	qdf_mem_copy(&pSmeRrmContext->eseBcnReqInfo, in_req,
 		     sizeof(tCsrEseBeaconReq));
 
 	/* Prepare the request to send to SME. */
@@ -1648,12 +1648,11 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 		     pSession->connectedProfile.bssid.bytes,
 		     sizeof(tSirMacAddr));
 	pSmeBcnReportReq->channelInfo.channelNum = 255;
-	pSmeBcnReportReq->channelList.numChannels = pEseBcnReq->numBcnReqIe;
+	pSmeBcnReportReq->channelList.numChannels = in_req->numBcnReqIe;
 	pSmeBcnReportReq->msgSource = eRRM_MSG_SOURCE_ESE_UPLOAD;
 
-	for (counter = 0; counter < pEseBcnReq->numBcnReqIe; counter++) {
-		pBeaconReq =
-			(tCsrEseBeaconReqParams *) &pEseBcnReq->bcnReq[counter];
+	for (counter = 0; counter < in_req->numBcnReqIe; counter++) {
+		pBeaconReq = &in_req->bcnReq[counter];
 		pSmeBcnReportReq->fMeasurementtype[counter] =
 			pBeaconReq->scanMode;
 		pSmeBcnReportReq->measurementDuration[counter] =
