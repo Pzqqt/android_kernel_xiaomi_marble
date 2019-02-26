@@ -372,31 +372,31 @@ static QDF_STATUS
 hdd_parse_get_ibss_peer_info(uint8_t *command,
 			     struct qdf_mac_addr *peer_macaddr)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	size_t in_ptr_len = strlen(command);
 
-	inPtr = strnchr(command, in_ptr_len, SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, in_ptr_len, SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return QDF_STATUS_E_FAILURE;
-	else if (SPACE_ASCII_VALUE != *inPtr)
-		return QDF_STATUS_E_FAILURE;
-
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
-
-	if ('\0' == *inPtr)
+	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
-	in_ptr_len -= (inPtr - command);
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
+
+	if ('\0' == *in_ptr)
+		return QDF_STATUS_E_FAILURE;
+
+	in_ptr_len -= (in_ptr - command);
 	if (in_ptr_len < 17)
 		return QDF_STATUS_E_FAILURE;
 
-	if (inPtr[2] != ':' || inPtr[5] != ':' || inPtr[8] != ':' ||
-	    inPtr[11] != ':' || inPtr[14] != ':')
+	if (in_ptr[2] != ':' || in_ptr[5] != ':' || in_ptr[8] != ':' ||
+	    in_ptr[11] != ':' || in_ptr[14] != ':')
 		return QDF_STATUS_E_FAILURE;
 
-	sscanf(inPtr, "%2x:%2x:%2x:%2x:%2x:%2x",
+	sscanf(in_ptr, "%2x:%2x:%2x:%2x:%2x:%2x",
 	       (unsigned int *)&peer_macaddr->bytes[0],
 	       (unsigned int *)&peer_macaddr->bytes[1],
 	       (unsigned int *)&peer_macaddr->bytes[2],
@@ -546,7 +546,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *channel, uint8_t *dwell_time,
 				    uint8_t **pBuf, uint8_t *pBufLen)
 {
-	const uint8_t *inPtr = command;
+	const uint8_t *in_ptr = command;
 	const uint8_t *dataEnd;
 	int tempInt;
 	int j = 0;
@@ -555,24 +555,24 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	uint8_t tempBuf[32];
 	uint8_t tempByte = 0;
 
-	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, channel))
+	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, channel))
 		return -EINVAL;
 
 	/* point to the next argument */
-	inPtr = strnchr(inPtr, strlen(inPtr), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
 	/* removing empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return -EINVAL;
 
 	/* getting the next argument ie the dwell time */
-	v = sscanf(inPtr, "%31s ", tempBuf);
+	v = sscanf(in_ptr, "%31s ", tempBuf);
 	if (1 != v)
 		return -EINVAL;
 
@@ -583,24 +583,24 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	*dwell_time = tempInt;
 
 	/* point to the next argument */
-	inPtr = strnchr(inPtr, strlen(inPtr), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
 	/* removing empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return -EINVAL;
 
 	/* find the length of data */
-	dataEnd = inPtr;
+	dataEnd = in_ptr;
 	while (('\0' != *dataEnd))
 		dataEnd++;
 
-	*pBufLen = dataEnd - inPtr;
+	*pBufLen = dataEnd - in_ptr;
 	if (*pBufLen <= 0)
 		return -EINVAL;
 
@@ -626,11 +626,11 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 */
 	for (i = 0, j = 0; j < *pBufLen; j += 2) {
 		if (j + 1 == *pBufLen) {
-			tempByte = hex_to_bin(inPtr[j]);
+			tempByte = hex_to_bin(in_ptr[j]);
 		} else {
 			tempByte =
-				(hex_to_bin(inPtr[j]) << 4) |
-				(hex_to_bin(inPtr[j + 1]));
+				(hex_to_bin(in_ptr[j]) << 4) |
+				(hex_to_bin(in_ptr[j + 1]));
 		}
 		(*pBuf)[i++] = tempByte;
 	}
@@ -653,9 +653,9 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 					     uint8_t *bssid,
 					     uint8_t *channel)
 {
-	const uint8_t *inPtr = command;
+	const uint8_t *in_ptr = command;
 
-	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, channel))
+	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, channel))
 		return -EINVAL;
 
 	return 0;
@@ -1207,29 +1207,29 @@ static int
 hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		      uint8_t *pNumChannels)
 {
-	const uint8_t *inPtr = command;
+	const uint8_t *in_ptr = command;
 	int tempInt;
 	int j = 0;
 	int v = 0;
 	char buf[32];
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
+	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return -EINVAL;
 
 	/* get the first argument ie the number of channels */
-	v = sscanf(inPtr, "%31s ", buf);
+	v = sscanf(in_ptr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
@@ -1244,12 +1244,12 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 
 	for (j = 0; j < (*pNumChannels); j++) {
 		/*
-		 * inPtr pointing to the beginning of first space after number
+		 * in_ptr pointing to the beginning of first space after number
 		 * of channels
 		 */
-		inPtr = strpbrk(inPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 		/* no channel list after the number of channels argument */
-		if (NULL == inPtr) {
+		if (NULL == in_ptr) {
 			if (0 != j) {
 				*pNumChannels = j;
 				return 0;
@@ -1259,14 +1259,14 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		}
 
 		/* remove empty space */
-		while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-			inPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/*
 		 * no channel list after the number of channels
 		 * argument and spaces
 		 */
-		if ('\0' == *inPtr) {
+		if ('\0' == *in_ptr) {
 			if (0 != j) {
 				*pNumChannels = j;
 				return 0;
@@ -1275,7 +1275,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 			}
 		}
 
-		v = sscanf(inPtr, "%31s ", buf);
+		v = sscanf(in_ptr, "%31s ", buf);
 		if (1 != v)
 			return -EINVAL;
 
@@ -2096,27 +2096,27 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
  */
 static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *pTxPower)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
 	*pTxPower = 0;
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
+	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return 0;
 
-	v = kstrtos32(inPtr, 10, &tempInt);
+	v = kstrtos32(in_ptr, 10, &tempInt);
 
 	/* Range checking for passed parameter */
 	if ((tempInt < HDD_MIN_TX_POWER) || (tempInt > HDD_MAX_TX_POWER))
@@ -2523,28 +2523,28 @@ done:
 static int hdd_parse_ese_beacon_req(uint8_t *command,
 				    tCsrEseBeaconReq *req)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	uint8_t input = 0;
 	uint32_t tempInt = 0;
 	int j = 0, i = 0, v = 0;
 	char buf[32];
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
-	if (NULL == inPtr) /* no argument after the command */
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	if (NULL == in_ptr) /* no argument after the command */
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
+	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return -EINVAL;
 
 	/* Getting the first argument ie Number of IE fields */
-	v = sscanf(inPtr, "%31s ", buf);
+	v = sscanf(in_ptr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
@@ -2560,27 +2560,27 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 	for (j = 0; j < (req->numBcnReqIe); j++) {
 		for (i = 0; i < 4; i++) {
 			/*
-			 * inPtr pointing to the beginning of 1st space
+			 * in_ptr pointing to the beginning of 1st space
 			 * after number of ie fields
 			 */
-			inPtr = strpbrk(inPtr, " ");
+			in_ptr = strpbrk(in_ptr, " ");
 			/* no ie data after the number of ie fields argument */
-			if (NULL == inPtr)
+			if (NULL == in_ptr)
 				return -EINVAL;
 
 			/* remove empty space */
-			while ((SPACE_ASCII_VALUE == *inPtr)
-			       && ('\0' != *inPtr))
-				inPtr++;
+			while ((SPACE_ASCII_VALUE == *in_ptr)
+			       && ('\0' != *in_ptr))
+				in_ptr++;
 
 			/*
 			 * no ie data after the number of ie fields
 			 * argument and spaces
 			 */
-			if ('\0' == *inPtr)
+			if ('\0' == *in_ptr)
 				return -EINVAL;
 
-			v = sscanf(inPtr, "%31s ", buf);
+			v = sscanf(in_ptr, "%31s ", buf);
 			if (1 != v)
 				return -EINVAL;
 
@@ -2663,28 +2663,28 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 				 uint8_t *pCckmIeLen)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	uint8_t *dataEnd;
 	int j = 0;
 	int i = 0;
 	uint8_t tempByte = 0;
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
+	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 	/* no argument followed by spaces */
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return -EINVAL;
 
 	/* find the length of data */
-	dataEnd = inPtr;
+	dataEnd = in_ptr;
 	while (('\0' != *dataEnd)) {
 		dataEnd++;
 		++(*pCckmIeLen);
@@ -2712,8 +2712,8 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	 * 7f in 0th location, 00 in 1st and f0 in 3rd location
 	 */
 	for (i = 0, j = 0; j < *pCckmIeLen; j += 2) {
-		tempByte = (hex_to_bin(inPtr[j]) << 4) |
-			   (hex_to_bin(inPtr[j + 1]));
+		tempByte = (hex_to_bin(in_ptr[j]) << 4) |
+			   (hex_to_bin(in_ptr[j + 1]));
 		(*pCckmIe)[i++] = tempByte;
 	}
 	*pCckmIeLen = i;
@@ -4802,26 +4802,26 @@ exit:
 static int hdd_parse_setrmcenable_command(uint8_t *command,
 					  uint8_t *pRmcEnable)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
 	*pRmcEnable = 0;
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return 0;
-	else if (SPACE_ASCII_VALUE != *inPtr)
-		return 0;
-
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
-
-	if ('\0' == *inPtr)
+	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return 0;
 
-	v = sscanf(inPtr, "%31s ", buf);
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
+
+	if ('\0' == *in_ptr)
+		return 0;
+
+	v = sscanf(in_ptr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
@@ -4882,27 +4882,27 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 					uint32_t *pRate,
 					enum tx_rate_info *tx_flags)
 {
-	uint8_t *inPtr = command;
+	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
 	*pRate = 0;
 	*tx_flags = 0;
 
-	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr)
+	if (NULL == in_ptr)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr)
+	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return -EINVAL;
 
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
-	if ('\0' == *inPtr)
+	if ('\0' == *in_ptr)
 		return 0;
 
-	v = sscanf(inPtr, "%31s ", buf);
+	v = sscanf(in_ptr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
