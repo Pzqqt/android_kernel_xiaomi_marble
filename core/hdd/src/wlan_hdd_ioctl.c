@@ -243,7 +243,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 /**
  * hdd_get_ibss_peer_info_cb() - IBSS peer Info request callback
  * @UserData: Adapter private data
- * @pPeerInfoRsp: Peer info response
+ * @peer_info: Peer info response
  *
  * This is an asynchronous callback function from SME when the peer info
  * is received
@@ -252,7 +252,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
  */
 void
 hdd_get_ibss_peer_info_cb(void *pUserData,
-				tSirPeerInfoRspParams *pPeerInfo)
+			  tSirPeerInfoRspParams *peer_info)
 {
 	struct hdd_adapter *adapter = (struct hdd_adapter *) pUserData;
 	struct hdd_station_ctx *sta_ctx;
@@ -265,24 +265,24 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (NULL != pPeerInfo && QDF_STATUS_SUCCESS == pPeerInfo->status) {
+	if (NULL != peer_info && QDF_STATUS_SUCCESS == peer_info->status) {
 		/* validate number of peers */
-		if (pPeerInfo->numPeers > SIR_MAX_NUM_STA_IN_IBSS) {
+		if (peer_info->numPeers > SIR_MAX_NUM_STA_IN_IBSS) {
 			hdd_warn("Limiting num_peers %u to %u",
-				pPeerInfo->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
-			pPeerInfo->numPeers = SIR_MAX_NUM_STA_IN_IBSS;
+				peer_info->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
+			peer_info->numPeers = SIR_MAX_NUM_STA_IN_IBSS;
 		}
-		sta_ctx->ibss_peer_info.status = pPeerInfo->status;
-		sta_ctx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
+		sta_ctx->ibss_peer_info.status = peer_info->status;
+		sta_ctx->ibss_peer_info.numPeers = peer_info->numPeers;
 
-		for (i = 0; i < pPeerInfo->numPeers; i++)
+		for (i = 0; i < peer_info->numPeers; i++)
 			sta_ctx->ibss_peer_info.peerInfoParams[i] =
-				pPeerInfo->peerInfoParams[i];
+				peer_info->peerInfoParams[i];
 	} else {
 		hdd_debug("peerInfo %s: status %u, numPeers %u",
-			pPeerInfo ? "valid" : "null",
-			pPeerInfo ? pPeerInfo->status : QDF_STATUS_E_FAILURE,
-			pPeerInfo ? pPeerInfo->numPeers : 0);
+			peer_info ? "valid" : "null",
+			peer_info ? peer_info->status : QDF_STATUS_E_FAILURE,
+			peer_info ? peer_info->numPeers : 0);
 		sta_ctx->ibss_peer_info.numPeers = 0;
 		sta_ctx->ibss_peer_info.status = QDF_STATUS_E_FAILURE;
 	}

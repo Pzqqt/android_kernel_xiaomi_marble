@@ -2164,7 +2164,7 @@
  * @INPUT: None
  *
  * @OUTPUT: print ibss peer in info logs
- *  pPeerInfo->numIBSSPeers = 1
+ *  peer_info->numIBSSPeers = 1
  *  PEER ADDR : 8c:fd:f0:01:9c:bf TxRate: 1 Mbps RSSI: -35
  *
  * This IOCTL is used to rint the ibss peers's MAC, rate and RSSI
@@ -3400,7 +3400,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tSirPeerInfoRspParams *pPeerInfo = &sta_ctx->ibss_peer_info;
+	tSirPeerInfoRspParams *peer_info = &sta_ctx->ibss_peer_info;
 
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 	status = sme_request_ibss_peer_info(mac_handle, adapter,
@@ -3419,16 +3419,16 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
 		}
 
 		/** Print the peer info */
-		hdd_debug("pPeerInfo->numIBSSPeers = %d ", pPeerInfo->numPeers);
+		hdd_debug("peer_info->numIBSSPeers = %d ", peer_info->numPeers);
 		{
 			uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
-			uint32_t tx_rate = pPeerInfo->peerInfoParams[0].txRate;
+			uint32_t tx_rate = peer_info->peerInfoParams[0].txRate;
 
-			qdf_mem_copy(mac_addr, pPeerInfo->peerInfoParams[0].
+			qdf_mem_copy(mac_addr, peer_info->peerInfoParams[0].
 					mac_addr, sizeof(mac_addr));
 			hdd_debug("PEER ADDR : %pM TxRate: %d Mbps  RSSI: %d",
 				mac_addr, (int)tx_rate,
-				(int)pPeerInfo->peerInfoParams[0].rssi);
+				(int)peer_info->peerInfoParams[0].rssi);
 		}
 	} else {
 		hdd_warn("Warning: sme_request_ibss_peer_info Request failed");
@@ -3449,7 +3449,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tSirPeerInfoRspParams *pPeerInfo = &sta_ctx->ibss_peer_info;
+	tSirPeerInfoRspParams *peer_info = &sta_ctx->ibss_peer_info;
 	int i;
 
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
@@ -3469,20 +3469,20 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 		}
 
 		/** Print the peer info */
-		hdd_debug("pPeerInfo->numIBSSPeers = %d ",
-			(int)pPeerInfo->numPeers);
-		for (i = 0; i < pPeerInfo->numPeers; i++) {
+		hdd_debug("peer_info->numIBSSPeers = %d ",
+			(int)peer_info->numPeers);
+		for (i = 0; i < peer_info->numPeers; i++) {
 			uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 			uint32_t tx_rate;
 
-			tx_rate = pPeerInfo->peerInfoParams[i].txRate;
+			tx_rate = peer_info->peerInfoParams[i].txRate;
 			qdf_mem_copy(mac_addr,
-				pPeerInfo->peerInfoParams[i].mac_addr,
+				peer_info->peerInfoParams[i].mac_addr,
 				sizeof(mac_addr));
 
 			hdd_debug(" PEER ADDR : %pM TxRate: %d Mbps RSSI: %d",
 				mac_addr, (int)tx_rate,
-				(int)pPeerInfo->peerInfoParams[i].rssi);
+				(int)peer_info->peerInfoParams[i].rssi);
 		}
 	} else {
 		hdd_warn("Warning: sme_request_ibss_peer_info Request failed");

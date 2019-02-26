@@ -2737,7 +2737,7 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 #endif /* FEATURE_TSO */
 
 void hdd_get_ibss_peer_info_cb(void *pUserData,
-				tSirPeerInfoRspParams *pPeerInfo);
+				tSirPeerInfoRspParams *peer_info);
 
 #ifdef CONFIG_CNSS_LOGGER
 /**
