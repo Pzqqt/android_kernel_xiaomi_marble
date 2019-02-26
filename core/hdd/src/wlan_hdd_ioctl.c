@@ -529,7 +529,7 @@ error:
  * hdd_parse_send_action_frame_data() - HDD Parse send action frame data
  * @command: Pointer to input data
  * @bssid: Pointer to target Ap bssid
- * @pChannel: Pointer to the Target AP channel
+ * @channel: Pointer to the Target AP channel
  * @dwell_time: Pointer to the time to stay off-channel
  *              after transmitting action frame
  * @pBuf: Pointer to data
@@ -543,7 +543,7 @@ error:
 static int
 hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *bssid,
-				    uint8_t *pChannel, uint8_t *dwell_time,
+				    uint8_t *channel, uint8_t *dwell_time,
 				    uint8_t **pBuf, uint8_t *pBufLen)
 {
 	const uint8_t *inPtr = command;
@@ -555,7 +555,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	uint8_t tempBuf[32];
 	uint8_t tempByte = 0;
 
-	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, pChannel))
+	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, channel))
 		return -EINVAL;
 
 	/* point to the next argument */
@@ -642,7 +642,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
  * hdd_parse_reassoc_command_data() - HDD Parse reassoc command data
  * @command: Pointer to input data (its a NULL terminated string)
  * @bssid: Pointer to target Ap bssid
- * @pChannel: Pointer to the Target AP channel
+ * @channel: Pointer to the Target AP channel
  *
  * This function parses the reasoc command data passed in the format
  * REASSOC<space><bssid><space><channel>
@@ -651,11 +651,11 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
  */
 static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 					     uint8_t *bssid,
-					     uint8_t *pChannel)
+					     uint8_t *channel)
 {
 	const uint8_t *inPtr = command;
 
-	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, pChannel))
+	if (_hdd_parse_bssid_and_chan(&inPtr, bssid, channel))
 		return -EINVAL;
 
 	return 0;
