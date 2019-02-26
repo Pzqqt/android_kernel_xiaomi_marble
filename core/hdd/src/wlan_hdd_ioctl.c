@@ -255,7 +255,7 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 				tSirPeerInfoRspParams *pPeerInfo)
 {
 	struct hdd_adapter *adapter = (struct hdd_adapter *) pUserData;
-	struct hdd_station_ctx *pStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	uint8_t i;
 
 	if ((NULL == adapter) ||
@@ -264,7 +264,7 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 		return;
 	}
 
-	pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (NULL != pPeerInfo && QDF_STATUS_SUCCESS == pPeerInfo->status) {
 		/* validate number of peers */
 		if (pPeerInfo->numPeers > SIR_MAX_NUM_STA_IN_IBSS) {
@@ -272,19 +272,19 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 				pPeerInfo->numPeers, SIR_MAX_NUM_STA_IN_IBSS);
 			pPeerInfo->numPeers = SIR_MAX_NUM_STA_IN_IBSS;
 		}
-		pStaCtx->ibss_peer_info.status = pPeerInfo->status;
-		pStaCtx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
+		sta_ctx->ibss_peer_info.status = pPeerInfo->status;
+		sta_ctx->ibss_peer_info.numPeers = pPeerInfo->numPeers;
 
 		for (i = 0; i < pPeerInfo->numPeers; i++)
-			pStaCtx->ibss_peer_info.peerInfoParams[i] =
+			sta_ctx->ibss_peer_info.peerInfoParams[i] =
 				pPeerInfo->peerInfoParams[i];
 	} else {
 		hdd_debug("peerInfo %s: status %u, numPeers %u",
 			pPeerInfo ? "valid" : "null",
 			pPeerInfo ? pPeerInfo->status : QDF_STATUS_E_FAILURE,
 			pPeerInfo ? pPeerInfo->numPeers : 0);
-		pStaCtx->ibss_peer_info.numPeers = 0;
-		pStaCtx->ibss_peer_info.status = QDF_STATUS_E_FAILURE;
+		sta_ctx->ibss_peer_info.numPeers = 0;
+		sta_ctx->ibss_peer_info.status = QDF_STATUS_E_FAILURE;
 	}
 
 	complete(&adapter->ibss_peer_info_comp);

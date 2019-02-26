@@ -917,8 +917,8 @@ QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
 
 /**
  * wlansap_deauth_sta() - Ap App/HDD initiated deauthentication of station
- * @pStaCtx : Pointer to the SAP context
- * @pDelStaParams : Pointer to parameters of the station to deauthenticate
+ * @sap_ctx: Pointer to the SAP context
+ * @pDelStaParams: Pointer to parameters of the station to deauthenticate
  *
  * This api function provides for Ap App/HDD initiated deauthentication of
  * station

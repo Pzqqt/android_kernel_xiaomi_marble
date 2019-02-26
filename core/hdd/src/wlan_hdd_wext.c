@@ -3399,8 +3399,8 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
-	struct hdd_station_ctx *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	tSirPeerInfoRspParams *pPeerInfo = &sta_ctx->ibss_peer_info;
 
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 	status = sme_request_ibss_peer_info(mac_handle, adapter,
@@ -3448,8 +3448,8 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
-	struct hdd_station_ctx *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	tSirPeerInfoRspParams *pPeerInfo = &sta_ctx->ibss_peer_info;
 	int i;
 
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
