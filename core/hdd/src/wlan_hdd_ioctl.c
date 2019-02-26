@@ -4880,14 +4880,14 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
 /* Function header is left blank intentionally */
 static int hdd_parse_setrmcrate_command(uint8_t *command,
 					uint32_t *pRate,
-					enum tx_rate_info *pTxFlags)
+					enum tx_rate_info *tx_flags)
 {
 	uint8_t *inPtr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
 	*pRate = 0;
-	*pTxFlags = 0;
+	*tx_flags = 0;
 
 	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
@@ -4923,15 +4923,15 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 	case 36:
 	case 48:
 	case 54:
-		*pTxFlags = TX_RATE_LEGACY;
+		*tx_flags = TX_RATE_LEGACY;
 		*pRate = tempInt * 10;
 		break;
 	case 65:
-		*pTxFlags = TX_RATE_HT20;
+		*tx_flags = TX_RATE_HT20;
 		*pRate = tempInt * 10;
 		break;
 	case 72:
-		*pTxFlags = TX_RATE_HT20 | TX_RATE_SGI;
+		*tx_flags = TX_RATE_HT20 | TX_RATE_SGI;
 		*pRate = 722;
 		break;
 	}
@@ -5055,7 +5055,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint32_t uRate = 0;
-	enum tx_rate_info txFlags = 0;
+	enum tx_rate_info tx_flags = 0;
 	tSirRateUpdateInd rateUpdateParams = {0};
 	int status;
 	bool bval = false;
@@ -5070,7 +5070,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = hdd_parse_setrmcrate_command(value, &uRate, &txFlags);
+	status = hdd_parse_setrmcrate_command(value, &uRate, &tx_flags);
 	if (status) {
 		hdd_err("Invalid SETRMCTXRATE command");
 		ret = -EINVAL;
@@ -5090,7 +5090,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	}
 	rateUpdateParams.nss = (bval == 0) ? 0 : 1;
 	rateUpdateParams.reliableMcastDataRate = uRate;
-	rateUpdateParams.reliableMcastDataRateTxFlag = txFlags;
+	rateUpdateParams.reliableMcastDataRateTxFlag = tx_flags;
 	rateUpdateParams.dev_mode = adapter->device_mode;
 	rateUpdateParams.bcastDataRate = -1;
 	memcpy(rateUpdateParams.bssid.bytes,
