@@ -20846,10 +20846,31 @@ static void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
 			&roam_fils_info->hlp_data_len,
 			roam_fils_info->hlp_data);
 }
+
+/*
+ * csr_update_fils_erp_seq_num() - Update the FILS erp sequence number in
+ * roaming profile after roam complete
+ * @roam_info: roam_info pointer
+ * @erp_next_seq_num: next erp sequence number from firmware
+ *
+ * Return: NONE
+ */
+static
+void csr_update_fils_erp_seq_num(struct csr_roam_profile *roam_profile,
+				 uint16_t erp_next_seq_num)
+{
+	if (roam_profile->fils_con_info)
+		roam_profile->fils_con_info->sequence_number = erp_next_seq_num;
+}
 #else
 static inline
 void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
 				      struct roam_offload_synch_ind *roam_synch_data)
+{}
+
+static inline
+void csr_update_fils_erp_seq_num(struct csr_roam_profile *roam_profile,
+				 uint16_t erp_next_seq_num)
 {}
 #endif
 
@@ -21213,8 +21234,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	roam_info->update_erp_next_seq_num =
 			roam_synch_data->update_erp_next_seq_num;
 	roam_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
-	session->pCurRoamProfile->fils_con_info->sequence_number =
-					roam_info->next_erp_seq_num;
+	csr_update_fils_erp_seq_num(session->pCurRoamProfile,
+				    roam_info->next_erp_seq_num);
 	sme_debug("Update ERP Seq Num : %d, Next ERP Seq Num : %d",
 			roam_info->update_erp_next_seq_num,
 			roam_info->next_erp_seq_num);
