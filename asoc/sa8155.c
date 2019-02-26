@@ -691,6 +691,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_tx_format, bit_format_text);
 
 static bool is_initial_boot = true;
+static struct platform_device *spdev;
 
 static struct afe_clk_set mi2s_clk[MI2S_MAX] = {
 	{
@@ -7099,6 +7100,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 	dev_info(&pdev->dev, "Sound card %s registered\n", card->name);
+	spdev = pdev;
 
 	/* Parse pinctrl info from devicetree */
 	ret = msm_get_pinctrl(pdev);
@@ -7165,10 +7167,22 @@ static struct platform_driver sa8155_dummy_asoc_machine_driver = {
 static int sa8155_notifier_service_cb(struct notifier_block *this,
 					 unsigned long opcode, void *ptr)
 {
+	struct snd_soc_card *card = NULL;
+
 	pr_debug("%s: Service opcode 0x%lx\n", __func__, opcode);
 
 	switch (opcode) {
 	case AUDIO_NOTIFIER_SERVICE_DOWN:
+		if (!spdev)
+			return -EINVAL;
+		card = platform_get_drvdata(spdev);
+		if (card == NULL){
+			pr_err("%s: card is NULL\n",__func__);
+			return -EINVAL;
+		} else {
+			pr_debug("%s: setting snd_card to OFFLINE\n", __func__);
+			snd_soc_card_change_online_state(card, 0);
+		}
 		break;
 	case AUDIO_NOTIFIER_SERVICE_UP:
 		if (is_initial_boot) {
@@ -7176,11 +7190,20 @@ static int sa8155_notifier_service_cb(struct notifier_block *this,
 			platform_device_register(&sa8155_dummy_asoc_machine_device);
 			is_initial_boot = false;
 		}
+		if (!spdev)
+			return -EINVAL;
+		card = platform_get_drvdata(spdev);
+		if (card == NULL){
+			pr_err("%s: card is NULL\n",__func__);
+			return -EINVAL;
+		} else {
+			pr_debug("%s: setting snd_card to ONLINE\n", __func__);
+			snd_soc_card_change_online_state(card, 1);
+		}
 		break;
 	default:
 		break;
 	}
-
 	return NOTIFY_OK;
 }
 
