@@ -95,6 +95,22 @@ void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * sme_reset_key() -Reset key information
+ * @mac_handle: MAC handle
+ * @vdev_id: vdev identifier
+ *
+ * Return: None
+ */
+void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id);
+#else
+static inline void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id)
+{
+}
+#endif
+
 void sme_preauth_reassoc_intvl_timer_callback(void *context);
 void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId,
 			       bool state);

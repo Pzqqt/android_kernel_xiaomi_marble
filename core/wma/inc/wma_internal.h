@@ -231,6 +231,13 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
  */
 int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 					uint32_t len);
+#else
+static inline int wma_mlme_roam_synch_event_handler_cb(void *handle,
+						       uint8_t *event,
+						       uint32_t len)
+{
+	return 0;
+}
 #endif
 
 /**

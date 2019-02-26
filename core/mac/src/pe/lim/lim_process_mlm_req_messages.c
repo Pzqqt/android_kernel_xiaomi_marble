@@ -1879,6 +1879,8 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 
 	mlm_set_keys_req = (tLimMlmSetKeysReq *) msg_buf;
 	if (mac_ctx->lim.gpLimMlmSetKeysReq != NULL) {
+		qdf_mem_zero(mac_ctx->lim.gpLimMlmSetKeysReq,
+			     sizeof(*mlm_set_keys_req));
 		qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
 		mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
 	}
@@ -1888,6 +1890,9 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 				mlm_set_keys_req->sessionId);
 	if (NULL == session) {
 		pe_err("session does not exist for given sessionId");
+		qdf_mem_zero(mlm_set_keys_req->key,
+			     sizeof(mlm_set_keys_req->key));
+		mlm_set_keys_req->numKeys = 0;
 		qdf_mem_free(mlm_set_keys_req);
 		mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
 		return;
@@ -2025,6 +2030,7 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 			session->peSessionId);
 		/* Package WMA_SET_BSSKEY_REQ message parameters */
 		lim_send_set_bss_key_req(mac_ctx, mlm_set_keys_req, session);
+
 		return;
 	} else {
 		/*

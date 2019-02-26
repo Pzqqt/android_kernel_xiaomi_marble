@@ -2575,6 +2575,8 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 		return;
 	qdf_mem_copy(set_context_req, msg_buf,
 			sizeof(*set_context_req));
+
+	qdf_mem_zero(msg_buf, sizeof(*set_context_req));
 	sme_session_id = set_context_req->sessionId;
 
 	if ((!lim_is_sme_set_context_req_valid(mac_ctx, set_context_req))) {
@@ -2678,6 +2680,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 				session_entry, sme_session_id);
 	}
 end:
+	qdf_mem_zero(set_context_req, sizeof(*set_context_req));
 	qdf_mem_free(set_context_req);
 	return;
 }

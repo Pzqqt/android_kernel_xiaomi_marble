@@ -1042,6 +1042,10 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	session->valid = false;
 
 	session->mac_ctx = NULL;
+
+	qdf_mem_zero(session->WEPKeyMaterial,
+		     sizeof(session->WEPKeyMaterial));
+
 	if (session->access_policy_vendor_ie)
 		qdf_mem_free(session->access_policy_vendor_ie);
 

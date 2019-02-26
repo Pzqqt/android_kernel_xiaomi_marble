@@ -745,6 +745,7 @@ void lim_post_sme_set_keys_cnf(struct mac_context *mac,
 			 &pMlmSetKeysReq->peer_macaddr);
 
 	/* Free up buffer allocated for mlmSetKeysReq */
+	qdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
 	qdf_mem_free(pMlmSetKeysReq);
 	mac->lim.gpLimMlmSetKeysReq = NULL;
 
@@ -1008,6 +1009,7 @@ void lim_send_set_sta_key_req(struct mac_context *mac,
 		return;         /* Continue after WMA_SET_STAKEY_RSP... */
 
 free_sta_key:
+	qdf_mem_zero(pSetStaKeyParams, sizeof(tSetStaKeyParams));
 	qdf_mem_free(pSetStaKeyParams);
 fail:
 	/* Respond to SME with LIM_MLM_SETKEYS_CNF */

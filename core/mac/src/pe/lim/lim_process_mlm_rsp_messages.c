@@ -2825,6 +2825,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		 sme_session_id);
 	if (session_entry == NULL) {
 		pe_err("session does not exist for given session_id");
+		qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		lim_send_sme_set_context_rsp(mac_ctx,
@@ -2868,6 +2869,8 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 			 * Free the buffer cached for the global
 			 * mac_ctx->lim.gpLimMlmSetKeysReq
 			 */
+			qdf_mem_zero(mac_ctx->lim.gpLimMlmSetKeysReq,
+				     sizeof(tpLimMlmSetKeysReq));
 			qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
 			mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
 		} else {
@@ -2879,6 +2882,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		lim_post_sme_message(mac_ctx, LIM_MLM_SETKEYS_CNF,
 			(uint32_t *) &mlm_set_key_cnf);
 	}
+	qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
 }
@@ -2920,6 +2924,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	if (session_entry == NULL) {
 		pe_err("session does not exist for given sessionId [%d]",
 			session_id);
+		qdf_mem_zero(msg->bodyptr, sizeof(tSetBssKeyParams));
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		lim_send_sme_set_context_rsp(mac_ctx, set_key_cnf.peer_macaddr,
@@ -2974,6 +2979,8 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 		 * Free the buffer cached for the
 		 * global mac_ctx->lim.gpLimMlmSetKeysReq
 		 */
+		qdf_mem_zero(mac_ctx->lim.gpLimMlmSetKeysReq,
+			     sizeof(*set_key_req));
 		qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
 		mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
 	} else {
@@ -2981,6 +2988,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 				&set_key_cnf.peer_macaddr,
 				&((tpSetBssKeyParams)msg->bodyptr)->macaddr);
 	}
+	qdf_mem_zero(msg->bodyptr, sizeof(tSetBssKeyParams));
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
 

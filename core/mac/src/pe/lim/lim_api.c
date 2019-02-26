@@ -479,6 +479,8 @@ void lim_cleanup(struct mac_context *mac)
 	}
 
 	if (mac->lim.gpLimMlmSetKeysReq != NULL) {
+		qdf_mem_zero(mac->lim.gpLimMlmSetKeysReq,
+			     sizeof(tLimMlmSetKeysReq));
 		qdf_mem_free(mac->lim.gpLimMlmSetKeysReq);
 		mac->lim.gpLimMlmSetKeysReq = NULL;
 	}

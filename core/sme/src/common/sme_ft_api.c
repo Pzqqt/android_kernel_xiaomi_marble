@@ -512,6 +512,35 @@ void sme_preauth_reassoc_intvl_timer_callback(void *context)
 						  pUsrCtx->sessionId);
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef FEATURE_WLAN_ESE
+static void sme_reset_esecckm_info(struct csr_roam_session *session)
+{
+	qdf_mem_zero(&session->eseCckmInfo, sizeof(session->eseCckmInfo));
+}
+#else
+static void sme_reset_esecckm_info(struct csr_roam_session *session)
+{
+}
+#endif
+void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session = NULL;
+
+	if (!mac) {
+		sme_err("mac is NULL");
+		return;
+	}
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session)
+		return;
+	qdf_mem_zero(&session->psk_pmk, sizeof(session->psk_pmk));
+	session->pmk_len = 0;
+	sme_reset_esecckm_info(session);
+}
+#endif
 /* Reset the FT context. */
 void sme_ft_reset(mac_handle_t mac_handle, uint32_t sessionId)
 {

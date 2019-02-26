@@ -4129,6 +4129,24 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
 	return status;
 }
 
+static void csr_reset_cfg_privacy(struct mac_context *mac)
+{
+	uint8_t Key0[MLME_WEP_KEY_LEN_13] = {0};
+	uint8_t Key1[MLME_WEP_KEY_LEN_13] = {0};
+	uint8_t Key2[MLME_WEP_KEY_LEN_13] = {0};
+	uint8_t Key3[MLME_WEP_KEY_LEN_13] = {0};
+	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
+
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0,
+			 MLME_WEP_KEY_LEN_13);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1,
+			 MLME_WEP_KEY_LEN_13);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2,
+			 MLME_WEP_KEY_LEN_13);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_4, Key3,
+			 MLME_WEP_KEY_LEN_13);
+}
+
 void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProfile,
 			 bool fPrivacy)
 {
@@ -16630,6 +16648,8 @@ void csr_cleanup_session(struct mac_context *mac, uint32_t sessionId)
 		/* Clean up FT related data structures */
 		sme_ft_close(MAC_HANDLE(mac), sessionId);
 		csr_free_connect_bss_desc(mac, sessionId);
+		sme_reset_key(MAC_HANDLE(mac), sessionId);
+		csr_reset_cfg_privacy(mac);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);
 		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
