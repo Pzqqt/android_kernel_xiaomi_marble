@@ -888,7 +888,9 @@ static void mlme_vdev_subst_start_conn_progress_entry(void *ctx)
  */
 static void mlme_vdev_subst_start_conn_progress_exit(void *ctx)
 {
-	/* NONE */
+	struct vdev_mlme_obj *vdev_mlme = (struct vdev_mlme_obj *)ctx;
+
+	mlme_vdev_notify_start_state_exit(vdev_mlme);
 }
 
 /**

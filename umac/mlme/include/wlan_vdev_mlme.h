@@ -452,6 +452,8 @@ enum vdev_start_resp_type {
  *                                      peer delete completion
  * @mlme_vdev_down_send:                callback to initiate actions of VDEV
  *                                      MLME down operation
+ * @mlme_vdev_notify_start_state_exit:  callback to notify on vdev start
+ *                                      start state exit
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -519,6 +521,8 @@ struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_ext_start_rsp)(
 				struct vdev_mlme_obj *vdev_mlme,
 				struct vdev_start_response *rsp);
+	QDF_STATUS (*mlme_vdev_notify_start_state_exit)(
+				struct vdev_mlme_obj *vdev_mlme);
 };
 
 /**
@@ -986,4 +990,25 @@ static inline QDF_STATUS mlme_vdev_notify_down_complete(
 	return ret;
 }
 
+/**
+ * mlme_vdev_notify_start_state_exit - VDEV SM start state exit notification
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * API notifies on start state exit
+ *
+ * Return: SUCCESS on successful completion of notification
+ *         FAILURE, if it fails due to any
+ */
+static inline QDF_STATUS mlme_vdev_notify_start_state_exit(
+				struct vdev_mlme_obj *vdev_mlme)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) &&
+	    vdev_mlme->ops->mlme_vdev_notify_start_state_exit)
+		ret = vdev_mlme->ops->mlme_vdev_notify_start_state_exit(
+								vdev_mlme);
+
+	return ret;
+}
 #endif

@@ -121,6 +121,8 @@
 #define WLAN_PDEV_OP_RESTART_INPROGRESS 0x00020000
    /* PDEV MBSSID VDEV restart trigger */
 #define WLAN_PDEV_OP_MBSSID_RESTART     0x00040000
+   /* RADAR DETECT Defer */
+#define WLAN_PDEV_OP_RADAR_DETECT_DEFER 0x00080000
 
 
 struct osif_pdev_priv;
