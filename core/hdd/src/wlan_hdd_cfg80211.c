@@ -5361,6 +5361,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SET_HE_TESTBED_DEFAULTS]
 			= {.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_2G_VHT] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7133,6 +7135,14 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			sme_config_su_ppdu_queue(adapter->vdev_id, true);
 		else
 			sme_config_su_ppdu_queue(adapter->vdev_id, false);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ENABLE_2G_VHT;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Configure 2G VHT support %d", cfg_val);
+		ucfg_mlme_set_vht_for_24ghz(hdd_ctx->psoc,
+					    (cfg_val ? true : false));
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_HTC_HE_SUPP;
