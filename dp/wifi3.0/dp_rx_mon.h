@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,10 +18,6 @@
 
 #ifndef _DP_RX_MON_H_
 #define _DP_RX_MON_H_
-
-#ifdef CONFIG_MCL
-#include <cds_ieee80211_defines.h>
-#endif
 
 /**
 * dp_rx_mon_dest_process() - Brain of the Rx processing functionality
