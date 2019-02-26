@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -255,10 +255,10 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 		ret = PTR_ERR(reset_ctl);
 		goto err_reset;
 	}
-	qal_vbus_activate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
-				     (struct qdf_vbus_rstctl *)reset_ctl);
 	qal_vbus_deactivate_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
 				       (struct qdf_vbus_rstctl *)reset_ctl);
+	qal_vbus_release_dev_rstctl((struct qdf_pfm_hndl *)&pdev->dev,
+				    (struct qdf_vbus_rstctl *)reset_ctl);
 
 	return 0;
 
