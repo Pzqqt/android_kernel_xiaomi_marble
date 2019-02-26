@@ -247,7 +247,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 			       struct sk_buff *vendor_event)
 {
 	u32 i = 0;
-	tpSirWifiRateStat pRateStats;
+	tpSirWifiRateStat rate_stat;
 
 	if (nla_put_u32
 		    (vendor_event, QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_TYPE,
@@ -275,7 +275,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 			goto error;
 
 		for (i = 0; i < stats->numRate; i++) {
-			pRateStats = (tpSirWifiRateStat) ((uint8_t *)
+			rate_stat = (tpSirWifiRateStat) ((uint8_t *)
 							  stats->rateStats +
 							  (i *
 							   sizeof
@@ -285,7 +285,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 				goto error;
 
 			if (false ==
-			    put_wifi_rate_stat(pRateStats, vendor_event)) {
+			    put_wifi_rate_stat(rate_stat, vendor_event)) {
 				hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 				return false;
 			}
