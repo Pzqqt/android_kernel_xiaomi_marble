@@ -3279,7 +3279,7 @@ QDF_STATUS wma_plm_start(tp_wma_handle wma, const struct plm_req *plm)
 	params.burst_len = plm->burstLen;
 	params.desired_tx_pwr = plm->desiredTxPwr;
 	params.plm_num_ch = plm->plmNumCh;
-	params.session_id = plm->sessionId;
+	params.vdev_id = plm->sessionId;
 	params.enable = plm->enable;
 	qdf_mem_copy(&params.mac_addr, &plm->mac_addr,
 			sizeof(struct qdf_mac_addr));
@@ -3336,7 +3336,7 @@ QDF_STATUS wma_plm_stop(tp_wma_handle wma, const struct plm_req *plm)
 	params.burst_len = plm->burstLen;
 	params.desired_tx_pwr = plm->desiredTxPwr;
 	params.plm_num_ch = plm->plmNumCh;
-	params.session_id = plm->sessionId;
+	params.vdev_id = plm->sessionId;
 	params.enable = plm->enable;
 	qdf_mem_copy(&params.mac_addr, &plm->mac_addr,
 			sizeof(struct qdf_mac_addr));
