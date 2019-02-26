@@ -369,12 +369,13 @@ hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staIdx)
 
 /* Function header is left blank intentionally */
 static QDF_STATUS
-hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
+hdd_parse_get_ibss_peer_info(uint8_t *command,
+			     struct qdf_mac_addr *pPeerMacAddr)
 {
-	uint8_t *inPtr = pValue;
-	size_t in_ptr_len = strlen(pValue);
+	uint8_t *inPtr = command;
+	size_t in_ptr_len = strlen(command);
 
-	inPtr = strnchr(pValue, in_ptr_len, SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, in_ptr_len, SPACE_ASCII_VALUE);
 
 	if (NULL == inPtr)
 		return QDF_STATUS_E_FAILURE;
@@ -387,7 +388,7 @@ hdd_parse_get_ibss_peer_info(uint8_t *pValue, struct qdf_mac_addr *pPeerMacAddr)
 	if ('\0' == *inPtr)
 		return QDF_STATUS_E_FAILURE;
 
-	in_ptr_len -= (inPtr - pValue);
+	in_ptr_len -= (inPtr - command);
 	if (in_ptr_len < 17)
 		return QDF_STATUS_E_FAILURE;
 
@@ -526,13 +527,13 @@ error:
 
 /**
  * hdd_parse_send_action_frame_data() - HDD Parse send action frame data
- * @pValue:         Pointer to input data
+ * @command: Pointer to input data
  * @pTargetApBssid: Pointer to target Ap bssid
- * @pChannel:       Pointer to the Target AP channel
- * @pDwellTime:     Pointer to the time to stay off-channel
- *                  after transmitting action frame
- * @pBuf:           Pointer to data
- * @pBufLen:        Pointer to data length
+ * @pChannel: Pointer to the Target AP channel
+ * @pDwellTime: Pointer to the time to stay off-channel
+ *              after transmitting action frame
+ * @pBuf: Pointer to data
+ * @pBufLen: Pointer to data length
  *
  * This function parses the send action frame data passed in the format
  * SENDACTIONFRAME<space><bssid><space><channel><space><dwelltime><space><data>
@@ -540,12 +541,12 @@ error:
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
+hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *pTargetApBssid,
 				    uint8_t *pChannel, uint8_t *pDwellTime,
 				    uint8_t **pBuf, uint8_t *pBufLen)
 {
-	const uint8_t *inPtr = pValue;
+	const uint8_t *inPtr = command;
 	const uint8_t *dataEnd;
 	int tempInt;
 	int j = 0;
@@ -639,20 +640,20 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 
 /**
  * hdd_parse_reassoc_command_data() - HDD Parse reassoc command data
- * @pValue:         Pointer to input data (its a NULL terminated string)
+ * @command: Pointer to input data (its a NULL terminated string)
  * @pTargetApBssid: Pointer to target Ap bssid
- * @pChannel:       Pointer to the Target AP channel
+ * @pChannel: Pointer to the Target AP channel
  *
  * This function parses the reasoc command data passed in the format
  * REASSOC<space><bssid><space><channel>
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
+static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 					     uint8_t *pTargetApBssid,
 					     uint8_t *pChannel)
 {
-	const uint8_t *inPtr = pValue;
+	const uint8_t *inPtr = command;
 
 	if (_hdd_parse_bssid_and_chan(&inPtr, pTargetApBssid, pChannel))
 		return -EINVAL;
@@ -1185,10 +1186,10 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
 
 /**
  * hdd_parse_channellist() - HDD Parse channel list
- * @pValue:		Pointer to input channel list
- * @ChannelList:	Pointer to local output array to record
- *			channel list
- * @pNumChannels:	Pointer to number of roam scan channels
+ * @command: Pointer to input channel list
+ * @pChannelList: Pointer to local output array to record
+ *                channel list
+ * @pNumChannels: Pointer to number of roam scan channels
  *
  * This function parses the channel list passed in the format
  * SETROAMSCANCHANNELS<space><Number of channels><space>Channel 1<space>
@@ -1203,16 +1204,16 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
  * Return: 0 for success non-zero for failure
  */
 static int
-hdd_parse_channellist(const uint8_t *pValue, uint8_t *pChannelList,
+hdd_parse_channellist(const uint8_t *command, uint8_t *pChannelList,
 		      uint8_t *pNumChannels)
 {
-	const uint8_t *inPtr = pValue;
+	const uint8_t *inPtr = command;
 	int tempInt;
 	int j = 0;
 	int v = 0;
 	char buf[32];
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
 	if (NULL == inPtr)
 		return -EINVAL;
@@ -1488,8 +1489,8 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
 #ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_plm_cmd() - HDD Parse Plm command
- * @pValue:	Pointer to input data
- * @pPlmRequest:Pointer to output struct plm_req
+ * @command: Pointer to input data
+ * @pPlmRequest: Pointer to output struct plm_req
  *
  * This function parses the plm command passed in the format
  * CCXPLMREQ<space><enable><space><dialog_token><space>
@@ -1500,7 +1501,7 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
  *
  * Return: 0 for success non-zero for failure
  */
-static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue,
+static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 				    struct plm_req *pPlmRequest)
 {
 	uint8_t *cmdPtr = NULL;
@@ -1508,7 +1509,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue,
 	char buf[32];
 
 	/* move to argument list */
-	cmdPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	cmdPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	if (NULL == cmdPtr)
 		return QDF_STATUS_E_FAILURE;
 
@@ -2081,8 +2082,8 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 
 /**
  * hdd_parse_setmaxtxpower_command() - HDD Parse MAXTXPOWER command
- * @pValue:	Pointer to MAXTXPOWER command
- * @pDbm:	Pointer to tx power
+ * @command: Pointer to MAXTXPOWER command
+ * @pTxPower: Pointer to tx power
  *
  * This function parses the MAXTXPOWER command passed in the format
  * MAXTXPOWER<space>X(Tx power in dbm)
@@ -2093,14 +2094,14 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
+static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *pTxPower)
 {
-	uint8_t *inPtr = pValue;
+	uint8_t *inPtr = command;
 	int tempInt;
 	int v = 0;
 	*pTxPower = 0;
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
 	if (NULL == inPtr)
 		return -EINVAL;
@@ -2414,20 +2415,20 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 
 
 /**
- * hdd_ParseuserParams - return a pointer to the next argument
- * @pValue:	Input argument string
- * @ppArg:	Output pointer to the next argument
+ * hdd_parse_user_params() - return a pointer to the next argument
+ * @command: Input argument string
+ * @ppArg: Output pointer to the next argument
  *
  * This function parses argument stream and finds the pointer
  * to the next argument
  *
  * Return: 0 if the next argument found; -EINVAL otherwise
  */
-static int hdd_parse_user_params(uint8_t *pValue, uint8_t **ppArg)
+static int hdd_parse_user_params(uint8_t *command, uint8_t **ppArg)
 {
 	uint8_t *pVal;
 
-	pVal = strnchr(pValue, strlen(pValue), ' ');
+	pVal = strnchr(command, strlen(command), ' ');
 
 	if (NULL == pVal) /* no argument remains */
 		return -EINVAL;
@@ -2452,20 +2453,20 @@ static int hdd_parse_user_params(uint8_t *pValue, uint8_t **ppArg)
 /**
  * hdd_parse_ibsstx_fail_event_params - Parse params
  *                                             for SETIBSSTXFAILEVENT
- * @pValue:		Input ibss tx fail event argument
- * @tx_fail_count:	(Output parameter) Tx fail counter
- * @pid:		(Output parameter) PID
+ * @command: Input ibss tx fail event argument
+ * @tx_fail_count: (Output parameter) Tx fail counter
+ * @pid: (Output parameter) PID
  *
  * Return: 0 if the parsing succeeds; -EINVAL otherwise
  */
-static int hdd_parse_ibsstx_fail_event_params(uint8_t *pValue,
+static int hdd_parse_ibsstx_fail_event_params(uint8_t *command,
 					      uint8_t *tx_fail_count,
 					      uint16_t *pid)
 {
 	uint8_t *param = NULL;
 	int ret;
 
-	ret = hdd_parse_user_params(pValue, &param);
+	ret = hdd_parse_user_params(command, &param);
 
 	if (0 == ret && NULL != param) {
 		if (1 != sscanf(param, "%hhu", tx_fail_count)) {
@@ -2481,10 +2482,10 @@ static int hdd_parse_ibsstx_fail_event_params(uint8_t *pValue,
 		goto done;
 	}
 
-	pValue = param;
-	pValue++;
+	command = param;
+	command++;
 
-	ret = hdd_parse_user_params(pValue, &param);
+	ret = hdd_parse_user_params(command, &param);
 
 	if (0 == ret) {
 		if (1 != sscanf(param, "%hu", pid)) {
@@ -2502,7 +2503,7 @@ done:
 #ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_ese_beacon_req() - Parse ese beacon request
- * @pValue:	Pointer to data
+ * @command: Pointer to data
  * @pEseBcnReq:	Output pointer to store parsed ie information
  *
  * This function parses the ese beacon request passed in the format
@@ -2519,16 +2520,16 @@ done:
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_ese_beacon_req(uint8_t *pValue,
-					tCsrEseBeaconReq *pEseBcnReq)
+static int hdd_parse_ese_beacon_req(uint8_t *command,
+				    tCsrEseBeaconReq *pEseBcnReq)
 {
-	uint8_t *inPtr = pValue;
+	uint8_t *inPtr = command;
 	uint8_t input = 0;
 	uint32_t tempInt = 0;
 	int j = 0, i = 0, v = 0;
 	char buf[32];
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	if (NULL == inPtr) /* no argument after the command */
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *inPtr) /* no space after the command */
@@ -2650,25 +2651,25 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 
 /**
  * hdd_parse_get_cckm_ie() - HDD Parse and fetch the CCKM IE
- * @pValue:	Pointer to input data
- * @pCckmIe:	Pointer to output cckm Ie
- * @pCckmIeLen:	Pointer to output cckm ie length
+ * @command: Pointer to input data
+ * @pCckmIe: Pointer to output cckm Ie
+ * @pCckmIeLen: Pointer to output cckm ie length
  *
  * This function parses the SETCCKM IE command
  * SETCCKMIE<space><ie data>
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
+static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 				 uint8_t *pCckmIeLen)
 {
-	uint8_t *inPtr = pValue;
+	uint8_t *inPtr = command;
 	uint8_t *dataEnd;
 	int j = 0;
 	int i = 0;
 	uint8_t tempByte = 0;
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
 	if (NULL == inPtr)
 		return -EINVAL;
@@ -4798,16 +4799,16 @@ exit:
 
 #ifdef FEATURE_WLAN_RMC
 /* Function header is left blank intentionally */
-static int hdd_parse_setrmcenable_command(uint8_t *pValue,
+static int hdd_parse_setrmcenable_command(uint8_t *command,
 					  uint8_t *pRmcEnable)
 {
-	uint8_t *inPtr = pValue;
+	uint8_t *inPtr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
 	*pRmcEnable = 0;
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
 	if (NULL == inPtr)
 		return 0;
@@ -4877,18 +4878,18 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
 }
 
 /* Function header is left blank intentionally */
-static int hdd_parse_setrmcrate_command(uint8_t *pValue,
+static int hdd_parse_setrmcrate_command(uint8_t *command,
 					uint32_t *pRate,
 					enum tx_rate_info *pTxFlags)
 {
-	uint8_t *inPtr = pValue;
+	uint8_t *inPtr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
 	*pRate = 0;
 	*pTxFlags = 0;
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
 	if (NULL == inPtr)
 		return -EINVAL;
