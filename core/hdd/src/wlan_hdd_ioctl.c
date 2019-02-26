@@ -1504,25 +1504,25 @@ hdd_parse_set_roam_scan_channels(struct hdd_adapter *adapter, const char *comman
 static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 				    struct plm_req *req)
 {
-	uint8_t *cmdPtr = NULL;
+	uint8_t *in_ptr = NULL;
 	int count, content = 0, ret = 0;
 	char buf[32];
 
 	/* move to argument list */
-	cmdPtr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
-	if (NULL == cmdPtr)
+	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
+	if (NULL == in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* no space after the command */
-	if (SPACE_ASCII_VALUE != *cmdPtr)
+	if (SPACE_ASCII_VALUE != *in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-		cmdPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* START/STOP PLM req */
-	ret = sscanf(cmdPtr, "%31s ", buf);
+	ret = sscanf(in_ptr, "%31s ", buf);
 	if (1 != ret)
 		return QDF_STATUS_E_FAILURE;
 
@@ -1531,17 +1531,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		return QDF_STATUS_E_FAILURE;
 
 	req->enable = content;
-	cmdPtr = strpbrk(cmdPtr, " ");
+	in_ptr = strpbrk(in_ptr, " ");
 
-	if (NULL == cmdPtr)
+	if (NULL == in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-		cmdPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* Dialog token of radio meas req containing meas reqIE */
-	ret = sscanf(cmdPtr, "%31s ", buf);
+	ret = sscanf(in_ptr, "%31s ", buf);
 	if (1 != ret)
 		return QDF_STATUS_E_FAILURE;
 
@@ -1551,17 +1551,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 	req->diag_token = content;
 	hdd_debug("diag token %d", req->diag_token);
-	cmdPtr = strpbrk(cmdPtr, " ");
+	in_ptr = strpbrk(in_ptr, " ");
 
-	if (NULL == cmdPtr)
+	if (NULL == in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-		cmdPtr++;
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
 
 	/* measurement token of meas req IE */
-	ret = sscanf(cmdPtr, "%31s ", buf);
+	ret = sscanf(in_ptr, "%31s ", buf);
 	if (1 != ret)
 		return QDF_STATUS_E_FAILURE;
 
@@ -1575,17 +1575,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 	hdd_debug("PLM req %s", req->enable ? "START" : "STOP");
 	if (req->enable) {
 
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* total number of bursts after which STA stops sending */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1598,17 +1598,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		req->numBursts = content;
 		hdd_debug("num burst %d", req->numBursts);
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* burst interval in seconds */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1621,17 +1621,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		req->burstInt = content;
 		hdd_debug("burst Int %d", req->burstInt);
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* Meas dur in TU's,STA goes off-ch and transmit PLM bursts */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1644,17 +1644,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		req->measDuration = content;
 		hdd_debug("measDur %d", req->measDuration);
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* burst length of PLM bursts */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1667,17 +1667,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		req->burstLen = content;
 		hdd_debug("burstLen %d", req->burstLen);
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* desired tx power for transmission of PLM bursts */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1693,17 +1693,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			   req->desiredTxPwr);
 
 		for (count = 0; count < QDF_MAC_ADDR_SIZE; count++) {
-			cmdPtr = strpbrk(cmdPtr, " ");
+			in_ptr = strpbrk(in_ptr, " ");
 
-			if (NULL == cmdPtr)
+			if (NULL == in_ptr)
 				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
-			while ((SPACE_ASCII_VALUE == *cmdPtr)
-			       && ('\0' != *cmdPtr))
-				cmdPtr++;
+			while ((SPACE_ASCII_VALUE == *in_ptr)
+			       && ('\0' != *in_ptr))
+				in_ptr++;
 
-			ret = sscanf(cmdPtr, "%31s ", buf);
+			ret = sscanf(in_ptr, "%31s ", buf);
 			if (1 != ret)
 				return QDF_STATUS_E_FAILURE;
 
@@ -1717,17 +1717,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		hdd_debug("MC addr " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(req->mac_addr.bytes));
 
-		cmdPtr = strpbrk(cmdPtr, " ");
+		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == cmdPtr)
+		if (NULL == in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
-		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
-			cmdPtr++;
+		while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+			in_ptr++;
 
 		/* number of channels */
-		ret = sscanf(cmdPtr, "%31s ", buf);
+		ret = sscanf(in_ptr, "%31s ", buf);
 		if (1 != ret)
 			return QDF_STATUS_E_FAILURE;
 
@@ -1744,17 +1744,17 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		/* Channel numbers */
 		for (count = 0; count < req->plmNumCh; count++) {
-			cmdPtr = strpbrk(cmdPtr, " ");
+			in_ptr = strpbrk(in_ptr, " ");
 
-			if (NULL == cmdPtr)
+			if (NULL == in_ptr)
 				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
-			while ((SPACE_ASCII_VALUE == *cmdPtr)
-			       && ('\0' != *cmdPtr))
-				cmdPtr++;
+			while ((SPACE_ASCII_VALUE == *in_ptr)
+			       && ('\0' != *in_ptr))
+				in_ptr++;
 
-			ret = sscanf(cmdPtr, "%31s ", buf);
+			ret = sscanf(in_ptr, "%31s ", buf);
 			if (1 != ret)
 				return QDF_STATUS_E_FAILURE;
 
