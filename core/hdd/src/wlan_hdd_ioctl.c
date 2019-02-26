@@ -4798,13 +4798,13 @@ exit:
 #ifdef FEATURE_WLAN_RMC
 /* Function header is left blank intentionally */
 static int hdd_parse_setrmcenable_command(uint8_t *command,
-					  uint8_t *pRmcEnable)
+					  uint8_t *rmc_enable)
 {
 	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
 	char buf[32];
-	*pRmcEnable = 0;
+	*rmc_enable = 0;
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
@@ -4827,9 +4827,9 @@ static int hdd_parse_setrmcenable_command(uint8_t *command,
 	if (v < 0)
 		return -EINVAL;
 
-	*pRmcEnable = tempInt;
+	*rmc_enable = tempInt;
 
-	hdd_debug("ucRmcEnable: %d", *pRmcEnable);
+	hdd_debug("ucRmcEnable: %d", *rmc_enable);
 
 	return 0;
 }
