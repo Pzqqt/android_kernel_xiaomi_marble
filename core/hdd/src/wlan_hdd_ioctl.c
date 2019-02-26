@@ -2653,7 +2653,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
  * hdd_parse_get_cckm_ie() - HDD Parse and fetch the CCKM IE
  * @command: Pointer to input data
  * @pCckmIe: Pointer to output cckm Ie
- * @pCckmIeLen: Pointer to output cckm ie length
+ * @cckm_ie_len: Pointer to output cckm ie length
  *
  * This function parses the SETCCKM IE command
  * SETCCKMIE<space><ie data>
@@ -2661,7 +2661,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
  * Return: 0 for success non-zero for failure
  */
 static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
-				 uint8_t *pCckmIeLen)
+				 uint8_t *cckm_ie_len)
 {
 	uint8_t *in_ptr = command;
 	uint8_t *dataEnd;
@@ -2687,9 +2687,9 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	dataEnd = in_ptr;
 	while (('\0' != *dataEnd)) {
 		dataEnd++;
-		++(*pCckmIeLen);
+		++(*cckm_ie_len);
 	}
-	if (*pCckmIeLen <= 0)
+	if (*cckm_ie_len <= 0)
 		return -EINVAL;
 	/*
 	 * Allocate the number of bytes based on the number of input characters
@@ -2700,7 +2700,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	 * For example, if N = 18, then (18 + 1) / 2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1) / 2 = 10 bytes
 	 */
-	*pCckmIe = qdf_mem_malloc((*pCckmIeLen + 1) / 2);
+	*pCckmIe = qdf_mem_malloc((*cckm_ie_len + 1) / 2);
 	if (NULL == *pCckmIe) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
@@ -2711,12 +2711,12 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **pCckmIe,
 	 * decimal number for example 7f0000f0...form a buffer to contain
 	 * 7f in 0th location, 00 in 1st and f0 in 3rd location
 	 */
-	for (i = 0, j = 0; j < *pCckmIeLen; j += 2) {
+	for (i = 0, j = 0; j < *cckm_ie_len; j += 2) {
 		tempByte = (hex_to_bin(in_ptr[j]) << 4) |
 			   (hex_to_bin(in_ptr[j + 1]));
 		(*pCckmIe)[i++] = tempByte;
 	}
-	*pCckmIeLen = i;
+	*cckm_ie_len = i;
 	return 0;
 }
 #endif /* FEATURE_WLAN_ESE */
