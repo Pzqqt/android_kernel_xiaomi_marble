@@ -2083,7 +2083,7 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 /**
  * hdd_parse_setmaxtxpower_command() - HDD Parse MAXTXPOWER command
  * @command: Pointer to MAXTXPOWER command
- * @pTxPower: Pointer to tx power
+ * @tx_power: Pointer to tx power
  *
  * This function parses the MAXTXPOWER command passed in the format
  * MAXTXPOWER<space>X(Tx power in dbm)
@@ -2094,12 +2094,12 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *pTxPower)
+static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *tx_power)
 {
 	uint8_t *in_ptr = command;
 	int tempInt;
 	int v = 0;
-	*pTxPower = 0;
+	*tx_power = 0;
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
@@ -2122,9 +2122,9 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *pTxPower)
 	if ((tempInt < HDD_MIN_TX_POWER) || (tempInt > HDD_MAX_TX_POWER))
 		return -EINVAL;
 
-	*pTxPower = tempInt;
+	*tx_power = tempInt;
 
-	hdd_debug("SETMAXTXPOWER: %d", *pTxPower);
+	hdd_debug("SETMAXTXPOWER: %d", *tx_power);
 
 	return 0;
 } /* End of hdd_parse_setmaxtxpower_command */
