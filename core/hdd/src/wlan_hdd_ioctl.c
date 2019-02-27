@@ -5569,7 +5569,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint8_t *value = command;
-	tCsrEseBeaconReq eseBcnReq = {0};
+	tCsrEseBeaconReq req = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (QDF_STA_MODE != adapter->device_mode) {
@@ -5579,7 +5579,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	ret = hdd_parse_ese_beacon_req(value, &eseBcnReq);
+	ret = hdd_parse_ese_beacon_req(value, &req);
 	if (ret) {
 		hdd_err("Failed to parse ese beacon req");
 		goto exit;
@@ -5588,11 +5588,11 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hdd_debug("Not associated");
 
-		if (!eseBcnReq.numBcnReqIe)
+		if (!req.numBcnReqIe)
 			return -EINVAL;
 
 		hdd_indicate_ese_bcn_report_no_results(adapter,
-			eseBcnReq.bcnReq[0].measurementToken,
+			req.bcnReq[0].measurementToken,
 			0x02, /* BIT(1) set for measurement done */
 			0);   /* no BSS */
 		goto exit;
@@ -5600,7 +5600,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 
 	status = sme_set_ese_beacon_request(hdd_ctx->mac_handle,
 					    adapter->vdev_id,
-					    &eseBcnReq);
+					    &req);
 
 	if (QDF_STATUS_E_RESOURCES == status) {
 		hdd_err("sme_set_ese_beacon_request failed (%d), a request already in progress",
