@@ -1019,14 +1019,9 @@ resume_cdp:
 
 int wlan_hdd_bus_suspend(void)
 {
-	int ret;
 	struct wow_enable_params default_params = {0};
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(default_params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
+	return __wlan_hdd_bus_suspend(default_params);
 }
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
@@ -1043,7 +1038,7 @@ int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params)
 #endif
 
 /**
- * __wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback
+ * wlan_hdd_bus_suspend_noirq() - handle .suspend_noirq callback
  *
  * This function is called by the platform driver to complete the
  * bus suspend callback when device interrupts are disabled by kernel.
@@ -1052,7 +1047,7 @@ int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params)
  *
  * Return: 0 for success and -EBUSY if FW is requesting wake up
  */
-static int __wlan_hdd_bus_suspend_noirq(void)
+int wlan_hdd_bus_suspend_noirq(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
@@ -1112,19 +1107,8 @@ done:
 	return errno;
 }
 
-int wlan_hdd_bus_suspend_noirq(void)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend_noirq();
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
 /**
- * __wlan_hdd_bus_resume() - handles platform resume
+ * wlan_hdd_bus_resume() - handles platform resume
  *
  * Does precondtion validation. Ensures that a subsystem restart isn't in
  * progress.  Ensures that no load or unload is in progress.  Ensures that
@@ -1136,7 +1120,7 @@ int wlan_hdd_bus_suspend_noirq(void)
  *
  * return: error code or 0 for success
  */
-static int __wlan_hdd_bus_resume(void)
+int wlan_hdd_bus_resume(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
@@ -1209,19 +1193,8 @@ out:
 	return status;
 }
 
-int wlan_hdd_bus_resume(void)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_resume();
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
 /**
- * __wlan_hdd_bus_resume_noirq(): handle bus resume no irq
+ * wlan_hdd_bus_resume_noirq(): handle bus resume no irq
  *
  * This function is called by the platform driver to do bus
  * resume no IRQ before calling resume callback. Call WMA and HIF
@@ -1229,7 +1202,7 @@ int wlan_hdd_bus_resume(void)
  *
  * Return: 0 for success and negative error code for failure
  */
-static int __wlan_hdd_bus_resume_noirq(void)
+int wlan_hdd_bus_resume_noirq(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
@@ -1262,18 +1235,8 @@ static int __wlan_hdd_bus_resume_noirq(void)
 	QDF_BUG(!status);
 
 	hdd_info("bus_resume_noirq done");
+
 	return status;
-}
-
-int wlan_hdd_bus_resume_noirq(void)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_resume_noirq();
-	cds_ssr_unprotect(__func__);
-
-	return ret;
 }
 
 /**
@@ -1287,19 +1250,14 @@ int wlan_hdd_bus_resume_noirq(void)
  */
 static int wlan_hdd_bus_reset_resume(void)
 {
-	int ret;
-	struct hif_opaque_softc *scn = NULL;
+	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 
-	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
 		hdd_err("Failed to get HIF context");
 		return -EFAULT;
 	}
 
-	cds_ssr_protect(__func__);
-	ret = hif_bus_reset_resume(scn);
-	cds_ssr_unprotect(__func__);
-	return ret;
+	return hif_bus_reset_resume(scn);
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -1321,7 +1279,7 @@ static int hdd_pld_runtime_suspend_cb(void)
 }
 
 /**
- * __wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
+ * wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
  *
  * Each layer is responsible for its own suspend actions.  wma_runtime_suspend
  * takes care of the parts of the 802.11 suspend that we want to do for runtime
@@ -1329,7 +1287,7 @@ static int hdd_pld_runtime_suspend_cb(void)
  *
  * Return: 0 or errno
  */
-static int __wlan_hdd_runtime_suspend(struct device *dev)
+static int wlan_hdd_runtime_suspend(struct device *dev)
 {
 	int err;
 	QDF_STATUS status;
@@ -1363,25 +1321,6 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 }
 
 /**
- * wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
- *
- * This function is called by the platform driver to suspend the
- * wlan bus separately from system suspend
- *
- * Return: 0 or errno
- */
-static int wlan_hdd_runtime_suspend(struct device *dev)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_runtime_suspend(dev);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * hdd_pld_runtime_resume_cb() - Runtime resume callback from PMO
  *
  * Return: 0 on success or error value otherwise
@@ -1399,14 +1338,14 @@ static int hdd_pld_runtime_resume_cb(void)
 }
 
 /**
- * __wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
+ * wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
  *
  * Sets the runtime pm state and coordinates resume between hif wma and
  * ol_txrx.
  *
  * Return: success since failure is a bug
  */
-static int __wlan_hdd_runtime_resume(struct device *dev)
+static int wlan_hdd_runtime_resume(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	QDF_STATUS status;
@@ -1429,25 +1368,6 @@ static int __wlan_hdd_runtime_resume(struct device *dev)
 	hdd_debug("Runtime resume done");
 
 	return 0;
-}
-
-/**
- * wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
- *
- * This function is called by the platform driver to resume the
- * wlan bus separately from system suspend
- *
- * Return: success since failure is a bug
- */
-static int wlan_hdd_runtime_resume(struct device *dev)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_runtime_resume(dev);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
 }
 #endif
 
@@ -1558,7 +1478,18 @@ static int wlan_hdd_pld_suspend(struct device *dev,
 				pm_message_t state)
 
 {
-	return wlan_hdd_bus_suspend();
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_bus_suspend();
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 /**
@@ -1571,9 +1502,19 @@ static int wlan_hdd_pld_suspend(struct device *dev,
 static int wlan_hdd_pld_resume(struct device *dev,
 		    enum pld_bus_type bus_type)
 {
-	return wlan_hdd_bus_resume();
-}
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_bus_resume();
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
+}
 
 /**
  * wlan_hdd_pld_suspend_noirq() - handle suspend no irq
@@ -1589,9 +1530,20 @@ static int wlan_hdd_pld_resume(struct device *dev,
  * Return: 0 on success
  */
 static int wlan_hdd_pld_suspend_noirq(struct device *dev,
-		     enum pld_bus_type bus_type)
+				      enum pld_bus_type bus_type)
 {
-	return wlan_hdd_bus_suspend_noirq();
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_bus_suspend_noirq();
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 /**
@@ -1608,9 +1560,20 @@ static int wlan_hdd_pld_suspend_noirq(struct device *dev,
  * Return: 0 on success
  */
 static int wlan_hdd_pld_resume_noirq(struct device *dev,
-		    enum pld_bus_type bus_type)
+				     enum pld_bus_type bus_type)
 {
-	return wlan_hdd_bus_resume_noirq();
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_bus_resume_noirq();
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 /**
@@ -1621,9 +1584,20 @@ static int wlan_hdd_pld_resume_noirq(struct device *dev,
  * Return: 0 on success
  */
 static int wlan_hdd_pld_reset_resume(struct device *dev,
-		    enum pld_bus_type bus_type)
+				     enum pld_bus_type bus_type)
 {
-	return wlan_hdd_bus_reset_resume();
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_bus_reset_resume();
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 /**
@@ -1690,7 +1664,18 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 static int wlan_hdd_pld_runtime_suspend(struct device *dev,
 					enum pld_bus_type bus_type)
 {
-	return wlan_hdd_runtime_suspend(dev);
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_runtime_suspend(dev);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 /**
@@ -1703,7 +1688,18 @@ static int wlan_hdd_pld_runtime_suspend(struct device *dev,
 static int wlan_hdd_pld_runtime_resume(struct device *dev,
 				       enum pld_bus_type bus_type)
 {
-	return wlan_hdd_runtime_resume(dev);
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = wlan_hdd_runtime_resume(dev);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 #endif
 
