@@ -552,8 +552,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	int j = 0;
 	int i = 0;
 	int v = 0;
-	uint8_t tempBuf[32];
-	uint8_t tempByte = 0;
+	uint8_t temp_buf[32];
+	uint8_t temp_u8 = 0;
 
 	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, channel))
 		return -EINVAL;
@@ -572,11 +572,11 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 		return -EINVAL;
 
 	/* getting the next argument ie the dwell time */
-	v = sscanf(in_ptr, "%31s ", tempBuf);
+	v = sscanf(in_ptr, "%31s ", temp_buf);
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(tempBuf, 10, &tempInt);
+	v = kstrtos32(temp_buf, 10, &tempInt);
 	if (v < 0 || tempInt < 0)
 		return -EINVAL;
 
@@ -626,13 +626,13 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 */
 	for (i = 0, j = 0; j < *buf_len; j += 2) {
 		if (j + 1 == *buf_len) {
-			tempByte = hex_to_bin(in_ptr[j]);
+			temp_u8 = hex_to_bin(in_ptr[j]);
 		} else {
-			tempByte =
+			temp_u8 =
 				(hex_to_bin(in_ptr[j]) << 4) |
 				(hex_to_bin(in_ptr[j + 1]));
 		}
-		(*buf)[i++] = tempByte;
+		(*buf)[i++] = temp_u8;
 	}
 	*buf_len = i;
 	return 0;
@@ -2670,7 +2670,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 	uint8_t *end_ptr;
 	int j = 0;
 	int i = 0;
-	uint8_t tempByte = 0;
+	uint8_t temp_u8 = 0;
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
@@ -2715,9 +2715,9 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 	 * 7f in 0th location, 00 in 1st and f0 in 3rd location
 	 */
 	for (i = 0, j = 0; j < *cckm_ie_len; j += 2) {
-		tempByte = (hex_to_bin(in_ptr[j]) << 4) |
+		temp_u8 = (hex_to_bin(in_ptr[j]) << 4) |
 			   (hex_to_bin(in_ptr[j + 1]));
-		(*cckm_ie)[i++] = tempByte;
+		(*cckm_ie)[i++] = temp_u8;
 	}
 	*cckm_ie_len = i;
 	return 0;
