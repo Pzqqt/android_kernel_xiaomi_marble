@@ -807,7 +807,7 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 uint16_t sme_get_neighbor_scan_refresh_period(mac_handle_t mac_handle);
 uint16_t sme_get_empty_scan_refresh_period(mac_handle_t mac_handle);
 QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
-		uint8_t sessionId, uint16_t nEmptyScanRefreshPeriod);
+		uint8_t sessionId, uint16_t empty_scan_refresh_period);
 QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 		const uint16_t nNeighborScanMinChanTime,
 		uint8_t sessionId);

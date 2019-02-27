@@ -6671,21 +6671,21 @@ uint16_t sme_get_empty_scan_refresh_period(mac_handle_t mac_handle)
 
 /*
  * sme_update_empty_scan_refresh_period
- * Update nEmptyScanRefreshPeriod
+ * Update empty_scan_refresh_period
  *	    This function is called through dynamic setConfig callback function
- *	    to configure nEmptyScanRefreshPeriod
+ *	    to configure empty_scan_refresh_period
  *	    Usage: adb shell iwpriv wlan0 setConfig
- *			nEmptyScanRefreshPeriod=[0 .. 60]
+ *			empty_scan_refresh_period=[0 .. 60]
  *
  * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
- * nEmptyScanRefreshPeriod - scan period following empty scan results.
+ * empty_scan_refresh_period - scan period following empty scan results.
  * Return Success or failure
  */
 
 QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 						uint8_t sessionId, uint16_t
-						nEmptyScanRefreshPeriod)
+						empty_scan_refresh_period)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -6702,16 +6702,16 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set roam scan period to %d -old value is %d - roam state is %s",
-			  nEmptyScanRefreshPeriod,
+			  empty_scan_refresh_period,
 			  mac->mlme_cfg->lfr.empty_scan_refresh_period,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
 		mac->mlme_cfg->lfr.empty_scan_refresh_period =
-			nEmptyScanRefreshPeriod;
+			empty_scan_refresh_period;
 		pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
-			nEmptyScanRefreshPeriod;
+			empty_scan_refresh_period;
 
 		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,

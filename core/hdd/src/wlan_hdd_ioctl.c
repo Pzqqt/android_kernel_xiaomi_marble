@@ -3056,7 +3056,7 @@ static int drv_cmd_get_roam_scan_period(struct hdd_adapter *adapter,
 					struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint16_t nEmptyScanRefreshPeriod =
+	uint16_t empty_scan_refresh_period =
 		sme_get_empty_scan_refresh_period(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len;
@@ -3064,11 +3064,11 @@ static int drv_cmd_get_roam_scan_period(struct hdd_adapter *adapter,
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_GETROAMSCANPERIOD_IOCTL,
 		   adapter->vdev_id,
-		   nEmptyScanRefreshPeriod);
+		   empty_scan_refresh_period);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
 			"GETROAMSCANPERIOD",
-			(nEmptyScanRefreshPeriod / 1000));
+			(empty_scan_refresh_period / 1000));
 	/* Returned value is in units of seconds */
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
