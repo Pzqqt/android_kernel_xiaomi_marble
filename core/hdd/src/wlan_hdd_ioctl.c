@@ -165,7 +165,7 @@ struct tsm_priv {
 };
 
 static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
-				 const uint32_t staId, void *context)
+				 const uint32_t staid, void *context)
 {
 	struct osif_request *request;
 	struct tsm_priv *priv;

@@ -1622,7 +1622,7 @@ static void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 /**
  * hdd_roam_deregister_sta() - deregister station
  * @adapter: pointer to adapter
- * @staId: station identifier
+ * @staid: station identifier
  *
  * Return: QDF_STATUS enumeration
  */
@@ -2070,14 +2070,14 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  * hdd_roam_register_sta() - register station
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
- * @staId: station identifier
+ * @staid: station identifier
  * @pBssDesc: pointer to BSS description
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
-					uint8_t staId,
+					uint8_t staid,
 					struct bss_description *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2091,7 +2091,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 
 	/* Get the Station ID from the one saved during the association */
-	staDesc.sta_id = staId;
+	staDesc.sta_id = staid;
 
 	/* set the QoS field appropriately */
 	if (hdd_wmm_is_active(adapter))
@@ -3279,7 +3279,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							adapter->vdev,
 							false);
 			} else {
-				hdd_debug("staId: %d Changing TL state to AUTHENTICATED",
+				hdd_debug("staid: %d Changing TL state to AUTHENTICATED",
 					 sta_ctx->conn_info.staId[0]);
 				qdf_status =
 					hdd_change_peer_state(adapter,
@@ -3672,13 +3672,13 @@ void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id)
 /**
  * roam_remove_ibss_station() - Remove the IBSS peer MAC address in the adapter
  * @adapter: pointer to adapter
- * @staId: station id
+ * @staid: station id
  *
  * Return:
  *	true if we remove MAX_PEERS or less STA
  *	false otherwise.
  */
-static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staId)
+static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staid)
 {
 	bool fSuccess = false;
 	int idx = 0;
@@ -3688,7 +3688,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staId)
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (staId == sta_ctx->conn_info.staId[idx]) {
+		if (staid == sta_ctx->conn_info.staId[idx]) {
 			sta_ctx->conn_info.staId[idx] =
 						HDD_WLAN_INVALID_STA_ID;
 
@@ -3721,7 +3721,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staId)
 				eConnectionState_IbssDisconnected);
 		hdd_debug("Last IBSS Peer Departed!!!");
 	}
-	/* Find next active staId, to have a valid sta trigger for TL. */
+	/* Find next active staid, to have a valid sta trigger for TL. */
 	if (fSuccess == true) {
 		if (del_idx == 0) {
 			if (sta_ctx->conn_info.staId[valid_idx] !=
@@ -4014,7 +4014,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
-				     const uint8_t *peerMac, uint16_t staId,
+				     const uint8_t *peerMac, uint16_t staid,
 				     uint8_t qos)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -4027,7 +4027,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
 	 * be peer MAC, here we are working on direct Link
 	 */
-	staDesc.sta_id = staId;
+	staDesc.sta_id = staid;
 
 	/* set the QoS field appropriately .. */
 	staDesc.is_qos_enabled = qos;
@@ -4058,18 +4058,18 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 /**
  * hdd_roam_deregister_tdlssta() - deregister new TDLS station
  * @adapter: pointer to adapter
- * @staId: station identifier
+ * @staid: station identifier
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-				       uint8_t staId)
+				       uint8_t staid)
 {
 	QDF_STATUS qdf_status;
 
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			staId);
+			staid);
 
 	return qdf_status;
 }
@@ -4077,7 +4077,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 #else
 
 inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-					      uint8_t staId)
+					      uint8_t staid)
 {
 	return QDF_STATUS_SUCCESS;
 }

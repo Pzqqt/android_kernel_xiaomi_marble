@@ -1671,7 +1671,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t *we_custom_event_generic = NULL;
 	int we_event = 0;
 	int i = 0;
-	uint8_t staId;
+	uint8_t staid;
 	QDF_STATUS qdf_status;
 	bool bAuthRequired = true;
 	char unknownSTAEvent[IW_CUSTOM_MAX + 1];
@@ -1739,7 +1739,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	mac_handle = hdd_ctx->mac_handle;
 	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
-	staId = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
+	staid = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
 
 	switch (sapEvent) {
@@ -2186,11 +2186,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
-		staId = event->staId;
+		staid = event->staId;
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_fill_station_info(adapter, event);
 
-		adapter->sta_info[staId].ecsa_capable = event->ecsa_capable;
+		adapter->sta_info[staid].ecsa_capable = event->ecsa_capable;
 
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
@@ -2317,7 +2317,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_softap_get_sta_id(adapter,
 					      &pSapEvent->sapevt.
 					      sapStationDisassocCompleteEvent.staMac,
-					      &staId);
+					      &staid);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to find sta id status: %d", qdf_status);
 			return QDF_STATUS_E_FAILURE;
@@ -2335,11 +2335,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			stainfo->dhcp_phase = DHCP_PHASE_ACK;
 			if (stainfo->dhcp_nego_status ==
 						DHCP_NEGO_IN_PROGRESS)
-				hdd_post_dhcp_ind(adapter, staId,
+				hdd_post_dhcp_ind(adapter, staid,
 						  WMA_DHCP_STOP_IND);
 			stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 		}
-		hdd_softap_deregister_sta(adapter, staId);
+		hdd_softap_deregister_sta(adapter, staid);
 
 		ap_ctx->ap_active = false;
 		spin_lock_bh(&adapter->sta_info_lock);
