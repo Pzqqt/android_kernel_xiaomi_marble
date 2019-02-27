@@ -3383,16 +3383,16 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 					  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t numChannels = 0;
+	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t num_channels = 0;
 	uint8_t j = 0;
 	char extra[128] = { 0 };
 	int len;
 
 	if (QDF_STATUS_SUCCESS !=
 		sme_get_roam_scan_channel_list(hdd_ctx->mac_handle,
-					       ChannelList,
-					       &numChannels,
+					       channel_list,
+					       &num_channels,
 					       adapter->vdev_id)) {
 		hdd_err("failed to get roam scan channel list");
 		ret = -EFAULT;
@@ -3401,7 +3401,7 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL,
-		   adapter->vdev_id, numChannels);
+		   adapter->vdev_id, num_channels);
 
 	/*
 	 * output channel list is of the format
@@ -3409,10 +3409,10 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 	 * copy the number of channels in the 0th index
 	 */
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
-			numChannels);
-	for (j = 0; (j < numChannels) && len <= sizeof(extra); j++)
+			num_channels);
+	for (j = 0; (j < num_channels) && len <= sizeof(extra); j++)
 		len += scnprintf(extra + len, sizeof(extra) - len,
-				 " %d", ChannelList[j]);
+				 " %d", channel_list[j]);
 
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
@@ -5379,26 +5379,27 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t ChannelList[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
-	uint8_t numChannels = 0;
+	uint8_t channel_list[CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
+	uint8_t num_channels = 0;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
-	ret = hdd_parse_channellist(value, ChannelList, &numChannels);
+	ret = hdd_parse_channellist(value, channel_list, &num_channels);
 	if (ret) {
 		hdd_err("Failed to parse channel list information");
 		goto exit;
 	}
-	if (numChannels > CFG_VALID_CHANNEL_LIST_LEN) {
+	if (num_channels > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("number of channels (%d) supported exceeded max (%d)",
-			  numChannels,
-			  CFG_VALID_CHANNEL_LIST_LEN);
+			num_channels,
+			CFG_VALID_CHANNEL_LIST_LEN);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	if (!sme_validate_channel_list(mac_handle, ChannelList, numChannels)) {
+	if (!sme_validate_channel_list(mac_handle, channel_list,
+				       num_channels)) {
 		hdd_err("List contains invalid channel(s)");
 		ret = -EINVAL;
 		goto exit;
@@ -5406,8 +5407,8 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 
 	status = sme_set_ese_roam_scan_channel_list(mac_handle,
 						    adapter->vdev_id,
-						    ChannelList,
-						    numChannels);
+						    channel_list,
+						    num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
