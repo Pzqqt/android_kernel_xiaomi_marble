@@ -710,7 +710,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 	qdf_mem_copy(&req.destIpv4Addr, &req.hostIpv4Addr,
 		     sizeof(req.destIpv4Addr));
 
-	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
+	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssid);
 	ucfg_mlme_get_sta_keep_alive_period(hdd_ctx->psoc, &req.timePeriod);
 	req.sessionId = adapter->vdev_id;
 

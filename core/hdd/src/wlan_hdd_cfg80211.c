@@ -4950,7 +4950,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 		qdf_mem_copy(gtk_req->kek, kek_ptr, kek_len);
 	}
 
-	qdf_copy_macaddr(&gtk_req->bssid, &hdd_sta_ctx->conn_info.bssId);
+	qdf_copy_macaddr(&gtk_req->bssid, &hdd_sta_ctx->conn_info.bssid);
 
 	gtk_req->kek_len = kek_len;
 	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
@@ -8195,7 +8195,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((hdd_sta_ctx->conn_info.conn_state !=
 			eConnectionState_Associated) ||
-		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssId.bytes,
+		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssid.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
 			hdd_err("Not Associated to mac "MAC_ADDRESS_STR,
 			       MAC_ADDR_ARRAY(peer_mac));
@@ -14234,7 +14234,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	if (!pairwise && ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE))) {
 		qdf_mem_copy(mac_address.bytes,
-			     adapter->session.station.conn_info.bssId.bytes,
+			     adapter->session.station.conn_info.bssid.bytes,
 			     QDF_MAC_ADDR_SIZE);
 	} else {
 		qdf_mem_copy(mac_address.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
@@ -14870,7 +14870,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if (unicast)
 		status =
 		wlan_cfg80211_set_default_key(adapter->vdev, key_index,
-					      &sta_ctx->conn_info.bssId);
+					      &sta_ctx->conn_info.bssid);
 	else
 		status = wlan_cfg80211_set_default_key(adapter->vdev, key_index,
 						       &bssid);
@@ -14975,7 +14975,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			setKey.keyDirection = eSIR_TX_RX;
 
 			qdf_copy_macaddr(&setKey.peerMac,
-					 &sta_ctx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssid);
 
 			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
 			    roam_profile->EncryptionType.

@@ -4461,7 +4461,7 @@ static int hdd_we_set_tx_power(struct hdd_adapter *adapter, int value)
 		return -EINVAL;
 
 	status = sme_set_tx_power(mac_handle, adapter->vdev_id,
-				  sta_ctx->conn_info.bssId,
+				  sta_ctx->conn_info.bssid,
 				  adapter->device_mode, value);
 
 	if (QDF_IS_STATUS_ERROR(status))
@@ -4481,8 +4481,8 @@ static int hdd_we_set_max_tx_power(struct hdd_adapter *adapter, int value)
 		return -EINVAL;
 
 	status = sme_set_max_tx_power(mac_handle,
-				      sta_ctx->conn_info.bssId,
-				      sta_ctx->conn_info.bssId,
+				      sta_ctx->conn_info.bssid,
+				      sta_ctx->conn_info.bssid,
 				      value);
 
 	if (QDF_IS_STATUS_ERROR(status))
@@ -7494,7 +7494,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 					      &mod_fields);
 		if (roaming_offload_enabled(hdd_ctx)) {
 			qdf_mem_copy(bssid,
-				&adapter->session.station.conn_info.bssId,
+				&adapter->session.station.conn_info.bssid,
 				sizeof(bssid));
 			hdd_wma_send_fastreassoc_cmd(adapter,
 						     bssid, operating_ch);
@@ -8092,9 +8092,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		if (apps_args[0] == CDP_TXRX_STATS_28) {
 			if (sta_ctx->conn_info.is_authenticated) {
 				hdd_debug("ap mac addr: %pM",
-					  (void *)&sta_ctx->conn_info.bssId);
+					  (void *)&sta_ctx->conn_info.bssid);
 				req.peer_addr =
-					(char *)&sta_ctx->conn_info.bssId;
+					(char *)&sta_ctx->conn_info.bssid;
 			}
 		}
 		ret = cdp_txrx_stats_request(soc, vdev, &req);

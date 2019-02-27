@@ -216,7 +216,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 
 	status = sme_get_tsm_stats(hdd_ctx->mac_handle, hdd_get_tsm_stats_cb,
 				   hdd_sta_ctx->conn_info.staId[0],
-				   hdd_sta_ctx->conn_info.bssId,
+				   hdd_sta_ctx->conn_info.bssid,
 				   cookie, tid);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve tsm statistics");
@@ -672,7 +672,7 @@ QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 	tSirMacAddr connected_bssid;
 
 	roam_profile = hdd_roam_profile(adapter);
-	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssId.bytes,
+	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssid.bytes,
 		     ETH_ALEN);
 	return sme_fast_reassoc(adapter->hdd_ctx->mac_handle,
 				roam_profile, bssid, channel,
@@ -734,7 +734,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * if the target bssid is same as currently associated AP,
 	 * use the current connections's channel.
 	 */
-	if (!memcmp(bssid, sta_ctx->conn_info.bssId.bytes,
+	if (!memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		channel = sta_ctx->conn_info.operationChannel;
@@ -938,7 +938,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * if the target bssid is different from currently associated AP,
 	 * then no need to send action frame
 	 */
-	if (memcmp(bssid, sta_ctx->conn_info.bssId.bytes,
+	if (memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("STA is not associated to this AP");
 		ret = -EINVAL;
@@ -4315,7 +4315,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
 	 */
-	if (!qdf_mem_cmp(bssid, sta_ctx->conn_info.bssId.bytes,
+	if (!qdf_mem_cmp(bssid, sta_ctx->conn_info.bssid.bytes,
 			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {

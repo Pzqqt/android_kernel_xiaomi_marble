@@ -868,7 +868,7 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
 				 buf, adapter->last_target_time,
 				 tsf_sync_qtime,
-				 hdd_sta_ctx->conn_info.bssId.bytes);
+				 hdd_sta_ctx->conn_info.bssid.bytes);
 	} else {
 		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
 				 buf, adapter->last_target_time,
@@ -1015,7 +1015,7 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
 					 buf, target_time, host_time,
-					 hdd_sta_ctx->conn_info.bssId.bytes);
+					 hdd_sta_ctx->conn_info.bssid.bytes);
 		} else {
 			size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
 					 buf, target_time, host_time,

@@ -78,7 +78,7 @@ void hdd_ipa_set_tx_flow_info(void)
 				staChannel =
 					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&staBssid,
-						 &sta_ctx->conn_info.bssId);
+						 &sta_ctx->conn_info.bssid);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = staChannel;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
@@ -91,7 +91,7 @@ void hdd_ipa_set_tx_flow_info(void)
 				p2pChannel =
 					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&p2pBssid,
-						&sta_ctx->conn_info.bssId);
+						&sta_ctx->conn_info.bssid);
 				p2pMode = "CLI";
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = p2pChannel;

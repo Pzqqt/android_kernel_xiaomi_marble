@@ -577,7 +577,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		    sta_ctx->conn_info.conn_state) {
 			pInfo->state = WIFI_ASSOCIATED;
 			qdf_copy_macaddr(&pInfo->bssid,
-					 &sta_ctx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssid);
 			qdf_mem_copy(pInfo->ssid,
 				     sta_ctx->conn_info.ssid.SSID.ssId,
 				     sta_ctx->conn_info.ssid.SSID.length);
@@ -4452,7 +4452,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	/* for new connection there might be no valid previous RSSI */
 	if (!adapter->rssi) {
 		hdd_get_rssi_snr_by_bssid(adapter,
-				sta_ctx->conn_info.bssId.bytes,
+				sta_ctx->conn_info.bssid.bytes,
 				&adapter->rssi, &snr);
 	}
 
@@ -4992,7 +4992,7 @@ static bool hdd_is_rcpi_applicable(struct hdd_adapter *adapter,
 			return false;
 		}
 
-		if (qdf_mem_cmp(mac_addr, &hdd_sta_ctx->conn_info.bssId,
+		if (qdf_mem_cmp(mac_addr, &hdd_sta_ctx->conn_info.bssid,
 				sizeof(*mac_addr))) {
 			hdd_err("mac addr is different from bssid connected");
 			return false;
@@ -5223,7 +5223,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(
 			adapter->vdev,
-			sta_ctx->conn_info.bssId.bytes,
+			sta_ctx->conn_info.bssid.bytes,
 			&ret);
 	if (ret || !rssi_info) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
@@ -5232,7 +5232,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	for (i = 0; i < rssi_info->num_peer_stats; i++) {
 		if (!qdf_mem_cmp(rssi_info->peer_stats[i].peer_macaddr,
-				 sta_ctx->conn_info.bssId.bytes,
+				 sta_ctx->conn_info.bssid.bytes,
 				 WLAN_MACADDR_LEN)) {
 			*rssi_value = rssi_info->peer_stats[i].peer_rssi;
 			hdd_debug("RSSI = %d", *rssi_value);
@@ -5328,7 +5328,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	status = sme_get_rssi(hdd_ctx->mac_handle, hdd_get_rssi_cb,
 			      sta_ctx->conn_info.staId[0],
-			      sta_ctx->conn_info.bssId, adapter->rssi,
+			      sta_ctx->conn_info.bssid, adapter->rssi,
 			      cookie);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve RSSI");
@@ -5351,7 +5351,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 			 */
 			if (!adapter->rssi) {
 				hdd_get_rssi_snr_by_bssid(adapter,
-					sta_ctx->conn_info.bssId.bytes,
+					sta_ctx->conn_info.bssid.bytes,
 					&adapter->rssi, NULL);
 			}
 		}
@@ -5440,7 +5440,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 
 	status = sme_get_snr(hdd_ctx->mac_handle, hdd_get_snr_cb,
 			     sta_ctx->conn_info.staId[0],
-			     sta_ctx->conn_info.bssId, cookie);
+			     sta_ctx->conn_info.bssid, cookie);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve RSSI");
 		/* we'll returned a cached value below */
@@ -5582,7 +5582,7 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
 	} else {
 		struct qdf_mac_addr bssid;
 
-		qdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
+		qdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssid);
 
 		ret = wlan_hdd_get_linkspeed_for_peermac(adapter, &bssid,
 							 link_speed);

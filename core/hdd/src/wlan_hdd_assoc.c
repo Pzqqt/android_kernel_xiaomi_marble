@@ -971,7 +971,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 		/* Save the BSSID for the connection */
 		if (eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) {
 			QDF_ASSERT(roam_info->pBssDesc);
-			qdf_copy_macaddr(&sta_ctx->conn_info.bssId,
+			qdf_copy_macaddr(&sta_ctx->conn_info.bssid,
 					 &roam_info->bssid);
 
 			/*
@@ -986,7 +986,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 					roam_info->staId;
 			}
 		} else if (eCSR_BSS_TYPE_IBSS == bss_type) {
-			qdf_copy_macaddr(&sta_ctx->conn_info.bssId,
+			qdf_copy_macaddr(&sta_ctx->conn_info.bssid,
 					 &roam_info->bssid);
 		} else {
 			/*
@@ -1405,7 +1405,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			hdd_send_ft_assoc_response(dev, adapter, pCsrRoamInfo);
 		}
 		qdf_copy_macaddr(&peer_macaddr,
-				 &sta_ctx->conn_info.bssId);
+				 &sta_ctx->conn_info.bssid);
 		chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
 		chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
 		chan_info.info = pCsrRoamInfo->chan_info.info;
@@ -1455,10 +1455,10 @@ static void hdd_send_association_event(struct net_device *dev,
 			sta_ctx->conn_info.conn_state) {
 		policy_mgr_update_connection_info(hdd_ctx->psoc,
 				adapter->vdev_id);
-		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssId.bytes,
+		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssid.bytes,
 				ETH_ALEN);
 		hdd_debug("wlan: new IBSS peer connection to BSSID " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(sta_ctx->conn_info.bssId.bytes));
+			MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes));
 	} else {                /* Not Associated */
 		hdd_debug("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
@@ -1474,7 +1474,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			qdf_copy_macaddr(&peer_macaddr,
-					 &sta_ctx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssid);
 
 			/* send peer status indication to oem app */
 			hdd_send_peer_status_ind_to_app(&peer_macaddr,
@@ -1533,9 +1533,9 @@ static void hdd_send_association_event(struct net_device *dev,
  */
 static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 {
-	/* Remove staId, bssId and peerMacAddress */
+	/* Remove staId, bssid and peerMacAddress */
 	sta_ctx->conn_info.staId[0] = HDD_WLAN_INVALID_STA_ID;
-	qdf_mem_zero(&sta_ctx->conn_info.bssId, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(&sta_ctx->conn_info.bssid, QDF_MAC_ADDR_SIZE);
 	qdf_mem_zero(&sta_ctx->conn_info.peerMacAddress[0],
 		     QDF_MAC_ADDR_SIZE);
 
@@ -1733,7 +1733,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 				  sta_ctx->conn_info.staId[0],
 				  adapter->vdev_id,
 				  WLAN_IPA_STA_DISCONNECT,
-				  sta_ctx->conn_info.bssId.bytes);
+				  sta_ctx->conn_info.bssid.bytes);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
@@ -1860,9 +1860,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		    eCSR_ROAM_RESULT_DISASSOC_IND == roam_result ||
 		    eCSR_ROAM_LOSTLINK == roam_status) {
 			wlan_hdd_cfg80211_update_bss_list(adapter,
-				sta_ctx->conn_info.bssId.bytes);
+				sta_ctx->conn_info.bssid.bytes);
 			sme_remove_bssid_from_scan_list(mac_handle,
-			sta_ctx->conn_info.bssId.bytes);
+			sta_ctx->conn_info.bssid.bytes);
 		}
 		if (sta_id < HDD_MAX_ADAPTERS)
 			hdd_ctx->sta_to_adapter[sta_id] = NULL;
@@ -3884,7 +3884,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
 			 MAC_ADDRESS_STR " and stationID= %d",
 			 MAC_ADDR_ARRAY(roam_info->peerMac.bytes),
-			 MAC_ADDR_ARRAY(sta_ctx->conn_info.bssId.bytes),
+			 MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes),
 			 roam_info->staId);
 
 		if (!hdd_save_peer
@@ -3972,7 +3972,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 			 "with peerMac " MAC_ADDRESS_STR " BSSID: "
 			 MAC_ADDRESS_STR " and stationID= %d",
 			 MAC_ADDR_ARRAY(roam_info->peerMac.bytes),
-			 MAC_ADDR_ARRAY(sta_ctx->conn_info.bssId.bytes),
+			 MAC_ADDR_ARRAY(sta_ctx->conn_info.bssid.bytes),
 			 roam_info->staId);
 
 		hdd_roam_deregister_sta(adapter, roam_info->staId);
@@ -5763,7 +5763,7 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 	roam_profile->SSIDs.SSIDList = &sta_ctx->conn_info.ssid;
 
 	roam_profile->BSSIDs.numOfBSSIDs = 0;
-	roam_profile->BSSIDs.bssid = &sta_ctx->conn_info.bssId;
+	roam_profile->BSSIDs.bssid = &sta_ctx->conn_info.bssid;
 
 	/* Set the numOfChannels to zero to scan all the channels */
 	roam_profile->ChannelInfo.numOfChannels = 0;

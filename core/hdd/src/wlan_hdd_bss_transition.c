@@ -201,7 +201,7 @@ __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_get_bss_transition_status(mac_handle, transition_reason,
-					       &hdd_sta_ctx->conn_info.bssId,
+					       &hdd_sta_ctx->conn_info.bssid,
 					       candidate_info,
 					       nof_candidates,
 					       is_bt_in_progress);

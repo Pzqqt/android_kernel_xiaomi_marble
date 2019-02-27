@@ -368,7 +368,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 			    "last_auth_type = %s\n"
 			    "dot11Mode = %s\n",
 			    conn_info->last_ssid.SSID.ssId,
-			    MAC_ADDR_ARRAY(conn_info->bssId.bytes),
+			    MAC_ADDR_ARRAY(conn_info->bssid.bytes),
 			    conn_info->connect_time,
 			    conn_info->auth_time,
 			    conn_info->freq,

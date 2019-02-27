@@ -149,8 +149,8 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 			       sta_ctx->conn_info.ssid.SSID.ssId,
 			       sta_ctx->conn_info.ssid.SSID.length);
 		}
-		if (QDF_MAC_ADDR_SIZE >= sizeof(sta_ctx->conn_info.bssId))
-			memcpy(data->bssid, sta_ctx->conn_info.bssId.bytes,
+		if (QDF_MAC_ADDR_SIZE >= sizeof(sta_ctx->conn_info.bssid))
+			memcpy(data->bssid, sta_ctx->conn_info.bssid.bytes,
 			       QDF_MAC_ADDR_SIZE);
 	}
 	return 0;

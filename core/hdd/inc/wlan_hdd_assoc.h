@@ -139,7 +139,7 @@ struct hdd_conn_flag {
 /**
  * struct hdd_connection_info - structure to store connection information
  * @conn_state: connection state of the NIC
- * @bssId: BSSID
+ * @bssid: BSSID
  * @SSID: SSID Info
  * @staId: Station ID
  * @peerMacAddress:Peer Mac Address of the IBSS Stations
@@ -174,7 +174,7 @@ struct hdd_conn_flag {
  */
 struct hdd_connection_info {
 	eConnectionState conn_state;
-	struct qdf_mac_addr bssId;
+	struct qdf_mac_addr bssid;
 	tCsrSSIDInfo ssid;
 	uint8_t staId[MAX_PEERS];
 	struct qdf_mac_addr peerMacAddress[MAX_PEERS];

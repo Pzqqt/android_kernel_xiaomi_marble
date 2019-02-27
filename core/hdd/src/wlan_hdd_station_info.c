@@ -449,7 +449,7 @@ hdd_add_link_standard_info(struct sk_buff *skb,
 		goto fail;
 	}
 	if (nla_put(skb, NL80211_ATTR_MAC, QDF_MAC_ADDR_SIZE,
-		    hdd_sta_ctx->cache_conn_info.bssId.bytes)) {
+		    hdd_sta_ctx->cache_conn_info.bssid.bytes)) {
 		hdd_err("put bssid failed");
 		goto fail;
 	}

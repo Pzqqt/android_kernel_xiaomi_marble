@@ -5323,7 +5323,7 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 	{
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		bssid = &sta_ctx->conn_info.bssId;
+		bssid = &sta_ctx->conn_info.bssid;
 		break;
 	}
 	case QDF_SAP_MODE:
@@ -5842,7 +5842,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			qdf_copy_macaddr(&peer_macaddr,
-					 &sta_ctx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssid);
 
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
