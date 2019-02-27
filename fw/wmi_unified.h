@@ -22165,6 +22165,43 @@ typedef enum wmi_coex_config_type {
      * arg4 - priority level 4, same parameters rules as arg1
      */
     WMI_COEX_CONFIG_THREE_WAY_COEX_START   = 34,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_ENABLE
+     * config to enable(1)/disable(0) mpta-helper function
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_ENABLE     = 35,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_ZIGBEE_STATE
+     * config zigbee state
+     * arg1: zigbee state
+     *       (idle form-network wait-join join-network network-up HMI)
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_ZIGBEE_STATE = 36,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_INT_OCS_PARAMS
+     * config ocs wlan/nonwlan params after MPTA interrupt fired
+     * arg1: wlan duration (ms units) in Shape-OCS
+     * arg2: nonwlan duration (ms units) in Shape-OCS
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_INT_OCS_PARAMS = 37,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_MON_OCS_PARAMS
+     * config ocs wlan/nonwlan params during monitor period after
+     * interrupt period finished
+     * arg1: wlan duration (ms units) in Shape-OCS
+     * arg2: nonwlan duration (ms units) in Shape-OCS
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_MON_OCS_PARAMS   = 38,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_INT_MON_DURATION
+     * config ocs duration in interrupt period and monitor period
+     * arg1: duration (ms units) in interrupt period
+     * arg2: duration (ms units) in monitor period
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_INT_MON_DURATION = 39,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_ZIGBEE_CHANNEL
+     * config zigbee channel 11 - 26
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_ZIGBEE_CHANNEL   = 40,
+    /* WMI_COEX_CONFIG_MPTA_HELPER_WLAN_MUTE_DURATION
+     * config msw mute duration (ms units) after MPTA interrupt fired
+     */
+    WMI_COEX_CONFIG_MPTA_HELPER_WLAN_MUTE_DURATION   = 41,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
