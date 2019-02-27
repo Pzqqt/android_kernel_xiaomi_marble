@@ -1058,15 +1058,15 @@ static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 				       uint32_t *conn_state_mask)
 {
 
-	eConnectionState connState;
+	eConnectionState conn_state;
 	struct hdd_station_ctx *sta_ctx;
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	connState = sta_ctx->conn_info.connState;
+	conn_state = sta_ctx->conn_info.conn_state;
 
-	if (connState == eConnectionState_Associated ||
-			connState == eConnectionState_IbssConnected)
+	if (conn_state == eConnectionState_Associated ||
+			conn_state == eConnectionState_IbssConnected)
 		*conn_state_mask |= (1 << adapter->vdev_id);
 }
 
@@ -2151,7 +2151,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
-	if (sta_ctx->conn_info.connState != eConnectionState_Associated) {
+	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
 		hdd_debug("Not associated");
 		return 0;
 	}

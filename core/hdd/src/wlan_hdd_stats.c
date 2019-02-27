@@ -553,17 +553,17 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	     (QDF_P2P_DEVICE_MODE == adapter->device_mode))) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (eConnectionState_NotConnected ==
-		    sta_ctx->conn_info.connState) {
+		    sta_ctx->conn_info.conn_state) {
 			pInfo->state = WIFI_DISCONNECTED;
 		}
 		if (eConnectionState_Connecting ==
-		    sta_ctx->conn_info.connState) {
+		    sta_ctx->conn_info.conn_state) {
 			hdd_err("Session ID %d, Connection is in progress",
 				adapter->vdev_id);
 			pInfo->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
-		     sta_ctx->conn_info.connState)
+		     sta_ctx->conn_info.conn_state)
 		    && (false == sta_ctx->conn_info.uIsAuthenticated)) {
 			staMac =
 				(uint8_t *) &(adapter->mac_addr.
@@ -574,7 +574,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			pInfo->state = WIFI_AUTHENTICATING;
 		}
 		if (eConnectionState_Associated ==
-		    sta_ctx->conn_info.connState) {
+		    sta_ctx->conn_info.conn_state) {
 			pInfo->state = WIFI_ASSOCIATED;
 			qdf_copy_macaddr(&pInfo->bssid,
 					 &sta_ctx->conn_info.bssId);
@@ -4416,7 +4416,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		   TRACE_CODE_HDD_CFG80211_GET_STA,
 		   adapter->vdev_id, 0);
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_debug("Not associated");
 		/*To keep GUI happy */
 		return 0;
@@ -4976,7 +4976,7 @@ static bool hdd_is_rcpi_applicable(struct hdd_adapter *adapter,
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (hdd_sta_ctx->conn_info.connState !=
+		if (hdd_sta_ctx->conn_info.conn_state !=
 		    eConnectionState_Associated)
 			return false;
 
@@ -5208,7 +5208,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_debug("Not associated!, rssi on disconnect %d",
 			  adapter->rssi_on_disconnect);
 		*rssi_value = adapter->rssi_on_disconnect;
@@ -5305,7 +5305,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_debug("Not associated!, rssi on disconnect %d",
 			adapter->rssi_on_disconnect);
 		*rssi_value = adapter->rssi_on_disconnect;
@@ -5576,7 +5576,7 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
 		return -ENOTSUPP;
 	}
 
-	if (eConnectionState_Associated != hdd_stactx->conn_info.connState) {
+	if (eConnectionState_Associated != hdd_stactx->conn_info.conn_state) {
 		/* we are not connected so we don't have a classAstats */
 		*link_speed = 0;
 	} else {

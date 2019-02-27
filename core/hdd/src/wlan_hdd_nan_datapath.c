@@ -816,7 +816,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
 		hdd_info("Set ctx connection state to connected");
-		sta_ctx->conn_info.connState = eConnectionState_NdiConnected;
+		sta_ctx->conn_info.conn_state = eConnectionState_NdiConnected;
 		hdd_wmm_connect(adapter, roam_info, eCSR_BSS_TYPE_NDI);
 		wlan_hdd_netif_queue_control(adapter,
 				WLAN_WAKE_ALL_NETIF_QUEUE, WLAN_CONTROL_PATH);
@@ -867,7 +867,7 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 
 	if (last_peer) {
 		hdd_info("No more ndp peers.");
-		sta_ctx->conn_info.connState = eConnectionState_NdiDisconnected;
+		sta_ctx->conn_info.conn_state = eConnectionState_NdiDisconnected;
 		hdd_conn_set_connection_state(adapter,
 			eConnectionState_NdiDisconnected);
 		hdd_info("Stop netif tx queues.");

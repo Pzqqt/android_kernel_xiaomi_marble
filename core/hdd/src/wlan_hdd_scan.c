@@ -503,7 +503,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	if ((eConnectionState_Associated ==
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-						conn_info.connState) &&
+						conn_info.conn_state) &&
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		if (wlan_hdd_enqueue_blocked_scan_request(dev, request, source))
@@ -1304,7 +1304,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 	if ((eConnectionState_Associated ==
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-							conn_info.connState) &&
+							conn_info.conn_state) &&
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		return -EBUSY;

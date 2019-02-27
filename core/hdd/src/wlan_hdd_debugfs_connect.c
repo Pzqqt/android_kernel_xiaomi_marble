@@ -322,7 +322,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 	int ret_val;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (hdd_sta_ctx->conn_info.connState != eConnectionState_Associated) {
+	if (hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
 		ret_val = scnprintf(buf, buf_avail_len,
 				    "\nSTA is not connected\n");
 		if (ret_val >= 0)

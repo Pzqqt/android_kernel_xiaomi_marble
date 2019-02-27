@@ -234,7 +234,7 @@ static void __hdd_nud_failure_work(void *data)
 		return;
 
 	conn_state = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-		      ->conn_info.connState;
+		      ->conn_info.conn_state;
 
 	if (eConnectionState_Associated != conn_state) {
 		hdd_debug("Not in Connected State");
@@ -372,7 +372,7 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 		return;
 
 	conn_state = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-		->conn_info.connState;
+		->conn_info.conn_state;
 
 	if (eConnectionState_Associated != conn_state) {
 		hdd_debug("Not in Connected State");

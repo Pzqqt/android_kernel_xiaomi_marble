@@ -544,7 +544,7 @@ static void hdd_get_transmit_sta_id(struct hdd_adapter *adapter,
 			*station_id = sta_ctx->broadcast_staid;
 	} else {
 		/* For the rest, traffic is directed to AP/P2P GO */
-		if (eConnectionState_Associated == sta_ctx->conn_info.connState)
+		if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
 			*station_id = sta_ctx->conn_info.staId[0];
 	}
 }

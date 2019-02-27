@@ -714,15 +714,15 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/*
-	 * pHddStaCtx->conn_info.connState is set to disconnected only
+	 * pHddStaCtx->conn_info.conn_state is set to disconnected only
 	 * after the disconnect done indication from SME. If the SME is
 	 * in the process of disconnecting, the SME Connection state is
-	 * set to disconnected and the pHddStaCtx->conn_info.connState
+	 * set to disconnected and the pHddStaCtx->conn_info.conn_state
 	 * will still be associated till the disconnect is done.
 	 * So check both the HDD state and SME state here.
 	 * If not associated, no need to proceed with reassoc
 	 */
-	if ((eConnectionState_Associated != sta_ctx->conn_info.connState) ||
+	if ((eConnectionState_Associated != sta_ctx->conn_info.conn_state) ||
 	    (!sme_is_conn_state_connected(hdd_ctx->mac_handle,
 	    adapter->vdev_id))) {
 		hdd_warn("Not associated");
@@ -928,7 +928,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to send action frame */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_warn("Not associated");
 		ret = -EINVAL;
 		goto exit;
@@ -2328,7 +2328,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		/* If not associated, then expected link status return
 		 * value is 0
 		 */
@@ -4296,7 +4296,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_warn("Not associated!");
 		ret = -EINVAL;
 		goto exit;
@@ -5255,7 +5255,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 
 	/* if there are no peers, no need to continue with the command */
 	if (eConnectionState_IbssConnected !=
-	    sta_ctx->conn_info.connState) {
+	    sta_ctx->conn_info.conn_state) {
 		hdd_err("No IBSS Peers coalesced");
 		ret = -EINVAL;
 		goto exit;
@@ -5441,7 +5441,7 @@ static int drv_cmd_get_tsm_stats(struct hdd_adapter *adapter,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, return error */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_err("Not associated!");
 		ret = -EINVAL;
 		goto exit;

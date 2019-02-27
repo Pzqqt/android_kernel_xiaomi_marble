@@ -74,7 +74,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		case QDF_STA_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
-			    sta_ctx->conn_info.connState) {
+			    sta_ctx->conn_info.conn_state) {
 				staChannel =
 					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&staBssid,
@@ -87,7 +87,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
-			    sta_ctx->conn_info.connState) {
+			    sta_ctx->conn_info.conn_state) {
 				p2pChannel =
 					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&p2pBssid,

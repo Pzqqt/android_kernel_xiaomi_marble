@@ -6456,7 +6456,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	}
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc)) {
-		connstate = sta_ctx->conn_info.connState;
+		connstate = sta_ctx->conn_info.conn_state;
 		if (eConnectionState_Associated == connstate ||
 		    eConnectionState_Connecting == connstate) {
 			return -EINVAL;
@@ -6582,7 +6582,7 @@ static void hdd_delete_sta(struct hdd_adapter *adapter)
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	eConnectionState connState;
+	eConnectionState conn_state;
 	bool value;
 
 	hdd_enter();
@@ -6602,8 +6602,8 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		case QDF_P2P_CLIENT_MODE:
 		case QDF_P2P_DEVICE_MODE:
 
-			connState = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-					->conn_info.connState;
+			conn_state = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
+					->conn_info.conn_state;
 
 			hdd_start_station_adapter(adapter);
 			/* Open the gates for HDD to receive Wext commands */
@@ -6612,11 +6612,11 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			/* Indicate disconnect event to supplicant
 			 * if associated previously
 			 */
-			if (eConnectionState_Associated == connState ||
-			    eConnectionState_IbssConnected == connState ||
-			    eConnectionState_NotConnected == connState ||
-			    eConnectionState_IbssDisconnected == connState ||
-			    eConnectionState_Disconnecting == connState) {
+			if (eConnectionState_Associated == conn_state ||
+			    eConnectionState_IbssConnected == conn_state ||
+			    eConnectionState_NotConnected == conn_state ||
+			    eConnectionState_IbssDisconnected == conn_state ||
+			    eConnectionState_Disconnecting == conn_state) {
 				union iwreq_data wrqu;
 
 				memset(&wrqu, '\0', sizeof(wrqu));
@@ -6631,7 +6631,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 				wlan_hdd_cfg80211_indicate_disconnect(
 						adapter->dev, false,
 						WLAN_REASON_UNSPECIFIED);
-			} else if (eConnectionState_Connecting == connState) {
+			} else if (eConnectionState_Connecting == conn_state) {
 				/*
 				 * Indicate connect failure to supplicant if we
 				 * were in the process of connecting
@@ -7959,7 +7959,7 @@ static void __hdd_bus_bw_work_handler(struct work_struct *work)
 
 		if ((adapter->device_mode == QDF_STA_MODE ||
 		     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.connState
+		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.conn_state
 		    != eConnectionState_Associated) {
 
 			continue;
@@ -11553,8 +11553,8 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 		case QDF_P2P_CLIENT_MODE:
 			hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			len += scnprintf(buf + len, *size - len,
-				"\n connState: %d",
-				hdd_sta_ctx->conn_info.connState);
+				"\n conn_state: %d",
+				hdd_sta_ctx->conn_info.conn_state);
 			break;
 
 		default:
@@ -12560,7 +12560,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 		hdd_for_each_adapter(hdd_ctx, adapter) {
 			if (adapter->device_mode == QDF_STA_MODE) {
 				if (WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-				    conn_info.connState ==
+				    conn_info.conn_state ==
 				    eConnectionState_Associated) {
 					sta_connected = true;
 					break;
@@ -12641,7 +12641,7 @@ static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (hdd_adapter_is_sta(adapter) &&
 		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
-			conn_info.connState == eConnectionState_Associated) {
+			conn_info.conn_state == eConnectionState_Associated) {
 			return true;
 		}
 
@@ -14707,7 +14707,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
 			&& (eConnectionState_Connecting ==
 				(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-					conn_info.connState)) {
+					conn_info.conn_state)) {
 			hdd_debug("%pK(%d) Connection is in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->vdev_id);
@@ -14741,7 +14741,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			hdd_sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if ((eConnectionState_Associated ==
-			    hdd_sta_ctx->conn_info.connState)
+			    hdd_sta_ctx->conn_info.conn_state)
 			    && sme_is_sta_key_exchange_in_progress(
 			    mac_handle, adapter->vdev_id)) {
 				sta_mac = (uint8_t *)

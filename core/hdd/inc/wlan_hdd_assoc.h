@@ -138,7 +138,7 @@ struct hdd_conn_flag {
 
 /**
  * struct hdd_connection_info - structure to store connection information
- * @connState: connection state of the NIC
+ * @conn_state: connection state of the NIC
  * @bssId: BSSID
  * @SSID: SSID Info
  * @staId: Station ID
@@ -173,7 +173,7 @@ struct hdd_conn_flag {
  * @ch_width: channel width of operating channel
  */
 struct hdd_connection_info {
-	eConnectionState connState;
+	eConnectionState conn_state;
 	struct qdf_mac_addr bssId;
 	tCsrSSIDInfo SSID;
 	uint8_t staId[MAX_PEERS];

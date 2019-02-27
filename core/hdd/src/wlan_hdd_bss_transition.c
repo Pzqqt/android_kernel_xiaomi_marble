@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -144,9 +144,9 @@ __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 		return ret;
 
 	if (adapter->device_mode != QDF_STA_MODE ||
-	    hdd_sta_ctx->conn_info.connState != eConnectionState_Associated) {
+	    hdd_sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
 		hdd_err("Command is either not invoked for STA mode (device mode: %d) or STA is not associated (Connection state: %d)",
-			adapter->device_mode, hdd_sta_ctx->conn_info.connState);
+			adapter->device_mode, hdd_sta_ctx->conn_info.conn_state);
 		return -EINVAL;
 	}
 

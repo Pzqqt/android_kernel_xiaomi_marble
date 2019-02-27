@@ -8193,7 +8193,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if ((hdd_sta_ctx->conn_info.connState !=
+		if ((hdd_sta_ctx->conn_info.conn_state !=
 			eConnectionState_Associated) ||
 		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssId.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
@@ -10249,7 +10249,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 				qdf_status);
 	ret = qdf_status_to_os_return(qdf_status);
 
-	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.connState &&
+	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.conn_state &&
 		QDF_IS_STATUS_SUCCESS(qdf_status) && !is_fast_roam_enabled) {
 
 		INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
@@ -15563,7 +15563,7 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    ucfg_mlme_is_change_channel_bandwidth_enabled(hdd_ctx->psoc)) {
-		connstate = station_ctx->conn_info.connState;
+		connstate = station_ctx->conn_info.conn_state;
 		if (!(eConnectionState_Associated == connstate ||
 		      eConnectionState_Connecting == connstate)) {
 			cbmode_select = true;
@@ -17523,12 +17523,12 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	}
 
 	if ((QDF_IBSS_MODE == adapter->device_mode) ||
-	  (eConnectionState_Associated == sta_ctx->conn_info.connState) ||
-	  (eConnectionState_Connecting == sta_ctx->conn_info.connState) ||
-	  (eConnectionState_IbssConnected == sta_ctx->conn_info.connState)) {
+	  (eConnectionState_Associated == sta_ctx->conn_info.conn_state) ||
+	  (eConnectionState_Connecting == sta_ctx->conn_info.conn_state) ||
+	  (eConnectionState_IbssConnected == sta_ctx->conn_info.conn_state)) {
 		eConnectionState prev_conn_state;
 
-		prev_conn_state = sta_ctx->conn_info.connState;
+		prev_conn_state = sta_ctx->conn_info.conn_state;
 		hdd_conn_set_connection_state(adapter,
 					      eConnectionState_Disconnecting);
 		/* Issue disconnect to CSR */
@@ -17573,7 +17573,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 			result = -ETIMEDOUT;
 		}
 	} else if (eConnectionState_Disconnecting ==
-				sta_ctx->conn_info.connState) {
+				sta_ctx->conn_info.conn_state) {
 		rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
 						 msecs_to_jiffies(wait_time));
 		if (!rc) {
@@ -17947,12 +17947,12 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		}
 	}
 
-	prev_conn_state = sta_ctx->conn_info.connState;
+	prev_conn_state = sta_ctx->conn_info.conn_state;
 	/*stop tx queues */
 	hdd_info("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
-	hdd_debug("Set HDD connState to eConnectionState_Disconnecting");
+	hdd_debug("Set HDD conn_state to eConnectionState_Disconnecting");
 	hdd_conn_set_connection_state(adapter, eConnectionState_Disconnecting);
 
 	INIT_COMPLETION(adapter->disconnect_comp_var);
@@ -18150,8 +18150,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	qdf_mutex_release(&adapter->disconnection_status_lock);
 
 	/* Issue disconnect request to SME, if station is in connected state */
-	if ((sta_ctx->conn_info.connState == eConnectionState_Associated) ||
-	    (sta_ctx->conn_info.connState == eConnectionState_Connecting)) {
+	if ((sta_ctx->conn_info.conn_state == eConnectionState_Associated) ||
+	    (sta_ctx->conn_info.conn_state == eConnectionState_Connecting)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
 
@@ -18220,7 +18220,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		}
 	} else {
 		hdd_err("Unexpected cfg disconnect called while in state: %d",
-		       sta_ctx->conn_info.connState);
+		       sta_ctx->conn_info.conn_state);
 		hdd_set_disconnect_status(adapter, false);
 	}
 
@@ -19620,10 +19620,10 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES,
-		   adapter->vdev_id, sta_ctx->conn_info.connState);
+		   adapter->vdev_id, sta_ctx->conn_info.conn_state);
 
 	/* Added for debug on reception of Re-assoc Req. */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_err("Called with Ie of length = %zu when not associated",
 		       ftie->ie_len);
 		hdd_err("Should be Re-assoc Req IEs");

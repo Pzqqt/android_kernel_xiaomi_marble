@@ -260,13 +260,13 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 
 	/* save the new connection state */
 	hdd_debug("Changed conn state from old:%d to new:%d for dev %s",
-		  hdd_sta_ctx->conn_info.connState, conn_state,
+		  hdd_sta_ctx->conn_info.conn_state, conn_state,
 		  adapter->dev->name);
 
 	hdd_tsf_notify_wlan_state_change(adapter,
-					 hdd_sta_ctx->conn_info.connState,
+					 hdd_sta_ctx->conn_info.conn_state,
 					 conn_state);
-	hdd_sta_ctx->conn_info.connState = conn_state;
+	hdd_sta_ctx->conn_info.conn_state = conn_state;
 
 	connect_time = hdd_sta_ctx->conn_info.connect_time;
 	time_buffer_size = sizeof(hdd_sta_ctx->conn_info.connect_time);
@@ -293,7 +293,7 @@ static inline bool
 hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
 			      eConnectionState *out_state)
 {
-	eConnectionState state = sta_ctx->conn_info.connState;
+	eConnectionState state = sta_ctx->conn_info.conn_state;
 
 	if (out_state)
 		*out_state = state;
@@ -311,7 +311,7 @@ hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
 
 bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx)
 {
-	return hdd_sta_ctx->conn_info.connState ==
+	return hdd_sta_ctx->conn_info.conn_state ==
 		eConnectionState_Connecting;
 }
 
@@ -336,7 +336,7 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 {
 	uint8_t staChannel = 0;
 
-	if (eConnectionState_Associated == sta_ctx->conn_info.connState)
+	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
 		staChannel = sta_ctx->conn_info.operationChannel;
 
 	if (staChannel > 0 && staChannel < 14)
@@ -385,12 +385,12 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 		    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 		    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 			if (eConnectionState_Connecting ==
-			    hdd_sta_ctx->conn_info.connState) {
+			    hdd_sta_ctx->conn_info.conn_state) {
 				hdd_debug("vdev_id %d: Connection is in progress",
 					  adapter->vdev_id);
 				return adapter;
 			} else if ((eConnectionState_Associated ==
-				   hdd_sta_ctx->conn_info.connState) &&
+				   hdd_sta_ctx->conn_info.conn_state) &&
 				   sme_is_sta_key_exchange_in_progress(
 							hdd_ctx->mac_handle,
 							adapter->vdev_id)) {
@@ -1356,7 +1356,7 @@ static void hdd_send_association_event(struct net_device *dev,
 						 adapter->vdev);
 		}
 #endif
-	if (eConnectionState_Associated == sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
 		struct oem_channel_info chan_info = {0};
 
 		if (!pCsrRoamInfo || !pCsrRoamInfo->pBssDesc) {
@@ -1452,7 +1452,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
-			sta_ctx->conn_info.connState) {
+			sta_ctx->conn_info.conn_state) {
 		policy_mgr_update_connection_info(hdd_ctx->psoc,
 				adapter->vdev_id);
 		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssId.bytes,
@@ -1512,7 +1512,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		wireless_send_event(dev, we_event, &wrqu, msg);
 #ifdef FEATURE_WLAN_ESE
 		if (eConnectionState_Associated ==
-			 sta_ctx->conn_info.connState) {
+			 sta_ctx->conn_info.conn_state) {
 			if ((roam_profile->AuthType.authType[0] ==
 			     eCSR_AUTH_TYPE_CCKM_RSN) ||
 			    (roam_profile->AuthType.authType[0] ==
@@ -1750,11 +1750,11 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	 * to cfg80211_disconnected.
 	 */
 	if ((eConnectionState_Disconnecting ==
-	    sta_ctx->conn_info.connState) ||
+	    sta_ctx->conn_info.conn_state) ||
 	    (eConnectionState_NotConnected ==
-	    sta_ctx->conn_info.connState) ||
+	    sta_ctx->conn_info.conn_state) ||
 	    (eConnectionState_Connecting ==
-	    sta_ctx->conn_info.connState)) {
+	    sta_ctx->conn_info.conn_state)) {
 		hdd_debug("HDD has initiated a disconnect, no need to send disconnect indication to kernel");
 		sendDisconInd = false;
 	} else {
@@ -1875,7 +1875,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	* eConnectionState_Connecting state mean that connection is in
 	* progress so no need to set state to eConnectionState_NotConnected
 	*/
-	if ((eConnectionState_Connecting != sta_ctx->conn_info.connState)) {
+	if ((eConnectionState_Connecting != sta_ctx->conn_info.conn_state)) {
 		hdd_conn_set_connection_state(adapter,
 					       eConnectionState_NotConnected);
 		 hdd_set_roaming_in_progress(false);
@@ -2793,13 +2793,13 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	 * to kernel as it will be handled by __cfg80211_disconnect.
 	 */
 	if (((eConnectionState_Disconnecting ==
-	    sta_ctx->conn_info.connState) ||
+	    sta_ctx->conn_info.conn_state) ||
 	    (eConnectionState_NotConnected ==
-	    sta_ctx->conn_info.connState)) &&
+	    sta_ctx->conn_info.conn_state)) &&
 	    ((eCSR_ROAM_RESULT_ASSOCIATED == roam_result) ||
 	    (eCSR_ROAM_ASSOCIATION_FAILURE == roam_status))) {
 		hdd_info("hddDisconInProgress state=%d, result=%d, status=%d",
-				sta_ctx->conn_info.connState,
+				sta_ctx->conn_info.conn_state,
 				roam_result, roam_status);
 		hddDisconInProgress = true;
 	}
@@ -3800,7 +3800,7 @@ hdd_roam_mic_error_indication_handler(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tSirMicFailureInfo *mic_failure_info;
 
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState)
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state)
 		return;
 
 	mic_failure_info = roam_info->u.pMICFailureInfo;

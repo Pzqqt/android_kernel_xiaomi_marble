@@ -41,7 +41,7 @@ struct wireless_dev;
 
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) ( \
 	eConnectionState_NdiConnected ==\
-		(adapter)->session.station.conn_info.connState)
+		(adapter)->session.station.conn_info.conn_state)
 
 void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg);

@@ -6964,7 +6964,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 					  "\n CSR State - %s"
 					  "\n CSR Substate - %s",
 					  hdd_connection_state_string
-						  (sta_ctx->conn_info.connState),
+						  (sta_ctx->conn_info.conn_state),
 					  mac_trace_get_neighbour_roam_state
 						  (sme_get_neighbor_roam_state
 							  (mac_handle, useAdapter->vdev_id)),
@@ -7375,10 +7375,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (0 == hdd_ctx->config->fEnableSNRMonitoring ||
 		    eConnectionState_Associated !=
-		    sta_ctx->conn_info.connState) {
+		    sta_ctx->conn_info.conn_state) {
 			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
 			       hdd_ctx->config->fEnableSNRMonitoring,
-			       sta_ctx->conn_info.connState);
+			       sta_ctx->conn_info.conn_state);
 			return -ENONET;
 		}
 		wlan_hdd_get_snr(adapter, &s7snr);
@@ -8322,7 +8322,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		return -EPERM;
 
 	/* we must be associated in order to add a tspec */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
@@ -8641,7 +8641,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 		return -EINVAL;
 	}
 	/* Added for debug on reception of Re-assoc Req. */
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		hdd_debug("Called with Ie of length = %d when not associated",
 		       wrqu->data.length);
 		hdd_debug("Should be Re-assoc Req IEs");
@@ -9197,7 +9197,7 @@ static int __iw_get_statistics(struct net_device *dev,
 		return ret;
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
 		wrqu->data.length = 0;
 		return 0;
 	}
