@@ -294,6 +294,16 @@ static const struct ieee80211_channel hdd_etsi13_srd_ch[] = {
 };
 #endif
 
+#define band_2_ghz_channels_size sizeof(hdd_channels_2_4_ghz)
+
+#ifdef WLAN_FEATURE_DSRC
+#define band_5_ghz_chanenls_size (sizeof(hdd_channels_5_ghz) + \
+	sizeof(hdd_channels_dot11p))
+#else
+#define band_5_ghz_chanenls_size (sizeof(hdd_channels_5_ghz) + \
+	sizeof(hdd_etsi13_srd_ch))
+#endif
+
 static struct ieee80211_rate g_mode_rates[] = {
 	HDD_G_MODE_RATETAB(10, 0x1, 0),
 	HDD_G_MODE_RATETAB(20, 0x2, 0),
@@ -13223,8 +13233,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			   struct wiphy *wiphy, struct hdd_config *config)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	int len_5g_ch = 0, num_ch, ch_arr_size;
-	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
 	uint32_t *cipher_suites;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
 	bool mac_spoofing_enabled;
@@ -13324,47 +13332,19 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 * If driver load happens statically, at the time of driver unload,
 	 * wiphy flags don't get reset because of static memory.
 	 * It's better not to store channel in static memory.
+	 * The memory is for channels of struct wiphy and shouldn't be
+	 * released during stop modules. So if it's allocated in active
+	 * domain, the memory leak detector would catch the leak during
+	 * stop modules. To avoid this,alloc in init domain in advance.
 	 */
-	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
-	wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels =
-		qdf_mem_malloc(sizeof(hdd_channels_2_4_ghz));
-	if (!wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels)
+	hdd_ctx->channels_2ghz = qdf_mem_malloc(band_2_ghz_channels_size);
+	if (!hdd_ctx->channels_2ghz) {
+		hdd_err("Not enough memory to allocate channels");
 		return -ENOMEM;
-	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
-			&hdd_channels_2_4_ghz[0],
-			sizeof(hdd_channels_2_4_ghz));
-	if ((hdd_is_5g_supported(hdd_ctx)) &&
-		((eHDD_DOT11_MODE_11b != config->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11g != config->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11b_ONLY != config->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11g_ONLY != config->dot11Mode))) {
-		wiphy->bands[HDD_NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
-		wlan_hdd_get_num_dsrc_ch_and_len(config, &num_dsrc_ch,
-						 &len_dsrc_ch);
-		wlan_hdd_get_num_srd_ch_and_len(config, &num_srd_ch,
-						&len_srd_ch);
-		num_ch = QDF_ARRAY_SIZE(hdd_channels_5_ghz) + num_dsrc_ch +
-			 num_srd_ch;
-		len_5g_ch = sizeof(hdd_channels_5_ghz);
-		ch_arr_size = len_5g_ch + len_dsrc_ch + len_srd_ch;
-
-		wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels =
-			qdf_mem_malloc(ch_arr_size);
-		if (!wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels)
-			goto mem_fail;
-		wiphy->bands[HDD_NL80211_BAND_5GHZ]->n_channels = num_ch;
-
-		qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels,
-			     &hdd_channels_5_ghz[0], len_5g_ch);
-		if (num_dsrc_ch)
-			wlan_hdd_copy_dsrc_ch((char *)wiphy->bands[
-					      HDD_NL80211_BAND_5GHZ]->channels +
-					      len_5g_ch, len_dsrc_ch);
-		if (num_srd_ch)
-			wlan_hdd_copy_srd_ch((char *)wiphy->bands[
-					     HDD_NL80211_BAND_5GHZ]->channels +
-					     len_5g_ch, len_srd_ch);
 	}
+	hdd_ctx->channels_5ghz = qdf_mem_malloc(band_5_ghz_chanenls_size);
+	if (!hdd_ctx->channels_5ghz)
+		goto mem_fail;
 
 	/*Initialise the supported cipher suite details */
 	if (ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc)) {
@@ -13427,9 +13407,9 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 mem_fail:
 	hdd_err("Not enough memory to allocate channels");
-	if (wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels) {
-		qdf_mem_free(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels);
-		wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels = NULL;
+	if (hdd_ctx->channels_2ghz) {
+		qdf_mem_free(hdd_ctx->channels_2ghz);
+		hdd_ctx->channels_2ghz = NULL;
 	}
 	return -ENOMEM;
 }
@@ -13448,14 +13428,17 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 {
 	int i;
 	const uint32_t *cipher_suites;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
 		if (wiphy->bands[i] &&
-		   (wiphy->bands[i]->channels)) {
-			qdf_mem_free(wiphy->bands[i]->channels);
+		   (wiphy->bands[i]->channels))
 			wiphy->bands[i]->channels = NULL;
-		}
 	}
+	qdf_mem_free(hdd_ctx->channels_2ghz);
+	qdf_mem_free(hdd_ctx->channels_5ghz);
+	hdd_ctx->channels_2ghz = NULL;
+	hdd_ctx->channels_5ghz = NULL;
 
 	cipher_suites = wiphy->cipher_suites;
 	wiphy->cipher_suites = NULL;
@@ -13661,6 +13644,51 @@ void wlan_hdd_update_11n_mode(struct hdd_context *hdd_ctx)
 			ucfg_mlme_set_go_11ac_override(hdd_ctx->psoc, 0);
 		}
 	}
+}
+
+QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
+{
+	int len_5g_ch, num_ch;
+	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
+	struct hdd_config *cfg = hdd_ctx->config;
+	struct wiphy *wiphy = hdd_ctx->wiphy;
+
+	if (!hdd_ctx->channels_2ghz)
+		return QDF_STATUS_E_NOMEM;
+	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
+	wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels = hdd_ctx->channels_2ghz;
+	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
+		     &hdd_channels_2_4_ghz[0], sizeof(hdd_channels_2_4_ghz));
+
+	if (!hdd_is_5g_supported(hdd_ctx) ||
+	    (eHDD_DOT11_MODE_11b == cfg->dot11Mode) ||
+	    (eHDD_DOT11_MODE_11g == cfg->dot11Mode) ||
+	    (eHDD_DOT11_MODE_11b_ONLY == cfg->dot11Mode) ||
+	    (eHDD_DOT11_MODE_11g_ONLY == cfg->dot11Mode))
+		return QDF_STATUS_SUCCESS;
+
+	if (!hdd_ctx->channels_5ghz)
+		return QDF_STATUS_E_NOMEM;
+	wiphy->bands[HDD_NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
+	wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels = hdd_ctx->channels_5ghz;
+	wlan_hdd_get_num_dsrc_ch_and_len(cfg, &num_dsrc_ch, &len_dsrc_ch);
+	wlan_hdd_get_num_srd_ch_and_len(cfg, &num_srd_ch, &len_srd_ch);
+	num_ch = QDF_ARRAY_SIZE(hdd_channels_5_ghz) + num_dsrc_ch + num_srd_ch;
+	len_5g_ch = sizeof(hdd_channels_5_ghz);
+
+	wiphy->bands[HDD_NL80211_BAND_5GHZ]->n_channels = num_ch;
+	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_5GHZ]->channels,
+		     &hdd_channels_5_ghz[0], len_5g_ch);
+	if (num_dsrc_ch)
+		wlan_hdd_copy_dsrc_ch((char *)wiphy->bands[
+				      HDD_NL80211_BAND_5GHZ]->channels +
+				      len_5g_ch, len_dsrc_ch);
+	if (num_srd_ch)
+		wlan_hdd_copy_srd_ch((char *)wiphy->bands[
+				     HDD_NL80211_BAND_5GHZ]->channels +
+				     len_5g_ch, len_srd_ch);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /* In this function we are registering wiphy. */

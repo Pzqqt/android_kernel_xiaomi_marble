@@ -274,6 +274,17 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx);
 
 void wlan_hdd_update_11n_mode(struct hdd_context *hdd_ctx);
 
+/**
+ * wlan_hdd_update_wiphy_supported_band() - Updates wiphy band info when
+ * receive FW ready event
+ * @hdd_ctx: HDD context
+ *
+ * Updates wiphy band info
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx);
+
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
 
 /**

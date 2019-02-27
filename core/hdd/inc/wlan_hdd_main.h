@@ -1609,6 +1609,10 @@ struct hdd_context {
 	/** Config values read from qcom_cfg.ini file */
 	struct hdd_config *config;
 
+	/* Pointer for wiphy 2G/5G band channels */
+	struct ieee80211_channel *channels_2ghz;
+	struct ieee80211_channel *channels_5ghz;
+
 	/* Completion  variable to indicate Mc Thread Suspended */
 	struct completion mc_sus_event_var;
 
