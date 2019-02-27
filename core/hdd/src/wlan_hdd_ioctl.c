@@ -5052,7 +5052,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	uint32_t uRate = 0;
 	enum tx_rate_info tx_flags = 0;
-	tSirRateUpdateInd rateUpdateParams = {0};
+	tSirRateUpdateInd params = {0};
 	int status;
 	bool bval = false;
 
@@ -5084,16 +5084,16 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto exit;
 	}
-	rateUpdateParams.nss = (bval == 0) ? 0 : 1;
-	rateUpdateParams.reliableMcastDataRate = uRate;
-	rateUpdateParams.reliableMcastDataRateTxFlag = tx_flags;
-	rateUpdateParams.dev_mode = adapter->device_mode;
-	rateUpdateParams.bcastDataRate = -1;
-	memcpy(rateUpdateParams.bssid.bytes,
+	params.nss = (bval == 0) ? 0 : 1;
+	params.reliableMcastDataRate = uRate;
+	params.reliableMcastDataRateTxFlag = tx_flags;
+	params.dev_mode = adapter->device_mode;
+	params.bcastDataRate = -1;
+	memcpy(params.bssid.bytes,
 	       adapter->mac_addr.bytes,
-	       sizeof(rateUpdateParams.bssid));
+	       sizeof(params.bssid));
 	status = sme_send_rate_update_ind(hdd_ctx->mac_handle,
-					  &rateUpdateParams);
+					  &params);
 
 exit:
 	return ret;
