@@ -4362,13 +4362,13 @@ static int drv_cmd_set_roam_scan_control(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t roamScanControl = 0;
+	uint8_t roam_scan_control = 0;
 
 	/* Move pointer to ahead of SETROAMSCANCONTROL<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &roamScanControl);
+	ret = kstrtou8(value, 10, &roam_scan_control);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
@@ -4380,16 +4380,16 @@ static int drv_cmd_set_roam_scan_control(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("Received Command to Set roam scan control = %d",
-		  roamScanControl);
+		  roam_scan_control);
 
-	if (0 != roamScanControl) {
+	if (0 != roam_scan_control) {
 		ret = 0; /* return success but ignore param value "true" */
 		goto exit;
 	}
 
 	sme_set_roam_scan_control(hdd_ctx->mac_handle,
 				  adapter->vdev_id,
-				  roamScanControl);
+				  roam_scan_control);
 
 exit:
 	return ret;
@@ -4478,12 +4478,12 @@ static int drv_cmd_get_roam_scan_control(struct hdd_adapter *adapter,
 					 struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	bool roamScanControl = sme_get_roam_scan_control(hdd_ctx->mac_handle);
+	bool roam_scan_control = sme_get_roam_scan_control(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len = 0;
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
-			command, roamScanControl);
+			command, roam_scan_control);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
