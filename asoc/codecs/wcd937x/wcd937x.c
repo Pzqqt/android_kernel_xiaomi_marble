@@ -131,7 +131,9 @@ static int wcd937x_init_reg(struct snd_soc_component *component)
 				0xFF, 0x3A);
 	snd_soc_component_update_bits(component, WCD937X_RX_OCP_CTL,
 				0x0F, 0x02);
-
+	snd_soc_component_update_bits(component,
+				WCD937X_HPH_SURGE_HPHLR_SURGE_EN,
+				0xFF, 0xD9);
 	return 0;
 }
 
@@ -1507,6 +1509,10 @@ static int wcd937x_event_notify(struct notifier_block *block,
 		wcd937x_get_logical_addr(wcd937x->rx_swr_dev);
 		regcache_mark_dirty(wcd937x->regmap);
 		regcache_sync(wcd937x->regmap);
+		/* Enable surge protection */
+		snd_soc_component_update_bits(component,
+				WCD937X_HPH_SURGE_HPHLR_SURGE_EN,
+				0xFF, 0xD9);
 		/* Initialize MBHC module */
 		mbhc = &wcd937x->mbhc->wcd_mbhc;
 		ret = wcd937x_mbhc_post_ssr_init(wcd937x->mbhc, component);
