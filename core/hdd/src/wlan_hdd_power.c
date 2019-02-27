@@ -213,49 +213,34 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 #ifdef WLAN_NS_OFFLOAD
 /**
  * __wlan_hdd_ipv6_changed() - IPv6 notifier callback function
- * @nb: notifier block that was registered with the kernel
- * @data: (unused) generic data that was registered with the kernel
- * @arg: (unused) generic argument that was registered with the kernel
+ * @net_dev: net_device whose IP address changed
  *
  * This is a callback function that is registered with the kernel via
  * register_inet6addr_notifier() which allows the driver to be
  * notified when there is an IPv6 address change.
  *
- * Return: NOTIFY_DONE to indicate we don't care what happens with
- *	other callbacks
+ * Return: None
  */
-static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
-				   unsigned long data, void *arg)
+static void __wlan_hdd_ipv6_changed(struct net_device *net_dev)
 {
-	struct inet6_ifaddr *ifa = (struct inet6_ifaddr *)arg;
-	struct net_device *ndev = ifa->idev->dev;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
 	int errno;
 
-	hdd_enter_dev(ndev);
+	hdd_enter_dev(net_dev);
 
 	errno = hdd_validate_adapter(adapter);
+	if (errno || adapter->dev != net_dev)
+		goto exit;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
 		goto exit;
 
-	if (adapter->dev == ndev &&
-	    (adapter->device_mode == QDF_STA_MODE ||
-	     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	     adapter->device_mode == QDF_NDI_MODE)) {
-		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		errno = wlan_hdd_validate_context(hdd_ctx);
-		if (errno)
-			goto exit;
-
-		/* Ignore if the interface is down */
-		if (!(ndev->flags & IFF_UP)) {
-			hdd_err("Rcvd change addr request on %s(flags 0x%X)",
-				ndev->name, ndev->flags);
-			hdd_err("NETDEV Interface is down, ignoring...");
-			goto exit;
-		}
-
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	    adapter->device_mode == QDF_NDI_MODE) {
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 		schedule_work(&adapter->ipv6_notifier_work);
@@ -263,20 +248,23 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 
 exit:
 	hdd_exit();
-
-	return NOTIFY_DONE;
 }
 
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
-				unsigned long data, void *arg)
+			  unsigned long data, void *context)
 {
-	int ret;
+	struct inet6_ifaddr *ifa = context;
+	struct net_device *net_dev = ifa->idev->dev;
+	struct osif_vdev_sync *vdev_sync;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_ipv6_changed(nb, data, arg);
-	cds_ssr_unprotect(__func__);
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return NOTIFY_DONE;
 
-	return ret;
+	__wlan_hdd_ipv6_changed(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return NOTIFY_DONE;
 }
 
 /**
@@ -482,7 +470,7 @@ out:
 
 /**
  * __hdd_ipv6_notifier_work_queue() - IPv6 notification work function
- * @work: registered work item
+ * @adapter: adapter whose IP address changed
  *
  * This function performs the work initially trigged by a callback
  * from the IPv6 netdev notifier.  Since this means there has been a
@@ -491,15 +479,13 @@ out:
  *
  * Return: None
  */
-static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
+static void __hdd_ipv6_notifier_work_queue(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *adapter;
 	int errno;
 
 	hdd_enter();
 
-	adapter = container_of(work, struct hdd_adapter, ipv6_notifier_work);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -517,9 +503,16 @@ exit:
 
 void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 {
-	cds_ssr_protect(__func__);
-	__hdd_ipv6_notifier_work_queue(work);
-	cds_ssr_unprotect(__func__);
+	struct hdd_adapter *adapter = container_of(work, struct hdd_adapter,
+						   ipv6_notifier_work);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		return;
+
+	__hdd_ipv6_notifier_work_queue(adapter);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 #endif /* WLAN_NS_OFFLOAD */
 
@@ -736,7 +729,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 
 /**
  * __hdd_ipv4_notifier_work_queue() - IPv4 notification work function
- * @work: registered work item
+ * @adapter: adapter whose IP address changed
  *
  * This function performs the work initially trigged by a callback
  * from the IPv4 netdev notifier.  Since this means there has been a
@@ -746,10 +739,9 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
  *
  * Return: None
  */
-static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
+static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *adapter;
 	int errno;
 	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
@@ -758,7 +750,6 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	hdd_enter();
 
-	adapter = container_of(work, struct hdd_adapter, ipv4_notifier_work);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -791,56 +782,49 @@ exit:
 
 void hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
-	cds_ssr_protect(__func__);
-	__hdd_ipv4_notifier_work_queue(work);
-	cds_ssr_unprotect(__func__);
+	struct hdd_adapter *adapter = container_of(work, struct hdd_adapter,
+						   ipv4_notifier_work);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		return;
+
+	__hdd_ipv4_notifier_work_queue(adapter);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**
  * __wlan_hdd_ipv4_changed() - IPv4 notifier callback function
- * @nb: notifier block that was registered with the kernel
- * @data: (unused) generic data that was registered with the kernel
- * @arg: (unused) generic argument that was registered with the kernel
+ * @net_dev: the net_device whose IP address changed
  *
  * This is a callback function that is registered with the kernel via
  * register_inetaddr_notifier() which allows the driver to be
  * notified when there is an IPv4 address change.
  *
- * Return: NOTIFY_DONE to indicate we don't care what happens with
- *	other callbacks
+ * Return: None
  */
-static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
-				 unsigned long data, void *arg)
+static void __wlan_hdd_ipv4_changed(struct net_device *net_dev)
 {
-	struct in_ifaddr *ifa = (struct in_ifaddr *)arg;
-	struct net_device *ndev = ifa->ifa_dev->dev;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct in_ifaddr *ifa;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
 	int errno;
 
-	hdd_enter_dev(ndev);
+	hdd_enter_dev(net_dev);
 
 	errno = hdd_validate_adapter(adapter);
+	if (errno || adapter->dev != net_dev)
+		goto exit;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
 		goto exit;
 
-	if (adapter->dev == ndev &&
-	    (adapter->device_mode == QDF_STA_MODE ||
-	     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	     adapter->device_mode == QDF_NDI_MODE)) {
-
-		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		errno = wlan_hdd_validate_context(hdd_ctx);
-		if (errno)
-			goto exit;
-
-		/* Ignore if the interface is down */
-		if (!(ndev->flags & IFF_UP)) {
-			hdd_err("Rcvd change addr request on %s(flags 0x%X)",
-				ndev->name, ndev->flags);
-			hdd_err("NETDEV Interface is down, ignoring...");
-			goto exit;
-		}
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	    adapter->device_mode == QDF_NDI_MODE) {
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 
@@ -856,20 +840,23 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 exit:
 	hdd_exit();
-
-	return NOTIFY_DONE;
 }
 
 int wlan_hdd_ipv4_changed(struct notifier_block *nb,
-			unsigned long data, void *arg)
+			  unsigned long data, void *context)
 {
-	int ret;
+	struct in_ifaddr *ifa = context;
+	struct net_device *net_dev = ifa->ifa_dev->dev;
+	struct osif_vdev_sync *vdev_sync;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_ipv4_changed(nb, data, arg);
-	cds_ssr_unprotect(__func__);
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return NOTIFY_DONE;
 
-	return ret;
+	__wlan_hdd_ipv4_changed(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return NOTIFY_DONE;
 }
 
 /**
