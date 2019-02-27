@@ -7485,7 +7485,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	{
 		struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 		tSirMacAddr bssid;
-		uint32_t roamId = INVALID_ROAM_ID;
+		uint32_t roam_id = INVALID_ROAM_ID;
 		uint8_t operating_ch =
 			adapter->session.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields mod_fields;
@@ -7500,7 +7500,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 						     bssid, operating_ch);
 		} else {
 			sme_roam_reassoc(mac_handle, adapter->vdev_id,
-					 NULL, mod_fields, &roamId, 1);
+					 NULL, mod_fields, &roam_id, 1);
 		}
 		return 0;
 	}

@@ -4280,7 +4280,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	uint8_t channel = 0;
 	tSirMacAddr bssid;
-	uint32_t roamId = INVALID_ROAM_ID;
+	uint32_t roam_id = INVALID_ROAM_ID;
 	tCsrRoamModifyProfileFields mod_fields;
 	tCsrHandoffRequest handoffInfo;
 	struct hdd_station_ctx *sta_ctx;
@@ -4327,7 +4327,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 				adapter->vdev_id,
 				&mod_fields);
 			sme_roam_reassoc(mac_handle, adapter->vdev_id,
-				NULL, mod_fields, &roamId, 1);
+				NULL, mod_fields, &roam_id, 1);
 		}
 		return 0;
 	}

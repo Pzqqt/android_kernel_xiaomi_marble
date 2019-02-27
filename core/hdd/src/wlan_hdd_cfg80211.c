@@ -13345,7 +13345,7 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 	tCsrRoamSetKey setKey;
 	bool isConnected = true;
 	QDF_STATUS status;
-	uint32_t roamId = INVALID_ROAM_ID;
+	uint32_t roam_id = INVALID_ROAM_ID;
 	uint8_t *pKeyPtr = NULL;
 	mac_handle_t mac_handle;
 
@@ -13372,7 +13372,7 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 		mac_handle = hdd_adapter_get_mac_handle(adapter);
 		status = sme_roam_set_key(mac_handle,
 					  adapter->vdev_id,
-					  &setKey, &roamId);
+					  &setKey, &roam_id);
 		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("sme_roam_set_key failed status: %d", status);
 	}
@@ -14292,7 +14292,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	tCsrRoamSetKey setKey;
 	int errno;
-	uint32_t roamId = INVALID_ROAM_ID;
+	uint32_t roam_id = INVALID_ROAM_ID;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
@@ -14466,7 +14466,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		setKey.keyDirection = eSIR_TX_RX;
 		/*Set the group key */
 		status = sme_roam_set_key(mac_handle,
-					  adapter->vdev_id, &setKey, &roamId);
+					  adapter->vdev_id, &setKey, &roam_id);
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
@@ -14550,7 +14550,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		/* issue set key request to SME */
 		status = sme_roam_set_key(mac_handle,
 					  adapter->vdev_id, &setKey,
-					  &roamId);
+					  &roam_id);
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
@@ -14586,7 +14586,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 			status = sme_roam_set_key(mac_handle,
 						  adapter->vdev_id, &setKey,
-						  &roamId);
+						  &roam_id);
 
 			if (0 != status) {
 				hdd_err("sme_roam_set_key failed for group key (IBSS), returned %d", status);
@@ -14958,7 +14958,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			 */
 
 			tCsrRoamSetKey setKey;
-			uint32_t roamId = INVALID_ROAM_ID;
+			uint32_t roam_id = INVALID_ROAM_ID;
 			tCsrKeys *Keys = &roam_profile->Keys;
 
 			hdd_debug("Default tx key index %d", key_index);
@@ -15003,7 +15003,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			/* Issue set key request */
 			status = sme_roam_set_key(mac_handle,
 						  adapter->vdev_id, &setKey,
-						  &roamId);
+						  &roam_id);
 
 			if (0 != status) {
 				hdd_err("sme_roam_set_key failed, status: %d",
@@ -15746,7 +15746,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
-	uint32_t roamId = INVALID_ROAM_ID;
+	uint32_t roam_id = INVALID_ROAM_ID;
 	struct csr_roam_profile *roam_profile;
 	eCsrAuthType RSNAuthType;
 	tSmeConfigParams *sme_config;
@@ -16067,7 +16067,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 					    WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 		qdf_status = sme_roam_connect(mac_handle,
 					      adapter->vdev_id, roam_profile,
-					      &roamId);
+					      &roam_id);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			status = qdf_status_to_os_return(qdf_status);
 
