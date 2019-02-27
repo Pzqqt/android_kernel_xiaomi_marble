@@ -1189,7 +1189,7 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
  * @command: Pointer to input channel list
  * @channel_list: Pointer to local output array to record
  *                channel list
- * @pNumChannels: Pointer to number of roam scan channels
+ * @num_channels: Pointer to number of roam scan channels
  *
  * This function parses the channel list passed in the format
  * SETROAMSCANCHANNELS<space><Number of channels><space>Channel 1<space>
@@ -1205,7 +1205,7 @@ hdd_parse_sendactionframe(struct hdd_adapter *adapter, const char *command,
  */
 static int
 hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
-		      uint8_t *pNumChannels)
+		      uint8_t *num_channels)
 {
 	const uint8_t *in_ptr = command;
 	int tempInt;
@@ -1238,11 +1238,11 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 	    (tempInt <= 0) || (tempInt > CFG_VALID_CHANNEL_LIST_LEN))
 		return -EINVAL;
 
-	*pNumChannels = tempInt;
+	*num_channels = tempInt;
 
-	hdd_debug("Number of channels are: %d", *pNumChannels);
+	hdd_debug("Number of channels are: %d", *num_channels);
 
-	for (j = 0; j < (*pNumChannels); j++) {
+	for (j = 0; j < (*num_channels); j++) {
 		/*
 		 * in_ptr pointing to the beginning of first space after number
 		 * of channels
@@ -1251,7 +1251,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		/* no channel list after the number of channels argument */
 		if (NULL == in_ptr) {
 			if (0 != j) {
-				*pNumChannels = j;
+				*num_channels = j;
 				return 0;
 			} else {
 				return -EINVAL;
@@ -1268,7 +1268,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		 */
 		if ('\0' == *in_ptr) {
 			if (0 != j) {
-				*pNumChannels = j;
+				*num_channels = j;
 				return 0;
 			} else {
 				return -EINVAL;
