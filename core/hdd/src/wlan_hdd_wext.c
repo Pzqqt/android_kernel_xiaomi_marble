@@ -7488,10 +7488,10 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		uint32_t roamId = INVALID_ROAM_ID;
 		uint8_t operating_ch =
 			adapter->session.station.conn_info.operationChannel;
-		tCsrRoamModifyProfileFields modProfileFields;
+		tCsrRoamModifyProfileFields mod_fields;
 
 		sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,
-					      &modProfileFields);
+					      &mod_fields);
 		if (roaming_offload_enabled(hdd_ctx)) {
 			qdf_mem_copy(bssid,
 				&adapter->session.station.conn_info.bssId,
@@ -7500,7 +7500,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 						     bssid, operating_ch);
 		} else {
 			sme_roam_reassoc(mac_handle, adapter->vdev_id,
-					 NULL, modProfileFields, &roamId, 1);
+					 NULL, mod_fields, &roamId, 1);
 		}
 		return 0;
 	}
