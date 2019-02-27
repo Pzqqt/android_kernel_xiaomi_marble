@@ -3391,13 +3391,13 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 /**
  * hdd_wlan_get_ibss_peer_info() - Print IBSS peer information
  * @adapter: Adapter upon which the IBSS client is active
- * @staIdx: Station index of the IBSS peer
+ * @staid: Station index of the IBSS peer
  *
  * Return: QDF_STATUS_STATUS if the peer was found and displayed,
  * otherwise an appropriate QDF_STATUS_E_* failure code.
  */
 static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
-					      uint8_t staIdx)
+					      uint8_t staid)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
@@ -3407,7 +3407,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 	status = sme_request_ibss_peer_info(mac_handle, adapter,
 					    hdd_get_ibss_peer_info_cb,
-					    false, staIdx);
+					    false, staid);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		unsigned long rc;

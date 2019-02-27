@@ -331,14 +331,14 @@ QDF_STATUS hdd_cfg80211_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 /**
  * hdd_cfg80211_get_ibss_peer_info() - get ibss peer info
  * @adapter:	Adapter context
- * @staIdx:	Sta index for which the peer info is requested
+ * @staid:	Sta index for which the peer info is requested
  *
  * Request function to get IBSS peer info from lower layers
  *
  * Return: 0 for success non-zero for failure
  */
 static QDF_STATUS
-hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staIdx)
+hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staid)
 {
 	unsigned long rc;
 	QDF_STATUS status;
@@ -348,7 +348,7 @@ hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staIdx)
 	status = sme_request_ibss_peer_info(adapter->hdd_ctx->mac_handle,
 					    adapter,
 					    hdd_get_ibss_peer_info_cb,
-					    false, staIdx);
+					    false, staid);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		rc = wait_for_completion_timeout(
@@ -5239,7 +5239,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx = NULL;
 	char extra[128] = { 0 };
 	uint32_t length = 0;
-	uint8_t staIdx = 0;
+	uint8_t staid = 0;
 	struct qdf_mac_addr peer_macaddr;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
@@ -5270,16 +5270,16 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Get station index for the peer mac address and sanitize it */
-	hdd_get_peer_sta_id(sta_ctx, &peer_macaddr, &staIdx);
+	hdd_get_peer_sta_id(sta_ctx, &peer_macaddr, &staid);
 
-	if (staIdx > MAX_PEERS) {
-		hdd_err("Invalid StaIdx %d returned", staIdx);
+	if (staid > MAX_PEERS) {
+		hdd_err("Invalid StaIdx %d returned", staid);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	/* Handle the command */
-	status = hdd_cfg80211_get_ibss_peer_info(adapter, staIdx);
+	status = hdd_cfg80211_get_ibss_peer_info(adapter, staid);
 	if (QDF_STATUS_SUCCESS == status) {
 		uint32_t tx_rate =
 			sta_ctx->ibss_peer_info.peerInfoParams[0].txRate;
