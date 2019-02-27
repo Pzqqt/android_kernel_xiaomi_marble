@@ -5053,7 +5053,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint32_t uRate = 0;
+	uint32_t rate = 0;
 	enum tx_rate_info tx_flags = 0;
 	tSirRateUpdateInd params = {0};
 	int status;
@@ -5069,13 +5069,13 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = hdd_parse_setrmcrate_command(value, &uRate, &tx_flags);
+	status = hdd_parse_setrmcrate_command(value, &rate, &tx_flags);
 	if (status) {
 		hdd_err("Invalid SETRMCTXRATE command");
 		ret = -EINVAL;
 		goto exit;
 	}
-	hdd_debug("uRate %d", uRate);
+	hdd_debug("rate %d", rate);
 
 	/*
 	 * Fill the user specifieed RMC rate param
@@ -5088,7 +5088,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 		goto exit;
 	}
 	params.nss = (bval == 0) ? 0 : 1;
-	params.reliableMcastDataRate = uRate;
+	params.reliableMcastDataRate = rate;
 	params.reliableMcastDataRateTxFlag = tx_flags;
 	params.dev_mode = adapter->device_mode;
 	params.bcastDataRate = -1;
