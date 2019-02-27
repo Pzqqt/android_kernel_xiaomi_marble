@@ -4871,7 +4871,7 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
 
 	*paction_period = temp_int;
 
-	hdd_debug("uActionPeriod: %d", *paction_period);
+	hdd_debug("action_period: %d", *paction_period);
 
 	return 0;
 }
@@ -5000,7 +5000,7 @@ static int drv_cmd_set_rmc_action_period(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint32_t uActionPeriod = 0;
+	uint32_t action_period = 0;
 	int status;
 	mac_handle_t mac_handle;
 
@@ -5014,20 +5014,20 @@ static int drv_cmd_set_rmc_action_period(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = hdd_parse_setrmcactionperiod_command(value, &uActionPeriod);
+	status = hdd_parse_setrmcactionperiod_command(value, &action_period);
 	if (status) {
 		hdd_err("Invalid SETRMCACTIONPERIOD command");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	hdd_debug("uActionPeriod %d", uActionPeriod);
+	hdd_debug("action_period %d", action_period);
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (ucfg_mlme_set_rmc_action_period_freq(hdd_ctx->psoc,
-						 uActionPeriod) !=
+						 action_period) !=
 						 QDF_STATUS_SUCCESS) {
-		hdd_err("Could not set SETRMCACTIONPERIOD %d", uActionPeriod);
+		hdd_err("Could not set SETRMCACTIONPERIOD %d", action_period);
 		ret = -EINVAL;
 		goto exit;
 	}
