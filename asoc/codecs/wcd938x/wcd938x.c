@@ -49,6 +49,10 @@ enum {
 };
 
 enum {
+	WCD_ADC1 = 0,
+	WCD_ADC2,
+	WCD_ADC3,
+	WCD_ADC4,
 	ALLOW_BUCK_DISABLE,
 	HPH_COMP_DELAY,
 	HPH_PA_DELAY,
@@ -1227,12 +1231,14 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
+		set_bit(w->shift, &wcd938x->status_mask);
 		wcd938x_tx_connect_port(component, ADC1 + (w->shift), true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd938x_tx_connect_port(component, ADC1 + (w->shift), false);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
+		clear_bit(w->shift, &wcd938x->status_mask);
 		break;
 	};
 
@@ -1469,8 +1475,6 @@ static int wcd938x_event_notify(struct notifier_block *block,
 				void *data)
 {
 	u16 event = (val & 0xffff);
-	u16 amic;
-	u16 mask = 0x40, reg = 0x0;
 	int ret = 0;
 	struct wcd938x_priv *wcd938x = dev_get_drvdata((struct device *)data);
 	struct snd_soc_component *component = wcd938x->component;
@@ -1478,16 +1482,26 @@ static int wcd938x_event_notify(struct notifier_block *block,
 
 	switch (event) {
 	case BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR:
-		amic = (val >> 0x10);
-		if (amic == 0x1 || amic == 0x2)
-			reg = WCD938X_ANA_TX_CH2;
-		else if (amic == 0x3)
-			reg = WCD938X_ANA_TX_CH4;
-		else
-			return 0;
-		if (amic == 0x2)
-			mask = 0x20;
-		snd_soc_component_update_bits(component, reg, mask, 0x00);
+		if (test_bit(WCD_ADC1, &wcd938x->status_mask)) {
+			snd_soc_component_update_bits(component,
+					WCD938X_ANA_TX_CH2, 0x40, 0x00);
+			clear_bit(WCD_ADC1, &wcd938x->status_mask);
+		}
+		if (test_bit(WCD_ADC2, &wcd938x->status_mask)) {
+			snd_soc_component_update_bits(component,
+					WCD938X_ANA_TX_CH2, 0x20, 0x00);
+			clear_bit(WCD_ADC2, &wcd938x->status_mask);
+		}
+		if (test_bit(WCD_ADC3, &wcd938x->status_mask)) {
+			snd_soc_component_update_bits(component,
+					WCD938X_ANA_TX_CH4, 0x40, 0x00);
+			clear_bit(WCD_ADC3, &wcd938x->status_mask);
+		}
+		if (test_bit(WCD_ADC4, &wcd938x->status_mask)) {
+			snd_soc_component_update_bits(component,
+					WCD938X_ANA_TX_CH4, 0x20, 0x00);
+			clear_bit(WCD_ADC4, &wcd938x->status_mask);
+		}
 		break;
 	case BOLERO_WCD_EVT_PA_OFF_PRE_SSR:
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
