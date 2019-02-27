@@ -4500,19 +4500,19 @@ static int drv_cmd_bt_coex_mode(struct hdd_adapter *adapter,
 				struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	char *bcMode;
+	char *coex_mode;
 
-	bcMode = command + 11;
-	if ('1' == *bcMode) {
-		hdd_debug("BTCOEXMODE %d", *bcMode);
+	coex_mode = command + 11;
+	if ('1' == *coex_mode) {
+		hdd_debug("BTCOEXMODE %d", *coex_mode);
 		hdd_ctx->bt_coex_mode_set = true;
 		ret = wlan_hdd_scan_abort(adapter);
 		if (ret < 0) {
 			hdd_err("Failed to abort existing scan status: %d",
 				ret);
 		}
-	} else if ('2' == *bcMode) {
-		hdd_debug("BTCOEXMODE %d", *bcMode);
+	} else if ('2' == *coex_mode) {
+		hdd_debug("BTCOEXMODE %d", *coex_mode);
 		hdd_ctx->bt_coex_mode_set = false;
 	}
 
