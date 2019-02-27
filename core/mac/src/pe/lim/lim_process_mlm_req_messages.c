@@ -120,9 +120,6 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	case LIM_MLM_ASSOC_REQ:
 		lim_process_mlm_assoc_req(mac_ctx, msg->bodyptr);
 		break;
-	case LIM_MLM_REASSOC_REQ:
-		lim_process_mlm_reassoc_req(mac_ctx, msg->bodyptr);
-		break;
 	case LIM_MLM_DISASSOC_REQ:
 		lim_process_mlm_disassoc_req(mac_ctx, msg->bodyptr);
 		break;
