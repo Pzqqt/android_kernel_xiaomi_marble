@@ -339,7 +339,7 @@ static inline int ol_txrx_ieee80211_hdrsize(const void *data)
 		     IEEE80211_FC0_TYPE_CTL);
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
 	    IEEE80211_FC1_DIR_DSTODS)
-		size += IEEE80211_ADDR_LEN;
+		size += QDF_MAC_ADDR_SIZE;
 	if (IEEE80211_QOS_HAS_SEQ(wh)) {
 		size += sizeof(uint16_t);
 		/* Qos frame with Order bit set indicates an HTC frame */

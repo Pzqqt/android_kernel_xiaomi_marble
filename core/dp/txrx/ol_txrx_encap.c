@@ -167,34 +167,34 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 	case wlan_op_mode_ap:
 		/* DA , BSSID , SA */
 		qdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(wh->i_addr2, &vdev->mac_addr.raw,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(wh->i_addr3, eth_hdr->src_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 		new_hdsize = sizeof(struct ieee80211_frame);
 		break;
 	case wlan_op_mode_ibss:
 		/* DA, SA, BSSID */
 		qdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		/* need to check the bssid behaviour for IBSS vdev */
 		qdf_mem_copy(wh->i_addr3, &vdev->mac_addr.raw,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 		new_hdsize = sizeof(struct ieee80211_frame);
 		break;
 	case wlan_op_mode_sta:
 		/* BSSID, SA , DA */
 		qdf_mem_copy(wh->i_addr1, &peer->mac_addr.raw,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(wh->i_addr3, eth_hdr->dest_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
 		new_hdsize = sizeof(struct ieee80211_frame);
 		break;
@@ -307,27 +307,27 @@ ol_rx_decap_to_native_wifi(struct ol_txrx_vdev_t *vdev,
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 		case IEEE80211_FC1_DIR_NODS:
 			qdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_TODS:
 			qdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
 			qdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(wh->i_addr3, ethr_hdr->src_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
 			qdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(wh->i_addr4, ethr_hdr->src_addr,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		}
 	}
@@ -392,27 +392,27 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 		case IEEE80211_FC1_DIR_NODS:
 			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_TODS:
 			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
 			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
 			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
-				     ETHERNET_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			break;
 		}
 	}

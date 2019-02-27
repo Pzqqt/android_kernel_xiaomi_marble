@@ -5225,7 +5225,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	for (i = 0; i < rssi_info->num_peer_stats; i++) {
 		if (!qdf_mem_cmp(rssi_info->peer_stats[i].peer_macaddr,
 				 sta_ctx->conn_info.bssid.bytes,
-				 WLAN_MACADDR_LEN)) {
+				 QDF_MAC_ADDR_SIZE)) {
 			*rssi_value = rssi_info->peer_stats[i].peer_rssi;
 			hdd_debug("RSSI = %d", *rssi_value);
 			wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);

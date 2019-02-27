@@ -806,8 +806,8 @@ struct roam_synch_frame_ind {
  */
 struct wma_txrx_node {
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t addr[IEEE80211_ADDR_LEN];
-	uint8_t bssid[IEEE80211_ADDR_LEN];
+	uint8_t addr[QDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct cdp_vdev *handle;
 	struct beacon_info *beacon;
 	vdev_restart_params_t vdev_restart_params;
@@ -1113,8 +1113,8 @@ typedef struct {
 	qdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
-	uint8_t myaddr[IEEE80211_ADDR_LEN];
-	uint8_t hwaddr[IEEE80211_ADDR_LEN];
+	uint8_t myaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t hwaddr[QDF_MAC_ADDR_SIZE];
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif
@@ -1380,7 +1380,7 @@ struct wma_set_key_params {
 	/* def_key_idx can be used to see if we have to read the key from cfg */
 	uint32_t def_key_idx;
 	uint16_t key_len;
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint8_t singl_tid_rc;
 	enum eAniEdType key_type;
 	uint32_t key_idx;
@@ -1665,7 +1665,7 @@ enum uapsd_up {
  */
 struct wma_roam_invoke_cmd {
 	uint32_t vdev_id;
-	uint8_t bssid[IEEE80211_ADDR_LEN];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t channel;
 	uint32_t frame_len;
 	uint8_t *frame_buf;

@@ -318,7 +318,7 @@ void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
 	sta_kickout.vdev_id = vdev_id;
 	if (macaddr)
 		qdf_mem_copy(sta_kickout.peer_mac, macaddr,
-							IEEE80211_ADDR_LEN);
+							QDF_MAC_ADDR_SIZE);
 	WLAN_HOST_DIAG_EVENT_REPORT(&sta_kickout, EVENT_WLAN_STA_KICKOUT);
 }
 #endif
@@ -341,7 +341,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_peer_sta_kickout_event_fixed_param *kickout_event = NULL;
-	uint8_t vdev_id, peer_id, macaddr[IEEE80211_ADDR_LEN];
+	uint8_t vdev_id, peer_id, macaddr[QDF_MAC_ADDR_SIZE];
 	void *peer;
 	struct cdp_pdev *pdev;
 	tpDeleteStaContext del_sta_ctx;
@@ -386,7 +386,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 
 		inactivity->staIdx = peer_id;
 		qdf_mem_copy(inactivity->peer_addr.bytes, macaddr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
 			     inactivity, 0);
 		goto exit_handler;
@@ -403,9 +403,9 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		del_sta_ctx->is_tdls = true;
 		del_sta_ctx->vdev_id = vdev_id;
 		del_sta_ctx->staId = peer_id;
-		qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(del_sta_ctx->addr2, macaddr, QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].bssid,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 		wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND,
 			     (void *)del_sta_ctx, 0);
@@ -417,7 +417,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
 		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
-				    macaddr, IEEE80211_ADDR_LEN)) {
+				    macaddr, QDF_MAC_ADDR_SIZE)) {
 			wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_XRETRY,
 							vdev_id, macaddr);
 			/*
@@ -446,7 +446,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
 		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
-				    macaddr, IEEE80211_ADDR_LEN)) {
+				    macaddr, QDF_MAC_ADDR_SIZE)) {
 			wma_sta_kickout_event(
 			HOST_STA_KICKOUT_REASON_UNSPECIFIED, vdev_id, macaddr);
 			/*
@@ -489,9 +489,9 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	del_sta_ctx->is_tdls = false;
 	del_sta_ctx->vdev_id = vdev_id;
 	del_sta_ctx->staId = peer_id;
-	qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(del_sta_ctx->addr2, macaddr, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
-		     IEEE80211_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 	if (wmi_service_enabled(wma->wmi_handle,
 				wmi_service_hw_db2dbm_support))
@@ -1969,7 +1969,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 
 	params.vdev_id = key_params->vdev_id;
 	params.key_idx = key_params->key_idx;
-	qdf_mem_copy(params.peer_mac, key_params->peer_mac, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(params.peer_mac, key_params->peer_mac, QDF_MAC_ADDR_SIZE);
 
 #ifdef FEATURE_WLAN_WAPI
 	qdf_mem_zero(params.tx_iv, 16);
@@ -2299,7 +2299,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	if (wlan_opmode == wlan_op_mode_sta) {
 		qdf_mem_copy(key_params.peer_mac,
 			wma_handle->interfaces[key_info->smesessionId].bssid,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 	} else {
 		mac_addr = cdp_get_vdev_mac_addr(soc,
 					txrx_vdev);
@@ -2310,7 +2310,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		}
 		/* vdev mac address will be passed for all other modes */
 		qdf_mem_copy(key_params.peer_mac, mac_addr,
-			     IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		WMA_LOGD("BSS Key setup with vdev_mac %pM\n",
 			 mac_addr);
 	}
@@ -2424,7 +2424,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	ASSERT(wlan_op_mode_ibss == opmode);
 
 	qdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
@@ -2550,7 +2550,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	key_params.def_key_idx = key_info->defWEPIdx;
 	qdf_mem_copy((void *)key_params.peer_mac,
 		     (const void *)key_info->peer_macaddr.bytes,
-		     IEEE80211_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	for (i = 0; i < num_keys; i++) {
 		if (key_params.key_type != eSIR_ED_NONE &&
 		    !key_info->key[i].keyLength)

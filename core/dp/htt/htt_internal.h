@@ -424,8 +424,6 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 #define HTT_ASSERT3(condition)
 #endif
 
-#define HTT_MAC_ADDR_LEN 6
-
 /*
  * HTT_MAX_SEND_QUEUE_DEPTH -
  * How many packets HTC should allow to accumulate in a send queue

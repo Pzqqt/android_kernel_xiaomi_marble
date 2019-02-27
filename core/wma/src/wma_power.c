@@ -979,7 +979,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
  */
 static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 					uint32_t vdevid,
-					uint8_t peer_addr[IEEE80211_ADDR_LEN],
+					uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 					struct sta_uapsd_params *trig_param,
 					uint32_t num_ac)
 {
@@ -991,7 +991,7 @@ static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 	cmd.num_ac = num_ac;
 
 	qdf_mem_copy((uint8_t *) cmd.peer_addr, (uint8_t *) peer_addr,
-		     sizeof(uint8_t) * IEEE80211_ADDR_LEN);
+		     sizeof(uint8_t) * QDF_MAC_ADDR_SIZE);
 	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_handle,
 				   &cmd);
 	if (QDF_IS_STATUS_ERROR(ret))

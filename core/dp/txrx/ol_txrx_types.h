@@ -217,7 +217,7 @@ union ol_tx_desc_list_elem_t {
 };
 
 union ol_txrx_align_mac_addr_t {
-	uint8_t raw[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t raw[QDF_MAC_ADDR_SIZE];
 	struct {
 		uint16_t bytes_ab;
 		uint16_t bytes_cd;
@@ -380,7 +380,7 @@ struct ol_tx_log_queue_add_t {
 };
 
 struct ol_mac_addr {
-	uint8_t mac_addr[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 struct ol_tx_sched_t;

@@ -591,7 +591,7 @@ QDF_STATUS wma_peer_unmap_conf_send(tp_wma_handle wma,
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  struct cdp_vdev *vdev,
-			  uint8_t peer_addr[IEEE80211_ADDR_LEN],
+			  uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress);
 
@@ -1320,7 +1320,7 @@ int wma_unified_beacon_debug_stats_event_handler(void *handle,
 /**
  * wma_sta_kickout_event()- send sta kickout event
  * @kickout_reason - reasoncode for kickout
- * @macaddr[IEEE80211_ADDR_LEN]: Peer mac address
+ * @macaddr[QDF_MAC_ADDR_SIZE]: Peer mac address
  * @vdev_id: Unique id for identifying the VDEV
  *
  * This function sends sta kickout diag event
@@ -1419,7 +1419,7 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data, uint32_t data_len);
  */
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,
-				  uint8_t bssid[IEEE80211_ADDR_LEN]);
+				  uint8_t bssid[QDF_MAC_ADDR_SIZE]);
 
 /**
  * wma_send_vdev_down_to_fw() - send the vdev down command to firmware

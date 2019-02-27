@@ -282,7 +282,7 @@ hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
 	fc[0] = *(tmp + 1);
 	if ((fc[0] & 0x03) == 0x03) {
 		hdd_err("Address 4 is present");
-		mac_hdr_len += IEEE80211_ADDR_LEN;
+		mac_hdr_len += QDF_MAC_ADDR_SIZE;
 	}
 
 	/*

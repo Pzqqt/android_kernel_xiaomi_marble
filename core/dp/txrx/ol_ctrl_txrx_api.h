@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,12 +23,11 @@
 #ifndef _OL_CTRL_TXRX_API__H_
 #define _OL_CTRL_TXRX_API__H_
 
-/* #include <osapi_linux.h>      / * uint8_t * / */
 #include <osdep.h>              /* uint8_t */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <cdp_txrx_cmn.h>           /* ol_txrx_pdev_handle */
-#include <ol_txrx_types.h>          /* OL_TXRX_MAC_ADDR_LEN */
+#include <ol_txrx_types.h>
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 #include <cdp_txrx_handle.h>
 #ifdef SUPPORT_HOST_STATISTICS

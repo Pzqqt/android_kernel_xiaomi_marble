@@ -33,26 +33,26 @@ struct ieee80211_frame {
 	uint8_t i_dur[2];
 	union {
 		struct {
-			uint8_t i_addr1[IEEE80211_ADDR_LEN];
-			uint8_t i_addr2[IEEE80211_ADDR_LEN];
-			uint8_t i_addr3[IEEE80211_ADDR_LEN];
+			uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 		};
-		uint8_t i_addr_all[3 * IEEE80211_ADDR_LEN];
+		uint8_t i_addr_all[3 * QDF_MAC_ADDR_SIZE];
 	};
 	uint8_t i_seq[2];
-	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
+	/* possibly followed by addr4[QDF_MAC_ADDR_SIZE]; */
 	/* see below */
 } __packed;
 
 struct ieee80211_qosframe {
 	uint8_t i_fc[2];
 	uint8_t i_dur[2];
-	uint8_t i_addr1[IEEE80211_ADDR_LEN];
-	uint8_t i_addr2[IEEE80211_ADDR_LEN];
-	uint8_t i_addr3[IEEE80211_ADDR_LEN];
+	uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 	uint8_t i_seq[2];
 	uint8_t i_qos[2];
-	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
+	/* possibly followed by addr4[QDF_MAC_ADDR_SIZE]; */
 	/* see below */
 } __packed;
 
@@ -63,21 +63,21 @@ struct ieee80211_qoscntl {
 struct ieee80211_frame_addr4 {
 	uint8_t i_fc[2];
 	uint8_t i_dur[2];
-	uint8_t i_addr1[IEEE80211_ADDR_LEN];
-	uint8_t i_addr2[IEEE80211_ADDR_LEN];
-	uint8_t i_addr3[IEEE80211_ADDR_LEN];
+	uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 	uint8_t i_seq[2];
-	uint8_t i_addr4[IEEE80211_ADDR_LEN];
+	uint8_t i_addr4[QDF_MAC_ADDR_SIZE];
 } __packed;
 
 struct ieee80211_qosframe_addr4 {
 	uint8_t i_fc[2];
 	uint8_t i_dur[2];
-	uint8_t i_addr1[IEEE80211_ADDR_LEN];
-	uint8_t i_addr2[IEEE80211_ADDR_LEN];
-	uint8_t i_addr3[IEEE80211_ADDR_LEN];
+	uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 	uint8_t i_seq[2];
-	uint8_t i_addr4[IEEE80211_ADDR_LEN];
+	uint8_t i_addr4[QDF_MAC_ADDR_SIZE];
 	uint8_t i_qos[2];
 } __packed;
 
@@ -86,17 +86,17 @@ struct ieee80211_qosframe_addr4 {
 struct ieee80211_frame_min_one {
 	uint8_t i_fc[2];
 	uint8_t i_dur[2];
-	uint8_t i_addr1[IEEE80211_ADDR_LEN];
+	uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
 } __packed;                     /* For TxBF RC */
 
 struct ieee80211_qosframe_htc_addr4 {
 	uint8_t i_fc[2];
 	uint8_t i_dur[2];
-	uint8_t i_addr1[IEEE80211_ADDR_LEN];
-	uint8_t i_addr2[IEEE80211_ADDR_LEN];
-	uint8_t i_addr3[IEEE80211_ADDR_LEN];
+	uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+	uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 	uint8_t i_seq[2];
-	uint8_t i_addr4[IEEE80211_ADDR_LEN];
+	uint8_t i_addr4[QDF_MAC_ADDR_SIZE];
 	uint8_t i_qos[2];
 	uint8_t i_htc[4];
 } __packed;

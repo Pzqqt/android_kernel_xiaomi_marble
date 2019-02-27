@@ -2341,16 +2341,16 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	del_bss_params->smesessionId = vdev_id;
 	del_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 	set_link_params->state = eSIR_LINK_PREASSOC_STATE;
 	qdf_mem_copy(set_link_params->selfMacAddr,
-		roam_synch_ind_ptr->self_mac.bytes, IEEE80211_ADDR_LEN);
+		roam_synch_ind_ptr->self_mac.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 	add_sta_params->staType = STA_ENTRY_SELF;
 	add_sta_params->smesessionId = vdev_id;
 	qdf_mem_copy(&add_sta_params->bssId, &roam_synch_ind_ptr->bssid.bytes,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
 
@@ -2361,7 +2361,7 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	wma_add_sta(wma, add_sta_params);
 	wma_vdev_set_mlme_state_run(wma, vdev_id);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
-			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
+			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_free(del_bss_params);
 	qdf_mem_free(set_link_params);
 	qdf_mem_free(add_sta_params);

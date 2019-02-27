@@ -20562,7 +20562,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 
 				qdf_mem_copy(&config->accept_mac[i],
 					     params->mac_addrs[i].addr,
-					     sizeof(qcmacaddr));
+					     QDF_MAC_ADDR_SIZE);
 			}
 		} else if (eSAP_ACCEPT_UNLESS_DENIED == config->SapMacaddr_acl) {
 			config->num_deny_mac = params->n_acl_entries;
@@ -20574,7 +20574,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 
 				qdf_mem_copy(&config->deny_mac[i],
 					     params->mac_addrs[i].addr,
-					     sizeof(qcmacaddr));
+					     QDF_MAC_ADDR_SIZE);
 			}
 		}
 		qdf_status = wlansap_set_mac_acl(

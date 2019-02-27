@@ -2673,7 +2673,7 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 	tAniGetPEStatsRsp *stats_rsp_params;
 	tCsrGlobalClassAStatsInfo *classa_stats = NULL;
 	struct wma_txrx_node *node;
-	uint8_t *stats_buf, vdev_id, macaddr[IEEE80211_ADDR_LEN], mcsRateFlags;
+	uint8_t *stats_buf, vdev_id, macaddr[QDF_MAC_ADDR_SIZE], mcsRateFlags;
 	uint32_t temp_mask;
 	uint8_t nss;
 
@@ -4548,7 +4548,7 @@ static void wma_update_roam_offload_flag(tp_wma_handle wma, uint8_t vdev_id,
 #ifdef CONFIG_VDEV_SM
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,
-				  uint8_t bssid[IEEE80211_ADDR_LEN])
+				  uint8_t bssid[QDF_MAC_ADDR_SIZE])
 {
 	QDF_STATUS status;
 	struct wma_txrx_node *vdev;
@@ -4568,7 +4568,7 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 #else
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,
-				  uint8_t bssid[IEEE80211_ADDR_LEN])
+				  uint8_t bssid[QDF_MAC_ADDR_SIZE])
 {
 	QDF_STATUS status;
 	struct wma_txrx_node *vdev;

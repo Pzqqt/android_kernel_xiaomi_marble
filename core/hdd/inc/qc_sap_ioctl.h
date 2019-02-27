@@ -23,10 +23,6 @@
  * QCSAP ioctls.
  */
 
-#define QCSAP_ADDR_LEN  6
-
-typedef uint8_t qcmacaddr[QCSAP_ADDR_LEN];
-
 /*
  * Channel List Info
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -325,7 +325,7 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	}
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
 	{
-		uint8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+		uint8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
 		uint8_t *peer_mac_addr;
 		uint16_t peer_id;
 		uint8_t vdev_id;
@@ -599,14 +599,14 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				(*(msg_word + 1));
 			qdf_mem_copy(err_info.u.mic_err.da,
 				 (uint8_t *)(msg_word + 2),
-				 OL_TXRX_MAC_ADDR_LEN);
+				 QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(err_info.u.mic_err.sa,
 				 (uint8_t *)(msg_word + 4),
-				 OL_TXRX_MAC_ADDR_LEN);
+				 QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(&err_info.u.mic_err.pn,
 				 (uint8_t *)(msg_word + 6), 6);
 			qdf_mem_copy(err_info.u.mic_err.ta,
-				 peer->mac_addr.raw, OL_TXRX_MAC_ADDR_LEN);
+				 peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 
 			wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);
 			break;

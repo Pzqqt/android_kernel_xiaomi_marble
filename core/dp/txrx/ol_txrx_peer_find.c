@@ -183,7 +183,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 		mac_addr = (union ol_txrx_align_mac_addr_t *)peer_mac_addr;
 	} else {
 		qdf_mem_copy(&local_mac_addr_aligned.raw[0],
-			     peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
+			     peer_mac_addr, QDF_MAC_ADDR_SIZE);
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = ol_txrx_peer_find_hash_index(pdev, mac_addr);
@@ -218,7 +218,7 @@ struct ol_txrx_peer_t *
 		mac_addr = (union ol_txrx_align_mac_addr_t *)peer_mac_addr;
 	} else {
 		qdf_mem_copy(&local_mac_addr_aligned.raw[0],
-			     peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
+			     peer_mac_addr, QDF_MAC_ADDR_SIZE);
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = ol_txrx_peer_find_hash_index(pdev, mac_addr);

@@ -1642,7 +1642,7 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	ol_txrx_vdev_per_vdev_tx_desc_init(vdev);
 
 	qdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr,
-		     OL_TXRX_MAC_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 
 	TAILQ_INIT(&vdev->peer_list);
 	vdev->last_real_peer = NULL;
@@ -2176,7 +2176,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 	peer->vdev = vdev;
 	peer->ctrl_peer = peer->ctrl_peer;
 	qdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
-		     OL_TXRX_MAC_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 
 	ol_txrx_peer_txqs_init(pdev, peer);
 
@@ -2235,7 +2235,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 	 * For every peer MAp message search and set if bss_peer
 	 */
 	if (qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
-				OL_TXRX_MAC_ADDR_LEN))
+				QDF_MAC_ADDR_SIZE))
 		peer->bss_peer = 1;
 
 	/*

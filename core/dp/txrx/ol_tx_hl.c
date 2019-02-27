@@ -743,10 +743,10 @@ void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr)
 	if (bss_addr && vdev->last_real_peer &&
 	    !qdf_mem_cmp((u8 *)bss_addr,
 			     vdev->last_real_peer->mac_addr.raw,
-			     IEEE80211_ADDR_LEN))
+			     QDF_MAC_ADDR_SIZE))
 		qdf_mem_copy(vdev->hl_tdls_ap_mac_addr.raw,
 			     vdev->last_real_peer->mac_addr.raw,
-			     OL_TXRX_MAC_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 	qdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
 }
 

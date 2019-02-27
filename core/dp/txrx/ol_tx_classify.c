@@ -189,13 +189,13 @@ ol_tx_set_ether_type(
 		}
 	} else if (tx_msdu_info->htt.info.l2_hdr_type ==
 					htt_pkt_type_ethernet) {
-		ptr = (datap + ETHERNET_ADDR_LEN * 2);
+		ptr = (datap + QDF_MAC_ADDR_SIZE * 2);
 		typeorlength = (ptr[0] << 8) | ptr[1];
 		/*ETHERNET_HDR_LEN;*/
 		l3_data_ptr = datap + sizeof(struct ethernet_hdr_t);
 
 		if (typeorlength == ETHERTYPE_VLAN) {
-			ptr = (datap + ETHERNET_ADDR_LEN * 2
+			ptr = (datap + QDF_MAC_ADDR_SIZE * 2
 					+ ETHERTYPE_VLAN_LEN);
 			typeorlength = (ptr[0] << 8) | ptr[1];
 			l3_data_ptr += ETHERTYPE_VLAN_LEN;
@@ -676,7 +676,7 @@ ol_tx_classify_mgmt(
 
 				qdf_mem_copy(
 					&local_mac_addr_aligned.raw[0],
-					dest_addr, OL_TXRX_MAC_ADDR_LEN);
+					dest_addr, QDF_MAC_ADDR_SIZE);
 				mac_addr = &local_mac_addr_aligned;
 				if (ol_txrx_peer_find_mac_addr_cmp
 						(mac_addr,

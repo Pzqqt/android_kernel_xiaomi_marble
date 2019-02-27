@@ -1187,7 +1187,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_CSA_HANDLING_EVENTID_param_tlvs *param_buf;
 	wmi_csa_event_fixed_param *csa_event;
-	uint8_t bssid[IEEE80211_ADDR_LEN];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t vdev_id = 0;
 	uint8_t cur_chan = 0;
 	struct ieee80211_channelswitch_ie *csa_ie;
@@ -1224,7 +1224,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	qdf_mem_zero(csa_offload_event, sizeof(*csa_offload_event));
-	qdf_mem_copy(csa_offload_event->bssId, &bssid, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(csa_offload_event->bssId, &bssid, QDF_MAC_ADDR_SIZE);
 
 	if (csa_event->ies_present_flag & WMI_CSA_IE_PRESENT) {
 		csa_ie = (struct ieee80211_channelswitch_ie *)
@@ -2813,8 +2813,8 @@ static int wma_wake_event_piggybacked(
 		del_sta_ctx->is_tdls = false;
 		del_sta_ctx->vdev_id = event_param->fixed_param->vdev_id;
 		del_sta_ctx->staId = peer_id;
-		qdf_mem_copy(del_sta_ctx->addr2, bssid, IEEE80211_ADDR_LEN);
-		qdf_mem_copy(del_sta_ctx->bssId, bssid, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(del_sta_ctx->addr2, bssid, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(del_sta_ctx->bssId, bssid, QDF_MAC_ADDR_SIZE);
 		del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 		wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, del_sta_ctx,
 			     0);
@@ -3221,10 +3221,10 @@ QDF_STATUS wma_process_get_peer_info_req
 	struct cdp_pdev *pdev;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint8_t *peer_mac_raw;
 	wmi_peer_info_req_cmd_fixed_param *p_get_peer_info_cmd;
-	uint8_t bcast_mac[IEEE80211_ADDR_LEN] = { 0xff, 0xff, 0xff,
+	uint8_t bcast_mac[QDF_MAC_ADDR_SIZE] = { 0xff, 0xff, 0xff,
 						  0xff, 0xff, 0xff };
 
 	if (!soc) {
@@ -3247,7 +3247,7 @@ QDF_STATUS wma_process_get_peer_info_req
 
 	if (0xFF == pReq->staIdx) {
 		/*get info for all peers */
-		qdf_mem_copy(peer_mac, bcast_mac, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(peer_mac, bcast_mac, QDF_MAC_ADDR_SIZE);
 	} else {
 		/*get info for a single peer */
 		peer = cdp_peer_find_by_local_id(soc,
@@ -3268,7 +3268,7 @@ QDF_STATUS wma_process_get_peer_info_req
 			peer_mac_raw[1], peer_mac_raw[2],
 			peer_mac_raw[3], peer_mac_raw[4],
 			peer_mac_raw[5]);
-		qdf_mem_copy(peer_mac, peer_mac_raw, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(peer_mac, peer_mac_raw, QDF_MAC_ADDR_SIZE);
 	}
 
 	len = sizeof(wmi_peer_info_req_cmd_fixed_param);
@@ -5437,7 +5437,7 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	wmi_pdev_div_rssi_antid_event_fixed_param *event;
 	struct chain_rssi_result chain_rssi_result;
 	u_int32_t i;
-	u_int8_t macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t macaddr[QDF_MAC_ADDR_SIZE];
 	tp_wma_handle wma = (tp_wma_handle)handle;
 
 	struct mac_context *pmac = (struct mac_context *)cds_get_context(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -117,7 +117,7 @@ static QDF_STATUS pmo_configure_wow_ap(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS ret;
 	uint8_t arp_offset = 20;
-	uint8_t mac_mask[PMO_80211_ADDR_LEN];
+	uint8_t mac_mask[QDF_MAC_ADDR_SIZE];
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
@@ -127,12 +127,12 @@ static QDF_STATUS pmo_configure_wow_ap(struct wlan_objmgr_vdev *vdev)
 	 * WoW pattern id should be unique for each vdev
 	 * WoW pattern id can be same on 2 different VDEVs
 	 */
-	qdf_mem_set(&mac_mask, PMO_80211_ADDR_LEN, 0xFF);
+	qdf_mem_set(&mac_mask, QDF_MAC_ADDR_SIZE, 0xFF);
 	ret = pmo_tgt_send_wow_patterns_to_fw(vdev,
 			pmo_get_and_increment_wow_default_ptrn(vdev_ctx),
 			wlan_vdev_mlme_get_macaddr(vdev),
-			PMO_80211_ADDR_LEN, 0, mac_mask,
-			PMO_80211_ADDR_LEN, false);
+			QDF_MAC_ADDR_SIZE, 0, mac_mask,
+			QDF_MAC_ADDR_SIZE, false);
 	if (ret != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to add WOW unicast pattern ret %d", ret);
 		return ret;
@@ -253,13 +253,13 @@ static QDF_STATUS pmo_configure_ssdp(struct wlan_objmgr_vdev *vdev)
 static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 {
 	uint8_t arp_offset = 12;
-	uint8_t mac_mask[PMO_80211_ADDR_LEN];
+	uint8_t mac_mask[QDF_MAC_ADDR_SIZE];
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
-	qdf_mem_set(&mac_mask, PMO_80211_ADDR_LEN, 0xFF);
+	qdf_mem_set(&mac_mask, QDF_MAC_ADDR_SIZE, 0xFF);
 	/*
 	 * Set up unicast wow pattern
 	 * WoW pattern ID should be unique for each vdev
@@ -268,8 +268,8 @@ static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 	ret = pmo_tgt_send_wow_patterns_to_fw(vdev,
 			pmo_get_and_increment_wow_default_ptrn(vdev_ctx),
 			wlan_vdev_mlme_get_macaddr(vdev),
-			PMO_80211_ADDR_LEN, 0, mac_mask,
-			PMO_80211_ADDR_LEN, false);
+			QDF_MAC_ADDR_SIZE, 0, mac_mask,
+			QDF_MAC_ADDR_SIZE, false);
 	if (ret != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to add WOW unicast pattern ret %d", ret);
 		return ret;

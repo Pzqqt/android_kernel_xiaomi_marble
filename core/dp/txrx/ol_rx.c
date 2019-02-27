@@ -266,7 +266,7 @@ void ol_rx_update_histogram_stats(uint32_t msdu_count, uint8_t frag_ind,
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 				   void *rx_mpdu_desc, qdf_nbuf_t msdu)
 {
-	uint8_t a1[IEEE80211_ADDR_LEN];
+	uint8_t a1[QDF_MAC_ADDR_SIZE];
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 	struct ol_txrx_vdev_t *vdev = NULL;
 	struct ieee80211_frame *wh;
@@ -288,9 +288,9 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 		return;
 
 	/* ignore frames for non-existent bssids */
-	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(a1, wh->i_addr1, QDF_MAC_ADDR_SIZE);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN))
+		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
 			break;
 	}
 	if (!vdev)
@@ -884,7 +884,7 @@ ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 		offset = SIZEOF_80211_HDR + LLC_SNAP_HDR_OFFSET_ETHERTYPE;
 		l3_hdr = data + SIZEOF_80211_HDR + LLC_SNAP_HDR_LEN;
 	} else {
-		offset = ETHERNET_ADDR_LEN * 2;
+		offset = QDF_MAC_ADDR_SIZE * 2;
 		l3_hdr = data + ETHERNET_HDR_LEN;
 	}
 	ethertype = (data[offset] << 8) | data[offset + 1];
@@ -1019,7 +1019,7 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 			offset = SIZEOF_80211_HDR +
 				LLC_SNAP_HDR_OFFSET_ETHERTYPE;
 		} else {
-			offset = ETHERNET_ADDR_LEN * 2;
+			offset = QDF_MAC_ADDR_SIZE * 2;
 		}
 		/* get header info from msdu */
 		wh = qdf_nbuf_data(msdu);
@@ -1706,7 +1706,7 @@ void ol_ath_add_vow_extstats(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 
 	data = qdf_nbuf_data(msdu);
 
-	offset = ETHERNET_ADDR_LEN * 2;
+	offset = QDF_MAC_ADDR_SIZE * 2;
 	l3_hdr = data + ETHERNET_HDR_LEN;
 	ethertype = (data[offset] << 8) | data[offset + 1];
 	if (ethertype == ETHERTYPE_IPV4) {

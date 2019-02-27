@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,7 +27,6 @@
 #include <ol_txrx_internal.h>
 #include <ol_txrx_dbg.h>
 
-#define DEFRAG_IEEE80211_ADDR_LEN    6
 #define DEFRAG_IEEE80211_KEY_LEN     8
 #define DEFRAG_IEEE80211_FCS_LEN     4
 

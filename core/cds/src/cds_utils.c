@@ -313,7 +313,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 				 IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * QDF_MAC_ADDR_SIZE);
 
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (frmLen - sizeof(struct ieee80211_frame));
@@ -415,7 +415,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 				 IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * QDF_MAC_ADDR_SIZE);
 
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (efrm - (uint8_t *) (wh + 1));
@@ -540,13 +540,13 @@ bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 				 IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * QDF_MAC_ADDR_SIZE);
 
 	data_len = efrm - (uint8_t *) (wh + 1) - IEEE80211_MMIE_GMAC_MICLEN;
 
 	/* IV */
-	qdf_mem_copy(gmac_nonce, wh->i_addr2, IEEE80211_ADDR_LEN);
-	qdf_mem_copy(gmac_nonce + IEEE80211_ADDR_LEN, rx_ipn,
+	qdf_mem_copy(gmac_nonce, wh->i_addr2, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(gmac_nonce + QDF_MAC_ADDR_SIZE, rx_ipn,
 		     IEEE80211_MMIE_IPNLEN);
 	qdf_mem_copy(iv, gmac_nonce, GMAC_NONCE_LEN);
 	iv[AES_BLOCK_SIZE - 1] = 0x01;

@@ -130,8 +130,6 @@ enum ieee80211_protmode {
 /* flagext */
 #define IEEE80211_CHAN_DFS              0x0002  /* DFS required on channel */
 
-#define IEEE80211_ADDR_LEN  6   /* size of 802.11 address */
-
 #define IEEE80211_SEQ_MASK      0xfff   /* sequence generator mask */
 #define MIN_SW_SEQ              0x100   /* minimum sequence for SW generate packect */
 

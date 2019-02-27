@@ -43,7 +43,7 @@
 static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 {
 	struct ieee80211_frame *mac_header;
-	unsigned char tmp_addr[IEEE80211_ADDR_LEN];
+	unsigned char tmp_addr[QDF_MAC_ADDR_SIZE];
 	unsigned char type;
 	unsigned char subtype;
 	unsigned char fromds;
@@ -69,7 +69,7 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 	    ((tods != 1) || (fromds != 0)) ||
 	    qdf_mem_cmp
 		     (mac_header->i_addr3, vdev->mac_addr.raw,
-		     IEEE80211_ADDR_LEN)) {
+		     QDF_MAC_ADDR_SIZE)) {
 		ol_txrx_dbg("Exit | Unnecessary to adjust mac header");
 	} else {
 		/* Flip the ToDs bit to FromDs */

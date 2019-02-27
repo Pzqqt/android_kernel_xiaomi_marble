@@ -60,10 +60,10 @@
 #include <qdf_time.h>           /* qdf_system_time */
 
 #define DEFRAG_IEEE80211_ADDR_EQ(a1, a2) \
-	(!qdf_mem_cmp(a1, a2, IEEE80211_ADDR_LEN))
+	(!qdf_mem_cmp(a1, a2, QDF_MAC_ADDR_SIZE))
 
 #define DEFRAG_IEEE80211_ADDR_COPY(dst, src) \
-	qdf_mem_copy(dst, src, IEEE80211_ADDR_LEN)
+	qdf_mem_copy(dst, src, QDF_MAC_ADDR_SIZE)
 
 #define DEFRAG_IEEE80211_QOS_HAS_SEQ(wh) \
 	(((wh)->i_fc[0] & \
@@ -946,22 +946,22 @@ void ol_rx_defrag_michdr(const struct ieee80211_frame *wh0, uint8_t hdr[])
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr1);   /* DA */
-		DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
 		DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr3);   /* DA */
-		DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
 		DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr1);   /* DA */
-		DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr3);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr3);   /* DA */
-		DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr4);
 		break;
 	}
@@ -1119,7 +1119,7 @@ uint16_t ol_rx_frag_hdrsize(const void *data)
 	uint16_t size = sizeof(struct ieee80211_frame);
 
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
-		size += IEEE80211_ADDR_LEN;
+		size += QDF_MAC_ADDR_SIZE;
 
 	if (DEFRAG_IEEE80211_QOS_HAS_SEQ(wh)) {
 		size += sizeof(uint16_t);
@@ -1199,18 +1199,18 @@ void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, qdf_nbuf_t msdu)
 	switch (wh.i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
-			     IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
 		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr3,
-			     IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
 		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
-			     IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr3, IEEE80211_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr3, QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		break;

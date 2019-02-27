@@ -2146,7 +2146,7 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	tSirIbssGetPeerInfoRspParams *pRsp;
 	WMI_PEER_INFO_EVENTID_param_tlvs *param_tlvs;
 	wmi_peer_info_event_fixed_param *fix_param;
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	tp_wma_handle wma = (tp_wma_handle)handle;
 
 	if (!wma) {
@@ -2247,7 +2247,7 @@ int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
 					  uint32_t len)
 {
 	uint8_t tx_fail_cnt;
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_PEER_TX_FAIL_CNT_THR_EVENTID_param_tlvs *param_tlvs;
 	wmi_peer_tx_fail_cnt_thr_event_fixed_param *fix_param;
@@ -2321,27 +2321,27 @@ static void wma_decap_to_8023(qdf_nbuf_t msdu, struct wma_decap_info_t *info)
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
 		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
 		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
-			     ETHERNET_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		break;
 	}
 
@@ -2371,7 +2371,7 @@ static int32_t wma_ieee80211_hdrsize(const void *data)
 	int32_t size = sizeof(struct ieee80211_frame);
 
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
-		size += IEEE80211_ADDR_LEN;
+		size += QDF_MAC_ADDR_SIZE;
 	if (IEEE80211_QOS_HAS_SEQ(wh))
 		size += sizeof(uint16_t);
 	return size;
@@ -3267,8 +3267,8 @@ void wma_rx_mic_error_ind(void *scn_handle, uint16_t vdev_id, void *wh)
 	struct ol_error_info err_info;
 
 	err_info.u.mic_err.vdev_id = vdev_id;
-	qdf_mem_copy(err_info.u.mic_err.da, w->i_addr1, OL_TXRX_MAC_ADDR_LEN);
-	qdf_mem_copy(err_info.u.mic_err.ta, w->i_addr2, OL_TXRX_MAC_ADDR_LEN);
+	qdf_mem_copy(err_info.u.mic_err.da, w->i_addr1, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(err_info.u.mic_err.ta, w->i_addr2, QDF_MAC_ADDR_SIZE);
 
 	WMA_LOGD("MIC vdev_id %d\n", vdev_id);
 	WMA_LOGD("MIC DA: %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -3300,8 +3300,8 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 		return -ENOMEM;
 
 	rx_inv_msg->vdev_id = vdev_id;
-	qdf_mem_copy(rx_inv_msg->ra, wh_l->i_addr1, OL_TXRX_MAC_ADDR_LEN);
-	qdf_mem_copy(rx_inv_msg->ta, wh_l->i_addr2, OL_TXRX_MAC_ADDR_LEN);
+	qdf_mem_copy(rx_inv_msg->ra, wh_l->i_addr1, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(rx_inv_msg->ta, wh_l->i_addr2, QDF_MAC_ADDR_SIZE);
 
 	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
 	WMA_LOGD("%s: RA:" MAC_ADDRESS_STR,

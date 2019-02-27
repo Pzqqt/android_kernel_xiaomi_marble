@@ -1568,7 +1568,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		tpAddBssParams bssParams = (tpAddBssParams) req_msg->user_data;
 
 		qdf_mem_copy(iface->bssid, bssParams->bssId,
-				IEEE80211_ADDR_LEN);
+				QDF_MAC_ADDR_SIZE);
 		wma_vdev_start_rsp(wma, bssParams, resp_event);
 	} else if (req_msg->msg_type == WMA_OCB_SET_CONFIG_CMD) {
 		param.vdev_id = resp_event->vdev_id;
@@ -1995,7 +1995,7 @@ static int wma_get_obj_mgr_peer_type(tp_wma_handle wma, uint8_t vdev_id,
 		return WLAN_PEER_TDLS;
 
 	if (!qdf_mem_cmp(wma->interfaces[vdev_id].addr, peer_addr,
-					IEEE80211_ADDR_LEN)) {
+					QDF_MAC_ADDR_SIZE)) {
 		obj_peer_type = WLAN_PEER_SELF;
 	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_STA) {
 		if (wma->interfaces[vdev_id].sub_type ==
@@ -2081,7 +2081,7 @@ static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
  */
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  struct cdp_vdev *vdev,
-			  uint8_t peer_addr[IEEE80211_ADDR_LEN],
+			  uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress)
 {
@@ -2196,7 +2196,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 
 	/* for each remote ibss peer, clear its keys */
 	if (wma_is_vdev_in_ibss_mode(wma, vdev_id) &&
-	    qdf_mem_cmp(peer_addr, mac_addr_raw, IEEE80211_ADDR_LEN)) {
+	    qdf_mem_cmp(peer_addr, mac_addr_raw, QDF_MAC_ADDR_SIZE)) {
 		tSetStaKeyParams key_info;
 
 		WMA_LOGD("%s: remote ibss peer %pM key clearing\n", __func__,
@@ -2204,7 +2204,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		qdf_mem_zero(&key_info, sizeof(key_info));
 		key_info.smesessionId = vdev_id;
 		qdf_mem_copy(key_info.peer_macaddr.bytes, peer_addr,
-				IEEE80211_ADDR_LEN);
+				QDF_MAC_ADDR_SIZE);
 		key_info.sendRsp = false;
 
 		wma_set_stakey(wma, &key_info);
@@ -3534,7 +3534,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 	WMI_PEER_ASSOC_CONF_EVENTID_param_tlvs *param_buf;
 	wmi_peer_assoc_conf_event_fixed_param *event;
 	struct wma_target_req *req_msg;
-	uint8_t macaddr[IEEE80211_ADDR_LEN];
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	int status = 0;
 
 	WMA_LOGD(FL("Enter"));
@@ -3678,7 +3678,7 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_peer_delete_cmd_fixed_param *event;
 	struct wma_target_req *req_msg;
 	tDeleteStaParams *del_sta;
-	uint8_t macaddr[IEEE80211_ADDR_LEN];
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	int status = 0;
 
 	param_buf = (WMI_PEER_DELETE_RESP_EVENTID_param_tlvs *)cmd_param_info;
@@ -5002,7 +5002,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		 * Store the bssid in interface table, bssid will
 		 * be used during group key setting sta mode.
 		 */
-		qdf_mem_copy(iface->bssid, add_bss->bssId, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(iface->bssid, add_bss->bssId, QDF_MAC_ADDR_SIZE);
 
 	}
 send_bss_resp:
@@ -6191,7 +6191,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 				__func__, params->smesessionId);
 		goto fail_del_bss_ho_fail;
 	}
-	qdf_mem_zero(iface->bssid, IEEE80211_ADDR_LEN);
+	qdf_mem_zero(iface->bssid, QDF_MAC_ADDR_SIZE);
 
 	txrx_vdev = wma_find_vdev_by_id(wma, params->smesessionId);
 	if (!txrx_vdev) {
@@ -6369,7 +6369,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	}
 
 	qdf_mem_zero(wma->interfaces[params->smesessionId].bssid,
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 
 	txrx_vdev = wma_find_vdev_by_id(wma, params->smesessionId);
 	if (!txrx_vdev) {

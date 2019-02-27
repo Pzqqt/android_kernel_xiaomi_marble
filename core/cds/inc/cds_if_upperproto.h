@@ -19,8 +19,6 @@
 #ifndef _NET_IF_UPPERPROTO_H_
 #define _NET_IF_UPPERPROTO_H_
 
-#define ETHER_ADDR_LEN    6     /* length of an Ethernet address */
-
 #define ETHERTYPE_OCB_TX   0x8151
 #define ETHERTYPE_OCB_RX   0x8152
 
