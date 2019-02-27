@@ -144,8 +144,8 @@ struct hdd_conn_flag {
  * @staId: Station ID
  * @peerMacAddress:Peer Mac Address of the IBSS Stations
  * @authType: Auth Type
- * @ucEncryptionType: Unicast Encryption Type
- * @mcEncryptionType: Multicast Encryption Type
+ * @uc_encrypt_type: Unicast Encryption Type
+ * @mc_encrypt_type: Multicast Encryption Type
  * @Keys: Keys
  * @operationChannel: Operation Channel
  * @uIsAuthenticated: Remembers authenticated state
@@ -179,8 +179,8 @@ struct hdd_connection_info {
 	uint8_t staId[MAX_PEERS];
 	struct qdf_mac_addr peerMacAddress[MAX_PEERS];
 	eCsrAuthType authType;
-	eCsrEncryptionType ucEncryptionType;
-	eCsrEncryptionType mcEncryptionType;
+	eCsrEncryptionType uc_encrypt_type;
+	eCsrEncryptionType mc_encrypt_type;
 	tCsrKeys Keys;
 	uint8_t operationChannel;
 	uint8_t uIsAuthenticated;

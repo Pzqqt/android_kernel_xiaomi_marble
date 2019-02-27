@@ -14807,15 +14807,15 @@ static int wlan_hdd_cfg80211_del_key(struct wiphy *wiphy,
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
 #ifdef FEATURE_WLAN_WAPI
-static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
+static bool hdd_is_wapi_enc_type(eCsrEncryptionType encrypt_type)
 {
-	if (ucEncryptionType == eCSR_ENCRYPT_TYPE_WPI)
+	if (encrypt_type == eCSR_ENCRYPT_TYPE_WPI)
 		return true;
 
 	return false;
 }
 #else
-static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
+static bool hdd_is_wapi_enc_type(eCsrEncryptionType encrypt_type)
 {
 	return false;
 }
@@ -14944,15 +14944,15 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		roam_profile = hdd_roam_profile(adapter);
 
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
-		     sta_ctx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.uc_encrypt_type) &&
 		    !hdd_is_wapi_enc_type(
-		     sta_ctx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.uc_encrypt_type) &&
 		    (eCSR_ENCRYPT_TYPE_AES !=
-		     sta_ctx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.uc_encrypt_type) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP !=
-			sta_ctx->conn_info.ucEncryptionType) &&
+			sta_ctx->conn_info.uc_encrypt_type) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
-		     sta_ctx->conn_info.ucEncryptionType)) {
+		     sta_ctx->conn_info.uc_encrypt_type)) {
 			/* If default key index is not same as previous one,
 			 * then update the default key index
 			 */
@@ -16615,13 +16615,13 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 	roam_profile = hdd_roam_profile(adapter);
 	if (ucast) {
 		hdd_debug("setting unicast cipher type to %d", encryptionType);
-		sta_ctx->conn_info.ucEncryptionType = encryptionType;
+		sta_ctx->conn_info.uc_encrypt_type = encryptionType;
 		roam_profile->EncryptionType.numEntries = 1;
 		roam_profile->EncryptionType.encryptionType[0] =
 			encryptionType;
 	} else {
 		hdd_debug("setting mcast cipher type to %d", encryptionType);
-		sta_ctx->conn_info.mcEncryptionType = encryptionType;
+		sta_ctx->conn_info.mc_encrypt_type = encryptionType;
 		roam_profile->mcEncryptionType.numEntries = 1;
 		roam_profile->mcEncryptionType.encryptionType[0] =
 			encryptionType;
@@ -17475,9 +17475,9 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 	hdd_sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.AuthType.authType[0] = eCSR_AUTH_TYPE_NONE;
 
-	hdd_sta_ctx->conn_info.ucEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
+	hdd_sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.EncryptionType.numEntries = 0;
-	hdd_sta_ctx->conn_info.mcEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
+	hdd_sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.mcEncryptionType.numEntries = 0;
 
 	wlan_hdd_clear_wapi_privacy(adapter);
@@ -18348,7 +18348,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 		encryptionType = eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
 	}
 	hdd_debug("encryptionType=%d", encryptionType);
-	sta_ctx->conn_info.ucEncryptionType = encryptionType;
+	sta_ctx->conn_info.uc_encrypt_type = encryptionType;
 	roam_profile->EncryptionType.numEntries = 1;
 	roam_profile->EncryptionType.encryptionType[0] =
 		encryptionType;

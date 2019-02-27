@@ -363,7 +363,7 @@ hdd_conn_get_connected_cipher_algo(struct hdd_station_ctx *sta_ctx,
 	connected = hdd_conn_get_connection_state(sta_ctx, NULL);
 
 	if (pConnectedCipherAlgo)
-		*pConnectedCipherAlgo = sta_ctx->conn_info.ucEncryptionType;
+		*pConnectedCipherAlgo = sta_ctx->conn_info.uc_encrypt_type;
 
 	return connected;
 }
@@ -1005,11 +1005,11 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			/* Get Multicast Encryption Type */
 			encryptType =
 			    roam_info->u.pConnectedProfile->mcEncryptionType;
-			sta_ctx->conn_info.mcEncryptionType = encryptType;
+			sta_ctx->conn_info.mc_encrypt_type = encryptType;
 			/* Get Unicast Encryption Type */
 			encryptType =
 				roam_info->u.pConnectedProfile->EncryptionType;
-			sta_ctx->conn_info.ucEncryptionType = encryptType;
+			sta_ctx->conn_info.uc_encrypt_type = encryptType;
 
 			sta_ctx->conn_info.authType =
 				roam_info->u.pConnectedProfile->AuthType;
@@ -1541,8 +1541,8 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 
 	/* Clear all security settings */
 	sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	sta_ctx->conn_info.mcEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
-	sta_ctx->conn_info.ucEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
+	sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
+	sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
 	qdf_mem_zero(&sta_ctx->conn_info.Keys, sizeof(tCsrKeys));
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
@@ -2566,7 +2566,7 @@ static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	eCsrEncryptionType encr_type = hdd_sta_ctx->conn_info.ucEncryptionType;
+	eCsrEncryptionType encr_type = hdd_sta_ctx->conn_info.uc_encrypt_type;
 
 	/*
 	 * If the security mode is one of the following, IBSS peer will be
