@@ -2724,7 +2724,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 }
 #endif /* FEATURE_WLAN_ESE */
 
-int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
+int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate)
 {
 	tSirRateUpdateInd rateUpdate = {0};
 	QDF_STATUS status;
@@ -2753,9 +2753,9 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 	rateUpdate.nss = (bval == 0) ? 0 : 1;
 
 	rateUpdate.dev_mode = adapter->device_mode;
-	rateUpdate.mcastDataRate24GHz = targetRate;
+	rateUpdate.mcastDataRate24GHz = target_rate;
 	rateUpdate.mcastDataRate24GHzTxFlag = 1;
-	rateUpdate.mcastDataRate5GHz = targetRate;
+	rateUpdate.mcastDataRate5GHz = target_rate;
 	rateUpdate.bcastDataRate = -1;
 	qdf_copy_macaddr(&rateUpdate.bssid, &adapter->mac_addr);
 	hdd_debug("MC Target rate %d, mac = %pM, dev_mode %s(%d)",

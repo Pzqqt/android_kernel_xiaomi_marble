@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,7 @@
 extern struct sock *cesium_nl_srv_sock;
 
 int hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd);
-int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate);
+int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate);
 
 /**
  * hdd_update_smps_antenna_mode() - set smps and antenna mode
