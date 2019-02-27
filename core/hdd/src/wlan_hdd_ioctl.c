@@ -4587,7 +4587,7 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 {
 	QDF_STATUS ret_status;
 	int ret = 0;
-	uint8_t filterType = 0;
+	uint8_t filter_type = 0;
 	uint8_t *value;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -4596,7 +4596,7 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 	value = command + 9;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &filterType);
+	ret = kstrtou8(value, 10, &filter_type);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
@@ -4606,30 +4606,29 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto exit;
 	}
-	if ((filterType < WLAN_HDD_DRIVER_MIRACAST_CFG_MIN_VAL)
-	    || (filterType >
-		WLAN_HDD_DRIVER_MIRACAST_CFG_MAX_VAL)) {
+	if ((filter_type < WLAN_HDD_DRIVER_MIRACAST_CFG_MIN_VAL) ||
+	    (filter_type > WLAN_HDD_DRIVER_MIRACAST_CFG_MAX_VAL)) {
 		hdd_err("Accepted Values are 0 to 2. 0-Disabled, 1-Source, 2-Sink");
 		ret = -EINVAL;
 		goto exit;
 	}
 	/* Filtertype value should be either 0-Disabled, 1-Source, 2-sink */
-	hdd_ctx->miracast_value = filterType;
+	hdd_ctx->miracast_value = filter_type;
 
-	ret_status = sme_set_miracast(hdd_ctx->mac_handle, filterType);
+	ret_status = sme_set_miracast(hdd_ctx->mac_handle, filter_type);
 	if (QDF_STATUS_SUCCESS != ret_status) {
 		hdd_err("Failed to set miracast");
 		return -EBUSY;
 	}
 	ret_status = ucfg_scan_set_miracast(hdd_ctx->psoc,
-					    filterType ? true : false);
+					    filter_type ? true : false);
 	if (QDF_IS_STATUS_ERROR(ret_status)) {
 		hdd_err("Failed to set miracastn scan");
 		return -EBUSY;
 	}
 
 	if (policy_mgr_is_mcc_in_24G(hdd_ctx->psoc))
-		return wlan_hdd_set_mas(adapter, filterType);
+		return wlan_hdd_set_mas(adapter, filter_type);
 
 exit:
 	return ret;
