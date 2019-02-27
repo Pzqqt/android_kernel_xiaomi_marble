@@ -5835,7 +5835,7 @@ static int drv_cmd_set_dfs_scan_mode(struct hdd_adapter *adapter,
 	}
 
 	if (!cfg_in_range(CFG_LFR_ROAMING_DFS_CHANNEL, dfs_scan_mode)) {
-		hdd_err("dfsScanMode value %d is out of range (Min: %d Max: %d)",
+		hdd_err("dfs_scan_mode value %d is out of range (Min: %d Max: %d)",
 			  dfs_scan_mode,
 			  cfg_min(CFG_LFR_ROAMING_DFS_CHANNEL),
 			  cfg_max(CFG_LFR_ROAMING_DFS_CHANNEL));
@@ -5871,11 +5871,11 @@ static int drv_cmd_get_dfs_scan_mode(struct hdd_adapter *adapter,
 				     struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t dfsScanMode = sme_get_dfs_scan_mode(hdd_ctx->mac_handle);
+	uint8_t dfs_scan_mode = sme_get_dfs_scan_mode(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len = 0;
 
-	len = scnprintf(extra, sizeof(extra), "%s %d", command, dfsScanMode);
+	len = scnprintf(extra, sizeof(extra), "%s %d", command, dfs_scan_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
