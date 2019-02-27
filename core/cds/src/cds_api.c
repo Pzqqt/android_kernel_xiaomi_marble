@@ -343,15 +343,11 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	cdp_cfg.lro_enable = cfg_get(psoc, CFG_DP_LRO);
 	cdp_cfg.enable_data_stall_detection =
 		cfg_get(psoc, CFG_DP_ENABLE_DATA_STALL_DETECTION);
-	cdp_cfg.tso_enable = cfg_get(psoc, CFG_DP_TSO);
-	cdp_cfg.lro_enable = cfg_get(psoc, CFG_DP_LRO);
 	cdp_cfg.gro_enable = cfg_get(psoc, CFG_DP_GRO);
 	cdp_cfg.enable_flow_steering =
 		cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	cdp_cfg.disable_intra_bss_fwd =
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
-	cdp_cfg.ce_classify_enabled =
-		cfg_get(psoc, CFG_DP_CE_CLASSIFY_ENABLE);
 
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));
