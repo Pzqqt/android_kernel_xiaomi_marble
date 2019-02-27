@@ -2373,7 +2373,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	return adapter->link_status;
 }
 
-static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seq_no)
+static void hdd_tx_fail_ind_callback(uint8_t *macaddr, uint8_t seq_no)
 {
 	int payload_len;
 	struct sk_buff *skb;
@@ -2405,7 +2405,7 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seq_no)
 	}
 
 	data = nlmsg_data(nlh);
-	memcpy(data, MacAddr, ETH_ALEN);
+	memcpy(data, macaddr, ETH_ALEN);
 
 	if (nlmsg_unicast(cesium_nl_srv_sock, skb, cesium_pid) < 0) {
 		hdd_err("nlmsg_unicast() failed for msg size[%d]",
