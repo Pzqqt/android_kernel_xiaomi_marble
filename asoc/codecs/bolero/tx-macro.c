@@ -1456,9 +1456,6 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 					BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
 			tx_priv->reset_swr = false;
-			regmap_update_bits(regmap,
-				BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
-				0x1C, 0x0C);
 			msm_cdc_pinctrl_select_active_state(
 						tx_priv->tx_swr_gpio_p);
 		}
