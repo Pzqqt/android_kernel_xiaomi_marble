@@ -143,11 +143,11 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		data->freq =
 			cds_chan_to_freq(sta_ctx->conn_info.operationChannel);
 		if (WLAN_SVC_MAX_SSID_LEN >=
-		    sta_ctx->conn_info.SSID.SSID.length) {
-			data->ssid_len = sta_ctx->conn_info.SSID.SSID.length;
+		    sta_ctx->conn_info.ssid.SSID.length) {
+			data->ssid_len = sta_ctx->conn_info.ssid.SSID.length;
 			memcpy(data->ssid,
-			       sta_ctx->conn_info.SSID.SSID.ssId,
-			       sta_ctx->conn_info.SSID.SSID.length);
+			       sta_ctx->conn_info.ssid.SSID.ssId,
+			       sta_ctx->conn_info.ssid.SSID.length);
 		}
 		if (QDF_MAC_ADDR_SIZE >= sizeof(sta_ctx->conn_info.bssId))
 			memcpy(data->bssid, sta_ctx->conn_info.bssId.bytes,

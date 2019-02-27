@@ -579,12 +579,12 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			qdf_copy_macaddr(&pInfo->bssid,
 					 &sta_ctx->conn_info.bssId);
 			qdf_mem_copy(pInfo->ssid,
-				     sta_ctx->conn_info.SSID.SSID.ssId,
-				     sta_ctx->conn_info.SSID.SSID.length);
+				     sta_ctx->conn_info.ssid.SSID.ssId,
+				     sta_ctx->conn_info.ssid.SSID.length);
 			/*
 			 * NULL Terminate the string
 			 */
-			pInfo->ssid[sta_ctx->conn_info.SSID.SSID.length] = 0;
+			pInfo->ssid[sta_ctx->conn_info.ssid.SSID.length] = 0;
 		}
 	}
 

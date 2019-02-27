@@ -175,7 +175,7 @@ struct hdd_conn_flag {
 struct hdd_connection_info {
 	eConnectionState conn_state;
 	struct qdf_mac_addr bssId;
-	tCsrSSIDInfo SSID;
+	tCsrSSIDInfo ssid;
 	uint8_t staId[MAX_PEERS];
 	struct qdf_mac_addr peerMacAddress[MAX_PEERS];
 	eCsrAuthType authType;

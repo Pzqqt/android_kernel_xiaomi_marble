@@ -1020,7 +1020,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			    roam_info->u.pConnectedProfile->operationChannel;
 
 			/* Save the ssid for the connection */
-			qdf_mem_copy(&sta_ctx->conn_info.SSID.SSID,
+			qdf_mem_copy(&sta_ctx->conn_info.ssid.SSID,
 				     &roam_info->u.pConnectedProfile->SSID,
 				     sizeof(tSirMacSSid));
 			qdf_mem_copy(&sta_ctx->conn_info.last_ssid.SSID,
@@ -1549,7 +1549,7 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 
 	sta_ctx->conn_info.proxyARPService = 0;
 
-	qdf_mem_zero(&sta_ctx->conn_info.SSID, sizeof(tCsrSSIDInfo));
+	qdf_mem_zero(&sta_ctx->conn_info.ssid, sizeof(tCsrSSIDInfo));
 }
 
 /**
@@ -5760,7 +5760,7 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 
 	/* Configure the roaming profile links to SSID and bssid. */
 	roam_profile->SSIDs.numOfSSIDs = 0;
-	roam_profile->SSIDs.SSIDList = &sta_ctx->conn_info.SSID;
+	roam_profile->SSIDs.SSIDList = &sta_ctx->conn_info.ssid;
 
 	roam_profile->BSSIDs.numOfBSSIDs = 0;
 	roam_profile->BSSIDs.bssid = &sta_ctx->conn_info.bssId;
