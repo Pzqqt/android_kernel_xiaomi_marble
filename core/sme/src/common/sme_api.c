@@ -12865,22 +12865,6 @@ QDF_STATUS sme_set_he_bss_color(mac_handle_t mac_handle, uint8_t session_id,
 }
 #endif
 
-/**
- * sme_update_hw_dbs_capable() - sets the HW DBS capability
- * @mac_handle: Opaque handle to the global MAC context
- * @hw_dbs_capable: HW DBS capability
- *
- * Sets HW DBS capability based on INI and fw capability.
- *
- * Return: None
- */
-void sme_update_hw_dbs_capable(mac_handle_t mac_handle, uint8_t hw_dbs_capable)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-
-	mac_ctx->hw_dbs_capable = hw_dbs_capable;
-}
-
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * sme_register_p2p_lo_event() - Register for the p2p lo event

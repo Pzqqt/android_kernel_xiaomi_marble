@@ -1466,39 +1466,6 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 		  band_5g->vht_cap.cap, value, value1);
 }
 
-/**
- * hdd_update_hw_dbs_capable() - sets the dbs capability of the device
- * @hdd_ctx: HDD context
- *
- * Sets the DBS capability as per INI and firmware capability
- *
- * Return: None
- */
-static void hdd_update_hw_dbs_capable(struct hdd_context *hdd_ctx)
-{
-	uint8_t hw_dbs_capable = 0;
-	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
-	QDF_STATUS status;
-
-	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
-						      &dual_mac_feature);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_err("can't get dual_mac_feature value");
-	if (policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
-		switch (dual_mac_feature) {
-		case ENABLE_DBS_CXN_AND_SCAN:
-		case ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF:
-		case ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN:
-			hw_dbs_capable = 1;
-			break;
-		default:
-			hw_dbs_capable = 0;
-			break;
-		}
-	}
-	sme_update_hw_dbs_capable(hdd_ctx->mac_handle, hw_dbs_capable);
-}
-
 static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_ht_cap *cfg)
 {
@@ -1962,7 +1929,6 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	hdd_update_vdev_nss(hdd_ctx);
 
-	hdd_update_hw_dbs_capable(hdd_ctx);
 	hdd_ctx->dynamic_nss_chains_support =
 					cfg->dynamic_nss_chains_support;
 	ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc, &fine_time_meas_cap);

@@ -783,8 +783,6 @@ struct mac_context {
 	struct vdev_type_nss vdev_type_nss_5g;
 
 	uint16_t mgmtSeqNum;
-	/* DBS capability based on INI and FW capability */
-	uint8_t hw_dbs_capable;
 	uint32_t sta_sap_scc_on_dfs_chan;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
 	qdf_atomic_t global_cmd_id;
