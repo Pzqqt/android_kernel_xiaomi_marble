@@ -4072,14 +4072,14 @@ static int drv_cmd_set_opportunistic_rssi_diff(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t nOpportunisticThresholdDiff =
+	uint8_t diff =
 		cfg_default(CFG_LFR_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF);
 
 	/* Move pointer to ahead of SETOPPORTUNISTICRSSIDIFF<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &nOpportunisticThresholdDiff);
+	ret = kstrtou8(value, 10, &diff);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
@@ -4091,11 +4091,11 @@ static int drv_cmd_set_opportunistic_rssi_diff(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("Received Command to Set Opportunistic Threshold diff = %d",
-		  nOpportunisticThresholdDiff);
+		  diff);
 
 	sme_set_roam_opportunistic_scan_threshold_diff(hdd_ctx->mac_handle,
-				adapter->vdev_id,
-				nOpportunisticThresholdDiff);
+						       adapter->vdev_id,
+						       diff);
 
 exit:
 	return ret;
