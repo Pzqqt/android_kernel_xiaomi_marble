@@ -2570,8 +2570,12 @@ static int wsa_swrm_clock(void *handle, bool enable)
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
 		if (wsa_priv->swr_clk_users == 0) {
+			msm_cdc_pinctrl_select_active_state(
+						wsa_priv->wsa_swr_gpio_p);
 			ret = wsa_macro_mclk_enable(wsa_priv, 1, true);
 			if (ret < 0) {
+				msm_cdc_pinctrl_select_sleep_state(
+						wsa_priv->wsa_swr_gpio_p);
 				dev_err(wsa_priv->dev,
 					"%s: wsa request clock enable failed\n",
 					__func__);
@@ -2589,8 +2593,6 @@ static int wsa_swrm_clock(void *handle, bool enable)
 					BOLERO_CDC_WSA_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
 			wsa_priv->reset_swr = false;
-			msm_cdc_pinctrl_select_active_state(
-						wsa_priv->wsa_swr_gpio_p);
 		}
 		wsa_priv->swr_clk_users++;
 	} else {
@@ -2605,9 +2607,9 @@ static int wsa_swrm_clock(void *handle, bool enable)
 			regmap_update_bits(regmap,
 				BOLERO_CDC_WSA_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
+			wsa_macro_mclk_enable(wsa_priv, 0, true);
 			msm_cdc_pinctrl_select_sleep_state(
 						wsa_priv->wsa_swr_gpio_p);
-			wsa_macro_mclk_enable(wsa_priv, 0, true);
 		}
 	}
 	dev_dbg(wsa_priv->dev, "%s: swrm clock users %d\n",

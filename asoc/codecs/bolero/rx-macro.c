@@ -3262,8 +3262,12 @@ static int rx_swrm_clock(void *handle, bool enable)
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
 		if (rx_priv->swr_clk_users == 0) {
+			msm_cdc_pinctrl_select_active_state(
+						rx_priv->rx_swr_gpio_p);
 			ret = rx_macro_mclk_enable(rx_priv, 1, true);
 			if (ret < 0) {
+				msm_cdc_pinctrl_select_sleep_state(
+						rx_priv->rx_swr_gpio_p);
 				dev_err(rx_priv->dev,
 					"%s: rx request clock enable failed\n",
 					__func__);
@@ -3281,8 +3285,6 @@ static int rx_swrm_clock(void *handle, bool enable)
 					BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
 			rx_priv->reset_swr = false;
-			msm_cdc_pinctrl_select_active_state(
-						rx_priv->rx_swr_gpio_p);
 		}
 		rx_priv->swr_clk_users++;
 	} else {
@@ -3298,9 +3300,9 @@ static int rx_swrm_clock(void *handle, bool enable)
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
+			rx_macro_mclk_enable(rx_priv, 0, true);
 			msm_cdc_pinctrl_select_sleep_state(
 						rx_priv->rx_swr_gpio_p);
-			rx_macro_mclk_enable(rx_priv, 0, true);
 		}
 	}
 	dev_dbg(rx_priv->dev, "%s: swrm clock users %d\n",
