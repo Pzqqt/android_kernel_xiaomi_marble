@@ -3318,17 +3318,17 @@ static int drv_cmd_get_roam_delta(struct hdd_adapter *adapter,
 				  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t roamRssiDiff =
+	uint8_t rssi_diff =
 		sme_get_roam_rssi_diff(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_GETROAMDELTA_IOCTL,
-		   adapter->vdev_id, roamRssiDiff);
+		   adapter->vdev_id, rssi_diff);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
-			command, roamRssiDiff);
+			command, rssi_diff);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
