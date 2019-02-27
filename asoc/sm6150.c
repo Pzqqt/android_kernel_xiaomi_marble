@@ -4913,15 +4913,17 @@ static int msm_audrx_tavil_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	card = rtd->card->snd_card;
-	entry = snd_info_create_subdir(card->module, "codecs",
-					 card->proc_root);
-	if (!entry) {
-		pr_debug("%s: Cannot create codecs module entry\n",
-			 __func__);
-		ret = 0;
-		goto err;
+	if (!pdata->codec_root) {
+		entry = snd_info_create_subdir(card->module, "codecs",
+						 card->proc_root);
+		if (!entry) {
+			pr_debug("%s: Cannot create codecs module entry\n",
+				 __func__);
+			ret = 0;
+			goto err;
+		}
+		pdata->codec_root = entry;
 	}
-	pdata->codec_root = entry;
 	tavil_codec_info_create_codec_entry(pdata->codec_root, component);
 
 	codec_reg_done = true;
@@ -5089,15 +5091,17 @@ static int msm_audrx_tasha_init(struct snd_soc_pcm_runtime *rtd)
 	}
 
 	card = rtd->card->snd_card;
-	entry = snd_info_create_subdir(card->module, "codecs",
-					 card->proc_root);
-	if (!entry) {
-		pr_debug("%s: Cannot create codecs module entry\n",
-			 __func__);
-		ret = 0;
-		goto err;
+	if (!pdata->codec_root) {
+		entry = snd_info_create_subdir(card->module, "codecs",
+						 card->proc_root);
+		if (!entry) {
+			pr_debug("%s: Cannot create codecs module entry\n",
+				 __func__);
+			ret = 0;
+			goto err;
+		}
+		pdata->codec_root = entry;
 	}
-	pdata->codec_root = entry;
 	tasha_codec_info_create_codec_entry(pdata->codec_root, component);
 	tasha_mbhc_zdet_gpio_ctrl(msm_config_hph_en0_gpio, component);
 
