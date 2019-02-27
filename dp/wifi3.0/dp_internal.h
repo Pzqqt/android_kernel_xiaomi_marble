@@ -746,7 +746,7 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 		union hal_reo_status *reo_status);
 uint16_t dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle,
-		qdf_nbuf_t nbuf, uint8_t newmac[][DP_MAC_ADDR_LEN],
+		qdf_nbuf_t nbuf, uint8_t newmac[][QDF_MAC_ADDR_SIZE],
 		uint8_t new_mac_cnt);
 void dp_tx_me_alloc_descriptor(struct cdp_pdev *pdev);
 

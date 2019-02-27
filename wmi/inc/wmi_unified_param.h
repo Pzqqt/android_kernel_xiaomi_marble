@@ -35,7 +35,6 @@
 #define MIN_MAC_HEADER_LEN 24
 #define QOS_CONTROL_LEN 2
 
-#define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
 #define WMI_MAC_MAX_SSID_LENGTH              32
 #ifndef CONFIG_HL_SUPPORT
 #define mgmt_tx_dl_frm_len 64
@@ -715,7 +714,7 @@ struct vdev_up_params {
 	uint16_t assoc_id;
 	uint32_t profile_idx;
 	uint32_t profile_num;
-	uint8_t trans_bssid[IEEE80211_ADDR_LEN];
+	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -796,8 +795,8 @@ struct vdev_start_params {
  */
 struct vdev_scan_nac_rssi_params {
 	uint32_t vdev_id;
-	uint8_t bssid_addr[IEEE80211_ADDR_LEN];
-	uint8_t client_addr[IEEE80211_ADDR_LEN];
+	uint8_t bssid_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t client_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t chan_num;
 	uint32_t action; /* WMI_FILTER_NAC_RSSI_ACTION */
 };
@@ -1324,7 +1323,7 @@ struct peer_assoc_params {
 	bool amsdu_disable;
 	/* Use common structure */
 #endif
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	bool he_flag;
 	bool twt_requester;
 	bool twt_responder;
@@ -1654,7 +1653,7 @@ struct sta_uapsd_params {
  */
 struct sta_uapsd_trig_params {
 		uint32_t vdevid;
-		uint8_t peer_addr[IEEE80211_ADDR_LEN];
+		uint8_t peer_addr[QDF_MAC_ADDR_SIZE];
 		struct sta_uapsd_params *auto_triggerparam;
 		uint32_t num_ac;
 };
@@ -1794,7 +1793,7 @@ struct set_key_params {
 	uint8_t vdev_id;
 	uint16_t key_len;
 	uint32_t key_idx;
-	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t key_flags;
 	uint32_t key_cipher;
 	uint32_t key_txmic_len;
@@ -2449,7 +2448,7 @@ struct delts_req_info {
 struct del_ts_params {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
-	uint8_t bssId[IEEE80211_ADDR_LEN];
+	uint8_t bssId[QDF_MAC_ADDR_SIZE];
 	uint8_t sessionId;
 	uint8_t userPrio;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -3078,7 +3077,7 @@ typedef struct {
 struct set_qdepth_thresh_params {
 	uint32_t pdev_id;
 	uint32_t vdev_id;
-	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t num_of_msduq_updates;
 	msduq_update_params update_params[QDEPTH_THRESH_MAX_UPDATES];
 };
@@ -3091,7 +3090,7 @@ struct set_qdepth_thresh_params {
  */
 
 struct peer_chan_width_switch_info {
-	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t chan_width;
 };
 
@@ -3935,7 +3934,7 @@ typedef struct {
  * @req_id: requested id
  */
 struct rtt_meas_req_test_params {
-	uint8_t peer[IEEE80211_ADDR_LEN];
+	uint8_t peer[QDF_MAC_ADDR_SIZE];
 	int req_frame_type;
 	int req_bw;
 	int req_preamble;
@@ -4143,7 +4142,7 @@ typedef struct {
  * @rx_count: rx count
  */
 struct wmi_host_peer_adv_stats {
-	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t fcs_count;
 	uint64_t rx_bytes;
 	uint32_t rx_count;
@@ -5498,8 +5497,8 @@ typedef struct {
  */
 typedef struct {
 	uint32_t event_type[4];
-	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
-	u_int8_t dest_mac[IEEE80211_ADDR_LEN];
+	u_int8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	u_int8_t dest_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t vdev_id;
 } wds_addr_event_t;
 /**
@@ -5905,7 +5904,7 @@ typedef struct {
  * @pdev_id: pdev_id
  */
 typedef struct {
-	uint8_t peer_macaddr[IEEE80211_ADDR_LEN];
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t reason;
 	uint32_t rssi;
 } wmi_host_peer_sta_kickout_event;
@@ -5917,7 +5916,7 @@ typedef struct {
  * @pdev_id: pdev_id
  */
 typedef struct {
-	uint8_t peer_macaddr[IEEE80211_ADDR_LEN];
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t peer_ps_state;
 } wmi_host_peer_sta_ps_statechange_event;
 
@@ -6530,7 +6529,7 @@ typedef struct {
 		v3_tm_start:1,
 		num_ap:4;
 	uint16_t result;
-	uint8_t  dest_mac[IEEE80211_ADDR_LEN];
+	uint8_t  dest_mac[QDF_MAC_ADDR_SIZE];
 } wmi_host_rtt_event_hdr;
 
 /**
@@ -6962,7 +6961,7 @@ enum rcpi_measurement_type {
 struct rcpi_req {
 	uint32_t vdev_id;
 	enum rcpi_measurement_type measurement_type;
-	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -6975,7 +6974,7 @@ struct rcpi_req {
 struct rcpi_res {
 	uint32_t vdev_id;
 	enum rcpi_measurement_type measurement_type;
-	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	int32_t rcpi_value;
 };
 
@@ -7419,8 +7418,8 @@ struct wmi_host_obss_spatial_reuse_set_def_thresh {
  * @flags: flags
  */
 struct wdsentry {
-	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
-	u_int8_t wds_mac[IEEE80211_ADDR_LEN];
+	u_int8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	u_int8_t wds_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t flags;
 };
 
@@ -7477,7 +7476,7 @@ struct wmi_obss_detect_info {
 	uint32_t vdev_id;
 	enum wmi_obss_detection_reason reason;
 	uint32_t matched_detection_masks;
-	uint8_t matched_bssid_addr[IEEE80211_ADDR_LEN];
+	uint8_t matched_bssid_addr[QDF_MAC_ADDR_SIZE];
 };
 
 #ifdef QCA_SUPPORT_CP_STATS

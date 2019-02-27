@@ -40,10 +40,6 @@
 
 #define DP_HTT_MAX_SEND_QUEUE_DEPTH 64
 
-#ifndef HTT_MAC_ADDR_LEN
-#define HTT_MAC_ADDR_LEN 6
-#endif
-
 #define DP_HTT_HTC_PKT_MISCLIST_SIZE          256
 
 #define HTT_T2H_EXT_STATS_TLV_START_OFFSET    3

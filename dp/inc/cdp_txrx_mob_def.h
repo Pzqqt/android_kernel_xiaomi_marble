@@ -31,8 +31,6 @@
 
 #define OL_TXRX_INVALID_NUM_PEERS (-1)
 
-#define OL_TXRX_MAC_ADDR_LEN 6
-
 
 /* Maximum number of station supported by data path, including BC. */
 #define WLAN_MAX_STA_COUNT  (HAL_NUM_STA)
@@ -349,9 +347,9 @@ struct ol_mic_error_info {
 	uint8_t vdev_id;
 	uint32_t key_id;
 	uint64_t pn;
-	uint8_t sa[OL_TXRX_MAC_ADDR_LEN];
-	uint8_t da[OL_TXRX_MAC_ADDR_LEN];
-	uint8_t ta[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t sa[QDF_MAC_ADDR_SIZE];
+	uint8_t da[QDF_MAC_ADDR_SIZE];
+	uint8_t ta[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -452,8 +450,8 @@ typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
  */
 struct ol_rx_inv_peer_params {
 	uint8_t vdev_id;
-	uint8_t ra[OL_TXRX_MAC_ADDR_LEN];
-	uint8_t ta[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t ra[QDF_MAC_ADDR_SIZE];
+	uint8_t ta[QDF_MAC_ADDR_SIZE];
 };
 
 #endif /* __CDP_TXRX_MOB_DEF_H */

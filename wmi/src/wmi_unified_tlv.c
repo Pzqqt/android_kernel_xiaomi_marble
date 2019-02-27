@@ -176,7 +176,7 @@ qdf_export_symbol(wmi_mtrace);
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN],
+				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param)
 {
 	wmi_vdev_create_cmd_fixed_param *cmd;
@@ -647,7 +647,7 @@ static QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
-					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+					 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 					 struct peer_flush_params *param)
 {
 	wmi_peer_flush_tids_cmd_fixed_param *cmd;
@@ -688,7 +688,7 @@ static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
-				 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				 uint8_t vdev_id)
 {
 	wmi_peer_delete_cmd_fixed_param *cmd;
@@ -858,7 +858,7 @@ static void crash_on_send_peer_rx_reorder_queue_remove_cmd(void)
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
-				uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				struct peer_set_params *param)
 {
 	wmi_peer_set_param_cmd_fixed_param *cmd;
@@ -905,7 +905,7 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_vdev_up_cmd_tlv(wmi_unified_t wmi,
-			     uint8_t bssid[IEEE80211_ADDR_LEN],
+			     uint8_t bssid[QDF_MAC_ADDR_SIZE],
 				 struct vdev_up_params *params)
 {
 	wmi_vdev_up_cmd_fixed_param *cmd;
@@ -1669,7 +1669,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct stats_request_params *param)
 {
 	int32_t ret;
@@ -1854,7 +1854,7 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
  *  Return: QDF_STATUS.
  */
 static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct packet_enable_params *param)
 {
 	return QDF_STATUS_SUCCESS;
@@ -7323,7 +7323,7 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_addba_send_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct addba_send_params *param)
 {
 	wmi_addba_send_cmd_fixed_param *cmd;
@@ -7370,7 +7370,7 @@ send_addba_send_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_delba_send_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct delba_send_params *param)
 {
 	wmi_delba_send_cmd_fixed_param *cmd;
@@ -7417,7 +7417,7 @@ send_delba_send_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_addba_clearresponse_cmd_tlv(wmi_unified_t wmi_handle,
-			uint8_t macaddr[IEEE80211_ADDR_LEN],
+			uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 			struct addba_clearresponse_params *param)
 {
 	wmi_addba_clear_resp_cmd_fixed_param *cmd;

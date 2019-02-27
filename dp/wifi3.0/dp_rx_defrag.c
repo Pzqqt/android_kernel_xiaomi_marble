@@ -535,7 +535,7 @@ static uint16_t dp_rx_defrag_hdrsize(qdf_nbuf_t nbuf)
 	frm_ctrl_field = hal_rx_get_frame_ctrl_field(rx_tlv_hdr);
 
 	if (to_ds && fr_ds)
-		size += IEEE80211_ADDR_LEN;
+		size += QDF_MAC_ADDR_SIZE;
 
 	if (frm_ctrl_valid) {
 		fc = frm_ctrl_field;
@@ -570,22 +570,22 @@ static void dp_rx_defrag_michdr(const struct ieee80211_frame *wh0,
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr1); /* DA */
-		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
 		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr3); /* DA */
-		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr2);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
 		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr1); /* DA */
-		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr3);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr, wh->i_addr3); /* DA */
-		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + IEEE80211_ADDR_LEN,
+		DP_RX_DEFRAG_IEEE80211_ADDR_COPY(hdr + QDF_MAC_ADDR_SIZE,
 					   wh->i_addr4);
 		break;
 	}
@@ -924,42 +924,42 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 		hal_rx_mpdu_get_addr1(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr2(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
 		hal_rx_mpdu_get_addr3(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr2(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
 		hal_rx_mpdu_get_addr1(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr3(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		break;
 
 	case IEEE80211_FC1_DIR_DSTODS:
 		hal_rx_mpdu_get_addr3(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		hal_rx_mpdu_get_addr4(rx_desc_info,
 			&mac_addr.raw[0]);
 		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
-			IEEE80211_ADDR_LEN);
+			QDF_MAC_ADDR_SIZE);
 		break;
 
 	default:

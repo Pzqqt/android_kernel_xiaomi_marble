@@ -418,7 +418,7 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
 	struct dp_ast_entry *ase;
 
 	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
-		     ast_mac_addr, DP_MAC_ADDR_LEN);
+		     ast_mac_addr, QDF_MAC_ADDR_SIZE);
 	mac_addr = &local_mac_addr_aligned;
 
 	index = dp_peer_ast_hash_index(soc, mac_addr);
@@ -449,7 +449,7 @@ struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
 	struct dp_ast_entry *ase;
 
 	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
-			ast_mac_addr, DP_MAC_ADDR_LEN);
+			ast_mac_addr, QDF_MAC_ADDR_SIZE);
 	mac_addr = &local_mac_addr_aligned;
 
 	index = dp_peer_ast_hash_index(soc, mac_addr);
@@ -669,10 +669,10 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				}
 
 				qdf_mem_copy(&param->mac_addr.raw[0], mac_addr,
-					     DP_MAC_ADDR_LEN);
+					     QDF_MAC_ADDR_SIZE);
 				qdf_mem_copy(&param->peer_mac_addr.raw[0],
 					     &peer->mac_addr.raw[0],
-					     DP_MAC_ADDR_LEN);
+					     QDF_MAC_ADDR_SIZE);
 				param->type = type;
 				param->flags = flags;
 				param->vdev_id = vdev->vdev_id;
@@ -723,7 +723,7 @@ add_ast_entry:
 		return ret;
 	}
 
-	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, DP_MAC_ADDR_LEN);
+	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, QDF_MAC_ADDR_SIZE);
 	ast_entry->pdev_id = vdev->pdev->pdev_id;
 	ast_entry->vdev_id = vdev->vdev_id;
 	ast_entry->is_mapped = false;
@@ -1096,7 +1096,7 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	} else {
 		qdf_mem_copy(
 			&local_mac_addr_aligned.raw[0],
-			peer_mac_addr, DP_MAC_ADDR_LEN);
+			peer_mac_addr, QDF_MAC_ADDR_SIZE);
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = dp_peer_find_hash_index(soc, mac_addr);
@@ -1413,7 +1413,7 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 			 */
 			if (!(qdf_mem_cmp(peer->mac_addr.raw,
 					  peer->vdev->mac_addr.raw,
-					  DP_MAC_ADDR_LEN))) {
+					  QDF_MAC_ADDR_SIZE))) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  "vdev bss_peer!!!!");

@@ -430,7 +430,7 @@ struct ap_profile_params {
  */
 struct wmi_roam_invoke_cmd {
 	uint32_t vdev_id;
-	uint8_t bssid[IEEE80211_ADDR_LEN];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t channel;
 	uint32_t frame_len;
 	uint8_t *frame_buf;

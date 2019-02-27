@@ -144,8 +144,6 @@
 #define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
 #endif
 
-#define HAL_MAC_ADDR_LEN 6
-
 enum {
 	DP_PPDU_STATUS_START,
 	DP_PPDU_STATUS_DONE,
@@ -415,7 +413,7 @@ struct hal_rx_nac_info {
 	uint8_t fc_valid;
 	uint8_t to_ds_flag;
 	uint8_t mac_addr2_valid;
-	uint8_t mac_addr2[HAL_MAC_ADDR_LEN];
+	uint8_t mac_addr2[QDF_MAC_ADDR_SIZE];
 };
 
 struct hal_rx_ppdu_info {

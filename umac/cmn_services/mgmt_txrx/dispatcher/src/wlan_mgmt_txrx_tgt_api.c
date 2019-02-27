@@ -911,10 +911,10 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 				   wh->i_addr2, wh->i_addr3);
 		if (!is_from_addr_valid)
 			qdf_mem_copy(wh->i_addr2, wh->i_addr3,
-				     IEEE80211_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 		else
 			qdf_mem_copy(wh->i_addr3, wh->i_addr2,
-				     IEEE80211_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 	}
 
 	/* mpdu_data_ptr is pointer to action header */

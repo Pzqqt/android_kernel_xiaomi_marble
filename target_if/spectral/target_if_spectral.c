@@ -1256,7 +1256,7 @@ target_if_spectral_get_macaddr(void *arg, char *addr)
 	wlan_pdev_obj_lock(pdev);
 	myaddr = wlan_pdev_get_hw_macaddr(pdev);
 	wlan_pdev_obj_unlock(pdev);
-	qdf_mem_copy(addr, myaddr, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(addr, myaddr, QDF_MAC_ADDR_SIZE);
 
 	return 0;
 }

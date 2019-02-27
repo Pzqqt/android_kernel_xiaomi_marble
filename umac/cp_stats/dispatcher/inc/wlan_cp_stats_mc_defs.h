@@ -148,7 +148,7 @@ struct request_info {
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;
-	uint8_t peer_mac_addr[WLAN_MACADDR_LEN];
+	uint8_t peer_mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -248,7 +248,7 @@ struct peer_mc_cp_stats {
 	uint32_t tx_rate;
 	uint32_t rx_rate;
 	int8_t peer_rssi;
-	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -259,7 +259,7 @@ struct peer_mc_cp_stats {
  * @rx_count: rx count
  */
 struct peer_adv_mc_cp_stats {
-	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
+	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	uint32_t fcs_count;
 	uint32_t rx_count;
 	uint64_t rx_bytes;

@@ -259,7 +259,7 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 		ret = -EINVAL;
 		goto peer_is_null;
 	}
-	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, WLAN_MACADDR_LEN);
+	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
 
 	status = ucfg_mc_cp_stats_send_stats_request(vdev,
 						     TYPE_CONNECTION_TX_POWER,
@@ -374,7 +374,7 @@ wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 	info.u.get_peer_rssi_cb = get_peer_rssi_cb;
 	info.vdev_id = wlan_vdev_get_id(vdev);
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
-	qdf_mem_copy(info.peer_mac_addr, mac_addr, WLAN_MACADDR_LEN);
+	qdf_mem_copy(info.peer_mac_addr, mac_addr, QDF_MAC_ADDR_SIZE);
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_PEER_STATS,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -512,7 +512,7 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 		*errno = -EINVAL;
 		goto get_station_stats_fail;
 	}
-	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, WLAN_MACADDR_LEN);
+	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
 
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
 						     &info);

@@ -662,7 +662,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 			if (!qdf_mem_cmp(&mac_addr.raw[0],
 					&vdev->mac_addr.raw[0],
-					DP_MAC_ADDR_LEN))
+					QDF_MAC_ADDR_SIZE))
 				return  QDF_STATUS_SUCCESS;
 		}
 
@@ -673,7 +673,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 			if (!qdf_mem_cmp(&mac_addr.raw[0],
 					&vdev->mac_addr.raw[0],
-					DP_MAC_ADDR_LEN))
+					QDF_MAC_ADDR_SIZE))
 				return  QDF_STATUS_SUCCESS;
 		}
 	}
@@ -720,7 +720,7 @@ struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
 	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
 				neighbour_peer_list_elem) {
 		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
-				wh->i_addr2, DP_MAC_ADDR_LEN) == 0) {
+				wh->i_addr2, QDF_MAC_ADDR_SIZE) == 0) {
 			QDF_TRACE(
 				QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				FL("NAC configuration matched for mac-%2x:%2x:%2x:%2x:%2x:%2x"),
@@ -807,7 +807,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
 			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
-						DP_MAC_ADDR_LEN) == 0) {
+						QDF_MAC_ADDR_SIZE) == 0) {
 				goto out;
 			}
 		}
@@ -892,7 +892,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
-					DP_MAC_ADDR_LEN) == 0) {
+					QDF_MAC_ADDR_SIZE) == 0) {
 				qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 				goto out;
 			}

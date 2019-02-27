@@ -51,7 +51,7 @@ target_if_ocb_get_rx_ops(struct wlan_objmgr_psoc *psoc)
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS fake_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN],
+				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param)
 {
 	WMI_LOGP("%s : called", __func__);
@@ -378,7 +378,7 @@ static QDF_STATUS fake_peer_create_cmd_tlv(wmi_unified_t wmi,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS fake_peer_delete_cmd_tlv(wmi_unified_t wmi,
-				 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				 uint8_t vdev_id)
 {
 	WMI_LOGP("%s : called", __func__);

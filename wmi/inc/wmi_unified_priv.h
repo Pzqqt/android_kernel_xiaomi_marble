@@ -265,7 +265,7 @@ struct wmi_wq_dbg_info {
 
 struct wmi_ops {
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN],
+				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param);
 
 QDF_STATUS (*send_vdev_delete_cmd)(wmi_unified_t wmi_handle,
@@ -291,11 +291,11 @@ QDF_STATUS (*send_hidden_ssid_vdev_restart_cmd)(wmi_unified_t wmi_handle,
 		struct hidden_ssid_vdev_restart_params *restart_params);
 
 QDF_STATUS (*send_peer_flush_tids_cmd)(wmi_unified_t wmi,
-					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+					 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 					 struct peer_flush_params *param);
 
 QDF_STATUS (*send_peer_delete_cmd)(wmi_unified_t wmi,
-				    uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				    uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				    uint8_t vdev_id);
 
 QDF_STATUS
@@ -305,11 +305,11 @@ QDF_STATUS
 			    uint16_t *peer_id_list);
 
 QDF_STATUS (*send_peer_param_cmd)(wmi_unified_t wmi,
-				uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				struct peer_set_params *param);
 
 QDF_STATUS (*send_vdev_up_cmd)(wmi_unified_t wmi,
-			     uint8_t bssid[IEEE80211_ADDR_LEN],
+			     uint8_t bssid[QDF_MAC_ADDR_SIZE],
 				 struct vdev_up_params *params);
 
 QDF_STATUS (*send_peer_create_cmd)(wmi_unified_t wmi,
@@ -373,7 +373,7 @@ QDF_STATUS (*send_vdev_sifs_trigger_cmd)(wmi_unified_t wmi_handle,
 					 struct sifs_trigger_param *param);
 
 QDF_STATUS (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct stats_request_params *param);
 
 #ifdef CONFIG_WIN
@@ -381,7 +381,7 @@ QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
 #else
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct packet_enable_params *param);
 #endif
 
@@ -1105,15 +1105,15 @@ QDF_STATUS (*send_smart_ant_set_rx_ant_cmd)(wmi_unified_t wmi_handle,
 		struct smart_ant_rx_ant_params *param);
 
 QDF_STATUS (*send_smart_ant_set_tx_ant_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct smart_ant_tx_ant_params *param);
 
 QDF_STATUS (*send_smart_ant_set_training_info_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct smart_ant_training_info_params *param);
 
 QDF_STATUS (*send_smart_ant_set_node_config_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct smart_ant_node_config_params *param);
 #endif
 
@@ -1133,7 +1133,7 @@ QDF_STATUS (*send_thermal_mitigation_param_cmd)(wmi_unified_t wmi_handle,
 		struct thermal_mitigation_params *param);
 
 QDF_STATUS (*send_vdev_set_neighbour_rx_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct set_neighbour_rx_params *param);
 
 QDF_STATUS (*send_vdev_set_fwtest_param_cmd)(wmi_unified_t wmi_handle,
@@ -1178,32 +1178,32 @@ QDF_STATUS (*send_remove_beacon_filter_cmd)(wmi_unified_t wmi_handle,
 		struct remove_beacon_filter_params *param);
 /*
 QDF_STATUS (*send_mgmt_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct mgmt_params *param);
 		*/
 
 QDF_STATUS (*send_addba_clearresponse_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct addba_clearresponse_params *param);
 
 QDF_STATUS (*send_addba_send_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct addba_send_params *param);
 
 QDF_STATUS (*send_delba_send_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct delba_send_params *param);
 
 QDF_STATUS (*send_addba_setresponse_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct addba_setresponse_params *param);
 
 QDF_STATUS (*send_singleamsdu_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct singleamsdu_params *param);
 
 QDF_STATUS (*send_set_qboost_param_cmd)(wmi_unified_t wmi_handle,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 		struct set_qboost_params *param);
 
 QDF_STATUS (*send_mu_scan_cmd)(wmi_unified_t wmi_handle,

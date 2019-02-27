@@ -153,7 +153,6 @@ struct cdp_soc_rate_stats_ctx;
  */
 #define DP_SW2HW_MACID(id) ((id) + 1)
 #define DP_HW2SW_MACID(id) ((id) > 0 ? ((id) - 1) : 0)
-#define DP_MAC_ADDR_LEN 6
 
 /**
  * Number of Tx Queues
@@ -635,9 +634,8 @@ struct dp_soc_stats {
 	} rx;
 };
 
-#define DP_MAC_ADDR_LEN 6
 union dp_align_mac_addr {
-	uint8_t raw[DP_MAC_ADDR_LEN];
+	uint8_t raw[QDF_MAC_ADDR_SIZE];
 	struct {
 		uint16_t bytes_ab;
 		uint16_t bytes_cd;
@@ -1719,7 +1717,7 @@ struct dp_tx_me_buf_t {
 	/* Note: ME buf pool initialization logic expects next pointer to
 	 * be the first element. Dont add anything before next */
 	struct dp_tx_me_buf_t *next;
-	uint8_t data[DP_MAC_ADDR_LEN];
+	uint8_t data[QDF_MAC_ADDR_SIZE];
 };
 
 #endif /* _DP_TYPES_H_ */

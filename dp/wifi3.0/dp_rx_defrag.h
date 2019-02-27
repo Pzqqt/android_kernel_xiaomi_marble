@@ -27,12 +27,11 @@
 #include <linux/ieee80211.h>
 #endif
 
-#define DEFRAG_IEEE80211_ADDR_LEN	6
 #define DEFRAG_IEEE80211_KEY_LEN	8
 #define DEFRAG_IEEE80211_FCS_LEN	4
 
 #define DP_RX_DEFRAG_IEEE80211_ADDR_COPY(dst, src) \
-	qdf_mem_copy(dst, src, IEEE80211_ADDR_LEN)
+	qdf_mem_copy(dst, src, QDF_MAC_ADDR_SIZE)
 
 #define DP_RX_DEFRAG_IEEE80211_QOS_HAS_SEQ(wh) \
 	(((wh) & \

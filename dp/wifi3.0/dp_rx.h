@@ -499,7 +499,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 					      neighbour_peer_list_elem) {
 					if (!qdf_mem_cmp(&neighbour_peer->neighbour_peers_macaddr,
 							 wds_src_mac,
-							 DP_MAC_ADDR_LEN)) {
+							 QDF_MAC_ADDR_SIZE)) {
 						ret = dp_peer_add_ast(soc,
 								      ta_peer,
 								      wds_src_mac,
@@ -605,7 +605,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 {
 	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
 	uint8_t sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
-	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
+	uint8_t wds_src_mac[QDF_MAC_ADDR_SIZE];
 	uint16_t sa_idx;
 	uint8_t is_chfrag_start = 0;
 	uint8_t is_ad4_valid = 0;
@@ -617,8 +617,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	if (is_chfrag_start)
 		is_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr);
 
-	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),
-	       IEEE80211_ADDR_LEN);
+	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
+	       QDF_MAC_ADDR_SIZE);
 
 	/*
 	 * Get the AST entry from HW SA index and mark it as active
@@ -901,8 +901,8 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 		TAILQ_FOREACH(psta_vdev, &pdev->vdev_list, vdev_list_elem) {
 			if (qdf_unlikely(psta_vdev->proxysta_vdev &&
 					 !qdf_mem_cmp(psta_vdev->mac_addr.raw,
-						      &data[DP_MAC_ADDR_LEN],
-						      DP_MAC_ADDR_LEN))) {
+						      &data[QDF_MAC_ADDR_SIZE],
+						      QDF_MAC_ADDR_SIZE))) {
 				/* Drop packet if source address is equal to
 				 * any of the vdev addresses.
 				 */

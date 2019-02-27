@@ -741,7 +741,7 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
-		     DP_MAC_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 	return true;
 }
@@ -786,7 +786,7 @@ static bool dp_peer_get_ast_info_by_pdevid_wifi3
 	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
-		     DP_MAC_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 	return true;
 }
@@ -4471,7 +4471,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 #endif
 
 	qdf_mem_copy(
-		&vdev->mac_addr.raw[0], vdev_mac_addr, OL_TXRX_MAC_ADDR_LEN);
+		&vdev->mac_addr.raw[0], vdev_mac_addr, QDF_MAC_ADDR_SIZE);
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
@@ -4854,7 +4854,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 		if ((vdev->opmode == wlan_op_mode_sta) &&
 		    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
-		     DP_MAC_ADDR_LEN)) {
+		     QDF_MAC_ADDR_SIZE)) {
 			ast_type = CDP_TXRX_AST_TYPE_SELF;
 		}
 
@@ -4909,7 +4909,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	if ((vdev->opmode == wlan_op_mode_sta) &&
 	    !qdf_mem_cmp(peer_mac_addr, &vdev->mac_addr.raw[0],
-			 DP_MAC_ADDR_LEN)) {
+			 QDF_MAC_ADDR_SIZE)) {
 		ast_type = CDP_TXRX_AST_TYPE_SELF;
 	}
 
@@ -4918,7 +4918,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	qdf_spinlock_create(&peer->peer_info_lock);
 
 	qdf_mem_copy(
-		&peer->mac_addr.raw[0], peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
+		&peer->mac_addr.raw[0], peer_mac_addr, QDF_MAC_ADDR_SIZE);
 
 	/* TODO: See of rx_opt_proc is really required */
 	peer->rx_opt_proc = soc->rx_opt_proc;
@@ -4968,7 +4968,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	DP_STATS_INIT(peer);
 
 	qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
-		     CDP_MAC_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	peer_cookie.ctx = NULL;
 	peer_cookie.cookie = pdev->next_peer_cookie++;
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
@@ -5281,7 +5281,7 @@ static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
 		}
 
 		qdf_mem_copy(&peer->neighbour_peers_macaddr.raw[0],
-			macaddr, DP_MAC_ADDR_LEN);
+			macaddr, QDF_MAC_ADDR_SIZE);
 		peer->vdev = vdev;
 
 		qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
@@ -5303,7 +5303,7 @@ static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
 		TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
 				neighbour_peer_list_elem) {
 			if (!qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
-				macaddr, DP_MAC_ADDR_LEN)) {
+				macaddr, QDF_MAC_ADDR_SIZE)) {
 				/* delete this peer from the list */
 				TAILQ_REMOVE(&pdev->neighbour_peers_list,
 					peer, neighbour_peer_list_elem);
@@ -5518,7 +5518,7 @@ void dp_peer_unref_delete(void *peer_handle)
 
 		/* send peer destroy event to upper layer */
 		qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
-			     CDP_MAC_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		peer_cookie.ctx = NULL;
 		peer_cookie.ctx = (void *)peer->wlanstats_ctx;
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
@@ -5823,7 +5823,7 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
 		peer = dp_peer_find_by_id(pdev->soc, (uint16_t)peer_id);
 		if (peer) {
 			qdf_mem_copy(peer_mac, peer->mac_addr.raw,
-				     DP_MAC_ADDR_LEN);
+				     QDF_MAC_ADDR_SIZE);
 			dp_peer_unref_del_find_by_id(peer);
 		}
 	}
@@ -9278,7 +9278,7 @@ static QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_vdev *vdev_hdl,
 	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
 		      neighbour_peer_list_elem) {
 		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
-				mac_addr, DP_MAC_ADDR_LEN) == 0) {
+				mac_addr, QDF_MAC_ADDR_SIZE) == 0) {
 			*rssi = peer->rssi;
 			status = QDF_STATUS_SUCCESS;
 			break;

@@ -115,7 +115,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	}
 
 	qdf_mem_copy(cdp_rx_ppdu->mac_addr,
-		     peer->mac_addr.raw, DP_MAC_ADDR_LEN);
+		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 }
@@ -412,7 +412,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 				      neighbour_peer_list_elem) {
 				if (!qdf_mem_cmp(&peer->neighbour_peers_macaddr,
 						 &ppdu_info->nac_info.mac_addr2,
-						 DP_MAC_ADDR_LEN)) {
+						 QDF_MAC_ADDR_SIZE)) {
 					peer->rssi = rssi;
 					break;
 				}

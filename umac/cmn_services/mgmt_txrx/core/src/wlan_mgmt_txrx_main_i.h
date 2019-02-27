@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,6 @@
 #include "qdf_list.h"
 
 
-#define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
 #define IEEE80211_FC0_TYPE_MASK             0x0c
 #define IEEE80211_FC0_SUBTYPE_MASK          0xf0
 #define IEEE80211_FC0_TYPE_MGT              0x00
@@ -55,14 +54,14 @@ struct ieee80211_frame {
 	uint8_t i_dur[2];
 	union {
 		struct {
-			uint8_t i_addr1[IEEE80211_ADDR_LEN];
-			uint8_t i_addr2[IEEE80211_ADDR_LEN];
-			uint8_t i_addr3[IEEE80211_ADDR_LEN];
+			uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
 		};
-		uint8_t i_addr_all[3 * IEEE80211_ADDR_LEN];
+		uint8_t i_addr_all[3 * QDF_MAC_ADDR_SIZE];
 	};
 	uint8_t i_seq[2];
-	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
+	/* possibly followed by addr4[QDF_MAC_ADDR_SIZE]; */
 	/* see below */
 } __packed;
 

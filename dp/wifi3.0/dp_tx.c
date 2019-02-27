@@ -1152,7 +1152,7 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	}
 
 	if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr))) {
-		ether_type = *(uint16_t *)(nbuf->data + 2*ETHER_ADDR_LEN +
+		ether_type = *(uint16_t *)(nbuf->data + 2*QDF_MAC_ADDR_SIZE +
 				sizeof(*llcHdr));
 		nbuf_clone = qdf_nbuf_clone(nbuf);
 		if (qdf_unlikely(nbuf_clone)) {
@@ -1238,13 +1238,13 @@ static void dp_tx_get_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	 * Check if packet is dot3 or eth2 type.
 	 */
 	if (DP_FRAME_IS_LLC(ether_type) && DP_FRAME_IS_SNAP(llcHdr)) {
-		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
+		ether_type = (uint16_t)*(nbuf->data + 2*QDF_MAC_ADDR_SIZE +
 				sizeof(*llcHdr));
 
 		if (ether_type == htons(ETHERTYPE_VLAN)) {
 			L3datap = hdr_ptr + sizeof(qdf_ethervlan_header_t) +
 				sizeof(*llcHdr);
-			ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN
+			ether_type = (uint16_t)*(nbuf->data + 2*QDF_MAC_ADDR_SIZE
 					+ sizeof(*llcHdr) +
 					sizeof(qdf_net_vlanhdr_t));
 		} else {
@@ -2511,9 +2511,9 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 
 	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
 	qdf_mem_copy(ppdu_hdr->ta, peer->vdev->mac_addr.raw,
-		     IEEE80211_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
-		     IEEE80211_ADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	ppdu_hdr->ppdu_id = ppdu_id;
 	ppdu_hdr->peer_id = peer_id;
 	ppdu_hdr->first_msdu = first_msdu;
@@ -2624,7 +2624,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 	struct dp_soc *soc;
 	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
 	struct dp_peer *peer;
-	uint8_t mac_addr[DP_MAC_ADDR_LEN], i;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE], i;
 
 	if (!vdev->mec_enabled)
 		return;
@@ -2648,11 +2648,11 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 			"%s Tx MEC Handler",
 			__func__);
 
-	for (i = 0; i < DP_MAC_ADDR_LEN; i++)
-		mac_addr[(DP_MAC_ADDR_LEN - 1) - i] =
-					status[(DP_MAC_ADDR_LEN - 2) + i];
+	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
+		mac_addr[(QDF_MAC_ADDR_SIZE - 1) - i] =
+					status[(QDF_MAC_ADDR_SIZE - 2) + i];
 
-	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN))
+	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
 		dp_peer_add_ast(soc,
 				peer,
 				mac_addr,
@@ -4044,7 +4044,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
 		phy_addr =  (phy_addr << 32) | seg_info_head->frags[0].paddr_lo;
 		qdf_mem_unmap_nbytes_single(pdev->soc->osdev,
 				phy_addr,
-				QDF_DMA_TO_DEVICE , DP_MAC_ADDR_LEN);
+				QDF_DMA_TO_DEVICE , QDF_MAC_ADDR_SIZE);
 		dp_tx_me_free_buf(pdev, mc_uc_buf);
 		qdf_nbuf_free(nbuf);
 		seg_info_new = seg_info_head;
@@ -4064,7 +4064,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
  */
 uint16_t
 dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
-		uint8_t newmac[][DP_MAC_ADDR_LEN], uint8_t new_mac_cnt)
+		uint8_t newmac[][QDF_MAC_ADDR_SIZE], uint8_t new_mac_cnt)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
 	struct dp_pdev *pdev = vdev->pdev;
@@ -4075,7 +4075,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	/* reference to frame dst addr */
 	uint8_t *dstmac;
 	/* copy of original frame src addr */
-	uint8_t srcmac[DP_MAC_ADDR_LEN];
+	uint8_t srcmac[QDF_MAC_ADDR_SIZE];
 
 	/* local index into newmac */
 	uint8_t new_mac_idx = 0;
@@ -4088,7 +4088,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	struct dp_tx_frag_info_s data_frag;
 	qdf_dma_addr_t paddr_data;
 	qdf_dma_addr_t paddr_mcbuf = 0;
-	uint8_t empty_entry_mac[DP_MAC_ADDR_LEN] = {0};
+	uint8_t empty_entry_mac[QDF_MAC_ADDR_SIZE] = {0};
 	QDF_STATUS status;
 
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
@@ -4096,7 +4096,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
 	eh = (qdf_ether_header_t *)nbuf;
-	qdf_mem_copy(srcmac, eh->ether_shost, DP_MAC_ADDR_LEN);
+	qdf_mem_copy(srcmac, eh->ether_shost, QDF_MAC_ADDR_SIZE);
 
 	len = qdf_nbuf_len(nbuf);
 
@@ -4113,13 +4113,13 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		return 1;
 	}
 
-	paddr_data = qdf_nbuf_get_frag_paddr(nbuf, 0) + IEEE80211_ADDR_LEN;
+	paddr_data = qdf_nbuf_get_frag_paddr(nbuf, 0) + QDF_MAC_ADDR_SIZE;
 
 	/*preparing data fragment*/
-	data_frag.vaddr = qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN;
+	data_frag.vaddr = qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE;
 	data_frag.paddr_lo = (uint32_t)paddr_data;
 	data_frag.paddr_hi = (((uint64_t) paddr_data)  >> 32);
-	data_frag.len = len - DP_MAC_ADDR_LEN;
+	data_frag.len = len - QDF_MAC_ADDR_SIZE;
 
 	for (new_mac_idx = 0; new_mac_idx < new_mac_cnt; new_mac_idx++) {
 		dstmac = newmac[new_mac_idx];
@@ -4127,11 +4127,11 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 				"added mac addr (%pM)", dstmac);
 
 		/* Check for NULL Mac Address */
-		if (!qdf_mem_cmp(dstmac, empty_entry_mac, DP_MAC_ADDR_LEN))
+		if (!qdf_mem_cmp(dstmac, empty_entry_mac, QDF_MAC_ADDR_SIZE))
 			continue;
 
 		/* frame to self mac. skip */
-		if (!qdf_mem_cmp(dstmac, srcmac, DP_MAC_ADDR_LEN))
+		if (!qdf_mem_cmp(dstmac, srcmac, QDF_MAC_ADDR_SIZE))
 			continue;
 
 		/*
@@ -4170,10 +4170,10 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 			nbuf_clone = nbuf;
 		}
 
-		qdf_mem_copy(mc_uc_buf->data, dstmac, DP_MAC_ADDR_LEN);
+		qdf_mem_copy(mc_uc_buf->data, dstmac, QDF_MAC_ADDR_SIZE);
 
 		status = qdf_mem_map_nbytes_single(vdev->osdev, mc_uc_buf->data,
-				QDF_DMA_TO_DEVICE, DP_MAC_ADDR_LEN,
+				QDF_DMA_TO_DEVICE, QDF_MAC_ADDR_SIZE,
 				&paddr_mcbuf);
 
 		if (status) {
@@ -4187,7 +4187,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		seg_info_new->frags[0].paddr_lo = (uint32_t) paddr_mcbuf;
 		seg_info_new->frags[0].paddr_hi =
 			((uint64_t) paddr_mcbuf >> 32);
-		seg_info_new->frags[0].len = DP_MAC_ADDR_LEN;
+		seg_info_new->frags[0].len = QDF_MAC_ADDR_SIZE;
 
 		seg_info_new->frags[1] = data_frag;
 		seg_info_new->nbuf = nbuf_clone;

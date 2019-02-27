@@ -244,7 +244,7 @@ tgt_mc_cp_stats_update_peer_adv_stats(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_copy(peer_adv_mc_stats->peer_macaddr,
 		     peer_adv_stats->peer_macaddr,
-		     WLAN_MACADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	if (peer_adv_stats->fcs_count)
 		peer_adv_mc_stats->fcs_count = peer_adv_stats->fcs_count;
 	if (peer_adv_stats->rx_bytes)
@@ -292,7 +292,7 @@ tgt_mc_cp_stats_update_peer_stats(struct wlan_objmgr_psoc *psoc,
 	peer_mc_stats = peer_cp_stats_priv->peer_stats;
 	qdf_mem_copy(peer_mc_stats->peer_macaddr,
 		     peer_stats->peer_macaddr,
-		     WLAN_MACADDR_LEN);
+		     QDF_MAC_ADDR_SIZE);
 	if (peer_stats->tx_rate)
 		peer_mc_stats->tx_rate = peer_stats->tx_rate;
 	if (peer_stats->rx_rate)
@@ -348,7 +348,7 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 		if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 		    !qdf_mem_cmp(ev->peer_stats[i].peer_macaddr,
 				 last_req.peer_mac_addr,
-				 WLAN_MACADDR_LEN)) {
+				 QDF_MAC_ADDR_SIZE)) {
 			/* mac is specified, but failed to update the peer */
 			if (QDF_IS_STATUS_ERROR(status))
 				return;
@@ -377,7 +377,7 @@ extd2_stats:
 		if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 		    !qdf_mem_cmp(ev->peer_adv_stats[i].peer_macaddr,
 				 last_req.peer_mac_addr,
-				 WLAN_MACADDR_LEN)) {
+				 QDF_MAC_ADDR_SIZE)) {
 			/* mac is specified, but failed to update the peer */
 			if (QDF_IS_STATUS_ERROR(status))
 				return;

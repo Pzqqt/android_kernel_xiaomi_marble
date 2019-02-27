@@ -1987,13 +1987,13 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 		if (!vdev)
 			return;
 		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
-			     DP_MAC_ADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 	} else {
 		peer = dp_peer_find_by_id(pdev->soc, peer_id);
 		if (!peer)
 			return;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
-			     peer->mac_addr.raw, DP_MAC_ADDR_LEN);
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 		dp_peer_unref_del_find_by_id(peer);
 	}
 
@@ -3081,7 +3081,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
 		{
-			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+			u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
 			u_int8_t *peer_mac_addr;
 			u_int16_t peer_id;
 			u_int16_t hw_peer_id;
@@ -3118,7 +3118,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		{
 			u_int16_t peer_id;
 			u_int8_t vdev_id;
-			u_int8_t mac_addr[HTT_MAC_ADDR_LEN] = {0};
+			u_int8_t mac_addr[QDF_MAC_ADDR_SIZE] = {0};
 			peer_id = HTT_RX_PEER_UNMAP_PEER_ID_GET(*msg_word);
 			vdev_id = HTT_RX_PEER_UNMAP_VDEV_ID_GET(*msg_word);
 
@@ -3233,7 +3233,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		}
 	case HTT_T2H_MSG_TYPE_PEER_MAP_V2:
 		{
-			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+			u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
 			u_int8_t *peer_mac_addr;
 			u_int16_t peer_id;
 			u_int16_t hw_peer_id;
@@ -3265,7 +3265,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		}
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP_V2:
 		{
-			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+			u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
 			u_int8_t *mac_addr;
 			u_int16_t peer_id;
 			u_int8_t vdev_id;

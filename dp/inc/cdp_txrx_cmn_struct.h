@@ -353,8 +353,6 @@ typedef void (*txrx_ast_free_cb)(void *ctrl_soc,
 				 void *cookie,
 				 enum cdp_ast_free_status);
 
-#define CDP_MAC_ADDR_LEN 6
-
 /**
  *  struct cdp_ast_entry_info - AST entry information
  *  @peer_mac_addr: mac address of peer on which AST entry is added
@@ -367,7 +365,7 @@ typedef void (*txrx_ast_free_cb)(void *ctrl_soc,
  *
  */
 struct cdp_ast_entry_info {
-	uint8_t peer_mac_addr[CDP_MAC_ADDR_LEN];
+	uint8_t peer_mac_addr[QDF_MAC_ADDR_SIZE];
 	enum cdp_txrx_ast_entry_type type;
 	uint8_t vdev_id;
 	uint8_t pdev_id;
@@ -1526,7 +1524,7 @@ enum cdp_dp_cfg {
  */
 struct cdp_peer_cookie {
 	uint8_t peer_id;
-	uint8_t mac_addr[CDP_MAC_ADDR_LEN];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint8_t cookie;
 	struct cdp_stats_cookie *ctx;
 };

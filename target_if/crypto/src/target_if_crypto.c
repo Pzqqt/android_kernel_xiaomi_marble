@@ -139,7 +139,7 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	}
 	params.vdev_id = wlan_vdev_get_id(vdev);
 	params.key_idx = req->keyix;
-	qdf_mem_copy(params.peer_mac, req->macaddr, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(params.peer_mac, req->macaddr, QDF_MAC_ADDR_SIZE);
 	pdev_wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
 	if (!pdev_wmi_handle) {
 		target_if_err("Invalid PDEV WMI handle");

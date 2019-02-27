@@ -156,7 +156,7 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	for (i = 0; i < ev->num_peer_adv_stats; i++) {
 		qdf_mem_copy(&ev->peer_adv_stats[i].peer_macaddr,
 			     &peer_adv_stats[i].peer_macaddr,
-			     WLAN_MACADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 		ev->peer_adv_stats[i].fcs_count = peer_adv_stats[i].fcs_count;
 		ev->peer_adv_stats[i].rx_bytes = peer_adv_stats[i].rx_bytes;
 		ev->peer_adv_stats[i].rx_count = peer_adv_stats[i].rx_count;

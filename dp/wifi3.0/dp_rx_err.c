@@ -86,9 +86,9 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 * if the received pkts src mac addr matches with vdev
 	 * mac address then drop the pkt as it is looped back
 	 */
-	if (!(qdf_mem_cmp(&data[DP_MAC_ADDR_LEN],
+	if (!(qdf_mem_cmp(&data[QDF_MAC_ADDR_SIZE],
 			vdev->mac_addr.raw,
-			DP_MAC_ADDR_LEN)))
+			QDF_MAC_ADDR_SIZE)))
 		return true;
 
 	/*
@@ -128,7 +128,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			 * AST entry for STA's own mac_address.
 			 */
 			ase = dp_peer_ast_list_find(soc, peer,
-						    &data[DP_MAC_ADDR_LEN]);
+						    &data[QDF_MAC_ADDR_SIZE]);
 			if (ase) {
 				ase->ast_idx = sa_idx;
 				soc->ast_table[sa_idx] = ase;
@@ -137,7 +137,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 		}
 	} else
 		ase = dp_peer_ast_hash_find_by_pdevid(soc,
-						      &data[DP_MAC_ADDR_LEN],
+						      &data[QDF_MAC_ADDR_SIZE],
 						      vdev->pdev->pdev_id);
 
 	if (ase) {
@@ -147,7 +147,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
 				"Detected DBDC Root AP %pM, %d %d",
-				&data[DP_MAC_ADDR_LEN], vdev->pdev->pdev_id,
+				&data[QDF_MAC_ADDR_SIZE], vdev->pdev->pdev_id,
 				ase->pdev_id);
 			return false;
 		}
@@ -158,7 +158,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
 				"received pkt with same src mac %pM",
-				&data[DP_MAC_ADDR_LEN]);
+				&data[QDF_MAC_ADDR_SIZE]);
 
 			return true;
 		}
