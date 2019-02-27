@@ -3433,7 +3433,7 @@ static int drv_cmd_get_ccx_mode(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	bool eseMode = sme_get_is_ese_feature_enabled(mac_handle);
+	bool ese_mode = sme_get_is_ese_feature_enabled(mac_handle);
 	char extra[32];
 	uint8_t len = 0;
 	struct pmkid_mode_bits pmkid_modes;
@@ -3443,7 +3443,7 @@ static int drv_cmd_get_ccx_mode(struct hdd_adapter *adapter,
 	 * Check if the features PMKID/ESE/11R are supported simultaneously,
 	 * then this operation is not permitted (return FAILURE)
 	 */
-	if (eseMode &&
+	if (ese_mode &&
 	    (pmkid_modes.fw_okc || pmkid_modes.fw_pmksa_cache) &&
 	    sme_get_is_ft_feature_enabled(mac_handle)) {
 		hdd_warn("PMKID/ESE/11R are supported simultaneously hence this operation is not permitted!");
@@ -3452,7 +3452,7 @@ static int drv_cmd_get_ccx_mode(struct hdd_adapter *adapter,
 	}
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
-			"GETCCXMODE", eseMode);
+			"GETCCXMODE", ese_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
@@ -3510,12 +3510,12 @@ static int drv_cmd_get_fast_roam(struct hdd_adapter *adapter,
 				 struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	bool lfrMode = sme_get_is_lfr_feature_enabled(hdd_ctx->mac_handle);
+	bool lfr_mode = sme_get_is_lfr_feature_enabled(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len = 0;
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
-			"GETFASTROAM", lfrMode);
+			"GETFASTROAM", lfr_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
@@ -4050,11 +4050,11 @@ static int drv_cmd_get_wes_mode(struct hdd_adapter *adapter,
 				struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	bool wesMode = sme_get_wes_mode(hdd_ctx->mac_handle);
+	bool wes_mode = sme_get_wes_mode(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len = 0;
 
-	len = scnprintf(extra, sizeof(extra), "%s %d", command, wesMode);
+	len = scnprintf(extra, sizeof(extra), "%s %d", command, wes_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
