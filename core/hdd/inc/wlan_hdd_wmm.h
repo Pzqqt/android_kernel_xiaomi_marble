@@ -298,13 +298,13 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
  *
  * @adapter: [in]  pointer to adapter context
  * @roam_info: [in]  pointer to roam information
- * @eBssType: [in]  type of BSS
+ * @bss_type: [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 			 struct csr_roam_info *roam_info,
-			 eCsrRoamBssType eBssType);
+			 eCsrRoamBssType bss_type);
 
 /**
  * hdd_wmm_connect() - Function which will handle the housekeeping
@@ -312,13 +312,13 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
  *
  * @adapter : [in]  pointer to adapter context
  * @roam_info: [in]  pointer to roam information
- * @eBssType : [in]  type of BSS
+ * @bss_type : [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			   struct csr_roam_info *roam_info,
-			   eCsrRoamBssType eBssType);
+			   eCsrRoamBssType bss_type);
 
 /**
  * hdd_wmm_is_active() - Function which will determine if WMM is

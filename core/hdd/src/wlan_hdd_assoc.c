@@ -953,14 +953,14 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
  * hdd_conn_save_connect_info() - save current connection information
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
- * @eBssType: bss type
+ * @bss_type: bss type
  *
  * Return: none
  */
 static void
 hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			   struct csr_roam_info *roam_info,
-			   eCsrRoamBssType eBssType)
+			   eCsrRoamBssType bss_type)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encryptType = eCSR_ENCRYPT_TYPE_NONE;
@@ -969,7 +969,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 
 	if (roam_info) {
 		/* Save the BSSID for the connection */
-		if (eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) {
+		if (eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) {
 			QDF_ASSERT(roam_info->pBssDesc);
 			qdf_copy_macaddr(&sta_ctx->conn_info.bssId,
 					 &roam_info->bssid);
@@ -985,7 +985,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				sta_ctx->conn_info.staId[0] =
 					roam_info->staId;
 			}
-		} else if (eCSR_BSS_TYPE_IBSS == eBssType) {
+		} else if (eCSR_BSS_TYPE_IBSS == bss_type) {
 			qdf_copy_macaddr(&sta_ctx->conn_info.bssId,
 					 &roam_info->bssid);
 		} else {
@@ -997,7 +997,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 		}
 
 		/* notify WMM */
-		hdd_wmm_connect(adapter, roam_info, eBssType);
+		hdd_wmm_connect(adapter, roam_info, bss_type);
 
 		if (!roam_info->u.pConnectedProfile) {
 			QDF_ASSERT(roam_info->u.pConnectedProfile);

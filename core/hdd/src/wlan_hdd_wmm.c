@@ -1996,13 +1996,13 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
  *
  * @adapter: [in]  pointer to adapter context
  * @roam_info: [in]  pointer to roam information
- * @eBssType: [in]  type of BSS
+ * @bss_type: [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 			 struct csr_roam_info *roam_info,
-			 eCsrRoamBssType eBssType)
+			 eCsrRoamBssType bss_type)
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
@@ -2165,13 +2165,13 @@ static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
  *
  * @adapter : [in]  pointer to adapter context
  * @roam_info: [in]  pointer to roam information
- * @eBssType : [in]  type of BSS
+ * @bss_type : [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			   struct csr_roam_info *roam_info,
-			   eCsrRoamBssType eBssType)
+			   eCsrRoamBssType bss_type)
 {
 	int ac;
 	bool qap;
@@ -2181,7 +2181,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) &&
+	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) &&
 	    roam_info && roam_info->u.pConnectedProfile) {
 		qap = roam_info->u.pConnectedProfile->qap;
 		qosConnection = roam_info->u.pConnectedProfile->qosConnection;
