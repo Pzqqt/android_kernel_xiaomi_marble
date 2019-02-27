@@ -2373,7 +2373,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	return adapter->link_status;
 }
 
-static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
+static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seq_no)
 {
 	int payload_len;
 	struct sk_buff *skb;
@@ -2394,7 +2394,7 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 		return;
 	}
 
-	nlh = nlmsg_put(skb, cesium_pid, seqNo, 0, payload_len, NLM_F_REQUEST);
+	nlh = nlmsg_put(skb, cesium_pid, seq_no, 0, payload_len, NLM_F_REQUEST);
 
 	if (NULL == nlh) {
 		hdd_err("nlmsg_put() failed for msg size[%d]",
