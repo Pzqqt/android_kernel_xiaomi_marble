@@ -5281,13 +5281,13 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	/* Handle the command */
 	status = hdd_cfg80211_get_ibss_peer_info(adapter, staIdx);
 	if (QDF_STATUS_SUCCESS == status) {
-		uint32_t txRate =
+		uint32_t tx_rate =
 			sta_ctx->ibss_peer_info.peerInfoParams[0].txRate;
 		/* Only lower 3 bytes are rate info. Mask of the MSByte */
-		txRate &= 0x00FFFFFF;
+		tx_rate &= 0x00FFFFFF;
 
 		length = scnprintf(extra, sizeof(extra), "%d %d",
-				(int)txRate,
+				(int)tx_rate,
 				(int)sta_ctx->ibss_peer_info.
 				peerInfoParams[0].rssi);
 		length = QDF_MIN(priv_data->total_len, length + 1);
