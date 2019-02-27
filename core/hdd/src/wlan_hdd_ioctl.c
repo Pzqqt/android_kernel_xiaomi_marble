@@ -533,7 +533,7 @@ error:
  * @dwell_time: Pointer to the time to stay off-channel
  *              after transmitting action frame
  * @pBuf: Pointer to data
- * @pBufLen: Pointer to data length
+ * @buf_len: Pointer to data length
  *
  * This function parses the send action frame data passed in the format
  * SENDACTIONFRAME<space><bssid><space><channel><space><dwelltime><space><data>
@@ -544,7 +544,7 @@ static int
 hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *bssid,
 				    uint8_t *channel, uint8_t *dwell_time,
-				    uint8_t **pBuf, uint8_t *pBufLen)
+				    uint8_t **pBuf, uint8_t *buf_len)
 {
 	const uint8_t *in_ptr = command;
 	const uint8_t *dataEnd;
@@ -600,8 +600,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	while (('\0' != *dataEnd))
 		dataEnd++;
 
-	*pBufLen = dataEnd - in_ptr;
-	if (*pBufLen <= 0)
+	*buf_len = dataEnd - in_ptr;
+	if (*buf_len <= 0)
 		return -EINVAL;
 
 	/*
@@ -613,7 +613,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 * For example, if N = 18, then (18 + 1)/2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1)/2 = 10 bytes
 	 */
-	*pBuf = qdf_mem_malloc((*pBufLen + 1) / 2);
+	*pBuf = qdf_mem_malloc((*buf_len + 1) / 2);
 	if (NULL == *pBuf) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
@@ -624,8 +624,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 * decimal number for example 7f0000f0...form a buffer to contain 7f
 	 * in 0th location, 00 in 1st and f0 in 3rd location
 	 */
-	for (i = 0, j = 0; j < *pBufLen; j += 2) {
-		if (j + 1 == *pBufLen) {
+	for (i = 0, j = 0; j < *buf_len; j += 2) {
+		if (j + 1 == *buf_len) {
 			tempByte = hex_to_bin(in_ptr[j]);
 		} else {
 			tempByte =
@@ -634,7 +634,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 		}
 		(*pBuf)[i++] = tempByte;
 	}
-	*pBufLen = i;
+	*buf_len = i;
 	return 0;
 }
 
