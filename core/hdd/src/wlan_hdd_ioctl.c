@@ -2417,35 +2417,38 @@ static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
 /**
  * hdd_parse_user_params() - return a pointer to the next argument
  * @command: Input argument string
- * @ppArg: Output pointer to the next argument
+ * @arg: Output pointer to the next argument
  *
  * This function parses argument stream and finds the pointer
  * to the next argument
  *
  * Return: 0 if the next argument found; -EINVAL otherwise
  */
-static int hdd_parse_user_params(uint8_t *command, uint8_t **ppArg)
+static int hdd_parse_user_params(uint8_t *command, uint8_t **arg)
 {
-	uint8_t *pVal;
+	uint8_t *cursor;
 
-	pVal = strnchr(command, strlen(command), ' ');
+	cursor = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
-	if (NULL == pVal) /* no argument remains */
+	/* no argument remains ? */
+	if (!cursor)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *pVal)/* no space after the current arg */
+
+	/* no space after the current arg ? */
+	if (SPACE_ASCII_VALUE != *cursor)
 		return -EINVAL;
 
-	pVal++;
+	cursor++;
 
 	/* remove empty spaces */
-	while ((SPACE_ASCII_VALUE == *pVal) && ('\0' != *pVal))
-		pVal++;
+	while (SPACE_ASCII_VALUE == *cursor)
+		cursor++;
 
-	/* no argument followed by spaces */
-	if ('\0' == *pVal)
+	/* no argument after the spaces ? */
+	if ('\0' == *cursor)
 		return -EINVAL;
 
-	*ppArg = pVal;
+	*arg = cursor;
 
 	return 0;
 }
