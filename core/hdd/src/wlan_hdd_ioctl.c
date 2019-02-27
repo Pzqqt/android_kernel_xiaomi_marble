@@ -548,7 +548,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 {
 	const uint8_t *in_ptr = command;
 	const uint8_t *end_ptr;
-	int tempInt;
+	int temp_int;
 	int j = 0;
 	int i = 0;
 	int v = 0;
@@ -576,11 +576,11 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(temp_buf, 10, &tempInt);
-	if (v < 0 || tempInt < 0)
+	v = kstrtos32(temp_buf, 10, &temp_int);
+	if (v < 0 || temp_int < 0)
 		return -EINVAL;
 
-	*dwell_time = tempInt;
+	*dwell_time = temp_int;
 
 	/* point to the next argument */
 	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
@@ -1208,7 +1208,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		      uint8_t *num_channels)
 {
 	const uint8_t *in_ptr = command;
-	int tempInt;
+	int temp_int;
 	int j = 0;
 	int v = 0;
 	char buf[32];
@@ -1233,12 +1233,12 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(buf, 10, &tempInt);
+	v = kstrtos32(buf, 10, &temp_int);
 	if ((v < 0) ||
-	    (tempInt <= 0) || (tempInt > CFG_VALID_CHANNEL_LIST_LEN))
+	    (temp_int <= 0) || (temp_int > CFG_VALID_CHANNEL_LIST_LEN))
 		return -EINVAL;
 
-	*num_channels = tempInt;
+	*num_channels = temp_int;
 
 	hdd_debug("Number of channels are: %d", *num_channels);
 
@@ -1279,13 +1279,13 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		if (1 != v)
 			return -EINVAL;
 
-		v = kstrtos32(buf, 10, &tempInt);
+		v = kstrtos32(buf, 10, &temp_int);
 		if ((v < 0) ||
-		    (tempInt <= 0) ||
-		    (tempInt > WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
+		    (temp_int <= 0) ||
+		    (temp_int > WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
 			return -EINVAL;
 		}
-		channel_list[j] = tempInt;
+		channel_list[j] = temp_int;
 
 		hdd_debug("Channel %d added to preferred channel list",
 			  channel_list[j]);
@@ -2097,7 +2097,7 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *tx_power)
 {
 	uint8_t *in_ptr = command;
-	int tempInt;
+	int temp_int;
 	int v = 0;
 	*tx_power = 0;
 
@@ -2116,13 +2116,13 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *tx_power)
 	if ('\0' == *in_ptr)
 		return 0;
 
-	v = kstrtos32(in_ptr, 10, &tempInt);
+	v = kstrtos32(in_ptr, 10, &temp_int);
 
 	/* Range checking for passed parameter */
-	if ((tempInt < HDD_MIN_TX_POWER) || (tempInt > HDD_MAX_TX_POWER))
+	if ((temp_int < HDD_MIN_TX_POWER) || (temp_int > HDD_MAX_TX_POWER))
 		return -EINVAL;
 
-	*tx_power = tempInt;
+	*tx_power = temp_int;
 
 	hdd_debug("SETMAXTXPOWER: %d", *tx_power);
 
@@ -2528,7 +2528,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 {
 	uint8_t *in_ptr = command;
 	uint8_t input = 0;
-	uint32_t tempInt = 0;
+	uint32_t temp_int = 0;
 	int j = 0, i = 0, v = 0;
 	char buf[32];
 
@@ -2587,54 +2587,54 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 			if (1 != v)
 				return -EINVAL;
 
-			v = kstrtou32(buf, 10, &tempInt);
+			v = kstrtou32(buf, 10, &temp_int);
 			if (v < 0)
 				return -EINVAL;
 
 			switch (i) {
 			case 0: /* Measurement token */
-				if (!tempInt) {
+				if (!temp_int) {
 					hdd_err("Invalid Measurement Token: %u",
-						  tempInt);
+						  temp_int);
 					return -EINVAL;
 				}
 				req->bcnReq[j].measurementToken =
-					tempInt;
+					temp_int;
 				break;
 
 			case 1: /* Channel number */
-				if (!tempInt ||
-				    (tempInt >
+				if (!temp_int ||
+				    (temp_int >
 				     WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
 					hdd_err("Invalid Channel Number: %u",
-						  tempInt);
+						  temp_int);
 					return -EINVAL;
 				}
-				req->bcnReq[j].channel = tempInt;
+				req->bcnReq[j].channel = temp_int;
 				break;
 
 			case 2: /* Scan mode */
-				if ((tempInt < eSIR_PASSIVE_SCAN)
-				    || (tempInt > eSIR_BEACON_TABLE)) {
+				if ((temp_int < eSIR_PASSIVE_SCAN)
+				    || (temp_int > eSIR_BEACON_TABLE)) {
 					hdd_err("Invalid Scan Mode: %u Expected{0|1|2}",
-						  tempInt);
+						  temp_int);
 					return -EINVAL;
 				}
-				req->bcnReq[j].scanMode = tempInt;
+				req->bcnReq[j].scanMode = temp_int;
 				break;
 
 			case 3: /* Measurement duration */
-				if ((!tempInt
+				if ((!temp_int
 				     && (req->bcnReq[j].scanMode !=
 					 eSIR_BEACON_TABLE)) ||
 				    (req->bcnReq[j].scanMode ==
 						eSIR_BEACON_TABLE)) {
 					hdd_err("Invalid Measurement Duration: %u",
-						  tempInt);
+						  temp_int);
 					return -EINVAL;
 				}
 				req->bcnReq[j].measurementDuration =
-					tempInt;
+					temp_int;
 				break;
 			}
 		}
@@ -4802,7 +4802,7 @@ static int hdd_parse_setrmcenable_command(uint8_t *command,
 					  uint8_t *rmc_enable)
 {
 	uint8_t *in_ptr = command;
-	int tempInt;
+	int temp_int;
 	int v = 0;
 	char buf[32];
 	*rmc_enable = 0;
@@ -4824,11 +4824,11 @@ static int hdd_parse_setrmcenable_command(uint8_t *command,
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(buf, 10, &tempInt);
+	v = kstrtos32(buf, 10, &temp_int);
 	if (v < 0)
 		return -EINVAL;
 
-	*rmc_enable = tempInt;
+	*rmc_enable = temp_int;
 
 	hdd_debug("ucRmcEnable: %d", *rmc_enable);
 
@@ -4882,7 +4882,7 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 					enum tx_rate_info *tx_flags)
 {
 	uint8_t *in_ptr = command;
-	int tempInt;
+	int temp_int;
 	int v = 0;
 	char buf[32];
 	*rate = 0;
@@ -4905,13 +4905,13 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(buf, 10, &tempInt);
+	v = kstrtos32(buf, 10, &temp_int);
 	if (v < 0)
 		return -EINVAL;
 
-	switch (tempInt) {
+	switch (temp_int) {
 	default:
-		hdd_warn("Unsupported rate: %d", tempInt);
+		hdd_warn("Unsupported rate: %d", temp_int);
 		return -EINVAL;
 	case 0:
 	case 6:
@@ -4923,11 +4923,11 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 	case 48:
 	case 54:
 		*tx_flags = TX_RATE_LEGACY;
-		*rate = tempInt * 10;
+		*rate = temp_int * 10;
 		break;
 	case 65:
 		*tx_flags = TX_RATE_HT20;
-		*rate = tempInt * 10;
+		*rate = temp_int * 10;
 		break;
 	case 72:
 		*tx_flags = TX_RATE_HT20 | TX_RATE_SGI;
