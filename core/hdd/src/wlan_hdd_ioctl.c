@@ -547,7 +547,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t **buf, uint8_t *buf_len)
 {
 	const uint8_t *in_ptr = command;
-	const uint8_t *dataEnd;
+	const uint8_t *end_ptr;
 	int tempInt;
 	int j = 0;
 	int i = 0;
@@ -596,11 +596,11 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 		return -EINVAL;
 
 	/* find the length of data */
-	dataEnd = in_ptr;
-	while (('\0' != *dataEnd))
-		dataEnd++;
+	end_ptr = in_ptr;
+	while (('\0' != *end_ptr))
+		end_ptr++;
 
-	*buf_len = dataEnd - in_ptr;
+	*buf_len = end_ptr - in_ptr;
 	if (*buf_len <= 0)
 		return -EINVAL;
 
@@ -2664,7 +2664,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 				 uint8_t *cckm_ie_len)
 {
 	uint8_t *in_ptr = command;
-	uint8_t *dataEnd;
+	uint8_t *end_ptr;
 	int j = 0;
 	int i = 0;
 	uint8_t tempByte = 0;
@@ -2684,9 +2684,9 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 		return -EINVAL;
 
 	/* find the length of data */
-	dataEnd = in_ptr;
-	while (('\0' != *dataEnd)) {
-		dataEnd++;
+	end_ptr = in_ptr;
+	while (('\0' != *end_ptr)) {
+		end_ptr++;
 		++(*cckm_ie_len);
 	}
 	if (*cckm_ie_len <= 0)
