@@ -545,7 +545,7 @@ static void hdd_get_transmit_sta_id(struct hdd_adapter *adapter,
 	} else {
 		/* For the rest, traffic is directed to AP/P2P GO */
 		if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
-			*station_id = sta_ctx->conn_info.staId[0];
+			*station_id = sta_ctx->conn_info.staid[0];
 	}
 }
 
@@ -1187,7 +1187,7 @@ QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (!qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],
 				 mac_address, QDF_MAC_ADDR_SIZE)) {
-			*sta_id = sta_ctx->conn_info.staId[idx];
+			*sta_id = sta_ctx->conn_info.staid[idx];
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -1427,7 +1427,7 @@ int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (sta_ctx->conn_info.staId[idx] == HDD_WLAN_INVALID_STA_ID)
+		if (sta_ctx->conn_info.staid[idx] == HDD_WLAN_INVALID_STA_ID)
 			continue;
 		if (qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],
 				addr, sizeof(struct qdf_mac_addr)))

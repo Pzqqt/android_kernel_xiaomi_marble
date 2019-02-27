@@ -215,7 +215,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 	cookie = osif_request_cookie(request);
 
 	status = sme_get_tsm_stats(hdd_ctx->mac_handle, hdd_get_tsm_stats_cb,
-				   hdd_sta_ctx->conn_info.staId[0],
+				   hdd_sta_ctx->conn_info.staid[0],
 				   hdd_sta_ctx->conn_info.bssid,
 				   cookie, tid);
 	if (QDF_STATUS_SUCCESS != status) {

@@ -141,7 +141,7 @@ struct hdd_conn_flag {
  * @conn_state: connection state of the NIC
  * @bssid: BSSID
  * @SSID: SSID Info
- * @staId: Station ID
+ * @staid: Station ID
  * @peerMacAddress:Peer Mac Address of the IBSS Stations
  * @authType: Auth Type
  * @uc_encrypt_type: Unicast Encryption Type
@@ -176,7 +176,7 @@ struct hdd_connection_info {
 	eConnectionState conn_state;
 	struct qdf_mac_addr bssid;
 	tCsrSSIDInfo ssid;
-	uint8_t staId[MAX_PEERS];
+	uint8_t staid[MAX_PEERS];
 	struct qdf_mac_addr peerMacAddress[MAX_PEERS];
 	eCsrAuthType authType;
 	eCsrEncryptionType uc_encrypt_type;

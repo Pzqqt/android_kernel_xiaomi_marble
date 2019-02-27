@@ -7214,12 +7214,12 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		for (idx = 0; idx < MAX_PEERS; idx++) {
 			if (HDD_WLAN_INVALID_STA_ID !=
-					sta_ctx->conn_info.staId[idx]) {
+					sta_ctx->conn_info.staid[idx]) {
 				buf = snprintf
 					      ((extra + length),
 					      WE_MAX_STR_LEN - length,
 					      "\n%d .%02x:%02x:%02x:%02x:%02x:%02x\n",
-					      sta_ctx->conn_info.staId[idx],
+					      sta_ctx->conn_info.staid[idx],
 					      sta_ctx->conn_info.
 					      peerMacAddress[idx].bytes[0],
 					      sta_ctx->conn_info.
@@ -9140,7 +9140,7 @@ static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 				    SME_GLOBAL_CLASSA_STATS |
 				    SME_GLOBAL_CLASSD_STATS,
 				    hdd_statistics_cb,
-				    sta_ctx->conn_info.staId[0],
+				    sta_ctx->conn_info.staid[0],
 				    cookie, adapter->vdev_id);
 
 	if (QDF_STATUS_SUCCESS != status) {

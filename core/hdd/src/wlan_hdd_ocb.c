@@ -255,12 +255,12 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	if (sta_ctx->conn_info.staId[0] != HDD_WLAN_INVALID_STA_ID &&
-	     sta_ctx->conn_info.staId[0] != peer_id) {
+	if (sta_ctx->conn_info.staid[0] != HDD_WLAN_INVALID_STA_ID &&
+	     sta_ctx->conn_info.staid[0] != peer_id) {
 		hdd_err("The ID for the OCB station has changed.");
 	}
 
-	sta_ctx->conn_info.staId[0] = peer_id;
+	sta_ctx->conn_info.staid[0] = peer_id;
 	qdf_copy_macaddr(&sta_ctx->conn_info.peerMacAddress[0],
 			 &adapter->mac_addr);
 
