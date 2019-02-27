@@ -594,24 +594,24 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 	case QCSAP_PARAM_SET_MC_RATE:
 	{
-		tSirRateUpdateInd rateUpdate = {0};
+		tSirRateUpdateInd rate_update = {0};
 
 		hdd_debug("MC Target rate %d", set_value);
-		qdf_copy_macaddr(&rateUpdate.bssid,
+		qdf_copy_macaddr(&rate_update.bssid,
 				 &adapter->mac_addr);
 		status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("unable to get vht_enable2x2");
 			ret = -1;
 		}
-		rateUpdate.nss = (bval == 0) ? 0 : 1;
+		rate_update.nss = (bval == 0) ? 0 : 1;
 
-		rateUpdate.dev_mode = adapter->device_mode;
-		rateUpdate.mcastDataRate24GHz = set_value;
-		rateUpdate.mcastDataRate24GHzTxFlag = 1;
-		rateUpdate.mcastDataRate5GHz = set_value;
-		rateUpdate.bcastDataRate = -1;
-		status = sme_send_rate_update_ind(mac_handle, &rateUpdate);
+		rate_update.dev_mode = adapter->device_mode;
+		rate_update.mcastDataRate24GHz = set_value;
+		rate_update.mcastDataRate24GHzTxFlag = 1;
+		rate_update.mcastDataRate5GHz = set_value;
+		rate_update.bcastDataRate = -1;
+		status = sme_send_rate_update_ind(mac_handle, &rate_update);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("SET_MC_RATE failed");
 			ret = -1;

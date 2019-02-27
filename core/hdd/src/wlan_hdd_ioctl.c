@@ -2726,7 +2726,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 
 int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate)
 {
-	tSirRateUpdateInd rateUpdate = {0};
+	tSirRateUpdateInd rate_update = {0};
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool bval = false;
@@ -2750,18 +2750,18 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate)
 		hdd_err("unable to get vht_enable2x2");
 		return -EINVAL;
 	}
-	rateUpdate.nss = (bval == 0) ? 0 : 1;
+	rate_update.nss = (bval == 0) ? 0 : 1;
 
-	rateUpdate.dev_mode = adapter->device_mode;
-	rateUpdate.mcastDataRate24GHz = target_rate;
-	rateUpdate.mcastDataRate24GHzTxFlag = 1;
-	rateUpdate.mcastDataRate5GHz = target_rate;
-	rateUpdate.bcastDataRate = -1;
-	qdf_copy_macaddr(&rateUpdate.bssid, &adapter->mac_addr);
+	rate_update.dev_mode = adapter->device_mode;
+	rate_update.mcastDataRate24GHz = target_rate;
+	rate_update.mcastDataRate24GHzTxFlag = 1;
+	rate_update.mcastDataRate5GHz = target_rate;
+	rate_update.bcastDataRate = -1;
+	qdf_copy_macaddr(&rate_update.bssid, &adapter->mac_addr);
 	hdd_debug("MC Target rate %d, mac = %pM, dev_mode %s(%d)",
-		  rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
+		  rate_update.mcastDataRate24GHz, rate_update.bssid.bytes,
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
-	status = sme_send_rate_update_ind(hdd_ctx->mac_handle, &rateUpdate);
+	status = sme_send_rate_update_ind(hdd_ctx->mac_handle, &rate_update);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SETMCRATE failed");
 		return -EFAULT;
