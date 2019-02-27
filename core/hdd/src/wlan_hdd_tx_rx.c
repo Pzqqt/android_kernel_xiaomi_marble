@@ -1020,7 +1020,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	if (((adapter->psb_changed & (1 << ac)) &&
 		likely(adapter->hdd_wmm_status.wmmAcStatus[ac].
 			wmmAcAccessAllowed)) ||
-		((sta_ctx->conn_info.uIsAuthenticated == false) &&
+		((sta_ctx->conn_info.is_authenticated == false) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb) ||
 		  QDF_NBUF_CB_PACKET_TYPE_WAPI ==
@@ -2098,7 +2098,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		/* hold configurable wakelock for unicast traffic */
 		if (!hdd_is_current_high_throughput(hdd_ctx) &&
 		    hdd_ctx->config->rx_wakelock_timeout &&
-		    sta_ctx->conn_info.uIsAuthenticated)
+		    sta_ctx->conn_info.is_authenticated)
 			wake_lock = hdd_is_rx_wake_lock_needed(skb);
 
 		if (wake_lock) {

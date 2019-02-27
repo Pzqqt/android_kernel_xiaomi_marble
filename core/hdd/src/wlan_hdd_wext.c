@@ -8090,7 +8090,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		hdd_debug("WE_SET_TXRX_STATS stats cmd: %d mac_id: %d",
 			  req.stats, req.mac_id);
 		if (apps_args[0] == CDP_TXRX_STATS_28) {
-			if (sta_ctx->conn_info.uIsAuthenticated) {
+			if (sta_ctx->conn_info.is_authenticated) {
 				hdd_debug("ap mac addr: %pM",
 					  (void *)&sta_ctx->conn_info.bssId);
 				req.peer_addr =

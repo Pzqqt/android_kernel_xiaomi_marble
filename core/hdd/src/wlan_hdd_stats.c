@@ -564,7 +564,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		}
 		if ((eConnectionState_Associated ==
 		     sta_ctx->conn_info.conn_state)
-		    && (false == sta_ctx->conn_info.uIsAuthenticated)) {
+		    && (false == sta_ctx->conn_info.is_authenticated)) {
 			staMac =
 				(uint8_t *) &(adapter->mac_addr.
 					      bytes[0]);

@@ -236,8 +236,8 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 
 	/* save the new connection state */
 	hdd_debug("Authenticated state Changed from oldState:%d to State:%d",
-		   sta_ctx->conn_info.uIsAuthenticated, auth_state);
-	sta_ctx->conn_info.uIsAuthenticated = auth_state;
+		   sta_ctx->conn_info.is_authenticated, auth_state);
+	sta_ctx->conn_info.is_authenticated = auth_state;
 
 	auth_time = sta_ctx->conn_info.auth_time;
 	time_buffer_size = sizeof(sta_ctx->conn_info.auth_time);

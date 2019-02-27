@@ -148,7 +148,7 @@ struct hdd_conn_flag {
  * @mc_encrypt_type: Multicast Encryption Type
  * @Keys: Keys
  * @operationChannel: Operation Channel
- * @uIsAuthenticated: Remembers authenticated state
+ * @is_authenticated: Remembers authenticated state
  * @dot11Mode: dot11Mode
  * @proxy_arp_service: proxy arp service
  * @ptk_installed: ptk installed state
@@ -183,7 +183,7 @@ struct hdd_connection_info {
 	eCsrEncryptionType mc_encrypt_type;
 	tCsrKeys Keys;
 	uint8_t operationChannel;
-	uint8_t uIsAuthenticated;
+	uint8_t is_authenticated;
 	uint32_t dot11Mode;
 	uint8_t proxy_arp_service;
 	bool ptk_installed;
