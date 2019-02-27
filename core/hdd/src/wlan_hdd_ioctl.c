@@ -4704,7 +4704,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 	int32_t oui_length = 0;
 	uint32_t ibss_ie_length;
 	uint8_t *value = command;
-	tSirModifyIE ibssModifyIE;
+	tSirModifyIE modify_ie;
 	struct csr_roam_profile *roam_profile;
 	mac_handle_t mac_handle;
 
@@ -4758,28 +4758,28 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 
 	roam_profile = hdd_roam_profile(adapter);
 
-	qdf_copy_macaddr(&ibssModifyIE.bssid,
+	qdf_copy_macaddr(&modify_ie.bssid,
 		     roam_profile->BSSIDs.bssid);
 
-	ibssModifyIE.smeSessionId = adapter->vdev_id;
-	ibssModifyIE.notify = true;
-	ibssModifyIE.ieID = IE_EID_VENDOR;
-	ibssModifyIE.ieIDLen = ibss_ie_length;
-	ibssModifyIE.ieBufferlength = ibss_ie_length;
-	ibssModifyIE.pIEBuffer = ibss_ie;
-	ibssModifyIE.oui_length = oui_length;
+	modify_ie.smeSessionId = adapter->vdev_id;
+	modify_ie.notify = true;
+	modify_ie.ieID = IE_EID_VENDOR;
+	modify_ie.ieIDLen = ibss_ie_length;
+	modify_ie.ieBufferlength = ibss_ie_length;
+	modify_ie.pIEBuffer = ibss_ie;
+	modify_ie.oui_length = oui_length;
 
 	hdd_warn("ibss_ie length %d oui_length %d ibss_ie:",
 		 ibss_ie_length, oui_length);
-	while (i < ibssModifyIE.ieBufferlength)
+	while (i < modify_ie.ieBufferlength)
 		hdd_warn("0x%x", ibss_ie[i++]);
 
 	/* Probe Bcn modification */
 	mac_handle = hdd_ctx->mac_handle;
-	sme_modify_add_ie(mac_handle, &ibssModifyIE, eUPDATE_IE_PROBE_BCN);
+	sme_modify_add_ie(mac_handle, &modify_ie, eUPDATE_IE_PROBE_BCN);
 
 	/* Populating probe resp frame */
-	sme_modify_add_ie(mac_handle, &ibssModifyIE, eUPDATE_IE_PROBE_RESP);
+	sme_modify_add_ie(mac_handle, &modify_ie, eUPDATE_IE_PROBE_RESP);
 
 	qdf_mem_free(ibss_ie);
 
