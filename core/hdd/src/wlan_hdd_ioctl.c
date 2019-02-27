@@ -949,9 +949,9 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	/* Check if it is specific action frame */
 	if (pVendorSpecific->category ==
 	    SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY) {
-		static const uint8_t Oui[] = { 0x00, 0x00, 0xf0 };
+		static const uint8_t oui[] = { 0x00, 0x00, 0xf0 };
 
-		if (!qdf_mem_cmp(pVendorSpecific->Oui, (void *)Oui, 3)) {
+		if (!qdf_mem_cmp(pVendorSpecific->Oui, oui, 3)) {
 			/*
 			 * if the channel number is different from operating
 			 * channel then no need to send action frame
