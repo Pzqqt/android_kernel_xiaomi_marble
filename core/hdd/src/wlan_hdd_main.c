@@ -4316,7 +4316,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 		hdd_ctx->config->operating_channel;
 
 	/* Make the default Auth Type as OPEN */
-	sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	status = hdd_init_tx_rx(adapter);
 	if (QDF_STATUS_SUCCESS != status) {

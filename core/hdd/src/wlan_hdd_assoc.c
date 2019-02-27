@@ -1011,10 +1011,10 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				roam_info->u.pConnectedProfile->EncryptionType;
 			sta_ctx->conn_info.uc_encrypt_type = encryptType;
 
-			sta_ctx->conn_info.authType =
+			sta_ctx->conn_info.auth_type =
 				roam_info->u.pConnectedProfile->AuthType;
 			sta_ctx->conn_info.last_auth_type =
-				sta_ctx->conn_info.authType;
+				sta_ctx->conn_info.auth_type;
 
 			sta_ctx->conn_info.operationChannel =
 			    roam_info->u.pConnectedProfile->operationChannel;
@@ -1540,7 +1540,7 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 		     QDF_MAC_ADDR_SIZE);
 
 	/* Clear all security settings */
-	sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
@@ -4558,7 +4558,7 @@ static inline bool
 hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
 {
 	return eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
-				sta_ctx->conn_info.authType;
+				sta_ctx->conn_info.auth_type;
 }
 #else
 static inline bool
@@ -4839,7 +4839,7 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 		break;
 
 	case eCSR_ROAM_PMK_NOTIFY:
-		if (eCSR_AUTH_TYPE_RSN == sta_ctx->conn_info.authType
+		if (eCSR_AUTH_TYPE_RSN == sta_ctx->conn_info.auth_type
 				|| hdd_is_8021x_sha256_auth_type(sta_ctx)) {
 			/* notify the supplicant of a new candidate */
 			qdf_ret_status =
@@ -4908,9 +4908,9 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 	case eCSR_ROAM_CCKM_PREAUTH_NOTIFY:
 	{
 		if (eCSR_AUTH_TYPE_CCKM_WPA ==
-		    sta_ctx->conn_info.authType
+		    sta_ctx->conn_info.auth_type
 		    || eCSR_AUTH_TYPE_CCKM_RSN ==
-		    sta_ctx->conn_info.authType) {
+		    sta_ctx->conn_info.auth_type) {
 			hdd_indicate_cckm_pre_auth(adapter, roam_info);
 		}
 		break;
@@ -5551,11 +5551,11 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 
 	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->AuthType.numEntries = 1;
-	hdd_debug("authType = %d RSNAuthType %d wpa_versions %d",
-		  sta_ctx->conn_info.authType, RSNAuthType,
+	hdd_debug("auth_type = %d RSNAuthType %d wpa_versions %d",
+		  sta_ctx->conn_info.auth_type, RSNAuthType,
 		  sta_ctx->wpa_versions);
 
-	switch (sta_ctx->conn_info.authType) {
+	switch (sta_ctx->conn_info.auth_type) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
 	case eCSR_AUTH_TYPE_AUTOSWITCH:
 #ifdef FEATURE_WLAN_ESE

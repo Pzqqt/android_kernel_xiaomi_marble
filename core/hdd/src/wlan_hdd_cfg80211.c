@@ -14571,7 +14571,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		    !((HDD_AUTH_KEY_MGMT_802_1X ==
 		       (sta_ctx->auth_key_mgmt & HDD_AUTH_KEY_MGMT_802_1X))
 		      && (eCSR_AUTH_TYPE_OPEN_SYSTEM ==
-			  sta_ctx->conn_info.authType)
+			  sta_ctx->conn_info.auth_type)
 		      )
 		    && ((WLAN_CIPHER_SUITE_WEP40 == params->cipher)
 			|| (WLAN_CIPHER_SUITE_WEP104 == params->cipher)
@@ -16146,23 +16146,23 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 	switch (auth_type) {
 	case NL80211_AUTHTYPE_AUTOMATIC:
 		hdd_debug("set authentication type to AUTOSWITCH");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_AUTOSWITCH;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_AUTOSWITCH;
 		break;
 
 	case NL80211_AUTHTYPE_OPEN_SYSTEM:
 	case NL80211_AUTHTYPE_FT:
 		hdd_debug("set authentication type to OPEN");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 
 	case NL80211_AUTHTYPE_SHARED_KEY:
 		hdd_debug("set authentication type to SHARED");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_SHARED_KEY;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_SHARED_KEY;
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case NL80211_AUTHTYPE_NETWORK_EAP:
 		hdd_debug("set authentication type to CCKM WPA");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_CCKM_WPA;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_CCKM_WPA;
 		break;
 #endif
 #if defined(WLAN_FEATURE_FILS_SK) && \
@@ -16170,21 +16170,21 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case NL80211_AUTHTYPE_FILS_SK:
 		hdd_debug("set authentication type to FILS SHARED");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 #endif
 	case NL80211_AUTHTYPE_SAE:
 		hdd_debug("set authentication type to SAE");
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_SAE;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_SAE;
 		break;
 	default:
 		hdd_err("Unsupported authentication type: %d", auth_type);
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_UNKNOWN;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_UNKNOWN;
 		return -EINVAL;
 	}
 
 	roam_profile = hdd_roam_profile(adapter);
-	roam_profile->AuthType.authType[0] = sta_ctx->conn_info.authType;
+	roam_profile->AuthType.authType[0] = sta_ctx->conn_info.auth_type;
 	return 0;
 }
 
@@ -17472,7 +17472,7 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 
 	hdd_sta_ctx->wpa_versions = 0;
 
-	hdd_sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_NONE;
+	hdd_sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_NONE;
 	hdd_sta_ctx->roam_profile.AuthType.authType[0] = eCSR_AUTH_TYPE_NONE;
 
 	hdd_sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
@@ -18334,7 +18334,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 
 	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->AuthType.authType[0] =
-		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	if (params->privacy) {
 		/* Security enabled IBSS, At this time there is no information
