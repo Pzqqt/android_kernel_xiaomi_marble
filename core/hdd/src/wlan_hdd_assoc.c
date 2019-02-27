@@ -1031,8 +1031,8 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			sta_ctx->conn_info.dot11Mode =
 				roam_info->u.pConnectedProfile->dot11Mode;
 
-			sta_ctx->conn_info.proxyARPService =
-				roam_info->u.pConnectedProfile->proxyARPService;
+			sta_ctx->conn_info.proxy_arp_service =
+				roam_info->u.pConnectedProfile->proxy_arp_service;
 
 			sta_ctx->conn_info.nss = roam_info->chan_info.nss;
 
@@ -1547,7 +1547,7 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 	qdf_mem_zero(&sta_ctx->conn_info.Keys, sizeof(tCsrKeys));
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 
-	sta_ctx->conn_info.proxyARPService = 0;
+	sta_ctx->conn_info.proxy_arp_service = 0;
 
 	qdf_mem_zero(&sta_ctx->conn_info.ssid, sizeof(tCsrSSIDInfo));
 }

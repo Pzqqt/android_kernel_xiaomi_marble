@@ -8577,8 +8577,8 @@ QDF_STATUS csr_roam_save_connected_information(struct mac_context *mac,
 		if (pIesTemp->ExtCap.present) {
 			struct s_ext_cap *p_ext_cap = (struct s_ext_cap *)
 							pIesTemp->ExtCap.bytes;
-			pConnectProfile->proxyARPService = p_ext_cap->
-							    proxy_arp_service;
+			pConnectProfile->proxy_arp_service =
+				p_ext_cap->proxy_arp_service;
 		}
 
 		if (NULL == pIes)

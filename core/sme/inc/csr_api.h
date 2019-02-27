@@ -891,7 +891,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	bool isESEAssoc;
 #endif
 	uint32_t dot11Mode;
-	uint8_t proxyARPService;
+	uint8_t proxy_arp_service;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tCsrRoamHTProfile ht_profile;
 #endif

@@ -150,7 +150,7 @@ struct hdd_conn_flag {
  * @operationChannel: Operation Channel
  * @uIsAuthenticated: Remembers authenticated state
  * @dot11Mode: dot11Mode
- * @proxyARPService: proxy arp service
+ * @proxy_arp_service: proxy arp service
  * @ptk_installed: ptk installed state
  * @gtk_installed: gtk installed state
  * @nss: number of spatial streams negotiated
@@ -185,7 +185,7 @@ struct hdd_connection_info {
 	uint8_t operationChannel;
 	uint8_t uIsAuthenticated;
 	uint32_t dot11Mode;
-	uint8_t proxyARPService;
+	uint8_t proxy_arp_service;
 	bool ptk_installed;
 	bool gtk_installed;
 	uint8_t nss;

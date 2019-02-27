@@ -2045,7 +2045,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 						PKT_TYPE_RSP, &pkt_type);
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if ((sta_ctx->conn_info.proxyARPService) &&
+		if ((sta_ctx->conn_info.proxy_arp_service) &&
 		    hdd_is_gratuitous_arp_unsolicited_na(skb)) {
 			qdf_atomic_inc(&adapter->hdd_stats.tx_rx_stats.
 						rx_usolict_arp_n_mcast_drp);
