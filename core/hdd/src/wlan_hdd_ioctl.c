@@ -911,7 +911,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	u64 cookie;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx;
-	tpSirMacVendorSpecificFrameHdr pVendorSpecific =
+	tpSirMacVendorSpecificFrameHdr vendor =
 		(tpSirMacVendorSpecificFrameHdr) payload;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 	struct cfg80211_mgmt_tx_params params;
@@ -947,11 +947,11 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 
 	chan.center_freq = sme_chn_to_freq(channel);
 	/* Check if it is specific action frame */
-	if (pVendorSpecific->category ==
+	if (vendor->category ==
 	    SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY) {
 		static const uint8_t oui[] = { 0x00, 0x00, 0xf0 };
 
-		if (!qdf_mem_cmp(pVendorSpecific->Oui, oui, 3)) {
+		if (!qdf_mem_cmp(vendor->Oui, oui, 3)) {
 			/*
 			 * if the channel number is different from operating
 			 * channel then no need to send action frame
