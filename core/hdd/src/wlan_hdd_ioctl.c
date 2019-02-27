@@ -532,7 +532,7 @@ error:
  * @channel: Pointer to the Target AP channel
  * @dwell_time: Pointer to the time to stay off-channel
  *              after transmitting action frame
- * @pBuf: Pointer to data
+ * @buf: Pointer to data
  * @buf_len: Pointer to data length
  *
  * This function parses the send action frame data passed in the format
@@ -544,7 +544,7 @@ static int
 hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *bssid,
 				    uint8_t *channel, uint8_t *dwell_time,
-				    uint8_t **pBuf, uint8_t *buf_len)
+				    uint8_t **buf, uint8_t *buf_len)
 {
 	const uint8_t *in_ptr = command;
 	const uint8_t *dataEnd;
@@ -613,8 +613,8 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 * For example, if N = 18, then (18 + 1)/2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1)/2 = 10 bytes
 	 */
-	*pBuf = qdf_mem_malloc((*buf_len + 1) / 2);
-	if (NULL == *pBuf) {
+	*buf = qdf_mem_malloc((*buf_len + 1) / 2);
+	if (NULL == *buf) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
@@ -632,7 +632,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				(hex_to_bin(in_ptr[j]) << 4) |
 				(hex_to_bin(in_ptr[j + 1]));
 		}
-		(*pBuf)[i++] = tempByte;
+		(*buf)[i++] = tempByte;
 	}
 	*buf_len = i;
 	return 0;
