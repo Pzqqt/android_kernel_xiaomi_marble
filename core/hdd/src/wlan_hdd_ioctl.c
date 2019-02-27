@@ -5113,7 +5113,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 	int idx = 0;
 	int length = 0;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
-	uint32_t numOfBytestoPrint = 0;
+	uint32_t print_break_index = 0;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -5148,7 +5148,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 		/* Copy number of stations */
 		length = scnprintf(extra, user_size, "%d ",
 				   sta_ctx->ibss_peer_info.numPeers);
-		numOfBytestoPrint = length;
+		print_break_index = length;
 		for (idx = 0; idx < sta_ctx->ibss_peer_info.numPeers;
 								idx++) {
 			int8_t rssi;
@@ -5182,7 +5182,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 			 * and the second chunk will have the rest.
 			 */
 			if (idx < NUM_OF_STA_DATA_TO_PRINT)
-				numOfBytestoPrint = length;
+				print_break_index = length;
 		}
 
 		/*
@@ -5190,26 +5190,26 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 		 * more than 512 bytes than we will split the data and do
 		 * it in two shots
 		 */
-		if (copy_to_user(priv_data->buf, extra, numOfBytestoPrint)) {
+		if (copy_to_user(priv_data->buf, extra, print_break_index)) {
 			hdd_err("Copy into user data buffer failed");
 			ret = -EFAULT;
 			goto mem_free;
 		}
 
 		/* This overwrites the last space, which we already copied */
-		extra[numOfBytestoPrint - 1] = '\0';
+		extra[print_break_index - 1] = '\0';
 		hdd_debug("%s", extra);
 
-		if (length > numOfBytestoPrint) {
+		if (length > print_break_index) {
 			if (copy_to_user
-				    (priv_data->buf + numOfBytestoPrint,
-				    extra + numOfBytestoPrint,
-				    length - numOfBytestoPrint + 1)) {
+				    (priv_data->buf + print_break_index,
+				    extra + print_break_index,
+				    length - print_break_index + 1)) {
 				hdd_err("Copy into user data buffer failed");
 				ret = -EFAULT;
 				goto mem_free;
 			}
-			hdd_debug("%s", &extra[numOfBytestoPrint]);
+			hdd_debug("%s", &extra[print_break_index]);
 		}
 	} else {
 		/* Command failed, log error */
