@@ -146,7 +146,6 @@ struct hdd_conn_flag {
  * @auth_type: Auth Type
  * @uc_encrypt_type: Unicast Encryption Type
  * @mc_encrypt_type: Multicast Encryption Type
- * @Keys: Keys
  * @operationChannel: Operation Channel
  * @is_authenticated: Remembers authenticated state
  * @dot11Mode: dot11Mode
@@ -181,7 +180,6 @@ struct hdd_connection_info {
 	eCsrAuthType auth_type;
 	eCsrEncryptionType uc_encrypt_type;
 	eCsrEncryptionType mc_encrypt_type;
-	tCsrKeys Keys;
 	uint8_t operationChannel;
 	uint8_t is_authenticated;
 	uint32_t dot11Mode;

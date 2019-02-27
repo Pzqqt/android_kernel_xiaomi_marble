@@ -1544,7 +1544,6 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 	sta_ctx->conn_info.mc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 	sta_ctx->conn_info.uc_encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
-	qdf_mem_zero(&sta_ctx->conn_info.Keys, sizeof(tCsrKeys));
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 
 	sta_ctx->conn_info.proxy_arp_service = 0;
