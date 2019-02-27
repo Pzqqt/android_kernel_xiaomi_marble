@@ -54,7 +54,6 @@
 #define PMO_IPV6_ADDR_UC_TYPE                 0
 #define PMO_IPV6_ADDR_AC_TYPE                 1
 
-#define PMO_80211_ADDR_LEN  6  /* size of 802.11 address */
 
 #define PMO_WOW_REQUIRED_CREDITS 1
 
