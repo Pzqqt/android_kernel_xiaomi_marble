@@ -4830,7 +4830,7 @@ static int hdd_parse_setrmcenable_command(uint8_t *command,
 
 	*rmc_enable = temp_int;
 
-	hdd_debug("ucRmcEnable: %d", *rmc_enable);
+	hdd_debug("rmc_enable: %d", *rmc_enable);
 
 	return 0;
 }
@@ -4948,7 +4948,7 @@ static int drv_cmd_set_rmc_enable(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t ucRmcEnable = 0;
+	uint8_t rmc_enable = 0;
 	int status;
 	mac_handle_t mac_handle;
 
@@ -4962,28 +4962,28 @@ static int drv_cmd_set_rmc_enable(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = hdd_parse_setrmcenable_command(value, &ucRmcEnable);
+	status = hdd_parse_setrmcenable_command(value, &rmc_enable);
 	if (status) {
 		hdd_err("Invalid SETRMCENABLE command");
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	hdd_debug("ucRmcEnable %d", ucRmcEnable);
+	hdd_debug("rmc_enable %d", rmc_enable);
 	mac_handle = hdd_ctx->mac_handle;
 
-	if (true == ucRmcEnable) {
+	if (true == rmc_enable) {
 		status = sme_enable_rmc(mac_handle, adapter->vdev_id);
-	} else if (false == ucRmcEnable) {
+	} else if (false == rmc_enable) {
 		status = sme_disable_rmc(mac_handle, adapter->vdev_id);
 	} else {
-		hdd_err("Invalid SETRMCENABLE command %d", ucRmcEnable);
+		hdd_err("Invalid SETRMCENABLE command %d", rmc_enable);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("SETRMC %d failed status %d", ucRmcEnable, status);
+		hdd_err("SETRMC %d failed status %d", rmc_enable, status);
 		ret = -EINVAL;
 		goto exit;
 	}
