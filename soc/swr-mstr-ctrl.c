@@ -1415,6 +1415,195 @@ handle_irq:
 	return ret;
 }
 
+static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
+{
+	struct swr_mstr_ctrl *swrm = dev;
+	u32 value, intr_sts, intr_sts_masked;
+	u32 temp = 0;
+	u32 status, chg_sts, i;
+	u8 devnum = 0;
+	int ret = IRQ_HANDLED;
+	struct swr_device *swr_dev;
+	struct swr_master *mstr = &swrm->master;
+
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		return IRQ_NONE;
+	}
+
+	mutex_lock(&swrm->reslock);
+	swrm_clk_request(swrm, true);
+	mutex_unlock(&swrm->reslock);
+
+	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
+	intr_sts_masked = intr_sts & swrm->intr_mask;
+handle_irq:
+	for (i = 0; i < SWRM_INTERRUPT_MAX; i++) {
+		value = intr_sts_masked & (1 << i);
+		if (!value)
+			continue;
+
+		switch (value) {
+		case SWRM_INTERRUPT_STATUS_SLAVE_PEND_IRQ:
+			dev_dbg(swrm->dev, "%s: Trigger irq to slave device\n",
+				__func__);
+			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
+			ret = swrm_find_alert_slave(swrm, status, &devnum);
+			if (ret) {
+				dev_err_ratelimited(swrm->dev,
+				   "%s: no slave alert found.spurious interrupt\n",
+					__func__);
+				break;
+			}
+			swrm_cmd_fifo_rd_cmd(swrm, &temp, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_CLEAR_1, 1);
+			swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_CLEAR_1);
+			swrm_cmd_fifo_wr_cmd(swrm, 0x0, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_CLEAR_1);
+
+
+			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
+				if (swr_dev->dev_num != devnum)
+					continue;
+				if (swr_dev->slave_irq) {
+					do {
+						handle_nested_irq(
+							irq_find_mapping(
+							swr_dev->slave_irq, 0));
+					} while (swr_dev->slave_irq_pending);
+				}
+
+			}
+			break;
+		case SWRM_INTERRUPT_STATUS_NEW_SLAVE_ATTACHED:
+			dev_dbg(swrm->dev, "%s: SWR new slave attached\n",
+				__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_CHANGE_ENUM_SLAVE_STATUS:
+			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
+			if (status == swrm->slave_status) {
+				dev_dbg(swrm->dev,
+					"%s: No change in slave status: %d\n",
+					__func__, status);
+				break;
+			}
+			chg_sts = swrm_check_slave_change_status(swrm, status,
+								&devnum);
+			switch (chg_sts) {
+			case SWR_NOT_PRESENT:
+				dev_dbg(swrm->dev,
+					"%s: device %d got detached\n",
+					__func__, devnum);
+				break;
+			case SWR_ATTACHED_OK:
+				dev_dbg(swrm->dev,
+					"%s: device %d got attached\n",
+					__func__, devnum);
+				/* enable host irq from slave device*/
+				swrm_cmd_fifo_wr_cmd(swrm, 0xFF, devnum, 0x0,
+					SWRS_SCP_INT_STATUS_CLEAR_1);
+				swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
+					SWRS_SCP_INT_STATUS_MASK_1);
+
+				break;
+			case SWR_ALERT:
+				dev_dbg(swrm->dev,
+					"%s: device %d has pending interrupt\n",
+					__func__, devnum);
+				break;
+			}
+			break;
+		case SWRM_INTERRUPT_STATUS_MASTER_CLASH_DET:
+			dev_err_ratelimited(swrm->dev,
+					"%s: SWR bus clsh detected\n",
+					__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_RD_FIFO_OVERFLOW:
+			dev_dbg(swrm->dev, "%s: SWR read FIFO overflow\n",
+				__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_RD_FIFO_UNDERFLOW:
+			dev_dbg(swrm->dev, "%s: SWR read FIFO underflow\n",
+				__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_WR_CMD_FIFO_OVERFLOW:
+			dev_dbg(swrm->dev, "%s: SWR write FIFO overflow\n",
+				__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_CMD_ERROR:
+			value = swr_master_read(swrm, SWRM_CMD_FIFO_STATUS);
+			dev_err_ratelimited(swrm->dev,
+			"%s: SWR CMD error, fifo status 0x%x, flushing fifo\n",
+					__func__, value);
+			swr_master_write(swrm, SWRM_CMD_FIFO_CMD, 0x1);
+			break;
+		case SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION:
+			dev_err_ratelimited(swrm->dev,
+					"%s: SWR Port collision detected\n",
+					__func__);
+			swrm->intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
+			swr_master_write(swrm,
+				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
+			break;
+		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
+			dev_dbg(swrm->dev,
+				"%s: SWR read enable valid mismatch\n",
+				__func__);
+			swrm->intr_mask &=
+				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
+			swr_master_write(swrm,
+				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
+			break;
+		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
+			complete(&swrm->broadcast);
+			dev_dbg(swrm->dev, "%s: SWR cmd id finished\n",
+				__func__);
+			break;
+		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_FAILED_V2:
+			break;
+		case SWRM_INTERRUPT_STATUS_AUTO_ENUM_TABLE_IS_FULL_V2:
+			break;
+		case SWRM_INTERRUPT_STATUS_BUS_RESET_FINISHED_V2:
+			break;
+		case SWRM_INTERRUPT_STATUS_CLK_STOP_FINISHED_V2:
+			break;
+		case SWRM_INTERRUPT_STATUS_EXT_CLK_STOP_WAKEUP:
+			if (swrm->state == SWR_MSTR_UP)
+				dev_dbg(swrm->dev,
+					"%s:SWR Master is already up\n",
+					__func__);
+			else
+				dev_err_ratelimited(swrm->dev,
+					"%s: SWR wokeup during clock stop\n",
+					__func__);
+			break;
+		default:
+			dev_err_ratelimited(swrm->dev,
+					"%s: SWR unknown interrupt value: %d\n",
+					__func__, value);
+			ret = IRQ_NONE;
+			break;
+		}
+	}
+	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, intr_sts);
+	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x0);
+
+	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
+	intr_sts_masked = intr_sts & swrm->intr_mask;
+
+	if (intr_sts_masked) {
+		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
+		goto handle_irq;
+	}
+
+	mutex_lock(&swrm->reslock);
+	swrm_clk_request(swrm, false);
+	mutex_unlock(&swrm->reslock);
+	swrm_unlock_sleep(swrm);
+	return ret;
+}
+
 static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 {
 	struct swr_mstr_ctrl *swrm = dev;
@@ -1899,7 +2088,7 @@ static int swrm_probe(struct platform_device *pdev)
 		}
 
 		ret = request_threaded_irq(swrm->irq, NULL,
-					   swr_mstr_interrupt,
+					   swr_mstr_interrupt_v2,
 					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					   "swr_master_irq", swrm);
 		if (ret) {
