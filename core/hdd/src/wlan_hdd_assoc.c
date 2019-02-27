@@ -1340,7 +1340,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	union iwreq_data wrqu;
 	int we_event;
 	char *msg;
-	struct qdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peer_macaddr;
 	struct csr_roam_profile *roam_profile;
 
 	roam_profile = hdd_roam_profile(adapter);
@@ -1404,7 +1404,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		    ) {
 			hdd_send_ft_assoc_response(dev, adapter, pCsrRoamInfo);
 		}
-		qdf_copy_macaddr(&peerMacAddr,
+		qdf_copy_macaddr(&peer_macaddr,
 				 &sta_ctx->conn_info.bssId);
 		chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
 		chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
@@ -1422,10 +1422,10 @@ static void hdd_send_association_event(struct net_device *dev,
 						     WLAN_ASSOC_STATE);
 		if (ret)
 			hdd_err("Peer object %pM fail to set associated state",
-					peerMacAddr.bytes);
+					peer_macaddr.bytes);
 
 		/* send peer status indication to oem app */
-		hdd_send_peer_status_ind_to_app(&peerMacAddr,
+		hdd_send_peer_status_ind_to_app(&peer_macaddr,
 						ePeerConnected,
 						pCsrRoamInfo->timingMeasCap,
 						adapter->vdev_id, &chan_info,
@@ -1473,11 +1473,11 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-			qdf_copy_macaddr(&peerMacAddr,
+			qdf_copy_macaddr(&peer_macaddr,
 					 &sta_ctx->conn_info.bssId);
 
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_app(&peerMacAddr,
+			hdd_send_peer_status_ind_to_app(&peer_macaddr,
 							ePeerDisconnected, 0,
 							adapter->vdev_id,
 							NULL,

@@ -5243,7 +5243,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	char extra[128] = { 0 };
 	uint32_t length = 0;
 	uint8_t staIdx = 0;
-	struct qdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peer_macaddr;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -5265,7 +5265,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Parse the incoming command buffer */
-	status = hdd_parse_get_ibss_peer_info(value, &peerMacAddr);
+	status = hdd_parse_get_ibss_peer_info(value, &peer_macaddr);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Invalid GETIBSSPEERINFO command");
 		ret = -EINVAL;
@@ -5273,7 +5273,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Get station index for the peer mac address and sanitize it */
-	hdd_get_peer_sta_id(sta_ctx, &peerMacAddr, &staIdx);
+	hdd_get_peer_sta_id(sta_ctx, &peer_macaddr, &staIdx);
 
 	if (staIdx > MAX_PEERS) {
 		hdd_err("Invalid StaIdx %d returned", staIdx);

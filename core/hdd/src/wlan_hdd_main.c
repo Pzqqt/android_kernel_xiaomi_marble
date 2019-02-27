@@ -5748,7 +5748,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
-	struct qdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peer_macaddr;
 	int sta_id;
 	bool value;
 	struct wlan_objmgr_vdev *vdev;
@@ -5841,7 +5841,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			qdf_copy_macaddr(&peerMacAddr,
+			qdf_copy_macaddr(&peer_macaddr,
 					 &sta_ctx->conn_info.bssId);
 
 		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {

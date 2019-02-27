@@ -1924,7 +1924,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx;
-	uint8_t *peerMacAddr;
+	uint8_t *peer_macaddr;
 	int ret;
 	struct csr_del_sta_params del_sta_params;
 
@@ -1947,14 +1947,14 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	/* iwpriv tool or framework calls this ioctl with
 	 * data passed in extra (less than 16 octets);
 	 */
-	peerMacAddr = (uint8_t *) (extra);
+	peer_macaddr = (uint8_t *) (extra);
 
 	hdd_debug("data " MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(peerMacAddr));
-	wlansap_populate_del_sta_params(peerMacAddr,
-			eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-			(SIR_MAC_MGMT_DISASSOC >> 4),
-			&del_sta_params);
+		  MAC_ADDR_ARRAY(peer_macaddr));
+	wlansap_populate_del_sta_params(peer_macaddr,
+					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					(SIR_MAC_MGMT_DISASSOC >> 4),
+					&del_sta_params);
 	hdd_softap_sta_disassoc(adapter, &del_sta_params);
 
 	hdd_exit();
