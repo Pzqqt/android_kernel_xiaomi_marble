@@ -7238,7 +7238,7 @@ static int hdd_init_netlink_services(struct hdd_context *hdd_ctx)
 		goto err_close_cesium;
 	}
 
-	spectral_scan_activate_service();
+	spectral_scan_activate_service(hdd_ctx);
 
 	return 0;
 

@@ -26,6 +26,7 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <net/cfg80211.h>
+#include "osif_sync.h"
 #include "wlan_hdd_includes.h"
 #include "cds_api.h"
 #include "ani_global.h"
@@ -272,97 +273,124 @@ static int __wlan_hdd_cfg80211_spectral_scan_get_status(
 }
 
 int wlan_hdd_cfg80211_spectral_scan_start(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+					  struct wireless_dev *wdev,
+					  const void *data,
+					  int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_start(
-				wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_spectral_scan_start(wiphy, wdev,
+							data, data_len);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int wlan_hdd_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+					 struct wireless_dev *wdev,
+					 const void *data,
+					 int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_stop(
-				wiphy, wdev, data, data_len);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	cds_ssr_unprotect(__func__);
+	errno = __wlan_hdd_cfg80211_spectral_scan_stop(wiphy, wdev,
+						       data, data_len);
 
-	return ret;
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int wlan_hdd_cfg80211_spectral_scam_get_config(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+					       struct wireless_dev *wdev,
+					       const void *data,
+					       int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_get_config(
-				wiphy, wdev, data, data_len);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	cds_ssr_unprotect(__func__);
+	errno = __wlan_hdd_cfg80211_spectral_scan_get_config(wiphy, wdev,
+							     data, data_len);
 
-	return ret;
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int wlan_hdd_cfg80211_spectral_scan_get_diag_stats(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+						   struct wireless_dev *wdev,
+						   const void *data,
+						   int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(
-				wiphy, wdev, data, data_len);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	cds_ssr_unprotect(__func__);
+	errno = __wlan_hdd_cfg80211_spectral_scan_get_diag_stats(wiphy, wdev,
+								 data,
+								 data_len);
 
-	return ret;
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int wlan_hdd_cfg80211_spectral_scan_get_cap_info(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+						 struct wireless_dev *wdev,
+						 const void *data,
+						 int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_get_cap_info(
-				wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_spectral_scan_get_cap_info(wiphy, wdev,
+							       data, data_len);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
+					       struct wireless_dev *wdev,
+					       const void *data,
+					       int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_spectral_scan_get_status(
-				wiphy, wdev, data, data_len);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	cds_ssr_unprotect(__func__);
+	errno = __wlan_hdd_cfg80211_spectral_scan_get_status(wiphy, wdev,
+							     data, data_len);
 
-	return ret;
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 #if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)
@@ -405,8 +433,7 @@ static void send_spectral_scan_reg_rsp_msg(struct hdd_context *hdd_ctx)
 }
 
 /**
- * __spectral_scan_msg_handler() - API to handle spectral scan
- * command
+ * __spectral_scan_msg_handler() - API to handle spectral scan command
  * @data: Data received
  * @data_len: length of the data received
  * @ctx: Pointer to stored context
@@ -426,7 +453,7 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 
 	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return;
 
 	if (wlan_cfg80211_nla_parse(tb, CLD80211_ATTR_MAX, data,
@@ -462,17 +489,23 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 }
 
 static void spectral_scan_msg_handler(const void *data, int data_len,
-					void *ctx, int pid)
+				      void *ctx, int pid)
 {
-	cds_ssr_protect(__func__);
+	struct device *dev = ctx;
+	struct osif_psoc_sync *psoc_sync;
+
+	if (osif_psoc_sync_op_start(dev, &psoc_sync))
+		return;
+
 	__spectral_scan_msg_handler(data, data_len, ctx, pid);
-	cds_ssr_unprotect(__func__);
+
+	osif_psoc_sync_op_stop(psoc_sync);
 }
 
-void spectral_scan_activate_service(void)
+void spectral_scan_activate_service(struct hdd_context *hdd_ctx)
 {
 	register_cld_cmd_cb(WLAN_NL_MSG_SPECTRAL_SCAN,
-			    spectral_scan_msg_handler, NULL);
+			    spectral_scan_msg_handler, hdd_ctx->parent_dev);
 }
 
 void spectral_scan_deactivate_service(void)

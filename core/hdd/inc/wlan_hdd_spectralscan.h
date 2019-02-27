@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -193,13 +193,14 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 #if defined(CNSS_GENL) && defined(WLAN_CONV_SPECTRAL_ENABLE)
 /**
  * spectral_scan_activate_service() - Activate spectral scan  message handler
+ * @hdd_ctx: callback context to use
  *
  * This function registers a handler to receive netlink message from
  * the spectral scan application process.
  *
  * Return: None
  */
-void spectral_scan_activate_service(void);
+void spectral_scan_activate_service(struct hdd_context *hdd_ctx);
 
 /**
  * spectral_scan_deactivate_service() - Deactivate spectral scan message handler
@@ -211,7 +212,7 @@ void spectral_scan_activate_service(void);
  */
 void spectral_scan_deactivate_service(void);
 #else
-static inline void spectral_scan_activate_service(void)
+static inline void spectral_scan_activate_service(struct hdd_context *hdd_ctx)
 {
 }
 
