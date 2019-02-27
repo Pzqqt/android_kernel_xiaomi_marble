@@ -1533,10 +1533,10 @@ static void hdd_send_association_event(struct net_device *dev,
  */
 static void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 {
-	/* Remove staid, bssid and peerMacAddress */
+	/* Remove staid, bssid and peer_macaddr */
 	sta_ctx->conn_info.staid[0] = HDD_WLAN_INVALID_STA_ID;
 	qdf_mem_zero(&sta_ctx->conn_info.bssid, QDF_MAC_ADDR_SIZE);
-	qdf_mem_zero(&sta_ctx->conn_info.peerMacAddress[0],
+	qdf_mem_zero(&sta_ctx->conn_info.peer_macaddr[0],
 		     QDF_MAC_ADDR_SIZE);
 
 	/* Clear all security settings */
@@ -1844,7 +1844,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 			 */
 			sta_ctx->conn_info.staid[i] =
 						HDD_WLAN_INVALID_STA_ID;
-			qdf_mem_zero(&sta_ctx->conn_info.peerMacAddress[i],
+			qdf_mem_zero(&sta_ctx->conn_info.peer_macaddr[i],
 				sizeof(struct qdf_mac_addr));
 			if (sta_id < HDD_MAX_ADAPTERS)
 				hdd_ctx->sta_to_adapter[sta_id] = NULL;
@@ -3642,7 +3642,7 @@ bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 				 peer_mac_addr, sta_id, idx);
 			sta_ctx->conn_info.staid[idx] = sta_id;
 			qdf_copy_macaddr(
-				&sta_ctx->conn_info.peerMacAddress[idx],
+				&sta_ctx->conn_info.peer_macaddr[idx],
 				peer_mac_addr);
 			return true;
 		}
@@ -3693,7 +3693,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staid)
 						HDD_WLAN_INVALID_STA_ID;
 
 			qdf_zero_macaddr(&sta_ctx->conn_info.
-					 peerMacAddress[idx]);
+					 peer_macaddr[idx]);
 
 			fSuccess = true;
 
@@ -3729,14 +3729,14 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter, uint8_t staid)
 				sta_ctx->conn_info.staid[0] =
 					sta_ctx->conn_info.staid[valid_idx];
 				qdf_copy_macaddr(&sta_ctx->conn_info.
-						 peerMacAddress[0],
+						 peer_macaddr[0],
 						 &sta_ctx->conn_info.
-						 peerMacAddress[valid_idx]);
+						 peer_macaddr[valid_idx]);
 
 				sta_ctx->conn_info.staid[valid_idx] =
 							HDD_WLAN_INVALID_STA_ID;
 				qdf_zero_macaddr(&sta_ctx->conn_info.
-						 peerMacAddress[valid_idx]);
+						 peer_macaddr[valid_idx]);
 			}
 		}
 	}

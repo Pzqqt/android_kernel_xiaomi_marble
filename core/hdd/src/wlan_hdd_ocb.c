@@ -261,7 +261,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	}
 
 	sta_ctx->conn_info.staid[0] = peer_id;
-	qdf_copy_macaddr(&sta_ctx->conn_info.peerMacAddress[0],
+	qdf_copy_macaddr(&sta_ctx->conn_info.peer_macaddr[0],
 			 &adapter->mac_addr);
 
 	return 0;

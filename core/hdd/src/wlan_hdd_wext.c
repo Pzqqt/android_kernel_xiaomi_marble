@@ -7221,17 +7221,17 @@ static int __iw_get_char_setnone(struct net_device *dev,
 					      "\n%d .%02x:%02x:%02x:%02x:%02x:%02x\n",
 					      sta_ctx->conn_info.staid[idx],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[0],
+					      peer_macaddr[idx].bytes[0],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[1],
+					      peer_macaddr[idx].bytes[1],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[2],
+					      peer_macaddr[idx].bytes[2],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[3],
+					      peer_macaddr[idx].bytes[3],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[4],
+					      peer_macaddr[idx].bytes[4],
 					      sta_ctx->conn_info.
-					      peerMacAddress[idx].bytes[5]
+					      peer_macaddr[idx].bytes[5]
 					      );
 				length += buf;
 			}
