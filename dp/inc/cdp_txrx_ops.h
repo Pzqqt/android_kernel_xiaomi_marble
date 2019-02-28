@@ -1255,7 +1255,7 @@ struct cdp_peer_ops {
 	void (*add_last_real_peer)(struct cdp_pdev *pdev,
 		struct cdp_vdev *vdev, uint8_t *peer_id);
 	bool (*is_vdev_restore_last_peer)(void *peer);
-	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *peer,
+	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *vdev,
 			uint8_t *peer_id, bool restore_last_peer);
 	void (*peer_detach_force_delete)(void *peer);
 };
