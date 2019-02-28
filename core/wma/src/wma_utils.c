@@ -61,7 +61,7 @@
 #include "target_if.h"
 #include <wlan_utility.h>
 #include <wlan_mlme_main.h>
-
+#include "host_diag_core_log.h"
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -5205,3 +5205,70 @@ send_data:
 	return 0;
 }
 #endif /* FEATURE_WLM_STATS */
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+static QDF_STATUS wma_send_cold_boot_cal_data(uint8_t *data,
+		wmi_cold_boot_cal_data_fixed_param *event)
+{
+	struct host_log_cold_boot_cal_data_type *log_ptr = NULL;
+
+	WLAN_HOST_DIAG_LOG_ALLOC(log_ptr,
+				 struct host_log_cold_boot_cal_data_type,
+				 LOG_WLAN_COLD_BOOT_CAL_DATA_C);
+
+	if (!log_ptr)
+		return QDF_STATUS_E_NOMEM;
+
+	log_ptr->version = VERSION_LOG_WLAN_COLD_BOOT_CAL_DATA_C;
+	log_ptr->cb_cal_data_len = event->data_len;
+	log_ptr->flags = event->flags;
+	qdf_mem_copy(log_ptr->cb_cal_data, data, log_ptr->cb_cal_data_len);
+
+	WLAN_HOST_DIAG_LOG_REPORT(log_ptr);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wma_send_cold_boot_cal_data(uint8_t *data,
+		wmi_cold_boot_cal_data_fixed_param *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
+				    uint32_t len)
+{
+	WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID_param_tlvs *param_buf;
+	wmi_cold_boot_cal_data_fixed_param *event;
+	QDF_STATUS status;
+	tp_wma_handle wma_handle = (tp_wma_handle)wma_ctx;
+
+	if (!wma_handle) {
+		wma_err("NULL wma handle");
+		return -EINVAL;
+	}
+
+	param_buf =
+		   (WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID_param_tlvs *)event_buff;
+	if (!param_buf) {
+		wma_err("Invalid Cold Boot Cal Event");
+		return -EINVAL;
+	}
+
+	event = param_buf->fixed_param;
+	if ((event->data_len > param_buf->num_data) ||
+	    (param_buf->num_data > HOST_LOG_MAX_COLD_BOOT_CAL_DATA_SIZE)) {
+		WMA_LOGE("Excess data_len:%d, num_data:%d", event->data_len,
+			 param_buf->num_data);
+		return -EINVAL;
+	}
+
+	status = wma_send_cold_boot_cal_data((uint8_t *)param_buf->data, event);
+	if (status != QDF_STATUS_SUCCESS) {
+		wma_err("Cold Boot Cal Diag log not sent");
+		return -ENOMEM;
+	}
+
+	return 0;
+}

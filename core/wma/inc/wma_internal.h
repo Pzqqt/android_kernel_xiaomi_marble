@@ -1633,4 +1633,14 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
  */
 void wma_send_vdev_down(tp_wma_handle wma, struct wma_target_req *req);
 
+/**
+ * wma_cold_boot_cal_event_handler() - Cold boot cal event handler
+ * @wma_ctx: wma handle
+ * @event_buff: event data
+ * @len: length of data
+ *
+ * Return: Success or Failure status
+ */
+int wma_cold_boot_cal_event_handler(void *wma_ctx, uint8_t *event_buff,
+				    uint32_t len);
 #endif
