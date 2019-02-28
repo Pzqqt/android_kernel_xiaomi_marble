@@ -94,7 +94,7 @@ target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
 	if (dbr_tx_ops->direct_buf_rx_module_register) {
 		return dbr_tx_ops->direct_buf_rx_module_register
-			(pdev, DBR_MODULE_CFR,
+			(pdev, 1,
 			 cfr_dbr_event_handler);
 	}
 
@@ -126,7 +126,7 @@ int cfr_8074v2_deinit_pdev(
 {
 	int status;
 
-	status = target_if_unregister_tx_complection_event_handler(pdev);
+	status = target_if_unregister_tx_completion_event_handler(psoc);
 	return status;
 }
 
