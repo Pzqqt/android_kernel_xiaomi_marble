@@ -165,7 +165,7 @@ QDF_STATUS wlan_ser_print_history(
 	struct wlan_serialization_pdev_queue *pdev_q;
 	struct wlan_serialization_vdev_queue *vdev_q;
 	bool for_vdev_queue = false;
-	uint32_t vdev_id;
+	uint32_t vdev_id = WLAN_INVALID_VDEV_ID;
 
 	ser_pdev = wlan_serialization_get_pdev_obj(
 			wlan_vdev_get_pdev(vdev));
