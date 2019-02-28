@@ -40,7 +40,7 @@ osif_vdev_sync_create(struct device *dev,
 		      struct osif_vdev_sync **out_vdev_sync);
 
 /**
- * osif_vdev_sync_create_with_trans() - create a vdev synchronization context
+ * osif_vdev_sync_create_and_trans() - create a vdev synchronization context
  * @dev: parent device to the vdev
  * @out_vdev_sync: out parameter for the new synchronization context
  *
@@ -48,13 +48,13 @@ osif_vdev_sync_create(struct device *dev,
  *
  * Return: Errno
  */
-#define osif_vdev_sync_create_with_trans(dev, out_vdev_sync) \
-	__osif_vdev_sync_create_with_trans(dev, out_vdev_sync, __func__)
+#define osif_vdev_sync_create_and_trans(dev, out_vdev_sync) \
+	__osif_vdev_sync_create_and_trans(dev, out_vdev_sync, __func__)
 
 qdf_must_check int
-__osif_vdev_sync_create_with_trans(struct device *dev,
-				   struct osif_vdev_sync **out_vdev_sync,
-				   const char *desc);
+__osif_vdev_sync_create_and_trans(struct device *dev,
+				  struct osif_vdev_sync **out_vdev_sync,
+				  const char *desc);
 
 /**
  * osif_vdev_sync_destroy() - destroy a vdev synchronization context

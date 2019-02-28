@@ -126,9 +126,9 @@ sync_put:
 	return qdf_status_to_os_return(status);
 }
 
-int __osif_psoc_sync_create_with_trans(struct dsc_driver *dsc_driver,
-				       struct osif_psoc_sync **out_psoc_sync,
-				       const char *desc)
+int __osif_psoc_sync_create_and_trans(struct dsc_driver *dsc_driver,
+				      struct osif_psoc_sync **out_psoc_sync,
+				      const char *desc)
 {
 	struct osif_psoc_sync *psoc_sync;
 	QDF_STATUS status;

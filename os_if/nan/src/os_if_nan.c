@@ -297,7 +297,7 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 	if (errno)
 		return errno;
 
-	errno = osif_vdev_sync_create_with_trans(dev, &vdev_sync);
+	errno = osif_vdev_sync_create_and_trans(dev, &vdev_sync);
 	if (errno)
 		return errno;
 

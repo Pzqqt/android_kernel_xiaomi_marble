@@ -400,8 +400,8 @@ int wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx, uint8_t channel)
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
 
-	errno = osif_vdev_sync_create_with_trans(hdd_ctx->parent_dev,
-						 &vdev_sync);
+	errno = osif_vdev_sync_create_and_trans(hdd_ctx->parent_dev,
+						&vdev_sync);
 	if (errno)
 		return errno;
 

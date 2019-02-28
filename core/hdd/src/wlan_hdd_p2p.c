@@ -769,7 +769,7 @@ _wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
 
-	errno = osif_vdev_sync_create_with_trans(wiphy_dev(wiphy), &vdev_sync);
+	errno = osif_vdev_sync_create_and_trans(wiphy_dev(wiphy), &vdev_sync);
 	if (errno)
 		return ERR_PTR(errno);
 

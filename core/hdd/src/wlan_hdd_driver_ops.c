@@ -459,7 +459,7 @@ static int hdd_soc_probe(struct device *dev,
 
 	hdd_info("probing driver");
 
-	errno = osif_psoc_sync_create_with_trans(dsc_driver, &psoc_sync);
+	errno = osif_psoc_sync_create_and_trans(dsc_driver, &psoc_sync);
 	if (errno)
 		return errno;
 

@@ -125,9 +125,9 @@ sync_put:
 	return qdf_status_to_os_return(status);
 }
 
-int __osif_vdev_sync_create_with_trans(struct device *dev,
-				       struct osif_vdev_sync **out_vdev_sync,
-				       const char *desc)
+int __osif_vdev_sync_create_and_trans(struct device *dev,
+				      struct osif_vdev_sync **out_vdev_sync,
+				      const char *desc)
 {
 	struct osif_vdev_sync *vdev_sync;
 	QDF_STATUS status;
