@@ -1511,7 +1511,7 @@ peer_unmap:
 
 	if (soc->cdp_soc.ol_ops->peer_unmap_event) {
 		soc->cdp_soc.ol_ops->peer_unmap_event(soc->ctrl_psoc,
-				peer_id);
+				peer_id, vdev_id);
 	}
 
 	/*

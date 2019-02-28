@@ -908,7 +908,8 @@ struct ol_if_ops {
 			uint8_t vdev_id, uint8_t *peer_mac_addr,
 			enum cdp_txrx_ast_entry_type peer_type,
 			uint32_t tx_ast_hashidx);
-	int (*peer_unmap_event)(void *ol_soc_handle, uint16_t peer_id);
+	int (*peer_unmap_event)(void *ol_soc_handle, uint16_t peer_id,
+				uint8_t vdev_id);
 
 	int (*get_dp_cfg_param)(void *ol_soc_handle, enum cdp_cfg_param_type param_num);
 
