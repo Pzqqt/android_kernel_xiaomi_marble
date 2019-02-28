@@ -13477,6 +13477,9 @@ static void hdd_qdf_deinit(void)
 	hdd_qdf_print_deinit();
 }
 
+static void hdd_driver_mode_change_register(void);
+static void hdd_driver_mode_change_unregister(void);
+
 /**
  * hdd_driver_load() - Perform the driver-level load operation
  *
@@ -13549,6 +13552,7 @@ static int hdd_driver_load(void)
 	}
 
 	hdd_driver->state = driver_state_loaded;
+	hdd_driver_mode_change_register();
 	dsc_driver_trans_stop(hdd_driver->dsc_driver);
 
 	/* psoc probe can happen in registration; do after 'load' transition */
@@ -13566,6 +13570,7 @@ pld_deinit:
 	status = dsc_driver_trans_start(hdd_driver->dsc_driver, "unload");
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
+	hdd_driver_mode_change_unregister();
 	pld_deinit();
 
 param_destroy:
@@ -13631,6 +13636,7 @@ static void hdd_driver_unload(void)
 		hdd_warn("External threads are still active attempting "
 			 "driver unload anyway");
 
+	hdd_driver_mode_change_unregister();
 	pld_deinit();
 	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
@@ -13938,48 +13944,44 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 static int
 hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
 {
-	int mode;
-	int errno;
+	QDF_STATUS status;
+	uint32_t mode;
 
 	*out_mode = QDF_GLOBAL_MAX_MODE;
 
-	errno = kstrtoint(mode_str, 0, &mode);
-	if (!errno)
-		*out_mode = (enum QDF_GLOBAL_MODE)mode;
+	status = qdf_uint32_parse(mode_str, &mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
-	return errno;
+	if (mode >= QDF_GLOBAL_MAX_MODE)
+		return -ERANGE;
+
+	*out_mode = (enum QDF_GLOBAL_MODE)mode;
+
+	return 0;
 }
 
 /**
- * __con_mode_handler() - Handles module param con_mode change
- * @kmessage: con mode name on which driver to be bring up
- * @kp: The associated kernel parameter
+ * __hdd_driver_mode_change() - Handles a driver mode change
  * @hdd_ctx: Pointer to the global HDD context
+ * @next_mode: the driver mode to transition to
  *
- * This function is invoked when user updates con mode using sys entry,
+ * This function is invoked when user updates con_mode using sys entry,
  * to initialize and bring-up driver in that specific mode.
  *
  * Return: Errno
  */
-static int __con_mode_handler(const char *kmessage,
-			      const struct kernel_param *kp,
-			      struct hdd_context *hdd_ctx)
+static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
+				    enum QDF_GLOBAL_MODE next_mode)
 {
 	enum QDF_GLOBAL_MODE curr_mode;
-	enum QDF_GLOBAL_MODE next_mode;
 	int errno;
 
-	hdd_info("Driver mode changing to %s", kmessage);
+	hdd_info("Driver mode changing to %d", next_mode);
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
 		return errno;
-
-	errno = hdd_parse_driver_mode(kmessage, &next_mode);
-	if (errno) {
-		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
-		return errno;
-	}
 
 	if (!is_con_mode_valid(next_mode)) {
 		hdd_err_rl("Requested driver mode is invalid");
@@ -14045,7 +14047,7 @@ static int __con_mode_handler(const char *kmessage,
 
 	/* con_mode is a global module parameter */
 	con_mode = next_mode;
-	hdd_info("Driver mode successfully changed to %s", kmessage);
+	hdd_info("Driver mode successfully changed to %d", next_mode);
 
 	errno = 0;
 
@@ -14056,7 +14058,7 @@ unlock:
 	return errno;
 }
 
-static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
+static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
 {
 	struct hdd_driver *hdd_driver = hdd_driver_get();
 	struct hdd_context *hdd_ctx;
@@ -14064,19 +14066,6 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 	int errno;
 
 	hdd_enter();
-
-	/* This handler will be invoked before module init when the wlan driver
-	 * is loaded using 'insmod wlan.ko con_mode=5' for example. Return
-	 * success in this case, as module init will bring up the correct
-	 * con_mode when it runs.
-	 */
-	if (hdd_driver->state == driver_state_uninit)
-		return 0;
-
-	if (hdd_driver->state == driver_state_deinit) {
-		hdd_err_rl("driver is unloaded so load again");
-		return -EAGAIN;
-	}
 
 	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
 					     "mode change");
@@ -14094,13 +14083,13 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 		goto trans_stop;
 
 	if (!cds_wait_for_external_threads_completion(__func__)) {
-		hdd_warn("External threads are still active, can not change mode");
+		hdd_warn("External threads still active, cannot change mode");
 		errno = -EAGAIN;
 		goto trans_stop;
 	}
 
 	cds_ssr_protect(__func__);
-	errno = __con_mode_handler(kmessage, kp, hdd_ctx);
+	errno = __hdd_driver_mode_change(hdd_ctx, mode);
 	cds_ssr_unprotect(__func__);
 
 trans_stop:
@@ -14110,6 +14099,39 @@ exit:
 	hdd_exit();
 
 	return errno;
+}
+
+static int hdd_set_con_mode(enum QDF_GLOBAL_MODE mode)
+{
+	con_mode = mode;
+
+	return 0;
+}
+
+static int (*hdd_set_con_mode_cb)(enum QDF_GLOBAL_MODE mode) = hdd_set_con_mode;
+
+static void hdd_driver_mode_change_register(void)
+{
+	hdd_set_con_mode_cb = hdd_driver_mode_change;
+}
+
+static void hdd_driver_mode_change_unregister(void)
+{
+	hdd_set_con_mode_cb = hdd_set_con_mode;
+}
+
+static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
+{
+	enum QDF_GLOBAL_MODE mode;
+	int errno;
+
+	errno = hdd_parse_driver_mode(kmessage, &mode);
+	if (errno) {
+		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
+		return errno;
+	}
+
+	return hdd_set_con_mode_cb(mode);
 }
 
 static int con_mode_handler_ftm(const char *kmessage,
