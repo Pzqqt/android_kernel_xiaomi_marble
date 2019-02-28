@@ -819,6 +819,7 @@ struct cdp_soc_t {
  * @CDP_CONFIG_IGMPMLD_OVERRIDE: Override IGMP/MLD
  * @CDP_CONFIG_IGMPMLD_TID: Configurable TID value when igmmld_override is set
  * @CDP_CONFIG_ARP_DBG_CONF: Enable ARP debug
+ * @CDP_CONFIG_CAPTURE_LATENCY: Capture time latency
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -828,6 +829,7 @@ enum cdp_pdev_param_type {
 	CDP_CONFIG_IGMPMLD_OVERRIDE,
 	CDP_CONFIG_IGMPMLD_TID,
 	CDP_CONFIG_ARP_DBG_CONF,
+	CDP_CONFIG_CAPTURE_LATENCY,
 };
 
 /*

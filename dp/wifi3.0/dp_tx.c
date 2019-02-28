@@ -2407,7 +2407,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 				       struct dp_pdev *pdev,
 				       struct dp_peer *peer,
 				       struct hal_tx_completion_status *ts,
-				       qdf_nbuf_t netbuf)
+				       qdf_nbuf_t netbuf,
+				       uint64_t time_latency)
 {
 	struct tx_capture_hdr *ppdu_hdr;
 	uint16_t peer_id = ts->peer_id;
@@ -2415,7 +2416,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	uint8_t first_msdu = ts->first_msdu;
 	uint8_t last_msdu = ts->last_msdu;
 
-	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode))
+	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
+			 !pdev->latency_capture_enable))
 		return QDF_STATUS_E_NOSUPPORT;
 
 	if (!peer) {
@@ -2449,6 +2451,10 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	ppdu_hdr->peer_id = peer_id;
 	ppdu_hdr->first_msdu = first_msdu;
 	ppdu_hdr->last_msdu = last_msdu;
+	if (qdf_unlikely(pdev->latency_capture_enable)) {
+		ppdu_hdr->tsf = ts->tsf;
+		ppdu_hdr->time_latency = time_latency;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2479,7 +2485,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 				       struct dp_pdev *pdev,
 				       struct dp_peer *peer,
 				       struct hal_tx_completion_status *ts,
-				       qdf_nbuf_t netbuf)
+				       qdf_nbuf_t netbuf,
+				       uint64_t time_latency)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -2893,13 +2900,19 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 			struct hal_tx_completion_status *ts,
 			struct dp_peer *peer)
 {
+	uint64_t time_latency = 0;
 	/*
 	 * m_copy/tx_capture modes are not supported for
 	 * scatter gather packets
 	 */
+	if (qdf_unlikely(!!desc->pdev->latency_capture_enable)) {
+		time_latency = (qdf_ktime_to_ms(qdf_ktime_get()) -
+				desc->timestamp);
+	}
 	if (!(desc->msdu_ext_desc) &&
 	    (dp_get_completion_indication_for_stack(soc, desc->pdev,
-						    peer, ts, desc->nbuf)
+						    peer, ts, desc->nbuf,
+						    time_latency)
 			== QDF_STATUS_SUCCESS)) {
 		qdf_nbuf_unmap(soc->osdev, desc->nbuf,
 			       QDF_DMA_TO_DEVICE);

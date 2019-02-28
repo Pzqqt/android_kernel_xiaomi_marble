@@ -7978,6 +7978,12 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 	case CDP_CONFIG_PRIMARY_RADIO:
 		pdev->is_primary = val;
 		break;
+	case CDP_CONFIG_CAPTURE_LATENCY:
+		if (val == 1)
+			pdev->latency_capture_enable = true;
+		else
+			pdev->latency_capture_enable = false;
+		break;
 	default:
 		return QDF_STATUS_E_INVAL;
 	}

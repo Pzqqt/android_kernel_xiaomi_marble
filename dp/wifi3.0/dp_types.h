@@ -1327,6 +1327,10 @@ struct dp_pdev {
 	/* mirror copy mode */
 	bool mcopy_mode;
 	bool bpr_enable;
+
+	/* enable time latency check for tx completion */
+	bool latency_capture_enable;
+
 	struct {
 		uint16_t tx_ppdu_id;
 		uint16_t tx_peer_id;
