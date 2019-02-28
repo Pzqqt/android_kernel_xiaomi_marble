@@ -459,6 +459,19 @@ wlan_hdd_update_roam_stats(struct hdd_context *hdd_ctx,
 			goto free_mem;
 		}
 
+		ret = scnprintf(buf + length, buf_avail_len - length,
+			"\nRaom Scan time: 0x%llx\n",
+			roam_stats->roam_scan[rsi].time_stamp);
+		if (ret <= 0)
+			goto free_mem;
+		length += ret;
+
+		if (length >= buf_avail_len) {
+			hdd_err("No sufficient buf_avail_len");
+			length = buf_avail_len;
+			goto free_mem;
+		}
+
 		if (scan->is_roam_successful) {
 			ret = scnprintf(buf + length,
 					buf_avail_len - length,
