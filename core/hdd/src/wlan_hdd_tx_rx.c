@@ -652,6 +652,11 @@ static bool hdd_tx_rx_is_dns_domain_name_match(struct sk_buff *skb,
 	if (adapter->track_dns_domain_len == 0)
 		return false;
 
+	/* check OOB , is strncmp accessing data more than skb->len */
+	if ((adapter->track_dns_domain_len +
+	    QDF_NBUF_PKT_DNS_NAME_OVER_UDP_OFFSET) > qdf_nbuf_len(skb))
+		return false;
+
 	domain_name = qdf_nbuf_get_dns_domain_name(skb,
 						adapter->track_dns_domain_len);
 	if (strncmp(domain_name, adapter->dns_payload,
