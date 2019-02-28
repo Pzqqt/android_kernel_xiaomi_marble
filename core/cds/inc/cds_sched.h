@@ -55,7 +55,9 @@
 #define CDS_MAX_OL_RX_PKT 4000
 #endif
 
-typedef void (*cds_ol_rx_thread_cb)(void *context, void *rxpkt, uint16_t staid);
+typedef void (*cds_ol_rx_thread_cb)(void *context,
+				    qdf_nbuf_t rxpkt,
+				    uint16_t staid);
 
 /*
 ** CDS message wrapper for data rx from TXRX
@@ -65,7 +67,7 @@ struct cds_ol_rx_pkt {
 	void *context;
 
 	/* Rx skb */
-	void *Rxpkt;
+	qdf_nbuf_t Rxpkt;
 
 	/* Station id to which this packet is destined */
 	uint16_t staId;
