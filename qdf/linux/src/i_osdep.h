@@ -26,7 +26,6 @@
 
 #ifdef CONFIG_MCL
 #include <cds_queue.h>
-#include <cds_if_upperproto.h>
 #else
 #include <sys/queue.h>
 #endif
