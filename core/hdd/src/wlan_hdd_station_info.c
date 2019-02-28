@@ -533,7 +533,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 		      sizeof(hdd_sta_ctx->cache_conn_info.txrate.nss) +
 		      sizeof(hdd_sta_ctx->cache_conn_info.roam_count) +
 		      sizeof(hdd_sta_ctx->cache_conn_info.last_auth_type) +
-		      sizeof(hdd_sta_ctx->cache_conn_info.dot11Mode);
+		      sizeof(hdd_sta_ctx->cache_conn_info.dot11mode);
 	if (hdd_sta_ctx->cache_conn_info.conn_flag.vht_present)
 		nl_buf_len += sizeof(hdd_sta_ctx->cache_conn_info.vht_caps);
 	if (hdd_sta_ctx->cache_conn_info.conn_flag.ht_present)
@@ -574,7 +574,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 			hdd_sta_ctx->cache_conn_info.last_auth_type)) ||
 	    nla_put_u32(skb, WLAN802_11_MODE,
 			hdd_convert_dot11mode(
-			hdd_sta_ctx->cache_conn_info.dot11Mode))) {
+			hdd_sta_ctx->cache_conn_info.dot11mode))) {
 		hdd_err("put fail");
 		goto fail;
 	}

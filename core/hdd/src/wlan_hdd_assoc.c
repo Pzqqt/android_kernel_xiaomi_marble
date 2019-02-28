@@ -1028,7 +1028,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				     sizeof(tSirMacSSid));
 
 			/* Save dot11mode in which STA associated to AP */
-			sta_ctx->conn_info.dot11Mode =
+			sta_ctx->conn_info.dot11mode =
 				roam_info->u.pConnectedProfile->dot11Mode;
 
 			sta_ctx->conn_info.proxy_arp_service =
@@ -1654,7 +1654,7 @@ static void hdd_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
 	hdd_debug("channel: %d",
 		 hdd_sta_ctx->conn_info.freq);
 	hdd_debug("dot11mode: %d",
-		 hdd_sta_ctx->conn_info.dot11Mode);
+		 hdd_sta_ctx->conn_info.dot11mode);
 	hdd_debug("AKM: %d",
 		  hdd_sta_ctx->conn_info.last_auth_type);
 	hdd_debug("ssid: %.*s",

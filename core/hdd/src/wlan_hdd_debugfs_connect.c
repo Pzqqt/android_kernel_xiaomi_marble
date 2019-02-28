@@ -366,7 +366,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 			    "signal = %ddBm\n"
 			    "bit_rate = %u\n"
 			    "last_auth_type = %s\n"
-			    "dot11Mode = %s\n",
+			    "dot11mode = %s\n",
 			    conn_info->last_ssid.SSID.ssId,
 			    MAC_ADDR_ARRAY(conn_info->bssid.bytes),
 			    conn_info->connect_time,
@@ -376,7 +376,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 			    conn_info->signal,
 			    bit_rate,
 			    hdd_auth_type_str(conn_info->last_auth_type),
-			    hdd_dot11_mode_str(conn_info->dot11Mode));
+			    hdd_dot11_mode_str(conn_info->dot11mode));
 
 	if (ret_val <= 0)
 		return length;
