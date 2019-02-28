@@ -2363,8 +2363,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	rx_tid->num_of_addba_req++;
 	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE &&
-	     rx_tid->hw_qdesc_vaddr_unaligned != NULL) ||
-	    (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS)) {
+	     rx_tid->hw_qdesc_vaddr_unaligned)) {
 		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		peer->active_ba_session_cnt--;
