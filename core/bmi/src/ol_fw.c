@@ -738,6 +738,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 		       __func__);
 		return;
 	}
+	cds_set_target_ready(false);
 	cds_set_recovery_in_progress(true);
 
 	ret = hif_check_fw_reg(scn);
