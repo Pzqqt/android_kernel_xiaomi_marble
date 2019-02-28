@@ -105,9 +105,8 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 	}
 
 	if (target_if_vdev_mgr_is_panic_on_bug()) {
-		mlme_err("VDEV_%d: Panic on bug enabled, rsp status:%d",
-			 vdev_id, vdev_rsp->rsp_status);
-		QDF_BUG(0);
+		QDF_DEBUG_PANIC("VDEV_%d: Panic on bug enabled, rsp status:%d",
+			        vdev_id, vdev_rsp->rsp_status);
 	} else {
 		mlme_err("VDEV_%d: Trigger Self recovery, rsp status%d",
 			 vdev_id, vdev_rsp->rsp_status);

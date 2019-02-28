@@ -174,15 +174,6 @@ struct wmi_unified
 	return wmi_handle;
 }
 
-static bool target_if_check_is_pre_lithium(
-					struct wlan_objmgr_psoc *psoc)
-{
-	if (lmac_get_tgt_type(psoc) < TARGET_TYPE_QCA8074)
-		return true;
-	else
-		return false;
-}
-
 static inline uint32_t
 target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 {
@@ -427,10 +418,10 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 	status = wmi_unified_vdev_delete_send(wmi_handle, param->vdev_id);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/*
-		 * pre lithium chipsets doesn't have a delete response
-		 * hence fake response is sent
+		 * Simulate delete response if target doesn't support
 		 */
-		if (target_if_check_is_pre_lithium(psoc) ||
+		if (!wmi_service_enabled(wmi_handle,
+					 wmi_service_sync_delete_cmds) ||
 		    wlan_psoc_nif_feat_cap_get(psoc,
 					       WLAN_SOC_F_TESTMODE_ENABLE))
 			target_if_vdev_mgr_delete_response_send(vdev, rx_ops);
@@ -901,8 +892,6 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_set_param_send;
 	mlme_tx_ops->vdev_sta_ps_param_send =
 			target_if_vdev_mgr_sta_ps_param_send;
-	mlme_tx_ops->target_is_pre_lithium =
-			target_if_check_is_pre_lithium;
 	mlme_tx_ops->vdev_mgr_rsp_timer_init =
 			target_if_vdev_mgr_rsp_timer_init;
 	mlme_tx_ops->vdev_mgr_rsp_timer_deinit =

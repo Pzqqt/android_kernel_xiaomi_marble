@@ -279,7 +279,6 @@ struct wlan_lmac_if_mlme_tx_ops {
 	QDF_STATUS (*vdev_bcn_miss_offload_send)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*vdev_sta_ps_param_send)(struct wlan_objmgr_vdev *vdev,
 					     struct sta_ps_params *param);
-	bool (*target_is_pre_lithium)(struct wlan_objmgr_psoc *psoc);
 #endif
 };
 

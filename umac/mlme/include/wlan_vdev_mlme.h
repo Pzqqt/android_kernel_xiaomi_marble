@@ -423,20 +423,6 @@ enum vdev_start_resp_type {
 };
 
 /**
- * enum vdev_rsp_type - Response type
- * @START_RSP:      Start Response
- * @RESTART_RSP:    Restart Response
- * @STOP_RSP: STOP Response
- * @DELETE_RSP: DELETE Response
- */
-enum vdev_rsp_type {
-	START_RSP = 0,
-	RESTART_RSP,
-	STOP_RSP,
-	DELETE_RSP,
-};
-
-/**
  * struct vdev_mlme_ops - VDEV MLME operation callbacks structure
  * @mlme_vdev_validate_basic_params:    callback to validate VDEV basic params
  * @mlme_vdev_reset_proto_params:       callback to Reset protocol params
