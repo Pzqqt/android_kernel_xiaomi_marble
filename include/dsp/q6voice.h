@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #ifndef __QDSP6VOICE_H__
 #define __QDSP6VOICE_H__
@@ -1768,6 +1768,7 @@ struct incall_rec_info {
 	uint32_t rec_enable;
 	uint32_t rec_mode;
 	uint32_t recording;
+	uint32_t port_id;
 };
 
 struct incall_music_info {
@@ -1946,6 +1947,7 @@ struct common_data {
 	bool sidetone_enable;
 	bool mic_break_enable;
 	struct audio_uevent_data *uevent_data;
+	int32_t rec_channel_count;
 };
 
 struct voice_session_itr {
@@ -2079,6 +2081,8 @@ int voc_disable_topology(uint32_t session_id, uint32_t disable);
 int voc_set_device_config(uint32_t session_id, uint8_t path_dir,
 			  struct media_format_info *finfo);
 uint32_t voice_get_topology(uint32_t topology_idx);
+void voc_set_incall_capture_channel_config(int channel_count);
+int voc_get_incall_capture_channel_config(void);
 int voice_set_topology_specific_info(struct voice_data *v,
 				     uint32_t topology_idx);
 int voc_set_sound_focus(struct sound_focus_param sound_focus_param);

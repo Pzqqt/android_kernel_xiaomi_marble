@@ -98,7 +98,8 @@ static void voice_unload_topo_modules(void);
 
 static int voice_cvs_stop_playback(struct voice_data *v);
 static int voice_cvs_start_playback(struct voice_data *v);
-static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode);
+static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode,
+					uint32_t port_id);
 static int voice_cvs_stop_record(struct voice_data *v);
 
 static int32_t qdsp_mvm_callback(struct apr_client_data *data, void *priv);
@@ -4411,7 +4412,8 @@ static int voice_setup_vocproc(struct voice_data *v)
 
 	/* Start in-call recording if this feature is enabled */
 	if (v->rec_info.rec_enable)
-		voice_cvs_start_record(v, v->rec_info.rec_mode);
+		voice_cvs_start_record(v, v->rec_info.rec_mode,
+					v->rec_info.port_id);
 
 	if (v->dtmf_rx_detect_en)
 		voice_send_dtmf_rx_detection_cmd(v, v->dtmf_rx_detect_en);
@@ -5056,7 +5058,8 @@ static int voice_destroy_vocproc(struct voice_data *v)
 		if (v->rec_info.rec_enable) {
 			voice_cvs_start_record(
 				&common.voice[VOC_PATH_PASSIVE],
-				v->rec_info.rec_mode);
+				v->rec_info.rec_mode,
+				v->rec_info.port_id);
 			common.srvcc_rec_flag = true;
 
 			pr_debug("%s: switch recording, srvcc_rec_flag %d\n",
@@ -5565,7 +5568,8 @@ static int voice_send_vol_step_cmd(struct voice_data *v)
 	return 0;
 }
 
-static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode)
+static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode,
+					uint32_t port_id)
 {
 	int ret = 0;
 	void *apr_cvs;
@@ -5616,6 +5620,18 @@ static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode)
 					VSS_IRECORD_TAP_POINT_STREAM_END;
 			cvs_start_record.rec_mode.tx_tap_point =
 					VSS_IRECORD_TAP_POINT_STREAM_END;
+			if (common.rec_channel_count ==
+					NUM_CHANNELS_STEREO) {
+			/*
+			 * if channel count is not stereo,
+			 * then default port_id and mode
+			 * (mono) will be used
+			 */
+				cvs_start_record.rec_mode.mode =
+					VSS_IRECORD_MODE_TX_RX_STEREO;
+				cvs_start_record.rec_mode.port_id =
+					port_id;
+			}
 		} else {
 			pr_err("%s: Invalid in-call rec_mode %d\n", __func__,
 				rec_mode);
@@ -5774,6 +5790,7 @@ int voc_start_record(uint32_t port_id, uint32_t set, uint32_t session_id)
 
 		mutex_lock(&v->lock);
 		rec_mode = v->rec_info.rec_mode;
+		v->rec_info.port_id = port_id;
 		rec_set = set;
 		if (set) {
 			if ((v->rec_route_state.ul_flag != 0) &&
@@ -5850,7 +5867,8 @@ int voc_start_record(uint32_t port_id, uint32_t set, uint32_t session_id)
 
 		if (cvs_handle != 0) {
 			if (rec_set)
-				ret = voice_cvs_start_record(v, rec_mode);
+				ret = voice_cvs_start_record(v, rec_mode,
+						port_id);
 			else
 				ret = voice_cvs_stop_record(v);
 		}
@@ -6147,6 +6165,31 @@ int voc_disable_topology(uint32_t session_id, uint32_t disable)
 	return ret;
 }
 EXPORT_SYMBOL(voc_disable_topology);
+
+/**
+ * voc_set_incall_capture_channel_config -
+ *		command to set channel count for record
+ *
+ * @channel_count: number of channels
+ *
+ */
+void voc_set_incall_capture_channel_config(int channel_count)
+{
+	common.rec_channel_count = channel_count;
+}
+EXPORT_SYMBOL(voc_set_incall_capture_channel_config);
+
+/**
+ * voc_get_incall_capture_channel_config -
+ *		command to get channel count for record
+ *
+ * Returns number of channels configured for record
+ */
+int voc_get_incall_capture_channel_config(void)
+{
+	return common.rec_channel_count;
+}
+EXPORT_SYMBOL(voc_get_incall_capture_channel_config);
 
 static int voice_set_packet_exchange_mode_and_config(uint32_t session_id,
 						 uint32_t mode)
@@ -9906,6 +9949,12 @@ int __init voice_init(void)
 		sizeof(common.cvd_version));
 	/* Initialize Per-Vocoder Calibration flag */
 	common.is_per_vocoder_cal_enabled = false;
+
+	/*
+	 * Initialize in call record channel config
+	 * to mono
+	 */
+	common.rec_channel_count = NUM_CHANNELS_MONO;
 
 	mutex_init(&common.common_lock);
 
