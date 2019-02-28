@@ -33,10 +33,15 @@
 int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_peer *peer)
 {
+	struct peer_cfr *pe;
 	struct peer_cfr_params param = {0};
 	struct common_wmi_handle *pdev_wmi_handle = NULL;
 	struct wlan_objmgr_vdev *vdev = {0};
 	int retv = 0;
+
+	pe = wlan_objmgr_peer_get_comp_private_obj(peer, WLAN_UMAC_COMP_CFR);
+	if (pe == NULL)
+		return -EINVAL;
 
 	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
 	vdev = wlan_peer_get_vdev(peer);
@@ -46,6 +51,10 @@ int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 	param.request = PEER_CFR_CAPTURE_DISABLE;
 	param.macaddr = wlan_peer_get_macaddr(peer);
 	param.vdev_id = wlan_vdev_get_id(vdev);
+
+	param.periodicity = pe->period;
+	param.bandwidth = pe->bandwidth;
+	param.capture_method = pe->capture_method;
 
 	retv = wmi_unified_send_peer_cfr_capture_cmd(pdev_wmi_handle, &param);
 
@@ -98,18 +107,31 @@ int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
 int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
 				   uint32_t cfr_timer)
 {
+	struct pdev_cfr *pa;
 	int retval;
 
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (pa == NULL)
+		return QDF_STATUS_E_FAILURE;
+
 	if (!cfr_timer) {
+	     /* disable periodic cfr capture */
 		retval =
 	target_if_cfr_pdev_set_param(pdev,
 				     wmi_pdev_param_per_peer_prd_cfr_enable,
 				     WMI_HOST_PEER_CFR_TIMER_DISABLE);
+
+		if (retval == QDF_STATUS_SUCCESS)
+			pa->cfr_timer_enable = 0;
 	} else {
+	    /* enable periodic cfr capture (default base timer is 10ms ) */
 		retval =
 	target_if_cfr_pdev_set_param(pdev,
 				     wmi_pdev_param_per_peer_prd_cfr_enable,
 				     WMI_HOST_PEER_CFR_TIMER_ENABLE);
+
+		if (retval == QDF_STATUS_SUCCESS)
+			pa->cfr_timer_enable = 1;
 	}
 
 	return retval;

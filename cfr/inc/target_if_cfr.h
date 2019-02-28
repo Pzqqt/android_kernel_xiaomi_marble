@@ -21,8 +21,6 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
-#define PEER_CFR_CAPTURE_ENABLE   1
-#define PEER_CFR_CAPTURE_DISABLE  0
 #define IEEE80211_ADDR_LEN        6
 
 struct cfr_metadata_version_1 {
