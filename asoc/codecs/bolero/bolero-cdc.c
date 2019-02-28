@@ -103,7 +103,8 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 		goto err;
 	}
 
-	pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
+	if (priv->macro_params[VA_MACRO].dev)
+		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -125,8 +126,10 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 	priv->macro_params[current_mclk_mux_macro].mclk_fn(
 			priv->macro_params[current_mclk_mux_macro].dev, false);
 err:
-	pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
-	pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
+	if (priv->macro_params[VA_MACRO].dev) {
+		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
+		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
+	}
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
@@ -143,7 +146,8 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 			"%s: SSR in progress, exit\n", __func__);
 		goto err;
 	}
-	ret = pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
+	if (priv->macro_params[VA_MACRO].dev)
+		ret = pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -165,8 +169,10 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 	priv->macro_params[current_mclk_mux_macro].mclk_fn(
 			priv->macro_params[current_mclk_mux_macro].dev, false);
 err:
-	pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
-	pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
+	if (priv->macro_params[VA_MACRO].dev) {
+		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
+		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
+	}
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
