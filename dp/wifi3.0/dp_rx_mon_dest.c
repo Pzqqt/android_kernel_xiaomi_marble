@@ -195,21 +195,23 @@ struct dp_srng *dp_rxdma_get_mon_buf_ring(struct dp_pdev *pdev,
 }
 
 /**
- * dp_rx_get_desc_pool() - Return monitor descriptor pool
- *			      based on target
+ * dp_rx_get_mon_desc_pool() - Return monitor descriptor pool
+ *			       based on target
  * @soc: soc handle
  * @mac_id: mac id number
+ * @pdev_id: pdev id number
  *
  * Return: descriptor pool address
  */
 static inline
-struct rx_desc_pool *dp_rx_get_desc_pool(struct dp_soc *soc,
-					 uint8_t mac_id)
+struct rx_desc_pool *dp_rx_get_mon_desc_pool(struct dp_soc *soc,
+					     uint8_t mac_id,
+					     uint8_t pdev_id)
 {
 	if (soc->wlan_cfg_ctx->rxdma1_enable)
 		return &soc->rx_desc_mon[mac_id];
 
-	return &soc->rx_desc_buf[mac_id];
+	return &soc->rx_desc_buf[pdev_id];
 }
 
 /**
@@ -1039,6 +1041,7 @@ mon_deliver_non_std_fail:
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	uint8_t pdev_id;
 	void *hal_soc;
 	void *rxdma_dst_ring_desc;
 	void *mon_dst_srng;
@@ -1060,7 +1063,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	hal_soc = soc->hal_soc;
 
-	qdf_assert(hal_soc);
+	qdf_assert((hal_soc && pdev));
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
 
@@ -1071,6 +1074,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		return;
 	}
 
+	pdev_id = pdev->pdev_id;
 	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
 	rx_bufs_used = 0;
 	rx_mon_stats = &pdev->rx_mon_stats;
@@ -1114,9 +1118,11 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (rx_bufs_used) {
 		rx_mon_stats->dest_ppdu_done++;
 		dp_rx_buffers_replenish(soc, mac_id,
-			dp_rxdma_get_mon_buf_ring(pdev, mac_for_pdev),
-			dp_rx_get_desc_pool(soc, mac_id),
-			rx_bufs_used, &head, &tail);
+					dp_rxdma_get_mon_buf_ring(pdev,
+								  mac_for_pdev),
+					dp_rx_get_mon_desc_pool(soc, mac_id,
+								pdev_id),
+					rx_bufs_used, &head, &tail);
 	}
 }
 
