@@ -1881,6 +1881,33 @@ cdp_soc_set_dp_txrx_handle(ol_txrx_soc_handle soc, void *dp_handle)
 }
 
 /**
+ * cdp_soc_map_pdev_to_lmac() - Save pdev_id to lmac_id mapping
+ * @soc: opaque soc handle
+ * @pdev_handle: data path pdev handle
+ * @lmac_id: lmac id
+ *
+ * Return: void
+ */
+static inline void
+cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, void *pdev_handle,
+			 uint32_t lmac_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->map_pdev_to_lmac)
+		return;
+
+	soc->ops->cmn_drv_ops->map_pdev_to_lmac((struct cdp_pdev *)pdev_handle,
+			lmac_id);
+}
+
+/**
  * cdp_tx_send() - enqueue frame for transmission
  * @soc: soc opaque handle
  * @vdev: VAP device

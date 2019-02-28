@@ -9374,6 +9374,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	qdf_mem_copy(&param->he_ppet5G, &mac_phy_caps->he_ppet5G,
 				sizeof(param->he_ppet5G));
 	param->chainmask_table_id = mac_phy_caps->chainmask_table_id;
+	param->lmac_id = mac_phy_caps->lmac_id;
 
 	return QDF_STATUS_SUCCESS;
 }

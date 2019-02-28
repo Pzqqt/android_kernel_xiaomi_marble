@@ -9369,6 +9369,25 @@ dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
 }
 
 /**
+ * dp_soc_map_pdev_to_lmac() - Save pdev_id to lmac_id mapping
+ * @pdev_hdl: datapath pdev handle
+ * @lmac_id: lmac id
+ *
+ * Return: void
+ */
+static void
+dp_soc_map_pdev_to_lmac(struct cdp_pdev *pdev_hdl, uint32_t lmac_id)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+	struct dp_soc *soc = pdev->soc;
+
+	pdev->lmac_id = lmac_id;
+	wlan_cfg_set_hw_macid(soc->wlan_cfg_ctx,
+			      pdev->pdev_id,
+			      (lmac_id + 1));
+}
+
+/**
  * dp_get_cfg_capabilities() - get dp capabilities
  * @soc_handle: datapath soc handle
  * @dp_caps: enum for dp capabilities
@@ -9895,6 +9914,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_dp_txrx_handle = dp_pdev_set_dp_txrx_handle,
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
+	.map_pdev_to_lmac = dp_soc_map_pdev_to_lmac,
 	.txrx_set_ba_aging_timeout = dp_set_ba_aging_timeout,
 	.txrx_get_ba_aging_timeout = dp_get_ba_aging_timeout,
 	.tx_send = dp_tx_send,

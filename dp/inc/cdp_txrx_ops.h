@@ -405,6 +405,9 @@ struct cdp_cmn_ops {
 	void (*set_soc_dp_txrx_handle)(struct cdp_soc *soc_handle,
 			void *dp_txrx_handle);
 
+	void (*map_pdev_to_lmac)(struct cdp_pdev *pdev_hdl,
+				 uint32_t lmac_id);
+
 	void (*txrx_peer_reset_ast)
 		(ol_txrx_soc_handle soc, uint8_t *ast_macaddr,
 		 uint8_t *peer_macaddr, void *vdev_hdl);

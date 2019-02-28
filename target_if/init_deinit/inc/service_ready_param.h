@@ -156,6 +156,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @he_ppet2G: 2G HE PPET info
  * @he_ppet5G: 5G HE PPET info
  * @chainmask_table_id: chain mask table id
+ * @lmac_id: hw mac id
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -192,6 +193,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	struct wlan_psoc_host_ppe_threshold he_ppet2G;
 	struct wlan_psoc_host_ppe_threshold he_ppet5G;
 	uint32_t chainmask_table_id;
+	uint32_t lmac_id;
 };
 
 /**
