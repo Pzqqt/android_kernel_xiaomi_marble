@@ -4000,7 +4000,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	uint32_t i;
 	struct cdp_pdev *pdev;
 	uint8_t peer_id;
-	void *peer;
+	void *peer, *vdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct tdls_peer_params *peer_cap;
 	uint8_t *peer_mac_addr;
@@ -4069,6 +4069,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		ret = -EIO;
 		goto end_tdls_peer_state;
 	}
+	vdev = cdp_peer_get_vdev(soc, peer);
 
 	if (wmi_unified_update_tdls_peer_state_cmd(wma_handle->wmi_handle,
 						   peer_state,
@@ -4103,7 +4104,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			goto end_tdls_peer_state;
 		}
 		cdp_peer_update_last_real_peer(soc,
-				pdev, peer, &peer_id,
+				pdev, vdev, &peer_id,
 				restore_last_peer);
 	}
 

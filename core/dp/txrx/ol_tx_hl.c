@@ -802,17 +802,16 @@ bool is_vdev_restore_last_peer(void *ppeer)
  *
  * Return: None
  */
-void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *ppeer,
+void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
 				   uint8_t *peer_id, bool restore_last_peer)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	struct ol_txrx_peer_t *peer = ppeer;
-	struct ol_txrx_vdev_t *vdev;
+	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+	struct ol_txrx_peer_t *peer;
 
 	if (!restore_last_peer)
 		return;
 
-	vdev = peer->vdev;
 	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
 					 vdev->hl_tdls_ap_mac_addr.raw,
 					 peer_id);

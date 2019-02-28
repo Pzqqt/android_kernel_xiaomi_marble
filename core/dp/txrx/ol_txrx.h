@@ -233,7 +233,7 @@ void ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr);
 void ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
 				struct cdp_vdev *pvdev, uint8_t *peer_id);
 bool is_vdev_restore_last_peer(void *ppeer);
-void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *ppeer,
+void ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *pvdev,
 				   uint8_t *peer_id, bool restore_last_peer);
 #endif
 
