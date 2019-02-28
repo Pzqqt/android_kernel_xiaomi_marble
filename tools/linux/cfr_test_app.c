@@ -42,7 +42,8 @@
 #define CFR_DUMP_STREAMFS_FILE "/sys/kernel/debug/cfr%s/cfr_dump0"
 #define CFR_DUMP_FILE "/tmp/cfr_dump_%s.bin"
 
-#define MAX_CAPTURE_SIZE 2048
+#define MAX_FILE_SIZE          (8 * 1024 * 1024)
+#define MAX_CAPTURE_SIZE       (4096)
 static char rbuffer[MAX_CAPTURE_SIZE];
 
 int stop_capture;
@@ -54,12 +55,20 @@ void print_usage(char *argv[])
 
 void streamfs_read_handler(int sfd, int cfd)
 {
-	int rlen = 0;
+	int rlen = 0, retval = 0;
 
 	memset(rbuffer, 0, sizeof(rbuffer));
 	rlen = read(sfd, rbuffer, sizeof(rbuffer));
 	if (rlen <= 0)
 		return;
+
+	if (lseek(cfd, 0, SEEK_CUR) + rlen > MAX_FILE_SIZE) {
+		retval = lseek(cfd, 0, SEEK_SET);
+		if (retval < 0) {
+			perror("lseek()");
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	write(cfd, rbuffer, rlen);
 }

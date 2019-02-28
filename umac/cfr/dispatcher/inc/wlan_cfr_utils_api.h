@@ -101,6 +101,8 @@ struct pdev_cfr {
 	 */
 };
 
+#define PEER_CFR_CAPTURE_ENABLE   1
+#define PEER_CFR_CAPTURE_DISABLE  0
 /**
  * struct peer_cfr - private peer object for cfr
  * peer_obj: pointer to peer_obj

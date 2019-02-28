@@ -21,6 +21,8 @@
 #include <osif_private.h>
 #include <ol_if_athvar.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
+#include <wlan_objmgr_peer_obj.h>
 #include <wlan_cfr_tgt_api.h>
 #include <qal_streamfs.h>
 #include <relay.h>
@@ -135,13 +137,30 @@ QDF_STATUS
 wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 {
 	struct peer_cfr *pe = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_cfr *pa = NULL;
 
 	if (NULL == peer) {
 		cfr_err("PEER is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	vdev = wlan_peer_get_vdev(peer);
+	if (vdev)
+		pdev = wlan_vdev_get_pdev(vdev);
+
+	if (pdev)
+		pa = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+							   WLAN_UMAC_COMP_CFR);
+
 	pe = wlan_objmgr_peer_get_comp_private_obj(peer, WLAN_UMAC_COMP_CFR);
+
+	if (pa && pe) {
+		if (pe->period && pe->request)
+			pa->cfr_current_sta_count--;
+	}
+
 	if (NULL != pe) {
 		wlan_objmgr_peer_component_obj_detach(peer, WLAN_UMAC_COMP_CFR,
 						      (void *)pe);

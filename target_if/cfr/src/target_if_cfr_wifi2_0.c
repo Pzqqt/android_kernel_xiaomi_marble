@@ -40,8 +40,8 @@
 #define NUM_SUBBUF_2S                               2200
 
 /* max subbuf size and number for 4 chains */
-#define MAX_SUBBUF_4S                               2304
-#define NUM_SUBBUF_4S                               910
+#define MAX_SUBBUF_4S                               2200
+#define NUM_SUBBUF_4S                               1100
 #define MAX_CFR_CLIENTS_LEGACY                      10
 
 enum cfrmetaversion {
@@ -109,7 +109,7 @@ target_if_mac_addr_deswizzle(u_int8_t *tgt_mac_addr, u_int8_t *buffer)
 #endif
 }
 
-int ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
+QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 				   uint32_t *msg_word, size_t msg_len)
 {
 	struct wlan_objmgr_pdev *pdev;
@@ -131,20 +131,21 @@ int ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_CFR_ID);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_print("%s, %d unable to get reference", __func__, __LINE__);
+		cfr_err("%s,%d unable to get reference", __func__, __LINE__);
 		return status;
 	}
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa == NULL) {
+		cfr_err("pdev_cfr is NULL\n");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -1;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!pa->is_cfr_capable) {
-		qdf_print("CFR capture not enabled/supported in Host SW\n");
+		cfr_err("CFR capture not enabled/supported in Host SW\n");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		return -1;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -225,9 +226,9 @@ int ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	break;
 
 	default:
-	    qdf_print(" Unsupported CFR capture type:%d\n", cfr_msg_type);
+	    cfr_err("Unsupported CFR capture type:%d\n", cfr_msg_type);
 	    wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-	    return -1;
+	    return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	vaddr = pa->cfr_mem_chunk.vaddr;
@@ -247,9 +248,12 @@ int ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 				prindex, cfr_dump_len, &end_magic, 4);
 	}
 
+	cfr_debug("CFR:%s status=%d rindex=%x dump_len=%d\n", __func__,
+		    cfr_cap_status, prindex, cfr_dump_len);
+
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(ol_txrx_htt_cfr_rx_ind_handler);
 
@@ -295,14 +299,14 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 				read_offset = pa->cfr_mem_chunk.vaddr;
 				(*read_offset) =
 				    CFR_CAPTURE_HOST_MEM_DEFAULT_READ_OFFSET;
-				qdf_print("CFR:%s reqid=%d len=%d\n", __func__,
+				cfr_debug("CFR:%s reqid=%d len=%d\n", __func__,
 					pa->cfr_mem_chunk.req_id,
 					pa->cfr_mem_chunk.len);
 			}
 
 			if (idx >= info->num_mem_chunks) {
 				pa->is_cfr_capable = 0;
-				qdf_info("CFR Shared memory not allocated\n");
+				cfr_err("CFR Shared memory not allocated\n");
 				return QDF_STATUS_E_NOMEM;
 			}
 

@@ -138,6 +138,9 @@ QDF_STATUS cfr_initialize_pdev(struct wlan_objmgr_pdev *pdev)
 
 	status = tgt_cfr_init_pdev(pdev);
 
+	if (status != QDF_STATUS_SUCCESS)
+		cfr_err("cfr_initialize_pdev status=%d\n", status);
+
 	return status;
 }
 qdf_export_symbol(cfr_initialize_pdev);
@@ -149,6 +152,9 @@ QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev)
 	/* chip specific deinit */
 
 	status = tgt_cfr_deinit_pdev(pdev);
+
+	if (status != QDF_STATUS_SUCCESS)
+		cfr_err("cfr_deinitialize_pdev status=%d\n", status);
 
 	return status;
 }

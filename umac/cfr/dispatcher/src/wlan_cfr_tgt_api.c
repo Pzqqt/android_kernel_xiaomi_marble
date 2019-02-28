@@ -69,6 +69,8 @@ void tgt_cfr_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
 		return;
 
 	cfr_sc->is_cfr_capable = !!value;
+	cfr_debug("CFR:%s FW support advert=%d\n", __func__,
+		    cfr_sc->is_cfr_capable);
 }
 
 static inline struct wlan_lmac_if_cfr_tx_ops *
@@ -161,15 +163,20 @@ int tgt_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
-void
+int
 tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer)
 {
+	int status;
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
 
 	if (cfr_tx_ops->cfr_enable_cfr_timer)
-		cfr_tx_ops->cfr_enable_cfr_timer(pdev, cfr_timer);
+		status = cfr_tx_ops->cfr_enable_cfr_timer(pdev, cfr_timer);
 
+	if (status != 0)
+		cfr_err("Error occurred with exit code %d\n", status);
+
+	return status;
 }
