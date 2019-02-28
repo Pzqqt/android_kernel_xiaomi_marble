@@ -8107,8 +8107,10 @@ static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
 static int dp_txrx_get_ratekbps(int preamb, int mcs,
 				int htflag, int gintval)
 {
+	uint32_t rix;
+
 	return dp_getrateindex((uint32_t)gintval, (uint16_t)mcs, 1,
-			       (uint8_t)preamb, 1);
+			       (uint8_t)preamb, 1, &rix);
 }
 #else
 static int dp_txrx_get_ratekbps(int preamb, int mcs,
