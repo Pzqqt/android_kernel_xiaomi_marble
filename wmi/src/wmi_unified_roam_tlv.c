@@ -415,7 +415,7 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		WMITLV_TAG_STRUC_wmi_roam_filter_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(wmi_roam_filter_fixed_param));
 	/* fill in fixed values */
-	roam_filter->vdev_id = roam_req->session_id;
+	roam_filter->vdev_id = roam_req->vdev_id;
 	roam_filter->flags = 0;
 	roam_filter->op_bitmap = roam_req->op_bitmap;
 	roam_filter->num_bssid_black_list = roam_req->num_bssid_black_list;

@@ -164,29 +164,29 @@ struct rssi_disallow_bssid {
 /**
  * struct roam_scan_filter_params - Structure holding roaming scan
  *                                  parameters
- * @op_bitmap:                bitmap to determine reason of roaming
- * @session_id:               vdev id
- * @num_bssid_black_list:     The number of BSSID's that we should
- *                            avoid connecting to. It is like a
- *                            blacklist of BSSID's.
- * @num_ssid_white_list:      The number of SSID profiles that are
- *                            in the Whitelist. When roaming, we
- *                            consider the BSSID's with this SSID
- *                            also for roaming apart from the connected one's
+ * @op_bitmap: bitmap to determine reason of roaming
+ * @vdev_id: vdev id
+ * @num_bssid_black_list: The number of BSSID's that we should avoid
+ *                        connecting to. It is like a blacklist of BSSID's.
+ * @num_ssid_white_list: The number of SSID profiles that are in the
+ *                       Whitelist. When roaming, we consider the BSSID's with
+ *                       this SSID also for roaming apart from the connected
+ *                       one's
  * @num_bssid_preferred_list: Number of BSSID's which have a preference over
  *                            others
- * @bssid_avoid_list:         Blacklist SSID's
- * @ssid_allowed_list:        Whitelist SSID's
- * @bssid_favored:            Favorable BSSID's
- * @bssid_favored_factor:     RSSI to be added to this BSSID to prefer it
- * @lca_disallow_config_present: LCA [Last Connected AP] disallow config present
- * @disallow_duration:        How long LCA AP will be disallowed before it
- *                            can be a roaming candidate again, in seconds
- * @rssi_channel_penalization:How much RSSI will be penalized if candidate(s)
- *                            are found in the same channel as disallowed AP's,
- *                            in units of db
- * @num_disallowed_aps:       How many APs the target should maintain in its
- *                            LCA list
+ * @bssid_avoid_list: Blacklist SSID's
+ * @ssid_allowed_list: Whitelist SSID's
+ * @bssid_favored: Favorable BSSID's
+ * @bssid_favored_factor: RSSI to be added to this BSSID to prefer it
+ * @lca_disallow_config_present: LCA [Last Connected AP] disallow config
+ *                               present
+ * @disallow_duration: How long LCA AP will be disallowed before it can be a
+ *                     roaming candidate again, in seconds
+ * @rssi_channel_penalization: How much RSSI will be penalized if candidate(s)
+ *                             are found in the same channel as disallowed
+ *                             AP's, in units of db
+ * @num_disallowed_aps: How many APs the target should maintain in its LCA
+ *                      list
  *
  * This structure holds all the key parameters related to
  * initial connection and roaming connections.
@@ -194,7 +194,7 @@ struct rssi_disallow_bssid {
 
 struct roam_scan_filter_params {
 	uint32_t op_bitmap;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint32_t num_bssid_black_list;
 	uint32_t num_ssid_white_list;
 	uint32_t num_bssid_preferred_list;
