@@ -7487,7 +7487,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		tSirMacAddr bssid;
 		uint32_t roam_id = INVALID_ROAM_ID;
 		uint8_t operating_ch =
-			adapter->session.station.conn_info.operationChannel;
+			adapter->session.station.conn_info.channel;
 		tCsrRoamModifyProfileFields mod_fields;
 
 		sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,

@@ -146,7 +146,7 @@ struct hdd_conn_flag {
  * @auth_type: Auth Type
  * @uc_encrypt_type: Unicast Encryption Type
  * @mc_encrypt_type: Multicast Encryption Type
- * @operationChannel: Operation Channel
+ * @channel: Operation Channel
  * @is_authenticated: Remembers authenticated state
  * @dot11mode: dot11mode
  * @proxy_arp_service: proxy arp service
@@ -180,7 +180,7 @@ struct hdd_connection_info {
 	eCsrAuthType auth_type;
 	eCsrEncryptionType uc_encrypt_type;
 	eCsrEncryptionType mc_encrypt_type;
-	uint8_t operationChannel;
+	uint8_t channel;
 	uint8_t is_authenticated;
 	uint32_t dot11mode;
 	uint8_t proxy_arp_service;

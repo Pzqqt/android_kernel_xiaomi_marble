@@ -3111,7 +3111,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				policy_mgr_mode_specific_get_channel(
 					hdd_ctx->psoc, PM_SAP_MODE)))) {
 			hdd_debug("can't move sap to %d",
-				hdd_sta_ctx->conn_info.operationChannel);
+				hdd_sta_ctx->conn_info.channel);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -3610,9 +3610,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 
 		roam_profile = hdd_roam_profile(adapter);
 		num_ch = roam_profile->ChannelInfo.numOfChannels = 1;
-		sta_ctx->conn_info.operationChannel = channel;
+		sta_ctx->conn_info.channel = channel;
 		roam_profile->ChannelInfo.ChannelList =
-			&sta_ctx->conn_info.operationChannel;
+			&sta_ctx->conn_info.channel;
 	} else if ((adapter->device_mode == QDF_SAP_MODE)
 		   || (adapter->device_mode == QDF_P2P_GO_MODE)
 		   ) {

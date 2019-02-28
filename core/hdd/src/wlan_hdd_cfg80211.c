@@ -4250,7 +4250,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			if (hdd_conn_is_connected(sta_ctx) &&
 				(CHANNEL_STATE_DFS ==
 				wlan_reg_get_channel_state(hdd_ctx->pdev,
-					sta_ctx->conn_info.operationChannel))) {
+					sta_ctx->conn_info.channel))) {
 				hdd_err("client connected on DFS channel");
 				return true;
 			}
@@ -8204,7 +8204,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 		nss  = hdd_sta_ctx->conn_info.nss;
 		freq = cds_chan_to_freq(
-				hdd_sta_ctx->conn_info.operationChannel);
+				hdd_sta_ctx->conn_info.channel);
 		rate_flags = hdd_sta_ctx->conn_info.rate_flags;
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE ||
 		   adapter->device_mode == QDF_SAP_MODE) {
@@ -18508,9 +18508,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		/* Set the Operational Channel */
 		hdd_debug("set channel %d", channelNum);
 		roam_profile->ChannelInfo.numOfChannels = 1;
-		sta_ctx->conn_info.operationChannel = channelNum;
+		sta_ctx->conn_info.channel = channelNum;
 		roam_profile->ChannelInfo.ChannelList =
-			&sta_ctx->conn_info.operationChannel;
+			&sta_ctx->conn_info.channel;
 	}
 
 	/* Initialize security parameters */
@@ -18525,7 +18525,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 						 params->ssid_len,
 						 bssid.bytes, NULL,
 						 sta_ctx->conn_info.
-						 operationChannel,
+						 channel,
 						 params->chandef.width);
 
 	if (0 > status) {

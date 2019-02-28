@@ -76,7 +76,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (eConnectionState_Associated ==
 			    sta_ctx->conn_info.conn_state) {
 				staChannel =
-					sta_ctx->conn_info.operationChannel;
+					sta_ctx->conn_info.channel;
 				qdf_copy_macaddr(&staBssid,
 						 &sta_ctx->conn_info.bssid);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -89,7 +89,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (eConnectionState_Associated ==
 			    sta_ctx->conn_info.conn_state) {
 				p2pChannel =
-					sta_ctx->conn_info.operationChannel;
+					sta_ctx->conn_info.channel;
 				qdf_copy_macaddr(&p2pBssid,
 						&sta_ctx->conn_info.bssid);
 				p2pMode = "CLI";

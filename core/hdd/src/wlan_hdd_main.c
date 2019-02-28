@@ -4312,7 +4312,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	status = sme_config_fast_roaming(mac_handle, adapter->vdev_id,
 					 true);
 	/* Set the default operation channel */
-	sta_ctx->conn_info.operationChannel =
+	sta_ctx->conn_info.channel =
 		hdd_ctx->config->operating_channel;
 
 	/* Make the default Auth Type as OPEN */
@@ -6947,7 +6947,7 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 					operatingChannel =
 						(WLAN_HDD_GET_STATION_CTX_PTR
 						(adapter))->conn_info.
-							operationChannel;
+							channel;
 				}
 				break;
 			case QDF_SAP_MODE:

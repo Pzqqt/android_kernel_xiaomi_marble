@@ -737,7 +737,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	if (!memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		channel = sta_ctx->conn_info.operationChannel;
+		channel = sta_ctx->conn_info.channel;
 	}
 
 	/* Check channel number is a valid channel number */
@@ -958,11 +958,11 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 			 */
 			if (channel != 0) {
 				if (channel !=
-				    sta_ctx->conn_info.operationChannel) {
+				    sta_ctx->conn_info.channel) {
 					hdd_warn("channel(%d) is different from operating channel(%d)",
 						  channel,
 						  sta_ctx->conn_info.
-						  operationChannel);
+						  channel);
 					ret = -EINVAL;
 					goto exit;
 				}
@@ -983,7 +983,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 				 */
 				chan.center_freq =
 					sme_chn_to_freq(sta_ctx->conn_info.
-							operationChannel);
+							channel);
 			}
 		}
 	}
@@ -4319,7 +4319,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 			 QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
-			channel = sta_ctx->conn_info.operationChannel;
+			channel = sta_ctx->conn_info.channel;
 			hdd_wma_send_fastreassoc_cmd(adapter, bssid,
 						     channel);
 		} else {

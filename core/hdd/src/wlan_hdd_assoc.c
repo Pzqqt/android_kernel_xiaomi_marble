@@ -337,7 +337,7 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 	uint8_t staChannel = 0;
 
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
-		staChannel = sta_ctx->conn_info.operationChannel;
+		staChannel = sta_ctx->conn_info.channel;
 
 	if (staChannel > 0 && staChannel < 14)
 		return BAND_2G;
@@ -907,7 +907,7 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_sta_ctx->conn_info.freq = cds_chan_to_freq(
-		hdd_sta_ctx->conn_info.operationChannel);
+		hdd_sta_ctx->conn_info.channel);
 	if (roam_info->vht_caps.present) {
 		hdd_sta_ctx->conn_info.conn_flag.vht_present = true;
 		hdd_copy_vht_caps(&hdd_sta_ctx->conn_info.vht_caps,
@@ -1016,7 +1016,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			sta_ctx->conn_info.last_auth_type =
 				sta_ctx->conn_info.auth_type;
 
-			sta_ctx->conn_info.operationChannel =
+			sta_ctx->conn_info.channel =
 			    roam_info->u.pConnectedProfile->operationChannel;
 
 			/* Save the ssid for the connection */
@@ -2916,16 +2916,16 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 		hdd_debug("check if STA chan ok for DNBS");
 		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->psoc,
-					sta_ctx->conn_info.operationChannel,
+					sta_ctx->conn_info.channel,
 					&ok)) {
 			hdd_err("Unable to check DNBS eligibility for chan:%d",
-					sta_ctx->conn_info.operationChannel);
+					sta_ctx->conn_info.channel);
 			return QDF_STATUS_E_FAILURE;
 		}
 
 		if (!ok) {
 			hdd_err("Chan:%d not suitable for DNBS",
-				sta_ctx->conn_info.operationChannel);
+				sta_ctx->conn_info.channel);
 			wlan_hdd_netif_queue_control(adapter,
 				WLAN_NETIF_CARRIER_OFF,
 				WLAN_CONTROL_PATH);
@@ -3114,7 +3114,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						cdp_hl_fc_set_td_limit(soc,
 						adapter->vdev_id,
 						sta_ctx->
-						conn_info.operationChannel);
+						conn_info.channel);
 
 						hdd_send_roamed_ind(
 								dev,
@@ -3162,7 +3162,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						 ft_carrier_on);
 					cdp_hl_fc_set_td_limit(soc,
 					adapter->vdev_id,
-					sta_ctx->conn_info.operationChannel);
+					sta_ctx->conn_info.channel);
 					hdd_connect_result(dev,
 							   roam_info->
 							   bssid.bytes,
@@ -3221,7 +3221,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					}
 					cdp_hl_fc_set_td_limit(soc,
 					adapter->vdev_id,
-					sta_ctx->conn_info.operationChannel);
+					sta_ctx->conn_info.channel);
 				}
 			}
 			if (!hddDisconInProgress) {
@@ -3258,7 +3258,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 			cdp_hl_fc_set_td_limit(soc,
 				adapter->vdev_id,
-				sta_ctx->conn_info.operationChannel);
+				sta_ctx->conn_info.channel);
 			hdd_send_re_assoc_event(dev, adapter, roam_info,
 						reqRsnIe, reqRsnLength);
 			/* Reassoc successfully */
