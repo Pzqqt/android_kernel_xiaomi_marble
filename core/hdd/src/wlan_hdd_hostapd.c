@@ -700,7 +700,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 		return -EINVAL;
 	}
 
-	if (ETHER_IS_MULTICAST(psta_mac_addr->sa_data)) {
+	if (qdf_is_macaddr_group(&mac_addr)) {
 		hdd_err("MAC is Multicast");
 		return -EINVAL;
 	}

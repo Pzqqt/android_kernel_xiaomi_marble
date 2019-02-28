@@ -77,6 +77,8 @@
 #define TXRX_DATA_HISTROGRAM_NUM_INTERVALS    100
 
 #define OL_TXRX_INVALID_VDEV_ID		(-1)
+#define ETHERTYPE_OCB_TX   0x8151
+#define ETHERTYPE_OCB_RX   0x8152
 
 struct ol_txrx_pdev_t;
 struct ol_txrx_vdev_t;
