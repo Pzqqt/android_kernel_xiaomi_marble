@@ -436,6 +436,8 @@ void wlan_crypto_fils_delkey(struct wlan_objmgr_peer *peer)
 }
 #else
 
+#define WLAN_MAX_WPA_KEK_LEN (0)
+
 static QDF_STATUS fils_aead_setkey(struct wlan_crypto_key *key)
 {
 	return QDF_STATUS_SUCCESS;
