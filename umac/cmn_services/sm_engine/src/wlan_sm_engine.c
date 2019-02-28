@@ -79,7 +79,7 @@ qdf_export_symbol(wlan_sm_dispatch);
 
 void wlan_sm_transition_to(struct wlan_sm *sm, uint8_t state)
 {
-	const struct wlan_sm_state_info *state_info = sm->state_info;
+	struct wlan_sm_state_info *state_info;
 	uint8_t new_state;
 	uint8_t old_state;
 	uint8_t new_sub_st;
@@ -91,6 +91,7 @@ void wlan_sm_transition_to(struct wlan_sm *sm, uint8_t state)
 		return;
 	}
 
+	state_info = sm->state_info;
 	cur_state = sm->cur_state;
 
 	/* cannot change state from state entry/exit routines */

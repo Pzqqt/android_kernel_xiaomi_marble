@@ -54,7 +54,7 @@ void mlme_vdev_sm_print_state_event(struct vdev_mlme_obj *vdev_mlme,
 				    enum wlan_vdev_sm_evt event);
 
 /**
- * mlme_vdev_sm_print_state_event() - Prints the state/substate
+ * mlme_vdev_sm_print_state() - Prints the state/substate
  * @vdev_mlme: MLME VDEV comp object
  *
  * API to print current state/substate
