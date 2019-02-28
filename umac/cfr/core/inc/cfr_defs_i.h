@@ -31,18 +31,6 @@
 #include <qdf_types.h>
 #include <wlan_cfr_utils_api.h>
 
-#define cfr_log(level, args...) \
-QDF_TRACE(QDF_MODULE_ID_CFR, level, ##args)
-
-#define cfr_log_fl(level, format, args...) cfr_log(level, FL(format), ## args)
-
-#define cfr_err(format, args...) \
-	cfr_log_fl(QDF_TRACE_LEVEL_ERROR, format, ## args)
-#define cfr_info(format, args...) \
-	cfr_log_fl(QDF_TRACE_LEVEL_INFO, format, ## args)
-#define cfr_debug(format, args...) \
-	cfr_log_fl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
-
 /**
  * wlan_cfr_psoc_obj_create_handler() - psoc object create handler for cfr
  * @psoc - pointer to psoc object

@@ -302,8 +302,7 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 			if (idx >= info->num_mem_chunks) {
 				pa->is_cfr_capable = 0;
-				qdf_print("WLAN_CSI: Shared memory not allocated
-					for CSI\n");
+				qdf_info("CFR Shared memory not allocated\n");
 				return QDF_STATUS_E_NOMEM;
 			}
 
@@ -333,7 +332,8 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-			struct wlan_objmgr_pdev *pdev) {
+			struct wlan_objmgr_pdev *pdev)
+{
 
     /* TODO:No cleanup action need for now */
 	return QDF_STATUS_SUCCESS;

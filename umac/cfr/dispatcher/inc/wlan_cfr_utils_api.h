@@ -22,6 +22,21 @@
 #include <wlan_objmgr_cmn.h>
 #include <qal_streamfs.h>
 
+#define cfr_alert(format, args...) \
+		QDF_TRACE_FATAL(QDF_MODULE_ID_CFR, format, ## args)
+
+#define cfr_err(format, args...) \
+		QDF_TRACE_ERROR(QDF_MODULE_ID_CFR, format, ## args)
+
+#define cfr_warn(format, args...) \
+		QDF_TRACE_WARN(QDF_MODULE_ID_CFR, format, ## args)
+
+#define cfr_info(format, args...) \
+		QDF_TRACE_INFO(QDF_MODULE_ID_CFR, format, ## args)
+
+#define cfr_debug(format, args...) \
+		QDF_TRACE_DEBUG(QDF_MODULE_ID_CFR, format, ## args)
+
 /**
  * struct cfr_capture_params - structure to store cfr config param
  * bandwidth: bandwitdh of capture
