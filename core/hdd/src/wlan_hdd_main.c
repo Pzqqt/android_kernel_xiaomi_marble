@@ -4122,7 +4122,7 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 	return 0;
 }
 
-static void
+void
 hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 {
 	struct wlan_mlme_nss_chains vdev_ini_cfg;

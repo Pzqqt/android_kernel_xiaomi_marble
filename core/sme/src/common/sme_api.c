@@ -4329,6 +4329,57 @@ sme_validate_nss_chains_config(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+sme_change_vdev_nss_ini(mac_handle_t mac_handle,
+			uint8_t rx_nss, uint8_t tx_nss,
+			enum QDF_OPMODE vdev_op_mode,
+			enum nss_chains_band_info band)
+{
+	uint8_t nss_shift;
+	uint32_t nss_mask = 0x7;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	nss_shift = sme_get_nss_chain_shift(vdev_op_mode);
+
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.rx_nss[band] &=
+						~(nss_mask << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.rx_nss[band] |=
+						 (rx_nss << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.tx_nss[band] &=
+						~(nss_mask << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.tx_nss[band] |=
+						 (tx_nss << nss_shift);
+	sme_debug("rx nss %d tx nss %d changed for vdev mode %d for band %d",
+		  rx_nss, tx_nss, vdev_op_mode, band);
+}
+
+void
+sme_update_vdev_nss(mac_handle_t mac_handle,
+		    uint8_t rx_nss, uint8_t tx_nss,
+		    enum QDF_OPMODE vdev_op_mode,
+		    enum nss_chains_band_info band)
+{
+	/*
+	 * If device mode is P2P-DEVICE, then we want P2P to come in that
+	 * particular nss, then we should change the nss of P@P-CLI, and GO
+	 * and we are unaware that for what will be the device mode after
+	 * negotiation yet.
+	 */
+
+	if (vdev_op_mode == QDF_P2P_DEVICE_MODE ||
+	    vdev_op_mode == QDF_P2P_CLIENT_MODE ||
+	    vdev_op_mode == QDF_P2P_GO_MODE) {
+		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
+					QDF_P2P_CLIENT_MODE, band);
+		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
+					QDF_P2P_GO_MODE, band);
+		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
+					QDF_P2P_DEVICE_MODE, band);
+	} else
+		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
+					vdev_op_mode, band);
+}
+
 QDF_STATUS
 sme_nss_chains_update(mac_handle_t mac_handle,
 		      struct wlan_mlme_nss_chains *user_cfg,

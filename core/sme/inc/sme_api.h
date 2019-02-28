@@ -361,6 +361,26 @@ sme_store_nss_chains_cfg_in_vdev(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_mlme_nss_chains *vdev_ini_cfg);
 
 /**
+ * sme_update_vdev_nss() - Change the nss in ini(rx_nss_(band)) for
+ * particular opmode, and band.
+ * @mac_handle: The handle returned by mac_open.
+ * @rx_nss: new value of rx nss that user wants to change.
+ * @tx_nss: new value of tx nss that user wants to change.
+ * @vdev_op_mode: vdev operation mode.
+ * @band:- band for which user wants to change nss.
+ *
+ * This API will change the nss in ini (for eg. rx_nss_2g) in the mlme cfg i.e
+ * the global config structure kept in mac context.
+ *
+ * Return: none
+ */
+void
+sme_update_vdev_nss(mac_handle_t mac_handle,
+		    uint8_t rx_nss, uint8_t tx_nss,
+		    enum QDF_OPMODE vdev_op_mode,
+		    enum nss_chains_band_info band);
+
+/**
  * sme_nss_chains_update() - validate and send the user params to fw
  * @mac_handle: The handle returned by mac_open.
  * @user_cfg: pointer to the structure to be validated and sent to fw

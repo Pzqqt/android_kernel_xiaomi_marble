@@ -2504,6 +2504,18 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 			struct qdf_mac_addr hw_macaddr, bool generate_mac_auto);
 
 /**
+ * hdd_store_nss_chains_cfg_in_vdev() - Store the per vdev ini cfg in vdev_obj
+ * @adapter: Current HDD adapter passed from caller
+ *
+ * This function will store the per vdev nss params to the particular mlme
+ * vdev obj.
+ *
+ * Return: None
+ */
+void
+hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter);
+
+/**
  * wlan_hdd_disable_roaming() - disable roaming on all STAs except the input one
  * @cur_adapter: Current HDD adapter passed from caller
  *

@@ -1722,12 +1722,6 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!hdd_is_vdev_in_conn_state(adapter)) {
-		hdd_debug("Vdev (id %d) not in connected/started state, cannot accept command",
-				adapter->vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++)
 		hdd_populate_vdev_nss(&user_cfg, tx_nss,
 				      rx_nss, band);
@@ -1772,6 +1766,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	mac_handle_t mac_handle;
 	bool bval = 0;
 	uint8_t tx_nss, rx_nss;
+	uint8_t band, max_supp_nss;
 
 	if ((nss == 2) && (hdd_ctx->num_rf_chains != 2)) {
 		hdd_err("No support for 2 spatial streams");
@@ -1783,18 +1778,59 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	qdf_status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("unable to get vht_enable2x2");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!bval) {
+		hdd_err("Nss in 1x1, no change required, 2x2 mode disabled");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle) {
 		hdd_err("NULL MAC handle");
 		return QDF_STATUS_E_INVAL;
 	}
+	max_supp_nss = MAX_VDEV_NSS;
 
 	/* Till now we dont have support for different rx, tx nss values */
 	tx_nss = nss;
 	rx_nss = nss;
 
-	if (hdd_ctx->dynamic_nss_chains_support)
-		return hdd_set_nss_params(adapter, tx_nss, rx_nss);
+	/*
+	 * If FW is supporting the dynamic nss update, this command is meant to
+	 * be per vdev, so update only the ini params of that particular vdev
+	 * and not the global param enable2x2
+	 */
+	if (hdd_ctx->dynamic_nss_chains_support) {
+		if (hdd_is_vdev_in_conn_state(adapter))
+			return hdd_set_nss_params(adapter, tx_nss, rx_nss);
+		hdd_debug("Vdev %d in disconnect state, changing ini nss params",
+			  adapter->vdev_id);
+
+		for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX;
+		     band++) {
+			/* This API will change the global ini in mlme cfg */
+			sme_update_vdev_nss(mac_handle, rx_nss, tx_nss,
+					    adapter->device_mode, band);
+			/*
+			 * This API will change the vdev nss params in mac
+			 * context
+			 */
+			sme_update_vdev_type_nss(mac_handle, max_supp_nss,
+						 band);
+		}
+		/*
+		 * This API will change the ini and dynamic nss params in
+		 * mlme vdev priv obj.
+		 */
+		hdd_store_nss_chains_cfg_in_vdev(adapter);
+
+		return QDF_STATUS_SUCCESS;
+	}
 
 	/*
 	 * The code below is executed only when fw doesn't support dynamic
@@ -1802,12 +1838,6 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	 * connection
 	 */
 	enable2x2 = (nss == 1) ? 0 : 1;
-
-	qdf_status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("unable to get vht_enable2x2");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	if (bval == enable2x2) {
 		hdd_debug("NSS same as requested");
@@ -1909,5 +1939,6 @@ skip_ht_cap_update:
 		status = false;
 
 	hdd_set_policy_mgr_user_cfg(hdd_ctx);
+
 	return (status == false) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
