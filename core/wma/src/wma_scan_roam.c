@@ -1315,7 +1315,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	}
 
 	/* fill in fixed values */
-	params->session_id = roam_req->sessionId;
+	params->vdev_id = roam_req->sessionId;
 	params->op_bitmap = op_bitmap;
 	params->num_bssid_black_list = num_bssid_black_list;
 	params->num_ssid_white_list = num_ssid_white_list;
@@ -1354,7 +1354,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 				= lca_config_params->num_disallowed_aps;
 	}
 	status = wmi_unified_roam_scan_filter_cmd(wma_handle->wmi_handle,
-					params);
+						  params);
 
 	qdf_mem_free(params);
 	return status;
