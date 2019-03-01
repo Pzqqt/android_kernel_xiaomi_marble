@@ -653,7 +653,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		wifi_hdr_len += 6;
 
 	is_amsdu = 0;
-	if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS) {
+	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
 		qos = (struct ieee80211_qoscntl *)
 			(hdr_desc + wifi_hdr_len);
 		wifi_hdr_len += 2;

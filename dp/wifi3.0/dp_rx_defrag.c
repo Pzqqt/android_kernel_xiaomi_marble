@@ -591,11 +591,11 @@ static void dp_rx_defrag_michdr(const struct ieee80211_frame *wh0,
 	}
 
 	/*
-	 * Bit 7 is IEEE80211_FC0_SUBTYPE_QOS for data frame, but
+	 * Bit 7 is QDF_IEEE80211_FC0_SUBTYPE_QOS for data frame, but
 	 * it could also be set for deauth, disassoc, action, etc. for
 	 * a mgt type frame. It comes into picture for MFP.
 	 */
-	if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS) {
+	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
 		if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) ==
 				IEEE80211_FC1_DIR_DSTODS) {
 			const struct ieee80211_qosframe_addr4 *qwh =
