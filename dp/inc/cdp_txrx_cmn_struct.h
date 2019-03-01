@@ -1213,6 +1213,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_seq_id;
 	uint16_t vdev_id;
 	uint32_t num_users;
+	uint8_t last_usr_index;
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint16_t frame_type;

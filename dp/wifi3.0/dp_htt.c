@@ -181,6 +181,13 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	if (soc->process_tx_status)
 		return;
 
+	if (ppdu->completion_status != HTT_PPDU_STATS_USER_STATUS_OK) {
+		DP_STATS_INC(peer, tx.retries,
+			     (ppdu->long_retries + ppdu->short_retries));
+		DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
+		return;
+	}
+
 	if (ppdu->mu_group_id <= MAX_MU_GROUP_ID &&
 	    ppdu->ppdu_type != HTT_PPDU_STATS_PPDU_TYPE_SU) {
 		if (unlikely(!(ppdu->mu_group_id & (MAX_MU_GROUP_ID - 1))))
@@ -221,7 +228,6 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
 			num_msdu, (ppdu->success_bytes +
 				ppdu->retry_bytes + ppdu->failed_bytes));
-	DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
 	DP_STATS_UPD(peer, tx.tx_rate, ppdu->tx_rate);
 	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], num_msdu);
 	DP_STATS_INC(peer, tx.bw[ppdu->bw], num_msdu);
@@ -232,8 +238,6 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	if (!(ppdu->is_mcast) && ppdu->ack_rssi_valid)
 		DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
 
-	DP_STATS_INC(peer, tx.retries,
-			(ppdu->long_retries + ppdu->short_retries));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
@@ -2122,6 +2126,7 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->peer_id = peer_id;
+	ppdu_desc->last_usr_index = curr_user_index;
 
 	ppdu_user_desc->completion_status =
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_COMPLETION_STATUS_GET(
@@ -2531,6 +2536,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	qdf_nbuf_t nbuf;
 	uint16_t i;
 	uint32_t tlv_bitmap_expected;
+	uint32_t tlv_bitmap_default;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 		qdf_nbuf_data(ppdu_info->nbuf);
@@ -2545,6 +2551,8 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
 					ppdu_info->tlv_bitmap);
 	}
+
+	tlv_bitmap_default = tlv_bitmap_expected;
 	for (i = 0; i < ppdu_desc->num_users; i++) {
 
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
@@ -2559,6 +2567,10 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		if (!peer)
 			continue;
 
+		if (ppdu_desc->user[i].completion_status !=
+		    HTT_PPDU_STATS_USER_STATUS_OK)
+			tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
+
 		if (ppdu_info->tlv_bitmap != tlv_bitmap_expected) {
 			dp_peer_unref_del_find_by_id(peer);
 			continue;
@@ -2572,6 +2584,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 
 		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		dp_peer_unref_del_find_by_id(peer);
+		tlv_bitmap_expected = tlv_bitmap_default;
 	}
 
 	/*
@@ -2679,6 +2692,8 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 		return NULL;
 	}
 
+	ppdu_info->ppdu_desc =
+		(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 	qdf_mem_zero(qdf_nbuf_data(ppdu_info->nbuf),
 			sizeof(struct cdp_tx_completion_ppdu));
 
@@ -2720,6 +2735,7 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	uint32_t tlv_length, tlv_bitmap_expected;
 	uint8_t *tlv_buf;
 	struct ppdu_info *ppdu_info = NULL;
+	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 
 	uint32_t *msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 
@@ -2781,6 +2797,13 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	pdev->last_ppdu_id = ppdu_id;
 
 	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
+
+	ppdu_desc = ppdu_info->ppdu_desc;
+	if (ppdu_desc &&
+	    ppdu_desc->user[ppdu_desc->last_usr_index].completion_status !=
+	    HTT_PPDU_STATS_USER_STATUS_OK) {
+		tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
+	}
 
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		if (ppdu_info->is_ampdu)
