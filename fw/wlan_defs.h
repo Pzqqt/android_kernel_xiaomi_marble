@@ -115,6 +115,8 @@
 #define HE_PET_8_USEC            1
 #define HE_PET_16_USEC           2
 
+#define DEFAULT_OFDMA_RU26_COUNT 0
+
 typedef enum {
     MODE_11A        = 0,   /* 11a Mode */
     MODE_11G        = 1,   /* 11b/g Mode */
