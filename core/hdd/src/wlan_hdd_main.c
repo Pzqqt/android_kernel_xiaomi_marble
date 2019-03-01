@@ -2005,6 +2005,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	hdd_ctx->wmi_max_len = cfg->wmi_max_len;
 
+	wlan_config_sched_scan_plans_to_wiphy(hdd_ctx->wiphy, hdd_ctx->psoc);
 	/*
 	 * This needs to be done after HDD pdev is created and stored since
 	 * it will access the HDD pdev object lock.

@@ -12931,7 +12931,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
 
-	wlan_config_sched_scan_plans_to_wiphy(wiphy, hdd_ctx->psoc);
 	wlan_scan_cfg80211_add_connected_pno_support(wiphy);
 
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;
