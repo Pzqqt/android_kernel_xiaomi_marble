@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -161,7 +161,7 @@ ol_tx_set_ether_type(
 			/* dot11 encapsulated frame */
 			struct ieee80211_qosframe *whqos =
 					(struct ieee80211_qosframe *)datap;
-			if (whqos->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS) {
+			if (whqos->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
 				tx_msdu_info->htt.info.l3_hdr_offset =
 					sizeof(struct ieee80211_qosframe);
 			} else {
@@ -263,7 +263,7 @@ ol_tx_tid_by_raw_type(
 		/* dot11 encapsulated frame */
 		struct ieee80211_qosframe *whqos =
 					(struct ieee80211_qosframe *)datap;
-		if (whqos->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
+		if (whqos->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS)
 			tid = whqos->i_qos[0] & IEEE80211_QOS_TID;
 		else
 			tid = HTT_NON_QOS_TID;

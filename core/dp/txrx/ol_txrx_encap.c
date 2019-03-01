@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,7 @@ ol_tx_encap_from_native_wifi(struct ol_txrx_vdev_t *vdev,
 #endif
 
 		qos_cntl->i_qos[1] = 0;
-		wh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
+		wh->i_fc[0] |= QDF_IEEE80211_FC0_SUBTYPE_QOS;
 		/* count for qos field */
 		new_hdsize =
 			hdsize + sizeof(struct ieee80211_qosframe) -
@@ -207,7 +207,7 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 		qos_cntl = (struct ieee80211_qoscntl *)(localbuf + new_hdsize);
 		qos_cntl->i_qos[0] =
 			tx_msdu_info->htt.info.ext_tid & IEEE80211_QOS_TID;
-		wh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
+		wh->i_fc[0] |= QDF_IEEE80211_FC0_SUBTYPE_QOS;
 #ifdef NEVERDEFINED
 		if (wmmParam[ac].wmep_noackPolicy)
 			qos_cntl->i_qos[0] |= 1 << IEEE80211_QOS_ACKPOLICY_S;
@@ -334,7 +334,7 @@ ol_rx_decap_to_native_wifi(struct ol_txrx_vdev_t *vdev,
 	if (IEEE80211_QOS_HAS_SEQ(wh)) {
 		if (wh->i_fc[1] & IEEE80211_FC1_ORDER)
 			wh->i_fc[1] &= ~IEEE80211_FC1_ORDER;
-		wh->i_fc[0] &= ~IEEE80211_FC0_SUBTYPE_QOS;
+		wh->i_fc[0] &= ~QDF_IEEE80211_FC0_SUBTYPE_QOS;
 	}
 }
 

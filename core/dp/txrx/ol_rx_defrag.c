@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,8 +67,8 @@
 
 #define DEFRAG_IEEE80211_QOS_HAS_SEQ(wh) \
 	(((wh)->i_fc[0] & \
-	  (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
-	 (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
+	  (IEEE80211_FC0_TYPE_MASK | QDF_IEEE80211_FC0_SUBTYPE_QOS)) == \
+	 (IEEE80211_FC0_TYPE_DATA | QDF_IEEE80211_FC0_SUBTYPE_QOS))
 
 #define DEFRAG_IEEE80211_QOS_GET_TID(_x) \
 	((_x)->i_qos[0] & IEEE80211_QOS_TID)
@@ -966,11 +966,11 @@ void ol_rx_defrag_michdr(const struct ieee80211_frame *wh0, uint8_t hdr[])
 		break;
 	}
 	/*
-	 * Bit 7 is IEEE80211_FC0_SUBTYPE_QOS for data frame, but
+	 * Bit 7 is QDF_IEEE80211_FC0_SUBTYPE_QOS for data frame, but
 	 * it could also be set for deauth, disassoc, action, etc. for
 	 * a mgt type frame. It comes into picture for MFP.
 	 */
-	if (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS) {
+	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
 		const struct ieee80211_qosframe *qwh =
 			(const struct ieee80211_qosframe *)wh;
 		hdr[12] = qwh->i_qos[0] & IEEE80211_QOS_TID;
@@ -1269,7 +1269,7 @@ ol_rx_defrag_qos_decap(ol_txrx_pdev_handle pdev,
 		 * adding this explicit check is okay.
 		 */
 		if (wh)
-			wh->i_fc[0] &= ~IEEE80211_FC0_SUBTYPE_QOS;
+			wh->i_fc[0] &= ~QDF_IEEE80211_FC0_SUBTYPE_QOS;
 
 		ol_rx_defrag_push_rx_desc(nbuf, rx_desc_old_position,
 					  ind_old_position, rx_desc_len);
