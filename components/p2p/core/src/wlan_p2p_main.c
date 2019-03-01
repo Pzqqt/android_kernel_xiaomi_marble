@@ -317,9 +317,7 @@ static QDF_STATUS p2p_peer_obj_create_notification(
 	struct wlan_objmgr_peer *peer, void *arg)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct p2p_vdev_priv_obj *p2p_vdev_obj;
 	enum QDF_OPMODE mode;
-	enum wlan_peer_type peer_type;
 
 	if (!peer) {
 		p2p_err("peer context passed is NULL");
@@ -331,18 +329,6 @@ static QDF_STATUS p2p_peer_obj_create_notification(
 	if (mode != QDF_P2P_GO_MODE)
 		return QDF_STATUS_SUCCESS;
 
-	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-						WLAN_UMAC_COMP_P2P);
-	peer_type = wlan_peer_get_peer_type(peer);
-	if ((peer_type == WLAN_PEER_STA) && p2p_vdev_obj) {
-
-		mode = wlan_vdev_mlme_get_opmode(vdev);
-		if (mode == QDF_P2P_GO_MODE) {
-			p2p_vdev_obj->non_p2p_peer_count++;
-			p2p_debug("Non P2P peer count: %d",
-				  p2p_vdev_obj->non_p2p_peer_count);
-		}
-	}
 	p2p_debug("p2p peer object create successful");
 
 	return QDF_STATUS_SUCCESS;
@@ -521,6 +507,8 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 
 	peer_type = wlan_peer_get_peer_type(peer);
+	if (peer_type == WLAN_PEER_STA)
+		p2p_vdev_obj->non_p2p_peer_count++;
 
 	disable_noa = ((mode == QDF_P2P_GO_MODE)
 			&& p2p_vdev_obj->non_p2p_peer_count

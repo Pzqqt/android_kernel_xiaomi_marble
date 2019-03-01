@@ -2004,10 +2004,6 @@ static int wma_get_obj_mgr_peer_type(tp_wma_handle wma, uint8_t vdev_id,
 		else
 			obj_peer_type = WLAN_PEER_AP;
 	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_AP) {
-		if (wma->interfaces[vdev_id].sub_type ==
-				WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)
-			obj_peer_type = WLAN_PEER_P2P_CLI;
-		else
 			obj_peer_type = WLAN_PEER_STA;
 	} else if (wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_IBSS) {
 		obj_peer_type = WLAN_PEER_IBSS;
