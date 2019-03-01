@@ -2017,6 +2017,8 @@ static void mlme_init_btm_cfg(struct wlan_objmgr_psoc *psoc,
 	btm->rct_validity_timer = cfg_get(psoc, CFG_BTM_VALIDITY_TIMER);
 	btm->disassoc_timer_threshold =
 			cfg_get(psoc, CFG_BTM_DISASSOC_TIMER_THRESHOLD);
+	btm->btm_query_bitmask = cfg_get(psoc, CFG_BTM_QUERY_BITMASK);
+
 }
 
 /**

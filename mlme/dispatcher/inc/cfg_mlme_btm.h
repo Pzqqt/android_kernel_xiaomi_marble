@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -236,6 +236,39 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"BTM disassociation timer threshold")
 
+/*
+ * <ini>
+ * btm_query_bitmask - To send BTM query with candidate list on various roam
+ * scans reasons
+ * @Min: 0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x8
+ *
+ * This new ini is introduced to configure the bitmask for various roam scan
+ * reasons. Fw sends "BTM query with preferred candidate list" only for those
+ * roam scans which are enable through this bitmask.
+
+ * For Example:
+ * Bitmask : 0x8 (LOW_RSSI) refer enum WMI_ROAM_TRIGGER_REASON_ID
+ * Bitmask : 0xDA (PER, LOW_RSSI, HIGH_RSSI, MAWC, DENSE)
+ * refer enum WMI_ROAM_TRIGGER_REASON_ID
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BTM_QUERY_BITMASK CFG_INI_UINT( \
+			"btm_query_bitmask", \
+			0, \
+			0xFFFFFFFF, \
+			0x8, \
+			CFG_VALUE_OR_DEFAULT, \
+			"btm query with candidate list bitmask")
+
 #define CFG_BTM_ALL \
 	CFG(CFG_PREFER_BTM_QUERY) \
 	CFG(CFG_ENABLE_BTM_ABRIDGE) \
@@ -244,6 +277,7 @@
 	CFG(CFG_BTM_MAX_ATTEMPT_CNT) \
 	CFG(CFG_BTM_STICKY_TIME) \
 	CFG(CFG_BTM_VALIDITY_TIMER) \
-	CFG(CFG_BTM_DISASSOC_TIMER_THRESHOLD)
+	CFG(CFG_BTM_DISASSOC_TIMER_THRESHOLD) \
+	CFG(CFG_BTM_QUERY_BITMASK)
 
 #endif /* CFG_MLME_BTM_H_ */
