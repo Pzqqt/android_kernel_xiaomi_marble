@@ -508,6 +508,9 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	tDot11fIEhe_cap *he_cap = &wma_cfg->he_cap;
 	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
 	uint8_t value;
+	uint16_t tx_mcs_map = 0;
+	uint16_t rx_mcs_map = 0;
+	uint8_t nss;
 
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
@@ -740,23 +743,38 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_obj->cfg.he_caps.dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb =
 				he_cap->rx_full_bw_su_he_mu_non_cmpr_sigb;
 
-	if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, he_cap->rx_he_mcs_map_lt_80))
+	tx_mcs_map = he_cap->tx_he_mcs_map_lt_80;
+	rx_mcs_map = he_cap->rx_he_mcs_map_lt_80;
+	if (!mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2) {
+		nss = 2;
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, nss);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, nss);
+	}
+
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map))
 		mlme_obj->cfg.he_caps.dot11_he_cap.rx_he_mcs_map_lt_80 =
-			he_cap->rx_he_mcs_map_lt_80;
-	if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, he_cap->tx_he_mcs_map_lt_80))
+			rx_mcs_map;
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map))
 		mlme_obj->cfg.he_caps.dot11_he_cap.tx_he_mcs_map_lt_80 =
-			he_cap->tx_he_mcs_map_lt_80;
-	if (cfg_in_range(CFG_HE_RX_MCS_MAP_160,
-			 *((uint16_t *)he_cap->rx_he_mcs_map_160)))
+			tx_mcs_map;
+	tx_mcs_map = *((uint16_t *)he_cap->tx_he_mcs_map_160);
+	rx_mcs_map = *((uint16_t *)he_cap->rx_he_mcs_map_160);
+
+	if (!mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2) {
+		nss = 2;
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, nss);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, nss);
+	}
+
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_160, rx_mcs_map))
 		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
 			     rx_he_mcs_map_160,
-			     he_cap->rx_he_mcs_map_160, sizeof(uint16_t));
+			     &rx_mcs_map, sizeof(uint16_t));
 
-	if (cfg_in_range(CFG_HE_TX_MCS_MAP_160,
-			 *((uint16_t *)he_cap->tx_he_mcs_map_160)))
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_160, tx_mcs_map))
 		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
 			     tx_he_mcs_map_160,
-			     he_cap->tx_he_mcs_map_160, sizeof(uint16_t));
+			     &tx_mcs_map, sizeof(uint16_t));
 
 	if (cfg_in_range(CFG_HE_RX_MCS_MAP_80_80,
 			 *((uint16_t *)he_cap->rx_he_mcs_map_80_80)))
