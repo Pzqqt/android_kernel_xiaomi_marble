@@ -13477,8 +13477,306 @@ static void hdd_qdf_deinit(void)
 	hdd_qdf_print_deinit();
 }
 
-static void hdd_driver_mode_change_register(void);
-static void hdd_driver_mode_change_unregister(void);
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+static bool is_monitor_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_monitor_mode_supported(void)
+{
+	pr_err("Monitor mode not supported!");
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_EPPING
+static bool is_epping_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_epping_mode_supported(void)
+{
+	pr_err("Epping mode not supported!");
+	return false;
+}
+#endif
+
+#ifdef QCA_WIFI_FTM
+static bool is_ftm_mode_supported(void)
+{
+	return true;
+}
+#else
+static bool is_ftm_mode_supported(void)
+{
+	pr_err("FTM mode not supported!");
+	return false;
+}
+#endif
+
+/**
+ * is_con_mode_valid() check con mode is valid or not
+ * @mode: global con mode
+ *
+ * Return: TRUE on success FALSE on failure
+ */
+static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
+{
+	switch (mode) {
+	case QDF_GLOBAL_MONITOR_MODE:
+		return is_monitor_mode_supported();
+	case QDF_GLOBAL_EPPING_MODE:
+		return is_epping_mode_supported();
+	case QDF_GLOBAL_FTM_MODE:
+		return is_ftm_mode_supported();
+	case QDF_GLOBAL_MISSION_MODE:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
+				  enum QDF_GLOBAL_MODE curr_mode)
+{
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED)
+		return;
+
+	switch (curr_mode) {
+	case QDF_GLOBAL_MONITOR_MODE:
+		hdd_info("Release wakelock for monitor mode!");
+		qdf_wake_lock_release(&hdd_ctx->monitor_mode_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
+		/* fallthrough */
+	case QDF_GLOBAL_MISSION_MODE:
+	case QDF_GLOBAL_FTM_MODE:
+		hdd_abort_mac_scan_all_adapters(hdd_ctx);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
+		hdd_stop_all_adapters(hdd_ctx);
+		hdd_deinit_all_adapters(hdd_ctx, false);
+
+		break;
+	default:
+		break;
+	}
+}
+
+static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
+				    enum QDF_GLOBAL_MODE curr_mode)
+{
+	int driver_status;
+
+	driver_status = hdd_ctx->driver_status;
+
+	switch (curr_mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+	case QDF_GLOBAL_MONITOR_MODE:
+	case QDF_GLOBAL_FTM_MODE:
+		hdd_close_all_adapters(hdd_ctx, false);
+		break;
+	case QDF_GLOBAL_EPPING_MODE:
+		epping_disable();
+		epping_close();
+		break;
+	default:
+		return;
+	}
+}
+
+static int
+hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
+{
+	QDF_STATUS status;
+	uint32_t mode;
+
+	*out_mode = QDF_GLOBAL_MAX_MODE;
+
+	status = qdf_uint32_parse(mode_str, &mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	if (mode >= QDF_GLOBAL_MAX_MODE)
+		return -ERANGE;
+
+	*out_mode = (enum QDF_GLOBAL_MODE)mode;
+
+	return 0;
+}
+
+/**
+ * __hdd_driver_mode_change() - Handles a driver mode change
+ * @hdd_ctx: Pointer to the global HDD context
+ * @next_mode: the driver mode to transition to
+ *
+ * This function is invoked when user updates con_mode using sys entry,
+ * to initialize and bring-up driver in that specific mode.
+ *
+ * Return: Errno
+ */
+static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
+				    enum QDF_GLOBAL_MODE next_mode)
+{
+	enum QDF_GLOBAL_MODE curr_mode;
+	int errno;
+
+	hdd_info("Driver mode changing to %d", next_mode);
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	if (!is_con_mode_valid(next_mode)) {
+		hdd_err_rl("Requested driver mode is invalid");
+		return -EINVAL;
+	}
+
+	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
+	mutex_lock(&hdd_init_deinit_lock);
+
+	curr_mode = hdd_get_conparam();
+	if (curr_mode == next_mode) {
+		hdd_err_rl("Driver is already in the requested mode");
+		errno = 0;
+		goto unlock;
+	}
+
+	/* ensure adapters are stopped */
+	hdd_stop_present_mode(hdd_ctx, curr_mode);
+
+	errno = hdd_wlan_stop_modules(hdd_ctx, true);
+	if (errno) {
+		hdd_err("Stop wlan modules failed");
+		goto unlock;
+	}
+
+	/* Cleanup present mode before switching to new mode */
+	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
+
+	hdd_set_conparam(next_mode);
+
+	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	if (errno) {
+		hdd_err("Start wlan modules failed: %d", errno);
+		goto unlock;
+	}
+
+	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
+	if (errno) {
+		hdd_err("Failed to open adapters");
+		goto unlock;
+	}
+
+	if (next_mode == QDF_GLOBAL_MONITOR_MODE) {
+		struct hdd_adapter *adapter =
+			hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
+
+		QDF_BUG(adapter);
+		if (!adapter) {
+			hdd_err("Failed to get monitor adapter");
+			goto unlock;
+		}
+
+		errno = hdd_start_adapter(adapter);
+		if (errno) {
+			hdd_err("Failed to start monitor adapter");
+			goto unlock;
+		}
+
+		hdd_info("Acquire wakelock for monitor mode");
+		qdf_wake_lock_acquire(&hdd_ctx->monitor_mode_wakelock,
+				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
+	}
+
+	/* con_mode is a global module parameter */
+	con_mode = next_mode;
+	hdd_info("Driver mode successfully changed to %d", next_mode);
+
+	errno = 0;
+
+unlock:
+	mutex_unlock(&hdd_init_deinit_lock);
+	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
+
+	return errno;
+}
+
+static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
+{
+	struct hdd_driver *hdd_driver = hdd_driver_get();
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+	int errno;
+
+	hdd_enter();
+
+	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
+					     "mode change");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to start 'mode change'; status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto exit;
+	}
+
+	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		goto trans_stop;
+
+	if (!cds_wait_for_external_threads_completion(__func__)) {
+		hdd_warn("External threads still active, cannot change mode");
+		errno = -EAGAIN;
+		goto trans_stop;
+	}
+
+	cds_ssr_protect(__func__);
+	errno = __hdd_driver_mode_change(hdd_ctx, mode);
+	cds_ssr_unprotect(__func__);
+
+trans_stop:
+	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+
+exit:
+	hdd_exit();
+
+	return errno;
+}
+
+static int hdd_set_con_mode(enum QDF_GLOBAL_MODE mode)
+{
+	con_mode = mode;
+
+	return 0;
+}
+
+static int (*hdd_set_con_mode_cb)(enum QDF_GLOBAL_MODE mode) = hdd_set_con_mode;
+
+static void hdd_driver_mode_change_register(void)
+{
+	hdd_set_con_mode_cb = hdd_driver_mode_change;
+}
+
+static void hdd_driver_mode_change_unregister(void)
+{
+	hdd_set_con_mode_cb = hdd_set_con_mode;
+}
+
+static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
+{
+	enum QDF_GLOBAL_MODE mode;
+	int errno;
+
+	errno = hdd_parse_driver_mode(kmessage, &mode);
+	if (errno) {
+		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
+		return errno;
+	}
+
+	return hdd_set_con_mode_cb(mode);
+}
 
 /**
  * hdd_driver_load() - Perform the driver-level load operation
@@ -13831,307 +14129,6 @@ static int fwpath_changed_handler(const char *kmessage,
 				  const struct kernel_param *kp)
 {
 	return param_set_copystring(kmessage, kp);
-}
-
-#ifdef FEATURE_MONITOR_MODE_SUPPORT
-static bool is_monitor_mode_supported(void)
-{
-	return true;
-}
-#else
-static bool is_monitor_mode_supported(void)
-{
-	pr_err("Monitor mode not supported!");
-	return false;
-}
-#endif
-
-#ifdef WLAN_FEATURE_EPPING
-static bool is_epping_mode_supported(void)
-{
-	return true;
-}
-#else
-static bool is_epping_mode_supported(void)
-{
-	pr_err("Epping mode not supported!");
-	return false;
-}
-#endif
-
-#ifdef QCA_WIFI_FTM
-static bool is_ftm_mode_supported(void)
-{
-	return true;
-}
-#else
-static bool is_ftm_mode_supported(void)
-{
-	pr_err("FTM mode not supported!");
-	return false;
-}
-#endif
-
-/**
- * is_con_mode_valid() check con mode is valid or not
- * @mode: global con mode
- *
- * Return: TRUE on success FALSE on failure
- */
-static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
-{
-	switch (mode) {
-	case QDF_GLOBAL_MONITOR_MODE:
-		return is_monitor_mode_supported();
-	case QDF_GLOBAL_EPPING_MODE:
-		return is_epping_mode_supported();
-	case QDF_GLOBAL_FTM_MODE:
-		return is_ftm_mode_supported();
-	case QDF_GLOBAL_MISSION_MODE:
-		return true;
-	default:
-		return false;
-	}
-}
-
-static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
-				  enum QDF_GLOBAL_MODE curr_mode)
-{
-	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED)
-		return;
-
-	switch (curr_mode) {
-	case QDF_GLOBAL_MONITOR_MODE:
-		hdd_info("Release wakelock for monitor mode!");
-		qdf_wake_lock_release(&hdd_ctx->monitor_mode_wakelock,
-				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
-		/* fallthrough */
-	case QDF_GLOBAL_MISSION_MODE:
-	case QDF_GLOBAL_FTM_MODE:
-		hdd_abort_mac_scan_all_adapters(hdd_ctx);
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
-		hdd_stop_all_adapters(hdd_ctx);
-		hdd_deinit_all_adapters(hdd_ctx, false);
-
-		break;
-	default:
-		break;
-	}
-}
-
-static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
-				    enum QDF_GLOBAL_MODE curr_mode)
-{
-	int driver_status;
-
-	driver_status = hdd_ctx->driver_status;
-
-	switch (curr_mode) {
-	case QDF_GLOBAL_MISSION_MODE:
-	case QDF_GLOBAL_MONITOR_MODE:
-	case QDF_GLOBAL_FTM_MODE:
-		hdd_close_all_adapters(hdd_ctx, false);
-		break;
-	case QDF_GLOBAL_EPPING_MODE:
-		epping_disable();
-		epping_close();
-		break;
-	default:
-		return;
-	}
-}
-
-static int
-hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
-{
-	QDF_STATUS status;
-	uint32_t mode;
-
-	*out_mode = QDF_GLOBAL_MAX_MODE;
-
-	status = qdf_uint32_parse(mode_str, &mode);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
-
-	if (mode >= QDF_GLOBAL_MAX_MODE)
-		return -ERANGE;
-
-	*out_mode = (enum QDF_GLOBAL_MODE)mode;
-
-	return 0;
-}
-
-/**
- * __hdd_driver_mode_change() - Handles a driver mode change
- * @hdd_ctx: Pointer to the global HDD context
- * @next_mode: the driver mode to transition to
- *
- * This function is invoked when user updates con_mode using sys entry,
- * to initialize and bring-up driver in that specific mode.
- *
- * Return: Errno
- */
-static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
-				    enum QDF_GLOBAL_MODE next_mode)
-{
-	enum QDF_GLOBAL_MODE curr_mode;
-	int errno;
-
-	hdd_info("Driver mode changing to %d", next_mode);
-
-	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
-
-	if (!is_con_mode_valid(next_mode)) {
-		hdd_err_rl("Requested driver mode is invalid");
-		return -EINVAL;
-	}
-
-	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
-	mutex_lock(&hdd_init_deinit_lock);
-
-	curr_mode = hdd_get_conparam();
-	if (curr_mode == next_mode) {
-		hdd_err_rl("Driver is already in the requested mode");
-		errno = 0;
-		goto unlock;
-	}
-
-	/* ensure adapters are stopped */
-	hdd_stop_present_mode(hdd_ctx, curr_mode);
-
-	errno = hdd_wlan_stop_modules(hdd_ctx, true);
-	if (errno) {
-		hdd_err("Stop wlan modules failed");
-		goto unlock;
-	}
-
-	/* Cleanup present mode before switching to new mode */
-	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
-
-	hdd_set_conparam(next_mode);
-
-	errno = hdd_wlan_start_modules(hdd_ctx, false);
-	if (errno) {
-		hdd_err("Start wlan modules failed: %d", errno);
-		goto unlock;
-	}
-
-	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
-	if (errno) {
-		hdd_err("Failed to open adapters");
-		goto unlock;
-	}
-
-	if (next_mode == QDF_GLOBAL_MONITOR_MODE) {
-		struct hdd_adapter *adapter =
-			hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
-
-		QDF_BUG(adapter);
-		if (!adapter) {
-			hdd_err("Failed to get monitor adapter");
-			goto unlock;
-		}
-
-		errno = hdd_start_adapter(adapter);
-		if (errno) {
-			hdd_err("Failed to start monitor adapter");
-			goto unlock;
-		}
-
-		hdd_info("Acquire wakelock for monitor mode");
-		qdf_wake_lock_acquire(&hdd_ctx->monitor_mode_wakelock,
-				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
-	}
-
-	/* con_mode is a global module parameter */
-	con_mode = next_mode;
-	hdd_info("Driver mode successfully changed to %d", next_mode);
-
-	errno = 0;
-
-unlock:
-	mutex_unlock(&hdd_init_deinit_lock);
-	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
-
-	return errno;
-}
-
-static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
-{
-	struct hdd_driver *hdd_driver = hdd_driver_get();
-	struct hdd_context *hdd_ctx;
-	QDF_STATUS status;
-	int errno;
-
-	hdd_enter();
-
-	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
-					     "mode change");
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to start 'mode change'; status:%u", status);
-		errno = qdf_status_to_os_return(status);
-		goto exit;
-	}
-
-	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		goto trans_stop;
-
-	if (!cds_wait_for_external_threads_completion(__func__)) {
-		hdd_warn("External threads still active, cannot change mode");
-		errno = -EAGAIN;
-		goto trans_stop;
-	}
-
-	cds_ssr_protect(__func__);
-	errno = __hdd_driver_mode_change(hdd_ctx, mode);
-	cds_ssr_unprotect(__func__);
-
-trans_stop:
-	dsc_driver_trans_stop(hdd_driver->dsc_driver);
-
-exit:
-	hdd_exit();
-
-	return errno;
-}
-
-static int hdd_set_con_mode(enum QDF_GLOBAL_MODE mode)
-{
-	con_mode = mode;
-
-	return 0;
-}
-
-static int (*hdd_set_con_mode_cb)(enum QDF_GLOBAL_MODE mode) = hdd_set_con_mode;
-
-static void hdd_driver_mode_change_register(void)
-{
-	hdd_set_con_mode_cb = hdd_driver_mode_change;
-}
-
-static void hdd_driver_mode_change_unregister(void)
-{
-	hdd_set_con_mode_cb = hdd_set_con_mode;
-}
-
-static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
-{
-	enum QDF_GLOBAL_MODE mode;
-	int errno;
-
-	errno = hdd_parse_driver_mode(kmessage, &mode);
-	if (errno) {
-		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
-		return errno;
-	}
-
-	return hdd_set_con_mode_cb(mode);
 }
 
 static int con_mode_handler_ftm(const char *kmessage,
