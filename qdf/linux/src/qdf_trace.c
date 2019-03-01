@@ -2930,13 +2930,14 @@ void qdf_trace_display(void)
 }
 qdf_export_symbol(qdf_trace_display);
 
-#ifdef CONFIG_MCL
-#define print_to_console(str)
-#else
+#ifdef QDF_TRACE_PRINT_ENABLE
 static inline void print_to_console(char *str_buffer)
 {
 	pr_err("%s\n", str_buffer);
 }
+#else
+
+#define print_to_console(str)
 #endif
 
 #ifdef MULTI_IF_NAME
