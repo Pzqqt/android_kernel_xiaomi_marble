@@ -165,8 +165,8 @@ __osif_psoc_sync_op_start(struct device *dev,
  *
  * Return: none
  */
-#define osif_psoc_sync_op_stop(dev) \
-	__osif_psoc_sync_op_stop(dev, __func__)
+#define osif_psoc_sync_op_stop(psoc_sync) \
+	__osif_psoc_sync_op_stop(psoc_sync, __func__)
 
 void __osif_psoc_sync_op_stop(struct osif_psoc_sync *psoc_sync,
 			      const char *func);

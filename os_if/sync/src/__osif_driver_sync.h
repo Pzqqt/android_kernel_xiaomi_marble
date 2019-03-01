@@ -19,5 +19,31 @@
 #ifndef ____OSIF_DRIVER_SYNC_H
 #define ____OSIF_DRIVER_SYNC_H
 
+#include "qdf_status.h"
+#include "wlan_dsc_psoc.h"
+
+/**
+ * osif_driver_sync_init() - global initializer
+ *
+ * Return: None
+ */
+void osif_driver_sync_init(void);
+
+/**
+ * osif_driver_sync_deinit() - global de-initializer
+ *
+ * Return: None
+ */
+void osif_driver_sync_deinit(void);
+
+/**
+ * osif_driver_sync_dsc_psoc_create() - create a dsc_psoc and attach it to the
+ *	global dsc_driver instance
+ * @out_dsc_psoc: output pointer parameter for the new dsc_psoc
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_driver_sync_dsc_psoc_create(struct dsc_psoc **out_dsc_psoc);
+
 #endif /* ____OSIF_DRIVER_SYNC_H */
 

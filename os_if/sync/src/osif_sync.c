@@ -16,12 +16,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "__osif_driver_sync.h"
 #include "__osif_psoc_sync.h"
 #include "__osif_vdev_sync.h"
 #include "osif_sync.h"
 
 void osif_sync_init(void)
 {
+	osif_driver_sync_init();
 	osif_psoc_sync_init();
 	osif_vdev_sync_init();
 }
@@ -30,5 +32,6 @@ void osif_sync_deinit(void)
 {
 	osif_vdev_sync_deinit();
 	osif_psoc_sync_deinit();
+	osif_driver_sync_deinit();
 }
 
