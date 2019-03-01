@@ -453,13 +453,12 @@ static int hdd_soc_probe(struct device *dev,
 			 const struct hif_bus_id *bid,
 			 enum qdf_bus_type bus_type)
 {
-	struct dsc_driver *dsc_driver = hdd_driver_get()->dsc_driver;
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
 
 	hdd_info("probing driver");
 
-	errno = osif_psoc_sync_create_and_trans(dsc_driver, &psoc_sync);
+	errno = osif_psoc_sync_create_and_trans(&psoc_sync);
 	if (errno)
 		return errno;
 

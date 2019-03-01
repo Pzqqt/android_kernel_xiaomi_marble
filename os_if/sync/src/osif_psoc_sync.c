@@ -17,12 +17,12 @@
  */
 
 #include "linux/device.h"
+#include "__osif_driver_sync.h"
 #include "__osif_psoc_sync.h"
 #include "osif_psoc_sync.h"
 #include "qdf_lock.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
-#include "wlan_dsc_driver.h"
 #include "wlan_dsc_psoc.h"
 #include "wlan_dsc_vdev.h"
 
@@ -90,15 +90,10 @@ static void osif_psoc_sync_put(struct osif_psoc_sync *psoc_sync)
 	qdf_mem_zero(psoc_sync, sizeof(*psoc_sync));
 }
 
-int osif_psoc_sync_create(struct dsc_driver *dsc_driver,
-			  struct osif_psoc_sync **out_psoc_sync)
+int osif_psoc_sync_create(struct osif_psoc_sync **out_psoc_sync)
 {
 	QDF_STATUS status;
 	struct osif_psoc_sync *psoc_sync;
-
-	QDF_BUG(dsc_driver);
-	if (!dsc_driver)
-		return -EINVAL;
 
 	QDF_BUG(out_psoc_sync);
 	if (!out_psoc_sync)
@@ -110,7 +105,7 @@ int osif_psoc_sync_create(struct dsc_driver *dsc_driver,
 	if (!psoc_sync)
 		return -ENOMEM;
 
-	status = dsc_psoc_create(dsc_driver, &psoc_sync->dsc_psoc);
+	status = osif_driver_sync_dsc_psoc_create(&psoc_sync->dsc_psoc);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto sync_put;
 
@@ -126,15 +121,14 @@ sync_put:
 	return qdf_status_to_os_return(status);
 }
 
-int __osif_psoc_sync_create_and_trans(struct dsc_driver *dsc_driver,
-				      struct osif_psoc_sync **out_psoc_sync,
+int __osif_psoc_sync_create_and_trans(struct osif_psoc_sync **out_psoc_sync,
 				      const char *desc)
 {
 	struct osif_psoc_sync *psoc_sync;
 	QDF_STATUS status;
 	int errno;
 
-	errno = osif_psoc_sync_create(dsc_driver, &psoc_sync);
+	errno = osif_psoc_sync_create(&psoc_sync);
 	if (errno)
 		return errno;
 

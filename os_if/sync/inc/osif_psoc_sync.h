@@ -30,30 +30,26 @@ struct osif_psoc_sync;
 
 /**
  * osif_psoc_sync_create() - create a psoc synchronization context
- * @dsc_driver: parent dsc_driver to the psoc
  * @out_psoc_sync: out parameter for the new synchronization context
  *
  * Return: Errno
  */
 qdf_must_check int
-osif_psoc_sync_create(struct dsc_driver *dsc_driver,
-		      struct osif_psoc_sync **out_psoc_sync);
+osif_psoc_sync_create(struct osif_psoc_sync **out_psoc_sync);
 
 /**
  * osif_psoc_sync_create_and_trans() - create a psoc synchronization context
- * @dsc_driver: parent dsc_driver to the psoc
  * @out_psoc_sync: out parameter for the new synchronization context
  *
  * For protecting the device creation process.
  *
  * Return: Errno
  */
-#define osif_psoc_sync_create_and_trans(dsc_driver, out_psoc_sync) \
-	__osif_psoc_sync_create_and_trans(dsc_driver, out_psoc_sync, __func__)
+#define osif_psoc_sync_create_and_trans(out_psoc_sync) \
+	__osif_psoc_sync_create_and_trans(out_psoc_sync, __func__)
 
 qdf_must_check int
-__osif_psoc_sync_create_and_trans(struct dsc_driver *dsc_driver,
-				  struct osif_psoc_sync **out_psoc_sync,
+__osif_psoc_sync_create_and_trans(struct osif_psoc_sync **out_psoc_sync,
 				  const char *desc);
 
 /**

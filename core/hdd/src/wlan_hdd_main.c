@@ -12951,16 +12951,13 @@ static inline int hdd_state_query_cb(void)
 int hdd_init(void)
 {
 	QDF_STATUS status;
-	int ret;
-
-	osif_sync_init();
 
 	status = cds_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to allocate CDS context");
-		ret = -ENOMEM;
-		goto deinit_dsc;
+		return -ENOMEM;
 	}
+
 	qdf_register_module_state_query_callback(hdd_state_query_cb);
 
 	wlan_init_bug_report_lock();
@@ -12978,11 +12975,6 @@ int hdd_init(void)
 	wlan_roam_debug_init();
 
 	return 0;
-
-deinit_dsc:
-	osif_sync_deinit();
-
-	return ret;
 }
 
 /**
@@ -13003,8 +12995,6 @@ void hdd_deinit(void)
 
 	wlan_destroy_bug_report_lock();
 	cds_deinit();
-
-	osif_sync_deinit();
 }
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -13338,34 +13328,6 @@ QDF_STATUS hdd_component_pdev_open(struct wlan_objmgr_pdev *pdev)
 void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	ucfg_mlme_pdev_close(pdev);
-}
-
-static struct hdd_driver __hdd_driver;
-
-static QDF_STATUS hdd_driver_ctx_init(struct hdd_driver *hdd_driver)
-{
-	QDF_BUG(hdd_driver);
-	if (!hdd_driver)
-		return QDF_STATUS_E_INVAL;
-
-	hdd_driver->state = driver_state_uninit;
-
-	return dsc_driver_create(&hdd_driver->dsc_driver);
-}
-
-static void hdd_driver_ctx_deinit(struct hdd_driver *hdd_driver)
-{
-	QDF_BUG(hdd_driver);
-	if (!hdd_driver)
-		return;
-
-	dsc_driver_destroy(&hdd_driver->dsc_driver);
-	qdf_mem_zero(hdd_driver, sizeof(*hdd_driver));
-}
-
-struct hdd_driver *hdd_driver_get(void)
-{
-	return &__hdd_driver;
 }
 
 static QDF_STATUS hdd_qdf_print_init(void)
@@ -13704,22 +13666,21 @@ unlock:
 
 static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
 {
-	struct hdd_driver *hdd_driver = hdd_driver_get();
+	struct osif_driver_sync *driver_sync;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int errno;
 
 	hdd_enter();
 
-	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
-					     "mode change");
+	status = osif_driver_sync_trans_start_wait(&driver_sync);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to start 'mode change'; status:%u", status);
 		errno = qdf_status_to_os_return(status);
 		goto exit;
 	}
 
-	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
+	osif_driver_sync_wait_for_ops(driver_sync);
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	errno = wlan_hdd_validate_context(hdd_ctx);
@@ -13737,7 +13698,7 @@ static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
 	cds_ssr_unprotect(__func__);
 
 trans_stop:
-	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+	osif_driver_sync_trans_stop(driver_sync);
 
 exit:
 	hdd_exit();
@@ -13787,12 +13748,11 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
  */
 static int hdd_driver_load(void)
 {
-	struct hdd_driver *hdd_driver = hdd_driver_get();
+	struct osif_driver_sync *driver_sync;
 	QDF_STATUS status;
 	int errno;
 
-	pr_err("%s: Loading driver v%s\n",
-	       WLAN_MODULE_NAME,
+	pr_err("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 	       g_wlan_driver_version);
 
 	status = hdd_qdf_init();
@@ -13801,18 +13761,13 @@ static int hdd_driver_load(void)
 		goto exit;
 	}
 
-	status = hdd_driver_ctx_init(hdd_driver);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to init driver context; status:%u", status);
-		errno = qdf_status_to_os_return(status);
-		goto qdf_deinit;
-	}
+	osif_sync_init();
 
-	status = dsc_driver_trans_start(hdd_driver->dsc_driver, "load");
-	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+	status = osif_driver_sync_create_and_trans(&driver_sync);
 	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init driver sync; status:%u", status);
 		errno = qdf_status_to_os_return(status);
-		goto hdd_driver_deinit;
+		goto sync_deinit;
 	}
 
 	errno = hdd_init();
@@ -13849,9 +13804,10 @@ static int hdd_driver_load(void)
 		goto param_destroy;
 	}
 
-	hdd_driver->state = driver_state_loaded;
 	hdd_driver_mode_change_register();
-	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+
+	osif_driver_sync_register(driver_sync);
+	osif_driver_sync_trans_stop(driver_sync);
 
 	/* psoc probe can happen in registration; do after 'load' transition */
 	errno = wlan_hdd_register_driver();
@@ -13865,8 +13821,11 @@ static int hdd_driver_load(void)
 	return 0;
 
 pld_deinit:
-	status = dsc_driver_trans_start(hdd_driver->dsc_driver, "unload");
+	status = osif_driver_sync_trans_start(&driver_sync);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+
+	osif_driver_sync_unregister();
+	osif_driver_sync_wait_for_ops(driver_sync);
 
 	hdd_driver_mode_change_unregister();
 	pld_deinit();
@@ -13880,11 +13839,10 @@ comp_deinit:
 hdd_deinit:
 	hdd_deinit();
 trans_stop:
-	hdd_driver->state = driver_state_deinit;
-	dsc_driver_trans_stop(hdd_driver->dsc_driver);
-hdd_driver_deinit:
-	hdd_driver_ctx_deinit(hdd_driver);
-qdf_deinit:
+	osif_driver_sync_trans_stop(driver_sync);
+	osif_driver_sync_destroy(driver_sync);
+sync_deinit:
+	osif_sync_deinit();
 	hdd_qdf_deinit();
 
 exit:
@@ -13900,7 +13858,7 @@ exit:
  */
 static void hdd_driver_unload(void)
 {
-	struct hdd_driver *hdd_driver = hdd_driver_get();
+	struct osif_driver_sync *driver_sync;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	QDF_STATUS status;
 
@@ -13918,14 +13876,15 @@ static void hdd_driver_unload(void)
 	/* trigger SoC remove */
 	wlan_hdd_unregister_driver();
 
-	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver, "unload");
+	status = osif_driver_sync_trans_start_wait(&driver_sync);
 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Unable to unload wlan; status:%u", status);
 		return;
 	}
 
-	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
+	osif_driver_sync_unregister();
+	osif_driver_sync_wait_for_ops(driver_sync);
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
@@ -13942,10 +13901,10 @@ static void hdd_driver_unload(void)
 	hdd_component_deinit();
 	hdd_deinit();
 
-	hdd_driver->state = driver_state_deinit;
-	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+	osif_driver_sync_trans_stop(driver_sync);
+	osif_driver_sync_destroy(driver_sync);
 
-	hdd_driver_ctx_deinit(hdd_driver);
+	osif_sync_deinit();
 
 	hdd_qdf_deinit();
 }
