@@ -2989,6 +2989,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			wma_handle->interfaces[vdev_id].vdev_active = false;
 			wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 			wma_handle->interfaces[vdev_id].vdev = NULL;
+			txrx_vdev_handle = NULL;
 			goto end;
 		}
 	} else if (self_sta_req->type == WMI_VDEV_TYPE_STA) {
@@ -3005,6 +3006,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 			wma_handle->interfaces[vdev_id].vdev = NULL;
 			wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+			txrx_vdev_handle = NULL;
 			goto end;
 		}
 	}
