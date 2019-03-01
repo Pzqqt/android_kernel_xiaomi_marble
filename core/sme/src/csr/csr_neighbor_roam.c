@@ -1000,14 +1000,16 @@ static void csr_neighbor_roam_info_ctx_init(
 			FL("isESEAssoc is = %d ft = %d"),
 			ngbr_roam_info->isESEAssoc, init_ft_flag);
 #endif
-	/* If "Legacy Fast Roaming" is enabled */
+	/* If "FastRoamEnabled" ini is enabled */
 	if (csr_roam_is_fast_roam_enabled(mac, session_id))
 		init_ft_flag = true;
-	if (init_ft_flag == false)
-		return;
-	/* Initialize all the data structures needed for the 11r FT Preauth */
-	ngbr_roam_info->FTRoamInfo.currentNeighborRptRetryNum = 0;
-	csr_neighbor_roam_purge_preauth_failed_list(mac);
+
+	if (init_ft_flag) {
+		/* Initialize all the data needed for the 11r FT Preauth */
+		ngbr_roam_info->FTRoamInfo.currentNeighborRptRetryNum = 0;
+		csr_neighbor_roam_purge_preauth_failed_list(mac);
+	}
+
 	if (csr_roam_is_roam_offload_scan_enabled(mac)) {
 		/*
 		 * If this is not a INFRA type BSS, then do not send the command
