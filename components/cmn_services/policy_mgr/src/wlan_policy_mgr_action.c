@@ -1432,6 +1432,7 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 		uint8_t sta_channel)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool sta_sap_scc_on_dfs_chan;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1439,8 +1440,16 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
+	sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+	if (wlan_reg_is_dfs_ch(pm_ctx->pdev, sta_channel) &&
+	    sta_sap_scc_on_dfs_chan) {
+		policy_mgr_debug("STA, SAP SCC is allowed on DFS chan %u",
+				 sta_channel);
+		return true;
+	}
 	if ((wlan_reg_is_dfs_ch(pm_ctx->pdev, sta_channel) &&
-		(!policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc))) ||
+	    !sta_sap_scc_on_dfs_chan) ||
 		wlan_reg_is_passive_or_disable_ch(pm_ctx->pdev, sta_channel) ||
 		!policy_mgr_is_safe_channel(psoc, sta_channel)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc))
