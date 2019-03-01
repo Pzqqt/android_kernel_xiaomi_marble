@@ -18093,6 +18093,9 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->rct_validity_timer = mac_ctx->mlme_cfg->btm.rct_validity_timer;
 	req_buf->disassoc_timer_threshold =
 		mac_ctx->mlme_cfg->btm.disassoc_timer_threshold;
+	req_buf->btm_query_bitmask =
+		mac_ctx->mlme_cfg->btm.btm_query_bitmask;
+
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

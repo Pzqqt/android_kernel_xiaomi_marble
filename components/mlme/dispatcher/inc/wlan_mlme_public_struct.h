@@ -1848,6 +1848,8 @@ struct wlan_mlme_wifi_pos_cfg {
  * @rct_validity_timer: Timeout values for roam cache table entries
  * @disassoc_timer_threshold: Disassociation timeout till which roam scan need
  * not be triggered
+ * @btm_query_bitmask: Bitmask to send BTM query with candidate list on
+ * various roam
  */
 struct wlan_mlme_btm {
 	bool prefer_btm_query;
@@ -1858,6 +1860,7 @@ struct wlan_mlme_btm {
 	uint32_t btm_sticky_time;
 	uint32_t rct_validity_timer;
 	uint32_t disassoc_timer_threshold;
+	uint32_t btm_query_bitmask;
 };
 
 /**

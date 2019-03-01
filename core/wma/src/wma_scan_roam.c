@@ -1425,9 +1425,11 @@ wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 	params->btm_max_attempt_cnt = roam_req->btm_max_attempt_cnt;
 	params->btm_sticky_time = roam_req->btm_sticky_time;
 	params->disassoc_timer_threshold = roam_req->disassoc_timer_threshold;
+	params->btm_query_bitmask = roam_req->btm_query_bitmask;
 
-	WMA_LOGD("%s: Sending BTM offload to FW for vdev %u btm_offload_config %u",
-		 __func__, params->vdev_id, params->btm_offload_config);
+	WMA_LOGD("%s: Sending BTM offload to FW for vdev %u btm_offload_config %u btm_query_bitmask %u",
+		 __func__, params->vdev_id, params->btm_offload_config,
+		params->btm_query_bitmask);
 
 	status = wmi_unified_send_btm_config(wma_handle->wmi_handle, params);
 	qdf_mem_free(params);
