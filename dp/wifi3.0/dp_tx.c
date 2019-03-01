@@ -969,7 +969,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	void *hal_srng = soc->tcl_data_ring[ring_id].hal_srng;
 
 	hal_tx_desc_cached = (void *) cached_desc;
-	qdf_mem_zero_outline(hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
+	qdf_mem_zero(hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG) {
 		length = HAL_TX_EXT_DESC_WITH_META_DATA;

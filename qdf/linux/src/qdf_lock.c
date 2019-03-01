@@ -677,39 +677,6 @@ QDF_STATUS qdf_mutex_destroy(qdf_mutex_t *lock)
 }
 qdf_export_symbol(qdf_mutex_destroy);
 
-/**
- * qdf_spin_trylock_bh_outline() - spin trylock bottomhalf
- * @lock: spinlock object
- * Return: nonzero if lock is acquired
- */
-int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock)
-{
-	return qdf_spin_trylock_bh(lock);
-}
-qdf_export_symbol(qdf_spin_trylock_bh_outline);
-
-/**
- * qdf_spin_lock_bh_outline() - locks the spinlock in soft irq context
- * @lock: spinlock object pointer
- * Return: none
- */
-void qdf_spin_lock_bh_outline(qdf_spinlock_t *lock)
-{
-	qdf_spin_lock_bh(lock);
-}
-qdf_export_symbol(qdf_spin_lock_bh_outline);
-
-/**
- * qdf_spin_unlock_bh_outline() - unlocks spinlock in soft irq context
- * @lock: spinlock object pointer
- * Return: none
- */
-void qdf_spin_unlock_bh_outline(qdf_spinlock_t *lock)
-{
-	qdf_spin_unlock_bh(lock);
-}
-qdf_export_symbol(qdf_spin_unlock_bh_outline);
-
 #if QDF_LOCK_STATS_LIST
 struct qdf_lock_cookie {
 	union {

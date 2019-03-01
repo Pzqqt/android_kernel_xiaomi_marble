@@ -840,59 +840,6 @@ void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf)
 }
 qdf_export_symbol(__qdf_mempool_free);
 
-/**
- * qdf_mem_alloc_outline() - allocation QDF memory
- * @osdev: platform device object
- * @size: Number of bytes of memory to allocate.
- *
- * This function will dynamicallly allocate the specified number of bytes of
- * memory.
- *
- * Return:
- * Upon successful allocate, returns a non-NULL pointer to the allocated
- * memory.  If this function is unable to allocate the amount of memory
- * specified (for any reason) it returns NULL.
- */
-void *
-qdf_mem_alloc_outline(qdf_device_t osdev, size_t size)
-{
-	return qdf_mem_malloc(size);
-}
-qdf_export_symbol(qdf_mem_alloc_outline);
-
-/**
- * qdf_mem_free_outline() - QDF memory free API
- * @ptr: Pointer to the starting address of the memory to be free'd.
- *
- * This function will free the memory pointed to by 'ptr'. It also checks
- * is memory is corrupted or getting double freed and panic.
- *
- * Return: none
- */
-void
-qdf_mem_free_outline(void *buf)
-{
-	qdf_mem_free(buf);
-}
-qdf_export_symbol(qdf_mem_free_outline);
-
-/**
- * qdf_mem_zero_outline() - zero out memory
- * @buf: pointer to memory that will be set to zero
- * @size: number of bytes zero
- *
- * This function sets the memory location to all zeros, essentially clearing
- * the memory.
- *
- * Return: none
- */
-void
-qdf_mem_zero_outline(void *buf, qdf_size_t size)
-{
-	qdf_mem_zero(buf, size);
-}
-qdf_export_symbol(qdf_mem_zero_outline);
-
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 /**
  * qdf_mem_prealloc_get() - conditionally pre-allocate memory

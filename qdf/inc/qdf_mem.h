@@ -311,8 +311,6 @@ void *qdf_aligned_mem_alloc_consistent_fl(
 	qdf_dma_addr_t *paddr_aligned, uint32_t ring_base_align,
 	const char *func, uint32_t line);
 
-void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
-
 void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value);
 
 void qdf_mem_copy_toio(void *dst_addr, const void *src_addr,
@@ -392,10 +390,6 @@ void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes);
  *	> 0 -- *memory1 is bigger than *memory2
  */
 int qdf_mem_cmp(const void *left, const void *right, size_t size);
-
-void qdf_mem_free_outline(void *buf);
-
-void qdf_mem_zero_outline(void *buf, qdf_size_t size);
 
 void qdf_ether_addr_copy(void *dst_addr, const void *src_addr);
 
