@@ -904,6 +904,15 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
 		return 0;
 
+	/*
+	 * Avoids flood of WMI update messages sent to FW for same peer.
+	 */
+	if (qdf_unlikely(ast_entry->peer == peer) &&
+	    (ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
+	    (ast_entry->vdev_id == peer->vdev->vdev_id) &&
+	    (ast_entry->is_active))
+		return 0;
+
 	old_peer = ast_entry->peer;
 	TAILQ_REMOVE(&old_peer->ast_entry_list, ast_entry, ase_list_elem);
 
