@@ -619,17 +619,22 @@ static inline struct pdev_scan_ev_handler*
 wlan_pdev_get_pdev_scan_ev_handlers(struct wlan_objmgr_pdev *pdev)
 {
 	uint8_t pdevid;
-	struct wlan_scan_obj *scan;
-	struct pdev_scan_ev_handler *pdev_ev_handler;
+	struct wlan_scan_obj *scan = NULL;
+
+	if (!pdev)
+		goto err;
 
 	pdevid = wlan_objmgr_pdev_get_pdev_id(pdev);
-
 	scan = wlan_pdev_get_scan_obj(pdev);
+	if (!scan)
+		goto err;
 
-	pdev_ev_handler =
-		&scan->global_evhandlers.pdev_ev_handlers[pdevid];
+	return &scan->global_evhandlers.pdev_ev_handlers[pdevid];
 
-	return pdev_ev_handler;
+err:
+	scm_err("NULL pointer, pdev: 0x%pK, scan_obj: 0x%pK",
+		pdev, scan);
+	return NULL;
 }
 
 /**

@@ -903,6 +903,10 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 
 	scan = wlan_pdev_get_scan_obj(pdev);
 	pdev_ev_handler = wlan_pdev_get_pdev_scan_ev_handlers(pdev);
+	if (!pdev_ev_handler) {
+		scm_err("null pdev_ev_handler");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 	cb_handler = &(pdev_ev_handler->cb_handlers[0]);
 
 	qdf_spin_lock_bh(&scan->lock);
@@ -1081,6 +1085,9 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 		return;
 
 	pdev_ev_handler = wlan_pdev_get_pdev_scan_ev_handlers(pdev);
+	if (!pdev_ev_handler)
+		return;
+
 	cb_handler = &(pdev_ev_handler->cb_handlers[0]);
 
 	qdf_spin_lock_bh(&scan->lock);
