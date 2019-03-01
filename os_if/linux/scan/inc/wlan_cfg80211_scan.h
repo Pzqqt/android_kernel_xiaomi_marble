@@ -123,6 +123,7 @@ struct scan_req {
  * struct scan_params - Scan params
  * @source: scan request source
  * @default_ie: default scan ie
+ * @vendor_ie: vendor ie
  * @half_rate: Half rate flag
  * @quarter_rate: Quarter rate flag
  * @strict_pscan: strict passive scan flag
@@ -130,6 +131,7 @@ struct scan_req {
 struct scan_params {
 	uint8_t source;
 	struct element_info default_ie;
+	struct element_info vendor_ie;
 	bool half_rate;
 	bool quarter_rate;
 	bool strict_pscan;

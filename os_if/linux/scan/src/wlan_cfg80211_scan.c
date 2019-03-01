@@ -1294,6 +1294,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	enum wlan_band band;
 	struct net_device *netdev = NULL;
 	QDF_STATUS qdf_status;
+	uint32_t extra_ie_len = 0;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
@@ -1490,25 +1491,39 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	/* P2P increase the scan priority */
 	if (is_p2p_scan)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
-	if (request->ie_len) {
-		req->scan_req.extraie.ptr = qdf_mem_malloc(request->ie_len);
+
+	if (request->ie_len)
+		extra_ie_len = request->ie_len;
+	else if (params->default_ie.ptr && params->default_ie.len)
+		extra_ie_len = params->default_ie.len;
+
+	if (params->vendor_ie.ptr && params->vendor_ie.len)
+		extra_ie_len += params->vendor_ie.len;
+
+	if (extra_ie_len) {
+		req->scan_req.extraie.ptr = qdf_mem_malloc(extra_ie_len);
 		if (!req->scan_req.extraie.ptr) {
 			ret = -ENOMEM;
 			goto err;
 		}
+	}
+
+	if (request->ie_len) {
 		req->scan_req.extraie.len = request->ie_len;
 		qdf_mem_copy(req->scan_req.extraie.ptr, request->ie,
-				request->ie_len);
+			     request->ie_len);
 	} else if (params->default_ie.ptr && params->default_ie.len) {
-		req->scan_req.extraie.ptr =
-			qdf_mem_malloc(params->default_ie.len);
-		if (!req->scan_req.extraie.ptr) {
-			ret = -ENOMEM;
-			goto err;
-		}
 		req->scan_req.extraie.len = params->default_ie.len;
 		qdf_mem_copy(req->scan_req.extraie.ptr, params->default_ie.ptr,
 			     params->default_ie.len);
+	}
+
+	if (params->vendor_ie.ptr && params->vendor_ie.len) {
+		qdf_mem_copy((req->scan_req.extraie.ptr +
+			      req->scan_req.extraie.len),
+			     params->vendor_ie.ptr, params->vendor_ie.len);
+
+		req->scan_req.extraie.len += params->vendor_ie.len;
 	}
 
 	if (!is_p2p_scan) {
