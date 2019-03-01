@@ -447,6 +447,14 @@ struct cdp_cmn_ops {
 					   void *buf);
 	void (*txrx_flush_rate_stats_request)(struct cdp_soc_t *soc,
 					      struct cdp_pdev *pdev);
+	QDF_STATUS (*set_pdev_pcp_tid_map)(struct cdp_pdev *pdev,
+					   uint8_t pcp, uint8_t tid);
+	QDF_STATUS (*set_pdev_tidmap_prty)(struct cdp_pdev *pdev, uint8_t prty);
+	QDF_STATUS (*set_vdev_pcp_tid_map)(struct cdp_vdev *vdev,
+					   uint8_t pcp, uint8_t tid);
+	QDF_STATUS (*set_vdev_tidmap_prty)(struct cdp_vdev *vdev, uint8_t prty);
+	QDF_STATUS (*set_vdev_tidmap_tbl_id)(struct cdp_vdev *vdev,
+					     uint8_t mapid);
 };
 
 struct cdp_ctrl_ops {
