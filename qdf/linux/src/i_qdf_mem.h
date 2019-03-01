@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,27 +179,6 @@ void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf);
 
 #define __qdf_mempool_elem_size(_pool) ((_pool)->elem_size)
 #endif
-
-/**
- * __qdf_mem_cmp() - memory compare
- * @memory1: pointer to one location in memory to compare.
- * @memory2: pointer to second location in memory to compare.
- * @num_bytes: the number of bytes to compare.
- *
- * Function to compare two pieces of memory, similar to memcmp function
- * in standard C.
- * Return:
- * int32_t - returns an int value that tells if the memory
- * locations are equal or not equal.
- * 0 -- equal
- * < 0 -- *memory1 is less than *memory2
- * > 0 -- *memory1 is bigger than *memory2
- */
-static inline int32_t __qdf_mem_cmp(const void *memory1, const void *memory2,
-				    uint32_t num_bytes)
-{
-	return (int32_t) memcmp(memory1, memory2, num_bytes);
-}
 
 /**
  * __qdf_mem_smmu_s1_enabled() - Return SMMU stage 1 translation enable status

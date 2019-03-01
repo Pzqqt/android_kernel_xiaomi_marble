@@ -1423,35 +1423,17 @@ int qdf_mem_multi_page_link(qdf_device_t osdev,
 }
 qdf_export_symbol(qdf_mem_multi_page_link);
 
-/**
- * qdf_mem_copy() - copy memory
- * @dst_addr: Pointer to destination memory location (to copy to)
- * @src_addr: Pointer to source memory location (to copy from)
- * @num_bytes: Number of bytes to copy.
- *
- * Copy host memory from one location to another, similar to memcpy in
- * standard C.  Note this function does not specifically handle overlapping
- * source and destination memory locations.  Calling this function with
- * overlapping source and destination memory locations will result in
- * unpredictable results.  Use qdf_mem_move() if the memory locations
- * for the source and destination are overlapping (or could be overlapping!)
- *
- * Return: none
- */
 void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 {
-	if (0 == num_bytes) {
-		/* special case where dst_addr or src_addr can be NULL */
+	/* special case where dst_addr or src_addr can be NULL */
+	if (!num_bytes)
 		return;
-	}
 
-	if ((dst_addr == NULL) || (src_addr == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter, source:%pK destination:%pK",
-			  __func__, src_addr, dst_addr);
-		QDF_ASSERT(0);
+	QDF_BUG(dst_addr);
+	QDF_BUG(src_addr);
+	if (!dst_addr || !src_addr)
 		return;
-	}
+
 	memcpy(dst_addr, src_addr, num_bytes);
 }
 qdf_export_symbol(qdf_mem_copy);
@@ -1505,32 +1487,6 @@ qdf_shared_mem_t *qdf_mem_shared_mem_alloc(qdf_device_t osdev, uint32_t size)
 qdf_export_symbol(qdf_mem_shared_mem_alloc);
 
 /**
- * qdf_mem_zero() - zero out memory
- * @ptr: pointer to memory that will be set to zero
- * @num_bytes: number of bytes zero
- *
- * This function sets the memory location to all zeros, essentially clearing
- * the memory.
- *
- * Return: None
- */
-void qdf_mem_zero(void *ptr, uint32_t num_bytes)
-{
-	if (0 == num_bytes) {
-		/* special case where ptr can be NULL */
-		return;
-	}
-
-	if (ptr == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter ptr", __func__);
-		return;
-	}
-	memset(ptr, 0, num_bytes);
-}
-qdf_export_symbol(qdf_mem_zero);
-
-/**
  * qdf_mem_copy_toio() - copy memory
  * @dst_addr: Pointer to destination memory location (to copy to)
  * @src_addr: Pointer to source memory location (to copy from)
@@ -1576,56 +1532,39 @@ void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value)
 
 qdf_export_symbol(qdf_mem_set_io);
 
-/**
- * qdf_mem_set() - set (fill) memory with a specified byte value.
- * @ptr: Pointer to memory that will be set
- * @num_bytes: Number of bytes to be set
- * @value: Byte set in memory
- *
- * WARNING: parameter @num_bytes and @value are swapped comparing with
- * standard C function "memset", please ensure correct usage of this function!
- *
- * Return: None
- */
 void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value)
 {
-	if (ptr == NULL) {
-		qdf_print("%s called with NULL parameter ptr", __func__);
+	QDF_BUG(ptr);
+	if (!ptr)
 		return;
-	}
+
 	memset(ptr, value, num_bytes);
 }
 qdf_export_symbol(qdf_mem_set);
 
-/**
- * qdf_mem_move() - move memory
- * @dst_addr: pointer to destination memory location (to move to)
- * @src_addr: pointer to source memory location (to move from)
- * @num_bytes: number of bytes to move.
- *
- * Move host memory from one location to another, similar to memmove in
- * standard C.  Note this function *does* handle overlapping
- * source and destination memory locations.
-
- * Return: None
- */
 void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 {
-	if (0 == num_bytes) {
-		/* special case where dst_addr or src_addr can be NULL */
+	/* special case where dst_addr or src_addr can be NULL */
+	if (!num_bytes)
 		return;
-	}
 
-	if ((dst_addr == NULL) || (src_addr == NULL)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter, source:%pK destination:%pK",
-			  __func__, src_addr, dst_addr);
-		QDF_ASSERT(0);
+	QDF_BUG(dst_addr);
+	QDF_BUG(src_addr);
+	if (!dst_addr || !src_addr)
 		return;
-	}
+
 	memmove(dst_addr, src_addr, num_bytes);
 }
 qdf_export_symbol(qdf_mem_move);
+
+int qdf_mem_cmp(const void *left, const void *right, size_t size)
+{
+	QDF_BUG(left);
+	QDF_BUG(right);
+
+	return memcmp(left, right, size);
+}
+qdf_export_symbol(qdf_mem_cmp);
 
 #if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO) || defined(HIF_USB)
 /**

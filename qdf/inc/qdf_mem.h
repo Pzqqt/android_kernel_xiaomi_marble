@@ -318,40 +318,86 @@ void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value);
 void qdf_mem_copy_toio(void *dst_addr, const void *src_addr,
 					   uint32_t num_bytes);
 
+/**
+ * qdf_mem_set() - set (fill) memory with a specified byte value.
+ * @ptr: Pointer to memory that will be set
+ * @num_bytes: Number of bytes to be set
+ * @value: Byte set in memory
+ *
+ * WARNING: parameter @num_bytes and @value are swapped comparing with
+ * standard C function "memset", please ensure correct usage of this function!
+ *
+ * Return: None
+ */
 void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value);
 
-void qdf_mem_zero(void *ptr, uint32_t num_bytes);
+/**
+ * qdf_mem_zero() - zero out memory
+ * @ptr: pointer to memory that will be set to zero
+ * @num_bytes: number of bytes zero
+ *
+ * This function sets the memory location to all zeros, essentially clearing
+ * the memory.
+ *
+ * Return: None
+ */
+static inline void qdf_mem_zero(void *ptr, uint32_t num_bytes)
+{
+	qdf_mem_set(ptr, num_bytes, 0);
+}
 
+/**
+ * qdf_mem_copy() - copy memory
+ * @dst_addr: Pointer to destination memory location (to copy to)
+ * @src_addr: Pointer to source memory location (to copy from)
+ * @num_bytes: Number of bytes to copy.
+ *
+ * Copy host memory from one location to another, similar to memcpy in
+ * standard C.  Note this function does not specifically handle overlapping
+ * source and destination memory locations.  Calling this function with
+ * overlapping source and destination memory locations will result in
+ * unpredictable results.  Use qdf_mem_move() if the memory locations
+ * for the source and destination are overlapping (or could be overlapping!)
+ *
+ * Return: none
+ */
 void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes);
 
+/**
+ * qdf_mem_move() - move memory
+ * @dst_addr: pointer to destination memory location (to move to)
+ * @src_addr: pointer to source memory location (to move from)
+ * @num_bytes: number of bytes to move.
+ *
+ * Move host memory from one location to another, similar to memmove in
+ * standard C.  Note this function *does* handle overlapping
+ * source and destination memory locations.
+
+ * Return: None
+ */
 void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes);
+
+/**
+ * qdf_mem_cmp() - memory compare
+ * @left: pointer to one location in memory to compare
+ * @right: pointer to second location in memory to compare
+ * @size: the number of bytes to compare
+ *
+ * Function to compare two pieces of memory, similar to memcmp function
+ * in standard C.
+ *
+ * Return:
+ *	0 -- equal
+ *	< 0 -- *memory1 is less than *memory2
+ *	> 0 -- *memory1 is bigger than *memory2
+ */
+int qdf_mem_cmp(const void *left, const void *right, size_t size);
 
 void qdf_mem_free_outline(void *buf);
 
 void qdf_mem_zero_outline(void *buf, qdf_size_t size);
 
 void qdf_ether_addr_copy(void *dst_addr, const void *src_addr);
-
-/**
- * qdf_mem_cmp() - memory compare
- * @memory1: pointer to one location in memory to compare.
- * @memory2: pointer to second location in memory to compare.
- * @num_bytes: the number of bytes to compare.
- *
- * Function to compare two pieces of memory, similar to memcmp function
- * in standard C.
- * Return:
- * int32_t - returns an int value that tells if the memory
- * locations are equal or not equal.
- * 0 -- equal
- * < 0 -- *memory1 is less than *memory2
- * > 0 -- *memory1 is bigger than *memory2
- */
-static inline int32_t qdf_mem_cmp(const void *memory1, const void *memory2,
-				  uint32_t num_bytes)
-{
-	return __qdf_mem_cmp(memory1, memory2, num_bytes);
-}
 
 /**
  * qdf_mem_map_nbytes_single - Map memory for DMA
