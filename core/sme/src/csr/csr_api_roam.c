@@ -1775,7 +1775,7 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
  * @sessionId: session id
  * @pChannelList: pointer to channel list
  * @numChannels: number of channels
- * @eBand: band enumeration
+ * @band: band enumeration
  *
  * This function modifies the roam scan channel list as per AP neighbor
  * report; AP neighbor report may be empty or may include only other AP
@@ -1791,7 +1791,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 					     uint8_t sessionId,
 					     uint8_t *pChannelList,
 					     uint8_t numChannels,
-					     const enum band_info eBand)
+					     const enum band_info band)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -1823,14 +1823,14 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 						&mergedOutputNumOfChannels);
 		inNumChannels = mergedOutputNumOfChannels;
 	}
-	if (BAND_2G == eBand) {
+	if (BAND_2G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (WLAN_REG_IS_24GHZ_CH(inPtr[i])
 			    && csr_roam_is_channel_valid(mac, inPtr[i])) {
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
-	} else if (BAND_5G == eBand) {
+	} else if (BAND_5G == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
 			if (WLAN_REG_IS_5GHZ_CH(inPtr[i]) &&
@@ -1839,7 +1839,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
-	} else if (BAND_ALL == eBand) {
+	} else if (BAND_ALL == band) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (csr_roam_is_channel_valid(mac, inPtr[i]) &&
 			    !wlan_reg_is_dfs_ch(mac->pdev, inPtr[i])) {
@@ -1849,7 +1849,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
 			  "Invalid band, No operation carried out (Band %d)",
-			  eBand);
+			  band);
 		return QDF_STATUS_E_INVAL;
 	}
 	/*
@@ -1859,7 +1859,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 	 * E.g., if band capability is only 2.4G then all the channels in the
 	 * list are already filtered for 2.4G channels, hence ignore this check
 	 */
-	if ((BAND_ALL == eBand) && CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
+	if ((BAND_ALL == band) && CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
 		csr_neighbor_roam_channels_filter_by_current_band(mac,
 								sessionId,
 								ChannelList,
@@ -3868,9 +3868,9 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		}
 	}
 	if (WLAN_REG_IS_5GHZ_CH(pBssDesc->channelId))
-		pBssConfig->eBand = BAND_5G;
+		pBssConfig->band = BAND_5G;
 	else
-		pBssConfig->eBand = BAND_2G;
+		pBssConfig->band = BAND_2G;
 		/* phymode */
 	if (csr_is_phy_mode_match(mac, pProfile->phyMode, pBssDesc,
 				  pProfile, &cfgDot11Mode, pIes)) {
@@ -3881,7 +3881,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		 * 2.4Ghz and to 11a mode for 5Ghz
 		 */
 		sme_warn("Can not find match phy mode");
-		if (BAND_2G == pBssConfig->eBand) {
+		if (BAND_2G == pBssConfig->band) {
 			if (mac->roam.configParam.phyMode &
 			    (eCSR_DOT11_MODE_11b | eCSR_DOT11_MODE_11b_ONLY)) {
 				pBssConfig->uCfgDot11Mode =
@@ -4025,13 +4025,13 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	    pProfile->EncryptionType.encryptionType[0])
 		pBssConfig->BssCap.privacy = 1;
 
-	pBssConfig->eBand = mac->mlme_cfg->gen.band;
+	pBssConfig->band = mac->mlme_cfg->gen.band;
 	/* phymode */
 	if (pProfile->ChannelInfo.ChannelList)
 		operationChannel = pProfile->ChannelInfo.ChannelList[0];
 	pBssConfig->uCfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(mac,
 						pProfile, operationChannel,
-						   &pBssConfig->eBand);
+						   &pBssConfig->band);
 	/* QOS */
 	/* Is this correct to always set to this // *** */
 	if (pBssConfig->BssCap.ess == 1) {
@@ -4091,7 +4091,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	pBssConfig->f11hSupport = false;
 	pBssConfig->uPowerLimit = 0;
 	/* heartbeat */
-	if (BAND_5G == pBssConfig->eBand) {
+	if (BAND_5G == pBssConfig->band) {
 		pBssConfig->uHeartBeatThresh =
 			mac->roam.configParam.HeartbeatThresh50;
 	} else {
@@ -4554,7 +4554,7 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 							SIR_MAC_RATE_5_5,
 							SIR_MAC_RATE_11} } };
 	enum csr_cfgdot11mode cfgDot11Mode;
-	enum band_info eBand;
+	enum band_info band;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	qdf_size_t OperationalRatesLength = 0;
@@ -4568,14 +4568,14 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 		operationChannel = pProfile->ChannelInfo.ChannelList[0];
 	cfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
 							operationChannel,
-							&eBand);
+							&band);
 	/* For 11a networks, the 11a rates go into the Operational Rate set.
 	 * For 11b and 11g networks, the 11b rates appear in the Operational
 	 * Rate set. In either case, we can blindly put the rates we support
 	 * into our Operational Rate set (including the basic rates, which we
 	 * have already verified are supported earlier in the roaming decision).
 	 */
-	if (BAND_5G == eBand) {
+	if (BAND_5G == band) {
 		/* 11a rates into the Operational Rate Set. */
 		OperationalRatesLength =
 			DefaultSupportedRates11a.supportedRateSet.numRates *
@@ -13690,7 +13690,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 					uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	enum band_info eBand;
+	enum band_info band;
 	/* Set the roaming substate to 'Start BSS attempt'... */
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_START_BSS_REQ,
 				 sessionId);
@@ -13750,7 +13750,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 		csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
 						   pParam->
 						   operationChn,
-						   &eBand);
+						   &band);
 	pParam->bssPersona = pProfile->csrPersona;
 
 #ifdef WLAN_FEATURE_11W

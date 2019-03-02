@@ -12475,13 +12475,9 @@ struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
 	return hdd_ctx;
 }
 
-/*
- * FUNCTION: wlan_hdd_cfg80211_update_band
- * This function is called from the supplicant through a
- * private ioctl to change the band value
- */
-int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wiphy,
-		enum band_info eBand)
+int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
+				  struct wiphy *wiphy,
+				  enum band_info new_band)
 {
 	int i, j;
 	enum channel_state channelEnabledState;
@@ -12501,7 +12497,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 					band->channels[j].hw_value);
 
 			if (HDD_NL80211_BAND_2GHZ == i &&
-				BAND_5G == eBand) {
+			    BAND_5G == new_band) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable Social channels for P2P */
@@ -12517,7 +12513,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 					IEEE80211_CHAN_DISABLED;
 				continue;
 			} else if (HDD_NL80211_BAND_5GHZ == i &&
-					BAND_2G == eBand) {
+				   BAND_2G == new_band) {
 				/* 2G only */
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;

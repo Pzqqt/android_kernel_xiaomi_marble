@@ -177,7 +177,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		uint8_t sessionId,
 		uint8_t *pChannelList,
 		uint8_t numChannels,
-		const enum band_info eBand);
+		const enum band_info band);
 #endif
 
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);

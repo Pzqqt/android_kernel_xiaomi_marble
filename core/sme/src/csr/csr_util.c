@@ -1997,7 +1997,7 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 			uint32_t phyMode)
 {
 	enum csr_cfgdot11mode cfgDot11ModeToUse;
-	enum band_info eBand = mac->mlme_cfg->gen.band;
+	enum band_info band = mac->mlme_cfg->gen.band;
 
 	if ((0 == phyMode) ||
 	    (eCSR_DOT11_MODE_AUTO & phyMode) ||
@@ -2024,7 +2024,7 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 		if ((eCSR_DOT11_MODE_11n | eCSR_DOT11_MODE_11n_ONLY) & phyMode)
 			cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11N;
 		else if (eCSR_DOT11_MODE_abg & phyMode) {
-			if (BAND_2G != eBand)
+			if (BAND_2G != band)
 				cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11A;
 			else
 				cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_11G;

@@ -393,9 +393,21 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter);
 int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 				  bool enable_dfs_channels);
 
+/**
+ * wlan_hdd_cfg80211_update_band() - Update band of operation
+ * @hdd_ctx: The global HDD context
+ * @wiphy: The wiphy being configured
+ * @new_band: The new bad of operation
+ *
+ * This function is called from the supplicant through a
+ * private ioctl to change the band value
+ *
+ * Return: 0 on success, else a negative errno if the operation could
+ *         not be completed
+ */
 int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  struct wiphy *wiphy,
-				  enum band_info eBand);
+				  enum band_info new_band);
 
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection
