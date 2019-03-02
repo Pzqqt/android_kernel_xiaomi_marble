@@ -1141,6 +1141,11 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
 
 	hdd_debug("Enter Val %d", val);
 
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_debug("Skipping powersave in FTM");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	if (hdd_ctx->imps_enabled == val) {
 		hdd_info("Already in the requested power state:%d", val);
 		return QDF_STATUS_SUCCESS;
