@@ -3016,7 +3016,7 @@ sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 }
 #endif
 
-#ifdef FEATURE_WLAN_ESE
+#if defined(FEATURE_WLAN_ESE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * sme_add_key_btk() - Add BTK key
  * @mac_handle: MAC handle
@@ -3028,6 +3028,16 @@ sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
  */
 int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len);
+
+#else
+static inline int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
+				  const uint8_t *key, const int key_len)
+{
+	return 0;
+}
+#endif
+
+#ifdef FEATURE_WLAN_ESE
 /**
  * sme_add_key_krk() - Add KRK key
  * @mac_handle: MAC handle
@@ -3041,11 +3051,6 @@ int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len);
 
 #else
-static inline int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
-				  const uint8_t *key, const int key_len)
-{
-	return 0;
-}
 
 static inline int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 				  const uint8_t *key, const int key_len)

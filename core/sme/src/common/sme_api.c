@@ -6193,7 +6193,9 @@ int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 
 	return 0;
 }
+#endif
 
+#if defined(FEATURE_WLAN_ESE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len)
 {
