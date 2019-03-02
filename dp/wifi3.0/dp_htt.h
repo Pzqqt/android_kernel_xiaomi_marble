@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,6 +108,14 @@ struct htt_soc {
  * @enable_mgmt: enable/disable MGMT packet
  * @enable_ctrl: enable/disable CTRL packet
  * @enable_data: enable/disable DATA packet
+ * @offset_valid: Flag to indicate if below offsets are valid
+ * @rx_packet_offset: Offset of packet payload
+ * @rx_header_offset: Offset of rx_header tlv
+ * @rx_mpdu_end_offset: Offset of rx_mpdu_end tlv
+ * @rx_mpdu_start_offset: Offset of rx_mpdu_start tlv
+ * @rx_msdu_end_offset: Offset of rx_msdu_end tlv
+ * @rx_msdu_start_offset: Offset of rx_msdu_start tlv
+ * @rx_attn_offset: Offset of rx_attention tlv
  */
 struct htt_rx_ring_tlv_filter {
 	u_int32_t mpdu_start:1,
@@ -135,6 +143,14 @@ struct htt_rx_ring_tlv_filter {
 	u_int16_t md_data_filter;
 	u_int16_t md_mgmt_filter;
 	u_int16_t md_ctrl_filter;
+	bool offset_valid;
+	uint16_t rx_packet_offset;
+	uint16_t rx_header_offset;
+	uint16_t rx_mpdu_end_offset;
+	uint16_t rx_mpdu_start_offset;
+	uint16_t rx_msdu_end_offset;
+	uint16_t rx_msdu_start_offset;
+	uint16_t rx_attn_offset;
 };
 
 /*

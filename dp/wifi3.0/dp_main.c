@@ -4220,6 +4220,85 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 }
 #endif
 
+#ifdef NO_RX_PKT_HDR_TLV
+static QDF_STATUS
+dp_rxdma_ring_sel_cfg(struct dp_soc *soc)
+{
+	int i;
+	int mac_id;
+	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	htt_tlv_filter.mpdu_start = 1;
+	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.mpdu_end = 1;
+	htt_tlv_filter.msdu_end = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.packet = 1;
+	htt_tlv_filter.packet_header = 0;
+
+	htt_tlv_filter.ppdu_start = 0;
+	htt_tlv_filter.ppdu_end = 0;
+	htt_tlv_filter.ppdu_end_user_stats = 0;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 0;
+	htt_tlv_filter.ppdu_end_status_done = 0;
+	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_mo = 0;
+
+	htt_tlv_filter.fp_mgmt_filter = 0;
+	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_BA_REQ;
+	htt_tlv_filter.fp_data_filter = (FILTER_DATA_UCAST |
+					 FILTER_DATA_MCAST |
+					 FILTER_DATA_DATA);
+	htt_tlv_filter.mo_mgmt_filter = 0;
+	htt_tlv_filter.mo_ctrl_filter = 0;
+	htt_tlv_filter.mo_data_filter = 0;
+	htt_tlv_filter.md_data_filter = 0;
+
+	htt_tlv_filter.offset_valid = true;
+
+	htt_tlv_filter.rx_packet_offset = RX_PKT_TLVS_LEN;
+	/*Not subscribing rx_pkt_header*/
+	htt_tlv_filter.rx_header_offset = 0;
+	htt_tlv_filter.rx_mpdu_start_offset =
+				HAL_RX_PKT_TLV_MPDU_START_OFFSET(soc->hal_soc);
+	htt_tlv_filter.rx_mpdu_end_offset =
+				HAL_RX_PKT_TLV_MPDU_END_OFFSET(soc->hal_soc);
+	htt_tlv_filter.rx_msdu_start_offset =
+				HAL_RX_PKT_TLV_MSDU_START_OFFSET(soc->hal_soc);
+	htt_tlv_filter.rx_msdu_end_offset =
+				HAL_RX_PKT_TLV_MSDU_END_OFFSET(soc->hal_soc);
+	htt_tlv_filter.rx_attn_offset =
+				HAL_RX_PKT_TLV_ATTN_OFFSET(soc->hal_soc);
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		struct dp_pdev *pdev = soc->pdev_list[i];
+
+		if (!pdev)
+			continue;
+
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+					pdev->pdev_id);
+
+			htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+					    pdev->rx_refill_buf_ring.hal_srng,
+					    RXDMA_BUF, RX_BUFFER_SIZE,
+					    &htt_tlv_filter);
+		}
+	}
+	return status;
+}
+#else
+static QDF_STATUS
+dp_rxdma_ring_sel_cfg(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /*
  * dp_soc_attach_target_wifi3() - SOC initialization in the target
  * @cdp_soc: Opaque Datapath SOC handle
@@ -4237,6 +4316,12 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	status = dp_rxdma_ring_config(soc);
 	if (status != QDF_STATUS_SUCCESS) {
 		dp_err("Failed to send htt srng setup messages to target");
+		return status;
+	}
+
+	status = dp_rxdma_ring_sel_cfg(soc);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_err("Failed to send htt ring config message to target");
 		return status;
 	}
 
@@ -5708,6 +5793,7 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
@@ -5747,6 +5833,7 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -5895,6 +5982,7 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
@@ -5934,6 +6022,7 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -7706,6 +7795,8 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	if (pdev->neighbour_peers_added &&
 	    pdev->soc->hw_nac_monitor_support)
 		htt_tlv_filter.md_data_filter = FILTER_DATA_ALL;
+
+	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -9991,6 +10082,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
 				htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 				htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+				htt_tlv_filter.offset_valid = false;
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
@@ -10038,6 +10130,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
 				htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 				htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+				htt_tlv_filter.offset_valid = false;
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {

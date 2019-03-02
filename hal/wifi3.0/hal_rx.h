@@ -671,6 +671,17 @@ static inline uint8_t
 }
 #endif
 
+#define RX_PKT_TLV_OFFSET(field) qdf_offsetof(struct rx_pkt_tlvs, field)
+
+#define HAL_RX_PKT_TLV_MPDU_START_OFFSET(hal_soc) \
+					RX_PKT_TLV_OFFSET(mpdu_start_tlv)
+#define HAL_RX_PKT_TLV_MPDU_END_OFFSET(hal_soc) RX_PKT_TLV_OFFSET(mpdu_end_tlv)
+#define HAL_RX_PKT_TLV_MSDU_START_OFFSET(hal_soc) \
+					RX_PKT_TLV_OFFSET(msdu_start_tlv)
+#define HAL_RX_PKT_TLV_MSDU_END_OFFSET(hal_soc) RX_PKT_TLV_OFFSET(msdu_end_tlv)
+#define HAL_RX_PKT_TLV_ATTN_OFFSET(hal_soc) RX_PKT_TLV_OFFSET(attn_tlv)
+#define HAL_RX_PKT_TLV_PKT_HDR_OFFSET(hal_soc) RX_PKT_TLV_OFFSET(pkt_hdr_tlv)
+
 static inline uint8_t
 *hal_rx_padding0_get(uint8_t *buf)
 {

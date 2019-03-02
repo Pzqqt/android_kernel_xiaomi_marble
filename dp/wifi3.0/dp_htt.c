@@ -937,6 +937,9 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	HTT_RX_RING_SELECTION_CFG_PKT_TLV_SET(*msg_word,
 		!!(srng_params.flags & HAL_SRNG_DATA_TLV_SWAP));
 
+	HTT_RX_RING_SELECTION_CFG_RX_OFFSETS_VALID_SET(*msg_word,
+						htt_tlv_filter->offset_valid);
+
 	/* word 1 */
 	msg_word++;
 	*msg_word = 0;
@@ -1473,6 +1476,34 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 		 htt_tlv_filter->header_per_msdu);
 
 	HTT_RX_RING_SELECTION_CFG_TLV_FILTER_IN_FLAG_SET(*msg_word, tlv_filter);
+
+	msg_word++;
+	*msg_word = 0;
+	if (htt_tlv_filter->offset_valid) {
+		HTT_RX_RING_SELECTION_CFG_RX_PACKET_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_packet_offset);
+		HTT_RX_RING_SELECTION_CFG_RX_HEADER_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_header_offset);
+
+		msg_word++;
+		*msg_word = 0;
+		HTT_RX_RING_SELECTION_CFG_RX_MPDU_END_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_mpdu_end_offset);
+		HTT_RX_RING_SELECTION_CFG_RX_MPDU_START_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_mpdu_start_offset);
+
+		msg_word++;
+		*msg_word = 0;
+		HTT_RX_RING_SELECTION_CFG_RX_MSDU_END_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_msdu_end_offset);
+		HTT_RX_RING_SELECTION_CFG_RX_MSDU_START_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_msdu_start_offset);
+
+		msg_word++;
+		*msg_word = 0;
+		HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET_SET(*msg_word,
+					htt_tlv_filter->rx_attn_offset);
+	}
 
 	/* "response_required" field should be set if a HTT response message is
 	 * required after setting up the ring.
