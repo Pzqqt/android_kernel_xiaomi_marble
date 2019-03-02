@@ -1454,14 +1454,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_set_plm_request() - set plm request
- * @mac_handle: Opaque handle to the global MAC context
- * @pPlmReq: Pointer to input plm request
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *pPlmReq)
+QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *req)
 {
 	QDF_STATUS status;
 	bool ret = false;
@@ -1470,14 +1463,14 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *pPlmReq)
 	uint8_t count, valid_count = 0;
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac,
-					pPlmReq->sessionId);
+					req->sessionId);
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
 	if (!pSession) {
-		sme_err("session %d not found",	pPlmReq->sessionId);
+		sme_err("session %d not found",	req->sessionId);
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1489,51 +1482,51 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, struct plm_req *pPlmReq)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!pPlmReq->enable)
+	if (!req->enable)
 		goto send_plm_start;
 	/* validating channel numbers */
-	for (count = 0; count < pPlmReq->plmNumCh; count++) {
-		ret = csr_is_supported_channel(mac, pPlmReq->plmChList[count]);
-		if (ret && pPlmReq->plmChList[count] > 14) {
+	for (count = 0; count < req->plmNumCh; count++) {
+		ret = csr_is_supported_channel(mac, req->plmChList[count]);
+		if (ret && req->plmChList[count] > 14) {
 			if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
 						mac->pdev,
-						pPlmReq->plmChList[count])) {
+						req->plmChList[count])) {
 				/* DFS channel is provided, no PLM bursts can be
 				 * transmitted. Ignoring these channels.
 				 */
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  FL("DFS channel %d ignored for PLM"),
-					  pPlmReq->plmChList[count]);
+					  req->plmChList[count]);
 				continue;
 			}
 		} else if (!ret) {
 			/* Not supported, ignore the channel */
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Unsupported channel %d ignored for PLM"),
-				  pPlmReq->plmChList[count]);
+				  req->plmChList[count]);
 			continue;
 		}
-		ch_list[valid_count] = pPlmReq->plmChList[count];
+		ch_list[valid_count] = req->plmChList[count];
 		valid_count++;
 	} /* End of for () */
 
 	/* Copying back the valid channel list to plm struct */
-	qdf_mem_zero((void *)pPlmReq->plmChList,
-		    pPlmReq->plmNumCh);
+	qdf_mem_zero((void *)req->plmChList,
+		    req->plmNumCh);
 	if (valid_count)
-		qdf_mem_copy(pPlmReq->plmChList, ch_list,
+		qdf_mem_copy(req->plmChList, ch_list,
 			     valid_count);
 	/* All are invalid channels, FW need to send the PLM
 	 *  report with "incapable" bit set.
 	 */
-	pPlmReq->plmNumCh = valid_count;
+	req->plmNumCh = valid_count;
 
 send_plm_start:
 	/* PLM START */
 	msg.type = WMA_SET_PLM_REQ;
 	msg.reserved = 0;
-	msg.bodyptr = pPlmReq;
+	msg.bodyptr = req;
 
 	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_message(QDF_MODULE_ID_SME,
 							  QDF_MODULE_ID_WMA,
