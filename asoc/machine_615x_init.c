@@ -19,14 +19,12 @@
 static int __init audio_machine_615x_init(void)
 {
 	sm6150_init();
-	sa6155_init();
 	return 0;
 }
 
 static void audio_machine_615x_exit(void)
 {
 	sm6150_exit();
-	sa6155_exit();
 }
 
 module_init(audio_machine_615x_init);

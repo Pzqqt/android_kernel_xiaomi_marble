@@ -15,9 +15,7 @@
 #ifndef __MACHINE_615X_INIT_H__
 #define __MACHINE_615X_INIT_H__
 int sm6150_init(void);
-int sa6155_init(void);
 
 void sm6150_exit(void);
-void sa6155_exit(void);
 #endif
 
