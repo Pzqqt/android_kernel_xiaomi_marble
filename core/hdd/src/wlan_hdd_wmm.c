@@ -108,14 +108,14 @@ const uint8_t hdd_linux_up_to_ac_map[HDD_WMM_UP_TO_AC_MAP_SIZE] = {
  * hdd_wmm_enable_tl_uapsd() - function which decides whether and
  * how to update UAPSD parameters in TL
  *
- * @pQosContext: [in] the pointer the QoS instance control block
+ * @qos_context: [in] the pointer the QoS instance control block
  *
  * Return: None
  */
-static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
+static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 {
-	struct hdd_adapter *adapter = pQosContext->adapter;
-	sme_ac_enum_type acType = pQosContext->acType;
+	struct hdd_adapter *adapter = qos_context->adapter;
+	sme_ac_enum_type acType = qos_context->acType;
 	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
@@ -189,14 +189,14 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
  * hdd_wmm_disable_tl_uapsd() - function which decides whether
  * to disable UAPSD parameters in TL
  *
- * @pQosContext: [in] the pointer the QoS instance control block
+ * @qos_context: [in] the pointer the QoS instance control block
  *
  * Return: None
  */
-static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
+static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 {
-	struct hdd_adapter *adapter = pQosContext->adapter;
-	sme_ac_enum_type acType = pQosContext->acType;
+	struct hdd_adapter *adapter = qos_context->adapter;
+	sme_ac_enum_type acType = qos_context->acType;
 	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 	QDF_STATUS status;
 
@@ -222,38 +222,38 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 /**
  * hdd_wmm_free_context() - function which frees a QoS context
  *
- * @pQosContext: [in] the pointer the QoS instance control block
+ * @qos_context: [in] the pointer the QoS instance control block
  *
  * Return: None
  */
-static void hdd_wmm_free_context(struct hdd_wmm_qos_context *pQosContext)
+static void hdd_wmm_free_context(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter;
 
-	hdd_debug("Entered, context %pK", pQosContext);
+	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == pQosContext) ||
-		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
+	if (unlikely((NULL == qos_context) ||
+		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		/* must have been freed in another thread */
 		return;
 	}
 	/* get pointer to the adapter context */
-	adapter = pQosContext->adapter;
+	adapter = qos_context->adapter;
 
 	/* take the wmmLock since we're manipulating the context list */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
 
 	/* make sure nobody thinks this is a valid context */
-	pQosContext->magic = 0;
+	qos_context->magic = 0;
 
 	/* unlink the context */
-	list_del(&pQosContext->node);
+	list_del(&qos_context->node);
 
 	/* done manipulating the list */
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 	/* reclaim memory */
-	qdf_mem_free(pQosContext);
+	qdf_mem_free(qos_context);
 
 }
 
@@ -262,21 +262,21 @@ static void hdd_wmm_free_context(struct hdd_wmm_qos_context *pQosContext)
  * hdd_wmm_notify_app() - function which notifies an application
  *			  of changes in state of it flow
  *
- * @pQosContext: [in] the pointer the QoS instance control block
+ * @qos_context: [in] the pointer the QoS instance control block
  *
  * Return: None
  */
 #define MAX_NOTIFY_LEN 50
-static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *pQosContext)
+static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter;
 	union iwreq_data wrqu;
 	char buf[MAX_NOTIFY_LEN + 1];
 
-	hdd_debug("Entered, context %pK", pQosContext);
+	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == pQosContext) ||
-		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
+	if (unlikely((NULL == qos_context) ||
+		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		hdd_err("Invalid QoS Context");
 		return;
 	}
@@ -286,14 +286,14 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *pQosContext)
 	memset(buf, 0, sizeof(buf));
 
 	snprintf(buf, MAX_NOTIFY_LEN, "QCOM: TS change[%u: %u]",
-		 (unsigned int)pQosContext->handle,
-		 (unsigned int)pQosContext->lastStatus);
+		 (unsigned int)qos_context->handle,
+		 (unsigned int)qos_context->lastStatus);
 
 	wrqu.data.pointer = buf;
 	wrqu.data.length = strlen(buf);
 
 	/* get pointer to the adapter */
-	adapter = pQosContext->adapter;
+	adapter = qos_context->adapter;
 
 	/* send the event */
 	hdd_debug("Sending [%s]", buf);
@@ -317,7 +317,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *pQosContext)
  */
 static void hdd_wmm_inactivity_timer_cb(void *user_data)
 {
-	struct hdd_wmm_qos_context *pQosContext = user_data;
+	struct hdd_wmm_qos_context *qos_context = user_data;
 	struct hdd_adapter *adapter;
 	struct hdd_wmm_ac_status *pAc;
 	hdd_wlan_wmm_status_e status;
@@ -325,13 +325,13 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	uint32_t currentTrafficCnt = 0;
 	sme_ac_enum_type acType;
 
-	if (!pQosContext) {
+	if (!qos_context) {
 		hdd_err("invalid user data");
 		return;
 	}
-	acType = pQosContext->acType;
+	acType = qos_context->acType;
 
-	adapter = pQosContext->adapter;
+	adapter = qos_context->adapter;
 	if ((NULL == adapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("invalid adapter: %pK", adapter);
@@ -342,14 +342,14 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 
 	/* Get the Tx stats for this AC. */
 	currentTrafficCnt =
-		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[pQosContext->
+		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
 								    acType];
 
 	hdd_warn("WMM inactivity Timer for AC=%d, currentCnt=%d, prevCnt=%d",
 		 acType, (int)currentTrafficCnt, (int)pAc->wmmPrevTrafficCnt);
 	if (pAc->wmmPrevTrafficCnt == currentTrafficCnt) {
 		/* there is no traffic activity, delete the TSPEC for this AC */
-		status = hdd_wmm_delts(adapter, pQosContext->handle);
+		status = hdd_wmm_delts(adapter, qos_context->handle);
 		hdd_warn("Deleted TS on AC %d, due to inactivity with status = %d!!!",
 			 acType, status);
 	} else {
@@ -375,7 +375,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
  * hdd_wmm_enable_inactivity_timer() -
  *	function to enable the traffic inactivity timer for the given AC
  *
- * @pQosContext: [in] pointer to pQosContext
+ * @qos_context: [in] pointer to qos_context
  * @inactivityTime: [in] value of the inactivity interval in millisecs
  *
  * When a QoS-Tspec is successfully setup, if the inactivity interval
@@ -385,21 +385,21 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS
-hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
+hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 				uint32_t inactivityTime)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct hdd_adapter *adapter = pQosContext->adapter;
-	sme_ac_enum_type acType = pQosContext->acType;
+	struct hdd_adapter *adapter = qos_context->adapter;
+	sme_ac_enum_type acType = qos_context->acType;
 	struct hdd_wmm_ac_status *pAc;
 
-	adapter = pQosContext->adapter;
+	adapter = qos_context->adapter;
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 
 	qdf_status = qdf_mc_timer_init(&pAc->wmmInactivityTimer,
 				       QDF_TIMER_TYPE_SW,
 				       hdd_wmm_inactivity_timer_cb,
-				       pQosContext);
+				       qos_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Initializing inactivity timer failed on AC %d",
 			  acType);
@@ -420,9 +420,9 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
 	pAc->wmmInactivityTime = inactivityTime;
 	/* Initialize the current tx traffic count on this AC */
 	pAc->wmmPrevTrafficCnt =
-		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[pQosContext->
+		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
 								    acType];
-	pQosContext->is_inactivity_timer_running = true;
+	qos_context->is_inactivity_timer_running = true;
 	return qdf_status;
 }
 
@@ -430,7 +430,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
  * hdd_wmm_disable_inactivity_timer() -
  *	function to disable the traffic inactivity timer for the given AC.
  *
- * @pQosContext: [in] pointer to pQosContext
+ * @qos_context: [in] pointer to qos_context
  *
  * This function is invoked to disable the traffic inactivity timer
  * for the given AC.  This is normally done when the TS is deleted.
@@ -438,10 +438,10 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS
-hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
+hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 {
-	struct hdd_adapter *adapter = pQosContext->adapter;
-	sme_ac_enum_type acType = pQosContext->acType;
+	struct hdd_adapter *adapter = qos_context->adapter;
+	sme_ac_enum_type acType = qos_context->acType;
 	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
@@ -449,8 +449,8 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 	pAc->wmmInactivityTime = 0;
 	pAc->wmmPrevTrafficCnt = 0;
 
-	if (pQosContext->is_inactivity_timer_running == true) {
-		pQosContext->is_inactivity_timer_running = false;
+	if (qos_context->is_inactivity_timer_running == true) {
+		qos_context->is_inactivity_timer_running = false;
 		qdf_status = qdf_mc_timer_stop(&pAc->wmmInactivityTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to stop inactivity timer");
@@ -466,7 +466,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 #else
 
 static QDF_STATUS
-hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
+hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -494,21 +494,21 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			enum sme_qos_statustype smeStatus,
 			uint32_t qosFlowId)
 {
-	struct hdd_wmm_qos_context *pQosContext = context;
+	struct hdd_wmm_qos_context *qos_context = context;
 	struct hdd_adapter *adapter;
 	sme_ac_enum_type acType;
 	struct hdd_wmm_ac_status *pAc;
 
-	hdd_debug("Entered, context %pK", pQosContext);
+	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == pQosContext) ||
-		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
+	if (unlikely((NULL == qos_context) ||
+		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		hdd_err("Invalid QoS Context");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = pQosContext->adapter;
-	acType = pQosContext->acType;
+	adapter = qos_context->adapter;
+	acType = qos_context->acType;
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 
 	hdd_debug("status %d flowid %d info %pK",
@@ -532,14 +532,14 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		pAc->wmmAcAccessPending = false;
 		pAc->wmmAcAccessFailed = false;
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 
 #ifdef FEATURE_WLAN_ESE
@@ -547,14 +547,14 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		if (pCurrentQosInfo && pCurrentQosInfo->inactivity_interval) {
 			hdd_debug("Inactivity timer value = %d for AC=%d",
 				  pCurrentQosInfo->inactivity_interval, acType);
-			hdd_wmm_enable_inactivity_timer(pQosContext,
+			hdd_wmm_enable_inactivity_timer(qos_context,
 							pCurrentQosInfo->
 							inactivity_interval);
 		}
 #endif /* FEATURE_WLAN_ESE */
 
 		/* notify TL to enable trigger frames if necessary */
-		hdd_wmm_enable_tl_uapsd(pQosContext);
+		hdd_wmm_enable_tl_uapsd(qos_context);
 
 		break;
 
@@ -565,14 +565,14 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		pAc->wmmAcAccessGranted = true;
 		pAc->wmmAcAccessPending = false;
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_UAPSD_EXISTING;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 
 		break;
@@ -584,19 +584,19 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		pAc->wmmAcAccessPending = false;
 		pAc->wmmAcAccessFailed = true;
 		pAc->wmmAcAccessAllowed = false;
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED;
 
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
 		/* Setting up QoS Failed, QoS context can be released.
 		 * SME is releasing this flow information and if HDD
@@ -606,7 +606,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * Modify QoS request to SME but SME will reject as now
 		 * it has no information for this flow.
 		 */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 		break;
 
 	case SME_QOS_STATUS_SETUP_INVALID_PARAMS_RSP:
@@ -614,7 +614,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* QoS setup failed */
 		pAc->wmmAcAccessAllowed = false;
 
-		if (HDD_WMM_HANDLE_IMPLICIT == pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 
 			/* we note the failure, but we also mark
 			 * access as allowed so that the packets will
@@ -629,21 +629,21 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
 	case SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP:
 		hdd_err("Setup failed, not a QoS AP");
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED_NO_WMM;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -660,21 +660,21 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			memcpy(&pAc->wmmAcTspecInfo,
 			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
 
-			if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+			if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 				hdd_debug("Explicit Qos, notifying user space");
 
 				/* this was triggered by an application */
-				pQosContext->lastStatus =
+				qos_context->lastStatus =
 					HDD_WLAN_WMM_STATUS_MODIFIED;
-				hdd_wmm_notify_app(pQosContext);
+				hdd_wmm_notify_app(qos_context);
 			}
 			/* need to tell TL to update its UAPSD handling */
-			hdd_wmm_enable_tl_uapsd(pQosContext);
+			hdd_wmm_enable_tl_uapsd(qos_context);
 		}
 		break;
 
 	case SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP:
-		if (HDD_WMM_HANDLE_IMPLICIT == pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 
 			/* this was triggered by implicit QoS so we
 			 * know packets are pending
@@ -687,9 +687,9 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_NO_UAPSD;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -700,7 +700,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	case SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_SET_FAILED:
 		hdd_err("Setup successful but U-APSD failed");
 
-		if (HDD_WMM_HANDLE_IMPLICIT == pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 
 			/* QoS setup was successful but setting U=APSD
 			 * failed.  Since the OTA part of the request
@@ -717,15 +717,15 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_SETUP_UAPSD_SET_FAILED;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 
 		/* Since U-APSD portion failed disabled trigger frame
 		 * generation
 		 */
-		hdd_wmm_disable_tl_uapsd(pQosContext);
+		hdd_wmm_disable_tl_uapsd(qos_context);
 
 		break;
 
@@ -742,7 +742,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
 
 			/* need to tell TL to update its UAPSD handling */
-			hdd_wmm_enable_tl_uapsd(pQosContext);
+			hdd_wmm_enable_tl_uapsd(qos_context);
 		} else {
 			hdd_debug("last flow");
 
@@ -755,22 +755,22 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			pAc->wmmAcAccessAllowed = false;
 
 			/* need to tell TL to update its UAPSD handling */
-			hdd_wmm_disable_tl_uapsd(pQosContext);
+			hdd_wmm_disable_tl_uapsd(qos_context);
 		}
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_RELEASE_SUCCESS;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
 		/* we are done with this flow */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 		break;
 
 	case SME_QOS_STATUS_RELEASE_FAILURE_RSP:
@@ -779,13 +779,13 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* we don't need to update our state or TL since
 		 * nothing has changed
 		 */
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_RELEASE_FAILED;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 
 		break;
@@ -799,9 +799,9 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		pAc->wmmAcAccessAllowed = false;
 
 		/* need to tell TL to update its UAPSD handling */
-		hdd_wmm_disable_tl_uapsd(pQosContext);
+		hdd_wmm_disable_tl_uapsd(qos_context);
 
-		if (HDD_WMM_HANDLE_IMPLICIT == pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 			/* we no longer have implicit access granted */
 			pAc->wmmAcAccessGranted = false;
 			pAc->wmmAcAccessFailed = false;
@@ -809,15 +809,15 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			pQosContext->lastStatus = HDD_WLAN_WMM_STATUS_LOST;
-			hdd_wmm_notify_app(pQosContext);
+			qos_context->lastStatus = HDD_WLAN_WMM_STATUS_LOST;
+			hdd_wmm_notify_app(qos_context);
 		}
 
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
 		/* we are done with this flow */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 		break;
 
 	case SME_QOS_STATUS_RELEASE_REQ_PENDING_RSP:
@@ -827,11 +827,11 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 	case SME_QOS_STATUS_RELEASE_INVALID_PARAMS_RSP:
 		hdd_err("Release Invalid Params");
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_RELEASE_FAILED_BAD_PARAM;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -847,23 +847,23 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
 		}
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		/* notify TL to enable trigger frames if necessary */
-		hdd_wmm_enable_tl_uapsd(pQosContext);
+		hdd_wmm_enable_tl_uapsd(qos_context);
 
 		break;
 
 	case SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_APSD_SET_ALREADY:
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_UAPSD_EXISTING;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -872,11 +872,11 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * place whatever existed beforehand
 		 */
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_FAILED;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -890,21 +890,21 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * changes required
 		 */
 
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_NO_UAPSD;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
 	case SME_QOS_STATUS_MODIFY_SETUP_INVALID_PARAMS_RSP:
 		/* invalid params -- notify the application */
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_FAILED_BAD_PARAM;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		break;
 
@@ -920,16 +920,16 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * instance, so all we can do is notify the
 		 * application and let it clean up.
 		 */
-		if (HDD_WMM_HANDLE_IMPLICIT != pQosContext->handle) {
+		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			pQosContext->lastStatus =
+			qos_context->lastStatus =
 				HDD_WLAN_WMM_STATUS_MODIFY_UAPSD_SET_FAILED;
-			hdd_wmm_notify_app(pQosContext);
+			hdd_wmm_notify_app(qos_context);
 		}
 		/* Since U-APSD portion failed disabled trigger frame
 		 * generation
 		 */
-		hdd_wmm_disable_tl_uapsd(pQosContext);
+		hdd_wmm_disable_tl_uapsd(qos_context);
 
 		break;
 
@@ -939,12 +939,12 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 	case SME_QOS_STATUS_OUT_OF_APSD_POWER_MODE_IND:
 		/* need to tell TL to stop trigger frame generation */
-		hdd_wmm_disable_tl_uapsd(pQosContext);
+		hdd_wmm_disable_tl_uapsd(qos_context);
 		break;
 
 	case SME_QOS_STATUS_INTO_APSD_POWER_MODE_IND:
 		/* need to tell TL to start sending trigger frames again */
-		hdd_wmm_enable_tl_uapsd(pQosContext);
+		hdd_wmm_enable_tl_uapsd(qos_context);
 		break;
 
 	default:
@@ -1008,7 +1008,7 @@ int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr)
  */
 static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 {
-	struct hdd_wmm_qos_context *pQosContext =
+	struct hdd_wmm_qos_context *qos_context =
 		container_of(work, struct hdd_wmm_qos_context,
 			     wmmAcSetupImplicitQos);
 	struct hdd_adapter *adapter;
@@ -1029,14 +1029,14 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	bool is_ts_burst_enable;
 	enum mlme_ts_info_ack_policy ack_policy;
 
-	hdd_debug("Entered, context %pK", pQosContext);
+	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely(HDD_WMM_CTX_MAGIC != pQosContext->magic)) {
+	if (unlikely(HDD_WMM_CTX_MAGIC != qos_context->magic)) {
 		hdd_err("Invalid QoS Context");
 		return;
 	}
 
-	adapter = pQosContext->adapter;
+	adapter = qos_context->adapter;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -1044,15 +1044,15 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	acType = pQosContext->acType;
+	acType = qos_context->acType;
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
 
 	hdd_debug("adapter %pK acType %d", adapter, acType);
 
 	if (!pAc->wmmAcAccessNeeded) {
 		hdd_err("AC %d doesn't need service", acType);
-		pQosContext->magic = 0;
-		qdf_mem_free(pQosContext);
+		qos_context->magic = 0;
+		qdf_mem_free(qos_context);
 		return;
 	}
 
@@ -1381,7 +1381,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	}
 
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	list_add(&pQosContext->node, &adapter->hdd_wmm_status.wmmContextList);
+	list_add(&qos_context->node, &adapter->hdd_wmm_status.wmmContextList);
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -1389,12 +1389,12 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 				      adapter->vdev_id,
 				      &qosInfo,
 				      hdd_wmm_sme_callback,
-				      pQosContext,
+				      qos_context,
 				      qosInfo.ts_info.up,
-				      &pQosContext->qosFlowId);
+				      &qos_context->qosFlowId);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, pQosContext->qosFlowId);
+		   smeStatus, qos_context->qosFlowId);
 
 	/* need to check the return values and act appropriately */
 	switch (smeStatus) {
@@ -1409,7 +1409,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 
 	case SME_QOS_STATUS_SETUP_FAILURE_RSP:
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
 		/* we can't tell the difference between when a request
 		 * fails because AP rejected it versus when SME
@@ -1417,7 +1417,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		 * won't ever reference this context so free the
 		 * record
 		 */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 
 		/* fall through and start packets flowing */
 	case SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP:
@@ -1565,23 +1565,23 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
  */
 QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter)
 {
-	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_wmm_qos_context *qos_context;
 
 	hdd_enter();
 
 	/* free any context records that we still have linked */
 	while (!list_empty(&adapter->hdd_wmm_status.wmmContextList)) {
-		pQosContext =
+		qos_context =
 			list_first_entry(&adapter->hdd_wmm_status.wmmContextList,
 					 struct hdd_wmm_qos_context, node);
 
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
-		if (pQosContext->handle == HDD_WMM_HANDLE_IMPLICIT
-			&& pQosContext->magic == HDD_WMM_CTX_MAGIC)
-			cds_flush_work(&pQosContext->wmmAcSetupImplicitQos);
+		if (qos_context->handle == HDD_WMM_HANDLE_IMPLICIT
+			&& qos_context->magic == HDD_WMM_CTX_MAGIC)
+			cds_flush_work(&qos_context->wmmAcSetupImplicitQos);
 
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1882,7 +1882,7 @@ void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
 QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 				  sme_ac_enum_type acType, bool *pGranted)
 {
-	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_wmm_qos_context *qos_context;
 	struct hdd_context *hdd_ctx;
 	bool enable;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1955,8 +1955,8 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 
 	adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessNeeded = true;
 
-	pQosContext = qdf_mem_malloc(sizeof(*pQosContext));
-	if (NULL == pQosContext) {
+	qos_context = qdf_mem_malloc(sizeof(*qos_context));
+	if (NULL == qos_context) {
 		/* no memory for QoS context.  Nothing we can do but
 		 * let data flow
 		 */
@@ -1968,20 +1968,20 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	pQosContext->acType = acType;
-	pQosContext->adapter = adapter;
-	pQosContext->qosFlowId = 0;
-	pQosContext->handle = HDD_WMM_HANDLE_IMPLICIT;
-	pQosContext->magic = HDD_WMM_CTX_MAGIC;
-	pQosContext->is_inactivity_timer_running = false;
+	qos_context->acType = acType;
+	qos_context->adapter = adapter;
+	qos_context->qosFlowId = 0;
+	qos_context->handle = HDD_WMM_HANDLE_IMPLICIT;
+	qos_context->magic = HDD_WMM_CTX_MAGIC;
+	qos_context->is_inactivity_timer_running = false;
 
-	INIT_WORK(&pQosContext->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
+	INIT_WORK(&qos_context->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Scheduling work for AC %d, context %pK",
-		  __func__, acType, pQosContext);
+		  __func__, acType, qos_context);
 
-	schedule_work(&pQosContext->wmmAcSetupImplicitQos);
+	schedule_work(&qos_context->wmmAcSetupImplicitQos);
 
 	/* caller will need to wait until the work takes place and
 	 * TSPEC negotiation completes
@@ -2303,7 +2303,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				    uint32_t handle,
 				    struct sme_qos_wmmtspecinfo *pTspec)
 {
-	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_wmm_qos_context *qos_context;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	enum sme_qos_statustype smeStatus;
@@ -2315,9 +2315,9 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 
 	/* see if a context already exists with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	list_for_each_entry(pQosContext,
+	list_for_each_entry(qos_context,
 			    &adapter->hdd_wmm_status.wmmContextList, node) {
-		if (pQosContext->handle == handle) {
+		if (qos_context->handle == handle) {
 			found = true;
 			break;
 		}
@@ -2331,7 +2331,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		 * params. Allow it
 		 */
 		smeStatus = sme_qos_modify_req(mac_handle,
-					       pTspec, pQosContext->qosFlowId);
+					       pTspec, qos_context->qosFlowId);
 
 		/* need to check the return value and act appropriately */
 		switch (smeStatus) {
@@ -2367,39 +2367,39 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 
 		/* we were successful, save the status */
 		mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-		if (pQosContext->magic == HDD_WMM_CTX_MAGIC)
-			pQosContext->lastStatus = status;
+		if (qos_context->magic == HDD_WMM_CTX_MAGIC)
+			qos_context->lastStatus = status;
 		mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 		return status;
 	}
 
-	pQosContext = qdf_mem_malloc(sizeof(*pQosContext));
-	if (NULL == pQosContext) {
+	qos_context = qdf_mem_malloc(sizeof(*qos_context));
+	if (NULL == qos_context) {
 		/* no memory for QoS context.  Nothing we can do */
 		hdd_err("Unable to allocate QoS context");
 		return HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE;
 	}
 	/* we assume the tspec has already been validated by the caller */
 
-	pQosContext->handle = handle;
+	qos_context->handle = handle;
 	if (pTspec->ts_info.up < HDD_WMM_UP_TO_AC_MAP_SIZE)
-		pQosContext->acType = hdd_wmm_up_to_ac_map[pTspec->ts_info.up];
+		qos_context->acType = hdd_wmm_up_to_ac_map[pTspec->ts_info.up];
 	else {
 		hdd_err("ts_info.up (%d) larger than max value (%d), use default acType (%d)",
 			pTspec->ts_info.up,
 			HDD_WMM_UP_TO_AC_MAP_SIZE - 1, hdd_wmm_up_to_ac_map[0]);
-		pQosContext->acType = hdd_wmm_up_to_ac_map[0];
+		qos_context->acType = hdd_wmm_up_to_ac_map[0];
 	}
-	pQosContext->adapter = adapter;
-	pQosContext->qosFlowId = 0;
-	pQosContext->magic = HDD_WMM_CTX_MAGIC;
-	pQosContext->is_inactivity_timer_running = false;
+	qos_context->adapter = adapter;
+	qos_context->qosFlowId = 0;
+	qos_context->magic = HDD_WMM_CTX_MAGIC;
+	qos_context->is_inactivity_timer_running = false;
 
-	hdd_debug("Setting up QoS, context %pK", pQosContext);
+	hdd_debug("Setting up QoS, context %pK", qos_context);
 
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	list_add(&pQosContext->node, &adapter->hdd_wmm_status.wmmContextList);
+	list_add(&qos_context->node, &adapter->hdd_wmm_status.wmmContextList);
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -2407,12 +2407,12 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				      adapter->vdev_id,
 				      pTspec,
 				      hdd_wmm_sme_callback,
-				      pQosContext,
+				      qos_context,
 				      pTspec->ts_info.up,
-				      &pQosContext->qosFlowId);
+				      &qos_context->qosFlowId);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, pQosContext->qosFlowId);
+		   smeStatus, qos_context->qosFlowId);
 
 	/* need to check the return value and act appropriately */
 	switch (smeStatus) {
@@ -2431,30 +2431,30 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		break;
 	case SME_QOS_STATUS_SETUP_INVALID_PARAMS_RSP:
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
+		hdd_wmm_free_context(qos_context);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 	case SME_QOS_STATUS_SETUP_FAILURE_RSP:
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 		/* we can't tell the difference between when a request
 		 * fails because AP rejected it versus when SME
 		 * encounterd an internal error
 		 */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED;
 	case SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP:
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
+		hdd_wmm_free_context(qos_context);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED_NO_WMM;
 	default:
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 		/* we didn't get back one of the
 		 * SME_QOS_STATUS_SETUP_* status codes
 		 */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 		hdd_err("unexpected SME Status=%d", smeStatus);
 		QDF_ASSERT(0);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED;
@@ -2463,8 +2463,8 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 
 	/* we were successful, save the status */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	if (pQosContext->magic == HDD_WMM_CTX_MAGIC)
-		pQosContext->lastStatus = status;
+	if (qos_context->magic == HDD_WMM_CTX_MAGIC)
+		qos_context->lastStatus = status;
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 	return status;
@@ -2482,7 +2482,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 				    uint32_t handle)
 {
-	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_wmm_qos_context *qos_context;
 	bool found = false;
 	sme_ac_enum_type acType = 0;
 	uint32_t qosFlowId = 0;
@@ -2496,12 +2496,12 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 
 	/* locate the context with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	list_for_each_entry(pQosContext,
+	list_for_each_entry(qos_context,
 			    &adapter->hdd_wmm_status.wmmContextList, node) {
-		if (pQosContext->handle == handle) {
+		if (qos_context->handle == handle) {
 			found = true;
-			acType = pQosContext->acType;
-			qosFlowId = pQosContext->qosFlowId;
+			acType = qos_context->acType;
+			qosFlowId = qos_context->qosFlowId;
 			break;
 		}
 	}
@@ -2514,7 +2514,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("found handle 0x%x, flow %d, AC %d, context %pK",
-		 handle, qosFlowId, acType, pQosContext);
+		 handle, qosFlowId, acType, qos_context);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_release_req(mac_handle, adapter->vdev_id,
@@ -2533,13 +2533,13 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 			false;
 
 		/* need to tell TL to stop trigger timer, etc */
-		hdd_wmm_disable_tl_uapsd(pQosContext);
+		hdd_wmm_disable_tl_uapsd(qos_context);
 
 		/* disable the inactivity timer */
-		hdd_wmm_disable_inactivity_timer(pQosContext);
+		hdd_wmm_disable_inactivity_timer(qos_context);
 
 		/* we are done with this context */
-		hdd_wmm_free_context(pQosContext);
+		hdd_wmm_free_context(qos_context);
 
 		/* SME must not fire any more callbacks for this flow
 		 * since the context is no longer valid
@@ -2573,8 +2573,8 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 
 #endif
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	if (pQosContext->magic == HDD_WMM_CTX_MAGIC)
-		pQosContext->lastStatus = status;
+	if (qos_context->magic == HDD_WMM_CTX_MAGIC)
+		qos_context->lastStatus = status;
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 	return status;
@@ -2591,20 +2591,20 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
  */
 hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter, uint32_t handle)
 {
-	struct hdd_wmm_qos_context *pQosContext;
+	struct hdd_wmm_qos_context *qos_context;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_LOST;
 
 	hdd_debug("Entered with handle 0x%x", handle);
 
 	/* locate the context with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
-	list_for_each_entry(pQosContext,
+	list_for_each_entry(qos_context,
 			    &adapter->hdd_wmm_status.wmmContextList, node) {
-		if (pQosContext->handle == handle) {
+		if (qos_context->handle == handle) {
 			hdd_debug("found handle 0x%x, context %pK",
-				 handle, pQosContext);
+				 handle, qos_context);
 
-			status = pQosContext->lastStatus;
+			status = qos_context->lastStatus;
 			break;
 		}
 	}
