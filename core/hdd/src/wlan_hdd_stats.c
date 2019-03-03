@@ -1246,7 +1246,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 {
 	int status;
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX + 1];
-	tSirLLStatsSetReq LinkLayerStatsSetReq;
+	tSirLLStatsSetReq req;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
@@ -1292,25 +1292,25 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	}
 
 	/* Shall take the request Id if the Upper layers pass. 1 For now. */
-	LinkLayerStatsSetReq.reqId = 1;
+	req.reqId = 1;
 
-	LinkLayerStatsSetReq.mpduSizeThreshold =
+	req.mpduSizeThreshold =
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_MPDU_SIZE_THRESHOLD]);
 
-	LinkLayerStatsSetReq.aggressiveStatisticsGathering =
+	req.aggressiveStatisticsGathering =
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING]);
 
-	LinkLayerStatsSetReq.staId = adapter->vdev_id;
+	req.staId = adapter->vdev_id;
 
 	hdd_debug("LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering = %d",
-		LinkLayerStatsSetReq.reqId, LinkLayerStatsSetReq.staId,
-		LinkLayerStatsSetReq.mpduSizeThreshold,
-		LinkLayerStatsSetReq.aggressiveStatisticsGathering);
+		req.reqId, req.staId,
+		req.mpduSizeThreshold,
+		req.aggressiveStatisticsGathering);
 
 	if (QDF_STATUS_SUCCESS != sme_ll_stats_set_req(hdd_ctx->mac_handle,
-						       &LinkLayerStatsSetReq)) {
+						       &req)) {
 		hdd_err("sme_ll_stats_set_req Failed");
 		return -EINVAL;
 	}
