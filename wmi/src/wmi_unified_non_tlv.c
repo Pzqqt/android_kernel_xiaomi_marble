@@ -8948,6 +8948,75 @@ void wmi_non_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
 	WMI_LOGD("PDEV conversion Not Available");
 }
 
+/**
+ * send_vdev_pcp_tid_map_cmd_non_tlv()-send pcp tid mapping
+ * WDS entries cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding pcp-to-tid mapping details
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_vdev_pcp_tid_map_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct vap_pcp_tid_map_params *param)
+{
+	wmi_vdev_set_pcp_tid_map_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_vdev_set_pcp_tid_map_cmd);
+	QDF_STATUS retval;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("wmi_buf_alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* wmi_buf_alloc returns zeroed command buffer */
+	cmd = (wmi_vdev_set_pcp_tid_map_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->vdev_id;
+	qdf_mem_copy(cmd->pcp_to_tid_map, param->pcp_to_tid_map,
+		     sizeof(cmd->pcp_to_tid_map));
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+				    WMI_VDEV_SET_PCP_TID_MAP_CMDID);
+	if (retval)
+		wmi_buf_free(buf);
+
+	return retval;
+}
+
+/**
+ * send_vdev_tidmap_prec_cmd_non_tlv()-send pcp tid mapping
+ * WDS entries cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding tidmap order details
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_vdev_tidmap_prec_cmd_non_tlv(wmi_unified_t wmi_handle,
+					struct vap_tidmap_prec_params *param)
+{
+	wmi_vdev_set_precedence_map_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_vdev_set_precedence_map_cmd);
+	QDF_STATUS retval;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("wmi_buf_alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* wmi_buf_alloc returns zeroed command buffer */
+	cmd = (wmi_vdev_set_precedence_map_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->vdev_id;
+	cmd->map_precedence = param->map_precedence;
+	retval = wmi_unified_cmd_send(wmi_handle, buf, len,
+				    WMI_VDEV_SET_PRECEDENCE_MAP_CMDID);
+	if (retval)
+		wmi_buf_free(buf);
+
+	return retval;
+}
+
 struct wmi_ops non_tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_non_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_non_tlv,
@@ -9212,6 +9281,8 @@ struct wmi_ops non_tlv_ops =  {
 			extract_ctl_failsafe_check_ev_param_non_tlv,
 	.send_peer_del_all_wds_entries_cmd =
 			send_peer_del_all_wds_entries_cmd_non_tlv,
+	.send_vdev_pcp_tid_map_cmd = send_vdev_pcp_tid_map_cmd_non_tlv,
+	.send_vdev_tidmap_prec_cmd = send_vdev_tidmap_prec_cmd_non_tlv,
 };
 
 /**

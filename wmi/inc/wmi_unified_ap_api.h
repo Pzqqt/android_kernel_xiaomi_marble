@@ -251,4 +251,27 @@ QDF_STATUS wmi_unified_peer_chan_width_switch_cmd_send(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_peer_del_all_wds_entries_cmd_send(void *wmi_hdl,
 		struct peer_del_all_wds_entries_params *param);
+
+/**
+ *  wmi_unified_vdev_pcp_tid_map_cmd_send() - WMI set vap pcp
+ *  tid map cmd function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold pcp param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_pcp_tid_map_cmd_send(void *wmi_hdl,
+					 struct vap_pcp_tid_map_params *param);
+
+
+/**
+ *  wmi_unified_vdev_tidmap_prec_cmd_send() - WMI set vap tidmap precedence
+ *  cmd function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold precedence param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_tidmap_prec_cmd_send(void *wmi_hdl,
+					struct vap_tidmap_prec_params *param);
 #endif /* _WMI_UNIFIED_AP_API_H_ */
