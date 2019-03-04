@@ -162,7 +162,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	/* everything is in place to notify TL */
 	status =
 		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-					   conn_info.staid[0], acType,
+					   conn_info.sta_id[0], acType,
 					   pAc->wmmAcTspecInfo.ts_info.tid,
 					   pAc->wmmAcTspecInfo.ts_info.up,
 					   service_interval, suspension_interval,
@@ -204,7 +204,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	if (pAc->wmmAcUapsdInfoValid == true) {
 		status =
 			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
-							     (adapter))->conn_info.staid[0],
+							     (adapter))->conn_info.sta_id[0],
 						    acType, adapter->vdev_id);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -2056,7 +2056,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 		status = sme_enable_uapsd_for_ac(
 				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.staid[0],
+				adapter))->conn_info.sta_id[0],
 				SME_AC_VO, 7, 7, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2081,7 +2081,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 		status = sme_enable_uapsd_for_ac(
 				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.staid[0],
+				adapter))->conn_info.sta_id[0],
 				SME_AC_VI, 5, 5, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2106,7 +2106,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 		status = sme_enable_uapsd_for_ac(
 				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.staid[0],
+				adapter))->conn_info.sta_id[0],
 				SME_AC_BK, 2, 2, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
@@ -2131,7 +2131,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 		status = sme_enable_uapsd_for_ac(
 				(WLAN_HDD_GET_STATION_CTX_PTR(
-				adapter))->conn_info.staid[0],
+				adapter))->conn_info.sta_id[0],
 				SME_AC_BE, 3, 3, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,

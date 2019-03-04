@@ -1529,7 +1529,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	}
 
 	if ((i == WLAN_MAX_STA_COUNT) && oldest_disassoc_sta_ts) {
-		hdd_debug("reached max cached staid, removing oldest stainfo");
+		hdd_debug("reached max cached sta_id, removing oldest stainfo");
 		i = oldest_disassoc_sta_idx;
 	}
 	if (i < WLAN_MAX_STA_COUNT) {
@@ -1539,7 +1539,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 				     stainfo, sizeof(struct hdd_station_info));
 
 	} else {
-		hdd_debug("reached max staid, stainfo can't be cached");
+		hdd_debug("reached max sta_id, stainfo can't be cached");
 	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
@@ -1671,7 +1671,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t *we_custom_event_generic = NULL;
 	int we_event = 0;
 	int i = 0;
-	uint8_t staid;
+	uint8_t sta_id;
 	QDF_STATUS qdf_status;
 	bool bAuthRequired = true;
 	char unknownSTAEvent[IW_CUSTOM_MAX + 1];
@@ -1739,7 +1739,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	mac_handle = hdd_ctx->mac_handle;
 	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
-	staid = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
+	sta_id = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
 
 	switch (sapEvent) {
@@ -2186,11 +2186,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
-		staid = event->staId;
+		sta_id = event->staId;
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_fill_station_info(adapter, event);
 
-		adapter->sta_info[staid].ecsa_capable = event->ecsa_capable;
+		adapter->sta_info[sta_id].ecsa_capable = event->ecsa_capable;
 
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
@@ -2317,7 +2317,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_softap_get_sta_id(adapter,
 					      &pSapEvent->sapevt.
 					      sapStationDisassocCompleteEvent.staMac,
-					      &staid);
+					      &sta_id);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to find sta id status: %d", qdf_status);
 			return QDF_STATUS_E_FAILURE;
@@ -2335,11 +2335,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			stainfo->dhcp_phase = DHCP_PHASE_ACK;
 			if (stainfo->dhcp_nego_status ==
 						DHCP_NEGO_IN_PROGRESS)
-				hdd_post_dhcp_ind(adapter, staid,
+				hdd_post_dhcp_ind(adapter, sta_id,
 						  WMA_DHCP_STOP_IND);
 			stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 		}
-		hdd_softap_deregister_sta(adapter, staid);
+		hdd_softap_deregister_sta(adapter, sta_id);
 
 		ap_ctx->ap_active = false;
 		spin_lock_bh(&adapter->sta_info_lock);

@@ -633,7 +633,7 @@ static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	if (adapter->tx_fn(adapter->txrx_vdev,
 		 (qdf_nbuf_t)skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Failed to send packet to txrx for staid:%d",
+			  "%s: Failed to send packet to txrx for sta_id:%d",
 			  __func__, sta_id);
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
@@ -841,7 +841,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 	struct sk_buff *next = NULL;
 	struct hdd_context *hdd_ctx = NULL;
 	struct qdf_mac_addr *src_mac;
-	uint8_t staid;
+	uint8_t sta_id;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rx_buf))) {
@@ -898,13 +898,13 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		src_mac = (struct qdf_mac_addr *)(skb->data +
 						  QDF_NBUF_SRC_MAC_OFFSET);
 		if (QDF_STATUS_SUCCESS ==
-			hdd_softap_get_sta_id(adapter, src_mac, &staid)) {
-			if (staid < WLAN_MAX_STA_COUNT) {
-				adapter->sta_info[staid].rx_packets++;
-				adapter->sta_info[staid].rx_bytes += skb->len;
-				adapter->sta_info[staid].last_tx_rx_ts =
+			hdd_softap_get_sta_id(adapter, src_mac, &sta_id)) {
+			if (sta_id < WLAN_MAX_STA_COUNT) {
+				adapter->sta_info[sta_id].rx_packets++;
+				adapter->sta_info[sta_id].rx_bytes += skb->len;
+				adapter->sta_info[sta_id].last_tx_rx_ts =
 					qdf_system_ticks();
-				hdd_inspect_dhcp_packet(adapter, staid,
+				hdd_inspect_dhcp_packet(adapter, sta_id,
 							skb, QDF_RX);
 			}
 		}

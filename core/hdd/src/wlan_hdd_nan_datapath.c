@@ -632,8 +632,8 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	}
 
 	/* Since, the interface is being deleted, remove the broadcast id. */
-	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = 0;
-	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_sta_id] = 0;
+	sta_ctx->broadcast_sta_id = HDD_WLAN_INVALID_STA_ID;
 
 	os_if_nan_set_ndp_delete_transaction_id(adapter->vdev,
 						transaction_id);
@@ -694,12 +694,12 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 			ndi_rsp->reason /* create_reason */);
 	}
 
-	sta_ctx->broadcast_staid = ndi_rsp->sta_id;
-	hdd_save_peer(sta_ctx, sta_ctx->broadcast_staid, &bc_mac_addr);
+	sta_ctx->broadcast_sta_id = ndi_rsp->sta_id;
+	hdd_save_peer(sta_ctx, sta_ctx->broadcast_sta_id, &bc_mac_addr);
 	hdd_roam_register_sta(adapter, roam_info,
-			      sta_ctx->broadcast_staid,
+			      sta_ctx->broadcast_sta_id,
 			      &tmp_bss_descp);
-	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_sta_id] = adapter;
 	qdf_mem_free(roam_info);
 }
 
@@ -747,10 +747,10 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 		return;
 	}
 
-	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = NULL;
-	hdd_roam_deregister_sta(adapter, sta_ctx->broadcast_staid);
-	hdd_delete_peer(sta_ctx, sta_ctx->broadcast_staid);
-	sta_ctx->broadcast_staid = HDD_WLAN_INVALID_STA_ID;
+	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_sta_id] = NULL;
+	hdd_roam_deregister_sta(adapter, sta_ctx->broadcast_sta_id);
+	hdd_delete_peer(sta_ctx, sta_ctx->broadcast_sta_id);
+	sta_ctx->broadcast_sta_id = HDD_WLAN_INVALID_STA_ID;
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,

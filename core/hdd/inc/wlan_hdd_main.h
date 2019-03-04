@@ -689,7 +689,7 @@ struct hdd_mon_set_ch_info {
  * @ibss_peer_info: information about the ibss peer
  * @hdd_reassoc_scenario: is station in the middle of reassociation?
  * @sta_debug_state: STA context debug variable
- * @broadcast_staid: STA ID assigned for broadcast frames
+ * @broadcast_sta_id: STA ID assigned for broadcast frames
  * @ch_info: monitor mode channel information
  * @ap_supports_immediate_power_save: Does the current AP allow our STA
  *    to immediately go into power save?
@@ -711,7 +711,7 @@ struct hdd_station_ctx {
 	tSirPeerInfoRspParams ibss_peer_info;
 	bool hdd_reassoc_scenario;
 	int sta_debug_state;
-	uint8_t broadcast_staid;
+	uint8_t broadcast_sta_id;
 	struct hdd_mon_set_ch_info ch_info;
 	bool ap_supports_immediate_power_save;
 };

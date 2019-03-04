@@ -541,11 +541,11 @@ static void hdd_get_transmit_sta_id(struct hdd_adapter *adapter,
 		 * overwritten for UC traffic in IBSS or NDI mode
 		 */
 		if (mcbc_addr)
-			*station_id = sta_ctx->broadcast_staid;
+			*station_id = sta_ctx->broadcast_sta_id;
 	} else {
 		/* For the rest, traffic is directed to AP/P2P GO */
 		if (eConnectionState_Associated == sta_ctx->conn_info.conn_state)
-			*station_id = sta_ctx->conn_info.staid[0];
+			*station_id = sta_ctx->conn_info.sta_id[0];
 	}
 }
 
@@ -618,7 +618,7 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t peer_id)
 	peer = cdp_peer_find_by_local_id(soc, pdev, peer_id);
 
 	if (peer == NULL) {
-		hdd_err_rl("Unable to find peer entry for staid: %d", peer_id);
+		hdd_err_rl("Unable to find peer entry for sta_id: %d", peer_id);
 		return false;
 	}
 
@@ -1120,7 +1120,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	if (adapter->tx_fn(adapter->txrx_vdev,
 		 (qdf_nbuf_t)skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Failed to send packet to txrx for staid: %d",
+			  "%s: Failed to send packet to txrx for sta_id: %d",
 			  __func__, STAId);
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
@@ -1187,7 +1187,7 @@ QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (!qdf_mem_cmp(&sta_ctx->conn_info.peer_macaddr[idx],
 				 mac_address, QDF_MAC_ADDR_SIZE)) {
-			*sta_id = sta_ctx->conn_info.staid[idx];
+			*sta_id = sta_ctx->conn_info.sta_id[idx];
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -1427,7 +1427,7 @@ int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (sta_ctx->conn_info.staid[idx] == HDD_WLAN_INVALID_STA_ID)
+		if (sta_ctx->conn_info.sta_id[idx] == HDD_WLAN_INVALID_STA_ID)
 			continue;
 		if (qdf_mem_cmp(&sta_ctx->conn_info.peer_macaddr[idx],
 				addr, sizeof(struct qdf_mac_addr)))

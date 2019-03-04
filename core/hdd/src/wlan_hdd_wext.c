@@ -2215,9 +2215,9 @@
  * <ioctl>
  * ibssPeerInfo - Print the ibss peers's MAC, rate and RSSI
  *
- * @INPUT: staid
+ * @INPUT: sta_id
  *
- * @OUTPUT: print ibss peer corresponding to staid in info logs
+ * @OUTPUT: print ibss peer corresponding to sta_id in info logs
  *  PEER ADDR : 8c:fd:f0:01:9c:bf TxRate: 1 Mbps RSSI: -35
  *
  * This IOCTL is used to print the specific ibss peers's MAC,
@@ -3391,13 +3391,13 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 /**
  * hdd_wlan_get_ibss_peer_info() - Print IBSS peer information
  * @adapter: Adapter upon which the IBSS client is active
- * @staid: Station index of the IBSS peer
+ * @sta_id: Station index of the IBSS peer
  *
  * Return: QDF_STATUS_STATUS if the peer was found and displayed,
  * otherwise an appropriate QDF_STATUS_E_* failure code.
  */
 static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
-					      uint8_t staid)
+					      uint8_t sta_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
@@ -3407,7 +3407,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(struct hdd_adapter *adapter,
 	INIT_COMPLETION(adapter->ibss_peer_info_comp);
 	status = sme_request_ibss_peer_info(mac_handle, adapter,
 					    hdd_get_ibss_peer_info_cb,
-					    false, staid);
+					    false, sta_id);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		unsigned long rc;
@@ -7214,12 +7214,12 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		for (idx = 0; idx < MAX_PEERS; idx++) {
 			if (HDD_WLAN_INVALID_STA_ID !=
-					sta_ctx->conn_info.staid[idx]) {
+					sta_ctx->conn_info.sta_id[idx]) {
 				buf = snprintf
 					      ((extra + length),
 					      WE_MAX_STR_LEN - length,
 					      "\n%d .%02x:%02x:%02x:%02x:%02x:%02x\n",
-					      sta_ctx->conn_info.staid[idx],
+					      sta_ctx->conn_info.sta_id[idx],
 					      sta_ctx->conn_info.
 					      peer_macaddr[idx].bytes[0],
 					      sta_ctx->conn_info.
@@ -9140,7 +9140,7 @@ static int hdd_get_wlan_stats(struct hdd_adapter *adapter)
 				    SME_GLOBAL_CLASSA_STATS |
 				    SME_GLOBAL_CLASSD_STATS,
 				    hdd_statistics_cb,
-				    sta_ctx->conn_info.staid[0],
+				    sta_ctx->conn_info.sta_id[0],
 				    cookie, adapter->vdev_id);
 
 	if (QDF_STATUS_SUCCESS != status) {

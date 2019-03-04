@@ -165,7 +165,7 @@ struct tsm_priv {
 };
 
 static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
-				 const uint32_t staid, void *context)
+				 const uint32_t sta_id, void *context)
 {
 	struct osif_request *request;
 	struct tsm_priv *priv;
@@ -215,7 +215,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 	cookie = osif_request_cookie(request);
 
 	status = sme_get_tsm_stats(hdd_ctx->mac_handle, hdd_get_tsm_stats_cb,
-				   hdd_sta_ctx->conn_info.staid[0],
+				   hdd_sta_ctx->conn_info.sta_id[0],
 				   hdd_sta_ctx->conn_info.bssid,
 				   cookie, tid);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -331,14 +331,14 @@ QDF_STATUS hdd_cfg80211_get_ibss_peer_info_all(struct hdd_adapter *adapter)
 /**
  * hdd_cfg80211_get_ibss_peer_info() - get ibss peer info
  * @adapter:	Adapter context
- * @staid:	Sta index for which the peer info is requested
+ * @sta_id:	Sta index for which the peer info is requested
  *
  * Request function to get IBSS peer info from lower layers
  *
  * Return: 0 for success non-zero for failure
  */
 static QDF_STATUS
-hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staid)
+hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t sta_id)
 {
 	unsigned long rc;
 	QDF_STATUS status;
@@ -348,7 +348,7 @@ hdd_cfg80211_get_ibss_peer_info(struct hdd_adapter *adapter, uint8_t staid)
 	status = sme_request_ibss_peer_info(adapter->hdd_ctx->mac_handle,
 					    adapter,
 					    hdd_get_ibss_peer_info_cb,
-					    false, staid);
+					    false, sta_id);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		rc = wait_for_completion_timeout(
@@ -5239,7 +5239,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx = NULL;
 	char extra[128] = { 0 };
 	uint32_t length = 0;
-	uint8_t staid = 0;
+	uint8_t sta_id = 0;
 	struct qdf_mac_addr peer_macaddr;
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
@@ -5270,16 +5270,16 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Get station index for the peer mac address and sanitize it */
-	hdd_get_peer_sta_id(sta_ctx, &peer_macaddr, &staid);
+	hdd_get_peer_sta_id(sta_ctx, &peer_macaddr, &sta_id);
 
-	if (staid > MAX_PEERS) {
-		hdd_err("Invalid StaIdx %d returned", staid);
+	if (sta_id > MAX_PEERS) {
+		hdd_err("Invalid StaIdx %d returned", sta_id);
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	/* Handle the command */
-	status = hdd_cfg80211_get_ibss_peer_info(adapter, staid);
+	status = hdd_cfg80211_get_ibss_peer_info(adapter, sta_id);
 	if (QDF_STATUS_SUCCESS == status) {
 		uint32_t tx_rate =
 			sta_ctx->ibss_peer_info.peerInfoParams[0].txRate;

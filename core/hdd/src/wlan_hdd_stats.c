@@ -5327,7 +5327,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	cookie = osif_request_cookie(request);
 
 	status = sme_get_rssi(hdd_ctx->mac_handle, hdd_get_rssi_cb,
-			      sta_ctx->conn_info.staid[0],
+			      sta_ctx->conn_info.sta_id[0],
 			      sta_ctx->conn_info.bssid, adapter->rssi,
 			      cookie);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -5439,7 +5439,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 	cookie = osif_request_cookie(request);
 
 	status = sme_get_snr(hdd_ctx->mac_handle, hdd_get_snr_cb,
-			     sta_ctx->conn_info.staid[0],
+			     sta_ctx->conn_info.sta_id[0],
 			     sta_ctx->conn_info.bssid, cookie);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve RSSI");
@@ -5889,7 +5889,7 @@ QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter)
 	status = sme_get_statistics(adapter->hdd_ctx->mac_handle,
 				    eCSR_HDD, SME_GLOBAL_CLASSA_STATS,
 				    hdd_get_class_a_statistics_cb,
-				    sta_ctx->conn_info.staid[0],
+				    sta_ctx->conn_info.sta_id[0],
 				    cookie, adapter->vdev_id);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_warn("Unable to retrieve Class A statistics");
@@ -6074,7 +6074,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 					    SME_GLOBAL_CLASSA_STATS |
 					    SME_PER_CHAIN_RSSI_STATS,
 				    hdd_get_station_statistics_cb,
-				    sta_ctx->conn_info.staid[0],
+				    sta_ctx->conn_info.sta_id[0],
 				    cookie,
 				    adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
