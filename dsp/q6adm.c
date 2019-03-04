@@ -2927,7 +2927,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				if (this_adm.num_ec_ref_rx_chans != 0) {
 					open_v8.endpoint_id_2 =
 						this_adm.ec_ref_rx;
-					this_adm.ec_ref_rx = -1;
 				} else {
 					pr_err("%s: EC channels not set %d\n",
 						__func__,
@@ -2971,7 +2970,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				if (this_adm.ec_ref_rx_bit_width != 0) {
 					ep2_payload.bit_width =
 						this_adm.ec_ref_rx_bit_width;
-					this_adm.ec_ref_rx_bit_width = 0;
 				} else {
 					ep2_payload.bit_width = bit_width;
 				}
@@ -2979,7 +2977,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				if (this_adm.ec_ref_rx_sampling_rate != 0) {
 					ep2_payload.sample_rate =
 					this_adm.ec_ref_rx_sampling_rate;
-					this_adm.ec_ref_rx_sampling_rate = 0;
 				} else {
 					ep2_payload.sample_rate = rate;
 				}
@@ -3049,7 +3046,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			if (this_adm.ec_ref_rx && (path != 1) &&
 			    (afe_get_port_type(tmp_port) == MSM_AFE_PORT_TYPE_TX)) {
 				open.endpoint_id_2 = this_adm.ec_ref_rx;
-				this_adm.ec_ref_rx = -1;
 			}
 
 			open.topology_id = topology;
@@ -3081,12 +3077,10 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				open_v6.hdr.pkt_size = sizeof(open_v6);
 				open_v6.dev_num_channel_eid2 =
 					this_adm.num_ec_ref_rx_chans;
-				this_adm.num_ec_ref_rx_chans = 0;
 
 				if (this_adm.ec_ref_rx_bit_width != 0) {
 					open_v6.bit_width_eid2 =
 						this_adm.ec_ref_rx_bit_width;
-					this_adm.ec_ref_rx_bit_width = 0;
 				} else {
 					open_v6.bit_width_eid2 = bit_width;
 				}
@@ -3094,7 +3088,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				if (this_adm.ec_ref_rx_sampling_rate != 0) {
 					open_v6.sample_rate_eid2 =
 					       this_adm.ec_ref_rx_sampling_rate;
-					this_adm.ec_ref_rx_sampling_rate = 0;
 				} else {
 					open_v6.sample_rate_eid2 = rate;
 				}
