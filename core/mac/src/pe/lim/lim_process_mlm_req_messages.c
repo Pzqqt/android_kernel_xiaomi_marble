@@ -806,8 +806,9 @@ static bool lim_is_auth_req_expected(struct mac_context *mac_ctx,
 		  (LIM_IS_IBSS_ROLE(session) &&
 		  (session->limMlmState ==
 					eLIM_MLM_BSS_STARTED_STATE))) &&
-		(!lim_is_group_addr(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr))
-		 && lim_is_auth_algo_supported(mac_ctx,
+		(!IEEE80211_IS_MULTICAST(
+			mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr)) &&
+		 lim_is_auth_algo_supported(mac_ctx,
 			mac_ctx->lim.gpLimMlmAuthReq->authType, session));
 
 	return flag;

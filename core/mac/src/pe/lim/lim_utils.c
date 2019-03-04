@@ -624,37 +624,6 @@ void lim_cleanup_mlm(struct mac_context *mac_ctx)
 } /*** end lim_cleanup_mlm() ***/
 
 /**
- * lim_is_group_addr()
- *
- ***FUNCTION:
- * This function is called in various places within LIM code
- * to determine whether passed MAC address is a group address or not
- *
- ***LOGIC:
- * If least significant bit of first octet of the MAC address is
- * set to 1, it is a Group address.
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param macAddr  Indicates MAC address that need to be determined
- *                 whether it is Group address or not
- *
- * @return true if passed address is Group address else false
- */
-
-uint8_t lim_is_group_addr(tSirMacAddr macAddr)
-{
-	if ((macAddr[0] & 0x01) == 0x01)
-		return true;
-	else
-		return false;
-} /****** end lim_is_group_addr() ******/
-
-/**
  * lim_print_mac_addr()
  *
  ***FUNCTION:
@@ -5584,7 +5553,7 @@ bool lim_validate_received_frame_a1_addr(struct mac_context *mac_ctx,
 		/* let main routine handle it */
 		return true;
 	}
-	if (lim_is_group_addr(a1) || QDF_IS_ADDR_BROADCAST(a1)) {
+	if (IEEE80211_IS_MULTICAST(a1) || QDF_IS_ADDR_BROADCAST(a1)) {
 		/* just for fail safe, don't handle MC/BC a1 in this routine */
 		return true;
 	}

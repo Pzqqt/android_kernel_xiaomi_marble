@@ -2184,7 +2184,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	/* Get pointer to Re/Association Request frame body */
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
-	if (lim_is_group_addr(hdr->sa)) {
+	if (IEEE80211_IS_MULTICAST(hdr->sa)) {
 		/*
 		 * Rcvd Re/Assoc Req frame from BC/MC address Log error and
 		 * ignore it

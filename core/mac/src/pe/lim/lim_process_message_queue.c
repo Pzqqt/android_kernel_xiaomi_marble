@@ -1030,7 +1030,7 @@ static void lim_handle_unknown_a2_index_frames(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_TDLS
 	mac_hdr = WMA_GET_RX_MPDUHEADER3A(rx_pkt_buffer);
 
-	if (lim_is_group_addr(mac_hdr->addr2)) {
+	if (IEEE80211_IS_MULTICAST(mac_hdr->addr2)) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			FL("Ignoring A2 Invalid Packet received for MC/BC:"));
 		lim_print_mac_addr(mac_ctx, mac_hdr->addr2, LOGD);

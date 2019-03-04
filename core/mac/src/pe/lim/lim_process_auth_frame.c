@@ -1206,7 +1206,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	if (lim_is_group_addr(mac_hdr->sa)) {
+	if (IEEE80211_IS_MULTICAST(mac_hdr->sa)) {
 		/*
 		 * Received Auth frame from a BC/MC address
 		 * Log error and ignore it

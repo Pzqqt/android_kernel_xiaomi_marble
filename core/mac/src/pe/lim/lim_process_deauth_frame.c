@@ -96,14 +96,15 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (lim_is_group_addr(pHdr->sa)) {
+	if (IEEE80211_IS_MULTICAST(pHdr->sa)) {
 		/* Received Deauth frame from a BC/MC address */
 		/* Log error and ignore it */
 		pe_debug("received Deauth frame from a BC/MC address");
 		return;
 	}
 
-	if (lim_is_group_addr(pHdr->da) && !QDF_IS_ADDR_BROADCAST(pHdr->da)) {
+	if (IEEE80211_IS_MULTICAST(pHdr->da) &&
+	    !QDF_IS_ADDR_BROADCAST(pHdr->da)) {
 		/* Received Deauth frame for a MC address */
 		/* Log error and ignore it */
 		pe_debug("received Deauth frame for a MC address");
