@@ -45,7 +45,7 @@ void dump_dma_hdr(struct whal_cfir_dma_hdr *dma_hdr)
 		 dma_hdr->phy_ppdu_id);
 }
 
-int cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 			  struct direct_buf_rx_data *payload)
 {
 	uint8_t *data = payload->vaddr;
@@ -53,13 +53,13 @@ int cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 
 	if ((!pdev) || (!payload)) {
 		cfr_err("%s Error!! pdev or payload is null\n", __func__);
-		return -EINVAL;
+		return true;
 	}
 
 	qdf_mem_copy(&dma_hdr, &data[0], sizeof(struct whal_cfir_dma_hdr));
 	dump_dma_hdr(&dma_hdr);
 
-	return 0;
+	return true;
 }
 #endif
 
@@ -142,8 +142,7 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
 
 	if(dbr_tx_ops->direct_buf_rx_get_ring_params)
-		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,
-							  DBR_MODULE_CFR)
+		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param, 1);
 	return param;
 }
 #else
