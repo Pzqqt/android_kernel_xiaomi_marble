@@ -334,6 +334,13 @@ wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 	if (params->supported_channels_len)
 		tdls_calc_channels_from_staparams(req_info, params);
 
+	if (params->supported_oper_classes_len > WLAN_MAX_SUPP_OPER_CLASSES) {
+		cfg80211_debug("received oper classes:%d, resetting it to max supported: %d",
+			       params->supported_oper_classes_len,
+			       WLAN_MAX_SUPP_OPER_CLASSES);
+		params->supported_oper_classes_len = WLAN_MAX_SUPP_OPER_CLASSES;
+	}
+
 	qdf_mem_copy(req_info->supported_oper_classes,
 		     params->supported_oper_classes,
 		     params->supported_oper_classes_len);
