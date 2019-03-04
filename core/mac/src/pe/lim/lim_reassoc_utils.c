@@ -109,7 +109,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 		tpDphHashNode sta, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
-	tpSirBssDescription bss_desc;
+	struct bss_description *bss_desc;
 	/*
 	 * Skipped the DeleteDPH Hash Entry as we need it for the new BSS
 	 * Set the MlmState to IDLE

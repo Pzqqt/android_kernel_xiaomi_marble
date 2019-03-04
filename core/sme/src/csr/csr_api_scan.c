@@ -1835,23 +1835,11 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 }
 #endif
 
-/**
- * csr_scan_save_roam_offload_ap_to_scan_cache
- * This function parses the received beacon/probe response
- * from the firmware as part of the roam synch indication.
- * The beacon or the probe response is parsed and is also
- * saved into the scan cache
- *
- * @param  mac Pointer to Global Mac
- * @param  roam_sync_ind_ptr Roam Synch Indication from
- *         firmware which also contains the beacon/probe
- *         response
- * @return Status
- */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(struct mac_context *mac,
-				struct roam_offload_synch_ind *roam_sync_ind_ptr,
-				tpSirBssDescription  bss_desc_ptr)
+QDF_STATUS
+csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
+			      struct roam_offload_synch_ind *roam_sync_ind_ptr,
+			      struct bss_description *bss_desc_ptr)
 {
 	uint32_t length = 0;
 	struct tag_csrscan_result *scan_res_ptr = NULL;
@@ -1882,7 +1870,8 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(struct mac_context *mac,
  *
  * Return: first bss descriptor from the scan handle.
  */
-tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
+struct bss_description*
+csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
 {
 	tListElem *first_element = NULL;
 	struct tag_csrscan_result *scan_result = NULL;

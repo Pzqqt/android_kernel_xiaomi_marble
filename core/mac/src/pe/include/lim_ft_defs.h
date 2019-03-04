@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@ typedef struct sSirFTPreAuthReq {
 	uint32_t scan_id;
 	uint16_t ft_ies_length;
 	uint8_t ft_ies[MAX_FTIE_SIZE];
-	tpSirBssDescription pbssDescription;
+	struct bss_description *pbssDescription;
 } tSirFTPreAuthReq, *tpSirFTPreAuthReq;
 
 /*-------------------------------------------------------------------------

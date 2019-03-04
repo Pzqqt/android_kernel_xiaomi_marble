@@ -685,7 +685,7 @@ struct bss_description {
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 };
-typedef struct bss_description tSirBssDescription, *tpSirBssDescription;
+typedef struct bss_description tSirBssDescription;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 struct ht_profile {

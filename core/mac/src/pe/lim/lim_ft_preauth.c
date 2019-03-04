@@ -402,7 +402,7 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 {
 	struct pe_session *ft_session = NULL;
 	uint8_t sessionId = 0;
-	tpSirBssDescription pbssDescription = NULL;
+	struct bss_description *pbssDescription = NULL;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac, WLAN_PE_DIAG_PRE_AUTH_RSP_EVENT,
 			      pe_session, (uint16_t) status, 0);

@@ -78,7 +78,7 @@ typedef struct sCsrNeighborRoamChannelInfo {
 typedef struct sCsrNeighborRoamBSSInfo {
 	tListElem List;
 	uint8_t apPreferenceVal;
-	tpSirBssDescription pBssDescription;
+	struct bss_description *pBssDescription;
 } tCsrNeighborRoamBSSInfo, *tpCsrNeighborRoamBSSInfo;
 
 #define CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT  1000       /* in milliseconds */
@@ -360,11 +360,11 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
-	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
+	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason);
 #else
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
-	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
+	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

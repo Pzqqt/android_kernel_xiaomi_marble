@@ -128,7 +128,7 @@
  * @Return: total IE length
  */
 static inline uint16_t
-csr_get_ielen_from_bss_description(tpSirBssDescription pBssDescr)
+csr_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 {
 	uint16_t ielen;
 
@@ -2172,7 +2172,7 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 	tCsrNeighborRoamBSSInfo handoffNode = {{0} };
 	uint64_t timer_diff = 0;
 	uint32_t timeStamp[2];
-	tpSirBssDescription pBssDescription = NULL;
+	struct bss_description *pBssDescription = NULL;
 
 	csr_neighbor_roam_get_handoff_ap_info(mac, &handoffNode, sessionId);
 	if (!handoffNode.pBssDescription) {
@@ -20878,7 +20878,7 @@ void csr_update_fils_erp_seq_num(struct csr_roam_profile *roam_profile,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription bss_desc, enum sir_roam_op_code reason)
+		struct bss_description *bss_desc, enum sir_roam_op_code reason)
 {
 	uint8_t session_id = roam_synch_data->roamed_vdev_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -21012,8 +21012,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		qdf_mem_free(ies_local);
 		return QDF_STATUS_E_NOMEM;
 	}
-	csr_scan_save_roam_offload_ap_to_scan_cache(mac_ctx, roam_synch_data,
-						    bss_desc);
+	csr_rso_save_ap_to_scan_cache(mac_ctx, roam_synch_data, bss_desc);
 	roam_info->sessionId = session_id;
 
 	qdf_mem_copy(&roam_info->bssid.bytes, &bss_desc->bssId,
@@ -21286,9 +21285,11 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
  *
  * Return: Success or Failure.
  */
-QDF_STATUS csr_roam_synch_callback(struct mac_context *mac_ctx,
-		struct roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
+QDF_STATUS
+csr_roam_synch_callback(struct mac_context *mac_ctx,
+			struct roam_offload_synch_ind *roam_synch_data,
+			struct bss_description *bss_desc,
+			enum sir_roam_op_code reason)
 {
 	QDF_STATUS status;
 

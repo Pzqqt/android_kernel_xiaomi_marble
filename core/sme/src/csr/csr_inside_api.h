@@ -842,8 +842,9 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 #endif
 
 QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac, uint32_t sessionId,
-			    tpSirBssDescription pBssDescription,
-			    enum csr_roam_reason reason, bool fImmediate);
+				    struct bss_description *pBssDescription,
+				    enum csr_roam_reason reason,
+				    bool fImmediate);
 QDF_STATUS csr_dequeue_roam_command(struct mac_context *mac,
 				enum csr_roam_reason reason,
 				uint8_t session_id);
@@ -891,7 +892,8 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac,
 		uint32_t session_id);
 void csr_saved_scan_cmd_free_fields(struct mac_context *mac_ctx,
 				    struct csr_roam_session *session);
-tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
+struct bss_description*
+csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
 tSirBssDescription*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,

@@ -278,13 +278,13 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       tpSirBssDescription  bss_desc_ptr,
+		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason);
 #else
 static inline QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       tpSirBssDescription  bss_desc_ptr,
+		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;

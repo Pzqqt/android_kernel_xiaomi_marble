@@ -2407,7 +2407,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	struct roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
-	tpSirBssDescription  bss_desc_ptr = NULL;
+	struct bss_description *bss_desc_ptr = NULL;
 	uint8_t channel;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;

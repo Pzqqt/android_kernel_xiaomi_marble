@@ -119,7 +119,7 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
  *------------------------------------------------------------------*/
 void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		uint8_t updateEntry, struct pe_session *ft_session,
-		tpSirBssDescription bssDescription)
+		struct bss_description *bssDescription)
 {
 	tpAddBssParams pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
@@ -521,7 +521,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
  *
  *------------------------------------------------------------------*/
 void lim_fill_ft_session(struct mac_context *mac,
-			 tpSirBssDescription pbssDescription,
+			 struct bss_description *pbssDescription,
 			 struct pe_session *ft_session, struct pe_session *pe_session)
 {
 	uint8_t currentBssUapsd;

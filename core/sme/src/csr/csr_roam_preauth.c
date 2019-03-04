@@ -102,8 +102,9 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
  * Return: Success if queued properly, false otherwise.
  */
 QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac_ctx,
-		uint32_t session_id, tpSirBssDescription bss_desc,
-		enum csr_roam_reason reason, bool immediate)
+				    uint32_t session_id,
+				    struct bss_description *bss_desc,
+				    enum csr_roam_reason reason, bool immediate)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *command;
@@ -447,7 +448,7 @@ bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
  */
 static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 				   uint32_t session_id,
-				   tpSirBssDescription bss_desc)
+				   struct bss_description *bss_desc)
 {
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				session_id);
@@ -506,11 +507,11 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 
 QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
-					 tpSirBssDescription bss_desc)
+					 struct bss_description *bss_desc)
 {
 	tpSirFTPreAuthReq preauth_req;
 	uint16_t auth_req_len;
-	tpSirBssDescription buf;
+	struct bss_description *buf;
 	uint32_t dot11mode, buf_len;
 	QDF_STATUS status;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,

@@ -1076,10 +1076,22 @@ QDF_STATUS
 csr_roam_update_add_ies(struct mac_context *mac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(
-		struct mac_context *mac,
-		struct roam_offload_synch_ind *roam_synch_ind_ptr,
-		tpSirBssDescription  bss_desc_ptr);
+/**
+ * csr_scan_save_roam_offload_ap_to_scan_cache() - This function parses the
+ * received beacon/probe response from the firmware as part of the roam synch
+ * indication. The beacon or the probe response is parsed and is also
+ * saved into the scan cache
+ *
+ * @mac:  mac Pointer to Global Mac
+ * @roam_sync_ind_ptr:  Roam Synch Indication from firmware
+ *
+ * @Return QDF_STATUS
+ */
+QDF_STATUS
+csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
+			      struct roam_offload_synch_ind *roam_synch_ind,
+			      struct bss_description *bss_desc_ptr);
+
 void csr_process_ho_fail_ind(struct mac_context *mac, void *pMsgBuf);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR

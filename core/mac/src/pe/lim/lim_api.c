@@ -1932,7 +1932,7 @@ static void sir_parse_bcn_fixed_fields(struct mac_context *mac_ctx,
 static QDF_STATUS
 lim_roam_fill_bss_descr(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_offload_synch_ind_ptr,
-			tpSirBssDescription  bss_desc_ptr)
+			struct bss_description *bss_desc_ptr)
 {
 	uint32_t ie_len = 0;
 	tpSirProbeRespBeacon parsed_frm_ptr;
@@ -2115,7 +2115,7 @@ static inline void lim_copy_and_free_hlp_data_from_session(
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       tpSirBssDescription  bss_desc,
+		       struct bss_description *bss_desc,
 		       enum sir_roam_op_code reason)
 {
 	struct pe_session *session_ptr;

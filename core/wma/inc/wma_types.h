@@ -731,21 +731,21 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void);
 QDF_STATUS wma_register_roaming_callbacks(
 		QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
-			tpSirBssDescription  bss_desc_ptr,
+			struct bss_description *bss_desc_ptr,
 			enum sir_roam_op_code reason),
 		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
-			tpSirBssDescription  bss_desc_ptr,
+			struct bss_description *bss_desc_ptr,
 			enum sir_roam_op_code reason));
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
 		QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
-			tpSirBssDescription  bss_desc_ptr,
+			struct bss_description *bss_desc_ptr,
 			enum sir_roam_op_code reason),
 		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
-			tpSirBssDescription  bss_desc_ptr,
+			struct bss_description *bss_desc_ptr,
 			enum sir_roam_op_code reason))
 {
 	return QDF_STATUS_E_NOSUPPORT;

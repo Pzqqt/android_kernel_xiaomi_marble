@@ -186,7 +186,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac,
 
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
-				   tpSirBssDescription bssDescription,
+				   struct bss_description *bssDescription,
 				   uint8_t updateEntry, struct pe_session *pe_session);
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updateEntry,
 					     struct pe_session *pe_session);

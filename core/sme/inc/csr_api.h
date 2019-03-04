@@ -1414,12 +1414,12 @@ typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
 #ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
-					 tpSirBssDescription bss_desc);
+					 struct bss_description *bss_desc);
 #else
 static inline
 QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
-					 tpSirBssDescription bss_desc)
+					 struct bss_description *bss_desc)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

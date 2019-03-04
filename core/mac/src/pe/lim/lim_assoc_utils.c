@@ -3529,7 +3529,7 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
 
 QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
-				   tpSirBssDescription bssDescription,
+				   struct bss_description *bssDescription,
 				   uint8_t updateEntry, struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
@@ -4072,7 +4072,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
-	tpSirBssDescription bssDescription =
+	struct bss_description *bssDescription =
 		&pe_session->pLimJoinReq->bssDescription;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 

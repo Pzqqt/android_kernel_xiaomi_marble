@@ -163,7 +163,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 	tCsrScanResultInfo **result_arr, uint8_t msrmnt_status,
 	uint8_t bss_count)
 {
-	tpSirBssDescription bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	tpSirBeaconReportXmitInd beacon_rep;
 	uint16_t length;
 	uint32_t size;
@@ -171,7 +171,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 	tCsrScanResultInfo *cur_result = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
-	tpSirBssDescription bss_desc_to_free[SIR_BCN_REPORT_MAX_BSS_DESC] = {0};
+	struct bss_description *tmp_bss_desc[SIR_BCN_REPORT_MAX_BSS_DESC] = {0};
 
 	if (NULL == result_arr && !msrmnt_status) {
 		sme_err("Beacon report xmit Ind to PE Failed");
@@ -207,7 +207,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 				break;
 			qdf_mem_copy(beacon_rep->pBssDescription[i],
 				bss_desc, size);
-			bss_desc_to_free[i] =
+			tmp_bss_desc[i] =
 				beacon_rep->pBssDescription[i];
 			sme_debug("RRM Result Bssid = " MAC_ADDRESS_STR
 				" chan= %d, rssi = -%d",
@@ -240,7 +240,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 		status = umac_send_mb_message_to_mac(beacon_rep);
 		if (status != QDF_STATUS_SUCCESS)
 			for (counter = 0; counter < i; ++counter)
-				qdf_mem_free(bss_desc_to_free[counter]);
+				qdf_mem_free(tmp_bss_desc[counter]);
 	} while (cur_result);
 
 	return status;
@@ -270,7 +270,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS fill_ie_status;
-	tpSirBssDescription bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	uint32_t ie_len = 0;
 	uint32_t out_ie_len = 0;
 	uint8_t bss_counter = 0;

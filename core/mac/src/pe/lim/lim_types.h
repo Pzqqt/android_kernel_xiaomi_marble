@@ -849,7 +849,7 @@ lim_post_mlm_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBu
  */
 
 static inline uint16_t
-lim_get_ielen_from_bss_description(tpSirBssDescription pBssDescr)
+lim_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 {
 	uint16_t ielen;
 

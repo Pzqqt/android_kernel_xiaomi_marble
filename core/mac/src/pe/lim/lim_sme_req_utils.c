@@ -342,7 +342,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 
 static uint8_t
 lim_is_bss_descr_valid_in_sme_req_message(struct mac_context *mac,
-					  tpSirBssDescription pBssDescr)
+					  struct bss_description *pBssDescr)
 {
 	uint8_t valid = true;
 

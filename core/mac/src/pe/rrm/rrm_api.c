@@ -670,7 +670,7 @@ static uint8_t
 rrm_fill_beacon_ies(struct mac_context *mac,
 		    uint8_t *pIes, uint8_t *pNumIes, uint8_t pIesMaxSize,
 		    uint8_t *eids, uint8_t numEids, uint8_t start_offset,
-		    tpSirBssDescription pBssDesc)
+		    struct bss_description *pBssDesc)
 {
 	uint8_t len, *pBcnIes, count = 0, i;
 	uint16_t BcnNumIes, total_ies_len;
@@ -785,7 +785,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirMacRadioMeasureReport *report = NULL;
 	tSirMacBeaconReport *beacon_report;
-	tpSirBssDescription bss_desc;
+	struct bss_description *bss_desc;
 	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 	struct pe_session *session_entry;
 	uint8_t session_id, counter;

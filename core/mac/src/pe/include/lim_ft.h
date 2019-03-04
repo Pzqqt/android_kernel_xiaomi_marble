@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,23 +110,25 @@ static inline int lim_process_ft_pre_auth_req(struct mac_context *mac,
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void lim_fill_ft_session(struct mac_context *mac,
-		tpSirBssDescription pbssDescription,
+		struct bss_description *pbssDescription,
 		struct pe_session *ft_session,
 		struct pe_session *pe_session);
+
 void lim_ft_prepare_add_bss_req(struct mac_context *mac, uint8_t updateEntry,
 		struct pe_session *ft_session,
-		tpSirBssDescription bssDescription);
+		struct bss_description *bssDescription);
+
 QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 		struct pe_session *session_entry, tSirFTPreAuthReq *ft_preauth_req);
 #else
 static inline void lim_fill_ft_session(struct mac_context *mac,
-		tpSirBssDescription pbssDescription,
+		struct bss_description *pbssDescription,
 		struct pe_session *ft_session,
 		struct pe_session *pe_session)
 {}
 static inline void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		uint8_t updateEntry, struct pe_session *ft_session,
-		tpSirBssDescription bssDescription)
+		struct bss_description *bssDescription)
 {}
 #endif
 

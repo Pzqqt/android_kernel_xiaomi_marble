@@ -71,7 +71,7 @@ typedef struct sSirBeaconReportXmitInd {
 	uint16_t duration;
 	uint8_t regClass;
 	uint8_t numBssDesc;
-	tpSirBssDescription pBssDescription[SIR_BCN_REPORT_MAX_BSS_DESC];
+	struct bss_description *pBssDescription[SIR_BCN_REPORT_MAX_BSS_DESC];
 } tSirBeaconReportXmitInd, *tpSirBeaconReportXmitInd;
 
 typedef struct sSirNeighborReportReqInd {

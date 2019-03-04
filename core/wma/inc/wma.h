@@ -1199,11 +1199,11 @@ typedef struct {
 
 	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc_ptr,
+		struct bss_description *bss_desc_ptr,
 		enum sir_roam_op_code reason);
 	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc_ptr,
+		struct bss_description *bss_desc_ptr,
 		enum sir_roam_op_code reason);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
