@@ -1361,9 +1361,14 @@ static bool sap_fill_owe_ie_in_assoc_ind(tSap_StationAssocIndication *assoc_ind,
 	uint32_t owe_ie_len, rsn_ie_len, dh_ie_len;
 	const uint8_t *rsn_ie, *dh_ie;
 
+	if (assoc_ind->assocReqLength < ASSOC_REQ_IE_OFFSET) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid assoc req");
+		return false;
+	}
+
 	rsn_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_RSN,
-					  assoc_ind->assocReqPtr,
-					  assoc_ind->assocReqLength);
+			       assoc_ind->assocReqPtr + ASSOC_REQ_IE_OFFSET,
+			       assoc_ind->assocReqLength - ASSOC_REQ_IE_OFFSET);
 	if (!rsn_ie) {
 		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "RSN IE is not present");
 		return false;
@@ -1377,8 +1382,8 @@ static bool sap_fill_owe_ie_in_assoc_ind(tSap_StationAssocIndication *assoc_ind,
 	}
 
 	dh_ie = wlan_get_ext_ie_ptr_from_ext_id(DH_OUI_TYPE, DH_OUI_TYPE_SIZE,
-					   assoc_ind->assocReqPtr,
-					   (uint16_t)assoc_ind->assocReqLength);
+		   assoc_ind->assocReqPtr + ASSOC_REQ_IE_OFFSET,
+		   (uint16_t)(assoc_ind->assocReqLength - ASSOC_REQ_IE_OFFSET));
 	if (!dh_ie) {
 		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "DH IE is not present");
 		return false;
