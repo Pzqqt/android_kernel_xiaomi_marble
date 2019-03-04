@@ -688,16 +688,37 @@ QDF_STATUS wmi_unified_pno_start_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_nlo_mawc_cmd(void *wmi_hdl,
 		struct nlo_mawc_params *params);
 
-QDF_STATUS wmi_unified_process_ll_stats_clear_cmd
-	(void *wmi_hdl, const struct ll_stats_clear_params *clear_req,
-	 uint8_t addr[IEEE80211_ADDR_LEN]);
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+/**
+ * wmi_unified_process_ll_stats_clear_cmd() - clear link layer stats
+ * @wmi_handle: wmi handle
+ * @clear_req: ll stats clear request command params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_process_ll_stats_clear_cmd(wmi_unified_t wmi_handle,
+				 const struct ll_stats_clear_params *clear_req);
 
-QDF_STATUS wmi_unified_process_ll_stats_set_cmd
-	(void *wmi_hdl, const struct ll_stats_set_params *set_req);
+/**
+ * wmi_unified_process_ll_stats_set_cmd() - link layer stats set request
+ * @wmi_handle: wmi handle
+ * @set_req: ll stats set request command params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_process_ll_stats_set_cmd(wmi_unified_t wmi_handle,
+				 const struct ll_stats_set_params *set_req);
 
-QDF_STATUS wmi_unified_process_ll_stats_get_cmd
-	(void *wmi_hdl, const struct ll_stats_get_params  *get_req,
-		 uint8_t addr[IEEE80211_ADDR_LEN]);
+/**
+ * wmi_unified_process_ll_stats_get_cmd() - link layer stats get request
+ * @wmi_handle: wmi handle
+ * @get_req: ll stats get request command params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_process_ll_stats_get_cmd(wmi_unified_t wmi_handle,
+				 const struct ll_stats_get_params *get_req);
+#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 /**
  * wmi_unified_congestion_request_cmd() - send request to fw to get CCA

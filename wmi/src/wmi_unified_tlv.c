@@ -4471,8 +4471,7 @@ static QDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
-		const struct ll_stats_clear_params *clear_req,
-		uint8_t addr[IEEE80211_ADDR_LEN])
+		const struct ll_stats_clear_params *clear_req)
 {
 	wmi_clear_link_stats_cmd_fixed_param *cmd;
 	int32_t len;
@@ -4496,18 +4495,18 @@ static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
 			       (wmi_clear_link_stats_cmd_fixed_param));
 
 	cmd->stop_stats_collection_req = clear_req->stop_req;
-	cmd->vdev_id = clear_req->sta_id;
+	cmd->vdev_id = clear_req->vdev_id;
 	cmd->stats_clear_req_mask = clear_req->stats_clear_mask;
 
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(addr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(clear_req->peer_macaddr.bytes,
 				   &cmd->peer_macaddr);
 
 	WMI_LOGD("LINK_LAYER_STATS - Clear Request Params");
-	WMI_LOGD("StopReq	 : %d", cmd->stop_stats_collection_req);
-	WMI_LOGD("Vdev Id	 : %d", cmd->vdev_id);
-	WMI_LOGD("Clear Stat Mask : %d", cmd->stats_clear_req_mask);
-	/* WMI_LOGD("Peer MAC Addr   : %pM",
-		 cmd->peer_macaddr); */
+	WMI_LOGD("StopReq: %d", cmd->stop_stats_collection_req);
+	WMI_LOGD("Vdev Id: %d", cmd->vdev_id);
+	WMI_LOGD("Clear Stat Mask: %d", cmd->stats_clear_req_mask);
+	WMI_LOGD("Peer MAC Addr: %pM", clear_req->peer_macaddr.bytes);
+
 	wmi_mtrace(WMI_CLEAR_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_CLEAR_LINK_STATS_CMDID);
@@ -4523,8 +4522,8 @@ static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
 
 /**
  * send_process_ll_stats_set_cmd_tlv() - link layer stats set request
- * @wmi_handle:       wmi handle
- * @setReq:  ll stats set request command params
+ * @wmi_handle: wmi handle
+ * @set_req: ll stats set request command params
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
@@ -4574,15 +4573,13 @@ static QDF_STATUS send_process_ll_stats_set_cmd_tlv(wmi_unified_t wmi_handle,
 
 /**
  * send_process_ll_stats_get_cmd_tlv() - link layer stats get request
- * @wmi_handle:wmi handle
- * @get_req:ll stats get request command params
- * @addr: mac address
+ * @wmi_handle: wmi handle
+ * @get_req: ll stats get request command params
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
-		 const struct ll_stats_get_params  *get_req,
-		 uint8_t addr[IEEE80211_ADDR_LEN])
+				const struct ll_stats_get_params  *get_req)
 {
 	wmi_request_link_stats_cmd_fixed_param *cmd;
 	int32_t len;
@@ -4607,16 +4604,16 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->request_id = get_req->req_id;
 	cmd->stats_type = get_req->param_id_mask;
-	cmd->vdev_id = get_req->sta_id;
+	cmd->vdev_id = get_req->vdev_id;
 
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(addr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_req->peer_macaddr.bytes,
 				   &cmd->peer_macaddr);
 
 	WMI_LOGD("LINK_LAYER_STATS - Get Request Params");
-	WMI_LOGD("Request ID      : %u", cmd->request_id);
-	WMI_LOGD("Stats Type      : %0x", cmd->stats_type);
-	WMI_LOGD("Vdev ID	 : %d", cmd->vdev_id);
-	WMI_LOGD("Peer MAC Addr   : %pM", addr);
+	WMI_LOGD("Request ID: %u", cmd->request_id);
+	WMI_LOGD("Stats Type: %0x", cmd->stats_type);
+	WMI_LOGD("Vdev ID: %d", cmd->vdev_id);
+	WMI_LOGD("Peer MAC Addr: %pM", get_req->peer_macaddr.bytes);
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,

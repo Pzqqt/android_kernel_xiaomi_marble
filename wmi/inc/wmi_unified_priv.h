@@ -660,21 +660,19 @@ QDF_STATUS (*send_ipa_offload_control_cmd)(wmi_unified_t wmi_handle,
 		struct ipa_uc_offload_control_params *ipa_offload);
 #endif
 
-QDF_STATUS (*send_process_ll_stats_clear_cmd)
-	   (wmi_unified_t wmi_handle,
-	   const struct ll_stats_clear_params *clear_req,
-	   uint8_t addr[IEEE80211_ADDR_LEN]);
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+QDF_STATUS (*send_process_ll_stats_clear_cmd)(wmi_unified_t wmi_handle,
+				const struct ll_stats_clear_params *clear_req);
 
-QDF_STATUS (*send_process_ll_stats_set_cmd)
-	(wmi_unified_t wmi_handle, const struct ll_stats_set_params *set_req);
+QDF_STATUS (*send_process_ll_stats_set_cmd)(wmi_unified_t wmi_handle,
+				const struct ll_stats_set_params *set_req);
 
-QDF_STATUS (*send_process_ll_stats_get_cmd)
-	(wmi_unified_t wmi_handle, const struct ll_stats_get_params  *get_req,
-		 uint8_t addr[IEEE80211_ADDR_LEN]);
-
+QDF_STATUS (*send_process_ll_stats_get_cmd)(wmi_unified_t wmi_handle,
+				const struct ll_stats_get_params *get_req);
+#endif
 
 QDF_STATUS (*send_congestion_cmd)(wmi_unified_t wmi_handle,
-			uint8_t vdev_id);
+				  uint8_t vdev_id);
 
 QDF_STATUS (*send_snr_request_cmd)(wmi_unified_t wmi_handle);
 

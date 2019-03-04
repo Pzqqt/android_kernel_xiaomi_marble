@@ -2428,27 +2428,27 @@ struct del_ts_params {
 /**
  * struct ll_stats_clear_params - ll stats clear parameter
  * @req_id: request id
- * @sta_id: sta id
+ * @vdev_id: vdev id
  * @stats_clear_mask: stats clear mask
  * @stop_req: stop request
+ * @peer_macaddr: MAC address of the peer for which stats are to be cleared
  */
 struct ll_stats_clear_params {
 	uint32_t req_id;
-	uint8_t sta_id;
+	uint8_t vdev_id;
 	uint32_t stats_clear_mask;
 	uint8_t stop_req;
+	struct qdf_mac_addr peer_macaddr;
 };
 
 /**
  * struct ll_stats_set_params - ll stats get parameter
  * @req_id: request id
- * @sta_id: sta id
- * @mpdu_size_threshold: mpdu sixe threshold
+ * @mpdu_size_threshold: mpdu size threshold
  * @aggressive_statistics_gathering: aggressive_statistics_gathering
  */
 struct ll_stats_set_params {
 	uint32_t req_id;
-	uint8_t sta_id;
 	uint32_t mpdu_size_threshold;
 	uint32_t aggressive_statistics_gathering;
 };
@@ -2456,13 +2456,15 @@ struct ll_stats_set_params {
 /**
  * struct ll_stats_get_params - ll stats parameter
  * @req_id: request id
- * @sta_id: sta id
+ * @vdev_id: vdev id
  * @param_id_mask: param is mask
+ * @peer_macaddr: MAC address of the peer for which stats are desired
  */
 struct ll_stats_get_params {
 	uint32_t req_id;
-	uint8_t sta_id;
+	uint8_t vdev_id;
 	uint32_t param_id_mask;
+	struct qdf_mac_addr peer_macaddr;
 };
 
 
