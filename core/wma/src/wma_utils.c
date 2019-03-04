@@ -2045,11 +2045,12 @@ QDF_STATUS wma_process_ll_stats_clear_req(tp_wma_handle wma,
 	}
 
 	cmd.stop_req = clearReq->stopReq;
-	cmd.sta_id = clearReq->staId;
+	cmd.vdev_id = clearReq->staId;
 	cmd.stats_clear_mask = clearReq->statsClearReqMask;
-
-	ret = wmi_unified_process_ll_stats_clear_cmd(wma->wmi_handle, &cmd,
-				   wma->interfaces[clearReq->staId].addr);
+	qdf_mem_copy(cmd.peer_macaddr.bytes,
+		     wma->interfaces[clearReq->staId].addr,
+		     QDF_MAC_ADDR_SIZE);
+	ret = wmi_unified_process_ll_stats_clear_cmd(wma->wmi_handle, &cmd);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send clear link stats req", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2116,10 +2117,12 @@ QDF_STATUS wma_process_ll_stats_get_req(tp_wma_handle wma,
 
 	cmd.req_id = getReq->reqId;
 	cmd.param_id_mask = getReq->paramIdMask;
-	cmd.sta_id = getReq->staId;
+	cmd.vdev_id = getReq->staId;
+	qdf_mem_copy(cmd.peer_macaddr.bytes,
+		     wma->interfaces[getReq->staId].addr,
+		     QDF_MAC_ADDR_SIZE);
 
-	ret = wmi_unified_process_ll_stats_get_cmd(wma->wmi_handle, &cmd,
-				   wma->interfaces[getReq->staId].addr);
+	ret = wmi_unified_process_ll_stats_get_cmd(wma->wmi_handle, &cmd);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send get link stats request", __func__);
 		return QDF_STATUS_E_FAILURE;
