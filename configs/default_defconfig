@@ -121,6 +121,9 @@ CONFIG_WLAN_FEATURE_SARV1_TO_SARV2 := n
 #Flag to enable get firmware state
 CONFIG_QCACLD_FEATURE_FW_STATE := y
 
+#Flag to enable set coex configuration
+CONFIG_QCACLD_FEATURE_COEX_CONFIG := y
+
 ifeq ($(CONFIG_ARCH_MSM8998), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 endif
