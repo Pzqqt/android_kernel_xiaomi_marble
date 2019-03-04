@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,8 +21,8 @@
  * QCA driver framework (QDF) virtual filesystem management APIs
  */
 
-#if !defined(__QDF_VFS_H)
-#define __QDF_VFS_H
+#if !defined(__I_QDF_VFS_H)
+#define __I_QDF_VFS_H
 
 /* Include Files */
 #include <qdf_types.h>
@@ -31,9 +31,8 @@ struct qdf_vfs_attr;
 struct qdf_vf_bin_attr;
 struct qdf_dev_obj;
 
-#ifdef ENHANCED_OS_ABSTRACTION
 /**
- * qdf_vfs_set_file_attributes() - set file attributes
+ * __qdf_vfs_set_file_attributes() - set file attributes
  * @devobj: Device object
  * @attr: File attribute
  *
@@ -41,12 +40,20 @@ struct qdf_dev_obj;
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_vfs_set_file_attributes(struct qdf_dev_obj *devobj,
-			    struct qdf_vfs_attr *attr);
+static inline QDF_STATUS
+__qdf_vfs_set_file_attributes(struct qdf_dev_obj *devobj,
+			      struct qdf_vfs_attr *attr)
+{
+	int ret;
+
+	ret = sysfs_create_group((struct kobject *)devobj,
+				 (struct attribute_group *)attr);
+
+	return qdf_status_from_os_return(ret);
+}
 
 /**
- * qdf_vfs_clear_file_attributes() - clear file attributes
+ * __qdf_vfs_clear_file_attributes() - clear file attributes
  * @devobj: Device object
  * @attr: File attribute
  *
@@ -54,12 +61,18 @@ qdf_vfs_set_file_attributes(struct qdf_dev_obj *devobj,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_vfs_clear_file_attributes(struct qdf_dev_obj *devobj,
-			      struct qdf_vfs_attr *attr);
+static inline QDF_STATUS
+__qdf_vfs_clear_file_attributes(struct qdf_dev_obj *devobj,
+				struct qdf_vfs_attr *attr)
+{
+	sysfs_remove_group((struct kobject *)devobj,
+			   (struct attribute_group *)attr);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
- * qdf_vfs_create_binfile() - create binfile
+ * __qdf_vfs_create_binfile() - create binfile
  * @devobj: Device object
  * @attr: File attribute
  *
@@ -67,12 +80,20 @@ qdf_vfs_clear_file_attributes(struct qdf_dev_obj *devobj,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_vfs_create_binfile(struct qdf_dev_obj *devobj,
-		       struct qdf_vf_bin_attr *attr);
+statuc inline QDF_STATUS
+__qdf_vfs_create_binfile(struct qdf_dev_obj *devobj,
+			 struct qdf_vf_bin_attr *attr)
+{
+	int ret;
+
+	ret = sysfs_create_bin_file((struct kobject *)devobj,
+				    (struct bin_attribute *)attr);
+
+	return qdf_status_from_os_return(ret);
+}
 
 /**
- * qdf_vfs_delete_binfile() - delete binfile
+ * __qdf_vfs_delete_binfile() - delete binfile
  * @devobj: Device object
  * @attr: File attribute
  *
@@ -80,36 +101,13 @@ qdf_vfs_create_binfile(struct qdf_dev_obj *devobj,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_vfs_delete_binfile(struct qdf_dev_obj *devobj,
-		       struct qdf_vf_bin_attr *attr);
-#else
 static inline QDF_STATUS
-qdf_vfs_set_file_attributes(struct qdf_dev_obj *devobj,
-			    struct qdf_vfs_attr *attr)
+__qdf_vfs_delete_binfile(struct qdf_dev_obj *devobj,
+			 struct qdf_vf_bin_attr *attr)
 {
-	return __qdf_vfs_set_file_attributes(devobj, attr);
-}
+	sysfs_remove_bin_file((struct kobject *)devobj,
+			      (struct bin_attribute *)attr);
 
-static inline QDF_STATUS
-qdf_vfs_clear_file_attributes(struct qdf_dev_obj *devobj,
-			      struct qdf_vfs_attr *attr)
-{
-	return __qdf_vfs_clear_file_attributes(devobj, attr);
+	return QDF_STATUS_SUCCESS;
 }
-
-statuc inline QDF_STATUS
-qdf_vfs_create_binfile(struct qdf_dev_obj *devobj,
-		       struct qdf_vf_bin_attr *attr)
-{
-	return __qdf_vfs_create_binfile(devobj, attr);
-}
-
-static inline QDF_STATUS
-qdf_vfs_delete_binfile(struct qdf_dev_obj *devobj,
-		       struct qdf_vf_bin_attr *attr)
-{
-	return __qdf_vfs_delete_binfile(devobj, attr);
-}
-#endif
-#endif /* __QDF_VFS_H */
+#endif /* __I_QDF_VFS_H */

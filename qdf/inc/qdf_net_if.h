@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,9 +26,11 @@
 
 /* Include Files */
 #include <qdf_types.h>
+#include <i_qdf_net_if.h>
 
 struct qdf_net_if;
 
+#ifdef ENHANCED_OS_ABSTRACTION
 /**
  * qdf_net_if_create_dummy_if() - create dummy interface
  * @nif: interface handle
@@ -39,4 +41,11 @@ struct qdf_net_if;
  */
 QDF_STATUS
 qdf_net_if_create_dummy_if(struct qdf_net_if *nif);
+#else
+static inline QDF_STATUS
+qdf_net_if_create_dummy_if(struct qdf_net_if *nif)
+{
+	return __qdf_net_if_create_dummy_if(nif);
+}
 #endif
+#endif /* __QDF_NET_IF_H */

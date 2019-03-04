@@ -18,6 +18,7 @@ INCS += -I$(WLAN_TOP)/../../include
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/inc
 INCS += -I$(WLAN_TOP)/cmn_dev/qal/inc
 INCS += -I$(WLAN_TOP)/component_dev/qal/inc
+INCS += -I$(WLAN_TOP)/cmn_dev/qal/linux/src
 INCS += -I$(WLAN_TOP)/cmn_dev/qdf/linux/src
 INCS += -I$(obj)/$(HOST_CMN_CONVG_PTT)/inc \
         -I$(obj)/$(HOST_CMN_CONVG_NLINK)/inc \
@@ -58,8 +59,8 @@ src/qdf_str.o \
 src/qdf_types.o \
 src/qdf_platform.o \
 $(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
-$(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_devcfg.o \
-$(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_vbus_dev.o \
+$(HOST_QAL_SRC)/linux/src/qal_devcfg.o \
+$(HOST_QAL_SRC)/linux/src/qal_vbus_dev.o \
 $(HOST_QAL_SRC)/linux/src/qal_streamfs.o \
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \

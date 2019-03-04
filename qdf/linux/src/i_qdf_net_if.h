@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,33 +17,35 @@
  */
 
 /**
- * DOC: qal_devcfg
- * QCA abstraction layer (QAL) device config APIs
+ * DOC: qdf_net_if
+ * QCA driver framework (QDF) network interface management APIs
  */
 
-#if !defined(__QAL_DEVCFG_H)
-#define __QAL_DEVCFG_H
+#if !defined(__I_QDF_NET_IF_H)
+#define __I_QDF_NET_IF_H
 
 /* Include Files */
 #include <qdf_types.h>
-#include <i_qal_devcfg.h>
+#include <qdf_util.h>
+#include <linux/netdevice.h>
 
-#ifdef ENHANCED_OS_ABSTRACTION
+struct qdf_net_if;
+
 /**
- * qal_devcfg_send_response() - send devcfg response
- * @cfgbuf: response buffer
+ * __qdf_net_if_create_dummy_if() - create dummy interface
+ * @nif: interface handle
  *
- * This function will send the response for a config request
+ * This function will create a dummy network interface
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qal_devcfg_send_response(qdf_nbuf_t cfgbuf);
-#else
 static inline QDF_STATUS
-qal_devcfg_send_response(qdf_nbuf_t cfgbuf)
+__qdf_net_if_create_dummy_if(struct qdf_net_if *nif)
 {
-	return __qal_devcfg_send_response(cfgbuf);
+	int ret;
+
+	ret = init_dummy_netdev((struct net_device *)nif);
+
+	return qdf_status_from_os_return(ret);
 }
-#endif
-#endif /* __QAL_DEVCFG_H */
+#endif /*__I_QDF_NET_IF_H */

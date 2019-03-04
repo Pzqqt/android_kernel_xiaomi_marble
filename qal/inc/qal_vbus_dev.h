@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,11 +21,12 @@
  * QCA abstraction layer (QAL) virtual bus management APIs
  */
 
-#if !defined(__QDF_VBUS_DEV_H)
-#define __QDF_VBUS_DEV_H
+#if !defined(__QAL_VBUS_DEV_H)
+#define __QAL_VBUS_DEV_H
 
 /* Include Files */
 #include <qdf_types.h>
+#include <i_qal_vbus_dev.h>
 
 struct qdf_vbus_resource;
 struct qdf_vbus_rstctl;
@@ -33,6 +34,7 @@ struct qdf_dev_clk;
 struct qdf_pfm_hndl;
 struct qdf_pfm_drv;
 
+#ifdef ENHANCED_OS_ABSTRACTION
 /**
  * qal_vbus_get_iorsc() - acquire io resource
  * @devnum: Device Number
@@ -182,4 +184,83 @@ qal_vbus_register_driver(struct qdf_pfm_drv *pfdev);
  */
 QDF_STATUS
 qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev);
+#else
+static inline QDF_STATUS
+qal_vbus_get_iorsc(int devnum, uint32_t flag, char *devname)
+{
+	return __qal_vbus_get_iorsc(devnum, flag, devname);
+}
+
+static inline QDF_STATUS
+qal_vbus_release_iorsc(int devnum)
+{
+	return __qal_vbus_release_iorsc(devnum);
+}
+
+static inline QDF_STATUS
+qal_vbus_enable_devclk(struct qdf_dev_clk *clk)
+{
+	return __qal_vbus_enable_devclk(clk);
+}
+
+static inline QDF_STATUS
+qal_vbus_disable_devclk(struct qdf_dev_clk *clk)
+{
+	return __qal_vbus_disable_devclk(clk);
+}
+
+static inline QDF_STATUS
+qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
+			struct qdf_vbus_rstctl **rstctl)
+{
+	return __qal_vbus_get_dev_rstctl(pfhndl, state, rstctl);
+}
+
+static inline QDF_STATUS
+qal_vbus_release_dev_rstctl(struct qdf_pfm_hndl *pfhndl,
+			    struct qdf_vbus_rstctl *rstctl)
+{
+	return __qal_vbus_release_dev_rstctl(pfhndl, rstctl);
+}
+
+static inline QDF_STATUS
+qal_vbus_activate_dev_rstctl(struct qdf_pfm_hndl *pfhndl,
+			     struct qdf_vbus_rstctl *rstctl)
+{
+	return __qal_vbus_activate_dev_rstctl(pfhndl, rstctl);
+}
+
+static inline QDF_STATUS
+qal_vbus_deactivate_dev_rstctl(struct qdf_pfm_hndl *pfhndl,
+			       struct qdf_vbus_rstctl *rstctl)
+{
+	return __qal_vbus_deactivate_dev_rstctl(pfhndl, rstctl);
+}
+
+static inline QDF_STATUS
+qal_vbus_get_resource(struct qdf_pfm_hndl *pfhndl,
+		      struct qdf_vbus_resource **rsc, uint32_t restype,
+		      uint32_t residx)
+{
+	return __qal_vbus_get_resource(pfhndl, rsc, restype, residx);
+}
+
+static inline QDF_STATUS
+qal_vbus_get_irq(struct qdf_pfm_hndl *pfhndl, const char *str, int *irq)
+{
+	return __qal_vbus_get_irq(pfhndl, str, irq);
+}
+
+static inline QDF_STATUS
+qal_vbus_register_driver(struct qdf_pfm_drv *pfdev)
+{
+	return __qal_vbus_register_driver(pfdev);
+}
+
+static inline QDF_STATUS
+qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev)
+{
+	return __qal_vbus_deregister_driver(pfdev);
+}
 #endif
+#endif  /* __QAL_VBUS_DEV_H */

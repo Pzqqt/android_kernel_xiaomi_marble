@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,20 +21,20 @@
  * QCA driver framework (QDF) device management APIs
  */
 
-#if !defined(__QDF_DEV_H)
-#define __QDF_DEV_H
+#if !defined(__I_QDF_DEV_H)
+#define __I_QDF_DEV_H
 
 /* Include Files */
 #include <qdf_types.h>
-#include "i_qdf_dev.h"
+#include "qdf_util.h"
+#include <linux/irq.h>
 
 struct qdf_cpu_mask;
 struct qdf_devm;
 struct qdf_dev;
 
-#ifdef ENHANCED_OS_ABSTRACTION
 /**
- * qdf_dev_alloc_mem() - allocate memory
+ * __qdf_dev_alloc_mem() - allocate memory
  * @qdfdev: Device handle
  * @mrptr: Pointer to the allocated memory
  * @reqsize: Allocation request in bytes
@@ -44,12 +44,20 @@ struct qdf_dev;
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
-		  uint32_t reqsize, uint32_t mask);
+static inline QDF_STATUS
+__qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
+		    uint32_t reqsize, uint32_t mask)
+{
+	*mrptr = devm_kzalloc((struct device *)qdfdev, reqsize, mask);
+
+	if (!*mrptr)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
- * qdf_dev_release_mem() - release memory
+ * __qdf_dev_release_mem() - release memory
  * @qdfdev: Device handle
  * @mrptr: Pointer to the allocated memory
  *
@@ -57,25 +65,35 @@ qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_dev_release_mem(struct qdf_dev *qdfdev, struct qdf_devm *mrptr);
+static inline QDF_STATUS
+__qdf_dev_release_mem(struct qdf_dev *qdfdev, struct qdf_devm *mrptr)
+{
+	devm_kfree((struct device *)qdfdev, mrptr);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
- * qdf_dev_modify_irq() - modify irq
+ * __qdf_dev_modify_irq() - modify irq
  * @irnum: irq number
  * @cmask: Bitmap to be cleared for the property mask
  * @smask: Bitmap to be set for the property mask
  *
- * This function will acquire memory to be associated with a device
+ * This function will modify the properties of the irq associated with a device
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_dev_modify_irq_status(uint32_t irnum, unsigned long cmask,
-			  unsigned long smask);
+static inline QDF_STATUS
+__qdf_dev_modify_irq_status(uint32_t irnum, unsigned long cmask,
+			    unsigned long smask)
+{
+	irq_modify_status(irnum, cmask, smask);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
- * qdf_dev_set_irq_affinity() - set irq affinity
+ * __qdf_dev_set_irq_affinity() - set irq affinity
  * @irnum: irq number
  * @cpmask: cpu affinity bitmap
  *
@@ -83,33 +101,13 @@ qdf_dev_modify_irq_status(uint32_t irnum, unsigned long cmask,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-QDF_STATUS
-qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask);
-#else
 static inline QDF_STATUS
-qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
-		  uint32_t reqsize, uint32_t mask)
+__qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask)
 {
-	return __qdf_dev_alloc_mem(qdfdev, mrptr, reqsize, mask);
-}
+	int ret;
 
-static inline QDF_STATUS
-qdf_dev_release_mem(struct qdf_dev *qdfdev, struct qdf_devm *mrptr)
-{
-	return __qdf_dev_release_mem(qdfdev, mrptr);
-}
+	ret = irq_set_affinity_hint(irnum, (struct cpumask *)cpmask);
 
-static inline QDF_STATUS
-qdf_dev_modify_irq_status(uint32_t irnum, unsigned long cmask,
-			  unsigned long smask)
-{
-	return __qdf_dev_modify_irq_status(irnum, cmask, smask);
+	return qdf_status_from_os_return(ret);
 }
-
-static inline QDF_STATUS
-qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask)
-{
-	return __qdf_dev_set_irq_affinity(irnum, cpmask);
-}
-#endif
-#endif /* __QDF_DEV_H */
+#endif /* __I_QDF_DEV_H */
