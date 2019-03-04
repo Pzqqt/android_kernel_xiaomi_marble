@@ -948,13 +948,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	struct csr_roam_profile *roam_profile = session->pCurRoamProfile;
 	int init_ft_flag = false;
 
-	/*
-	 * Initialize the occupied list ONLY if we are
-	 * transitioning from INIT state to CONNECTED state.
-	 */
-	if (eCSR_NEIGHBOR_ROAM_STATE_INIT ==
-		ngbr_roam_info->neighborRoamState)
-		csr_init_occupied_channels_list(mac, session_id);
+	csr_init_occupied_channels_list(mac, session_id);
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 
