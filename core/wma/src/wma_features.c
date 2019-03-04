@@ -69,10 +69,6 @@
 #endif
 #include <wlan_crypto_global_api.h>
 
-#ifndef ARRAY_LENGTH
-#define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
-#endif
-
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
  * command. The value is 0x0 for the VDEV SET IE WMI commands from mobile
