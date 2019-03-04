@@ -113,6 +113,9 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_ul_ru26_allowed))
 		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_OBSS_NBW_RU);
 
+	if (wmi_service_enabled(wmi_handle, wmi_service_infra_mbssid))
+		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_MBSS_IE);
+
 	target_if_debug(" TT support %d, Wide BW Scan %d, SW cal %d",
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_TT_SUPPORT),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WIDEBAND_SCAN),

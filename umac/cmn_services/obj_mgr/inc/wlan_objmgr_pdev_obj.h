@@ -84,6 +84,8 @@
 #define WLAN_PDEV_F_CHAN_CONCURRENCY        0x08000000
 /* Multivdev restart enabled */
 #define WLAN_PDEV_F_MULTIVDEV_RESTART       0x10000000
+/* MBSS IE enable */
+#define WLAN_PDEV_F_MBSS_IE_ENABLE          0x20000000
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */
