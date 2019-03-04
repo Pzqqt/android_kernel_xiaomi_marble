@@ -499,6 +499,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
 	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT = 171,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT = 174,
+	QCA_NL80211_VENDOR_SUBCMD_COEX_CONFIG = 175,
 	QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE = 177,
 	QCA_NL80211_VENDOR_SUBCMD_PEER_STATS_CACHE_FLUSH = 178,
 	QCA_NL80211_VENDOR_SUBCMD_MPTA_HELPER_CONFIG = 179,
@@ -6674,6 +6675,149 @@ enum qca_wlan_vendor_attr_nan_params {
 };
 
 /**
+ * enum qca_coex_config_profiles - This enum defines different types of
+ * traffic streams that can be prioritized one over the other during coex
+ * scenarios.
+ * The types defined in this enum are categorized in the below manner.
+ * 0 - 31 values corresponds to WLAN
+ * 32 - 63 values corresponds to BT
+ * 64 - 95 values corresponds to Zigbee
+ * @QCA_WIFI_STA_DISCOVERY: Prioritize discovery frames for WLAN STA
+ * @QCA_WIFI_STA_CONNECTION: Prioritize connection frames for WLAN STA
+ * @QCA_WIFI_STA_CLASS_3_MGMT: Prioritize class 3 mgmt frames for WLAN STA
+ * @QCA_WIFI_STA_DATA : Prioritize data frames for WLAN STA
+ * @QCA_WIFI_STA_ALL: Priritize all frames for WLAN STA
+ * @QCA_WIFI_SAP_DISCOVERY: Prioritize discovery frames for WLAN SAP
+ * @QCA_WIFI_SAP_CONNECTION: Prioritize connection frames for WLAN SAP
+ * @QCA_WIFI_SAP_CLASS_3_MGMT: Prioritize class 3 mgmt frames for WLAN SAP
+ * @QCA_WIFI_SAP_DATA: Prioritize data frames for WLAN SAP
+ * @QCA_WIFI_SAP_ALL: Prioritize all frames for WLAN SAP
+ * @QCA_BT_A2DP: Prioritize BT A2DP
+ * @QCA_BT_BLE: Prioritize BT BLE
+ * @QCA_BT_SCO: Prioritize BT SCO
+ * @QCA_ZB_LOW: Prioritize Zigbee Low
+ * @QCA_ZB_HIGH: Prioritize Zigbee High
+ */
+enum qca_coex_config_profiles {
+	/* 0 - 31 corresponds to WLAN */
+	QCA_WIFI_STA_DISCOVERY = 0,
+	QCA_WIFI_STA_CONNECTION = 1,
+	QCA_WIFI_STA_CLASS_3_MGMT = 2,
+	QCA_WIFI_STA_DATA = 3,
+	QCA_WIFI_STA_ALL = 4,
+	QCA_WIFI_SAP_DISCOVERY = 5,
+	QCA_WIFI_SAP_CONNECTION = 6,
+	QCA_WIFI_SAP_CLASS_3_MGMT = 7,
+	QCA_WIFI_SAP_DATA = 8,
+	QCA_WIFI_SAP_ALL = 9,
+	QCA_WIFI_CASE_MAX = 31,
+	/* 32 - 63 corresponds to BT */
+	QCA_BT_A2DP = 32,
+	QCA_BT_BLE = 33,
+	QCA_BT_SCO = 34,
+	QCA_BT_CASE_MAX = 63,
+	/* 64 - 95 corresponds to Zigbee */
+	QCA_ZB_LOW = 64,
+	QCA_ZB_HIGH = 65,
+	QCA_ZB_CASE_MAX = 95,
+	/* 0xff is default value if the u8 profile value is not set. */
+	QCA_PROFILE_DEFAULT_VALUE = 255
+};
+
+/**
+ * enum qca_vendor_attr_coex_config_types - Coex configurations types.
+ * This enum defines the valid set of values of coex configuration types. These
+ * values may used by attribute
+ * %QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_CONFIG_TYPE.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_COEX_RESET: Reset all the
+ *	weights to default values.
+ * @QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_COEX_START: Start to config
+ *	weights with configurability value.
+ */
+enum qca_vendor_attr_coex_config_types {
+	QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_COEX_RESET = 1,
+	QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_COEX_START = 2,
+	QCA_WLAN_VENDOR_ATTR_COEX_CONFIG_TYPE_MAX
+};
+
+/**
+ * enum qca_vendor_attr_coex_config_three_way - Specifies vendor coex config
+ * attributes
+ * Attributes for data used by
+ * QCA_NL80211_VENDOR_SUBCMD_COEX_CONFIG
+ *
+ * QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_CONFIG_TYPE: u32 attribute.
+ * Indicate config type.
+ * the config types are 32-bit values from qca_vendor_attr_coex_config_types
+ *
+ * @QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_1: u32 attribute.
+ *	Indicate the Priority 1 profiles.
+ *	the profiles are 8-bit values from enum qca_coex_config_profiles
+ *	In same priority level, maximum to 4 profiles can be set here.
+ * @QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_2: u32 attribute.
+ *	Indicate the Priority 2 profiles.
+ *	the profiles are 8-bit values from enum qca_coex_config_profiles
+ *	In same priority level, maximum to 4 profiles can be set here.
+ * @QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_3: u32 attribute.
+ *	Indicate the Priority 3 profiles.
+ *	the profiles are 8-bit values from enum qca_coex_config_profiles
+ *	In same priority level, maximum to 4 profiles can be set here.
+ * @QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_4: u32 attribute.
+ *	Indicate the Priority 4 profiles.
+ *	the profiles are 8-bit values from enum qca_coex_config_profiles
+ *	In same priority level, maximum to 4 profiles can be set here.
+ * NOTE:
+ * limitations for QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_x priority
+ * arrangement:
+ *	1: In the same u32 attribute(priority x), the profiles enum values own
+ *	same priority level.
+ *	2: 0xff is default value if the u8 profile value is not set.
+ *	3: max to 4 rules/profiles in same priority level.
+ *	4: max to 4 priority level (priority 1 - priority 4)
+ *	5: one priority level only supports one scenario from WLAN/BT/ZB,
+ *	hybrid rules not support.
+ *	6: if WMI_COEX_CONFIG_THREE_WAY_COEX_RESET called, priority x will
+ *	remain blank to reset all parameters.
+ * For example:
+ *
+ *	If the attributes as follow:
+ *	priority 1:
+ *	------------------------------------
+ *	|  0xff  |    0   |   1   |    2   |
+ *	------------------------------------
+ *	priority 2:
+ *	-------------------------------------
+ *	|  0xff  |  0xff  |  0xff  |   32   |
+ *	-------------------------------------
+ *	priority 3:
+ *	-------------------------------------
+ *	|  0xff  |  0xff  |  0xff  |   65   |
+ *	-------------------------------------
+ *	then it means:
+ *	1: WIFI_STA_DISCOVERY, WIFI_STA_CLASS_3_MGMT and WIFI_STA_CONNECTION
+ *		owns same priority level.
+ *	2: WIFI_STA_DISCOVERY, WIFI_STA_CLASS_3_MGMT and WIFI_STA_CONNECTION
+ *		has priority over BT_A2DP and ZB_HIGH.
+ *	3: BT_A2DP has priority over ZB_HIGH.
+ */
+
+enum qca_vendor_attr_coex_config_three_way {
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_INVALID = 0,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_CONFIG_TYPE = 1,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_1 = 2,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_2 = 3,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_3 = 4,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_PRIORITY_4 = 5,
+
+	/* Keep last */
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_AFTER_LAST,
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX =
+	QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_AFTER_LAST - 1,
+};
+
+/**
  * enum qca_vendor_attr_peer_stats_cache_type - Represents peer stats cache type
  * This enum defines the valid set of values of peer stats cache types. These
  * values are used by attribute
@@ -6811,5 +6955,4 @@ enum qca_mpta_helper_vendor_attr {
 	QCA_MPTA_HELPER_VENDOR_ATTR_MAX =
 		QCA_MPTA_HELPER_VENDOR_ATTR_AFTER_LAST - 1
 };
-
 #endif
