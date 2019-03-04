@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017, 2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MSM_PCM_H
@@ -115,6 +115,8 @@ struct msm_plat_data {
 	int perf_mode;
 	struct snd_pcm *pcm;
 	struct msm_pcm_ch_map *ch_map[MSM_FRONTEND_DAI_MAX];
+	struct snd_pcm *pcm_device[MSM_FRONTEND_DAI_MM_SIZE];
+	struct msm_pcm_channel_mixer *chmixer_pspd[MSM_FRONTEND_DAI_MM_SIZE][2];
 };
 
 struct msm_pcm_ch_map {
