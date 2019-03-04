@@ -142,7 +142,6 @@ extern QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
 		struct pe_session *pe_session);
 extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 		uint8_t iniTxPower);
-uint8_t lim_is_addr_bc(tSirMacAddr);
 uint8_t lim_is_group_addr(tSirMacAddr);
 
 /* AID pool management functions */

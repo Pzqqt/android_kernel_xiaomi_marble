@@ -4231,7 +4231,7 @@ static void __lim_process_send_disassoc_frame(struct mac_context *mac_ctx,
 	}
 
 	if ((lim_is_group_addr(req->peer_mac) &&
-	     !lim_is_addr_bc(req->peer_mac))) {
+	     !QDF_IS_ADDR_BROADCAST(req->peer_mac))) {
 		pe_err("received invalid SME_DISASSOC_REQ message");
 		return;
 	}

@@ -346,7 +346,7 @@ lim_is_bss_descr_valid_in_sme_req_message(struct mac_context *mac,
 {
 	uint8_t valid = true;
 
-	if (lim_is_addr_bc(pBssDescr->bssId) || !pBssDescr->channelId) {
+	if (QDF_IS_ADDR_BROADCAST(pBssDescr->bssId) || !pBssDescr->channelId) {
 		valid = false;
 		goto end;
 	}

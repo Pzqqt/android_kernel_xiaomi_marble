@@ -84,7 +84,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (lim_is_group_addr(pHdr->da) && !lim_is_addr_bc(pHdr->da)) {
+	if (lim_is_group_addr(pHdr->da) && !QDF_IS_ADDR_BROADCAST(pHdr->da)) {
 		/* Received Disassoc frame for a MC address */
 		/* Log error and ignore it */
 		pe_err("received Disassoc frame for a MC address");

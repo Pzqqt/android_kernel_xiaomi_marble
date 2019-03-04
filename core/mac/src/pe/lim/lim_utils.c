@@ -641,39 +641,6 @@ void lim_cleanup_mlm(struct mac_context *mac_ctx)
 } /*** end lim_cleanup_mlm() ***/
 
 /**
- * lim_is_addr_bc()
- *
- ***FUNCTION:
- * This function is called in various places within LIM code
- * to determine whether passed MAC address is a broadcast or not
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param macAddr  Indicates MAC address that need to be determined
- *                 whether it is Broadcast address or not
- *
- * @return true if passed address is Broadcast address else false
- */
-
-uint8_t lim_is_addr_bc(tSirMacAddr macAddr)
-{
-	int i;
-
-	for (i = 0; i < 6; i++) {
-		if ((macAddr[i] & 0xFF) != 0xFF)
-			return false;
-	}
-
-	return true;
-} /****** end lim_is_addr_bc() ******/
-
-/**
  * lim_is_group_addr()
  *
  ***FUNCTION:
@@ -5634,7 +5601,7 @@ bool lim_validate_received_frame_a1_addr(struct mac_context *mac_ctx,
 		/* let main routine handle it */
 		return true;
 	}
-	if (lim_is_group_addr(a1) || lim_is_addr_bc(a1)) {
+	if (lim_is_group_addr(a1) || QDF_IS_ADDR_BROADCAST(a1)) {
 		/* just for fail safe, don't handle MC/BC a1 in this routine */
 		return true;
 	}

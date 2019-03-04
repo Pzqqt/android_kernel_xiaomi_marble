@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,7 +103,7 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (lim_is_group_addr(pHdr->da) && !lim_is_addr_bc(pHdr->da)) {
+	if (lim_is_group_addr(pHdr->da) && !QDF_IS_ADDR_BROADCAST(pHdr->da)) {
 		/* Received Deauth frame for a MC address */
 		/* Log error and ignore it */
 		pe_debug("received Deauth frame for a MC address");
