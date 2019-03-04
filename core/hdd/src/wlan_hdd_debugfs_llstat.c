@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,8 +23,9 @@
  * debugfs with Link Layer statistics
  */
 
-#include <wlan_hdd_debugfs_llstat.h>
 #include <cds_sched.h>
+#include "osif_sync.h"
+#include <wlan_hdd_debugfs_llstat.h>
 #include <wlan_hdd_stats.h>
 #include <wma_api.h>
 
@@ -357,31 +358,31 @@ static ssize_t hdd_debugfs_stats_update(char __user *buf, size_t count,
 
 /**
  * __wlan_hdd_read_ll_stats_debugfs() - API to collect LL stats from FW
- * @file: file pointer
+ * @net_dev: net_device context used to register the debugfs file
  * @buf: buffer
  * @count: count
  * @pos: position pointer
  *
  * Return: Number of bytes read on success, error number otherwise
  */
-static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
-			char __user *buf, size_t count, loff_t *pos)
+static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct net_device *net_dev,
+						char __user *buf, size_t count,
+						loff_t *pos)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
-	ssize_t ret = 0;
+	ssize_t ret;
 
 	hdd_enter();
 
-	adapter = (struct hdd_adapter *)file->private_data;
-	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	/* All the events are received and buffer is populated */
@@ -389,8 +390,8 @@ static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
 	hdd_info("%zu characters written into debugfs", ret);
 
 	hdd_exit();
-	return ret;
 
+	return ret;
 }
 
 /**
@@ -403,38 +404,38 @@ static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
  * Return: Number of bytes read on success, error number otherwise
  */
 static ssize_t wlan_hdd_read_ll_stats_debugfs(struct file *file,
-		char __user *buf,
-		size_t count, loff_t *pos)
+					      char __user *buf, size_t count,
+					      loff_t *pos)
 {
-	int ret;
+	struct net_device *net_dev = file_inode(file)->i_private;
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_read_ll_stats_debugfs(file, buf, count, pos);
-	cds_ssr_unprotect(__func__);
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
 
-	return ret;
+	err_size = __wlan_hdd_read_ll_stats_debugfs(net_dev, buf, count, pos);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
 }
 
 /**
  * __wlan_hdd_open_ll_stats_debugfs() - Function to save private on open
- * @inode: Pointer to inode structure
- * @file: file pointer
+ * @net_dev: net_device context used to register the debugfs file
  *
- * Return: zero
+ * Return: Errno
  */
-static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
-					    struct file *file)
+static int __wlan_hdd_open_ll_stats_debugfs(struct net_device *net_dev)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
 	int errno;
 
 	hdd_enter();
 
-	if (inode->i_private)
-		file->private_data = inode->i_private;
-
-	adapter = (struct hdd_adapter *)file->private_data;
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		return errno;
@@ -467,57 +468,58 @@ free_buf:
 
 /**
  * wlan_hdd_open_ll_stats_debugfs() - SSR wrapper function to save private
- *                                    on open
+ *	on open
  * @inode: Pointer to inode structure
  * @file: file pointer
  *
- * Return: zero
+ * Return: Errno
  */
 static int wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 					  struct file *file)
 {
-	int ret;
+	struct net_device *net_dev = inode->i_private;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_open_ll_stats_debugfs(inode, file);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_open_ll_stats_debugfs(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
  * __wlan_hdd_release_ll_stats_debugfs() - Function to save private on release
- * @inode: Pointer to inode structure
- * @file: file pointer
+ * @net_dev: net_device context used to register the debugfs file
  *
- * Return: zero
+ * Return: Errno
  */
-static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
-					    struct file *file)
+static int __wlan_hdd_release_ll_stats_debugfs(struct net_device *net_dev)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
 	hdd_enter();
 
-	if (inode->i_private)
-		file->private_data = inode->i_private;
-
-	adapter = (struct hdd_adapter *)file->private_data;
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	wlan_hdd_llstats_free_buf();
 
 	hdd_exit();
+
 	return 0;
 }
 
@@ -527,18 +529,24 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
  * @inode: Pointer to inode structure
  * @file: file pointer
  *
- * Return: zero
+ * Return: Errno
  */
 static int wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
-					  struct file *file)
+					     struct file *file)
 {
-	int ret;
+	struct net_device *net_dev = file_inode(file)->i_private;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_release_ll_stats_debugfs(inode, file);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_release_ll_stats_debugfs(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 static const struct file_operations fops_ll_stats_debugfs = {
@@ -552,7 +560,7 @@ static const struct file_operations fops_ll_stats_debugfs = {
 int wlan_hdd_create_ll_stats_file(struct hdd_adapter *adapter)
 {
 	if (!debugfs_create_file("ll_stats", 0444, adapter->debugfs_phy,
-				 adapter, &fops_ll_stats_debugfs))
+				 adapter->dev, &fops_ll_stats_debugfs))
 		return -EINVAL;
 
 	return 0;
