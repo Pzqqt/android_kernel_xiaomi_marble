@@ -237,6 +237,7 @@ struct vdev_mlme_mgmt_generic {
 	uint8_t nss_2g;
 	uint8_t nss_5g;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	uint32_t phy_mode;
 };
 
 /**

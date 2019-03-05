@@ -92,10 +92,8 @@ static QDF_STATUS vdev_mgr_start_param_update(
 					struct vdev_mlme_obj *mlme_obj,
 					struct vdev_start_params *param)
 {
-	struct wlan_channel *bss_chan;
+	struct wlan_channel *des_chan;
 	uint32_t dfs_reg;
-	uint64_t chan_flags;
-	uint16_t chan_flags_ext;
 	bool set_agile = false, dfs_set_cfreq2 = false;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
@@ -118,16 +116,15 @@ static QDF_STATUS vdev_mgr_start_param_update(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
 	param->vdev_id = wlan_vdev_get_id(vdev);
-	chan_flags = mlme_obj->mgmt.generic.chan_flags;
-	chan_flags_ext = mlme_obj->mgmt.generic.chan_flags_ext;
 
-	tgt_dfs_set_current_channel(pdev, bss_chan->ch_freq,
-				    chan_flags, chan_flags_ext,
-				    bss_chan->ch_ieee,
-				    bss_chan->ch_freq_seg1,
-				    bss_chan->ch_freq_seg2);
+	tgt_dfs_set_current_channel(pdev, des_chan->ch_freq,
+				    des_chan->ch_flags,
+				    des_chan->ch_flagext,
+				    des_chan->ch_ieee,
+				    des_chan->ch_freq_seg1,
+				    des_chan->ch_freq_seg2);
 
 	param->beacon_interval = mlme_obj->proto.generic.beacon_interval;
 	param->dtim_period = mlme_obj->proto.generic.dtim_period;
@@ -141,9 +138,9 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->regdomain = dfs_reg;
 	param->he_ops = mlme_obj->proto.he_ops_info.he_ops;
 
-	param->channel.chan_id = bss_chan->ch_ieee;
+	param->channel.chan_id = des_chan->ch_ieee;
 	param->channel.pwr = mlme_obj->mgmt.generic.tx_power;
-	param->channel.mhz = bss_chan->ch_freq;
+	param->channel.mhz = des_chan->ch_freq;
 	param->channel.half_rate = mlme_obj->mgmt.rate_info.half_rate;
 	param->channel.quarter_rate = mlme_obj->mgmt.rate_info.quarter_rate;
 	param->channel.dfs_set = mlme_obj->mgmt.generic.dfs_set;
@@ -152,7 +149,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 		mlme_obj->mgmt.generic.is_chan_passive;
 	param->channel.allow_ht = mlme_obj->proto.ht_info.allow_ht;
 	param->channel.allow_vht = mlme_obj->proto.vht_info.allow_vht;
-	param->channel.phy_mode = bss_chan->ch_phymode;
+	param->channel.phy_mode = mlme_obj->mgmt.generic.phy_mode;
 	param->channel.cfreq1 = mlme_obj->mgmt.generic.cfreq1;
 	param->channel.cfreq2 = mlme_obj->mgmt.generic.cfreq2;
 	param->channel.maxpower = mlme_obj->mgmt.generic.maxpower;
@@ -165,10 +162,11 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	wlan_vdev_mlme_get_ssid(vdev, param->ssid.mac_ssid,
 				&param->ssid.length);
 
-	if (bss_chan->ch_phymode == WLAN_PHYMODE_11AXA_HE80_80) {
+	if (des_chan->ch_phymode == WLAN_PHYMODE_11AC_VHT80 ||
+	    des_chan->ch_phymode == WLAN_PHYMODE_11AXA_HE80) {
 		tgt_dfs_find_vht80_chan_for_precac(pdev,
-						   param->channel.phy_mode,
-						   bss_chan->ch_freq_seg1,
+						   des_chan->ch_phymode,
+						   des_chan->ch_freq_seg1,
 						   &param->channel.cfreq1,
 						   &param->channel.cfreq2,
 						   &param->channel.phy_mode,
