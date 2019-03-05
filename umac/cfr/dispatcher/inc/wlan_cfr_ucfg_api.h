@@ -22,13 +22,15 @@
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 
+#define MAX_CFR_PRD        (10*60*1000)        /* 10 minutes */
+
 /**
  * ucfg_cfr_start_capture() - function to start cfr capture
  * @pdev: pointer to pdev object
  * @peer: pointer to peer object
  * @cfr_params: config params to cfr capture
  *
- * Return: startus of start capture.
+ * Return: status of start capture.
  */
 int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 			   struct wlan_objmgr_peer *peer,
@@ -39,7 +41,7 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
  * @pdev: pointer to pdev object
  * @peer: pointer to peer object
  *
- * Return: startus of stop capture.
+ * Return: status of stop capture.
  */
 int ucfg_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			  struct wlan_objmgr_peer *peer);
@@ -51,4 +53,21 @@ int ucfg_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
  * Return: number of peers with cfr capture enabled
  */
 int ucfg_cfr_list_peers(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_cfr_set_timer() - function to enable cfr timer
+ * @pdev: pointer to pdev object
+ * @value: value to be set
+ *
+ * Return: status of timer enable
+ */
+int ucfg_cfr_set_timer(struct wlan_objmgr_pdev *pdev, uint32_t value);
+
+/**
+ * ucfg_cfr_get_timer() - function to get cfr_timer_enable
+ * @pdev: pointer to pdev object
+ *
+ * Return: value of cfr_timer_enable
+ */
+int ucfg_cfr_get_timer(struct wlan_objmgr_pdev *pdev);
 #endif
