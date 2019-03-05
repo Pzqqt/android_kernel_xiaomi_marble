@@ -1437,8 +1437,12 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
 		if (tx_priv->swr_clk_users == 0) {
+			msm_cdc_pinctrl_select_active_state(
+						tx_priv->tx_swr_gpio_p);
 			ret = tx_macro_mclk_enable(tx_priv, 1);
 			if (ret < 0) {
+				msm_cdc_pinctrl_select_sleep_state(
+						tx_priv->tx_swr_gpio_p);
 				dev_err(tx_priv->dev,
 					"%s: request clock enable failed\n",
 					__func__);
@@ -1456,8 +1460,6 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 					BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
 			tx_priv->reset_swr = false;
-			msm_cdc_pinctrl_select_active_state(
-						tx_priv->tx_swr_gpio_p);
 		}
 		tx_priv->swr_clk_users++;
 	} else {
@@ -1472,9 +1474,9 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
+			tx_macro_mclk_enable(tx_priv, 0);
 			msm_cdc_pinctrl_select_sleep_state(
 						tx_priv->tx_swr_gpio_p);
-			tx_macro_mclk_enable(tx_priv, 0);
 		}
 	}
 	dev_dbg(tx_priv->dev, "%s: swrm clock users %d\n",
