@@ -14770,6 +14770,39 @@ static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
 	return false;
 }
 
+#ifdef WLAN_FEATURE_11AX
+static void
+csr_update_he_caps_mcs(struct wlan_mlme_cfg *mlme_cfg,
+		       struct csr_roam_session *csr_session)
+{
+	uint32_t tx_mcs_map = 0;
+	uint32_t rx_mcs_map = 0;
+	uint32_t mcs_map = 0;
+
+	rx_mcs_map = mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80;
+	tx_mcs_map = mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80;
+	mcs_map = rx_mcs_map & 0x3;
+
+	if (csr_session->nss == 1) {
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, 2);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, 2);
+	} else {
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, mcs_map, 2);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, mcs_map, 2);
+	}
+	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
+			rx_mcs_map, tx_mcs_map);
+	csr_session->he_config.tx_he_mcs_map_lt_80 = tx_mcs_map;
+	csr_session->he_config.rx_he_mcs_map_lt_80 = rx_mcs_map;
+}
+#else
+static void
+csr_update_he_caps_mcs(struct wlan_mlme_cfg *mlme_cfg,
+		       struct csr_roam_session *csr_session)
+{
+}
+#endif
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".
@@ -14996,6 +15029,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			sme_debug("For special ap, NSS: %d", pSession->nss);
 		}
 
+		csr_update_he_caps_mcs(mac->mlme_cfg, pSession);
 		/*
 		 * If CCK WAR is set for current AP, update to firmware via
 		 * WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM
