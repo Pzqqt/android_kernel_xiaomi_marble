@@ -70,6 +70,17 @@ enum verbose_debug_module {
 #define dp_verbose_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP, params)
 #endif
 
+#define dp_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_DP, params)
+#define dp_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_DP, params)
+#define dp_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_DP, params)
+#define dp_nofl_info(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_DP, params)
+#define dp_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_DP, params)
+
 #define dp_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_DP, params)
 #define dp_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP, params)
 #define dp_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_DP, params)

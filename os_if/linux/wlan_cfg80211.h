@@ -45,6 +45,17 @@
 #define cfg80211_debug_rl(params...) \
 	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_OS_IF, params)
 
+#define osif_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_OS_IF, params)
+#define osif_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_OS_IF, params)
+#define osif_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_OS_IF, params)
+#define osif_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_OS_IF, params)
+#define osif_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OS_IF, params)
+
 #define COMMON_VENDOR_COMMANDS						\
 { 									\
 	.info.vendor_id = OUI_QCA,					\
