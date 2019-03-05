@@ -2080,7 +2080,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct bss_description *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct ol_txrx_desc_type staDesc = { 0 };
+	struct ol_txrx_desc_type txrx_desc = { 0 };
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2090,21 +2090,21 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 
 	/* Get the Station ID from the one saved during the association */
-	staDesc.sta_id = sta_id;
+	txrx_desc.sta_id = sta_id;
 
 	/* set the QoS field appropriately */
 	if (hdd_wmm_is_active(adapter))
-		staDesc.is_qos_enabled = 1;
+		txrx_desc.is_qos_enabled = 1;
 	else
-		staDesc.is_qos_enabled = 0;
+		txrx_desc.is_qos_enabled = 0;
 
 #ifdef FEATURE_WLAN_WAPI
 	hdd_debug("WAPI STA Registered: %d",
 		   adapter->wapi_info.is_wapi_sta);
 	if (adapter->wapi_info.is_wapi_sta)
-		staDesc.is_wapi_supported = 1;
+		txrx_desc.is_wapi_supported = 1;
 	else
-		staDesc.is_wapi_supported = 0;
+		txrx_desc.is_wapi_supported = 0;
 #endif /* FEATURE_WLAN_WAPI */
 
 	/* Register the vdev transmit and receive functions */
@@ -2139,7 +2139,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 	adapter->tx_fn = txrx_ops.tx.tx;
 	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &staDesc);
+			(struct cdp_pdev *)pdev, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed Status: %d [0x%08X]",
 			 qdf_status, qdf_status);
@@ -2152,7 +2152,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		 * TLSHIM directly to 'Authenticated' state
 		 */
 		qdf_status =
-			hdd_change_peer_state(adapter, staDesc.sta_id,
+			hdd_change_peer_state(adapter, txrx_desc.sta_id,
 						OL_TXRX_PEER_STATE_AUTH,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						roam_info->roamSynchInProgress
@@ -2167,7 +2167,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		hdd_debug("ULA auth StaId= %d. Changing TL state to CONNECTED at Join time",
 			 sta_ctx->conn_info.sta_id[0]);
 		qdf_status =
-			hdd_change_peer_state(adapter, staDesc.sta_id,
+			hdd_change_peer_state(adapter, txrx_desc.sta_id,
 						OL_TXRX_PEER_STATE_CONN,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						roam_info->roamSynchInProgress
@@ -4020,7 +4020,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     uint8_t qos)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct ol_txrx_desc_type staDesc = { 0 };
+	struct ol_txrx_desc_type txrx_desc = { 0 };
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -4029,10 +4029,10 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
 	 * be peer MAC, here we are working on direct Link
 	 */
-	staDesc.sta_id = sta_id;
+	txrx_desc.sta_id = sta_id;
 
 	/* set the QoS field appropriately .. */
-	staDesc.is_qos_enabled = qos;
+	txrx_desc.is_qos_enabled = qos;
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
@@ -4047,7 +4047,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 
 	/* Register the Station with TL...  */
 	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &staDesc);
+			(struct cdp_pdev *)pdev, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed Status: %d [0x%08X]",
 			qdf_status, qdf_status);

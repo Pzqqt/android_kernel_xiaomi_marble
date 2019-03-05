@@ -330,7 +330,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
  * @staId: station identifier
  * @qos: Quality of service
  *
- * Construct the staDesc and register the new STA with the Data Plane.
+ * Construct the txrx_desc and register the new STA with the Data Plane.
  * This is called as part of ADD_STA in the TDLS setup.
  *
  * Return: QDF_STATUS enumeration

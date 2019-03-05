@@ -1010,7 +1010,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool wmm_enabled)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct ol_txrx_desc_type staDesc = { 0 };
+	struct ol_txrx_desc_type txrx_desc = { 0 };
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -1028,14 +1028,14 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	}
 
 	/* Get the Station ID from the one saved during the association. */
-	staDesc.sta_id = sta_id;
+	txrx_desc.sta_id = sta_id;
 
 	/* Save the adapter Pointer for this sta_id */
 	hdd_ctx->sta_to_adapter[sta_id] = adapter;
 
 	qdf_status = hdd_softap_init_tx_rx_sta(adapter, sta_id, sta_mac);
 
-	staDesc.is_qos_enabled = wmm_enabled;
+	txrx_desc.is_qos_enabled = wmm_enabled;
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
@@ -1061,7 +1061,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	adapter->tx_fn = txrx_ops.tx.tx;
 
 	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &staDesc);
+			(struct cdp_pdev *)pdev, &txrx_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("cdp_peer_register() failed to register.  Status = %d [0x%08X]",
 			qdf_status, qdf_status);
@@ -1084,7 +1084,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		/* Connections that do not need Upper layer auth,
 		 * transition TL directly to 'Authenticated' state.
 		 */
-		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
+		qdf_status = hdd_change_peer_state(adapter, txrx_desc.sta_id,
 						OL_TXRX_PEER_STATE_AUTH, false);
 
 		adapter->sta_info[sta_id].peer_state = OL_TXRX_PEER_STATE_AUTH;
@@ -1097,7 +1097,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
 			 adapter->sta_info[sta_id].sta_id);
 
-		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
+		qdf_status = hdd_change_peer_state(adapter, txrx_desc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
 		adapter->sta_info[sta_id].peer_state = OL_TXRX_PEER_STATE_CONN;
 	}
