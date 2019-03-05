@@ -860,14 +860,16 @@ int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
 		struct ch_avoid_ind_type *srcFreqList)
 {
 	int i;
+	uint32_t room;
 	struct ch_avoid_freq_type *avoid_range =
 	&destFreqList->avoid_freq_range[destFreqList->ch_avoid_range_cnt];
 
-	destFreqList->ch_avoid_range_cnt += srcFreqList->ch_avoid_range_cnt;
-	if (destFreqList->ch_avoid_range_cnt > CH_AVOID_MAX_RANGE) {
+	room = CH_AVOID_MAX_RANGE - destFreqList->ch_avoid_range_cnt;
+	if (srcFreqList->ch_avoid_range_cnt > room) {
 		hdd_err("avoid freq overflow");
 		return -EINVAL;
 	}
+	destFreqList->ch_avoid_range_cnt += srcFreqList->ch_avoid_range_cnt;
 
 	for (i = 0; i < srcFreqList->ch_avoid_range_cnt; i++) {
 		avoid_range->start_freq =
