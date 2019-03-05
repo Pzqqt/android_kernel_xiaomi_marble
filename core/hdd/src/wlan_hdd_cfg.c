@@ -1784,11 +1784,6 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!bval) {
-		hdd_err("Nss in 1x1, no change required, 2x2 mode disabled");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle) {
 		hdd_err("NULL MAC handle");
@@ -1810,6 +1805,10 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 			return hdd_set_nss_params(adapter, tx_nss, rx_nss);
 		hdd_debug("Vdev %d in disconnect state, changing ini nss params",
 			  adapter->vdev_id);
+		if (!bval) {
+			hdd_err("Nss in 1x1, no change required, 2x2 mode disabled");
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX;
 		     band++) {
