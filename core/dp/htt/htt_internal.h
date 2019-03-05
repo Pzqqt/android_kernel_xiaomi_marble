@@ -26,6 +26,75 @@
 
 #include <htt_types.h>
 
+/* htt_rx.c */
+#define RX_MSDU_END_4_FIRST_MSDU_MASK \
+	(pdev->targetdef->d_RX_MSDU_END_4_FIRST_MSDU_MASK)
+#define RX_MSDU_END_4_FIRST_MSDU_LSB \
+	(pdev->targetdef->d_RX_MSDU_END_4_FIRST_MSDU_LSB)
+#define RX_MPDU_START_0_RETRY_LSB  \
+	(pdev->targetdef->d_RX_MPDU_START_0_RETRY_LSB)
+#define RX_MPDU_START_0_RETRY_MASK  \
+	(pdev->targetdef->d_RX_MPDU_START_0_RETRY_MASK)
+#define RX_MPDU_START_0_SEQ_NUM_MASK \
+	(pdev->targetdef->d_RX_MPDU_START_0_SEQ_NUM_MASK)
+#define RX_MPDU_START_0_SEQ_NUM_LSB \
+	(pdev->targetdef->d_RX_MPDU_START_0_SEQ_NUM_LSB)
+#define RX_MPDU_START_2_PN_47_32_LSB \
+	(pdev->targetdef->d_RX_MPDU_START_2_PN_47_32_LSB)
+#define RX_MPDU_START_2_PN_47_32_MASK \
+	(pdev->targetdef->d_RX_MPDU_START_2_PN_47_32_MASK)
+#define RX_MPDU_START_2_TID_LSB  \
+	(pdev->targetdef->d_RX_MPDU_START_2_TID_LSB)
+#define RX_MPDU_START_2_TID_MASK  \
+	(pdev->targetdef->d_RX_MPDU_START_2_TID_MASK)
+#define RX_MSDU_END_1_KEY_ID_OCT_MASK \
+	(pdev->targetdef->d_RX_MSDU_END_1_KEY_ID_OCT_MASK)
+#define RX_MSDU_END_1_KEY_ID_OCT_LSB \
+	(pdev->targetdef->d_RX_MSDU_END_1_KEY_ID_OCT_LSB)
+#define RX_MSDU_END_1_EXT_WAPI_PN_63_48_MASK \
+	(pdev->targetdef->d_RX_MSDU_END_1_EXT_WAPI_PN_63_48_MASK)
+#define RX_MSDU_END_1_EXT_WAPI_PN_63_48_LSB \
+	(pdev->targetdef->d_RX_MSDU_END_1_EXT_WAPI_PN_63_48_LSB)
+#define RX_MSDU_END_4_LAST_MSDU_MASK \
+	(pdev->targetdef->d_RX_MSDU_END_4_LAST_MSDU_MASK)
+#define RX_MSDU_END_4_LAST_MSDU_LSB \
+	(pdev->targetdef->d_RX_MSDU_END_4_LAST_MSDU_LSB)
+#define RX_ATTENTION_0_MCAST_BCAST_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_MCAST_BCAST_MASK)
+#define RX_ATTENTION_0_MCAST_BCAST_LSB \
+	(pdev->targetdef->d_RX_ATTENTION_0_MCAST_BCAST_LSB)
+#define RX_ATTENTION_0_FRAGMENT_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_FRAGMENT_MASK)
+#define RX_ATTENTION_0_FRAGMENT_LSB \
+	(pdev->targetdef->d_RX_ATTENTION_0_FRAGMENT_LSB)
+#define RX_ATTENTION_0_MPDU_LENGTH_ERR_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_MPDU_LENGTH_ERR_MASK)
+#define RX_FRAG_INFO_0_RING2_MORE_COUNT_MASK \
+	(pdev->targetdef->d_RX_FRAG_INFO_0_RING2_MORE_COUNT_MASK)
+#define RX_FRAG_INFO_0_RING2_MORE_COUNT_LSB \
+	(pdev->targetdef->d_RX_FRAG_INFO_0_RING2_MORE_COUNT_LSB)
+#define RX_MSDU_START_0_MSDU_LENGTH_MASK \
+	(pdev->targetdef->d_RX_MSDU_START_0_MSDU_LENGTH_MASK)
+#define RX_MSDU_START_0_MSDU_LENGTH_LSB \
+	(pdev->targetdef->d_RX_MSDU_START_0_MSDU_LENGTH_LSB)
+#define RX_MPDU_START_0_ENCRYPTED_MASK \
+	(pdev->targetdef->d_RX_MPDU_START_0_ENCRYPTED_MASK)
+#define RX_MPDU_START_0_ENCRYPTED_LSB \
+	(pdev->targetdef->d_RX_MPDU_START_0_ENCRYPTED_LSB)
+#define RX_ATTENTION_0_MORE_DATA_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_MORE_DATA_MASK)
+#define RX_ATTENTION_0_MSDU_DONE_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_MSDU_DONE_MASK)
+#define RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK \
+	(pdev->targetdef->d_RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK)
+#define RX_MSDU_START_2_DECAP_FORMAT_OFFSET \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_OFFSET)
+#define RX_MSDU_START_2_DECAP_FORMAT_LSB \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_LSB)
+#define RX_MSDU_START_2_DECAP_FORMAT_MASK \
+	(pdev->targetdef->d_RX_MSDU_START_2_DECAP_FORMAT_MASK)
+/* end */
+
 #ifndef offsetof
 #define offsetof(type, field)   ((size_t)(&((type *)0)->field))
 #endif
