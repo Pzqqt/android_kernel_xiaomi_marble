@@ -68,6 +68,7 @@
 #include "sme_api.h"
 #include "wma_types.h"
 #include "qdf_hashtable_test.h"
+#include "qdf_periodic_work_test.h"
 #include "qdf_talloc_test.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
@@ -5861,9 +5862,11 @@ struct hdd_ut_entry {
 
 struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "dsc", .callback = dsc_unit_test },
-	{ .name = "ht", .callback = qdf_ht_unit_test },
-	{ .name = "talloc", .callback = qdf_talloc_unit_test },
-	{ .name = "types", .callback = qdf_types_unit_test },
+	{ .name = "qdf_ht", .callback = qdf_ht_unit_test },
+	{ .name = "qdf_periodic_work",
+	  .callback = qdf_periodic_work_unit_test },
+	{ .name = "qdf_talloc", .callback = qdf_talloc_unit_test },
+	{ .name = "qdf_types", .callback = qdf_types_unit_test },
 };
 
 #define hdd_for_each_ut_entry(cursor) \

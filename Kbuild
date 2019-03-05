@@ -564,6 +564,7 @@ QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_periodic_work.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_status.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
@@ -594,12 +595,14 @@ endif
 
 ifeq ($(CONFIG_QDF_TEST), y)
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_periodic_work_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_talloc_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
 endif
 
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_PERIODIC_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TALLOC_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
 
