@@ -10931,7 +10931,16 @@ static inline QDF_STATUS hdd_register_bcn_cb(struct hdd_context *hdd_ctx)
 		wlan_cfg80211_inform_bss_frame,
 		SCAN_CB_TYPE_INFORM_BCN);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("failed with status code %08d [x%08x]",
+		hdd_err("failed to register SCAN_CB_TYPE_INFORM_BCN with status code %08d [x%08x]",
+			status, status);
+		return status;
+	}
+
+	status = ucfg_scan_register_bcn_cb(hdd_ctx->psoc,
+		wlan_cfg80211_unlink_bss_list,
+		SCAN_CB_TYPE_UNLINK_BSS);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed to refister SCAN_CB_TYPE_FLUSH_BSS with status code %08d [x%08x]",
 			status, status);
 		return status;
 	}
