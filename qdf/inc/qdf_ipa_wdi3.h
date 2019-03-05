@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,12 +73,16 @@ typedef __qdf_ipa_wdi_pipe_setup_info_smmu_t qdf_ipa_wdi_pipe_setup_info_smmu_t;
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_SIZE(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(txrx)
+#define QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(txrx)	\
+	__QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(txrx)
+#define QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(txrx)	\
+	__QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(txrx)	\
@@ -202,12 +206,16 @@ typedef __qdf_ipa_wdi_pipe_setup_info_t qdf_ipa_wdi_pipe_setup_info_t;
 	__QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(txrx)
+#define QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(txrx)	\
+	__QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(txrx)
+#define QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(txrx)	\
+	__QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(txrx)	\
 	__QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(txrx)
 #define QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(txrx)	\
