@@ -39,6 +39,13 @@
 #define dsc_debug(params...) /* no-op */
 #endif
 
+#define dsc_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_QDF, params)
+#define dsc_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_QDF, params)
+#define dsc_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_QDF, params)
+
 #define dsc_enter_exit dsc_debug
 #define dsc_enter() dsc_enter_exit("enter")
 #define dsc_enter_str(str) dsc_enter_exit("enter(\"%s\")", str)
