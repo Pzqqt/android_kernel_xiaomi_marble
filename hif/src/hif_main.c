@@ -816,6 +816,8 @@ int hif_get_device_type(uint32_t device_id,
 	case QCN7605_DEVICE_ID:
 	case QCN7605_COMPOSITE:
 	case QCN7605_STANDALONE:
+	case QCN7605_STANDALONE_V2:
+	case QCN7605_COMPOSITE_V2:
 		*hif_type = HIF_TYPE_QCN7605;
 		*target_type = TARGET_TYPE_QCN7605;
 		HIF_INFO(" *********** QCN7605 *************\n");

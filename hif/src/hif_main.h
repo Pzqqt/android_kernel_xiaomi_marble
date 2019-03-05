@@ -98,8 +98,10 @@
 #define QCA6018_DEVICE_ID (0xfffd) /* Todo: replace this with actual number */
 /* Genoa */
 #define QCN7605_DEVICE_ID  (0x1102) /* Genoa PCIe device ID*/
-#define QCN7605_COMPOSITE  (0x9900)
-#define QCN7605_STANDALONE  (0x9901)
+#define QCN7605_COMPOSITE  (0x9901)
+#define QCN7605_STANDALONE  (0x9900)
+#define QCN7605_STANDALONE_V2  (0x9902)
+#define QCN7605_COMPOSITE_V2  (0x9903)
 
 #define RUMIM2M_DEVICE_ID_NODE0	0xabc0
 #define RUMIM2M_DEVICE_ID_NODE1	0xabc1
