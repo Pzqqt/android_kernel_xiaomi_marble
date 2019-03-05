@@ -7141,29 +7141,6 @@ static struct platform_driver sa8155_asoc_machine_driver = {
 	.remove = msm_asoc_machine_remove,
 };
 
-static int dummy_asoc_machine_probe(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static int dummy_asoc_machine_remove(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static struct platform_device sa8155_dummy_asoc_machine_device = {
-	.name = "sa8155-asoc-snd-dummy",
-};
-
-static struct platform_driver sa8155_dummy_asoc_machine_driver = {
-	.driver = {
-		.name = "sa8155-asoc-snd-dummy",
-		.owner = THIS_MODULE,
-	},
-	.probe = dummy_asoc_machine_probe,
-	.remove = dummy_asoc_machine_remove,
-};
-
 static int sa8155_notifier_service_cb(struct notifier_block *this,
 					 unsigned long opcode, void *ptr)
 {
@@ -7186,9 +7163,8 @@ static int sa8155_notifier_service_cb(struct notifier_block *this,
 		break;
 	case AUDIO_NOTIFIER_SERVICE_UP:
 		if (is_initial_boot) {
-			platform_driver_register(&sa8155_dummy_asoc_machine_driver);
-			platform_device_register(&sa8155_dummy_asoc_machine_device);
 			is_initial_boot = false;
+			break;
 		}
 		if (!spdev)
 			return -EINVAL;
