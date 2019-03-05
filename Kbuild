@@ -556,6 +556,7 @@ QDF_INC := \
 QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_delayed_work.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_idr.o \
@@ -594,6 +595,7 @@ ifeq ($(CONFIG_LEAK_DETECTION), y)
 endif
 
 ifeq ($(CONFIG_QDF_TEST), y)
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_delayed_work_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_periodic_work_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_talloc_test.o
@@ -601,6 +603,7 @@ ifeq ($(CONFIG_QDF_TEST), y)
 endif
 
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_DELAYED_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_PERIODIC_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TALLOC_TEST

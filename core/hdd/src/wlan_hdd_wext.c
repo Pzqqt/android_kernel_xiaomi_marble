@@ -67,6 +67,7 @@
 #include "qc_sap_ioctl.h"
 #include "sme_api.h"
 #include "wma_types.h"
+#include "qdf_delayed_work_test.h"
 #include "qdf_hashtable_test.h"
 #include "qdf_periodic_work_test.h"
 #include "qdf_talloc_test.h"
@@ -5862,6 +5863,7 @@ struct hdd_ut_entry {
 
 struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "dsc", .callback = dsc_unit_test },
+	{ .name = "qdf_delayed_work", .callback = qdf_delayed_work_unit_test },
 	{ .name = "qdf_ht", .callback = qdf_ht_unit_test },
 	{ .name = "qdf_periodic_work",
 	  .callback = qdf_periodic_work_unit_test },
