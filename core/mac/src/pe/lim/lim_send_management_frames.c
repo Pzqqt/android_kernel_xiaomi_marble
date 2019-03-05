@@ -4554,6 +4554,19 @@ returnAfterError:
 } /* End lim_send_sa_query_response_frame */
 #endif
 
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+#ifdef WLAN_FEATURE_11AX
+#define IS_PE_SESSION_11N_MODE(_session) \
+	((_session)->htCapability && !(_session)->vhtCapability && \
+	 !(_session)->he_capable)
+#else
+#define IS_PE_SESSION_11N_MODE(_session) \
+	((_session)->htCapability && !(_session)->vhtCapability)
+#endif /* WLAN_FEATURE_11AX */
+#else
+#define IS_PE_SESSION_11N_MODE(_session) false
+#endif
+
 /**
  * lim_send_addba_response_frame(): Send ADDBA response action frame to peer
  * @mac_ctx: mac context
@@ -4633,10 +4646,14 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	} else if (!session->active_ba_64_session) {
 		session->active_ba_64_session = true;
 	}
-	if (mac_ctx->is_usr_cfg_amsdu_enabled)
+
+	/* disable 11n RX AMSDU */
+	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
+	    !IS_PE_SESSION_11N_MODE(session))
 		frm.addba_param_set.amsdu_supp = amsdu_support;
 	else
 		frm.addba_param_set.amsdu_supp = 0;
+
 	frm.addba_param_set.policy = SIR_MAC_BA_POLICY_IMMEDIATE;
 	frm.ba_timeout.timeout = batimeout;
 	if (addba_extn_present) {
