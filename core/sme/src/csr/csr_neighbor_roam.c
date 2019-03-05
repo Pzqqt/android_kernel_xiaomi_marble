@@ -141,8 +141,8 @@ QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac
 						REASON_CONNECT);
 			} else {
 				csr_roam_offload_scan(mac_ctx, session_id,
-						ROAM_SCAN_OFFLOAD_STOP,
-						REASON_DISCONNECTED);
+					ROAM_SCAN_OFFLOAD_STOP,
+					REASON_SUPPLICANT_DISABLED_ROAMING);
 			}
 			sme_release_global_lock(&mac_ctx->sme);
 		}

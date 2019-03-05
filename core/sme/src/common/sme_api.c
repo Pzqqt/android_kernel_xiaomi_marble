@@ -13530,10 +13530,8 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	}
 
 	roam_profile = session->pCurRoamProfile;
-	if (roam_profile->supplicant_disabled_roaming ||
-	    roam_profile->driver_disabled_roaming) {
-		sme_debug("roaming status in Supplicant %d and in driver %d",
-			  roam_profile->supplicant_disabled_roaming,
+	if (roam_profile->driver_disabled_roaming) {
+		sme_debug("roaming status in driver %d",
 			  roam_profile->driver_disabled_roaming);
 		return QDF_STATUS_E_FAILURE;
 	}
