@@ -271,7 +271,6 @@ lim_print_sme_state(struct mac_context *mac, uint16_t logLevel, tLimSmeStates st
 
 char *lim_msg_str(uint32_t msgType)
 {
-#ifdef FIXME_GEN6
 	switch (msgType) {
 	case eWNI_SME_SYS_READY_IND:
 		return "eWNI_SME_SYS_READY_IND";
@@ -329,8 +328,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_DELTS_RSP";
 	case eWNI_SME_DELTS_IND:
 		return "eWNI_SME_DELTS_IND";
-	case WMA_SUSPEND_ACTIVITY_RSP:
-		return "WMA_SUSPEND_ACTIVITY_RSP";
 	case SIR_BB_XPORT_MGMT_MSG:
 		return "SIR_BB_XPORT_MGMT_MSG";
 	case SIR_LIM_JOIN_FAIL_TIMEOUT:
@@ -349,24 +346,12 @@ char *lim_msg_str(uint32_t msgType)
 		return "SIR_LIM_ADDTS_RSP_TIMEOUT";
 	case SIR_LIM_LINK_TEST_DURATION_TIMEOUT:
 		return "SIR_LIM_LINK_TEST_DURATION_TIMEOUT";
-	case SIR_LIM_HASH_MISS_THRES_TIMEOUT:
-		return "SIR_LIM_HASH_MISS_THRES_TIMEOUT";
 	case SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT:
 		return "SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT";
 	case SIR_LIM_CNF_WAIT_TIMEOUT:
 		return "SIR_LIM_CNF_WAIT_TIMEOUT";
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		return "SIR_LIM_FT_PREAUTH_RSP_TIMEOUT";
-	case eWNI_PMC_ENTER_IMPS_RSP:
-		return "eWNI_PMC_ENTER_IMPS_RSP";
-	case eWNI_PMC_EXIT_IMPS_RSP:
-		return "eWNI_PMC_EXIT_IMPS_RSP";
-	case eWNI_PMC_ENTER_BMPS_RSP:
-		return "eWNI_PMC_ENTER_BMPS_RSP";
-	case eWNI_PMC_EXIT_BMPS_RSP:
-		return "eWNI_PMC_EXIT_BMPS_RSP";
-	case eWNI_PMC_EXIT_BMPS_IND:
-		return "eWNI_PMC_EXIT_BMPS_IND";
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
 		return "eWNI_SME_GET_TSM_STATS_REQ";
@@ -384,8 +369,6 @@ char *lim_msg_str(uint32_t msgType)
 	default:
 		return "INVALID SME message";
 	}
-#endif
-	return "";
 }
 
 char *lim_result_code_str(tSirResultCodes resultCode)
