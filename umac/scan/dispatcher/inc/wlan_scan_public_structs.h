@@ -273,6 +273,7 @@ struct security_info {
  * @bssid: bssid
  * @mac_addr: mac address
  * @ssid: ssid
+ * @is_hidden_ssid: is AP having hidden ssid.
  * @seq_num: sequence number
  * @phy_mode: Phy mode of the AP
  * @avg_rssi: Average RSSI fof the AP
@@ -309,6 +310,7 @@ struct scan_cache_entry {
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr mac_addr;
 	struct wlan_ssid ssid;
+	bool is_hidden_ssid;
 	uint16_t seq_num;
 	enum wlan_phymode phy_mode;
 	int32_t avg_rssi;
@@ -1139,12 +1141,14 @@ typedef void (*scan_event_handler) (struct wlan_objmgr_vdev *vdev,
  * enum scan_cb_type - update beacon cb type
  * @SCAN_CB_TYPE_INFORM_BCN: Calback to indicate beacon to OS
  * @SCAN_CB_TYPE_UPDATE_BCN: Calback to indicate beacon
+ * @SCAN_CB_TYPE_UNLINK_BSS: cb to unlink bss entry
  *                    to MLME and update MLME info
  *
  */
 enum scan_cb_type {
 	SCAN_CB_TYPE_INFORM_BCN,
 	SCAN_CB_TYPE_UPDATE_BCN,
+	SCAN_CB_TYPE_UNLINK_BSS,
 };
 
 /* Set PNO */

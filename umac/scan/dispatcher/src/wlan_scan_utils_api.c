@@ -1097,6 +1097,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 
 	if (util_scan_is_hidden_ssid(ssid)) {
 		scan_entry->ie_list.ssid = NULL;
+		scan_entry->is_hidden_ssid = true;
 	} else {
 		qdf_mem_copy(scan_entry->ssid.ssid,
 				ssid->ssid, ssid->ssid_len);

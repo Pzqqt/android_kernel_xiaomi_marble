@@ -262,6 +262,34 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	struct scan_cache_entry *scan_params);
 
 /**
+ * wlan_cfg80211_get_bss() - Get the bss entry matching the chan, bssid and ssid
+ * @wiphy: wiphy
+ * @channel: channel of the BSS to find
+ * @bssid: bssid of the BSS to find
+ * @ssid: ssid of the BSS to find
+ * @ssid_len: ssid len of of the BSS to find
+ *
+ * The API is a wrapper to get bss from kernel matching the chan,
+ * bssid and ssid
+ *
+ * Return: bss structure if found else NULL
+ */
+struct cfg80211_bss *wlan_cfg80211_get_bss(struct wiphy *wiphy,
+					   struct ieee80211_channel *channel,
+					   const u8 *bssid,
+					   const u8 *ssid, size_t ssid_len);
+
+/*
+ * wlan_cfg80211_unlink_bss_list : flush bss from the kernel cache
+ * @pdev: Pointer to pdev
+ * @scan_entry: scan entry
+ *
+ * Return: bss which is unlinked from kernel cache
+ */
+void wlan_cfg80211_unlink_bss_list(struct wlan_objmgr_pdev *pdev,
+				   struct scan_cache_entry *scan_entry);
+
+/**
  * wlan_vendor_abort_scan() - API to vendor abort scan
  * @pdev: Pointer to pdev
  * @data: pointer to data

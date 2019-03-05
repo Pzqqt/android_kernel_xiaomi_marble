@@ -462,10 +462,12 @@ struct scan_default_params {
  * struct scan_cb - nif/sif function callbacks
  * @inform_beacon: cb to indicate frame to OS
  * @update_beacon: cb to indicate frame to MLME
+ * @unlink_bss: cb to unlink bss from kernel cache
  */
 struct scan_cb {
 	update_beacon_cb inform_beacon;
 	update_beacon_cb update_beacon;
+	update_beacon_cb unlink_bss;
 	/* Define nif/sif function callbacks here */
 };
 

@@ -1936,6 +1936,57 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_free(bss_data.mgmt);
 }
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && \
+	!defined(WITH_BACKPORTS) && !defined(IEEE80211_PRIVACY)
+struct cfg80211_bss *wlan_cfg80211_get_bss(struct wiphy *wiphy,
+					   struct ieee80211_channel *channel,
+					   const u8 *bssid, const u8 *ssid,
+					   size_t ssid_len)
+{
+	return cfg80211_get_bss(wiphy, channel, bssid,
+				ssid, ssid_len,
+				WLAN_CAPABILITY_ESS,
+				WLAN_CAPABILITY_ESS);
+}
+#else
+struct cfg80211_bss *wlan_cfg80211_get_bss(struct wiphy *wiphy,
+					   struct ieee80211_channel *channel,
+					   const u8 *bssid, const u8 *ssid,
+					   size_t ssid_len)
+{
+	return cfg80211_get_bss(wiphy, channel, bssid,
+				ssid, ssid_len,
+				IEEE80211_BSS_TYPE_ESS,
+				IEEE80211_PRIVACY_ANY);
+}
+#endif
+
+void wlan_cfg80211_unlink_bss_list(struct wlan_objmgr_pdev *pdev,
+				   struct scan_cache_entry *scan_entry)
+{
+	struct cfg80211_bss *bss = NULL;
+	struct pdev_osif_priv *pdev_ospriv = wlan_pdev_get_ospriv(pdev);
+	struct wiphy *wiphy;
+
+	if (!pdev_ospriv) {
+		cfg80211_err("os_priv is NULL");
+		return;
+	}
+
+	wiphy = pdev_ospriv->wiphy;
+	bss = wlan_cfg80211_get_bss(wiphy, NULL, scan_entry->bssid.bytes,
+				    scan_entry->ssid.ssid,
+				    scan_entry->ssid.length);
+	if (!bss) {
+		cfg80211_err("BSS %pM not found", scan_entry->bssid.bytes);
+	} else {
+		cfg80211_debug("cfg80211_unlink_bss called for BSSID %pM",
+			       scan_entry->bssid.bytes);
+		cfg80211_unlink_bss(wiphy, bss);
+		wlan_cfg80211_put_bss(wiphy, bss);
+	}
+}
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0))
 /*
  * wlan_scan_wiphy_set_max_sched_scans() - set maximum number of scheduled scans
