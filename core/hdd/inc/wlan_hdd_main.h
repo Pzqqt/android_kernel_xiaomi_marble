@@ -98,6 +98,10 @@
 #include "wma_sar_public_structs.h"
 #include "wlan_mlme_ucfg_api.h"
 
+#ifdef MSM_PLATFORM
+#include "qdf_periodic_work.h"
+#endif
+
 /*
  * Preprocessor definitions and constants
  */
@@ -1576,6 +1580,7 @@ struct hdd_dynamic_mac {
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
+ * @bus_bw_work: work for periodically computing DDR bus bandwidth requirements
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
@@ -1643,12 +1648,7 @@ struct hdd_context {
 	bool is_wiphy_suspended;
 
 #ifdef MSM_PLATFORM
-	/* DDR bus bandwidth compute timer
-	 */
-	qdf_timer_t bus_bw_timer;
-	bool bus_bw_timer_running;
-	qdf_spinlock_t bus_bw_timer_lock;
-	struct work_struct bus_bw_work;
+	struct qdf_periodic_work bus_bw_work;
 	int cur_vote_level;
 	spinlock_t bus_bw_lock;
 	int cur_rx_level;
