@@ -3188,15 +3188,6 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_FEATURE_ENABLED, roam_mode)) {
-		hdd_err("Roam Mode value %d is out of range (Min: %d Max: %d)",
-			roam_mode,
-			cfg_min(CFG_LFR_FEATURE_ENABLED),
-			cfg_max(CFG_LFR_FEATURE_ENABLED));
-		ret = -EINVAL;
-		goto exit;
-	}
-
 	hdd_debug("Received Command to Set Roam Mode = %d",
 		  roam_mode);
 	/*
@@ -3809,13 +3800,6 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_ROAM_INTRA_BAND, val)) {
-		hdd_err("intra band mode value %d is out of range (Min: %d Max: %d)",
-			val, cfg_min(CFG_LFR_ROAM_INTRA_BAND),
-			cfg_max(CFG_LFR_ROAM_INTRA_BAND));
-		ret = -EINVAL;
-		goto exit;
-	}
 	hdd_debug("Received Command to change intra band = %d",
 		  val);
 
@@ -4027,14 +4011,6 @@ static int drv_cmd_set_wes_mode(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_ENABLE_WES_MODE, wes_mode)) {
-		hdd_err("WES Mode value %d is out of range (Min: %d Max: %d)",
-			wes_mode, cfg_min(CFG_LFR_ENABLE_WES_MODE),
-			cfg_max(CFG_LFR_ENABLE_WES_MODE));
-		ret = -EINVAL;
-		goto exit;
-	}
-
 	hdd_debug("Received Command to Set WES Mode rssi diff = %d", wes_mode);
 
 	sme_update_wes_mode(hdd_ctx->mac_handle, wes_mode, adapter->vdev_id);
@@ -4207,14 +4183,6 @@ static int drv_cmd_set_fast_roam(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_FEATURE_ENABLED, lfr_mode)) {
-		hdd_err("lfr mode value %d is out of range (Min: %d Max: %d)",
-			lfr_mode, cfg_min(CFG_LFR_FEATURE_ENABLED),
-			cfg_max(CFG_LFR_FEATURE_ENABLED));
-		ret = -EINVAL;
-		goto exit;
-	}
-
 	hdd_debug("Received Command to change lfr mode = %d",
 		  lfr_mode);
 
@@ -4249,14 +4217,6 @@ static int drv_cmd_set_fast_transition(struct hdd_adapter *adapter,
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
 			cfg_min(CFG_LFR_FAST_TRANSITION_ENABLED),
-			cfg_max(CFG_LFR_FAST_TRANSITION_ENABLED));
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	if (!cfg_in_range(CFG_LFR_FAST_TRANSITION_ENABLED, ft)) {
-		hdd_err("ft mode value %d is out of range (Min: %d Max: %d)",
-			ft, cfg_min(CFG_LFR_FAST_TRANSITION_ENABLED),
 			cfg_max(CFG_LFR_FAST_TRANSITION_ENABLED));
 		ret = -EINVAL;
 		goto exit;
@@ -5720,13 +5680,6 @@ static int drv_cmd_set_ccx_mode(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (!cfg_in_range(CFG_LFR_ESE_FEATURE_ENABLED, ese_mode)) {
-		hdd_err("Ese mode value %d is out of range (Min: %d Max: %d)",
-			ese_mode, cfg_min(CFG_LFR_ESE_FEATURE_ENABLED),
-			cfg_max(CFG_LFR_ESE_FEATURE_ENABLED));
-		ret = -EINVAL;
-		goto exit;
-	}
 	hdd_debug("Received Command to change ese mode = %d", ese_mode);
 
 	sme_update_is_ese_feature_enabled(mac_handle,

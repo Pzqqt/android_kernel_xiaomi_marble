@@ -1361,11 +1361,6 @@ QDF_STATUS ucfg_mlme_set_ibss_auto_bssid(struct wlan_objmgr_psoc *psoc,
 		mlme_err("MLME Obj null on get IBSS config");
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!cfg_in_range(CFG_IBSS_AUTO_BSSID, auto_bssid)) {
-		mlme_err("Invalid IBSS Auto BSSID control value: %d",
-			 auto_bssid);
-		return QDF_STATUS_E_INVAL;
-	}
 	mlme_obj->cfg.ibss.auto_bssid = auto_bssid;
 	return QDF_STATUS_SUCCESS;
 }

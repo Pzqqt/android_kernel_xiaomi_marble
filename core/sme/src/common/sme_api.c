@@ -11382,11 +11382,7 @@ int sme_update_he_om_ctrl_supp(mac_handle_t mac_handle, uint8_t session_id,
 		sme_err("No session for id %d", session_id);
 		return -EINVAL;
 	}
-	if (cfg_in_range(CFG_HE_OMI, cfg_val))
-		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.omi_a_ctrl =
-		cfg_val;
-	else
-		return -EINVAL;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.omi_a_ctrl = cfg_val;
 
 	csr_update_session_he_cap(mac_ctx, session);
 	return 0;
