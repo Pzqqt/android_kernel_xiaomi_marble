@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __Q6CORE_H__
@@ -305,17 +305,5 @@ int q6core_create_lpass_npa_client(uint32_t node_id, char *client_name,
 int q6core_destroy_lpass_npa_client(uint32_t client_handle);
 int q6core_request_island_transition(uint32_t client_handle,
 				     uint32_t island_allow_mode);
-
-#if IS_ENABLED(CONFIG_USE_Q6_32CH_SUPPORT)
-static inline bool q6core_use_Q6_32ch_support(void)
-{
-	return true;
-}
-#else
-static inline bool q6core_use_Q6_32ch_support(void)
-{
-	return false;
-}
-#endif
 
 #endif /* __Q6CORE_H__ */
