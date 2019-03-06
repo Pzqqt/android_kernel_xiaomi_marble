@@ -10980,7 +10980,8 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/* Refused due to Mac filtering */
 			roam_info->statusCode = eSIR_SME_ASSOC_REFUSED;
-		} else if (pAssocInd->rsnIE.length) {
+		} else if (pAssocInd->rsnIE.length && SIR_MAC_RSN_EID ==
+			   pAssocInd->rsnIE.rsnIEdata[0]) {
 			tDot11fIERSN rsn_ie = {0};
 
 			if (dot11f_unpack_ie_rsn(mac_ctx,
