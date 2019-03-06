@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,20 +45,7 @@ typedef struct {
 	void *arg;
 } __qdf_work_t;
 
-/**
- * __qdf_delayed_work_t - wrapper around the real work func
- * @dwork: Instance of delayed work
- * @fn: function pointer to the handler
- * @arg: pointer to argument
- */
-typedef struct {
-	struct delayed_work dwork;
-	qdf_defer_fn_t fn;
-	void *arg;
-} __qdf_delayed_work_t;
-
 extern void __qdf_defer_func(struct work_struct *work);
-extern void __qdf_defer_delayed_func(struct work_struct *work);
 
 typedef void (*__qdf_bh_fn_t)(unsigned long arg);
 
@@ -80,25 +67,6 @@ __qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
 }
 
 /**
- * __qdf_init_delayed_work - create a work/task, This runs in non-interrupt
- * context, so can be preempted by H/W & S/W intr
- * @work: pointer to work
- * @func: deferred function to run at bottom half non-interrupt context.
- * @arg: argument for the deferred function
- * Return: none
- */
-static inline uint32_t __qdf_init_delayed_work(__qdf_delayed_work_t *work,
-					       qdf_defer_fn_t func,
-					       void *arg)
-{
-	/*Initialize func and argument in work struct */
-	work->fn = func;
-	work->arg = arg;
-	INIT_DELAYED_WORK(&work->dwork, __qdf_defer_delayed_func);
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * __qdf_queue_work - Queue the work/task
  * @wqueue: pointer to workqueue
  * @work: pointer to work
@@ -108,20 +76,6 @@ static inline void
 __qdf_queue_work(__qdf_workqueue_t *wqueue, __qdf_work_t *work)
 {
 	queue_work(wqueue, &work->work);
-}
-
-/**
- * __qdf_queue_delayed_work - Queue the delayed work/task
- * @wqueue: pointer to workqueue
- * @work: pointer to work
- * @delay: delay interval
- * Return: none
- */
-static inline void __qdf_queue_delayed_work(__qdf_workqueue_t *wqueue,
-					    __qdf_delayed_work_t *work,
-					    uint32_t delay)
-{
-	queue_delayed_work(wqueue, &work->dwork, msecs_to_jiffies(delay));
 }
 
 /**
@@ -136,19 +90,6 @@ static inline QDF_STATUS __qdf_sched_work(__qdf_work_t *work)
 }
 
 /**
- * __qdf_sched_delayed_work() - Schedule a delayed work
- * @work: pointer to delayed work
- * @delay: delay interval
- * Return: none
- */
-static inline QDF_STATUS
-__qdf_sched_delayed_work(__qdf_delayed_work_t *work, uint32_t delay)
-{
-	schedule_delayed_work(&work->dwork, msecs_to_jiffies(delay));
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * __qdf_cancel_work() - Cancel a work
  * @work: pointer to work
  * Return: true if work was pending, false otherwise
@@ -159,16 +100,6 @@ static inline bool __qdf_cancel_work(__qdf_work_t *work)
 }
 
 /**
- * __qdf_cancel_delayed_work() - Cancel a delayed work
- * @work: pointer to delayed work
- * Return: true if work was pending, false otherwise
- */
-static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
-{
-	return cancel_delayed_work_sync(&work->dwork);
-}
-
-/**
  * __qdf_flush_work - Flush a deferred task on non-interrupt context
  * @work: pointer to work
  * Return: none
@@ -176,17 +107,6 @@ static inline bool __qdf_cancel_delayed_work(__qdf_delayed_work_t *work)
 static inline uint32_t __qdf_flush_work(__qdf_work_t *work)
 {
 	flush_work(&work->work);
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * __qdf_flush_delayed_work() - Flush a delayed work
- * @work: pointer to delayed work
- * Return: none
- */
-static inline uint32_t __qdf_flush_delayed_work(__qdf_delayed_work_t *work)
-{
-	flush_delayed_work(&work->dwork);
 	return QDF_STATUS_SUCCESS;
 }
 

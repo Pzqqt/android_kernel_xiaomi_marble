@@ -47,22 +47,3 @@ void __qdf_defer_func(struct work_struct *work)
 }
 qdf_export_symbol(__qdf_defer_func);
 
-/**
- * __qdf_defer_delayed_func() - defer work handler
- * @dwork: Pointer to defer work
- *
- * Return: none
- */
-void
-__qdf_defer_delayed_func(struct work_struct *dwork)
-{
-	__qdf_delayed_work_t  *ctx = container_of(dwork, __qdf_delayed_work_t,
-		 dwork.work);
-	if (!ctx->fn) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "BugCheck: Callback is not initilized while creating delayed work queue");
-		return;
-	}
-	ctx->fn(ctx->arg);
-}
-qdf_export_symbol(__qdf_defer_delayed_func);
