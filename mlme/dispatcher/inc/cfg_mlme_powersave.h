@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,8 +72,8 @@
  * <ini>
  * gAutoBmpsTimerValue - Set Auto BMPS Timer value
  * @Min: 0
- * @Max: 120
- * @Default: 90
+ * @Max: 1000
+ * @Default: 600
  *
  * This ini is used to set Auto BMPS Timer value in seconds
  *
@@ -88,8 +88,8 @@
 #define CFG_AUTO_BMPS_ENABLE_TIMER CFG_INI_UINT( \
 		"gAutoBmpsTimerValue", \
 		0, \
-		120, \
-		90, \
+		1000, \
+		600, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Auto BMPS Timer value")
 
