@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,7 +73,7 @@ enum wlan_sm_trace_type {
  */
 struct wlan_sm_history_info {
 	enum wlan_sm_trace_type trace_type;
-	uint16_t event_type;
+	uint8_t event_type;
 	uint8_t initial_state;
 	uint8_t final_state;
 };
@@ -86,7 +86,7 @@ struct wlan_sm_history_info {
  */
 struct wlan_sm_history {
 	qdf_spinlock_t sm_history_lock;
-	int index;
+	uint8_t index;
 	struct wlan_sm_history_info data[WLAN_SM_ENGINE_HISTORY_SIZE];
 };
 
