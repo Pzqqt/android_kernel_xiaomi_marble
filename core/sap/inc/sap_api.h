@@ -1303,6 +1303,14 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
  */
 QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx);
 
+/*
+ * wlansap_set_invalid_session() - Release vdev ref taken by sap context
+ * @sap_ctx: pointer to the SAP context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_release_vdev_ref(struct sap_context *sap_ctx);
+
 /**
  * sap_get_cac_dur_dfs_region() - get cac duration and dfs region.
  * @sap_ctxt: sap context

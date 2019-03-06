@@ -5805,6 +5805,12 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		}
 
+		/* Release vdev ref count to avoid vdev object leak */
+		if (adapter->device_mode == QDF_P2P_GO_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE)
+			wlansap_release_vdev_ref(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
 		/* Delete connection peers if any to avoid peer object leaks */
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {

@@ -2441,9 +2441,20 @@ QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sap_release_vdev_ref(sap_ctx);
-
 	sap_ctx->sessionId = CSR_SESSION_ID_INVALID;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlansap_release_vdev_ref(struct sap_context *sap_ctx)
+{
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid SAP pointer"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sap_release_vdev_ref(sap_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }
