@@ -14857,12 +14857,12 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		}
 		qdf_mem_copy(&csr_join_req->selfMacAddr, &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
-		sme_err("Connecting to ssid:%.*s bssid: "MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
-			csr_join_req->ssId.length, csr_join_req->ssId.ssId,
-			MAC_ADDR_ARRAY(pBssDescription->bssId),
-			pBssDescription->rssi, pBssDescription->channelId,
-			mac->scan.countryCodeCurrent[0],
-			mac->scan.countryCodeCurrent[1]);
+		sme_info("Connecting to ssid:%.*s bssid: "MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
+			 csr_join_req->ssId.length, csr_join_req->ssId.ssId,
+			 MAC_ADDR_ARRAY(pBssDescription->bssId),
+			 pBssDescription->rssi, pBssDescription->channelId,
+			 mac->scan.countryCodeCurrent[0],
+			 mac->scan.countryCodeCurrent[1]);
 		/* bsstype */
 		dw_tmp = csr_translate_bsstype_to_mac_type
 						(pProfile->BSSType);
