@@ -9557,7 +9557,7 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	mutex_init(&hdd_ctx->iface_change_lock);
 
 	hdd_ctx->parent_dev = dev;
-	hdd_ctx->last_scan_reject_session_id = 0xFF;
+	hdd_ctx->last_scan_reject_vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 
 	hdd_ctx->config = qdf_mem_malloc(sizeof(struct hdd_config));
 	if (!hdd_ctx->config) {

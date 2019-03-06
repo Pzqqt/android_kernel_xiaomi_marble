@@ -1778,7 +1778,7 @@ struct hdd_context {
 	bool tdls_umac_comp_active;
 	bool tdls_nap_active;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
-	uint8_t last_scan_reject_session_id;
+	uint8_t last_scan_reject_vdev_id;
 	enum scan_reject_states last_scan_reject_reason;
 	unsigned long last_scan_reject_timestamp;
 	uint8_t scan_reject_cnt;

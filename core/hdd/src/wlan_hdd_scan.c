@@ -316,7 +316,7 @@ void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx) {
 		hdd_ctx->last_scan_reject_timestamp = 0;
-		hdd_ctx->last_scan_reject_session_id = 0xFF;
+		hdd_ctx->last_scan_reject_vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 		hdd_ctx->last_scan_reject_reason = 0;
 		hdd_ctx->scan_reject_cnt = 0;
 	}
@@ -461,7 +461,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	struct hdd_scan_info *scan_info = NULL;
 	struct hdd_adapter *con_sap_adapter;
 	uint16_t con_dfs_ch;
-	uint8_t curr_session_id;
+	uint8_t curr_vdev_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
 	struct scan_params params = {0};
@@ -568,14 +568,14 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	}
 
 	/* Check if scan is allowed at this point of time */
-	if (hdd_is_connection_in_progress(&curr_session_id, &curr_reason)) {
+	if (hdd_is_connection_in_progress(&curr_vdev_id, &curr_reason)) {
 		scan_ebusy_cnt++;
 		hdd_err_rl("Scan not allowed. scan_ebusy_cnt: %d Session %d Reason %d",
-			   scan_ebusy_cnt, curr_session_id, curr_reason);
-		if (hdd_ctx->last_scan_reject_session_id != curr_session_id ||
+			   scan_ebusy_cnt, curr_vdev_id, curr_reason);
+		if (hdd_ctx->last_scan_reject_vdev_id != curr_vdev_id ||
 		    hdd_ctx->last_scan_reject_reason != curr_reason ||
 		    !hdd_ctx->last_scan_reject_timestamp) {
-			hdd_ctx->last_scan_reject_session_id = curr_session_id;
+			hdd_ctx->last_scan_reject_vdev_id = curr_vdev_id;
 			hdd_ctx->last_scan_reject_reason = curr_reason;
 			hdd_ctx->last_scan_reject_timestamp = jiffies +
 				msecs_to_jiffies(SCAN_REJECT_THRESHOLD_TIME);
@@ -587,7 +587,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			   qdf_system_time_after(jiffies,
 			   hdd_ctx->last_scan_reject_timestamp)) {
 				hdd_err("scan reject threshold reached Session %d Reason %d count %d reject timestamp %lu jiffies %lu",
-					curr_session_id, curr_reason,
+					curr_vdev_id, curr_reason,
 					hdd_ctx->scan_reject_cnt,
 					hdd_ctx->last_scan_reject_timestamp,
 					jiffies);
