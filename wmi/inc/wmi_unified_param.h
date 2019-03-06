@@ -4757,6 +4757,7 @@ typedef enum {
 	wmi_roam_blacklist_event_id,
 	wmi_wlm_stats_event_id,
 	wmi_peer_cfr_capture_event_id,
+	wmi_pdev_cold_boot_cal_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 

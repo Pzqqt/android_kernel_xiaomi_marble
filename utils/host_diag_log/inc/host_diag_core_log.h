@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,9 +57,14 @@ extern "C" {
 #define HOST_LOG_MAX_WOW_PTRN_MASK_SIZE                      (16)
 #define VOS_LOG_PKT_LOG_SIZE                                 (2048)
 #define HOST_LOG_PKT_LOG_THRESHOLD                           40960
+#define HOST_LOG_MAX_COLD_BOOT_CAL_DATA_SIZE                 (2048)
 
 /* Version to be updated whenever format of vos_log_pktlog_info changes */
 #define VERSION_LOG_WLAN_PKT_LOG_INFO_C                     1
+/* Version to be updated whenever format of host_log_cold_boot_cal_data_type
+ * changes
+ */
+#define VERSION_LOG_WLAN_COLD_BOOT_CAL_DATA_C               1
 
 /*---------------------------------------------------------------------------
    This packet contains the scan results of the recent scan operation
@@ -257,6 +262,26 @@ struct host_log_pktlog_info {
 	uint32_t seq_no;
 	uint32_t buf_len;
 	uint8_t buf[];
+};
+
+/**
+ * struct host_log_cold_boot_cal_data_type - Cold boot cal log info
+ * @hdr: Log header
+ * @version: version
+ * @flags: Flag to indicate if more data follows
+ * @cb_cal_data_len: Length of the cal data
+ * @cb_cal_data: Cold boot cal data
+ *
+ * Structure containing the cold boot calibration data
+ * log information
+ * LOG_WLAN_COLD_BOOT_CAL_DATA_C          0x1A18
+ */
+struct host_log_cold_boot_cal_data_type {
+	log_hdr_type hdr;
+	uint32_t version;
+	uint32_t flags;
+	uint32_t cb_cal_data_len;
+	uint8_t cb_cal_data[HOST_LOG_MAX_COLD_BOOT_CAL_DATA_SIZE];
 };
 
 /*-------------------------------------------------------------------------
