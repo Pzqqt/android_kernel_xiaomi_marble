@@ -40,6 +40,22 @@ QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
 QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
 
 /**
+ * dp_reset_monitor_mode() - Disable monitor mode
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle);
+
+/**
+ * dp_pdev_configure_monitor_rings() - configure monitor rings
+ * @vdev_handle: Datapath VDEV handle
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev);
+
+/**
  * dp_mon_link_free() - free monitor link desc pool
  * @pdev: core txrx pdev context
  *

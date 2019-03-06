@@ -33,6 +33,7 @@
 #include "dp_tx.h"
 #include "dp_tx_desc.h"
 #include "dp_rx.h"
+#include "dp_rx_mon.h"
 #ifdef DP_RATETABLE_SUPPORT
 #include "dp_ratetable.h"
 #endif
@@ -65,6 +66,24 @@ extern int con_mode_monitor;
 #include <pktlog_ac.h>
 #endif
 #endif
+
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+#include "dp_rx_mon_feature.h"
+#else
+/*
+ * dp_config_enh_rx_capture()- API to enable/disable enhanced rx capture
+ * @pdev_handle: DP_PDEV handle
+ * @val: user provided value
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, int val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+#endif
+
 void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle);
 static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force);
 static struct dp_soc *
@@ -5822,9 +5841,9 @@ QDF_STATUS dp_monitor_mode_ring_config(struct dp_soc *soc, uint8_t mac_for_pdev,
  * dp_reset_monitor_mode() - Disable monitor mode
  * @pdev_handle: Datapath PDEV handle
  *
- * Return: 0 on success, not 0 on failure
+ * Return: QDF_STATUS
  */
-static QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
+QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
@@ -5921,9 +5940,9 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
  * dp_pdev_configure_monitor_rings() - configure monitor rings
  * @vdev_handle: Datapath VDEV handle
  *
- * Return: void
+ * Return: QDF_STATUS
  */
-static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
+QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 {
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	struct dp_soc *soc;
@@ -5975,6 +5994,16 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.offset_valid = false;
 
+	if ((pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU) ||
+	    (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU_MSDU)) {
+		htt_tlv_filter.fp_mgmt_filter = 0;
+		htt_tlv_filter.fp_ctrl_filter = 0;
+		htt_tlv_filter.fp_data_filter = 0;
+		htt_tlv_filter.mo_mgmt_filter = 0;
+		htt_tlv_filter.mo_ctrl_filter = 0;
+		htt_tlv_filter.mo_data_filter = 0;
+	}
+
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
@@ -5995,6 +6024,10 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.packet = 0;
 	htt_tlv_filter.msdu_end = 0;
 	htt_tlv_filter.mpdu_end = 0;
+	if ((pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU) ||
+	    (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU_MSDU)) {
+		htt_tlv_filter.mpdu_end = 1;
+	}
 	htt_tlv_filter.attention = 0;
 	htt_tlv_filter.ppdu_start = 1;
 	htt_tlv_filter.ppdu_end = 1;
@@ -6004,9 +6037,19 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 1;
-	if (pdev->mcopy_mode) {
+	if (pdev->mcopy_mode ||
+	    (pdev->rx_enh_capture_mode != CDP_RX_ENH_CAPTURE_DISABLED)) {
 		htt_tlv_filter.packet_header = 1;
+		if (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU) {
+			htt_tlv_filter.header_per_msdu = 0;
+			htt_tlv_filter.enable_mo = 0;
+		} else if (pdev->rx_enh_capture_mode ==
+			   CDP_RX_ENH_CAPTURE_MPDU_MSDU) {
+			htt_tlv_filter.header_per_msdu = 1;
+			htt_tlv_filter.enable_mo = 0;
+		}
 	}
+
 	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
@@ -8188,6 +8231,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 			dp_h2t_cfg_stats_msg_send(pdev,
 				DP_PPDU_STATS_CFG_SNIFFER, pdev->pdev_id);
 		break;
+
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"Invalid value");
@@ -8376,6 +8420,8 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 	case CDP_OSIF_DROP:
 		dp_pdev_tid_stats_osif_drop(pdev_handle, val);
 		break;
+	case CDP_CONFIG_ENH_RX_CAPTURE:
+		return dp_config_enh_rx_capture(pdev_handle, val);
 	default:
 		return QDF_STATUS_E_INVAL;
 	}

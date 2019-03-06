@@ -147,6 +147,7 @@ typedef union {
  *
  * @rx.ftype: mcast2ucast, TSO, SG, MESH
  * @rx.is_raw_frame: RAW frame
+ * @rx.fcs_err: FCS error
  * @rx.reserved: reserved
  *
  * @tx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
@@ -259,7 +260,8 @@ struct qdf_nbuf_cb {
 			} trace;
 			uint8_t ftype;
 			uint8_t is_raw_frame:1,
-				reserved:7;
+				fcs_err:1,
+				reserved:6;
 		} rx;
 
 		/* Note: MAX: 40 bytes */
@@ -405,6 +407,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_RX_IS_FRAG(skb) \
 	(((struct qdf_nbuf_cb *) \
 	((skb)->cb))->u.rx.flag_is_frag)
+
+#define QDF_NBUF_CB_RX_FCS_ERR(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.fcs_err)
 
 #define QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, PACKET_STATE) \
 	qdf_nbuf_set_state(skb, PACKET_STATE)
@@ -1011,6 +1017,45 @@ static inline struct sk_buff *__qdf_nbuf_copy(struct sk_buff *skb)
 }
 
 #define __qdf_nbuf_reserve      skb_reserve
+
+/**
+ * __qdf_nbuf_set_data_pointer() - set buffer data pointer
+ * @skb: Pointer to network buffer
+ * @data: data pointer
+ *
+ * Return: none
+ */
+static inline void
+__qdf_nbuf_set_data_pointer(struct sk_buff *skb, uint8_t *data)
+{
+	skb->data = data;
+}
+
+/**
+ * __qdf_nbuf_set_len() - set buffer data length
+ * @skb: Pointer to network buffer
+ * @len: data length
+ *
+ * Return: none
+ */
+static inline void
+__qdf_nbuf_set_len(struct sk_buff *skb, uint32_t len)
+{
+	skb->len = len;
+}
+
+/**
+ * __qdf_nbuf_set_tail_pointer() - set buffer data tail pointer
+ * @skb: Pointer to network buffer
+ * @len: skb data length
+ *
+ * Return: none
+ */
+static inline void
+__qdf_nbuf_set_tail_pointer(struct sk_buff *skb, int len)
+{
+	skb_set_tail_pointer(skb, len);
+}
 
 /**
  * __qdf_nbuf_reset() - reset the buffer data and pointer
@@ -1620,6 +1665,18 @@ static inline struct sk_buff *
 __qdf_nbuf_queue_first(__qdf_nbuf_queue_t *qhead)
 {
 	return qhead->head;
+}
+
+/**
+ * __qdf_nbuf_queue_last() - returns the last skb in the queue
+ * @qhead: head of queue
+ *
+ * Return: NULL if the queue is empty
+ */
+static inline struct sk_buff *
+__qdf_nbuf_queue_last(__qdf_nbuf_queue_t *qhead)
+{
+	return qhead->tail;
 }
 
 /**

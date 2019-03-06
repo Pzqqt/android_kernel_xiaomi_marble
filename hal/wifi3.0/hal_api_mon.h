@@ -61,11 +61,15 @@
 		HAL_RX_USER_TLV32_USERID_MASK) >> \
 		HAL_RX_USER_TLV32_USERID_LSB)
 
-#define HAL_TLV_STATUS_PPDU_NOT_DONE		0
-#define HAL_TLV_STATUS_PPDU_DONE		1
-#define HAL_TLV_STATUS_BUF_DONE			2
-#define HAL_TLV_STATUS_PPDU_NON_STD_DONE	3
-
+#define HAL_TLV_STATUS_PPDU_NOT_DONE 0
+#define HAL_TLV_STATUS_PPDU_DONE 1
+#define HAL_TLV_STATUS_BUF_DONE 2
+#define HAL_TLV_STATUS_PPDU_NON_STD_DONE 3
+#define HAL_TLV_STATUS_PPDU_START 4
+#define HAL_TLV_STATUS_HEADER 5
+#define HAL_TLV_STATUS_MPDU_END 6
+#define HAL_TLV_STATUS_MSDU_START 7
+#define HAL_TLV_STATUS_MSDU_END 8
 
 #define HAL_MAX_UL_MU_USERS			8
 
@@ -386,10 +390,6 @@ enum {
 	HAL_RX_MON_PPDU_END,
 };
 
-struct hal_rx_ppdu_user_info {
-
-};
-
 struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_id;
 	uint32_t ppdu_timestamp;
@@ -418,12 +418,20 @@ struct hal_rx_nac_info {
 
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
-	struct hal_rx_ppdu_user_info user_info[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_status rx_status;
+	struct mon_rx_user_status rx_user_status[HAL_MAX_UL_MU_USERS];
 	struct hal_rx_msdu_payload_info msdu_info;
 	struct hal_rx_nac_info nac_info;
 	/* status ring PPDU start and end state */
 	uint32_t rx_state;
+	/* MU user id for status ring TLV */
+	uint32_t user_id;
+	/* MPDU/MSDU truncated to 128 bytes header start addr in status skb */
+	unsigned char *data;
+	/* MPDU/MSDU truncated to 128 bytes header real length */
+	uint32_t hdr_len;
+	/* MPDU FCS error */
+	bool fcs_err;
 };
 
 static inline uint32_t

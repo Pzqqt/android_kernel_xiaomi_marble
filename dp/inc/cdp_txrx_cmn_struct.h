@@ -39,6 +39,9 @@
 #endif /* CONFIG_WIN */
 #include <cdp_txrx_handle.h>
 #include <cdp_txrx_stats_struct.h>
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+#include "cdp_txrx_extd_struct.h"
+#endif
 
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
 /*
@@ -825,6 +828,7 @@ struct cdp_soc_t {
  * @CDP_CONFIG_CAPTURE_LATENCY: Capture time latency
  * @CDP_INGRESS_STATS: Accumulate ingress statistics
  * @CDP_OSIF_DROP: Accumulate drops in OSIF layer
+ * @CDP_CONFIG_ENH_RX_CAPTURE: Enable enhanced RX capture
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -837,6 +841,19 @@ enum cdp_pdev_param_type {
 	CDP_CONFIG_CAPTURE_LATENCY,
 	CDP_INGRESS_STATS,
 	CDP_OSIF_DROP,
+	CDP_CONFIG_ENH_RX_CAPTURE,
+};
+
+/**
+ * cdp_rx_enh_capture_mode - Rx enhanced capture modes
+ * @CDP_RX_ENH_CAPTURE_DISABLED: Disable Rx enhance capture
+ * @CDP_RX_ENH_CAPTURE_MPDU: Enable capture of 128 bytes of each MPDU
+ * @CDP_RX_ENH_CAPTURE_MPDU_MSDU: Enable capture of 128 bytes of each MSDU
+ */
+enum cdp_rx_enh_capture_mode {
+	CDP_RX_ENH_CAPTURE_DISABLED = 0,
+	CDP_RX_ENH_CAPTURE_MPDU,
+	CDP_RX_ENH_CAPTURE_MPDU_MSDU,
 };
 
 /*

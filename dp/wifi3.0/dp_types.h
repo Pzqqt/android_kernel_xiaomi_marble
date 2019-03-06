@@ -92,6 +92,7 @@
 #define DP_MAX_DELBA_RETRY 3
 
 #define PCP_TID_MAP_MAX 8
+#define MAX_MU_USERS 37
 
 #ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
@@ -100,6 +101,12 @@ enum rx_pktlog_mode {
 	DP_RX_PKTLOG_LITE,
 };
 #endif
+
+struct msdu_list {
+	qdf_nbuf_t head;
+	qdf_nbuf_t tail;
+	uint32 sum_len;
+};
 
 struct dp_soc_cmn;
 struct dp_pdev;
@@ -1291,7 +1298,18 @@ struct dp_pdev {
 	uint64_t mon_last_linkdesc_paddr;
 	/* to track duplicate buffer indications by HW for a WAR */
 	uint32_t mon_last_buf_cookie;
-
+	/* 128 bytes mpdu header queue per user for ppdu */
+	qdf_nbuf_queue_t mpdu_q[MAX_MU_USERS];
+	/* is this a mpdu header TLV and not msdu header TLV */
+	bool is_mpdu_hdr[MAX_MU_USERS];
+	/* per user 128 bytes msdu header list for MPDU */
+	struct msdu_list msdu_list[MAX_MU_USERS];
+	/* RX enhanced capture mode */
+	uint32_t rx_enh_capture_mode;
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+	/* RX per MPDU/PPDU information */
+	struct cdp_rx_indication_mpdu mpdu_ind[MAX_MU_USERS];
+#endif
 	/* pool addr for mcast enhance buff */
 	struct {
 		int size;

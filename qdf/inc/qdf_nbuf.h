@@ -154,6 +154,8 @@
 #define IEEE80211_AMSDU_FLAG    0x02
 #endif
 
+#define MAX_CHAIN 8
+
 /**
  * struct mon_rx_status - This will have monitor mode rx_status extracted from
  * htt_rx_desc used later to update radiotap information.
@@ -191,6 +193,7 @@
  * @beamformed: Is frame beamformed.
  * @he_sig_b_common_RU[4]: HE (11ax) common RU assignment index
  * @rssi_comb: Combined RSSI
+ * @rssi[MAX_CHAIN]: 8 bits RSSI per 20Mhz per chain
  * @duration: 802.11 Duration
  * @frame_control_info_valid: field indicates if fc value is valid
  * @frame_control: frame control field
@@ -266,6 +269,7 @@ struct mon_rx_status {
 	uint8_t  beamformed;
 	uint8_t  he_sig_b_common_RU[4];
 	int8_t   rssi_comb;
+	uint64_t rssi[MAX_CHAIN];
 	uint8_t  reception_type;
 	uint16_t duration;
 	uint8_t frame_control_info_valid;
@@ -300,6 +304,23 @@ struct mon_rx_status {
 	uint8_t data_sequence_control_info_valid;
 	uint16_t first_data_seq_ctrl;
 	uint8_t ltf_size;
+};
+
+/**
+ * struct mon_rx_status - This will have monitor mode per user rx_status
+ * extracted from hardware TLV.
+ * @mcs: MCS index of Rx frame
+ * @nss: Number of spatial streams
+ * @ofdma_info_valid: OFDMA info below is valid
+ * @dl_ofdma_ru_start_index: OFDMA RU start index
+ * @dl_ofdma_ru_width: OFDMA total RU width
+ */
+struct mon_rx_user_status {
+	uint32_t mcs:4,
+		 nss:3,
+		 ofdma_info_valid:1,
+		 dl_ofdma_ru_start_index:7,
+		 dl_ofdma_ru_width:7;
 };
 
 /**
@@ -1707,6 +1728,41 @@ static inline void qdf_nbuf_reserve(qdf_nbuf_t buf, qdf_size_t size)
 }
 
 /**
+ * qdf_nbuf_set_data_pointer() - set data pointer
+ * @buf: Network buf instance
+ * @data: data pointer
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_set_data_pointer(qdf_nbuf_t buf, uint8_t *data)
+{
+	__qdf_nbuf_set_data_pointer(buf, data);
+}
+
+/**
+ * qdf_nbuf_set_len() - set data length
+ * @buf: Network buf instance
+ * @len: data length
+ * Return: none
+ */
+static inline void qdf_nbuf_set_len(qdf_nbuf_t buf, uint32_t len)
+{
+	__qdf_nbuf_set_len(buf, len);
+}
+
+/**
+ * qdf_nbuf_set_tail_pointer() - set data tail pointer
+ * @buf: Network buf instance
+ * @len: length of data
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_set_tail_pointer(qdf_nbuf_t buf, int len)
+{
+	__qdf_nbuf_set_tail_pointer(buf, len);
+}
+
+/**
  * qdf_nbuf_reset() - reset the buffer data and pointer
  * @buf: Network buf instance
  * @reserve: reserve
@@ -1868,6 +1924,12 @@ static inline qdf_nbuf_t
 qdf_nbuf_queue_first(qdf_nbuf_queue_t *head)
 {
 	return __qdf_nbuf_queue_first(head);
+}
+
+static inline qdf_nbuf_t
+qdf_nbuf_queue_last(qdf_nbuf_queue_t *head)
+{
+	return __qdf_nbuf_queue_last(head);
 }
 
 /**
