@@ -23,6 +23,7 @@
  *
  */
 
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
@@ -1233,12 +1234,17 @@ int32_t hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 				     const void *data,
 				     int data_len)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_cfg80211_get_station_cmd(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __hdd_cfg80211_get_station_cmd(wiphy, wdev, data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 

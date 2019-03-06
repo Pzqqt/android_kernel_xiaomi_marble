@@ -23,6 +23,7 @@
  *
  */
 
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
@@ -250,14 +251,19 @@ int wlan_hdd_cfg80211_p2p_lo_start(struct wiphy *wiphy,
 				   const void *data,
 				   int data_len)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_p2p_lo_start(wiphy, wdev,
-					       data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_p2p_lo_start(wiphy, wdev,
+						 data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -335,13 +341,18 @@ int wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 				  const void *data,
 				  int data_len)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_p2p_lo_stop(wiphy, wdev,
-					      data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_p2p_lo_stop(wiphy, wdev,
+						data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 

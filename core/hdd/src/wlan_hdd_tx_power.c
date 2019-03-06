@@ -23,6 +23,7 @@
  *
  */
 
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
@@ -102,14 +103,18 @@ int wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 				    const void *data,
 				    int data_len)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_txpower_scale(wiphy, wdev,
-						data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_txpower_scale(wiphy, wdev, data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 static const struct nla_policy txpower_scale_decr_db_policy
@@ -180,13 +185,18 @@ int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 					    const void *data,
 					    int data_len)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_txpower_scale_decr_db(wiphy, wdev,
-							data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_txpower_scale_decr_db(wiphy, wdev,
+							  data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 

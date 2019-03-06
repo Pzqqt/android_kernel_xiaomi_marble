@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
  *
  */
 
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
@@ -309,12 +310,17 @@ int wlan_hdd_cfg80211_get_sar_power_limits(struct wiphy *wiphy,
 					   const void *data,
 					   int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_get_sar_power_limits(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_get_sar_power_limits(wiphy, wdev, data, data_len);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 

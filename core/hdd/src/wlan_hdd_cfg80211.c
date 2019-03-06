@@ -2965,16 +2965,19 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
  *
  * Return: None
  */
-
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work)
 {
 	struct hdd_adapter *adapter = container_of(work, struct hdd_adapter,
 						   acs_pending_work.work);
+	struct osif_vdev_sync *vdev_sync;
 
-	cds_ssr_protect(__func__);
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		return;
+
 	wlan_hdd_cfg80211_start_acs(adapter);
-	cds_ssr_unprotect(__func__);
 	clear_bit(ACS_PENDING, &adapter->event_flags);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**
