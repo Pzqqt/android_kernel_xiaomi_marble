@@ -908,15 +908,21 @@ tdls_activate_update_peer(struct tdls_update_peer_request *req)
 	}
 
 	/* in change station, we accept only when sta_id is valid */
-	if (curr_peer->link_status > TDLS_LINK_CONNECTING ||
+	if (curr_peer->link_status ==  TDLS_LINK_TEARING ||
 	    !(TDLS_STA_INDEX_CHECK(curr_peer->sta_id))) {
-		tdls_err(QDF_MAC_ADDR_STR " link %d. sta %d. update peer %s",
+		tdls_err(QDF_MAC_ADDR_STR " link %d. sta %d. update peer rejected",
 			 QDF_MAC_ADDR_ARRAY(mac), curr_peer->link_status,
-			 curr_peer->sta_id,
-			 (TDLS_STA_INDEX_CHECK(curr_peer->sta_id)) ? "ignored"
-			 : "declined");
-		status = (TDLS_STA_INDEX_CHECK(curr_peer->sta_id)) ?
-			QDF_STATUS_SUCCESS : QDF_STATUS_E_PERM;
+			 curr_peer->sta_id);
+		status = QDF_STATUS_E_PERM;
+		goto updatersp;
+	}
+
+	if (curr_peer->link_status ==  TDLS_LINK_CONNECTED &&
+	    TDLS_STA_INDEX_CHECK(curr_peer->sta_id)) {
+		tdls_err(QDF_MAC_ADDR_STR " link %d. sta %d. update peer is igonored as tdls state is already connected ",
+			 QDF_MAC_ADDR_ARRAY(mac), curr_peer->link_status,
+			 curr_peer->sta_id);
+		status = QDF_STATUS_SUCCESS;
 		goto updatersp;
 	}
 
