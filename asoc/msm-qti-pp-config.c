@@ -824,6 +824,32 @@ static int msm_qti_pp_put_channel_map_mixer(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_qti_pp_get_channel_map_capture(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL_V8] = {0};
+	int i;
+
+	adm_get_multi_ch_map(channel_map, ADM_PATH_LIVE_REC);
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
+		ucontrol->value.integer.value[i] =
+			(unsigned int) channel_map[i];
+	return 0;
+}
+
+static int msm_qti_pp_put_channel_map_capture(struct snd_kcontrol *kcontrol,
+					    struct snd_ctl_elem_value *ucontrol)
+{
+	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL_V8];
+	int i;
+
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
+		channel_map[i] = (char)(ucontrol->value.integer.value[i]);
+	adm_set_multi_ch_map(channel_map, ADM_PATH_LIVE_REC);
+
+	return 0;
+}
+
 /* Audio Sphere functions */
 
 static void msm_qti_pp_asphere_init_state(void)
@@ -1418,6 +1444,12 @@ static const struct snd_kcontrol_new multi_ch_channel_map_mixer_controls[] = {
 	msm_qti_pp_put_channel_map_mixer),
 };
 
+static const struct snd_kcontrol_new multi_ch_channel_map_capture_controls[] = {
+	SOC_SINGLE_MULTI_EXT("Capture Device Channel Map", SND_SOC_NOPM, 0, 47,
+	0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, msm_qti_pp_get_channel_map_capture,
+	msm_qti_pp_put_channel_map_capture),
+};
+
 
 static const struct snd_kcontrol_new get_rms_controls[] = {
 	SOC_SINGLE_EXT("Get RMS", SND_SOC_NOPM, 0, 0xFFFFFFFF,
@@ -1613,6 +1645,11 @@ void msm_qti_pp_add_controls(struct snd_soc_component *component)
 
 	snd_soc_add_component_controls(component, get_rms_controls,
 			ARRAY_SIZE(get_rms_controls));
+
+	snd_soc_add_component_controls(component,
+				multi_ch_channel_map_capture_controls,
+			ARRAY_SIZE(multi_ch_channel_map_capture_controls));
+
 
 	snd_soc_add_component_controls(component, eq_enable_mixer_controls,
 			ARRAY_SIZE(eq_enable_mixer_controls));
