@@ -48,6 +48,7 @@
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
 #include <linux/ieee80211.h>
+#include <qdf_delayed_work.h>
 #include <qdf_list.h>
 #include <qdf_types.h>
 #include "sir_mac_prot_def.h"
@@ -1763,7 +1764,7 @@ struct hdd_context {
 #endif
 	/* Present state of driver cds modules */
 	enum driver_modules_status driver_status;
-	qdf_delayed_work_t psoc_idle_timeout_work;
+	struct qdf_delayed_work psoc_idle_timeout_work;
 	/* Interface change lock */
 	struct mutex iface_change_lock;
 	bool rps;

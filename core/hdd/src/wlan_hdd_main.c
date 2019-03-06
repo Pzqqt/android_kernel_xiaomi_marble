@@ -54,6 +54,7 @@
 #ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
 #endif
+#include "qdf_delayed_work.h"
 #include "qdf_str.h"
 #include "qdf_talloc.h"
 #include "qdf_trace.h"
@@ -7414,6 +7415,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_exit_netlink_services(hdd_ctx);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
+	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
@@ -9188,13 +9190,13 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_debug("Starting psoc idle timer");
-	qdf_sched_delayed_work(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
+	qdf_delayed_work_start(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
 	hdd_prevent_suspend_timeout(timeout_ms, reason);
 }
 
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
 {
-	qdf_cancel_delayed_work(&hdd_ctx->psoc_idle_timeout_work);
+	qdf_delayed_work_stop_sync(&hdd_ctx->psoc_idle_timeout_work);
 	hdd_debug("Stopped psoc idle timer");
 }
 
@@ -9496,9 +9498,13 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto err_out;
 	}
 
-	qdf_create_delayed_work(&hdd_ctx->psoc_idle_timeout_work,
-				hdd_psoc_idle_timeout_callback,
-				hdd_ctx);
+	status = qdf_delayed_work_create(&hdd_ctx->psoc_idle_timeout_work,
+					 hdd_psoc_idle_timeout_callback,
+					 hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto wiphy_dealloc;
+	}
 
 	mutex_init(&hdd_ctx->iface_change_lock);
 
@@ -9588,6 +9594,9 @@ err_free_config:
 
 err_free_hdd_context:
 	mutex_destroy(&hdd_ctx->iface_change_lock);
+	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
+
+wiphy_dealloc:
 	wiphy_free(hdd_ctx->wiphy);
 
 err_out:
