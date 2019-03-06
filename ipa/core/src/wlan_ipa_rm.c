@@ -17,6 +17,7 @@
  */
 
 /* Include Files */
+#include "qdf_delayed_work.h"
 #include "wlan_ipa_core.h"
 #include "wlan_ipa_main.h"
 #include "cdp_txrx_ipa.h"
@@ -176,7 +177,7 @@ QDF_STATUS wlan_ipa_wdi_rm_request(struct wlan_ipa_priv *ipa_ctx)
 	}
 	qdf_spin_unlock_bh(&ipa_ctx->rm_lock);
 
-	qdf_cancel_delayed_work(&ipa_ctx->wake_lock_work);
+	qdf_delayed_work_stop_sync(&ipa_ctx->wake_lock_work);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -235,9 +236,8 @@ QDF_STATUS wlan_ipa_wdi_rm_try_release(struct wlan_ipa_priv *ipa_ctx)
 	 * while there is healthy amount of data transfer going on by
 	 * releasing the wake_lock after some delay.
 	 */
-	qdf_sched_delayed_work(&ipa_ctx->wake_lock_work,
-			       msecs_to_jiffies
-			       (WLAN_IPA_RX_INACTIVITY_MSEC_DELAY));
+	qdf_delayed_work_start(&ipa_ctx->wake_lock_work,
+			       WLAN_IPA_RX_INACTIVITY_MSEC_DELAY);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -412,6 +412,7 @@ static void wlan_ipa_rm_notify(void *user_data, qdf_ipa_rm_event_t event,
 QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 {
 	qdf_ipa_rm_create_params_t create_params;
+	QDF_STATUS status;
 	int ret;
 
 	if (!wlan_ipa_is_rm_enabled(ipa_ctx->config))
@@ -453,15 +454,22 @@ QDF_STATUS wlan_ipa_wdi_setup_rm(struct wlan_ipa_priv *ipa_ctx)
 		goto timer_init_failed;
 	}
 
+	status = qdf_delayed_work_create(&ipa_ctx->wake_lock_work,
+					 wlan_ipa_wake_lock_timer_func,
+					 ipa_ctx);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto timer_destroy;
+
 	qdf_wake_lock_create(&ipa_ctx->wake_lock, "wlan_ipa");
-	qdf_create_delayed_work(&ipa_ctx->wake_lock_work,
-				wlan_ipa_wake_lock_timer_func, ipa_ctx);
 	qdf_spinlock_create(&ipa_ctx->rm_lock);
 	ipa_ctx->rm_state = WLAN_IPA_RM_RELEASED;
 	ipa_ctx->wake_lock_released = true;
 	qdf_atomic_set(&ipa_ctx->tx_ref_cnt, 0);
 
 	return QDF_STATUS_SUCCESS;
+
+timer_destroy:
+	qdf_ipa_rm_inactivity_timer_destroy(QDF_IPA_RM_RESOURCE_WLAN_PROD);
 
 timer_init_failed:
 	qdf_ipa_rm_delete_resource(QDF_IPA_RM_RESOURCE_APPS_CONS);
@@ -480,8 +488,8 @@ void wlan_ipa_wdi_destroy_rm(struct wlan_ipa_priv *ipa_ctx)
 	if (!wlan_ipa_is_rm_enabled(ipa_ctx->config))
 		return;
 
-	qdf_cancel_delayed_work(&ipa_ctx->wake_lock_work);
 	qdf_wake_lock_destroy(&ipa_ctx->wake_lock);
+	qdf_delayed_work_destroy(&ipa_ctx->wake_lock_work);
 	qdf_cancel_work(&ipa_ctx->uc_rm_work.work);
 	qdf_spinlock_destroy(&ipa_ctx->rm_lock);
 

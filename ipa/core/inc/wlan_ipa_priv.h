@@ -36,6 +36,7 @@
 #include <qdf_mc_timer.h>
 #include <qdf_list.h>
 #include <qdf_defer.h>
+#include "qdf_delayed_work.h"
 #include <qdf_event.h>
 #include "wlan_ipa_public_struct.h"
 
@@ -587,7 +588,7 @@ struct wlan_ipa_priv {
 	struct uc_rm_work_struct uc_rm_work;
 	struct uc_op_work_struct uc_op_work[WLAN_IPA_UC_OPCODE_MAX];
 	qdf_wake_lock_t wake_lock;
-	qdf_delayed_work_t wake_lock_work;
+	struct qdf_delayed_work wake_lock_work;
 	bool wake_lock_released;
 
 	qdf_atomic_t tx_ref_cnt;
