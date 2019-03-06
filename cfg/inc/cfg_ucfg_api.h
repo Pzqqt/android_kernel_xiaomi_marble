@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,8 +240,6 @@ cfg_string_in_range(const char *value, qdf_size_t min_len, qdf_size_t max_len)
 #define __cfg_UINT_in_range(value, min, max) (value >= min && value <= max)
 #define __cfg_STRING_in_range(value, min_len, max_len) \
 	cfg_string_in_range(value, min_len, max_len)
-#define __cfg_BOOL_in_range(value, min, max) \
-	((value == min) || (value == max))
 
 #define __cfg_in_range(id, value, mtype) \
 	__cfg_ ## mtype ## _in_range(value, cfg_min(id), cfg_max(id))
