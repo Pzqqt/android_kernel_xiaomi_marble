@@ -20,6 +20,7 @@
  * DOC: contains nud event tracking main function definitions
  */
 
+#include "osif_sync.h"
 #include "wlan_hdd_main.h"
 
 void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
@@ -206,23 +207,17 @@ static void hdd_nud_set_tracking(struct hdd_adapter *adapter,
 
 /**
  * __hdd_nud_failure_work() - work for nud event
- * @data: Pointer to hdd_adapter
+ * @adapter: Pointer to hdd_adapter
  *
  * Return: None
  */
-static void __hdd_nud_failure_work(void *data)
+static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 {
-	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	eConnectionState conn_state;
 	int status;
 
 	hdd_enter();
-
-	if (!data)
-		return;
-
-	adapter = (struct hdd_adapter *)data;
 
 	status = hdd_validate_adapter(adapter);
 	if (status)
@@ -274,9 +269,15 @@ static void __hdd_nud_failure_work(void *data)
  */
 static void hdd_nud_failure_work(void *data)
 {
-	cds_ssr_protect(__func__);
-	__hdd_nud_failure_work(data);
-	cds_ssr_unprotect(__func__);
+	struct hdd_adapter *adapter = data;
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		return;
+
+	__hdd_nud_failure_work(adapter);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 void hdd_nud_init_tracking(struct hdd_adapter *adapter)
@@ -300,8 +301,7 @@ void hdd_nud_init_tracking(struct hdd_adapter *adapter)
 		qdf_atomic_init(&adapter
 				->nud_tracking.tx_rx_stats.gw_rx_packets);
 		qdf_create_work(0, &adapter->nud_tracking.nud_event_work,
-				hdd_nud_failure_work,
-				(void *)adapter);
+				hdd_nud_failure_work, adapter);
 	}
 }
 
@@ -412,20 +412,14 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 
 /**
  * __hdd_nud_netevent_cb() - netevent callback
- * @nb: Pointer to notifier block
- * @event: Net Event triggered
- * @data: Pointer to neighbour struct
- *
- * Callback for netevent
+ * @neighbor: neighbor used in the nud event
  *
  * Return: None
  */
-static void __hdd_nud_netevent_cb(struct notifier_block *nb,
-				  unsigned long event,
-				  void *data)
+static void __hdd_nud_netevent_cb(struct neighbour *neighbor)
 {
 	hdd_enter();
-	hdd_nud_filter_netevent(data);
+	hdd_nud_filter_netevent(neighbor);
 	hdd_exit();
 }
 
@@ -442,16 +436,24 @@ static void __hdd_nud_netevent_cb(struct notifier_block *nb,
 static int hdd_nud_netevent_cb(struct notifier_block *nb, unsigned long event,
 			       void *data)
 {
+	struct neighbour *neighbor = data;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
+
+	errno = osif_vdev_sync_op_start(neighbor->dev, &vdev_sync);
+	if (errno)
+		return errno;
+
 	switch (event) {
 	case NETEVENT_NEIGH_UPDATE:
-		cds_ssr_protect(__func__);
-		__hdd_nud_netevent_cb(nb, event, data);
-		cds_ssr_unprotect(__func__);
+		__hdd_nud_netevent_cb(neighbor);
 		break;
-	case NETEVENT_REDIRECT:
 	default:
 		break;
 	}
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
 	return 0;
 }
 

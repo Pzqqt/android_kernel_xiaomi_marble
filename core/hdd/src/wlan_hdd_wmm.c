@@ -46,6 +46,7 @@
 #include <linux/ip.h>
 #include <linux/semaphore.h>
 #include <linux/ipv6.h>
+#include "osif_sync.h"
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_wmm.h>
 #include <wlan_hdd_ether.h>
@@ -1001,16 +1002,13 @@ int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr)
 
 /**
  * __hdd_wmm_do_implicit_qos() - Function which will attempt to setup
- *				QoS for any AC requiring it.
- * @work: [in] pointer to work structure.
+ *	QoS for any AC requiring it.
+ * @qos_context: the QoS context to operate against
  *
  * Return: none
  */
-static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
+static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 {
-	struct hdd_wmm_qos_context *qos_context =
-		container_of(work, struct hdd_wmm_qos_context,
-			     wmmAcSetupImplicitQos);
 	struct hdd_adapter *adapter;
 	sme_ac_enum_type acType;
 	struct hdd_wmm_ac_status *pAc;
@@ -1030,11 +1028,6 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	enum mlme_ts_info_ack_policy ack_policy;
 
 	hdd_debug("Entered, context %pK", qos_context);
-
-	if (unlikely(HDD_WMM_CTX_MAGIC != qos_context->magic)) {
-		hdd_err("Invalid QoS Context");
-		return;
-	}
 
 	adapter = qos_context->adapter;
 
@@ -1452,9 +1445,22 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
  */
 static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 {
-	cds_ssr_protect(__func__);
-	__hdd_wmm_do_implicit_qos(work);
-	cds_ssr_unprotect(__func__);
+	struct hdd_wmm_qos_context *qos_ctx =
+		container_of(work, struct hdd_wmm_qos_context,
+			     wmmAcSetupImplicitQos);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (qos_ctx->magic != HDD_WMM_CTX_MAGIC) {
+		hdd_err("Invalid QoS Context");
+		return;
+	}
+
+	if (osif_vdev_sync_op_start(qos_ctx->adapter->dev, &vdev_sync))
+		return;
+
+	__hdd_wmm_do_implicit_qos(qos_ctx);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**

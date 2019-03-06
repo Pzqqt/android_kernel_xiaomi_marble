@@ -305,11 +305,10 @@ static void hdd_beacon_debugstats_cb(struct bcn_reception_stats_rsp
 	hdd_exit();
 }
 
-static ssize_t __show_beacon_reception_stats(struct device *dev, char *buf)
+static ssize_t __show_beacon_reception_stats(struct net_device *net_dev,
+					     char *buf)
 {
-	struct net_device *netdev =
-			qdf_container_of(dev, struct net_device, dev);
-	struct hdd_adapter *adapter = (netdev_priv(netdev));
+	struct hdd_adapter *adapter = netdev_priv(net_dev);
 	struct bcn_reception_stats_rsp *beacon_stats;
 	int ret_val, j;
 	void *cookie;
@@ -410,13 +409,19 @@ static ssize_t show_beacon_reception_stats(struct device *dev,
 					   struct device_attribute *attr,
 					   char *buf)
 {
-	ssize_t ret_val;
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
 
-	cds_ssr_protect(__func__);
-	ret_val = __show_beacon_reception_stats(dev, buf);
-	cds_ssr_unprotect(__func__);
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
 
-	return ret_val;
+	err_size = __show_beacon_reception_stats(net_dev, buf);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
 }
 
 static DEVICE_ATTR(beacon_stats, 0444,

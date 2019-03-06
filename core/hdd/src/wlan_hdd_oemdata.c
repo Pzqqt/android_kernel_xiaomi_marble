@@ -30,6 +30,7 @@
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/wireless.h>
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <net/arp.h>
 #include "qwlan_version.h"
@@ -1094,13 +1095,23 @@ static int oem_msg_callback(struct sk_buff *skb)
 
 static int __oem_msg_callback(struct sk_buff *skb)
 {
-	int ret;
+	struct hdd_context *hdd_ctx = p_hdd_ctx;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = oem_msg_callback(skb);
-	cds_ssr_unprotect(__func__);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = osif_psoc_sync_op_start(hdd_ctx->parent_dev, &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = oem_msg_callback(skb);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }
 
 int oem_activate_service(struct hdd_context *hdd_ctx)
