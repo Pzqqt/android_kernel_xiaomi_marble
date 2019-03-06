@@ -3652,13 +3652,13 @@ wlan_hdd_set_roam_param_policy[MAX_ROAMING_PARAM + 1] = {
  * @hdd_ctx:        HDD context
  * @roam_params:   roam params
  * @tb:            list of attributes
- * @session_id:    session id
+ * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 			      struct roam_ext_params *roam_params,
-			      struct nlattr **tb, uint8_t session_id)
+			      struct nlattr **tb, uint8_t vdev_id)
 {
 	int rem, i;
 	uint32_t buf_len = 0, count;
@@ -3723,7 +3723,7 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 	roam_params->num_ssid_allowed_list = i;
 	hdd_debug("Num of Allowed SSID %d", roam_params->num_ssid_allowed_list);
 	mac_handle = hdd_ctx->mac_handle;
-	sme_update_roam_params(mac_handle, session_id,
+	sme_update_roam_params(mac_handle, vdev_id,
 			       roam_params, REASON_ROAM_SET_SSID_ALLOWED);
 	return 0;
 
@@ -3736,13 +3736,13 @@ fail:
  * @hdd_ctx:        HDD context
  * @roam_params:   roam params
  * @tb:            list of attributes
- * @session_id:    session id
+ * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_bssid_prefs(struct hdd_context *hdd_ctx,
 			       struct roam_ext_params *roam_params,
-			       struct nlattr **tb, uint8_t session_id)
+			       struct nlattr **tb, uint8_t vdev_id)
 {
 	int rem, i;
 	uint32_t count;
@@ -3811,7 +3811,7 @@ static int hdd_set_bssid_prefs(struct hdd_context *hdd_ctx,
 
 	roam_params->num_bssid_favored = i;
 	mac_handle = hdd_ctx->mac_handle;
-	sme_update_roam_params(mac_handle, session_id,
+	sme_update_roam_params(mac_handle, vdev_id,
 			       roam_params, REASON_ROAM_SET_FAVORED_BSSID);
 
 	return 0;
@@ -3825,14 +3825,14 @@ fail:
  * @hdd_ctx:        HDD context
  * @roam_params:   roam params
  * @tb:            list of attributes
- * @session_id:    session id
+ * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 				   struct roam_ext_params *roam_params,
 				   struct nlattr **tb,
-				   uint8_t session_id)
+				   uint8_t vdev_id)
 {
 	int rem, i;
 	uint32_t count;
@@ -3890,7 +3890,7 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 
 	roam_params->num_bssid_avoid_list = i;
 	mac_handle = hdd_ctx->mac_handle;
-	sme_update_roam_params(mac_handle, session_id,
+	sme_update_roam_params(mac_handle, vdev_id,
 			       roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
 
 	return 0;
@@ -3903,13 +3903,13 @@ fail:
  * @hdd_ctx:        HDD context
  * @roam_params:   roam params
  * @tb:            list of attributes
- * @session_id:    session id
+ * @vdev_id:    vdev id
  *
  * Return: 0 on success; error number on failure
  */
 static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 				   const void *data, int data_len,
-				   uint8_t session_id,
+				   uint8_t vdev_id,
 				   struct roam_ext_params *roam_params)
 {
 	uint32_t cmd_type, req_id;
@@ -3939,7 +3939,7 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 	hdd_debug("Req Id: %u Cmd Type: %u", req_id, cmd_type);
 	switch (cmd_type) {
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SSID_WHITE_LIST:
-		ret = hdd_set_white_list(hdd_ctx, roam_params, tb, session_id);
+		ret = hdd_set_white_list(hdd_ctx, roam_params, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
@@ -4008,7 +4008,7 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 			tb[PARAM_RSSI_TRIGGER]);
 		hdd_debug("Alert RSSI Threshold (%d)",
 			roam_params->alert_rssi_threshold);
-		sme_update_roam_params(mac_handle, session_id,
+		sme_update_roam_params(mac_handle, vdev_id,
 				       roam_params,
 				       REASON_ROAM_EXT_SCAN_PARAMS_CHANGED);
 		break;
@@ -4022,18 +4022,18 @@ static int hdd_set_ext_roam_params(struct hdd_context *hdd_ctx,
 			tb[PARAM_ROAM_ENABLE]);
 		hdd_debug("Activate Good Rssi Roam (%d)",
 			  roam_params->good_rssi_roam);
-		sme_update_roam_params(mac_handle, session_id,
+		sme_update_roam_params(mac_handle, vdev_id,
 				       roam_params,
 				       REASON_ROAM_GOOD_RSSI_CHANGED);
 		break;
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BSSID_PREFS:
-		ret = hdd_set_bssid_prefs(hdd_ctx, roam_params, tb, session_id);
+		ret = hdd_set_bssid_prefs(hdd_ctx, roam_params, tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
 	case QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_SET_BLACKLIST_BSSID:
 		ret = hdd_set_blacklist_bssid(hdd_ctx, roam_params,
-					      tb, session_id);
+					      tb, vdev_id);
 		if (ret)
 			goto fail;
 		break;
@@ -6283,7 +6283,7 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 		  first_miss_count, final_miss_count);
 
 	/*****
-	 * TODO: research why is 0 being passed for session ID???
+	 * TODO: research why is 0 being passed for vdev id???
 	 */
 	status = sme_set_roam_bmiss_final_bcnt(hdd_ctx->mac_handle,
 					       0,
@@ -17682,7 +17682,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 				&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
 			if (!rc) {
-				hdd_err("roaming comp var timed out session Id: %d",
+				hdd_err("roaming comp var timed out vdev id: %d",
 					adapter->vdev_id);
 			}
 			if (adapter->roam_ho_fail) {
@@ -17739,7 +17739,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
 						 msecs_to_jiffies(wait_time));
 		if (!rc && (QDF_STATUS_CMD_NOT_QUEUED != status)) {
-			hdd_err("Sme disconnect event timed out session Id: %d sta_debug_state: %d",
+			hdd_err("Sme disconnect event timed out vdev id: %d sta_debug_state: %d",
 				adapter->vdev_id, sta_ctx->sta_debug_state);
 			result = -ETIMEDOUT;
 		}
@@ -17748,7 +17748,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
 						 msecs_to_jiffies(wait_time));
 		if (!rc) {
-			hdd_err("Disconnect event timed out session Id: %d sta_debug_state: %d",
+			hdd_err("Disconnect event timed out vdev id: %d sta_debug_state: %d",
 				adapter->vdev_id, sta_ctx->sta_debug_state);
 			result = -ETIMEDOUT;
 		}
@@ -18102,7 +18102,7 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 				&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
 			if (!rc) {
-				hdd_err("roaming comp var timed out session Id: %d",
+				hdd_err("roaming comp var timed out vdev id: %d",
 					adapter->vdev_id);
 			}
 			if (adapter->roam_ho_fail) {

@@ -2003,8 +2003,20 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx);
 void hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_get_adapter_by_vdev() - Return adapter with the given vdev id
+ * @hdd_ctx: hdd context.
+ * @vdev_id: vdev id for the adapter to get.
+ *
+ * This function is used to get the adapter with provided vdev id
+ *
+ * Return: adapter pointer if found
+ *
+ */
 struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
-				       uint32_t vdev_id);
+					    uint32_t vdev_id);
+
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr);
 
@@ -2042,13 +2054,15 @@ int hdd_vdev_ready(struct hdd_adapter *adapter);
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter);
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum QDF_OPMODE mode);
-/*
+
+/**
  * hdd_get_device_mode() - Get device mode
- * @session_id: Session id
+ * @vdev_id: vdev id
  *
  * Return: Device mode
  */
-enum QDF_OPMODE hdd_get_device_mode(uint32_t session_id);
+enum QDF_OPMODE hdd_get_device_mode(uint32_t vdev_id);
+
 void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held);
@@ -2578,10 +2592,6 @@ void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx);
 const char *hdd_get_fwpath(void);
 void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind);
 
-struct hdd_adapter *
-hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
-				  uint32_t sme_session_id);
-
 /**
  * hdd_get_adapter_by_iface_name() - Return adapter with given interface name
  * @hdd_ctx: hdd context.
@@ -2766,9 +2776,9 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 	return nl_srv_init(hdd_ctx->wiphy);
 }
 #endif
-QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
+QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status);
-QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id);
+QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
 
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint8_t channel, const handoff_src src);

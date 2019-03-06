@@ -3885,7 +3885,7 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
+QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status)
 {
 	struct hdd_adapter *adapter;
@@ -3897,9 +3897,9 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (NULL == adapter) {
-		hdd_err("NULL adapter for %d", session_id);
+		hdd_err("NULL adapter for %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3912,7 +3912,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id)
+QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
@@ -3923,7 +3923,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (NULL == adapter) {
 		hdd_err("NULL adapter");
 		return QDF_STATUS_E_INVAL;
@@ -6765,37 +6765,12 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 }
 
 struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
-				       uint32_t vdev_id)
+					    uint32_t vdev_id)
 {
 	struct hdd_adapter *adapter;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->vdev_id == vdev_id)
-			return adapter;
-	}
-
-	return NULL;
-}
-
-/**
- * hdd_get_adapter_by_sme_session_id() - Return adapter with
- * the sessionid
- * @hdd_ctx: hdd context.
- * @sme_session_id: sme session is for the adapter to get.
- *
- * This function is used to get the adapter with provided session id
- *
- * Return: adapter pointer if found
- *
- */
-struct hdd_adapter *
-hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
-				  uint32_t sme_session_id)
-{
-	struct hdd_adapter *adapter;
-
-	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (adapter->vdev_id == sme_session_id)
 			return adapter;
 	}
 
@@ -6838,7 +6813,7 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 	return NULL;
 }
 
-enum QDF_OPMODE hdd_get_device_mode(uint32_t session_id)
+enum QDF_OPMODE hdd_get_device_mode(uint32_t vdev_id)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
@@ -6849,7 +6824,7 @@ enum QDF_OPMODE hdd_get_device_mode(uint32_t session_id)
 		return QDF_MAX_NO_OF_MODE;
 	}
 
-	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
 		hdd_err("Invalid HDD adapter");
 		return QDF_MAX_NO_OF_MODE;
@@ -8275,7 +8250,7 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_nofl_info("Netif queue operation statistics:");
-		hdd_nofl_info("Session_id %d device mode %d",
+		hdd_nofl_info("vdev_id %d device mode %d",
 			      adapter->vdev_id, adapter->device_mode);
 		hdd_nofl_info("Current pause_map value %x", adapter->pause_map);
 		curr_time = qdf_system_ticks();
@@ -8975,7 +8950,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 	if (SME_SESSION_ID_ANY == frame_ind->sessionId) {
 		for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 			adapter =
-				hdd_get_adapter_by_sme_session_id(hdd_ctx, i);
+				hdd_get_adapter_by_vdev(hdd_ctx, i);
 			if (adapter)
 				break;
 		}
@@ -8994,8 +8969,8 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 		}
 		adapter = NULL;
 	} else {
-		adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx,
-					frame_ind->sessionId);
+		adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+						  frame_ind->sessionId);
 	}
 
 	if ((NULL != adapter) &&
@@ -14124,17 +14099,17 @@ void hdd_set_conparam(int32_t con_param)
  */
 void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx)
 {
-	uint8_t session_id;
+	uint8_t vdev_id;
 	QDF_STATUS status;
 	struct hdd_adapter *precac_adapter;
 
-	status = wlan_sap_get_pre_cac_vdev_id(hdd_ctx->mac_handle, &session_id);
+	status = wlan_sap_get_pre_cac_vdev_id(hdd_ctx->mac_handle, &vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to get pre cac vdev id");
 		return;
 	}
 
-	precac_adapter = hdd_get_adapter_by_vdev(hdd_ctx, session_id);
+	precac_adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!precac_adapter) {
 		hdd_err("invalid pre cac adapter");
 		return;
