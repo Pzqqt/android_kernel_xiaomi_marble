@@ -18,6 +18,7 @@
 
 /* Include Files */
 
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include <wlan_hdd_stats.h>
@@ -7661,7 +7662,7 @@ exit:
 
 /**
  * hdd_ioctl() - ioctl handler (wrapper) for wlan network interfaces
- * @dev: device upon which the ioctl was received
+ * @net_dev: device upon which the ioctl was received
  * @ifr: ioctl request information
  * @cmd: ioctl command
  *
@@ -7670,12 +7671,19 @@ exit:
  *
  * Return: 0 on success, non-zero on error
  */
-int hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
+int hdd_ioctl(struct net_device *net_dev, struct ifreq *ifr, int cmd)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_ioctl(dev, ifr, cmd);
-	cds_ssr_unprotect(__func__);
-	return ret;
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __hdd_ioctl(net_dev, ifr, cmd);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
+

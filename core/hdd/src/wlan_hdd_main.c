@@ -698,22 +698,30 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 	return 0;
 }
 
-static int __hdd_netdev_notifier_call(struct notifier_block *nb,
-				    unsigned long state, void *data)
-{
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-	struct netdev_notifier_info *dev_notif_info = data;
-	struct net_device *dev = dev_notif_info->dev;
+static inline struct net_device *hdd_net_dev_from_notifier(void *context)
+{
+	struct netdev_notifier_info *info = context;
+
+	return info->dev;
+}
 #else
-	struct net_device *dev = data;
+static inline struct net_device *hdd_net_dev_from_notifier(void *context)
+{
+	return context;
+}
 #endif
+
+static int __hdd_netdev_notifier_call(struct net_device *net_dev,
+				      unsigned long state)
+{
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
 
-	hdd_enter_dev(dev);
+	hdd_enter_dev(net_dev);
 
-	if (!dev->ieee80211_ptr) {
+	if (!net_dev->ieee80211_ptr) {
 		hdd_debug("ieee80211_ptr is null");
 		return NOTIFY_DONE;
 	}
@@ -730,13 +738,13 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	}
 
 	/* Make sure that this callback corresponds to our device. */
-	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, dev->name);
+	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, net_dev->name);
 	if (!adapter) {
-		hdd_debug("failed to look up adapter for '%s'", dev->name);
+		hdd_debug("failed to look up adapter for '%s'", net_dev->name);
 		return NOTIFY_DONE;
 	}
 
-	if (adapter != WLAN_HDD_GET_PRIV_PTR(dev)) {
+	if (adapter != WLAN_HDD_GET_PRIV_PTR(net_dev)) {
 		hdd_err("HDD adapter mismatch!");
 		return NOTIFY_DONE;
 	}
@@ -751,7 +759,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		return NOTIFY_DONE;
 	}
 
-	hdd_debug("%s New Net Device State = %lu", dev->name, state);
+	hdd_debug("%s New Net Device State = %lu", net_dev->name, state);
 
 	switch (state) {
 	case NETDEV_REGISTER:
@@ -793,7 +801,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		 * flag after which driver does not send the cfg80211_scan_done.
 		 * Ensure to cleanup the scan queue in NETDEV_GOING_DOWN
 		 */
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, dev);
+		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, net_dev);
 		break;
 
 	default:
@@ -807,21 +815,27 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
  * hdd_netdev_notifier_call() - netdev notifier callback function
  * @nb: pointer to notifier block
  * @state: state
- * @ndev: ndev pointer
+ * @context: notifier callback context pointer
  *
  * Return: 0 on success, error number otherwise.
  */
 static int hdd_netdev_notifier_call(struct notifier_block *nb,
 					unsigned long state,
-					void *ndev)
+					void *context)
 {
-	int ret;
+	struct net_device *net_dev = hdd_net_dev_from_notifier(context);
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_netdev_notifier_call(nb, state, ndev);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __hdd_netdev_notifier_call(net_dev, state);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 struct notifier_block hdd_netdev_notifier = {
@@ -3146,7 +3160,7 @@ err_hdd_hdd_init_deinit_lock:
 
 /**
  * hdd_open() - Wrapper function for __hdd_open to protect it from SSR
- * @dev:	Pointer to net_device structure
+ * @net_dev: Pointer to net_device structure
  *
  * This is called in response to ifconfig up
  *
@@ -3327,17 +3341,17 @@ static void __hdd_uninit(struct net_device *dev)
 
 /**
  * hdd_uninit() - Wrapper function to protect __hdd_uninit from SSR
- * @dev: pointer to net_device structure
+ * @net_dev: pointer to net_device structure
  *
  * This is called during the netdev unregister to uninitialize all data
  * associated with the device
  *
  * Return: none
  */
-static void hdd_uninit(struct net_device *dev)
+static void hdd_uninit(struct net_device *net_dev)
 {
 	cds_ssr_protect(__func__);
-	__hdd_uninit(dev);
+	__hdd_uninit(net_dev);
 	cds_ssr_unprotect(__func__);
 }
 
@@ -3462,8 +3476,8 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 
 /**
  * hdd_set_mac_address() - Wrapper function to protect __hdd_set_mac_address()
- *			function from SSR
- * @dev: pointer to net_device structure
+ *	function from SSR
+ * @net_dev: pointer to net_device structure
  * @addr: Pointer to the sockaddr
  *
  * This function sets the user specified mac address using
@@ -3471,15 +3485,20 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
  *
  * Return: 0 for success.
  */
-static int hdd_set_mac_address(struct net_device *dev, void *addr)
+static int hdd_set_mac_address(struct net_device *net_dev, void *addr)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_set_mac_address(dev, addr);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __hdd_set_mac_address(net_dev, addr);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 static uint8_t *wlan_hdd_get_derived_intf_addr(struct hdd_context *hdd_ctx)
@@ -3704,18 +3723,22 @@ out:
 	hdd_exit();
 }
 
-
 /**
  * hdd_set_multicast_list() - SSR wrapper function for __hdd_set_multicast_list
- * @dev: pointer to net_device
+ * @net_dev: pointer to net_device
  *
  * Return: none
  */
-static void hdd_set_multicast_list(struct net_device *dev)
+static void hdd_set_multicast_list(struct net_device *net_dev)
 {
-	cds_ssr_protect(__func__);
-	__hdd_set_multicast_list(dev);
-	cds_ssr_unprotect(__func__);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return;
+
+	__hdd_set_multicast_list(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 static const struct net_device_ops wlan_drv_ops = {

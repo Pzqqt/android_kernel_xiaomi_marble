@@ -581,14 +581,14 @@ static void __hdd_hostapd_uninit(struct net_device *dev)
 
 /**
  * hdd_hostapd_uninit() - SSR wrapper for __hdd_hostapd_uninit
- * @dev: pointer to net_device
+ * @net_dev: pointer to net_device
  *
  * Return: 0 on success, error number otherwise
  */
-static void hdd_hostapd_uninit(struct net_device *dev)
+static void hdd_hostapd_uninit(struct net_device *net_dev)
 {
 	cds_ssr_protect(__func__);
-	__hdd_hostapd_uninit(dev);
+	__hdd_hostapd_uninit(net_dev);
 	cds_ssr_unprotect(__func__);
 }
 
@@ -608,20 +608,25 @@ static int __hdd_hostapd_change_mtu(struct net_device *dev, int new_mtu)
 
 /**
  * hdd_hostapd_change_mtu() - SSR wrapper for __hdd_hostapd_change_mtu
- * @dev: pointer to net_device
+ * @net_dev: pointer to net_device
  * @new_mtu: new mtu
  *
  * Return: 0 on success, error number otherwise
  */
-static int hdd_hostapd_change_mtu(struct net_device *dev, int new_mtu)
+static int hdd_hostapd_change_mtu(struct net_device *net_dev, int new_mtu)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_hostapd_change_mtu(dev, new_mtu);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __hdd_hostapd_change_mtu(net_dev, new_mtu);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #ifdef QCA_HT_2040_COEX
@@ -715,20 +720,25 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 
 /**
  * hdd_hostapd_set_mac_address() - set mac address
- * @dev: pointer to net_device
+ * @net_dev: pointer to net_device
  * @addr: mac address
  *
  * Return: 0 on success, error number otherwise
  */
-static int hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
+static int hdd_hostapd_set_mac_address(struct net_device *net_dev, void *addr)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_hostapd_set_mac_address(dev, addr);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __hdd_hostapd_set_mac_address(net_dev, addr);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
@@ -1571,27 +1581,21 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
  *
  * Return: none
  */
-static void
-hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
+static void hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
 {
-	/*
-	 * Extract the adapter from work structure. sap_stop_bss_work
-	 * is part of adapter context.
-	 */
-	struct hdd_adapter *sap_adapter = container_of(work,
-						  struct hdd_adapter,
-						  sap_stop_bss_work);
-	cds_ssr_protect(__func__);
-	if (sap_adapter == NULL) {
-		cds_err("sap_adapter is NULL, no work needed");
-		cds_ssr_unprotect(__func__);
+	struct hdd_adapter *sap_adapter = container_of(work, struct hdd_adapter,
+						       sap_stop_bss_work);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(sap_adapter->dev, &vdev_sync))
 		return;
-	}
+
 	hdd_debug("work started for sap session[%d]", sap_adapter->vdev_id);
 	wlan_hdd_stop_sap(sap_adapter);
 	wlansap_cleanup_cac_timer(WLAN_HDD_GET_SAP_CTX_PTR(sap_adapter));
 	hdd_debug("work finished for sap");
-	cds_ssr_unprotect(__func__);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**
