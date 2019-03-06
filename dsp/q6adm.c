@@ -2677,7 +2677,7 @@ static int adm_arrange_mch_ep2_map_v8(
 		ep_payload->dev_channel_mapping[6] = PCM_CHANNEL_LB;
 		ep_payload->dev_channel_mapping[7] = PCM_CHANNEL_RB;
 		ep_payload->dev_channel_mapping[8] = PCM_CHANNEL_CS;
-		ep_payload->dev_channel_mapping[9] = PCM_CHANNELS;
+		ep_payload->dev_channel_mapping[9] = PCM_CHANNEL_TS;
 	} else if (channel_mode == 12) {
 		ep_payload->dev_channel_mapping[0] = PCM_CHANNEL_FL;
 		ep_payload->dev_channel_mapping[1] = PCM_CHANNEL_FR;
@@ -2701,7 +2701,7 @@ static int adm_arrange_mch_ep2_map_v8(
 		ep_payload->dev_channel_mapping[6] = PCM_CHANNEL_LB;
 		ep_payload->dev_channel_mapping[7] = PCM_CHANNEL_RB;
 		ep_payload->dev_channel_mapping[8] = PCM_CHANNEL_CS;
-		ep_payload->dev_channel_mapping[9] = PCM_CHANNELS;
+		ep_payload->dev_channel_mapping[9] = PCM_CHANNEL_TS;
 		ep_payload->dev_channel_mapping[10] = PCM_CHANNEL_CVH;
 		ep_payload->dev_channel_mapping[11] = PCM_CHANNEL_MS;
 		ep_payload->dev_channel_mapping[12] = PCM_CHANNEL_FLC;
