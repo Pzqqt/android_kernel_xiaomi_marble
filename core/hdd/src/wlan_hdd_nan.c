@@ -162,10 +162,8 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_nan_ext_request(wiphy, wdev,
 						    data, data_len);
-	cds_ssr_unprotect(__func__);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 

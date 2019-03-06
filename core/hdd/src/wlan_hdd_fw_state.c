@@ -22,11 +22,12 @@
  * The implementation for getting firmware state
  */
 
-#include "wlan_hdd_main.h"
-#include "wmi_unified_param.h"
-#include "wlan_hdd_fw_state.h"
+#include "osif_sync.h"
 #include "qca_vendor.h"
+#include "wlan_hdd_fw_state.h"
+#include "wlan_hdd_main.h"
 #include "wlan_osif_request_manager.h"
+#include "wmi_unified_param.h"
 
 struct fw_state {
 	bool fw_active;
@@ -194,11 +195,16 @@ int wlan_hdd_cfg80211_get_fw_state(struct wiphy *wiphy,
 				   const void *data,
 				   int data_len)
 {
-	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_get_fw_state(wiphy, wdev, data, data_len);
-	cds_ssr_unprotect(__func__);
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_get_fw_state(wiphy, wdev, data, data_len);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
 }

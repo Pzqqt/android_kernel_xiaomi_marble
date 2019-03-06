@@ -3907,17 +3907,22 @@ static int __iw_get_wlm_stats(struct net_device *dev,
 	return 0;
 }
 
-static int iw_get_wlm_stats(struct net_device *dev,
+static int iw_get_wlm_stats(struct net_device *net_dev,
 			    struct iw_request_info *info,
 			    union iwreq_data *wrqu, char *extra)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __iw_get_wlm_stats(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __iw_get_wlm_stats(net_dev, info, wrqu, extra);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif /* FEATURE_WLM_STATS */
 

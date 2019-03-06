@@ -125,13 +125,11 @@ void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
 				  eCsrRoamResult roam_result);
 
 /**
- * wlan_hdd_cfg80211_scan_block_cb() - scan block work handler
- * @work: Pointer to work
- *
- * This function is used to do scan block work handler
+ * wlan_hdd_cfg80211_scan_block() - scan block handler
+ * @adapter: HDD adapter to work against
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work);
+void wlan_hdd_cfg80211_scan_block(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_SCAN_H) */
 

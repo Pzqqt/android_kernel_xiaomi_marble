@@ -793,7 +793,7 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 		hdd_objmgr_put_vdev(vdev);
 		cds_flush_work(&adapter->scan_block_work);
 		/* Need to clean up blocked scan request */
-		wlan_hdd_cfg80211_scan_block_cb(&adapter->scan_block_work);
+		wlan_hdd_cfg80211_scan_block(adapter);
 		hdd_debug("Scan is not Pending from user");
 		/*
 		 * After NETDEV_GOING_DOWN, kernel calls hdd_stop.Irrespective
@@ -3299,60 +3299,45 @@ static int hdd_stop(struct net_device *net_dev)
 }
 
 /**
- * __hdd_uninit() - HDD uninit function
- * @dev:	Pointer to net_device structure
+ * hdd_uninit() - HDD uninit function
+ * @dev: Pointer to net_device structure
  *
  * This is called during the netdev unregister to uninitialize all data
  * associated with the device
  *
+ * This function must be protected by a transition
+ *
  * Return: None
  */
-static void __hdd_uninit(struct net_device *dev)
+static void hdd_uninit(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter_dev(dev);
 
-	do {
-		if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-			hdd_err("Invalid magic");
-			break;
-		}
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
+		hdd_err("Invalid magic");
+		goto exit;
+	}
 
-		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		if (!hdd_ctx) {
-			hdd_err("NULL hdd_ctx");
-			break;
-		}
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("NULL hdd_ctx");
+		goto exit;
+	}
 
-		if (dev != adapter->dev)
-			hdd_err("Invalid device reference");
+	if (dev != adapter->dev)
+		hdd_err("Invalid device reference");
 
-		hdd_deinit_adapter(hdd_ctx, adapter, true);
+	hdd_deinit_adapter(hdd_ctx, adapter, true);
 
-		/* after uninit our adapter structure will no longer be valid */
-		adapter->dev = NULL;
-		adapter->magic = 0;
-	} while (0);
+	/* after uninit our adapter structure will no longer be valid */
+	adapter->dev = NULL;
+	adapter->magic = 0;
 
+exit:
 	hdd_exit();
-}
-
-/**
- * hdd_uninit() - Wrapper function to protect __hdd_uninit from SSR
- * @net_dev: pointer to net_device structure
- *
- * This is called during the netdev unregister to uninitialize all data
- * associated with the device
- *
- * Return: none
- */
-static void hdd_uninit(struct net_device *net_dev)
-{
-	cds_ssr_protect(__func__);
-	__hdd_uninit(net_dev);
-	cds_ssr_unprotect(__func__);
 }
 
 static int hdd_open_cesium_nl_sock(void)
@@ -4989,6 +4974,20 @@ static void hdd_reset_locally_admin_bit(struct hdd_context *hdd_ctx,
 	WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(macAddr);
 	hdd_debug("locally administered bit reset in sta mode: "
 		 MAC_ADDRESS_STR, MAC_ADDR_ARRAY(macAddr));
+}
+
+static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
+{
+	struct hdd_adapter *adapter =
+		container_of(work, struct hdd_adapter, scan_block_work);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		return;
+
+	wlan_hdd_cfg80211_scan_block(adapter);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**

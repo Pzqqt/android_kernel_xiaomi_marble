@@ -269,15 +269,13 @@ static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 }
 #endif
 
-static void __wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
+void wlan_hdd_cfg80211_scan_block(struct hdd_adapter *adapter)
 {
-	struct hdd_adapter *adapter;
 	struct cfg80211_scan_request *request;
 	struct scan_req *blocked_scan_req;
-	qdf_list_node_t *node = NULL;
+	qdf_list_node_t *node;
 
-	adapter = container_of(work, struct hdd_adapter, scan_block_work);
-	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("HDD adapter context is invalid");
 		return;
 	}
@@ -303,13 +301,6 @@ static void __wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 	}
 
 	qdf_mutex_release(&adapter->blocked_scan_request_q_lock);
-}
-
-void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
-{
-	cds_ssr_protect(__func__);
-	__wlan_hdd_cfg80211_scan_block_cb(work);
-	cds_ssr_unprotect(__func__);
 }
 
 void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx)

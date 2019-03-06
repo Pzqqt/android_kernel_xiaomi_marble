@@ -21,6 +21,7 @@
 
 /* Include files */
 #include <linux/semaphore.h>
+#include "osif_sync.h"
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <linux/netdevice.h>
@@ -436,10 +437,10 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
  * In case of any packet drop or error, log the error with
  * INFO HIGH/LOW/MEDIUM to avoid excessive logging in kmsg.
  *
- * Return: Always returns NETDEV_TX_OK
+ * Return: None
  */
-static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
-						struct net_device *dev)
+static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
+					 struct net_device *dev)
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	struct hdd_adapter *adapter = (struct hdd_adapter *) netdev_priv(dev);
@@ -631,7 +632,7 @@ static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	}
 	netif_trans_update(dev);
 
-	return NETDEV_TX_OK;
+	return;
 
 drop_pkt_and_release_skb:
 	qdf_net_buf_debug_release_skb(skb);
@@ -645,20 +646,21 @@ drop_pkt:
 drop_pkt_accounting:
 	++adapter->stats.tx_dropped;
 	++adapter->hdd_stats.tx_rx_stats.tx_dropped;
-
-	return NETDEV_TX_OK;
 }
 
 netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
-				       struct net_device *dev)
+				       struct net_device *net_dev)
 {
-	netdev_tx_t ret;
+	struct osif_vdev_sync *vdev_sync;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_softap_hard_start_xmit(skb, dev);
-	cds_ssr_unprotect(__func__);
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return NETDEV_TX_OK;
 
-	return ret;
+	__hdd_softap_hard_start_xmit(skb, net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return NETDEV_TX_OK;
 }
 
 static void __hdd_softap_tx_timeout(struct net_device *dev)
@@ -718,11 +720,16 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	}
 }
 
-void hdd_softap_tx_timeout(struct net_device *dev)
+void hdd_softap_tx_timeout(struct net_device *net_dev)
 {
-	cds_ssr_protect(__func__);
-	__hdd_softap_tx_timeout(dev);
-	cds_ssr_unprotect(__func__);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return;
+
+	__hdd_softap_tx_timeout(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter)

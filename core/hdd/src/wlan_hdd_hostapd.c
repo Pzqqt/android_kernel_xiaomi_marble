@@ -544,28 +544,30 @@ int hdd_hostapd_stop(struct net_device *net_dev)
 }
 
 /**
- * __hdd_hostapd_uninit() - hdd uninit function
+ * hdd_hostapd_uninit() - hdd uninit function
+ * @dev: pointer to net_device structure
+ *
  * This is called during the netdev unregister to uninitialize all data
  * associated with the device.
  *
- * @dev: pointer to net_device structure
+ * This function must be protected by a transition
  *
  * Return: None
  */
-static void __hdd_hostapd_uninit(struct net_device *dev)
+static void hdd_hostapd_uninit(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter_dev(dev);
 
-	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
+	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		hdd_err("Invalid magic");
 		return;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (NULL == hdd_ctx) {
+	if (!hdd_ctx) {
 		hdd_err("NULL hdd_ctx");
 		return;
 	}
@@ -577,19 +579,6 @@ static void __hdd_hostapd_uninit(struct net_device *dev)
 	adapter->magic = 0;
 
 	hdd_exit();
-}
-
-/**
- * hdd_hostapd_uninit() - SSR wrapper for __hdd_hostapd_uninit
- * @net_dev: pointer to net_device
- *
- * Return: 0 on success, error number otherwise
- */
-static void hdd_hostapd_uninit(struct net_device *net_dev)
-{
-	cds_ssr_protect(__func__);
-	__hdd_hostapd_uninit(net_dev);
-	cds_ssr_unprotect(__func__);
 }
 
 /**

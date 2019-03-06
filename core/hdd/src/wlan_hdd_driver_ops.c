@@ -1026,13 +1026,7 @@ int wlan_hdd_bus_suspend(void)
 #ifdef WLAN_SUSPEND_RESUME_TEST
 int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params)
 {
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_bus_suspend(wow_params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
+	return __wlan_hdd_bus_suspend(wow_params);
 }
 #endif
 

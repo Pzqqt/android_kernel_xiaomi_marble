@@ -24,6 +24,7 @@
 
 /* denote that this file does not allow legacy hddLog */
 #define HDD_DISALLOW_LEGACY_HDDLOG 1
+#include "osif_sync.h"
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_napi.h>
@@ -903,10 +904,10 @@ void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
  * In case of any packet drop or error, log the error with
  * INFO HIGH/LOW/MEDIUM to avoid excessive logging in kmsg.
  *
- * Return: Always returns NETDEV_TX_OK
+ * Return: None
  */
-static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
-					 struct net_device *dev)
+static void __hdd_hard_start_xmit(struct sk_buff *skb,
+				  struct net_device *dev)
 {
 	QDF_STATUS status;
 	sme_ac_enum_type ac;
@@ -924,7 +925,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		kfree_skb(skb);
-		return NETDEV_TX_OK;
+		return;
 	}
 #endif
 
@@ -1128,7 +1129,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	netif_trans_update(dev);
 
-	return NETDEV_TX_OK;
+	return;
 
 drop_pkt_and_release_skb:
 	qdf_net_buf_debug_release_skb(skb);
@@ -1153,29 +1154,30 @@ drop_pkt_accounting:
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s : ARP packet dropped", __func__);
 	}
-
-	return NETDEV_TX_OK;
 }
 
 /**
  * hdd_hard_start_xmit() - Wrapper function to protect
  * __hdd_hard_start_xmit from SSR
  * @skb: pointer to OS packet
- * @dev: pointer to net_device structure
+ * @net_dev: pointer to net_device structure
  *
  * Function called by OS if any packet needs to transmit.
  *
  * Return: Always returns NETDEV_TX_OK
  */
-netdev_tx_t hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
+netdev_tx_t hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *net_dev)
 {
-	netdev_tx_t ret;
+	struct osif_vdev_sync *vdev_sync;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_hard_start_xmit(skb, dev);
-	cds_ssr_unprotect(__func__);
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return NETDEV_TX_OK;
 
-	return ret;
+	__hdd_hard_start_xmit(skb, net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return NETDEV_TX_OK;
 }
 
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
@@ -1282,7 +1284,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 
 /**
  * hdd_tx_timeout() - Wrapper function to protect __hdd_tx_timeout from SSR
- * @dev: pointer to net_device structure
+ * @net_dev: pointer to net_device structure
  *
  * Function called by OS if there is any timeout during transmission.
  * Since HDD simply enqueues packet and returns control to OS right away,
@@ -1290,11 +1292,16 @@ static void __hdd_tx_timeout(struct net_device *dev)
  *
  * Return: none
  */
-void hdd_tx_timeout(struct net_device *dev)
+void hdd_tx_timeout(struct net_device *net_dev)
 {
-	cds_ssr_protect(__func__);
-	__hdd_tx_timeout(dev);
-	cds_ssr_unprotect(__func__);
+	struct osif_vdev_sync *vdev_sync;
+
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+		return;
+
+	__hdd_tx_timeout(net_dev);
+
+	osif_vdev_sync_op_stop(vdev_sync);
 }
 
 /**

@@ -19873,7 +19873,7 @@ __wlan_hdd_cfg80211_update_owe_info(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	QDF_STATUS status;
-	int errno = 0;
+	int errno;
 
 	hdd_enter_dev(dev);
 
@@ -19915,16 +19915,21 @@ __wlan_hdd_cfg80211_update_owe_info(struct wiphy *wiphy,
  */
 static int
 wlan_hdd_cfg80211_update_owe_info(struct wiphy *wiphy,
-				  struct net_device *dev,
+				  struct net_device *net_dev,
 				  struct cfg80211_update_owe_info *owe_info)
 {
-	int ret;
+	struct osif_vdev_sync *vdev_sync;
+	int errno;
 
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_update_owe_info(wiphy, dev, owe_info);
-	cds_ssr_unprotect(__func__);
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __wlan_hdd_cfg80211_update_owe_info(wiphy, net_dev, owe_info);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 

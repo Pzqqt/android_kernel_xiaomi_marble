@@ -5062,7 +5062,7 @@ static void wlan_hdd_get_rcpi_cb(void *context, struct qdf_mac_addr mac_addr,
 }
 
 /**
- * __wlan_hdd_get_rcpi() - local function to get RCPI
+ * wlan_hdd_get_rcpi() - local function to get RCPI
  * @adapter: adapter upon which the measurement is requested
  * @mac: peer addr for which measurement is requested
  * @rcpi_value: pointer to where the RCPI should be returned
@@ -5070,10 +5070,10 @@ static void wlan_hdd_get_rcpi_cb(void *context, struct qdf_mac_addr mac_addr,
  *
  * Return: 0 for success, non-zero for failure
  */
-static int __wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
-			       uint8_t *mac,
-			       int32_t *rcpi_value,
-			       enum rcpi_measurement_type measurement_type)
+int wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
+		      uint8_t *mac,
+		      int32_t *rcpi_value,
+		      enum rcpi_measurement_type measurement_type)
 {
 	struct hdd_context *hdd_ctx;
 	int status = 0, ret = 0;
@@ -5177,19 +5177,6 @@ out:
 
 	hdd_exit();
 	return status;
-}
-
-int wlan_hdd_get_rcpi(struct hdd_adapter *adapter, uint8_t *mac,
-		      int32_t *rcpi_value,
-		      enum rcpi_measurement_type measurement_type)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_get_rcpi(adapter, mac, rcpi_value, measurement_type);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
 }
 
 #ifdef QCA_SUPPORT_CP_STATS

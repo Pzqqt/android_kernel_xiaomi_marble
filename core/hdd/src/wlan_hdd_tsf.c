@@ -1038,13 +1038,19 @@ static inline void hdd_update_tsf(struct hdd_adapter *adapter, uint64_t tsf)
 static ssize_t hdd_wlan_tsf_show(struct device *dev,
 				 struct device_attribute *attr, char *buf)
 {
-	ssize_t ret;
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
 
-	cds_ssr_protect(__func__);
-	ret = __hdd_wlan_tsf_show(dev, attr, buf);
-	cds_ssr_unprotect(__func__);
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
 
-	return ret;
+	err_size = __hdd_wlan_tsf_show(dev, attr, buf);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
 }
 
 static DEVICE_ATTR(tsf, 0400, hdd_wlan_tsf_show, NULL);
