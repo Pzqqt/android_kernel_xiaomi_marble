@@ -406,12 +406,6 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 		stats->mgmt_action++;
 		break;
 
-	case WOW_REASON_RA_MATCH:
-		stats->ipv6_mcast_wake_up_count++;
-		stats->ipv6_mcast_ra_stats++;
-		stats->icmpv6_count++;
-		break;
-
 	case WOW_REASON_NLOD:
 		stats->pno_match_wake_up_count++;
 		break;
