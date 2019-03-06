@@ -306,7 +306,7 @@ int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	vdev = adapter->vdev;
 	adapter->vdev = NULL;
-	adapter->vdev_id = HDD_SESSION_ID_INVALID;
+	adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 	qdf_spin_unlock_bh(&adapter->vdev_lock);
 
 	QDF_BUG(vdev);

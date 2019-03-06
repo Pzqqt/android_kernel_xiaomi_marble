@@ -353,9 +353,6 @@ enum hdd_driver_flags {
 
 #define PRE_CAC_SSID "pre_cac_ssid"
 
-/* session ID invalid */
-#define HDD_SESSION_ID_INVALID    0xFF
-
 #define SCAN_REJECT_THRESHOLD_TIME 300000 /* Time is in msec, equal to 5 mins */
 #define SCAN_REJECT_THRESHOLD 15
 

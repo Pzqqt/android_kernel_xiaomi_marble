@@ -10930,21 +10930,21 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 	if (0 != err)
 		return err;
 
-	err = wlan_cfg80211_nla_parse(tb, STATS_SET_MAX, data, data_len,
-				      qca_wlan_vendor_set_nud_stats);
-	if (err) {
-		hdd_err("STATS_SET_START ATTR");
-		return err;
-	}
-
-	if (adapter->vdev_id == HDD_SESSION_ID_INVALID) {
-		hdd_err("Invalid session id");
+	if (adapter->vdev_id == WLAN_UMAC_VDEV_ID_MAX) {
+		hdd_err("Invalid vdev id");
 		return -EINVAL;
 	}
 
 	if (adapter->device_mode != QDF_STA_MODE) {
 		hdd_err("STATS supported in only STA mode!");
 		return -EINVAL;
+	}
+
+	err = wlan_cfg80211_nla_parse(tb, STATS_SET_MAX, data, data_len,
+				      qca_wlan_vendor_set_nud_stats);
+	if (err) {
+		hdd_err("STATS_SET_START ATTR");
+		return err;
 	}
 
 	if (tb[STATS_SET_START]) {

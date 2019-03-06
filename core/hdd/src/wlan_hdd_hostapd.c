@@ -3418,7 +3418,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	adapter->dev = dev;
 	adapter->hdd_ctx = hdd_ctx;
 	adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
-	adapter->vdev_id = HDD_SESSION_ID_INVALID;
+	adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 
 	hdd_debug("dev = %pK, adapter = %pK, concurrency_mode=0x%x",
 		dev, adapter,

@@ -2309,7 +2309,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 	if (hdd_set_fw_params(adapter))
 		hdd_err("Failed to set the FW params for the adapter!");
 
-	if (adapter->vdev_id != HDD_SESSION_ID_INVALID) {
+	if (adapter->vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
 		ret = wlan_hdd_cfg80211_register_frames(adapter);
 		if (ret < 0) {
 			hdd_err("Failed to register frames - ret %d", ret);
@@ -3806,7 +3806,7 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	adapter->dev = dev;
 	adapter->hdd_ctx = hdd_ctx;
 	adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
-	adapter->vdev_id = HDD_SESSION_ID_INVALID;
+	adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 
 	qdf_status = qdf_event_create(&adapter->qdf_session_open_event);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
@@ -4172,7 +4172,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 			 * SSR/PDR has caused shutdown, which has forcefully
 			 * set the event. Return without the closing session.
 			 */
-			adapter->vdev_id = HDD_SESSION_ID_INVALID;
+			adapter->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 			hdd_err("Session open event forcefully set");
 			return -EINVAL;
 		}
@@ -5343,7 +5343,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 
 	hdd_enter();
 
-	if (adapter->vdev_id != HDD_SESSION_ID_INVALID)
+	if (adapter->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		wlan_hdd_cfg80211_deregister_frames(adapter);
 
 	hdd_nud_ignore_tracking(adapter, true);
