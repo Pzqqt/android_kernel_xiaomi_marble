@@ -106,6 +106,7 @@
  * HTT_PPDU_STATS_MAX_TAG declared in FW
  */
 #define CDP_PPDU_STATS_MAX_TAG 14
+#define CDP_MAX_DATA_TIDS 9
 
 #ifdef CONFIG_MCL
 #define CDP_WDI_NUM_EVENTS WDI_NUM_EVENTS
@@ -162,6 +163,141 @@ enum cdp_txrx_tidq_stats {
 
 struct cdp_tidq_stats {
 	uint32_t stats[TIDQ_STATS_MAX];
+};
+
+/*
+ * cdp_delay_stats_mode: Different types of delay statistics
+ *
+ * @CDP_DELAY_STATS_SW_ENQ: Stack to hw enqueue delay
+ * @CDP_DELAY_STATS_INTERFRAME: Interframe delay at radio entry point
+ * @CDP_DELAY_STATS_FW_HW_TRANSMIT: Hw enqueue to tx completion delay
+ * @CDP_DELAY_STATS_REAP_STACK: Delay in ring reap to indicating network stack
+ * @CDP_DELAY_STATS_RX_INTERFRAME: Rx inteframe delay
+ * @CDP_DELAY_STATS_MODE_MAX: Maximum delay mode
+ */
+enum cdp_delay_stats_mode {
+	CDP_DELAY_STATS_SW_ENQ,
+	CDP_DELAY_STATS_INTERFRAME,
+	CDP_DELAY_STATS_FW_HW_TRANSMIT,
+	CDP_DELAY_STATS_REAP_STACK,
+	CDP_DELAY_STATS_RX_INTERFRAME,
+	CDP_DELAY_STATS_MODE_MAX,
+};
+
+/*
+ * cdp_delay_bucket_index
+ *	Index to be used for all delay stats
+ */
+enum cdp_delay_bucket_index {
+	CDP_DELAY_BUCKET_1,
+	CDP_DELAY_BUCKET_2,
+	CDP_DELAY_BUCKET_3,
+	CDP_DELAY_BUCKET_4,
+	CDP_DELAY_BUCKET_5,
+	CDP_DELAY_BUCKET_6,
+	CDP_DELAY_BUCKET_7,
+	CDP_DELAY_BUCKET_8,
+	CDP_DELAY_BUCKET_9,
+	CDP_DELAY_BUCKET_10,
+	CDP_DELAY_BUCKET_11,
+	CDP_DELAY_BUCKET_12,
+	CDP_DELAY_BUCKET_MAX,
+};
+
+/*
+ * struct cdp_tx_host_drop - packet drop due to following reasons.
+ */
+enum cdp_tx_sw_drop {
+	TX_DESC_ERR,
+	TX_HAL_RING_ACCESS_ERR,
+	TX_DMA_MAP_ERR,
+	TX_HW_ENQUEUE,
+	TX_SW_ENQUEUE,
+	TX_MAX_DROP,
+};
+
+/*
+ * struct cdp_rx_host_drop - packet drop due to following reasons.
+ */
+enum cdp_rx_sw_drop {
+	INTRABSS_DROP,
+	MSDU_DONE_FAILURE,
+	INVALID_PEER_VDEV,
+	POLICY_CHECK_DROP,
+	MEC_DROP,
+	NAWDS_MCAST_DROP,
+	MESH_FILTER_DROP,
+	ENQUEUE_DROP,
+	RX_MAX_DROP,
+};
+
+/*
+ * struct cdp_delay_stats
+ * @delay_bucket: division of buckets as per latency
+ * @min_delay: minimum delay
+ * @max_delay: maximum delay
+ * @avg_delay: average delay
+ */
+struct cdp_delay_stats {
+	uint64_t delay_bucket[CDP_DELAY_BUCKET_MAX];
+	uint32_t min_delay;
+	uint32_t max_delay;
+	uint32_t avg_delay;
+};
+
+/*
+ * struct cdp_tid_tx_stats
+ * @swq_delay: delay between wifi driver entry point and enqueue to HW in tx
+ * @hwtx_delay: delay between wifi driver exit (enqueue to HW) and tx completion
+ * @intfrm_delay: interframe delay
+ * @success_cnt: total successful transmit count
+ * @complete_cnt: total transmit count
+ * @fwdrop_cnt: firmware drop found in tx completion path
+ * @swdrop_cnt: software drop in tx path
+ */
+struct cdp_tid_tx_stats {
+	struct cdp_delay_stats swq_delay;
+	struct cdp_delay_stats hwtx_delay;
+	struct cdp_delay_stats intfrm_delay;
+	uint64_t success_cnt;
+	uint64_t complete_cnt;
+	uint64_t comp_fail_cnt;
+	uint64_t swdrop_cnt[TX_MAX_DROP];
+};
+
+/*
+ * struct cdp_tid_tx_stats
+ * @to_stack_delay: Time taken between ring reap to indication to network stack
+ * @intfrm_delay: Interframe rx delay
+ * @delivered_cnt: Total packets indicated to stack
+ * @intrabss_cnt: Rx total intraBSS frames
+ * @msdu_cnt: number of msdu received from HW
+ * @mcast_msdu_cnt: Num Mcast Msdus received from HW in Rx
+ * @bcast_msdu_cnt: Num Bcast Msdus received from HW in Rx
+ * @fail_cnt: Rx deliver drop counters
+ */
+struct cdp_tid_rx_stats {
+	struct cdp_delay_stats to_stack_delay;
+	struct cdp_delay_stats intfrm_delay;
+	uint64_t delivered_to_stack;
+	uint64_t intrabss_cnt;
+	uint64_t msdu_cnt;
+	uint64_t mcast_msdu_cnt;
+	uint64_t bcast_msdu_cnt;
+	uint64_t fail_cnt[RX_MAX_DROP];
+};
+
+/*
+ * struct cdp_tid_stats
+ * @ingress_stack: Total packets received from linux stack
+ * @tid_tx_stats: transmit counters per tid
+ * @tid_rx_stats: receive counters per tid
+ */
+struct cdp_tid_stats {
+	uint64_t ingress_stack;
+	uint64_t osif_drop;
+	struct cdp_tid_tx_stats tid_tx_stats[CDP_MAX_DATA_TIDS];
+	struct cdp_tid_rx_stats tid_rx_stats[CDP_MAX_DATA_TIDS];
 };
 
 /* struct cdp_pkt_info - packet info
@@ -1065,6 +1201,7 @@ struct cdp_pdev_stats {
 
 	/* Received wdi messages from fw */
 	uint32_t wdi_event[CDP_WDI_NUM_EVENTS];
+	struct cdp_tid_stats tid_stats;
 };
 
 #ifndef BIG_ENDIAN_HOST

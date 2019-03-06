@@ -7761,6 +7761,36 @@ dp_set_bpr_enable(struct cdp_pdev *pdev_handle, int val)
 }
 
 /*
+ * dp_pdev_tid_stats_ingress_inc
+ * @pdev: pdev handle
+ * @val: increase in value
+ *
+ * Return: void
+ */
+static void
+dp_pdev_tid_stats_ingress_inc(struct cdp_pdev *pdev, uint32_t val)
+{
+	struct dp_pdev *dp_pdev = (struct dp_pdev *)pdev;
+
+	dp_pdev->stats.tid_stats.ingress_stack += val;
+}
+
+/*
+ * dp_pdev_tid_stats_osif_drop
+ * @pdev: pdev handle
+ * @val: increase in value
+ *
+ * Return: void
+ */
+static void
+dp_pdev_tid_stats_osif_drop(struct cdp_pdev *pdev, uint32_t val)
+{
+	struct dp_pdev *dp_pdev = (struct dp_pdev *)pdev;
+
+	dp_pdev->stats.tid_stats.osif_drop += val;
+}
+
+/*
  * dp_config_debug_sniffer()- API to enable/disable debug sniffer
  * @pdev_handle: DP_PDEV handle
  * @val: user provided value
@@ -8005,6 +8035,12 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 			pdev->latency_capture_enable = true;
 		else
 			pdev->latency_capture_enable = false;
+		break;
+	case CDP_INGRESS_STATS:
+		dp_pdev_tid_stats_ingress_inc(pdev_handle, val);
+		break;
+	case CDP_OSIF_DROP:
+		dp_pdev_tid_stats_osif_drop(pdev_handle, val);
 		break;
 	default:
 		return QDF_STATUS_E_INVAL;

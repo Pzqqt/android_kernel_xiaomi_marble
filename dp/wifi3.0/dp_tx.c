@@ -1157,19 +1157,16 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 }
 
 /**
- * dp_tx_classify_tid() - Obtain TID to be used for this frame
+ * dp_tx_get_tid() - Obtain TID to be used for this frame
  * @vdev: DP vdev handle
  * @nbuf: skb
  *
  * Extract the DSCP or PCP information from frame and map into TID value.
- * Software based TID classification is required when more than 2 DSCP-TID
- * mapping tables are needed.
- * Hardware supports 2 DSCP-TID mapping tables
  *
  * Return: void
  */
-static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		struct dp_tx_msdu_info_s *msdu_info)
+static void dp_tx_get_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+			  struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint8_t tos = 0, dscp_tid_override = 0;
 	uint8_t *hdr_ptr, *L3datap;
@@ -1181,14 +1178,6 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
 	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
-
-	if (pdev->soc && vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map)
-		return;
-
-	/* for mesh packets don't do any classification */
-	if (qdf_unlikely(vdev->mesh_vdev))
-		return;
-
 	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
 		eh = (qdf_ether_header_t *)nbuf->data;
 		hdr_ptr = eh->ether_dhost;
@@ -1286,7 +1275,39 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		tos = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
 		msdu_info->tid = pdev->dscp_tid_map[vdev->dscp_tid_map_id][tos];
 	}
+
+	if (msdu_info->tid >= CDP_MAX_DATA_TIDS)
+		msdu_info->tid = CDP_MAX_DATA_TIDS - 1;
+
 	return;
+}
+
+/**
+ * dp_tx_classify_tid() - Obtain TID to be used for this frame
+ * @vdev: DP vdev handle
+ * @nbuf: skb
+ *
+ * Software based TID classification is required when more than 2 DSCP-TID
+ * mapping tables are needed.
+ * Hardware supports 2 DSCP-TID mapping tables for HKv1 and 48 for HKv2.
+ *
+ * Return: void
+ */
+static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+			       struct dp_tx_msdu_info_s *msdu_info)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+
+	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
+
+	if (pdev->soc && vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map)
+		return;
+
+	/* for mesh packets don't do any classification */
+	if (qdf_unlikely(vdev->mesh_vdev))
+		return;
+
+	dp_tx_get_tid(vdev, nbuf, msdu_info);
 }
 
 #ifdef FEATURE_WLAN_TDLS
@@ -1364,6 +1385,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	uint16_t htt_tcl_metadata = 0;
 	uint8_t tid = msdu_info->tid;
+	struct cdp_tid_tx_stats *tid_stats = NULL;
 
 	/* Setup Tx descriptor for an MSDU, and MSDU extension descriptor */
 	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id,
@@ -1372,6 +1394,9 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_desc prepare Fail vdev %pK queue %d",
 			  __func__, vdev, tx_q->desc_pool_id);
+		dp_tx_get_tid(vdev, nbuf, msdu_info);
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats->swdrop_cnt[TX_DESC_ERR]++;
 		return nbuf;
 	}
 
@@ -1389,6 +1414,9 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
+		dp_tx_get_tid(vdev, nbuf, msdu_info);
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
@@ -1419,6 +1447,9 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
 			  __func__, tx_desc, tx_q->ring_id);
+		dp_tx_get_tid(vdev, nbuf, msdu_info);
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
 		goto fail_return;
@@ -1466,11 +1497,15 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
+	struct cdp_tid_tx_stats *tid_stats = NULL;
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
+		dp_tx_get_tid(vdev, nbuf, msdu_info);
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		return nbuf;
 	}
@@ -1531,9 +1566,13 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 		if (status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
-				  __func__, tx_desc, tx_q->ring_id);
+					"%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
+					__func__, tx_desc, tx_q->ring_id);
 
+			dp_tx_get_tid(vdev, nbuf, msdu_info);
+			tid_stats = &pdev->stats.tid_stats.
+				tid_tx_stats[msdu_info->tid];
+			tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
 				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
 
@@ -2640,10 +2679,16 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = NULL;
 	uint8_t mcs, pkt_type;
+	uint8_t tid = ts->tid;
+	struct cdp_tid_tx_stats *tid_stats;
 
 	if (!pdev)
 		return;
 
+	if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
+		tid = CDP_MAX_DATA_TIDS - 1;
+
+	tid_stats = &pdev->stats.tid_stats.tid_tx_stats[tid];
 	soc = pdev->soc;
 
 	mcs = ts->mcs;
@@ -2655,6 +2700,7 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	}
 
 	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+	tid_stats->complete_cnt++;
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -2677,8 +2723,12 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
 	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
+		tid_stats->comp_fail_cnt++;
 		return;
 	}
+
+	tid_stats->success_cnt++;
+
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 
 	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
@@ -3077,6 +3127,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	struct hal_tx_completion_status ts = {0};
 	uint32_t *htt_desc = (uint32_t *)status;
 	struct dp_peer *peer;
+	struct cdp_tid_tx_stats *tid_stats = NULL;
 
 	qdf_assert(tx_desc->pdev);
 
@@ -3091,6 +3142,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	case HTT_TX_FW2WBM_TX_STATUS_DROP:
 	case HTT_TX_FW2WBM_TX_STATUS_TTL:
 	{
+		uint8_t tid;
 		if (HTT_TX_WBM_COMPLETION_V2_VALID_GET(htt_desc[2])) {
 			ts.peer_id =
 				HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_GET(
@@ -3111,9 +3163,19 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 		ts.first_msdu = 1;
 		ts.last_msdu = 1;
+		tid = ts.tid;
+		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
+			tid = CDP_MAX_DATA_TIDS - 1;
 
-		if (tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[tid];
+
+		tid_stats->complete_cnt++;
+		if (qdf_unlikely(tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)) {
 			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;
+			tid_stats->comp_fail_cnt++;
+		} else {
+			tid_stats->success_cnt++;
+		}
 
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 

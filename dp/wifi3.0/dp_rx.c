@@ -428,6 +428,9 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
+	uint8_t tid = qdf_nbuf_get_priority(nbuf);
+	struct cdp_tid_rx_stats *tid_stats =
+		&ta_peer->vdev->pdev->stats.tid_stats.tid_rx_stats[tid];
 
 	/* check if the destination peer is available in peer table
 	 * and also check if the source peer and destination peer
@@ -480,6 +483,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 					 * failed and we want to continue with
 					 * next nbuf.
 					 */
+					tid_stats->fail_cnt[INTRABSS_DROP]++;
 					return true;
 				}
 			}
@@ -490,7 +494,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 				return true;
 			} else {
 				DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1,
-						 len);
+						len);
+				tid_stats->fail_cnt[INTRABSS_DROP]++;
 				return false;
 			}
 		}
@@ -513,9 +518,11 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 
 		if (dp_tx_send(ta_peer->vdev, nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
+			tid_stats->fail_cnt[INTRABSS_DROP]++;
 			qdf_nbuf_free(nbuf_copy);
 		} else {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1, len);
+			tid_stats->intrabss_cnt++;
 		}
 	}
 	/* return false as we have to still send the original pkt
@@ -1094,6 +1101,8 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 						qdf_nbuf_t nbuf_head,
 						qdf_nbuf_t nbuf_tail)
 {
+	struct cdp_tid_rx_stats *stats = NULL;
+	uint8_t tid = 0;
 	/*
 	 * highly unlikely to have a vdev without a registered rx
 	 * callback function. if so let us free the nbuf_list.
@@ -1103,6 +1112,10 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 		do {
 			nbuf = nbuf_head;
 			nbuf_head = nbuf_head->next;
+			tid = qdf_nbuf_get_priority(nbuf);
+			stats = &vdev->pdev->stats.tid_stats.tid_rx_stats[tid];
+			stats->fail_cnt[INVALID_PEER_VDEV]++;
+			stats->delivered_to_stack--;
 			qdf_nbuf_free(nbuf);
 		} while (nbuf_head);
 
@@ -1401,6 +1414,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
 	uint8_t mac_id = 0;
 	struct dp_pdev *pdev;
+	struct dp_pdev *rx_pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_soc *soc = int_ctx->soc;
@@ -1412,6 +1426,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	qdf_nbuf_t deliver_list_tail = NULL;
 	int32_t tid = 0;
 	uint32_t dst_num_valid = 0;
+	struct cdp_tid_rx_stats *tid_stats;
 
 	DP_HIST_INIT();
 	/* Debug -- Remove later */
@@ -1593,17 +1608,32 @@ done:
 	while (nbuf) {
 		next = nbuf->next;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
+		/* Get TID from first msdu per MPDU, save to skb->priority */
+		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
+			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
+							rx_tlv_hdr);
+		DP_RX_TID_SAVE(nbuf, tid);
 
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
 		 * to be written
 		 */
+		rx_pdev = soc->pdev_list[rx_desc->pool_id];
+		tid_stats = &rx_pdev->stats.tid_stats.tid_rx_stats[tid];
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL("MSDU DONE failure"));
+					FL("MSDU DONE failure"));
 			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
-					     QDF_TRACE_LEVEL_INFO);
+					QDF_TRACE_LEVEL_INFO);
+			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
 			qdf_assert(0);
+		}
+
+		tid_stats->msdu_cnt++;
+		if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+			tid_stats->mcast_msdu_cnt++;
+			if (qdf_nbuf_is_bcast_pkt(nbuf))
+				tid_stats->bcast_msdu_cnt++;
 		}
 
 		peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
@@ -1632,12 +1662,14 @@ done:
 		} else {
 			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 					 qdf_nbuf_len(nbuf));
+			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			continue;
 		}
 
 		if (qdf_unlikely(vdev == NULL)) {
+			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
@@ -1701,6 +1733,7 @@ done:
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("Policy Check Drop pkt"));
+			tid_stats->fail_cnt[POLICY_CHECK_DROP]++;
 			/* Drop & free packet */
 			qdf_nbuf_free(nbuf);
 			/* Statistics */
@@ -1713,6 +1746,7 @@ done:
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_ERROR,
 				FL("received pkt with same src MAC"));
+			tid_stats->fail_cnt[MEC_DROP]++;
 			DP_STATS_INC_PKT(peer, rx.mec_drop, 1, msdu_len);
 
 			/* Drop & free packet */
@@ -1726,6 +1760,7 @@ done:
 		if (qdf_unlikely(peer && (peer->nawds_enabled == true) &&
 			(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr)) &&
 			(hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) == false))) {
+			tid_stats->fail_cnt[NAWDS_MCAST_DROP]++;
 			DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
@@ -1750,14 +1785,14 @@ done:
 		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
 
 		if (qdf_unlikely(vdev->mesh_vdev)) {
-			if (dp_rx_filter_mesh_packets(vdev, nbuf,
-							rx_tlv_hdr)
+			if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
 					== QDF_STATUS_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_INFO_MED,
-					FL("mesh pkt filtered"));
-			DP_STATS_INC(vdev->pdev, dropped.mesh_filter,
-					1);
+						QDF_TRACE_LEVEL_INFO_MED,
+						FL("mesh pkt filtered"));
+				tid_stats->fail_cnt[MESH_FILTER_DROP]++;
+				DP_STATS_INC(vdev->pdev, dropped.mesh_filter,
+					     1);
 
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
@@ -1812,6 +1847,7 @@ done:
 							nbuf)) {
 					nbuf = next;
 					dp_peer_unref_del_find_by_id(peer);
+					tid_stats->intrabss_cnt++;
 					continue; /* Get next desc */
 				}
 		}
@@ -1819,18 +1855,13 @@ done:
 		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf);
 		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
 
-		/* Get TID from first msdu per MPDU, save to skb->priority */
-		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
-			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
-							rx_tlv_hdr);
-		DP_RX_TID_SAVE(nbuf, tid);
-
 		DP_RX_LIST_APPEND(deliver_list_head,
 				  deliver_list_tail,
 				  nbuf);
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 				qdf_nbuf_len(nbuf));
 
+		tid_stats->delivered_to_stack++;
 		nbuf = next;
 		dp_peer_unref_del_find_by_id(peer);
 	}
