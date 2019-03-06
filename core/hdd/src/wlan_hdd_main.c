@@ -14644,18 +14644,8 @@ bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 	return hdd_ctx->roaming_in_progress;
 }
 
-/**
- * hdd_is_connection_in_progress() - check if connection is in
- * progress
- * @session_id: session id
- * @reason: scan reject reason
- *
- * Go through each adapter and check if Connection is in progress
- *
- * Return: true if connection is in progress else false
- */
-bool hdd_is_connection_in_progress(uint8_t *session_id,
-				enum scan_reject_states *reason)
+bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
+				   enum scan_reject_states *out_reason)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct hdd_adapter *adapter = NULL;
@@ -14685,9 +14675,9 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			hdd_debug("%pK(%d) Connection is in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->vdev_id);
-			if (session_id && reason) {
-				*session_id = adapter->vdev_id;
-				*reason = CONNECTION_IN_PROGRESS;
+			if (out_vdev_id && out_reason) {
+				*out_vdev_id = adapter->vdev_id;
+				*out_reason = CONNECTION_IN_PROGRESS;
 			}
 			return true;
 		}
@@ -14703,9 +14693,9 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			hdd_debug("%pK(%d) Reassociation in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->vdev_id);
-			if (session_id && reason) {
-				*session_id = adapter->vdev_id;
-				*reason = REASSOC_IN_PROGRESS;
+			if (out_vdev_id && out_reason) {
+				*out_vdev_id = adapter->vdev_id;
+				*out_reason = REASSOC_IN_PROGRESS;
 			}
 			return true;
 		}
@@ -14723,9 +14713,9 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				hdd_debug("client " MAC_ADDRESS_STR
 					" is in middle of WPS/EAPOL exchange.",
 					MAC_ADDR_ARRAY(sta_mac));
-				if (session_id && reason) {
-					*session_id = adapter->vdev_id;
-					*reason = EAPOL_IN_PROGRESS;
+				if (out_vdev_id && out_reason) {
+					*out_vdev_id = adapter->vdev_id;
+					*out_reason = EAPOL_IN_PROGRESS;
 				}
 				return true;
 			}
@@ -14744,9 +14734,9 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				hdd_debug("client " MAC_ADDRESS_STR
 				" of SAP/GO is in middle of WPS/EAPOL exchange",
 				MAC_ADDR_ARRAY(sta_mac));
-				if (session_id && reason) {
-					*session_id = adapter->vdev_id;
-					*reason = SAP_EAPOL_IN_PROGRESS;
+				if (out_vdev_id && out_reason) {
+					*out_vdev_id = adapter->vdev_id;
+					*out_reason = SAP_EAPOL_IN_PROGRESS;
 				}
 				return true;
 			}

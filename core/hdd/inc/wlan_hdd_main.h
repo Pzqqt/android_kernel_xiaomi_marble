@@ -3010,8 +3010,21 @@ tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
  */
 bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx);
 void hdd_set_roaming_in_progress(bool value);
-bool hdd_is_connection_in_progress(uint8_t *session_id,
-	enum scan_reject_states *reason);
+
+/**
+ * hdd_is_connection_in_progress() - check if connection is in progress
+ * @out_vdev_id: id of vdev where connection is occurring
+ * @out_reason: scan reject reason
+ *
+ * Go through each adapter and check if connection is in progress.
+ * Output parameters @out_vdev_id and @out_reason will only be written
+ * when a connection is in progress.
+ *
+ * Return: true if connection is in progress else false
+ */
+bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
+				   enum scan_reject_states *out_reason);
+
 void hdd_restart_sap(struct hdd_adapter *ap_adapter);
 void hdd_check_and_restart_sap_with_non_dfs_acs(void);
 bool hdd_set_connection_in_progress(bool value);
