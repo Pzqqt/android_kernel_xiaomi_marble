@@ -803,10 +803,17 @@ static inline QDF_STATUS dp_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
 	 * (This is needed, because the headroom of the dst buffer
 	 * contains the rx desc.)
 	 */
-	if (qdf_nbuf_cat(dst, src))
-		return QDF_STATUS_E_DEFRAG_ERROR;
+	if (!qdf_nbuf_cat(dst, src)) {
+		/*
+		 * qdf_nbuf_cat does not free the src memory.
+		 * Free src nbuf before returning
+		 * For failure case the caller takes of freeing the nbuf
+		 */
+		qdf_nbuf_free(src);
+		return QDF_STATUS_SUCCESS;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	return QDF_STATUS_E_DEFRAG_ERROR;
 }
 
 /*
