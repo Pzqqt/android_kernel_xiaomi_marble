@@ -80,9 +80,6 @@ struct cds_config_info {
 	enum qdf_driver_type driver_type;
 	uint8_t ap_maxoffload_peers;
 	uint8_t ap_maxoffload_reorderbuffs;
-#ifdef FEATURE_WLAN_RA_FILTERING
-	bool is_ra_ratelimit_enabled;
-#endif
 	uint8_t reorder_offload;
 	uint8_t uc_offload_enabled;
 	bool enable_rxthread;
