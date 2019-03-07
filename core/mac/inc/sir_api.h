@@ -3038,11 +3038,6 @@ typedef struct {
 } tSirStatsExtEvent, *tpSirStatsExtEvent;
 #endif
 
-typedef struct {
-	uint32_t event_data_len;
-	uint8_t event_data[];
-} tSirNanEvent, *tpSirNanEvent;
-
 struct roam_offload_synch_ind {
 	uint16_t messageType;   /*eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
 	uint16_t length;
