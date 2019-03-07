@@ -945,7 +945,7 @@ struct dp_soc {
 	/* Enable processing of Tx completion status words */
 	bool process_tx_status;
 	bool process_rx_status;
-	struct dp_ast_entry *ast_table[WLAN_UMAC_PSOC_MAX_PEERS * 2];
+	struct dp_ast_entry **ast_table;
 	struct {
 		unsigned mask;
 		unsigned idx_bits;

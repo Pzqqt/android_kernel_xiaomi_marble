@@ -67,6 +67,24 @@ static inline int dp_peer_find_mac_addr_cmp(
 		(mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
 }
 
+static int dp_peer_ast_table_attach(struct dp_soc *soc)
+{
+	uint32_t max_ast_index;
+
+	max_ast_index = wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx);
+	/* allocate ast_table for ast entry to ast_index map */
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "\n<=== cfg max ast idx %d ====>", max_ast_index);
+	soc->ast_table = qdf_mem_malloc(max_ast_index *
+					sizeof(struct dp_ast_entry *));
+	if (!soc->ast_table) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: ast_table memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	return 0; /* success */
+}
+
 static int dp_peer_find_map_attach(struct dp_soc *soc)
 {
 	uint32_t max_peers, peer_map_size;
@@ -201,8 +219,9 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 {
 	int i, hash_elems, log2;
+	unsigned int max_ast_idx = wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx);
 
-	hash_elems = ((soc->max_peers * DP_AST_HASH_LOAD_MULT) >>
+	hash_elems = ((max_ast_idx * DP_AST_HASH_LOAD_MULT) >>
 		DP_AST_HASH_LOAD_SHIFT);
 
 	log2 = dp_log2_ceil(hash_elems);
@@ -210,6 +229,10 @@ static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 
 	soc->ast_hash.mask = hash_elems - 1;
 	soc->ast_hash.idx_bits = log2;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "ast hash_elems: %d, max_ast_idx: %d",
+		  hash_elems, max_ast_idx);
 
 	/* allocate an array of TAILQ peer object lists */
 	soc->ast_hash.bins = qdf_mem_malloc(
@@ -1172,6 +1195,11 @@ void dp_peer_find_hash_erase(struct dp_soc *soc)
 	}
 }
 
+static void dp_peer_ast_table_detach(struct dp_soc *soc)
+{
+	qdf_mem_free(soc->ast_table);
+}
+
 static void dp_peer_find_map_detach(struct dp_soc *soc)
 {
 	qdf_mem_free(soc->peer_id_to_obj_map);
@@ -1187,11 +1215,19 @@ int dp_peer_find_attach(struct dp_soc *soc)
 		return 1;
 	}
 
-	if (dp_peer_ast_hash_attach(soc)) {
+	if (dp_peer_ast_table_attach(soc)) {
 		dp_peer_find_hash_detach(soc);
 		dp_peer_find_map_detach(soc);
 		return 1;
 	}
+
+	if (dp_peer_ast_hash_attach(soc)) {
+		dp_peer_ast_table_detach(soc);
+		dp_peer_find_hash_detach(soc);
+		dp_peer_find_map_detach(soc);
+		return 1;
+	}
+
 	return 0; /* success */
 }
 
@@ -1527,6 +1563,7 @@ dp_peer_find_detach(struct dp_soc *soc)
 	dp_peer_find_map_detach(soc);
 	dp_peer_find_hash_detach(soc);
 	dp_peer_ast_hash_detach(soc);
+	dp_peer_ast_table_detach(soc);
 }
 
 static void dp_rx_tid_update_cb(struct dp_soc *soc, void *cb_ctxt,
