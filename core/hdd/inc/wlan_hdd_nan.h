@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,22 +67,6 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 				      const void *data,
 				      int data_len);
 
-/**
- * wlan_hdd_cfg80211_nan_request() - handle NAN Extended request
- * @wiphy:   pointer to wireless wiphy structure.
- * @wdev:    pointer to wireless_dev structure.
- * @data:    Pointer to the data to be passed via vendor interface
- * @data_len:Length of the data to be passed
- *
- * This function is called by userspace to send a NAN request to
- * firmware.  This is an SSR-protected wrapper function.
- *
- * Return: 0 on success, negative errno on failure
- */
-int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-				  struct wireless_dev *wdev,
-				  const void *data, int data_len);
-
 #define FEATURE_NAN_VENDOR_COMMANDS					\
 	{                                                               \
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,                \
@@ -111,30 +95,9 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 #else /* WLAN_FEATURE_NAN */
 #define FEATURE_NAN_VENDOR_COMMANDS
 
-static inline int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-						struct wireless_dev *wdev,
-						const void *data,
-						int data_len)
-{
-	return 0;
-}
-
-static inline int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
-						    struct wireless_dev *wdev,
-						    const void *data,
-						    int data_len)
-{
-	return 0;
-}
-
 static inline bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 {
 	return false;
-}
-
-static inline
-void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
-{
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* __WLAN_HDD_NAN_H */
