@@ -815,7 +815,7 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 							wsa_priv->default_clk_id,
 							true);
 			if (ret < 0) {
-				dev_err(wsa_priv->dev,
+				dev_err_ratelimited(wsa_priv->dev,
 					"%s: wsa request clock enable failed\n",
 					__func__);
 				goto exit;
@@ -2637,7 +2637,7 @@ static int wsa_swrm_clock(void *handle, bool enable)
 			if (ret < 0) {
 				msm_cdc_pinctrl_select_sleep_state(
 						wsa_priv->wsa_swr_gpio_p);
-				dev_err(wsa_priv->dev,
+				dev_err_ratelimited(wsa_priv->dev,
 					"%s: wsa request clock enable failed\n",
 					__func__);
 				goto exit;

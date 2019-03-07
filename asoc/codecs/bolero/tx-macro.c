@@ -212,7 +212,7 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 							   TX_CORE_CLK,
 							   true);
 			if (ret < 0) {
-				dev_err(tx_priv->dev,
+				dev_err_ratelimited(tx_priv->dev,
 					"%s: request clock enable failed\n",
 					__func__);
 				goto exit;

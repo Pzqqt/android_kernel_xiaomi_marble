@@ -7578,7 +7578,7 @@ int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg)
 
 	ret = afe_q6_interface_prepare();
 	if (ret != 0) {
-		pr_err("%s: Q6 interface prepare failed %d\n", __func__, ret);
+		pr_err_ratelimited("%s: Q6 interface prepare failed %d\n", __func__, ret);
 		return ret;
 	}
 
@@ -7599,7 +7599,7 @@ int afe_set_lpass_clk_cfg(int index, struct afe_clk_set *cfg)
 	ret = q6afe_svc_pack_and_set_param_in_band(index, param_hdr,
 						   (u8 *) cfg);
 	if (ret < 0)
-		pr_err("%s: AFE clk cfg failed with ret %d\n",
+		pr_err_ratelimited("%s: AFE clk cfg failed with ret %d\n",
 		       __func__, ret);
 
 	mutex_unlock(&this_afe.afe_cmd_lock);

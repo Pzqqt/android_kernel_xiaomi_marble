@@ -70,7 +70,7 @@ static int audio_ext_clk_prepare(struct clk_hw *hw)
 		clk_priv->clk_cfg.enable = 1;
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 		if (ret < 0) {
-			pr_err("%s afe_set_digital_codec_core_clock failed\n",
+			pr_err_ratelimited("%s afe_set_digital_codec_core_clock failed\n",
 				__func__);
 			return ret;
 		}
@@ -112,7 +112,7 @@ static void audio_ext_clk_unprepare(struct clk_hw *hw)
 		clk_priv->clk_cfg.enable = 0;
 		ret = afe_set_lpass_clk_cfg(IDX_RSVD_3, &clk_priv->clk_cfg);
 		if (ret < 0)
-			pr_err("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
+			pr_err_ratelimited("%s: afe_set_lpass_clk_cfg failed, ret = %d\n",
 				__func__, ret);
 	}
 
