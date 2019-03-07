@@ -1376,6 +1376,10 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
+			policy_mgr_set_hw_mode_before_channel_switch(mac->psoc,
+						sapContext->sessionId,
+						targetChannel);
+
 			/*
 			 * Copy the requested target channel
 			 * to sap context.

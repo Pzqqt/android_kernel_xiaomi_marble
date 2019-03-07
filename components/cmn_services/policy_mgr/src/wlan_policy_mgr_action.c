@@ -1910,6 +1910,40 @@ done:
 	return status;
 }
 
+QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan)
+{
+	QDF_STATUS status;
+	struct policy_mgr_conc_connection_info info;
+	uint8_t num_cxn_del = 0;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_err("DBS is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/*
+	 * Store the connection's parameter and temporarily delete it
+	 * from the concurrency table. This way the allow concurrency
+	 * check can be used as though a new connection is coming up,
+	 * after check, restore the connection to concurrency table.
+	 */
+	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
+						      &info, &num_cxn_del);
+
+	status = policy_mgr_update_and_wait_for_connection_update(psoc,
+				vdev_id, chan,
+				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH);
+	if (QDF_IS_STATUS_ERROR(status))
+		policy_mgr_err("Failed to update HW modeStatus %d", status);
+
+	/* Restore the connection entry */
+	if (num_cxn_del)
+		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
+	return status;
+}
+
 void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 		struct wlan_objmgr_psoc *psoc, uint8_t channel)
 {
