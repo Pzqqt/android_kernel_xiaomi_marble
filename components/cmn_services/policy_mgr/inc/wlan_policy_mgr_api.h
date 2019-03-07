@@ -2673,15 +2673,18 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
 
 /**
- * policy_mgr_trim_acs_channel_list() - Trim the ACS channel list based
- * on the number of active station connections
+ * policy_mgr_trim_acs_channel_list() - Trims ACS channel list with
+ * intersection of PCL
+ * @pcl: preferred channel list
+ * @pcl_count: Preferred channel list count
  * @org_ch_list: ACS channel list from user space
  * @org_ch_list_count: ACS channel count from user space
  *
  * Return: None
  */
-void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
-		uint8_t *org_ch_list, uint8_t *org_ch_list_count);
+void policy_mgr_trim_acs_channel_list(uint8_t *pcl, uint8_t pcl_count,
+				      uint8_t *org_ch_list,
+				      uint8_t *org_ch_list_count);
 
 /**
  * policy_mgr_is_hwmode_set_for_given_chnl() - to check for given channel
