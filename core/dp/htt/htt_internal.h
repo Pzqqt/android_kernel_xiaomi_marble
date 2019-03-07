@@ -520,13 +520,13 @@ QDF_STATUS
 htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev);
 #endif /* defined(HELIUMPLUS) */
 
-extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
+QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev);
 
-extern QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev);
+QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev);
 
-extern QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_hl(struct htt_pdev_t *pdev);
+QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_hl(struct htt_pdev_t *pdev);
 
-extern QDF_STATUS htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev);
+QDF_STATUS htt_h2t_rx_ring_cfg_msg_hl(struct htt_pdev_t *pdev);
 
 extern QDF_STATUS (*htt_h2t_rx_ring_cfg_msg)(struct htt_pdev_t *pdev);
 
