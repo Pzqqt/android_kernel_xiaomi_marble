@@ -6149,8 +6149,8 @@ void hdd_update_hlp_info(struct net_device *dev,
 	}
 
 	if (!roam_fils_params->hlp_data_len) {
-		hdd_err("FILS HLP Data NULL, len %d",
-			roam_fils_params->hlp_data_len);
+		hdd_debug("FILS HLP Data NULL, len %d",
+			  roam_fils_params->hlp_data_len);
 		return;
 	}
 

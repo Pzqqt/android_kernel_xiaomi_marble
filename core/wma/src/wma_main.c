@@ -4085,8 +4085,7 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 
 		mac_id = WMA_PDEV_TO_MAC_MAP(vdev_mac_entry[i].pdev_id);
 
-		WMA_LOGE("%s: vdev_id:%d mac_id:%d",
-				__func__, vdev_id, mac_id);
+		wma_debug("vdev_id:%d mac_id:%d", vdev_id, mac_id);
 
 		hw_mode_trans_ind->vdev_mac_map[i].vdev_id = vdev_id;
 		hw_mode_trans_ind->vdev_mac_map[i].mac_id = mac_id;

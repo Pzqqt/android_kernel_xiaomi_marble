@@ -13382,7 +13382,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 
 	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
 	if (QDF_STATUS_SUCCESS != status) {
-		sme_err("parse_scan_result failed");
+		sme_debug("parse_scan_result failed");
 		goto free_scan_flter;
 	}
 

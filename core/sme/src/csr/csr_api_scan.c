@@ -2855,7 +2855,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		sme_debug("num_entries %d", qdf_list_size(list));
 
 	if (!list || (list && !qdf_list_size(list))) {
-		sme_err("get scan result failed");
+		sme_debug("get scan result failed");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
