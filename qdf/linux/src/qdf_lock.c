@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,10 +22,10 @@
 #include <qdf_module.h>
 
 #include <qdf_types.h>
-#ifdef CONFIG_MCL
 #include <i_host_diag_core_event.h>
-#include <hif.h>
+#ifdef CONFIG_MCL
 #include <cds_api.h>
+#include <hif.h>
 #endif
 #include <i_qdf_lock.h>
 
@@ -290,12 +290,11 @@ qdf_export_symbol(qdf_wake_lock_create);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 QDF_STATUS qdf_wake_lock_acquire(qdf_wake_lock_t *lock, uint32_t reason)
 {
-#ifdef CONFIG_MCL
 	host_diag_log_wlock(reason, qdf_wake_lock_name(lock),
-			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
-			WIFI_POWER_EVENT_WAKELOCK_TAKEN);
-#endif
+			    WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
+			    WIFI_POWER_EVENT_WAKELOCK_TAKEN);
 	__pm_stay_awake(lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -350,12 +349,11 @@ qdf_export_symbol(qdf_wake_lock_timeout_acquire);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason)
 {
-#ifdef CONFIG_MCL
 	host_diag_log_wlock(reason, qdf_wake_lock_name(lock),
-			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
-			WIFI_POWER_EVENT_WAKELOCK_RELEASED);
-#endif
+			    WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
+			    WIFI_POWER_EVENT_WAKELOCK_RELEASED);
 	__pm_relax(lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
