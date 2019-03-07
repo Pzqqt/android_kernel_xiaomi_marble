@@ -154,7 +154,7 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
  * Function to cleanup LIM state.
  * This called upon reset/persona change etc
  */
-extern void lim_cleanup(struct mac_context *);
+void lim_cleanup(struct mac_context *);
 
 /**
  * lim_post_msg_api() - post normal priority PE message
@@ -187,34 +187,37 @@ QDF_STATUS lim_post_msg_high_priority(struct mac_context *mac,
  * Function to process messages posted to LIM thread
  * and dispatch to various sub modules within LIM module.
  */
-extern void lim_message_processor(struct mac_context *, struct scheduler_msg *);
+void lim_message_processor(struct mac_context *, struct scheduler_msg *);
 /**
  * Function to check the LIM state if system is in Scan/Learn state.
  */
-extern uint8_t lim_is_system_in_scan_state(struct mac_context *);
+uint8_t lim_is_system_in_scan_state(struct mac_context *);
 /**
  * Function to handle IBSS coalescing.
  * Beacon Processing module to call this.
  */
-extern QDF_STATUS lim_handle_ibss_coalescing(struct mac_context *,
-						tpSchBeaconStruct,
-						uint8_t *, struct pe_session *);
+QDF_STATUS lim_handle_ibss_coalescing(struct mac_context *,
+				      tpSchBeaconStruct,
+				      uint8_t *, struct pe_session *);
 /* / Function used by other Sirius modules to read global SME state */
 static inline tLimSmeStates lim_get_sme_state(struct mac_context *mac)
 {
 	return mac->lim.gLimSmeState;
 }
 
-extern void lim_received_hb_handler(struct mac_context *, uint8_t, struct pe_session *);
+void lim_received_hb_handler(struct mac_context *, uint8_t,
+			     struct pe_session *);
+
 /* / Function that triggers STA context deletion */
-extern void lim_trigger_sta_deletion(struct mac_context *mac, tpDphHashNode sta,
-				     struct pe_session *pe_session);
+void lim_trigger_sta_deletion(struct mac_context *mac, tpDphHashNode sta,
+			      struct pe_session *pe_session);
 
 #ifdef FEATURE_WLAN_TDLS
 /* Function that sends TDLS Del Sta indication to SME */
-extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
-					  struct pe_session *pe_session,
-					  uint16_t reasonCode);
+void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
+				   struct pe_session *pe_session,
+				   uint16_t reasonCode);
+
 /**
  * lim_set_tdls_flags() - update tdls flags based on newer STA connection
  * information
@@ -226,17 +229,20 @@ extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode
  * Return: None
  */
 void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		   struct pe_session *ft_session_ptr);
+			struct pe_session *ft_session_ptr);
 #else
-static inline void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		   struct pe_session *ft_session_ptr)
+static inline
+void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
+			struct pe_session *ft_session_ptr)
 {
 }
 #endif
 
 /* / Function that checks for change in AP's capabilties on STA */
-extern void lim_detect_change_in_ap_capabilities(struct mac_context *,
-						 tpSirProbeRespBeacon, struct pe_session *);
+void lim_detect_change_in_ap_capabilities(struct mac_context *,
+					  tpSirProbeRespBeacon,
+					  struct pe_session *);
+
 QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,

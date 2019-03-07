@@ -138,10 +138,10 @@ void lim_print_sme_state(struct mac_context *mac, uint16_t logLevel,
 		tLimSmeStates state);
 void lim_print_msg_name(struct mac_context *mac, uint16_t logLevel, uint32_t msgType);
 
-extern QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
+QDF_STATUS lim_send_set_max_tx_power_req(struct mac_context *mac,
 		int8_t txPower,
 		struct pe_session *pe_session);
-extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
+uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 		uint8_t iniTxPower);
 
 /* AID pool management functions */
@@ -207,45 +207,45 @@ void lim_decide_ap_protection_on_delete(struct mac_context *mac,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *pe_session);
 
-extern QDF_STATUS lim_update_11a_protection(struct mac_context *mac,
+QDF_STATUS lim_update_11a_protection(struct mac_context *mac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *);
-extern QDF_STATUS lim_enable11g_protection(struct mac_context *mac,
+QDF_STATUS lim_enable11g_protection(struct mac_context *mac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *pe_session);
-extern QDF_STATUS lim_enable_ht_protection_from11g(struct mac_context *mac,
+QDF_STATUS lim_enable_ht_protection_from11g(struct mac_context *mac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams,
 		struct pe_session *pe_session);
-extern QDF_STATUS lim_enable_ht20_protection(struct mac_context *mac,
+QDF_STATUS lim_enable_ht20_protection(struct mac_context *mac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *pe_session);
-extern QDF_STATUS lim_enable_ht_non_gf_protection(struct mac_context *mac,
+QDF_STATUS lim_enable_ht_non_gf_protection(struct mac_context *mac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, struct pe_session *);
-extern QDF_STATUS lim_enable_ht_rifs_protection(struct mac_context *mac,
+QDF_STATUS lim_enable_ht_rifs_protection(struct mac_context *mac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams,
 		struct pe_session *pe_session);
-extern QDF_STATUS lim_enable_ht_lsig_txop_protection(struct mac_context *mac,
+QDF_STATUS lim_enable_ht_lsig_txop_protection(struct mac_context *mac,
 		uint8_t enable,
 		uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, struct pe_session *);
-extern QDF_STATUS lim_enable_short_preamble(struct mac_context *mac,
+QDF_STATUS lim_enable_short_preamble(struct mac_context *mac,
 		uint8_t enable,
 		tpUpdateBeaconParams pBeaconParams,
 		struct pe_session *pe_session);
-extern QDF_STATUS lim_enable_ht_obss_protection(struct mac_context *mac,
+QDF_STATUS lim_enable_ht_obss_protection(struct mac_context *mac,
 		uint8_t enable, uint8_t overlap,
 		tpUpdateBeaconParams
 		pBeaconParams, struct pe_session *);

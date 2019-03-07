@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,14 +47,14 @@ QDF_STATUS lim_tspec_add(struct mac_context *mac,
 			    uint32_t interval, tpLimTspecInfo *ppInfo);
 
 /* admit control interface */
-extern QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac,
-				uint8_t *pAddr, tSirAddtsReqInfo *addts,
-				tSirMacQosCapabilityStaIE *qos,
-				uint16_t assocId, uint8_t alloc,
-				tSirMacScheduleIE *pSch,
-				/* index to the lim tspec table. */
-				uint8_t *pTspecIdx,
-				struct pe_session *pe_session);
+QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac,
+				    uint8_t *pAddr, tSirAddtsReqInfo *addts,
+				    tSirMacQosCapabilityStaIE *qos,
+				    uint16_t assocId, uint8_t alloc,
+				    tSirMacScheduleIE *pSch,
+				    /* index to the lim tspec table. */
+				    uint8_t *pTspecIdx,
+				    struct pe_session *pe_session);
 
 static inline QDF_STATUS
 lim_admit_control_add_sta(struct mac_context *mac, uint8_t *staAddr, uint8_t alloc)
@@ -62,10 +62,10 @@ lim_admit_control_add_sta(struct mac_context *mac, uint8_t *staAddr, uint8_t all
 	return QDF_STATUS_SUCCESS;
 }
 
-extern QDF_STATUS
+QDF_STATUS
 lim_admit_control_delete_sta(struct mac_context *mac, uint16_t assocId);
 
-extern QDF_STATUS
+QDF_STATUS
 lim_admit_control_delete_ts(struct mac_context *mac,
 			    uint16_t assocId,
 			    struct mac_ts_info *tsinfo,
