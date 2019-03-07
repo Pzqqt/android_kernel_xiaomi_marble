@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1761,6 +1761,18 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 		struct wlan_objmgr_psoc *psoc, uint8_t session_id);
+
+/**
+ * policy_mgr_set_hw_mode_before_channel_switch() - Set hw mode
+ * before channel switch, this is required if DBS mode is 2x2
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id on which channel switch is required
+ * @chan: New channel to which channel switch is requested
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan);
 
 /**
  * policy_mgr_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
