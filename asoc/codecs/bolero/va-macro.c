@@ -1632,7 +1632,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	}
 
 	va_io_base = devm_ioremap(&pdev->dev, va_base_addr,
-				  VA_MAX_OFFSET);
+				  VA_MACRO_MAX_OFFSET);
 	if (!va_io_base) {
 		dev_err(&pdev->dev, "%s: ioremap failed\n", __func__);
 		return -EINVAL;
