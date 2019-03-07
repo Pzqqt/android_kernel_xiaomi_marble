@@ -16210,8 +16210,10 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 		status = scheduler_post_message(QDF_MODULE_ID_SME,
 						QDF_MODULE_ID_PE,
 						QDF_MODULE_ID_PE, &msg);
-		if (QDF_IS_STATUS_ERROR(status))
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mem_zero(pMsg, msgLen);
 			qdf_mem_free(pMsg);
+		}
 	} while (0);
 	return status;
 }

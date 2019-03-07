@@ -6440,6 +6440,7 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("WMA_ROAM_SCAN_OFFLOAD_REQ failed, session_id: %d",
 			session_id);
+		qdf_mem_zero(req, sizeof(*req));
 		qdf_mem_free(req);
 		return QDF_STATUS_E_FAULT;
 	}
