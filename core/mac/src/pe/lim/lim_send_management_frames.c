@@ -2288,6 +2288,12 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 				frame_len += (2 + SIR_MDIE_SIZE);
 			}
 		}
+
+		/* include MDIE in FILS authentication frame */
+		if (session->pLimJoinReq->is11Rconnection &&
+		    auth_frame->authAlgoNumber == SIR_FILS_SK_WITHOUT_PFS &&
+		    session->pLimJoinReq->bssDescription.mdiePresent)
+			frame_len += (2 + SIR_MDIE_SIZE);
 		break;
 
 	case SIR_MAC_AUTH_FRAME_2:
@@ -2465,10 +2471,11 @@ alloc_packet:
 						pbssDescription->mdie[0],
 					SIR_MDIE_SIZE);
 			}
-		} else if (auth_frame->authAlgoNumber ==
-				SIR_FILS_SK_WITHOUT_PFS) {
-			/* TODO MDIE */
-			pe_debug("appending fils Auth data");
+		} else if ((auth_frame->authAlgoNumber ==
+					SIR_FILS_SK_WITHOUT_PFS) &&
+			   (auth_frame->authTransactionSeqNumber ==
+						SIR_MAC_AUTH_FRAME_1)) {
+			pe_debug("FILS: appending fils Auth data");
 			lim_add_fils_data_to_auth_frame(session, body);
 		}
 

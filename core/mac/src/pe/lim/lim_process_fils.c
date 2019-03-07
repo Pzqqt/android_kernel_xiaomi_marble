@@ -996,6 +996,33 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	lim_fils_data_dump("FILS RSN", fils_info->rsn_ie,
 			fils_info->rsn_ie_len);
 
+	/**
+	 * FT-FILS IEEE-802.11ai specification mandates
+	 * MDIE to be sent in auth frame during initial
+	 * mobility domain association
+	 */
+	if (session->pLimJoinReq->is11Rconnection) {
+		struct bss_description *bss_desc;
+
+		bss_desc = &session->pLimJoinReq->bssDescription;
+
+		if (bss_desc->mdiePresent) {
+			/* Populate MDIE received from AP */
+			*body = SIR_MDIE_ELEMENT_ID;
+			body++;
+			*body = SIR_MDIE_SIZE;
+			body++;
+			qdf_mem_copy(body, &bss_desc->mdie[0],
+			     SIR_MDIE_SIZE);
+			pe_debug("FILS: mdie = %02x %02x %02x",
+				 bss_desc->mdie[0], bss_desc->mdie[1],
+				 bss_desc->mdie[2]);
+			body += SIR_MDIE_SIZE;
+		} else {
+			pe_err("FT-FILS: MDIE not advertised by AP");
+		}
+	}
+
 	/* ***Nounce*** */
 	/* Add element id */
 	*body = SIR_MAX_ELEMENT_ID;

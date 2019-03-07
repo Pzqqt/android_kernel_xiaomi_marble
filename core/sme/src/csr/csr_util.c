@@ -2554,6 +2554,8 @@ bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType auth_type,
 	case eCSR_AUTH_TYPE_FT_RSN:
 	case eCSR_AUTH_TYPE_FT_SAE:
 	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
 		return true;
 	default:
 		break;
