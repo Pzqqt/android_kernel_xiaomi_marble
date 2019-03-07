@@ -3302,93 +3302,27 @@ bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc)
 	return ret;
 }
 
-void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
-		uint8_t *org_ch_list, uint8_t *org_ch_list_count)
+void policy_mgr_trim_acs_channel_list(uint8_t *pcl, uint8_t pcl_count,
+				      uint8_t *org_ch_list,
+				      uint8_t *org_ch_list_count)
 {
-	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	uint32_t index = 0, count, i, ch_list_count;
-	uint8_t band_mask = 0, ch_5g = 0, ch_24g = 0;
-	uint8_t ch_list[QDF_MAX_NUM_CHAN];
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
+	uint16_t i, j, ch_list_count = 0;
 
 	if (*org_ch_list_count >= QDF_MAX_NUM_CHAN) {
 		policy_mgr_err("org_ch_list_count too big %d",
 			*org_ch_list_count);
 		return;
 	}
-	/*
-	 * if force SCC is enabled and there is a STA connection, trim the
-	 * ACS channel list on the band on which STA connection is present
-	 */
-	count = policy_mgr_mode_specific_connection_count(
-				psoc, PM_STA_MODE, list);
-	if (!(policy_mgr_is_force_scc(psoc) && count))
-		return;
-	while (index < count) {
-		if (WLAN_REG_IS_24GHZ_CH(
-			pm_conc_connection_list[list[index]].chan) &&
-			policy_mgr_is_safe_channel(psoc,
-			pm_conc_connection_list[list[index]].chan)) {
-			band_mask |= 1;
-			ch_24g = pm_conc_connection_list[list[index]].chan;
-		}
-		if (WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[list[index]].chan) &&
-			policy_mgr_is_safe_channel(psoc,
-			pm_conc_connection_list[list[index]].chan) &&
-			!wlan_reg_is_dfs_ch(pm_ctx->pdev,
-			pm_conc_connection_list[list[index]].chan) &&
-			!wlan_reg_is_passive_or_disable_ch(pm_ctx->pdev,
-			pm_conc_connection_list[list[index]].chan)) {
-			band_mask |= 2;
-			ch_5g = pm_conc_connection_list[list[index]].chan;
-		}
-		index++;
-	}
-	ch_list_count = 0;
-	if (band_mask == 1) {
-		ch_list[ch_list_count++] = ch_24g;
-		for (i = 0; i < *org_ch_list_count; i++) {
-			if (WLAN_REG_IS_24GHZ_CH(
-				org_ch_list[i]))
-				continue;
-			ch_list[ch_list_count++] =
-				org_ch_list[i];
-		}
-	} else if (band_mask == 2) {
-		if ((wlan_reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
-			CHANNEL_STATE_DFS) &&
-		      policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc))
-			ch_list[ch_list_count++] = ch_5g;
-		else if (!(wlan_reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
-			CHANNEL_STATE_DFS))
-			ch_list[ch_list_count++] = ch_5g;
-		for (i = 0; i < *org_ch_list_count; i++) {
-			if (WLAN_REG_IS_5GHZ_CH(
-				org_ch_list[i]))
-				continue;
-			ch_list[ch_list_count++] =
-				org_ch_list[i];
-		}
-	} else if (band_mask == 3) {
-		ch_list[ch_list_count++] = ch_24g;
-		ch_list[ch_list_count++] = ch_5g;
-	} else {
-		policy_mgr_debug("unexpected band_mask value %d",
-			band_mask);
-		return;
-	}
+
+	policy_mgr_debug("Update ACS channels with PCL");
+	for (j = 0; j < *org_ch_list_count; j++)
+		for (i = 0; i < pcl_count; i++)
+			if (pcl[i] == org_ch_list[j]) {
+				org_ch_list[ch_list_count++] = pcl[i];
+				break;
+			}
 
 	*org_ch_list_count = ch_list_count;
-	for (i = 0; i < *org_ch_list_count; i++)
-		org_ch_list[i] = ch_list[i];
-
 }
 
 uint32_t policy_mgr_get_connection_info(struct wlan_objmgr_psoc *psoc,
