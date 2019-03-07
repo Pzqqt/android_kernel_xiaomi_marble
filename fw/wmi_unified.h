@@ -5592,6 +5592,8 @@ typedef enum {
      */
     WMI_PDEV_PARAM_NAV_OVERRIDE_CONFIG,
 
+    /* Set global MU PPDU duration for DL (usec units) */
+    WMI_PDEV_PARAM_SET_MU_PPDU_DURATION, /* 0xB5 */
 } WMI_PDEV_PARAM;
 
 typedef struct {
