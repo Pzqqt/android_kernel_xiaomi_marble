@@ -272,7 +272,7 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 
 	if (!wifi_pos_is_app_registered(psoc) ||
 			wifi_pos_get_app_pid(psoc) == 0) {
-		cfg80211_err("app is not registered or pid is invalid");
+		cfg80211_debug("app is not registered or pid is invalid");
 		return;
 	}
 
