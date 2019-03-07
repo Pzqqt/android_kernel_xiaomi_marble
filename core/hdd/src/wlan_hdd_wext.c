@@ -1854,7 +1854,8 @@
  * </ioctl>
  */
 #define WE_SET_AP_WPS_IE     4
-#define WE_SET_CONFIG        5
+
+/* 5 is unused */
 
 /*
  * <ioctl>
@@ -5934,7 +5935,6 @@ static int __iw_setchar_getnone(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
-	QDF_STATUS status;
 	int sub_cmd;
 	int ret;
 	char *str_arg = NULL;
@@ -6045,12 +6045,6 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	break;
 	case WE_SET_AP_WPS_IE:
 		hdd_debug("Received WE_SET_AP_WPS_IE, won't process");
-		break;
-	case WE_SET_CONFIG:
-		status = hdd_execute_global_config_command(hdd_ctx, str_arg);
-		if (QDF_IS_STATUS_ERROR(status))
-			ret = -EINVAL;
-
 		break;
 	case WE_UNIT_TEST:
 		ret = hdd_we_unit_test(hdd_ctx, str_arg);
@@ -10712,11 +10706,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | 512,
 	 0,
 	 "set_ap_wps_ie"},
-
-	{WE_SET_CONFIG,
-	 IW_PRIV_TYPE_CHAR | 512,
-	 0,
-	 "setConfig"},
 
 #ifdef WLAN_UNIT_TEST
 	{WE_UNIT_TEST,

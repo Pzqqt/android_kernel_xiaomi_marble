@@ -57,69 +57,6 @@
 
 #define SAP_24GHZ_CH_COUNT (14)
 
-static int __iw_softap_set_ini_cfg(struct net_device *dev,
-				   struct iw_request_info *info,
-				   union iwreq_data *wrqu,
-				   char *extra)
-{
-	QDF_STATUS status;
-	int errno;
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-	char *value;
-	size_t len;
-
-	hdd_enter_dev(dev);
-
-	adapter = netdev_priv(dev);
-	errno = hdd_validate_adapter(adapter);
-	if (errno)
-		return errno;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	errno = wlan_hdd_validate_context(hdd_ctx);
-	if (errno)
-		return errno;
-
-	errno = hdd_check_private_wext_control(hdd_ctx, info);
-	if (errno)
-		return errno;
-
-	/* ensure null termination by copying into a larger, zeroed buffer */
-	len = min_t(size_t, wrqu->data.length, QCSAP_IOCTL_MAX_STR_LEN);
-	value = qdf_mem_malloc(len + 1);
-	if (!value)
-		return -ENOMEM;
-
-	qdf_mem_copy(value, extra, len);
-	hdd_debug("Received data %s", value);
-	status = hdd_execute_global_config_command(hdd_ctx, value);
-	qdf_mem_free(value);
-
-	hdd_exit();
-
-	return qdf_status_to_os_return(status);
-}
-
-int
-static iw_softap_set_ini_cfg(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	int errno;
-	struct osif_vdev_sync *vdev_sync;
-
-	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
-	if (errno)
-		return errno;
-
-	errno = __iw_softap_set_ini_cfg(dev, info, wrqu, extra);
-
-	osif_vdev_sync_op_stop(vdev_sync);
-
-	return errno;
-}
-
 static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 {
 	struct sap_context *sap_ctx;
@@ -3227,12 +3164,6 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		0, "pktlog"
 	}
 	,
-	/* Set HDD CFG Ini param */
-	{
-		QCSAP_IOCTL_SET_INI_CFG,
-		IW_PRIV_TYPE_CHAR | QCSAP_IOCTL_MAX_STR_LEN, 0, "setConfig"
-	}
-	,
 	/* Get HDD CFG Ini param */
 	{
 		QCSAP_IOCTL_GET_INI_CFG,
@@ -3384,8 +3315,6 @@ static const iw_handler hostapd_private[] = {
 		iw_softap_set_max_tx_power,
 	[QCSAP_IOCTL_SET_PKTLOG - SIOCIWFIRSTPRIV] =
 		iw_softap_set_pktlog,
-	[QCSAP_IOCTL_SET_INI_CFG - SIOCIWFIRSTPRIV] =
-		iw_softap_set_ini_cfg,
 	[QCSAP_IOCTL_GET_INI_CFG - SIOCIWFIRSTPRIV] =
 		iw_softap_get_ini_cfg,
 	[QCSAP_IOCTL_SET_TWO_INT_GET_NONE - SIOCIWFIRSTPRIV] =

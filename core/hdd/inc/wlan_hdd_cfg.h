@@ -278,12 +278,6 @@ struct hdd_config {
  */
 #define VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT (1 << 2)
 
-/*
- * Bit 3 indicates that the config item can be modified dynamicially
- * on a running system
- */
-#define VAR_FLAGS_DYNAMIC_CFG (1 << 3)
-
 enum wlan_parameter_type {
 	WLAN_PARAM_Integer,
 	WLAN_PARAM_SignedInteger,
@@ -304,37 +298,6 @@ enum wlan_parameter_type {
 		(_Default),					\
 		(_Min),						\
 		(_Max),						\
-		NULL						\
-	}
-
-#define REG_DYNAMIC_VARIABLE(_Name, _Type,  _Struct, _VarName,	\
-			      _Flags, _Default, _Min, _Max,	\
-			      _CBFunc, _CBParam)		\
-	{							\
-		(_Name),					\
-		(_Type),					\
-		(VAR_FLAGS_DYNAMIC_CFG | (_Flags)),		\
-		(_CBParam),					\
-		VAR_OFFSET(_Struct, _VarName),			\
-		VAR_SIZE(_Struct, _VarName),			\
-		(_Default),					\
-		(_Min),						\
-		(_Max),						\
-		(_CBFunc)					\
-	}
-
-#define REG_VARIABLE_STRING(_Name, _Type,  _Struct, _VarName,	\
-			     _Flags, _Default)			\
-	{							\
-		(_Name),					\
-		(_Type),					\
-		(_Flags),					\
-		0,						\
-		VAR_OFFSET(_Struct, _VarName),			\
-		VAR_SIZE(_Struct, _VarName),			\
-		(unsigned long)(_Default),			\
-		0,						\
-		0,						\
 		NULL						\
 	}
 
@@ -374,8 +337,6 @@ void hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *buf,
 			       int buflen);
 
 eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode);
-QDF_STATUS hdd_execute_global_config_command(struct hdd_context *hdd_ctx,
-					     char *command);
 
 QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val);
 void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
