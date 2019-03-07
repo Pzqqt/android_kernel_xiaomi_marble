@@ -13960,10 +13960,8 @@ static int _wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_cfg80211_change_iface(wiphy, net_dev, type,
 						 flags, params);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 

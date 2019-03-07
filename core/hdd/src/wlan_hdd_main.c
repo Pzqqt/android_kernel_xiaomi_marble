@@ -2175,9 +2175,7 @@ static int hdd_mon_open(struct net_device *net_dev)
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_mon_open(net_dev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -3161,9 +3159,7 @@ static int hdd_open(struct net_device *net_dev)
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_open(net_dev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -3279,9 +3275,7 @@ static int hdd_stop(struct net_device *net_dev)
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_stop(net_dev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -13675,9 +13669,7 @@ static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
 		goto trans_stop;
 	}
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_driver_mode_change(hdd_ctx, mode);
-	cds_ssr_unprotect(__func__);
 
 trans_stop:
 	osif_driver_sync_trans_stop(driver_sync);

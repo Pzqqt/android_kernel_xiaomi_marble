@@ -465,9 +465,7 @@ static int hdd_hostapd_open(struct net_device *net_dev)
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_hostapd_open(net_dev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -538,9 +536,7 @@ int hdd_hostapd_stop(struct net_device *net_dev)
 	if (errno)
 		return errno;
 
-	cds_ssr_protect(__func__);
 	errno = __hdd_hostapd_stop(net_dev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -1090,9 +1086,7 @@ void wlan_hdd_sap_pre_cac_failure(void *data)
 	osif_vdev_sync_unregister(adapter->dev);
 	osif_vdev_sync_wait_for_ops(vdev_sync);
 
-	cds_ssr_protect(__func__);
 	__wlan_hdd_sap_pre_cac_failure(data);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 	osif_vdev_sync_destroy(vdev_sync);
@@ -1161,9 +1155,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	osif_vdev_sync_unregister(adapter->dev);
 	osif_vdev_sync_wait_for_ops(vdev_sync);
 
-	cds_ssr_protect(__func__);
 	__wlan_hdd_sap_pre_cac_success(adapter);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 	osif_vdev_sync_destroy(vdev_sync);

@@ -773,10 +773,8 @@ _wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (errno)
 		return ERR_PTR(errno);
 
-	cds_ssr_protect(__func__);
 	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
 					   type, flags, params);
-	cds_ssr_unprotect(__func__);
 
 	if (IS_ERR_OR_NULL(wdev))
 		goto destroy_sync;
@@ -890,9 +888,7 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	osif_vdev_sync_unregister(wdev->netdev);
 	osif_vdev_sync_wait_for_ops(vdev_sync);
 
-	cds_ssr_protect(__func__);
 	errno = __wlan_hdd_del_virtual_intf(wiphy, wdev);
-	cds_ssr_unprotect(__func__);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 	osif_vdev_sync_destroy(vdev_sync);
