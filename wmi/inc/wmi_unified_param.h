@@ -5962,10 +5962,13 @@ typedef enum {
 
 #define WMI_HOST_FIXED_RATE_NONE	(0xff)
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /** slot time long */
 #define WMI_HOST_VDEV_SLOT_TIME_LONG	0x1
 /** slot time short */
 #define WMI_HOST_VDEV_SLOT_TIME_SHORT	0x2
+#endif
+
 /** preablbe long */
 #define WMI_HOST_VDEV_PREAMBLE_LONG	0x1
 /** preablbe short */

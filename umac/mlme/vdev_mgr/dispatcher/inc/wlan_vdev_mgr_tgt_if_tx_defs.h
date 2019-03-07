@@ -38,6 +38,11 @@ struct mlme_mac_ssid {
 	uint8_t mac_ssid[WLAN_SSID_MAX_LEN];
 } qdf_packed;
 
+/** slot time long */
+#define WLAN_MLME_VDEV_SLOT_TIME_LONG   0x1
+/** slot time short */
+#define WLAN_MLME_VDEV_SLOT_TIME_SHORT  0x2
+
 /**
  * enum MLME_bcn_tx_rate_code - beacon tx rate code
  */

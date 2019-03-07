@@ -261,7 +261,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_MODDTIM_CNT:
 		mlme_mgmt->powersave_info.moddtim_cnt = mlme_cfg.value;
 		break;
-	case WLAN_MLME_CFG_PROILE_IDX:
+	case WLAN_MLME_CFG_PROFILE_IDX:
 		mlme_mgmt->mbss_11ax.profile_idx = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_PROFILE_NUM:
@@ -485,7 +485,7 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_MODDTIM_CNT:
 		*value = mlme_mgmt->powersave_info.moddtim_cnt;
 		break;
-	case WLAN_MLME_CFG_PROILE_IDX:
+	case WLAN_MLME_CFG_PROFILE_IDX:
 		*value = mlme_mgmt->mbss_11ax.profile_idx;
 		break;
 	case WLAN_MLME_CFG_PROFILE_NUM:
