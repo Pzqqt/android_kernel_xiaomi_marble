@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -112,7 +112,6 @@ typedef struct TX_TIMER_STRUCT {
 
 #define TX_TIMER_VALID(timer) (timer.mac != 0)
 
-extern uint64_t tx_time_get(void);
 extern uint32_t tx_timer_activate(TX_TIMER *);
 extern uint32_t tx_timer_change(TX_TIMER *, uint64_t, uint64_t);
 extern uint32_t tx_timer_change_context(TX_TIMER *, uint32_t);

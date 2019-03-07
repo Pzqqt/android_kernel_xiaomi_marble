@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,28 +61,6 @@
 #else
 #define TIMER_NAME "N/A"
 #endif
-
-/**---------------------------------------------------------------------
- * tx_time_get()
- *
- * FUNCTION:
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param
- *
- * @return current system time in units of miliseconds
- *
- */
-uint64_t tx_time_get(void)
-{
-	return qdf_mc_timer_get_system_ticks();
-
-} /* * tx_time_get() */
 
 /**---------------------------------------------------------------------
  * tx_timer_activate()

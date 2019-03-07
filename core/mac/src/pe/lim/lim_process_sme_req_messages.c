@@ -1047,10 +1047,10 @@ void lim_get_random_bssid(struct mac_context *mac, uint8_t *data)
 {
 	uint32_t random[2];
 
-	random[0] = tx_time_get();
+	random[0] = qdf_mc_timer_get_system_ticks();
 	random[0] |= (random[0] << 15);
 	random[1] = random[0] >> 1;
-	qdf_mem_copy(data, (uint8_t *) random, sizeof(tSirMacAddr));
+	qdf_mem_copy(data, random, sizeof(tSirMacAddr));
 }
 
 #ifdef WLAN_FEATURE_SAE
