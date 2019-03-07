@@ -1612,73 +1612,6 @@ static bool hdd_is_mcast_replay(struct sk_buff *skb)
 	return false;
 }
 
-/**
- * hdd_is_arp_local() - check if local or non local arp
- * @skb: pointer to sk_buff
- *
- * Return: true if local arp or false otherwise.
- */
-static bool hdd_is_arp_local(struct sk_buff *skb)
-{
-	struct arphdr *arp;
-	struct in_ifaddr **ifap = NULL;
-	struct in_ifaddr *ifa = NULL;
-	struct in_device *in_dev;
-	unsigned char *arp_ptr;
-	__be32 tip;
-
-	arp = (struct arphdr *)skb->data;
-	if (arp->ar_op == htons(ARPOP_REQUEST)) {
-		/* if fail to acquire rtnl lock, assume it's local arp */
-		if (!rtnl_trylock())
-			return true;
-
-		in_dev = __in_dev_get_rtnl(skb->dev);
-		if (in_dev) {
-			for (ifap = &in_dev->ifa_list; (ifa = *ifap) != NULL;
-				ifap = &ifa->ifa_next) {
-				if (!strcmp(skb->dev->name, ifa->ifa_label))
-					break;
-			}
-		}
-
-		if (ifa && ifa->ifa_local) {
-			arp_ptr = (unsigned char *)(arp + 1);
-			arp_ptr += (skb->dev->addr_len + 4 +
-					skb->dev->addr_len);
-			memcpy(&tip, arp_ptr, 4);
-			hdd_debug("ARP packet: local IP: %x dest IP: %x",
-				ifa->ifa_local, tip);
-			if (ifa->ifa_local == tip) {
-				rtnl_unlock();
-				return true;
-			}
-		}
-		rtnl_unlock();
-	}
-
-	return false;
-}
-
-/**
- * hdd_is_rx_wake_lock_needed() - check if wake lock is needed
- * @skb: pointer to sk_buff
- *
- * RX wake lock is needed for:
- * 1) Unicast data packet OR
- * 2) Local ARP data packet
- *
- * Return: true if wake lock is needed or false otherwise.
- */
-static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
-{
-	if ((skb->pkt_type != PACKET_BROADCAST &&
-	     skb->pkt_type != PACKET_MULTICAST) || hdd_is_arp_local(skb))
-		return true;
-
-	return false;
-}
-
 #ifdef RECEIVE_OFFLOAD
 /**
  * hdd_resolve_rx_ol_mode() - Resolve Rx offload method, LRO or GRO
@@ -2463,7 +2396,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	struct hdd_station_ctx *sta_ctx = NULL;
 	unsigned int cpu_index;
 	struct qdf_mac_addr *mac_addr, *dest_mac_addr;
-	bool wake_lock = false;
 	uint8_t pkt_type = 0;
 	bool track_arp = false;
 	struct wlan_objmgr_vdev *vdev;
@@ -2609,21 +2541,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			qdf_atomic_inc(&stats->rx_usolict_arp_n_mcast_drp);
 			qdf_nbuf_free(skb);
 			continue;
-		}
-
-		/* hold configurable wakelock for unicast traffic */
-		if (!hdd_is_current_high_throughput(hdd_ctx) &&
-		    hdd_ctx->config->rx_wakelock_timeout &&
-		    sta_ctx->conn_info.is_authenticated)
-			wake_lock = hdd_is_rx_wake_lock_needed(skb);
-
-		if (wake_lock) {
-			cds_host_diag_log_work(&hdd_ctx->rx_wake_lock,
-						   hdd_ctx->config->rx_wakelock_timeout,
-						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-			qdf_wake_lock_timeout_acquire(&hdd_ctx->rx_wake_lock,
-							  hdd_ctx->config->
-								  rx_wakelock_timeout);
 		}
 
 		/* Remove SKB from internal tracking table before submitting
@@ -3812,8 +3729,6 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	hdd_set_rx_mode_value(hdd_ctx);
 	config->multicast_replay_filter =
 		cfg_get(psoc, CFG_DP_FILTER_MULTICAST_REPLAY);
-	config->rx_wakelock_timeout =
-		cfg_get(psoc, CFG_DP_RX_WAKELOCK_TIMEOUT);
 	config->num_dp_rx_threads = cfg_get(psoc, CFG_DP_NUM_DP_RX_THREADS);
 	config->cfg_wmi_credit_cnt = cfg_get(psoc, CFG_DP_HTC_WMI_CREDIT_CNT);
 	config->icmp_req_to_fw_mark_interval =

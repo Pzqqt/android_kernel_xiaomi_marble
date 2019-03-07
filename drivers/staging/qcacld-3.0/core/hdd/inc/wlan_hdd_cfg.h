@@ -214,7 +214,6 @@ struct hdd_config {
 	uint32_t rx_thread_affinity_mask;
 	uint8_t cpu_map_list[CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
 	bool multicast_replay_filter;
-	uint32_t rx_wakelock_timeout;
 	uint8_t num_dp_rx_threads;
 #ifdef CONFIG_DP_TRACE
 	bool enable_dp_trace;
