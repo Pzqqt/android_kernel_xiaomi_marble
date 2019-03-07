@@ -707,7 +707,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
 		/* Trigger invalid peer handler wrapper */
-		dp_rx_process_invalid_peer_wrapper(soc, nbuf, mpdu_done);
+		dp_rx_process_invalid_peer_wrapper(soc,
+						   pdev->invalid_peer_head_msdu,
+						   mpdu_done);
 
 		if (mpdu_done) {
 			pdev->invalid_peer_head_msdu = NULL;
