@@ -61,6 +61,7 @@
 #include "dp_txrx.h"
 #include "cfg_ucfg_api.h"
 #include "target_type.h"
+#include "wlan_hdd_object_manager.h"
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
@@ -924,6 +925,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	uint8_t pkt_type = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_arp = false;
+	struct wlan_objmgr_vdev *vdev;
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -1071,7 +1073,11 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	mac_addr = (struct qdf_mac_addr *)skb->data;
 
-	ucfg_tdls_update_tx_pkt_cnt(adapter->vdev, mac_addr);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (vdev) {
+		ucfg_tdls_update_tx_pkt_cnt(vdev, mac_addr);
+		hdd_objmgr_put_vdev(vdev);
+	}
 
 	if (qdf_nbuf_is_tso(skb))
 		adapter->stats.tx_packets += qdf_nbuf_get_tso_num_seg(skb);
@@ -1993,6 +1999,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	bool wake_lock = false;
 	uint8_t pkt_type = 0;
 	bool track_arp = false;
+	struct wlan_objmgr_vdev *vdev;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rxBuf))) {
@@ -2073,9 +2080,14 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		dest_mac_addr = (struct qdf_mac_addr *)(skb->data);
 		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 
-		if (!hdd_is_current_high_throughput(hdd_ctx))
-			ucfg_tdls_update_rx_pkt_cnt(adapter->vdev, mac_addr,
-						    dest_mac_addr);
+		if (!hdd_is_current_high_throughput(hdd_ctx)) {
+			vdev = hdd_objmgr_get_vdev(adapter);
+			if (vdev) {
+				ucfg_tdls_update_rx_pkt_cnt(vdev, mac_addr,
+							    dest_mac_addr);
+				hdd_objmgr_put_vdev(vdev);
+			}
+		}
 
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
