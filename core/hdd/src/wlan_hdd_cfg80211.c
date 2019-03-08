@@ -12879,7 +12879,7 @@ wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
  * This function is used to initialize and register wiphy structure.
  */
 int wlan_hdd_cfg80211_init(struct device *dev,
-			   struct wiphy *wiphy, struct hdd_config *pCfg)
+			   struct wiphy *wiphy, struct hdd_config *config)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int len_5g_ch = 0, num_ch, ch_arr_size;
@@ -12950,7 +12950,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc))
 		hdd_err("can't get enable_mcc value, use default");
-	if (pCfg->advertiseConcurrentOperation) {
+	if (config->advertiseConcurrentOperation) {
 		if (enable_mcc) {
 			int i;
 
@@ -12984,14 +12984,15 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			&hdd_channels_2_4_ghz[0],
 			sizeof(hdd_channels_2_4_ghz));
 	if ((hdd_is_5g_supported(hdd_ctx)) &&
-		((eHDD_DOT11_MODE_11b != pCfg->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11g != pCfg->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11b_ONLY != pCfg->dot11Mode) &&
-		 (eHDD_DOT11_MODE_11g_ONLY != pCfg->dot11Mode))) {
+		((eHDD_DOT11_MODE_11b != config->dot11Mode) &&
+		 (eHDD_DOT11_MODE_11g != config->dot11Mode) &&
+		 (eHDD_DOT11_MODE_11b_ONLY != config->dot11Mode) &&
+		 (eHDD_DOT11_MODE_11g_ONLY != config->dot11Mode))) {
 		wiphy->bands[HDD_NL80211_BAND_5GHZ] = &wlan_hdd_band_5_ghz;
-		wlan_hdd_get_num_dsrc_ch_and_len(pCfg, &num_dsrc_ch,
+		wlan_hdd_get_num_dsrc_ch_and_len(config, &num_dsrc_ch,
 						 &len_dsrc_ch);
-		wlan_hdd_get_num_srd_ch_and_len(pCfg, &num_srd_ch, &len_srd_ch);
+		wlan_hdd_get_num_srd_ch_and_len(config, &num_srd_ch,
+						&len_srd_ch);
 		num_ch = QDF_ARRAY_SIZE(hdd_channels_5_ghz) + num_dsrc_ch +
 			 num_srd_ch;
 		len_5g_ch = sizeof(hdd_channels_5_ghz);
