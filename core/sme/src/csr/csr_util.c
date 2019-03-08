@@ -1136,7 +1136,7 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 {
 	uint32_t i;
-	uint8_t connected_session = CSR_SESSION_ID_INVALID;
+	uint8_t connected_session = WLAN_UMAC_VDEV_ID_MAX;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, i)

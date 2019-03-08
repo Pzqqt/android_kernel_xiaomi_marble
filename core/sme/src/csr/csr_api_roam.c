@@ -183,7 +183,7 @@ static QDF_STATUS csr_sae_callback(struct mac_context *mac_ctx,
 		MAC_ADDR_ARRAY(sae_info->peer_mac_addr.bytes));
 
 	session_id = sae_info->vdev_id;
-	if (session_id == CSR_SESSION_ID_INVALID)
+	if (session_id == WLAN_UMAC_VDEV_ID_MAX)
 		return QDF_STATUS_E_INVAL;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
@@ -1412,11 +1412,11 @@ static QDF_STATUS csr_roam_open(struct mac_context *mac)
 			pSession = CSR_GET_SESSION(mac, i);
 			pSession->roamingTimerInfo.mac = mac;
 			pSession->roamingTimerInfo.session_id =
-				CSR_SESSION_ID_INVALID;
+				WLAN_UMAC_VDEV_ID_MAX;
 		}
 		mac->roam.WaitForKeyTimerInfo.mac = mac;
 		mac->roam.WaitForKeyTimerInfo.session_id =
-			CSR_SESSION_ID_INVALID;
+			WLAN_UMAC_VDEV_ID_MAX;
 		status = qdf_mc_timer_init(&mac->roam.hTimerWaitForKey,
 					  QDF_TIMER_TYPE_SW,
 					 csr_roam_wait_for_key_time_out_handler,
@@ -1972,7 +1972,7 @@ static void csr_send_ese_adjacent_ap_rep_ind(struct mac_context *mac,
 	uint32_t roamTS2 = 0;
 	struct csr_roam_info *roam_info;
 	struct pe_session *pe_session = NULL;
-	uint8_t sessionId = CSR_SESSION_ID_INVALID;
+	uint8_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 
 	if (NULL == pSession) {
 		sme_err("pSession is NULL");
@@ -10886,7 +10886,7 @@ static void
 csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct assoc_ind *pAssocInd;
@@ -11067,7 +11067,7 @@ static void
 csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct disassoc_ind *pDisassocInd;
 	tSmeCmd *cmd;
@@ -11221,7 +11221,7 @@ static void
 csr_roam_chk_lnk_deauth_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct deauth_ind *pDeauthInd;
 
@@ -11301,7 +11301,7 @@ static void
 csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	uint16_t ie_len;
 	QDF_STATUS status;
 	struct switch_channel_ind *pSwitchChnInd;
@@ -11389,7 +11389,7 @@ static void
 csr_roam_chk_lnk_deauth_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct deauth_rsp *pDeauthRsp = (struct deauth_rsp *) msg_ptr;
@@ -11422,7 +11422,7 @@ static void
 csr_roam_chk_lnk_disassoc_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	/*
@@ -11487,7 +11487,7 @@ csr_roam_diag_mic_fail(struct mac_context *mac_ctx, uint32_t sessionId)
 static void
 csr_roam_chk_lnk_mic_fail_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct mic_failure_ind *mic_ind = (struct mic_failure_ind *)msg_ptr;
@@ -11516,7 +11516,7 @@ csr_roam_chk_lnk_mic_fail_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 static void
 csr_roam_chk_lnk_pbs_probe_req_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	tpSirSmeProbeReqInd pProbeReqInd = (tpSirSmeProbeReqInd) msg_ptr;
@@ -11570,7 +11570,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 				      tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct wm_status_change_ntf *pStatusChangeMsg;
@@ -11587,7 +11587,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 	switch (pStatusChangeMsg->statusChangeCode) {
 	case eSIR_SME_IBSS_ACTIVE:
 		sessionId = csr_find_ibss_session(mac_ctx);
-		if (CSR_SESSION_ID_INVALID == sessionId)
+		if (WLAN_UMAC_VDEV_ID_MAX == sessionId)
 			break;
 		session = CSR_GET_SESSION(mac_ctx, sessionId);
 		if (!session) {
@@ -11611,7 +11611,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 
 	case eSIR_SME_IBSS_INACTIVE:
 		sessionId = csr_find_ibss_session(mac_ctx);
-		if (CSR_SESSION_ID_INVALID != sessionId) {
+		if (WLAN_UMAC_VDEV_ID_MAX != sessionId) {
 			session = CSR_GET_SESSION(mac_ctx, sessionId);
 			if (!session) {
 				sme_err("session %d not found", sessionId);
@@ -11628,7 +11628,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 		/* IBSS coalescing. */
 		sme_debug("CSR: eSIR_SME_JOINED_NEW_BSS received from PE");
 		sessionId = csr_find_ibss_session(mac_ctx);
-		if (CSR_SESSION_ID_INVALID == sessionId)
+		if (WLAN_UMAC_VDEV_ID_MAX == sessionId)
 			break;
 		session = CSR_GET_SESSION(mac_ctx, sessionId);
 		if (!session) {
@@ -11723,7 +11723,7 @@ static void
 csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info = NULL;
 	tSmeIbssPeerInd *pIbssPeerInd = (tSmeIbssPeerInd *) msg_ptr;
@@ -11741,7 +11741,7 @@ csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 
 	sessionId = csr_find_ibss_session(mac_ctx);
-	if (CSR_SESSION_ID_INVALID == sessionId)
+	if (WLAN_UMAC_VDEV_ID_MAX == sessionId)
 		return;
 	session = CSR_GET_SESSION(mac_ctx, sessionId);
 	if (!session) {
@@ -11816,7 +11816,7 @@ static void
 csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
 					tSirSmeRsp *msg_ptr)
 {
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	struct csr_roam_info *roam_info;
 	tSmeIbssPeerInd *pIbssPeerInd;
 
@@ -11829,7 +11829,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(struct mac_context *mac_ctx,
 		return;
 	pIbssPeerInd = (tSmeIbssPeerInd *) msg_ptr;
 	sessionId = csr_find_ibss_session(mac_ctx);
-	if (CSR_SESSION_ID_INVALID != sessionId) {
+	if (WLAN_UMAC_VDEV_ID_MAX != sessionId) {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 		host_log_ibss_pkt_type *pIbssLog;
 
@@ -11901,7 +11901,7 @@ static void
 csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
 	struct csr_roam_session *session;
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
@@ -12012,7 +12012,7 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 static void
 csr_roam_chk_lnk_max_assoc_exceeded(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 {
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	tSmeMaxAssocInd *pSmeMaxAssocInd;
 	struct csr_roam_info *roam_info;
 
@@ -16690,7 +16690,7 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 	}
 
 	pSession->sessionActive = false;
-	pSession->sessionId = CSR_SESSION_ID_INVALID;
+	pSession->sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	pSession->callback = NULL;
 	pSession->pContext = NULL;
 	pSession->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
@@ -16762,7 +16762,7 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
  */
 static uint32_t csr_find_ibss_session(struct mac_context *mac)
 {
-	uint32_t i, nRet = CSR_SESSION_ID_INVALID;
+	uint32_t i, nRet = WLAN_UMAC_VDEV_ID_MAX;
 	struct csr_roam_session *pSession;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
@@ -17177,7 +17177,7 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msg = {0};
-	uint32_t sessionId = CSR_SESSION_ID_INVALID;
+	uint32_t sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	tAniGetSnrReq *pMsg;
 
 	pMsg = qdf_mem_malloc(sizeof(tAniGetSnrReq));
@@ -18917,7 +18917,7 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 		}
 	}
 
-	return CSR_SESSION_ID_INVALID;
+	return WLAN_UMAC_VDEV_ID_MAX;
 }
 
 /**
@@ -18957,7 +18957,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	}
 
 	temp_session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
-	if ((temp_session_id != CSR_SESSION_ID_INVALID) &&
+	if ((temp_session_id != WLAN_UMAC_VDEV_ID_MAX) &&
 	    (session_id != temp_session_id)) {
 		sme_debug("Roam cmd not for session %d on which roaming is enabled",
 			   temp_session_id);
@@ -20426,7 +20426,7 @@ static void csr_init_operating_classes(struct mac_context *mac)
 static uint32_t
 csr_find_session_by_type(struct mac_context *mac_ctx, enum QDF_OPMODE type)
 {
-	uint32_t i, session_id = CSR_SESSION_ID_INVALID;
+	uint32_t i, session_id = WLAN_UMAC_VDEV_ID_MAX;
 	struct csr_roam_session *session_ptr;
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
@@ -20488,7 +20488,7 @@ static bool csr_is_conn_allow_2g_band(struct mac_context *mac_ctx, uint32_t chnl
 	}
 
 	sap_session_id = csr_find_session_by_type(mac_ctx, QDF_SAP_MODE);
-	if (CSR_SESSION_ID_INVALID != sap_session_id) {
+	if (WLAN_UMAC_VDEV_ID_MAX != sap_session_id) {
 		sap_session = CSR_GET_SESSION(mac_ctx, sap_session_id);
 		if ((0 != sap_session->bssParams.operationChn) &&
 				(sap_session->bssParams.operationChn != chnl)) {
@@ -20526,7 +20526,7 @@ static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx, uint32_t chnl
 	}
 
 	p2pgo_session_id = csr_find_session_by_type(mac_ctx, QDF_P2P_GO_MODE);
-	if (CSR_SESSION_ID_INVALID != p2pgo_session_id) {
+	if (WLAN_UMAC_VDEV_ID_MAX != p2pgo_session_id) {
 		p2pgo_session = CSR_GET_SESSION(mac_ctx, p2pgo_session_id);
 		if ((0 != p2pgo_session->bssParams.operationChn) &&
 				(eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED !=
@@ -21358,7 +21358,7 @@ csr_roam_synch_callback(struct mac_context *mac_ctx,
 QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 			       struct assoc_ind *assoc_ind)
 {
-	uint32_t session_id = CSR_SESSION_ID_INVALID;
+	uint32_t session_id = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_STATUS status;
 
 	status = csr_roam_get_session_id_from_bssid(mac,

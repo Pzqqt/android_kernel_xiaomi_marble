@@ -603,7 +603,7 @@ static uint32_t sme_get_sessionid_from_activelist(struct mac_context *mac)
 {
 	tListElem *entry;
 	tSmeCmd *command;
-	uint32_t session_id = CSR_SESSION_ID_INVALID;
+	uint32_t session_id = WLAN_UMAC_VDEV_ID_MAX;
 
 	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (entry) {
@@ -641,7 +641,7 @@ static void sme_state_info_dump(char **buf_ptr, uint16_t *size)
 	mac = MAC_CONTEXT(mac_handle);
 
 	active_session_id = sme_get_sessionid_from_activelist(mac);
-	if (active_session_id != CSR_SESSION_ID_INVALID) {
+	if (active_session_id != WLAN_UMAC_VDEV_ID_MAX) {
 		len += qdf_scnprintf(buf + len, *size - len,
 			"\n active command sessionid %d", active_session_id);
 	}
@@ -11866,7 +11866,7 @@ static enum band_info sme_get_connected_roaming_vdev_band(void)
 		return band;
 	}
 	session_id = csr_get_roam_enabled_sta_sessionid(mac);
-	if (session_id != CSR_SESSION_ID_INVALID) {
+	if (session_id != WLAN_UMAC_VDEV_ID_MAX) {
 		session = CSR_GET_SESSION(mac, session_id);
 		channel = session->connectedProfile.operationChannel;
 		band = csr_get_rf_band(channel);
@@ -14360,11 +14360,11 @@ void sme_enable_roaming_on_connected_sta(mac_handle_t mac_handle)
 	QDF_STATUS status;
 
 	session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
-	if (session_id != CSR_SESSION_ID_INVALID)
+	if (session_id != WLAN_UMAC_VDEV_ID_MAX)
 		return;
 
 	session_id = csr_get_connected_infra(mac_ctx);
-	if (session_id == CSR_SESSION_ID_INVALID) {
+	if (session_id == WLAN_UMAC_VDEV_ID_MAX) {
 		sme_debug("No STA in conencted state");
 		return;
 	}

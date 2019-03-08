@@ -1248,7 +1248,7 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 	sap_clear_global_dfs_param(mac_handle);
 	sap_free_roam_profile(&sapctx->csr_roamProfile);
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
-	sapctx->sessionId = CSR_SESSION_ID_INVALID;
+	sapctx->sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		"%s: Initializing State: %d, sapContext value = %pK", __func__,
 		sapctx->fsm_state, sapctx);
@@ -1538,7 +1538,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		bss_complete = &sap_ap_event.sapevt.sapStartBssCompleteEvent;
 
 		bss_complete->sessionId = sap_ctx->sessionId;
-		if (bss_complete->sessionId == CSR_SESSION_ID_INVALID) {
+		if (bss_complete->sessionId == WLAN_UMAC_VDEV_ID_MAX) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("Invalid sessionId"));
 			return QDF_STATUS_E_INVAL;

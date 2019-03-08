@@ -321,7 +321,7 @@ static inline QDF_STATUS csr_roam_offload_scan(struct mac_context *mac,
  *
  * The function check if any sta is present and has roaming enabled and return
  * the session id of the sta with roaming enabled else if roaming is not enabled
- * on any STA return CSR_SESSION_ID_INVALID
+ * on any STA return WLAN_UMAC_VDEV_ID_MAX
  *
  * Return: session id of STA on which roaming is enabled
  */

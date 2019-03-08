@@ -42,8 +42,6 @@
 #define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
-/* session ID invalid */
-#define CSR_SESSION_ID_INVALID    0xFF
 /* No of sessions to be supported, and a session is for Infra, IBSS or BT-AMP */
 #define CSR_IS_SESSION_VALID(mac, sessionId) \
 	((sessionId) < WLAN_MAX_VDEVS && \
@@ -929,7 +927,7 @@ bool csr_is_all_session_disconnected(struct mac_context *mac);
  *
  * The function check if any infra is present in connected state and if present
  * return the session id of the connected infra else if no infra is in connected
- * state return CSR_SESSION_ID_INVALID
+ * state return WLAN_UMAC_VDEV_ID_MAX
  *
  * Return: session id of the connected infra
  */

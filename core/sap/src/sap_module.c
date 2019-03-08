@@ -400,7 +400,7 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 		sap_ctx->num_of_channel = 0;
 	}
 	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
-	if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID) {
+	if (sap_ctx->sessionId != WLAN_UMAC_VDEV_ID_MAX) {
 		/* empty queues/lists/pkts if any */
 		sap_clear_session_param(MAC_HANDLE(mac), sap_ctx,
 					sap_ctx->sessionId);
@@ -2441,7 +2441,7 @@ QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sap_ctx->sessionId = CSR_SESSION_ID_INVALID;
+	sap_ctx->sessionId = WLAN_UMAC_VDEV_ID_MAX;
 
 	return QDF_STATUS_SUCCESS;
 }

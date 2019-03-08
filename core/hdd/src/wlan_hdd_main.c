@@ -1095,7 +1095,7 @@ int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func)
 
 int __wlan_hdd_validate_vdev_id(uint8_t vdev_id, const char *func)
 {
-	if (vdev_id == CSR_SESSION_ID_INVALID) {
+	if (vdev_id == WLAN_UMAC_VDEV_ID_MAX) {
 		hdd_debug_rl("adapter is not up (via %s)", func);
 		return -EINVAL;
 	}
