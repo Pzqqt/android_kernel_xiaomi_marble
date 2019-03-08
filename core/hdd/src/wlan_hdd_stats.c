@@ -6016,7 +6016,7 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
 	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
 
 	if ((NULL == stats) || (NULL == context)) {
-		hdd_err("Bad param, pStats [%pK] pContext [%pK]",
+		hdd_err("Bad param, stats [%pK] context [%pK]",
 			stats, context);
 		return;
 	}

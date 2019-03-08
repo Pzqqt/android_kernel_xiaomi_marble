@@ -288,7 +288,7 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
- * @pContext: pointer to adapter context
+ * @context: pointer to adapter context
  * @roam_info: pointer to roam info
  * @roam_id: roam id
  * @roam_status: roam status
@@ -296,7 +296,7 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_sme_roam_callback(void *pContext,
+QDF_STATUS hdd_sme_roam_callback(void *context,
 				 struct csr_roam_info *roam_info,
 				 uint32_t roam_id,
 				 eRoamCmdStatus roam_status,

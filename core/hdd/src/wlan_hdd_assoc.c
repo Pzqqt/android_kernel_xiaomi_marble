@@ -4629,7 +4629,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
- * @pContext: pointer to adapter context
+ * @context: pointer to adapter context
  * @roam_info: pointer to roam info
  * @roam_id: roam id
  * @roam_status: roam status
@@ -4638,19 +4638,19 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS
-hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
+hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		      uint32_t roam_id,
 		      eRoamCmdStatus roam_status, eCsrRoamResult roam_result)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	struct hdd_adapter *adapter = (struct hdd_adapter *) pContext;
+	struct hdd_adapter *adapter = context;
 	struct hdd_station_ctx *sta_ctx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cfg80211_bss *bss_status;
 	struct hdd_context *hdd_ctx;
 
-	hdd_debug("CSR Callback: status= %d result= %d roamID=%d",
-			  roam_status, roam_result, roam_id);
+	hdd_debug("CSR Callback: status=%d result=%d roamID=%d",
+		  roam_status, roam_result, roam_id);
 
 	/* Sanity check */
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
