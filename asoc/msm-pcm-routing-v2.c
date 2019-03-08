@@ -23917,6 +23917,11 @@ static uint32_t msm_routing_get_topology(size_t data_size, void *data)
 	uint32_t size = 0;
 
 	/* Retrieve cal_info size from cal data*/
+	if (data_size < sizeof(struct audio_cal_type_basic) +
+			sizeof(struct audio_cal_info_adm_top)) {
+		pr_err("%s: Invalid data size: %zd\n", __func__, data_size);
+		goto done;
+	}
 	size = data_size - sizeof(struct audio_cal_type_basic);
 	cal_info = kzalloc(size, GFP_KERNEL);
 
