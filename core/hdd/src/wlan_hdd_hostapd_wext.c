@@ -1748,7 +1748,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 				       union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
-	struct hdd_station_info *pStaInfo = adapter->sta_info;
+	struct hdd_station_info *sta_info = adapter->sta_info;
 	struct hdd_context *hdd_ctx;
 	char *buf;
 	int cnt = 0;
@@ -1800,9 +1800,9 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 
 	spin_lock_bh(&adapter->sta_info_lock);
 	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
-		if ((pStaInfo[cnt].in_use) &&
-		    (!qdf_is_macaddr_broadcast(&pStaInfo[cnt].sta_mac))) {
-			memcpy(&buf[maclist_index], &(pStaInfo[cnt].sta_mac),
+		if ((sta_info[cnt].in_use) &&
+		    (!qdf_is_macaddr_broadcast(&sta_info[cnt].sta_mac))) {
+			memcpy(&buf[maclist_index], &(sta_info[cnt].sta_mac),
 			       QDF_MAC_ADDR_SIZE);
 			maclist_index += QDF_MAC_ADDR_SIZE;
 			left -= QDF_MAC_ADDR_SIZE;
