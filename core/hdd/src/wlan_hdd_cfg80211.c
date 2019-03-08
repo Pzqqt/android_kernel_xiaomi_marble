@@ -20103,7 +20103,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	int i;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_hostapd_state *hostapd_state;
-	tsap_config_t *pConfig;
+	tsap_config_t *config;
 	struct hdd_context *hdd_ctx;
 	int status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -20141,11 +20141,11 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 		   adapter->vdev_id, adapter->device_mode);
 
 	if (QDF_SAP_MODE == adapter->device_mode) {
-		pConfig = &adapter->session.ap.sap_config;
+		config = &adapter->session.ap.sap_config;
 
 		/* default value */
-		pConfig->num_accept_mac = 0;
-		pConfig->num_deny_mac = 0;
+		config->num_accept_mac = 0;
+		config->num_deny_mac = 0;
 
 		/**
 		 * access control policy
@@ -20155,43 +20155,43 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 		 *   listed in hostapd.accept file.
 		 */
 		if (NL80211_ACL_POLICY_DENY_UNLESS_LISTED == params->acl_policy) {
-			pConfig->SapMacaddr_acl = eSAP_DENY_UNLESS_ACCEPTED;
+			config->SapMacaddr_acl = eSAP_DENY_UNLESS_ACCEPTED;
 		} else if (NL80211_ACL_POLICY_ACCEPT_UNLESS_LISTED ==
 			   params->acl_policy) {
-			pConfig->SapMacaddr_acl = eSAP_ACCEPT_UNLESS_DENIED;
+			config->SapMacaddr_acl = eSAP_ACCEPT_UNLESS_DENIED;
 		} else {
 			hdd_warn("Acl Policy : %d is not supported",
 				params->acl_policy);
 			return -ENOTSUPP;
 		}
 
-		if (eSAP_DENY_UNLESS_ACCEPTED == pConfig->SapMacaddr_acl) {
-			pConfig->num_accept_mac = params->n_acl_entries;
+		if (eSAP_DENY_UNLESS_ACCEPTED == config->SapMacaddr_acl) {
+			config->num_accept_mac = params->n_acl_entries;
 			for (i = 0; i < params->n_acl_entries; i++) {
 				hdd_debug("** Add ACL MAC entry %i in WhiletList :"
 					MAC_ADDRESS_STR, i,
 					MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
-				qdf_mem_copy(&pConfig->accept_mac[i],
+				qdf_mem_copy(&config->accept_mac[i],
 					     params->mac_addrs[i].addr,
 					     sizeof(qcmacaddr));
 			}
-		} else if (eSAP_ACCEPT_UNLESS_DENIED == pConfig->SapMacaddr_acl) {
-			pConfig->num_deny_mac = params->n_acl_entries;
+		} else if (eSAP_ACCEPT_UNLESS_DENIED == config->SapMacaddr_acl) {
+			config->num_deny_mac = params->n_acl_entries;
 			for (i = 0; i < params->n_acl_entries; i++) {
 				hdd_debug("** Add ACL MAC entry %i in BlackList :"
 					MAC_ADDRESS_STR, i,
 					MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
-				qdf_mem_copy(&pConfig->deny_mac[i],
+				qdf_mem_copy(&config->deny_mac[i],
 					     params->mac_addrs[i].addr,
 					     sizeof(qcmacaddr));
 			}
 		}
 		qdf_status = wlansap_set_mac_acl(
-			WLAN_HDD_GET_SAP_CTX_PTR(adapter), pConfig);
+			WLAN_HDD_GET_SAP_CTX_PTR(adapter), config);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("SAP Set Mac Acl fail");
 			return -EINVAL;

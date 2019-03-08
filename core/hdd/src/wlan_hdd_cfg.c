@@ -1300,7 +1300,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 #endif
 	struct wlan_mlme_ibss_cfg ibss_cfg = {0};
 
-	struct hdd_config *pConfig = hdd_ctx->config;
+	struct hdd_config *config = hdd_ctx->config;
 
 	if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_ibss_cfg(
 				hdd_ctx->psoc, &ibss_cfg))) {
@@ -1318,13 +1318,13 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 * To Do: set regulatory information here
 	 */
 	sme_config->csrConfig.phyMode =
-		hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
+		hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
 
-	if (pConfig->dot11Mode == eHDD_DOT11_MODE_abg ||
-	    pConfig->dot11Mode == eHDD_DOT11_MODE_11b ||
-	    pConfig->dot11Mode == eHDD_DOT11_MODE_11g ||
-	    pConfig->dot11Mode == eHDD_DOT11_MODE_11b_ONLY ||
-	    pConfig->dot11Mode == eHDD_DOT11_MODE_11g_ONLY) {
+	if (config->dot11Mode == eHDD_DOT11_MODE_abg ||
+	    config->dot11Mode == eHDD_DOT11_MODE_11b ||
+	    config->dot11Mode == eHDD_DOT11_MODE_11g ||
+	    config->dot11Mode == eHDD_DOT11_MODE_11b_ONLY ||
+	    config->dot11Mode == eHDD_DOT11_MODE_11g_ONLY) {
 		sme_config->csrConfig.channelBondingMode24GHz = 0;
 		sme_config->csrConfig.channelBondingMode5GHz = 0;
 	} else {
@@ -1391,7 +1391,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("hdd_set_sme_cfgs_related_to_plcy_mgr fail: %d",
 			status);
-	hdd_debug("dot11Mode=%d", pConfig->dot11Mode);
+	hdd_debug("dot11Mode=%d", config->dot11Mode);
 	status = sme_update_config(mac_handle, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);

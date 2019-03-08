@@ -674,7 +674,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_11N_RATE:
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
-		tsap_config_t *pConfig =
+		tsap_config_t *config =
 			&adapter->session.ap.sap_config;
 
 		hdd_debug("SET_HT_RATE val %d", set_value);
@@ -682,17 +682,17 @@ static __iw_softap_setparam(struct net_device *dev,
 		if (set_value != 0xff) {
 			rix = RC_2_RATE_IDX(set_value);
 			if (set_value & 0x80) {
-				if (pConfig->SapHw_mode ==
+				if (config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11b
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11b_ONLY
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11g
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11g_ONLY
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_abg
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11a) {
 					hdd_err("Not valid mode for HT");
 					ret = -EIO;
@@ -701,7 +701,7 @@ static __iw_softap_setparam(struct net_device *dev,
 				preamble = WMI_RATE_PREAMBLE_HT;
 				nss = HT_RC_2_STREAMS(set_value) - 1;
 			} else if (set_value & 0x10) {
-				if (pConfig->SapHw_mode ==
+				if (config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11a) {
 					hdd_err("Not valid for cck");
 					ret = -EIO;
@@ -714,9 +714,9 @@ static __iw_softap_setparam(struct net_device *dev,
 				if (rix != 0x3)
 					rix |= 0x4;
 			} else {
-				if (pConfig->SapHw_mode ==
+				if (config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11b
-				    || pConfig->SapHw_mode ==
+				    || config->SapHw_mode ==
 				    eCSR_DOT11_MODE_11b_ONLY) {
 					hdd_err("Not valid for OFDM");
 					ret = -EIO;
@@ -737,13 +737,13 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_VHT_RATE:
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
-		tsap_config_t *pConfig =
+		tsap_config_t *config =
 			&adapter->session.ap.sap_config;
 
-		if (pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac &&
-		    pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac_ONLY) {
+		if (config->SapHw_mode != eCSR_DOT11_MODE_11ac &&
+		    config->SapHw_mode != eCSR_DOT11_MODE_11ac_ONLY) {
 			hdd_err("SET_VHT_RATE error: SapHw_mode= 0x%x, ch: %d",
-			       pConfig->SapHw_mode, pConfig->channel);
+			       config->SapHw_mode, config->channel);
 			ret = -EIO;
 			break;
 		}
