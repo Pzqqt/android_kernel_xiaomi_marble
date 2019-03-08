@@ -1174,7 +1174,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
  * Return: QDF_STATUS_SUCCESS on success,
  *      other value on failure
  */
-static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
+static QDF_STATUS hdd_handle_acs_scan_event(struct sap_event *sap_event,
 		struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
@@ -1221,7 +1221,7 @@ static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
+static QDF_STATUS hdd_handle_acs_scan_event(struct sap_event *sap_event,
 		struct hdd_adapter *adapter)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1699,7 +1699,7 @@ static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
 }
 #endif
 
-QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event sap_event,
+QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				    void *context)
 {
 	struct hdd_adapter *adapter;
@@ -6468,7 +6468,7 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
  */
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 {
-	tSap_Event sap_event;
+	struct sap_event sap_event;
 	int sta_id;
 	struct sap_context *sap_ctx;
 

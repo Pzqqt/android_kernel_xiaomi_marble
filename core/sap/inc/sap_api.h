@@ -377,7 +377,7 @@ struct sap_ch_change_ind {
  * structure  in the union is defined in comment next to the structure
  */
 
-typedef struct sap_Event_s {
+struct sap_event {
 	eSapHddEvent sapHddEventCode;
 	union {
 		/*SAP_START_BSS_EVENT */
@@ -408,7 +408,7 @@ typedef struct sap_Event_s {
 		struct sap_acs_scan_complete_event sap_acs_scan_comp;
 		QDF_STATUS ch_change_rsp_status;
 	} sapevt;
-} tSap_Event, *tpSap_Event;
+};
 
 typedef struct sap_SSID {
 	uint8_t length;
@@ -749,7 +749,7 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext);
 
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
-typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
+typedef QDF_STATUS (*tpWLAN_SAPEventCB)(struct sap_event *pSapEvent,
 					void *pUsrContext);
 
 /**

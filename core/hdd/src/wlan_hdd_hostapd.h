@@ -106,7 +106,7 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     struct csr_del_sta_params *pDelStaParams);
 
-QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event sap_event,
+QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				    void *context);
 /**
  * hdd_init_ap_mode() - to init the AP adaptor

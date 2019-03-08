@@ -1318,7 +1318,7 @@ static QDF_STATUS sap_goto_init(struct sap_context *sap_ctx)
 /**
  * sap_handle_acs_scan_event() - handle acs scan event for SAP
  * @sap_context: ptSapContext
- * @sap_event: tSap_Event
+ * @sap_event: struct sap_event
  * @status: status of acs scan
  *
  * The function is to handle the eSAP_ACS_SCAN_SUCCESS_EVENT event.
@@ -1326,7 +1326,7 @@ static QDF_STATUS sap_goto_init(struct sap_context *sap_ctx)
  * Return: void
  */
 static void sap_handle_acs_scan_event(struct sap_context *sap_context,
-		tSap_Event *sap_event, eSapStatus status)
+		struct sap_event *sap_event, eSapStatus status)
 {
 	sap_event->sapHddEventCode = eSAP_ACS_SCAN_SUCCESS_EVENT;
 	sap_event->sapevt.sap_acs_scan_comp.status = status;
@@ -1337,7 +1337,7 @@ static void sap_handle_acs_scan_event(struct sap_context *sap_context,
 }
 #else
 static void sap_handle_acs_scan_event(struct sap_context *sap_context,
-		tSap_Event *sap_event, eSapStatus status)
+		struct sap_event *sap_event, eSapStatus status)
 {
 }
 #endif
@@ -1453,7 +1453,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		void *context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tSap_Event sap_ap_event = {0};
+	struct sap_event sap_ap_event = {0};
 	struct mac_context *mac_ctx;
 	struct oem_channel_info *chaninfo;
 	tSap_StationAssocIndication *assoc_ind;
