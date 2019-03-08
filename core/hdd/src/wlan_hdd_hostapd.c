@@ -1699,7 +1699,7 @@ static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
 }
 #endif
 
-QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
+QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event sap_event,
 				    void *context)
 {
 	struct hdd_adapter *adapter;
@@ -1755,12 +1755,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
-	if (!pSapEvent) {
-		hdd_err("pSapEvent is null");
+	if (!sap_event) {
+		hdd_err("sap_event is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sapEvent = pSapEvent->sapHddEventCode;
+	sapEvent = sap_event->sapHddEventCode;
 	memset(&wrqu, '\0', sizeof(wrqu));
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1779,35 +1779,35 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	mac_handle = hdd_ctx->mac_handle;
 	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
-	sta_id = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
+	sta_id = sap_event->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
 
 	switch (sapEvent) {
 	case eSAP_START_BSS_EVENT:
 		hdd_debug("BSS status = %s, channel = %u, bc sta Id = %d",
-		       pSapEvent->sapevt.sapStartBssCompleteEvent.
+		       sap_event->sapevt.sapStartBssCompleteEvent.
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS",
-		       pSapEvent->sapevt.sapStartBssCompleteEvent.
+		       sap_event->sapevt.sapStartBssCompleteEvent.
 		       operatingChannel,
-		       pSapEvent->sapevt.sapStartBssCompleteEvent.staId);
+		       sap_event->sapevt.sapStartBssCompleteEvent.staId);
 		ap_ctx->operating_channel =
-			pSapEvent->sapevt.sapStartBssCompleteEvent
+			sap_event->sapevt.sapStartBssCompleteEvent
 			.operatingChannel;
 
 		adapter->vdev_id =
-			pSapEvent->sapevt.sapStartBssCompleteEvent.sessionId;
+			sap_event->sapevt.sapStartBssCompleteEvent.sessionId;
 
 		sap_config->channel =
-			pSapEvent->sapevt.sapStartBssCompleteEvent.
+			sap_event->sapevt.sapStartBssCompleteEvent.
 			operatingChannel;
 		sap_config->ch_params.ch_width =
-			pSapEvent->sapevt.sapStartBssCompleteEvent.ch_width;
+			sap_event->sapevt.sapStartBssCompleteEvent.ch_width;
 
 		sap_config->ch_params = ap_ctx->sap_context->ch_params;
 		sap_config->sec_ch = ap_ctx->sap_context->secondary_ch;
 
 		hostapd_state->qdf_status =
-			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
+			sap_event->sapevt.sapStartBssCompleteEvent.status;
 
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 
@@ -1851,7 +1851,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			sme_ch_avoid_update_req(mac_handle);
 
 			ap_ctx->broadcast_sta_id =
-				pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
+				sap_event->sapevt.sapStartBssCompleteEvent.staId;
 
 			cdp_hl_fc_set_td_limit(
 				cds_get_context(QDF_MODULE_ID_SOC),
@@ -1946,7 +1946,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_STOP_BSS_EVENT:
 		hdd_debug("BSS stop status = %s",
-		       pSapEvent->sapevt.sapStopBssCompleteEvent.
+		       sap_event->sapevt.sapStopBssCompleteEvent.
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
 		hdd_hostapd_channel_allow_suspend(adapter,
@@ -2101,7 +2101,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * forward the message to hostapd once implementation
 		 * is done for now just print
 		 */
-		key_complete = &pSapEvent->sapevt.sapStationSetKeyCompleteEvent;
+		key_complete = &sap_event->sapevt.sapStationSetKeyCompleteEvent;
 		hdd_debug("SET Key: configured status = %s",
 			  key_complete->status ?
 			  "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
@@ -2121,11 +2121,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		memset(&msg, '\0', sizeof(msg));
 		msg.src_addr.sa_family = ARPHRD_ETHER;
 		memcpy(msg.src_addr.sa_data,
-		       &pSapEvent->sapevt.sapStationMICFailureEvent.
+		       &sap_event->sapevt.sapStationMICFailureEvent.
 		       staMac, QDF_MAC_ADDR_SIZE);
 		hdd_debug("MIC MAC " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(msg.src_addr.sa_data));
-		if (pSapEvent->sapevt.sapStationMICFailureEvent.
+		if (sap_event->sapevt.sapStationMICFailureEvent.
 		    multicast == true)
 			msg.flags = IW_MICFAILURE_GROUP;
 		else
@@ -2137,25 +2137,25 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	}
 		/* inform mic failure to nl80211 */
 		cfg80211_michael_mic_failure(dev,
-					     pSapEvent->
+					     sap_event->
 					     sapevt.sapStationMICFailureEvent.
 					     staMac.bytes,
-					     ((pSapEvent->sapevt.
+					     ((sap_event->sapevt.
 					       sapStationMICFailureEvent.
 					       multicast ==
 					       true) ?
 					      NL80211_KEYTYPE_GROUP :
 					      NL80211_KEYTYPE_PAIRWISE),
-					     pSapEvent->sapevt.
+					     sap_event->sapevt.
 					     sapStationMICFailureEvent.keyId,
-					     pSapEvent->sapevt.
+					     sap_event->sapevt.
 					     sapStationMICFailureEvent.TSC,
 					     GFP_KERNEL);
 		break;
 
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
-		event = &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent;
+		event = &sap_event->sapevt.sapStationAssocReassocCompleteEvent;
 		if (eSAP_STATUS_FAILURE == event->status) {
 			hdd_info("assoc failure: " MAC_ADDRESS_STR,
 				 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
@@ -2307,7 +2307,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_STA_DISASSOC_EVENT:
 		disassoc_comp =
-			&pSapEvent->sapevt.sapStationDisassocCompleteEvent;
+			&sap_event->sapevt.sapStationDisassocCompleteEvent;
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
 
@@ -2328,7 +2328,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Station Deauth event Set failed");
 
-		if (pSapEvent->sapevt.sapStationDisassocCompleteEvent.reason ==
+		if (sap_event->sapevt.sapStationDisassocCompleteEvent.reason ==
 		    eSAP_USR_INITATED_DISASSOC)
 			hdd_debug(" User initiated disassociation");
 		else
@@ -2336,7 +2336,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		we_event = IWEVEXPIRED;
 		qdf_status =
 			hdd_softap_get_sta_id(adapter,
-					      &pSapEvent->sapevt.
+					      &sap_event->sapevt.
 					      sapStationDisassocCompleteEvent.staMac,
 					      &sta_id);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -2385,7 +2385,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		qdf_wake_lock_timeout_acquire(&hdd_ctx->sap_wake_lock,
 			 HDD_SAP_CLIENT_DISCONNECT_WAKE_LOCK_DURATION);
 		cfg80211_del_sta(dev,
-				 (const u8 *)&pSapEvent->sapevt.
+				 (const u8 *)&sap_event->sapevt.
 				 sapStationDisassocCompleteEvent.staMac.
 				 bytes[0], GFP_KERNEL);
 
@@ -2399,7 +2399,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 		if (adapter->device_mode == QDF_P2P_GO_MODE) {
 			/* send peer status indication to oem app */
-			hdd_send_peer_status_ind_to_app(&pSapEvent->sapevt.
+			hdd_send_peer_status_ind_to_app(&sap_event->sapevt.
 						sapStationDisassocCompleteEvent.
 						staMac, ePeerDisconnected,
 						0,
@@ -2429,12 +2429,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_UNKNOWN_STA_JOIN:
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
 			 "JOIN_UNKNOWN_STA-%02x:%02x:%02x:%02x:%02x:%02x",
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[0],
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[1],
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[2],
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[3],
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[4],
-			 pSapEvent->sapevt.sapUnknownSTAJoin.macaddr.bytes[5]);
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[0],
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[1],
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[2],
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[3],
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[4],
+			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[5]);
 		we_event = IWEVCUSTOM;  /* Discovered a new node (AP mode). */
 		wrqu.data.pointer = unknownSTAEvent;
 		wrqu.data.length = strlen(unknownSTAEvent);
@@ -2447,12 +2447,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 "Peer %02x:%02x:%02x:%02x:%02x:%02x denied"
 			 " assoc due to Maximum Mobile Hotspot connections reached. Please disconnect"
 			 " one or more devices to enable the new device connection",
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.bytes[0],
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.bytes[1],
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.bytes[2],
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.bytes[3],
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.bytes[4],
-			 pSapEvent->sapevt.sapMaxAssocExceeded.macaddr.
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[0],
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[1],
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[2],
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[3],
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[4],
+			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.
 			 bytes[5]);
 		we_event = IWEVCUSTOM;  /* Discovered a new node (AP mode). */
 		wrqu.data.pointer = maxAssocExceededEvent;
@@ -2461,15 +2461,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_debug("%s", maxAssocExceededEvent);
 		break;
 	case eSAP_STA_ASSOC_IND:
-		if (pSapEvent->sapevt.sapAssocIndication.owe_ie) {
+		if (sap_event->sapevt.sapAssocIndication.owe_ie) {
 			hdd_send_update_owe_info_event(adapter,
-			      pSapEvent->sapevt.sapAssocIndication.staMac.bytes,
-			      pSapEvent->sapevt.sapAssocIndication.owe_ie,
-			      pSapEvent->sapevt.sapAssocIndication.owe_ie_len);
+			      sap_event->sapevt.sapAssocIndication.staMac.bytes,
+			      sap_event->sapevt.sapAssocIndication.owe_ie,
+			      sap_event->sapevt.sapAssocIndication.owe_ie_len);
 			qdf_mem_free(
-				   pSapEvent->sapevt.sapAssocIndication.owe_ie);
-			pSapEvent->sapevt.sapAssocIndication.owe_ie = NULL;
-			pSapEvent->sapevt.sapAssocIndication.owe_ie_len = 0;
+				   sap_event->sapevt.sapAssocIndication.owe_ie);
+			sap_event->sapevt.sapAssocIndication.owe_ie = NULL;
+			sap_event->sapevt.sapAssocIndication.owe_ie_len = 0;
 		}
 		return QDF_STATUS_SUCCESS;
 
@@ -2488,7 +2488,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (hostapd_state->bss_state != BSS_STOP) {
 			/* Prevent suspend for new channel */
 			hdd_hostapd_channel_prevent_suspend(adapter,
-				pSapEvent->sapevt.sap_ch_selected.pri_ch);
+				sap_event->sapevt.sap_ch_selected.pri_ch);
 			/* Allow suspend for old channel */
 			hdd_hostapd_channel_allow_suspend(adapter,
 				ap_ctx->operating_channel);
@@ -2502,27 +2502,27 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * operation channel for MCC DFS restriction
 		 */
 		ap_ctx->operating_channel =
-			pSapEvent->sapevt.sap_ch_selected.pri_ch;
+			sap_event->sapevt.sap_ch_selected.pri_ch;
 		ap_ctx->sap_config.acs_cfg.pri_ch =
-			pSapEvent->sapevt.sap_ch_selected.pri_ch;
+			sap_event->sapevt.sap_ch_selected.pri_ch;
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
 		ap_ctx->sap_config.acs_cfg.ch_width =
-			pSapEvent->sapevt.sap_ch_selected.ch_width;
+			sap_event->sapevt.sap_ch_selected.ch_width;
 
 		sap_ch_param.ch_width =
-			pSapEvent->sapevt.sap_ch_selected.ch_width;
+			sap_event->sapevt.sap_ch_selected.ch_width;
 		sap_ch_param.center_freq_seg0 =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		sap_ch_param.center_freq_seg1 =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
 		wlan_reg_set_channel_params(hdd_ctx->pdev,
-			pSapEvent->sapevt.sap_ch_selected.pri_ch,
-			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch,
+			sap_event->sapevt.sap_ch_selected.pri_ch,
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch,
 			&sap_ch_param);
 
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
@@ -2545,20 +2545,20 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 
 		chan_change.chan =
-			pSapEvent->sapevt.sap_ch_selected.pri_ch;
+			sap_event->sapevt.sap_ch_selected.pri_ch;
 		chan_change.chan_params.ch_width =
-			pSapEvent->sapevt.sap_ch_selected.ch_width;
+			sap_event->sapevt.sap_ch_selected.ch_width;
 		chan_change.chan_params.sec_ch_offset =
 			sap_ch_param.sec_ch_offset;
 		chan_change.chan_params.center_freq_seg0 =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		chan_change.chan_params.center_freq_seg1 =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
 
 		return hdd_chan_change_notify(adapter, dev,
 					      chan_change, legacy_phymode);
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
-		return hdd_handle_acs_scan_event(pSapEvent, adapter);
+		return hdd_handle_acs_scan_event(sap_event, adapter);
 
 	case eSAP_ACS_CHANNEL_SELECTED:
 		hdd_debug("ACS Completed for wlan%d",
@@ -2566,23 +2566,23 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		clear_bit(ACS_PENDING, &adapter->event_flags);
 		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 		ap_ctx->sap_config.acs_cfg.pri_ch =
-			pSapEvent->sapevt.sap_ch_selected.pri_ch;
+			sap_event->sapevt.sap_ch_selected.pri_ch;
 		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
-			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
+			sap_event->sapevt.sap_ch_selected.ht_sec_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch;
 		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
-			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
+			sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch;
 		ap_ctx->sap_config.acs_cfg.ch_width =
-			pSapEvent->sapevt.sap_ch_selected.ch_width;
+			sap_event->sapevt.sap_ch_selected.ch_width;
 		wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
 		qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 		return QDF_STATUS_SUCCESS;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
 		hdd_debug("Channel change indication from peer for channel %d",
-			  pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
+			  sap_event->sapevt.sap_chan_cng_ind.new_chan);
 		if (hdd_softap_set_channel_change(dev,
-			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan,
+			 sap_event->sapevt.sap_chan_cng_ind.new_chan,
 			 CH_WIDTH_MAX, false))
 			return QDF_STATUS_E_FAILURE;
 		else
@@ -2604,7 +2604,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_CHANNEL_CHANGE_RESP:
 		hdd_debug("Channel change rsp status = %d",
-			  pSapEvent->sapevt.ch_change_rsp_status);
+			  sap_event->sapevt.ch_change_rsp_status);
 		/*
 		 * Set the ch_switch_in_progress flag to zero and also enable
 		 * roaming once channel change process (success/failure)
@@ -2631,7 +2631,7 @@ stopbss:
 		int event_len = strlen(stopBssEvent);
 
 		hdd_debug("BSS stop status = %s",
-		       pSapEvent->sapevt.sapStopBssCompleteEvent.status ?
+		       sap_event->sapevt.sapStopBssCompleteEvent.status ?
 		       "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
 		/* Change the BSS state now since, as we are shutting
