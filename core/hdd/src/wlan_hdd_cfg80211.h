@@ -369,8 +369,15 @@ void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
 void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 				struct rso_cmd_status *rso_status);
 
-struct cfg80211_bss *
-wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
+/*
+ * wlan_hdd_cfg80211_unlink_bss :to inform nl80211
+ * interface that BSS might have been lost.
+ * @adapter: adapter
+ * @bssid: bssid which might have been lost
+ *
+ * Return: void
+ */
+void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid);
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);

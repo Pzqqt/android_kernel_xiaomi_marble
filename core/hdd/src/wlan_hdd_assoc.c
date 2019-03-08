@@ -1858,7 +1858,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		if (eCSR_ROAM_RESULT_DEAUTH_IND == roam_result ||
 		    eCSR_ROAM_RESULT_DISASSOC_IND == roam_result ||
 		    eCSR_ROAM_LOSTLINK == roam_status) {
-			wlan_hdd_cfg80211_update_bss_list(adapter,
+			wlan_hdd_cfg80211_unlink_bss(adapter,
 				sta_ctx->conn_info.bssid.bytes);
 			sme_remove_bssid_from_scan_list(mac_handle,
 			sta_ctx->conn_info.bssid.bytes);
@@ -3360,7 +3360,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					roam_info->statusCode) ||
 		   (eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE ==
 					roam_info->statusCode)))) {
-			wlan_hdd_cfg80211_update_bss_list(adapter,
+			wlan_hdd_cfg80211_unlink_bss(adapter,
 				roam_info ?
 				roam_info->bssid.bytes :
 				sta_ctx->requested_bssid.bytes);
