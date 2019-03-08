@@ -3615,7 +3615,7 @@ typedef enum {
 /* set is 802.11 Country Element is present */
 #define WIFI_CAPABILITY_COUNTRY      0x00000020
 
-typedef struct {
+struct wifi_interface_info {
 	/* tSirWifiInterfaceMode */
 	/* interface mode */
 	uint8_t mode;
@@ -3637,7 +3637,7 @@ typedef struct {
 	uint8_t apCountryStr[CFG_COUNTRY_CODE_LEN];
 	/* country string for this association */
 	uint8_t countryStr[CFG_COUNTRY_CODE_LEN];
-} tSirWifiInterfaceInfo, *tpSirWifiInterfaceInfo;
+};
 
 /* channel information */
 typedef struct {
@@ -3787,7 +3787,7 @@ typedef struct {
  */
 typedef struct {
 	/* current state of the interface */
-	tSirWifiInterfaceInfo info;
+	struct wifi_interface_info info;
 
 	uint32_t rts_succ_cnt;
 	uint32_t rts_fail_cnt;

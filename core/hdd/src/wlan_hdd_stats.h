@@ -150,7 +150,7 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
  * Return: bool
  */
 bool hdd_get_interface_info(struct hdd_adapter *adapter,
-			    tpSirWifiInterfaceInfo info);
+			    struct wifi_interface_info *info);
 
 /**
  * wlan_hdd_ll_stats_get() - Get Link Layer statistics from FW

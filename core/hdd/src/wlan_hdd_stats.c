@@ -367,7 +367,7 @@ static bool put_wifi_wmm_ac_stat(wmi_wmm_ac_stats *stats,
  *
  * Return: bool
  */
-static bool put_wifi_interface_info(tpSirWifiInterfaceInfo stats,
+static bool put_wifi_interface_info(struct wifi_interface_info *stats,
 				    struct sk_buff *vendor_event)
 {
 	if (nla_put_u32(vendor_event,
@@ -536,7 +536,7 @@ static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int deviceMode)
 }
 
 bool hdd_get_interface_info(struct hdd_adapter *adapter,
-			    tpSirWifiInterfaceInfo pInfo)
+			    struct wifi_interface_info *pInfo)
 {
 	uint8_t *staMac = NULL;
 	struct hdd_station_ctx *sta_ctx;

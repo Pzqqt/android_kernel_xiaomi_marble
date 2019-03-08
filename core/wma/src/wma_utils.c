@@ -2206,7 +2206,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	}
 
 	link_stats_size = sizeof(tSirWifiIfaceStat);
-	iface_info_size = sizeof(tSirWifiInterfaceInfo);
+	iface_info_size = sizeof(struct wifi_interface_info);
 
 	ac_stats_size = sizeof(wmi_wmm_ac_stats);
 	offload_stats_size = sizeof(wmi_iface_offload_stats);
@@ -2232,7 +2232,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	/* results is copied to tSirWifiIfaceStat in upper layer
 	 *   tSirWifiIfaceStat
-	 *    - tSirWifiInterfaceInfo (all fields except roaming is
+	 *    - struct wifi_interface_info (all fields except roaming is
 	 *                             filled by host in the upper layer)
 	 *    - various members of tSirWifiIfaceStat (from wmi_iface_link_stats)
 	 *    - ACs information (from wmi_wmm_ac_stats)
