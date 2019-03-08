@@ -681,8 +681,11 @@ typedef void (*ol_txrx_stats_callback)(void *ctxt,
 /**
  * ol_txrx_pktdump_cb - callback for packet dump feature
  */
-typedef void (*ol_txrx_pktdump_cb)(qdf_nbuf_t netbuf, uint8_t status,
-				   uint8_t vdev_id, uint8_t type);
+typedef void (*ol_txrx_pktdump_cb)(ol_txrx_soc_handle soc,
+				struct cdp_vdev *vdev,
+				qdf_nbuf_t netbuf,
+				uint8_t status,
+				uint8_t type);
 
 /**
  * ol_txrx_ops - (pointers to) the functions used for tx and rx

@@ -28,7 +28,6 @@
 #include <host_diag_core_event.h>
 #include "cds_utils.h"
 #include "csr_api.h"
-#include "wlan_hdd_main.h"
 #include "wma.h"
 #include "ol_txrx_api.h"
 #include "pktlog_ac.h"
@@ -1327,9 +1326,10 @@ static void driver_hal_status_map(uint8_t *status)
 
 /*
  * send_packetdump() - send packet dump
+ * @soc: soc handle
+ * @vdev: vdev handle
  * @netbuf: netbuf
  * @status: status of tx packet
- * @vdev_id: virtual device id
  * @type: type of packet
  *
  * This function is used to send packet dump to HAL layer
@@ -1338,29 +1338,20 @@ static void driver_hal_status_map(uint8_t *status)
  * Return: None
  *
  */
-static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
-				uint8_t vdev_id, uint8_t type)
+static void send_packetdump(ol_txrx_soc_handle soc,
+			    struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			    uint8_t status, uint8_t type)
 {
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
-	struct hdd_context *hdd_ctx;
-	struct hdd_adapter *adapter;
 
 	if (!netbuf) {
 		pr_err("%s: Invalid netbuf.\n", __func__);
 		return;
 	}
 
-	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx)
-		return;
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (!adapter)
-		return;
-
 	/* Send packet dump only for STA interface */
-	if (adapter->device_mode != QDF_STA_MODE)
+	if (wlan_op_mode_sta != cdp_get_opmode(soc, vdev))
 		return;
 
 #if defined(HELIUMPLUS)
@@ -1469,9 +1460,10 @@ static bool check_txrx_packetdump_count(void)
 
 /*
  * tx_packetdump_cb() - tx packet dump callback
+ * @soc: soc handle
+ * @vdev: vdev handle
  * @netbuf: netbuf
  * @status: status of tx packet
- * @vdev_id: virtual device id
  * @type: packet type
  *
  * This function is used to send tx packet dump to HAL layer
@@ -1480,25 +1472,30 @@ static bool check_txrx_packetdump_count(void)
  * Return: None
  *
  */
-static void tx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
-				uint8_t vdev_id, uint8_t type)
+static void tx_packetdump_cb(ol_txrx_soc_handle soc,
+			     struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			     uint8_t status, uint8_t type)
 {
 	bool temp;
+
+	if (!soc || !vdev)
+		return;
 
 	temp = check_txrx_packetdump_count();
 	if (temp)
 		return;
 
 	driver_hal_status_map(&status);
-	send_packetdump(netbuf, status, vdev_id, type);
+	send_packetdump(soc, vdev, netbuf, status, type);
 }
 
 
 /*
  * rx_packetdump_cb() - rx packet dump callback
+ * @soc: soc handle
+ * @vdev: vdev handle
  * @netbuf: netbuf
  * @status: status of rx packet
- * @vdev_id: virtual device id
  * @type: packet type
  *
  * This function is used to send rx packet dump to HAL layer
@@ -1507,16 +1504,20 @@ static void tx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
  * Return: None
  *
  */
-static void rx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
-				uint8_t vdev_id, uint8_t type)
+static void rx_packetdump_cb(ol_txrx_soc_handle soc,
+			     struct cdp_vdev *vdev, qdf_nbuf_t netbuf,
+			     uint8_t status, uint8_t type)
 {
 	bool temp;
+
+	if (!soc || !vdev)
+		return;
 
 	temp = check_txrx_packetdump_count();
 	if (temp)
 		return;
 
-	send_packetdump(netbuf, status, vdev_id, type);
+	send_packetdump(soc, vdev, netbuf, status, type);
 }
 
 
