@@ -1354,14 +1354,6 @@ wlan_hdd_cfg80211_extscan_generic_rsp(struct hdd_context *hdd_ctx,
 	spin_unlock(&context->context_lock);
 }
 
-/**
- * wlan_hdd_cfg80211_extscan_callback() - ext scan callback
- * @hdd_handle: Opaque handle to hdd context
- * @event_id: Event identifier
- * @msg: Pointer to message
- *
- * Return: none
- */
 void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
 					const uint16_t event_id, void *msg)
 {

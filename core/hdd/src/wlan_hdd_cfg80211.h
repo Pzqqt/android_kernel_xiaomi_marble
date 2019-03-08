@@ -346,16 +346,6 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
 				      uint8_t op_chan);
 
-#ifdef FEATURE_WLAN_EXTSCAN
-void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
-					const uint16_t evType, void *pMsg);
-#else
-static inline
-void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
-					const uint16_t evType, void *pMsg)
-{
-}
-#endif /* FEATURE_WLAN_EXTSCAN */
 /**
  * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
  * @hdd_handle: opaque handle for the hdd context

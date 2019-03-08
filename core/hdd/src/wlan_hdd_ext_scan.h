@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,9 +100,26 @@ int wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 						const void *data,
 						int data_len);
 
+/**
+ * wlan_hdd_cfg80211_extscan_callback() - ext scan callback
+ * @hdd_handle: Opaque handle to hdd context
+ * @event_id: Event identifier
+ * @msg: Pointer to message
+ *
+ * Return: none
+ */
+void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
+					const uint16_t event_id, void *msg);
+
 void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx);
 
 #else /* FEATURE_WLAN_EXTSCAN */
+
+static inline
+void wlan_hdd_cfg80211_extscan_callback(hdd_handle_t hdd_handle,
+					const uint16_t event_id, void *msg)
+{
+}
 
 static inline void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx)
 {
