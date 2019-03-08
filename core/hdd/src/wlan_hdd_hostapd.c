@@ -3224,7 +3224,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	struct hdd_hostapd_state *phostapdBuf;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct sap_context *sapContext = NULL;
+	struct sap_context *sap_context = NULL;
 	int ret;
 	enum dfs_mode acs_dfs_mode;
 
@@ -3233,8 +3233,8 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	hdd_info("SSR in progress: %d", reinit);
 	qdf_atomic_init(&adapter->session.ap.acs_in_progress);
 
-	sapContext = hdd_hostapd_init_sap_session(adapter, reinit);
-	if (!sapContext) {
+	sap_context = hdd_hostapd_init_sap_session(adapter, reinit);
+	if (!sap_context) {
 		hdd_err("Invalid sap_ctx");
 		goto error_release_vdev;
 	}
