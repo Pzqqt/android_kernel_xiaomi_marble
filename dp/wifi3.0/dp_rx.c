@@ -28,6 +28,7 @@
 #endif
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
+#include "dp_ipa.h"
 
 #ifdef RX_DESC_DEBUG_CHECK
 static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
@@ -249,6 +250,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						rx_desc_pool->owner);
 
 		*desc_list = next;
+
+		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf, true);
 	}
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);

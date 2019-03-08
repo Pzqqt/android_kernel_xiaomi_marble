@@ -28,10 +28,87 @@
 #include "dp_types.h"
 #include "dp_htt.h"
 #include "dp_tx.h"
+#include "dp_rx.h"
 #include "dp_ipa.h"
 
 /* Hard coded config parameters until dp_ops_cfg.cfg_attach implemented */
 #define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
+
+static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
+						   qdf_nbuf_t nbuf,
+						   bool create)
+{
+	qdf_mem_info_t mem_map_table = {0};
+
+	qdf_update_mem_map_table(soc->osdev, &mem_map_table,
+				 qdf_nbuf_get_frag_paddr(nbuf, 0),
+				 skb_end_pointer(nbuf) - nbuf->data);
+
+	if (create)
+		qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
+	else
+		qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
+					     qdf_nbuf_t nbuf,
+					     bool create)
+{
+	bool reo_remapped = false;
+	struct dp_pdev *pdev;
+	int i;
+
+	for (i = 0; i < soc->pdev_count; i++) {
+		pdev = soc->pdev_list[i];
+		if (pdev && pdev->monitor_configured)
+			return QDF_STATUS_SUCCESS;
+	}
+
+	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx) ||
+	    !qdf_mem_smmu_s1_enabled(soc->osdev))
+		return QDF_STATUS_SUCCESS;
+
+	qdf_spin_lock_bh(&soc->remap_lock);
+	reo_remapped = soc->reo_remapped;
+	qdf_spin_unlock_bh(&soc->remap_lock);
+
+	if (!reo_remapped)
+		return QDF_STATUS_SUCCESS;
+
+	return __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, create);
+}
+
+static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
+							 struct dp_pdev *pdev,
+							 bool create)
+{
+	struct rx_desc_pool *rx_pool;
+	uint8_t pdev_id;
+	qdf_nbuf_t nbuf;
+	int i;
+
+	if (!qdf_mem_smmu_s1_enabled(soc->osdev))
+		return QDF_STATUS_SUCCESS;
+
+	pdev_id = pdev->pdev_id;
+	rx_pool = &soc->rx_desc_buf[pdev_id];
+
+	qdf_spin_lock_bh(&rx_pool->lock);
+	for (i = 0; i < rx_pool->pool_size; i++) {
+		if ((!(rx_pool->array[i].rx_desc.in_use)) ||
+		    rx_pool->array[i].rx_desc.unmapped)
+			continue;
+
+		nbuf = rx_pool->array[i].rx_desc.nbuf;
+
+		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, create);
+	}
+	qdf_spin_unlock_bh(&rx_pool->lock);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * dp_tx_ipa_uc_detach - Free autonomy TX resources
@@ -46,12 +123,17 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	int idx;
 	qdf_nbuf_t nbuf;
+	struct dp_ipa_resources *ipa_res;
 
 	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		nbuf = (qdf_nbuf_t)
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx];
 		if (!nbuf)
 			continue;
+
+		if (qdf_mem_smmu_s1_enabled(soc->osdev))
+			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, false);
+
 		qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
 		qdf_nbuf_free(nbuf);
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx] =
@@ -60,6 +142,12 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
 	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
+
+	ipa_res = &pdev->ipa_resource;
+	iounmap(ipa_res->tx_comp_doorbell_vaddr);
+
+	qdf_mem_free_sgtable(&ipa_res->tx_ring.sgtable);
+	qdf_mem_free_sgtable(&ipa_res->tx_comp_ring.sgtable);
 }
 
 /**
@@ -74,15 +162,24 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
  */
 static void dp_rx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
+	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
+
+	qdf_mem_free_sgtable(&ipa_res->rx_rdy_ring.sgtable);
+	qdf_mem_free_sgtable(&ipa_res->rx_refill_ring.sgtable);
 }
 
 int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
+	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+		return QDF_STATUS_SUCCESS;
+
 	/* TX resource detach */
 	dp_tx_ipa_uc_detach(soc, pdev);
 
 	/* RX resource detach */
 	dp_rx_ipa_uc_detach(soc, pdev);
+
+	qdf_spinlock_destroy(&soc->remap_lock);
 
 	return QDF_STATUS_SUCCESS;	/* success */
 }
@@ -111,6 +208,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	int num_entries;
 	qdf_nbuf_t nbuf;
 	int retval = QDF_STATUS_SUCCESS;
+
 	/*
 	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
 	 * unsigned int uc_tx_buf_sz =
@@ -173,6 +271,9 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[tx_buffer_count]
 			= (void *)nbuf;
+
+		if (qdf_mem_smmu_s1_enabled(soc->osdev))
+			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, true);
 	}
 
 	hal_srng_access_end(soc->hal_soc, wbm_srng);
@@ -217,6 +318,8 @@ int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
+
+	qdf_spinlock_create(&soc->remap_lock);
 
 	/* TX resource attach */
 	error = dp_tx_ipa_uc_attach(soc, pdev);
@@ -346,7 +449,8 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size =
 		(srng_params.num_entries * srng_params.entry_size) << 2;
 	hp_addr = hal_srng_get_hp_addr(hal_soc, (void *)hal_srng);
-	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr = hp_addr;
+	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr =
+		qdf_mem_paddr_from_dmaaddr(soc->osdev, hp_addr);
 
 	dp_info("IPA REFILL_BUF Ring hp_paddr=%x paddr=%pK vaddr=%pK size= %u(%u bytes)",
 		(unsigned int)(soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr),
@@ -356,6 +460,34 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size);
 
 	return 0;
+}
+
+static QDF_STATUS dp_ipa_get_shared_mem_info(qdf_device_t osdev,
+					     qdf_shared_mem_t *shared_mem,
+					     void *cpu_addr,
+					     qdf_dma_addr_t dma_addr,
+					     uint32_t size)
+{
+	qdf_dma_addr_t paddr;
+	int ret;
+
+	shared_mem->vaddr = cpu_addr;
+	qdf_mem_set_dma_size(osdev, &shared_mem->mem_info, size);
+	*qdf_mem_get_dma_addr_ptr(osdev, &shared_mem->mem_info) = dma_addr;
+
+	paddr = qdf_mem_paddr_from_dmaaddr(osdev, dma_addr);
+	qdf_mem_set_dma_pa(osdev, &shared_mem->mem_info, paddr);
+
+	ret = qdf_mem_dma_get_sgtable(osdev->dev, &shared_mem->sgtable,
+				      shared_mem->vaddr, dma_addr, size);
+	if (ret) {
+		dp_err("Unable to get DMA sgtable");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_dma_get_sgtable_dma_addr(&shared_mem->sgtable);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -377,38 +509,33 @@ QDF_STATUS dp_ipa_get_resource(struct cdp_pdev *ppdev)
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	ipa_res->tx_ring_base_paddr =
-		soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_paddr;
-	ipa_res->tx_ring_size =
-		soc->ipa_uc_tx_rsc.ipa_tcl_ring_size;
 	ipa_res->tx_num_alloc_buffer =
 		(uint32_t)soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
 
-	ipa_res->tx_comp_ring_base_paddr =
-		soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_paddr;
-	ipa_res->tx_comp_ring_size =
-		soc->ipa_uc_tx_rsc.ipa_wbm_ring_size;
+	dp_ipa_get_shared_mem_info(soc->osdev, &ipa_res->tx_ring,
+				   soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_vaddr,
+				   soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_paddr,
+				   soc->ipa_uc_tx_rsc.ipa_tcl_ring_size);
 
-	ipa_res->rx_rdy_ring_base_paddr =
-		soc->ipa_uc_rx_rsc.ipa_reo_ring_base_paddr;
-	ipa_res->rx_rdy_ring_size =
-		soc->ipa_uc_rx_rsc.ipa_reo_ring_size;
+	dp_ipa_get_shared_mem_info(soc->osdev, &ipa_res->tx_comp_ring,
+				   soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_vaddr,
+				   soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_paddr,
+				   soc->ipa_uc_tx_rsc.ipa_wbm_ring_size);
 
-	ipa_res->rx_refill_ring_base_paddr =
-		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr;
-	ipa_res->rx_refill_ring_size =
-		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size;
+	dp_ipa_get_shared_mem_info(soc->osdev, &ipa_res->rx_rdy_ring,
+				   soc->ipa_uc_rx_rsc.ipa_reo_ring_base_vaddr,
+				   soc->ipa_uc_rx_rsc.ipa_reo_ring_base_paddr,
+				   soc->ipa_uc_rx_rsc.ipa_reo_ring_size);
 
-	dp_debug("ipa_res->tx_ring_base_paddr:%pK ipa_res->tx_ring_size:%u ipa_res->tx_comp_ring_base_paddr:%pK ipa_res->tx_comp_ring_size:%u ipa_res->rx_refill_ring_base_paddr:%pK ipa_res->rx_refill_ring_size:%u",
-		 (void *)ipa_res->tx_ring_base_paddr,
-		 ipa_res->tx_ring_size,
-		 (void *)ipa_res->tx_comp_ring_base_paddr,
-		 ipa_res->tx_comp_ring_size,
-		 (void *)ipa_res->rx_refill_ring_base_paddr,
-		 ipa_res->rx_refill_ring_size);
+	dp_ipa_get_shared_mem_info(
+			soc->osdev, &ipa_res->rx_refill_ring,
+			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_vaddr,
+			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr,
+			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size);
 
-	if ((0 == ipa_res->tx_comp_ring_base_paddr) ||
-			(0 == ipa_res->rx_rdy_ring_base_paddr))
+	if (!qdf_mem_get_dma_addr(soc->osdev,
+				  &ipa_res->tx_comp_ring.mem_info) ||
+	    !qdf_mem_get_dma_addr(soc->osdev, &ipa_res->rx_rdy_ring.mem_info))
 		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
@@ -432,14 +559,27 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_pdev *ppdev)
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
 	struct hal_srng *reo_srng =
 			soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
+	uint32_t tx_comp_doorbell_dmaaddr;
+	uint32_t rx_ready_doorbell_dmaaddr;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	hal_srng_dst_set_hp_paddr(wbm_srng, ipa_res->tx_comp_doorbell_paddr);
-
 	ipa_res->tx_comp_doorbell_vaddr =
 				ioremap(ipa_res->tx_comp_doorbell_paddr, 4);
+
+	if (qdf_mem_smmu_s1_enabled(soc->osdev)) {
+		pld_smmu_map(soc->osdev->dev, ipa_res->tx_comp_doorbell_paddr,
+			     &tx_comp_doorbell_dmaaddr, sizeof(uint32_t));
+		ipa_res->tx_comp_doorbell_paddr = tx_comp_doorbell_dmaaddr;
+
+		pld_smmu_map(soc->osdev->dev, ipa_res->rx_ready_doorbell_paddr,
+			     &rx_ready_doorbell_dmaaddr, sizeof(uint32_t));
+		ipa_res->rx_ready_doorbell_paddr = rx_ready_doorbell_dmaaddr;
+	}
+
+	hal_srng_dst_set_hp_paddr(wbm_srng, ipa_res->tx_comp_doorbell_paddr);
+
 	dp_info("paddr %pK vaddr %pK",
 		(void *)ipa_res->tx_comp_doorbell_paddr,
 		(void *)ipa_res->tx_comp_doorbell_vaddr);
@@ -557,6 +697,12 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
+	qdf_spin_lock_bh(&soc->remap_lock);
+	soc->reo_remapped = true;
+	qdf_spin_unlock_bh(&soc->remap_lock);
+
+	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
+
 	/* Call HAL API to remap REO rings to REO2IPA ring */
 	remap_val = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
 		    HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW4) |
@@ -598,6 +744,12 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
 		    HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
 	hal_reo_remap_IX0(soc->hal_soc, remap_val);
 
+	qdf_spin_lock_bh(&soc->remap_lock);
+	soc->reo_remapped = false;
+	qdf_spin_unlock_bh(&soc->remap_lock);
+
+	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -626,6 +778,192 @@ static inline void dp_setup_mcc_sys_pipes(
 	QDF_IPA_WDI_CONN_IN_PARAMS_NUM_SYS_PIPE_NEEDED(pipe_in) = 0;
 }
 #endif
+
+static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
+				 struct dp_ipa_resources *ipa_res,
+				 qdf_ipa_wdi_pipe_setup_info_t *tx,
+				 bool over_gsi)
+{
+	struct tcl_data_cmd *tcl_desc_ptr;
+	uint8_t *desc_addr;
+	uint32_t desc_size;
+
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN2_CONS;
+	else
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
+
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
+		qdf_mem_get_dma_addr(soc->osdev,
+				     &ipa_res->tx_comp_ring.mem_info);
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(tx) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->tx_comp_ring.mem_info);
+
+	/* WBM Tail Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx) =
+		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(tx) =
+		qdf_mem_get_dma_addr(soc->osdev,
+				     &ipa_res->tx_ring.mem_info);
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(tx) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->tx_ring.mem_info);
+
+	/* TCL Head Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
+		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
+		ipa_res->tx_num_alloc_buffer;
+
+	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
+
+	/* Preprogram TCL descriptor */
+	desc_addr =
+		(uint8_t *)QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx);
+	desc_size = sizeof(struct tcl_data_cmd);
+	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
+	tcl_desc_ptr = (struct tcl_data_cmd *)
+		(QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx) + 1);
+	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
+		HAL_RX_BUF_RBM_SW2_BM;
+	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
+	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
+	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
+}
+
+static void dp_ipa_wdi_rx_params(struct dp_soc *soc,
+				 struct dp_ipa_resources *ipa_res,
+				 qdf_ipa_wdi_pipe_setup_info_t *rx,
+				 bool over_gsi)
+{
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
+					IPA_CLIENT_WLAN2_PROD;
+	else
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
+					IPA_CLIENT_WLAN1_PROD;
+
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
+		qdf_mem_get_dma_addr(soc->osdev,
+				     &ipa_res->rx_rdy_ring.mem_info);
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(rx) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->rx_rdy_ring.mem_info);
+
+	/* REO Tail Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) =
+		soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(rx) =
+		qdf_mem_get_dma_addr(soc->osdev,
+				     &ipa_res->rx_refill_ring.mem_info);
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(rx) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->rx_refill_ring.mem_info);
+
+	/* FW Head Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) =
+		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) =
+		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
+}
+
+static void
+dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
+			  struct dp_ipa_resources *ipa_res,
+			  qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu,
+			  bool over_gsi)
+{
+	struct tcl_data_cmd *tcl_desc_ptr;
+	uint8_t *desc_addr;
+	uint32_t desc_size;
+
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(tx_smmu) =
+			IPA_CLIENT_WLAN2_CONS;
+	else
+		QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(tx_smmu) =
+			IPA_CLIENT_WLAN1_CONS;
+
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(tx_smmu),
+		     &ipa_res->tx_comp_ring.sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_SIZE(tx_smmu) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->tx_comp_ring.mem_info);
+	/* WBM Tail Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(tx_smmu) =
+		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
+
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(tx_smmu),
+		     &ipa_res->tx_ring.sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(tx_smmu) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->tx_ring.mem_info);
+	/* TCL Head Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(tx_smmu) =
+		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(tx_smmu) =
+		ipa_res->tx_num_alloc_buffer;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(tx_smmu) = 0;
+
+	/* Preprogram TCL descriptor */
+	desc_addr = (uint8_t *)QDF_IPA_WDI_SETUP_INFO_SMMU_DESC_FORMAT_TEMPLATE(
+			tx_smmu);
+	desc_size = sizeof(struct tcl_data_cmd);
+	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
+	tcl_desc_ptr = (struct tcl_data_cmd *)
+		(QDF_IPA_WDI_SETUP_INFO_SMMU_DESC_FORMAT_TEMPLATE(tx_smmu) + 1);
+	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
+		HAL_RX_BUF_RBM_SW2_BM;
+	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
+	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
+	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
+}
+
+static void
+dp_ipa_wdi_rx_smmu_params(struct dp_soc *soc,
+			  struct dp_ipa_resources *ipa_res,
+			  qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu,
+			  bool over_gsi)
+{
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
+					IPA_CLIENT_WLAN2_PROD;
+	else
+		QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(rx_smmu) =
+					IPA_CLIENT_WLAN1_PROD;
+
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(rx_smmu),
+		     &ipa_res->rx_rdy_ring.sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_SIZE(rx_smmu) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->rx_rdy_ring.mem_info);
+	/* REO Tail Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(rx_smmu) =
+		soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
+
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(rx_smmu),
+		     &ipa_res->rx_refill_ring.sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(rx_smmu) =
+		qdf_mem_get_dma_size(soc->osdev,
+				     &ipa_res->rx_refill_ring.mem_info);
+
+	/* FW Head Pointer Address */
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(rx_smmu) =
+		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
+
+	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) =
+		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
+}
 
 /**
  * dp_ipa_setup() - Setup and connect IPA pipes
@@ -661,9 +999,6 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu;
 	qdf_ipa_wdi_conn_in_params_t pipe_in;
 	qdf_ipa_wdi_conn_out_params_t pipe_out;
-	struct tcl_data_cmd *tcl_desc_ptr;
-	uint8_t *desc_addr;
-	uint32_t desc_size;
 	int ret;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
@@ -705,48 +1040,10 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	 * Event Ring: TCL ring
 	 * Event Ring Doorbell PA: TCL Head Pointer Address
 	 */
-	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in)) {
-		/* TODO: SMMU implementation on WDI3 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: SMMU is not implementation on host", __func__);
-			return QDF_STATUS_E_FAILURE;
-	}
-
-	if (over_gsi)
-		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN2_CONS;
+	if (is_smmu_enabled)
+		dp_ipa_wdi_tx_smmu_params(soc, ipa_res, tx_smmu, over_gsi);
 	else
-		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
-	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
-		ipa_res->tx_comp_ring_base_paddr;
-	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(tx) =
-		ipa_res->tx_comp_ring_size;
-	/* WBM Tail Pointer Address */
-	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx) =
-		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
-	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(tx) =
-		ipa_res->tx_ring_base_paddr;
-	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(tx) =
-		ipa_res->tx_ring_size;
-	/* TCL Head Pointer Address */
-	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
-		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
-	QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
-		ipa_res->tx_num_alloc_buffer;
-	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
-
-	/* Preprogram TCL descriptor */
-	desc_addr =
-		(uint8_t *)QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx);
-	desc_size = sizeof(struct tcl_data_cmd);
-	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
-	tcl_desc_ptr = (struct tcl_data_cmd *)
-		(QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx) + 1);
-	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
-		HAL_RX_BUF_RBM_SW2_BM;
-	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
-	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
-	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
-
+		dp_ipa_wdi_tx_params(soc, ipa_res, tx, over_gsi);
 
 	/* RX PIPE */
 	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in)) {
@@ -773,35 +1070,10 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	 * Event Ring: FW ring
 	 * Event Ring Doorbell PA: FW Head Pointer Address
 	 */
-	if (QDF_IPA_WDI_CONN_IN_PARAMS_SMMU_ENABLED(&pipe_in)) {
-		/* TODO: SMMU implementation on WDI3 */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s: SMMU is not implementation on host", __func__);
-			return QDF_STATUS_E_FAILURE;
-	} else {
-		if (over_gsi)
-			QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
-						IPA_CLIENT_WLAN2_PROD;
-		else
-			QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
-						IPA_CLIENT_WLAN1_PROD;
-		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
-			ipa_res->rx_rdy_ring_base_paddr;
-		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(rx) =
-			ipa_res->rx_rdy_ring_size;
-		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) =
-			/* REO Tail Pointer Address */
-			soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
-		QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(rx) =
-			ipa_res->rx_refill_ring_base_paddr;
-		QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(rx) =
-			ipa_res->rx_refill_ring_size;
-		QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) =
-			/* FW Head Pointer Address */
-			soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
-		QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) =
-			RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
-	}
+	if (is_smmu_enabled)
+		dp_ipa_wdi_rx_smmu_params(soc, ipa_res, rx_smmu, over_gsi);
+	else
+		dp_ipa_wdi_rx_params(soc, ipa_res, rx, over_gsi);
 
 	QDF_IPA_WDI_CONN_IN_PARAMS_NOTIFY(&pipe_in) = ipa_w2i_cb;
 	QDF_IPA_WDI_CONN_IN_PARAMS_PRIV(&pipe_in) = ipa_priv;
@@ -825,46 +1097,6 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 		QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_DB_PA(&pipe_out);
 	ipa_res->rx_ready_doorbell_paddr =
 		QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
-
-	dp_info("Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK %s=%pK",
-		"transfer_ring_base_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx),
-		"transfer_ring_size",
-		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(tx),
-		"transfer_ring_doorbell_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx),
-		"event_ring_base_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(tx),
-		"event_ring_size",
-		QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(tx),
-		"event_ring_doorbell_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx),
-		"num_pkt_buffers",
-		QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx),
-		"tx_comp_doorbell_paddr",
-		(void *)ipa_res->tx_comp_doorbell_paddr,
-		"tx_comp_doorbell_vaddr",
-		(void *)ipa_res->tx_comp_doorbell_vaddr);
-
-	dp_info("Rx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%u, %s=%pK",
-		"transfer_ring_base_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx),
-		"transfer_ring_size",
-		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(rx),
-		"transfer_ring_doorbell_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx),
-		"event_ring_base_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(rx),
-		"event_ring_size",
-		QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(rx),
-		"event_ring_doorbell_pa",
-		(void *)QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx),
-		"num_pkt_buffers",
-		QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(rx),
-		"pkt_offset(rx)",
-		QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx),
-		"tx_comp_doorbell_paddr",
-		(void *)ipa_res->rx_ready_doorbell_paddr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1239,7 +1471,7 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 	return QDF_STATUS_SUCCESS;
 }
 
- /**
+/**
  * dp_ipa_uc_enable_pipes() - Enable and resume traffic on Tx/Rx pipes
  * @ppdev - handle to the device instance
  *

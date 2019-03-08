@@ -1006,6 +1006,9 @@ struct dp_soc {
 		uint32_t ipa_rx_refill_buf_ring_size;
 		qdf_dma_addr_t ipa_rx_refill_buf_hp_paddr;
 	} ipa_uc_rx_rsc;
+
+	bool reo_remapped; /* Indicate if REO2IPA rings are remapped */
+	qdf_spinlock_t remap_lock;
 #endif
 
 	/* Smart monitor capability for HKv2 */
@@ -1034,18 +1037,12 @@ struct dp_soc {
  * dp_ipa_resources - Resources needed for IPA
  */
 struct dp_ipa_resources {
-	qdf_dma_addr_t tx_ring_base_paddr;
-	uint32_t tx_ring_size;
+	qdf_shared_mem_t tx_ring;
 	uint32_t tx_num_alloc_buffer;
 
-	qdf_dma_addr_t tx_comp_ring_base_paddr;
-	uint32_t tx_comp_ring_size;
-
-	qdf_dma_addr_t rx_rdy_ring_base_paddr;
-	uint32_t rx_rdy_ring_size;
-
-	qdf_dma_addr_t rx_refill_ring_base_paddr;
-	uint32_t rx_refill_ring_size;
+	qdf_shared_mem_t tx_comp_ring;
+	qdf_shared_mem_t rx_rdy_ring;
+	qdf_shared_mem_t rx_refill_ring;
 
 	/* IPA UC doorbell registers paddr */
 	qdf_dma_addr_t tx_comp_doorbell_paddr;

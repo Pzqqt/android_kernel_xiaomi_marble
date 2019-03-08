@@ -18,6 +18,7 @@
 
 #include "dp_types.h"
 #include "dp_rx.h"
+#include "dp_ipa.h"
 
 /*
  * dp_rx_desc_pool_alloc() - create a pool of software rx_descs
@@ -81,16 +82,22 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 	struct rx_desc_pool *rx_desc_pool)
 {
+	qdf_nbuf_t nbuf;
 	int i;
 
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
 	for (i = 0; i < rx_desc_pool->pool_size; i++) {
 		if (rx_desc_pool->array[i].rx_desc.in_use) {
-			if (!(rx_desc_pool->array[i].rx_desc.unmapped))
-				qdf_nbuf_unmap_single(soc->osdev,
-					rx_desc_pool->array[i].rx_desc.nbuf,
-					QDF_DMA_BIDIRECTIONAL);
-			qdf_nbuf_free(rx_desc_pool->array[i].rx_desc.nbuf);
+			nbuf = rx_desc_pool->array[i].rx_desc.nbuf;
+
+			if (!(rx_desc_pool->array[i].rx_desc.unmapped)) {
+				dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+								  false);
+
+				qdf_nbuf_unmap_single(soc->osdev, nbuf,
+						      QDF_DMA_BIDIRECTIONAL);
+			}
+			qdf_nbuf_free(nbuf);
 		}
 	}
 	qdf_mem_free(rx_desc_pool->array);
@@ -109,16 +116,23 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
 			       struct rx_desc_pool *rx_desc_pool)
 {
+	qdf_nbuf_t nbuf;
 	int i;
 
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
 	for (i = 0; i < rx_desc_pool->pool_size; i++) {
 		if (rx_desc_pool->array[i].rx_desc.in_use) {
-			if (!(rx_desc_pool->array[i].rx_desc.unmapped))
-				qdf_nbuf_unmap_single(soc->osdev,
-					rx_desc_pool->array[i].rx_desc.nbuf,
-					QDF_DMA_BIDIRECTIONAL);
-			qdf_nbuf_free(rx_desc_pool->array[i].rx_desc.nbuf);
+			nbuf = rx_desc_pool->array[i].rx_desc.nbuf;
+
+			if (!(rx_desc_pool->array[i].rx_desc.unmapped)) {
+				dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+								  false);
+
+				qdf_nbuf_unmap_single(soc->osdev, nbuf,
+						      QDF_DMA_BIDIRECTIONAL);
+			}
+
+			qdf_nbuf_free(nbuf);
 		}
 	}
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);

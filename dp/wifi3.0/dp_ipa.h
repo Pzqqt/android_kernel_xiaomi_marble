@@ -90,6 +90,9 @@ int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev);
 int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev);
 int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		struct dp_pdev *pdev);
+QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
+					     qdf_nbuf_t nbuf,
+					     bool create);
 #else
 static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
@@ -105,6 +108,13 @@ static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 					     struct dp_pdev *pdev)
 {
 	return 0;
+}
+
+static inline QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
+							   qdf_nbuf_t nbuf,
+							   bool create)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif /* _DP_IPA_H_ */
