@@ -1297,13 +1297,6 @@ void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 	req->he_ops = he_ops;
 }
 
-void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
-		struct wma_vdev_start_req *req)
-{
-	node->he_capable = req->he_capable;
-	node->he_ops = req->he_ops;
-}
-
 void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 		struct wma_vdev_start_req *req)
 {
@@ -1314,7 +1307,6 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 				struct wma_vdev_start_req *req)
 {
 	QDF_STATUS ret;
-	struct wma_txrx_node *intr = wma->interfaces;
 
 	if (!req->he_capable)
 		return;
@@ -1324,8 +1316,6 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE(FL("Failed to set HE OPs"));
-	else
-		intr[vdev_id].he_ops = req->he_ops;
 }
 
 void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,

@@ -645,26 +645,6 @@ struct wma_version_info {
 	u_int32_t revision;
 };
 
-/**
- * struct wma_wow - store wow patterns
- * @magic_ptrn_enable: magic pattern enable/disable
- * @wow_enable: wow enable/disable
- * @wow_enable_cmd_sent: is wow enable command sent to fw
- * @deauth_enable: is deauth wakeup enable/disable
- * @disassoc_enable: is disassoc wakeup enable/disable
- * @gtk_err_enable: is GTK error wakeup enable/disable
- *
- * This structure stores wow patterns and wow related parameters in host.
- */
-struct wma_wow {
-	bool magic_ptrn_enable;
-	bool wow_enable;
-	bool wow_enable_cmd_sent;
-	bool deauth_enable;
-	bool disassoc_enable;
-	bool gtk_err_enable[WLAN_MAX_VDEVS];
-};
-
 #ifdef WLAN_FEATURE_11W
 #define CMAC_IPN_LEN         (6)
 #define WMA_IGTK_KEY_INDEX_4 (4)
@@ -747,10 +727,6 @@ struct roam_synch_frame_ind {
  * @nlo_match_evt_received: is nlo match event received or not
  * @pno_in_progress: is pno in progress or not
  * @plm_in_progress: is plm in progress or not
- * @ptrn_match_enable: is pattern match is enable or not
- * @num_wow_default_patterns: number of default wow patterns configured for vdev
- * @num_wow_user_patterns: number of user wow patterns configured for vdev
- * @conn_state: connection state
  * @beaconInterval: beacon interval
  * @llbCoexist: 11b coexist
  * @shortSlotTimeSupported: is short slot time supported or not
@@ -817,10 +793,6 @@ struct wma_txrx_node {
 #ifdef FEATURE_WLAN_ESE
 	bool plm_in_progress;
 #endif
-	bool ptrn_match_enable;
-	uint8_t num_wow_default_patterns;
-	uint8_t num_wow_user_patterns;
-	bool conn_state;
 	tSirMacBeaconInterval beaconInterval;
 	uint8_t llbCoexist;
 	uint8_t shortSlotTimeSupported;
@@ -869,19 +841,11 @@ struct wma_txrx_node {
 	uint32_t mac_id;
 	bool roaming_in_progress;
 	int32_t roam_synch_delay;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
 	uint8_t wep_default_key_idx;
-	struct sir_host_offload_req arp_offload_req;
-	struct sir_host_offload_req ns_offload_req;
 #ifndef QCA_SUPPORT_CP_STATS
 	struct sir_vdev_wow_stats wow_stats;
 #endif
 	struct sme_rcpi_req *rcpi_req;
-#ifdef WLAN_FEATURE_11AX
-	bool he_capable;
-	uint32_t he_ops;
-#endif
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
 	bool beacon_filter_enabled;
@@ -1005,10 +969,8 @@ struct wma_wlm_stats_data {
  * @wma_hold_req_q_lock: Mutex for @wma_hold_req_queue
  * @vht_supp_mcs: VHT supported MCS
  * @is_fw_assert: is fw asserted
- * @wow: wow related patterns & parameters
  * @ack_work_ctx: Context for deferred processing of TX ACK
  * @powersave_mode: power save mode
- * @ptrn_match_enable_all_vdev: is pattern match is enable/disable
  * @pGetRssiReq: get RSSI request
  * @get_one_peer_info: When a "get peer info" request is active, is
  *   the request for a single peer?
@@ -1142,10 +1104,8 @@ typedef struct {
 	qdf_spinlock_t wma_hold_req_q_lock;
 	uint32_t vht_supp_mcs;
 	uint8_t is_fw_assert;
-	struct wma_wow wow;
 	struct wma_tx_ack_work_ctx *ack_work_ctx;
 	uint8_t powersave_mode;
-	bool ptrn_match_enable_all_vdev;
 	void *pGetRssiReq;
 	bool get_one_peer_info;
 	bool get_sta_peer_info;

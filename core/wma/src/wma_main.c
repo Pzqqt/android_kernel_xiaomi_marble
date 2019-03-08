@@ -2018,7 +2018,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\tipv6_mcast_ns %u\n"
 			"\tipv6_mcast_na %u\n"
 			"\toem_response %u\n"
-			"conn_state %d\n"
 			"dtimPeriod %d\n"
 			"chanmode %d\n"
 			"vht_capable %d\n"
@@ -2034,9 +2033,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"nwType %d\n"
 			"tx_streams %d\n"
 			"rx_streams %d\n"
-			"chain_mask %d\n"
-			"nss_2g %d\n"
-			"nss_5g %d",
+			"chain_mask %d\n",
 			vdev_id,
 			stats.pno_match_wake_up_count,
 			stats.pno_complete_wake_up_count,
@@ -2053,7 +2050,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			stats.ipv6_mcast_ns_stats,
 			stats.ipv6_mcast_na_stats,
 			stats.oem_response_wake_up_count,
-			iface->conn_state,
 			iface->dtimPeriod,
 			iface->chanmode,
 			iface->vht_capable,
@@ -2069,9 +2065,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->nwType,
 			iface->tx_streams,
 			iface->rx_streams,
-			iface->chain_mask,
-			iface->nss_2g,
-			iface->nss_5g);
+			iface->chain_mask);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 
@@ -3194,7 +3188,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	bool val = 0;
 	void *cds_context;
 	target_resource_config *wlan_res_cfg;
-	enum pmo_wow_enable_type wow_enable;
 	uint8_t delay_before_vdev_stop;
 	uint32_t self_gen_frm_pwr = 0;
 
@@ -3574,20 +3567,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->staModDtim = ucfg_pmo_get_sta_mod_dtim(wma_handle->psoc);
 	wma_handle->staDynamicDtim =
 			ucfg_pmo_get_sta_dynamic_dtim(wma_handle->psoc);
-
-	/*
-	 * Value of cds_cfg->wow_enable can be,
-	 * 0 - Disable both magic pattern match and pattern byte match.
-	 * 1 - Enable magic pattern match on all interfaces.
-	 * 2 - Enable pattern byte match on all interfaces.
-	 * 3 - Enable both magic patter and pattern byte match on
-	 *     all interfaces.
-	 */
-	wow_enable = ucfg_pmo_get_wow_enable(wma_handle->psoc);
-	wma_handle->wow.magic_ptrn_enable =
-		(wow_enable & 0x01) ? true : false;
-	wma_handle->ptrn_match_enable_all_vdev =
-		(wow_enable & 0x02) ? true : false;
 
 	/* register for install key completion event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

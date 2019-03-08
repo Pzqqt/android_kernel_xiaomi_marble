@@ -2659,12 +2659,6 @@ __wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event)
 		if (iface->type == WMI_VDEV_TYPE_STA)
 			wma_get_cca_stats(wma, resp_event->vdev_id);
 
-		/* Clear arp and ns offload cache */
-		qdf_mem_zero(&iface->ns_offload_req,
-			sizeof(iface->ns_offload_req));
-		qdf_mem_zero(&iface->arp_offload_req,
-			sizeof(iface->arp_offload_req));
-
 		status = wma_remove_bss_peer(wma, pdev, resp_event->vdev_id,
 					     params);
 		if (status != 0) {
@@ -2899,14 +2893,6 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	}
 
 	wma_handle->interfaces[vdev_id].vdev = vdev;
-	wma_handle->interfaces[vdev_id].ptrn_match_enable =
-		wma_handle->ptrn_match_enable_all_vdev ? true : false;
-
-	wma_handle->wow.deauth_enable =
-		ucfg_pmo_is_wowlan_deauth_enabled(wma_handle->psoc);
-
-	wma_handle->wow.disassoc_enable =
-		ucfg_pmo_is_wowlan_disassoc_enabled(wma_handle->psoc);
 
 	qdf_mem_copy(wma_handle->interfaces[vdev_id].addr,
 		     self_sta_req->self_mac_addr,
@@ -3377,7 +3363,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	intr[params.vdev_id].mhz = params.channel.mhz;
 	intr[params.vdev_id].chan_width = ch_width;
 	intr[params.vdev_id].channel = req->chan;
-	wma_copy_txrxnode_he_ops(&intr[params.vdev_id], req);
 
 	temp_chan_info &= 0xffffffc0;
 	temp_chan_info |= params.channel.phy_mode;
@@ -6225,11 +6210,6 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 		iface->roam_scan_stats_req = NULL;
 		qdf_mem_free(roam_scan_stats_req);
 	}
-
-	qdf_mem_zero(&iface->ns_offload_req,
-			sizeof(iface->ns_offload_req));
-	qdf_mem_zero(&iface->arp_offload_req,
-			sizeof(iface->arp_offload_req));
 
 	WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP (del_bss)",
 		 __func__, params->smesessionId);

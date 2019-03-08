@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,16 +134,6 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
  */
 void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 		tpAddBssParams add_bss);
-
-/**
- * wma_copy_txrxnode_he_ops() - copy HE ops from vdev start req to txrx node
- * @node: pointer to txrx node
- * @req: pointer to vdev start request
- *
- * Return: None
- */
-void wma_copy_txrxnode_he_ops(struct wma_txrx_node *node,
-		struct wma_vdev_start_req *req);
 
 /**
  * wma_copy_vdev_start_he_ops() - copy HE ops from vdev start req to vdev start
@@ -285,10 +275,6 @@ static inline void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 static inline void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 			tpAddBssParams add_bss)
-{
-}
-static inline void wma_copy_txrxnode_he_ops(struct wma_txrx_node *intr,
-			struct wma_vdev_start_req *req)
 {
 }
 
