@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -4687,20 +4687,18 @@ static int tavil_codec_enable_dec(struct snd_soc_dapm_widget *w,
 
 		tavil->tx_hpf_work[decimator].hpf_cut_off_freq =
 							hpf_cut_off_freq;
-		if (hpf_cut_off_freq != CF_MIN_3DB_150HZ) {
-			snd_soc_component_update_bits(component, dec_cfg_reg,
-					    TX_HPF_CUT_OFF_FREQ_MASK,
-					    CF_MIN_3DB_150HZ << 5);
-			snd_soc_component_update_bits(component, hpf_gate_reg,
+		snd_soc_component_update_bits(component, dec_cfg_reg,
+					TX_HPF_CUT_OFF_FREQ_MASK,
+					CF_MIN_3DB_150HZ << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
 					0x02, 0x02);
-			/*
-			 * Minimum 1 clk cycle delay is required as per
-			 * HW spec.
-			 */
-			usleep_range(1000, 1010);
-			snd_soc_component_update_bits(component, hpf_gate_reg,
+		/*
+		 * Minimum 1 clk cycle delay is required as per
+		 * HW spec.
+		 */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
 					0x02, 0x00);
-		}
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&tavil->tx_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(tx_unmute_delay));
