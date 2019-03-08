@@ -25,7 +25,7 @@
 #ifndef __REG_CALLBKS_H_
 #define __REG_CALLBKS_H_
 
-#ifdef CONFIG_MCL_REGDB
+#ifdef CONFIG_REG_CLIENT
 /**
  * reg_register_chan_change_callback() - Register channel change callbacks
  * @psoc: Pointer to psoc

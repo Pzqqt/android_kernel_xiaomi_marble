@@ -281,7 +281,7 @@ enum reg_domain {
 	WORLD_6C = 0x6C,
 };
 
-#ifndef CONFIG_MCL_REGDB
+#ifndef CONFIG_REG_CLIENT
 const struct country_code_to_reg_domain g_all_countries[] = {
 	{CTRY_AFGHANISTAN, ETSI1_WORLD, "AF", 40, 160, 0},
 	{CTRY_ALBANIA, ETSI1_WORLD, "AL", 40, 160, 0},

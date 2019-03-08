@@ -116,7 +116,7 @@ QDF_STATUS ucfg_reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
 	return reg_get_current_cc(pdev, rd);
 }
 
-#ifdef CONFIG_MCL_REGDB
+#ifdef CONFIG_REG_CLIENT
 /**
  * ucfg_reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical pdev to set the band for
