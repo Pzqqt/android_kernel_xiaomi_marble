@@ -3541,7 +3541,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	int status;
 	mac_handle_t mac_handle;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	tsap_config_t *sap_config;
 
 	hdd_enter();
@@ -4907,7 +4907,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct hdd_config *iniConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	bool MFPCapable = false;
 	bool MFPRequired = false;
 	uint16_t prev_rsn_length = 0;

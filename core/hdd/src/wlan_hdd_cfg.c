@@ -1138,9 +1138,9 @@ eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode)
 	}
 }
 
-static
-QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
-						tSmeConfigParams *sme_cfg)
+static QDF_STATUS
+hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
+				     struct sme_config_params *sme_cfg)
 {
 	uint8_t mcc_to_scc_switch = 0, is_force_1x1 = 0, allow_diff_bi = 0;
 	uint8_t conc_rule1 = 0, conc_rule2 = 0, sta_cxn_5g = 0;
@@ -1197,14 +1197,14 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 }
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(tSmeConfigParams *sme_cfg,
+static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(struct sme_config_params *sme_cfg,
 					     uint8_t val)
 {
 	sme_cfg->csrConfig.sap_channel_avoidance = val;
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(tSmeConfigParams *sme_cfg,
+static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(struct sme_config_params *sme_cfg,
 					     uint8_t val)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1213,7 +1213,7 @@ static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(tSmeConfigParams *sme_cfg,
 
 static
 QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
-					    tSmeConfigParams *sme_cfg)
+					    struct sme_config_params *sme_cfg)
 {
 	QDF_STATUS status;
 	uint8_t wmm_mode = 0, enable_mcc = 0, sap_mcc_avoid = 0;
@@ -1289,7 +1289,7 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool roam_scan_enabled;
 	bool enable_dfs_scan = true;

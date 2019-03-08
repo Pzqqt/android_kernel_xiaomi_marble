@@ -129,9 +129,9 @@
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/
-typedef struct _smeConfigParams {
+struct sme_config_params {
 	tCsrConfigParam csrConfig;
-} tSmeConfigParams, *tpSmeConfigParams;
+};
 
 #ifdef FEATURE_WLAN_TDLS
 #define SME_TDLS_MAX_SUPP_CHANNELS       128
@@ -440,10 +440,10 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 				  struct roam_ext_params *roam_params_src,
 				  int update_param);
 QDF_STATUS sme_update_config(mac_handle_t mac_handle,
-			     tpSmeConfigParams pSmeConfigParams);
+			     struct sme_config_params *pSmeConfigParams);
 
 QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
-			  tpSmeConfigParams pSmeConfigParams);
+			  struct sme_config_params *pSmeConfigParams);
 QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle);
 /**
  * sme_ser_cmd_callback() - callback from serialization module
@@ -593,7 +593,7 @@ QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
 				       uint32_t *len, uint8_t *buf);
 
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
-				tSmeConfigParams *pParam);
+				struct sme_config_params *pParam);
 #ifndef QCA_SUPPORT_CP_STATS
 QDF_STATUS sme_get_statistics(mac_handle_t mac_handle,
 		eCsrStatsRequesterType requesterId,

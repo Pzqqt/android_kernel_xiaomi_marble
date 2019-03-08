@@ -6703,7 +6703,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	int ret_val = 0;
 	uint8_t cfg_val = 0;
 	uint8_t set_val = 0;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	bool update_sme_cfg = false;
 	uint8_t tid = 0, ac;
 	uint16_t buff_size = 0;
@@ -15895,7 +15895,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	uint32_t roam_id = INVALID_ROAM_ID;
 	struct csr_roam_profile *roam_profile;
 	eCsrAuthType RSNAuthType;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	uint8_t channel = 0;
 	mac_handle_t mac_handle;
 	uint8_t wmm_mode = 0;

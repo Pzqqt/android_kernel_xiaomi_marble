@@ -776,7 +776,7 @@ QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
  *
  * mac_handle - The handle returned by mac_open.
  * pSmeConfigParams - a pointer to a caller allocated object of
- *  typedef struct _smeConfigParams.
+ *  struct sme_config_params.
  *
  * Return QDF_STATUS_SUCCESS - SME update the config parameters successfully.
  *
@@ -784,7 +784,7 @@ QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
  */
 
 QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
-			  tpSmeConfigParams pSmeConfigParams)
+			  struct sme_config_params *pSmeConfigParams)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -886,12 +886,12 @@ static void sme_update_neighbor_report_config(struct mac_context *mac,
  *
  * mac_handle - The handle returned by mac_open.
  * pSmeConfigParams - a pointer to a caller allocated object of
- *  typedef struct _smeConfigParams.
+ *  struct sme_config_params.
  * Return QDF_STATUS_SUCCESS - SME update the config parameters successfully.
  *  Other status means SME is failed to update the config parameters.
  */
-QDF_STATUS sme_update_config(mac_handle_t mac_handle, tpSmeConfigParams
-				pSmeConfigParams)
+QDF_STATUS sme_update_config(mac_handle_t mac_handle,
+			     struct sme_config_params *pSmeConfigParams)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -3216,7 +3216,7 @@ QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
  * Return QDF_STATUS
  */
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
-				tSmeConfigParams *pParam)
+				struct sme_config_params *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -12977,7 +12977,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,

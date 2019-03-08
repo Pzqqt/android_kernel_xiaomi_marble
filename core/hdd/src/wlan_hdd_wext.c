@@ -3928,7 +3928,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 	mac_handle_t mac_handle = phddctx->mac_handle;
 	bool band_24 = false, band_5g = false;
 	bool ch_bond24 = false, ch_bond5g = false;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint8_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
@@ -4295,7 +4295,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 	int errno;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t bonding_mode;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	mac_handle_t mac_handle;
 
 	mac_handle = hdd_ctx->mac_handle;
@@ -6098,7 +6098,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	mac_handle_t mac_handle;
 	int *value = (int *)extra;
 	int ret;
-	tSmeConfigParams *sme_config;
+	struct sme_config_params *sme_config;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	bool bval = false;
@@ -7239,7 +7239,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 		eCsrPhyMode phymode;
 		enum band_info currBand;
-		tSmeConfigParams *sme_config;
+		struct sme_config_params *sme_config;
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
