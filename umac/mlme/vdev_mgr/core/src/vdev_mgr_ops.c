@@ -435,7 +435,7 @@ static QDF_STATUS vdev_mgr_peer_flush_tids_param_update(
 
 	param->vdev_id = wlan_vdev_get_id(vdev);
 	param->peer_tid_bitmap = peer_tid_bitmap;
-	qdf_mem_copy(param->peer_mac, mac, sizeof(*mac));
+	qdf_mem_copy(param->peer_mac, mac, QDF_MAC_ADDR_SIZE);
 	return QDF_STATUS_SUCCESS;
 }
 
