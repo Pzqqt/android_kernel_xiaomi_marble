@@ -25,7 +25,11 @@
 #include "dp_internal.h"
 
 #ifdef RXDMA_OPTIMIZATION
+#ifdef NO_RX_PKT_HDR_TLV
+#define RX_BUFFER_ALIGNMENT     0
+#else
 #define RX_BUFFER_ALIGNMENT     128
+#endif /* NO_RX_PKT_HDR_TLV */
 #else /* RXDMA_OPTIMIZATION */
 #define RX_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
@@ -51,7 +55,6 @@
 #define DP_RX_DESC_ALLOC_MULTIPLIER 3
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
-#define RX_BUFFER_SIZE			2048
 #define RX_BUFFER_RESERVATION   0
 
 #define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff

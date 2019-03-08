@@ -23,15 +23,6 @@
 #include "hal_internal.h"
 #include <target_type.h>
 
-#define HAL_RX_OFFSET(block, field) block##_##field##_OFFSET
-#define HAL_RX_LSB(block, field) block##_##field##_LSB
-#define HAL_RX_MASk(block, field) block##_##field##_MASK
-
-#define HAL_RX_GET(_ptr, block, field) \
-	(((*((volatile uint32_t *)_ptr + (HAL_RX_OFFSET(block, field)>>2))) & \
-	HAL_RX_MASk(block, field)) >> \
-	HAL_RX_LSB(block, field))
-
 #define HAL_RX_PHY_DATA_RADAR 0x01
 #define HAL_SU_MU_CODING_LDPC 0x01
 
@@ -156,13 +147,6 @@
 #define HAL_MAC_ADDR_LEN 6
 
 enum {
-	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
-	HAL_HW_RX_DECAP_FORMAT_NWIFI,
-	HAL_HW_RX_DECAP_FORMAT_ETH2,
-	HAL_HW_RX_DECAP_FORMAT_8023,
-};
-
-enum {
 	DP_PPDU_STATUS_START,
 	DP_PPDU_STATUS_DONE,
 };
@@ -202,28 +186,6 @@ uint32_t HAL_RX_DESC_GET_MPDU_FCS_ERR(void *hw_desc_addr)
 	return HAL_RX_GET(rx_attn, RX_ATTENTION_1, FCS_ERR);
 }
 
-static inline
-uint32_t
-HAL_RX_DESC_GET_DECAP_FORMAT(void *hw_desc_addr) {
-	struct rx_msdu_start *rx_msdu_start;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
-
-	rx_msdu_start = &rx_desc->msdu_start_tlv.rx_msdu_start;
-
-	return HAL_RX_GET(rx_msdu_start, RX_MSDU_START_2, DECAP_FORMAT);
-}
-
-static inline
-uint8_t *
-HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
-	uint8_t *rx_pkt_hdr;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
-
-	rx_pkt_hdr = &rx_desc->pkt_hdr_tlv.rx_pkt_hdr[0];
-
-	return rx_pkt_hdr;
-}
-
 /*
  * HAL_RX_HW_DESC_MPDU_VALID() - check MPDU start TLV tag in MPDU
  *			start TLV of Hardware TLV descriptor
@@ -256,14 +218,6 @@ uint32_t HAL_RX_HW_DESC_GET_PPDUID_GET(void *hw_desc_addr)
 }
 
 /* TODO: Move all Rx descriptor functions to hal_rx.h to avoid duplication */
-static inline
-uint32_t hal_rx_desc_is_first_msdu(void *hw_desc_addr)
-{
-	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
-	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
-
-	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
-}
 
 #define HAL_RX_BUFFER_ADDR_31_0_GET(buff_addr_info)		\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(buff_addr_info,		\

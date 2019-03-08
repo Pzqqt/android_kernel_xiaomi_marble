@@ -21,6 +21,32 @@
 
 #include <hal_internal.h>
 
+#define HAL_RX_OFFSET(block, field) block##_##field##_OFFSET
+#define HAL_RX_LSB(block, field) block##_##field##_LSB
+#define HAL_RX_MASk(block, field) block##_##field##_MASK
+
+#define HAL_RX_GET(_ptr, block, field) \
+	(((*((volatile uint32_t *)_ptr + (HAL_RX_OFFSET(block, field)>>2))) & \
+	HAL_RX_MASk(block, field)) >> \
+	HAL_RX_LSB(block, field))
+
+#ifdef NO_RX_PKT_HDR_TLV
+/* RX_BUFFER_SIZE = 1536 data bytes + 256 RX TLV bytes. We are avoiding
+ * 128 bytes of RX_PKT_HEADER_TLV.
+ */
+#define RX_BUFFER_SIZE			1792
+#else
+/* RX_BUFFER_SIZE = 1536 data bytes + 384 RX TLV bytes + some spare bytes */
+#define RX_BUFFER_SIZE			2048
+#endif
+
+enum {
+	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
+	HAL_HW_RX_DECAP_FORMAT_NWIFI,
+	HAL_HW_RX_DECAP_FORMAT_ETH2,
+	HAL_HW_RX_DECAP_FORMAT_8023,
+};
+
 /**
  * struct hal_wbm_err_desc_info: structure to hold wbm error codes and reasons
  *
@@ -611,7 +637,9 @@ struct rx_pkt_tlvs {
 	struct rx_mpdu_start_tlv mpdu_start_tlv;/*  96 bytes */
 	struct rx_mpdu_end_tlv   mpdu_end_tlv;	/*  12 bytes */
 	uint8_t rx_padding1[RX_PADDING1_BYTES];	/*  16 bytes */
+#ifndef NO_RX_PKT_HDR_TLV
 	struct rx_pkt_hdr_tlv	 pkt_hdr_tlv;	/* 128 bytes */
+#endif
 };
 #else /* RXDMA_OPTIMIZATION */
 struct rx_pkt_tlvs {
@@ -626,6 +654,13 @@ struct rx_pkt_tlvs {
 
 #define RX_PKT_TLVS_LEN		(sizeof(struct rx_pkt_tlvs))
 
+#ifdef NO_RX_PKT_HDR_TLV
+static inline uint8_t
+*hal_rx_pkt_hdr_get(uint8_t *buf)
+{
+	return buf + RX_PKT_TLVS_LEN;
+}
+#else
 static inline uint8_t
 *hal_rx_pkt_hdr_get(uint8_t *buf)
 {
@@ -634,6 +669,7 @@ static inline uint8_t
 	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
 
 }
+#endif
 
 static inline uint8_t
 *hal_rx_padding0_get(uint8_t *buf)
@@ -2558,6 +2594,12 @@ static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
 			  mpdu_end->rx_bitmap_not_updated);
 }
 
+#ifdef NO_RX_PKT_HDR_TLV
+static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_tlvs *pkt_tlvs,
+					   uint8_t dbg_level)
+{
+}
+#else
 /**
  * hal_rx_dump_pkt_hdr_tlv: dump RX pkt header TLV in hex format
  * @ pkt_hdr_tlv: pointer the pkt_hdr_tlv in pkt.
@@ -2565,9 +2607,11 @@ static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
  *
  * Return: void
  */
-static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_hdr_tlv  *pkt_hdr_tlv,
-							uint8_t dbg_level)
+static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_tlvs *pkt_tlvs,
+					   uint8_t dbg_level)
 {
+	struct rx_pkt_hdr_tlv *pkt_hdr_tlv = &pkt_tlvs->pkt_hdr_tlv;
+
 	hal_verbose_debug(
 			  "\n---------------\n"
 			  "rx_pkt_hdr_tlv \n"
@@ -2577,6 +2621,7 @@ static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_hdr_tlv  *pkt_hdr_tlv,
 
 	hal_verbose_hex_dump(pkt_hdr_tlv->rx_pkt_hdr, 128);
 }
+#endif
 
 /**
  * hal_srng_ring_id_get: API to retrieve ring id from hal ring
@@ -3186,14 +3231,13 @@ static inline void hal_rx_dump_pkt_tlvs(struct hal_soc *hal_soc,
 				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
 	struct rx_mpdu_end *mpdu_end = &pkt_tlvs->mpdu_end_tlv.rx_mpdu_end;
 	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	struct rx_pkt_hdr_tlv    *pkt_hdr_tlv = &pkt_tlvs->pkt_hdr_tlv;
 
 	hal_rx_dump_rx_attention_tlv(rx_attn, dbg_level);
 	hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level, hal_soc);
 	hal_rx_dump_msdu_start_tlv(hal_soc, msdu_start, dbg_level);
 	hal_rx_dump_mpdu_end_tlv(mpdu_end, dbg_level);
 	hal_rx_dump_msdu_end_tlv(hal_soc, msdu_end, dbg_level);
-	hal_rx_dump_pkt_hdr_tlv(pkt_hdr_tlv, dbg_level);
+	hal_rx_dump_pkt_hdr_tlv(pkt_tlvs, dbg_level);
 }
 
 
@@ -3214,4 +3258,67 @@ static inline void hal_reo_status_get_header(uint32_t *d, int b,
 	hal_soc->ops->hal_reo_status_get_header(d, b, h);
 }
 
+static inline
+uint32_t hal_rx_desc_is_first_msdu(void *hw_desc_addr)
+{
+	struct rx_pkt_tlvs *rx_tlvs = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_msdu_end *msdu_end = &rx_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	return HAL_RX_GET(msdu_end, RX_MSDU_END_5, FIRST_MSDU);
+}
+
+static inline
+uint32_t
+HAL_RX_DESC_GET_DECAP_FORMAT(void *hw_desc_addr) {
+	struct rx_msdu_start *rx_msdu_start;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+
+	rx_msdu_start = &rx_desc->msdu_start_tlv.rx_msdu_start;
+
+	return HAL_RX_GET(rx_msdu_start, RX_MSDU_START_2, DECAP_FORMAT);
+}
+
+#ifdef NO_RX_PKT_HDR_TLV
+static inline
+uint8_t *
+HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "[%s][%d] decap format not raw", __func__, __LINE__);
+	QDF_ASSERT(0);
+	return 0;
+}
+#else
+static inline
+uint8_t *
+HAL_RX_DESC_GET_80211_HDR(void *hw_desc_addr) {
+	uint8_t *rx_pkt_hdr;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+
+	rx_pkt_hdr = &rx_desc->pkt_hdr_tlv.rx_pkt_hdr[0];
+
+	return rx_pkt_hdr;
+}
+#endif
+
+#ifdef NO_RX_PKT_HDR_TLV
+static inline
+bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
+{
+	uint8_t decap_format;
+
+	if (hal_rx_desc_is_first_msdu(rx_tlv_hdr)) {
+		decap_format = HAL_RX_DESC_GET_DECAP_FORMAT(rx_tlv_hdr);
+		if (decap_format == HAL_HW_RX_DECAP_FORMAT_RAW)
+			return true;
+	}
+
+	return false;
+}
+#else
+static inline
+bool HAL_IS_DECAP_FORMAT_RAW(uint8_t *rx_tlv_hdr)
+{
+	return true;
+}
+#endif
 #endif /* _HAL_RX_H */
