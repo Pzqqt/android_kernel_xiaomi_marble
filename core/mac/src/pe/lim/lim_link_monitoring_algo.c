@@ -385,6 +385,14 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 	if (sta != NULL) {
 		tLimMlmDeauthInd mlmDeauthInd;
 
+		if ((sta->mlmStaContext.disassocReason ==
+		    eSIR_MAC_DEAUTH_LEAVING_BSS_REASON) ||
+		    (sta->mlmStaContext.cleanupTrigger ==
+		    eLIM_HOST_DEAUTH)) {
+			pe_err("Host already issued deauth, do nothing");
+			return;
+		}
+
 #ifdef FEATURE_WLAN_TDLS
 		/* Delete all TDLS peers connected before leaving BSS */
 		lim_delete_tdls_peers(mac, pe_session);
