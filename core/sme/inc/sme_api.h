@@ -131,7 +131,6 @@
   ------------------------------------------------------------------------*/
 typedef struct _smeConfigParams {
 	tCsrConfigParam csrConfig;
-	struct rrm_config_param rrmConfig;
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS

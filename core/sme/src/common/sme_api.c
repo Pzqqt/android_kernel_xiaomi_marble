@@ -3231,9 +3231,6 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 			sme_release_global_lock(&mac->sme);
 			return status;
 		}
-		qdf_mem_copy(&pParam->rrmConfig,
-				&mac->rrm.rrmSmeContext.rrmConfig,
-				sizeof(mac->rrm.rrmSmeContext.rrmConfig));
 		sme_release_global_lock(&mac->sme);
 	}
 
