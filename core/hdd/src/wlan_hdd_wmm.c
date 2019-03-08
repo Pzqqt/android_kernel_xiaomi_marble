@@ -2301,13 +2301,13 @@ bool hdd_wmm_is_acm_allowed(uint8_t vdev_id)
  *
  * @adapter  : [in]  pointer to adapter context
  * @handle    : [in]  handle to uniquely identify a TS
- * @pTspec    : [in]  pointer to the traffic spec
+ * @tspec    : [in]  pointer to the traffic spec
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
 hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				    uint32_t handle,
-				    struct sme_qos_wmmtspecinfo *pTspec)
+				    struct sme_qos_wmmtspecinfo *tspec)
 {
 	struct hdd_wmm_qos_context *qos_context;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
@@ -2337,7 +2337,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		 * params. Allow it
 		 */
 		smeStatus = sme_qos_modify_req(mac_handle,
-					       pTspec, qos_context->qosFlowId);
+					       tspec, qos_context->qosFlowId);
 
 		/* need to check the return value and act appropriately */
 		switch (smeStatus) {
@@ -2389,11 +2389,11 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	/* we assume the tspec has already been validated by the caller */
 
 	qos_context->handle = handle;
-	if (pTspec->ts_info.up < HDD_WMM_UP_TO_AC_MAP_SIZE)
-		qos_context->acType = hdd_wmm_up_to_ac_map[pTspec->ts_info.up];
+	if (tspec->ts_info.up < HDD_WMM_UP_TO_AC_MAP_SIZE)
+		qos_context->acType = hdd_wmm_up_to_ac_map[tspec->ts_info.up];
 	else {
 		hdd_err("ts_info.up (%d) larger than max value (%d), use default acType (%d)",
-			pTspec->ts_info.up,
+			tspec->ts_info.up,
 			HDD_WMM_UP_TO_AC_MAP_SIZE - 1, hdd_wmm_up_to_ac_map[0]);
 		qos_context->acType = hdd_wmm_up_to_ac_map[0];
 	}
@@ -2411,10 +2411,10 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_setup_req(mac_handle,
 				      adapter->vdev_id,
-				      pTspec,
+				      tspec,
 				      hdd_wmm_sme_callback,
 				      qos_context,
-				      pTspec->ts_info.up,
+				      tspec->ts_info.up,
 				      &qos_context->qosFlowId);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",

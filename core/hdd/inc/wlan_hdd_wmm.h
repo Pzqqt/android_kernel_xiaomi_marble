@@ -347,13 +347,13 @@ bool hdd_wmm_is_acm_allowed(uint8_t vdev_id);
  *
  * @adapter  : [in]  pointer to adapter context
  * @handle    : [in]  handle to uniquely identify a TS
- * @pTspec    : [in]  pointer to the traffic spec
+ * @tspec    : [in]  pointer to the traffic spec
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
 hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				    uint32_t handle,
-				    struct sme_qos_wmmtspecinfo *pTspec);
+				    struct sme_qos_wmmtspecinfo *tspec);
 
 /**
  * hdd_wmm_delts() - Function which will delete a traffic spec at the
