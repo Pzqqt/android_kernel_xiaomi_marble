@@ -19044,6 +19044,7 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 /**
  * __wlan_hdd_cfg80211_del_station() - delete station v2
  * @wiphy: Pointer to wiphy
+ * @dev: Underlying net device
  * @param: Pointer to delete station parameter
  *
  * Return: 0 for success, non-zero for failure
@@ -19051,7 +19052,7 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 static
 int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				    struct net_device *dev,
-				    struct csr_del_sta_params *pDelStaParams)
+				    struct csr_del_sta_params *param)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
@@ -19082,7 +19083,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	mac = (uint8_t *) pDelStaParams->peerMacAddr.bytes;
+	mac = (uint8_t *) param->peerMacAddr.bytes;
 	mac_handle = hdd_ctx->mac_handle;
 
 	if ((QDF_SAP_MODE == adapter->device_mode) ||
@@ -19118,7 +19119,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
 					qdf_status =
 						hdd_softap_sta_deauth(adapter,
-							pDelStaParams);
+							param);
 					if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 						adapter->sta_info[i].
 						is_deauth_in_progress = true;
@@ -19171,10 +19172,10 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
 			sme_send_disassoc_req_frame(mac_handle,
 					adapter->vdev_id,
-					(uint8_t *)&pDelStaParams->peerMacAddr,
-					pDelStaParams->reason_code, 0);
+					(uint8_t *)&param->peerMacAddr,
+					param->reason_code, 0);
 			qdf_status = hdd_softap_sta_deauth(adapter,
-							   pDelStaParams);
+							   param);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				adapter->sta_info[sta_id].is_deauth_in_progress =
 					false;

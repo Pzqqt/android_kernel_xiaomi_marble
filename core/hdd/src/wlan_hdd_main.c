@@ -12266,27 +12266,27 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 
 /**
  * hdd_softap_sta_deauth() - handle deauth req from HDD
- * @adapter:	Pointer to the HDD
- * @enable:	bool value
+ * @adapter: Pointer to the HDD adapter
+ * @param: Params to the operation
  *
  * This to take counter measure to handle deauth req from HDD
  *
  * Return: None
  */
 QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
-				 struct csr_del_sta_params *pDelStaParams)
+				 struct csr_del_sta_params *param)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
 	hdd_enter();
 
 	/* Ignore request to deauth bcmc station */
-	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
+	if (param->peerMacAddr.bytes[0] & 0x1)
 		return qdf_status;
 
 	qdf_status =
 		wlansap_deauth_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				   pDelStaParams);
+				   param);
 
 	hdd_exit();
 	return qdf_status;
@@ -12294,24 +12294,24 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 
 /**
  * hdd_softap_sta_disassoc() - take counter measure to handle deauth req from HDD
- * @adapter:	Pointer to the HDD
- * @p_del_sta_params: pointer to station deletion parameters
+ * @adapter: Pointer to the HDD
+ * @param: pointer to station deletion parameters
  *
  * This to take counter measure to handle deauth req from HDD
  *
  * Return: None
  */
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
-			     struct csr_del_sta_params *pDelStaParams)
+			     struct csr_del_sta_params *param)
 {
 	hdd_enter();
 
 	/* Ignore request to disassoc bcmc station */
-	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
+	if (param->peerMacAddr.bytes[0] & 0x1)
 		return;
 
 	wlansap_disassoc_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-			     pDelStaParams);
+			     param);
 }
 
 void wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter)

@@ -102,9 +102,9 @@ eCsrEncryptionType
 hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4]);
 
 QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
-		struct csr_del_sta_params *pDelStaParams);
+				 struct csr_del_sta_params *param);
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
-			     struct csr_del_sta_params *pDelStaParams);
+			     struct csr_del_sta_params *param);
 
 QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				    void *context);
