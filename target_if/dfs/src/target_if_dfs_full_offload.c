@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -189,7 +189,6 @@ QDF_STATUS target_if_dfs_reg_offload_events(
 		return QDF_STATUS_SUCCESS;
 }
 
-#if (defined(CONFIG_MCL) || (QCA_WIFI_QCA8074))
 QDF_STATUS target_process_bang_radar_cmd(
 		struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
@@ -235,14 +234,6 @@ QDF_STATUS target_process_bang_radar_cmd(
 		target_if_err("dfs: unit_test_cmd send failed %d", status);
 	return status;
 }
-#else
-static QDF_STATUS target_process_bang_radar_cmd(
-		struct wlan_objmgr_pdev *pdev,
-		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
-{
-	    return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 QDF_STATUS target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
