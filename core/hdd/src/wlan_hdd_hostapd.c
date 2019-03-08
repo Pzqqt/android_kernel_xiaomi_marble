@@ -4899,7 +4899,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	eCsrEncryptionType mcRSNEncryptType;
 	int status = QDF_STATUS_SUCCESS, ret;
 	int qdf_status = QDF_STATUS_SUCCESS;
-	tpWLAN_SAPEventCB pSapEventCallback;
+	tpWLAN_SAPEventCB sap_event_callback;
 	struct hdd_hostapd_state *hostapd_state;
 	mac_handle_t mac_handle;
 	int32_t i;
@@ -5607,7 +5607,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	config->persona = adapter->device_mode;
 
-	pSapEventCallback = hdd_hostapd_sap_event_cb;
+	sap_event_callback = hdd_hostapd_sap_event_cb;
 
 	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->dfs_cac_block_tx = true;
 	set_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
@@ -5615,7 +5615,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	qdf_event_reset(&hostapd_state->qdf_event);
 	status = wlansap_start_bss(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		pSapEventCallback, config, adapter->dev);
+		sap_event_callback, config, adapter->dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		mutex_unlock(&hdd_ctx->sap_lock);
 
