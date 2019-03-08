@@ -1289,7 +1289,7 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeConfigParams *smeConfig;
+	tSmeConfigParams *sme_config;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool roam_scan_enabled;
 	bool enable_dfs_scan = true;
@@ -1308,16 +1308,16 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
-	if (NULL == smeConfig) {
-		hdd_err("unable to allocate smeConfig");
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (NULL == sme_config) {
+		hdd_err("unable to allocate sme_config");
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
 	 */
-	smeConfig->csrConfig.phyMode =
+	sme_config->csrConfig.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
 
 	if (pConfig->dot11Mode == eHDD_DOT11_MODE_abg ||
@@ -1325,31 +1325,31 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	    pConfig->dot11Mode == eHDD_DOT11_MODE_11g ||
 	    pConfig->dot11Mode == eHDD_DOT11_MODE_11b_ONLY ||
 	    pConfig->dot11Mode == eHDD_DOT11_MODE_11g_ONLY) {
-		smeConfig->csrConfig.channelBondingMode24GHz = 0;
-		smeConfig->csrConfig.channelBondingMode5GHz = 0;
+		sme_config->csrConfig.channelBondingMode24GHz = 0;
+		sme_config->csrConfig.channelBondingMode5GHz = 0;
 	} else {
 		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 						    &channel_bonding_mode);
-		smeConfig->csrConfig.channelBondingMode24GHz =
+		sme_config->csrConfig.channelBondingMode24GHz =
 			channel_bonding_mode;
 		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
 						   &channel_bonding_mode);
-		smeConfig->csrConfig.channelBondingMode5GHz =
+		sme_config->csrConfig.channelBondingMode5GHz =
 			channel_bonding_mode;
 	}
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
 	/* This param cannot be configured from INI */
-	smeConfig->csrConfig.send_smps_action = true;
-	smeConfig->csrConfig.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
-	smeConfig->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
-	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
-	smeConfig->csrConfig.HeartbeatThresh50 = 40;
+	sme_config->csrConfig.send_smps_action = true;
+	sme_config->csrConfig.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
+	sme_config->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
+	sme_config->csrConfig.ProprietaryRatesEnabled = 0;
+	sme_config->csrConfig.HeartbeatThresh50 = 40;
 	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
 						&enable_dfs_scan);
-	smeConfig->csrConfig.fEnableDFSChnlScan = enable_dfs_scan;
-	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
+	sme_config->csrConfig.fEnableDFSChnlScan = enable_dfs_scan;
+	sme_config->csrConfig.Csr11dinfo.Channels.numChannels = 0;
 
 	hdd_set_power_save_offload_config(hdd_ctx);
 
@@ -1370,33 +1370,33 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc, false);
 	}
 
-	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
+	sme_config->csrConfig.isCoalesingInIBSSAllowed =
 						ibss_cfg.coalesing_enable;
 
 	/* Update maximum interfaces information */
-	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
+	sme_config->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
 
 	hdd_set_fine_time_meas_cap(hdd_ctx);
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	smeConfig->csrConfig.sta_roam_policy_params.dfs_mode =
+	sme_config->csrConfig.sta_roam_policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
-	smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
+	sme_config->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
 
-	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, smeConfig);
+	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("hdd_set_sme_cfgs_related_to_mlme() fail: %d", status);
-	status = hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
+	status = hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("hdd_set_sme_cfgs_related_to_plcy_mgr fail: %d",
 			status);
 	hdd_debug("dot11Mode=%d", pConfig->dot11Mode);
-	status = sme_update_config(mac_handle, smeConfig);
+	status = sme_update_config(mac_handle, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);
 
-	qdf_mem_free(smeConfig);
+	qdf_mem_free(sme_config);
 	return status;
 }
 
