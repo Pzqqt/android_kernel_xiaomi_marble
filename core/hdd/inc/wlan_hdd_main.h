@@ -2843,23 +2843,6 @@ void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);
  * Return: 0 if interface was opened else false
  */
 bool hdd_is_interface_up(struct hdd_adapter *adapter);
-/**
- * hdd_get_bss_entry() - Get the bss entry matching the chan, bssid and ssid
- * @wiphy: wiphy
- * @channel: channel of the BSS to find
- * @bssid: bssid of the BSS to find
- * @ssid: ssid of the BSS to find
- * @ssid_len: ssid len of of the BSS to find
- *
- * The API is a wrapper to get bss from kernel matching the chan,
- * bssid and ssid
- *
- * Return: bss structure if found else NULL
- */
-struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
-	struct ieee80211_channel *channel,
-	const u8 *bssid,
-	const u8 *ssid, size_t ssid_len);
 
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			struct csr_roam_info *roam_info, const u8 *req_ie,

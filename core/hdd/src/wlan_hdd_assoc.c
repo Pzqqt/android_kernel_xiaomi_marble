@@ -2363,10 +2363,10 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	sme_roam_get_connect_profile(hdd_ctx->mac_handle, adapter->vdev_id,
 				     &roam_profile);
 
-	bss = hdd_cfg80211_get_bss(adapter->wdev.wiphy,
-			chan, pCsrRoamInfo->bssid.bytes,
-			&roam_profile.SSID.ssId[0],
-			roam_profile.SSID.length);
+	bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy,
+				    chan, pCsrRoamInfo->bssid.bytes,
+				    &roam_profile.SSID.ssId[0],
+				    roam_profile.SSID.length);
 
 	if (bss == NULL)
 		hdd_warn("Get BSS returned NULL");
@@ -3104,7 +3104,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								channelId);
 
 						roam_bss =
-							hdd_cfg80211_get_bss(
+							wlan_cfg80211_get_bss(
 							adapter->wdev.wiphy,
 							chan,
 							roam_info->bssid.bytes,

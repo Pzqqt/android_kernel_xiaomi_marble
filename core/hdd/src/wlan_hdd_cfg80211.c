@@ -15226,8 +15226,7 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 	struct wiphy *wiphy = wdev->wiphy;
 	struct cfg80211_bss *bss = NULL;
 
-	bss = hdd_cfg80211_get_bss(wiphy, NULL, bssid,
-			NULL, 0);
+	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid, NULL, 0);
 	if (!bss) {
 		hdd_err("BSS not present");
 	} else {
@@ -17996,10 +17995,10 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			hdd_warn("Channel:%d not OK for DNBS",
 				req->channel->hw_value);
 			if (chan) {
-				bss = hdd_cfg80211_get_bss(wiphy,
-							chan,
-							req->bssid, req->ssid,
-							req->ssid_len);
+				bss = wlan_cfg80211_get_bss(wiphy, chan,
+							    req->bssid,
+							    req->ssid,
+							    req->ssid_len);
 				if (bss) {
 					cfg80211_assoc_timeout(ndev, bss);
 					return -ETIMEDOUT;

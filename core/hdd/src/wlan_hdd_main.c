@@ -5874,31 +5874,6 @@ bool hdd_is_interface_up(struct hdd_adapter *adapter)
 		return false;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) \
-	&& !defined(WITH_BACKPORTS) && !defined(IEEE80211_PRIVACY)
-struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
-					  struct ieee80211_channel *channel,
-					  const u8 *bssid, const u8 *ssid,
-					  size_t ssid_len)
-{
-	return cfg80211_get_bss(wiphy, channel, bssid,
-				ssid, ssid_len,
-				WLAN_CAPABILITY_ESS,
-				WLAN_CAPABILITY_ESS);
-}
-#else
-struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
-					  struct ieee80211_channel *channel,
-					  const u8 *bssid, const u8 *ssid,
-					  size_t ssid_len)
-{
-	return cfg80211_get_bss(wiphy, channel, bssid,
-				ssid, ssid_len,
-				IEEE80211_BSS_TYPE_ESS,
-				IEEE80211_PRIVACY_ANY);
-}
-#endif
-
 #if defined CFG80211_CONNECT_BSS || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 #if defined CFG80211_CONNECT_TIMEOUT_REASON_CODE || \
@@ -6367,7 +6342,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 				HDD_NL80211_BAND_5GHZ);
 
 		chan = ieee80211_get_channel(padapter->wdev.wiphy, freq);
-		bss = hdd_cfg80211_get_bss(padapter->wdev.wiphy, chan, bssid,
+		bss = wlan_cfg80211_get_bss(padapter->wdev.wiphy, chan, bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);
 	}
