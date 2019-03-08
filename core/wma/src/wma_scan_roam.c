@@ -2823,8 +2823,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	iface = &wma->interfaces[synch_event->vdev_id];
 	qdf_status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 						   WLAN_VDEV_SM_EV_ROAM,
-						   sizeof(*synch_event),
-						   synch_event);
+						   len,
+						   event);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to send the EV_ROAM");
 	} else {
