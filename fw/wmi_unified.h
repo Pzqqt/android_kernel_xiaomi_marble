@@ -24149,6 +24149,10 @@ typedef struct {
     A_UINT32 flags;
 } wmi_wlm_config_cmd_fixed_param;
 
+/* Broadcast TWT enable/disable */
+#define TWT_EN_DIS_FLAGS_GET_BTWT(flag)         WMI_GET_BITS(flag, 0, 1)
+#define TWT_EN_DIS_FLAGS_SET_BTWT(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param  */
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0
@@ -24181,7 +24185,8 @@ typedef struct {
      */
     A_UINT32 mode_check_interval;            /* Interval between two successive check to decide the mode of TWT */
     A_UINT32 add_sta_slot_interval;          /* Interval between decisions making to create TWT slots for STAs */
-    A_UINT32 remove_sta_slot_interval;       /* Inrerval between decisions making to remove TWT slot of STAs */
+    A_UINT32 remove_sta_slot_interval;       /* Interval between decisions making to remove TWT slot of STAs */
+    A_UINT32 flags;                          /* enable/disable flags, refer to MACROs TWT_EN_DIS_FLAGS_* (TWT_EN_DIS_FLAGS_GET_BTWT etc.) */
 } wmi_twt_enable_cmd_fixed_param;
 
 /* status code of enabling TWT */
@@ -24203,7 +24208,8 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_disable_cmd_fixed_param  */
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0 */
-    A_UINT32 pdev_id;               /* host should never set it to WMI_PDEV_ID_SOC  */
+    A_UINT32 pdev_id;       /* host should never set it to WMI_PDEV_ID_SOC  */
+    A_UINT32 flags;         /* enable/disable flags, refer to MACROs TWT_EN_DIS_FLAGS_* (TWT_EN_DIS_FLAGS_GET_BTWT etc.) */
 } wmi_twt_disable_cmd_fixed_param;
 
 typedef struct {
