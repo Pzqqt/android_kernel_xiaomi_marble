@@ -4006,7 +4006,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	uint8_t nan_addr[] = {0x50, 0x6F, 0x9A, 0x01, 0x00, 0x00};
 
 	/* Drop the beacons from NAN device */
-	if ((subtype == IEEE80211_FC0_SUBTYPE_BEACON) &&
+	if ((subtype == MGMT_SUBTYPE_BEACON) &&
 		(!qdf_mem_cmp(nan_addr, bssid, NAN_CLUSTER_ID_BYTES))) {
 			should_drop = true;
 			goto end;
@@ -4156,9 +4156,9 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	mgt_subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
-	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
-	     mgt_subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
-	     mgt_subtype == IEEE80211_FC0_SUBTYPE_ACTION)) {
+	    (mgt_subtype == MGMT_SUBTYPE_DISASSOC ||
+	     mgt_subtype == MGMT_SUBTYPE_DEAUTH ||
+	     mgt_subtype == MGMT_SUBTYPE_ACTION)) {
 		if (wma_find_vdev_by_bssid(
 			wma_handle, wh->i_addr3, &vdev_id)) {
 			iface = &(wma_handle->interfaces[vdev_id]);
@@ -4181,8 +4181,8 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
-	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_BEACON ||
-	     mgt_subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)) {
+	    (mgt_subtype == MGMT_SUBTYPE_BEACON ||
+	     mgt_subtype == MGMT_SUBTYPE_PROBE_RESP)) {
 		if (mgmt_rx_params->buf_len <=
 			(sizeof(struct ieee80211_frame) +
 			offsetof(struct wlan_bcn_frame, ie))) {
@@ -4201,7 +4201,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 
 	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
 	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
-			mgt_subtype != IEEE80211_FC0_SUBTYPE_BEACON) &&
+			mgt_subtype != MGMT_SUBTYPE_BEACON) &&
 			packetdump_cb)
 		packetdump_cb(rx_pkt->pkt_buf, QDF_STATUS_SUCCESS,
 			rx_pkt->pkt_meta.sessionId, RX_MGMT_PKT);

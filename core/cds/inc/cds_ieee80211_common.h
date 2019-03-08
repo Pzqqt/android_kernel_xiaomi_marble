@@ -105,51 +105,14 @@ struct ieee80211_htc {
 	uint8_t i_htc[4];
 };
 
-#define IEEE80211_FC0_VERSION_MASK          0x03
-#define IEEE80211_FC0_VERSION_SHIFT         0
 #define IEEE80211_FC0_VERSION_0             0x00
 #define IEEE80211_FC0_TYPE_MASK             0x0c
-#define IEEE80211_FC0_TYPE_SHIFT            2
 #define IEEE80211_FC0_TYPE_MGT              0x00
 #define IEEE80211_FC0_TYPE_CTL              0x04
 #define IEEE80211_FC0_TYPE_DATA             0x08
 
 #define IEEE80211_FC0_SUBTYPE_MASK          0xf0
 #define IEEE80211_FC0_SUBTYPE_SHIFT         4
-/* for TYPE_MGT */
-#define IEEE80211_FC0_SUBTYPE_ASSOC_REQ     0x00
-#define IEEE80211_FC0_SUBTYPE_ASSOC_RESP    0x10
-#define IEEE80211_FC0_SUBTYPE_REASSOC_REQ   0x20
-#define IEEE80211_FC0_SUBTYPE_REASSOC_RESP  0x30
-#define IEEE80211_FC0_SUBTYPE_PROBE_REQ     0x40
-#define IEEE80211_FC0_SUBTYPE_PROBE_RESP    0x50
-#define IEEE80211_FC0_SUBTYPE_BEACON        0x80
-#define IEEE80211_FC0_SUBTYPE_ATIM          0x90
-#define IEEE80211_FC0_SUBTYPE_DISASSOC      0xa0
-#define IEEE80211_FC0_SUBTYPE_AUTH          0xb0
-#define IEEE80211_FC0_SUBTYPE_DEAUTH        0xc0
-#define IEEE80211_FC0_SUBTYPE_ACTION        0xd0
-#define IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK 0xe0
-/* for TYPE_CTL */
-#define IEEE80211_FCO_SUBTYPE_Control_Wrapper   0x70    /* For TxBF RC */
-#define IEEE80211_FC0_SUBTYPE_BAR           0x80
-#define IEEE80211_FC0_SUBTYPE_PS_POLL       0xa0
-#define IEEE80211_FC0_SUBTYPE_RTS           0xb0
-#define IEEE80211_FC0_SUBTYPE_CTS           0xc0
-#define IEEE80211_FC0_SUBTYPE_ACK           0xd0
-#define IEEE80211_FC0_SUBTYPE_CF_END        0xe0
-#define IEEE80211_FC0_SUBTYPE_CF_END_ACK    0xf0
-/* for TYPE_DATA (bit combination) */
-#define IEEE80211_FC0_SUBTYPE_DATA          0x00
-#define IEEE80211_FC0_SUBTYPE_CF_ACK        0x10
-#define IEEE80211_FC0_SUBTYPE_CF_POLL       0x20
-#define IEEE80211_FC0_SUBTYPE_CF_ACPL       0x30
-#define IEEE80211_FC0_SUBTYPE_NODATA        0x40
-#define IEEE80211_FC0_SUBTYPE_CFACK         0x50
-#define IEEE80211_FC0_SUBTYPE_CFPOLL        0x60
-#define IEEE80211_FC0_SUBTYPE_CF_ACK_CF_ACK 0x70
-#define IEEE80211_FC0_SUBTYPE_QOS           0x80
-#define IEEE80211_FC0_SUBTYPE_QOS_NULL      0xc0
 
 #define IEEE80211_FC1_DIR_MASK              0x03
 #define IEEE80211_FC1_DIR_NODS              0x00        /* STA->STA */
@@ -174,8 +137,6 @@ struct ieee80211_htc {
 #define IEEE80211_QOS_TID                   0x0f
 
 #define IEEE80211_IS_DATA(_frame)      (((_frame)->i_fc[0] & IEEE80211_FC0_TYPE_MASK) == IEEE80211_FC0_TYPE_DATA)
-
-#define IEEE8023_MAX_LEN 0x600  /* 1536 - larger is Ethernet II */
 
 /* does frame have QoS sequence control data */
 #define IEEE80211_QOS_HAS_SEQ(wh) \
@@ -274,11 +235,6 @@ enum {
 #define IEEE80211_WEP_EXTIV      0x20
 #define IEEE80211_WEP_EXTIVLEN      4   /* extended IV length */
 #define IEEE80211_WEP_MICLEN        8   /* trailing MIC */
-
-#define IEEE80211_CCMP_HEADERLEN    8
-#define IEEE80211_CCMP_MICLEN       8
-#define WLAN_IEEE80211_GCMP_HEADERLEN    8
-#define WLAN_IEEE80211_GCMP_MICLEN      16
 
 /*
  * 802.11w defines a MMIE chunk to be attached at the end of

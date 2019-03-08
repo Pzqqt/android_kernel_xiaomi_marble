@@ -228,7 +228,7 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 		llc_hdr = (struct llc_snap_hdr_t *)(localbuf + new_hdsize);
 		ether_type =
 			(eth_hdr->ethertype[0] << 8) | (eth_hdr->ethertype[1]);
-		if (ether_type >= IEEE8023_MAX_LEN) {
+		if (ether_type >= ETH_P_802_3_MIN) {
 			qdf_mem_copy(llc_hdr,
 				     ethernet_II_llc_snap_header_prefix,
 				     sizeof
