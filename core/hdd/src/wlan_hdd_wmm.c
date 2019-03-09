@@ -531,7 +531,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		ac->wmmAcAccessAllowed = true;
 		ac->wmmAcAccessGranted = true;
 		ac->is_access_pending = false;
-		ac->wmmAcAccessFailed = false;
+		ac->has_access_failed = false;
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
@@ -583,7 +583,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* QoS setup failed */
 
 		ac->is_access_pending = false;
-		ac->wmmAcAccessFailed = true;
+		ac->has_access_failed = true;
 		ac->wmmAcAccessAllowed = false;
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
@@ -623,7 +623,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			 * thing"
 			 */
 			ac->is_access_pending = false;
-			ac->wmmAcAccessFailed = true;
+			ac->has_access_failed = true;
 			ac->wmmAcAccessAllowed = true;
 
 		} else {
@@ -711,7 +711,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			 */
 			ac->wmmAcAccessGranted = true;
 			ac->wmmAcAccessAllowed = true;
-			ac->wmmAcAccessFailed = false;
+			ac->has_access_failed = false;
 			ac->is_access_pending = false;
 
 		} else {
@@ -805,7 +805,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 			/* we no longer have implicit access granted */
 			ac->wmmAcAccessGranted = false;
-			ac->wmmAcAccessFailed = false;
+			ac->has_access_failed = false;
 		} else {
 			hdd_debug("Explicit Qos, notifying user space");
 
@@ -1518,7 +1518,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 		ac_status->is_access_required = false;
 		ac_status->is_access_needed = false;
 		ac_status->is_access_pending = false;
-		ac_status->wmmAcAccessFailed = false;
+		ac_status->has_access_failed = false;
 		ac_status->wmmAcAccessGranted = false;
 		ac_status->wmmAcAccessAllowed = false;
 		ac_status->wmmAcTspecValid = false;
@@ -1551,7 +1551,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 		ac_status->is_access_required = false;
 		ac_status->is_access_needed = false;
 		ac_status->is_access_pending = false;
-		ac_status->wmmAcAccessFailed = false;
+		ac_status->has_access_failed = false;
 		ac_status->wmmAcAccessGranted = false;
 		ac_status->wmmAcAccessAllowed = false;
 		ac_status->wmmAcTspecValid = false;
@@ -1933,7 +1933,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	 * (if so, access should have been granted when the failure
 	 * was handled)
 	 */
-	if (adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessFailed) {
+	if (adapter->hdd_wmm_status.ac_status[ac_type].has_access_failed) {
 		/* request previously failed
 		 * allow access, but we'll be downgraded
 		 */
