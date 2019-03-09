@@ -149,7 +149,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	psb = ac->wmmAcTspecInfo.ts_info.psb;
 
 	/* if we have previously enabled U-APSD, have any params changed? */
-	if ((ac->wmmAcUapsdInfoValid) &&
+	if ((ac->is_uapsd_info_valid) &&
 	    (ac->wmmAcUapsdServiceInterval == service_interval) &&
 	    (ac->wmmAcUapsdSuspensionInterval == suspension_interval) &&
 	    (ac->wmmAcUapsdDirection == direction) &&
@@ -175,7 +175,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 		return;
 	}
 	/* stash away the parameters that were used */
-	ac->wmmAcUapsdInfoValid = true;
+	ac->is_uapsd_info_valid = true;
 	ac->wmmAcUapsdServiceInterval = service_interval;
 	ac->wmmAcUapsdSuspensionInterval = suspension_interval;
 	ac->wmmAcUapsdDirection = direction;
@@ -202,7 +202,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	QDF_STATUS status;
 
 	/* have we previously enabled UAPSD? */
-	if (ac->wmmAcUapsdInfoValid == true) {
+	if (ac->is_uapsd_info_valid == true) {
 		status =
 			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							     (adapter))->conn_info.sta_id[0],
@@ -212,7 +212,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Failed to disable U-APSD for AC=%d", ac_type);
 		} else {
 			/* TL no longer has valid UAPSD info */
-			ac->wmmAcUapsdInfoValid = false;
+			ac->is_uapsd_info_valid = false;
 			hdd_debug("Disabled UAPSD in TL for AC=%d", ac_type);
 		}
 	}
@@ -1522,7 +1522,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 		ac_status->was_access_granted = false;
 		ac_status->is_access_allowed = false;
 		ac_status->is_tspec_valid = false;
-		ac_status->wmmAcUapsdInfoValid = false;
+		ac_status->is_uapsd_info_valid = false;
 	}
 	/* Invalid value(0xff) to indicate psb not configured through
 	 * framework initially.
@@ -1555,7 +1555,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 		ac_status->was_access_granted = false;
 		ac_status->is_access_allowed = false;
 		ac_status->is_tspec_valid = false;
-		ac_status->wmmAcUapsdInfoValid = false;
+		ac_status->is_uapsd_info_valid = false;
 	}
 	return QDF_STATUS_SUCCESS;
 }
