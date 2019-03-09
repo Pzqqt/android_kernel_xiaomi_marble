@@ -288,7 +288,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *qos_context)
 
 	snprintf(buf, MAX_NOTIFY_LEN, "QCOM: TS change[%u: %u]",
 		 (unsigned int)qos_context->handle,
-		 (unsigned int)qos_context->lastStatus);
+		 (unsigned int)qos_context->status);
 
 	wrqu.data.pointer = buf;
 	wrqu.data.length = strlen(buf);
@@ -538,7 +538,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -571,7 +571,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_UAPSD_EXISTING;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -590,7 +590,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED;
 
 			hdd_wmm_notify_app(qos_context);
@@ -630,7 +630,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -642,7 +642,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_FAILED_NO_WMM;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -665,7 +665,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 				hdd_debug("Explicit Qos, notifying user space");
 
 				/* this was triggered by an application */
-				qos_context->lastStatus =
+				qos_context->status =
 					HDD_WLAN_WMM_STATUS_MODIFIED;
 				hdd_wmm_notify_app(qos_context);
 			}
@@ -688,7 +688,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_SUCCESS_NO_ACM_NO_UAPSD;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -718,7 +718,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_info("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_SETUP_UAPSD_SET_FAILED;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -763,7 +763,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_RELEASE_SUCCESS;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -784,7 +784,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_RELEASE_FAILED;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -810,7 +810,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			hdd_debug("Explicit Qos, notifying user space");
 
 			/* this was triggered by an application */
-			qos_context->lastStatus = HDD_WLAN_WMM_STATUS_LOST;
+			qos_context->status = HDD_WLAN_WMM_STATUS_LOST;
 			hdd_wmm_notify_app(qos_context);
 		}
 
@@ -830,7 +830,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		hdd_err("Release Invalid Params");
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_RELEASE_FAILED_BAD_PARAM;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -850,7 +850,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -862,7 +862,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	case SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_APSD_SET_ALREADY:
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_UAPSD_EXISTING;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -875,7 +875,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_FAILED;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -893,7 +893,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_SUCCESS_NO_ACM_NO_UAPSD;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -903,7 +903,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* invalid params -- notify the application */
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_FAILED_BAD_PARAM;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -923,7 +923,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 */
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 			/* this was triggered by an application */
-			qos_context->lastStatus =
+			qos_context->status =
 				HDD_WLAN_WMM_STATUS_MODIFY_UAPSD_SET_FAILED;
 			hdd_wmm_notify_app(qos_context);
 		}
@@ -2374,7 +2374,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		/* we were successful, save the status */
 		mutex_lock(&adapter->hdd_wmm_status.wmmLock);
 		if (qos_context->magic == HDD_WMM_CTX_MAGIC)
-			qos_context->lastStatus = status;
+			qos_context->status = status;
 		mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 		return status;
@@ -2470,7 +2470,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	/* we were successful, save the status */
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
 	if (qos_context->magic == HDD_WMM_CTX_MAGIC)
-		qos_context->lastStatus = status;
+		qos_context->status = status;
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 	return status;
@@ -2580,7 +2580,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 #endif
 	mutex_lock(&adapter->hdd_wmm_status.wmmLock);
 	if (qos_context->magic == HDD_WMM_CTX_MAGIC)
-		qos_context->lastStatus = status;
+		qos_context->status = status;
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 	return status;
@@ -2610,7 +2610,7 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter, uint32_t hand
 			hdd_debug("found handle 0x%x, context %pK",
 				 handle, qos_context);
 
-			status = qos_context->lastStatus;
+			status = qos_context->status;
 			break;
 		}
 	}

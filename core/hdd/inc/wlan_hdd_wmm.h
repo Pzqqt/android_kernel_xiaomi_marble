@@ -112,7 +112,7 @@ enum hdd_wmm_linuxac {
  * @flow_id: identifier which uniquely identifies this flow to SME
  * @adapter: adapter upon which this flow was configured
  * @ac_type: access category for this flow
- * @lastStatus: the status of the last operation performed on this flow by SME
+ * @status: the status of the last operation performed on this flow by SME
  * @wmmAcSetupImplicitQos: work structure used for deferring implicit QoS work
  *	from softirq context to thread context
  * @magic: magic number used to verify that this is a valid context when
@@ -124,7 +124,7 @@ struct hdd_wmm_qos_context {
 	uint32_t flow_id;
 	struct hdd_adapter *adapter;
 	sme_ac_enum_type ac_type;
-	hdd_wlan_wmm_status_e lastStatus;
+	hdd_wlan_wmm_status_e status;
 	struct work_struct wmmAcSetupImplicitQos;
 	uint32_t magic;
 	bool is_inactivity_timer_running;
