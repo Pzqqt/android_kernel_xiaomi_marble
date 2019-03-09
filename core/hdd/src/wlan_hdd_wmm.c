@@ -127,7 +127,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	uint32_t delayed_trgr_frm_int;
 
 	/* The TSPEC must be valid */
-	if (ac->wmmAcTspecValid == false) {
+	if (ac->is_tspec_valid == false) {
 		hdd_err("Invoked with invalid TSPEC");
 		return;
 	}
@@ -524,7 +524,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * status, even if a TSPEC is not exchanged OTA
 		 */
 		if (tspec_info) {
-			ac->wmmAcTspecValid = true;
+			ac->is_tspec_valid = true;
 			memcpy(&ac->wmmAcTspecInfo,
 			       tspec_info, sizeof(ac->wmmAcTspecInfo));
 		}
@@ -657,7 +657,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		hdd_debug("Setup modified");
 		if (tspec_info) {
 			/* update the TSPEC */
-			ac->wmmAcTspecValid = true;
+			ac->is_tspec_valid = true;
 			memcpy(&ac->wmmAcTspecInfo,
 			       tspec_info, sizeof(ac->wmmAcTspecInfo));
 
@@ -750,7 +750,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			/* this is the last flow active for this AC so
 			 * update the AC state
 			 */
-			ac->wmmAcTspecValid = false;
+			ac->is_tspec_valid = false;
 
 			/* DELTS is successful, do not allow */
 			ac->is_access_allowed = false;
@@ -795,7 +795,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		hdd_debug("QOS Lost indication received");
 
 		/* current TSPEC is no longer valid */
-		ac->wmmAcTspecValid = false;
+		ac->is_tspec_valid = false;
 		/* AP has sent DELTS, do not allow */
 		ac->is_access_allowed = false;
 
@@ -843,7 +843,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 * status, even if a TSPEC is not exchanged OTA
 		 */
 		if (tspec_info) {
-			ac->wmmAcTspecValid = true;
+			ac->is_tspec_valid = true;
 			memcpy(&ac->wmmAcTspecInfo,
 			       tspec_info, sizeof(ac->wmmAcTspecInfo));
 		}
@@ -956,13 +956,13 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	/* if Tspec only allows downstream traffic then access is not
 	 * allowed
 	 */
-	if (ac->wmmAcTspecValid &&
+	if (ac->is_tspec_valid &&
 	    (ac->wmmAcTspecInfo.ts_info.direction ==
 	     SME_QOS_WMM_TS_DIR_DOWNLINK)) {
 		ac->is_access_allowed = false;
 	}
 	/* if we have valid Tpsec or if ACM bit is not set, allow access */
-	if ((ac->wmmAcTspecValid &&
+	if ((ac->is_tspec_valid &&
 	     (ac->wmmAcTspecInfo.ts_info.direction !=
 	      SME_QOS_WMM_TS_DIR_DOWNLINK)) || !ac->is_access_required) {
 		ac->is_access_allowed = true;
@@ -1521,7 +1521,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 		ac_status->has_access_failed = false;
 		ac_status->was_access_granted = false;
 		ac_status->is_access_allowed = false;
-		ac_status->wmmAcTspecValid = false;
+		ac_status->is_tspec_valid = false;
 		ac_status->wmmAcUapsdInfoValid = false;
 	}
 	/* Invalid value(0xff) to indicate psb not configured through
@@ -1554,7 +1554,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 		ac_status->has_access_failed = false;
 		ac_status->was_access_granted = false;
 		ac_status->is_access_allowed = false;
-		ac_status->wmmAcTspecValid = false;
+		ac_status->is_tspec_valid = false;
 		ac_status->wmmAcUapsdInfoValid = false;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -2218,7 +2218,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			was_access_granted = false;
 			/* after reassoc if we have valid tspec, allow access */
 			if (adapter->hdd_wmm_status.ac_status[ac].
-			    wmmAcTspecValid
+			    is_tspec_valid
 			    && (adapter->hdd_wmm_status.ac_status[ac].
 				wmmAcTspecInfo.ts_info.direction !=
 				SME_QOS_WMM_TS_DIR_DOWNLINK)) {
@@ -2231,7 +2231,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 						adapter->vdev_id) &&
 			    !sme_roam_is_ese_assoc(roam_info)) {
 				adapter->hdd_wmm_status.ac_status[ac].
-					wmmAcTspecValid = false;
+					is_tspec_valid = false;
 				adapter->hdd_wmm_status.ac_status[ac].
 					is_access_allowed = false;
 			}
@@ -2533,7 +2533,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		/* this flow is the only one on that AC, so go ahead
 		 * and update our TSPEC state for the AC
 		 */
-		adapter->hdd_wmm_status.ac_status[ac_type].wmmAcTspecValid =
+		adapter->hdd_wmm_status.ac_status[ac_type].is_tspec_valid =
 			false;
 		adapter->hdd_wmm_status.ac_status[ac_type].is_access_allowed =
 			false;

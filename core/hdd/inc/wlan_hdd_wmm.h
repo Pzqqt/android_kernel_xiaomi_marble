@@ -141,7 +141,7 @@ struct hdd_wmm_qos_context {
  * @is_access_allowed - is access to this AC allowed, either because we
  *	are not doing WMM, we are not doing implicit QoS, implict QoS has
  *	completed, or explicit QoS has completed?
- * @wmmAcTspecValid - is the wmmAcTspecInfo valid?
+ * @is_tspec_valid - is the wmmAcTspecInfo valid?
  * @wmmAcUapsdInfoValid - are the wmmAcUapsd* fields valid?
  * @wmmAcTspecInfo - current (possibly aggregate) Tspec for this AC
  * @wmmAcIsUapsdEnabled - is UAPSD enabled on this AC?
@@ -159,7 +159,7 @@ struct hdd_wmm_ac_status {
 	bool has_access_failed;
 	bool was_access_granted;
 	bool is_access_allowed;
-	bool wmmAcTspecValid;
+	bool is_tspec_valid;
 	bool wmmAcUapsdInfoValid;
 	struct sme_qos_wmmtspecinfo wmmAcTspecInfo;
 	bool wmmAcIsUapsdEnabled;
