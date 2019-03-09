@@ -149,7 +149,7 @@ struct hdd_wmm_qos_context {
  * @uapsd_suspension_interval - suspension interval for this AC
  * @uapsd_direction - direction for this AC
  * @inactivity_time - inactivity time for this AC
- * @wmmPrevTrafficCnt - TX counter used for inactivity detection
+ * @last_traffic_count - TX counter used for inactivity detection
  * @inactivity_timer - timer used for inactivity detection
  */
 struct hdd_wmm_ac_status {
@@ -169,7 +169,7 @@ struct hdd_wmm_ac_status {
 
 #ifdef FEATURE_WLAN_ESE
 	uint32_t inactivity_time;
-	uint32_t wmmPrevTrafficCnt;
+	uint32_t last_traffic_count;
 	qdf_mc_timer_t inactivity_timer;
 #endif
 };
