@@ -152,7 +152,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	if ((ac->is_uapsd_info_valid) &&
 	    (ac->uapsd_service_interval == service_interval) &&
 	    (ac->uapsd_suspension_interval == suspension_interval) &&
-	    (ac->wmmAcUapsdDirection == direction) &&
+	    (ac->uapsd_direction == direction) &&
 	    (ac->is_uapsd_enabled == psb)) {
 		hdd_debug("No change in U-APSD parameters");
 		return;
@@ -178,7 +178,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	ac->is_uapsd_info_valid = true;
 	ac->uapsd_service_interval = service_interval;
 	ac->uapsd_suspension_interval = suspension_interval;
-	ac->wmmAcUapsdDirection = direction;
+	ac->uapsd_direction = direction;
 	ac->is_uapsd_enabled = psb;
 
 	hdd_debug("Enabled UAPSD in TL srv_int=%d susp_int=%d dir=%d AC=%d",

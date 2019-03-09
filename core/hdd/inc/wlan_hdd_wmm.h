@@ -147,7 +147,7 @@ struct hdd_wmm_qos_context {
  * @is_uapsd_enabled - is UAPSD enabled on this AC?
  * @uapsd_service_interval - service interval for this AC
  * @uapsd_suspension_interval - suspension interval for this AC
- * @wmmAcUapsdDirection - direction for this AC
+ * @uapsd_direction - direction for this AC
  * @wmmInactivityTime - inactivity time for this AC
  * @wmmPrevTrafficCnt - TX counter used for inactivity detection
  * @wmmInactivityTimer - timer used for inactivity detection
@@ -165,7 +165,7 @@ struct hdd_wmm_ac_status {
 	bool is_uapsd_enabled;
 	uint32_t uapsd_service_interval;
 	uint32_t uapsd_suspension_interval;
-	enum sme_qos_wmm_dir_type wmmAcUapsdDirection;
+	enum sme_qos_wmm_dir_type uapsd_direction;
 
 #ifdef FEATURE_WLAN_ESE
 	uint32_t wmmInactivityTime;
