@@ -377,7 +377,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
  *	function to enable the traffic inactivity timer for the given AC
  *
  * @qos_context: [in] pointer to qos_context
- * @inactivityTime: [in] value of the inactivity interval in millisecs
+ * @inactivity_time: [in] value of the inactivity interval in millisecs
  *
  * When a QoS-Tspec is successfully setup, if the inactivity interval
  * time specified in the AddTS parameters is non-zero, this function
@@ -387,7 +387,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
  */
 static QDF_STATUS
 hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
-				uint32_t inactivityTime)
+				uint32_t inactivity_time)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct hdd_adapter *adapter = qos_context->adapter;
@@ -408,7 +408,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 	}
 	/* Start the inactivity timer */
 	qdf_status = qdf_mc_timer_start(&ac->inactivity_timer,
-					inactivityTime);
+					inactivity_time);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Starting inactivity timer failed on AC %d",
 			  ac_type);
@@ -418,7 +418,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 
 		return qdf_status;
 	}
-	ac->inactivity_time = inactivityTime;
+	ac->inactivity_time = inactivity_time;
 	/* Initialize the current tx traffic count on this AC */
 	ac->last_traffic_count =
 		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
