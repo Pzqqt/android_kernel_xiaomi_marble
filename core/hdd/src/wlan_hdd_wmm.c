@@ -1015,7 +1015,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	enum sme_qos_statustype sme_status;
 #endif
-	struct sme_qos_wmmtspecinfo qosInfo;
+	struct sme_qos_wmmtspecinfo tspec;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1052,13 +1052,13 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 	ac->is_access_pending = true;
 	ac->is_access_needed = false;
 
-	memset(&qosInfo, 0, sizeof(qosInfo));
+	memset(&tspec, 0, sizeof(tspec));
 
-	qosInfo.ts_info.psb = adapter->configured_psb;
+	tspec.ts_info.psb = adapter->configured_psb;
 
 	switch (ac_type) {
 	case SME_AC_VO:
-		qosInfo.ts_info.up = SME_QOS_WMM_UP_VO;
+		tspec.ts_info.up = SME_QOS_WMM_UP_VO;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
@@ -1067,7 +1067,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 				hdd_err("Get uapsd_mask failed");
 				return;
 			}
-			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_VO) ? 1 : 0;
+			tspec.ts_info.psb = (mask & SME_QOS_UAPSD_VO) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_vo(hdd_ctx->psoc,
 						     &dir_ac);
@@ -1075,9 +1075,9 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get infra_dir_ac_vo failed");
 			return;
 		}
-		qosInfo.ts_info.direction = dir_ac;
+		tspec.ts_info.direction = dir_ac;
 
-		qosInfo.ts_info.tid = 255;
+		tspec.ts_info.tid = 255;
 
 		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
 							     &uapsd_value);
@@ -1085,7 +1085,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get uapsd_srv_intv failed");
 			return;
 		}
-		qosInfo.min_service_interval = uapsd_value;
+		tspec.min_service_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_uapsd_vo_sus_intv(hdd_ctx->psoc,
 							     &uapsd_value);
@@ -1093,7 +1093,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get uapsd_vo_sus_intv failed");
 			return;
 		}
-		qosInfo.suspension_interval = uapsd_value;
+		tspec.suspension_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_mean_data_rate_ac_vo(hdd_ctx->psoc,
 								&rate_ac);
@@ -1101,7 +1101,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get mean_data_rate_ac_vo failed");
 			return;
 		}
-		qosInfo.mean_data_rate = rate_ac;
+		tspec.mean_data_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_min_phy_rate_ac_vo(hdd_ctx->psoc,
 							      &rate_ac);
@@ -1109,7 +1109,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get min_phy_rate_ac_vo failed");
 			return;
 		}
-		qosInfo.min_phy_rate = rate_ac;
+		tspec.min_phy_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_nom_msdu_size_ac_vo(hdd_ctx->psoc,
 							     &nom_msdu_size_ac);
@@ -1117,7 +1117,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get nom_msdu_size_ac_vo failed");
 			return;
 		}
-		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+		tspec.nominal_msdu_size = nom_msdu_size_ac;
 
 		status = ucfg_mlme_get_wmm_sba_ac_vo(hdd_ctx->psoc,
 						     &sba_ac);
@@ -1125,11 +1125,11 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get sba_ac_vo failed");
 			return;
 		}
-		qosInfo.surplus_bw_allowance = sba_ac;
+		tspec.surplus_bw_allowance = sba_ac;
 
 		break;
 	case SME_AC_VI:
-		qosInfo.ts_info.up = SME_QOS_WMM_UP_VI;
+		tspec.ts_info.up = SME_QOS_WMM_UP_VI;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
@@ -1138,7 +1138,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 				hdd_err("Get uapsd_mask failed");
 				return;
 			}
-			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_VI) ? 1 : 0;
+			tspec.ts_info.psb = (mask & SME_QOS_UAPSD_VI) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_vi(
 			hdd_ctx->psoc, &dir_ac);
@@ -1146,16 +1146,16 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get infra_dir_ac_vi failed");
 			return;
 		}
-		qosInfo.ts_info.direction = dir_ac;
+		tspec.ts_info.direction = dir_ac;
 
-		qosInfo.ts_info.tid = 255;
+		tspec.ts_info.tid = 255;
 		status = ucfg_mlme_get_wmm_uapsd_vi_srv_intv(
 			hdd_ctx->psoc, &uapsd_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get uapsd_vi_srv_intv failed");
 			return;
 		}
-		qosInfo.min_service_interval = uapsd_value;
+		tspec.min_service_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_uapsd_vi_sus_intv(
 			hdd_ctx->psoc, &uapsd_value);
@@ -1163,7 +1163,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get uapsd_vi_sus_intv failed");
 			return;
 		}
-		qosInfo.suspension_interval = uapsd_value;
+		tspec.suspension_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_mean_data_rate_ac_vi(
 			hdd_ctx->psoc, &rate_ac);
@@ -1171,7 +1171,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get mean_data_rate_ac_vi failed");
 			return;
 		}
-		qosInfo.mean_data_rate = rate_ac;
+		tspec.mean_data_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_min_phy_rate_ac_vi(
 			hdd_ctx->psoc, &rate_ac);
@@ -1179,7 +1179,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get min_phy_rate_ac_vi failed");
 			return;
 		}
-		qosInfo.min_phy_rate = rate_ac;
+		tspec.min_phy_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_nom_msdu_size_ac_vi(
 			hdd_ctx->psoc, &nom_msdu_size_ac);
@@ -1187,7 +1187,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get nom_msdu_size_ac_vi failed");
 			return;
 		}
-		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+		tspec.nominal_msdu_size = nom_msdu_size_ac;
 
 		status = ucfg_mlme_get_wmm_sba_ac_vi(
 			hdd_ctx->psoc, &sba_ac);
@@ -1195,12 +1195,12 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get sba_ac_vi failed");
 			return;
 		}
-		qosInfo.surplus_bw_allowance = sba_ac;
+		tspec.surplus_bw_allowance = sba_ac;
 
 		break;
 	default:
 	case SME_AC_BE:
-		qosInfo.ts_info.up = SME_QOS_WMM_UP_BE;
+		tspec.ts_info.up = SME_QOS_WMM_UP_BE;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
@@ -1209,23 +1209,23 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 				hdd_err("Get uapsd_mask failed");
 				return;
 			}
-			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_BE) ? 1 : 0;
+			tspec.ts_info.psb = (mask & SME_QOS_UAPSD_BE) ? 1 : 0;
 		}
 		status = ucfg_mlme_get_wmm_dir_ac_be(hdd_ctx->psoc, &dir_ac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get infra_dir_ac_be failed");
 			return;
 		}
-		qosInfo.ts_info.direction = dir_ac;
+		tspec.ts_info.direction = dir_ac;
 
-		qosInfo.ts_info.tid = 255;
+		tspec.ts_info.tid = 255;
 		status = ucfg_mlme_get_wmm_uapsd_be_srv_intv(hdd_ctx->psoc,
 							     &uapsd_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get uapsd_vi_srv_intv failed");
 			return;
 		}
-		qosInfo.min_service_interval = uapsd_value;
+		tspec.min_service_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_uapsd_be_sus_intv(hdd_ctx->psoc,
 							     &uapsd_value);
@@ -1233,7 +1233,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get uapsd_vi_sus_intv failed");
 			return;
 		}
-		qosInfo.suspension_interval = uapsd_value;
+		tspec.suspension_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_mean_data_rate_ac_be(hdd_ctx->psoc,
 								&rate_ac);
@@ -1241,7 +1241,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get mean_data_rate_ac_be failed");
 			return;
 		}
-		qosInfo.mean_data_rate = rate_ac;
+		tspec.mean_data_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_min_phy_rate_ac_be(hdd_ctx->psoc,
 							      &rate_ac);
@@ -1249,7 +1249,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get min_phy_rate_ac_be failed");
 			return;
 		}
-		qosInfo.min_phy_rate = rate_ac;
+		tspec.min_phy_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_nom_msdu_size_ac_be(hdd_ctx->psoc,
 							    &nom_msdu_size_ac);
@@ -1257,18 +1257,18 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get nom_msdu_size_ac_be failed");
 			return;
 		}
-		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+		tspec.nominal_msdu_size = nom_msdu_size_ac;
 
 		status = ucfg_mlme_get_wmm_sba_ac_be(hdd_ctx->psoc, &sba_ac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get sba_ac_be failed");
 			return;
 		}
-		qosInfo.surplus_bw_allowance = sba_ac;
+		tspec.surplus_bw_allowance = sba_ac;
 
 		break;
 	case SME_AC_BK:
-		qosInfo.ts_info.up = SME_QOS_WMM_UP_BK;
+		tspec.ts_info.up = SME_QOS_WMM_UP_BK;
 		/* Check if there is any valid configuration from framework */
 		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			status = ucfg_mlme_get_wmm_uapsd_mask(hdd_ctx->psoc,
@@ -1277,7 +1277,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 				hdd_err("Get uapsd_mask failed");
 				return;
 			}
-			qosInfo.ts_info.psb = (mask & SME_QOS_UAPSD_BK) ? 1 : 0;
+			tspec.ts_info.psb = (mask & SME_QOS_UAPSD_BK) ? 1 : 0;
 		}
 
 		status = ucfg_mlme_get_wmm_dir_ac_bk(hdd_ctx->psoc, &dir_ac);
@@ -1285,16 +1285,16 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get infra_dir_ac_bk failed");
 			return;
 		}
-		qosInfo.ts_info.direction = dir_ac;
+		tspec.ts_info.direction = dir_ac;
 
-		qosInfo.ts_info.tid = 255;
+		tspec.ts_info.tid = 255;
 		status = ucfg_mlme_get_wmm_uapsd_bk_srv_intv(hdd_ctx->psoc,
 							     &uapsd_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get uapsd_bk_srv_intv failed");
 			return;
 		}
-		qosInfo.min_service_interval = uapsd_value;
+		tspec.min_service_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_uapsd_bk_sus_intv(hdd_ctx->psoc,
 							     &uapsd_value);
@@ -1302,7 +1302,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get uapsd_bk_sus_intv failed");
 			return;
 		}
-		qosInfo.suspension_interval = uapsd_value;
+		tspec.suspension_interval = uapsd_value;
 
 		status = ucfg_mlme_get_wmm_mean_data_rate_ac_bk(hdd_ctx->psoc,
 								&rate_ac);
@@ -1310,7 +1310,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get mean_data_rate_ac_bk failed");
 			return;
 		}
-		qosInfo.mean_data_rate = rate_ac;
+		tspec.mean_data_rate = rate_ac;
 
 		status = ucfg_mlme_get_wmm_min_phy_rate_ac_bk(hdd_ctx->psoc,
 							      &rate_ac);
@@ -1318,7 +1318,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get min_phy_rate_ac_bk failed");
 			return;
 		}
-		qosInfo.min_phy_rate = rate_ac;
+		tspec.min_phy_rate = rate_ac;
 
 		status =
 		  ucfg_mlme_get_wmm_nom_msdu_size_ac_bk(hdd_ctx->psoc,
@@ -1327,48 +1327,48 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 			hdd_err("Get nom_msdu_size_ac_bk failed");
 			return;
 		}
-		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+		tspec.nominal_msdu_size = nom_msdu_size_ac;
 
 		status = ucfg_mlme_get_wmm_sba_ac_bk(hdd_ctx->psoc, &sba_ac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get sba_ac_bk failed");
 			return;
 		}
-		qosInfo.surplus_bw_allowance = sba_ac;
+		tspec.surplus_bw_allowance = sba_ac;
 
 		break;
 	}
 #ifdef FEATURE_WLAN_ESE
 	ucfg_mlme_get_inactivity_interval(hdd_ctx->psoc, &uapsd_value);
-	qosInfo.inactivity_interval = uapsd_value;
+	tspec.inactivity_interval = uapsd_value;
 #endif
 	ucfg_mlme_get_is_ts_burst_size_enable(hdd_ctx->psoc,
 					      &is_ts_burst_enable);
-	qosInfo.ts_info.burst_size_defn = is_ts_burst_enable;
+	tspec.ts_info.burst_size_defn = is_ts_burst_enable;
 
 	ucfg_mlme_get_ts_info_ack_policy(hdd_ctx->psoc, &ack_policy);
 	switch (ack_policy) {
 	case TS_INFO_ACK_POLICY_NORMAL_ACK:
-		qosInfo.ts_info.ack_policy =
+		tspec.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		break;
 
 	case TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
-		qosInfo.ts_info.ack_policy =
+		tspec.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK;
 		break;
 
 	default:
 		/* unknown */
-		qosInfo.ts_info.ack_policy =
+		tspec.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 	}
 
-	if (qosInfo.ts_info.ack_policy ==
+	if (tspec.ts_info.ack_policy ==
 	    SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK) {
-		if (!sme_qos_is_ts_info_ack_policy_valid(mac_handle, &qosInfo,
+		if (!sme_qos_is_ts_info_ack_policy_valid(mac_handle, &tspec,
 							 adapter->vdev_id)) {
-			qosInfo.ts_info.ack_policy =
+			tspec.ts_info.ack_policy =
 				SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		}
 	}
@@ -1380,10 +1380,10 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	sme_status = sme_qos_setup_req(mac_handle,
 				       adapter->vdev_id,
-				       &qosInfo,
+				       &tspec,
 				       hdd_wmm_sme_callback,
 				       qos_context,
-				       qosInfo.ts_info.up,
+				       tspec.ts_info.up,
 				       &qos_context->flow_id);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
