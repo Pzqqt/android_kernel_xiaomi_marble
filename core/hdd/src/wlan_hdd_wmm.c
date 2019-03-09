@@ -1504,7 +1504,7 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
  */
 QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 {
-	struct hdd_wmm_ac_status *pAcStatus;
+	struct hdd_wmm_ac_status *ac_status;
 	sme_ac_enum_type ac_type;
 
 	hdd_enter();
@@ -1514,15 +1514,15 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	mutex_init(&adapter->hdd_wmm_status.wmmLock);
 
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
-		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
-		pAcStatus->wmmAcAccessRequired = false;
-		pAcStatus->wmmAcAccessNeeded = false;
-		pAcStatus->wmmAcAccessPending = false;
-		pAcStatus->wmmAcAccessFailed = false;
-		pAcStatus->wmmAcAccessGranted = false;
-		pAcStatus->wmmAcAccessAllowed = false;
-		pAcStatus->wmmAcTspecValid = false;
-		pAcStatus->wmmAcUapsdInfoValid = false;
+		ac_status = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
+		ac_status->wmmAcAccessRequired = false;
+		ac_status->wmmAcAccessNeeded = false;
+		ac_status->wmmAcAccessPending = false;
+		ac_status->wmmAcAccessFailed = false;
+		ac_status->wmmAcAccessGranted = false;
+		ac_status->wmmAcAccessAllowed = false;
+		ac_status->wmmAcTspecValid = false;
+		ac_status->wmmAcUapsdInfoValid = false;
 	}
 	/* Invalid value(0xff) to indicate psb not configured through
 	 * framework initially.
@@ -1542,20 +1542,20 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
  */
 QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 {
-	struct hdd_wmm_ac_status *pAcStatus;
+	struct hdd_wmm_ac_status *ac_status;
 	sme_ac_enum_type ac_type;
 
 	hdd_enter();
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
-		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
-		pAcStatus->wmmAcAccessRequired = false;
-		pAcStatus->wmmAcAccessNeeded = false;
-		pAcStatus->wmmAcAccessPending = false;
-		pAcStatus->wmmAcAccessFailed = false;
-		pAcStatus->wmmAcAccessGranted = false;
-		pAcStatus->wmmAcAccessAllowed = false;
-		pAcStatus->wmmAcTspecValid = false;
-		pAcStatus->wmmAcUapsdInfoValid = false;
+		ac_status = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
+		ac_status->wmmAcAccessRequired = false;
+		ac_status->wmmAcAccessNeeded = false;
+		ac_status->wmmAcAccessPending = false;
+		ac_status->wmmAcAccessFailed = false;
+		ac_status->wmmAcAccessGranted = false;
+		ac_status->wmmAcAccessAllowed = false;
+		ac_status->wmmAcTspecValid = false;
+		ac_status->wmmAcUapsdInfoValid = false;
 	}
 	return QDF_STATUS_SUCCESS;
 }
