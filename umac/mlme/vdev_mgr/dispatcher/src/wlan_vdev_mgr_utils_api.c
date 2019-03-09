@@ -142,6 +142,9 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_SOUNDING_DIM:
 		mlme_proto->vht_info.sounding_dimension = mlme_cfg.value;
 		break;
+	case WLAN_MLME_CFG_BFEE_STS_CAP:
+		mlme_proto->vht_info.bfee_sts_cap = mlme_cfg.value;
+		break;
 	case WLAN_MLME_CFG_TXBF_CAPS:
 		is_wmi_cmd = 1;
 		break;
@@ -379,6 +382,9 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_SOUNDING_DIM:
 		*value = mlme_proto->vht_info.sounding_dimension;
+		break;
+	case WLAN_MLME_CFG_BFEE_STS_CAP:
+		*value = mlme_proto->vht_info.bfee_sts_cap;
 		break;
 	case WLAN_MLME_CFG_HT_CAPS:
 		*value = mlme_proto->ht_info.ht_caps;

@@ -115,6 +115,7 @@ struct vdev_mlme_proto_bss_color {
  * @mubfee: mu beam formee capability
  * @implicit_bf: Implicit BF support
  * @sounding_dimension: Beamformer number of sounding dimension
+ * @bfee_sts_cap: beam formee STA capability
  * @en_2gvht: 256 qam status
  * @allow_vht: vht capability status
  */
@@ -126,6 +127,7 @@ struct vdev_mlme_vht_info {
 	uint8_t  mubfee;
 	uint8_t  implicit_bf;
 	uint8_t  sounding_dimension;
+	uint8_t  bfee_sts_cap;
 	uint8_t  en_2gvht;
 	bool     allow_vht;
 };

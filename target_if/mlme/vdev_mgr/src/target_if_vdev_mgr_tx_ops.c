@@ -175,6 +175,53 @@ struct wmi_unified
 }
 
 static inline uint32_t
+target_if_vdev_mlme_build_txbf_caps(struct wlan_objmgr_vdev *vdev)
+{
+	uint32_t txbf_cap;
+	uint32_t subfer;
+	uint32_t mubfer;
+	uint32_t subfee;
+	uint32_t mubfee;
+	uint32_t implicit_bf;
+	uint32_t sounding_dimension;
+	uint32_t bfee_sts_cap;
+
+	txbf_cap = 0;
+	/*
+	 * ensure to set these after mlme component is attached to objmgr
+	 */
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_SUBFEE, &subfee);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_MUBFEE, &mubfee);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_SUBFER, &subfer);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_MUBFER, &mubfer);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_BFEE_STS_CAP,
+			&bfee_sts_cap);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_IMLICIT_BF,
+			&implicit_bf);
+	wlan_util_vdev_get_param(vdev, WLAN_MLME_CFG_SOUNDING_DIM,
+			&sounding_dimension);
+
+	WMI_HOST_TXBF_CONF_SU_TX_BFEE_SET(txbf_cap, subfee);
+	WMI_HOST_TXBF_CONF_MU_TX_BFEE_SET(txbf_cap, mubfee);
+	WMI_HOST_TXBF_CONF_SU_TX_BFER_SET(txbf_cap, subfer);
+	WMI_HOST_TXBF_CONF_MU_TX_BFER_SET(txbf_cap, mubfer);
+	WMI_HOST_TXBF_CONF_STS_CAP_SET(txbf_cap, bfee_sts_cap);
+	WMI_HOST_TXBF_CONF_IMPLICIT_BF_SET(txbf_cap, implicit_bf);
+	WMI_HOST_TXBF_CONF_BF_SND_DIM_SET(txbf_cap, sounding_dimension);
+
+	mlme_debug("VHT su bfee:%d mu bfee:%d su bfer:%d "
+		   "mu bfer:%d impl bf:%d sounding dim:%d",
+		   WMI_HOST_TXBF_CONF_SU_TX_BFEE_GET(txbf_cap),
+		   WMI_HOST_TXBF_CONF_MU_TX_BFEE_GET(txbf_cap),
+		   WMI_HOST_TXBF_CONF_SU_TX_BFER_GET(txbf_cap),
+		   WMI_HOST_TXBF_CONF_MU_TX_BFER_GET(txbf_cap),
+		   WMI_HOST_TXBF_CONF_IMPLICIT_BF_GET(txbf_cap),
+		   WMI_HOST_TXBF_CONF_BF_SND_DIM_GET(txbf_cap));
+
+	return txbf_cap;
+}
+
+static inline uint32_t
 target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 {
 	int wmi_id;
@@ -277,6 +324,8 @@ static QDF_STATUS target_if_vdev_mgr_set_param_send(
 	}
 	param_id = target_if_vdev_mlme_id_2_wmi(param->param_id);
 	param->param_id = param_id;
+	if (param->param_id == wmi_vdev_param_txbf)
+		param->param_value = target_if_vdev_mlme_build_txbf_caps(vdev);
 
 	status = wmi_unified_vdev_set_param_send(wmi_handle, param);
 
@@ -542,6 +591,11 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	status = target_if_vdev_mgr_set_param_send(vdev, &sparam);
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("VDEV_%d: Failed to set beacon interval!", vdev_id);
+
+	sparam.param_id = WLAN_MLME_CFG_TXBF_CAPS;
+	status = target_if_vdev_mgr_set_param_send(vdev, &sparam);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("VDEV_%d: Failed to set TxBF caps!", vdev_id);
 
 	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
 
