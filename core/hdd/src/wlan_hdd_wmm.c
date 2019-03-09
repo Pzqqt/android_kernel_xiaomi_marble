@@ -132,10 +132,10 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 		return;
 	}
 	/* determine the service interval */
-	if (ac->wmmAcTspecInfo.min_service_interval) {
-		service_interval = ac->wmmAcTspecInfo.min_service_interval;
-	} else if (ac->wmmAcTspecInfo.max_service_interval) {
-		service_interval = ac->wmmAcTspecInfo.max_service_interval;
+	if (ac->tspec.min_service_interval) {
+		service_interval = ac->tspec.min_service_interval;
+	} else if (ac->tspec.max_service_interval) {
+		service_interval = ac->tspec.max_service_interval;
 	} else {
 		/* no service interval is present in the TSPEC */
 		/* this is OK, there just won't be U-APSD */
@@ -144,9 +144,9 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	}
 
 	/* determine the suspension interval & direction */
-	suspension_interval = ac->wmmAcTspecInfo.suspension_interval;
-	direction = ac->wmmAcTspecInfo.ts_info.direction;
-	psb = ac->wmmAcTspecInfo.ts_info.psb;
+	suspension_interval = ac->tspec.suspension_interval;
+	direction = ac->tspec.ts_info.direction;
+	psb = ac->tspec.ts_info.psb;
 
 	/* if we have previously enabled U-APSD, have any params changed? */
 	if ((ac->is_uapsd_info_valid) &&
@@ -164,8 +164,8 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	status =
 		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
 					   conn_info.sta_id[0], ac_type,
-					   ac->wmmAcTspecInfo.ts_info.tid,
-					   ac->wmmAcTspecInfo.ts_info.up,
+					   ac->tspec.ts_info.tid,
+					   ac->tspec.ts_info.up,
 					   service_interval, suspension_interval,
 					   direction, psb, adapter->vdev_id,
 					   delayed_trgr_frm_int);
@@ -525,8 +525,8 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 */
 		if (tspec_info) {
 			ac->is_tspec_valid = true;
-			memcpy(&ac->wmmAcTspecInfo,
-			       tspec_info, sizeof(ac->wmmAcTspecInfo));
+			memcpy(&ac->tspec,
+			       tspec_info, sizeof(ac->tspec));
 		}
 		ac->is_access_allowed = true;
 		ac->was_access_granted = true;
@@ -658,8 +658,8 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		if (tspec_info) {
 			/* update the TSPEC */
 			ac->is_tspec_valid = true;
-			memcpy(&ac->wmmAcTspecInfo,
-			       tspec_info, sizeof(ac->wmmAcTspecInfo));
+			memcpy(&ac->tspec,
+			       tspec_info, sizeof(ac->tspec));
 
 			if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 				hdd_debug("Explicit Qos, notifying user space");
@@ -739,8 +739,8 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			/* there is still at least one flow active for
 			 * this AC so update the AC state
 			 */
-			memcpy(&ac->wmmAcTspecInfo,
-			       tspec_info, sizeof(ac->wmmAcTspecInfo));
+			memcpy(&ac->tspec,
+			       tspec_info, sizeof(ac->tspec));
 
 			/* need to tell TL to update its UAPSD handling */
 			hdd_wmm_enable_tl_uapsd(qos_context);
@@ -844,8 +844,8 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		 */
 		if (tspec_info) {
 			ac->is_tspec_valid = true;
-			memcpy(&ac->wmmAcTspecInfo,
-			       tspec_info, sizeof(ac->wmmAcTspecInfo));
+			memcpy(&ac->tspec,
+			       tspec_info, sizeof(ac->tspec));
 		}
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
@@ -957,13 +957,13 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	 * allowed
 	 */
 	if (ac->is_tspec_valid &&
-	    (ac->wmmAcTspecInfo.ts_info.direction ==
+	    (ac->tspec.ts_info.direction ==
 	     SME_QOS_WMM_TS_DIR_DOWNLINK)) {
 		ac->is_access_allowed = false;
 	}
 	/* if we have valid Tpsec or if ACM bit is not set, allow access */
 	if ((ac->is_tspec_valid &&
-	     (ac->wmmAcTspecInfo.ts_info.direction !=
+	     (ac->tspec.ts_info.direction !=
 	      SME_QOS_WMM_TS_DIR_DOWNLINK)) || !ac->is_access_required) {
 		ac->is_access_allowed = true;
 	}
@@ -2220,7 +2220,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			if (adapter->hdd_wmm_status.ac_status[ac].
 			    is_tspec_valid
 			    && (adapter->hdd_wmm_status.ac_status[ac].
-				wmmAcTspecInfo.ts_info.direction !=
+				tspec.ts_info.direction !=
 				SME_QOS_WMM_TS_DIR_DOWNLINK)) {
 				adapter->hdd_wmm_status.ac_status[ac].
 				is_access_allowed = true;

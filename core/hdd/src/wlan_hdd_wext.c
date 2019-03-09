@@ -7058,7 +7058,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_VO].
 			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
-			 ac_status[SME_AC_VO].wmmAcTspecInfo.
+			 ac_status[SME_AC_VO].tspec.
 			 ts_info.direction,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_VI].is_access_required,
@@ -7066,7 +7066,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_VI].
 			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
-			 ac_status[SME_AC_VI].wmmAcTspecInfo.
+			 ac_status[SME_AC_VI].tspec.
 			 ts_info.direction,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BE].is_access_required,
@@ -7074,7 +7074,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_BE].
 			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
-			 ac_status[SME_AC_BE].wmmAcTspecInfo.
+			 ac_status[SME_AC_BE].tspec.
 			 ts_info.direction,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BK].is_access_required,
@@ -7082,7 +7082,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_BK].
 			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
-			 ac_status[SME_AC_BK].wmmAcTspecInfo.
+			 ac_status[SME_AC_BK].tspec.
 			 ts_info.direction);
 
 		wrqu->data.length = strlen(extra) + 1;
