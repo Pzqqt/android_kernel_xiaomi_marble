@@ -116,8 +116,8 @@ const uint8_t hdd_linux_up_to_ac_map[HDD_WMM_UP_TO_AC_MAP_SIZE] = {
 static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter = qos_context->adapter;
-	sme_ac_enum_type acType = qos_context->acType;
-	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	sme_ac_enum_type ac_type = qos_context->ac_type;
+	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 	uint32_t service_interval;
@@ -163,7 +163,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	/* everything is in place to notify TL */
 	status =
 		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
-					   conn_info.sta_id[0], acType,
+					   conn_info.sta_id[0], ac_type,
 					   pAc->wmmAcTspecInfo.ts_info.tid,
 					   pAc->wmmAcTspecInfo.ts_info.up,
 					   service_interval, suspension_interval,
@@ -171,7 +171,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 					   delayed_trgr_frm_int);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Failed to enable U-APSD for AC=%d", acType);
+		hdd_err("Failed to enable U-APSD for AC=%d", ac_type);
 		return;
 	}
 	/* stash away the parameters that were used */
@@ -182,7 +182,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 	pAc->wmmAcIsUapsdEnabled = psb;
 
 	hdd_debug("Enabled UAPSD in TL srv_int=%d susp_int=%d dir=%d AC=%d",
-		   service_interval, suspension_interval, direction, acType);
+		   service_interval, suspension_interval, direction, ac_type);
 
 }
 
@@ -197,8 +197,8 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter = qos_context->adapter;
-	sme_ac_enum_type acType = qos_context->acType;
-	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	sme_ac_enum_type ac_type = qos_context->ac_type;
+	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 	QDF_STATUS status;
 
 	/* have we previously enabled UAPSD? */
@@ -206,14 +206,14 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *qos_context)
 		status =
 			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							     (adapter))->conn_info.sta_id[0],
-						    acType, adapter->vdev_id);
+						    ac_type, adapter->vdev_id);
 
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Failed to disable U-APSD for AC=%d", acType);
+			hdd_err("Failed to disable U-APSD for AC=%d", ac_type);
 		} else {
 			/* TL no longer has valid UAPSD info */
 			pAc->wmmAcUapsdInfoValid = false;
-			hdd_debug("Disabled UAPSD in TL for AC=%d", acType);
+			hdd_debug("Disabled UAPSD in TL for AC=%d", ac_type);
 		}
 	}
 }
@@ -324,13 +324,13 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	hdd_wlan_wmm_status_e status;
 	QDF_STATUS qdf_status;
 	uint32_t currentTrafficCnt = 0;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 
 	if (!qos_context) {
 		hdd_err("invalid user data");
 		return;
 	}
-	acType = qos_context->acType;
+	ac_type = qos_context->ac_type;
 
 	adapter = qos_context->adapter;
 	if ((NULL == adapter) ||
@@ -339,20 +339,20 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 		return;
 	}
 
-	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	/* Get the Tx stats for this AC. */
 	currentTrafficCnt =
 		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
-								    acType];
+								    ac_type];
 
 	hdd_warn("WMM inactivity Timer for AC=%d, currentCnt=%d, prevCnt=%d",
-		 acType, (int)currentTrafficCnt, (int)pAc->wmmPrevTrafficCnt);
+		 ac_type, (int)currentTrafficCnt, (int)pAc->wmmPrevTrafficCnt);
 	if (pAc->wmmPrevTrafficCnt == currentTrafficCnt) {
 		/* there is no traffic activity, delete the TSPEC for this AC */
 		status = hdd_wmm_delts(adapter, qos_context->handle);
 		hdd_warn("Deleted TS on AC %d, due to inactivity with status = %d!!!",
-			 acType, status);
+			 ac_type, status);
 	} else {
 		pAc->wmmPrevTrafficCnt = currentTrafficCnt;
 		if (pAc->wmmInactivityTimer.state == QDF_TIMER_STATE_STOPPED) {
@@ -362,7 +362,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 						   pAc->wmmInactivityTime);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("Restarting inactivity timer failed on AC %d",
-					acType);
+					ac_type);
 			}
 		} else {
 			QDF_ASSERT(qdf_mc_timer_get_current_state
@@ -391,11 +391,11 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct hdd_adapter *adapter = qos_context->adapter;
-	sme_ac_enum_type acType = qos_context->acType;
+	sme_ac_enum_type ac_type = qos_context->ac_type;
 	struct hdd_wmm_ac_status *pAc;
 
 	adapter = qos_context->adapter;
-	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	qdf_status = qdf_mc_timer_init(&pAc->wmmInactivityTimer,
 				       QDF_TIMER_TYPE_SW,
@@ -403,7 +403,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 				       qos_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Initializing inactivity timer failed on AC %d",
-			  acType);
+			  ac_type);
 		return qdf_status;
 	}
 	/* Start the inactivity timer */
@@ -411,7 +411,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 					inactivityTime);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Starting inactivity timer failed on AC %d",
-			  acType);
+			  ac_type);
 		qdf_status = qdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to destroy inactivity timer");
@@ -422,7 +422,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 	/* Initialize the current tx traffic count on this AC */
 	pAc->wmmPrevTrafficCnt =
 		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
-								    acType];
+								    ac_type];
 	qos_context->is_inactivity_timer_running = true;
 	return qdf_status;
 }
@@ -442,8 +442,8 @@ static QDF_STATUS
 hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter = qos_context->adapter;
-	sme_ac_enum_type acType = qos_context->acType;
-	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	sme_ac_enum_type ac_type = qos_context->ac_type;
+	struct hdd_wmm_ac_status *pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/* Clear the timer and the counter */
@@ -497,7 +497,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 {
 	struct hdd_wmm_qos_context *qos_context = context;
 	struct hdd_adapter *adapter;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 	struct hdd_wmm_ac_status *pAc;
 
 	hdd_debug("Entered, context %pK", qos_context);
@@ -509,8 +509,8 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	}
 
 	adapter = qos_context->adapter;
-	acType = qos_context->acType;
-	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	ac_type = qos_context->ac_type;
+	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	hdd_debug("status %d flowid %d info %pK",
 		 smeStatus, qosFlowId, pCurrentQosInfo);
@@ -547,7 +547,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* Check if the inactivity interval is specified */
 		if (pCurrentQosInfo && pCurrentQosInfo->inactivity_interval) {
 			hdd_debug("Inactivity timer value = %d for AC=%d",
-				  pCurrentQosInfo->inactivity_interval, acType);
+				  pCurrentQosInfo->inactivity_interval, ac_type);
 			hdd_wmm_enable_inactivity_timer(qos_context,
 							pCurrentQosInfo->
 							inactivity_interval);
@@ -969,7 +969,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	}
 
 	hdd_debug("complete, access for TL AC %d is%sallowed",
-		   acType, pAc->wmmAcAccessAllowed ? " " : " not ");
+		   ac_type, pAc->wmmAcAccessAllowed ? " " : " not ");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1010,7 +1010,7 @@ int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr)
 static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 {
 	struct hdd_adapter *adapter;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 	struct hdd_wmm_ac_status *pAc;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	enum sme_qos_statustype smeStatus;
@@ -1037,13 +1037,13 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	acType = qos_context->acType;
-	pAc = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	ac_type = qos_context->ac_type;
+	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
-	hdd_debug("adapter %pK acType %d", adapter, acType);
+	hdd_debug("adapter %pK ac_type %d", adapter, ac_type);
 
 	if (!pAc->wmmAcAccessNeeded) {
-		hdd_err("AC %d doesn't need service", acType);
+		hdd_err("AC %d doesn't need service", ac_type);
 		qos_context->magic = 0;
 		qdf_mem_free(qos_context);
 		return;
@@ -1056,7 +1056,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 
 	qosInfo.ts_info.psb = adapter->configured_psb;
 
-	switch (acType) {
+	switch (ac_type) {
 	case SME_AC_VO:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VO;
 		/* Check if there is any valid configuration from framework */
@@ -1505,7 +1505,7 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 {
 	struct hdd_wmm_ac_status *pAcStatus;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 
 	hdd_enter();
 
@@ -1513,8 +1513,8 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	INIT_LIST_HEAD(&adapter->hdd_wmm_status.wmmContextList);
 	mutex_init(&adapter->hdd_wmm_status.wmmLock);
 
-	for (acType = 0; acType < WLAN_MAX_AC; acType++) {
-		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
+		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 		pAcStatus->wmmAcAccessRequired = false;
 		pAcStatus->wmmAcAccessNeeded = false;
 		pAcStatus->wmmAcAccessPending = false;
@@ -1543,11 +1543,11 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 {
 	struct hdd_wmm_ac_status *pAcStatus;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 
 	hdd_enter();
-	for (acType = 0; acType < WLAN_MAX_AC; acType++) {
-		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[acType];
+	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
+		pAcStatus = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 		pAcStatus->wmmAcAccessRequired = false;
 		pAcStatus->wmmAcAccessNeeded = false;
 		pAcStatus->wmmAcAccessPending = false;
@@ -1840,18 +1840,18 @@ uint16_t hdd_select_queue(struct net_device *dev, struct sk_buff *skb)
  * done in framework
  *
  * @adapter: [in] pointer to adapter structure
- * @acType: [in] WMM AC type of OS packet
+ * @ac_type: [in] WMM AC type of OS packet
  *
  * Return: void
  */
 void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
-				     sme_ac_enum_type acType)
+				     sme_ac_enum_type ac_type)
 {
 	/* Each bit in the LSB nibble indicates 1 AC.
 	 * Clearing the particular bit in LSB nibble to indicate
 	 * access required
 	 */
-	switch (acType) {
+	switch (ac_type) {
 	case SME_AC_BK:
 		/* clear first bit */
 		adapter->psb_changed &= ~SME_QOS_UAPSD_CFG_BK_CHANGED_MASK;
@@ -1879,14 +1879,14 @@ void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
  * admittance for a WMM AC
  *
  * @adapter: [in]  pointer to adapter context
- * @acType: [in]  WMM AC type of OS packet
+ * @ac_type: [in]  WMM AC type of OS packet
  * @granted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
-				  sme_ac_enum_type acType, bool *granted)
+				  sme_ac_enum_type ac_type, bool *granted)
 {
 	struct hdd_wmm_qos_context *qos_context;
 	struct hdd_context *hdd_ctx;
@@ -1896,14 +1896,14 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Entered for AC %d", __func__, acType);
+		  "%s: Entered for AC %d", __func__, ac_type);
 
 	status = ucfg_mlme_get_implicit_qos_is_enabled(hdd_ctx->psoc, &enable);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get implicit_qos_is_enabled failed");
 		}
 	if (!hdd_wmm_is_active(adapter) || !(enable) ||
-	    !adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessRequired) {
+	    !adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessRequired) {
 		/* either we don't want QoS or the AP doesn't support
 		 * QoS or we don't want to do implicit QoS
 		 */
@@ -1911,20 +1911,20 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 			  "%s: QoS not configured on both ends ", __func__);
 
 		*granted =
-			adapter->hdd_wmm_status.wmmAcStatus[acType].
+			adapter->hdd_wmm_status.wmmAcStatus[ac_type].
 			wmmAcAccessAllowed;
 
 		return QDF_STATUS_SUCCESS;
 	}
 	/* do we already have an implicit QoS request pending for this AC? */
-	if ((adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessNeeded) ||
-	    (adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessPending)) {
+	if ((adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessNeeded) ||
+	    (adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessPending)) {
 		/* request already pending so we need to wait for that
 		 * response
 		 */
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Implicit QoS for TL AC %d already scheduled",
-			  __func__, acType);
+			  __func__, ac_type);
 
 		*granted = false;
 		return QDF_STATUS_SUCCESS;
@@ -1933,21 +1933,21 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	 * (if so, access should have been granted when the failure
 	 * was handled)
 	 */
-	if (adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessFailed) {
+	if (adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessFailed) {
 		/* request previously failed
 		 * allow access, but we'll be downgraded
 		 */
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Implicit QoS for TL AC %d previously failed",
-			  __func__, acType);
+			  __func__, ac_type);
 
-		if (!adapter->hdd_wmm_status.wmmAcStatus[acType].
+		if (!adapter->hdd_wmm_status.wmmAcStatus[ac_type].
 		    wmmAcAccessRequired) {
-			adapter->hdd_wmm_status.wmmAcStatus[acType].
+			adapter->hdd_wmm_status.wmmAcStatus[ac_type].
 			wmmAcAccessAllowed = true;
 			*granted = true;
 		} else {
-			adapter->hdd_wmm_status.wmmAcStatus[acType].
+			adapter->hdd_wmm_status.wmmAcStatus[ac_type].
 			wmmAcAccessAllowed = false;
 			*granted = false;
 		}
@@ -1957,9 +1957,9 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	/* we need to establish implicit QoS */
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Need to schedule implicit QoS for TL AC %d, adapter is %pK",
-		  __func__, acType, adapter);
+		  __func__, ac_type, adapter);
 
-	adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessNeeded = true;
+	adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessNeeded = true;
 
 	qos_context = qdf_mem_malloc(sizeof(*qos_context));
 	if (NULL == qos_context) {
@@ -1968,13 +1968,13 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		 */
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to allocate context", __func__);
-		adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessAllowed =
+		adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessAllowed =
 			true;
 		*granted = true;
 		return QDF_STATUS_SUCCESS;
 	}
 
-	qos_context->acType = acType;
+	qos_context->ac_type = ac_type;
 	qos_context->adapter = adapter;
 	qos_context->qosFlowId = 0;
 	qos_context->handle = HDD_WMM_HANDLE_IMPLICIT;
@@ -1985,7 +1985,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Scheduling work for AC %d, context %pK",
-		  __func__, acType, qos_context);
+		  __func__, ac_type, qos_context);
 
 	schedule_work(&qos_context->wmmAcSetupImplicitQos);
 
@@ -2390,12 +2390,12 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 
 	qos_context->handle = handle;
 	if (tspec->ts_info.up < HDD_WMM_UP_TO_AC_MAP_SIZE)
-		qos_context->acType = hdd_wmm_up_to_ac_map[tspec->ts_info.up];
+		qos_context->ac_type = hdd_wmm_up_to_ac_map[tspec->ts_info.up];
 	else {
-		hdd_err("ts_info.up (%d) larger than max value (%d), use default acType (%d)",
+		hdd_err("ts_info.up (%d) larger than max value (%d), use default ac_type (%d)",
 			tspec->ts_info.up,
 			HDD_WMM_UP_TO_AC_MAP_SIZE - 1, hdd_wmm_up_to_ac_map[0]);
-		qos_context->acType = hdd_wmm_up_to_ac_map[0];
+		qos_context->ac_type = hdd_wmm_up_to_ac_map[0];
 	}
 	qos_context->adapter = adapter;
 	qos_context->qosFlowId = 0;
@@ -2490,7 +2490,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 {
 	struct hdd_wmm_qos_context *qos_context;
 	bool found = false;
-	sme_ac_enum_type acType = 0;
+	sme_ac_enum_type ac_type = 0;
 	uint32_t qosFlowId = 0;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -2506,7 +2506,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 			    &adapter->hdd_wmm_status.wmmContextList, node) {
 		if (qos_context->handle == handle) {
 			found = true;
-			acType = qos_context->acType;
+			ac_type = qos_context->ac_type;
 			qosFlowId = qos_context->qosFlowId;
 			break;
 		}
@@ -2520,7 +2520,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("found handle 0x%x, flow %d, AC %d, context %pK",
-		 handle, qosFlowId, acType, qos_context);
+		 handle, qosFlowId, ac_type, qos_context);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_release_req(mac_handle, adapter->vdev_id,
@@ -2533,9 +2533,9 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		/* this flow is the only one on that AC, so go ahead
 		 * and update our TSPEC state for the AC
 		 */
-		adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcTspecValid =
+		adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcTspecValid =
 			false;
-		adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessAllowed =
+		adapter->hdd_wmm_status.wmmAcStatus[ac_type].wmmAcAccessAllowed =
 			false;
 
 		/* need to tell TL to stop trigger timer, etc */

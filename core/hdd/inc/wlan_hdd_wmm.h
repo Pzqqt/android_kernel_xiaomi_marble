@@ -111,7 +111,7 @@ enum hdd_wmm_linuxac {
  * @handle: identifer which uniquely identifies this context to userspace
  * @qosFlowID: identifier which uniquely identifies this flow to SME
  * @adapter: adapter upon which this flow was configured
- * @acType: access category for this flow
+ * @ac_type: access category for this flow
  * @lastStatus: the status of the last operation performed on this flow by SME
  * @wmmAcSetupImplicitQos: work structure used for deferring implicit QoS work
  *	from softirq context to thread context
@@ -123,7 +123,7 @@ struct hdd_wmm_qos_context {
 	uint32_t handle;
 	uint32_t qosFlowId;
 	struct hdd_adapter *adapter;
-	sme_ac_enum_type acType;
+	sme_ac_enum_type ac_type;
 	hdd_wlan_wmm_status_e lastStatus;
 	struct work_struct wmmAcSetupImplicitQos;
 	uint32_t magic;
@@ -271,26 +271,26 @@ uint16_t hdd_select_queue(struct net_device *dev, struct sk_buff *skb);
  * done in framework
  *
  * @adapter: [in] pointer to adapter structure
- * @acType: [in] WMM AC type of OS packet
+ * @ac_type: [in] WMM AC type of OS packet
  *
  * Return: void
  */
 void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
-				     sme_ac_enum_type acType);
+				     sme_ac_enum_type ac_type);
 
 /**
  * hdd_wmm_acquire_access() - Function which will attempt to acquire
  * admittance for a WMM AC
  *
  * @adapter: [in]  pointer to adapter context
- * @acType: [in]  WMM AC type of OS packet
+ * @ac_type: [in]  WMM AC type of OS packet
  * @granted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
-				  sme_ac_enum_type acType, bool *granted);
+				  sme_ac_enum_type ac_type, bool *granted);
 
 /**
  * hdd_wmm_assoc() - Function which will handle the housekeeping
