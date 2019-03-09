@@ -180,14 +180,14 @@ struct hdd_wmm_ac_status {
  * @wmmLock - mutex used for exclusive access to this adapter's WMM status
  * @wmmACStatus - per-AC WMM status
  * @qap - is this connected to a QoS-enabled AP?
- * @wmmQosConnection - is this a QoS connection?
+ * @qos_connection - is this a QoS connection?
  */
 struct hdd_wmm_status {
 	struct list_head wmmContextList;
 	struct mutex wmmLock;
 	struct hdd_wmm_ac_status wmmAcStatus[WLAN_MAX_AC];
 	bool qap;
-	bool wmmQosConnection;
+	bool qos_connection;
 };
 
 extern const uint8_t hdd_qdisc_ac_to_tl_ac[];

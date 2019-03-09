@@ -2202,7 +2202,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 		 qap, qos_connection, acm_mask);
 
 	adapter->hdd_wmm_status.qap = qap;
-	adapter->hdd_wmm_status.wmmQosConnection = qos_connection;
+	adapter->hdd_wmm_status.qos_connection = qos_connection;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 
 	for (ac = 0; ac < WLAN_MAX_AC; ac++) {
@@ -2261,7 +2261,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
  */
 bool hdd_wmm_is_active(struct hdd_adapter *adapter)
 {
-	if ((!adapter->hdd_wmm_status.wmmQosConnection) ||
+	if ((!adapter->hdd_wmm_status.qos_connection) ||
 	    (!adapter->hdd_wmm_status.qap)) {
 		return false;
 	} else {
