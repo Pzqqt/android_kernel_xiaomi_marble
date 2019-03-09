@@ -355,10 +355,10 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 			 ac_type, status);
 	} else {
 		ac->wmmPrevTrafficCnt = currentTrafficCnt;
-		if (ac->wmmInactivityTimer.state == QDF_TIMER_STATE_STOPPED) {
+		if (ac->inactivity_timer.state == QDF_TIMER_STATE_STOPPED) {
 			/* Restart the timer */
 			qdf_status =
-				qdf_mc_timer_start(&ac->wmmInactivityTimer,
+				qdf_mc_timer_start(&ac->inactivity_timer,
 						   ac->wmmInactivityTime);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("Restarting inactivity timer failed on AC %d",
@@ -366,7 +366,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 			}
 		} else {
 			QDF_ASSERT(qdf_mc_timer_get_current_state
-					   (&ac->wmmInactivityTimer) ==
+					   (&ac->inactivity_timer) ==
 				   QDF_TIMER_STATE_STOPPED);
 		}
 	}
@@ -397,7 +397,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 	adapter = qos_context->adapter;
 	ac = &adapter->hdd_wmm_status.ac_status[ac_type];
 
-	qdf_status = qdf_mc_timer_init(&ac->wmmInactivityTimer,
+	qdf_status = qdf_mc_timer_init(&ac->inactivity_timer,
 				       QDF_TIMER_TYPE_SW,
 				       hdd_wmm_inactivity_timer_cb,
 				       qos_context);
@@ -407,12 +407,12 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 		return qdf_status;
 	}
 	/* Start the inactivity timer */
-	qdf_status = qdf_mc_timer_start(&ac->wmmInactivityTimer,
+	qdf_status = qdf_mc_timer_start(&ac->inactivity_timer,
 					inactivityTime);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Starting inactivity timer failed on AC %d",
 			  ac_type);
-		qdf_status = qdf_mc_timer_destroy(&ac->wmmInactivityTimer);
+		qdf_status = qdf_mc_timer_destroy(&ac->inactivity_timer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to destroy inactivity timer");
 
@@ -452,12 +452,12 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 
 	if (qos_context->is_inactivity_timer_running == true) {
 		qos_context->is_inactivity_timer_running = false;
-		qdf_status = qdf_mc_timer_stop(&ac->wmmInactivityTimer);
+		qdf_status = qdf_mc_timer_stop(&ac->inactivity_timer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to stop inactivity timer");
 			return qdf_status;
 		}
-		qdf_status = qdf_mc_timer_destroy(&ac->wmmInactivityTimer);
+		qdf_status = qdf_mc_timer_destroy(&ac->inactivity_timer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to destroy inactivity timer:Timer started");
 	}

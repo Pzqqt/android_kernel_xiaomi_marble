@@ -150,7 +150,7 @@ struct hdd_wmm_qos_context {
  * @uapsd_direction - direction for this AC
  * @wmmInactivityTime - inactivity time for this AC
  * @wmmPrevTrafficCnt - TX counter used for inactivity detection
- * @wmmInactivityTimer - timer used for inactivity detection
+ * @inactivity_timer - timer used for inactivity detection
  */
 struct hdd_wmm_ac_status {
 	bool is_access_required;
@@ -170,7 +170,7 @@ struct hdd_wmm_ac_status {
 #ifdef FEATURE_WLAN_ESE
 	uint32_t wmmInactivityTime;
 	uint32_t wmmPrevTrafficCnt;
-	qdf_mc_timer_t wmmInactivityTimer;
+	qdf_mc_timer_t inactivity_timer;
 #endif
 };
 
