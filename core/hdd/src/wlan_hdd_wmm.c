@@ -529,7 +529,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			       tspec_info, sizeof(ac->wmmAcTspecInfo));
 		}
 		ac->wmmAcAccessAllowed = true;
-		ac->wmmAcAccessGranted = true;
+		ac->was_access_granted = true;
 		ac->is_access_pending = false;
 		ac->has_access_failed = false;
 
@@ -563,7 +563,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		hdd_debug("Setup is complete (U-APSD set previously)");
 
 		ac->wmmAcAccessAllowed = true;
-		ac->wmmAcAccessGranted = true;
+		ac->was_access_granted = true;
 		ac->is_access_pending = false;
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
@@ -681,7 +681,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			 * know packets are pending
 			 */
 			ac->is_access_pending = false;
-			ac->wmmAcAccessGranted = true;
+			ac->was_access_granted = true;
 			ac->wmmAcAccessAllowed = true;
 
 		} else {
@@ -709,7 +709,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			 * failure.  the packets will flow.  Note that
 			 * the MAC will "do the right thing"
 			 */
-			ac->wmmAcAccessGranted = true;
+			ac->was_access_granted = true;
 			ac->wmmAcAccessAllowed = true;
 			ac->has_access_failed = false;
 			ac->is_access_pending = false;
@@ -804,7 +804,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 		if (HDD_WMM_HANDLE_IMPLICIT == qos_context->handle) {
 			/* we no longer have implicit access granted */
-			ac->wmmAcAccessGranted = false;
+			ac->was_access_granted = false;
 			ac->has_access_failed = false;
 		} else {
 			hdd_debug("Explicit Qos, notifying user space");
@@ -1424,7 +1424,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 		hdd_debug("Setup is complete, notify TL");
 
 		ac->wmmAcAccessAllowed = true;
-		ac->wmmAcAccessGranted = true;
+		ac->was_access_granted = true;
 		ac->is_access_pending = false;
 
 		break;
@@ -1519,7 +1519,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 		ac_status->is_access_needed = false;
 		ac_status->is_access_pending = false;
 		ac_status->has_access_failed = false;
-		ac_status->wmmAcAccessGranted = false;
+		ac_status->was_access_granted = false;
 		ac_status->wmmAcAccessAllowed = false;
 		ac_status->wmmAcTspecValid = false;
 		ac_status->wmmAcUapsdInfoValid = false;
@@ -1552,7 +1552,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 		ac_status->is_access_needed = false;
 		ac_status->is_access_pending = false;
 		ac_status->has_access_failed = false;
-		ac_status->wmmAcAccessGranted = false;
+		ac_status->was_access_granted = false;
 		ac_status->wmmAcAccessAllowed = false;
 		ac_status->wmmAcTspecValid = false;
 		ac_status->wmmAcUapsdInfoValid = false;
@@ -2215,7 +2215,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			adapter->hdd_wmm_status.ac_status[ac].
 			wmmAcAccessAllowed = false;
 			adapter->hdd_wmm_status.ac_status[ac].
-			wmmAcAccessGranted = false;
+			was_access_granted = false;
 			/* after reassoc if we have valid tspec, allow access */
 			if (adapter->hdd_wmm_status.ac_status[ac].
 			    wmmAcTspecValid
