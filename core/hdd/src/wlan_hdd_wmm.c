@@ -964,7 +964,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	/* if we have valid Tpsec or if ACM bit is not set, allow access */
 	if ((ac->wmmAcTspecValid &&
 	     (ac->wmmAcTspecInfo.ts_info.direction !=
-	      SME_QOS_WMM_TS_DIR_DOWNLINK)) || !ac->wmmAcAccessRequired) {
+	      SME_QOS_WMM_TS_DIR_DOWNLINK)) || !ac->is_access_required) {
 		ac->wmmAcAccessAllowed = true;
 	}
 
@@ -1515,7 +1515,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
-		ac_status->wmmAcAccessRequired = false;
+		ac_status->is_access_required = false;
 		ac_status->wmmAcAccessNeeded = false;
 		ac_status->wmmAcAccessPending = false;
 		ac_status->wmmAcAccessFailed = false;
@@ -1548,7 +1548,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 	hdd_enter();
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
-		ac_status->wmmAcAccessRequired = false;
+		ac_status->is_access_required = false;
 		ac_status->wmmAcAccessNeeded = false;
 		ac_status->wmmAcAccessPending = false;
 		ac_status->wmmAcAccessFailed = false;
@@ -1903,7 +1903,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 			hdd_err("Get implicit_qos_is_enabled failed");
 		}
 	if (!hdd_wmm_is_active(adapter) || !(enable) ||
-	    !adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessRequired) {
+	    !adapter->hdd_wmm_status.ac_status[ac_type].is_access_required) {
 		/* either we don't want QoS or the AP doesn't support
 		 * QoS or we don't want to do implicit QoS
 		 */
@@ -1942,7 +1942,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 			  __func__, ac_type);
 
 		if (!adapter->hdd_wmm_status.ac_status[ac_type].
-		    wmmAcAccessRequired) {
+		    is_access_required) {
 			adapter->hdd_wmm_status.ac_status[ac_type].
 			wmmAcAccessAllowed = true;
 			*granted = true;
@@ -2211,7 +2211,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 
 			/* admission is required */
 			adapter->hdd_wmm_status.ac_status[ac].
-			wmmAcAccessRequired = true;
+			is_access_required = true;
 			adapter->hdd_wmm_status.ac_status[ac].
 			wmmAcAccessAllowed = false;
 			adapter->hdd_wmm_status.ac_status[ac].
@@ -2239,7 +2239,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			hdd_debug("ac %d off", ac);
 			/* admission is not required so access is allowed */
 			adapter->hdd_wmm_status.ac_status[ac].
-			wmmAcAccessRequired = false;
+			is_access_required = false;
 			adapter->hdd_wmm_status.ac_status[ac].
 			wmmAcAccessAllowed = true;
 		}
