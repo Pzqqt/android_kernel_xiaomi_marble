@@ -480,7 +480,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
  * @context : [in] the HDD callback context
  * @pCurrentQosInfo : [in] the TSPEC params
  * @smeStatus : [in] the QoS related SME status
- * @qosFlowId: [in] the unique identifier of the flow
+ * @flow_id: [in] the unique identifier of the flow
  *
  * This callback is registered by HDD with SME for receiving QoS
  * notifications. Even though this function has a static scope it
@@ -493,7 +493,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			void *context,
 			struct sme_qos_wmmtspecinfo *pCurrentQosInfo,
 			enum sme_qos_statustype smeStatus,
-			uint32_t qosFlowId)
+			uint32_t flow_id)
 {
 	struct hdd_wmm_qos_context *qos_context = context;
 	struct hdd_adapter *adapter;
@@ -513,7 +513,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	hdd_debug("status %d flowid %d info %pK",
-		 smeStatus, qosFlowId, pCurrentQosInfo);
+		 smeStatus, flow_id, pCurrentQosInfo);
 
 	switch (smeStatus) {
 
@@ -1384,10 +1384,10 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 				      hdd_wmm_sme_callback,
 				      qos_context,
 				      qosInfo.ts_info.up,
-				      &qos_context->qosFlowId);
+				      &qos_context->flow_id);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, qos_context->qosFlowId);
+		   smeStatus, qos_context->flow_id);
 
 	/* need to check the return values and act appropriately */
 	switch (smeStatus) {
@@ -1976,7 +1976,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 
 	qos_context->ac_type = ac_type;
 	qos_context->adapter = adapter;
-	qos_context->qosFlowId = 0;
+	qos_context->flow_id = 0;
 	qos_context->handle = HDD_WMM_HANDLE_IMPLICIT;
 	qos_context->magic = HDD_WMM_CTX_MAGIC;
 	qos_context->is_inactivity_timer_running = false;
@@ -2337,7 +2337,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		 * params. Allow it
 		 */
 		smeStatus = sme_qos_modify_req(mac_handle,
-					       tspec, qos_context->qosFlowId);
+					       tspec, qos_context->flow_id);
 
 		/* need to check the return value and act appropriately */
 		switch (smeStatus) {
@@ -2398,7 +2398,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		qos_context->ac_type = hdd_wmm_up_to_ac_map[0];
 	}
 	qos_context->adapter = adapter;
-	qos_context->qosFlowId = 0;
+	qos_context->flow_id = 0;
 	qos_context->magic = HDD_WMM_CTX_MAGIC;
 	qos_context->is_inactivity_timer_running = false;
 
@@ -2415,10 +2415,10 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				      hdd_wmm_sme_callback,
 				      qos_context,
 				      tspec->ts_info.up,
-				      &qos_context->qosFlowId);
+				      &qos_context->flow_id);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, qos_context->qosFlowId);
+		   smeStatus, qos_context->flow_id);
 
 	/* need to check the return value and act appropriately */
 	switch (smeStatus) {
@@ -2491,7 +2491,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	struct hdd_wmm_qos_context *qos_context;
 	bool found = false;
 	sme_ac_enum_type ac_type = 0;
-	uint32_t qosFlowId = 0;
+	uint32_t flow_id = 0;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	enum sme_qos_statustype smeStatus;
@@ -2507,7 +2507,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		if (qos_context->handle == handle) {
 			found = true;
 			ac_type = qos_context->ac_type;
-			qosFlowId = qos_context->qosFlowId;
+			flow_id = qos_context->flow_id;
 			break;
 		}
 	}
@@ -2520,13 +2520,13 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("found handle 0x%x, flow %d, AC %d, context %pK",
-		 handle, qosFlowId, ac_type, qos_context);
+		 handle, flow_id, ac_type, qos_context);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	smeStatus = sme_qos_release_req(mac_handle, adapter->vdev_id,
-					qosFlowId);
+					flow_id);
 
-	hdd_debug("SME flow %d released, SME status %d", qosFlowId, smeStatus);
+	hdd_debug("SME flow %d released, SME status %d", flow_id, smeStatus);
 
 	switch (smeStatus) {
 	case SME_QOS_STATUS_RELEASE_SUCCESS_RSP:

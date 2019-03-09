@@ -109,7 +109,7 @@ enum hdd_wmm_linuxac {
  * @node: list node which can be used to put the context into a list
  *	of contexts
  * @handle: identifer which uniquely identifies this context to userspace
- * @qosFlowID: identifier which uniquely identifies this flow to SME
+ * @flow_id: identifier which uniquely identifies this flow to SME
  * @adapter: adapter upon which this flow was configured
  * @ac_type: access category for this flow
  * @lastStatus: the status of the last operation performed on this flow by SME
@@ -121,7 +121,7 @@ enum hdd_wmm_linuxac {
 struct hdd_wmm_qos_context {
 	struct list_head node;
 	uint32_t handle;
-	uint32_t qosFlowId;
+	uint32_t flow_id;
 	struct hdd_adapter *adapter;
 	sme_ac_enum_type ac_type;
 	hdd_wlan_wmm_status_e lastStatus;
