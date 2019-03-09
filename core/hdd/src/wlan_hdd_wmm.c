@@ -323,7 +323,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	struct hdd_wmm_ac_status *ac;
 	hdd_wlan_wmm_status_e status;
 	QDF_STATUS qdf_status;
-	uint32_t currentTrafficCnt = 0;
+	uint32_t traffic_count = 0;
 	sme_ac_enum_type ac_type;
 
 	if (!qos_context) {
@@ -342,19 +342,19 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	ac = &adapter->hdd_wmm_status.ac_status[ac_type];
 
 	/* Get the Tx stats for this AC. */
-	currentTrafficCnt =
+	traffic_count =
 		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
 								    ac_type];
 
 	hdd_warn("WMM inactivity check for AC=%d, count=%u, last=%u",
-		 ac_type, currentTrafficCnt, ac->last_traffic_count);
-	if (ac->last_traffic_count == currentTrafficCnt) {
+		 ac_type, traffic_count, ac->last_traffic_count);
+	if (ac->last_traffic_count == traffic_count) {
 		/* there is no traffic activity, delete the TSPEC for this AC */
 		status = hdd_wmm_delts(adapter, qos_context->handle);
 		hdd_warn("Deleted TS on AC %d, due to inactivity with status = %d!!!",
 			 ac_type, status);
 	} else {
-		ac->last_traffic_count = currentTrafficCnt;
+		ac->last_traffic_count = traffic_count;
 		if (ac->inactivity_timer.state == QDF_TIMER_STATE_STOPPED) {
 			/* Restart the timer */
 			qdf_status =
