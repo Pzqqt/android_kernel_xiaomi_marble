@@ -479,7 +479,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
  * @mac_handle: [in] the MAC handle
  * @context : [in] the HDD callback context
  * @pCurrentQosInfo : [in] the TSPEC params
- * @smeStatus : [in] the QoS related SME status
+ * @sme_status : [in] the QoS related SME status
  * @flow_id: [in] the unique identifier of the flow
  *
  * This callback is registered by HDD with SME for receiving QoS
@@ -492,7 +492,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			void *context,
 			struct sme_qos_wmmtspecinfo *pCurrentQosInfo,
-			enum sme_qos_statustype smeStatus,
+			enum sme_qos_statustype sme_status,
 			uint32_t flow_id)
 {
 	struct hdd_wmm_qos_context *qos_context = context;
@@ -513,9 +513,9 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	hdd_debug("status %d flowid %d info %pK",
-		 smeStatus, flow_id, pCurrentQosInfo);
+		 sme_status, flow_id, pCurrentQosInfo);
 
-	switch (smeStatus) {
+	switch (sme_status) {
 
 	case SME_QOS_STATUS_SETUP_SUCCESS_IND:
 		hdd_debug("Setup is complete");
@@ -949,7 +949,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		break;
 
 	default:
-		hdd_err("unexpected SME Status=%d", smeStatus);
+		hdd_err("unexpected SME Status=%d", sme_status);
 		QDF_ASSERT(0);
 	}
 
@@ -1013,7 +1013,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 	sme_ac_enum_type ac_type;
 	struct hdd_wmm_ac_status *pAc;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	enum sme_qos_statustype smeStatus;
+	enum sme_qos_statustype sme_status;
 #endif
 	struct sme_qos_wmmtspecinfo qosInfo;
 	struct hdd_context *hdd_ctx;
@@ -1378,19 +1378,19 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	smeStatus = sme_qos_setup_req(mac_handle,
-				      adapter->vdev_id,
-				      &qosInfo,
-				      hdd_wmm_sme_callback,
-				      qos_context,
-				      qosInfo.ts_info.up,
-				      &qos_context->flow_id);
+	sme_status = sme_qos_setup_req(mac_handle,
+				       adapter->vdev_id,
+				       &qosInfo,
+				       hdd_wmm_sme_callback,
+				       qos_context,
+				       qosInfo.ts_info.up,
+				       &qos_context->flow_id);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, qos_context->flow_id);
+		  sme_status, qos_context->flow_id);
 
 	/* need to check the return values and act appropriately */
-	switch (smeStatus) {
+	switch (sme_status) {
 	case SME_QOS_STATUS_SETUP_REQ_PENDING_RSP:
 	case SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_PENDING:
 		/* setup is pending, so no more work to do now.  all
@@ -1430,7 +1430,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 		break;
 
 	default:
-		hdd_err("unexpected SME Status=%d", smeStatus);
+		hdd_err("unexpected SME Status=%d", sme_status);
 		QDF_ASSERT(0);
 	}
 #endif
@@ -2312,7 +2312,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	struct hdd_wmm_qos_context *qos_context;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	enum sme_qos_statustype smeStatus;
+	enum sme_qos_statustype sme_status;
 #endif
 	bool found = false;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
@@ -2336,11 +2336,11 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		/* Application is trying to modify some of the Tspec
 		 * params. Allow it
 		 */
-		smeStatus = sme_qos_modify_req(mac_handle,
-					       tspec, qos_context->flow_id);
+		sme_status = sme_qos_modify_req(mac_handle,
+						tspec, qos_context->flow_id);
 
 		/* need to check the return value and act appropriately */
-		switch (smeStatus) {
+		switch (sme_status) {
 		case SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP:
 			status = HDD_WLAN_WMM_STATUS_MODIFY_PENDING;
 			break;
@@ -2366,7 +2366,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 			 * SME_QOS_STATUS_MODIFY_* status codes
 			 */
 			hdd_err("unexpected SME Status=%d",
-				  smeStatus);
+				  sme_status);
 			QDF_ASSERT(0);
 			return HDD_WLAN_WMM_STATUS_MODIFY_FAILED;
 		}
@@ -2409,19 +2409,19 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	mutex_unlock(&adapter->hdd_wmm_status.wmmLock);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	smeStatus = sme_qos_setup_req(mac_handle,
-				      adapter->vdev_id,
-				      tspec,
-				      hdd_wmm_sme_callback,
-				      qos_context,
-				      tspec->ts_info.up,
-				      &qos_context->flow_id);
+	sme_status = sme_qos_setup_req(mac_handle,
+				       adapter->vdev_id,
+				       tspec,
+				       hdd_wmm_sme_callback,
+				       qos_context,
+				       tspec->ts_info.up,
+				       &qos_context->flow_id);
 
 	hdd_debug("sme_qos_setup_req returned %d flowid %d",
-		   smeStatus, qos_context->flow_id);
+		   sme_status, qos_context->flow_id);
 
 	/* need to check the return value and act appropriately */
-	switch (smeStatus) {
+	switch (sme_status) {
 	case SME_QOS_STATUS_SETUP_REQ_PENDING_RSP:
 		status = HDD_WLAN_WMM_STATUS_SETUP_PENDING;
 		break;
@@ -2461,7 +2461,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 		 * SME_QOS_STATUS_SETUP_* status codes
 		 */
 		hdd_wmm_free_context(qos_context);
-		hdd_err("unexpected SME Status=%d", smeStatus);
+		hdd_err("unexpected SME Status=%d", sme_status);
 		QDF_ASSERT(0);
 		return HDD_WLAN_WMM_STATUS_SETUP_FAILED;
 	}
@@ -2494,7 +2494,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	uint32_t flow_id = 0;
 	hdd_wlan_wmm_status_e status = HDD_WLAN_WMM_STATUS_SETUP_SUCCESS;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	enum sme_qos_statustype smeStatus;
+	enum sme_qos_statustype sme_status;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 #endif
 
@@ -2523,12 +2523,12 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		 handle, flow_id, ac_type, qos_context);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
-	smeStatus = sme_qos_release_req(mac_handle, adapter->vdev_id,
-					flow_id);
+	sme_status = sme_qos_release_req(mac_handle, adapter->vdev_id,
+					 flow_id);
 
-	hdd_debug("SME flow %d released, SME status %d", flow_id, smeStatus);
+	hdd_debug("SME flow %d released, SME status %d", flow_id, sme_status);
 
-	switch (smeStatus) {
+	switch (sme_status) {
 	case SME_QOS_STATUS_RELEASE_SUCCESS_RSP:
 		/* this flow is the only one on that AC, so go ahead
 		 * and update our TSPEC state for the AC
@@ -2572,7 +2572,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 		/* we didn't get back one of the
 		 * SME_QOS_STATUS_RELEASE_* status codes
 		 */
-		hdd_err("unexpected SME Status=%d", smeStatus);
+		hdd_err("unexpected SME Status=%d", sme_status);
 		QDF_ASSERT(0);
 		status = HDD_WLAN_WMM_STATUS_RELEASE_FAILED;
 	}
