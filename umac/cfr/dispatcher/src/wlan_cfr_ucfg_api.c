@@ -155,9 +155,10 @@ int ucfg_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 	}
 
-	if (status == 0)
+	if (status == 0) {
 		pe->request = PEER_CFR_CAPTURE_DISABLE;
 		pa->cfr_current_sta_count--;
+	}
 
 	return status;
 }
