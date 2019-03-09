@@ -1374,7 +1374,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 	}
 
 	mutex_lock(&adapter->hdd_wmm_status.mutex);
-	list_add(&qos_context->node, &adapter->hdd_wmm_status.wmmContextList);
+	list_add(&qos_context->node, &adapter->hdd_wmm_status.context_list);
 	mutex_unlock(&adapter->hdd_wmm_status.mutex);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -1510,7 +1510,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	hdd_enter();
 
 	adapter->hdd_wmm_status.qap = false;
-	INIT_LIST_HEAD(&adapter->hdd_wmm_status.wmmContextList);
+	INIT_LIST_HEAD(&adapter->hdd_wmm_status.context_list);
 	mutex_init(&adapter->hdd_wmm_status.mutex);
 
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
@@ -1576,9 +1576,9 @@ QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter)
 	hdd_enter();
 
 	/* free any context records that we still have linked */
-	while (!list_empty(&adapter->hdd_wmm_status.wmmContextList)) {
+	while (!list_empty(&adapter->hdd_wmm_status.context_list)) {
 		qos_context =
-			list_first_entry(&adapter->hdd_wmm_status.wmmContextList,
+			list_first_entry(&adapter->hdd_wmm_status.context_list,
 					 struct hdd_wmm_qos_context, node);
 
 		hdd_wmm_disable_inactivity_timer(qos_context);
@@ -2322,7 +2322,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	/* see if a context already exists with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.mutex);
 	list_for_each_entry(qos_context,
-			    &adapter->hdd_wmm_status.wmmContextList, node) {
+			    &adapter->hdd_wmm_status.context_list, node) {
 		if (qos_context->handle == handle) {
 			found = true;
 			break;
@@ -2405,7 +2405,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	hdd_debug("Setting up QoS, context %pK", qos_context);
 
 	mutex_lock(&adapter->hdd_wmm_status.mutex);
-	list_add(&qos_context->node, &adapter->hdd_wmm_status.wmmContextList);
+	list_add(&qos_context->node, &adapter->hdd_wmm_status.context_list);
 	mutex_unlock(&adapter->hdd_wmm_status.mutex);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -2503,7 +2503,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
 	/* locate the context with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.mutex);
 	list_for_each_entry(qos_context,
-			    &adapter->hdd_wmm_status.wmmContextList, node) {
+			    &adapter->hdd_wmm_status.context_list, node) {
 		if (qos_context->handle == handle) {
 			found = true;
 			ac_type = qos_context->ac_type;
@@ -2605,7 +2605,7 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter, uint32_t hand
 	/* locate the context with the given handle */
 	mutex_lock(&adapter->hdd_wmm_status.mutex);
 	list_for_each_entry(qos_context,
-			    &adapter->hdd_wmm_status.wmmContextList, node) {
+			    &adapter->hdd_wmm_status.context_list, node) {
 		if (qos_context->handle == handle) {
 			hdd_debug("found handle 0x%x, context %pK",
 				 handle, qos_context);
