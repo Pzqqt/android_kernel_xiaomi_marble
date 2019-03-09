@@ -1509,7 +1509,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	adapter->hdd_wmm_status.wmmQap = false;
+	adapter->hdd_wmm_status.qap = false;
 	INIT_LIST_HEAD(&adapter->hdd_wmm_status.wmmContextList);
 	mutex_init(&adapter->hdd_wmm_status.wmmLock);
 
@@ -2201,7 +2201,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	hdd_debug("qap is %d, qos_connection is %d, acm_mask is 0x%x",
 		 qap, qos_connection, acm_mask);
 
-	adapter->hdd_wmm_status.wmmQap = qap;
+	adapter->hdd_wmm_status.qap = qap;
 	adapter->hdd_wmm_status.wmmQosConnection = qos_connection;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 
@@ -2262,7 +2262,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 bool hdd_wmm_is_active(struct hdd_adapter *adapter)
 {
 	if ((!adapter->hdd_wmm_status.wmmQosConnection) ||
-	    (!adapter->hdd_wmm_status.wmmQap)) {
+	    (!adapter->hdd_wmm_status.qap)) {
 		return false;
 	} else {
 		return true;
