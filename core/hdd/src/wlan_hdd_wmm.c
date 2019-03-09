@@ -478,7 +478,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
  *
  * @mac_handle: [in] the MAC handle
  * @context : [in] the HDD callback context
- * @pCurrentQosInfo : [in] the TSPEC params
+ * @tspec_info : [in] the TSPEC params
  * @sme_status : [in] the QoS related SME status
  * @flow_id: [in] the unique identifier of the flow
  *
@@ -491,7 +491,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
  */
 static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			void *context,
-			struct sme_qos_wmmtspecinfo *pCurrentQosInfo,
+			struct sme_qos_wmmtspecinfo *tspec_info,
 			enum sme_qos_statustype sme_status,
 			uint32_t flow_id)
 {
@@ -513,7 +513,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	pAc = &adapter->hdd_wmm_status.wmmAcStatus[ac_type];
 
 	hdd_debug("status %d flowid %d info %pK",
-		 sme_status, flow_id, pCurrentQosInfo);
+		 sme_status, flow_id, tspec_info);
 
 	switch (sme_status) {
 
@@ -523,10 +523,10 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* there will always be a TSPEC returned with this
 		 * status, even if a TSPEC is not exchanged OTA
 		 */
-		if (pCurrentQosInfo) {
+		if (tspec_info) {
 			pAc->wmmAcTspecValid = true;
 			memcpy(&pAc->wmmAcTspecInfo,
-			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
+			       tspec_info, sizeof(pAc->wmmAcTspecInfo));
 		}
 		pAc->wmmAcAccessAllowed = true;
 		pAc->wmmAcAccessGranted = true;
@@ -545,11 +545,11 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 #ifdef FEATURE_WLAN_ESE
 		/* Check if the inactivity interval is specified */
-		if (pCurrentQosInfo && pCurrentQosInfo->inactivity_interval) {
+		if (tspec_info && tspec_info->inactivity_interval) {
 			hdd_debug("Inactivity timer value = %d for AC=%d",
-				  pCurrentQosInfo->inactivity_interval, ac_type);
+				  tspec_info->inactivity_interval, ac_type);
 			hdd_wmm_enable_inactivity_timer(qos_context,
-							pCurrentQosInfo->
+							tspec_info->
 							inactivity_interval);
 		}
 #endif /* FEATURE_WLAN_ESE */
@@ -655,11 +655,11 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 	case SME_QOS_STATUS_SETUP_MODIFIED_IND:
 		hdd_debug("Setup modified");
-		if (pCurrentQosInfo) {
+		if (tspec_info) {
 			/* update the TSPEC */
 			pAc->wmmAcTspecValid = true;
 			memcpy(&pAc->wmmAcTspecInfo,
-			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
+			       tspec_info, sizeof(pAc->wmmAcTspecInfo));
 
 			if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 				hdd_debug("Explicit Qos, notifying user space");
@@ -733,14 +733,14 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 	case SME_QOS_STATUS_RELEASE_SUCCESS_RSP:
 		hdd_debug("Release is complete");
 
-		if (pCurrentQosInfo) {
+		if (tspec_info) {
 			hdd_debug("flows still active");
 
 			/* there is still at least one flow active for
 			 * this AC so update the AC state
 			 */
 			memcpy(&pAc->wmmAcTspecInfo,
-			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
+			       tspec_info, sizeof(pAc->wmmAcTspecInfo));
 
 			/* need to tell TL to update its UAPSD handling */
 			hdd_wmm_enable_tl_uapsd(qos_context);
@@ -842,10 +842,10 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		/* there will always be a TSPEC returned with this
 		 * status, even if a TSPEC is not exchanged OTA
 		 */
-		if (pCurrentQosInfo) {
+		if (tspec_info) {
 			pAc->wmmAcTspecValid = true;
 			memcpy(&pAc->wmmAcTspecInfo,
-			       pCurrentQosInfo, sizeof(pAc->wmmAcTspecInfo));
+			       tspec_info, sizeof(pAc->wmmAcTspecInfo));
 		}
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
