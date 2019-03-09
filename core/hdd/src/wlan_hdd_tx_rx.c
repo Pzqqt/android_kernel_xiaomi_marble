@@ -1015,7 +1015,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	 */
 
 	if (((adapter->psb_changed & (1 << ac)) &&
-		likely(adapter->hdd_wmm_status.wmmAcStatus[ac].
+		likely(adapter->hdd_wmm_status.ac_status[ac].
 			wmmAcAccessAllowed)) ||
 		((sta_ctx->conn_info.is_authenticated == false) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
@@ -1036,7 +1036,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		 * Access category until ADDTS negotiation completes.
 		 */
 		while (!likely
-			       (adapter->hdd_wmm_status.wmmAcStatus[ac].
+			       (adapter->hdd_wmm_status.ac_status[ac].
 			       wmmAcAccessAllowed)) {
 			switch (ac) {
 			case SME_AC_VO:
