@@ -135,7 +135,7 @@ struct hdd_wmm_qos_context {
  * @is_access_required - does the AP require access to this AC?
  * @is_access_needed - does the worker thread need to acquire access to
  *	this AC?
- * @wmmAcAccessPending - is implicit QoS negotiation currently taking place?
+ * @is_access_pending - is implicit QoS negotiation currently taking place?
  * @wmmAcAccessFailed - has implicit QoS negotiation already failed?
  * @wmmAcAccessGranted - has implicit QoS negotiation already succeeded?
  * @wmmAcAccessAllowed - is access to this AC allowed, either because we
@@ -155,7 +155,7 @@ struct hdd_wmm_qos_context {
 struct hdd_wmm_ac_status {
 	bool is_access_required;
 	bool is_access_needed;
-	bool wmmAcAccessPending;
+	bool is_access_pending;
 	bool wmmAcAccessFailed;
 	bool wmmAcAccessGranted;
 	bool wmmAcAccessAllowed;

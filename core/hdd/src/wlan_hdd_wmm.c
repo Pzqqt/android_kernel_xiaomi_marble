@@ -530,7 +530,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		}
 		ac->wmmAcAccessAllowed = true;
 		ac->wmmAcAccessGranted = true;
-		ac->wmmAcAccessPending = false;
+		ac->is_access_pending = false;
 		ac->wmmAcAccessFailed = false;
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
@@ -564,7 +564,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 		ac->wmmAcAccessAllowed = true;
 		ac->wmmAcAccessGranted = true;
-		ac->wmmAcAccessPending = false;
+		ac->is_access_pending = false;
 
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
 
@@ -582,7 +582,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 		hdd_err("Setup failed");
 		/* QoS setup failed */
 
-		ac->wmmAcAccessPending = false;
+		ac->is_access_pending = false;
 		ac->wmmAcAccessFailed = true;
 		ac->wmmAcAccessAllowed = false;
 		if (HDD_WMM_HANDLE_IMPLICIT != qos_context->handle) {
@@ -622,7 +622,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			 * flow.  Note that the MAC will "do the right
 			 * thing"
 			 */
-			ac->wmmAcAccessPending = false;
+			ac->is_access_pending = false;
 			ac->wmmAcAccessFailed = true;
 			ac->wmmAcAccessAllowed = true;
 
@@ -680,7 +680,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			/* this was triggered by implicit QoS so we
 			 * know packets are pending
 			 */
-			ac->wmmAcAccessPending = false;
+			ac->is_access_pending = false;
 			ac->wmmAcAccessGranted = true;
 			ac->wmmAcAccessAllowed = true;
 
@@ -712,7 +712,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 			ac->wmmAcAccessGranted = true;
 			ac->wmmAcAccessAllowed = true;
 			ac->wmmAcAccessFailed = false;
-			ac->wmmAcAccessPending = false;
+			ac->is_access_pending = false;
 
 		} else {
 			hdd_info("Explicit Qos, notifying user space");
@@ -1049,7 +1049,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 		return;
 	}
 
-	ac->wmmAcAccessPending = true;
+	ac->is_access_pending = true;
 	ac->is_access_needed = false;
 
 	memset(&qosInfo, 0, sizeof(qosInfo));
@@ -1425,7 +1425,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 
 		ac->wmmAcAccessAllowed = true;
 		ac->wmmAcAccessGranted = true;
-		ac->wmmAcAccessPending = false;
+		ac->is_access_pending = false;
 
 		break;
 
@@ -1517,7 +1517,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
 		ac_status->is_access_required = false;
 		ac_status->is_access_needed = false;
-		ac_status->wmmAcAccessPending = false;
+		ac_status->is_access_pending = false;
 		ac_status->wmmAcAccessFailed = false;
 		ac_status->wmmAcAccessGranted = false;
 		ac_status->wmmAcAccessAllowed = false;
@@ -1550,7 +1550,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
 		ac_status->is_access_required = false;
 		ac_status->is_access_needed = false;
-		ac_status->wmmAcAccessPending = false;
+		ac_status->is_access_pending = false;
 		ac_status->wmmAcAccessFailed = false;
 		ac_status->wmmAcAccessGranted = false;
 		ac_status->wmmAcAccessAllowed = false;
@@ -1918,7 +1918,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	}
 	/* do we already have an implicit QoS request pending for this AC? */
 	if ((adapter->hdd_wmm_status.ac_status[ac_type].is_access_needed) ||
-	    (adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessPending)) {
+	    (adapter->hdd_wmm_status.ac_status[ac_type].is_access_pending)) {
 		/* request already pending so we need to wait for that
 		 * response
 		 */
