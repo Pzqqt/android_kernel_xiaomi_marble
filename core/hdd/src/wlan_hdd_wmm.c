@@ -2182,7 +2182,7 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	int ac;
 	bool qap;
 	bool qosConnection;
-	uint8_t acmMask;
+	uint8_t acm_mask;
 	mac_handle_t mac_handle;
 
 	hdd_enter();
@@ -2191,22 +2191,22 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	    roam_info && roam_info->u.pConnectedProfile) {
 		qap = roam_info->u.pConnectedProfile->qap;
 		qosConnection = roam_info->u.pConnectedProfile->qosConnection;
-		acmMask = roam_info->u.pConnectedProfile->acm_mask;
+		acm_mask = roam_info->u.pConnectedProfile->acm_mask;
 	} else {
 		qap = true;
 		qosConnection = true;
-		acmMask = 0x0;
+		acm_mask = 0x0;
 	}
 
-	hdd_debug("qap is %d, qosConnection is %d, acmMask is 0x%x",
-		 qap, qosConnection, acmMask);
+	hdd_debug("qap is %d, qosConnection is %d, acm_mask is 0x%x",
+		 qap, qosConnection, acm_mask);
 
 	adapter->hdd_wmm_status.wmmQap = qap;
 	adapter->hdd_wmm_status.wmmQosConnection = qosConnection;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 
 	for (ac = 0; ac < WLAN_MAX_AC; ac++) {
-		if (qap && qosConnection && (acmMask & acm_mask_bit[ac])) {
+		if (qap && qosConnection && (acm_mask & acm_mask_bit[ac])) {
 			hdd_debug("ac %d on", ac);
 
 			/* admission is required */
