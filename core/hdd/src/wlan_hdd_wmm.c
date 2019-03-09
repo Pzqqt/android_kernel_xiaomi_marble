@@ -1768,7 +1768,7 @@ static uint16_t hdd_wmm_select_queue(struct net_device *dev,
 				     struct sk_buff *skb)
 {
 	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
-	uint16_t queueIndex;
+	uint16_t index;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool is_crtical = false;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1802,9 +1802,9 @@ static uint16_t hdd_wmm_select_queue(struct net_device *dev,
 	}
 	spin_unlock_bh(&adapter->pause_map_lock);
 	skb->priority = up;
-	queueIndex = hdd_get_queue_index(skb->priority, is_crtical);
+	index = hdd_get_queue_index(skb->priority, is_crtical);
 
-	return queueIndex;
+	return index;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
