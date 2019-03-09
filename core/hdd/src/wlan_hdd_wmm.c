@@ -1447,7 +1447,7 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 {
 	struct hdd_wmm_qos_context *qos_ctx =
 		container_of(work, struct hdd_wmm_qos_context,
-			     wmmAcSetupImplicitQos);
+			     implicit_qos_work);
 	struct osif_vdev_sync *vdev_sync;
 
 	if (qos_ctx->magic != HDD_WMM_CTX_MAGIC) {
@@ -1585,7 +1585,7 @@ QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter)
 
 		if (qos_context->handle == HDD_WMM_HANDLE_IMPLICIT
 			&& qos_context->magic == HDD_WMM_CTX_MAGIC)
-			cds_flush_work(&qos_context->wmmAcSetupImplicitQos);
+			cds_flush_work(&qos_context->implicit_qos_work);
 
 		hdd_wmm_free_context(qos_context);
 	}
@@ -1981,13 +1981,13 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	qos_context->magic = HDD_WMM_CTX_MAGIC;
 	qos_context->is_inactivity_timer_running = false;
 
-	INIT_WORK(&qos_context->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
+	INIT_WORK(&qos_context->implicit_qos_work, hdd_wmm_do_implicit_qos);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Scheduling work for AC %d, context %pK",
 		  __func__, ac_type, qos_context);
 
-	schedule_work(&qos_context->wmmAcSetupImplicitQos);
+	schedule_work(&qos_context->implicit_qos_work);
 
 	/* caller will need to wait until the work takes place and
 	 * TSPEC negotiation completes
