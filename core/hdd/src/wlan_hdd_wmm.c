@@ -359,7 +359,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 			/* Restart the timer */
 			qdf_status =
 				qdf_mc_timer_start(&ac->inactivity_timer,
-						   ac->wmmInactivityTime);
+						   ac->inactivity_time);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("Restarting inactivity timer failed on AC %d",
 					ac_type);
@@ -418,7 +418,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *qos_context,
 
 		return qdf_status;
 	}
-	ac->wmmInactivityTime = inactivityTime;
+	ac->inactivity_time = inactivityTime;
 	/* Initialize the current tx traffic count on this AC */
 	ac->wmmPrevTrafficCnt =
 		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[qos_context->
@@ -447,7 +447,7 @@ hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *qos_context)
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/* Clear the timer and the counter */
-	ac->wmmInactivityTime = 0;
+	ac->inactivity_time = 0;
 	ac->wmmPrevTrafficCnt = 0;
 
 	if (qos_context->is_inactivity_timer_running == true) {
