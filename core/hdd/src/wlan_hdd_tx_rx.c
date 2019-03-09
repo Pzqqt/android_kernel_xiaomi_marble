@@ -573,7 +573,7 @@ static void hdd_clear_tx_rx_connectivity_stats(struct hdd_adapter *adapter)
 
 void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
 {
-	struct hdd_adapter *adapter = NULL, *pNext = NULL;
+	struct hdd_adapter *adapter = NULL, *next = NULL;
 	QDF_STATUS status;
 
 	hdd_enter();
@@ -582,8 +582,8 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
 
 	while (NULL != adapter && QDF_STATUS_SUCCESS == status) {
 		hdd_clear_tx_rx_connectivity_stats(adapter);
-		status = hdd_get_next_adapter(hdd_ctx, adapter, &pNext);
-		adapter = pNext;
+		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
+		adapter = next;
 	}
 
 	hdd_exit();
