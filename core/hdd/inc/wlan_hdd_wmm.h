@@ -144,7 +144,7 @@ struct hdd_wmm_qos_context {
  * @is_tspec_valid - is the tspec valid?
  * @is_uapsd_info_valid - are the UAPSD-related fields valid?
  * @tspec - current (possibly aggregate) Tspec for this AC
- * @wmmAcIsUapsdEnabled - is UAPSD enabled on this AC?
+ * @is_uapsd_enabled - is UAPSD enabled on this AC?
  * @wmmAcUapsdServiceInterval - service interval for this AC
  * @wmmAcUapsdSuspensionInterval - suspension interval for this AC
  * @wmmAcUapsdDirection - direction for this AC
@@ -162,7 +162,7 @@ struct hdd_wmm_ac_status {
 	bool is_tspec_valid;
 	bool is_uapsd_info_valid;
 	struct sme_qos_wmmtspecinfo tspec;
-	bool wmmAcIsUapsdEnabled;
+	bool is_uapsd_enabled;
 	uint32_t wmmAcUapsdServiceInterval;
 	uint32_t wmmAcUapsdSuspensionInterval;
 	enum sme_qos_wmm_dir_type wmmAcUapsdDirection;
