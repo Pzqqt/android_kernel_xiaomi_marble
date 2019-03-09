@@ -1042,7 +1042,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 
 	hdd_debug("adapter %pK ac_type %d", adapter, ac_type);
 
-	if (!ac->wmmAcAccessNeeded) {
+	if (!ac->is_access_needed) {
 		hdd_err("AC %d doesn't need service", ac_type);
 		qos_context->magic = 0;
 		qdf_mem_free(qos_context);
@@ -1050,7 +1050,7 @@ static void __hdd_wmm_do_implicit_qos(struct hdd_wmm_qos_context *qos_context)
 	}
 
 	ac->wmmAcAccessPending = true;
-	ac->wmmAcAccessNeeded = false;
+	ac->is_access_needed = false;
 
 	memset(&qosInfo, 0, sizeof(qosInfo));
 
@@ -1516,7 +1516,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
 		ac_status->is_access_required = false;
-		ac_status->wmmAcAccessNeeded = false;
+		ac_status->is_access_needed = false;
 		ac_status->wmmAcAccessPending = false;
 		ac_status->wmmAcAccessFailed = false;
 		ac_status->wmmAcAccessGranted = false;
@@ -1549,7 +1549,7 @@ QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter)
 	for (ac_type = 0; ac_type < WLAN_MAX_AC; ac_type++) {
 		ac_status = &adapter->hdd_wmm_status.ac_status[ac_type];
 		ac_status->is_access_required = false;
-		ac_status->wmmAcAccessNeeded = false;
+		ac_status->is_access_needed = false;
 		ac_status->wmmAcAccessPending = false;
 		ac_status->wmmAcAccessFailed = false;
 		ac_status->wmmAcAccessGranted = false;
@@ -1917,7 +1917,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		return QDF_STATUS_SUCCESS;
 	}
 	/* do we already have an implicit QoS request pending for this AC? */
-	if ((adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessNeeded) ||
+	if ((adapter->hdd_wmm_status.ac_status[ac_type].is_access_needed) ||
 	    (adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessPending)) {
 		/* request already pending so we need to wait for that
 		 * response
@@ -1959,7 +1959,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		  "%s: Need to schedule implicit QoS for TL AC %d, adapter is %pK",
 		  __func__, ac_type, adapter);
 
-	adapter->hdd_wmm_status.ac_status[ac_type].wmmAcAccessNeeded = true;
+	adapter->hdd_wmm_status.ac_status[ac_type].is_access_needed = true;
 
 	qos_context = qdf_mem_malloc(sizeof(*qos_context));
 	if (NULL == qos_context) {
