@@ -1880,13 +1880,13 @@ void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
  *
  * @adapter: [in]  pointer to adapter context
  * @acType: [in]  WMM AC type of OS packet
- * @pGranted: [out] pointer to bool flag when indicates if access
+ * @granted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
-				  sme_ac_enum_type acType, bool *pGranted)
+				  sme_ac_enum_type acType, bool *granted)
 {
 	struct hdd_wmm_qos_context *qos_context;
 	struct hdd_context *hdd_ctx;
@@ -1910,7 +1910,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: QoS not configured on both ends ", __func__);
 
-		*pGranted =
+		*granted =
 			adapter->hdd_wmm_status.wmmAcStatus[acType].
 			wmmAcAccessAllowed;
 
@@ -1926,7 +1926,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 			  "%s: Implicit QoS for TL AC %d already scheduled",
 			  __func__, acType);
 
-		*pGranted = false;
+		*granted = false;
 		return QDF_STATUS_SUCCESS;
 	}
 	/* did we already fail to establish implicit QoS for this AC?
@@ -1945,11 +1945,11 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 		    wmmAcAccessRequired) {
 			adapter->hdd_wmm_status.wmmAcStatus[acType].
 			wmmAcAccessAllowed = true;
-			*pGranted = true;
+			*granted = true;
 		} else {
 			adapter->hdd_wmm_status.wmmAcStatus[acType].
 			wmmAcAccessAllowed = false;
-			*pGranted = false;
+			*granted = false;
 		}
 
 		return QDF_STATUS_SUCCESS;
@@ -1970,7 +1970,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 			  "%s: Unable to allocate context", __func__);
 		adapter->hdd_wmm_status.wmmAcStatus[acType].wmmAcAccessAllowed =
 			true;
-		*pGranted = true;
+		*granted = true;
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -1992,7 +1992,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	/* caller will need to wait until the work takes place and
 	 * TSPEC negotiation completes
 	 */
-	*pGranted = false;
+	*granted = false;
 	return QDF_STATUS_SUCCESS;
 }
 

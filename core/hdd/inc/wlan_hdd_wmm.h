@@ -284,13 +284,13 @@ void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
  *
  * @adapter: [in]  pointer to adapter context
  * @acType: [in]  WMM AC type of OS packet
- * @pGranted: [out] pointer to bool flag when indicates if access
+ * @granted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
-				  sme_ac_enum_type acType, bool *pGranted);
+				  sme_ac_enum_type acType, bool *granted);
 
 /**
  * hdd_wmm_assoc() - Function which will handle the housekeeping
