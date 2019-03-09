@@ -7056,7 +7056,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_VO].is_access_required,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_VO].
-			 wmmAcAccessAllowed ? "YES" : "NO",
+			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_VO].wmmAcTspecInfo.
 			 ts_info.direction,
@@ -7064,7 +7064,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_VI].is_access_required,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_VI].
-			 wmmAcAccessAllowed ? "YES" : "NO",
+			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_VI].wmmAcTspecInfo.
 			 ts_info.direction,
@@ -7072,7 +7072,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_BE].is_access_required,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BE].
-			 wmmAcAccessAllowed ? "YES" : "NO",
+			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BE].wmmAcTspecInfo.
 			 ts_info.direction,
@@ -7080,7 +7080,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 ac_status[SME_AC_BK].is_access_required,
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BK].
-			 wmmAcAccessAllowed ? "YES" : "NO",
+			 is_access_allowed ? "YES" : "NO",
 			 adapter->hdd_wmm_status.
 			 ac_status[SME_AC_BK].wmmAcTspecInfo.
 			 ts_info.direction);

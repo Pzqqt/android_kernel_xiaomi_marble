@@ -138,7 +138,7 @@ struct hdd_wmm_qos_context {
  * @is_access_pending - is implicit QoS negotiation currently taking place?
  * @has_access_failed - has implicit QoS negotiation already failed?
  * @was_access_granted - has implicit QoS negotiation already succeeded?
- * @wmmAcAccessAllowed - is access to this AC allowed, either because we
+ * @is_access_allowed - is access to this AC allowed, either because we
  *	are not doing WMM, we are not doing implicit QoS, implict QoS has
  *	completed, or explicit QoS has completed?
  * @wmmAcTspecValid - is the wmmAcTspecInfo valid?
@@ -158,7 +158,7 @@ struct hdd_wmm_ac_status {
 	bool is_access_pending;
 	bool has_access_failed;
 	bool was_access_granted;
-	bool wmmAcAccessAllowed;
+	bool is_access_allowed;
 	bool wmmAcTspecValid;
 	bool wmmAcUapsdInfoValid;
 	struct sme_qos_wmmtspecinfo wmmAcTspecInfo;

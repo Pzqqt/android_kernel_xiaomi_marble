@@ -1016,7 +1016,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 
 	if (((adapter->psb_changed & (1 << ac)) &&
 		likely(adapter->hdd_wmm_status.ac_status[ac].
-			wmmAcAccessAllowed)) ||
+			is_access_allowed)) ||
 		((sta_ctx->conn_info.is_authenticated == false) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb) ||
@@ -1037,7 +1037,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		 */
 		while (!likely
 			       (adapter->hdd_wmm_status.ac_status[ac].
-			       wmmAcAccessAllowed)) {
+			       is_access_allowed)) {
 			switch (ac) {
 			case SME_AC_VO:
 				ac = SME_AC_VI;
