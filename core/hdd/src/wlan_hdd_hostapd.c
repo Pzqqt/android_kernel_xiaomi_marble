@@ -4902,7 +4902,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
 	struct sme_config_params *sme_config;
 	bool mfp_capable = false;
-	bool MFPRequired = false;
+	bool mfp_required = false;
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
 	bool ignore_cac = 0;
@@ -5260,7 +5260,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					     &mc_rsn_encrypt_type,
 					     &config->akm_list,
 					     &mfp_capable,
-					     &MFPRequired,
+					     &mfp_required,
 					     config->RSNWPAReqIE[1] + 2,
 					     config->RSNWPAReqIE);
 
@@ -5312,7 +5312,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					 &rsn_encrypt_type,
 					 &mc_rsn_encrypt_type,
 					 &config->akm_list,
-					 &mfp_capable, &MFPRequired,
+					 &mfp_capable, &mfp_required,
 					 config->RSNWPAReqIE[1] + 2,
 					 config->RSNWPAReqIE);
 
@@ -5539,9 +5539,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 #ifdef WLAN_FEATURE_11W
 	config->mfpCapable = mfp_capable;
-	config->mfpRequired = MFPRequired;
+	config->mfpRequired = mfp_required;
 	hdd_debug("Soft AP MFP capable %d, MFP required %d",
-	       config->mfpCapable, config->mfpRequired);
+		  config->mfpCapable, config->mfpRequired);
 #endif
 
 	hdd_debug("SOftAP macaddress : " MAC_ADDRESS_STR,
