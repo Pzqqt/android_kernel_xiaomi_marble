@@ -8296,7 +8296,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_wlan_wmm_status_e *wmm_status = (hdd_wlan_wmm_status_e *) extra;
 	int params[HDD_WLAN_WMM_PARAM_COUNT];
-	struct sme_qos_wmmtspecinfo tSpec;
+	struct sme_qos_wmmtspecinfo tspec;
 	uint32_t handle;
 	struct iw_point s_priv_data;
 	struct hdd_context *hdd_ctx;
@@ -8347,7 +8347,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		return -EIO;
 	}
 	/* clear the tspec */
-	memset(&tSpec, 0, sizeof(tSpec));
+	memset(&tspec, 0, sizeof(tspec));
 
 	/* validate the handle */
 	handle = params[HDD_WLAN_WMM_PARAM_HANDLE];
@@ -8362,20 +8362,20 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
-	tSpec.ts_info.tid = params[HDD_WLAN_WMM_PARAM_TID];
+	tspec.ts_info.tid = params[HDD_WLAN_WMM_PARAM_TID];
 
 	/* validate the direction */
 	switch (params[HDD_WLAN_WMM_PARAM_DIRECTION]) {
 	case HDD_WLAN_WMM_DIRECTION_UPSTREAM:
-		tSpec.ts_info.direction = SME_QOS_WMM_TS_DIR_UPLINK;
+		tspec.ts_info.direction = SME_QOS_WMM_TS_DIR_UPLINK;
 		break;
 
 	case HDD_WLAN_WMM_DIRECTION_DOWNSTREAM:
-		tSpec.ts_info.direction = SME_QOS_WMM_TS_DIR_DOWNLINK;
+		tspec.ts_info.direction = SME_QOS_WMM_TS_DIR_DOWNLINK;
 		break;
 
 	case HDD_WLAN_WMM_DIRECTION_BIDIRECTIONAL:
-		tSpec.ts_info.direction = SME_QOS_WMM_TS_DIR_BOTH;
+		tspec.ts_info.direction = SME_QOS_WMM_TS_DIR_BOTH;
 		break;
 
 	default:
@@ -8384,7 +8384,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		return 0;
 	}
 
-	tSpec.ts_info.psb = params[HDD_WLAN_WMM_PARAM_APSD];
+	tspec.ts_info.psb = params[HDD_WLAN_WMM_PARAM_APSD];
 
 	/* validate the user priority */
 	if (params[HDD_WLAN_WMM_PARAM_USER_PRIORITY] >= SME_QOS_WMM_UP_MAX) {
@@ -8392,44 +8392,44 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
-	tSpec.ts_info.up = params[HDD_WLAN_WMM_PARAM_USER_PRIORITY];
-	if (0 > tSpec.ts_info.up || SME_QOS_WMM_UP_MAX < tSpec.ts_info.up) {
+	tspec.ts_info.up = params[HDD_WLAN_WMM_PARAM_USER_PRIORITY];
+	if (0 > tspec.ts_info.up || SME_QOS_WMM_UP_MAX < tspec.ts_info.up) {
 		hdd_err("***ts_info.up out of bounds***");
 		return 0;
 	}
 
 	hdd_debug("TS_INFO PSB %d UP %d !!!",
-		  tSpec.ts_info.psb, tSpec.ts_info.up);
+		  tspec.ts_info.psb, tspec.ts_info.up);
 
-	tSpec.nominal_msdu_size = params[HDD_WLAN_WMM_PARAM_NOMINAL_MSDU_SIZE];
-	tSpec.maximum_msdu_size = params[HDD_WLAN_WMM_PARAM_MAXIMUM_MSDU_SIZE];
-	tSpec.min_data_rate = params[HDD_WLAN_WMM_PARAM_MINIMUM_DATA_RATE];
-	tSpec.mean_data_rate = params[HDD_WLAN_WMM_PARAM_MEAN_DATA_RATE];
-	tSpec.peak_data_rate = params[HDD_WLAN_WMM_PARAM_PEAK_DATA_RATE];
-	tSpec.max_burst_size = params[HDD_WLAN_WMM_PARAM_MAX_BURST_SIZE];
-	tSpec.min_phy_rate = params[HDD_WLAN_WMM_PARAM_MINIMUM_PHY_RATE];
-	tSpec.surplus_bw_allowance =
+	tspec.nominal_msdu_size = params[HDD_WLAN_WMM_PARAM_NOMINAL_MSDU_SIZE];
+	tspec.maximum_msdu_size = params[HDD_WLAN_WMM_PARAM_MAXIMUM_MSDU_SIZE];
+	tspec.min_data_rate = params[HDD_WLAN_WMM_PARAM_MINIMUM_DATA_RATE];
+	tspec.mean_data_rate = params[HDD_WLAN_WMM_PARAM_MEAN_DATA_RATE];
+	tspec.peak_data_rate = params[HDD_WLAN_WMM_PARAM_PEAK_DATA_RATE];
+	tspec.max_burst_size = params[HDD_WLAN_WMM_PARAM_MAX_BURST_SIZE];
+	tspec.min_phy_rate = params[HDD_WLAN_WMM_PARAM_MINIMUM_PHY_RATE];
+	tspec.surplus_bw_allowance =
 		params[HDD_WLAN_WMM_PARAM_SURPLUS_BANDWIDTH_ALLOWANCE];
-	tSpec.min_service_interval =
+	tspec.min_service_interval =
 		params[HDD_WLAN_WMM_PARAM_SERVICE_INTERVAL];
-	tSpec.max_service_interval =
+	tspec.max_service_interval =
 		params[HDD_WLAN_WMM_PARAM_MAX_SERVICE_INTERVAL];
-	tSpec.suspension_interval =
+	tspec.suspension_interval =
 		params[HDD_WLAN_WMM_PARAM_SUSPENSION_INTERVAL];
-	tSpec.inactivity_interval =
+	tspec.inactivity_interval =
 		params[HDD_WLAN_WMM_PARAM_INACTIVITY_INTERVAL];
 
-	tSpec.ts_info.burst_size_defn =
+	tspec.ts_info.burst_size_defn =
 		params[HDD_WLAN_WMM_PARAM_BURST_SIZE_DEFN];
 
 	/* validate the ts info ack policy */
 	switch (params[HDD_WLAN_WMM_PARAM_ACK_POLICY]) {
 	case TS_INFO_ACK_POLICY_NORMAL_ACK:
-		tSpec.ts_info.ack_policy = SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
+		tspec.ts_info.ack_policy = SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		break;
 
 	case TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
-		tSpec.ts_info.ack_policy =
+		tspec.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK;
 		break;
 
@@ -8439,7 +8439,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		return 0;
 	}
 
-	*wmm_status = hdd_wmm_addts(adapter, handle, &tSpec);
+	*wmm_status = hdd_wmm_addts(adapter, handle, &tspec);
 	hdd_exit();
 	return 0;
 }
