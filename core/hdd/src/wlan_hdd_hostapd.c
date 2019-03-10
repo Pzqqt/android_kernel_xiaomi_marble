@@ -4901,7 +4901,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
 	struct sme_config_params *sme_config;
-	bool MFPCapable = false;
+	bool mfp_capable = false;
 	bool MFPRequired = false;
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
@@ -5259,7 +5259,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					     &rsn_encrypt_type,
 					     &mc_rsn_encrypt_type,
 					     &config->akm_list,
-					     &MFPCapable,
+					     &mfp_capable,
 					     &MFPRequired,
 					     config->RSNWPAReqIE[1] + 2,
 					     config->RSNWPAReqIE);
@@ -5312,7 +5312,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					 &rsn_encrypt_type,
 					 &mc_rsn_encrypt_type,
 					 &config->akm_list,
-					 &MFPCapable, &MFPRequired,
+					 &mfp_capable, &MFPRequired,
 					 config->RSNWPAReqIE[1] + 2,
 					 config->RSNWPAReqIE);
 
@@ -5538,7 +5538,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	config->obssProtEnabled = ap_obss_prot;
 
 #ifdef WLAN_FEATURE_11W
-	config->mfpCapable = MFPCapable;
+	config->mfpCapable = mfp_capable;
 	config->mfpRequired = MFPRequired;
 	hdd_debug("Soft AP MFP capable %d, MFP required %d",
 	       config->mfpCapable, config->mfpRequired);
