@@ -5997,7 +5997,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		break;
 	case WE_NEIGHBOR_REPORT_REQUEST:
 	{
-		tRrmNeighborReq neighborReq;
+		tRrmNeighborReq request;
 		tRrmNeighborRspCallbackInfo callback;
 		bool rrm_enabled = false;
 
@@ -6005,18 +6005,18 @@ static int __iw_setchar_getnone(struct net_device *dev,
 					       &rrm_enabled);
 
 		if (rrm_enabled) {
-			neighborReq.neighbor_report_offload = false;
-			neighborReq.no_ssid =
+			request.neighbor_report_offload = false;
+			request.no_ssid =
 				(s_priv_data.length - 1) ? false : true;
 			hdd_debug("Neighbor Request ssid present %d",
-				  neighborReq.no_ssid);
-			if (!neighborReq.no_ssid) {
-				neighborReq.ssid.length =
+				  request.no_ssid);
+			if (!request.no_ssid) {
+				request.ssid.length =
 					(s_priv_data.length - 1) >
 					32 ? 32 : (s_priv_data.length - 1);
-				qdf_mem_copy(neighborReq.ssid.ssId,
+				qdf_mem_copy(request.ssid.ssId,
 					     str_arg,
-					     neighborReq.ssid.length);
+					     request.ssid.length);
 			}
 
 			/*
@@ -6031,7 +6031,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 			if (hdd_ctx->config->is_11k_offload_supported &&
 			    neighbor_report_req_support) {
 				hdd_debug("Neighbor report offloaded to FW");
-				neighborReq.neighbor_report_offload = true;
+				request.neighbor_report_offload = true;
 			}
 
 			callback.neighborRspCallback = NULL;
@@ -6040,7 +6040,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 			sme_neighbor_report_request(
 					hdd_ctx->mac_handle,
 					adapter->vdev_id,
-					&neighborReq,
+					&request,
 					&callback);
 		} else {
 			hdd_err("Ignoring neighbor request as RRM not enabled");
