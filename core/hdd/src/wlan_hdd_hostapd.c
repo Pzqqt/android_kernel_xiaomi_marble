@@ -2691,7 +2691,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 				uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	uint32_t ret;
-	uint8_t *pRsnIe;
+	uint8_t *rsn_ie;
 	uint16_t RSNIeLen, i;
 	tDot11fIERSN dot11RSNIE = {0};
 	tDot11fIEWPA dot11WPAIE = {0};
@@ -2713,11 +2713,11 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 			return QDF_STATUS_E_FAILURE;
 		}
 		/* Skip past the EID byte and length byte */
-		pRsnIe = gen_ie + 2;
+		rsn_ie = gen_ie + 2;
 		RSNIeLen = gen_ie_len - 2;
 		/* Unpack the RSN IE */
 		memset(&dot11RSNIE, 0, sizeof(tDot11fIERSN));
-		ret = sme_unpack_rsn_ie(mac_handle, pRsnIe, RSNIeLen,
+		ret = sme_unpack_rsn_ie(mac_handle, rsn_ie, RSNIeLen,
 					&dot11RSNIE, false);
 		if (DOT11F_FAILED(ret)) {
 			hdd_err("unpack failed, ret: 0x%x", ret);
@@ -2754,12 +2754,12 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 			return QDF_STATUS_E_FAILURE;
 		}
 		/* Skip past the EID byte and length byte and 4 byte WiFi OUI */
-		pRsnIe = gen_ie + 2 + 4;
+		rsn_ie = gen_ie + 2 + 4;
 		RSNIeLen = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
 		memset(&dot11WPAIE, 0, sizeof(tDot11fIEWPA));
 		ret = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
-					   pRsnIe, RSNIeLen,
+					   rsn_ie, RSNIeLen,
 					   &dot11WPAIE, false);
 		if (DOT11F_FAILED(ret)) {
 			hdd_err("unpack failed, ret: 0x%x", ret);
