@@ -2687,7 +2687,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 				eCsrEncryptionType *mc_encrypt_type,
 				tCsrAuthList *akm_list,
 				bool *mfp_capable,
-				bool *pMFPRequired,
+				bool *mfp_required,
 				uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	uint32_t ret;
@@ -2746,7 +2746,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 								 gp_cipher_suite);
 		/* Set the PMKSA ID Cache for this interface */
 		*mfp_capable = 0 != (dot11_rsn_ie.RSN_Cap[0] & 0x80);
-		*pMFPRequired = 0 != (dot11_rsn_ie.RSN_Cap[0] & 0x40);
+		*mfp_required = 0 != (dot11_rsn_ie.RSN_Cap[0] & 0x40);
 	} else if (gen_ie[0] == DOT11F_EID_WPA) {
 		/* Validity checks */
 		if ((gen_ie_len < DOT11F_IE_WPA_MIN_LEN) ||
@@ -2788,7 +2788,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 multicast_cipher);
 		*mfp_capable = false;
-		*pMFPRequired = false;
+		*mfp_required = false;
 	} else {
 		hdd_err("gen_ie[0]: %d", gen_ie[0]);
 		return QDF_STATUS_E_FAILURE;
