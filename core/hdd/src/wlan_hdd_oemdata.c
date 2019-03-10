@@ -146,28 +146,24 @@ int iw_get_oem_data_cap(struct net_device *dev,
 			struct iw_request_info *info,
 			union iwreq_data *wrqu, char *extra)
 {
-	int status;
-	struct oem_data_cap oemDataCap = { {0} };
-	struct oem_data_cap *pHddOemDataCap;
-	struct hdd_adapter *adapter = (netdev_priv(dev));
-	struct hdd_context *pHddContext;
-	int ret;
+	struct oem_data_cap *oem_data_cap = (void *)extra;
+	struct hdd_adapter *adapter = netdev_priv(dev);
+	struct hdd_context *hdd_ctx;
+	int errno;
 
 	hdd_enter();
 
-	pHddContext = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(pHddContext);
-	if (0 != ret)
-		return ret;
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	status = populate_oem_data_cap(adapter, &oemDataCap);
-	if (0 != status) {
+	qdf_mem_zero(oem_data_cap, sizeof(*oem_data_cap));
+	errno = populate_oem_data_cap(adapter, oem_data_cap);
+	if (errno) {
 		hdd_err("Failed to populate oem data capabilities");
-		return status;
+		return errno;
 	}
-
-	pHddOemDataCap = (struct oem_data_cap *) (extra);
-	*pHddOemDataCap = oemDataCap;
 
 	hdd_exit();
 	return 0;
