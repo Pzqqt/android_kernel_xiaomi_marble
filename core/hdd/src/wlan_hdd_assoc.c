@@ -2287,7 +2287,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	u8 *pFTAssocRsp = NULL;
 	uint8_t *rsp_rsn_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint8_t *assoc_req_ies = qdf_mem_malloc(IW_GENERIC_IE_MAX);
-	uint32_t rspRsnLength = 0;
+	uint32_t rsp_rsn_lemgth = 0;
 	struct ieee80211_channel *chan;
 	uint8_t buf_ssid_ie[2 + SIR_MAC_SSID_EID_MAX]; /* 2 bytes-EID and len */
 	uint8_t *buf_ptr, ssid_ie_len;
@@ -2349,7 +2349,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
-	rspRsnLength = len;
+	rsp_rsn_lemgth = len;
 	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
 	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
@@ -2401,7 +2401,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
 	hdd_send_roamed_ind(dev, bss, final_req_ie,
 			    (ssid_ie_len + reqRsnLength), rsp_rsn_ie,
-			    rspRsnLength);
+			    rsp_rsn_lemgth);
 
 	qdf_mem_copy(assoc_req_ies,
 		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
@@ -2415,7 +2415,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	wlan_hdd_send_roam_auth_event(adapter, pCsrRoamInfo->bssid.bytes,
 			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
-			rsp_rsn_ie, rspRsnLength,
+			rsp_rsn_ie, rsp_rsn_lemgth,
 			pCsrRoamInfo);
 
 	hdd_update_hlp_info(dev, pCsrRoamInfo);
@@ -2962,7 +2962,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			unsigned int assocReqlen = 0;
 			struct ieee80211_channel *chan;
 			uint8_t rsp_rsn_ie[DOT11F_IE_RSN_MAX_LEN];
-			uint32_t rspRsnLength = DOT11F_IE_RSN_MAX_LEN;
+			uint32_t rsp_rsn_lemgth = DOT11F_IE_RSN_MAX_LEN;
 
 			/* add bss_id to cfg80211 data base */
 			bss =
@@ -3192,7 +3192,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 				sme_roam_get_wpa_rsn_rsp_ie(mac_handle,
 							    adapter->vdev_id,
-							    &rspRsnLength,
+							    &rsp_rsn_lemgth,
 							    rsp_rsn_ie);
 				if (!hddDisconInProgress) {
 					if (ft_carrier_on)
