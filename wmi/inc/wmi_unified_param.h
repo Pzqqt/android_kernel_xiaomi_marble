@@ -4806,6 +4806,11 @@ typedef enum {
 	wmi_wlm_stats_event_id,
 	wmi_peer_cfr_capture_event_id,
 	wmi_pdev_cold_boot_cal_event_id,
+	wmi_vdev_get_mws_coex_state_eventid,
+	wmi_vdev_get_mws_coex_dpwb_state_eventid,
+	wmi_vdev_get_mws_coex_tdm_state_eventid,
+	wmi_vdev_get_mws_coex_idrx_state_eventid,
+	wmi_vdev_get_mws_coex_antenna_sharing_state_eventid,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -7755,4 +7760,139 @@ typedef struct {
 	uint32_t chain_rssi[WMI_HOST_MAX_CHAINS];
 } wmi_cfr_peer_tx_event_param;
 
+/**
+ * struct mws_coex_state - Modem Wireless Subsystem(MWS) coex info
+ * @vdev_id : vdev id
+ * @coex_scheme_bitmap: LTE-WLAN coexistence scheme bitmap
+ * Indicates the final schemes applied for the currrent Coex scenario.
+ * Bit 0 - TDM policy
+ * Bit 1 - Forced TDM policy
+ * Bit 2 - Dynamic Power Back-off policy
+ * Bit 3 - Channel Avoidance policy
+ * Bit 4 - Static Power Back-off policy.
+ * @active_conflict_count : active conflict count
+ * @potential_conflict_count: Potential conflict count
+ * @chavd_group0_bitmap : Indicates the WLAN channels to be avoided in
+ * b/w WLAN CH-1 and WLAN CH-14
+ * @chavd_group1_bitmap : Indicates the WLAN channels to be avoided in
+ * WLAN CH-36 and WLAN CH-64
+ * @chavd_group2_bitmap : Indicates the WLAN channels to be avoided in
+ * b/w WLAN CH-100 and WLAN CH-140
+ * @chavd_group2_bitmap : Indicates the WLAN channels to be avoided in
+ * b/w WLAN CH-149 and WLAN CH-165
+ */
+struct mws_coex_state {
+	uint32_t vdev_id;
+	uint32_t coex_scheme_bitmap;
+	uint32_t active_conflict_count;
+	uint32_t potential_conflict_count;
+	uint32_t chavd_group0_bitmap;
+	uint32_t chavd_group1_bitmap;
+	uint32_t chavd_group2_bitmap;
+	uint32_t chavd_group3_bitmap;
+};
+
+/**
+ * struct hdd_mws_coex_dpwb_state - Modem Wireless Subsystem(MWS) coex DPWB info
+ * @vdev_id : vdev id
+ * @current_dpwb_state: Current state of the Dynamic Power Back-off SM
+ * @pnp1_value: Tx power to be applied in next Dynamic Power Back-off cycle
+ * @lte_dutycycle: Indicates the duty cycle of current LTE frame
+ * @sinr_wlan_on: LTE SINR value in dB, when WLAN is ON
+ * @sinr_wlan_off: LTE SINR value in dB, when WLAN is OFF
+ * @bler_count: LTE blocks with error for the current block err report.
+ * @block_count: Number of LTE blocks considered for bler count report.
+ * @wlan_rssi_level: WLAN RSSI level
+ * @wlan_rssi: WLAN RSSI value in dBm considered in DP backoff algo
+ * @is_tdm_running: Indicates whether any TDM policy triggered
+ */
+struct mws_coex_dpwb_state {
+	uint32_t vdev_id;
+	int32_t  current_dpwb_state;
+	int32_t  pnp1_value;
+	uint32_t lte_dutycycle;
+	int32_t  sinr_wlan_on;
+	int32_t  sinr_wlan_off;
+	uint32_t bler_count;
+	uint32_t block_count;
+	uint32_t wlan_rssi_level;
+	int32_t  wlan_rssi;
+	uint32_t is_tdm_running;
+};
+
+/**
+ * struct mws_coex_tdm_state - Modem Wireless Subsystem(MWS) coex TDM state info
+ * @vdev_id: vdev id
+ * @tdm_policy_bitmap: Time Division Multiplexing (TDM) LTE-Coex Policy type.
+ * @tdm_sf_bitmap: TDM LTE/WLAN sub-frame bitmap.
+ */
+struct mws_coex_tdm_state {
+	uint32_t vdev_id;
+	uint32_t tdm_policy_bitmap;
+	uint32_t tdm_sf_bitmap;
+};
+
+/**
+ * struct mws_coex_idrx_state - Modem Wireless Subsystem(MWS) coex IDRX state
+ * @vdev_id: vdev id
+ * @sub0_techid: SUB0 LTE-coex tech.
+ * @sub0_policy: SUB0 mitigation policy.
+ * @sub0_is_link_critical: Set if SUB0 is in link critical state.
+ * @sub0_static_power: LTE SUB0 imposed static power applied
+ * to WLAN due to LTE-WLAN coex.
+ * @sub0_rssi: LTE SUB0 RSSI value in dBm.
+ * @sub1_techid: SUB1 LTE-coex tech.
+ * @sub1_policy: SUB1 mitigation policy.
+ * @sub1_is_link_critical: Set if SUB1 is in link critical state.
+ * @sub1_static_power: LTE SUB1 imposed static power applied
+ * to WLAN due to LTE-WLAN coex.
+ * @sub1_rssi: LTE SUB1 RSSI value in dBm.
+ */
+struct mws_coex_idrx_state {
+	uint32_t vdev_id;
+	uint32_t sub0_techid;
+	uint32_t sub0_policy;
+	uint32_t sub0_is_link_critical;
+	int32_t  sub0_static_power;
+	int32_t  sub0_rssi;
+	uint32_t sub1_techid;
+	uint32_t sub1_policy;
+	uint32_t sub1_is_link_critical;
+	int32_t  sub1_static_power;
+	int32_t  sub1_rssi;
+};
+
+/**
+ * struct mws_antenna_sharing_info - MWS Antenna sharing Info
+ * @vdev_id: vdev id
+ * @coex_flags: BDF values of Coex flags
+ * @coex_config: BDF values of Coex Antenna sharing config
+ * @tx_chain_mask: Tx Chain mask value
+ * @rx_chain_mask: Rx Chain mask value
+ * @rx_nss: Currently active Rx Spatial streams
+ * @force_mrc: Forced MRC policy type
+ * @rssi_type: RSSI value considered for MRC
+ * @chain0_rssi: RSSI value measured at Chain-0 in dBm
+ * @chain1_rssi: RSSI value measured at Chain-1 in dBm
+ * @combined_rssi: RSSI value of two chains combined in dBm
+ * @imbalance: Absolute imbalance between two Rx chains in dB
+ * @mrc_threshold: RSSI threshold defined for the above imbalance value in dBm
+ * @grant_duration: Antenna grant duration to WLAN, in milliseconds
+ */
+struct mws_antenna_sharing_info {
+	uint32_t vdev_id;
+	uint32_t coex_flags;
+	uint32_t coex_config;
+	uint32_t tx_chain_mask;
+	uint32_t rx_chain_mask;
+	uint32_t rx_nss;
+	uint32_t force_mrc;
+	uint32_t rssi_type;
+	int32_t  chain0_rssi;
+	int32_t  chain1_rssi;
+	int32_t  combined_rssi;
+	uint32_t imbalance;
+	int32_t  mrc_threshold;
+	uint32_t grant_duration;
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */

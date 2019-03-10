@@ -11172,6 +11172,51 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t *wmi_handle, void *evt_buf,
 }
 #endif /* WLAN_CFR_ENABLE */
 
+#ifdef WLAN_MWS_INFO_DEBUGFS
+/**
+ * send_mws_coex_status_req_cmd_tlv() - send coex cmd to fw
+ *
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @cmd_id: Coex command id
+ *
+ * Send WMI_VDEV_GET_MWS_COEX_INFO_CMDID to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
+						   uint32_t vdev_id,
+						   uint32_t cmd_id)
+{
+	wmi_buf_t buf;
+	wmi_vdev_get_mws_coex_info_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_get_mws_coex_info_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_get_mws_coex_info_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		      (wmi_vdev_get_mws_coex_info_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->cmd_id  = cmd_id;
+	wmi_mtrace(WMI_VDEV_GET_MWS_COEX_INFO_CMDID, vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_GET_MWS_COEX_INFO_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send set param command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -11435,7 +11480,9 @@ struct wmi_ops tlv_ops =  {
 		send_peer_cfr_capture_cmd_tlv,
 	.extract_cfr_peer_tx_event_param = extract_cfr_peer_tx_event_param_tlv,
 #endif /* WLAN_CFR_ENABLE */
-
+#ifdef WLAN_MWS_INFO_DEBUGFS
+	.send_mws_coex_status_req_cmd = send_mws_coex_status_req_cmd_tlv,
+#endif
 };
 
 /**
@@ -11749,6 +11796,18 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_peer_cfr_capture_event_id] = WMI_PEER_CFR_CAPTURE_EVENTID;
 	event_ids[wmi_pdev_cold_boot_cal_event_id] =
 					    WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID;
+#ifdef WLAN_MWS_INFO_DEBUGFS
+	event_ids[wmi_vdev_get_mws_coex_state_eventid] =
+			WMI_VDEV_GET_MWS_COEX_STATE_EVENTID;
+	event_ids[wmi_vdev_get_mws_coex_dpwb_state_eventid] =
+			WMI_VDEV_GET_MWS_COEX_DPWB_STATE_EVENTID;
+	event_ids[wmi_vdev_get_mws_coex_tdm_state_eventid] =
+			WMI_VDEV_GET_MWS_COEX_TDM_STATE_EVENTID;
+	event_ids[wmi_vdev_get_mws_coex_idrx_state_eventid] =
+			WMI_VDEV_GET_MWS_COEX_IDRX_STATE_EVENTID;
+	event_ids[wmi_vdev_get_mws_coex_antenna_sharing_state_eventid] =
+			WMI_VDEV_GET_MWS_COEX_ANTENNA_SHARING_STATE_EVENTID;
+#endif
 }
 
 /**

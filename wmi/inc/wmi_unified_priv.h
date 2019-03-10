@@ -1925,10 +1925,11 @@ QDF_STATUS (*send_peer_cfr_capture_cmd)(wmi_unified_t wmi_handle,
 #ifdef WMI_AP_SUPPORT
 QDF_STATUS (*send_vdev_pcp_tid_map_cmd)(wmi_unified_t wmi_handle,
 					struct vap_pcp_tid_map_params *param);
-
 QDF_STATUS (*send_vdev_tidmap_prec_cmd)(wmi_unified_t wmi_handle,
 					struct vap_tidmap_prec_params *param);
 #endif
+QDF_STATUS (*send_mws_coex_status_req_cmd)(wmi_unified_t wmi_handle,
+					   uint32_t vdev_id, uint32_t cmd_id);
 };
 
 /* Forward declartion for psoc*/

@@ -1785,6 +1785,19 @@ enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
 
 #endif
 
+/**
+ * wmi_unified_send_mws_coex_req_cmd() - WMI function to send coex req cmd
+ * @wmi_hdl: wmi handle
+ * @vdev_id: Vdev Id
+ * @cmd_id: Coex cmd for which info is required
+ *
+ * Send wmi coex command to fw.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_send_mws_coex_req_cmd(struct wmi_unified *wmi_handle,
+					     uint32_t vdev_id, uint32_t cmd_id);
+
 #ifdef WLAN_CFR_ENABLE
 /**
  * wmi_unified_send_peer_cfr_capture_cmd() - WMI function to start CFR capture
