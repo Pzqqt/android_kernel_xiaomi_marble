@@ -4897,7 +4897,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 	int32_t i;
 	uint32_t ii;
-	struct hdd_config *iniConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
 	struct sme_config_params *sme_config;
@@ -4978,7 +4977,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto free;
 	}
 
-	iniConfig = hdd_ctx->config;
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	clear_bit(ACS_PENDING, &adapter->event_flags);
