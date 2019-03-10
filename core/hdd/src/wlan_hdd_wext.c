@@ -8294,7 +8294,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	hdd_wlan_wmm_status_e *pStatus = (hdd_wlan_wmm_status_e *) extra;
+	hdd_wlan_wmm_status_e *wmm_status = (hdd_wlan_wmm_status_e *) extra;
 	int params[HDD_WLAN_WMM_PARAM_COUNT];
 	struct sme_qos_wmmtspecinfo tSpec;
 	uint32_t handle;
@@ -8322,7 +8322,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 
 	/* we must be associated in order to add a tspec */
 	if (eConnectionState_Associated != sta_ctx->conn_info.conn_state) {
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	/* since we are defined to be a "get" ioctl, and since the number */
@@ -8332,13 +8332,13 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 
 	/* helper function to get iwreq_data with compat handling. */
 	if (hdd_priv_get_data(&s_priv_data, wrqu)) {
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	/* make sure all params are correctly passed to function */
 	if ((NULL == s_priv_data.pointer) ||
 	    (HDD_WLAN_WMM_PARAM_COUNT != s_priv_data.length)) {
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	/* from user space ourselves */
@@ -8353,13 +8353,13 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	handle = params[HDD_WLAN_WMM_PARAM_HANDLE];
 	if (HDD_WMM_HANDLE_IMPLICIT == handle) {
 		/* that one is reserved */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	/* validate the TID */
 	if (params[HDD_WLAN_WMM_PARAM_TID] > 7) {
 		/* out of range */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	tSpec.ts_info.tid = params[HDD_WLAN_WMM_PARAM_TID];
@@ -8380,7 +8380,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 
 	default:
 		/* unknown */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 
@@ -8389,7 +8389,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	/* validate the user priority */
 	if (params[HDD_WLAN_WMM_PARAM_USER_PRIORITY] >= SME_QOS_WMM_UP_MAX) {
 		/* out of range */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 	tSpec.ts_info.up = params[HDD_WLAN_WMM_PARAM_USER_PRIORITY];
@@ -8435,11 +8435,11 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 
 	default:
 		/* unknown */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 
-	*pStatus = hdd_wmm_addts(adapter, handle, &tSpec);
+	*wmm_status = hdd_wmm_addts(adapter, handle, &tSpec);
 	hdd_exit();
 	return 0;
 }
@@ -8477,7 +8477,7 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	int *params = (int *)extra;
-	hdd_wlan_wmm_status_e *pStatus = (hdd_wlan_wmm_status_e *) extra;
+	hdd_wlan_wmm_status_e *wmm_status = (hdd_wlan_wmm_status_e *) extra;
 	uint32_t handle;
 	int ret;
 
@@ -8507,11 +8507,11 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	handle = params[HDD_WLAN_WMM_PARAM_HANDLE];
 	if (HDD_WMM_HANDLE_IMPLICIT == handle) {
 		/* that one is reserved */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 
-	*pStatus = hdd_wmm_delts(adapter, handle);
+	*wmm_status = hdd_wmm_delts(adapter, handle);
 	hdd_exit();
 	return 0;
 }
@@ -8549,7 +8549,7 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	int *params = (int *)extra;
-	hdd_wlan_wmm_status_e *pStatus = (hdd_wlan_wmm_status_e *) extra;
+	hdd_wlan_wmm_status_e *wmm_status = (hdd_wlan_wmm_status_e *) extra;
 	uint32_t handle;
 	int ret;
 
@@ -8572,11 +8572,11 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	handle = params[HDD_WLAN_WMM_PARAM_HANDLE];
 	if (HDD_WMM_HANDLE_IMPLICIT == handle) {
 		/* that one is reserved */
-		*pStatus = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
+		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
 	}
 
-	*pStatus = hdd_wmm_checkts(adapter, handle);
+	*wmm_status = hdd_wmm_checkts(adapter, handle);
 	hdd_exit();
 	return 0;
 }
