@@ -1699,7 +1699,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_hostapd_state *hostapd_state;
 	struct net_device *dev;
-	eSapHddEvent sapEvent;
+	eSapHddEvent event_id;
 	union iwreq_data wrqu;
 	uint8_t *we_custom_event_generic = NULL;
 	int we_event = 0;
@@ -1753,7 +1753,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sapEvent = sap_event->sapHddEventCode;
+	event_id = sap_event->sapHddEventCode;
 	memset(&wrqu, '\0', sizeof(wrqu));
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1775,7 +1775,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	sta_id = sap_event->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
 
-	switch (sapEvent) {
+	switch (event_id) {
 	case eSAP_START_BSS_EVENT:
 		hdd_debug("BSS status = %s, channel = %u, bc sta Id = %d",
 		       sap_event->sapevt.sapStartBssCompleteEvent.
@@ -2672,7 +2672,7 @@ stopbss:
 		 * not be touched since they are now subject to being deleted
 		 * by another thread
 		 */
-		if (eSAP_STOP_BSS_EVENT == sapEvent) {
+		if (eSAP_STOP_BSS_EVENT == event_id) {
 			qdf_event_set(&hostapd_state->qdf_stop_bss_event);
 			hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
 		}
