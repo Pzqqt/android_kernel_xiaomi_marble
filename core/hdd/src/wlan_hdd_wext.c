@@ -8715,7 +8715,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct host_offload_req *pRequest = (struct host_offload_req *) extra;
-	struct sir_host_offload_req offloadRequest;
+	struct sir_host_offload_req offload_request;
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -8783,17 +8783,17 @@ static int __iw_set_host_offload(struct net_device *dev,
 		}
 	}
 
-	qdf_mem_zero(&offloadRequest, sizeof(offloadRequest));
-	offloadRequest.offloadType = pRequest->offloadType;
-	offloadRequest.enableOrDisable = pRequest->enableOrDisable;
-	qdf_mem_copy(&offloadRequest.params, &pRequest->params,
+	qdf_mem_zero(&offload_request, sizeof(offload_request));
+	offload_request.offloadType = pRequest->offloadType;
+	offload_request.enableOrDisable = pRequest->enableOrDisable;
+	qdf_mem_copy(&offload_request.params, &pRequest->params,
 		     sizeof(pRequest->params));
-	qdf_mem_copy(&offloadRequest.bssid, &pRequest->bssId.bytes,
+	qdf_mem_copy(&offload_request.bssid, &pRequest->bssId.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_host_offload(hdd_ctx->mac_handle,
-				 adapter->vdev_id, &offloadRequest)) {
+				 adapter->vdev_id, &offload_request)) {
 		hdd_err("Failure to execute host offload request");
 		return -EINVAL;
 	}
