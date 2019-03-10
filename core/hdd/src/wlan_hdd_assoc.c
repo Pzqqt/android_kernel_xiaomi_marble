@@ -5225,7 +5225,7 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter)
  * @adapter: pointer to adapter
  * @bssid: pointer to mac address
  * @encrypt_type: pointer to encryption type
- * @mcEncryptType: pointer to multicast encryption type
+ * @mc_encrypt_type: pointer to multicast encryption type
  * @auth_type: pointer to auth type
  *
  * Return: 0 on success, error number otherwise
@@ -5233,7 +5233,7 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 u8 *bssid,
 				 eCsrEncryptionType *encrypt_type,
-				 eCsrEncryptionType *mcEncryptType,
+				 eCsrEncryptionType *mc_encrypt_type,
 				 eCsrAuthType *auth_type,
 #ifdef WLAN_FEATURE_11W
 				 uint8_t *pMfpRequired, uint8_t *pMfpCapable,
@@ -5294,7 +5294,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 			hdd_translate_rsn_to_csr_encryption_type(
 					dot11_rsn_ie.pwise_cipher_suites[0]);
 		/* dot11_rsn_ie.gp_cipher_suite_count */
-		*mcEncryptType =
+		*mc_encrypt_type =
 			hdd_translate_rsn_to_csr_encryption_type(
 					dot11_rsn_ie.gp_cipher_suite);
 #ifdef WLAN_FEATURE_11W
@@ -5341,7 +5341,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 			hdd_translate_wpa_to_csr_encryption_type(
 					dot11_wpa_ie.unicast_ciphers[0]);
 		/* dot11_wpa_ie.unicast_cipher_count */
-		*mcEncryptType =
+		*mc_encrypt_type =
 			hdd_translate_wpa_to_csr_encryption_type(
 					dot11_wpa_ie.multicast_cipher);
 	} else {

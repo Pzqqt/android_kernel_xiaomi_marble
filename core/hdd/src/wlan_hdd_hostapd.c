@@ -2684,7 +2684,7 @@ stopbss:
 
 static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 				eCsrEncryptionType *encrypt_type,
-				eCsrEncryptionType *mcEncryptType,
+				eCsrEncryptionType *mc_encrypt_type,
 				tCsrAuthList *akm_list,
 				bool *pMFPCapable,
 				bool *pMFPRequired,
@@ -2741,7 +2741,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 			hdd_translate_rsn_to_csr_encryption_type(dot11_rsn_ie.
 								 pwise_cipher_suites[0]);
 		/* dot11_rsn_ie.gp_cipher_suite_count */
-		*mcEncryptType =
+		*mc_encrypt_type =
 			hdd_translate_rsn_to_csr_encryption_type(dot11_rsn_ie.
 								 gp_cipher_suite);
 		/* Set the PMKSA ID Cache for this interface */
@@ -2784,7 +2784,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 unicast_ciphers[0]);
 		/* dot11_wpa_ie.unicast_cipher_count */
-		*mcEncryptType =
+		*mc_encrypt_type =
 			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 multicast_cipher);
 		*pMFPCapable = false;
