@@ -4888,8 +4888,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct ieee80211_mgmt mgmt;
 	const uint8_t *ie = NULL;
 	uint16_t capab_info, ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
-	eCsrEncryptionType RSNEncryptType;
-	eCsrEncryptionType mcRSNEncryptType;
+	eCsrEncryptionType rsn_encrypt_type;
+	eCsrEncryptionType mc_rsn_encrypt_type;
 	int status = QDF_STATUS_SUCCESS, ret;
 	int qdf_status = QDF_STATUS_SUCCESS;
 	tpWLAN_SAPEventCB sap_event_callback;
@@ -5256,7 +5256,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		status =
 			hdd_softap_unpack_ie(cds_get_context
 						     (QDF_MODULE_ID_SME),
-					     &RSNEncryptType, &mcRSNEncryptType,
+					     &rsn_encrypt_type,
+					     &mc_rsn_encrypt_type,
 					     &config->akm_list,
 					     &MFPCapable,
 					     &MFPRequired,
@@ -5267,12 +5268,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			/* Now copy over all the security attributes you have
 			 * parsed out. Use the cipher type in the RSN IE
 			 */
-			config->RSNEncryptType = RSNEncryptType;
-			config->mcRSNEncryptType = mcRSNEncryptType;
+			config->RSNEncryptType = rsn_encrypt_type;
+			config->mcRSNEncryptType = mc_rsn_encrypt_type;
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-			encryption_type = RSNEncryptType;
+			encryption_type = rsn_encrypt_type;
 			hdd_debug("CSR EncryptionType = %d mcEncryptionType = %d",
-				  RSNEncryptType, mcRSNEncryptType);
+				  rsn_encrypt_type, mc_rsn_encrypt_type);
 			hdd_debug("CSR AKM Suites %d",
 				  config->akm_list.numEntries);
 			for (ii = 0; ii < config->akm_list.numEntries;
@@ -5308,8 +5309,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				       config->RSNWPAReqIELength);
 			status = hdd_softap_unpack_ie
 					(cds_get_context(QDF_MODULE_ID_SME),
-					 &RSNEncryptType,
-					 &mcRSNEncryptType,
+					 &rsn_encrypt_type,
+					 &mc_rsn_encrypt_type,
 					 &config->akm_list,
 					 &MFPCapable, &MFPRequired,
 					 config->RSNWPAReqIE[1] + 2,
@@ -5320,12 +5321,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				 * you have parsed out. Use the cipher type
 				 * in the RSN IE
 				 */
-				config->RSNEncryptType = RSNEncryptType;
-				config->mcRSNEncryptType = mcRSNEncryptType;
+				config->RSNEncryptType = rsn_encrypt_type;
+				config->mcRSNEncryptType = mc_rsn_encrypt_type;
 				(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-				encryption_type = RSNEncryptType;
+				encryption_type = rsn_encrypt_type;
 				hdd_debug("CSR EncryptionType = %d mcEncryptionType = %d",
-					  RSNEncryptType, mcRSNEncryptType);
+					  rsn_encrypt_type,
+					  mc_rsn_encrypt_type);
 				hdd_debug("CSR AKM Suites %d",
 					  config->akm_list.numEntries);
 				for (ii = 0; ii < config->akm_list.numEntries;

@@ -5395,8 +5395,8 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	struct csr_roam_profile *roam_profile;
 	uint8_t *security_ie;
 	uint32_t status = 0;
-	eCsrEncryptionType RSNEncryptType;
-	eCsrEncryptionType mcRSNEncryptType;
+	eCsrEncryptionType rsn_encrypt_type;
+	eCsrEncryptionType mc_rsn_encrypt_type;
 	struct hdd_context *hdd_ctx;
 #ifdef WLAN_FEATURE_11W
 	uint8_t RSNMfpRequired = 0;
@@ -5420,8 +5420,8 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	/* The actual processing may eventually be more extensive than this. */
 	/* Right now, just consume any PMKIDs that are  sent in by the app. */
 	status = hdd_process_genie(adapter, bssid,
-				   &RSNEncryptType,
-				   &mcRSNEncryptType, rsn_auth_type,
+				   &rsn_encrypt_type,
+				   &mc_rsn_encrypt_type, rsn_auth_type,
 #ifdef WLAN_FEATURE_11W
 				   &RSNMfpRequired, &RSNMfpCapable,
 #endif
@@ -5438,15 +5438,15 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 		/* Use the cipher type in the RSN IE */
 		roam_profile->EncryptionType.encryptionType[0] =
-			RSNEncryptType;
+			rsn_encrypt_type;
 		roam_profile->mcEncryptionType.encryptionType[0] =
-			mcRSNEncryptType;
+			mc_rsn_encrypt_type;
 
 		if ((QDF_IBSS_MODE == adapter->device_mode) &&
-		    ((eCSR_ENCRYPT_TYPE_AES == mcRSNEncryptType) ||
-		     (eCSR_ENCRYPT_TYPE_AES_GCMP == mcRSNEncryptType) ||
-		     (eCSR_ENCRYPT_TYPE_AES_GCMP_256 == mcRSNEncryptType) ||
-		     (eCSR_ENCRYPT_TYPE_TKIP == mcRSNEncryptType))) {
+		    ((eCSR_ENCRYPT_TYPE_AES == mc_rsn_encrypt_type) ||
+		     (eCSR_ENCRYPT_TYPE_AES_GCMP == mc_rsn_encrypt_type) ||
+		     (eCSR_ENCRYPT_TYPE_AES_GCMP_256 == mc_rsn_encrypt_type) ||
+		     (eCSR_ENCRYPT_TYPE_TKIP == mc_rsn_encrypt_type))) {
 			/*
 			 * For wpa none supplicant sends the WPA IE with unicast
 			 * cipher as eCSR_ENCRYPT_TYPE_NONE ,where as the
@@ -5457,7 +5457,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 
 			/* Set the unicast cipher same as multicast cipher */
 			roam_profile->EncryptionType.encryptionType[0]
-				= mcRSNEncryptType;
+				= mc_rsn_encrypt_type;
 		}
 #ifdef WLAN_FEATURE_11W
 		hdd_debug("RSNMfpRequired = %d, RSNMfpCapable = %d",
@@ -5466,7 +5466,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 		roam_profile->MFPCapable = RSNMfpCapable;
 #endif
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
-			 *rsn_auth_type, RSNEncryptType, mcRSNEncryptType);
+			 *rsn_auth_type, rsn_encrypt_type, mc_rsn_encrypt_type);
 	}
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	if (QDF_STATUS_SUCCESS != wlan_set_vdev_crypto_prarams_from_ie(
