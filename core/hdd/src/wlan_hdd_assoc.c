@@ -5244,7 +5244,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	tDot11fIERSN dot11RSNIE = {0};
 	tDot11fIEWPA dot11WPAIE = {0};
 	uint8_t *rsn_ie;
-	uint16_t RSNIeLen;
+	uint16_t rsn_ie_len;
 	uint32_t parse_status;
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	uint16_t rsn_cap = 0;
@@ -5268,9 +5268,9 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		}
 		/* Skip past the EID byte and length byte */
 		rsn_ie = gen_ie + 2;
-		RSNIeLen = gen_ie_len - 2;
+		rsn_ie_len = gen_ie_len - 2;
 		/* Unpack the RSN IE */
-		parse_status = sme_unpack_rsn_ie(mac_handle, rsn_ie, RSNIeLen,
+		parse_status = sme_unpack_rsn_ie(mac_handle, rsn_ie, rsn_ie_len,
 						 &dot11RSNIE, false);
 		if (!DOT11F_SUCCEEDED(parse_status)) {
 			hdd_err("Invalid RSN IE: parse status %d",
@@ -5316,10 +5316,10 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		}
 		/* Skip past the EID and length byte - and four byte WiFi OUI */
 		rsn_ie = gen_ie + 2 + 4;
-		RSNIeLen = gen_ie_len - (2 + 4);
+		rsn_ie_len = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
 		parse_status = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
-						    rsn_ie, RSNIeLen,
+						    rsn_ie, rsn_ie_len,
 						    &dot11WPAIE, false);
 		if (!DOT11F_SUCCEEDED(parse_status)) {
 			hdd_err("Invalid WPA IE: parse status %d",
