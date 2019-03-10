@@ -16006,7 +16006,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roam_id = INVALID_ROAM_ID;
 	struct csr_roam_profile *roam_profile;
-	eCsrAuthType RSNAuthType;
+	eCsrAuthType rsn_auth_type;
 	struct sme_config_params *sme_config;
 	uint8_t channel = 0;
 	mac_handle_t mac_handle;
@@ -16148,8 +16148,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		       operatingChannel);
 
 		if (hdd_sta_ctx->wpa_versions) {
-			hdd_set_genie_to_csr(adapter, &RSNAuthType);
-			hdd_set_csr_auth_type(adapter, RSNAuthType);
+			hdd_set_genie_to_csr(adapter, &rsn_auth_type);
+			hdd_set_csr_auth_type(adapter, rsn_auth_type);
 		}
 #ifdef FEATURE_WLAN_WAPI
 		if (adapter->wapi_info.wapi_mode) {

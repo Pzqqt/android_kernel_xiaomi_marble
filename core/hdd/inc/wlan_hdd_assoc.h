@@ -305,22 +305,22 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
- * @RSNAuthType: pointer to auth type
+ * @rsn_auth_type: pointer to auth type
  *
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
-			 eCsrAuthType *RSNAuthType);
+			 eCsrAuthType *rsn_auth_type);
 
 /**
  * hdd_set_csr_auth_type() - set csr auth type
  * @adapter: pointer to adapter
- * @RSNAuthType: auth type
+ * @rsn_auth_type: auth type
  *
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
-			  eCsrAuthType RSNAuthType);
+			  eCsrAuthType rsn_auth_type);
 
 #ifdef FEATURE_WLAN_TDLS
 /**
