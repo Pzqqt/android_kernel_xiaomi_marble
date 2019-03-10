@@ -5242,7 +5242,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 {
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	tDot11fIERSN dot11RSNIE = {0};
-	tDot11fIEWPA dot11WPAIE = {0};
+	tDot11fIEWPA dot11_wpa_ie = {0};
 	uint8_t *rsn_ie;
 	uint16_t rsn_ie_len;
 	uint32_t parse_status;
@@ -5254,7 +5254,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	 * Clear struct of tDot11fIERSN and tDot11fIEWPA specifically
 	 * setting present flag to 0.
 	 */
-	memset(&dot11WPAIE, 0, sizeof(tDot11fIEWPA));
+	memset(&dot11_wpa_ie, 0, sizeof(tDot11fIEWPA));
 	memset(&dot11RSNIE, 0, sizeof(tDot11fIERSN));
 
 	/* Type check */
@@ -5320,7 +5320,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		/* Unpack the WPA IE */
 		parse_status = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
 						    rsn_ie, rsn_ie_len,
-						    &dot11WPAIE, false);
+						    &dot11_wpa_ie, false);
 		if (!DOT11F_SUCCEEDED(parse_status)) {
 			hdd_err("Invalid WPA IE: parse status %d",
 				parse_status);
@@ -5328,22 +5328,22 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		}
 		/* Copy out the encryption and authentication types */
 		hdd_debug("WPA unicast cipher suite count: %d",
-			 dot11WPAIE.unicast_cipher_count);
+			 dot11_wpa_ie.unicast_cipher_count);
 		hdd_debug("WPA authentication suite count: %d",
-			 dot11WPAIE.auth_suite_count);
-		/* dot11WPAIE.auth_suite_count */
+			 dot11_wpa_ie.auth_suite_count);
+		/* dot11_wpa_ie.auth_suite_count */
 		/* Just translate the FIRST one */
 		*pAuthType =
 			hdd_translate_wpa_to_csr_auth_type(
-					dot11WPAIE.auth_suites[0]);
-		/* dot11WPAIE.unicast_cipher_count */
+					dot11_wpa_ie.auth_suites[0]);
+		/* dot11_wpa_ie.unicast_cipher_count */
 		*pEncryptType =
 			hdd_translate_wpa_to_csr_encryption_type(
-					dot11WPAIE.unicast_ciphers[0]);
-		/* dot11WPAIE.unicast_cipher_count */
+					dot11_wpa_ie.unicast_ciphers[0]);
+		/* dot11_wpa_ie.unicast_cipher_count */
 		*mcEncryptType =
 			hdd_translate_wpa_to_csr_encryption_type(
-					dot11WPAIE.multicast_cipher);
+					dot11_wpa_ie.multicast_cipher);
 	} else {
 		hdd_warn("gen_ie[0]: %d", gen_ie[0]);
 		return -EINVAL;

@@ -18573,12 +18573,12 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 			sta_ctx->wpa_versions = NL80211_WPA_VERSION_2;
 			encryptionType = eCSR_ENCRYPT_TYPE_AES;
 		} else if (hdd_is_wpaie_present(params->ie, params->ie_len)) {
-			tDot11fIEWPA dot11WPAIE;
+			tDot11fIEWPA dot11_wpa_ie;
 			mac_handle_t mac_handle =
 				hdd_adapter_get_mac_handle(adapter);
 			const u8 *ie;
 
-			memset(&dot11WPAIE, 0, sizeof(dot11WPAIE));
+			memset(&dot11_wpa_ie, 0, sizeof(dot11_wpa_ie));
 			ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_WPA,
 						params->ie, params->ie_len);
 			if (NULL != ie) {
@@ -18595,7 +18595,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 				ret = dot11f_unpack_ie_wpa(
 						MAC_CONTEXT(mac_handle),
 						(uint8_t *)&ie[2 + 4],
-						ie[1] - 4, &dot11WPAIE, false);
+						ie[1] - 4, &dot11_wpa_ie, false);
 				if (DOT11F_FAILED(ret)) {
 					hdd_err("unpack failed ret: 0x%x", ret);
 					return -EINVAL;
@@ -18607,7 +18607,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 				 */
 				encryptionType =
 					hdd_translate_wpa_to_csr_encryption_type
-						(dot11WPAIE.multicast_cipher);
+						(dot11_wpa_ie.multicast_cipher);
 			}
 		}
 

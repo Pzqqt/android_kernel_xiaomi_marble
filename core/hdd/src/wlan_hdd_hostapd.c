@@ -2694,7 +2694,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 	uint8_t *rsn_ie;
 	uint16_t rsn_ie_len, i;
 	tDot11fIERSN dot11RSNIE = {0};
-	tDot11fIEWPA dot11WPAIE = {0};
+	tDot11fIEWPA dot11_wpa_ie = {0};
 
 	if (NULL == mac_handle) {
 		hdd_err("Error haHandle returned NULL");
@@ -2757,35 +2757,35 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		rsn_ie = gen_ie + 2 + 4;
 		rsn_ie_len = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
-		memset(&dot11WPAIE, 0, sizeof(tDot11fIEWPA));
+		memset(&dot11_wpa_ie, 0, sizeof(tDot11fIEWPA));
 		ret = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
 					   rsn_ie, rsn_ie_len,
-					   &dot11WPAIE, false);
+					   &dot11_wpa_ie, false);
 		if (DOT11F_FAILED(ret)) {
 			hdd_err("unpack failed, ret: 0x%x", ret);
 			return -EINVAL;
 		}
 		/* Copy out the encryption and authentication types */
 		hdd_debug("WPA unicast cipher suite count: %d",
-		       dot11WPAIE.unicast_cipher_count);
+		       dot11_wpa_ie.unicast_cipher_count);
 		hdd_debug("WPA authentication suite count: %d",
-		       dot11WPAIE.auth_suite_count);
-		/* dot11WPAIE.auth_suite_count */
+		       dot11_wpa_ie.auth_suite_count);
+		/* dot11_wpa_ie.auth_suite_count */
 		/*
 		 * Translate akms in akm suite
 		 */
-		for (i = 0; i < dot11WPAIE.auth_suite_count; i++)
+		for (i = 0; i < dot11_wpa_ie.auth_suite_count; i++)
 			akm_list->authType[i] =
 				hdd_translate_wpa_to_csr_auth_type(
-						     dot11WPAIE.auth_suites[i]);
-		akm_list->numEntries = dot11WPAIE.auth_suite_count;
-		/* dot11WPAIE.unicast_cipher_count */
+						     dot11_wpa_ie.auth_suites[i]);
+		akm_list->numEntries = dot11_wpa_ie.auth_suite_count;
+		/* dot11_wpa_ie.unicast_cipher_count */
 		*pEncryptType =
-			hdd_translate_wpa_to_csr_encryption_type(dot11WPAIE.
+			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 unicast_ciphers[0]);
-		/* dot11WPAIE.unicast_cipher_count */
+		/* dot11_wpa_ie.unicast_cipher_count */
 		*mcEncryptType =
-			hdd_translate_wpa_to_csr_encryption_type(dot11WPAIE.
+			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 multicast_cipher);
 		*pMFPCapable = false;
 		*pMFPRequired = false;
