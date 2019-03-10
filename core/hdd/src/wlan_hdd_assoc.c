@@ -1050,7 +1050,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
  * hdd_send_ft_assoc_response() - send fast transition assoc response
  * @dev: pointer to net device
  * @adapter: pointer to adapter
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  *
  * Send the 11R key information to the supplicant. Only then can the supplicant
  * generate the PMK-R1. (BTW, the ESE supplicant also needs the Assoc Resp IEs
@@ -1065,21 +1065,21 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 static void
 hdd_send_ft_assoc_response(struct net_device *dev,
 			   struct hdd_adapter *adapter,
-			   struct csr_roam_info *pCsrRoamInfo)
+			   struct csr_roam_info *roam_info)
 {
 	union iwreq_data wrqu;
 	char *buff;
 	unsigned int len = 0;
 	u8 *pFTAssocRsp = NULL;
 
-	if (pCsrRoamInfo->nAssocRspLength == 0) {
+	if (roam_info->nAssocRspLength == 0) {
 		hdd_debug("assoc rsp length is 0");
 		return;
 	}
 
 	pFTAssocRsp =
-		(u8 *) (pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength +
-			pCsrRoamInfo->nAssocReqLength);
+		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
+			roam_info->nAssocReqLength);
 	if (pFTAssocRsp == NULL) {
 		hdd_debug("AssocReq or AssocRsp is NULL");
 		return;
@@ -1096,7 +1096,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 		return;
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth. */
-	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
+	len = roam_info->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	wrqu.data.length = len;
 	memcpy(buff, pFTAssocRsp, len);
 	wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
@@ -1216,7 +1216,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
  * hdd_send_new_ap_channel_info() - send new ap channel info
  * @dev: pointer to net device
  * @adapter: pointer to adapter
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  *
  * Send the ESE required "new AP Channel info" to the supplicant.
  * (This keeps the supplicant "up to date" on the current channel.)
@@ -1228,10 +1228,10 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 static void
 hdd_send_new_ap_channel_info(struct net_device *dev,
 			     struct hdd_adapter *adapter,
-			     struct csr_roam_info *pCsrRoamInfo)
+			     struct csr_roam_info *roam_info)
 {
 	union iwreq_data wrqu;
-	struct bss_description *descriptor = pCsrRoamInfo->pBssDesc;
+	struct bss_description *descriptor = roam_info->pBssDesc;
 
 	if (descriptor == NULL) {
 		hdd_err("bss descriptor is null");
@@ -1255,13 +1255,13 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 /**
  * hdd_send_update_beacon_ies_event() - send update beacons ie event
  * @adapter: pointer to adapter
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  *
  * Return: none
  */
 static void
 hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
-				 struct csr_roam_info *pCsrRoamInfo)
+				 struct csr_roam_info *roam_info)
 {
 	union iwreq_data wrqu;
 	u8 *beacon_ies;
@@ -1271,11 +1271,11 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 
 	memset(&wrqu, '\0', sizeof(wrqu));
 
-	if (0 == pCsrRoamInfo->nBeaconLength) {
+	if (0 == roam_info->nBeaconLength) {
 		hdd_debug("beacon frame length is 0");
 		return;
 	}
-	beacon_ies = (u8 *) (pCsrRoamInfo->pbFrames + BEACON_FRAME_IES_OFFSET);
+	beacon_ies = (u8 *) (roam_info->pbFrames + BEACON_FRAME_IES_OFFSET);
 	if (beacon_ies == NULL) {
 		hdd_warn("Beacon IEs is NULL");
 		return;
@@ -1285,7 +1285,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 		   (unsigned int)beacon_ies[0],
 		   (unsigned int)beacon_ies[1]);
 	hdd_debug("Beacon IEs length = %d",
-		   pCsrRoamInfo->nBeaconLength - BEACON_FRAME_IES_OFFSET);
+		   roam_info->nBeaconLength - BEACON_FRAME_IES_OFFSET);
 
 	/* We need to send the IEs to the supplicant. */
 	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
@@ -1295,7 +1295,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 	strLen = strlcpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
 	currentLen = strLen + 1;
 
-	totalIeLen = pCsrRoamInfo->nBeaconLength - BEACON_FRAME_IES_OFFSET;
+	totalIeLen = roam_info->nBeaconLength - BEACON_FRAME_IES_OFFSET;
 	do {
 		/*
 		 * If the beacon size exceeds max CUSTOM event size, break it
@@ -1326,12 +1326,12 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 /**
  * hdd_send_association_event() - send association event
  * @dev: pointer to net device
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  *
  * Return: none
  */
 static void hdd_send_association_event(struct net_device *dev,
-				       struct csr_roam_info *pCsrRoamInfo)
+				       struct csr_roam_info *roam_info)
 {
 	int ret;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1348,8 +1348,8 @@ static void hdd_send_association_event(struct net_device *dev,
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 	we_event = SIOCGIWAP;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (NULL != pCsrRoamInfo)
-		if (pCsrRoamInfo->roamSynchInProgress) {
+	if (NULL != roam_info)
+		if (roam_info->roamSynchInProgress) {
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(adapter->vdev_id,
 						 true, false,
@@ -1359,19 +1359,19 @@ static void hdd_send_association_event(struct net_device *dev,
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
 		struct oem_channel_info chan_info = {0};
 
-		if (!pCsrRoamInfo || !pCsrRoamInfo->pBssDesc) {
-			hdd_warn("STA in associated state but pCsrRoamInfo is null");
+		if (!roam_info || !roam_info->pBssDesc) {
+			hdd_warn("STA in associated state but roam_info is null");
 			return;
 		}
 
-		if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
+		if (!hdd_is_roam_sync_in_progress(roam_info)) {
 			policy_mgr_incr_active_session(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
 			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
 		}
-		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
-		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
+		memcpy(wrqu.ap_addr.sa_data, roam_info->pBssDesc->bssId,
+		       sizeof(roam_info->pBssDesc->bssId));
 
 		ucfg_p2p_status_connect(adapter->vdev);
 
@@ -1379,7 +1379,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			MAC_ADDRESS_STR "\n",
 			MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
 			MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));
-		hdd_send_update_beacon_ies_event(adapter, pCsrRoamInfo);
+		hdd_send_update_beacon_ies_event(adapter, roam_info);
 
 		/*
 		 * Send IWEVASSOCRESPIE Event if WLAN_FEATURE_CIQ_METRICS
@@ -1402,21 +1402,21 @@ static void hdd_send_association_event(struct net_device *dev,
 			eCSR_AUTH_TYPE_CCKM_WPA)
 #endif
 		    ) {
-			hdd_send_ft_assoc_response(dev, adapter, pCsrRoamInfo);
+			hdd_send_ft_assoc_response(dev, adapter, roam_info);
 		}
 		qdf_copy_macaddr(&peer_macaddr,
 				 &sta_ctx->conn_info.bssid);
-		chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
-		chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
-		chan_info.info = pCsrRoamInfo->chan_info.info;
+		chan_info.chan_id = roam_info->chan_info.chan_id;
+		chan_info.mhz = roam_info->chan_info.mhz;
+		chan_info.info = roam_info->chan_info.info;
 		chan_info.band_center_freq1 =
-			pCsrRoamInfo->chan_info.band_center_freq1;
+			roam_info->chan_info.band_center_freq1;
 		chan_info.band_center_freq2 =
-			pCsrRoamInfo->chan_info.band_center_freq2;
+			roam_info->chan_info.band_center_freq2;
 		chan_info.reg_info_1 =
-			pCsrRoamInfo->chan_info.reg_info_1;
+			roam_info->chan_info.reg_info_1;
 		chan_info.reg_info_2 =
-			pCsrRoamInfo->chan_info.reg_info_2;
+			roam_info->chan_info.reg_info_2;
 
 		ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
 						     WLAN_ASSOC_STATE);
@@ -1427,15 +1427,15 @@ static void hdd_send_association_event(struct net_device *dev,
 		/* send peer status indication to oem app */
 		hdd_send_peer_status_ind_to_app(&peer_macaddr,
 						ePeerConnected,
-						pCsrRoamInfo->timingMeasCap,
+						roam_info->timingMeasCap,
 						adapter->vdev_id, &chan_info,
 						adapter->device_mode);
 
 #ifdef FEATURE_WLAN_TDLS
 		/* Update tdls module about connection event */
 		hdd_notify_sta_connect(adapter->vdev_id,
-				       pCsrRoamInfo->tdls_chan_swit_prohibited,
-				       pCsrRoamInfo->tdls_prohibited,
+				       roam_info->tdls_chan_swit_prohibited,
+				       roam_info->tdls_prohibited,
 				       adapter->vdev);
 #endif
 
@@ -1518,7 +1518,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			    (roam_profile->AuthType.authType[0] ==
 				eCSR_AUTH_TYPE_CCKM_WPA))
 				hdd_send_new_ap_channel_info(dev, adapter,
-							     pCsrRoamInfo);
+							     roam_info);
 		}
 #endif
 	}
@@ -1527,7 +1527,7 @@ static void hdd_send_association_event(struct net_device *dev,
 /**
  * hdd_conn_remove_connect_info() - remove connection info
  * @sta_ctx: pointer to global HDD station context
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  *
  * Return: none
  */
@@ -2273,14 +2273,14 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
  * hdd_send_re_assoc_event() - send reassoc event
  * @dev: pointer to net device
  * @adapter: pointer to adapter
- * @pCsrRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  * @reqRsnIe: pointer to RSN Information element
  * @reqRsnLength: length of RSN IE
  *
  * Return: none
  */
 static void hdd_send_re_assoc_event(struct net_device *dev,
-	struct hdd_adapter *adapter, struct csr_roam_info *pCsrRoamInfo,
+	struct hdd_adapter *adapter, struct csr_roam_info *roam_info,
 	uint8_t *reqRsnIe, uint32_t reqRsnLength)
 {
 	unsigned int len = 0;
@@ -2310,19 +2310,19 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		goto done;
 	}
 
-	if (!pCsrRoamInfo || !pCsrRoamInfo->pBssDesc) {
+	if (!roam_info || !roam_info->pBssDesc) {
 		hdd_err("Invalid CSR roam info");
 		goto done;
 	}
 
-	if (pCsrRoamInfo->nAssocRspLength == 0) {
+	if (roam_info->nAssocRspLength == 0) {
 		hdd_err("Assoc rsp length is 0");
 		goto done;
 	}
 
 	pFTAssocRsp =
-		(u8 *) (pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength +
-			pCsrRoamInfo->nAssocReqLength);
+		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
+			roam_info->nAssocReqLength);
 	if (pFTAssocRsp == NULL)
 		goto done;
 
@@ -2340,7 +2340,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * active session count should still be the same and hence upon
 	 * successful reassoc decrement the active session count here.
 	 */
-	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
+	if (!hdd_is_roam_sync_in_progress(roam_info)) {
 		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
@@ -2348,12 +2348,12 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	}
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
-	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
+	len = roam_info->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	rsp_rsn_lemgth = len;
 	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
 	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
-	chan_no = pCsrRoamInfo->pBssDesc->channelId;
+	chan_no = roam_info->pBssDesc->channelId;
 	if (chan_no <= 14)
 		freq = ieee80211_channel_to_frequency(chan_no,
 							NL80211_BAND_2GHZ);
@@ -2366,7 +2366,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 				     &roam_profile);
 
 	bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy,
-				    chan, pCsrRoamInfo->bssid.bytes,
+				    chan, roam_info->bssid.bytes,
 				    &roam_profile.SSID.ssId[0],
 				    roam_profile.SSID.length);
 
@@ -2404,21 +2404,21 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			    rsp_rsn_lemgth);
 
 	qdf_mem_copy(assoc_req_ies,
-		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
-		pCsrRoamInfo->nAssocReqLength);
+		(u8 *)roam_info->pbFrames + roam_info->nBeaconLength,
+		roam_info->nAssocReqLength);
 
-	hdd_save_gtk_params(adapter, pCsrRoamInfo, true);
+	hdd_save_gtk_params(adapter, roam_info, true);
 
 	hdd_debug("ReAssoc Req IE dump");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
+		assoc_req_ies, roam_info->nAssocReqLength);
 
-	wlan_hdd_send_roam_auth_event(adapter, pCsrRoamInfo->bssid.bytes,
-			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
+	wlan_hdd_send_roam_auth_event(adapter, roam_info->bssid.bytes,
+			assoc_req_ies, roam_info->nAssocReqLength,
 			rsp_rsn_ie, rsp_rsn_lemgth,
-			pCsrRoamInfo);
+			roam_info);
 
-	hdd_update_hlp_info(dev, pCsrRoamInfo);
+	hdd_update_hlp_info(dev, roam_info);
 
 done:
 	sme_roam_free_connect_profile(&roam_profile);
