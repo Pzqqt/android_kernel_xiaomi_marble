@@ -180,7 +180,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
+	tAniMsgHdr *ani_hdr;
 	uint8_t *buf;
 	uint8_t *numInterfaces;
 	uint8_t *deviceMode;
@@ -202,8 +202,8 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_APP_REG_RSP;
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_APP_REG_RSP;
 
 	/* Fill message body:
 	 *   First byte will be number of interfaces, followed by
@@ -211,7 +211,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	 *     - one byte for device mode
 	 *     - one byte for vdev id
 	 */
-	buf = (char *)((char *)aniHdr + sizeof(tAniMsgHdr));
+	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
 	numInterfaces = buf++;
 	*numInterfaces = 0;
 
@@ -227,14 +227,14 @@ static void send_oem_reg_rsp_nlink_msg(void)
 			  *vdevId);
 	}
 
-	aniHdr->length =
+	ani_hdr->length =
 		sizeof(uint8_t) + (*numInterfaces) * 2 * sizeof(uint8_t);
-	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
+	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
 
-	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
+	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_debug("sending App Reg Response length: %d to pid: %d",
-		   aniHdr->length, p_hdd_ctx->oem_pid);
+		   ani_hdr->length, p_hdd_ctx->oem_pid);
 
 	(void)nl_srv_ucast_oem(skb, p_hdd_ctx->oem_pid, MSG_DONTWAIT);
 }
@@ -252,7 +252,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
+	tAniMsgHdr *ani_hdr;
 	uint8_t *buf;
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
@@ -264,16 +264,16 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_OEM_ERROR;
-	aniHdr->length = sizeof(uint8_t);
-	nlh->nlmsg_len = NLMSG_LENGTH(sizeof(tAniMsgHdr) + aniHdr->length);
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_OEM_ERROR;
+	ani_hdr->length = sizeof(uint8_t);
+	nlh->nlmsg_len = NLMSG_LENGTH(sizeof(tAniMsgHdr) + ani_hdr->length);
 
 	/* message body will contain one byte of error code */
-	buf = (char *)((char *)aniHdr + sizeof(tAniMsgHdr));
+	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
 	*buf = error_code;
 
-	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + aniHdr->length));
+	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + ani_hdr->length));
 
 	hdd_debug("sending oem error response to pid: %d", app_pid);
 
@@ -444,7 +444,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
-	tAniMsgHdr *aniHdr;
+	tAniMsgHdr *ani_hdr;
 	struct hdd_channel_info *pHddChanInfo;
 	struct hdd_channel_info hddChanInfo;
 	uint8_t chanId;
@@ -471,15 +471,15 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 	nlh->nlmsg_flags = 0;
 	nlh->nlmsg_seq = 0;
 	nlh->nlmsg_type = WLAN_NL_MSG_OEM;
-	aniHdr = NLMSG_DATA(nlh);
-	aniHdr->type = ANI_MSG_CHANNEL_INFO_RSP;
+	ani_hdr = NLMSG_DATA(nlh);
+	ani_hdr->type = ANI_MSG_CHANNEL_INFO_RSP;
 
-	aniHdr->length =
+	ani_hdr->length =
 		sizeof(uint8_t) + numOfChannels * sizeof(*pHddChanInfo);
-	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
+	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
 
 	/* First byte of message body will have num of channels */
-	buf = (char *)((char *)aniHdr + sizeof(tAniMsgHdr));
+	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
 	*buf++ = numOfChannels;
 
 	/* Next follows channel info struct for each channel id.
@@ -531,7 +531,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			     sizeof(*pHddChanInfo));
 	}
 
-	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
+	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_debug("sending channel info resp for num channels (%d) to pid (%d)",
 		   numOfChannels, p_hdd_ctx->oem_pid);
