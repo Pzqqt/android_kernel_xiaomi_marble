@@ -2683,7 +2683,7 @@ stopbss:
 }
 
 static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
-				eCsrEncryptionType *pEncryptType,
+				eCsrEncryptionType *encrypt_type,
 				eCsrEncryptionType *mcEncryptType,
 				tCsrAuthList *akm_list,
 				bool *pMFPCapable,
@@ -2737,7 +2737,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 						       dot11_rsn_ie.akm_suite[i]);
 		akm_list->numEntries = dot11_rsn_ie.akm_suite_cnt;
 		/* dot11_rsn_ie.pwise_cipher_suite_count */
-		*pEncryptType =
+		*encrypt_type =
 			hdd_translate_rsn_to_csr_encryption_type(dot11_rsn_ie.
 								 pwise_cipher_suites[0]);
 		/* dot11_rsn_ie.gp_cipher_suite_count */
@@ -2780,7 +2780,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 						     dot11_wpa_ie.auth_suites[i]);
 		akm_list->numEntries = dot11_wpa_ie.auth_suite_count;
 		/* dot11_wpa_ie.unicast_cipher_count */
-		*pEncryptType =
+		*encrypt_type =
 			hdd_translate_wpa_to_csr_encryption_type(dot11_wpa_ie.
 								 unicast_ciphers[0]);
 		/* dot11_wpa_ie.unicast_cipher_count */
