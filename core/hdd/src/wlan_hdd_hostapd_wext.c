@@ -1467,7 +1467,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	uint8_t *value = (uint8_t *) extra;
-	uint8_t pPeerStaMac[QDF_MAC_ADDR_SIZE];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	int listType, cmd, i;
 	int ret;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -1485,18 +1485,18 @@ int __iw_softap_modify_acl(struct net_device *dev,
 		return ret;
 
 	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
-		pPeerStaMac[i] = *(value + i);
+		peer_mac[i] = *(value + i);
 
 	listType = (int)(*(value + i));
 	i++;
 	cmd = (int)(*(value + i));
 
 	hdd_debug("Modify ACL mac:" MAC_ADDRESS_STR " type: %d cmd: %d",
-	       MAC_ADDR_ARRAY(pPeerStaMac), listType, cmd);
+	       MAC_ADDR_ARRAY(peer_mac), listType, cmd);
 
 	qdf_status = wlansap_modify_acl(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-		pPeerStaMac, (eSapACLType) listType, (eSapACLCmdType) cmd);
+		peer_mac, (eSapACLType) listType, (eSapACLCmdType) cmd);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Modify ACL failed");
 		ret = -EIO;
