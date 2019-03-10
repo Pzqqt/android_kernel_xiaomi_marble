@@ -2693,7 +2693,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 	uint32_t ret;
 	uint8_t *rsn_ie;
 	uint16_t rsn_ie_len, i;
-	tDot11fIERSN dot11RSNIE = {0};
+	tDot11fIERSN dot11_rsn_ie = {0};
 	tDot11fIEWPA dot11_wpa_ie = {0};
 
 	if (NULL == mac_handle) {
@@ -2716,37 +2716,37 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		rsn_ie = gen_ie + 2;
 		rsn_ie_len = gen_ie_len - 2;
 		/* Unpack the RSN IE */
-		memset(&dot11RSNIE, 0, sizeof(tDot11fIERSN));
+		memset(&dot11_rsn_ie, 0, sizeof(tDot11fIERSN));
 		ret = sme_unpack_rsn_ie(mac_handle, rsn_ie, rsn_ie_len,
-					&dot11RSNIE, false);
+					&dot11_rsn_ie, false);
 		if (DOT11F_FAILED(ret)) {
 			hdd_err("unpack failed, ret: 0x%x", ret);
 			return -EINVAL;
 		}
 		/* Copy out the encryption and authentication types */
 		hdd_debug("pairwise cipher suite count: %d",
-		       dot11RSNIE.pwise_cipher_suite_count);
+		       dot11_rsn_ie.pwise_cipher_suite_count);
 		hdd_debug("authentication suite count: %d",
-		       dot11RSNIE.akm_suite_cnt);
+		       dot11_rsn_ie.akm_suite_cnt);
 		/*
 		 * Translate akms in akm suite
 		 */
-		for (i = 0; i < dot11RSNIE.akm_suite_cnt; i++)
+		for (i = 0; i < dot11_rsn_ie.akm_suite_cnt; i++)
 			akm_list->authType[i] =
 				hdd_translate_rsn_to_csr_auth_type(
-						       dot11RSNIE.akm_suite[i]);
-		akm_list->numEntries = dot11RSNIE.akm_suite_cnt;
-		/* dot11RSNIE.pwise_cipher_suite_count */
+						       dot11_rsn_ie.akm_suite[i]);
+		akm_list->numEntries = dot11_rsn_ie.akm_suite_cnt;
+		/* dot11_rsn_ie.pwise_cipher_suite_count */
 		*pEncryptType =
-			hdd_translate_rsn_to_csr_encryption_type(dot11RSNIE.
+			hdd_translate_rsn_to_csr_encryption_type(dot11_rsn_ie.
 								 pwise_cipher_suites[0]);
-		/* dot11RSNIE.gp_cipher_suite_count */
+		/* dot11_rsn_ie.gp_cipher_suite_count */
 		*mcEncryptType =
-			hdd_translate_rsn_to_csr_encryption_type(dot11RSNIE.
+			hdd_translate_rsn_to_csr_encryption_type(dot11_rsn_ie.
 								 gp_cipher_suite);
 		/* Set the PMKSA ID Cache for this interface */
-		*pMFPCapable = 0 != (dot11RSNIE.RSN_Cap[0] & 0x80);
-		*pMFPRequired = 0 != (dot11RSNIE.RSN_Cap[0] & 0x40);
+		*pMFPCapable = 0 != (dot11_rsn_ie.RSN_Cap[0] & 0x80);
+		*pMFPRequired = 0 != (dot11_rsn_ie.RSN_Cap[0] & 0x40);
 	} else if (gen_ie[0] == DOT11F_EID_WPA) {
 		/* Validity checks */
 		if ((gen_ie_len < DOT11F_IE_WPA_MIN_LEN) ||
