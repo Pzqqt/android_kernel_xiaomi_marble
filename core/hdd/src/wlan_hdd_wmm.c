@@ -2010,7 +2010,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 			 struct csr_roam_info *roam_info,
 			 eCsrRoamBssType bss_type)
 {
-	uint8_t uapsdMask;
+	uint8_t uapsd_mask;
 	QDF_STATUS status;
 	uint32_t srv_value = 0;
 	uint32_t sus_value = 0;
@@ -2038,15 +2038,15 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		return QDF_STATUS_SUCCESS;
 	}
 	/* get the negotiated UAPSD Mask */
-	uapsdMask =
+	uapsd_mask =
 		roam_info->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
 
-	hdd_debug("U-APSD mask is 0x%02x", (int)uapsdMask);
+	hdd_debug("U-APSD mask is 0x%02x", (int)uapsd_mask);
 
 	ucfg_mlme_get_tl_delayed_trgr_frm_int(hdd_ctx->psoc,
 					      &delayed_trgr_frm_int);
 
-	if (uapsdMask & HDD_AC_VO) {
+	if (uapsd_mask & HDD_AC_VO) {
 		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
 							     &srv_value);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -2071,7 +2071,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
-	if (uapsdMask & HDD_AC_VI) {
+	if (uapsd_mask & HDD_AC_VI) {
 		status = ucfg_mlme_get_wmm_uapsd_vi_srv_intv(
 			hdd_ctx->psoc, &srv_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -2096,7 +2096,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
-	if (uapsdMask & HDD_AC_BK) {
+	if (uapsd_mask & HDD_AC_BK) {
 		status = ucfg_mlme_get_wmm_uapsd_bk_srv_intv(hdd_ctx->psoc,
 							     &srv_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -2121,7 +2121,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
-	if (uapsdMask & HDD_AC_BE) {
+	if (uapsd_mask & HDD_AC_BE) {
 		status = ucfg_mlme_get_wmm_uapsd_be_srv_intv(hdd_ctx->psoc,
 							     &srv_value);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
