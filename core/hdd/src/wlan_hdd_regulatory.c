@@ -750,7 +750,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	enum band_info current_band;
-	enum band_info connectedBand;
+	enum band_info connected_band;
 	long lrc;
 	uint8_t band_capability;
 
@@ -813,7 +813,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 				adapter->vdev_id, INVALID_SCAN_ID, false);
-		connectedBand = hdd_conn_get_connected_band(
+		connected_band = hdd_conn_get_connected_band(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
 
 		/* Handling is done only for STA and P2P */
@@ -822,7 +822,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 		     (adapter->device_mode == QDF_P2P_CLIENT_MODE)) &&
 		    (hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)))
-			&& (connectedBand != band)) {
+			&& (connected_band != band)) {
 			status = QDF_STATUS_SUCCESS;
 
 			/* STA already connected on current
