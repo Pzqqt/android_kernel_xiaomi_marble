@@ -7243,7 +7243,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		bool ch_bond24 = false, ch_bond5g = false;
 		struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 		eCsrPhyMode phymode;
-		enum band_info currBand;
+		enum band_info current_band;
 		struct sme_config_params *sme_config;
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
@@ -7266,7 +7266,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		phymode = sme_get_phy_mode(mac_handle);
 		if ((QDF_STATUS_SUCCESS !=
-		     sme_get_freq_band(mac_handle, &currBand))) {
+		     sme_get_freq_band(mac_handle, &current_band))) {
 			hdd_err("Failed to get current band config");
 			return -EIO;
 		}
@@ -7277,14 +7277,14 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			break;
 		case eCSR_DOT11_MODE_11n:
 		case eCSR_DOT11_MODE_11n_ONLY:
-			if (currBand == BAND_2G) {
+			if (current_band == BAND_2G) {
 				if (ch_bond24)
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NGHT40");
 				else
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NGHT20");
-			} else if (currBand == BAND_5G) {
+			} else if (current_band == BAND_5G) {
 				if (ch_bond5g)
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NAHT40");

@@ -749,7 +749,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	enum band_info band;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
-	enum band_info currBand;
+	enum band_info current_band;
 	enum band_info connectedBand;
 	long lrc;
 	uint8_t band_capability;
@@ -791,13 +791,13 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 		band = band_capability;
 	}
 
-	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &currBand) !=
+	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &current_band) !=
 	    QDF_STATUS_SUCCESS) {
 		hdd_debug("Failed to get current band config");
 		return -EIO;
 	}
 
-	if (currBand == band)
+	if (current_band == band)
 		return 0;
 
 	hdd_ctx->curr_band = band;
@@ -807,7 +807,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	 * and change the band capability
 	 */
 	hdd_debug("Current band value = %u, new setting %u ",
-			currBand, band);
+			current_band, band);
 
 	mac_handle = hdd_ctx->mac_handle;
 	hdd_for_each_adapter(hdd_ctx, adapter) {
@@ -832,7 +832,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 			hdd_debug("STA (Device mode %s(%d)) connected in band %u, Changing band to %u, Issuing Disconnect",
 				  qdf_opmode_str(adapter->device_mode),
-				  adapter->device_mode, currBand, band);
+				  adapter->device_mode, current_band, band);
 			INIT_COMPLETION(adapter->disconnect_comp_var);
 
 			status = sme_roam_disconnect(
