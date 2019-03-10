@@ -8714,7 +8714,8 @@ static int __iw_set_host_offload(struct net_device *dev,
 				 union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct host_offload_req *pRequest = (struct host_offload_req *) extra;
+	struct host_offload_req *user_request =
+					(struct host_offload_req *) extra;
 	struct sir_host_offload_req offload_request;
 	struct hdd_context *hdd_ctx;
 	int ret;
@@ -8736,10 +8737,10 @@ static int __iw_set_host_offload(struct net_device *dev,
 	}
 
 	/* Debug display of request components. */
-	switch (pRequest->offloadType) {
+	switch (user_request->offloadType) {
 	case WLAN_IPV4_ARP_REPLY_OFFLOAD:
 		hdd_debug("Host offload request: ARP reply");
-		switch (pRequest->enableOrDisable) {
+		switch (user_request->enableOrDisable) {
 		case WLAN_OFFLOAD_DISABLE:
 			hdd_debug("   disable");
 			break;
@@ -8748,47 +8749,30 @@ static int __iw_set_host_offload(struct net_device *dev,
 			/* fallthrough */
 		case WLAN_OFFLOAD_ENABLE:
 			hdd_debug("   ARP offload enable");
-			hdd_debug("   IP address: %d.%d.%d.%d",
-			       pRequest->params.hostIpv4Addr[0],
-			       pRequest->params.hostIpv4Addr[1],
-			       pRequest->params.hostIpv4Addr[2],
-			       pRequest->params.hostIpv4Addr[3]);
+			hdd_debug("   IP address: %pI4",
+				  user_request->params.hostIpv4Addr);
 		}
 		break;
 
 	case WLAN_IPV6_NEIGHBOR_DISCOVERY_OFFLOAD:
 		hdd_debug("Host offload request: neighbor discovery");
-		switch (pRequest->enableOrDisable) {
+		switch (user_request->enableOrDisable) {
 		case WLAN_OFFLOAD_DISABLE:
 			hdd_debug("   disable");
 			break;
 		case WLAN_OFFLOAD_ENABLE:
 			hdd_debug("   enable");
-			hdd_debug("   IP address: %x:%x:%x:%x:%x:%x:%x:%x",
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      2),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      4),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      6),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      8),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      10),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      12),
-			       *(uint16_t *) (pRequest->params.hostIpv6Addr +
-					      14));
+			hdd_debug("   IP address: %pI6c",
+				  user_request->params.hostIpv6Addr);
 		}
 	}
 
 	qdf_mem_zero(&offload_request, sizeof(offload_request));
-	offload_request.offloadType = pRequest->offloadType;
-	offload_request.enableOrDisable = pRequest->enableOrDisable;
-	qdf_mem_copy(&offload_request.params, &pRequest->params,
-		     sizeof(pRequest->params));
-	qdf_mem_copy(&offload_request.bssid, &pRequest->bssId.bytes,
+	offload_request.offloadType = user_request->offloadType;
+	offload_request.enableOrDisable = user_request->enableOrDisable;
+	qdf_mem_copy(&offload_request.params, &user_request->params,
+		     sizeof(user_request->params));
+	qdf_mem_copy(&offload_request.bssid, &user_request->bssId.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	if (QDF_STATUS_SUCCESS !=
