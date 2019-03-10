@@ -4090,12 +4090,43 @@ inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 #endif
 
 #ifdef WLAN_FEATURE_11W
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
+
+static void hdd_rx_unprot_disassoc(struct net_device *dev,
+				   const u8 *buf, size_t len)
+{
+	cfg80211_rx_unprot_mlme_mgmt(dev, buf, len);
+}
+
+static void hdd_rx_unprot_deauth(struct net_device *dev,
+				 const u8 *buf, size_t len)
+{
+	cfg80211_rx_unprot_mlme_mgmt(dev, buf, len);
+}
+
+#else
+
+static void hdd_rx_unprot_disassoc(struct net_device *dev,
+				   const u8 *buf, size_t len)
+{
+	cfg80211_send_unprot_disassoc(dev, buf, len);
+}
+
+static void hdd_rx_unprot_deauth(struct net_device *dev,
+				 const u8 *buf, size_t len)
+{
+	cfg80211_send_unprot_deauth(dev, buf, len);
+}
+
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)) */
+
 /**
  * hdd_indicate_unprot_mgmt_frame() - indicate unprotected management frame
- * @adapter:     pointer to the adapter
- * @nFrameLength: Length of the unprotected frame being passed
- * @pbFrames:     Pointer to the frame buffer
- * @frameType:    802.11 frame type
+ * @adapter: pointer to the adapter
+ * @frame_length: Length of the unprotected frame being passed
+ * @frame: Pointer to the frame buffer
+ * @frame_type: 802.11 frame type
  *
  * This function forwards the unprotected management frame to the supplicant.
  *
@@ -4103,71 +4134,49 @@ inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
  */
 static void
 hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter,
-			       uint32_t nFrameLength,
-			       uint8_t *pbFrames, uint8_t frameType)
+			       uint32_t frame_length,
+			       uint8_t *frame, uint8_t frame_type)
 {
-	uint8_t type = 0;
-	uint8_t subType = 0;
+	uint8_t type, subtype;
 
 	hdd_debug("Frame Type = %d Frame Length = %d",
-		 frameType, nFrameLength);
+		  frame_type, frame_length);
 
-	/* Sanity Checks */
-	if (NULL == adapter) {
-		hdd_err("adapter is NULL");
+	if (hdd_validate_adapter(adapter))
 		return;
-	}
 
-	if (NULL == adapter->dev) {
-		hdd_err("adapter->dev is NULL");
-		return;
-	}
-
-	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-		hdd_err("adapter has invalid magic");
-		return;
-	}
-
-	if (!nFrameLength) {
+	if (!frame_length) {
 		hdd_err("Frame Length is Invalid ZERO");
 		return;
 	}
 
-	if (NULL == pbFrames) {
-		hdd_err("pbFrames is NULL");
+	if (!frame) {
+		hdd_err("frame is NULL");
 		return;
 	}
 
-	type = WLAN_HDD_GET_TYPE_FRM_FC(pbFrames[0]);
-	subType = WLAN_HDD_GET_SUBTYPE_FRM_FC(pbFrames[0]);
-
-	/* Get adapter from Destination mac address of the frame */
-	if (type == SIR_MAC_MGMT_FRAME && subType == SIR_MAC_MGMT_DISASSOC) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-		cfg80211_rx_unprot_mlme_mgmt(adapter->dev, pbFrames,
-					     nFrameLength);
-#else
-		cfg80211_send_unprot_disassoc(adapter->dev, pbFrames,
-					      nFrameLength);
-#endif
-		adapter->hdd_stats.hdd_pmf_stats.num_unprot_disassoc_rx++;
-	} else if (type == SIR_MAC_MGMT_FRAME &&
-		   subType == SIR_MAC_MGMT_DEAUTH) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-		cfg80211_rx_unprot_mlme_mgmt(adapter->dev, pbFrames,
-					     nFrameLength);
-#else
-		cfg80211_send_unprot_deauth(adapter->dev, pbFrames,
-					    nFrameLength);
-#endif
-		adapter->hdd_stats.hdd_pmf_stats.num_unprot_deauth_rx++;
-	} else {
-		hdd_warn("Frame type %d and subtype %d are not valid",
-			type, subType);
+	type = WLAN_HDD_GET_TYPE_FRM_FC(frame[0]);
+	if (type != SIR_MAC_MGMT_FRAME) {
+		hdd_warn("Unexpected frame type %d", type);
 		return;
+	}
+
+	subtype = WLAN_HDD_GET_SUBTYPE_FRM_FC(frame[0]);
+	switch (subtype) {
+	case SIR_MAC_MGMT_DISASSOC:
+		hdd_rx_unprot_disassoc(adapter->dev, frame, frame_length);
+		adapter->hdd_stats.hdd_pmf_stats.num_unprot_disassoc_rx++;
+		break;
+	case SIR_MAC_MGMT_DEAUTH:
+		hdd_rx_unprot_deauth(adapter->dev, frame, frame_length);
+		adapter->hdd_stats.hdd_pmf_stats.num_unprot_deauth_rx++;
+		break;
+	default:
+		hdd_warn("Unexpected frame subtype %d", subtype);
+		break;
 	}
 }
-#endif
+#endif /* WLAN_FEATURE_11W */
 
 #ifdef FEATURE_WLAN_ESE
 /**
