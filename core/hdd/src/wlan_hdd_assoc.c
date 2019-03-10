@@ -2285,7 +2285,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 {
 	unsigned int len = 0;
 	u8 *pFTAssocRsp = NULL;
-	uint8_t *rspRsnIe = qdf_mem_malloc(IW_GENERIC_IE_MAX);
+	uint8_t *rsp_rsn_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint8_t *assoc_req_ies = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint32_t rspRsnLength = 0;
 	struct ieee80211_channel *chan;
@@ -2300,7 +2300,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	qdf_mem_zero(&roam_profile, sizeof(roam_profile));
 
-	if (!rspRsnIe) {
+	if (!rsp_rsn_ie) {
 		hdd_err("Unable to allocate RSN IE");
 		goto done;
 	}
@@ -2350,8 +2350,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	rspRsnLength = len;
-	qdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
-	qdf_mem_zero(rspRsnIe + len, IW_GENERIC_IE_MAX - len);
+	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
+	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
 	chan_no = pCsrRoamInfo->pBssDesc->channelId;
 	if (chan_no <= 14)
@@ -2393,14 +2393,14 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_copy(buf_ptr, buf_ssid_ie, ssid_ie_len);
 	buf_ptr += ssid_ie_len;
 	qdf_mem_copy(buf_ptr, reqRsnIe, reqRsnLength);
-	qdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
+	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
 	qdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
 	hdd_debug("Req RSN IE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
 	hdd_send_roamed_ind(dev, bss, final_req_ie,
-			    (ssid_ie_len + reqRsnLength), rspRsnIe,
+			    (ssid_ie_len + reqRsnLength), rsp_rsn_ie,
 			    rspRsnLength);
 
 	qdf_mem_copy(assoc_req_ies,
@@ -2415,7 +2415,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	wlan_hdd_send_roam_auth_event(adapter, pCsrRoamInfo->bssid.bytes,
 			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
-			rspRsnIe, rspRsnLength,
+			rsp_rsn_ie, rspRsnLength,
 			pCsrRoamInfo);
 
 	hdd_update_hlp_info(dev, pCsrRoamInfo);
@@ -2424,7 +2424,7 @@ done:
 	sme_roam_free_connect_profile(&roam_profile);
 	if (final_req_ie)
 		qdf_mem_free(final_req_ie);
-	qdf_mem_free(rspRsnIe);
+	qdf_mem_free(rsp_rsn_ie);
 	qdf_mem_free(assoc_req_ies);
 }
 
@@ -2961,7 +2961,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			u8 *pFTAssocReq = NULL;
 			unsigned int assocReqlen = 0;
 			struct ieee80211_channel *chan;
-			uint8_t rspRsnIe[DOT11F_IE_RSN_MAX_LEN];
+			uint8_t rsp_rsn_ie[DOT11F_IE_RSN_MAX_LEN];
 			uint32_t rspRsnLength = DOT11F_IE_RSN_MAX_LEN;
 
 			/* add bss_id to cfg80211 data base */
@@ -3193,7 +3193,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				sme_roam_get_wpa_rsn_rsp_ie(mac_handle,
 							    adapter->vdev_id,
 							    &rspRsnLength,
-							    rspRsnIe);
+							    rsp_rsn_ie);
 				if (!hddDisconInProgress) {
 					if (ft_carrier_on)
 						hdd_send_re_assoc_event(dev,
