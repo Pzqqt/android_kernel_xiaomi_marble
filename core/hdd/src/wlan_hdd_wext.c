@@ -5998,7 +5998,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	case WE_NEIGHBOR_REPORT_REQUEST:
 	{
 		tRrmNeighborReq neighborReq;
-		tRrmNeighborRspCallbackInfo callbackInfo;
+		tRrmNeighborRspCallbackInfo callback;
 		bool rrm_enabled = false;
 
 		ucfg_wlan_mlme_get_rrm_enabled(hdd_ctx->psoc,
@@ -6034,14 +6034,14 @@ static int __iw_setchar_getnone(struct net_device *dev,
 				neighborReq.neighbor_report_offload = true;
 			}
 
-			callbackInfo.neighborRspCallback = NULL;
-			callbackInfo.neighborRspCallbackContext = NULL;
-			callbackInfo.timeout = 5000; /* 5 seconds */
+			callback.neighborRspCallback = NULL;
+			callback.neighborRspCallbackContext = NULL;
+			callback.timeout = 5000; /* 5 seconds */
 			sme_neighbor_report_request(
 					hdd_ctx->mac_handle,
 					adapter->vdev_id,
 					&neighborReq,
-					&callbackInfo);
+					&callback);
 		} else {
 			hdd_err("Ignoring neighbor request as RRM not enabled");
 			ret = -EINVAL;
