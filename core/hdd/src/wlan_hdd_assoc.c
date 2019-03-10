@@ -3686,7 +3686,7 @@ void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id)
 static bool roam_remove_ibss_station(struct hdd_adapter *adapter,
 				     uint8_t sta_id)
 {
-	bool fSuccess = false;
+	bool successful = false;
 	int idx = 0;
 	uint8_t valid_idx = 0;
 	uint8_t del_idx = 0;
@@ -3701,7 +3701,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter,
 			qdf_zero_macaddr(&sta_ctx->conn_info.
 					 peer_macaddr[idx]);
 
-			fSuccess = true;
+			successful = true;
 
 			/*
 			 * Note the deleted Index, if its 0 we need special
@@ -3728,7 +3728,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter,
 		hdd_debug("Last IBSS Peer Departed!!!");
 	}
 	/* Find next active sta_id, to have a valid sta trigger for TL. */
-	if (fSuccess == true) {
+	if (successful) {
 		if (del_idx == 0) {
 			if (sta_ctx->conn_info.sta_id[valid_idx] !=
 					HDD_WLAN_INVALID_STA_ID) {
@@ -3746,7 +3746,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter,
 			}
 		}
 	}
-	return fSuccess;
+	return successful;
 }
 
 /**
