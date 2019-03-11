@@ -2641,7 +2641,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 				  eRoamCmdStatus roam_status,
 				  eCsrRoamResult roam_result)
 {
-	eCsrEncryptionType connectedCipherAlgo;
+	eCsrEncryptionType algorithm;
 	bool connected = false;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -2662,7 +2662,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 		  MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 
 	connected = hdd_conn_get_connected_cipher_algo(sta_ctx,
-						   &connectedCipherAlgo);
+						       &algorithm);
 	if (connected) {
 		hdd_change_peer_state_after_set_key(adapter, roam_info,
 						    roam_result);
