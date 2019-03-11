@@ -7,7 +7,7 @@
 
 #include "bolero-cdc-registers.h"
 
-#define BOLERO_CDC_CHILD_DEVICES_MAX 5
+#define BOLERO_CDC_CHILD_DEVICES_MAX 6
 
 /* from bolero to WCD events */
 enum {
@@ -73,7 +73,8 @@ struct bolero_priv {
 	struct wcd_ctrl_platform_data plat_data;
 	struct device *wcd_dev;
 	struct blocking_notifier_head notifier;
-	int clk_users;
+	struct device *clk_dev;
+	rsc_clk_cb_t rsc_clk_cb;
 };
 
 struct regmap *bolero_regmap_init(struct device *dev,

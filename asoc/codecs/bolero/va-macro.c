@@ -15,6 +15,7 @@
 #include <linux/pm_runtime.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
+#include "bolero-clk-rsc.h"
 
 /* pm runtime auto suspend timer in msecs */
 #define VA_AUTO_SUSPEND_DELAY          100 /* delay in msec */
@@ -94,7 +95,6 @@ struct va_macro_priv {
 	struct device *dev;
 	bool dec_active[VA_MACRO_NUM_DECIMATORS];
 	bool va_without_decimation;
-	struct clk *va_core_clk;
 	struct mutex mclk_lock;
 	struct snd_soc_component *component;
 	struct hpf_work va_hpf_work[VA_MACRO_NUM_DECIMATORS];
@@ -114,6 +114,8 @@ struct va_macro_priv {
 	u32 micb_voltage;
 	u32 micb_current;
 	int micb_users;
+	u16 default_clk_id;
+	u16 clk_id;
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -153,15 +155,18 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 	mutex_lock(&va_priv->mclk_lock);
 	if (mclk_enable) {
 		if (va_priv->va_mclk_users == 0) {
-			ret = bolero_request_clock(va_priv->dev,
-						VA_MACRO,
-						va_priv->mclk_mux_sel, true);
+			ret = bolero_clk_rsc_request_clock(va_priv->dev,
+							   va_priv->default_clk_id,
+							   va_priv->clk_id,
+							   true);
 			if (ret < 0) {
 				dev_err(va_priv->dev,
 					"%s: va request clock en failed\n",
 					__func__);
 				goto exit;
 			}
+			bolero_clk_rsc_fs_gen_request(va_priv->dev,
+						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					VA_START_OFFSET,
@@ -177,9 +182,12 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 		}
 		va_priv->va_mclk_users--;
 		if (va_priv->va_mclk_users == 0) {
-			bolero_request_clock(va_priv->dev,
-					VA_MACRO,
-					va_priv->mclk_mux_sel, false);
+			bolero_clk_rsc_fs_gen_request(va_priv->dev,
+						  false);
+			bolero_clk_rsc_request_clock(va_priv->dev,
+						va_priv->default_clk_id,
+						va_priv->clk_id,
+						false);
 		}
 	}
 exit:
@@ -249,29 +257,6 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			"%s: invalid DAPM event %d\n", __func__, event);
 		ret = -EINVAL;
 	}
-	return ret;
-}
-
-static int va_macro_mclk_ctrl(struct device *dev, bool enable)
-{
-	struct va_macro_priv *va_priv = dev_get_drvdata(dev);
-	int ret = 0;
-
-	if (enable) {
-		ret = clk_prepare_enable(va_priv->va_core_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:va mclk enable failed\n", __func__);
-			goto exit;
-		}
-		if (va_priv->mclk_mux_sel == MCLK_MUX1)
-			iowrite32(0x1, va_priv->va_island_mode_muxsel);
-	} else {
-		if (va_priv->mclk_mux_sel == MCLK_MUX1)
-			iowrite32(0x0, va_priv->va_island_mode_muxsel);
-		clk_disable_unprepare(va_priv->va_core_clk);
-	}
-
-exit:
 	return ret;
 }
 
@@ -1581,7 +1566,6 @@ static void va_macro_init_ops(struct macro_ops *ops,
 	ops->init = va_macro_init;
 	ops->exit = va_macro_deinit;
 	ops->io_base = va_io_base;
-	ops->mclk_fn = va_macro_mclk_ctrl;
 	ops->event_handler = va_macro_event_handler;
 }
 
@@ -1589,10 +1573,8 @@ static int va_macro_probe(struct platform_device *pdev)
 {
 	struct macro_ops ops;
 	struct va_macro_priv *va_priv;
-	u32 va_base_addr, sample_rate = 0, island_sel = 0;
+	u32 va_base_addr, sample_rate = 0;
 	char __iomem *va_io_base;
-	char __iomem *va_muxsel_io = NULL;
-	struct clk *va_core_clk;
 	bool va_without_decimation = false;
 	const char *micb_supply_str = "va-vdd-micb-supply";
 	const char *micb_supply_str1 = "va-vdd-micb";
@@ -1600,7 +1582,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
-	u16 mclk_mux_sel = MCLK_MUX0;
+	u32 default_clk_id = 0;
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -1639,53 +1621,6 @@ static int va_macro_probe(struct platform_device *pdev)
 	}
 	va_priv->va_io_base = va_io_base;
 
-	ret = of_property_read_u16(va_priv->dev->of_node,
-				   "qcom,va-clk-mux-select", &mclk_mux_sel);
-	if (ret) {
-		dev_dbg(&pdev->dev,
-			"%s: could not find %s entry in dt, use default\n",
-			__func__, "qcom,va-clk-mux-select");
-	} else {
-		if (mclk_mux_sel != MCLK_MUX0 && mclk_mux_sel != MCLK_MUX1) {
-			dev_err(&pdev->dev,
-				"%s: mclk_mux_sel: %d is invalid\n",
-				__func__, mclk_mux_sel);
-			return -EINVAL;
-		}
-	}
-	va_priv->mclk_mux_sel = mclk_mux_sel;
-
-	if (va_priv->mclk_mux_sel == MCLK_MUX1) {
-		ret = of_property_read_u32(pdev->dev.of_node,
-					   "qcom,va-island-mode-muxsel",
-					   &island_sel);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: could not find %s entry in dt\n",
-				__func__, "qcom,va-island-mode-muxsel");
-			return ret;
-		} else {
-			va_muxsel_io = devm_ioremap(&pdev->dev,
-						    island_sel, 0x4);
-			if (!va_muxsel_io) {
-				dev_err(&pdev->dev,
-					"%s: ioremap failed for island_sel\n",
-					__func__);
-				return -ENOMEM;
-			}
-		}
-		va_priv->va_island_mode_muxsel = va_muxsel_io;
-	}
-	/* Register MCLK for va macro */
-	va_core_clk = devm_clk_get(&pdev->dev, "va_core_clk");
-	if (IS_ERR(va_core_clk)) {
-		ret = PTR_ERR(va_core_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed\n",
-			__func__, "va_core_clk");
-		return ret;
-	}
-	va_priv->va_core_clk = va_core_clk;
-
 	if (of_parse_phandle(pdev->dev.of_node, micb_supply_str, 0)) {
 		va_priv->micb_supply = devm_regulator_get(&pdev->dev,
 						micb_supply_str1);
@@ -1717,10 +1652,21 @@ static int va_macro_probe(struct platform_device *pdev)
 			return ret;
 		}
 	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,default-clk-id",
+				   &default_clk_id);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: could not find %s entry in dt\n",
+			__func__, "qcom,default-clk-id");
+		default_clk_id = VA_CORE_CLK;
+	}
+	va_priv->clk_id = VA_CORE_CLK;
+	va_priv->default_clk_id = default_clk_id;
 
 	mutex_init(&va_priv->mclk_lock);
 	dev_set_drvdata(&pdev->dev, va_priv);
 	va_macro_init_ops(&ops, va_io_base, va_without_decimation);
+	ops.clk_id_req = va_priv->default_clk_id;
+	ops.default_clk_id = va_priv->default_clk_id;
 	ret = bolero_register_macro(&pdev->dev, VA_MACRO, &ops);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);

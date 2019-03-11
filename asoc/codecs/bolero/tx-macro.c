@@ -16,6 +16,7 @@
 #include <asoc/msm-cdc-pinctrl.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
+#include "bolero-clk-rsc.h"
 
 #define TX_MACRO_MAX_OFFSET 0x1000
 
@@ -129,8 +130,6 @@ struct tx_macro_priv {
 	int swr_clk_users;
 	bool dapm_mclk_enable;
 	bool reset_swr;
-	struct clk *tx_core_clk;
-	struct clk *tx_npl_clk;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
 	struct snd_soc_component *component;
@@ -198,14 +197,18 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 	mutex_lock(&tx_priv->mclk_lock);
 	if (mclk_enable) {
 		if (tx_priv->tx_mclk_users == 0) {
-			ret = bolero_request_clock(tx_priv->dev,
-					TX_MACRO, MCLK_MUX0, true);
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   true);
 			if (ret < 0) {
 				dev_err(tx_priv->dev,
 					"%s: request clock enable failed\n",
 					__func__);
 				goto exit;
 			}
+			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					TX_START_OFFSET,
@@ -236,8 +239,13 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-			bolero_request_clock(tx_priv->dev,
-					TX_MACRO, MCLK_MUX0, false);
+			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+						  false);
+
+			bolero_clk_rsc_request_clock(tx_priv->dev,
+						 TX_CORE_CLK,
+						 TX_CORE_CLK,
+						 false);
 		}
 	}
 exit:
@@ -275,33 +283,6 @@ static int tx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			"%s: invalid DAPM event %d\n", __func__, event);
 		ret = -EINVAL;
 	}
-	return ret;
-}
-
-static int tx_macro_mclk_ctrl(struct device *dev, bool enable)
-{
-	struct tx_macro_priv *tx_priv = dev_get_drvdata(dev);
-	int ret = 0;
-
-	if (enable) {
-		ret = clk_prepare_enable(tx_priv->tx_core_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:tx mclk enable failed\n", __func__);
-			goto exit;
-		}
-		ret = clk_prepare_enable(tx_priv->tx_npl_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:tx npl_clk enable failed\n",
-				__func__);
-			clk_disable_unprepare(tx_priv->tx_core_clk);
-			goto exit;
-		}
-	} else {
-		clk_disable_unprepare(tx_priv->tx_npl_clk);
-		clk_disable_unprepare(tx_priv->tx_core_clk);
-	}
-
-exit:
 	return ret;
 }
 
@@ -1769,7 +1750,6 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->io_base = tx_io_base;
 	ops->dai_ptr = tx_macro_dai;
 	ops->num_dais = ARRAY_SIZE(tx_macro_dai);
-	ops->mclk_fn = tx_macro_mclk_ctrl;
 	ops->event_handler = tx_macro_event_handler;
 	ops->reg_wake_irq = tx_macro_reg_wake_irq;
 	ops->set_port_map = tx_macro_set_port_map;
@@ -1781,7 +1761,6 @@ static int tx_macro_probe(struct platform_device *pdev)
 	struct tx_macro_priv *tx_priv = NULL;
 	u32 tx_base_addr = 0, sample_rate = 0;
 	char __iomem *tx_io_base = NULL;
-	struct clk *tx_core_clk = NULL, *tx_npl_clk = NULL;
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
 
@@ -1835,34 +1814,19 @@ static int tx_macro_probe(struct platform_device *pdev)
 	tx_priv->swr_plat_data.bulk_write = NULL;
 	tx_priv->swr_plat_data.clk = tx_macro_swrm_clock;
 	tx_priv->swr_plat_data.handle_irq = NULL;
-	/* Register MCLK for tx macro */
-	tx_core_clk = devm_clk_get(&pdev->dev, "tx_core_clk");
-	if (IS_ERR(tx_core_clk)) {
-		ret = PTR_ERR(tx_core_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed %d\n",
-			__func__, "tx_core_clk", ret);
-		return ret;
-	}
-	tx_priv->tx_core_clk = tx_core_clk;
-	/* Register npl clk for soundwire */
-	tx_npl_clk = devm_clk_get(&pdev->dev, "tx_npl_clk");
-	if (IS_ERR(tx_npl_clk)) {
-		ret = PTR_ERR(tx_npl_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed %d\n",
-			__func__, "tx_npl_clk", ret);
-		return ret;
-	}
-	tx_priv->tx_npl_clk = tx_npl_clk;
 
 	mutex_init(&tx_priv->mclk_lock);
 	mutex_init(&tx_priv->swr_clk_lock);
 	tx_macro_init_ops(&ops, tx_io_base);
+	ops.clk_id_req = TX_CORE_CLK;
+	ops.default_clk_id = TX_CORE_CLK;
 	ret = bolero_register_macro(&pdev->dev, TX_MACRO, &ops);
 	if (ret) {
 		dev_err(&pdev->dev,
 			"%s: register macro failed\n", __func__);
 		goto err_reg_macro;
 	}
+
 	schedule_work(&tx_priv->tx_macro_add_child_devices_work);
 	return 0;
 err_reg_macro:

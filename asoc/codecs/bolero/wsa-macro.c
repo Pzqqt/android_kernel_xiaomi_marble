@@ -17,6 +17,7 @@
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
 #include "wsa-macro.h"
+#include "bolero-clk-rsc.h"
 
 #define WSA_MACRO_MAX_OFFSET 0x1000
 
@@ -175,8 +176,6 @@ enum {
  * @swr_plat_data: Soundwire platform data
  * @wsa_macro_add_child_devices_work: work for adding child devices
  * @wsa_swr_gpio_p: used by pinctrl API
- * @wsa_core_clk: MCLK for wsa macro
- * @wsa_npl_clk: NPL clock for WSA soundwire
  * @component: codec handle
  * @rx_0_count: RX0 interpolation users
  * @rx_1_count: RX1 interpolation users
@@ -201,8 +200,6 @@ struct wsa_macro_priv {
 	struct wsa_macro_swr_ctrl_platform_data swr_plat_data;
 	struct work_struct wsa_macro_add_child_devices_work;
 	struct device_node *wsa_swr_gpio_p;
-	struct clk *wsa_core_clk;
-	struct clk *wsa_npl_clk;
 	struct snd_soc_component *component;
 	int rx_0_count;
 	int rx_1_count;
@@ -219,6 +216,8 @@ struct wsa_macro_priv {
 	int is_softclip_on[WSA_MACRO_SOFTCLIP_MAX];
 	int softclip_clk_users[WSA_MACRO_SOFTCLIP_MAX];
 	struct wsa_macro_bcl_pmic_params bcl_pmic_params;
+	char __iomem *mclk_mode_muxsel;
+	u16 default_clk_id;
 };
 
 static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
@@ -808,14 +807,18 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 	mutex_lock(&wsa_priv->mclk_lock);
 	if (mclk_enable) {
 		if (wsa_priv->wsa_mclk_users == 0) {
-			ret = bolero_request_clock(wsa_priv->dev,
-					WSA_MACRO, MCLK_MUX0, true);
+			ret = bolero_clk_rsc_request_clock(wsa_priv->dev,
+							wsa_priv->default_clk_id,
+							wsa_priv->default_clk_id,
+							true);
 			if (ret < 0) {
 				dev_err(wsa_priv->dev,
 					"%s: wsa request clock enable failed\n",
 					__func__);
 				goto exit;
 			}
+			bolero_clk_rsc_fs_gen_request(wsa_priv->dev,
+						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					WSA_START_OFFSET,
@@ -846,8 +849,13 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_WSA_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-			bolero_request_clock(wsa_priv->dev,
-					WSA_MACRO, MCLK_MUX0, false);
+			bolero_clk_rsc_fs_gen_request(wsa_priv->dev,
+						  false);
+
+			bolero_clk_rsc_request_clock(wsa_priv->dev,
+						  wsa_priv->default_clk_id,
+						  wsa_priv->default_clk_id,
+						  false);
 		}
 	}
 exit:
@@ -885,35 +893,6 @@ static int wsa_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			"%s: invalid DAPM event %d\n", __func__, event);
 		ret = -EINVAL;
 	}
-	return ret;
-}
-
-static int wsa_macro_mclk_ctrl(struct device *dev, bool enable)
-{
-	struct wsa_macro_priv *wsa_priv = dev_get_drvdata(dev);
-	int ret = 0;
-
-	if (!wsa_priv)
-		return -EINVAL;
-
-	if (enable) {
-		ret = clk_prepare_enable(wsa_priv->wsa_core_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:wsa mclk enable failed\n", __func__);
-			goto exit;
-		}
-		ret = clk_prepare_enable(wsa_priv->wsa_npl_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:wsa npl_clk enable failed\n",
-				__func__);
-			clk_disable_unprepare(wsa_priv->wsa_core_clk);
-			goto exit;
-		}
-	} else {
-		clk_disable_unprepare(wsa_priv->wsa_npl_clk);
-		clk_disable_unprepare(wsa_priv->wsa_core_clk);
-	}
-exit:
 	return ret;
 }
 
@@ -2809,7 +2788,6 @@ static void wsa_macro_init_ops(struct macro_ops *ops,
 	ops->io_base = wsa_io_base;
 	ops->dai_ptr = wsa_macro_dai;
 	ops->num_dais = ARRAY_SIZE(wsa_macro_dai);
-	ops->mclk_fn = wsa_macro_mclk_ctrl;
 	ops->event_handler = wsa_macro_event_handler;
 	ops->set_port_map = wsa_macro_set_port_map;
 }
@@ -2818,10 +2796,9 @@ static int wsa_macro_probe(struct platform_device *pdev)
 {
 	struct macro_ops ops;
 	struct wsa_macro_priv *wsa_priv;
-	u32 wsa_base_addr;
+	u32 wsa_base_addr, default_clk_id;
 	char __iomem *wsa_io_base;
 	int ret = 0;
-	struct clk *wsa_core_clk, *wsa_npl_clk;
 	u8 bcl_pmic_params[3];
 
 	wsa_priv = devm_kzalloc(&pdev->dev, sizeof(struct wsa_macro_priv),
@@ -2861,24 +2838,13 @@ static int wsa_macro_probe(struct platform_device *pdev)
 	wsa_priv->swr_plat_data.clk = wsa_swrm_clock;
 	wsa_priv->swr_plat_data.handle_irq = NULL;
 
-	/* Register MCLK for wsa macro */
-	wsa_core_clk = devm_clk_get(&pdev->dev, "wsa_core_clk");
-	if (IS_ERR(wsa_core_clk)) {
-		ret = PTR_ERR(wsa_core_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed\n",
-			__func__, "wsa_core_clk");
-		return ret;
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,default-clk-id",
+				   &default_clk_id);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: could not find %s entry in dt\n",
+			__func__, "qcom,mux0-clk-id");
+		default_clk_id = WSA_CORE_CLK;
 	}
-	wsa_priv->wsa_core_clk = wsa_core_clk;
-	/* Register npl clk for soundwire */
-	wsa_npl_clk = devm_clk_get(&pdev->dev, "wsa_npl_clk");
-	if (IS_ERR(wsa_npl_clk)) {
-		ret = PTR_ERR(wsa_npl_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed\n",
-			__func__, "wsa_npl_clk");
-		return ret;
-	}
-	wsa_priv->wsa_npl_clk = wsa_npl_clk;
 
 	ret = of_property_read_u8_array(pdev->dev.of_node,
 				"qcom,wsa-bcl-pmic-params", bcl_pmic_params,
@@ -2891,11 +2857,14 @@ static int wsa_macro_probe(struct platform_device *pdev)
 		wsa_priv->bcl_pmic_params.sid = bcl_pmic_params[1];
 		wsa_priv->bcl_pmic_params.ppid = bcl_pmic_params[2];
 	}
+	wsa_priv->default_clk_id  = default_clk_id;
 
 	dev_set_drvdata(&pdev->dev, wsa_priv);
 	mutex_init(&wsa_priv->mclk_lock);
 	mutex_init(&wsa_priv->swr_clk_lock);
 	wsa_macro_init_ops(&ops, wsa_io_base);
+	ops.clk_id_req = wsa_priv->default_clk_id;
+	ops.default_clk_id = wsa_priv->default_clk_id;
 	ret = bolero_register_macro(&pdev->dev, WSA_MACRO, &ops);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
