@@ -18875,7 +18875,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	int status;
 	mac_handle_t mac_handle;
 	unsigned long rc;
-	tSirUpdateIE updateIE;
+	tSirUpdateIE update_ie;
 
 	hdd_enter();
 
@@ -18906,16 +18906,16 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	/* Clearing add IE of beacon */
-	qdf_mem_copy(updateIE.bssid.bytes, adapter->mac_addr.bytes,
+	qdf_mem_copy(update_ie.bssid.bytes, adapter->mac_addr.bytes,
 		     sizeof(tSirMacAddr));
-	updateIE.smeSessionId = adapter->vdev_id;
-	updateIE.ieBufferlength = 0;
-	updateIE.pAdditionIEBuffer = NULL;
-	updateIE.append = true;
-	updateIE.notify = true;
+	update_ie.smeSessionId = adapter->vdev_id;
+	update_ie.ieBufferlength = 0;
+	update_ie.pAdditionIEBuffer = NULL;
+	update_ie.append = true;
+	update_ie.notify = true;
 	mac_handle = hdd_ctx->mac_handle;
 	if (sme_update_add_ie(mac_handle,
-			      &updateIE,
+			      &update_ie,
 			      eUPDATE_IE_PROBE_BCN) == QDF_STATUS_E_FAILURE) {
 		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 	}

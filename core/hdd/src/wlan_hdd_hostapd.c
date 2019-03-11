@@ -4059,7 +4059,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	uint16_t total_ielen = 0;
 	int ret = 0;
 	tsap_config_t *config;
-	tSirUpdateIE updateIE;
+	tSirUpdateIE update_ie;
 	struct hdd_beacon_data *beacon = NULL;
 	uint16_t proberesp_ies_len;
 	uint8_t *proberesp_ies = NULL;
@@ -4109,16 +4109,16 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
 
-	qdf_copy_macaddr(&updateIE.bssid, &adapter->mac_addr);
-	updateIE.smeSessionId = adapter->vdev_id;
+	qdf_copy_macaddr(&update_ie.bssid, &adapter->mac_addr);
+	update_ie.smeSessionId = adapter->vdev_id;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		updateIE.ieBufferlength = total_ielen;
-		updateIE.pAdditionIEBuffer = genie;
-		updateIE.append = false;
-		updateIE.notify = true;
+		update_ie.ieBufferlength = total_ielen;
+		update_ie.pAdditionIEBuffer = genie;
+		update_ie.append = false;
+		update_ie.notify = true;
 		if (sme_update_add_ie(mac_handle,
-				      &updateIE,
+				      &update_ie,
 				      eUPDATE_IE_PROBE_BCN) ==
 		    QDF_STATUS_E_FAILURE) {
 			hdd_err("Could not pass on Add Ie probe beacon data");
@@ -4150,12 +4150,12 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 				     &proberesp_ies_len);
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		updateIE.ieBufferlength = proberesp_ies_len;
-		updateIE.pAdditionIEBuffer = proberesp_ies;
-		updateIE.append = false;
-		updateIE.notify = false;
+		update_ie.ieBufferlength = proberesp_ies_len;
+		update_ie.pAdditionIEBuffer = proberesp_ies;
+		update_ie.append = false;
+		update_ie.notify = false;
 		if (sme_update_add_ie(mac_handle,
-				      &updateIE,
+				      &update_ie,
 				      eUPDATE_IE_PROBE_RESP) ==
 		    QDF_STATUS_E_FAILURE) {
 			hdd_err("Could not pass on PROBE_RESP add Ie data");
@@ -4172,12 +4172,12 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	/* Assoc resp Add ie Data */
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		updateIE.ieBufferlength = beacon->assocresp_ies_len;
-		updateIE.pAdditionIEBuffer = (uint8_t *) beacon->assocresp_ies;
-		updateIE.append = false;
-		updateIE.notify = false;
+		update_ie.ieBufferlength = beacon->assocresp_ies_len;
+		update_ie.pAdditionIEBuffer = (uint8_t *) beacon->assocresp_ies;
+		update_ie.append = false;
+		update_ie.notify = false;
 		if (sme_update_add_ie(mac_handle,
-				      &updateIE,
+				      &update_ie,
 				      eUPDATE_IE_ASSOC_RESP) ==
 		    QDF_STATUS_E_FAILURE) {
 			hdd_err("Could not pass on Add Ie Assoc Response data");
@@ -5723,7 +5723,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	tSirUpdateIE updateIE;
+	tSirUpdateIE update_ie;
 	struct hdd_beacon_data *old;
 	int ret;
 	mac_handle_t mac_handle;
@@ -5842,20 +5842,20 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	qdf_copy_macaddr(&updateIE.bssid, &adapter->mac_addr);
-	updateIE.smeSessionId = adapter->vdev_id;
-	updateIE.ieBufferlength = 0;
-	updateIE.pAdditionIEBuffer = NULL;
-	updateIE.append = true;
-	updateIE.notify = true;
+	qdf_copy_macaddr(&update_ie.bssid, &adapter->mac_addr);
+	update_ie.smeSessionId = adapter->vdev_id;
+	update_ie.ieBufferlength = 0;
+	update_ie.pAdditionIEBuffer = NULL;
+	update_ie.append = true;
+	update_ie.notify = true;
 	if (sme_update_add_ie(mac_handle,
-			      &updateIE,
+			      &update_ie,
 			      eUPDATE_IE_PROBE_BCN) == QDF_STATUS_E_FAILURE) {
 		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 	}
 
 	if (sme_update_add_ie(mac_handle,
-			      &updateIE,
+			      &update_ie,
 			      eUPDATE_IE_ASSOC_RESP) == QDF_STATUS_E_FAILURE) {
 		hdd_err("Could not pass on ASSOC_RSP data to PE");
 	}

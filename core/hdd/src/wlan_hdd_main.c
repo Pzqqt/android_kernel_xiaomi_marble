@@ -5306,7 +5306,7 @@ void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 {
 	struct qdf_mac_addr *bssid = NULL;
-	tSirUpdateIE updateIE;
+	tSirUpdateIE update_ie;
 	mac_handle_t mac_handle;
 
 	switch (adapter->device_mode) {
@@ -5337,15 +5337,15 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 		return;
 	}
 
-	qdf_copy_macaddr(&updateIE.bssid, bssid);
-	updateIE.smeSessionId = adapter->vdev_id;
-	updateIE.ieBufferlength = 0;
-	updateIE.pAdditionIEBuffer = NULL;
-	updateIE.append = true;
-	updateIE.notify = false;
+	qdf_copy_macaddr(&update_ie.bssid, bssid);
+	update_ie.smeSessionId = adapter->vdev_id;
+	update_ie.ieBufferlength = 0;
+	update_ie.pAdditionIEBuffer = NULL;
+	update_ie.append = true;
+	update_ie.notify = false;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	if (sme_update_add_ie(mac_handle,
-			      &updateIE,
+			      &update_ie,
 			      eUPDATE_IE_PROBE_RESP) == QDF_STATUS_E_FAILURE) {
 		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
 	}
@@ -5359,7 +5359,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	struct sap_context *sap_ctx;
 	struct csr_roam_profile *roam_profile;
 	union iwreq_data wrqu;
-	tSirUpdateIE updateIE;
+	tSirUpdateIE update_ie;
 	unsigned long rc;
 	tsap_config_t *sap_config;
 	mac_handle_t mac_handle;
@@ -5581,22 +5581,22 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 						    adapter->device_mode,
 						    false);
 
-			qdf_copy_macaddr(&updateIE.bssid,
+			qdf_copy_macaddr(&update_ie.bssid,
 					 &adapter->mac_addr);
-			updateIE.smeSessionId = adapter->vdev_id;
-			updateIE.ieBufferlength = 0;
-			updateIE.pAdditionIEBuffer = NULL;
-			updateIE.append = false;
-			updateIE.notify = false;
+			update_ie.smeSessionId = adapter->vdev_id;
+			update_ie.ieBufferlength = 0;
+			update_ie.pAdditionIEBuffer = NULL;
+			update_ie.append = false;
+			update_ie.notify = false;
 
 			/* Probe bcn reset */
-			status = sme_update_add_ie(mac_handle, &updateIE,
+			status = sme_update_add_ie(mac_handle, &update_ie,
 						   eUPDATE_IE_PROBE_BCN);
 			if (status == QDF_STATUS_E_FAILURE)
 				hdd_err("Could not pass PROBE_RSP_BCN to PE");
 
 			/* Assoc resp reset */
-			status = sme_update_add_ie(mac_handle, &updateIE,
+			status = sme_update_add_ie(mac_handle, &update_ie,
 						   eUPDATE_IE_ASSOC_RESP);
 			if (status == QDF_STATUS_E_FAILURE)
 				hdd_err("Could not pass ASSOC_RSP to PE");
