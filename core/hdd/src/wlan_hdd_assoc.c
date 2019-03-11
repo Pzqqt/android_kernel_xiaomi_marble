@@ -1070,25 +1070,22 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 	union iwreq_data wrqu;
 	char *buff;
 	unsigned int len = 0;
-	u8 *pFTAssocRsp = NULL;
+	u8 *assoc_rsp = NULL;
 
 	if (roam_info->nAssocRspLength == 0) {
 		hdd_debug("assoc rsp length is 0");
 		return;
 	}
 
-	pFTAssocRsp =
+	assoc_rsp =
 		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
 			roam_info->nAssocReqLength);
-	if (pFTAssocRsp == NULL) {
+	if (assoc_rsp == NULL) {
 		hdd_debug("AssocReq or AssocRsp is NULL");
 		return;
 	}
-	/* pFTAssocRsp needs to point to the IEs */
-	pFTAssocRsp += FT_ASSOC_RSP_IES_OFFSET;
-	hdd_debug("AssocRsp is now at %02x%02x",
-		   (unsigned int)pFTAssocRsp[0],
-		   (unsigned int)pFTAssocRsp[1]);
+	/* assoc_rsp needs to point to the IEs */
+	assoc_rsp += FT_ASSOC_RSP_IES_OFFSET;
 
 	/* We need to send the IEs to the supplicant. */
 	buff = qdf_mem_malloc(IW_GENERIC_IE_MAX);
@@ -1098,7 +1095,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth. */
 	len = roam_info->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	wrqu.data.length = len;
-	memcpy(buff, pFTAssocRsp, len);
+	memcpy(buff, assoc_rsp, len);
 	wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
 
 	qdf_mem_free(buff);
@@ -2284,7 +2281,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *reqRsnIe, uint32_t reqRsnLength)
 {
 	unsigned int len = 0;
-	u8 *pFTAssocRsp = NULL;
+	u8 *assoc_rsp = NULL;
 	uint8_t *rsp_rsn_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint8_t *assoc_req_ies = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint32_t rsp_rsn_lemgth = 0;
@@ -2320,16 +2317,14 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		goto done;
 	}
 
-	pFTAssocRsp =
+	assoc_rsp =
 		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
 			roam_info->nAssocReqLength);
-	if (pFTAssocRsp == NULL)
+	if (assoc_rsp == NULL)
 		goto done;
 
-	/* pFTAssocRsp needs to point to the IEs */
-	pFTAssocRsp += FT_ASSOC_RSP_IES_OFFSET;
-	hdd_debug("AssocRsp is now at %02x%02x",
-		 (unsigned int)pFTAssocRsp[0], (unsigned int)pFTAssocRsp[1]);
+	/* assoc_rsp needs to point to the IEs */
+	assoc_rsp += FT_ASSOC_RSP_IES_OFFSET;
 
 	/*
 	 * Active session count is decremented upon disconnection, but during
@@ -2350,7 +2345,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = roam_info->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	rsp_rsn_lemgth = len;
-	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
+	qdf_mem_copy(rsp_rsn_ie, assoc_rsp, len);
 	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
 	chan_no = roam_info->pBssDesc->channelId;
@@ -2393,7 +2388,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_copy(buf_ptr, buf_ssid_ie, ssid_ie_len);
 	buf_ptr += ssid_ie_len;
 	qdf_mem_copy(buf_ptr, reqRsnIe, reqRsnLength);
-	qdf_mem_copy(rsp_rsn_ie, pFTAssocRsp, len);
+	qdf_mem_copy(rsp_rsn_ie, assoc_rsp, len);
 	qdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
 	hdd_debug("Req RSN IE:");
@@ -2956,8 +2951,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		 */
 		if (!roam_info->fReassocReq) {
 			struct cfg80211_bss *bss;
-			u8 *pFTAssocRsp = NULL;
-			unsigned int assocRsplen = 0;
+			u8 *assoc_rsp = NULL;
+			unsigned int assoc_rsp_len = 0;
 			u8 *assoc_req = NULL;
 			unsigned int assocReqlen = 0;
 			struct ieee80211_channel *chan;
@@ -2995,31 +2990,28 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			cfg80211_put_bss(hdd_ctx->wiphy, bss);
 
 			/* Association Response */
-			pFTAssocRsp =
+			assoc_rsp =
 				(u8 *) (roam_info->pbFrames +
 					roam_info->nBeaconLength +
 					roam_info->nAssocReqLength);
-			if (pFTAssocRsp != NULL) {
+			if (assoc_rsp != NULL) {
 				/*
-				 * pFTAssocRsp needs to point to the IEs
+				 * assoc_rsp needs to point to the IEs
 				 */
-				pFTAssocRsp += FT_ASSOC_RSP_IES_OFFSET;
-				hdd_debug("AssocRsp is now at %02x%02x",
-					 (unsigned int)pFTAssocRsp[0],
-					 (unsigned int)pFTAssocRsp[1]);
-				assocRsplen =
+				assoc_rsp += FT_ASSOC_RSP_IES_OFFSET;
+				assoc_rsp_len =
 					roam_info->nAssocRspLength -
 					FT_ASSOC_RSP_IES_OFFSET;
 
-				hdd_debug("assocRsplen %d", assocRsplen);
+				hdd_debug("assoc_rsp_len %d", assoc_rsp_len);
 				hdd_debug("Assoc Rsp IE dump");
 				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
 						   QDF_TRACE_LEVEL_DEBUG,
-						   pFTAssocRsp,
-						   assocRsplen);
+						   assoc_rsp,
+						   assoc_rsp_len);
 			} else {
 				hdd_debug("AssocRsp is NULL");
-				assocRsplen = 0;
+				assoc_rsp_len = 0;
 			}
 
 			/* Association Request */
@@ -3125,15 +3117,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								roam_bss,
 								assoc_req,
 								assocReqlen,
-								pFTAssocRsp,
-								assocRsplen);
+								assoc_rsp,
+								assoc_rsp_len);
 						wlan_hdd_send_roam_auth_event(
 							adapter,
 							roam_info->bssid.bytes,
 							assoc_req,
 							assocReqlen,
-							pFTAssocRsp,
-							assocRsplen,
+							assoc_rsp,
+							assoc_rsp_len,
 							roam_info);
 					}
 					if (sme_get_ftptk_state
@@ -3173,8 +3165,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							   roam_info,
 							   assoc_req,
 							   assocReqlen,
-							   pFTAssocRsp,
-							   assocRsplen,
+							   assoc_rsp,
+							   assoc_rsp_len,
 							   WLAN_STATUS_SUCCESS,
 							   GFP_KERNEL,
 							   false,
@@ -3216,8 +3208,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   roam_info,
 								   assoc_req,
 								   assocReqlen,
-								   pFTAssocRsp,
-								   assocRsplen,
+								   assoc_rsp,
+								   assoc_rsp_len,
 								   WLAN_STATUS_SUCCESS,
 								   GFP_KERNEL,
 								   false,
