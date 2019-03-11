@@ -4469,13 +4469,13 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 }
 
 static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
-						 tSirMacAddr macAddr)
+						 tSirMacAddr mac_addr)
 {
 	struct hdd_adapter *adapter;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (!qdf_mem_cmp(adapter->mac_addr.bytes,
-				 macAddr, sizeof(tSirMacAddr))) {
+				 mac_addr, sizeof(tSirMacAddr))) {
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
@@ -4953,7 +4953,7 @@ static void hdd_init_completion(struct hdd_adapter *adapter)
 }
 
 static void hdd_reset_locally_admin_bit(struct hdd_context *hdd_ctx,
-					tSirMacAddr macAddr)
+					tSirMacAddr mac_addr)
 {
 	int i;
 	/*
@@ -4963,7 +4963,7 @@ static void hdd_reset_locally_admin_bit(struct hdd_context *hdd_ctx,
 	 */
 	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		if (!qdf_mem_cmp(
-			macAddr,
+			mac_addr,
 			 &hdd_ctx->
 				dynamic_mac_list[i].dynamic_mac.bytes[0],
 				sizeof(struct qdf_mac_addr))) {
@@ -4977,9 +4977,9 @@ static void hdd_reset_locally_admin_bit(struct hdd_context *hdd_ctx,
 	 * Reset locally administered bit if the device mode is
 	 * STA
 	 */
-	WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(macAddr);
+	WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(mac_addr);
 	hdd_debug("locally administered bit reset in sta mode: "
-		 MAC_ADDRESS_STR, MAC_ADDR_ARRAY(macAddr));
+		 MAC_ADDRESS_STR, MAC_ADDR_ARRAY(mac_addr));
 }
 
 static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
@@ -5001,7 +5001,7 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
  * @hdd_ctx: global hdd context
  * @session_type: type of the interface to be created
  * @iface_name: User-visible name of the interface
- * @macAddr: MAC address to assign to the interface
+ * @mac_addr: MAC address to assign to the interface
  * @name_assign_type: the name of assign type of the netdev
  * @rtnl_held: the rtnl lock hold flag
  *
@@ -5012,7 +5012,7 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
  * Return: the pointer of hdd adapter, otherwise NULL.
  */
 struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t session_type,
-				const char *iface_name, tSirMacAddr macAddr,
+				const char *iface_name, tSirMacAddr mac_addr,
 				unsigned char name_assign_type,
 				bool rtnl_held)
 {
@@ -5029,36 +5029,36 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		return NULL;
 	}
 
-	status = wlan_hdd_validate_mac_address((struct qdf_mac_addr *)macAddr);
+	status = wlan_hdd_validate_mac_address((struct qdf_mac_addr *)mac_addr);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		/* Not received valid macAddr */
+		/* Not received valid mac_addr */
 		hdd_err("Unable to add virtual intf: Not able to get valid mac address");
 		return NULL;
 	}
 
-	status = hdd_check_for_existing_macaddr(hdd_ctx, macAddr);
+	status = hdd_check_for_existing_macaddr(hdd_ctx, mac_addr);
 	if (QDF_STATUS_E_FAILURE == status) {
 		hdd_err("Duplicate MAC addr: " MAC_ADDRESS_STR
 				" already exists",
-				MAC_ADDR_ARRAY(macAddr));
+				MAC_ADDR_ARRAY(mac_addr));
 		return NULL;
 	}
 
 	switch (session_type) {
 	case QDF_STA_MODE:
 		if (!hdd_ctx->config->mac_provision) {
-			hdd_reset_locally_admin_bit(hdd_ctx, macAddr);
+			hdd_reset_locally_admin_bit(hdd_ctx, mac_addr);
 			/*
 			 * After resetting locally administered bit
 			 * again check if the new mac address is already
 			 * exists.
 			 */
 			status = hdd_check_for_existing_macaddr(hdd_ctx,
-								macAddr);
+								mac_addr);
 			if (QDF_STATUS_E_FAILURE == status) {
 				hdd_err("Duplicate MAC addr: " MAC_ADDRESS_STR
 					" already exists",
-					MAC_ADDR_ARRAY(macAddr));
+					MAC_ADDR_ARRAY(mac_addr));
 				return NULL;
 			}
 		}
@@ -5069,7 +5069,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	case QDF_OCB_MODE:
 	case QDF_NDI_MODE:
 	case QDF_MONITOR_MODE:
-		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
+		adapter = hdd_alloc_station_adapter(hdd_ctx, mac_addr,
 						    name_assign_type,
 						    iface_name);
 
@@ -5126,7 +5126,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
-		adapter = hdd_wlan_create_ap_dev(hdd_ctx, macAddr,
+		adapter = hdd_wlan_create_ap_dev(hdd_ctx, mac_addr,
 						 name_assign_type,
 						 (uint8_t *) iface_name);
 		if (NULL == adapter) {
@@ -5167,7 +5167,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 #endif
 		break;
 	case QDF_FTM_MODE:
-		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
+		adapter = hdd_alloc_station_adapter(hdd_ctx, mac_addr,
 						    name_assign_type,
 						    iface_name);
 		if (NULL == adapter) {
@@ -6788,13 +6788,13 @@ struct hdd_adapter *hdd_get_adapter_by_rand_macaddr(
 }
 
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
-					  tSirMacAddr macAddr)
+					       tSirMacAddr mac_addr)
 {
 	struct hdd_adapter *adapter;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (!qdf_mem_cmp(adapter->mac_addr.bytes,
-				 macAddr, sizeof(tSirMacAddr)))
+				 mac_addr, sizeof(tSirMacAddr)))
 			return adapter;
 	}
 

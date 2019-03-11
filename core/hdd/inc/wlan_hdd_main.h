@@ -1987,7 +1987,7 @@ QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 
 struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     uint8_t session_type,
-				     const char *name, tSirMacAddr macAddr,
+				     const char *name, tSirMacAddr mac_addr,
 				     unsigned char name_assign_type,
 				     bool rtnl_held);
 
@@ -2031,7 +2031,7 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 					    uint32_t vdev_id);
 
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
-					  tSirMacAddr macAddr);
+					       tSirMacAddr mac_addr);
 
 /*
  * hdd_get_adapter_by_rand_macaddr() - find Random mac adapter

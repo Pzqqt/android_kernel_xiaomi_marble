@@ -3362,7 +3362,7 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 /**
  * hdd_wlan_create_ap_dev() - create an AP-mode device
  * @hdd_ctx: Global HDD context
- * @macAddr: MAC address to assign to the interface
+ * @mac_addr: MAC address to assign to the interface
  * @name_assign_type: the name of assign type of the netdev
  * @iface_name: User-visible name of the interface
  *
@@ -3374,7 +3374,7 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
  * the allocation and initialization was successful, NULL otherwise.
  */
 struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
-				      tSirMacAddr macAddr,
+				      tSirMacAddr mac_addr,
 				      unsigned char name_assign_type,
 				      uint8_t *iface_name)
 {
@@ -3418,10 +3418,8 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	dev->mtu = HDD_DEFAULT_MTU;
 	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-	qdf_mem_copy(dev->dev_addr, (void *)macAddr,
-		     sizeof(tSirMacAddr));
-	qdf_mem_copy(adapter->mac_addr.bytes,
-		     (void *)macAddr, sizeof(tSirMacAddr));
+	qdf_mem_copy(dev->dev_addr, mac_addr, sizeof(tSirMacAddr));
+	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
 
 	adapter->offloads_configured = false;
 	hdd_dev_setup_destructor(dev);
