@@ -3707,7 +3707,7 @@ static int __iw_get_linkspeed(struct net_device *dev,
 			      union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	char *pLinkSpeed = (char *)extra;
+	char *out_link_speed = (char *)extra;
 	int len = sizeof(uint32_t) + 1;
 	uint32_t link_speed = 0;
 	struct hdd_context *hdd_ctx;
@@ -3731,7 +3731,7 @@ static int __iw_get_linkspeed(struct net_device *dev,
 
 	wrqu->data.length = len;
 	/* return the linkspeed as a string */
-	rc = snprintf(pLinkSpeed, len, "%u", link_speed);
+	rc = snprintf(out_link_speed, len, "%u", link_speed);
 	if ((rc < 0) || (rc >= len)) {
 		/* encoding or length error? */
 		hdd_err("Unable to encode link speed");

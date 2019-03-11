@@ -2434,7 +2434,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx;
-	char *pLinkSpeed = (char *)extra;
+	char *out_link_speed = (char *)extra;
 	uint32_t link_speed = 0;
 	int len = sizeof(uint32_t) + 1;
 	struct qdf_mac_addr mac_address;
@@ -2507,7 +2507,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	/* linkspeed in units of 500 kbps */
 	link_speed = link_speed / 500;
 	wrqu->data.length = len;
-	rc = snprintf(pLinkSpeed, len, "%u", link_speed);
+	rc = snprintf(out_link_speed, len, "%u", link_speed);
 	if ((rc < 0) || (rc >= len)) {
 		/* encoding or length error? */
 		hdd_err("Unable to encode link speed");
