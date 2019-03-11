@@ -2437,7 +2437,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	char *pLinkSpeed = (char *)extra;
 	uint32_t link_speed = 0;
 	int len = sizeof(uint32_t) + 1;
-	struct qdf_mac_addr macAddress;
+	struct qdf_mac_addr mac_address;
 	char macaddr_string[MAC_ADDRESS_STR_LEN + 1];
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int rc, ret, i;
@@ -2471,7 +2471,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		}
 		macaddr_string[MAC_ADDRESS_STR_LEN - 1] = '\0';
 
-		if (!mac_pton(macaddr_string, macAddress.bytes)) {
+		if (!mac_pton(macaddr_string, mac_address.bytes)) {
 			hdd_err("String to Hex conversion Failed");
 			return -EINVAL;
 		}
@@ -2485,7 +2485,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 			    (!qdf_is_macaddr_broadcast
 				  (&adapter->sta_info[i].sta_mac))) {
 				qdf_copy_macaddr(
-					&macAddress,
+					&mac_address,
 					&adapter->sta_info[i].
 					 sta_mac);
 				status = QDF_STATUS_SUCCESS;
@@ -2497,7 +2497,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		hdd_err("Invalid peer macaddress");
 		return -EINVAL;
 	}
-	rc = wlan_hdd_get_linkspeed_for_peermac(adapter, &macAddress,
+	rc = wlan_hdd_get_linkspeed_for_peermac(adapter, &mac_address,
 						&link_speed);
 	if (rc) {
 		hdd_err("Unable to retrieve SME linkspeed");
