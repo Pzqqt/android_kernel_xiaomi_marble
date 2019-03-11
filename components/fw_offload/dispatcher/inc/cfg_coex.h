@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -236,6 +236,30 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"BT Interference High UL")
 
+#ifdef FEATURE_MPTA_HELPER
+/*
+ * <ini>
+ * gMPTAHelperEnable - Enable MPTA Helper
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable or disable coex MPTA Helper.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_COEX_MPTA_HELPER CFG_INI_BOOL( \
+		"gMPTAHelperEnable", \
+		0, \
+		"Enable/Disable MPTA Helper")
+
+#define COEX_MPTA_HELPER_CFG CFG(CFG_COEX_MPTA_HELPER)
+#else
+#define COEX_MPTA_HELPER_CFG
+#endif
+
 #define CFG_COEX_ALL \
 	CFG(CFG_BTC_MODE) \
 	CFG(CFG_ANTENNA_ISOLATION) \
@@ -247,5 +271,6 @@
 	CFG(CFG_BT_INTERFERENCE_MEDIUM_LL) \
 	CFG(CFG_BT_INTERFERENCE_MEDIUM_UL) \
 	CFG(CFG_BT_INTERFERENCE_HIGH_LL) \
-	CFG(CFG_BT_INTERFERENCE_HIGH_UL)
+	CFG(CFG_BT_INTERFERENCE_HIGH_UL) \
+	COEX_MPTA_HELPER_CFG
 #endif

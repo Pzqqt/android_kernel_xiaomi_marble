@@ -29,6 +29,29 @@ struct wlan_fwol_psoc_obj *fwol_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 						     WLAN_UMAC_COMP_FWOL);
 }
 
+/**
+ * fwol_mpta_helper_config_get: Populate btc_mpta_helper_enable from cfg
+ * @psoc: The global psoc handler
+ * @coex_config: The cfg structure
+ *
+ * Return: none
+ */
+#ifdef FEATURE_MPTA_HELPER
+static void
+fwol_mpta_helper_config_get(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_fwol_coex_config *coex_config)
+{
+	coex_config->btc_mpta_helper_enable =
+				cfg_get(psoc, CFG_COEX_MPTA_HELPER);
+}
+#else
+static void
+fwol_mpta_helper_config_get(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_fwol_coex_config *coex_config)
+{
+}
+#endif
+
 static void
 fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 			     struct wlan_fwol_coex_config *coex_config)
@@ -53,6 +76,7 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_LL);
 	coex_config->bt_interference_high_ul =
 				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_UL);
+	fwol_mpta_helper_config_get(psoc, coex_config);
 }
 
 static void
