@@ -4210,7 +4210,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 {
 	tsap_config_t *config = &adapter->session.ap.sap_config;
 	struct hdd_beacon_data *beacon = adapter->session.ap.beacon;
-	struct ieee80211_mgmt *pMgmt_frame =
+	struct ieee80211_mgmt *mgmt_frame =
 		(struct ieee80211_mgmt *)beacon->head;
 	u8 checkRatesfor11g = true;
 	u8 require_ht = false, require_vht = false;
@@ -4219,7 +4219,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 	config->SapHw_mode = eCSR_DOT11_MODE_11b;
 
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
-				      &pMgmt_frame->u.beacon.variable[0],
+				      &mgmt_frame->u.beacon.variable[0],
 				      beacon->head_len);
 	if (ie != NULL) {
 		ie += 1;
@@ -4884,7 +4884,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 {
 	tsap_config_t *config;
 	struct hdd_beacon_data *beacon = NULL;
-	struct ieee80211_mgmt *pMgmt_frame;
+	struct ieee80211_mgmt *mgmt_frame;
 	struct ieee80211_mgmt mgmt;
 	const uint8_t *ie = NULL;
 	uint16_t capab_info, ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
@@ -5039,9 +5039,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 
-	pMgmt_frame = (struct ieee80211_mgmt *)beacon->head;
+	mgmt_frame = (struct ieee80211_mgmt *)beacon->head;
 
-	config->beacon_int = pMgmt_frame->u.beacon.beacon_int;
+	config->beacon_int = mgmt_frame->u.beacon.beacon_int;
 	config->dfs_cac_offload = hdd_ctx->dfs_cac_offload;
 
 	status = ucfg_mlme_get_auto_channel_weight(hdd_ctx->psoc,
@@ -5193,9 +5193,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					       &tx_leakage_threshold);
 	tgt_dfs_set_tx_leakage_threshold(hdd_ctx->pdev, tx_leakage_threshold);
 
-	capab_info = pMgmt_frame->u.beacon.capab_info;
+	capab_info = mgmt_frame->u.beacon.capab_info;
 
-	config->privacy = (pMgmt_frame->u.beacon.capab_info &
+	config->privacy = (mgmt_frame->u.beacon.capab_info &
 			    WLAN_CAPABILITY_PRIVACY) ? true : false;
 
 	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->privacy = config->privacy;
@@ -5405,7 +5405,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		beacon_data_len = beacon->head_len - beacon_fixed_len;
 
 		ie = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
-					&pMgmt_frame->u.beacon.variable[0],
+					&mgmt_frame->u.beacon.variable[0],
 					beacon_data_len);
 
 		if (ie) {
