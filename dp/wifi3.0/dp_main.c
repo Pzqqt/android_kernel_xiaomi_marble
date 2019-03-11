@@ -4444,6 +4444,8 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->dscp_tid_map_id = 0;
 	vdev->mcast_enhancement_en = 0;
 	vdev->raw_mode_war = wlan_cfg_get_raw_mode_war(soc->wlan_cfg_ctx);
+	vdev->prev_tx_enq_tstamp = 0;
+	vdev->prev_rx_deliver_tstamp = 0;
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	/* add this vdev into the pdev's list */
@@ -6048,6 +6050,20 @@ uint8_t dp_get_pdev_id_frm_pdev(struct cdp_pdev *pdev_handle)
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	return pdev->pdev_id;
+}
+
+/**
+ * dp_get_delay_stats_flag() - get delay stats flag
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: 0 if flag is disabled else 1
+ */
+static
+bool dp_get_delay_stats_flag(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	return pdev->delay_stats_flag;
 }
 
 /**
@@ -8158,10 +8174,31 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 	case CDP_OSIF_DROP:
 		dp_pdev_tid_stats_osif_drop(pdev_handle, val);
 		break;
+	case CDP_CONFIG_DELAY_STATS:
+		if (val == 1)
+			pdev->delay_stats_flag = true;
+		else
+			pdev->delay_stats_flag = false;
+		break;
 	default:
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_calculate_delay_stats: function to get rx delay stats
+ * @vdev_handle: DP vdev handle
+ * @nbuf: skb
+ *
+ * Return: void
+ */
+static void dp_calculate_delay_stats(struct cdp_vdev *vdev_handle,
+				     qdf_nbuf_t nbuf)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	dp_rx_compute_delay(vdev, nbuf);
 }
 
 /*
@@ -9360,7 +9397,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.txrx_get_pdev_id_frm_pdev = dp_get_pdev_id_frm_pdev,
-	.txrx_get_vow_config_frm_pdev = NULL,
+	.txrx_get_vow_config_frm_pdev = dp_get_delay_stats_flag,
 	.txrx_pdev_set_chan_noise_floor = dp_pdev_set_chan_noise_floor,
 	.txrx_set_nac = dp_set_nac,
 	.txrx_get_tx_pending = dp_get_tx_pending,
@@ -9424,6 +9461,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.set_key = dp_set_michael_key,
 	.txrx_get_vdev_param = dp_get_vdev_param,
 	.enable_peer_based_pktlog = dp_enable_peer_based_pktlog,
+	.calculate_delay_stats = dp_calculate_delay_stats,
 };
 
 static struct cdp_me_ops dp_ops_me = {
@@ -10246,3 +10284,153 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	return 0;
 }
 #endif
+
+/**
+ * dp_bucket_index() - Return index from array
+ *
+ * @delay: delay measured
+ * @array: array used to index corresponding delay
+ *
+ * Return: index
+ */
+static uint8_t dp_bucket_index(uint32_t delay, uint16_t *array)
+{
+	uint8_t i = CDP_DELAY_BUCKET_1;
+
+	for (; i < CDP_DELAY_BUCKET_MAX; i++) {
+		if (delay < array[i] && delay > array[i + 1])
+			return i;
+	}
+
+	return (CDP_DELAY_BUCKET_MAX - 1);
+}
+
+/**
+ * dp_fill_delay_buckets() - Fill delay statistics bucket for each
+ *				type of delay
+ *
+ * @pdev: pdev handle
+ * @delay: delay in ms
+ * @t: tid value
+ * @mode: type of tx delay mode
+ * Return: pointer to cdp_delay_stats structure
+ */
+static struct cdp_delay_stats *
+dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
+		      uint8_t tid, uint8_t mode)
+{
+	uint8_t delay_index = 0;
+	struct cdp_tid_tx_stats *tstats =
+		&pdev->stats.tid_stats.tid_tx_stats[tid];
+	struct cdp_tid_rx_stats *rstats =
+		&pdev->stats.tid_stats.tid_rx_stats[tid];
+	/*
+	 * cdp_fw_to_hw_delay_range
+	 * Fw to hw delay ranges in milliseconds
+	 */
+	uint16_t cdp_fw_to_hw_delay[CDP_DELAY_BUCKET_MAX] = {
+		10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 250, 500};
+
+	/*
+	 * cdp_sw_enq_delay_range
+	 * Software enqueue delay ranges in milliseconds
+	 */
+	uint16_t cdp_sw_enq_delay[CDP_DELAY_BUCKET_MAX] = {
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+
+	/*
+	 * cdp_intfrm_delay_range
+	 * Interframe delay ranges in milliseconds
+	 */
+	uint16_t cdp_intfrm_delay[CDP_DELAY_BUCKET_MAX] = {
+		5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
+
+	/*
+	 * Update delay stats in proper bucket
+	 */
+	switch (mode) {
+	/* Software Enqueue delay ranges */
+	case CDP_DELAY_STATS_SW_ENQ:
+
+		delay_index = dp_bucket_index(delay, cdp_sw_enq_delay);
+		tstats->swq_delay.delay_bucket[delay_index]++;
+		return &tstats->swq_delay;
+
+	/* Tx Completion delay ranges */
+	case CDP_DELAY_STATS_FW_HW_TRANSMIT:
+
+		delay_index = dp_bucket_index(delay, cdp_fw_to_hw_delay);
+		tstats->hwtx_delay.delay_bucket[delay_index]++;
+		return &tstats->hwtx_delay;
+
+	/* Interframe tx delay ranges */
+	case CDP_DELAY_STATS_TX_INTERFRAME:
+
+		delay_index = dp_bucket_index(delay, cdp_intfrm_delay);
+		tstats->intfrm_delay.delay_bucket[delay_index]++;
+		return &tstats->intfrm_delay;
+
+	/* Interframe rx delay ranges */
+	case CDP_DELAY_STATS_RX_INTERFRAME:
+
+		delay_index = dp_bucket_index(delay, cdp_intfrm_delay);
+		rstats->intfrm_delay.delay_bucket[delay_index]++;
+		return &rstats->intfrm_delay;
+
+	/* Ring reap to indication to network stack */
+	case CDP_DELAY_STATS_REAP_STACK:
+
+		delay_index = dp_bucket_index(delay, cdp_intfrm_delay);
+		rstats->to_stack_delay.delay_bucket[delay_index]++;
+		return &rstats->intfrm_delay;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s Incorrect delay mode: %d", __func__, mode);
+	}
+
+	return NULL;
+}
+
+/**
+ * dp_update_delay_stats() - Update delay statistics in structure
+ *				and fill min, max and avg delay
+ *
+ * @pdev: pdev handle
+ * @delay: delay in ms
+ * @tid: tid value
+ * @mode: type of tx delay mode
+ * Return: none
+ */
+void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
+			   uint8_t tid, uint8_t mode)
+{
+	struct cdp_delay_stats *dstats = NULL;
+
+	/*
+	 * Delay ranges are different for different delay modes
+	 * Get the correct index to update delay bucket
+	 */
+	dstats = dp_fill_delay_buckets(pdev, delay, tid, mode);
+	if (qdf_unlikely(!dstats))
+		return;
+
+	if (delay != 0) {
+		/*
+		 * Compute minimum,average and maximum
+		 * delay
+		 */
+		if (delay < dstats->min_delay)
+			dstats->min_delay = delay;
+
+		if (delay > dstats->max_delay)
+			dstats->max_delay = delay;
+
+		/*
+		 * Average over delay measured till now
+		 */
+		if (!dstats->avg_delay)
+			dstats->avg_delay = delay;
+		else
+			dstats->avg_delay = ((delay + dstats->avg_delay) / 2);
+	}
+}

@@ -169,7 +169,7 @@ struct cdp_tidq_stats {
  * cdp_delay_stats_mode: Different types of delay statistics
  *
  * @CDP_DELAY_STATS_SW_ENQ: Stack to hw enqueue delay
- * @CDP_DELAY_STATS_INTERFRAME: Interframe delay at radio entry point
+ * @CDP_DELAY_STATS_TX_INTERFRAME: Interframe delay at radio entry point
  * @CDP_DELAY_STATS_FW_HW_TRANSMIT: Hw enqueue to tx completion delay
  * @CDP_DELAY_STATS_REAP_STACK: Delay in ring reap to indicating network stack
  * @CDP_DELAY_STATS_RX_INTERFRAME: Rx inteframe delay
@@ -177,7 +177,7 @@ struct cdp_tidq_stats {
  */
 enum cdp_delay_stats_mode {
 	CDP_DELAY_STATS_SW_ENQ,
-	CDP_DELAY_STATS_INTERFRAME,
+	CDP_DELAY_STATS_TX_INTERFRAME,
 	CDP_DELAY_STATS_FW_HW_TRANSMIT,
 	CDP_DELAY_STATS_REAP_STACK,
 	CDP_DELAY_STATS_RX_INTERFRAME,

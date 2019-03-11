@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -556,8 +556,6 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 		soc->tx_desc[desc_pool_id].freelist->next;
 	soc->tx_desc[desc_pool_id].num_allocated++;
 	soc->tx_desc[desc_pool_id].num_free--;
-
-	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
 
 	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 

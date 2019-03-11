@@ -641,6 +641,7 @@ struct cdp_ctrl_ops {
 	int (*enable_peer_based_pktlog)(struct cdp_pdev
 			*txrx_pdev_handle, char *macaddr, uint8_t enb_dsb);
 
+	void (*calculate_delay_stats)(struct cdp_vdev *vdev, qdf_nbuf_t nbuf);
 };
 
 struct cdp_me_ops {

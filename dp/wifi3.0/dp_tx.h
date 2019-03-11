@@ -223,9 +223,6 @@ void  dp_iterate_update_peer_list(void *pdev_hdl);
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf)
 #endif
 
-#define DP_RX_TID_SAVE(_nbuf, _tid) \
-	(qdf_nbuf_set_priority(_nbuf, _tid))
-
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {

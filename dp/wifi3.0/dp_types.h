@@ -1331,6 +1331,8 @@ struct dp_pdev {
 	/* enable time latency check for tx completion */
 	bool latency_capture_enable;
 
+	/* enable calculation of delay stats*/
+	bool delay_stats_flag;
 	struct {
 		uint16_t tx_ppdu_id;
 		uint16_t tx_peer_id;
@@ -1548,6 +1550,12 @@ struct dp_vdev {
 
 	/* AST hash value for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_hash;
+
+	/* Capture timestamp of previous tx packet enqueued */
+	uint64_t prev_tx_enq_tstamp;
+
+	/* Capture timestamp of previous rx packet delivered */
+	uint64_t prev_rx_deliver_tstamp;
 };
 
 

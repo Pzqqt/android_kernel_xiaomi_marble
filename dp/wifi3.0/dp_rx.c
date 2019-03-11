@@ -57,6 +57,23 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 }
 #endif
 
+#ifdef ATH_RX_PRI_SAVE
+static inline void dp_rx_save_tid_ts(qdf_nbuf_t nbuf, uint8_t tid, bool flag)
+{
+	qdf_nbuf_set_priority(nbuf, tid);
+	if (qdf_unlikely(flag))
+		qdf_nbuf_set_timestamp(nbuf);
+}
+#else
+static inline void dp_rx_save_tid_ts(qdf_nbuf_t nbuf, uint8_t tid, bool flag)
+{
+	if (qdf_unlikely(flag)) {
+		qdf_nbuf_set_priority(nbuf, tid);
+		qdf_nbuf_set_timestamp(nbuf);
+	}
+}
+#endif
+
 /*
  * dp_rx_dump_info_and_assert() - dump RX Ring info and Rx Desc info
  *
@@ -1102,6 +1119,37 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	return parent;
 }
 
+/**
+ * dp_rx_compute_delay() - Compute and fill in all timestamps
+ *				to pass in correct fields
+ *
+ * @vdev: pdev handle
+ * @tx_desc: tx descriptor
+ * @tid: tid value
+ * Return: none
+ */
+void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	int64_t current_ts = qdf_ktime_to_ms(qdf_ktime_get());
+	uint32_t to_stack = qdf_nbuf_get_timedelta_ms(nbuf);
+	uint8_t tid = qdf_nbuf_get_priority(nbuf);
+	uint32_t interframe_delay =
+		(uint32_t)(current_ts - vdev->prev_rx_deliver_tstamp);
+
+	dp_update_delay_stats(vdev->pdev, to_stack, tid,
+			      CDP_DELAY_STATS_REAP_STACK);
+	/*
+	 * Update interframe delay stats calculated at deliver_data_ol point.
+	 * Value of vdev->prev_rx_deliver_tstamp will be 0 for 1st frame, so
+	 * interframe delay will not be calculate correctly for 1st frame.
+	 * On the other side, this will help in avoiding extra per packet check
+	 * of vdev->prev_rx_deliver_tstamp.
+	 */
+	dp_update_delay_stats(vdev->pdev, interframe_delay, tid,
+			      CDP_DELAY_STATS_RX_INTERFRAME);
+	vdev->prev_rx_deliver_tstamp = current_ts;
+}
+
 static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 						struct dp_peer *peer,
 						qdf_nbuf_t nbuf_head,
@@ -1618,13 +1666,13 @@ done:
 		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
 			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 							rx_tlv_hdr);
-		DP_RX_TID_SAVE(nbuf, tid);
 
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
 		 * to be written
 		 */
 		rx_pdev = soc->pdev_list[rx_desc->pool_id];
+		dp_rx_save_tid_ts(nbuf, tid, rx_pdev->delay_stats_flag);
 		tid_stats = &rx_pdev->stats.tid_stats.tid_rx_stats[tid];
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

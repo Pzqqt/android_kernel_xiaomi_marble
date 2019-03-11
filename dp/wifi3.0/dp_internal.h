@@ -765,6 +765,10 @@ void dp_set_michael_key(struct cdp_peer *peer_handle,
 uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
 			enum _ol_ath_param_t param, uint32_t value, void *buff);
 #endif
+
+void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
+			   uint8_t tid, uint8_t mode);
+
 /*
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
  *

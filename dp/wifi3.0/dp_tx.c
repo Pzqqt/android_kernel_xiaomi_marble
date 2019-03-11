@@ -1028,6 +1028,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_mesh_en(hal_tx_desc_cached, 1);
 
 
+	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
 	/* Sync cached descriptor with HW */
 	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 
@@ -2666,20 +2667,73 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 #endif
 
 /**
+ * dp_tx_compute_delay() - Compute and fill in all timestamps
+ *				to pass in correct fields
+ *
+ * @vdev: pdev handle
+ * @tx_desc: tx descriptor
+ * @tid: tid value
+ * Return: none
+ */
+static void dp_tx_compute_delay(struct dp_vdev *vdev,
+				struct dp_tx_desc_s *tx_desc, uint8_t tid)
+{
+	int64_t current_timestamp, timestamp_ingress, timestamp_hw_enqueue;
+	uint32_t sw_enqueue_delay, fwhw_transmit_delay, interframe_delay;
+
+	if (qdf_likely(!vdev->pdev->delay_stats_flag))
+		return;
+
+	current_timestamp = qdf_ktime_to_ms(qdf_ktime_get());
+	timestamp_ingress = qdf_nbuf_get_timestamp(tx_desc->nbuf);
+	timestamp_hw_enqueue = tx_desc->timestamp;
+	sw_enqueue_delay = (uint32_t)(timestamp_hw_enqueue - timestamp_ingress);
+	fwhw_transmit_delay = (uint32_t)(current_timestamp -
+					 timestamp_hw_enqueue);
+	interframe_delay = (uint32_t)(timestamp_ingress -
+				      vdev->prev_tx_enq_tstamp);
+
+	/*
+	 * Delay in software enqueue
+	 */
+	dp_update_delay_stats(vdev->pdev, sw_enqueue_delay, tid,
+			      CDP_DELAY_STATS_SW_ENQ);
+	/*
+	 * Delay between packet enqueued to HW and Tx completion
+	 */
+	dp_update_delay_stats(vdev->pdev, fwhw_transmit_delay, tid,
+			      CDP_DELAY_STATS_FW_HW_TRANSMIT);
+
+	/*
+	 * Update interframe delay stats calculated at hardstart receive point.
+	 * Value of vdev->prev_tx_enq_tstamp will be 0 for 1st frame, so
+	 * interframe delay will not be calculate correctly for 1st frame.
+	 * On the other side, this will help in avoiding extra per packet check
+	 * of !vdev->prev_tx_enq_tstamp.
+	 */
+	dp_update_delay_stats(vdev->pdev, interframe_delay, tid,
+			      CDP_DELAY_STATS_TX_INTERFRAME);
+	vdev->prev_tx_enq_tstamp = timestamp_ingress;
+}
+
+/**
  * dp_tx_update_peer_stats() - Update peer stats from Tx completion indications
- * @peer: Handle to DP peer
- * @ts: pointer to HAL Tx completion stats
+ * @tx_desc: software descriptor head pointer
+ * @ts: Tx completion status
+ * @peer: peer handle
  *
  * Return: None
  */
 static inline void
-dp_tx_update_peer_stats(struct dp_peer *peer,
-			struct hal_tx_completion_status *ts, uint32_t length)
+dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
+			struct hal_tx_completion_status *ts,
+			struct dp_peer *peer)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = NULL;
 	uint8_t mcs, pkt_type;
 	uint8_t tid = ts->tid;
+	uint32_t length;
 	struct cdp_tid_tx_stats *tid_stats;
 
 	if (!pdev)
@@ -2699,7 +2753,11 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 		return;
 	}
 
+	length = qdf_nbuf_len(tx_desc->nbuf);
 	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+
+	if (qdf_unlikely(pdev->delay_stats_flag))
+		dp_tx_compute_delay(peer->vdev, tx_desc, tid);
 	tid_stats->complete_cnt++;
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
@@ -3061,7 +3119,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		}
 	}
 
-	dp_tx_update_peer_stats(peer, ts, length);
+	dp_tx_update_peer_stats(tx_desc, ts, peer);
 
 out:
 	return;
@@ -3169,6 +3227,8 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[tid];
 
+		if (qdf_unlikely(pdev->delay_stats_flag))
+			dp_tx_compute_delay(vdev, tx_desc, tid);
 		tid_stats->complete_cnt++;
 		if (qdf_unlikely(tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)) {
 			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;

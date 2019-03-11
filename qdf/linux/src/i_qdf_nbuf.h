@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2019,6 +2019,19 @@ static inline void
 __qdf_nbuf_set_timestamp(struct sk_buff *skb)
 {
 	__net_timestamp(skb);
+}
+
+/**
+ * __qdf_nbuf_get_timestamp() - get the timestamp for frame
+ *
+ * @buf: sk buff
+ *
+ * Return: timestamp stored in skb in ms
+ */
+static inline uint64_t
+__qdf_nbuf_get_timestamp(struct sk_buff *skb)
+{
+	return ktime_to_ms(skb_get_ktime(skb));
 }
 
 /**

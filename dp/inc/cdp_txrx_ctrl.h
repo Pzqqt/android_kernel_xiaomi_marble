@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -527,6 +527,36 @@ cdp_enable_peer_based_pktlog(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->enable_peer_based_pktlog
 			(pdev, peer_macaddr, enable);
+}
+
+/**
+ * cdp_calculate_delay_stats()- get rx delay stats
+ *
+ * @soc: pointer to the soc
+ * @vdev: vdev handle
+ * @nbuf: nbuf which is passed
+ *
+ * This function will calculate rx delay statistics.
+ */
+static inline void
+cdp_calculate_delay_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+			  qdf_nbuf_t nbuf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->calculate_delay_stats) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: callback not registered:", __func__);
+		return;
+	}
+
+	return soc->ops->ctrl_ops->calculate_delay_stats(vdev, nbuf);
 }
 
 /**

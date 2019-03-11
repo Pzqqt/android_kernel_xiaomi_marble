@@ -987,4 +987,5 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);
 void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 				void *ring_desc, struct dp_rx_desc *rx_desc);
 
+void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 #endif /* _DP_RX_H */

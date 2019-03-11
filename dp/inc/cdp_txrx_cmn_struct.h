@@ -822,6 +822,7 @@ struct cdp_soc_t {
  * @CDP_CONFIG_CAPTURE_LATENCY: Capture time latency
  * @CDP_INGRESS_STATS: Accumulate ingress statistics
  * @CDP_OSIF_DROP: Accumulate drops in OSIF layer
+ * @CDP_CONFIG_DELAY_STATS: Enable per tid delay stats
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -834,6 +835,7 @@ enum cdp_pdev_param_type {
 	CDP_CONFIG_CAPTURE_LATENCY,
 	CDP_INGRESS_STATS,
 	CDP_OSIF_DROP,
+	CDP_CONFIG_DELAY_STATS,
 };
 
 /*
