@@ -5403,7 +5403,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	eCsrEncryptionType mc_rsn_encrypt_type;
 	struct hdd_context *hdd_ctx;
 #ifdef WLAN_FEATURE_11W
-	uint8_t RSNMfpRequired = 0;
+	uint8_t mfp_required = 0;
 	uint8_t RSNMfpCapable = 0;
 #endif
 	u8 bssid[ETH_ALEN];        /* MAC address of assoc peer */
@@ -5427,7 +5427,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 				   &rsn_encrypt_type,
 				   &mc_rsn_encrypt_type, rsn_auth_type,
 #ifdef WLAN_FEATURE_11W
-				   &RSNMfpRequired, &RSNMfpCapable,
+				   &mfp_required, &RSNMfpCapable,
 #endif
 				   security_ie[1] + 2,
 				   security_ie);
@@ -5464,9 +5464,9 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 				= mc_rsn_encrypt_type;
 		}
 #ifdef WLAN_FEATURE_11W
-		hdd_debug("RSNMfpRequired = %d, RSNMfpCapable = %d",
-			 RSNMfpRequired, RSNMfpCapable);
-		roam_profile->MFPRequired = RSNMfpRequired;
+		hdd_debug("mfp_required = %d, RSNMfpCapable = %d",
+			 mfp_required, RSNMfpCapable);
+		roam_profile->MFPRequired = mfp_required;
 		roam_profile->MFPCapable = RSNMfpCapable;
 #endif
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
