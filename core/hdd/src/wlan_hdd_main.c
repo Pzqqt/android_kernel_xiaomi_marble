@@ -10294,18 +10294,18 @@ static int hdd_platform_wlan_mac(struct hdd_context *hdd_ctx)
  */
 static int hdd_update_mac_addr_to_fw(struct hdd_context *hdd_ctx)
 {
-	tSirMacAddr customMacAddr;
+	tSirMacAddr custom_mac_addr;
 	QDF_STATUS status;
 
 	if (hdd_ctx->num_provisioned_addr)
-		qdf_mem_copy(&customMacAddr,
+		qdf_mem_copy(&custom_mac_addr,
 			     &hdd_ctx->provisioned_mac_addr[0].bytes[0],
 			     sizeof(tSirMacAddr));
 	else
-		qdf_mem_copy(&customMacAddr,
+		qdf_mem_copy(&custom_mac_addr,
 			     &hdd_ctx->derived_mac_addr[0].bytes[0],
 			     sizeof(tSirMacAddr));
-	status = sme_set_custom_mac_addr(customMacAddr);
+	status = sme_set_custom_mac_addr(custom_mac_addr);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return -EAGAIN;
 	return 0;
