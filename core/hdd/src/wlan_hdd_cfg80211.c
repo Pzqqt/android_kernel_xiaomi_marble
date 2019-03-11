@@ -13876,7 +13876,8 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 	uint32_t num_ch = 0;
 	u8 valid_ch[CFG_VALID_CHANNEL_LIST_LEN];
 	u32 indx = 0;
-	uint8_t fValidChannel = false, count = 0;
+	bool is_valid_channel = false;
+	uint8_t count;
 	QDF_STATUS status;
 	bool value;
 	struct hdd_context *hdd_ctx;
@@ -13890,11 +13891,11 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 		/* Validate the channel */
 		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_173; count++) {
 			if (channel == WLAN_REG_CH_NUM(count)) {
-				fValidChannel = true;
+				is_valid_channel = true;
 				break;
 			}
 		}
-		if (fValidChannel != true) {
+		if (!is_valid_channel) {
 			hdd_err("Invalid Channel: %d", channel);
 			return QDF_STATUS_E_FAILURE;
 		}
