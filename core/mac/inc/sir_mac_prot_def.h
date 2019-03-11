@@ -1466,6 +1466,7 @@ typedef struct sSirMacAuthFrameBody {
 	uint8_t challengeText[SIR_MAC_AUTH_CHALLENGE_LENGTH];
 #ifdef WLAN_FEATURE_FILS_SK
 	tSirMacRsnInfo rsn_ie;
+	struct mac_ft_ie ft_ie;
 	uint8_t assoc_delay_info;
 	uint8_t session[SIR_FILS_SESSION_LENGTH];
 	uint8_t wrapped_data_len;

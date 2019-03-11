@@ -4167,6 +4167,69 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 } /* End sir_convert_beacon_frame2_struct. */
 
 #ifdef WLAN_FEATURE_FILS_SK
+
+/* update_ftie_in_fils_conf() - API to update fils info from auth
+ * response packet from AP
+ * @auth: auth packet pointer received from AP
+ * @auth_frame: data structure needs to be updated
+ *
+ * Return: None
+ */
+static void
+update_ftie_in_fils_conf(tDot11fAuthentication *auth,
+			 tpSirMacAuthFrameBody auth_frame)
+{
+	/**
+	 * Copy the FTIE sent by the AP in the auth request frame.
+	 * This is required for FT-FILS connection.
+	 * This FTIE will be sent in Assoc request frame without
+	 * any modification.
+	 */
+	if (auth->FTInfo.present) {
+		pe_debug("FT-FILS: r0kh_len:%d r1kh_present:%d",
+			 auth->FTInfo.R0KH_ID.num_PMK_R0_ID,
+			 auth->FTInfo.R1KH_ID.present);
+
+		auth_frame->ft_ie.present = 1;
+		if (auth->FTInfo.R1KH_ID.present) {
+			qdf_mem_copy(auth_frame->ft_ie.r1kh_id,
+				     auth->FTInfo.R1KH_ID.PMK_R1_ID,
+				     FT_R1KH_ID_LEN);
+		}
+
+		if (auth->FTInfo.R0KH_ID.present) {
+			qdf_mem_copy(auth_frame->ft_ie.r0kh_id,
+				     auth->FTInfo.R0KH_ID.PMK_R0_ID,
+				     auth->FTInfo.R0KH_ID.num_PMK_R0_ID);
+			auth_frame->ft_ie.r0kh_id_len =
+					auth->FTInfo.R0KH_ID.num_PMK_R0_ID;
+		}
+
+		if (auth_frame->ft_ie.gtk_ie.present) {
+			pe_debug("FT-FILS: GTK present");
+			qdf_mem_copy(&auth_frame->ft_ie.gtk_ie,
+				     &auth->FTInfo.GTK,
+				     sizeof(struct mac_ft_gtk_ie));
+		}
+
+		if (auth_frame->ft_ie.igtk_ie.present) {
+			pe_debug("FT-FILS: IGTK present");
+			qdf_mem_copy(&auth_frame->ft_ie.igtk_ie,
+				     &auth->FTInfo.IGTK,
+				     sizeof(struct mac_ft_igtk_ie));
+		}
+
+		qdf_mem_copy(auth_frame->ft_ie.anonce, auth->FTInfo.Anonce,
+			     FT_NONCE_LEN);
+		qdf_mem_copy(auth_frame->ft_ie.snonce, auth->FTInfo.Snonce,
+			     FT_NONCE_LEN);
+
+		qdf_mem_copy(auth_frame->ft_ie.mic, auth->FTInfo.MIC,
+			     FT_MIC_LEN);
+		auth_frame->ft_ie.element_count = auth->FTInfo.IECount;
+	}
+}
+
 /* sir_update_auth_frame2_struct_fils_conf: API to update fils info from auth
  * packet type 2
  * @auth: auth packet pointer received from AP
@@ -4174,8 +4237,9 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
  *
  * Return: None
  */
-static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
-				tpSirMacAuthFrameBody auth_frame)
+static void
+sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
+					tpSirMacAuthFrameBody auth_frame)
 {
 	if (auth->AuthAlgo.algo != SIR_FILS_SK_WITHOUT_PFS)
 		return;
@@ -4204,6 +4268,9 @@ static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
 			auth->RSNOpaque.num_data);
 		auth_frame->rsn_ie.length = auth->RSNOpaque.num_data;
 	}
+
+	update_ftie_in_fils_conf(auth, auth_frame);
+
 }
 #else
 static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,

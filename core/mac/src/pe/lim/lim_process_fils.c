@@ -1109,6 +1109,17 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 		return false;
 	}
 
+	/*
+	 * copy FTIE to fils_info and send it over assoc response frame
+	 * for FT-FILS connection
+	 */
+	if (pe_session->is11Rconnection && pe_session->fils_info) {
+		pe_session->fils_info->ft_ie = rx_auth_frm_body->ft_ie;
+		if (!pe_session->fils_info->ft_ie.present) {
+			pe_err("FT-FILS: NO FTIE in auth response");
+		}
+	}
+
 	for (i = 0; i < dot11f_ie_rsn.pmkid_count; i++) {
 		if (qdf_mem_cmp(dot11f_ie_rsn.pmkid[i],
 		    pe_session->fils_info->fils_pmkid,
