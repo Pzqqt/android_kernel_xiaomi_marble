@@ -9477,7 +9477,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 				cfg_get(psoc, CFG_PROVISION_INTERFACE_POOL);
 	config->derived_intf_pool = cfg_get(psoc, CFG_DERIVED_INTERFACE_POOL);
 	config->action_oui_enable = cfg_get(psoc, CFG_ENABLE_ACTION_OUI);
-	config->advertiseConcurrentOperation =
+	config->advertise_concurrent_operation =
 				cfg_get(psoc,
 					CFG_ADVERTISE_CONCURRENT_OPERATION);
 	qdf_str_lcopy(config->action_oui_str[0],

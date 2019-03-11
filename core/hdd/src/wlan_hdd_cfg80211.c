@@ -13258,7 +13258,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc))
 		hdd_err("can't get enable_mcc value, use default");
-	if (config->advertiseConcurrentOperation) {
+	if (config->advertise_concurrent_operation) {
 		if (enable_mcc) {
 			int i;
 

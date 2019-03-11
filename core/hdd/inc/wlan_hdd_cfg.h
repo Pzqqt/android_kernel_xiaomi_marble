@@ -117,7 +117,7 @@ struct hdd_config {
 	bool enable_mtrace;
 #endif
 	bool fEnableSNRMonitoring;
-	bool advertiseConcurrentOperation;
+	bool advertise_concurrent_operation;
 #ifdef DHCP_SERVER_OFFLOAD
 	struct dhcp_server dhcp_server_ip;
 #endif /* DHCP_SERVER_OFFLOAD */
