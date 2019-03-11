@@ -905,7 +905,6 @@ void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 #endif
 
 #define HTT_FCS_LEN (4)
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 #ifdef HTT_DEBUG_DATA
 #define HTT_PKT_DUMP(x) x

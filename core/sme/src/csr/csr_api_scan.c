@@ -632,7 +632,7 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
 	struct csr_channel tmp_ch_lst;
 
 	if (ch_lst->numChannels) {
-		tempNumChannels = CSR_MIN(ch_lst->numChannels,
+		tempNumChannels = QDF_MIN(ch_lst->numChannels,
 					  CFG_VALID_CHANNEL_LIST_LEN);
 		for (i = 0; i < tempNumChannels; i++) {
 			tmp_ch_lst.channelList[num_ch] = ch_lst->channelList[i];

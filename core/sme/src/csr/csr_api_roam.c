@@ -13737,8 +13737,8 @@ static void csr_roam_determine_max_rate_for_ad_hoc(struct mac_context *mac,
 
 	pRate = pSirRateSet->rate;
 	for (i = 0; i < pSirRateSet->numRates; i++) {
-		MaxRate = CSR_MAX(MaxRate, (pRate[i] &
-						(~CSR_DOT11_BASIC_RATE_MASK)));
+		MaxRate = QDF_MAX(MaxRate, (pRate[i] &
+					(~CSR_DOT11_BASIC_RATE_MASK)));
 	}
 
 	/* Save the max rate in the connected state information.

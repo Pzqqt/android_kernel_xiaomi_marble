@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,10 +68,6 @@ struct ol_tx_sched_ctx {
 
 typedef TAILQ_HEAD(ol_tx_frms_queue_list_s, ol_tx_frms_queue_t)
 	ol_tx_frms_queue_list;
-
-#define OL_A_MAX(_x, _y) ((_x) > (_y) ? (_x) : (_y))
-
-#define OL_A_MIN(_x, _y) ((_x) < (_y) ? (_x) : (_y))
 
 	/*--- scheduler algorithm selection ---*/
 
@@ -210,7 +206,7 @@ ol_tx_sched_select_batch_rr(
 	next_tq = TAILQ_FIRST(&txq_queue->head);
 	TAILQ_REMOVE(&txq_queue->head, next_tq, list_elem);
 
-	credit = OL_A_MIN(credit, TX_SCH_MAX_CREDIT_FOR_THIS_TID(next_tq));
+	credit = QDF_MIN(credit, TX_SCH_MAX_CREDIT_FOR_THIS_TID(next_tq));
 	frames = next_tq->frms; /* download as many frames as credit allows */
 	tx_limit = ol_tx_bad_peer_dequeue_check(next_tq,
 					frames,

@@ -40,8 +40,6 @@
 
 #define HTT_FCS_LEN (4)
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-
 enum {
 	HW_RX_DECAP_FORMAT_RAW = 0,
 	HW_RX_DECAP_FORMAT_NWIFI,
@@ -106,7 +104,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 	qdf_nbuf_set_pktlen(frag_nbuf, HTT_RX_BUF_SIZE);
 	qdf_nbuf_unmap(pdev->osdev, frag_nbuf, QDF_DMA_FROM_DEVICE);
 	/* For msdu's other than parent will not have htt_host_rx_desc_base */
-	len = MIN(amsdu_len, HTT_RX_BUF_SIZE);
+	len = QDF_MIN(amsdu_len, HTT_RX_BUF_SIZE);
 	amsdu_len -= len;
 	qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
 
@@ -131,7 +129,7 @@ int htt_mon_rx_handle_amsdu_packet(qdf_nbuf_t msdu, htt_pdev_handle pdev,
 		qdf_nbuf_set_pktlen(frag_nbuf, HTT_RX_BUF_SIZE);
 		qdf_nbuf_unmap(pdev->osdev, frag_nbuf, QDF_DMA_FROM_DEVICE);
 
-		len = MIN(amsdu_len, HTT_RX_BUF_SIZE);
+		len = QDF_MIN(amsdu_len, HTT_RX_BUF_SIZE);
 		amsdu_len -= len;
 		qdf_nbuf_trim_tail(frag_nbuf, HTT_RX_BUF_SIZE - len);
 		HTT_PKT_DUMP(qdf_trace_hex_dump(QDF_MODULE_ID_TXRX,
@@ -673,7 +671,7 @@ int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		 * MAX_RX_PAYLOAD_SZ when we have AMSDU packet. amsdu_len in
 		 * which case is the total length of sum of all AMSDU's
 		 */
-		len = MIN(amsdu_len, MAX_RX_PAYLOAD_SZ);
+		len = QDF_MIN(amsdu_len, MAX_RX_PAYLOAD_SZ);
 		amsdu_len -= len;
 		qdf_nbuf_trim_tail(msdu, HTT_RX_BUF_SIZE -
 				   (RX_STD_DESC_SIZE + len));
