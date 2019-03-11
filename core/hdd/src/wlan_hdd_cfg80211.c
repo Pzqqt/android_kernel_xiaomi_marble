@@ -12947,7 +12947,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  enum band_info new_band)
 {
 	int i, j;
-	enum channel_state channelEnabledState;
+	enum channel_state channel_state;
 
 	hdd_enter();
 
@@ -12959,7 +12959,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
-			channelEnabledState = wlan_reg_get_channel_state(
+			channel_state = wlan_reg_get_channel_state(
 					hdd_ctx->pdev,
 					band->channels[j].hw_value);
 
@@ -12971,7 +12971,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				if (WLAN_HDD_IS_SOCIAL_CHANNEL
 					    (band->channels[j].center_freq)
 				    && CHANNEL_STATE_ENABLE ==
-				    channelEnabledState)
+				    channel_state)
 					band->channels[j].flags &=
 						~IEEE80211_CHAN_DISABLED;
 				else
@@ -12987,7 +12987,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				continue;
 			}
 
-			if (CHANNEL_STATE_DISABLE != channelEnabledState)
+			if (CHANNEL_STATE_DISABLE != channel_state)
 				band->channels[j].flags &=
 					~IEEE80211_CHAN_DISABLED;
 		}
