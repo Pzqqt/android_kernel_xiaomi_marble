@@ -5150,14 +5150,16 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		__func__, rtd->card->num_aux_devs);
 	if (rtd->card->num_aux_devs &&
 	    !list_empty(&rtd->card->aux_comp_list)) {
-		aux_comp = list_first_entry(&rtd->card->aux_comp_list,
-				struct snd_soc_component, card_aux_list);
-		if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
-		    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
-			wsa_macro_set_spkr_mode(component,
-						WSA_MACRO_SPKR_MODE_1);
-			wsa_macro_set_spkr_gain_offset(component,
-					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+		list_for_each_entry(aux_comp, &rtd->card->aux_comp_list,
+				card_aux_list) {
+			if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
+			    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
+				wsa_macro_set_spkr_mode(component,
+							WSA_MACRO_SPKR_MODE_1);
+				wsa_macro_set_spkr_gain_offset(component,
+						WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+				break;
+			}
 		}
 	}
 	card = rtd->card->snd_card;
