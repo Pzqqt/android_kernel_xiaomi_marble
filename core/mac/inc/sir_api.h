@@ -5886,4 +5886,16 @@ struct sir_md_evt {
 	uint32_t status;
 };
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+
+#ifdef WLAN_MWS_INFO_DEBUGFS
+/**
+ * struct sir_get_mws_coex_info - Get MWS coex info
+ * @vdev_id: vdev id
+ * @cmd_id: wmi mws-coex command IDs
+ */
+struct sir_get_mws_coex_info {
+	uint32_t vdev_id;
+	uint32_t cmd_id;
+};
+#endif /* WLAN_MWS_INFO_DEBUGFS */
 #endif /* __SIR_API_H */

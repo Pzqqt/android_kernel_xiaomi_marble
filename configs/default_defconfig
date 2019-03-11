@@ -373,6 +373,8 @@ ifeq ($(CONFIG_DEBUG_FS), y)
        CONFIG_WLAN_DEBUGFS := y
 
        CONFIG_WLAN_POWER_DEBUGFS := y
+
+       CONFIG_WLAN_MWS_INFO_DEBUGFS := y
 endif
 
 # Feature flags which are not (currently) configurable via Kconfig

@@ -43,6 +43,7 @@
 #include "scheduler_api.h"
 #include "wlan_serialization_legacy_api.h"
 #include <qca_vendor.h>
+#include "wmi_unified.h"
 
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -3426,4 +3427,25 @@ QDF_STATUS sme_update_hidden_ssid_status_cb(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_update_owe_info(struct mac_context *mac,
 			       struct assoc_ind *assoc_ind);
+
+#ifdef WLAN_MWS_INFO_DEBUGFS
+/**
+ * sme_get_mws_coex_info() - SME API to get the coex information
+ * @mac_handle: mac handler
+ * @vdev_id: Vdev_id
+ * @cmd_id: enum mws_coex_cmdid which information is needed.
+ * @callback_fn: Callback function
+ * @context: callback context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_get_mws_coex_info(mac_handle_t mac_handle, uint32_t vdev_id,
+		      uint32_t cmd_id, void (*callback_fn)(void *coex_info_data,
+							   void *context,
+							   wmi_mws_coex_cmd_id
+							   cmd_id),
+		      void *context);
+#endif /* WLAN_MWS_INFO_DEBUGFS */
+
 #endif /* #if !defined( __SME_API_H ) */

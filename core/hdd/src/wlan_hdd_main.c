@@ -161,6 +161,7 @@
 #include "wlan_green_ap_ucfg_api.h"
 #include <wlan_p2p_ucfg_api.h>
 #include <target_type.h>
+#include <wlan_hdd_debugfs_coex.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -7286,6 +7287,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	hdd_debugfs_mws_coex_info_deinit(hdd_ctx);
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	hdd_unregister_notifiers(hdd_ctx);
@@ -11889,6 +11891,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 
 	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
 	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
+	hdd_debugfs_mws_coex_info_init(hdd_ctx);
 
 	hdd_exit();
 

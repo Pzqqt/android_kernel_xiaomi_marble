@@ -86,6 +86,9 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_csr.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_connect.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_offload.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_roam.o
+ifeq ($(CONFIG_WLAN_MWS_INFO_DEBUGFS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_coex.o
+endif
 endif
 
 ifeq ($(CONFIG_WLAN_CONV_SPECTRAL_ENABLE),y)
@@ -1669,6 +1672,9 @@ endif
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_fw_state.o
 endif
+ifeq ($(CONFIG_WLAN_MWS_INFO_DEBUGFS), y)
+WMA_OBJS +=	$(WMA_SRC_DIR)/wma_coex.o
+endif
 ############## PLD ##########
 PLD_DIR := core/pld
 PLD_INC_DIR := $(PLD_DIR)/inc
@@ -2073,6 +2079,8 @@ cppflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_HOST_ROAM
 cppflags-$(CONFIG_FEATURE_ROAM_DEBUG) += -DFEATURE_ROAM_DEBUG
 
 cppflags-$(CONFIG_WLAN_POWER_DEBUGFS) += -DWLAN_POWER_DEBUGFS
+
+cppflags-$(CONFIG_WLAN_MWS_INFO_DEBUGFS) += -DWLAN_MWS_INFO_DEBUGFS
 
 # Enable object manager reference count debug infrastructure
 cppflags-$(CONFIG_WLAN_OBJMGR_DEBUG) += -DWLAN_OBJMGR_DEBUG
