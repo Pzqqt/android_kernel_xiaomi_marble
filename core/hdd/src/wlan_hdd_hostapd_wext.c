@@ -2438,7 +2438,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	uint32_t link_speed = 0;
 	int len = sizeof(uint32_t) + 1;
 	struct qdf_mac_addr macAddress;
-	char pmacAddress[MAC_ADDRESS_STR_LEN + 1];
+	char macaddr_string[MAC_ADDRESS_STR_LEN + 1];
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int rc, ret, i;
 
@@ -2464,14 +2464,14 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	}
 
 	if (wrqu->data.length >= MAC_ADDRESS_STR_LEN - 1) {
-		if (copy_from_user((void *)pmacAddress,
+		if (copy_from_user(macaddr_string,
 				   wrqu->data.pointer, MAC_ADDRESS_STR_LEN)) {
 			hdd_err("failed to copy data to user buffer");
 			return -EFAULT;
 		}
-		pmacAddress[MAC_ADDRESS_STR_LEN - 1] = '\0';
+		macaddr_string[MAC_ADDRESS_STR_LEN - 1] = '\0';
 
-		if (!mac_pton(pmacAddress, macAddress.bytes)) {
+		if (!mac_pton(macaddr_string, macAddress.bytes)) {
 			hdd_err("String to Hex conversion Failed");
 			return -EINVAL;
 		}
