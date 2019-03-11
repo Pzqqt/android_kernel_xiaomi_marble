@@ -54,6 +54,9 @@
 #include <qca_vendor.h>
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_reg_services_api.h"
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
+#include "cfg_ucfg_api.h"
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -2948,6 +2951,19 @@ eSapStatus
 sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 			  struct csr_roam_profile *profile)
 {
+	int qdf_status = QDF_STATUS_SUCCESS;
+	bool sap_uapsd = true, chan_switch_hostapd_rate_enabled = true;
+	bool ap_obss_prot = false;
+	uint16_t ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
+	struct mac_context *mac_ctx;
+	uint8_t mcc_to_scc_switch = 0;
+
+	mac_ctx = sap_get_mac_context();
+	if (!mac_ctx) {
+		sap_err("Invalid MAC context");
+		return eSAP_STATUS_FAILURE;
+	}
+
 	/* Create Roam profile for SoftAP to connect */
 	profile->BSSType = eCSR_BSS_TYPE_INFRA_AP;
 	profile->SSIDs.numOfSSIDs = 1;
@@ -3041,13 +3057,31 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	profile->dtimPeriod = config->dtim_period;
 
 	/* set Uapsd enable bit */
-	profile->ApUapsdEnable = config->UapsdEnable;
+	qdf_status = ucfg_mlme_is_sap_uapsd_enabled(mac_ctx->psoc, &sap_uapsd);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		sap_err("Get ap UAPSD enabled/disabled failed");
 
+	profile->ApUapsdEnable = sap_uapsd;
+	sap_debug("Uapsd %d", sap_uapsd);
 	/* Enable protection parameters */
-	profile->protEnabled = config->protEnabled;
-	profile->obssProtEnabled = config->obssProtEnabled;
-	profile->cfg_protection = config->ht_capab;
+	profile->protEnabled = ucfg_mlme_is_ap_prot_enabled(mac_ctx->psoc);
 
+	/* Enable OBSS protection */
+	qdf_status = ucfg_mlme_is_ap_obss_prot_enabled(mac_ctx->psoc,
+						       &ap_obss_prot);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		sap_err("Get ap obss protection failed");
+	profile->obssProtEnabled = ap_obss_prot;
+
+	sap_debug("ProtEnabled = %d", profile->protEnabled);
+	sap_debug("OBSSProtEnabled = %d", profile->obssProtEnabled);
+
+	qdf_status = ucfg_mlme_get_ap_protection_mode(mac_ctx->psoc, &ap_prot);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		sap_err("Get ap protection mode failed using default value");
+	profile->cfg_protection = ap_prot;
+
+	sap_debug("cfg_protection = %d", profile->cfg_protection);
 	/* country code */
 	if (config->countryCode[0])
 		qdf_mem_copy(profile->countryCode, config->countryCode,
@@ -3111,10 +3145,23 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 			config->extended_rates.numRates;
 	}
 
-	profile->chan_switch_hostapd_rate_enabled =
-		config->chan_switch_hostapd_rate_enabled;
+	qdf_status = ucfg_mlme_get_sap_chan_switch_rate_enabled(
+					mac_ctx->psoc,
+					&chan_switch_hostapd_rate_enabled);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		sap_err("ucfg_mlme_get_sap_chan_switch_rate_enabled, set def");
 
-	return eSAP_STATUS_SUCCESS;     /* Success. */
+	profile->chan_switch_hostapd_rate_enabled =
+					chan_switch_hostapd_rate_enabled;
+	if (QDF_STATUS_SUCCESS ==
+		ucfg_policy_mgr_get_mcc_scc_switch(mac_ctx->psoc,
+						   &mcc_to_scc_switch)) {
+		if (mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
+			profile->chan_switch_hostapd_rate_enabled = false;
+	}
+	sap_debug("rate_enabled %d", profile->chan_switch_hostapd_rate_enabled);
+
+	return eSAP_STATUS_SUCCESS;
 }
 
 void sap_free_roam_profile(struct csr_roam_profile *profile)

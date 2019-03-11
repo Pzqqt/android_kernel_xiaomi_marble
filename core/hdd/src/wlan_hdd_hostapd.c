@@ -4883,9 +4883,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct ieee80211_mgmt *mgmt_frame;
 	struct ieee80211_mgmt mgmt;
 	const uint8_t *ie = NULL;
-	uint16_t capab_info, ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
 	eCsrEncryptionType rsn_encrypt_type;
 	eCsrEncryptionType mc_rsn_encrypt_type;
+	uint16_t capab_info;
 	int status = QDF_STATUS_SUCCESS, ret;
 	int qdf_status = QDF_STATUS_SUCCESS;
 	sap_event_cb sap_event_callback;
@@ -4904,14 +4904,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint8_t is_overlap_enable = 0, scc_on_dfs_chan = 0;
 	uint8_t beacon_fixed_len, indoor_chnl_marking = 0;
 	int value;
-	bool val;
-	uint32_t tx_leakage_threshold = 0;
 	uint32_t auto_channel_select_weight =
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	uint8_t pref_chan_location = 0;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
-	bool bval = false, ap_obss_prot = false, sap_uapsd = true;
+	bool bval = false;
 	bool enable_dfs_scan = true;
 
 	hdd_enter();
@@ -5034,33 +5032,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_err("ucfg_mlme_get_auto_channel_weight failed, set def");
 
 	config->auto_channel_select_weight = auto_channel_select_weight;
-	status = ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("ucfg_mlme_get_sap_chn_switch_bcn_count fail, set def");
-	config->sap_chanswitch_beacon_cnt = value;
-	status = ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->psoc, &val);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("ucfg_mlme_get_sap_channel_switch_mode, set def");
-	config->sap_chanswitch_mode = val;
 
-	/* channel is already set in the set_channel Call back */
-	/* config->channel = pCommitConfig->channel; */
-
-	/* Protection parameter to enable or disable */
-	config->protEnabled = ucfg_mlme_is_ap_prot_enabled(hdd_ctx->psoc);
-
-	status = ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc,
-							    &val);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("ucfg_mlme_get_sap_chan_switch_rate_enabled, set def");
-	config->chan_switch_hostapd_rate_enabled = val;
-
-	if (QDF_STATUS_SUCCESS ==
-	    ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
-					       &mcc_to_scc_switch)) {
-		if (mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
-			config->chan_switch_hostapd_rate_enabled = false;
-	}
 	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
 							 &is_overlap_enable);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -5154,6 +5126,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("can't get sta-sap scc on dfs chnl, use def");
 
+		ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+						   &mcc_to_scc_switch);
 		if (ignore_cac ||
 		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 		     scc_on_dfs_chan))
@@ -5173,9 +5147,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		config->ieee80211d = 0;
 	}
 
-	ucfg_mlme_get_sap_tx_leakage_threshold(hdd_ctx->psoc,
-					       &tx_leakage_threshold);
-	tgt_dfs_set_tx_leakage_threshold(hdd_ctx->pdev, tx_leakage_threshold);
+	tgt_dfs_set_tx_leakage_threshold(hdd_ctx->pdev);
 
 	capab_info = mgmt_frame->u.beacon.capab_info;
 
@@ -5493,31 +5465,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	wlan_reg_set_channel_params(hdd_ctx->pdev, config->channel,
 				    config->sec_ch, &config->ch_params);
 
-	/* ht_capab is not what the name conveys,
-	 * this is used for protection bitmap
-	 */
-	qdf_status = ucfg_mlme_get_ap_protection_mode(hdd_ctx->psoc, &ap_prot);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		hdd_debug("Get ap protection mode failed using default value");
-	config->ht_capab = ap_prot;
-
 	if (0 != wlan_hdd_cfg80211_update_apies(adapter)) {
 		hdd_err("SAP Not able to set AP IEs");
 		ret = -EINVAL;
 		goto error;
 	}
-	/* Uapsd Enabled Bit */
-	qdf_status = ucfg_mlme_is_sap_uapsd_enabled(hdd_ctx->psoc, &sap_uapsd);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		hdd_debug("Get ap UAPSD enabled/disabled failed");
-	config->UapsdEnable = sap_uapsd;
-
-	/* Enable OBSS protection */
-	qdf_status = ucfg_mlme_is_ap_obss_prot_enabled(hdd_ctx->psoc,
-						       &ap_obss_prot);
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		hdd_debug("Get ap obss protection failed");
-	config->obssProtEnabled = ap_obss_prot;
 
 #ifdef WLAN_FEATURE_11W
 	config->mfpCapable = mfp_capable;
@@ -5533,12 +5485,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	       (int)config->channel);
 	hdd_debug("hw_mode=%x, privacy=%d, authType=%d",
 	       config->SapHw_mode, config->privacy, config->authType);
-	hdd_debug("RSN/WPALen=%d, Uapsd = %d",
-	       (int)config->RSNWPAReqIELength, config->UapsdEnable);
-	hdd_debug("ProtEnabled = %d, OBSSProtEnabled = %d",
-	       config->protEnabled, config->obssProtEnabled);
-	hdd_debug("ChanSwitchHostapdRateEnabled = %d",
-		config->chan_switch_hostapd_rate_enabled);
+	hdd_debug("RSN/WPALen=%d", (int)config->RSNWPAReqIELength);
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (cds_is_driver_unloading()) {

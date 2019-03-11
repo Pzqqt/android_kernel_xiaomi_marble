@@ -471,9 +471,6 @@ struct sap_config {
 	eSapMacAddrACL SapMacaddr_acl;
 	struct qdf_mac_addr accept_mac[MAX_ACL_MAC_ADDRESS]; /* MAC filtering */
 	bool ieee80211d;      /* Specify if 11D is enabled or disabled */
-	bool protEnabled;     /* Specify if protection is enabled or disabled */
-	/* Specify if OBSS protection is enabled or disabled */
-	bool obssProtEnabled;
 	struct qdf_mac_addr deny_mac[MAX_ACL_MAC_ADDRESS];  /* MAC filtering */
 	struct qdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
 	uint8_t channel;          /* Operation channel */
@@ -493,11 +490,9 @@ struct sap_config {
 	eSapAuthType authType;
 	tCsrAuthList akm_list;
 	bool privacy;
-	bool UapsdEnable;
 	bool fwdWPSPBCProbeReq;
 	/* 0 - disabled, 1 - not configured , 2 - configured */
 	uint8_t wps_state;
-	uint16_t ht_capab;
 	uint16_t RSNWPAReqIELength;     /* The byte count in the pWPAReqIE */
 	uint32_t beacon_int;            /* Beacon Interval */
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
@@ -532,10 +527,6 @@ struct sap_config {
 	struct hdd_channel_info *channel_info;
 	uint32_t channel_info_count;
 	bool dfs_cac_offload;
-	/* beacon count before channel switch */
-	uint8_t sap_chanswitch_beacon_cnt;
-	uint8_t sap_chanswitch_mode;
-	bool chan_switch_hostapd_rate_enabled;
 	uint16_t reduced_beacon_interval;
 };
 

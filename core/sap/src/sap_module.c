@@ -52,6 +52,7 @@
 #include <wlan_reg_ucfg_api.h>
 #include <wlan_cfg80211_crypto.h>
 #include <wlan_crypto_global_api.h>
+#include "wlan_mlme_ucfg_api.h"
 
 #define SAP_DEBUG
 static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
@@ -668,6 +669,8 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	struct sap_sm_event sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *pmac = NULL;
+	int sap_chanswitch_beacon_cnt;
+	bool sap_chanswitch_mode;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("sap_ctx=%pK"), sap_ctx);
@@ -721,19 +724,34 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			       &sap_ctx->csr_roamProfile);
 	pmac = sap_get_mac_context();
 	if (!pmac) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
+		sap_err("Invalid MAC context");
 		qdf_status = QDF_STATUS_E_FAULT;
 		goto fail;
 	}
 
 	/*
-	 * Copy the DFS Test Mode setting to pmac for
-	 * access in lower layers
+	 * Set the DFS Test Mode setting
+	 * Set beacon channel count before chanel switch
 	 */
+	qdf_status = ucfg_mlme_get_sap_chn_switch_bcn_count(
+						pmac->psoc,
+						&sap_chanswitch_beacon_cnt);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		sap_err("ucfg_mlme_get_sap_chn_switch_bcn_count fail, set def");
+
 	pmac->sap.SapDfsInfo.sap_ch_switch_beacon_cnt =
-				config->sap_chanswitch_beacon_cnt;
+				sap_chanswitch_beacon_cnt;
 	pmac->sap.SapDfsInfo.sap_ch_switch_mode =
-			config->sap_chanswitch_mode;
+				sap_chanswitch_beacon_cnt;
+	sap_debug("sap_chanswitch_beacon_cnt:%d", sap_chanswitch_beacon_cnt);
+
+	qdf_status = ucfg_mlme_get_sap_channel_switch_mode(
+						pmac->psoc,
+						&sap_chanswitch_mode);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		sap_err("ucfg_mlme_get_sap_channel_switch_mode, set def");
+	pmac->sap.SapDfsInfo.sap_ch_switch_mode = sap_chanswitch_mode;
+	sap_debug("sap_chanswitch_mode:%d", sap_chanswitch_mode);
 
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =

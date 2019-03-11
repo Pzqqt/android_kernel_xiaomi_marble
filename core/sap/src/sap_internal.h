@@ -50,6 +50,31 @@
 #define SAP_CHAN_PREFERRED_INDOOR  1
 #define SAP_CHAN_PREFERRED_OUTDOOR 2
 
+/*SAP Specific logging*/
+
+#define sap_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_SAP, params)
+#define sap_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, params)
+#define sap_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_SAP, params)
+#define sap_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_SAP, params)
+#define sap_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_SAP, params)
+
+#define sap_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SAP, params)
+#define sap_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SAP, params)
+#define sap_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SAP, params)
+#define sap_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SAP, params)
+#define sap_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SAP, params)
+
+#define sap_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_SAP, params)
+#define sap_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SAP, params)
+#define sap_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_SAP, params)
+#define sap_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_SAP, params)
+#define sap_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SAP, params)
+
 /*----------------------------------------------------------------------------
  *  Typedefs
  * -------------------------------------------------------------------------*/
