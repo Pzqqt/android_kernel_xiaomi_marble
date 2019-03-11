@@ -2954,7 +2954,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			u8 *assoc_rsp = NULL;
 			unsigned int assoc_rsp_len = 0;
 			u8 *assoc_req = NULL;
-			unsigned int assocReqlen = 0;
+			unsigned int assoc_req_len = 0;
 			struct ieee80211_channel *chan;
 			uint8_t rsp_rsn_ie[DOT11F_IE_RSN_MAX_LEN];
 			uint32_t rsp_rsn_lemgth = DOT11F_IE_RSN_MAX_LEN;
@@ -3030,7 +3030,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						 assoc_req[0],
 						 (unsigned int)
 						 assoc_req[1]);
-					assocReqlen =
+					assoc_req_len =
 					    roam_info->nAssocReqLength -
 						FT_ASSOC_REQ_IES_OFFSET;
 				} else {
@@ -3038,19 +3038,19 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					 * This should contain only the
 					 * FTIEs
 					 */
-					assocReqlen =
+					assoc_req_len =
 					    roam_info->nAssocReqLength;
 				}
 
-				hdd_debug("assocReqlen %d", assocReqlen);
+				hdd_debug("assoc_req_len %d", assoc_req_len);
 				hdd_debug("Assoc/Reassoc Req IE dump");
 				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
 						   QDF_TRACE_LEVEL_DEBUG,
 						   assoc_req,
-						   assocReqlen);
+						   assoc_req_len);
 			} else {
 				hdd_debug("AssocReq is NULL");
-				assocReqlen = 0;
+				assoc_req_len = 0;
 			}
 
 			if ((roam_info->u.pConnectedProfile->AuthType ==
@@ -3116,14 +3116,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								dev,
 								roam_bss,
 								assoc_req,
-								assocReqlen,
+								assoc_req_len,
 								assoc_rsp,
 								assoc_rsp_len);
 						wlan_hdd_send_roam_auth_event(
 							adapter,
 							roam_info->bssid.bytes,
 							assoc_req,
-							assocReqlen,
+							assoc_req_len,
 							assoc_rsp,
 							assoc_rsp_len,
 							roam_info);
@@ -3164,7 +3164,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							   bssid.bytes,
 							   roam_info,
 							   assoc_req,
-							   assocReqlen,
+							   assoc_req_len,
 							   assoc_rsp,
 							   assoc_rsp_len,
 							   WLAN_STATUS_SUCCESS,
@@ -3207,7 +3207,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   bssid.bytes,
 								   roam_info,
 								   assoc_req,
-								   assocReqlen,
+								   assoc_req_len,
 								   assoc_rsp,
 								   assoc_rsp_len,
 								   WLAN_STATUS_SUCCESS,
