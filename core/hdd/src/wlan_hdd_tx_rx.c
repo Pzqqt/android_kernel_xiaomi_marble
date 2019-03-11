@@ -918,7 +918,6 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
 	struct qdf_mac_addr *mac_addr;
 	uint8_t pkt_type = 0;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_arp = false;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -943,7 +942,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) == QDF_NBUF_CB_PACKET_TYPE_ARP) {
 		is_arp = true;
 		if (qdf_nbuf_data_is_arp_req(skb) &&
-		    (hdd_ctx->track_arp_ip == qdf_nbuf_get_arp_tgt_ip(skb))) {
+		    (adapter->track_arp_ip == qdf_nbuf_get_arp_tgt_ip(skb))) {
 			++adapter->hdd_stats.hdd_arp_stats.tx_arp_req_count;
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -2036,7 +2035,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		if (QDF_NBUF_CB_PACKET_TYPE_ARP ==
 		    QDF_NBUF_CB_GET_PACKET_TYPE(skb)) {
 			if (qdf_nbuf_data_is_arp_rsp(skb) &&
-				(hdd_ctx->track_arp_ip ==
+				(adapter->track_arp_ip ==
 			     qdf_nbuf_get_arp_src_ip(skb))) {
 				++adapter->hdd_stats.hdd_arp_stats.
 							rx_arp_rsp_count;
