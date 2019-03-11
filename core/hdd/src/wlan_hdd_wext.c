@@ -7880,7 +7880,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 	case WE_P2P_NOA_CMD:
 	{
-		struct p2p_app_set_ps p2pNoA;
+		struct p2p_app_set_ps p2p_noa;
 
 		if (adapter->device_mode != QDF_P2P_GO_MODE) {
 			hdd_err("Setting NoA is not allowed in Device mode %s(%d)",
@@ -7889,20 +7889,20 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			return -EINVAL;
 		}
 
-		p2pNoA.opp_ps = apps_args[0];
-		p2pNoA.ctWindow = apps_args[1];
-		p2pNoA.duration = apps_args[2];
-		p2pNoA.interval = apps_args[3];
-		p2pNoA.count = apps_args[4];
-		p2pNoA.single_noa_duration = apps_args[5];
-		p2pNoA.psSelection = apps_args[6];
+		p2p_noa.opp_ps = apps_args[0];
+		p2p_noa.ctWindow = apps_args[1];
+		p2p_noa.duration = apps_args[2];
+		p2p_noa.interval = apps_args[3];
+		p2p_noa.count = apps_args[4];
+		p2p_noa.single_noa_duration = apps_args[5];
+		p2p_noa.psSelection = apps_args[6];
 
 		hdd_debug("P2P_NOA_ATTR:oppPS %d ctWindow %d duration %d interval %d count %d single noa duration %d PsSelection %x",
 			   apps_args[0], apps_args[1], apps_args[2],
 			   apps_args[3], apps_args[4],
 			   apps_args[5], apps_args[6]);
 
-		hdd_set_p2p_ps(dev, &p2pNoA);
+		hdd_set_p2p_ps(dev, &p2p_noa);
 
 	}
 	break;
