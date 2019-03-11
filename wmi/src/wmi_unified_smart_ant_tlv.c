@@ -186,7 +186,7 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_tlv(wmi_unified_t wmi_handle,
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS send_smart_ant_set_tx_ant_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_tx_ant_params *param)
 {
 	wmi_peer_smart_ant_set_tx_antenna_cmd_fixed_param *cmd;
@@ -319,7 +319,7 @@ send_set_ant_switch_tbl_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
 				wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_training_info_params *param)
 {
 	wmi_peer_smart_ant_set_train_antenna_cmd_fixed_param *cmd;
@@ -402,7 +402,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_tlv(
  */
 static QDF_STATUS send_smart_ant_set_node_config_cmd_tlv(
 				wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_node_config_params *param)
 {
 	wmi_peer_smart_ant_set_node_config_ops_cmd_fixed_param *cmd;

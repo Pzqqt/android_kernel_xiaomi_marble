@@ -56,7 +56,7 @@ QDF_STATUS wmi_unified_peer_update_wds_entry_cmd_send(void *wmi_hdl,
 				struct peer_update_wds_entry_params *param);
 
 QDF_STATUS wmi_unified_vdev_set_neighbour_rx_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct set_neighbour_rx_params *param);
 
 QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
@@ -192,7 +192,7 @@ QDF_STATUS wmi_unified_fils_discovery_send_cmd(void *wmi_hdl,
 #endif /* WLAN_SUPPORT_FILS */
 
 QDF_STATUS wmi_unified_set_qboost_param_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct set_qboost_params *param);
 
 QDF_STATUS wmi_unified_gpio_config_cmd_send(void *wmi_hdl,

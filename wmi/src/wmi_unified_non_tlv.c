@@ -44,7 +44,7 @@ static const uint32_t svc_ids[] = {WMI_CONTROL_SVC};
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_vdev_create_cmd_non_tlv(wmi_unified_t wmi_handle,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN],
+				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param)
 {
 	wmi_vdev_create_cmd *cmd;
@@ -270,7 +270,7 @@ QDF_STATUS send_vdev_set_nac_rssi_cmd_non_tlv(wmi_unified_t wmi,
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_vdev_set_neighbour_rx_cmd_non_tlv(wmi_unified_t wmi_handle,
-					uint8_t macaddr[IEEE80211_ADDR_LEN],
+					uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 					struct set_neighbour_rx_params *param)
 {
 	wmi_vdev_filter_nrp_config_cmd *cmd;
@@ -502,7 +502,7 @@ static QDF_STATUS send_peer_cfr_capture_cmd_non_tlv(wmi_unified_t wmi_handle,
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
-					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+					 uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 					 struct peer_flush_params *param)
 {
 	wmi_peer_flush_tids_cmd *cmd;
@@ -532,7 +532,7 @@ static QDF_STATUS send_peer_flush_tids_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS send_peer_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
 					uint8_t
-					peer_addr[IEEE80211_ADDR_LEN],
+					peer_addr[QDF_MAC_ADDR_SIZE],
 					uint8_t vdev_id)
 {
 	wmi_peer_delete_cmd *cmd;
@@ -616,7 +616,7 @@ static QDF_STATUS convert_host_peer_id_to_target_id_non_tlv(
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				struct peer_set_params *param)
 {
 	wmi_peer_set_param_cmd *cmd;
@@ -651,7 +651,7 @@ static QDF_STATUS send_peer_param_cmd_non_tlv(wmi_unified_t wmi_handle,
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
-				 uint8_t bssid[IEEE80211_ADDR_LEN],
+				 uint8_t bssid[QDF_MAC_ADDR_SIZE],
 				 struct vdev_up_params *param)
 {
 	wmi_vdev_up_cmd *cmd;
@@ -835,7 +835,7 @@ QDF_STATUS send_set_bridge_mac_addr_cmd_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_peer_add_wds_entry_cmd *cmd;
 	wmi_buf_t buf;
-	uint8_t null_macaddr[IEEE80211_ADDR_LEN];
+	uint8_t null_macaddr[QDF_MAC_ADDR_SIZE];
 	int len = sizeof(wmi_peer_add_wds_entry_cmd);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
@@ -843,7 +843,7 @@ QDF_STATUS send_set_bridge_mac_addr_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(null_macaddr, IEEE80211_ADDR_LEN);
+	qdf_mem_zero(null_macaddr, QDF_MAC_ADDR_SIZE);
 	cmd = (wmi_peer_add_wds_entry_cmd *)wmi_buf_data(buf);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->bridge_addr, &cmd->wds_macaddr);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(null_macaddr, &cmd->peer_macaddr);
@@ -1610,7 +1610,7 @@ static uint32_t get_stats_id_non_tlv(wmi_host_stats_id host_stats_id)
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS send_stats_request_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct stats_request_params *param)
 {
 	wmi_buf_t buf;
@@ -2608,7 +2608,7 @@ static QDF_STATUS send_smart_ant_set_rx_ant_cmd_non_tlv(wmi_unified_t wmi_handle
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_tx_ant_params *param)
 {
 	wmi_peer_sant_set_tx_antenna_cmd *cmd;
@@ -2658,7 +2658,7 @@ static QDF_STATUS send_smart_ant_set_tx_ant_cmd_non_tlv(wmi_unified_t wmi_handle
  */
 static QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
 				wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_training_info_params *param)
 {
 	wmi_peer_sant_set_train_antenna_cmd *cmd;
@@ -2711,7 +2711,7 @@ static QDF_STATUS send_smart_ant_set_training_info_cmd_non_tlv(
  *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS send_smart_ant_set_node_config_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_node_config_params *param)
 {
 	wmi_peer_sant_set_node_config_ops_cmd *cmd;
@@ -3254,7 +3254,7 @@ send_mgmt_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_addba_clearresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
-			uint8_t macaddr[IEEE80211_ADDR_LEN],
+			uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 			struct addba_clearresponse_params *param)
 {
 	wmi_addba_clear_resp_cmd *cmd;
@@ -3284,7 +3284,7 @@ send_addba_clearresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_addba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct addba_send_params *param)
 {
 	wmi_addba_send_cmd *cmd;
@@ -3316,7 +3316,7 @@ send_addba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_delba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct delba_send_params *param)
 {
 	wmi_delba_send_cmd *cmd;
@@ -3350,7 +3350,7 @@ send_delba_send_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_addba_setresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct addba_setresponse_params *param)
 {
 	wmi_addba_setresponse_cmd *cmd;
@@ -3383,7 +3383,7 @@ send_addba_setresponse_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_singleamsdu_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct singleamsdu_params *param)
 {
 	wmi_send_singleamsdu_cmd *cmd;
@@ -3415,7 +3415,7 @@ send_singleamsdu_cmd_non_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_set_qboost_param_cmd_non_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct set_qboost_params *param)
 {
 
@@ -5280,7 +5280,7 @@ send_rtt_meas_req_cmd_non_tlv(wmi_unified_t wmi_handle,
 		WMI_SET_CHANNEL_FLAG(w_chan, WMI_CHAN_FLAG_DFS);
 
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)peer), &body->dest_mac);
-	qdf_mem_set(spoof, IEEE80211_ADDR_LEN, 0);
+	qdf_mem_set(spoof, QDF_MAC_ADDR_SIZE, 0);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(((uint8_t *)param->spoof_mac_addr),
 		&body->spoof_bssid);
 
@@ -5381,7 +5381,7 @@ send_lci_set_cmd_non_tlv(wmi_unified_t wmi_handle,
 		/* Convert num_vaps to octets:
 		   6*Num_of_vap + 1 (Max BSSID Indicator field) */
 		param->colocated_bss[1] =
-			(param->colocated_bss[1]*IEEE80211_ADDR_LEN)+1;
+			(param->colocated_bss[1]*QDF_MAC_ADDR_SIZE)+1;
 		colocated_bss_len =  param->colocated_bss[1]+2;
 		qdf_mem_copy(rtt_req->colocated_bssids_info,
 				param->colocated_bss,

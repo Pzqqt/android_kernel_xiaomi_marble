@@ -84,7 +84,7 @@ QDF_STATUS wmi_unified_smart_ant_set_rx_ant_cmd_send(void *wmi_hdl,
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_smart_ant_set_tx_ant_cmd_send(void *wmi_hdl,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_tx_ant_params *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
@@ -104,7 +104,7 @@ QDF_STATUS wmi_unified_smart_ant_set_tx_ant_cmd_send(void *wmi_hdl,
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_smart_ant_set_training_info_cmd_send(void *wmi_hdl,
-		uint8_t macaddr[IEEE80211_ADDR_LEN],
+		uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_training_info_params *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
@@ -125,7 +125,7 @@ QDF_STATUS wmi_unified_smart_ant_set_training_info_cmd_send(void *wmi_hdl,
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_smart_ant_node_config_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct smart_ant_node_config_params *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;

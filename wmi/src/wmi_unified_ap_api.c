@@ -199,7 +199,7 @@ QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_vdev_set_neighbour_rx_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct set_neighbour_rx_params *param)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
@@ -878,7 +878,7 @@ wmi_extract_swfda_vdev_id(void *wmi_hdl, void *evt_buf,
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_set_qboost_param_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct set_qboost_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;

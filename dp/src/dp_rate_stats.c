@@ -382,7 +382,7 @@ void wlan_peer_create_event_handler(void *pdev, enum WDI_EVENT event,
 	qdf_mem_zero(stats, sizeof(*stats));
 	RATE_STATS_LOCK_CREATE(&stats->tx.lock);
 	RATE_STATS_LOCK_CREATE(&stats->rx.lock);
-	qdf_mem_copy(stats->mac_addr, peer_info->mac_addr, CDP_MAC_ADDR_LEN);
+	qdf_mem_copy(stats->mac_addr, peer_info->mac_addr, QDF_MAC_ADDR_SIZE);
 	stats->peer_cookie = peer_info->cookie;
 	stats->pdev = pdev;
 
