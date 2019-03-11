@@ -2958,7 +2958,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			struct cfg80211_bss *bss;
 			u8 *pFTAssocRsp = NULL;
 			unsigned int assocRsplen = 0;
-			u8 *pFTAssocReq = NULL;
+			u8 *assoc_req = NULL;
 			unsigned int assocReqlen = 0;
 			struct ieee80211_channel *chan;
 			uint8_t rsp_rsn_ie[DOT11F_IE_RSN_MAX_LEN];
@@ -3023,21 +3023,21 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			}
 
 			/* Association Request */
-			pFTAssocReq = (u8 *) (roam_info->pbFrames +
+			assoc_req = (u8 *) (roam_info->pbFrames +
 					      roam_info->nBeaconLength);
-			if (pFTAssocReq != NULL) {
+			if (assoc_req != NULL) {
 				if (!ft_carrier_on) {
 					/*
-					 * pFTAssocReq needs to point to
+					 * assoc_req needs to point to
 					 * the IEs
 					 */
-					pFTAssocReq +=
+					assoc_req +=
 						FT_ASSOC_REQ_IES_OFFSET;
-					hdd_debug("pFTAssocReq is now at %02x%02x",
+					hdd_debug("assoc_req is now at %02x%02x",
 						 (unsigned int)
-						 pFTAssocReq[0],
+						 assoc_req[0],
 						 (unsigned int)
-						 pFTAssocReq[1]);
+						 assoc_req[1]);
 					assocReqlen =
 					    roam_info->nAssocReqLength -
 						FT_ASSOC_REQ_IES_OFFSET;
@@ -3054,7 +3054,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				hdd_debug("Assoc/Reassoc Req IE dump");
 				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
 						   QDF_TRACE_LEVEL_DEBUG,
-						   pFTAssocReq,
+						   assoc_req,
 						   assocReqlen);
 			} else {
 				hdd_debug("AssocReq is NULL");
@@ -3123,14 +3123,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						hdd_send_roamed_ind(
 								dev,
 								roam_bss,
-								pFTAssocReq,
+								assoc_req,
 								assocReqlen,
 								pFTAssocRsp,
 								assocRsplen);
 						wlan_hdd_send_roam_auth_event(
 							adapter,
 							roam_info->bssid.bytes,
-							pFTAssocReq,
+							assoc_req,
 							assocReqlen,
 							pFTAssocRsp,
 							assocRsplen,
@@ -3171,7 +3171,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							   roam_info->
 							   bssid.bytes,
 							   roam_info,
-							   pFTAssocReq,
+							   assoc_req,
 							   assocReqlen,
 							   pFTAssocRsp,
 							   assocRsplen,
@@ -3214,7 +3214,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   roam_info->
 								   bssid.bytes,
 								   roam_info,
-								   pFTAssocReq,
+								   assoc_req,
 								   assocReqlen,
 								   pFTAssocRsp,
 								   assocRsplen,
