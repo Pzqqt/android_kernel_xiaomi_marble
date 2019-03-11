@@ -2375,7 +2375,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	uint32_t requestId, maxChannels;
-	tWifiBand wifiBand;
+	tWifiBand wifi_band;
 	QDF_STATUS status;
 	struct sk_buff *reply_skb;
 	int ret, len = 0;
@@ -2417,7 +2417,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 		hdd_err("attr wifi band failed");
 		return -EINVAL;
 	}
-	wifiBand =
+	wifi_band =
 		nla_get_u32(tb
 		    [QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_WIFI_BAND]);
 
@@ -2437,9 +2437,9 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	}
 
 	hdd_debug("Req Id: %u Wifi band: %d Max channels: %d", requestId,
-		    wifiBand, maxChannels);
+		    wifi_band, maxChannels);
 	status = sme_get_valid_channels_by_band(hdd_ctx->mac_handle,
-						wifiBand, chan_list,
+						wifi_band, chan_list,
 						&num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_get_valid_channels_by_band failed (err=%d)",
