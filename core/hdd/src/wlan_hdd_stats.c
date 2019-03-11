@@ -4888,7 +4888,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	if (hdd_ctx->config->fEnableSNRMonitoring == 0)
+	if (!hdd_ctx->config->enable_snr_monitoring)
 		return -ENONET;
 
 	if (sta_ctx->hdd_reassoc_scenario) {

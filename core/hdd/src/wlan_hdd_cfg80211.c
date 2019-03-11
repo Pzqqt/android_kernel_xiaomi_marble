@@ -21481,7 +21481,7 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle;
 
 	hdd_ctx->chan_info = NULL;
-	if (!hdd_ctx->config->fEnableSNRMonitoring) {
+	if (!hdd_ctx->config->enable_snr_monitoring) {
 		hdd_debug("SNR monitoring is disabled");
 		return;
 	}

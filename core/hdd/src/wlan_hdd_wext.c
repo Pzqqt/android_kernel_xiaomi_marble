@@ -7375,11 +7375,11 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			return status;
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (0 == hdd_ctx->config->fEnableSNRMonitoring ||
+		if (!hdd_ctx->config->enable_snr_monitoring ||
 		    eConnectionState_Associated !=
 		    sta_ctx->conn_info.conn_state) {
 			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
-			       hdd_ctx->config->fEnableSNRMonitoring,
+			       hdd_ctx->config->enable_snr_monitoring,
 			       sta_ctx->conn_info.conn_state);
 			return -ENONET;
 		}
