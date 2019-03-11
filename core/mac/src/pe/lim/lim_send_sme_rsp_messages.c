@@ -1179,10 +1179,7 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 	}
 
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, session_id, msg.type));
-	if (QDF_STATUS_SUCCESS != lim_sys_process_mmh_msg_api(mac_ctx, &msg)) {
-		qdf_mem_free(wm_status_change_ntf);
-		pe_err("lim_sys_process_mmh_msg_api failed");
-	}
+	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
 
 } /*** end lim_send_sme_wm_status_change_ntf() ***/
 

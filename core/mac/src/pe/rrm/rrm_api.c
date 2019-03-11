@@ -299,7 +299,7 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 				     tDot11fNeighborReportResponse *pNeighborRep,
 				     struct pe_session *pe_session)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirNeighborReportInd pSmeNeighborRpt = NULL;
 	uint16_t length;
 	uint8_t i;
@@ -390,7 +390,7 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 	mmhMsg.bodyptr = pSmeNeighborRpt;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pe_session->peSessionId, mmhMsg.type));
-	status = lim_sys_process_mmh_msg_api(mac, &mmhMsg);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return status;
 
@@ -637,9 +637,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	mmhMsg.bodyptr = pSmeBcnReportReq;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pe_session->peSessionId, mmhMsg.type));
-	if (QDF_STATUS_SUCCESS !=
-	    lim_sys_process_mmh_msg_api(mac, &mmhMsg))
-		return eRRM_FAILURE;
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return eRRM_SUCCESS;
 }
 
