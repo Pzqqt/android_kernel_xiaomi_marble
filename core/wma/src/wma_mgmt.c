@@ -4177,7 +4177,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		}
 	}
 
-	rx_pkt->pkt_meta.sessionId =
+	rx_pkt->pkt_meta.session_id =
 		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
@@ -4204,7 +4204,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 			mgt_subtype != MGMT_SUBTYPE_BEACON) &&
 			packetdump_cb)
 		packetdump_cb(rx_pkt->pkt_buf, QDF_STATUS_SUCCESS,
-			rx_pkt->pkt_meta.sessionId, RX_MGMT_PKT);
+			rx_pkt->pkt_meta.session_id, RX_MGMT_PKT);
 
 	return 0;
 }

@@ -91,7 +91,7 @@
 #define WMA_GET_ROAMCANDIDATEIND(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->roamCandidateInd)
 #define WMA_GET_SESSIONID(pRxMeta) \
-	(((t_packetmeta *)pRxMeta)->sessionId)
+	(((t_packetmeta *)pRxMeta)->session_id)
 #define WMA_GET_SCAN_SRC(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->scan_src)
 
