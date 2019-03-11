@@ -5240,7 +5240,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 eCsrEncryptionType *mc_encrypt_type,
 				 eCsrAuthType *auth_type,
 #ifdef WLAN_FEATURE_11W
-				 uint8_t *pMfpRequired, uint8_t *pMfpCapable,
+				 uint8_t *mfp_required, uint8_t *pMfpCapable,
 #endif
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
 {
@@ -5302,7 +5302,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 			hdd_translate_rsn_to_csr_encryption_type(
 					dot11_rsn_ie.gp_cipher_suite);
 #ifdef WLAN_FEATURE_11W
-		*pMfpRequired = (dot11_rsn_ie.RSN_Cap[0] >> 6) & 0x1;
+		*mfp_required = (dot11_rsn_ie.RSN_Cap[0] >> 6) & 0x1;
 		*pMfpCapable = csr_is_mfpc_capable(&dot11_rsn_ie);
 #endif
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
