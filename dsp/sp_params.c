@@ -15,8 +15,9 @@
 #define SPK_PARAMS  "spk_params"
 #define CLASS_NAME "cal_data"
 #define BUF_SZ 20
-#define Q27 (1<<27)
 #define Q22 (1<<22)
+#define Q13 (1<<13)
+#define Q7 (1<<7)
 
 struct afe_spk_ctl {
 	struct class *p_class;
@@ -88,11 +89,11 @@ static ssize_t sp_max_excursion_l_show(struct device *dev,
 {
 	ssize_t ret = 0;
 	int32_t ex_val_frac;
-	float ex_val;
 	int32_t ex_q27 = this_afe_spk.xt_logging.max_excursion[SP_V2_SPKR_1];
 
-	ex_val = (ex_q27 * 1.0)/Q27;
-	ex_val_frac = ex_val * 100;
+	ex_val_frac = ex_q27/Q13;
+	ex_val_frac = (ex_val_frac * 10000)/(Q7 * Q7);
+	ex_val_frac /= 100;
 	ret = snprintf(buf, BUF_SZ, "%d.%02d\n", 0, ex_val_frac);
 	this_afe_spk.xt_logging.max_excursion[SP_V2_SPKR_1] = 0;
 	return ret;
@@ -105,11 +106,11 @@ static ssize_t sp_max_excursion_r_show(struct device *dev,
 {
 	ssize_t ret = 0;
 	int32_t ex_val_frac;
-	float ex_val;
 	int32_t ex_q27 = this_afe_spk.xt_logging.max_excursion[SP_V2_SPKR_2];
 
-	ex_val = (ex_q27 * 1.0)/Q27;
-	ex_val_frac = ex_val * 100;
+	ex_val_frac = ex_q27/Q13;
+	ex_val_frac = (ex_val_frac * 10000)/(Q7 * Q7);
+	ex_val_frac /= 100;
 	ret = snprintf(buf, BUF_SZ, "%d.%02d\n", 0, ex_val_frac);
 	this_afe_spk.xt_logging.max_excursion[SP_V2_SPKR_2] = 0;
 	return ret;
