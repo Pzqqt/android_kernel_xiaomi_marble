@@ -10018,6 +10018,11 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 	if (tb[SET_CHAN_REASON])
 		*reason = nla_get_u8(tb[SET_CHAN_REASON]);
 
+	if (!tb[SET_CHAN_CHAN_LIST]) {
+		hdd_err("channel list empty");
+		return -EINVAL;
+	}
+
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem)
 		i++;
 
