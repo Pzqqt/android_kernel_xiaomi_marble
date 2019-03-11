@@ -48,6 +48,7 @@
  * @bt_interference_medium_ul: Upper limit of medium level BT interference
  * @bt_interference_high_ll: Lower limit of high level BT interference
  * @bt_interference_high_ul: Upper limit of high level BT interference
+ * @btc_mpta_helper_enable: Enable/Disable tri-radio MPTA helper
  */
 struct wlan_fwol_coex_config {
 	uint8_t btc_mode;
@@ -61,6 +62,9 @@ struct wlan_fwol_coex_config {
 	int16_t bt_interference_medium_ul;
 	int16_t bt_interference_high_ll;
 	int16_t bt_interference_high_ul;
+#ifdef FEATURE_MPTA_HELPER
+	bool    btc_mpta_helper_enable;
+#endif
 };
 
 #define FWOL_THERMAL_LEVEL_MAX 4
