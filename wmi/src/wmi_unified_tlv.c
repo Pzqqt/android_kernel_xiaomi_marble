@@ -2178,6 +2178,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		param->peer_he_cap_macinfo[WMI_HOST_HECAP_MAC_WORD1];
 	cmd->peer_he_cap_info_ext =
 		param->peer_he_cap_macinfo[WMI_HOST_HECAP_MAC_WORD2];
+	cmd->peer_he_cap_info_internal = param->peer_he_cap_info_internal;
 	cmd->peer_he_ops = param->peer_he_ops;
 	qdf_mem_copy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
 				sizeof(param->peer_he_cap_phyinfo));
@@ -9288,6 +9289,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->he_cap_info_5G[WMI_HOST_HECAP_MAC_WORD2] =
 		mac_phy_caps->he_cap_info_5G_ext;
 	param->he_supp_mcs_5G = mac_phy_caps->he_supp_mcs_5G;
+	param->he_cap_info_internal = mac_phy_caps->he_cap_info_internal;
 	param->tx_chain_mask_5G = mac_phy_caps->tx_chain_mask_5G;
 	param->rx_chain_mask_5G = mac_phy_caps->rx_chain_mask_5G;
 	qdf_mem_copy(&param->he_cap_phy_info_2G,

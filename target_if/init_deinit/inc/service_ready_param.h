@@ -152,6 +152,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @rx_chain_mask_5G: Valid Receive chain mask
  * @he_cap_phy_info_2G: 2G HE capability phy field
  * @he_cap_phy_info_5G: 5G HE capability phy field
+ * @he_cap_info_internal: HE PHY proprietary feature capability
  * @he_ppet2G: 2G HE PPET info
  * @he_ppet5G: 5G HE PPET info
  * @chainmask_table_id: chain mask table id
@@ -187,6 +188,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t rx_chain_mask_5G;
 	uint32_t he_cap_phy_info_2G[PSOC_HOST_MAX_PHY_SIZE];
 	uint32_t he_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t he_cap_info_internal;
 	struct wlan_psoc_host_ppe_threshold he_ppet2G;
 	struct wlan_psoc_host_ppe_threshold he_ppet5G;
 	uint32_t chainmask_table_id;
