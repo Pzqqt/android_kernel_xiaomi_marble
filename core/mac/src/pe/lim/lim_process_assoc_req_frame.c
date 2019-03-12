@@ -1461,17 +1461,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	sta_ds->mlmStaContext.listenInterval = assoc_req->listenInterval;
 	sta_ds->mlmStaContext.capabilityInfo = assoc_req->capabilityInfo;
 
-	/*
-	 * The following count will be used to knock-off the station if it
-	 * doesn't come back to receive the buffered data. The AP will wait
-	 * for numTimSent number of beacons after sending TIM information for
-	 * the station, before assuming that the station is no more associated
-	 * and disassociates it
-	 */
-
-	/* Init the Current successful MPDU's tranfered to this STA count = 0 */
-	sta_ds->curTxMpduCnt = 0;
-
 	if (IS_DOT11_MODE_HT(session->dot11mode) &&
 	    assoc_req->HTCaps.present && assoc_req->wmeInfoPresent) {
 		sta_ds->htGreenfield = (uint8_t) assoc_req->HTCaps.greenField;

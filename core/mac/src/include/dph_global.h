@@ -101,8 +101,6 @@ typedef struct sDphHashNode {
 	uint8_t rmfEnabled:1;
 	/* LIM state */
 	tLimMlmStaContext mlmStaContext;
-	/* Number of Successful MPDU's being sent */
-	uint32_t curTxMpduCnt;
 	/* qos parameter info */
 	tDphQosParams qos;
 	/*
