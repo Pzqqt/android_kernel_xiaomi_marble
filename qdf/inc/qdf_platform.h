@@ -24,6 +24,8 @@
 #ifndef _QDF_PLATFORM_H
 #define _QDF_PLATFORM_H
 
+#include "qdf_types.h"
+
 /**
  * qdf_self_recovery_callback() - callback for self recovery
  * @reason: the reason for the recovery request
