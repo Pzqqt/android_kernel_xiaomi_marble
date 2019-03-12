@@ -92,7 +92,32 @@ static uint8_t lim_get_auth_tag_len(enum fils_erp_cryptosuite crypto_suite)
  *
  * Return: Crypto type
  */
-static uint8_t *lim_get_crypto_type(uint8_t akm)
+static uint8_t *lim_get_hash_crypto_type(uint8_t akm)
+{
+	switch (akm) {
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return SHA386_CRYPTO_TYPE;
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+	default:
+		return SHA256_CRYPTO_TYPE;
+	}
+}
+
+/**
+ * lim_get_hmac_crypto_type()- This API returns crypto type based on akm suite
+ * used.
+ * @akm: akm used for authentication
+ *
+ * This API is used to get the crypto type when HMAC-hash() needs to
+ * be generated.
+ * Eg: PMK = HMAC-Hash(SNonce || ANonce, rMSK [ || DHss ])
+ *     Here HMAC-Hash will be either hmac(sha256) or hmac(sha384)
+ *
+ * Return: Crypto type
+ */
+static uint8_t *lim_get_hmac_crypto_type(uint8_t akm)
 {
 	switch (akm) {
 	case eCSR_AUTH_TYPE_FILS_SHA384:
@@ -102,6 +127,32 @@ static uint8_t *lim_get_crypto_type(uint8_t akm)
 	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
 	default:
 		return HMAC_SHA256_CRYPTO_TYPE;
+	}
+}
+
+/**
+ * lim_get_Q_length()- This API returns pmk length based on akm used
+ * @akm: akm used for authentication
+ *
+ * [IEEE 802.11ai - 12.7.1.7.3 PMK-R0]
+ * PMK-R0 = L(R0-Key-Data, 0, Q)
+ * where Q is 32 if AKM negotiated is 00-0F-AC:16
+ *       Q is 48 if AKM negotiated is 00-0F-AC:17
+ *
+ * PMK-R0 Derivation is for FT protocol akm only.
+ * So Value of Q is not applicable for non-FT akm.
+ *
+ * Return: Q length
+ */
+static uint8_t lim_get_Q_length(int akm_type)
+{
+	switch (akm_type) {
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return FILS_SHA256_Q_LEN;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return FILS_SHA384_Q_LEN;
+	default:
+		return 0;
 	}
 }
 
@@ -116,12 +167,32 @@ static uint8_t lim_get_pmk_length(int akm_type)
 	switch (akm_type) {
 	case eCSR_AUTH_TYPE_FILS_SHA256:
 	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
-		return FILS_SHA256_PKM_LEN;
+		return FILS_SHA256_PMK_LEN;
 	case eCSR_AUTH_TYPE_FILS_SHA384:
 	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
-		return FILS_SHA384_PKM_LEN;
+		return FILS_SHA384_PMK_LEN;
 	default:
-		return FILS_SHA256_PKM_LEN;
+		return FILS_SHA256_PMK_LEN;
+	}
+}
+
+/**
+ * lim_get_fils_ft_length()- This API returns fils_ft length based on akm used
+ * @akm: akm used for authentication
+ *
+ * FILS_FT is the xx key used in derivation of the PMKR0.
+ *
+ * Return: PMK length
+ */
+static uint8_t lim_get_fils_ft_length(int akm_type)
+{
+	switch (akm_type) {
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return FILS_FT_SHA256_LEN;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return FILS_FT_SHA384_LEN;
+	default:
+		return 0;
 	}
 }
 
@@ -413,21 +484,23 @@ static uint32_t lim_process_fils_eap_tlv(struct pe_session *pe_session,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS lim_generate_key_data(struct pe_fils_session *fils_info,
-			uint8_t *key_label, uint8_t *data, uint32_t data_len,
-			uint8_t *key_data, uint32_t key_data_len)
+static QDF_STATUS
+lim_generate_key_data(struct pe_fils_session *fils_info,
+		      uint8_t *key_label, uint8_t *data, uint32_t data_len,
+		      uint8_t *key_data, uint32_t key_data_len)
 {
 	QDF_STATUS status;
 
 	if (!fils_info)
 		return QDF_STATUS_E_FAILURE;
 
-	status = lim_get_key_from_prf(lim_get_crypto_type(fils_info->akm),
-			fils_info->fils_pmk,
-			fils_info->fils_pmk_len,
-			key_label, data, data_len, key_data, key_data_len);
+	status = lim_get_key_from_prf(lim_get_hmac_crypto_type(fils_info->akm),
+				      fils_info->fils_pmk,
+				      fils_info->fils_pmk_len, key_label, data,
+				      data_len, key_data, key_data_len);
 	if (status != QDF_STATUS_SUCCESS)
 		pe_err("failed to generate keydata");
+
 	return status;
 }
 
@@ -463,12 +536,12 @@ static void lim_generate_ap_key_auth(struct pe_session *pe_session)
 	qdf_mem_copy(buf, pe_session->selfMacAddr, QDF_MAC_ADDR_SIZE);
 	buf += QDF_MAC_ADDR_SIZE;
 
-	if (qdf_get_hmac_hash(lim_get_crypto_type(fils_info->akm),
-				fils_info->ick, fils_info->ick_len, 1, &addr[0],
-				&len, fils_info->ap_key_auth_data) < 0)
+	if (qdf_get_hmac_hash(lim_get_hmac_crypto_type(fils_info->akm),
+			      fils_info->ick, fils_info->ick_len, 1, &addr[0],
+			      &len, fils_info->ap_key_auth_data) < 0)
 		pe_err("failed to generate PMK id");
 	fils_info->ap_key_auth_len = lim_get_crypto_digest_len(
-					lim_get_crypto_type(fils_info->akm));
+				lim_get_hmac_crypto_type(fils_info->akm));
 	lim_fils_data_dump("AP Key Auth", fils_info->ap_key_auth_data,
 		fils_info->ap_key_auth_len);
 }
@@ -506,12 +579,12 @@ static void lim_generate_key_auth(struct pe_session *pe_session)
 	qdf_mem_copy(buf, pe_session->bssId, QDF_MAC_ADDR_SIZE);
 	buf += QDF_MAC_ADDR_SIZE;
 
-	if (qdf_get_hmac_hash(lim_get_crypto_type(fils_info->akm),
-				fils_info->ick, fils_info->ick_len, 1,
-				&addr[0], &len, fils_info->key_auth) < 0)
+	if (qdf_get_hmac_hash(lim_get_hmac_crypto_type(fils_info->akm),
+			      fils_info->ick, fils_info->ick_len, 1,
+			      &addr[0], &len, fils_info->key_auth) < 0)
 		pe_err("failed to generate key auth");
 	fils_info->key_auth_len = lim_get_crypto_digest_len(
-				lim_get_crypto_type(fils_info->akm));
+				lim_get_hmac_crypto_type(fils_info->akm));
 	lim_fils_data_dump("STA Key Auth",
 			fils_info->key_auth, fils_info->key_auth_len);
 }
@@ -533,10 +606,11 @@ static void lim_get_keys(struct pe_session *pe_session)
 	uint8_t *data;
 	uint8_t data_len;
 	struct pe_fils_session *fils_info = pe_session->fils_info;
-	uint8_t key_data[MAX_ICK_LEN + MAX_KEK_LEN + MAX_TK_LEN] = {0};
+	uint8_t key_data[FILS_MAX_KEY_DATA_LEN] = {0};
 	uint8_t key_data_len;
 	uint8_t ick_len;
 	uint8_t kek_len;
+	uint8_t fils_ft_len = 0;
 	uint8_t tk_len = lim_get_tk_len(pe_session->encryptType);
 	uint8_t *buf;
 
@@ -546,34 +620,69 @@ static void lim_get_keys(struct pe_session *pe_session)
 	ick_len = lim_get_ick_len(fils_info->akm);
 	kek_len = lim_get_kek_len(fils_info->akm);
 
-	key_data_len = ick_len + kek_len + tk_len;
+	if (pe_session->is11Rconnection)
+		fils_ft_len = lim_get_fils_ft_length(fils_info->akm);
+
+	/*
+	 * [IEEE 802.11ai - 12.12.2.5.3]
+	 * FILS-Key-Data = PRF-X(PMK, “FILS PTK Derivation”, SPA || AA ||
+	 *                                              SNonce || ANonce)
+	 * ICK = L(FILS-Key-Data, 0, ICK_bits)
+	 * KEK = L(FILS-Key-Data, ICK_bits, KEK_bits)
+	 * TK = L(FILS-Key-Data, ICK_bits + KEK_bits, TK_bits)
+	 * When doing FT initial mobility domain association using
+	 * FILS authentication,
+	 * FILS-FT = L(FILS-Key-Data, ICK_bits + KEK_bits +
+	 *             TK_bits, FILS-FT_bits)
+	 */
+	key_data_len = ick_len + kek_len + tk_len + fils_ft_len;
 
 	data_len = 2 * SIR_FILS_NONCE_LENGTH + 2 * QDF_MAC_ADDR_SIZE;
 	data = qdf_mem_malloc(data_len);
 	if (!data)
 		return;
 
-	/* Update data */
+	/* data is  SPA || AA ||SNonce || ANonce */
 	buf = data;
 	qdf_mem_copy(buf, pe_session->selfMacAddr, QDF_MAC_ADDR_SIZE);
 	buf += QDF_MAC_ADDR_SIZE;
+
 	qdf_mem_copy(buf, pe_session->bssId, QDF_MAC_ADDR_SIZE);
 	buf += QDF_MAC_ADDR_SIZE;
+
 	qdf_mem_copy(buf, fils_info->fils_nonce, SIR_FILS_NONCE_LENGTH);
 	buf += SIR_FILS_NONCE_LENGTH;
+
 	qdf_mem_copy(buf, fils_info->auth_info.fils_nonce,
 			SIR_FILS_NONCE_LENGTH);
+
+	/* Derive FILS-Key-Data */
 	lim_generate_key_data(fils_info, key_label, data, data_len,
 				key_data, key_data_len);
 	buf = key_data;
+
 	qdf_mem_copy(fils_info->ick, buf, ick_len);
 	fils_info->ick_len = ick_len;
 	buf += ick_len;
+
 	qdf_mem_copy(fils_info->kek, buf, kek_len);
 	fils_info->kek_len = kek_len;
 	buf += kek_len;
+
 	qdf_mem_copy(fils_info->tk, buf, tk_len);
 	fils_info->tk_len = tk_len;
+	buf += tk_len;
+
+	/*
+	 * Derive FILS-FT:
+	 * FILS-FT =
+	 *     L(FILS-Key-Data, ICK_bits + KEK_bits + TK_bits, FILS-FT_bits)
+	 */
+	if (pe_session->is11Rconnection && fils_ft_len) {
+		qdf_mem_copy(fils_info->fils_ft, buf, fils_ft_len);
+		fils_info->fils_ft_len = fils_ft_len;
+	}
+	qdf_mem_zero(data, data_len);
 	qdf_mem_free(data);
 }
 
@@ -593,9 +702,9 @@ static void lim_generate_pmkid(struct pe_session *pe_session)
 	if (!fils_info)
 		return;
 
-	qdf_get_hash(lim_get_crypto_type(fils_info->akm), 1,
-		&fils_info->fils_erp_reauth_pkt,
-		&fils_info->fils_erp_reauth_pkt_len, hash);
+	qdf_get_hash(lim_get_hash_crypto_type(fils_info->akm), 1,
+		     &fils_info->fils_erp_reauth_pkt,
+		     &fils_info->fils_erp_reauth_pkt_len, hash);
 	qdf_mem_copy(fils_info->fils_pmkid, hash, PMKID_LEN);
 	lim_fils_data_dump("PMKID", fils_info->fils_pmkid, PMKID_LEN);
 }
@@ -638,9 +747,9 @@ static void lim_generate_pmk(struct pe_session *pe_session)
 	addr[0] = fils_info->fils_rmsk;
 	len[0] = fils_info->fils_rmsk_len;
 	lim_fils_data_dump("Nonce", nounce, nounce_len);
-	if (qdf_get_hmac_hash(lim_get_crypto_type(fils_info->akm), nounce,
-				nounce_len, 1,
-				&addr[0], &len[0], fils_info->fils_pmk) < 0)
+	if (qdf_get_hmac_hash(lim_get_hmac_crypto_type(fils_info->akm), nounce,
+			      nounce_len, 1, &addr[0], &len[0],
+			      fils_info->fils_pmk) < 0)
 		pe_err("failed to generate PMK");
 }
 
@@ -996,7 +1105,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	lim_fils_data_dump("FILS RSN", fils_info->rsn_ie,
 			fils_info->rsn_ie_len);
 
-	/**
+	/*
 	 * FT-FILS IEEE-802.11ai specification mandates
 	 * MDIE to be sent in auth frame during initial
 	 * mobility domain association
@@ -1079,6 +1188,231 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 }
 
 /**
+ * lim_generate_fils_pmkr0() - Derive PMKR0 and PMKR0-Name from FT-FILS
+ * key data
+ * @pe_session: pointer to pe_session
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS lim_generate_fils_pmkr0(struct pe_session *pe_session)
+{
+	uint8_t *key_data, *data_buf;
+	uint8_t key_label[] = FT_PMK_R0_KEY_LABEL;
+	uint8_t key_data_len, ssid_length, r0kh_len, mdid_len;
+	uint8_t *r0_key_data;
+	uint8_t *hash;
+	uint8_t r0_key_data_len;
+	uint8_t pmkr0_len;
+	uint8_t *buf, *pmkr0_name_salt;
+	uint8_t *scatter_list[PMKR0_SCATTER_LIST_ELEM];
+	uint32_t len[PMKR0_SCATTER_LIST_ELEM];
+	uint16_t data_buf_len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct pe_fils_session *fils_info = pe_session->fils_info;
+	struct bss_description *bss_desc =
+			&pe_session->pLimJoinReq->bssDescription;
+
+	if (!fils_info)
+		return QDF_STATUS_E_FAILURE;
+
+	ssid_length = pe_session->ssId.length;
+	r0kh_len = fils_info->ft_ie.r0kh_id_len;
+	mdid_len = (SIR_MDIE_SIZE - 1);
+	pmkr0_len = lim_get_Q_length(fils_info->akm);
+	r0_key_data_len = pmkr0_len + FILS_FT_PMK_R0_SALT_LEN;
+
+	/*
+	 * [IEEE 802.11ai 12.7.1.7.3]
+	 * R0-Key-Data = KDF-Hash-Length(XXKey, "FT-R0", SSIDlength || SSID ||
+	 *                             MDID || R0KHlength || R0KH-ID || S0KH-ID)
+	 * PMK-R0 = L(R0-Key-Data, 0, Q)
+	 * PMK-R0Name-Salt = L(R0-Key-Data, Q, 128)
+	 * Length = Q + 128
+	 */
+	key_data_len = (1 + ssid_length + mdid_len + 1 + r0kh_len +
+			QDF_MAC_ADDR_SIZE);
+	pe_debug("FT-FILS: ssid_length:%d MDID len:%d R0KH len:%d key_data len:%d",
+		 ssid_length, mdid_len, r0kh_len, key_data_len);
+
+	data_buf_len = (key_data_len + FILS_FT_MAX_R0_KEY_DATA_LEN +
+			SHA384_DIGEST_SIZE);
+	data_buf = qdf_mem_malloc(data_buf_len);
+	if (!data_buf)
+		return QDF_STATUS_E_NOMEM;
+
+	key_data = &data_buf[0];
+	r0_key_data = &data_buf[key_data_len];
+	hash = &data_buf[key_data_len + FILS_FT_MAX_R0_KEY_DATA_LEN];
+
+	/*
+	 * key_data is (SSIDlength || SSID || MDID || R0KHlength || R0KH-ID ||
+	 *              S0KH-ID)
+	 */
+	buf = key_data;
+
+	*key_data = pe_session->ssId.length;
+	key_data += 1;
+
+	qdf_mem_copy(key_data, pe_session->ssId.ssId, ssid_length);
+	key_data += ssid_length;
+
+	qdf_mem_copy(key_data, bss_desc->mdie, mdid_len);
+	key_data += mdid_len;
+
+	*key_data = r0kh_len;
+	key_data += 1;
+
+	qdf_mem_copy(key_data, fils_info->ft_ie.r0kh_id, r0kh_len);
+	key_data += r0kh_len;
+
+	qdf_mem_copy(key_data, pe_session->selfMacAddr, QDF_MAC_ADDR_SIZE);
+
+	pe_debug("FT-FILS: Derive R0-Key-Data");
+	status = lim_get_key_from_prf(lim_get_hmac_crypto_type(fils_info->akm),
+				      fils_info->fils_ft,
+				      fils_info->fils_ft_len, key_label,
+				      buf, key_data_len, r0_key_data,
+				      r0_key_data_len);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto free_buf;
+
+	/* PMK-R0 is the first Q bytes of R0-Key-Data */
+	qdf_mem_copy(fils_info->pmkr0, r0_key_data, pmkr0_len);
+	fils_info->pmkr0_len = pmkr0_len;
+
+	/* PMK-R0Name-Salt = L(R0-Key-Data, Q, 128) */
+	pmkr0_name_salt = r0_key_data + pmkr0_len;
+
+	/*
+	 * [IEEE 802.11-2016 12.7.1.7.3]
+	 * PMKR0Name = Truncate-128(Hash("FT-R0N" || PMK-R0Name-Salt)
+	 * The Hash function requires the crypto type, number of scatterlist
+	 * parameters, scatterlist, lengths of scatterlist arguments, pointer
+	 * to output hash.
+	 *
+	 * The scatterlist has two arguments - label "FT-R0N" and
+	 * PMK-R0Name-Salt
+	 *
+	 */
+	scatter_list[SCTR_LST_ELEM0] = FT_PMK_R0_NAME_KEY_LABEL;
+	len[SCTR_LST_ELEM0] = SCTR_LST_R0_LABEL_LEN;
+	scatter_list[SCTR_LST_ELEM1] = pmkr0_name_salt;
+	len[SCTR_LST_ELEM1] = FILS_FT_PMK_R0_SALT_LEN;
+
+	pe_debug("FT-FILS: Derive PMK-R0 Name");
+	if (qdf_get_hash(lim_get_hash_crypto_type(fils_info->akm),
+			 PMKR0_SCATTER_LIST_ELEM, scatter_list, len,
+			 hash) < 0) {
+		pe_err("FT-FILS: PMK-R0Name derivation failed");
+		status = QDF_STATUS_E_FAILURE;
+		goto free_buf;
+	}
+	qdf_mem_copy(fils_info->pmkr0_name, hash, FILS_PMK_NAME_LEN);
+
+free_buf:
+	qdf_mem_zero(data_buf, data_buf_len);
+	qdf_mem_free(data_buf);
+
+	return status;
+}
+
+/**
+ * lim_generate_fils_pmkr1_name() - Derive PMKR1 and PMKR1-Name from FT-FILS
+ * key data
+ * @pe_session: pointer to pe_session
+ *
+ * Return: None
+ */
+static QDF_STATUS lim_generate_fils_pmkr1_name(struct pe_session *pe_session)
+{
+	uint8_t *hash;
+	uint8_t *scatter_list[PMKR1_SCATTER_LIST_ELEM];
+	uint32_t len[PMKR1_SCATTER_LIST_ELEM];
+	uint8_t *buf;
+	uint8_t gp_mgmt_cipher_suite[4];
+	struct pe_fils_session *fils_info = pe_session->fils_info;
+
+	if (!fils_info)
+		return QDF_STATUS_E_FAILURE;
+
+	hash = qdf_mem_malloc(SHA384_DIGEST_SIZE);
+	if (!hash)
+		return QDF_STATUS_E_NOMEM;
+
+	/*
+	 * [IEEE 802.11-2016 12.7.1.7.4]
+	 * PMKR1Name = Truncate-128(Hash("FT-R1N" || PMKR0Name ||
+	 *                               R1KH-ID || S1KH-ID))
+	 */
+	scatter_list[SCTR_LST_ELEM0] = FT_PMK_R1_NAME_KEY_LABEL;
+	len[SCTR_LST_ELEM0] = SCTR_LST_R1_LABEL_LEN;
+	scatter_list[SCTR_LST_ELEM1] = fils_info->pmkr0_name;
+	len[SCTR_LST_ELEM1] = FILS_PMK_NAME_LEN;
+	scatter_list[SCTR_LST_ELEM2] = fils_info->ft_ie.r1kh_id;
+	len[SCTR_LST_ELEM2] = FT_R1KH_ID_LEN;
+	scatter_list[SCTR_LST_ELEM3] = pe_session->selfMacAddr;
+	len[SCTR_LST_ELEM3] = QDF_MAC_ADDR_SIZE;
+
+	if (qdf_get_hash(lim_get_hash_crypto_type(fils_info->akm),
+			 PMKR1_SCATTER_LIST_ELEM, scatter_list, len,
+			 hash) < 0) {
+		qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
+		qdf_mem_free(hash);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(fils_info->pmkr1_name, hash, FILS_PMK_NAME_LEN);
+
+	if (fils_info->rsn_ie_len) {
+		if (fils_info->group_mgmt_cipher_present) {
+			/*
+			 * If 802.11w is enabled, group management cipher
+			 * suite is added at the end of RSN IE after
+			 * PMKID. Since the driver has opaque RSN IE
+			 * saved in fils_session, strip the last 4 bytes
+			 * of the RSN IE to get group mgmt cipher suite.
+			 * Then copy the PMKID followed by the grp mgmt cipher
+			 * suite.
+			 */
+			buf = fils_info->rsn_ie + fils_info->rsn_ie_len - 4;
+			qdf_mem_copy(gp_mgmt_cipher_suite, buf, 4);
+			buf -= 2;
+		} else {
+			buf = fils_info->rsn_ie + fils_info->rsn_ie_len;
+		}
+
+		/*
+		 * Add PMKID count as 1. PMKID count field is 2 bytes long.
+		 * Copy the PMKR1-Name in the PMKID list at the end of the
+		 * RSN IE.
+		 */
+		*buf = 1;
+		buf += 2;
+		qdf_mem_copy(buf, fils_info->pmkr1_name, FILS_PMK_NAME_LEN);
+		if (fils_info->group_mgmt_cipher_present) {
+			fils_info->rsn_ie_len += FILS_PMK_NAME_LEN;
+			fils_info->rsn_ie[1] += (FILS_PMK_NAME_LEN);
+		} else {
+			fils_info->rsn_ie_len += (2 + FILS_PMK_NAME_LEN);
+			fils_info->rsn_ie[1] += (2 + FILS_PMK_NAME_LEN);
+		}
+
+		if (fils_info->group_mgmt_cipher_present) {
+			buf += FILS_PMK_NAME_LEN;
+			qdf_mem_copy(buf, gp_mgmt_cipher_suite, 4);
+		}
+	} else {
+		pe_err("FT-FILS: RSN IE not present");
+		qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
+		qdf_mem_free(hash);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_zero(hash, SHA384_DIGEST_SIZE);
+	qdf_mem_free(hash);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_process_fils_auth_frame2()- This API process fils data from auth response
  * @mac_ctx: mac context
  * @session: PE session
@@ -1094,6 +1428,7 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 	uint32_t ret;
 	bool pmkid_found = false;
 	tDot11fIERSN dot11f_ie_rsn = {0};
+	QDF_STATUS status;
 
 	if (!pe_session->fils_info)
 		return false;
@@ -1138,16 +1473,28 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 			return false;
 	}
 	lim_get_keys(pe_session);
+	if (pe_session->is11Rconnection) {
+		status = lim_generate_fils_pmkr0(pe_session);
+		if (QDF_IS_STATUS_ERROR(status))
+			return false;
+
+		status = lim_generate_fils_pmkr1_name(pe_session);
+		if (QDF_IS_STATUS_ERROR(status))
+			return false;
+	}
 	lim_generate_key_auth(pe_session);
 	lim_generate_ap_key_auth(pe_session);
 	return true;
 }
 
-void lim_update_fils_config(struct pe_session *session,
+void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
 			    struct join_req *sme_join_req)
 {
 	struct pe_fils_session *csr_fils_info;
 	struct cds_fils_connection_info *fils_config_info;
+	tDot11fIERSN dot11f_ie_rsn = {0};
+	uint32_t ret;
 
 	fils_config_info = &sme_join_req->fils_con_info;
 	csr_fils_info = session->fils_info;
@@ -1199,6 +1546,26 @@ void lim_update_fils_config(struct pe_session *session,
 	qdf_mem_copy(csr_fils_info->rsn_ie,
 			sme_join_req->rsnIE.rsnIEdata,
 			sme_join_req->rsnIE.length);
+	/*
+	 * When AP is MFP capable and STA is also MFP capable,
+	 * the supplicant fills the RSN IE with PMKID count as 0
+	 * and PMKID as 0, then appends the group management cipher
+	 * suite. This opaque RSN IE is copied into fils_info in pe
+	 * session. For FT-FILS association, STA has to fill the
+	 * PMKR0 derived after authentication response is received from
+	 * the AP. So unpack the RSN IE to find if group management cipher
+	 * suite is present and based on this RSN IE will be constructed in
+	 * lim_generate_fils_pmkr1_name() for FT-FILS connection.
+	 */
+	ret = dot11f_unpack_ie_rsn(mac_ctx, csr_fils_info->rsn_ie + 2,
+				   csr_fils_info->rsn_ie_len - 2,
+				   &dot11f_ie_rsn, 0);
+	if (DOT11F_SUCCEEDED(ret)) {
+		csr_fils_info->group_mgmt_cipher_present =
+			dot11f_ie_rsn.gp_mgmt_cipher_suite_present;
+	} else {
+		pe_err("FT-FILS: Invalid RSN IE");
+	}
 
 	csr_fils_info->fils_pmk_len = fils_config_info->pmk_len;
 	if (fils_config_info->pmk_len) {
@@ -1918,7 +2285,11 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 
 	roam_fils_params->rik_length = pe_fils_info->fils_rik_len;
 	qdf_mem_copy(roam_fils_params->rik, pe_fils_info->fils_rik,
-			roam_fils_params->rik_length);
-	pe_debug("fils rik len %d", roam_fils_params->rik_length);
+		     roam_fils_params->rik_length);
+	qdf_mem_copy(roam_fils_params->fils_ft, pe_fils_info->fils_ft,
+		     pe_fils_info->fils_ft_len);
+	roam_fils_params->fils_ft_len = pe_fils_info->fils_ft_len;
+	pe_debug("fils rik len %d ft-len:%d", roam_fils_params->rik_length,
+		 pe_fils_info->fils_ft_len);
 }
 #endif

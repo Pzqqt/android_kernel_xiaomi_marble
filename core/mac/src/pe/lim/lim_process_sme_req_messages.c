@@ -1516,7 +1516,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->txLdpcIniFeatureEnabled =
 			sme_join_req->txLdpcIniFeatureEnabled;
 
-		lim_update_fils_config(session, sme_join_req);
+		lim_update_fils_config(mac_ctx, session, sme_join_req);
 		lim_update_sae_config(session, sme_join_req);
 		if (session->bssType == eSIR_INFRASTRUCTURE_MODE) {
 			session->limSystemRole = eLIM_STA_ROLE;

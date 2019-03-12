@@ -2199,6 +2199,18 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	/* Next routine may update nss based on dot11Mode */
 	lim_ft_prepare_add_bss_req(mac_ctx, false, ft_session_ptr, bss_desc);
+	if (session_ptr->is11Rconnection) {
+		ft_session_ptr->is11Rconnection = session_ptr->is11Rconnection;
+		if (session_ptr->fils_info &&
+		    session_ptr->fils_info->fils_ft_len) {
+			ft_session_ptr->fils_info->fils_ft_len =
+			       session_ptr->fils_info->fils_ft_len;
+			qdf_mem_copy(ft_session_ptr->fils_info->fils_ft,
+				     session_ptr->fils_info->fils_ft,
+				     session_ptr->fils_info->fils_ft_len);
+		}
+	}
+
 	roam_sync_ind_ptr->add_bss_params =
 		(tpAddBssParams) ft_session_ptr->ftPEContext.pAddBssReq;
 	add_bss_params = ft_session_ptr->ftPEContext.pAddBssReq;

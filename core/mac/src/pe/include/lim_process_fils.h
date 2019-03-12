@@ -83,12 +83,14 @@ QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
 /**
  * lim_update_fils_config()- This API updates fils session info to csr config
  * from join request.
+ * @mac_ctx: pointer to mac context
  * @session: PE session
  * @sme_join_req: pointer to join request
  *
  * Return: None
  */
-void lim_update_fils_config(struct pe_session *session,
+void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
 			    struct join_req *sme_join_req);
 
 /**
@@ -249,7 +251,8 @@ static inline bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 }
 
 static inline
-void lim_update_fils_config(struct pe_session *session,
+void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
 			    struct join_req *sme_join_req)
 { }
 

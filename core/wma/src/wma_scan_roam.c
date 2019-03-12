@@ -250,6 +250,10 @@ static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
 	qdf_mem_copy(dst_fils_params->rik, src_fils_params->rik,
 		     dst_fils_params->rik_length);
 
+	dst_fils_params->fils_ft_len = src_fils_params->fils_ft_len;
+	qdf_mem_copy(dst_fils_params->fils_ft, src_fils_params->fils_ft,
+		     dst_fils_params->fils_ft_len);
+
 	dst_fils_params->realm_len = src_fils_params->realm_len;
 	qdf_mem_copy(dst_fils_params->realm, src_fils_params->realm,
 		     dst_fils_params->realm_len);
