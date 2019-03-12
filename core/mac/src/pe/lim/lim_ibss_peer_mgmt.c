@@ -247,9 +247,6 @@ ibss_sta_caps_update(struct mac_context *mac,
 			sta->htShortGI40Mhz = pPeerNode->htShortGI40Mhz;
 			sta->htMaxRxAMpduFactor =
 				pPeerNode->htMaxRxAMpduFactor;
-			/* In the future, may need to check for "delayedBA" */
-			/* For now, it is IMMEDIATE BA only on ALL TID's */
-			sta->baPolicyFlag = 0xFF;
 			sta->htLdpcCapable = pPeerNode->htLdpcCapable;
 		}
 	}

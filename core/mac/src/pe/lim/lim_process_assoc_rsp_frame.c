@@ -100,13 +100,6 @@ static void lim_update_stads_htcap(struct mac_context *mac_ctx,
 		 */
 		sta_ds->htSecondaryChannelOffset =
 			(uint8_t) assoc_rsp->HTInfo.secondaryChannelOffset;
-		/*
-		 * FIXME_AMPDU
-		 * In the future, may need to check for
-		 * "assoc.HTCaps.delayedBA"
-		 * For now, it is IMMEDIATE BA only on ALL TID's
-		 */
-		sta_ds->baPolicyFlag = 0xFF;
 
 		/* Check if we have support for gShortGI20Mhz and
 		 * gShortGI40Mhz from ini file

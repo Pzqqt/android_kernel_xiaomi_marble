@@ -1558,7 +1558,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			sta_ds->vhtSupportedChannelWidthSet =
 					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 
-		sta_ds->baPolicyFlag = 0xFF;
 		sta_ds->htLdpcCapable =
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
 	}

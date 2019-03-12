@@ -92,8 +92,6 @@ struct parsed_ies {
 /* STA state node */
 typedef struct sDphHashNode {
 	/*
-	 * BYTE 0
-	 * HASH ENTRY FIELDS NOT NEEDED IN HAL.
 	 * This STA valid or not
 	 */
 	uint8_t valid:1;
@@ -101,7 +99,6 @@ typedef struct sDphHashNode {
 	uint8_t defaultKey:1;
 	uint8_t defaultKeyId:2;
 	uint8_t qosMode:1;
-	/* BYTE 1 */
 	uint8_t erpEnabled:1;
 	/* This has been added to the dph hash table */
 	uint8_t added:1;
@@ -113,7 +110,6 @@ typedef struct sDphHashNode {
 	uint8_t wmeEnabled:1;
 	/* set if both ap and sta are 11e capable */
 	uint8_t lleEnabled:1;
-	/* BYTE 2 */
 	/* set if both ap and sta are wsm capable */
 	uint8_t wsmEnabled:1;
 	uint8_t staAuthenticated:1;
@@ -121,8 +117,6 @@ typedef struct sDphHashNode {
 	uint8_t rmfEnabled:1;
 	/* Fragmentation size */
 	uint16_t fragSize;
-	/* Taurus capabilities */
-	uint16_t baPolicyFlag;  /* BA Policy for each TID. */
 	/* LIM state */
 	tLimMlmStaContext mlmStaContext;
 	/* number of consecutive TIMs sent without response */

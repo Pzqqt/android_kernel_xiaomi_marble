@@ -2456,7 +2456,6 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 						   &sta->supportedRates.
 						   rxHighestDataRate,
 						   htCaps->supportedMCSSet);
-		sta->baPolicyFlag = 0xFF;
 		sta->ht_caps = add_sta_req->ht_cap.hc_cap;
 	} else {
 		sta->mlmStaContext.htCapability = 0;
