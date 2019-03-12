@@ -66,22 +66,6 @@
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
 
-/*
- * From NOVA Mac Arch document
- *  Encryp. mode    The encryption mode
- *  000: Encryption functionality is not enabled
- *  001: Encryption is set to WEP
- *  010: Encryption is set to WEP 104
- *  011: Encryption is set to TKIP
- *  100: Encryption is set to AES
- *  101 - 111: Reserved for future
- */
-#define ENC_POLICY_NULL        0
-#define ENC_POLICY_WEP40       1
-#define ENC_POLICY_WEP104      2
-#define ENC_POLICY_TKIP        3
-#define ENC_POLICY_AES_CCM     4
-
 /**
  * enum eFrameType - frame types
  * @TXRX_FRM_RAW: raw frame

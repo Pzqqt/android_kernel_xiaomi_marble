@@ -248,7 +248,6 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 		sta->fragSize = (uint16_t) val;
 
 	sta->added = 1;
-	sta->encPolicy = ENC_POLICY_NULL;
 	sta->is_disassoc_deauth_in_progress = 0;
 	sta->last_assoc_received_time = 0;
 	sta->last_disassoc_deauth_received_time = 0;
