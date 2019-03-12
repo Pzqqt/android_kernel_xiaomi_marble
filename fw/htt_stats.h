@@ -1144,6 +1144,7 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
      * BIT [31 : 8]   :- Reserved
      */
     A_UINT32  per_chain_rssi_pkt_type;
+    A_INT8 rx_per_chain_rssi_in_dbm[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PEER_STATS_NUM_BW_COUNTERS];
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -2978,6 +2979,7 @@ typedef struct {
      * BIT [31 : 8]   :- Reserved
      */
     A_UINT32  per_chain_rssi_pkt_type;
+    A_INT8 rx_per_chain_rssi_in_dbm[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
 } htt_rx_pdev_rate_stats_tlv;
 
 
