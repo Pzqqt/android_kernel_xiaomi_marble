@@ -95,6 +95,7 @@
 #include "wlan_hdd_apf.h"
 #endif
 #include "wlan_hdd_fw_state.h"
+#include "wlan_hdd_mpta_helper.h"
 
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
@@ -12708,6 +12709,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_ACTIVE_TOS_VENDOR_COMMANDS
 	FEATURE_NAN_VENDOR_COMMANDS
 	FEATURE_FW_STATE_COMMANDS
+	FEATURE_MPTA_HELPER_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
