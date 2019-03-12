@@ -733,6 +733,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
 		value = he_ltf << QDF_MON_STATUS_HE_LTF_SIZE_SHIFT;
+		ppdu_info->rx_status.ltf_size = he_ltf;
 		ppdu_info->rx_status.he_data5 |= value;
 
 		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_0, NSTS);

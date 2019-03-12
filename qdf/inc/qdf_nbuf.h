@@ -299,6 +299,7 @@ struct mon_rx_status {
 	uint8_t monitor_direct_used;
 	uint8_t data_sequence_control_info_valid;
 	uint16_t first_data_seq_ctrl;
+	uint8_t ltf_size;
 };
 
 /**

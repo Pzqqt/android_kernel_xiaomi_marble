@@ -118,6 +118,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
+	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
 }
 #else
 static inline void

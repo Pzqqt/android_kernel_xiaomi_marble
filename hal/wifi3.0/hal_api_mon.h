@@ -116,10 +116,10 @@
 
 #define HT_SGI_PRESENT 0x80
 
-#define HE_LTF_1_X 1
-#define HE_LTF_2_X 2
-#define HE_LTF_4_X 3
-#define HE_LTF_UNKNOWN 0
+#define HE_LTF_1_X 0
+#define HE_LTF_2_X 1
+#define HE_LTF_4_X 2
+#define HE_LTF_UNKNOWN 3
 #define VHT_SIG_SU_NSS_MASK	0x7
 #define HT_SIG_SU_NSS_SHIFT	0x3
 
