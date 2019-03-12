@@ -102,7 +102,6 @@ typedef struct sDphHashNode {
 	uint8_t added:1;
 	uint8_t shortPreambleEnabled:1;
 	uint8_t shortSlotTimeEnabled:1;
-	uint8_t stopTx:1;
 	/* set if both ap and sta are wme capable */
 	uint8_t wmeEnabled:1;
 	/* set if both ap and sta are 11e capable */
