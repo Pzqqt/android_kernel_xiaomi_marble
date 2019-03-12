@@ -305,6 +305,13 @@ static const uint32_t pdev_param_tlv[] = {
 				WMI_PDEV_PARAM_EQUAL_RU_ALLOCATION_ENABLE,
 	[wmi_pdev_param_per_peer_prd_cfr_enable] =
 			WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE,
+	[wmi_pdev_param_set_mgmt_ttl] = WMI_PDEV_PARAM_SET_MGMT_TTL,
+	[wmi_pdev_param_set_prb_rsp_ttl] =
+			WMI_PDEV_PARAM_SET_PROBE_RESP_TTL,
+	[wmi_pdev_param_set_mu_ppdu_duration] =
+			WMI_PDEV_PARAM_SET_MU_PPDU_DURATION,
+	[wmi_pdev_param_set_tbtt_ctrl] =
+			WMI_PDEV_PARAM_SET_TBTT_CTRL,
 };
 
 /**
