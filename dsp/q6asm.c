@@ -389,6 +389,33 @@ static const struct file_operations audio_input_latency_debug_fops = {
 	.write = audio_input_latency_dbgfs_write
 };
 
+/*
+ * get_monotonic_timeval -
+ *       This method returns a structure in timeval
+ *       format (sec,microsec) by using ktime kernel
+ *       API to get time in nano secs and then converts
+ *       it to timeval format
+ *
+ * ktime_get [nsec]-> ktime_to_timespec [sec,nsec]-> timeval[sec,usec]
+ *
+ * Returns struct timeval
+*/
+static struct timeval get_monotonic_timeval(void)
+{
+	static struct timeval out_tval;
+
+	/* Get time from monotonic clock in nanoseconds */
+	ktime_t kTimeNsec = ktime_get();
+
+	/* Convert it to timespec format and later to timeval as expected by audio HAL */
+	struct timespec temp_tspec = ktime_to_timespec(kTimeNsec);
+
+	/* Time returned above is in sec,nanosec format, needs to convert to sec,microsec */
+	out_tval.tv_usec = temp_tspec.tv_nsec/1000;
+	out_tval.tv_sec = temp_tspec.tv_sec;
+	return out_tval;
+}
+
 static void config_debug_fs_write_cb(void)
 {
 	if (out_enable_flag) {
@@ -396,7 +423,7 @@ static void config_debug_fs_write_cb(void)
 		 * out_cold_index
 		 */
 		if (out_cold_index != 1) {
-			do_gettimeofday(&out_cold_tv);
+			out_cold_tv = get_monotonic_timeval();
 			pr_debug("COLD: apr_send_pkt at %ld sec %ld microsec\n",
 				out_cold_tv.tv_sec,
 				out_cold_tv.tv_usec);
@@ -421,7 +448,7 @@ static void config_debug_fs_read_cb(void)
 		 * Hence continuous input latency
 		 */
 		if (in_cont_index == 7) {
-			do_gettimeofday(&in_cont_tv);
+			in_cont_tv = get_monotonic_timeval();
 			pr_info("%s: read buffer at %ld sec %ld microsec\n",
 				__func__,
 				in_cont_tv.tv_sec, in_cont_tv.tv_usec);
@@ -438,7 +465,7 @@ static void config_debug_fs_reset_index(void)
 static void config_debug_fs_run(void)
 {
 	if (out_enable_flag) {
-		do_gettimeofday(&out_cold_tv);
+		out_cold_tv = get_monotonic_timeval();
 		pr_debug("%s: COLD apr_send_pkt at %ld sec %ld microsec\n",
 			__func__, out_cold_tv.tv_sec, out_cold_tv.tv_usec);
 	}
@@ -453,7 +480,7 @@ static void config_debug_fs_write(struct audio_buffer *ab)
 		 */
 		if ((strcmp(((char *)ab->data), zero_pattern)) &&
 		(!strcmp(((char *)ab->data + 2), zero_pattern))) {
-			do_gettimeofday(&out_warm_tv);
+			out_warm_tv = get_monotonic_timeval();
 			pr_debug("%s: WARM:apr_send_pkt at %ld sec %ld microsec\n",
 			 __func__,
 			 out_warm_tv.tv_sec,
@@ -465,7 +492,7 @@ static void config_debug_fs_write(struct audio_buffer *ab)
 		 */
 		else if ((!strcmp(((char *)ab->data), zero_pattern))
 		&& (strcmp(((char *)ab->data + 2), zero_pattern))) {
-			do_gettimeofday(&out_cont_tv);
+			out_cont_tv = get_monotonic_timeval();
 			pr_debug("%s: CONT:apr_send_pkt at %ld sec %ld microsec\n",
 			__func__,
 			out_cont_tv.tv_sec,
