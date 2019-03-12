@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,6 +66,17 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 		    eWNI_SME_GET_STATISTICS_RSP) {
 			csr_roam_joined_state_msg_processor(mac_ctx,
 							    msg_buf);
+			break;
+		}
+
+		if (sme_rsp->messageType ==
+		    eWNI_SME_UPPER_LAYER_ASSOC_CNF) {
+			tSirSmeAssocIndToUpperLayerCnf *upper_layer_assoc_cnf =
+				(tSirSmeAssocIndToUpperLayerCnf *)msg_buf;
+			if (upper_layer_assoc_cnf->ies) {
+				qdf_mem_free(upper_layer_assoc_cnf->ies);
+				sme_debug("free ies");
+			}
 			break;
 		}
 

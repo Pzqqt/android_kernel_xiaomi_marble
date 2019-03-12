@@ -9663,6 +9663,15 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		csr_roam_check_for_link_status_change(mac, pSmeRsp);
 		break;
 
+	case eWNI_SME_UPPER_LAYER_ASSOC_CNF:
+	{
+		tSirSmeAssocIndToUpperLayerCnf *upper_layer_assoc_cnf =
+			(tSirSmeAssocIndToUpperLayerCnf *)pMsgBuf;
+		if (upper_layer_assoc_cnf->ies) {
+			qdf_mem_free(upper_layer_assoc_cnf->ies);
+			sme_debug("free ies");
+		}
+	}
 	default:
 		sme_debug("Unexpected message type: %d[0x%X] received in substate %s",
 			pSmeRsp->messageType, pSmeRsp->messageType,
