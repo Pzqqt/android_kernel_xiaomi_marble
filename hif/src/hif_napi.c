@@ -1058,8 +1058,6 @@ void hif_napi_update_yield_stats(struct CE_state *ce_state,
 	cpu_id = qdf_get_cpu();
 
 	if (unlikely(!napi_data->napis[ce_id])) {
-		HIF_INFO("%s: NAPI info is NULL for ce id: %d",
-			 __func__, ce_id);
 		return;
 	}
 
