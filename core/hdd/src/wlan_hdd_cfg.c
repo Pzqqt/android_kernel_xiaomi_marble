@@ -1511,6 +1511,7 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 
 	return QDF_STATUS_SUCCESS;
 }
+
 /**
  * hdd_update_nss() - Update the number of spatial streams supported.
  * Ensure that nss is either 1 or 2 before calling this.
@@ -1585,8 +1586,8 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX;
 		     band++) {
 			/* This API will change the global ini in mlme cfg */
-			sme_update_vdev_nss(mac_handle, rx_nss, tx_nss,
-					    adapter->device_mode, band);
+			sme_update_nss_in_mlme_cfg(mac_handle, rx_nss, tx_nss,
+						   adapter->device_mode, band);
 			/*
 			 * This API will change the vdev nss params in mac
 			 * context

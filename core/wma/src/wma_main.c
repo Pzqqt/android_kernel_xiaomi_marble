@@ -5555,6 +5555,59 @@ static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 }
 #endif
 
+static uint8_t
+wma_convert_chainmask_to_chain(uint8_t chainmask)
+{
+	uint8_t num_chains = 0;
+
+	while (chainmask) {
+		chainmask &= (chainmask - 1);
+		num_chains++;
+	}
+
+	return num_chains;
+}
+
+static void
+wma_fill_chain_cfg(struct target_psoc_info *tgt_hdl,
+		   uint8_t phy)
+{
+	struct mac_context *mac_ctx;
+	uint8_t num_chain;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap =
+						tgt_hdl->info.mac_phy_cap;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		WMA_LOGE("fill chain cfg failed as mac_ctx is NULL");
+		return;
+	}
+
+	num_chain = wma_convert_chainmask_to_chain(mac_phy_cap[phy].
+						   tx_chain_mask_2G);
+
+	if (num_chain > mac_ctx->fw_chain_cfg.max_tx_chains_2g)
+		mac_ctx->fw_chain_cfg.max_tx_chains_2g = num_chain;
+
+	num_chain = wma_convert_chainmask_to_chain(mac_phy_cap[phy].
+						   tx_chain_mask_5G);
+
+	if (num_chain > mac_ctx->fw_chain_cfg.max_tx_chains_5g)
+		mac_ctx->fw_chain_cfg.max_tx_chains_5g = num_chain;
+
+	num_chain = wma_convert_chainmask_to_chain(mac_phy_cap[phy].
+						   rx_chain_mask_2G);
+
+	if (num_chain > mac_ctx->fw_chain_cfg.max_rx_chains_2g)
+		mac_ctx->fw_chain_cfg.max_rx_chains_2g = num_chain;
+
+	num_chain = wma_convert_chainmask_to_chain(mac_phy_cap[phy].
+						   rx_chain_mask_5G);
+
+	if (num_chain > mac_ctx->fw_chain_cfg.max_rx_chains_5g)
+		mac_ctx->fw_chain_cfg.max_rx_chains_5g = num_chain;
+}
+
 /**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
@@ -5569,6 +5622,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	struct wlan_psoc_host_service_ext_param *service_ext_param;
 	struct target_psoc_info *tgt_hdl;
 	struct wmi_unified *wmi_handle;
+	uint8_t i;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -5648,6 +5702,11 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_obss_color_collision_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_update_nan_target_caps(wma_handle, &tgt_cfg);
+
+	/* Take the max of chains supported by FW, which will limit nss */
+	for (i = 0; i < tgt_hdl->info.total_mac_phy_cnt; i++)
+		wma_fill_chain_cfg(tgt_hdl, i);
+
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
 	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,

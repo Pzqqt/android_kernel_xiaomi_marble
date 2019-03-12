@@ -1801,6 +1801,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	bool bval = false;
 	uint8_t value = 0;
 	uint32_t fine_time_meas_cap = 0;
+	enum nss_chains_band_info band;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -1943,6 +1944,22 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_update_tgt_he_cap(hdd_ctx, cfg);
 	}
 	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
+
+	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++) {
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_STA_MODE, band);
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_SAP_MODE, band);
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_TDLS_MODE, band);
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_P2P_DEVICE_MODE,
+					      band);
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_OCB_MODE, band);
+		sme_modify_nss_chains_tgt_cfg(hdd_ctx->mac_handle,
+					      QDF_TDLS_MODE, band);
+	}
 
 	hdd_update_vdev_nss(hdd_ctx);
 

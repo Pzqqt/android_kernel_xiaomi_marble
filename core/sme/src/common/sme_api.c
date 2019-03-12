@@ -4321,15 +4321,71 @@ sme_validate_nss_chains_config(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-sme_change_vdev_nss_ini(mac_handle_t mac_handle,
-			uint8_t rx_nss, uint8_t tx_nss,
-			enum QDF_OPMODE vdev_op_mode,
-			enum nss_chains_band_info band)
+static bool
+sme_is_nss_update_allowed(struct wlan_mlme_chain_cfg chain_cfg,
+			  uint8_t rx_nss, uint8_t tx_nss,
+			  enum nss_chains_band_info band)
+{
+	switch (band) {
+	case NSS_CHAINS_BAND_2GHZ:
+		if (rx_nss > chain_cfg.max_rx_chains_2g)
+			return false;
+		if (tx_nss > chain_cfg.max_tx_chains_2g)
+			return false;
+		break;
+	case NSS_CHAINS_BAND_5GHZ:
+		if (rx_nss > chain_cfg.max_rx_chains_5g)
+			return false;
+		if (tx_nss > chain_cfg.max_tx_chains_5g)
+			return false;
+		break;
+	default:
+		sme_err("Unknown Band nss change not allowed");
+		return false;
+	}
+	return true;
+}
+
+static void sme_modify_chains_in_mlme_cfg(mac_handle_t mac_handle,
+					  uint8_t rx_chains,
+					  uint8_t tx_chains,
+					  enum QDF_OPMODE vdev_op_mode,
+					  enum nss_chains_band_info band)
 {
 	uint8_t nss_shift;
 	uint32_t nss_mask = 0x7;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	nss_shift = sme_get_nss_chain_shift(vdev_op_mode);
+
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.num_rx_chains[band] &=
+						~(nss_mask << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.num_rx_chains[band] |=
+						 (rx_chains << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.num_tx_chains[band] &=
+						~(nss_mask << nss_shift);
+	mac_ctx->mlme_cfg->nss_chains_ini_cfg.num_tx_chains[band] |=
+						 (tx_chains << nss_shift);
+	sme_debug("rx chains %d tx chains %d changed for vdev mode %d for band %d",
+		  rx_chains, tx_chains, vdev_op_mode, band);
+}
+
+static void
+sme_modify_nss_in_mlme_cfg(mac_handle_t mac_handle,
+			   uint8_t rx_nss, uint8_t tx_nss,
+			   enum QDF_OPMODE vdev_op_mode,
+			   enum nss_chains_band_info band)
+{
+	uint8_t nss_shift;
+	uint32_t nss_mask = 0x7;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	if (!sme_is_nss_update_allowed(mac_ctx->fw_chain_cfg, rx_nss, tx_nss,
+				       band)) {
+		sme_debug("Nss modification failed, fw doesn't support this nss %d",
+			  rx_nss);
+		return;
+	}
 
 	nss_shift = sme_get_nss_chain_shift(vdev_op_mode);
 
@@ -4346,10 +4402,73 @@ sme_change_vdev_nss_ini(mac_handle_t mac_handle,
 }
 
 void
-sme_update_vdev_nss(mac_handle_t mac_handle,
-		    uint8_t rx_nss, uint8_t tx_nss,
-		    enum QDF_OPMODE vdev_op_mode,
-		    enum nss_chains_band_info band)
+sme_modify_nss_chains_tgt_cfg(mac_handle_t mac_handle,
+			      enum QDF_OPMODE vdev_op_mode,
+			      enum nss_chains_band_info band)
+{
+	uint8_t ini_rx_nss;
+	uint8_t ini_tx_nss;
+	uint8_t max_supported_rx_nss = MAX_VDEV_NSS;
+	uint8_t max_supported_tx_nss = MAX_VDEV_NSS;
+	uint8_t ini_rx_chains;
+	uint8_t ini_tx_chains;
+	uint8_t max_supported_rx_chains = MAX_VDEV_CHAINS;
+	uint8_t max_supported_tx_chains = MAX_VDEV_CHAINS;
+
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct wlan_mlme_nss_chains *nss_chains_ini_cfg =
+					&mac_ctx->mlme_cfg->nss_chains_ini_cfg;
+	uint8_t nss_shift = sme_get_nss_chain_shift(vdev_op_mode);
+	struct wlan_mlme_chain_cfg chain_cfg = mac_ctx->fw_chain_cfg;
+
+	ini_rx_nss = GET_VDEV_NSS_CHAIN(nss_chains_ini_cfg->rx_nss[band],
+					nss_shift);
+	ini_tx_nss = GET_VDEV_NSS_CHAIN(nss_chains_ini_cfg->tx_nss[band],
+					nss_shift);
+
+	if (band == NSS_CHAINS_BAND_2GHZ) {
+		max_supported_rx_nss = chain_cfg.max_rx_chains_2g;
+		max_supported_tx_nss = chain_cfg.max_tx_chains_2g;
+	} else if (band == NSS_CHAINS_BAND_5GHZ) {
+		max_supported_rx_nss = chain_cfg.max_rx_chains_5g;
+		max_supported_tx_nss = chain_cfg.max_tx_chains_5g;
+	}
+
+	max_supported_rx_nss = QDF_MIN(ini_rx_nss, max_supported_rx_nss);
+	max_supported_tx_nss = QDF_MIN(ini_tx_nss, max_supported_tx_nss);
+
+	ini_rx_chains = GET_VDEV_NSS_CHAIN(nss_chains_ini_cfg->
+						num_rx_chains[band],
+					   nss_shift);
+	ini_tx_chains = GET_VDEV_NSS_CHAIN(nss_chains_ini_cfg->
+						num_tx_chains[band],
+					   nss_shift);
+
+	if (band == NSS_CHAINS_BAND_2GHZ) {
+		max_supported_rx_chains = chain_cfg.max_rx_chains_2g;
+		max_supported_tx_chains = chain_cfg.max_tx_chains_2g;
+	} else if (band == NSS_CHAINS_BAND_5GHZ) {
+		max_supported_rx_chains = chain_cfg.max_rx_chains_5g;
+		max_supported_tx_chains = chain_cfg.max_tx_chains_5g;
+	}
+
+	max_supported_rx_chains = QDF_MIN(ini_rx_chains,
+					  max_supported_rx_chains);
+	max_supported_tx_chains = QDF_MIN(ini_tx_chains,
+					  max_supported_tx_chains);
+
+	sme_modify_chains_in_mlme_cfg(mac_handle, max_supported_rx_chains,
+				      max_supported_tx_chains, vdev_op_mode,
+				      band);
+	sme_modify_nss_in_mlme_cfg(mac_handle, max_supported_rx_nss,
+				   max_supported_tx_nss, vdev_op_mode, band);
+}
+
+void
+sme_update_nss_in_mlme_cfg(mac_handle_t mac_handle,
+			   uint8_t rx_nss, uint8_t tx_nss,
+			   enum QDF_OPMODE vdev_op_mode,
+			   enum nss_chains_band_info band)
 {
 	/*
 	 * If device mode is P2P-DEVICE, then we want P2P to come in that
@@ -4361,15 +4480,15 @@ sme_update_vdev_nss(mac_handle_t mac_handle,
 	if (vdev_op_mode == QDF_P2P_DEVICE_MODE ||
 	    vdev_op_mode == QDF_P2P_CLIENT_MODE ||
 	    vdev_op_mode == QDF_P2P_GO_MODE) {
-		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
-					QDF_P2P_CLIENT_MODE, band);
-		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
-					QDF_P2P_GO_MODE, band);
-		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
-					QDF_P2P_DEVICE_MODE, band);
+		sme_modify_nss_in_mlme_cfg(mac_handle, rx_nss, tx_nss,
+					   QDF_P2P_CLIENT_MODE, band);
+		sme_modify_nss_in_mlme_cfg(mac_handle, rx_nss, tx_nss,
+					   QDF_P2P_GO_MODE, band);
+		sme_modify_nss_in_mlme_cfg(mac_handle, rx_nss, tx_nss,
+					   QDF_P2P_DEVICE_MODE, band);
 	} else
-		sme_change_vdev_nss_ini(mac_handle, rx_nss, tx_nss,
-					vdev_op_mode, band);
+		sme_modify_nss_in_mlme_cfg(mac_handle, rx_nss, tx_nss,
+					   vdev_op_mode, band);
 }
 
 QDF_STATUS

@@ -1848,7 +1848,6 @@ struct hdd_context {
 	enum sar_version sar_version;
 	struct hdd_dynamic_mac dynamic_mac_list[QDF_MAX_CONCURRENCY_PERSONA];
 	bool dynamic_nss_chains_support;
-
 	struct qdf_mac_addr hw_macaddr;
 	struct qdf_mac_addr provisioned_mac_addr[QDF_MAX_CONCURRENCY_PERSONA];
 	struct qdf_mac_addr derived_mac_addr[QDF_MAX_CONCURRENCY_PERSONA];

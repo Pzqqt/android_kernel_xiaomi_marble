@@ -755,7 +755,7 @@ struct mgmt_beacon_probe_filter {
  */
 struct mac_context {
 	enum qdf_driver_type gDriverType;
-
+	struct wlan_mlme_chain_cfg fw_chain_cfg;
 	tAniSirCfg cfg;
 	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
