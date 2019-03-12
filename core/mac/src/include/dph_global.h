@@ -109,7 +109,6 @@ typedef struct sDphHashNode {
 	uint8_t lleEnabled:1;
 	/* set if both ap and sta are wsm capable */
 	uint8_t wsmEnabled:1;
-	uint8_t staAuthenticated:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
 	/* Fragmentation size */
