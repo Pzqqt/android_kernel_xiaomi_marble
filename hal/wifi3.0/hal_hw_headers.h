@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,7 +89,8 @@
 #define SRNG_LOOP_CNT_MASK REO_DESTINATION_RING_15_LOOPING_COUNT_MASK
 #define SRNG_LOOP_CNT_LSB REO_DESTINATION_RING_15_LOOPING_COUNT_LSB
 
-#define HAL_DEFAULT_REO_TIMEOUT_MS 40 /* milliseconds */
+#define HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS 100 /* milliseconds */
+#define HAL_DEFAULT_VO_REO_TIMEOUT_MS 40 /* milliseconds */
 
 #define HAL_DESC_SET_FIELD(_desc, _word, _fld, _value) do { \
 	((uint32_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 2] &= \
