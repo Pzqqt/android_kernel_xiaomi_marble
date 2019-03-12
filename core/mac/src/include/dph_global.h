@@ -100,7 +100,6 @@ typedef struct sDphHashNode {
 	uint8_t erpEnabled:1;
 	/* This has been added to the dph hash table */
 	uint8_t added:1;
-	uint8_t linkTestOn:1;
 	uint8_t shortPreambleEnabled:1;
 	uint8_t shortSlotTimeEnabled:1;
 	uint8_t stopTx:1;
