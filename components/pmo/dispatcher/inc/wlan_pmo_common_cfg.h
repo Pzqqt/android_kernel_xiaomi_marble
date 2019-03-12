@@ -28,7 +28,8 @@
  * @Max: 1
  * @Default: 1
  *
- * This ini is used to enable/disable host ARP offload.
+ * This ini is used to enable/disable firmware's capability of sending ARP
+ * response to clients.
  *
  * Usage: External
  *
@@ -37,7 +38,7 @@
 #define CFG_PMO_ENABLE_HOST_ARPOFFLOAD CFG_INI_BOOL( \
 	"hostArpOffload", \
 	1, \
-	"enable/disable host arp offload")
+	"enable/disable host ARP offload")
 
 /*
  * <ini>
@@ -77,12 +78,12 @@
 
 /*
  * <ini>
- * ssdp - Enable/disable ssdp
+ * ssdp - Enable/disable SSDP
  * @Min: 0
  * @Max: 1
  * @Default: 1
  *
- * This ini is used to enable/disable ssdp.
+ * This ini is used to enable/disable Simple Service Discovery Protocol(SSDP).
  *
  * Usage: External
  *
@@ -115,12 +116,12 @@
  * <ini>
  * gEnableDynamicDTIM - Enable Dynamic DTIM
  * @Min: 0
- * @Max: 9
+ * @Max: 5
  * @Default: 0
  *
- * This ini is used to enable/disable ssdp.
+ * This ini is used to enable/disable dynamic DTIM.
  *
- * 0 -Disable DynamicDTIM
+ * 0 -Disable Dynamic DTIM
  * 1 to 5 - SLM will switch to DTIM specified here when host suspends and
  *          switch DTIM1 when host resumes
  *
@@ -131,7 +132,7 @@
 #define CFG_PMO_ENABLE_DYNAMIC_DTIM CFG_INI_UINT( \
 	"gEnableDynamicDTIM", \
 	0, \
-	9, \
+	5, \
 	0, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Enable Dynamic DTIM")
@@ -144,6 +145,16 @@
  * @Default: 0
  *
  * This ini is used to enable/disable modulated DTIM feature.
+ *
+ * 0 - Disable modulated DTIM.
+ * 1 to 5 - The maximum No. of modulated DTIM period used for calculating the
+ * target listen interval.
+ *
+ * The target listen interval will be updated to firmware when host driver is
+ * setting the suspend DTIM parameters.
+ *
+ * This configuration will be ignored when dynamic DTIM is enabled(by
+ * gEnableDynamicDTIM).
  *
  * Usage: External
  *
