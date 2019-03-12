@@ -96,8 +96,6 @@ typedef struct sDphHashNode {
 	 */
 	uint8_t valid:1;
 	uint8_t encPolicy:3;
-	uint8_t defaultKey:1;
-	uint8_t defaultKeyId:2;
 	uint8_t qosMode:1;
 	uint8_t erpEnabled:1;
 	/* This has been added to the dph hash table */
