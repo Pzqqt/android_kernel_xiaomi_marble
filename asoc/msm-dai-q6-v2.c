@@ -2241,22 +2241,6 @@ static int msm_dai_q6_slim_bus_hw_params(struct snd_pcm_hw_params *params,
 	dai_data->port_config.slim_sch.sample_rate = dai_data->rate;
 	dai_data->port_config.slim_sch.num_channels = dai_data->channels;
 
-	switch (dai->id) {
-	case SLIMBUS_7_RX:
-	case SLIMBUS_7_TX:
-	case SLIMBUS_8_RX:
-	case SLIMBUS_8_TX:
-	case SLIMBUS_9_RX:
-	case SLIMBUS_9_TX:
-		dai_data->port_config.slim_sch.slimbus_dev_id =
-			AFE_SLIMBUS_DEVICE_2;
-		break;
-	default:
-		dai_data->port_config.slim_sch.slimbus_dev_id =
-			AFE_SLIMBUS_DEVICE_1;
-		break;
-	}
-
 	dev_dbg(dai->dev, "%s:slimbus_dev_id[%hu] bit_wd[%hu] format[%hu]\n"
 		"num_channel %hu  shared_ch_mapping[0]  %hu\n"
 		"slave_port_mapping[1]  %hu slave_port_mapping[2]  %hu\n"
@@ -3509,6 +3493,31 @@ static const struct snd_kcontrol_new avd_drift_config_controls[] = {
 		.get	= msm_dai_q6_slim_rx_drift_get,
 	},
 };
+
+static inline void msm_dai_q6_set_slim_dev_id(struct snd_soc_dai *dai)
+{
+	int rc = 0;
+	int slim_dev_id = 0;
+	const char *q6_slim_dev_id = "qcom,msm-dai-q6-slim-dev-id";
+	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
+
+	dai_data->port_config.slim_sch.slimbus_dev_id = AFE_SLIMBUS_DEVICE_1;
+
+	rc = of_property_read_u32(dai->dev->of_node, q6_slim_dev_id,
+				  &slim_dev_id);
+	if (rc) {
+		dev_dbg(dai->dev,
+			"%s: missing %s in dt node\n", __func__, q6_slim_dev_id);
+		return;
+	}
+
+	dev_dbg(dai->dev, "%s: slim_dev_id = %d\n", __func__, slim_dev_id);
+
+	if (slim_dev_id >= AFE_SLIMBUS_DEVICE_1 &&
+	    slim_dev_id <= AFE_SLIMBUS_DEVICE_2)
+		dai_data->port_config.slim_sch.slimbus_dev_id = slim_dev_id;
+}
+
 static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 {
 	struct msm_dai_q6_dai_data *dai_data;
@@ -3531,6 +3540,9 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 		dev_set_drvdata(dai->dev, dai_data);
 
 	msm_dai_q6_set_dai_id(dai);
+
+	if ((dai->id >= SLIMBUS_0_RX) && (dai->id <= SLIMBUS_9_TX))
+		msm_dai_q6_set_slim_dev_id(dai);
 
 	switch (dai->id) {
 	case SLIMBUS_4_TX:
