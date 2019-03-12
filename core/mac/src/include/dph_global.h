@@ -116,8 +116,6 @@ typedef struct sDphHashNode {
 	uint16_t fragSize;
 	/* LIM state */
 	tLimMlmStaContext mlmStaContext;
-	/* number of consecutive TIMs sent without response */
-	uint8_t numTimSent;
 	/* Number of Successful MPDU's being sent */
 	uint32_t curTxMpduCnt;
 	/* qos parameter info */
