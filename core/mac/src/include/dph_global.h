@@ -109,8 +109,6 @@ typedef struct sDphHashNode {
 	uint8_t wsmEnabled:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
-	/* Fragmentation size */
-	uint16_t fragSize;
 	/* LIM state */
 	tLimMlmStaContext mlmStaContext;
 	/* Number of Successful MPDU's being sent */

@@ -212,8 +212,6 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId, uint8_t validStaIdx,
 				 struct dph_hash_table *hash_table)
 {
-	uint32_t val;
-
 	tpDphHashNode sta, pnext;
 	uint16_t staIdx = STA_INVALID_IDX;
 
@@ -239,13 +237,6 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 
 	/* Initialize STA mac address */
 	qdf_mem_copy(sta->staAddr, staAddr, sizeof(tSirMacAddr));
-
-	/* Initialize fragmentation threshold */
-	if (wlan_mlme_get_frag_threshold(mac->psoc, &val) !=
-					 QDF_STATUS_SUCCESS)
-		pe_warn("could not retrieve fragmentation threshold");
-	else
-		sta->fragSize = (uint16_t) val;
 
 	sta->added = 1;
 	sta->is_disassoc_deauth_in_progress = 0;
