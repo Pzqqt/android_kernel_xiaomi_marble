@@ -75,6 +75,7 @@
 #include "qdf_talloc_test.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
+#include "qdf_tracker_test.h"
 #include "qdf_types_test.h"
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_ioctl.h"
@@ -5874,6 +5875,7 @@ struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "qdf_ptr_hash", .callback = qdf_ptr_hash_unit_test },
 	{ .name = "qdf_slist", .callback = qdf_slist_unit_test },
 	{ .name = "qdf_talloc", .callback = qdf_talloc_unit_test },
+	{ .name = "qdf_tracker", .callback = qdf_tracker_unit_test },
 	{ .name = "qdf_types", .callback = qdf_types_unit_test },
 };
 
