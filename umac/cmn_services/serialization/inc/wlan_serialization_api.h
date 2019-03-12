@@ -552,8 +552,8 @@ void *wlan_serialization_get_active_cmd(
 		enum wlan_serialization_cmd_type cmd_type);
 
 /**
- * wlan_serialization_get_active_cmd() - Return active umac command which
- *  matches vdev and cmd type
+ * wlan_serialization_get_vdev_active_cmd_type() - Return cmd type of the
+ *  active command for the given vdev
  * @vdev: vdev object
  *
  * This API fetches command type of the command in the vdev active queue
@@ -563,4 +563,17 @@ void *wlan_serialization_get_active_cmd(
 
 enum wlan_serialization_cmd_type
 wlan_serialization_get_vdev_active_cmd_type(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_ser_get_cmd_activation_status - Return active command status
+ * @vdev: vdev object
+ *
+ * This API fetches active command state in the vdev active queue
+ *
+ * Return: success if CMD_MARKED_FOR_ACTIVATION bit is set, else fail
+ */
+
+QDF_STATUS
+wlan_ser_get_cmd_activation_status(struct wlan_objmgr_vdev *vdev);
+
 #endif
