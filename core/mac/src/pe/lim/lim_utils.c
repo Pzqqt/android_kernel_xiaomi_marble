@@ -4010,8 +4010,9 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		return;
 	}
 
-	if (!pHTInfo->primaryChannel) {
-		pe_debug("Ignore as primary channel is 0 in HT info");
+	if (wlan_reg_get_chan_enum(pHTInfo->primaryChannel) ==
+	    INVALID_CHANNEL) {
+		pe_debug("Ignore Invalid channel in HT info");
 		return;
 	}
 
