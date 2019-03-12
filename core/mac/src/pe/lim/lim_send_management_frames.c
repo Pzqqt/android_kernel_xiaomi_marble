@@ -1835,9 +1835,17 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			(unsigned int) bssdescr->mdie[2]);
 		populate_mdie(mac_ctx, &frm->MobilityDomain,
 			pe_session->pLimJoinReq->bssDescription.mdie);
-	} else {
-		/* No 11r IEs dont send any MDIE */
-		pe_debug("MDIE not present");
+
+		/*
+		 * IEEE80211-ai [13.2.4 FT initial mobility domain association
+		 * over FILS in an RSN]
+		 * Populate FT IE in association request. This FT IE should be
+		 * same as the FT IE received in auth response frame during the
+		 * FT-FILS authentication.
+		 */
+		if (lim_is_fils_connection(pe_session))
+			populate_fils_ft_info(mac_ctx, &frm->FTInfo,
+					      pe_session);
 	}
 
 #ifdef FEATURE_WLAN_ESE

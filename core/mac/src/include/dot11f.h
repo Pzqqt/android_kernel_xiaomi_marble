@@ -9481,6 +9481,7 @@ typedef struct sDot11fAssocRequest{
 	tDot11fIERSNOpaque                     RSNOpaque;
 	tDot11fIEExtSuppRates                  ExtSuppRates;
 	tDot11fIEMobilityDomain                MobilityDomain;
+	tDot11fIEFTInfo                        FTInfo;
 	tDot11fIESuppOperatingClasses          SuppOperatingClasses;
 	tDot11fIEWAPIOpaque                    WAPIOpaque;
 	tDot11fIEWAPI                          WAPI;

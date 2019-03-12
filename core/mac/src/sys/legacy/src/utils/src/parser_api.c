@@ -5584,13 +5584,54 @@ void populate_mdie(struct mac_context *mac,
 
 }
 
-void populate_ft_info(struct mac_context *mac, tDot11fIEFTInfo *pDot11f)
+#ifdef WLAN_FEATURE_FILS_SK
+void populate_fils_ft_info(struct mac_context *mac, tDot11fIEFTInfo *ft_info,
+			   struct pe_session *pe_session)
 {
-	pDot11f->present = 1;
-	pDot11f->IECount = 0;   /* TODO: put valid data during reassoc. */
-	/* All other info is zero. */
+	struct pe_fils_session *ft_fils_info = pe_session->fils_info;
 
+	if (!ft_fils_info)
+		return;
+
+	if (!ft_fils_info->ft_ie.present) {
+		ft_info->present = 0;
+		pe_err("FT IE doesn't exist");
+		return;
+	}
+
+	ft_info->IECount = ft_fils_info->ft_ie.element_count;
+
+	qdf_mem_copy(ft_info->MIC, ft_fils_info->ft_ie.mic,
+		     FT_MIC_LEN);
+
+	qdf_mem_copy(ft_info->Anonce, ft_fils_info->ft_ie.anonce,
+		     FT_NONCE_LEN);
+
+	qdf_mem_copy(ft_info->Snonce, ft_fils_info->ft_ie.snonce,
+		     FT_NONCE_LEN);
+
+	if (ft_fils_info->ft_ie.r0kh_id_len > 0) {
+		ft_info->R0KH_ID.present = 1;
+		qdf_mem_copy(ft_info->R0KH_ID.PMK_R0_ID,
+			     ft_fils_info->ft_ie.r0kh_id,
+			     ft_fils_info->ft_ie.r0kh_id_len);
+		ft_info->R0KH_ID.num_PMK_R0_ID =
+				ft_fils_info->ft_ie.r0kh_id_len;
+	}
+
+	ft_info->R1KH_ID.present = 1;
+	qdf_mem_copy(ft_info->R1KH_ID.PMK_R1_ID,
+		     ft_fils_info->ft_ie.r1kh_id,
+		     FT_R1KH_ID_LEN);
+
+	qdf_mem_copy(&ft_info->GTK, &ft_fils_info->ft_ie.gtk_ie,
+		     sizeof(struct mac_ft_gtk_ie));
+	qdf_mem_copy(&ft_info->IGTK, &ft_fils_info->ft_ie.igtk_ie,
+		     sizeof(struct mac_ft_igtk_ie));
+
+	ft_info->present = 1;
 }
+#endif
 
 void populate_dot11f_assoc_rsp_rates(struct mac_context *mac,
 				     tDot11fIESuppRates *pSupp,

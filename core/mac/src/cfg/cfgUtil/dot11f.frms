@@ -3660,6 +3660,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  RSNOpaque;
     OPTIE  ExtSuppRates;
     OPTIE  MobilityDomain;
+    OPTIE  FTInfo;
     OPTIE  SuppOperatingClasses;
     OPTIE  WAPIOpaque;
     OPTIE  WAPI;
