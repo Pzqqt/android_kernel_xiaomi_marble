@@ -482,29 +482,12 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * lim_send_probe_rsp_mgmt_frame() - Send probe response
- *
- * @mac_ctx: Handle for mac context
- * @peer_macaddr: Mac address of requesting peer
- * @ssid: SSID for response
- * @n_staid: Station ID, currently unused.
- * @pe_session: PE session id
- * @keepalive: Keep alive flag. Currently unused.
- * @preq_p2pie: P2P IE in incoming probe request
- *
- * Builds and sends probe response frame to the requesting peer
- *
- * Return: void
- */
-
 void
 lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			      tSirMacAddr peer_macaddr,
 			      tpAniSSID ssid,
-			      short n_staid,
-			      uint8_t keepalive,
-			      struct pe_session *pe_session, uint8_t preq_p2pie)
+			      struct pe_session *pe_session,
+			      uint8_t preq_p2pie)
 {
 	tDot11fProbeResponse *frm;
 	QDF_STATUS sir_status;

@@ -451,8 +451,26 @@ void lim_populate_mac_header(struct mac_context *, uint8_t *, uint8_t, uint8_t,
 QDF_STATUS lim_send_probe_req_mgmt_frame(struct mac_context *, tSirMacSSid *,
 					    tSirMacAddr, uint8_t, tSirMacAddr,
 					    uint32_t, uint16_t *, uint8_t *);
-void lim_send_probe_rsp_mgmt_frame(struct mac_context *, tSirMacAddr, tpAniSSID, short,
-				   uint8_t, struct pe_session *, uint8_t);
+
+/**
+ * lim_send_probe_rsp_mgmt_frame() - Send probe response
+ * @mac_ctx: Handle for mac context
+ * @peer_macaddr: Mac address of requesting peer
+ * @ssid: SSID for response
+ * @pe_session: PE session id
+ * @preq_p2pie: P2P IE in incoming probe request
+ *
+ * Builds and sends probe response frame to the requesting peer
+ *
+ * Return: void
+ */
+void
+lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
+			      tSirMacAddr peer_macaddr,
+			      tpAniSSID ssid,
+			      struct pe_session *pe_session,
+			      uint8_t preq_p2pie);
+
 void lim_send_auth_mgmt_frame(struct mac_context *, tSirMacAuthFrameBody *, tSirMacAddr,
 			      uint8_t, struct pe_session *);
 void lim_send_assoc_req_mgmt_frame(struct mac_context *, tLimMlmAssocReq *, struct pe_session *);

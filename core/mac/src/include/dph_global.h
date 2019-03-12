@@ -41,16 +41,6 @@
 #include "sir_mac_prot_def.h"
 #include "sir_api.h"
 
-/* Following determines whether statistics are maintained or not */
-#define DPH_STATS
-
-/* STAID for Management frames */
-#define DPH_USE_MGMT_STAID  -1
-
-/* Keep Alive frames */
-#define DPH_NON_KEEPALIVE_FRAME  0
-#define DPH_KEEPALIVE_FRAME      1
-
 /* DPH Hash Index for BSS(STA's Peer) on station. */
 #define DPH_STA_HASH_INDEX_PEER   1
 

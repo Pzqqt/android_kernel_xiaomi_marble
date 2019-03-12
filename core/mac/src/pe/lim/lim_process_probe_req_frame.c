@@ -358,8 +358,6 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 						(uint8_t) (ssid.length + 1))) {
 				lim_send_probe_rsp_mgmt_frame(mac_ctx,
 						mac_hdr->sa, &ssid,
-						DPH_USE_MGMT_STAID,
-						DPH_NON_KEEPALIVE_FRAME,
 						session,
 						probe_req.p2pIePresent);
 				return;
@@ -374,8 +372,6 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 					lim_send_probe_rsp_mgmt_frame(mac_ctx,
 							mac_hdr->sa,
 							&ssid,
-							DPH_USE_MGMT_STAID,
-							DPH_NON_KEEPALIVE_FRAME,
 							session,
 							probe_req.p2pIePresent);
 					return;
@@ -401,8 +397,6 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				return;
 			lim_send_probe_rsp_mgmt_frame(mac_ctx, mac_hdr->sa,
 					&ssid,
-					DPH_USE_MGMT_STAID,
-					DPH_NON_KEEPALIVE_FRAME,
 					session,
 					probe_req.p2pIePresent);
 			return;
