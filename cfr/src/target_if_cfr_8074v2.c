@@ -484,6 +484,12 @@ target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 						 wmi_peer_cfr_capture_event_id,
 						 target_if_peer_capture_event,
 						 WMI_RX_UMAC_CTX);
+	/*
+	 * Event registration is called per pdev
+	 * Ignore erorr if event is alreday registred.
+	 */
+	if (ret == QDF_STATUS_E_FAILURE)
+		ret = QDF_STATUS_SUCCESS;
 
 	return ret;
 }
