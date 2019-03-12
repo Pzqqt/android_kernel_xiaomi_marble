@@ -25,6 +25,7 @@
 #include <target_if_vdev_mgr_rx_ops.h>
 #include <target_if_vdev_mgr_tx_ops.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
+#include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wmi_unified_param.h>
 #include <wlan_mlme_dbg.h>
 #include <target_if.h>
@@ -77,7 +78,7 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 		    qdf_atomic_test_bit(RESTART_RESPONSE_BIT,
 					&vdev_rsp->rsp_status)) {
 			start_rsp.vdev_id = wlan_vdev_get_id(vdev);
-			start_rsp.status = WMI_HOST_VDEV_START_TIMEOUT;
+			start_rsp.status = WLAN_MLME_HOST_VDEV_START_TIMEOUT;
 			if (qdf_atomic_test_bit(START_RESPONSE_BIT,
 						&vdev_rsp->rsp_status))
 				start_rsp.resp_type =

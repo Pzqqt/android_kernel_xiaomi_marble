@@ -461,6 +461,7 @@ typedef enum {
 	WMI_HOST_MODE_MAX = 24
 } WMI_HOST_WLAN_PHY_MODE;
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 typedef enum {
 	WMI_HOST_VDEV_START_OK = 0,
 	WMI_HOST_VDEV_START_CHAN_INVALID,
@@ -468,6 +469,7 @@ typedef enum {
 	WMI_HOST_VDEV_START_CHAN_DFS_VIOLATION,
 	WMI_HOST_VDEV_START_TIMEOUT,
 } WMI_HOST_VDEV_START_STATUS;
+#endif
 
 /*
  * Needs to be removed and use channel_param based
@@ -5502,6 +5504,7 @@ typedef struct {
 	u_int8_t dest_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t vdev_id;
 } wds_addr_event_t;
+
 /**
  * Enum replicated for host abstraction with FW
  */
@@ -6290,6 +6293,7 @@ enum wmi_host_ap_ps_peer_param {
 #define WMI_HOST_RXERR_MIC	0x10 /* Michael MIC decrypt error */
 #define WMI_HOST_RXERR_KEY_CACHE_MISS 0x20 /* No/incorrect key matter in h/w */
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 enum wmi_host_sta_ps_param_uapsd {
 	WMI_HOST_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
 	WMI_HOST_STA_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
@@ -6300,6 +6304,7 @@ enum wmi_host_sta_ps_param_uapsd {
 	WMI_HOST_STA_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
 	WMI_HOST_STA_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
 };
+#endif
 
 enum wmi_host_sta_ps_param_rx_wake_policy {
 	/* Wake up when ever there is an  RX activity on the VDEV. In this mode

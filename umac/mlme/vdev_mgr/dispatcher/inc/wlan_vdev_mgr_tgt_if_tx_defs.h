@@ -62,6 +62,39 @@ enum mlme_bcn_tx_rate_code {
 };
 
 /**
+ * enum wlan_mlme_host_sta_ps_param_uapsd - STA UPASD params
+ */
+enum wlan_mlme_host_sta_ps_param_uapsd {
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC1_DELIVERY_EN = (1 << 2),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC1_TRIGGER_EN  = (1 << 3),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC2_DELIVERY_EN = (1 << 4),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
+	WLAN_MLME_HOST_STA_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
+};
+
+/**
+ * enum wlan_mlme_host_vdev_start_status - vdev start status code
+ */
+enum wlan_mlme_host_vdev_start_status {
+	WLAN_MLME_HOST_VDEV_START_OK = 0,
+	WLAN_MLME_HOST_VDEV_START_CHAN_INVALID,
+	WLAN_MLME_HOST_VDEV_START_CHAN_BLOCKED,
+	WLAN_MLME_HOST_VDEV_START_CHAN_DFS_VIOLATION,
+	WLAN_MLME_HOST_VDEV_START_TIMEOUT,
+};
+
+/**
+ * enum wlan_mlme_host_start_event_param - start/restart resp event
+ */
+enum wlan_mlme_host_start_event_param {
+	WLAN_MLME_HOST_VDEV_START_RESP_EVENT = 0,
+	WLAN_MLME_HOST_VDEV_RESTART_RESP_EVENT,
+};
+
+/**
  * struct sta_ps_params - sta ps cmd parameter
  * @vdev_id: vdev id
  * @param_id: sta ps parameter
