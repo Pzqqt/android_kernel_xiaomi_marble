@@ -62,6 +62,7 @@ $(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
 $(HOST_QAL_SRC)/linux/src/qal_devcfg.o \
 $(HOST_QAL_SRC)/linux/src/qal_vbus_dev.o \
 $(HOST_QAL_SRC)/linux/src/qal_streamfs.o \
+$(HOST_QAL_SRC)/linux/src/qal_notifier.o \
 #linux/src/qdf_net.o \
 #linux/src/qdf_net_event.o \
 #linux/src/qdf_net_ioctl.o
