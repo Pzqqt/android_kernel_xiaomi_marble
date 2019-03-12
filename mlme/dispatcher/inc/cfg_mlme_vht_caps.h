@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -488,7 +488,7 @@
 		"VHT Enable for 24GHz")
 
 /*
- * gEnableVendorVhtFor24GHzBand:Parameter to control VHT support
+ * gEnableVendorVhtFor24GHzBand - Parameter to control VHT support
  * based on vendor ie in 2.4 GHz band
  * @Min: 0
  * @Max: 1
