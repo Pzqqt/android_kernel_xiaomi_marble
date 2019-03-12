@@ -44,16 +44,12 @@ typedef enum {
 	TWO_BYTE = 2
 } eSizeOfLenField;
 
-#define LIM_STA_ID_MASK                        0x00FF
 #define LIM_AID_MASK                              0xC000
 #define LIM_SPECTRUM_MANAGEMENT_BIT_MASK          0x0100
 #define LIM_RRM_BIT_MASK                          0x1000
 #define LIM_SHORT_PREAMBLE_BIT_MASK               0x0020
 #define LIM_IMMEDIATE_BLOCK_ACK_MASK              0x8000
 #define LIM_MAX_REASSOC_RETRY_LIMIT            2
-
-/* classifier ID is coded as 0-3: tsid, 4-5:direction */
-#define LIM_MAKE_CLSID(tsid, dir) (((tsid) & 0x0F) | (((dir) & 0x03) << 4))
 
 #define VHT_MCS_3x3_MASK    0x30
 #define VHT_MCS_2x2_MASK    0x0C

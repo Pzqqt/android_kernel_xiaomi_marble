@@ -102,17 +102,6 @@
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
 /*
- * MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT - Indicates the traffic thresold in kBps
- * MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT - indicates the AP RSSI threshold
- * MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT - Adjustable high value to suppress scan
- * MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT - Adjustable low value to suppress scan
- */
-#define MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT  300
-#define MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT  (-66)
-#define MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT   5
-#define MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT    5
-
-/*
  * Neighbor report offload needs to send 0xFFFFFFFF if a particular
  * parameter is disabled from the ini
  */

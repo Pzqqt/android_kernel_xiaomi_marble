@@ -53,22 +53,6 @@
 #include "cds_regdomain.h"
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
-/*
- * This overhead is time for sending NOA start to host in case of GO/sending
- * NULL data & receiving ACK in case of P2P Client and starting actual scanning
- * with init scan req/rsp plus in case of concurrency, taking care of sending
- * null data and receiving ACK to/from AP/Also SetChannel with calibration
- * is taking around 7ms .
- */
-#define SCAN_MESSAGING_OVERHEAD             20  /* in msecs */
-#define JOIN_NOA_DURATION                   2000        /* in msecs */
-#define OEM_DATA_NOA_DURATION               60  /* in msecs */
-#define DEFAULT_PASSIVE_MAX_CHANNEL_TIME    110 /* in msecs */
-
-#define CONV_MS_TO_US 1024      /* conversion factor from ms to us */
-
-#define BEACON_INTERVAL_THRESHOLD 50  /* in msecs */
-#define STA_BURST_SCAN_DURATION 120   /* in msecs */
 
 /* SME REQ processing function templates */
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *, uint32_t *);

@@ -36,9 +36,6 @@
 #include "sir_types.h"
 #include "wlan_mlme_public_struct.h"
 
-/* define scan return criteria. LIM should use these define as well */
-#define CSR_SCAN_RETURN_AFTER_ALL_CHANNELS          (0)
-#define CSR_SCAN_RETURN_AFTER_FIRST_MATCH           (0x01)
 #define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
@@ -52,7 +49,6 @@
 	 &(mac)->roam.roamSession[(sessionId)] : NULL)
 
 #define CSR_IS_SESSION_ANY(sessionId) (sessionId == SME_SESSION_ID_ANY)
-#define CSR_MAX_NUM_COUNTRY_CODE  100
 #define CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx) \
 	( \
 	  ((((mac_ctx)->mlme_cfg->lfr.roaming_dfs_channel) != \

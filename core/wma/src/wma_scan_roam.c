@@ -75,31 +75,7 @@
 #include "wma_nan_datapath.h"
 #include "wlan_mlme_api.h"
 
-#define WMA_MCC_MIRACAST_REST_TIME 400
-#define WMA_SCAN_ID_MASK 0x0fff
-
 #ifdef FEATURE_WLAN_EXTSCAN
-/**
- * enum extscan_report_events_type - extscan report events type
- * @EXTSCAN_REPORT_EVENTS_BUFFER_FULL: report only when scan history is % full
- * @EXTSCAN_REPORT_EVENTS_EACH_SCAN: report a scan completion event after scan
- * @EXTSCAN_REPORT_EVENTS_FULL_RESULTS: forward scan results
- *		(beacons/probe responses + IEs)
- *		in real time to HAL, in addition to completion events.
- *		Note: To keep backward compatibility,
- *		fire completion events regardless of REPORT_EVENTS_EACH_SCAN.
- * @EXTSCAN_REPORT_EVENTS_NO_BATCH: controls batching,
- *		0 => batching, 1 => no batching
- * @EXTSCAN_REPORT_EVENTS_CONTEXT_HUB: forward results to context hub
- */
-enum extscan_report_events_type {
-	EXTSCAN_REPORT_EVENTS_BUFFER_FULL   = 0x00,
-	EXTSCAN_REPORT_EVENTS_EACH_SCAN     = 0x01,
-	EXTSCAN_REPORT_EVENTS_FULL_RESULTS  = 0x02,
-	EXTSCAN_REPORT_EVENTS_NO_BATCH      = 0x04,
-	EXTSCAN_REPORT_EVENTS_CONTEXT_HUB   = 0x08,
-};
-
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
 
 /*

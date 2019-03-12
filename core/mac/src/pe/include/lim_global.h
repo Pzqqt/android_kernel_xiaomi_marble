@@ -45,15 +45,6 @@
 /* Deferred Message Queue Length */
 #define MAX_DEFERRED_QUEUE_LEN                  80
 
-/* Maximum number of PS - TIM's to be sent with out wakeup from STA */
-#define LIM_TIM_WAIT_COUNT_FACTOR          5
-
-/*
- * Use this count if (LIM_TIM_WAIT_FACTOR * ListenInterval)
- * is less than LIM_MIN_TIM_WAIT_CNT
- */
-#define LIM_MIN_TIM_WAIT_COUNT          50
-
 #ifdef CHANNEL_HOPPING_ALL_BANDS
 #define CHAN_HOP_ALL_BANDS_ENABLE        1
 #else

@@ -92,9 +92,6 @@
 #define LIM_ASSOC    0
 #define LIM_REASSOC  1
 
-/* / Minimum Memory blocks require for different scenario */
-#define LIM_MIN_MEM_ASSOC       4
-
 /* / Verifies whether given mac addr matches the CURRENT Bssid */
 #define IS_CURRENT_BSSID(mac, addr, pe_session)  (!qdf_mem_cmp(addr, \
 								      pe_session->bssId, \
@@ -107,22 +104,12 @@
 #define REQ_TYPE_REGISTRAR                   (0x2)
 #define REQ_TYPE_WLAN_MANAGER_REGISTRAR      (0x3)
 
-#define RESP_TYPE_REGISTRAR                  (0x2)
 #define RESP_TYPE_ENROLLEE_INFO_ONLY         (0x0)
 #define RESP_TYPE_ENROLLEE_OPEN_8021X        (0x1)
 #define RESP_TYPE_AP                         (0x3)
-#define LIM_TX_FRAMES_THRESHOLD_ON_CHIP       300
 
 
-#define HAL_TXCOMP_REQUESTED_MASK           0x1 /* bit 0 for TxComp intr requested. */
 #define HAL_USE_SELF_STA_REQUESTED_MASK     0x2 /* bit 1 for STA overwrite with selfSta Requested. */
-#define HAL_TX_NO_ENCRYPTION_MASK           0x4 /* bit 2. If set, the frame is not to be encrypted */
-#if defined(LIBRA_WAPI_SUPPORT)
-#define HAL_WAPI_STA_MASK            0x8        /* bit 3. If set, this frame is for WAPI station */
-#endif
-
-#define HAL_TRIGGER_ENABLED_AC_MASK         0x10        /* bit 4 for data frames belonging to trigger enabled AC */
-#define HAL_USE_NO_ACK_REQUESTED_MASK       0x20
 
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40      /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_PEER_STA_REQUESTED_MASK   0x80  /* bit 7 will be used to control frames for p2p interface */

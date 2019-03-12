@@ -30,33 +30,13 @@
 #include "wlan_objmgr_vdev_obj.h"
 
 /* This number minus 1 means the number of times a channel is scanned before
- * a BSS is remvoed from
+ * a BSS is removed from cache scan result
  */
-/* cache scan result */
 #define CSR_AGING_COUNT     3
-/* 5 seconds */
-#define CSR_SCAN_GET_RESULT_INTERVAL    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
-/* 60 seconds */
-#define CSR_MIC_ERROR_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)
-/* 60 seconds */
-#define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-/* the following defines are NOT used by palTimer */
-#define CSR_JOIN_FAILURE_TIMEOUT_DEFAULT (3000)
-#define CSR_JOIN_FAILURE_TIMEOUT_MIN   (1000)   /* minimal value */
 /* These are going against the signed RSSI (int8_t) so it is between -+127 */
 #define CSR_BEST_RSSI_VALUE         (-30)       /* RSSI >= this is in CAT4 */
 #define CSR_DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
-#define CSR_BSS_CAP_VALUE_NONE  0       /* not much value */
-#define CSR_BSS_CAP_VALUE_HT    1
-#define CSR_BSS_CAP_VALUE_VHT    2
-#define CSR_BSS_CAP_VALUE_WMM   1
-#define CSR_BSS_CAP_VALUE_UAPSD 1
-#define CSR_BSS_CAP_VALUE_5GHZ  2
-
-#define CSR_ROAMING_DFS_CHANNEL_DISABLED           (0)
-#define CSR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL     (1)
-#define CSR_ROAMING_DFS_CHANNEL_ENABLED_ACTIVE     (2)
 
 #ifdef QCA_WIFI_3_0_EMU
 #define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30*20)
@@ -131,13 +111,6 @@ struct scan_result_list {
 	tListElem *pCurEntry;
 };
 
-#define CSR_IS_ROAM_REASON(pCmd, reason) \
-					((reason) == (pCmd)->roamCmd.roamReason)
-#define CSR_IS_BETTER_PREFER_VALUE(v1, v2)   ((v1) > (v2))
-#define CSR_IS_EQUAL_PREFER_VALUE(v1, v2)   ((v1) == (v2))
-#define CSR_IS_BETTER_CAP_VALUE(v1, v2)     ((v1) > (v2))
-#define CSR_IS_EQUAL_CAP_VALUE(v1, v2)  ((v1) == (v2))
-#define CSR_IS_BETTER_RSSI(v1, v2)   ((v1) > (v2))
 #define CSR_IS_ENC_TYPE_STATIC(encType) ((eCSR_ENCRYPT_TYPE_NONE == (encType)) \
 			|| (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == (encType)) || \
 			(eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == (encType)))

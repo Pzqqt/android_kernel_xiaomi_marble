@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,7 +64,6 @@
 #define IPA_UC_TX_BUF_FRAG_HDR_OFFSET  64
 #define IPA_UC_TX_BUF_TSO_HDR_SIZE     6
 #define IPA_UC_TX_BUF_PADDR_HI_MASK    0x0000001F
-#define IPA_UC_TX_BUF_PADDR_HI_OFFSET  32
 #else
 #define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
 #define IPA_UC_TX_BUF_FRAG_HDR_OFFSET  32

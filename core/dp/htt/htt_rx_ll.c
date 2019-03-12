@@ -42,16 +42,6 @@
 #define MAX_DONE_BIT_CHECK_ITER 5
 #endif
 
-#define AR600P_ASSEMBLE_HW_RATECODE(_rate, _nss, _pream)     \
-	(((_pream) << 6) | ((_nss) << 4) | (_rate))
-
-enum AR600P_HW_RATECODE_PREAM_TYPE {
-	AR600P_HW_RATECODE_PREAM_OFDM,
-	AR600P_HW_RATECODE_PREAM_CCK,
-	AR600P_HW_RATECODE_PREAM_HT,
-	AR600P_HW_RATECODE_PREAM_VHT,
-};
-
 #ifdef HTT_DEBUG_DATA
 #define HTT_PKT_DUMP(x) x
 #else

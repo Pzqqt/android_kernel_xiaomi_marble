@@ -31,23 +31,12 @@
 #define WMI_PEER_STATE_AUTHORIZED 0x2
 
 #define WMA_2_4_GHZ_MAX_FREQ  3000
-#define WOW_CSA_EVENT_OFFSET 12
-
-#define WMA_DEFAULT_SCAN_REQUESTER_ID        1
-#define WMI_SCAN_FINISH_EVENTS (WMI_SCAN_EVENT_START_FAILED | \
-				WMI_SCAN_EVENT_COMPLETED | \
-				WMI_SCAN_EVENT_DEQUEUED)
-/* default value */
-#define DEFAULT_INFRA_STA_KEEP_ALIVE_PERIOD  20
-#define DEFAULT_STA_SA_QUERY_MAX_RETRIES_COUNT       (5)
-#define DEFAULT_STA_SA_QUERY_RETRY_INTERVAL    (200)
 
 /* pdev vdev and peer stats*/
 #define FW_PDEV_STATS_SET 0x1
 #define FW_VDEV_STATS_SET 0x2
 #define FW_PEER_STATS_SET 0x4
 #define FW_RSSI_PER_CHAIN_STATS_SET 0x8
-#define FW_STATS_SET 0xf
 
 /*AR9888/AR6320  noise floor approx value
  * similar to the mentioned the WMA
@@ -64,23 +53,10 @@
 #define WMA_LINK_MONITOR_DEFAULT_TIME_SECS 10
 #define WMA_KEEP_ALIVE_DEFAULT_TIME_SECS   5
 
-#define AGC_DUMP  1
-#define CHAN_DUMP 2
-#define WD_DUMP   3
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-#define PCIE_DUMP 4
-#endif
-
 /* conformance test limits */
 #define FCC       0x10
 #define MKK       0x40
 #define ETSI      0x30
-
-#define WMI_DEFAULT_NOISE_FLOOR_DBM (-96)
-
-#define WMI_MCC_MIN_CHANNEL_QUOTA             20
-#define WMI_MCC_MAX_CHANNEL_QUOTA             80
-#define WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY  30
 
 /* The maximum number of patterns that can be transmitted by the firmware
  *  and maximum patterns size.
@@ -88,11 +64,6 @@
 #ifndef WMA_MAXNUM_PERIODIC_TX_PTRNS
 #define WMA_MAXNUM_PERIODIC_TX_PTRNS 6
 #endif
-
-#define WMI_MAX_HOST_CREDITS 2
-#define WMI_WOW_REQUIRED_CREDITS 1
-
-#define WMI_MAX_MHF_ENTRIES 32
 
 #define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 
@@ -110,12 +81,6 @@
 
 #define MAX_ENTRY_HOLD_REQ_QUEUE 2
 #define MAX_ENTRY_VDEV_RESP_QUEUE 10
-
-/* Time(in ms) to detect DOS attack */
-#define WMA_MGMT_FRAME_DETECT_DOS_TIMER 1000
-
-#define MAX_NUM_HW_MODE    0xff
-#define MAX_NUM_PHY        0xff
 
 /**
  * struct index_data_rate_type - non vht data rate type

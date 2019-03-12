@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,7 +44,6 @@
 
 /* Remove these macros when they get added to htt.h. */
 #ifndef HTT_TX_DESC_EXTENSION_GET
-#define HTT_TX_DESC_EXTENSION_OFFSET_BYTES 0
 #define HTT_TX_DESC_EXTENSION_OFFSET_DWORD 0
 #define HTT_TX_DESC_EXTENSION_M        0x10000000
 #define HTT_TX_DESC_EXTENSION_S        28

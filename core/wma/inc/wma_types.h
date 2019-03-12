@@ -25,17 +25,10 @@
 #include "wma_tgt_cfg.h"
 #include "i_cds_packet.h"
 
-#define IS_MCC_SUPPORTED 1
 #define IS_FEATURE_SUPPORTED_BY_FW(feat_enum_value) \
 				wma_get_fw_wlan_feat_caps(feat_enum_value)
 
-#define IS_ROAM_SCAN_OFFLOAD_FEATURE_ENABLE 1
-
 #define IS_IBSS_HEARTBEAT_OFFLOAD_FEATURE_ENABLE 1
-
-#ifdef FEATURE_WLAN_TDLS
-#define IS_ADVANCE_TDLS_ENABLE 0
-#endif
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F
 
@@ -62,14 +55,10 @@
 #define WMA_GET_RX_MPDU_DATA(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->mpdu_data_ptr)
 
-#define WMA_GET_RX_MPDU_HEADER_OFFSET(pRxMeta) 0
-
 #define WMA_GET_RX_UNKNOWN_UCAST(pRxMeta) 0
 
 #define WMA_GET_RX_CH(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->channel)
-
-#define WMA_IS_RX_BCAST(pRxMeta) 0
 
 #define WMA_GET_RX_FT_DONE(pRxMeta) 0
 
