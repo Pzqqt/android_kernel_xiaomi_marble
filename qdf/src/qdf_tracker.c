@@ -81,7 +81,7 @@ static uint32_t qdf_tracker_leaks_print(struct qdf_tracker *tracker,
 		}
 
 		count++;
-		qdf_nofl_alert("0x%zx @ %s:%u", node->entry.key,
+		qdf_nofl_alert("0x%lx @ %s:%u", node->entry.key,
 			       node->func, node->line);
 	}
 
