@@ -403,6 +403,38 @@ QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+QDF_STATUS reg_get_band(struct wlan_objmgr_pdev *pdev,
+			enum band_info *band)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reg_debug("getting band_info: %d", pdev_priv_obj->band_capability);
+	*band = pdev_priv_obj->band_capability;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef DISABLE_CHANNEL_LIST
 QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
 {

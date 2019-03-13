@@ -56,21 +56,30 @@ bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch);
 /**
  * reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical dev to set the band for
- * @band: The set band parameters to configure for the pysical device
+ * @band: The set band parameters to configure for the physical device
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, enum band_info band);
 
+/**
+ * reg_get_band() - Get the band information for the PDEV
+ * @pdev: The physical dev to get the band for
+ * @band: The band parameters of the physical device
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_get_band(struct wlan_objmgr_pdev *pdev, enum band_info *band);
+
 #ifdef DISABLE_CHANNEL_LIST
 /**
- * reg_restore_cached_channels() - Cache the current state of the channles
+ * reg_restore_cached_channels() - Cache the current state of the channels
  * @pdev: The physical dev to cache the channels for
  */
 QDF_STATUS reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
 
 /**
- * reg_cache_channel_state() - Cache the current state of the channles
+ * reg_cache_channel_state() - Cache the current state of the channels
  * @pdev: The physical dev to cache the channels for
  * @channel_list: List of the channels for which states needs to be cached
  * @num_channels: Number of channels in the list

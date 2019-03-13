@@ -31,12 +31,22 @@ typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 /**
  * ucfg_reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical pdev to set the band for
- * @band: The set band parameter to configure for the pysical device
+ * @band: The set band parameter to configure for the physical device
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_reg_set_band(struct wlan_objmgr_pdev *pdev,
-		enum band_info band);
+			     enum band_info band);
+
+/**
+ * ucfg_reg_get_band() - Gets the band information for the PDEV
+ * @pdev: The physical pdev to get the band for
+ * @band: The band parameter of the physical device
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_band(struct wlan_objmgr_pdev *pdev,
+			     enum band_info *band);
 
 /**
  * ucfg_reg_notify_sap_event() - Notify regulatory domain for sap event
