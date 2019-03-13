@@ -1144,6 +1144,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	gp_cds_context->mac_context = NULL;
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
+	gp_cds_context->dp_soc = NULL;
+
 	ucfg_pmo_psoc_update_dp_handle(psoc, NULL);
 	wlan_psoc_set_dp_handle(psoc, NULL);
 
