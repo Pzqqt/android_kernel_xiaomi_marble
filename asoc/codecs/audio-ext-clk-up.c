@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -14,7 +14,6 @@
 #include <linux/platform_device.h>
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
 #include <dsp/q6afe-v2.h>
-#include <dsp/q6core.h>
 #include "audio-ext-clk-up.h"
 
 enum {
@@ -27,7 +26,7 @@ enum {
 	AUDIO_EXT_CLK_LPASS5,
 	AUDIO_EXT_CLK_LPASS6,
 	AUDIO_EXT_CLK_LPASS7,
-	AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND,
+	AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE,
 	AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_EXTERNAL_PLL = AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_MAX,
@@ -51,7 +50,7 @@ struct audio_ext_clk_priv {
 	struct afe_clk_set clk_cfg;
 	struct audio_ext_clk audio_clk;
 	const char *clk_name;
-	uint32_t npa_rsc_client_handle;
+	uint32_t lpass_core_hwvote_client_handle;
 };
 
 static inline struct audio_ext_clk_priv *to_audio_clk(struct clk_hw *hw)
@@ -138,43 +137,37 @@ static u8 audio_ext_clk_get_parent(struct clk_hw *hw)
 		return 0;
 }
 
-static int lpass_npa_rsc_prepare(struct clk_hw *hw)
+static int lpass_hw_vote_prepare(struct clk_hw *hw)
 {
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret;
 
-	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND) &&
-		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >= AVCS_API_VERSION_V4) {
-			ret = q6core_request_island_transition(
-				clk_priv->npa_rsc_client_handle, false);
-			if (ret < 0) {
-				pr_err("%s q6core_request_island_transition failed %d\n",
-					__func__, ret);
-				return ret;
-			}
+	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE)  {
+		ret = afe_vote_lpass_core_hw(AFE_LPASS_CORE_HW_MACRO_BLOCK,
+			"LPASS_HW_MACRO",
+			&clk_priv->lpass_core_hwvote_client_handle);
+		if (ret < 0) {
+			pr_err("%s lpass core hw vote failed %d\n",
+				__func__, ret);
+			return ret;
 		}
 	}
 
 	return 0;
 }
 
-static void lpass_npa_rsc_unprepare(struct clk_hw *hw)
+static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 {
 	struct audio_ext_clk_priv *clk_priv = to_audio_clk(hw);
 	int ret = 0;
 
-	if ((clk_priv->clk_src >= AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND) &&
-		(clk_priv->clk_src < AUDIO_EXT_CLK_LPASS_MAX))  {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >= AVCS_API_VERSION_V4) {
-			ret = q6core_request_island_transition(
-					clk_priv->npa_rsc_client_handle, true);
-			if (ret < 0) {
-				pr_err("%s q6core_request_island_transition failed %d\n",
-					__func__, ret);
-			}
+	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE) {
+		ret = afe_unvote_lpass_core_hw(
+			AFE_LPASS_CORE_HW_MACRO_BLOCK,
+			clk_priv->lpass_core_hwvote_client_handle);
+		if (ret < 0) {
+			pr_err("%s lpass core hw vote failed %d\n",
+				__func__, ret);
 		}
 	}
 }
@@ -185,9 +178,9 @@ static const struct clk_ops audio_ext_clk_ops = {
 	.get_parent = audio_ext_clk_get_parent,
 };
 
-static const struct clk_ops lpass_npa_rsc_ops = {
-	.prepare = lpass_npa_rsc_prepare,
-	.unprepare = lpass_npa_rsc_unprepare,
+static const struct clk_ops lpass_hw_vote_ops = {
+	.prepare = lpass_hw_vote_prepare,
+	.unprepare = lpass_hw_vote_unprepare,
 };
 
 static const char * const audio_ext_pmi_div_clk[] = {
@@ -322,8 +315,8 @@ static struct audio_ext_clk audio_clk_array[] = {
 		.pnctrl_info = {NULL},
 		.fact = {
 			.hw.init = &(struct clk_init_data){
-				.name = "lpass_npa_rsc_island_clk",
-				.ops = &lpass_npa_rsc_ops,
+				.name = "lpass_hw_vote_clk",
+				.ops = &lpass_hw_vote_ops,
 			},
 		},
 	},
@@ -539,35 +532,11 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 		audio_put_pinctrl(pdev);
 		return ret;
 	}
-
-	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND) {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >= AVCS_API_VERSION_V4) {
-			ret = q6core_create_lpass_npa_client(
-				AVCS_SLEEP_NODE_ISLAND_TRANSITION_RESOURCE_ID,
-				"lpass_npa_rsc_mgr",
-				&clk_priv->npa_rsc_client_handle);
-			if (ret) {
-				dev_err(&pdev->dev, "%s: q6core_create_lpass_npa_client is failed %d\n",
-					__func__, ret);
-				audio_put_pinctrl(pdev);
-				return ret;
-			}
-		}
-	}
 	return 0;
 }
 
 static int audio_ref_clk_remove(struct platform_device *pdev)
 {
-	struct audio_ext_clk_priv *clk_priv = platform_get_drvdata(pdev);
-
-	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND) {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >= AVCS_API_VERSION_V4)
-			q6core_destroy_lpass_npa_client(
-					clk_priv->npa_rsc_client_handle);
-	}
 	audio_put_pinctrl(pdev);
 
 	return 0;
