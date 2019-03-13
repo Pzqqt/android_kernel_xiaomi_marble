@@ -943,6 +943,10 @@ struct ol_if_ops {
 	int (*send_delba)(void *pdev_handle,  void *ctrl_peer,
 			  uint8_t *peer_macaddr, uint8_t tid, void *vdev_handle,
 			  uint8_t reason_code);
+	int (*peer_delete_multiple_wds_entries)(void *vdev_handle,
+						uint8_t *dest_macaddr,
+						uint8_t *peer_macaddr,
+						uint32_t flags);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
