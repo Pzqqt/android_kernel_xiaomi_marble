@@ -161,6 +161,60 @@ static QDF_STATUS pmo_core_calculate_listen_interval(
 	return QDF_STATUS_SUCCESS;
 }
 
+static void pmo_configure_vdev_suspend_params(
+					struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev,
+					struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	QDF_STATUS ret;
+	uint8_t vdev_id;
+	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
+	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+
+	pmo_enter();
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	if (!PMO_VDEV_IN_STA_MODE(opmode))
+		return;
+	ret = pmo_tgt_vdev_update_param_req(
+				vdev,
+				pmo_vdev_param_inactivity_time,
+				psoc_cfg->wow_data_inactivity_timeout);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pmo_debug("Failed to Set wow inactivity timeout vdevId %d",
+			  vdev_id);
+	}
+
+	pmo_exit();
+}
+
+static void pmo_configure_vdev_resume_params(
+					struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev,
+					struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	QDF_STATUS ret;
+	uint8_t vdev_id;
+	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
+	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+
+	pmo_enter();
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	if (!PMO_VDEV_IN_STA_MODE(opmode))
+		return;
+	ret = pmo_tgt_vdev_update_param_req(
+					vdev,
+					pmo_vdev_param_inactivity_time,
+					psoc_cfg->ps_data_inactivity_timeout);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pmo_debug("Failed to Set inactivity timeout vdevId %d",
+			  vdev_id);
+	}
+
+	pmo_exit();
+}
+
 /**
  * pmo_core_set_vdev_suspend_dtim() - set suspend dtim parameters in fw
  * @psoc: objmgr psoc handle
@@ -259,6 +313,7 @@ static void pmo_core_set_suspend_dtim(struct wlan_objmgr_psoc *psoc)
 		if (!pmo_is_listen_interval_user_set(vdev_ctx)
 		    && !li_offload_support)
 			pmo_core_set_vdev_suspend_dtim(psoc, vdev, vdev_ctx);
+		pmo_configure_vdev_suspend_params(psoc, vdev, vdev_ctx);
 		pmo_vdev_put_ref(vdev);
 	}
 }
@@ -495,6 +550,7 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
 		if (!pmo_is_listen_interval_user_set(vdev_ctx)
 		    && !li_offload_support)
 			pmo_core_set_vdev_resume_dtim(psoc, vdev, vdev_ctx);
+		pmo_configure_vdev_resume_params(psoc, vdev, vdev_ctx);
 		pmo_vdev_put_ref(vdev);
 	}
 }
