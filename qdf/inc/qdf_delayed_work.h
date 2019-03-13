@@ -51,9 +51,13 @@ struct qdf_delayed_work {
  *
  * Return: QDF_STATUS
  */
+#define qdf_delayed_work_create(dwork, callback, context) \
+	__qdf_delayed_work_create(dwork, callback, context, __func__, __LINE__)
+
 qdf_must_check QDF_STATUS
-qdf_delayed_work_create(struct qdf_delayed_work *dwork,
-			qdf_delayed_work_cb callback, void *context);
+__qdf_delayed_work_create(struct qdf_delayed_work *dwork,
+			  qdf_delayed_work_cb callback, void *context,
+			  const char *func, uint32_t line);
 
 /**
  * qdf_delayed_work_destroy() - deinitialize a delayed work @dwork
@@ -61,7 +65,11 @@ qdf_delayed_work_create(struct qdf_delayed_work *dwork,
  *
  * Return: None
  */
-void qdf_delayed_work_destroy(struct qdf_delayed_work *dwork);
+#define qdf_delayed_work_destroy(dwork) \
+	__qdf_delayed_work_destroy(dwork, __func__, __LINE__)
+
+void __qdf_delayed_work_destroy(struct qdf_delayed_work *dwork,
+				const char *func, uint32_t line);
 
 /**
  * qdf_delayed_work_start() - schedule execution of @dwork callback
@@ -82,6 +90,33 @@ bool qdf_delayed_work_start(struct qdf_delayed_work *dwork, uint32_t msec);
  * Return: true if @dwork was queued or running
  */
 bool qdf_delayed_work_stop_sync(struct qdf_delayed_work *dwork);
+
+#ifdef WLAN_DELAYED_WORK_DEBUG
+/**
+ * qdf_delayed_work_check_for_leaks() - assert no delayed work leaks
+ *
+ * Return: None
+ */
+void qdf_delayed_work_check_for_leaks(void);
+
+/**
+ * qdf_delayed_work_feature_init() - global init logic for delayed work
+ *
+ * Return: None
+ */
+void qdf_delayed_work_feature_init(void);
+
+/**
+ * qdf_delayed_work_feature_deinit() - global de-init logic for delayed work
+ *
+ * Return: None
+ */
+void qdf_delayed_work_feature_deinit(void);
+#else
+static inline void qdf_delayed_work_check_for_leaks(void) { }
+static inline void qdf_delayed_work_feature_init(void) { }
+static inline void qdf_delayed_work_feature_deinit(void) { }
+#endif /* WLAN_DELAYED_WORK_DEBUG */
 
 #endif /* __QDF_DELAYED_WORK_H */
 
