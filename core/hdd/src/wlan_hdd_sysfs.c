@@ -433,7 +433,7 @@ static struct kobj_attribute dr_ver_attribute =
 static struct kobj_attribute fw_ver_attribute =
 	__ATTR(version, 0440, show_fw_version, NULL);
 static struct kobj_attribute power_stats_attribute =
-	__ATTR(power_stats, 0440, show_device_power_stats, NULL);
+	__ATTR(power_stats, 0444, show_device_power_stats, NULL);
 
 void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
 {
