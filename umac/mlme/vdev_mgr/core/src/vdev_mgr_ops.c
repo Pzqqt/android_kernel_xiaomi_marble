@@ -280,22 +280,6 @@ QDF_STATUS vdev_mgr_stop_send(struct vdev_mlme_obj *mlme_obj)
 	return status;
 }
 
-static QDF_STATUS vdev_mgr_config_ratemask_update(
-				struct vdev_mlme_obj *mlme_obj,
-				struct config_ratemask_params *param)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = mlme_obj->vdev;
-	param->vdev_id = wlan_vdev_get_id(vdev);
-	param->type = mlme_obj->mgmt.rate_info.type;
-	param->lower32 = mlme_obj->mgmt.rate_info.lower32;
-	param->higher32 = mlme_obj->mgmt.rate_info.higher32;
-	param->lower32_2 = mlme_obj->mgmt.rate_info.lower32_2;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS vdev_mgr_bcn_tmpl_param_update(
 				struct vdev_mlme_obj *mlme_obj,
 				struct beacon_tmpl_params *param)
@@ -341,7 +325,6 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 {
 	QDF_STATUS status;
 	struct vdev_up_params param = {0};
-	struct config_ratemask_params rm_param = {0};
 	struct sta_ps_params ps_param = {0};
 	struct beacon_tmpl_params bcn_tmpl_param = {0};
 	enum QDF_OPMODE opmode;
@@ -366,10 +349,6 @@ QDF_STATUS vdev_mgr_up_send(struct vdev_mlme_obj *mlme_obj)
 		vdev_mgr_sta_ps_param_update(mlme_obj, &ps_param);
 		status = tgt_vdev_mgr_sta_ps_param_send(mlme_obj, &ps_param);
 
-	} else if (opmode == QDF_SAP_MODE) {
-		vdev_mgr_config_ratemask_update(mlme_obj, &rm_param);
-		status = tgt_vdev_mgr_config_ratemask_cmd_send(mlme_obj,
-							       &rm_param);
 	}
 
 	status = tgt_vdev_mgr_beacon_tmpl_send(mlme_obj, &bcn_tmpl_param);
