@@ -1702,11 +1702,6 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.doBMPSWorkaround = 0;
 }
 
-enum band_info csr_get_current_band(struct mac_context *mac)
-{
-	return mac->mlme_cfg->gen.band_capability;
-}
-
 /* This function flushes the roam scan cache */
 QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
 						   uint8_t sessionId)

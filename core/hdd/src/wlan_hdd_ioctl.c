@@ -44,6 +44,7 @@
 #endif
 #include "hif.h"
 #include "wlan_scan_ucfg_api.h"
+#include "wlan_reg_ucfg_api.h"
 
 #if defined(LINUX_QCMBR)
 #define SIOCIOCTLTX99 (SIOCDEVPRIVATE+13)
@@ -412,7 +413,7 @@ static void hdd_get_band_helper(struct hdd_context *hdd_ctx, int *ui_band)
 {
 	enum band_info band = -1;
 
-	sme_get_freq_band(hdd_ctx->mac_handle, &band);
+	ucfg_reg_get_band(hdd_ctx->pdev, &band);
 	switch (band) {
 	case BAND_ALL:
 		*ui_band = WLAN_HDD_UI_BAND_AUTO;

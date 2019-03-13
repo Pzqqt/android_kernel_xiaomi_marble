@@ -42,7 +42,7 @@
 #include <wlan_ipa_ucfg_api.h>
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_mlme_ucfg_api.h"
-
+#include "wlan_reg_ucfg_api.h"
 #define WE_WLAN_VERSION     1
 
 /* WEXT limitation: MAX allowed buf len for any *
@@ -2007,7 +2007,7 @@ static int __iw_get_channel_list(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (QDF_STATUS_SUCCESS != sme_get_freq_band(hdd_ctx->mac_handle,
+	if (QDF_STATUS_SUCCESS != ucfg_reg_get_band(hdd_ctx->pdev,
 						    &cur_band)) {
 		hdd_err("not able get the current frequency band");
 		return -EIO;

@@ -746,7 +746,6 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
 bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
-QDF_STATUS sme_get_freq_band(mac_handle_t mac_handle, enum band_info *pBand);
 uint16_t sme_chn_to_freq(uint8_t chanNum);
 bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
 QDF_STATUS sme_set_max_tx_power(mac_handle_t mac_handle,

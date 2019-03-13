@@ -7266,7 +7266,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		phymode = sme_get_phy_mode(mac_handle);
 		if ((QDF_STATUS_SUCCESS !=
-		     sme_get_freq_band(mac_handle, &current_band))) {
+		     ucfg_reg_get_band(hddctx->pdev, &current_band))) {
 			hdd_err("Failed to get current band config");
 			return -EIO;
 		}

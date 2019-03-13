@@ -1718,6 +1718,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 	uint8_t oldChannelList[CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
 	uint8_t newChannelList[128] = { 0 };
 	uint8_t i = 0, j = 0;
+	enum band_info band = -1;
 
 	if (sessionId >= WLAN_MAX_VDEVS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -1740,9 +1741,10 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 				curchnl_list_info->ChannelList[i]);
 		}
 	}
+        ucfg_reg_get_band(mac->pdev, &band);
 	status = csr_create_roam_scan_channel_list(mac, sessionId,
 				pChannelList, numChannels,
-				csr_get_current_band(mac));
+				band);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (NULL != curchnl_list_info->ChannelList) {
 			j = 0;
@@ -5419,27 +5421,6 @@ bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel)
 	}
 
 	return valid;
-}
-
-/*
- * sme_get_freq_band() -
- * Used to get the current band settings.
- *
- * mac_handle
- * pBand  pointer to hold band value
- * Return QDF_STATUS
- */
-QDF_STATUS sme_get_freq_band(mac_handle_t mac_handle, enum band_info *pBand)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		*pBand = csr_get_current_band(mac);
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
 }
 
 /*
