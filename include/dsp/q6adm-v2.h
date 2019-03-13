@@ -130,6 +130,11 @@ void adm_ec_ref_rx_id(int  port_id);
 
 void adm_num_ec_ref_rx_chans(int num_chans);
 
+void adm_num_ec_ref_rx_chans_downmixed(int num_chans);
+
+int adm_ec_ref_chmixer_weights(int out_channel_idx,
+			uint16_t *weights, int count);
+
 void adm_ec_ref_rx_bit_width(int bit_width);
 
 void adm_ec_ref_rx_sampling_rate(int sampling_rate);
