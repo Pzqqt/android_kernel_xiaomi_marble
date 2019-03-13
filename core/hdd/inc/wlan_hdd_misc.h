@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014,2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016-2017,2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,13 +19,26 @@
 #ifndef WLAN_HDD_MISC_H
 #define WLAN_HDD_MISC_H
 /*
- * If MULTI_IF_NAME is defined, then prepend MULTI_IF_NAME to the filename
- * to prevent name conflicts when loading multiple instances of the driver.
+ * To prevent name conflicts when loading different instances of the driver:
+ *
+ * If DYNAMIC_SINGLE_CHIP is defined, which means there are multiple possible
+ * drivers, but only one instance of driver at a time(WLAN dynamic detect),
+ * prepend DYNAMIC_SINGLE_CHIP to the filenames.
+ *
+ * Otherwise, if MULTI_IF_NAME is defined, which means there are multiple
+ * instances of the driver with different module names, prepend MULTI_IF_NAME
+ * to the filenames.
  */
+#ifdef DYNAMIC_SINGLE_CHIP
+#define PREFIX DYNAMIC_SINGLE_CHIP "/"
+#else
+
 #ifdef MULTI_IF_NAME
 #define PREFIX MULTI_IF_NAME "/"
 #else
 #define PREFIX ""
+#endif
+
 #endif
 
 #ifdef MSM_PLATFORM

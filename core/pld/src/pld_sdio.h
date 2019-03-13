@@ -24,10 +24,16 @@
 #endif
 #include "pld_common.h"
 
+#ifdef DYNAMIC_SINGLE_CHIP
+#define PREFIX DYNAMIC_SINGLE_CHIP "/"
+#else
+
 #ifdef MULTI_IF_NAME
 #define PREFIX MULTI_IF_NAME "/"
 #else
 #define PREFIX ""
+#endif
+
 #endif
 
 #define PLD_QCA9377_REV1_1_VERSION          0x5020001

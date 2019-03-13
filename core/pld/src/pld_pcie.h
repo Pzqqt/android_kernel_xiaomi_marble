@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,10 +24,16 @@
 #endif
 #include "pld_internal.h"
 
+#ifdef DYNAMIC_SINGLE_CHIP
+#define PREFIX DYNAMIC_SINGLE_CHIP "/"
+#else
+
 #ifdef MULTI_IF_NAME
 #define PREFIX MULTI_IF_NAME "/"
 #else
 #define PREFIX ""
+#endif
+
 #endif
 
 #ifndef HIF_PCI

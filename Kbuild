@@ -2710,10 +2710,22 @@ endif
 # This allows multiple instances of the driver with different module names.
 # If the module name is wlan, leave MULTI_IF_NAME undefined and the code will
 # treat the driver as the primary driver.
+#
+# If DYNAMIC_SINGLE_CHIP is defined, which means there are multiple possible
+# drivers, but only 1 driver will be loaded at a time(WLAN dynamic detect),
+# leave MULTI_IF_NAME undefined, no matter what the module name is, then
+# host driver will only append DYNAMIC_SINGLE_CHIP to the path of
+# firmware/mac/ini file.
+ifneq ($(DYNAMIC_SINGLE_CHIP),)
+ccflags-y += -DDYNAMIC_SINGLE_CHIP=\"$(DYNAMIC_SINGLE_CHIP)\"
+else
+
 ifneq ($(MODNAME), wlan)
 CHIP_NAME ?= $(MODNAME)
 ccflags-y += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
+
+endif #DYNAMIC_SINGLE_CHIP
 
 # WLAN_HDD_ADAPTER_MAGIC must be unique for all instances of the driver on the
 # system. If it is not defined, then the host driver will use the first 4

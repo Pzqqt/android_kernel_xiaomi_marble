@@ -23,16 +23,18 @@ ifneq ($(findstring opensource,$(LOCAL_PATH)),)
 endif # opensource
 
 # Multi-ko check
-LOCAL_MOD_NAME := $(lastword $(strip \
+LOCAL_DEV_NAME := $(lastword $(strip \
 	$(subst ~, , \
 	$(subst /, ,$(LOCAL_PATH)))))
 
 ifeq (1, $(strip $(shell expr $(words $(strip $(TARGET_WLAN_CHIP))) \>= 2)))
-ifeq ($(LOCAL_MOD_NAME), qcacld-3.0)
+
+ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
 LOCAL_MULTI_KO := true
 else
 LOCAL_MULTI_KO := false
 endif
+
 endif
 
 ifeq ($(LOCAL_MULTI_KO), true)
@@ -56,7 +58,9 @@ include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/~$(chip)/Android.mk)
 
 else # Multi-ok check
 
-ifeq ($(LOCAL_MOD_NAME), qcacld-3.0)
+ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
+
+LOCAL_DEV_NAME := wlan
 LOCAL_MOD_NAME := wlan
 CMN_OFFSET := ..
 LOCAL_SRC_DIR :=
@@ -64,13 +68,23 @@ WLAN_PROFILE := default
 TARGET_FW_DIR := firmware/wlan/qca_cld
 TARGET_CFG_PATH := /vendor/etc/wifi
 TARGET_MAC_BIN_PATH := /mnt/vendor/persist
+
 else
-LOCAL_SRC_DIR := ~$(LOCAL_MOD_NAME)
+
+LOCAL_SRC_DIR := ~$(LOCAL_DEV_NAME)
 CMN_OFFSET := .
-WLAN_PROFILE := $(LOCAL_MOD_NAME)
-TARGET_FW_DIR := firmware/wlan/qca_cld/$(LOCAL_MOD_NAME)
-TARGET_CFG_PATH := /vendor/etc/wifi/$(LOCAL_MOD_NAME)
-TARGET_MAC_BIN_PATH := /mnt/vendor/persist/$(LOCAL_MOD_NAME)
+WLAN_PROFILE := $(LOCAL_DEV_NAME)
+TARGET_FW_DIR := firmware/wlan/qca_cld/$(LOCAL_DEV_NAME)
+TARGET_CFG_PATH := /vendor/etc/wifi/$(LOCAL_DEV_NAME)
+TARGET_MAC_BIN_PATH := /mnt/vendor/persist/$(LOCAL_DEV_NAME)
+
+ifneq ($(TARGET_MULTI_WLAN), true)
+LOCAL_MOD_NAME := wlan
+DYNAMIC_SINGLE_CHIP := $(LOCAL_DEV_NAME)
+else
+LOCAL_MOD_NAME := $(LOCAL_DEV_NAME)
+endif
+
 endif
 
 # DLKM_DIR was moved for JELLY_BEAN (PLATFORM_SDK 16)
@@ -88,6 +102,7 @@ KBUILD_OPTIONS += WLAN_COMMON_ROOT=$(CMN_OFFSET)/qca-wifi-host-cmn
 KBUILD_OPTIONS += WLAN_COMMON_INC=$(WLAN_BLD_DIR)/qca-wifi-host-cmn
 KBUILD_OPTIONS += WLAN_FW_API=$(WLAN_BLD_DIR)/fw-api
 KBUILD_OPTIONS += WLAN_PROFILE=$(WLAN_PROFILE)
+KBUILD_OPTIONS += DYNAMIC_SINGLE_CHIP=$(DYNAMIC_SINGLE_CHIP)
 
 # We are actually building wlan.ko here, as per the
 # requirement we are specifying <chipset>_wlan.ko as LOCAL_MODULE.
@@ -98,7 +113,7 @@ KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(WLAN_SELECT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE              := $(WLAN_CHIPSET)_$(LOCAL_MOD_NAME).ko
+LOCAL_MODULE              := $(WLAN_CHIPSET)_$(LOCAL_DEV_NAME).ko
 LOCAL_MODULE_KBUILD_NAME  := $(LOCAL_MOD_NAME).ko
 LOCAL_MODULE_TAGS         := debug
 LOCAL_MODULE_DEBUG_ENABLE := true
@@ -120,11 +135,11 @@ ifneq ($(findstring $(WLAN_CHIPSET),$(WIFI_DRIVER_DEFAULT)),)
 ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
 ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),)
 $(shell mkdir -p $(TARGET_OUT_VENDOR)/lib/modules; \
-	ln -sf /$(TARGET_COPY_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MOD_NAME).ko)
+	ln -sf /$(TARGET_COPY_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MODULE))
 endif
 else
 $(shell mkdir -p $(TARGET_OUT)/lib/modules; \
-	ln -sf /system/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT)/lib/modules/$(LOCAL_MOD_NAME).ko)
+	ln -sf /system/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT)/lib/modules/$(LOCAL_MODULE))
 endif
 endif
 
