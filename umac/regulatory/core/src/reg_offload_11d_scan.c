@@ -125,7 +125,13 @@ static QDF_STATUS reg_send_11d_msg_cbk(struct scheduler_msg *msg)
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
 	if (!psoc_priv_obj) {
 		reg_err("psoc priv obj is NULL");
-		return QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
+	if (psoc_priv_obj->vdev_id_for_11d_scan == INVALID_VDEV_ID) {
+		psoc_priv_obj->enable_11d_supp = false;
+		reg_err("No valid vdev for 11d scan command");
+		goto end;
 	}
 
 	if (psoc_priv_obj->enable_11d_supp) {
@@ -140,6 +146,7 @@ static QDF_STATUS reg_send_11d_msg_cbk(struct scheduler_msg *msg)
 		tx_ops->stop_11d_scan(psoc, &stop_req);
 	}
 
+end:
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
 	return QDF_STATUS_SUCCESS;
 }
@@ -183,6 +190,12 @@ void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
 	if (!psoc_priv_obj) {
 		reg_err("reg psoc private obj is NULL");
+		return;
+	}
+
+	if (psoc_priv_obj->vdev_id_for_11d_scan == INVALID_VDEV_ID) {
+		psoc_priv_obj->enable_11d_supp = false;
+		reg_err("No valid vdev for 11d scan command");
 		return;
 	}
 
@@ -309,9 +322,14 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 			}
 		}
 
-		if ((psoc_priv_obj->vdev_id_for_11d_scan != vdev_id) ||
-		    !psoc_priv_obj->vdev_cnt_11d)
+		if (psoc_priv_obj->vdev_id_for_11d_scan != vdev_id)
 			return QDF_STATUS_SUCCESS;
+
+		if (!psoc_priv_obj->vdev_cnt_11d) {
+			psoc_priv_obj->vdev_id_for_11d_scan = INVALID_VDEV_ID;
+			psoc_priv_obj->enable_11d_supp = false;
+			return QDF_STATUS_SUCCESS;
+		}
 
 		for (i = 0; i < MAX_STA_VDEV_CNT; i++) {
 			if (psoc_priv_obj->vdev_ids_11d[i] == INVALID_VDEV_ID)
