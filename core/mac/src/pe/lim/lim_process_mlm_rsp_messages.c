@@ -3094,6 +3094,8 @@ static void lim_process_switch_channel_join_req(
 {
 	tSirMacSSid ssId;
 	tLimMlmJoinCnf join_cnf;
+	uint8_t nontx_bss_id = 0;
+	tSirBssDescription *bss;
 
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("Change channel failed!!");
@@ -3106,12 +3108,17 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
+	bss = &session_entry->pLimJoinReq->bssDescription;
+	nontx_bss_id = bss->mbssid_info.profile_num;
+
 	session_entry->limPrevMlmState = session_entry->limMlmState;
 	session_entry->limMlmState = eLIM_MLM_WT_JOIN_BEACON_STATE;
 	pe_debug("Sessionid %d prev lim state %d new lim state %d "
-		"systemrole = %d", session_entry->peSessionId,
+		"systemrole = %d nontx_profile_num %d",
+		session_entry->peSessionId,
 		session_entry->limPrevMlmState,
-		session_entry->limMlmState, GET_LIM_SYSTEM_ROLE(session_entry));
+		session_entry->limMlmState, GET_LIM_SYSTEM_ROLE(session_entry),
+		nontx_bss_id);
 
 	/* Apply previously set configuration at HW */
 	lim_apply_configuration(mac_ctx, session_entry);
@@ -3143,6 +3150,21 @@ static void lim_process_switch_channel_join_req(
 				break;
 			}
 		}
+	}
+
+	/*
+	 * MBSSID: Non Tx BSS may or may not respond to unicast
+	 * probe request.So dont send unicast probe request
+	 * and wait for the probe response/ beacon to post JOIN CNF
+	 */
+	if (nontx_bss_id) {
+		session_entry->limMlmState = eLIM_MLM_JOINED_STATE;
+		join_cnf.sessionId = session_entry->peSessionId;
+		join_cnf.resultCode = eSIR_SME_SUCCESS;
+		join_cnf.protStatusCode = eSIR_MAC_SUCCESS_STATUS;
+		lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
+				     (uint32_t *)&join_cnf);
+		return;
 	}
 
 	/* Wait for Beacon to announce join success */
@@ -3178,6 +3200,7 @@ static void lim_process_switch_channel_join_req(
 			 mac_ctx->lim.gLimMlmState));
 		goto error;
 	}
+
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
@@ -3195,6 +3218,7 @@ static void lim_process_switch_channel_join_req(
 			goto error;
 		}
 	}
+
 	return;
 error:
 	if (NULL != session_entry) {
