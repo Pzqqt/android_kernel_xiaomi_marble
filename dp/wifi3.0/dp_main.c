@@ -3424,6 +3424,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			     &dp_iterate_update_peer_list);
 	qdf_event_create(&pdev->fw_peer_stats_event);
 
+	pdev->num_tx_allowed = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+
 	return (struct cdp_pdev *)pdev;
 
 fail1:
@@ -9339,6 +9341,78 @@ static uint32_t dp_get_cfg(void *soc, enum cdp_dp_cfg cfg)
 	return value;
 }
 
+#ifdef CONFIG_WIN
+/**
+ * dp_tx_flow_ctrl_configure_pdev() - Configure flow control params
+ * @pdev_hdl: datapath pdev handle
+ * @param: ol ath params
+ * @value: value of the flag
+ * @buff: Buffer to be passed
+ *
+ * Implemented this function same as legacy function. In legacy code, single
+ * function is used to display stats and update pdev params.
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+static uint32_t dp_tx_flow_ctrl_configure_pdev(void *pdev_handle,
+					       enum _ol_ath_param_t param,
+					       uint32_t value, void *buff)
+{
+	struct dp_soc *soc = NULL;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (qdf_unlikely(!pdev))
+		return 1;
+
+	soc = pdev->soc;
+	if (!soc)
+		return 1;
+
+	switch (param) {
+	case OL_ATH_PARAM_VIDEO_DELAY_STATS_FC:
+		if (value)
+			pdev->delay_stats_flag = true;
+		else
+			pdev->delay_stats_flag = false;
+		break;
+	case OL_ATH_PARAM_VIDEO_STATS_FC:
+		qdf_print("------- TID Stats ------\n");
+		dp_pdev_print_tid_stats(pdev);
+		qdf_print("------ Delay Stats ------\n");
+		dp_pdev_print_delay_stats(pdev);
+		break;
+	case OL_ATH_PARAM_TOTAL_Q_SIZE:
+		{
+			uint32_t tx_min, tx_max;
+
+			tx_min = wlan_cfg_get_min_tx_desc(soc->wlan_cfg_ctx);
+			tx_max = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+
+			if (!buff) {
+				if ((value >= tx_min) && (value <= tx_max)) {
+					pdev->num_tx_allowed = value;
+				} else {
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_INFO,
+						  "Failed to update num_tx_allowed, Q_min = %d Q_max = %d",
+						  tx_min, tx_max);
+					break;
+				}
+			} else {
+				*(int *)buff = pdev->num_tx_allowed;
+			}
+		}
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s: not handled param %d ", __func__, param);
+		break;
+	}
+
+	return 0;
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -9499,7 +9573,7 @@ static struct cdp_raw_ops dp_ops_raw = {
 
 #ifdef CONFIG_WIN
 static struct cdp_pflow_ops dp_ops_pflow = {
-	dp_pdev_tid_stats_display,
+	dp_tx_flow_ctrl_configure_pdev,
 };
 #endif /* CONFIG_WIN */
 

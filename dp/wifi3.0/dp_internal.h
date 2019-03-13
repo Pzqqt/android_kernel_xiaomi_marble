@@ -935,4 +935,21 @@ static inline void dp_peer_unref_del_find_by_id(struct dp_peer *peer)
 }
 #endif
 
+#ifdef CONFIG_WIN
+/**
+ * dp_pdev_print_delay_stats(): Print pdev level delay stats
+ * @pdev: DP_PDEV handle
+ *
+ * Return:void
+ */
+void dp_pdev_print_delay_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_pdev_print_tid_stats(): Print pdev level tid stats
+ * @pdev: DP_PDEV handle
+ *
+ * Return:void
+ */
+void dp_pdev_print_tid_stats(struct dp_pdev *pdev);
+#endif /* CONFIG_WIN */
 #endif /* #ifndef _DP_INTERNAL_H_ */

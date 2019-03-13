@@ -267,6 +267,7 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 	wlan_cfg_ctx->num_tx_ext_desc_pool = cfg_get(psoc,
 						     CFG_DP_TX_EXT_DESC_POOLS);
 	wlan_cfg_ctx->num_tx_desc = cfg_get(psoc, CFG_DP_TX_DESC);
+	wlan_cfg_ctx->min_tx_desc = WLAN_CFG_NUM_TX_DESC_MIN;
 	wlan_cfg_ctx->num_tx_ext_desc = cfg_get(psoc, CFG_DP_TX_EXT_DESC);
 	wlan_cfg_ctx->htt_packet_type = cfg_get(psoc, CFG_DP_HTT_PACKET_TYPE);
 	wlan_cfg_ctx->max_peer_id = cfg_get(psoc, CFG_DP_MAX_PEER_ID);
@@ -682,6 +683,11 @@ int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
 void wlan_cfg_set_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg, int num_desc)
 {
 	cfg->num_tx_desc = num_desc;
+}
+
+int wlan_cfg_get_min_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->min_tx_desc;
 }
 
 int wlan_cfg_get_num_tx_ext_desc(struct wlan_cfg_dp_soc_ctxt *cfg)

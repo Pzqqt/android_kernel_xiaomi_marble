@@ -649,6 +649,39 @@ static void dp_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 				      msdu_id, QDF_TX));
 }
 
+#ifdef QCA_512M_CONFIG
+/**
+ * dp_tx_pdev_pflow_control - Check if allocated tx descriptors reached max
+ * tx descriptor configured value
+ * @vdev: DP vdev handle
+ *
+ * Return: true if allocated tx descriptors reached max configured value, else
+ * false.
+ */
+static inline bool
+dp_tx_pdev_pflow_control(struct dp_vdev *vdev)
+{
+	struct dp_pdev *pdev = vdev->pdev;
+
+	if (qdf_atomic_read(&pdev->num_tx_outstanding) >=
+			pdev->num_tx_allowed) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s: queued packets are more than max tx, drop the frame",
+			  __func__);
+		DP_STATS_INC(vdev, tx_i.dropped.desc_na.num, 1);
+		return true;
+	}
+
+	return false;
+}
+#else
+static inline bool
+dp_tx_pdev_pflow_control(struct dp_vdev *vdev)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_tx_desc_prepare_single - Allocate and prepare Tx descriptor
  * @vdev: DP vdev handle
@@ -674,6 +707,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	struct dp_tx_desc_s *tx_desc;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
+
+	if (dp_tx_pdev_pflow_control(vdev))
+		return NULL;
 
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);
@@ -809,6 +845,9 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
+
+	if (dp_tx_pdev_pflow_control(vdev))
+		return NULL;
 
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);

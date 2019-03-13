@@ -3565,14 +3565,7 @@ static inline const char *dp_vow_str_intfrm_delay(uint8_t index)
 	return intfrm_delay_bucket[index];
 }
 
-/**
- * dp_pdev_print_tid_stats(): Print pdev level tid stats
- * @pdev: DP_PDEV handle
- *
- * Return:void
- */
-static inline void
-dp_pdev_print_tid_stats(struct dp_pdev *pdev)
+void dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 {
 	struct cdp_tid_stats *tid_stats;
 	struct cdp_tid_tx_stats *txstats;
@@ -3640,14 +3633,7 @@ dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 	}
 }
 
-/**
- * dp_pdev_print_delay_stats(): Print pdev level delay stats
- * @pdev: DP_PDEV handle
- *
- * Return:void
- */
-static inline void
-dp_pdev_print_delay_stats(struct dp_pdev *pdev)
+void dp_pdev_print_delay_stats(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc = pdev->soc;
 	struct cdp_tid_tx_stats *txstats = NULL;
@@ -3735,48 +3721,5 @@ dp_pdev_print_delay_stats(struct dp_pdev *pdev)
 		DP_PRINT_STATS("Max = %u", rxstats->to_stack_delay.max_delay);
 		DP_PRINT_STATS("Avg = %u\n", rxstats->to_stack_delay.avg_delay);
 	}
-}
-
-/**
- * dp_pdev_tid_stats_display() - Pdev TID stats display
- * @pdev_hdl: datapath pdev handle
- * @param: ol ath params
- * @value: value of the flag
- * @buff: Buffer to be passed
- *
- * Return: 0 for success. nonzero for failure.
- */
-uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
-		enum _ol_ath_param_t param, uint32_t value, void *buff)
-{
-	struct dp_soc *soc = NULL;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-
-	if (qdf_unlikely(!pdev))
-		return 1;
-
-	soc = pdev->soc;
-	if (!soc)
-		return 1;
-
-	switch (param) {
-	case OL_ATH_PARAM_VIDEO_DELAY_STATS_FC:
-		if (value)
-			pdev->delay_stats_flag = true;
-		else
-			pdev->delay_stats_flag = false;
-		break;
-	case OL_ATH_PARAM_VIDEO_STATS_FC:
-		qdf_print("------- TID Stats ------\n");
-		dp_pdev_print_tid_stats(pdev);
-		qdf_print("------ Delay Stats ------\n");
-		dp_pdev_print_delay_stats(pdev);
-		break;
-	default:
-		qdf_print("%s: not handled param %d ", __func__, param);
-		break;
-	}
-
-	return 0;
 }
 #endif

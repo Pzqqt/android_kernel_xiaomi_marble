@@ -1393,6 +1393,9 @@ struct dp_pdev {
 
 	/* qdf_event for fw_peer_stats */
 	qdf_event_t fw_peer_stats_event;
+
+	/* User configured max number of tx buffers */
+	uint32_t num_tx_allowed;
 };
 
 struct dp_peer;
