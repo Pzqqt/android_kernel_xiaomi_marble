@@ -219,6 +219,9 @@ static void wcd_clsh_flyback_ctrl(struct snd_soc_component *component,
 	if ((enable && (++clsh_d->flyback_users == 1)) ||
 	   (!enable && (--clsh_d->flyback_users == 0))) {
 		snd_soc_component_update_bits(component,
+				WCD9XXX_FLYBACK_VNEG_CTRL_1,
+				0xE0, 0xE0);
+		snd_soc_component_update_bits(component,
 				WCD9XXX_ANA_RX_SUPPLIES,
 				(1 << 6), (enable << 6));
 		/*
