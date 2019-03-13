@@ -70,6 +70,7 @@ static int lsm_port_index;
 static int slim0_rx_aanc_fb_port;
 static int msm_route_ec_ref_rx;
 static int msm_ec_ref_ch = 4;
+static int msm_ec_ref_ch_downmixed = 4;
 static int msm_ec_ref_bit_format = SNDRV_PCM_FORMAT_S16_LE;
 static int msm_ec_ref_sampling_rate = 48000;
 static uint32_t voc_session_id = ALL_SESSION_VSID;
@@ -3846,8 +3847,45 @@ static int msm_ec_ref_ch_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_ec_ref_ch_downmixed_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_ec_ref_ch_downmixed;
+	pr_debug("%s: msm_ec_ref_downmixed_ch = %ld\n", __func__,
+		ucontrol->value.integer.value[0]);
+	return 0;
+}
+
+static int msm_ec_ref_ch_downmixed_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	msm_ec_ref_ch_downmixed = ucontrol->value.integer.value[0];
+	pr_debug("%s: msm_ec_ref_downmixed_ch = %d\n",
+		__func__, msm_ec_ref_ch_downmixed);
+	adm_num_ec_ref_rx_chans_downmixed(msm_ec_ref_ch_downmixed);
+	return 0;
+}
+
+static int msm_ec_ref_chmixer_weights_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	int i = 0, ret = 0;
+	uint16_t weights[PCM_FORMAT_MAX_NUM_CHANNEL_V8] = {0};
+	int out_channel_idx = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+
+	for (; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
+		weights[i] = ucontrol->value.integer.value[i];
+
+	ret = adm_ec_ref_chmixer_weights(out_channel_idx,
+					weights, PCM_FORMAT_MAX_NUM_CHANNEL_V8);
+	pr_debug("%s: ch_index = %d, ret = %d\n", __func__, out_channel_idx, ret);
+	return ret;
+}
+
 static const char *const ec_ref_ch_text[] = {"Zero", "One", "Two", "Three",
-	"Four", "Five", "Six", "Seven", "Eight"};
+	"Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven",
+	"Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen"};
 
 static int msm_ec_ref_bit_format_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
@@ -3952,7 +3990,7 @@ static const char *const ec_ref_rate_text[] = {"0", "8000", "16000",
 	"32000", "44100", "48000", "96000", "192000", "384000"};
 
 static const struct soc_enum msm_route_ec_ref_params_enum[] = {
-	SOC_ENUM_SINGLE_EXT(9, ec_ref_ch_text),
+	SOC_ENUM_SINGLE_EXT(17, ec_ref_ch_text),
 	SOC_ENUM_SINGLE_EXT(3, ec_ref_bit_format_text),
 	SOC_ENUM_SINGLE_EXT(9, ec_ref_rate_text),
 };
@@ -3964,6 +4002,26 @@ static const struct snd_kcontrol_new ec_ref_param_controls[] = {
 		msm_ec_ref_bit_format_get, msm_ec_ref_bit_format_put),
 	SOC_ENUM_EXT("EC Reference SampleRate", msm_route_ec_ref_params_enum[2],
 		msm_ec_ref_rate_get, msm_ec_ref_rate_put),
+	SOC_ENUM_EXT("EC Reference Downmixed Channels", msm_route_ec_ref_params_enum[0],
+		msm_ec_ref_ch_downmixed_get, msm_ec_ref_ch_downmixed_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch1", SND_SOC_NOPM, 0,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch2", SND_SOC_NOPM, 1,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch3", SND_SOC_NOPM, 2,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch4", SND_SOC_NOPM, 3,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch5", SND_SOC_NOPM, 4,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch6", SND_SOC_NOPM, 5,
+		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
+		NULL, msm_ec_ref_chmixer_weights_put),
 };
 
 static int msm_routing_ec_ref_rx_get(struct snd_kcontrol *kcontrol,
