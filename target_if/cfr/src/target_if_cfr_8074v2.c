@@ -518,12 +518,15 @@ target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+	struct dbr_module_config dbr_config;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	dbr_config.num_resp_per_event = DBR_NUM_RESP_PER_EVENT_CFR;
+	dbr_config.event_timeout_in_ms = DBR_EVENT_TIMEOUT_IN_MS_CFR;
 	if (dbr_tx_ops->direct_buf_rx_module_register) {
 		return dbr_tx_ops->direct_buf_rx_module_register
-			(pdev, DBR_MODULE_CFR,
+			(pdev, DBR_MODULE_CFR, &dbr_config,
 			 cfr_dbr_event_handler);
 	}
 
