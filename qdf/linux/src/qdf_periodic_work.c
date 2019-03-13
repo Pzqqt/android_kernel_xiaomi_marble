@@ -21,6 +21,52 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+#ifdef WLAN_PERIODIC_WORK_DEBUG
+#include "qdf_tracker.h"
+
+#define qdf_pwork_tracker_bits 2 /* 4 buckets */
+static qdf_tracker_declare(qdf_pwork_tracker, qdf_pwork_tracker_bits,
+			   "periodic work leaks", "periodic work create",
+			   "periodic work destroy");
+
+void qdf_periodic_work_feature_init(void)
+{
+	qdf_tracker_init(&qdf_pwork_tracker);
+}
+
+void qdf_periodic_work_feature_deinit(void)
+{
+	qdf_tracker_deinit(&qdf_pwork_tracker);
+}
+
+void qdf_periodic_work_check_for_leaks(void)
+{
+	qdf_tracker_check_for_leaks(&qdf_pwork_tracker);
+}
+
+static inline QDF_STATUS qdf_pwork_dbg_track(struct qdf_periodic_work *pwork,
+					     const char *func, uint32_t line)
+{
+	return qdf_tracker_track(&qdf_pwork_tracker, pwork, func, line);
+}
+
+static inline void qdf_pwork_dbg_untrack(struct qdf_periodic_work *pwork,
+					 const char *func, uint32_t line)
+{
+	qdf_tracker_untrack(&qdf_pwork_tracker, pwork, func, line);
+}
+#else
+static inline QDF_STATUS qdf_pwork_dbg_track(struct qdf_periodic_work *pwork,
+					     const char *func, uint32_t line)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void qdf_pwork_dbg_untrack(struct qdf_periodic_work *pwork,
+					 const char *func, uint32_t line)
+{ }
+#endif /* WLAN_PERIODIC_WORK_DEBUG */
+
 static void __qdf_periodic_work_handler(struct work_struct *work)
 {
 	struct qdf_periodic_work *pwork =
@@ -35,14 +81,21 @@ static void __qdf_periodic_work_handler(struct work_struct *work)
 		schedule_delayed_work(&pwork->dwork, msecs_to_jiffies(msec));
 }
 
-QDF_STATUS qdf_periodic_work_create(struct qdf_periodic_work *pwork,
-				    qdf_periodic_work_cb callback,
-				    void *context)
+QDF_STATUS __qdf_periodic_work_create(struct qdf_periodic_work *pwork,
+				      qdf_periodic_work_cb callback,
+				      void *context,
+				      const char *func, uint32_t line)
 {
+	QDF_STATUS status;
+
 	QDF_BUG(pwork);
 	QDF_BUG(callback);
 	if (!pwork || !callback)
 		return QDF_STATUS_E_INVAL;
+
+	status = qdf_pwork_dbg_track(pwork, func, line);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	INIT_DELAYED_WORK(&pwork->dwork, __qdf_periodic_work_handler);
 	pwork->callback = callback;
@@ -52,9 +105,11 @@ QDF_STATUS qdf_periodic_work_create(struct qdf_periodic_work *pwork,
 	return QDF_STATUS_SUCCESS;
 }
 
-void qdf_periodic_work_destroy(struct qdf_periodic_work *pwork)
+void __qdf_periodic_work_destroy(struct qdf_periodic_work *pwork,
+				 const char *func, uint32_t line)
 {
 	qdf_periodic_work_stop_sync(pwork);
+	qdf_pwork_dbg_untrack(pwork, func, line);
 }
 
 bool qdf_periodic_work_start(struct qdf_periodic_work *pwork, uint32_t msec)

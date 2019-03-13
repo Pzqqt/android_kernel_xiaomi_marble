@@ -54,17 +54,25 @@ struct qdf_periodic_work {
  *
  * Return: QDF_STATUS
  */
+#define qdf_periodic_work_create(pwork, callback, context) \
+	__qdf_periodic_work_create(pwork, callback, context, __func__, __LINE__)
+
 qdf_must_check QDF_STATUS
-qdf_periodic_work_create(struct qdf_periodic_work *pwork,
-			 qdf_periodic_work_cb callback, void *context);
+__qdf_periodic_work_create(struct qdf_periodic_work *pwork,
+			   qdf_periodic_work_cb callback, void *context,
+			   const char *func, uint32_t line);
 
 /**
  * qdf_periodic_work_destroy() - deinitialize a periodic work @pwork
- * @pwork: the periodic work to initialize
+ * @pwork: the periodic work to de-initialize
  *
  * Return: None
  */
-void qdf_periodic_work_destroy(struct qdf_periodic_work *pwork);
+#define qdf_periodic_work_destroy(pwork) \
+	__qdf_periodic_work_destroy(pwork, __func__, __LINE__)
+
+void __qdf_periodic_work_destroy(struct qdf_periodic_work *pwork,
+				 const char *func, uint32_t line);
 
 /**
  * qdf_periodic_work_start() - begin periodic execution of @pwork callback
@@ -100,6 +108,33 @@ bool qdf_periodic_work_stop_async(struct qdf_periodic_work *pwork);
  * Return: true if @pwork was previously started
  */
 bool qdf_periodic_work_stop_sync(struct qdf_periodic_work *pwork);
+
+#ifdef WLAN_PERIODIC_WORK_DEBUG
+/**
+ * qdf_periodic_work_check_for_leaks() - assert no periodic work leaks
+ *
+ * Return: None
+ */
+void qdf_periodic_work_check_for_leaks(void);
+
+/**
+ * qdf_periodic_work_feature_init() - global init logic for periodic work
+ *
+ * Return: None
+ */
+void qdf_periodic_work_feature_init(void);
+
+/**
+ * qdf_periodic_work_feature_deinit() - global de-init logic for periodic work
+ *
+ * Return: None
+ */
+void qdf_periodic_work_feature_deinit(void);
+#else
+static inline void qdf_periodic_work_check_for_leaks(void) { }
+static inline void qdf_periodic_work_feature_init(void) { }
+static inline void qdf_periodic_work_feature_deinit(void) { }
+#endif /* WLAN_PERIODIC_WORK_DEBUG */
 
 #endif /* __QDF_PERIODIC_WORK_H */
 
