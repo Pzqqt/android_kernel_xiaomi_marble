@@ -3349,7 +3349,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;
-	wma_handle->ssdp = ucfg_pmo_is_ssdp_enabled(wma_handle->psoc);
 	wma_handle->enable_mc_list =
 		ucfg_pmo_is_mc_addr_list_enabled(wma_handle->psoc);
 	wma_handle->active_uc_apf_mode =
