@@ -202,9 +202,6 @@ QDF_STATUS tgt_vdev_mgr_delete_send(
 	QDF_STATUS status;
 	struct wlan_lmac_if_mlme_tx_ops *txops;
 	struct wlan_objmgr_vdev *vdev;
-	struct wlan_objmgr_psoc *psoc;
-	ol_txrx_soc_handle soc_txrx_handle;
-	struct cdp_vdev *vdev_txrx_handle;
 	uint8_t vdev_id;
 
 	if (!param) {
@@ -218,15 +215,6 @@ QDF_STATUS tgt_vdev_mgr_delete_send(
 	if (!txops || !txops->vdev_delete_send) {
 		mlme_err("VDEV_%d: No Tx Ops", vdev_id);
 		return QDF_STATUS_E_INVAL;
-	}
-
-	psoc = wlan_vdev_get_psoc(vdev);
-	soc_txrx_handle = wlan_psoc_get_dp_handle(psoc);
-	vdev_txrx_handle = wlan_vdev_get_dp_handle(vdev);
-	if (soc_txrx_handle && vdev_txrx_handle) {
-		wlan_vdev_set_dp_handle(vdev, NULL);
-		cdp_vdev_detach(soc_txrx_handle, vdev_txrx_handle,
-				NULL, NULL);
 	}
 
 	status = txops->vdev_delete_send(vdev, param);

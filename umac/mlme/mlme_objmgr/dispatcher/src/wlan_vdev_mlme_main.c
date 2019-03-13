@@ -30,6 +30,7 @@
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_serialization_api.h"
 #include "wlan_utility.h"
+#include <cdp_txrx_cmn.h>
 
 static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					       void *arg)
@@ -106,6 +107,9 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 						void *arg)
 {
 	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_objmgr_psoc *psoc;
+	struct cdp_soc_t *soc_txrx_handle;
+	struct cdp_vdev *vdev_txrx_handle;
 
 	if (!vdev) {
 		mlme_err(" VDEV is NULL");
@@ -116,6 +120,15 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 	if (!vdev_mlme) {
 		mlme_info(" VDEV MLME component object is NULL");
 		return QDF_STATUS_SUCCESS;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	soc_txrx_handle = (struct cdp_soc_t *)wlan_psoc_get_dp_handle(psoc);
+	vdev_txrx_handle = wlan_vdev_get_dp_handle(vdev);
+	if (soc_txrx_handle && vdev_txrx_handle) {
+		wlan_vdev_set_dp_handle(vdev, NULL);
+		cdp_vdev_detach(soc_txrx_handle, vdev_txrx_handle,
+				NULL, NULL);
 	}
 
 	mlme_vdev_sm_destroy(vdev_mlme);
