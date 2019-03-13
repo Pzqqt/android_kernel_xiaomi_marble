@@ -170,6 +170,8 @@ static void pmo_configure_vdev_suspend_params(
 	uint8_t vdev_id;
 	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
 	struct pmo_psoc_cfg *psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+	uint8_t  ito_repeat_count_value = 0;
+	uint32_t non_wow_inactivity_time, wow_inactivity_time;
 
 	pmo_enter();
 
@@ -183,6 +185,25 @@ static void pmo_configure_vdev_suspend_params(
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		pmo_debug("Failed to Set wow inactivity timeout vdevId %d",
 			  vdev_id);
+	}
+
+	non_wow_inactivity_time = psoc_cfg->ps_data_inactivity_timeout;
+	wow_inactivity_time = psoc_cfg->wow_data_inactivity_timeout;
+	/*
+	 * To keep ito repeat count same in wow mode as in non wow mode,
+	 * modulating ito repeat count value.
+	 */
+	ito_repeat_count_value = (non_wow_inactivity_time /
+				  wow_inactivity_time) *
+					psoc_cfg->ito_repeat_count;
+	if (ito_repeat_count_value)
+		ret = pmo_tgt_vdev_update_param_req(
+					vdev,
+					pmo_vdev_param_ito_repeat_count,
+					psoc_cfg->wow_data_inactivity_timeout);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pmo_err("Failed to Set ito repeat count vdevId %d",
+			vdev_id);
 	}
 
 	pmo_exit();

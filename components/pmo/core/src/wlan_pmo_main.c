@@ -209,6 +209,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ACTIVE_UC_APF_MODE);
 	psoc_cfg->active_mc_bc_apf_mode =
 			cfg_get(psoc, CFG_ACTIVE_MC_BC_APF_MODE);
+	psoc_cfg->ito_repeat_count = cfg_get(psoc, CFG_ITO_REPEAT_COUNT);
 	wlan_pmo_ra_filtering_init_cfg(psoc, psoc_cfg);
 }
 
