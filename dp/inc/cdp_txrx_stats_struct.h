@@ -1719,6 +1719,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_HE_UL_RU_ALLOCATION = 403,
 	OL_ATH_PARAM_PERIODIC_CFR_CAPTURE = 404,
 	OL_ATH_PARAM_FLUSH_PEER_RATE_STATS = 405,
+	OL_ATH_PARAM_DCS_RE_ENABLE_TIMER = 406,
 };
 
 /* Enumeration of PDEV Configuration parameter */
