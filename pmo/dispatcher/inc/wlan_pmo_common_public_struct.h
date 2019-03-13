@@ -63,10 +63,12 @@
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
  * @pmo_vdev_max_param: Max vdev param id
+ * @pmo_vdev_param_inactivity_time: inactivity time value
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
+	pmo_vdev_param_inactivity_time,
 	pmo_vdev_max_param
 };
 
@@ -339,6 +341,8 @@ enum active_apf_mode {
  * @wow_pulse_interval_low: The interval of low level in the pulse
  * @packet_filters_bitmap: Packet filter bitmap configuration
  * @wow_data_inactivity_timeout: power save wow data inactivity timeout
+ * @ps_data_inactivity_timeout: Power save data inactivity timeout for non
+ *  wow mode
  * @active_uc_apf_mode: Setting that determines how APF is applied in active
  *	mode for uc packets
  * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
@@ -401,6 +405,7 @@ struct pmo_psoc_cfg {
 #endif
 	bool enable_sap_suspend;
 	uint8_t wow_data_inactivity_timeout;
+	uint8_t ps_data_inactivity_timeout;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 };

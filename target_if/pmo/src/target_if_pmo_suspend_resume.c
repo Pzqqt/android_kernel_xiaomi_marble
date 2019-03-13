@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,6 +56,9 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 		break;
 	case pmo_vdev_param_dtim_policy:
 		param_id = WMI_VDEV_PARAM_DTIM_POLICY;
+		break;
+	case pmo_vdev_param_inactivity_time:
+		param_id = WMI_STA_PS_PARAM_INACTIVITY_TIME;
 		break;
 	default:
 		target_if_err("invalid vdev param id %d", param_id);

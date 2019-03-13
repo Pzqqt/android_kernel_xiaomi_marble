@@ -203,6 +203,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->enable_sap_suspend = cfg_get(psoc, CFG_ENABLE_SAP_SUSPEND);
 	psoc_cfg->wow_data_inactivity_timeout =
 			cfg_get(psoc, CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT);
+	psoc_cfg->ps_data_inactivity_timeout =
+			cfg_get(psoc, CFG_PS_DATA_INACTIVITY_TIMEOUT);
 	psoc_cfg->active_uc_apf_mode =
 			cfg_get(psoc, CFG_ACTIVE_UC_APF_MODE);
 	psoc_cfg->active_mc_bc_apf_mode =
