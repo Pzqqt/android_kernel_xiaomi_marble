@@ -10836,13 +10836,14 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 
 	/**
 	 * In case of SSR/PDR, if pktlog was enabled manually before
-	 * SSR/PDR, Then enabled it again automatically after Wlan
+	 * SSR/PDR, then enable it again automatically after Wlan
 	 * device up.
+	 * During SSR/PDR, pktlog will be disabled as part of
+	 * hdd_features_deinit if pktlog is enabled in ini.
+	 * Re-enable pktlog in SSR case, if pktlog is enabled in ini.
 	 */
-	if (cds_is_driver_recovering()) {
-		if (hdd_ctx->is_pktlog_enabled)
-			hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
-	} else if (cds_is_packet_log_enabled())
+	if (cds_is_packet_log_enabled() ||
+	    (cds_is_driver_recovering() && hdd_ctx->is_pktlog_enabled))
 		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
 
 	hddtxlimit.txPower2g = ucfg_get_tx_power(hdd_ctx->psoc, BAND_2G);
