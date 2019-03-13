@@ -60,6 +60,9 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	case pmo_vdev_param_inactivity_time:
 		param_id = WMI_STA_PS_PARAM_INACTIVITY_TIME;
 		break;
+	case pmo_vdev_param_ito_repeat_count:
+		param_id = WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX;
+		break;
 	default:
 		target_if_err("invalid vdev param id %d", param_id);
 		return QDF_STATUS_E_INVAL;

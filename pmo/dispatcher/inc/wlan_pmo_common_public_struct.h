@@ -64,11 +64,13 @@
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
  * @pmo_vdev_max_param: Max vdev param id
  * @pmo_vdev_param_inactivity_time: inactivity time value
+ * @pmo_vdev_param_ito_repeat_count: Indicates ito repeated count
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
 	pmo_vdev_param_inactivity_time,
+	pmo_vdev_param_ito_repeat_count,
 	pmo_vdev_max_param
 };
 
@@ -347,6 +349,7 @@ enum active_apf_mode {
  *	mode for uc packets
  * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
  *	active mode for MC/BC packets
+ * @ito_repeat_count: Indicates ito repeated count
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -408,6 +411,7 @@ struct pmo_psoc_cfg {
 	uint8_t ps_data_inactivity_timeout;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
+	uint8_t ito_repeat_count;
 };
 
 /**
