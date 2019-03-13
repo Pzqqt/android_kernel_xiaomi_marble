@@ -1925,6 +1925,14 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 	QDF_STATUS status;
 	struct mac_context *mac = session->mac_ctx;
 
+	if (wlan_vdev_mlme_get_substate(session->vdev) ==
+	    WLAN_VDEV_SS_STOP_STOP_PROGRESS) {
+		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						       WLAN_VDEV_SM_EV_STOP_REQ,
+						       sizeof(*session),
+						       session);
+		return;
+	}
 	status =
 	   wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,

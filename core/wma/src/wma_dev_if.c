@@ -5530,9 +5530,7 @@ static inline QDF_STATUS wma_indicate_start_success(tp_wma_handle wma,
 						    struct wma_txrx_node *iface,
 						    tpAddStaParams params)
 {
-	return wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
-					     WLAN_VDEV_SM_EV_START_SUCCESS,
-					     0, NULL);
+	return QDF_STATUS_SUCCESS;
 }
 #else
 static QDF_STATUS wma_indicate_start_success(tp_wma_handle wma,

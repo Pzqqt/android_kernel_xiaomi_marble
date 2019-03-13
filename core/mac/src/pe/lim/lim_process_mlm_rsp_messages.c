@@ -1384,11 +1384,15 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 		pe_err("session is NULL");
 		return;
 	}
-	if (result_code == eSIR_SME_SUCCESS)
+	if (result_code == eSIR_SME_SUCCESS) {
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_START_SUCCESS,
+					      0, NULL);
 		return lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
 						     result_code,
 						     prot_status_code, session,
 						     session->smeSessionId);
+	}
 
 	param.result_code = result_code;
 	param.prot_status_code = prot_status_code;
