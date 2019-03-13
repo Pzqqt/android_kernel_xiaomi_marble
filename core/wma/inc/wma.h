@@ -425,8 +425,6 @@
 
 typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
 
-typedef void (*tp_wma_packetdump_cb)(qdf_nbuf_t netbuf,
-			uint8_t status, uint8_t vdev_id, uint8_t type);
 
 /**
  * enum wma_rx_exec_ctx - wma rx execution context
@@ -1212,8 +1210,8 @@ typedef struct {
 	bool fw_timeout_crash;
 	bool sub_20_support;
 	bool is_dfs_offloaded;
-	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb;
-	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb;
+	ol_txrx_pktdump_cb wma_mgmt_tx_packetdump_cb;
+	ol_txrx_pktdump_cb wma_mgmt_rx_packetdump_cb;
 	bool rcpi_enabled;
 	tSirLLStatsResults *link_stats_results;
 	uint64_t tx_fail_cnt;
@@ -1958,8 +1956,8 @@ QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
 QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma_handle,
 				uint8_t val);
 void wma_register_packetdump_callback(
-		tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb,
-		tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb);
+		ol_txrx_pktdump_cb wma_mgmt_tx_packetdump_cb,
+		ol_txrx_pktdump_cb wma_mgmt_rx_packetdump_cb);
 void wma_deregister_packetdump_callback(void);
 void wma_update_sta_inactivity_timeout(tp_wma_handle wma,
 		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);

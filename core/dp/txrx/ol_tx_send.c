@@ -759,7 +759,10 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
+#if !defined(REMOVE_PKT_LOG)
 	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+#endif
 	uint32_t is_tx_desc_freed = 0;
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
 	u_int32_t *msg_word = (u_int32_t *)msg;
@@ -810,12 +813,15 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 						status);
 		ol_tx_update_ack_count(tx_desc, status);
 
+#if !defined(REMOVE_PKT_LOG)
 		if (tx_desc->pkt_type != OL_TX_FRM_TSO) {
 			packetdump_cb = pdev->ol_tx_packetdump_cb;
 			if (packetdump_cb)
-				packetdump_cb(netbuf, status,
-					tx_desc->vdev_id, TX_DATA_PKT);
+				packetdump_cb(soc,
+					      (struct cdp_vdev *)tx_desc->vdev,
+					      netbuf, status, TX_DATA_PKT);
 		}
+#endif
 
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
 			QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
@@ -1032,7 +1038,10 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 {
 	struct ol_tx_desc_t *tx_desc;
 	qdf_nbuf_t netbuf;
+#if !defined(REMOVE_PKT_LOG)
 	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+#endif
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
 	if (tx_desc == NULL) {
@@ -1047,10 +1056,12 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 	/* Do one shot statistics */
 	TXRX_STATS_UPDATE_TX_STATS(pdev, status, 1, qdf_nbuf_len(netbuf));
 
+#if !defined(REMOVE_PKT_LOG)
 	packetdump_cb = pdev->ol_tx_packetdump_cb;
 	if (packetdump_cb)
-		packetdump_cb(netbuf, status,
-			tx_desc->vdev->vdev_id, TX_MGMT_PKT);
+		packetdump_cb(soc, (struct cdp_vdev *)tx_desc->vdev,
+			      netbuf, status, TX_MGMT_PKT);
+#endif
 
 	if (OL_TX_DESC_NO_REFS(tx_desc)) {
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc,

@@ -3248,9 +3248,13 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 {
 	struct wlan_objmgr_pdev *pdev;
 	qdf_nbuf_t buf = NULL;
-	uint8_t vdev_id = 0;
 	QDF_STATUS ret;
-	tp_wma_packetdump_cb packetdump_cb;
+#if !defined(REMOVE_PKT_LOG)
+	uint8_t vdev_id = 0;
+	struct cdp_vdev *txrx_vdev;
+	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+#endif
 
 	if (wma_handle == NULL) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
@@ -3267,15 +3271,19 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	}
 
 	buf = mgmt_txrx_get_nbuf(pdev, desc_id);
-	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
+
 
 	if (buf)
 		wma_mgmt_unmap_buf(wma_handle, buf);
 
+#if !defined(REMOVE_PKT_LOG)
+	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
+	txrx_vdev = wma_find_vdev_by_id(wma_handle, vdev_id);
 	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
 	if (packetdump_cb)
-		packetdump_cb(buf, QDF_STATUS_SUCCESS,
-			vdev_id, TX_MGMT_PKT);
+		packetdump_cb(soc, txrx_vdev,
+			      buf, QDF_STATUS_SUCCESS, TX_MGMT_PKT);
+#endif
 
 	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
 
@@ -4028,7 +4036,11 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	int status;
 	tp_wma_handle wma_handle = (tp_wma_handle)
 				cds_get_context(QDF_MODULE_ID_WMA);
-	tp_wma_packetdump_cb packetdump_cb;
+#if !defined(REMOVE_PKT_LOG)
+	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct cdp_vdev *txrx_vdev;
+#endif
 	static uint8_t limit_prints_invalid_len = RATE_LIMIT - 1;
 	static uint8_t limit_prints_load_unload = RATE_LIMIT - 1;
 	static uint8_t limit_prints_recovery = RATE_LIMIT - 1;
@@ -4199,13 +4211,16 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		return -EINVAL;
 	}
 
+#if !defined(REMOVE_PKT_LOG)
 	packetdump_cb = wma_handle->wma_mgmt_rx_packetdump_cb;
+	txrx_vdev = wma_find_vdev_by_id(wma_handle,
+					rx_pkt->pkt_meta.session_id);
 	if ((mgt_type == IEEE80211_FC0_TYPE_MGT &&
-			mgt_subtype != MGMT_SUBTYPE_BEACON) &&
-			packetdump_cb)
-		packetdump_cb(rx_pkt->pkt_buf, QDF_STATUS_SUCCESS,
-			rx_pkt->pkt_meta.session_id, RX_MGMT_PKT);
-
+		mgt_subtype != MGMT_SUBTYPE_BEACON) &&
+		packetdump_cb)
+		packetdump_cb(soc, txrx_vdev, rx_pkt->pkt_buf,
+			      QDF_STATUS_SUCCESS, RX_MGMT_PKT);
+#endif
 	return 0;
 }
 
@@ -4453,8 +4468,8 @@ QDF_STATUS wma_register_mgmt_frm_client(void)
 /**
  * wma_register_packetdump_callback() - stores tx and rx mgmt packet dump
  *   callback handler
- * @wma_mgmt_tx_packetdump_cb: tx mgmt packetdump cb
- * @wma_mgmt_rx_packetdump_cb: rx mgmt packetdump cb
+ * @tx_cb: tx mgmt packetdump cb
+ * @rx_cb: rx mgmt packetdump cb
  *
  * This function is used to store tx and rx mgmt. packet dump callback
  *
@@ -4462,8 +4477,8 @@ QDF_STATUS wma_register_mgmt_frm_client(void)
  *
  */
 void wma_register_packetdump_callback(
-	tp_wma_packetdump_cb wma_mgmt_tx_packetdump_cb,
-	tp_wma_packetdump_cb wma_mgmt_rx_packetdump_cb)
+	ol_txrx_pktdump_cb tx_cb,
+	ol_txrx_pktdump_cb rx_cb)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -4472,8 +4487,8 @@ void wma_register_packetdump_callback(
 		return;
 	}
 
-	wma_handle->wma_mgmt_tx_packetdump_cb = wma_mgmt_tx_packetdump_cb;
-	wma_handle->wma_mgmt_rx_packetdump_cb = wma_mgmt_rx_packetdump_cb;
+	wma_handle->wma_mgmt_tx_packetdump_cb = tx_cb;
+	wma_handle->wma_mgmt_rx_packetdump_cb = rx_cb;
 }
 
 /**

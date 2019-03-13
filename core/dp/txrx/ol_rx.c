@@ -1541,9 +1541,9 @@ void ol_rx_pkt_dump_call(
 	ol_txrx_pdev_handle pdev;
 	struct ol_txrx_peer_t *peer = NULL;
 	ol_txrx_pktdump_cb packetdump_cb;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
 	if (!pdev) {
 		ol_txrx_err("pdev is NULL");
 		return;
@@ -1556,8 +1556,10 @@ void ol_rx_pkt_dump_call(
 	}
 
 	packetdump_cb = pdev->ol_rx_packetdump_cb;
-	if (packetdump_cb)
-		packetdump_cb(msdu, status, peer->vdev->vdev_id, RX_DATA_PKT);
+	if (packetdump_cb &&
+	    wlan_op_mode_sta == peer->vdev->opmode)
+		packetdump_cb(soc, (struct cdp_vdev *)peer->vdev,
+			      msdu, status, RX_DATA_PKT);
 }
 #endif
 
