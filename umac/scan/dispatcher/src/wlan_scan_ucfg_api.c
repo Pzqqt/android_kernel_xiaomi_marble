@@ -1023,6 +1023,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.scan_ev_preempted = true;
 	scan_obj->scan_def.scan_ev_start_failed = true;
 	scan_obj->scan_def.scan_ev_restarted = true;
+	scan_obj->scan_def.enable_connected_scan =
+		cfg_get(psoc, CFG_ENABLE_CONNECTED_SCAN);
 	/* init scan id seed */
 	qdf_atomic_init(&scan_obj->scan_ids);
 
