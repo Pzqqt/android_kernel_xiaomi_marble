@@ -8174,12 +8174,6 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 	case CDP_OSIF_DROP:
 		dp_pdev_tid_stats_osif_drop(pdev_handle, val);
 		break;
-	case CDP_CONFIG_DELAY_STATS:
-		if (val == 1)
-			pdev->delay_stats_flag = true;
-		else
-			pdev->delay_stats_flag = false;
-		break;
 	default:
 		return QDF_STATUS_E_INVAL;
 	}
@@ -10295,10 +10289,10 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
  */
 static uint8_t dp_bucket_index(uint32_t delay, uint16_t *array)
 {
-	uint8_t i = CDP_DELAY_BUCKET_1;
+	uint8_t i = CDP_DELAY_BUCKET_0;
 
 	for (; i < CDP_DELAY_BUCKET_MAX; i++) {
-		if (delay < array[i] && delay > array[i + 1])
+		if (delay >= array[i] && delay <= array[i + 1])
 			return i;
 	}
 
@@ -10329,21 +10323,21 @@ dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
 	 * Fw to hw delay ranges in milliseconds
 	 */
 	uint16_t cdp_fw_to_hw_delay[CDP_DELAY_BUCKET_MAX] = {
-		10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 250, 500};
+		0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 250, 500};
 
 	/*
 	 * cdp_sw_enq_delay_range
 	 * Software enqueue delay ranges in milliseconds
 	 */
 	uint16_t cdp_sw_enq_delay[CDP_DELAY_BUCKET_MAX] = {
-		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 	/*
 	 * cdp_intfrm_delay_range
 	 * Interframe delay ranges in milliseconds
 	 */
 	uint16_t cdp_intfrm_delay[CDP_DELAY_BUCKET_MAX] = {
-		5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
+		0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
 
 	/*
 	 * Update delay stats in proper bucket
@@ -10382,7 +10376,7 @@ dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
 
 		delay_index = dp_bucket_index(delay, cdp_intfrm_delay);
 		rstats->to_stack_delay.delay_bucket[delay_index]++;
-		return &rstats->intfrm_delay;
+		return &rstats->to_stack_delay;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s Incorrect delay mode: %d", __func__, mode);

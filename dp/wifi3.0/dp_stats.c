@@ -56,16 +56,16 @@ const char *fw_to_hw_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"41 to 50 ms", "51 to 60 ms",
 	"61 to 70 ms", "71 to 80 ms",
 	"81 to 90 ms", "91 to 100 ms",
-	"101 to 250 ms", "251 to 500 ms"
+	"101 to 250 ms", "251 to 500 ms", "500+ ms"
 };
 
 const char *sw_enq_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
-	"0 to 1 ms", "11 to 20 ms",
-	"21 to 30 ms", "6 to 7 ms",
-	"8 to 9 ms", "10 to 11 ms",
-	"12 to 13 ms", "14 to 15 ms",
-	"16 to 17 ms", "18 to 19 ms",
-	"20 to 21 ms", "22 to 23 ms"
+	"0 to 1 ms", "1 to 2 ms",
+	"2 to 3 ms", "3 to 4 ms",
+	"4 to 5 ms", "5 to 6 ms",
+	"6 to 7 ms", "7 to 8 ms",
+	"8 to 9 ms", "9 to 10 ms",
+	"10 to 11 ms", "11 to 12 ms", "12+ ms"
 };
 
 const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
@@ -74,7 +74,7 @@ const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"21 to 25 ms", "26 to 30 ms",
 	"31 to 35 ms", "36 to 40 ms",
 	"41 to 45 ms", "46 to 50 ms",
-	"55 to 60 ms", "61 to 65 ms"
+	"51 to 55 ms", "56 to 60 ms", "60+ ms"
 };
 #endif
 
@@ -3574,6 +3574,7 @@ static inline const char *dp_vow_str_intfrm_delay(uint8_t index)
 static inline void
 dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 {
+	struct cdp_tid_stats *tid_stats;
 	struct cdp_tid_tx_stats *txstats;
 	struct cdp_tid_rx_stats *rxstats;
 	struct dp_soc *soc = pdev->soc;
@@ -3584,77 +3585,57 @@ dp_pdev_print_tid_stats(struct dp_pdev *pdev)
 	tid = 0;
 	rxstats = NULL;
 	txstats = NULL;
+	tid_stats = &pdev->stats.tid_stats;
 
+	DP_PRINT_STATS("Packets received in hardstart: %llu ",
+		       tid_stats->ingress_stack);
+	DP_PRINT_STATS("Packets dropped in osif layer: %llu ",
+		       tid_stats->osif_drop);
 	DP_PRINT_STATS("Per TID Video Stats:\n");
+
 	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
-		txstats = &pdev->stats.tid_stats.tid_tx_stats[tid];
-		rxstats = &pdev->stats.tid_stats.tid_rx_stats[tid];
-		DP_PRINT_STATS("TID %d:\n", tid);
-		DP_PRINT_STATS("Tx Success Count:");
-		DP_PRINT_STATS("Packets = %llu",
-			       txstats->success_cnt);
-		DP_PRINT_STATS("Tx Complete Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		txstats = &tid_stats->tid_tx_stats[tid];
+		rxstats = &tid_stats->tid_rx_stats[tid];
+		DP_PRINT_STATS("----TID: %d----", tid);
+		DP_PRINT_STATS("Tx Success Count: %llu", txstats->success_cnt);
+		DP_PRINT_STATS("Tx Complete Count: %llu",
 			       txstats->complete_cnt);
-		DP_PRINT_STATS("Tx Firmware Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Tx Firmware Drop Count: %llu",
 			       txstats->comp_fail_cnt);
-		DP_PRINT_STATS("Tx Firmware Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
-			       txstats->comp_fail_cnt);
-		DP_PRINT_STATS("Tx Hardware Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Tx Hardware Drop Count: %llu",
 			       txstats->swdrop_cnt[TX_HW_ENQUEUE]);
-		DP_PRINT_STATS("Tx Software Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Tx Software Drop Count: %llu",
 			       txstats->swdrop_cnt[TX_SW_ENQUEUE]);
-		DP_PRINT_STATS("Tx Descriptor Error Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Tx Descriptor Error Count: %llu",
 			       txstats->swdrop_cnt[TX_DESC_ERR]);
-		DP_PRINT_STATS("Tx HAL Ring Error Count:");
-		DP_PRINT_STATS("Packet = %llu",
+		DP_PRINT_STATS("Tx HAL Ring Error Count: %llu",
 			       txstats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]);
-		DP_PRINT_STATS("Tx Dma Map Error Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Tx Dma Map Error Count: %llu",
 			       txstats->swdrop_cnt[TX_DMA_MAP_ERR]);
-		DP_PRINT_STATS("Rx Delievered Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Delievered Count: %llu",
 			       rxstats->delivered_to_stack);
-		DP_PRINT_STATS("Rx Software Enqueue Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Software Enqueue Drop Count: %llu",
 			       rxstats->fail_cnt[ENQUEUE_DROP]);
-		DP_PRINT_STATS("Rx Intrabss Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Intrabss Drop Count: %llu",
 			       rxstats->fail_cnt[INTRABSS_DROP]);
-		DP_PRINT_STATS("Rx Msdu Done Failure Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Msdu Done Failure Count: %llu",
 			       rxstats->fail_cnt[MSDU_DONE_FAILURE]);
-		DP_PRINT_STATS("Rx Invalid Peer Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Invalid Peer Count: %llu",
 			       rxstats->fail_cnt[INVALID_PEER_VDEV]);
-		DP_PRINT_STATS("Rx Policy Check Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Policy Check Drop Count: %llu",
 			       rxstats->fail_cnt[POLICY_CHECK_DROP]);
-		DP_PRINT_STATS("Rx Mec Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Mec Drop Count: %llu",
 			       rxstats->fail_cnt[MEC_DROP]);
-		DP_PRINT_STATS("Rx Nawds Mcast Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Nawds Mcast Drop Count: %llu",
 			       rxstats->fail_cnt[NAWDS_MCAST_DROP]);
-		DP_PRINT_STATS("Rx Mesh Filter Drop Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Mesh Filter Drop Count: %llu",
 			       rxstats->fail_cnt[MESH_FILTER_DROP]);
-		DP_PRINT_STATS("Rx Intra Bss Deliever Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Intra Bss Deliver Count: %llu",
 			       rxstats->intrabss_cnt);
-		DP_PRINT_STATS("Rx MSDU Count:");
-		DP_PRINT_STATS("Packets = %llu",
-			       rxstats->msdu_cnt);
-		DP_PRINT_STATS("Rx Multicast MSDU Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx MSDU Count: %llu", rxstats->msdu_cnt);
+		DP_PRINT_STATS("Rx Multicast MSDU Count: %llu",
 			       rxstats->mcast_msdu_cnt);
-		DP_PRINT_STATS("Rx Broadcast MSDU Count:");
-		DP_PRINT_STATS("Packets = %llu",
+		DP_PRINT_STATS("Rx Broadcast MSDU Count: %llu\n",
 			       rxstats->bcast_msdu_cnt);
 	}
 }
@@ -3672,6 +3653,7 @@ dp_pdev_print_delay_stats(struct dp_pdev *pdev)
 	struct cdp_tid_tx_stats *txstats = NULL;
 	struct cdp_tid_rx_stats *rxstats;
 	uint8_t tid, index;
+	uint64_t count = 0;
 
 	if (!soc)
 		return;
@@ -3682,58 +3664,76 @@ dp_pdev_print_delay_stats(struct dp_pdev *pdev)
 
 	DP_PRINT_STATS("Per TID Delay Non-Zero Stats:\n");
 	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
-		DP_PRINT_STATS("TID %d:\n", tid);
+		DP_PRINT_STATS("----TID: %d----", tid);
 		txstats = &pdev->stats.tid_stats.tid_tx_stats[tid];
 		rxstats = &pdev->stats.tid_stats.tid_rx_stats[tid];
 
-		DP_PRINT_STATS("Software Enqueue Delay:\n");
+		DP_PRINT_STATS("Software Enqueue Delay:");
 		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
-
-			if (txstats->swq_delay.delay_bucket[index]) {
-				DP_PRINT_STATS("%s:  Packets = %d",
+			count = txstats->swq_delay.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
 					       dp_vow_str_sw_enq_delay(index),
-					       txstats->swq_delay.delay_bucket[index]);
+					       count);
 			}
 		}
-		DP_PRINT_STATS("Min = %d", txstats->swq_delay.min_delay);
-		DP_PRINT_STATS("Max = %d", txstats->swq_delay.max_delay);
-		DP_PRINT_STATS("Avg = %d", txstats->swq_delay.avg_delay);
 
-		DP_PRINT_STATS("Hardware Transmission Delay:\n");
+		DP_PRINT_STATS("Min = %u", txstats->swq_delay.min_delay);
+		DP_PRINT_STATS("Max = %u", txstats->swq_delay.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", txstats->swq_delay.avg_delay);
+
+		DP_PRINT_STATS("Hardware Transmission Delay:");
 		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
-			if (txstats->hwtx_delay.delay_bucket[index]) {
-				DP_PRINT_STATS("%s:  Packets = %d",
+			count = txstats->hwtx_delay.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
 					       dp_vow_str_fw_to_hw_delay(index),
-					       txstats->hwtx_delay.delay_bucket[index]);
+					       count);
 			}
 		}
-		DP_PRINT_STATS("Min = %d", txstats->hwtx_delay.min_delay);
-		DP_PRINT_STATS("Max = %d", txstats->hwtx_delay.max_delay);
-		DP_PRINT_STATS("Avg = %d", txstats->hwtx_delay.avg_delay);
+		DP_PRINT_STATS("Min = %u", txstats->hwtx_delay.min_delay);
+		DP_PRINT_STATS("Max = %u", txstats->hwtx_delay.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", txstats->hwtx_delay.avg_delay);
 
-		DP_PRINT_STATS("Tx Interframe Delay:\n");
+		DP_PRINT_STATS("Tx Interframe Delay:");
 		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
-			if (txstats->intfrm_delay.delay_bucket[index]) {
-				DP_PRINT_STATS("%s:  Packets = %d",
+			count = txstats->intfrm_delay.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
 					       dp_vow_str_intfrm_delay(index),
-					       txstats->intfrm_delay.delay_bucket[index]);
+					       count);
 			}
 		}
-		DP_PRINT_STATS("Min = %d", txstats->intfrm_delay.min_delay);
-		DP_PRINT_STATS("Max = %d", txstats->intfrm_delay.max_delay);
-		DP_PRINT_STATS("Avg = %d", txstats->intfrm_delay.avg_delay);
+		DP_PRINT_STATS("Min = %u", txstats->intfrm_delay.min_delay);
+		DP_PRINT_STATS("Max = %u", txstats->intfrm_delay.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", txstats->intfrm_delay.avg_delay);
 
-		DP_PRINT_STATS("Rx Interframe Delay:\n");
+		DP_PRINT_STATS("Rx Interframe Delay:");
 		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
-			if (rxstats->intfrm_delay.delay_bucket[index]) {
-				DP_PRINT_STATS("%s:  Packets = %d",
+			count = rxstats->intfrm_delay.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
 					       dp_vow_str_intfrm_delay(index),
-					       rxstats->intfrm_delay.delay_bucket[index]);
+					       count);
 			}
 		}
-		DP_PRINT_STATS("Min = %d", rxstats->intfrm_delay.min_delay);
-		DP_PRINT_STATS("Max = %d", rxstats->intfrm_delay.max_delay);
-		DP_PRINT_STATS("Avg = %d", rxstats->intfrm_delay.avg_delay);
+		DP_PRINT_STATS("Min = %u", rxstats->intfrm_delay.min_delay);
+		DP_PRINT_STATS("Max = %u", rxstats->intfrm_delay.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", rxstats->intfrm_delay.avg_delay);
+
+		DP_PRINT_STATS("Rx Reap to Stack Delay:");
+		for (index = 0; index < CDP_DELAY_BUCKET_MAX; index++) {
+			count = rxstats->to_stack_delay.delay_bucket[index];
+			if (count) {
+				DP_PRINT_STATS("%s:  Packets = %llu",
+					       dp_vow_str_intfrm_delay(index),
+					       count);
+			}
+		}
+
+		DP_PRINT_STATS("Min = %u", rxstats->to_stack_delay.min_delay);
+		DP_PRINT_STATS("Max = %u", rxstats->to_stack_delay.max_delay);
+		DP_PRINT_STATS("Avg = %u\n", rxstats->to_stack_delay.avg_delay);
 	}
 }
 
@@ -3761,12 +3761,16 @@ uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
 
 	switch (param) {
 	case OL_ATH_PARAM_VIDEO_DELAY_STATS_FC:
-		qdf_print("------ Delay Stats ------\n");
-		dp_pdev_print_delay_stats(pdev);
+		if (value)
+			pdev->delay_stats_flag = true;
+		else
+			pdev->delay_stats_flag = false;
 		break;
 	case OL_ATH_PARAM_VIDEO_STATS_FC:
 		qdf_print("------- TID Stats ------\n");
 		dp_pdev_print_tid_stats(pdev);
+		qdf_print("------ Delay Stats ------\n");
+		dp_pdev_print_delay_stats(pdev);
 		break;
 	default:
 		qdf_print("%s: not handled param %d ", __func__, param);

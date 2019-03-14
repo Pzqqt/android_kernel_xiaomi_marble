@@ -189,6 +189,7 @@ enum cdp_delay_stats_mode {
  *	Index to be used for all delay stats
  */
 enum cdp_delay_bucket_index {
+	CDP_DELAY_BUCKET_0,
 	CDP_DELAY_BUCKET_1,
 	CDP_DELAY_BUCKET_2,
 	CDP_DELAY_BUCKET_3,
