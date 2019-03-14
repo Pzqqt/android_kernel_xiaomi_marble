@@ -371,9 +371,17 @@
  * @Max: 1
  * @Default: 1
  *
- * This ini is used to configure channel switch mode
+ * This ini is used to configure the value of channel switch mode, which is
+ * contained in the Channel Switch Announcement(CSA) information element sent
+ * by an SAP.
+ *
+ * 0 - CSA receiving STA doesn't need to do anything
+ * 1 - CSA receiving STA shall not transmit any more frames on the channel
+ *     until the scheduled channel switch occurs
  *
  * Related: none
+ *
+ * Supported Feature: SAP
  *
  * Usage: External
  *

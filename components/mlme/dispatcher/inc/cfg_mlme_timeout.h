@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -264,12 +264,13 @@
 
 /*
  * <ini>
- * gDataInactivityTimeout - Data activity timeout for non wow mode.
+ * gDataInactivityTimeout - Data inactivity timeout for non wow mode.
  * @Min: 1
  * @Max: 255
  * @Default: 200
  *
- * This ini is used to set data inactivity timeout in non wow mode.
+ * This ini is used to set data inactivity timeout value, in milliseconds, of
+ * non wow mode.
  *
  * Supported Feature: inactivity timeout in non wow mode
  *
