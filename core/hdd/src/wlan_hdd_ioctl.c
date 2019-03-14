@@ -7205,6 +7205,12 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 mem_alloc_failed:
 
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
+	/* Disable the channels received in command SET_DISABLE_CHANNEL_LIST */
+	if (!is_command_repeated && hdd_ctx->original_channels) {
+		wlan_hdd_disable_channels(hdd_ctx);
+		hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx);
+	}
+
 	hdd_exit();
 
 	return ret;
@@ -7212,6 +7218,7 @@ mem_alloc_failed:
 parse_failed:
 	if (!is_command_repeated)
 		wlan_hdd_free_cache_channels(hdd_ctx);
+
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
 	hdd_exit();
 

@@ -4537,7 +4537,7 @@ static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
 		return 0;
 }
 
-static void hdd_check_and_disconnect_sta_on_invalid_channel(
+void hdd_check_and_disconnect_sta_on_invalid_channel(
 		struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *sta_adapter;
@@ -4644,9 +4644,13 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 		 * Restore the orginal states of the channels
 		 * only if we have cached non zero values
 		 */
-		if (cache_chann->channel_info[i].wiphy_status && wiphy_channel)
-			wiphy_channel->flags =
+		wiphy_channel->flags =
 				cache_chann->channel_info[i].wiphy_status;
+
+		hdd_debug("Restore channel %d reg_stat %d wiphy_stat 0x%x",
+			  cache_chann->channel_info[i].channel_num,
+			  cache_chann->channel_info[i].reg_status,
+			  wiphy_channel->flags);
 	}
 
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
@@ -4662,16 +4666,7 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
-/**
- * wlan_hdd_disable_channels() - Cache the channels
- * and current state of the channels from the channel list
- * received in the command and disable the channels on the
- * wiphy and reg table.
- * @hdd_ctx: Pointer to hdd context
- *
- * Return: 0 on success, Error code on failure
- */
-static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
+int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 {
 	struct hdd_cache_channels *cache_chann;
 	struct wiphy *wiphy;
@@ -4737,7 +4732,7 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	return status;
 }
 #else
-static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
+int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
@@ -5018,18 +5013,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (policy_mgr_is_force_scc(hdd_ctx->psoc))
 			hdd_check_and_disconnect_sta_on_invalid_channel(
 								       hdd_ctx);
-	}
-	if (adapter->device_mode == QDF_SAP_MODE) {
-		/*
-		 * Disable the channels received in command
-		 * SET_DISABLE_CHANNEL_LIST
-		 */
-		status = wlan_hdd_disable_channels(hdd_ctx);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("Disable channel list fail");
-		else
-			hdd_check_and_disconnect_sta_on_invalid_channel(
-								hdd_ctx);
 	}
 
 	beacon = adapter->session.ap.beacon;
@@ -5674,8 +5657,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	goto free;
 
 error:
-	if (adapter->device_mode == QDF_SAP_MODE)
-		wlan_hdd_restore_channels(hdd_ctx, true);
 
 	/* Revert the indoor to passive marking if START BSS fails */
 	if (indoor_chnl_marking && adapter->device_mode == QDF_SAP_MODE) {
