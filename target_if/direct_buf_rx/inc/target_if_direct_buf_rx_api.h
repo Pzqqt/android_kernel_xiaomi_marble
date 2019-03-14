@@ -87,6 +87,16 @@ struct direct_buf_rx_data {
 };
 
 /**
+ * struct dbr_module_config - module configuration for dbr
+ * @num_resp_per_event: Number of events to be packed together
+ * @event_timeout_in_ms: Timeout until which multiple events can be packed
+ */
+struct dbr_module_config {
+	uint32_t num_resp_per_event;
+	uint32_t event_timeout_in_ms;
+};
+
+/**
  * direct_buf_rx_init() - Function to initialize direct buf rx module
  *
  * Return: QDF status of operation

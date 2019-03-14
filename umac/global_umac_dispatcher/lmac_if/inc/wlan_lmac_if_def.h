@@ -68,6 +68,8 @@ struct oem_data_rsp;
 struct direct_buf_rx_data;
 /* Forward declaration for module_ring_params */
 struct module_ring_params;
+/*Forward declaration for dbr_module_config */
+struct dbr_module_config;
 #endif
 
 #ifdef FEATURE_WLAN_TDLS
@@ -584,6 +586,7 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 struct wlan_lmac_if_direct_buf_rx_tx_ops {
 	QDF_STATUS (*direct_buf_rx_module_register)(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
+			struct dbr_module_config *dbr_config,
 			bool (*dbr_rsp_handler)
 			     (struct wlan_objmgr_pdev *pdev,
 			      struct direct_buf_rx_data *dbr_data));

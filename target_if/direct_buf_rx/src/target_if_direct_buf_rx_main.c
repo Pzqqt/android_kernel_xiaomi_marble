@@ -566,6 +566,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 	struct direct_buf_rx_cfg_req dbr_cfg_req = {0};
 	struct direct_buf_rx_ring_cfg *dbr_ring_cfg;
 	struct direct_buf_rx_ring_cap *dbr_ring_cap;
+	struct dbr_module_config *dbr_config;
 
 	direct_buf_rx_enter();
 
@@ -577,6 +578,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
+	dbr_config = &mod_param->dbr_config;
 	wmi_hdl = lmac_get_pdev_wmi_handle(pdev);
 	if (!wmi_hdl) {
 		direct_buf_rx_err("WMI handle null. Can't send WMI CMD");
@@ -601,8 +603,8 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 						& 0xFFFFFFFF00000000;
 	dbr_cfg_req.num_elems = dbr_ring_cap->ring_elems_min;
 	dbr_cfg_req.buf_size = dbr_ring_cap->min_buf_size;
-	dbr_cfg_req.num_resp_per_event = DBR_NUM_RESP_PER_EVENT;
-	dbr_cfg_req.event_timeout_ms = DBR_EVENT_TIMEOUT_IN_MS;
+	dbr_cfg_req.num_resp_per_event = dbr_config->num_resp_per_event;
+	dbr_cfg_req.event_timeout_ms = dbr_config->event_timeout_in_ms;
 	direct_buf_rx_info("pdev id %d mod id %d base addr lo %x\n"
 			   "base addr hi %x head idx addr lo %x\n"
 			   "head idx addr hi %x tail idx addr lo %x\n"
@@ -670,12 +672,14 @@ dbr_srng_init_failed:
 
 QDF_STATUS target_if_direct_buf_rx_module_register(
 			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
+			struct dbr_module_config *dbr_config,
 			bool (*dbr_rsp_handler)
 			     (struct wlan_objmgr_pdev *pdev,
 			      struct direct_buf_rx_data *dbr_data))
 {
 	QDF_STATUS status;
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
+	struct dbr_module_config *config = NULL;
 
 	if (!pdev) {
 		direct_buf_rx_err("pdev context passed is null");
@@ -712,8 +716,10 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	config = &dbr_pdev_obj->dbr_mod_param[mod_id].dbr_config;
 	dbr_pdev_obj->dbr_mod_param[mod_id].dbr_rsp_handler =
 			dbr_rsp_handler;
+	*config = *dbr_config;
 
 	status = target_if_init_dbr_ring(pdev, dbr_pdev_obj,
 					 (enum DBR_MODULE)mod_id);
