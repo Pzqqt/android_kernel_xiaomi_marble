@@ -2532,6 +2532,8 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
+	/* Stop the HIF Sleep Timer */
+	hif_cancel_deferred_target_sleep(scn);
 	return 0;
 }
 
@@ -2597,9 +2599,6 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
 {
 	if (hif_drain_tasklets(scn) != 0)
 		return -EBUSY;
-
-	/* Stop the HIF Sleep Timer */
-	hif_cancel_deferred_target_sleep(scn);
 
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		qdf_atomic_set(&scn->link_suspended, 1);
