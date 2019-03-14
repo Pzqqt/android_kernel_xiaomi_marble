@@ -1114,7 +1114,8 @@ static struct cal_block_data *msm_routing_find_topology_by_path(int path,
 static struct cal_block_data *msm_routing_find_topology(int path,
 							int app_type,
 							int acdb_id,
-							int cal_index)
+							int cal_index,
+							bool exact)
 {
 	struct list_head *ptr, *next;
 	struct cal_block_data *cal_block = NULL;
@@ -1139,9 +1140,29 @@ static struct cal_block_data *msm_routing_find_topology(int path,
 			return cal_block;
 		}
 	}
-	pr_debug("%s: Can't find topology for path %d, app %d, acdb_id %d defaulting to search by path\n",
-		__func__, path, app_type, acdb_id);
-	return msm_routing_find_topology_by_path(path, cal_index);
+	pr_debug("%s: Can't find topology for path %d, app %d, "
+		 "acdb_id %d %s\n",  __func__, path, app_type, acdb_id,
+		 exact ? "fail" : "defaulting to search by path");
+	return exact ? NULL : msm_routing_find_topology_by_path(path,
+								cal_index);
+}
+
+static int msm_routing_find_topology_on_index(int session_type, int app_type,
+					      int acdb_dev_id,  int idx,
+					      bool exact)
+{
+	int topology = -EINVAL;
+	struct cal_block_data *cal_block = NULL;
+
+	mutex_lock(&cal_data[idx]->lock);
+	cal_block = msm_routing_find_topology(session_type, app_type,
+					      acdb_dev_id, idx, exact);
+	if (cal_block != NULL) {
+		topology = ((struct audio_cal_info_adm_top *)
+			    cal_block->cal_info)->topology;
+	}
+	mutex_unlock(&cal_data[idx]->lock);
+	return topology;
 }
 
 /*
@@ -1153,7 +1174,6 @@ static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 					int be_id)
 {
 	int topology = NULL_COPP_TOPOLOGY;
-	struct cal_block_data *cal_block = NULL;
 	int app_type = 0, acdb_dev_id = 0;
 
 	pr_debug("%s: fedai_id %d, session_type %d, be_id %d\n",
@@ -1166,31 +1186,22 @@ static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 	acdb_dev_id =
 		fe_dai_app_type_cfg[fedai_id][session_type][be_id].acdb_dev_id;
 
-	mutex_lock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
-	cal_block = msm_routing_find_topology(session_type, app_type,
-					      acdb_dev_id,
-					      ADM_TOPOLOGY_CAL_TYPE_IDX);
-	if (cal_block != NULL) {
-		topology = ((struct audio_cal_info_adm_top *)
-			cal_block->cal_info)->topology;
-		cal_utils_mark_cal_used(cal_block);
-		mutex_unlock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
-	} else {
-		mutex_unlock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
-
-		pr_debug("%s: Check for LSM topology\n", __func__);
-		mutex_lock(&cal_data[ADM_LSM_TOPOLOGY_CAL_TYPE_IDX]->lock);
-		cal_block = msm_routing_find_topology(session_type, app_type,
-						acdb_dev_id,
-						ADM_LSM_TOPOLOGY_CAL_TYPE_IDX);
-		if (cal_block != NULL) {
-			topology = ((struct audio_cal_info_adm_top *)
-				cal_block->cal_info)->topology;
-			cal_utils_mark_cal_used(cal_block);
-		}
-		mutex_unlock(&cal_data[ADM_LSM_TOPOLOGY_CAL_TYPE_IDX]->lock);
+	pr_debug("%s: Check for exact LSM topology\n", __func__);
+	topology = msm_routing_find_topology_on_index(session_type,
+					       app_type,
+					       acdb_dev_id,
+					       ADM_LSM_TOPOLOGY_CAL_TYPE_IDX,
+					       true /*exact*/);
+	if (topology < 0) {
+		pr_debug("%s: Check for compatible topology\n", __func__);
+		topology = msm_routing_find_topology_on_index(session_type,
+						      app_type,
+						      acdb_dev_id,
+						      ADM_TOPOLOGY_CAL_TYPE_IDX,
+						      false /*exact*/);
+		if (topology < 0)
+			topology = NULL_COPP_TOPOLOGY;
 	}
-
 done:
 	pr_debug("%s: Using topology %d\n", __func__, topology);
 	return topology;
