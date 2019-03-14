@@ -1775,6 +1775,19 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan);
 
 /**
+ * policy_mgr_check_and_set_hw_mode_sta_channel_switch() - check if hw mode
+ * change is required before channel switch for STA,
+ * this is required if DBS mode is 2x2
+ * @psoc: PSOC object information
+ * @vdev_id: vdev id on which channel switch is required
+ * @chan: New channel to which channel switch is requested
+ *
+ * Return: QDF_STATUS, success if HW mode change is required else Failure
+ */
+QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan);
+
+/**
  * policy_mgr_set_do_hw_mode_change_flag() - Set flag to indicate hw mode change
  * @psoc: PSOC object information
  * @flag: Indicate if hw mode change is required or not
