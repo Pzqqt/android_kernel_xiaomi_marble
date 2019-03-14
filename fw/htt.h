@@ -176,9 +176,10 @@
  * 3.59 Add HTT_RXDMA_HOST_BUF_RING2 def
  * 3.60 Add HTT_T2H_MSG_TYPE_PEER_STATS_IND def
  * 3.61 Add rx offset fields to HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG msg
+ * 3.62 Add antenna mask to reserved space in htt_rx_ind_hl_rx_desc_t
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 61
+#define HTT_CURRENT_VERSION_MINOR 62
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -6930,7 +6931,7 @@ A_COMPILE_TIME_ASSERT(HTT_RX_IND_hdr_size_quantum,
 
 #define HTT_RX_IND_HL_BYTES                               \
     (HTT_RX_IND_HDR_BYTES +                               \
-     4 /* single FW rx MSDU descriptor, plus padding */ + \
+     4 /* single FW rx MSDU descriptor */ + \
      4 /* single MPDU range information element */)
 #define HTT_RX_IND_HL_SIZE32 (HTT_RX_IND_HL_BYTES >> 2)
 
@@ -6967,6 +6968,14 @@ struct htt_rx_ind_hl_rx_desc_t {
             udp: 1,
             reserved: 1;
     } flags;
+    /* sa_ant_matrix
+     * For cases where a single rx chain has options to be connected to
+     * different rx antennas, show which rx antennas were in use during
+     * receipt of a given PPDU.
+     * This sa_ant_matrix provides a bitmask of the antennas used while
+     * receiving this frame.
+     */
+    A_UINT8 sa_ant_matrix;
 };
 
 #define HTT_RX_IND_HL_RX_DESC_VER_OFFSET \
