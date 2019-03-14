@@ -245,9 +245,6 @@ enum hdd_driver_flags {
 #define MAX_GENIE_LEN (512)
 #define MIN_GENIE_LEN (2)
 
-/** Maximum Length of WPA/RSN IE */
-#define MAX_WPA_RSN_IE_LEN 255
-
 #define WPS_OUI_TYPE   "\x00\x50\xf2\x04"
 #define WPS_OUI_TYPE_SIZE  4
 
@@ -706,7 +703,7 @@ struct hdd_mon_set_ch_info {
  */
 struct hdd_station_ctx {
 	struct csr_roam_profile roam_profile;
-	uint8_t security_ie[MAX_WPA_RSN_IE_LEN];
+	uint8_t security_ie[WLAN_MAX_IE_LEN];
 	tSirAddie assoc_additional_ie;
 	enum nl80211_wpa_versions wpa_versions;
 	enum hdd_auth_key_mgmt auth_key_mgmt;

@@ -4115,20 +4115,20 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
 
 static void csr_reset_cfg_privacy(struct mac_context *mac)
 {
-	uint8_t Key0[MLME_WEP_KEY_LEN_13] = {0};
-	uint8_t Key1[MLME_WEP_KEY_LEN_13] = {0};
-	uint8_t Key2[MLME_WEP_KEY_LEN_13] = {0};
-	uint8_t Key3[MLME_WEP_KEY_LEN_13] = {0};
+	uint8_t Key0[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
+	uint8_t Key1[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
+	uint8_t Key2[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
+	uint8_t Key3[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
 	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
 
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0,
-			 MLME_WEP_KEY_LEN_13);
+			 WLAN_CRYPTO_KEY_WEP104_LEN);
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1,
-			 MLME_WEP_KEY_LEN_13);
+			 WLAN_CRYPTO_KEY_WEP104_LEN);
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2,
-			 MLME_WEP_KEY_LEN_13);
+			 WLAN_CRYPTO_KEY_WEP104_LEN);
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_4, Key3,
-			 MLME_WEP_KEY_LEN_13);
+			 WLAN_CRYPTO_KEY_WEP104_LEN);
 }
 
 void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProfile,
@@ -4141,14 +4141,14 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 	 * associations. See note below in this function...
 	 */
 	uint32_t privacy_enabled = 0, rsn_enabled = 0, wep_default_key_id = 0;
-	uint32_t WepKeyLength = MLME_WEP_KEY_LENGTH_5;
+	uint32_t WepKeyLength = WLAN_CRYPTO_KEY_WEP40_LEN;
 	uint32_t Key0Length = 0, Key1Length = 0, Key2Length = 0, Key3Length = 0;
 
 	/* Reserve for the biggest key */
-	uint8_t Key0[MLME_WEP_KEY_LEN_13];
-	uint8_t Key1[MLME_WEP_KEY_LEN_13];
-	uint8_t Key2[MLME_WEP_KEY_LEN_13];
-	uint8_t Key3[MLME_WEP_KEY_LEN_13];
+	uint8_t Key0[WLAN_CRYPTO_KEY_WEP104_LEN];
+	uint8_t Key1[WLAN_CRYPTO_KEY_WEP104_LEN];
+	uint8_t Key2[WLAN_CRYPTO_KEY_WEP104_LEN];
+	uint8_t Key3[WLAN_CRYPTO_KEY_WEP104_LEN];
 
 	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
 
@@ -4173,7 +4173,7 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		/* Set the Wep default key ID. */
 		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 5 bytes (40 bits). */
-		WepKeyLength = MLME_WEP_KEY_LENGTH_5;
+		WepKeyLength = WLAN_CRYPTO_KEY_WEP40_LEN;
 		/*
 		 * set encryption keys in the CFG database or
 		 * clear those that are not present in this profile.
@@ -4181,8 +4181,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[0]) {
 			qdf_mem_copy(Key0,
 				pProfile->Keys.KeyMaterial[0],
-				MLME_WEP_KEY_LENGTH_5);
-			Key0Length = MLME_WEP_KEY_LENGTH_5;
+				WLAN_CRYPTO_KEY_WEP40_LEN);
+			Key0Length = WLAN_CRYPTO_KEY_WEP40_LEN;
 		} else {
 			Key0Length = 0;
 		}
@@ -4190,8 +4190,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[1]) {
 			qdf_mem_copy(Key1,
 				pProfile->Keys.KeyMaterial[1],
-				MLME_WEP_KEY_LENGTH_5);
-			Key1Length = MLME_WEP_KEY_LENGTH_5;
+				WLAN_CRYPTO_KEY_WEP40_LEN);
+			Key1Length = WLAN_CRYPTO_KEY_WEP40_LEN;
 		} else {
 			Key1Length = 0;
 		}
@@ -4199,8 +4199,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[2]) {
 			qdf_mem_copy(Key2,
 				pProfile->Keys.KeyMaterial[2],
-				MLME_WEP_KEY_LENGTH_5);
-			Key2Length = MLME_WEP_KEY_LENGTH_5;
+				WLAN_CRYPTO_KEY_WEP40_LEN);
+			Key2Length = WLAN_CRYPTO_KEY_WEP40_LEN;
 		} else {
 			Key2Length = 0;
 		}
@@ -4208,8 +4208,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[3]) {
 			qdf_mem_copy(Key3,
 				pProfile->Keys.KeyMaterial[3],
-				MLME_WEP_KEY_LENGTH_5);
-			Key3Length = MLME_WEP_KEY_LENGTH_5;
+				WLAN_CRYPTO_KEY_WEP40_LEN);
+			Key3Length = WLAN_CRYPTO_KEY_WEP40_LEN;
 		} else {
 			Key3Length = 0;
 		}
@@ -4224,7 +4224,7 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		/* Set the Wep default key ID. */
 		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 13 bytes (104 bits). */
-		WepKeyLength = MLME_WEP_KEY_LEN_13;
+		WepKeyLength = WLAN_CRYPTO_KEY_WEP104_LEN;
 		/*
 		 * set encryption keys in the CFG database or clear
 		 * those that are not present in this profile.
@@ -4232,8 +4232,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[0]) {
 			qdf_mem_copy(Key0,
 				pProfile->Keys.KeyMaterial[0],
-				MLME_WEP_KEY_LEN_13);
-			Key0Length = MLME_WEP_KEY_LEN_13;
+				WLAN_CRYPTO_KEY_WEP104_LEN);
+			Key0Length = WLAN_CRYPTO_KEY_WEP104_LEN;
 		} else {
 			Key0Length = 0;
 		}
@@ -4241,8 +4241,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[1]) {
 			qdf_mem_copy(Key1,
 				pProfile->Keys.KeyMaterial[1],
-				MLME_WEP_KEY_LEN_13);
-			Key1Length = MLME_WEP_KEY_LEN_13;
+				WLAN_CRYPTO_KEY_WEP104_LEN);
+			Key1Length = WLAN_CRYPTO_KEY_WEP104_LEN;
 		} else {
 			Key1Length = 0;
 		}
@@ -4250,8 +4250,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[2]) {
 			qdf_mem_copy(Key2,
 				pProfile->Keys.KeyMaterial[2],
-				MLME_WEP_KEY_LEN_13);
-			Key2Length = MLME_WEP_KEY_LEN_13;
+				WLAN_CRYPTO_KEY_WEP104_LEN);
+			Key2Length = WLAN_CRYPTO_KEY_WEP104_LEN;
 		} else {
 			Key2Length = 0;
 		}
@@ -4259,8 +4259,8 @@ void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProf
 		if (pProfile->Keys.KeyLength[3]) {
 			qdf_mem_copy(Key3,
 				pProfile->Keys.KeyMaterial[3],
-				MLME_WEP_KEY_LEN_13);
-			Key3Length = MLME_WEP_KEY_LEN_13;
+				WLAN_CRYPTO_KEY_WEP104_LEN);
+			Key3Length = WLAN_CRYPTO_KEY_WEP104_LEN;
 		} else {
 			Key3Length = 0;
 		}
@@ -9962,16 +9962,16 @@ csr_update_key_cmd(struct mac_context *mac_ctx, struct csr_roam_session *session
 	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
 		/* KeyLength maybe 0 for static WEP */
 		if (set_key->keyLength) {
-			if (set_key->keyLength < CSR_WEP40_KEY_LEN) {
+			if (set_key->keyLength < WLAN_CRYPTO_KEY_WEP40_LEN) {
 				sme_warn("Invalid WEP40 keylength [= %d]",
 					set_key->keyLength);
 				*is_key_valid = false;
 				return QDF_STATUS_E_INVAL;
 			}
 
-			set_key_cmd->keyLength = CSR_WEP40_KEY_LEN;
+			set_key_cmd->keyLength = WLAN_CRYPTO_KEY_WEP40_LEN;
 			qdf_mem_copy(set_key_cmd->Key, set_key->Key,
-				     CSR_WEP40_KEY_LEN);
+				     WLAN_CRYPTO_KEY_WEP40_LEN);
 		}
 		*is_key_valid = true;
 		break;
@@ -9979,16 +9979,16 @@ csr_update_key_cmd(struct mac_context *mac_ctx, struct csr_roam_session *session
 	case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
 		/* KeyLength maybe 0 for static WEP */
 		if (set_key->keyLength) {
-			if (set_key->keyLength < CSR_WEP104_KEY_LEN) {
+			if (set_key->keyLength < WLAN_CRYPTO_KEY_WEP104_LEN) {
 				sme_warn("Invalid WEP104 keylength [= %d]",
 					set_key->keyLength);
 				*is_key_valid = false;
 				return QDF_STATUS_E_INVAL;
 			}
 
-			set_key_cmd->keyLength = CSR_WEP104_KEY_LEN;
+			set_key_cmd->keyLength = WLAN_CRYPTO_KEY_WEP104_LEN;
 			qdf_mem_copy(set_key_cmd->Key, set_key->Key,
-				     CSR_WEP104_KEY_LEN);
+				     WLAN_CRYPTO_KEY_WEP104_LEN);
 		}
 		*is_key_valid = true;
 		break;
@@ -10191,7 +10191,7 @@ struct mac_context *mac_ctx, uint32_t session_id,
 		set_key_cmd.paeRole = set_key->paeRole;
 		set_key_cmd.keyId = set_key->keyId;
 		qdf_mem_copy(set_key_cmd.keyRsc, set_key->keyRsc,
-			     CSR_MAX_RSC_LEN);
+			     WLAN_CRYPTO_RSC_SIZE);
 		/*
 		 * Always put set key to the head of the Q because it is the
 		 * only thing to get executed in case of WT_KEY state
@@ -16056,7 +16056,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 		pMsg->keyMaterial.key[0].unicast = fUnicast;
 		pMsg->keyMaterial.key[0].keyDirection = aniKeyDirection;
 		qdf_mem_copy(pMsg->keyMaterial.key[0].keyRsc,
-				pKeyRsc, CSR_MAX_RSC_LEN);
+				pKeyRsc, WLAN_CRYPTO_RSC_SIZE);
 		/* 0 is Supplicant */
 		pMsg->keyMaterial.key[0].paeRole = paeRole;
 		pMsg->keyMaterial.key[0].keyLength = keyLength;

@@ -274,7 +274,6 @@
 #define WMA_P2P_IE_ID 0xdd
 #define WMA_P2P_WFA_OUI { 0x50, 0x6f, 0x9a }
 #define WMA_P2P_WFA_VER 0x09    /* ver 1.0 */
-#define WMA_WSC_OUI { 0x00, 0x50, 0xF2 } /* Microsoft WSC OUI byte */
 
 /* P2P Sub element definitions (according to table 5 of Wifi's P2P spec) */
 #define WMA_P2P_SUB_ELEMENT_STATUS                    0
@@ -1389,7 +1388,7 @@ struct wma_set_key_params {
 	uint32_t key_idx;
 	bool unicast;
 	uint8_t key_data[SIR_MAC_MAX_KEY_LENGTH];
-	uint8_t key_rsc[SIR_MAC_MAX_KEY_RSC_LEN];
+	uint8_t key_rsc[WLAN_CRYPTO_RSC_SIZE];
 };
 
 /**

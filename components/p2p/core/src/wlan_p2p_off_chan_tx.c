@@ -206,10 +206,10 @@ static const uint8_t *p2p_get_p2pie_from_probe_rsp(
 	ie_len = tx_ctx->buf_len - PROBE_RSP_IE_OFFSET;
 	p2p_ie = p2p_get_p2pie_ptr(ie, ie_len);
 	while ((p2p_ie) &&
-		(P2P_MAX_IE_LENGTH == p2p_ie[1])) {
+		(WLAN_MAX_IE_LEN == p2p_ie[1])) {
 		ie_len = tx_ctx->buf_len - (p2p_ie - tx_ctx->buf);
 		if (ie_len > 2) {
-			ie = p2p_ie + P2P_MAX_IE_LENGTH + 2;
+			ie = p2p_ie + WLAN_MAX_IE_LEN + 2;
 			tmp_p2p_ie = p2p_get_p2pie_ptr(ie, ie_len);
 		}
 
@@ -467,12 +467,12 @@ static uint16_t p2p_update_noa_stream(struct tx_action_context *tx_ctx,
 		p2p_ie[1] = orig_len;
 	}
 
-	if ((p2p_ie[1] + noa_len) > P2P_MAX_IE_LENGTH) {
+	if ((p2p_ie[1] + noa_len) > WLAN_MAX_IE_LEN) {
 		overflow_len = p2p_ie[1] + noa_len -
-				P2P_MAX_IE_LENGTH;
+				WLAN_MAX_IE_LEN;
 		noa_len = p2p_get_noa_attr_stream_in_mult_p2p_ies(
 				noa_stream, noa_len, overflow_len);
-		p2p_ie[1] = P2P_MAX_IE_LENGTH;
+		p2p_ie[1] = WLAN_MAX_IE_LEN;
 	} else {
 		/* increment the length of P2P IE */
 		p2p_ie[1] += noa_len;

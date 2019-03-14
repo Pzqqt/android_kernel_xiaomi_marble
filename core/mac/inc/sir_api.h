@@ -5382,7 +5382,7 @@ struct sme_update_access_policy_vendor_ie {
 	uint16_t msg_type;
 	uint16_t length;
 	uint32_t sme_session_id;
-	uint8_t ie[SIR_MAC_MAX_IE_LENGTH + 2];
+	uint8_t ie[WLAN_MAX_IE_LEN + 2];
 	uint8_t access_policy;
 };
 

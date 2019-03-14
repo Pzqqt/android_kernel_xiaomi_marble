@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,6 @@
 
 #define P2P_MAX_NOA_ATTR_LEN                    31
 #define P2P_IE_HEADER_LEN                       6
-#define P2P_MAX_IE_LENGTH                       255
 #define P2P_ACTION_OFFSET                       24
 #define P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET     30
 #define P2P_ACTION_FRAME_TYPE_OFFSET            29

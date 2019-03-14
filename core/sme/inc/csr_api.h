@@ -176,8 +176,6 @@ typedef enum {
 #define CSR_RSN_PMKID_SIZE          16
 #define CSR_RSN_MAX_PMK_LEN         48
 #define CSR_MAX_PMKID_ALLOWED       32
-#define CSR_WEP40_KEY_LEN           5
-#define CSR_WEP104_KEY_LEN          13
 #define CSR_TKIP_KEY_LEN            32
 #define CSR_AES_KEY_LEN             16
 #define CSR_AES_GCMP_KEY_LEN        16
@@ -185,7 +183,6 @@ typedef enum {
 #define CSR_AES_GMAC_128_KEY_LEN    16
 #define CSR_AES_GMAC_256_KEY_LEN    32
 #define CSR_MAX_TX_POWER        (WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX)
-#define CSR_MAX_RSC_LEN             16
 #ifdef FEATURE_WLAN_WAPI
 #define CSR_WAPI_BKID_SIZE          16
 #define CSR_MAX_BKID_ALLOWED        16
@@ -1297,7 +1294,7 @@ typedef struct tagCsrRoamSetKey {
 	uint8_t keyId;          /* Key index */
 	uint16_t keyLength;     /* Number of bytes containing the key in pKey */
 	uint8_t Key[CSR_MAX_KEY_LEN];
-	uint8_t keyRsc[CSR_MAX_RSC_LEN];
+	uint8_t keyRsc[WLAN_CRYPTO_RSC_SIZE];
 } tCsrRoamSetKey;
 
 typedef void *tScanResultHandle;

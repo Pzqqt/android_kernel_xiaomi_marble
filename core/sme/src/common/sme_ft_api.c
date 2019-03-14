@@ -266,7 +266,7 @@ QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t session_
 	keymaterial->key[0].keyDirection = ftkey_info->keyDirection;
 
 	qdf_mem_copy(&keymaterial->key[0].keyRsc,
-			ftkey_info->keyRsc, CSR_MAX_RSC_LEN);
+			ftkey_info->keyRsc, WLAN_CRYPTO_RSC_SIZE);
 	keymaterial->key[0].paeRole = ftkey_info->paeRole;
 	keymaterial->key[0].keyLength = ftkey_info->keyLength;
 

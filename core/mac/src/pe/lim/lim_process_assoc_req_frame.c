@@ -831,8 +831,8 @@ static tSirMacStatusCodes lim_check_rsn_ie(struct pe_session *session,
 {
 	struct wlan_objmgr_vdev *vdev;
 
-	uint8_t buffer[SIR_MAC_MAX_IE_LENGTH];
-	uint32_t dot11f_status, written = 0, nbuffer = SIR_MAC_MAX_IE_LENGTH;
+	uint8_t buffer[WLAN_MAX_IE_LEN];
+	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
 	tSirMacRsnInfo rsn_ie;
 
 	dot11f_status = dot11f_pack_ie_rsn(mac_ctx, rsn, buffer,
@@ -868,8 +868,8 @@ static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
 					   tpSirAssocReq assoc_req,
 					   tDot11fIEWPA *wpa)
 {
-	uint8_t buffer[SIR_MAC_MAX_IE_LENGTH];
-	uint32_t dot11f_status, written = 0, nbuffer = SIR_MAC_MAX_IE_LENGTH;
+	uint8_t buffer[WLAN_MAX_IE_LEN];
+	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
 	tSirMacRsnInfo wpa_ie = {0};
 
 	dot11f_status = dot11f_pack_ie_wpa(mac_ctx, wpa, buffer,
@@ -2593,7 +2593,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		if (assoc_req->wpaPresent && (NULL == wpsie)) {
 			rsn_len = assoc_ind->rsnIE.length;
 			if ((rsn_len + assoc_req->wpa.length)
-				>= SIR_MAC_MAX_IE_LENGTH) {
+				>= WLAN_MAX_IE_LEN) {
 				pe_err("rsnIEdata index out of bounds: %d",
 					rsn_len);
 				qdf_mem_free(assoc_ind);
@@ -2630,7 +2630,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 
 			rsn_len = assoc_ind->addIE.length;
 			if (assoc_ind->addIE.length + DOT11F_IE_HTCAPS_MIN_LEN
-				+ 2 < SIR_MAC_MAX_IE_LENGTH) {
+				+ 2 < WLAN_MAX_IE_LEN) {
 				assoc_ind->addIE.addIEdata[rsn_len] =
 					SIR_MAC_HT_CAPABILITIES_EID;
 				assoc_ind->addIE.addIEdata[rsn_len + 1] =

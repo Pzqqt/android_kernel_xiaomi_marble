@@ -306,7 +306,7 @@ struct setkey_cmd {
 	uint8_t keyId;          /* Kye index */
 	uint8_t keyLength;      /* Number of bytes containing the key in pKey */
 	uint8_t Key[CSR_MAX_KEY_LEN];
-	uint8_t keyRsc[CSR_MAX_RSC_LEN];
+	uint8_t keyRsc[WLAN_CRYPTO_RSC_SIZE];
 };
 
 struct wmstatus_changecmd {

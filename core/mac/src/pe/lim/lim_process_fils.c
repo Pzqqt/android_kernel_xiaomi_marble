@@ -97,11 +97,11 @@ static uint8_t *lim_get_crypto_type(uint8_t akm)
 	switch (akm) {
 	case eCSR_AUTH_TYPE_FILS_SHA384:
 	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
-		return FILS_SHA384_CRYPTO_TYPE;
+		return HMAC_SHA386_CRYPTO_TYPE;
 	case eCSR_AUTH_TYPE_FILS_SHA256:
 	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
 	default:
-		return FILS_SHA256_CRYPTO_TYPE;
+		return HMAC_SHA256_CRYPTO_TYPE;
 	}
 }
 
@@ -292,7 +292,7 @@ lim_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
 	}
 
 	/* Create T1 */
-	if (qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE, secret, secret_len, 3,
+	if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret, secret_len, 3,
 			&addr[1], &len[1], tmp_hash) < 0) {
 		pe_err("failed to get hmac hash");
 		return QDF_STATUS_E_FAILURE;
@@ -308,7 +308,7 @@ lim_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
 			remaining_data = SHA256_DIGEST_SIZE;
 
 		/* Create T-n */
-		if (qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE, secret,
+		if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret,
 				secret_len, 4, addr, len, tmp_hash) < 0) {
 			pe_err("failed to get hmac hash");
 			return QDF_STATUS_E_FAILURE;
@@ -761,7 +761,7 @@ static QDF_STATUS lim_process_auth_wrapped_data(struct pe_session *pe_session,
 	input_len[0] -= auth_tag_len;
 	/* if we have auth tag remaining */
 	if (remaining_len == auth_tag_len) {
-		qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE,
+		qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE,
 				fils_info->fils_rik,
 				fils_info->fils_rik_len,
 				SINGLE_ELEMENT_HASH_CNT,
@@ -953,7 +953,7 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 	fils_info->fils_erp_reauth_pkt_len = buf_len;
 	length = fils_info->fils_erp_reauth_pkt_len -
 			lim_get_auth_tag_len(HMAC_SHA256_128);
-	qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE,
+	qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE,
 			fils_info->fils_rik, fils_info->fils_rik_len, 1,
 			&fils_info->fils_erp_reauth_pkt, &length, auth_tag);
 

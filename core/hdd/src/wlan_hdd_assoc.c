@@ -5758,7 +5758,7 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 	qdf_mem_zero(roam_profile, sizeof(*roam_profile));
 
 	security_ie = hdd_security_ie(adapter);
-	qdf_mem_zero(security_ie, MAX_WPA_RSN_IE_LEN);
+	qdf_mem_zero(security_ie, WLAN_MAX_IE_LEN);
 
 	assoc_additional_ie = hdd_assoc_additional_ie(adapter);
 	qdf_mem_zero(assoc_additional_ie, sizeof(*assoc_additional_ie));

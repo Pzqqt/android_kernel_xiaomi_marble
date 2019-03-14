@@ -20,9 +20,6 @@
 #define FILS_SHA256_128_AUTH_TAG 16
 #define FILS_SHA256_256_AUTH_TAG 32
 
-#define FILS_SHA256_CRYPTO_TYPE "hmac(sha256)"
-#define FILS_SHA384_CRYPTO_TYPE "hmac(sha384)"
-
 /* RFC 6696 */
 #define RMSK_LABEL "Re-authentication Master Session Key@ietf.org"
 
@@ -74,8 +71,6 @@
 /*9.4.2.188 FILS Wrapped Data element */
 #define SIR_FILS_WRAPPED_DATA_MAX_SIZE 255
 #define SIR_FILS_WRAPPED_DATA_EXT_EID   8
-
-#define MAX_IE_LENGTH 255
 
 /* RFC 6696 5.3.1: EAP-Initiate/Re-auth-Start Packet */
 #define SIR_FILS_EAP_REAUTH_PACKET_TYPE 1
@@ -238,7 +233,7 @@ struct pe_fils_session {
 	uint16_t sequence_number;
 	uint8_t fils_session[SIR_FILS_SESSION_LENGTH];
 	uint8_t fils_nonce[SIR_FILS_NONCE_LENGTH];
-	uint8_t rsn_ie[MAX_IE_LENGTH];
+	uint8_t rsn_ie[WLAN_MAX_IE_LEN];
 	uint8_t rsn_ie_len;
 	uint8_t *fils_eap_finish_pkt;
 	uint8_t fils_eap_finish_pkt_len;

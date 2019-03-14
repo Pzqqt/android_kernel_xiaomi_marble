@@ -107,10 +107,10 @@ lim_is_rsn_ie_valid_in_sme_req_message(struct mac_context *mac_ctx,
 			break;
 		case DOT11F_EID_WPA:
 			/* Check validity of WPA IE */
-			if (SIR_MAC_MAX_IE_LENGTH <= start)
+			if (WLAN_MAX_IE_LEN <= start)
 				break;
 
-			if (start <= (SIR_MAC_MAX_IE_LENGTH - sizeof(uint32_t)))
+			if (start <= (WLAN_MAX_IE_LEN - sizeof(uint32_t)))
 				val = sir_read_u32((uint8_t *) &
 					rsn_ie->rsnIEdata[start + 2]);
 
@@ -251,7 +251,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 	    (rsn_ie->rsnIEdata[1] < SIR_MAC_RSN_IE_MIN_LENGTH)) {
 		pe_err("RSN IE len: %d not [%d,%d]",
 			rsn_ie->rsnIEdata[1], SIR_MAC_RSN_IE_MIN_LENGTH,
-			SIR_MAC_RSN_IE_MAX_LENGTH);
+			WLAN_MAX_IE_LEN);
 		return false;
 	}
 
@@ -287,7 +287,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 		return true;
 	}
 	/* Check validity of WPA IE */
-	if (wpa_idx + 6 >= SIR_MAC_MAX_IE_LENGTH)
+	if (wpa_idx + 6 >= WLAN_MAX_IE_LEN)
 		return false;
 
 	val = sir_read_u32((uint8_t *)&rsn_ie->rsnIEdata[wpa_idx + 2]);
@@ -297,7 +297,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 		pe_err("WPA IE len: %d not [%d,%d] OR data 0x%x not 0x%x",
 			rsn_ie->rsnIEdata[1],
 			SIR_MAC_RSN_IE_MIN_LENGTH,
-			SIR_MAC_RSN_IE_MAX_LENGTH, val,
+			WLAN_MAX_IE_LEN, val,
 			SIR_MAC_WPA_OUI);
 		return false;
 	} else {

@@ -2345,7 +2345,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		key_params.key_len = key_info->key[i].keyLength;
 		qdf_mem_copy(key_params.key_rsc,
 				key_info->key[i].keyRsc,
-				SIR_MAC_MAX_KEY_RSC_LEN);
+				WLAN_CRYPTO_RSC_SIZE);
 		if (key_info->encType == eSIR_ED_TKIP) {
 			qdf_mem_copy(key_params.key_data,
 				     key_info->key[i].key, 16);

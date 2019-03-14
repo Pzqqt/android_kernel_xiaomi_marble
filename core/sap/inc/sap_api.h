@@ -485,7 +485,7 @@ typedef struct sap_config {
 	uint8_t num_accept_mac;
 	uint8_t num_deny_mac;
 	/* Max ie length 255 * 2(WPA+RSN) + 2 bytes(vendor specific ID) * 2 */
-	uint8_t RSNWPAReqIE[(SIR_MAC_MAX_IE_LENGTH * 2) + 4];
+	uint8_t RSNWPAReqIE[(WLAN_MAX_IE_LEN * 2) + 4];
 	/* it is ignored if [0] is 0. */
 	uint8_t countryCode[CFG_COUNTRY_CODE_LEN];
 	uint8_t RSNEncryptType;

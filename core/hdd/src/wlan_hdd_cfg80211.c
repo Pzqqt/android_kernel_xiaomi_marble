@@ -5294,7 +5294,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST] = {
 		.type = NLA_BINARY,
-		.len = SIR_MAC_MAX_IE_LENGTH + 2},
+		.len = WLAN_MAX_IE_LEN + 2},
 
 };
 
@@ -5649,7 +5649,7 @@ static int hdd_config_access_policy(struct hdd_adapter *adapter,
 	struct nlattr *ielist_attr =
 		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST];
 	uint32_t access_policy;
-	uint8_t ie[SIR_MAC_MAX_IE_LENGTH + 2];
+	uint8_t ie[WLAN_MAX_IE_LEN + 2];
 	QDF_STATUS status;
 
 	/* nothing to do if neither attribute is present */
@@ -5678,7 +5678,7 @@ static int hdd_config_access_policy(struct hdd_adapter *adapter,
 
 	/*
 	 * ie length is validated by the nla_policy.  need to make a
-	 * copy since SME will always read SIR_MAC_MAX_IE_LENGTH+2 bytes
+	 * copy since SME will always read WLAN_MAX_IE_LEN+2 bytes
 	 */
 	nla_memcpy(ie, ielist_attr, sizeof(ie));
 
@@ -14591,7 +14591,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (CSR_MAX_RSC_LEN < params->seq_len) {
+	if (WLAN_CRYPTO_RSC_SIZE < params->seq_len) {
 		hdd_err("Invalid seq length %d", params->seq_len);
 
 		return -EINVAL;
@@ -15246,7 +15246,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			qdf_copy_macaddr(&setKey.peerMac,
 					 &sta_ctx->conn_info.bssid);
 
-			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
+			if (Keys->KeyLength[key_index] ==
+					WLAN_CRYPTO_KEY_WEP40_LEN &&
 			    roam_profile->EncryptionType.
 			    encryptionType[0] == eCSR_ENCRYPT_TYPE_WEP104) {
 				/* In the case of dynamic wep
@@ -17232,14 +17233,14 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 				roam_profile->nAddIEAssocLength =
 					assoc_add_ie->length;
 			} else if (0 == memcmp(&genie[0], "\x00\x50\xf2", 3)) {
-				if (eLen > (MAX_WPA_RSN_IE_LEN - 2)) {
+				if (eLen > (WLAN_MAX_IE_LEN - 2)) {
 					hdd_err("%s: Invalid WPA IE length[%d]",
 						__func__, eLen);
 					QDF_ASSERT(0);
 					return -EINVAL;
 				}
 				hdd_debug("Set WPA IE (len %d)", eLen + 2);
-				memset(security_ie, 0, MAX_WPA_RSN_IE_LEN);
+				memset(security_ie, 0, WLAN_MAX_IE_LEN);
 				memcpy(security_ie, genie - 2, (eLen + 2));
 				roam_profile->pWPAReqIE = security_ie;
 				roam_profile->nWPAReqIELength = eLen + 2;     /* ie_len; */
@@ -17375,7 +17376,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 						__func__, eLen);
 				return -EINVAL;
 			}
-			memset(security_ie, 0, MAX_WPA_RSN_IE_LEN);
+			memset(security_ie, 0, WLAN_MAX_IE_LEN);
 			memcpy(security_ie, genie - 2, (eLen + 2));
 			roam_profile->pRSNReqIE = security_ie;
 			roam_profile->nRSNReqIELength = eLen + 2;     /* ie_len; */

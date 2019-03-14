@@ -32,14 +32,12 @@
 
 #include "sir_types.h"
 #include "sir_mac_prot_def.h"
+#include "wlan_crypto_global_def.h"
 
 #define ANI_OUI  0x000AF5
 
 /* This is to force compiler to use the maximum of an int for enum */
 #define SIR_MAX_ENUM_SIZE    0x7FFFFFFF
-
-/* Max key size  including the WAPI and TKIP */
-#define WLAN_MAX_KEY_RSC_LEN         16
 
 #ifndef false
 #undef false
@@ -138,12 +136,12 @@ typedef struct sAniSSID {
 /* / RSN IE information */
 typedef struct sSirRSNie {
 	uint16_t length;
-	uint8_t rsnIEdata[SIR_MAC_MAX_IE_LENGTH + 2];
+	uint8_t rsnIEdata[WLAN_MAX_IE_LEN + 2];
 } tSirRSNie, *tpSirRSNie;
 
 typedef struct sSirWAPIie {
 	uint16_t length;
-	uint8_t wapiIEdata[SIR_MAC_MAX_IE_LENGTH + 2];
+	uint8_t wapiIEdata[WLAN_MAX_IE_LEN + 2];
 } tSirWAPIie, *tpSirWAPIie;
 /* / Additional IE information : */
 /* / This can include WSC IE, P2P IE, and/or FTIE from upper layer. */
@@ -160,7 +158,7 @@ typedef struct sSirAddie {
 /* Join and Reassoc Req. */
 typedef struct sSirCCKMie {
 	uint16_t length;
-	uint8_t cckmIEdata[SIR_MAC_MAX_IE_LENGTH + 2];
+	uint8_t cckmIEdata[WLAN_MAX_IE_LEN + 2];
 } tSirCCKMie, *tpSirCCKMie;
 
 #endif
@@ -170,7 +168,7 @@ typedef struct sSirKeys {
 	uint8_t keyId;
 	uint8_t unicast;        /* 0 for multicast */
 	tAniKeyDirection keyDirection;
-	uint8_t keyRsc[WLAN_MAX_KEY_RSC_LEN];   /* Usage is unknown */
+	uint8_t keyRsc[WLAN_CRYPTO_RSC_SIZE];   /* Usage is unknown */
 	uint8_t paeRole;        /* =1 for authenticator, */
 	/* =0 for supplicant */
 	uint16_t keyLength;

@@ -109,7 +109,7 @@ int find_ie_location(struct mac_context *mac, tpSirRSNie pRsnIe, uint8_t EID)
 	/*     typedef struct sSirRSNie */
 	/*     { */
 	/*         uint16_t       length; */
-	/*         uint8_t        rsnIEdata[SIR_MAC_MAX_IE_LENGTH+2]; */
+	/*         uint8_t        rsnIEdata[WLAN_MAX_IE_LEN+2]; */
 	/*     } tSirRSNie, *tpSirRSNie; */
 
 	/* other code records both the WPA & RSN IEs (including their EIDs & */

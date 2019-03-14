@@ -188,7 +188,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	 *     typedef struct sSirRSNie
 	 *     {
 	 *         uint16_t       length;
-	 *         uint8_t        rsnIEdata[SIR_MAC_MAX_IE_LENGTH+2];
+	 *         uint8_t        rsnIEdata[WLAN_MAX_IE_LEN+2];
 	 *     } tSirRSNie, *tpSirRSNie;
 	 *
 	 * So, we should be able to make the following two calls harmlessly,
@@ -641,7 +641,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 	/*     typedef struct sSirRSNie */
 	/*     { */
 	/*         uint16_t       length; */
-	/*         uint8_t        rsnIEdata[SIR_MAC_MAX_IE_LENGTH+2]; */
+	/*         uint8_t        rsnIEdata[WLAN_MAX_IE_LEN+2]; */
 	/*     } tSirRSNie, *tpSirRSNie; */
 
 	/* So, we should be able to make the following two calls harmlessly, */

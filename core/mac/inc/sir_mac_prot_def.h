@@ -430,11 +430,6 @@
 
 #define SIR_MAC_MAX_ADD_IE_LENGTH       2048
 
-/* / Maximum length of each IE */
-#define SIR_MAC_MAX_IE_LENGTH       255
-
-/* / Maximum length of each IE */
-#define SIR_MAC_RSN_IE_MAX_LENGTH   255
 /* / Minimum length of each IE */
 #define SIR_MAC_RSN_IE_MIN_LENGTH   2
 #define SIR_MAC_WPA_IE_MIN_LENGTH   6
@@ -456,8 +451,6 @@
 
 /* OUI and type definition for WPA IE in network byte order */
 #define SIR_MAC_WPA_OUI             0x01F25000
-#define SIR_MAC_WME_OUI             0x02F25000
-#define SIR_MAC_WSM_OUI             SIR_MAC_WME_OUI
 #define SIR_MAC_WSC_OUI             "\x00\x50\xf2\x04"
 #define SIR_MAC_WSC_OUI_SIZE        4
 #define SIR_MAC_P2P_OUI             "\x50\x6f\x9a\x09"
@@ -581,7 +574,6 @@
 
 /* / MAX key length when ULA is used */
 #define SIR_MAC_MAX_KEY_LENGTH               32
-#define SIR_MAC_MAX_KEY_RSC_LEN              16
 
 /* / Macro definitions for get/set on FC fields */
 #define SIR_MAC_GET_PROT_VERSION(x)      ((((uint16_t) x) & 0x0300) >> 8)
@@ -1000,13 +992,13 @@ typedef struct sSirMacSSid {
 
 typedef struct sSirMacWpaInfo {
 	uint8_t length;
-	uint8_t info[SIR_MAC_MAX_IE_LENGTH];
+	uint8_t info[WLAN_MAX_IE_LEN];
 } qdf_packed tSirMacWpaInfo, *tpSirMacWpaInfo,
 tSirMacRsnInfo, *tpSirMacRsnInfo;
 
 typedef struct sSirMacWapiInfo {
 	uint8_t length;
-	uint8_t info[SIR_MAC_MAX_IE_LENGTH];
+	uint8_t info[WLAN_MAX_IE_LEN];
 } qdf_packed tSirMacWapiInfo, *tpSirMacWapiInfo;
 
 typedef struct sSirMacFHParamSet {
