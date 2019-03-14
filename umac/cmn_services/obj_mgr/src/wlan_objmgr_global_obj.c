@@ -785,3 +785,27 @@ void wlan_objmgr_print_ref_ids(qdf_atomic_t *id,
 
 	return;
 }
+
+QDF_STATUS wlan_objmgr_iterate_psoc_list(
+		wlan_objmgr_psoc_handler handler,
+		void *arg, wlan_objmgr_ref_dbgid dbg_id)
+{
+	uint8_t index = 0;
+
+	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
+
+	while (index < WLAN_OBJMGR_MAX_DEVICES) {
+		if (g_umac_glb_obj->psoc[index]) {
+			handler((void *)g_umac_glb_obj->psoc[index],
+				arg, index);
+		}
+		index++;
+	}
+
+	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_objmgr_iterate_psoc_list);
+

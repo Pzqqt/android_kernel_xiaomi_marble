@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -479,5 +479,30 @@ QDF_STATUS wlan_objmgr_unregister_peer_status_handler(
 		enum wlan_umac_comp_id id,
 		wlan_objmgr_peer_status_handler handler,
 		void *args);
+
+/**
+ * APIs to operations on psoc
+ */
+typedef void (*wlan_objmgr_psoc_handler)(struct wlan_objmgr_psoc *psoc,
+					void *arg,
+					uint8_t index);
+
+/**
+ * wlan_objmgr_iterate_psoc_list() - iterate through all psocs
+ *
+ * @handler: the handler will be called for each psoc
+ *           the handler should be implemented to perform required operation
+ * @arg:     agruments passed by caller
+ * @dbg_id: id of the caller
+ *
+ * API to be used for performing the operations on all psoc
+ * The "handler" here shouldn't take g_umac_glb_obj->global_lock lock when
+ * processing
+ *
+ * Return: SUCCESS/FAILURE
+ */
+QDF_STATUS wlan_objmgr_iterate_psoc_list(
+		wlan_objmgr_psoc_handler handler,
+		void *arg, wlan_objmgr_ref_dbgid dbg_id);
 
 #endif /* _WLAN_OBJMGR_GLOBAL_OBJ_H_*/
