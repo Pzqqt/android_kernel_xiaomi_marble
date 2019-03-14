@@ -27,6 +27,7 @@ enum {
 	AUDIO_EXT_CLK_LPASS6,
 	AUDIO_EXT_CLK_LPASS7,
 	AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE,
+	AUDIO_EXT_CLK_LPASS8,
 	AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_EXTERNAL_PLL = AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_MAX,
@@ -317,6 +318,17 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.hw.init = &(struct clk_init_data){
 				.name = "lpass_hw_vote_clk",
 				.ops = &lpass_hw_vote_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.mult = 1,
+			.div = 1,
+			.hw.init = &(struct clk_init_data){
+				.name = "audio_lpass_mclk8",
+				.ops = &audio_ext_clk_ops,
 			},
 		},
 	},
