@@ -7030,6 +7030,67 @@ static int hdd_alloc_chan_cache(struct hdd_context *hdd_ctx, int num_chan)
 }
 
 /**
+ * check_disable_channels() - Check for disable channel
+ * @hdd_ctx: Pointer to hdd context
+ * @operating_channel: Current operating channel of adapter
+ *
+ * This function checks original_channels array for a specific channel
+ *
+ * Return: 0 if channel not found, 1 if channel found
+ */
+static bool check_disable_channels(struct hdd_context *hdd_ctx,
+				   uint8_t operating_channel)
+{
+	uint32_t num_channels;
+	uint8_t i;
+
+	if (!hdd_ctx || !hdd_ctx->original_channels ||
+	    !hdd_ctx->original_channels->channel_info)
+		return false;
+
+	num_channels = hdd_ctx->original_channels->num_channels;
+	for (i = 0; i < num_channels; i++)
+		if (hdd_ctx->original_channels->channel_info[i].channel_num ==
+				operating_channel)
+			return true;
+	return false;
+}
+
+/**
+ * disconnect_sta_and_stop_sap() - Disconnect STA and stop SAP
+ *
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Disable channels provided by user and disconnect STA if it is
+ * connected to any AP, stop SAP and send deauthentication request
+ * to STAs connected to SAP.
+ *
+ * Return: None
+ */
+static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter, *next = NULL;
+	QDF_STATUS status;
+
+	if (!hdd_ctx)
+		return;
+
+	hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx);
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapter);
+	while (adapter && (status == QDF_STATUS_SUCCESS)) {
+		if (!hdd_validate_adapter(adapter) &&
+		    (adapter->device_mode == QDF_SAP_MODE) &&
+		    (check_disable_channels(hdd_ctx,
+		     adapter->session.ap.operating_channel)))
+			wlan_hdd_stop_sap(adapter);
+
+		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
+		adapter = next;
+	}
+}
+
+/**
  * hdd_parse_disable_chan_cmd() - Parse the channel list received
  * in command.
  * @adapter: pointer to hdd adapter
@@ -7207,8 +7268,10 @@ mem_alloc_failed:
 	qdf_mutex_release(&hdd_ctx->cache_channel_lock);
 	/* Disable the channels received in command SET_DISABLE_CHANNEL_LIST */
 	if (!is_command_repeated && hdd_ctx->original_channels) {
-		wlan_hdd_disable_channels(hdd_ctx);
-		hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx);
+		ret = wlan_hdd_disable_channels(hdd_ctx);
+		if (ret)
+			return ret;
+		disconnect_sta_and_stop_sap(hdd_ctx);
 	}
 
 	hdd_exit();

@@ -129,6 +129,7 @@ struct hdd_config {
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
 	bool is_unit_test_framework_enabled;
+	bool disable_channel;
 
 	/* HDD converged ini items are listed below this*/
 	bool bug_on_reinit_failure;
