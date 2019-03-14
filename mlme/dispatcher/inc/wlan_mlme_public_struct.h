@@ -1785,9 +1785,6 @@ struct wlan_mlme_oce {
 	uint8_t feature_bitmap;
 };
 
-#define MLME_WEP_KEY_LEN_13 (13)
-#define MLME_WEP_KEY_LENGTH_5 (5)
-
 /**
  * enum wep_key_id  - values passed to get/set wep default keys
  * @MLME_WEP_DEFAULT_KEY_1: wep default key 1
