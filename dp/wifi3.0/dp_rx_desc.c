@@ -126,6 +126,20 @@ void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
 }
 
 /*
+ * dp_rx_desc_pool_free_array() - free the sw rx desc array called during
+ *			         de-initialization of wifi module.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @rx_desc_pool: rx descriptor pool pointer
+ */
+void dp_rx_desc_free_array(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool)
+{
+	qdf_mem_free(rx_desc_pool->array);
+}
+
+/*
  * dp_rx_get_free_desc_list() - provide a list of descriptors from
  *				the free rx desc pool.
  *

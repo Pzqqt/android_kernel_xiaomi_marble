@@ -370,6 +370,9 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
 			       struct rx_desc_pool *rx_desc_pool);
 
+void dp_rx_desc_free_array(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool);
+
 void dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 				struct dp_peer *peer);
 

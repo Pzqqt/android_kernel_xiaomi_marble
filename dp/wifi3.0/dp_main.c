@@ -3733,7 +3733,8 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
-	int mac_id;
+	struct rx_desc_pool *rx_desc_pool;
+	int mac_id, mac_for_pdev;
 
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		dp_srng_cleanup(soc, &soc->tcl_data_ring[pdev->pdev_id],
@@ -3756,6 +3757,19 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 		dp_mon_ring_cleanup(soc, pdev, mac_id);
 		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
 				RXDMA_DST, 0);
+		if (dp_is_soc_reinit(soc)) {
+			mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+							      pdev->pdev_id);
+			rx_desc_pool = &soc->rx_desc_status[mac_for_pdev];
+			dp_rx_desc_free_array(soc, rx_desc_pool);
+			rx_desc_pool = &soc->rx_desc_mon[mac_for_pdev];
+			dp_rx_desc_free_array(soc, rx_desc_pool);
+		}
+	}
+
+	if (dp_is_soc_reinit(soc)) {
+		rx_desc_pool = &soc->rx_desc_buf[pdev->pdev_id];
+		dp_rx_desc_free_array(soc, rx_desc_pool);
 	}
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
