@@ -9864,6 +9864,7 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 						   curr_attr,
 						   acs_chan_list_policy)) {
 			hdd_err("nla_parse failed");
+			qdf_mem_free(channel_list);
 			return -EINVAL;
 		}
 		if (tb2[SET_EXT_ACS_BAND]) {
