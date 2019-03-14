@@ -1443,10 +1443,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (!rx_reorder_array_elem) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "Rcvd Fragmented pkt before peer_tid is setup");
-		qdf_nbuf_free(frag);
-		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
-		*rx_bfs = 1;
-		goto end;
+		goto discard_frag;
 	}
 
 	/*
