@@ -281,6 +281,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_BCN_TX_RATE:
 		mlme_mgmt->rate_info.bcn_tx_rate = mlme_cfg.value;
+		is_wmi_cmd = 1;
 		break;
 	default:
 		break;
