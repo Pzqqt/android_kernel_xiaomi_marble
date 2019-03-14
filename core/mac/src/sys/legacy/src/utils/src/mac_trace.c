@@ -369,6 +369,7 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_CSA_RESTART_RSP);
 		CASE_RETURN_STRING(eWNI_SME_MSG_TYPES_END);
 		CASE_RETURN_STRING(eWNI_SME_HIDDEN_SSID_RESTART_RSP);
+		CASE_RETURN_STRING(eWNI_SME_STA_CSA_CONTINUE_REQ);
 	default:
 		return (uint8_t *) "UNKNOWN";
 		break;

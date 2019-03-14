@@ -20297,6 +20297,26 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac_ctx,
 
 	return status;
 }
+
+QDF_STATUS csr_sta_continue_csa(struct mac_context *mac_ctx, uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct scheduler_msg message = {0};
+
+	/* Serialize the req through MC thread */
+	message.bodyval = vdev_id;
+	message.type    = eWNI_SME_STA_CSA_CONTINUE_REQ;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("eWNI_SME_STA_CSA_CONTINUE_REQ failed!(err=%d)",
+			status);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 /**
  * csr_roaming_report_diag_event() - Diag events for LFR3

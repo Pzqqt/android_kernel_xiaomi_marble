@@ -1057,6 +1057,15 @@ void lim_send_mgmt_frame_tx(struct mac_context *mac_ctx,
 void lim_send_csa_restart_req(struct mac_context *mac_ctx, uint8_t vdev_id);
 
 /**
+ * lim_continue_sta_csa_req() - continue with CSA req after HW mode change
+ * @mac_ctx Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id);
+
+/**
  * lim_process_mlm_start_req() - process MLM_START_REQ message
  *
  * @mac_ctx: global MAC context

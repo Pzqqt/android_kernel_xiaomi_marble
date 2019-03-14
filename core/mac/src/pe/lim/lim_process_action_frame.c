@@ -72,6 +72,7 @@ static last_processed_msg rrm_link_action_frm;
 void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 {
 	struct pe_session *pe_session;
+	QDF_STATUS status;
 
 	pe_session = pe_find_session_by_session_id(mac, sessionId);
 
@@ -89,6 +90,13 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		       pe_session->gLimChannelSwitch.switchMode);
 
 	mac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
+	status = policy_mgr_check_and_set_hw_mode_sta_channel_switch(mac->psoc,
+				pe_session->smeSessionId,
+				pe_session->gLimChannelSwitch.primaryChannel);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		pe_info("Channel change will continue after HW mode change");
+		return;
+	}
 	/* change the channel immediately only if
 	 * the channel switch count is 0
 	 */

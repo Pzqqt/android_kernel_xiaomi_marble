@@ -2075,6 +2075,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		lim_send_csa_restart_req(mac_ctx, msg->bodyval);
 		break;
 #endif
+	case eWNI_SME_STA_CSA_CONTINUE_REQ:
+		lim_continue_sta_csa_req(mac_ctx, msg->bodyval);
+		break;
 	case WMA_SEND_BCN_RSP:
 		lim_send_bcn_rsp(mac_ctx, (tpSendbeaconParams)msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);

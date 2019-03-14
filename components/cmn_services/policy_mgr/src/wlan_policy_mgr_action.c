@@ -1944,6 +1944,47 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 	return status;
 }
 
+QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
+		struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, uint8_t chan)
+{
+	QDF_STATUS status;
+	struct policy_mgr_conc_connection_info info;
+	uint8_t num_cxn_del = 0;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc) ||
+	    !policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+		policy_mgr_err("2x2 DBS is not enabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
+		policy_mgr_err("Already in DBS mode");
+		return QDF_STATUS_E_ALREADY;
+	}
+
+	if (!WLAN_CHAN_IS_2GHZ(chan)) {
+		policy_mgr_err("DBS is not required for 5Ghz chan");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+	/*
+	 * Store the connection's parameter and temporarily delete it
+	 * from the concurrency table. This way the allow concurrency
+	 * check can be used as though a new connection is coming up,
+	 * after check, restore the connection to concurrency table.
+	 */
+	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
+						      &info, &num_cxn_del);
+
+	status = policy_mgr_current_connections_update(psoc, vdev_id, chan,
+				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA);
+
+	/* Restore the connection entry */
+	if (num_cxn_del)
+		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
+	return status;
+}
+
 void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 		struct wlan_objmgr_psoc *psoc, uint8_t channel)
 {

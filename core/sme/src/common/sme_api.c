@@ -210,6 +210,10 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		}
 		csr_saved_scan_cmd_free_fields(mac, session);
 	}
+	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
+		sme_debug(" Continue channel switch for STA");
+		csr_sta_continue_csa(mac, session_id);
+	}
 
 end:
 	found = csr_nonscan_active_ll_remove_entry(mac, entry,

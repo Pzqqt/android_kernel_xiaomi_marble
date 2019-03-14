@@ -852,6 +852,15 @@ QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
 QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id);
 #endif
 
+/**
+ * csr_sta_continue_csa() - Continue for CSA for STA after HW mode change
+ * @mac_ctx: handle returned by mac_open
+ * @vdev_id: STA VDEV ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_sta_continue_csa(struct mac_context *mac_ctx,
+				uint8_t vdev_id);
 
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
