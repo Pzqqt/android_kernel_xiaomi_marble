@@ -88,26 +88,6 @@ struct reg_domain_pair {
 	uint8_t dmn_id_2g;
 };
 
-/**
- * enum ctl_value - CTL value
- * @CTL_FCC: CTL FCC
- * @CTL_MKK: CTL MKK
- * @CTL_ETSI: CTL ETSI
- * @CTL_KOR: CTL KOR
- * @CTL_CHN: CTL CHINA
- * @CTL_USER_DEF: CTL USER_DEF
- * @CTL_NONE: CTL NONE
- */
-enum ctl_value {
-	CTL_FCC = 0x10,
-	CTL_ETSI = 0x30,
-	CTL_MKK = 0x40,
-	CTL_KOR = 0x50,
-	CTL_CHN = 0x60,
-	CTL_USER_DEF = 0x70,
-	CTL_NONE = 0xff
-};
-
 QDF_STATUS reg_get_num_countries(int *num_countries);
 
 QDF_STATUS reg_get_num_reg_dmn_pairs(int *num_reg_dmn);
