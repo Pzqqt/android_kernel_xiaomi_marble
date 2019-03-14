@@ -121,7 +121,7 @@
  *
  * This ini is used to enable/disable dynamic DTIM.
  *
- * 0 -Disable Dynamic DTIM
+ * 0 - Disable Dynamic DTIM
  * 1 to 5 - SLM will switch to DTIM specified here when host suspends and
  *          switch DTIM1 when host resumes
  *

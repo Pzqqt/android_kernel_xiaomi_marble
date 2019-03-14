@@ -217,9 +217,9 @@
  * gVhtChannelWidth - Channel width capability for 11ac
  * @Min: 0
  * @Max: 4
- * @Default: 3
+ * @Default: 2
  *
- * This ini is  used to set channel width capability for 11AC.
+ * This ini is used to set channel width capability for 11AC.
  * eHT_CHANNEL_WIDTH_20MHZ = 0,
  * eHT_CHANNEL_WIDTH_40MHZ = 1,
  * eHT_CHANNEL_WIDTH_80MHZ = 2,
