@@ -9796,6 +9796,20 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 #define	SET_CHAN_MAX QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_MAX
 #define SET_EXT_ACS_BAND QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_CHANNEL_BAND
 
+static const struct nla_policy acs_chan_config_policy[SET_CHAN_MAX + 1] = {
+	[SET_CHAN_REASON] = {.type = NLA_U8},
+	[SET_CHAN_CHAN_LIST] = {.type = NLA_NESTED},
+};
+
+static const struct nla_policy acs_chan_list_policy[SET_CHAN_MAX + 1] = {
+	[SET_CHAN_PRIMARY_CHANNEL] = {.type = NLA_U8},
+	[SET_CHAN_SECONDARY_CHANNEL] = {.type = NLA_U8},
+	[SET_CHAN_SEG0_CENTER_CHANNEL] = {.type = NLA_U8},
+	[SET_CHAN_SEG1_CENTER_CHANNEL] = {.type = NLA_U8},
+	[SET_CHAN_CHANNEL_WIDTH] = {.type = NLA_U8},
+	[SET_EXT_ACS_BAND] = {.type = NLA_U8},
+};
+
 /**
  * hdd_parse_vendor_acs_chan_config() - API to parse vendor acs channel config
  * @channel_list: pointer to hdd_vendor_chan_info
@@ -9810,13 +9824,15 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 		**chan_list_ptr, uint8_t *reason, uint8_t *channel_cnt,
 		const void *data, int data_len)
 {
-	int rem, i = 0;
+	int rem;
+	uint32_t i = 0;
 	struct nlattr *tb[SET_CHAN_MAX + 1];
 	struct nlattr *tb2[SET_CHAN_MAX + 1];
 	struct nlattr *curr_attr;
 	struct hdd_vendor_chan_info *channel_list;
 
-	if (wlan_cfg80211_nla_parse(tb, SET_CHAN_MAX, data, data_len, NULL)) {
+	if (wlan_cfg80211_nla_parse(tb, SET_CHAN_MAX, data, data_len,
+				    acs_chan_config_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -9827,7 +9843,12 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem)
 		i++;
 
-	*channel_cnt = i;
+	if (i > MAX_CHANNEL) {
+		hdd_err("Error: Exceeded max channels: %u", MAX_CHANNEL);
+		return -ENOMEM;
+	}
+
+	*channel_cnt = (uint8_t)i;
 
 	if (i == 0)
 		hdd_err("incorrect channel count");
@@ -9839,9 +9860,9 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 
 	i = 0;
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem) {
-		if (wlan_cfg80211_nla_parse(tb2, SET_CHAN_MAX,
-					    nla_data(curr_attr),
-					    nla_len(curr_attr), NULL)) {
+		if (wlan_cfg80211_nla_parse_nested(tb2, SET_CHAN_MAX,
+						   curr_attr,
+						   acs_chan_list_policy)) {
 			hdd_err("nla_parse failed");
 			return -EINVAL;
 		}
