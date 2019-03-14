@@ -20482,6 +20482,10 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 
 		buf = nla_data(tb[WLAN_HDD_TM_ATTR_DATA]);
 		buf_len = nla_len(tb[WLAN_HDD_TM_ATTR_DATA]);
+		if (buf_len < sizeof(*hb_params_temp)) {
+			hdd_err("Invalid buffer length for TM_ATTR_DATA");
+			return -EINVAL;
+		}
 
 		hb_params_temp = (struct pmo_lphb_req *) buf;
 		if ((hb_params_temp->cmd == pmo_lphb_set_tcp_pararm_indid)
