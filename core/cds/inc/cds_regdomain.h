@@ -441,20 +441,6 @@ enum reg_domain {
 };
 
 /**
- * enum ctl_val: CTL value
- * @FCC: FCC
- * @MKK: MKK
- * @ETSI: ETSI
- * @NO_CTL: no CTL
- */
-enum ctl_val {
-	FCC = 0x10,
-	MKK = 0x40,
-	ETSI = 0x30,
-	NO_CTL = 0xff
-};
-
-/**
  * struct reg_dmn_pair: regulatory domain pair
  * @reg_dmn_pair: reg domain pair
  * @reg_dmn_5ghz: 5G reg domain

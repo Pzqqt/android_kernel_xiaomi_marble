@@ -53,11 +53,6 @@
 #define WMA_LINK_MONITOR_DEFAULT_TIME_SECS 10
 #define WMA_KEEP_ALIVE_DEFAULT_TIME_SECS   5
 
-/* conformance test limits */
-#define FCC       0x10
-#define MKK       0x40
-#define ETSI      0x30
-
 /* The maximum number of patterns that can be transmitted by the firmware
  *  and maximum patterns size.
  */
