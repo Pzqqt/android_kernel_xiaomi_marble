@@ -541,7 +541,14 @@ dp_2k_jump_handle(struct dp_soc *soc,
 	}
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	ppdu_id = hal_rx_attn_phy_ppdu_id_get(rx_tlv_hdr);
-	if (rx_tid->ppdu_id_2k != ppdu_id) {
+
+	/*
+	 * If BA session is created and a non-aggregate packet is
+	 * landing here then the issue is with sequence number mismatch.
+	 * Proceed with delba even in that case
+	 */
+	if (rx_tid->ppdu_id_2k != ppdu_id &&
+	    rx_tid->ba_status != DP_RX_BA_ACTIVE) {
 		rx_tid->ppdu_id_2k = ppdu_id;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		goto free_nbuf;
