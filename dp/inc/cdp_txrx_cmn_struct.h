@@ -88,7 +88,7 @@
 		(((_tid) == 4) || ((_tid) == 5)) ? WME_AC_VI : \
 		WME_AC_VO)
 
-#define CDP_MU_MAX_USERS 8
+#define CDP_MU_MAX_USERS 37
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 #define CDP_INVALID_PEER 0xffff
 #define CDP_INVALID_TID	 31
