@@ -1620,7 +1620,6 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 {
 	switch (event_data->uevent) {
 	case PLD_FW_DOWN:
-	case PLD_FW_CRASHED:
 		hdd_info("Received firmware down indication");
 
 		/* NOTE! SSR cleanup logic goes in pld shutdown, not here */

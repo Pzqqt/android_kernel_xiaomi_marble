@@ -1017,7 +1017,6 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 		pmo_err("Pending commands %d credits %d",
 			pmo_tgt_psoc_get_pending_cmnds(psoc),
 			pmo_tgt_psoc_get_host_credits(psoc));
-		cds_set_driver_in_bad_state(true);
 		qdf_trigger_self_recovery();
 	} else {
 		pmo_debug("Host wakeup received");
@@ -1091,7 +1090,6 @@ QDF_STATUS pmo_core_psoc_resume_target(struct wlan_objmgr_psoc *psoc,
 		pmo_fatal("Pending commands %d credits %d",
 			pmo_tgt_psoc_get_pending_cmnds(psoc),
 			pmo_tgt_psoc_get_host_credits(psoc));
-		cds_set_driver_in_bad_state(true);
 		qdf_trigger_self_recovery();
 	} else {
 		pmo_debug("Host wakeup received");
