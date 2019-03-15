@@ -110,6 +110,7 @@ struct lpi_gpio_state {
 	char __iomem        *base;
 	struct clk          *lpass_core_hw_vote;
 	struct mutex         slew_access_lock;
+	bool core_hw_vote_status;
 };
 
 static const char *const lpi_gpio_groups[] = {
@@ -710,6 +711,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	}
 	state->lpass_core_hw_vote = lpass_core_hw_vote;
 
+	state->core_hw_vote_status = false;
 	pm_runtime_set_autosuspend_delay(&pdev->dev, LPI_AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
@@ -760,10 +762,12 @@ int lpi_pinctrl_runtime_resume(struct device *dev)
 	}
 
 	ret = clk_prepare_enable(state->lpass_core_hw_vote);
-	if (ret < 0) {
+	if (ret < 0)
 		dev_err(dev, "%s:lpass core hw island enable failed\n",
 			__func__);
-	}
+	else
+		state->core_hw_vote_status = true;
+
 	pm_runtime_set_autosuspend_delay(dev, LPI_AUTO_SUSPEND_DELAY);
 	return 0;
 }
@@ -776,7 +780,11 @@ int lpi_pinctrl_runtime_suspend(struct device *dev)
 		dev_dbg(dev, "%s: Invalid core hw node\n", __func__);
 		return 0;
 	}
-	clk_disable_unprepare(state->lpass_core_hw_vote);
+
+	if (state->core_hw_vote_status) {
+		clk_disable_unprepare(state->lpass_core_hw_vote);
+		state->core_hw_vote_status = false;
+	}
 	return 0;
 }
 
