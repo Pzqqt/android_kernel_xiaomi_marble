@@ -55,10 +55,9 @@
 #include <wlan_action_oui_public_struct.h>
 #include <wlan_action_oui_ucfg_api.h>
 #include "wlan_mlme_api.h"
+#include "wlan_mlme_ucfg_api.h"
 #include <wlan_utility.h>
 #include "cfg_mlme.h"
-#include "cfg_ucfg_api.h"
-#include "wlan_mlme_api.h"
 #include "wlan_mlme_public_struct.h"
 #include <wlan_crypto_global_api.h>
 #include "wlan_qct_sys.h"
@@ -1333,12 +1332,14 @@ void csr_set_global_cfgs(struct mac_context *mac)
 	 */
 	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE_5GHZ,
 			 mac->roam.configParam.channelBondingMode5GHz))
-		mac->mlme_cfg->feature_flags.channel_bonding_mode_5ghz =
-				mac->roam.configParam.channelBondingMode5GHz;
+		ucfg_mlme_set_channel_bonding_5ghz(mac->psoc,
+						   mac->roam.configParam.
+						   channelBondingMode5GHz);
 	if (cfg_in_range(CFG_CHANNEL_BONDING_MODE_24GHZ,
 			 mac->roam.configParam.channelBondingMode24GHz))
-		mac->mlme_cfg->feature_flags.channel_bonding_mode_24ghz =
-				mac->roam.configParam.channelBondingMode24GHz;
+		ucfg_mlme_set_channel_bonding_24ghz(mac->psoc,
+						    mac->roam.configParam.
+						    channelBondingMode24GHz);
 
 	if (cfg_in_range(CFG_HEART_BEAT_THRESHOLD,
 			 mac->roam.configParam.HeartbeatThresh24))

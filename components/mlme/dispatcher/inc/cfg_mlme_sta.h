@@ -25,13 +25,15 @@
 
 /*
  * <ini>
- * gStaKeepAlivePeriod - Sends NULL frame to AP periodically in
- * seconds to notify STA's existence
+ * gStaKeepAlivePeriod - STA keep alive period
+ *
+ *
  * @Min: 0
  * @Max: 1000
  * @Default: 60
  *
- * This ini is used to send default NULL frame to AP
+ * This ini is used to control how frequently STA should send NULL frames to AP
+ * (period in seconds) to notify AP of its existence.
  *
  * Related: None
  *
