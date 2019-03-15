@@ -754,6 +754,9 @@ static int csra66x0_init(struct csra66x0_priv *csra66x0)
 	snd_soc_component_write(component, CSRA66X0_CH2_VOLUME_1_FA,
 				SPK_VOLUME_M20DB_MSB);
 
+	/* disable volume ramping */
+	snd_soc_component_write(component, CSRA66X0_VOLUME_CONFIG_FA, 0x27);
+
 	snd_soc_component_write(component, CSRA66X0_DEAD_TIME_CTRL, 0x0);
 	snd_soc_component_write(component, CSRA66X0_DEAD_TIME_THRESHOLD_0,
 				0xE7);
