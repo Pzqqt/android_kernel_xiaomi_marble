@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,7 @@
 #define __WMA_TWT_H
 
 #include "wma.h"
+#include "wmi_unified_twt_param.h"
 
 #ifdef WLAN_SUPPORT_TWT
 /**
@@ -40,6 +41,23 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout);
  */
 void wma_set_twt_peer_caps(tpAddStaParams params,
 			   struct peer_assoc_params *cmd);
+
+/**
+ * wma_twt_process_add_dialog() - Process twt add dialog command
+ * @params: add dialog configuration param
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_twt_process_add_dialog(struct wmi_twt_add_dialog_param *params);
+
+/**
+ * wma_twt_process_del_dialog() - Process del dialog command
+ * @params: del dialog configuration param
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_twt_process_del_dialog(struct wmi_twt_del_dialog_param *params);
+
 #else
 static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   uint32_t congestion_timeout)
@@ -50,6 +68,22 @@ static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 static inline void wma_set_twt_peer_caps(tpAddStaParams params,
 					 struct peer_assoc_params *cmd)
 {
+}
+
+static inline QDF_STATUS wma_twt_process_add_dialog(
+		struct wmi_twt_add_dialog_param *params)
+{
+	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline QDF_STATUS wma_twt_process_del_dialog(
+		struct wmi_twt_del_dialog_param *params)
+{
+	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+
+	return QDF_STATUS_E_INVAL;
 }
 #endif
 

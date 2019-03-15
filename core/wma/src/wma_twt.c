@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,5 +86,45 @@ void wma_set_twt_peer_caps(tpAddStaParams params, struct peer_assoc_params *cmd)
 		cmd->peer_flags |= WMI_PEER_TWT_REQ;
 	if (params->twt_responder)
 		cmd->peer_flags |= WMI_PEER_TWT_RESP;
+}
+
+QDF_STATUS wma_twt_process_add_dialog(
+		struct wmi_twt_add_dialog_param *params)
+{
+	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	wmi_unified_t wmi_handle;
+
+	if (!wma_handle) {
+		WMA_LOGE("Invalid WMA context, twt add dialog failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE("Invalid wmi handle, twt add dialog failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_twt_add_dialog_cmd(wmi_handle, params);
+}
+
+QDF_STATUS wma_twt_process_del_dialog(
+		struct wmi_twt_del_dialog_param *params)
+{
+	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	wmi_unified_t wmi_handle;
+
+	if (!wma_handle) {
+		WMA_LOGE("Invalid WMA context, twt del dialog failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE("Invalid wmi handle, twt del dialog failed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_twt_del_dialog_cmd(wmi_handle, params);
 }
 
