@@ -1734,7 +1734,6 @@ static QDF_STATUS cds_force_assert_target(qdf_device_t qdf)
 
 	/* wmi assert failed, start recovery without the firmware assert */
 	cds_err("Scheduling recovery work without firmware assert");
-	cds_set_recovery_in_progress(true);
 	pld_schedule_recovery_work(qdf->dev, PLD_REASON_DEFAULT);
 
 	return status;
@@ -1804,6 +1803,7 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		goto deinit_rtl;
 	}
 
+	cds_set_recovery_in_progress(true);
 	cds_force_assert_target(qdf);
 
 	status = qdf_runtime_pm_allow_suspend(&rtl);
