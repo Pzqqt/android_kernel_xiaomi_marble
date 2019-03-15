@@ -167,6 +167,18 @@
  *
  * This ini is used to set default channel bonding mode 24GHZ
  *
+ * 0 - 20MHz IF bandwidth centered on IF carrier
+ * 1 - 40MHz IF bandwidth with lower 20MHz supporting the primary channel
+ * 2 - reserved
+ * 3 - 40MHz IF bandwidth with higher 20MHz supporting the primary channel
+ * 4 - 20/40MHZ offset LOW 40/80MHZ offset CENTERED
+ * 5 - 20/40MHZ offset CENTERED 40/80MHZ offset CENTERED
+ * 6 - 20/40MHZ offset HIGH 40/80MHZ offset CENTERED
+ * 7 - 20/40MHZ offset LOW 40/80MHZ offset LOW
+ * 8 - 20/40MHZ offset HIGH 40/80MHZ offset LOW
+ * 9 - 20/40MHZ offset LOW 40/80MHZ offset HIGH
+ * 10 - 20/40MHZ offset-HIGH 40/80MHZ offset HIGH
+ *
  * Related: None
  *
  * Supported Feature: STA
@@ -191,6 +203,8 @@
  * @Default: 0
  *
  * This ini is used to set default channel bonding mode 5GHZ
+ *
+ * Values of 0 - 10 have the same meanings as for gChannelBondingMode24GHz.
  *
  * Related: None
  *

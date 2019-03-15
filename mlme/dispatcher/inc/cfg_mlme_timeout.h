@@ -219,7 +219,7 @@
  * @Max: 65535
  * @Default: 20
  *
- * This ini is used to set keep alive period of AP
+ * This ini is used to set keep alive period(in seconds) of AP
  *
  * Related: None.
  *
