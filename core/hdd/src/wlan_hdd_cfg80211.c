@@ -20171,7 +20171,8 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 		gtk_req->replay_counter);
 
 	wlan_hdd_copy_gtk_kek(gtk_req, data);
-	qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
+	if (data->kck)
+		qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
 	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev) {
