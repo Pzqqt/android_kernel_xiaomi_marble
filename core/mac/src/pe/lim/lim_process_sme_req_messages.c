@@ -2978,7 +2978,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 
 	if (msg_buf == NULL) {
 		pe_err("msg_buf is NULL");
-		goto end;
+		return;
 	}
 
 	qdf_mem_copy(&assoc_cnf, msg_buf, sizeof(assoc_cnf));
