@@ -586,7 +586,7 @@ QDF_STATUS wlan_objmgr_pdev_vdev_attach(struct wlan_objmgr_pdev *pdev,
 
 	wlan_pdev_obj_lock(pdev);
 	/* If Max vdev count exceeds, return failure */
-	if (objmgr->wlan_vdev_count > objmgr->max_vdev_count) {
+	if (objmgr->wlan_vdev_count >= objmgr->max_vdev_count) {
 		wlan_pdev_obj_unlock(pdev);
 		return QDF_STATUS_E_FAILURE;
 	}
