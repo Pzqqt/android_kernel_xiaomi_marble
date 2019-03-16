@@ -217,13 +217,13 @@ static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 		if ((!pdev_mlme->restart_pend_vdev_bmap[0] &&
 		     !pdev_mlme->restart_pend_vdev_bmap[1]) &&
 		    (!pdev_mlme->restart_send_vdev_bmap[0] &&
-		     !pdev_mlme->restart_send_vdev_bmap[1]))
+		     !pdev_mlme->restart_send_vdev_bmap[1])) {
 			wlan_pdev_mlme_op_clear
 					(pdev,
 					 WLAN_PDEV_OP_RESTART_INPROGRESS);
 			wlan_pdev_mlme_op_clear(pdev,
 						WLAN_PDEV_OP_MBSSID_RESTART);
-
+		}
 	} else {
 		status = QDF_STATUS_SUCCESS;
 	}
