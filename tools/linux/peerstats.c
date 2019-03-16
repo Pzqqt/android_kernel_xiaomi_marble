@@ -85,7 +85,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 			    "rssi 2 e80",
 			    "rssi 3 p20",
 			    "rssi 3 e20");
-	DP_PEER_STATS_PRINT(" | %10s | %10s | %10s | %10s | %10s\n\n\n",
+	DP_PEER_STATS_PRINT(" | %10s | %10s | %10s | %10s | %10s | %10s\n\n\n",
 			    "rssi 3 e40",
 			    "rssi 3 e80",
 			    "rssi 4 p20",
@@ -93,13 +93,13 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 			    "rssi 4 e40",
 			    "rssi 4 e80");
 
-	for (i = 0; i < WLANSTATS_MAX_NODE; i++) {
+	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
 		DP_PEER_STATS_PRINT("\t\t%10u | %10u | %10u | %10u | %10u |",
 				    rx_stats->rate,
 				    rx_stats->rix,
 				    rx_stats->num_bytes,
 				    rx_stats->num_msdus,
-				    rx_stats->num_mpdus,
+				    rx_stats->num_mpdus
 				     );
 		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u |",
 				    rx_stats->num_ppdus,
@@ -183,7 +183,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	struct wlan_tx_rate_stats *tx_stats;
 	struct wlan_tx_sojourn_stats *sojourn_stats;
 
-	if (buffer_len < (WLANSTATS_MAX_NODE *
+	if (buffer_len < (WLANSTATS_CACHE_SIZE *
 			  sizeof(struct wlan_tx_rate_stats))
 			  + sizeof(struct wlan_tx_sojourn_stats)) {
 		DP_PEER_STATS_PRINT("invalid buffer len, return");
@@ -214,7 +214,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 			    "attempts",
 			    "success",
 			    "ppdus");
-	for (i = 0; i < WLANSTATS_MAX_NODE; i++) {
+	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
 		DP_PEER_STATS_PRINT("\t\t%10u | %10u | %10u | %10u | %10u\n",
 				    tx_stats->rate,
 				    tx_stats->rix,
@@ -224,7 +224,7 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 		tx_stats = tx_stats + 1;
 	}
 
-	sojourn_stats = buffer + (WLANSTATS_MAX_NODE *
+	sojourn_stats = buffer + (WLANSTATS_CACHE_SIZE *
 				  sizeof(struct wlan_tx_rate_stats));
 	dp_peer_tx_sojourn_stats_print(peer_mac, peer_cookie, sojourn_stats);
 
