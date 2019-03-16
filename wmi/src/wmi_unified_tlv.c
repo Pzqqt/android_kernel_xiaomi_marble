@@ -12133,6 +12133,12 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_CFR_CAPTURE_SUPPORT;
 	wmi_service[wmi_service_bcast_twt_support] =
 			WMI_SERVICE_BROADCAST_TWT;
+	wmi_service[wmi_service_wpa3_ft_sae_support] =
+			WMI_SERVICE_WPA3_FT_SAE_SUPPORT;
+	wmi_service[wmi_service_wpa3_ft_suite_b_support] =
+			WMI_SERVICE_WPA3_FT_SUITE_B_SUPPORT;
+	wmi_service[wmi_service_ft_fils] =
+			WMI_SERVICE_WPA3_FT_FILS;
 }
 
 /**

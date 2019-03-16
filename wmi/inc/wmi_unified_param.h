@@ -69,7 +69,7 @@
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define WMI_BTK_KEY_LEN     32
 #define WMI_ROAM_R0KH_ID_MAX_LEN    48
-#define WMI_ROAM_SCAN_PSK_SIZE    32
+#define WMI_ROAM_SCAN_PSK_SIZE    48
 #endif
 #define WMI_NOISE_FLOOR_DBM_DEFAULT      (-96)
 #define WMI_EXTSCAN_MAX_HOTLIST_SSIDS                    8
@@ -1899,6 +1899,7 @@ typedef struct {
 #define WMI_FILS_MAX_RIK_LENGTH WMI_FILS_MAX_RRK_LENGTH
 #define WMI_FILS_MAX_REALM_LENGTH 256
 #define WMI_FILS_MAX_USERNAME_LENGTH 16
+#define WMI_FILS_FT_MAX_LEN 48
 
 /**
  * struct roam_fils_params - Roam FILS params
@@ -1911,6 +1912,8 @@ typedef struct {
  * @rik_length: length of @rik
  * @realm: realm
  * @realm_len: length of @realm
+ * @fils_ft: xx_key for FT-FILS connection
+ * @fils_ft_len: length of FT-FILS
  */
 struct roam_fils_params {
 	uint8_t username[WMI_FILS_MAX_USERNAME_LENGTH];
@@ -1922,6 +1925,8 @@ struct roam_fils_params {
 	uint32_t rik_length;
 	uint8_t realm[WMI_FILS_MAX_REALM_LENGTH];
 	uint32_t realm_len;
+	uint8_t fils_ft[WMI_FILS_FT_MAX_LEN];
+	uint8_t fils_ft_len;
 };
 
 /* struct roam_offload_scan_params - structure
@@ -5307,6 +5312,9 @@ typedef enum {
 	wmi_service_ul_ru26_allowed,
 	wmi_service_cfr_capture_support,
 	wmi_service_bcast_twt_support,
+	wmi_service_wpa3_ft_sae_support,
+	wmi_service_wpa3_ft_suite_b_support,
+	wmi_service_ft_fils,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
