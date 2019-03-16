@@ -33,6 +33,9 @@
 #include "../../core/src/dfs_process_radar_found_ind.h"
 #include <qdf_module.h>
 #include "../../core/src/dfs_partial_offload_radar.h"
+#ifdef QCA_MCL_DFS_SUPPORT
+#include "wlan_mlme_ucfg_api.h"
+#endif
 
 struct wlan_lmac_if_dfs_tx_ops *
 wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
@@ -301,18 +304,29 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 qdf_export_symbol(tgt_dfs_destroy_object);
 
 #ifdef QCA_MCL_DFS_SUPPORT
-QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
-		uint16_t tx_leakage_threshold)
+QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
+	uint32_t tx_leakage_threshold = 0;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return  QDF_STATUS_E_FAILURE;
 	}
+	ucfg_mlme_get_sap_tx_leakage_threshold(psoc,
+					       &tx_leakage_threshold);
 
 	dfs->tx_leakage_threshold = tx_leakage_threshold;
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		  "dfs tx_leakage_threshold = %d", dfs->tx_leakage_threshold);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -277,16 +277,13 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev);
 /**
  * tgt_dfs_set_tx_leakage_threshold() - set tx_leakage_threshold.
  * @pdev: Pointer to DFS pdev object.
- * @tx_leakage_threshold: tx leakage threshold for dfs.
  *
  * Return QDF_STATUS.
  */
-QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
-		uint16_t tx_leakage_threshold);
+QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev);
 #else
 static inline QDF_STATUS tgt_dfs_set_tx_leakage_threshold
-		(struct wlan_objmgr_pdev *pdev,
-		uint16_t tx_leakage_threshold)
+		(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
