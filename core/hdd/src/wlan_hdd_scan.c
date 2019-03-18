@@ -234,7 +234,7 @@ static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->skip_acs_scan_status != eSAP_SKIP_ACS_SCAN)
 		return false;
 	qdf_spin_lock(&hdd_ctx->acs_skip_lock);
-	if (hdd_ctx->last_acs_channel_list == NULL ||
+	if (!hdd_ctx->last_acs_channel_list ||
 	   hdd_ctx->num_of_channels == 0 ||
 	   request->n_channels == 0) {
 		qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
@@ -642,7 +642,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				scan_info->default_scan_ies_len;
 			params.default_ie.ptr =
 				qdf_mem_malloc(scan_info->default_scan_ies_len);
-			if (params.default_ie.ptr != NULL) {
+			if (params.default_ie.ptr) {
 				qdf_mem_copy(params.default_ie.ptr,
 					     scan_info->default_scan_ies,
 					     scan_info->default_scan_ies_len);
@@ -676,7 +676,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		goto error;
 	}
 
-	if ((request->n_ssids == 1) && (request->ssids != NULL) &&
+	if ((request->n_ssids == 1) && (request->ssids) &&
 	    (request->ssids[0].ssid_len > 7) &&
 	     !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		ucfg_p2p_status_scan(vdev);
@@ -1364,7 +1364,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (NULL == hdd_ctx) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is Null");
 		return -EINVAL;
 	}

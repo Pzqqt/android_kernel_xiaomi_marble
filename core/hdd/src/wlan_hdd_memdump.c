@@ -231,7 +231,7 @@ static const struct file_operations driver_dump_fops = {
 static int hdd_driver_memdump_procfs_init(struct hdd_context *hdd_ctx)
 {
 	proc_dir_driver = proc_mkdir(PROCFS_DRIVER_DUMP_DIR, NULL);
-	if (proc_dir_driver == NULL) {
+	if (!proc_dir_driver) {
 		pr_debug("Could not initialize /proc/%s\n",
 			 PROCFS_DRIVER_DUMP_DIR);
 		return -ENOMEM;
@@ -240,7 +240,7 @@ static int hdd_driver_memdump_procfs_init(struct hdd_context *hdd_ctx)
 	proc_file_driver = proc_create_data(PROCFS_DRIVER_DUMP_NAME,
 				     PROCFS_DRIVER_DUMP_PERM, proc_dir_driver,
 				     &driver_dump_fops, hdd_ctx);
-	if (proc_file_driver == NULL) {
+	if (!proc_file_driver) {
 		remove_proc_entry(PROCFS_DRIVER_DUMP_NAME, proc_dir_driver);
 		pr_debug("Could not initialize /proc/%s\n",
 			  PROCFS_DRIVER_DUMP_NAME);

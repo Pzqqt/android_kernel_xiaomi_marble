@@ -67,7 +67,7 @@ static char *get_next_line(char *str)
 {
 	char c;
 
-	if (str == NULL || *str == '\0')
+	if (!str || *str == '\0')
 		return NULL;
 
 	c = *str;
@@ -627,7 +627,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 
 	temp = qdf_mem_malloc(fw->size + 1);
 
-	if (temp == NULL) {
+	if (!temp) {
 		hdd_err("fail to alloc memory");
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto config_exit;
@@ -641,7 +641,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	 * Intf1MacAddress=00AA00BB00CD
 	 * END
 	 */
-	while (buffer != NULL) {
+	while (buffer) {
 		line = get_next_line(buffer);
 		buffer = i_trim(buffer);
 
@@ -806,7 +806,7 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 
 	buffer = (char *)qdf_mem_malloc(fw->size);
 
-	if (NULL == buffer) {
+	if (!buffer) {
 		hdd_err("qdf_mem_malloc failure");
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto config_exit;
@@ -816,7 +816,7 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 	qdf_mem_copy((void *)buffer, (void *)fw->data, fw->size);
 	size = fw->size;
 
-	while (buffer != NULL) {
+	while (buffer) {
 		line = get_next_line(buffer);
 		buffer = i_trim(buffer);
 
@@ -985,13 +985,13 @@ static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
 {
 	char *format, *s = str;
 
-	if (str == NULL || array == NULL || len == NULL)
+	if (!str || !array || !len)
 		return QDF_STATUS_E_INVAL;
 
 	format = (to_hex) ? "%02x" : "%d";
 
 	*len = 0;
-	while ((s != NULL) && (*len < array_max_len)) {
+	while ((s) && (*len < array_max_len)) {
 		int val;
 		/* Increment length only if sscanf successfully extracted
 		 * one element. Any other return value means error.
@@ -1038,7 +1038,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 	char *s = str;
 	uint32_t val = 0;
 
-	if (str == NULL || int_array == NULL || len == NULL)
+	if (!str || !int_array || !len)
 		return QDF_STATUS_E_INVAL;
 
 	hdd_debug("str %pK intArray %pK intArrayMaxLen %d",
@@ -1046,7 +1046,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 
 	*len = 0;
 
-	while ((s != NULL) && (*len < int_array_max_len)) {
+	while ((s) && (*len < int_array_max_len)) {
 		/*
 		 * Increment length only if sscanf successfully extracted one
 		 * element. Any other return value means error. Ignore it.
@@ -1108,7 +1108,7 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	struct policy_mgr_user_cfg *user_cfg;
 
 	user_cfg = qdf_mem_malloc(sizeof(*user_cfg));
-	if (NULL == user_cfg) {
+	if (!user_cfg) {
 		hdd_err("unable to allocate user_cfg");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1309,7 +1309,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	}
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (NULL == sme_config) {
+	if (!sme_config) {
 		hdd_err("unable to allocate sme_config");
 		return QDF_STATUS_E_NOMEM;
 	}

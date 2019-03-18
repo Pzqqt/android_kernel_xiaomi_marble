@@ -514,15 +514,15 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 
 	adapter->debugfs_phy = debugfs_create_dir(net_dev->name, 0);
 
-	if (NULL == adapter->debugfs_phy)
+	if (!adapter->debugfs_phy)
 		return QDF_STATUS_E_FAILURE;
 
-	if (NULL == debugfs_create_file("wow_pattern", 00400 | 00200,
+	if (!debugfs_create_file("wow_pattern", 00400 | 00200,
 					adapter->debugfs_phy, net_dev,
 					&fops_wowpattern))
 		return QDF_STATUS_E_FAILURE;
 
-	if (NULL == debugfs_create_file("pattern_gen", 00400 | 00200,
+	if (!debugfs_create_file("pattern_gen", 00400 | 00200,
 					adapter->debugfs_phy, net_dev,
 					&fops_patterngen))
 		return QDF_STATUS_E_FAILURE;

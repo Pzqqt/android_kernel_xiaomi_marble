@@ -1752,7 +1752,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 	adapter = netdev_priv(dev);
 
-	if ((NULL == adapter) ||
+	if ((!adapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("invalid adapter or adapter has invalid magic");
 		return QDF_STATUS_E_FAILURE;
@@ -2708,7 +2708,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 	tDot11fIERSN dot11_rsn_ie = {0};
 	tDot11fIEWPA dot11_wpa_ie = {0};
 
-	if (NULL == mac_handle) {
+	if (!mac_handle) {
 		hdd_err("Error haHandle returned NULL");
 		return -EINVAL;
 	}
@@ -3086,7 +3086,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (NULL == channel || NULL == sec_ch) {
+	if (!channel || !sec_ch) {
 		hdd_err("Null parameters");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3549,7 +3549,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 
 	hdd_enter();
 
-	if (NULL == dev) {
+	if (!dev) {
 		hdd_err("Called with dev = NULL");
 		return -ENODEV;
 	}
@@ -3799,7 +3799,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(struct hdd_adapter *adapter,
 	uint16_t ielen = 0;
 	bool skip_ie;
 
-	if (NULL == ptr || 0 == left)
+	if (!ptr || 0 == left)
 		return;
 
 	while (left >= 2) {
@@ -3866,7 +3866,7 @@ static void wlan_hdd_add_extra_ie(struct hdd_adapter *adapter,
 	uint8_t elem_id, elem_len;
 	uint16_t ielen = 0;
 
-	if (NULL == ptr || 0 == left)
+	if (!ptr || 0 == left)
 		return;
 
 	while (left >= 2) {
@@ -3967,7 +3967,7 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *adapter,
 
 	beacon = qdf_mem_malloc(size);
 
-	if (beacon == NULL) {
+	if (!beacon) {
 		hdd_err("Mem allocation for beacon failed");
 		return -ENOMEM;
 	}
@@ -4086,7 +4086,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	genie = qdf_mem_malloc(MAX_GENIE_LEN);
 
-	if (genie == NULL)
+	if (!genie)
 		return -ENOMEM;
 
 	mac_handle = adapter->hdd_ctx->mac_handle;
@@ -4148,7 +4148,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	/* Added for Probe Response IE */
 	proberesp_ies = qdf_mem_malloc(beacon->proberesp_ies_len +
 				      MAX_GENIE_LEN);
-	if (proberesp_ies == NULL) {
+	if (!proberesp_ies) {
 		hdd_err("mem alloc failed for probe resp ies, size: %d",
 			beacon->proberesp_ies_len + MAX_GENIE_LEN);
 		ret = -EINVAL;
@@ -4231,7 +4231,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
 				      &mgmt_frame->u.beacon.variable[0],
 				      beacon->head_len);
-	if (ie != NULL) {
+	if (ie) {
 		ie += 1;
 		wlan_hdd_check_11gmode(ie, &require_ht, &require_vht,
 			&checkRatesfor11g, &config->SapHw_mode);
@@ -4239,7 +4239,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_EXT_SUPP_RATES,
 				      beacon->tail, beacon->tail_len);
-	if (ie != NULL) {
+	if (ie) {
 		ie += 1;
 		wlan_hdd_check_11gmode(ie, &require_ht, &require_vht,
 			&checkRatesfor11g, &config->SapHw_mode);
@@ -5361,7 +5361,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	config->SSIDinfo.ssidHidden = false;
 
-	if (ssid != NULL) {
+	if (ssid) {
 		qdf_mem_copy(config->SSIDinfo.ssid.ssId, ssid, ssid_len);
 		config->SSIDinfo.ssid.length = ssid_len;
 

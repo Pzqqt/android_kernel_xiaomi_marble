@@ -160,7 +160,7 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 	}
 
 	priv = qdf_mem_malloc(sizeof(*priv));
-	if (priv == NULL) {
+	if (!priv) {
 		hdd_err("pdev os obj create failed");
 		return -ENOMEM;
 	}

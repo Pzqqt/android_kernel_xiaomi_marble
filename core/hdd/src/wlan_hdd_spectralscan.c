@@ -403,7 +403,7 @@ static void send_spectral_scan_reg_rsp_msg(struct hdd_context *hdd_ctx)
 
 	skb = alloc_skb(NLMSG_SPACE(sizeof(struct spectral_scan_msg)),
 				GFP_KERNEL);
-	if (skb == NULL) {
+	if (!skb) {
 		hdd_err("Skb allocation failed");
 		return;
 	}

@@ -388,7 +388,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	}
 
 	in6_dev = __in6_dev_get(adapter->dev);
-	if (NULL == in6_dev) {
+	if (!in6_dev) {
 		hdd_err("IPv6 dev does not exist. Failed to request NSOffload");
 		goto out;
 	}
@@ -1448,7 +1448,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool is_bmps_enabled;
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("Adapter NULL");
 		return -ENODEV;
 	}

@@ -303,7 +303,7 @@ bool hdd_tx_flow_control_is_pause(void *adapter_context)
 {
 	struct hdd_adapter *adapter = (struct hdd_adapter *) adapter_context;
 
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		/* INVALID ARG */
 		hdd_err("invalid adapter %pK", adapter);
 		return false;
@@ -580,7 +580,7 @@ void hdd_reset_all_adapters_connectivity_stats(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter);
 
-	while (NULL != adapter && QDF_STATUS_SUCCESS == status) {
+	while (adapter && QDF_STATUS_SUCCESS == status) {
 		hdd_clear_tx_rx_connectivity_stats(adapter);
 		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
 		adapter = next;
@@ -613,7 +613,7 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t peer_id)
 
 	peer = cdp_peer_find_by_local_id(soc, pdev, peer_id);
 
-	if (peer == NULL) {
+	if (!peer) {
 		hdd_err_rl("Unable to find peer entry for sta_id: %d", peer_id);
 		return false;
 	}
@@ -1314,7 +1314,7 @@ QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -1363,14 +1363,14 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 	unsigned int cpu_index;
 
 	/* Sanity check on inputs */
-	if ((NULL == context) || (NULL == rxbuf)) {
+	if ((!context) || (!rxbuf)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	adapter = (struct hdd_adapter *)context;
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "invalid adapter %pK", adapter);
 		return QDF_STATUS_E_FAILURE;
@@ -1380,7 +1380,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 
 	/* walk the chain until all are processed */
 	skb = (struct sk_buff *) rxbuf;
-	while (NULL != skb) {
+	while (skb) {
 		skb_next = skb->next;
 		skb->dev = adapter->dev;
 
@@ -1654,11 +1654,11 @@ QDF_STATUS hdd_gro_rx_legacy(struct hdd_adapter *adapter, struct sk_buff *skb)
 		return QDF_STATUS_E_NOSUPPORT;
 
 	napid = hdd_napi_get_all();
-	if (unlikely(napid == NULL))
+	if (unlikely(!napid))
 		goto out;
 
 	qca_napii = hif_get_napi(QDF_NBUF_CB_RX_CTX_ID(skb), napid);
-	if (unlikely(qca_napii == NULL))
+	if (unlikely(!qca_napii))
 		goto out;
 
 	/*
@@ -2017,7 +2017,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (unlikely(NULL == hdd_ctx)) {
+	if (unlikely(!hdd_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;

@@ -483,7 +483,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 	/* Scheduled slots same as num channels for compatibility */
 	config = hdd_ocb_config_new(sched->num_channels, sched->num_channels,
 				    0, 0);
-	if (config == NULL) {
+	if (!config) {
 		hdd_err("Failed to allocate memory!");
 		return -ENOMEM;
 	}
@@ -527,7 +527,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx,
 							  adapter->device_mode);
-			if (mac_addr == NULL) {
+			if (!mac_addr) {
 				hdd_err("Cannot obtain mac address");
 				rc = -EINVAL;
 				goto fail;
@@ -834,7 +834,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	config = hdd_ocb_config_new(channel_count, schedule_size,
 				    ndl_chan_list_len,
 				    ndl_active_state_list_len);
-	if (config == NULL) {
+	if (!config) {
 		hdd_err("Failed to allocate memory!");
 		return -ENOMEM;
 	}
@@ -878,7 +878,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx,
 							  adapter->device_mode);
-			if (mac_addr == NULL) {
+			if (!mac_addr) {
 				hdd_err("Cannot obtain mac address");
 				goto fail;
 			}

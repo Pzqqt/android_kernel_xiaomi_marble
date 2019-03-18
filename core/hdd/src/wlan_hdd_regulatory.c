@@ -454,7 +454,7 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 
 	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
 
-		if (wiphy->bands[band_num] == NULL)
+		if (!wiphy->bands[band_num])
 			continue;
 
 		for (chan_num = 0;
@@ -543,7 +543,7 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 		  (1 << WMI_REG_EXT_FCC_CH_144))) {
 		cds_chan = &(reg_channels[CHAN_ENUM_144]);
 		cds_chan->state = CHANNEL_STATE_DISABLE;
-		if (NULL != wiphy_chan_144)
+		if (wiphy_chan_144)
 			wiphy_chan_144->flags |= IEEE80211_CHAN_DISABLED;
 	}
 
@@ -671,7 +671,7 @@ void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
 	band_capability = hdd_ctx->curr_band;
 	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
 
-		if (wiphy->bands[band_num] == NULL)
+		if (!wiphy->bands[band_num])
 			continue;
 
 		for (chan_num = 0;
@@ -990,7 +990,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		  request->initiator,
 		  request->dfs_region);
 
-	if (NULL == hdd_ctx) {
+	if (!hdd_ctx) {
 		hdd_err("invalid hdd_ctx pointer");
 		return;
 	}
@@ -1133,7 +1133,7 @@ static void fill_wiphy_band_channels(struct wiphy *wiphy,
 	uint32_t chan_cnt;
 	struct ieee80211_channel *wiphy_chan;
 
-	if (wiphy->bands[band_id] == NULL)
+	if (!wiphy->bands[band_id])
 		return;
 
 	wiphy_num_chan = wiphy->bands[band_id]->n_channels;

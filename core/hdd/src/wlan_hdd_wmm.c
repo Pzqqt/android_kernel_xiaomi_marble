@@ -233,7 +233,7 @@ static void hdd_wmm_free_context(struct hdd_wmm_qos_context *qos_context)
 
 	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == qos_context) ||
+	if (unlikely((!qos_context) ||
 		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		/* must have been freed in another thread */
 		return;
@@ -276,7 +276,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *qos_context)
 
 	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == qos_context) ||
+	if (unlikely((!qos_context) ||
 		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		hdd_err("Invalid QoS Context");
 		return;
@@ -333,7 +333,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	ac_type = qos_context->ac_type;
 
 	adapter = qos_context->adapter;
-	if ((NULL == adapter) ||
+	if ((!adapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("invalid adapter: %pK", adapter);
 		return;
@@ -502,7 +502,7 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
 
 	hdd_debug("Entered, context %pK", qos_context);
 
-	if (unlikely((NULL == qos_context) ||
+	if (unlikely((!qos_context) ||
 		     (HDD_WMM_CTX_MAGIC != qos_context->magic))) {
 		hdd_err("Invalid QoS Context");
 		return QDF_STATUS_E_FAILURE;
@@ -985,11 +985,11 @@ static QDF_STATUS hdd_wmm_sme_callback(mac_handle_t mac_handle,
  */
 int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr)
 {
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return -EINVAL;
 	}
-	if (NULL == ptr) {
+	if (!ptr) {
 		hdd_err("ptr is NULL");
 		return -EINVAL;
 	}
@@ -1962,7 +1962,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 	adapter->hdd_wmm_status.ac_status[ac_type].is_access_needed = true;
 
 	qos_context = qdf_mem_malloc(sizeof(*qos_context));
-	if (NULL == qos_context) {
+	if (!qos_context) {
 		/* no memory for QoS context.  Nothing we can do but
 		 * let data flow
 		 */
@@ -2381,7 +2381,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 	}
 
 	qos_context = qdf_mem_malloc(sizeof(*qos_context));
-	if (NULL == qos_context) {
+	if (!qos_context) {
 		/* no memory for QoS context.  Nothing we can do */
 		hdd_err("Unable to allocate QoS context");
 		return HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE;

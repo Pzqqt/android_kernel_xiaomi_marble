@@ -3000,7 +3000,7 @@ void *mem_alloc_copy_from_user_helper(const __user void *wrqu_data, size_t len)
 	}
 
 	ptr = qdf_mem_malloc(len + 1);
-	if (NULL == ptr) {
+	if (!ptr) {
 		hdd_err("unable to allocate memory");
 		return NULL;
 	}
@@ -3025,7 +3025,7 @@ void *mem_alloc_copy_from_user_helper(const __user void *wrqu_data, size_t len)
  */
 int hdd_priv_get_data(struct iw_point *p_priv_data, union iwreq_data *wrqu)
 {
-	if ((NULL == p_priv_data) || (NULL == wrqu))
+	if ((!p_priv_data) || (!wrqu))
 		return -EINVAL;
 
 #ifdef CONFIG_COMPAT
@@ -5973,7 +5973,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		return -EINVAL;
 
 	/* make sure all params are correctly passed to function */
-	if ((NULL == s_priv_data.pointer) || (0 == s_priv_data.length))
+	if ((!s_priv_data.pointer) || (0 == s_priv_data.length))
 		return -EINVAL;
 
 	sub_cmd = s_priv_data.flags;
@@ -6627,7 +6627,7 @@ static int hdd_set_fwtest(int argc, int cmd, int value)
 		return -EINVAL;
 	}
 	fw_test = qdf_mem_malloc(sizeof(*fw_test));
-	if (NULL == fw_test) {
+	if (!fw_test) {
 		hdd_err("qdf_mem_malloc failed for fw_test");
 		return -ENOMEM;
 	}
@@ -8227,7 +8227,7 @@ static int iw_hdd_set_var_ints_getnone(struct net_device *dev,
 	if (hdd_priv_get_data(&u_priv_wrqu.data, wrqu))
 		return -EINVAL;
 
-	if (NULL == u_priv_wrqu.data.pointer) {
+	if (!u_priv_wrqu.data.pointer) {
 		hdd_err("NULL data pointer");
 		return -EINVAL;
 	}
@@ -8341,7 +8341,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 		return 0;
 	}
 	/* make sure all params are correctly passed to function */
-	if ((NULL == s_priv_data.pointer) ||
+	if ((!s_priv_data.pointer) ||
 	    (HDD_WLAN_WMM_PARAM_COUNT != s_priv_data.length)) {
 		*wmm_status = HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM;
 		return 0;
@@ -8640,7 +8640,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 		hdd_err("called with 0 length IEs");
 		return -EINVAL;
 	}
-	if (wrqu->data.pointer == NULL) {
+	if (!wrqu->data.pointer) {
 		hdd_err("called with NULL IE");
 		return -EINVAL;
 	}
@@ -8978,7 +8978,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	if ((NULL == priv_data.pointer) || (0 == priv_data.length)) {
+	if ((!priv_data.pointer) || (0 == priv_data.length)) {
 		hdd_err("invalid priv data %pK or invalid priv data length %d",
 			priv_data.pointer, priv_data.length);
 		return -EINVAL;
@@ -8999,7 +8999,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	request = mem_alloc_copy_from_user_helper(priv_data.pointer,
 						   priv_data.length);
 
-	if (NULL == request) {
+	if (!request) {
 		hdd_err("mem_alloc_copy_from_user_helper fail");
 		return -ENOMEM;
 	}

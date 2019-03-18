@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 
 	/* walk the chain until all are processed */
 	skb = (struct sk_buff *)rxbuf;
-	while (NULL != skb) {
+	while (skb) {
 		skb_next = skb->next;
 		skb->dev = adapter->dev;
 

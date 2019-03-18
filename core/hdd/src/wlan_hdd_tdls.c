@@ -225,7 +225,7 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (NULL == adapter)
+	if (!adapter)
 		return -EINVAL;
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX,
@@ -664,7 +664,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		   TRACE_CODE_HDD_CFG80211_TDLS_OPER,
 		   adapter->vdev_id, oper);
 
-	if (NULL == peer) {
+	if (!peer) {
 		hdd_err("Invalid arguments");
 		return -EINVAL;
 	}

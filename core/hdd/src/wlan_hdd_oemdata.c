@@ -77,7 +77,7 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	}
 
 	chan_list = qdf_mem_malloc(sizeof(uint8_t) * OEM_CAP_MAX_NUM_CHANNELS);
-	if (NULL == chan_list) {
+	if (!chan_list) {
 		hdd_err("Memory allocation failed");
 		return -ENOMEM;
 	}
@@ -194,7 +194,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	}
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -256,7 +256,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 	uint8_t *buf;
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -311,7 +311,7 @@ void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_data_rsp)
 
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) + OEM_DATA_RSP_SIZE),
 			GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -463,7 +463,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) + sizeof(uint8_t) +
 				    numOfChannels * sizeof(*pHddChanInfo)),
 			GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return -ENOMEM;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -573,7 +573,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 	error_code = qdf_status_to_os_return(status);
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return -ENOMEM;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -633,7 +633,7 @@ static int oem_process_get_cap_req_msg(void)
 
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) + sizeof(*cap_rsp)),
 			GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return -ENOMEM;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -691,7 +691,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) +
 				    sizeof(*peer_info)),
 			GFP_KERNEL);
-	if (skb == NULL)
+	if (!skb)
 		return;
 
 	nlh = (struct nlmsghdr *)skb->data;

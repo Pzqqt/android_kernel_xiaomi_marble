@@ -201,7 +201,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return -EINVAL;
 	}
@@ -260,14 +260,14 @@ hdd_get_ibss_peer_info_cb(void *context,
 	struct hdd_station_ctx *sta_ctx;
 	uint8_t i;
 
-	if ((NULL == adapter) ||
+	if ((!adapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("invalid adapter or adapter has invalid magic");
 		return;
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (NULL != peer_info && QDF_STATUS_SUCCESS == peer_info->status) {
+	if (peer_info && QDF_STATUS_SUCCESS == peer_info->status) {
 		/* validate number of peers */
 		if (peer_info->numPeers > SIR_MAX_NUM_STA_IN_IBSS) {
 			hdd_warn("Limiting num_peers %u to %u",
@@ -379,7 +379,7 @@ hdd_parse_get_ibss_peer_info(uint8_t *command,
 
 	in_ptr = strnchr(command, in_ptr_len, SPACE_ASCII_VALUE);
 
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return QDF_STATUS_E_FAILURE;
 	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return QDF_STATUS_E_FAILURE;
@@ -461,7 +461,7 @@ static int _hdd_parse_bssid_and_chan(const uint8_t **data,
 
 	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		goto error;
 	/* no space after the command */
 	else if (SPACE_ASCII_VALUE != *in_ptr)
@@ -498,7 +498,7 @@ static int _hdd_parse_bssid_and_chan(const uint8_t **data,
 	/* point to the next argument */
 	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		goto error;
 
 	/* remove empty spaces */
@@ -563,7 +563,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	/* point to the next argument */
 	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	/* removing empty spaces */
 	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
@@ -587,7 +587,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	/* point to the next argument */
 	in_ptr = strnchr(in_ptr, strlen(in_ptr), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	/* removing empty spaces */
 	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
@@ -616,7 +616,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	 * If N = 19, then we need 10 bytes, hence (19 + 1)/2 = 10 bytes
 	 */
 	*buf = qdf_mem_malloc((*buf_len + 1) / 2);
-	if (NULL == *buf) {
+	if (!*buf) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
@@ -701,7 +701,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	int ret = 0;
 	QDF_STATUS status;
 
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("Invalid hdd ctx");
 		return -EINVAL;
 	}
@@ -1217,7 +1217,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
@@ -1251,7 +1251,7 @@ hdd_parse_channellist(const uint8_t *command, uint8_t *channel_list,
 		 */
 		in_ptr = strpbrk(in_ptr, " ");
 		/* no channel list after the number of channels argument */
-		if (NULL == in_ptr) {
+		if (!in_ptr) {
 			if (0 != j) {
 				*num_channels = j;
 				return 0;
@@ -1512,7 +1512,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 	/* move to argument list */
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* no space after the command */
@@ -1535,7 +1535,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 	req->enable = content;
 	in_ptr = strpbrk(in_ptr, " ");
 
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
@@ -1555,7 +1555,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 	hdd_debug("diag token %d", req->diag_token);
 	in_ptr = strpbrk(in_ptr, " ");
 
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
@@ -1579,7 +1579,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1602,7 +1602,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		hdd_debug("num bursts %d", req->num_bursts);
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1625,7 +1625,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		hdd_debug("burst int %d", req->burst_int);
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1648,7 +1648,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		hdd_debug("meas duration %d", req->meas_duration);
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1671,7 +1671,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		hdd_debug("burst len %d", req->burst_len);
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1696,7 +1696,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		for (count = 0; count < QDF_MAC_ADDR_SIZE; count++) {
 			in_ptr = strpbrk(in_ptr, " ");
 
-			if (NULL == in_ptr)
+			if (!in_ptr)
 				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
@@ -1720,7 +1720,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 
 		in_ptr = strpbrk(in_ptr, " ");
 
-		if (NULL == in_ptr)
+		if (!in_ptr)
 			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
@@ -1747,7 +1747,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		for (count = 0; count < req->plm_num_ch; count++) {
 			in_ptr = strpbrk(in_ptr, " ");
 
-			if (NULL == in_ptr)
+			if (!in_ptr)
 				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
@@ -2104,7 +2104,7 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *command, int *tx_power)
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
@@ -2383,13 +2383,13 @@ static void hdd_tx_fail_ind_callback(uint8_t *macaddr, uint8_t seq_no)
 
 	payload_len = ETH_ALEN;
 
-	if (0 == cesium_pid || cesium_nl_srv_sock == NULL) {
+	if (0 == cesium_pid || !cesium_nl_srv_sock) {
 		hdd_err("cesium process not registered");
 		return;
 	}
 
 	skb = nlmsg_new(payload_len, GFP_ATOMIC);
-	if (skb == NULL) {
+	if (!skb) {
 		hdd_err("nlmsg_new() failed for msg size[%d]",
 			 NLMSG_SPACE(payload_len));
 		return;
@@ -2397,7 +2397,7 @@ static void hdd_tx_fail_ind_callback(uint8_t *macaddr, uint8_t seq_no)
 
 	nlh = nlmsg_put(skb, cesium_pid, seq_no, 0, payload_len, NLM_F_REQUEST);
 
-	if (NULL == nlh) {
+	if (!nlh) {
 		hdd_err("nlmsg_put() failed for msg size[%d]",
 			 NLMSG_SPACE(payload_len));
 
@@ -2472,7 +2472,7 @@ static int hdd_parse_ibsstx_fail_event_params(uint8_t *command,
 
 	ret = hdd_parse_user_params(command, &param);
 
-	if (0 == ret && NULL != param) {
+	if (0 == ret && param) {
 		if (1 != sscanf(param, "%hhu", tx_fail_count)) {
 			ret = -EINVAL;
 			goto done;
@@ -2534,7 +2534,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 	char buf[32];
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
-	if (NULL == in_ptr) /* no argument after the command */
+	if (!in_ptr) /* no argument after the command */
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
@@ -2569,7 +2569,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *command,
 			 */
 			in_ptr = strpbrk(in_ptr, " ");
 			/* no ie data after the number of ie fields argument */
-			if (NULL == in_ptr)
+			if (!in_ptr)
 				return -EINVAL;
 
 			/* remove empty space */
@@ -2675,7 +2675,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 	/* no argument after the command */
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *in_ptr) /* no space after the command */
 		return -EINVAL;
@@ -2705,7 +2705,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *command, uint8_t **cckm_ie,
 	 * If N = 19, then we need 10 bytes, hence (19 + 1) / 2 = 10 bytes
 	 */
 	*cckm_ie = qdf_mem_malloc((*cckm_ie_len + 1) / 2);
-	if (NULL == *cckm_ie) {
+	if (!*cckm_ie) {
 		hdd_err("qdf_mem_malloc failed");
 		return -ENOMEM;
 	}
@@ -2732,7 +2732,7 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool bval = false;
 
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
@@ -4767,7 +4767,7 @@ static int hdd_parse_setrmcenable_command(uint8_t *command,
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return 0;
 	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return 0;
@@ -4805,7 +4805,7 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
 
 	inptr = strnchr(pvalue, strlen(pvalue), SPACE_ASCII_VALUE);
 
-	if (NULL == inptr)
+	if (!inptr)
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *inptr)
 		return -EINVAL;
@@ -4848,7 +4848,7 @@ static int hdd_parse_setrmcrate_command(uint8_t *command,
 
 	in_ptr = strnchr(command, strlen(command), SPACE_ASCII_VALUE);
 
-	if (NULL == in_ptr)
+	if (!in_ptr)
 		return -EINVAL;
 	else if (SPACE_ASCII_VALUE != *in_ptr)
 		return -EINVAL;
@@ -5100,7 +5100,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 		 */
 		extra = qdf_mem_malloc(user_size);
 
-		if (NULL == extra) {
+		if (!extra) {
 			hdd_err("memory allocation failed");
 			ret = -ENOMEM;
 			goto exit;
@@ -5500,7 +5500,7 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 	if (cckm_ie_len > DOT11F_IE_RSN_MAX_LEN) {
 		hdd_err("CCKM Ie input length is more than max[%d]",
 			  DOT11F_IE_RSN_MAX_LEN);
-		if (NULL != cckm_ie) {
+		if (cckm_ie) {
 			qdf_mem_free(cckm_ie);
 			cckm_ie = NULL;
 		}
@@ -5510,7 +5510,7 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 
 	sme_set_cckm_ie(hdd_ctx->mac_handle, adapter->vdev_id,
 			cckm_ie, cckm_ie_len);
-	if (NULL != cckm_ie) {
+	if (cckm_ie) {
 		qdf_mem_free(cckm_ie);
 		cckm_ie = NULL;
 	}
@@ -6165,7 +6165,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 
 
 		filter = qdf_mem_malloc(sizeof(*filter));
-		if (NULL == filter) {
+		if (!filter) {
 			hdd_err("Could not allocate Memory");
 			return -ENOMEM;
 		}
@@ -6314,7 +6314,7 @@ static int hdd_parse_setantennamode_command(const uint8_t *value)
 	in_ptr = strnchr(value, strlen(value), SPACE_ASCII_VALUE);
 
 	/* no argument after the command */
-	if (NULL == in_ptr) {
+	if (!in_ptr) {
 		hdd_err("No argument after the command");
 		return -EINVAL;
 	}
@@ -6843,7 +6843,7 @@ static int hdd_parse_set_channel_switch_command(uint8_t *value,
 	in_ptr = strnchr(value, strlen(value), SPACE_ASCII_VALUE);
 
 	/* no argument after the command */
-	if (NULL == in_ptr) {
+	if (!in_ptr) {
 		hdd_err("No argument after the command");
 		return -EINVAL;
 	}
@@ -7014,14 +7014,14 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 	uint32_t parsed_channels[MAX_CHANNEL];
 	bool is_command_repeated = false;
 
-	if (NULL == hdd_ctx) {
+	if (!hdd_ctx) {
 		hdd_err("HDD Context is NULL");
 		return -EINVAL;
 	}
 
 	param = strnchr(ptr, strlen(ptr), ' ');
 	/*no argument after the command*/
-	if (NULL == param)
+	if (!param)
 		return -EINVAL;
 
 	/*no space after the command*/
@@ -7085,7 +7085,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 		 */
 		param = strpbrk(param, " ");
 		/*no channel list after the number of channels argument*/
-		if (NULL == param) {
+		if (!param) {
 			hdd_err("Invalid No of channel provided in the list");
 			ret = -EINVAL;
 			goto parse_failed;
@@ -7121,7 +7121,7 @@ static int hdd_parse_disable_chan_cmd(struct hdd_adapter *adapter, uint8_t *ptr)
 
 	/*extra arguments check*/
 	param = strpbrk(param, " ");
-	if (NULL != param) {
+	if (param) {
 		while ((SPACE_ASCII_VALUE == *param) && ('\0' != *param))
 			param++;
 

@@ -1080,7 +1080,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 	assoc_rsp =
 		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
 			roam_info->nAssocReqLength);
-	if (assoc_rsp == NULL) {
+	if (!assoc_rsp) {
 		hdd_debug("AssocReq or AssocRsp is NULL");
 		return;
 	}
@@ -1230,7 +1230,7 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 	union iwreq_data wrqu;
 	struct bss_description *descriptor = roam_info->pBssDesc;
 
-	if (descriptor == NULL) {
+	if (!descriptor) {
 		hdd_err("bss descriptor is null");
 		return;
 	}
@@ -1273,7 +1273,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 		return;
 	}
 	beacon_ies = (u8 *) (roam_info->pbFrames + BEACON_FRAME_IES_OFFSET);
-	if (beacon_ies == NULL) {
+	if (!beacon_ies) {
 		hdd_warn("Beacon IEs is NULL");
 		return;
 	}
@@ -1345,7 +1345,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 	we_event = SIOCGIWAP;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (NULL != roam_info)
+	if (roam_info)
 		if (roam_info->roamSynchInProgress) {
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(adapter->vdev_id,
@@ -1713,7 +1713,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	bool sendDisconInd = true;
 	mac_handle_t mac_handle;
 
-	if (dev == NULL) {
+	if (!dev) {
 		hdd_err("net_dev is released return");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1925,7 +1925,7 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 		return;
 	}
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (adapter == NULL) {
+	if (!adapter) {
 		hdd_err("Invalid vdev_id");
 		return;
 	}
@@ -1967,7 +1967,7 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAULT;
 
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
-	if (peer_mac_addr == NULL) {
+	if (!peer_mac_addr) {
 		hdd_err("peer mac addr is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -2057,7 +2057,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 		return status;
 
 	data_vdev = cdp_peer_get_vdev_by_sta_id(soc, pdev, sta_id);
-	if (NULL == data_vdev) {
+	if (!data_vdev) {
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
@@ -2088,7 +2088,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pBssDesc)
+	if (!pBssDesc)
 		return QDF_STATUS_E_FAILURE;
 
 	/* Get the Station ID from the one saved during the association */
@@ -2323,7 +2323,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	assoc_rsp =
 		(u8 *) (roam_info->pbFrames + roam_info->nBeaconLength +
 			roam_info->nAssocReqLength);
-	if (assoc_rsp == NULL)
+	if (!assoc_rsp)
 		goto done;
 
 	/* assoc_rsp needs to point to the IEs */
@@ -2368,7 +2368,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 				    &roam_profile.SSID.ssId[0],
 				    roam_profile.SSID.length);
 
-	if (bss == NULL)
+	if (!bss)
 		hdd_warn("Get BSS returned NULL");
 	buf_ptr = buf_ssid_ie;
 	*buf_ptr = SIR_MAC_SSID_EID;
@@ -2382,7 +2382,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
-	if (final_req_ie == NULL) {
+	if (!final_req_ie) {
 		if (bss)
 			cfg80211_put_bss(adapter->wdev.wiphy, bss);
 		goto done;
@@ -2645,7 +2645,7 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	if (NULL == roam_info) {
+	if (!roam_info) {
 		hdd_err("roam_info is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2808,7 +2808,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (eCSR_ROAM_RESULT_ASSOCIATED == roam_result) {
-		if (NULL == roam_info) {
+		if (!roam_info) {
 			hdd_err("roam_info is NULL");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -2966,7 +2966,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			bss =
 				wlan_hdd_cfg80211_update_bss_db(adapter,
 								roam_info);
-			if (NULL == bss) {
+			if (!bss) {
 				hdd_err("wlan: Not able to create BSS entry");
 				wlan_hdd_netif_queue_control(adapter,
 					WLAN_NETIF_CARRIER_OFF,
@@ -2997,7 +2997,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				(u8 *) (roam_info->pbFrames +
 					roam_info->nBeaconLength +
 					roam_info->nAssocReqLength);
-			if (assoc_rsp != NULL) {
+			if (assoc_rsp) {
 				/*
 				 * assoc_rsp needs to point to the IEs
 				 */
@@ -3020,7 +3020,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			/* Association Request */
 			assoc_req = (u8 *) (roam_info->pbFrames +
 					      roam_info->nBeaconLength);
-			if (assoc_req != NULL) {
+			if (assoc_req) {
 				if (!ft_carrier_on) {
 					/*
 					 * assoc_req needs to point to
@@ -3510,7 +3510,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-		if (NULL == roam_info) {
+		if (!roam_info) {
 			QDF_ASSERT(0);
 			return;
 		}
@@ -3553,7 +3553,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 			/* we must first give cfg80211 the BSS information */
 			bss = wlan_hdd_cfg80211_update_bss_db(adapter,
 								roam_info);
-			if (NULL == bss) {
+			if (!bss) {
 				hdd_err("%s: unable to create IBSS entry",
 					adapter->dev->name);
 				return;
@@ -3767,7 +3767,7 @@ static QDF_STATUS roam_ibss_connect_handler(struct hdd_adapter *adapter,
 	hdd_send_association_event(adapter->dev, roam_info);
 	/* add bss_id to cfg80211 data base */
 	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);
-	if (NULL == bss) {
+	if (!bss) {
 		hdd_err("%s: unable to create IBSS entry",
 		       adapter->dev->name);
 		return QDF_STATUS_E_FAILURE;
@@ -4191,7 +4191,7 @@ hdd_indicate_tsm_ie(struct hdd_adapter *adapter, uint8_t tid,
 	char buf[IW_CUSTOM_MAX + 1];
 	int nBytes = 0;
 
-	if (NULL == adapter)
+	if (!adapter)
 		return;
 
 	/* create the event */
@@ -4230,7 +4230,7 @@ hdd_indicate_cckm_pre_auth(struct hdd_adapter *adapter,
 	char *pos = buf;
 	int nBytes = 0, freeBytes = IW_CUSTOM_MAX;
 
-	if ((NULL == adapter) || (NULL == roam_info))
+	if ((!adapter) || (!roam_info))
 		return;
 
 	/* create the event */
@@ -4276,7 +4276,7 @@ hdd_indicate_ese_adj_ap_rep_ind(struct hdd_adapter *adapter,
 	char buf[IW_CUSTOM_MAX + 1];
 	int nBytes = 0;
 
-	if ((NULL == adapter) || (NULL == roam_info))
+	if ((!adapter) || (!roam_info))
 		return;
 
 	/* create the event */
@@ -4364,7 +4364,7 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 	 */
 #define ESEBCNREPHEADER_LEN  (18)
 
-	if ((NULL == adapter) || (NULL == roam_info))
+	if ((!adapter) || (!roam_info))
 		return;
 
 	/*
@@ -4613,7 +4613,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		roam_info->chan_info.band_center_freq2;
 
 	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);
-	if (NULL == bss)
+	if (!bss)
 		hdd_err("%s: unable to create BSS entry", adapter->dev->name);
 	else
 		cfg80211_put_bss(wiphy, bss);
@@ -4658,7 +4658,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		  roam_status, roam_result, roam_id);
 
 	/* Sanity check */
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4836,7 +4836,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		}
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (roam_info != NULL)
+		if (roam_info)
 			roam_info->roamSynchInProgress = false;
 #endif
 		break;
@@ -4940,10 +4940,10 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		break;
 
 	case eCSR_ROAM_UPDATE_SCAN_RESULT:
-		if ((NULL != roam_info) && (NULL != roam_info->pBssDesc)) {
+		if ((roam_info) && (roam_info->pBssDesc)) {
 			bss_status = wlan_hdd_inform_bss_frame(adapter,
 							roam_info->pBssDesc);
-			if (NULL == bss_status)
+			if (!bss_status)
 				hdd_debug("UPDATE_SCAN_RESULT returned NULL");
 			else
 				cfg80211_put_bss(

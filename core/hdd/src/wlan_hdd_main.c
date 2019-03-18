@@ -1164,7 +1164,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2440,10 +2440,10 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 	int i;
 	struct cds_context *cds_ctx;
 
-	if (NULL == hdd_ctx)
+	if (!hdd_ctx)
 		return;
 
-	if (NULL == hdd_ctx->config) {
+	if (!hdd_ctx->config) {
 		/* Do nothing if hdd_ctx is invalid */
 		hdd_err("%s: Warning: hdd_ctx->cfg_ini is NULL", __func__);
 		return;
@@ -3365,7 +3365,7 @@ static int hdd_open_cesium_nl_sock(void)
 						   NULL, NULL, THIS_MODULE);
 #endif
 
-	if (cesium_nl_srv_sock == NULL) {
+	if (!cesium_nl_srv_sock) {
 		hdd_err("NLINK:  cesium netlink_kernel_create failed");
 		ret = -ECONNREFUSED;
 	}
@@ -3375,7 +3375,7 @@ static int hdd_open_cesium_nl_sock(void)
 
 static void hdd_close_cesium_nl_sock(void)
 {
-	if (NULL != cesium_nl_srv_sock) {
+	if (cesium_nl_srv_sock) {
 		netlink_kernel_release(cesium_nl_srv_sock);
 		cesium_nl_srv_sock = NULL;
 	}
@@ -3911,7 +3911,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("NULL adapter for %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -3937,7 +3937,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id)
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("NULL adapter");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5074,7 +5074,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 						    name_assign_type,
 						    iface_name);
 
-		if (NULL == adapter) {
+		if (!adapter) {
 			hdd_err("failed to allocate adapter for session %d",
 					session_type);
 			return NULL;
@@ -5130,7 +5130,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		adapter = hdd_wlan_create_ap_dev(hdd_ctx, mac_addr,
 						 name_assign_type,
 						 (uint8_t *) iface_name);
-		if (NULL == adapter) {
+		if (!adapter) {
 			hdd_err("failed to allocate adapter for session %d",
 					  session_type);
 			return NULL;
@@ -5171,7 +5171,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		adapter = hdd_alloc_station_adapter(hdd_ctx, mac_addr,
 						    name_assign_type,
 						    iface_name);
-		if (NULL == adapter) {
+		if (!adapter) {
 			hdd_err("Failed to allocate adapter for FTM mode");
 			return NULL;
 		}
@@ -5206,7 +5206,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	}
 
 	if (QDF_STATUS_SUCCESS != status) {
-		if (NULL != adapter) {
+		if (adapter) {
 			hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
 			adapter = NULL;
 		}
@@ -6167,7 +6167,7 @@ void hdd_update_hlp_info(struct net_device *dev,
 	/* Calculate skb length */
 	skb_len = (2 * ETH_ALEN) + hlp_data_len;
 	skb = qdf_nbuf_alloc(NULL, skb_len, 0, 4, false);
-	if (skb == NULL) {
+	if (!skb) {
 		hdd_err("HLP packet nbuf alloc fails");
 		return;
 	}
@@ -8056,7 +8056,7 @@ static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
  */
 void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
-	if (!hdd_ctx || hdd_ctx->hdd_txrx_hist == NULL)
+	if (!hdd_ctx || !hdd_ctx->hdd_txrx_hist)
 		return;
 
 	qdf_mem_free(hdd_ctx->hdd_txrx_hist);
@@ -8958,7 +8958,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 		}
 	} else if (SME_SESSION_ID_BROADCAST == frame_ind->sessionId) {
 		hdd_for_each_adapter(hdd_ctx, adapter) {
-			if ((NULL != adapter) &&
+			if ((adapter) &&
 			    (WLAN_HDD_ADAPTER_MAGIC == adapter->magic)) {
 				__hdd_indicate_mgmt_frame(adapter,
 						frame_ind->frame_len,
@@ -8975,7 +8975,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 						  frame_ind->sessionId);
 	}
 
-	if ((NULL != adapter) &&
+	if ((adapter) &&
 		(WLAN_HDD_ADAPTER_MAGIC == adapter->magic))
 		__hdd_indicate_mgmt_frame(adapter,
 						frame_ind->frame_len,
@@ -10522,7 +10522,7 @@ static void wlan_hdd_p2p_lo_event_callback(void *context,
 
 	hdd_enter();
 
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context pointer");
 		return;
 	}
@@ -12028,7 +12028,7 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 	}
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
-	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		osif_request_put(request);
 		return;
@@ -12382,7 +12382,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), flags);
 
-	if (skb == NULL)
+	if (!skb)
 		return;
 
 	nlh = (struct nlmsghdr *)skb->data;
@@ -12656,7 +12656,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
 
-	if (NULL == ap_adapter) {
+	if (!ap_adapter) {
 		hdd_err("ap_adapter is NULL here");
 		return;
 	}
@@ -12712,7 +12712,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	struct hdd_context *hdd_ctx;
 	tsap_config_t *sap_config;
 
-	if (NULL == ap_adapter) {
+	if (!ap_adapter) {
 		hdd_err("ap_adapter is NULL here");
 		return;
 	}

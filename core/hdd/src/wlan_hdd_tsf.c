@@ -254,7 +254,7 @@ static enum hdd_tsf_op_result hdd_capture_tsf_internal(
 	struct hdd_context *hddctx;
 	qdf_mc_timer_t *cap_timer;
 
-	if (adapter == NULL || buf == NULL) {
+	if (!adapter || !buf) {
 		hdd_err("invalid pointer");
 		return HDD_TSF_OP_FAIL;
 	}
@@ -1321,7 +1321,7 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapternode_ptr);
 
-	while (NULL != adapternode_ptr && QDF_STATUS_SUCCESS == status) {
+	while (adapternode_ptr && QDF_STATUS_SUCCESS == status) {
 		adapter = adapternode_ptr;
 		status =
 		    hdd_get_next_adapter(hdd_ctx, adapternode_ptr, &next_ptr);
@@ -1470,7 +1470,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	QDF_TIMER_STATE capture_req_timer_status;
 	qdf_mc_timer_t *capture_timer;
 
-	if (pcb_cxt == NULL || ptsf == NULL) {
+	if (!pcb_cxt || !ptsf) {
 		hdd_err("HDD context is not valid");
 			return -EINVAL;
 	}
@@ -1482,7 +1482,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 
 	adapter = hdd_get_adapter_by_vdev(hddctx, ptsf->vdev_id);
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("failed to find adapter");
 		return -EINVAL;
 	}

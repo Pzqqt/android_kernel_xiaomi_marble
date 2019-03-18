@@ -271,7 +271,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 
 		rateInfo = nla_nest_start(vendor_event,
 					  QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_RATE_INFO);
-		if (rateInfo == NULL)
+		if (!rateInfo)
 			goto error;
 
 		for (i = 0; i < stats->numRate; i++) {
@@ -281,7 +281,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 							   sizeof
 							   (tSirWifiRateStat)));
 			rates = nla_nest_start(vendor_event, i);
-			if (rates == NULL)
+			if (!rates)
 				goto error;
 
 			if (false ==
@@ -489,12 +489,12 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 
 	wmmInfo = nla_nest_start(vendor_event,
 				 QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_INFO);
-	if (wmmInfo == NULL)
+	if (!wmmInfo)
 		return false;
 
 	for (i = 0; i < WIFI_AC_MAX; i++) {
 		wmmStats = nla_nest_start(vendor_event, i);
-		if (wmmStats == NULL)
+		if (!wmmStats)
 			return false;
 
 		if (false ==
@@ -671,7 +671,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 
 		peerInfo = nla_nest_start(vendor_event,
 					  QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO);
-		if (peerInfo == NULL) {
+		if (!peerInfo) {
 			hdd_err("nla_nest_start failed");
 			kfree_skb(vendor_event);
 			return;
@@ -679,7 +679,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 
 		for (i = 1; i <= pWifiPeerStat->numPeers; i++) {
 			peers = nla_nest_start(vendor_event, i);
-			if (peers == NULL) {
+			if (!peers) {
 				hdd_err("nla_nest_start failed");
 				kfree_skb(vendor_event);
 				return;
@@ -795,7 +795,7 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 
 	chlist = nla_nest_start(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CH_INFO);
-	if (chlist == NULL) {
+	if (!chlist) {
 		hdd_err("nla_nest_start failed");
 		return -EINVAL;
 	}
@@ -806,7 +806,7 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 				     (i * sizeof(tSirWifiChannelStats)));
 
 		chinfo = nla_nest_start(vendor_event, i);
-		if (chinfo == NULL) {
+		if (!chinfo) {
 			hdd_err("nla_nest_start failed");
 			return -EINVAL;
 		}
@@ -1810,7 +1810,7 @@ static int hdd_populate_wifi_peer_ps_info(tSirWifiPeerStat *data,
 
 	peer_info = nla_nest_start(vendor_event,
 			       QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_PEER_PS_CHG);
-	if (peer_info == NULL) {
+	if (!peer_info) {
 		hdd_err("nla_nest_start failed");
 		return -EINVAL;
 	}
@@ -1819,7 +1819,7 @@ static int hdd_populate_wifi_peer_ps_info(tSirWifiPeerStat *data,
 		wifi_peer_info = &data->peerInfo[i];
 		peers = nla_nest_start(vendor_event, i);
 
-		if (peers == NULL) {
+		if (!peers) {
 			hdd_err("nla_nest_start failed");
 			return -EINVAL;
 		}
@@ -1847,7 +1847,7 @@ hdd_populate_tx_failure_info(struct sir_wifi_iface_tx_fail *tx_fail,
 {
 	int status = 0;
 
-	if (tx_fail == NULL || skb == NULL)
+	if (!tx_fail || !skb)
 		return -EINVAL;
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_TID,
@@ -3022,7 +3022,7 @@ wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
 	if (0 != status)
 		return;
 
-	if (NULL == pmsg) {
+	if (!pmsg) {
 		hdd_err("msg received here is null");
 		return;
 	}
@@ -4830,7 +4830,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 	mutex_lock(&hdd_ctx->chan_info_lock);
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS && !filled; i++) {
-		if (wiphy->bands[i] == NULL)
+		if (!wiphy->bands[i])
 			continue;
 
 		for (j = 0; j < wiphy->bands[i]->n_channels && !filled; j++) {
@@ -4876,7 +4876,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	if (hdd_ctx->chan_info == NULL) {
+	if (!hdd_ctx->chan_info) {
 		hdd_debug("chan_info is NULL");
 		return -EINVAL;
 	}
@@ -5186,7 +5186,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	struct hdd_station_ctx *sta_ctx;
 	struct stats_event *rssi_info;
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("Invalid context, adapter");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -5282,7 +5282,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("Invalid context, adapter");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -5410,7 +5410,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr)
 
 	hdd_enter();
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("Invalid context, adapter");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -5828,7 +5828,7 @@ static void hdd_get_class_a_statistics_cb(void *stats, void *context)
 	tCsrGlobalClassAStatsInfo *returned_stats;
 
 	hdd_enter();
-	if (NULL == stats) {
+	if (!stats) {
 		hdd_err("Bad param, stats");
 		return;
 	}
@@ -5860,7 +5860,7 @@ QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter)
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -6013,7 +6013,7 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
 	tCsrGlobalClassAStatsInfo *class_a_stats;
 	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
 
-	if ((NULL == stats) || (NULL == context)) {
+	if ((!stats) || (!context)) {
 		hdd_err("Bad param, stats [%pK] context [%pK]",
 			stats, context);
 		return;
@@ -6053,7 +6053,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 		.timeout_ms = WLAN_WAIT_TIME_STATS,
 	};
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return 0;
 	}
@@ -6154,7 +6154,7 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	};
 
 	hdd_enter();
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return -EPERM;
 	}

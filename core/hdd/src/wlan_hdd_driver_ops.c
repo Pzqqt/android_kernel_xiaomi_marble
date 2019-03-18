@@ -288,7 +288,7 @@ void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx)
 		return;
 	}
 
-	if (hif_ctx == NULL)
+	if (!hif_ctx)
 		return;
 
 	cds_set_target_ready(false);
@@ -1118,7 +1118,7 @@ int wlan_hdd_bus_resume(void)
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (NULL == hif_ctx) {
+	if (!hif_ctx) {
 		hdd_err("Failed to get hif context");
 		return -EINVAL;
 	}
@@ -1197,7 +1197,7 @@ int wlan_hdd_bus_resume_noirq(void)
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (NULL == hif_ctx)
+	if (!hif_ctx)
 		return -EINVAL;
 
 	qdf_status = ucfg_pmo_psoc_clear_target_wake_up(hdd_ctx->psoc);

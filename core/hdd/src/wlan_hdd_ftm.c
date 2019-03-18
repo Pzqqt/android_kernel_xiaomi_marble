@@ -133,7 +133,7 @@ static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
 	int ret = 0;
 
 	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
-	if (qcmbr_data == NULL)
+	if (!qcmbr_data)
 		return -ENOMEM;
 
 	if (copy_from_user(qcmbr_data, ifr->ifr_data, sizeof(*qcmbr_data))) {
@@ -172,7 +172,7 @@ static int wlan_hdd_qcmbr_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 	int ret = 0;
 
 	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
-	if (qcmbr_data == NULL)
+	if (!qcmbr_data)
 		return -ENOMEM;
 
 	if (copy_from_user(qcmbr_data, ifr->ifr_data, sizeof(*qcmbr_data))) {

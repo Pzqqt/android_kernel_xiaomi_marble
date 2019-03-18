@@ -1587,7 +1587,7 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 
 	hdd_enter_dev(dev);
 
-	if (NULL == value)
+	if (!value)
 		return -ENOMEM;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);

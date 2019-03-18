@@ -1543,7 +1543,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 	temp_skbuff = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(u32) +
 							  NLMSG_HDRLEN);
 
-	if (temp_skbuff != NULL) {
+	if (temp_skbuff) {
 		ret_val = nla_put_u32(temp_skbuff, QCA_WLAN_VENDOR_ATTR_DFS,
 				      dfs_capability);
 		if (ret_val) {
@@ -2897,7 +2897,7 @@ out:
 	if (ret == 0) {
 		temp_skbuff = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 							      NLMSG_HDRLEN);
-		if (temp_skbuff != NULL)
+		if (temp_skbuff)
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 	}
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
@@ -2950,7 +2950,7 @@ static int wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
-	if (adapter == NULL)
+	if (!adapter)
 		return;
 	if (adapter->session.ap.sap_config.acs_cfg.ch_list) {
 		qdf_mem_free(adapter->session.ap.sap_config.acs_cfg.ch_list);
@@ -4623,7 +4623,7 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if ((data == NULL) || (data_len <= 0) ||
+	if ((!data) || (data_len <= 0) ||
 	    (data_len > SIR_ROAM_SCAN_PSK_SIZE)) {
 		hdd_err("Invalid data");
 		return -EINVAL;
@@ -8705,7 +8705,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 			sizeof(u8) + sizeof(u8) + sizeof(u32) + NLMSG_HDRLEN);
 
-	if (NULL == reply_skb) {
+	if (!reply_skb) {
 		hdd_err("getLinkProperties: skb alloc failed");
 		return -EINVAL;
 	}
@@ -11068,7 +11068,7 @@ void hdd_update_cca_info_cb(hdd_handle_t hdd_handle, uint32_t congestion,
 		return;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (adapter == NULL) {
+	if (!adapter) {
 		hdd_err("vdev_id %d does not exist with host", vdev_id);
 		return;
 	}
@@ -11640,14 +11640,14 @@ static int hdd_populate_connectivity_check_stats_info(
 	uint32_t count = 0;
 
 	connect_stats = nla_nest_start(skb, DATA_PKT_STATS);
-	if (connect_stats == NULL) {
+	if (!connect_stats) {
 		hdd_err("nla_nest_start failed");
 		return -EINVAL;
 	}
 
 	if (adapter->pkt_type_bitmap & CONNECTIVITY_CHECK_SET_DNS) {
 		connect_info = nla_nest_start(skb, count);
-		if (connect_info == NULL) {
+		if (!connect_info) {
 			hdd_err("nla_nest_start failed count %u", count);
 			return -EINVAL;
 		}
@@ -11660,7 +11660,7 @@ static int hdd_populate_connectivity_check_stats_info(
 
 	if (adapter->pkt_type_bitmap & CONNECTIVITY_CHECK_SET_TCP_HANDSHAKE) {
 		connect_info = nla_nest_start(skb, count);
-		if (connect_info == NULL) {
+		if (!connect_info) {
 			hdd_err("nla_nest_start failed count %u", count);
 			return -EINVAL;
 		}
@@ -11671,7 +11671,7 @@ static int hdd_populate_connectivity_check_stats_info(
 		count++;
 
 		connect_info = nla_nest_start(skb, count);
-		if (connect_info == NULL) {
+		if (!connect_info) {
 			hdd_err("nla_nest_start failed count %u", count);
 			return -EINVAL;
 		}
@@ -11682,7 +11682,7 @@ static int hdd_populate_connectivity_check_stats_info(
 		count++;
 
 		connect_info = nla_nest_start(skb, count);
-		if (connect_info == NULL) {
+		if (!connect_info) {
 			hdd_err("nla_nest_start failed count %u", count);
 			return -EINVAL;
 		}
@@ -11695,7 +11695,7 @@ static int hdd_populate_connectivity_check_stats_info(
 
 	if (adapter->pkt_type_bitmap & CONNECTIVITY_CHECK_SET_ICMPV4) {
 		connect_info = nla_nest_start(skb, count);
-		if (connect_info == NULL) {
+		if (!connect_info) {
 			hdd_err("nla_nest_start failed count %u", count);
 			return -EINVAL;
 		}
@@ -12953,7 +12953,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
 
-		if (NULL == wiphy->bands[i])
+		if (!wiphy->bands[i])
 			continue;
 
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
@@ -13391,7 +13391,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 mem_fail:
 	hdd_err("Not enough memory to allocate channels");
-	if (wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels != NULL) {
+	if (wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels) {
 		qdf_mem_free(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels);
 		wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels = NULL;
 	}
@@ -13414,8 +13414,8 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy)
 	const uint32_t *cipher_suites;
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
-		if (NULL != wiphy->bands[i] &&
-		   (NULL != wiphy->bands[i]->channels)) {
+		if (wiphy->bands[i] &&
+		   (wiphy->bands[i]->channels)) {
 			qdf_mem_free(wiphy->bands[i]->channels);
 			wiphy->bands[i]->channels = NULL;
 		}
@@ -13448,10 +13448,10 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 		hdd_err("could not get HT capability info");
 
 	if (ht_cap_info.tx_stbc) {
-		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ])
+		if (hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ])
 			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_2GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
-		if (NULL != hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ])
+		if (hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ])
 			hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ]->ht_cap.cap |=
 						IEEE80211_HT_CAP_TX_STBC;
 	}
@@ -13502,7 +13502,7 @@ static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
-		if (NULL == hdd_ctx->wiphy->bands[i])
+		if (!hdd_ctx->wiphy->bands[i])
 			continue;
 
 		for (j = 0; j < hdd_ctx->wiphy->bands[i]->n_channels; j++) {
@@ -15145,7 +15145,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		roam_profile = hdd_roam_profile(adapter);
 	}
 
-	if (roam_profile == NULL) {
+	if (!roam_profile) {
 		hdd_err("Get roam profile failed!");
 		return -EINVAL;
 	}
@@ -15684,12 +15684,12 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	}
 
 	if (bss_desc->channelId <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
-	    (wiphy->bands[HDD_NL80211_BAND_2GHZ] != NULL)) {
+	    (wiphy->bands[HDD_NL80211_BAND_2GHZ])) {
 		freq =
 			ieee80211_channel_to_frequency(bss_desc->channelId,
 						       HDD_NL80211_BAND_2GHZ);
 	} else if ((bss_desc->channelId > ARRAY_SIZE(hdd_channels_2_4_ghz))
-		   && (wiphy->bands[HDD_NL80211_BAND_5GHZ] != NULL)) {
+		   && (wiphy->bands[HDD_NL80211_BAND_5GHZ])) {
 		freq =
 			ieee80211_channel_to_frequency(bss_desc->channelId,
 						       HDD_NL80211_BAND_5GHZ);
@@ -15756,10 +15756,10 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 	sme_roam_get_connect_profile(mac_handle, adapter->vdev_id,
 				     &roamProfile);
 
-	if (NULL != roamProfile.pBssDesc) {
+	if (roamProfile.pBssDesc) {
 		bss = wlan_hdd_inform_bss_frame(adapter, roamProfile.pBssDesc);
 
-		if (NULL == bss)
+		if (!bss)
 			hdd_debug("wlan_hdd_inform_bss_frame returned NULL");
 
 		sme_roam_free_connect_profile(&roamProfile);
@@ -15792,7 +15792,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 	hdd_enter();
 	hdd_debug("is going to notify supplicant of:");
 
-	if (NULL == roam_info) {
+	if (!roam_info) {
 		hdd_err("roam_info is NULL");
 		return -EINVAL;
 	}
@@ -15824,7 +15824,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -15867,7 +15867,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -15916,7 +15916,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -16074,7 +16074,7 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	/* probably no sap running, no handling required */
-	if (ap_adapter == NULL)
+	if (!ap_adapter)
 		return true;
 
 	/*
@@ -16095,7 +16095,7 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * know what is going to happen better stop sta connection
 	 */
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
-	if (NULL == hdd_ap_ctx) {
+	if (!hdd_ap_ctx) {
 		hdd_err("AP context not found");
 		return false;
 	}
@@ -18782,7 +18782,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 	sta_ctx->ibss_enc_key_installed = 0;
 
-	if (params->ie_len && (NULL != params->ie)) {
+	if (params->ie_len && (params->ie)) {
 		if (wlan_get_ie_ptr_from_eid(WLAN_EID_RSN, params->ie,
 					     params->ie_len)) {
 			sta_ctx->wpa_versions = NL80211_WPA_VERSION_2;
@@ -18796,7 +18796,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 			memset(&dot11_wpa_ie, 0, sizeof(dot11_wpa_ie));
 			ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_WPA,
 						params->ie, params->ie_len);
-			if (NULL != ie) {
+			if (ie) {
 				sta_ctx->wpa_versions = NL80211_WPA_VERSION_1;
 				/* Unpack the WPA IE
 				 * Skip past the EID byte and length byte
@@ -18985,7 +18985,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	roam_profile->cfg_protection = IBSS_CFG_PROTECTION_ENABLE_MASK;
 
 	/* BSSID is provided by upper layers hence no need to AUTO generate */
-	if (NULL != params->bssid) {
+	if (params->bssid) {
 		if (ucfg_mlme_set_ibss_auto_bssid(hdd_ctx->psoc, 0)
 				== QDF_STATUS_E_FAILURE) {
 			hdd_err("Unable to update MLME IBSS Auto BSSID config");
@@ -20460,7 +20460,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (NULL == params) {
+	if (!params) {
 		hdd_err("params is Null");
 		return -EINVAL;
 	}
@@ -20473,7 +20473,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	if (NULL == hostapd_state) {
+	if (!hostapd_state) {
 		hdd_err("hostapd_state is Null");
 		return -EINVAL;
 	}

@@ -319,7 +319,7 @@ hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
 			qdf_mem_malloc(sizeof(uint8_t) *
 				encrypt_decrypt_params->data_len);
 
-		if (encrypt_decrypt_params->data == NULL) {
+		if (!encrypt_decrypt_params->data) {
 			hdd_err("memory allocation failed");
 			return -ENOMEM;
 		}

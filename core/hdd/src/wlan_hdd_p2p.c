@@ -394,7 +394,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	int ret;
 
 	param = strnchr(command, strlen(command), ' ');
-	if (param == NULL) {
+	if (!param) {
 		hdd_err("strnchr failed to find delimeter");
 		return -EINVAL;
 	}
@@ -471,7 +471,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 	int ret;
 
 	param = strnchr(command, strlen(command), ' ');
-	if (param == NULL) {
+	if (!param) {
 		hdd_err("strnchr failed to find delimiter");
 		return -EINVAL;
 	}
@@ -974,7 +974,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 	hdd_debug("Frame Type = %d Frame Length = %d",
 		  frame_type, frm_len);
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("adapter is NULL");
 		return;
 	}
@@ -1003,7 +1003,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 		if (!adapter)
 			adapter = hdd_get_adapter_by_rand_macaddr(hdd_ctx,
 								  dest_addr);
-		if (NULL == adapter) {
+		if (!adapter) {
 			/*
 			 * Under assumtion that we don't receive any action
 			 * frame with BCST as destination,
@@ -1018,7 +1018,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			 * in OCB mode
 			 */
 			adapter = hdd_get_adapter(hdd_ctx, QDF_OCB_MODE);
-			if (NULL == adapter || !qdf_is_macaddr_broadcast(
+			if (!adapter || !qdf_is_macaddr_broadcast(
 			    (struct qdf_mac_addr *)dest_addr)) {
 				/*
 				 * Under assumtion that we don't
@@ -1031,7 +1031,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 		}
 	}
 
-	if (NULL == adapter->dev) {
+	if (!adapter->dev) {
 		hdd_err("adapter->dev is NULL");
 		return;
 	}
@@ -1128,7 +1128,7 @@ static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t enable_mcc_adaptive_sch = 0;
 
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
@@ -1325,7 +1325,7 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 		return -EFAULT;
 	}
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
@@ -1385,7 +1385,7 @@ void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value)
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (hdd_ctx == NULL) {
+	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return;
 	}

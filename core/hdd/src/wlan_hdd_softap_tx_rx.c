@@ -857,7 +857,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (unlikely(NULL == hdd_ctx)) {
+	if (unlikely(!hdd_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -881,7 +881,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 
 		skb->dev = adapter->dev;
 
-		if (unlikely(skb->dev == NULL)) {
+		if (unlikely(!skb->dev)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_ERROR,
 				  "%s: ERROR!!Invalid netdevice", __func__);
@@ -955,7 +955,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("NULL adapter");
 		return QDF_STATUS_E_INVAL;
 	}

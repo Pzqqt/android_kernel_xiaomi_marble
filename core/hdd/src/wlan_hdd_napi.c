@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,8 +50,8 @@ struct qca_napi_data *hdd_napi_get_all(void)
 	NAPI_DEBUG("-->");
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
-	if (unlikely(NULL == hif))
-		QDF_ASSERT(NULL != hif); /* WARN */
+	if (unlikely(!hif))
+		QDF_ASSERT(hif); /* WARN */
 	else
 		rp = hif_napi_get_all(hif);
 
@@ -71,9 +71,9 @@ static uint32_t hdd_napi_get_map(void)
 
 	NAPI_DEBUG("-->");
 	/* cache once, use forever */
-	if (hdd_napi_ctx == NULL)
+	if (!hdd_napi_ctx)
 		hdd_napi_ctx = hdd_napi_get_all();
-	if (hdd_napi_ctx != NULL)
+	if (hdd_napi_ctx)
 		map = hdd_napi_ctx->ce_map;
 
 	NAPI_DEBUG("<-- [map=0x%08x]", map);
@@ -102,15 +102,15 @@ int hdd_napi_create(void)
 
 	NAPI_DEBUG("-->");
 
-	if (NULL == napid) {
+	if (!napid) {
 		hdd_err("unable to retrieve napi structure");
 		rc = -EFAULT;
 		goto exit;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (unlikely(NULL == hif_ctx)) {
-		QDF_ASSERT(NULL != hif_ctx);
+	if (unlikely(!hif_ctx)) {
+		QDF_ASSERT(hif_ctx);
 		rc = -EFAULT;
 		goto exit;
 	}
@@ -131,7 +131,7 @@ int hdd_napi_create(void)
 
 	hdd_debug("napi instances were created. Map=0x%x", rc);
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (unlikely(NULL == hdd_ctx)) {
+	if (unlikely(!hdd_ctx)) {
 		QDF_ASSERT(0);
 		rc = -EFAULT;
 		goto exit;
@@ -169,8 +169,8 @@ int hdd_napi_destroy(int force)
 		struct hif_opaque_softc *hif_ctx;
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-		if (unlikely(NULL == hif_ctx))
-			QDF_ASSERT(NULL != hif_ctx);
+		if (unlikely(!hif_ctx))
+			QDF_ASSERT(hif_ctx);
 		else
 			for (i = 0; i < CE_COUNT_MAX; i++)
 				if (hdd_napi_map & (0x01 << i)) {
@@ -189,8 +189,8 @@ int hdd_napi_destroy(int force)
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
-		if (unlikely(NULL == hif_ctx))
-			QDF_ASSERT(NULL != hif_ctx);
+		if (unlikely(!hif_ctx))
+			QDF_ASSERT(hif_ctx);
 		else
 			rc = hif_napi_cpu_deinit(hif_ctx);
 	}
@@ -222,8 +222,8 @@ int hdd_napi_enabled(int id)
 	int rc = 0; /* NOT enabled */
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
-	if (unlikely(NULL == hif))
-		QDF_ASSERT(hif != NULL); /* WARN_ON; rc = 0 */
+	if (unlikely(!hif))
+		QDF_ASSERT(hif); /* WARN_ON; rc = 0 */
 	else if (-1 == id)
 		rc = hif_napi_enabled(hif, id);
 	else
@@ -251,8 +251,8 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 	NAPI_DEBUG("-->(event=%d, aux=%pK)", event, data);
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
-	if (unlikely(NULL == hif))
-		QDF_ASSERT(hif != NULL);
+	if (unlikely(!hif))
+		QDF_ASSERT(hif);
 	else
 		rc = hif_napi_event(hif, event, data);
 
@@ -288,7 +288,7 @@ static int hdd_napi_perfd_cpufreq(enum qca_napi_tput_state req_state)
 	NAPI_DEBUG("-> (%d)", req_state);
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (unlikely(hdd_ctx == NULL)) {
+	if (unlikely(!hdd_ctx)) {
 		hdd_err("cannot get hdd_context");
 		rc = -EFAULT;
 		goto hnpc_ret;
@@ -432,7 +432,7 @@ int hdd_napi_serialize(int is_on)
 
 		/* make sure that bus_bandwidth trigger is executed */
 		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-		if (hdd_ctx != NULL)
+		if (hdd_ctx)
 			hdd_ctx->cur_vote_level = -1;
 
 	}
@@ -480,7 +480,7 @@ int hdd_display_napi_stats(void)
 	char buf[6 * QCA_NAPI_NUM_BUCKETS + 1] = {'\0'};
 
 	napid = hdd_napi_get_all();
-	if (NULL == napid) {
+	if (!napid) {
 		hdd_err("%s unable to retrieve napi structure", __func__);
 		return -EFAULT;
 	}
@@ -539,7 +539,7 @@ int hdd_clear_napi_stats(void)
 	struct qca_napi_stat *napis;
 
 	napid = hdd_napi_get_all();
-	if (NULL == napid) {
+	if (!napid) {
 		hdd_err("%s unable to retrieve napi structure", __func__);
 		return -EFAULT;
 	}
