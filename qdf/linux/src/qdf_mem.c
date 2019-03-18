@@ -691,7 +691,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool_addr,
 		 */
 		new_pool = (__qdf_mempool_ctxt_t *)
 			kmalloc(sizeof(__qdf_mempool_ctxt_t), GFP_KERNEL);
-		if (new_pool == NULL)
+		if (!new_pool)
 			return QDF_STATUS_E_NOMEM;
 
 		memset(new_pool, 0, sizeof(*new_pool));
@@ -704,7 +704,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool_addr,
 	}
 
 	for (pool_id = 0; pool_id < MAX_MEM_POOLS; pool_id++) {
-		if (osdev->mem_pool[pool_id] == NULL)
+		if (!osdev->mem_pool[pool_id])
 			break;
 	}
 
@@ -713,7 +713,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool_addr,
 
 	new_pool = osdev->mem_pool[pool_id] = (__qdf_mempool_ctxt_t *)
 		kmalloc(sizeof(__qdf_mempool_ctxt_t), GFP_KERNEL);
-	if (new_pool == NULL)
+	if (!new_pool)
 		return -ENOMEM;
 
 	memset(new_pool, 0, sizeof(*new_pool));
@@ -727,7 +727,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool_addr,
 				((align)?(align - 1):0);
 
 	new_pool->pool_mem = kzalloc(new_pool->mem_size, GFP_KERNEL);
-	if (new_pool->pool_mem == NULL) {
+	if (!new_pool->pool_mem) {
 			/* TBD: Check if we need get_free_pages above */
 		kfree(new_pool);
 		osdev->mem_pool[pool_id] = NULL;
@@ -802,7 +802,7 @@ void *__qdf_mempool_alloc(qdf_device_t osdev, __qdf_mempool_t pool)
 	spin_lock_bh(&pool->lock);
 
 	buf = STAILQ_FIRST(&pool->free_list);
-	if (buf != NULL) {
+	if (buf) {
 		STAILQ_REMOVE_HEAD(&pool->free_list, mempool_entry);
 		pool->free_cnt--;
 	}
@@ -1805,7 +1805,7 @@ qdf_export_symbol(qdf_mem_exit);
  */
 void qdf_ether_addr_copy(void *dst_addr, const void *src_addr)
 {
-	if ((dst_addr == NULL) || (src_addr == NULL)) {
+	if ((!dst_addr) || (!src_addr)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, source:%pK destination:%pK",
 			  __func__, src_addr, dst_addr);

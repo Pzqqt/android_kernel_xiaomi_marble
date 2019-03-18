@@ -223,7 +223,7 @@ int qdf_aes_s2v(const uint8_t *key, unsigned int key_len, const uint8_t *s[],
 	ret = qdf_get_keyed_hash(alg, key, key_len, a, &t_len, 1, out);
 
 error:
-	if (t != NULL && t != d)
+	if (t && t != d)
 		qdf_mem_free(t);
 	return ret;
 }

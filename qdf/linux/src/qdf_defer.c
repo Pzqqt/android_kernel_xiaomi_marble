@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,7 +38,7 @@ void __qdf_defer_func(struct work_struct *work)
 {
 	__qdf_work_t *ctx = container_of(work, __qdf_work_t, work);
 
-	if (ctx->fn == NULL) {
+	if (!ctx->fn) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "No callback registered !!");
 		return;
@@ -58,7 +58,7 @@ __qdf_defer_delayed_func(struct work_struct *dwork)
 {
 	__qdf_delayed_work_t  *ctx = container_of(dwork, __qdf_delayed_work_t,
 		 dwork.work);
-	if (ctx->fn == NULL) {
+	if (!ctx->fn) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "BugCheck: Callback is not initilized while creating delayed work queue");
 		return;

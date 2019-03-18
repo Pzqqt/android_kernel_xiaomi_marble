@@ -98,7 +98,7 @@ qdf_export_symbol(qdf_try_allowing_sleep);
  */
 QDF_TIMER_STATE qdf_mc_timer_get_current_state(qdf_mc_timer_t *timer)
 {
-	if (NULL == timer) {
+	if (!timer) {
 		QDF_ASSERT(0);
 		return QDF_TIMER_STATE_UNUSED;
 	}
@@ -357,7 +357,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 	QDF_STATUS qdf_status;
 
 	/* check for invalid pointer */
-	if ((timer == NULL) || (callback == NULL)) {
+	if ((!timer) || (!callback)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		QDF_ASSERT(0);
@@ -406,7 +406,7 @@ QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
 			     void *user_data)
 {
 	/* check for invalid pointer */
-	if ((timer == NULL) || (callback == NULL)) {
+	if ((!timer) || (!callback)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		QDF_ASSERT(0);
@@ -459,7 +459,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 	QDF_STATUS v_status = QDF_STATUS_SUCCESS;
 
 	/* check for invalid pointer */
-	if (NULL == timer) {
+	if (!timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null timer pointer being passed", __func__);
 		QDF_ASSERT(0);
@@ -557,7 +557,7 @@ QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer)
 	QDF_STATUS v_status = QDF_STATUS_SUCCESS;
 
 	/* check for invalid pointer */
-	if (NULL == timer) {
+	if (!timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null timer pointer being passed", __func__);
 		QDF_ASSERT(0);
@@ -637,7 +637,7 @@ qdf_export_symbol(qdf_mc_timer_destroy);
 QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 {
 	/* check for invalid pointer */
-	if (NULL == timer) {
+	if (!timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s Null timer pointer being passed", __func__);
 		QDF_ASSERT(0);
@@ -718,7 +718,7 @@ qdf_export_symbol(qdf_mc_timer_start);
 QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer)
 {
 	/* check for invalid pointer */
-	if (NULL == timer) {
+	if (!timer) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s Null timer pointer being passed", __func__);
 		QDF_ASSERT(0);

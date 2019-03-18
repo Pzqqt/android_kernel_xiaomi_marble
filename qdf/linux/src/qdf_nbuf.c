@@ -2175,7 +2175,7 @@ static QDF_NBUF_TRACK *qdf_nbuf_track_alloc(void)
 
 	spin_lock_irqsave(&qdf_net_buf_track_free_list_lock, irq_flag);
 	qdf_net_buf_track_used_list_count++;
-	if (qdf_net_buf_track_free_list != NULL) {
+	if (qdf_net_buf_track_free_list) {
 		new_node = qdf_net_buf_track_free_list;
 		qdf_net_buf_track_free_list =
 			qdf_net_buf_track_free_list->p_next;
@@ -2184,7 +2184,7 @@ static QDF_NBUF_TRACK *qdf_nbuf_track_alloc(void)
 	update_max_used();
 	spin_unlock_irqrestore(&qdf_net_buf_track_free_list_lock, irq_flag);
 
-	if (new_node != NULL)
+	if (new_node)
 		return new_node;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
@@ -2254,7 +2254,7 @@ static void qdf_nbuf_track_prefill(void)
 	head = NULL;
 	for (i = 0; i < FREEQ_POOLSIZE; i++) {
 		node = qdf_nbuf_track_alloc();
-		if (node == NULL)
+		if (!node)
 			continue;
 		node->p_next = head;
 		head = node;
@@ -2570,7 +2570,7 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 	while (p_node) {
 		p_prev = p_node;
 		p_node = p_node->p_next;
-		if ((NULL != p_node) && (p_node->net_buf == net_buf)) {
+		if ((p_node) && (p_node->net_buf == net_buf)) {
 			p_prev->p_next = p_node->p_next;
 			break;
 		}
@@ -3604,7 +3604,7 @@ qdf_export_symbol(__qdf_nbuf_dma_map_info);
 void
 __qdf_nbuf_frag_info(struct sk_buff *skb, qdf_sglist_t  *sg)
 {
-	qdf_assert(skb != NULL);
+	qdf_assert(skb);
 	sg->sg_segs[0].vaddr = skb->data;
 	sg->sg_segs[0].len   = skb->len;
 	sg->nsegs            = 1;
@@ -3630,7 +3630,7 @@ __qdf_nbuf_frag_info(struct sk_buff *skb, qdf_sglist_t  *sg)
 
 	struct skb_shared_info  *sh = skb_shinfo(skb);
 
-	qdf_assert(skb != NULL);
+	qdf_assert(skb);
 	sg->sg_segs[0].vaddr = skb->data;
 	sg->sg_segs[0].len   = skb->len;
 	sg->nsegs            = 1;

@@ -248,7 +248,7 @@ void qdf_complete_wait_events(void)
 	qdf_list_peek_front(&qdf_wait_event_list,
 			    &list_node);
 
-	while (list_node != NULL) {
+	while (list_node) {
 		event_node = qdf_container_of(list_node,
 						struct qdf_evt_node, node);
 

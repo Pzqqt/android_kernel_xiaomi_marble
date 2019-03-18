@@ -449,7 +449,7 @@ void qdf_trace_enable(uint32_t bitmask_of_module_id, uint8_t enable)
 	} else {
 		if (enable) {
 			for (i = 0; i < QDF_MODULE_ID_MAX; i++) {
-				if (NULL != qdf_trace_restore_cb_table[i]) {
+				if (qdf_trace_restore_cb_table[i]) {
 					qdf_trace_cb_table[i] =
 						qdf_trace_restore_cb_table[i];
 				}
@@ -536,7 +536,7 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 		return;
 
 	/* if module is not registered, don't record for that module */
-	if (NULL == qdf_trace_cb_table[module])
+	if (!qdf_trace_cb_table[module])
 		return;
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time, sizeof(time));
@@ -710,7 +710,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 		spin_unlock(&ltrace_lock);
 		for (;; ) {
 			if ((code == 0 || (code == p_record.code)) &&
-			    (qdf_trace_cb_table[p_record.module] != NULL)) {
+			    (qdf_trace_cb_table[p_record.module])) {
 				if (0 == bitmask_of_module) {
 					qdf_trace_cb_table[p_record.
 							   module] (p_mac,
@@ -799,7 +799,7 @@ QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 	char *buf_ptr = buf;
 
 	for (module = 0; module < QDF_MODULE_ID_MAX; module++) {
-		if (NULL != qdf_state_info_table[module]) {
+		if (qdf_state_info_table[module]) {
 			qdf_state_info_table[module](&buf_ptr, &buf_len);
 			if (!buf_len) {
 				ret = QDF_STATUS_E_NOMEM;
@@ -3180,7 +3180,7 @@ static void process_qdf_dbg_arr_param(struct category_info *cinfo,
 	mod_val_str = qdf_dbg_arr[array_index];
 	mod_str = strsep(&mod_val_str, "=");
 	val_str = mod_val_str;
-	if (val_str == NULL) {
+	if (!val_str) {
 		pr_info("qdf_dbg_arr: %s not in the <mod>=<val> form\n",
 				mod_str);
 		return;
