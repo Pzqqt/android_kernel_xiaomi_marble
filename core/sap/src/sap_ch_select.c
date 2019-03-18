@@ -491,8 +491,8 @@ uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
 {
 	uint8_t i = 0;
 
-	if ((NULL == sap_ctx->acs_cfg->ch_list) ||
-	    (NULL == spect_info_params))
+	if ((!sap_ctx->acs_cfg->ch_list) ||
+	    (!spect_info_params))
 		return channel_num;
 
 	if (channel_num > 0 && channel_num <= 252) {
@@ -526,7 +526,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 	uint8_t i = 0;
 	struct mac_context *mac_ctx = sme_get_mac_context();
 
-	if (NULL == mac_ctx) {
+	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"pmac Global Context is NULL");
 		return SAP_CHANNEL_NOT_SELECTED;
@@ -536,8 +536,8 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 	 * If Channel List is not Configured don't do anything
 	 * Else return the Best Channel from the Channel List
 	 */
-	if ((NULL == sap_ctx->acs_cfg->ch_list) ||
-		(NULL == spectinfo_param) ||
+	if ((!sap_ctx->acs_cfg->ch_list) ||
+		(!spectinfo_param) ||
 		(0 == sap_ctx->acs_cfg->ch_list_count))
 		return best_chnl;
 
@@ -808,7 +808,7 @@ static uint32_t sap_weight_channel_noise_floor(struct sap_context *sap_ctx,
 	    ACS_WEIGHT_CFG_TO_LOCAL(sap_ctx->auto_channel_select_weight,
 				    softap_nf_weight_cfg);
 
-	if (channel_stat == NULL || channel_stat->channelfreq == 0) {
+	if (!channel_stat || channel_stat->channelfreq == 0) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "In %s, sanity check failed return max weight",
 			  __func__);
@@ -860,7 +860,7 @@ static uint32_t sap_weight_channel_free(struct sap_context *sap_ctx,
 	    ACS_WEIGHT_CFG_TO_LOCAL(sap_ctx->auto_channel_select_weight,
 				    softap_channel_free_weight_cfg);
 
-	if (channel_stat == NULL || channel_stat->channelfreq == 0) {
+	if (!channel_stat || channel_stat->channelfreq == 0) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "In %s, sanity check failed return max weight",
 			  __func__);
@@ -921,7 +921,7 @@ static uint32_t sap_weight_channel_txpwr_range(struct sap_context *sap_ctx,
 	    ACS_WEIGHT_CFG_TO_LOCAL(sap_ctx->auto_channel_select_weight,
 				    softap_txpwr_range_weight_cfg);
 
-	if (channel_stat == NULL || channel_stat->channelfreq == 0) {
+	if (!channel_stat || channel_stat->channelfreq == 0) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "In %s, sanity check failed return max weight",
 			  __func__);
@@ -973,7 +973,7 @@ static uint32_t sap_weight_channel_txpwr_tput(struct sap_context *sap_ctx,
 	    ACS_WEIGHT_CFG_TO_LOCAL(sap_ctx->auto_channel_select_weight,
 				    softap_txpwr_tput_weight_cfg);
 
-	if (channel_stat == NULL || channel_stat->channelfreq == 0) {
+	if (!channel_stat || channel_stat->channelfreq == 0) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "In %s, sanity check failed return max weight",
 			  __func__);
@@ -1059,7 +1059,7 @@ static void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
 	int32_t rssi, rsssi_effect;
 
 	pExtSpectCh = (pSpectCh + offset);
-	if (pExtSpectCh != NULL &&
+	if (pExtSpectCh &&
 	    pExtSpectCh >= spectch_start &&
 	    pExtSpectCh < spectch_end) {
 		if (!sap_check_channels_same_band(pSpectCh->chNum,
@@ -1138,7 +1138,7 @@ static void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 				     uint16_t *centerFreq,
 				     uint16_t *centerFreq_2)
 {
-	if (NULL == pBeaconStruct) {
+	if (!pBeaconStruct) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("pBeaconStruct is NULL"));
 		return;
@@ -1236,7 +1236,7 @@ static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 	uint16_t num_ch;
 	int32_t offset = 0;
 
-	if (NULL == spect_ch) {
+	if (!spect_ch) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("spect_ch is NULL"));
 		return;
@@ -1325,7 +1325,7 @@ static void sap_interference_rssi_count(tSapSpectChInfo *spect_ch,
 	tSapSpectChInfo *spectch_start,
 	tSapSpectChInfo *spectch_end)
 {
-	if (NULL == spect_ch) {
+	if (!spect_ch) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: spect_ch is NULL", __func__);
 		return;
@@ -2659,7 +2659,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	 * If ACS weight is not enabled on noise_floor/channel_free/tx_power,
 	 * then skip acs process if no bss found.
 	 */
-	if (NULL == scan_result &&
+	if (!scan_result &&
 	    !(sap_ctx->auto_channel_select_weight & 0xffff00)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("No external AP present"));

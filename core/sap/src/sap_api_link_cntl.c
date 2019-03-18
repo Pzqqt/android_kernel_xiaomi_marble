@@ -139,7 +139,7 @@ static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 	struct sap_context *sap_ctx = ctx;
 	QDF_STATUS status;
 
-	if (NULL == sap_ctx) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				FL("sap context is not valid"));
 		return QDF_STATUS_E_FAILURE;
@@ -268,7 +268,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 close_session:
 #ifdef SOFTAP_CHANNEL_RANGE
-	if (sap_ctx->channelList != NULL) {
+	if (sap_ctx->channelList) {
 		/*
 		* Always free up the memory for
 		* channel selection whatever
@@ -536,7 +536,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 		struct sap_context *sap_context;
 
 		if (!((QDF_SAP_MODE == mac_ctx->sap.sapCtxList[intf].sapPersona)
-		    && (mac_ctx->sap.sapCtxList[intf].sap_context != NULL)))
+		    && (mac_ctx->sap.sapCtxList[intf].sap_context)))
 			continue;
 		sap_context = mac_ctx->sap.sapCtxList[intf].sap_context;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,

@@ -290,7 +290,7 @@ static uint8_t sap_get_bonding_channels(struct sap_context *sapContext,
 {
 	uint8_t numChannel;
 
-	if (channels == NULL)
+	if (!channels)
 		return 0;
 
 	if (size < MAX_BONDED_CHANNELS)
@@ -696,7 +696,7 @@ uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
 	uint8_t channel;
 
-	if (NULL == acs_cfg) {
+	if (!acs_cfg) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"ACS config invalid!");
 		QDF_BUG(0);
@@ -1050,7 +1050,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 					sap_context->acs_cfg);
 
 #ifdef SOFTAP_CHANNEL_RANGE
-			if (sap_context->channelList != NULL) {
+			if (sap_context->channelList) {
 				sap_context->channel =
 					sap_context->channelList[0];
 				qdf_mem_free(sap_context->
@@ -1121,7 +1121,7 @@ sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 		     (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-		    mac_ctx->sap.sapCtxList[intf].sap_context != NULL) {
+		    mac_ctx->sap.sapCtxList[intf].sap_context) {
 			sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
 			if (sap_ctx->fsm_state != SAP_INIT)
 				return sap_ctx;
@@ -1135,7 +1135,7 @@ static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
-	if (NULL != sap_find_valid_concurrent_session(mac_handle)) {
+	if (sap_find_valid_concurrent_session(mac_handle)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "conc session exists, no need to clear dfs struct");
 		return QDF_STATUS_SUCCESS;
@@ -1465,7 +1465,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	tSap_StationMICFailureEvent *mic_failure;
 
 	/* Format the Start BSS Complete event to return... */
-	if (NULL == sap_ctx->pfnSapEventCallback) {
+	if (!sap_ctx->pfnSapEventCallback) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1500,7 +1500,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		assoc_ind->assocReqPtr = csr_roaminfo->assocReqPtr;
 		assoc_ind->fWmmEnabled = csr_roaminfo->wmmEnabledSta;
 		assoc_ind->ecsa_capable = csr_roaminfo->ecsa_capable;
-		if (csr_roaminfo->u.pConnectedProfile != NULL) {
+		if (csr_roaminfo->u.pConnectedProfile) {
 			assoc_ind->negotiatedAuthType =
 				csr_roaminfo->u.pConnectedProfile->AuthType;
 			assoc_ind->negotiatedUCEncryptionType =
@@ -1917,7 +1917,7 @@ void sap_cac_reset_notify(mac_handle_t mac_handle)
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
-		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
+		    && mac->sap.sapCtxList[intf].sap_context) {
 			sap_context->isCacStartNotified = false;
 			sap_context->isCacEndNotified = false;
 		}
@@ -1947,7 +1947,7 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
-		    && mac->sap.sapCtxList[intf].sap_context != NULL &&
+		    && mac->sap.sapCtxList[intf].sap_context &&
 		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
 			profile = &sap_context->csr_roamProfile;
@@ -2041,7 +2041,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
-		    && mac->sap.sapCtxList[intf].sap_context != NULL &&
+		    && mac->sap.sapCtxList[intf].sap_context &&
 		    (false == sap_context->isCacEndNotified) &&
 		    sap_is_dfs_cac_wait_state(sap_context)) {
 			sap_context = mac->sap.sapCtxList[intf].sap_context;
@@ -2536,7 +2536,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 		 * mulitple APs: incase of multiple APs, make sure that
 		 *               all APs are down.
 		 */
-		if (NULL == sap_find_valid_concurrent_session(mac_handle)) {
+		if (!sap_find_valid_concurrent_session(mac_handle)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_INFO_MED,
 				  FL("sapdfs: no sessions are valid, stopping timer"));
@@ -2799,7 +2799,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			    (QDF_P2P_GO_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    mac_ctx->sap.sapCtxList[intf].sap_context != NULL) {
+			    mac_ctx->sap.sapCtxList[intf].sap_context) {
 				temp_sap_ctx =
 				    mac_ctx->sap.sapCtxList[intf].sap_context;
 				/*
@@ -3053,7 +3053,7 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 #endif
 
 	if (pconfig_params->probeRespIEsBufferLen > 0 &&
-	    pconfig_params->pProbeRespIEsBuffer != NULL) {
+	    pconfig_params->pProbeRespIEsBuffer) {
 		profile->add_ie_params.probeRespDataLen =
 			pconfig_params->probeRespIEsBufferLen;
 		profile->add_ie_params.probeRespData_buff =
@@ -3064,7 +3064,7 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	}
 	/*assoc resp IE */
 	if (pconfig_params->assocRespIEsLen > 0 &&
-	    pconfig_params->pAssocRespIEsBuffer != NULL) {
+	    pconfig_params->pAssocRespIEsBuffer) {
 		profile->add_ie_params.assocRespDataLen =
 			pconfig_params->assocRespIEsLen;
 		profile->add_ie_params.assocRespData_buff =
@@ -3075,7 +3075,7 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	}
 
 	if (pconfig_params->probeRespBcnIEsLen > 0 &&
-	    pconfig_params->pProbeRespBcnIEsBuffer != NULL) {
+	    pconfig_params->pProbeRespBcnIEsBuffer) {
 		profile->add_ie_params.probeRespBCNDataLen =
 			pconfig_params->probeRespBcnIEsLen;
 		profile->add_ie_params.probeRespBCNData_buff =
@@ -3121,7 +3121,7 @@ void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 	struct qdf_mac_addr temp;
 	int32_t nRes = -1;
 
-	if ((NULL == macList) || (size > MAX_ACL_MAC_ADDRESS)) {
+	if ((!macList) || (size > MAX_ACL_MAC_ADDRESS)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("either buffer is NULL or size = %d is more"), size);
 		return;
@@ -3157,7 +3157,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 
 	nEnd = num_mac - 1;
 
-	if ((NULL == macList) || (num_mac > MAX_ACL_MAC_ADDRESS)) {
+	if ((!macList) || (num_mac > MAX_ACL_MAC_ADDRESS)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		    FL("either buffer is NULL or size = %d is more."), num_mac);
 		return false;
@@ -3174,7 +3174,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 				  "search SUCC");
 			/* "index equals NULL" means the caller does not need the */
 			/* index value of the peerMac being searched */
-			if (index != NULL) {
+			if (index) {
 				*index = (uint8_t) nMiddle;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH, "index %d",
@@ -3202,7 +3202,7 @@ void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "add acl entered");
 
-	if (NULL == macList || *size > MAX_ACL_MAC_ADDRESS) {
+	if (!macList || *size > MAX_ACL_MAC_ADDRESS) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("either buffer is NULL or size = %d is incorrect."),
 			*size);
@@ -3240,7 +3240,7 @@ void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
 	 * the index of the mac addr to be removed and this will only get
 	 * called if the search is successful. Still no harm in having the check
 	 */
-	if ((macList == NULL) || (*size == 0) ||
+	if ((!macList) || (*size == 0) ||
 					(*size > MAX_ACL_MAC_ADDRESS)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("either buffer is NULL or size %d is incorrect."),
@@ -3267,7 +3267,7 @@ void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "print acl entered");
 
-	if ((NULL == macList) || (size == 0) || (size >= MAX_ACL_MAC_ADDRESS)) {
+	if ((!macList) || (size == 0) || (size >= MAX_ACL_MAC_ADDRESS)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, either buffer is NULL or size %d is incorrect.",
 			  __func__, size);
@@ -3621,14 +3621,14 @@ void sap_dfs_cac_timer_callback(void *data)
 	mac_handle_t mac_handle = data;
 	struct mac_context *mac;
 
-	if (NULL == mac_handle) {
+	if (!mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "In %s invalid mac_handle", __func__);
 		return;
 	}
 	mac = MAC_CONTEXT(mac_handle);
 	sapContext = sap_find_cac_wait_session(mac_handle);
-	if (NULL == sapContext) {
+	if (!sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: no SAP contexts in wait state", __func__);
 		return;
@@ -3829,7 +3829,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
-		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
+		    && mac->sap.sapCtxList[intf].sap_context) {
 			intf_count++;
 		}
 	}
@@ -3859,7 +3859,7 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
 		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
-		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
+		    && mac->sap.sapCtxList[intf].sap_context) {
 			sap_context =
 				mac->sap.sapCtxList[intf].sap_context;
 			if (sap_context == sapContext) {
