@@ -37,20 +37,6 @@ typedef void (*qdf_self_recovery_callback)(enum qdf_hang_reason reason,
 					   const uint32_t line);
 
 /**
- * qdf_ssr_callback() - callback for ssr
- *
- * Return: true if fw is down and false if fw is not down
- */
-typedef void (*qdf_ssr_callback)(const char *);
-
-/**
- * qdf_is_module_state_transitioning_cb() - callback to check module state
- *
- * Return: true if module is in transition, else false
- */
-typedef int (*qdf_is_module_state_transitioning_cb)(void);
-
-/**
  * qdf_is_fw_down_callback() - callback to query if fw is down
  *
  * Return: true if fw is down and false if fw is not down
@@ -93,43 +79,6 @@ void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
 #define qdf_trigger_self_recovery() \
 	__qdf_trigger_self_recovery(__func__, __LINE__)
 void __qdf_trigger_self_recovery(const char *func, const uint32_t line);
-
-/**
- * qdf_register_ssr_protect_callbacks() - register [un]protect callbacks
- *
- * Return: None
- */
-void qdf_register_ssr_protect_callbacks(qdf_ssr_callback protect,
-					qdf_ssr_callback unprotect);
-
-/**
- * qdf_ssr_protect() - start SSR protection
- *
- * Return: None
- */
-void qdf_ssr_protect(const char *caller);
-
-/**
- * qdf_ssr_unprotect() - remove SSR protection
- *
- * Return: None
- */
-void qdf_ssr_unprotect(const char *caller);
-
-/**
- * qdf_register_module_state_query_callback() - register module state query
- *
- * Return: None
- */
-void qdf_register_module_state_query_callback(
-			qdf_is_module_state_transitioning_cb query);
-
-/**
- * qdf_is_module_state_transitioning() - query module state transition
- *
- * Return: true if in transition else false
- */
-bool qdf_is_module_state_transitioning(void);
 
 /**
  * qdf_is_recovering_callback() - callback to get driver recovering in progress
