@@ -1185,7 +1185,7 @@ uint32_t policy_mgr_mode_specific_connection_count(
 		conn_index++) {
 		if ((pm_conc_connection_list[conn_index].mode == mode) &&
 			pm_conc_connection_list[conn_index].in_use) {
-			if (list != NULL)
+			if (list)
 				list[count] = conn_index;
 			 count++;
 		}
@@ -1502,14 +1502,14 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 									0) ||
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) > 0) ||
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) > 0)) {
-		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency != NULL)
+		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(true);
 	};
 
 	/* Enable RPS if SAP interface has come up */
 	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
 		== 1) {
-		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb != NULL)
+		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb)
 			pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb(true);
 	}
 
@@ -1575,14 +1575,14 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 									0) &&
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) == 0) &&
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) == 0)) {
-		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency != NULL)
+		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(false);
 	};
 
 	/* Disable RPS if SAP interface has come up */
 	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
 		== 0) {
-		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb != NULL)
+		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb)
 			pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb(false);
 	}
 
@@ -1792,7 +1792,7 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid Context");
 		return status;
 	}
-	if (NULL == ibss_channel) {
+	if (!ibss_channel) {
 		policy_mgr_err("Null pointer error");
 		return false;
 	}
@@ -1829,7 +1829,7 @@ uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid Context");
 		return count;
 	}
-	if (NULL == channel || NULL == vdev_id) {
+	if (!channel || !vdev_id) {
 		policy_mgr_err("Null pointer error");
 		return count;
 	}
@@ -1865,7 +1865,7 @@ bool policy_mgr_max_concurrent_connections_reached(
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	pm_ctx = policy_mgr_get_context(psoc);
-	if (NULL != pm_ctx) {
+	if (pm_ctx) {
 		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			j += pm_ctx->no_of_active_sessions[i];
 		return j >
@@ -2245,7 +2245,7 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("Invalid context");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (NULL == user_cfg) {
+	if (!user_cfg) {
 		policy_mgr_err("Invalid User Config");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2628,7 +2628,7 @@ void policy_mgr_clear_concurrent_session_count(struct wlan_objmgr_psoc *psoc)
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	pm_ctx = policy_mgr_get_context(psoc);
-	if (NULL != pm_ctx) {
+	if (pm_ctx) {
 		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			pm_ctx->no_of_active_sessions[i] = 0;
 	}

@@ -1591,7 +1591,7 @@ static QDF_STATUS policy_mgr_get_sbs_channels(uint8_t *channels,
 	uint32_t remaining_channel_index = 0;
 	uint32_t j = 0, i = 0, weight1, weight2;
 
-	if ((NULL == channels) || (NULL == len)) {
+	if ((!channels) || (!len)) {
 		policy_mgr_err("channels or len is NULL");
 		status = QDF_STATUS_E_FAILURE;
 		return status;
@@ -1710,7 +1710,7 @@ QDF_STATUS policy_mgr_get_connection_channels(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	if ((NULL == channels) || (NULL == len)) {
+	if ((!channels) || (!len)) {
 		policy_mgr_err("channels or len is NULL");
 		status = QDF_STATUS_E_FAILURE;
 		return status;
@@ -1927,7 +1927,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	if ((NULL == pcl_channels) || (NULL == len)) {
+	if ((!pcl_channels) || (!len)) {
 		policy_mgr_err("pcl_channels or len is NULL");
 		return status;
 	}
