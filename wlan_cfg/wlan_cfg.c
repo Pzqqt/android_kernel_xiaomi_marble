@@ -251,7 +251,7 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx =
 		qdf_mem_malloc(sizeof(struct wlan_cfg_dp_soc_ctxt));
 
-	if (wlan_cfg_ctx == NULL)
+	if (!wlan_cfg_ctx)
 		return NULL;
 
 	wlan_cfg_ctx->rxdma1_enable = WLAN_CFG_RXDMA1_ENABLE;
@@ -382,7 +382,7 @@ struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *psoc)
 	struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx =
 		qdf_mem_malloc(sizeof(struct wlan_cfg_dp_pdev_ctxt));
 
-	if (wlan_cfg_ctx == NULL)
+	if (!wlan_cfg_ctx)
 		return NULL;
 
 	wlan_cfg_ctx->rx_dma_buf_ring_size = cfg_get(psoc,
