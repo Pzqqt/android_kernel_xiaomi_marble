@@ -32,6 +32,9 @@
 #endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
+#ifdef SERIALIZE_QUEUE_SETUP
+#include "scheduler_api.h"
+#endif
 
 #ifdef DP_LFR
 static inline void
@@ -1615,6 +1618,112 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 	return peer;
 }
 
+#ifdef SERIALIZE_QUEUE_SETUP
+static QDF_STATUS
+dp_rx_reorder_queue_setup(struct scheduler_msg *msg)
+{
+	struct cdp_reorder_q_setup *q_params;
+	struct dp_soc *soc;
+
+	if (!(msg->bodyptr)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid message body");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	q_params = msg->bodyptr;
+	soc = (struct dp_soc *)q_params->soc;
+	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
+		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
+				q_params->ctrl_pdev, q_params->vdev_id,
+				q_params->peer_mac, q_params->hw_qdesc_paddr,
+				q_params->tid, q_params->queue_no,
+				q_params->ba_window_size_valid,
+				q_params->ba_window_size);
+	}
+
+	qdf_mem_free(q_params);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+dp_flush_queue_setup_msg(struct scheduler_msg *msg)
+{
+	if (msg->bodyptr)
+		qdf_mem_free(msg->bodyptr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_rx_reorder_update_queue_setup() - update rx reorder queue setup
+ * @peer: dp peer pointer
+ * @hw_qdesc: hw queue descriptor
+ * @tid: tid number
+ * @queue_no: queue number
+ * @size_valid: BA window size validity flag
+ * @window_size: BA window size
+ *
+ * return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+dp_rx_reorder_update_queue_setup(struct dp_peer *peer, qdf_dma_addr_t hw_qdesc,
+				 int tid, uint16_t queue_no, uint8_t size_valid,
+				 uint16_t window_size)
+{
+	struct dp_soc *soc = peer->vdev->pdev->soc;
+	struct scheduler_msg msg = {0};
+	struct cdp_reorder_q_setup *q_params;
+	QDF_STATUS status;
+
+	q_params = qdf_mem_malloc(sizeof(*q_params));
+	qdf_mem_zero(q_params, sizeof(*q_params));
+
+	q_params->soc = (struct cdp_soc *)soc;
+	q_params->ctrl_pdev = peer->vdev->pdev->ctrl_pdev;
+	q_params->vdev_id = peer->vdev->vdev_id;
+	q_params->hw_qdesc_paddr = hw_qdesc;
+	q_params->tid = tid;
+	q_params->queue_no = queue_no;
+	q_params->ba_window_size_valid = size_valid;
+	q_params->ba_window_size = window_size;
+	qdf_mem_copy(q_params->peer_mac, peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+
+	msg.bodyptr = q_params;
+	msg.callback = dp_rx_reorder_queue_setup;
+	msg.flush_callback = dp_flush_queue_setup_msg;
+	status = scheduler_post_message(QDF_MODULE_ID_DP,
+					QDF_MODULE_ID_DP,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_mem_free(q_params);
+
+	return status;
+}
+#else
+
+static QDF_STATUS
+dp_rx_reorder_update_queue_setup(struct dp_peer *peer, qdf_dma_addr_t hw_qdesc,
+				 int tid, uint16_t queue_no, uint8_t size_valid,
+				 uint16_t window_size)
+{
+	struct dp_soc *soc = peer->vdev->pdev->soc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
+		status = soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
+					peer->vdev->pdev->ctrl_pdev,
+					peer->vdev->vdev_id, peer->mac_addr.raw,
+					hw_qdesc, tid, tid, size_valid,
+					window_size);
+	}
+
+	return status;
+}
+#endif
+
 /*
  * dp_rx_tid_update_wifi3() – Update receive TID state
  * @peer: Datapath peer handle
@@ -1645,17 +1754,14 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 	}
 
 	dp_set_ssn_valid_flag(&params, 0);
-
-	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, dp_rx_tid_update_cb, rx_tid);
+	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
+			dp_rx_tid_update_cb, rx_tid);
 
 	rx_tid->ba_win_size = ba_window_size;
-	if (soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup) {
-		soc->cdp_soc.ol_ops->peer_rx_reorder_queue_setup(
-			peer->vdev->pdev->ctrl_pdev,
-			peer->vdev->vdev_id, peer->mac_addr.raw,
-			rx_tid->hw_qdesc_paddr, tid, tid, 1, ba_window_size);
 
-	}
+	dp_rx_reorder_update_queue_setup(peer, rx_tid->hw_qdesc_paddr, tid,
+					 tid, 1, ba_window_size);
+
 	return 0;
 }
 

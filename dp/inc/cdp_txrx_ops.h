@@ -843,6 +843,30 @@ struct cdp_pflow_ops {
 #define LRO_IPV6_SEED_ARR_SZ 11
 
 /**
+ * struct cdp_reorder_q_setup - reorder queue setup params
+ * @soc: dp soc pointer
+ * @ctrl_pdev: umac ctrl pdev pointer
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @hw_qdesc: hw queue descriptor
+ * @tid: tid number
+ * @queue_no: queue number
+ * @ba_window_size_valid: BA window size validity flag
+ * @ba_window_size: BA window size
+ */
+struct cdp_reorder_q_setup {
+	struct cdp_soc *soc;
+	struct cdp_ctrl_objmgr_pdev *ctrl_pdev;
+	uint8_t vdev_id;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	qdf_dma_addr_t hw_qdesc_paddr;
+	uint8_t tid;
+	uint16_t queue_no;
+	uint8_t ba_window_size_valid;
+	uint16_t ba_window_size;
+};
+
+/**
  * struct cdp_lro_hash_config - set rx_offld(LRO/GRO) init parameters
  * @lro_enable: indicates whether rx_offld is enabled
  * @tcp_flag: If the TCP flags from the packet do not match
