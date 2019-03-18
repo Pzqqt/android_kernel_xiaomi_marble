@@ -1945,7 +1945,7 @@ QDF_STATUS wlan_mlme_set_rts_threshold(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1983,7 +1983,7 @@ QDF_STATUS wlan_mlme_set_frag_threshold(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -2256,7 +2256,7 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 	crypto_key = wlan_crypto_get_key(vdev, wep_keyid);
-	if (crypto_key == NULL) {
+	if (!crypto_key) {
 		mlme_err("Crypto KEY not present");
 		return QDF_STATUS_E_INVAL;
 	}
