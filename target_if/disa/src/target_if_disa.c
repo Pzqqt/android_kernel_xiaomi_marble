@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@ target_if_encrypt_decrypt_event_handler(ol_scn_t scn_handle, uint8_t *data,
 	struct wlan_objmgr_psoc *psoc;
 	wmi_unified_t wmi_handle;
 
-	if (data == NULL) {
+	if (!data) {
 		target_if_err("%s: invalid pointer", __func__);
 		return -EINVAL;
 	}
