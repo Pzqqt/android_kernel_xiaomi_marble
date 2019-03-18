@@ -556,7 +556,6 @@ QDF_INC := \
 QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
-	$(QDF_LINUX_OBJ_DIR)/qdf_dev.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_idr.o \
@@ -565,11 +564,9 @@ QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
-	$(QDF_LINUX_OBJ_DIR)/qdf_net_if.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_status.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
-	$(QDF_LINUX_OBJ_DIR)/qdf_vfs.o \
 	$(QDF_OBJ_DIR)/qdf_flex_mem.o \
 	$(QDF_OBJ_DIR)/qdf_parse.o \
 	$(QDF_OBJ_DIR)/qdf_platform.o \
@@ -622,13 +619,10 @@ endif
 QAL_OS_DIR :=	qal
 QAL_OS_INC_DIR := $(QAL_OS_DIR)/inc
 QAL_OS_LINUX_SRC_DIR := $(QAL_OS_DIR)/linux/src
-QAL_LINUX_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QAL_OS_LINUX_SRC_DIR)
 
 QAL_INC :=	-I$(WLAN_COMMON_INC)/$(QAL_OS_INC_DIR) \
 		-I$(WLAN_COMMON_INC)/$(QAL_OS_LINUX_SRC_DIR)
 
-QAL_OBJS := 	$(QAL_LINUX_OBJ_DIR)/qal_devcfg.o \
-		$(QAL_LINUX_OBJ_DIR)/qal_vbus_dev.o \
 
 ##########OS_IF #######
 OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
@@ -1812,7 +1806,6 @@ OBJS :=		$(HDD_OBJS) \
 		$(SAP_OBJS) \
 		$(SME_OBJS) \
 		$(SYS_OBJS) \
-		$(QAL_OBJS) \
 		$(QDF_OBJS) \
 		$(WBUFF_OBJS) \
 		$(CDS_OBJS) \
