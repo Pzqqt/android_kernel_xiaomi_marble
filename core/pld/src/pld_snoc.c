@@ -248,7 +248,7 @@ static int pld_snoc_uevent(struct device *dev,
 		data.uevent = PLD_FW_CRASHED;
 		break;
 	case ICNSS_UEVENT_FW_DOWN:
-		if (uevent->data == NULL)
+		if (!uevent->data)
 			return -EINVAL;
 		uevent_data = (struct icnss_uevent_fw_down_data *)uevent->data;
 		data.uevent = PLD_FW_DOWN;
@@ -384,7 +384,7 @@ int pld_snoc_get_soc_info(struct device *dev, struct pld_soc_info *info)
 	int errno;
 	struct icnss_soc_info icnss_info = {0};
 
-	if (info == NULL || !dev)
+	if (!info || !dev)
 		return -ENODEV;
 
 	errno = icnss_get_soc_info(dev, &icnss_info);

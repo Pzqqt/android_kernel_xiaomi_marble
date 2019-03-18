@@ -369,7 +369,7 @@ int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 	int ret = 0;
 	struct cnss_fw_files cnss_fw_files;
 
-	if (pfw_files == NULL)
+	if (!pfw_files)
 		return -ENODEV;
 
 	memset(pfw_files, 0, sizeof(*pfw_files));

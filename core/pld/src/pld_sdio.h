@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,7 +201,7 @@ static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
 
 	length = TOTAL_DUMP_SIZE;
 
-	if (size != NULL)
+	if (size)
 		*size = (unsigned long)length;
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
@@ -218,7 +218,7 @@ static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
  */
 static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
 {
-	if (address != NULL)
+	if (address)
 		kfree(address);
 }
 #endif

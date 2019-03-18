@@ -130,7 +130,7 @@ int pld_add_dev(struct pld_context *pld_context,
 	struct dev_node *dev_node;
 
 	dev_node = kzalloc(sizeof(*dev_node), GFP_KERNEL);
-	if (dev_node == NULL)
+	if (!dev_node)
 		return -ENOMEM;
 
 	dev_node->dev = dev;
@@ -175,7 +175,7 @@ static struct dev_node *pld_get_dev_node(struct device *dev)
 
 	pld_context = pld_get_global_context();
 
-	if (dev == NULL || pld_context == NULL) {
+	if (!dev || !pld_context) {
 		pr_err("Invalid info: dev %pK, context %pK\n",
 		       dev, pld_context);
 		return NULL;
@@ -244,7 +244,7 @@ int pld_register_driver(struct pld_driver_ops *ops)
 
 	pld_context = pld_get_global_context();
 
-	if (pld_context == NULL) {
+	if (!pld_context) {
 		pr_err("global context is NULL\n");
 		ret = -ENODEV;
 		goto out;
@@ -324,12 +324,12 @@ void pld_unregister_driver(void)
 
 	pld_context = pld_get_global_context();
 
-	if (pld_context == NULL) {
+	if (!pld_context) {
 		pr_err("global context is NULL\n");
 		return;
 	}
 
-	if (pld_context->ops == NULL) {
+	if (!pld_context->ops) {
 		pr_err("driver not registered\n");
 		return;
 	}

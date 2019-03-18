@@ -632,7 +632,7 @@ int pld_pcie_get_fw_files_for_target(struct device *dev,
 	int ret = 0;
 	struct cnss_fw_files cnss_fw_files;
 
-	if (pfw_files == NULL)
+	if (!pfw_files)
 		return -ENODEV;
 
 	memset(pfw_files, 0, sizeof(*pfw_files));
@@ -675,7 +675,7 @@ int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 	int ret = 0;
 	struct cnss_platform_cap cnss_cap;
 
-	if (cap == NULL)
+	if (!cap)
 		return -ENODEV;
 
 	ret = cnss_get_platform_cap(dev, &cnss_cap);
@@ -701,7 +701,7 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 	int ret = 0;
 	struct cnss_soc_info cnss_info = {0};
 
-	if (info == NULL)
+	if (!info)
 		return -ENODEV;
 
 	ret = cnss_get_soc_info(dev, &cnss_info);
