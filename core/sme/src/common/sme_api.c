@@ -2115,12 +2115,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 	case eWNI_SME_FW_STATUS_IND:
 		status = sme_fw_state_resp(mac);
 		break;
-	case eWNI_SME_CSA_OFFLOAD_EVENT:
-		if (pMsg->bodyptr) {
-			csr_scan_flush_bss_entry(mac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		}
-		break;
 	case eWNI_SME_TSF_EVENT:
 		if (mac->sme.get_tsf_cb) {
 			mac->sme.get_tsf_cb(mac->sme.get_tsf_cxt,

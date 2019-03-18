@@ -1636,10 +1636,8 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg)
 {
 	struct pe_session *session_entry;
-	struct scheduler_msg mmh_msg = {0};
 	struct csa_offload_params *csa_params =
 				(struct csa_offload_params *) (msg->bodyptr);
-	tpSmeCsaOffloadInd csa_offload_ind;
 	tpDphHashNode sta_ds = NULL;
 	uint8_t session_id;
 	uint16_t aid = 0;
@@ -1656,17 +1654,12 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		return;
 	}
 
-	csa_offload_ind = qdf_mem_malloc(sizeof(tSmeCsaOffloadInd));
-	if (!csa_offload_ind)
-		goto err;
-
 	session_entry =
 		pe_find_session_by_bssid(mac_ctx,
 			csa_params->bssId, &session_id);
 	if (!session_entry) {
 		pe_err("Session does not exists for %pM",
 				csa_params->bssId);
-		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
@@ -1675,13 +1668,11 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	if (!sta_ds) {
 		pe_err("sta_ds does not exist");
-		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
 	if (!LIM_IS_STA_ROLE(session_entry)) {
 		pe_debug("Invalid role to handle CSA");
-		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 	/*
@@ -1856,7 +1847,6 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		(session_entry->ch_width ==
 		 session_entry->gLimChannelSwitch.ch_width)) {
 		pe_debug("Ignore CSA, no change in ch and bw");
-		qdf_mem_free(csa_offload_ind);
 		goto err;
 	}
 
@@ -1876,22 +1866,13 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
 
-	csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
-	csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
-	qdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
-			QDF_MAC_ADDR_SIZE);
-	mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
-	mmh_msg.bodyptr = csa_offload_ind;
-	mmh_msg.bodyval = 0;
-	pe_debug("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME");
-	MTRACE(mac_trace_msg_tx
-			(mac_ctx, session_entry->peSessionId, mmh_msg.type));
+	lim_flush_bssid(mac_ctx, session_entry->bssId);
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx,
 			WLAN_PE_DIAG_SWITCH_CHL_IND_EVENT, session_entry,
 			QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
 
 err:
 	qdf_mem_free(csa_params);

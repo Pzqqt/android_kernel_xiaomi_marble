@@ -1720,12 +1720,6 @@ typedef struct sSmeMaxAssocInd {
 	struct qdf_mac_addr peer_mac;
 } tSmeMaxAssocInd, *tpSmeMaxAssocInd;
 
-typedef struct sSmeCsaOffloadInd {
-	uint16_t mesgType;      /* eWNI_SME_CSA_OFFLOAD_EVENT */
-	uint16_t mesgLen;
-	struct qdf_mac_addr bssid;      /* BSSID */
-} tSmeCsaOffloadInd, *tpSmeCsaOffloadInd;
-
 #define SIR_MAX_NAME_SIZE 64
 #define SIR_MAX_TEXT_SIZE 32
 

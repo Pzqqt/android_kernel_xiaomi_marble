@@ -469,8 +469,6 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac, tSmeCmd *pCommand,
 tSmeCmd *csr_get_command_buffer(struct mac_context *mac);
 void csr_release_command(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_release_command_buffer(struct mac_context *mac, tSmeCmd *pCommand);
-void csr_scan_flush_bss_entry(struct mac_context *mac,
-			      tpSmeCsaOffloadInd pCsaOffloadInd);
 
 #ifdef FEATURE_WLAN_WAPI
 bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);

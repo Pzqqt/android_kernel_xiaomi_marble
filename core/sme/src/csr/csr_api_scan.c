@@ -3009,13 +3009,6 @@ static inline void csr_flush_bssid(struct mac_context *mac_ctx,
 		qdf_mem_free(filter);
 }
 
-void csr_scan_flush_bss_entry(struct mac_context *mac_ctx,
-			      tpSmeCsaOffloadInd csa_off_ind)
-{
-	csr_flush_bssid(mac_ctx,
-		csa_off_ind->bssid.bytes);
-}
-
 void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
 				     tSirMacAddr bssid)
 {

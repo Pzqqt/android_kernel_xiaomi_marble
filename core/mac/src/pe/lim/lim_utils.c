@@ -67,6 +67,7 @@
 #include "wlan_mlme_main.h"
 #include "qdf_util.h"
 #include "wlan_qct_sys.h"
+#include <wlan_scan_ucfg_api.h>
 
 #define ASCII_SPACE_CHARACTER 0x20
 
@@ -359,8 +360,6 @@ char *lim_msg_str(uint32_t msgType)
 	case eWNI_SME_GET_TSM_STATS_RSP:
 		return "eWNI_SME_GET_TSM_STATS_RSP";
 #endif /* FEATURE_WLAN_ESE */
-	case eWNI_SME_CSA_OFFLOAD_EVENT:
-		return "eWNI_SME_CSA_OFFLOAD_EVENT";
 	case eWNI_SME_SET_HW_MODE_REQ:
 		return "eWNI_SME_SET_HW_MODE_REQ";
 	case eWNI_SME_SET_HW_MODE_RESP:
@@ -8371,4 +8370,37 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_IMMEDIATE) & 1);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void lim_flush_bssid(struct mac_context *mac_ctx, uint8_t *bssid)
+{
+	struct scan_filter *filter;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	QDF_STATUS status;
+
+	if (!bssid)
+		return;
+
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter)
+		return;
+
+	filter->num_of_bssid = 1;
+	qdf_mem_copy(filter->bssid_list[0].bytes, bssid, QDF_MAC_ADDR_SIZE);
+
+	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc, 0, WLAN_LEGACY_MAC_ID);
+	if (!pdev) {
+		pe_err("pdev is NULL");
+		qdf_mem_free(filter);
+		return;
+	}
+	status = ucfg_scan_flush_results(pdev, filter);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		pe_debug("Removed BSS entry:%pM", bssid);
+
+	if (filter)
+		qdf_mem_free(filter);
 }

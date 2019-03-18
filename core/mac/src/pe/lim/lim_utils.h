@@ -1711,4 +1711,13 @@ int8_t lim_get_regulatory_max_transmit_power(struct mac_context *mac,
 QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 				   struct pe_session *pe_session);
 
+/**
+ * lim_flush_bssid() - flush bssid from scan cache
+ * @mac_ctx: pointer to mac data
+ * @bssid: bssid to be flushed
+ *
+ * Return: void
+ */
+void lim_flush_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
+
 #endif /* __LIM_UTILS_H */
