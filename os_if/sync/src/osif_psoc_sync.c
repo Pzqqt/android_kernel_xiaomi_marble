@@ -58,6 +58,9 @@ static struct osif_psoc_sync *osif_psoc_sync_lookup(struct device *dev)
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_psoc_sync_arr); i++) {
 		struct osif_psoc_sync *psoc_sync = __osif_psoc_sync_arr + i;
 
+		if (!psoc_sync->in_use)
+			continue;
+
 		if (psoc_sync->dev == dev)
 			return psoc_sync;
 	}

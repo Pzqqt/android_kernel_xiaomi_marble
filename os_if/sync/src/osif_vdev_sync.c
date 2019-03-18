@@ -57,6 +57,9 @@ static struct osif_vdev_sync *osif_vdev_sync_lookup(struct net_device *net_dev)
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_vdev_sync_arr); i++) {
 		struct osif_vdev_sync *vdev_sync = __osif_vdev_sync_arr + i;
 
+		if (!vdev_sync->in_use)
+			continue;
+
 		if (vdev_sync->net_dev == net_dev)
 			return vdev_sync;
 	}
