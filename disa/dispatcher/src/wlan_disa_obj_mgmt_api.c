@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,7 +128,7 @@ QDF_STATUS disa_psoc_object_created_notification(
 	DISA_ENTER();
 
 	disa_priv = qdf_mem_malloc(sizeof(*disa_priv));
-	if (disa_priv == NULL) {
+	if (!disa_priv) {
 		disa_err("Failed to allocate disa_priv");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
