@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +47,7 @@
 QDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
 {
 	/* Validate the input parameter pointer */
-	if (unlikely(packet == NULL)) {
+	if (unlikely(!packet)) {
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -81,8 +81,8 @@ QDF_STATUS
 cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 {
 	/* Validate the parameter pointers */
-	if (unlikely((pPacket == NULL) || (pPacketSize == NULL)) ||
-	    (pPacket->pkt_buf == NULL)) {
+	if (unlikely((!pPacket) || (!pPacketSize)) ||
+	    (!pPacket->pkt_buf)) {
 		cds_alert("NULL pointer");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -107,7 +107,7 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 		TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false,
 				     file_name, line_num);
 
-	if (nbuf != NULL) {
+	if (nbuf) {
 		qdf_nbuf_put_tail(nbuf, size);
 		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
@@ -130,7 +130,7 @@ QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 	nbuf = qdf_nbuf_alloc(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
 			      TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false);
 
-	if (nbuf != NULL) {
+	if (nbuf) {
 		qdf_nbuf_put_tail(nbuf, size);
 		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;

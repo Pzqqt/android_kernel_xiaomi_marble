@@ -121,7 +121,7 @@ static QDF_STATUS cds_recovery_work_init(void)
 			cds_trigger_recovery_work, &__cds_recovery_caller);
 	gp_cds_context->cds_recovery_wq =
 		qdf_create_workqueue("cds_recovery_workqueue");
-	if (NULL == gp_cds_context->cds_recovery_wq) {
+	if (!gp_cds_context->cds_recovery_wq) {
 		cds_err("Failed to create cds_recovery_workqueue");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -275,10 +275,10 @@ cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
 {
 	int i;
 
-	if (NULL == olcfg)
+	if (!olcfg)
 		return;
 
-	if (NULL == cds_cfg)
+	if (!cds_cfg)
 		return;
 
 	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
@@ -438,7 +438,7 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 	int i;
 	struct cds_context *cds_ctx;
 
-	if (NULL == cds_cfg)
+	if (!cds_cfg)
 		return;
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
@@ -1216,7 +1216,7 @@ void *cds_get_context(QDF_MODULE_ID module_id)
 {
 	void *context = NULL;
 
-	if (gp_cds_context == NULL) {
+	if (!gp_cds_context) {
 		cds_err("cds context pointer is null");
 		return NULL;
 	}
@@ -1318,7 +1318,7 @@ void *cds_get_context(QDF_MODULE_ID module_id)
  */
 void *cds_get_global_context(void)
 {
-	if (gp_cds_context == NULL) {
+	if (!gp_cds_context) {
 		/*
 		 * To avoid recursive call, this should not change to
 		 * QDF_TRACE().
@@ -1338,7 +1338,7 @@ void *cds_get_global_context(void)
  */
 enum cds_driver_state cds_get_driver_state(void)
 {
-	if (gp_cds_context == NULL) {
+	if (!gp_cds_context) {
 		cds_err("global cds context is NULL");
 
 		return CDS_DRIVER_STATE_UNINITIALIZED;
@@ -1359,7 +1359,7 @@ enum cds_driver_state cds_get_driver_state(void)
  */
 void cds_set_driver_state(enum cds_driver_state state)
 {
-	if (gp_cds_context == NULL) {
+	if (!gp_cds_context) {
 		cds_err("global cds context is NULL: %x", state);
 
 		return;
@@ -1379,7 +1379,7 @@ void cds_set_driver_state(enum cds_driver_state state)
  */
 void cds_clear_driver_state(enum cds_driver_state state)
 {
-	if (gp_cds_context == NULL) {
+	if (!gp_cds_context) {
 		cds_err("global cds context is NULL: %x", state);
 
 		return;
@@ -1654,7 +1654,7 @@ bool cds_is_packet_log_enabled(void)
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = gp_cds_context->hdd_context;
-	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+	if ((!hdd_ctx) || (!hdd_ctx->config)) {
 		cds_alert("Hdd Context is Null");
 		return false;
 	}
@@ -2189,7 +2189,7 @@ bool cds_is_ptp_rx_opt_enabled(void)
 	}
 
 	hdd_ctx = (struct hdd_context *)(p_cds_context->hdd_context);
-	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+	if ((!hdd_ctx) || (!hdd_ctx->config)) {
 		cds_err("Hdd Context is Null");
 		return false;
 	}
@@ -2209,7 +2209,7 @@ bool cds_is_ptp_tx_opt_enabled(void)
 	}
 
 	hdd_ctx = (struct hdd_context *)(p_cds_context->hdd_context);
-	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+	if ((!hdd_ctx) || (!hdd_ctx->config)) {
 		cds_err("Hdd Context is Null");
 		return false;
 	}

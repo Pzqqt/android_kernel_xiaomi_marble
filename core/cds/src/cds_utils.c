@@ -318,7 +318,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (frmLen - sizeof(struct ieee80211_frame));
 	input = (uint8_t *) qdf_mem_malloc(nBytes);
-	if (NULL == input) {
+	if (!input) {
 		cds_err("Memory allocation failed");
 		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;
@@ -420,7 +420,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (efrm - (uint8_t *) (wh + 1));
 	input = (uint8_t *) qdf_mem_malloc(nBytes);
-	if (NULL == input) {
+	if (!input) {
 		cds_err("Memory allocation failed");
 		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;

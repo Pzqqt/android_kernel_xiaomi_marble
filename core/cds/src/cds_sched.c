@@ -412,7 +412,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 {
 	cds_debug("Opening the CDS Scheduler");
 	/* Sanity checks */
-	if ((p_cds_context == NULL) || (pSchedContext == NULL)) {
+	if ((!p_cds_context) || (!pSchedContext)) {
 		cds_err("Null params being passed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -622,7 +622,7 @@ QDF_STATUS cds_close_rx_thread(void)
 	cds_debug("invoked");
 
 	if (!gp_cds_sched_context) {
-		cds_err("gp_cds_sched_context == NULL");
+		cds_err("!gp_cds_sched_context");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -796,7 +796,7 @@ void cds_resume_rx_thread(void)
 	p_cds_sched_context cds_sched_context;
 
 	cds_sched_context = get_cds_sched_ctxt();
-	if (NULL == cds_sched_context) {
+	if (!cds_sched_context) {
 		cds_err("cds_sched_context is NULL");
 		return;
 	}
@@ -820,8 +820,8 @@ QDF_STATUS cds_sched_close(void)
 {
 	cds_debug("invoked");
 
-	if (gp_cds_sched_context == NULL) {
-		cds_err("gp_cds_sched_context == NULL");
+	if (!gp_cds_sched_context) {
+		cds_err("!gp_cds_sched_context");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -838,8 +838,8 @@ QDF_STATUS cds_sched_close(void)
 p_cds_sched_context get_cds_sched_ctxt(void)
 {
 	/* Make sure that Vos Scheduler context has been initialized */
-	if (gp_cds_sched_context == NULL)
-		cds_err("gp_cds_sched_context == NULL");
+	if (!gp_cds_sched_context)
+		cds_err("!gp_cds_sched_context");
 
 	return gp_cds_sched_context;
 }
@@ -1002,7 +1002,7 @@ QDF_STATUS cds_shutdown_notifier_register(void (*cb)(void *priv), void *priv)
 
 	notifier = qdf_mem_malloc(sizeof(*notifier));
 
-	if (notifier == NULL)
+	if (!notifier)
 		return QDF_STATUS_E_NOMEM;
 
 	/*
