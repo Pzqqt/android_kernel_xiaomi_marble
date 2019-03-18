@@ -223,7 +223,7 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 		wmi_id = wmi_vdev_param_tx_power;
 		break;
 	case WLAN_MLME_CFG_AMPDU:
-		wmi_id = wmi_vdev_param_amsdu_subframe_size_per_ac;
+		wmi_id = wmi_vdev_param_ampdu_subframe_size_per_ac;
 		break;
 	case WLAN_MLME_CFG_AMSDU:
 		wmi_id = wmi_vdev_param_amsdu_subframe_size_per_ac;
