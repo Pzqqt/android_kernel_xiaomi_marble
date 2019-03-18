@@ -860,7 +860,7 @@ static QDF_STATUS p2p_packet_alloc(uint16_t size, void **data,
 			P2P_TX_PKT_MIN_HEADROOM, sizeof(uint32_t),
 			false);
 
-	if (nbuf != NULL) {
+	if (nbuf) {
 		qdf_nbuf_put_tail(nbuf, size);
 		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
