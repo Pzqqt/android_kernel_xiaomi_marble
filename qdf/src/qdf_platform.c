@@ -30,9 +30,6 @@ static qdf_ssr_callback                     ssr_unprotect_cb;
 static qdf_is_module_state_transitioning_cb module_state_transitioning_cb;
 static qdf_is_fw_down_callback		    is_fw_down_cb;
 static qdf_is_recovering_callback           is_recovering_cb;
-static qdf_psoc_start_callback           psoc_op_start;
-static qdf_psoc_stop_callback            psoc_op_stop;
-
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
@@ -128,29 +125,30 @@ bool qdf_is_recovering(void)
 
 qdf_export_symbol(qdf_is_recovering);
 
-void qdf_register_dsc_psoc_callbacks(qdf_psoc_start_callback psoc_start,
-				     qdf_psoc_stop_callback psoc_stop)
+static qdf_op_protect_cb __on_op_protect;
+static qdf_op_unprotect_cb __on_op_unprotect;
+
+void qdf_op_callbacks_register(qdf_op_protect_cb on_protect,
+			       qdf_op_unprotect_cb on_unprotect)
 {
-	psoc_op_start = psoc_start;
-	psoc_op_stop  = psoc_stop;
+	__on_op_protect = on_protect;
+	__on_op_unprotect = on_unprotect;
 }
+qdf_export_symbol(qdf_op_callbacks_register);
 
-qdf_export_symbol(qdf_register_dsc_psoc_callbacks);
-
-QDF_STATUS qdf_psoc_op_start(void)
+int __qdf_op_protect(struct qdf_op_sync **out_sync, const char *func)
 {
-	if (psoc_op_start)
-		return psoc_op_start();
+	if (!__on_op_protect)
+		return 0;
 
-	return QDF_STATUS_E_INVAL;
+	return __on_op_protect((void **)out_sync, func);
 }
+qdf_export_symbol(__qdf_op_protect);
 
-qdf_export_symbol(qdf_psoc_op_start);
-
-void qdf_psoc_op_stop(void)
+void __qdf_op_unprotect(struct qdf_op_sync *sync, const char *func)
 {
-	if (psoc_op_stop)
-		psoc_op_stop();
+	if (__on_op_unprotect)
+		__on_op_unprotect(sync, func);
 }
+qdf_export_symbol(__qdf_op_unprotect);
 
-qdf_export_symbol(qdf_psoc_op_stop);
