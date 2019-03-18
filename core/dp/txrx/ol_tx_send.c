@@ -1044,7 +1044,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 #endif
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
-	if (tx_desc == NULL) {
+	if (!tx_desc) {
 		ol_txrx_err("invalid desc_id(%u), ignore it", tx_desc_id);
 		return;
 	}
@@ -1320,7 +1320,7 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 	int l2_hdr_size;
 
 	dest_addr = ol_tx_dest_addr_find(pdev, msdu);
-	if (NULL == dest_addr)
+	if (!dest_addr)
 		return QDF_NBUF_TX_EXT_TID_INVALID;
 
 	is_mcast = IEEE80211_IS_MULTICAST(dest_addr);

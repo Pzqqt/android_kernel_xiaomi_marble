@@ -382,7 +382,7 @@ ol_tx_sched_init_rr(
 	int i;
 
 	scheduler = qdf_mem_malloc(sizeof(struct ol_tx_sched_rr_t));
-	if (scheduler == NULL)
+	if (!scheduler)
 		return scheduler;
 
 	for (i = 0; i < (OL_TX_NUM_TIDS + OL_TX_VDEV_NUM_QUEUES); i++) {
@@ -1019,7 +1019,7 @@ static void ol_tx_sched_wrr_param_update(struct ol_txrx_pdev_t *pdev,
 		"VO"
 	};
 
-	if (NULL == scheduler)
+	if (!scheduler)
 		return;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
@@ -1073,7 +1073,7 @@ ol_tx_sched_init_wrr_adv(
 
 	scheduler = qdf_mem_malloc(
 			sizeof(struct ol_tx_sched_wrr_adv_t));
-	if (scheduler == NULL)
+	if (!scheduler)
 		return scheduler;
 
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(VO, scheduler);
@@ -1256,7 +1256,7 @@ ol_tx_sched_discard_select(
 	/* then decide which peer within this category to discard from next */
 	txq = ol_tx_sched_discard_select_txq(
 			pdev, ol_tx_sched_category_tx_queues(pdev, cat));
-	if (NULL == txq)
+	if (!txq)
 		/* No More pending Tx Packets in Tx Queue. Exit Discard loop */
 		return 0;
 
@@ -1355,7 +1355,7 @@ ol_tx_sched_notify(
 	}
 }
 
-#define OL_TX_MSDU_ID_STORAGE_ERR(ptr) (NULL == ptr)
+#define OL_TX_MSDU_ID_STORAGE_ERR(ptr) (!ptr)
 
 static void
 ol_tx_sched_dispatch(
@@ -1371,7 +1371,7 @@ ol_tx_sched_dispatch(
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 	while (sctx->frms) {
 		tx_desc = TAILQ_FIRST(&sctx->head);
-		if (tx_desc == NULL) {
+		if (!tx_desc) {
 			/* TODO: find its reason */
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				  "%s: err, no enough tx_desc from stx->head.\n",
@@ -1380,7 +1380,7 @@ ol_tx_sched_dispatch(
 		}
 		msdu = tx_desc->netbuf;
 		TAILQ_REMOVE(&sctx->head, tx_desc, tx_desc_list_elem);
-		if (NULL == head_msdu)
+		if (!head_msdu)
 			head_msdu = msdu;
 
 		if (prev)

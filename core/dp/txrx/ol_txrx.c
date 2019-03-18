@@ -740,7 +740,7 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 	if (ol_cfg_is_high_latency(cfg_pdev)) {
 		qdf_spinlock_create(&pdev->tx_queue_spinlock);
 		pdev->tx_sched.scheduler = ol_tx_sched_attach(pdev);
-		if (pdev->tx_sched.scheduler == NULL)
+		if (!pdev->tx_sched.scheduler)
 			goto fail2;
 	}
 	ol_txrx_pdev_txq_log_init(pdev);
@@ -918,7 +918,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 	qdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_desc.desc_pages,
 		pdev->tx_desc.desc_reserved_size, desc_pool_size, 0, true);
 	if ((0 == pdev->tx_desc.desc_pages.num_pages) ||
-		(NULL == pdev->tx_desc.desc_pages.cacheable_pages)) {
+		(!pdev->tx_desc.desc_pages.cacheable_pages)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"Page alloc fail");
 		ret = -ENOMEM;
@@ -2657,7 +2657,7 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 
 	peer =  ol_txrx_peer_find_hash_find_get_ref(pdev, peer_mac, 0, 1,
 						    PEER_DEBUG_ID_OL_INTERNAL);
-	if (NULL == peer) {
+	if (!peer) {
 		ol_txrx_err(
 			   "peer is null for peer_mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
 			   peer_mac[0], peer_mac[1], peer_mac[2], peer_mac[3],
@@ -2832,7 +2832,7 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id)
 
 	struct ol_txrx_peer_t *peer_t =
 		ol_txrx_peer_find_by_id(txrx_pdev, peer_id);
-	if (peer_t != NULL)
+	if (peer_t)
 		return peer_t->qos_capable;
 	return 0;
 }
@@ -2887,13 +2887,13 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	TXRX_ASSERT2(peer);
 
 	vdev = peer->vdev;
-	if (NULL == vdev) {
+	if (!vdev) {
 		ol_txrx_err("The vdev is not present anymore\n");
 		return -EINVAL;
 	}
 
 	pdev = vdev->pdev;
-	if (NULL == pdev) {
+	if (!pdev) {
 		ol_txrx_err("The pdev is not present anymore\n");
 		err_code = 0xbad2;
 		goto ERR_STATE;
@@ -3368,7 +3368,7 @@ static QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 {
 	struct ol_txrx_pdev_t *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (txrx_pdev == NULL) {
+	if (!txrx_pdev) {
 		ol_txrx_err("txrx context is null");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -4324,7 +4324,7 @@ static void ol_vdev_rx_set_intrabss_fwd(struct cdp_vdev *pvdev, bool val)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 
-	if (NULL == vdev)
+	if (!vdev)
 		return;
 
 	vdev->disable_intrabss_fwd = val;
@@ -4343,7 +4343,7 @@ static void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id)
 			(struct ol_txrx_vdev_t *)
 			ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
-	if (NULL == vdev) {
+	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid vdev_id %d", __func__, vdev_id);
 		return;
@@ -4845,7 +4845,7 @@ static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr,
 void ol_txrx_set_ocb_peer(struct ol_txrx_pdev_t *pdev,
 			  struct ol_txrx_peer_t *peer)
 {
-	if (pdev == NULL)
+	if (!pdev)
 		return;
 
 	pdev->ocb_peer = peer;
@@ -4864,7 +4864,7 @@ bool ol_txrx_get_ocb_peer(struct ol_txrx_pdev_t *pdev,
 {
 	int rc;
 
-	if ((pdev == NULL) || (peer == NULL)) {
+	if ((!pdev) || (!peer)) {
 		rc = false;
 		goto exit;
 	}
@@ -4964,12 +4964,12 @@ static void ol_register_offld_flush_cb(void (offld_flush_cb)(void *))
 	struct hif_opaque_softc *hif_device;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		ol_txrx_err("pdev NULL!");
 		TXRX_ASSERT2(0);
 		goto out;
 	}
-	if (pdev->offld_flush_cb != NULL) {
+	if (pdev->offld_flush_cb) {
 		ol_txrx_info("offld already initialised");
 		if (pdev->offld_flush_cb != offld_flush_cb) {
 			ol_txrx_err(
@@ -4982,7 +4982,7 @@ static void ol_register_offld_flush_cb(void (offld_flush_cb)(void *))
 	pdev->offld_flush_cb = offld_flush_cb;
 	hif_device = cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (qdf_unlikely(hif_device == NULL)) {
+	if (qdf_unlikely(!hif_device)) {
 		ol_txrx_err("hif_device NULL!");
 		qdf_assert(0);
 		goto out;
@@ -5007,13 +5007,13 @@ static void ol_deregister_offld_flush_cb(void)
 	struct hif_opaque_softc *hif_device;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		ol_txrx_err("pdev NULL!");
 		return;
 	}
 	hif_device = cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (qdf_unlikely(hif_device == NULL)) {
+	if (qdf_unlikely(!hif_device)) {
 		ol_txrx_err("hif_device NULL!");
 		qdf_assert(0);
 		return;
@@ -5037,7 +5037,7 @@ static QDF_STATUS ol_register_data_stall_detect_cb(
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		ol_txrx_err("pdev NULL!");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5057,7 +5057,7 @@ static QDF_STATUS ol_deregister_data_stall_detect_cb(
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		ol_txrx_err("pdev NULL!");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5479,7 +5479,7 @@ void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 {
 	struct ol_txrx_pdev_t *pdev =
 				 (struct ol_txrx_pdev_t *)txrx_pdev;
-	if (pdev != NULL)
+	if (pdev)
 		return pdev->pl_dev;
 
 	return NULL;

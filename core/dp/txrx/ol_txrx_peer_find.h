@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,7 +76,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_by_id(struct ol_txrx_pdev_t *pdev,
 	 * If the peer ID is for a vdev, the peer_id_to_obj_map entry
 	 * will hold NULL rather than a valid peer pointer.
 	 */
-	/* TXRX_ASSERT2(peer != NULL); */
+	/* TXRX_ASSERT2(peer); */
 	/*
 	 * Only return the peer object if it is valid,
 	 * i.e. it has not already been detached.

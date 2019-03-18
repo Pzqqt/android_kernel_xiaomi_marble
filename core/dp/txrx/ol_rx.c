@@ -284,7 +284,7 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	 *  clear to static analysis that this code is safe, add an explicit
 	 *  check that htt_rx_mpdu_wifi_hdr_retrieve provides a non-NULL value.
 	 */
-	if (wh == NULL || !IEEE80211_IS_DATA(wh))
+	if (!wh || !IEEE80211_IS_DATA(wh))
 		return;
 
 	/* ignore frames for non-existent bssids */
@@ -707,7 +707,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 						       status);
 
 				if (status == htt_rx_status_tkip_mic_err &&
-				    vdev != NULL && peer != NULL) {
+				    vdev && peer) {
 					union htt_rx_pn_t pn;
 					uint8_t key_id;
 
@@ -1308,7 +1308,7 @@ DONE:
 			 * list, NULL terminator should be added
 			 * for delivery list.
 			 */
-			if (next == NULL && deliver_list_head) {
+			if (!next && deliver_list_head) {
 				/* add NULL terminator */
 				qdf_nbuf_set_next(deliver_list_tail, NULL);
 			}

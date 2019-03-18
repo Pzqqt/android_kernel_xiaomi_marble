@@ -766,8 +766,8 @@ static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
 	int i;
 	struct rx_buf_debug *buf;
 
-	if ((pdev != NULL) &&
-	    (pdev->rx_buff_list != NULL)) {
+	if ((pdev) &&
+	    (pdev->rx_buff_list)) {
 		buf = pdev->rx_buff_list;
 		for (i = 0; i < HTT_RX_RING_BUFF_DBG_LIST; i++) {
 			if (buf[i].posted != 0)

@@ -387,7 +387,7 @@ ol_tx_classify(
 
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 	dest_addr = ol_tx_dest_addr_find(pdev, tx_nbuf);
-	if (unlikely(NULL == dest_addr)) {
+	if (unlikely(!dest_addr)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX,
 				QDF_TRACE_LEVEL_ERROR,
 				"Error: dest_addr is NULL.\n");
@@ -629,7 +629,7 @@ ol_tx_classify_mgmt(
 
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 	dest_addr = ol_tx_dest_addr_find(pdev, tx_nbuf);
-	if (unlikely(NULL == dest_addr)) {
+	if (unlikely(!dest_addr)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX,
 				QDF_TRACE_LEVEL_ERROR,
 				"Error: dest_addr is NULL.\n");

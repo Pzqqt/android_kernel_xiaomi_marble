@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -788,12 +788,12 @@ ol_tx_bad_peer_update_tx_limit(struct ol_txrx_pdev_t *pdev,
 			       u_int16_t frames,
 			       u_int16_t tx_limit_flag)
 {
-	if (unlikely(NULL == pdev)) {
+	if (unlikely(!pdev)) {
 		TX_SCHED_DEBUG_PRINT_ALWAYS("Error: NULL pdev handler\n");
 		return;
 	}
 
-	if (unlikely(NULL == txq)) {
+	if (unlikely(!txq)) {
 		TX_SCHED_DEBUG_PRINT_ALWAYS("Error: NULL txq\n");
 		return;
 	}
@@ -946,12 +946,12 @@ ol_txrx_peer_link_status_handler(
 	u_int16_t i = 0;
 	struct ol_txrx_peer_t *peer = NULL;
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		TX_SCHED_DEBUG_PRINT_ALWAYS("Error: NULL pdev handler\n");
 		return;
 	}
 
-	if (NULL == peer_link_status) {
+	if (!peer_link_status) {
 		TX_SCHED_DEBUG_PRINT_ALWAYS(
 			"Error:NULL link report message. peer num %d\n",
 			peer_num);
@@ -1274,7 +1274,7 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 		if (record.peer_id != 0xffff) {
 			peer = ol_txrx_peer_find_by_id(pdev,
 						       record.peer_id);
-			if (peer != NULL)
+			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "Q: %6d  %5d  %3d  %4d (%02x:%02x:%02x:%02x:%02x:%02x)",
@@ -1313,7 +1313,7 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 
 		if (record.peer_id != 0xffff) {
 			peer = ol_txrx_peer_find_by_id(pdev, record.peer_id);
-			if (peer != NULL)
+			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "DQ: %6d  %5d  %3d  %4d (%02x:%02x:%02x:%02x:%02x:%02x)",
@@ -1352,7 +1352,7 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 
 		if (record.peer_id != 0xffff) {
 			peer = ol_txrx_peer_find_by_id(pdev, record.peer_id);
-			if (peer != NULL)
+			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "F: %6d  %5d  %3d  %4d (%02x:%02x:%02x:%02x:%02x:%02x)",

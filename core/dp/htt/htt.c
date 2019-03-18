@@ -69,7 +69,7 @@ struct htt_htc_pkt *htt_htc_pkt_alloc(struct htt_pdev_t *pdev)
 	}
 	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
 
-	if (pkt == NULL)
+	if (!pkt)
 		pkt = qdf_mem_malloc(sizeof(*pkt));
 
 	if (!pkt)
@@ -750,8 +750,8 @@ int htt_update_endpoint(struct htt_pdev_t *pdev,
 	int     rc = 0;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (qdf_unlikely(NULL == hif_ctx)) {
-		QDF_ASSERT(NULL != hif_ctx);
+	if (qdf_unlikely(!hif_ctx)) {
+		QDF_ASSERT(hif_ctx);
 		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
 			  "%s:%d: assuming non-tx service.",
 			  __func__, __LINE__);

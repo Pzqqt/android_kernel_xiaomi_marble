@@ -615,7 +615,7 @@ NOT_IP_TCP:
 		else							\
 			err_type = OL_RX_ERR_UNKNOWN;			\
 									\
-		if (vdev != NULL && peer != NULL) {			\
+		if (vdev && peer) {			\
 			OL_RX_ERR_STATISTICS_1(pdev, vdev, peer,	\
 					       rx_mpdu_desc, err_type); \
 		} else {						\

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,7 +86,7 @@ void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 
 	/* process (free or keep) the netbuf that held the message */
 	netbuf = (qdf_nbuf_t) htc_pkt->pNetBufContext;
-	if (send_complete_part2 != NULL) {
+	if (send_complete_part2) {
 		send_complete_part2(htt_pkt->pdev_ctxt, htc_pkt->Status, netbuf,
 				    htt_pkt->msdu_id);
 	}
@@ -347,7 +347,7 @@ QDF_STATUS htt_h2t_rx_ring_rfs_cfg_msg_ll(struct htt_pdev_t *pdev)
 		      "Disable Rx flow steering");
 	}
 	cds_cfg = cds_get_ini_config();
-	if (cds_cfg != NULL) {
+	if (cds_cfg) {
 		msg_local |= ((cds_cfg->max_msdus_per_rxinorderind & 0xff)
 			      << 16);
 		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO_LOW,

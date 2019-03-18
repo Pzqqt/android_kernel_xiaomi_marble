@@ -652,7 +652,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	}
 	peer = pdev->peer_id_to_obj_map[peer_id].peer;
 
-	if (peer == NULL) {
+	if (!peer) {
 		/*
 		 * Currently peer IDs are assigned for vdevs as well as peers.
 		 * If the peer ID is for a vdev, then the peer pointer stored
@@ -724,7 +724,7 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 		peer_id = peer->peer_ids[i];
 		save_peer_ids[i] = HTT_INVALID_PEER;
 		if (peer_id == HTT_INVALID_PEER ||
-			pdev->peer_id_to_obj_map[peer_id].peer == NULL) {
+			!pdev->peer_id_to_obj_map[peer_id].peer) {
 			/* unused peer_id, or object is already dereferenced */
 			continue;
 		}

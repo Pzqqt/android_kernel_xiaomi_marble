@@ -298,12 +298,12 @@ ol_rx_decap_to_native_wifi(struct ol_txrx_vdev_t *vdev,
 		hdsize = sizeof(struct ieee80211_frame);
 
 	wh = (struct ieee80211_frame_addr4 *)qdf_nbuf_push_head(msdu, hdsize);
-	TXRX_ASSERT2(wh != NULL);
+	TXRX_ASSERT2(wh);
 	TXRX_ASSERT2(hdsize <= info->hdr_len);
 	qdf_mem_copy((uint8_t *) wh, info->hdr, hdsize);
 
 	/* amsdu subfrm handling if ethr_hdr is not NULL  */
-	if (ethr_hdr != NULL) {
+	if (ethr_hdr) {
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 		case IEEE80211_FC1_DIR_NODS:
 			qdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
@@ -381,7 +381,7 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 		buf = qdf_nbuf_push_head(msdu, ETHERNET_HDR_LEN - l2_hdr_space);
 
 	/* normal msdu(non-subfrm of A-MSDU) if ethr_hdr is null */
-	if (ethr_hdr == NULL) {
+	if (!ethr_hdr) {
 		/*
 		 * mpdu hdr should be present in info,
 		 * re-create ethr_hdr based on mpdu hdr
@@ -416,7 +416,7 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 			break;
 		}
 	}
-	if (llc_hdr == NULL) {
+	if (!llc_hdr) {
 		ethr_hdr->ethertype[0] = (ether_type >> 8) & 0xff;
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	} else {

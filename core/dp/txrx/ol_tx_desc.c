@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -337,13 +337,13 @@ static void ol_tso_unmap_tso_segment(struct ol_txrx_pdev_t *pdev,
 	bool is_last_seg = false;
 	struct qdf_tso_num_seg_elem_t *tso_num_desc = NULL;
 
-	if (qdf_unlikely(tx_desc->tso_desc == NULL)) {
+	if (qdf_unlikely(!tx_desc->tso_desc)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d TSO desc is NULL!",
 			  __func__, __LINE__);
 		qdf_assert(0);
 		return;
-	} else if (qdf_unlikely(tx_desc->tso_num_desc == NULL)) {
+	} else if (qdf_unlikely(!tx_desc->tso_num_desc)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d TSO common info is NULL!",
 			  __func__, __LINE__);
@@ -895,7 +895,7 @@ ol_tso_seg_dbg_sanitize(struct qdf_tso_seg_elem_t *tsoseg)
 	int rc = -1;
 	struct ol_tx_desc_t *txdesc;
 
-	if (tsoseg != NULL) {
+	if (tsoseg) {
 		txdesc = tsoseg->dbg.txdesc;
 		/* Don't validate if TX desc is NULL*/
 		if (!txdesc)

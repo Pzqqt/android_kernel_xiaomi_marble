@@ -176,7 +176,7 @@ ol_rx_frag_restructure(
 	const struct ol_rx_defrag_cipher *f_type,
 	int rx_desc_len)
 {
-	if ((ind_old_position == NULL) || (rx_desc_old_position == NULL)) {
+	if ((!ind_old_position) || (!rx_desc_old_position)) {
 		ol_txrx_err("ind_old_position,rx_desc_old_position is NULL\n");
 		ASSERT(0);
 		return;
@@ -580,14 +580,14 @@ void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer, unsigned int tid)
 	struct ol_txrx_pdev_t *pdev = peer->vdev->pdev;
 	struct ol_rx_reorder_t *rx_reorder = &peer->tids_rx_reorder[tid];
 
-	if (rx_reorder->defrag_waitlist_elem.tqe_next != NULL) {
+	if (rx_reorder->defrag_waitlist_elem.tqe_next) {
 
 		TAILQ_REMOVE(&pdev->rx.defrag.waitlist, rx_reorder,
 			     defrag_waitlist_elem);
 
 		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
 		rx_reorder->defrag_waitlist_elem.tqe_prev = NULL;
-	} else if (rx_reorder->defrag_waitlist_elem.tqe_next != NULL) {
+	} else if (rx_reorder->defrag_waitlist_elem.tqe_next) {
 		ol_txrx_alert("waitlist->tqe_prv = NULL\n");
 		QDF_ASSERT(0);
 		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
@@ -1037,7 +1037,7 @@ ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 			break;
 
 		wbuf = qdf_nbuf_next(wbuf);
-		if (wbuf == NULL)
+		if (!wbuf)
 			return OL_RX_DEFRAG_ERR;
 
 		rx_desc_len = ol_rx_get_desc_len(htt_pdev, wbuf,

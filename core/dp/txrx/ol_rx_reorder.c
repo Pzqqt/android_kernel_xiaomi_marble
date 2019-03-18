@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -344,7 +344,7 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 		if (rx_reorder_array_elem->head) {
 			OL_RX_REORDER_MPDU_CNT_DECR(&peer->tids_rx_reorder[tid],
 						    1);
-			if (head_msdu == NULL) {
+			if (!head_msdu) {
 				head_msdu = rx_reorder_array_elem->head;
 				tail_msdu = rx_reorder_array_elem->tail;
 				rx_reorder_array_elem->head = NULL;
@@ -695,7 +695,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 				} while (1);
 
 			} else {
-				if (head_msdu == NULL) {
+				if (!head_msdu) {
 					head_msdu = rx_reorder_array_elem->head;
 					tail_msdu = rx_reorder_array_elem->tail;
 				} else {

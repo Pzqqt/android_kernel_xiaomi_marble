@@ -790,7 +790,7 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 	pool = ol_tx_get_flow_pool(flow_pool_id);
 	if (!pool) {
 		pool = ol_tx_create_flow_pool(flow_pool_id, flow_pool_size);
-		if (pool == NULL) {
+		if (!pool) {
 			ol_txrx_err("creation of flow_pool %d size %d failed",
 				    flow_pool_id, flow_pool_size);
 			return;

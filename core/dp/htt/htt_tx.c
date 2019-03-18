@@ -160,7 +160,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 		pdev->frag_descs.size, desc_pool_elems,
 		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 	if ((0 == pdev->frag_descs.desc_pages.num_pages) ||
-		(NULL == pdev->frag_descs.desc_pages.dma_pages)) {
+		(!pdev->frag_descs.desc_pages.dma_pages)) {
 		ol_txrx_err("FRAG descriptor alloc fail");
 		return -ENOBUFS;
 	}
@@ -343,7 +343,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 				  qdf_get_dma_mem_context((&pdev->tx_descs),
 							  memctx), true);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
-	    (NULL == pdev->tx_descs.desc_pages.cacheable_pages)) {
+	    (!pdev->tx_descs.desc_pages.cacheable_pages)) {
 		ol_txrx_err("HTT desc alloc fail");
 		goto out_fail;
 	}
@@ -511,7 +511,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 		pdev->tx_descs.size, pdev->tx_descs.pool_elems,
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
-		(NULL == pdev->tx_descs.desc_pages.dma_pages)) {
+		(!pdev->tx_descs.desc_pages.dma_pages)) {
 		ol_txrx_err("HTT desc alloc fail");
 		goto out_fail;
 	}
@@ -738,7 +738,7 @@ void htt_tx_sched(htt_pdev_handle pdev)
 	int packet_len;
 
 	HTT_TX_NBUF_QUEUE_REMOVE(pdev, msdu);
-	while (msdu != NULL) {
+	while (msdu) {
 		int not_accepted;
 		/* packet length includes HTT tx desc frag added above */
 		packet_len = qdf_nbuf_len(msdu);
