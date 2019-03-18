@@ -718,7 +718,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 
 	cfg80211_debug("Dequeue Scan id: %d", scan_id);
 
-	if ((source == NULL) || (req == NULL)) {
+	if ((!source) || (!req)) {
 		cfg80211_err("source or request is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}

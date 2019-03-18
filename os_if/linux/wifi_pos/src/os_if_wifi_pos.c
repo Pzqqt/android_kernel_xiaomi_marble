@@ -54,7 +54,7 @@ static void os_if_wifi_pos_send_rsp(uint32_t pid, uint32_t rsp_msg_type,
 	}
 
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) + buf_len), GFP_ATOMIC);
-	if (skb == NULL) {
+	if (!skb) {
 		cfg80211_alert("alloc_skb failed");
 		return;
 	}
