@@ -168,7 +168,7 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 	eCsrNeighborRoamState state;
 	uint8_t old_value;
 
-	if (NULL == pNeighborRoamInfo) {
+	if (!pNeighborRoamInfo) {
 		sme_err("Invalid Session ID %d", session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -349,8 +349,8 @@ csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 	struct roam_ext_params *roam_params;
 	uint8_t num_ch = 0;
 
-	QDF_ASSERT(pScanFilter != NULL);
-	if (pScanFilter == NULL)
+	QDF_ASSERT(pScanFilter);
+	if (!pScanFilter)
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_mem_zero(pScanFilter, sizeof(tCsrScanResultFilter));
@@ -810,7 +810,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	struct csr_roam_session *roam_session = NULL;
 
-	if (NULL == pSession) {
+	if (!pSession) {
 		sme_err("pSession is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -831,9 +831,9 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	 */
 	if (!csr_neighbor_middle_of_roaming(mac, sessionId))
 		csr_roam_reset_roam_params(mac);
-	if (NULL != pSession) {
+	if (pSession) {
 		roam_session = &mac->roam.roamSession[sessionId];
-		if (NULL != pSession->pCurRoamProfile && (QDF_STA_MODE !=
+		if (pSession->pCurRoamProfile && (QDF_STA_MODE !=
 			roam_session->pCurRoamProfile->csrPersona)) {
 			sme_err("Ignore disconn ind rcvd from nonSTA persona sessionId: %d csrPersonna %d",
 				sessionId,
@@ -1025,7 +1025,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		ngbr_roam_info->uOsRequestedHandoff = 0;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		if (session->roam_synch_in_progress) {
-			if (mac->roam.pReassocResp != NULL) {
+			if (mac->roam.pReassocResp) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_DEBUG,
 					"Free Reassoc Rsp");
@@ -1075,8 +1075,8 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* if session id invalid then we need return failure */
-	if (NULL == ngbr_roam_info || !CSR_IS_SESSION_VALID(mac, session_id)
-	|| (NULL == mac->roam.roamSession[session_id].pCurRoamProfile)) {
+	if (!ngbr_roam_info || !CSR_IS_SESSION_VALID(mac, session_id)
+	|| (!mac->roam.roamSession[session_id].pCurRoamProfile)) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1442,7 +1442,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	tCsrScanResultFilter    scan_filter;
 	tScanResultHandle       scan_result;
 
-	if (NULL == session) {
+	if (!session) {
 		sme_err("session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1461,7 +1461,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 	/* Add the BSSID & Channel */
 	profile->BSSIDs.numOfBSSIDs = 1;
-	if (NULL == profile->BSSIDs.bssid) {
+	if (!profile->BSSIDs.bssid) {
 		profile->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(tSirMacAddr) *
 				profile->BSSIDs.numOfBSSIDs);
@@ -1478,7 +1478,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 
 	profile->ChannelInfo.numOfChannels = 1;
-	if (NULL == profile->ChannelInfo.ChannelList) {
+	if (!profile->ChannelInfo.ChannelList) {
 		profile->ChannelInfo.ChannelList =
 			qdf_mem_malloc(sizeof(*profile->
 				ChannelInfo.ChannelList) *
@@ -1522,7 +1522,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 	}
 
 end:
-	if (NULL != profile) {
+	if (profile) {
 		csr_release_profile(mac_ctx, profile);
 		qdf_mem_free(profile);
 	}
@@ -1614,7 +1614,7 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
 
 	/* save the handoff info came from HDD as part of the reassoc req */
 	handoff_req = (tAniHandoffReq *) msg;
-	if (NULL == handoff_req) {
+	if (!handoff_req) {
 		sme_err("Received msg is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}

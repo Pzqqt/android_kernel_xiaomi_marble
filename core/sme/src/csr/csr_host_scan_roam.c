@@ -96,7 +96,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
 				pCommand = NULL;
 		}
 	}
-	if (NULL == pCommand) {
+	if (!pCommand) {
 		sme_err("fail to get cmd buf based on prev roam command");
 		return QDF_STATUS_E_RESOURCES;
 	}
@@ -108,7 +108,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
 		 * csr_reinit_roam_cmd when releasing the current command.
 		 */
 		tmp_command = csr_get_command_buffer(mac);
-		if (tmp_command == NULL) {
+		if (!tmp_command) {
 			sme_err("fail to get cmd buf!");
 			csr_release_command(mac, pCommand);
 			return QDF_STATUS_E_RESOURCES;
@@ -197,7 +197,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 
 			scan_result = csr_scan_result_get_next(
 						mac_ctx, *scan_results_list);
-			if (NULL == scan_result)
+			if (!scan_result)
 				break;
 			descr = &scan_result->BssDescriptor;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -329,7 +329,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 			bss_info->pBssDescription =
 				qdf_mem_malloc(descr->length +
 					sizeof(descr->length));
-			if (bss_info->pBssDescription != NULL) {
+			if (bss_info->pBssDescription) {
 				qdf_mem_copy(bss_info->pBssDescription, descr,
 					descr->length + sizeof(descr->length));
 			} else {
@@ -578,7 +578,7 @@ tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
 	tpCsrNeighborRoamBSSInfo result = NULL;
 
 	if (llist) {
-		if (NULL == neighbor_entry)
+		if (!neighbor_entry)
 			entry = csr_ll_peek_head(llist, LL_ACCESS_LOCK);
 		else
 			entry = csr_ll_next(llist, &neighbor_entry->List,
@@ -715,8 +715,8 @@ bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 		&mac->roam.neighborRoamInfo[session_id];
 	tpCsrNeighborRoamBSSInfo bss_node = NULL;
 
-	if (NULL == hand_off_node) {
-		QDF_ASSERT(NULL != hand_off_node);
+	if (!hand_off_node) {
+		QDF_ASSERT(hand_off_node);
 		return false;
 	}
 	if (ngbr_roam_info->is11rAssoc) {
@@ -758,7 +758,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 		sme_debug("Number of Handoff candidates: %d",
 			csr_ll_count(&ngbr_roam_info->roamableAPList));
 	}
-	if (NULL == bss_node)
+	if (!bss_node)
 		return false;
 	qdf_mem_copy(hand_off_node, bss_node, sizeof(tCsrNeighborRoamBSSInfo));
 	return true;

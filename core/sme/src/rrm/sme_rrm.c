@@ -173,7 +173,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	struct bss_description *tmp_bss_desc[SIR_BCN_REPORT_MAX_BSS_DESC] = {0};
 
-	if (NULL == result_arr && !msrmnt_status) {
+	if (!result_arr && !msrmnt_status) {
 		sme_err("Beacon report xmit Ind to PE Failed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -198,7 +198,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 		i = 0;
 		while (cur_result) {
 			bss_desc = &cur_result->BssDescriptor;
-			if (bss_desc == NULL)
+			if (!bss_desc)
 				break;
 			size =  bss_desc->length + sizeof(bss_desc->length);
 			beacon_rep->pBssDescription[i] = qdf_mem_malloc(size);
@@ -225,7 +225,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 		}
 
 		j += i;
-		if (!result_arr || (cur_result == NULL)
+		if (!result_arr || (!cur_result)
 			|| (j >= bss_count)) {
 			cur_result = NULL;
 			sme_debug("Reached to  max/last BSS in cur_result list");
@@ -283,12 +283,12 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	uint8_t i = 0, j = 0;
 	tBcnReportFields *bcn_rpt_fields;
 
-	if (NULL == rrm_ctx) {
+	if (!rrm_ctx) {
 		sme_err("rrm_ctx is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (NULL == result_arr && !msrmnt_status) {
+	if (!result_arr && !msrmnt_status) {
 		sme_err("Beacon report xmit Ind to HDD Failed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -313,7 +313,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 				break;
 			}
 		}
-		if (NULL != cur_meas_req)
+		if (cur_meas_req)
 			bcn_report->measurementToken =
 				cur_meas_req->measurementToken;
 		sme_debug("Channel: %d MeasToken: %d", channel,
@@ -322,7 +322,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 		j = 0;
 		while (cur_result) {
 			bss_desc = &cur_result->BssDescriptor;
-			if (NULL == bss_desc) {
+			if (!bss_desc) {
 				cur_result = NULL;
 				break;
 			}
@@ -332,7 +332,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 			bcn_rpt_fields->ChanNum =
 				bss_desc->channelId;
 			bcn_report->bcnRepBssInfo[j].bcnReportFields.Spare = 0;
-			if (NULL != cur_meas_req)
+			if (cur_meas_req)
 				bcn_rpt_fields->MeasDuration =
 					cur_meas_req->measurementDuration;
 			bcn_rpt_fields->PhyType = bss_desc->nwType;
@@ -482,7 +482,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		qdf_mem_free(filter.SSIDs.SSIDList);
 
 	sme_debug("RRM Measurement Done %d", measurementdone);
-	if (NULL == result_handle) {
+	if (!result_handle) {
 		/*
 		 * no scan results
 		 * Spec. doesn't say anything about such condition
@@ -510,7 +510,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		return status;
 	}
 	scan_results = sme_scan_result_get_first(mac_handle, result_handle);
-	if (NULL == scan_results && measurementdone) {
+	if (!scan_results && measurementdone) {
 #ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource) {
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
@@ -550,7 +550,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if ((!session) ||  (!csr_is_conn_state_connected_infra(
 	    mac_ctx, session_id)) ||
-	    (NULL == session->pConnectBssDesc)) {
+	    (!session->pConnectBssDesc)) {
 		sme_err("Invaild session");
 		status = QDF_STATUS_E_FAILURE;
 		goto rrm_send_scan_results_done;
@@ -1144,12 +1144,12 @@ rrm_calculate_neighbor_ap_roam_score(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 	uint8_t session_id;
 #endif
-	if (NULL == nbr_report_desc) {
+	if (!nbr_report_desc) {
 		QDF_ASSERT(0);
 		return;
 	}
 
-	if (NULL == nbr_report_desc->pNeighborBssDescription) {
+	if (!nbr_report_desc->pNeighborBssDescription) {
 		QDF_ASSERT(0);
 		return;
 	}
@@ -1226,11 +1226,11 @@ static void rrm_store_neighbor_rpt_by_roam_score(struct mac_context *mac,
 	tListElem *pEntry;
 	tRrmNeighborReportDesc *pTempNeighborReportDesc;
 
-	if (NULL == pNeighborReportDesc) {
+	if (!pNeighborReportDesc) {
 		QDF_ASSERT(0);
 		return;
 	}
-	if (NULL == pNeighborReportDesc->pNeighborBssDescription) {
+	if (!pNeighborReportDesc->pNeighborBssDescription) {
 		QDF_ASSERT(0);
 		return;
 	}
@@ -1251,7 +1251,7 @@ static void rrm_store_neighbor_rpt_by_roam_score(struct mac_context *mac,
 	 */
 	pEntry = csr_ll_peek_head(&pSmeRrmContext->neighborReportCache,
 				LL_ACCESS_LOCK);
-	while (pEntry != NULL) {
+	while (pEntry) {
 		pTempNeighborReportDesc = GET_BASE_ADDR(pEntry,
 					tRrmNeighborReportDesc, List);
 		if (pTempNeighborReportDesc->roamScore <

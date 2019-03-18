@@ -629,7 +629,7 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 			request->params.hostIpv4Addr[2],
 			request->params.hostIpv4Addr[3]);
 
-	if (NULL == session) {
+	if (!session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: SESSION not Found", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -680,7 +680,7 @@ QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	if (NULL == session) {
+	if (!session) {
 		sme_err("Session not found");
 		return QDF_STATUS_E_FAILURE;
 	}

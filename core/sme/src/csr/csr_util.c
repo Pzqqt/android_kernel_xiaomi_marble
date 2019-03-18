@@ -700,7 +700,7 @@ bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessio
 	if (CSR_IS_SESSION_VALID(mac, sessionId)
 	    && csr_is_conn_state_infra(mac, sessionId)) {
 		pSession = CSR_GET_SESSION(mac, sessionId);
-		if (NULL != pSession->pCurRoamProfile) {
+		if (pSession->pCurRoamProfile) {
 			if ((pSession->pCurRoamProfile->csrPersona ==
 			     QDF_STA_MODE)
 			    || (pSession->pCurRoamProfile->csrPersona ==
@@ -721,7 +721,7 @@ uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 		session = CSR_GET_SESSION(mac_ctx, i);
-		if (NULL == session->pCurRoamProfile)
+		if (!session->pCurRoamProfile)
 			continue;
 		persona = session->pCurRoamProfile->csrPersona;
 		if ((((persona == QDF_STA_MODE) ||
@@ -751,7 +751,7 @@ uint8_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
 		session = CSR_GET_SESSION(mac_ctx, i);
-		if (NULL == session->pCurRoamProfile)
+		if (!session->pCurRoamProfile)
 			continue;
 		persona = session->pCurRoamProfile->csrPersona;
 		if (((persona == QDF_P2P_GO_MODE) ||
@@ -1022,7 +1022,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			continue;
 
 		session = CSR_GET_SESSION(mac_ctx, i);
-		if (NULL == session->pCurRoamProfile)
+		if (!session->pCurRoamProfile)
 			continue;
 		if (((session->pCurRoamProfile->csrPersona == QDF_STA_MODE) ||
 			(session->pCurRoamProfile->csrPersona ==
@@ -1225,7 +1225,7 @@ bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 		return false;
 	/* Validate BeaconInterval */
 	pSession = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == pSession->pCurRoamProfile)
+	if (!pSession->pCurRoamProfile)
 		return false;
 	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(mac_ctx,
 					bss_descr->channelId,
@@ -1305,7 +1305,7 @@ bool csr_is_ssid_equal(struct mac_context *mac,
 	tDot11fBeaconIEs *pIesLocal = pIes2;
 
 	do {
-		if ((NULL == pSirBssDesc1) || (NULL == pSirBssDesc2))
+		if ((!pSirBssDesc1) || (!pSirBssDesc2))
 			break;
 		if (!pIesLocal
 		    &&
@@ -1351,7 +1351,7 @@ static bool csr_is_bss_description_wme(struct mac_context *mac,
 	tDot11fBeaconIEs *pIesTemp = pIes;
 
 	do {
-		if (pIesTemp == NULL) {
+		if (!pIesTemp) {
 			if (!QDF_IS_STATUS_SUCCESS
 				    (csr_get_parsed_bss_description_ies
 					    (mac, pSirBssDesc, &pIesTemp))) {
@@ -1369,7 +1369,7 @@ static bool csr_is_bss_description_wme(struct mac_context *mac,
 		if (!pIesTemp->HTCaps.present)
 			fWme = false;
 
-	if ((pIes == NULL) && (NULL != pIesTemp))
+	if ((!pIes) && (pIesTemp))
 		/* we allocate memory here so free it before returning */
 		qdf_mem_free(pIesTemp);
 
@@ -1382,8 +1382,8 @@ eCsrMediaAccessType csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 {
 	eCsrMediaAccessType qosType = eCSR_MEDIUM_ACCESS_DCF;
 
-	if (NULL == pIes) {
-		QDF_ASSERT(pIes != NULL);
+	if (!pIes) {
+		QDF_ASSERT(pIes);
 		return qosType;
 	}
 
@@ -6055,9 +6055,9 @@ bool csr_is_set_key_allowed(struct mac_context *mac, uint32_t sessionId)
 	 * what the state is.
 	 */
 	sme_debug("is not what it intends to. Must be revisit or removed");
-	if ((NULL == pSession)
+	if ((!pSession)
 	    || (csr_is_conn_state_disconnected(mac, sessionId)
-		&& (pSession->pCurRoamProfile != NULL)
+		&& (pSession->pCurRoamProfile)
 		&& (!(CSR_IS_INFRA_AP(pSession->pCurRoamProfile))))
 	    ) {
 		fRet = false;
@@ -6225,7 +6225,7 @@ enum QDF_OPMODE csr_get_session_persona(struct mac_context *pmac,
 	struct csr_roam_session *session = NULL;
 
 	session = CSR_GET_SESSION(pmac, session_id);
-	if (NULL == session || NULL == session->pCurRoamProfile)
+	if (!session || !session->pCurRoamProfile)
 		return QDF_MAX_NO_OF_MODE;
 
 	return session->pCurRoamProfile->csrPersona;
@@ -6261,7 +6261,7 @@ bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
 	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 			session = CSR_GET_SESSION(mac_ctx, session_id);
-			if (NULL == session->pCurRoamProfile)
+			if (!session->pCurRoamProfile)
 				continue;
 			oper_mode = session->pCurRoamProfile->csrPersona;
 			if ((((oper_mode == QDF_STA_MODE) ||

@@ -29,7 +29,7 @@ void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
-	if (NULL != pSession) {
+	if (pSession) {
 		/* Clean up the context */
 		qdf_mem_zero(&pSession->ftSmeContext, sizeof(tftSMEContext));
 
@@ -67,7 +67,7 @@ void sme_ft_close(mac_handle_t mac_handle, uint32_t sessionId)
 	sme_ft_reset(mac_handle, sessionId);
 
 	pSession = CSR_GET_SESSION(mac, sessionId);
-	if (NULL != pSession) {
+	if (pSession) {
 		/* check if the timer is running */
 		if (QDF_TIMER_STATE_RUNNING ==
 		    qdf_mc_timer_get_current_state(&pSession->ftSmeContext.
@@ -79,7 +79,7 @@ void sme_ft_close(mac_handle_t mac_handle, uint32_t sessionId)
 		qdf_mc_timer_destroy(&pSession->ftSmeContext.
 					preAuthReassocIntvlTimer);
 
-		if (pSession->ftSmeContext.pUsrCtx != NULL) {
+		if (pSession->ftSmeContext.pUsrCtx) {
 			qdf_mem_free(pSession->ftSmeContext.pUsrCtx);
 			pSession->ftSmeContext.pUsrCtx = NULL;
 		}
@@ -126,7 +126,7 @@ void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t session_id,
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	if (NULL == session || NULL == ft_ies) {
+	if (!session || !ft_ies) {
 		sme_err("ft ies or session is NULL");
 		return;
 	}
@@ -359,7 +359,7 @@ QDF_STATUS sme_ft_update_key(mac_handle_t mac_handle, uint32_t sessionId,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pFTKeyInfo == NULL) {
+	if (!pFTKeyInfo) {
 		sme_err("pFTKeyInfo is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -547,27 +547,27 @@ void sme_ft_reset(mac_handle_t mac_handle, uint32_t sessionId)
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *pSession = NULL;
 
-	if (mac == NULL) {
+	if (!mac) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("mac is NULL"));
 		return;
 	}
 
 	pSession = CSR_GET_SESSION(mac, sessionId);
-	if (NULL != pSession) {
-		if (pSession->ftSmeContext.auth_ft_ies != NULL) {
+	if (pSession) {
+		if (pSession->ftSmeContext.auth_ft_ies) {
 			qdf_mem_free(pSession->ftSmeContext.auth_ft_ies);
 			pSession->ftSmeContext.auth_ft_ies = NULL;
 		}
 		pSession->ftSmeContext.auth_ft_ies_length = 0;
 
-		if (pSession->ftSmeContext.reassoc_ft_ies != NULL) {
+		if (pSession->ftSmeContext.reassoc_ft_ies) {
 			qdf_mem_free(pSession->ftSmeContext.reassoc_ft_ies);
 			pSession->ftSmeContext.reassoc_ft_ies = NULL;
 		}
 		pSession->ftSmeContext.reassoc_ft_ies_length = 0;
 
-		if (pSession->ftSmeContext.psavedFTPreAuthRsp != NULL) {
+		if (pSession->ftSmeContext.psavedFTPreAuthRsp) {
 			qdf_mem_free(pSession->ftSmeContext.psavedFTPreAuthRsp);
 			pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
 		}

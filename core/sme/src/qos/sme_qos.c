@@ -599,7 +599,7 @@ QDF_STATUS sme_qos_close(struct mac_context *mac)
 	/* shut down all of the sessions */
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; ++sessionId) {
 		pSession = &sme_qos_cb.sessionInfo[sessionId];
-		if (pSession == NULL)
+		if (!pSession)
 			continue;
 
 		sme_qos_init_a_cs(mac, sessionId);
@@ -838,7 +838,7 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	case eWNI_SME_ADDTS_RSP:
 		entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 				LL_ACCESS_LOCK);
-		if (NULL == entry)
+		if (!entry)
 			break;
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		if (eSmeCommandAddTs == command->command) {
@@ -852,7 +852,7 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	case eWNI_SME_DELTS_RSP:
 		entry = csr_nonscan_active_ll_peek_head(mac_ctx,
 				LL_ACCESS_LOCK);
-		if (NULL == entry)
+		if (!entry)
 			break;
 		command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		if (eSmeCommandDelTs == command->command) {
@@ -2923,7 +2923,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(struct mac_context *mac,
 	uint32_t tspecIeLen;
 
 	pCsrSession = CSR_GET_SESSION(mac, sessionId);
-	if (NULL == pCsrSession) {
+	if (!pCsrSession) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("session %d not found"), sessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -3132,7 +3132,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	tDot11fIERICDataDesc ricIE;
 	uint32_t nStatus;
 
-	if (pRICBuffer == NULL || pRICIdentifier == NULL || pRICLength ==
+	if (!pRICBuffer || !pRICIdentifier || pRICLength ==
 								NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("RIC data is NULL, %pK, %pK, %pK"),
@@ -3757,7 +3757,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 	uint32_t ric_len;
 #endif
 
-	if (NULL == csr_session) {
+	if (!csr_session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("The Session pointer is NULL"));
 		return QDF_STATUS_E_FAILURE;
@@ -3903,7 +3903,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 		pTspec_Info->ts_info.ack_policy;
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
-	if (NULL == pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.pBssDesc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
@@ -4004,7 +4004,7 @@ static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 		pTspecInfo->ts_info.ack_policy;
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
-	if (NULL == pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.pBssDesc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
@@ -4980,7 +4980,7 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("invoked on SME session %d"), sessionid);
 
-	if (NULL == sme_session) {
+	if (!sme_session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("sme_session is NULL"));
 		return QDF_STATUS_E_INVAL;
@@ -5016,7 +5016,7 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 		return status;
 
 	/* Data is accessed from saved PreAuth Rsp */
-	if (NULL == sme_session->ftSmeContext.psavedFTPreAuthRsp) {
+	if (!sme_session->ftSmeContext.psavedFTPreAuthRsp) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("psavedFTPreAuthRsp is NULL"));
 		return QDF_STATUS_E_INVAL;
@@ -5485,7 +5485,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 
 	/* Inform this TSPEC IE change to FW */
 	csr_session = CSR_GET_SESSION(mac, sessionId);
-	if ((csr_session != NULL) && (NULL != csr_session->pCurRoamProfile) &&
+	if ((csr_session) && (csr_session->pCurRoamProfile) &&
 	    (csr_session->pCurRoamProfile->csrPersona == QDF_STA_MODE))
 		csr_roam_offload_scan(mac, sessionId,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
@@ -5958,7 +5958,7 @@ static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssD
 		return false;
 	}
 
-	if (NULL != pIes)
+	if (pIes)
 		/* IEs were provided so use them locally */
 		pIesLocal = pIes;
 	else {
@@ -6004,7 +6004,7 @@ static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssD
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: ACM = %d for AC = %d",
 		  __func__, __LINE__, ret_val, ac);
-	if (NULL == pIes)
+	if (!pIes)
 		/* IEs were allocated locally so free them */
 		qdf_mem_free(pIesLocal);
 
@@ -6381,7 +6381,7 @@ static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 	tSirBssDescription *pBssDesc = NULL;
 	uint32_t bssLen = 0;
 
-	if (NULL == pAssoc_info) {
+	if (!pAssoc_info) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: pAssoc_info is NULL", __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;

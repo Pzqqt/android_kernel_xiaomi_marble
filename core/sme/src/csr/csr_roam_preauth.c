@@ -110,7 +110,7 @@ QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac_ctx,
 	tSmeCmd *command;
 
 	command = csr_get_command_buffer(mac_ctx);
-	if (NULL == command) {
+	if (!command) {
 		sme_err("fail to get command buffer");
 		status = QDF_STATUS_E_RESOURCES;
 	} else {
@@ -238,7 +238,7 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac_ctx,
 			csr_neighbor_roam_next_roamable_ap(
 				mac_ctx, &neighbor_roam_info->roamableAPList,
 				NULL);
-	if ((QDF_STATUS_SUCCESS == lim_status) && (NULL != preauth_rsp_node)) {
+	if ((QDF_STATUS_SUCCESS == lim_status) && (preauth_rsp_node)) {
 		sme_debug("Preauth completed successfully after %d tries",
 			neighbor_roam_info->FTRoamInfo.numPreAuthRetries);
 		sme_debug("After Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d",
@@ -471,7 +471,7 @@ static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 		sme_err("csr_get_parsed_bss_description_ies failed");
 		return 0;
 	}
-	if (ies_local == NULL) {
+	if (!ies_local) {
 		sme_err("ies_local is NULL");
 		return 0;
 	}
@@ -517,7 +517,7 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				session_id);
 
-	if (NULL == csr_session) {
+	if (!csr_session) {
 		sme_err("Session does not exist for session id: %d",
 			session_id);
 		return QDF_STATUS_E_FAILURE;
@@ -588,7 +588,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 				session_id);
 	tDot11fAuthentication *p_auth = NULL;
 
-	if (NULL == csr_session) {
+	if (!csr_session) {
 		sme_err("CSR session is NULL");
 		return;
 	}
@@ -683,7 +683,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 		p_auth = (tDot11fAuthentication *) qdf_mem_malloc(
 						sizeof(tDot11fAuthentication));
 
-		if (p_auth == NULL)
+		if (!p_auth)
 			return;
 
 		status = dot11f_unpack_authentication(mac_ctx,
@@ -750,7 +750,7 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac_ctx,
 	neighbor_bss_node = csr_neighbor_roam_next_roamable_ap(mac_ctx,
 				&neighbor_roam_info->roamableAPList, NULL);
 
-	if (NULL == neighbor_bss_node) {
+	if (!neighbor_bss_node) {
 		sme_err("Roamable AP list is empty");
 		return QDF_STATUS_E_FAILURE;
 	}

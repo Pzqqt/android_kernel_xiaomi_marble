@@ -70,7 +70,7 @@ static bool csr_roam_is_valid_channel(struct mac_context *mac, uint8_t channel);
 void csr_free_scan_result_entry(struct mac_context *mac,
 				struct tag_csrscan_result *pResult)
 {
-	if (NULL != pResult->Result.pvIes)
+	if (pResult->Result.pvIes)
 		qdf_mem_free(pResult->Result.pvIes);
 
 	qdf_mem_free(pResult);
@@ -148,10 +148,10 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 			sme_warn("aborts because roam command waiting");
 			break;
 		}
-		if (profile == NULL)
+		if (!profile)
 			break;
 		pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-		if (NULL == pScanFilter) {
+		if (!pScanFilter) {
 			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
@@ -272,7 +272,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac_ctx,
 		return status;
 	}
 	roam_result = eCSR_ROAM_RESULT_FAILURE;
-	if (NULL != profile && csr_is_bss_type_ibss(profile->BSSType)) {
+	if (profile && csr_is_bss_type_ibss(profile->BSSType)) {
 		roam_result = eCSR_ROAM_RESULT_IBSS_START_FAILED;
 		goto roam_completion;
 	}
@@ -536,7 +536,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 	/* atleast 3 bytes have to be remaining  -- from "countryString" */
 	while (i--) {
 	pChannelSet = qdf_mem_malloc(sizeof(struct csr_channel_powerinfo));
-		if (NULL == pChannelSet) {
+		if (!pChannelSet) {
 			pChannelInfo++;
 			continue;
 		}
@@ -843,7 +843,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 
 	chan_info = qdf_mem_malloc(sizeof(tSirMacChanInfo) *
 				   CFG_VALID_CHANNEL_LIST_LEN);
-	if (NULL == chan_info)
+	if (!chan_info)
 		return;
 
 	ch_info_start = chan_info;
@@ -906,7 +906,7 @@ bool csr_learn_11dcountry_information(struct mac_context *mac,
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	bool useVoting = false;
 
-	if ((NULL == pSirBssDesc) && (NULL == pIes))
+	if ((!pSirBssDesc) && (!pIes))
 		useVoting = true;
 
 	/* check if .11d support is enabled */
@@ -1314,7 +1314,7 @@ tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 	if (!pResultList)
 		return NULL;
 
-	if (NULL == pResultList->pCurEntry)
+	if (!pResultList->pCurEntry)
 		pEntry = csr_ll_peek_head(&pResultList->List, LL_ACCESS_NOLOCK);
 	else
 		pEntry = csr_ll_next(&pResultList->List, pResultList->pCurEntry,
@@ -1412,7 +1412,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 		req->scan_req.extraie.ptr =
 			qdf_mem_malloc(profile->nAddIEScanLength);
 
-		if (NULL == req->scan_req.extraie.ptr)
+		if (!req->scan_req.extraie.ptr)
 			status = QDF_STATUS_E_NOMEM;
 		else
 			status = QDF_STATUS_SUCCESS;
@@ -1785,7 +1785,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 	tSirBssDescription *pNewBssDescriptor = NULL;
 	uint32_t size = 0;
 
-	if (NULL == pSession) {
+	if (!pSession) {
 		return QDF_STATUS_E_FAILURE;
 	}
 	sme_debug("Current bssid::"MAC_ADDRESS_STR,
@@ -1878,7 +1878,7 @@ csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
 	struct scan_result_list *bss_list =
 				(struct scan_result_list *)result_handle;
 
-	if (NULL == bss_list) {
+	if (!bss_list) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Empty bss_list"));
 		return NULL;
@@ -1889,7 +1889,7 @@ csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
 		return NULL;
 	}
 	first_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
-	if (NULL == first_element) {
+	if (!first_element) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("peer head return NULL"));
 		return NULL;
@@ -1919,7 +1919,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 	struct scan_result_list *bss_list =
 				(struct scan_result_list *)result_handle;
 
-	if (NULL == bss_list) {
+	if (!bss_list) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("Empty bss_list"));
 		return NULL;
@@ -1953,7 +1953,7 @@ csr_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 				(struct scan_result_list *)result_handle;
 	uint8_t channel_id = 0;
 
-	if (NULL == bss_list) {
+	if (!bss_list) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Empty bss_list"));
 		goto end;
@@ -3075,7 +3075,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		 * Free the memory allocated for pIes in
 		 * csr_get_parsed_bss_description_ies
 		 */
-		if ((bss_desc->Result.pvIes == NULL) && ie_ptr)
+		if ((!bss_desc->Result.pvIes) && ie_ptr)
 			qdf_mem_free(ie_ptr);
 		scan_entry = csr_ll_next(&scan_list->List, scan_entry,
 				     LL_ACCESS_NOLOCK);

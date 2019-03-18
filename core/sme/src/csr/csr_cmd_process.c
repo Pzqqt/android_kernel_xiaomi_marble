@@ -98,7 +98,7 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 				sme_rsp->messageType) {
 			tAniGetRssiReq *pGetRssiReq =
 				(tAniGetRssiReq *) msg_buf;
-			if (NULL == pGetRssiReq->rssiCallback) {
+			if (!pGetRssiReq->rssiCallback) {
 				sme_err("rssiCallback is NULL");
 				return status;
 			}
