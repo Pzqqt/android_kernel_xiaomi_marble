@@ -694,7 +694,7 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 	qdf_mem_copy(mgmt_req, req, sizeof(*req));
 
 	/*populate the additional IE's */
-	if ((0 != req->len) && (NULL != req->cmd_buf)) {
+	if ((0 != req->len) && (req->cmd_buf)) {
 		qdf_mem_copy(mgmt_req->tdls_mgmt.buf, req->cmd_buf,
 				req->len);
 		mgmt_req->tdls_mgmt.len = req->len;

@@ -61,7 +61,7 @@ static int tdls_set_rssi(struct tdls_vdev_priv_obj *tdls_vdev,
 	struct tdls_peer *curr_peer;
 
 	curr_peer = tdls_find_peer(tdls_vdev, mac);
-	if (curr_peer == NULL) {
+	if (!curr_peer) {
 		tdls_err("curr_peer is NULL");
 		return -EINVAL;
 	}
@@ -246,7 +246,7 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 
 	tdls_mgmt_req = qdf_mem_malloc(sizeof(struct tdls_send_mgmt_request) +
 				action_req->tdls_mgmt.len);
-	if (NULL == tdls_mgmt_req) {
+	if (!tdls_mgmt_req) {
 		status = QDF_STATUS_E_NOMEM;
 		tdls_err("mem alloc failed ");
 		QDF_ASSERT(0);
