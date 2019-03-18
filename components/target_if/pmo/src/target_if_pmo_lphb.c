@@ -113,7 +113,7 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	wmi_hb_set_tcp_pkt_filter_cmd_fixed_param hb_tcp_filter_fp = {0};
 	wmi_unified_t wmi_handle;
 
-	if (ts_lphb_tcp_filter == NULL) {
+	if (!ts_lphb_tcp_filter) {
 		target_if_err("TCP PKT FILTER LPHB configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
