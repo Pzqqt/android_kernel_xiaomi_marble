@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,7 +134,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	payload_len = wmsg_length + sizeof(wnl->radio) + sizeof(*wmsg);
 	tot_msg_len = NLMSG_SPACE(payload_len);
 	skb = dev_alloc_skb(tot_msg_len);
-	if (skb  == NULL) {
+	if (!skb) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: dev_alloc_skb() failed for msg size[%d]\n",
 			  __func__, tot_msg_len);
@@ -143,7 +143,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	nlh =
 		nlmsg_put(skb, pid, nlmsg_seq++, src_mod, payload_len,
 			  NLM_F_REQUEST);
-	if (NULL == nlh) {
+	if (!nlh) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: nlmsg_put() failed for msg size[%d]\n", __func__,
 			  tot_msg_len);

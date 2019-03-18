@@ -50,14 +50,14 @@ static void epping_timer_expire(void *data)
 	struct net_device *dev = (struct net_device *)data;
 	epping_adapter_t *adapter;
 
-	if (dev == NULL) {
+	if (!dev) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: netdev = NULL", __func__);
 		return;
 	}
 
 	adapter = netdev_priv(dev);
-	if (adapter == NULL) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: adapter = NULL", __func__);
 		return;
@@ -82,7 +82,7 @@ static int epping_ndev_stop(struct net_device *dev)
 	int ret = 0;
 
 	adapter = netdev_priv(dev);
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		ret = -ENODEV;
@@ -98,7 +98,7 @@ static void epping_ndev_uninit(struct net_device *dev)
 	epping_adapter_t *adapter;
 
 	adapter = netdev_priv(dev);
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		goto end;
@@ -113,7 +113,7 @@ static void epping_tx_queue_timeout(struct net_device *dev)
 	epping_adapter_t *adapter;
 
 	adapter = netdev_priv(dev);
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		goto end;
@@ -142,7 +142,7 @@ static netdev_tx_t epping_hard_start_xmit(struct sk_buff *skb,
 	int ret = 0;
 
 	adapter = netdev_priv(dev);
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		kfree_skb(skb);
@@ -159,7 +159,7 @@ static struct net_device_stats *epping_get_stats(struct net_device *dev)
 {
 	epping_adapter_t *adapter = netdev_priv(dev);
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_ERROR, "%s: adapter = NULL",
 			   __func__);
 		return NULL;
@@ -174,7 +174,7 @@ static int epping_ndev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	int ret = 0;
 
 	adapter = netdev_priv(dev);
-	if (NULL == adapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		ret = -ENODEV;
@@ -363,7 +363,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 			   NET_NAME_UNKNOWN,
 #endif
 			   ether_setup);
-	if (dev == NULL) {
+	if (!dev) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Cannot allocate epping_adapter_t\n", __func__);
 		return NULL;

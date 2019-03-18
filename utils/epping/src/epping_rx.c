@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,7 +76,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint)
 	for (RxBuffers = 0; RxBuffers < buffersToRefill; RxBuffers++) {
 		osBuf = qdf_nbuf_alloc(NULL, AR6000_BUFFER_SIZE,
 				       AR6000_MIN_HEAD_ROOM, 4, false);
-		if (NULL == osBuf) {
+		if (!osBuf) {
 			break;
 		}
 		/* the HTC packet wrapper is at the head of the reserved area

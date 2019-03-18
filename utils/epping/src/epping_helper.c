@@ -107,7 +107,7 @@ struct epping_cookie *epping_alloc_cookie(epping_context_t *pEpping_ctx)
 
 	qdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
 	cookie = pEpping_ctx->cookie_list;
-	if (cookie != NULL) {
+	if (cookie) {
 		pEpping_ctx->cookie_list = cookie->next;
 		pEpping_ctx->cookie_count--;
 	}

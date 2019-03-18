@@ -113,7 +113,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	page_cnt = (sizeof(*(pl_info->buf)) + pl_info->buf_size) / PAGE_SIZE;
 
 	qdf_spin_lock_bh(&pl_info->log_lock);
-	if (pl_info->buf != NULL) {
+	if (pl_info->buf) {
 		qdf_spin_unlock_bh(&pl_info->log_lock);
 		printk(PKTLOG_TAG "Buffer is already in use\n");
 		return -EINVAL;
@@ -121,7 +121,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	qdf_spin_unlock_bh(&pl_info->log_lock);
 
 	buffer = vmalloc((page_cnt + 2) * PAGE_SIZE);
-	if (buffer == NULL) {
+	if (!buffer) {
 		printk(PKTLOG_TAG
 		       "%s: Unable to allocate buffer "
 		       "(%d pages)\n", __func__, page_cnt);
@@ -140,7 +140,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	}
 
 	qdf_spin_lock_bh(&pl_info->log_lock);
-	if (pl_info->buf != NULL)
+	if (pl_info->buf)
 		pktlog_release_buf(scn);
 
 	pl_info->buf =  buffer;
@@ -418,9 +418,9 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	/* Allocate pktlog dev for later use */
 	pl_dev = get_pktlog_handle();
 
-	if (pl_dev != NULL) {
+	if (pl_dev) {
 		pl_info_lnx = kmalloc(sizeof(*pl_info_lnx), GFP_KERNEL);
-		if (pl_info_lnx == NULL) {
+		if (!pl_info_lnx) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				 "%s: Allocation failed for pl_info",
 				 __func__);
@@ -454,7 +454,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 			g_pktlog_pde, &pktlog_fops,
 			&pl_info_lnx->info);
 
-	if (proc_entry == NULL) {
+	if (!proc_entry) {
 		printk(PKTLOG_TAG "%s: create_proc_entry failed for %s\n",
 				__func__, proc_name);
 		goto attach_fail1;
@@ -701,7 +701,7 @@ pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 
 	*read_complete = false;
 
-	if (log_buf == NULL) {
+	if (!log_buf) {
 		*read_complete = true;
 		qdf_spin_unlock_bh(&pl_info->log_lock);
 		return 0;
@@ -842,7 +842,7 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	qdf_spin_lock_bh(&pl_info->log_lock);
 	log_buf = pl_info->buf;
 
-	if (log_buf == NULL) {
+	if (!log_buf) {
 		qdf_spin_unlock_bh(&pl_info->log_lock);
 		return 0;
 	}
@@ -1005,7 +1005,7 @@ int pktlogmod_init(void *context)
 	/* create the proc directory entry */
 	g_pktlog_pde = proc_mkdir(PKTLOG_PROC_DIR, NULL);
 
-	if (g_pktlog_pde == NULL) {
+	if (!g_pktlog_pde) {
 		printk(PKTLOG_TAG "%s: proc_mkdir failed\n", __func__);
 		return -EPERM;
 	}
@@ -1028,7 +1028,7 @@ attach_fail:
 
 void pktlogmod_exit(void *context)
 {
-	if (g_pktlog_pde == NULL)
+	if (!g_pktlog_pde)
 		return;
 
 	pktlog_detach((struct hif_opaque_softc *)context);

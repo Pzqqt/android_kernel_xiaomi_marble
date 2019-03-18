@@ -569,7 +569,7 @@ static int pktlog_send_per_pkt_stats_to_user(void)
 	while (!list_empty(&gwlan_logging.pkt_stat_filled_list)
 		&& !gwlan_logging.exit) {
 		skb_new = dev_alloc_skb(MAX_SKBMSG_LENGTH);
-		if (skb_new == NULL) {
+		if (!skb_new) {
 			if (!rate_limit) {
 				pr_err("%s: dev_alloc_skb() failed for msg size[%d] drop count = %u\n",
 					__func__, MAX_SKBMSG_LENGTH,
@@ -645,7 +645,7 @@ static int send_filled_buffers_to_user(void)
 	       && !gwlan_logging.exit) {
 
 		skb = dev_alloc_skb(MAX_LOGMSG_LENGTH);
-		if (skb == NULL) {
+		if (!skb) {
 			if (!rate_limit) {
 				pr_err
 					("%s: dev_alloc_skb() failed for msg size[%d] drop count = %u\n",
@@ -671,7 +671,7 @@ static int send_filled_buffers_to_user(void)
 		tot_msg_len = NLMSG_SPACE(payload_len);
 		nlh = nlmsg_put(skb, 0, nlmsg_seq++,
 				ANI_NL_MSG_LOG, payload_len, NLM_F_REQUEST);
-		if (NULL == nlh) {
+		if (!nlh) {
 			spin_lock_irqsave(&gwlan_logging.spin_lock, flags);
 			list_add_tail(&plog_msg->node,
 				      &gwlan_logging.free_list);
@@ -980,7 +980,7 @@ int wlan_logging_sock_init_svc(void)
 
 	for (i = 0; i < MAX_PKTSTATS_BUFF; i++) {
 		gpkt_stats_buffers[i].skb = dev_alloc_skb(MAX_PKTSTATS_LENGTH);
-		if (gpkt_stats_buffers[i].skb == NULL) {
+		if (!gpkt_stats_buffers[i].skb) {
 			pr_err("%s: Memory alloc failed for skb", __func__);
 			/* free previously allocated skb and return */
 			for (j = 0; j < i ; j++)
@@ -1235,7 +1235,7 @@ void wlan_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 
 	pktlog_hdr = (struct ath_pktlog_hdr *)pl_hdr;
 
-	if (pktlog_hdr == NULL) {
+	if (!pktlog_hdr) {
 		pr_err("%s : Invalid pkt_stats_header\n", __func__);
 		return;
 	}

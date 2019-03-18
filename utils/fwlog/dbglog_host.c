@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1505,7 +1505,7 @@ static int dbglog_print_raw_data(uint32_t *buffer, uint32_t length)
 skip_args_processing:
 			if (debugid < MAX_DBG_MSGS) {
 				dbgidString = DBG_MSG_ARR[moduleid][debugid];
-				if (dbgidString != NULL) {
+				if (dbgidString) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
 							("fw:%s(%x %x):%s\n",
 							 dbgidString, timestamp,
@@ -2053,7 +2053,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		if (moduleid >= WLAN_MODULE_ID_MAX)
 			return A_OK;
 
-		if (mod_print[moduleid] == NULL) {
+		if (!mod_print[moduleid]) {
 			/*
 			 * No module specific log registered
 			 * use the default handler

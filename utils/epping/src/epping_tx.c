@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,7 +54,7 @@ void epping_tx_dup_pkt(epping_adapter_t *adapter,
 	qdf_nbuf_t new_skb;
 
 	cookie = epping_alloc_cookie(adapter->pEpping_ctx);
-	if (cookie == NULL) {
+	if (!cookie) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_alloc_cookie returns no resource\n",
 			   __func__);
@@ -103,7 +103,7 @@ static int epping_tx_send_int(qdf_nbuf_t skb, epping_adapter_t *adapter)
 	/* allocate resource for this packet */
 	cookie = epping_alloc_cookie(adapter->pEpping_ctx);
 	/* no resource */
-	if (cookie == NULL) {
+	if (!cookie) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_alloc_cookie returns no resource\n",
 			   __func__);
@@ -318,7 +318,7 @@ void epping_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	A_BOOL flushing = false;
 	qdf_nbuf_queue_t skb_queue;
 
-	if (htc_pkt == NULL)
+	if (!htc_pkt)
 		return;
 
 	qdf_nbuf_queue_init(&skb_queue);
@@ -381,7 +381,7 @@ void epping_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	while (qdf_nbuf_queue_len(&skb_queue)) {
 		/* use non-lock version */
 		pktSkb = qdf_nbuf_queue_remove(&skb_queue);
-		if (pktSkb == NULL)
+		if (!pktSkb)
 			break;
 		qdf_nbuf_tx_free(pktSkb, QDF_NBUF_PKT_ERROR);
 		pEpping_ctx->total_tx_acks++;

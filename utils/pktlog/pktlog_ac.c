@@ -595,7 +595,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 	struct ath_pktlog_info *pl_info;
 
-	if (pl_dev == NULL || pl_dev->pl_info == NULL) {
+	if (!pl_dev || !pl_dev->pl_info) {
 		qdf_print("pl_dev or pl_info is invalid");
 		return;
 	}
@@ -678,7 +678,7 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	}
 
 	if (!pl_dev->tgt_pktlog_alloced) {
-		if (pl_info->buf == NULL) {
+		if (!pl_info->buf) {
 			error = pktlog_alloc_buf(scn);
 
 			if (error != 0) {
@@ -846,7 +846,7 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	}
 
 	qdf_spin_lock_bh(&pl_info->log_lock);
-	if (pl_info->buf != NULL) {
+	if (pl_info->buf) {
 		if (pl_dev->is_pktlog_cb_subscribed &&
 			wdi_pktlog_unsubscribe(pdev, pl_info->log_state)) {
 			pl_info->curr_pkt_state =
@@ -934,7 +934,7 @@ int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 		return -EINVAL;
 	}
 
-	if (pl_info->buf != NULL) {
+	if (pl_info->buf) {
 		if (pl_info->buf_size > 0) {
 			qdf_print("%s: pktlog buffer is cleared.", __func__);
 			memset(pl_info->buf, 0, pl_info->buf_size);

@@ -110,7 +110,7 @@ void epping_disable(void)
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (hif_ctx == NULL) {
+	if (!hif_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: error: hif_ctx = NULL", __func__);
 		return;
@@ -119,7 +119,7 @@ void epping_disable(void)
 	hif_reset_soc(hif_ctx);
 
 	htc_handle = cds_get_context(QDF_MODULE_ID_HTC);
-	if (htc_handle == NULL) {
+	if (!htc_handle) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: error: htc_handle = NULL", __func__);
 		return;
@@ -145,7 +145,7 @@ void epping_close(void)
 {
 	epping_context_t *to_free;
 
-	if (g_epping_ctx == NULL) {
+	if (!g_epping_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: error: g_epping_ctx  = NULL", __func__);
 		return;
@@ -163,7 +163,7 @@ void epping_close(void)
  */
 static void epping_target_suspend_acknowledge(void *context, bool wow_nack)
 {
-	if (NULL == g_epping_ctx) {
+	if (!g_epping_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_ctx is NULL", __func__);
 		return;
@@ -251,7 +251,7 @@ int epping_enable(struct device *parent_dev, bool rtnl_held)
 
 	p_cds_context = cds_get_global_context();
 
-	if (p_cds_context == NULL) {
+	if (!p_cds_context) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed cds_get_global_context", __func__);
 		ret = -1;

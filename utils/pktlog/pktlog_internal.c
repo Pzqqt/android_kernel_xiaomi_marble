@@ -1424,7 +1424,7 @@ int process_rx_desc_remote(void *pdev, void *data)
 	rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
 						  log_size, &pl_hdr);
 
-	if (rxstat_log.rx_desc == NULL) {
+	if (!rxstat_log.rx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Rx descriptor is NULL", __func__);
 		return -EFAULT;
@@ -1456,7 +1456,7 @@ process_pktlog_lite(void *context, void *log_data, uint16_t log_type)
 	log_size = pl_hdr.size;
 	rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
 						   log_size, &pl_hdr);
-	if (rxstat_log.rx_desc == NULL) {
+	if (!rxstat_log.rx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Rx descriptor is NULL", __func__);
 		return -EFAULT;
