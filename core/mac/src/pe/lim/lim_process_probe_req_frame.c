@@ -473,7 +473,7 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 {
 	uint8_t i;
 
-	if (session != NULL) {
+	if (session) {
 		if (LIM_IS_AP_ROLE(session)) {
 			lim_indicate_probe_req_to_hdd(mac_ctx,
 					buf_descr, session);
@@ -484,7 +484,7 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		session = pe_find_session_by_session_id(mac_ctx, i);
-		if (session == NULL)
+		if (!session)
 			continue;
 		if (LIM_IS_AP_ROLE(session))
 			lim_indicate_probe_req_to_hdd(mac_ctx,

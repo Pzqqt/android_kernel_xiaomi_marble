@@ -278,7 +278,7 @@ static void __sch_beacon_process_no_session(struct mac_context *mac,
 	struct pe_session *pe_session = NULL;
 
 	pe_session = lim_is_ibss_session_active(mac);
-	if (pe_session != NULL) {
+	if (pe_session) {
 		lim_handle_ibss_coalescing(mac, pBeacon, pRxPacketInfo,
 					   pe_session);
 	}
@@ -441,7 +441,7 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 							 session);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				pe_err("EDCA parameter processing error");
-			} else if (sta != NULL) {
+			} else if (sta) {
 				/* If needed, downgrade the EDCA parameters */
 				lim_set_active_edca_params(mac_ctx,
 					session->gLimEdcaParams, session);
@@ -734,7 +734,7 @@ sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 	/* check for VHT capability */
 	sta = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
 			&session->dph.dphHashTable);
-	if ((NULL == sta) || ((NULL != sta) &&
+	if ((!sta) || ((sta) &&
 					(STA_INVALID_IDX == sta->staIndex)))
 		return;
 	sch_bcn_update_opmode_change(mac_ctx, sta, session, bcn, pMh,
@@ -1102,7 +1102,7 @@ sch_beacon_process(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	 * Now process the beacon in the context of the BSS which is
 	 * transmitting the beacons, if one is found
 	 */
-	if (session == NULL)
+	if (!session)
 		__sch_beacon_process_no_session(mac_ctx, &bcn, rx_pkt_info);
 	else
 		__sch_beacon_process_for_session(mac_ctx, &bcn, rx_pkt_info,

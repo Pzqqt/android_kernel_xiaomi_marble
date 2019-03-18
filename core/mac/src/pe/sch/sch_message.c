@@ -223,7 +223,7 @@ broadcast_wmm_of_concurrent_sta_session(struct mac_context *mac_ctx,
 		break;
 	}
 
-	if (concurrent_session == NULL)
+	if (!concurrent_session)
 		return false;
 
 	if (!qdf_mem_cmp(session->gLimEdcaParamsBC,

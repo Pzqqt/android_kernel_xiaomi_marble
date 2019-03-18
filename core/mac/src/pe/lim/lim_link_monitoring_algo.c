@@ -199,12 +199,12 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	tpDphHashNode sta_ds;
 
-	if (NULL == msg) {
+	if (!msg) {
 		pe_err("Invalid body pointer in message");
 		return;
 	}
 	session_entry = pe_find_session_by_sme_session_id(mac_ctx, msg->vdev_id);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("session not found for given sme session");
 		qdf_mem_free(msg);
 		return;
@@ -230,7 +230,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 			sta_ds = dph_get_hash_entry(mac_ctx,
 					DPH_STA_HASH_INDEX_PEER,
 					&session_entry->dph.dphHashTable);
-			if (NULL == sta_ds) {
+			if (!sta_ds) {
 				pe_err("Dph entry not found");
 				qdf_mem_free(msg);
 				return;
@@ -362,7 +362,7 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 	struct pe_session *pe_session;
 
 	pe_session = pe_find_session_by_session_id(mac, sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -382,7 +382,7 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
 
-	if (sta != NULL) {
+	if (sta) {
 		tLimMlmDeauthInd mlmDeauthInd;
 
 		if ((sta->mlmStaContext.disassocReason ==
@@ -517,7 +517,7 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 			 */
 			pe_debug("HB missed from AP. Sending Probe Req");
 			/* for searching AP, we don't include any more IE */
-			if (session->pLimJoinReq != NULL) {
+			if (session->pLimJoinReq) {
 				scan_ie = &session->pLimJoinReq->addIEScan;
 				lim_send_probe_req_mgmt_frame(mac_ctx,
 					&session->ssId,
@@ -572,14 +572,14 @@ void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 	uint16_t reason_code =
 		eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON;
 
-	if (NULL == msg) {
+	if (!msg) {
 		pe_err("Invalid body pointer in message");
 		return;
 	}
 
 	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
 							  msg->vdev_id);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err_rl("session not found for given sme session");
 		qdf_mem_free(msg);
 		return;

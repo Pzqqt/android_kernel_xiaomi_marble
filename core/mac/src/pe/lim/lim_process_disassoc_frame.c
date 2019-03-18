@@ -173,7 +173,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 				      &pe_session->dph.dphHashTable);
 
-	if (sta == NULL) {
+	if (!sta) {
 		/**
 		 * Disassociating STA is not associated.
 		 * Log error.
@@ -324,7 +324,7 @@ void lim_disassoc_tdls_peers(struct mac_context *mac_ctx,
 
 	sta_ds = dph_lookup_hash_entry(mac_ctx, addr, &aid,
 				       &pe_session->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_debug("Hash entry not found");
 		return;
 	}
@@ -351,7 +351,7 @@ void lim_perform_disassoc(struct mac_context *mac_ctx, int32_t frame_rssi,
 
 	sta_ds = dph_lookup_hash_entry(mac_ctx, addr, &aid,
 				       &pe_session->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_debug("Hash entry not found");
 		return;
 	}

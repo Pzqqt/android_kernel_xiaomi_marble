@@ -219,7 +219,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 */
 	pesession = pe_find_session_by_bssid(mac_ctx, bssid, &sessionid);
 
-	if (pesession != NULL)
+	if (pesession)
 		sme_sessionid = pesession->smeSessionId;
 
 	/* The scheme here is to fill out a 'tDot11fProbeRequest' structure */
@@ -237,8 +237,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Don't include 11b rate if it is a P2P serach or probe request is
 	 * sent by P2P Client
 	 */
-	if ((MLME_DOT11_MODE_11B != dot11mode) && (p2pie != NULL) &&
-	    ((pesession != NULL) &&
+	if ((MLME_DOT11_MODE_11B != dot11mode) && (p2pie) &&
+	    ((pesession) &&
 	      (QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
 		/*
 		 * In the below API pass channel number > 14, do that it fills
@@ -268,12 +268,12 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_wfatpc(mac_ctx, &pr.WFATPC, txPower, 0);
 
 
-	if (pesession != NULL) {
+	if (pesession) {
 		pesession->htCapability = IS_DOT11_MODE_HT(dot11mode);
 		/* Include HT Capability IE */
 		if (pesession->htCapability)
 			populate_dot11f_ht_caps(mac_ctx, pesession, &pr.HTCaps);
-	} else {                /* pesession == NULL */
+	} else {                /* !pesession */
 		if (IS_DOT11_MODE_HT(dot11mode))
 			populate_dot11f_ht_caps(mac_ctx, NULL, &pr.HTCaps);
 	}
@@ -293,7 +293,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 				eHT_CHANNEL_WIDTH_40MHZ;
 		}
 	}
-	if (pesession != NULL) {
+	if (pesession) {
 		pesession->vhtCapability = IS_DOT11_MODE_VHT(dot11mode);
 		/* Include VHT Capability IE */
 		if (pesession->vhtCapability) {
@@ -308,11 +308,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			is_vht_enabled = true;
 		}
 	}
-	if (pesession != NULL)
+	if (pesession)
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &pr.ExtCap,
 			pesession);
 
-	if (IS_DOT11_MODE_HE(dot11mode) && NULL != pesession)
+	if (IS_DOT11_MODE_HE(dot11mode) && pesession)
 		lim_update_session_he_capable(mac_ctx, pesession);
 
 	pe_debug("Populate HE IEs");
@@ -412,7 +412,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		 * above variables. So we need to add one more check whether it
 		 * is pePersona is P2P_CLIENT or not
 		 */
-	    ((pesession != NULL) &&
+	    ((pesession) &&
 		(QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
 		txflag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
@@ -445,7 +445,7 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(struct mac_context *mac,
 		uint8_t *ptr = addIE;
 		uint8_t elem_id, elem_len;
 
-		if (NULL == addIE) {
+		if (!addIE) {
 			pe_err("NULL addIE pointer");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -516,7 +516,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG)
 		return;
 
-	if (NULL == pe_session)
+	if (!pe_session)
 		return;
 
 	/*
@@ -691,7 +691,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			p2p_ie = limGetP2pIEPtr(mac_ctx, &add_ie[0],
 					addn_ie_len);
 
-		if (p2p_ie != NULL) {
+		if (p2p_ie) {
 			/* get NoA attribute stream P2P IE */
 			noalen = lim_get_noa_attr_stream(mac_ctx,
 					noa_stream, pe_session);
@@ -794,18 +794,18 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		pe_err("Could not send Probe Response");
 
-	if (add_ie != NULL)
+	if (add_ie)
 		qdf_mem_free(add_ie);
 
 	qdf_mem_free(frm);
 	return;
 
 err_ret:
-	if (add_ie != NULL)
+	if (add_ie)
 		qdf_mem_free(add_ie);
-	if (frm != NULL)
+	if (frm)
 		qdf_mem_free(frm);
-	if (packet != NULL)
+	if (packet)
 		cds_packet_free((void *)packet);
 	return;
 
@@ -830,7 +830,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		return;
 	}
 
@@ -1057,7 +1057,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	uint16_t max_retries;
 #endif
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return;
 	}
@@ -1079,7 +1079,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	frm.AID.associd = aid | LIM_AID_MASK;
 
-	if (NULL == sta) {
+	if (!sta) {
 		populate_dot11f_supp_rates(mac_ctx,
 			POPULATE_DOT11F_RATES_OPERATIONAL,
 			&frm.SuppRates, pe_session);
@@ -1093,7 +1093,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			sta->supportedRates.llaRates);
 	}
 
-	if (LIM_IS_AP_ROLE(pe_session) && sta != NULL &&
+	if (LIM_IS_AP_ROLE(pe_session) && sta &&
 	    QDF_STATUS_SUCCESS == status_code) {
 		assoc_req = (tpSirAssocReq)
 			pe_session->parsedAssocReq[sta->assocId];
@@ -1101,13 +1101,13 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		 * populate P2P IE in AssocRsp when assocReq from the peer
 		 * includes P2P IE
 		 */
-		if (assoc_req != NULL && assoc_req->addIEPresent)
+		if (assoc_req && assoc_req->addIEPresent)
 			populate_dot11_assoc_res_p2p_ie(mac_ctx,
 				&frm.P2PAssocRes,
 				assoc_req);
 	}
 
-	if (NULL != sta) {
+	if (sta) {
 		if (eHAL_SET == qos_mode) {
 			if (sta->lleEnabled) {
 				lle_mode = 1;
@@ -1164,7 +1164,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 		if (pe_session->vhtCapability &&
 		    pe_session->vendor_vht_sap &&
-		    (assoc_req != NULL) &&
+		    (assoc_req) &&
 		    assoc_req->vendor_vht_ie.VHTCaps.present) {
 			pe_debug("Populate Vendor VHT IEs in Assoc Rsponse");
 			frm.vendor_vht_ie.present = 1;
@@ -1237,7 +1237,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	lim_obss_send_detection_cfg(mac_ctx, pe_session, false);
 
-	if (assoc_req != NULL) {
+	if (assoc_req) {
 		addn_ie_len = pe_session->add_ie_params.assocRespDataLen;
 
 		/* Nonzero length indicates Assoc rsp IE available */
@@ -1599,7 +1599,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t *mbo_ie = NULL;
 	uint8_t mbo_ie_len = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		qdf_mem_free(mlm_assoc_req);
 		return;
@@ -1608,7 +1608,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	sme_sessionid = pe_session->smeSessionId;
 
 	/* check this early to avoid unncessary operation */
-	if (NULL == pe_session->pLimJoinReq) {
+	if (!pe_session->pLimJoinReq) {
 		pe_err("pe_session->pLimJoinReq is NULL");
 		qdf_mem_free(mlm_assoc_req);
 		return;
@@ -1731,7 +1731,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (add_ie_len && add_ie)
 		wps_ie = limGetWscIEPtr(mac_ctx, add_ie, add_ie_len);
 
-	if (NULL == wps_ie) {
+	if (!wps_ie) {
 		populate_dot11f_rsn_opaque(mac_ctx,
 			&(pe_session->pLimJoinReq->rsnIE),
 			&frm->RSNOpaque);
@@ -2004,7 +2004,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		     mbo_ie, mbo_ie_len);
 	payload = payload + mbo_ie_len;
 
-	if (pe_session->assocReq != NULL) {
+	if (pe_session->assocReq) {
 		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
@@ -2227,7 +2227,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint16_t ch_freq_tx_frame = 0;
 
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Error: psession Entry is NULL");
 		return;
 	}
@@ -2275,7 +2275,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		frame_len += lim_create_fils_auth_data(mac_ctx,
 						auth_frame, session);
 		if (auth_frame->authAlgoNumber == eSIR_FT_AUTH) {
-			if (NULL != session->ftPEContext.pFTPreAuthReq &&
+			if (session->ftPEContext.pFTPreAuthReq &&
 			    0 != session->ftPEContext.pFTPreAuthReq->
 				ft_ies_length) {
 				ft_ies_length = session->ftPEContext.
@@ -2447,7 +2447,7 @@ alloc_packet:
 		if ((auth_frame->authAlgoNumber == eSIR_FT_AUTH) &&
 		    (auth_frame->authTransactionSeqNumber ==
 		     SIR_MAC_AUTH_FRAME_1) &&
-		     (session->ftPEContext.pFTPreAuthReq != NULL)) {
+		     (session->ftPEContext.pFTPreAuthReq)) {
 
 			if (ft_ies_length > 0) {
 				qdf_mem_copy(body,
@@ -2459,7 +2459,7 @@ alloc_packet:
 						   QDF_TRACE_LEVEL_DEBUG,
 						   (uint8_t *) body,
 						   ft_ies_length);
-			} else if (NULL != session->ftPEContext.
+			} else if (session->ftPEContext.
 					pFTPreAuthReq->pbssDescription) {
 				/* MDID attr is 54 */
 				*body = SIR_MDIE_ELEMENT_ID;
@@ -2491,7 +2491,7 @@ alloc_packet:
 			   QDF_TRACE_LEVEL_DEBUG,
 			   frame, frame_len);
 
-	if ((NULL != session->ftPEContext.pFTPreAuthReq) &&
+	if ((session->ftPEContext.pFTPreAuthReq) &&
 	    (BAND_5G == lim_get_rf_band(
 	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -2513,7 +2513,7 @@ alloc_packet:
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 
-	if (session->ftPEContext.pFTPreAuthReq != NULL)
+	if (session->ftPEContext.pFTPreAuthReq)
 		ch_freq_tx_frame = cds_chan_to_freq(
 			session->ftPEContext.pFTPreAuthReq->preAuthchannelNum);
 
@@ -2554,7 +2554,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 
 		session_entry = pe_find_session_by_session_id(mac_ctx,
 					deauth_req->sessionId);
-		if (session_entry == NULL) {
+		if (!session_entry) {
 			pe_err("session does not exist for given sessionId");
 			deauth_cnf.resultCode =
 				eSIR_SME_INVALID_PARAMETERS;
@@ -2566,7 +2566,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 					      deauth_req->peer_macaddr.bytes,
 					      &aid,
 					      &session_entry->dph.dphHashTable);
-		if (sta_ds == NULL) {
+		if (!sta_ds) {
 			deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
@@ -2660,7 +2660,7 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 
 		pe_session = pe_find_session_by_session_id(
 					mac_ctx, disassoc_req->sessionId);
-		if (pe_session == NULL) {
+		if (!pe_session) {
 			pe_err("No session for given sessionId");
 			disassoc_cnf.resultCode =
 				eSIR_SME_INVALID_PARAMETERS;
@@ -2670,7 +2670,7 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 		sta_ds = dph_lookup_hash_entry(mac_ctx,
 				disassoc_req->peer_macaddr.bytes, &aid,
 				&pe_session->dph.dphHashTable);
-		if (sta_ds == NULL) {
+		if (!sta_ds) {
 			pe_err("StaDs Null");
 			disassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
@@ -2709,7 +2709,7 @@ end:
 	/* Update PE session ID */
 	disassoc_cnf.sessionId = disassoc_req->sessionId;
 
-	if (disassoc_req != NULL) {
+	if (disassoc_req) {
 		/* / Free up buffer allocated for mlmDisassocReq */
 		qdf_mem_free(disassoc_req);
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
@@ -2821,7 +2821,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	uint32_t val = 0;
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		return;
 	}
 
@@ -2998,7 +2998,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 #endif
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		return;
 	}
 
@@ -3135,7 +3135,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 				 pe_session->peSessionId,
 				 pMacHdr->fc.subType));
 #ifdef FEATURE_WLAN_TDLS
-		if ((NULL != sta)
+		if ((sta)
 		    && (STA_ENTRY_TDLS_PEER == sta->staType)) {
 			/* Queue Disassociation frame in high priority WQ */
 			lim_diag_mgmt_tx_event_report(mac, pMacHdr,
@@ -3442,7 +3442,7 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 
 	uint8_t smeSessionId = 0;
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session entry is NULL!!!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3561,7 +3561,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	uint8_t                  ch_spacing;
 	tLimWiderBWChannelSwitchInfo *wide_bw_ie;
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("Session entry is NULL!!!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3729,7 +3729,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 	uint8_t                  tx_flag = 0;
 	uint8_t                  sme_session_id = 0;
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("Session entry is NULL!!!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3862,8 +3862,8 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
-	if (pe_session == NULL) {
-		pe_err("(psession == NULL) in Request to send Neighbor Report request action frame");
+	if (!pe_session) {
+		pe_err("(!psession) in Request to send Neighbor Report request action frame");
 		return QDF_STATUS_E_FAILURE;
 	}
 	smeSessionId = pe_session->smeSessionId;
@@ -3999,8 +3999,8 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
-	if (pe_session == NULL) {
-		pe_err("(psession == NULL) in Request to send Link Report action frame");
+	if (!pe_session) {
+		pe_err("(!psession) in Request to send Link Report action frame");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4137,8 +4137,8 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 	if (!frm)
 		return QDF_STATUS_E_NOMEM;
 
-	if (pe_session == NULL) {
-		pe_err("(psession == NULL) in Request to send Beacon Report action frame");
+	if (!pe_session) {
+		pe_err("(!psession) in Request to send Beacon Report action frame");
 		qdf_mem_free(frm);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4784,7 +4784,7 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
 
 	sme_session_id = mb_msg->session_id;
 	session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
-	if (session == NULL) {
+	if (!session) {
 		cds_packet_free((void *)packet);
 		pe_err("session not found for given sme session %d",
 		       sme_session_id);

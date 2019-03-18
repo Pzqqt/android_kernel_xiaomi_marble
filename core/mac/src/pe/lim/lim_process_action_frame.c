@@ -76,7 +76,7 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 
 	pe_session = pe_find_session_by_session_id(mac, sessionId);
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("Session: %d not active", sessionId);
 		return;
 	}
@@ -471,7 +471,7 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 			&session->dph.dphHashTable);
 
-	if (sta_ptr == NULL) {
+	if (!sta_ptr) {
 		pe_err("Station context not found");
 		goto end;
 	}
@@ -705,7 +705,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 				&session->dph.dphHashTable);
-	if (sta_ptr == NULL) {
+	if (!sta_ptr) {
 		pe_err("Station context not found - ignoring AddTsRsp");
 		return;
 	}
@@ -833,7 +833,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 				   session);
 	sta_ds_ptr = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				   &session->dph.dphHashTable);
-	if (sta_ds_ptr != NULL)
+	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
 				     sta_ds_ptr->bssId, false);
 	else
@@ -933,7 +933,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 
 	sta_ptr = dph_lookup_hash_entry(mac_ctx, mac_hdr->sa, &aid,
 				      &session->dph.dphHashTable);
-	if (sta_ptr == NULL) {
+	if (!sta_ptr) {
 		pe_err("Station context not found - ignoring DelTs");
 		return;
 	}
@@ -1034,7 +1034,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 				   session);
 	sta_ds_ptr = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				   &session->dph.dphHashTable);
-	if (sta_ds_ptr != NULL)
+	if (sta_ds_ptr)
 		lim_send_edca_params(mac_ctx, session->gLimEdcaParamsActive,
 				     sta_ds_ptr->bssId, false);
 	else
@@ -1212,7 +1212,7 @@ __lim_process_sm_power_save_update(struct mac_context *mac, uint8_t *pRxPacketIn
 	pSta =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 				      &pe_session->dph.dphHashTable);
-	if (pSta == NULL) {
+	if (!pSta) {
 		pe_err("STA context not found - ignoring UpdateSM PSave Mode from");
 		lim_print_mac_addr(mac, pHdr->sa, LOGE);
 		return;
@@ -1278,7 +1278,7 @@ __lim_process_radio_measure_request(struct mac_context *mac, uint8_t *pRxPacketI
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		return;
 	}
 
@@ -1338,7 +1338,7 @@ __lim_process_link_measurement_req(struct mac_context *mac, uint8_t *pRxPacketIn
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1381,7 +1381,7 @@ __lim_process_neighbor_report(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	if (!pFrm)
 		return;
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		qdf_mem_free(pFrm);
 		return;
 	}
@@ -1539,7 +1539,7 @@ static void __lim_process_sa_query_response_action_frame(struct mac_context *mac
 	pSta =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 				      &pe_session->dph.dphHashTable);
-	if (NULL == pSta)
+	if (!pSta)
 		return;
 
 	pe_debug("SA Query Response source addr:  %0x:%0x:%0x:%0x:%0x:%0x",
@@ -1605,7 +1605,7 @@ lim_drop_unprotected_action_frame(struct mac_context *mac, struct pe_session *pe
 		sta =
 			dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 					      &pe_session->dph.dphHashTable);
-		if (sta != NULL)
+		if (sta)
 			if (sta->rmfEnabled)
 				rmfConnection = true;
 	} else if (pe_session->limRmfEnabled)

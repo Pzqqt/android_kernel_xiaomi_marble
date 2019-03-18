@@ -213,7 +213,7 @@ static void pe_reset_protection_callback(void *ptr)
 	for (i = 1 ; i <= mac_ctx->mlme_cfg->sap_cfg.assoc_sta_limit ; i++) {
 		station_hash_node = dph_get_hash_entry(mac_ctx, i,
 					&pe_session_entry->dph.dphHashTable);
-		if (NULL == station_hash_node)
+		if (!station_hash_node)
 			continue;
 		lim_decide_ap_protection(mac_ctx, station_hash_node->staAddr,
 		&beacon_params, pe_session_entry);
@@ -649,9 +649,9 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 			qdf_mem_malloc(SIR_MAX_BEACON_SIZE);
 		session_ptr->pSchBeaconFrameEnd =
 			qdf_mem_malloc(SIR_MAX_BEACON_SIZE);
-		if ((NULL == session_ptr->pSchProbeRspTemplate)
-		    || (NULL == session_ptr->pSchBeaconFrameBegin)
-		    || (NULL == session_ptr->pSchBeaconFrameEnd)) {
+		if ((!session_ptr->pSchProbeRspTemplate)
+		    || (!session_ptr->pSchBeaconFrameBegin)
+		    || (!session_ptr->pSchBeaconFrameEnd)) {
 			goto free_session_attrs;
 		}
 	}
@@ -913,66 +913,66 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 
 	/* Delete FT related information */
 	lim_ft_cleanup(mac_ctx, session);
-	if (session->pLimStartBssReq != NULL) {
+	if (session->pLimStartBssReq) {
 		qdf_mem_free(session->pLimStartBssReq);
 		session->pLimStartBssReq = NULL;
 	}
 
-	if (session->pLimJoinReq != NULL) {
+	if (session->pLimJoinReq) {
 		qdf_mem_free(session->pLimJoinReq);
 		session->pLimJoinReq = NULL;
 	}
 
-	if (session->pLimReAssocReq != NULL) {
+	if (session->pLimReAssocReq) {
 		qdf_mem_free(session->pLimReAssocReq);
 		session->pLimReAssocReq = NULL;
 	}
 
-	if (session->pLimMlmJoinReq != NULL) {
+	if (session->pLimMlmJoinReq) {
 		qdf_mem_free(session->pLimMlmJoinReq);
 		session->pLimMlmJoinReq = NULL;
 	}
 
-	if (session->dph.dphHashTable.pHashTable != NULL) {
+	if (session->dph.dphHashTable.pHashTable) {
 		qdf_mem_free(session->dph.dphHashTable.pHashTable);
 		session->dph.dphHashTable.pHashTable = NULL;
 	}
 
-	if (session->dph.dphHashTable.pDphNodeArray != NULL) {
+	if (session->dph.dphHashTable.pDphNodeArray) {
 		qdf_mem_zero(session->dph.dphHashTable.pDphNodeArray,
 			sizeof(struct sDphHashNode) *
 			(SIR_SAP_MAX_NUM_PEERS + 1));
 		session->dph.dphHashTable.pDphNodeArray = NULL;
 	}
 
-	if (session->gpLimPeerIdxpool != NULL) {
+	if (session->gpLimPeerIdxpool) {
 		qdf_mem_free(session->gpLimPeerIdxpool);
 		session->gpLimPeerIdxpool = NULL;
 	}
 
-	if (session->beacon != NULL) {
+	if (session->beacon) {
 		qdf_mem_free(session->beacon);
 		session->beacon = NULL;
 		session->bcnLen = 0;
 	}
 
-	if (session->assocReq != NULL) {
+	if (session->assocReq) {
 		qdf_mem_free(session->assocReq);
 		session->assocReq = NULL;
 		session->assocReqLen = 0;
 	}
 
-	if (session->assocRsp != NULL) {
+	if (session->assocRsp) {
 		qdf_mem_free(session->assocRsp);
 		session->assocRsp = NULL;
 		session->assocRspLen = 0;
 	}
 
-	if (session->parsedAssocReq != NULL) {
+	if (session->parsedAssocReq) {
 		tpSirAssocReq tmp_ptr = NULL;
 		/* Cleanup the individual allocation first */
 		for (i = 0; i < session->dph.dphHashTable.size; i++) {
-			if (session->parsedAssocReq[i] == NULL)
+			if (!session->parsedAssocReq[i])
 				continue;
 			tmp_ptr = ((tpSirAssocReq)
 				  (session->parsedAssocReq[i]));
@@ -988,46 +988,46 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		qdf_mem_free(session->parsedAssocReq);
 		session->parsedAssocReq = NULL;
 	}
-	if (NULL != session->limAssocResponseData) {
+	if (session->limAssocResponseData) {
 		qdf_mem_free(session->limAssocResponseData);
 		session->limAssocResponseData = NULL;
 	}
-	if (NULL != session->pLimMlmReassocRetryReq) {
+	if (session->pLimMlmReassocRetryReq) {
 		qdf_mem_free(session->pLimMlmReassocRetryReq);
 		session->pLimMlmReassocRetryReq = NULL;
 	}
-	if (NULL != session->pLimMlmReassocReq) {
+	if (session->pLimMlmReassocReq) {
 		qdf_mem_free(session->pLimMlmReassocReq);
 		session->pLimMlmReassocReq = NULL;
 	}
 
-	if (NULL != session->pSchProbeRspTemplate) {
+	if (session->pSchProbeRspTemplate) {
 		qdf_mem_free(session->pSchProbeRspTemplate);
 		session->pSchProbeRspTemplate = NULL;
 	}
 
-	if (NULL != session->pSchBeaconFrameBegin) {
+	if (session->pSchBeaconFrameBegin) {
 		qdf_mem_free(session->pSchBeaconFrameBegin);
 		session->pSchBeaconFrameBegin = NULL;
 	}
 
-	if (NULL != session->pSchBeaconFrameEnd) {
+	if (session->pSchBeaconFrameEnd) {
 		qdf_mem_free(session->pSchBeaconFrameEnd);
 		session->pSchBeaconFrameEnd = NULL;
 	}
 
 	/* Must free the buffer before peSession invalid */
-	if (NULL != session->add_ie_params.probeRespData_buff) {
+	if (session->add_ie_params.probeRespData_buff) {
 		qdf_mem_free(session->add_ie_params.probeRespData_buff);
 		session->add_ie_params.probeRespData_buff = NULL;
 		session->add_ie_params.probeRespDataLen = 0;
 	}
-	if (NULL != session->add_ie_params.assocRespData_buff) {
+	if (session->add_ie_params.assocRespData_buff) {
 		qdf_mem_free(session->add_ie_params.assocRespData_buff);
 		session->add_ie_params.assocRespData_buff = NULL;
 		session->add_ie_params.assocRespDataLen = 0;
 	}
-	if (NULL != session->add_ie_params.probeRespBCNData_buff) {
+	if (session->add_ie_params.probeRespBCNData_buff) {
 		qdf_mem_free(session->add_ie_params.probeRespBCNData_buff);
 		session->add_ie_params.probeRespBCNData_buff = NULL;
 		session->add_ie_params.probeRespBCNDataLen = 0;
@@ -1088,7 +1088,7 @@ struct pe_session *pe_find_session_by_peer_sta(struct mac_context *mac, uint8_t 
 				dph_lookup_hash_entry(mac, sa, &aid,
 						      &mac->lim.gpSession[i].dph.
 						      dphHashTable);
-			if (pSta != NULL) {
+			if (pSta) {
 				*sessionId = i;
 				return &mac->lim.gpSession[i];
 			}

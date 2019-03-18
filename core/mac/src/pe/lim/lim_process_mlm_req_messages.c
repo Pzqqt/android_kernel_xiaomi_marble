@@ -63,7 +63,7 @@ static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.sae_auth_timer.sessionId);
-	if (session == NULL) {
+	if (!session) {
 		pe_err("Session does not exist for given session id");
 		return;
 	}
@@ -495,7 +495,7 @@ void lim_process_mlm_start_req(struct mac_context *mac_ctx,
 
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_start_req->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		mlm_start_cnf.resultCode = eSIR_SME_REFUSED;
 		goto end;
@@ -713,7 +713,7 @@ void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 	sessionid = mlm_join_req->sessionId;
 
 	session = pe_find_session_by_session_id(mac_ctx, sessionid);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("SessionId:%d does not exist", sessionid);
 		goto error;
 	}
@@ -764,7 +764,7 @@ void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 
 error:
 	qdf_mem_free(mlm_join_req);
-	if (session != NULL)
+	if (session)
 		session->pLimMlmJoinReq = NULL;
 	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 	mlmjoin_cnf.sessionId = sessionid;
@@ -844,12 +844,12 @@ static bool lim_is_preauth_ctx_exists(struct mac_context *mac_ctx,
 
 	fl = (((LIM_IS_STA_ROLE(session)) &&
 	       (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-	      ((stads != NULL) &&
+	      ((stads) &&
 	       (mac_ctx->lim.gpLimMlmAuthReq->authType ==
 			stads->mlmStaContext.authType)) &&
 	       (!qdf_mem_cmp(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 			curr_bssid, sizeof(tSirMacAddr)))) ||
-	      ((preauth_node != NULL) &&
+	      ((preauth_node) &&
 	       (preauth_node->authType ==
 			mac_ctx->lim.gpLimMlmAuthReq->authType)));
 
@@ -954,7 +954,7 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 	uint8_t session_id;
 	struct pe_session *session;
 
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -962,7 +962,7 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 	mac_ctx->lim.gpLimMlmAuthReq = (tLimMlmAuthReq *) msg;
 	session_id = mac_ctx->lim.gpLimMlmAuthReq->sessionId;
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("SessionId:%d does not exist", session_id);
 		qdf_mem_free(msg);
 		mac_ctx->lim.gpLimMlmAuthReq = NULL;
@@ -1125,7 +1125,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	tLimMlmAssocCnf mlm_assoc_cnf;
 	struct pe_session *session_entry;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -1133,7 +1133,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	mlm_assoc_req = (tLimMlmAssocReq *) msg_buf;
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 						      mlm_assoc_req->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d Session Does not exist",
 			mlm_assoc_req->sessionId);
 		qdf_mem_free(mlm_assoc_req);
@@ -1244,7 +1244,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_disassocreq->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session does not exist for given sessionId %d",
 			mlm_disassocreq->sessionId);
 		mlm_disassoccnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
@@ -1325,7 +1325,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 	if (stads)
 		mlm_state = stads->mlmStaContext.mlmState;
 
-	if ((stads == NULL) ||
+	if ((!stads) ||
 	    (stads &&
 	     ((mlm_state != eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 	      (mlm_state != eLIM_MLM_WT_ASSOC_CNF_STATE) &&
@@ -1336,7 +1336,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 		 */
 		pe_warn("Invalid MLM_DISASSOC_REQ, Addr= " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
-		if (stads != NULL)
+		if (stads)
 			pe_err("Sta MlmState: %d", stads->mlmStaContext.mlmState);
 
 		/* Prepare and Send LIM_MLM_DISASSOC_CNF */
@@ -1535,7 +1535,7 @@ lim_process_mlm_disassoc_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDisassocReq *mlm_disassoc_req;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -1581,7 +1581,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 	mlm_deauth_req = (tLimMlmDeauthReq *) msg_buf;
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_deauth_req->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session does not exist for given sessionId %d",
 			mlm_deauth_req->sessionId);
 		qdf_mem_free(mlm_deauth_req);
@@ -1712,11 +1712,11 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 				       mlm_deauth_req->peer_macaddr.bytes,
 				       &aid, &session->dph.dphHashTable);
 
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		/* Check if there exists pre-auth context for this STA */
 		auth_node = lim_search_pre_auth_list(mac_ctx,
 					mlm_deauth_req->peer_macaddr.bytes);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			/*
 			 * Received DEAUTH REQ for a STA that is neither
 			 * Associated nor Pre-authenticated. Log error,
@@ -1826,7 +1826,7 @@ void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	tLimMlmDeauthReq *mlm_deauth_req;
 	struct pe_session *session;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -1839,7 +1839,7 @@ void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_deauth_req->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session does not exist for given sessionId %d",
 			mlm_deauth_req->sessionId);
 		qdf_mem_free(mlm_deauth_req);
@@ -1872,13 +1872,13 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	tLimMlmSetKeysCnf mlm_set_keys_cnf;
 	struct pe_session *session;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	mlm_set_keys_req = (tLimMlmSetKeysReq *) msg_buf;
-	if (mac_ctx->lim.gpLimMlmSetKeysReq != NULL) {
+	if (mac_ctx->lim.gpLimMlmSetKeysReq) {
 		qdf_mem_zero(mac_ctx->lim.gpLimMlmSetKeysReq,
 			     sizeof(*mlm_set_keys_req));
 		qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
@@ -1888,7 +1888,7 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	mac_ctx->lim.gpLimMlmSetKeysReq = (void *)mlm_set_keys_req;
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_set_keys_req->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session does not exist for given sessionId");
 		qdf_mem_zero(mlm_set_keys_req->key,
 			     sizeof(mlm_set_keys_req->key));
@@ -1976,7 +1976,7 @@ lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		sta_ds = dph_lookup_hash_entry(mac_ctx,
 				mlm_set_keys_req->peer_macaddr.bytes, &aid,
 				&session->dph.dphHashTable);
-		if ((sta_ds == NULL) ||
+		if ((!sta_ds) ||
 		    ((sta_ds->mlmStaContext.mlmState !=
 		    eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 		    !LIM_IS_AP_ROLE(session))) {
@@ -2058,7 +2058,7 @@ void lim_process_join_failure_timeout(struct mac_context *mac_ctx)
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -2122,7 +2122,7 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 
 	session = pe_find_session_by_session_id(mac_ctx,
 		mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session does not exist for given SessionId: %d",
 			mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.
 			sessionId);
@@ -2167,7 +2167,7 @@ static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 	session_entry =
 	  pe_find_session_by_session_id(mac_ctx,
 	  mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("session does not exist for given SessionId: %d",
 		  mac_ctx->lim.limTimers.
 			g_lim_periodic_auth_retry_timer.sessionId);
@@ -2223,7 +2223,7 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx)
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -2298,14 +2298,14 @@ lim_process_auth_rsp_timeout(struct mac_context *mac_ctx, uint32_t auth_idx)
 
 	auth_node = lim_get_pre_auth_node_from_index(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable, auth_idx);
-	if (NULL == auth_node) {
+	if (!auth_node) {
 		pe_warn("Invalid auth node");
 		return;
 	}
 
 	session = pe_find_session_by_bssid(mac_ctx, auth_node->peerMacAddr,
 					   &session_id);
-	if (NULL == session) {
+	if (!session) {
 		pe_warn("session does not exist for given BSSID");
 		return;
 	}
@@ -2358,7 +2358,7 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 		    mac_ctx->lim.limTimers.gLimReassocFailureTimer.sessionId;
 
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -2484,7 +2484,7 @@ void lim_set_channel(struct mac_context *mac_ctx, uint8_t channel,
 
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("Invalid PE session: %d", pe_session_id);
 		return;
 	}

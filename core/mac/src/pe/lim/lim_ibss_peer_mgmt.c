@@ -58,7 +58,7 @@ static tLimIbssPeerNode *ibss_peer_find(struct mac_context *mac,
 {
 	tLimIbssPeerNode *pTempNode = mac->lim.gLimIbssPeerList;
 
-	while (pTempNode != NULL) {
+	while (pTempNode) {
 		if (!qdf_mem_cmp((uint8_t *) macAddr,
 				    (uint8_t *) &pTempNode->peerMacAddr,
 				    sizeof(tSirMacAddr)))
@@ -102,7 +102,7 @@ ibss_peer_add(struct mac_context *mac, tLimIbssPeerNode *pPeerNode)
 		tLimIbssPeerNode *pTemp, *pPrev;
 
 		pTemp = pPrev = mac->lim.gLimIbssPeerList;
-		while (pTemp->next != NULL) {
+		while (pTemp->next) {
 			pPrev = pTemp;
 			pTemp = pTemp->next;
 		}
@@ -226,7 +226,7 @@ ibss_sta_caps_update(struct mac_context *mac,
 	/* if the peer node exists, update its qos capabilities */
 	sta = dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 				       &pe_session->dph.dphHashTable);
-	if (sta == NULL)
+	if (!sta)
 		return;
 
 	/* Update HT Capabilities */
@@ -464,7 +464,7 @@ ibss_dph_entry_add(struct mac_context *mac,
 	sta =
 		dph_lookup_hash_entry(mac, peerAddr, &peerIdx,
 				      &pe_session->dph.dphHashTable);
-	if (sta != NULL) {
+	if (sta) {
 		/* Trying to add context for already existing STA in IBSS */
 		pe_err("STA exists already");
 		lim_print_mac_addr(mac, peerAddr, LOGE);
@@ -490,7 +490,7 @@ ibss_dph_entry_add(struct mac_context *mac,
 	sta =
 		dph_add_hash_entry(mac, peerAddr, peerIdx,
 				   &pe_session->dph.dphHashTable);
-	if (sta == NULL) {
+	if (!sta) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for peerIdx/aid: %d MACaddr:",
 			       peerIdx);
@@ -513,8 +513,8 @@ ibss_status_chg_notify(struct mac_context *mac, tSirMacAddr peerAddr,
 	uint16_t bcnLen = 0;
 
 	peerNode = ibss_peer_find(mac, peerAddr);
-	if (peerNode != NULL) {
-		if (peerNode->beacon == NULL)
+	if (peerNode) {
+		if (!peerNode->beacon)
 			peerNode->beaconLen = 0;
 		beacon = peerNode->beacon;
 		bcnLen = peerNode->beaconLen;
@@ -525,7 +525,7 @@ ibss_status_chg_notify(struct mac_context *mac, tSirMacAddr peerAddr,
 	lim_send_sme_ibss_peer_ind(mac, peerAddr, staIndex,
 				   beacon, bcnLen, status, sessionId);
 
-	if (beacon != NULL) {
+	if (beacon) {
 		qdf_mem_free(beacon);
 	}
 }
@@ -539,7 +539,7 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 	qdf_size_t num_ext_rates = 0;
 	QDF_STATUS status;
 
-	if ((pHdr == NULL) || (pBeacon == NULL)) {
+	if ((!pHdr) || (!pBeacon)) {
 		pe_err("Unable to add BSS (no cached BSS info)");
 		return;
 	}
@@ -703,7 +703,7 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 
 	pCurrNode = pTempNode = mac->lim.gLimIbssPeerList;
 
-	while (pCurrNode != NULL) {
+	while (pCurrNode) {
 		if (!mac->lim.gLimNumIbssPeers) {
 			pe_err("Number of peers in the list is zero and node present");
 			return;
@@ -878,7 +878,7 @@ lim_ibss_decide_protection(struct mac_context *mac, tpDphHashNode sta,
 
 	pBeaconParams->paramChangeBitmap = 0;
 
-	if (NULL == sta) {
+	if (!sta) {
 		pe_err("sta is NULL");
 		return;
 	}
@@ -976,7 +976,7 @@ lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_ses
 	lim_print_mac_addr(mac, *pPeerAddr, LOGD);
 
 	pPeerNode = ibss_peer_find(mac, *pPeerAddr);
-	if (NULL != pPeerNode) {
+	if (pPeerNode) {
 		retCode =
 			ibss_dph_entry_add(mac, *pPeerAddr, &sta,
 					   pe_session);
@@ -1053,7 +1053,7 @@ lim_ibss_search_and_delete_peer(struct mac_context *mac_ctx,
 		MAC_ADDR_ARRAY(mac_addr));
 
 	/** Compare Peer */
-	while (NULL != temp_node) {
+	while (temp_node) {
 		temp_next_node = temp_node->next;
 
 		/* Delete the STA with MAC address */
@@ -1206,7 +1206,7 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 	tpAddStaParams pAddStaParams = (tpAddStaParams) msg;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	if (pAddStaParams == NULL) {
+	if (!pAddStaParams) {
 		pe_err("IBSS: ADD_STA_RSP with no body!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1214,7 +1214,7 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 	sta =
 		dph_lookup_hash_entry(mac, pAddStaParams->staMac, &peerIdx,
 				      &pe_session->dph.dphHashTable);
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("IBSS: ADD_STA_RSP for unknown MAC addr: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(pAddStaParams->staMac));
 		qdf_mem_free(pAddStaParams);
@@ -1255,7 +1255,7 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 
 	pe_debug("IBSS: DEL_BSS_RSP Rcvd during coalescing!");
 
-	if (pDelBss == NULL) {
+	if (!pDelBss) {
 		pe_err("IBSS: DEL_BSS_RSP(coalesce) with no body!");
 		goto end;
 	}
@@ -1271,7 +1271,7 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	/* add the new bss */
 	ibss_bss_add(mac, pe_session);
 end:
-	if (pDelBss != NULL)
+	if (pDelBss)
 		qdf_mem_free(pDelBss);
 }
 
@@ -1284,7 +1284,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	tpSirMacMgmtHdr pHdr = mac->lim.ibss_info.mac_hdr;
 	tpSchBeaconStruct pBeacon = mac->lim.ibss_info.beacon;
 
-	if ((pHdr == NULL) || (pBeacon == NULL)) {
+	if ((!pHdr) || (!pBeacon)) {
 		pe_err("Unable to handle AddBssRspWhenCoalescing (no cached BSS info)");
 		goto end;
 	}
@@ -1319,14 +1319,14 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	if (pDelBss == NULL) {
+	if (!pDelBss) {
 		pe_err("IBSS: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
 
 	pe_session = pe_find_session_by_session_id(mac, pDelBss->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;
 	}
@@ -1378,10 +1378,10 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 		cfg_default(CFG_SHORT_SLOT_TIME_ENABLED);
 
 end:
-	if (pDelBss != NULL)
+	if (pDelBss)
 		qdf_mem_free(pDelBss);
 	/* Delete PE session once BSS is deleted */
-	if (NULL != pe_session) {
+	if (pe_session) {
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,
 				 pe_session->smeSessionId);
 		pe_delete_session(mac, pe_session);
@@ -1466,7 +1466,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 		 * let the peer coalesce when we receive next beacon from the peer
 		 */
 		pPeerNode = ibss_peer_find(mac, pHdr->sa);
-		if (NULL != pPeerNode) {
+		if (pPeerNode) {
 			lim_ibss_delete_peer(mac, pe_session,
 							  pHdr->sa);
 			pe_warn("Peer attempting to reconnect before HB timeout, deleted");
@@ -1497,7 +1497,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 
 	/* STA in IBSS mode and SSID matches with ours */
 	pPeerNode = ibss_peer_find(mac, pHdr->sa);
-	if (pPeerNode == NULL) {
+	if (!pPeerNode) {
 		/* Peer not in the list - Collect BSS description & add to the list */
 		uint32_t frameLen;
 		QDF_STATUS retCode;
@@ -1541,7 +1541,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 		sta =
 			dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 					      &pe_session->dph.dphHashTable);
-		if (sta != NULL) {
+		if (sta) {
 			/* / DPH node already exists for the peer */
 			pe_warn("DPH Node present for just learned peer");
 			lim_print_mac_addr(mac, pPeerNode->peerMacAddr, LOGD);
@@ -1626,7 +1626,7 @@ void lim_ibss_heart_beat_handle(struct mac_context *mac_ctx, struct pe_session *
 	threshold = (mac_ctx->lim.gLimNumIbssPeers / 4) + 1;
 
 	/* Monitor the HeartBeat with the Individual PEERS in the IBSS */
-	while (tempnode != NULL) {
+	while (tempnode) {
 		temp_next = tempnode->next;
 		if (tempnode->beaconHBCount) {
 			/* There was a beacon for this peer during heart beat */
@@ -1738,7 +1738,7 @@ void lim_ibss_decide_protection_on_delete(struct mac_context *mac_ctx,
 	enum band_info rfband = BAND_UNKNOWN;
 	uint32_t i;
 
-	if (NULL == stads)
+	if (!stads)
 		return;
 
 	lim_get_rf_band_new(mac_ctx, &rfband, session);

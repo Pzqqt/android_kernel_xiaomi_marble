@@ -79,7 +79,7 @@ lim_process_mlm_rsp_messages(struct mac_context *mac, uint32_t msgType,
 			     uint32_t *pMsgBuf)
 {
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -155,14 +155,14 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint8_t channelId;
 	uint8_t send_bcon_ind = false;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	pLimMlmStartCnf = (tLimMlmStartCnf *) pMsgBuf;
 	pe_session = pe_find_session_by_session_id(mac,
 				pLimMlmStartCnf->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does Not exist with given sessionId");
 		return;
 	}
@@ -204,7 +204,7 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	lim_send_sme_start_bss_rsp(mac, eWNI_SME_START_BSS_RSP,
 				((tLimMlmStartCnf *)pMsgBuf)->resultCode,
 				pe_session, smesessionId);
-	if ((pe_session != NULL) &&
+	if ((pe_session) &&
 		(((tLimMlmStartCnf *) pMsgBuf)->resultCode ==
 						eSIR_SME_SUCCESS)) {
 		channelId = pe_session->pLimStartBssReq->channelId;
@@ -269,7 +269,7 @@ void lim_process_mlm_join_cnf(struct mac_context *mac_ctx,
 	join_cnf = (tLimMlmJoinCnf *) msg;
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 		join_cnf->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d does not exist", join_cnf->sessionId);
 		return;
 	}
@@ -333,14 +333,14 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 	pe_debug("SessionId: %d Authenticated with BSS",
 		session_entry->peSessionId);
 
-	if (NULL == session_entry->pLimJoinReq) {
+	if (!session_entry->pLimJoinReq) {
 		pe_err("Join Request is NULL");
 		/* No need to Assert. JOIN timeout will handle this error */
 		return;
 	}
 
 	assoc_req = qdf_mem_malloc(sizeof(tLimMlmAssocReq));
-	if (NULL == assoc_req) {
+	if (!assoc_req) {
 		pe_err("call to AllocateMemory failed for mlmAssocReq");
 		return;
 	}
@@ -453,14 +453,14 @@ void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 	tLimMlmAuthCnf *auth_cnf;
 	struct pe_session *session_entry;
 
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	auth_cnf = (tLimMlmAuthCnf *) msg;
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 			auth_cnf->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d session doesn't exist",
 			auth_cnf->sessionId);
 		return;
@@ -519,7 +519,7 @@ void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 		auth_mode = eSIR_OPEN_SYSTEM;
 		/* Trigger MAC based Authentication */
 		auth_req = qdf_mem_malloc(sizeof(tLimMlmAuthReq));
-		if (NULL == auth_req) {
+		if (!auth_req) {
 			pe_err("mlmAuthReq :Memory alloc failed");
 			return;
 		}
@@ -591,14 +591,14 @@ void lim_process_mlm_assoc_cnf(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	tLimMlmAssocCnf *assoc_cnf;
 
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	assoc_cnf = (tLimMlmAssocCnf *) msg;
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 				assoc_cnf->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d Session does not exist",
 			assoc_cnf->sessionId);
 		return;
@@ -786,21 +786,21 @@ void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 	tpDphHashNode sta = 0;
 	struct pe_session *pe_session;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	pe_session = pe_find_session_by_session_id(mac,
 				((tpLimMlmAssocInd) pMsgBuf)->
 				sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionId");
 		return;
 	}
 	/* / Inform Host of STA association */
 	len = sizeof(struct assoc_ind);
 	pSirSmeAssocInd = qdf_mem_malloc(len);
-	if (NULL == pSirSmeAssocInd) {
+	if (!pSirSmeAssocInd) {
 		pe_err("call to AllocateMemory failed for eWNI_SME_ASSOC_IND");
 		return;
 	}
@@ -868,7 +868,7 @@ void lim_process_mlm_disassoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 	pMlmDisassocInd = (tLimMlmDisassocInd *) pMsgBuf;
 	pe_session = pe_find_session_by_session_id(mac,
 				pMlmDisassocInd->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -911,7 +911,7 @@ void lim_process_mlm_disassoc_cnf(struct mac_context *mac_ctx,
 
 	session_entry =
 		pe_find_session_by_session_id(mac_ctx, disassoc_cnf->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("session Does not exist for given session Id");
 		return;
 	}
@@ -1035,14 +1035,14 @@ void lim_process_mlm_deauth_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	tLimMlmDeauthCnf *pMlmDeauthCnf;
 	struct pe_session *pe_session;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	pMlmDeauthCnf = (tLimMlmDeauthCnf *) pMsgBuf;
 	pe_session = pe_find_session_by_session_id(mac,
 				pMlmDeauthCnf->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given session Id");
 		return;
 	}
@@ -1111,14 +1111,14 @@ void lim_process_mlm_purge_sta_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 	tpLimMlmPurgeStaInd pMlmPurgeStaInd;
 	struct pe_session *pe_session;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	pMlmPurgeStaInd = (tpLimMlmPurgeStaInd) pMsgBuf;
 	pe_session = pe_find_session_by_session_id(mac,
 				pMlmPurgeStaInd->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given bssId");
 		return;
 	}
@@ -1197,14 +1197,14 @@ void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint16_t aid;
 	tpDphHashNode sta_ds;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	pMlmSetKeysCnf = (tLimMlmSetKeysCnf *) pMsgBuf;
 	pe_session = pe_find_session_by_session_id(mac,
 					   pMlmSetKeysCnf->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given sessionId");
 		return;
 	}
@@ -1221,7 +1221,7 @@ void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 			sta_ds = dph_lookup_hash_entry(mac,
 				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &pe_session->dph.dphHashTable);
-			if (sta_ds != NULL && pMlmSetKeysCnf->key_len_nonzero)
+			if (sta_ds && pMlmSetKeysCnf->key_len_nonzero)
 				sta_ds->is_key_installed = 1;
 		}
 	}
@@ -1414,7 +1414,7 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 	uint8_t sme_session_id;
 	join_params *param = NULL;
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("pe_session is NULL");
 		return;
 	}
@@ -1427,7 +1427,7 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 		sta_ds =
 			dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-		if (sta_ds != NULL) {
+		if (sta_ds) {
 			sta_ds->mlmStaContext.disassocReason =
 				eSIR_MAC_UNSPEC_FAILURE_REASON;
 			sta_ds->mlmStaContext.cleanupTrigger =
@@ -1464,7 +1464,7 @@ error:
 	if (result_code != eSIR_SME_SUCCESS &&
 	    result_code != eSIR_SME_PEER_CREATE_FAILED) {
 		param = qdf_mem_malloc(sizeof(join_params));
-		if (param != NULL) {
+		if (param) {
 			param->result_code = result_code;
 			param->prot_status_code = prot_status_code;
 			param->pe_session_id = session_entry->peSessionId;
@@ -1542,7 +1542,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 	struct pe_session *ft_session = NULL;
 	uint8_t ft_session_id;
 
-	if (NULL == add_sta_params) {
+	if (!add_sta_params) {
 		pe_err("Encountered NULL Pointer");
 		return;
 	}
@@ -1590,7 +1590,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 
 			ft_session = pe_find_session_by_bssid(mac_ctx,
 				session_entry->limReAssocbssId, &ft_session_id);
-			if (ft_session != NULL &&
+			if (ft_session &&
 				ft_ctx->PreAuthKeyInfo.extSetStaKeyParamValid
 				== true) {
 				tpLimMlmSetKeysReq pMlmStaKeys =
@@ -1608,7 +1608,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 		sta_ds =
 			dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-		if (NULL != sta_ds) {
+		if (sta_ds) {
 			sta_ds->mlmStaContext.mlmState =
 				eLIM_MLM_LINK_ESTABLISHED_STATE;
 			sta_ds->nss = add_sta_params->nss;
@@ -1667,7 +1667,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	}
 end:
-	if (NULL != msg->bodyptr) {
+	if (msg->bodyptr) {
 		qdf_mem_free(add_sta_params);
 		msg->bodyptr = NULL;
 	}
@@ -1716,7 +1716,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 				   &pe_session->dph.dphHashTable);
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
 
-	if (NULL == pDelBssParams) {
+	if (!pDelBssParams) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
@@ -1731,7 +1731,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
 		}
-		if (sta == NULL) {
+		if (!sta) {
 			pe_err("DPH Entry for STA 1 missing");
 			statusCode = eSIR_SME_REFUSED;
 			goto end;
@@ -1754,7 +1754,7 @@ end:
 		qdf_mem_free(pDelBssParams);
 		limMsgQ->bodyptr = NULL;
 	}
-	if (sta == NULL)
+	if (!sta)
 		return;
 	if ((LIM_IS_STA_ROLE(pe_session)) &&
 	    (pe_session->limSmeState !=
@@ -1783,16 +1783,16 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) limMsgQ->bodyptr;
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session entry passed is NULL");
-		if (pDelBss != NULL) {
+		if (pDelBss) {
 			qdf_mem_free(pDelBss);
 			limMsgQ->bodyptr = NULL;
 		}
 		return;
 	}
 
-	if (pDelBss == NULL) {
+	if (!pDelBss) {
 		pe_err("BSS: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_REFUSED;
 		goto end;
@@ -1833,7 +1833,7 @@ end:
 			 pe_session->smeSessionId);
 	pe_delete_session(mac, pe_session);
 
-	if (pDelBss != NULL) {
+	if (pDelBss) {
 		qdf_mem_free(pDelBss);
 		limMsgQ->bodyptr = NULL;
 	}
@@ -1863,7 +1863,7 @@ void lim_process_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 	tpDeleteStaParams del_sta_params;
 
 	del_sta_params = (tpDeleteStaParams) msg->bodyptr;
-	if (NULL == del_sta_params) {
+	if (!del_sta_params) {
 		pe_err("null pointer del_sta_params msg");
 		return;
 	}
@@ -1871,7 +1871,7 @@ void lim_process_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 				del_sta_params->sessionId);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("Session Doesn't exist: %d",
 			del_sta_params->sessionId);
 		qdf_mem_free(del_sta_params);
@@ -1914,14 +1914,14 @@ void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds;
 	tSirResultCodes status_code = eSIR_SME_SUCCESS;
 
-	if (msg->bodyptr == NULL) {
+	if (!msg->bodyptr) {
 		pe_err("msg->bodyptr NULL");
 		return;
 	}
 
 	sta_ds = dph_get_hash_entry(mac_ctx, del_sta_params->assocId,
 				    &session_entry->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("DPH Entry for STA %X missing",
 			del_sta_params->assocId);
 		status_code = eSIR_SME_REFUSED;
@@ -2007,7 +2007,7 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
 	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
 
-	if (NULL == pDelStaParams) {
+	if (!pDelStaParams) {
 		pe_err("Encountered NULL Pointer");
 		goto end;
 	}
@@ -2058,7 +2058,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
 	tpDphHashNode sta = NULL;
 
-	if (NULL == pAddStaParams) {
+	if (!pAddStaParams) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
@@ -2066,7 +2066,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 	sta =
 		dph_get_hash_entry(mac, pAddStaParams->assocId,
 				   &pe_session->dph.dphHashTable);
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("DPH Entry for STA %X missing", pAddStaParams->assocId);
 		goto end;
 	}
@@ -2155,16 +2155,16 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 	uint8_t isWepEnabled = false;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
 
-	if (NULL == pAddBssParams) {
+	if (!pAddBssParams) {
 		pe_err("Encountered NULL Pointer");
 		goto end;
 	}
 	/* TBD: free the memory before returning, do it for all places where lookup fails. */
 	pe_session = pe_find_session_by_session_id(mac,
 					   pAddBssParams->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given sessionId");
-		if (NULL != pAddBssParams) {
+		if (pAddBssParams) {
 			qdf_mem_free(pAddBssParams);
 			limMsgQ->bodyptr = NULL;
 		}
@@ -2301,7 +2301,7 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 	tLimMlmStartCnf mlmStartCnf;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
 
-	if (NULL == pAddBssParams) {
+	if (!pAddBssParams) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
@@ -2401,7 +2401,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 	tLimMlmAuthReq *pMlmAuthReq;
 	tpDphHashNode sta = NULL;
 
-	if (NULL == pAddBssParams) {
+	if (!pAddBssParams) {
 		pe_err("Invalid body pointer in message");
 		goto joinFailure;
 	}
@@ -2410,7 +2410,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 				pAddBssParams->staContext.staMac,
 				DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-		if (sta == NULL) {
+		if (!sta) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac_ctx,
@@ -2434,7 +2434,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		lim_update_fils_auth_mode(session_entry, &authMode);
 		/* Trigger MAC based Authentication */
 		pMlmAuthReq = qdf_mem_malloc(sizeof(tLimMlmAuthReq));
-		if (NULL == pMlmAuthReq) {
+		if (!pMlmAuthReq) {
 			pe_err("Allocate Memory failed for mlmAuthReq");
 			return;
 		}
@@ -2565,7 +2565,7 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		sta_ds =
 			dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-		if (sta_ds == NULL) {
+		if (!sta_ds) {
 			pe_err("Session:%d Fail to add Self Entry for STA",
 				session_entry->peSessionId);
 			mlm_assoc_cnf.resultCode =
@@ -2661,7 +2661,7 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	tpAddBssParams add_bss_param = (tpAddBssParams) (msg->bodyptr);
 	tSirBssType bss_type;
 
-	if (NULL == add_bss_param) {
+	if (!add_bss_param) {
 		pe_err("Encountered NULL Pointer");
 		return;
 	}
@@ -2677,10 +2677,10 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	/* Validate SME/LIM/MLME state */
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 			add_bss_param->sessionId);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d Session Doesn't exist",
 			add_bss_param->sessionId);
-		if (NULL != add_bss_param) {
+		if (add_bss_param) {
 			qdf_mem_free(add_bss_param);
 			msg->bodyptr = NULL;
 		}
@@ -2740,7 +2740,7 @@ void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
 
 	hidden_ssid_vdev_restart = (tpHalHiddenSsidVdevRestart)(msg->bodyptr);
 
-	if (NULL == hidden_ssid_vdev_restart) {
+	if (!hidden_ssid_vdev_restart) {
 		pe_err("NULL msg pointer");
 		return;
 	}
@@ -2748,7 +2748,7 @@ void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_session_id(mac_ctx,
 			hidden_ssid_vdev_restart->pe_session_id);
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SessionId:%d Session Doesn't exist",
 			hidden_ssid_vdev_restart->pe_session_id);
 		goto free_req;
@@ -2767,7 +2767,7 @@ void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
 		pe_err("Failed to post message %u", status);
 
 free_req:
-	if (NULL != hidden_ssid_vdev_restart) {
+	if (hidden_ssid_vdev_restart) {
 		qdf_mem_free(hidden_ssid_vdev_restart);
 		msg->bodyptr = NULL;
 	}
@@ -2817,7 +2817,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	qdf_mem_zero((void *)&mlm_set_key_cnf, sizeof(tLimMlmSetKeysCnf));
-	if (NULL == msg->bodyptr) {
+	if (!msg->bodyptr) {
 		pe_err("msg bodyptr is NULL");
 		return;
 	}
@@ -2828,7 +2828,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	session_id = session_entry->peSessionId;
 	pe_debug("PE session ID %d, SME session id %d", session_id,
 		 sme_session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("session does not exist for given session_id");
 		qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
 		qdf_mem_free(msg->bodyptr);
@@ -2867,7 +2867,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		tpLimMlmSetKeysReq lpLimMlmSetKeysReq =
 			(tpLimMlmSetKeysReq) mac_ctx->lim.gpLimMlmSetKeysReq;
 		/* Prepare and Send LIM_MLM_SETKEYS_CNF */
-		if (NULL != lpLimMlmSetKeysReq) {
+		if (lpLimMlmSetKeysReq) {
 			qdf_copy_macaddr(&mlm_set_key_cnf.peer_macaddr,
 					 &lpLimMlmSetKeysReq->peer_macaddr);
 			/*
@@ -2916,7 +2916,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	qdf_mem_zero((void *)&set_key_cnf, sizeof(tLimMlmSetKeysCnf));
-	if (NULL == msg->bodyptr) {
+	if (!msg->bodyptr) {
 		pe_err("msg bodyptr is null");
 		return;
 	}
@@ -2926,7 +2926,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	session_id = session_entry->peSessionId;
 	pe_debug("PE session ID %d, SME session id %d", session_id,
 		 sme_session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("session does not exist for given sessionId [%d]",
 			session_id);
 		qdf_mem_zero(msg->bodyptr, sizeof(tSetBssKeyParams));
@@ -2977,7 +2977,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	set_key_cnf.sessionId = session_id;
 
 	/* Prepare and Send LIM_MLM_SETKEYS_CNF */
-	if (NULL != set_key_req) {
+	if (set_key_req) {
 		qdf_copy_macaddr(&set_key_cnf.peer_macaddr,
 				 &set_key_req->peer_macaddr);
 		/*
@@ -3031,7 +3031,7 @@ static void lim_process_switch_channel_re_assoc_req(struct mac_context *mac,
 
 	pMlmReassocReq =
 		(tLimMlmReassocReq *) (pe_session->pLimMlmReassocReq);
-	if (pMlmReassocReq == NULL) {
+	if (!pMlmReassocReq) {
 		pe_err("pLimMlmReassocReq does not exist for given switchChanSession");
 		mlmReassocCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
@@ -3059,7 +3059,7 @@ static void lim_process_switch_channel_re_assoc_req(struct mac_context *mac,
 	return;
 end:
 	/* Free up buffer allocated for reassocReq */
-	if (pMlmReassocReq != NULL) {
+	if (pMlmReassocReq) {
 		/* Update PE session Id */
 		mlmReassocCnf.sessionId = pMlmReassocReq->sessionId;
 		qdf_mem_free(pMlmReassocReq);
@@ -3103,8 +3103,8 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
-	if ((NULL == session_entry) || (NULL == session_entry->pLimMlmJoinReq)
-		|| (NULL == session_entry->pLimJoinReq)) {
+	if ((!session_entry) || (!session_entry->pLimMlmJoinReq)
+		|| (!session_entry->pLimJoinReq)) {
 		pe_err("invalid pointer!!");
 		goto error;
 	}
@@ -3222,7 +3222,7 @@ static void lim_process_switch_channel_join_req(
 
 	return;
 error:
-	if (NULL != session_entry) {
+	if (session_entry) {
 		if (session_entry->pLimMlmJoinReq) {
 			qdf_mem_free(session_entry->pLimMlmJoinReq);
 			session_entry->pLimMlmJoinReq = NULL;
@@ -3275,7 +3275,7 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 	peSessionId = pChnlParams->peSessionId;
 
 	pe_session = pe_find_session_by_session_id(mac, peSessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given sessionId");
 		goto free;
 	}
@@ -3373,7 +3373,7 @@ void lim_process_rx_channel_status_event(struct mac_context *mac_ctx, void *buf)
 {
 	struct lim_channel_status *chan_status = buf;
 
-	if (NULL == chan_status) {
+	if (!chan_status) {
 		QDF_TRACE(QDF_MODULE_ID_PE,
 			  QDF_TRACE_LEVEL_ERROR,
 			  "%s: ACS evt report buf NULL", __func__);

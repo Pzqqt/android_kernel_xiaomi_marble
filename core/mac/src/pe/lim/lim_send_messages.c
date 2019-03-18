@@ -66,7 +66,7 @@ QDF_STATUS lim_send_beacon_params(struct mac_context *mac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_BEACON_IND, paramChangeBitmap in hex: %x",
 	       pUpdatedBcnParams->paramChangeBitmap);
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		qdf_mem_free(pBcnParams);
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 		return QDF_STATUS_E_FAILURE;
@@ -123,7 +123,7 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	struct pe_session *pe_session;
 
 	pe_session = pe_find_session_by_session_id(mac, peSessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Unable to get Session for session Id %d",
 				peSessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -416,7 +416,7 @@ QDF_STATUS lim_send_mode_update(struct mac_context *mac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_OP_MODE, op_mode %d, sta_id %d",
 			pVhtOpMode->opMode, pVhtOpMode->staId);
-	if (NULL == pe_session)
+	if (!pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
@@ -449,7 +449,7 @@ QDF_STATUS lim_send_rx_nss_update(struct mac_context *mac,
 	msgQ.bodyptr = pRxNss;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_RX_NSS");
-	if (NULL == pe_session)
+	if (!pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
@@ -484,7 +484,7 @@ QDF_STATUS lim_set_membership(struct mac_context *mac,
 	msgQ.bodyptr = pMembership;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_MEMBERSHIP");
-	if (NULL == pe_session)
+	if (!pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
@@ -518,7 +518,7 @@ QDF_STATUS lim_set_user_pos(struct mac_context *mac,
 	msgQ.bodyptr = pUserPos;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_USERPOS");
-	if (NULL == pe_session)
+	if (!pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,

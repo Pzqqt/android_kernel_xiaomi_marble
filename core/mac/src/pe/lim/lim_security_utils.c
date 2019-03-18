@@ -158,7 +158,7 @@ void lim_delete_pre_auth_list(struct mac_context *mac)
 	struct tLimPreAuthNode *pCurrNode, *pTempNode;
 
 	pCurrNode = pTempNode = mac->lim.pLimPreAuthList;
-	while (pCurrNode != NULL) {
+	while (pCurrNode) {
 		pTempNode = pCurrNode->next;
 		lim_release_pre_auth_node(mac, pCurrNode);
 
@@ -193,7 +193,7 @@ struct tLimPreAuthNode *lim_search_pre_auth_list(struct mac_context *mac,
 {
 	struct tLimPreAuthNode *pTempNode = mac->lim.pLimPreAuthList;
 
-	while (pTempNode != NULL) {
+	while (pTempNode) {
 		if (!qdf_mem_cmp((uint8_t *) macAddr,
 				    (uint8_t *) &pTempNode->peerMacAddr,
 				    sizeof(tSirMacAddr)))
@@ -223,10 +223,10 @@ lim_delete_open_auth_pre_auth_node(struct mac_context *mac_ctx)
 
 	temp_node = prev_node = mac_ctx->lim.pLimPreAuthList;
 
-	if (temp_node == NULL)
+	if (!temp_node)
 		return auth_node_freed;
 
-	while (temp_node != NULL) {
+	while (temp_node) {
 		if (temp_node->mlmState == eLIM_MLM_AUTHENTICATED_STATE &&
 		    temp_node->authType == eSIR_OPEN_SYSTEM &&
 		    (qdf_mc_timer_get_system_ticks() >
@@ -352,7 +352,7 @@ void lim_delete_pre_auth_node(struct mac_context *mac, tSirMacAddr macAddr)
 
 	pTempNode = pPrevNode = mac->lim.pLimPreAuthList;
 
-	if (pTempNode == NULL)
+	if (!pTempNode)
 		return;
 
 	if (!qdf_mem_cmp((uint8_t *) macAddr,
@@ -372,7 +372,7 @@ void lim_delete_pre_auth_node(struct mac_context *mac, tSirMacAddr macAddr)
 
 	pTempNode = pTempNode->next;
 
-	while (pTempNode != NULL) {
+	while (pTempNode) {
 		if (!qdf_mem_cmp((uint8_t *) macAddr,
 				    (uint8_t *) &pTempNode->peerMacAddr,
 				    sizeof(tSirMacAddr))) {

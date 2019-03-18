@@ -1513,7 +1513,7 @@ static QDF_STATUS find_ie_data_after_fils_session_ie(struct mac_context *mac_ctx
 	uint8_t *ptr = buf;
 	uint8_t elem_id, elem_len;
 
-	if (NULL == buf || 0 == buf_len)
+	if (!buf || 0 == buf_len)
 		return QDF_STATUS_E_FAILURE;
 
 	while (left >= 2) {
@@ -1574,9 +1574,9 @@ static int fils_aead_encrypt(const uint8_t *kek, unsigned int kek_len,
 		return -EINVAL;
 	}
 
-	if (own_mac == NULL || bssid == NULL || snonce == NULL ||
-	    anonce == NULL || data_len == 0 || plain_text_len == 0 ||
-	    out == NULL) {
+	if (!own_mac || !bssid || !snonce ||
+	    !anonce || data_len == 0 || plain_text_len == 0 ||
+	    !out) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  FL("Error missing params mac:%pK bssid:%pK snonce:%pK anonce:%pK data_len:%zu plain_text_len:%zu out:%pK"),
 			  own_mac, bssid, snonce, anonce, data_len,
@@ -1724,9 +1724,9 @@ static int fils_aead_decrypt(const uint8_t *kek, unsigned int kek_len,
 		return -EINVAL;
 	}
 
-	if (own_mac == NULL || bssid == NULL || snonce == NULL ||
-	    anonce == NULL || data_len == 0 || ciphered_text_len == 0 ||
-	    plain_text == NULL) {
+	if (!own_mac || !bssid || !snonce ||
+	    !anonce || data_len == 0 || ciphered_text_len == 0 ||
+	    !plain_text) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  FL("Error missing params mac:%pK bssid:%pK snonce:%pK anonce:%pK data_len:%zu ciphered_text_len:%zu plain_text:%pK"),
 			  own_mac, bssid, snonce, anonce, data_len,

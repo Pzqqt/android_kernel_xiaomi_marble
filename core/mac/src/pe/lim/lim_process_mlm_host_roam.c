@@ -65,7 +65,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			reassoc_req->sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionId: %d",
 			reassoc_req->sessionId);
 		qdf_mem_free(reassoc_req);
@@ -179,7 +179,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 	tpDphHashNode sta = NULL;
 	uint8_t smesessionId;
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return;
 	}
@@ -188,7 +188,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 		sta =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 					   &pe_session->dph.dphHashTable);
-		if (sta != NULL) {
+		if (sta) {
 			sta->mlmStaContext.disassocReason =
 				eSIR_MAC_UNSPEC_FAILURE_REASON;
 			sta->mlmStaContext.cleanupTrigger =
@@ -209,7 +209,7 @@ static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 error:
 	/* Delete the session if REASSOC failure occurred. */
 	if (resultCode != eSIR_SME_SUCCESS) {
-		if (NULL != pe_session) {
+		if (pe_session) {
 			pe_delete_session(mac, pe_session);
 			pe_session = NULL;
 		}
@@ -234,14 +234,14 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 	struct pe_session *session;
 	tLimMlmReassocCnf *lim_mlm_reassoc_cnf;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	lim_mlm_reassoc_cnf = (tLimMlmReassocCnf *) msg_buf;
 	session = pe_find_session_by_session_id(mac_ctx,
 				lim_mlm_reassoc_cnf->sessionId);
-	if (session == NULL) {
+	if (!session) {
 		pe_err("session Does not exist for given session Id");
 		return;
 	}
@@ -353,7 +353,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 
 	/* Sanity Checks */
 
-	if (pAddBssParams == NULL) {
+	if (!pAddBssParams) {
 		pe_err("Invalid parameters");
 		goto end;
 	}
@@ -365,7 +365,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	sta = dph_add_hash_entry(mac, pAddBssParams->bssId,
 					DPH_STA_HASH_INDEX_PEER,
 					&pe_session->dph.dphHashTable);
-	if (sta == NULL) {
+	if (!sta) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for");
 		lim_print_mac_addr(mac, pAddBssParams->staContext.staMac,
@@ -398,7 +398,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 			goto end;
 		}
 		mac->lim.pe_session = pe_session;
-		if (NULL == mac->lim.pe_session->pLimMlmReassocRetryReq) {
+		if (!mac->lim.pe_session->pLimMlmReassocRetryReq) {
 			/* Take a copy of reassoc request for retrying */
 			mac->lim.pe_session->pLimMlmReassocRetryReq =
 				qdf_mem_malloc(sizeof(tLimMlmReassocReq));
@@ -518,7 +518,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	/* Lets save this for when we receive the Reassoc Rsp */
 	pe_session->ftPEContext.pAddStaReq = pAddStaParams;
 
-	if (pAddBssParams != NULL) {
+	if (pAddBssParams) {
 		qdf_mem_free(pAddBssParams);
 		pAddBssParams = NULL;
 		limMsgQ->bodyptr = NULL;
@@ -534,13 +534,13 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 
 end:
 	/* Free up buffer allocated for reassocReq */
-	if (pe_session != NULL)
-		if (pe_session->pLimMlmReassocReq != NULL) {
+	if (pe_session)
+		if (pe_session->pLimMlmReassocReq) {
 			qdf_mem_free(pe_session->pLimMlmReassocReq);
 			pe_session->pLimMlmReassocReq = NULL;
 		}
 
-	if (pAddBssParams != NULL) {
+	if (pAddBssParams) {
 		qdf_mem_free(pAddBssParams);
 		pAddBssParams = NULL;
 		limMsgQ->bodyptr = NULL;
@@ -549,7 +549,7 @@ end:
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
 	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	/* Update PE session Id */
-	if (pe_session != NULL)
+	if (pe_session)
 		mlmReassocCnf.sessionId = pe_session->peSessionId;
 	else
 		mlmReassocCnf.sessionId = 0;
@@ -595,7 +595,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 		return;
 	}
 
-	if (NULL == session->ftPEContext.pAddBssReq) {
+	if (!session->ftPEContext.pAddBssReq) {
 		pe_err("pAddBssReq is NULL");
 		return;
 	}

@@ -43,7 +43,7 @@ void lim_set_cfg_protection(struct mac_context *mac, struct pe_session *pesessio
 	uint32_t val = 0;
 	struct wlan_mlme_cfg *mlme_cfg = mac->mlme_cfg;
 
-	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
+	if (pesessionEntry && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			qdf_mem_zero((void *)&pesessionEntry->cfgProtection,

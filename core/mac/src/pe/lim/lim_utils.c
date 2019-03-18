@@ -81,7 +81,7 @@ void lim_delete_dialogue_token_list(struct mac_context *mac)
 {
 	tpDialogueToken pCurrNode = mac->lim.pDialogueTokenHead;
 
-	while (NULL != mac->lim.pDialogueTokenHead) {
+	while (mac->lim.pDialogueTokenHead) {
 		pCurrNode = mac->lim.pDialogueTokenHead;
 		mac->lim.pDialogueTokenHead =
 			mac->lim.pDialogueTokenHead->next;
@@ -868,7 +868,7 @@ void lim_handle_update_olbc_cache(struct mac_context *mac_ctx)
 
 	struct pe_session *pe_session = lim_is_ap_session_active(mac_ctx);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err(" Session not found");
 		return;
 	}
@@ -1090,7 +1090,7 @@ lim_decide_ap_protection(struct mac_context *mac, tSirMacAddr peerMacAddr,
 	sta =
 		dph_lookup_hash_entry(mac, peerMacAddr, &tmpAid,
 				      &pe_session->dph.dphHashTable);
-	if (NULL == sta) {
+	if (!sta) {
 		pe_err("sta is NULL");
 		return;
 	}
@@ -1236,7 +1236,7 @@ lim_update_short_preamble(struct mac_context *mac_ctx, tSirMacAddr peer_mac_addr
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, psession_entry);
 
-	if (sta_ds == NULL || phy_mode != WNI_CFG_PHY_MODE_11G)
+	if (!sta_ds || phy_mode != WNI_CFG_PHY_MODE_11G)
 		return;
 
 	if (sta_ds->shortPreambleEnabled != eHAL_CLEAR)
@@ -1342,7 +1342,7 @@ lim_update_short_slot_time(struct mac_context *mac_ctx, tSirMacAddr peer_mac_add
 				       &session_entry->dph.dphHashTable);
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
 
-	if (sta_ds == NULL || phy_mode != WNI_CFG_PHY_MODE_11G)
+	if (!sta_ds || phy_mode != WNI_CFG_PHY_MODE_11G)
 		return;
 
 	/*
@@ -2149,7 +2149,7 @@ lim_util_count_sta_del(struct mac_context *mac,
 		       tpDphHashNode pSta, struct pe_session *pe_session)
 {
 
-	if ((pSta == NULL) || (!pSta->fAniCount))
+	if ((!pSta) || (!pSta->fAniCount))
 		return;
 
 	/* Only if sta is invalid and the validInDummyState bit is set to 1,
@@ -2760,7 +2760,7 @@ lim_update_11a_protection(struct mac_context *mac_ctx, uint8_t enable,
 			 uint8_t overlap, tpUpdateBeaconParams bcn_prms,
 			 struct pe_session *session)
 {
-	if (NULL == session) {
+	if (!session) {
 		pe_err("session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4202,7 +4202,7 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 	 *  - verify sta is in assoc state
 	 *  - del sta tspec locally
 	 */
-	if (delts_req == NULL) {
+	if (!delts_req) {
 		pe_err("Delete TS request pointer is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4232,13 +4232,13 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 						&session->dph.
 							dphHashTable);
 
-		if (sta != NULL)
+		if (sta)
 			/* TBD: check sta assoc state as well */
 			for (i = 0; i < sizeof(tSirMacAddr); i++)
 				macaddr[i] = sta->staAddr[i];
 	}
 
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("Cannot find station context for delts req");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4746,7 +4746,7 @@ void lim_process_add_sta_rsp(struct mac_context *mac_ctx,
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			add_sta_params->sessionId);
-	if (session == NULL) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		qdf_mem_free(add_sta_params);
 		return;
@@ -4919,7 +4919,7 @@ void lim_handle_defer_msg_error(struct mac_context *mac,
 		lim_decrement_pending_mgmt_count(mac);
 		cds_pkt_return_packet((cds_pkt_t *) pLimMsg->bodyptr);
 		pLimMsg->bodyptr = NULL;
-	} else if (pLimMsg->bodyptr != NULL) {
+	} else if (pLimMsg->bodyptr) {
 		qdf_mem_free(pLimMsg->bodyptr);
 		pLimMsg->bodyptr = NULL;
 	}
@@ -4947,7 +4947,7 @@ void lim_diag_event_report(struct mac_context *mac, uint16_t eventType,
 
 	qdf_mem_zero(&peEvent, sizeof(host_event_wlan_pe_payload_type));
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		qdf_mem_copy(peEvent.bssid, nullBssid, sizeof(tSirMacAddr));
 		peEvent.sme_state = (uint16_t) mac->lim.gLimSmeState;
 		peEvent.mlm_state = (uint16_t) mac->lim.gLimMlmState;
@@ -5064,7 +5064,7 @@ uint8_t lim_get_noa_attr_stream(struct mac_context *mac, uint8_t *pNoaStream,
 
 	uint8_t *pBody = pNoaStream;
 
-	if ((pe_session != NULL) && (pe_session->valid) &&
+	if ((pe_session) && (pe_session->valid) &&
 	    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
 		if ((!(pe_session->p2pGoPsUpdate.uNoa1Duration))
 		    && (!(pe_session->p2pGoPsUpdate.uNoa2Duration))
@@ -5176,14 +5176,14 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 	/* Check that SA Query is in progress */
 	pe_session = pe_find_session_by_session_id(mac,
 			timerId.fields.sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does not exist for given session ID: %d",
 			timerId.fields.sessionId);
 		return;
 	}
 	pSta = dph_get_hash_entry(mac, timerId.fields.peerIdx,
 			       &pe_session->dph.dphHashTable);
-	if (pSta == NULL) {
+	if (!pSta) {
 		pe_err("Entry does not exist for given peer index: %d",
 			timerId.fields.peerIdx);
 		return;
@@ -5365,7 +5365,7 @@ lim_set_protected_bit(struct mac_context *mac,
 
 		sta = dph_lookup_hash_entry(mac, peer, &aid,
 					       &pe_session->dph.dphHashTable);
-		if (sta != NULL) {
+		if (sta) {
 			/* rmfenabled will be set at the time of addbss.
 			 * but sometimes EAP auth fails and keys are not
 			 * installed then if we send any management frame
@@ -5533,7 +5533,7 @@ void lim_set_vht_caps(struct mac_context *p_mac, struct pe_session *p_session_en
 bool lim_validate_received_frame_a1_addr(struct mac_context *mac_ctx,
 		tSirMacAddr a1, struct pe_session *session)
 {
-	if (mac_ctx == NULL || session == NULL) {
+	if (!mac_ctx || !session) {
 		pe_err("mac or session context is null");
 		/* let main routine handle it */
 		return true;
@@ -5906,7 +5906,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
 
 	num_bytes = ext_cap_data.num_bytes;
 
-	if (merge && NULL != extra_extcap && extra_extcap->num_bytes > 0) {
+	if (merge && extra_extcap && extra_extcap->num_bytes > 0) {
 		if (extra_extcap->num_bytes > ext_cap_data.num_bytes)
 			num_bytes = extra_extcap->num_bytes;
 		lim_merge_extcap_struct(&ext_cap_data, extra_extcap, true);
@@ -5970,7 +5970,7 @@ QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
 	uint8_t elem_id;
 	uint16_t elem_len;
 
-	if (NULL == addn_ie) {
+	if (!addn_ie) {
 		pe_debug("NULL addn_ie pointer");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -6008,7 +6008,7 @@ QDF_STATUS lim_strip_ie(struct mac_context *mac_ctx,
 			 * eid matched and if provided OUI also matched
 			 * take oui IE and store in provided buffer.
 			 */
-			if (NULL != extracted_ie) {
+			if (extracted_ie) {
 				qdf_mem_zero(extracted_ie,
 					eid_max_len + size_of_len_field + 1);
 				if (elem_len <= eid_max_len)
@@ -6039,7 +6039,7 @@ void lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *
 			associated_sta++) {
 		sta_ds = dph_get_hash_entry(mac_ctx, associated_sta,
 				&pe_session->dph.dphHashTable);
-		if (NULL == sta_ds)
+		if (!sta_ds)
 			continue;
 		if (!sta_ds->rmfEnabled) {
 			pe_debug("no PMF timer for sta-idx:%d assoc-id:%d",
@@ -6108,12 +6108,12 @@ void lim_update_extcap_struct(struct mac_context *mac_ctx,
 	uint8_t out[DOT11F_IE_EXTCAP_MAX_LEN];
 	uint32_t status;
 
-	if (NULL == buf) {
+	if (!buf) {
 		pe_err("Invalid Buffer Address");
 		return;
 	}
 
-	if (NULL == dst) {
+	if (!dst) {
 		pe_err("NULL dst pointer");
 		return;
 	}
@@ -7389,7 +7389,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 	if (!IS_DOT11_MODE_HE(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;
 
-	if ((peer_he_caps == NULL) || (!peer_he_caps->present)) {
+	if ((!peer_he_caps) || (!peer_he_caps->present)) {
 		pe_debug("peer not he capable or he_caps NULL");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -7603,7 +7603,7 @@ bool lim_check_if_vendor_oui_match(struct mac_context *mac_ctx,
 	uint8_t *ptr = ie;
 	uint8_t elem_id;
 
-	if (NULL == ie || 0 == ie_len) {
+	if (!ie || 0 == ie_len) {
 		pe_err("IE Null or ie len zero %d", ie_len);
 		return false;
 	}

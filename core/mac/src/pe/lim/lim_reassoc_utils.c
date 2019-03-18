@@ -146,7 +146,7 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 				pe_session->limReAssocbssId,
 				DPH_STA_HASH_INDEX_PEER,
 				&pe_session->dph.dphHashTable);
-		if (sta == NULL) {
+		if (!sta) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac,
@@ -268,7 +268,7 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 		sta =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 					   &pe_session->dph.dphHashTable);
-		if (sta == NULL) {
+		if (!sta) {
 			pe_err("Fail to get STA PEER entry from hash");
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -356,7 +356,7 @@ Error:
  */
 bool lim_is_reassoc_in_progress(struct mac_context *mac, struct pe_session *pe_session)
 {
-	if (pe_session == NULL)
+	if (!pe_session)
 		return false;
 
 	if (LIM_IS_STA_ROLE(pe_session) &&

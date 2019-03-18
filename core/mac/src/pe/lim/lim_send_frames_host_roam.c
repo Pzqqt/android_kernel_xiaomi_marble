@@ -86,13 +86,13 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 	tftSMEContext *ft_sme_context;
 
-	if (NULL == pe_session)
+	if (!pe_session)
 		return;
 
 	sme_sessionid = pe_session->smeSessionId;
 
 	/* check this early to avoid unncessary operation */
-	if (NULL == pe_session->pLimReAssocReq)
+	if (!pe_session->pLimReAssocReq)
 		return;
 
 	frm = qdf_mem_malloc(sizeof(*frm));
@@ -205,7 +205,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	if (!pe_session->is11Rconnection) {
 		if (add_ie_len && add_ie)
 			wps_ie = limGetWscIEPtr(mac_ctx, add_ie, add_ie_len);
-		if (NULL == wps_ie) {
+		if (!wps_ie) {
 			populate_dot11f_rsn_opaque(mac_ctx,
 				&(pe_session->pLimReAssocReq->rsnIE),
 				&frm->RSNOpaque);
@@ -371,7 +371,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	pe_debug("*** Sending Re-Assoc Request length: %d %d to",
 		       bytes, payload);
 
-	if (pe_session->assocReq != NULL) {
+	if (pe_session->assocReq) {
 		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
@@ -407,7 +407,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   (uint8_t *) frame, (bytes + ft_ies_length));
 
-	if ((NULL != pe_session->ftPEContext.pFTPreAuthReq) &&
+	if ((pe_session->ftPEContext.pFTPreAuthReq) &&
 	    (BAND_5G == lim_get_rf_band(
 	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -417,7 +417,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		 || (pe_session->pePersona == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (NULL != pe_session->assocReq) {
+	if (pe_session->assocReq) {
 		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
@@ -481,9 +481,9 @@ void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 	tLimMlmReassocCnf mlmReassocCnf;        /* keep sme */
 	tLimMlmReassocReq *pTmpMlmReassocReq = NULL;
 
-	if (NULL == pTmpMlmReassocReq) {
+	if (!pTmpMlmReassocReq) {
 		pTmpMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-		if (NULL == pTmpMlmReassocReq)
+		if (!pTmpMlmReassocReq)
 			goto end;
 		qdf_mem_copy(pTmpMlmReassocReq, pMlmReassocReq,
 			     sizeof(tLimMlmReassocReq));
@@ -513,11 +513,11 @@ void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 
 end:
 	/* Free up buffer allocated for reassocReq */
-	if (pMlmReassocReq != NULL) {
+	if (pMlmReassocReq) {
 		qdf_mem_free(pMlmReassocReq);
 		pMlmReassocReq = NULL;
 	}
-	if (pTmpMlmReassocReq != NULL) {
+	if (pTmpMlmReassocReq) {
 		qdf_mem_free(pTmpMlmReassocReq);
 		pTmpMlmReassocReq = NULL;
 	}
@@ -558,11 +558,11 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 	bool isVHTEnabled = false;
 	tpSirMacMgmtHdr pMacHdr;
 
-	if (NULL == pe_session)
+	if (!pe_session)
 		return;
 
 	smeSessionId = pe_session->smeSessionId;
-	if (NULL == pe_session->pLimReAssocReq)
+	if (!pe_session->pLimReAssocReq)
 		return;
 
 	frm = qdf_mem_malloc(sizeof(*frm));
@@ -656,7 +656,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 	/* eliding the WPA or RSN IE, we just skip this: */
 	if (nAddIELen && pAddIE)
 		wpsIe = limGetWscIEPtr(mac, pAddIE, nAddIELen);
-	if (NULL == wpsIe) {
+	if (!wpsIe) {
 		populate_dot11f_rsn_opaque(mac,
 				&(pe_session->pLimReAssocReq->rsnIE),
 				&frm->RSNOpaque);
@@ -742,7 +742,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 
 	pe_debug("*** Sending Re-Association Request length: %d" "to", nBytes);
 
-	if (pe_session->assocReq != NULL) {
+	if (pe_session->assocReq) {
 		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;

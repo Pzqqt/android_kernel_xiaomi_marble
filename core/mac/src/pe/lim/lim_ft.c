@@ -69,7 +69,7 @@ void lim_ft_cleanup_all_ft_sessions(struct mac_context *mac)
 
 void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
 {
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return;
 	}
@@ -80,7 +80,7 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
 		return;
 	}
 
-	if (NULL != pe_session->ftPEContext.pFTPreAuthReq) {
+	if (pe_session->ftPEContext.pFTPreAuthReq) {
 		pe_debug("Freeing pFTPreAuthReq: %pK",
 			       pe_session->ftPEContext.pFTPreAuthReq);
 		if (NULL !=
@@ -741,7 +741,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint8_t sessionId;
 
 	/* Sanity Check */
-	if (mac == NULL || pMsgBuf == NULL) {
+	if (!mac || !pMsgBuf) {
 		return false;
 	}
 
@@ -749,7 +749,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 
 	pe_session = pe_find_session_by_bssid(mac, pKeyInfo->bssid.bytes,
 						 &sessionId);
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("%s: Unable to find session for the following bssid",
 			       __func__);
 		lim_print_mac_addr(mac, pKeyInfo->bssid.bytes, LOGE);
@@ -762,7 +762,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 		return false;
 	}
 
-	if (NULL == pe_session->ftPEContext.pAddBssReq) {
+	if (!pe_session->ftPEContext.pAddBssReq) {
 		/* AddBss Req is NULL, save the keys to configure them later. */
 		tpLimMlmSetKeysReq pMlmSetKeysReq =
 			&pe_session->ftPEContext.PreAuthKeyInfo.
@@ -782,7 +782,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 		pe_session->ftPEContext.PreAuthKeyInfo.
 		extSetStaKeyParamValid = true;
 
-		if (pe_session->ftPEContext.pAddStaReq == NULL) {
+		if (!pe_session->ftPEContext.pAddStaReq) {
 			pe_err("pAddStaReq is NULL");
 			lim_send_set_sta_key_req(mac, pMlmSetKeysReq, 0, 0,
 						 pe_session, false);
@@ -869,15 +869,15 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 	pe_debug(" Received AGGR_QOS_RSP from HAL");
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	pAggrQosRspMsg = limMsg->bodyptr;
-	if (NULL == pAggrQosRspMsg) {
+	if (!pAggrQosRspMsg) {
 		pe_err("NULL pAggrQosRspMsg");
 		return;
 	}
 	pe_session =
 		pe_find_session_by_session_id(mac, pAggrQosRspMsg->sessionId);
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("Cant find session entry for %s", __func__);
-		if (pAggrQosRspMsg != NULL) {
+		if (pAggrQosRspMsg) {
 			qdf_mem_free(pAggrQosRspMsg);
 		}
 		return;
@@ -901,7 +901,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 			pSta =
 				dph_lookup_assoc_id(mac, addTsParam.staIdx, &assocId,
 						    &pe_session->dph.dphHashTable);
-			if (pSta != NULL) {
+			if (pSta) {
 				lim_admit_control_delete_ts(mac, assocId,
 							    &addTsParam.tspec.
 							    tsinfo, NULL,
@@ -912,7 +912,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 	}
 	lim_ft_send_aggr_qos_rsp(mac, rspReqd, pAggrQosRspMsg,
 				 pe_session->smeSessionId);
-	if (pAggrQosRspMsg != NULL) {
+	if (pAggrQosRspMsg) {
 		qdf_mem_free(pAggrQosRspMsg);
 	}
 	return;
@@ -939,7 +939,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 	pe_session = pe_find_session_by_bssid(mac, aggrQosReq->bssid.bytes,
 					      &sessionId);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("psession Entry Null for sessionId: %d",
 			       aggrQosReq->sessionId);
 		qdf_mem_free(pAggrAddTsParam);
@@ -955,7 +955,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 
 	pSta = dph_lookup_hash_entry(mac, aggrQosReq->bssid.bytes, &aid,
 				     &pe_session->dph.dphHashTable);
-	if (pSta == NULL) {
+	if (!pSta) {
 		pe_err("Station context not found - ignoring AddTsRsp");
 		qdf_mem_free(pAggrAddTsParam);
 		return QDF_STATUS_E_FAILURE;
@@ -1078,7 +1078,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 		/* Send the Aggr QoS response to SME */
 		lim_ft_send_aggr_qos_rsp(mac, true, pAggrAddTsParam,
 					 pe_session->smeSessionId);
-		if (pAggrAddTsParam != NULL) {
+		if (pAggrAddTsParam) {
 			qdf_mem_free(pAggrAddTsParam);
 		}
 	}

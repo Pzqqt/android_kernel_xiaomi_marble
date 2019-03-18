@@ -106,7 +106,7 @@ uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx, tpDphHashNode sta_d
 {
 	uint32_t rate_flags = 0;
 
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("sta_ds is NULL");
 		return rate_flags;
 	}
@@ -192,7 +192,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	struct ht_profile *ht_profile;
 #endif
 	if (result_code == eSIR_SME_SUCCESS) {
-		if (session_entry->beacon != NULL) {
+		if (session_entry->beacon) {
 			sme_join_rsp->beaconLength = session_entry->bcnLen;
 			qdf_mem_copy(sme_join_rsp->frames,
 				session_entry->beacon,
@@ -203,7 +203,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			pe_debug("Beacon: %d",
 				sme_join_rsp->beaconLength);
 		}
-		if (session_entry->assocReq != NULL) {
+		if (session_entry->assocReq) {
 			sme_join_rsp->assocReqLength =
 				session_entry->assocReqLen;
 			qdf_mem_copy(sme_join_rsp->frames +
@@ -216,7 +216,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			pe_debug("AssocReq: %d",
 				sme_join_rsp->assocReqLength);
 		}
-		if (session_entry->assocRsp != NULL) {
+		if (session_entry->assocRsp) {
 			sme_join_rsp->assocRspLength =
 				session_entry->assocRspLen;
 			qdf_mem_copy(sme_join_rsp->frames +
@@ -228,7 +228,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			session_entry->assocRsp = NULL;
 			session_entry->assocRspLen = 0;
 		}
-		if (session_entry->ricData != NULL) {
+		if (session_entry->ricData) {
 			sme_join_rsp->parsedRicRspLen =
 				session_entry->RICDataLen;
 			qdf_mem_copy(sme_join_rsp->frames +
@@ -244,7 +244,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 				sme_join_rsp->parsedRicRspLen);
 		}
 #ifdef FEATURE_WLAN_ESE
-		if (session_entry->tspecIes != NULL) {
+		if (session_entry->tspecIes) {
 			sme_join_rsp->tspecIeLen =
 				session_entry->tspecLen;
 			qdf_mem_copy(sme_join_rsp->frames +
@@ -318,28 +318,28 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 
 		}
 	} else {
-		if (session_entry->beacon != NULL) {
+		if (session_entry->beacon) {
 			qdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
 			session_entry->bcnLen = 0;
 		}
-		if (session_entry->assocReq != NULL) {
+		if (session_entry->assocReq) {
 			qdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
 			session_entry->assocReqLen = 0;
 		}
-		if (session_entry->assocRsp != NULL) {
+		if (session_entry->assocRsp) {
 			qdf_mem_free(session_entry->assocRsp);
 			session_entry->assocRsp = NULL;
 			session_entry->assocRspLen = 0;
 		}
-		if (session_entry->ricData != NULL) {
+		if (session_entry->ricData) {
 			qdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
 			session_entry->RICDataLen = 0;
 		}
 #ifdef FEATURE_WLAN_ESE
-		if (session_entry->tspecIes != NULL) {
+		if (session_entry->tspecIes) {
 			qdf_mem_free(session_entry->tspecIes);
 			session_entry->tspecIes = NULL;
 			session_entry->tspecLen = 0;
@@ -407,7 +407,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 	pe_debug("Sending message: %s with reasonCode: %s",
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		rsp_len = sizeof(*sme_join_rsp);
 		sme_join_rsp = qdf_mem_malloc(rsp_len);
 		if (!sme_join_rsp)
@@ -438,7 +438,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 			sta_ds = dph_get_hash_entry(mac_ctx,
 				DPH_STA_HASH_INDEX_PEER,
 				&session_entry->dph.dphHashTable);
-			if (sta_ds == NULL) {
+			if (!sta_ds) {
 				pe_err("Get Self Sta Entry fail");
 			} else {
 				/* Pass the peer's staId */
@@ -508,7 +508,7 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 
 	size = sizeof(struct start_bss_rsp);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pSirSmeRsp = qdf_mem_malloc(size);
 		if (!pSirSmeRsp)
 			return;
@@ -596,13 +596,13 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	pSirSmeRsp->length = size;
 	pSirSmeRsp->sessionId = smesessionId;
 	pSirSmeRsp->statusCode = resultCode;
-	if (pe_session != NULL)
+	if (pe_session)
 		pSirSmeRsp->staId = pe_session->staId;       /* else it will be always zero smeRsp StaID = 0 */
 
 	mmhMsg.type = msgType;
 	mmhMsg.bodyptr = pSirSmeRsp;
 	mmhMsg.bodyval = 0;
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 				 NO_SESSION, mmhMsg.type));
 	} else {
@@ -769,7 +769,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 
 error:
 	/* Delete the PE session Created */
-	if ((pe_session != NULL) && LIM_IS_STA_ROLE(pe_session))
+	if ((pe_session) && LIM_IS_STA_ROLE(pe_session))
 		pe_delete_session(mac, pe_session);
 
 	if (false == failure)
@@ -1206,7 +1206,7 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 	mmhMsg.type = eWNI_SME_SETCONTEXT_RSP;
 	mmhMsg.bodyptr = set_context_rsp;
 	mmhMsg.bodyval = 0;
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 				 NO_SESSION, mmhMsg.type));
 	} else {
@@ -1247,7 +1247,7 @@ void lim_send_sme_addts_rsp(struct mac_context *mac,
 	mmhMsg.type = eWNI_SME_ADDTS_RSP;
 	mmhMsg.bodyptr = rsp;
 	mmhMsg.bodyval = 0;
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 				 NO_SESSION, mmhMsg.type));
 	} else {
@@ -1281,7 +1281,7 @@ void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 	if (!rsp)
 		return;
 
-	if (pe_session != NULL) {
+	if (pe_session) {
 
 		rsp->aid = delts->aid;
 		qdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
@@ -1296,7 +1296,7 @@ void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 	mmhMsg.type = eWNI_SME_DELTS_RSP;
 	mmhMsg.bodyptr = rsp;
 	mmhMsg.bodyval = 0;
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 				 NO_SESSION, mmhMsg.type));
 	} else {
@@ -1383,7 +1383,7 @@ lim_send_sme_pe_statistics_rsp(struct mac_context *mac, uint16_t msgType, void *
 		pe_find_session_by_sta_id(mac, pPeStats->staId, &sessionId);
 
 	/* Fill the Session Id */
-	if (NULL != pPeSessionEntry) {
+	if (pPeSessionEntry) {
 		/* Fill the Session Id */
 		pPeStats->sessionId = pPeSessionEntry->smeSessionId;
 	}
@@ -1427,7 +1427,7 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 	pPeSessionEntry = pe_find_session_by_bssid(mac, pPeStats->bssid.bytes,
 						   &sessionId);
 	/* Fill the Session Id */
-	if (NULL != pPeSessionEntry) {
+	if (pPeSessionEntry) {
 		/* Fill the Session Id */
 		pPeStats->sessionId = pPeSessionEntry->smeSessionId;
 	} else {
@@ -1476,7 +1476,7 @@ lim_send_sme_ibss_peer_ind(struct mac_context *mac,
 	pNewPeerInd->mesgType = msgType;
 	pNewPeerInd->sessionId = sessionId;
 
-	if (beacon != NULL) {
+	if (beacon) {
 		qdf_mem_copy((void *)((uint8_t *) pNewPeerInd +
 				      sizeof(tSmeIbssPeerInd)), (void *)beacon,
 			     beaconLen);
@@ -1892,7 +1892,7 @@ void lim_handle_delete_bss_rsp(struct mac_context *mac, struct scheduler_msg *Ms
 
 	pe_session =
 		pe_find_session_by_session_id(mac, pDelBss->sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID: %d",
 			pDelBss->sessionId);
 		qdf_mem_free(MsgQ->bodyptr);

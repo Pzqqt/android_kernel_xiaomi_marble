@@ -127,7 +127,7 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 	data_stall_detect_cb data_stall_detect_callback;
 	mac_handle_t mac_handle;
 
-	if (NULL == pMsg) {
+	if (!pMsg) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer to struct scheduler_msg", __func__);
 		QDF_ASSERT(0);
@@ -148,7 +148,7 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 				"Processing SYS MC STOP");
 			mac_handle = cds_get_context(QDF_MODULE_ID_PE);
-			if (NULL == mac_handle) {
+			if (!mac_handle) {
 				QDF_TRACE(QDF_MODULE_ID_SYS,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Invalid mac_handle", __func__);
@@ -164,7 +164,7 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 
 		case SYS_MSG_ID_DATA_STALL_MSG:
 			data_stall_detect_callback = pMsg->callback;
-			if (NULL != data_stall_detect_callback)
+			if (data_stall_detect_callback)
 				data_stall_detect_callback(pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 			break;

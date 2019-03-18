@@ -211,7 +211,7 @@ lim_compute_mean_bw_used(struct mac_context *mac,
 			tpDphHashNode pSta =
 				dph_get_hash_entry(mac, pTspecInfo->assocId,
 						   &pe_session->dph.dphHashTable);
-			if (pSta == NULL) {
+			if (!pSta) {
 				/* maybe we should delete the tspec?? */
 				pe_err("Tspec: %d assocId: %d dphNode not found",
 					ctspec, pTspecInfo->assocId);
@@ -361,7 +361,7 @@ static QDF_STATUS lim_admit_policy(struct mac_context *mac,
 /* delete the specified tspec */
 static void lim_tspec_delete(struct mac_context *mac, tpLimTspecInfo pInfo)
 {
-	if (pInfo == NULL)
+	if (!pInfo)
 		return;
 	/* pierre */
 	pe_debug("tspec entry: %d delete tspec: %pK", pInfo->idx, pInfo);
@@ -587,7 +587,7 @@ lim_validate_access_policy(struct mac_context *mac,
 	tpDphHashNode pSta =
 		dph_get_hash_entry(mac, assocId, &pe_session->dph.dphHashTable);
 
-	if ((pSta == NULL) || (!pSta->valid)) {
+	if ((!pSta) || (!pSta->valid)) {
 		pe_err("invalid station address passed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -681,7 +681,7 @@ QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac, uint8_t *pAddr,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* fill in a schedule if requested */
-	if (pSch != NULL) {
+	if (pSch) {
 		qdf_mem_zero((uint8_t *) pSch, sizeof(*pSch));
 		pSch->svcStartTime = pAddts->tspec.svcStartTime;
 		pSch->svcInterval = svcInterval;
@@ -736,13 +736,13 @@ lim_admit_control_delete_ts(struct mac_context *mac,
 {
 	tpLimTspecInfo pTspecInfo = NULL;
 
-	if (pTsStatus != NULL)
+	if (pTsStatus)
 		*pTsStatus = 0;
 
 	if (lim_find_tspec
 		    (mac, assocId, pTsInfo, &mac->lim.tspecInfo[0],
 		    &pTspecInfo) == QDF_STATUS_SUCCESS) {
-		if (pTspecInfo != NULL) {
+		if (pTspecInfo) {
 			pe_debug("Tspec entry: %d found", pTspecInfo->idx);
 
 			*ptspecIdx = pTspecInfo->idx;
@@ -824,7 +824,7 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 
 	struct pe_session *pe_session = pe_find_session_by_session_id(mac, sessionId);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Unable to get Session for session Id: %d",
 			sessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -904,7 +904,7 @@ lim_send_hal_msg_del_ts(struct mac_context *mac,
 	qdf_mem_copy(&pDelTsParam->bssId, bssId, sizeof(tSirMacAddr));
 
 	pe_session = pe_find_session_by_session_id(mac, sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does Not exist with given sessionId: %d",
 			       sessionId);
 		goto err;
@@ -971,7 +971,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 	/* from the sessionId in the Rsp Msg from HAL */
 	pe_session = pe_find_session_by_session_id(mac, pAddTsRspMsg->sessionId);
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does Not exist with given sessionId: %d",
 			       pAddTsRspMsg->sessionId);
 		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
@@ -1002,7 +1002,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 		/* 090803: Pull the hash table from the session */
 		pSta = dph_lookup_assoc_id(mac, pAddTsRspMsg->staIdx, &assocId,
 					   &pe_session->dph.dphHashTable);
-		if (pSta != NULL)
+		if (pSta)
 			lim_admit_control_delete_ts(mac, assocId,
 						    &pAddTsRspMsg->tspec.tsinfo,
 						    NULL,
@@ -1018,7 +1018,7 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 	}
 
 end:
-	if (pAddTsRspMsg != NULL)
+	if (pAddTsRspMsg)
 		qdf_mem_free(pAddTsRspMsg);
 	return;
 }

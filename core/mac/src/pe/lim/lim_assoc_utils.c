@@ -849,7 +849,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 				     (uint32_t *) &mlmDisassocCnf);
 	}
 
-	if (NULL != pe_session && !LIM_IS_AP_ROLE(pe_session)) {
+	if (pe_session && !LIM_IS_AP_ROLE(pe_session)) {
 		pe_delete_session(mac, pe_session);
 		pe_session = NULL;
 	}
@@ -929,7 +929,7 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 	sta_ds = dph_get_hash_entry(mac_ctx, sta_id,
 		   &session_entry->dph.dphHashTable);
 
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("No STA context, yet rejecting Association");
 		return;
 	}
@@ -950,7 +950,7 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 	lim_send_assoc_rsp_mgmt_frame(mac_ctx, result_code, 0, peer_addr,
 					 sub_type, 0, session_entry);
 
-	if (session_entry->parsedAssocReq[sta_ds->assocId] != NULL) {
+	if (session_entry->parsedAssocReq[sta_ds->assocId]) {
 		uint8_t *assoc_req_frame;
 
 		assoc_req_frame = (uint8_t *)((tpSirAssocReq) (session_entry->
@@ -1039,7 +1039,7 @@ lim_decide_ap_protection_on_delete(struct mac_context *mac_ctx,
 	enum band_info rf_band = BAND_UNKNOWN;
 	uint32_t i;
 
-	if (NULL == sta_ds)
+	if (!sta_ds)
 		return;
 
 	lim_get_rf_band_new(mac_ctx, &rf_band, session_entry);
@@ -1408,7 +1408,7 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 		}
 	}
 
-	if ((peer_vht_caps == NULL) || (!peer_vht_caps->present))
+	if ((!peer_vht_caps) || (!peer_vht_caps->present))
 		return QDF_STATUS_SUCCESS;
 
 	rates->vhtTxHighestDataRate =
@@ -1467,7 +1467,7 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 		vht_cap_info->enable2x2, nss,
 		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
 
-	if (NULL != session_entry) {
+	if (session_entry) {
 		session_entry->supported_nss_1x1 =
 			((rates->vhtTxMCSMap & VHT_MCS_1x1) ==
 			 VHT_MCS_1x1) ? true : false;
@@ -1591,7 +1591,7 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 		 * else use the MCS set from local CFG.
 		 */
 
-		if (supported_mcs_set != NULL) {
+		if (supported_mcs_set) {
 			for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
 				rates->supportedMCSSet[i] &=
 					 supported_mcs_set[i];
@@ -1749,7 +1749,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 		/* if supported MCS Set of the peer is passed in, then do the
 		 * intersection, else use the MCS set from local CFG.
 		 */
-		if (pSupportedMCSSet != NULL) {
+		if (pSupportedMCSSet) {
 			for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
 				pRates->supportedMCSSet[i] &=
 					pSupportedMCSSet[i];
@@ -2352,7 +2352,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	add_sta_params->maxTxPower = session_entry->maxTxPower;
 
-	if (session_entry->parsedAssocReq != NULL) {
+	if (session_entry->parsedAssocReq) {
 		uint16_t aid = sta_ds->assocId;
 		/* Get a copy of the already parsed Assoc Request */
 		assoc_req =
@@ -2940,13 +2940,13 @@ void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 
 	pe_session = pe_find_session_by_session_id(mac,
 			mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
 	sta = dph_get_hash_entry(mac, staId, &pe_session->dph.dphHashTable);
 
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("No STA context in SIR_LIM_CNF_WAIT_TIMEOUT");
 		return;
 	}
@@ -2999,7 +2999,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 	beacon_params.paramChangeBitmap = 0;
 	lim_deactivate_and_change_per_sta_id_timer(mac_ctx, eLIM_CNF_WAIT_TIMER,
 		 sta_id);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("NULL session_entry");
 		return;
 	}
@@ -3008,7 +3008,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 	sta_ds = dph_lookup_hash_entry(mac_ctx, sta_addr, &aid,
 			 &session_entry->dph.dphHashTable);
 
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("sta_ds is NULL");
 		return;
 	}
@@ -3345,7 +3345,7 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bssIdx,
 
 	/* DPH was storing the AssocID in staID field, */
 	/* staID is actually assigned by HAL when AddSTA message is sent. */
-	if (sta != NULL) {
+	if (sta) {
 		pDelBssParams->bssIdx = sta->bssId;
 		sta->valid = 0;
 		sta->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
@@ -3703,10 +3703,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		pAddBssParams->vhtCapable = 0;
 	}
 	if (pAddBssParams->vhtCapable) {
-		if (vht_oper != NULL)
+		if (vht_oper)
 			lim_update_vht_oper_assoc_resp(mac, pAddBssParams,
 					vht_oper, pe_session);
-		if (vht_caps != NULL)
+		if (vht_caps)
 			lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					vht_caps, pe_session);
 	}
@@ -3740,7 +3740,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	sta = dph_lookup_hash_entry(mac, pAddBssParams->staContext.bssId,
 				&pAddBssParams->staContext.assocId,
 				&pe_session->dph.dphHashTable);
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("Couldn't get assoc id for " "MAC ADDR: "
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(
@@ -3792,16 +3792,16 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				is_vht_cap_in_vendor_ie = true;
 			}
 
-			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
+			if ((vht_caps) && (vht_caps->suBeamFormerCap ||
 				vht_caps->muBeamformerCap) &&
 				pe_session->vht_config.su_beam_formee)
 				sta_context->vhtTxBFCapable = 1;
 
-			if ((vht_caps != NULL) && vht_caps->muBeamformerCap &&
+			if ((vht_caps) && vht_caps->muBeamformerCap &&
 				pe_session->vht_config.mu_beam_formee)
 				sta_context->vhtTxMUBformeeCapable = 1;
 
-			if ((vht_caps != NULL) && vht_caps->suBeamformeeCap &&
+			if ((vht_caps) && vht_caps->suBeamformeeCap &&
 				pe_session->vht_config.su_beam_former)
 				sta_context->enable_su_tx_bformer = 1;
 
@@ -3900,7 +3900,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				vht_caps = &pAssocRsp->vendor_vht_ie.VHTCaps;
 				pe_debug("VHT Caps is in vendor Specific IE");
 			}
-			if (vht_caps != NULL &&
+			if (vht_caps &&
 				(pe_session->txLdpcIniFeatureEnabled & 0x2)) {
 				if (!is_vht_cap_in_vendor_ie)
 					pAddBssParams->staContext.vhtLdpcCapable =
@@ -3963,7 +3963,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	/* Update the rates */
 	sta = dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				&pe_session->dph.dphHashTable);
-	if (sta != NULL) {
+	if (sta) {
 		qdf_mem_copy(&pAddBssParams->staContext.supportedRates,
 			     &sta->supportedRates,
 			     sizeof(sta->supportedRates));
@@ -4243,7 +4243,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		}
 
 
-		if ((vht_oper != NULL) &&
+		if ((vht_oper) &&
 			vht_oper->chanWidth &&
 			chanWidthSupp) {
 			pAddBssParams->ch_center_freq_seg0 =
@@ -4324,17 +4324,17 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 				vht_caps = &pBeaconStruct->
 						vendor_vht_ie.VHTCaps;
 
-			if ((vht_caps != NULL) && (vht_caps->suBeamFormerCap ||
+			if ((vht_caps) && (vht_caps->suBeamFormerCap ||
 				vht_caps->muBeamformerCap) &&
 				pe_session->vht_config.su_beam_formee)
 				pAddBssParams->staContext.vhtTxBFCapable = 1;
 
-			if ((vht_caps != NULL) && vht_caps->muBeamformerCap &&
+			if ((vht_caps) && vht_caps->muBeamformerCap &&
 				pe_session->vht_config.mu_beam_formee)
 				pAddBssParams->staContext.vhtTxMUBformeeCapable
 						= 1;
 
-			if ((vht_caps != NULL) && vht_caps->suBeamformeeCap &&
+			if ((vht_caps) && vht_caps->suBeamformeeCap &&
 				pe_session->vht_config.su_beam_former)
 				pAddBssParams->staContext.enable_su_tx_bformer
 						= 1;
@@ -4352,7 +4352,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 			pAddBssParams->staContext.ch_width =
 				(uint8_t) pBeaconStruct->HTInfo.
 				recommendedTxWidthSet;
-			if ((vht_oper != NULL) &&
+			if ((vht_oper) &&
 					pAddBssParams->staContext.vhtCapable &&
 					vht_oper->chanWidth)
 				pAddBssParams->staContext.ch_width =
@@ -4413,7 +4413,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 					&pBeaconStruct->vendor_vht_ie.VHTCaps;
 				pe_debug("VHT Caps are in vendor Specific IE");
 			}
-			if (vht_caps != NULL &&
+			if (vht_caps &&
 				(pe_session->txLdpcIniFeatureEnabled & 0x2))
 				pAddBssParams->staContext.vhtLdpcCapable =
 					(uint8_t) vht_caps->ldpcCodingCap;
@@ -4572,7 +4572,7 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 	struct qdf_mac_addr sta_dsaddr;
 	tLimMlmStaContext mlmStaContext;
 
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("sta is NULL");
 		return;
 	}
@@ -4666,7 +4666,7 @@ tLimPreAuthNode *lim_get_pre_auth_node_from_index(struct mac_context *mac,
 						  uint32_t authNodeIdx)
 {
 	if ((authNodeIdx >= pAuthTable->numEntry)
-	    || (pAuthTable->pTable == NULL)) {
+	    || (!pAuthTable->pTable)) {
 		pe_err("Invalid Auth Timer Index: %d NumEntry: %d",
 			authNodeIdx, pAuthTable->numEntry);
 		return NULL;

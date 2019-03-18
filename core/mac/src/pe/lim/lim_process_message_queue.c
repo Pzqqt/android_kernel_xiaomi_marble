@@ -195,7 +195,7 @@ static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *bod
 
 	session = pe_find_session_by_sme_session_id(mac,
 				sae_msg->session_id);
-	if (session == NULL) {
+	if (!session) {
 		pe_err("SAE:Unable to find session");
 		return;
 	}
@@ -788,7 +788,7 @@ __lim_handle_beacon(struct mac_context *mac, struct scheduler_msg *pMsg,
 	/* This function should not be called if beacon is received in scan state. */
 	/* So not doing any checks for the global state. */
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		sch_beacon_process(mac, pRxPacketInfo, NULL);
 	} else if ((pe_session->limSmeState == eLIM_SME_LINK_EST_STATE) ||
 		   (pe_session->limSmeState == eLIM_SME_NORMAL_STATE)) {
@@ -1089,7 +1089,7 @@ lim_check_mgmt_registered_frames(struct mac_context *mac_ctx, uint8_t *buff_desc
 			    (qdf_list_node_t **) &mgmt_frame);
 	qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
-	while (mgmt_frame != NULL) {
+	while (mgmt_frame) {
 		type = (mgmt_frame->frameType >> 2) & 0x03;
 		sub_type = (mgmt_frame->frameType >> 4) & 0x0f;
 		if ((type == SIR_MAC_MGMT_FRAME)
@@ -1284,7 +1284,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 	/* Added For BT-AMP Support */
 	pe_session = pe_find_session_by_bssid(mac, pHdr->bssId,
 						 &sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 			pe_debug("ProtVersion %d, Type %d, Subtype %d rateIndex=%d",
 				fc.protVer, fc.type, fc.subType,
@@ -1304,7 +1304,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 
 			pe_session = pe_find_session_by_peer_sta(mac,
 						pHdr->sa, &sessionId);
-			if (pe_session == NULL) {
+			if (!pe_session) {
 				pe_debug("session does not exist for bssId");
 				lim_print_mac_addr(mac, pHdr->sa, LOGD);
 				goto end;
@@ -1424,7 +1424,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 			break;
 
 		case SIR_MAC_MGMT_ACTION:
-			if (pe_session == NULL)
+			if (!pe_session)
 				lim_process_action_frame_no_session(mac,
 								    pRxPacketInfo);
 			else {
@@ -1511,7 +1511,7 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 	ht40_scanind = (struct sme_obss_ht40_scanind_msg *)msg->bodyptr;
 	session = pe_find_session_by_bssid(mac_ctx,
 			ht40_scanind->mac_addr.bytes, &session_id);
-	if (session == NULL) {
+	if (!session) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"OBSS Scan not started: session id is NULL");
 		return;
@@ -1557,7 +1557,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	QDF_STATUS qdf_status;
 	struct scheduler_msg new_msg = {0};
 
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("Message pointer is Null");
 		QDF_ASSERT(0);
 		return;
@@ -1621,7 +1621,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		 * process the msg, we will try to use 'BD' as
 		 * 'cds Pkt' which will cause a crash
 		 */
-		if (msg->bodyptr == NULL) {
+		if (!msg->bodyptr) {
 			pe_err("Message bodyptr is Null");
 			QDF_ASSERT(0);
 			break;
@@ -1746,7 +1746,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 			msg->type);
 		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 			session_entry = &mac_ctx->lim.gpSession[i];
-			if ((session_entry != NULL) && (session_entry->valid)
+			if ((session_entry) && (session_entry->valid)
 				&& (session_entry->pePersona ==
 				QDF_P2P_GO_MODE)) { /* Save P2P attr for Go */
 					qdf_mem_copy(
@@ -1818,7 +1818,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		 * is rcvd within the Heart Beat interval continue
 		 * normal processing
 		 */
-		if (NULL == msg->bodyptr)
+		if (!msg->bodyptr)
 			pe_err("Can't Process HB TO - bodyptr is Null");
 		else {
 			session_entry = (struct pe_session *) msg->bodyptr;
@@ -1879,7 +1879,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case WMA_SET_MAX_TX_POWER_RSP:
 		rrm_set_max_tx_power_rsp(mac_ctx, msg);
-		if (msg->bodyptr != NULL) {
+		if (msg->bodyptr) {
 			qdf_mem_free((void *)msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
@@ -1944,7 +1944,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 			vdev_id = ((uint8_t *)msg->bodyptr)[i];
 			session_entry = pe_find_session_by_sme_session_id(
 				mac_ctx, vdev_id);
-			if (session_entry == NULL)
+			if (!session_entry)
 				continue;
 			session_entry->sap_advertise_avoid_ch_ie =
 				(uint8_t)msg->bodyval;
@@ -2292,7 +2292,7 @@ handle_ht_capabilityand_ht_info(struct mac_context *mac,
 	 * For now, we might come here during init and join with pe_session = NULL; in that case just fill the globals which exist
 	 * Sessionized entries values will be filled in join or add bss req. The ones which are missed in join are filled below
 	 */
-	if (pe_session != NULL) {
+	if (pe_session) {
 		pe_session->htCapability =
 			IS_DOT11_MODE_HT(pe_session->dot11mode);
 		pe_session->beaconParams.fLsigTXOPProtectionFullSupport =

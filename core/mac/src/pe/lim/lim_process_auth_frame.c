@@ -138,7 +138,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		/* Create entry for this STA in pre-auth list */
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 					&mac_ctx->lim.gLimPreAuthTimerTable);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			pe_warn("Max preauth-nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
@@ -246,7 +246,7 @@ static void lim_process_auth_open_system_algo(struct mac_context *mac_ctx,
 	/* Create entry for this STA in pre-auth list */
 	auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable);
-	if (auth_node == NULL) {
+	if (!auth_node) {
 		pe_warn("Max pre-auth nodes reached ");
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 		return;
@@ -493,7 +493,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			associd++) {
 			sta_ds_ptr = dph_get_hash_entry(mac_ctx, associd,
 						&pe_session->dph.dphHashTable);
-			if (NULL == sta_ds_ptr)
+			if (!sta_ds_ptr)
 				continue;
 			if (sta_ds_ptr->valid && (!qdf_mem_cmp(
 					(uint8_t *)&sta_ds_ptr->staAddr,
@@ -503,7 +503,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			sta_ds_ptr = NULL;
 		}
 
-		if (NULL != sta_ds_ptr
+		if (sta_ds_ptr
 #ifdef WLAN_FEATURE_11W
 			&& !sta_ds_ptr->rmfEnabled
 #endif
@@ -644,7 +644,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		    (pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE) &&
 		    (rx_auth_frm_body->authStatusCode ==
 				eSIR_MAC_SUCCESS_STATUS) &&
-		    (pe_session->ftPEContext.pFTPreAuthReq != NULL) &&
+		    (pe_session->ftPEContext.pFTPreAuthReq) &&
 		    (!qdf_mem_cmp(
 			pe_session->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			mac_hdr->sa, sizeof(tSirMacAddr)))) {
@@ -654,7 +654,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 				pe_session->limSmeState, mac_hdr->sa);
 			pe_session->ftPEContext.saved_auth_rsp_length = 0;
 
-			if ((body_ptr != NULL) && (frame_len < MAX_FTIE_SIZE)) {
+			if ((body_ptr) && (frame_len < MAX_FTIE_SIZE)) {
 				qdf_mem_copy(
 					pe_session->ftPEContext.saved_auth_rsp,
 					body_ptr, frame_len);
@@ -755,7 +755,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		pe_session->limCurrentAuthType = eSIR_OPEN_SYSTEM;
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 				&mac_ctx->lim.gLimPreAuthTimerTable);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			pe_warn("Max pre-auth nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
@@ -938,7 +938,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		}
 
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			pe_warn("received AuthFrame3 from peer that has no preauth context "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
@@ -1114,7 +1114,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		pe_session->limCurrentAuthType = eSIR_SHARED_KEY;
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
 					&mac_ctx->lim.gLimPreAuthTimerTable);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			pe_warn("Max pre-auth nodes reached");
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
@@ -1367,7 +1367,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		 * STA. If not, reject with unspecified failure status code
 		 */
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
-		if (auth_node == NULL) {
+		if (!auth_node) {
 			pe_err("rx Auth frame with no preauth ctx with WEP bit set "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
@@ -1610,12 +1610,12 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac, uint8_t *p
 		}
 	}
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_debug("cannot find session id in FT pre-auth phase");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pe_session->ftPEContext.pFTPreAuthReq == NULL) {
+	if (!pe_session->ftPEContext.pFTPreAuthReq) {
 		pe_err("Error: No FT");
 		/* No FT in progress. */
 		return QDF_STATUS_E_FAILURE;

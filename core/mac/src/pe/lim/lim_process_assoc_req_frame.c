@@ -515,7 +515,7 @@ static bool lim_chk_11ac_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 
 	if (LIM_IS_AP_ROLE(session) &&
 		(session->dot11mode == MLME_DOT11_MODE_11AC_ONLY) &&
-		((vht_caps == NULL) || ((vht_caps != NULL) && (!vht_caps->present)))) {
+		((!vht_caps) || ((vht_caps) && (!vht_caps->present)))) {
 		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
 			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 			1, hdr->sa, sub_type, 0, session);
@@ -1080,7 +1080,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(struct mac_context *mac_ctx,
 			 assoc_req->addIEPresent, assoc_req->addIE.length);
 
 	/* when wps_ie is present, RSN/WPA IE is ignored */
-	if (wps_ie == NULL) {
+	if (!wps_ie) {
 		/* check whether RSN IE is present */
 		if (LIM_IS_AP_ROLE(session) &&
 		    session->pLimStartBssReq->privacy &&
@@ -1131,7 +1131,7 @@ static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 		return false;
 	}
 	/* Check if STA is pre-authenticated. */
-	if ((sta_pre_auth_ctx == NULL) || (sta_pre_auth_ctx &&
+	if ((!sta_pre_auth_ctx) || (sta_pre_auth_ctx &&
 		(sta_pre_auth_ctx->mlmState != eLIM_MLM_AUTHENTICATED_STATE))) {
 		/*
 		 * STA is not pre-authenticated yet requesting Re/Association
@@ -1411,9 +1411,9 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	 * check here if the parsedAssocReq already pointing to the assoc_req
 	 * and free it before assigning this new assoc_req
 	 */
-	if (session->parsedAssocReq != NULL) {
+	if (session->parsedAssocReq) {
 		tmp_assoc_req = session->parsedAssocReq[sta_ds->assocId];
-		if (tmp_assoc_req != NULL) {
+		if (tmp_assoc_req) {
 			if (tmp_assoc_req->assocReqFrame) {
 				qdf_mem_free(tmp_assoc_req->assocReqFrame);
 				tmp_assoc_req->assocReqFrame = NULL;
@@ -1428,7 +1428,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	}
 
 	sta_ds->mlmStaContext.htCapability = assoc_req->HTCaps.present;
-	if ((vht_caps != NULL) && vht_caps->present)
+	if ((vht_caps) && vht_caps->present)
 		sta_ds->mlmStaContext.vhtCapability = vht_caps->present;
 	else
 		sta_ds->mlmStaContext.vhtCapability = false;
@@ -1520,7 +1520,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				(uint8_t) (ch_width ?
 				eHT_CHANNEL_WIDTH_40MHZ :
 				eHT_CHANNEL_WIDTH_20MHZ);
-		} else if ((vht_caps != NULL) && vht_caps->present) {
+		} else if ((vht_caps) && vht_caps->present) {
 			/*
 			 * Check if STA has enabled it's channel bonding mode.
 			 * If channel bonding mode is enabled, we decide based
@@ -1550,7 +1550,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
 	}
 
-	if ((vht_caps != NULL) && vht_caps->present &&
+	if ((vht_caps) && vht_caps->present &&
 	    assoc_req->wmeInfoPresent) {
 		sta_ds->vhtLdpcCapable =
 			(uint8_t) vht_caps->ldpcCodingCap;
@@ -1839,7 +1839,7 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 {
 	tpSirAssocReq tmp_assoc_req;
 
-	if (assoc_req != NULL) {
+	if (assoc_req) {
 		if (assoc_req->assocReqFrame) {
 			qdf_mem_free(assoc_req->assocReqFrame);
 			assoc_req->assocReqFrame = NULL;
@@ -1853,12 +1853,12 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 	}
 
 	/* If it is not duplicate Assoc request then only make to Null */
-	if ((sta_ds != NULL) &&
+	if ((sta_ds) &&
 	    (sta_ds->mlmStaContext.mlmState != eLIM_MLM_WT_ADD_STA_RSP_STATE)) {
-		if (session->parsedAssocReq != NULL) {
+		if (session->parsedAssocReq) {
 			tmp_assoc_req =
 				session->parsedAssocReq[sta_ds->assocId];
-			if (tmp_assoc_req != NULL) {
+			if (tmp_assoc_req) {
 				if (tmp_assoc_req->assocReqFrame) {
 					qdf_mem_free(
 						tmp_assoc_req->assocReqFrame);
@@ -2110,7 +2110,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	 */
 	sta_ds = dph_lookup_hash_entry(mac_ctx, hdr->sa, &assoc_id,
 				&session->dph.dphHashTable);
-	if (NULL != sta_ds) {
+	if (sta_ds) {
 		if (hdr->fc.retry > 0) {
 			pe_err("STA is initiating Assoc Req after ACK lost. Do not process sessionid: %d sys sub_type=%d for role=%d from: "
 				MAC_ADDRESS_STR, session->peSessionId,
@@ -2337,7 +2337,7 @@ static void lim_fill_assoc_ind_wapi_info(struct mac_context *mac_ctx,
 	tpSirAssocReq assoc_req, tpLimMlmAssocInd assoc_ind,
 	const uint8_t *wpsie)
 {
-	if (assoc_req->wapiPresent && (NULL == wpsie)) {
+	if (assoc_req->wapiPresent && (!wpsie)) {
 		pe_debug("Received WAPI IE length in Assoc Req is %d",
 			assoc_req->wapi.length);
 		assoc_ind->wapiIE.wapiIEdata[0] = SIR_MAC_WAPI_EID;
@@ -2563,7 +2563,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 				assoc_req->addIE.addIEdata,
 				assoc_req->addIE.length);
 		}
-		if (assoc_req->rsnPresent && (NULL == wpsie)) {
+		if (assoc_req->rsnPresent && (!wpsie)) {
 			pe_debug("Assoc Req RSN IE len: %d",
 				assoc_req->rsn.length);
 			assoc_ind->rsnIE.length = 2 + assoc_req->rsn.length;
@@ -2589,7 +2589,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		}
 
 		/* This check is to avoid extra Sec IEs present incase of WPS */
-		if (assoc_req->wpaPresent && (NULL == wpsie)) {
+		if (assoc_req->wpaPresent && (!wpsie)) {
 			rsn_len = assoc_ind->rsnIE.length;
 			if ((rsn_len + assoc_req->wpa.length)
 				>= WLAN_MAX_IE_LEN) {

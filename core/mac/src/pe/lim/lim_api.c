@@ -461,7 +461,7 @@ void lim_cleanup(struct mac_context *mac)
 	pe_deregister_mgmt_rx_frm_callback(mac);
 
 	/* free up preAuth table */
-	if (mac->lim.gLimPreAuthTimerTable.pTable != NULL) {
+	if (mac->lim.gLimPreAuthTimerTable.pTable) {
 		for (i = 0; i < mac->lim.gLimPreAuthTimerTable.numEntry; i++)
 			qdf_mem_free(mac->lim.gLimPreAuthTimerTable.pTable[i]);
 		qdf_mem_free(mac->lim.gLimPreAuthTimerTable.pTable);
@@ -469,23 +469,23 @@ void lim_cleanup(struct mac_context *mac)
 		mac->lim.gLimPreAuthTimerTable.numEntry = 0;
 	}
 
-	if (NULL != mac->lim.pDialogueTokenHead) {
+	if (mac->lim.pDialogueTokenHead) {
 		lim_delete_dialogue_token_list(mac);
 	}
 
-	if (NULL != mac->lim.pDialogueTokenTail) {
+	if (mac->lim.pDialogueTokenTail) {
 		qdf_mem_free(mac->lim.pDialogueTokenTail);
 		mac->lim.pDialogueTokenTail = NULL;
 	}
 
-	if (mac->lim.gpLimMlmSetKeysReq != NULL) {
+	if (mac->lim.gpLimMlmSetKeysReq) {
 		qdf_mem_zero(mac->lim.gpLimMlmSetKeysReq,
 			     sizeof(tLimMlmSetKeysReq));
 		qdf_mem_free(mac->lim.gpLimMlmSetKeysReq);
 		mac->lim.gpLimMlmSetKeysReq = NULL;
 	}
 
-	if (mac->lim.gpLimMlmAuthReq != NULL) {
+	if (mac->lim.gpLimMlmAuthReq) {
 		qdf_mem_free(mac->lim.gpLimMlmAuthReq);
 		mac->lim.gpLimMlmAuthReq = NULL;
 	}
@@ -919,8 +919,8 @@ static void pe_free_nested_messages(struct scheduler_msg *msg)
    -----------------------------------------------------------------*/
 void pe_free_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
-	if (pMsg != NULL) {
-		if (NULL != pMsg->bodyptr) {
+	if (pMsg) {
+		if (pMsg->bodyptr) {
 			if (SIR_BB_XPORT_MGMT_MSG == pMsg->type) {
 				cds_pkt_return_packet((cds_pkt_t *) pMsg->
 						      bodyptr);
@@ -954,7 +954,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 {
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (mac_ctx == NULL)
+	if (!mac_ctx)
 		return QDF_STATUS_E_FAILURE;
 
 	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG)
@@ -1187,7 +1187,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 	int ret;
 
 	mac = cds_get_context(QDF_MODULE_ID_PE);
-	if (NULL == mac) {
+	if (!mac) {
 		/* cannot log a failure without a valid mac */
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
@@ -1842,11 +1842,11 @@ void lim_fill_join_rsp_ht_caps(struct pe_session *session,
 {
 	struct ht_profile *ht_profile;
 
-	if (session == NULL) {
+	if (!session) {
 		pe_err("Invalid Session");
 		return;
 	}
-	if (join_rsp == NULL) {
+	if (!join_rsp) {
 		pe_err("Invalid Join Response");
 		return;
 	}
@@ -2099,7 +2099,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
 				roam_sync_ind_ptr->roamed_vdev_id);
-	if (session_ptr == NULL) {
+	if (!session_ptr) {
 		pe_err("LFR3:Unable to find session");
 		return status;
 	}
@@ -2201,7 +2201,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	lim_delete_tdls_peers(mac_ctx, session_ptr);
 	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId, &aid,
 					    &session_ptr->dph.dphHashTable);
-	if (curr_sta_ds == NULL) {
+	if (!curr_sta_ds) {
 		pe_err("LFR3:failed to lookup hash entry");
 		ft_session_ptr->bRoamSynchInProgress = false;
 		return status;
@@ -2216,7 +2216,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 					 roam_sync_ind_ptr->bssid.bytes,
 					 DPH_STA_HASH_INDEX_PEER,
 					 &ft_session_ptr->dph.dphHashTable);
-	if (curr_sta_ds == NULL) {
+	if (!curr_sta_ds) {
 		pe_err("LFR3:failed to add hash entry for %pM",
 		       add_bss_params->staContext.staMac);
 		ft_session_ptr->bRoamSynchInProgress = false;
@@ -2278,7 +2278,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("LFR3: Session RicLength: %d", ft_session_ptr->RICDataLen);
-	if (ft_session_ptr->ricData != NULL) {
+	if (ft_session_ptr->ricData) {
 		roam_sync_ind_ptr->join_rsp->parsedRicRspLen =
 					ft_session_ptr->RICDataLen;
 		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames,
@@ -2290,7 +2290,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 
 #ifdef FEATURE_WLAN_ESE
-	if (ft_session_ptr->tspecIes != NULL) {
+	if (ft_session_ptr->tspecIes) {
 		roam_sync_ind_ptr->join_rsp->tspecIeLen =
 					ft_session_ptr->tspecLen;
 		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames +
@@ -2487,7 +2487,7 @@ void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *sessi
 	struct sir_lost_link_info *lost_link_info;
 	struct scheduler_msg mmh_msg = {0};
 
-	if ((NULL == mac) || (NULL == session)) {
+	if ((!mac) || (!session)) {
 		pe_err("parameter NULL");
 		return;
 	}
@@ -2527,7 +2527,7 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
 					   mac_ptr->lim.maxStation,
 					   eSIR_MONITOR_MODE,
 					   msg->vdev_id);
-	if (psession_entry == NULL) {
+	if (!psession_entry) {
 		pe_err("Monitor mode: Session Can not be created");
 		lim_print_mac_addr(mac_ptr, msg->bss_id.bytes, LOGE);
 		return;

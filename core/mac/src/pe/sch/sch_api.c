@@ -68,7 +68,7 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	}
 
 	beaconParams = qdf_mem_malloc(sizeof(tSendbeaconParams));
-	if (NULL == beaconParams)
+	if (!beaconParams)
 		return QDF_STATUS_E_NOMEM;
 
 	msgQ.type = WMA_SEND_BEACON_REQ;
@@ -134,7 +134,7 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	pe_session->beacon = NULL;
 
 	pe_session->beacon = qdf_mem_malloc(size);
-	if (pe_session->beacon != NULL) {
+	if (pe_session->beacon) {
 		qdf_mem_copy(pe_session->beacon, beaconPayload, size);
 		pe_session->bcnLen = size;
 	}
@@ -164,7 +164,7 @@ static uint32_t lim_remove_p2p_ie_from_add_ie(struct mac_context *mac,
 	qdf_mem_copy(addIeWoP2pIe, ptr, left);
 	*addnIELenWoP2pIe = left;
 
-	if (addIeWoP2pIe != NULL) {
+	if (addIeWoP2pIe) {
 		while (left >= 2) {
 			elem_id  = ptr[0];
 			elem_len = ptr[1];
@@ -226,7 +226,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 		*/
 		addIeWoP2pIe = qdf_mem_malloc(pe_session->add_ie_params.
 						probeRespDataLen);
-		if (NULL == addIeWoP2pIe) {
+		if (!addIeWoP2pIe) {
 			pe_err("FAILED to alloc memory when removing P2P IE");
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -241,7 +241,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 		/* Probe rsp IE available */
 		/*need to check the data length */
 		addIE = qdf_mem_malloc(addnIELenWoP2pIe);
-		if (NULL == addIE) {
+		if (!addIE) {
 			pe_err("Unable to get WNI_CFG_PROBE_RSP_ADDNIE_DATA1 length");
 			qdf_mem_free(addIeWoP2pIe);
 			return QDF_STATUS_E_NOMEM;
@@ -342,7 +342,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 	qdf_mem_free(addIE);
 
 	pprobeRespParams = qdf_mem_malloc(sizeof(tSendProbeRespParams));
-	if (NULL == pprobeRespParams) {
+	if (!pprobeRespParams) {
 		pe_err("malloc failed for bytes %d", nBytes);
 	} else {
 		sir_copy_mac_addr(pprobeRespParams->bssId, pe_session->bssId);
@@ -409,7 +409,7 @@ int sch_gen_timing_advert_frame(struct mac_context *mac_ctx, tSirMacAddr self_ad
 
 	buf_size = sizeof(tSirMacMgmtHdr) + payload_size;
 	*buf = qdf_mem_malloc(buf_size);
-	if (*buf == NULL) {
+	if (!*buf) {
 		pe_err("Cannot allocate memory");
 		return QDF_STATUS_E_FAILURE;
 	}

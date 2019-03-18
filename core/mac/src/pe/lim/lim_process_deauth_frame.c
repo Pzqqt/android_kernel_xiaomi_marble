@@ -330,7 +330,7 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 
 	sta_ds = dph_lookup_hash_entry(mac_ctx, addr, &aid,
 				       &pe_session->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_debug("Hash entry not found");
 		return;
 	}
@@ -429,7 +429,7 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 		case eLIM_MLM_IDLE_STATE:
 		case eLIM_MLM_LINK_ESTABLISHED_STATE:
 #ifdef FEATURE_WLAN_TDLS
-			if ((NULL != sta_ds)
+			if ((sta_ds)
 				&& (STA_ENTRY_TDLS_PEER == sta_ds->staType)) {
 				pe_err("received Deauth frame in state %X with "
 					"reason code %d from Tdls peer"
@@ -498,7 +498,7 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 	 * Extract 'associated' context for STA, if any.
 	 * This is maintained by DPH and created by LIM.
 	 */
-	if (NULL == sta_ds) {
+	if (!sta_ds) {
 		pe_err("sta_ds is NULL");
 		return;
 	}

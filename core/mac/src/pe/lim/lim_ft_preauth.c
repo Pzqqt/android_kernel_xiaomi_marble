@@ -131,7 +131,7 @@ int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
 	uint8_t session_id;
 	tpSirFTPreAuthReq ft_pre_auth_req = (tSirFTPreAuthReq *) msg->bodyptr;
 
-	if (NULL == ft_pre_auth_req) {
+	if (!ft_pre_auth_req) {
 		pe_err("tSirFTPreAuthReq is NULL");
 		return buf_consumed;
 	}
@@ -140,7 +140,7 @@ int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 					   ft_pre_auth_req->currbssId,
 					   &session_id);
-	if (session == NULL) {
+	if (!session) {
 		pe_err("Unable to find session for the bssid"
 			   MAC_ADDRESS_STR,
 			   MAC_ADDR_ARRAY(ft_pre_auth_req->currbssId));
@@ -228,7 +228,7 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 	unsigned int session_id;
 	eCsrAuthType auth_type;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return;
 	}
@@ -322,7 +322,7 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 	ft_session =
 		pe_find_session_by_bssid(mac, pe_session->limReAssocbssId,
 					 &sessionId);
-	if (ft_session == NULL) {
+	if (!ft_session) {
 		pe_err("No session found for bssid");
 		lim_print_mac_addr(mac, pe_session->limReAssocbssId, LOGE);
 		return QDF_STATUS_E_FAILURE;
@@ -358,8 +358,8 @@ QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 static void lim_ft_process_pre_auth_result(struct mac_context *mac,
 					   struct pe_session *pe_session)
 {
-	if (NULL == pe_session ||
-	    NULL == pe_session->ftPEContext.pFTPreAuthReq)
+	if (!pe_session ||
+	    !pe_session->ftPEContext.pFTPreAuthReq)
 		return;
 
 	/* Nothing to be done if the session is not in STA mode */
@@ -421,7 +421,7 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 	 * SME once we resume link
 	 */
 	pe_session->ftPEContext.saved_auth_rsp_length = 0;
-	if ((auth_rsp != NULL) && (auth_rsp_length < MAX_FTIE_SIZE)) {
+	if ((auth_rsp) && (auth_rsp_length < MAX_FTIE_SIZE)) {
 		qdf_mem_copy(pe_session->ftPEContext.saved_auth_rsp,
 			     auth_rsp, auth_rsp_length);
 		pe_session->ftPEContext.saved_auth_rsp_length =
@@ -521,7 +521,7 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	pe_err("FT Pre-Auth Time Out!!!!");
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
-	if (NULL == session) {
+	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -535,7 +535,7 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	/* Reset the flag to indicate preauth request session */
 	session->ftPEContext.ftPreAuthSession = false;
 
-	if (NULL == session->ftPEContext.pFTPreAuthReq) {
+	if (!session->ftPEContext.pFTPreAuthReq) {
 		/* Auth Rsp might already be posted to SME and ftcleanup done */
 		pe_err("pFTPreAuthReq is NULL sessionId: %d",
 			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
@@ -597,7 +597,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 
 	ft_pre_auth_rsp = qdf_mem_malloc(rsp_len);
 	if (!ft_pre_auth_rsp) {
-		QDF_ASSERT(ft_pre_auth_rsp != NULL);
+		QDF_ASSERT(ft_pre_auth_rsp);
 		return;
 	}
 
@@ -622,7 +622,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 
 	/* Attach the auth response now back to SME */
 	ft_pre_auth_rsp->ft_ies_length = 0;
-	if ((auth_rsp != NULL) && (auth_rsp_length < MAX_FTIE_SIZE)) {
+	if ((auth_rsp) && (auth_rsp_length < MAX_FTIE_SIZE)) {
 		/* Only 11r assoc has FT IEs */
 		qdf_mem_copy(ft_pre_auth_rsp->ft_ies,
 			     auth_rsp, auth_rsp_length);
@@ -673,7 +673,7 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 	uint8_t session_id;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("Session entry is NULL"));
 		return QDF_STATUS_E_FAILURE;
@@ -690,7 +690,7 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
 						    session_id,
 						    WLAN_LEGACY_MAC_ID);
-	if (vdev == NULL) {
+	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("vdev object is NULL"));
 		qdf_mem_free(req);
@@ -772,7 +772,7 @@ void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 								  session_id);
 	}
 
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("SmeSessionId:%d PeSessionId:%d does not exist",
 			session_id,
 			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);

@@ -774,7 +774,7 @@ lim_post_sme_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBu
 {
 	struct scheduler_msg msg = {0};
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -821,7 +821,7 @@ lim_post_mlm_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBu
 {
 	struct scheduler_msg msg = {0};
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}

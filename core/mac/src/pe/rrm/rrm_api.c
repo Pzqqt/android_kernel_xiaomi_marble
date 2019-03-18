@@ -64,7 +64,7 @@ rrm_cache_mgmt_tx_power(struct mac_context *mac, int8_t txPower,
 {
 	pe_debug("Cache Mgmt Tx Power: %d", txPower);
 
-	if (pe_session == NULL)
+	if (!pe_session)
 		mac->rrm.rrmPEContext.txMgmtPower = txPower;
 	else
 		pe_session->txMgmtPower = txPower;
@@ -87,7 +87,7 @@ rrm_cache_mgmt_tx_power(struct mac_context *mac, int8_t txPower,
  */
 int8_t rrm_get_mgmt_tx_power(struct mac_context *mac, struct pe_session *pe_session)
 {
-	if (pe_session == NULL)
+	if (!pe_session)
 		return mac->rrm.rrmPEContext.txMgmtPower;
 
 	pe_debug("tx mgmt pwr %d", pe_session->txMgmtPower);
@@ -119,7 +119,7 @@ rrm_send_set_max_tx_power_req(struct mac_context *mac, int8_t txPower,
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msgQ = {0};
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Invalid parameters");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -189,7 +189,7 @@ QDF_STATUS rrm_set_max_tx_power_rsp(struct mac_context *mac,
 		pe_session = pe_find_session_by_bssid(mac,
 							 pMaxTxParams->bssId.bytes,
 							 &sessionId);
-		if (pe_session == NULL) {
+		if (!pe_session) {
 			retCode = QDF_STATUS_E_FAILURE;
 		} else {
 			rrm_cache_mgmt_tx_power(mac, pMaxTxParams->power,
@@ -231,7 +231,7 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 
 	pe_debug("Received Link measurement request");
 
-	if (pRxPacketInfo == NULL || pLinkReq == NULL || pe_session == NULL) {
+	if (!pRxPacketInfo || !pLinkReq || !pe_session) {
 		pe_err("Invalid parameters - Ignoring the request");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -305,7 +305,7 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 	uint8_t i;
 	struct scheduler_msg mmhMsg = {0};
 
-	if (pNeighborRep == NULL || pe_session == NULL) {
+	if (!pNeighborRep || !pe_session) {
 		pe_err("Invalid parameters");
 		return status;
 	}
@@ -420,13 +420,13 @@ rrm_process_neighbor_report_req(struct mac_context *mac,
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 
-	if (pNeighborReq == NULL) {
+	if (!pNeighborReq) {
 		pe_err("NeighborReq is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	pe_session = pe_find_session_by_bssid(mac, pNeighborReq->bssId,
 						 &sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given bssId");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -674,12 +674,12 @@ rrm_fill_beacon_ies(struct mac_context *mac,
 	uint16_t BcnNumIes, total_ies_len;
 	uint8_t rem_len = 0;
 
-	if ((pIes == NULL) || (pNumIes == NULL) || (pBssDesc == NULL)) {
+	if ((!pIes) || (!pNumIes) || (!pBssDesc)) {
 		pe_err("Invalid parameters");
 		return 0;
 	}
 	/* Make sure that if eid is null, numEids is set to zero. */
-	numEids = (eids == NULL) ? 0 : numEids;
+	numEids = (!eids) ? 0 : numEids;
 
 	total_ies_len = GET_IE_LEN_IN_BSS(pBssDesc->length);
 	BcnNumIes = total_ies_len;
@@ -796,12 +796,12 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 
 	pe_debug("Received beacon report xmit indication");
 
-	if (NULL == beacon_xmit_ind) {
+	if (!beacon_xmit_ind) {
 		pe_err("Received beacon_xmit_ind is NULL in PE");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (NULL == curr_req) {
+	if (!curr_req) {
 		pe_err("Received report xmit while there is no request pending in PE");
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -814,7 +814,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 
 		session_entry = pe_find_session_by_bssid(mac_ctx,
 				beacon_xmit_ind->bssId, &session_id);
-		if (NULL == session_entry) {
+		if (!session_entry) {
 			pe_err("session does not exist for given bssId");
 			status = QDF_STATUS_E_FAILURE;
 			goto end;
@@ -974,7 +974,7 @@ end:
 		rrm_cleanup(mac_ctx);
 	}
 
-	if (NULL != report)
+	if (report)
 		qdf_mem_free(report);
 
 	return status;
@@ -1047,7 +1047,7 @@ QDF_STATUS rrm_process_beacon_req(struct mac_context *mac_ctx, tSirMacAddr peer,
 	tpSirMacRadioMeasureReport report;
 
 	if (curr_req) {
-		if (*radiomes_report == NULL) {
+		if (!*radiomes_report) {
 			/*
 			 * Allocate memory to send reports for
 			 * any subsequent requests.
@@ -1107,7 +1107,7 @@ QDF_STATUS update_rrm_report(struct mac_context *mac_ctx,
 			     tDot11fRadioMeasurementRequest *rrm_req,
 			     uint8_t *num_report, int index)
 {
-	if (report == NULL) {
+	if (!report) {
 		/*
 		 * Allocate memory to send reports for
 		 * any subsequent requests.

@@ -138,7 +138,7 @@ sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 	}
 
 	p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx, &add_ie[0], addn_ielen);
-	if ((p2p_ie != NULL) && !mac_ctx->beacon_offload) {
+	if ((p2p_ie) && !mac_ctx->beacon_offload) {
 		/* get NoA attribute stream P2P IE */
 		noa_len = lim_get_noa_attr_stream(mac_ctx, noa_strm, session);
 		if (noa_len) {
@@ -474,7 +474,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 				POPULATE_DOT11F_RATES_OPERATIONAL,
 				&bcn_2->ExtSuppRates, session);
 
-	if (session->pLimStartBssReq != NULL) {
+	if (session->pLimStartBssReq) {
 		populate_dot11f_wpa(mac_ctx, &session->pLimStartBssReq->rsnIE,
 				    &bcn_2->WPA);
 		populate_dot11f_rsn_opaque(mac_ctx,

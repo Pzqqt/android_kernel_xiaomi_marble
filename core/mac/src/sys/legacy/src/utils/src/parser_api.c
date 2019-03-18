@@ -523,7 +523,7 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 	   sending mgmt frames (lile probe req) which need to go out before any session is present.
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
-		if (pe_session != NULL) {
+		if (pe_session) {
 			nRates = pe_session->extRateSet.numRates;
 			qdf_mem_copy(rates, pe_session->extRateSet.rate,
 				     nRates);
@@ -615,7 +615,7 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->lsigTXOPProtection = ht_cap_info->l_sig_tx_op_protection;
 
 	/* All sessionized entries will need the check below */
-	if (pe_session == NULL) {     /* Only in case of NO session */
+	if (!pe_session) {     /* Only in case of NO session */
 		pDot11f->supportedChannelWidthSet =
 			ht_cap_info->supported_channel_width_set;
 		pDot11f->advCodingCap = ht_cap_info->adv_coding_cap;
@@ -1132,7 +1132,7 @@ populate_dot11f_ht_info(struct mac_context *mac,
 	qdf_size_t ncfglen;
 	QDF_STATUS nSirStatus;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("Invalid session entry");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1479,7 +1479,7 @@ populate_dot11f_supp_rates(struct mac_context *mac,
 	 * req) which need to go out before any session is present.
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
-		if (pe_session != NULL) {
+		if (pe_session) {
 			nRates = pe_session->rateSet.numRates;
 			qdf_mem_copy(rates, pe_session->rateSet.rate,
 				     nRates);
@@ -5373,7 +5373,7 @@ QDF_STATUS populate_dot11_assoc_res_p2p_ie(struct mac_context *mac,
 
 	p2pIe = limGetP2pIEPtr(mac, pRcvdAssocReq->addIE.addIEdata,
 			       pRcvdAssocReq->addIE.length);
-	if (p2pIe != NULL) {
+	if (p2pIe) {
 		pDot11f->present = 1;
 		pDot11f->P2PStatus.present = 1;
 		pDot11f->P2PStatus.status = QDF_STATUS_SUCCESS;

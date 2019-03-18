@@ -526,7 +526,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		 */
 		session = pe_find_session_by_bssid(mac_ctx,
 				sme_start_bss_req->bssid.bytes, &session_id);
-		if (session != NULL) {
+		if (session) {
 			pe_warn("Session Already exists for given BSSID");
 			ret_code = eSIR_SME_BSS_ALREADY_STARTED_OR_JOINED;
 			session = NULL;
@@ -936,15 +936,15 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	} /* if (mac_ctx->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) */
 
 free:
-	if ((session != NULL) &&
+	if ((session) &&
 	    (session->pLimStartBssReq == sme_start_bss_req)) {
 		session->pLimStartBssReq = NULL;
 	}
-	if (NULL != sme_start_bss_req)
+	if (sme_start_bss_req)
 		qdf_mem_free(sme_start_bss_req);
-	if (NULL != mlm_start_req)
+	if (mlm_start_req)
 		qdf_mem_free(mlm_start_req);
-	if (NULL != session) {
+	if (session) {
 		pe_delete_session(mac_ctx, session);
 		session = NULL;
 	}
@@ -1211,7 +1211,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session = pe_find_session_by_bssid(mac_ctx, bss_desc->bssId,
 				&session_id);
 
-		if (session != NULL) {
+		if (session) {
 			pe_err("Session(%d) Already exists for BSSID: "
 				   MAC_ADDRESS_STR " in limSmeState = %X",
 				session_id,
@@ -1246,7 +1246,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 					&session_id, mac_ctx->lim.maxStation,
 					eSIR_INFRASTRUCTURE_MODE,
 					sme_join_req->sessionId);
-			if (session == NULL) {
+			if (!session) {
 				pe_err("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto end;
@@ -1299,7 +1299,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				SIR_MAC_CISCO_OUI, SIR_MAC_CISCO_OUI_SIZE,
 				((uint8_t *)&bss_desc->ieFields), ie_len);
 
-		if (NULL != vendor_ie) {
+		if (vendor_ie) {
 			pe_debug("Cisco vendor OUI present");
 			session->isCiscoVendorAP = true;
 		} else {
@@ -1608,11 +1608,11 @@ end:
 	if (sme_join_req) {
 		qdf_mem_free(sme_join_req);
 		sme_join_req = NULL;
-		if (NULL != session)
+		if (session)
 			session->pLimJoinReq = NULL;
 	}
 	if (ret_code != eSIR_SME_SUCCESS) {
-		if (NULL != session) {
+		if (session) {
 			pe_delete_session(mac_ctx, session);
 			session = NULL;
 		}
@@ -1690,7 +1690,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			reassoc_req->bssDescription.bssId,
 			&session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("Session does not exist for given bssId");
 		lim_print_mac_addr(mac_ctx, reassoc_req->bssDescription.bssId,
 				LOGE);
@@ -1698,7 +1698,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		session_entry =
 			pe_find_session_by_sme_session_id(mac_ctx,
 					sme_session_id);
-		if (session_entry != NULL)
+		if (session_entry)
 			lim_handle_sme_join_result(mac_ctx,
 					eSIR_SME_INVALID_PARAMETERS,
 					eSIR_MAC_UNSPEC_FAILURE_STATUS,
@@ -1963,7 +1963,7 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 	uint8_t sessionId;
 	uint8_t smesessionId;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -1988,7 +1988,7 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 	pe_session = pe_find_session_by_bssid(mac,
 				smeDisassocReq.bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given bssId "
 			   MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(smeDisassocReq.bssid.bytes));
@@ -2176,7 +2176,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	pe_session = pe_find_session_by_bssid(mac,
 				smeDisassocCnf.bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given bssId");
 		status = lim_prepare_disconnect_done_ind(mac, &msg,
 						smeDisassocCnf.sme_session_id,
@@ -2259,7 +2259,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 		sta = dph_lookup_hash_entry(mac,
 				smeDisassocCnf.peer_macaddr.bytes, &aid,
 				&pe_session->dph.dphHashTable);
-		if (sta == NULL) {
+		if (!sta) {
 			pe_err("DISASSOC_CNF for a STA with no context, addr= "
 				MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes));
@@ -2335,7 +2335,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 					sme_deauth_req.bssid.bytes,
 					&session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("session does not exist for given bssId");
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		deauth_trigger = eLIM_HOST_DEAUTH;
@@ -2521,7 +2521,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 	uint8_t session_id;      /* PE sessionID */
 	uint8_t sme_session_id;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -2553,7 +2553,7 @@ __lim_process_sme_set_context_req(struct mac_context *mac_ctx,
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			set_context_req->bssid.bytes, &session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("Session does not exist for given BSSID");
 		lim_send_sme_set_context_rsp(mac_ctx,
 				set_context_req->peer_macaddr, 1,
@@ -2800,7 +2800,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	pe_session = pe_find_session_by_bssid(mac,
 				stop_bss_req.bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("session does not exist for given BSSID");
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP,
 				 eSIR_SME_INVALID_PARAMETERS, smesessionId);
@@ -2941,7 +2941,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 	uint8_t session_id;
 	tpSirAssocReq assoc_req;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
 		return;
 	}
@@ -2954,7 +2954,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 
 	session_entry = pe_find_session_by_bssid(mac_ctx, assoc_cnf.bssid.bytes,
 			&session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("session does not exist for given bssId");
 		goto end;
 	}
@@ -2968,7 +2968,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 	}
 	sta_ds = dph_get_hash_entry(mac_ctx, assoc_cnf.aid,
 			&session_entry->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("Rcvd invalid msg %X due to no STA ctx, aid %d, peer",
 				msg_type, assoc_cnf.aid);
 		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOGE);
@@ -3063,8 +3063,8 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 				       session_entry);
 	}
 end:
-	if (((session_entry != NULL) && (sta_ds != NULL)) &&
-		(session_entry->parsedAssocReq[sta_ds->assocId] != NULL)) {
+	if (((session_entry) && (sta_ds)) &&
+		(session_entry->parsedAssocReq[sta_ds->assocId])) {
 		assoc_req = (tpSirAssocReq)
 			session_entry->parsedAssocReq[sta_ds->assocId];
 		if (assoc_req->assocReqFrame) {
@@ -3087,7 +3087,7 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 	uint8_t sessionId;      /* PE sessionId */
 	uint8_t smesessionId;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -3096,7 +3096,7 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 	smesessionId = pSirAddts->sessionId;
 	pe_session = pe_find_session_by_bssid(mac, pSirAddts->bssid.bytes,
 						 &sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given bssId");
 		lim_send_sme_addts_rsp(mac, pSirAddts->rspReqd,
 				       QDF_STATUS_E_FAILURE,
@@ -3128,7 +3128,7 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
 
-	if (sta == NULL) {
+	if (!sta) {
 		pe_err("Cannot find AP context for addts req");
 		goto send_failure_addts_rsp;
 	}
@@ -3238,7 +3238,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	pe_session = pe_find_session_by_bssid(mac,
 				pDeltsReq->bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given bssId");
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -3306,7 +3306,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
-	if (sta != NULL) {
+	if (sta) {
 		lim_send_edca_params(mac, pe_session->gLimEdcaParamsActive,
 				     sta->bssId, false);
 		status = QDF_STATUS_SUCCESS;
@@ -3332,7 +3332,7 @@ void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)
 	pe_session = pe_find_session_by_session_id(mac,
 				mac->lim.limTimers.gLimAddtsRspTimer.
 				sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -3515,14 +3515,14 @@ static void lim_process_sme_update_config(struct mac_context *mac_ctx,
 	struct pe_session *pe_session;
 
 	pe_debug("received eWNI_SME_UPDATE_HT_CONFIG message");
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	pe_session = pe_find_session_by_sme_session_id(mac_ctx,
 						       msg->sme_session_id);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_warn("Session does not exist for given BSSID");
 		return;
 	}
@@ -3559,7 +3559,7 @@ lim_send_vdev_restart(struct mac_context *mac,
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Invalid parameters");
 		return;
 	}
@@ -3777,7 +3777,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 
 	pe_debug("received Update Beacon Interval message");
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -3788,7 +3788,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 	pe_session = pe_find_session_by_bssid(mac,
 				pChangeBIParams->bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does not exist for given BSSID");
 		return;
 	}
@@ -3839,7 +3839,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 	tpDphHashNode sta = NULL;
 
 	pe_debug("received Set HT 20/40 mode message");
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -3849,7 +3849,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 	pe_session = pe_find_session_by_bssid(mac,
 				pSetHT2040Mode->bssid.bytes,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_debug("Session does not exist for given BSSID");
 		lim_print_mac_addr(mac, pSetHT2040Mode->bssid.bytes, LOGD);
 		return;
@@ -3893,7 +3893,7 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 	for (staId = 0; staId < pe_session->dph.dphHashTable.size; staId++) {
 		sta = dph_get_hash_entry(mac, staId,
 				&pe_session->dph.dphHashTable);
-		if (NULL == sta)
+		if (!sta)
 			continue;
 
 		if (sta->valid && sta->htSupportedChannelWidthSet) {
@@ -3987,7 +3987,7 @@ lim_send_set_max_tx_power_req(struct mac_context *mac, int8_t txPower,
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msgQ = {0};
 
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Invalid parameters");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4045,7 +4045,7 @@ static void __lim_process_sme_register_mgmt_frame_req(struct mac_context *mac_ct
 			    (qdf_list_node_t **) &lim_mgmt_regn);
 	qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
-	while (lim_mgmt_regn != NULL) {
+	while (lim_mgmt_regn) {
 		if (lim_mgmt_regn->frameType != sme_req->frameType)
 			goto skip_match;
 		if (sme_req->matchLen) {
@@ -4086,7 +4086,7 @@ skip_match:
 		lim_mgmt_regn =
 			qdf_mem_malloc(sizeof(struct mgmt_frm_reg_info) +
 					sme_req->matchLen);
-		if (lim_mgmt_regn != NULL) {
+		if (lim_mgmt_regn) {
 			lim_mgmt_regn->frameType = sme_req->frameType;
 			lim_mgmt_regn->matchLen = sme_req->matchLen;
 			lim_mgmt_regn->sessionId = sme_req->sessionId;
@@ -4114,7 +4114,7 @@ __lim_process_sme_reset_ap_caps_change(struct mac_context *mac, uint32_t *pMsgBu
 	struct pe_session *pe_session;
 	uint8_t sessionId = 0;
 
-	if (pMsgBuf == NULL) {
+	if (!pMsgBuf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -4123,7 +4123,7 @@ __lim_process_sme_reset_ap_caps_change(struct mac_context *mac, uint32_t *pMsgBu
 	pe_session =
 		pe_find_session_by_bssid(mac, pResetCapsChange->bssId.bytes,
 					 &sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("Session does not exist for given BSSID");
 		return;
 	}
@@ -4149,7 +4149,7 @@ static void lim_register_mgmt_frame_ind_cb(struct mac_context *mac_ctx,
 	struct sir_sme_mgmt_frame_cb_req *sme_req =
 		(struct sir_sme_mgmt_frame_cb_req *)msg_buf;
 
-	if (NULL == msg_buf) {
+	if (!msg_buf) {
 		pe_err("msg_buf is null");
 		return;
 	}
@@ -4246,7 +4246,7 @@ static void lim_set_pdev_ht_ie(struct mac_context *mac_ctx, uint8_t pdev_id,
 		if (NSS_1x1_MODE == i) {
 			p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_HTCAPS,
 					ie_params->ie_ptr, ie_params->ie_len);
-			if (NULL == p_ie) {
+			if (!p_ie) {
 				qdf_mem_free(ie_params->ie_ptr);
 				qdf_mem_free(ie_params);
 				pe_err("failed to get IE ptr");
@@ -4316,7 +4316,7 @@ static void lim_set_pdev_vht_ie(struct mac_context *mac_ctx, uint8_t pdev_id,
 		if (NSS_1x1_MODE == i) {
 			p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_VHTCAPS,
 					ie_params->ie_ptr, ie_params->ie_len);
-			if (NULL == p_ie) {
+			if (!p_ie) {
 				qdf_mem_free(ie_params->ie_ptr);
 				qdf_mem_free(ie_params);
 				pe_err("failed to get IE ptr");
@@ -4364,7 +4364,7 @@ static void lim_process_set_vdev_ies_per_band(struct mac_context *mac_ctx,
 	struct sir_set_vdev_ies_per_band *p_msg =
 				(struct sir_set_vdev_ies_per_band *)msg_buf;
 
-	if (NULL == p_msg) {
+	if (!p_msg) {
 		pe_err("NULL p_msg");
 		return;
 	}
@@ -4393,7 +4393,7 @@ static void lim_process_set_pdev_IEs(struct mac_context *mac_ctx, uint32_t *msg_
 
 	ht_vht_cfg = (struct sir_set_ht_vht_cfg *)msg_buf;
 
-	if (NULL == ht_vht_cfg) {
+	if (!ht_vht_cfg) {
 		pe_err("NULL ht_vht_cfg");
 		return;
 	}
@@ -4878,7 +4878,7 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 	struct pe_session *pe_session;
 	uint8_t sessionId;      /* PE sessionID */
 
-	if (pMsg == NULL) {
+	if (!pMsg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -4887,7 +4887,7 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 	pe_session = pe_find_session_by_bssid(mac,
 				pBeaconStartInd->bssid,
 				&sessionId);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		lim_print_mac_addr(mac, pBeaconStartInd->bssid, LOGE);
 		pe_err("Session does not exist for given bssId");
 		return;
@@ -4979,7 +4979,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	uint8_t session_id;      /* PE session_id */
 	int8_t max_tx_pwr;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
 		return;
 	}
@@ -4996,7 +4996,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			ch_change_req->bssid, &session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		lim_print_mac_addr(mac_ctx, ch_change_req->bssid, LOGE);
 		pe_err("Session does not exist for given bssId");
 		return;
@@ -5093,7 +5093,7 @@ lim_start_bss_update_add_ie_buffer(struct mac_context *mac,
 				   uint8_t *pSrcData_buff, uint16_t srcDataLen)
 {
 
-	if (srcDataLen > 0 && pSrcData_buff != NULL) {
+	if (srcDataLen > 0 && pSrcData_buff) {
 		*pDstDataLen = srcDataLen;
 
 		*pDstData_buff = qdf_mem_malloc(*pDstDataLen);
@@ -5135,7 +5135,7 @@ lim_update_add_ie_buffer(struct mac_context *mac,
 			 uint8_t *pSrcData_buff, uint16_t srcDataLen)
 {
 
-	if (NULL == pSrcData_buff) {
+	if (!pSrcData_buff) {
 		pe_err("src buffer is null");
 		return;
 	}
@@ -5184,7 +5184,7 @@ lim_update_ibss_prop_add_ies(struct mac_context *mac, uint8_t **pDstData_buff,
 	ibss_ie = pModifyIE->pIEBuffer;
 	oui_length = pModifyIE->oui_length;
 
-	if ((0 == oui_length) || (NULL == ibss_ie)) {
+	if ((0 == oui_length) || (!ibss_ie)) {
 		pe_err("Invalid set IBSS vendor IE command length %d",
 			oui_length);
 		return false;
@@ -5249,7 +5249,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 	bool ret = false;
 	struct add_ie_params *add_ie_params;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
 		return;
 	}
@@ -5259,7 +5259,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			modify_add_ies->modifyIE.bssid.bytes, &session_id);
 
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("Session not found for given bssid"
 					MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(modify_add_ies->modifyIE.bssid.bytes));
@@ -5267,7 +5267,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 	}
 	if ((0 == modify_add_ies->modifyIE.ieBufferlength) ||
 		(0 == modify_add_ies->modifyIE.ieIDLen) ||
-		(NULL == modify_add_ies->modifyIE.pIEBuffer)) {
+		(!modify_add_ies->modifyIE.pIEBuffer)) {
 		pe_err("Invalid request pIEBuffer %pK ieBufferlength %d ieIDLen %d ieID %d. update Type %d",
 				modify_add_ies->modifyIE.pIEBuffer,
 				modify_add_ies->modifyIE.ieBufferlength,
@@ -5341,7 +5341,7 @@ static void lim_process_update_add_ies(struct mac_context *mac_ctx,
 	uint8_t *new_ptr = NULL;
 	tSirUpdateIE *update_ie;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
 		return;
 	}
@@ -5350,7 +5350,7 @@ static void lim_process_update_add_ies(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			update_ie->bssid.bytes, &session_id);
 
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_debug("Session not found for given bssid"
 			 MAC_ADDRESS_STR,
 			 MAC_ADDR_ARRAY(update_ie->bssid.bytes));
@@ -5572,7 +5572,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
 	enum offset_t ch_offset;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
@@ -5580,7 +5580,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	dfs_csa_ie_req = (tSirDfsCsaIeRequest *)msg_buf;
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			dfs_csa_ie_req->bssid, &session_id);
-	if (session_entry == NULL) {
+	if (!session_entry) {
 		pe_err("Session not found for given BSSID" MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(dfs_csa_ie_req->bssid));
 		return;
@@ -5714,14 +5714,14 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 				(struct sir_sme_ext_cng_chan_req *) msg;
 	struct pe_session *session_entry = NULL;
 
-	if (NULL == msg) {
+	if (!msg) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	session_entry =
 		pe_find_session_by_sme_session_id(mac_ctx,
 						ext_chng_channel->session_id);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("Session not found for given session %d",
 			ext_chng_channel->session_id);
 		return;
@@ -5872,7 +5872,7 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
 
-	if (msg_buf == NULL) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}

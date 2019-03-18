@@ -111,7 +111,7 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 	if (session->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
-		if (session->beacon != NULL) {
+		if (session->beacon) {
 			qdf_mem_free(session->beacon);
 			session->beacon = NULL;
 			session->bcnLen = 0;

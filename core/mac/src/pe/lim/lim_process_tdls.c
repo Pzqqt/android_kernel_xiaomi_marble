@@ -508,7 +508,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 #endif
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -794,7 +794,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 /*  uint32_t tdlsChannelBondingMode; */
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -996,7 +996,7 @@ static void populate_dotf_tdls_vht_aid(struct mac_context *mac, uint32_t selfDot
 				dph_lookup_hash_entry(mac, peerMac.bytes, &aid,
 						      &pe_session->dph.
 						      dphHashTable);
-			if (NULL != sta) {
+			if (sta) {
 				Aid->present = 1;
 				Aid->assocId = aid | LIM_AID_MASK;      /* set bit 14 and 15 1's */
 			} else {
@@ -1367,7 +1367,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	uint8_t qos_mode = 0;
 	uint8_t tdls_link_type;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1563,7 +1563,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 /*  uint32_t tdlsChannelBondingMode; */
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2045,7 +2045,7 @@ lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 	 * All sessionized entries will need the check below
 	 * Only in case of NO session
 	 */
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pDot11f->supportedChannelWidthSet =
 			uHTCapabilityInfo.ht_cap_info.
 			supported_channel_width_set;
@@ -2565,7 +2565,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	if (NULL == sta) {
+	if (!sta) {
 		aid = lim_assign_peer_idx(mac, pe_session);
 
 		if (!aid) {
@@ -2593,7 +2593,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 		sta = dph_add_hash_entry(mac, pAddStaReq->peermac.bytes,
 					 aid, &pe_session->dph.dphHashTable);
 
-		if (NULL == sta) {
+		if (!sta) {
 			pe_err("add hash entry failed");
 			QDF_ASSERT(0);
 			return QDF_STATUS_E_FAILURE;
@@ -2722,7 +2722,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 
 	sta = dph_lookup_hash_entry(mac, pAddStaParams->staMac, &aid,
 				       &pe_session->dph.dphHashTable);
-	if (NULL == sta) {
+	if (!sta) {
 		pe_err("sta is NULL ");
 		status = QDF_STATUS_E_FAILURE;
 		goto add_sta_error;
@@ -2967,7 +2967,7 @@ QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 	pe_session =
 		pe_find_session_by_bssid(mac, add_sta_req->bssid.bytes,
 					 &session_id);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("PE Session does not exist for given sme sessionId: %d",
 		       add_sta_req->session_id);
 		goto lim_tdls_add_sta_error;
@@ -3026,7 +3026,7 @@ QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 	pe_session =
 		pe_find_session_by_bssid(mac, del_sta_req->bssid.bytes,
 					 &session_id);
-	if (pe_session == NULL) {
+	if (!pe_session) {
 		pe_err("PE Session does not exist for given vdev id: %d",
 		       del_sta_req->session_id);
 		lim_send_sme_tdls_del_sta_rsp(mac, del_sta_req->session_id,
@@ -3107,7 +3107,7 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 					(aid + i * (sizeof(uint32_t) << 3)),
 					&session_entry->dph.dphHashTable);
 
-			if (NULL == stads)
+			if (!stads)
 				goto skip;
 
 			pe_debug("Deleting "MAC_ADDRESS_STR,
@@ -3162,7 +3162,7 @@ QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 {
 	pe_debug("Enter");
 
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("NULL session_entry");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3208,14 +3208,14 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
 	uint8_t session_id;
 
 	msg = (struct tdls_del_all_tdls_peers *)msg_buf;
-	if (msg == NULL) {
+	if (!msg) {
 		pe_err("NULL msg");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	session_entry = pe_find_session_by_bssid(p_mac,
 						 msg->bssid.bytes, &session_id);
-	if (NULL == session_entry) {
+	if (!session_entry) {
 		pe_err("NULL pe_session");
 		return QDF_STATUS_E_FAILURE;
 	}

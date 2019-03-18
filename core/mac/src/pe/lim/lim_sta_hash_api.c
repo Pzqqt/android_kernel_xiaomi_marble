@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ QDF_STATUS lim_get_sta_hash_bssidx(struct mac_context *mac, uint16_t assocId,
 	tpDphHashNode pSta =
 		dph_get_hash_entry(mac, assocId, &pe_session->dph.dphHashTable);
 
-	if (pSta == NULL) {
+	if (!pSta) {
 		pe_err("invalid STA: %d", assocId);
 		return QDF_STATUS_E_NOENT;
 	}

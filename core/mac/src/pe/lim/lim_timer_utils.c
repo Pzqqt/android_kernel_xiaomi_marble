@@ -216,7 +216,7 @@ uint32_t lim_create_timers(struct mac_context *mac)
 	for (i = 0; i < cfgValue; i++) {
 		mac->lim.gLimPreAuthTimerTable.pTable[i] =
 					qdf_mem_malloc(sizeof(tLimPreAuthNode));
-		if (mac->lim.gLimPreAuthTimerTable.pTable[i] == NULL) {
+		if (!mac->lim.gLimPreAuthTimerTable.pTable[i]) {
 			mac->lim.gLimPreAuthTimerTable.numEntry = 0;
 			goto err_timer;
 		}
@@ -276,7 +276,7 @@ err_timer:
 	tx_timer_delete(&mac->lim.limTimers.gLimChannelSwitchTimer);
 	tx_timer_delete(&mac->lim.limTimers.sae_auth_timer);
 
-	if (NULL != mac->lim.gLimPreAuthTimerTable.pTable) {
+	if (mac->lim.gLimPreAuthTimerTable.pTable) {
 		for (i = 0; i < mac->lim.gLimPreAuthTimerTable.numEntry; i++)
 			qdf_mem_free(mac->lim.gLimPreAuthTimerTable.pTable[i]);
 		qdf_mem_free(mac->lim.gLimPreAuthTimerTable.pTable);
@@ -418,7 +418,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 	struct pe_session *session = NULL;
 
 	session = mac_ctx->lim.pe_session;
-	if (LIM_REASSOC == param && NULL != session
+	if (LIM_REASSOC == param && session
 	    && session->limMlmState == eLIM_MLM_WT_FT_REASSOC_RSP_STATE) {
 		pe_err("Reassoc timeout happened");
 		if (mac_ctx->lim.reAssocRetryAttempt <
@@ -432,7 +432,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 		} else {
 			pe_warn("Reassoc request retry MAX: %d reached",
 				LIM_MAX_REASSOC_RETRY_LIMIT);
-			if (NULL != session->pLimMlmReassocRetryReq) {
+			if (session->pLimMlmReassocRetryReq) {
 				qdf_mem_free(session->pLimMlmReassocRetryReq);
 				session->pLimMlmReassocRetryReq = NULL;
 			}
@@ -599,7 +599,7 @@ void lim_deactivate_and_change_timer(struct mac_context *mac, uint32_t timerId)
 		session_entry = pe_find_session_by_session_id(mac,
 			mac->lim.limTimers.
 				g_lim_periodic_auth_retry_timer.sessionId);
-		if (NULL == session_entry) {
+		if (!session_entry) {
 			pe_err("session does not exist for given SessionId : %d",
 			mac->lim.limTimers.
 				g_lim_periodic_auth_retry_timer.sessionId);
@@ -791,7 +791,7 @@ lim_deactivate_and_change_per_sta_id_timer(struct mac_context *mac, uint32_t tim
 							 gLimPreAuthTimerTable,
 							 staId);
 
-		if (pAuthNode == NULL) {
+		if (!pAuthNode) {
 			pe_err("Invalid Pre Auth Index passed :%d",
 				staId);
 			break;

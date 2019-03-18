@@ -160,7 +160,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 		vht_caps = &assoc_rsp->vendor_vht_ie.VHTCaps;
 
 	if (IS_DOT11_MODE_VHT(session_entry->dot11mode)) {
-		if ((vht_caps != NULL) && vht_caps->present) {
+		if ((vht_caps) && vht_caps->present) {
 			sta_ds->mlmStaContext.vhtCapability =
 				vht_caps->present;
 			/*
@@ -285,7 +285,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 static void lim_update_ric_data(struct mac_context *mac_ctx,
 	 struct pe_session *session_entry, tpSirAssocRsp assoc_rsp)
 {
-	if (session_entry->ricData != NULL) {
+	if (session_entry->ricData) {
 		qdf_mem_free(session_entry->ricData);
 		session_entry->ricData = NULL;
 		session_entry->RICDataLen = 0;
@@ -328,7 +328,7 @@ static void lim_update_ric_data(struct mac_context *mac_ctx,
 static void lim_update_ese_tspec(struct mac_context *mac_ctx,
 	 struct pe_session *session_entry, tpSirAssocRsp assoc_rsp)
 {
-	if (session_entry->tspecIes != NULL) {
+	if (session_entry->tspecIes) {
 		qdf_mem_free(session_entry->tspecIes);
 		session_entry->tspecIes = NULL;
 		session_entry->tspecLen = 0;
@@ -456,7 +456,7 @@ static void lim_update_stads_ext_cap(struct mac_context *mac_ctx,
 static void lim_stop_reassoc_retry_timer(struct mac_context *mac_ctx)
 {
 	mac_ctx->lim.reAssocRetryAttempt = 0;
-	if ((NULL != mac_ctx->lim.pe_session)
+	if ((mac_ctx->lim.pe_session)
 		&& (NULL !=
 			mac_ctx->lim.pe_session->pLimMlmReassocRetryReq)) {
 		qdf_mem_free(
@@ -508,7 +508,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	assoc_cnf.resultCode = eSIR_SME_SUCCESS;
 	/* Update PE session Id */
 	assoc_cnf.sessionId = session_entry->peSessionId;
-	if (hdr == NULL) {
+	if (!hdr) {
 		pe_err("LFR3: Reassoc response packet header is NULL");
 		return;
 	}
@@ -622,7 +622,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	}
 
 	assoc_cnf.protStatusCode = assoc_rsp->statusCode;
-	if (session_entry->assocRsp != NULL) {
+	if (session_entry->assocRsp) {
 		pe_warn("session_entry->assocRsp is not NULL freeing it and setting NULL");
 		qdf_mem_free(session_entry->assocRsp);
 		session_entry->assocRsp = NULL;
@@ -950,7 +950,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	/* STA entry was created during pre-assoc state. */
 	sta_ds = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 			&session_entry->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		/* Could not add hash table entry */
 		pe_err("could not get hash entry at DPH");
 		lim_print_mac_addr(mac_ctx, hdr->sa, LOGE);

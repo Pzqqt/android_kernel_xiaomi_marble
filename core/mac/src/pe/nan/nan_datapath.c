@@ -58,7 +58,7 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 
 	session = pe_find_session_by_sme_session_id(mac_ctx,
 						vdev_id);
-	if (session == NULL) {
+	if (!session) {
 		/* couldn't find session */
 		pe_err("Session not found for vdev_id: %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
@@ -68,7 +68,7 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 				peer_mac_addr.bytes,
 				&assoc_id, &session->dph.dphHashTable);
 	/* peer exists, don't do anything */
-	if (sta_ds != NULL) {
+	if (sta_ds) {
 		pe_err("NDI Peer already exists!!");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -83,7 +83,7 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 
 	sta_ds = dph_add_hash_entry(mac_ctx, peer_mac_addr.bytes, peer_idx,
 			&session->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("Couldn't add dph entry");
 		/* couldn't add dph entry */
 		return QDF_STATUS_E_FAILURE;
@@ -352,7 +352,7 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	tLimMlmStartCnf mlm_start_cnf;
 	tpAddBssParams add_bss_params = (tpAddBssParams) lim_msgq->bodyptr;
 
-	if (NULL == add_bss_params) {
+	if (!add_bss_params) {
 		pe_err("Invalid body pointer in message");
 		goto end;
 	}
@@ -400,7 +400,7 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 	tpDeleteBssParams del_bss = (tpDeleteBssParams) msg;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
-	if (del_bss == NULL) {
+	if (!del_bss) {
 		pe_err("NDI: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
@@ -433,7 +433,7 @@ end:
 	if (del_bss)
 		qdf_mem_free(del_bss);
 	/* Delete PE session once BSS is deleted */
-	if (NULL != session_entry) {
+	if (session_entry) {
 		lim_send_sme_rsp(mac_ctx, eWNI_SME_STOP_BSS_RSP,
 			rc, session_entry->smeSessionId);
 		pe_delete_session(mac_ctx, session_entry);
@@ -497,7 +497,7 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 	tpDphHashNode sta_ds;
 	uint16_t peer_idx;
 
-	if (NULL == add_sta_rsp) {
+	if (!add_sta_rsp) {
 		pe_err("Invalid add_sta_rsp");
 		qdf_mem_free(add_sta_rsp);
 		return;
@@ -506,7 +506,7 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	sta_ds = dph_lookup_hash_entry(mac_ctx, add_sta_rsp->staMac, &peer_idx,
 				    &session->dph.dphHashTable);
-	if (sta_ds == NULL) {
+	if (!sta_ds) {
 		pe_err("NAN: ADD_STA_RSP for unknown MAC addr "
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(add_sta_rsp->staMac));
