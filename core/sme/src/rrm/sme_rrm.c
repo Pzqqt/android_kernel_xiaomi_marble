@@ -1289,71 +1289,61 @@ static void rrm_store_neighbor_rpt_by_roam_score(struct mac_context *mac,
  * Return: QDF_STATUS_SUCCESS - Validation is successful
  */
 static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
-						  void *pMsgBuf)
+						  void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpSirNeighborReportInd pNeighborRpt = (tpSirNeighborReportInd) pMsgBuf;
-	tpRrmNeighborReportDesc pNeighborReportDesc;
+	tpSirNeighborReportInd neighbor_rpt = (tpSirNeighborReportInd)msg_buf;
+	tpRrmNeighborReportDesc neighbor_rpt_desc;
 	uint8_t i = 0;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	uint32_t sessionId;
 
-	/* Get the session id */
-	status =
-		csr_roam_get_session_id_from_bssid(mac,
-			   (struct qdf_mac_addr *) pNeighborRpt->bssId,
-			   &sessionId);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-#ifdef FEATURE_WLAN_ESE
-		/* Clear the cache for ESE. */
-		if (csr_roam_is_ese_assoc(mac, sessionId)) {
-			rrm_ll_purge_neighbor_cache(mac,
-						    &mac->rrm.rrmSmeContext.
-						    neighborReportCache);
-		}
-#endif
-	}
+	/* Purge the cache on reception of unsolicited neighbor report */
+	if (!mac->rrm.rrmSmeContext.neighborReqControlInfo.
+			isNeighborRspPending)
+		rrm_ll_purge_neighbor_cache(mac,
+					    &mac->rrm.rrmSmeContext.
+					    neighborReportCache);
 
-	for (i = 0; i < pNeighborRpt->numNeighborReports; i++) {
-		pNeighborReportDesc =
+	for (i = 0; i < neighbor_rpt->numNeighborReports; i++) {
+		neighbor_rpt_desc =
 			qdf_mem_malloc(sizeof(tRrmNeighborReportDesc));
-		if (!pNeighborReportDesc) {
+		if (!neighbor_rpt_desc) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 
 		}
 
-		pNeighborReportDesc->pNeighborBssDescription =
+		neighbor_rpt_desc->pNeighborBssDescription =
 			qdf_mem_malloc(sizeof(tSirNeighborBssDescription));
-		if (!pNeighborReportDesc->pNeighborBssDescription) {
-			qdf_mem_free(pNeighborReportDesc);
+		if (!neighbor_rpt_desc->pNeighborBssDescription) {
+			qdf_mem_free(neighbor_rpt_desc);
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
-		qdf_mem_copy(pNeighborReportDesc->pNeighborBssDescription,
-			     &pNeighborRpt->sNeighborBssDescription[i],
+		qdf_mem_copy(neighbor_rpt_desc->pNeighborBssDescription,
+			     &neighbor_rpt->sNeighborBssDescription[i],
 			     sizeof(tSirNeighborBssDescription));
 
 		sme_debug("Received neighbor report with Neighbor BSSID: "
 			MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(
-			       pNeighborRpt->sNeighborBssDescription[i].bssId));
+			       neighbor_rpt->sNeighborBssDescription[i].bssId));
 
-		rrm_calculate_neighbor_ap_roam_score(mac, pNeighborReportDesc);
+		rrm_calculate_neighbor_ap_roam_score(mac, neighbor_rpt_desc);
 
-		if (pNeighborReportDesc->roamScore > 0) {
+		if (neighbor_rpt_desc->roamScore > 0) {
 			rrm_store_neighbor_rpt_by_roam_score(mac,
-				     pNeighborReportDesc);
+							     neighbor_rpt_desc);
 		} else {
 			sme_err("Roam score of BSSID  " MAC_ADDRESS_STR
 				" is 0, Ignoring..",
-				MAC_ADDR_ARRAY(pNeighborRpt->
+				MAC_ADDR_ARRAY(neighbor_rpt->
 					       sNeighborBssDescription[i].
 					       bssId));
 
 			qdf_mem_free(
-				pNeighborReportDesc->pNeighborBssDescription);
-			qdf_mem_free(pNeighborReportDesc);
+				neighbor_rpt_desc->pNeighborBssDescription);
+			qdf_mem_free(neighbor_rpt_desc);
 		}
 	}
 end:
@@ -1362,6 +1352,7 @@ end:
 		qdf_status = QDF_STATUS_E_FAILURE;
 
 	rrm_indicate_neighbor_report_result(mac, qdf_status);
+
 	return status;
 }
 
