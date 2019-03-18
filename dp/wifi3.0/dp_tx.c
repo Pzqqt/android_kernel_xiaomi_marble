@@ -2578,6 +2578,10 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 	struct dp_vdev *vdev = desc->vdev;
 	qdf_nbuf_t nbuf = desc->nbuf;
 
+	/* nbuf already freed in vdev detach path */
+	if (!nbuf)
+		return;
+
 	/* If it is TDLS mgmt, don't unmap or free the frame */
 	if (desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)
 		return dp_non_std_tx_comp_free_buff(desc, vdev);
@@ -3079,22 +3083,24 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				  struct dp_peer *peer)
 {
 	uint32_t length;
+	qdf_ether_header_t *eh;
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
-	qdf_ether_header_t *eh =
-		(qdf_ether_header_t *)qdf_nbuf_data(tx_desc->nbuf);
+	qdf_nbuf_t nbuf = tx_desc->nbuf;
 
-	if (!vdev) {
+	if (!vdev || !nbuf) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"invalid vdev");
+				"invalid tx descriptor. vdev or nbuf NULL");
 		goto out;
 	}
+
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
 	DPTRACE(qdf_dp_trace_ptr(tx_desc->nbuf,
 				 QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD,
 				 QDF_TRACE_DEFAULT_PDEV_ID,
-				 qdf_nbuf_data_addr(tx_desc->nbuf),
-				 sizeof(qdf_nbuf_data(tx_desc->nbuf)),
+				 qdf_nbuf_data_addr(nbuf),
+				 sizeof(qdf_nbuf_data(nbuf)),
 				 tx_desc->id,
 				 ts->status));
 
@@ -3138,7 +3144,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 			!(tx_desc->flags & DP_TX_DESC_FLAG_TO_FW))
 		dp_tx_comp_fill_tx_completion_stats(tx_desc, ts);
 
-	length = qdf_nbuf_len(tx_desc->nbuf);
+	length = qdf_nbuf_len(nbuf);
 	/* Update peer level stats */
 	if (!peer) {
 		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
@@ -3244,6 +3250,9 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	pdev = tx_desc->pdev;
 	vdev = tx_desc->vdev;
 	soc = pdev->soc;
+
+	if (!vdev)
+		return;
 
 	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
 
