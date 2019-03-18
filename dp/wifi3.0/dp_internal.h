@@ -68,10 +68,16 @@ while (0)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		fmt, ## args)
 
-#define DP_PRINT_STATS(fmt, args ...)	\
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,       \
-		fmt, ## args)
-
+#ifdef CONFIG_MCL
+/* Stat prints should not go to console or kernel logs.*/
+#define DP_PRINT_STATS(fmt, args ...)\
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,       \
+		  fmt, ## args)
+#else
+#define DP_PRINT_STATS(fmt, args ...)\
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,\
+		  fmt, ## args)
+#endif
 #define DP_STATS_INIT(_handle) \
 	qdf_mem_zero(&((_handle)->stats), sizeof((_handle)->stats))
 

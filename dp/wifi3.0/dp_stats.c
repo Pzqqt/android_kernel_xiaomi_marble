@@ -2464,18 +2464,18 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 		tx_gi[i] = (char *)qdf_mem_malloc(DP_MAX_STRING_LEN);
 	}
 
-	DP_TRACE_STATS(FATAL, "HTT_TX_PDEV_RATE_STATS_TLV:");
-	DP_TRACE_STATS(FATAL, "mac_id__word = %u",
-			dp_stats_buf->mac_id__word);
-	DP_TRACE_STATS(FATAL, "tx_ldpc = %u",
-			dp_stats_buf->tx_ldpc);
-	DP_TRACE_STATS(FATAL, "rts_cnt = %u",
-			dp_stats_buf->rts_cnt);
-	DP_TRACE_STATS(FATAL, "rts_success = %u",
-			dp_stats_buf->rts_success);
+	DP_PRINT_STATS("HTT_TX_PDEV_RATE_STATS_TLV:");
+	DP_PRINT_STATS("mac_id__word = %u",
+		       dp_stats_buf->mac_id__word);
+	DP_PRINT_STATS("tx_ldpc = %u",
+		       dp_stats_buf->tx_ldpc);
+	DP_PRINT_STATS("rts_cnt = %u",
+		       dp_stats_buf->rts_cnt);
+	DP_PRINT_STATS("rts_success = %u",
+		       dp_stats_buf->rts_success);
 
-	DP_TRACE_STATS(FATAL, "ack_rssi = %u",
-			dp_stats_buf->ack_rssi);
+	DP_PRINT_STATS("ack_rssi = %u",
+		       dp_stats_buf->ack_rssi);
 
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
 	for (i = 0; i <  DP_HTT_TX_MCS_LEN; i++) {
@@ -2483,7 +2483,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_mcs[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_mcs = %s ", str_buf);
+	DP_PRINT_STATS("tx_mcs = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2492,7 +2492,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_su_mcs[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_su_mcs = %s ", str_buf);
+	DP_PRINT_STATS("tx_su_mcs = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2501,7 +2501,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_mu_mcs[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_mu_mcs = %s ", str_buf);
+	DP_PRINT_STATS("tx_mu_mcs = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2512,7 +2512,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				" %u:%u,", (i + 1),
 				dp_stats_buf->tx_nss[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_nss = %s ", str_buf);
+	DP_PRINT_STATS("tx_nss = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2521,7 +2521,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_bw[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_bw = %s ", str_buf);
+	DP_PRINT_STATS("tx_bw = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2530,7 +2530,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_stbc[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_stbc = %s ", str_buf);
+	DP_PRINT_STATS("tx_stbc = %s ", str_buf);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -2539,7 +2539,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_pream[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_pream = %s ", str_buf);
+	DP_PRINT_STATS("tx_pream = %s ", str_buf);
 
 	for (j = 0; j < DP_HTT_PDEV_TX_GI_LEN; j++) {
 		index = 0;
@@ -2549,7 +2549,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 					" %u:%u,", i,
 					dp_stats_buf->tx_gi[j][i]);
 		}
-		DP_TRACE_STATS(FATAL, "tx_gi[%u] = %s ", j, tx_gi[j]);
+		DP_PRINT_STATS("tx_gi[%u] = %s ", j, tx_gi[j]);
 	}
 
 	index = 0;
@@ -2559,7 +2559,7 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tx_dcm[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tx_dcm = %s\n", str_buf);
+	DP_PRINT_STATS("tx_dcm = %s\n", str_buf);
 
 	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(tx_gi[i]);

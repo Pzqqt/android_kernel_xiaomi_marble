@@ -8660,9 +8660,8 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_vdev *vdev,
 	fw_stats = dp_stats_mapping_table[stats][STATS_FW];
 	host_stats = dp_stats_mapping_table[stats][STATS_HOST];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		 "stats: %u fw_stats_type: %d host_stats: %d",
-		  stats, fw_stats, host_stats);
+	dp_info("stats: %u fw_stats_type: %d host_stats: %d",
+		stats, fw_stats, host_stats);
 
 	if (fw_stats != TXRX_FW_STATS_INVALID) {
 		/* update request with FW stats type */
