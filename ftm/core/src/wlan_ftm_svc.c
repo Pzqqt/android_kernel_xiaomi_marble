@@ -100,7 +100,7 @@ wlan_ftm_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj =
 		wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_FTM);
 
-	if (NULL == ftm_pdev_obj) {
+	if (!ftm_pdev_obj) {
 		ftm_err("invalid wifi ftm obj");
 		return QDF_STATUS_E_FAULT;
 	}
