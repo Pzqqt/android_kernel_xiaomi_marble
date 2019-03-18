@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,7 +42,7 @@ static QDF_STATUS pmo_core_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	struct pmo_lphb_enable_req *ts_lphb_enable;
 	int i;
 
-	if (lphb_conf_req == NULL) {
+	if (!lphb_conf_req) {
 		pmo_err("LPHB configuration is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -214,7 +214,7 @@ QDF_STATUS pmo_core_lphb_config_req(struct wlan_objmgr_psoc *psoc,
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	if (lphb_req == NULL) {
+	if (!lphb_req) {
 		pmo_err("LPHB configuration is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}

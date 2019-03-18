@@ -31,7 +31,7 @@ static struct wlan_pmo_ctx *gp_pmo_ctx;
 QDF_STATUS pmo_allocate_ctx(void)
 {
 	/* If it is already created, ignore */
-	if (gp_pmo_ctx != NULL) {
+	if (gp_pmo_ctx) {
 		pmo_debug("already allocated pmo_ctx");
 		return QDF_STATUS_SUCCESS;
 	}

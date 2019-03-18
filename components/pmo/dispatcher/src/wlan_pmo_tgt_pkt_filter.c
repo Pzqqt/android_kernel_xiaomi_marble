@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +50,7 @@ QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 
-	if (request_buf == NULL) {
+	if (!request_buf) {
 		pmo_err("Not able to allocate memory for Receive Filter Set Filter request");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
@@ -114,7 +114,7 @@ QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 
-	if (request_buf == NULL) {
+	if (!request_buf) {
 		pmo_err("Not able to allocate memory for Receive Filter Set Filter request");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
