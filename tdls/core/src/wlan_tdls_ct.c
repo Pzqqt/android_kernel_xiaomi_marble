@@ -240,7 +240,7 @@ static void tdls_ct_sampling_tx_rx(struct tdls_vdev_priv_obj *tdls_vdev,
 		qdf_mem_copy(mac, mac_table[mac_cnt].mac_address.bytes,
 		       QDF_MAC_ADDR_SIZE);
 		curr_peer = tdls_get_peer(tdls_vdev, mac);
-		if (NULL != curr_peer) {
+		if (curr_peer) {
 			curr_peer->tx_pkt =
 			mac_table[mac_cnt].tx_packet_cnt;
 			curr_peer->rx_pkt =
@@ -362,28 +362,28 @@ void tdls_implicit_send_discovery_request(
 	struct tdls_soc_priv_obj *tdls_psoc;
 	struct tdls_osif_indication tdls_ind;
 
-	if (NULL == tdls_vdev_obj) {
+	if (!tdls_vdev_obj) {
 		tdls_notice("tdls_vdev_obj is NULL");
 		return;
 	}
 
 	tdls_psoc = wlan_vdev_get_tdls_soc_obj(tdls_vdev_obj->vdev);
 
-	if (NULL == tdls_psoc) {
+	if (!tdls_psoc) {
 		tdls_notice("tdls_psoc_obj is NULL");
 		return;
 	}
 
 	curr_peer = tdls_vdev_obj->curr_candidate;
 
-	if (NULL == curr_peer) {
+	if (!curr_peer) {
 		tdls_err("curr_peer is NULL");
 		return;
 	}
 
 	/* This function is called in mutex_lock */
 	temp_peer = tdls_is_progress(tdls_vdev_obj, NULL, 0);
-	if (NULL != temp_peer) {
+	if (temp_peer) {
 		tdls_notice(QDF_MAC_ADDR_STR " ongoing. pre_setup ignored",
 			    QDF_MAC_ADDR_ARRAY(temp_peer->peer_mac.bytes));
 		goto done;
@@ -434,13 +434,13 @@ int tdls_recv_discovery_resp(struct tdls_vdev_priv_obj *tdls_vdev,
 		return -EINVAL;
 
 	tdls_soc = wlan_vdev_get_tdls_soc_obj(tdls_vdev->vdev);
-	if (NULL == tdls_soc) {
+	if (!tdls_soc) {
 		tdls_err("tdls soc is NULL");
 		return -EINVAL;
 	}
 
 	curr_peer = tdls_get_peer(tdls_vdev, mac);
-	if (NULL == curr_peer) {
+	if (!curr_peer) {
 		tdls_err("curr_peer is NULL");
 		return -EINVAL;
 	}
@@ -595,7 +595,7 @@ tdls_ct_process_idle_handler(struct wlan_objmgr_vdev *vdev,
 	curr_peer = tdls_find_peer(tdls_vdev_obj,
 		(u8 *) &tdls_info->peer_mac.bytes[0]);
 
-	if (NULL == curr_peer) {
+	if (!curr_peer) {
 		tdls_err("Invalid tdls idle timer expired");
 		return;
 	}
@@ -1046,7 +1046,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 	}
 
 	conn_peer = tdls_find_first_connected_peer(tdls_vdev);
-	if (NULL == conn_peer) {
+	if (!conn_peer) {
 		tdls_err("No TDLS Connected Peer");
 		return -EPERM;
 	}
@@ -1112,7 +1112,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 
 	if (ENABLE_CHANSWITCH == offchanmode) {
 		conn_peer = tdls_find_first_connected_peer(tdls_vdev);
-		if (NULL == conn_peer) {
+		if (!conn_peer) {
 			tdls_err("No TDLS Connected Peer");
 			return -EPERM;
 		}

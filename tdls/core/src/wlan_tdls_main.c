@@ -766,7 +766,7 @@ QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
 {
 	enum QDF_OPMODE device_mode;
 
-	if (NULL == vdev)
+	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	*tdls_vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
@@ -896,7 +896,7 @@ void tdls_set_ct_mode(struct wlan_objmgr_psoc *psoc)
 	struct tdls_soc_priv_obj *tdls_soc_obj;
 
 	tdls_soc_obj = wlan_psoc_get_tdls_soc_obj(psoc);
-	if (NULL == tdls_soc_obj)
+	if (!tdls_soc_obj)
 		return;
 
 	/* If any concurrency is detected, skip tdls pkt tracker */
@@ -1312,7 +1312,7 @@ tdls_process_sta_disconnect(struct tdls_sta_notify_params *notify)
 	 */
 	if (!notify->lfr_roam && !tdls_soc_obj->tdls_disable_in_progress) {
 		temp_vdev = tdls_get_vdev(tdls_soc_obj->soc, WLAN_TDLS_NB_ID);
-		if (NULL != temp_vdev) {
+		if (temp_vdev) {
 			vdev_id = wlan_vdev_get_id(temp_vdev);
 			status = tdls_get_vdev_objects(temp_vdev,
 						       &tdls_vdev_obj,
@@ -1605,7 +1605,7 @@ static void tdls_set_current_mode(struct tdls_soc_priv_obj *tdls_soc,
 	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(tdls_soc->soc,
 							QDF_STA_MODE,
 							WLAN_TDLS_NB_ID);
-	if (NULL != vdev) {
+	if (vdev) {
 		tdls_debug("set mode in tdls vdev ");
 		tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
 		if (!tdls_vdev)
@@ -1618,7 +1618,7 @@ static void tdls_set_current_mode(struct tdls_soc_priv_obj *tdls_soc,
 	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(tdls_soc->soc,
 							QDF_P2P_CLIENT_MODE,
 							WLAN_TDLS_NB_ID);
-	if (NULL != vdev) {
+	if (vdev) {
 		tdls_debug("set mode in tdls vdev ");
 		tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
 		if (!tdls_vdev)
@@ -1757,7 +1757,7 @@ QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 		goto  return_success;
 
 	curr_peer = tdls_is_progress(tdls_vdev, NULL, 0);
-	if (NULL != curr_peer) {
+	if (curr_peer) {
 		if (tdls_soc->scan_reject_count++ >= TDLS_SCAN_REJECT_MAX) {
 			tdls_notice(QDF_MAC_ADDR_STR
 				    ". scan rejected %d. force it to idle",

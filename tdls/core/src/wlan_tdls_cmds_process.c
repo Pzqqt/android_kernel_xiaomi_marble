@@ -622,7 +622,7 @@ int tdls_set_cap(struct tdls_vdev_priv_obj *tdls_vdev, const uint8_t *mac,
 	struct tdls_peer *curr_peer;
 
 	curr_peer = tdls_get_peer(tdls_vdev, mac);
-	if (curr_peer == NULL) {
+	if (!curr_peer) {
 		tdls_err("curr_peer is NULL");
 		return -EINVAL;
 	}
@@ -716,7 +716,7 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 	}
 
 	if (TDLS_IS_SETUP_ACTION(tdls_validate->action_code)) {
-		if (NULL != tdls_is_progress(tdls_vdev,
+		if (tdls_is_progress(tdls_vdev,
 			tdls_validate->peer_mac, true)) {
 			tdls_err("setup is ongoing. action %d declined for "
 				 QDF_MAC_ADDR_STR,
@@ -2166,7 +2166,7 @@ int tdls_process_set_responder(struct tdls_set_responder_req *set_req)
 		return -EINVAL;
 	}
 	curr_peer = tdls_get_peer(tdls_vdev, set_req->peer_mac);
-	if (curr_peer == NULL) {
+	if (!curr_peer) {
 		tdls_err("curr_peer is NULL");
 		return -EINVAL;
 	}
