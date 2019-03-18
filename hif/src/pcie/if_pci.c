@@ -1280,7 +1280,7 @@ static void hif_disable_power_gating(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (NULL == scn) {
+	if (!scn) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
 		       __func__);
 		return;
@@ -1299,7 +1299,7 @@ static void hif_disable_power_gating(struct hif_opaque_softc *hif_ctx)
  */
 static void hif_enable_power_gating(struct hif_pci_softc *sc)
 {
-	if (NULL == sc) {
+	if (!sc) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
 		       __func__);
 		return;
@@ -1324,7 +1324,7 @@ void hif_pci_enable_power_management(struct hif_softc *hif_sc,
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_sc);
 
-	if (pci_ctx == NULL) {
+	if (!pci_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
@@ -1356,7 +1356,7 @@ void hif_pci_disable_power_management(struct hif_softc *hif_ctx)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (pci_ctx == NULL) {
+	if (!pci_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
@@ -1368,7 +1368,7 @@ void hif_pci_display_stats(struct hif_softc *hif_ctx)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (pci_ctx == NULL) {
+	if (!pci_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
@@ -1379,7 +1379,7 @@ void hif_pci_clear_stats(struct hif_softc *hif_ctx)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (pci_ctx == NULL) {
+	if (!pci_ctx) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
@@ -2186,7 +2186,7 @@ static void hif_disable_pci(struct hif_pci_softc *sc)
 {
 	struct hif_softc *ol_sc = HIF_GET_SOFTC(sc);
 
-	if (ol_sc == NULL) {
+	if (!ol_sc) {
 		HIF_ERROR("%s: ol_sc = NULL", __func__);
 		return;
 	}
@@ -2652,7 +2652,7 @@ static void __hif_runtime_pm_set_state(struct hif_softc *scn,
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (NULL == sc) {
+	if (!sc) {
 		HIF_ERROR("%s: HIF_CTX not initialized",
 		       __func__);
 		return;
@@ -2698,7 +2698,7 @@ static void hif_log_runtime_suspend_success(struct hif_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (sc == NULL)
+	if (!sc)
 		return;
 
 	sc->pm_stats.suspended++;
@@ -2715,7 +2715,7 @@ static void hif_log_runtime_suspend_failure(void *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (sc == NULL)
+	if (!sc)
 		return;
 
 	sc->pm_stats.suspend_err++;
@@ -2731,7 +2731,7 @@ static void hif_log_runtime_resume_success(void *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (sc == NULL)
+	if (!sc)
 		return;
 
 	sc->pm_stats.resumed++;
@@ -2750,7 +2750,7 @@ void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_log_runtime_suspend_failure(hif_ctx);
-	if (hif_pci_sc != NULL)
+	if (hif_pci_sc)
 		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
 	hif_runtime_pm_set_state_on(scn);
 }
@@ -2817,7 +2817,7 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_log_runtime_resume_success(hif_ctx);
-	if (hif_pci_sc != NULL)
+	if (hif_pci_sc)
 		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
 	hif_runtime_pm_set_state_on(scn);
 }
@@ -3849,7 +3849,7 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (NULL == sc)
+	if (!sc)
 		return;
 
 	sc->pm_stats.runtime_get++;
@@ -3876,7 +3876,7 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 	int ret;
 	int pm_state;
 
-	if (NULL == scn) {
+	if (!scn) {
 		HIF_ERROR("%s: Could not do runtime get, scn is null",
 				__func__);
 		return -EFAULT;
@@ -3932,7 +3932,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
 	int pm_state, usage_count;
 	char *error = NULL;
 
-	if (NULL == scn) {
+	if (!scn) {
 		HIF_ERROR("%s: Could not do runtime put, scn is null",
 				__func__);
 		return -EFAULT;

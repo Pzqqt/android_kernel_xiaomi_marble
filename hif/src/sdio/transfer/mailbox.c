@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -658,7 +658,7 @@ static QDF_STATUS hif_dev_issue_recv_packet_bundle
 	     !HTC_QUEUE_EMPTY(recv_pkt_queue) && i < HTC_MAX_MSG_PER_BUNDLE_RX;
 	     i++) {
 		packet = htc_packet_dequeue(recv_pkt_queue);
-		A_ASSERT(packet != NULL);
+		A_ASSERT(packet);
 		if (!packet)
 			break;
 		padded_length =
@@ -846,7 +846,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 			if (pkts_fetched == 0) {
 				/* dequeue one packet */
 				pkt = htc_packet_dequeue(&recv_q);
-				A_ASSERT(pkt != NULL);
+				A_ASSERT(pkt);
 				if (!pkt)
 					break;
 
@@ -871,7 +871,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 					qdf_nbuf_t nbuf;
 
 					pkt = htc_packet_dequeue(&recv_q);
-					if (pkt == NULL)
+					if (!pkt)
 						break;
 					nbuf = pkt->pNetBufContext;
 					if (nbuf)
@@ -906,7 +906,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 			qdf_nbuf_t netbuf;
 
 			pkt = htc_packet_dequeue(&sync_comp_q);
-			A_ASSERT(pkt != NULL);
+			A_ASSERT(pkt);
 			if (!pkt)
 				break;
 
@@ -1346,7 +1346,7 @@ int hif_sdio_set_drvdata(struct sdio_func *func,
 
 struct hif_sdio_dev *get_hif_device(struct sdio_func *func)
 {
-	qdf_assert(func != NULL);
+	qdf_assert(func);
 
 	return (struct hif_sdio_dev *)sdio_get_drvdata(func);
 }

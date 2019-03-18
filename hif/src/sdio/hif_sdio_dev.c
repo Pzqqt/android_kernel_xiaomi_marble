@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,7 @@ HTC_PACKET *hif_dev_alloc_rx_buffer(struct hif_sdio_device *pdev)
 	bufsize = HIF_SDIO_RX_BUFFER_SIZE + HIF_SDIO_RX_DATA_OFFSET;
 	headsize = sizeof(HTC_PACKET);
 	netbuf = qdf_nbuf_alloc(NULL, bufsize + headsize, 0, 4, false);
-	if (netbuf == NULL) {
+	if (!netbuf) {
 		hif_err_rl("Allocate netbuf failed");
 		return NULL;
 	}

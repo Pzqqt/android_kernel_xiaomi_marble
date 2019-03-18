@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -273,7 +273,7 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 				hal_srng_src_get_next(scn->hal_soc,
 							dest_ring->srng_ctx);
 
-		if (dest_desc == NULL) {
+		if (!dest_desc) {
 			status = QDF_STATUS_E_FAILURE;
 		} else {
 
@@ -364,7 +364,7 @@ ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 	dest_status = hal_srng_dst_get_next(scn->hal_soc,
 						status_ring->srng_ctx);
 
-	if (dest_status == NULL) {
+	if (!dest_status) {
 		status = QDF_STATUS_E_FAILURE;
 		goto done;
 	}
@@ -440,7 +440,7 @@ ce_revoke_recv_next_srng(struct CE_handle *copyeng,
 		*per_transfer_contextp =
 			dest_ring->per_transfer_context[sw_index];
 
-	if (dest_ring->per_transfer_context[sw_index] == NULL)
+	if (!dest_ring->per_transfer_context[sw_index])
 		return QDF_STATUS_E_FAILURE;
 
 	/* provide end condition */
@@ -805,7 +805,7 @@ static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
 		struct pld_shadow_reg_v2_cfg **shadow_config,
 		int *num_shadow_registers_configured)
 {
-	if (scn->hal_soc == NULL) {
+	if (!scn->hal_soc) {
 		HIF_ERROR("%s: hal not initialized: not initializing shadow config",
 			  __func__);
 		return;

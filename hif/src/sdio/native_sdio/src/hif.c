@@ -193,12 +193,12 @@ __hif_read_write(struct hif_sdio_dev *device,
 	uint8_t *tbuffer;
 	bool bounced = false;
 
-	if (device == NULL) {
+	if (!device) {
 		HIF_ERROR("%s: device null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (device->func == NULL) {
+	if (!device->func) {
 		HIF_ERROR("%s: func null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -261,7 +261,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 		if (request & HIF_SDIO_WRITE) {
 #if HIF_USE_DMA_BOUNCE_BUFFER
 			if (BUFFER_NEEDS_BOUNCE(buffer)) {
-				AR_DEBUG_ASSERT(device->dma_buffer != NULL);
+				AR_DEBUG_ASSERT(device->dma_buffer);
 				tbuffer = device->dma_buffer;
 				/* copy the write data to the dma buffer */
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
@@ -279,7 +279,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 #else
 			tbuffer = buffer;
 #endif
-			if (opcode == CMD53_FIXED_ADDRESS  && tbuffer != NULL) {
+			if (opcode == CMD53_FIXED_ADDRESS  && tbuffer) {
 				ret = sdio_writesb(device->func, address,
 						   tbuffer, length);
 				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
@@ -295,7 +295,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 		} else if (request & HIF_SDIO_READ) {
 #if HIF_USE_DMA_BOUNCE_BUFFER
 			if (BUFFER_NEEDS_BOUNCE(buffer)) {
-				AR_DEBUG_ASSERT(device->dma_buffer != NULL);
+				AR_DEBUG_ASSERT(device->dma_buffer);
 				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
 				if (length > HIF_DMA_BUFFER_SIZE) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
@@ -312,7 +312,7 @@ __hif_read_write(struct hif_sdio_dev *device,
 #else
 			tbuffer = buffer;
 #endif
-			if (opcode == CMD53_FIXED_ADDRESS && tbuffer != NULL) {
+			if (opcode == CMD53_FIXED_ADDRESS && tbuffer) {
 				ret = sdio_readsb(device->func, tbuffer,
 						  address, length);
 				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
@@ -366,12 +366,12 @@ void add_to_async_list(struct hif_sdio_dev *device,
 
 	qdf_spin_lock_irqsave(&device->asynclock);
 	active = device->asyncreq;
-	if (active == NULL) {
+	if (!active) {
 		device->asyncreq = busrequest;
 		device->asyncreq->inusenext = NULL;
 	} else {
 		for (async = device->asyncreq;
-		     async != NULL; async = async->inusenext) {
+		     async; async = async->inusenext) {
 			active = async;
 		}
 		active->inusenext = busrequest;
@@ -400,8 +400,8 @@ hif_read_write(struct hif_sdio_dev *device,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct bus_request *busrequest;
 
-	AR_DEBUG_ASSERT(device != NULL);
-	AR_DEBUG_ASSERT(device->func != NULL);
+	AR_DEBUG_ASSERT(device);
+	AR_DEBUG_ASSERT(device->func);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 			("%s: device 0x%pK addr 0x%X buffer 0x%pK len %d req 0x%X context 0x%pK",
 			 __func__, device, address, buffer,
@@ -422,7 +422,7 @@ hif_read_write(struct hif_sdio_dev *device,
 					 (request & HIF_ASYNCHRONOUS) ? "Async"
 					 : "Synch"));
 			busrequest = hif_allocate_bus_request(device);
-			if (busrequest == NULL) {
+			if (!busrequest) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
 					("no async bus requests available (%s, addr:0x%X, len:%d)\n",
 					 request & HIF_SDIO_READ ? "READ" :
@@ -524,9 +524,9 @@ static int async_task(void *param)
 		 */
 		qdf_spin_lock_irqsave(&device->asynclock);
 		/* pull the request to work on */
-		while (device->asyncreq != NULL) {
+		while (device->asyncreq) {
 			request = device->asyncreq;
-			if (request->inusenext != NULL)
+			if (request->inusenext)
 				device->asyncreq = request->inusenext;
 			else
 				device->asyncreq = NULL;
@@ -539,7 +539,7 @@ static int async_task(void *param)
 				sdio_claim_host(device->func);
 				claimed = true;
 			}
-			if (request->scatter_req != NULL) {
+			if (request->scatter_req) {
 				A_ASSERT(device->scatter_enabled);
 				/* pass the request to scatter routine which
 				 * executes it synchronously, note, no need
@@ -974,7 +974,7 @@ hif_configure_device(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 		device->htc_context = config;
 		break;
 	case HIF_DEVICE_GET_HTC_CONTEXT:
-		if (config == NULL) {
+		if (!config) {
 			HIF_ERROR("%s: htc context is NULL", __func__);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1004,9 +1004,9 @@ void hif_sdio_shutdown(struct hif_softc *hif_ctx)
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 			("%s: Enter\n", __func__));
-	if (hif_device != NULL) {
+	if (hif_device) {
 		AR_DEBUG_ASSERT(hif_device->power_config == HIF_DEVICE_POWER_CUT
-				|| hif_device->func != NULL);
+				|| hif_device->func);
 	} else {
 		int i;
 		/* since we are unloading the driver anyways,
@@ -1017,7 +1017,7 @@ void hif_sdio_shutdown(struct hif_softc *hif_ctx)
 		 * a card that is already enumerated
 		 */
 		for (i = 0; i < MAX_HIF_DEVICES; ++i) {
-			if (hif_devices[i] && hif_devices[i]->func == NULL) {
+			if (hif_devices[i] && !hif_devices[i]->func) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 				("%s: Remove pending hif_device %pK\n",
 					 __func__, hif_devices[i]));
@@ -1071,13 +1071,13 @@ static int hif_device_inserted(struct hif_softc *ol_sc,
 	}
 
 	/* If device not found, then it is a new insertion, alloc and add it */
-	if (device == NULL) {
+	if (!device) {
 		if (add_hif_device(func) == NULL)
 			return QDF_STATUS_E_FAILURE;
 		device = get_hif_device(func);
 
 		for (i = 0; i < MAX_HIF_DEVICES; ++i) {
-			if (hif_devices[i] == NULL) {
+			if (!hif_devices[i]) {
 				hif_devices[i] = device;
 				break;
 			}
@@ -1164,7 +1164,7 @@ del_hif_dev:
  */
 void hif_ack_interrupt(struct hif_sdio_dev *device)
 {
-	AR_DEBUG_ASSERT(device != NULL);
+	AR_DEBUG_ASSERT(device);
 
 	/* Acknowledge our function IRQ */
 }
@@ -1195,7 +1195,7 @@ struct bus_request *hif_allocate_bus_request(struct hif_sdio_dev *device)
 	qdf_spin_lock_irqsave(&device->lock);
 	busrequest = device->bus_request_free_queue;
 	/* Remove first in list */
-	if (busrequest != NULL)
+	if (busrequest)
 		device->bus_request_free_queue = busrequest->next;
 
 	/* Release lock */
@@ -1217,7 +1217,7 @@ struct bus_request *hif_allocate_bus_request(struct hif_sdio_dev *device)
 void hif_free_bus_request(struct hif_sdio_dev *device,
 			  struct bus_request *busrequest)
 {
-	AR_DEBUG_ASSERT(busrequest != NULL);
+	AR_DEBUG_ASSERT(busrequest);
 	/* Acquire lock */
 	qdf_spin_lock_irqsave(&device->lock);
 
@@ -1373,7 +1373,7 @@ static void hif_device_removed(struct sdio_func *func)
 	struct hif_sdio_dev *device;
 	int i;
 
-	AR_DEBUG_ASSERT(func != NULL);
+	AR_DEBUG_ASSERT(func);
 	HIF_ENTER();
 	device = get_hif_device(func);
 
@@ -1412,17 +1412,17 @@ static struct hif_sdio_dev *add_hif_device(struct sdio_func *func)
 	int ret = 0;
 
 	HIF_ENTER();
-	AR_DEBUG_ASSERT(func != NULL);
+	AR_DEBUG_ASSERT(func);
 	hifdevice = (struct hif_sdio_dev *) qdf_mem_malloc(sizeof(
 							struct hif_sdio_dev));
-	AR_DEBUG_ASSERT(hifdevice != NULL);
+	AR_DEBUG_ASSERT(hifdevice);
 	if (!hifdevice)
 		return NULL;
 
 #if HIF_USE_DMA_BOUNCE_BUFFER
 	hifdevice->dma_buffer = qdf_mem_malloc(HIF_DMA_BUFFER_SIZE);
-	AR_DEBUG_ASSERT(hifdevice->dma_buffer != NULL);
-	if (hifdevice->dma_buffer == NULL) {
+	AR_DEBUG_ASSERT(hifdevice->dma_buffer);
+	if (!hifdevice->dma_buffer) {
 		qdf_mem_free(hifdevice);
 		return NULL;
 	}
@@ -1438,11 +1438,11 @@ static struct hif_sdio_dev *add_hif_device(struct sdio_func *func)
 
 static void del_hif_device(struct hif_sdio_dev *device)
 {
-	AR_DEBUG_ASSERT(device != NULL);
+	AR_DEBUG_ASSERT(device);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
 			("%s: deleting hif device 0x%pK\n",
 				__func__, device));
-	if (device->dma_buffer != NULL)
+	if (device->dma_buffer)
 		qdf_mem_free(device->dma_buffer);
 
 	qdf_mem_free(device);
@@ -1451,7 +1451,7 @@ static void del_hif_device(struct hif_sdio_dev *device)
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
 				struct htc_callbacks *callbacks)
 {
-	if (device->htc_callbacks.context != NULL)
+	if (device->htc_callbacks.context)
 		/* already in use! */
 		return QDF_STATUS_E_FAILURE;
 	device->htc_callbacks = *callbacks;

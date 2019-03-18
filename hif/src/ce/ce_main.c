@@ -818,7 +818,7 @@ static bool ce_mark_datapath(struct CE_state *ce_state)
 	int    i;
 	bool   rc = false;
 
-	if (ce_state != NULL) {
+	if (ce_state) {
 		hif_select_service_to_pipe_map(ce_state->scn, &svc_map,
 					       &map_sz);
 
@@ -1242,7 +1242,7 @@ QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 		event = &hist_ev[index];
 		event->data =
 			(uint8_t *)qdf_mem_malloc(CE_DEBUG_MAX_DATA_BUF_SIZE);
-		if (event->data == NULL)
+		if (!event->data)
 			return QDF_STATUS_E_NOMEM;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1270,7 +1270,7 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 
 	for (index = 0; index < HIF_CE_HISTORY_MAX; index++) {
 		event = &hist_ev[index];
-		if (event->data != NULL)
+		if (event->data)
 			qdf_mem_free(event->data);
 		event->data = NULL;
 		event = NULL;
@@ -1322,7 +1322,7 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
 	scn->hif_ce_desc_hist.hist_ev[CE_id] = (struct hif_ce_desc_event *)
 	qdf_mem_malloc(HIF_CE_HISTORY_MAX * sizeof(struct hif_ce_desc_event));
 
-	if (scn->hif_ce_desc_hist.hist_ev[CE_id] == NULL) {
+	if (!scn->hif_ce_desc_hist.hist_ev[CE_id]) {
 		scn->hif_ce_desc_hist.enable[CE_id] = 0;
 		return QDF_STATUS_E_NOMEM;
 	} else {
@@ -1440,7 +1440,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	CE_state->service = ce_engine_service_reg;
 
 	qdf_atomic_init(&CE_state->rx_pending);
-	if (attr == NULL) {
+	if (!attr) {
 		/* Already initialized; caller wants the handle */
 		return (struct CE_handle *)CE_state;
 	}
@@ -1547,7 +1547,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 					ce_alloc_ring_state(CE_state,
 							CE_RING_STATUS,
 							nentries);
-				if (CE_state->status_ring == NULL) {
+				if (!CE_state->status_ring) {
 					/*Allocation failed. Cleanup*/
 					qdf_mem_free(CE_state->dest_ring);
 					if (malloc_src_ring) {
@@ -1974,7 +1974,7 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 	pipe_info->num_sends_allowed -= nfrags;
 	qdf_spin_unlock_bh(&pipe_info->completion_freeq_lock);
 
-	if (qdf_unlikely(ce_hdl == NULL)) {
+	if (qdf_unlikely(!ce_hdl)) {
 		HIF_ERROR("%s: error CE handle is null", __func__);
 		return A_ERROR;
 	}
@@ -2268,7 +2268,7 @@ void hif_dump_pipe_debug_count(struct hif_softc *scn)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
 
-	if (hif_state == NULL) {
+	if (!hif_state) {
 		HIF_ERROR("%s hif_state is NULL", __func__);
 		return;
 	}
@@ -2495,7 +2495,7 @@ static void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 	scn = HIF_GET_SOFTC(hif_state);
 	ce_hdl = pipe_info->ce_hdl;
 
-	if (scn->qdf_dev == NULL)
+	if (!scn->qdf_dev)
 		return;
 	while (ce_revoke_recv_next
 		       (ce_hdl, &per_CE_context, (void **)&netbuf,
@@ -3250,7 +3250,7 @@ static void hif_post_static_buf_to_target(struct hif_softc *scn)
 
 	target_va = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
 				FW_SHARED_MEM, &target_pa);
-	if (NULL == target_va) {
+	if (!target_va) {
 		HIF_TRACE("Memory allocation failed could not post target buf");
 		return;
 	}
@@ -3329,8 +3329,8 @@ int hif_config_ce(struct hif_softc *scn)
 			goto err;
 		}
 		qdf_spinlock_create(&pipe_info->recv_bufs_needed_lock);
-		QDF_ASSERT(pipe_info->ce_hdl != NULL);
-		if (pipe_info->ce_hdl == NULL) {
+		QDF_ASSERT(pipe_info->ce_hdl);
+		if (!pipe_info->ce_hdl) {
 			rv = QDF_STATUS_E_FAILURE;
 			A_TARGET_ACCESS_UNLIKELY(scn);
 			goto err;
@@ -3760,7 +3760,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 	QDF_STATUS status;
 
 	for (i = 0; i < scn->ce_count; i++, ce_reg_address += CE_OFFSET) {
-		if (scn->ce_id_to_state[i] == NULL) {
+		if (!scn->ce_id_to_state[i]) {
 			HIF_DBG("CE%d not used.", i);
 			continue;
 		}

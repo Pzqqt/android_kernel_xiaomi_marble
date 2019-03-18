@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -463,7 +463,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	if (scn == NULL) {
+	if (!scn) {
 		HIF_ERROR("%s: hif_opaque_softc is NULL", __func__);
 		return;
 	}
@@ -492,7 +492,7 @@ static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
 		scn->hal_soc = hal_attach(scn, scn->qdf_dev);
-		if (scn->hal_soc == NULL)
+		if (!scn->hal_soc)
 			return QDF_STATUS_E_FAILURE;
 	}
 
@@ -540,7 +540,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	QDF_STATUS status;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	if (scn == NULL) {
+	if (!scn) {
 		HIF_ERROR("%s: hif_ctx = NULL", __func__);
 		return QDF_STATUS_E_NULL_VALUE;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,7 +192,7 @@ static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 	struct hif_napi_exec_context *ctx;
 
 	ctx = qdf_mem_malloc(sizeof(struct hif_napi_exec_context));
-	if (ctx == NULL)
+	if (!ctx)
 		return NULL;
 
 	ctx->exec_ctx.sched_ops = &napi_sched_ops;
@@ -246,7 +246,7 @@ static struct hif_exec_context *hif_exec_tasklet_create(void)
 	struct hif_tasklet_exec_context *ctx;
 
 	ctx = qdf_mem_malloc(sizeof(struct hif_tasklet_exec_context));
-	if (ctx == NULL)
+	if (!ctx)
 		return NULL;
 
 	ctx->exec_ctx.sched_ops = &tasklet_sched_ops;
@@ -434,7 +434,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	}
 
 	hif_ext_group = hif_exec_create(type, scale);
-	if (hif_ext_group == NULL)
+	if (!hif_ext_group)
 		return QDF_STATUS_E_FAILURE;
 
 	hif_state->hif_ext_group[hif_state->hif_num_extgroup] =

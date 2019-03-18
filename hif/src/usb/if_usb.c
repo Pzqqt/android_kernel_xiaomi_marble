@@ -436,7 +436,7 @@ void hif_usb_reg_tbl_attach(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = &scn->target_info;
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
-	if (scn->hostdef == NULL && scn->targetdef == NULL) {
+	if (!scn->hostdef && !scn->targetdef) {
 		switch (tgt_info->target_type) {
 		case TARGET_TYPE_AR6320:
 			switch (tgt_info->target_version) {

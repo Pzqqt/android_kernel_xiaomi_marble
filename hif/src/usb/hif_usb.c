@@ -206,7 +206,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 				sizeof(struct hif_usb_send_context);
 
 	urb_context = usb_hif_alloc_urb_from_pipe(pipe);
-	if (NULL == urb_context) {
+	if (!urb_context) {
 		/* TODO : note, it is possible to run out of urbs if 2
 		 * endpoints map to the same pipe ID
 		 */
@@ -349,10 +349,10 @@ void hif_usb_device_deinit(struct hif_usb_softc *sc)
 
 	usb_set_intfdata(device->interface, NULL);
 
-	if (device->diag_cmd_buffer != NULL)
+	if (device->diag_cmd_buffer)
 		qdf_mem_free(device->diag_cmd_buffer);
 
-	if (device->diag_resp_buffer != NULL)
+	if (device->diag_resp_buffer)
 		qdf_mem_free(device->diag_resp_buffer);
 
 	HIF_TRACE("-%s", __func__);
@@ -399,13 +399,13 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 
 		device->diag_cmd_buffer =
 			qdf_mem_malloc(USB_CTRL_MAX_DIAG_CMD_SIZE);
-		if (NULL == device->diag_cmd_buffer) {
+		if (!device->diag_cmd_buffer) {
 			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
 		device->diag_resp_buffer =
 			qdf_mem_malloc(USB_CTRL_MAX_DIAG_RESP_SIZE);
-		if (NULL == device->diag_resp_buffer) {
+		if (!device->diag_resp_buffer) {
 			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
@@ -645,7 +645,7 @@ static QDF_STATUS hif_ctrl_msg_exchange(struct HIF_DEVICE_USB *macp,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
-		if (NULL == response_msg) {
+		if (!response_msg) {
 			/* no expected response */
 			break;
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -238,7 +238,7 @@ hif_bmi_buffer_receive(struct hif_sdio_dev *device,
 		timeout = BMI_COMMUNICATION_TIMEOUT;
 		while ((!want_timeout || timeout--) && !word_available) {
 
-			if (get_pending_events_func != NULL) {
+			if (get_pending_events_func) {
 				status = get_pending_events_func(device,
 							&hif_pending_events,
 							NULL);
@@ -404,7 +404,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	struct hif_sdio_dev *device = scn->hif_handle;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (device == NULL) {
+	if (!device) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 			("%s:Null device argument\n",
 			__func__));
@@ -419,7 +419,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 		return status;
 	}
 
-	if (response_message != NULL) {
+	if (response_message) {
 		status = hif_bmi_buffer_receive(device, response_message,
 						*response_length,
 						timeout_ms ? true : false);

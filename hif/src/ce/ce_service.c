@@ -188,7 +188,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	event->type = type;
 	event->time = qdf_get_log_timestamp();
 
-	if (descriptor != NULL) {
+	if (descriptor) {
 		qdf_mem_copy(&event->descriptor, descriptor, sizeof(union ce_desc));
 	} else {
 		qdf_mem_zero(&event->descriptor, sizeof(union ce_desc));
@@ -487,7 +487,7 @@ qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,  qdf_nbuf_t msdu,
 
 			deltacount = CE_RING_DELTA(nentries_mask, write_index,
 					sw_index-1);
-			if (freelist == NULL) {
+			if (!freelist) {
 				freelist = msdu;
 				hfreelist = msdu;
 			} else {
@@ -1299,13 +1299,13 @@ ce_send_cb_register(struct CE_handle *copyeng,
 	struct hif_softc *scn;
 	struct HIF_CE_state *hif_state;
 
-	if (CE_state == NULL) {
+	if (!CE_state) {
 		HIF_ERROR("%s: Error CE state = NULL", __func__);
 		return;
 	}
 	scn = CE_state->scn;
 	hif_state = HIF_GET_CE_STATE(scn);
-	if (hif_state == NULL) {
+	if (!hif_state) {
 		HIF_ERROR("%s: Error HIF state = NULL", __func__);
 		return;
 	}
@@ -1337,13 +1337,13 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 	struct hif_softc *scn;
 	struct HIF_CE_state *hif_state;
 
-	if (CE_state == NULL) {
+	if (!CE_state) {
 		HIF_ERROR("%s: ERROR CE state = NULL", __func__);
 		return;
 	}
 	scn = CE_state->scn;
 	hif_state = HIF_GET_CE_STATE(scn);
-	if (hif_state == NULL) {
+	if (!hif_state) {
 		HIF_ERROR("%s: Error HIF state = NULL", __func__);
 		return;
 	}

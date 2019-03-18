@@ -202,7 +202,7 @@ static const struct file_operations athdiag_fops = {
 int athdiag_procfs_init(void *scn)
 {
 	proc_dir = proc_mkdir(PROCFS_DIR, NULL);
-	if (proc_dir == NULL) {
+	if (!proc_dir) {
 		remove_proc_entry(PROCFS_DIR, NULL);
 		HIF_ERROR("%s: Error: Could not initialize /proc/%s",
 			__func__, PROCFS_DIR);
@@ -211,7 +211,7 @@ int athdiag_procfs_init(void *scn)
 
 	proc_file = proc_create_data(PROCFS_NAME, 0600, proc_dir,
 				     &athdiag_fops, (void *)scn);
-	if (proc_file == NULL) {
+	if (!proc_file) {
 		remove_proc_entry(PROCFS_NAME, proc_dir);
 		HIF_ERROR("%s: Could not initialize /proc/%s",
 			__func__, PROCFS_NAME);
@@ -228,7 +228,7 @@ int athdiag_procfs_init(void *scn)
  */
 void athdiag_procfs_remove(void)
 {
-	if (proc_dir != NULL) {
+	if (proc_dir) {
 		remove_proc_entry(PROCFS_NAME, proc_dir);
 		HIF_DBG("/proc/%s/%s removed", PROCFS_DIR, PROCFS_NAME);
 		remove_proc_entry(PROCFS_DIR, NULL);

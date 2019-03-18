@@ -162,7 +162,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 	unsigned int boundary_addr = 0;
 
 	ce_diag = hif_state->ce_diag;
-	if (ce_diag == NULL) {
+	if (!ce_diag) {
 		HIF_ERROR("%s: DIAG CE not present", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -367,7 +367,7 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 	unsigned int target_type = 0;
 
 	ce_diag = hif_state->ce_diag;
-	if (ce_diag == NULL) {
+	if (!ce_diag) {
 		HIF_ERROR("%s: DIAG CE not present", __func__);
 		return QDF_STATUS_E_INVAL;
 	}

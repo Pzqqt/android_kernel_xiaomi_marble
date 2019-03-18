@@ -255,7 +255,7 @@ static int hncm_exec_migrate_to(struct qca_napi_data *napid, uint8_t ctx_id,
 	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, ctx_id, didx);
 
 	exec_ctx = hif_exec_get_ctx(&napid->hif_softc->osc, ctx_id);
-	if (exec_ctx == NULL)
+	if (!exec_ctx)
 		return -EINVAL;
 
 	exec_ctx->cpumask.bits[0] = (1 << didx);

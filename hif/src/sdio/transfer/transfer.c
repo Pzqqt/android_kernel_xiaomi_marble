@@ -347,7 +347,7 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 			qdf_nbuf_t netbuf;
 
 			packet = htc_packet_dequeue(queue);
-			if (packet == NULL)
+			if (!packet)
 				break;
 			netbuf = (qdf_nbuf_t)packet->pNetBufContext;
 			if (netbuf)
@@ -711,7 +711,7 @@ void hif_dev_free_recv_pkt_queue(HTC_PACKET_QUEUE *recv_pkt_queue)
 
 	while (!HTC_QUEUE_EMPTY(recv_pkt_queue)) {
 		packet = htc_packet_dequeue(recv_pkt_queue);
-		if (packet == NULL)
+		if (!packet)
 			break;
 		netbuf = (qdf_nbuf_t)packet->pNetBufContext;
 		if (netbuf)

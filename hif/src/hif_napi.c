@@ -901,7 +901,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	struct qca_napi_info *napi_info;
 	struct CE_state *ce_state = NULL;
 
-	if (unlikely(NULL == hif)) {
+	if (unlikely(!hif)) {
 		HIF_ERROR("%s: hif context is NULL", __func__);
 		QDF_ASSERT(0);
 		goto out;
@@ -1037,20 +1037,20 @@ void hif_napi_update_yield_stats(struct CE_state *ce_state,
 	int ce_id = 0;
 	int cpu_id = 0;
 
-	if (unlikely(NULL == ce_state)) {
-		QDF_ASSERT(NULL != ce_state);
+	if (unlikely(!ce_state)) {
+		QDF_ASSERT(ce_state);
 		return;
 	}
 
 	hif = ce_state->scn;
 
-	if (unlikely(NULL == hif)) {
-		QDF_ASSERT(NULL != hif);
+	if (unlikely(!hif)) {
+		QDF_ASSERT(hif);
 		return;
 	}
 	napi_data = &(hif->napi_data);
-	if (unlikely(NULL == napi_data)) {
-		QDF_ASSERT(NULL != napi_data);
+	if (unlikely(!napi_data)) {
+		QDF_ASSERT(napi_data);
 		return;
 	}
 
@@ -1086,7 +1086,7 @@ void hif_napi_stats(struct qca_napi_data *napid)
 	int i;
 	struct qca_napi_cpu *cpu;
 
-	if (napid == NULL) {
+	if (!napid) {
 		qdf_debug("%s: napiid struct is null", __func__);
 		return;
 	}
@@ -1778,7 +1778,7 @@ int hif_napi_serialize(struct hif_opaque_softc *hif, int is_on)
 {
 	int rc = -EINVAL;
 
-	if (hif != NULL)
+	if (hif)
 		switch (is_on) {
 		case 0: { /* de-serialize */
 			rc = hif_napi_event(hif, NAPI_EVT_USR_NORMAL,

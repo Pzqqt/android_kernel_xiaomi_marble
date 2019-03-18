@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,7 +62,7 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 	struct hif_softc *scn = ce_work->data;
 	struct HIF_CE_state *hif_ce_state;
 
-	if (NULL == scn) {
+	if (!scn) {
 		HIF_ERROR("%s: tasklet scn is null", __func__);
 		return;
 	}
@@ -482,7 +482,7 @@ QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	int ret;
 	struct hif_softc *scn;
 
-	if (hif_ce_state == NULL) {
+	if (!hif_ce_state) {
 		HIF_WARN("%s: hif_ce_state = NULL", __func__);
 		return QDF_STATUS_SUCCESS;
 	}

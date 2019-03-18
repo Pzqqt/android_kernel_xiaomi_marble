@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,7 @@ void hif_sdio_stop(struct hif_softc *hif_ctx)
 	struct hif_sdio_device *htc_sdio_device = hif_dev_from_hif(hif_device);
 
 	HIF_ENTER();
-	if (htc_sdio_device != NULL) {
+	if (htc_sdio_device) {
 		hif_dev_disable_interrupts(htc_sdio_device);
 		hif_dev_destroy(htc_sdio_device);
 	}
@@ -174,7 +174,7 @@ void hif_post_init(struct hif_opaque_softc *hif_ctx, void *target,
 
 	HIF_ENTER();
 
-	if (htc_sdio_device == NULL)
+	if (!htc_sdio_device)
 		htc_sdio_device = hif_dev_create(hif_device, callbacks, target);
 
 	if (htc_sdio_device)
