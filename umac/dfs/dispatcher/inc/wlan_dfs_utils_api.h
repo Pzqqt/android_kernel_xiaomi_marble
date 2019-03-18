@@ -105,7 +105,7 @@ QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev);
 
 /**
- * utils_dfs_freq_is_in_nol() -  check if given channel in nol list
+ * utils_dfs_is_freq_in_nol() -  check if given channel in nol list
  * @pdev: Pointer to DFS pdev object
  * @freq: channel frequency
  *
@@ -113,7 +113,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev);
  *
  * Return: true if channel in nol, false else
  */
-bool utils_dfs_freq_is_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq);
+bool utils_dfs_is_freq_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 
 /**
  * utils_dfs_reset_precaclists() - Clears and initiakizes precac_required_list,

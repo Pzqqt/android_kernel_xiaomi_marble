@@ -812,7 +812,7 @@ scm_update_channel_list(struct scan_start_request *req,
 		if (skip_dfs_ch &&
 		    wlan_reg_is_dfs_ch(pdev, wlan_reg_freq_to_chan(pdev, freq)))
 			continue;
-		if (utils_dfs_freq_is_in_nol(pdev, freq))
+		if (utils_dfs_is_freq_in_nol(pdev, freq))
 			continue;
 		req->scan_req.chan_list.chan[num_scan_channels++] =
 			req->scan_req.chan_list.chan[i];

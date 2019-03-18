@@ -1206,7 +1206,7 @@ static void dfs_remove_cur_ch_from_list(
 	return;
 }
 
-bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
+bool dfs_is_freq_in_nol(struct wlan_dfs *dfs, uint32_t freq)
 {
 	struct dfs_nolelem *nol;
 
@@ -1360,7 +1360,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 			continue;
 		}
 
-		if (dfs_freq_is_in_nol(dfs, chan->dfs_ch_freq)) {
+		if (dfs_is_freq_in_nol(dfs, chan->dfs_ch_freq)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				  "skip nol channel=%d", chan->dfs_ch_ieee);
 			continue;

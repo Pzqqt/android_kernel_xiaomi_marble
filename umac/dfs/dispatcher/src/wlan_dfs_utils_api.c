@@ -59,7 +59,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-bool utils_dfs_freq_is_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+bool utils_dfs_is_freq_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
 	struct wlan_dfs *dfs;
 
@@ -67,7 +67,7 @@ bool utils_dfs_freq_is_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 	if (!dfs)
 		return false;
 
-	return dfs_freq_is_in_nol(dfs, freq);
+	return dfs_is_freq_in_nol(dfs, freq);
 }
 
 QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,

@@ -2605,7 +2605,7 @@ bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
 void dfs_task_testtimer_reset(struct wlan_dfs *dfs);
 
 /**
- * dfs_freq_is_in_nol() - check if given channel in nol list
+ * dfs_is_freq_in_nol() - check if given channel in nol list
  * @dfs: Pointer to wlan_dfs structure
  * @freq: channel frequency
  *
@@ -2613,7 +2613,7 @@ void dfs_task_testtimer_reset(struct wlan_dfs *dfs);
  *
  * Return: true if channel in nol, false else
  */
-bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq);
+bool dfs_is_freq_in_nol(struct wlan_dfs *dfs, uint32_t freq);
 
 /**
  * dfs_task_testtimer_detach() - Free dfs test timer.
