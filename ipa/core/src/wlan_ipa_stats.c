@@ -538,7 +538,7 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 	i = 0;
 	qdf_list_peek_front(&ipa_ctx->pending_event,
 			(qdf_list_node_t **)&event);
-	while (event != NULL) {
+	while (event) {
 		ipa_info("PENDING EVENT[%d]: EVT:%s, sta_id:%d, MAC:%pM",
 			 i, wlan_ipa_wlan_event_to_str(event->type),
 			 event->sta_id, event->mac_addr);
