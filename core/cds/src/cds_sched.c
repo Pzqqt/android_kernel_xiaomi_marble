@@ -39,31 +39,7 @@
 #include <linux/sched/types.h>
 #endif
 
-/* Milli seconds to delay SSR thread when an Entry point is Active */
-#define SSR_WAIT_SLEEP_TIME 200
-
-/* MAX iteration count to wait for Entry point to exit before
- * we proceed with SSR in WD Thread
- */
-#define MAX_SSR_WAIT_ITERATIONS 100
-#define MAX_SSR_PROTECT_LOG (16)
-
-static atomic_t ssr_protect_entry_count;
-
-/**
- * struct ssr_protect - sub system restart(ssr) protection tracking table
- * @func: Function which needs ssr protection
- * @free: Flag to tell whether entry is free in table or not
- * @pid: Process id which needs ssr protection
- */
-struct ssr_protect {
-	const char *func;
-	bool  free;
-	uint32_t pid;
-};
-
 static spinlock_t ssr_protect_lock;
-static struct ssr_protect ssr_protect_log[MAX_SSR_PROTECT_LOG];
 
 struct shutdown_notifier {
 	struct list_head list;
@@ -77,7 +53,6 @@ enum notifier_state {
 	NOTIFIER_STATE_NONE,
 	NOTIFIER_STATE_NOTIFYING,
 } notifier_state;
-
 
 static p_cds_sched_context gp_cds_sched_context;
 #ifdef QCA_CONFIG_SMP
@@ -374,9 +349,14 @@ static void __cds_cpu_hotplug_notify(uint32_t cpu, bool cpu_up)
  */
 static void cds_cpu_hotplug_notify(uint32_t cpu, bool cpu_up)
 {
-	cds_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
 	__cds_cpu_hotplug_notify(cpu, cpu_up);
-	cds_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 static void cds_cpu_online_cb(void *context, uint32_t cpu)
@@ -852,129 +832,8 @@ p_cds_sched_context get_cds_sched_ctxt(void)
  */
 void cds_ssr_protect_init(void)
 {
-	int i = 0;
-
 	spin_lock_init(&ssr_protect_lock);
-
-	while (i < MAX_SSR_PROTECT_LOG) {
-		ssr_protect_log[i].func = NULL;
-		ssr_protect_log[i].free = true;
-		ssr_protect_log[i].pid =  0;
-		i++;
-	}
-
 	INIT_LIST_HEAD(&shutdown_notifier_head);
-}
-
-/**
- * cds_print_external_threads() - print external threads stuck in driver
- *
- * Return:
- *        void
- */
-void cds_print_external_threads(void)
-{
-	int i = 0;
-	unsigned long irq_flags;
-
-	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
-
-	while (i < MAX_SSR_PROTECT_LOG) {
-		if (!ssr_protect_log[i].free) {
-			cds_err("PID %d is executing %s",
-				ssr_protect_log[i].pid,
-				ssr_protect_log[i].func);
-		}
-		i++;
-	}
-
-	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
-}
-
-/**
- * cds_ssr_protect() - start ssr protection
- * @caller_func: name of calling function.
- *
- * This function is called to keep track of active driver entry points
- *
- * Return: none
- */
-void cds_ssr_protect(const char *caller_func)
-{
-	int count;
-	int i = 0;
-	bool status = false;
-	unsigned long irq_flags;
-
-	count = atomic_inc_return(&ssr_protect_entry_count);
-
-	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
-
-	while (i < MAX_SSR_PROTECT_LOG) {
-		if (ssr_protect_log[i].free) {
-			ssr_protect_log[i].func = caller_func;
-			ssr_protect_log[i].free = false;
-			ssr_protect_log[i].pid = current->pid;
-			status = true;
-			break;
-		}
-		i++;
-	}
-
-	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
-
-	/*
-	 * Dump the protect log at intervals if count is consistently growing.
-	 * Long running functions should tend to dominate the protect log, so
-	 * hopefully, dumping at multiples of log size will prevent spamming the
-	 * logs while telling us which calls are taking a long time to finish.
-	 */
-	if (count >= MAX_SSR_PROTECT_LOG && count % MAX_SSR_PROTECT_LOG == 0) {
-		cds_err("Protect Log overflow; Dumping contents:");
-		cds_print_external_threads();
-	}
-
-	if (!status)
-		cds_err("%s can not be protected; PID:%d, entry_count:%d",
-			caller_func, current->pid, count);
-}
-
-/**
- * cds_ssr_unprotect() - stop ssr protection
- * @caller_func: name of calling function.
- *
- * Return: none
- */
-void cds_ssr_unprotect(const char *caller_func)
-{
-	int count;
-	int i = 0;
-	bool status = false;
-	unsigned long irq_flags;
-
-	count = atomic_dec_return(&ssr_protect_entry_count);
-
-	spin_lock_irqsave(&ssr_protect_lock, irq_flags);
-
-	while (i < MAX_SSR_PROTECT_LOG) {
-		if (!ssr_protect_log[i].free) {
-			if ((ssr_protect_log[i].pid == current->pid) &&
-			     !strcmp(ssr_protect_log[i].func, caller_func)) {
-				ssr_protect_log[i].func = NULL;
-				ssr_protect_log[i].free = true;
-				ssr_protect_log[i].pid =  0;
-				status = true;
-				break;
-			}
-		}
-		i++;
-	}
-
-	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
-
-	if (!status)
-		cds_err("%s was not protected; PID:%d, entry_count:%d",
-			caller_func, current->pid, count);
 }
 
 /**
@@ -1082,54 +941,6 @@ void cds_shutdown_notifier_call(void)
 
 	notifier_state = NOTIFIER_STATE_NONE;
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
-}
-
-/**
- * cds_wait_for_external_threads_completion() - wait for external threads
- *					completion before proceeding further
- * @caller_func: name of calling function.
- *
- * Return: true if there is no active entry points in driver
- *	   false if there is at least one active entry in driver
- */
-bool cds_wait_for_external_threads_completion(const char *caller_func)
-{
-	int count = MAX_SSR_WAIT_ITERATIONS;
-	int r;
-
-	while (count) {
-
-		r = atomic_read(&ssr_protect_entry_count);
-
-		if (!r)
-			break;
-
-		if (--count) {
-			cds_err("Waiting for %d active entry points to exit",
-				r);
-			msleep(SSR_WAIT_SLEEP_TIME);
-			if (count & 0x1) {
-				cds_err("in middle of waiting for active entry points:");
-				cds_print_external_threads();
-			}
-		}
-	}
-
-	/* at least one external thread is executing */
-	if (!count) {
-		cds_err("Timed-out waiting for active entry points:");
-		cds_print_external_threads();
-		return false;
-	}
-
-	cds_info("Allowing SSR/Driver unload for %s", caller_func);
-
-	return true;
-}
-
-int cds_return_external_threads_count(void)
-{
-	return  atomic_read(&ssr_protect_entry_count);
 }
 
 /**

@@ -866,11 +866,6 @@ static void __wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 
 	ipa_debug("event=%d", evt);
 
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err_rl("Module transition in progress");
-		return;
-	}
-
 	iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
 	if (!iface_ctx) {
 		ipa_err_rl("IPA uC share stats failed - no iface");
@@ -957,9 +952,14 @@ static void __wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 void wlan_ipa_wdi_meter_notifier_cb(qdf_ipa_wdi_meter_evt_type_t evt,
 				    void *data)
 {
-	qdf_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
 	__wlan_ipa_wdi_meter_notifier_cb(evt, data);
-	qdf_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 #endif /* FEATURE_METERING */

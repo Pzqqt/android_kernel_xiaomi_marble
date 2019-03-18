@@ -460,18 +460,7 @@ p_cds_sched_context get_cds_sched_ctxt(void);
 void qdf_timer_module_init(void);
 void qdf_timer_module_deinit(void);
 void cds_ssr_protect_init(void);
-void cds_ssr_protect(const char *caller_func);
-void cds_ssr_unprotect(const char *caller_func);
-bool cds_wait_for_external_threads_completion(const char *caller_func);
-void cds_print_external_threads(void);
 int cds_get_gfp_flags(void);
-
-/**
- * cds_return_external_threads_count() - return active external thread calls
- *
- * Return: total number of active extrenal threads in driver
- */
-int cds_return_external_threads_count(void);
 
 /**
  * cds_shutdown_notifier_register() - Register for shutdown notification

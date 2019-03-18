@@ -194,7 +194,6 @@ QDF_STATUS cds_init(void)
 
 	qdf_register_self_recovery_callback(__cds_trigger_recovery);
 	qdf_register_fw_down_callback(cds_is_fw_down);
-	qdf_register_ssr_protect_callbacks(cds_ssr_protect, cds_ssr_unprotect);
 	qdf_register_recovering_state_query_callback(cds_is_driver_recovering);
 
 	return QDF_STATUS_SUCCESS;
@@ -216,8 +215,8 @@ void cds_deinit(void)
 	QDF_BUG(gp_cds_context);
 	if (!gp_cds_context)
 		return;
+
 	qdf_register_recovering_state_query_callback(NULL);
-	qdf_register_ssr_protect_callbacks(NULL, NULL);
 	qdf_register_fw_down_callback(NULL);
 	qdf_register_self_recovery_callback(NULL);
 

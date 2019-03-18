@@ -8002,11 +8002,15 @@ stop_work:
 
 static void hdd_bus_bw_work_handler(void *context)
 {
-	struct wiphy *wiphy = context;
+	struct hdd_context *hdd_ctx = context;
+	struct qdf_op_sync *op_sync;
 
-	cds_ssr_protect(__func__);
-	__hdd_bus_bw_work_handler(wiphy_priv(wiphy));
-	cds_ssr_unprotect(__func__);
+	if (qdf_op_protect(&op_sync))
+		return;
+
+	__hdd_bus_bw_work_handler(hdd_ctx);
+
+	qdf_op_unprotect(op_sync);
 }
 
 int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
@@ -8018,7 +8022,7 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
 	status = qdf_periodic_work_create(&hdd_ctx->bus_bw_work,
 					  hdd_bus_bw_work_handler,
-					  hdd_ctx->wiphy);
+					  hdd_ctx);
 
 	hdd_exit();
 
@@ -11275,7 +11279,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	QDF_STATUS qdf_status;
 	bool is_recovery_stop = cds_is_driver_recovering();
 	int ret = 0;
-	int active_threads;
 	int debugfs_threads;
 	struct target_psoc_info *tgt_hdl;
 
@@ -11293,17 +11296,11 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	hdd_ctx->stop_modules_in_progress = true;
 	cds_set_module_stop_in_progress(true);
 
-	active_threads = cds_return_external_threads_count();
 	debugfs_threads = hdd_return_debugfs_threads_count();
 
-	if (active_threads > 0 || debugfs_threads > 0 ||
-	    hdd_ctx->is_wiphy_suspended) {
-		hdd_warn("External threads %d, Debugfs threads %d, wiphy suspend %d",
-			 active_threads, debugfs_threads,
-			 hdd_ctx->is_wiphy_suspended);
-
-		if (active_threads)
-			cds_print_external_threads();
+	if (debugfs_threads > 0 || hdd_ctx->is_wiphy_suspended) {
+		hdd_warn("Debugfs threads %d, wiphy suspend %d",
+			 debugfs_threads, hdd_ctx->is_wiphy_suspended);
 
 		if (IS_IDLE_STOP && !ftm_mode) {
 			mutex_unlock(&hdd_ctx->iface_change_lock);
@@ -12880,7 +12877,6 @@ int hdd_init(void)
 	}
 
 	qdf_op_callbacks_register(__hdd_op_protect_cb, __hdd_op_unprotect_cb);
-	qdf_register_module_state_query_callback(hdd_state_query_cb);
 
 	wlan_init_bug_report_lock();
 
@@ -13603,12 +13599,6 @@ static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
 	if (errno)
 		goto trans_stop;
 
-	if (!cds_wait_for_external_threads_completion(__func__)) {
-		hdd_warn("External threads still active, cannot change mode");
-		errno = -EAGAIN;
-		goto trans_stop;
-	}
-
 	errno = __hdd_driver_mode_change(hdd_ctx, mode);
 
 trans_stop:
@@ -13802,10 +13792,6 @@ static void hdd_driver_unload(void)
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
-
-	if (!cds_wait_for_external_threads_completion(__func__))
-		hdd_warn("External threads are still active attempting "
-			 "driver unload anyway");
 
 	hdd_driver_mode_change_unregister();
 	pld_deinit();

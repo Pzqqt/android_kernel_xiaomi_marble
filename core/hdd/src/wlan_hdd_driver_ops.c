@@ -571,9 +571,6 @@ static void __hdd_soc_remove(struct device *dev)
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
-	if (!cds_wait_for_external_threads_completion(__func__))
-		hdd_warn("External threads are still active attempting driver unload anyway");
-
 	if (!hdd_wait_for_debugfs_threads_completion())
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
 
@@ -729,9 +726,6 @@ static void __hdd_soc_recovery_shutdown(void)
 	hif_mask_interrupt_call(hif_ctx);
 
 	hdd_psoc_shutdown_notify(hdd_ctx);
-
-	if (!cds_wait_for_external_threads_completion(__func__))
-		hdd_err("Host is not ready for SSR, attempting anyway");
 
 	if (!hdd_wait_for_debugfs_threads_completion())
 		hdd_err("Debufs threads are still pending, attempting SSR anyway");

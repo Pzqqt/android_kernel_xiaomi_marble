@@ -778,16 +778,6 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		return;
 	}
 
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err_rl("Module transition in progress");
-		if (evt == IPA_RECEIVE) {
-			skb = (qdf_nbuf_t)data;
-			ipa_ctx->ipa_rx_internal_drop_count++;
-			dev_kfree_skb_any(skb);
-		}
-		return;
-	}
-
 	switch (evt) {
 	case IPA_RECEIVE:
 		skb = (qdf_nbuf_t) data;
@@ -867,9 +857,23 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 static void wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 			    unsigned long data)
 {
-	qdf_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync)) {
+		if (evt == IPA_RECEIVE) {
+			struct wlan_ipa_priv *ipa_ctx = priv;
+			qdf_nbuf_t skb = (qdf_nbuf_t)data;
+
+			ipa_ctx->ipa_rx_internal_drop_count++;
+			dev_kfree_skb_any(skb);
+		}
+
+		return;
+	}
+
 	__wlan_ipa_w2i_cb(priv, evt, data);
-	qdf_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 /**
@@ -893,13 +897,6 @@ static void __wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 	iface_context = (struct wlan_ipa_iface_context *)priv;
 	ipa_tx_desc = (qdf_ipa_rx_data_t *)data;
 	ipa_ctx = iface_context->ipa_ctx;
-
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err_rl("Module transition in progress");
-		ipa_free_skb(ipa_tx_desc);
-		iface_context->stats.num_tx_drop++;
-		return;
-	}
 
 	if (evt != IPA_RECEIVE) {
 		ipa_err_rl("Event is not IPA_RECEIVE");
@@ -961,9 +958,21 @@ static void __wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 static void wlan_ipa_i2w_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 			    unsigned long data)
 {
-	qdf_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync)) {
+		qdf_ipa_rx_data_t *ipa_tx_desc = (qdf_ipa_rx_data_t *)data;
+		struct wlan_ipa_iface_context *iface_context = priv;
+
+		ipa_free_skb(ipa_tx_desc);
+		iface_context->stats.num_tx_drop++;
+
+		return;
+	}
+
 	__wlan_ipa_i2w_cb(priv, evt, data);
-	qdf_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 QDF_STATUS wlan_ipa_suspend(struct wlan_ipa_priv *ipa_ctx)
@@ -2854,11 +2863,6 @@ static void __wlan_ipa_uc_fw_op_event_handler(void *data)
 				(struct uc_op_work_struct *)data;
 	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
 
-	if (qdf_is_module_state_transitioning()) {
-		ipa_err("Module transition in progress");
-		return;
-	}
-
 	msg = uc_op_work->msg;
 	uc_op_work->msg = NULL;
 	ipa_debug("posted msg %d", msg->op_code);
@@ -2875,9 +2879,14 @@ static void __wlan_ipa_uc_fw_op_event_handler(void *data)
  */
 static void wlan_ipa_uc_fw_op_event_handler(void *data)
 {
-	qdf_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
 	__wlan_ipa_uc_fw_op_event_handler(data);
-	qdf_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 /**

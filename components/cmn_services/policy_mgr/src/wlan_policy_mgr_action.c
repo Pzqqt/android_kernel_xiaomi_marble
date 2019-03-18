@@ -1340,12 +1340,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 
-	if (qdf_is_module_state_transitioning()) {
-		policy_mgr_err("Module transition in progress");
-		goto end;
-	}
-
-	work_info = (struct sta_ap_intf_check_work_ctx *) data;
+	work_info = data;
 	if (!work_info) {
 		policy_mgr_err("Invalid work_info");
 		goto end;
@@ -1426,9 +1421,14 @@ end:
 
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 {
-	qdf_ssr_protect(__func__);
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
 	__policy_mgr_check_sta_ap_concurrent_ch_intf(data);
-	qdf_ssr_unprotect(__func__);
+
+	qdf_op_unprotect(op_sync);
 }
 
 static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
