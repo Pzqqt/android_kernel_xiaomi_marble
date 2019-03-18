@@ -1263,13 +1263,13 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 	}
 
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
-		if (ipa_ctx->iface_context[i].tl_context == NULL) {
+		if (!ipa_ctx->iface_context[i].tl_context) {
 			iface_context = &(ipa_ctx->iface_context[i]);
 			break;
 		}
 	}
 
-	if (iface_context == NULL) {
+	if (!iface_context) {
 		ipa_err("All the IPA interfaces are in use");
 		status = QDF_STATUS_E_NOMEM;
 		QDF_ASSERT(0);
@@ -1280,7 +1280,7 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 	tl_context = (void *)cdp_peer_get_vdev_by_sta_id(ipa_ctx->dp_soc,
 							 ipa_ctx->dp_pdev,
 							 sta_id);
-	if (tl_context == NULL) {
+	if (!tl_context) {
 		ipa_err("Not able to get TL context sta_id: %d", sta_id);
 		status = QDF_STATUS_E_INVAL;
 		goto end;
@@ -1886,7 +1886,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 				sizeof(qdf_ipa_wlan_hdr_attrib_val_t));
 		msg_ex = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
 
-		if (msg_ex == NULL) {
+		if (!msg_ex) {
 			ipa_err("msg_ex allocation failed");
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -2106,7 +2106,7 @@ wlan_ipa_uc_proc_pending_event(struct wlan_ipa_priv *ipa_ctx, bool is_loading)
 
 	qdf_list_remove_front(&ipa_ctx->pending_event,
 			(qdf_list_node_t **)&pending_event);
-	while (pending_event != NULL) {
+	while (pending_event) {
 		struct wlan_objmgr_pdev *pdev = ipa_ctx->pdev;
 		struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 		struct wlan_objmgr_vdev *vdev =
@@ -2428,7 +2428,7 @@ QDF_STATUS wlan_ipa_send_mcc_scc_msg(struct wlan_ipa_priv *ipa_ctx,
 	/* Send SCC/MCC Switching event to IPA */
 	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(*msg);
 	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (msg == NULL) {
+	if (!msg) {
 		ipa_err("msg allocation failed");
 		return QDF_STATUS_E_NOMEM;
 	}
