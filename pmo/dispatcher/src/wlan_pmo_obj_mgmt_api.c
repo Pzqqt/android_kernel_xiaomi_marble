@@ -157,7 +157,7 @@ QDF_STATUS pmo_psoc_object_created_notification(
 	}
 
 	psoc_ctx = qdf_mem_malloc(sizeof(*psoc_ctx));
-	if (psoc_ctx == NULL) {
+	if (!psoc_ctx) {
 		pmo_err("Failed to allocate pmo_psoc");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
@@ -241,7 +241,7 @@ QDF_STATUS pmo_vdev_object_created_notification(
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	vdev_ctx = qdf_mem_malloc(sizeof(*vdev_ctx));
-	if (vdev_ctx == NULL) {
+	if (!vdev_ctx) {
 		pmo_err("Failed to allocate vdev_ctx");
 		status = QDF_STATUS_E_NOMEM;
 		goto out;
