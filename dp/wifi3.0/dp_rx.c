@@ -1644,7 +1644,6 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		if (qdf_likely(!qdf_nbuf_is_rx_chfrag_cont(rx_desc->nbuf)))
 			quota -= 1;
 
-
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 						&tail[rx_desc->pool_id],
 						rx_desc);
@@ -1654,9 +1653,6 @@ done:
 
 	if (nbuf_tail)
 		QDF_NBUF_CB_RX_FLUSH_IND(nbuf_tail) = 1;
-
-	/* Update histogram statistics by looping through pdev's */
-	DP_RX_HIST_STATS_PER_PDEV();
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*
@@ -1947,6 +1943,9 @@ done:
 		nbuf = next;
 		dp_peer_unref_del_find_by_id(peer);
 	}
+
+	/* Update histogram statistics by looping through pdev's */
+	DP_RX_HIST_STATS_PER_PDEV();
 
 	if (deliver_list_head)
 		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
