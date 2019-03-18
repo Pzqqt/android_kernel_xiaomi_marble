@@ -1292,7 +1292,7 @@ static QDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 	 * states are in sync
 	 */
 	wmibuf = wmi_buf_alloc(wmi_handle, len);
-	if (wmibuf == NULL)
+	if (!wmibuf)
 		return QDF_STATUS_E_NOMEM;
 
 	cmd = (wmi_pdev_suspend_cmd_fixed_param *) wmi_buf_data(wmibuf);
@@ -1333,7 +1333,7 @@ static QDF_STATUS send_resume_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS ret;
 
 	wmibuf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
-	if (wmibuf == NULL)
+	if (!wmibuf)
 		return QDF_STATUS_E_NOMEM;
 	cmd = (wmi_pdev_resume_cmd_fixed_param *) wmi_buf_data(wmibuf);
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -6685,7 +6685,7 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 		sizeof(u_int8_t)*param->data_len + FIPS_ALIGN);
 
 	/* Checking if kmalloc is successful to allocate space */
-	if (key_unaligned == NULL)
+	if (!key_unaligned)
 		return QDF_STATUS_SUCCESS;
 	/* Checking if space is aligned */
 	if (!FIPS_IS_ALIGNED(key_unaligned, FIPS_ALIGN)) {
@@ -6708,7 +6708,7 @@ static QDF_STATUS fips_align_data_be(wmi_unified_t wmi_handle,
 		16, 1, key_aligned, param->key_len, true);
 
 	/* Checking if kmalloc is successful to allocate space */
-	if (data_unaligned == NULL)
+	if (!data_unaligned)
 		return QDF_STATUS_SUCCESS;
 	/* Checking of space is aligned */
 	if (!FIPS_IS_ALIGNED(data_unaligned, FIPS_ALIGN)) {
@@ -6818,7 +6818,7 @@ send_pdev_fips_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 								param->pdev_id);
-	if (param->key != NULL && param->data != NULL) {
+	if (param->key && param->data) {
 		cmd->key_len = param->key_len;
 		cmd->data_len = param->data_len;
 		cmd->fips_cmd = !!(param->op);
@@ -8956,7 +8956,7 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 	chainmask_caps = param_buf->mac_phy_chainmask_caps;
 
-	if (chainmask_caps == NULL)
+	if (!chainmask_caps)
 		return QDF_STATUS_E_INVAL;
 
 	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
@@ -9096,7 +9096,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	}
 	chain_mask_combo = param_buf->mac_phy_chainmask_combo;
 
-	if (chain_mask_combo == NULL)
+	if (!chain_mask_combo)
 		return QDF_STATUS_SUCCESS;
 
 	wmi_nofl_debug("Dumping chain mask combo data");
@@ -9465,7 +9465,7 @@ static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
 					FIPS_ALIGN));
 	/* Assigning unaligned space to copy the data */
 	/* Checking if kmalloc does successful allocation */
-	if (data_unaligned == NULL)
+	if (!data_unaligned)
 		return QDF_STATUS_E_FAILURE;
 
 	/* Checking if space is alligned */

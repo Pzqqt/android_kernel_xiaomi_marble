@@ -1788,7 +1788,7 @@ static int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
 	for (idx = 0; (idx < soc->max_event_idx &&
 		       idx < WMI_UNIFIED_MAX_EVENT); ++idx) {
 		if (wmi_handle->event_id[idx] == event_id &&
-		    wmi_handle->event_handler[idx] != NULL) {
+		    wmi_handle->event_handler[idx]) {
 			return idx;
 		}
 	}
@@ -2102,7 +2102,7 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
 	wmi_handle = wmi_get_pdev_ep(soc, htc_packet->Endpoint);
-	if (wmi_handle == NULL) {
+	if (!wmi_handle) {
 		WMI_LOGE
 		("unable to get wmi_handle to Endpoint %d\n",
 		 htc_packet->Endpoint);
@@ -2411,7 +2411,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 	if (pdev_idx >= WMI_MAX_RADIOS)
 		return NULL;
 
-	if (soc->wmi_pdev[pdev_idx] == NULL) {
+	if (!soc->wmi_pdev[pdev_idx]) {
 		wmi_handle =
 			(struct wmi_unified *) qdf_mem_malloc(
 					sizeof(struct wmi_unified));
@@ -2430,7 +2430,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 				wmi_rx_event_work, wmi_handle);
 		wmi_handle->wmi_rx_work_queue =
 			qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
-		if (NULL == wmi_handle->wmi_rx_work_queue) {
+		if (!wmi_handle->wmi_rx_work_queue) {
 			WMI_LOGE("failed to create wmi_rx_event_work_queue");
 			goto error;
 		}
@@ -2570,7 +2570,7 @@ void *wmi_unified_attach(void *scn_handle,
 			wmi_rx_event_work, wmi_handle);
 	wmi_handle->wmi_rx_work_queue =
 		qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
-	if (NULL == wmi_handle->wmi_rx_work_queue) {
+	if (!wmi_handle->wmi_rx_work_queue) {
 		WMI_LOGE("failed to create wmi_rx_event_work_queue");
 		goto error;
 	}
@@ -2742,7 +2742,7 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 
 	ASSERT(wmi_cmd_buf);
 	wmi_handle = wmi_get_pdev_ep(soc, htc_pkt->Endpoint);
-	if (wmi_handle == NULL) {
+	if (!wmi_handle) {
 		WMI_LOGE("%s: Unable to get wmi handle\n", __func__);
 		QDF_ASSERT(0);
 		return;

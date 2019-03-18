@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -541,7 +541,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 		return error;
 	}
 #endif
-	if (*wmi_cmd_struct_ptr == NULL) {
+	if (!*wmi_cmd_struct_ptr) {
 		/* Error: unable to alloc memory */
 		wmi_tlv_print_error
 			("%s: Error: unable to alloc memory (size=%d) for TLV\n",
@@ -704,7 +704,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 			wmi_tlv_os_mem_alloc(os_handle, new_tlv_buf,
 					     (num_of_elems *
 					      attr_struct_ptr.tag_struct_size));
-			if (new_tlv_buf == NULL) {
+			if (!new_tlv_buf) {
 				/* Error: unable to alloc memory */
 				wmi_tlv_print_error
 					("%s: Error: unable to alloc memory (size=%d) for padding the TLV array %d\n",
@@ -910,7 +910,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 			/* Dynamic memory allocation is supported */
 			wmi_tlv_os_mem_alloc(os_handle, new_tlv_buf,
 					     (curr_tlv_len - tlv_size_diff));
-			if (new_tlv_buf == NULL) {
+			if (!new_tlv_buf) {
 				/* Error: unable to alloc memory */
 				wmi_tlv_print_error
 					("%s: Error: unable to alloc memory (size=%d) for padding the TLV %d\n",
@@ -1053,7 +1053,7 @@ static void wmitlv_free_allocated_tlvs(uint32_t is_cmd_id,
 /* macro to free that previously allocated memory for this TLV. When (op==FREE_TLV_ELEM). */
 #define WMITLV_OP_FREE_TLV_ELEM_macro(param_ptr, param_len, wmi_cmd_event_id, elem_tlv_tag, elem_struc_type, elem_name, var_len, arr_size)  \
 	if ((((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->WMITLV_FIELD_BUF_IS_ALLOCATED(elem_name)) &&	\
-	    (((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->elem_name != NULL)) \
+	    (((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->elem_name)) \
 	{ \
 		wmi_tlv_os_mem_free(((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->elem_name); \
 	}
