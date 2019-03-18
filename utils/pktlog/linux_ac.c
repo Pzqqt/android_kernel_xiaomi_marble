@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -537,9 +537,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 	int ret = 0;
 
 	PKTLOG_MOD_INC_USE_COUNT;
-	pl_info = (struct ath_pktlog_info *)
-			PDE_DATA(f->f_path.dentry->d_inode);
-
+	pl_info = PDE_DATA(f->f_path.dentry->d_inode);
 	if (!pl_info) {
 		pr_err("%s: pl_info NULL", __func__);
 		return -EINVAL;
@@ -549,11 +547,6 @@ static int __pktlog_open(struct inode *i, struct file *f)
 		pr_info("%s: plinfo state (%d) != PKTLOG_OPR_NOT_IN_PROGRESS",
 			__func__, pl_info->curr_pkt_state);
 		return -EBUSY;
-	}
-
-	if (qdf_is_module_state_transitioning()) {
-		pr_info("%s: module transition in progress", __func__);
-		return -EAGAIN;
 	}
 
 	pl_info->curr_pkt_state = PKTLOG_OPR_IN_PROGRESS_READ_START;
@@ -593,13 +586,18 @@ static int __pktlog_open(struct inode *i, struct file *f)
 
 static int pktlog_open(struct inode *i, struct file *f)
 {
-	int ret;
+	struct qdf_op_sync *op_sync;
+	int errno;
 
-	qdf_ssr_protect(__func__);
-	ret = __pktlog_open(i, f);
-	qdf_ssr_unprotect(__func__);
+	errno = qdf_op_protect(&op_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __pktlog_open(i, f);
+
+	qdf_op_unprotect(op_sync);
+
+	return errno;
 }
 
 static int __pktlog_release(struct inode *i, struct file *f)
@@ -611,16 +609,9 @@ static int __pktlog_release(struct inode *i, struct file *f)
 
 	PKTLOG_MOD_DEC_USE_COUNT;
 
-	pl_info = (struct ath_pktlog_info *)
-			PDE_DATA(f->f_path.dentry->d_inode);
-
+	pl_info = PDE_DATA(f->f_path.dentry->d_inode);
 	if (!pl_info)
 		return -EINVAL;
-
-	if (qdf_is_module_state_transitioning()) {
-		pr_info("%s: module transition in progress", __func__);
-		return -EAGAIN;
-	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
@@ -660,13 +651,18 @@ static int __pktlog_release(struct inode *i, struct file *f)
 
 static int pktlog_release(struct inode *i, struct file *f)
 {
-	int ret;
+	struct qdf_op_sync *op_sync;
+	int errno;
 
-	qdf_ssr_protect(__func__);
-	ret = __pktlog_release(i, f);
-	qdf_ssr_unprotect(__func__);
+	errno = qdf_op_protect(&op_sync);
+	if (errno)
+		return errno;
 
-	return ret;
+	errno = __pktlog_release(i, f);
+
+	qdf_op_unprotect(op_sync);
+
+	return errno;
 }
 
 #ifndef MIN
@@ -839,13 +835,7 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	struct ath_pktlog_info *pl_info;
 	struct ath_pktlog_buf *log_buf;
 
-	if (qdf_is_module_state_transitioning()) {
-		pr_info("%s: module transition in progress", __func__);
-		return -EAGAIN;
-	}
-
-	pl_info = (struct ath_pktlog_info *)
-					PDE_DATA(file->f_path.dentry->d_inode);
+	pl_info = PDE_DATA(file->f_path.dentry->d_inode);
 	if (!pl_info)
 		return 0;
 
@@ -988,20 +978,24 @@ rd_done:
 static ssize_t
 pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 {
-	size_t ret;
-	struct ath_pktlog_info *pl_info;
+	struct ath_pktlog_info *info = PDE_DATA(file->f_path.dentry->d_inode);
+	struct qdf_op_sync *op_sync;
+	ssize_t err_size;
 
-	pl_info = (struct ath_pktlog_info *)
-			PDE_DATA(file->f_path.dentry->d_inode);
-	if (!pl_info)
+	if (!info)
 		return 0;
 
-	qdf_ssr_protect(__func__);
-	mutex_lock(&pl_info->pktlog_mutex);
-	ret = __pktlog_read(file, buf, nbytes, ppos);
-	mutex_unlock(&pl_info->pktlog_mutex);
-	qdf_ssr_unprotect(__func__);
-	return ret;
+	err_size = qdf_op_protect(&op_sync);
+	if (err_size)
+		return err_size;
+
+	mutex_lock(&info->pktlog_mutex);
+	err_size = __pktlog_read(file, buf, nbytes, ppos);
+	mutex_unlock(&info->pktlog_mutex);
+
+	qdf_op_unprotect(op_sync);
+
+	return err_size;
 }
 
 int pktlogmod_init(void *context)
