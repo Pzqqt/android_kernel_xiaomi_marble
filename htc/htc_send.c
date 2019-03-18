@@ -129,7 +129,7 @@ static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
 			 pEndpoint->Id, pPacket));
 
 	EpTxComplete = pEndpoint->EpCallBacks.EpTxComplete;
-	if (EpTxComplete != NULL)
+	if (EpTxComplete)
 		EpTxComplete(pEndpoint->EpCallBacks.pContext, pPacket);
 	else
 		qdf_nbuf_free(pPacket->pPktContext);
@@ -151,7 +151,7 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 	qdf_nbuf_t netbuf;
 
 	LOCK_HTC_TX(target);
-	if (NULL == target->pBundleFreeList) {
+	if (!target->pBundleFreeList) {
 		UNLOCK_HTC_TX(target);
 		netbuf = qdf_nbuf_alloc(NULL,
 					target->MaxMsgsPerHTCBundle *
@@ -239,7 +239,7 @@ void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 		INIT_HTC_PACKET_QUEUE(pQueueSave);
 
 	LOCK_HTC_TX(target);
-	if (target->pBundleFreeList == NULL) {
+	if (!target->pBundleFreeList) {
 		target->pBundleFreeList = pPacket;
 		pPacket->ListLink.pNext = NULL;
 	} else {
@@ -378,7 +378,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 	pQueueSave = (HTC_PACKET_QUEUE *) pPacketTx->pContext;
 	while (1) {
 		pPacket = htc_packet_dequeue(pPktQueue);
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		creditPad = 0;
 		transferLength = pPacket->ActualLength + HTC_HDR_LENGTH;
@@ -527,7 +527,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		 * placed in a bundle, and send it by normal way
 		 */
 		pPacket = htc_packet_dequeue(pPktQueue);
-		if (NULL == pPacket) {
+		if (!pPacket) {
 			/* local queue is fully drained */
 			break;
 		}
@@ -777,7 +777,7 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 		sendFlags = 0;
 		/* get packet at head, but don't remove it */
 		pPacket = htc_get_pkt_at_head(tx_queue);
-		if (pPacket == NULL) {
+		if (!pPacket) {
 			if (do_pm_get)
 				hif_pm_runtime_put(target->hif_dev);
 			break;
@@ -907,7 +907,7 @@ static void get_htc_send_packets(HTC_TARGET *target,
 		}
 
 		pPacket = htc_packet_dequeue(tx_queue);
-		if (pPacket == NULL) {
+		if (!pPacket) {
 			if (do_pm_get)
 				hif_pm_runtime_put(target->hif_dev);
 			break;
@@ -984,7 +984,7 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 		/* caller didn't provide a queue, just wants us to check
 		 * queues and send
 		 */
-		if (pCallersSendQueue == NULL)
+		if (!pCallersSendQueue)
 			break;
 
 		if (HTC_QUEUE_EMPTY(pCallersSendQueue)) {
@@ -1017,7 +1017,7 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 					 pEndpoint->MaxTxQueueDepth));
 		}
 		if ((overflow <= 0)
-		    || (pEndpoint->EpCallBacks.EpSendFull == NULL)) {
+		    || (!pEndpoint->EpCallBacks.EpSendFull)) {
 			/* all packets will fit or caller did not provide send
 			 * full indication handler
 			 * just move all of them to local sendQueue object
@@ -1037,7 +1037,7 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			for (i = 0; i < goodPkts; i++) {
 				/* pop off caller's queue */
 				pPacket = htc_packet_dequeue(pCallersSendQueue);
-				A_ASSERT(pPacket != NULL);
+				A_ASSERT(pPacket);
 				/* insert into local queue */
 				HTC_PACKET_ENQUEUE(&sendQueue, pPacket);
 			}
@@ -1370,7 +1370,7 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 	/* get packet at head to figure out which endpoint these packets will
 	 * go into
 	 */
-	if (NULL == pPacket) {
+	if (!pPacket) {
 		OL_ATH_HTC_PKT_ERROR_COUNT_INCR(target, GET_HTC_PKT_Q_FAIL);
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-__htc_send_pkt\n"));
 		return QDF_STATUS_E_INVAL;
@@ -1745,7 +1745,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 			htc_issue_packets_bundle(target, pEndpoint, &sendQueue);
 		}
 		pPacket = htc_packet_dequeue(&sendQueue);
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
 
@@ -1866,7 +1866,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	ITERATE_OVER_LIST_ALLOW_REMOVE(&lookupQueue.QueueHead, pPacket,
 				       HTC_PACKET, ListLink) {
 
-		if (NULL == pPacket) {
+		if (!pPacket) {
 			pFoundPacket = pPacket;
 			break;
 		}
@@ -1920,7 +1920,7 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 
 	do {
 		pPacket = htc_lookup_tx_packet(target, pEndpoint, netbuf);
-		if (NULL == pPacket) {
+		if (!pPacket) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("HTC TX lookup failed!\n"));
 			/* may have already been flushed and freed */

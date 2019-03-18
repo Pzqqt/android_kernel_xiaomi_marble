@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,7 +76,7 @@ static A_STATUS htc_process_trailer(HTC_TARGET *target,
 static void do_recv_completion_pkt(HTC_ENDPOINT *pEndpoint,
 				   HTC_PACKET *pPacket)
 {
-	if (pEndpoint->EpCallBacks.EpRecv == NULL) {
+	if (!pEndpoint->EpCallBacks.EpRecv) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("HTC ep %d has NULL recv callback on packet %pK\n",
 				 pEndpoint->Id,
@@ -146,7 +146,7 @@ HTC_PACKET *allocate_htc_packet_container(HTC_TARGET *target)
 
 	LOCK_HTC_RX(target);
 
-	if (NULL == target->pHTCPacketStructPool) {
+	if (!target->pHTCPacketStructPool) {
 		UNLOCK_HTC_RX(target);
 		return NULL;
 	}
@@ -165,7 +165,7 @@ void free_htc_packet_container(HTC_TARGET *target, HTC_PACKET *pPacket)
 	pPacket->ListLink.pPrev = NULL;
 
 	LOCK_HTC_RX(target);
-	if (NULL == target->pHTCPacketStructPool) {
+	if (!target->pHTCPacketStructPool) {
 		target->pHTCPacketStructPool = pPacket;
 		pPacket->ListLink.pNext = NULL;
 	} else {
@@ -197,7 +197,7 @@ qdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 	}
 
 	new_skb = qdf_nbuf_alloc(target->ExpRxSgTotalLen, 0, 4, false);
-	if (new_skb == NULL) {
+	if (!new_skb) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("rx_sg_to_single_netbuf: can't allocate %u size netbuf\n",
 				 target->ExpRxSgTotalLen));
@@ -214,7 +214,7 @@ qdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 		anbdata_new += qdf_nbuf_len(skb);
 		qdf_nbuf_free(skb);
 		skb = qdf_nbuf_queue_remove(rx_sg_queue);
-	} while (skb != NULL);
+	} while (skb);
 
 	RESET_RX_SG_CONFIG(target);
 	return new_skb;
@@ -257,7 +257,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		qdf_nbuf_queue_add(&target->RxSgQueue, netbuf);
 		if (target->CurRxSgTotalLen == target->ExpRxSgTotalLen) {
 			netbuf = rx_sg_to_single_netbuf(target);
-			if (netbuf == NULL) {
+			if (!netbuf) {
 				UNLOCK_HTC_RX(target);
 				goto _out;
 			}
@@ -481,7 +481,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		 * TODO_FIXME
 		 */
 		pPacket = allocate_htc_packet_container(target);
-		if (NULL == pPacket) {
+		if (!pPacket) {
 			status = QDF_STATUS_E_RESOURCES;
 			break;
 		}
@@ -507,7 +507,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 _out:
 #endif
 
-	if (netbuf != NULL)
+	if (netbuf)
 		qdf_nbuf_free(netbuf);
 
 	return status;
@@ -525,7 +525,7 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
 
 	pFirstPacket = htc_get_pkt_at_head(pPktQueue);
 
-	if (NULL == pFirstPacket) {
+	if (!pFirstPacket) {
 		A_ASSERT(false);
 		return A_EINVAL;
 	}
@@ -581,7 +581,7 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 
 	while (1) {
 		pPacket = htc_packet_dequeue(&pEndpoint->RxBufferHoldQueue);
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		UNLOCK_HTC_RX(target);
 		pPacket->Status = QDF_STATUS_E_CANCELED;

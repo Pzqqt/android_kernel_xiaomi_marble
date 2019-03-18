@@ -61,7 +61,7 @@ static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 	qdf_nbuf_t netbuf;
 
 	netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-	if (netbuf != NULL)
+	if (netbuf)
 		qdf_nbuf_free(netbuf);
 	qdf_mem_free(pPacket);
 }
@@ -73,11 +73,11 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 
 	do {
 		pPacket = (HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		netbuf = qdf_nbuf_alloc(osdev, HTC_CONTROL_BUFFER_SIZE,
 					20, 4, true);
-		if (NULL == netbuf) {
+		if (!netbuf) {
 			qdf_mem_free(pPacket);
 			pPacket = NULL;
 			break;
@@ -142,7 +142,7 @@ static void htc_cleanup(HTC_TARGET *target)
 	HTC_PACKET_QUEUE *pkt_queue;
 	qdf_nbuf_t netbuf;
 
-	if (target->hif_dev != NULL) {
+	if (target->hif_dev) {
 		hif_detach_htc(target->hif_dev);
 		hif_mask_interrupt_call(target->hif_dev);
 		target->hif_dev = NULL;
@@ -150,7 +150,7 @@ static void htc_cleanup(HTC_TARGET *target)
 
 	while (true) {
 		pPacket = allocate_htc_packet_container(target);
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		qdf_mem_free(pPacket);
 	}
@@ -174,10 +174,10 @@ static void htc_cleanup(HTC_TARGET *target)
 #ifdef TODO_FIXME
 	while (true) {
 		pPacket = htc_alloc_control_tx_packet(target);
-		if (pPacket == NULL)
+		if (!pPacket)
 			break;
 		netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-		if (netbuf != NULL)
+		if (netbuf)
 			qdf_nbuf_free(netbuf);
 		qdf_mem_free(pPacket);
 	}
@@ -236,7 +236,7 @@ int htc_runtime_resume(HTC_HANDLE htc_ctx)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_ctx);
 
-	if (target == NULL)
+	if (!target)
 		return 0;
 
 	qdf_sched_work(0, &target->queue_kicker);
@@ -255,7 +255,7 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 	HTC_TARGET *target = NULL;
 	int i;
 
-	if (ol_sc == NULL) {
+	if (!ol_sc) {
 		HTC_ERROR("%s: ol_sc = NULL", __func__);
 		return NULL;
 	}
@@ -294,14 +294,14 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		for (i = 0; i < HTC_PACKET_CONTAINER_ALLOCATION; i++) {
 			HTC_PACKET *pPacket = (HTC_PACKET *)
 					qdf_mem_malloc(sizeof(HTC_PACKET));
-			if (pPacket != NULL)
+			if (pPacket)
 				free_htc_packet_container(target, pPacket);
 		}
 
 #ifdef TODO_FIXME
 		for (i = 0; i < NUM_CONTROL_TX_BUFFERS; i++) {
 			pPacket = build_htc_tx_ctrl_packet();
-			if (pPacket == NULL)
+			if (!pPacket)
 				break;
 			htc_free_control_tx_packet(target, pPacket);
 		}
@@ -606,7 +606,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			for (i = 0; i < MAX_HTC_RX_BUNDLE; i++) {
 				rx_bundle_packet =
 					allocate_htc_bundle_packet(target);
-				if (rx_bundle_packet != NULL)
+				if (rx_bundle_packet)
 					rx_bundle_packet->ListLink.pNext =
 						(DL_LIST *)temp_bundle_packet;
 				else
@@ -694,7 +694,7 @@ QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 
 		/* allocate a buffer to send */
 		pSendPacket = htc_alloc_control_tx_packet(target);
-		if (NULL == pSendPacket) {
+		if (!pSendPacket) {
 			AR_DEBUG_ASSERT(false);
 			qdf_print("%s: allocControlTxPacket failed",
 				  __func__);
@@ -905,7 +905,7 @@ bool htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 	LOCK_HTC_RX(target);
 
 	if (sample) {
-		A_ASSERT(pStats != NULL);
+		A_ASSERT(pStats);
 		/* return the stats to the caller */
 		qdf_mem_copy(pStats, &target->endpoint[Endpoint].endpoint_stats,
 			 sizeof(struct htc_endpoint_stats));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -135,7 +135,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			/* allocate a packet to send to the target */
 			pSendPacket = htc_alloc_control_tx_packet(target);
 
-			if (NULL == pSendPacket) {
+			if (!pSendPacket) {
 				AR_DEBUG_ASSERT(false);
 				status = QDF_STATUS_E_NOMEM;
 				break;
@@ -153,7 +153,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			pConnectMsg =
 			    (HTC_CONNECT_SERVICE_MSG *) qdf_nbuf_data(netbuf);
 
-			if (NULL == pConnectMsg) {
+			if (!pConnectMsg) {
 				AR_DEBUG_ASSERT(0);
 				status = QDF_STATUS_E_FAULT;
 				break;
@@ -183,7 +183,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 				disableCreditFlowCtrl = true;
 
 			/* check caller if it wants to transfer meta data */
-			if ((pConnectReq->pMetaData != NULL) &&
+			if ((pConnectReq->pMetaData) &&
 			    (pConnectReq->MetaDataLength <=
 			     HTC_SERVICE_META_DATA_MAX_LENGTH)) {
 				/* copy meta data into msg buffer (after hdr) */
@@ -282,7 +282,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			assignedEndpoint = (HTC_ENDPOINT_ID) rsp_msg_end_id;
 			maxMsgSize = rsp_msg_max_msg_size;
 
-			if ((pConnectResp->pMetaData != NULL) &&
+			if ((pConnectResp->pMetaData) &&
 			    (rsp_msg_serv_meta_len > 0) &&
 			    (rsp_msg_serv_meta_len <=
 			     HTC_SERVICE_META_DATA_MAX_LENGTH)) {
@@ -412,7 +412,7 @@ void htc_fw_event_handler(void *context, QDF_STATUS status)
 	struct htc_init_info *initInfo = &target->HTCInitInfo;
 
 	/* check if target failure handler exists and pass error code to it. */
-	if (target->HTCInitInfo.TargetFailure != NULL)
+	if (target->HTCInitInfo.TargetFailure)
 		initInfo->TargetFailure(initInfo->pContext, status);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -127,9 +127,9 @@ static inline PDL_LIST dl_list_insert_head(PDL_LIST pList, PDL_LIST pAdd)
  */
 static inline PDL_LIST dl_list_remove(PDL_LIST pDel)
 {
-	if (pDel->pNext != NULL)
+	if (pDel->pNext)
 		pDel->pNext->pPrev = pDel->pPrev;
-	if (pDel->pPrev != NULL)
+	if (pDel->pPrev)
 		pDel->pPrev->pNext = pDel->pNext;
 	/* point back to itself just to be safe, if remove is called again */
 	pDel->pNext = pDel;
