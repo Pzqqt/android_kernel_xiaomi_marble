@@ -245,6 +245,10 @@ ifeq ($(CONFIG_ROME_IF), snoc)
 	CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
 endif
 
+ifeq ($(CONFIG_ARCH_QCS405), y)
+CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
+endif
+
 # Flag to enable LFR Subnet Detection
 CONFIG_LFR_SUBNET_DETECTION := y
 
