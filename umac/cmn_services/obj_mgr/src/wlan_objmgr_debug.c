@@ -29,6 +29,8 @@
 
 #define LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC   5000
 #define LOG_DEL_OBJ_DESTROY_DURATION_SEC 5
+/* The max duration for which a obj can be allowed to remain in L-state */
+#define LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC 10
 #define LOG_DEL_OBJ_LIST_MAX_COUNT       (3 + 5 + 48 + 4096)
 
 /**
@@ -230,6 +232,65 @@ void wlan_objmgr_notify_destroy(void *obj,
 	wlan_objmgr_rem_ld_obj_from_list(obj, debug_info, obj_type);
 }
 
+/**
+ * wlan_objmgr_debug_obj_destroyed_panic() - Panic in case obj is in L-state
+ * for long
+ * @obj_name: The name of the module ID
+ *
+ * This will invoke panic in the case that the obj is in logically destroyed
+ * state for a long time. The panic is invoked only in case feature flag
+ * WLAN_OBJMGR_PANIC_ON_BUG is enabled
+ *
+ * Return: None
+ */
+#ifdef CONFIG_LEAK_DETECTION
+static inline void wlan_objmgr_debug_obj_destroyed_panic(const char *obj_name)
+{
+	obj_mgr_alert("#%s in L-state for too long!", obj_name);
+	QDF_BUG(0);
+}
+#else
+static inline void wlan_objmgr_debug_obj_destroyed_panic(const char *obj_name)
+{
+}
+#endif
+
+/*
+ * wlan_objmgr_print_pending_refs() - Print pending refs according to the obj
+ * @obj:	Represents peer/vdev/pdev/psoc
+ * @obj_type:	Object type for peer/vdev/pdev/psoc
+ *
+ * Return: None
+ */
+static void wlan_objmgr_print_pending_refs(void *obj,
+					   enum wlan_objmgr_obj_type obj_type)
+{
+	switch (obj_type) {
+	case WLAN_PSOC_OP:
+		wlan_objmgr_print_ref_ids(((struct wlan_objmgr_psoc *)
+					  obj)->soc_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_DEBUG);
+		break;
+	case WLAN_PDEV_OP:
+		wlan_objmgr_print_ref_ids(((struct wlan_objmgr_pdev *)
+					  obj)->pdev_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_DEBUG);
+		break;
+	case WLAN_VDEV_OP:
+		wlan_objmgr_print_ref_ids(((struct wlan_objmgr_vdev *)
+					  obj)->vdev_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_DEBUG);
+		break;
+	case WLAN_PEER_OP:
+		wlan_objmgr_print_ref_ids(((struct wlan_objmgr_peer *)
+					  obj)->peer_objmgr.ref_id_dbg,
+					  QDF_TRACE_LEVEL_DEBUG);
+		break;
+	default:
+		obj_mgr_debug("invalid obj_type");
+	}
+}
+
 /* timeout handler for iterating logically deleted object */
 
 static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
@@ -293,6 +354,11 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 
 		obj_mgr_alert("#%s in L-state,MAC: " QDF_MAC_ADDR_STR,
 			      obj_name, QDF_MAC_ADDR_ARRAY(macaddr));
+		wlan_objmgr_print_pending_refs(del_obj->obj, obj_type);
+
+		if (cur_tstamp > del_obj->tstamp +
+		    LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC)
+			wlan_objmgr_debug_obj_destroyed_panic(obj_name);
 
 		status = qdf_list_peek_next(log_del_obj_list, node, &node);
 
