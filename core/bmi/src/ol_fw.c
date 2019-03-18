@@ -510,7 +510,7 @@ release_fw:
 		BMI_ERR("%s, BMI operation failed: %d", __func__, __LINE__);
 	else
 		BMI_INFO("transferring file: %s size %d bytes done!",
-			 (filename != NULL) ? filename : " ", fw_entry_size);
+			 (filename) ? filename : " ", fw_entry_size);
 	return status;
 }
 
