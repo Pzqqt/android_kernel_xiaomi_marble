@@ -2264,7 +2264,7 @@ int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
 	tx_fail_cnt = fix_param->seq_no;
 
 	/*call HDD callback */
-	if (wma->hddTxFailCb != NULL)
+	if (wma->hddTxFailCb)
 		wma->hddTxFailCb(peer_mac, tx_fail_cnt);
 	else
 		WMA_LOGE("%s: HDD callback is %pK", __func__, wma->hddTxFailCb);

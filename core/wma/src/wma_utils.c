@@ -1987,7 +1987,7 @@ static inline int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
  */
 void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 {
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return;
 	}
@@ -2511,7 +2511,7 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 	    !qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
 		req_msg = wma_peek_vdev_req(wma, vdev_stats->vdev_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_STOP);
-		if ((NULL == req_msg) ||
+		if ((!req_msg) ||
 		    (WMA_DELETE_BSS_REQ != req_msg->msg_type)) {
 			WMA_LOGD(FL("cannot find DELETE_BSS request message"));
 			return;
@@ -2607,7 +2607,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			 pGetRssiReq->sessionId);
 
 		/* update the average rssi value to UMAC layer */
-		if (NULL != pGetRssiReq->rssiCallback) {
+		if (pGetRssiReq->rssiCallback) {
 			((tCsrRssiCallback) (pGetRssiReq->rssiCallback))(rssi,
 						pGetRssiReq->staId,
 						pGetRssiReq->pDevContext);
@@ -4003,7 +4003,7 @@ QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 	struct wma_txrx_node *wma_conn_table_entry;
 
 	wma_conn_table_entry = wma_get_interface_by_vdev_id(vdev_id);
-	if (NULL == wma_conn_table_entry) {
+	if (!wma_conn_table_entry) {
 		WMA_LOGE("%s: can't find vdev_id %d in WMA table", __func__, vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4022,7 +4022,7 @@ QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
 	struct wma_txrx_node *wma_iface_entry;
 
 	wma_iface_entry = wma_get_interface_by_vdev_id(vdev_id);
-	if (NULL == wma_iface_entry) {
+	if (!wma_iface_entry) {
 		WMA_LOGE("%s: can't find vdev_id %d in WMA table", __func__, vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4138,7 +4138,7 @@ uint32_t wma_get_vht_ch_width(void)
 	struct target_psoc_info *tgt_hdl;
 	int vht_cap_info;
 
-	if (NULL == wm_hdl)
+	if (!wm_hdl)
 		return fw_ch_wd;
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(wm_hdl->psoc);
@@ -4361,7 +4361,7 @@ QDF_STATUS wma_get_rcpi_req(WMA_HANDLE handle,
 	WMA_LOGD("%s: Enter", __func__);
 	iface = &wma_handle->interfaces[rcpi_request->session_id];
 	/* command is in progress */
-	if (iface->rcpi_req != NULL) {
+	if (iface->rcpi_req) {
 		WMA_LOGE("%s : previous rcpi request is pending", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -4678,7 +4678,7 @@ int wma_chip_power_save_failure_detected_handler(void *handle,
 	struct chip_pwr_save_fail_detected_params  pwr_save_fail_params;
 	struct mac_context *mac = (struct mac_context *)cds_get_context(
 						QDF_MODULE_ID_PE);
-	if (wma == NULL) {
+	if (!wma) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return -EINVAL;
 	}

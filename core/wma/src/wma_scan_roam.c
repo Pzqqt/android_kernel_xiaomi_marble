@@ -841,7 +841,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 	uint32_t rsn_authmode;
 
 	qdf_mem_zero(profile, sizeof(*profile));
-	if (roam_req == NULL) {
+	if (!roam_req) {
 		profile->ssid.length = 0;
 		profile->ssid.mac_ssid[0] = 0;
 		profile->rsn_authmode = WMI_AUTH_NONE;
@@ -1030,7 +1030,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 {
 	uint8_t channels_per_burst = 0;
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: mac is NULL", __func__);
 		return;
 	}
@@ -1039,7 +1039,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 	scan_params->scan_ctrl_flags = WMI_SCAN_ADD_CCK_RATES |
 				       WMI_SCAN_ADD_OFDM_RATES |
 				       WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
-	if (roam_req != NULL) {
+	if (roam_req) {
 		/* Parameters updated after association is complete */
 		WMA_LOGD("%s: NeighborScanChannelMinTime: %d NeighborScanChannelMaxTime: %d",
 			 __func__,
@@ -1528,7 +1528,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	struct wma_txrx_node *intr = NULL;
 	struct wmi_bss_load_config *bss_load_cfg;
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: mac is NULL", __func__);
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_FAILURE;
@@ -2221,21 +2221,21 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		if (!iface->roam_synch_frame_ind.bcn_probe_rsp) {
 			WMA_LOGE("LFR3: bcn_probe_rsp is NULL");
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   bcn_probe_rsp != NULL);
+				   bcn_probe_rsp);
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
 		}
 		if (!iface->roam_synch_frame_ind.reassoc_rsp) {
 			WMA_LOGE("LFR3: reassoc_rsp is NULL");
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   reassoc_rsp != NULL);
+				   reassoc_rsp);
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
 		}
 		if (!iface->roam_synch_frame_ind.reassoc_req) {
 			WMA_LOGE("LFR3: reassoc_req is NULL");
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   reassoc_req != NULL);
+				   reassoc_req);
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
 		}
@@ -2248,7 +2248,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	if (chan)
 		roam_synch_ind_ptr->chan_freq = chan->mhz;
 	key = param_buf->key;
-	if (key != NULL) {
+	if (key) {
 		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
 		roam_synch_ind_ptr->kek_len = SIR_KEK_KEY_LEN;
@@ -2521,7 +2521,7 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 
 	roam_synch_ind_ptr = qdf_mem_malloc(roam_synch_data_len);
 	if (!roam_synch_ind_ptr) {
-		QDF_ASSERT(roam_synch_ind_ptr != NULL);
+		QDF_ASSERT(roam_synch_ind_ptr);
 		status = -ENOMEM;
 		goto cleanup_label;
 	}
@@ -2541,7 +2541,7 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	}
 	bss_desc_ptr = qdf_mem_malloc(sizeof(tSirBssDescription) + ie_len);
 	if (!bss_desc_ptr) {
-		QDF_ASSERT(bss_desc_ptr != NULL);
+		QDF_ASSERT(bss_desc_ptr);
 		status = -ENOMEM;
 		goto cleanup_label;
 	}
@@ -2696,7 +2696,7 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 				       bcn_probe_rsp_len);
 		if (!iface->roam_synch_frame_ind.bcn_probe_rsp) {
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   bcn_probe_rsp != NULL);
+				   bcn_probe_rsp);
 			status = -ENOMEM;
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
@@ -2718,7 +2718,7 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 				       reassoc_req_len);
 		if (!iface->roam_synch_frame_ind.reassoc_req) {
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   reassoc_req != NULL);
+				   reassoc_req);
 			status = -ENOMEM;
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
@@ -2740,7 +2740,7 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 				       reassoc_rsp_len);
 		if (!iface->roam_synch_frame_ind.reassoc_rsp) {
 			QDF_ASSERT(iface->roam_synch_frame_ind.
-				   reassoc_rsp != NULL);
+				   reassoc_rsp);
 			status = -ENOMEM;
 			wma_free_roam_synch_frame_ind(iface);
 			return status;
@@ -3136,7 +3136,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		goto send_resp;
 	}
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;

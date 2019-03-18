@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -147,7 +147,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE(FL("Failed to find pdev"));
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_rsp;

@@ -313,7 +313,7 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		return -EINVAL;
 	}
@@ -956,7 +956,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
 	qdf_mem_zero(&aggr, sizeof(aggr));
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		return;
 	}
@@ -1834,7 +1834,7 @@ static uint8_t wma_init_max_no_of_peers(tp_wma_handle wma_handle,
 	uint8_t max_supported_peers = (tgt_version == AR6320_REV1_1_VERSION) ?
 			MAX_SUPPORTED_PEERS_REV1_1 : MAX_SUPPORTED_PEERS_REV1_3;
 
-	if (cfg == NULL) {
+	if (!cfg) {
 		WMA_LOGE("%s: NULL WMA ini handle", __func__);
 		return 0;
 	}
@@ -1995,7 +1995,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
 						vdev_id, WLAN_LEGACY_WMA_ID);
-		if (vdev == NULL)
+		if (!vdev)
 			continue;
 		ucfg_mc_cp_stats_get_vdev_wake_lock_stats(vdev, &stats);
 		len += qdf_scnprintf(buf + len, *size - len,
@@ -2680,7 +2680,7 @@ static QDF_STATUS spectral_phyerr_event_handler(void *handle,
 	struct target_if_spectral_chan_info chan_info;
 	struct target_if_spectral_acs_stats acs_stats;
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s:wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3782,7 +3782,7 @@ QDF_STATUS wma_pre_start(void)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* Validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: invalid wma handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
@@ -4302,7 +4302,7 @@ QDF_STATUS wma_start(void)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	/* validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
@@ -4580,7 +4580,7 @@ QDF_STATUS wma_stop(void)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	WMA_LOGD("%s: Enter", __func__);
 	/* validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
@@ -4664,13 +4664,13 @@ QDF_STATUS wma_wmi_service_close(void)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	/* validate the wmi handle */
-	if (NULL == wma_handle->wmi_handle) {
+	if (!wma_handle->wmi_handle) {
 		WMA_LOGE("%s: Invalid wmi handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -4714,13 +4714,13 @@ QDF_STATUS wma_wmi_work_close(void)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	/* validate the wmi handle */
-	if (NULL == wma_handle->wmi_handle) {
+	if (!wma_handle->wmi_handle) {
 		WMA_LOGE("%s: Invalid wmi handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -4749,13 +4749,13 @@ QDF_STATUS wma_close(void)
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	/* validate the wmi handle */
-	if (NULL == wma_handle->wmi_handle) {
+	if (!wma_handle->wmi_handle) {
 		WMA_LOGE("%s: Invalid wmi handle", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -4803,7 +4803,7 @@ QDF_STATUS wma_close(void)
 	qdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
 	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 
-	if (NULL != wma_handle->pGetRssiReq) {
+	if (wma_handle->pGetRssiReq) {
 		qdf_mem_free(wma_handle->pGetRssiReq);
 		wma_handle->pGetRssiReq = NULL;
 	}
@@ -5172,7 +5172,7 @@ static void wma_derive_ext_ht_cap(
 {
 	struct wma_tgt_ht_cap tmp = {0};
 
-	if (ht_cap == NULL)
+	if (!ht_cap)
 		return;
 
 	if (!qdf_mem_cmp(ht_cap, &tmp, sizeof(struct wma_tgt_ht_cap))) {
@@ -5288,7 +5288,7 @@ static void wma_derive_ext_vht_cap(
 	struct wma_tgt_vht_cap tmp_cap = {0};
 	uint32_t tmp = 0;
 
-	if (vht_cap == NULL)
+	if (!vht_cap)
 		return;
 
 	if (!qdf_mem_cmp(vht_cap, &tmp_cap,
@@ -6804,7 +6804,7 @@ void wma_setneedshutdown(void)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid arguments", __func__);
 		QDF_ASSERT(0);
 		return;
@@ -6827,7 +6827,7 @@ bool wma_needshutdown(void)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid arguments", __func__);
 		QDF_ASSERT(0);
 		return false;
@@ -6882,7 +6882,7 @@ QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 	int ret = -EIO;
 	uint32_t pps_val;
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -6958,7 +6958,7 @@ static QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
 {
 	uint32_t val;
 
-	if (NULL == wma || NULL == mas_val) {
+	if (!wma || !mas_val) {
 		WMA_LOGE("%s: Invalid input to enable/disable MAS", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6987,7 +6987,7 @@ static QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
 static QDF_STATUS wma_process_set_miracast(tp_wma_handle wma,
 					   uint32_t *miracast_val)
 {
-	if (NULL == wma || NULL == miracast_val) {
+	if (!wma || !miracast_val) {
 		WMA_LOGE("%s: Invalid input to store miracast value", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7013,7 +7013,7 @@ static QDF_STATUS wma_config_stats_factor(tp_wma_handle wma,
 {
 	QDF_STATUS ret;
 
-	if (NULL == wma || NULL == avg_factor) {
+	if (!wma || !avg_factor) {
 		WMA_LOGE("%s: Invalid input of stats avg factor", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7048,7 +7048,7 @@ static QDF_STATUS wma_config_guard_time(tp_wma_handle wma,
 {
 	QDF_STATUS ret;
 
-	if (NULL == wma || NULL == guard_time) {
+	if (!wma || !guard_time) {
 		WMA_LOGE("%s: Invalid input of guard time", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7144,7 +7144,7 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
-	if (scn == NULL) {
+	if (!scn) {
 		WMA_LOGE("%s: Invalid HIF handle", __func__);
 		return;
 	}
@@ -8248,7 +8248,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (NULL == msg) {
+	if (!msg) {
 		WMA_LOGE("msg is NULL");
 		QDF_ASSERT(0);
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -8260,7 +8260,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		QDF_ASSERT(0);
 		qdf_mem_free(msg->bodyptr);

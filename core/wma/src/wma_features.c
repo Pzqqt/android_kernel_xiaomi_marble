@@ -252,7 +252,7 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
 	tAniGetRssiReq *pRssiBkUp = NULL;
 
 	/* command is in progress */
-	if (NULL != wma_handle->pGetRssiReq)
+	if (wma_handle->pGetRssiReq)
 		return QDF_STATUS_SUCCESS;
 
 	/* create a copy of csrRssiCallback to send rssi value
@@ -296,14 +296,14 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s : Failed to get wma_handle", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
 	intr = &wma_handle->interfaces[psnr_req->sessionId];
 	/* command is in progress */
-	if (NULL != intr->psnr_req) {
+	if (intr->psnr_req) {
 		WMA_LOGE("%s : previous snr request is pending", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -380,7 +380,7 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	wmi_vdev_tsf_report_event_fixed_param *tsf_event;
 	struct stsf *ptsf;
 
-	if (data == NULL) {
+	if (!data) {
 		WMA_LOGE("%s: invalid pointer", __func__);
 		return -EINVAL;
 	}
@@ -3025,7 +3025,7 @@ static QDF_STATUS wma_set_tsm_interval(struct add_ts_param *req)
 	uint32_t interval_milliseconds;
 	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3109,7 +3109,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	struct cdp_pdev *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		qdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_INVAL;
@@ -3227,7 +3227,7 @@ QDF_STATUS wma_process_get_peer_info_req
 	uint8_t bcast_mac[IEEE80211_ADDR_LEN] = { 0xff, 0xff, 0xff,
 						  0xff, 0xff, 0xff };
 
-	if (NULL == soc) {
+	if (!soc) {
 		WMA_LOGE("%s: SOC context is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3240,7 +3240,7 @@ QDF_STATUS wma_process_get_peer_info_req
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3258,7 +3258,7 @@ QDF_STATUS wma_process_get_peer_info_req
 			return QDF_STATUS_E_FAILURE;
 		}
 		peer_mac_raw = cdp_peer_get_peer_mac_addr(soc, peer);
-		if (peer_mac_raw == NULL) {
+		if (!peer_mac_raw) {
 			WMA_LOGE("peer_mac_raw is NULL");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -3457,7 +3457,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 	wmi_rmc_set_action_period_cmd_fixed_param *p_rmc_cmd;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: MAC mac does not exist", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3792,7 +3792,7 @@ QDF_STATUS
 wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 				struct auto_shutdown_cmd *auto_sh_cmd)
 {
-	if (auto_sh_cmd == NULL) {
+	if (!auto_sh_cmd) {
 		WMA_LOGE("%s : Invalid Autoshutdown cfg cmd", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3900,7 +3900,7 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (ch_avoid_update_req == NULL) {
+	if (!ch_avoid_update_req) {
 		WMA_LOGE("%s : ch_avoid_update_req is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3931,7 +3931,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	WMA_LOGD("reg_dmn: %d regdmn2g: %d regdmn5g :%d ctl2g: %d ctl5g: %d",
 		 reg_dmn, regdmn2G, regdmn5G, ctl2G, ctl5G);
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return;
 	}
@@ -4070,7 +4070,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	/* in case of teardown, remove peer from fw */
 	if (TDLS_PEER_STATE_TEARDOWN == peer_state->peer_state) {
 		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
-		if (peer_mac_addr == NULL) {
+		if (!peer_mac_addr) {
 			WMA_LOGE("peer_mac_addr is NULL");
 			ret = -EIO;
 			goto end_tdls_peer_state;
@@ -4976,7 +4976,7 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (sar_limit_params == NULL) {
+	if (!sar_limit_params) {
 		WMA_LOGE("%s: set sar limit ptr NULL",
 			__func__);
 		return QDF_STATUS_E_INVAL;
@@ -5037,7 +5037,7 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	if (data == NULL) {
+	if (!data) {
 		WMA_LOGE("%s: invalid pointer", __func__);
 		return -EINVAL;
 	}
@@ -5248,7 +5248,7 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	if (wma != NULL && wma->cds_context != NULL)
+	if (wma && wma->cds_context)
 		mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {

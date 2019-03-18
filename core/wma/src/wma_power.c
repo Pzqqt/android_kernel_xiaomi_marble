@@ -107,7 +107,7 @@ QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: wma is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -424,7 +424,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 
 	vdev = wma_find_vdev_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
 				     &vdev_id);
-	if (vdev == NULL) {
+	if (!vdev) {
 		/* not in SAP array. Try the station/p2p array */
 		vdev = wma_find_vdev_by_bssid(wma_handle,
 					      tx_pwr_params->bssId.bytes,
@@ -556,7 +556,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 
 	WMA_LOGD("Set Force Sleep vdevId %d val %d", vdev_id, enable);
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1627,7 +1627,7 @@ QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
 	tp_wma_handle wma_handle =
 			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1658,7 +1658,7 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 	tp_wma_handle wma_handle =
 			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}

@@ -708,7 +708,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 	enum cds_band_type band = 0;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		return;
 	}
@@ -777,7 +777,7 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	QDF_STATUS status;
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		return;
 	}
@@ -1264,7 +1264,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		qdf_mem_free(cmd);
 		return QDF_STATUS_E_INVAL;
@@ -1949,7 +1949,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE(FL("Invalid wma_handle for vdev_id: %d"),
 			key_params->vdev_id);
 		return QDF_STATUS_E_INVAL;
@@ -2303,7 +2303,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	} else {
 		mac_addr = cdp_get_vdev_mac_addr(soc,
 					txrx_vdev);
-		if (mac_addr == NULL) {
+		if (!mac_addr) {
 			WMA_LOGE("%s: mac_addr is NULL for vdev with id %d",
 				 __func__, key_info->smesessionId);
 			goto out;
@@ -3256,7 +3256,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #endif
 
-	if (wma_handle == NULL) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return -EINVAL;
 	}
@@ -3265,7 +3265,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		wma_get_status_str(status), desc_id);
 
 	pdev = wma_handle->pdev;
-	if (pdev == NULL) {
+	if (!pdev) {
 		WMA_LOGE("%s: psoc ptr is NULL", __func__);
 		return -EINVAL;
 	}
@@ -3534,7 +3534,7 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		return QDF_STATUS_E_INVAL;
 	}

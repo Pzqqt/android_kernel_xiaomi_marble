@@ -636,7 +636,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 		 del_sta_self_req_param->self_mac_addr);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		qdf_status = QDF_STATUS_E_FAULT;
 		goto error;
@@ -1465,7 +1465,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	if (NULL == mac_ctx) {
+	if (!mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		policy_mgr_set_do_hw_mode_change_flag(
 			psoc, false);
@@ -1847,7 +1847,7 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 				cdp_cfg_get_peer_unmap_conf_support(soc);
 
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
-	if (peer_mac_addr == NULL) {
+	if (!peer_mac_addr) {
 		WMA_LOGE("%s: peer mac addr is NULL, Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
 			 __func__, bssid, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
@@ -2189,7 +2189,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		__func__, peer_addr, vdev_id);
 
 	mac_addr_raw = cdp_get_vdev_mac_addr(dp_soc, vdev);
-	if (mac_addr_raw == NULL) {
+	if (!mac_addr_raw) {
 		WMA_LOGE("%s: peer mac addr is NULL", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
@@ -2387,7 +2387,7 @@ wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (NULL == mac_ctx) {
+	if (!mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		return;
 	}
@@ -2647,7 +2647,7 @@ __wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event)
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) req_msg->user_data;
 
-		if (iface->handle == NULL) {
+		if (!iface->handle) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, resp_event->vdev_id);
 			wma_cleanup_target_req_param(req_msg);
@@ -2829,7 +2829,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		self_sta_req->self_mac_addr, self_sta_req->session_id,
 		self_sta_req->type, self_sta_req->sub_type,
 		self_sta_req->nss_2g, self_sta_req->nss_5g);
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		status = QDF_STATUS_E_FAILURE;
 		goto end;
@@ -3273,7 +3273,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	if (mac_ctx == NULL) {
+	if (!mac_ctx) {
 		WMA_LOGE("%s: vdev start failed as mac_ctx is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3773,7 +3773,7 @@ void wma_hold_req_timer(void *data)
 	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE(FL("Failed to get wma"));
 		return;
 	}
@@ -4112,7 +4112,7 @@ void wma_vdev_resp_timer(void *data)
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		wma_cleanup_target_req_param(tgt_req);
 		goto free_tgt_req;
@@ -4134,7 +4134,7 @@ void wma_vdev_resp_timer(void *data)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		wma_cleanup_target_req_param(tgt_req);
 		qdf_mc_timer_stop(&tgt_req->event_timeout);
@@ -4167,7 +4167,7 @@ void wma_vdev_resp_timer(void *data)
 		}
 
 		iface = &wma->interfaces[tgt_req->vdev_id];
-		if (iface->handle == NULL) {
+		if (!iface->handle) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, tgt_req->vdev_id);
 			wma_cleanup_target_req_param(tgt_req);
@@ -4491,7 +4491,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}
@@ -4631,7 +4631,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, vdev_id);
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}
@@ -4780,14 +4780,14 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (NULL == mac) {
+	if (!mac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		goto send_fail_resp;
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s Failed to get pdev", __func__);
 		goto send_fail_resp;
 	}
@@ -5008,7 +5008,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 send_bss_resp:
 
 	wma_vdev_set_he_config(wma, vdev_id, add_bss);
-	if (NULL == cdp_peer_find_by_addr(soc, pdev, add_bss->bssId,
+	if (!cdp_peer_find_by_addr(soc, pdev, add_bss->bssId,
 					&add_bss->staContext.staIdx))
 		add_bss->status = QDF_STATUS_E_FAILURE;
 	else
@@ -5119,7 +5119,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_rsp;
@@ -5353,7 +5353,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_rsp;
@@ -5585,7 +5585,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Unable to get pdev", __func__);
 		goto out;
 	}
@@ -5599,7 +5599,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	peer = cdp_peer_find_by_addr(soc,
 			pdev,
 			params->bssId, &params->staIdx);
-	if (peer == NULL) {
+	if (!peer) {
 		WMA_LOGE("%s: Peer is not present vdev id %d for %pM", __func__,
 			params->smesessionId, params->bssId);
 		status = QDF_STATUS_E_FAILURE;
@@ -5620,7 +5620,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		goto out;
 	}
 
-	if (peer != NULL &&
+	if (peer &&
 	    (cdp_peer_state_get(soc, peer) == OL_TXRX_PEER_STATE_DISC)) {
 		/*
 		 * This is the case for reassociation.
@@ -5834,7 +5834,7 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		del_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_del_rsp;
@@ -6166,7 +6166,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s:Unable to get TXRX context", __func__);
 		goto fail_del_bss_ho_fail;
 	}
@@ -6298,7 +6298,7 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (pdev == NULL) {
+	if (!pdev) {
 		WMA_LOGE("%s: pdev is not valid: %d",
 			 __func__, session_id);
 		return;
@@ -6336,7 +6336,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		WMA_LOGE("%s:Unable to get TXRX context", __func__);
 		goto out;
 	}
@@ -6477,7 +6477,7 @@ int32_t wma_find_vdev_by_type(tp_wma_handle wma, int32_t type)
 	struct wma_txrx_node *intf = wma->interfaces;
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
-		if (NULL != intf) {
+		if (intf) {
 			if (intf[vdev_id].type == type)
 				return vdev_id;
 		}
@@ -6539,7 +6539,7 @@ static void wma_vdev_reset_beacon_interval_timer(void *data)
 	uint8_t vdev_id = req->vdev_id;
 
 	wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		goto end;
 	}
