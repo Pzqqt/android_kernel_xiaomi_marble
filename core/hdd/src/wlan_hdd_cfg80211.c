@@ -11144,8 +11144,9 @@ __wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 	nla_for_each_nested(apth,
 			tb1[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM], rem) {
 		if (wlan_cfg80211_nla_parse(tb2,
-				       QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX,
-				       nla_data(apth), nla_len(apth), NULL)) {
+				     QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX,
+				     nla_data(apth), nla_len(apth),
+				     qca_wlan_vendor_set_trace_level_policy)) {
 			hdd_err("Invalid attr");
 			return -EINVAL;
 		}
