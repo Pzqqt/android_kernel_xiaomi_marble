@@ -534,7 +534,7 @@ dp_2k_jump_handle(struct dp_soc *soc,
 		goto free_nbuf;
 	}
 	rx_tid = &peer->rx_tid[tid];
-	if (qdf_unlikely(rx_tid == NULL)) {
+	if (qdf_unlikely(!rx_tid)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "rx_tid is NULL!!");
 		goto free_nbuf;

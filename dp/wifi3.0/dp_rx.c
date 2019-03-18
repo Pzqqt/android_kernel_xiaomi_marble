@@ -201,7 +201,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 					RX_BUFFER_ALIGNMENT,
 					FALSE);
 
-		if (rx_netbuf == NULL) {
+		if (!rx_netbuf) {
 			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
 			continue;
 		}
@@ -578,7 +578,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	/* upper layers are resposible to free this memory */
 
-	if (rx_info == NULL) {
+	if (!rx_info) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"Memory allocation failed for mesh rx stats");
 		DP_STATS_INC(vdev->pdev, mesh_mem_alloc, 1);
@@ -900,7 +900,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
-	if (NULL == vdev) {
+	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "VDEV not found");
 		goto free;
@@ -1672,7 +1672,7 @@ done:
 	}
 
 	/* Peer can be NULL is case of LFR */
-	if (qdf_likely(peer != NULL))
+	if (qdf_likely(peer))
 		vdev = NULL;
 
 	/*
@@ -1735,7 +1735,7 @@ done:
 			deliver_list_tail = NULL;
 		}
 
-		if (qdf_likely(peer != NULL)) {
+		if (qdf_likely(peer)) {
 			vdev = peer->vdev;
 		} else {
 			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
@@ -1746,7 +1746,7 @@ done:
 			continue;
 		}
 
-		if (qdf_unlikely(vdev == NULL)) {
+		if (qdf_unlikely(!vdev)) {
 			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
@@ -2058,7 +2058,7 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
 					RX_BUFFER_ALIGNMENT,
 					FALSE);
 
-		if (nbuf == NULL) {
+		if (!nbuf) {
 			DP_STATS_INC(pdev,
 				replenish.nbuf_alloc_fail, 1);
 			continue;

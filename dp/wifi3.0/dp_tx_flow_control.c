@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -431,7 +431,7 @@ QDF_STATUS dp_tx_flow_pool_map_handler(struct dp_pdev *pdev, uint8_t flow_id,
 
 	pool = dp_tx_create_flow_pool(soc, flow_pool_id,
 			flow_pool_size);
-	if (pool == NULL) {
+	if (!pool) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			   "%s: creation of flow_pool %d size %d failed",
 			   __func__, flow_pool_id, flow_pool_size);

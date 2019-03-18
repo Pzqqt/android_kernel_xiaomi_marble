@@ -286,7 +286,7 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		}
 		/* Fill and add HTT metaheader */
 		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size_aligned);
-		if (hdr == NULL) {
+		if (!hdr) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"Error in filling HTT metadata");
 
@@ -1185,12 +1185,12 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 			&& qdf_nbuf_is_ipv4_dhcp_pkt(nbuf))
 		|| (qdf_nbuf_is_ipv6_pkt(nbuf) &&
 			qdf_nbuf_is_ipv6_dhcp_pkt(nbuf)))) {
-		if (qdf_unlikely(nbuf_clone != NULL))
+		if (qdf_unlikely(nbuf_clone))
 			qdf_nbuf_free(nbuf_clone);
 		return true;
 	}
 
-	if (qdf_unlikely(nbuf_clone != NULL))
+	if (qdf_unlikely(nbuf_clone))
 		qdf_nbuf_free(nbuf_clone);
 
 	return false;
@@ -1897,7 +1897,7 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			peer_id = peer->peer_ids[0];
 			nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy,
 					msdu_info, peer_id, NULL);
-			if (nbuf_copy != NULL) {
+			if (nbuf_copy) {
 				qdf_nbuf_free(nbuf_copy);
 				continue;
 			}
@@ -2046,7 +2046,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	uint8_t no_enc_frame = 0;
 
 	nbuf_mesh = qdf_nbuf_unshare(nbuf);
-	if (nbuf_mesh == NULL) {
+	if (!nbuf_mesh) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"qdf_nbuf_unshare failed");
 		return nbuf;
@@ -2065,7 +2065,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	if ((mhdr->flags & METAHDR_FLAG_INFO_UPDATED) &&
 		       !no_enc_frame) {
 		nbuf_clone = qdf_nbuf_clone(nbuf);
-		if (nbuf_clone == NULL) {
+		if (!nbuf_clone) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"qdf_nbuf_clone failed");
 			return nbuf;
@@ -2087,7 +2087,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 		qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_INVALID);
 
 	nbuf = dp_tx_send(vap_dev, nbuf);
-	if ((nbuf == NULL) && no_enc_frame) {
+	if ((!nbuf) && no_enc_frame) {
 		DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
 	}
 
@@ -2141,7 +2141,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		nbuf_mesh = dp_tx_extract_mesh_meta_data(vdev, nbuf,
 								&msdu_info);
-		if (nbuf_mesh == NULL) {
+		if (!nbuf_mesh) {
 			dp_verbose_debug("Extracting mesh metadata failed");
 			return nbuf;
 		}
@@ -2228,7 +2228,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	/* RAW */
 	if (qdf_unlikely(vdev->tx_encap_type == htt_cmn_pkt_type_raw)) {
 		nbuf = dp_tx_prepare_raw(vdev, nbuf, &seg_info, &msdu_info);
-		if (nbuf == NULL)
+		if (!nbuf)
 			return NULL;
 
 		dp_verbose_debug("Raw frame %pK", vdev);
@@ -4148,7 +4148,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		}
 
 		mc_uc_buf = dp_tx_me_alloc_buf(pdev);
-		if (mc_uc_buf == NULL)
+		if (!mc_uc_buf)
 			goto fail_buf_alloc;
 
 		/*
@@ -4157,7 +4157,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		 */
 		if (new_mac_idx < (new_mac_cnt - 1)) {
 			nbuf_clone = qdf_nbuf_clone((qdf_nbuf_t)nbuf);
-			if (nbuf_clone == NULL) {
+			if (!nbuf_clone) {
 				DP_STATS_INC(vdev, tx_i.mcast_en.clone_fail, 1);
 				goto fail_clone;
 			}
@@ -4196,7 +4196,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 
 		seg_info_new->next = NULL;
 
-		if (seg_info_head == NULL)
+		if (!seg_info_head)
 			seg_info_head = seg_info_new;
 		else
 			seg_info_tail->next = seg_info_new;

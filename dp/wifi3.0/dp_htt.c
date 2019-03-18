@@ -298,7 +298,7 @@ htt_htc_pkt_alloc(struct htt_soc *soc)
 	}
 	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
 
-	if (pkt == NULL)
+	if (!pkt)
 		pkt = qdf_mem_malloc(sizeof(*pkt));
 	return &pkt->u.pkt; /* not actually a dereference */
 }
@@ -498,7 +498,7 @@ dp_htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 	 * adf sendcomplete is required for windows only
 	 */
 	/* qdf_nbuf_set_sendcompleteflag(netbuf, TRUE); */
-	if (send_complete_part2 != NULL) {
+	if (send_complete_part2) {
 		send_complete_part2(
 			htt_pkt->soc_ctxt, htc_pkt->Status, netbuf);
 	}

@@ -282,7 +282,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	struct ieee80211_frame *wh;
 	uint32_t *nbuf_data;
 
-	if (ppdu_info->msdu_info.first_msdu_payload == NULL)
+	if (!ppdu_info->msdu_info.first_msdu_payload)
 		return QDF_STATUS_SUCCESS;
 
 	if (pdev->m_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
@@ -346,7 +346,7 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			  __func__, __LINE__);
 		return 1;
 	}
-	if (ppdu_info->msdu_info.first_msdu_payload == NULL) {
+	if (!ppdu_info->msdu_info.first_msdu_payload) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "[%s]:[%d] First msdu payload not present",
 			  __func__, __LINE__);
@@ -542,7 +542,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		rx_tlv = qdf_nbuf_data(status_nbuf);
 		rx_tlv_start = rx_tlv;
 
-		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en) ||
+		if ((pdev->monitor_vdev) || (pdev->enhanced_stats_en) ||
 				pdev->mcopy_mode) {
 
 			do {
@@ -742,7 +742,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		 * wait next time dp_rx_mon_status_srng_process
 		 * to fill in buffer at current HP.
 		 */
-		if (qdf_unlikely(status_nbuf == NULL)) {
+		if (qdf_unlikely(!status_nbuf)) {
 			union dp_rx_desc_list_elem_t *desc_list = NULL;
 			union dp_rx_desc_list_elem_t *tail = NULL;
 			struct rx_desc_pool *rx_desc_pool;
@@ -941,7 +941,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		 * wait dp_rx_mon_status_srng_process
 		 * to fill in buffer at current HP.
 		 */
-		if (qdf_unlikely(rx_netbuf == NULL)) {
+		if (qdf_unlikely(!rx_netbuf)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s: qdf_nbuf allocate or map fail, count %d",
 				__func__, count);
@@ -954,7 +954,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
 							 rxdma_srng);
 
-		if (qdf_unlikely(rxdma_ring_entry == NULL)) {
+		if (qdf_unlikely(!rxdma_ring_entry)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"[%s][%d] rxdma_ring_entry is NULL, count - %d",
 					__func__, __LINE__, count);

@@ -355,7 +355,7 @@ static QDF_STATUS dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned ti
 			cur = frag;
 			*head_addr = frag; /* head pointer to be updated */
 		} else {
-			while ((cur_fragno > head_fragno) && cur != NULL) {
+			while ((cur_fragno > head_fragno) && cur) {
 				prev = cur;
 				cur = qdf_nbuf_next(cur);
 				rx_desc_info = qdf_nbuf_data(cur);
@@ -670,7 +670,7 @@ static QDF_STATUS dp_rx_defrag_mic(const uint8_t *key, qdf_nbuf_t wbuf,
 			break;
 
 		wbuf = qdf_nbuf_next(wbuf);
-		if (wbuf == NULL)
+		if (!wbuf)
 			return QDF_STATUS_E_DEFRAG_ERROR;
 
 		if (space != 0) {
@@ -895,7 +895,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	union dp_align_mac_addr mac_addr;
 	uint8_t *rx_desc_info = qdf_mem_malloc(RX_PKT_TLVS_LEN);
 
-	if (rx_desc_info == NULL) {
+	if (!rx_desc_info) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Memory alloc failed ! ", __func__);
 		QDF_ASSERT(0);
@@ -1341,7 +1341,7 @@ static QDF_STATUS dp_rx_defrag_save_info_from_ring_desc(void *ring_desc,
 	void *dst_ring_desc = qdf_mem_malloc(
 			sizeof(struct reo_destination_ring));
 
-	if (dst_ring_desc == NULL) {
+	if (!dst_ring_desc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Memory alloc failed !", __func__);
 		QDF_ASSERT(0);

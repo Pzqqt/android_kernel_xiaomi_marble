@@ -1739,7 +1739,7 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 		return QDF_STATUS_E_FAILURE;
 
 	rx_tid->ba_win_size = ba_window_size;
-	if (rx_tid->hw_qdesc_vaddr_unaligned != NULL)
+	if (rx_tid->hw_qdesc_vaddr_unaligned)
 		return dp_rx_tid_update_wifi3(peer, tid, ba_window_size,
 			start_seq);
 	rx_tid->delba_tx_status = 0;
@@ -1874,7 +1874,7 @@ try_desc_alloc:
 	}
 	return 0;
 error:
-	if (NULL != rx_tid->hw_qdesc_vaddr_unaligned) {
+	if (rx_tid->hw_qdesc_vaddr_unaligned) {
 		if (dp_reo_desc_addr_chk(rx_tid->hw_qdesc_paddr) ==
 		    QDF_STATUS_SUCCESS)
 			qdf_mem_unmap_nbytes_single(
@@ -2637,7 +2637,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 	for (i = 0; i < DP_MAX_TIDS; i++) {
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[i];
 		qdf_spin_lock_bh(&rx_tid->tid_lock);
-		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
+		if (rx_tid->hw_qdesc_vaddr_unaligned) {
 			params.std.addr_lo =
 				rx_tid->hw_qdesc_paddr & 0xffffffff;
 			params.std.addr_hi =
@@ -2890,7 +2890,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
 	peer =  dp_peer_find_hash_find(pdev->soc, peer_mac, 0, DP_VDEV_ALL);
-	if (NULL == peer) {
+	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to find peer for: [%pM]", peer_mac);
 		return QDF_STATUS_E_FAILURE;
@@ -3143,7 +3143,7 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 	qdf_mem_zero(&params, sizeof(params));
 	for (i = 0; i < DP_MAX_TIDS; i++) {
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[i];
-		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
+		if (rx_tid->hw_qdesc_vaddr_unaligned) {
 			params.std.need_status = 1;
 			params.std.addr_lo =
 				rx_tid->hw_qdesc_paddr & 0xffffffff;

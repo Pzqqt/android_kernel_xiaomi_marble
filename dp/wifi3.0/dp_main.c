@@ -1442,7 +1442,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	/* Process LMAC interrupts */
 	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
 		pdev = soc->pdev_list[ring];
-		if (pdev == NULL)
+		if (!pdev)
 			continue;
 		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
@@ -2059,7 +2059,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 								 buf_size,
 								 baseaddr);
 			}
-			if (soc->wbm_idle_scatter_buf_base_vaddr[i] == NULL) {
+			if (!soc->wbm_idle_scatter_buf_base_vaddr[i]) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("Scatter lst memory alloc fail"));
@@ -4240,7 +4240,7 @@ static QDF_STATUS dp_rxdma_ring_config(struct dp_soc *soc)
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
-		if (pdev == NULL)
+		if (!pdev)
 			continue;
 
 		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
@@ -5355,7 +5355,7 @@ static void dp_peer_authorize(struct cdp_peer *peer_handle, uint32_t authorize)
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_soc *soc;
 
-	if (peer != NULL) {
+	if (peer) {
 		soc = peer->vdev->pdev->soc;
 		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 		peer->authorize = authorize ? 1 : 0;

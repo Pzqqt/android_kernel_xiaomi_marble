@@ -472,7 +472,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					  qdf_nbuf_data(msdu),
 					  (uint32_t)qdf_nbuf_len(msdu));
 
-			if (head_msdu && *head_msdu == NULL) {
+			if (head_msdu && !*head_msdu) {
 				*head_msdu = msdu;
 			} else {
 				if (last)
@@ -1103,7 +1103,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			break;
 		}
 
-		if (qdf_likely((head_msdu != NULL) && (tail_msdu != NULL))) {
+		if (qdf_likely((head_msdu) && (tail_msdu))) {
 			rx_mon_stats->dest_mpdu_done++;
 			dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
 		}
