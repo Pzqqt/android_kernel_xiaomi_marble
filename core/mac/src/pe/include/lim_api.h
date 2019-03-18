@@ -188,10 +188,7 @@ QDF_STATUS lim_post_msg_high_priority(struct mac_context *mac,
  * and dispatch to various sub modules within LIM module.
  */
 void lim_message_processor(struct mac_context *, struct scheduler_msg *);
-/**
- * Function to check the LIM state if system is in Scan/Learn state.
- */
-uint8_t lim_is_system_in_scan_state(struct mac_context *);
+
 /**
  * Function to handle IBSS coalescing.
  * Beacon Processing module to call this.

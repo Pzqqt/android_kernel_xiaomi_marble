@@ -98,8 +98,7 @@ QDF_STATUS sys_bbt_process_message_core(struct mac_context *mac_ctx,
 		 * message wrappers.
 		 */
 		if ((subtype == SIR_MAC_MGMT_BEACON) &&
-			(!lim_is_system_in_scan_state(mac_ctx)) &&
-			(GET_LIM_PROCESS_DEFD_MESGS(mac_ctx) != true)) {
+		     !GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)) {
 			pe_debug("dropping received beacon in deffered state");
 			goto fail;
 		}

@@ -72,9 +72,6 @@
 #define WMA_GET_RX_TIMESTAMP(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->timestamp)
 
-#define WMA_IS_RX_IN_SCAN(pRxMeta) \
-	(((t_packetmeta *)pRxMeta)->scan)
-
 #define WMA_GET_OFFLOADSCANLEARN(pRxMeta) \
 	(((t_packetmeta *)pRxMeta)->offloadScanLearn)
 #define WMA_GET_ROAMCANDIDATEIND(pRxMeta) \

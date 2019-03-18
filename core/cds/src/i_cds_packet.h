@@ -50,7 +50,6 @@
  * @mpdu_data_len: Length of 802.11 MPDU payload
  * @offloadScanLearn: Bit set to 1 for beacons received during roaming scan
  * @roamCandidateInd: Bit set to 1 when roaming candidate is found by fw
- * @scan: Bit set to 1 if packet received during scanning
  * @scan_src: Source of scan
  * @dpuFeedback: DPU feedback for frame
  * @session_id: PE session
@@ -69,7 +68,6 @@ typedef struct {
 	uint32_t mpdu_data_len;
 	uint8_t offloadScanLearn:1;
 	uint8_t roamCandidateInd:1;
-	uint8_t scan:1;
 	uint8_t scan_src;
 	uint8_t dpuFeedback;
 	uint8_t session_id;

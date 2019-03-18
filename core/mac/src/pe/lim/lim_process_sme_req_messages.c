@@ -313,33 +313,6 @@ static bool __lim_is_sme_assoc_cnf_valid(struct assoc_cnf *assoc_cnf)
 }
 
 /**
- * __lim_is_defered_msg_for_learn() - message handling in SME learn state
- * @mac: Global MAC context
- * @pMsg: Pointer to message posted from SME to LIM.
- *
- * Has role only if 11h is enabled. Not used on STA side.
- * Defers the message if SME is in learn state and brings
- * the LIM back to normal mode.
- *
- * Return: true - If defered false - Otherwise
- */
-
-static bool __lim_is_defered_msg_for_learn(struct mac_context *mac,
-					   struct scheduler_msg *pMsg)
-{
-	if (lim_is_system_in_scan_state(mac)) {
-		if (lim_defer_msg(mac, pMsg) != TX_SUCCESS) {
-			pe_err("Could not defer Msg: %d", pMsg->type);
-			return false;
-		}
-		pe_debug("Defer the message, in learn mode type: %d",
-			pMsg->type);
-		return true;
-	}
-	return false;
-}
-
-/**
  * __lim_is_defered_msg_for_radar() - Defers the message if radar is detected
  * @mac_ctx: Pointer to Global MAC structure
  * @message: Pointer to message posted from SME to LIM.
@@ -996,8 +969,7 @@ free:
 static bool __lim_process_sme_start_bss_req(struct mac_context *mac,
 					    struct scheduler_msg *pMsg)
 {
-	if (__lim_is_defered_msg_for_learn(mac, pMsg) ||
-	    __lim_is_defered_msg_for_radar(mac, pMsg)) {
+	if (__lim_is_defered_msg_for_radar(mac, pMsg)) {
 		/**
 		 * If message defered, buffer is not consumed yet.
 		 * So return false
@@ -2929,13 +2901,6 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 static bool __lim_process_sme_stop_bss_req(struct mac_context *mac,
 					   struct scheduler_msg *pMsg)
 {
-	if (__lim_is_defered_msg_for_learn(mac, pMsg)) {
-		/**
-		 * If message defered, buffer is not consumed yet.
-		 * So return false
-		 */
-		return false;
-	}
 	__lim_handle_sme_stop_bss_request(mac, (uint32_t *) pMsg->bodyptr);
 	return true;
 } /*** end __lim_process_sme_stop_bss_req() ***/
@@ -2995,9 +2960,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 	}
 
 	if ((!LIM_IS_AP_ROLE(session_entry)) ||
-	    ((session_entry->limSmeState != eLIM_SME_NORMAL_STATE) &&
-	    (session_entry->limSmeState !=
-			eLIM_SME_NORMAL_CHANNEL_SCAN_STATE))) {
+	    (session_entry->limSmeState != eLIM_SME_NORMAL_STATE)) {
 		pe_err("Rcvd unexpected msg %X in state %X, in role %X",
 			msg_type, session_entry->limSmeState,
 			GET_LIM_SYSTEM_ROLE(session_entry));

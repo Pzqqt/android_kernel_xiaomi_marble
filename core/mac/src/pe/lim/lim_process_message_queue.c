@@ -526,8 +526,7 @@ static bool def_msg_decision(struct mac_context *mac_ctx,
 	 * When defer is requested then defer all the messages except
 	 * HAL responses.
 	 */
-	if (!lim_is_system_in_scan_state(mac_ctx) &&
-	    !GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)) {
+	if (!GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)) {
 		if (lim_msg->type == SIR_BB_XPORT_MGMT_MSG) {
 			/*
 			 * Dont defer beacon and probe response
@@ -2128,9 +2127,8 @@ static void lim_process_deferred_message_queue(struct mac_context *mac)
 			size--;
 			lim_process_messages(mac, &limMsg);
 
-			if ((lim_is_system_in_scan_state(mac))
-			    || (true != GET_LIM_PROCESS_DEFD_MESGS(mac))
-			    ||  mac->lim.gLimAddtsSent)
+			if (!GET_LIM_PROCESS_DEFD_MESGS(mac) ||
+			    mac->lim.gLimAddtsSent)
 				break;
 		}
 	}
@@ -2157,8 +2155,7 @@ void lim_message_processor(struct mac_context *mac_ctx, struct scheduler_msg *ms
 		lim_process_messages(mac_ctx, msg);
 		/* process deferred message queue if allowed */
 		if ((!(mac_ctx->lim.gLimAddtsSent)) &&
-		    (!(lim_is_system_in_scan_state(mac_ctx))) &&
-		    (true == GET_LIM_PROCESS_DEFD_MESGS(mac_ctx)))
+		    GET_LIM_PROCESS_DEFD_MESGS(mac_ctx))
 			lim_process_deferred_message_queue(mac_ctx);
 	}
 }
@@ -2203,8 +2200,7 @@ static void lim_process_normal_hdd_msg(struct mac_context *mac_ctx,
 			defer_msg = false;
 	}
 
-	if (((mac_ctx->lim.gLimAddtsSent) ||
-		(lim_is_system_in_scan_state(mac_ctx))) && defer_msg) {
+	if (mac_ctx->lim.gLimAddtsSent && defer_msg) {
 		/*
 		 * System is in DFS (Learn) mode or awaiting addts response or
 		 * if radar is detected, Defer processing this message

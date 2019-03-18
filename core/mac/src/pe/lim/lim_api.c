@@ -1322,42 +1322,6 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 }
 
 /**
- * lim_is_system_in_scan_state()
- *
- ***FUNCTION:
- * This function is called by various MAC software modules to
- * determine if System is in Scan/Learn state
- *
- ***LOGIC:
- * NA
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- *
- * @param  mac  - Pointer to Global MAC structure
- * @return true  - System is in Scan/Learn state
- *         false - System is NOT in Scan/Learn state
- */
-
-uint8_t lim_is_system_in_scan_state(struct mac_context *mac)
-{
-	switch (mac->lim.gLimSmeState) {
-	case eLIM_SME_CHANNEL_SCAN_STATE:
-	case eLIM_SME_NORMAL_CHANNEL_SCAN_STATE:
-	case eLIM_SME_LINK_EST_WT_SCAN_STATE:
-	case eLIM_SME_WT_SCAN_STATE:
-		/* System is in Learn mode */
-		return true;
-
-	default:
-		/* System is NOT in Learn mode */
-		return false;
-	}
-} /*** end lim_is_system_in_scan_state() ***/
-
-/**
  *\brief lim_received_hb_handler()
  *
  * This function is called by sch_beacon_process() upon
@@ -2418,10 +2382,6 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 					 eLOG_NODROP_MISSED_BEACON_SCENARIO));
 			return eMGMT_DROP_NO_DROP;
 		}
-		if (lim_is_system_in_scan_state(mac))
-			return eMGMT_DROP_NO_DROP;
-		else if (WMA_IS_RX_IN_SCAN(pRxPacketInfo))
-			return eMGMT_DROP_SCAN_MODE_FRAME;
 
 		framelen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 		pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);

@@ -224,8 +224,6 @@ char *lim_sme_state_str(tLimSmeStates state)
 		return "eLIM_SME_OFFLINE_STATE";
 	case eLIM_SME_SUSPEND_STATE:
 		return "eLIM_SME_SUSPEND_STATE";
-	case eLIM_SME_WT_SCAN_STATE:
-		return "eLIM_SME_WT_SCAN_STATE";
 	case eLIM_SME_WT_JOIN_STATE:
 		return "eLIM_SME_WT_JOIN_STATE";
 	case eLIM_SME_WT_AUTH_STATE:
@@ -242,8 +240,6 @@ char *lim_sme_state_str(tLimSmeStates state)
 		return "eLIM_SME_REASSOCIATED_STATE";
 	case eLIM_SME_LINK_EST_STATE:
 		return "eLIM_SME_LINK_EST_STATE";
-	case eLIM_SME_LINK_EST_WT_SCAN_STATE:
-		return "eLIM_SME_LINK_EST_WT_SCAN_STATE";
 	case eLIM_SME_WT_PRE_AUTH_STATE:
 		return "eLIM_SME_WT_PRE_AUTH_STATE";
 	case eLIM_SME_WT_DISASSOC_STATE:
@@ -256,10 +252,6 @@ char *lim_sme_state_str(tLimSmeStates state)
 		return "eLIM_SME_WT_STOP_BSS_STATE";
 	case eLIM_SME_NORMAL_STATE:
 		return "eLIM_SME_NORMAL_STATE";
-	case eLIM_SME_CHANNEL_SCAN_STATE:
-		return "eLIM_SME_CHANNEL_SCAN_STATE";
-	case eLIM_SME_NORMAL_CHANNEL_SCAN_STATE:
-		return "eLIM_SME_NORMAL_CHANNEL_SCAN_STATE";
 	default:
 		return "INVALID SME STATE";
 	}
@@ -731,10 +723,9 @@ uint8_t lim_write_deferred_msg_q(struct mac_context *mac_ctx,
 	 * happen.
 	 */
 	if (mac_ctx->lim.gLimDeferredMsgQ.size > 0)
-		pe_debug("%d Deferred Msg type: 0x%x scan: %d global sme: %d global mlme: %d addts: %d",
+		pe_debug("%d Deferred Msg type: 0x%x global sme: %d global mlme: %d addts: %d",
 			mac_ctx->lim.gLimDeferredMsgQ.size,
 			lim_msg->type,
-			lim_is_system_in_scan_state(mac_ctx),
 			mac_ctx->lim.gLimSmeState,
 			mac_ctx->lim.gLimMlmState,
 			mac_ctx->lim.gLimAddtsSent);
@@ -853,9 +844,9 @@ struct scheduler_msg *lim_read_deferred_msg_q(struct mac_context *mac)
 			mac->lim.gLimDeferredMsgQ.size,
 			mac->lim.gLimDeferredMsgQ.read, msg->type);
 
-	pe_debug("DQ msg -- scan: %d global sme: %d global mlme: %d addts: %d",
-		lim_is_system_in_scan_state(mac), mac->lim.gLimSmeState,
-		mac->lim.gLimMlmState, mac->lim.gLimAddtsSent);
+	pe_debug("DQ msg -- global sme: %d global mlme: %d addts: %d",
+		 mac->lim.gLimSmeState, mac->lim.gLimMlmState,
+		 mac->lim.gLimAddtsSent);
 
 	return msg;
 }
@@ -4569,23 +4560,8 @@ lim_prepare_for11h_channel_switch(struct mac_context *mac, struct pe_session *pe
 	/* Flag to indicate 11h channel switch in progress */
 	pe_session->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_RUNNING;
 
-	if (mac->lim.gLimSmeState == eLIM_SME_LINK_EST_WT_SCAN_STATE ||
-	    mac->lim.gLimSmeState == eLIM_SME_CHANNEL_SCAN_STATE) {
-		pe_debug("Posting finish scan as we are in scan state");
-		/* Stop ongoing scanning if any */
-		if (GET_LIM_PROCESS_DEFD_MESGS(mac)) {
-			/* Set the resume channel to Any valid channel (invalid). */
-			/* This will instruct HAL to set it to any previous valid channel. */
-			pe_set_resume_channel(mac, 0, 0);
-		} else {
-			lim_restore_pre_channel_switch_state(mac, pe_session);
-		}
-		return;
-	} else {
-		pe_debug("Not in scan state, start channel switch timer");
-		/** We are safe to switch channel at this point */
-		lim_stop_tx_and_switch_channel(mac, pe_session->peSessionId);
-	}
+	/** We are safe to switch channel at this point */
+	lim_stop_tx_and_switch_channel(mac, pe_session->peSessionId);
 }
 
 /**----------------------------------------------------
