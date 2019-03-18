@@ -760,7 +760,7 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	}
 
 	if ((cfg_tdls_get_support_enable(hdd_ctx->psoc, &tdls_support) ==
-	     QDF_STATUS_SUCCESS) && tdls_support) {
+	     QDF_STATUS_SUCCESS) && !tdls_support) {
 		hdd_debug("TDLS feature not Enabled or Not supported in FW");
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION, 0) ||
 			nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT, 0)) {
