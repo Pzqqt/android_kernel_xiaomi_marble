@@ -1736,7 +1736,7 @@ static void os_if_new_peer_ind_handler(struct wlan_objmgr_vdev *vdev,
 	uint32_t active_peers = ucfg_nan_get_active_peers(vdev);
 	struct nan_callbacks cb_obj;
 
-	if (NULL == peer_ind) {
+	if (!peer_ind) {
 		cfg80211_err("Invalid new NDP peer params");
 		return;
 	}
@@ -1785,7 +1785,7 @@ static void os_if_peer_departed_ind_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	if (NULL == peer_ind) {
+	if (!peer_ind) {
 		cfg80211_err("Invalid new NDP peer params");
 		return;
 	}
