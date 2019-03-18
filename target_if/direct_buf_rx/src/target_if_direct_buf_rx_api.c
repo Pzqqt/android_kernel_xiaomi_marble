@@ -141,7 +141,7 @@ QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 {
 	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
 
-	if (hal_soc == NULL || osdev == NULL) {
+	if (!hal_soc || !osdev) {
 		direct_buf_rx_err("hal soc or osdev is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -151,7 +151,7 @@ QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 
 	direct_buf_rx_info("Dbr psoc obj %pK", dbr_psoc_obj);
 
-	if (dbr_psoc_obj == NULL) {
+	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc obj is null");
 		return QDF_STATUS_E_FAILURE;
 	}

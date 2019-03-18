@@ -47,13 +47,13 @@ static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if (psoc == NULL) {
+	if (!psoc) {
 		direct_buf_rx_err("psoc is null");
 		return 0;
 	}
 
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
-	if (tgt_psoc_info == NULL) {
+	if (!tgt_psoc_info) {
 		direct_buf_rx_err("target_psoc_info is null");
 		return 0;
 	}
@@ -85,13 +85,13 @@ static QDF_STATUS populate_dbr_cap_mod_param(struct wlan_objmgr_pdev *pdev,
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if (psoc == NULL) {
+	if (!psoc) {
 		direct_buf_rx_err("psoc is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
-	if (tgt_psoc_info == NULL) {
+	if (!tgt_psoc_info) {
 		direct_buf_rx_err("target_psoc_info is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -134,14 +134,14 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 
 	direct_buf_rx_enter();
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		direct_buf_rx_err("pdev context passed is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if (psoc == NULL) {
+	if (!psoc) {
 		direct_buf_rx_err("psoc is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -196,7 +196,7 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	QDF_STATUS status;
 	uint8_t num_modules, mod_idx;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		direct_buf_rx_err("pdev context passed is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -204,7 +204,7 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_pdev_obj == NULL) {
+	if (!dbr_pdev_obj) {
 		direct_buf_rx_err("dir buf rx object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -238,7 +238,7 @@ QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
 
 	direct_buf_rx_enter();
 
-	if (psoc == NULL) {
+	if (!psoc) {
 		direct_buf_rx_err("psoc context passed is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -328,7 +328,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_psoc_obj == NULL) {
+	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -355,7 +355,7 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 
 	hal_srng_access_start(hal_soc, srng);
 	ring_entry = hal_srng_src_get_next(hal_soc, srng);
-	QDF_ASSERT(ring_entry != NULL);
+	QDF_ASSERT(ring_entry);
 	dw_lo = (uint64_t)paddr & 0xFFFFFFFF;
 	WMI_HOST_DBR_RING_ADDR_HI_SET(dw_hi, (uint64_t)paddr >> 32);
 	WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_SET(dw_hi, cookie);
@@ -434,13 +434,13 @@ static QDF_STATUS target_if_dbr_init_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_psoc_obj == NULL) {
+	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (dbr_psoc_obj->hal_soc == NULL ||
-	    dbr_psoc_obj->osdev == NULL) {
+	if (!dbr_psoc_obj->hal_soc ||
+	    !dbr_psoc_obj->osdev) {
 		direct_buf_rx_err("dir buf rx target attach failed");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -677,12 +677,12 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 	QDF_STATUS status;
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		direct_buf_rx_err("pdev context passed is null");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (dbr_rsp_handler == NULL) {
+	if (!dbr_rsp_handler) {
 		direct_buf_rx_err("Response handler is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -695,7 +695,7 @@ QDF_STATUS target_if_direct_buf_rx_module_register(
 	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_pdev_obj == NULL) {
+	if (!dbr_pdev_obj) {
 		direct_buf_rx_err("dir buf rx object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -874,7 +874,7 @@ static QDF_STATUS target_if_get_dbr_data(struct wlan_objmgr_pdev *pdev,
 	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_psoc_obj == NULL) {
+	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -949,7 +949,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_pdev_obj == NULL) {
+	if (!dbr_pdev_obj) {
 		direct_buf_rx_err("dir buf rx object is null");
 		wlan_objmgr_pdev_release_ref(pdev, dbr_mod_id);
 		return QDF_STATUS_E_FAILURE;
@@ -1066,7 +1066,7 @@ static QDF_STATUS target_if_dbr_deinit_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (dbr_psoc_obj == NULL) {
+	if (!dbr_psoc_obj) {
 		direct_buf_rx_err("dir buf rx psoc object is null");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1216,7 +1216,7 @@ target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
 	struct direct_buf_rx_module_param *dbr_mod_param;
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		direct_buf_rx_err("pdev context passed is null");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1224,7 +1224,7 @@ target_if_direct_buf_rx_get_ring_params(struct wlan_objmgr_pdev *pdev,
 	dbr_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj
 			(pdev, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
 
-	if (NULL == dbr_pdev_obj) {
+	if (!dbr_pdev_obj) {
 		direct_buf_rx_err("dir buf rx object is null");
 		return QDF_STATUS_E_FAILURE;
 	}

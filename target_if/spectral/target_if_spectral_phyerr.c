@@ -1809,7 +1809,7 @@ int target_if_spectral_process_report_gen3(
 	struct spectral_report report;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
-	if (spectral == NULL) {
+	if (!spectral) {
 		spectral_err("Spectral target object is null");
 		return -EINVAL;
 	}
