@@ -149,6 +149,8 @@ static void scm_scan_post_event(struct wlan_objmgr_vdev *vdev,
 	}
 	scan = wlan_vdev_get_scan_obj(vdev);
 	pdev_ev_handler = wlan_vdev_get_pdev_scan_ev_handlers(vdev);
+	if (!pdev_ev_handler)
+		return;
 	cb_handlers = &(pdev_ev_handler->cb_handlers[0]);
 	requesters = scan->requesters;
 
