@@ -29,6 +29,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include <wlan_hdd_softap_tx_rx.h>
 #include <linux/inetdevice.h>
+#include <qdf_trace.h>
 
 void hdd_ipa_set_tx_flow_info(void)
 {
@@ -450,6 +451,21 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 
 	++adapter->stats.rx_packets;
 	adapter->stats.rx_bytes += skb->len;
+
+	qdf_dp_trace_set_track(skb, QDF_RX);
+
+	hdd_event_eapol_log(skb, QDF_RX);
+	qdf_dp_trace_log_pkt(adapter->vdev_id,
+			     skb, QDF_RX, QDF_TRACE_DEFAULT_PDEV_ID);
+	DPTRACE(qdf_dp_trace(skb,
+			     QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
+			     QDF_TRACE_DEFAULT_PDEV_ID,
+			     qdf_nbuf_data_addr(skb),
+			     sizeof(qdf_nbuf_data(skb)), QDF_RX));
+	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+				      QDF_DP_TRACE_RX_PACKET_RECORD, 0,
+				      QDF_RX));
+
 	result = hdd_ipa_aggregated_rx_ind(skb);
 	if (result == NET_RX_SUCCESS)
 		++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
