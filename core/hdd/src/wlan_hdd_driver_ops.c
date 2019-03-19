@@ -357,10 +357,9 @@ static int check_for_probe_defer(int ret)
 }
 #endif
 
-static void hdd_soc_load_lock(struct device *dev, int load_op)
+static void hdd_soc_load_lock(struct device *dev)
 {
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(load_op);
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
 }
@@ -369,7 +368,6 @@ static void hdd_soc_load_unlock(struct device *dev)
 {
 	hdd_remove_pm_qos(dev);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 }
 
@@ -384,7 +382,7 @@ static int __hdd_soc_probe(struct device *dev,
 
 	hdd_info("probing driver");
 
-	hdd_soc_load_lock(dev, HDD_DRV_OP_PROBE);
+	hdd_soc_load_lock(dev);
 	cds_set_load_in_progress(true);
 	cds_set_driver_in_bad_state(false);
 	cds_set_recovery_in_progress(false);
@@ -490,7 +488,7 @@ static int __hdd_soc_recovery_reinit(struct device *dev,
 
 	hdd_info("re-probing driver");
 
-	hdd_soc_load_lock(dev, HDD_DRV_OP_REINIT);
+	hdd_soc_load_lock(dev);
 	cds_set_driver_in_bad_state(false);
 
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
@@ -582,7 +580,6 @@ static void __hdd_soc_remove(struct device *dev)
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(HDD_DRV_OP_REMOVE);
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		hdd_wlan_stop_modules(hdd_ctx, false);
 		epping_disable();
@@ -593,7 +590,6 @@ static void __hdd_soc_remove(struct device *dev)
 
 	hdd_context_destroy(hdd_ctx);
 
-	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
 	cds_set_driver_in_bad_state(false);
@@ -718,7 +714,6 @@ static void __hdd_soc_recovery_shutdown(void)
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(HDD_DRV_OP_SHUTDOWN);
 
 	/* nothing to do if the soc is already unloaded */
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
@@ -753,13 +748,11 @@ static void __hdd_soc_recovery_shutdown(void)
 		hdd_wlan_shutdown();
 	}
 
-	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
 	return;
 
 unlock:
-	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 }
 

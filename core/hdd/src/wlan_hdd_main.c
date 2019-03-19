@@ -219,13 +219,6 @@ static struct attribute *attrs[] = {
 #endif
 #endif
 
-#define HDD_OPS_INACTIVITY_TIMEOUT (120000)
-#define MAX_OPS_NAME_STRING_SIZE 20
-
-static qdf_timer_t hdd_drv_ops_inactivity_timer;
-static struct task_struct *hdd_drv_ops_task;
-static char drv_ops_string[MAX_OPS_NAME_STRING_SIZE];
-
 /* the Android framework expects this param even though we don't use it */
 #define BUF_LEN 20
 static char fwpath_buffer[BUF_LEN];
@@ -3120,7 +3113,6 @@ static int __hdd_open(struct net_device *dev)
 	}
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(HDD_DRV_OP_IFF_UP);
 
 	/*
 	 * This scenario can be hit in cases where in the wlan driver after
@@ -3171,11 +3163,10 @@ static int __hdd_open(struct net_device *dev)
 	hdd_lpass_notify_start(hdd_ctx, adapter);
 
 err_hdd_hdd_init_deinit_lock:
-	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
+
 	return ret;
 }
-
 
 /**
  * hdd_open() - Wrapper function for __hdd_open to protect it from SSR
@@ -12947,10 +12938,6 @@ int hdd_init(void)
 	wlan_logging_sock_init_svc();
 #endif
 
-	qdf_timer_init(NULL, &hdd_drv_ops_inactivity_timer,
-		(void *)hdd_drv_ops_inactivity_handler, NULL,
-		QDF_TIMER_TYPE_SW);
-
 	hdd_trace_init();
 	hdd_register_debug_callback();
 	wlan_roam_debug_init();
@@ -12968,7 +12955,6 @@ int hdd_init(void)
 void hdd_deinit(void)
 {
 	wlan_roam_debug_deinit();
-	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_deinit_svc();
@@ -15035,79 +15021,6 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter)
 	}
 
 	return ret;
-}
-
-/**
- * hdd_start_driver_ops_timer() - Starts driver ops inactivity timer
- * @drv_op: Enum indicating driver op
- *
- * Return: none
- */
-void hdd_start_driver_ops_timer(int drv_op)
-{
-	memset(drv_ops_string, 0, MAX_OPS_NAME_STRING_SIZE);
-	switch (drv_op) {
-	case HDD_DRV_OP_PROBE:
-		memcpy(drv_ops_string, "probe", sizeof("probe"));
-		break;
-	case HDD_DRV_OP_REMOVE:
-		memcpy(drv_ops_string, "remove", sizeof("remove"));
-		break;
-	case HDD_DRV_OP_SHUTDOWN:
-		memcpy(drv_ops_string, "shutdown", sizeof("shutdown"));
-		break;
-	case HDD_DRV_OP_REINIT:
-		memcpy(drv_ops_string, "reinit", sizeof("reinit"));
-		break;
-	case HDD_DRV_OP_IFF_UP:
-		memcpy(drv_ops_string, "iff_up", sizeof("iff_up"));
-		break;
-	}
-
-	hdd_drv_ops_task = current;
-	qdf_timer_start(&hdd_drv_ops_inactivity_timer,
-			HDD_OPS_INACTIVITY_TIMEOUT);
-}
-
-/**
- * hdd_stop_driver_ops_timer() - Stops driver ops inactivity timer
- *
- * Return: none
- */
-void hdd_stop_driver_ops_timer(void)
-{
-	qdf_timer_sync_cancel(&hdd_drv_ops_inactivity_timer);
-}
-
-/**
- * hdd_drv_ops_inactivity_handler() - Timeout handler for driver ops
- * inactivity timer
- *
- * Return: None
- */
-void hdd_drv_ops_inactivity_handler(void)
-{
-	hdd_err("WLAN_BUG_RCA %s: %d Sec timer expired while in .%s",
-		__func__, HDD_OPS_INACTIVITY_TIMEOUT/1000, drv_ops_string);
-
-	if (hdd_drv_ops_task) {
-		printk("Call stack for \"%s\"\n", hdd_drv_ops_task->comm);
-		qdf_print_thread_trace(hdd_drv_ops_task);
-	} else {
-		hdd_err("hdd_drv_ops_task is null");
-	}
-
-	/* Driver shutdown is stuck, no recovery possible at this point */
-	if (0 == qdf_mem_cmp(&drv_ops_string[0], "shutdown",
-		sizeof("shutdown")))
-		QDF_BUG(0);
-
-	if (cds_is_fw_down()) {
-		hdd_err("FW is down");
-		return;
-	}
-
-	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 }
 
 /**

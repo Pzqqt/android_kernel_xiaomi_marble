@@ -1930,21 +1930,6 @@ struct hdd_channel_info {
 };
 
 /*
- * @HDD_DRV_OP_PROBE: Refers to .probe operation
- * @HDD_DRV_OP_REMOVE: Refers to .remove operation
- * @HDD_DRV_OP_SHUTDOWN: Refers to .shutdown operation
- * @HDD_DRV_OP_REINIT: Refers to .reinit operation
- * @HDD_DRV_OP_IFF_UP: Refers to IFF_UP operation
- */
-enum {
-	HDD_DRV_OP_PROBE = 0,
-	HDD_DRV_OP_REMOVE,
-	HDD_DRV_OP_SHUTDOWN,
-	HDD_DRV_OP_REINIT,
-	HDD_DRV_OP_IFF_UP
-};
-
-/*
  * Function declarations and documentation
  */
 
@@ -3288,29 +3273,6 @@ void hdd_dp_trace_init(struct hdd_config *config) {}
 #endif
 
 void hdd_set_rx_mode_rps(bool enable);
-
-/**
- * hdd_drv_ops_inactivity_handler() - Timeout handler for driver ops
- * inactivity timer
- *
- * Return: None
- */
-void hdd_drv_ops_inactivity_handler(void);
-
-/**
- * hdd_start_driver_ops_timer() - Starts driver ops inactivity timer
- * @drv_op: Enum indicating driver op
- *
- * Return: none
- */
-void hdd_start_driver_ops_timer(int drv_op);
-
-/**
- * hdd_stop_driver_ops_timer() - Stops driver ops inactivity timer
- *
- * Return: none
- */
-void hdd_stop_driver_ops_timer(void);
 
 /**
  * hdd_limit_max_per_index_score() -check if per index score doesn't exceed 100%
