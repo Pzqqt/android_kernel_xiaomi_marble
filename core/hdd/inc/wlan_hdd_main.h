@@ -369,8 +369,6 @@ enum hdd_driver_flags {
 /* Assigned size of driver memory dump is 4096 bytes */
 #define DRIVER_MEM_DUMP_SIZE    4096
 
-extern struct mutex hdd_init_deinit_lock;
-
 /* MAX OS Q block time value in msec
  * Prevent from permanent stall, resume OS Q if timer expired
  */

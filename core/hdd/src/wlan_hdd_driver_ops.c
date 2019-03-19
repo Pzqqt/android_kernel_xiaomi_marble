@@ -359,7 +359,6 @@ static int check_for_probe_defer(int ret)
 
 static void hdd_soc_load_lock(struct device *dev)
 {
-	mutex_lock(&hdd_init_deinit_lock);
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_request_pm_qos(dev, DISABLE_KRAIT_IDLE_PS_VAL);
 }
@@ -368,7 +367,6 @@ static void hdd_soc_load_unlock(struct device *dev)
 {
 	hdd_remove_pm_qos(dev);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	mutex_unlock(&hdd_init_deinit_lock);
 }
 
 static int __hdd_soc_probe(struct device *dev,
@@ -579,7 +577,6 @@ static void __hdd_soc_remove(struct device *dev)
 	if (!hdd_wait_for_debugfs_threads_completion())
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
 
-	mutex_lock(&hdd_init_deinit_lock);
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		hdd_wlan_stop_modules(hdd_ctx, false);
 		epping_disable();
@@ -589,8 +586,6 @@ static void __hdd_soc_remove(struct device *dev)
 	}
 
 	hdd_context_destroy(hdd_ctx);
-
-	mutex_unlock(&hdd_init_deinit_lock);
 
 	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
@@ -713,23 +708,21 @@ static void __hdd_soc_recovery_shutdown(void)
 	/* cancel/flush any pending/active idle shutdown work */
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
-	mutex_lock(&hdd_init_deinit_lock);
-
 	/* nothing to do if the soc is already unloaded */
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_info("Driver modules are already closed");
-		goto unlock;
+		return;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_info("Load/unload in progress, ignore SSR shutdown");
-		goto unlock;
+		return;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Failed to get HIF context, ignore SSR shutdown");
-		goto unlock;
+		return;
 	}
 
 	/* mask the host controller interrupts */
@@ -747,13 +740,6 @@ static void __hdd_soc_recovery_shutdown(void)
 		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
-
-	mutex_unlock(&hdd_init_deinit_lock);
-
-	return;
-
-unlock:
-	mutex_unlock(&hdd_init_deinit_lock);
 }
 
 /**

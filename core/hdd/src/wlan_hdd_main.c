@@ -232,8 +232,6 @@ static char *country_code;
 static int enable_11d = -1;
 static int enable_dfs_chan_scan = -1;
 
-DEFINE_MUTEX(hdd_init_deinit_lock);
-
 #define WLAN_NLINK_CESIUM 30
 
 static qdf_wake_lock_t wlan_wake_lock;
@@ -3113,8 +3111,6 @@ static int __hdd_open(struct net_device *dev)
 		return -EBUSY;
 	}
 
-	mutex_lock(&hdd_init_deinit_lock);
-
 	/*
 	 * This scenario can be hit in cases where in the wlan driver after
 	 * registering the netdevices and there is a failure in driver
@@ -3124,14 +3120,13 @@ static int __hdd_open(struct net_device *dev)
 
 	if (!cds_is_driver_loaded()) {
 		hdd_err("Failed to start the wlan driver!!");
-		ret = -EIO;
-		goto err_hdd_hdd_init_deinit_lock;
+		return -EIO;
 	}
 
 	ret = hdd_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start WLAN modules return");
-		goto err_hdd_hdd_init_deinit_lock;
+		return ret;
 	}
 
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
@@ -3139,7 +3134,7 @@ static int __hdd_open(struct net_device *dev)
 		if (ret) {
 			hdd_err("Failed to start adapter :%d",
 				adapter->device_mode);
-			goto err_hdd_hdd_init_deinit_lock;
+			return ret;
 		}
 	}
 
@@ -3163,10 +3158,7 @@ static int __hdd_open(struct net_device *dev)
 	hdd_populate_wifi_pos_cfg(hdd_ctx);
 	hdd_lpass_notify_start(hdd_ctx, adapter);
 
-err_hdd_hdd_init_deinit_lock:
-	mutex_unlock(&hdd_init_deinit_lock);
-
-	return ret;
+	return 0;
 }
 
 /**
@@ -13507,7 +13499,6 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	}
 
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
-	mutex_lock(&hdd_init_deinit_lock);
 
 	curr_mode = hdd_get_conparam();
 	if (curr_mode == next_mode) {
@@ -13570,7 +13561,6 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	errno = 0;
 
 unlock:
-	mutex_unlock(&hdd_init_deinit_lock);
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
 
 	return errno;
