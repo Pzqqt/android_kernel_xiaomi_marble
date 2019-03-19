@@ -1031,16 +1031,6 @@ int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func)
 		return -EAGAIN;
 	}
 
-	if (hdd_ctx->start_modules_in_progress) {
-		hdd_debug("Start modules in progress (via %s)", func);
-		return -EAGAIN;
-	}
-
-	if (hdd_ctx->stop_modules_in_progress) {
-		hdd_debug("Stop modules in progress (via %s)", func);
-		return -EAGAIN;
-	}
-
 	if (cds_is_driver_in_bad_state()) {
 		hdd_debug("Driver in bad state (via %s); state:0x%x",
 			  func, cds_get_driver_state());
@@ -2772,8 +2762,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		return 0;
 	}
 
-	hdd_ctx->start_modules_in_progress = true;
-
 	switch (hdd_ctx->driver_status) {
 	case DRIVER_MODULES_UNINITIALIZED:
 		hdd_info("Wlan transitioning (UNINITIALIZED -> CLOSED)");
@@ -2946,8 +2934,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 	hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
 	hdd_info("Wlan transitioned (now ENABLED)");
 
-	hdd_ctx->start_modules_in_progress = false;
-
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	hdd_exit();
@@ -2994,7 +2980,6 @@ power_down:
 	if (!reinit && !unint)
 		pld_power_off(qdf_dev->dev);
 release_lock:
-	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->target_hw_name) {
 		qdf_mem_free(hdd_ctx->target_hw_name);
@@ -11283,7 +11268,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	}
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
-	hdd_ctx->stop_modules_in_progress = true;
 	cds_set_module_stop_in_progress(true);
 
 	debugfs_threads = hdd_return_debugfs_threads_count();
@@ -11295,7 +11279,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		if (IS_IDLE_STOP && !ftm_mode) {
 			mutex_unlock(&hdd_ctx->iface_change_lock);
 			hdd_psoc_idle_timer_start(hdd_ctx);
-			hdd_ctx->stop_modules_in_progress = false;
 			cds_set_module_stop_in_progress(false);
 
 			return 0;
@@ -11431,7 +11414,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
 
 done:
-	hdd_ctx->stop_modules_in_progress = false;
 	cds_set_module_stop_in_progress(false);
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
@@ -11439,7 +11421,6 @@ done:
 
 	return ret;
 }
-
 
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
 /**

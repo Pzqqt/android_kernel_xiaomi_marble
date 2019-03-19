@@ -141,18 +141,6 @@ static inline bool cds_is_load_or_unload_in_progress(void)
 }
 
 /**
- * cds_is_module_stop_in_progress() - Is module stopping
- *
- * Return: true if module stop is in progress.
- */
-static inline bool cds_is_module_stop_in_progress(void)
-{
-	enum cds_driver_state state = cds_get_driver_state();
-
-	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_MODULE_STOPPING);
-}
-
-/**
  * cds_is_target_ready() - Is target is in ready state
  *
  * Return: true if target is in ready state and false otherwise.

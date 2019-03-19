@@ -298,8 +298,7 @@ static void __cds_cpu_hotplug_notify(uint32_t cpu, bool cpu_up)
 	if (!pSchedContext || !pSchedContext->ol_rx_thread)
 		return;
 
-	if (cds_is_load_or_unload_in_progress() ||
-	    cds_is_module_stop_in_progress() || cds_is_driver_recovering())
+	if (cds_is_load_or_unload_in_progress() || cds_is_driver_recovering())
 		return;
 
 	cds_debug("'%s' event on CPU %u (of %d); Currently affine to CPU %u",

@@ -1772,8 +1772,6 @@ struct hdd_context {
 	/* support for DP RX threads */
 	bool enable_dp_rx_threads;
 	bool napi_enable;
-	bool stop_modules_in_progress;
-	bool start_modules_in_progress;
 	struct acs_dfs_policy acs_policy;
 	uint16_t wmi_max_len;
 	struct suspend_resume_stats suspend_resume_stats;
