@@ -8546,63 +8546,6 @@ static void hdd_set_thermal_level_cb(hdd_handle_t hdd_handle, u_int8_t level)
 		/* restore original concurrency mode */
 		ucfg_ipa_send_mcc_scc_msg(hdd_ctx->pdev, hdd_ctx->mcc_mode);
 }
-
-/**
- * hdd_get_safe_channel() - Get safe channel from current regulatory
- * @hdd_ctx: pointer to hdd context
- * @adapter: pointer to softap adapter
- *
- * This function is used to get safe channel from current regulatory valid
- * channels to restart SAP if failed to get safe channel from PCL.
- *
- * Return: Channel number to restart SAP in case of success. In case of any
- * failure, the channel number returned is zero.
- */
-static uint8_t
-hdd_get_safe_channel(struct hdd_context *hdd_ctx,
-		     struct hdd_adapter *adapter)
-{
-	struct sir_pcl_list pcl = {0};
-	uint32_t i, j;
-	bool found = false;
-	int ret;
-
-	/* Try for safe channel from all valid channel */
-	pcl.pcl_len = MAX_NUM_CHAN;
-	ret = hdd_get_valid_chan(hdd_ctx, pcl.pcl_list,
-				 &pcl.pcl_len);
-	if (ret) {
-		hdd_err("error %d in getting valid channel list", ret);
-		return INVALID_CHANNEL_ID;
-	}
-
-	for (i = 0; i < pcl.pcl_len; i++) {
-		hdd_debug("chan[%d]:%d", i, pcl.pcl_list[i]);
-		found = false;
-		for (j = 0; j < hdd_ctx->unsafe_channel_count; j++) {
-			if (pcl.pcl_list[i] ==
-					hdd_ctx->unsafe_channel_list[j]) {
-				hdd_debug("unsafe chan:%d", pcl.pcl_list[i]);
-				found = true;
-				break;
-			}
-		}
-
-		if (found)
-			continue;
-
-		if ((pcl.pcl_list[i] >=
-		   adapter->session.ap.sap_config.acs_cfg.start_ch) &&
-		   (pcl.pcl_list[i] <=
-		   adapter->session.ap.sap_config.acs_cfg.end_ch)) {
-			hdd_debug("found safe chan:%d", pcl.pcl_list[i]);
-			return pcl.pcl_list[i];
-		}
-	}
-
-	return INVALID_CHANNEL_ID;
-}
-
 #else
 /**
  * hdd_set_thermal_level_cb() - set thermal level callback function
@@ -8617,96 +8560,7 @@ hdd_get_safe_channel(struct hdd_context *hdd_ctx,
 static void hdd_set_thermal_level_cb(hdd_handle_t hdd_handle, u_int8_t level)
 {
 }
-
-/**
- * hdd_get_safe_channel() - Get safe channel from current regulatory
- * @hdd_ctx: pointer to hdd context
- * @adapter: pointer to softap adapter
- *
- * This function is used to get safe channel from current regulatory valid
- * channels to restart SAP if failed to get safe channel from PCL.
- *
- * Return: Channel number to restart SAP in case of success. In case of any
- * failure, the channel number returned is zero.
- */
-static uint8_t
-hdd_get_safe_channel(struct hdd_context *hdd_ctx,
-		     struct hdd_adapter *adapter)
-{
-	return 0;
-}
 #endif
-
-/**
- * hdd_get_safe_channel_from_pcl_and_acs_range() - Get safe channel for SAP
- * restart
- * @adapter: AP adapter, which should be checked for NULL
- *
- * Get a safe channel to restart SAP. PCL already takes into account the
- * unsafe channels. So, the PCL is validated with the ACS range to provide
- * a safe channel for the SAP to restart.
- *
- * Return: Channel number to restart SAP in case of success. In case of any
- * failure, the channel number returned is zero.
- */
-static uint8_t
-hdd_get_safe_channel_from_pcl_and_acs_range(struct hdd_adapter *adapter)
-{
-	struct sir_pcl_list pcl;
-	QDF_STATUS status;
-	uint32_t i;
-	mac_handle_t mac_handle;
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (!hdd_ctx) {
-		hdd_err("invalid HDD context");
-		return INVALID_CHANNEL_ID;
-	}
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!mac_handle) {
-		hdd_err("invalid MAC handle");
-		return INVALID_CHANNEL_ID;
-	}
-
-	status = policy_mgr_get_pcl_for_existing_conn(hdd_ctx->psoc,
-			PM_SAP_MODE, pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
-			false);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Get PCL failed");
-		return INVALID_CHANNEL_ID;
-	}
-
-	/*
-	 * In some scenarios, like hw dbs disabled, sap+sap case, if operating
-	 * channel is unsafe channel, the pcl may be empty, instead of return,
-	 * try to choose a safe channel from acs range.
-	 */
-	if (!pcl.pcl_len)
-		hdd_debug("pcl length is zero!");
-
-	hdd_debug("start:%d end:%d",
-		adapter->session.ap.sap_config.acs_cfg.start_ch,
-		adapter->session.ap.sap_config.acs_cfg.end_ch);
-
-	/* PCL already takes unsafe channel into account */
-	for (i = 0; i < pcl.pcl_len; i++) {
-		hdd_debug("chan[%d]:%d", i, pcl.pcl_list[i]);
-		if ((pcl.pcl_list[i] >=
-		   adapter->session.ap.sap_config.acs_cfg.start_ch) &&
-		   (pcl.pcl_list[i] <=
-		   adapter->session.ap.sap_config.acs_cfg.end_ch)) {
-			hdd_debug("found PCL safe chan:%d", pcl.pcl_list[i]);
-			return pcl.pcl_list[i];
-		}
-	}
-
-	hdd_debug("no safe channel from PCL found in ACS range");
-
-	return hdd_get_safe_channel(hdd_ctx, adapter);
-}
 
 /**
  * hdd_switch_sap_channel() - Move SAP to the given channel
@@ -8866,8 +8720,8 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			continue;
 		} else
 			restart_chan =
-				hdd_get_safe_channel_from_pcl_and_acs_range(
-					adapter);
+				wlansap_get_safe_channel_from_pcl_and_acs_range(
+					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (!restart_chan) {
 			hdd_err("fail to restart SAP");
 		} else {
@@ -8934,7 +8788,8 @@ static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 {
 	uint8_t restart_chan;
 
-	restart_chan = hdd_get_safe_channel_from_pcl_and_acs_range(adapter);
+	restart_chan = wlansap_get_safe_channel_from_pcl_and_acs_range(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 	if (!restart_chan) {
 		hdd_alert("fail to restart SAP");
 		return;
@@ -14904,7 +14759,8 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 		hdd_warn("STA-AP Mode DFS not supported, Switch SAP channel to Non DFS");
 
 		restart_chan =
-			hdd_get_safe_channel_from_pcl_and_acs_range(ap_adapter);
+			wlansap_get_safe_channel_from_pcl_and_acs_range(
+				WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter));
 		if (!restart_chan ||
 		    wlan_reg_is_dfs_ch(hdd_ctx->pdev, restart_chan))
 			restart_chan = SAP_DEFAULT_5GHZ_CHANNEL;

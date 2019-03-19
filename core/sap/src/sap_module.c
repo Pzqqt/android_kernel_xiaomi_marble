@@ -2690,3 +2690,167 @@ QDF_STATUS wlansap_update_owe_info(struct sap_context *sap_ctx,
 
 	return status;
 }
+
+QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
+				       uint8_t *ch_list,
+				       uint32_t *ch_cnt)
+{
+	size_t ch_index;
+	size_t target_ch_cnt = 0;
+
+	if (!sap_ctx || !ch_list || !ch_cnt) {
+		sap_err("NULL parameters");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	for (ch_index = 0; ch_index < *ch_cnt; ch_index++) {
+		if (ch_list[ch_index] >= sap_ctx->acs_cfg->start_ch &&
+		    ch_list[ch_index] <= sap_ctx->acs_cfg->end_ch)
+			ch_list[target_ch_cnt++] = ch_list[ch_index];
+	}
+
+	*ch_cnt = target_ch_cnt;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#if defined(FEATURE_WLAN_CH_AVOID)
+/**
+ * wlansap_get_safe_channel() - Get safe channel from current regulatory
+ * @sap_ctx: Pointer to SAP context
+ *
+ * This function is used to get safe channel from current regulatory valid
+ * channels to restart SAP if failed to get safe channel from PCL.
+ *
+ * Return: Channel number to restart SAP in case of success. In case of any
+ * failure, the channel number returned is zero.
+ */
+static uint8_t
+wlansap_get_safe_channel(struct sap_context *sap_ctx)
+{
+	struct mac_context *mac;
+	struct sir_pcl_list pcl = {0};
+	QDF_STATUS status;
+	mac_handle_t mac_handle;
+
+	if (!sap_ctx) {
+		sap_err("NULL parameter");
+		return INVALID_CHANNEL_ID;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return INVALID_CHANNEL_ID;
+	}
+	mac_handle = MAC_HANDLE(mac);
+
+	/* get the channel list for current domain */
+	status = policy_mgr_get_valid_chans(mac->psoc,
+					    pcl.pcl_list,
+					    &pcl.pcl_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sap_err("Error in getting valid channels");
+		return INVALID_CHANNEL_ID;
+	}
+
+	status = wlansap_filter_ch_based_acs(sap_ctx,
+					     pcl.pcl_list,
+					     &pcl.pcl_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sap_err("failed to filter ch from acs %d", status);
+		return INVALID_CHANNEL_ID;
+	}
+
+	if (pcl.pcl_len) {
+		status = policy_mgr_get_valid_chans_from_range(mac->psoc,
+							       pcl.pcl_list,
+							       &pcl.pcl_len,
+							       PM_SAP_MODE);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sap_err("failed to get valid channel: %d", status);
+			return INVALID_CHANNEL_ID;
+		}
+
+		if (pcl.pcl_len) {
+			sap_debug("select %d from valid channel list",
+				  pcl.pcl_list[0]);
+			return pcl.pcl_list[0];
+		}
+	}
+
+	return INVALID_CHANNEL_ID;
+}
+#else
+/**
+ * wlansap_get_safe_channel() - Get safe channel from current regulatory
+ * @sap_ctx: Pointer to SAP context
+ *
+ * This function is used to get safe channel from current regulatory valid
+ * channels to restart SAP if failed to get safe channel from PCL.
+ *
+ * Return: Channel number to restart SAP in case of success. In case of any
+ * failure, the channel number returned is zero.
+ */
+static uint8_t
+wlansap_get_safe_channel(struct sap_context *sap_ctx)
+{
+	return 0;
+}
+#endif
+
+uint8_t
+wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
+{
+	struct mac_context *mac;
+	struct sir_pcl_list pcl = {0};
+	QDF_STATUS status;
+	mac_handle_t mac_handle;
+
+	if (!sap_ctx) {
+		sap_err("NULL parameter");
+		return INVALID_CHANNEL_ID;
+	}
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return INVALID_CHANNEL_ID;
+	}
+	mac_handle = MAC_HANDLE(mac);
+
+	status = policy_mgr_get_pcl_for_existing_conn(
+			mac->psoc, PM_SAP_MODE, pcl.pcl_list, &pcl.pcl_len,
+			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list),
+			false);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sap_err("Get PCL failed");
+		return INVALID_CHANNEL_ID;
+	}
+
+	if (pcl.pcl_len) {
+		status = wlansap_filter_ch_based_acs(sap_ctx,
+						     pcl.pcl_list,
+						     &pcl.pcl_len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sap_err("failed to filter ch from acs %d", status);
+			return INVALID_CHANNEL_ID;
+		}
+
+		if (pcl.pcl_len) {
+			sap_debug("select %d from valid channel list",
+				  pcl.pcl_list[0]);
+			return pcl.pcl_list[0];
+		}
+		sap_debug("no safe channel from PCL found in ACS range");
+	} else {
+		sap_debug("pcl length is zero!");
+	}
+
+	/*
+	 * In some scenarios, like hw dbs disabled, sap+sap case, if operating
+	 * channel is unsafe channel, the pcl may be empty, instead of return,
+	 * try to choose a safe channel from acs range.
+	 */
+	return wlansap_get_safe_channel(sap_ctx);
+}

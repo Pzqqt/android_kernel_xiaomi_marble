@@ -1375,6 +1375,32 @@ QDF_STATUS wlansap_update_owe_info(struct sap_context *sap_ctx,
 				   uint8_t *peer, const uint8_t *ie,
 				   uint32_t ie_len, uint16_t owe_status);
 
+/**
+ * wlansap_filter_ch_based_acs() -filter out channel based on acs
+ * @sap_ctx: sap context
+ * @ch_list: pointer to channel list
+ * @ch_cnt: channel number of channel list
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_filter_ch_based_acs(struct sap_context *sap_ctx,
+				       uint8_t *ch_list,
+				       uint32_t *ch_cnt);
+
+/**
+ * wlansap_get_safe_channel_from_pcl_and_acs_range() - Get safe channel for SAP
+ * restart
+ * @sap_ctx: sap context
+ *
+ * Get a safe channel to restart SAP. PCL already takes into account the
+ * unsafe channels. So, the PCL is validated with the ACS range to provide
+ * a safe channel for the SAP to restart.
+ *
+ * Return: Channel number to restart SAP in case of success. In case of any
+ * failure, the channel number returned is zero.
+ */
+uint8_t
+wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx);
 #ifdef __cplusplus
 }
 #endif

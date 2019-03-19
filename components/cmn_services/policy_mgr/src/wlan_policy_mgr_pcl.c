@@ -32,6 +32,7 @@
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_utility.h"
+#include "wlan_mlme_ucfg_api.h"
 
 /**
  * first_connection_pcl_table - table which provides PCL for the
@@ -328,6 +329,102 @@ uint8_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
+/**
+ * policy_mgr_skip_dfs_ch() - skip dfs channel or not
+ * @psoc: pointer to soc
+ * @skip_dfs_channel: pointer to result
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS policy_mgr_skip_dfs_ch(struct wlan_objmgr_psoc *psoc,
+					 bool *skip_dfs_channel)
+{
+	bool sta_sap_scc_on_dfs_chan;
+	bool dfs_master_capable = true;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_dfs_master_capability(psoc,
+						     &dfs_master_capable);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get dfs master capable");
+		return status;
+	}
+
+	*skip_dfs_channel = false;
+	if (!dfs_master_capable) {
+		policy_mgr_debug("skip DFS ch for SAP/Go dfs master cap %d",
+				 dfs_master_capable);
+		*skip_dfs_channel = true;
+	}
+
+	if (!*skip_dfs_channel) {
+		sta_sap_scc_on_dfs_chan =
+			policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+		if ((policy_mgr_mode_specific_connection_count(psoc,
+							       PM_STA_MODE,
+							       NULL) > 0) &&
+		    !sta_sap_scc_on_dfs_chan) {
+			policy_mgr_debug("SAP/Go skips DFS ch if sta connects");
+			*skip_dfs_channel = true;
+		}
+	}
+
+	return status;
+}
+
+/**
+ * policy_mgr_modify_sap_pcl_based_on_dfs() - filter out DFS channel if needed
+ * @psoc: pointer to soc
+ * @pcl_list_org: channel list to filter out
+ * @weight_list_org: weight of channel list
+ * @pcl_len_org: length of channel list
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_dfs(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t *pcl_list_org,
+		uint8_t *weight_list_org,
+		uint32_t *pcl_len_org)
+{
+	size_t i, pcl_len = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool skip_dfs_channel = false;
+	QDF_STATUS status;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (*pcl_len_org > QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = policy_mgr_skip_dfs_ch(psoc, &skip_dfs_channel);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get dfs channel skip info");
+		return status;
+	}
+
+	if (!skip_dfs_channel) {
+		policy_mgr_debug("No more operation on DFS channel");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	for (i = 0; i < *pcl_len_org; i++) {
+		if (!wlan_reg_is_dfs_ch(pm_ctx->pdev, pcl_list_org[i])) {
+			pcl_list_org[pcl_len] = pcl_list_org[i];
+			weight_list_org[pcl_len++] = weight_list_org[i];
+		}
+	}
+
+	*pcl_len_org = pcl_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t *pcl_list_org,
@@ -421,10 +518,11 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 		status = policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 				psoc, pcl_channels, pcl_weight, len);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			policy_mgr_err("failed to get modified pcl for SAP");
+			policy_mgr_err(
+				"failed to get mandatory modified pcl for SAP");
 			return status;
 		}
-		policy_mgr_debug("modified pcl len:%d", *len);
+		policy_mgr_debug("mandatory modified pcl len:%d", *len);
 		for (i = 0; i < *len; i++)
 			policy_mgr_debug("chan:%d weight:%d",
 				pcl_channels[i], pcl_weight[i]);
@@ -433,18 +531,29 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	status = policy_mgr_modify_sap_pcl_based_on_nol(
 			psoc, pcl_channels, pcl_weight, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		policy_mgr_err("failed to get modified pcl for SAP");
+		policy_mgr_err("failed to get nol modified pcl for SAP");
 		return status;
 	}
-	policy_mgr_debug("modified pcl len:%d", *len);
+	policy_mgr_debug("nol modified pcl len:%d", *len);
 	for (i = 0; i < *len; i++)
 		policy_mgr_debug("chan:%d weight:%d",
 			pcl_channels[i], pcl_weight[i]);
 
+	status = policy_mgr_modify_sap_pcl_based_on_dfs(
+			psoc, pcl_channels, pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get dfs modified pcl for SAP");
+		return status;
+	}
+	policy_mgr_debug("dfs modified pcl len:%d", *len);
+	for (i = 0; i < *len; i++)
+		policy_mgr_debug("chan:%d weight:%d",
+				 pcl_channels[i], pcl_weight[i]);
+
 	status = policy_mgr_modify_sap_pcl_based_on_srd
 			(psoc, pcl_channels, pcl_weight, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		policy_mgr_err("failed to get modified pcl for SAP");
+		policy_mgr_err("failed to get srd modified pcl for SAP");
 		return status;
 	}
 	policy_mgr_debug("modified final pcl len:%d", *len);
@@ -1543,6 +1652,51 @@ static void policy_mgr_remove_dsrc_channels(uint8_t *chan_list,
 	}
 
 	*num_channels = num_chan_temp;
+}
+
+QDF_STATUS policy_mgr_get_valid_chans_from_range(struct wlan_objmgr_psoc *psoc,
+						 uint8_t *ch_list,
+						 uint32_t *ch_cnt,
+						 enum policy_mgr_con_mode mode)
+{
+	uint8_t ch_weight_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t ch_weight_len;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	size_t chan_index = 0;
+
+	if (!ch_list || !ch_cnt) {
+		policy_mgr_err("NULL parameters");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (chan_index = 0; chan_index < *ch_cnt; chan_index++)
+		ch_weight_list[chan_index] = WEIGHT_OF_GROUP1_PCL_CHANNELS;
+
+	ch_weight_len = *ch_cnt;
+
+	/* check the channel avoidance list for beaconing entities */
+	if (mode == PM_SAP_MODE || mode == PM_P2P_GO_MODE)
+		policy_mgr_update_with_safe_channel_list(psoc, ch_list,
+							 ch_cnt, ch_weight_list,
+							 ch_weight_len);
+
+	status = policy_mgr_mode_specific_modification_on_pcl(
+				psoc, ch_list, ch_weight_list, ch_cnt, mode);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get modified pcl for mode %d", mode);
+		return status;
+	}
+
+	status = policy_mgr_modify_pcl_based_on_dnbs(psoc, ch_list,
+						     ch_weight_list, ch_cnt);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get modified pcl based on DNBS");
+		return status;
+	}
+
+	return status;
 }
 
 QDF_STATUS policy_mgr_get_valid_chans(struct wlan_objmgr_psoc *psoc,
