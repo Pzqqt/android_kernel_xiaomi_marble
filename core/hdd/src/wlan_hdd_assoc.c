@@ -3323,13 +3323,10 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
 			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 #endif
+		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->psoc);
-		if (roam_info->pBssDesc)
-			policy_mgr_checkn_update_hw_mode_single_mac_mode
-				(hdd_ctx->psoc,
-				 roam_info->pBssDesc->channelId);
 	} else {
 		bool connect_timeout = false;
 		/* do we need to change the HW mode */
@@ -4626,13 +4623,13 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("channel change notification failed");
 
-	hdd_debug("check for SAP restart");
-	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
-
 	status = policy_mgr_set_hw_mode_on_channel_switch(hdd_ctx->psoc,
 		adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_debug("set hw mode change not done");
+
+	hdd_debug("check for SAP restart");
+	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 }
 
 /**

@@ -1923,10 +1923,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		we_custom_event_generic = we_custom_start_event;
 		hdd_ipa_set_tx_flow_info();
 
-		hdd_debug("check for SAP restart");
-		policy_mgr_check_concurrent_intf_and_restart_sap(
-						hdd_ctx->psoc);
-
 		if (policy_mgr_is_hw_mode_change_after_vdev_up(
 			hdd_ctx->psoc)) {
 			hdd_debug("check for possible hw mode change");
@@ -1937,6 +1933,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			policy_mgr_set_do_hw_mode_change_flag(
 					hdd_ctx->psoc, false);
 		}
+		hdd_debug("check for SAP restart");
+		policy_mgr_check_concurrent_intf_and_restart_sap(
+						hdd_ctx->psoc);
 		/*
 		 * set this event at the very end because once this events
 		 * get set, caller thread is waiting to do further processing.

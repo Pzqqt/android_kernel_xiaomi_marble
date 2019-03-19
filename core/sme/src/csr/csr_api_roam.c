@@ -21128,8 +21128,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			session->disable_hi_rssi = false;
 		}
 
-		policy_mgr_check_concurrent_intf_and_restart_sap(mac_ctx->psoc);
 		policy_mgr_check_n_start_opportunistic_timer(mac_ctx->psoc);
+		policy_mgr_check_concurrent_intf_and_restart_sap(mac_ctx->psoc);
 		csr_roam_offload_scan(mac_ctx, session_id,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				      REASON_CONNECT);

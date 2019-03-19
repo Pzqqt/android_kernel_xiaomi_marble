@@ -1376,9 +1376,20 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
-			policy_mgr_set_hw_mode_before_channel_switch(mac->psoc,
+			status = policy_mgr_set_hw_mode_before_channel_switch(
+						mac->psoc,
 						sapContext->sessionId,
 						targetChannel);
+			/*
+			 * If status is QDF_STATUS_E_FAILURE that mean HW mode
+			 * change was required but set HW mode change failed.
+			 */
+			if (status == QDF_STATUS_E_FAILURE) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("HW change required but failed to set hw mode"));
+				return status;
+			}
 
 			/*
 			 * Copy the requested target channel

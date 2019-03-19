@@ -93,6 +93,23 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 	status = policy_mgr_check_and_set_hw_mode_sta_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
 				pe_session->gLimChannelSwitch.primaryChannel);
+
+	/*
+	 * If status is QDF_STATUS_E_FAILURE, mean HW mode change was required
+	 * but driver failed to set HW mode so ignore CSA for the channel.
+	 * If status is QDF_STATUS_SUCCESS mean HW mode change was required
+	 * and was sucessfully changed so the channel switch will continue after
+	 * HW mode change completion.
+	 * If status is QDF_STATUS_E_NOSUPPORT or QDF_STATUS_E_ALREADY, mean
+	 * DBS is not supported or required HW mode is already set, so
+	 * So contunue with CSA from here.
+	 */
+	if (status == QDF_STATUS_E_FAILURE) {
+		pe_err("Failed to set required HW mode for channel %d, ignore CSA",
+		       pe_session->gLimChannelSwitch.primaryChannel);
+		return;
+	}
+
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		pe_info("Channel change will continue after HW mode change");
 		return;
