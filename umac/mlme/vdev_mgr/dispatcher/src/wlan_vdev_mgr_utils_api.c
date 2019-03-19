@@ -237,6 +237,7 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_LISTEN_INTERVAL:
 		mlme_mgmt->powersave_info.listen_interval = mlme_cfg.value;
+		is_wmi_cmd = 1;
 		break;
 	case WLAN_MLME_CFG_MODDTIM_CNT:
 		mlme_mgmt->powersave_info.moddtim_cnt = mlme_cfg.value;
