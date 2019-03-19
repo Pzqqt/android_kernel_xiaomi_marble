@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1613,8 +1613,9 @@ target_if_consume_spectral_report_gen3(
 
 		vdev = target_if_spectral_get_vdev(spectral);
 		if (!vdev) {
-			spectral_err("First vdev is NULL");
-			goto fail;
+			spectral_info("First vdev is NULL");
+			reset_160mhz_delivery_state_machine(spectral);
+			return -EPERM;
 		}
 		vdev_rxchainmask = wlan_vdev_mlme_get_rxchainmask(vdev);
 		QDF_ASSERT(vdev_rxchainmask != 0);
@@ -1751,8 +1752,9 @@ target_if_consume_spectral_report_gen3(
 
 		vdev = target_if_spectral_get_vdev(spectral);
 		if (!vdev) {
-			spectral_err("First vdev is NULL");
-			goto fail;
+			spectral_info("First vdev is NULL");
+			reset_160mhz_delivery_state_machine(spectral);
+			return -EPERM;
 		}
 		vdev_rxchainmask = wlan_vdev_mlme_get_rxchainmask(vdev);
 		QDF_ASSERT(vdev_rxchainmask != 0);
