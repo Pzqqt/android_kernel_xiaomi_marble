@@ -567,6 +567,8 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 				WCD937X_DIGITAL_CDC_COMP_CTL_0,
 				0x02, 0x02);
 		usleep_range(5000, 5010);
+		snd_soc_component_update_bits(component, WCD937X_FLYBACK_EN,
+				0x04, 0x00);
 		wcd_cls_h_fsm(component, &wcd937x->clsh_info,
 			     WCD_CLSH_EVENT_PRE_DAC,
 			     WCD_CLSH_STATE_EAR,
@@ -942,6 +944,8 @@ static int wcd937x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_EAR,
 			     hph_mode);
+		snd_soc_component_update_bits(component, WCD937X_FLYBACK_EN,
+				0x04, 0x04);
 		if (wcd937x->ear_rx_path & EAR_RX_PATH_AUX)
 			snd_soc_component_update_bits(component,
 					WCD937X_DIGITAL_PDM_WD_CTL2,
