@@ -363,6 +363,9 @@ QDF_STATUS policy_mgr_update_connection_info(struct wlan_objmgr_psoc *psoc,
 			chain_mask,
 			nss, vdev_id, true, true);
 
+	/* do we need to change the HW mode */
+	policy_mgr_check_n_start_opportunistic_timer(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1923,6 +1926,25 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 	}
 
 	/*
+	 * Stop opportunistic timer as current connection info will change once
+	 * channel is switched and thus if required it will be started once
+	 * channel switch is completed. With new connection info.
+	 */
+	policy_mgr_stop_opportunistic_timer(psoc);
+
+	/*
+	 * Return if driver is already in the dbs mode, movement to
+	 * Single mac/SBS mode will be decided and changed once channel
+	 * switch is completed. This will avoid changing to SBS/Single mac
+	 * till new channel is configured, while the old channel still
+	 * requires DBS.
+	 */
+	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
+		policy_mgr_err("Already in DBS mode");
+		return QDF_STATUS_E_ALREADY;
+	}
+
+	/*
 	 * Store the connection's parameter and temporarily delete it
 	 * from the concurrency table. This way the allow concurrency
 	 * check can be used as though a new connection is coming up,
@@ -1934,12 +1956,18 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 	status = policy_mgr_update_and_wait_for_connection_update(psoc,
 				vdev_id, chan,
 				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH);
-	if (QDF_IS_STATUS_ERROR(status))
-		policy_mgr_err("Failed to update HW modeStatus %d", status);
-
 	/* Restore the connection entry */
 	if (num_cxn_del)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
+	/*
+	 * If hw mode change failed restart the opportunistic timer to
+	 * Switch to single mac if required.
+	 */
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Failed to update HW modeStatus %d", status);
+		policy_mgr_check_n_start_opportunistic_timer(psoc);
+	}
 
 	return status;
 }
@@ -1956,6 +1984,13 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
 		policy_mgr_err("2x2 DBS is not enabled");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
+
+	/*
+	 * Stop opportunistic timer as current connection info will change once
+	 * channel is switched and thus if required it will be started once
+	 * channel switch is completed. With new connection info.
+	 */
+	policy_mgr_stop_opportunistic_timer(psoc);
 
 	if (policy_mgr_is_current_hwmode_dbs(psoc)) {
 		policy_mgr_err("Already in DBS mode");
@@ -1981,6 +2016,15 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
 	/* Restore the connection entry */
 	if (num_cxn_del)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+
+	/*
+	 * If hw mode change failed restart the opportunistic timer to
+	 * Switch to single mac if required.
+	 */
+	if (status == QDF_STATUS_E_FAILURE) {
+		policy_mgr_err("Failed to update HW modeStatus %d", status);
+		policy_mgr_check_n_start_opportunistic_timer(psoc);
+	}
 
 	return status;
 }
