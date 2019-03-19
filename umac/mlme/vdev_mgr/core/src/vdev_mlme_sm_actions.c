@@ -224,8 +224,6 @@ static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 			wlan_pdev_mlme_op_clear(pdev,
 						WLAN_PDEV_OP_MBSSID_RESTART);
 		}
-	} else {
-		status = QDF_STATUS_SUCCESS;
 	}
 	qdf_spin_unlock_bh(&pdev_mlme->vdev_restart_lock);
 
