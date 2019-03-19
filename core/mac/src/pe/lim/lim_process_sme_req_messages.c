@@ -5571,6 +5571,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
 	enum offset_t ch_offset;
+	QDF_STATUS status;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -5672,6 +5673,24 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 skip_vht:
 	/* Send CSA IE request from here */
 	lim_send_dfs_chan_sw_ie_update(mac_ctx, session_entry);
+
+	/*
+	 * Wait for MAX_WAIT_FOR_BCN_TX_COMPLETE ms for tx complete for beacon.
+	 * If tx complete for beacon is received before this timer expire,
+	 * stop this timer and then this will be restarted for every beacon
+	 * interval until switchCount become 0 and bcn template with new
+	 * switchCount will be sent to firmware.
+	 * OR
+	 * If no tx complete for beacon is recived till this timer expire
+	 * this will be restarted for every beacon interval until switchCount
+	 * become 0 and bcn template with new switchCount will be sent to
+	 * firmware.
+	 */
+	pe_debug("start ap_ecsa_timer for %d ms", MAX_WAIT_FOR_BCN_TX_COMPLETE);
+	status = qdf_mc_timer_start(&session_entry->ap_ecsa_timer,
+				    MAX_WAIT_FOR_BCN_TX_COMPLETE);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("cannot start ap_ecsa_timer");
 
 	if (dfs_csa_ie_req->ch_params.ch_width == CH_WIDTH_80MHZ)
 		ch_offset = BW80;

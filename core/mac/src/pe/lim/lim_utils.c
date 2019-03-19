@@ -7787,6 +7787,9 @@ void lim_process_ap_ecsa_timeout(void *data)
 		return;
 	}
 
+	/* Stop the timer if already running */
+	qdf_mc_timer_stop(&session->ap_ecsa_timer);
+
 	if (session->gLimChannelSwitch.switchCount) {
 		/* Decrement the beacon switch count */
 		session->gLimChannelSwitch.switchCount--;
