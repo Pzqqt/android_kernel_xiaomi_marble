@@ -2941,6 +2941,10 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 		result_status =
 			(uint16_t)(((tpSetBssKeyParams)msg->bodyptr)->status);
 		key_len = ((tpSetBssKeyParams)msg->bodyptr)->key[0].keyLength;
+	} else if (lim_is_set_key_req_converged()) {
+		result_status =
+			(uint16_t)(((tpSetBssKeyParams)msg->bodyptr)->status);
+		key_len = ((tpSetBssKeyParams)msg->bodyptr)->key[0].keyLength;
 	} else {
 		/*
 		 * BCAST key also uses tpSetStaKeyParams.
@@ -2950,6 +2954,9 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 			(uint16_t)(((tpSetStaKeyParams)msg->bodyptr)->status);
 		key_len = ((tpSetStaKeyParams)msg->bodyptr)->key[0].keyLength;
 	}
+
+	pe_debug("limMlmState %d status %d key_len %d",
+		 session_entry->limMlmState, result_status, key_len);
 
 	if (result_status == eSIR_SME_SUCCESS && key_len)
 		set_key_cnf.key_len_nonzero = true;
