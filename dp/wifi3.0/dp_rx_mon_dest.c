@@ -1126,6 +1126,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	}
 }
 
+#ifndef DISABLE_MON_CONFIG
 #ifndef QCA_WIFI_QCA6390
 /**
  * dp_rx_pdev_mon_buf_attach() - Allocate the monitor descriptor pool
@@ -1472,7 +1473,6 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
  * Return: QDF_STATUS_SUCCESS: success
  *         QDF_STATUS_E_RESOURCES: Error return
  */
-#ifndef DISABLE_MON_CONFIG
 QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	struct dp_soc *soc = pdev->soc;
