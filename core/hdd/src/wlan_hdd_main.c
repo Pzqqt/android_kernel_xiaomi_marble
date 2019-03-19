@@ -1053,11 +1053,6 @@ int __wlan_hdd_validate_context(struct hdd_context *hdd_ctx, const char *func)
 		return -EAGAIN;
 	}
 
-	if (qdf_atomic_read(&hdd_ctx->con_mode_flag)) {
-		hdd_debug("Driver mode change in progress (via %s)", func);
-		return -EAGAIN;
-	}
-
 	return 0;
 }
 
@@ -3104,11 +3099,6 @@ static int __hdd_open(struct net_device *dev)
 
 	if (cds_is_driver_recovering()) {
 		hdd_err("WLAN is currently recovering; Please try again.");
-		return -EBUSY;
-	}
-
-	if (qdf_atomic_read(&hdd_ctx->con_mode_flag)) {
-		hdd_err("con_mode_handler is in progress; Please try again.");
 		return -EBUSY;
 	}
 
@@ -11862,7 +11852,6 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 #endif
 
 	osif_request_manager_init();
-	qdf_atomic_init(&hdd_ctx->con_mode_flag);
 	hdd_driver_memdump_init();
 	hdd_bus_bandwidth_init(hdd_ctx);
 
@@ -13508,13 +13497,10 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
-
 	curr_mode = hdd_get_conparam();
 	if (curr_mode == next_mode) {
 		hdd_err_rl("Driver is already in the requested mode");
-		errno = 0;
-		goto unlock;
+		return 0;
 	}
 
 	/* ensure adapters are stopped */
@@ -13523,7 +13509,7 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	errno = hdd_wlan_stop_modules(hdd_ctx, true);
 	if (errno) {
 		hdd_err("Stop wlan modules failed");
-		goto unlock;
+		return errno;
 	}
 
 	/* Cleanup present mode before switching to new mode */
@@ -13534,13 +13520,13 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
 		hdd_err("Start wlan modules failed: %d", errno);
-		goto unlock;
+		return errno;
 	}
 
 	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
 	if (errno) {
 		hdd_err("Failed to open adapters");
-		goto unlock;
+		return errno;
 	}
 
 	if (next_mode == QDF_GLOBAL_MONITOR_MODE) {
@@ -13550,13 +13536,13 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 		QDF_BUG(adapter);
 		if (!adapter) {
 			hdd_err("Failed to get monitor adapter");
-			goto unlock;
+			return -EINVAL;
 		}
 
 		errno = hdd_start_adapter(adapter);
 		if (errno) {
 			hdd_err("Failed to start monitor adapter");
-			goto unlock;
+			return errno;
 		}
 
 		hdd_info("Acquire wakelock for monitor mode");
@@ -13568,12 +13554,7 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	con_mode = next_mode;
 	hdd_info("Driver mode successfully changed to %d", next_mode);
 
-	errno = 0;
-
-unlock:
-	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
-
-	return errno;
+	return 0;
 }
 
 static int hdd_driver_mode_change(enum QDF_GLOBAL_MODE mode)
