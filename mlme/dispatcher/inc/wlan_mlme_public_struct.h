@@ -549,7 +549,6 @@ struct wlan_mlme_wps_params {
 #define MLME_CFG_TX_MGMT_RATE_DEF       0xFF
 #define MLME_CFG_TX_MGMT_2G_RATE_DEF    0xFF
 #define MLME_CFG_TX_MGMT_5G_RATE_DEF    0xFF
-#define MLME_CFG_SSID_LEN               32
 
 /**
  * struct wlan_mlme_cfg_sap - SAP related config items
@@ -584,7 +583,7 @@ struct wlan_mlme_wps_params {
  * @go_11ac_override: Override GO bandwidth to 11ac
  */
 struct wlan_mlme_cfg_sap {
-	uint8_t cfg_ssid[MLME_CFG_SSID_LEN];
+	uint8_t cfg_ssid[WLAN_SSID_MAX_LEN];
 	uint8_t cfg_ssid_len;
 	uint16_t beacon_interval;
 	uint16_t dtim_interval;
