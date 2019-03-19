@@ -374,10 +374,10 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 
 	/* Send the SSID to HAL to enable SSID matching for IBSS */
 	addbss_param->ssId.length = mlm_start_req->ssId.length;
-	if (addbss_param->ssId.length > SIR_MAC_MAX_SSID_LENGTH) {
+	if (addbss_param->ssId.length > WLAN_SSID_MAX_LEN) {
 		pe_err("Invalid ssid length %d, max length allowed %d",
 		       addbss_param->ssId.length,
-		       SIR_MAC_MAX_SSID_LENGTH);
+		       WLAN_SSID_MAX_LEN);
 		qdf_mem_free(addbss_param);
 		return eSIR_SME_INVALID_PARAMETERS;
 	}

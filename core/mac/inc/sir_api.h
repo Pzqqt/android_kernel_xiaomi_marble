@@ -3219,7 +3219,7 @@ typedef struct {
 	uint64_t ts;
 
 	/* Null terminated SSID */
-	uint8_t ssid[SIR_MAC_MAX_SSID_LENGTH + 1];
+	uint8_t ssid[WLAN_SSID_MAX_LEN + 1];
 
 	struct qdf_mac_addr bssid;
 

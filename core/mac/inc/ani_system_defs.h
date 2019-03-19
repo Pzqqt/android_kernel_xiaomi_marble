@@ -130,7 +130,7 @@ typedef enum eAniKeyDirection {
 
 typedef struct sAniSSID {
 	uint8_t length;
-	uint8_t ssId[SIR_MAC_MAX_SSID_LENGTH];
+	uint8_t ssId[WLAN_SSID_MAX_LEN];
 } tAniSSID, *tpAniSSID;
 
 /* / RSN IE information */

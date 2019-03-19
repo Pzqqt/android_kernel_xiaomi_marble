@@ -3961,10 +3961,10 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		dest_ap->ieLength = src_hotlist->ie_length;
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_hotlist->bssid,
 					   dest_ap->bssid.bytes);
-		if (src_hotlist->ssid.ssid_len > SIR_MAC_MAX_SSID_LENGTH) {
+		if (src_hotlist->ssid.ssid_len > WLAN_SSID_MAX_LEN) {
 			WMA_LOGE("%s Invalid SSID len %d, truncating",
 				 __func__, src_hotlist->ssid.ssid_len);
-			src_hotlist->ssid.ssid_len = SIR_MAC_MAX_SSID_LENGTH;
+			src_hotlist->ssid.ssid_len = WLAN_SSID_MAX_LEN;
 		}
 		qdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
 			     src_hotlist->ssid.ssid_len);
@@ -4151,11 +4151,11 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 						   ap->bssid.bytes);
 
 			if (src_hotlist->ssid.ssid_len >
-			    SIR_MAC_MAX_SSID_LENGTH) {
+			    WLAN_SSID_MAX_LEN) {
 				WMA_LOGD("%s Invalid SSID len %d, truncating",
 					 __func__, src_hotlist->ssid.ssid_len);
 				src_hotlist->ssid.ssid_len =
-						SIR_MAC_MAX_SSID_LENGTH;
+						WLAN_SSID_MAX_LEN;
 			}
 			qdf_mem_copy(ap->ssid, src_hotlist->ssid.ssid,
 					src_hotlist->ssid.ssid_len);
@@ -4528,10 +4528,10 @@ int wma_passpoint_match_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	if (event->ssid.ssid_len > SIR_MAC_MAX_SSID_LENGTH) {
+	if (event->ssid.ssid_len > WLAN_SSID_MAX_LEN) {
 		WMA_LOGD("%s: Invalid ssid len %d, truncating",
 			 __func__, event->ssid.ssid_len);
-		event->ssid.ssid_len = SIR_MAC_MAX_SSID_LENGTH;
+		event->ssid.ssid_len = WLAN_SSID_MAX_LEN;
 	}
 
 	dest_match = qdf_mem_malloc(sizeof(*dest_match) + buf_len);

@@ -700,7 +700,7 @@ typedef struct tagPmkidCacheInfo {
 	uint8_t pmk[CSR_RSN_MAX_PMK_LEN];
 	uint8_t pmk_len;
 	uint8_t ssid_len;
-	uint8_t ssid[SIR_MAC_MAX_SSID_LENGTH];
+	uint8_t ssid[WLAN_SSID_MAX_LEN];
 	uint8_t cache_id[CACHE_ID_LEN];
 } tPmkidCacheInfo;
 

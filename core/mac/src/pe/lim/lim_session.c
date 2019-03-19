@@ -507,7 +507,7 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 			filter->num_ibss_sessions--;
 		filter->ibss_ssid[session_id].length = 0;
 		qdf_mem_zero(&filter->ibss_ssid[session_id].ssId,
-			    SIR_MAC_MAX_SSID_LENGTH);
+			    WLAN_SSID_MAX_LEN);
 		pe_debug("Cleared IBSS Filter for session %d", session_id);
 	} else if (eSIR_INFRA_AP_MODE == bss_type) {
 		if (filter->num_sap_sessions)

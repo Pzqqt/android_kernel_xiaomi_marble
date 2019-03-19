@@ -3261,8 +3261,8 @@ static void csr_dump_connection_stats(struct mac_context *mac_ctx,
 	qdf_mem_copy(conn_stats.bssid, conn_profile->bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
 	conn_stats.ssid_len = conn_profile->SSID.length;
-	if (conn_stats.ssid_len > SIR_MAC_MAX_SSID_LENGTH)
-		conn_stats.ssid_len = SIR_MAC_MAX_SSID_LENGTH;
+	if (conn_stats.ssid_len > WLAN_SSID_MAX_LEN)
+		conn_stats.ssid_len = WLAN_SSID_MAX_LEN;
 	qdf_mem_copy(conn_stats.ssid, conn_profile->SSID.ssId,
 		     conn_stats.ssid_len);
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
@@ -4308,10 +4308,10 @@ static void csr_set_cfg_ssid(struct mac_context *mac, tSirMacSSid *pSSID)
 {
 	uint32_t len = 0;
 
-	if (pSSID->length <= MLME_CFG_SSID_LEN)
+	if (pSSID->length <= WLAN_SSID_MAX_LEN)
 		len = pSSID->length;
 	else
-		len = MLME_CFG_SSID_LEN;
+		len = WLAN_SSID_MAX_LEN;
 
 	qdf_mem_copy(mac->mlme_cfg->sap_cfg.cfg_ssid,
 		     (uint8_t *)pSSID->ssId, len);

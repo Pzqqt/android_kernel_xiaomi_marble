@@ -1054,7 +1054,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		nla_for_each_nested(attr, tb[QCA_WLAN_VENDOR_ATTR_SCAN_SSIDS],
 				tmp) {
 			ssid_length = nla_len(attr);
-			if ((ssid_length > SIR_MAC_MAX_SSID_LENGTH) ||
+			if ((ssid_length > WLAN_SSID_MAX_LEN) ||
 			    (ssid_length < 0)) {
 				hdd_err("SSID Len %d is not correct for network %d",
 					 ssid_length, count);

@@ -1449,7 +1449,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 
 	/* Extend it for multiple SSID */
 	if (profile->SSIDs.numOfSSIDs) {
-		if (profile->SSIDs.SSIDList[0].SSID.length > MAX_SSID_LEN) {
+		if (profile->SSIDs.SSIDList[0].SSID.length > WLAN_SSID_MAX_LEN) {
 			sme_debug("wrong ssid length = %d",
 					profile->SSIDs.SSIDList[0].SSID.length);
 			status = QDF_STATUS_E_INVAL;

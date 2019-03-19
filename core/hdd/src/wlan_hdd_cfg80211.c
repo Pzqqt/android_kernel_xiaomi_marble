@@ -3704,7 +3704,7 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 			 * buffer.
 			 */
 			if (buf_len && (i < MAX_SSID_ALLOWED_LIST) &&
-			    ((buf_len - 1) <= SIR_MAC_MAX_SSID_LENGTH)) {
+			    ((buf_len - 1) <= WLAN_SSID_MAX_LEN)) {
 				nla_memcpy(roam_params->ssid_allowed_list[i].ssId,
 					tb2[PARAM_LIST_SSID], buf_len - 1);
 				roam_params->ssid_allowed_list[i].length = buf_len - 1;
@@ -16236,7 +16236,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	if (status)
 		goto ret_status;
 
-	if (SIR_MAC_MAX_SSID_LENGTH < ssid_len) {
+	if (WLAN_SSID_MAX_LEN < ssid_len) {
 		hdd_err("wrong SSID len");
 		status = -EINVAL;
 		goto ret_status;

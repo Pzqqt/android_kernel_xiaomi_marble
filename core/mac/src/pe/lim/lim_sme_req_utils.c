@@ -395,7 +395,7 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 
 	if (start_bss_req->bssType == eSIR_IBSS_MODE
 	    && (!start_bss_req->ssId.length
-		|| start_bss_req->ssId.length > SIR_MAC_MAX_SSID_LENGTH)) {
+		|| start_bss_req->ssId.length > WLAN_SSID_MAX_LEN)) {
 		pe_warn("Invalid SSID length in eWNI_SME_START_BSS_REQ");
 		return false;
 	}

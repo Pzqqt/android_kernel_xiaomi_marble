@@ -4982,8 +4982,8 @@ static void lim_diag_fill_mgmt_event_report(struct mac_context *mac_ctx,
 	qdf_mem_copy(mgmt_event->bssid, session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	length = session->ssId.length;
-	if (length > SIR_MAC_MAX_SSID_LENGTH)
-		length = SIR_MAC_MAX_SSID_LENGTH;
+	if (length > WLAN_SSID_MAX_LEN)
+		length = WLAN_SSID_MAX_LEN;
 	qdf_mem_copy(mgmt_event->ssid, session->ssId.ssId, length);
 	mgmt_event->ssid_len = length;
 	mgmt_event->operating_channel = session->currentOperChannel;

@@ -2289,7 +2289,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	uint8_t *assoc_req_ies = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	uint32_t rsp_rsn_lemgth = 0;
 	struct ieee80211_channel *chan;
-	uint8_t buf_ssid_ie[2 + SIR_MAC_SSID_EID_MAX]; /* 2 bytes-EID and len */
+	uint8_t buf_ssid_ie[2 + WLAN_SSID_MAX_LEN]; /* 2 bytes-EID and len */
 	uint8_t *buf_ptr, ssid_ie_len;
 	struct cfg80211_bss *bss = NULL;
 	uint8_t *final_req_ie = NULL;

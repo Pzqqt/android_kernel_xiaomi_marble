@@ -268,7 +268,6 @@
 
 #define SIR_MAC_SSID_EID               0
 #define SIR_MAC_SSID_EID_MIN               0
-#define SIR_MAC_SSID_EID_MAX               32
 #define SIR_MAC_RATESET_EID            1
 #define SIR_MAC_RATESET_EID_MIN            1
 #define SIR_MAC_RATESET_EID_MAX            12
@@ -556,7 +555,6 @@
 #define    SIR_MAC_AUTH_FRAME_4        4
 
 /* / Protocol defined MAX definitions */
-#define SIR_MAC_MAX_SSID_LENGTH              32
 #define SIR_MAC_MAX_NUMBER_OF_RATES          12
 #define SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS      4
 #define SIR_MAC_KEY_LENGTH                   13 /* WEP Maximum key length size */
@@ -987,7 +985,7 @@ struct merged_mac_rate_set {
 /* Reserve 1 byte for NULL character in the SSID name field to print in %s */
 typedef struct sSirMacSSid {
 	uint8_t length;
-	uint8_t ssId[SIR_MAC_MAX_SSID_LENGTH +1];
+	uint8_t ssId[WLAN_SSID_MAX_LEN +1];
 } qdf_packed tSirMacSSid;
 
 typedef struct sSirMacWpaInfo {

@@ -46,7 +46,6 @@ extern "C" {
 /*---------------------------------------------------------------------------
  * defines and enum
  *--------------------------------------------------------------------------*/
-#define       MAX_SSID_LEN                 32
 #define       MAX_ACL_MAC_ADDRESS          32
 #define       AUTO_CHANNEL_SELECT          0
 #define       MAX_ASSOC_IND_IE_LEN         255
@@ -412,7 +411,7 @@ struct sap_event {
 
 typedef struct sap_SSID {
 	uint8_t length;
-	uint8_t ssId[MAX_SSID_LEN];
+	uint8_t ssId[WLAN_SSID_MAX_LEN];
 } qdf_packed tSap_SSID_t;
 
 typedef struct sap_SSIDInfo {

@@ -1148,7 +1148,7 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 	uint8_t *ssid;
 
 	ssid = cfg_default(CFG_SSID);
-	qdf_mem_zero(sap_cfg->cfg_ssid, MLME_CFG_SSID_LEN);
+	qdf_mem_zero(sap_cfg->cfg_ssid, WLAN_SSID_MAX_LEN);
 	sap_cfg->cfg_ssid_len = STR_SSID_DEFAULT_LEN;
 	qdf_mem_copy(sap_cfg->cfg_ssid, ssid, STR_SSID_DEFAULT_LEN);
 	sap_cfg->beacon_interval = cfg_get(psoc, CFG_BEACON_INTERVAL);
