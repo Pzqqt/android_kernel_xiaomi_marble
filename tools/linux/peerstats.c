@@ -119,7 +119,7 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 				    rx_stats->avg_rssi_ant[2][0],
 				    rx_stats->avg_rssi_ant[2][1],
 				    rx_stats->avg_rssi_ant[2][2]);
-		DP_PEER_STATS_PRINT(" %10u | %10u | %10u\n\n\n",
+		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u\n\n\n",
 				    rx_stats->avg_rssi_ant[2][3],
 				    rx_stats->avg_rssi_ant[3][0],
 				    rx_stats->avg_rssi_ant[3][1],
@@ -228,10 +228,10 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 				  sizeof(struct wlan_tx_rate_stats));
 	dp_peer_tx_sojourn_stats_print(peer_mac, peer_cookie, sojourn_stats);
 
-	return 0;
+	return;
 }
 
-static int dp_peer_stats_handler(uint32_t cache_type,
+static void dp_peer_stats_handler(uint32_t cache_type,
 				 uint8_t *peer_mac,
 				 uint64_t peer_cookie,
 				 void *buffer,
@@ -255,9 +255,6 @@ dp_peer_stats_event_callback(char *ifname,
 			     uint8_t *data,
 			     size_t len)
 {
-	uint8_t cmd;
-	struct dbg_event_q_entry *q_entry;
-	int response_cookie = 0;
 	struct nlattr *tb_array[QCA_WLAN_VENDOR_ATTR_PEER_STATS_CACHE_MAX + 1];
 	struct nlattr *tb;
 	void *buffer = NULL;
@@ -319,13 +316,10 @@ dp_peer_stats_event_callback(char *ifname,
 
 int main(int argc, char *argv[])
 {
-	struct cfg80211_data buffer;
 	int err = 0;
 	wifi_cfg80211_context cfg80211_ctxt;
 	char *ifname;
 	int num_msecs = 0;
-	void *req_buff = NULL;
-	int req_buff_sz = 0;
 	int status = 0;
 
 	if (argc < 2) {
