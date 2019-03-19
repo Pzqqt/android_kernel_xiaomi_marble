@@ -446,6 +446,9 @@ int afe_tdm_port_start(u16 port_id, struct afe_tdm_port_config *tdm_port,
 void afe_set_routing_callback(routing_cb cb);
 int afe_get_av_dev_drift(struct afe_param_id_dev_timing_stats *timing_stats,
 		u16 port);
+int afe_get_sp_rx_tmax_xmax_logging_data(
+		struct afe_sp_rx_tmax_xmax_logging_param *xt_logging,
+		u16 port_id);
 int afe_cal_init_hwdep(void *card);
 int afe_send_port_island_mode(u16 port_id);
 int afe_send_cmd_wakeup_register(void *handle, bool enable);

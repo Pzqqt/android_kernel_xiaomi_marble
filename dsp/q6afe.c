@@ -59,6 +59,16 @@ static char fbsp_state[MAX_FBSP_STATE][50] = {
 	[FBSP_FAILED] = "failed"
 };
 
+enum v_vali_state {
+	V_VALI_FAILED,
+	V_VALI_SUCCESS,
+	V_VALI_INCORRECT_OP_MODE,
+	V_VALI_INACTIVE,
+	V_VALI_WARMUP,
+	V_VALI_IN_PROGRESS,
+	MAX_V_VALI_STATE
+};
+
 enum {
 	USE_CALIBRATED_R0TO,
 	USE_SAFE_R0TO
@@ -72,7 +82,8 @@ enum {
 enum {
 	Q6AFE_MSM_SPKR_PROCESSING = 0,
 	Q6AFE_MSM_SPKR_CALIBRATION,
-	Q6AFE_MSM_SPKR_FTM_MODE
+	Q6AFE_MSM_SPKR_FTM_MODE,
+	Q6AFE_MSM_SPKR_V_VALI_MODE
 };
 
 enum {
@@ -124,9 +135,12 @@ struct afe_ctl {
 	struct audio_cal_info_spk_prot_cfg	prot_cfg;
 	struct afe_spkr_prot_calib_get_resp	calib_data;
 	struct audio_cal_info_sp_th_vi_ftm_cfg	th_ftm_cfg;
+	struct audio_cal_info_sp_th_vi_v_vali_cfg	v_vali_cfg;
 	struct audio_cal_info_sp_ex_vi_ftm_cfg	ex_ftm_cfg;
 	struct afe_sp_th_vi_get_param_resp	th_vi_resp;
+	struct afe_sp_th_vi_v_vali_get_param_resp	th_vi_v_vali_resp;
 	struct afe_sp_ex_vi_get_param_resp	ex_vi_resp;
+	struct afe_sp_rx_tmax_xmax_logging_resp	xt_logging_resp;
 	struct afe_av_dev_drift_get_param_resp	av_dev_drift_resp;
 	struct afe_doa_tracking_mon_get_param_resp	doa_tracking_mon_resp;
 	int vi_tx_port;
@@ -364,9 +378,18 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 		expected_size += sizeof(struct afe_sp_th_vi_ftm_params);
 		data_dest = (u32 *) &this_afe.th_vi_resp;
 		break;
+	case AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_PARAMS:
+		expected_size += sizeof(struct afe_sp_th_vi_v_vali_params);
+		data_dest = (u32 *) &this_afe.th_vi_v_vali_resp;
+		break;
 	case AFE_PARAM_ID_SP_V2_EX_VI_FTM_PARAMS:
 		expected_size += sizeof(struct afe_sp_ex_vi_ftm_params);
 		data_dest = (u32 *) &this_afe.ex_vi_resp;
+		break;
+	case AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING:
+		expected_size += sizeof(
+				struct afe_sp_rx_tmax_xmax_logging_param);
+		data_dest = (u32 *) &this_afe.xt_logging_resp;
 		break;
 	default:
 		pr_err("%s: Unrecognized param ID %d\n", __func__,
@@ -1606,10 +1629,12 @@ static int afe_spk_prot_prepare(int src_port, int dst_port, int param_id,
 		break;
 	/*
 	 * AFE_PARAM_ID_SPKR_CALIB_VI_PROC_CFG_V2 is same as
-	 * AFE_PARAM_ID_SP_V2_TH_VI_MODE_CFG
+	 * AFE_PARAM_ID_SP_V2_TH_VI_MODE_CFG. V_VALI_CFG uses
+	 * same module TH_VI.
 	 */
 	case AFE_PARAM_ID_SPKR_CALIB_VI_PROC_CFG_V2:
 	case AFE_PARAM_ID_SP_V2_TH_VI_FTM_CFG:
+	case AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_CFG:
 		param_info.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_TH_VI;
 		break;
 	case AFE_PARAM_ID_SP_V2_EX_VI_MODE_CFG:
@@ -1737,6 +1762,10 @@ static void afe_send_cal_spkr_prot_tx(int port_id)
 		if (this_afe.th_ftm_cfg.mode == MSM_SPKR_PROT_IN_FTM_MODE)
 			afe_spk_config.vi_proc_cfg.operation_mode =
 					    Q6AFE_MSM_SPKR_FTM_MODE;
+		else if (this_afe.v_vali_cfg.mode ==
+					MSM_SPKR_PROT_IN_V_VALI_MODE)
+			afe_spk_config.vi_proc_cfg.operation_mode =
+					    Q6AFE_MSM_SPKR_V_VALI_MODE;
 		afe_spk_config.vi_proc_cfg.minor_version = 1;
 		afe_spk_config.vi_proc_cfg.r0_cali_q24[SP_V2_SPKR_1] =
 			(uint32_t) this_afe.prot_cfg.r0[SP_V2_SPKR_1];
@@ -1789,6 +1818,25 @@ static void afe_send_cal_spkr_prot_tx(int port_id)
 					 &afe_spk_config))
 			pr_err("%s: th vi ftm cfg failed\n", __func__);
 		this_afe.th_ftm_cfg.mode = MSM_SPKR_PROT_DISABLED;
+	} else if ((this_afe.v_vali_cfg.mode ==
+			MSM_SPKR_PROT_IN_V_VALI_MODE) &&
+		   (this_afe.vi_tx_port == port_id)) {
+		afe_spk_config.th_vi_v_vali_cfg.minor_version = 1;
+		afe_spk_config.th_vi_v_vali_cfg.wait_time_ms[SP_V2_SPKR_1] =
+			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_1];
+		afe_spk_config.th_vi_v_vali_cfg.wait_time_ms[SP_V2_SPKR_2] =
+			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_2];
+		afe_spk_config.th_vi_v_vali_cfg.vali_time_ms[SP_V2_SPKR_1] =
+			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_1];
+		afe_spk_config.th_vi_v_vali_cfg.vali_time_ms[SP_V2_SPKR_2] =
+			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_2];
+
+		if (afe_spk_prot_prepare(port_id, 0,
+					 AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_CFG,
+					 &afe_spk_config))
+			pr_err("%s: th vi v-vali cfg failed\n", __func__);
+
+		this_afe.v_vali_cfg.mode = MSM_SPKR_PROT_DISABLED;
 	}
 	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 
@@ -7453,6 +7501,46 @@ int q6afe_check_osr_clk_freq(u32 freq)
 }
 EXPORT_SYMBOL(q6afe_check_osr_clk_freq);
 
+static int afe_get_sp_th_vi_v_vali_data(
+		struct afe_sp_th_vi_v_vali_get_param *th_vi_v_vali)
+{
+	struct param_hdr_v3 param_hdr;
+	int port = SLIMBUS_4_TX;
+	int ret = -EINVAL;
+
+	if (!th_vi_v_vali) {
+		pr_err("%s: Invalid params\n", __func__);
+		goto done;
+	}
+	if (this_afe.vi_tx_port != -1)
+		port = this_afe.vi_tx_port;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AFE_MODULE_SPEAKER_PROTECTION_V2_TH_VI;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_PARAMS;
+	param_hdr.param_size = sizeof(struct afe_sp_th_vi_v_vali_params);
+
+	ret = q6afe_get_params(port, NULL, &param_hdr);
+	if (ret) {
+		pr_err("%s: Failed to get TH VI V-Vali data\n", __func__);
+		goto done;
+	}
+
+	th_vi_v_vali->pdata = param_hdr;
+	memcpy(&th_vi_v_vali->param, &this_afe.th_vi_v_vali_resp.param,
+		sizeof(this_afe.th_vi_v_vali_resp.param));
+	pr_debug("%s:  Vrms %d %d status %d %d\n", __func__,
+		 th_vi_v_vali->param.vrms_q24[SP_V2_SPKR_1],
+		 th_vi_v_vali->param.vrms_q24[SP_V2_SPKR_2],
+		 th_vi_v_vali->param.status[SP_V2_SPKR_1],
+		 th_vi_v_vali->param.status[SP_V2_SPKR_2]);
+	ret = 0;
+done:
+	return ret;
+}
+
 int afe_get_sp_th_vi_ftm_data(struct afe_sp_th_vi_get_param *th_vi)
 {
 	struct param_hdr_v3 param_hdr;
@@ -7537,6 +7625,57 @@ int afe_get_sp_ex_vi_ftm_data(struct afe_sp_ex_vi_get_param *ex_vi)
 done:
 	return ret;
 }
+
+/**
+ * afe_get_sp_rx_tmax_xmax_logging_data -
+ *       command to get excursion logging data from DSP
+ *
+ * @xt_logging: excursion logging params
+ * @port: AFE port ID
+ *
+ * Returns 0 on success or error on failure
+ */
+int afe_get_sp_rx_tmax_xmax_logging_data(
+			struct afe_sp_rx_tmax_xmax_logging_param *xt_logging,
+			u16 port_id)
+{
+	struct param_hdr_v3 param_hdr;
+	int ret = -EINVAL;
+
+	if (!xt_logging) {
+		pr_err("%s: Invalid params\n", __func__);
+		goto done;
+	}
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AFE_MODULE_FB_SPKR_PROT_V2_RX;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING;
+	param_hdr.param_size = sizeof(struct afe_sp_rx_tmax_xmax_logging_param);
+
+	ret = q6afe_get_params(port_id, NULL, &param_hdr);
+	if (ret < 0) {
+		pr_err("%s: get param port 0x%x param id[0x%x]failed %d\n",
+		       __func__, port_id, param_hdr.param_id, ret);
+		goto done;
+	}
+
+	memcpy(xt_logging, &this_afe.xt_logging_resp.param,
+		sizeof(this_afe.xt_logging_resp.param));
+	pr_debug("%s: max_excursion %d %d count_exceeded_excursion %d %d max_temperature %d %d count_exceeded_temperature %d %d\n",
+		 __func__, xt_logging->max_excursion[SP_V2_SPKR_1],
+		 xt_logging->max_excursion[SP_V2_SPKR_2],
+		 xt_logging->count_exceeded_excursion[SP_V2_SPKR_1],
+		 xt_logging->count_exceeded_excursion[SP_V2_SPKR_2],
+		 xt_logging->max_temperature[SP_V2_SPKR_1],
+		 xt_logging->max_temperature[SP_V2_SPKR_2],
+		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_1],
+		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_2]);
+done:
+	return ret;
+}
+EXPORT_SYMBOL(afe_get_sp_rx_tmax_xmax_logging_data);
 
 /**
  * afe_get_av_dev_drift -
@@ -7952,21 +8091,57 @@ done:
 	return ret;
 }
 
+static int afe_set_cal_sp_th_vi_v_vali_cfg(int32_t cal_type, size_t data_size,
+					void *data)
+{
+	int ret = 0;
+	struct audio_cal_type_sp_th_vi_v_vali_cfg *cal_data = data;
+
+	if (cal_data == NULL || data_size != sizeof(*cal_data))
+		goto done;
+
+	memcpy(&this_afe.v_vali_cfg, &cal_data->cal_info,
+		sizeof(this_afe.v_vali_cfg));
+done:
+	return ret;
+}
+
 static int afe_set_cal_sp_th_vi_ftm_cfg(int32_t cal_type, size_t data_size,
 					void *data)
 {
 	int ret = 0;
 	struct audio_cal_type_sp_th_vi_ftm_cfg *cal_data = data;
 
-	if (this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL] == NULL ||
-	    cal_data == NULL ||
-	    data_size != sizeof(*cal_data))
+	if (cal_data == NULL || data_size != sizeof(*cal_data))
 		goto done;
 
-	pr_debug("%s: cal_type = %d\n", __func__, cal_type);
-	mutex_lock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 	memcpy(&this_afe.th_ftm_cfg, &cal_data->cal_info,
 		sizeof(this_afe.th_ftm_cfg));
+done:
+	return ret;
+}
+
+static int afe_set_cal_sp_th_vi_cfg(int32_t cal_type, size_t data_size,
+				    void *data)
+{
+	int ret = 0;
+	struct audio_cal_type_sp_th_vi_ftm_cfg *cal_data = data;
+	uint32_t mode;
+
+	if (cal_data == NULL ||
+	    this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL] == NULL)
+		goto done;
+
+	mutex_lock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
+	mode = cal_data->cal_info.mode;
+	pr_debug("%s: cal_type = %d, mode = %d\n", __func__, cal_type, mode);
+	if (mode == MSM_SPKR_PROT_IN_FTM_MODE) {
+		ret = afe_set_cal_sp_th_vi_ftm_cfg(cal_type,
+						data_size, data);
+	} else if (mode == MSM_SPKR_PROT_IN_V_VALI_MODE) {
+		ret = afe_set_cal_sp_th_vi_v_vali_cfg(cal_type,
+						data_size, data);
+	}
 	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 done:
 	return ret;
@@ -8017,6 +8192,41 @@ done:
 	return ret;
 }
 
+static int afe_get_cal_sp_th_vi_v_vali_param(int32_t cal_type, size_t data_size,
+					  void *data)
+{
+	int i, ret = 0;
+	struct audio_cal_type_sp_th_vi_v_vali_param *cal_data = data;
+	struct afe_sp_th_vi_v_vali_get_param th_vi_v_vali;
+
+	if (this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL] == NULL ||
+	    cal_data == NULL ||
+	    data_size != sizeof(*cal_data))
+		goto done;
+
+	for (i = 0; i < SP_V2_NUM_MAX_SPKRS; i++) {
+		cal_data->cal_info.status[i] = -EINVAL;
+		cal_data->cal_info.vrms_q24[i] = -1;
+	}
+	if (!afe_get_sp_th_vi_v_vali_data(&th_vi_v_vali)) {
+		for (i = 0; i < SP_V2_NUM_MAX_SPKRS; i++) {
+			pr_debug("%s: v-vali param status = %d\n",
+				  __func__, th_vi_v_vali.param.status[i]);
+			if (th_vi_v_vali.param.status[i] ==
+					V_VALI_IN_PROGRESS) {
+				cal_data->cal_info.status[i] = -EAGAIN;
+			} else if (th_vi_v_vali.param.status[i] ==
+					V_VALI_SUCCESS) {
+				cal_data->cal_info.status[i] = V_VALI_SUCCESS;
+				cal_data->cal_info.vrms_q24[i] =
+					th_vi_v_vali.param.vrms_q24[i];
+			}
+		}
+	}
+done:
+	return ret;
+}
+
 static int afe_get_cal_sp_th_vi_ftm_param(int32_t cal_type, size_t data_size,
 					  void *data)
 {
@@ -8024,13 +8234,11 @@ static int afe_get_cal_sp_th_vi_ftm_param(int32_t cal_type, size_t data_size,
 	struct audio_cal_type_sp_th_vi_param *cal_data = data;
 	struct afe_sp_th_vi_get_param th_vi;
 
-	pr_debug("%s: cal_type = %d\n", __func__, cal_type);
 	if (this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL] == NULL ||
 	    cal_data == NULL ||
 	    data_size != sizeof(*cal_data))
 		goto done;
 
-	mutex_lock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 	for (i = 0; i < SP_V2_NUM_MAX_SPKRS; i++) {
 		cal_data->cal_info.status[i] = -EINVAL;
 		cal_data->cal_info.r_dc_q24[i] = -1;
@@ -8051,8 +8259,31 @@ static int afe_get_cal_sp_th_vi_ftm_param(int32_t cal_type, size_t data_size,
 			}
 		}
 	}
-	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 done:
+	return ret;
+}
+
+static int afe_get_cal_sp_th_vi_param(int32_t cal_type, size_t data_size,
+				      void *data)
+{
+	struct audio_cal_type_sp_th_vi_param *cal_data = data;
+	uint32_t mode;
+	int ret = 0;
+
+	if (cal_data == NULL ||
+	    this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL] == NULL)
+		return 0;
+
+	mutex_lock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
+	mode = cal_data->cal_info.mode;
+	pr_debug("%s: cal_type = %d,mode = %d\n", __func__, cal_type, mode);
+	if (mode == MSM_SPKR_PROT_IN_V_VALI_MODE)
+		ret = afe_get_cal_sp_th_vi_v_vali_param(cal_type,
+						data_size, data);
+	else
+		ret = afe_get_cal_sp_th_vi_ftm_param(cal_type,
+						data_size, data);
+	mutex_unlock(&this_afe.cal_data[AFE_FB_SPKR_PROT_TH_VI_CAL]->lock);
 	return ret;
 }
 
@@ -8313,8 +8544,8 @@ static int afe_init_cal_data(void)
 		cal_utils_match_buf_num} },
 
 		{{AFE_FB_SPKR_PROT_TH_VI_CAL_TYPE,
-		{NULL, NULL, NULL, afe_set_cal_sp_th_vi_ftm_cfg,
-		afe_get_cal_sp_th_vi_ftm_param, NULL} },
+		{NULL, NULL, NULL, afe_set_cal_sp_th_vi_cfg,
+		afe_get_cal_sp_th_vi_param, NULL} },
 		{NULL, NULL, cal_utils_match_buf_num} },
 
 		{{AFE_FB_SPKR_PROT_EX_VI_CAL_TYPE,

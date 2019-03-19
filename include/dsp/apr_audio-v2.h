@@ -10408,6 +10408,7 @@ struct cmd_set_topologies {
 #define AFE_PARAM_ID_SP_RX_LIMITER_TH 0x000102B1
 #define AFE_PARAM_ID_FBSP_MODE_RX_CFG 0x0001021D
 #define AFE_PARAM_ID_FBSP_PTONE_RAMP_CFG 0x00010260
+#define AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING 0x000102BC
 
 struct asm_fbsp_mode_rx_cfg {
 	uint32_t minor_version;
@@ -10468,6 +10469,8 @@ struct asm_mode_vi_proc_cfg {
 #define AFE_PARAM_ID_SP_V2_TH_VI_MODE_CFG	0x0001026B
 #define AFE_PARAM_ID_SP_V2_TH_VI_FTM_CFG	0x0001029F
 #define AFE_PARAM_ID_SP_V2_TH_VI_FTM_PARAMS	0x000102A0
+#define AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_CFG	0x000102BF
+#define AFE_PARAM_ID_SP_V2_TH_VI_V_VALI_PARAMS	0x000102C0
 
 struct afe_sp_th_vi_mode_cfg {
 	uint32_t minor_version;
@@ -10557,6 +10560,51 @@ struct afe_sp_th_vi_get_param_resp {
 	struct afe_sp_th_vi_ftm_params param;
 } __packed;
 
+struct afe_sp_th_vi_v_vali_cfg {
+	uint32_t minor_version;
+	uint32_t wait_time_ms[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Wait time to heat up speaker before collecting statistics
+	 * for V validation mode in ms.
+	 * values 100 to 1000 ms
+	 */
+	uint32_t vali_time_ms[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * duration for which V VALIDATION statistics are collected in ms.
+	 * values 1000 to 3000 ms
+	 */
+} __packed;
+
+struct afe_sp_th_vi_v_vali_params {
+	uint32_t minor_version;
+	uint32_t vrms_q24[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Vrms value in q24 format
+	 * values [0 33554432] Q24 (0 - 2Vrms)
+	 */
+	uint32_t status[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * v-vali packet status
+	 * 0 - Failed.
+	 * 1 - Success.
+	 * 2 - Incorrect operation mode.This status is returned
+	 *     when GET_PARAM is called in non v-vali Mode
+	 * 3 - Inactive mode -- Port is not yet started.
+	 * 4 - Wait state. wait_time_ms has not yet elapsed
+	 * 5 - In progress state. ftm_time_ms has not yet elapsed.
+	 */
+} __packed;
+
+struct afe_sp_th_vi_v_vali_get_param {
+	struct param_hdr_v3 pdata;
+	struct afe_sp_th_vi_v_vali_params param;
+} __packed;
+
+struct afe_sp_th_vi_v_vali_get_param_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct afe_sp_th_vi_v_vali_params param;
+} __packed;
 
 #define AFE_MODULE_SPEAKER_PROTECTION_V2_EX_VI	0x0001026F
 #define AFE_PARAM_ID_SP_V2_EX_VI_MODE_CFG	0x000102A1
@@ -10618,6 +10666,33 @@ struct afe_sp_ex_vi_ftm_params {
 	 */
 } __packed;
 
+struct afe_sp_rx_tmax_xmax_logging_param {
+	/*
+	 * Maximum excursion since the last grasp of xmax in mm.
+	 */
+	int32_t max_excursion[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Number of periods when the monitored excursion exceeds to and
+	 * stays at Xmax during logging_count_period.
+	 */
+	uint32_t count_exceeded_excursion[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Maximum temperature since the last grasp of tmax in C.
+	 */
+	int32_t max_temperature[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Number of periods when the monitored temperature exceeds to and
+	 * stays at Tmax during logging_count_period
+	 */
+	uint32_t count_exceeded_temperature[SP_V2_NUM_MAX_SPKR];
+} __packed;
+
+struct afe_sp_rx_tmax_xmax_logging_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct afe_sp_rx_tmax_xmax_logging_param param;
+} __packed;
+
 struct afe_sp_ex_vi_get_param {
 	struct param_hdr_v3 pdata;
 	struct afe_sp_ex_vi_ftm_params param;
@@ -10641,6 +10716,7 @@ union afe_spkr_prot_config {
 	struct asm_mode_vi_proc_cfg mode_vi_proc_cfg;
 	struct afe_sp_th_vi_mode_cfg th_vi_mode_cfg;
 	struct afe_sp_th_vi_ftm_cfg th_vi_ftm_cfg;
+	struct afe_sp_th_vi_v_vali_cfg th_vi_v_vali_cfg;
 	struct afe_sp_ex_vi_mode_cfg ex_vi_mode_cfg;
 	struct afe_sp_ex_vi_ftm_cfg ex_vi_ftm_cfg;
 	struct afe_sp_rx_limiter_th_param limiter_th_cfg;

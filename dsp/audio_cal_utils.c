@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/fs.h>
@@ -16,6 +16,7 @@ static int unmap_memory(struct cal_type_data *cal_type,
 size_t get_cal_info_size(int32_t cal_type)
 {
 	size_t size = 0;
+	size_t size1 = 0, size2 = 0;
 
 	switch (cal_type) {
 	case CVP_VOC_RX_TOPOLOGY_CAL_TYPE:
@@ -93,8 +94,11 @@ size_t get_cal_info_size(int32_t cal_type)
 		 * Since get and set parameter structures are different in size
 		 * use the maximum size of get and set parameter structure
 		 */
-		size = max(sizeof(struct audio_cal_info_sp_th_vi_ftm_cfg),
+		size1 = max(sizeof(struct audio_cal_info_sp_th_vi_ftm_cfg),
 			   sizeof(struct audio_cal_info_sp_th_vi_param));
+		size2 = max(sizeof(struct audio_cal_info_sp_th_vi_v_vali_cfg),
+			   sizeof(struct audio_cal_info_sp_th_vi_v_vali_param));
+		size = max(size1, size2);
 		break;
 	case AFE_FB_SPKR_PROT_EX_VI_CAL_TYPE:
 		/*
