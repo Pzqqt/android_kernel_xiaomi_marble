@@ -68,6 +68,23 @@ wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS
+wlan_util_vdev_mlme_set_ratemask_config(struct vdev_mlme_obj *vdev_mlme)
+{
+	struct config_ratemask_params rm_param = {0};
+
+	if (!vdev_mlme) {
+		mlme_err("VDEV MLME is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_mgr_config_ratemask_update(vdev_mlme, &rm_param);
+
+	return tgt_vdev_mgr_config_ratemask_cmd_send(vdev_mlme, &rm_param);
+}
+
+qdf_export_symbol(wlan_util_vdev_mlme_set_ratemask_config);
+
+QDF_STATUS
 wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 			      enum wlan_mlme_cfg_id param_id,
 			      struct wlan_vdev_mgr_cfg mlme_cfg)
@@ -79,7 +96,6 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	int is_wmi_cmd = 0;
 	int ret = QDF_STATUS_SUCCESS;
 	struct vdev_set_params param = {0};
-	struct config_ratemask_params rm_param = {0};
 
 	if (!vdev_mlme) {
 		mlme_err("VDEV MLME is NULL");
@@ -299,10 +315,6 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		break;
 	case WLAN_MLME_CFG_RATEMASK_LOWER32_2:
 		mlme_mgmt->rate_info.lower32_2 = mlme_cfg.value;
-		break;
-	case WLAN_MLME_CFG_RATEMASK_CAPS:
-		vdev_mgr_config_ratemask_update(vdev_mlme, &rm_param);
-		tgt_vdev_mgr_config_ratemask_cmd_send(vdev_mlme, &rm_param);
 		break;
 	case WLAN_MLME_CFG_BCN_TX_RATE:
 		mlme_mgmt->rate_info.bcn_tx_rate = mlme_cfg.value;

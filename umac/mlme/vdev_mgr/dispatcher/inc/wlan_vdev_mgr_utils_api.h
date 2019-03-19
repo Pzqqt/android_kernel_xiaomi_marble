@@ -40,6 +40,16 @@ enum wlan_op_mode
 wlan_util_vdev_get_cdp_txrx_opmode(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_util_vdev_mlme_set_ratemask_config) – common MLME API to set
+ * ratemask configuration and send it to FW
+ * @vdev_mlme: pointer to vdev_mlme object
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS
+wlan_util_vdev_mlme_set_ratemask_config(struct vdev_mlme_obj *vdev_mlme);
+
+/**
  * wlan_util_vdev_mlme_set_param() – common MLME API to fill common
  * parameters of vdev_mlme object
  * @vdev_mlme: pointer to vdev_mlme object
