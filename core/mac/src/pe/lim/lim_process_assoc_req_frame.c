@@ -144,14 +144,13 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 	uint8_t i;
 	uint16_t assoc_id = 0;
 	tpDphHashNode sta_ds = NULL;
-	struct pe_session *session = NULL;
+	struct pe_session *session;
 
 	*dup_entry = false;
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-		if ((&mac_ctx->lim.gpSession[i] != NULL) &&
-		    (mac_ctx->lim.gpSession[i].valid) &&
-		    (mac_ctx->lim.gpSession[i].pePersona == QDF_SAP_MODE)) {
-			session = &mac_ctx->lim.gpSession[i];
+		session = &mac_ctx->lim.gpSession[i];
+		if (session->valid &&
+		    (session->pePersona == QDF_SAP_MODE)) {
 			sta_ds = dph_lookup_hash_entry(mac_ctx, hdr->sa,
 					&assoc_id, &session->dph.dphHashTable);
 			if (sta_ds
