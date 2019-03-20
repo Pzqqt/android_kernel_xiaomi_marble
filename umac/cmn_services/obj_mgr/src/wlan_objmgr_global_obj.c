@@ -36,7 +36,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 	struct wlan_objmgr_global *umac_global_obj;
 
 	/* If it is already created, ignore */
-	if (g_umac_glb_obj != NULL) {
+	if (g_umac_glb_obj) {
 		obj_mgr_err("Global object is already created");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -60,7 +60,7 @@ qdf_export_symbol(wlan_objmgr_global_obj_init);
 QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 {
 	/* If it is already destroyed */
-	if (g_umac_glb_obj == NULL) {
+	if (!g_umac_glb_obj) {
 		obj_mgr_err("Global object is not allocated");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -96,7 +96,7 @@ QDF_STATUS wlan_objmgr_register_psoc_create_handler(
 
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->psoc_create_handler[id] != NULL) {
+	if (g_umac_glb_obj->psoc_create_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -150,7 +150,7 @@ QDF_STATUS wlan_objmgr_register_psoc_destroy_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->psoc_destroy_handler[id] != NULL) {
+	if (g_umac_glb_obj->psoc_destroy_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -204,7 +204,7 @@ QDF_STATUS wlan_objmgr_register_psoc_status_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->psoc_status_handler[id] != NULL) {
+	if (g_umac_glb_obj->psoc_status_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
@@ -255,7 +255,7 @@ QDF_STATUS wlan_objmgr_register_pdev_create_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->pdev_create_handler[id] != NULL) {
+	if (g_umac_glb_obj->pdev_create_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -309,7 +309,7 @@ QDF_STATUS wlan_objmgr_register_pdev_destroy_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->pdev_destroy_handler[id] != NULL) {
+	if (g_umac_glb_obj->pdev_destroy_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -363,7 +363,7 @@ QDF_STATUS wlan_objmgr_register_pdev_status_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->pdev_status_handler[id] != NULL) {
+	if (g_umac_glb_obj->pdev_status_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
@@ -414,7 +414,7 @@ QDF_STATUS wlan_objmgr_register_vdev_create_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->vdev_create_handler[id] != NULL) {
+	if (g_umac_glb_obj->vdev_create_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -466,7 +466,7 @@ QDF_STATUS wlan_objmgr_register_vdev_destroy_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->vdev_destroy_handler[id] != NULL) {
+	if (g_umac_glb_obj->vdev_destroy_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -518,7 +518,7 @@ QDF_STATUS wlan_objmgr_register_vdev_status_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->vdev_status_handler[id] != NULL) {
+	if (g_umac_glb_obj->vdev_status_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
@@ -569,7 +569,7 @@ QDF_STATUS wlan_objmgr_register_peer_create_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->peer_create_handler[id] != NULL) {
+	if (g_umac_glb_obj->peer_create_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -622,7 +622,7 @@ QDF_STATUS wlan_objmgr_register_peer_destroy_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->peer_destroy_handler[id] != NULL) {
+	if (g_umac_glb_obj->peer_destroy_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		QDF_ASSERT(0);
@@ -674,7 +674,7 @@ QDF_STATUS wlan_objmgr_register_peer_status_handler(
 	}
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* If there is a valid entry, return failure */
-	if (g_umac_glb_obj->peer_status_handler[id] != NULL) {
+	if (g_umac_glb_obj->peer_status_handler[id]) {
 		qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
 		obj_mgr_err("Callback for comp %d is already registered", id);
 		return QDF_STATUS_E_FAILURE;
@@ -720,7 +720,7 @@ QDF_STATUS wlan_objmgr_psoc_object_attach(struct wlan_objmgr_psoc *psoc)
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* Find free slot in PSOC table, store the PSOC */
 	while (index < WLAN_OBJMGR_MAX_DEVICES) {
-		if (g_umac_glb_obj->psoc[index] == NULL) {
+		if (!g_umac_glb_obj->psoc[index]) {
 			/* Found free slot, store psoc */
 			g_umac_glb_obj->psoc[index] = psoc;
 			psoc->soc_objmgr.psoc_id = index;
@@ -757,7 +757,7 @@ QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
 	/* Check whether all PSOCs are freed */
 	while (index < WLAN_OBJMGR_MAX_DEVICES) {
-		if (g_umac_glb_obj->psoc[index] != NULL) {
+		if (g_umac_glb_obj->psoc[index]) {
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}

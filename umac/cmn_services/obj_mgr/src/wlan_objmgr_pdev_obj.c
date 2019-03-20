@@ -49,7 +49,7 @@ static QDF_STATUS wlan_objmgr_pdev_object_status(
 		/* If component operates in Async, status is Partially created,
 			break */
 		} else if (pdev->obj_status[id] == QDF_STATUS_COMP_ASYNC) {
-			if (pdev->pdev_comp_priv_obj[id] == NULL) {
+			if (!pdev->pdev_comp_priv_obj[id]) {
 				status = QDF_STATUS_COMP_ASYNC;
 				break;
 			}
@@ -70,7 +70,7 @@ static QDF_STATUS wlan_objmgr_pdev_obj_free(struct wlan_objmgr_pdev *pdev)
 
 	uint8_t pdev_id;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev obj is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -101,7 +101,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	void *arg;
 	QDF_STATUS obj_status;
 
-	if (psoc == NULL) {
+	if (!psoc) {
 		obj_mgr_err("psoc is NULL");
 		return NULL;
 	}
@@ -140,7 +140,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 		handler = g_umac_glb_obj->pdev_create_handler[id];
 		arg = g_umac_glb_obj->pdev_create_handler_arg[id];
-		if (handler != NULL)
+		if (handler)
 			pdev->obj_status[id] = handler(pdev, arg);
 		else
 			pdev->obj_status[id] = QDF_STATUS_COMP_DISABLED;
@@ -155,7 +155,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 		for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 			s_handler = g_umac_glb_obj->pdev_status_handler[id];
 			arg = g_umac_glb_obj->pdev_status_handler_arg[id];
-			if (s_handler != NULL) {
+			if (s_handler) {
 				s_handler(pdev, arg,
 					  QDF_STATUS_SUCCESS);
 			}
@@ -186,7 +186,7 @@ static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *pdev)
 	void *arg;
 	uint8_t pdev_id;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -238,7 +238,7 @@ QDF_STATUS wlan_objmgr_pdev_obj_delete(struct wlan_objmgr_pdev *pdev)
 {
 	uint8_t print_idx;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -284,7 +284,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 	}
 	wlan_pdev_obj_lock(pdev);
 	/* If there is a valid entry, return failure */
-	if (pdev->pdev_comp_priv_obj[id] != NULL) {
+	if (pdev->pdev_comp_priv_obj[id]) {
 		obj_mgr_err("component-%d already have valid pointer", id);
 		wlan_pdev_obj_unlock(pdev);
 		return QDF_STATUS_E_FAILURE;
@@ -318,7 +318,7 @@ QDF_STATUS wlan_objmgr_pdev_component_obj_attach(
 		for (i = 0; i < WLAN_UMAC_MAX_COMPONENTS; i++) {
 			s_hlr = g_umac_glb_obj->pdev_status_handler[i];
 			a = g_umac_glb_obj->pdev_status_handler_arg[i];
-			if (s_hlr != NULL)
+			if (s_hlr)
 				s_hlr(pdev, a, obj_status);
 		}
 	}
@@ -411,10 +411,10 @@ static void wlan_objmgr_pdev_vdev_iterate_peers(struct wlan_objmgr_pdev *pdev,
 		needed */
 	/* Get peer list of the vdev */
 	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
-	if (peer_list != NULL) {
+	if (peer_list) {
 		peer = wlan_vdev_peer_list_peek_active_head(vdev, peer_list,
 								dbg_id);
-		while (peer != NULL) {
+		while (peer) {
 			/* Invoke the handler */
 			handler(pdev, (void *)peer, arg);
 			/* Get next peer pointer, increments the ref count */
@@ -447,7 +447,7 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 			VDEV object */
 		vdev = wlan_pdev_vdev_list_peek_active_head(pdev, vdev_list,
 								dbg_id);
-		while (vdev != NULL) {
+		while (vdev) {
 			handler(pdev, (void *)vdev, arg);
 			 /* Get next vdev, it increments ref of next vdev */
 			vdev_next = wlan_vdev_get_next_active_vdev_of_pdev(
@@ -459,7 +459,7 @@ QDF_STATUS wlan_objmgr_pdev_iterate_obj_list(
 	case WLAN_PEER_OP:
 		vdev = wlan_pdev_vdev_list_peek_active_head(pdev, vdev_list,
 								dbg_id);
-		while (vdev != NULL) {
+		while (vdev) {
 			wlan_objmgr_pdev_vdev_iterate_peers(pdev, vdev,	handler,
 						arg, lock_free_op, dbg_id);
 			 /* Get next vdev, it increments ref of next vdev */
@@ -492,7 +492,7 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_creation(
 	wlan_pdev_obj_lock(pdev);
 	/* If component object is already created, delete old
 		component object, then invoke creation */
-	if (pdev->pdev_comp_priv_obj[id] != NULL) {
+	if (pdev->pdev_comp_priv_obj[id]) {
 		wlan_pdev_obj_unlock(pdev);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -501,7 +501,7 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_creation(
 	/* Invoke registered create handlers */
 	handler = g_umac_glb_obj->pdev_create_handler[id];
 	arg = g_umac_glb_obj->pdev_create_handler_arg[id];
-	if (handler != NULL)
+	if (handler)
 		pdev->obj_status[id] = handler(pdev, arg);
 	else
 		return QDF_STATUS_E_FAILURE;
@@ -532,7 +532,7 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 
 	wlan_pdev_obj_lock(pdev);
 	/* Component object was never created, invalid operation */
-	if (pdev->pdev_comp_priv_obj[id] == NULL) {
+	if (!pdev->pdev_comp_priv_obj[id]) {
 		wlan_pdev_obj_unlock(pdev);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -541,7 +541,7 @@ QDF_STATUS wlan_objmgr_trigger_pdev_comp_priv_object_deletion(
 	/* Invoke registered create handlers */
 	handler = g_umac_glb_obj->pdev_destroy_handler[id];
 	arg = g_umac_glb_obj->pdev_destroy_handler_arg[id];
-	if (handler != NULL)
+	if (handler)
 		pdev->obj_status[id] = handler(pdev, arg);
 	else
 		return QDF_STATUS_E_FAILURE;
@@ -568,7 +568,7 @@ static QDF_STATUS wlan_obj_pdev_vdevlist_remove_vdev(
 {
 	qdf_list_node_t *vdev_node = NULL;
 
-	if (vdev == NULL)
+	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 	/* get vdev list node element */
 	vdev_node = &vdev->vdev_node;
@@ -639,7 +639,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev(
 	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
 	/* Iterate through pdev's vdev list, till vdev id matches with
 	entry of vdev list */
-	while (vdev != NULL) {
+	while (vdev) {
 		if (wlan_vdev_get_id(vdev) == vdev_id) {
 			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
 							QDF_STATUS_SUCCESS)
@@ -676,7 +676,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_pdev_no_state(
 	 * Iterate through pdev's vdev list, till vdev id matches with
 	 * entry of vdev list
 	 */
-	while (vdev != NULL) {
+	while (vdev) {
 		if (wlan_vdev_get_id(vdev) == vdev_id) {
 			wlan_objmgr_vdev_get_ref(vdev, dbg_id);
 			wlan_pdev_obj_unlock(pdev);
@@ -709,7 +709,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev(
 	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
 	/* Iterate through pdev's vdev list, till vdev macaddr matches with
 	entry of vdev list */
-	while (vdev != NULL) {
+	while (vdev) {
 		if (WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr)
 					== QDF_STATUS_SUCCESS) {
 			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
@@ -744,7 +744,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_macaddr_from_pdev_no_state(
 	vdev = wlan_pdev_vdev_list_peek_head(vdev_list);
 	/* Iterate through pdev's vdev list, till vdev macaddr matches with
 	entry of vdev list */
-	while (vdev != NULL) {
+	while (vdev) {
 		if (WLAN_ADDR_EQ(wlan_vdev_mlme_get_macaddr(vdev), macaddr)
 					== QDF_STATUS_SUCCESS) {
 			wlan_objmgr_vdev_get_ref(vdev, dbg_id);
@@ -773,7 +773,7 @@ void *wlan_objmgr_pdev_get_comp_private_obj(
 		return NULL;
 	}
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		QDF_BUG(0);
 		return NULL;
 	}
@@ -787,7 +787,7 @@ qdf_export_symbol(wlan_objmgr_pdev_get_comp_private_obj);
 void wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
 					wlan_objmgr_ref_dbgid id)
 {
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev obj is NULL");
 		QDF_ASSERT(0);
 		return;
@@ -804,7 +804,7 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
 {
 	uint8_t pdev_id;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev obj is NULL");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -834,7 +834,7 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 {
 	uint8_t pdev_id;
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		obj_mgr_err("pdev obj is NULL");
 		QDF_ASSERT(0);
 		return;

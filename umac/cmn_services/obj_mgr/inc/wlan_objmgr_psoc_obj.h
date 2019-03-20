@@ -934,7 +934,7 @@ static inline void wlan_psoc_set_nif_phy_version(struct wlan_objmgr_psoc *psoc,
 static inline uint32_t wlan_psoc_get_nif_phy_version(
 			struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return (uint32_t)-1;
 
 	return psoc->soc_nif.phy_version;
@@ -966,7 +966,7 @@ static inline void wlan_psoc_set_dev_type(struct wlan_objmgr_psoc *psoc,
 static inline WLAN_DEV_TYPE wlan_objmgr_psoc_get_dev_type(
 				struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return (uint32_t)-1;
 
 	return psoc->soc_nif.phy_type;
@@ -1167,7 +1167,7 @@ static inline void wlan_psoc_set_hw_macaddr(struct wlan_objmgr_psoc *psoc,
 					uint8_t *macaddr)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (psoc != NULL)
+	if (psoc)
 		WLAN_ADDR_COPY(psoc->soc_nif.soc_hw_macaddr, macaddr);
 }
 
@@ -1181,7 +1181,7 @@ static inline void wlan_psoc_set_hw_macaddr(struct wlan_objmgr_psoc *psoc,
  */
 static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return NULL;
 
 	return psoc->soc_nif.soc_hw_macaddr;
@@ -1209,7 +1209,7 @@ void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *psoc,
  */
 static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return 0;
 
 	return psoc->soc_objmgr.wlan_pdev_count;
@@ -1227,7 +1227,7 @@ static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
 static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
 			void *tgt_if_handle)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return;
 
 	psoc->tgt_if_handle = tgt_if_handle;
@@ -1243,7 +1243,7 @@ static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
  */
 static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return NULL;
 
 	return psoc->tgt_if_handle;
@@ -1260,7 +1260,7 @@ static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 static inline qdf_device_t wlan_psoc_get_qdf_dev(
 			struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return NULL;
 
 	return psoc->soc_objmgr.qdf_dev;
@@ -1279,7 +1279,7 @@ static inline void wlan_psoc_set_qdf_dev(
 			struct wlan_objmgr_psoc *psoc,
 			qdf_device_t dev)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return;
 
 	psoc->soc_objmgr.qdf_dev = dev;
@@ -1476,7 +1476,7 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc);
 static inline uint8_t wlan_objmgr_psoc_get_band_capability(
 		struct wlan_objmgr_psoc *psoc)
 {
-	if (psoc == NULL)
+	if (!psoc)
 		return 0;
 
 	return psoc->soc_nif.user_config.band_capability;

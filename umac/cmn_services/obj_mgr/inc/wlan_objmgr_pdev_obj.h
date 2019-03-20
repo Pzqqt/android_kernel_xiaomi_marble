@@ -832,7 +832,7 @@ static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
 			void *tgt_if_handle)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (pdev == NULL)
+	if (!pdev)
 		return;
 
 	pdev->tgt_if_handle = tgt_if_handle;
@@ -848,7 +848,7 @@ static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
  */
 static inline void *wlan_pdev_get_tgt_if_handle(struct wlan_objmgr_pdev *pdev)
 {
-	if (pdev == NULL)
+	if (!pdev)
 		return NULL;
 
 	return pdev->tgt_if_handle;

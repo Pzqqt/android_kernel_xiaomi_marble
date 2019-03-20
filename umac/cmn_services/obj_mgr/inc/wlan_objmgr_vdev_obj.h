@@ -602,7 +602,7 @@ static inline struct wlan_objmgr_vdev *wlan_vdev_get_next_vdev_of_pdev(
 	qdf_list_node_t *next_node = NULL;
 
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (node == NULL)
+	if (!node)
 		return NULL;
 
 	if (qdf_list_peek_next(vdev_list, node, &next_node) !=
@@ -666,7 +666,7 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	pdev = wlan_vdev_get_pdev(vdev);
-	if (pdev == NULL)
+	if (!pdev)
 		return NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -804,7 +804,7 @@ static inline uint8_t *wlan_vdev_get_hw_macaddr(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (pdev != NULL)
+	if (pdev)
 		return wlan_pdev_get_hw_macaddr(pdev);
 	else
 		return NULL;
