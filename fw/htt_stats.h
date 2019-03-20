@@ -575,6 +575,8 @@ typedef struct {
 
     A_UINT32 tx_active_dur_us_low;
     A_UINT32 tx_active_dur_us_high;
+    /* Number of MPDUs dropped after max retries */
+    A_UINT32 remove_mpdus_max_retries;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -719,6 +721,20 @@ typedef struct {
     A_UINT32    tx_glb_reset;
     A_UINT32    tx_txq_reset;
     A_UINT32    rx_timeout_reset;
+    A_UINT32    mac_cold_reset_restore_cal;
+    A_UINT32    mac_cold_reset;
+    A_UINT32    mac_warm_reset;
+    A_UINT32    mac_only_reset;
+    A_UINT32    phy_warm_reset;
+    A_UINT32    phy_warm_reset_ucode_trig;
+    A_UINT32    mac_warm_reset_restore_cal;
+    A_UINT32    mac_sfm_reset;
+    A_UINT32    phy_warm_reset_m3_ssr;
+    A_UINT32    phy_warm_reset_reason_phy_m3;
+    A_UINT32    phy_warm_reset_reason_tx_hw_stuck;
+    A_UINT32    phy_warm_reset_reason_num_cca_rx_frame_stuck;
+    A_UINT32    phy_warm_reset_reason_wal_rx_recovery_rst_rx_busy;
+    A_UINT32    phy_warm_reset_reason_wal_rx_recovery_rst_mac_hang;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
@@ -1038,6 +1054,8 @@ typedef struct {
      * If the peer is currently active, this inactive_time will be 0x0.
      */
     A_UINT32 inactive_time;
+    /* Number of MPDUs dropped after max retries */
+    A_UINT32 remove_mpdus_max_retries;
 } htt_peer_stats_cmn_tlv;
 
 typedef struct {
