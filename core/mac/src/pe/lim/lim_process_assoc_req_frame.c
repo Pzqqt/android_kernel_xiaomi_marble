@@ -2735,6 +2735,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 			      sizeof(tDot11fIEVHTCaps));
 		lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,
 					    assoc_ind, sta_ds);
+		assoc_ind->he_caps_present = assoc_req->he_cap.present;
 		assoc_ind->is_sae_authenticated =
 					assoc_req->is_sae_authenticated;
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_IND,

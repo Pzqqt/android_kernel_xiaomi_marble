@@ -9760,6 +9760,8 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 			roam_info->vht_caps = pUpperLayerAssocCnf->vht_caps;
 		roam_info->capability_info =
 					pUpperLayerAssocCnf->capability_info;
+		roam_info->he_caps_present =
+					pUpperLayerAssocCnf->he_caps_present;
 
 		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
 			if (pUpperLayerAssocCnf->ies_len > 0) {
@@ -10876,6 +10878,7 @@ csr_send_assoc_ind_to_upper_layer_cnf_msg(struct mac_context *mac,
 	if (ind->VHTCaps.present)
 		cnf->vht_caps = ind->VHTCaps;
 	cnf->capability_info = ind->capability_info;
+	cnf->he_caps_present = ind->he_caps_present;
 	if (ind->assocReqPtr) {
 		if (ind->assocReqLength < MAX_ASSOC_REQ_IE_LEN) {
 			cnf->ies = qdf_mem_malloc(ind->assocReqLength);
@@ -10966,6 +10969,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 			     &pAssocInd->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
 	roam_info->capability_info = pAssocInd->capability_info;
+	roam_info->he_caps_present = pAssocInd->he_caps_present;
 
 	if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
 		if (session->pCurRoamProfile &&

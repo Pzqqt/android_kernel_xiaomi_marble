@@ -1082,6 +1082,7 @@ struct assoc_ind {
 	uint8_t ecsa_capable;
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEVHTCaps VHTCaps;
+	bool he_caps_present;
 	tSirMacCapabilityInfo capability_info;
 	bool is_sae_authenticated;
 	const uint8_t *owe_ie;

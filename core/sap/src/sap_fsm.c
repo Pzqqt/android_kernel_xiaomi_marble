@@ -1675,6 +1675,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			reassoc_complete->ht_caps = csr_roaminfo->ht_caps;
 		if (csr_roaminfo->vht_caps.present)
 			reassoc_complete->vht_caps = csr_roaminfo->vht_caps;
+		reassoc_complete->he_caps_present =
+						csr_roaminfo->he_caps_present;
 		reassoc_complete->capability_info =
 						csr_roaminfo->capability_info;
 

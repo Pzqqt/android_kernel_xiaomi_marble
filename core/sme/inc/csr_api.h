@@ -1151,6 +1151,7 @@ struct csr_roam_info {
 #endif
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;
+	bool he_caps_present;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEVHTOperation vht_operation;
 	tDot11fIEHTInfo ht_operation;
@@ -1219,6 +1220,7 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;
 	tSirMacCapabilityInfo capability_info;
+	bool he_caps_present;
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

@@ -946,7 +946,8 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 			(sizeof(stainfo->dot11_mode) + NLA_HDRLEN) +
 			(sizeof(stainfo->ch_width) + NLA_HDRLEN) +
 			(sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
-			(sizeof(stainfo->rx_rate) + NLA_HDRLEN);
+			(sizeof(stainfo->rx_rate) + NLA_HDRLEN) +
+			(sizeof(stainfo->support_mode) + NLA_HDRLEN);
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
@@ -970,8 +971,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 	channel_width = hdd_decode_ch_width(stainfo->ch_width);
 
 	if (nla_put_u32(skb, REMOTE_SUPPORTED_MODE,
-			hdd_convert_dot11mode(
-			stainfo->mode)) ||
+			stainfo->support_mode) ||
 	    nla_put_u8(skb, REMOTE_CH_WIDTH, channel_width)) {
 		hdd_err("remote ch put fail");
 		goto fail;
@@ -982,6 +982,10 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 	}
 	if (nla_put_u32(skb, REMOTE_LAST_RX_RATE, stainfo->rx_rate)) {
 		hdd_err("rx rate put fail");
+		goto fail;
+	}
+	if (nla_put_u32(skb, WLAN802_11_MODE, stainfo->dot11_mode)) {
+		hdd_err("dot11 mode put fail");
 		goto fail;
 	}
 
