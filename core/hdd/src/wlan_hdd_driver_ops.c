@@ -576,8 +576,6 @@ static void __hdd_soc_remove(struct device *dev)
 
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		hdd_wlan_stop_modules(hdd_ctx, false);
-		epping_disable();
-		epping_close();
 	} else {
 		hdd_wlan_exit(hdd_ctx);
 	}
