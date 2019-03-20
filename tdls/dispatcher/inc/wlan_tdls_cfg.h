@@ -80,7 +80,7 @@
  * @Max: 10
  * @Default: 0
  *
- * This ini is used to configure peer uapsd inactivity time.
+ * This ini is used to configure peer uapsd inactivity time(in ms).
  *
  * Related: gEnableTDLSSupport.
  *
@@ -468,56 +468,6 @@
 
 /*
  * <ini>
- * gTDLSPuapsdInactivityTime - Peer UAPSD Inactivity time.
- * @Min: 0
- * @Max: 10
- * @Default: 0
- *
- * This ini is used to configure peer uapsd inactivity time.
- *
- * Related: gEnableTDLSSupport.
- *
- * Supported Feature: TDLS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_TDLS_PUAPSD_INACTIVITY_TIME CFG_INI_UINT( \
-	"gTDLSPuapsdInactivityTime", \
-	0, \
-	10, \
-	0, \
-	CFG_VALUE_OR_DEFAULT, \
-	"Peer UAPSD Inactivity time")
-
-/*
- * <ini>
- * gTDLSPuapsdInactivityTime - Peer UAPSD Inactivity time.
- * @Min: 0
- * @Max: 10
- * @Default: 0
- *
- * This ini is used to configure peer uapsd inactivity time.
- *
- * Related: gEnableTDLSSupport.
- *
- * Supported Feature: TDLS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD CFG_INI_UINT( \
-	"gTDLSPuapsdRxFrameThreshold", \
-	10, \
-	20, \
-	10, \
-	CFG_VALUE_OR_DEFAULT, \
-	"Peer UAPSD Rx frame threshold")
-
-/*
- * <ini>
  * gTDLSPuapsdPTIWindow - This ini is used to configure peer traffic indication
  * window.
  * @Min: 1
@@ -720,8 +670,6 @@
 	CFG(CFG_TDLS_RSSI_DELTA) \
 	CFG(CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM) \
 	CFG(CFG_TDLS_PREFERRED_OFF_CHANNEL_BW) \
-	CFG(CFG_TDLS_PUAPSD_INACTIVITY_TIME) \
-	CFG(CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD) \
 	CFG(CFG_TDLS_PUAPSD_PEER_TRAFFIC_IND_WINDOW) \
 	CFG(CFG_TDLS_PUAPSD_PEER_TRAFFIC_RSP_TIMEOUT) \
 	CFG(CFG_TDLS_EXTERNAL_CONTROL) \

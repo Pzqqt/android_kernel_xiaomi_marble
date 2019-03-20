@@ -173,7 +173,7 @@ static QDF_STATUS tdls_object_init_params(
 	tdls_soc_obj->tdls_configs.tdls_tx_pkt_threshold =
 			cfg_get(psoc, CFG_TDLS_TX_PACKET_THRESHOLD);
 	tdls_soc_obj->tdls_configs.tdls_rx_pkt_threshold =
-			cfg_get(psoc, CFG_TDLS_PUAPSD_RX_FRAME_THRESHOLD);
+			cfg_get(psoc, CFG_TDLS_RX_FRAME_THRESHOLD);
 	tdls_soc_obj->tdls_configs.tdls_max_discovery_attempt =
 			cfg_get(psoc, CFG_TDLS_MAX_DISCOVERY_ATTEMPT);
 	tdls_soc_obj->tdls_configs.tdls_idle_timeout =

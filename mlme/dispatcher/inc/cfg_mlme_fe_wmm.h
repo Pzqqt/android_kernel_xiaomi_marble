@@ -64,6 +64,11 @@
  *
  * This ini is used to set TSPEC direction for VO
  *
+ * 0 - uplink
+ * 1 - direct link
+ * 2 - down link
+ * 3 - bidirectional link
+ *
  * Related: None.
  *
  * Supported Feature: WMM
@@ -312,7 +317,7 @@
  * @Max: 4294967295UL
  * @Default: 20
  *
- * This ini is used to set Uapsd service interval for voice.
+ * This ini is used to set Uapsd service interval(in ms) for voice.
  *
  * Related: None.
  *
@@ -337,7 +342,7 @@
  * @Max: 4294967295UL
  * @Default: 2000
  *
- * This ini is used to set Uapsd suspension interval for voice.
+ * This ini is used to set Uapsd suspension interval(in ms) for voice.
  *
  * Related: None.
  *
@@ -362,7 +367,7 @@
  * @Max: 4294967295UL
  * @Default: 300
  *
- * This ini is used to set Uapsd service interval for video.
+ * This ini is used to set Uapsd service interval(in ms) for video.
  *
  * Related: None.
  *
@@ -388,7 +393,7 @@
  * @Max: 4294967295UL
  * @Default: 2000
  *
- * This ini is used to set Uapsd suspension interval for video
+ * This ini is used to set Uapsd suspension interval(in ms) for video
  *
  * Related: None.
  *
@@ -414,6 +419,11 @@
  * @Default: 3
  *
  * This ini is used to set TSPEC direction for BE
+ *
+ * 0 - uplink
+ * 1 - direct link
+ * 2 - down link
+ * 3 - bidirectional link
  *
  * Related: None.
  *
@@ -538,7 +548,7 @@
  * @Max: 4294967295UL
  * @Default: 300
  *
- * This ini is used to set Uapsd service interval for BE
+ * This ini is used to set Uapsd service interval(in ms) for BE
  *
  * Related: None.
  *
@@ -563,7 +573,7 @@
  * @Max: 4294967295UL
  * @Default: 2000
  *
- * This ini is used to set Uapsd suspension interval for BE
+ * This ini is used to set Uapsd suspension interval(in ms) for BE
  *
  * Related: None.
  *
@@ -589,6 +599,11 @@
  * @Default: 3
  *
  * This ini is used to set TSPEC direction for BK
+ *
+ * 0 - uplink
+ * 1 - direct link
+ * 2 - down link
+ * 3 - bidirectional link
  *
  * Related: None.
  *
@@ -690,6 +705,11 @@
  *
  * This ini is used to set surplus bandwidth allowance for BK
  *
+ * The 13 least significant bits (LSBs) indicate the decimal part while the
+ * three MSBs indicate the integer part of the number.
+ *
+ * A value of 1 indicates that no additional allocation of time is requested.
+ *
  * Related: None.
  *
  * Supported Feature: WMM
@@ -713,7 +733,7 @@
  * @Max: 4294967295UL
  * @Default: 300
  *
- * This ini is used to set Uapsd service interval for BK
+ * This ini is used to set Uapsd service interval(in ms) for BK
  *
  * Related: None.
  *
@@ -738,7 +758,7 @@
  * @Max: 4294967295UL
  * @Default: 2000
  *
- * This ini is used to set Uapsd suspension interval for BK
+ * This ini is used to set Uapsd suspension interval(in ms) for BK
  *
  * Related: None.
  *
@@ -812,6 +832,12 @@
  * @Default: 0x00
  *
  * This ini is used to setup U-APSD mask for ACs.
+ *
+ * Bit 0 set, Voice both deliver/trigger enabled
+ * Bit 1 set, Video both deliver/trigger enabled
+ * Bit 2 set, Background both deliver/trigger enabled
+ * Bit 3 set, Best Effort both deliver/trigger enabled
+ * others, reserved
  *
  * Related: None.
  *
@@ -894,6 +920,9 @@
  *
  * This ini is used to set TS burst size
  *
+ * 0 - burst is disabled
+ * 1 - burst is enabled
+ *
  * Related: None.
  *
  * Supported Feature: WMM
@@ -915,12 +944,11 @@
  * @Default: 0x00
  *
  * This ini is used to set TS ack policy
- * TS Info Ack Policy can be either of the
- * following values:
- * enum mlme_ts_info_ack_policy {
- * TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
- * TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
- * }
+ *
+ * TS Info Ack Policy can be either of the following values:
+ *
+ * 0 - normal ack
+ * 1 - HT immediate block ack
  *
  * Related: None.
  *
