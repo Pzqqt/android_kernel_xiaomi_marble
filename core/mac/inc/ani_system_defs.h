@@ -34,8 +34,6 @@
 #include "sir_mac_prot_def.h"
 #include "wlan_crypto_global_def.h"
 
-#define ANI_OUI  0x000AF5
-
 /* This is to force compiler to use the maximum of an int for enum */
 #define SIR_MAX_ENUM_SIZE    0x7FFFFFFF
 

@@ -65,13 +65,6 @@ struct mac_context;
 #define SIR_NUM_11B_RATES 4     /* 1,2,5.5,11 */
 #define SIR_NUM_11A_RATES 8     /* 6,9,12,18,24,36,48,54 */
 
-#define SIR_PM_SLEEP_MODE   0
-#define SIR_PM_ACTIVE_MODE        1
-
-/* hidden SSID options */
-#define SIR_SCAN_NO_HIDDEN_SSID                      0
-#define SIR_SCAN_HIDDEN_SSID_PE_DECISION             1
-
 #define SIR_IPV4_ADDR_LEN       4
 
 typedef uint8_t tSirIpv4Addr[SIR_IPV4_ADDR_LEN];
@@ -290,16 +283,6 @@ struct rrm_config_param {
 	uint8_t max_randn_interval;
 	uint8_t rm_capability[RMENABLEDCAP_MAX_LEN];
 };
-
-/*
- * although in struct supported_rates each IE is 16bit but PE only
- * passes IEs in 8 bits with MSB=1 for basic rates. change the mask
- * for bit0-7 only so HAL gets correct basic rates for setting
- * response rates.
- */
-#define IERATE_BASICRATE_MASK     0x80
-#define IERATE_RATE_MASK          0x7f
-#define IERATE_IS_BASICRATE(x)   ((x) & IERATE_BASICRATE_MASK)
 
 const char *lim_bss_type_to_string(const uint16_t bss_type);
 /**
@@ -1937,17 +1920,12 @@ typedef struct sSirSmeProbeReqInd {
 #define CHANNEL_LIST_STATIC                   1
 /* Occupied channel list can be dynamic */
 #define CHANNEL_LIST_DYNAMIC                  2
-#define SIR_ROAM_SCAN_24G_DEFAULT_CH     1
-#define SIR_ROAM_SCAN_5G_DEFAULT_CH      36
-#define SIR_ROAM_SCAN_RESERVED_BYTES     61
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_ROAM_SCAN_PSK_SIZE    48
 #define SIR_ROAM_R0KH_ID_MAX_LEN  48
 #endif
 /* SME -> HAL - This is the host offload request. */
-#define SIR_IPV4_ARP_REPLY_OFFLOAD                  0
-#define SIR_IPV6_NEIGHBOR_DISCOVERY_OFFLOAD         1
 #define SIR_IPV6_NS_OFFLOAD                         2
 #define SIR_OFFLOAD_DISABLE                         0
 #define SIR_OFFLOAD_ENABLE                          1
@@ -2022,13 +2000,6 @@ typedef struct sSirSmeUnprotMgmtFrameInd {
 	uint8_t frameBuf[1];    /* variable */
 } tSirSmeUnprotMgmtFrameInd, *tpSirSmeUnprotMgmtFrameInd;
 #endif
-
-#define SIR_IS_FULL_POWER_REASON_DISCONNECTED(eReason) \
-	((eSME_LINK_DISCONNECTED_BY_HDD == (eReason)) || \
-	 (eSME_LINK_DISCONNECTED_BY_OTHER == (eReason)))
-#define SIR_IS_FULL_POWER_NEEDED_BY_HDD(eReason) \
-	((eSME_LINK_DISCONNECTED_BY_HDD == (eReason)) || \
-	 (eSME_FULL_PWR_NEEDED_BY_HDD == (eReason)))
 
 /* P2P Power Save Related */
 typedef struct sSirNoAParam {
@@ -2333,8 +2304,6 @@ struct roam_offload_scan_rsp {
 #define    SIR_MAX_FILTER_TEST_DATA_LEN       8
 #define    SIR_MAX_FILTER_TEST_DATA_OFFSET  200
 #define    SIR_MAX_NUM_MULTICAST_ADDRESS    240
-#define    SIR_MAX_NUM_FILTERS               20
-#define    SIR_MAX_NUM_TESTS_PER_FILTER      10
 
 /* */
 /* Multicast Address List Parameters */

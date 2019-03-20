@@ -57,20 +57,6 @@
 #define SIR_MAC_FRAME_TYPE_START   0x0
 #define SIR_MAC_FRAME_TYPE_END     0x3
 
-/* Control frame subtype definitions */
-
-#define SIR_MAC_CTRL_RR         4
-#define SIR_MAC_CTRL_BAR        8
-#define SIR_MAC_CTRL_BA         9
-#define SIR_MAC_CTRL_PS_POLL    10
-#define SIR_MAC_CTRL_RTS        11
-#define SIR_MAC_CTRL_CTS        12
-#define SIR_MAC_CTRL_ACK        13
-#define SIR_MAC_CTRL_CF_END     14
-#define SIR_MAC_CTRL_CF_END_ACK 15
-
-#define SIR_MAC_MAX_DURATION_MICRO_SECONDS       32767
-
 /* Data frame subtype definitions */
 #define SIR_MAC_DATA_DATA                 0
 #define SIR_MAC_DATA_DATA_ACK             1
@@ -267,137 +253,50 @@
 /* ----------------------------------------------------------------------------- */
 
 #define SIR_MAC_SSID_EID               0
-#define SIR_MAC_SSID_EID_MIN               0
 #define SIR_MAC_RATESET_EID            1
-#define SIR_MAC_RATESET_EID_MIN            1
 #define SIR_MAC_RATESET_EID_MAX            12
 #define SIR_MAC_FH_PARAM_SET_EID       2
-#define SIR_MAC_FH_PARAM_SET_EID_MIN       5
 #define SIR_MAC_FH_PARAM_SET_EID_MAX       5
 #define SIR_MAC_DS_PARAM_SET_EID       3
-#define SIR_MAC_DS_PARAM_SET_EID_MIN       1
 #define SIR_MAC_DS_PARAM_SET_EID_MAX       1
 #define SIR_MAC_CF_PARAM_SET_EID       4
-#define SIR_MAC_CF_PARAM_SET_EID_MIN       6
 #define SIR_MAC_CF_PARAM_SET_EID_MAX       6
 #define SIR_MAC_TIM_EID                5
 #define SIR_MAC_TIM_EID_MIN                3
-#define SIR_MAC_TIM_EID_MAX                254
 #define SIR_MAC_IBSS_PARAM_SET_EID     6
-#define SIR_MAC_IBSS_PARAM_SET_EID_MIN     2
 #define SIR_MAC_IBSS_PARAM_SET_EID_MAX     2
 #define SIR_MAC_COUNTRY_EID            7
-#define SIR_MAC_COUNTRY_EID_MIN            6
 #define SIR_MAC_COUNTRY_EID_MAX            254
 #define SIR_MAC_FH_PARAMS_EID          8
-#define SIR_MAC_FH_PARAMS_EID_MIN          4
 #define SIR_MAC_FH_PARAMS_EID_MAX          4
 #define SIR_MAC_FH_PATTERN_EID         9
-#define SIR_MAC_FH_PATTERN_EID_MIN         4
-#define SIR_MAC_FH_PATTERN_EID_MAX         254
-#define SIR_MAC_REQUEST_EID            10
-#define SIR_MAC_REQUEST_EID_MIN            1
 #define SIR_MAC_REQUEST_EID_MAX            255
-#define SIR_MAC_QBSS_LOAD_EID          11
-#define SIR_MAC_QBSS_LOAD_EID_MIN          5
-#define SIR_MAC_QBSS_LOAD_EID_MAX          5
 #define SIR_MAC_EDCA_PARAM_SET_EID     12       /* EDCA parameter set */
-#define SIR_MAC_EDCA_PARAM_SET_EID_MIN     18
-#define SIR_MAC_EDCA_PARAM_SET_EID_MAX     20   /* TBD temp - change backto 18 */
-#define SIR_MAC_TSPEC_EID              13
-#define SIR_MAC_TSPEC_EID_MIN              55
-#define SIR_MAC_TSPEC_EID_MAX              55
-#define SIR_MAC_TCLAS_EID              14
-#define SIR_MAC_TCLAS_EID_MIN              4
-#define SIR_MAC_TCLAS_EID_MAX              255
-#define SIR_MAC_QOS_SCHEDULE_EID       15
-#define SIR_MAC_QOS_SCHEDULE_EID_MIN       14
-#define SIR_MAC_QOS_SCHEDULE_EID_MAX       14
 #define SIR_MAC_CHALLENGE_TEXT_EID     16
-#define SIR_MAC_CHALLENGE_TEXT_EID_MIN     1
-#define SIR_MAC_CHALLENGE_TEXT_EID_MAX     253
 /* reserved       17-31 */
 #define SIR_MAC_PWR_CONSTRAINT_EID     32
-#define SIR_MAC_PWR_CONSTRAINT_EID_MIN     1
-#define SIR_MAC_PWR_CONSTRAINT_EID_MAX     1
-#define SIR_MAC_PWR_CAPABILITY_EID     33
-#define SIR_MAC_PWR_CAPABILITY_EID_MIN     2
-#define SIR_MAC_PWR_CAPABILITY_EID_MAX     2
-#define SIR_MAC_TPC_REQ_EID            34
-#define SIR_MAC_TPC_REQ_EID_MIN            0
-#define SIR_MAC_TPC_REQ_EID_MAX            255
-/* SIR_MAC_EXTENDED_CAP_EID    35 */
 #define SIR_MAC_TPC_RPT_EID            35
-#define SIR_MAC_TPC_RPT_EID_MIN            2
-#define SIR_MAC_TPC_RPT_EID_MAX            2
-#define SIR_MAC_SPRTD_CHNLS_EID        36
-#define SIR_MAC_SPRTD_CHNLS_EID_MIN        2
-#define SIR_MAC_SPRTD_CHNLS_EID_MAX        254
 #define SIR_MAC_CHNL_SWITCH_ANN_EID    37
-#define SIR_MAC_CHNL_SWITCH_ANN_EID_MIN    3
-#define SIR_MAC_CHNL_SWITCH_ANN_EID_MAX    3
-#define SIR_MAC_MEAS_REQ_EID           38
-#define SIR_MAC_MEAS_REQ_EID_MIN           3
-#define SIR_MAC_MEAS_REQ_EID_MAX           255
-#define SIR_MAC_MEAS_RPT_EID           39
-#define SIR_MAC_MEAS_RPT_EID_MIN           3
-#define SIR_MAC_MEAS_RPT_EID_MAX           255
-#define SIR_MAC_QUIET_EID              40
-#define SIR_MAC_QUIET_EID_MIN              6
-#define SIR_MAC_QUIET_EID_MAX              6
-#define SIR_MAC_IBSS_DFS_EID           41
-#define SIR_MAC_IBSS_DFS_EID_MIN           7
-#define SIR_MAC_IBSS_DFS_EID_MAX           255
 #define SIR_MAC_ERP_INFO_EID           42
-#define SIR_MAC_ERP_INFO_EID_MIN           0
-#define SIR_MAC_ERP_INFO_EID_MAX           255
-#define SIR_MAC_TS_DELAY_EID           43
-#define SIR_MAC_TS_DELAY_EID_MIN           4
-#define SIR_MAC_TS_DELAY_EID_MAX           4
-#define SIR_MAC_TCLAS_PROC_EID         44
-#define SIR_MAC_TCLAS_PROC_EID_MIN         1
-#define SIR_MAC_TCLAS_PROC_EID_MAX         1
 #define SIR_MAC_QOS_CAPABILITY_EID     46
-#define SIR_MAC_QOS_CAPABILITY_EID_MIN     1
-#define SIR_MAC_QOS_CAPABILITY_EID_MAX     1
 #define SIR_MAC_RSN_EID                48
-#define SIR_MAC_RSN_EID_MIN                4
-#define SIR_MAC_RSN_EID_MAX                254
 
-/* using reserved EID for Qos Action IE for now, */
-/* need to check 11e spec for the actual EID */
-#define SIR_MAC_QOS_ACTION_EID         49
-#define SIR_MAC_QOS_ACTION_EID_MIN         4
-#define SIR_MAC_QOS_ACTION_EID_MAX         255
 #define SIR_MAC_EXTENDED_RATE_EID      50
-#define SIR_MAC_EXTENDED_RATE_EID_MIN      0
-#define SIR_MAC_EXTENDED_RATE_EID_MAX      255
 #define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID 60
-#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID_MIN    0
-#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID_MAX    255
 
 #define SIR_MAC_OPERATING_CLASS_EID    59
-#define SIR_MAC_OPERATING_CLASS_EID_MIN    2
-#define SIR_MAC_OPERATING_CLASS_EID_MAX    253
 /* reserved       51-69 */
 #define SIR_MAC_RM_ENABLED_CAPABILITY_EID      70
-#define SIR_MAC_RM_ENABLED_CAPABILITY_EID_MIN  5
 #define SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX  5
 /* reserved       71-220 */
 #define SIR_MAC_WPA_EID                221
-#define SIR_MAC_WPA_EID_MIN                0
-#define SIR_MAC_WPA_EID_MAX                255
 
 #define SIR_MAC_EID_VENDOR                221
 
 #define SIR_MAC_WAPI_EID                68
 /* reserved                            222-254 */
 #define SIR_MAC_HT_CAPABILITIES_EID    45
-#define SIR_MAC_HT_CAPABILITIES_EID_MIN    0
-#define SIR_MAC_HT_CAPABILITIES_EID_MAX    255
 #define SIR_MAC_HT_INFO_EID      61
-#define SIR_MAC_HT_INFO_EID_MIN    0
-#define SIR_MAC_HT_INFO_EID_MAX    255
 
 #define SIR_MAC_VHT_CAPABILITIES_EID   191
 #define SIR_MAC_VHT_OPERATION_EID      192
@@ -421,11 +320,6 @@
 #define SIR_MAC_QCOM_VENDOR_OUI      "\x00\xA0\xC6"
 #define SIR_MAC_QCOM_VENDOR_SIZE     3
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
-/* / Workaround IE to change beacon length when it is 4*n+1 */
-#define SIR_MAC_ANI_WORKAROUND_EID     255
-#define SIR_MAC_ANI_WORKAROUND_EID_MIN     0
-#define SIR_MAC_ANI_WORKAROUND_EID_MAX     255
 
 #define SIR_MAC_MAX_ADD_IE_LENGTH       2048
 
@@ -456,7 +350,6 @@
 #define SIR_MAC_P2P_OUI_SIZE        4
 #define SIR_P2P_NOA_ATTR            12
 #define SIR_MAX_NOA_ATTR_LEN        31
-#define SIR_MAX_NOA_DESCR           2
 #define SIR_P2P_IE_HEADER_LEN       6
 
 #define SIR_MAC_CISCO_OUI "\x00\x40\x96"
@@ -472,81 +365,17 @@
 /* min size of wme oui header: oui(3) + type + subtype + version */
 #define SIR_MAC_OUI_WME_HDR_MIN       6
 
-/* OUI subtype and their lengths */
-#define SIR_MAC_OUI_SUBTYPE_WME_INFO  0
-#define SIR_MAC_OUI_WME_INFO_MIN      7
-#define SIR_MAC_OUI_WME_INFO_MAX      7
-
-#define SIR_MAC_OUI_SUBTYPE_WME_PARAM 1
-#define SIR_MAC_OUI_WME_PARAM_MIN     24
-#define SIR_MAC_OUI_WME_PARAM_MAX     24
-
-#define SIR_MAC_OUI_SUBTYPE_WME_TSPEC 2
-#define SIR_MAC_OUI_WME_TSPEC_MIN     61
-#define SIR_MAC_OUI_WME_TSPEC_MAX     61
-
-#define SIR_MAC_OUI_SUBTYPE_WSM_TSPEC 2 /* same as WME TSPEC */
-#define SIR_MAC_OUI_WSM_TSPEC_MIN     61
-#define SIR_MAC_OUI_WSM_TSPEC_MAX     61
-
-/* reserved subtypes                        3-4 */
-/* WSM capability */
-#define SIR_MAC_OUI_SUBTYPE_WSM_CAPABLE     5
-#define SIR_MAC_OUI_WSM_CAPABLE_MIN         7
-#define SIR_MAC_OUI_WSM_CAPABLE_MAX         7
-/* WSM classifier */
-#define SIR_MAC_OUI_SUBTYPE_WSM_TCLAS       6
-#define SIR_MAC_OUI_WSM_TCLAS_MIN           10
-#define SIR_MAC_OUI_WSM_TCLAS_MAX           255
-/* classifier processing element */
-#define SIR_MAC_OUI_SUBTYPE_WSM_TCLASPROC   7
-#define SIR_MAC_OUI_WSM_TCLASPROC_MIN       7
-#define SIR_MAC_OUI_WSM_TCLASPROC_MAX       7
-/* tspec delay element */
-#define SIR_MAC_OUI_SUBTYPE_WSM_TSDELAY     8
-#define SIR_MAC_OUI_WSM_TSDELAY_MIN         10
-#define SIR_MAC_OUI_WSM_TSDELAY_MAX         10
-/* schedule element */
-#define SIR_MAC_OUI_SUBTYPE_WSM_SCHEDULE    9
-#define SIR_MAC_OUI_WSM_SCHEDULE_MIN        20
-#define SIR_MAC_OUI_WSM_SCHEDULE_MAX        20
-
-#define SIR_MAC_NS_OFFLOAD_SIZE             1   /* support only one IPv6 offload */
 #define SIR_MAC_IPV6_ADDR_LEN               16
-#define SIR_IPV6_ADDR_VALID                 1
-#define SIR_IPV6_ADDR_UC_TYPE               0
-#define SIR_IPV6_ADDR_AC_TYPE               1
-
 /* ----------------------------------------------------------------------------- */
 
 /* OFFSET definitions for fixed fields in Management frames */
 
 /* Beacon/Probe Response offsets */
-#define SIR_MAC_TS_OFFSET                    0
-#define SIR_MAC_BEACON_INT_OFFSET            8  /* Beacon Interval offset */
 #define SIR_MAC_B_PR_CAPAB_OFFSET            10
 #define SIR_MAC_B_PR_SSID_OFFSET             12
 
 /* Association/Reassociation offsets */
-#define SIR_MAC_ASSOC_CAPAB_OFFSET           0
-#define SIR_MAC_LISTEN_INT_OFFSET            2  /* Listen Interval offset */
-#define SIR_MAC_ASSOC_SSID_OFFSET            4
-#define SIR_MAC_CURRENT_AP_OFFSET            4
 #define SIR_MAC_REASSOC_SSID_OFFSET          10
-#define SIR_MAC_ASSOC_STATUS_CODE_OFFSET     2
-#define SIR_MAC_ASSOC_AID_OFFSET             4
-#define SIR_MAC_ASSOC_RSP_RATE_OFFSET        6
-
-/* Disassociation/Deauthentication offsets */
-#define SIR_MAC_REASON_CODE_OFFSET           0
-
-/* Probe Request offset */
-#define SIR_MAC_PROBE_REQ_SSID_OFFSET        0
-
-/* Authentication offsets */
-#define SIR_MAC_AUTH_ALGO_OFFSET             0
-#define SIR_MAC_AUTH_XACT_SEQNUM_OFFSET      2
-#define SIR_MAC_AUTH_STATUS_CODE_OFFSET      4
 
 /* / Transaction sequence number definitions (used in Authentication frames) */
 #define    SIR_MAC_AUTH_FRAME_1        1
@@ -617,10 +446,6 @@
 
 #define IS_WES_MODE_ENABLED(x) \
 	((x)->mlme_cfg->lfr.wes_mode_enabled)
-
-#define BA_RECIPIENT       1
-#define BA_INITIATOR       2
-#define BA_BOTH_DIRECTIONS 3
 
 #define SIR_MAC_VENDOR_AP_1_OUI             "\x00\x0C\x43"
 #define SIR_MAC_VENDOR_AP_1_OUI_LEN         3
@@ -1216,7 +1041,6 @@ typedef struct sSirMacTclasParamIPv4 {
 } qdf_packed tSirMacTclasParamIPv4;
 
 #define SIR_MAC_TCLAS_IPV4  4
-#define SIR_MAC_TCLAS_IPV6  6
 
 typedef struct sSirMacTclasParamIPv6 {
 	uint8_t version;
@@ -1351,11 +1175,6 @@ typedef struct sSirMacMeasReqIE {
 	uint8_t measType;
 	tSirMacMeasReqField measReqField;
 } tSirMacMeasReqIE, *tpSirMacMeasReqIE;
-
-#define SIR_MAC_MAX_SUPP_RATES            32
-
-#define SIR_MAC_MAX_SUPP_CHANNELS            100
-#define SIR_MAC_MAX_EXTN_CAP               8
 
 /* VHT Capabilities Info */
 typedef struct sSirMacVHTCapabilityInfo {
@@ -1544,47 +1363,6 @@ typedef struct sHtCaps {
 
 } qdf_packed tHtCaps;
 
-/* During 11h channel switch, the AP can indicate if the
- * STA needs to stop the transmission or continue until the
- * channel-switch.
- * eSIR_CHANSW_MODE_NORMAL - STA can continue transmission
- * eSIR_CHANSW_MODE_SILENT - STA should stop transmission
- */
-typedef enum eSirMacChanSwMode {
-	eSIR_CHANSW_MODE_NORMAL = 0,
-	eSIR_CHANSW_MODE_SILENT = 1
-} tSirMacChanSwitchMode;
-
-typedef struct _BarControl {
-
-#ifndef ANI_BIG_BYTE_ENDIAN
-
-	uint16_t barAckPolicy:1;
-	uint16_t multiTID:1;
-	uint16_t bitMap:1;
-	uint16_t rsvd:9;
-	uint16_t numTID:4;
-
-#else
-	uint16_t numTID:4;
-	uint16_t rsvd:9;
-	uint16_t bitMap:1;
-	uint16_t multiTID:1;
-	uint16_t barAckPolicy:1;
-
-#endif
-
-} qdf_packed barCtrlType;
-
-typedef struct _BARFrmStruct {
-	tSirMacFrameCtl fc;
-	uint16_t duration;
-	tSirMacAddr rxAddr;
-	tSirMacAddr txAddr;
-	barCtrlType barControl;
-	tSirMacSeqCtl ssnCtrl;
-} qdf_packed BARFrmType;
-
 /* Supported MCS set */
 #define SIZE_OF_SUPPORTED_MCS_SET                          16
 #define SIZE_OF_BASIC_MCS_SET                              16
@@ -1740,24 +1518,6 @@ typedef struct sSirMacASCapabilityInfo {
 #endif
 } qdf_packed tSirMacASCapabilityInfo;
 
-typedef struct sSirMacProbeReqFrame {
-	tSirMacSSidIE ssIdIE;
-	tSirMacRateSetIE rateSetIE;
-	tSirMacRateSetIE extendedRateSetIE;
-} qdf_packed tSirMacProbeReqFrame, *tpSirMacProbeReqFrame;
-
-typedef struct sSirMacProbeRspFrame {
-	tSirMacTimeStamp ts;
-	tSirMacBeaconInterval beaconInterval;
-	tSirMacCapabilityInfo capabilityInfo;
-	tSirMacSSidIE ssIdIE;
-	tSirMacRateSetIE rateSetIE;
-	tSirMacRateSetIE extendedRateSetIE;
-	tSirMacNonErpPresentIE nonErpPresent;
-	tSirMacDsParamSetIE dsParamsIE;
-	tSirMacCfParamSetIE cfParamsIE;
-} qdf_packed tSirMacProbeRspFrame, *tpSirMacProbeRspFrame;
-
 typedef struct sSirMacAuthFrameBody {
 	uint16_t authAlgoNumber;
 	uint16_t authTransactionSeqNumber;
@@ -1774,34 +1534,6 @@ typedef struct sSirMacAuthFrameBody {
 	uint8_t nonce[SIR_FILS_NONCE_LENGTH];
 #endif
 } qdf_packed tSirMacAuthFrameBody, *tpSirMacAuthFrameBody;
-
-typedef struct sSirMacAuthenticationFrame {
-	tSirMacAuthFrameBody authFrameBody;
-} qdf_packed tSirMacAuthFrame, *tpSirMacAuthFrame;
-
-typedef struct sSirMacAssocReqFrame {
-	tSirMacCapabilityInfo capabilityInfo;
-	uint16_t listenInterval;
-	tSirMacSSidIE ssIdIE;
-	tSirMacRateSetIE rateSetIE;
-	tSirMacRateSetIE extendedRateSetIE;
-} qdf_packed tSirMacAssocReqFrame, *tpSirMacAssocReqFrame;
-
-typedef struct sSirMacAssocRspFrame {
-	tSirMacCapabilityInfo capabilityInfo;
-	uint16_t statusCode;
-	uint16_t aid;
-	tSirMacRateSetIE supportedRates;
-	tSirMacRateSetIE extendedRateSetIE;
-} qdf_packed tSirMacAssocRspFrame, *tpSirMacAssocRspFrame;
-
-typedef struct sSirMacDisassocFrame {
-	uint16_t reasonCode;
-} qdf_packed tSirMacDisassocFrame, *tpSirMacDisassocFrame;
-
-typedef struct sDSirMacDeauthFrame {
-	uint16_t reasonCode;
-} qdf_packed tSirMacDeauthFrame, *tpSirMacDeauthFrame;
 
 /* / Common header for all action frames */
 typedef struct sSirMacActionFrameHdr {
@@ -1823,13 +1555,6 @@ typedef struct sSirMacVendorSpecificPublicActionFrameHdr {
 	uint8_t dialogToken;
 } qdf_packed tSirMacVendorSpecificPublicActionFrameHdr,
 *tpSirMacVendorSpecificPublicActionFrameHdr;
-
-typedef struct sSirMacP2PActionFrameHdr {
-	uint8_t category;
-	uint8_t Oui[4];
-	uint8_t OuiSubType;
-	uint8_t dialogToken;
-} qdf_packed tSirMacP2PActionFrameHdr, *tpSirMacP2PActionFrameHdr;
 
 typedef struct sSirMacMeasActionFrameHdr {
 	uint8_t category;
@@ -2357,8 +2082,6 @@ struct he_capability_info {
 
 #define SIR_MAC_MIN_IE_LEN 2    /* Minimum IE length for IE validation */
 
-#define SIR_MAC_TI_TYPE_REASSOC_DEADLINE        1
-#define SIR_MAC_TI_TYPE_KEY_LIFETIME            2
 #define SIR_MAC_TI_TYPE_ASSOC_COMEBACK          3
 
 #define SIR_MAC_VHT_CAP_MAX_MPDU_LEN              0
