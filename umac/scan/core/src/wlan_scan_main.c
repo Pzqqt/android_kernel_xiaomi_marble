@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,7 @@ QDF_STATUS wlan_scan_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	scan_obj = qdf_mem_malloc_atomic(sizeof(struct wlan_scan_obj));
-	if (scan_obj == NULL) {
+	if (!scan_obj) {
 		scm_err("Failed to allocate memory");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -79,7 +79,7 @@ QDF_STATUS wlan_scan_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	scan_vdev_obj = qdf_mem_malloc_atomic(sizeof(struct scan_vdev_obj));
-	if (scan_vdev_obj == NULL) {
+	if (!scan_vdev_obj) {
 		scm_err("Failed to allocate memory");
 		return QDF_STATUS_E_NOMEM;
 	}

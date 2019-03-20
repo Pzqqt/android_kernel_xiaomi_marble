@@ -389,7 +389,7 @@ static QDF_STATUS
 util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 	struct ie_header *ie)
 {
-	if (scan_params->ie_list.vendor == NULL)
+	if (!scan_params->ie_list.vendor)
 		scan_params->ie_list.vendor = (uint8_t *)ie;
 
 	if (is_wpa_oui((uint8_t *)ie)) {
@@ -416,7 +416,7 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.sonadv = (uint8_t *)ie;
 	} else if (is_ht_cap((uint8_t *)ie)) {
 		/* we only care if there isn't already an HT IE (ANA) */
-		if (scan_params->ie_list.htcap == NULL) {
+		if (!scan_params->ie_list.htcap) {
 			if (ie->ie_len != (WLAN_VENDOR_HT_IE_OFFSET_LEN +
 					   sizeof(struct htcap_cmn_ie)))
 				return QDF_STATUS_E_INVAL;
@@ -425,7 +425,7 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		}
 	} else if (is_ht_info((uint8_t *)ie)) {
 		/* we only care if there isn't already an HT IE (ANA) */
-		if (scan_params->ie_list.htinfo == NULL) {
+		if (!scan_params->ie_list.htinfo) {
 			if (ie->ie_len != WLAN_VENDOR_HT_IE_OFFSET_LEN +
 					  sizeof(struct wlan_ie_htinfo_cmn))
 				return QDF_STATUS_E_INVAL;

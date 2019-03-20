@@ -108,7 +108,7 @@ static QDF_STATUS scm_del_scan_node_from_db(struct scan_dbs *scan_db,
  */
 static void scm_scan_entry_get_ref(struct scan_cache_node *scan_node)
 {
-	if (scan_node == NULL) {
+	if (!scan_node) {
 		scm_err("scan_node is NULL");
 		QDF_ASSERT(0);
 		return;
@@ -804,7 +804,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	list_count = qdf_list_size(scan_list);
 	for (i = 0; i < list_count; i++) {
 		status = qdf_list_remove_front(scan_list, &next_node);
-		if (QDF_IS_STATUS_ERROR(status) || next_node == NULL) {
+		if (QDF_IS_STATUS_ERROR(status) || !next_node) {
 			scm_debug("list remove failure i:%d, lsize:%d, BSSID: %pM",
 				  i, list_count, hdr->i_addr3);
 			status = QDF_STATUS_E_INVAL;

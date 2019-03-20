@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -546,7 +546,7 @@ util_scan_entry_copy_ie_data(struct scan_cache_entry *scan_entry,
 	u_int16_t    buff_len;
 
 	/* iebuf can be NULL, ie_len must be a valid pointer. */
-	QDF_ASSERT(ie_len != NULL);
+	QDF_ASSERT(ie_len);
 	if (!ie_len)
 		return QDF_STATUS_E_NULL_VALUE;
 
@@ -557,7 +557,7 @@ util_scan_entry_copy_ie_data(struct scan_cache_entry *scan_entry,
 	 * it's large enough.
 	 * If no buffer is passed, just return the length of the IE blob.
 	 */
-	if (iebuf != NULL) {
+	if (iebuf) {
 		if (*ie_len >= buff_len) {
 			qdf_mem_copy(iebuf, buff, buff_len);
 			*ie_len = buff_len;
@@ -591,7 +591,7 @@ util_scan_free_cache_entry(struct scan_cache_entry *scan_entry)
 }
 
 #define conv_ptr(_address, _base1, _base2) \
-	((_address != NULL) ? (((u_int8_t *) (_address) - \
+	((_address) ? (((u_int8_t *) (_address) - \
 	(u_int8_t *) (_base1)) + (u_int8_t *) (_base2)) : NULL)
 
 /**

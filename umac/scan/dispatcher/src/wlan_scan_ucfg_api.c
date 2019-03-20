@@ -1488,7 +1488,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (scan_obj == NULL) {
+	if (!scan_obj) {
 		scm_err("Failed to get scan object");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1633,7 +1633,7 @@ ucfg_scan_psoc_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (scan_obj == NULL) {
+	if (!scan_obj) {
 		scm_err("Failed to get scan object");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1658,7 +1658,7 @@ ucfg_scan_psoc_close(struct wlan_objmgr_psoc *psoc)
 	}
 	scm_db_deinit(psoc);
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (scan_obj == NULL) {
+	if (!scan_obj) {
 		scm_err("Failed to get scan object");
 		return QDF_STATUS_E_FAILURE;
 	}
