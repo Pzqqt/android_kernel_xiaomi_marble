@@ -494,4 +494,11 @@ struct afe_cmd_remote_lpass_core_hw_devote_request {
 int afe_vote_lpass_core_hw(uint32_t hw_block_id, char *client_name,
 			uint32_t *client_handle);
 int afe_unvote_lpass_core_hw(uint32_t hw_block_id, uint32_t client_handle);
+int afe_get_spk_initial_cal(void);
+void afe_get_spk_r0(int *spk_r0);
+void afe_get_spk_t0(int *spk_t0);
+int afe_get_spk_v_vali_flag(void);
+void afe_get_spk_v_vali_sts(int *spk_v_vali_sts);
+void afe_set_spk_initial_cal(int initial_cal);
+void afe_set_spk_v_vali_flag(int v_vali_flag);
 #endif /* __Q6AFE_V2_H__ */
