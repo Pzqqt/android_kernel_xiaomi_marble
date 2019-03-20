@@ -4583,6 +4583,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	struct dp_soc *soc = pdev->soc;
 	struct dp_peer *peer;
 	uint16_t *peer_ids;
+	struct dp_ast_entry *ase, *tmp_ase;
 	uint8_t i = 0, j = 0;
 
 	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(peer_ids[0]));
@@ -4606,6 +4607,19 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 			peer = __dp_peer_find_by_id(soc, peer_ids[i]);
 
 			if (peer) {
+				if (soc->is_peer_map_unmap_v2) {
+					/* free AST entries of peer before
+					 * release peer reference
+					 */
+					DP_PEER_ITERATE_ASE_LIST(peer, ase,
+								 tmp_ase) {
+						dp_rx_peer_unmap_handler
+							(soc, peer_ids[i],
+							 vdev->vdev_id,
+							 ase->mac_addr.raw,
+							 1);
+					}
+				}
 				dp_rx_peer_unmap_handler(soc, peer_ids[i],
 							 vdev->vdev_id,
 							 peer->mac_addr.raw,
@@ -4618,6 +4632,19 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 				dp_info("peer: %pM is getting flush",
 					peer->mac_addr.raw);
 
+				if (soc->is_peer_map_unmap_v2) {
+					/* free AST entries of peer before
+					 * release peer reference
+					 */
+					DP_PEER_ITERATE_ASE_LIST(peer, ase,
+								 tmp_ase) {
+						dp_rx_peer_unmap_handler
+							(soc, peer_ids[i],
+							 vdev->vdev_id,
+							 ase->mac_addr.raw,
+							 1);
+					}
+				}
 				dp_peer_delete_wifi3(peer, 0);
 				/*
 				 * we need to call dp_peer_unref_del_find_by_id
