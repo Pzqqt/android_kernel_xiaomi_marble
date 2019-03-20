@@ -805,6 +805,19 @@ QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* CRYPTO_SET_KEY_CONVERGED */
 /**
+ * wlan_crypto_get_pmksa - called to get pmksa of bssid passed.
+ * @vdev: vdev
+ * @bssid: bssid
+ *
+ * This function gets called from to get pmksa for the bssid.
+ *
+ * Return: wlan_crypto_pmksa when match found else NULL.
+ */
+struct wlan_crypto_pmksa *
+wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev,
+		      struct qdf_mac_addr *bssid);
+
+/**
  * wlan_crypto_pmksa_flush - called to flush saved pmksa
  * @crypto_params: crypto_params
  *

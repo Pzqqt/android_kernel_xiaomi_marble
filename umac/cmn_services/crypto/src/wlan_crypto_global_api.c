@@ -331,6 +331,8 @@ QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 		if (qdf_is_macaddr_equal(&pmksa->bssid,
 					 &crypto_params->pmksa[i]->bssid)) {
 			/* free the current pmksa and use this slot */
+			qdf_mem_zero(crypto_params->pmksa[i],
+				     sizeof(struct wlan_crypto_pmksa));
 			qdf_mem_free(crypto_params->pmksa[i]);
 			crypto_params->pmksa[i] = pmksa;
 			return QDF_STATUS_SUCCESS;
@@ -339,7 +341,6 @@ QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 
 	if (i == WLAN_CRYPTO_MAX_PMKID && !slot_found) {
 		crypto_err("no entry available for pmksa");
-		qdf_mem_free(pmksa);
 		return QDF_STATUS_E_INVAL;
 	}
 	crypto_params->pmksa[first_available_slot] = pmksa;
@@ -359,6 +360,8 @@ QDF_STATUS wlan_crypto_del_pmksa(struct wlan_crypto_params *crypto_params,
 			continue;
 		if (qdf_is_macaddr_equal(&pmksa->bssid,
 					 &crypto_params->pmksa[i]->bssid)) {
+			qdf_mem_zero(crypto_params->pmksa[i],
+				     sizeof(struct wlan_crypto_pmksa));
 			qdf_mem_free(crypto_params->pmksa[i]);
 			crypto_params->pmksa[i] = NULL;
 			return QDF_STATUS_SUCCESS;
@@ -375,6 +378,8 @@ QDF_STATUS wlan_crypto_pmksa_flush(struct wlan_crypto_params *crypto_params)
 	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
 		if (!crypto_params->pmksa[i])
 			continue;
+		qdf_mem_zero(crypto_params->pmksa[i],
+			     sizeof(struct wlan_crypto_pmksa));
 		qdf_mem_free(crypto_params->pmksa[i]);
 		crypto_params->pmksa[i] = NULL;
 	}
@@ -420,16 +425,7 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-/**
- * wlan_crypto_get_pmksa - called to get pmksa of bssid passed.
- * @vdev: vdev
- * @bssid: bssid
- *
- * This function gets called from to get pmksa for the bssid.
- *
- * Return: wlan_crypto_pmksa when match found else NULL.
- */
-static struct wlan_crypto_pmksa *
+struct wlan_crypto_pmksa *
 wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *bssid)
 {
 	struct wlan_crypto_comp_priv *crypto_priv;
@@ -3835,6 +3831,18 @@ wlan_crypto_merge_prarams(struct wlan_crypto_params *dst_params,
 	dst_params->rsn_caps |= src_params->rsn_caps;
 }
 
+static void
+wlan_crypto_reset_prarams(struct wlan_crypto_params *params)
+{
+	params->authmodeset = 0;
+	params->ucastcipherset = 0;
+	params->mcastcipherset = 0;
+	params->mgmtcipherset = 0;
+	params->cipher_caps = 0;
+	params->key_mgmt = 0;
+	params->rsn_caps = 0;
+}
+
 QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 						uint8_t *ie_ptr,
 						uint16_t ie_len)
@@ -3865,7 +3873,7 @@ QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 
 	vdev_crypto_params = &crypto_priv->crypto_params;
 
-	qdf_mem_zero(vdev_crypto_params, sizeof(struct wlan_crypto_params));
+	wlan_crypto_reset_prarams(vdev_crypto_params);
 	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params,
 						    ie_ptr, ie_len);
 	if (QDF_STATUS_SUCCESS == status) {

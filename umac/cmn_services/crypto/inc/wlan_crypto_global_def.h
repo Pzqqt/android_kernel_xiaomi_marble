@@ -213,12 +213,16 @@ enum wlan_crypto_key_type {
 /**
  * struct wlan_crypto_pmksa - structure of crypto to contain pmkid
  * @bssid: bssid for which pmkid is saved
- * @pmkid: pmkid
+ * @pmkid: pmkid info
+ * @pmk: pmk info
+ * @pmk_len: pmk len
  */
 
 struct wlan_crypto_pmksa {
 	struct qdf_mac_addr bssid;
 	uint8_t    pmkid[PMKID_LEN];
+	uint8_t    pmk[MAX_PMK_LEN];
+	uint8_t    pmk_len;
 };
 
 /**

@@ -377,6 +377,7 @@ enum extn_element_ie {
 #define WLAN_RSN_SELECTOR_LEN 4
 #define WLAN_WPA_SELECTOR_LEN 4
 #define PMKID_LEN 16
+#define MAX_PMK_LEN 64
 #define MAX_PMKID 4
 
 #define WLAN_WPA_OUI 0xf25000
