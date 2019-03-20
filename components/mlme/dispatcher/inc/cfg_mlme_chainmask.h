@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,7 +116,12 @@
  * @Max: 3
  * @Default: 1
  *
- * This ini is used to set default tx chain Mask1ss
+ * This ini is used to set default tx chain Mask for 1ss
+ *
+ * 0 - 3X3
+ * 1 - 2X2
+ * 2 - 3X2
+ * 3 - 2X3
  *
  * Related: None
  *

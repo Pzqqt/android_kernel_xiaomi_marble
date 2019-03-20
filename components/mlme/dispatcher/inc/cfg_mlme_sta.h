@@ -322,6 +322,9 @@
  *
  * This ini is used to set replay counter for all TID's
  *
+ * 0 - Separate replay counter for all TID
+ * 1 - Single replay counter for all TID
+ *
  * Related: None.
  *
  * Supported Feature: WMM
