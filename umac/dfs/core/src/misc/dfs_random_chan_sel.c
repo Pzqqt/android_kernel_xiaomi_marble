@@ -764,7 +764,7 @@ dfs_find_target_channel_in_channel_matrix(enum phy_ch_width ch_width,
 		}
 	}
 
-	if (NULL == target_chan_matrix) {
+	if (!target_chan_matrix) {
 		return false;
 	} else {
 		*pTarget_chnl_mtrx = target_chan_matrix;

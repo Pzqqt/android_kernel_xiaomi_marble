@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -82,7 +82,7 @@ void dfs_print_filters(struct wlan_dfs *dfs)
 	}
 
 	for (i = 0; i < DFS_MAX_RADAR_TYPES; i++) {
-		if (dfs->dfs_radarf[i] != NULL) {
+		if (dfs->dfs_radarf[i]) {
 			ft = dfs->dfs_radarf[i];
 			if ((ft->ft_numfilters > DFS_MAX_NUM_RADAR_FILTERS) ||
 					(!ft->ft_numfilters)) {

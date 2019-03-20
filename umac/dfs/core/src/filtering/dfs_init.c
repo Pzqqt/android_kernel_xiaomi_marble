@@ -40,7 +40,7 @@ static inline void dfs_reset_filtertype(
 	for (j = 0; j < ft->ft_numfilters; j++) {
 		rf = ft->ft_filters[j];
 		dl = &(rf->rf_dl);
-		if (dl != NULL) {
+		if (dl) {
 			qdf_mem_zero(dl, sizeof(*dl));
 			dl->dl_lastelem = (0xFFFFFFFF) & DFS_MAX_DL_MASK;
 		}
@@ -69,7 +69,7 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 	pl->pl_lastelem = DFS_MAX_PULSE_BUFFER_MASK;
 
 	for (i = 0; i < DFS_MAX_RADAR_TYPES; i++) {
-		if (dfs->dfs_radarf[i] != NULL) {
+		if (dfs->dfs_radarf[i]) {
 			ft = dfs->dfs_radarf[i];
 			dfs_reset_filtertype(ft);
 		}

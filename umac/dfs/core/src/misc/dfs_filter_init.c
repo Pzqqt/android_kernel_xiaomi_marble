@@ -311,7 +311,7 @@ bad2:
 	dfs->dfs_ftindextable = NULL;
 bad1:
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
-		if (dfs->dfs_radarf[n] != NULL) {
+		if (dfs->dfs_radarf[n]) {
 			dfs_free_filter(dfs->dfs_radarf[n]);
 			qdf_mem_free(dfs->dfs_radarf[n]);
 			dfs->dfs_radarf[n] = NULL;
@@ -364,22 +364,22 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 	dfs_reset_radarq(dfs);
 	dfs_reset_alldelaylines(dfs);
 
-	if (dfs->pulses != NULL) {
+	if (dfs->pulses) {
 		dfs_free_dfs_pulseline(dfs->pulses);
 		dfs->pulses = NULL;
 	}
 
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
-		if (dfs->dfs_radarf[n] != NULL) {
+		if (dfs->dfs_radarf[n]) {
 			dfs_free_filter(dfs->dfs_radarf[n]);
 			qdf_mem_free(dfs->dfs_radarf[n]);
 			dfs->dfs_radarf[n] = NULL;
 		}
 	}
 
-	if (dfs->dfs_ftindextable != NULL) {
+	if (dfs->dfs_ftindextable) {
 		for (n = 0; n < DFS_NUM_FT_IDX_TBL_ROWS; n++) {
-			if (dfs->dfs_ftindextable[n] != NULL) {
+			if (dfs->dfs_ftindextable[n]) {
 				qdf_mem_free(dfs->dfs_ftindextable[n]);
 				dfs->dfs_ftindextable[n] = NULL;
 			}
@@ -389,7 +389,7 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 		dfs->wlan_dfs_isdfsregdomain = 0;
 	}
 
-	if (dfs->dfs_b5radars != NULL) {
+	if (dfs->dfs_b5radars) {
 		qdf_mem_free(dfs->dfs_b5radars);
 		dfs->dfs_b5radars = NULL;
 	}
@@ -402,7 +402,7 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 	if (!empty)
 		dfs_reset_arq(dfs);
 
-	if (dfs->events != NULL) {
+	if (dfs->events) {
 		dfs_free_dfs_events(dfs->events);
 		dfs->events = NULL;
 	}

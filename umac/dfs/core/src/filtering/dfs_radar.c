@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2011, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -103,7 +103,7 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 				(dfs->dfs_radar[i].rs_chan.dfs_ch_flags ==
 				 cmp_ch->dfs_ch_flags)
 		   ) {
-			if (index != NULL)
+			if (index)
 				*index = (uint8_t)i;
 			return &(dfs->dfs_radar[i]);
 		}
@@ -119,7 +119,7 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 			dfs_phyerr_param_copy(&rs->rs_param,
 					&dfs->dfs_defaultparams);
 
-			if (index != NULL)
+			if (index)
 				*index = (uint8_t)i;
 
 			return rs;
@@ -179,8 +179,8 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 		if (err == QDF_STATUS_SUCCESS)
 			rs_ext = dfs_getchanstate(dfs, &index_ext, 1);
 
-		if (rs_pri != NULL && ((err == QDF_STATUS_E_FAILURE) ||
-					(rs_ext != NULL))) {
+		if (rs_pri && ((err == QDF_STATUS_E_FAILURE) ||
+					(rs_ext))) {
 			struct wlan_dfs_phyerr_param pe;
 
 			qdf_mem_set(&pe, sizeof(pe), '\0');

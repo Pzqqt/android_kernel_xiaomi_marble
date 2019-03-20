@@ -460,7 +460,7 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 				"Found on channel minDur = %d, filterId = %d",
 				ft->ft_mindur,
-				rf != NULL ?  rf->rf_pulseid : -1);
+				rf ?  rf->rf_pulseid : -1);
 	}
 
 	return;
@@ -709,7 +709,7 @@ static inline void dfs_remove_event_from_radarq(
 {
 	WLAN_DFSQ_LOCK(dfs);
 	*event = STAILQ_FIRST(&(dfs->dfs_radarq));
-	if (*event != NULL)
+	if (*event)
 		STAILQ_REMOVE_HEAD(&(dfs->dfs_radarq), re_list);
 	WLAN_DFSQ_UNLOCK(dfs);
 }
