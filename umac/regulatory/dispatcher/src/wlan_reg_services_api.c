@@ -564,7 +564,7 @@ QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 			WLAN_UMAC_COMP_REGULATORY);
 
-	if (NULL == pdev_priv_obj) {
+	if (!pdev_priv_obj) {
 		reg_err("reg pdev private obj is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -590,7 +590,7 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 			WLAN_UMAC_COMP_REGULATORY);
 
-	if (NULL == pdev_priv_obj) {
+	if (!pdev_priv_obj) {
 		reg_err("reg pdev private obj is NULL");
 		return QDF_STATUS_E_FAULT;
 	}
