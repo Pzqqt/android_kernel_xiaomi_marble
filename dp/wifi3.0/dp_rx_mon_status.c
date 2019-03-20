@@ -435,7 +435,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			return;
 	}
 	ppdu_nbuf = qdf_nbuf_alloc(soc->osdev,
-			sizeof(struct hal_rx_ppdu_info), 0, 0, FALSE);
+			sizeof(struct cdp_rx_indication_ppdu), 0, 0, FALSE);
 	if (ppdu_nbuf) {
 		dp_rx_populate_cdp_indication_ppdu(pdev, ppdu_info, ppdu_nbuf);
 		qdf_nbuf_put_tail(ppdu_nbuf,
