@@ -649,6 +649,17 @@ struct cdp_ctrl_ops {
 			*txrx_pdev_handle, char *macaddr, uint8_t enb_dsb);
 
 	void (*calculate_delay_stats)(struct cdp_vdev *vdev, qdf_nbuf_t nbuf);
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+	QDF_STATUS (*txrx_update_pdev_rx_protocol_tag)(
+			struct cdp_pdev *txrx_pdev_handle,
+			uint32_t protocol_mask, uint16_t protocol_type,
+			uint16_t tag);
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+	void (*txrx_dump_pdev_rx_protocol_tag_stats)(
+				struct cdp_pdev *txrx_pdev_handle,
+				uint16_t protocol_type);
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 };
 
 struct cdp_me_ops {

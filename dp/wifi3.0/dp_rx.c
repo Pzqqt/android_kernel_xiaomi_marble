@@ -1856,6 +1856,9 @@ done:
 
 		dp_set_rx_queue(nbuf, ring_id);
 
+		/* Update the protocol tag in SKB based on CCE metadata */
+		dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr, true);
+
 		/*
 		 * HW structures call this L3 header padding --
 		 * even though this is actually the offset from

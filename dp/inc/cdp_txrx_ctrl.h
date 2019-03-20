@@ -26,6 +26,7 @@
 #define _CDP_TXRX_CTRL_H_
 #include "cdp_txrx_handle.h"
 #include "cdp_txrx_cmn_struct.h"
+#include "cdp_txrx_cmn.h"
 #include "cdp_txrx_ops.h"
 
 static inline int cdp_is_target_ar900b
@@ -701,6 +702,67 @@ cdp_get_pldev(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->txrx_get_pldev(pdev);
 }
+
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * cdp_update_pdev_rx_protocol_tag() - wrapper function to set the protocol
+ *                                    tag in CDP layer from cfg layer
+ * @soc: SOC TXRX handle
+ * @pdev: CDP pdev pointer
+ * @protocol_mask: Bitmap for protocol for which tagging is enabled
+ * @protocol_type: Protocol type for which the tag should be update
+ * @tag: Actual tag value for the given prototype
+ * Return: Returns QDF_STATUS_SUCCESS/FAILURE
+ */
+static inline QDF_STATUS
+cdp_update_pdev_rx_protocol_tag(ol_txrx_soc_handle soc,
+				struct cdp_pdev *pdev, uint32_t protocol_mask,
+				uint16_t protocol_type, uint16_t tag)
+{
+	if (!soc || !soc->ops) {
+		dp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_update_pdev_rx_protocol_tag)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_update_pdev_rx_protocol_tag
+			(pdev, protocol_mask, protocol_type, tag);
+}
+
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+/**
+ * cdp_dump_pdev_rx_protocol_tag_stats() - wrapper function to dump the protocol
+				tag statistics for given or all protocols
+ * @soc: SOC TXRX handle
+ * @pdev: CDP pdev pointer
+ * @protocol_type: Protocol type for which the tag should be update
+ * Return: Returns QDF_STATUS_SUCCESS/FAILURE
+ */
+static inline QDF_STATUS
+cdp_dump_pdev_rx_protocol_tag_stats(ol_txrx_soc_handle soc,
+				    struct cdp_pdev *pdev,
+				    uint16_t protocol_type)
+{
+	if (!soc || !soc->ops) {
+		dp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_dump_pdev_rx_protocol_tag_stats)
+		return QDF_STATUS_E_FAILURE;
+
+	soc->ops->ctrl_ops->txrx_dump_pdev_rx_protocol_tag_stats(pdev,
+						protocol_type);
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
 #ifdef ATH_SUPPORT_NAC_RSSI
 /**

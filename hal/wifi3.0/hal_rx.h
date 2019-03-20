@@ -852,6 +852,29 @@ hal_rx_attn_phy_ppdu_id_get(uint8_t *buf)
 	return phy_ppdu_id;
 }
 
+#define HAL_RX_ATTN_CCE_MATCH_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,	\
+		RX_ATTENTION_1_CCE_MATCH_OFFSET)),		\
+		RX_ATTENTION_1_CCE_MATCH_MASK,			\
+		RX_ATTENTION_1_CCE_MATCH_LSB))
+
+/*
+ * hal_rx_msdu_cce_match_get(): get CCE match bit
+ * from rx attention
+ * @buf: pointer to rx_pkt_tlvs
+ * Return: CCE match value
+ */
+static inline bool
+hal_rx_msdu_cce_match_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+	bool cce_match_val;
+
+	cce_match_val = HAL_RX_ATTN_CCE_MATCH_GET(rx_attn);
+	return cce_match_val;
+}
+
 /*
  * Get peer_meta_data from RX_MPDU_INFO within RX_MPDU_START
  */
@@ -1863,6 +1886,31 @@ hal_rx_msdu_end_last_msdu_get(uint8_t *buf)
 
 	return last_msdu;
 }
+
+#define HAL_RX_MSDU_END_CCE_METADATA_GET(_rx_msdu_end)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
+		RX_MSDU_END_16_CCE_METADATA_OFFSET)),	\
+		RX_MSDU_END_16_CCE_METADATA_MASK,		\
+		RX_MSDU_END_16_CCE_METADATA_LSB))
+
+/**
+ * hal_rx_msdu_cce_metadata_get: API to get CCE metadata
+ * from rx_msdu_end TLV
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * Return: last_msdu
+ */
+
+static inline uint32_t
+hal_rx_msdu_cce_metadata_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	uint32_t cce_metadata;
+
+	cce_metadata = HAL_RX_MSDU_END_CCE_METADATA_GET(msdu_end);
+	return cce_metadata;
+}
+
 /*******************************************************************************
  * RX ERROR APIS
  ******************************************************************************/
@@ -2697,10 +2745,8 @@ uint16_t hal_rx_get_rx_sequence(uint8_t *buf)
 	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);
 	uint16_t seq_number = 0;
 
-	seq_number =
-		HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info) >> 4;
+	seq_number = HAL_RX_MPDU_GET_SEQUENCE_NUMBER(rx_mpdu_info);
 
-	/* Skip first 4-bits for fragment number */
 	return seq_number;
 }
 

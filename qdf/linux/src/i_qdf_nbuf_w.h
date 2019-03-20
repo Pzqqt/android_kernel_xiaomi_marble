@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,6 +71,16 @@
 
 #define __qdf_nbuf_get_tx_fctx(skb) \
 		 QDF_NBUF_CB_TX_FCTX((skb))
+
+#define QDF_NBUF_CB_RX_PROTOCOL_TAG(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.rx.dev.priv_cb_w.protocol_tag)
+
+#define __qdf_nbuf_set_rx_protocol_tag(skb, val) \
+		((QDF_NBUF_CB_RX_PROTOCOL_TAG((skb))) = val)
+
+#define __qdf_nbuf_get_rx_protocol_tag(skb) \
+		(QDF_NBUF_CB_RX_PROTOCOL_TAG((skb)))
 
 /**
  * qdf_nbuf_cb_update_peer_local_id() - update peer local id in skb cb

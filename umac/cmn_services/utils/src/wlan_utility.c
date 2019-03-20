@@ -251,6 +251,8 @@ QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_INVAL;
 }
 
+qdf_export_symbol(wlan_util_is_vdev_active);
+
 #ifdef CMN_VDEV_MLME_SM_ENABLE
 void wlan_util_change_map_index(unsigned long *map, uint8_t id, uint8_t set)
 {

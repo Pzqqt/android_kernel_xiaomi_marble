@@ -929,6 +929,181 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
 }
 #endif
 
+#if defined(WLAN_SUPPORT_RX_TAG_STATISTICS) && \
+	defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG)
+/*
+ * dp_rx_update_rx_protocol_tag_stats() - Increments the protocol tag stats
+ *                                        for the given protocol type
+ *
+ * @soc: core txrx main context
+ * @pdev: TXRX pdev context for which the stats should be incremented
+ * @protocol_index: Protocol index for which the stats should be incremented
+ * Return: void
+ */
+static inline void dp_rx_update_rx_protocol_tag_stats(struct dp_pdev *pdev,
+						      uint16_t protocol_index)
+{
+	DP_STATS_INC(pdev, rx_protocol_tag_stats[protocol_index].tag_ctr, 1);
+}
+#else
+static inline void dp_rx_update_rx_protocol_tag_stats(struct dp_pdev *pdev,
+						      uint16_t protocol_index)
+{
+}
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+
+/*
+ * dp_rx_update_protocol_tag() - Reads CCE metadata from the RX MSDU end TLV
+ *                              and set the corresponding tag in QDF packet
+ *
+ * @soc           : core txrx main context
+ * @vdev          : vdev on which the packet is received
+ * @nbuf          : QDF packet buffer on which the protocol tag should be set
+ * @rx_tlv_hdr    : base address where the RX TLVs starts
+ * @update_stats  : Flag to indicate whether to update stats or not
+ * Return         : void
+ */
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+static inline void
+dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
+			  qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
+			  bool update_stats)
+{
+	uint16_t cce_metadata = RX_PROTOCOL_TAG_START_OFFSET;
+	bool     cce_match = false;
+	struct   dp_pdev *pdev = vdev->pdev;
+	uint16_t protocol_tag = 0;
+
+	if (qdf_unlikely(pdev->rx_protocol_tagging_enabled)) {
+		/*
+		 * In case of raw frames, rx_attention and rx_msdu_end tlv
+		 * may be stale or invalid. Do not tag such frames.
+		 * Default decap_type is set to ethernet for monitor vdev,
+		 * therefore, cannot check decap_type for monitor mode.
+		 * We will call this only for eth frames from dp_rx_mon_dest.c.
+		 */
+		if (qdf_unlikely((pdev->monitor_vdev &&
+				  pdev->monitor_vdev == vdev) ||
+		    (vdev->rx_decap_type ==  htt_cmn_pkt_type_ethernet))) {
+			/*
+			 * Check whether HW has filled in the CCE metadata in
+			 * this packet, if not filled, just return
+			 */
+			if (qdf_unlikely(
+			    hal_rx_msdu_cce_match_get(rx_tlv_hdr))) {
+				cce_match = true;
+				/* Get the cce_metadata from RX MSDU TLV */
+				cce_metadata =
+				    (hal_rx_msdu_cce_metadata_get(rx_tlv_hdr) &
+				     RX_MSDU_END_16_CCE_METADATA_MASK);
+				/*
+				 * Received CCE metadata should be within the
+				 * valid limits
+				 */
+				qdf_assert_always((cce_metadata >=
+					RX_PROTOCOL_TAG_START_OFFSET) &&
+					(cce_metadata <
+					(RX_PROTOCOL_TAG_START_OFFSET +
+						RX_PROTOCOL_TAG_MAX)));
+
+				/*
+				 * The CCE metadata received is just the
+				 * packet_type + RX_PROTOCOL_TAG_START_OFFSET
+				 */
+				cce_metadata -= RX_PROTOCOL_TAG_START_OFFSET;
+
+				/*
+				 * Update the QDF packet with the user-specified
+				 * tag/metadata by looking up tag value for
+				 * received protocol type.
+				 */
+				protocol_tag =
+				    pdev->rx_proto_tag_map[cce_metadata].tag;
+				qdf_nbuf_set_rx_protocol_tag(nbuf,
+							     protocol_tag);
+				if (qdf_unlikely(update_stats))
+					dp_rx_update_rx_protocol_tag_stats(
+							pdev, cce_metadata);
+			}
+		}
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
+			  "Seq:%u decap:%u CCE Match:%d ProtoID:%u Tag:%u US:%d",
+			  hal_rx_get_rx_sequence(rx_tlv_hdr),
+			  vdev->rx_decap_type, cce_match, cce_metadata,
+			  protocol_tag, update_stats);
+	}
+}
+#else
+static inline void
+dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
+			  qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
+			  bool update_stats)
+{
+	/* Stub API */
+}
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
+/*
+ * dp_rx_mon_update_protocol_tag() - Performs necessary checks for monitor mode
+ *				and then tags appropriate packets
+ * @soc           : core txrx main context
+ * @vdev          : pdev on which packet is received
+ * @msdu          : QDF packet buffer on which the protocol tag should be set
+ * @rx_desc       : base address where the RX TLVs start
+ * Return         : void
+ */
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+static inline
+void dp_rx_mon_update_protocol_tag(struct dp_soc *soc, struct dp_pdev *dp_pdev,
+				   qdf_nbuf_t msdu, void *rx_desc)
+{
+	/*
+	 * Update the protocol tag in SKB for packets received on BSS.
+	 * Do not update tag stats since it would double actual received count
+	 */
+	if (qdf_unlikely(dp_pdev->rx_protocol_tagging_enabled &&
+			 dp_pdev->monitor_vdev &&
+			 (1 == dp_pdev->ppdu_info.rx_status.rxpcu_filter_pass)
+			 )) {
+		uint32_t msdu_ppdu_id =
+		    HAL_RX_HW_DESC_GET_PPDUID_GET(rx_desc);
+
+		if (msdu_ppdu_id !=
+		    dp_pdev->ppdu_info.com_info.ppdu_id) {
+			QDF_TRACE(
+			  QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_ERROR,
+			  "msdu_ppdu_id=%x,com_info.ppdu_id=%x",
+			  msdu_ppdu_id,
+			  dp_pdev->ppdu_info.com_info.ppdu_id);
+		} else {
+			struct mon_rx_status *pmon_rx_status;
+
+			pmon_rx_status =
+				&dp_pdev->ppdu_info.rx_status;
+			if (pmon_rx_status->
+			    frame_control_info_valid &&
+			    ((pmon_rx_status->frame_control &
+			    IEEE80211_FC0_TYPE_MASK) ==
+			    IEEE80211_FC0_TYPE_DATA)) {
+				dp_rx_update_protocol_tag(
+				  soc,
+				  dp_pdev->monitor_vdev,
+				  msdu,
+				  rx_desc, false);
+			}
+		}
+	}
+}
+#else
+static inline
+void dp_rx_mon_update_protocol_tag(struct dp_soc *soc, struct dp_pdev *dp_pdev,
+				   qdf_nbuf_t msdu, void *rx_desc)
+{
+	/* Stub API */
+}
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization

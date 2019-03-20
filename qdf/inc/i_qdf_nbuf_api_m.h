@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017,2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,4 +55,23 @@ static inline void qdf_nbuf_ipa_priv_set(qdf_nbuf_t buf, uint32_t priv)
 	__qdf_nbuf_ipa_priv_set(buf, priv);
 }
 
+/**
+ * qdf_nbuf_set_rx_protocol_tag()
+ * @buf: Network buffer
+ * @val: Value to be set
+ * Return: void
+ */
+static inline void qdf_nbuf_set_rx_protocol_tag(qdf_nbuf_t buf, uint32_t val)
+{
+}
+
+/**
+ * qdf_nbuf_get_rx_protocol_tag()
+ * @buf: Network buffer
+ * Return: void
+ */
+static inline int qdf_nbuf_get_rx_protocol_tag(qdf_nbuf_t buf)
+{
+	return 0;
+}
 #endif /* _QDF_NBUF_M_H */

@@ -234,6 +234,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_SCHEDULER_ID:          mlme scheduler
  * @WLAN_CFR_ID:                CFG Capture method
  * @WLAN_VDEV_TARGET_IF_ID:     Target interface layer
+ * @WLAN_RX_PKT_TAG_ID:         RX protocol tag operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -290,6 +291,7 @@ typedef enum {
 	WLAN_SCHEDULER_ID          = 47,
 	WLAN_CFR_ID                = 48,
 	WLAN_VDEV_TARGET_IF_ID     = 49,
+	WLAN_RX_PKT_TAG_ID         = 50,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -353,6 +355,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_SCHEDULER_ID",
 					"WLAN_CFR_ID",
 					"WLAN_VDEV_TARGET_IF_ID",
+					"WLAN_RX_PKT_TAG_ID",
 					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];

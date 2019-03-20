@@ -816,6 +816,13 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 					 qdf_nbuf_len(nbuf));
 
+			/*
+			 * Update the protocol tag in SKB based on
+			 * CCE metadata
+			 */
+			dp_rx_update_protocol_tag(soc, vdev, nbuf,
+						  rx_tlv_hdr, true);
+
 			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
 						rx_tlv_hdr) &&
 					 (vdev->rx_decap_type ==
@@ -992,6 +999,9 @@ process_rx:
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
+		/* Update the protocol tag in SKB based on CCE metadata */
+		dp_rx_update_protocol_tag(soc, vdev, nbuf,
+					  rx_tlv_hdr, true);
 		DP_STATS_INC(peer, rx.to_stack.num, 1);
 		vdev->osif_rx(vdev->osif_vdev, nbuf);
 	}

@@ -1134,6 +1134,13 @@ struct ppdu_info {
 	TAILQ_ENTRY(ppdu_info) ppdu_info_list_elem;
 };
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+struct rx_protocol_tag_map {
+	/* This is the user configured tag for the said protocol type */
+	uint16_t tag;
+};
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/**
@@ -1430,6 +1437,19 @@ struct dp_pdev {
 
 	/* unique cookie required for peer session */
 	uint32_t next_peer_cookie;
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+	/*
+	 * Run time enabled when the first protocol tag is added,
+	 * run time disabled when the last protocol tag is deleted
+	 */
+	bool  rx_protocol_tagging_enabled;
+
+	/*
+	 * The protocol type is used as array index to save
+	 * user provided tag info
+	 */
+	struct rx_protocol_tag_map rx_proto_tag_map[RX_PROTOCOL_TAG_MAX];
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 };
 
 struct dp_peer;

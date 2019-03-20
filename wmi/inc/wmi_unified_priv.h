@@ -1938,6 +1938,11 @@ QDF_STATUS (*send_vdev_tidmap_prec_cmd)(wmi_unified_t wmi_handle,
 #endif
 QDF_STATUS (*send_mws_coex_status_req_cmd)(wmi_unified_t wmi_handle,
 					   uint32_t vdev_id, uint32_t cmd_id);
+
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+QDF_STATUS (*set_rx_pkt_type_routing_tag_cmd)(
+	wmi_unified_t wmi_hdl, struct wmi_rx_pkt_protocol_routing_info *param);
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 };
 
 /* Forward declartion for psoc*/

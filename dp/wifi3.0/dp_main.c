@@ -9525,6 +9525,90 @@ dp_enable_peer_based_pktlog(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
+ * applied to the desired protocol type packets
+ * @txrx_pdev_handle: cdp_pdev handle
+ * @enable_rx_protocol_tag - bitmask that indicates what protocol types
+ * are enabled for tagging. zero indicates disable feature, non-zero indicates
+ * enable feature
+ * @protocol_type: new protocol type for which the tag is being added
+ * @tag: user configured tag for the new protocol
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
+			       uint32_t enable_rx_protocol_tag,
+			       uint16_t protocol_type,
+			       uint16_t tag)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	/*
+	 * dynamically enable/disable tagging based on enable_rx_protocol_tag
+	 * flag.
+	 */
+	if (enable_rx_protocol_tag) {
+		/* Tagging for one or more protocols has been set by user */
+		pdev->rx_protocol_tagging_enabled = true;
+	} else {
+		/*
+		 * No protocols being tagged, disable feature till next add
+		 * operation
+		 */
+		pdev->rx_protocol_tagging_enabled = false;
+	}
+
+	if (tag == 0) {
+		/*
+		 * In case of tag deletion, clear the stats for given
+		 * protocol type.
+		 */
+		DP_STATS_UPD(pdev,
+			     rx_protocol_tag_stats[protocol_type].tag_ctr, 0);
+	}
+
+	pdev->rx_proto_tag_map[protocol_type].tag = tag;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+static void
+dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
+				   uint16_t protocol_type)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (protocol_type != RX_PROTOCOL_TAG_ALL &&
+	    protocol_type >= RX_PROTOCOL_TAG_MAX) {
+		DP_PRINT_STATS("%s : Invalid protocol type : %u\n",
+			       __func__, protocol_type);
+		return;
+	}
+
+	if (protocol_type == RX_PROTOCOL_TAG_ALL) {
+		uint8_t protocol_index = 0;
+
+		for (protocol_index = 0; protocol_index < RX_PROTOCOL_TAG_MAX;
+		     protocol_index++) {
+			DP_PRINT_STATS("PROTO: %d, TAG: %u COUNT = %u\n",
+				       protocol_index,
+			pdev->rx_proto_tag_map[protocol_index].tag,
+			pdev->stats.
+				rx_protocol_tag_stats[protocol_index].tag_ctr);
+		}
+	} else {
+		DP_PRINT_STATS("PROTO: %d, TAG: %u COUNT = %u\n",
+			       protocol_type,
+		pdev->rx_proto_tag_map[protocol_type].tag,
+		pdev->stats.rx_protocol_tag_stats[protocol_type].tag_ctr);
+	}
+}
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint32_t max_peers,
 					   uint32_t max_ast_index,
@@ -9973,6 +10057,13 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_get_vdev_param = dp_get_vdev_param,
 	.enable_peer_based_pktlog = dp_enable_peer_based_pktlog,
 	.calculate_delay_stats = dp_calculate_delay_stats,
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+	.txrx_update_pdev_rx_protocol_tag = dp_update_pdev_rx_protocol_tag,
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+	.txrx_dump_pdev_rx_protocol_tag_stats =
+				dp_dump_pdev_rx_protocol_tag_stats,
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 };
 
 static struct cdp_me_ops dp_ops_me = {

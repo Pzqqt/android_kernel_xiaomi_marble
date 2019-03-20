@@ -1233,8 +1233,12 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 
 		filter_category = HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_0,
 							RXPCU_MPDU_FILTER_IN_CATEGORY);
-		if (filter_category == 1)
+
+		if (filter_category == 0)
+			ppdu_info->rx_status.rxpcu_filter_pass = 1;
+		else if (filter_category == 1)
 			ppdu_info->rx_status.monitor_direct_used = 1;
+
 		break;
 	}
 	case WIFIRX_MPDU_END_E:

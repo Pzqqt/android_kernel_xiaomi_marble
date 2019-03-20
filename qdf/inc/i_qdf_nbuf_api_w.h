@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017,2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,4 +64,26 @@ qdf_nbuf_set_ext_cb(qdf_nbuf_t buf, void *ref)
 	__qdf_nbuf_set_ext_cb(buf, ref);
 }
 
+/**
+ * qdf_nbuf_set_rx_protocol_tag() - set given value in protocol_tag
+ * field of buf(skb->cb)
+ * @buf: Network buffer
+ * @val: Value to be set
+ * Return: void
+ */
+static inline void qdf_nbuf_set_rx_protocol_tag(qdf_nbuf_t buf, uint32_t val)
+{
+	__qdf_nbuf_set_rx_protocol_tag(buf, val);
+}
+
+/**
+ * qdf_nbuf_get_rx_protocol_tag() - Get the value of protocol_tag
+ * field of buf(skb->cb)
+ * @buf: Network buffer
+ * Return: void
+ */
+static inline int qdf_nbuf_get_rx_protocol_tag(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_rx_protocol_tag(buf);
+}
 #endif /* _QDF_NBUF_W_H */

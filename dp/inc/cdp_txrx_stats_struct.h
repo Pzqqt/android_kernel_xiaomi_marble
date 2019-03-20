@@ -1138,6 +1138,27 @@ struct cdp_htt_rx_pdev_stats {
     struct cdp_htt_rx_pdev_fw_stats_phy_err_tlv fw_stats_phy_err_tlv;
 };
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/* Since protocol type enumeration value is passed as CCE metadata
+ * to firmware, add a constant offset before passing it to firmware
+ */
+#define RX_PROTOCOL_TAG_START_OFFSET  128
+/* This should align with packet type enumerations in ieee80211_ioctl.h
+ * and wmi_unified_param.h files
+ */
+#define RX_PROTOCOL_TAG_MAX   24
+/* Macro that should be used to dump the statistics counter for all
+ * protocol types
+ */
+#define RX_PROTOCOL_TAG_ALL 0xff
+
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+struct cdp_pdev_rx_protocol_tag_stats {
+	uint32_t tag_ctr;
+};
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
 /* struct cdp_pdev_stats - pdev stats
  * @msdu_not_done: packets dropped because msdu done bit not set
  * @mec:Multicast Echo check
@@ -1213,6 +1234,12 @@ struct cdp_pdev_stats {
 	/* Received wdi messages from fw */
 	uint32_t wdi_event[CDP_WDI_NUM_EVENTS];
 	struct cdp_tid_stats tid_stats;
+
+#if defined(WLAN_SUPPORT_RX_TAG_STATISTICS) && \
+	defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG)
+	struct cdp_pdev_rx_protocol_tag_stats
+			rx_protocol_tag_stats[RX_PROTOCOL_TAG_MAX];
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 };
 
 #ifndef BIG_ENDIAN_HOST

@@ -352,9 +352,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_DEBUG,
-				"[%s] i=%d, ppdu_id=%x, num_msdus = %u\n",
-				__func__, i, *ppdu_id,
-				 num_msdus);
+				"[%s] i=%d, ppdu_id=%x, num_msdus = %u",
+				__func__, i, *ppdu_id, num_msdus);
 
 			if (is_first_msdu) {
 				if (!HAL_RX_HW_DESC_MPDU_VALID(
@@ -741,6 +740,9 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		if (is_first_frag) {
 			is_first_frag = 0;
 		}
+
+		/* Update protocol tag for MSDU */
+		dp_rx_mon_update_protocol_tag(soc, dp_pdev, msdu_orig, rx_desc);
 
 		dest = qdf_nbuf_put_tail(prev_buf,
 				msdu_llc_len + amsdu_pad);

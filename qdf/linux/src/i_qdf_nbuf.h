@@ -101,7 +101,10 @@ typedef union {
  * @rx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
  * @rx.dev.priv_cb_w.msdu_len: length of RX packet
  * @rx.dev.priv_cb_w.peer_id: peer_id for RX packet
- * @rx.dev.priv_cb_w.reserved1: reserved
+ * @rx.dev.priv_cb_w.protocol_tag:	protocol tag set by application for
+ *				received packet type
+ * @rx.dev.priv_cb_w.reserved1: reserved for flow tag set by application
+ *				for 5 tuples received
  *
  * @rx.dev.priv_cb_m.tcp_seq_num: TCP sequence number
  * @rx.dev.priv_cb_m.tcp_ack_num: TCP ACK number
@@ -207,7 +210,8 @@ struct qdf_nbuf_cb {
 					void *fctx;
 					uint16_t msdu_len;
 					uint16_t peer_id;
-					uint32_t reserved1;
+					uint16_t protocol_tag;
+					uint16_t reserved1;
 				} priv_cb_w;
 				struct {
 					/* ipa_owned bit is common between rx

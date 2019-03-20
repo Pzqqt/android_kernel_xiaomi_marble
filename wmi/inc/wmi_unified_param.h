@@ -7933,4 +7933,104 @@ struct mws_antenna_sharing_info {
 	int32_t  mrc_threshold;
 	uint32_t grant_duration;
 };
+
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * enum wmi_pdev_pkt_routing_op_code_type - packet routing supported opcodes
+ * @ADD_PKT_ROUTING: Add packet routing command
+ * @DEL_PKT_ROUTING: Delete packet routing command
+ *
+ * Defines supported opcodes for packet routing/tagging
+ */
+enum wmi_pdev_pkt_routing_op_code_type {
+	ADD_PKT_ROUTING,
+	DEL_PKT_ROUTING,
+};
+
+/**
+ * enum wmi_pdev_pkt_routing_pkt_type - supported packet types for
+ * routing & tagging
+ * @PDEV_PKT_TYPE_ARP_IPV4: Route/Tag for packet type ARP IPv4 (L3)
+ * @PDEV_PKT_TYPE_NS_IPV6: Route/Tag for packet type NS IPv6 (L3)
+ * @PDEV_PKT_TYPE_IGMP_IPV4: Route/Tag for packet type IGMP IPv4 (L3)
+ * @PDEV_PKT_TYPE_MLD_IPV6: Route/Tag for packet type MLD IPv6 (L3)
+ * @PDEV_PKT_TYPE_DHCP_IPV4: Route/Tag for packet type DHCP IPv4 (APP)
+ * @PDEV_PKT_TYPE_DHCP_IPV6: Route/Tag for packet type DHCP IPv6 (APP)
+ * @PDEV_PKT_TYPE_DNS_TCP_IPV4: Route/Tag for packet type TCP DNS IPv4 (APP)
+ * @PDEV_PKT_TYPE_DNS_TCP_IPV6: Route/Tag for packet type TCP DNS IPv6 (APP)
+ * @PDEV_PKT_TYPE_DNS_UDP_IPV4: Route/Tag for packet type UDP DNS IPv4 (APP)
+ * @PDEV_PKT_TYPE_DNS_UDP_IPV6: Route/Tag for packet type UDP DNS IPv6 (APP)
+ * @PDEV_PKT_TYPE_ICMP_IPV4: Route/Tag for packet type ICMP IPv4 (L3)
+ * @PDEV_PKT_TYPE_ICMP_IPV6: Route/Tag for packet type ICMP IPv6 (L3)
+ * @PDEV_PKT_TYPE_TCP_IPV4: Route/Tag for packet type TCP IPv4 (L4)
+ * @PDEV_PKT_TYPE_TCP_IPV6: Route/Tag for packet type TCP IPv6 (L4)
+ * @PDEV_PKT_TYPE_UDP_IPV4: Route/Tag for packet type UDP IPv4 (L4)
+ * @PDEV_PKT_TYPE_UDP_IPV6: Route/Tag for packet type UDP IPv6 (L4)
+ * @PDEV_PKT_TYPE_IPV4: Route/Tag for packet type IPv4 (L3)
+ * @PDEV_PKT_TYPE_IPV6: Route/Tag for packet type IPv6 (L3)
+ * @PDEV_PKT_TYPE_EAP: Route/Tag for packet type EAP (L2)
+ *
+ * Defines supported protocol types for routing/tagging
+ */
+enum wmi_pdev_pkt_routing_pkt_type {
+	PDEV_PKT_TYPE_ARP_IPV4,
+	PDEV_PKT_TYPE_NS_IPV6,
+	PDEV_PKT_TYPE_IGMP_IPV4,
+	PDEV_PKT_TYPE_MLD_IPV6,
+	PDEV_PKT_TYPE_DHCP_IPV4,
+	PDEV_PKT_TYPE_DHCP_IPV6,
+	PDEV_PKT_TYPE_DNS_TCP_IPV4,
+	PDEV_PKT_TYPE_DNS_TCP_IPV6,
+	PDEV_PKT_TYPE_DNS_UDP_IPV4,
+	PDEV_PKT_TYPE_DNS_UDP_IPV6,
+	PDEV_PKT_TYPE_ICMP_IPV4,
+	PDEV_PKT_TYPE_ICMP_IPV6,
+	PDEV_PKT_TYPE_TCP_IPV4,
+	PDEV_PKT_TYPE_TCP_IPV6,
+	PDEV_PKT_TYPE_UDP_IPV4,
+	PDEV_PKT_TYPE_UDP_IPV6,
+	PDEV_PKT_TYPE_IPV4,
+	PDEV_PKT_TYPE_IPV6,
+	PDEV_PKT_TYPE_EAP,
+	PDEV_PKT_TYPE_MAX
+};
+
+/**
+ * enum wmi_pdev_dest_ring_handler_type - packet routing options post CCE
+ * tagging
+ * @PDEV_WIFIRXCCE_USE_CCE_E: Use REO destination ring from CCE
+ * @PDEV_WIFIRXCCE_USE_ASPT_E: Use REO destination ring from ASPT
+ * @PDEV_WIFIRXCCE_USE_FT_E: Use REO destination ring from FSE
+ * @PDEV_WIFIRXCCE_USE_CCE2_E: Use REO destination ring from CCE2
+ *
+ * Defines various options for routing policy
+ */
+enum wmi_pdev_dest_ring_handler_type {
+	PDEV_WIFIRXCCE_USE_CCE_E  = 0,
+	PDEV_WIFIRXCCE_USE_ASPT_E = 1,
+	PDEV_WIFIRXCCE_USE_FT_E   = 2,
+	PDEV_WIFIRXCCE_USE_CCE2_E = 3,
+};
+
+/**
+ * struct wmi_rx_pkt_protocol_routing_info - RX packet routing/tagging params
+ * @pdev_id: pdev id
+ * @op_code: Opcode option from wmi_pdev_pkt_routing_op_code_type enum
+ * @routing_type_bitmap: Bitmap of protocol that is being configured. Only
+ * one protocol can be configured in one command. Supported protocol list
+ * from enum wmi_pdev_pkt_routing_pkt_type
+ * @dest_ring_handler: Destination ring selection from enum
+ * wmi_pdev_dest_ring_handler_type
+ * @dest_ring: Destination ring number to use if dest ring handler is CCE
+ * @meta_data: Metadata to tag with for given protocol
+ */
+struct wmi_rx_pkt_protocol_routing_info {
+	uint32_t      pdev_id;
+	enum wmi_pdev_pkt_routing_op_code_type op_code;
+	uint32_t      routing_type_bitmap;
+	uint32_t      dest_ring_handler;
+	uint32_t      dest_ring;
+	uint32_t      meta_data;
+};
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 #endif /* _WMI_UNIFIED_PARAM_H_ */

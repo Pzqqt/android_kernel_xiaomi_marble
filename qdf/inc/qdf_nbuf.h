@@ -226,6 +226,8 @@
  * @chan_noise_floor: Channel Noise Floor for the pdev
  * @data_sequence_control_info_valid: field to indicate validity of seq control
  * @first_data_seq_ctrl: Sequence ctrl field of first data frame
+ * @rxpcu_filter_pass: Flag which indicates whether RX packets are received in
+ *						BSS mode(not in promisc mode)
  */
 struct mon_rx_status {
 	uint64_t tsft;
@@ -304,6 +306,7 @@ struct mon_rx_status {
 	uint8_t data_sequence_control_info_valid;
 	uint16_t first_data_seq_ctrl;
 	uint8_t ltf_size;
+	uint8_t rxpcu_filter_pass;
 };
 
 /**
