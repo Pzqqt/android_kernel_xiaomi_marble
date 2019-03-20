@@ -5467,9 +5467,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		hdd_clear_fils_connection_info(adapter);
 
-		status = sme_roam_del_pmkid_from_cache(mac_handle,
-						       adapter->vdev_id,
-						       NULL, true);
+		status = wlan_hdd_flush_pmksa_cache(adapter);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("Cannot flush PMKIDCache");
 

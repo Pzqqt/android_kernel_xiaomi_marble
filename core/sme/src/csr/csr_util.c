@@ -3221,7 +3221,7 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 
 	if (!csr_lookup_pmkid_using_bssid(mac, session, &pmkid_cache, &index))
 		return false;
-	session_pmkid = &session->PmkidCacheInfo[index].PMKID[0];
+	session_pmkid = &pmkid_cache.PMKID[0];
 	for (i = 0; i < pmkid_count; i++) {
 		if (!qdf_mem_cmp(pmkid + (i * PMKID_LEN),
 				 session_pmkid, PMKID_LEN))
@@ -3654,6 +3654,35 @@ static bool csr_lookup_pmkid_using_ssid(struct mac_context *mac,
 }
 #endif
 
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
+				  struct csr_roam_session *session,
+				  tPmkidCacheInfo *pmk_cache,
+				  uint32_t *index)
+{
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, session->vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return false;
+	}
+
+	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache->BSSID);
+	if (!pmksa) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return false;
+	}
+	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, sizeof(pmk_cache->PMKID));
+	qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
+	pmk_cache->pmk_len = pmksa->pmk_len;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return true;
+}
+#else
 bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
@@ -3672,12 +3701,15 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 			/* match found */
 			*index = i;
 			sme_debug("PMKID found at index %d", i);
+			qdf_mem_copy(pmk_cache, session_pmk,
+				     sizeof(tPmkidCacheInfo));
 			return true;
 		}
 	}
 
 	return false;
 }
+#endif
 
 #ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
 /**

@@ -19787,6 +19787,99 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return errno;
 }
 
+#ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
+static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
+					   tPmkidCacheInfo *pmk_cache)
+{
+	QDF_STATUS result;
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	pmksa = qdf_mem_malloc(sizeof(*pmksa));
+	if (!pmksa) {
+		hdd_objmgr_put_vdev(vdev);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_copy_macaddr(&pmksa->bssid, &pmk_cache->BSSID);
+	qdf_mem_copy(pmksa->pmkid, pmk_cache->PMKID, PMKID_LEN);
+	qdf_mem_copy(pmksa->pmk, pmk_cache->pmk, pmk_cache->pmk_len);
+	pmksa->pmk_len = pmk_cache->pmk_len;
+
+	result = wlan_crypto_set_del_pmksa(vdev, pmksa, true);
+	if (result != QDF_STATUS_SUCCESS) {
+		qdf_mem_zero(pmksa, sizeof(*pmksa));
+		qdf_mem_free(pmksa);
+	}
+	hdd_objmgr_put_vdev(vdev);
+
+	return result;
+}
+
+static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
+					   tPmkidCacheInfo *pmk_cache)
+{
+	QDF_STATUS result;
+	struct wlan_crypto_pmksa pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_copy_macaddr(&pmksa.bssid, &pmk_cache->BSSID);
+	result = wlan_crypto_set_del_pmksa(adapter->vdev, &pmksa, false);
+	hdd_objmgr_put_vdev(vdev);
+
+	return result;
+}
+
+QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
+{
+	QDF_STATUS result;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+
+	result = wlan_crypto_set_del_pmksa(adapter->vdev, NULL, false);
+	hdd_objmgr_put_vdev(vdev);
+
+	return result;
+}
+#else
+static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
+					   tPmkidCacheInfo *pmk_cache)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return sme_roam_set_pmkid_cache(
+		hdd_ctx->mac_handle, adapter->vdev_id, pmk_cache, 1, false);
+}
+
+static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
+					   tPmkidCacheInfo *pmk_cache)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return sme_roam_del_pmkid_from_cache(
+			hdd_ctx->mac_handle, adapter->vdev_id, pmk_cache,
+			false);
+}
+
+QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return sme_roam_del_pmkid_from_cache(
+		hdd_ctx->mac_handle, adapter->vdev_id, NULL, true);
+}
+#endif
+
 #if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 	 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 /*
@@ -19954,8 +20047,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	 * 2. pmk
 	 * 3. bssid or cache identifier
 	 */
-	result = sme_roam_set_pmkid_cache(mac_handle, adapter->vdev_id,
-					  &pmk_cache, 1, false);
+	result = wlan_hdd_set_pmksa_cache(adapter, &pmk_cache);
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_SET_PMKSA,
@@ -20049,9 +20141,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 
 	/* Delete the PMKID CSR cache */
 	if (QDF_STATUS_SUCCESS !=
-	    sme_roam_del_pmkid_from_cache(mac_handle,
-					  adapter->vdev_id, &pmk_cache,
-					  false)) {
+	    wlan_hdd_del_pmksa_cache(adapter, &pmk_cache)) {
 		hdd_err("Failed to delete PMKSA for " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pmksa->bssid));
 		status = -EINVAL;
@@ -20127,9 +20217,7 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	status = sme_roam_del_pmkid_from_cache(mac_handle,
-					       adapter->vdev_id,
-					       NULL, true);
+	status = wlan_hdd_flush_pmksa_cache(adapter);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Cannot flush PMKIDCache");
 		errno = -EINVAL;
@@ -21402,8 +21490,7 @@ wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(pmk_cache.PMKID, params->pmkid,
 			     PMKID_LEN);
-		result = sme_roam_set_pmkid_cache(mac_handle, adapter->vdev_id,
-						  &pmk_cache, 1, false);
+		result = wlan_hdd_set_pmksa_cache(adapter, &pmk_cache);
 		if (!QDF_IS_STATUS_SUCCESS(result))
 			hdd_debug("external_auth: Failed to cache PMKID");
 	}

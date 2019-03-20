@@ -597,6 +597,15 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 					     uint32_t kek_len,
 					     uint8_t *replay_ctr,
 					     bool big_endian);
+
+/**
+ * wlan_hdd_flush_pmksa_cache() - flush pmksa cache for adapter
+ * @adapter: Adapter context
+ *
+ * Return: qdf status
+ */
+QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter);
+
 /*
  * wlan_hdd_send_mode_change_event() - API to send hw mode change event to
  * userspace

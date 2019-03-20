@@ -21351,12 +21351,10 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		if (csr_lookup_pmkid_using_bssid(mac_ctx, session,
 						 &pmkid_cache,
 						 &pmkid_index)) {
-			session->pmk_len =
-				session->PmkidCacheInfo[pmkid_index].pmk_len;
+			session->pmk_len = pmkid_cache.pmk_len;
 			qdf_mem_zero(session->psk_pmk,
 				     sizeof(session->psk_pmk));
-			qdf_mem_copy(session->psk_pmk,
-				     session->PmkidCacheInfo[pmkid_index].pmk,
+			qdf_mem_copy(session->psk_pmk, pmkid_cache.pmk,
 				     session->pmk_len);
 			sme_debug("pmkid found for " QDF_MAC_ADDR_STR " at %d len %d",
 				  QDF_MAC_ADDR_ARRAY(pmkid_cache.BSSID.bytes),
@@ -21365,6 +21363,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			sme_debug("PMKID Not found in cache for " QDF_MAC_ADDR_STR,
 				  QDF_MAC_ADDR_ARRAY(pmkid_cache.BSSID.bytes));
 		}
+		qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
 	} else {
 		roam_info->fAuthRequired = true;
 		csr_roam_substate_change(mac_ctx,
