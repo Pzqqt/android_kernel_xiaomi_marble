@@ -13062,6 +13062,24 @@ static void wlan_hdd_cfg80211_set_wiphy_scan_flags(struct wiphy *wiphy)
 }
 #endif
 
+#if defined(CFG80211_SCAN_OCE_CAPABILITY_SUPPORT) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
+static void wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(struct wiphy *wiphy)
+{
+	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_FILS_MAX_CHANNEL_TIME);
+	wiphy_ext_feature_set(wiphy,
+			      NL80211_EXT_FEATURE_ACCEPT_BCAST_PROBE_RESP);
+	wiphy_ext_feature_set(wiphy,
+			      NL80211_EXT_FEATURE_OCE_PROBE_REQ_HIGH_TX_RATE);
+	wiphy_ext_feature_set(
+		wiphy, NL80211_EXT_FEATURE_OCE_PROBE_REQ_DEFERRAL_SUPPRESSION);
+}
+#else
+static void wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(struct wiphy *wiphy)
+{
+}
+#endif
+
 #if defined(WLAN_FEATURE_SAE) && \
 	defined(CFG80211_EXTERNAL_AUTH_SUPPORT)
 /**
@@ -13203,6 +13221,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	uint32_t *cipher_suites;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
 	bool mac_spoofing_enabled;
+	bool is_oce_sta_enabled;
+	QDF_STATUS status;
 
 	hdd_enter();
 
@@ -13240,6 +13260,14 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 
 	wlan_hdd_cfg80211_set_wiphy_scan_flags(wiphy);
+
+	is_oce_sta_enabled = false;
+	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc,
+						    &is_oce_sta_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get OCE STA enable info");
+	if (is_oce_sta_enabled)
+		wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(wiphy);
 
 	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
 
