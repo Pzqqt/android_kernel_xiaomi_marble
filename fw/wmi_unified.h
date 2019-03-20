@@ -632,6 +632,8 @@ typedef enum {
     WMI_STA_POWERSAVE_PARAM_CMDID,
     /** set station mimo powersave mode */
     WMI_STA_MIMO_PS_MODE_CMDID,
+    /** config station TX cycle percentage in a beacon interval */
+    WMI_STA_TDCC_CONFIG_CMDID,
 
 
     /** DFS-specific commands */
@@ -9905,6 +9907,14 @@ typedef struct {
      */
     A_UINT32 sta_ps_mode;
 } wmi_sta_powersave_mode_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sta_tdcc_config_cmd_fixed_param */
+    /**  Set a max tx period: percentage of one beacon interval. range: 0 - 100  */
+    A_UINT32 tx_cycle_percentage;
+    /**  Enable/disable TX Duty Cycle Control powersave */
+    A_UINT32 enabled;
+} wmi_sta_tdcc_config_cmd_fixed_param;
 
 enum wmi_csa_offload_en {
            WMI_CSA_OFFLOAD_DISABLE = 0,
@@ -23593,6 +23603,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_MWS_COEX_INFO_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_WLM_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_RAP_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_STA_TDCC_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
