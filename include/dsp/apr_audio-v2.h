@@ -3852,6 +3852,9 @@ struct afe_id_aptx_adaptive_enc_init
 	uint32_t  min_sink_modeC;
 	uint32_t  max_sink_modeC;
 	uint32_t  mode;
+	uint32_t  input_mode;
+	uint32_t  fade_duration;
+	uint8_t   sink_cap[11];
 } __attribute__ ((packed));
 
 /*
