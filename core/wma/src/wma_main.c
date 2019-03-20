@@ -5605,9 +5605,9 @@ wma_fill_chain_cfg(struct target_psoc_info *tgt_hdl,
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
  *
- * Return: none
+ * Return: Zero on success err number on failure
  */
-static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
+static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 {
 	struct wma_tgt_cfg tgt_cfg;
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -5616,26 +5616,28 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	struct target_psoc_info *tgt_hdl;
 	struct wmi_unified *wmi_handle;
 	uint8_t i;
+	int ret;
 
 	WMA_LOGD("%s: Enter", __func__);
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
 	if (!tgt_hdl) {
 		WMA_LOGE("%s: target psoc info is NULL", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
 	if (!wlan_res_cfg) {
 		WMA_LOGE("%s: wlan_res_cfg is null", __func__);
-		return;
+		return -EINVAL;
 	}
+
 	service_ext_param =
 			target_psoc_get_service_ext_param(tgt_hdl);
 	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);
 	if (!wmi_handle) {
 		WMA_LOGE("%s: wmi handle is NULL", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
@@ -5711,11 +5713,15 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	for (i = 0; i < tgt_hdl->info.total_mac_phy_cnt; i++)
 		wma_fill_chain_cfg(tgt_hdl, i);
 
-	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
+	ret = wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
+	if (ret)
+		return -EINVAL;
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
 	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
 				   wma_handle->wmi_handle);
 	wma_green_ap_register_handlers(wma_handle);
+
+	return ret;
 }
 
 /**
@@ -6820,6 +6826,7 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_ready_event_fixed_param *ev = NULL;
+	int ret;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -6848,7 +6855,10 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	/* copy the mac addr */
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->myaddr);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->hwaddr);
-	wma_update_hdd_cfg(wma_handle);
+	ret = wma_update_hdd_cfg(wma_handle);
+	if (ret)
+		return ret;
+
 	WMA_LOGD("Exit");
 
 	return 0;
@@ -6920,6 +6930,11 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 
 	status = qdf_wait_for_event_completion(&tgt_hdl->info.event,
 					       WMA_READY_EVENTID_TIMEOUT);
+	if (!tgt_hdl->info.wmi_ready) {
+		wma_err("Error in pdev creation");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (status == QDF_STATUS_E_TIMEOUT)
 		wma_err("Timeout waiting for FW ready event");
 	else if (QDF_IS_STATUS_ERROR(status))

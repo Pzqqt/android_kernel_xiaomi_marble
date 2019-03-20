@@ -827,7 +827,6 @@ QDF_STATUS cds_pre_enable(void)
 	status = wma_wait_for_ready_event(gp_cds_context->wma_context);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to wait for ready event; status: %u", status);
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 		goto stop_wmi;
 	}
 

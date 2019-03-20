@@ -1793,7 +1793,7 @@ static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 	}
 }
 
-void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
+int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
@@ -1810,12 +1810,12 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
-		return;
+		return -EINVAL;
 	}
 	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
 	if (ret) {
 		QDF_DEBUG_PANIC("Failed to create pdev; errno:%d", ret);
-		return;
+		return -EINVAL;
 	}
 
 	hdd_debug("New pdev has been created with pdev_id = %u",
@@ -1825,15 +1825,18 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_DEBUG_PANIC("dispatcher pdev open failed; status:%d",
 				status);
-		return;
+		ret = qdf_status_to_os_return(status);
+		goto exit;
 	}
 
 	status = hdd_component_pdev_open(hdd_ctx->pdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_DEBUG_PANIC("hdd component pdev open failed; status:%d",
 				status);
-		return;
+		ret = qdf_status_to_os_return(status);
+		goto dispatcher_close;
 	}
+
 	cdp_pdev_set_ctrl_pdev(cds_get_context(QDF_MODULE_ID_SOC),
 			cds_get_context(QDF_MODULE_ID_TXRX),
 			(struct cdp_ctrl_objmgr_pdev *)hdd_ctx->pdev);
@@ -1856,7 +1859,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 						 &sub_20_chan_width);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get sub_20_chan_width config");
-		return;
+		ret = qdf_status_to_os_return(status);
+		goto pdev_close;
 	}
 
 	if (cds_cfg) {
@@ -1873,7 +1877,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get MLME band capability");
-		return;
+		ret = qdf_status_to_os_return(status);
+		goto pdev_close;
 	}
 
 	/* first store the INI band capability */
@@ -1902,7 +1907,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	status = ucfg_mlme_set_band_capability(hdd_ctx->psoc, band_capability);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set MLME Band Capability");
-		return;
+		ret = qdf_status_to_os_return(status);
+		goto pdev_close;
 	}
 
 	hdd_ctx->curr_band = band_capability;
@@ -1910,7 +1916,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	status = wlan_hdd_update_wiphy_supported_band(hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to update wiphy band info");
-		return;
+		goto pdev_close;
 	}
 
 	if (!cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
@@ -2069,6 +2075,16 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	else
 		hdd_debug("bcast twt is disable in ini, fw cap %d",
 			  cfg->bcast_twt_support);
+	return 0;
+
+dispatcher_close:
+	dispatcher_pdev_close(hdd_ctx->pdev);
+pdev_close:
+	hdd_component_pdev_close(hdd_ctx->pdev);
+exit:
+	hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+
+	return ret;
 }
 
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
