@@ -1124,14 +1124,12 @@ QDF_STATUS __wlan_hdd_validate_mac_address(struct qdf_mac_addr *mac_addr,
  */
 bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx)
 {
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_info("Modules not enabled, Present status: %d",
 			 hdd_ctx->driver_status);
 		return false;
 	}
-	mutex_unlock(&hdd_ctx->iface_change_lock);
+
 	return true;
 }
 
@@ -2754,9 +2752,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status == DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver modules already Enabled");
 		hdd_exit();
 		return 0;
@@ -2934,8 +2930,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 	hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
 	hdd_info("Wlan transitioned (now ENABLED)");
 
-	mutex_unlock(&hdd_ctx->iface_change_lock);
-
 	hdd_exit();
 
 	return 0;
@@ -2980,7 +2974,6 @@ power_down:
 	if (!reinit && !unint)
 		pld_power_off(qdf_dev->dev);
 release_lock:
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->target_hw_name) {
 		qdf_mem_free(hdd_ctx->target_hw_name);
 		hdd_ctx->target_hw_name = NULL;
@@ -7290,7 +7283,6 @@ static void wlan_hdd_cache_chann_mutex_destroy(struct hdd_context *hdd_ctx)
 void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy = hdd_ctx->wiphy;
-	int driver_status;
 
 	hdd_enter();
 
@@ -7315,10 +7307,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
 #endif
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
-	driver_status = hdd_ctx->driver_status;
-	mutex_unlock(&hdd_ctx->iface_change_lock);
-
 	/*
 	 * Powersave Offload Case
 	 * Disable Idle Power Save Mode
@@ -7327,7 +7315,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	/* clear the scan queue in all the scenarios */
 	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
 
-	if (driver_status != DRIVER_MODULES_CLOSED) {
+	if (hdd_ctx->driver_status != DRIVER_MODULES_CLOSED) {
 		hdd_unregister_wext_all_adapters(hdd_ctx);
 		/*
 		 * Cancel any outstanding scan requests.  We are about to close
@@ -7391,7 +7379,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_exit_netlink_services(hdd_ctx);
-	mutex_destroy(&hdd_ctx->iface_change_lock);
 	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
@@ -9487,8 +9474,6 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto wiphy_dealloc;
 	}
 
-	mutex_init(&hdd_ctx->iface_change_lock);
-
 	hdd_ctx->parent_dev = dev;
 	hdd_ctx->last_scan_reject_vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 
@@ -9574,7 +9559,6 @@ err_free_config:
 	qdf_mem_free(hdd_ctx->config);
 
 err_free_hdd_context:
-	mutex_destroy(&hdd_ctx->iface_change_lock);
 	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
 
 wiphy_dealloc:
@@ -11267,7 +11251,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		return -EINVAL;
 	}
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	cds_set_module_stop_in_progress(true);
 
 	debugfs_threads = hdd_return_debugfs_threads_count();
@@ -11277,7 +11260,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			 debugfs_threads, hdd_ctx->is_wiphy_suspended);
 
 		if (IS_IDLE_STOP && !ftm_mode) {
-			mutex_unlock(&hdd_ctx->iface_change_lock);
 			hdd_psoc_idle_timer_start(hdd_ctx);
 			cds_set_module_stop_in_progress(false);
 
@@ -11415,7 +11397,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 done:
 	cds_set_module_stop_in_progress(false);
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	hdd_exit();
 

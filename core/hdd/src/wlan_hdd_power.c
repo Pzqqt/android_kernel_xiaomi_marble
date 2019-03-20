@@ -1601,14 +1601,11 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		goto exit_with_code;
 	}
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver is not enabled; Skipping resume");
 		exit_code = 0;
 		goto exit_with_code;
 	}
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
@@ -1702,14 +1699,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (0 != rc)
 		return rc;
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver Modules not Enabled ");
 		return 0;
 	}
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -1947,13 +1941,10 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver Module not enabled return success");
 		return 0;
 	}
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	status = wlan_hdd_set_powersave(adapter, allow_power_save, timeout);
 
@@ -2141,15 +2132,12 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver Module not enabled return success");
 		/* Send cached data to upperlayer*/
 		*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 		return 0;
 	}
-	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	if (sta_ctx->conn_info.conn_state != eConnectionState_Associated) {
 		hdd_debug("Not associated");
