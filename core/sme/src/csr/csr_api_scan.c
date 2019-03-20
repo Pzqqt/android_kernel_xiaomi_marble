@@ -1512,7 +1512,7 @@ static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 /*
  * The Tx power limits are saved in the cfg for future usage.
  */
-static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
+static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				     tDblLinkList *pList,
 				     enum band_info band)
 {
@@ -1570,7 +1570,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
-					pMac->mlme_cfg->power.max_tx_power);
+					mac->mlme_cfg->power.max_tx_power);
 				sme_debug(
 					"Setting Max Transmit Power %d",
 					ch_pwr_set->maxTxPower);
@@ -1592,24 +1592,24 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 				ch_pwr_set->firstChanNum);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
-					pMac->mlme_cfg->power.max_tx_power);
+					mac->mlme_cfg->power.max_tx_power);
 			sme_debug(
 				"Setting Max Tx Power %d, nTxPower %d",
 				ch_pwr_set->maxTxPower,
-				pMac->mlme_cfg->power.max_tx_power);
+				mac->mlme_cfg->power.max_tx_power);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
 		}
 		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
 	}
 	if (band == BAND_2G)
-		qdf_mem_copy(pMac->mlme_cfg->power.max_tx_power_24.data,
+		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_24.data,
 			     (uint8_t *)p_buf,
-			     pMac->mlme_cfg->power.max_tx_power_24.len);
+			     mac->mlme_cfg->power.max_tx_power_24.len);
 	if (band == BAND_5G)
-		qdf_mem_copy(pMac->mlme_cfg->power.max_tx_power_5.data,
+		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_5.data,
 			     (uint8_t *)p_buf,
-			     pMac->mlme_cfg->power.max_tx_power_5.len);
+			     mac->mlme_cfg->power.max_tx_power_5.len);
 	qdf_mem_free(p_buf);
 }
 
