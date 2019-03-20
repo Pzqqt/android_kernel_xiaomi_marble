@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -8,6 +8,7 @@
 #include <linux/of.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
+#include <linux/dma-mapping.h>
 #include <linux/bitops.h>
 #include <linux/spi/spi.h>
 #include <linux/regmap.h>
@@ -152,6 +153,10 @@ struct wcd_spi_priv {
 	/* Buffers to hold memory used for transfers */
 	void *tx_buf;
 	void *rx_buf;
+
+	/* DMA handles for transfer buffers */
+	dma_addr_t tx_dma;
+	dma_addr_t rx_dma;
 };
 
 enum xfer_request {
@@ -1371,17 +1376,20 @@ static int wcd_spi_component_bind(struct device *dev,
 	spi_message_add_tail(&wcd_spi->xfer2[1], &wcd_spi->msg2);
 
 	/* Pre-allocate the buffers */
-	wcd_spi->tx_buf = kzalloc(WCD_SPI_RW_MAX_BUF_SIZE,
-				  GFP_KERNEL | GFP_DMA);
+	wcd_spi->tx_buf = dma_zalloc_coherent(&spi->dev,
+					      WCD_SPI_RW_MAX_BUF_SIZE,
+					      &wcd_spi->tx_dma, GFP_KERNEL);
 	if (!wcd_spi->tx_buf) {
 		ret = -ENOMEM;
 		goto done;
 	}
 
-	wcd_spi->rx_buf = kzalloc(WCD_SPI_RW_MAX_BUF_SIZE,
-				  GFP_KERNEL | GFP_DMA);
+	wcd_spi->rx_buf = dma_zalloc_coherent(&spi->dev,
+					      WCD_SPI_RW_MAX_BUF_SIZE,
+					      &wcd_spi->rx_dma, GFP_KERNEL);
 	if (!wcd_spi->rx_buf) {
-		kfree(wcd_spi->tx_buf);
+		dma_free_coherent(&spi->dev, WCD_SPI_RW_MAX_BUF_SIZE,
+				  wcd_spi->tx_buf, wcd_spi->tx_dma);
 		wcd_spi->tx_buf = NULL;
 		ret = -ENOMEM;
 		goto done;
@@ -1408,8 +1416,10 @@ static void wcd_spi_component_unbind(struct device *dev,
 	spi_transfer_del(&wcd_spi->xfer2[0]);
 	spi_transfer_del(&wcd_spi->xfer2[1]);
 
-	kfree(wcd_spi->tx_buf);
-	kfree(wcd_spi->rx_buf);
+	dma_free_coherent(&spi->dev, WCD_SPI_RW_MAX_BUF_SIZE,
+			  wcd_spi->tx_buf, wcd_spi->tx_dma);
+	dma_free_coherent(&spi->dev, WCD_SPI_RW_MAX_BUF_SIZE,
+			  wcd_spi->rx_buf, wcd_spi->rx_dma);
 	wcd_spi->tx_buf = NULL;
 	wcd_spi->rx_buf = NULL;
 }
@@ -1445,6 +1455,7 @@ static int wcd_spi_probe(struct spi_device *spi)
 	mutex_init(&wcd_spi->xfer_mutex);
 	INIT_DELAYED_WORK(&wcd_spi->clk_dwork, wcd_spi_clk_work);
 	init_completion(&wcd_spi->resume_comp);
+	arch_setup_dma_ops(&spi->dev, 0, 0, NULL, true);
 
 	wcd_spi->spi = spi;
 	spi_set_drvdata(spi, wcd_spi);
