@@ -1887,6 +1887,59 @@ static QDF_STATUS extract_pdev_caldata_version_check_ev_param_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * set_rx_pkt_type_routing_tag_update_tlv() - add/delete protocol tag in CCE
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: pointer to protocol tag/routing struct
+ *
+ * @return:QDF_STATUS_SUCCESS for success or
+ *			QDF_STATUS_E_NOMEM/QDF_STATUS_E_FAILURE on failure
+*/
+static QDF_STATUS set_rx_pkt_type_routing_tag_update_tlv(
+			void *wmi_hdl,
+			struct wmi_rx_pkt_protocol_routing_info *param)
+{
+	wmi_pdev_update_pkt_routing_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS status;
+	uint32_t len = sizeof(wmi_pdev_update_pkt_routing_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_hdl, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_pdev_update_pkt_routing_cmd_fixed_param *)wmi_buf_data(buf);
+		WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+	wmi_pdev_update_pkt_routing_cmd_fixed_param));
+	cmd->pdev_id = param->pdev_id;
+	cmd->op_code = (A_UINT32) param->op_code;
+	cmd->routing_type_bitmap = param->routing_type_bitmap;
+	cmd->dest_ring = param->dest_ring;
+	cmd->meta_data = param->meta_data;
+	cmd->dest_ring_handler = param->dest_ring_handler;
+	WMI_LOGI("Set RX PKT ROUTING TYPE TAG - opcode: %u", param->op_code);
+	WMI_LOGI("routing_bitmap: %u, dest_ring: %u",
+		 param->routing_type_bitmap, param->dest_ring);
+	WMI_LOGI("dest_ring_handler: %u, meta_data: 0x%x",
+		 param->dest_ring_handler, param->meta_data);
+
+	wmi_mtrace(WMI_PDEV_UPDATE_PKT_ROUTING_CMDID, cmd->pdev_id, 0);
+	status = wmi_unified_cmd_send(wmi_hdl, buf, len,
+				      WMI_PDEV_UPDATE_PKT_ROUTING_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
 #ifdef WLAN_SUPPORT_FILS
 /**
  * send_vdev_fils_enable_cmd_tlv() - enable/Disable FD Frame command to fw
@@ -2759,4 +2812,8 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_channel_hopping_event = extract_channel_hopping_event_tlv;
 	ops->send_peer_chan_width_switch_cmd =
 					send_peer_chan_width_switch_cmd_tlv;
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+	ops->set_rx_pkt_type_routing_tag_cmd =
+					set_rx_pkt_type_routing_tag_update_tlv;
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 }

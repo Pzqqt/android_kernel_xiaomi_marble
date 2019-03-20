@@ -1181,3 +1181,24 @@ wmi_unified_vdev_tidmap_prec_cmd_send(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * wmi_unified_set_rx_pkt_protocol_routing_tag() - api to add/delete the
+ *					protocols to be tagged by CCE
+ * @wmi_hdl: wmi handle
+ * @param: Packet routing/tagging info
+ *
+ * @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS wmi_unified_set_rx_pkt_type_routing_tag(
+		void *wmi_hdl, struct wmi_rx_pkt_protocol_routing_info *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->set_rx_pkt_type_routing_tag_cmd)
+		return wmi->ops->set_rx_pkt_type_routing_tag_cmd(wmi, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
