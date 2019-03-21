@@ -594,7 +594,6 @@ wlan_serialization_timer_cb_mc_ctx(void *arg)
 	ser_err("Could not enqueue timer to timer queue");
 }
 
-#ifdef CONFIG_MCL
 static void wlan_serialization_timer_handler(void *arg)
 {
 	ser_enter();
@@ -603,24 +602,6 @@ static void wlan_serialization_timer_handler(void *arg)
 
 	ser_exit();
 }
-#else
-static void wlan_serialization_timer_handler(void *arg)
-{
-	struct wlan_serialization_timer *timer = arg;
-	struct wlan_serialization_command *cmd = timer->cmd;
-
-	if (!cmd) {
-		ser_err("command not found");
-		QDF_ASSERT(0);
-		return;
-	}
-
-	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
-		wlan_serialization_timer_cb_mc_ctx(arg);
-	else
-		wlan_serialization_generic_timer_cb(arg);
-}
-#endif
 
 QDF_STATUS
 wlan_serialization_find_and_update_timer(
