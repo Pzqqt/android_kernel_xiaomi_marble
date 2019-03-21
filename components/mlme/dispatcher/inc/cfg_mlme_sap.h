@@ -687,6 +687,30 @@
 				1, \
 				"Override bw to 11ac for P2P GO")
 
+/*
+ *
+ * <ini>
+ * enable_bcast_deauth_for_sap - Enable/Disable broadcast deauth support
+ *                                                     in driver for SAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable broadcast deauth support in driver
+ * for sap mode.
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_IS_SAP_BCAST_DEAUTH_ENABLED CFG_INI_BOOL( \
+				"enable_bcast_deauth_for_sap", \
+				0, \
+				"Enable/Disable bcast deauth for SAP")
+
 #ifdef WLAN_FEATURE_SAE
 /*
  *
@@ -750,6 +774,7 @@
 	CFG(CFG_SAP_FORCE_11N_FOR_11AC) \
 	CFG(CFG_SAP_11AC_OVERRIDE) \
 	CFG(CFG_GO_FORCE_11N_FOR_11AC) \
-	CFG(CFG_GO_11AC_OVERRIDE)
+	CFG(CFG_GO_11AC_OVERRIDE) \
+	CFG(CFG_IS_SAP_BCAST_DEAUTH_ENABLED)
 
 #endif /* __CFG_MLME_SAP_H */

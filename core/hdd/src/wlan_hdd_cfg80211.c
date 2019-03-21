@@ -19428,6 +19428,17 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 		if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *) mac)) {
 			uint16_t i;
 
+			bool is_sap_bcast_deauth_enabled = false;
+
+			ucfg_mlme_is_sap_bcast_deauth_enabled(
+					hdd_ctx->psoc,
+					&is_sap_bcast_deauth_enabled);
+			hdd_debug("is_sap_bcast_deauth_enabled %d",
+				  is_sap_bcast_deauth_enabled);
+
+			if (is_sap_bcast_deauth_enabled)
+				goto fn_end;
+
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 				if ((adapter->sta_info[i].in_use) &&
 				    (!adapter->sta_info[i].
@@ -19486,8 +19497,8 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 
 			adapter->sta_info[sta_id].is_deauth_in_progress = true;
 
-			hdd_debug("Delete STA with MAC::" MAC_ADDRESS_STR,
-			       MAC_ADDR_ARRAY(mac));
+			hdd_debug("ucast, Delete STA with MAC:" MAC_ADDRESS_STR,
+				  MAC_ADDR_ARRAY(mac));
 
 			/* Case: SAP in ACS selected DFS ch and client connected
 			 * Now Radar detected. Then if random channel is another
