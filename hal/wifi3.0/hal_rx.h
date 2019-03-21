@@ -40,6 +40,9 @@
 #define RX_BUFFER_SIZE			2048
 #endif
 
+/* HAL_RX_NON_QOS_TID = NON_QOS_TID which is 16 */
+#define HAL_RX_NON_QOS_TID 16
+
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -1248,6 +1251,79 @@ hal_rx_mpdu_start_mpdu_qos_control_valid_get(uint8_t *buf)
 		&(mpdu_start->rx_mpdu_info_details));
 
 	return qos_control_valid;
+}
+
+/**
+ * enum hal_rx_mpdu_info_sw_frame_group_id_type: Enum for group id in MPDU_INFO
+ *
+ * @ HAL_MPDU_SW_FRAME_GROUP_NDP_FRAME: NDP frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_MULTICAST_DATA: multicast data frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA: unicast data frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_NULL_DATA: NULL data frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_MGMT: management frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_CTRL: control frame
+ * @ HAL_MPDU_SW_FRAME_GROUP_UNSUPPORTED: unsupported
+ * @ HAL_MPDU_SW_FRAME_GROUP_MAX: max limit
+ */
+enum hal_rx_mpdu_info_sw_frame_group_id_type {
+	HAL_MPDU_SW_FRAME_GROUP_NDP_FRAME = 0,
+	HAL_MPDU_SW_FRAME_GROUP_MULTICAST_DATA,
+	HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA,
+	HAL_MPDU_SW_FRAME_GROUP_NULL_DATA,
+	HAL_MPDU_SW_FRAME_GROUP_MGMT,
+	HAL_MPDU_SW_FRAME_GROUP_CTRL = 20,
+	HAL_MPDU_SW_FRAME_GROUP_UNSUPPORTED = 36,
+	HAL_MPDU_SW_FRAME_GROUP_MAX = 37,
+};
+
+/**
+ * hal_rx_is_unicast: check packet is unicast frame or not.
+ *
+ * @ buf: pointer to rx pkt TLV.
+ *
+ * Return: true on unicast.
+ */
+static inline bool
+hal_rx_is_unicast(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+		&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint32_t grp_id;
+	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
+
+	grp_id = (_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
+			   RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_OFFSET)),
+			  RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_MASK,
+			  RX_MPDU_INFO_0_SW_FRAME_GROUP_ID_LSB));
+
+	return (HAL_MPDU_SW_FRAME_GROUP_UNICAST_DATA == grp_id) ? true : false;
+}
+
+/**
+ * hal_rx_tid_get: get tid based on qos control valid.
+ *
+ * @ buf: pointer to rx pkt TLV.
+ *
+ * Return: tid
+ */
+static inline uint32_t
+hal_rx_tid_get(struct hal_soc *hal_soc, uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+	&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	uint8_t *rx_mpdu_info = (uint8_t *)&mpdu_start->rx_mpdu_info_details;
+	uint8_t qos_control_valid =
+		(_HAL_MS((*_OFFSET_TO_WORD_PTR((rx_mpdu_info),
+			  RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_OFFSET)),
+			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_MASK,
+			 RX_MPDU_INFO_2_MPDU_QOS_CONTROL_VALID_LSB));
+
+	if (qos_control_valid)
+		return hal_soc->ops->hal_rx_mpdu_start_tid_get(buf);
+
+	return HAL_RX_NON_QOS_TID;
 }
 
 

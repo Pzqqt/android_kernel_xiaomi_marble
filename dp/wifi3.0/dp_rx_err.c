@@ -791,15 +791,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		vdev->wds_enabled))
 		dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
 
-	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(rx_tlv_hdr)) {
-		/* TODO: Assuming that qos_control_valid also indicates
-		 * unicast. Should we check this?
-		 */
-		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, rx_tlv_hdr);
-		if (peer && !peer->rx_tid[tid].hw_qdesc_vaddr_unaligned) {
-			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
+	if (hal_rx_is_unicast(rx_tlv_hdr)) {
+		tid = hal_rx_tid_get(soc->hal_soc, rx_tlv_hdr);
+		if (!peer->rx_tid[tid].hw_qdesc_vaddr_unaligned)
 			dp_rx_tid_setup_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
-		}
+			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
 	}
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
