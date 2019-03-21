@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -291,13 +291,13 @@
 
 /*
  * <ini>
- * gEdcaVoCwmin - Set Cwmin value for EDCA_AC_VO
+ * gEdcaVoCwmin - Set Cwmin value for QCA_WLAN_AC_VO
  * @Min: 0
  * @Max: 0x15
  * @Default: 2
  *
- * This ini is used to set default Cwmin value for EDCA_AC_VO
- * Cwmin value for EDCA_AC_VO. CWVomin = 2^gEdcaVoCwmin -1
+ * This ini is used to set default Cwmin value for QCA_WLAN_AC_VO
+ * Cwmin value for QCA_WLAN_AC_VO. CWVomin = 2^gEdcaVoCwmin -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin etc
  * are aplicable
@@ -314,17 +314,17 @@
 		15, \
 		2, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Cwmin value for EDCA_AC_VO")
+		"Cwmin value for QCA_WLAN_AC_VO")
 
 /*
  * <ini>
- * gEdcaVoCwmax - Set Cwmax value for EDCA_AC_VO
+ * gEdcaVoCwmax - Set Cwmax value for QCA_WLAN_AC_VO
  * @Min: 0
  * @Max: 15
  * @Default: 3
  *
- * This ini is used to set default Cwmax value for EDCA_AC_VO
- * Cwmax value for EDCA_AC_VO. CWVomax = 2^gEdcaVoCwmax -1
+ * This ini is used to set default Cwmax value for QCA_WLAN_AC_VO
+ * Cwmax value for QCA_WLAN_AC_VO. CWVomax = 2^gEdcaVoCwmax -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -341,16 +341,16 @@
 		15, \
 		3, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Cwmax value for EDCA_AC_VO")
+		"Cwmax value for QCA_WLAN_AC_VO")
 
 /*
  * <ini>
- * gEdcaVoAifs - Set Aifs value for EDCA_AC_VO
+ * gEdcaVoAifs - Set Aifs value for QCA_WLAN_AC_VO
  * @Min: 0
  * @Max: 15
  * @Default: 2
  *
- * This ini is used to set default Aifs value for EDCA_AC_VO
+ * This ini is used to set default Aifs value for QCA_WLAN_AC_VO
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -367,17 +367,17 @@
 		15, \
 		2, \
 		CFG_VALUE_OR_DEFAULT, \
-		"default Aifs value for EDCA_AC_VO")
+		"default Aifs value for QCA_WLAN_AC_VO")
 
 /*
  * <ini>
- * gEdcaViCwmin - Set Cwmin value for EDCA_AC_VI
+ * gEdcaViCwmin - Set Cwmin value for QCA_WLAN_AC_VI
  * @Min: 0x0
  * @Max: 15
  * @Default: 3
  *
- * This ini is used to set default value for EDCA_AC_VI
- * Cwmin value for EDCA_AC_VI. CWVimin = 2^gEdcaViCwmin -1
+ * This ini is used to set default value for QCA_WLAN_AC_VI
+ * Cwmin value for QCA_WLAN_AC_VI. CWVimin = 2^gEdcaViCwmin -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -394,17 +394,17 @@
 		15, \
 		3, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Cwmin value for EDCA_AC_VI")
+		"Cwmin value for QCA_WLAN_AC_VI")
 
 /*
  * <ini>
- * gEdcaViCwmax - Set Cwmax value for EDCA_AC_VI
+ * gEdcaViCwmax - Set Cwmax value for QCA_WLAN_AC_VI
  * @Min: 0
  * @Max: 15
  * @Default: 4
  *
- * This ini is used to set default Cwmax value for EDCA_AC_VI
- * Cwmax value for EDCA_AC_VI. CWVimax = 2^gEdcaViCwmax -1
+ * This ini is used to set default Cwmax value for QCA_WLAN_AC_VI
+ * Cwmax value for QCA_WLAN_AC_VI. CWVimax = 2^gEdcaViCwmax -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -421,16 +421,16 @@
 		15, \
 		4, \
 		CFG_VALUE_OR_DEFAULT, \
-		"cwmax value for EDCA_AC_VI")
+		"cwmax value for QCA_WLAN_AC_VI")
 
 /*
  * <ini>
- * gEdcaViAifs - Set Aifs value for EDCA_AC_VI
+ * gEdcaViAifs - Set Aifs value for QCA_WLAN_AC_VI
  * @Min: 0
  * @Max: 15
  * @Default: 2
  *
- * This ini is used to set default Aifs value for EDCA_AC_VI
+ * This ini is used to set default Aifs value for QCA_WLAN_AC_VI
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -447,17 +447,17 @@
 		15, \
 		2, \
 		CFG_VALUE_OR_DEFAULT, \
-		"default Aifs value for EDCA_AC_VI")
+		"default Aifs value for QCA_WLAN_AC_VI")
 
 /*
  * <ini>
- * gEdcaBkCwmin - Set Cwmin value for EDCA_AC_BK
+ * gEdcaBkCwmin - Set Cwmin value for QCA_WLAN_AC_BK
  * @Min: 0x0
  * @Max: 15
  * @Default: 4
  *
- * This ini is used to set default Cwmin value for EDCA_AC_BK
- * Cwmin value for EDCA_AC_BK. CWBkmin = 2^gEdcaBkCwmin -1
+ * This ini is used to set default Cwmin value for QCA_WLAN_AC_BK
+ * Cwmin value for QCA_WLAN_AC_BK. CWBkmin = 2^gEdcaBkCwmin -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -473,17 +473,17 @@
 		15, \
 		4, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Cwmin value for EDCA_AC_BK")
+		"Cwmin value for QCA_WLAN_AC_BK")
 
 /*
  * <ini>
- * gEdcaBkCwmax - Set Cwmax value for EDCA_AC_BK
+ * gEdcaBkCwmax - Set Cwmax value for QCA_WLAN_AC_BK
  * @Min: 0
  * @Max: 15
  * @Default: 10
  *
- * This ini is used to set default Cwmax value for EDCA_AC_BK
- * Cwmax value for EDCA_AC_BK. CWBkmax = 2^gEdcaBkCwmax -1
+ * This ini is used to set default Cwmax value for QCA_WLAN_AC_BK
+ * Cwmax value for QCA_WLAN_AC_BK. CWBkmax = 2^gEdcaBkCwmax -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -500,16 +500,16 @@
 		15, \
 		10, \
 		CFG_VALUE_OR_DEFAULT, \
-		"cwmax value for EDCA_AC_BK")
+		"cwmax value for QCA_WLAN_AC_BK")
 
 /*
  * <ini>
- * gEdcaBkAifs - Set Aifs value for EDCA_AC_BK
+ * gEdcaBkAifs - Set Aifs value for QCA_WLAN_AC_BK
  * @Min: 0
  * @Max: 15
  * @Default: 7
  *
- * This ini is used to set default Aifs value for EDCA_AC_BK
+ * This ini is used to set default Aifs value for QCA_WLAN_AC_BK
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -526,17 +526,17 @@
 		15, \
 		7, \
 		CFG_VALUE_OR_DEFAULT, \
-		"default Aifs value for EDCA_AC_BK")
+		"default Aifs value for QCA_WLAN_AC_BK")
 
 /*
  * <ini>
- * gEdcaBeCwmin - Set Cwmin value for EDCA_AC_BE
+ * gEdcaBeCwmin - Set Cwmin value for QCA_WLAN_AC_BE
  * @Min: 0x0
  * @Max: 15
  * @Default: 4
  *
- * This ini is used to set default Cwmin value for EDCA_AC_BE
- * Cwmin value for EDCA_AC_BE. CWBemin = 2^gEdcaBeCwmin
+ * This ini is used to set default Cwmin value for QCA_WLAN_AC_BE
+ * Cwmin value for QCA_WLAN_AC_BE. CWBemin = 2^gEdcaBeCwmin
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -553,17 +553,17 @@
 		15, \
 		4, \
 		CFG_VALUE_OR_DEFAULT, \
-		"Cwmin value for EDCA_AC_BE")
+		"Cwmin value for QCA_WLAN_AC_BE")
 
 /*
  * <ini>
- * gEdcaBeCwmax - Set Cwmax value for EDCA_AC_BE
+ * gEdcaBeCwmax - Set Cwmax value for QCA_WLAN_AC_BE
  * @Min: 0
  * @Max: 15
  * @Default: 10
  *
- * This ini is used to set default Cwmax value for EDCA_AC_BE
- * Cwmax value for EDCA_AC_BE. CWBemax = 2^gEdcaBeCwmax -1
+ * This ini is used to set default Cwmax value for QCA_WLAN_AC_BE
+ * Cwmax value for QCA_WLAN_AC_BE. CWBemax = 2^gEdcaBeCwmax -1
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -581,16 +581,16 @@
 		15, \
 		10, \
 		CFG_VALUE_OR_DEFAULT, \
-		"cwmax value for EDCA_AC_BE")
+		"cwmax value for QCA_WLAN_AC_BE")
 
 /*
  * <ini>
- * gEdcaBeAifs - Set Aifs value for EDCA_AC_BE
+ * gEdcaBeAifs - Set Aifs value for QCA_WLAN_AC_BE
  * @Min: 0
  * @Max: 15
  * @Default: 3
  *
- * This ini is used to set default Aifs value for EDCA_AC_BE
+ * This ini is used to set default Aifs value for QCA_WLAN_AC_BE
  *
  * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
  * etc are aplicable
@@ -607,7 +607,7 @@
 		15, \
 		3, \
 		CFG_VALUE_OR_DEFAULT, \
-		"default Aifs value for EDCA_AC_BE")
+		"default Aifs value for QCA_WLAN_AC_BE")
 
 #define CFG_EDCA_PARAMS_ALL \
 	CFG(CFG_EDCA_ANI_ACBK_LOCAL) \
