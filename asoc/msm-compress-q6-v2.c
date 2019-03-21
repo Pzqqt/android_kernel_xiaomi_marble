@@ -363,12 +363,17 @@ static int msm_compr_set_volume(struct snd_compr_stream *cstream,
 	}
 	rtd = cstream->private_data;
 	prtd = cstream->runtime->private_data;
-	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
 
-	if (!rtd || !component || !prtd || !prtd->audio_client) {
+	if (!rtd || !prtd || !prtd->audio_client) {
 		pr_err("%s: invalid rtd, prtd or audio client", __func__);
 		return rc;
 	}
+	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s: invalid component\n", __func__);
+		return rc;
+	}
+
 	pdata = snd_soc_component_get_drvdata(component);
 
 	if (prtd->compr_passthr != LEGACY_PCM) {
@@ -1810,10 +1815,14 @@ static int msm_compr_playback_free(struct snd_compr_stream *cstream)
 	}
 	runtime = cstream->runtime;
 	soc_prtd = cstream->private_data;
-	component = snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
-	if (!runtime || !soc_prtd || !component) {
-		pr_err("%s runtime or soc_prtd or component is null\n",
+	if (!runtime || !soc_prtd) {
+		pr_err("%s runtime or soc_prtd is null\n",
 			__func__);
+		return 0;
+	}
+	component = snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s component is null\n", __func__);
 		return 0;
 	}
 	prtd = runtime->private_data;
@@ -1913,12 +1922,16 @@ static int msm_compr_capture_free(struct snd_compr_stream *cstream)
 	}
 	runtime = cstream->runtime;
 	soc_prtd = cstream->private_data;
-	component = snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
-	if (!runtime || !soc_prtd || !component) {
-		pr_err("%s runtime or soc_prtd or component is null\n",
-			__func__);
+	if (!runtime || !soc_prtd) {
+		pr_err("%s runtime or soc_prtd is null\n", __func__);
 		return 0;
 	}
+	component = snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
+	if (!component) {
+		pr_err("%s component is null\n", __func__);
+		return 0;
+	}
+
 	prtd = runtime->private_data;
 	if (!prtd) {
 		pr_err("%s prtd is null\n", __func__);
