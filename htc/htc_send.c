@@ -1704,23 +1704,23 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	}
 
 	else if (HTC_TX_BUNDLE_ENABLED(target)) {
-
-		if ((hif_get_bus_type(target->hif_dev) == QDF_BUS_TYPE_USB) &&
-			hif_get_free_queue_number(target->hif_dev,
-						pEndpoint->UL_PipeID)) {
-			/*
-			 * Header and payload belongs to the different fragments
-			 * and consume 2 resource for one HTC package but USB
-			 * combine into one transfer.
-			 */
-			get_htc_send_packets(target, pEndpoint, &sendQueue,
-				(HTC_MAX_MSG_PER_BUNDLE_TX * 2));
+		if (hif_get_bus_type(target->hif_dev) == QDF_BUS_TYPE_USB) {
+			if (hif_get_free_queue_number(target->hif_dev,
+						      pEndpoint->UL_PipeID))
+				/*
+				 * Header and payload belongs to the different
+				 * fragments and consume 2 resource for one HTC
+				 * package but USB combine into one transfer.
+				 */
+				get_htc_send_packets(target, pEndpoint,
+						     &sendQueue,
+						     HTC_MAX_MSG_PER_BUNDLE_TX
+						     * 2);
 		} else {
-		/* Dequeue max packets from endpoint tx queue */
-		get_htc_send_packets(target, pEndpoint, &sendQueue,
-				     HTC_MAX_TX_BUNDLE_SEND_LIMIT);
+			/* Dequeue max packets from endpoint tx queue */
+			get_htc_send_packets(target, pEndpoint, &sendQueue,
+					     HTC_MAX_TX_BUNDLE_SEND_LIMIT);
 		}
-
 		UNLOCK_HTC_TX(target);
 	} else {
 		/*
