@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,12 @@
 #include "hif.h"
 #include "if_usb.h"
 
+#ifdef QCN7605_SUPPORT
+#define TX_URB_COUNT    64
+#else
 #define TX_URB_COUNT    32
+#endif
+
 #define RX_URB_COUNT    32
 
 #define HIF_USB_RX_BUFFER_SIZE  (1792 + 8)
