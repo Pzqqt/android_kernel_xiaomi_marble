@@ -107,6 +107,8 @@ struct dp_vdev;
 struct dp_tx_desc_s;
 struct dp_soc;
 union dp_rx_desc_list_elem_t;
+struct cdp_peer_rate_stats_ctx;
+struct cdp_soc_rate_stats_ctx;
 
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
 	TAILQ_FOREACH((_vdev), &(_pdev)->vdev_list, vdev_list_elem)
@@ -1018,6 +1020,10 @@ struct dp_soc {
 	uint8_t da_war_enabled;
 	/* number of active ast entries */
 	uint32_t num_ast_entries;
+	/* rdk rate statistics context at soc level*/
+	struct cdp_soc_rate_stats_ctx *rate_stats_ctx;
+	/* rdk rate statistics control flag */
+	bool wlanstats_enabled;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1396,6 +1402,9 @@ struct dp_pdev {
 
 	/* User configured max number of tx buffers */
 	uint32_t num_tx_allowed;
+
+	/* unique cookie required for peer session */
+	uint32_t next_peer_cookie;
 };
 
 struct dp_peer;
@@ -1668,6 +1677,9 @@ struct dp_peer {
 	 * disabled
 	 */
 	uint8_t peer_based_pktlog_filter;
+
+	/* rdk statistics context */
+	struct cdp_peer_rate_stats_ctx *wlanstats_ctx;
 };
 
 #ifdef CONFIG_WIN

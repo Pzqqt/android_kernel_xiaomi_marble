@@ -148,6 +148,7 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	if (!ratekbps)
 		return;
 
+	ppdu->rix = rix;
 	peer->stats.tx.avg_tx_rate =
 		dp_ath_rate_lpf(peer->stats.tx.avg_tx_rate, ratekbps);
 	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
@@ -2613,6 +2614,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 					ppdu_desc->ack_rssi);
 		}
 
+		ppdu_desc->user[i].cookie = (void *)peer->wlanstats_ctx;
 		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		dp_peer_unref_del_find_by_id(peer);
 		tlv_bitmap_expected = tlv_bitmap_default;

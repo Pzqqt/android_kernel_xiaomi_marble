@@ -2969,12 +2969,14 @@ static inline void dp_tx_notify_completion(struct dp_soc *soc,
  */
 #ifdef FEATURE_PERPKT_INFO
 static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
+					       struct dp_peer *peer,
 					       uint8_t tid,
 					       uint64_t txdesc_ts,
 					       uint32_t ppdu_id)
 {
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
+	uint8_t tidno;
 
 	if (pdev->enhanced_stats_en == 0)
 		return;
@@ -2992,8 +2994,12 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 		qdf_mem_copy(sojourn_stats, &pdev->sojourn_stats,
 			     sizeof(struct cdp_tx_sojourn_stats));
 
-		qdf_mem_zero(&pdev->sojourn_stats,
-			     sizeof(struct cdp_tx_sojourn_stats));
+		sojourn_stats->cookie = (void *)peer->wlanstats_ctx;
+
+		for (tidno = 0; tidno < CDP_DATA_TID_MAX; tidno++) {
+			pdev->sojourn_stats.sum_sojourn_msdu[tidno] = 0;
+			pdev->sojourn_stats.num_msdus[tidno] = 0;
+		}
 
 		dp_wdi_event_handler(WDI_EVENT_TX_SOJOURN_STAT, pdev->soc,
 				     pdev->sojourn_buf, HTT_INVALID_PEER,
@@ -3159,6 +3165,13 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	}
 
 	dp_tx_update_peer_stats(tx_desc, ts, peer);
+
+#ifdef QCA_SUPPORT_RDK_STATS
+	if (soc->wlanstats_enabled)
+		dp_tx_sojourn_stats_process(vdev->pdev, peer, ts->tid,
+					    tx_desc->timestamp,
+					    ts->ppdu_id);
+#endif
 
 out:
 	return;

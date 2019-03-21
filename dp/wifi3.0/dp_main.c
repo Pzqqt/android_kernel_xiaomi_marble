@@ -4777,6 +4777,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
+	struct cdp_peer_cookie peer_cookie;
 	enum cdp_txrx_ast_entry_type ast_type = CDP_TXRX_AST_TYPE_STATIC;
 
 	/* preconditions */
@@ -4915,6 +4916,24 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 
 	dp_local_peer_id_alloc(pdev, peer);
 	DP_STATS_INIT(peer);
+
+	qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
+		     CDP_MAC_ADDR_LEN);
+	peer_cookie.ctx = NULL;
+	peer_cookie.cookie = pdev->next_peer_cookie++;
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_PEER_CREATE, pdev->soc,
+			     (void *)&peer_cookie,
+			     peer->peer_ids[0], WDI_NO_VAL, pdev->pdev_id);
+#endif
+	if (soc->wlanstats_enabled) {
+		if (!peer_cookie.ctx) {
+			pdev->next_peer_cookie--;
+			qdf_err("Failed to initialize peer rate stats");
+		} else {
+			peer->wlanstats_ctx = (void *)peer_cookie.ctx;
+		}
+	}
 	return (void *)peer;
 }
 
@@ -5393,6 +5412,7 @@ void dp_peer_unref_delete(void *peer_handle)
 	uint16_t peer_id;
 	uint16_t vdev_id;
 	bool delete_vdev;
+	struct cdp_peer_cookie peer_cookie;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -5445,6 +5465,21 @@ void dp_peer_unref_delete(void *peer_handle)
 				  "peer:%pK not found in vdev:%pK peerlist:%pK",
 				  peer, vdev, &peer->vdev->peer_list);
 		}
+
+		/* send peer destroy event to upper layer */
+		qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
+			     CDP_MAC_ADDR_LEN);
+		peer_cookie.ctx = NULL;
+		peer_cookie.ctx = (void *)peer->wlanstats_ctx;
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+		dp_wdi_event_handler(WDI_EVENT_PEER_DESTROY,
+				     pdev->soc,
+				     (void *)&peer_cookie,
+				     peer->peer_ids[0],
+				     WDI_NO_VAL,
+				     pdev->pdev_id);
+#endif
+		peer->wlanstats_ctx = NULL;
 
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer);
@@ -9297,6 +9332,81 @@ static void dp_pdev_set_ctrl_pdev(struct cdp_pdev *dp_pdev,
 	pdev->ctrl_pdev = ctrl_pdev;
 }
 
+static void dp_set_rate_stats_cap(struct cdp_soc_t *soc_hdl,
+				  uint8_t val)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	soc->wlanstats_enabled = val;
+}
+
+static void dp_soc_set_rate_stats_ctx(struct cdp_soc_t *soc_handle,
+				      void *stats_ctx)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	soc->rate_stats_ctx = stats_ctx;
+}
+
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+static void dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
+				    struct cdp_pdev *pdev_hdl)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+	struct dp_soc *soc = (struct dp_soc *)pdev->soc;
+	struct dp_vdev *vdev = NULL;
+	struct dp_peer *peer = NULL;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (peer)
+				dp_wdi_event_handler(
+					WDI_EVENT_FLUSH_RATE_STATS_REQ,
+					pdev->soc, peer->wlanstats_ctx,
+					peer->peer_ids[0],
+					WDI_NO_VAL, pdev->pdev_id);
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+}
+#else
+static inline void
+dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
+			struct cdp_pdev *pdev_hdl)
+{
+}
+#endif
+
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+static void dp_peer_flush_rate_stats(struct cdp_soc_t *soc,
+				     struct cdp_pdev *pdev_handle,
+				     void *buf)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	 dp_wdi_event_handler(WDI_EVENT_PEER_FLUSH_RATE_STATS,
+			      pdev->soc, buf, HTT_INVALID_PEER,
+			      WDI_NO_VAL, pdev->pdev_id);
+}
+#else
+static inline void
+dp_peer_flush_rate_stats(struct cdp_soc_t *soc,
+			 struct cdp_pdev *pdev_handle,
+			 void *buf)
+{
+}
+#endif
+
+static void *dp_soc_get_rate_stats_ctx(struct cdp_soc_t *soc_handle)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	return soc->rate_stats_ctx;
+}
+
 /*
  * dp_get_cfg() - get dp cfg
  * @soc: cdp soc handle
@@ -9497,6 +9607,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,
 	.get_dp_capabilities = dp_get_cfg_capabilities,
 	.txrx_get_cfg = dp_get_cfg,
+	.set_rate_stats_ctx = dp_soc_set_rate_stats_ctx,
+	.get_rate_stats_ctx = dp_soc_get_rate_stats_ctx,
+	.txrx_peer_flush_rate_stats = dp_peer_flush_rate_stats,
+	.txrx_flush_rate_stats_request = dp_flush_rate_stats_req,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -9564,6 +9678,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
 	.txrx_get_ratekbps = dp_txrx_get_ratekbps,
+	.configure_rate_stats = dp_set_rate_stats_cap,
 	/* TODO */
 };
 

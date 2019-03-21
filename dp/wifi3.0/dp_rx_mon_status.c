@@ -85,6 +85,9 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->num_msdu = (cdp_rx_ppdu->tcp_msdu_count +
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
+	cdp_rx_ppdu->num_bytes = ppdu_info->rx_status.ppdu_len;
+	if (CDP_FC_IS_RETRY_SET(cdp_rx_ppdu->frame_ctrl))
+		cdp_rx_ppdu->retries += ppdu_info->com_info.mpdu_cnt_fcs_ok;
 
 	if (ppdu_info->com_info.mpdu_cnt_fcs_ok > 1)
 		cdp_rx_ppdu->is_ampdu = 1;
@@ -159,6 +162,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	if (!ratekbps)
 		return;
 
+	ppdu->rix = rix;
 	DP_STATS_UPD(peer, rx.last_rx_rate, ratekbps);
 	dp_ath_rate_lpf(peer->stats.rx.avg_rx_rate, ratekbps);
 	ppdu_rx_rate = dp_ath_rate_out(peer->stats.rx.avg_rx_rate);
@@ -439,6 +443,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
 		peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
 		if (peer) {
+			cdp_rx_ppdu->cookie = (void *)peer->wlanstats_ctx;
 			dp_rx_stats_update(pdev, peer, cdp_rx_ppdu);
 			dp_peer_unref_del_find_by_id(peer);
 		}

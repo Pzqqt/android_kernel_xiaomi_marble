@@ -111,8 +111,13 @@
 #ifdef CONFIG_MCL
 #define CDP_WDI_NUM_EVENTS WDI_NUM_EVENTS
 #else
-#define CDP_WDI_NUM_EVENTS 22
+#define CDP_WDI_NUM_EVENTS 26
 #endif
+
+#define CDP_FC_RETRY_OFFSET 0x4
+#define CDP_FC_RETRY_MASK (CDP_FC_RETRY_OFFSET << 1)
+#define CDP_FC_IS_RETRY_SET(_fc) \
+	((_fc) && CDP_FC_RETRY_MASK)
 
 /* Different Packet Types */
 enum cdp_packet_type {
