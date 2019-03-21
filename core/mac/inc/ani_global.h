@@ -807,11 +807,11 @@ struct mac_context {
 	bool usr_cfg_ps_enable;
 	uint16_t usr_cfg_ba_buff_size;
 	bool is_usr_cfg_amsdu_enabled;
-	uint8_t no_ack_policy_cfg[MAX_NUM_AC];
+	uint8_t no_ack_policy_cfg[QCA_WLAN_AC_ALL];
 	uint32_t he_sgi_ltf_cfg_bit_mask;
 	uint8_t usr_cfg_tx_bfee_nsts;
 	struct mgmt_beacon_probe_filter bcn_filter;
-	tSirMacEdcaParamRecord usr_mu_edca_params[MAX_NUM_AC];
+	tSirMacEdcaParamRecord usr_mu_edca_params[QCA_WLAN_AC_ALL];
 	bool usr_cfg_mu_edca_params;
 	bool he_om_ctrl_cfg_bw_set;
 	uint8_t he_om_ctrl_cfg_bw;

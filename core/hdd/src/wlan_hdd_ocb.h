@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,7 +54,7 @@ struct ocb_channel {
 	uint32_t channel_bandwidth;
 	uint32_t tx_power;
 	uint32_t tx_rate;
-	struct ocb_qos_params qos_params[MAX_NUM_AC];
+	struct ocb_qos_params qos_params[QCA_WLAN_AC_ALL];
 	uint32_t per_packet_rx_stats;
 };
 

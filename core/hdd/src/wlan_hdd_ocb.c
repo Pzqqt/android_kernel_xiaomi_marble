@@ -61,7 +61,7 @@ static int dot11p_validate_qos_params(struct ocb_wmm_param qos_params[])
 {
 	int i;
 
-	for (i = 0; i < MAX_NUM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if ((!qos_params[i].aifsn) && (!qos_params[i].cwmin)
 				&& (!qos_params[i].cwmax))
 			continue;
@@ -542,7 +542,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 			adapter->ocb_mac_addr_count++;
 		}
 
-		for (j = 0; j < MAX_NUM_AC; j++) {
+		for (j = 0; j < QCA_WLAN_AC_ALL; j++) {
 			curr_chan->qos_params[j].aifsn =
 				sched->channels[i].qos_params[j].aifsn;
 			curr_chan->qos_params[j].cwmin =
@@ -719,7 +719,7 @@ struct wlan_hdd_ocb_config_channel {
 	uint32_t bandwidth;
 	uint16_t flags;
 	uint8_t reserved[4];
-	struct sir_qos_params qos_params[MAX_NUM_AC];
+	struct sir_qos_params qos_params[QCA_WLAN_AC_ALL];
 	uint32_t max_pwr;
 	uint32_t min_pwr;
 };

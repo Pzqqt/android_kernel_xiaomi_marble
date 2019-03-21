@@ -327,9 +327,9 @@ struct pe_session {
 	 * used on station. Specific AC values may be downgraded depending on
 	 * admission control for that particular AC.
 	 */
-	tSirMacEdcaParamRecord gLimEdcaParams[MAX_NUM_AC];      /* used locally */
-	tSirMacEdcaParamRecord gLimEdcaParamsBC[MAX_NUM_AC];    /* used for broadcast */
-	tSirMacEdcaParamRecord gLimEdcaParamsActive[MAX_NUM_AC];
+	tSirMacEdcaParamRecord gLimEdcaParams[QCA_WLAN_AC_ALL];      /* used locally */
+	tSirMacEdcaParamRecord gLimEdcaParamsBC[QCA_WLAN_AC_ALL];    /* used for broadcast */
+	tSirMacEdcaParamRecord gLimEdcaParamsActive[QCA_WLAN_AC_ALL];
 
 	uint8_t gLimEdcaParamSetCount;
 
@@ -552,7 +552,7 @@ struct pe_session {
 	bool deauth_disassoc_rc;
 	enum wmi_obss_color_collision_evt_type obss_color_collision_dec_evt;
 	bool is_session_obss_color_collision_det_enabled;
-	tSirMacEdcaParamRecord ap_mu_edca_params[MAX_NUM_AC];
+	tSirMacEdcaParamRecord ap_mu_edca_params[QCA_WLAN_AC_ALL];
 	bool mu_edca_present;
 	int8_t def_max_tx_pwr;
 	bool active_ba_64_session;

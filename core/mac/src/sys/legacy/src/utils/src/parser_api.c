@@ -418,7 +418,7 @@ populate_dot11f_edca_param_set(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[0].aci.aifsn));
 		pDot11f->acbe_acm =
 			(0x1 & pe_session->gLimEdcaParamsBC[0].aci.acm);
-		pDot11f->acbe_aci = (0x3 & SIR_MAC_EDCAACI_BESTEFFORT);
+		pDot11f->acbe_aci = (0x3 & QCA_WLAN_AC_BE);
 		pDot11f->acbe_acwmin =
 			(0xf & pe_session->gLimEdcaParamsBC[0].cw.min);
 		pDot11f->acbe_acwmax =
@@ -431,7 +431,7 @@ populate_dot11f_edca_param_set(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[1].aci.aifsn));
 		pDot11f->acbk_acm =
 			(0x1 & pe_session->gLimEdcaParamsBC[1].aci.acm);
-		pDot11f->acbk_aci = (0x3 & SIR_MAC_EDCAACI_BACKGROUND);
+		pDot11f->acbk_aci = (0x3 & QCA_WLAN_AC_BK);
 		pDot11f->acbk_acwmin =
 			(0xf & pe_session->gLimEdcaParamsBC[1].cw.min);
 		pDot11f->acbk_acwmax =
@@ -444,7 +444,7 @@ populate_dot11f_edca_param_set(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[2].aci.aifsn));
 		pDot11f->acvi_acm =
 			(0x1 & pe_session->gLimEdcaParamsBC[2].aci.acm);
-		pDot11f->acvi_aci = (0x3 & SIR_MAC_EDCAACI_VIDEO);
+		pDot11f->acvi_aci = (0x3 & QCA_WLAN_AC_VI);
 		pDot11f->acvi_acwmin =
 			(0xf & pe_session->gLimEdcaParamsBC[2].cw.min);
 		pDot11f->acvi_acwmax =
@@ -457,7 +457,7 @@ populate_dot11f_edca_param_set(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[3].aci.aifsn));
 		pDot11f->acvo_acm =
 			(0x1 & pe_session->gLimEdcaParamsBC[3].aci.acm);
-		pDot11f->acvo_aci = (0x3 & SIR_MAC_EDCAACI_VOICE);
+		pDot11f->acvo_aci = (0x3 & QCA_WLAN_AC_VO);
 		pDot11f->acvo_acwmin =
 			(0xf & pe_session->gLimEdcaParamsBC[3].cw.min);
 		pDot11f->acvo_acwmax =
@@ -1823,7 +1823,7 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 	pParams->acbe_aifsn =
 		(0xf & SET_AIFSN(pe_session->gLimEdcaParamsBC[0].aci.aifsn));
 	pParams->acbe_acm = (0x1 & pe_session->gLimEdcaParamsBC[0].aci.acm);
-	pParams->acbe_aci = (0x3 & SIR_MAC_EDCAACI_BESTEFFORT);
+	pParams->acbe_aci = (0x3 & QCA_WLAN_AC_BE);
 	pParams->acbe_acwmin =
 		(0xf & pe_session->gLimEdcaParamsBC[0].cw.min);
 	pParams->acbe_acwmax =
@@ -1833,7 +1833,7 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 	pParams->acbk_aifsn =
 		(0xf & SET_AIFSN(pe_session->gLimEdcaParamsBC[1].aci.aifsn));
 	pParams->acbk_acm = (0x1 & pe_session->gLimEdcaParamsBC[1].aci.acm);
-	pParams->acbk_aci = (0x3 & SIR_MAC_EDCAACI_BACKGROUND);
+	pParams->acbk_aci = (0x3 & QCA_WLAN_AC_BK);
 	pParams->acbk_acwmin =
 		(0xf & pe_session->gLimEdcaParamsBC[1].cw.min);
 	pParams->acbk_acwmax =
@@ -1849,7 +1849,7 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[2].aci.aifsn));
 
 	pParams->acvi_acm = (0x1 & pe_session->gLimEdcaParamsBC[2].aci.acm);
-	pParams->acvi_aci = (0x3 & SIR_MAC_EDCAACI_VIDEO);
+	pParams->acvi_aci = (0x3 & QCA_WLAN_AC_VI);
 	pParams->acvi_acwmin =
 		(0xf & pe_session->gLimEdcaParamsBC[2].cw.min);
 	pParams->acvi_acwmax =
@@ -1865,7 +1865,7 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 			 SET_AIFSN(pe_session->gLimEdcaParamsBC[3].aci.aifsn));
 
 	pParams->acvo_acm = (0x1 & pe_session->gLimEdcaParamsBC[3].aci.acm);
-	pParams->acvo_aci = (0x3 & SIR_MAC_EDCAACI_VOICE);
+	pParams->acvo_aci = (0x3 & QCA_WLAN_AC_VO);
 	pParams->acvo_acwmin =
 		(0xf & pe_session->gLimEdcaParamsBC[3].cw.min);
 	pParams->acvo_acwmax =

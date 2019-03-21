@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,7 +43,6 @@
 #define OCB_SIZE_UTC_TIME_ERROR                 (5)
 
 #define OCB_CHANNEL_MAX                         (5)
-#define OCB_MAX_NUM_AC                          (4)
 
 /**
  * struct ocb_utc_param - parameters to set UTC time
@@ -155,7 +154,7 @@ struct ocb_config_chan {
 	uint32_t chan_freq;
 	uint32_t bandwidth;
 	struct qdf_mac_addr mac_address;
-	struct ocb_wmm_param qos_params[OCB_MAX_NUM_AC];
+	struct ocb_wmm_param qos_params[QCA_WLAN_AC_ALL];
 	uint32_t max_pwr;
 	uint32_t min_pwr;
 	uint8_t reg_pwr;

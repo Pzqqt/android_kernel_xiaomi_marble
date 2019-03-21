@@ -901,23 +901,6 @@ typedef struct sSirMacRRMEnabledCap {
 #endif
 } tSirMacRRMEnabledCap, *tpSirMacRRMEnabledCap;
 
-/* ----------------
- *  EDCA Profiles
- * ---------------
- */
-
-#define EDCA_AC_BE 0
-#define EDCA_AC_BK 1
-#define EDCA_AC_VI 2
-#define EDCA_AC_VO 3
-#define MAX_NUM_AC 4
-
-/* access categories */
-#define SIR_MAC_EDCAACI_BESTEFFORT  (EDCA_AC_BE)
-#define SIR_MAC_EDCAACI_BACKGROUND  (EDCA_AC_BK)
-#define SIR_MAC_EDCAACI_VIDEO       (EDCA_AC_VI)
-#define SIR_MAC_EDCAACI_VOICE       (EDCA_AC_VO)
-
 #define MU_EDCA_DEF_AIFSN     0
 #define MU_EDCA_DEF_CW_MAX    15
 #define MU_EDCA_DEF_CW_MIN    15

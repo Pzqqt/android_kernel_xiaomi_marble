@@ -3458,14 +3458,14 @@ static void lim_process_sme_update_edca_params(struct mac_context *mac_ctx,
 		pe_err("Session does not exist: sme_id %d", sme_session_id);
 		return;
 	}
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BE].no_ack =
-		mac_ctx->no_ack_policy_cfg[EDCA_AC_BE];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BK].no_ack =
-		mac_ctx->no_ack_policy_cfg[EDCA_AC_BK];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VI].no_ack =
-		mac_ctx->no_ack_policy_cfg[EDCA_AC_VI];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VO].no_ack =
-		mac_ctx->no_ack_policy_cfg[EDCA_AC_VO];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BE].no_ack =
+		mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_BE];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BK].no_ack =
+		mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_BK];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VI].no_ack =
+		mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_VI];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VO].no_ack =
+		mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_VO];
 	sta_ds_ptr = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
 					&pe_session->dph.dphHashTable);
 	if (sta_ds_ptr)

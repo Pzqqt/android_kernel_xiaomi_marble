@@ -236,10 +236,10 @@ QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 	if (!pEdcaParams)
 		return QDF_STATUS_E_NOMEM;
 	pEdcaParams->bssIdx = bssIdx;
-	pEdcaParams->acbe = pUpdatedEdcaParams[EDCA_AC_BE];
-	pEdcaParams->acbk = pUpdatedEdcaParams[EDCA_AC_BK];
-	pEdcaParams->acvi = pUpdatedEdcaParams[EDCA_AC_VI];
-	pEdcaParams->acvo = pUpdatedEdcaParams[EDCA_AC_VO];
+	pEdcaParams->acbe = pUpdatedEdcaParams[QCA_WLAN_AC_BE];
+	pEdcaParams->acbk = pUpdatedEdcaParams[QCA_WLAN_AC_BK];
+	pEdcaParams->acvi = pUpdatedEdcaParams[QCA_WLAN_AC_VI];
+	pEdcaParams->acvo = pUpdatedEdcaParams[QCA_WLAN_AC_VO];
 	pEdcaParams->mu_edca_params = mu_edca;
 	msgQ.type = WMA_UPDATE_EDCA_PROFILE_IND;
 	msgQ.reserved = 0;
@@ -266,19 +266,19 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 	host_log_qos_edca_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 	/* Initialize gLimEdcaParamsActive[] to be same as localEdcaParams */
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BE] = edca_params[EDCA_AC_BE];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BK] = edca_params[EDCA_AC_BK];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VI] = edca_params[EDCA_AC_VI];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VO] = edca_params[EDCA_AC_VO];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BE] = edca_params[QCA_WLAN_AC_BE];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BK] = edca_params[QCA_WLAN_AC_BK];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VI] = edca_params[QCA_WLAN_AC_VI];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VO] = edca_params[QCA_WLAN_AC_VO];
 
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BE].no_ack =
-					mac_ctx->no_ack_policy_cfg[EDCA_AC_BE];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_BK].no_ack =
-					mac_ctx->no_ack_policy_cfg[EDCA_AC_BK];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VI].no_ack =
-					mac_ctx->no_ack_policy_cfg[EDCA_AC_VI];
-	pe_session->gLimEdcaParamsActive[EDCA_AC_VO].no_ack =
-					mac_ctx->no_ack_policy_cfg[EDCA_AC_VO];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BE].no_ack =
+					mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_BE];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BK].no_ack =
+					mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_BK];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VI].no_ack =
+					mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_VI];
+	pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VO].no_ack =
+					mac_ctx->no_ack_policy_cfg[QCA_WLAN_AC_VO];
 
 	/* An AC requires downgrade if the ACM bit is set, and the AC has not
 	 * yet been admitted in uplink or bi-directions.
@@ -297,7 +297,7 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 		pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_UPLINK]);
 	pe_debug("adAdmitMask[DOWNLINK] = 0x%x ",
 		pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_DNLINK]);
-	for (ac = EDCA_AC_BK; ac <= EDCA_AC_VO; ac++) {
+	for (ac = QCA_WLAN_AC_BK; ac <= QCA_WLAN_AC_VO; ac++) {
 		ac_admitted =
 			((pe_session->gAcAdmitMask[SIR_MAC_DIRECTION_UPLINK] &
 			 (1 << ac)) >> ac);
@@ -307,11 +307,11 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 		if ((edca_params[ac].aci.acm == 1) && (ac_admitted == 0)) {
 			pe_debug("We need to downgrade AC %d!!", ac);
 			/* Loop backwards through AC values until it finds
-			 * acm == 0 or reaches EDCA_AC_BE.
+			 * acm == 0 or reaches QCA_WLAN_AC_BE.
 			 * Note that for block has no executable statements.
 			 */
 			for (i = ac - 1;
-			    (i > EDCA_AC_BE &&
+			    (i > QCA_WLAN_AC_BE &&
 				(edca_params[i].aci.acm != 0));
 			     i--)
 				;
@@ -328,22 +328,22 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
 	if (log_ptr) {
 		tSirMacEdcaParamRecord *rec;
 
-		rec = &pe_session->gLimEdcaParamsActive[EDCA_AC_BE];
+		rec = &pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BE];
 		log_ptr->aci_be = rec->aci.aci;
 		log_ptr->cw_be = rec->cw.max << 4 | rec->cw.min;
 		log_ptr->txoplimit_be = rec->txoplimit;
 
-		rec = &pe_session->gLimEdcaParamsActive[EDCA_AC_BK];
+		rec = &pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_BK];
 		log_ptr->aci_bk = rec->aci.aci;
 		log_ptr->cw_bk = rec->cw.max << 4 | rec->cw.min;
 		log_ptr->txoplimit_bk = rec->txoplimit;
 
-		rec = &pe_session->gLimEdcaParamsActive[EDCA_AC_VI];
+		rec = &pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VI];
 		log_ptr->aci_vi = rec->aci.aci;
 		log_ptr->cw_vi = rec->cw.max << 4 | rec->cw.min;
 		log_ptr->txoplimit_vi = rec->txoplimit;
 
-		rec = &pe_session->gLimEdcaParamsActive[EDCA_AC_VO];
+		rec = &pe_session->gLimEdcaParamsActive[QCA_WLAN_AC_VO];
 		log_ptr->aci_vo = rec->aci.aci;
 		log_ptr->cw_vo = rec->cw.max << 4 | rec->cw.min;
 		log_ptr->txoplimit_vo = rec->txoplimit;

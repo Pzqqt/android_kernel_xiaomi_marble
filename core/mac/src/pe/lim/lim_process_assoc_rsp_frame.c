@@ -388,7 +388,7 @@ static void lim_update_ese_tsm(struct mac_context *mac_ctx,
 	/* Find the TSPEC IE with VO user priority */
 	for (cnt = 0; cnt < assoc_rsp->num_tspecs; cnt++) {
 		if (upToAc(assoc_rsp->TSPECInfo[cnt].user_priority) ==
-			EDCA_AC_VO) {
+			QCA_WLAN_AC_VO) {
 			tsm_ctx->tid =
 				assoc_rsp->TSPECInfo[cnt].user_priority;
 			qdf_mem_copy(&tsm_ctx->tsmInfo,
@@ -982,13 +982,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		session_entry->mu_edca_present = assoc_rsp->mu_edca_present;
 		if (session_entry->mu_edca_present) {
 			pe_debug("Save MU EDCA params to session");
-			session_entry->ap_mu_edca_params[EDCA_AC_BE] =
+			session_entry->ap_mu_edca_params[QCA_WLAN_AC_BE] =
 				assoc_rsp->mu_edca.acbe;
-			session_entry->ap_mu_edca_params[EDCA_AC_BK] =
+			session_entry->ap_mu_edca_params[QCA_WLAN_AC_BK] =
 				assoc_rsp->mu_edca.acbk;
-			session_entry->ap_mu_edca_params[EDCA_AC_VI] =
+			session_entry->ap_mu_edca_params[QCA_WLAN_AC_VI] =
 				assoc_rsp->mu_edca.acvi;
-			session_entry->ap_mu_edca_params[EDCA_AC_VO] =
+			session_entry->ap_mu_edca_params[QCA_WLAN_AC_VO] =
 				assoc_rsp->mu_edca.acvo;
 		}
 

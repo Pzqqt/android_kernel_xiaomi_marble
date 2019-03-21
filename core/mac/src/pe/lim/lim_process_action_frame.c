@@ -858,7 +858,7 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 	}
 	if ((addts.tspec.tsinfo.traffic.accessPolicy !=
 			SIR_MAC_ACCESSPOLICY_EDCA) ||
-		((upToAc(addts.tspec.tsinfo.traffic.userPrio) < MAX_NUM_AC))) {
+		((upToAc(addts.tspec.tsinfo.traffic.userPrio) < QCA_WLAN_AC_ALL))) {
 #ifdef FEATURE_WLAN_ESE
 		retval = lim_send_hal_msg_add_ts(mac_ctx,
 				sta_ptr->staIndex, tspec_info->idx,
@@ -964,7 +964,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 
 	/* if no Admit Control, ignore the request */
 	if (tsinfo->traffic.accessPolicy == SIR_MAC_ACCESSPOLICY_EDCA) {
-		if (upToAc(tsinfo->traffic.userPrio) >= MAX_NUM_AC) {
+		if (upToAc(tsinfo->traffic.userPrio) >= QCA_WLAN_AC_ALL) {
 			pe_warn("DelTs with UP: %d has no AC - ignoring req",
 				tsinfo->traffic.userPrio);
 			return;

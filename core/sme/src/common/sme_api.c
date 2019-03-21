@@ -8333,7 +8333,7 @@ int sme_set_no_ack_policy(mac_handle_t mac_handle, uint8_t session_id,
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
-	if (ac > MAX_NUM_AC) {
+	if (ac > QCA_WLAN_AC_ALL) {
 		sme_err("invalid ac val %d", ac);
 		return -EINVAL;
 	}
@@ -8341,7 +8341,7 @@ int sme_set_no_ack_policy(mac_handle_t mac_handle, uint8_t session_id,
 		set_val = 1;
 	else
 		set_val = 0;
-	if (ac == MAX_NUM_AC) {
+	if (ac == QCA_WLAN_AC_ALL) {
 		for (i = 0; i < ac; i++)
 			mac_ctx->no_ack_policy_cfg[i] = set_val;
 	} else {
@@ -11421,7 +11421,7 @@ void sme_set_he_mu_edca_def_cfg(mac_handle_t mac_handle)
 	uint8_t i;
 
 	sme_debug("Set MU EDCA params to default");
-	for (i = 0; i < MAX_NUM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		mac_ctx->usr_mu_edca_params[i].aci.aifsn = MU_EDCA_DEF_AIFSN;
 		mac_ctx->usr_mu_edca_params[i].aci.aci = i;
 		mac_ctx->usr_mu_edca_params[i].cw.max = MU_EDCA_DEF_CW_MAX;

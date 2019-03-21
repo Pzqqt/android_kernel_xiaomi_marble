@@ -235,7 +235,7 @@ broadcast_wmm_of_concurrent_sta_session(struct mac_context *mac_ctx,
 	 * Once atleast one concurrent session on same channel is found and WMM
 	 * broadcast params for current SoftAP/GO session updated, return
 	 */
-	for (j = 0; j < MAX_NUM_AC; j++) {
+	for (j = 0; j < QCA_WLAN_AC_ALL; j++) {
 		session->gLimEdcaParamsBC[j].aci.acm =
 			concurrent_session->gLimEdcaParams[j].aci.acm;
 		session->gLimEdcaParamsBC[j].aci.aifsn =
@@ -288,7 +288,7 @@ void sch_qos_update_broadcast(struct mac_context *mac, struct pe_session *pe_ses
 		txopidx = CFG_EDCA_PROFILE_TXOPA_IDX;
 	}
 
-	for (i = 0; i < MAX_NUM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if (pe_session->gLimEdcaParamsBC[i].aci.acm !=
 			(uint8_t)params[i][CFG_EDCA_PROFILE_ACM_IDX]) {
 			pe_session->gLimEdcaParamsBC[i].aci.acm =
@@ -423,7 +423,7 @@ set_sch_edca_params(struct mac_context *mac,
 		txopidx = CFG_EDCA_PROFILE_TXOPA_IDX;
 	}
 
-	for (i = 0; i < MAX_NUM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		pe_session->gLimEdcaParams[i].aci.acm =
 			(uint8_t)params[i][CFG_EDCA_PROFILE_ACM_IDX];
 		pe_session->gLimEdcaParams[i].aci.aifsn =
