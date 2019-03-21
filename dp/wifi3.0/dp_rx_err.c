@@ -296,6 +296,11 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 			return rx_bufs_used;
 		}
 
+		qdf_nbuf_unmap_single(soc->osdev,
+				      rx_desc->nbuf, QDF_DMA_BIDIRECTIONAL);
+
+		rx_desc->rx_buf_start = qdf_nbuf_data(rx_desc->nbuf);
+
 		rx_bufs_used++;
 		tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
 						rx_desc->rx_buf_start);
