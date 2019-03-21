@@ -1604,7 +1604,7 @@ static int msm_pcm_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 	struct snd_soc_pcm_runtime *rtd = NULL;
 	struct msm_plat_data *pdata = NULL;
 	struct msm_pcm_channel_mixer *chmixer_pspd = NULL;
-	struct snd_soc_component *component = snd_kcontrol_chip(kcontrol);
+	struct snd_soc_component *component = NULL;
 	u64 fe_id = 0;
 
 	pr_debug("%s", __func__);
@@ -1624,18 +1624,21 @@ static int msm_pcm_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 		/* update chmixer_pspd chmap cached with routing driver as well */
 		rtd = substream->private_data;
 		if (rtd) {
-			fe_id = rtd->dai_link->id;
-			pdata = (struct msm_plat_data *)
-					dev_get_drvdata(component->dev);
-			chmixer_pspd = pdata ?
-				pdata->chmixer_pspd[fe_id][SESSION_TYPE_RX] : NULL;
+			component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
+			if (component) {
+				fe_id = rtd->dai_link->id;
+				pdata = (struct msm_plat_data *)
+						dev_get_drvdata(component->dev);
+				chmixer_pspd = pdata ?
+					pdata->chmixer_pspd[fe_id][SESSION_TYPE_RX] : NULL;
 
-			if (chmixer_pspd && chmixer_pspd->enable) {
-				for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
-					chmixer_pspd->in_ch_map[i] = prtd->channel_map[i];
-				chmixer_pspd->override_in_ch_map = true;
-				msm_pcm_routing_set_channel_mixer_cfg(fe_id,
-						SESSION_TYPE_RX, chmixer_pspd);
+				if (chmixer_pspd && chmixer_pspd->enable) {
+					for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
+						chmixer_pspd->in_ch_map[i] = prtd->channel_map[i];
+					chmixer_pspd->override_in_ch_map = true;
+					msm_pcm_routing_set_channel_mixer_cfg(fe_id,
+							SESSION_TYPE_RX, chmixer_pspd);
+				}
 			}
 		}
 	}
