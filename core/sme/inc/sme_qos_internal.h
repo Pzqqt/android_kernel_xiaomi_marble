@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,19 +41,6 @@
   Type declarations
   ------------------------------------------------------------------------*/
 #define SME_QOS_AP_SUPPORTS_APSD         0x80
-
-/*---------------------------------------------------------------------------
-  Enumeration of the various EDCA Access Categories:
-  Based on AC to ACI mapping in 802.11e spec (identical to WMM)
-  ---------------------------------------------------------------------------*/
-typedef enum {
-	SME_QOS_EDCA_AC_BE = 0, /* Best effort access category */
-	SME_QOS_EDCA_AC_BK = 1, /* Background access category  */
-	SME_QOS_EDCA_AC_VI = 2, /* Video access category       */
-	SME_QOS_EDCA_AC_VO = 3, /* Voice access category       */
-
-	SME_QOS_EDCA_AC_MAX
-} sme_QosEdcaAcType;
 
 /*---------------------------------------------------------------------------
   Enumeration of the various CSR event indication types that would be reported

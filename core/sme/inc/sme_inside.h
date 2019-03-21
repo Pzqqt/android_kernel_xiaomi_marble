@@ -54,7 +54,7 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 
 typedef struct sGenericQosCmd {
 	struct sme_qos_wmmtspecinfo tspecInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	uint8_t tspec_mask;
 } tGenericQosCmd;
 

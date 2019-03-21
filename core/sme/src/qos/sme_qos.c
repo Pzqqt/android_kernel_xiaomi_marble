@@ -118,15 +118,15 @@ enum sme_qos_reasontype {
 /* Table to map user priority passed in as an argument to appropriate Access
  * Category as specified in 802.11e/WMM
  */
-sme_QosEdcaAcType sme_qos_u_pto_ac_map[SME_QOS_WMM_UP_MAX] = {
-	SME_QOS_EDCA_AC_BE,     /* User Priority 0 */
-	SME_QOS_EDCA_AC_BK,     /* User Priority 1 */
-	SME_QOS_EDCA_AC_BK,     /* User Priority 2 */
-	SME_QOS_EDCA_AC_BE,     /* User Priority 3 */
-	SME_QOS_EDCA_AC_VI,     /* User Priority 4 */
-	SME_QOS_EDCA_AC_VI,     /* User Priority 5 */
-	SME_QOS_EDCA_AC_VO,     /* User Priority 6 */
-	SME_QOS_EDCA_AC_VO      /* User Priority 7 */
+enum qca_wlan_ac_type sme_qos_u_pto_ac_map[SME_QOS_WMM_UP_MAX] = {
+	QCA_WLAN_AC_BE,     /* User Priority 0 */
+	QCA_WLAN_AC_BK,     /* User Priority 1 */
+	QCA_WLAN_AC_BK,     /* User Priority 2 */
+	QCA_WLAN_AC_BE,     /* User Priority 3 */
+	QCA_WLAN_AC_VI,     /* User Priority 4 */
+	QCA_WLAN_AC_VI,     /* User Priority 5 */
+	QCA_WLAN_AC_VO,     /* User Priority 6 */
+	QCA_WLAN_AC_VO      /* User Priority 7 */
 };
 
 /*
@@ -140,7 +140,7 @@ struct sme_qos_flowinfoentry {
 	uint8_t tspec_mask;
 	enum sme_qos_reasontype reason;
 	uint32_t QosFlowID;
-	sme_QosEdcaAcType ac_type;
+	enum qca_wlan_ac_type ac_type;
 	struct sme_qos_wmmtspecinfo QoSInfo;
 	void *HDDcontext;
 	sme_QosCallback QoSCallback;
@@ -170,7 +170,7 @@ struct sme_qos_setupcmdinfo {
  */
 struct sme_qos_modifycmdinfo {
 	uint32_t QosFlowID;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_wmmtspecinfo QoSInfo;
 };
 /*
@@ -179,7 +179,7 @@ struct sme_qos_modifycmdinfo {
  */
 struct sme_qos_resendcmdinfo {
 	uint8_t tspecMask;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_wmmtspecinfo QoSInfo;
 };
 /*
@@ -260,7 +260,7 @@ struct sme_qos_sessioninfo {
 	/* is the session currently active */
 	bool sessionActive;
 	/* All AC info for this session */
-	struct sme_qos_acinfo ac_info[SME_QOS_EDCA_AC_MAX];
+	struct sme_qos_acinfo ac_info[QCA_WLAN_AC_ALL];
 	/* Bitmask of the ACs with APSD on */
 	/* Bit0:VO; Bit1:VI; Bit2:BK; Bit3:BE all other bits are ignored */
 	uint8_t apsdMask;
@@ -283,7 +283,7 @@ struct sme_qos_sessioninfo {
  */
 union sme_qos_searchkey {
 	uint32_t QosFlowID;
-	sme_QosEdcaAcType ac_type;
+	enum qca_wlan_ac_type ac_type;
 	enum sme_qos_reasontype reason;
 };
 /*
@@ -323,14 +323,14 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				uint8_t sessionId,
 				struct sme_qos_wmmtspecinfo *pTspec_Info,
-				sme_QosEdcaAcType ac);
+				enum qca_wlan_ac_type ac);
 static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      struct sme_qos_wmmtspecinfo *pTspec_Info,
-			      sme_QosEdcaAcType ac);
+			      enum qca_wlan_ac_type ac);
 static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
-			      sme_QosEdcaAcType ac, uint8_t tspec_mask);
+			      enum qca_wlan_ac_type ac, uint8_t tspec_mask);
 static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac,
 						void *pMsgBuf);
 static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
@@ -375,19 +375,19 @@ static QDF_STATUS sme_qos_aggregate_params(
 	struct sme_qos_wmmtspecinfo *pCurrent_Tspec_Info,
 	struct sme_qos_wmmtspecinfo *pUpdated_Tspec_Info);
 static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
-				      sme_QosEdcaAcType ac,
+				      enum qca_wlan_ac_type ac,
 				      uint8_t tspec_mask,
 				      struct sme_qos_wmmtspecinfo *pTspec_Info);
-static sme_QosEdcaAcType sme_qos_up_to_ac(enum sme_qos_wmmuptype up);
+static enum qca_wlan_ac_type sme_qos_up_to_ac(enum sme_qos_wmmuptype up);
 static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
-		    sme_QosEdcaAcType ac, tDot11fBeaconIEs *pIes);
+		    enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes);
 static tListElem *sme_qos_find_in_flow_list(struct sme_qos_searchinfo
 						search_key);
 static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac,
 					 struct sme_qos_searchinfo search_key,
 					 sme_QosProcessSearchEntry fnp);
 static void sme_qos_state_transition(uint8_t sessionId,
-				     sme_QosEdcaAcType ac,
+				     enum qca_wlan_ac_type ac,
 				     enum sme_qos_states new_state);
 static QDF_STATUS sme_qos_buffer_cmd(struct sme_qos_cmdinfo *pcmd, bool
 					insert_head);
@@ -406,7 +406,7 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(struct mac_context *mac, tListElem
 						*pEntry);
 static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac, tListElem
 						*pEntry);
-static bool sme_qos_is_rsp_pending(uint8_t sessionId, sme_QosEdcaAcType ac);
+static bool sme_qos_is_rsp_pending(uint8_t sessionId, enum qca_wlan_ac_type ac);
 static bool sme_qos_is_uapsd_active(void);
 
 static QDF_STATUS sme_qos_buffer_existing_flows(struct mac_context *mac,
@@ -424,12 +424,12 @@ static bool sme_qos_validate_requested_params(struct mac_context *mac,
 static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
 				    eSmeCommandType cmdType,
 				    struct sme_qos_wmmtspecinfo *pQoSInfo,
-				    sme_QosEdcaAcType ac, uint8_t tspec_mask);
+				    enum qca_wlan_ac_type ac, uint8_t tspec_mask);
 /* sme_qos_re_request_add_ts to re-send AddTS for the combined QoS request */
 static enum sme_qos_statustype sme_qos_re_request_add_ts(struct mac_context *mac,
 					  uint8_t sessionId,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
-					  sme_QosEdcaAcType ac,
+					  enum qca_wlan_ac_type ac,
 					  uint8_t tspecMask);
 static void sme_qos_init_a_cs(struct mac_context *mac, uint8_t sessionId);
 static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
@@ -471,7 +471,7 @@ static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
 	if (!sme_qos_cb.sessionInfo)
 		return QDF_STATUS_E_NOMEM;
 
-	buf_size = SME_QOS_EDCA_AC_MAX * sizeof(struct sme_qos_wmmtspecinfo);
+	buf_size = QCA_WLAN_AC_ALL * sizeof(struct sme_qos_wmmtspecinfo);
 	sme_qos_cb.def_QoSInfo = qdf_mem_malloc(buf_size);
 
 	if (!sme_qos_cb.def_QoSInfo) {
@@ -494,7 +494,7 @@ static inline void sme_qos_free_control_block_buffer(void)
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 
 struct sme_qos_sessioninfo sessionInfo[WLAN_MAX_VDEVS];
-struct sme_qos_wmmtspecinfo def_QoSInfo[SME_QOS_EDCA_AC_MAX];
+struct sme_qos_wmmtspecinfo def_QoSInfo[QCA_WLAN_AC_ALL];
 
 static inline QDF_STATUS sme_qos_allocate_control_block_buffer(void)
 {
@@ -587,7 +587,7 @@ QDF_STATUS sme_qos_open(struct mac_context *mac)
 QDF_STATUS sme_qos_close(struct mac_context *mac)
 {
 	struct sme_qos_sessioninfo *pSession;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	uint8_t sessionId;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -620,7 +620,7 @@ QDF_STATUS sme_qos_close(struct mac_context *mac)
 		}
 		/* close the session's buffered command list */
 		csr_ll_close(&pSession->bufferedCommandList);
-		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++)
+		for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++)
 			sme_qos_state_transition(sessionId, ac, SME_QOS_CLOSED);
 
 		pSession->sessionActive = false;
@@ -977,14 +977,14 @@ QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 uint8_t sme_qos_get_acm_mask(struct mac_context *mac, tSirBssDescription
 				*pSirBssDesc, tDot11fBeaconIEs *pIes)
 {
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	uint8_t acm_mask = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked", __func__, __LINE__);
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		if (sme_qos_is_acm(mac, pSirBssDesc, ac, pIes))
-			acm_mask = acm_mask | (1 << (SME_QOS_EDCA_AC_VO - ac));
+			acm_mask = acm_mask | (1 << (QCA_WLAN_AC_VO - ac));
 	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: mask is %d", __func__, __LINE__, acm_mask);
@@ -1034,7 +1034,7 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *ma
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_wmmtspecinfo Tspec_Info;
 	enum sme_qos_states new_state = SME_QOS_CLOSED;
 	struct sme_qos_flowinfoentry *pentry = NULL;
@@ -1056,7 +1056,7 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *ma
 			  __func__, __LINE__);
 		/* find the AC with UPType passed in */
 		ac = sme_qos_up_to_ac(UPType);
-		if (SME_QOS_EDCA_AC_MAX == ac) {
+		if (QCA_WLAN_AC_ALL == ac) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid AC %d from UP %d",
 				  __func__, __LINE__, ac, UPType);
@@ -1067,7 +1067,7 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *ma
 	} else {
 		/* find the AC */
 		ac = sme_qos_up_to_ac(pQoSInfo->ts_info.up);
-		if (SME_QOS_EDCA_AC_MAX == ac) {
+		if (QCA_WLAN_AC_ALL == ac) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid AC %d from UP %d",
 				  __func__, __LINE__, ac, pQoSInfo->ts_info.up);
@@ -1627,7 +1627,7 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(struct mac_context *m
 	struct sme_qos_acinfo *pACInfo;
 	struct sme_qos_flowinfoentry *pNewEntry = NULL;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	enum sme_qos_states new_state = SME_QOS_CLOSED;
 	enum sme_qos_statustype status =
 		SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
@@ -1954,7 +1954,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 	struct sme_qos_acinfo *pACInfo;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	struct sme_qos_flowinfoentry *pDeletedFlow = NULL;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	enum sme_qos_states new_state = SME_QOS_CLOSED;
 	enum sme_qos_statustype status = SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 	struct sme_qos_wmmtspecinfo Aggr_Tspec_Info;
@@ -2359,7 +2359,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 					 * require APSD
 					 */
 					pSession->apsdMask &=
-					~(1 << (SME_QOS_EDCA_AC_VO - ac));
+					~(1 << (QCA_WLAN_AC_VO - ac));
 					/* Also update modifyProfileFields.
 					 * uapsd_mask in CSR for consistency
 					 */
@@ -2420,16 +2420,16 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 					deltsIssued = true;
 				}
 			} else if (pSession->apsdMask &
-				(1 << (SME_QOS_EDCA_AC_VO - ac))) {
+				(1 << (QCA_WLAN_AC_VO - ac))) {
 				/* reassoc logic */
 				csr_get_modify_profile_fields(mac, sessionId,
 							  &modifyProfileFields);
 				modifyProfileFields.uapsd_mask |=
 					pSession->apsdMask;
 				modifyProfileFields.uapsd_mask &=
-					~(1 << (SME_QOS_EDCA_AC_VO - ac));
+					~(1 << (QCA_WLAN_AC_VO - ac));
 				pSession->apsdMask &=
-					~(1 << (SME_QOS_EDCA_AC_VO - ac));
+					~(1 << (QCA_WLAN_AC_VO - ac));
 				if (!pSession->apsdMask) {
 					/* this session no longer needs UAPSD
 					 * do any sessions still require UAPSD?
@@ -2617,7 +2617,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				uint8_t sessionId,
 				struct sme_qos_wmmtspecinfo *pTspec_Info,
-				sme_QosEdcaAcType ac)
+				enum qca_wlan_ac_type ac)
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
@@ -2727,7 +2727,7 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 			 * for the above case to let the AP know
 			 */
 			if (pSession->
-			    apsdMask & (1 << (SME_QOS_EDCA_AC_VO - ac))) {
+			    apsdMask & (1 << (QCA_WLAN_AC_VO - ac))) {
 				/* APSD was formerly enabled on this AC but is
 				 * no longer required so we must reassociate
 				 */
@@ -2740,7 +2740,7 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				modifyProfileFields.uapsd_mask |=
 					pSession->apsdMask;
 				modifyProfileFields.uapsd_mask &=
-					~(1 << (SME_QOS_EDCA_AC_VO - ac));
+					~(1 << (QCA_WLAN_AC_VO - ac));
 				hstatus =
 					sme_qos_request_reassoc(mac, sessionId,
 							&modifyProfileFields,
@@ -2784,7 +2784,7 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				  __func__, __LINE__, sessionId);
 			break;
 		} else if (pSession->
-			   apsdMask & (1 << (SME_QOS_EDCA_AC_VO - ac))) {
+			   apsdMask & (1 << (QCA_WLAN_AC_VO - ac))) {
 			/* application is looking for APSD */
 			/* and it is already enabled on this AC */
 			status = SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY;
@@ -2807,7 +2807,7 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 			modifyProfileFields.uapsd_mask |=
 					pSession->apsdMask;
 			modifyProfileFields.uapsd_mask |=
-					1 << (SME_QOS_EDCA_AC_VO - ac);
+					1 << (QCA_WLAN_AC_VO - ac);
 			hstatus = sme_qos_request_reassoc(mac, sessionId,
 							&modifyProfileFields,
 							false);
@@ -2957,7 +2957,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(struct mac_context *mac,
 	numTspec = (tspecIeLen) / sizeof(tDot11fIEWMMTSPEC);
 	for (cnt = 0; cnt < numTspec; cnt++) {
 		ac = sme_qos_up_to_ac(pTspecIE->user_priority);
-		if (ac >= SME_QOS_EDCA_AC_MAX) {
+		if (ac >= QCA_WLAN_AC_ALL) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("ac %d more than it`s max value"), ac);
 			return QDF_STATUS_E_FAILURE;
@@ -3081,7 +3081,7 @@ uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac_ctx,
 	 * if not return
 	 */
 	session = &sme_qos_cb.sessionInfo[session_id];
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		volatile uint8_t index = 0;
 
 		ac_info = &session->ac_info[ac];
@@ -3255,7 +3255,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 
 	session = &sme_qos_cb.sessionInfo[sessionId];
 
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		ac_info = &session->ac_info[ac];
 		qos_requested = false;
 
@@ -3424,7 +3424,7 @@ static QDF_STATUS sme_qos_ft_aggr_qos_req(struct mac_context *mac_ctx, uint8_t
 		     &session->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 
-	for (i = 0; i < SME_QOS_EDCA_AC_MAX; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		for (j = 0; j < SME_QOS_TSPEC_INDEX_MAX; j++) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"ac=%d, tspec_mask_staus=%x, tspec_index=%d",
@@ -3688,7 +3688,7 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(struct mac_context *mac_ctx,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("invoked on session %d"), sessionid);
 
-	if (ac == SME_QOS_EDCA_AC_MAX) {
+	if (ac == QCA_WLAN_AC_ALL) {
 		sme_err("Invalid AC %d", ac);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3705,7 +3705,7 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(struct mac_context *mac_ctx,
 		do {
 			ac1 = sme_qos_up_to_ac(
 				ric_data->WMMTSPEC.user_priority);
-			if (ac1 == SME_QOS_EDCA_AC_MAX) {
+			if (ac1 == QCA_WLAN_AC_ALL) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL("Invalid AC %d UP %d"), ac1,
@@ -3778,7 +3778,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (!csr_session->roam_synch_in_progress) {
 #endif
-		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+		for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 			ac_info = &qos_session->ac_info[ac];
 			sme_qos_find_matching_tspec(mac_ctx, sessionid, ac,
 					ac_info, ric_data_desc, &ric_rsplen);
@@ -3797,7 +3797,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 		ric_len = ric_rsplen;
 		if (ric_rsplen && ric_data_desc->present &&
 		    ric_data_desc->WMMTSPEC.present) {
-			for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX;
+			for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL;
 			     ac++) {
 				sme_qos_find_matching_tspec_lfr3(mac_ctx,
 					sessionid, ac, qos_session, ric_data,
@@ -3830,7 +3830,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      struct sme_qos_wmmtspecinfo *pTspec_Info,
-			      sme_QosEdcaAcType ac)
+			      enum qca_wlan_ac_type ac)
 {
 	tSirAddtsReq *pMsg = NULL;
 	struct sme_qos_sessioninfo *pSession;
@@ -3950,7 +3950,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
  */
 static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
-			      sme_QosEdcaAcType ac, uint8_t tspec_mask)
+			      enum qca_wlan_ac_type ac, uint8_t tspec_mask)
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
@@ -4058,7 +4058,7 @@ static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac, void *pMsg
 		(enum sme_qos_wmmuptype)
 		paddts_rsp->rsp.tspec.tsinfo.traffic.userPrio;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
@@ -4070,7 +4070,7 @@ static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac, void *pMsg
 		  __func__, __LINE__, sessionId, up);
 
 	ac = sme_qos_up_to_ac(up);
-	if (SME_QOS_EDCA_AC_MAX == ac) {
+	if (QCA_WLAN_AC_ALL == ac) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
@@ -4150,7 +4150,7 @@ static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	uint8_t sessionId = pdeltsind->sessionId;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_searchinfo search_key;
 	struct mac_ts_info *tsinfo;
 	enum sme_qos_wmmuptype up =
@@ -4164,7 +4164,7 @@ static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
 		  __func__, __LINE__, sessionId, up);
 	tsinfo = &pdeltsind->rsp.tspec.tsinfo;
 	ac = sme_qos_up_to_ac(up);
-	if (SME_QOS_EDCA_AC_MAX == ac) {
+	if (QCA_WLAN_AC_ALL == ac) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
@@ -4215,19 +4215,19 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac, uin
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	sme_QosEdcaAcType ac = SME_QOS_EDCA_AC_BE;
+	enum qca_wlan_ac_type ac = QCA_WLAN_AC_BE;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	if (((SME_QOS_INIT == pSession->ac_info[SME_QOS_EDCA_AC_BE].curr_state)
+	if (((SME_QOS_INIT == pSession->ac_info[QCA_WLAN_AC_BE].curr_state)
 	     && (SME_QOS_INIT ==
-		 pSession->ac_info[SME_QOS_EDCA_AC_BK].curr_state)
+		 pSession->ac_info[QCA_WLAN_AC_BK].curr_state)
 	     && (SME_QOS_INIT ==
-		 pSession->ac_info[SME_QOS_EDCA_AC_VI].curr_state)
+		 pSession->ac_info[QCA_WLAN_AC_VI].curr_state)
 	     && (SME_QOS_INIT ==
-		 pSession->ac_info[SME_QOS_EDCA_AC_VO].curr_state))
+		 pSession->ac_info[QCA_WLAN_AC_VO].curr_state))
 	    || (pSession->handoffRequested)) {
 		/* get the association info */
 		if (!pEvent_info) {
@@ -4259,10 +4259,10 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac, uin
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: wrong state: BE %d, BK %d, VI %d, VO %d",
 			  __func__, __LINE__,
-			  pSession->ac_info[SME_QOS_EDCA_AC_BE].curr_state,
-			  pSession->ac_info[SME_QOS_EDCA_AC_BK].curr_state,
-			  pSession->ac_info[SME_QOS_EDCA_AC_VI].curr_state,
-			  pSession->ac_info[SME_QOS_EDCA_AC_VO].curr_state);
+			  pSession->ac_info[QCA_WLAN_AC_BE].curr_state,
+			  pSession->ac_info[QCA_WLAN_AC_BK].curr_state,
+			  pSession->ac_info[QCA_WLAN_AC_VI].curr_state,
+			  pSession->ac_info[QCA_WLAN_AC_VO].curr_state);
 		return status;
 	}
 	/* the session is active */
@@ -4273,7 +4273,7 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac, uin
 		(void)sme_qos_process_buffered_cmd(sessionId);
 		status = QDF_STATUS_SUCCESS;
 	} else {
-		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+		for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 			pACInfo = &pSession->ac_info[ac];
 			switch (pACInfo->curr_state) {
 			case SME_QOS_INIT:
@@ -4311,7 +4311,7 @@ static QDF_STATUS sme_qos_process_reassoc_req_ev(struct mac_context *mac, uint8_
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	tListElem *entry = NULL;
 
@@ -4407,7 +4407,7 @@ static QDF_STATUS sme_qos_process_reassoc_req_ev(struct mac_context *mac, uint8_
 		return QDF_STATUS_SUCCESS;
 	}
 
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		switch (pACInfo->curr_state) {
 		case SME_QOS_LINK_UP:
@@ -4453,12 +4453,12 @@ static
 QDF_STATUS sme_qos_handle_handoff_state(struct mac_context *mac_ctx,
 		struct sme_qos_sessioninfo *qos_session,
 		struct sme_qos_acinfo *ac_info,
-		sme_QosEdcaAcType ac, uint8_t sessionid)
+		enum qca_wlan_ac_type ac, uint8_t sessionid)
 
 {
 	struct sme_qos_searchinfo search_key;
 	struct sme_qos_searchinfo search_key1;
-	sme_QosEdcaAcType ac_index;
+	enum qca_wlan_ac_type ac_index;
 	tListElem *list_elt = NULL;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -4474,9 +4474,9 @@ QDF_STATUS sme_qos_handle_handoff_state(struct mac_context *mac_ctx,
 	 * case where we are resetting the bit in apsd_mask
 	 */
 	if (ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0].ts_info.psb)
-		qos_session->apsdMask |= 1 << (SME_QOS_EDCA_AC_VO - ac);
+		qos_session->apsdMask |= 1 << (QCA_WLAN_AC_VO - ac);
 	else
-		qos_session->apsdMask &= ~(1 << (SME_QOS_EDCA_AC_VO - ac));
+		qos_session->apsdMask &= ~(1 << (QCA_WLAN_AC_VO - ac));
 
 	ac_info->reassoc_pending = false;
 	/*
@@ -4499,7 +4499,7 @@ QDF_STATUS sme_qos_handle_handoff_state(struct mac_context *mac_ctx,
 	search_key1.index = SME_QOS_SEARCH_KEY_INDEX_3;
 	search_key1.key.reason = SME_QOS_REASON_SETUP;
 	search_key1.sessionId = sessionid;
-	for (ac_index = SME_QOS_EDCA_AC_BE; ac_index < SME_QOS_EDCA_AC_MAX;
+	for (ac_index = QCA_WLAN_AC_BE; ac_index < QCA_WLAN_AC_ALL;
 	     ac_index++) {
 		list_elt = sme_qos_find_in_flow_list(search_key1);
 		if (list_elt) {
@@ -4549,7 +4549,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 	struct csr_roam_session *csr_roam_session = NULL;
 	struct sme_qos_sessioninfo *qos_session;
 	struct sme_qos_acinfo *ac_info;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -4624,7 +4624,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 	}
 
 	qos_session->sessionActive = true;
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		ac_info = &qos_session->ac_info[ac];
 		switch (ac_info->curr_state) {
 		case SME_QOS_HANDOFF:
@@ -4663,13 +4663,13 @@ static QDF_STATUS sme_qos_process_reassoc_failure_ev(struct mac_context *mac,
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		switch (pACInfo->curr_state) {
 		case SME_QOS_HANDOFF:
@@ -4733,7 +4733,7 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(struct mac_context *mac,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		switch (pACInfo->curr_state) {
 		case SME_QOS_LINK_UP:
@@ -4802,7 +4802,7 @@ static QDF_STATUS sme_qos_process_handoff_success_ev(struct mac_context *mac,
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	/* go back to original state before handoff */
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		switch (pACInfo->curr_state) {
 		case SME_QOS_HANDOFF:
@@ -4914,7 +4914,7 @@ static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 						sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked on session %d",
@@ -4940,7 +4940,7 @@ static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 		return QDF_STATUS_SUCCESS;
 	}
 
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++)
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++)
 		sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
 
 	/* clean up the assoc info if already set */
@@ -4988,7 +4988,7 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 
 	qos_session = &sme_qos_cb.sessionInfo[sessionid];
 
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		ac_info = &qos_session->ac_info[ac];
 
 		switch (ac_info->curr_state) {
@@ -5036,7 +5036,7 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 	 * Now we have to process the currentTspeInfo inside this session and
 	 * create the RIC IEs
 	 */
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		volatile uint8_t tspec_idx = 0;
 
 		ric_ielen = 0;
@@ -5098,7 +5098,7 @@ static QDF_STATUS sme_qos_process_add_ts_failure_rsp(struct mac_context *mac,
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	struct sme_qos_searchinfo search_key;
 	uint8_t tspec_pending;
 	enum sme_qos_wmmuptype up =
@@ -5108,7 +5108,7 @@ static QDF_STATUS sme_qos_process_add_ts_failure_rsp(struct mac_context *mac,
 		  "%s: %d: invoked on session %d for UP %d", __func__, __LINE__,
 		  sessionId, up);
 	ac = sme_qos_up_to_ac(up);
-	if (SME_QOS_EDCA_AC_MAX == ac) {
+	if (QCA_WLAN_AC_ALL == ac) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
@@ -5184,7 +5184,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 
 	qos_session = &sme_qos_cb.sessionInfo[sessionid];
 
-	if (search_key.key.ac_type < SME_QOS_EDCA_AC_MAX) {
+	if (search_key.key.ac_type < QCA_WLAN_AC_ALL) {
 		ac_info = &qos_session->ac_info[search_key.key.ac_type];
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -5256,7 +5256,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac, ac_index;
+	enum qca_wlan_ac_type ac, ac_index;
 	struct sme_qos_searchinfo search_key;
 	struct sme_qos_searchinfo search_key1;
 	struct csr_roam_session *csr_session;
@@ -5275,7 +5275,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 		  __func__, __LINE__, sessionId, up);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	ac = sme_qos_up_to_ac(up);
-	if (SME_QOS_EDCA_AC_MAX == ac) {
+	if (QCA_WLAN_AC_ALL == ac) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
@@ -5296,7 +5296,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	 */
 	if (pACInfo->requested_QoSInfo[tspec_pending - 1].ts_info.psb) {
 		/* update the session's apsd mask */
-		pSession->apsdMask |= 1 << (SME_QOS_EDCA_AC_VO - ac);
+		pSession->apsdMask |= 1 << (QCA_WLAN_AC_VO - ac);
 	} else {
 		if (((SME_QOS_TSPEC_MASK_BIT_1_2_SET & ~tspec_pending) > 0) &&
 		    ((SME_QOS_TSPEC_MASK_BIT_1_2_SET & ~tspec_pending) <=
@@ -5306,7 +5306,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 			     1].ts_info.psb)
 				/* update the session's apsd mask */
 				pSession->apsdMask &=
-					~(1 << (SME_QOS_EDCA_AC_VO - ac));
+					~(1 << (QCA_WLAN_AC_VO - ac));
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: %d: Exceeded the array bounds of pACInfo->requested_QosInfo",
@@ -5390,7 +5390,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	search_key1.index = SME_QOS_SEARCH_KEY_INDEX_3;
 	search_key1.key.reason = SME_QOS_REASON_SETUP;
 	search_key1.sessionId = sessionId;
-	for (ac_index = SME_QOS_EDCA_AC_BE; ac_index < SME_QOS_EDCA_AC_MAX;
+	for (ac_index = QCA_WLAN_AC_BE; ac_index < QCA_WLAN_AC_ALL;
 	     ac_index++) {
 		pEntry = sme_qos_find_in_flow_list(search_key1);
 		if (pEntry) {
@@ -5668,7 +5668,7 @@ static QDF_STATUS sme_qos_aggregate_params(
  * Return QDF_STATUS
  */
 static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
-		sme_QosEdcaAcType ac,
+		enum qca_wlan_ac_type ac,
 		uint8_t tspec_mask,
 		struct sme_qos_wmmtspecinfo *pTspec_Info)
 {
@@ -5748,9 +5748,9 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
  * up - Enumeration of the various User priorities (UP).
  * Return an Access Category
  */
-static sme_QosEdcaAcType sme_qos_up_to_ac(enum sme_qos_wmmuptype up)
+static enum qca_wlan_ac_type sme_qos_up_to_ac(enum sme_qos_wmmuptype up)
 {
-	sme_QosEdcaAcType ac = SME_QOS_EDCA_AC_MAX;
+	enum qca_wlan_ac_type ac = QCA_WLAN_AC_ALL;
 
 	if (up >= 0 && up < SME_QOS_WMM_UP_MAX)
 		ac = sme_qos_u_pto_ac_map[up];
@@ -5772,7 +5772,7 @@ static sme_QosEdcaAcType sme_qos_up_to_ac(enum sme_qos_wmmuptype up)
  * Return None
  */
 static void sme_qos_state_transition(uint8_t sessionId,
-				     sme_QosEdcaAcType ac,
+				     enum qca_wlan_ac_type ac,
 				     enum sme_qos_states new_state)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -5886,7 +5886,7 @@ static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac_ctx,
 	struct sme_qos_sessioninfo *qos_session;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	sme_QosEdcaAcType ac_type;
+	enum qca_wlan_ac_type ac_type;
 
 	list_elt = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!list_elt) {
@@ -5947,7 +5947,7 @@ static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac_ctx,
  * Return true if the AC mandates Admission Control
  */
 static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
-		    sme_QosEdcaAcType ac, tDot11fBeaconIEs *pIes)
+		    enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes)
 {
 	bool ret_val = false;
 	tDot11fBeaconIEs *pIesLocal;
@@ -5978,19 +5978,19 @@ static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssD
 
 	if (CSR_IS_QOS_BSS(pIesLocal)) {
 		switch (ac) {
-		case SME_QOS_EDCA_AC_BE:
+		case QCA_WLAN_AC_BE:
 			if (pIesLocal->WMMParams.acbe_acm)
 				ret_val = true;
 			break;
-		case SME_QOS_EDCA_AC_BK:
+		case QCA_WLAN_AC_BK:
 			if (pIesLocal->WMMParams.acbk_acm)
 				ret_val = true;
 			break;
-		case SME_QOS_EDCA_AC_VI:
+		case QCA_WLAN_AC_VI:
 			if (pIesLocal->WMMParams.acvi_acm)
 				ret_val = true;
 			break;
-		case SME_QOS_EDCA_AC_VO:
+		case QCA_WLAN_AC_VO:
 			if (pIesLocal->WMMParams.acvo_acm)
 				ret_val = true;
 			break;
@@ -6423,7 +6423,7 @@ static QDF_STATUS sme_qos_setup_fnp(struct mac_context *mac, tListElem *pEntry)
 	struct sme_qos_acinfo *pACInfo;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	enum sme_qos_statustype hdd_status = SME_QOS_STATUS_SETUP_MODIFIED_IND;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	if (!pEntry) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6464,7 +6464,7 @@ static QDF_STATUS sme_qos_modification_notify_fnp(struct mac_context *mac, tList
 	struct sme_qos_acinfo *pACInfo;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	enum sme_qos_statustype hdd_status = SME_QOS_STATUS_SETUP_MODIFIED_IND;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	if (!pEntry) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6548,7 +6548,7 @@ static QDF_STATUS sme_qos_del_ts_ind_fnp(struct mac_context *mac, tListElem *pEn
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	struct sme_qos_flowinfoentry *flow_info = NULL;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	enum sme_qos_statustype status;
 
@@ -6605,7 +6605,7 @@ sme_qos_reassoc_success_ev_fnp(struct mac_context *mac_ctx,
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	bool delete_entry = false;
 	enum sme_qos_statustype hdd_status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	QDF_STATUS pmc_status = QDF_STATUS_E_FAILURE;
 
 	if (!entry) {
@@ -6728,7 +6728,7 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(struct mac_context *mac, tListElem
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 	bool inform_hdd = false;
 	enum sme_qos_statustype hdd_status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	if (!pEntry) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6824,7 +6824,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac_ctx,
 	bool inform_hdd = false;
 	bool delete_entry = false;
 	enum sme_qos_statustype hdd_status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 	QDF_STATUS pmc_status = QDF_STATUS_E_FAILURE;
 	tCsrRoamModifyProfileFields profile_fields;
 	uint8_t psb;
@@ -6915,7 +6915,7 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac_ctx,
 			/* this is the only TSPEC active on this AC */
 			/* so indicate that we no longer require APSD */
 			qos_session->apsdMask &=
-				~(1 << (SME_QOS_EDCA_AC_VO - ac));
+				~(1 << (QCA_WLAN_AC_VO - ac));
 			/* Also update modifyProfileFields.uapsd_mask
 			 * in CSR for consistency
 			 */
@@ -6972,15 +6972,15 @@ static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac_ctx,
  * Return bool
  *  true - Response is pending on an AC
  */
-static bool sme_qos_is_rsp_pending(uint8_t sessionId, sme_QosEdcaAcType ac)
+static bool sme_qos_is_rsp_pending(uint8_t sessionId, enum qca_wlan_ac_type ac)
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType acIndex;
+	enum qca_wlan_ac_type acIndex;
 	bool status = false;
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	for (acIndex = SME_QOS_EDCA_AC_BE; acIndex < SME_QOS_EDCA_AC_MAX;
+	for (acIndex = QCA_WLAN_AC_BE; acIndex < QCA_WLAN_AC_ALL;
 	     acIndex++) {
 		if (acIndex == ac)
 			continue;
@@ -7119,13 +7119,13 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(struct mac_context *mac,
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("invoked on session %d"), sessionId);
 
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		pACInfo = &pSession->ac_info[ac];
 		qdf_mem_zero(pACInfo->curr_QoSInfo,
 			     sizeof(struct sme_qos_wmmtspecinfo) *
@@ -7231,7 +7231,7 @@ static bool sme_qos_validate_requested_params(struct mac_context *mac,
 static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
 				    eSmeCommandType cmdType,
 				    struct sme_qos_wmmtspecinfo *pQoSInfo,
-				    sme_QosEdcaAcType ac, uint8_t tspec_mask)
+				    enum qca_wlan_ac_type ac, uint8_t tspec_mask)
 {
 	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
 	tSmeCmd *pCommand = NULL;
@@ -7332,7 +7332,7 @@ bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 static
 enum sme_qos_statustype sme_qos_re_request_add_ts(struct mac_context *mac_ctx,
 		uint8_t session_id, struct sme_qos_wmmtspecinfo *qos_info,
-		sme_QosEdcaAcType ac, uint8_t tspec_mask)
+		enum qca_wlan_ac_type ac, uint8_t tspec_mask)
 {
 	struct sme_qos_sessioninfo *session;
 	struct sme_qos_acinfo *ac_info;
@@ -7447,10 +7447,10 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(struct mac_context *mac_ctx,
 static void sme_qos_init_a_cs(struct mac_context *mac, uint8_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
-	sme_QosEdcaAcType ac;
+	enum qca_wlan_ac_type ac;
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+	for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 		qdf_mem_zero(&pSession->ac_info[ac],
 				sizeof(struct sme_qos_acinfo));
 		sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
@@ -7498,9 +7498,9 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 		/* Update the state to Handoff so subsequent requests are
 		 * queued until this one is finished
 		 */
-		sme_QosEdcaAcType ac;
+		enum qca_wlan_ac_type ac;
 
-		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+		for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 			pACInfo = &pSession->ac_info[ac];
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  "%s: %d: AC[%d] is in state [%d]",
