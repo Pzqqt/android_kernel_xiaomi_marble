@@ -1398,6 +1398,23 @@ QDF_STATUS ucfg_mlme_get_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_is_sap_bcast_deauth_enabled() - get the sap bcast deauth
+ *                                           enabled value
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_sap_bcast_deauth_enabled(struct wlan_objmgr_psoc *psoc,
+				      bool *value)
+{
+	return wlan_mlme_is_sap_bcast_deauth_enabled(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_sap_allow_all_channels() - get the sap allow all channels
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller

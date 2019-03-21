@@ -1200,6 +1200,8 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 	sap_cfg->go_11ac_override =
 		cfg_get(psoc, CFG_GO_11AC_OVERRIDE);
 	sap_cfg->sap_sae_enabled = is_sae_sap_enabled(psoc);
+	sap_cfg->is_sap_bcast_deauth_enabled =
+		cfg_get(psoc, CFG_IS_SAP_BCAST_DEAUTH_ENABLED);
 }
 
 static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
