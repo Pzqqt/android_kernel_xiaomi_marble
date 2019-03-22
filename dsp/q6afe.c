@@ -8827,6 +8827,12 @@ int afe_vote_lpass_core_hw(uint32_t hw_block_id, char *client_name,
 		return -EINVAL;
 	}
 
+	ret = afe_q6_interface_prepare();
+	if(ret) {
+		pr_err("%s: Q6 interface prepare failed %d\n", __func__, ret);
+		return ret;
+	}
+
 	mutex_lock(&this_afe.afe_cmd_lock);
 
 	memset(cmd_ptr, 0, sizeof(hw_vote_cfg));
@@ -8901,6 +8907,12 @@ int afe_unvote_lpass_core_hw(uint32_t hw_block_id, uint32_t client_handle)
 	struct afe_cmd_remote_lpass_core_hw_devote_request *cmd_ptr =
 						&hw_vote_cfg;
 	int ret = 0;
+
+	ret = afe_q6_interface_prepare();
+	if(ret) {
+		pr_err("%s: Q6 interface prepare failed %d\n", __func__, ret);
+		return ret;
+	}
 
 	mutex_lock(&this_afe.afe_cmd_lock);
 
