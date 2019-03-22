@@ -226,7 +226,7 @@ void qdf_nbuf_set_state(qdf_nbuf_t nbuf, uint8_t current_state)
 }
 qdf_export_symbol(qdf_nbuf_set_state);
 
-#ifdef CONFIG_MCL
+#ifdef FEATURE_NBUFF_REPLENISH_TIMER
 /**
  * __qdf_nbuf_start_replenish_timer - Start alloc fail replenish timer
  *
