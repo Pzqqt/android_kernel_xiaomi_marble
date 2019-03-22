@@ -9533,7 +9533,10 @@ struct hdd_context *hdd_context_create(struct device *dev)
 
 	hdd_cfg_params_init(hdd_ctx);
 
-	qdf_timer_set_multiplier(cfg_get(hdd_ctx->psoc, CFG_TIMER_MULTIPLIER));
+	/* apply multiplier config, if not already set via module parameter */
+	if (qdf_timer_get_multiplier() == 1)
+		qdf_timer_set_multiplier(cfg_get(hdd_ctx->psoc,
+						 CFG_TIMER_MULTIPLIER));
 	hdd_debug("set timer multiplier: %u", qdf_timer_get_multiplier());
 
 	cds_set_fatal_event(cfg_get(hdd_ctx->psoc,
@@ -15067,3 +15070,35 @@ module_param(enable_dfs_chan_scan, int, S_IRUSR | S_IRGRP | S_IROTH);
 module_param(enable_11d, int, S_IRUSR | S_IRGRP | S_IROTH);
 
 module_param(country_code, charp, S_IRUSR | S_IRGRP | S_IROTH);
+
+static int timer_multiplier_get_handler(char *buffer,
+					const struct kernel_param *kp)
+{
+	return scnprintf(buffer, PAGE_SIZE, "%u", qdf_timer_get_multiplier());
+}
+
+static int timer_multiplier_set_handler(const char *kmessage,
+					const struct kernel_param *kp)
+{
+	QDF_STATUS status;
+	uint32_t scalar;
+
+	status = qdf_uint32_parse(kmessage, &scalar);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	if (!cfg_in_range(CFG_TIMER_MULTIPLIER, scalar))
+		return -ERANGE;
+
+	qdf_timer_set_multiplier(scalar);
+
+	return 0;
+}
+
+static const struct kernel_param_ops timer_multiplier_ops = {
+	.get = timer_multiplier_get_handler,
+	.set = timer_multiplier_set_handler,
+};
+
+module_param_cb(timer_multiplier, &timer_multiplier_ops, NULL, 0644);
+
