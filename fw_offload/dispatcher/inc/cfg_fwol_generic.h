@@ -96,10 +96,10 @@
  * Firmware by default categorizes ARP packets with VOICE TID.
  * This ini shall be used to override the default configuration.
  * Access category enums are referenced in ieee80211_common.h
- * WME_AC_BE = 0 (Best effort)
- * WME_AC_BK = 1 (Background)
- * WME_AC_VI = 2 (Video)
- * WME_AC_VO = 3 (Voice)
+ * QCA_WLAN_AC_BE = 0 (Best effort)
+ * QCA_WLAN_AC_BK = 1 (Background)
+ * QCA_WLAN_AC_VI = 2 (Video)
+ * QCA_WLAN_AC_VO = 3 (Voice)
  *
  * Related: none
  *
