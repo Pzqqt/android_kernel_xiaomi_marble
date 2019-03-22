@@ -170,9 +170,11 @@ struct wlan_ipa_tx_hdr {
  * @reserved1: Reserved not used
  * @reserved2: Reserved not used
  */
-#if defined(QCA_WIFI_3_0) || \
-    defined(QCA_WIFI_QCA6290) || \
-    defined(QCA_WIFI_QCA6390)
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+struct frag_header {
+	uint8_t reserved[0];
+};
+#elif defined(QCA_WIFI_3_0)
 struct frag_header {
 	uint16_t length;
 	uint32_t reserved1;
@@ -192,11 +194,18 @@ struct frag_header {
  * @vdev_id:  vdev id
  * @reserved: Reserved not used
  */
+
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+struct ipa_header {
+	uint8_t reserved[0];
+};
+#else
 struct ipa_header {
 	uint32_t
 		vdev_id:8,	/* vdev_id field is LSB of IPA DESC */
 		reserved:24;
 } qdf_packed;
+#endif
 
 /**
  * struct wlan_ipa_uc_tx_hdr - full tx header registered to IPA hardware
