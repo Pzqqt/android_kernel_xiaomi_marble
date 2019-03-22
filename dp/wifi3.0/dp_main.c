@@ -5894,7 +5894,7 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
  * Return: 0 on success, not 0 on failure
  */
 static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
-					   uint8_t smart_monitor)
+					   uint8_t special_monitor)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev;
@@ -5902,9 +5902,20 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	qdf_assert(vdev);
 
 	pdev = vdev->pdev;
+	pdev->monitor_vdev = vdev;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 		  "pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
 		  pdev, pdev->pdev_id, pdev->soc, vdev);
+
+	/*
+	 * do not configure monitor buf ring and filter for smart and
+	 * lite monitor
+	 * for smart monitor filters are added along with first NAC
+	 * for lite monitor required configuration done through
+	 * dp_set_pdev_param
+	 */
+	if (special_monitor)
+		return QDF_STATUS_SUCCESS;
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (pdev->monitor_configured) {
@@ -5914,12 +5925,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	pdev->monitor_vdev = vdev;
 	pdev->monitor_configured = true;
-
-	/* If smart monitor mode, do not configure monitor ring */
-	if (smart_monitor)
-		return QDF_STATUS_SUCCESS;
 
 	return dp_pdev_configure_monitor_rings(pdev);
 }
