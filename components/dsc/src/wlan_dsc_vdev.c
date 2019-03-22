@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,16 +106,13 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
 	dsc_exit();
 }
 
-static bool __dsc_vdev_can_op(struct dsc_vdev *vdev)
+#define __dsc_vdev_can_op(vdev) __dsc_vdev_can_trans(vdev)
+
+static bool __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 {
 	return !__dsc_trans_active_or_queued(&vdev->psoc->driver->trans) &&
 		!__dsc_trans_active_or_queued(&vdev->psoc->trans) &&
 		!__dsc_trans_active_or_queued(&vdev->trans);
-}
-
-static bool __dsc_vdev_can_trans(struct dsc_vdev *vdev)
-{
-	return __dsc_vdev_can_op(vdev);
 }
 
 static QDF_STATUS

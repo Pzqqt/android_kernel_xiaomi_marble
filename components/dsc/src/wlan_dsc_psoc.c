@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,11 +124,7 @@ static bool __dsc_psoc_trans_active_down_tree(struct dsc_psoc *psoc)
 	return false;
 }
 
-static bool __dsc_psoc_can_op(struct dsc_psoc *psoc)
-{
-	return !__dsc_trans_active_or_queued(&psoc->driver->trans) &&
-		!__dsc_trans_active_or_queued(&psoc->trans);
-}
+#define __dsc_psoc_can_op(psoc) __dsc_psoc_can_trans(psoc)
 
 static bool __dsc_psoc_can_trans(struct dsc_psoc *psoc)
 {
