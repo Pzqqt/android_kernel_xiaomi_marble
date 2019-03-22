@@ -144,6 +144,14 @@ wlan_peer_update_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 	bool idx_match = false;
 
 	stats_ctx = (struct wlan_peer_rate_stats_ctx *)cdp_rx_ppdu->cookie;
+
+	if (qdf_unlikely(!stats_ctx)) {
+		qdf_warn("peer rate stats ctx is NULL, return");
+		qdf_warn("peer_mac:  " QDF_MAC_ADDR_STR,
+			 QDF_MAC_ADDR_ARRAY(cdp_rx_ppdu->mac_addr));
+		return;
+	}
+
 	rx_stats = &stats_ctx->rx;
 
 	if (qdf_unlikely(cdp_rx_ppdu->rix > DP_RATE_TABLE_SIZE)) {
@@ -227,6 +235,14 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		ppdu_user = &cdp_tx_ppdu->user[user_idx];
 		stats_ctx = (struct wlan_peer_rate_stats_ctx *)
 				ppdu_user->cookie;
+
+		if (qdf_unlikely(!stats_ctx)) {
+			qdf_warn("peer rate stats ctx is NULL, return");
+			qdf_warn("peer_mac: " QDF_MAC_ADDR_STR,
+				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
+			return;
+		}
+
 		tx_stats = &stats_ctx->tx;
 		RATE_STATS_LOCK_ACQUIRE(&tx_stats->lock);
 
@@ -287,12 +303,18 @@ wlan_peer_update_sojourn_stats(void *ctx,
 	uint8_t tid;
 
 	stats_ctx = (struct wlan_peer_rate_stats_ctx *)sojourn_stats->cookie;
+
+	if (qdf_unlikely(!stats_ctx)) {
+		qdf_warn("peer rate stats ctx is NULL, return");
+		return;
+	}
+
 	tx_stats = &stats_ctx->tx;
 
 	RATE_STATS_LOCK_ACQUIRE(&tx_stats->lock);
 	for (tid = 0; tid < CDP_DATA_TID_MAX; tid++) {
-		qdf_ewma_tx_lag_add(&tx_stats->sojourn.avg_sojourn_msdu[tid],
-				    sojourn_stats->sum_sojourn_msdu[tid]);
+		tx_stats->sojourn.avg_sojourn_msdu[tid] =
+			sojourn_stats->avg_sojourn_msdu[tid];
 
 		tx_stats->sojourn.sum_sojourn_msdu[tid] +=
 			sojourn_stats->sum_sojourn_msdu[tid];
