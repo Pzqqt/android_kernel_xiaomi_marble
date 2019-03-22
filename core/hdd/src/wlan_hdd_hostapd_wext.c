@@ -2366,7 +2366,7 @@ static int __iw_softap_get_ba_timeout(struct net_device *dev,
 {
 	int errno;
 	uint8_t ac_cat = 4;
-	uint32_t duration[WME_AC_MAX], i;
+	uint32_t duration[QCA_WLAN_AC_ALL], i;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;

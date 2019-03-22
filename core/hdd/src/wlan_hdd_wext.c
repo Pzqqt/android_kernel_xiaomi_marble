@@ -7095,7 +7095,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	case WE_GET_BA_AGEING_TIMEOUT:
 	{
 		uint8_t ac_cat = 4;
-		uint32_t duration[WME_AC_MAX], i;
+		uint32_t duration[QCA_WLAN_AC_ALL], i;
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 		if (!soc) {

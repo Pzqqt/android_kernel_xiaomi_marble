@@ -2639,16 +2639,16 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
 		switch (ac) {
-		case WME_AC_BE:
+		case QCA_WLAN_AC_BE:
 			edca_record = &edca_params->acbe;
 			break;
-		case WME_AC_BK:
+		case QCA_WLAN_AC_BK:
 			edca_record = &edca_params->acbk;
 			break;
-		case WME_AC_VI:
+		case QCA_WLAN_AC_VI:
 			edca_record = &edca_params->acvi;
 			break;
-		case WME_AC_VO:
+		case QCA_WLAN_AC_VO:
 			edca_record = &edca_params->acvo;
 			break;
 		default:
