@@ -33,20 +33,6 @@
 #include "wlan_policy_mgr_ucfg.h"
 #include "wlan_scan_ucfg_api.h"
 
-/**
- * tos - Type of service requested by the application
- * TOS_BK: Back ground traffic
- * TOS_BE: Best effort traffic
- * TOS_VI: Video traffic
- * TOS_VO: Voice traffic
- */
-enum tos {
-	TOS_BK = 0,
-	TOS_BE = 1,
-	TOS_VI = 2,
-	TOS_VO = 3,
-};
-
 #define HDD_AC_BK_BIT                   1
 #define HDD_AC_BE_BIT                   2
 #define HDD_AC_VI_BIT                   4
@@ -57,13 +43,12 @@ enum tos {
 #define HDD_MAX_OFF_CHAN_TIME_FOR_BE    40
 #define HDD_MAX_OFF_CHAN_TIME_FOR_BK    40
 
-#define HDD_MAX_AC                      4
 #define HDD_MAX_OFF_CHAN_ENTRIES        2
 
 #define HDD_AC_BIT_INDX                 0
 #define HDD_DWELL_TIME_INDX             1
 
-static int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
+static int limit_off_chan_tbl[QCA_WLAN_AC_ALL][HDD_MAX_OFF_CHAN_ENTRIES] = {
 		{ HDD_AC_BK_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BK },
 		{ HDD_AC_BE_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_BE },
 		{ HDD_AC_VI_BIT, HDD_MAX_OFF_CHAN_TIME_FOR_VI },
@@ -88,7 +73,7 @@ wlan_hdd_set_limit_off_channel_param_policy
 
 static int
 hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
-			       enum tos tos,
+			       enum qca_wlan_ac_type tos,
 			       bool is_tos_active)
 {
 	int ac_bit;
@@ -117,12 +102,12 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 	if (adapter->active_ac) {
 		if (adapter->active_ac & HDD_AC_VO_BIT) {
 			max_off_chan_time =
-				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
+				limit_off_chan_tbl[QCA_WLAN_AC_VO][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc,
 							    PM_LATENCY);
 		} else if (adapter->active_ac & HDD_AC_VI_BIT) {
 			max_off_chan_time =
-				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
+				limit_off_chan_tbl[QCA_WLAN_AC_VI][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc,
 							    PM_LATENCY);
 		} else {
@@ -198,9 +183,9 @@ __wlan_hdd_cfg80211_set_limit_offchan_param(struct wiphy *wiphy,
 	}
 
 	tos = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ACTIVE_TOS]);
-	if (tos >= HDD_MAX_AC) {
+	if (tos >= QCA_WLAN_AC_ALL) {
 		hdd_err("tos value %d exceeded Max value %d",
-			tos, HDD_MAX_AC);
+			tos, QCA_WLAN_AC_ALL);
 		goto fail;
 	}
 	hdd_debug("tos %d", tos);
