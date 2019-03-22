@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -250,7 +250,7 @@ enum qdf_timestamp_unit {
 	QTIMER,
 };
 
-#ifdef QCA_WIFI_3_0_ADRASTEA
+#ifdef MSM_PLATFORM
 #define QDF_LOG_TIMESTAMP_UNIT QTIMER
 #define QDF_LOG_TIMESTAMP_CYCLES_PER_10_US 192
 
@@ -279,7 +279,7 @@ static inline uint64_t qdf_log_timestamp_to_usecs(uint64_t time)
 	/* timestamps are already in micro seconds */
 	return time;
 }
-#endif
+#endif /* end of MSM_PLATFORM */
 
 static inline void qdf_log_timestamp_to_secs(uint64_t time, uint64_t *secs,
 					     uint64_t *usecs)
