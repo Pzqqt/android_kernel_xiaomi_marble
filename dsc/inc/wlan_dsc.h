@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,12 +37,12 @@
  * and vdev. These levels are arranged into a tree, with a single driver at
  * the root, zero or more psocs per driver, and zero or more vdevs per psoc.
  *
- * High level transitions block transitions and operations at the same level
- * down, and low level transitions block transitions at the same level up. So a
- * driver transition effectively prevents any new activity in the system, while
- * a vdev transition prevents transtitions on the same vdev, its parent psoc,
- * and the driver. This also means that sibling nodes can transition at the same
- * time, e.g. one vdev going up at the same time another is going down.
+ * High level transitions block transitions and operations at the same level,
+ * down-tree, and up-tree. So a driver transition effectively prevents any new
+ * activity in the system, while a vdev transition prevents transtitions and
+ * operations on the same vdev, its parent psoc, and the driver. This also means
+ * that sibling nodes can transition at the same time, e.g. one vdev going up at
+ * the same time another is going down.
  */
 
 #ifndef __WLAN_DSC_H

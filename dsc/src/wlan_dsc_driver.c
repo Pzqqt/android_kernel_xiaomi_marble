@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -123,10 +123,7 @@ static bool __dsc_driver_trans_active_down_tree(struct dsc_driver *driver)
 	return false;
 }
 
-static bool __dsc_driver_can_op(struct dsc_driver *driver)
-{
-	return !__dsc_trans_active_or_queued(&driver->trans);
-}
+#define __dsc_driver_can_op(driver) __dsc_driver_can_trans(driver)
 
 static bool __dsc_driver_can_trans(struct dsc_driver *driver)
 {

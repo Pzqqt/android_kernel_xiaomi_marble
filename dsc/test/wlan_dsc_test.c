@@ -199,17 +199,21 @@ static uint32_t dsc_test_driver_trans_blocks(void)
 		goto exit;
 	}
 
-	action_expect(driver, trans, QDF_STATUS_SUCCESS, errors);
-
 	/* test */
 
+	/* a driver in transition should cause ... */
+	action_expect(driver, trans, QDF_STATUS_SUCCESS, errors);
+
+	/* ... the same driver trans/ops to fail */
 	action_expect(driver, trans, QDF_STATUS_E_AGAIN, errors);
 	action_expect(driver, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... children psoc trans/ops to fail */
 	dsc_for_each_driver_psoc(driver, psoc) {
 		action_expect(psoc, trans, QDF_STATUS_E_AGAIN, errors);
 		action_expect(psoc, op, QDF_STATUS_E_AGAIN, errors);
 
+		/* ... grandchildren vdev trans/ops to fail */
 		dsc_for_each_psoc_vdev(psoc, vdev) {
 			action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
 			action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
@@ -248,31 +252,37 @@ static uint32_t dsc_test_psoc_trans_blocks(void)
 
 	/* test */
 
+	/* a psoc in transition should cause ... */
 	psoc = nth_psoc(driver, 1);
 	action_expect(psoc, trans, QDF_STATUS_SUCCESS, errors);
 
+	/* ... driver trans/ops to fail */
 	action_expect(driver, trans, QDF_STATUS_E_AGAIN, errors);
-	action_expect(driver, op, QDF_STATUS_SUCCESS, errors);
-	dsc_driver_op_stop(driver);
+	action_expect(driver, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... the same psoc trans/ops to fail */
 	action_expect(psoc, trans, QDF_STATUS_E_AGAIN, errors);
 	action_expect(psoc, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
 		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
 		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
 	}
 
+	/* a sibling psoc in transition should succeed and cause ... */
 	psoc = nth_psoc(driver, 2);
 	action_expect(psoc, trans, QDF_STATUS_SUCCESS, errors);
 
+	/* ... driver trans/ops to fail */
 	action_expect(driver, trans, QDF_STATUS_E_AGAIN, errors);
-	action_expect(driver, op, QDF_STATUS_SUCCESS, errors);
-	dsc_driver_op_stop(driver);
+	action_expect(driver, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... the same psoc trans/ops to fail */
 	action_expect(psoc, trans, QDF_STATUS_E_AGAIN, errors);
 	action_expect(psoc, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... children vdev trans/ops to fail */
 	dsc_for_each_psoc_vdev(psoc, vdev) {
 		action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
 		action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
@@ -309,22 +319,24 @@ static uint32_t dsc_test_vdev_trans_blocks(void)
 		goto exit;
 	}
 
+	/* test */
+
+	/* a vdev in transition should cause ... */
 	dsc_for_each_driver_psoc(driver, psoc) {
 		dsc_for_each_psoc_vdev(psoc, vdev)
 			action_expect(vdev, trans, QDF_STATUS_SUCCESS, errors);
 	}
 
-	/* test */
-
+	/* ... driver trans/ops to fail */
 	action_expect(driver, trans, QDF_STATUS_E_AGAIN, errors);
-	action_expect(driver, op, QDF_STATUS_SUCCESS, errors);
-	dsc_driver_op_stop(driver);
+	action_expect(driver, op, QDF_STATUS_E_AGAIN, errors);
 
+	/* ... psoc trans/ops to fail */
 	dsc_for_each_driver_psoc(driver, psoc) {
 		action_expect(psoc, trans, QDF_STATUS_E_AGAIN, errors);
-		action_expect(psoc, op, QDF_STATUS_SUCCESS, errors);
-		dsc_psoc_op_stop(psoc);
+		action_expect(psoc, op, QDF_STATUS_E_AGAIN, errors);
 
+		/* ... the same vdev trans/ops to fail */
 		dsc_for_each_psoc_vdev(psoc, vdev) {
 			action_expect(vdev, trans, QDF_STATUS_E_AGAIN, errors);
 			action_expect(vdev, op, QDF_STATUS_E_AGAIN, errors);
