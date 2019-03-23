@@ -271,7 +271,7 @@ static int parse_hex_digit(char c)
 /**
  * update_mac_from_string() - convert string to 6 bytes mac address
  * @hdd_ctx: the pointer to hdd context
- * @macTable: the macTable to carry the conversion
+ * @mac_table: the mac_table to carry the conversion
  * @num: number of the interface
  *
  * 00AA00BB00CC -> 0x00 0xAA 0x00 0xBB 0x00 0xCC
@@ -279,7 +279,7 @@ static int parse_hex_digit(char c)
  * Return: QDF_STATUS
  */
 static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
-					 struct hdd_cfg_entry *macTable,
+					 struct hdd_cfg_entry *mac_table,
 					 int num)
 {
 	int i = 0, j = 0, res = 0;
@@ -290,7 +290,7 @@ static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
 	memset(macaddr, 0, sizeof(macaddr));
 
 	for (i = 0; i < num; i++) {
-		candidate = macTable[i].value;
+		candidate = mac_table[i].value;
 		for (j = 0; j < QDF_MAC_ADDR_SIZE; j++) {
 			res =
 				hex2bin(&macaddr[i].bytes[j], &candidate[(j << 1)],
@@ -601,12 +601,12 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	char *temp = NULL;
 	char *name, *value;
 	int max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
-	struct hdd_cfg_entry macTable[QDF_MAX_CONCURRENCY_PERSONA];
+	struct hdd_cfg_entry mac_table[QDF_MAX_CONCURRENCY_PERSONA];
 	tSirMacAddr custom_mac_addr;
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	memset(macTable, 0, sizeof(macTable));
+	memset(mac_table, 0, sizeof(mac_table));
 	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
 	if (status) {
 		/*
@@ -661,8 +661,8 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 				buffer = i_trim(buffer);
 				if (strlen(buffer) == 12) {
 					value = buffer;
-					macTable[i].name = name;
-					macTable[i++].value = value;
+					mac_table[i].name = name;
+					mac_table[i++].value = value;
 					if (i >= QDF_MAX_CONCURRENCY_PERSONA)
 						break;
 				}
@@ -679,7 +679,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 		goto config_exit;
 	}
 
-	qdf_status = update_mac_from_string(hdd_ctx, &macTable[0], i);
+	qdf_status = update_mac_from_string(hdd_ctx, &mac_table[0], i);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		hdd_err("Invalid MAC addresses provided");
 		goto config_exit;
