@@ -1257,10 +1257,21 @@ static inline QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
 				   bool is_vendor_acs);
 
+/**
+ * wlansap_populate_del_sta_params() - populate delete station parameter
+ * @mac: Pointer to peer mac address.
+ * @reason_code: Reason code for the disassoc/deauth.
+ * @subtype: Subtype points to either disassoc/deauth frame.
+ * @params: Parameters to be populated.
+ *
+ * This API is used to populate delete station parameter structure
+ *
+ * Return: none
+ */
 void wlansap_populate_del_sta_params(const uint8_t *mac,
-		uint16_t reason_code,
-		uint8_t subtype,
-		struct csr_del_sta_params *pDelStaParams);
+				     uint16_t reason_code,
+				     uint8_t subtype,
+				     struct csr_del_sta_params *params);
 
 /**
  * wlansap_acs_chselect() - Initiates acs channel selection

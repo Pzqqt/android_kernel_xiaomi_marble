@@ -2293,46 +2293,33 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 }
 #endif
 
-/**
- * wlansap_populate_del_sta_params() - populate delete station parameter
- * @mac:           Pointer to peer mac address.
- * @reason_code:   Reason code for the disassoc/deauth.
- * @subtype:       Subtype points to either disassoc/deauth frame.
- * @pDelStaParams: Address where parameters to be populated.
- *
- * This API is used to populate delete station parameter structure
- *
- * Return: none
- */
-
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 				     uint16_t reason_code,
 				     uint8_t subtype,
-				     struct csr_del_sta_params *pDelStaParams)
+				     struct csr_del_sta_params *params)
 {
 	if (!mac)
-		qdf_set_macaddr_broadcast(&pDelStaParams->peerMacAddr);
+		qdf_set_macaddr_broadcast(&params->peerMacAddr);
 	else
-		qdf_mem_copy(pDelStaParams->peerMacAddr.bytes, mac,
+		qdf_mem_copy(params->peerMacAddr.bytes, mac,
 			     QDF_MAC_ADDR_SIZE);
 
 	if (reason_code == 0)
-		pDelStaParams->reason_code = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+		params->reason_code = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
 	else
-		pDelStaParams->reason_code = reason_code;
+		params->reason_code = reason_code;
 
 	if (subtype == (SIR_MAC_MGMT_DEAUTH >> 4) ||
 	    subtype == (SIR_MAC_MGMT_DISASSOC >> 4))
-		pDelStaParams->subtype = subtype;
+		params->subtype = subtype;
 	else
-		pDelStaParams->subtype = (SIR_MAC_MGMT_DEAUTH >> 4);
+		params->subtype = (SIR_MAC_MGMT_DEAUTH >> 4);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  FL(
-		     "Delete STA with RC:%hu subtype:%hhu MAC::"
+		  FL("Delete STA with RC:%hu subtype:%hhu MAC::"
 		     MAC_ADDRESS_STR),
-		  pDelStaParams->reason_code, pDelStaParams->subtype,
-		  MAC_ADDR_ARRAY(pDelStaParams->peerMacAddr.bytes));
+		  params->reason_code, params->subtype,
+		  MAC_ADDR_ARRAY(params->peerMacAddr.bytes));
 }
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
