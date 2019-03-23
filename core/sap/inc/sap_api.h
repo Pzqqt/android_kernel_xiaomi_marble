@@ -929,7 +929,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
- * @sapContext: Pointer to SAP context
+ * @sap_ctx: Pointer to SAP context
  * @targetChannel: Target channel
  * @target_bw: Target bandwidth
  * @strict: if true switch to the requested channel always, fail
@@ -940,7 +940,7 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
+QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 					       uint32_t targetChannel,
 					       enum phy_ch_width target_bw,
 					       bool strict);
@@ -1047,7 +1047,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 
 /**
  * wlansap_channel_change_request() - Send channel change request
- * @sapContext: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @target_channel: Target channel
  *
  * This API is used to send an Indication to SME/PE to change the
@@ -1064,7 +1064,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
  *   QDF_STATUS_SUCCESS:  Success
  *
  */
-QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
+QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					  uint8_t target_channel);
 
 /**

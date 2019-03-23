@@ -221,7 +221,7 @@ struct sap_context *sap_create_ctx(void)
 	struct sap_context *sap_ctx;
 	QDF_STATUS status;
 
-	/* dynamically allocate the sapContext */
+	/* dynamically allocate the sap_ctx */
 	sap_ctx = qdf_mem_malloc(sizeof(*sap_ctx));
 	if (!sap_ctx)
 		return NULL;
@@ -670,7 +670,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	struct mac_context *pmac = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("sapContext=%pK"), sap_ctx);
+		  FL("sap_ctx=%pK"), sap_ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1285,7 +1285,7 @@ static void sap_start_csa_restart(struct mac_context *mac,
 #endif
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
- * @sapContext: Pointer to SAP context
+ * @sap_ctx: Pointer to SAP context
  * @targetChannel: Target channel
  * @target_bw: Target bandwidth
  * @strict: if true switch to the requested channel always,
@@ -1297,7 +1297,7 @@ static void sap_start_csa_restart(struct mac_context *mac,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
+QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 					       uint32_t targetChannel,
 					       enum phy_ch_width target_bw,
 					       bool strict)
@@ -1308,7 +1308,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	QDF_STATUS status;
 	bool sta_sap_scc_on_dfs_chan;
 
-	if (!sapContext) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
 
@@ -1329,9 +1329,9 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		"%s: sap chan:%d target:%d conn on 5GHz:%d",
-		__func__, sapContext->channel, targetChannel,
+		__func__, sap_ctx->channel, targetChannel,
 		policy_mgr_is_any_mode_active_on_band_along_with_session(
-			mac->psoc, sapContext->sessionId, POLICY_MGR_BAND_5));
+			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5));
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);
@@ -1339,13 +1339,13 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	 * Now, validate if the passed channel is valid in the
 	 * current regulatory domain.
 	 */
-	if (sapContext->channel != targetChannel &&
+	if (sap_ctx->channel != targetChannel &&
 		((wlan_reg_get_channel_state(mac->pdev, targetChannel) ==
 			CHANNEL_STATE_ENABLE) ||
 		(wlan_reg_get_channel_state(mac->pdev, targetChannel) ==
 			CHANNEL_STATE_DFS &&
 		(!policy_mgr_is_any_mode_active_on_band_along_with_session(
-			mac->psoc, sapContext->sessionId,
+			mac->psoc, sap_ctx->sessionId,
 			POLICY_MGR_BAND_5) ||
 			sta_sap_scc_on_dfs_chan)))) {
 		/*
@@ -1355,7 +1355,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 		if (!strict) {
 			valid = wlan_sap_validate_channel_switch(mac_handle,
 								 targetChannel,
-								 sapContext);
+								 sap_ctx);
 			if (!valid) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -1367,18 +1367,18 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 		/*
 		 * Post a CSA IE request to SAP state machine with
 		 * target channel information and also CSA IE required
-		 * flag set in sapContext only, if SAP is in SAP_STARTED
+		 * flag set in sap_ctx only, if SAP is in SAP_STARTED
 		 * state.
 		 */
-		if (sapContext->fsm_state == SAP_STARTED) {
-			status = wlansap_update_csa_channel_params(sapContext,
+		if (sap_ctx->fsm_state == SAP_STARTED) {
+			status = wlansap_update_csa_channel_params(sap_ctx,
 					targetChannel);
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
 			status = policy_mgr_set_hw_mode_before_channel_switch(
 						mac->psoc,
-						sapContext->sessionId,
+						sap_ctx->sessionId,
 						targetChannel);
 			/*
 			 * If status is QDF_STATUS_E_FAILURE that mean HW mode
@@ -1445,7 +1445,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			mac->sap.SapDfsInfo.cac_state =
 					eSAP_DFS_DO_NOT_SKIP_CAC;
 			sap_cac_reset_notify(mac_handle);
-			sap_start_csa_restart(mac, sapContext);
+			sap_start_csa_restart(mac, sap_ctx);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to request Channel Change, since SAP is not in SAP_STARTED state",
@@ -1703,7 +1703,7 @@ void wlansap_get_sec_channel(uint8_t sec_ch_offset,
 		  __func__, sec_ch_offset, *sec_channel);
 }
 
-QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
+QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					  uint8_t target_channel)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -1717,7 +1717,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	if (!sapContext) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
@@ -1729,7 +1729,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	phy_mode = sapContext->csr_roamProfile.phyMode;
+	phy_mode = sap_ctx->csr_roamProfile.phyMode;
 
 	/* Update phy_mode if the target channel is in the other band */
 	if (WLAN_CHAN_IS_5GHZ(target_channel) &&
@@ -1742,17 +1742,17 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: phy_mode: %d, target_channel: %d new phy_mode: %d",
-		  __func__, sapContext->csr_roamProfile.phyMode,
+		  __func__, sap_ctx->csr_roamProfile.phyMode,
 		  target_channel, phy_mode);
-	sapContext->csr_roamProfile.phyMode = phy_mode;
+	sap_ctx->csr_roamProfile.phyMode = phy_mode;
 
-	if (sapContext->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
-	    !sapContext->csr_roamProfile.ChannelInfo.ChannelList) {
+	if (sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
+	    !sap_ctx->csr_roamProfile.ChannelInfo.ChannelList) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid channel list"));
 		return QDF_STATUS_E_FAULT;
 	}
-	sapContext->csr_roamProfile.ChannelInfo.ChannelList[0] = target_channel;
+	sap_ctx->csr_roamProfile.ChannelInfo.ChannelList[0] = target_channel;
 	/*
 	 * We are getting channel bonding mode from sapDfsInfor structure
 	 * because we've implemented channel width fallback mechanism for DFS
@@ -1761,35 +1761,35 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 	ch_params = &mac_ctx->sap.SapDfsInfo.new_ch_params;
 	wlan_reg_set_channel_params(mac_ctx->pdev, target_channel,
 			0, ch_params);
-	sapContext->ch_params = *ch_params;
+	sap_ctx->ch_params = *ch_params;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
-	sapContext->channel = target_channel;
+	sap_ctx->channel = target_channel;
 	wlansap_get_sec_channel(ch_params->sec_ch_offset, target_channel,
-				(uint8_t *)(&sapContext->secondary_ch));
-	sapContext->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
-	sapContext->csr_roamProfile.ch_params.sec_ch_offset =
+				(uint8_t *)(&sap_ctx->secondary_ch));
+	sap_ctx->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
+	sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
 						ch_params->sec_ch_offset;
-	sapContext->csr_roamProfile.ch_params.center_freq_seg0 =
+	sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
 						ch_params->center_freq_seg0;
-	sapContext->csr_roamProfile.ch_params.center_freq_seg1 =
+	sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
 						ch_params->center_freq_seg1;
-	sap_dfs_set_current_channel(sapContext);
+	sap_dfs_set_current_channel(sap_ctx);
 
 	status = sme_roam_channel_change_req(MAC_HANDLE(mac_ctx),
-					     sapContext->bssid,
+					     sap_ctx->bssid,
 					     ch_params,
-					     &sapContext->csr_roamProfile);
+					     &sap_ctx->csr_roamProfile);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		"%s: chan:%d phy_mode %d width:%d offset:%d seg0:%d seg1:%d",
-		__func__, sapContext->channel, phy_mode, ch_params->ch_width,
+		__func__, sap_ctx->channel, phy_mode, ch_params->ch_width,
 		ch_params->sec_ch_offset, ch_params->center_freq_seg0,
 		ch_params->center_freq_seg1);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
-		sap_signal_hdd_event(sapContext, NULL,
+		sap_signal_hdd_event(sap_ctx, NULL,
 				     eSAP_CHANNEL_CHANGE_EVENT,
 				     (void *) eSAP_STATUS_SUCCESS);
 

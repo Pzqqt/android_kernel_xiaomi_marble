@@ -98,13 +98,13 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
    PARAMETERS
 
     IN
-    sapContext: SAP Context
+    sap_ctx: SAP Context
    RETURN VALUE
     DFS Timer start status
    SIDE EFFECTS
    ============================================================================*/
 
-static int sap_stop_dfs_cac_timer(struct sap_context *sapContext);
+static int sap_stop_dfs_cac_timer(struct sap_context *sap_ctx);
 
 /*==========================================================================
    FUNCTION    sapStartDfsCacTimer
@@ -117,13 +117,13 @@ static int sap_stop_dfs_cac_timer(struct sap_context *sapContext);
    PARAMETERS
 
     IN
-    sapContext: SAP Context
+    sap_ctx: SAP Context
    RETURN VALUE
     DFS Timer start status
    SIDE EFFECTS
    ============================================================================*/
 
-static int sap_start_dfs_cac_timer(struct sap_context *sapContext);
+static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx);
 
 /** sap_hdd_event_to_string() - convert hdd event to string
  * @event: eSapHddEvent event type
@@ -275,7 +275,7 @@ sap_is_channel_bonding_etsi_weather_channel(struct sap_context *sap_ctx)
 
 /*
  * sap_get_bonding_channels() - get bonding channels from primary channel.
- * @sapContext: Handle to SAP context.
+ * @sap_ctx: Handle to SAP context.
  * @channel: Channel to get bonded channels.
  * @channels: Bonded channel list
  * @size: Max bonded channels
@@ -283,7 +283,7 @@ sap_is_channel_bonding_etsi_weather_channel(struct sap_context *sap_ctx)
  *
  * Return: Number of sub channels
  */
-static uint8_t sap_get_bonding_channels(struct sap_context *sapContext,
+static uint8_t sap_get_bonding_channels(struct sap_context *sap_ctx,
 					uint8_t channel,
 					uint8_t *channels, uint8_t size,
 					ePhyChanBondState chanBondState)
@@ -775,11 +775,11 @@ sap_validate_chan(struct sap_context *sap_context,
 		if (con_ch && (sap_context->cc_switch_mode !=
 			       QDF_MCC_TO_SCC_SWITCH_DISABLE)) {
 			/*
-			 * For ACS request ,the sapContext->channel is 0,
+			 * For ACS request ,the sap_ctx->channel is 0,
 			 * we skip below overlap checking. When the ACS
-			 * finish and SAPBSS start, the sapContext->channel
+			 * finish and SAPBSS start, the sap_ctx->channel
 			 * will not be 0. Then the overlap checking will be
-			 * reactivated.If we use sapContext->channel = 0
+			 * reactivated.If we use sap_ctx->channel = 0
 			 * to perform the overlap checking, an invalid overlap
 			 * channel con_ch could becreated. That may cause
 			 * SAP start failed.
@@ -1225,7 +1225,7 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 				sapctx->csr_roamProfile.csrPersona;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Initializing sapContext = %pK with session = %d", __func__,
+		"%s: Initializing sap_ctx = %pK with session = %d", __func__,
 		sapctx, session_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -1250,7 +1250,7 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = WLAN_UMAC_VDEV_ID_MAX;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Initializing State: %d, sapContext value = %pK", __func__,
+		"%s: Initializing State: %d, sap_ctx value = %pK", __func__,
 		sapctx->fsm_state, sapctx);
 
 	return QDF_STATUS_SUCCESS;
@@ -3285,29 +3285,29 @@ void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
 	return;
 }
 
-QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sapContext,
+QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 				   uint8_t *peerMac)
 {
-	if (eSAP_ALLOW_ALL == sapContext->eSapMacAddrAclMode)
+	if (eSAP_ALLOW_ALL == sap_ctx->eSapMacAddrAclMode)
 		return QDF_STATUS_SUCCESS;
 
 	if (sap_search_mac_list
-		    (sapContext->acceptMacList, sapContext->nAcceptMac, peerMac, NULL))
+		    (sap_ctx->acceptMacList, sap_ctx->nAcceptMac, peerMac, NULL))
 		return QDF_STATUS_SUCCESS;
 
 	if (sap_search_mac_list
-		    (sapContext->denyMacList, sapContext->nDenyMac, peerMac, NULL)) {
+		    (sap_ctx->denyMacList, sap_ctx->nDenyMac, peerMac, NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, Peer " MAC_ADDRESS_STR " in deny list",
 			  __func__, MAC_ADDR_ARRAY(peerMac));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* A new station CAN associate, unless in deny list. Less stringent mode */
-	if (eSAP_ACCEPT_UNLESS_DENIED == sapContext->eSapMacAddrAclMode)
+	if (eSAP_ACCEPT_UNLESS_DENIED == sap_ctx->eSapMacAddrAclMode)
 		return QDF_STATUS_SUCCESS;
 
 	/* A new station CANNOT associate, unless in accept list. More stringent mode */
-	if (eSAP_DENY_UNLESS_ACCEPTED == sapContext->eSapMacAddrAclMode) {
+	if (eSAP_DENY_UNLESS_ACCEPTED == sap_ctx->eSapMacAddrAclMode) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, Peer " MAC_ADDRESS_STR
 			  " denied, Mac filter mode is eSAP_DENY_UNLESS_ACCEPTED",
@@ -3318,8 +3318,8 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sapContext,
 	/* The new STA is neither in accept list nor in deny list. In this case, deny the association
 	 * but send a wifi event notification indicating the mac address being denied
 	 */
-	if (eSAP_SUPPORT_ACCEPT_AND_DENY == sapContext->eSapMacAddrAclMode) {
-		sap_signal_hdd_event(sapContext, NULL, eSAP_UNKNOWN_STA_JOIN,
+	if (eSAP_SUPPORT_ACCEPT_AND_DENY == sap_ctx->eSapMacAddrAclMode) {
+		sap_signal_hdd_event(sap_ctx, NULL, eSAP_UNKNOWN_STA_JOIN,
 				     (void *) peerMac);
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, Peer " MAC_ADDRESS_STR
@@ -3618,7 +3618,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
  */
 void sap_dfs_cac_timer_callback(void *data)
 {
-	struct sap_context *sapContext;
+	struct sap_context *sap_ctx;
 	tWLAN_SAPEvent sap_event;
 	mac_handle_t mac_handle = data;
 	struct mac_context *mac;
@@ -3629,8 +3629,8 @@ void sap_dfs_cac_timer_callback(void *data)
 		return;
 	}
 	mac = MAC_CONTEXT(mac_handle);
-	sapContext = sap_find_cac_wait_session(mac_handle);
-	if (!sapContext) {
+	sap_ctx = sap_find_cac_wait_session(mac_handle);
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: no SAP contexts in wait state", __func__);
 		return;
@@ -3642,7 +3642,7 @@ void sap_dfs_cac_timer_callback(void *data)
 	 * destroy timer here.
 	 */
 	if (mac->sap.SapDfsInfo.is_dfs_cac_timer_running == true) {
-		if (!sapContext->dfs_cac_offload)
+		if (!sap_ctx->dfs_cac_offload)
 			qdf_mc_timer_destroy(
 				&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
@@ -3653,14 +3653,14 @@ void sap_dfs_cac_timer_callback(void *data)
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			"sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%pK]",
-			sapContext->channel, sapContext);
+			sap_ctx->channel, sap_ctx);
 
 	sap_event.event = eSAP_DFS_CHANNEL_CAC_END;
 	sap_event.params = 0;
 	sap_event.u1 = 0;
 	sap_event.u2 = 0;
 
-	sap_fsm(sapContext, &sap_event);
+	sap_fsm(sap_ctx, &sap_event);
 }
 
 /*
@@ -3842,7 +3842,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
  * is_concurrent_sap_ready_for_channel_change() - to check all saps are ready
  *						  for channel change
  * @mac_handle: Opaque handle to the global MAC context
- * @sapContext: sap context for which this function has been called
+ * @sap_ctx: sap context for which this function has been called
  *
  * This function will find the concurrent sap context apart from
  * passed sap context and return its channel change ready status
@@ -3851,7 +3851,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
  * Return: true if other SAP personas are ready to channel switch else false
  */
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
-						struct sap_context *sapContext)
+						struct sap_context *sap_ctx)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_context;
@@ -3864,18 +3864,18 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 		    && mac->sap.sapCtxList[intf].sap_context) {
 			sap_context =
 				mac->sap.sapCtxList[intf].sap_context;
-			if (sap_context == sapContext) {
+			if (sap_context == sap_ctx) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sapCtx matched [%pK]"),
-					  sapContext);
+					  sap_ctx);
 				continue;
 			} else {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL
 						  ("concurrent sapCtx[%pK] didn't matche with [%pK]"),
-					  sap_context, sapContext);
+					  sap_context, sap_ctx);
 				return sap_context->is_sap_ready_for_chnl_chng;
 			}
 		}

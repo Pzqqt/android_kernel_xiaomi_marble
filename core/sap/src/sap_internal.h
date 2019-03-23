@@ -289,11 +289,11 @@ uint8_t sap_select_channel(mac_handle_t mac_handle, struct sap_context *sap_ctx,
 			   tScanResultHandle pScanResult);
 
 QDF_STATUS
-sap_signal_hdd_event(struct sap_context *sapContext,
+sap_signal_hdd_event(struct sap_context *sap_ctx,
 		  struct csr_roam_info *pCsrRoamInfo,
 		  eSapHddEvent sapHddevent, void *);
 
-QDF_STATUS sap_fsm(struct sap_context *sapContext, ptWLAN_SAPEvent sap_event);
+QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event);
 
 eSapStatus
 sapconvert_to_csr_profile(tsap_config_t *pconfig_params,
@@ -303,7 +303,7 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params,
 void sap_free_roam_profile(struct csr_roam_profile *profile);
 
 QDF_STATUS
-sap_is_peer_mac_allowed(struct sap_context *sapContext, uint8_t *peerMac);
+sap_is_peer_mac_allowed(struct sap_context *sap_ctx, uint8_t *peerMac);
 
 void
 sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size);
@@ -328,9 +328,9 @@ void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
 				    struct sap_context *sap_ctx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext);
+QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx);
 
-bool sap_dfs_is_channel_in_nol_list(struct sap_context *sapContext,
+bool sap_dfs_is_channel_in_nol_list(struct sap_context *sap_ctx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState);
 void sap_dfs_cac_timer_callback(void *data);
@@ -345,7 +345,7 @@ void sap_dfs_cac_timer_callback(void *data);
 void sap_cac_reset_notify(mac_handle_t mac_handle);
 
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
-						struct sap_context *sapContext);
+						struct sap_context *sap_ctx);
 
 bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 				   struct sap_context *given_sapctx);
@@ -360,7 +360,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle);
  *
  * Return: The QDF_STATUS code associated with performing the operation.
  */
-QDF_STATUS sap_channel_sel(struct sap_context *sapContext);
+QDF_STATUS sap_channel_sel(struct sap_context *sap_ctx);
 
 /**
  * sap_validate_chan - Function validate the channel and forces SCC
