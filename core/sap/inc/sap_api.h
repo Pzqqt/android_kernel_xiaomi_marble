@@ -783,7 +783,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  * @sap_ctx: Pointer to the SAP context
  * @pSapEventCallback: Callback function in HDD called by SAP to inform HDD
  *                        about SAP results
- * @pConfig: Pointer to configuration structure passed down from
+ * @config: Pointer to configuration structure passed down from
  *                    HDD(HostApd for Android)
  * @pUsrContext: Parameter that will be passed back in all the SAP callback
  *               events.
@@ -798,7 +798,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  */
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_config_t *pConfig, void *pUsrContext);
+			     tsap_config_t *config, void *pUsrContext);
 
 /**
  * wlansap_stop_bss() - stop BSS.
@@ -888,7 +888,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
 /**
  * wlansap_set_mac_acl() - set MAC list entry in ACL.
  * @sap_ctx: Pointer to the SAP context
- * @pConfig: Pointer to SAP config.
+ * @config: Pointer to SAP config.
  *
  * This api function provides SAP to set mac list entry in accept list as well
  * as deny list
@@ -899,7 +899,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_config_t *pConfig);
+			       tsap_config_t *config);
 
 /**
  * wlansap_disassoc_sta() - initiate disassociation of station.
@@ -1215,12 +1215,12 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   uint32_t sec_ch);
 
-QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
+QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *config,
 		const uint8_t *
 		pAdditionIEBuffer,
 		uint16_t additionIELength,
 		eUpdateIEsType updateType);
-QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig,
+QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *config,
 			eUpdateIEsType updateType);
 
 void wlansap_extend_to_acs_range(mac_handle_t mac_handle,

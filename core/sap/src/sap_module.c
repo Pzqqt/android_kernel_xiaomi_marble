@@ -663,7 +663,7 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_config_t *pConfig, void *pUsrContext)
+			     tsap_config_t *config, void *pUsrContext)
 {
 	tWLAN_SAPEvent sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -681,26 +681,26 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->fsm_state = SAP_INIT;
 
 	/* Channel selection is auto or configured */
-	sap_ctx->channel = pConfig->channel;
-	sap_ctx->dfs_mode = pConfig->acs_dfs_mode;
-	sap_ctx->ch_params.ch_width = pConfig->ch_params.ch_width;
+	sap_ctx->channel = config->channel;
+	sap_ctx->dfs_mode = config->acs_dfs_mode;
+	sap_ctx->ch_params.ch_width = config->ch_params.ch_width;
 	sap_ctx->ch_params.center_freq_seg0 =
-		pConfig->ch_params.center_freq_seg0;
+		config->ch_params.center_freq_seg0;
 	sap_ctx->ch_params.center_freq_seg1 =
-		pConfig->ch_params.center_freq_seg1;
+		config->ch_params.center_freq_seg1;
 	sap_ctx->ch_params.sec_ch_offset =
-		pConfig->ch_params.sec_ch_offset;
-	sap_ctx->ch_width_orig = pConfig->ch_width_orig;
+		config->ch_params.sec_ch_offset;
+	sap_ctx->ch_width_orig = config->ch_width_orig;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	sap_ctx->cc_switch_mode = pConfig->cc_switch_mode;
+	sap_ctx->cc_switch_mode = config->cc_switch_mode;
 #endif
 	sap_ctx->auto_channel_select_weight =
-		 pConfig->auto_channel_select_weight;
+		 config->auto_channel_select_weight;
 	sap_ctx->pUsrContext = pUsrContext;
-	sap_ctx->enableOverLapCh = pConfig->enOverLapCh;
-	sap_ctx->acs_cfg = &pConfig->acs_cfg;
-	sap_ctx->secondary_ch = pConfig->sec_ch;
-	sap_ctx->dfs_cac_offload = pConfig->dfs_cac_offload;
+	sap_ctx->enableOverLapCh = config->enOverLapCh;
+	sap_ctx->acs_cfg = &config->acs_cfg;
+	sap_ctx->secondary_ch = config->sec_ch;
+	sap_ctx->dfs_cac_offload = config->dfs_cac_offload;
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
 
@@ -712,12 +712,12 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 
 	/* Save a copy to SAP context */
 	qdf_mem_copy(sap_ctx->csr_roamProfile.BSSIDs.bssid,
-		     pConfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
+		     config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(sap_ctx->self_mac_addr,
-		     pConfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
+		     config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 
 	/* copy the configuration items to csrProfile */
-	sapconvert_to_csr_profile(pConfig, eCSR_BSS_TYPE_INFRA_AP,
+	sapconvert_to_csr_profile(config, eCSR_BSS_TYPE_INFRA_AP,
 			       &sap_ctx->csr_roamProfile);
 	pmac = sap_get_mac_context();
 	if (!pmac) {
@@ -731,27 +731,27 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	 * access in lower layers
 	 */
 	pmac->sap.SapDfsInfo.sap_ch_switch_beacon_cnt =
-				pConfig->sap_chanswitch_beacon_cnt;
+				config->sap_chanswitch_beacon_cnt;
 	pmac->sap.SapDfsInfo.sap_ch_switch_mode =
-			pConfig->sap_chanswitch_mode;
+			config->sap_chanswitch_mode;
 
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =
 		sap_ctx->csr_roamProfile.csrPersona;
 	pmac->sap.SapDfsInfo.reduced_beacon_interval =
-				pConfig->reduced_beacon_interval;
+				config->reduced_beacon_interval;
 
 	/* Copy MAC filtering settings to sap context */
-	sap_ctx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
-	qdf_mem_copy(sap_ctx->acceptMacList, pConfig->accept_mac,
-		     sizeof(pConfig->accept_mac));
-	sap_ctx->nAcceptMac = pConfig->num_accept_mac;
+	sap_ctx->eSapMacAddrAclMode = config->SapMacaddr_acl;
+	qdf_mem_copy(sap_ctx->acceptMacList, config->accept_mac,
+		     sizeof(config->accept_mac));
+	sap_ctx->nAcceptMac = config->num_accept_mac;
 	sap_sort_mac_list(sap_ctx->acceptMacList, sap_ctx->nAcceptMac);
-	qdf_mem_copy(sap_ctx->denyMacList, pConfig->deny_mac,
-		     sizeof(pConfig->deny_mac));
-	sap_ctx->nDenyMac = pConfig->num_deny_mac;
+	qdf_mem_copy(sap_ctx->denyMacList, config->deny_mac,
+		     sizeof(config->deny_mac));
+	sap_ctx->nDenyMac = config->num_deny_mac;
 	sap_sort_mac_list(sap_ctx->denyMacList, sap_ctx->nDenyMac);
-	sap_ctx->beacon_tx_rate = pConfig->beacon_tx_rate;
+	sap_ctx->beacon_tx_rate = config->beacon_tx_rate;
 
 	/* Fill in the event structure for FSM */
 	sap_event.event = eSAP_HDD_START_INFRA_BSS;
@@ -770,7 +770,7 @@ fail:
 } /* wlansap_start_bss */
 
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_config_t *pConfig)
+			       tsap_config_t *config)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
@@ -783,19 +783,19 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 	/* Copy MAC filtering settings to sap context */
-	sap_ctx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
+	sap_ctx->eSapMacAddrAclMode = config->SapMacaddr_acl;
 
 	if (eSAP_DENY_UNLESS_ACCEPTED == sap_ctx->eSapMacAddrAclMode) {
 		qdf_mem_copy(sap_ctx->acceptMacList,
-			     pConfig->accept_mac,
-			     sizeof(pConfig->accept_mac));
-		sap_ctx->nAcceptMac = pConfig->num_accept_mac;
+			     config->accept_mac,
+			     sizeof(config->accept_mac));
+		sap_ctx->nAcceptMac = config->num_accept_mac;
 		sap_sort_mac_list(sap_ctx->acceptMacList,
 			       sap_ctx->nAcceptMac);
 	} else if (eSAP_ACCEPT_UNLESS_DENIED == sap_ctx->eSapMacAddrAclMode) {
-		qdf_mem_copy(sap_ctx->denyMacList, pConfig->deny_mac,
-			     sizeof(pConfig->deny_mac));
-		sap_ctx->nDenyMac = pConfig->num_deny_mac;
+		qdf_mem_copy(sap_ctx->denyMacList, config->deny_mac,
+			     sizeof(config->deny_mac));
+		sap_ctx->nDenyMac = config->num_deny_mac;
 		sap_sort_mac_list(sap_ctx->denyMacList, sap_ctx->nDenyMac);
 	}
 
@@ -2021,7 +2021,7 @@ QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 }
 
 QDF_STATUS
-wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
+wlansap_update_sap_config_add_ie(tsap_config_t *config,
 				 const uint8_t *pAdditionIEBuffer,
 				 uint16_t additionIELength,
 				 eUpdateIEsType updateType)
@@ -2031,7 +2031,7 @@ wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 	uint16_t bufferLength = 0;
 	uint8_t *pBuffer = NULL;
 
-	if (!pConfig) {
+	if (!config) {
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -2054,40 +2054,40 @@ wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 
 	switch (updateType) {
 	case eUPDATE_IE_PROBE_BCN:
-		if (pConfig->pProbeRespBcnIEsBuffer)
-			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
+		if (config->pProbeRespBcnIEsBuffer)
+			qdf_mem_free(config->pProbeRespBcnIEsBuffer);
 		if (bufferValid) {
-			pConfig->probeRespBcnIEsLen = bufferLength;
-			pConfig->pProbeRespBcnIEsBuffer = pBuffer;
+			config->probeRespBcnIEsLen = bufferLength;
+			config->pProbeRespBcnIEsBuffer = pBuffer;
 		} else {
-			pConfig->probeRespBcnIEsLen = 0;
-			pConfig->pProbeRespBcnIEsBuffer = NULL;
+			config->probeRespBcnIEsLen = 0;
+			config->pProbeRespBcnIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				  FL("No Probe Resp beacone IE received in set beacon"));
 		}
 		break;
 	case eUPDATE_IE_PROBE_RESP:
-		if (pConfig->pProbeRespIEsBuffer)
-			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
+		if (config->pProbeRespIEsBuffer)
+			qdf_mem_free(config->pProbeRespIEsBuffer);
 		if (bufferValid) {
-			pConfig->probeRespIEsBufferLen = bufferLength;
-			pConfig->pProbeRespIEsBuffer = pBuffer;
+			config->probeRespIEsBufferLen = bufferLength;
+			config->pProbeRespIEsBuffer = pBuffer;
 		} else {
-			pConfig->probeRespIEsBufferLen = 0;
-			pConfig->pProbeRespIEsBuffer = NULL;
+			config->probeRespIEsBufferLen = 0;
+			config->pProbeRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				  FL("No Probe Response IE received in set beacon"));
 		}
 		break;
 	case eUPDATE_IE_ASSOC_RESP:
-		if (pConfig->pAssocRespIEsBuffer)
-			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
+		if (config->pAssocRespIEsBuffer)
+			qdf_mem_free(config->pAssocRespIEsBuffer);
 		if (bufferValid) {
-			pConfig->assocRespIEsLen = bufferLength;
-			pConfig->pAssocRespIEsBuffer = pBuffer;
+			config->assocRespIEsLen = bufferLength;
+			config->pAssocRespIEsBuffer = pBuffer;
 		} else {
-			pConfig->assocRespIEsLen = 0;
-			pConfig->pAssocRespIEsBuffer = NULL;
+			config->assocRespIEsLen = 0;
+			config->pAssocRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				  FL("No Assoc Response IE received in set beacon"));
 		}
@@ -2104,9 +2104,9 @@ wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 }
 
 QDF_STATUS
-wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig, eUpdateIEsType updateType)
+wlansap_reset_sap_config_add_ie(tsap_config_t *config, eUpdateIEsType updateType)
 {
-	if (!pConfig) {
+	if (!config) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid Config pointer", __func__);
 		return QDF_STATUS_E_FAULT;
@@ -2115,28 +2115,28 @@ wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig, eUpdateIEsType updateTyp
 	switch (updateType) {
 	case eUPDATE_IE_ALL:    /*only used to reset */
 	case eUPDATE_IE_PROBE_RESP:
-		if (pConfig->pProbeRespIEsBuffer) {
-			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
-			pConfig->probeRespIEsBufferLen = 0;
-			pConfig->pProbeRespIEsBuffer = NULL;
+		if (config->pProbeRespIEsBuffer) {
+			qdf_mem_free(config->pProbeRespIEsBuffer);
+			config->probeRespIEsBufferLen = 0;
+			config->pProbeRespIEsBuffer = NULL;
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_ASSOC_RESP:
-		if (pConfig->pAssocRespIEsBuffer) {
-			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
-			pConfig->assocRespIEsLen = 0;
-			pConfig->pAssocRespIEsBuffer = NULL;
+		if (config->pAssocRespIEsBuffer) {
+			qdf_mem_free(config->pAssocRespIEsBuffer);
+			config->assocRespIEsLen = 0;
+			config->pAssocRespIEsBuffer = NULL;
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_PROBE_BCN:
-		if (pConfig->pProbeRespBcnIEsBuffer) {
-			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
-			pConfig->probeRespBcnIEsLen = 0;
-			pConfig->pProbeRespBcnIEsBuffer = NULL;
+		if (config->pProbeRespBcnIEsBuffer) {
+			qdf_mem_free(config->pProbeRespBcnIEsBuffer);
+			config->probeRespBcnIEsLen = 0;
+			config->pProbeRespBcnIEsBuffer = NULL;
 		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
