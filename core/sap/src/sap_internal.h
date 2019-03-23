@@ -285,9 +285,6 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   uint32_t scanid,
 						   eCsrScanStatus scan_status);
 
-QDF_STATUS SapFsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent,
-			 uint8_t *status);
-
 uint8_t sap_select_channel(mac_handle_t mac_handle, struct sap_context *sap_ctx,
 			   tScanResultHandle pScanResult);
 
