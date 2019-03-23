@@ -7895,14 +7895,14 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		}
 
 		p2p_noa.opp_ps = apps_args[0];
-		p2p_noa.ctWindow = apps_args[1];
+		p2p_noa.ct_window = apps_args[1];
 		p2p_noa.duration = apps_args[2];
 		p2p_noa.interval = apps_args[3];
 		p2p_noa.count = apps_args[4];
 		p2p_noa.single_noa_duration = apps_args[5];
-		p2p_noa.psSelection = apps_args[6];
+		p2p_noa.ps_selection = apps_args[6];
 
-		hdd_debug("P2P_NOA_ATTR:oppPS %d ctWindow %d duration %d interval %d count %d single noa duration %d PsSelection %x",
+		hdd_debug("P2P_NOA_ATTR:opp ps %d ct window %d duration %d interval %d count %d single noa duration %d ps selection %x",
 			   apps_args[0], apps_args[1], apps_args[2],
 			   apps_args[3], apps_args[4],
 			   apps_args[5], apps_args[6]);

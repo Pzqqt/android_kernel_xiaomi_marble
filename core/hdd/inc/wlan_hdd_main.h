@@ -1130,8 +1130,8 @@ struct hdd_adapter {
 	struct wireless_dev wdev;
 
 	/** ops checks if Opportunistic Power Save is Enable or Not
-	 * ctw stores ctWindow value once we receive Opps command from
-	 * wpa_supplicant then using ctWindow value we need to Enable
+	 * ctw stores CT Window value once we receive Opps command from
+	 * wpa_supplicant then using CT Window value we need to Enable
 	 * Opportunistic Power Save
 	 */
 	uint8_t ops;

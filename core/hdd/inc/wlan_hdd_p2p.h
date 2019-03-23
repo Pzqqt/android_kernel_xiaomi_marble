@@ -35,12 +35,12 @@
 
 struct p2p_app_set_ps {
 	uint8_t opp_ps;
-	uint32_t ctWindow;
+	uint32_t ct_window;
 	uint8_t count;
 	uint32_t duration;
 	uint32_t interval;
 	uint32_t single_noa_duration;
-	uint8_t psSelection;
+	uint8_t ps_selection;
 };
 
 int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,

@@ -432,9 +432,9 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	noa.count = count;
 	noa.vdev_id = adapter->vdev_id;
 
-	hdd_debug("P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
+	hdd_debug("P2P_PS_ATTR:opp ps %d ct window %d duration %d "
 		  "interval %d count %d single noa duration %d "
-		  "PsSelection %x", noa.opp_ps,
+		  "ps selection %x", noa.opp_ps,
 		  noa.ct_window, noa.duration, noa.interval,
 		  noa.count, noa.single_noa_duration, noa.ps_selection);
 
@@ -507,10 +507,10 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 	 * Opportunistic Power Save (1)
 	 */
 
-	/* From wpa_cli user need to use separate command to set ctWindow and
-	 * Opps when user want to set ctWindow during that time other parameters
-	 * values are coming from wpa_supplicant as -1.
-	 * Example : User want to set ctWindow with 30 then wpa_cli command :
+	/* From wpa_cli user need to use separate command to set ct_window
+	 * and Opps when user want to set ct_window during that time other
+	 * parameters values are coming from wpa_supplicant as -1.
+	 * Example : User want to set ct_window with 30 then wpa_cli command :
 	 * P2P_SET ctwindow 30
 	 * Command Received at hdd_hostapd_ioctl is as below:
 	 * P2P_SET_PS -1 -1 30 (legacy_ps = -1, opp_ps = -1, ctwindow = 30)
@@ -543,7 +543,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 		noa.ps_selection = P2P_POWER_SAVE_TYPE_OPPORTUNISTIC;
 		noa.vdev_id = adapter->vdev_id;
 
-		hdd_debug("P2P_PS_ATTR: oppPS %d ctWindow %d duration %d interval %d count %d single noa duration %d PsSelection %x",
+		hdd_debug("P2P_PS_ATTR: opp ps %d ct window %d duration %d interval %d count %d single noa duration %d ps selection %x",
 			noa.opp_ps, noa.ct_window,
 			noa.duration, noa.interval, noa.count,
 			noa.single_noa_duration,
@@ -562,12 +562,12 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 	struct p2p_app_set_ps *pappnoa = (struct p2p_app_set_ps *) msgData;
 
 	noa.opp_ps = pappnoa->opp_ps;
-	noa.ct_window = pappnoa->ctWindow;
+	noa.ct_window = pappnoa->ct_window;
 	noa.duration = pappnoa->duration;
 	noa.interval = pappnoa->interval;
 	noa.count = pappnoa->count;
 	noa.single_noa_duration = pappnoa->single_noa_duration;
-	noa.ps_selection = pappnoa->psSelection;
+	noa.ps_selection = pappnoa->ps_selection;
 	noa.vdev_id = adapter->vdev_id;
 
 	return wlan_hdd_set_power_save(adapter, &noa);
