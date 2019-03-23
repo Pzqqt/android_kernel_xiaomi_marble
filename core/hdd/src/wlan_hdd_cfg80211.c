@@ -14389,7 +14389,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_ap_ctx *ap_ctx;
-	struct qdf_mac_addr STAMacAddress;
+	struct qdf_mac_addr sta_macaddr;
 	int ret;
 
 	hdd_enter();
@@ -14413,7 +14413,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	qdf_mem_copy(STAMacAddress.bytes, mac, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(sta_macaddr.bytes, mac, QDF_MAC_ADDR_SIZE);
 
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
@@ -14432,7 +14432,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 			status =
 				hdd_softap_change_sta_state(adapter,
-							    &STAMacAddress,
+							    &sta_macaddr,
 							    OL_TXRX_PEER_STATE_AUTH);
 
 			if (status != QDF_STATUS_SUCCESS) {
@@ -14442,7 +14442,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			status = wlan_hdd_send_sta_authorized_event(
 								adapter,
 								hdd_ctx,
-								&STAMacAddress);
+								&sta_macaddr);
 			if (status != QDF_STATUS_SUCCESS) {
 				return -EINVAL;
 			}
