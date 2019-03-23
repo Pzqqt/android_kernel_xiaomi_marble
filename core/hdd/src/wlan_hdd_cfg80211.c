@@ -13803,42 +13803,37 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 					   uint8_t key_index,
 					   const uint8_t *mac_addr,
 					   const uint8_t *key,
-					   int key_Len)
+					   int key_len)
 {
 	tCsrRoamSetKey set_key;
-	bool isConnected = true;
 	QDF_STATUS status;
 	uint32_t roam_id = INVALID_ROAM_ID;
-	uint8_t *pKeyPtr = NULL;
 	mac_handle_t mac_handle;
 
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
-	qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
-	set_key.keyId = key_index;       /* Store Key ID */
-	set_key.encType = eCSR_ENCRYPT_TYPE_WPI; /* SET WAPI Encryption */
-	set_key.keyDirection = eSIR_TX_RX;       /* Key Directionn both TX and RX */
-	set_key.paeRole = 0;     /* the PAE role */
+	qdf_mem_zero(&set_key, sizeof(set_key));
+	set_key.keyId = key_index;
+	set_key.encType = eCSR_ENCRYPT_TYPE_WPI;
+	set_key.keyDirection = eSIR_TX_RX;
+	set_key.paeRole = 0;
 	if (!mac_addr || is_broadcast_ether_addr(mac_addr))
 		qdf_set_macaddr_broadcast(&set_key.peerMac);
 	else
-		qdf_mem_copy(set_key.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(set_key.peerMac.bytes, mac_addr,
+			     QDF_MAC_ADDR_SIZE);
 
-	set_key.keyLength = key_Len;
-	pKeyPtr = set_key.Key;
-	memcpy(pKeyPtr, key, key_Len);
+	set_key.keyLength = key_len;
+	memcpy(set_key.Key, key, key_len);
 
-	hdd_debug("WAPI KEY LENGTH:0x%04x", key_Len);
+	hdd_debug("WAPI KEY LENGTH:0x%04x", key_len);
 
-	if (isConnected) {
-		mac_handle = hdd_adapter_get_mac_handle(adapter);
-		status = sme_roam_set_key(mac_handle,
-					  adapter->vdev_id,
-					  &set_key, &roam_id);
-		if (status != QDF_STATUS_SUCCESS)
-			hdd_err("sme_roam_set_key failed status: %d", status);
-	}
+	mac_handle = hdd_adapter_get_mac_handle(adapter);
+	status = sme_roam_set_key(mac_handle, adapter->vdev_id,
+				  &set_key, &roam_id);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("sme_roam_set_key failed status: %d", status);
 }
 #endif /* FEATURE_WLAN_WAPI */
 
