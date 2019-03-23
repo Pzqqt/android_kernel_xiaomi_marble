@@ -13805,7 +13805,7 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 					   const uint8_t *key,
 					   int key_Len)
 {
-	tCsrRoamSetKey setKey;
+	tCsrRoamSetKey set_key;
 	bool isConnected = true;
 	QDF_STATUS status;
 	uint32_t roam_id = INVALID_ROAM_ID;
@@ -13815,18 +13815,18 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
-	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
-	setKey.keyId = key_index;       /* Store Key ID */
-	setKey.encType = eCSR_ENCRYPT_TYPE_WPI; /* SET WAPI Encryption */
-	setKey.keyDirection = eSIR_TX_RX;       /* Key Directionn both TX and RX */
-	setKey.paeRole = 0;     /* the PAE role */
+	qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
+	set_key.keyId = key_index;       /* Store Key ID */
+	set_key.encType = eCSR_ENCRYPT_TYPE_WPI; /* SET WAPI Encryption */
+	set_key.keyDirection = eSIR_TX_RX;       /* Key Directionn both TX and RX */
+	set_key.paeRole = 0;     /* the PAE role */
 	if (!mac_addr || is_broadcast_ether_addr(mac_addr))
-		qdf_set_macaddr_broadcast(&setKey.peerMac);
+		qdf_set_macaddr_broadcast(&set_key.peerMac);
 	else
-		qdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(set_key.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 
-	setKey.keyLength = key_Len;
-	pKeyPtr = setKey.Key;
+	set_key.keyLength = key_Len;
+	pKeyPtr = set_key.Key;
 	memcpy(pKeyPtr, key, key_Len);
 
 	hdd_debug("WAPI KEY LENGTH:0x%04x", key_Len);
@@ -13835,7 +13835,7 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 		mac_handle = hdd_adapter_get_mac_handle(adapter);
 		status = sme_roam_set_key(mac_handle,
 					  adapter->vdev_id,
-					  &setKey, &roam_id);
+					  &set_key, &roam_id);
 		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("sme_roam_set_key failed status: %d", status);
 	}
@@ -14759,7 +14759,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 				       struct key_params *params)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	tCsrRoamSetKey setKey;
+	tCsrRoamSetKey set_key;
 	int errno;
 	uint32_t roam_id = INVALID_ROAM_ID;
 	QDF_STATUS status;
@@ -14811,28 +14811,28 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		  key_index, params->key_len, params->seq_len);
 
 	/*extract key idx, key len and key */
-	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
-	setKey.keyId = key_index;
-	setKey.keyLength = params->key_len;
-	qdf_mem_copy(&setKey.Key[0], params->key, params->key_len);
-	qdf_mem_copy(&setKey.keyRsc[0], params->seq, params->seq_len);
+	qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
+	set_key.keyId = key_index;
+	set_key.keyLength = params->key_len;
+	qdf_mem_copy(&set_key.Key[0], params->key, params->key_len);
+	qdf_mem_copy(&set_key.keyRsc[0], params->seq, params->seq_len);
 
 	mac_handle = hdd_ctx->mac_handle;
 
 	switch (params->cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
-		setKey.encType = eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
+		set_key.encType = eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
 		break;
 
 	case WLAN_CIPHER_SUITE_WEP104:
-		setKey.encType = eCSR_ENCRYPT_TYPE_WEP104_STATICKEY;
+		set_key.encType = eCSR_ENCRYPT_TYPE_WEP104_STATICKEY;
 		break;
 
 	case WLAN_CIPHER_SUITE_TKIP:
 	{
-		u8 *pKey = &setKey.Key[0];
+		u8 *pKey = &set_key.Key[0];
 
-		setKey.encType = eCSR_ENCRYPT_TYPE_TKIP;
+		set_key.encType = eCSR_ENCRYPT_TYPE_TKIP;
 		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
 		/* Supplicant sends the 32bytes key in this order
@@ -14862,13 +14862,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	}
 
 	case WLAN_CIPHER_SUITE_CCMP:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES;
 		break;
 
 #ifdef FEATURE_WLAN_WAPI
 	case WLAN_CIPHER_SUITE_SMS4:
 	{
-		qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+		qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 		wlan_hdd_cfg80211_set_key_wapi(adapter, key_index,
 					       mac_addr, params->key,
 					       params->key_len);
@@ -14878,80 +14878,80 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 #ifdef FEATURE_WLAN_ESE
 	case WLAN_CIPHER_SUITE_KRK:
-		setKey.encType = eCSR_ENCRYPT_TYPE_KRK;
+		set_key.encType = eCSR_ENCRYPT_TYPE_KRK;
 		break;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	case WLAN_CIPHER_SUITE_BTK:
-		setKey.encType = eCSR_ENCRYPT_TYPE_BTK;
+		set_key.encType = eCSR_ENCRYPT_TYPE_BTK;
 		break;
 #endif
 #endif
 
 #ifdef WLAN_FEATURE_11W
 	case WLAN_CIPHER_SUITE_AES_CMAC:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES_CMAC;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES_CMAC;
 		break;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_128;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_128;
 		break;
 	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_256;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_256;
 		break;
 #endif
 #endif
 	case WLAN_CIPHER_SUITE_GCMP:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GCMP;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES_GCMP;
 		break;
 	case WLAN_CIPHER_SUITE_GCMP_256:
-		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
+		set_key.encType = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
 		break;
 
 	default:
 		hdd_err("Unsupported cipher type: %u", params->cipher);
-		qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+		qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 		return -EOPNOTSUPP;
 	}
 
-	hdd_debug("encryption type %d", setKey.encType);
+	hdd_debug("encryption type %d", set_key.encType);
 
 	if (!pairwise) {
 		/* set group key */
 		hdd_debug("setting Broadcast key");
-		setKey.keyDirection = eSIR_RX_ONLY;
-		qdf_set_macaddr_broadcast(&setKey.peerMac);
+		set_key.keyDirection = eSIR_RX_ONLY;
+		qdf_set_macaddr_broadcast(&set_key.peerMac);
 	} else {
 		/* set pairwise key */
 		hdd_debug("setting pairwise key");
-		setKey.keyDirection = eSIR_TX_RX;
-		qdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		set_key.keyDirection = eSIR_TX_RX;
+		qdf_mem_copy(set_key.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
 	if ((QDF_IBSS_MODE == adapter->device_mode) && !pairwise) {
 		/* if a key is already installed, block all subsequent ones */
 		if (adapter->session.station.ibss_enc_key_installed) {
 			hdd_debug("IBSS key installed already");
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			return 0;
 		}
 
-		setKey.keyDirection = eSIR_TX_RX;
+		set_key.keyDirection = eSIR_TX_RX;
 		/*Set the group key */
 		status = sme_roam_set_key(mac_handle,
-					  adapter->vdev_id, &setKey, &roam_id);
+					  adapter->vdev_id, &set_key, &roam_id);
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			return -EINVAL;
 		}
 		/* Save the keys here and call sme_roam_set_key for setting
 		 * the PTK after peer joins the IBSS network
 		 */
 		qdf_mem_copy(&adapter->session.station.ibss_enc_key,
-			     &setKey, sizeof(tCsrRoamSetKey));
+			     &set_key, sizeof(tCsrRoamSetKey));
 
 		adapter->session.station.ibss_enc_key_installed = 1;
-		qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+		qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 		return qdf_status_to_os_return(status);
 	}
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
@@ -14963,7 +14963,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		if (hostapd_state->bss_state == BSS_START) {
 			status = wlansap_set_key_sta(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter), &setKey);
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter), &set_key);
 			if (status != QDF_STATUS_SUCCESS) {
 				hdd_err("wlansap_set_key_sta failed status: %d",
 					status);
@@ -14972,12 +14972,12 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		/* Save the key in ap ctx for use on START_BSS and restart */
 		if (pairwise ||
-			eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == setKey.encType ||
-			eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == setKey.encType)
-			qdf_mem_copy(&ap_ctx->wep_key[key_index], &setKey,
+			eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == set_key.encType ||
+			eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == set_key.encType)
+			qdf_mem_copy(&ap_ctx->wep_key[key_index], &set_key,
 				     sizeof(tCsrRoamSetKey));
 		else
-			qdf_mem_copy(&ap_ctx->group_key, &setKey,
+			qdf_mem_copy(&ap_ctx->group_key, &set_key,
 				     sizeof(tCsrRoamSetKey));
 
 	} else if ((adapter->device_mode == QDF_STA_MODE) ||
@@ -15003,33 +15003,33 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     params->key, params->key_len);
 
 		hdd_debug("Set key for peerMac "MAC_ADDRESS_STR" direction %d",
-		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
-		       setKey.keyDirection);
+		       MAC_ADDR_ARRAY(set_key.peerMac.bytes),
+		       set_key.keyDirection);
 
 		/* The supplicant may attempt to set the PTK once
 		 * pre-authentication is done. Save the key in the
 		 * UMAC and include it in the ADD BSS request
 		 */
 		status = sme_ft_update_key(mac_handle,
-					   adapter->vdev_id, &setKey);
+					   adapter->vdev_id, &set_key);
 		if (status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
 			hdd_debug("Update PreAuth Key success");
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			return 0;
 		} else if (status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
 			hdd_err("Update PreAuth Key failed");
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			return -EINVAL;
 		}
 
 		/* issue set key request to SME */
 		status = sme_roam_set_key(mac_handle,
-					  adapter->vdev_id, &setKey,
+					  adapter->vdev_id, &set_key,
 					  &roam_id);
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			return -EINVAL;
 		}
 
@@ -15053,25 +15053,25 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			|| (WLAN_CIPHER_SUITE_WEP104 == params->cipher)
 			)
 		    ) {
-			setKey.keyDirection = eSIR_RX_ONLY;
-			qdf_set_macaddr_broadcast(&setKey.peerMac);
+			set_key.keyDirection = eSIR_RX_ONLY;
+			qdf_set_macaddr_broadcast(&set_key.peerMac);
 
 			hdd_debug("Set key peerMac "MAC_ADDRESS_STR" direction %d",
-			       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
-			       setKey.keyDirection);
+			       MAC_ADDR_ARRAY(set_key.peerMac.bytes),
+			       set_key.keyDirection);
 
 			status = sme_roam_set_key(mac_handle,
-						  adapter->vdev_id, &setKey,
+						  adapter->vdev_id, &set_key,
 						  &roam_id);
 
 			if (0 != status) {
 				hdd_err("sme_roam_set_key failed for group key (IBSS), returned %d", status);
-				qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+				qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 				return -EINVAL;
 			}
 		}
 	}
-	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 	hdd_exit();
 	return 0;
 }
@@ -15437,23 +15437,23 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			 * then update the default key index
 			 */
 
-			tCsrRoamSetKey setKey;
+			tCsrRoamSetKey set_key;
 			uint32_t roam_id = INVALID_ROAM_ID;
 			tCsrKeys *Keys = &roam_profile->Keys;
 
 			hdd_debug("Default tx key index %d", key_index);
 			Keys->defaultIndex = (u8) key_index;
-			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
-			setKey.keyId = key_index;
-			setKey.keyLength = Keys->KeyLength[key_index];
+			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
+			set_key.keyId = key_index;
+			set_key.keyLength = Keys->KeyLength[key_index];
 
-			qdf_mem_copy(&setKey.Key[0],
+			qdf_mem_copy(&set_key.Key[0],
 				     &Keys->KeyMaterial[key_index][0],
 				     Keys->KeyLength[key_index]);
 
-			setKey.keyDirection = eSIR_TX_RX;
+			set_key.keyDirection = eSIR_TX_RX;
 
-			qdf_copy_macaddr(&setKey.peerMac,
+			qdf_copy_macaddr(&set_key.peerMac,
 					 &sta_ctx->conn_info.bssid);
 
 			if (Keys->KeyLength[key_index] ==
@@ -15476,13 +15476,13 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WEP40;
 			}
 
-			setKey.encType =
+			set_key.encType =
 				roam_profile->EncryptionType.
 				encryptionType[0];
 
 			/* Issue set key request */
 			status = sme_roam_set_key(mac_handle,
-						  adapter->vdev_id, &setKey,
+						  adapter->vdev_id, &set_key,
 						  &roam_id);
 
 			if (0 != status) {
