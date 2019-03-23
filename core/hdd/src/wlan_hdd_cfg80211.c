@@ -15434,24 +15434,24 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 			tCsrRoamSetKey set_key;
 			uint32_t roam_id = INVALID_ROAM_ID;
-			tCsrKeys *Keys = &roam_profile->Keys;
+			tCsrKeys *keys = &roam_profile->Keys;
 
 			hdd_debug("Default tx key index %d", key_index);
-			Keys->defaultIndex = (u8) key_index;
+			keys->defaultIndex = (u8) key_index;
 			qdf_mem_zero(&set_key, sizeof(tCsrRoamSetKey));
 			set_key.keyId = key_index;
-			set_key.keyLength = Keys->KeyLength[key_index];
+			set_key.keyLength = keys->KeyLength[key_index];
 
 			qdf_mem_copy(&set_key.Key[0],
-				     &Keys->KeyMaterial[key_index][0],
-				     Keys->KeyLength[key_index]);
+				     &keys->KeyMaterial[key_index][0],
+				     keys->KeyLength[key_index]);
 
 			set_key.keyDirection = eSIR_TX_RX;
 
 			qdf_copy_macaddr(&set_key.peerMac,
 					 &sta_ctx->conn_info.bssid);
 
-			if (Keys->KeyLength[key_index] ==
+			if (keys->KeyLength[key_index] ==
 					WLAN_CRYPTO_KEY_WEP40_LEN &&
 			    roam_profile->EncryptionType.
 			    encryptionType[0] == eCSR_ENCRYPT_TYPE_WEP104) {
