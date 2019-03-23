@@ -963,7 +963,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			   eCsrRoamBssType bss_type)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	eCsrEncryptionType encryptType = eCSR_ENCRYPT_TYPE_NONE;
+	eCsrEncryptionType encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
 
 	QDF_ASSERT(roam_info);
 
@@ -1003,13 +1003,13 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 			QDF_ASSERT(roam_info->u.pConnectedProfile);
 		} else {
 			/* Get Multicast Encryption Type */
-			encryptType =
+			encrypt_type =
 			    roam_info->u.pConnectedProfile->mcEncryptionType;
-			sta_ctx->conn_info.mc_encrypt_type = encryptType;
+			sta_ctx->conn_info.mc_encrypt_type = encrypt_type;
 			/* Get Unicast Encryption Type */
-			encryptType =
+			encrypt_type =
 				roam_info->u.pConnectedProfile->EncryptionType;
-			sta_ctx->conn_info.uc_encrypt_type = encryptType;
+			sta_ctx->conn_info.uc_encrypt_type = encrypt_type;
 
 			sta_ctx->conn_info.auth_type =
 				roam_info->u.pConnectedProfile->AuthType;
