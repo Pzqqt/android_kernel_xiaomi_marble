@@ -395,7 +395,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 	if (sta_ds_ptr) {
 		tLimMlmDisassocReq *pMlmDisassocReq = NULL;
 		tLimMlmDeauthReq *pMlmDeauthReq = NULL;
-		bool isConnected = true;
+		bool is_connected = true;
 
 		pMlmDisassocReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
@@ -408,7 +408,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 				MAC_ADDR_ARRAY(
 					pMlmDisassocReq->peer_macaddr.bytes));
 			lim_process_disassoc_ack_timeout(mac_ctx);
-			isConnected = false;
+			is_connected = false;
 		}
 		pMlmDeauthReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
@@ -421,11 +421,11 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 				MAC_ADDR_ARRAY(
 					pMlmDeauthReq->peer_macaddr.bytes));
 			lim_process_deauth_ack_timeout(mac_ctx);
-			isConnected = false;
+			is_connected = false;
 		}
 
 		/*
-		 * pStaDS != NULL and isConnected = 1 means the STA is already
+		 * pStaDS != NULL and is_connected = 1 means the STA is already
 		 * connected, But SAP received the Auth from that station.
 		 * For non PMF connection send Deauth frame as STA will retry
 		 * to connect back. The reason for above logic is captured in
@@ -438,7 +438,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		 * SA-Query procedure determines that the original SA is
 		 * invalid.
 		 */
-		if (isConnected
+		if (is_connected
 #ifdef WLAN_FEATURE_11W
 			&& !sta_ds_ptr->rmfEnabled
 #endif
