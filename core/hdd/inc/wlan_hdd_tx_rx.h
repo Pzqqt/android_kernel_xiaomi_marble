@@ -210,7 +210,7 @@ bool hdd_tx_flow_control_is_pause(void *adapter_context);
  */
 void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
-		ol_txrx_tx_flow_control_fp flowControl,
+		ol_txrx_tx_flow_control_fp flow_control_fp,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
 void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter);
 void hdd_get_tx_resource(struct hdd_adapter *adapter,
@@ -226,7 +226,7 @@ static inline bool hdd_tx_flow_control_is_pause(void *adapter_context)
 }
 static inline void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
-		ol_txrx_tx_flow_control_fp flowControl,
+		ol_txrx_tx_flow_control_fp flow_control_fp,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 }
