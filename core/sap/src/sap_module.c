@@ -539,7 +539,7 @@ wlansap_set_scan_acs_channel_params(tsap_config_t *pconfig,
 #endif
 	psap_ctx->auto_channel_select_weight =
 		 pconfig->auto_channel_select_weight;
-	psap_ctx->pUsrContext = pusr_context;
+	psap_ctx->user_context = pusr_context;
 	psap_ctx->enableOverLapCh = pconfig->enOverLapCh;
 	psap_ctx->acs_cfg = &pconfig->acs_cfg;
 	psap_ctx->ch_width_orig = pconfig->acs_cfg.ch_width;
@@ -663,7 +663,7 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_config_t *config, void *pUsrContext)
+			     tsap_config_t *config, void *user_context)
 {
 	tWLAN_SAPEvent sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -696,7 +696,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 #endif
 	sap_ctx->auto_channel_select_weight =
 		 config->auto_channel_select_weight;
-	sap_ctx->pUsrContext = pUsrContext;
+	sap_ctx->user_context = user_context;
 	sap_ctx->enableOverLapCh = config->enOverLapCh;
 	sap_ctx->acs_cfg = &config->acs_cfg;
 	sap_ctx->secondary_ch = config->sec_ch;

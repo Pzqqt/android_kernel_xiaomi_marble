@@ -1864,7 +1864,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		break;
 	}
 	qdf_status = (*sap_ctx->pfnSapEventCallback)
-			(&sap_ap_event, sap_ctx->pUsrContext);
+			(&sap_ap_event, sap_ctx->user_context);
 
 	return qdf_status;
 

@@ -750,7 +750,7 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext);
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(struct sap_event *pSapEvent,
-					void *pUsrContext);
+					void *user_context);
 
 /**
  * wlansap_is_channel_in_nol_list() - This API checks if channel is
@@ -785,7 +785,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  *                        about SAP results
  * @config: Pointer to configuration structure passed down from
  *                    HDD(HostApd for Android)
- * @pUsrContext: Parameter that will be passed back in all the SAP callback
+ * @user_context: Parameter that will be passed back in all the SAP callback
  *               events.
  *
  * This api function provides SAP FSM event eWLAN_SAP_PHYSICAL_LINK_CREATE for
@@ -798,7 +798,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  */
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_config_t *config, void *pUsrContext);
+			     tsap_config_t *config, void *user_context);
 
 /**
  * wlansap_stop_bss() - stop BSS.

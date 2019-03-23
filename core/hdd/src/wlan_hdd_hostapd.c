@@ -6506,7 +6506,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 			statusCode =
 				QDF_STATUS_E_RESOURCES;
 			hdd_hostapd_sap_event_cb(&sap_event,
-					sap_ctx->pUsrContext);
+					sap_ctx->user_context);
 		}
 	}
 

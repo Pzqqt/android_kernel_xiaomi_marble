@@ -166,7 +166,7 @@ struct sap_context {
 	/* QOS config */
 	tSapQosCfg SapQosCfg;
 
-	void *pUsrContext;
+	void *user_context;
 
 	uint32_t nStaWPARSnReqIeLength;
 	uint8_t pStaWpaRsnReqIE[MAX_ASSOC_IND_IE_LEN];
