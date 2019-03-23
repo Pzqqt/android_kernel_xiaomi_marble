@@ -310,7 +310,6 @@ struct pe_session {
 #endif
 	bool isFastTransitionEnabled;
 	bool isFastRoamIniFeatureEnabled;
-	tSirNoAParam p2pNoA;
 	tSirP2PNoaAttr p2pGoPsUpdate;
 	uint32_t defaultAuthFailureTimeout;
 

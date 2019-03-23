@@ -2002,17 +2002,6 @@ typedef struct sSirSmeUnprotMgmtFrameInd {
 } tSirSmeUnprotMgmtFrameInd, *tpSirSmeUnprotMgmtFrameInd;
 #endif
 
-/* P2P Power Save Related */
-typedef struct sSirNoAParam {
-	uint8_t ctWindow:7;
-	uint8_t OppPS:1;
-	uint8_t count;
-	uint32_t duration;
-	uint32_t interval;
-	uint32_t singleNoADuration;
-	uint8_t psSelection;
-} tSirNoAParam, *tpSirNoAParam;
-
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 
 typedef enum ext_wow_type {
