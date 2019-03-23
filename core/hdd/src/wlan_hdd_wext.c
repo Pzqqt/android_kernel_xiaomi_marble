@@ -6901,14 +6901,14 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		struct hdd_station_ctx *sta_ctx = NULL;
 
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		struct hdd_adapter *useAdapter = NULL;
+		struct hdd_adapter *stat_adapter = NULL;
 
 		/* Print wlan0 or p2p0 states based on the adapter_num
 		 * by using the correct adapter
 		 */
 		while (adapter_num < 2) {
 			if (WLAN_ADAPTER == adapter_num) {
-				useAdapter = adapter;
+				stat_adapter = adapter;
 				buf =
 					scnprintf(extra + len,
 						  WE_MAX_STR_LEN - len,
@@ -6935,10 +6935,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				 * case when the device is configured
 				 * as a p2p_client
 				 */
-				useAdapter =
+				stat_adapter =
 					hdd_get_adapter(hdd_ctx,
 							QDF_P2P_CLIENT_MODE);
-				if (!useAdapter) {
+				if (!stat_adapter) {
 					buf =
 						scnprintf(extra + len,
 							  WE_MAX_STR_LEN -
@@ -6957,7 +6957,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				break;
 			}
 			sta_ctx =
-				WLAN_HDD_GET_STATION_CTX_PTR(useAdapter);
+				WLAN_HDD_GET_STATION_CTX_PTR(stat_adapter);
 
 
 			buf =
@@ -6971,13 +6971,13 @@ static int __iw_get_char_setnone(struct net_device *dev,
 						  (sta_ctx->conn_info.conn_state),
 					  mac_trace_get_neighbour_roam_state
 						  (sme_get_neighbor_roam_state
-							  (mac_handle, useAdapter->vdev_id)),
+							  (mac_handle, stat_adapter->vdev_id)),
 					  mac_trace_getcsr_roam_state
 						  (sme_get_current_roam_state
-							  (mac_handle, useAdapter->vdev_id)),
+							  (mac_handle, stat_adapter->vdev_id)),
 					  mac_trace_getcsr_roam_sub_state
 						  (sme_get_current_roam_sub_state
-							  (mac_handle, useAdapter->vdev_id))
+							  (mac_handle, stat_adapter->vdev_id))
 					  );
 			len += buf;
 			adapter_num++;
