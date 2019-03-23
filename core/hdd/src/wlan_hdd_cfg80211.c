@@ -1784,7 +1784,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 
 	struct hdd_context *hdd_ctx;
 	tsap_config_t *sap_config;
-	tpWLAN_SAPEventCB acs_event_callback;
+	sap_event_cb acs_event_callback;
 	uint8_t mcc_to_scc_switch = 0;
 	int status;
 

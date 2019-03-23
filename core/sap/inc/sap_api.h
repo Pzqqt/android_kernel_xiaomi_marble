@@ -372,7 +372,7 @@ struct sap_ch_change_ind {
 };
 
 /*
- * This struct will be filled in and passed to tpWLAN_SAPEventCB that is
+ * This struct will be filled in and passed to sap_event_cb that is
  * provided during wlansap_start_bss call The event id corresponding to
  * structure  in the union is defined in comment next to the structure
  */
@@ -749,8 +749,8 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext);
 
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
-typedef QDF_STATUS (*tpWLAN_SAPEventCB)(struct sap_event *pSapEvent,
-					void *user_context);
+typedef QDF_STATUS (*sap_event_cb)(struct sap_event *sap_event,
+				   void *user_context);
 
 /**
  * wlansap_is_channel_in_nol_list() - This API checks if channel is
@@ -781,7 +781,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 /**
  * wlansap_start_bss() - start BSS
  * @sap_ctx: Pointer to the SAP context
- * @pSapEventCallback: Callback function in HDD called by SAP to inform HDD
+ * @sap_event_cb: Callback function in HDD called by SAP to inform HDD
  *                        about SAP results
  * @config: Pointer to configuration structure passed down from
  *                    HDD(HostApd for Android)
@@ -797,7 +797,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
-			     tpWLAN_SAPEventCB pSapEventCallback,
+			     sap_event_cb sap_event_cb,
 			     tsap_config_t *config, void *user_context);
 
 /**
@@ -1276,7 +1276,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 /**
  * wlansap_acs_chselect() - Initiates acs channel selection
  * @sap_context:               Pointer to SAP context structure
- * @pacs_event_callback:       Callback function in hdd called by sap
+ * @acs_event_callback:       Callback function in hdd called by sap
  *                             to inform hdd about channel selection result
  * @pconfig:                   Pointer to configuration structure
  *                             passed down from hdd
@@ -1289,7 +1289,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
  * Return: The QDF_STATUS code associated with performing the operation.
  */
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
-				tpWLAN_SAPEventCB pacs_event_callback,
+				sap_event_cb acs_event_callback,
 				tsap_config_t *pconfig,
 				void *pusr_context);
 

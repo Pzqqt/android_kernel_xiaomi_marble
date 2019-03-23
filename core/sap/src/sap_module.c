@@ -662,7 +662,7 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 }
 
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
-			     tpWLAN_SAPEventCB pSapEventCallback,
+			     sap_event_cb sap_event_cb,
 			     tsap_config_t *config, void *user_context)
 {
 	tWLAN_SAPEvent sap_event;        /* State machine event */
@@ -758,7 +758,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_event.params = 0;    /* pSapPhysLinkCreate */
 
 	/* Store the HDD callback in SAP context */
-	sap_ctx->pfnSapEventCallback = pSapEventCallback;
+	sap_ctx->sap_event_cb = sap_event_cb;
 
 	/* Handle event */
 	qdf_status = sap_fsm(sap_ctx, &sap_event);
@@ -2323,7 +2323,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 }
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
-				tpWLAN_SAPEventCB pacs_event_callback,
+				sap_event_cb acs_event_callback,
 				tsap_config_t *pconfig,
 				void *pusr_context)
 {
@@ -2358,7 +2358,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	 * Copy the HDD callback function to report the
 	 * ACS result after scan in SAP context callback function.
 	 */
-	sap_context->pfnSapEventCallback = pacs_event_callback;
+	sap_context->sap_event_cb = acs_event_callback;
 	/*
 	 * init dfs channel nol
 	 */

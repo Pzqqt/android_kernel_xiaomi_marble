@@ -1465,9 +1465,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	tSap_StationMICFailureEvent *mic_failure;
 
 	/* Format the Start BSS Complete event to return... */
-	if (!sap_ctx->pfnSapEventCallback) {
+	if (!sap_ctx->sap_event_cb)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -1863,7 +1862,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			  sap_hddevent);
 		break;
 	}
-	qdf_status = (*sap_ctx->pfnSapEventCallback)
+	qdf_status = (*sap_ctx->sap_event_cb)
 			(&sap_ap_event, sap_ctx->user_context);
 
 	return qdf_status;

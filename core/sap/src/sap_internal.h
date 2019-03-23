@@ -142,7 +142,7 @@ struct sap_context {
 	uint32_t csr_roamId;
 
 	/* SAP event Callback to hdd */
-	tpWLAN_SAPEventCB pfnSapEventCallback;
+	sap_event_cb sap_event_cb;
 
 	/*
 	 * Include the state machine structure here, state var that keeps

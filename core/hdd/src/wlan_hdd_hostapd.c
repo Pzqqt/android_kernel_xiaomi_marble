@@ -4902,7 +4902,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	eCsrEncryptionType mc_rsn_encrypt_type;
 	int status = QDF_STATUS_SUCCESS, ret;
 	int qdf_status = QDF_STATUS_SUCCESS;
-	tpWLAN_SAPEventCB sap_event_callback;
+	sap_event_cb sap_event_callback;
 	struct hdd_hostapd_state *hostapd_state;
 	mac_handle_t mac_handle;
 	int32_t i;
