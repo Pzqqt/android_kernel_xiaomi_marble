@@ -3619,7 +3619,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 void sap_dfs_cac_timer_callback(void *data)
 {
 	struct sap_context *sapContext;
-	tWLAN_SAPEvent sapEvent;
+	tWLAN_SAPEvent sap_event;
 	mac_handle_t mac_handle = data;
 	struct mac_context *mac;
 
@@ -3655,12 +3655,12 @@ void sap_dfs_cac_timer_callback(void *data)
 			"sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%pK]",
 			sapContext->channel, sapContext);
 
-	sapEvent.event = eSAP_DFS_CHANNEL_CAC_END;
-	sapEvent.params = 0;
-	sapEvent.u1 = 0;
-	sapEvent.u2 = 0;
+	sap_event.event = eSAP_DFS_CHANNEL_CAC_END;
+	sap_event.params = 0;
+	sap_event.u1 = 0;
+	sap_event.u2 = 0;
 
-	sap_fsm(sapContext, &sapEvent);
+	sap_fsm(sapContext, &sap_event);
 }
 
 /*

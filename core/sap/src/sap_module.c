@@ -665,7 +665,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
 			     tsap_config_t *pConfig, void *pUsrContext)
 {
-	tWLAN_SAPEvent sapEvent;        /* State machine event */
+	tWLAN_SAPEvent sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *pmac = NULL;
 
@@ -754,14 +754,14 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->beacon_tx_rate = pConfig->beacon_tx_rate;
 
 	/* Fill in the event structure for FSM */
-	sapEvent.event = eSAP_HDD_START_INFRA_BSS;
-	sapEvent.params = 0;    /* pSapPhysLinkCreate */
+	sap_event.event = eSAP_HDD_START_INFRA_BSS;
+	sap_event.params = 0;    /* pSapPhysLinkCreate */
 
 	/* Store the HDD callback in SAP context */
 	sap_ctx->pfnSapEventCallback = pSapEventCallback;
 
 	/* Handle event */
-	qdf_status = sap_fsm(sap_ctx, &sapEvent);
+	qdf_status = sap_fsm(sap_ctx, &sap_event);
 fail:
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		sap_free_roam_profile(&sap_ctx->csr_roamProfile);
@@ -804,7 +804,7 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
 
 QDF_STATUS wlansap_stop_bss(struct sap_context *sap_ctx)
 {
-	tWLAN_SAPEvent sapEvent;        /* State machine event */
+	tWLAN_SAPEvent sap_event;        /* State machine event */
 	QDF_STATUS qdf_status;
 
 	if (!sap_ctx) {
@@ -814,11 +814,11 @@ QDF_STATUS wlansap_stop_bss(struct sap_context *sap_ctx)
 	}
 
 	/* Fill in the event structure for FSM */
-	sapEvent.event = eSAP_HDD_STOP_INFRA_BSS;
-	sapEvent.params = 0;
+	sap_event.event = eSAP_HDD_STOP_INFRA_BSS;
+	sap_event.params = 0;
 
 	/* Handle event */
-	qdf_status = sap_fsm(sap_ctx, &sapEvent);
+	qdf_status = sap_fsm(sap_ctx, &sap_event);
 
 	return qdf_status;
 }
