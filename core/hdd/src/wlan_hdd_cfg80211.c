@@ -14825,10 +14825,10 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 	case WLAN_CIPHER_SUITE_TKIP:
 	{
-		u8 *pKey = &set_key.Key[0];
+		u8 *key = &set_key.Key[0];
 
 		set_key.encType = eCSR_ENCRYPT_TYPE_TKIP;
-		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
+		qdf_mem_zero(key, CSR_MAX_KEY_LEN);
 
 		/* Supplicant sends the 32bytes key in this order
 		 *
@@ -14845,13 +14845,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		 * <---16bytes---><--8bytes--><--8bytes-->
 		 */
 		/* Copy the Temporal Key 1 (TK1) */
-		qdf_mem_copy(pKey, params->key, 16);
+		qdf_mem_copy(key, params->key, 16);
 
 		/*Copy the rx mic first */
-		qdf_mem_copy(&pKey[16], &params->key[24], 8);
+		qdf_mem_copy(&key[16], &params->key[24], 8);
 
 		/*Copy the tx mic */
-		qdf_mem_copy(&pKey[24], &params->key[16], 8);
+		qdf_mem_copy(&key[24], &params->key[16], 8);
 
 		break;
 	}
