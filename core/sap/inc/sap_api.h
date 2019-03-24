@@ -465,7 +465,7 @@ enum  sap_acs_dfs_mode {
 	ACS_DFS_MODE_DEPRIORITIZE
 };
 
-typedef struct sap_config {
+struct sap_config {
 	tSap_SSIDInfo_t SSIDinfo;
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
 	eSapMacAddrACL SapMacaddr_acl;
@@ -537,7 +537,7 @@ typedef struct sap_config {
 	uint8_t sap_chanswitch_mode;
 	bool chan_switch_hostapd_rate_enabled;
 	uint16_t reduced_beacon_interval;
-} tsap_config_t;
+};
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 typedef enum {
@@ -798,7 +798,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  */
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     sap_event_cb sap_event_cb,
-			     tsap_config_t *config, void *user_context);
+			     struct sap_config *config, void *user_context);
 
 /**
  * wlansap_stop_bss() - stop BSS.
@@ -899,7 +899,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_config_t *config);
+			       struct sap_config *config);
 
 /**
  * wlansap_disassoc_sta() - initiate disassociation of station.
@@ -1209,19 +1209,19 @@ void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
  * Return: None
  */
 void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
-				  tsap_config_t *sap_config);
+				  struct sap_config *sap_config);
 
 void sap_config_acs_result(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   uint32_t sec_ch);
 
-QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *config,
-		const uint8_t *
-		pAdditionIEBuffer,
-		uint16_t additionIELength,
-		eUpdateIEsType updateType);
-QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *config,
-			eUpdateIEsType updateType);
+QDF_STATUS wlansap_update_sap_config_add_ie(struct sap_config *config,
+					    const uint8_t *pAdditionIEBuffer,
+					    uint16_t additionIELength,
+					    eUpdateIEsType updateType);
+
+QDF_STATUS wlansap_reset_sap_config_add_ie(struct sap_config *config,
+					   eUpdateIEsType updateType);
 
 void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 				 uint8_t *startChannelNum,
@@ -1290,7 +1290,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
  */
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				sap_event_cb acs_event_callback,
-				tsap_config_t *pconfig,
+				struct sap_config *pconfig,
 				void *pusr_context);
 
 /**

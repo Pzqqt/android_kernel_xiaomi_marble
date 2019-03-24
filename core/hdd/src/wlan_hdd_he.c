@@ -49,7 +49,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 }
 
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
-				 tsap_config_t *config)
+				 struct sap_config *config)
 {
 	const uint8_t *ie;
 

@@ -512,7 +512,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
   *                                         performing the operation
   */
 static QDF_STATUS
-wlansap_set_scan_acs_channel_params(tsap_config_t *pconfig,
+wlansap_set_scan_acs_channel_params(struct sap_config *pconfig,
 				    struct sap_context *psap_ctx,
 				    void *pusr_context)
 {
@@ -649,7 +649,7 @@ static bool wlan_sap_validate_channel_switch(mac_handle_t mac_handle,
 #endif
 
 void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
-				  tsap_config_t *sap_config)
+				  struct sap_config *sap_config)
 {
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -663,7 +663,7 @@ void wlan_sap_set_sap_ctx_acs_cfg(struct sap_context *sap_ctx,
 
 QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     sap_event_cb sap_event_cb,
-			     tsap_config_t *config, void *user_context)
+			     struct sap_config *config, void *user_context)
 {
 	tWLAN_SAPEvent sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -770,7 +770,7 @@ fail:
 } /* wlansap_start_bss */
 
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
-			       tsap_config_t *config)
+			       struct sap_config *config)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
@@ -2021,7 +2021,7 @@ QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 }
 
 QDF_STATUS
-wlansap_update_sap_config_add_ie(tsap_config_t *config,
+wlansap_update_sap_config_add_ie(struct sap_config *config,
 				 const uint8_t *pAdditionIEBuffer,
 				 uint16_t additionIELength,
 				 eUpdateIEsType updateType)
@@ -2104,7 +2104,8 @@ wlansap_update_sap_config_add_ie(tsap_config_t *config,
 }
 
 QDF_STATUS
-wlansap_reset_sap_config_add_ie(tsap_config_t *config, eUpdateIEsType updateType)
+wlansap_reset_sap_config_add_ie(struct sap_config *config,
+				eUpdateIEsType updateType)
 {
 	if (!config) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2324,7 +2325,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				sap_event_cb acs_event_callback,
-				tsap_config_t *pconfig,
+				struct sap_config *pconfig,
 				void *pusr_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;

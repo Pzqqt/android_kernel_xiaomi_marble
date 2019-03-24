@@ -1742,7 +1742,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo, *cache_stainfo;
 	mac_handle_t mac_handle;
-	tsap_config_t *sap_config;
+	struct sap_config *sap_config;
 
 	dev = context;
 	if (!dev) {
@@ -2044,7 +2044,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_DFS_RADAR_DETECT:
 	{
 		int i;
-		tsap_config_t *sap_config =
+		struct sap_config *sap_config =
 				&adapter->session.ap.sap_config;
 
 		hdd_dfs_indicate_radar(hdd_ctx);
@@ -3545,7 +3545,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	int status;
 	mac_handle_t mac_handle;
 	struct sme_config_params *sme_config;
-	tsap_config_t *sap_config;
+	struct sap_config *sap_config;
 
 	hdd_enter();
 
@@ -4070,7 +4070,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	uint8_t *genie;
 	uint16_t total_ielen = 0;
 	int ret = 0;
-	tsap_config_t *config;
+	struct sap_config *config;
 	tSirUpdateIE update_ie;
 	struct hdd_beacon_data *beacon = NULL;
 	uint16_t proberesp_ies_len;
@@ -4218,7 +4218,7 @@ done:
  */
 static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 {
-	tsap_config_t *config = &adapter->session.ap.sap_config;
+	struct sap_config *config = &adapter->session.ap.sap_config;
 	struct hdd_beacon_data *beacon = adapter->session.ap.beacon;
 	struct ieee80211_mgmt *mgmt_frame =
 		(struct ieee80211_mgmt *)beacon->head;
@@ -4282,7 +4282,7 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 			       struct hdd_adapter *adapter)
 {
-	tsap_config_t *sap_config;
+	struct sap_config *sap_config;
 	struct hdd_config *ini_config;
 	mac_handle_t mac_handle;
 	uint8_t is_overlap_enable = 0;
@@ -4302,7 +4302,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 	hdd_debug("HDD_ACS_SKIP_STATUS = %d", hdd_ctx->skip_acs_scan_status);
 	if (hdd_ctx->skip_acs_scan_status == eSAP_SKIP_ACS_SCAN) {
 		struct hdd_adapter *con_sap_adapter;
-		tsap_config_t *con_sap_config = NULL;
+		struct sap_config *con_sap_config = NULL;
 
 		con_sap_adapter = hdd_get_con_sap_adapter(adapter, false);
 
@@ -4418,7 +4418,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
  */
 static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 {
-	tsap_config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
+	struct sap_config *sap_cfg = &ap_adapter->session.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	uint8_t ch_width;
 	uint8_t sub_20_chan_width;
@@ -4892,7 +4892,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				       enum nl80211_hidden_ssid hidden_ssid,
 				       bool check_for_concurrency)
 {
-	tsap_config_t *config;
+	struct sap_config *config;
 	struct hdd_beacon_data *beacon = NULL;
 	struct ieee80211_mgmt *mgmt_frame;
 	struct ieee80211_mgmt mgmt;
@@ -6136,7 +6136,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
-		tsap_config_t *sap_cfg = &adapter->session.ap.sap_config;
+		struct sap_config *sap_cfg = &adapter->session.ap.sap_config;
 
 		if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
 					hdd_ctx->pdev, channel)) {
@@ -6237,7 +6237,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	    ) {
 		struct hdd_beacon_data *old, *new;
 		enum nl80211_channel_type channel_type;
-		tsap_config_t *sap_config =
+		struct sap_config *sap_config =
 			&((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 
 		old = adapter->session.ap.beacon;

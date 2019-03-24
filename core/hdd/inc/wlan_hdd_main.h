@@ -974,7 +974,7 @@ struct hdd_ap_ctx {
 	tCsrRoamSetKey wep_key[CSR_MAX_NUM_KEY];
 	uint8_t wep_def_key_idx;
 	struct sap_context *sap_context;
-	tsap_config_t sap_config;
+	struct sap_config sap_config;
 	uint8_t operating_channel;
 	struct hdd_beacon_data *beacon;
 	qdf_mc_timer_t vendor_acs_timer;
