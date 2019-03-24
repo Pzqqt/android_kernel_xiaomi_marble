@@ -2936,32 +2936,32 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 }
 
 eSapStatus
-sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType,
+sapconvert_to_csr_profile(tsap_config_t *config, eCsrRoamBssType bssType,
 			  struct csr_roam_profile *profile)
 {
 	/* Create Roam profile for SoftAP to connect */
 	profile->BSSType = eCSR_BSS_TYPE_INFRA_AP;
 	profile->SSIDs.numOfSSIDs = 1;
-	profile->csrPersona = pconfig_params->persona;
+	profile->csrPersona = config->persona;
 
 	qdf_mem_zero(profile->SSIDs.SSIDList[0].SSID.ssId,
 		     sizeof(profile->SSIDs.SSIDList[0].SSID.ssId));
 
 	/* Flag to not broadcast the SSID information */
 	profile->SSIDs.SSIDList[0].ssidHidden =
-		pconfig_params->SSIDinfo.ssidHidden;
+		config->SSIDinfo.ssidHidden;
 
 	profile->SSIDs.SSIDList[0].SSID.length =
-		pconfig_params->SSIDinfo.ssid.length;
+		config->SSIDinfo.ssid.length;
 	qdf_mem_copy(&profile->SSIDs.SSIDList[0].SSID.ssId,
-		     pconfig_params->SSIDinfo.ssid.ssId,
-		     sizeof(pconfig_params->SSIDinfo.ssid.ssId));
+		     config->SSIDinfo.ssid.ssId,
+		     sizeof(config->SSIDinfo.ssid.ssId));
 
 	profile->negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
-	if (pconfig_params->authType == eSAP_OPEN_SYSTEM) {
+	if (config->authType == eSAP_OPEN_SYSTEM) {
 		profile->negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	} else if (pconfig_params->authType == eSAP_SHARED_KEY) {
+	} else if (config->authType == eSAP_SHARED_KEY) {
 		profile->negotiatedAuthType = eCSR_AUTH_TYPE_SHARED_KEY;
 	} else {
 		profile->negotiatedAuthType = eCSR_AUTH_TYPE_AUTOSWITCH;
@@ -2970,27 +2970,27 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->AuthType.numEntries = 1;
 	profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
-	profile->akm_list = pconfig_params->akm_list;
+	profile->akm_list = config->akm_list;
 
 	/* Always set the Encryption Type */
 	profile->EncryptionType.numEntries = 1;
 	profile->EncryptionType.encryptionType[0] =
-		pconfig_params->RSNEncryptType;
+		config->RSNEncryptType;
 
 	profile->mcEncryptionType.numEntries = 1;
 	profile->mcEncryptionType.encryptionType[0] =
-		pconfig_params->mcRSNEncryptType;
+		config->mcRSNEncryptType;
 
-	if (pconfig_params->privacy & eSAP_SHARED_KEY) {
+	if (config->privacy & eSAP_SHARED_KEY) {
 		profile->AuthType.authType[0] = eCSR_AUTH_TYPE_SHARED_KEY;
 	}
 
-	profile->privacy = pconfig_params->privacy;
-	profile->fwdWPSPBCProbeReq = pconfig_params->fwdWPSPBCProbeReq;
+	profile->privacy = config->privacy;
+	profile->fwdWPSPBCProbeReq = config->fwdWPSPBCProbeReq;
 
-	if (pconfig_params->authType == eSAP_SHARED_KEY) {
+	if (config->authType == eSAP_SHARED_KEY) {
 		profile->csr80211AuthType = eSIR_SHARED_KEY;
-	} else if (pconfig_params->authType == eSAP_OPEN_SYSTEM) {
+	} else if (config->authType == eSAP_OPEN_SYSTEM) {
 		profile->csr80211AuthType = eSIR_OPEN_SYSTEM;
 	} else {
 		profile->csr80211AuthType = eSIR_AUTO_SWITCH;
@@ -3008,102 +3008,102 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	}
 
 	/* set the RSN/WPA IE */
-	profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
-	if (pconfig_params->RSNWPAReqIELength) {
+	profile->nRSNReqIELength = config->RSNWPAReqIELength;
+	if (config->RSNWPAReqIELength) {
 		profile->pRSNReqIE =
-			qdf_mem_malloc(pconfig_params->RSNWPAReqIELength);
+			qdf_mem_malloc(config->RSNWPAReqIELength);
 		if (!profile->pRSNReqIE)
 			return eSAP_STATUS_FAILURE;
 
-		qdf_mem_copy(profile->pRSNReqIE, pconfig_params->RSNWPAReqIE,
-			     pconfig_params->RSNWPAReqIELength);
-		profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
+		qdf_mem_copy(profile->pRSNReqIE, config->RSNWPAReqIE,
+			     config->RSNWPAReqIELength);
+		profile->nRSNReqIELength = config->RSNWPAReqIELength;
 	}
 
 	/* set the phyMode to accept anything */
 	/* Best means everything because it covers all the things we support */
 	/* eCSR_DOT11_MODE_BEST */
-	profile->phyMode = pconfig_params->SapHw_mode;
+	profile->phyMode = config->SapHw_mode;
 
 	/* Configure beaconInterval */
-	profile->beaconInterval = (uint16_t) pconfig_params->beacon_int;
+	profile->beaconInterval = (uint16_t) config->beacon_int;
 
 	/* set DTIM period */
-	profile->dtimPeriod = pconfig_params->dtim_period;
+	profile->dtimPeriod = config->dtim_period;
 
 	/* set Uapsd enable bit */
-	profile->ApUapsdEnable = pconfig_params->UapsdEnable;
+	profile->ApUapsdEnable = config->UapsdEnable;
 
 	/* Enable protection parameters */
-	profile->protEnabled = pconfig_params->protEnabled;
-	profile->obssProtEnabled = pconfig_params->obssProtEnabled;
-	profile->cfg_protection = pconfig_params->ht_capab;
+	profile->protEnabled = config->protEnabled;
+	profile->obssProtEnabled = config->obssProtEnabled;
+	profile->cfg_protection = config->ht_capab;
 
 	/* country code */
-	if (pconfig_params->countryCode[0])
-		qdf_mem_copy(profile->countryCode, pconfig_params->countryCode,
+	if (config->countryCode[0])
+		qdf_mem_copy(profile->countryCode, config->countryCode,
 			     CFG_COUNTRY_CODE_LEN);
-	profile->ieee80211d = pconfig_params->ieee80211d;
+	profile->ieee80211d = config->ieee80211d;
 	/* wps config info */
-	profile->wps_state = pconfig_params->wps_state;
+	profile->wps_state = config->wps_state;
 
 #ifdef WLAN_FEATURE_11W
 	/* MFP capable/required */
-	profile->MFPCapable = pconfig_params->mfpCapable ? 1 : 0;
-	profile->MFPRequired = pconfig_params->mfpRequired ? 1 : 0;
+	profile->MFPCapable = config->mfpCapable ? 1 : 0;
+	profile->MFPRequired = config->mfpRequired ? 1 : 0;
 #endif
 
-	if (pconfig_params->probeRespIEsBufferLen > 0 &&
-	    pconfig_params->pProbeRespIEsBuffer) {
+	if (config->probeRespIEsBufferLen > 0 &&
+	    config->pProbeRespIEsBuffer) {
 		profile->add_ie_params.probeRespDataLen =
-			pconfig_params->probeRespIEsBufferLen;
+			config->probeRespIEsBufferLen;
 		profile->add_ie_params.probeRespData_buff =
-			pconfig_params->pProbeRespIEsBuffer;
+			config->pProbeRespIEsBuffer;
 	} else {
 		profile->add_ie_params.probeRespDataLen = 0;
 		profile->add_ie_params.probeRespData_buff = NULL;
 	}
 	/*assoc resp IE */
-	if (pconfig_params->assocRespIEsLen > 0 &&
-	    pconfig_params->pAssocRespIEsBuffer) {
+	if (config->assocRespIEsLen > 0 &&
+	    config->pAssocRespIEsBuffer) {
 		profile->add_ie_params.assocRespDataLen =
-			pconfig_params->assocRespIEsLen;
+			config->assocRespIEsLen;
 		profile->add_ie_params.assocRespData_buff =
-			pconfig_params->pAssocRespIEsBuffer;
+			config->pAssocRespIEsBuffer;
 	} else {
 		profile->add_ie_params.assocRespDataLen = 0;
 		profile->add_ie_params.assocRespData_buff = NULL;
 	}
 
-	if (pconfig_params->probeRespBcnIEsLen > 0 &&
-	    pconfig_params->pProbeRespBcnIEsBuffer) {
+	if (config->probeRespBcnIEsLen > 0 &&
+	    config->pProbeRespBcnIEsBuffer) {
 		profile->add_ie_params.probeRespBCNDataLen =
-			pconfig_params->probeRespBcnIEsLen;
+			config->probeRespBcnIEsLen;
 		profile->add_ie_params.probeRespBCNData_buff =
-			pconfig_params->pProbeRespBcnIEsBuffer;
+			config->pProbeRespBcnIEsBuffer;
 	} else {
 		profile->add_ie_params.probeRespBCNDataLen = 0;
 		profile->add_ie_params.probeRespBCNData_buff = NULL;
 	}
 
-	if (pconfig_params->supported_rates.numRates) {
+	if (config->supported_rates.numRates) {
 		qdf_mem_copy(profile->supported_rates.rate,
-				pconfig_params->supported_rates.rate,
-				pconfig_params->supported_rates.numRates);
+				config->supported_rates.rate,
+				config->supported_rates.numRates);
 		profile->supported_rates.numRates =
-			pconfig_params->supported_rates.numRates;
+			config->supported_rates.numRates;
 	}
 
-	if (pconfig_params->extended_rates.numRates) {
+	if (config->extended_rates.numRates) {
 		qdf_mem_copy(profile->extended_rates.rate,
-				pconfig_params->extended_rates.rate,
-				pconfig_params->extended_rates.numRates);
+				config->extended_rates.rate,
+				config->extended_rates.numRates);
 		profile->extended_rates.numRates =
-			pconfig_params->extended_rates.numRates;
+			config->extended_rates.numRates;
 	}
 
 	profile->chan_switch_hostapd_rate_enabled =
-		pconfig_params->chan_switch_hostapd_rate_enabled;
+		config->chan_switch_hostapd_rate_enabled;
 
 	return eSAP_STATUS_SUCCESS;     /* Success. */
 }
