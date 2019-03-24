@@ -1278,7 +1278,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
  * @sap_context:               Pointer to SAP context structure
  * @acs_event_callback:       Callback function in hdd called by sap
  *                             to inform hdd about channel selection result
- * @pconfig:                   Pointer to configuration structure
+ * @config:                   Pointer to configuration structure
  *                             passed down from hdd
  * @pusr_context:              Parameter that will be passed back in all
  *                             the sap callback events.
@@ -1290,7 +1290,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
  */
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				sap_event_cb acs_event_callback,
-				struct sap_config *pconfig,
+				struct sap_config *config,
 				void *pusr_context);
 
 /**

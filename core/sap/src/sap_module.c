@@ -500,7 +500,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 
  /**
   * wlansap_set_scan_acs_channel_params() - Config scan and channel parameters.
-  * pconfig:                                Pointer to the SAP config
+  * config:                                Pointer to the SAP config
   * psap_ctx:                               Pointer to the SAP Context.
   * pusr_context:                           Parameter that will be passed
   *                                         back in all the SAP callback events.
@@ -512,38 +512,38 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
   *                                         performing the operation
   */
 static QDF_STATUS
-wlansap_set_scan_acs_channel_params(struct sap_config *pconfig,
+wlansap_set_scan_acs_channel_params(struct sap_config *config,
 				    struct sap_context *psap_ctx,
 				    void *pusr_context)
 {
 	struct mac_context *mac;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!pconfig) {
+	if (!config) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid pconfig passed ", __func__);
+			"%s: Invalid config passed ", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
 	if (!psap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid pconfig passed ", __func__);
+			"%s: Invalid config passed ", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
 	/* Channel selection is auto or configured */
-	psap_ctx->channel = pconfig->channel;
-	psap_ctx->dfs_mode = pconfig->acs_dfs_mode;
+	psap_ctx->channel = config->channel;
+	psap_ctx->dfs_mode = config->acs_dfs_mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	psap_ctx->cc_switch_mode = pconfig->cc_switch_mode;
+	psap_ctx->cc_switch_mode = config->cc_switch_mode;
 #endif
 	psap_ctx->auto_channel_select_weight =
-		 pconfig->auto_channel_select_weight;
+		 config->auto_channel_select_weight;
 	psap_ctx->user_context = pusr_context;
-	psap_ctx->enableOverLapCh = pconfig->enOverLapCh;
-	psap_ctx->acs_cfg = &pconfig->acs_cfg;
-	psap_ctx->ch_width_orig = pconfig->acs_cfg.ch_width;
-	psap_ctx->secondary_ch = pconfig->sec_ch;
+	psap_ctx->enableOverLapCh = config->enOverLapCh;
+	psap_ctx->acs_cfg = &config->acs_cfg;
+	psap_ctx->ch_width_orig = config->acs_cfg.ch_width;
+	psap_ctx->secondary_ch = config->sec_ch;
 
 	/*
 	 * Set the BSSID to your "self MAC Addr" read
@@ -554,9 +554,9 @@ wlansap_set_scan_acs_channel_params(struct sap_config *pconfig,
 
 	/* Save a copy to SAP context */
 	qdf_mem_copy(psap_ctx->csr_roamProfile.BSSIDs.bssid,
-		pconfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
+		config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(psap_ctx->self_mac_addr,
-		pconfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
+		config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -2325,7 +2325,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 
 QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				sap_event_cb acs_event_callback,
-				struct sap_config *pconfig,
+				struct sap_config *config,
 				void *pusr_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2344,16 +2344,16 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	sap_context->acs_cfg = &pconfig->acs_cfg;
-	sap_context->ch_width_orig = pconfig->acs_cfg.ch_width;
-	sap_context->csr_roamProfile.phyMode = pconfig->acs_cfg.hw_mode;
+	sap_context->acs_cfg = &config->acs_cfg;
+	sap_context->ch_width_orig = config->acs_cfg.ch_width;
+	sap_context->csr_roamProfile.phyMode = config->acs_cfg.hw_mode;
 
 	/*
 	 * Now, configure the scan and ACS channel params
 	 * to issue a scan request.
 	 */
-	wlansap_set_scan_acs_channel_params(pconfig, sap_context,
-						pusr_context);
+	wlansap_set_scan_acs_channel_params(config, sap_context,
+					    pusr_context);
 
 	/*
 	 * Copy the HDD callback function to report the
