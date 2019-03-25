@@ -57,6 +57,13 @@
 #define SIZE_OF_GETROAMMODE             11      /* size of GETROAMMODE */
 
 /*
+ * Size of GETCOUNTRYREV output = (sizeof("GETCOUNTRYREV") = 14) + one (space) +
+ *				  (sizeof("country_code") = 3) +
+ *                                one (NULL terminating character)
+ */
+#define SIZE_OF_GETCOUNTRYREV_OUTPUT 20
+
+/*
  * Ibss prop IE from command will be of size:
  * size  = sizeof(oui) + sizeof(oui_data) + 1(Element ID) + 1(EID Length)
  * OUI_DATA should be at least 3 bytes long
@@ -2901,6 +2908,40 @@ static inline int drv_cmd_country(struct hdd_adapter *adapter,
 		return -EINVAL;
 
 	return hdd_reg_set_country(hdd_ctx, country_code);
+}
+
+/**
+ * drv_cmd_get_country() - Helper function to get current county code
+ * @adapter: pointer to adapter on which request is received
+ * @hdd_ctx: pointer to hdd context
+ * @command: command name
+ * @command_len: command buffer length
+ * @priv_data: output pointer to hold current country code
+ *
+ * Return: On success 0, negative value on error.
+ */
+static int drv_cmd_get_country(struct hdd_adapter *adapter,
+			       struct hdd_context *hdd_ctx,
+			       uint8_t *command, uint8_t command_len,
+			       struct hdd_priv_data *priv_data)
+{
+	uint8_t buf[SIZE_OF_GETCOUNTRYREV_OUTPUT] = {0};
+	uint8_t cc[REG_ALPHA2_LEN + 1];
+	int ret = 0, len;
+
+	qdf_mem_copy(cc, hdd_ctx->reg.alpha2, REG_ALPHA2_LEN);
+	cc[REG_ALPHA2_LEN] = '\0';
+
+	len = scnprintf(buf, sizeof(buf), "%s %s",
+			"GETCOUNTRYREV", cc);
+	hdd_debug("buf = %s", buf);
+	len = QDF_MIN(priv_data->total_len, len + 1);
+	if (copy_to_user(priv_data->buf, buf, len)) {
+		hdd_err("failed to copy data to user buffer");
+		ret = -EFAULT;
+	}
+
+	return ret;
 }
 
 static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
@@ -7281,6 +7322,8 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"SETBAND",                   drv_cmd_set_band, true},
 	{"SETWMMPS",                  drv_cmd_set_wmmps, true},
 	{"COUNTRY",                   drv_cmd_country, true},
+	{"SETCOUNTRYREV",             drv_cmd_country, true},
+	{"GETCOUNTRYREV",             drv_cmd_get_country, false},
 	{"SETSUSPENDMODE",            drv_cmd_dummy, false},
 	{"SET_AP_WPS_P2P_IE",         drv_cmd_dummy, false},
 	{"SETROAMTRIGGER",            drv_cmd_set_roam_trigger, true},
