@@ -4032,7 +4032,14 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
-	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	if (adapter->hdd_ctx->enable_dp_rx_threads) {
+		txrx_ops.rx.rx = hdd_rx_pkt_thread_enqueue_cbk;
+		txrx_ops.rx.rx_stack = hdd_rx_packet_cbk;
+	} else {
+		txrx_ops.rx.rx = hdd_rx_packet_cbk;
+		txrx_ops.rx.rx_stack = NULL;
+	}
+
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->vdev_id),
