@@ -12532,8 +12532,8 @@ QDF_STATUS sme_set_fw_test(struct set_fwtest_params *fw_test)
 				"wma handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	wma_process_fw_test_cmd(wma_handle, fw_test);
-	return QDF_STATUS_SUCCESS;
+
+	return wma_process_fw_test_cmd(wma_handle, fw_test);
 }
 
 /**

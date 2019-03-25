@@ -4805,23 +4805,24 @@ QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *stats)
  *
  * Return: none
  */
-void wma_process_fw_test_cmd(WMA_HANDLE handle,
-			     struct set_fwtest_params *wma_fwtest)
+QDF_STATUS wma_process_fw_test_cmd(WMA_HANDLE handle,
+				   struct set_fwtest_params *wma_fwtest)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue fw test cmd",
 			 __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wmi_unified_fw_test_cmd(wma_handle->wmi_handle,
 				    (struct set_fwtest_params *)wma_fwtest)) {
 		WMA_LOGE("%s: Failed to issue fw test cmd",
 			 __func__);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

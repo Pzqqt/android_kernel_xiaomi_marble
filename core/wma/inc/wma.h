@@ -1811,8 +1811,8 @@ void wma_rx_mic_error_ind(void *scn_handle, uint16_t vdev_id, void *wh);
 QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
 				int32_t vdev_id);
 
-void wma_process_fw_test_cmd(WMA_HANDLE handle,
-				      struct set_fwtest_params *wma_fwtest);
+QDF_STATUS wma_process_fw_test_cmd(WMA_HANDLE handle,
+				   struct set_fwtest_params *wma_fwtest);
 
 QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	struct obss_ht40_scanind *req);
