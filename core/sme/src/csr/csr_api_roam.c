@@ -9999,6 +9999,9 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 	if (cipher == WLAN_CRYPTO_CIPHER_FILS_AEAD)
 		csr_roam_store_fils_key(vdev, unicast, key_id, key_length,
 					key, bssid);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
 	return csr_roam_issue_set_context_req(mac_ctx, session_id, addkey,
 					      unicast, key_id);
 }
