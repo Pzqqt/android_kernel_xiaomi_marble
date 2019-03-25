@@ -2532,8 +2532,16 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
+	hif_apps_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+
+	if (hif_drain_tasklets(scn)) {
+		hif_apps_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+		return -EBUSY;
+	}
+
 	/* Stop the HIF Sleep Timer */
 	hif_cancel_deferred_target_sleep(scn);
+
 	return 0;
 }
 
@@ -2583,7 +2591,15 @@ static int __hif_check_link_status(struct hif_softc *scn)
  */
 int hif_pci_bus_resume(struct hif_softc *scn)
 {
-	return __hif_check_link_status(scn);
+	int errno;
+
+	errno = __hif_check_link_status(scn);
+	if (errno)
+		return errno;
+
+	hif_apps_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+
+	return 0;
 }
 
 /**
@@ -2597,11 +2613,10 @@ int hif_pci_bus_resume(struct hif_softc *scn)
  */
 int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
 {
-	if (hif_drain_tasklets(scn) != 0)
-		return -EBUSY;
-
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		qdf_atomic_set(&scn->link_suspended, 1);
+
+	hif_apps_wake_irq_enable(GET_HIF_OPAQUE_HDL(scn));
 
 	return 0;
 }
@@ -2617,6 +2632,8 @@ int hif_pci_bus_suspend_noirq(struct hif_softc *scn)
  */
 int hif_pci_bus_resume_noirq(struct hif_softc *scn)
 {
+	hif_apps_wake_irq_disable(GET_HIF_OPAQUE_HDL(scn));
+
 	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		qdf_atomic_set(&scn->link_suspended, 0);
 
