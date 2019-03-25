@@ -394,8 +394,11 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
+	enum QDF_OPMODE op_mode;
 
-	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (op_mode != QDF_STA_MODE && op_mode != QDF_SAP_MODE)
 		return QDF_STATUS_E_NOSUPPORT;
 
 	if (!pmksa && set) {
