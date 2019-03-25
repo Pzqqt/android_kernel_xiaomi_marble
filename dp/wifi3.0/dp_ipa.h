@@ -86,6 +86,21 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *pdev);
 QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *pdev);
 QDF_STATUS dp_ipa_set_perf_level(int client,
 		uint32_t max_supported_bw_mbps);
+
+/**
+ * dp_ipa_rx_intrabss_fwd() - Perform intra-bss fwd for IPA RX path
+ *
+ * @pvdev: pointer to dp_vdev structure
+ * @nbuf: pointer to skb of ethernet packet received from IPA RX path
+ * @fwd_success: pointer to indicate if skb succeeded in intra-bss TX
+ *
+ * This function performs intra-bss forwarding for WDI 3.0 IPA RX path.
+ *
+ * Return: true if packet is intra-bss fwd-ed and no need to pass to
+ *	   network stack. false if packet needs to be passed to network stack.
+ */
+bool dp_ipa_rx_intrabss_fwd(struct cdp_vdev *pvdev, qdf_nbuf_t nbuf,
+			    bool *fwd_success);
 int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev);
 int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev);
 int dp_ipa_ring_resource_setup(struct dp_soc *soc,

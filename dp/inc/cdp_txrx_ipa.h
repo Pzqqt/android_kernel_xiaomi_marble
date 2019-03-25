@@ -574,6 +574,38 @@ cdp_ipa_set_perf_level(ol_txrx_soc_handle soc, int client,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * cdp_ipa_rx_intrabss_fwd() - Perform intra-bss fwd for IPA RX path
+ *
+ * @soc: data path soc handle
+ * @vdev: vdev handle
+ * @nbuf: pointer to skb of ethernet packet received from IPA RX path
+ * @fwd_success: pointer to indicate if skb succeeded in intra-bss TX
+ *
+ * This function performs intra-bss forwarding for WDI 3.0 IPA RX path.
+ *
+ * Return: true if packet is intra-bss fwd-ed and no need to pass to
+ *	   network stack. false if packet needs to be passed to network stack.
+ */
+static inline bool
+cdp_ipa_rx_intrabss_fwd(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+			qdf_nbuf_t nbuf, bool *fwd_success)
+{
+	if (!soc || !soc->ops || !soc->ops->ipa_ops || !vdev || !fwd_success) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc->ops->ipa_ops->ipa_rx_intrabss_fwd)
+		return soc->ops->ipa_ops->ipa_rx_intrabss_fwd(vdev, nbuf,
+							      fwd_success);
+
+	/* Fall back to pass up to stack */
+	return false;
+}
+
 #endif /* IPA_OFFLOAD */
 
 #endif /* _CDP_TXRX_IPA_H_ */

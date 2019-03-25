@@ -10100,7 +10100,8 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 	.ipa_cleanup_iface = dp_ipa_cleanup_iface,
 	.ipa_enable_pipes = dp_ipa_enable_pipes,
 	.ipa_disable_pipes = dp_ipa_disable_pipes,
-	.ipa_set_perf_level = dp_ipa_set_perf_level
+	.ipa_set_perf_level = dp_ipa_set_perf_level,
+	.ipa_rx_intrabss_fwd = dp_ipa_rx_intrabss_fwd
 };
 #endif
 

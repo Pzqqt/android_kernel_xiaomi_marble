@@ -1210,6 +1210,8 @@ struct cdp_ipa_ops {
 	QDF_STATUS (*ipa_disable_pipes)(struct cdp_pdev *pdev);
 	QDF_STATUS (*ipa_set_perf_level)(int client,
 		uint32_t max_supported_bw_mbps);
+	bool (*ipa_rx_intrabss_fwd)(struct cdp_vdev *vdev, qdf_nbuf_t nbuf,
+				    bool *fwd_success);
 };
 #endif
 

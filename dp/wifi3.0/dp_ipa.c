@@ -1547,4 +1547,124 @@ QDF_STATUS dp_ipa_set_perf_level(int client, uint32_t max_supported_bw_mbps)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_ipa_intrabss_send - send IPA RX intra-bss frames
+ * @pdev: pdev
+ * @vdev: vdev
+ * @nbuf: skb
+ *
+ * Return: nbuf if TX fails and NULL if TX succeeds
+ */
+static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
+				       struct dp_vdev *vdev,
+				       qdf_nbuf_t nbuf)
+{
+	struct cdp_tid_rx_stats *tid_stats;
+	struct dp_peer *vdev_peer;
+	uint16_t len;
+	uint8_t tid;
+
+	vdev_peer = vdev->vap_bss_peer;
+	if (qdf_unlikely(!vdev_peer))
+		return nbuf;
+
+	tid = qdf_nbuf_get_priority(nbuf);
+	tid_stats = &pdev->stats.tid_stats.tid_rx_stats[tid];
+
+	qdf_mem_zero(nbuf->cb, sizeof(nbuf->cb));
+	len = qdf_nbuf_len(nbuf);
+
+	if (dp_tx_send(vdev, nbuf)) {
+		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
+		tid_stats->fail_cnt[INTRABSS_DROP]++;
+		return nbuf;
+	}
+
+	DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.pkts, 1, len);
+	tid_stats->intrabss_cnt++;
+	return NULL;
+}
+
+bool dp_ipa_rx_intrabss_fwd(struct cdp_vdev *pvdev, qdf_nbuf_t nbuf,
+			    bool *fwd_success)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)pvdev;
+	struct dp_pdev *pdev;
+	struct dp_peer *da_peer;
+	struct dp_peer *sa_peer;
+	qdf_nbuf_t nbuf_copy;
+	uint8_t da_is_bcmc;
+	struct ethhdr *eh;
+	uint8_t local_id;
+
+	*fwd_success = false; /* set default as failure */
+
+	/*
+	 * WDI 3.0 skb->cb[] info from IPA driver
+	 * skb->cb[0] = vdev_id
+	 * skb->cb[1].bit#1 = da_is_bcmc
+	 */
+	da_is_bcmc = ((uint8_t)nbuf->cb[1]) & 0x2;
+
+	if (qdf_unlikely(!vdev))
+		return false;
+
+	pdev = vdev->pdev;
+	if (qdf_unlikely(!pdev))
+		return false;
+
+	/* no fwd for station mode and just pass up to stack */
+	if (vdev->opmode == wlan_op_mode_sta)
+		return false;
+
+	if (da_is_bcmc) {
+		nbuf_copy = qdf_nbuf_copy(nbuf);
+		if (!nbuf_copy)
+			return false;
+
+		if (dp_ipa_intrabss_send(pdev, vdev, nbuf_copy))
+			qdf_nbuf_free(nbuf_copy);
+		else
+			*fwd_success = true;
+
+		/* return false to pass original pkt up to stack */
+		return false;
+	}
+
+	eh = (struct ethhdr *)qdf_nbuf_data(nbuf);
+
+	if (!qdf_mem_cmp(eh->h_dest, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
+		return false;
+
+	da_peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, eh->h_dest,
+				       &local_id);
+	if (!da_peer)
+		return false;
+
+	if (da_peer->vdev != vdev)
+		return false;
+
+	sa_peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, eh->h_source,
+				       &local_id);
+	if (!sa_peer)
+		return false;
+
+	if (sa_peer->vdev != vdev)
+		return false;
+
+	/*
+	 * In intra-bss forwarding scenario, skb is allocated by IPA driver.
+	 * Need to add skb to internal tracking table to avoid nbuf memory
+	 * leak check for unallocated skb.
+	 */
+	qdf_net_buf_debug_acquire_skb(nbuf, __FILE__, __LINE__);
+
+	if (dp_ipa_intrabss_send(pdev, vdev, nbuf))
+		qdf_nbuf_free(nbuf);
+	else
+		*fwd_success = true;
+
+	return true;
+}
+
 #endif
