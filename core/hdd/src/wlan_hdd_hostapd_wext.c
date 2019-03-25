@@ -2365,8 +2365,8 @@ static int __iw_softap_get_ba_timeout(struct net_device *dev,
 				      union iwreq_data *wrqu, char *extra)
 {
 	int errno;
-	uint8_t ac_cat = 4;
-	uint32_t duration[QCA_WLAN_AC_ALL], i;
+	uint32_t i;
+	enum qca_wlan_ac_type duration[QCA_WLAN_AC_ALL];
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
@@ -2388,7 +2388,7 @@ static int __iw_softap_get_ba_timeout(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ac_cat; i++)
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++)
 		cdp_get_ba_timeout(soc, i, &duration[i]);
 
 	snprintf(extra, WE_SAP_MAX_STA_INFO,
@@ -2397,10 +2397,11 @@ static int __iw_softap_get_ba_timeout(struct net_device *dev,
 		 "|--------------------------------|\n"
 		 "|VO |  %d        |\n"
 		 "|VI |  %d        |\n"
-		 "|BE |  %d        |\n"
 		 "|BK |  %d        |\n"
+		 "|BE |  %d        |\n"
 		 "|--------------------------------|\n",
-		duration[3], duration[2], duration[1], duration[0]);
+		duration[QCA_WLAN_AC_VO], duration[QCA_WLAN_AC_VI],
+		duration[QCA_WLAN_AC_BK], duration[QCA_WLAN_AC_BE]);
 
 	wrqu->data.length = strlen(extra) + 1;
 	hdd_exit();

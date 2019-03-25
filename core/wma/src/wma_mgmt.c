@@ -2644,7 +2644,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 					     tEdcaParams *edca_params)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wmi_host_wme_vparams wmm_param[WME_NUM_AC];
+	struct wmi_host_wme_vparams wmm_param[QCA_WLAN_AC_ALL];
 	tSirMacEdcaParamRecord *edca_record;
 	int ac;
 	struct cdp_pdev *pdev;
@@ -2659,7 +2659,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 		goto fail;
 	}
 
-	for (ac = 0; ac < WME_NUM_AC; ac++) {
+	for (ac = 0; ac < QCA_WLAN_AC_ALL; ac++) {
 		switch (ac) {
 		case QCA_WLAN_AC_BE:
 			edca_record = &edca_params->acbe;

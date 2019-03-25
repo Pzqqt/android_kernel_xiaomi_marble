@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,7 @@
 #endif
 #include "ol_txrx_ctrl_api.h"   /* txrx_pdev_cfg_param_t */
 #include <cdp_txrx_handle.h>
+#include "qca_vendor.h"
 
 /**
  * @brief format of data frames delivered to/from the WLAN driver by/to the OS
@@ -96,7 +97,7 @@ struct txrx_pdev_cfg_t {
 	 * HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND only.
 	 */
 	u8 credit_update_enabled;
-	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
+	struct ol_tx_sched_wrr_ac_specs_t ac_specs[QCA_WLAN_AC_ALL];
 	bool gro_enable;
 	bool tso_enable;
 	bool lro_enable;

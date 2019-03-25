@@ -118,7 +118,7 @@ enum sme_qos_reasontype {
 /* Table to map user priority passed in as an argument to appropriate Access
  * Category as specified in 802.11e/WMM
  */
-enum qca_wlan_ac_type sme_qos_u_pto_ac_map[SME_QOS_WMM_UP_MAX] = {
+enum qca_wlan_ac_type sme_qos_up_to_ac_map[SME_QOS_WMM_UP_MAX] = {
 	QCA_WLAN_AC_BE,     /* User Priority 0 */
 	QCA_WLAN_AC_BK,     /* User Priority 1 */
 	QCA_WLAN_AC_BK,     /* User Priority 2 */
@@ -2869,7 +2869,7 @@ sme_qos_ese_save_tspec_response(struct mac_context *mac, uint8_t sessionId,
 		&sme_qos_cb.sessionInfo[sessionId].ac_info[ac].
 		addTsRsp[tspecIndex];
 
-	ac = sme_qos_u_pto_ac_map[pTspec->user_priority];
+	ac = sme_qos_up_to_ac_map[pTspec->user_priority];
 
 	qdf_mem_zero(pAddtsRsp, sizeof(tSirAddtsRsp));
 
@@ -3543,7 +3543,7 @@ static QDF_STATUS sme_qos_process_aggr_qos_rsp(struct mac_context *mac_ctx,
 		  FL("Received AGGR_QOS resp from LIM"));
 
 	/* Copy the updated response information for TSPEC of all the ACs */
-	for (i = 0; i < SIR_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		uint8_t tspec_mask_status =
 			sme_qos_cb.sessionInfo[sessionid].ac_info[i].
 			tspec_mask_status;
@@ -5753,7 +5753,7 @@ static enum qca_wlan_ac_type sme_qos_up_to_ac(enum sme_qos_wmmuptype up)
 	enum qca_wlan_ac_type ac = QCA_WLAN_AC_ALL;
 
 	if (up >= 0 && up < SME_QOS_WMM_UP_MAX)
-		ac = sme_qos_u_pto_ac_map[up];
+		ac = sme_qos_up_to_ac_map[up];
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: up = %d ac = %d returned",

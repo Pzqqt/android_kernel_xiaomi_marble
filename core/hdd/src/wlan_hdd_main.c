@@ -2447,9 +2447,9 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 		return;
 	}
 
-	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		switch (i) {
-		case OL_TX_WMM_AC_BE:
+		case QCA_WLAN_AC_BE:
 			qdf_uint8_array_parse(
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_ENABLE_TX_SCHED_WRR_BE),
@@ -2457,7 +2457,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 				sizeof(tx_sched_wrr_param),
 				&out_size);
 			break;
-		case OL_TX_WMM_AC_BK:
+		case QCA_WLAN_AC_BK:
 			qdf_uint8_array_parse(
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_ENABLE_TX_SCHED_WRR_BK),
@@ -2465,7 +2465,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 				sizeof(tx_sched_wrr_param),
 				&out_size);
 			break;
-		case OL_TX_WMM_AC_VI:
+		case QCA_WLAN_AC_VI:
 			qdf_uint8_array_parse(
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_ENABLE_TX_SCHED_WRR_VI),
@@ -2473,7 +2473,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 				sizeof(tx_sched_wrr_param),
 				&out_size);
 			break;
-		case OL_TX_WMM_AC_VO:
+		case QCA_WLAN_AC_VO:
 			qdf_uint8_array_parse(
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_ENABLE_TX_SCHED_WRR_VO),

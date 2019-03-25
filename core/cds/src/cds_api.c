@@ -280,7 +280,7 @@ cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
 	if (!cds_cfg)
 		return;
 
-	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		olcfg->ac_specs[i].wrr_skip_weight =
 			cds_cfg->ac_specs[i].wrr_skip_weight;
 		olcfg->ac_specs[i].credit_threshold =
@@ -447,7 +447,7 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 		return;
 	}
 
-	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		cds_cfg->ac_specs[i] = cds_ctx->ac_specs[i];
 	}
 }

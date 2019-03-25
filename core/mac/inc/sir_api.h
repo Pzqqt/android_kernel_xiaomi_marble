@@ -47,6 +47,7 @@ struct mac_context;
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
 #include "wlan_tdls_public_structs.h"
+#include "qca_vendor.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
@@ -1599,11 +1600,9 @@ typedef struct sSirDeltsRsp {
 	struct delts_req_info rsp;
 } tSirDeltsRsp, *tpSirDeltsRsp;
 
-#define SIR_QOS_NUM_AC_MAX 4
-
 typedef struct sSirAggrQosReqInfo {
 	uint16_t tspecIdx;
-	tSirAddtsReqInfo aggrAddTsInfo[SIR_QOS_NUM_AC_MAX];
+	tSirAddtsReqInfo aggrAddTsInfo[QCA_WLAN_AC_ALL];
 } tSirAggrQosReqInfo, *tpSirAggrQosReqInfo;
 
 typedef struct sSirAggrQosReq {
@@ -1618,7 +1617,7 @@ typedef struct sSirAggrQosReq {
 
 typedef struct sSirAggrQosRspInfo {
 	uint16_t tspecIdx;
-	tSirAddtsRspInfo aggrRsp[SIR_QOS_NUM_AC_MAX];
+	tSirAddtsRspInfo aggrRsp[QCA_WLAN_AC_ALL];
 } tSirAggrQosRspInfo, *tpSirAggrQosRspInfo;
 
 typedef struct sSirAggrQosRsp {

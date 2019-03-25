@@ -2290,7 +2290,7 @@ bool hdd_wmm_is_acm_allowed(uint8_t vdev_id)
 	wmm_ac_status = adapter->hdd_wmm_status.ac_status;
 
 	if (hdd_wmm_is_active(adapter) &&
-	    !(wmm_ac_status[OL_TX_WMM_AC_VI].is_access_allowed))
+	    !(wmm_ac_status[QCA_WLAN_AC_VI].is_access_allowed))
 		return false;
 	return true;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -163,7 +163,7 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 
 	ol_tx_set_flow_control_parameters((struct cdp_cfg *)cfg_ctx, cfg_param);
 
-	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		cfg_ctx->ac_specs[i].wrr_skip_weight =
 			cfg_param->ac_specs[i].wrr_skip_weight;
 		cfg_ctx->ac_specs[i].credit_threshold =
@@ -492,7 +492,7 @@ int ol_cfg_get_wrr_skip_weight(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
-	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+	if (ac >= QCA_WLAN_AC_BE && ac <= QCA_WLAN_AC_VO)
 		return cfg->ac_specs[ac].wrr_skip_weight;
 
 	return 0;
@@ -509,7 +509,7 @@ uint32_t ol_cfg_get_credit_threshold(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
-	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+	if (ac >= QCA_WLAN_AC_BE && ac <= QCA_WLAN_AC_VO)
 		return cfg->ac_specs[ac].credit_threshold;
 
 	return 0;
@@ -526,7 +526,7 @@ uint16_t ol_cfg_get_send_limit(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
-	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+	if (ac >= QCA_WLAN_AC_BE && ac <= QCA_WLAN_AC_VO)
 		return cfg->ac_specs[ac].send_limit;
 
 	return 0;
@@ -543,7 +543,7 @@ int ol_cfg_get_credit_reserve(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
-	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+	if (ac >= QCA_WLAN_AC_BE && ac <= QCA_WLAN_AC_VO)
 		return cfg->ac_specs[ac].credit_reserve;
 
 	return 0;
@@ -560,7 +560,7 @@ int ol_cfg_get_discard_weight(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
-	if (ac >= OL_TX_WMM_AC_BE && ac <= OL_TX_WMM_AC_VO)
+	if (ac >= QCA_WLAN_AC_BE && ac <= QCA_WLAN_AC_VO)
 		return cfg->ac_specs[ac].discard_weight;
 
 	return 0;

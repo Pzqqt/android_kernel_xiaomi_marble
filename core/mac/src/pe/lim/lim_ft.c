@@ -839,7 +839,7 @@ lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,
 	rsp->sessionId = smesessionId;
 	rsp->length = sizeof(*rsp);
 	rsp->aggrInfo.tspecIdx = aggrQosRsp->tspecIdx;
-	for (i = 0; i < SIR_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if ((1 << i) & aggrQosRsp->tspecIdx) {
 			if (QDF_IS_STATUS_SUCCESS(aggrQosRsp->status[i]))
 				rsp->aggrInfo.aggrRsp[i].status =
@@ -886,7 +886,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 		pe_err("pe_session is not in STA mode");
 		return;
 	}
-	for (i = 0; i < WMI_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if ((((1 << i) & pAggrQosRspMsg->tspecIdx)) &&
 		    (pAggrQosRspMsg->status[i] != QDF_STATUS_SUCCESS)) {
 			sir_copy_mac_addr(peerMacAddr, pe_session->bssId);
@@ -967,7 +967,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
 	pAggrAddTsParam->tspecIdx = aggrQosReq->aggrInfo.tspecIdx;
 	pAggrAddTsParam->vdev_id = pe_session->smeSessionId;
 
-	for (i = 0; i < WMI_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if (aggrQosReq->aggrInfo.tspecIdx & (1 << i)) {
 			struct mac_tspec_ie *pTspec =
 				&aggrQosReq->aggrInfo.aggrAddTsInfo[i].tspec;

@@ -1124,7 +1124,7 @@ ol_txrx_set_wmm_param(struct cdp_pdev *pdev,
 	struct ol_tx_sched_wrr_adv_t *scheduler =
 					data_pdev->tx_sched.scheduler;
 	u_int32_t i, ac_selected;
-	u_int32_t  weight[OL_TX_NUM_WMM_AC], default_edca[OL_TX_NUM_WMM_AC];
+	u_int32_t  weight[QCA_WLAN_AC_ALL], default_edca[QCA_WLAN_AC_ALL];
 
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(VO, (&def_cfg));
 	OL_TX_SCHED_WRR_ADV_CAT_CFG_STORE(VI, (&def_cfg));
@@ -1142,19 +1142,19 @@ ol_txrx_set_wmm_param(struct cdp_pdev *pdev,
 		OL_TX_AIFS_DEFAULT_BK + OL_TX_CW_MIN_DEFAULT_BK;
 
 	weight[OL_TX_SCHED_WRR_ADV_CAT_VO] =
-		wmm_param.ac[OL_TX_WMM_AC_VO].aifs +
-				wmm_param.ac[OL_TX_WMM_AC_VO].cwmin;
+		wmm_param.ac[QCA_WLAN_AC_VO].aifs +
+				wmm_param.ac[QCA_WLAN_AC_VO].cwmin;
 	weight[OL_TX_SCHED_WRR_ADV_CAT_VI] =
-		wmm_param.ac[OL_TX_WMM_AC_VI].aifs +
-				wmm_param.ac[OL_TX_WMM_AC_VI].cwmin;
+		wmm_param.ac[QCA_WLAN_AC_VI].aifs +
+				wmm_param.ac[QCA_WLAN_AC_VI].cwmin;
 	weight[OL_TX_SCHED_WRR_ADV_CAT_BK] =
-		wmm_param.ac[OL_TX_WMM_AC_BK].aifs +
-				wmm_param.ac[OL_TX_WMM_AC_BK].cwmin;
+		wmm_param.ac[QCA_WLAN_AC_BK].aifs +
+				wmm_param.ac[QCA_WLAN_AC_BK].cwmin;
 	weight[OL_TX_SCHED_WRR_ADV_CAT_BE] =
-		wmm_param.ac[OL_TX_WMM_AC_BE].aifs +
-				wmm_param.ac[OL_TX_WMM_AC_BE].cwmin;
+		wmm_param.ac[QCA_WLAN_AC_BE].aifs +
+				wmm_param.ac[QCA_WLAN_AC_BE].cwmin;
 
-	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
+	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
 		if (default_edca[OL_TX_SCHED_WRR_ADV_CAT_VO] >= weight[i])
 			ac_selected = OL_TX_SCHED_WRR_ADV_CAT_VO;
 		else if (default_edca[OL_TX_SCHED_WRR_ADV_CAT_VI] >= weight[i])
