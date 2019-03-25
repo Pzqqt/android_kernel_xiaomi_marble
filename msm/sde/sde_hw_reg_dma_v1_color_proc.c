@@ -139,7 +139,7 @@ static u32 sspp_feature_map[SDE_SSPP_MAX] = {
 	[SDE_SSPP_DMA_IGC] = IGC,
 	[SDE_SSPP_DMA_GC] = GC,
 	[SDE_SSPP_SCALER_QSEED3] = QSEED,
-	[SDE_SSPP_SCALER_QSEED3LITE] = REG_DMA_FEATURES_MAX,
+	[SDE_SSPP_SCALER_QSEED3LITE] = QSEED,
 };
 
 static u32 ltm_feature_map[SDE_LTM_MAX] = {
@@ -165,6 +165,7 @@ static u32 sspp_feature_reg_dma_sz[SDE_SSPP_MAX] = {
 	[SDE_SSPP_DMA_IGC] = IGC_LUT_MEM_SIZE,
 	[SDE_SSPP_DMA_GC] = GC_LUT_MEM_SIZE,
 	[SDE_SSPP_SCALER_QSEED3] = QSEED3_MEM_SIZE,
+	[SDE_SSPP_SCALER_QSEED3LITE] = QSEED3_MEM_SIZE,
 };
 
 static u32 ltm_feature_reg_dma_sz[SDE_LTM_MAX] = {
