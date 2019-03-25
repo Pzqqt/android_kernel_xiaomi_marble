@@ -2275,7 +2275,7 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 }
 #endif
 
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#if defined(CONFIG_IPA_WDI_UNIFIED_API) && defined(IPA_WDI3_GSI)
 /**
  * wlan_ipa_get_rx_ipa_client() - Get IPA RX ipa client
  * @ipa_ctx: IPA context

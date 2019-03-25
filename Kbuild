@@ -2233,8 +2233,10 @@ cppflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR -DQCA_WIFI_FTM_IOCTL
 #Enable Checksum Offload support
 cppflags-$(CONFIG_CHECKSUM_OFFLOAD) += -DCHECKSUM_OFFLOAD
 
-#Enable Checksum Offload support
+#Enable IPA Offload support
 cppflags-$(CONFIG_IPA_OFFLOAD) += -DIPA_OFFLOAD
+
+cppflags-$(CONFIG_WDI3_IPA_OVER_GSI) += -DIPA_WDI3_GSI
 
 ifeq ($(CONFIG_ARCH_SDX20), y)
 cppflags-y += -DSYNC_IPA_READY
