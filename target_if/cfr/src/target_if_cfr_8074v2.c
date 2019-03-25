@@ -426,7 +426,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	header->chip_type              = CFR_CAPTURE_RADIO_HKV2;
 	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
 	header->Reserved               = 0;
-	header->u.meta_v1.status       = tx_evt_param.status;
+	header->u.meta_v1.status       = (tx_evt_param.status &
+					  PEER_CFR_CAPTURE_EVT_STATUS_MASK)?0:1;
 	header->u.meta_v1.channel_bw   = tx_evt_param.bandwidth;
 	header->u.meta_v1.phy_mode     = tx_evt_param.phy_mode;
 	header->u.meta_v1.prim20_chan  = tx_evt_param.primary_20mhz_chan;
