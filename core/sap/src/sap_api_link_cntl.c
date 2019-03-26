@@ -761,10 +761,11 @@ static void wlansap_update_vendor_acs_chan(struct mac_context *mac_ctx,
 	}
 }
 
-QDF_STATUS
-wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
-		      uint32_t roamId,
-		      eRoamCmdStatus roam_status, eCsrRoamResult roam_result)
+QDF_STATUS wlansap_roam_callback(void *ctx,
+				 struct csr_roam_info *csr_roam_info,
+				 uint32_t roam_id,
+				 eRoamCmdStatus roam_status,
+				 eCsrRoamResult roam_result)
 {
 	/* sap_ctx value */
 	struct sap_context *sap_ctx = ctx;
