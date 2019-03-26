@@ -6991,6 +6991,10 @@ struct htt_rx_ind_hl_rx_desc_t {
     (HTT_RX_IND_HL_RX_DESC_BASE_OFFSET \
      + offsetof(struct htt_rx_ind_hl_rx_desc_t, flags))
 
+#define HTT_RX_IND_HL_SA_ANT_MATRIX_OFFSET \
+    (HTT_RX_IND_HL_RX_DESC_BASE_OFFSET \
+     + offsetof(struct htt_rx_ind_hl_rx_desc_t, sa_ant_matrix))
+
 #define HTT_RX_IND_HL_FLAG_FIRST_MSDU   (0x01 << 0)
 #define HTT_RX_IND_HL_FLAG_LAST_MSDU    (0x01 << 1)
 #define HTT_RX_IND_HL_FLAG_C3_FAILED    (0x01 << 2) /* L3 checksum failed */
