@@ -274,6 +274,7 @@ static int target_if_dfs_reg_ocac_event(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+#if defined(WLAN_DFS_FULL_OFFLOAD)
 QDF_STATUS target_if_dfs_reg_offload_events(
 		struct wlan_objmgr_psoc *psoc)
 {
@@ -299,6 +300,7 @@ QDF_STATUS target_if_dfs_reg_offload_events(
 	else
 		return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #if defined(QCA_SUPPORT_AGILE_DFS)
 QDF_STATUS target_send_ocac_abort_cmd(struct wlan_objmgr_pdev *pdev)

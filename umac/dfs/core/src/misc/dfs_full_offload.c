@@ -27,6 +27,7 @@
 #include "../dfs_internal.h"
 #include "../dfs_full_offload.h"
 
+#if defined(WLAN_DFS_FULL_OFFLOAD)
 int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
 		uint8_t segid, bool is_chirp, int32_t freq_offset,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
@@ -60,3 +61,4 @@ int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
 
 	return 0;
 }
+#endif
