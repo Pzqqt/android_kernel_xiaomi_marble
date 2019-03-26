@@ -407,8 +407,8 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
    RETURN VALUE
     NULL
    ============================================================================*/
-void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
-				    struct sap_context *sap_ctx)
+static void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
+					   struct sap_context *sap_ctx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
@@ -471,7 +471,11 @@ void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
 
 	return;
 }
-
+#else
+static void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
+					   struct sap_context *sap_ctx)
+{
+}
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 /**
@@ -2652,9 +2656,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Running SAP Ch Select", __func__);
 
-#ifdef FEATURE_WLAN_CH_AVOID
 	sap_update_unsafe_channel_list(mac_handle, sap_ctx);
-#endif
 
 	/*
 	 * If ACS weight is not enabled on noise_floor/channel_free/tx_power,
