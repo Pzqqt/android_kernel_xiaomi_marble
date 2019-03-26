@@ -220,6 +220,7 @@ struct wsa_macro_priv {
 	struct wsa_macro_bcl_pmic_params bcl_pmic_params;
 	char __iomem *mclk_mode_muxsel;
 	u16 default_clk_id;
+	int wsa_digital_mute_status[WSA_MACRO_RX_MAX];
 };
 
 static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
@@ -1775,6 +1776,72 @@ static int wsa_macro_set_ec_hq(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa_macro_get_rx_mute_status(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	int wsa_rx_shift = ((struct soc_multi_mixer_control *)
+		       kcontrol->private_value)->shift;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] =
+		wsa_priv->wsa_digital_mute_status[wsa_rx_shift];
+	return 0;
+}
+
+static int wsa_macro_set_rx_mute_status(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	int value = ucontrol->value.integer.value[0];
+	int wsa_rx_shift = ((struct soc_multi_mixer_control *)
+			kcontrol->private_value)->shift;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	switch (wsa_rx_shift) {
+	case 0:
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX0_RX_PATH_CTL,
+				0x10, value << 4);
+		break;
+	case 1:
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX1_RX_PATH_CTL,
+				0x10, value << 4);
+		break;
+	case 2:
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX0_RX_PATH_MIX_CTL,
+				0x10, value << 4);
+		break;
+	case 3:
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX1_RX_PATH_MIX_CTL,
+				0x10, value << 4);
+		break;
+	default:
+		pr_err("%s: invalid argument rx_shift = %d\n", __func__,
+			wsa_rx_shift);
+		return -EINVAL;
+	}
+
+	dev_dbg(component->dev, "%s: WSA Digital Mute RX %d Enable %d\n",
+		__func__, wsa_rx_shift, value);
+	wsa_priv->wsa_digital_mute_status[wsa_rx_shift] = value;
+	return 0;
+}
+
 static int wsa_macro_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -2102,6 +2169,18 @@ static const struct snd_kcontrol_new wsa_macro_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("WSA_RX1 Digital Volume",
 			  BOLERO_CDC_WSA_RX1_RX_VOL_CTL,
 			  0, -84, 40, digital_gain),
+	SOC_SINGLE_EXT("WSA_RX0 Digital Mute", SND_SOC_NOPM, WSA_MACRO_RX0, 1,
+			0, wsa_macro_get_rx_mute_status,
+			wsa_macro_set_rx_mute_status),
+	SOC_SINGLE_EXT("WSA_RX1 Digital Mute", SND_SOC_NOPM, WSA_MACRO_RX1, 1,
+			0, wsa_macro_get_rx_mute_status,
+			wsa_macro_set_rx_mute_status),
+	SOC_SINGLE_EXT("WSA_RX0_MIX Digital Mute", SND_SOC_NOPM,
+			WSA_MACRO_RX_MIX0, 1, 0, wsa_macro_get_rx_mute_status,
+			wsa_macro_set_rx_mute_status),
+	SOC_SINGLE_EXT("WSA_RX1_MIX Digital Mute", SND_SOC_NOPM,
+			WSA_MACRO_RX_MIX1, 1, 0, wsa_macro_get_rx_mute_status,
+			wsa_macro_set_rx_mute_status),
 	SOC_SINGLE_EXT("WSA_COMP1 Switch", SND_SOC_NOPM, WSA_MACRO_COMP1, 1, 0,
 		wsa_macro_get_compander, wsa_macro_set_compander),
 	SOC_SINGLE_EXT("WSA_COMP2 Switch", SND_SOC_NOPM, WSA_MACRO_COMP2, 1, 0,
