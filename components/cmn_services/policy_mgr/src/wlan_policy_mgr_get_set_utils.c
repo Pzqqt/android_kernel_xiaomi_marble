@@ -2137,6 +2137,13 @@ bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 	bool allow = false;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return allow;
+	}
 
 	/*
 	 * Store the connection's parameter and temporarily delete it
@@ -2144,6 +2151,7 @@ bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 	 * check can be used as though a new connection is coming up,
 	 * after check, restore the connection to concurrency table.
 	 */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
 						      &info, &num_cxn_del);
 	allow = policy_mgr_allow_concurrency(
@@ -2151,11 +2159,13 @@ bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,
 				mode,
 				channel,
 				HW_MODE_20_MHZ);
-	if (!allow)
-		policy_mgr_err("CSA concurrency check failed");
 	/* Restore the connection entry */
 	if (num_cxn_del > 0)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (!allow)
+		policy_mgr_err("CSA concurrency check failed");
 
 	return allow;
 }
