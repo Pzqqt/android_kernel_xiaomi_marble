@@ -5284,6 +5284,7 @@ typedef enum {
 	wmi_service_wlm_stats_support,
 	wmi_service_ul_ru26_allowed,
 	wmi_service_cfr_capture_support,
+	wmi_service_bcast_twt_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

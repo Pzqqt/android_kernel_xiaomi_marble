@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,6 +61,7 @@ static QDF_STATUS send_twt_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->mode_check_interval =          params->mode_check_interval;
 	cmd->add_sta_slot_interval =        params->add_sta_slot_interval;
 	cmd->remove_sta_slot_interval =     params->remove_sta_slot_interval;
+	cmd->flags =                        params->flags;
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 			WMI_TWT_ENABLE_CMDID);
