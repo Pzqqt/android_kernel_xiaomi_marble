@@ -1517,7 +1517,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
 	uint8_t channel_id = 0;
-	tCsrScanResultInfo *pScanResult;
+	tCsrScanResultInfo *scan_result;
 	tSapSpectChInfo *pSpectCh = pSpectInfoParams->pSpectCh;
 	uint32_t operatingBand;
 	uint16_t channelWidth;
@@ -1546,9 +1546,9 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	 */
 	SET_ACS_BAND(operatingBand, sap_ctx);
 
-	pScanResult = sme_scan_result_get_first(mac_handle, pResult);
+	scan_result = sme_scan_result_get_first(mac_handle, pResult);
 
-	while (pScanResult) {
+	while (scan_result) {
 		pSpectCh = pSpectInfoParams->pSpectCh;
 		/* Defining the default values, so that any value will hold the default values */
 		channelWidth = eHT_CHANNEL_WIDTH_20MHZ;
@@ -1558,14 +1558,14 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 
 		ieLen = GET_IE_LEN_IN_BSS(
-				pScanResult->BssDescriptor.length);
+				scan_result->BssDescriptor.length);
 		qdf_mem_zero((uint8_t *) pBeaconStruct,
 				   sizeof(tSirProbeRespBeacon));
 
 
 		if ((sir_parse_beacon_ie
 		     (mac, pBeaconStruct, (uint8_t *)
-		      (pScanResult->BssDescriptor.ieFields),
+		      (scan_result->BssDescriptor.ieFields),
 		      ieLen)) == QDF_STATUS_SUCCESS)
 			sap_upd_chan_spec_params(
 				pBeaconStruct,
@@ -1582,18 +1582,18 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			 * If the Beacon has channel ID, use it other wise we
 			 * will rely on the channelIdSelf
 			 */
-			if (pScanResult->BssDescriptor.channelId == 0)
+			if (scan_result->BssDescriptor.channelId == 0)
 				channel_id =
-				      pScanResult->BssDescriptor.channelIdSelf;
+				      scan_result->BssDescriptor.channelIdSelf;
 			else
 				channel_id =
-				      pScanResult->BssDescriptor.channelId;
+				      scan_result->BssDescriptor.channelId;
 
 			if (pSpectCh && (channel_id == pSpectCh->chNum)) {
 				if (pSpectCh->rssiAgr <
-				    pScanResult->BssDescriptor.rssi)
+				    scan_result->BssDescriptor.rssi)
 					pSpectCh->rssiAgr =
-						pScanResult->BssDescriptor.rssi;
+						scan_result->BssDescriptor.rssi;
 
 				++pSpectCh->bssCount;   /* Increment the count of BSS */
 
@@ -1639,13 +1639,13 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, pScanResult=%pK, ChannelWidth %d, secondaryChanOffset %d, center frequency %d",
+					  "In %s, bssdes.ch_self=%d, bssdes.ch_ID=%d, bssdes.rssi=%d, SpectCh.bssCount=%d, scan_result=%pK, ChannelWidth %d, secondaryChanOffset %d, center frequency %d",
 					  __func__,
-					  pScanResult->BssDescriptor.
+					  scan_result->BssDescriptor.
 					  channelIdSelf,
-					  pScanResult->BssDescriptor.channelId,
-					  pScanResult->BssDescriptor.rssi,
-					  pSpectCh->bssCount, pScanResult,
+					  scan_result->BssDescriptor.channelId,
+					  scan_result->BssDescriptor.rssi,
+					  pSpectCh->bssCount, scan_result,
 					  pSpectCh->channelWidth,
 					  secondaryChannelOffset, centerFreq);
 				pSpectCh++;
@@ -1655,7 +1655,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			}
 		}
 
-		pScanResult = sme_scan_result_get_next(mac_handle, pResult);
+		scan_result = sme_scan_result_get_next(mac_handle, pResult);
 	}
 
 	/* Calculate the weights for all channels in the spectrum pSpectCh */
@@ -2623,17 +2623,6 @@ static uint8_t sap_select_channel_no_scan_result(mac_handle_t mac_handle,
 }
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-/**
- * sap_select_channel() - select SAP channel
- * @mac_handle: Opaque handle to the global MAC context
- * @sap_ctx: Sap context
- * @scan_result: Pointer to tScanResultHandle
- *
- * Runs a algorithm to select the best channel to operate in based on BSS
- * rssi and bss count on each channel
- *
- * Returns: channel number if success, 0 otherwise
- */
 uint8_t sap_select_channel(mac_handle_t mac_handle,
 			   struct sap_context *sap_ctx,
 			   tScanResultHandle scan_result)
