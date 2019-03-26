@@ -611,7 +611,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 					      tpSirWifiPeerStat pData)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tpSirWifiPeerStat pWifiPeerStat;
+	tpSirWifiPeerStat peer_stat;
 	tpSirWifiPeerInfo peer_info;
 	struct sk_buff *vendor_event;
 	int status, i;
@@ -620,14 +620,14 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	pWifiPeerStat = pData;
+	peer_stat = pData;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return;
 
 	hdd_debug("LL_STATS_PEER_ALL : numPeers %u, more data = %u",
-		   pWifiPeerStat->numPeers, more_data);
+		   peer_stat->numPeers, more_data);
 
 	/*
 	 * Allocate a size of 4096 for the peer stats comprising
@@ -653,7 +653,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 			more_data) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_NUM_PEERS,
-			pWifiPeerStat->numPeers)) {
+			peer_stat->numPeers)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 
 		kfree_skb(vendor_event);
@@ -661,9 +661,9 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	}
 
 	peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
-					     pWifiPeerStat->peerInfo);
+					     peer_stat->peerInfo);
 
-	if (pWifiPeerStat->numPeers) {
+	if (peer_stat->numPeers) {
 		struct nlattr *peerInfo;
 
 		peerInfo = nla_nest_start(vendor_event,
@@ -674,7 +674,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 			return;
 		}
 
-		for (i = 1; i <= pWifiPeerStat->numPeers; i++) {
+		for (i = 1; i <= peer_stat->numPeers; i++) {
 			peers = nla_nest_start(vendor_event, i);
 			if (!peers) {
 				hdd_err("nla_nest_start failed");
@@ -691,7 +691,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 			}
 
 			peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
-							     pWifiPeerStat->
+							     peer_stat->
 							     peerInfo +
 							     (i *
 							      sizeof
