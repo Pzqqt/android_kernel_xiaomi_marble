@@ -36,16 +36,6 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include "wlan_vdev_mlme_api.h"
 
-/*----------------------------------------------------------------------------
- * Preprocessor Definitions and Constants
- * -------------------------------------------------------------------------*/
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/*----------------------------------------------------------------------------
- *  Defines
- * -------------------------------------------------------------------------*/
 /* DFS Non Occupancy Period =30 minutes, in microseconds */
 #define SAP_DFS_NON_OCCUPANCY_PERIOD      (30 * 60 * 1000 * 1000)
 
@@ -87,17 +77,6 @@ enum sap_fsm_state {
 	SAP_STARTED,
 	SAP_STOPPING
 };
-
-/*----------------------------------------------------------------------------
- *  SAP context Data Type Declaration
- * -------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------
- *  Type Declarations - QOS related
- * -------------------------------------------------------------------------*/
-/* SAP QOS config */
-typedef struct sSapQosCfg {
-	uint8_t WmmIsEnabled;
-} tSapQosCfg;
 
 typedef struct sSapAcsChannelInfo {
 	uint32_t channelNum;
@@ -162,9 +141,6 @@ struct sap_context {
 	uint8_t nAcceptMac;
 	struct qdf_mac_addr denyMacList[MAX_ACL_MAC_ADDRESS];
 	uint8_t nDenyMac;
-
-	/* QOS config */
-	tSapQosCfg SapQosCfg;
 
 	void *user_context;
 
@@ -532,7 +508,4 @@ QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
  */
 void sap_release_vdev_ref(struct sap_context *sap_ctx);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
