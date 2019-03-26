@@ -777,26 +777,33 @@ policy_mgr_get_third_conn_action_table(
 	}
 }
 
-QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
-		uint32_t session_id,
-		uint8_t channel,
-		enum policy_mgr_conn_update_reason reason)
+static QDF_STATUS
+policy_mgr_get_next_action(struct wlan_objmgr_psoc *psoc,
+			   uint32_t session_id,
+			   uint8_t channel,
+			   enum policy_mgr_conn_update_reason reason,
+			   enum policy_mgr_conc_next_action *next_action)
 {
-	enum policy_mgr_conc_next_action next_action = PM_NOP;
 	uint32_t num_connections = 0;
 	enum policy_mgr_one_connection_mode second_index = 0;
 	enum policy_mgr_two_connection_mode third_index = 0;
 	policy_mgr_next_action_two_connection_table_type *second_conn_table;
 	policy_mgr_next_action_three_connection_table_type *third_conn_table;
 	enum policy_mgr_band band;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	enum QDF_OPMODE new_conn_mode = QDF_MAX_NO_OF_MODE;
 
-	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
-		policy_mgr_err("driver isn't dbs capable, no further action needed");
-		return QDF_STATUS_E_NOSUPPORT;
+	if (!next_action) {
+		policy_mgr_err("next_action is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (WLAN_REG_IS_24GHZ_CH(channel))
 		band = POLICY_MGR_BAND_24;
 	else
@@ -811,11 +818,11 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	case 0:
 		if (band == POLICY_MGR_BAND_24)
 			if (policy_mgr_is_hw_dbs_2x2_capable(psoc))
-				next_action = PM_DBS;
+				*next_action = PM_DBS;
 			else
-				next_action = PM_NOP;
+				*next_action = PM_NOP;
 		else
-			next_action = PM_NOP;
+			*next_action = PM_NOP;
 		break;
 	case 1:
 		second_index =
@@ -823,11 +830,11 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		if (PM_MAX_ONE_CONNECTION_MODE == second_index) {
 			policy_mgr_err(
 			"couldn't find index for 2nd connection next action table");
-			goto done;
+			return QDF_STATUS_E_FAILURE;
 		}
 		second_conn_table = policy_mgr_get_second_conn_action_table(
 			psoc, session_id, channel, reason);
-		next_action = (*second_conn_table)[second_index][band];
+		*next_action = (*second_conn_table)[second_index][band];
 		break;
 	case 2:
 		third_index =
@@ -835,22 +842,16 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		if (PM_MAX_TWO_CONNECTION_MODE == third_index) {
 			policy_mgr_err(
 			"couldn't find index for 3rd connection next action table");
-			goto done;
+			return QDF_STATUS_E_FAILURE;
 		}
 		third_conn_table = policy_mgr_get_third_conn_action_table(
 			psoc, session_id, channel, reason);
-		next_action = (*third_conn_table)[third_index][band];
+		*next_action = (*third_conn_table)[third_index][band];
 		break;
 	default:
 		policy_mgr_err("unexpected num_connections value %d",
 			num_connections);
 		break;
-	}
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid context");
-		goto done;
 	}
 
 	/*
@@ -874,10 +875,36 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (policy_mgr_is_current_hwmode_dbs(psoc) &&
 		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, new_conn_mode))
-		next_action = PM_SINGLE_MAC;
+		*next_action = PM_SINGLE_MAC;
 	else if (!policy_mgr_is_current_hwmode_dbs(psoc) &&
 		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, new_conn_mode))
-		next_action = PM_NOP;
+		*next_action = PM_NOP;
+
+	policy_mgr_debug("idx2=%d idx3=%d next_action=%d, band=%d reason=%d session_id=%d",
+			 second_index, third_index, *next_action, band,
+			 reason, session_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
+		uint32_t session_id,
+		uint8_t channel,
+		enum policy_mgr_conn_update_reason reason)
+{
+	enum policy_mgr_conc_next_action next_action = PM_NOP;
+	QDF_STATUS status;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_err("driver isn't dbs capable, no further action needed");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	status = policy_mgr_get_next_action(psoc, session_id, channel, reason,
+					    &next_action);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	if (PM_NOP != next_action)
 		status = policy_mgr_next_actions(psoc, session_id,
@@ -885,12 +912,9 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	else
 		status = QDF_STATUS_E_NOSUPPORT;
 
-	policy_mgr_debug(
-		"idx2=%d idx3=%d next_action=%d, band=%d status=%d reason=%d session_id=%d",
-		second_index, third_index, next_action, band, status,
-		reason, session_id);
+	policy_mgr_debug("next_action %d reason=%d session_id=%d",
+			 next_action, reason, session_id);
 
-done:
 	return status;
 }
 
@@ -1919,6 +1943,16 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 	QDF_STATUS status;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum policy_mgr_conc_next_action next_action = PM_NOP;
+	enum policy_mgr_conn_update_reason reason =
+			POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
 		policy_mgr_err("DBS is disabled");
@@ -1944,6 +1978,7 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 		return QDF_STATUS_E_ALREADY;
 	}
 
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	/*
 	 * Store the connection's parameter and temporarily delete it
 	 * from the concurrency table. This way the allow concurrency
@@ -1952,19 +1987,39 @@ QDF_STATUS policy_mgr_set_hw_mode_before_channel_switch(
 	 */
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
 						      &info, &num_cxn_del);
-
-	status = policy_mgr_update_and_wait_for_connection_update(psoc,
-				vdev_id, chan,
-				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH);
+	status = policy_mgr_get_next_action(psoc, vdev_id, chan, reason,
+					    &next_action);
 	/* Restore the connection entry */
 	if (num_cxn_del)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
+	if (QDF_IS_STATUS_ERROR(status))
+		goto chk_opportunistic_timer;
+
+	status = policy_mgr_reset_connection_update(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		policy_mgr_err("clearing event failed");
+
+	if (PM_NOP != next_action)
+		status = policy_mgr_next_actions(psoc, vdev_id,
+						 next_action, reason);
+	else
+		status = QDF_STATUS_E_NOSUPPORT;
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = policy_mgr_wait_for_connection_update(psoc);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			policy_mgr_err("qdf wait for event failed");
+		}
+	}
+
+chk_opportunistic_timer:
 	/*
 	 * If hw mode change failed restart the opportunistic timer to
 	 * Switch to single mac if required.
 	 */
-	if (QDF_IS_STATUS_ERROR(status)) {
+	if (status == QDF_STATUS_E_FAILURE) {
 		policy_mgr_err("Failed to update HW modeStatus %d", status);
 		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	}
@@ -1978,6 +2033,16 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
 	QDF_STATUS status;
 	struct policy_mgr_conc_connection_info info;
 	uint8_t num_cxn_del = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum policy_mgr_conc_next_action next_action = PM_NOP;
+	enum policy_mgr_conn_update_reason reason =
+			POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!policy_mgr_is_hw_dbs_capable(psoc) ||
 	    !policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
@@ -2001,6 +2066,8 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
 		policy_mgr_err("DBS is not required for 5Ghz chan");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	/*
 	 * Store the connection's parameter and temporarily delete it
 	 * from the concurrency table. This way the allow concurrency
@@ -2010,13 +2077,23 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_sta_channel_switch(
 	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, vdev_id,
 						      &info, &num_cxn_del);
 
-	status = policy_mgr_current_connections_update(psoc, vdev_id, chan,
-				POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA);
-
+	status = policy_mgr_get_next_action(psoc, vdev_id, chan,
+					    reason, &next_action);
 	/* Restore the connection entry */
 	if (num_cxn_del)
 		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
+	if (QDF_IS_STATUS_ERROR(status))
+		goto chk_opportunistic_timer;
+
+	if (PM_NOP != next_action)
+		status = policy_mgr_next_actions(psoc, vdev_id,
+						next_action, reason);
+	else
+		status = QDF_STATUS_E_NOSUPPORT;
+
+chk_opportunistic_timer:
 	/*
 	 * If hw mode change failed restart the opportunistic timer to
 	 * Switch to single mac if required.

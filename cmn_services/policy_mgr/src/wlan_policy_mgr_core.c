@@ -1329,7 +1329,7 @@ QDF_STATUS policy_mgr_pdev_get_pcl(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_set_pcl_for_existing_combo(
 		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
 	enum QDF_OPMODE pcl_mode;
@@ -1348,7 +1348,6 @@ void policy_mgr_set_pcl_for_existing_combo(
 		return;
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		/* Check, store and temp delete the mode's parameter */
 		policy_mgr_store_and_del_conn_info(psoc, mode, false,
 						info, &num_cxn_del);
@@ -1357,14 +1356,14 @@ void policy_mgr_set_pcl_for_existing_combo(
 		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
-			if (QDF_IS_STATUS_ERROR(status))
-				policy_mgr_err("Send set PCL to SME failed");
-		}
-	} else {
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	/* Send PCL only if policy_mgr_pdev_get_pcl returned success */
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
+		if (QDF_IS_STATUS_ERROR(status))
+			policy_mgr_err("Send set PCL to SME failed");
 	}
 }
 
