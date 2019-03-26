@@ -102,7 +102,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 	if (!total_queued)
 		return;
 
-	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u max_len:%u invalid(peer:%u vdev:%u others:%u)",
+	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
 		rx_thread->id,
 		qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue),
 		total_queued,
@@ -112,6 +112,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 		rx_thread->stats.nbufq_max_len,
 		rx_thread->stats.dropped_invalid_peer,
 		rx_thread->stats.dropped_invalid_vdev,
+		rx_thread->stats.dropped_invalid_os_rx_handles,
 		rx_thread->stats.dropped_others);
 }
 
@@ -299,9 +300,7 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 		cdp_get_os_rx_handles_from_vdev(soc, vdev, &stack_fn,
 						&osif_vdev);
 		if (!stack_fn || !osif_vdev) {
-			dp_alert("stack_fn or osif_vdev is null, pkt dropped!");
-			QDF_BUG(0);
-			rx_thread->stats.dropped_others +=
+			rx_thread->stats.dropped_invalid_os_rx_handles +=
 							num_list_elements;
 			qdf_nbuf_list_free(nbuf_list);
 			goto dequeue_rx_thread;
