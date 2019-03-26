@@ -27,10 +27,13 @@
  * wma_send_twt_enable_cmd() - Send TWT Enable command to firmware
  * @pdev_id: pdev id
  * @congestion_timeout: Timeout value for the TWT congestion timer
+ * @bcast_val: broadcast twt support
  *
  * Return: None
  */
-void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout);
+void wma_send_twt_enable_cmd(uint32_t pdev_id,
+			     uint32_t congestion_timeout,
+			     bool bcast_val);
 
 /**
  * wma_set_twt_peer_caps() - Fill the peer TWT capabilities
@@ -60,7 +63,8 @@ QDF_STATUS wma_twt_process_del_dialog(struct wmi_twt_del_dialog_param *params);
 
 #else
 static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
-					   uint32_t congestion_timeout)
+					   uint32_t congestion_timeout,
+					   bool bcast_val)
 {
 	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
 }

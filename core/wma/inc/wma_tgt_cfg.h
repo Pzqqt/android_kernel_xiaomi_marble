@@ -172,6 +172,7 @@ struct board_info {
  * @obss_detection_offloaded: obss detection offloaded to firmware
  * @obss_color_collision_offloaded: obss color collision offloaded to firmware
  * @sar_version: Version of SAR supported by firmware
+ * @bcast_twt_support: braodcast twt support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -211,5 +212,6 @@ struct wma_tgt_cfg {
 	struct board_info hw_bd_info;
 	enum sar_version sar_version;
 	struct nan_tgt_caps nan_caps;
+	bool bcast_twt_support;
 };
 #endif /* WMA_TGT_CFG_H */

@@ -71,7 +71,7 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		  req_val, resp_val, bcast_val, pdev_id, congestion_timeout);
 
 	if (req_val || resp_val || bcast_val)
-		wma_send_twt_enable_cmd(pdev_id, congestion_timeout);
+		wma_send_twt_enable_cmd(pdev_id, congestion_timeout, bcast_val);
 }
 
 /**

@@ -27,7 +27,8 @@
 #include "wma_internal.h"
 #include "wmi_unified_priv.h"
 
-void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout)
+void wma_send_twt_enable_cmd(uint32_t pdev_id,
+			     uint32_t congestion_timeout, bool bcast_val)
 {
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wmi_twt_enable_param twt_enable_params = {0};
@@ -39,6 +40,7 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id, uint32_t congestion_timeout)
 	}
 	twt_enable_params.pdev_id = pdev_id;
 	twt_enable_params.sta_cong_timer_ms = congestion_timeout;
+	TWT_EN_DIS_FLAGS_SET_BTWT(twt_enable_params.flags, bcast_val);
 	ret = wmi_unified_twt_enable_cmd(wma->wmi_handle, &twt_enable_params);
 
 	if (ret)
