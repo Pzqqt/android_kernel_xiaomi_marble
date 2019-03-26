@@ -2638,6 +2638,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	tSapChSelSpectInfo spect_info_obj = { NULL, 0 };
 	tSapChSelSpectInfo *spect_info = &spect_info_obj;
 	uint8_t best_ch_num = SAP_CHANNEL_NOT_SELECTED;
+	uint32_t best_ch_weight = SAP_ACS_WEIGHT_MAX;
 	uint32_t ht40plus2gendch = 0;
 	v_REGDOMAIN_t domain;
 	uint8_t country[CDS_COUNTRY_CODE_LEN + 1];
@@ -2692,9 +2693,6 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	end_ch_num = sap_ctx->acs_cfg->end_ch;
 	SET_ACS_BAND(operating_band, sap_ctx);
 
-	sap_ctx->acsBestChannelInfo.channelNum = 0;
-	sap_ctx->acsBestChannelInfo.weight = SAP_ACS_WEIGHT_MAX;
-
 	/* Sort the ch lst as per the computed weights, lesser weight first. */
 	sap_sort_chl_weight_all(sap_ctx, spect_info, operating_band, domain);
 
@@ -2726,9 +2724,8 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 			}
 #endif
 
-			sap_ctx->acsBestChannelInfo.channelNum = best_ch_num;
-			sap_ctx->acsBestChannelInfo.weight =
-					spect_info->pSpectCh[count].weight_copy;
+			best_ch_weight =
+				spect_info->pSpectCh[count].weight_copy;
 		}
 
 		if (best_ch_num == SAP_CHANNEL_NOT_SELECTED)
@@ -2761,8 +2758,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 			continue;
 		}
 
-		if (spect_info->pSpectCh[count].weight_copy >
-				sap_ctx->acsBestChannelInfo.weight)
+		if (spect_info->pSpectCh[count].weight_copy > best_ch_weight)
 			continue;
 
 		tmp_ch_num = spect_info->pSpectCh[count].chNum;
@@ -2791,8 +2787,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	 */
 	for (count = 0; count < spect_info->numSpectChans; count++) {
 		if (!ch_in_pcl(sap_ctx, spect_info->pSpectCh[count].chNum) ||
-		    (spect_info->pSpectCh[count].weight !=
-				sap_ctx->acsBestChannelInfo.weight))
+		    (spect_info->pSpectCh[count].weight != best_ch_weight))
 			continue;
 
 		if (sap_select_preferred_channel_from_channel_list(
@@ -2855,7 +2850,7 @@ sap_ch_sel_end:
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Running SAP Ch select Completed, Ch=%d"), best_ch_num);
-	host_log_acs_best_chan(best_ch_num, sap_ctx->acsBestChannelInfo.weight);
+	host_log_acs_best_chan(best_ch_num, best_ch_weight);
 
 	if (best_ch_num > 0 && best_ch_num <= 252)
 		return best_ch_num;

@@ -78,11 +78,6 @@ enum sap_fsm_state {
 	SAP_STOPPING
 };
 
-typedef struct sSapAcsChannelInfo {
-	uint32_t channelNum;
-	uint32_t weight;
-} tSapAcsChannelInfo;
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 /*
  * In a setup having two MDM both operating in AP+AP MCC scenario
@@ -153,7 +148,6 @@ struct sap_context {
 	struct ch_params ch_params;
 
 	uint32_t auto_channel_select_weight;
-	tSapAcsChannelInfo acsBestChannelInfo;
 	bool enableOverLapCh;
 	struct sap_acs_cfg *acs_cfg;
 
