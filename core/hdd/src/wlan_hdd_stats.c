@@ -612,7 +612,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tpSirWifiPeerStat pWifiPeerStat;
-	tpSirWifiPeerInfo pWifiPeerInfo;
+	tpSirWifiPeerInfo peer_info;
 	struct sk_buff *vendor_event;
 	int status, i;
 	struct nlattr *peers;
@@ -660,7 +660,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 		return;
 	}
 
-	pWifiPeerInfo = (tpSirWifiPeerInfo) ((uint8_t *)
+	peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
 					     pWifiPeerStat->peerInfo);
 
 	if (pWifiPeerStat->numPeers) {
@@ -682,15 +682,15 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 				return;
 			}
 
-			numRate = pWifiPeerInfo->numRate;
+			numRate = peer_info->numRate;
 
-			if (!put_wifi_peer_info(pWifiPeerInfo, vendor_event)) {
+			if (!put_wifi_peer_info(peer_info, vendor_event)) {
 				hdd_err("put_wifi_peer_info fail");
 				kfree_skb(vendor_event);
 				return;
 			}
 
-			pWifiPeerInfo = (tpSirWifiPeerInfo) ((uint8_t *)
+			peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
 							     pWifiPeerStat->
 							     peerInfo +
 							     (i *
