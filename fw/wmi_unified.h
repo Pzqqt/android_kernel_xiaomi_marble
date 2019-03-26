@@ -5606,8 +5606,120 @@ typedef enum {
     WMI_PDEV_PARAM_NAV_OVERRIDE_CONFIG,
 
     /* Set global MU PPDU duration for DL (usec units) */
-    WMI_PDEV_PARAM_SET_MU_PPDU_DURATION, /* 0xB5 */
+    WMI_PDEV_PARAM_SET_MU_PPDU_DURATION,
+
+    /*
+     * Enable / disable test mode configuration.
+     * By default FW will always send triggers dynamically (mix of BSR/Basic).
+     * The below testmode are only used for certain tests.
+     * A value of 1 in a given bit enables corresponding test mode.
+     * bit | test mode
+     * ---------------
+     *  0  | FW only sends BSR triggers.
+     *  1  | FW only sends Basic triggers.
+     *  2  | If set, FW enables MU-RTS trigger.
+     *     | If cleared, FW uses implementation-specific internal default setting.
+     *  3  | FW enables unicast embedded trigger in HE MU PPDU.
+     * 4-31| reserved.
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_UL_TRIGGER_TYPE_ENABLE,
+
+    /*
+     * Configure test command to set LSIG len.
+     * Value 0: Dynamic LSIG based on STA's qdepth.
+     * Non zero Value: LSIG length to be configured
+     *                 as part of trigger frame.
+     *   bit   |
+     * ---------------
+     *  0 - 30 | Bits storing the host supplied <value>.
+     *  31     | If set: The legitimate value closest to the value specified in
+     *         |   in bits 30:0 is directly set in UL len in trigger frame.
+     *         |   The FW performs calculations to determine which legitimate
+     *         |   value is closest to the specified value, if the specified
+     *         |   value is not already legitimate.
+     *         | If not set: The value in lower bits is the duration (in ms),
+     *         |   from which the UL len is derived.
+     *         |   Example: if host sets 2000 (2ms), then UL Len in trigger
+     *         |   will be derived to accomodate the given duration.
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_UL_TRIGGER_LSIG_LEN,
+
+    /*
+     * Configure test cmd for fixed rate setting used for UL Trigger
+     * (only Basic/BSR triggers).
+     * The top nibble is used to select which format to use for encoding
+     * the rate specification: 0xVXXXXXXX, V must be 1 for the UL
+     * format.
+     * If V == 0b0001: format is: 0x1000RRRR.
+     *                 This will be output of WMI_ASSEMBLE_RATECODE_V1
+     *
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_UL_TRIGGER_FIXED_RATE,
+
+    /*
+     * Configure test command to set the mac padding duration.
+     *  0 - FW set Mac Padding to 0us
+     *  1 - FW set Mac Padding to 8us
+     *  2 - FW set Mac Padding to 16us
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_UL_MAC_PADDING,
+
+    /*
+     * Configure test command to set the fc duration in BSR trigger frame.
+     *  value 0 - FW calulates the duration(default).
+     *  Non zero Value: Duration to be configured.
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_UL_BSR_FC_DURATION,
+
+    /* Parameter used for configuring TWT scheduling properties
+     * bit | config_mode
+     * -----------------
+     *  0  | Disables DL MU for TWT peers within TWT SP
+     *  1  | Disables UL MU for TWT peers within TWT SP
+     *  2  | Disables scheduling from WMM sched context for TWT peers
+     *  3  | If set, FW only sends Basic triggers in TWT SP.
+     * 4-31| reserved.
+     */
+    WMI_PDEV_PARAM_SET_TEST_CMD_TWT_SCHED_CONFIG,
+
 } WMI_PDEV_PARAM;
+
+#define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
+#define WMI_PDEV_ONLY_BSR_TRIG_ENABLE(trig_type) WMI_SET_BITS(trig_type, 0, 1, 1)
+#define WMI_PDEV_ONLY_BSR_TRIG_DISABLE(trig_type) WMI_SET_BITS(trig_type, 0, 1, 0)
+
+#define WMI_PDEV_ONLY_BASIC_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 1, 1)
+#define WMI_PDEV_ONLY_BASIC_TRIG_ENABLE(trig_type) WMI_SET_BITS(trig_type, 1, 1, 1)
+#define WMI_PDEV_ONLY_BASIC_TRIG_DISABLE(trig_type) WMI_SET_BITS(trig_type, 1, 1, 0)
+
+#define WMI_PDEV_MU_RTS_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 2, 1)
+#define WMI_PDEV_MU_RTS_ENABLE(trig_type) WMI_SET_BITS(trig_type, 2, 1, 1)
+#define WMI_PDEV_MU_RTS_DISABLE(trig_type) WMI_SET_BITS(trig_type, 2, 1, 0)
+
+#define WMI_PDEV_EMBEDDED_TRIGGER_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 3, 1)
+#define WMI_PDEV_EMBEDDED_TRIGGER_ENABLE(trig_type) WMI_SET_BITS(trig_type, 3, 1, 1)
+#define WMI_PDEV_EMBEDDED_TRIGGER_DISABLE(trig_type) WMI_SET_BITS(trig_type, 3, 1, 0)
+
+#define WMI_PDEV_TWT_SCHED_CFG_IS_DL_MU_IS_ENABLED(twt_sched_cfg) WMI_GET_BITS(twt_sched_cfg, 0, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_DL_MU_ENABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 0, 1, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_DL_MU_DISABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 0, 1, 0)
+
+#define WMI_PDEV_TWT_SCHED_CFG_IS_UL_MU_IS_ENABLED(twt_sched_cfg) WMI_GET_BITS(twt_sched_cfg, 1, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_UL_MU_ENABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 1, 1, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_UL_MU_DISABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 1, 1, 0)
+
+#define WMI_PDEV_TWT_SCHED_CFG_IS_WMM_IS_ENABLED(twt_sched_cfg) WMI_GET_BITS(twt_sched_cfg, 2, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_WMM_ENABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 2, 1, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_WMM_DISABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 2, 1, 0)
+
+#define WMI_PDEV_TWT_SCHED_CFG_IS_USE_ONLY_BASIC_TRIGGER_IS_ENABLED(twt_sched_cfg) WMI_GET_BITS(twt_sched_cfg, 3, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_USE_ONLY_BASIC_TRIGGER_ENABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 3, 1, 1)
+#define WMI_PDEV_TWT_SCHED_CFG_USE_ONLY_BASIC_TRIGGER_DISABLE(twt_sched_cfg) WMI_SET_BITS(twt_sched_cfg, 3, 1, 0)
+
+#define WMI_PDEV_LSIG_LEN_DURATION_ENABLE(lsig_len) WMI_SET_BITS(lsig_len, 0, 31, 1)
+#define WMI_PDEV_LSIG_LEN_DURATION_DISABLE(lsig_len) WMI_SET_BITS(lsig_len, 0, 31, 0)
+#define WMI_PDEV_LSIG_LEN_DURATION_GET(lsig_len) WMI_GET_BITS(lsig_len, 0, 30)
+#define WMI_PDEV_LSIG_LEN_DURATION_SET(lsig_len, value) WMI_SET_BITS(lsig_len, 0, 30, value)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param */
