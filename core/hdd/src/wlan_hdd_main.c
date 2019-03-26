@@ -14115,11 +14115,43 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 
 	cfg.enable_self_recovery = self_recovery;
 	hdd_populate_runtime_cfg(hdd_ctx, &cfg);
+	cfg.rx_softirq_max_yield_duration_ns =
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS);
+
 	hif_init_ini_config(scn, &cfg);
 
 	if (prevent_link_down)
 		hif_vote_link_up(scn);
 }
+
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+/**
+ * hdd_update_dp_config_rx_softirq_limits() - Update DP rx softirq limit config
+ *                          datapath
+ * @hdd_ctx: HDD Context
+ * @params: pointer to cdp_config_params to be updated
+ *
+ * Void
+ */
+static
+void hdd_update_dp_config_rx_softirq_limits(struct hdd_context *hdd_ctx,
+					    struct cdp_config_params *params)
+{
+	params->tx_comp_loop_pkt_limit = cfg_get(hdd_ctx->psoc,
+						 CFG_DP_TX_COMP_LOOP_PKT_LIMIT);
+	params->rx_reap_loop_pkt_limit = cfg_get(hdd_ctx->psoc,
+						 CFG_DP_RX_REAP_LOOP_PKT_LIMIT);
+	params->rx_hp_oos_update_limit = cfg_get(hdd_ctx->psoc,
+						 CFG_DP_RX_HP_OOS_UPDATE_LIMIT);
+}
+#else
+static
+void hdd_update_dp_config_rx_softirq_limits(struct hdd_context *hdd_ctx,
+					    struct cdp_config_params *params)
+{
+}
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 
 /**
  * hdd_update_dp_config() - Propagate config parameters to Lithium
@@ -14150,6 +14182,13 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 				CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
 	params.ipa_enable = ucfg_ipa_is_enabled();
 	params.gro_enable = cfg_get(hdd_ctx->psoc, CFG_DP_GRO);
+	params.tx_comp_loop_pkt_limit = cfg_get(hdd_ctx->psoc,
+						CFG_DP_TX_COMP_LOOP_PKT_LIMIT);
+	params.rx_reap_loop_pkt_limit = cfg_get(hdd_ctx->psoc,
+						CFG_DP_RX_REAP_LOOP_PKT_LIMIT);
+	params.rx_hp_oos_update_limit = cfg_get(hdd_ctx->psoc,
+						CFG_DP_RX_HP_OOS_UPDATE_LIMIT);
+	hdd_update_dp_config_rx_softirq_limits(hdd_ctx, &params);
 
 	status = cdp_update_config_parameters(soc, &params);
 	if (status) {

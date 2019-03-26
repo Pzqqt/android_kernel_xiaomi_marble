@@ -43,6 +43,22 @@
 #define CFG_RX_MODE_DEFAULT (CFG_ENABLE_RX_THREAD | CFG_ENABLE_NAPI)
 #endif
 
+/* Max # of packets to be processed in 1 tx comp loop */
+#define CFG_DP_TX_COMP_LOOP_PKT_LIMIT_DEFAULT 64
+#define CFG_DP_TX_COMP_LOOP_PKT_LIMIT_MAX (1024 * 1024)
+
+/*Max # of packets to be processed in 1 rx reap loop */
+#define CFG_DP_RX_REAP_LOOP_PKT_LIMIT_DEFAULT 64
+#define CFG_DP_RX_REAP_LOOP_PKT_LIMIT_MAX (1024 * 1024)
+
+/* Max # of HP OOS (out of sync) updates */
+#define CFG_DP_RX_HP_OOS_UPDATE_LIMIT_DEFAULT 0
+#define CFG_DP_RX_HP_OOS_UPDATE_LIMIT_MAX 1024
+
+/* Max Yield time duration for RX Softirq */
+#define CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS_DEFAULT (500 * 1000)
+#define CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS_MAX (10 * 1000 * 1000)
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 
 /*
@@ -765,6 +781,81 @@
 
 /*
  * <ini>
+ * tx_comp_loop_pkt_limit - Control to decide max # of packets to be processed
+ *			    in 1 tx comp loop
+ *
+ * @Min: 8
+ * @Max: CFG_DP_TX_COMP_LOOP_PKT_LIMIT_MAX
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_TX_COMP_LOOP_PKT_LIMIT \
+		CFG_INI_UINT("tx_comp_loop_pkt_limit", \
+		1, CFG_DP_TX_COMP_LOOP_PKT_LIMIT_MAX, \
+		CFG_DP_TX_COMP_LOOP_PKT_LIMIT_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Control to decide tx comp loop pkt limit")
+/*
+ * <ini>
+ * rx_reap_loop_pkt_limit - Control to decide max # of packets to be reaped
+ *			    in 1 dp_rx_process reap loop
+ *
+ * @Min: 8
+ * @Max: CFG_DP_RX_REAP_LOOP_PKT_LIMIT_MAX
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_REAP_LOOP_PKT_LIMIT \
+		CFG_INI_UINT("rx_reap_loop_pkt_limit", \
+		0, CFG_DP_RX_REAP_LOOP_PKT_LIMIT_MAX, \
+		CFG_DP_RX_REAP_LOOP_PKT_LIMIT_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Control to decide rx reap loop packet limit")
+
+/*
+ * <ini>
+ * rx_hp_oos_update_limit - Control to decide max # of HP OOS (out of sync)
+ *			    updates
+ *
+ * @Min: 0
+ * @Max: CFG_DP_RX_HP_OOS_UPDATE_LIMIT_MAX
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_HP_OOS_UPDATE_LIMIT \
+		CFG_INI_UINT("rx_hp_oos_update_limit", \
+		0, CFG_DP_RX_HP_OOS_UPDATE_LIMIT_MAX, \
+		CFG_DP_RX_HP_OOS_UPDATE_LIMIT_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Control to decide HP OOS update limit")
+
+/*
+ * <ini>
+ * rx_softirq_max_yield_duration_ns - Control to decide max duration for RX
+ *				      softirq
+ *
+ * @Min: 100 * 1000 , 100us
+ * @Max: CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS_MAX
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS \
+		CFG_INI_UINT("rx_softirq_max_yield_duration_ns", \
+		100 * 1000, CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS_MAX, \
+		CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS_DEFAULT, \
+		CFG_VALUE_OR_DEFAULT, \
+		"max yield time duration for RX Softirq")
+
+/*
+ * <ini>
  * enable_multicast_replay_filter - Enable filtering of replayed multicast
  * packets
  *
@@ -979,6 +1070,10 @@
 	CFG(CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST) \
 	CFG(CFG_DP_TX_ORPHAN_ENABLE) \
 	CFG(CFG_DP_RX_MODE) \
+	CFG(CFG_DP_TX_COMP_LOOP_PKT_LIMIT)\
+	CFG(CFG_DP_RX_REAP_LOOP_PKT_LIMIT)\
+	CFG(CFG_DP_RX_HP_OOS_UPDATE_LIMIT)\
+	CFG(CFG_DP_RX_SOFTIRQ_MAX_YIELD_TIME_NS)\
 	CFG(CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH) \
 	CFG(CFG_DP_CE_SERVICE_MAX_YIELD_TIME) \
 	CFG(CFG_DP_ENABLE_TCP_PARAM_UPDATE) \
