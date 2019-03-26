@@ -4018,6 +4018,20 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	/*
+	 * if this is the last active connection check & stop the
+	 * opportunistic timer first
+	 */
+	if ((policy_mgr_get_connection_count(hdd_ctx->psoc) == 1 &&
+	     policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+		policy_mgr_convert_device_mode_to_qdf_type(
+			adapter->device_mode), NULL) == 1) ||
+	    !policy_mgr_get_connection_count(hdd_ctx->psoc))
+		policy_mgr_check_and_stop_opportunistic_timer(hdd_ctx->psoc,
+							      adapter->vdev_id);
+
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
@@ -4029,7 +4043,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = sme_close_session(hdd_ctx->mac_handle, adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to close sme session; status:%d", status);
@@ -5381,17 +5394,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
-	/*
-	 * if this is the last active connection check & stop the
-	 * opportunistic timer first
-	 */
-	if ((policy_mgr_get_connection_count(hdd_ctx->psoc) == 1 &&
-	     policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
-		policy_mgr_convert_device_mode_to_qdf_type(
-			adapter->device_mode), NULL) == 1) ||
-	    !policy_mgr_get_connection_count(hdd_ctx->psoc))
-		policy_mgr_check_and_stop_opportunistic_timer(
-			hdd_ctx->psoc, adapter->vdev_id);
 
 	mac_handle = hdd_ctx->mac_handle;
 
