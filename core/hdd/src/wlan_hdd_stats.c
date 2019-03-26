@@ -416,8 +416,8 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 				 u32 num_peers, struct sk_buff *vendor_event)
 {
 	int i = 0;
-	struct nlattr *wmmInfo;
-	struct nlattr *wmmStats;
+	struct nlattr *wmm_info;
+	struct nlattr *wmm_stats;
 	u64 average_tsf_offset;
 	wmi_iface_link_stats *link_stats = &pWifiIfaceStat->link_stats;
 
@@ -487,14 +487,14 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 		return false;
 	}
 
-	wmmInfo = nla_nest_start(vendor_event,
-				 QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_INFO);
-	if (!wmmInfo)
+	wmm_info = nla_nest_start(vendor_event,
+				  QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_INFO);
+	if (!wmm_info)
 		return false;
 
 	for (i = 0; i < WIFI_AC_MAX; i++) {
-		wmmStats = nla_nest_start(vendor_event, i);
-		if (!wmmStats)
+		wmm_stats = nla_nest_start(vendor_event, i);
+		if (!wmm_stats)
 			return false;
 
 		if (false ==
@@ -504,9 +504,9 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 			return false;
 		}
 
-		nla_nest_end(vendor_event, wmmStats);
+		nla_nest_end(vendor_event, wmm_stats);
 	}
-	nla_nest_end(vendor_event, wmmInfo);
+	nla_nest_end(vendor_event, wmm_info);
 	return true;
 }
 
