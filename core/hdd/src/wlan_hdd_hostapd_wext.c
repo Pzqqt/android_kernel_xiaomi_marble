@@ -175,17 +175,26 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 			req.stats, req.mac_id);
 		sta_info = adapter->sta_info;
 		if (value[1] == CDP_TXRX_STATS_28) {
+			req.peer_addr = (char *)&adapter->mac_addr;
+			ret = cdp_txrx_stats_request(soc, vdev, &req);
+
 			for (count = 0; count < WLAN_MAX_STA_COUNT; count++) {
-				if (sta_info[count].in_use) {
+				if (sta_info->in_use) {
 					hdd_debug("sta: %d: bss_id: %pM",
 						  sta_info->sta_id,
 						  (void *)&sta_info->sta_mac);
 					req.peer_addr =
 						(char *)&sta_info->sta_mac;
+					ret = cdp_txrx_stats_request(soc, vdev,
+								     &req);
 				}
+
+				sta_info++;
 			}
+		} else {
+			ret = cdp_txrx_stats_request(soc, vdev, &req);
 		}
-		ret = cdp_txrx_stats_request(soc, vdev, &req);
+
 		break;
 	}
 
