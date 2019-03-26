@@ -284,8 +284,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 			if (!rates)
 				goto error;
 
-			if (false ==
-			    put_wifi_rate_stat(rate_stat, vendor_event)) {
+			if (!put_wifi_rate_stat(rate_stat, vendor_event)) {
 				hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 				return false;
 			}
@@ -406,23 +405,22 @@ static bool put_wifi_interface_info(struct wifi_interface_info *stats,
 
 /**
  * put_wifi_iface_stats() - put wifi interface stats
- * @pWifiIfaceStat: Pointer to interface stats context
+ * @if_stat: Pointer to interface stats context
  * @num_peer: Number of peers
  * @vendor_event: Pointer to vendor event
  *
  * Return: bool
  */
-static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
+static bool put_wifi_iface_stats(tpSirWifiIfaceStat if_stat,
 				 u32 num_peers, struct sk_buff *vendor_event)
 {
 	int i = 0;
 	struct nlattr *wmm_info;
 	struct nlattr *wmm_stats;
 	u64 average_tsf_offset;
-	wmi_iface_link_stats *link_stats = &pWifiIfaceStat->link_stats;
+	wmi_iface_link_stats *link_stats = &if_stat->link_stats;
 
-	if (false == put_wifi_interface_info(&pWifiIfaceStat->info,
-					     vendor_event)) {
+	if (!put_wifi_interface_info(&if_stat->info, vendor_event)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 
@@ -473,16 +471,16 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 			average_tsf_offset) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_RTS_SUCC_CNT,
-			pWifiIfaceStat->rts_succ_cnt) ||
+			if_stat->rts_succ_cnt) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_RTS_FAIL_CNT,
-			pWifiIfaceStat->rts_fail_cnt) ||
+			if_stat->rts_fail_cnt) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_PPDU_SUCC_CNT,
-			pWifiIfaceStat->ppdu_succ_cnt) ||
+			if_stat->ppdu_succ_cnt) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_PPDU_FAIL_CNT,
-			pWifiIfaceStat->ppdu_fail_cnt)) {
+			if_stat->ppdu_fail_cnt)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 	}
@@ -497,9 +495,8 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 		if (!wmm_stats)
 			return false;
 
-		if (false ==
-		    put_wifi_wmm_ac_stat(&pWifiIfaceStat->ac_stats[i],
-					 vendor_event)) {
+		if (!put_wifi_wmm_ac_stat(&if_stat->ac_stats[i],
+					  vendor_event)) {
 			hdd_err("put_wifi_wmm_ac_stat Fail");
 			return false;
 		}
@@ -563,8 +560,8 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			pInfo->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
-		     sta_ctx->conn_info.conn_state)
-		    && (false == sta_ctx->conn_info.is_authenticated)) {
+		     sta_ctx->conn_info.conn_state) &&
+		    (!sta_ctx->conn_info.is_authenticated)) {
 			staMac =
 				(uint8_t *) &(adapter->mac_addr.
 					      bytes[0]);
@@ -687,8 +684,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 
 			numRate = pWifiPeerInfo->numRate;
 
-			if (false ==
-			    put_wifi_peer_info(pWifiPeerInfo, vendor_event)) {
+			if (!put_wifi_peer_info(pWifiPeerInfo, vendor_event)) {
 				hdd_err("put_wifi_peer_info fail");
 				kfree_skb(vendor_event);
 				return;
@@ -729,14 +725,14 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 					       tpSirWifiIfaceStat pData,
 					       u32 num_peers)
 {
-	tpSirWifiIfaceStat pWifiIfaceStat;
+	tpSirWifiIfaceStat if_stat;
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
 
 	hdd_enter();
 
-	pWifiIfaceStat = pData;
+	if_stat = pData;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
@@ -759,14 +755,13 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 
 	hdd_debug("WMI_LINK_STATS_IFACE Data");
 
-	if (false == hdd_get_interface_info(adapter, &pWifiIfaceStat->info)) {
+	if (!hdd_get_interface_info(adapter, &if_stat->info)) {
 		hdd_err("hdd_get_interface_info get fail");
 		kfree_skb(vendor_event);
 		return;
 	}
 
-	if (false ==
-	    put_wifi_iface_stats(pWifiIfaceStat, num_peers, vendor_event)) {
+	if (!put_wifi_iface_stats(if_stat, num_peers, vendor_event)) {
 		hdd_err("put_wifi_iface_stats fail");
 		kfree_skb(vendor_event);
 		return;
