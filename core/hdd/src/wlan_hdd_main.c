@@ -5229,9 +5229,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		hdd_err("Interface %s wow debug_fs init failed",
 			netdev_name(adapter->dev));
 
-	hdd_register_hl_netdev_fc_timer(adapter,
-					hdd_tx_resume_timer_expired_handler);
-
 	hdd_info("%s interface created. iftype: %d", netdev_name(adapter->dev),
 		 session_type);
 
@@ -5447,6 +5444,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("Cannot flush PMKIDCache");
 
+		hdd_deregister_hl_netdev_fc_timer(adapter);
+
 		hdd_deregister_tx_flow_control(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
@@ -5488,6 +5487,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 
 	case QDF_MONITOR_MODE:
 		wlan_hdd_scan_abort(adapter);
+		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 		hdd_vdev_destroy(adapter);
 		break;
@@ -5522,6 +5522,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
+		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 		hdd_destroy_acs_timer(adapter);
 
@@ -5623,14 +5624,13 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			       cds_get_context(QDF_MODULE_ID_TXRX),
 			       sta_ctx->conn_info.sta_id[0]);
+		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 		hdd_vdev_destroy(adapter);
 		break;
 	default:
 		break;
 	}
-
-	hdd_deregister_hl_netdev_fc_timer(adapter);
 
 	if (adapter->scan_info.default_scan_ies) {
 		qdf_mem_free(adapter->scan_info.default_scan_ies);
@@ -5863,6 +5863,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_stop_tsf_sync(adapter);
 
 		hdd_softap_deinit_tx_rx(adapter);
+		hdd_deregister_hl_netdev_fc_timer(adapter);
 		hdd_deregister_tx_flow_control(adapter);
 
 		/* Destroy vdev which will be recreated during reinit. */
@@ -6615,6 +6616,10 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 					hdd_tx_resume_timer_expired_handler,
 					hdd_tx_resume_cb,
 					hdd_tx_flow_control_is_pause);
+
+			hdd_register_hl_netdev_fc_timer(
+					adapter,
+					hdd_tx_resume_timer_expired_handler);
 
 			hdd_lpass_notify_start(hdd_ctx, adapter);
 			hdd_nud_ignore_tracking(adapter, false);
@@ -9623,6 +9628,9 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 		hdd_tx_resume_cb,
 		hdd_tx_flow_control_is_pause);
 
+	hdd_register_hl_netdev_fc_timer(adapter,
+					hdd_tx_resume_timer_expired_handler);
+
 	hdd_exit();
 
 	return 0;
@@ -9692,6 +9700,9 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		hdd_softap_tx_resume_timer_expired_handler,
 		hdd_softap_tx_resume_cb,
 		hdd_tx_flow_control_is_pause);
+
+	hdd_register_hl_netdev_fc_timer(adapter,
+					hdd_tx_resume_timer_expired_handler);
 
 	hdd_exit();
 	return 0;

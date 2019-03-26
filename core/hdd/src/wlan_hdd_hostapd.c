@@ -1869,6 +1869,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_softap_tx_resume_cb,
 				hdd_tx_flow_control_is_pause);
 
+			hdd_register_hl_netdev_fc_timer(
+				adapter,
+				hdd_tx_resume_timer_expired_handler);
+
 			/* @@@ need wep logic here to set privacy bit */
 			qdf_status =
 				hdd_softap_register_bc_sta(adapter,

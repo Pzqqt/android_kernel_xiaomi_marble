@@ -90,6 +90,7 @@ static int hdd_close_ndi(struct hdd_adapter *adapter)
 #ifdef WLAN_OPEN_SOURCE
 	cancel_work_sync(&adapter->ipv4_notifier_work);
 #endif
+	hdd_deregister_hl_netdev_fc_timer(adapter);
 	hdd_deregister_tx_flow_control(adapter);
 
 #ifdef WLAN_NS_OFFLOAD

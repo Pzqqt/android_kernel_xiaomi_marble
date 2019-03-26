@@ -14227,8 +14227,10 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 	if (hdd_is_client_mode(adapter->device_mode)) {
 		if (hdd_is_client_mode(new_mode)) {
-			if (new_mode == QDF_IBSS_MODE)
+			if (new_mode == QDF_IBSS_MODE) {
+				hdd_deregister_hl_netdev_fc_timer(adapter);
 				hdd_deregister_tx_flow_control(adapter);
+			}
 
 			errno = hdd_change_adapter_mode(adapter, new_mode);
 			if (errno) {
