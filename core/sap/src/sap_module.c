@@ -665,7 +665,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     sap_event_cb sap_event_cb,
 			     struct sap_config *config, void *user_context)
 {
-	tWLAN_SAPEvent sap_event;        /* State machine event */
+	struct sap_sm_event sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *pmac = NULL;
 
@@ -804,7 +804,7 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
 
 QDF_STATUS wlansap_stop_bss(struct sap_context *sap_ctx)
 {
-	tWLAN_SAPEvent sap_event;        /* State machine event */
+	struct sap_sm_event sap_event;        /* State machine event */
 	QDF_STATUS qdf_status;
 
 	if (!sap_ctx) {
@@ -1267,7 +1267,7 @@ static inline void sap_start_csa_restart(struct mac_context *mac,
 static void sap_start_csa_restart(struct mac_context *mac,
 				  struct sap_context *sap_ctx)
 {
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 
 	/*
 	 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START

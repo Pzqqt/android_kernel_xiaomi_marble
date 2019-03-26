@@ -203,20 +203,19 @@ struct sap_context {
  *  External declarations for global context
  * -------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------
- *  SAP state machine event definition
- * -------------------------------------------------------------------------*/
-/* The event structure */
-typedef struct sWLAN_SAPEvent {
-	/* A VOID pointer type for all possible inputs */
+/**
+ * struct sap_sm_event - SAP state machine event definition
+ * @params: A VOID pointer type for all possible inputs
+ * @event: State machine input event message
+ * @u1: Introduced to handle csr_roam_complete_cb roamStatus
+ * @u2: Introduced to handle csr_roam_complete_cb roamResult
+ */
+struct sap_sm_event {
 	void *params;
-	/* State machine input event message */
 	uint32_t event;
-	/* introduced to handle csr_roam_complete_cb roamStatus */
 	uint32_t u1;
-	/* introduced to handle csr_roam_complete_cb roamResult */
 	uint32_t u2;
-} tWLAN_SAPEvent, *ptWLAN_SAPEvent;
+};
 
 /*----------------------------------------------------------------------------
  * Function Declarations and Documentation
@@ -263,7 +262,7 @@ sap_signal_hdd_event(struct sap_context *sap_ctx,
 		  struct csr_roam_info *pCsrRoamInfo,
 		  eSapHddEvent sapHddevent, void *);
 
-QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event);
+QDF_STATUS sap_fsm(struct sap_context *sap_ctx, struct sap_sm_event *sap_event);
 
 eSapStatus
 sapconvert_to_csr_profile(struct sap_config *config,

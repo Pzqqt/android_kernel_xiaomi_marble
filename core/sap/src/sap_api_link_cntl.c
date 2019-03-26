@@ -300,7 +300,7 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 				      struct csr_roam_info *csr_roam_info,
 				      QDF_STATUS *ret_status)
 {
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 	QDF_STATUS qdf_status;
 	bool is_ch_dfs = false;
 	/*
@@ -579,7 +579,7 @@ wlansap_roam_process_dfs_radar_found(struct mac_context *mac_ctx,
 				     QDF_STATUS *ret_status)
 {
 	QDF_STATUS qdf_status;
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 
 	if (sap_is_dfs_cac_wait_state(sap_ctx)) {
 		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_channel_switch) {
@@ -769,7 +769,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	/* sap_ctx value */
 	struct sap_context *sap_ctx = ctx;
 	/* State machine event */
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	mac_handle_t mac_handle;

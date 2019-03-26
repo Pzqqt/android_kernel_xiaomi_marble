@@ -1295,7 +1295,7 @@ static QDF_STATUS sap_goto_stopping(struct sap_context *sap_ctx)
 static QDF_STATUS sap_goto_init(struct sap_context *sap_ctx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 	/* Processing has to be coded */
 
 	/*
@@ -2136,10 +2136,10 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS
-sap_goto_starting(struct sap_context *sap_ctx,
-		  ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
-		  mac_handle_t mac_handle)
+static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
+				    struct sap_sm_event *sap_event,
+				    struct mac_context *mac_ctx,
+				    mac_handle_t mac_handle)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	bool b_leak_chan = false;
@@ -2323,10 +2323,10 @@ static QDF_STATUS sap_fsm_cac_start(struct sap_context *sap_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS
-sap_fsm_state_init(struct sap_context *sap_ctx,
-		   ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
-		   mac_handle_t mac_handle)
+static QDF_STATUS sap_fsm_state_init(struct sap_context *sap_ctx,
+				     struct sap_sm_event *sap_event,
+				     struct mac_context *mac_ctx,
+				     mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2428,7 +2428,7 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 
 #ifdef CONFIG_VDEV_SM
 static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
-					     ptWLAN_SAPEvent sap_event,
+					     struct sap_sm_event *sap_event,
 					     struct mac_context *mac_ctx,
 					     mac_handle_t mac_handle)
 {
@@ -2506,8 +2506,9 @@ static QDF_STATUS sap_fsm_handle_start_failure(struct sap_context *sap_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
-			mac_handle_t mac_handle)
+					     struct sap_sm_event *sap_event,
+					     struct mac_context *mac_ctx,
+					     mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2586,8 +2587,9 @@ static QDF_STATUS sap_fsm_handle_start_failure(struct sap_context *sap_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
-			mac_handle_t mac_handle)
+					 struct sap_sm_event *sap_event,
+					 struct mac_context *mac_ctx,
+					 mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2763,7 +2765,8 @@ sap_handle_csa_anouncement_start(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx)
+					struct sap_sm_event *sap_event,
+					struct mac_context *mac_ctx)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2844,7 +2847,8 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
  */
 static QDF_STATUS
 sap_fsm_state_stopping(struct sap_context *sap_ctx,
-		       ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
+		       struct sap_sm_event *sap_event,
+		       struct mac_context *mac_ctx,
 		       mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
@@ -2882,7 +2886,7 @@ sap_fsm_state_stopping(struct sap_context *sap_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
+QDF_STATUS sap_fsm(struct sap_context *sap_ctx, struct sap_sm_event *sap_event)
 {
 	/*
 	 * Retrieve the phy link state machine structure
@@ -3618,7 +3622,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 void sap_dfs_cac_timer_callback(void *data)
 {
 	struct sap_context *sap_ctx;
-	tWLAN_SAPEvent sap_event;
+	struct sap_sm_event sap_event;
 	mac_handle_t mac_handle = data;
 	struct mac_context *mac;
 
