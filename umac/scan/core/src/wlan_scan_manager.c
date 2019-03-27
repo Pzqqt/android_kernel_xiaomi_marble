@@ -992,8 +992,16 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	}
 
 	scm_scan_req_update_params(req->vdev, req, scan_obj);
+
+	if (!req->scan_req.chan_list.num_chan) {
+		scm_err("Scan Aborted, 0 channel to scan");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
+
 	scm_info("request to scan %d channels",
 		 req->scan_req.chan_list.num_chan);
+
 	for (idx = 0; idx < req->scan_req.chan_list.num_chan; idx++)
 		scm_debug("chan[%d]: freq:%d, phymode:%d", idx,
 			  req->scan_req.chan_list.chan[idx].freq,
