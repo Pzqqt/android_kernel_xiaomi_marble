@@ -426,7 +426,7 @@ static int voice_mhi_pcie_up_callback(struct mhi_device *voice_mhi_dev,
 static void voice_mhi_pcie_down_callback(struct mhi_device *voice_mhi_dev)
 {
 	dma_addr_t iova;
-	struct device *md;
+	struct device *md = NULL;
 
 	mutex_lock(&voice_mhi_lcl.mutex);
 
