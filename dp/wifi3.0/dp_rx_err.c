@@ -599,7 +599,7 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 	if (peer) {
 		dp_verbose_debug("MPDU sw_peer_id & ast_idx is corrupted");
 		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
-				     QDF_TRACE_LEVEL_INFO);
+				     QDF_TRACE_LEVEL_DEBUG);
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer_id,
 				 1, qdf_nbuf_len(nbuf));
 		qdf_nbuf_free(nbuf);
