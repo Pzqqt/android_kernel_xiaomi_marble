@@ -364,7 +364,8 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 	unsigned long flags;
 
 	if (!handle || !buf) {
-		pr_err("APR: Wrong parameters\n");
+		pr_err("APR: Wrong parameters for %s\n",
+				!handle ? "handle" : "buf");
 		return -EINVAL;
 	}
 	if (svc->need_reset) {
