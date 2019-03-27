@@ -100,9 +100,9 @@ static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 	if (is_station_stats)
 		goto end;
 
+	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_CONNECTION_TX_POWER);
 	if (last_req.u.get_tx_power_cb)
 		last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_CONNECTION_TX_POWER);
 
 end:
 	if (vdev)
