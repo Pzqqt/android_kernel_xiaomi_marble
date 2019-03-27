@@ -504,7 +504,6 @@ struct sap_config {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	uint32_t auto_channel_select_weight;
 	struct sap_acs_cfg acs_cfg;
 	uint16_t probeRespIEsBufferLen;
 	/* buffer for addn ies comes from hostapd */
@@ -527,7 +526,6 @@ struct sap_config {
 	struct hdd_channel_info *channel_info;
 	uint32_t channel_info_count;
 	bool dfs_cac_offload;
-	uint16_t reduced_beacon_interval;
 };
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -1132,8 +1130,22 @@ wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 			       bool sap_channel_avoidance);
 #endif
 
-QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
-		uint8_t dfs_Preferred_Channels_location);
+/**
+ * wlansap_set_dfs_preferred_channel_location() - set dfs preferred channel
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * This API is used to set sap preferred channels location
+ * to resetrict the DFS random channel selection algorithm
+ * either Indoor/Outdoor channels only.
+ * dfs_Preferred_Channels_location :
+ *       0 - Indicates No preferred channel location restrictions
+ *       1 - Indicates SAP Indoor Channels operation only.
+ *       2 - Indicates SAP Outdoor Channels operation only.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success and error code otherwise.
+ */
+QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle);
 
 /**
  * wlansap_set_dfs_target_chnl() - Set target channel

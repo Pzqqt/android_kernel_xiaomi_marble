@@ -52,6 +52,7 @@
 #include <wlan_reg_ucfg_api.h>
 #include <wlan_cfg80211_crypto.h>
 #include <wlan_crypto_global_api.h>
+#include "cfg_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 
 #define SAP_DEBUG
@@ -519,6 +520,7 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 {
 	struct mac_context *mac;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t auto_channel_select_weight;
 
 	if (!config) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -532,14 +534,29 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 		return QDF_STATUS_E_FAULT;
 	}
 
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/* Channel selection is auto or configured */
 	psap_ctx->channel = config->channel;
 	psap_ctx->dfs_mode = config->acs_dfs_mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	psap_ctx->cc_switch_mode = config->cc_switch_mode;
 #endif
-	psap_ctx->auto_channel_select_weight =
-		 config->auto_channel_select_weight;
+	status = ucfg_mlme_get_auto_channel_weight(
+					mac->psoc,
+					&auto_channel_select_weight);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sap_err("get_auto_channel_weight failed");
+
+	psap_ctx->auto_channel_select_weight = auto_channel_select_weight;
+	sap_debug("auto_channel_select_weight %d",
+		  psap_ctx->auto_channel_select_weight);
+
 	psap_ctx->user_context = pusr_context;
 	psap_ctx->enableOverLapCh = config->enOverLapCh;
 	psap_ctx->acs_cfg = &config->acs_cfg;
@@ -558,12 +575,6 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 		config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(psap_ctx->self_mac_addr,
 		config->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
-
-	mac = sap_get_mac_context();
-	if (!mac) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
-		return QDF_STATUS_E_FAULT;
-	}
 
 	return status;
 }
@@ -668,6 +679,9 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 {
 	struct sap_sm_event sap_event;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	uint32_t auto_channel_select_weight =
+			cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
+	int reduced_beacon_interval;
 	struct mac_context *pmac = NULL;
 	int sap_chanswitch_beacon_cnt;
 	bool sap_chanswitch_mode;
@@ -681,6 +695,14 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
+
+	pmac = sap_get_mac_context();
+	if (!pmac) {
+		sap_err("Invalid MAC context");
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto fail;
+	}
+
 	sap_ctx->fsm_state = SAP_INIT;
 
 	/* Channel selection is auto or configured */
@@ -697,8 +719,17 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	sap_ctx->cc_switch_mode = config->cc_switch_mode;
 #endif
-	sap_ctx->auto_channel_select_weight =
-		 config->auto_channel_select_weight;
+
+	qdf_status = ucfg_mlme_get_auto_channel_weight(
+					pmac->psoc,
+					&auto_channel_select_weight);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		sap_err("get_auto_channel_weight failed");
+
+	sap_ctx->auto_channel_select_weight = auto_channel_select_weight;
+	sap_debug("auto_channel_select_weight %d",
+		  sap_ctx->auto_channel_select_weight);
+
 	sap_ctx->user_context = user_context;
 	sap_ctx->enableOverLapCh = config->enOverLapCh;
 	sap_ctx->acs_cfg = &config->acs_cfg;
@@ -722,12 +753,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	/* copy the configuration items to csrProfile */
 	sapconvert_to_csr_profile(config, eCSR_BSS_TYPE_INFRA_AP,
 			       &sap_ctx->csr_roamProfile);
-	pmac = sap_get_mac_context();
-	if (!pmac) {
-		sap_err("Invalid MAC context");
-		qdf_status = QDF_STATUS_E_FAULT;
-		goto fail;
-	}
 
 	/*
 	 * Set the DFS Test Mode setting
@@ -756,8 +781,16 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =
 		sap_ctx->csr_roamProfile.csrPersona;
+
+	qdf_status = ucfg_mlme_get_sap_reduces_beacon_interval(
+						pmac->psoc,
+						&reduced_beacon_interval);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		sap_err("ucfg_mlme_get_sap_reduces_beacon_interval fail");
+
 	pmac->sap.SapDfsInfo.reduced_beacon_interval =
-				config->reduced_beacon_interval;
+					reduced_beacon_interval;
+	sap_debug("reduced_beacon_interval %d", reduced_beacon_interval);
 
 	/* Copy MAC filtering settings to sap context */
 	sap_ctx->eSapMacAddrAclMode = config->SapMacaddr_acl;
@@ -1959,29 +1992,13 @@ wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 }
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-/**
- * wlansap_set_dfs_preferred_channel_location() - set dfs preferred channel
- * @mac_handle: Opaque handle to the global MAC context
- * @dfs_Preferred_Channels_location :
- *       0 - Indicates No preferred channel location restrictions
- *       1 - Indicates SAP Indoor Channels operation only.
- *       2 - Indicates SAP Outdoor Channels operation only.
- *
- * This API is used to set sap preferred channels location
- * to resetrict the DFS random channel selection algorithm
- * either Indoor/Outdoor channels only.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise.
- */
 QDF_STATUS
-wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
-					   uint8_t
-					   dfs_Preferred_Channels_location)
+wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle)
 {
 	struct mac_context *mac = NULL;
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
+	uint8_t dfs_preferred_channels_location = 0;
 
 	if (mac_handle) {
 		mac = MAC_CONTEXT(mac_handle);
@@ -1998,9 +2015,14 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 	 * restriction is currently enforeced only for
 	 * JAPAN regulatory domain.
 	 */
+	ucfg_mlme_get_pref_chan_location(mac->psoc,
+					 &dfs_preferred_channels_location);
+	sap_debug("dfs_preferred_channels_location %d",
+		  dfs_preferred_channels_location);
+
 	if (DFS_MKK_REGION == dfs_region) {
 		mac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
-			dfs_Preferred_Channels_location;
+			dfs_preferred_channels_location;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
 			  FL

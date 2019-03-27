@@ -4899,10 +4899,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool ignore_cac = 0;
 	uint8_t is_overlap_enable = 0, scc_on_dfs_chan = 0;
 	uint8_t beacon_fixed_len, indoor_chnl_marking = 0;
-	int value;
-	uint32_t auto_channel_select_weight =
-		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
-	uint8_t pref_chan_location = 0;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	bool bval = false;
@@ -5022,26 +5018,14 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	config->beacon_int = mgmt_frame->u.beacon.beacon_int;
 	config->dfs_cac_offload = hdd_ctx->dfs_cac_offload;
 
-	status = ucfg_mlme_get_auto_channel_weight(hdd_ctx->psoc,
-						   &auto_channel_select_weight);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("ucfg_mlme_get_auto_channel_weight failed, set def");
-
-	config->auto_channel_select_weight = auto_channel_select_weight;
-
 	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
 							 &is_overlap_enable);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("can't get overlap channel INI value, using default");
 	config->enOverLapCh = is_overlap_enable;
 
-	status = ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->psoc,
-							   &value);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("ucfg_mlme_get_sap_reduces_beacon_interval fail");
 	config->dtim_period = beacon->dtim_period;
 
-	config->reduced_beacon_interval = value;
 	hdd_debug("acs_mode %d", config->acs_cfg.acs_mode);
 
 	if (config->acs_cfg.acs_mode == true) {
@@ -5130,10 +5114,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			ignore_cac = 1;
 
 		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
-		ucfg_mlme_get_pref_chan_location(hdd_ctx->psoc,
-						 &pref_chan_location);
-		wlansap_set_dfs_preferred_channel_location(mac_handle,
-							   pref_chan_location);
+
+		wlansap_set_dfs_preferred_channel_location(mac_handle);
+
 		wlan_hdd_set_sap_mcc_chnl_avoid(hdd_ctx);
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 		config->countryCode[0] = hdd_ctx->reg.alpha2[0];

@@ -2541,8 +2541,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	enum policy_mgr_con_mode pm_mode;
 	QDF_STATUS qdf_status;
 	bool skip_etsi13_srd_chan = false;
-	uint32_t auto_channel_select_weight =
-		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	bool is_vendor_acs_support =
 		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
 	bool is_external_acs_policy =
@@ -2854,16 +2852,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			  ch_width, ht_enabled, vht_enabled,
 			  sap_config->acs_cfg.start_ch,
 			  sap_config->acs_cfg.end_ch);
-
-	qdf_status =
-		ucfg_mlme_get_auto_channel_weight(hdd_ctx->psoc,
-						  &auto_channel_select_weight);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		hdd_err("get_auto_channel_weight failed");
-
-	if (auto_channel_select_weight)
-		sap_config->auto_channel_select_weight =
-				auto_channel_select_weight;
 
 	sap_config->acs_cfg.is_ht_enabled = ht_enabled;
 	sap_config->acs_cfg.is_vht_enabled = vht_enabled;
