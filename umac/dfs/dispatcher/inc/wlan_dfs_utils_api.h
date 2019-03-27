@@ -510,6 +510,17 @@ static inline bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
 {
 	return wlan_reg_is_dfs_ch(pdev, chan);
 }
+
+/**
+ * utils_is_dfs_cfreq2_ch() - is channel dfs cfreq2.
+ * @pdev: pdev handler.
+ *
+ * is channel dfs.
+ *
+ * Return: True if channel dfs cfreq2, else false.
+ */
+bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev);
+
 /**
  * utils_dfs_reg_update_nol_ch() - set nol channel
  *

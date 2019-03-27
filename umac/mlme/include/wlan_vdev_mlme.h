@@ -118,7 +118,6 @@ struct vdev_mlme_proto_bss_color {
  * @implicit_bf: Implicit BF support
  * @sounding_dimension: Beamformer number of sounding dimension
  * @bfee_sts_cap: beam formee STA capability
- * @en_2gvht: 256 qam status
  * @allow_vht: vht capability status
  */
 struct vdev_mlme_vht_info {
@@ -130,7 +129,6 @@ struct vdev_mlme_vht_info {
 	uint8_t  implicit_bf;
 	uint8_t  sounding_dimension;
 	uint8_t  bfee_sts_cap;
-	uint8_t  en_2gvht;
 	bool     allow_vht;
 };
 
@@ -186,6 +184,7 @@ struct vdev_mlme_proto {
  * @maxpower: Max power
  * @maxregpower: max regulatory power
  * @antennamax: max antenna
+ * @reg_class_id: reg domain class id
  * @ampdu: ampdu limit
  * @amsdu: amsdu limit
  * @ssid: service set identifier
@@ -195,18 +194,8 @@ struct vdev_mlme_proto {
  * @rx_decap_type: rx decap type
  * @tx_decap_type: tx decap type
  * @disable_hw_ack: disable ha ack flag
- * @chan_flags: channel flags
- * @chan_flags_ext: extended channel flags
- * @cfreq0: channel frequency index0
- * @cfreq1: channel frequency index1
- * @dfs_set: DFS status flag
- * @dfs_set_cfreq2: DFS status channel index
- * @is_chan_passive: channel passive indication flag
- * @reg_class_id: reg domain class id
- * @is_11ax_stub_enabled: 11AX stub status indication flag
- * @nss_2g: 2G spatial streams
- * @nss_5g: 5G spatial streams
  * @bssid: bssid
+ * @phy_mode: phy mode
  */
 struct vdev_mlme_mgmt_generic {
 	uint32_t rts_threshold;
@@ -220,6 +209,7 @@ struct vdev_mlme_mgmt_generic {
 	uint8_t maxpower;
 	uint8_t maxregpower;
 	uint8_t antennamax;
+	uint8_t reg_class_id;
 	uint8_t ampdu;
 	uint8_t amsdu;
 	char ssid[WLAN_SSID_MAX_LEN + 1];
@@ -229,17 +219,6 @@ struct vdev_mlme_mgmt_generic {
 	uint8_t rx_decap_type;
 	uint8_t tx_decap_type;
 	bool disable_hw_ack;
-	uint64_t chan_flags;
-	uint16_t chan_flags_ext;
-	uint32_t cfreq1;
-	uint32_t cfreq2;
-	bool dfs_set;
-	bool dfs_set_cfreq2;
-	bool is_chan_passive;
-	uint8_t reg_class_id;
-	uint8_t is_11ax_stub_enabled;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t phy_mode;
 };

@@ -511,12 +511,6 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_BCN_TX_RATE:
 		*value = mlme_mgmt->rate_info.bcn_tx_rate;
 		break;
-	case WLAN_MLME_CFG_2G_VHT:
-		*value = mlme_proto->vht_info.en_2gvht;
-		break;
-	case WLAN_MLME_CFG_11AX_STUB:
-		*value = mlme_mgmt->generic.is_11ax_stub_enabled;
-		break;
 	default:
 		break;
 	}

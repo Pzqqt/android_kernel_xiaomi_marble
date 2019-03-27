@@ -32,6 +32,7 @@
 #include <wlan_lmac_if_api.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_dfs_tgt_api.h>
+#include <wlan_dfs_utils_api.h>
 #include <wlan_vdev_mgr_ucfg_api.h>
 
 static QDF_STATUS vdev_mgr_create_param_update(
@@ -57,8 +58,8 @@ static QDF_STATUS vdev_mgr_create_param_update(
 	mbss = &mlme_obj->mgmt.mbss_11ax;
 	param->pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	param->vdev_id = wlan_vdev_get_id(vdev);
-	param->nss_2g = mlme_obj->mgmt.generic.nss_2g;
-	param->nss_5g = mlme_obj->mgmt.generic.nss_5g;
+	param->nss_2g = mlme_obj->proto.generic.nss_2g;
+	param->nss_5g = mlme_obj->proto.generic.nss_5g;
 	param->type = mlme_obj->mgmt.generic.type;
 	param->subtype = mlme_obj->mgmt.generic.subtype;
 	param->mbssid_flags = mbss->mbssid_flags;
@@ -143,15 +144,15 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->channel.mhz = des_chan->ch_freq;
 	param->channel.half_rate = mlme_obj->mgmt.rate_info.half_rate;
 	param->channel.quarter_rate = mlme_obj->mgmt.rate_info.quarter_rate;
-	param->channel.dfs_set = mlme_obj->mgmt.generic.dfs_set;
-	param->channel.dfs_set_cfreq2 = mlme_obj->mgmt.generic.dfs_set_cfreq2;
+	param->channel.dfs_set = utils_is_dfs_ch(pdev, param->channel.chan_id);
+	param->channel.dfs_set_cfreq2 = utils_is_dfs_cfreq2_ch(pdev);
 	param->channel.is_chan_passive =
-		mlme_obj->mgmt.generic.is_chan_passive;
+		utils_is_dfs_ch(pdev, param->channel.chan_id);
 	param->channel.allow_ht = mlme_obj->proto.ht_info.allow_ht;
 	param->channel.allow_vht = mlme_obj->proto.vht_info.allow_vht;
 	param->channel.phy_mode = mlme_obj->mgmt.generic.phy_mode;
-	param->channel.cfreq1 = mlme_obj->mgmt.generic.cfreq1;
-	param->channel.cfreq2 = mlme_obj->mgmt.generic.cfreq2;
+	param->channel.cfreq1 = des_chan->ch_cfreq1;
+	param->channel.cfreq2 = des_chan->ch_cfreq2;
 	param->channel.maxpower = mlme_obj->mgmt.generic.maxpower;
 	param->channel.minpower = mlme_obj->mgmt.generic.minpower;
 	param->channel.maxregpower = mlme_obj->mgmt.generic.maxregpower;
