@@ -5006,6 +5006,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 				unsigned char name_assign_type,
 				bool rtnl_held)
 {
+	struct net_device *ndev = NULL;
 	struct hdd_adapter *adapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -5069,6 +5070,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			return NULL;
 		}
 
+		ndev = adapter->dev;
+
 		if (QDF_P2P_CLIENT_MODE == session_type)
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_CLIENT;
 		else if (QDF_P2P_DEVICE_MODE == session_type)
@@ -5125,6 +5128,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			return NULL;
 		}
 
+		ndev = adapter->dev;
+
 		adapter->wdev.iftype =
 			(session_type ==
 			 QDF_SAP_MODE) ? NL80211_IFTYPE_AP :
@@ -5164,6 +5169,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			hdd_err("Failed to allocate adapter for FTM mode");
 			return NULL;
 		}
+
+		ndev = adapter->dev;
+
 		adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 		adapter->device_mode = session_type;
 		status = hdd_register_interface(adapter, rtnl_held);
@@ -5234,7 +5242,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 err_free_netdev:
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
-	free_netdev(adapter->dev);
+
+	if (ndev)
+		free_netdev(ndev);
 
 	return NULL;
 }
