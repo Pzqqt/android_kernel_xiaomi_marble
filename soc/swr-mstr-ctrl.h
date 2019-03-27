@@ -154,6 +154,7 @@ struct swr_mstr_ctrl {
 	int wlock_holders;
 	u32 intr_mask;
 	struct port_params **port_param;
+	struct clk *lpass_core_hw_vote;
 	u8 num_usecase;
 };
 

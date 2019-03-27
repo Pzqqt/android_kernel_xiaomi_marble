@@ -1441,6 +1441,8 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 	}
 
 	mutex_lock(&swrm->reslock);
+	if (swrm->lpass_core_hw_vote)
+		clk_prepare_enable(swrm->lpass_core_hw_vote);
 	swrm_clk_request(swrm, true);
 	mutex_unlock(&swrm->reslock);
 
@@ -1608,6 +1610,8 @@ handle_irq:
 
 	mutex_lock(&swrm->reslock);
 	swrm_clk_request(swrm, false);
+	if (swrm->lpass_core_hw_vote)
+		clk_disable_unprepare(swrm->lpass_core_hw_vote);
 	mutex_unlock(&swrm->reslock);
 	swrm_unlock_sleep(swrm);
 	return ret;
@@ -1897,6 +1901,7 @@ static int swrm_probe(struct platform_device *pdev)
 	u32 i, num_ports, port_num, port_type, ch_mask;
 	u32 *temp, map_size, map_length, ch_iter = 0, old_port_num = 0;
 	int ret = 0;
+	struct clk *lpass_core_hw_vote = NULL;
 
 	/* Allocate soundwire master driver structure */
 	swrm = devm_kzalloc(&pdev->dev, sizeof(struct swr_mstr_ctrl),
@@ -2136,6 +2141,17 @@ static int swrm_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
 
+	/* Register LPASS core hw vote */
+	lpass_core_hw_vote = devm_clk_get(&pdev->dev, "lpass_core_hw_vote");
+	if (IS_ERR(lpass_core_hw_vote)) {
+		ret = PTR_ERR(lpass_core_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_core_hw_vote", ret);
+		lpass_core_hw_vote = NULL;
+		ret = 0;
+	}
+	swrm->lpass_core_hw_vote = lpass_core_hw_vote;
+
 	dbgswrm = swrm;
 	debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
 	if (!IS_ERR(debugfs_swrm_dent)) {
@@ -2236,6 +2252,12 @@ static int swrm_runtime_resume(struct device *dev)
 		__func__, swrm->state);
 	mutex_lock(&swrm->reslock);
 
+	if (swrm->lpass_core_hw_vote)
+		ret = clk_prepare_enable(swrm->lpass_core_hw_vote);
+		if (ret < 0)
+			dev_err(dev, "%s:lpass core hw enable failed\n",
+				__func__);
+
 	if ((swrm->state == SWR_MSTR_DOWN) ||
 	    (swrm->state == SWR_MSTR_SSR && swrm->dev_up)) {
 		if (swrm->clk_stop_mode0_supp) {
@@ -2272,6 +2294,8 @@ static int swrm_runtime_resume(struct device *dev)
 		swrm->state = SWR_MSTR_UP;
 	}
 exit:
+	if (swrm->lpass_core_hw_vote)
+		clk_disable_unprepare(swrm->lpass_core_hw_vote);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
 	mutex_unlock(&swrm->reslock);
 	return ret;
@@ -2292,6 +2316,12 @@ static int swrm_runtime_suspend(struct device *dev)
 	mutex_lock(&swrm->force_down_lock);
 	current_state = swrm->state;
 	mutex_unlock(&swrm->force_down_lock);
+	if (swrm->lpass_core_hw_vote)
+		ret = clk_prepare_enable(swrm->lpass_core_hw_vote);
+		if (ret < 0)
+			dev_err(dev, "%s:lpass core hw enable failed\n",
+				__func__);
+
 	if ((current_state == SWR_MSTR_UP) ||
 	    (current_state == SWR_MSTR_SSR)) {
 
@@ -2337,6 +2367,8 @@ static int swrm_runtime_suspend(struct device *dev)
 	if (current_state != SWR_MSTR_SSR)
 		swrm->state = SWR_MSTR_DOWN;
 exit:
+	if (swrm->lpass_core_hw_vote)
+		clk_disable_unprepare(swrm->lpass_core_hw_vote);
 	mutex_unlock(&swrm->reslock);
 	return ret;
 }
