@@ -368,8 +368,10 @@ QDF_STATUS wlan_mlme_get_auto_channel_weight(struct wlan_objmgr_psoc *psoc,
 {
 	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
 
-	if (!mlme_obj)
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	*value = mlme_obj->cfg.acs.auto_channel_select_weight;
 	return QDF_STATUS_SUCCESS;
@@ -1787,8 +1789,10 @@ QDF_STATUS wlan_mlme_get_sap_reduced_beacon_interval(struct wlan_objmgr_psoc
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
 	mlme_obj = mlme_get_psoc_obj(psoc);
-	if (!mlme_obj)
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_REDUCED_BEACON_INTERVAL);
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	*value = mlme_obj->cfg.sap_cfg.reduced_beacon_interval;
 
