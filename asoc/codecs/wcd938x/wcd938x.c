@@ -532,6 +532,8 @@ static int wcd938x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_COMP_CTL_0, 0x02, 0x02);
 		/* 5 msec delay as per HW requirement */
 		usleep_range(5000, 5010);
+		snd_soc_component_update_bits(component, WCD938X_FLYBACK_EN,
+				0x04, 0x00);
 		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
 			     WCD_CLSH_EVENT_PRE_DAC,
 			     WCD_CLSH_STATE_EAR,
@@ -824,6 +826,8 @@ static int wcd938x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_EAR,
 			     hph_mode);
+		snd_soc_component_update_bits(component, WCD938X_FLYBACK_EN,
+				0x04, 0x04);
 		break;
 	};
 	return ret;
