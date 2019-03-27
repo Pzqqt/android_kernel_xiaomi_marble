@@ -5013,7 +5013,7 @@ wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 	}
 
 	if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PMKID,
-		    SIR_PMKID_LEN, roam_info->pmkid)) {
+		    PMKID_LEN, roam_info->pmkid)) {
 		hdd_err("pmkid send fail");
 		return -EINVAL;
 	}
@@ -5094,7 +5094,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 	 * with 3 extra NL message headers for each of the
 	 * aforementioned params.
 	 */
-	fils_params_len = roam_info_ptr->pmk_len + SIR_PMKID_LEN +
+	fils_params_len = roam_info_ptr->pmk_len + PMKID_LEN +
 			  sizeof(uint16_t) + (3 * NLMSG_HDRLEN);
 
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
@@ -19778,7 +19778,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 	if (is_delete)
 		return;
 
-	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, PMKID_LEN);
 	if (pmksa->pmk_len && (pmksa->pmk_len <= CSR_RSN_MAX_PMK_LEN)) {
 		qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
 		pmk_cache->pmk_len = pmksa->pmk_len;
@@ -19825,7 +19825,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 		return;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	sme_get_pmk_info(mac_handle, adapter->vdev_id, pmk_cache);
-	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, PMKID_LEN);
 }
 #endif
 
@@ -21337,7 +21337,7 @@ wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 		qdf_mem_copy(pmk_cache.BSSID.bytes, params->bssid,
 			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(pmk_cache.PMKID, params->pmkid,
-			     CSR_RSN_PMKID_SIZE);
+			     PMKID_LEN);
 		result = sme_roam_set_pmkid_cache(mac_handle, adapter->vdev_id,
 						  &pmk_cache, 1, false);
 		if (!QDF_IS_STATUS_SUCCESS(result))

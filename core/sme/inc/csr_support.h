@@ -169,7 +169,7 @@ typedef struct tagCsrRSNAuthIe {
 typedef struct tagCsrRSNPMKIe {
 	uint16_t cPMKIDs;
 	struct {
-		uint8_t PMKID[CSR_RSN_PMKID_SIZE];
+		uint8_t PMKID[PMKID_LEN];
 	} qdf_packed PMKIDList[1];
 } qdf_packed tCsrRSNPMKIe;
 

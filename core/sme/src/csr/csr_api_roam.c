@@ -14237,7 +14237,7 @@ static void csr_update_pmk_cache(struct csr_roam_session *session,
 	}
 	qdf_mem_copy(
 	    session->PmkidCacheInfo[cache_idx].PMKID,
-	    pmksa->PMKID, CSR_RSN_PMKID_SIZE);
+	    pmksa->PMKID, PMKID_LEN);
 
 	if (pmksa->pmk_len)
 		qdf_mem_copy(session->PmkidCacheInfo[cache_idx].pmk,
@@ -21499,7 +21499,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		qdf_mem_copy(roam_info->pmk, roam_synch_data->pmk,
 			     roam_synch_data->pmk_len);
 
-	qdf_mem_copy(roam_info->pmkid, roam_synch_data->pmkid, SIR_PMKID_LEN);
+	qdf_mem_copy(roam_info->pmkid, roam_synch_data->pmkid, PMKID_LEN);
 	roam_info->update_erp_next_seq_num =
 			roam_synch_data->update_erp_next_seq_num;
 	roam_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;

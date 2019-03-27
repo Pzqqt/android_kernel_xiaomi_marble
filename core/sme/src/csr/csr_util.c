@@ -3223,8 +3223,8 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 		return false;
 	session_pmkid = &session->PmkidCacheInfo[index].PMKID[0];
 	for (i = 0; i < pmkid_count; i++) {
-		if (!qdf_mem_cmp(pmkid + (i * CSR_RSN_PMKID_SIZE),
-				 session_pmkid, CSR_RSN_PMKID_SIZE))
+		if (!qdf_mem_cmp(pmkid + (i * PMKID_LEN),
+				 session_pmkid, PMKID_LEN))
 			return true;
 	}
 
@@ -3720,7 +3720,7 @@ static bool csr_lookup_pmkid(struct mac_context *mac, uint32_t sessionId,
 
 	qdf_mem_copy(pmk_cache->PMKID,
 		     pSession->PmkidCacheInfo[Index].PMKID,
-		     CSR_RSN_PMKID_SIZE);
+		     PMKID_LEN);
 
 	qdf_mem_copy(pmk_cache->pmk,
 		     pSession->PmkidCacheInfo[Index].pmk,
@@ -3786,7 +3786,7 @@ static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
 	qdf_mem_copy(profile->fils_con_info->pmk,
 			pmkid_cache->pmk, pmkid_cache->pmk_len);
 	qdf_mem_copy(profile->fils_con_info->pmkid,
-		pmkid_cache->PMKID, CSR_RSN_PMKID_SIZE);
+		pmkid_cache->PMKID, PMKID_LEN);
 
 }
 #else
@@ -4004,7 +4004,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 				   pmkid_cache.pmk, pmkid_cache.pmk_len);
 			qdf_mem_copy(pPMK->PMKIDList[0].PMKID,
 				     pmkid_cache.PMKID,
-				     CSR_RSN_PMKID_SIZE);
+				     PMKID_LEN);
 
 			/*
 			 * If a PMK cache is found for the BSSID, then
@@ -4029,7 +4029,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			(RSNCapabilities.MFPCapable && pProfile->MFPCapable)) {
 			pGroupMgmtCipherSuite =
 				(uint8_t *) pPMK + sizeof(uint16_t) +
-				(pPMK->cPMKIDs * CSR_RSN_PMKID_SIZE);
+				(pPMK->cPMKIDs * PMKID_LEN);
 			qdf_mem_copy(pGroupMgmtCipherSuite,
 				     gp_mgmt_cipher_suite, CSR_RSN_OUI_SIZE);
 		}
@@ -4050,7 +4050,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 		if (pPMK->cPMKIDs)
 			pRSNIe->IeHeader.Length += (uint8_t) (sizeof(uint16_t) +
 							      (pPMK->cPMKIDs *
-							CSR_RSN_PMKID_SIZE));
+							PMKID_LEN));
 #ifdef WLAN_FEATURE_11W
 		if (pProfile->MFPEnabled &&
 			(RSNCapabilities.MFPCapable && pProfile->MFPCapable)) {

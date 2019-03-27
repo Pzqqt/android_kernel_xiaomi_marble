@@ -2288,7 +2288,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 			     fils_info->pmk_len);
 
 		qdf_mem_copy(roam_synch_ind_ptr->pmkid, fils_info->pmkid,
-			     SIR_PMKID_LEN);
+			     PMKID_LEN);
 
 		roam_synch_ind_ptr->update_erp_next_seq_num =
 				fils_info->update_erp_next_seq_num;

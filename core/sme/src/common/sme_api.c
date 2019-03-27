@@ -13819,9 +13819,9 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 	else
 		pmk_cache->action_flag = WMI_PMK_CACHE_ACTION_FLAG_DEL_ENTRY;
 
-	pmk_cache->pmkid_len = CSR_RSN_PMKID_SIZE;
+	pmk_cache->pmkid_len = PMKID_LEN;
 	qdf_mem_copy(pmk_cache->pmkid, pmk_cache_info->PMKID,
-		     CSR_RSN_PMKID_SIZE);
+		     PMKID_LEN);
 
 	pmk_cache->pmk_len = pmk_cache_info->pmk_len;
 	qdf_mem_copy(pmk_cache->pmk, pmk_cache_info->pmk,

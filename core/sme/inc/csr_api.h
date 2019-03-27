@@ -173,7 +173,6 @@ typedef enum {
 	eCSR_INI_CHANNEL_BONDING_STATE_MAX = 11
 } eIniChanBondState;
 
-#define CSR_RSN_PMKID_SIZE          16
 #define CSR_RSN_MAX_PMK_LEN         48
 #define CSR_MAX_PMKID_ALLOWED       32
 #define CSR_TKIP_KEY_LEN            32
@@ -696,7 +695,7 @@ typedef struct tagPmkidCandidateInfo {
 
 typedef struct tagPmkidCacheInfo {
 	struct qdf_mac_addr BSSID;
-	uint8_t PMKID[CSR_RSN_PMKID_SIZE];
+	uint8_t PMKID[PMKID_LEN];
 	uint8_t pmk[CSR_RSN_MAX_PMK_LEN];
 	uint8_t pmk_len;
 	uint8_t ssid_len;
@@ -1134,7 +1133,7 @@ struct csr_roam_info {
 	uint8_t kek_len;
 	uint32_t pmk_len;
 	uint8_t pmk[SIR_PMK_LEN];
-	uint8_t pmkid[SIR_PMKID_LEN];
+	uint8_t pmkid[PMKID_LEN];
 	bool update_erp_next_seq_num;
 	uint16_t next_erp_seq_num;
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
