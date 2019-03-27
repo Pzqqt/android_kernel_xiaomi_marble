@@ -3309,6 +3309,42 @@ bool wlan_crypto_peer_has_mcastcipher(struct wlan_objmgr_peer *peer,
 }
 qdf_export_symbol(wlan_crypto_peer_has_mcastcipher);
 
+/**
+ * wlan_crypto_vdev_has_mgmtcipher - check mgmtcipher for vdev
+ * @vdev: vdev
+ * @mgmtcipher: mgmtcipher to be checked
+ *
+ * This function checks any one of mgmtciphers are supported by vdev or not.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_has_mgmtcipher(struct wlan_objmgr_vdev *vdev,
+				     uint32_t mgmtcipher)
+{
+	return (wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER)
+			& mgmtcipher) != 0;
+}
+
+qdf_export_symbol(wlan_crypto_vdev_has_mgmtcipher);
+
+/**
+ * wlan_crypto_peer_has_mgmtcipher - check mgmtcipher for peer
+ * @peer: peer
+ * @mgmtcipher: mgmtcipher to be checked
+ *
+ * This function checks any one of mgmtciphers are supported by peer or not
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_peer_has_mgmtcipher(struct wlan_objmgr_peer *peer,
+				     uint32_t mgmtcipher)
+{
+	return (wlan_crypto_get_peer_param(peer, WLAN_CRYPTO_PARAM_MGMT_CIPHER)
+			& mgmtcipher) != 0;
+}
+
+qdf_export_symbol(wlan_crypto_peer_has_mgmtcipher);
+
 uint8_t wlan_crypto_get_peer_fils_aead(struct wlan_objmgr_peer *peer)
 {
 	struct wlan_crypto_comp_priv *crypto_priv = NULL;
