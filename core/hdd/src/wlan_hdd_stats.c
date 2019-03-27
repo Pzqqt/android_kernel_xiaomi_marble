@@ -237,6 +237,47 @@ static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
 }
 
 /**
+ * put_wifi_peer_rates() - put wifi peer rate info
+ * @stats: Pointer to stats context
+ * @vendor_event: Pointer to vendor event
+ *
+ * Return: bool
+ */
+static bool put_wifi_peer_rates(tpSirWifiPeerInfo stats,
+				struct sk_buff *vendor_event)
+{
+	uint32_t i;
+	tpSirWifiRateStat rate_stat;
+	int nest_id;
+	struct nlattr *info;
+	struct nlattr *rates;
+
+	/* no rates is ok */
+	if (!stats->numRate)
+		return true;
+
+	nest_id = QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_RATE_INFO;
+	info = nla_nest_start(vendor_event, nest_id);
+	if (!info)
+		return false;
+
+	for (i = 0; i < stats->numRate; i++) {
+		rates = nla_nest_start(vendor_event, i);
+		if (!rates)
+			return false;
+		rate_stat = &stats->rateStats[i];
+		if (!put_wifi_rate_stat(rate_stat, vendor_event)) {
+			hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+			return false;
+		}
+		nla_nest_end(vendor_event, rates);
+	}
+	nla_nest_end(vendor_event, info);
+
+	return true;
+}
+
+/**
  * put_wifi_peer_info() - put wifi peer info
  * @stats: Pointer to stats context
  * @vendor_event: Pointer to vendor event
@@ -246,56 +287,23 @@ static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
 static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 			       struct sk_buff *vendor_event)
 {
-	u32 i = 0;
-	tpSirWifiRateStat rate_stat;
-
-	if (nla_put_u32
-		    (vendor_event, QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_TYPE,
-		    wmi_to_sir_peer_type(stats->type)) ||
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_TYPE,
+			wmi_to_sir_peer_type(stats->type)) ||
 	    nla_put(vendor_event,
 		       QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_MAC_ADDRESS,
 		       QDF_MAC_ADDR_SIZE, &stats->peerMacAddress.bytes[0]) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_CAPABILITIES,
-			   stats->capabilities) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_CAPABILITIES,
+			stats->capabilities) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_NUM_RATES,
-			   stats->numRate)) {
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_NUM_RATES,
+			stats->numRate)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
-		goto error;
+		return false;
 	}
 
-	if (stats->numRate) {
-		struct nlattr *rateInfo;
-		struct nlattr *rates;
-
-		rateInfo = nla_nest_start(vendor_event,
-					  QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_RATE_INFO);
-		if (!rateInfo)
-			goto error;
-
-		for (i = 0; i < stats->numRate; i++) {
-			rate_stat = (tpSirWifiRateStat) ((uint8_t *)
-							  stats->rateStats +
-							  (i *
-							   sizeof
-							   (tSirWifiRateStat)));
-			rates = nla_nest_start(vendor_event, i);
-			if (!rates)
-				goto error;
-
-			if (!put_wifi_rate_stat(rate_stat, vendor_event)) {
-				hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
-				return false;
-			}
-			nla_nest_end(vendor_event, rates);
-		}
-		nla_nest_end(vendor_event, rateInfo);
-	}
-
-	return true;
-error:
-	return false;
+	return put_wifi_peer_rates(stats, vendor_event);
 }
 
 /**
