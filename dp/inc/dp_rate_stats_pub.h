@@ -33,10 +33,11 @@
 #define WLANSTATS_RSSI_OFFSET 8
 #define WLANSTATS_RSSI_MASK 0xff
 #define WLANSTATS_RSSI_MAX 0x80
+#define INVALID_CACHE_IDX (-1)
 
 #ifndef __KERNEL__
-#define qdf_ewma_tx_lag int
-#define qdf_ewma_rx_rssi int
+#define qdf_ewma_tx_lag unsigned long
+#define qdf_ewma_rx_rssi unsigned long
 #else
 #include <cdp_txrx_cmn_struct.h>
 QDF_DECLARE_EWMA(rx_rssi, 1024, 8)
@@ -100,10 +101,10 @@ struct wlan_rx_rate_stats {
  */
 struct wlan_tx_sojourn_stats {
 	uint32_t ppdu_seq_id;
-	qdf_ewma_tx_lag avg_sojourn_msdu[WLAN_DATA_TID_MAX];
 	uint32_t sum_sojourn_msdu[WLAN_DATA_TID_MAX];
 	uint32_t num_msdus[WLAN_DATA_TID_MAX];
 	void *cookie;
+	qdf_ewma_tx_lag avg_sojourn_msdu[WLAN_DATA_TID_MAX];
 };
 
 /**

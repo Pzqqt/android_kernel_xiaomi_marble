@@ -31,7 +31,7 @@
 #error confilicting defs of min
 #endif
 
-#define DP_PEER_STATS_PRINT(fmt, ...) \
+#define PRINT(fmt, ...) \
 	do { \
 		printf(fmt, ##__VA_ARGS__); \
 		printf("\n"); \
@@ -48,83 +48,83 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 	struct wlan_rx_rate_stats *rx_stats;
 
 	rx_stats = (struct wlan_rx_rate_stats *)buffer;
-	DP_PEER_STATS_PRINT("\n......................................");
-	DP_PEER_STATS_PRINT("......................................");
-	DP_PEER_STATS_PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
-			    peer_mac[0],
-			    peer_mac[1],
-			    peer_mac[2],
-			    peer_mac[3],
-			    peer_mac[4],
-			    peer_mac[5]);
-	DP_PEER_STATS_PRINT("\tpeer cookie: %016llx\n",
-			    peer_cookie);
-	DP_PEER_STATS_PRINT("\n..............................................");
-	DP_PEER_STATS_PRINT("................................");
-	DP_PEER_STATS_PRINT("................................................");
-	DP_PEER_STATS_PRINT(".................................\n");
-	DP_PEER_STATS_PRINT("\tRx statistics:");
-	DP_PEER_STATS_PRINT(" %10s | %10s | %10s | %10s | %10s | %10s",
-			    "rate",
-			    "rix",
-			    "bytes",
-			    "msdus",
-			    "mpdus",
-			    "ppdus");
-	DP_PEER_STATS_PRINT("\t\t%10s | %10s | %10s | %10s | %10s | %10s |",
-			    "retries",
-			    "rssi",
-			    "rssi 1 p20",
-			    "rssi 1 e20",
-			    "rssi 1 e40",
-			    "rssi 1 e80");
-	DP_PEER_STATS_PRINT(" | %10s | | %10s | %10s | %10s | %10s | %10s",
-			    "rssi 2 p20",
-			    "rssi 2 e20",
-			    "rssi 2 e40",
-			    "rssi 2 e80",
-			    "rssi 3 p20",
-			    "rssi 3 e20");
-	DP_PEER_STATS_PRINT(" | %10s | %10s | %10s | %10s | %10s | %10s\n\n\n",
-			    "rssi 3 e40",
-			    "rssi 3 e80",
-			    "rssi 4 p20",
-			    "rssi 4 e20",
-			    "rssi 4 e40",
-			    "rssi 4 e80");
+	PRINT("\n......................................");
+	PRINT("......................................");
+	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
+	      peer_mac[0],
+	      peer_mac[1],
+	      peer_mac[2],
+	      peer_mac[3],
+	      peer_mac[4],
+	      peer_mac[5]);
+	PRINT("\tpeer cookie: %016llx\n", peer_cookie);
+	PRINT("\n..............................................");
+	PRINT("................................");
+	PRINT("................................................");
+	PRINT(".................................\n");
+	PRINT("\tRx statistics:");
+	PRINT(" %10s | %10s | %10s | %10s | %10s | %10s",
+	      "rate",
+	      "rix",
+	      "bytes",
+	      "msdus",
+	      "mpdus",
+	      "ppdus");
+	PRINT("\t\t%10s | %10s | %10s | %10s | %10s | %10s |",
+	      "retries",
+	      "rssi",
+	      "rssi 1 p20",
+	      "rssi 1 e20",
+	      "rssi 1 e40",
+	      "rssi 1 e80");
+	PRINT(" | %10s | | %10s | %10s | %10s | %10s | %10s",
+	      "rssi 2 p20",
+	      "rssi 2 e20",
+	      "rssi 2 e40",
+	      "rssi 2 e80",
+	      "rssi 3 p20",
+	      "rssi 3 e20");
+	PRINT(" | %10s | %10s | %10s | %10s | %10s | %10s\n\n\n",
+	      "rssi 3 e40",
+	      "rssi 3 e80",
+	      "rssi 4 p20",
+	      "rssi 4 e20",
+	      "rssi 4 e40",
+	      "rssi 4 e80");
 
 	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
-		DP_PEER_STATS_PRINT("\t\t%10u | %10u | %10u | %10u | %10u |",
-				    rx_stats->rate,
-				    rx_stats->rix,
-				    rx_stats->num_bytes,
-				    rx_stats->num_msdus,
-				    rx_stats->num_mpdus
-				     );
-		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u |",
-				    rx_stats->num_ppdus,
-				    rx_stats->num_retries,
-				    rx_stats->num_sgi,
-				    rx_stats->avg_rssi,
-				    rx_stats->avg_rssi_ant[0][0]);
-		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u |",
-				    rx_stats->avg_rssi_ant[0][1],
-				    rx_stats->avg_rssi_ant[0][2],
-				    rx_stats->avg_rssi_ant[0][3],
-				    rx_stats->avg_rssi_ant[1][0],
-				    rx_stats->avg_rssi_ant[1][1]);
-		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u |",
-				    rx_stats->avg_rssi_ant[1][2],
-				    rx_stats->avg_rssi_ant[1][3],
-				    rx_stats->avg_rssi_ant[2][0],
-				    rx_stats->avg_rssi_ant[2][1],
-				    rx_stats->avg_rssi_ant[2][2]);
-		DP_PEER_STATS_PRINT(" %10u | %10u | %10u | %10u | %10u\n\n\n",
-				    rx_stats->avg_rssi_ant[2][3],
-				    rx_stats->avg_rssi_ant[3][0],
-				    rx_stats->avg_rssi_ant[3][1],
-				    rx_stats->avg_rssi_ant[3][2],
-				    rx_stats->avg_rssi_ant[3][3]);
+		if (rx_stats->rix != INVALID_CACHE_IDX) {
+			PRINT(" %10u | %10u | %10u | %10u | %10u |",
+			      rx_stats->rate,
+			      rx_stats->rix,
+			      rx_stats->num_bytes,
+			      rx_stats->num_msdus,
+			      rx_stats->num_mpdus);
+			PRINT(" %10u | %10u | %10u | %10lu | %10lu |",
+			      rx_stats->num_ppdus,
+			      rx_stats->num_retries,
+			      rx_stats->num_sgi,
+			      rx_stats->avg_rssi,
+			      rx_stats->avg_rssi_ant[0][0]);
+			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu |",
+			      rx_stats->avg_rssi_ant[0][1],
+			      rx_stats->avg_rssi_ant[0][2],
+			      rx_stats->avg_rssi_ant[0][3],
+			      rx_stats->avg_rssi_ant[1][0],
+			      rx_stats->avg_rssi_ant[1][1]);
+			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu |",
+			      rx_stats->avg_rssi_ant[1][2],
+			      rx_stats->avg_rssi_ant[1][3],
+			      rx_stats->avg_rssi_ant[2][0],
+			      rx_stats->avg_rssi_ant[2][1],
+			      rx_stats->avg_rssi_ant[2][2]);
+			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu\n\n\n",
+			      rx_stats->avg_rssi_ant[2][3],
+			      rx_stats->avg_rssi_ant[3][0],
+			      rx_stats->avg_rssi_ant[3][1],
+			      rx_stats->avg_rssi_ant[3][2],
+			      rx_stats->avg_rssi_ant[3][3]);
+		}
 		rx_stats = rx_stats + 1;
 	}
 }
@@ -136,42 +136,38 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 {
 	uint8_t tid;
 
-	DP_PEER_STATS_PRINT("\n..........................................");
-	DP_PEER_STATS_PRINT("....................................");
-	DP_PEER_STATS_PRINT("....................................");
-	DP_PEER_STATS_PRINT(".........................................\n");
-	DP_PEER_STATS_PRINT("PEER%02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx\n",
-			    peer_mac[0],
-			    peer_mac[1],
-			    peer_mac[2],
-			    peer_mac[3],
-			    peer_mac[4],
-			    peer_mac[5]);
-	DP_PEER_STATS_PRINT("\tPEER Cookie: %016llx\n",
-			    peer_cookie);
-	DP_PEER_STATS_PRINT("\n...........................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("..................................");
-	DP_PEER_STATS_PRINT("............................................");
-	DP_PEER_STATS_PRINT("\n\tSojourn statistics:\n");
-	DP_PEER_STATS_PRINT("\t\t%10s %10s %20s %20s\n",
-			    "tid",
-			    "ave",
-			    "sum",
-			    "num");
+	PRINT("\n..........................................");
+	PRINT("....................................");
+	PRINT("....................................");
+	PRINT(".........................................\n");
+	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx\n",
+	      peer_mac[0],
+	      peer_mac[1],
+	      peer_mac[2],
+	      peer_mac[3],
+	      peer_mac[4],
+	      peer_mac[5]);
+	PRINT("\tPEER Cookie: %016llx\n", peer_cookie);
+	PRINT("\n...........................................");
+	PRINT("...................................");
+	PRINT("..................................");
+	PRINT("............................................");
+	PRINT("\n\tSojourn statistics:\n");
+	PRINT("\t\t%10s %10s %20s %20s\n", "tid", "ave", "sum", "num");
 
 	for (tid = 0; tid < WLAN_DATA_TID_MAX; tid++) {
 				/* change sum_sojourn_msdu data type to u64 */
-		DP_PEER_STATS_PRINT("\t\t%10d %10u %20u %20u\n",
-				    tid,
-				    sojourn_stats->avg_sojourn_msdu[tid],
-				    sojourn_stats->sum_sojourn_msdu[tid],
-				    sojourn_stats->num_msdus[tid]);
+		PRINT("\t\t%10d %10lu %20u %20u\n",
+		      tid,
+		      sojourn_stats->avg_sojourn_msdu[tid],
+		      sojourn_stats->sum_sojourn_msdu[tid],
+		      sojourn_stats->num_msdus[tid]);
 	}
-	DP_PEER_STATS_PRINT("\n...........................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...........................................\n");
+	PRINT("sizeof(avg): %d", sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
+	PRINT("\n...........................................");
+	PRINT("...................................");
+	PRINT("...................................");
+	PRINT("...........................................\n");
 }
 
 static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
@@ -186,46 +182,49 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	if (buffer_len < (WLANSTATS_CACHE_SIZE *
 			  sizeof(struct wlan_tx_rate_stats))
 			  + sizeof(struct wlan_tx_sojourn_stats)) {
-		DP_PEER_STATS_PRINT("invalid buffer len, return");
+		PRINT("invalid buffer len, return");
 		return;
 	}
 	tx_stats = (struct wlan_tx_rate_stats *)buffer;
-	DP_PEER_STATS_PRINT("\n...........................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...........................................\n");
-	DP_PEER_STATS_PRINT("PEER%02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx\n\n",
-			    peer_mac[0],
-			    peer_mac[1],
-			    peer_mac[2],
-			    peer_mac[3],
-			    peer_mac[4],
-			    peer_mac[5]);
-	DP_PEER_STATS_PRINT("\tPEER Cookie: %016llx",
-			    peer_cookie);
-	DP_PEER_STATS_PRINT("\n...........................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...................................");
-	DP_PEER_STATS_PRINT("...........................................\n");
-	DP_PEER_STATS_PRINT("\tTx statistics:\n");
-	DP_PEER_STATS_PRINT("\t\t%10s | %10s | %10s | %10s | %10s",
-			    "rate",
-			    "rix",
-			    "attempts",
-			    "success",
-			    "ppdus");
+	PRINT("\n...........................................");
+	PRINT("...................................");
+	PRINT("...................................");
+	PRINT("...........................................\n");
+	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx\n\n",
+	      peer_mac[0],
+	      peer_mac[1],
+	      peer_mac[2],
+	      peer_mac[3],
+	      peer_mac[4],
+	      peer_mac[5]);
+	PRINT("\tPEER Cookie: %016llx", peer_cookie);
+	PRINT("\n...........................................");
+	PRINT("...................................");
+	PRINT("...................................");
+	PRINT("...........................................\n");
+	PRINT("\tTx statistics:\n");
+	PRINT("\t\t%10s | %10s | %10s | %10s | %10s",
+	      "rate",
+	      "rix",
+	      "attempts",
+	      "success",
+	      "ppdus");
+
 	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
-		DP_PEER_STATS_PRINT("\t\t%10u | %10u | %10u | %10u | %10u\n",
-				    tx_stats->rate,
-				    tx_stats->rix,
-				    tx_stats->mpdu_attempts,
-				    tx_stats->mpdu_success,
-				    tx_stats->num_ppdus);
+		if (tx_stats->rix != INVALID_CACHE_IDX) {
+			PRINT("\t\t%10u | %10u | %10u | %10u | %10u\n",
+			      tx_stats->rate,
+			      tx_stats->rix,
+			      tx_stats->mpdu_attempts,
+			      tx_stats->mpdu_success,
+			      tx_stats->num_ppdus);
+		}
 		tx_stats = tx_stats + 1;
 	}
 
-	sojourn_stats = buffer + (WLANSTATS_CACHE_SIZE *
-				  sizeof(struct wlan_tx_rate_stats));
+	sojourn_stats = (struct wlan_tx_sojourn_stats *)((uint8_t *)buffer
+			 + (WLANSTATS_CACHE_SIZE *
+			 sizeof(struct wlan_tx_rate_stats)));
 	dp_peer_tx_sojourn_stats_print(peer_mac, peer_cookie, sojourn_stats);
 
 	return;
@@ -275,20 +274,20 @@ dp_peer_stats_event_callback(char *ifname,
 
 	if (nla_parse(tb_array, QCA_WLAN_VENDOR_ATTR_PEER_STATS_CACHE_MAX,
 		      (struct nlattr *)data, len, NULL)) {
-		printf("INVALID EVENT\n");
+		PRINT("Invalid event\n");
 		return;
 	}
 
 	tb = tb_array[QCA_WLAN_VENDOR_ATTR_PEER_STATS_CACHE_TYPE];
 	if (!tb) {
-		printf("#############%s:%d\n", __func__, __LINE__);
+		PRINT("Cache type in NULL, return");
 		return;
 	}
 	cache_type = nla_get_u32(tb);
 
 	tb = tb_array[QCA_WLAN_VENDOR_ATTR_PEER_STATS_CACHE_PEER_MAC];
 	if (!tb) {
-		printf("#############%s:%d\n", __func__, __LINE__);
+		PRINT("Peer mac addr is null, return");
 		return;
 	}
 	peer_mac = (uint8_t *)nla_data(tb);
@@ -301,12 +300,12 @@ dp_peer_stats_event_callback(char *ifname,
 
 	tb = tb_array[QCA_WLAN_VENDOR_ATTR_PEER_STATS_CACHE_PEER_COOKIE];
 	if (!tb) {
-		printf("#############%s:%d\n", __func__, __LINE__);
+		PRINT("peer cookie attribute is null, return");
 		return;
 	}
 	peer_cookie = nla_get_u64(tb);
 	if (!buffer) {
-		printf("#############%s:%d\n", __func__, __LINE__);
+		PRINT(" stats buffer is null, return");
 		return;
 	}
 
