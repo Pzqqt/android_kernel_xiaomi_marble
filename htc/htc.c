@@ -575,8 +575,19 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			break;
 		}
 
-		target->TotalTransmitCredits =
-			HTC_GET_FIELD(rdy_msg, HTC_READY_MSG, CREDITCOUNT);
+		target->TotalTransmitCredits = HTC_GET_FIELD(rdy_msg,
+						HTC_READY_MSG, CREDITCOUNT);
+		if (target->HTCInitInfo.cfg_wmi_credit_cnt &&
+			(target->HTCInitInfo.cfg_wmi_credit_cnt <
+						target->TotalTransmitCredits))
+			/*
+			 * If INI configured value is less than FW advertised,
+			 * then use INI configured value, otherwise use FW
+			 * advertised.
+			 */
+			target->TotalTransmitCredits =
+				target->HTCInitInfo.cfg_wmi_credit_cnt;
+
 		target->TargetCreditSize =
 			(int)HTC_GET_FIELD(rdy_msg, HTC_READY_MSG, CREDITSIZE);
 		target->MaxMsgsPerHTCBundle =
