@@ -915,6 +915,32 @@
 #define CFG_DP_ENABLE_NUD_TRACKING_ALL
 #endif
 
+/*
+ * <ini>
+ * gWmiCreditCount - Credit count for WMI exchange
+ * @0: Not allowed
+ * @1: Serialize WMI commands, 1 command at a time
+ * @Default: 2: As advertized by FW
+ *
+ * This ini is used to serialize the WMI commandsif required.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#define WLAN_CFG_WMI_CREDIT_DEFAULT	0
+#define WLAN_CFG_WMI_CREDIT_MIN		1
+#define WLAN_CFG_WMI_CREDIT_MAX		2
+
+#define CFG_DP_HTC_WMI_CREDIT_CNT \
+		CFG_INI_UINT("gWmiCreditCount", \
+		 WLAN_CFG_WMI_CREDIT_MIN, \
+		 WLAN_CFG_WMI_CREDIT_MAX, \
+		 WLAN_CFG_WMI_CREDIT_DEFAULT, \
+		 CFG_VALUE_OR_DEFAULT, "WMI HTC CREDIT COUNT")
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define CFG_HDD_DP_LEGACY_TX_FLOW \
 	CFG(CFG_DP_LL_TX_FLOW_LWM) \
@@ -959,6 +985,7 @@
 	CFG(CFG_DP_FILTER_MULTICAST_REPLAY) \
 	CFG(CFG_DP_RX_WAKELOCK_TIMEOUT) \
 	CFG(CFG_DP_NUM_DP_RX_THREADS) \
+	CFG(CFG_DP_HTC_WMI_CREDIT_CNT) \
 	CFG_DP_ENABLE_FASTPATH_ALL \
 	CFG_HDD_DP_MSM_PLATFORM \
 	CFG_HDD_DP_LEGACY_TX_FLOW \

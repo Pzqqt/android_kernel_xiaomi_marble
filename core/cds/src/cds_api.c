@@ -556,6 +556,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		ucfg_pmo_psoc_target_suspend_acknowledge;
 	htcInfo.target_initial_wakeup_cb = ucfg_pmo_psoc_handle_initial_wake_up;
 	htcInfo.target_psoc = (void *)psoc;
+	htcInfo.cfg_wmi_credit_cnt = hdd_ctx->config->cfg_wmi_credit_cnt;
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
