@@ -681,16 +681,20 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	qdf_ether_header_t *eh;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
-			hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr));
+				hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr));
 	qdf_nbuf_set_rx_chfrag_end(nbuf,
-			hal_rx_msdu_end_last_msdu_get(rx_tlv_hdr));
+				   hal_rx_msdu_end_last_msdu_get(rx_tlv_hdr));
+	qdf_nbuf_set_da_mcbc(nbuf, hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr));
+	qdf_nbuf_set_da_valid(nbuf,
+			      hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr));
+	qdf_nbuf_set_sa_valid(nbuf,
+			      hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr));
 
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
-
-	if (!qdf_nbuf_get_ext_list(nbuf)) {
+	if (qdf_likely(!qdf_nbuf_is_frag(nbuf))) {
 		if (dp_rx_null_q_check_pkt_len_exception(soc, pkt_len))
 			goto drop_nbuf;
 
@@ -749,7 +753,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 * Advance the packet start pointer by total size of
 	 * pre-header TLV's
 	 */
-	if (qdf_nbuf_get_ext_list(nbuf))
+	if (qdf_nbuf_is_frag(nbuf))
 		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
 	else
 		qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
@@ -778,8 +782,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		goto drop_nbuf;
 	}
 
-	if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer,
-				hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+	if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 		dp_err_rl("mcast Policy Check Drop pkt");
 		goto drop_nbuf;
 	}

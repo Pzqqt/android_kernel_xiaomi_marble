@@ -1236,7 +1236,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 					uint8_t *rx_tlv_hdr);
 
 int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr, struct dp_vdev *vdev,
-				struct dp_peer *peer, int rx_mcast);
+			   struct dp_peer *peer);
 
 qdf_nbuf_t
 dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);

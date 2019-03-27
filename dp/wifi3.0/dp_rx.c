@@ -399,8 +399,8 @@ dp_rx_da_learn(struct dp_soc *soc,
 	if (!soc->da_war_enabled)
 		return;
 
-	if (qdf_unlikely(!hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
-			 !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+	if (qdf_unlikely(!qdf_nbuf_is_da_valid(nbuf) &&
+			 !qdf_nbuf_is_da_mcbc(nbuf))) {
 		dp_peer_add_ast(soc,
 				ta_peer,
 				qdf_nbuf_data(nbuf),
@@ -436,6 +436,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 {
 	uint16_t da_idx;
 	uint16_t len;
+	uint8_t is_frag;
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
@@ -448,8 +449,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 * belong to the same vap and destination peer is not bss peer.
 	 */
 
-	if ((hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
-	   !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+	if ((qdf_nbuf_is_da_valid(nbuf) && !qdf_nbuf_is_da_mcbc(nbuf))) {
 		da_idx = hal_rx_msdu_end_da_idx_get(soc->hal_soc, rx_tlv_hdr);
 
 		ast_entry = soc->ast_table[da_idx];
@@ -473,13 +473,14 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			return false;
 
 		if (da_peer->vdev == ta_peer->vdev && !da_peer->bss_peer) {
+			len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
+			is_frag = qdf_nbuf_is_frag(nbuf);
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
-			len = qdf_nbuf_len(nbuf);
 
 			/* linearize the nbuf just before we send to
 			 * dp_tx_send()
 			 */
-			if (qdf_unlikely(qdf_nbuf_get_ext_list(nbuf))) {
+			if (qdf_unlikely(is_frag)) {
 				if (qdf_nbuf_linearize(nbuf) == -ENOMEM)
 					return false;
 
@@ -519,13 +520,14 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 * like igmpsnoop decide whether to forward or not with
 	 * Mcast enhancement.
 	 */
-	else if (qdf_unlikely((hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
-		!ta_peer->bss_peer))) {
+	else if (qdf_unlikely((qdf_nbuf_is_da_mcbc(nbuf) &&
+			       !ta_peer->bss_peer))) {
 		nbuf_copy = qdf_nbuf_copy(nbuf);
 		if (!nbuf_copy)
 			return false;
+
+		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
-		len = qdf_nbuf_len(nbuf_copy);
 
 		if (dp_tx_send(ta_peer->vdev, nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
@@ -1401,7 +1403,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	DP_STATS_INCC(peer, rx.amsdu_cnt, 1, !is_not_amsdu);
 
 	tid_stats->msdu_cnt++;
-	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
+	if (qdf_unlikely(qdf_nbuf_is_da_mcbc(nbuf) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
@@ -1488,12 +1490,13 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 }
 
 static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
-				      void *rx_tlv_hdr)
+				      void *rx_tlv_hdr,
+				      qdf_nbuf_t nbuf)
 {
-	if ((hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr) &&
+	if ((qdf_nbuf_is_sa_valid(nbuf) &&
 	     (hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr) >
 		wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) ||
-	    (hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
+	    (qdf_nbuf_is_da_valid(nbuf) &&
 	     (hal_rx_msdu_end_da_idx_get(soc->hal_soc,
 					 rx_tlv_hdr) >
 	      wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))))
@@ -1503,16 +1506,14 @@ static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
 }
 
 #ifdef WDS_VENDOR_EXTENSION
-int dp_wds_rx_policy_check(
-		uint8_t *rx_tlv_hdr,
-		struct dp_vdev *vdev,
-		struct dp_peer *peer,
-		int rx_mcast
-		)
+int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
+			   struct dp_vdev *vdev,
+			   struct dp_peer *peer)
 {
 	struct dp_peer *bss_peer;
 	int fr_ds, to_ds, rx_3addr, rx_4addr;
 	int rx_policy_ucast, rx_policy_mcast;
+	int rx_mcast = hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr);
 
 	if (vdev->opmode == wlan_op_mode_ap) {
 		TAILQ_FOREACH(bss_peer, &vdev->peer_list, peer_list_elem) {
@@ -1583,12 +1584,9 @@ int dp_wds_rx_policy_check(
 	return 0;
 }
 #else
-int dp_wds_rx_policy_check(
-		uint8_t *rx_tlv_hdr,
-		struct dp_vdev *vdev,
-		struct dp_peer *peer,
-		int rx_mcast
-		)
+int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
+			   struct dp_vdev *vdev,
+			   struct dp_peer *peer)
 {
 	return 1;
 }
@@ -1786,15 +1784,20 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		/* Get MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
 
-		hal_rx_mpdu_peer_meta_data_set(qdf_nbuf_data(rx_desc->nbuf),
-						mpdu_desc_info.peer_meta_data);
+		peer_mdata = mpdu_desc_info.peer_meta_data;
+		QDF_NBUF_CB_RX_PEER_ID(rx_desc->nbuf) =
+			DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 
 		/* Get MSDU DESC info */
 		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
 
 		/*
 		 * save msdu flags first, last and continuation msdu in
-		 * nbuf->cb
+		 * nbuf->cb, also save mcbc, is_da_valid, is_sa_valid and
+		 * length to nbuf->cb. This ensures the info required for
+		 * per pkt processing is always in the same cache line.
+		 * This helps in improving throughput for smaller pkt
+		 * sizes.
 		 */
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_FIRST_MSDU_IN_MPDU)
 			qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
@@ -1805,7 +1808,19 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
 			qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
 
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_DA_IS_MCBC)
+			qdf_nbuf_set_da_mcbc(rx_desc->nbuf, 1);
+
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_DA_IS_VALID)
+			qdf_nbuf_set_da_valid(rx_desc->nbuf, 1);
+
+		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_SA_IS_VALID)
+			qdf_nbuf_set_sa_valid(rx_desc->nbuf, 1);
+
+		QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_desc_info.msdu_len;
+
 		QDF_NBUF_CB_RX_CTX_ID(rx_desc->nbuf) = reo_ring_num;
+
 		DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, rx_desc->nbuf);
 
 		/*
@@ -1882,7 +1897,7 @@ done:
 			continue;
 		}
 
-		peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
+		peer_mdata =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 		peer = dp_peer_find_by_id(soc, peer_id);
 
@@ -1907,7 +1922,7 @@ done:
 			vdev = peer->vdev;
 		} else {
 			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
-					 qdf_nbuf_len(nbuf));
+					 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
 			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
@@ -1949,23 +1964,33 @@ done:
 		 * This is the most likely case, we receive 802.3 pkts
 		 * decapsulated by HW, here we need to set the pkt length.
 		 */
-		if (qdf_unlikely(qdf_nbuf_get_ext_list(nbuf)))
+		if (qdf_unlikely(qdf_nbuf_is_frag(nbuf))) {
+			bool is_mcbc, is_sa_vld, is_da_vld;
+
+			is_mcbc = hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr);
+			is_sa_vld = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
+			is_da_vld = hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr);
+
+			qdf_nbuf_set_da_mcbc(nbuf, is_mcbc);
+			qdf_nbuf_set_da_valid(nbuf, is_da_vld);
+			qdf_nbuf_set_sa_valid(nbuf, is_sa_vld);
+
 			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+		}
 		else if (qdf_unlikely(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_raw)) {
-			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			nbuf = dp_rx_sg_create(nbuf, rx_tlv_hdr);
 
 			DP_STATS_INC(vdev->pdev, rx_raw_pkts, 1);
-			DP_STATS_INC_PKT(peer, rx.raw, 1,
-					 msdu_len);
+			DP_STATS_INC_PKT(peer, rx.raw, 1, msdu_len);
 
 			next = nbuf->next;
 		} else {
 			l2_hdr_offset =
 				hal_rx_msdu_end_l3_hdr_padding_get(rx_tlv_hdr);
 
-			msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
@@ -1974,8 +1999,7 @@ done:
 					   l2_hdr_offset);
 		}
 
-		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer,
-				hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("Policy Check Drop pkt"));
@@ -2003,9 +2027,10 @@ done:
 			continue;
 		}
 
-		if (qdf_unlikely(peer && (peer->nawds_enabled == true) &&
-			(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr)) &&
-			(hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) == false))) {
+		if (qdf_unlikely(peer && (peer->nawds_enabled) &&
+				 (qdf_nbuf_is_da_mcbc(nbuf)) &&
+				 (hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) ==
+				  false))) {
 			tid_stats->fail_cnt[NAWDS_MCAST_DROP]++;
 			DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 			qdf_nbuf_free(nbuf);
@@ -2014,23 +2039,14 @@ done:
 			continue;
 		}
 
-		dp_rx_cksum_offload(vdev->pdev, nbuf, rx_tlv_hdr);
+		if (soc->process_rx_status)
+			dp_rx_cksum_offload(vdev->pdev, nbuf, rx_tlv_hdr);
 
 		dp_set_rx_queue(nbuf, ring_id);
 
 		/* Update the protocol tag in SKB based on CCE metadata */
 		dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
 					  reo_ring_num, false, true);
-
-		/*
-		 * HW structures call this L3 header padding --
-		 * even though this is actually the offset from
-		 * the buffer beginning where the L2 header
-		 * begins.
-		 */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			FL("rxhash: flow id toeplitz: 0x%x"),
-			hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
 
 		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer,
 					ring_id, tid_stats);
@@ -2079,7 +2095,7 @@ done:
 			 * Drop the packet if sa_idx and da_idx OOB or
 			 * sa_sw_peerid is 0
 			 */
-			if (!is_sa_da_idx_valid(soc, rx_tlv_hdr)) {
+			if (!is_sa_da_idx_valid(soc, rx_tlv_hdr, nbuf)) {
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
 				DP_STATS_INC(soc, rx.err.invalid_sa_da_idx, 1);
@@ -2110,7 +2126,7 @@ done:
 				  deliver_list_tail,
 				  nbuf);
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
-				qdf_nbuf_len(nbuf));
+				 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
 
 		tid_stats->delivered_to_stack++;
 		nbuf = next;

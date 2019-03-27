@@ -834,6 +834,7 @@ dp_rx_construct_fraglist(struct dp_peer *peer,
 
 	qdf_nbuf_append_ext_list(head, rx_nbuf, len);
 	qdf_nbuf_set_next(head, NULL);
+	qdf_nbuf_set_is_frag(head, 1);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: head len %d ext len %d data len %d ",
