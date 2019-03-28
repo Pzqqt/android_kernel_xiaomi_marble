@@ -1206,6 +1206,12 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 
 	pmo_core_update_wow_initial_wake_up(psoc_ctx, false);
 
+	/* If target was not suspended, bail out */
+	if (!pmo_tgt_is_target_suspended(psoc)) {
+		pmo_psoc_put_ref(psoc);
+		goto out;
+	}
+
 	if (wow_mode)
 		status = pmo_core_psoc_disable_wow_in_fw(psoc, psoc_ctx);
 	else

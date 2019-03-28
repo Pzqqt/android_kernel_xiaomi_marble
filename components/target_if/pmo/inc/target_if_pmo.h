@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -386,6 +386,14 @@ int target_if_pmo_psoc_get_pending_cmnds(struct wlan_objmgr_psoc *psoc);
  */
 void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 		uint8_t value);
+
+/**
+ * target_if_pmo_is_target_suspended() - get wmi target suspend flag
+ * @psoc: objmgr psoc
+ *
+ * Return: true if target suspended, false otherwise
+ */
+bool target_if_pmo_is_target_suspended(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_pmo_psoc_send_wow_enable_req() -send wow enable request
