@@ -2899,6 +2899,19 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 }
 
 /**
+ * wmi_is_target_suspended() - WMI API to check target suspend state
+ * @wmi_handle: handle to WMI.
+ *
+ * WMI API to check target suspend state
+ *
+ * Return: true if target is suspended, else false.
+ */
+bool wmi_is_target_suspended(struct wmi_unified *wmi_handle)
+{
+	return qdf_atomic_read(&wmi_handle->is_target_suspended);
+}
+
+/**
  * WMI API to set crash injection state
  * @param wmi_handle:	handle to WMI.
  * @param val:		crash injection state boolean.
