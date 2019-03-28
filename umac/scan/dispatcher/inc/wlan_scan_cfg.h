@@ -146,7 +146,7 @@
  */
 #define CFG_PASSIVE_MAX_CHANNEL_TIME CFG_INI_UINT(\
 		"gPassiveMaxChannelTime",\
-		0, 10000, MCL_OR_WIN_VALUE(100, 300),\
+		0, 10000, MCL_OR_WIN_VALUE(110, 300),\
 		CFG_VALUE_OR_DEFAULT, "passive dwell time")
 
 /*
