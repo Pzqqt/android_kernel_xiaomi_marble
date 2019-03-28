@@ -193,7 +193,7 @@ struct hdd_ll_stats_priv {
  *
  * Return: bool
  */
-static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
+static bool put_wifi_rate_stat(struct wifi_rate_stat *stats,
 			       struct sk_buff *vendor_event)
 {
 	if (nla_put_u8(vendor_event,
@@ -213,22 +213,22 @@ static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
 			stats->rate.bitrate) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_TX_MPDU,
-			   stats->txMpdu) ||
+			   stats->tx_mpdu) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RX_MPDU,
-			   stats->rxMpdu) ||
+			   stats->rx_mpdu) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_MPDU_LOST,
-			   stats->mpduLost) ||
+			   stats->mpdu_lost) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES,
 			   stats->retries) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_SHORT,
-			   stats->retriesShort) ||
+			   stats->retries_short) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_LONG,
-			   stats->retriesLong)) {
+			   stats->retries_long)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 	}
@@ -247,7 +247,7 @@ static bool put_wifi_peer_rates(tpSirWifiPeerInfo stats,
 				struct sk_buff *vendor_event)
 {
 	uint32_t i;
-	tpSirWifiRateStat rate_stat;
+	struct wifi_rate_stat *rate_stat;
 	int nest_id;
 	struct nlattr *info;
 	struct nlattr *rates;
@@ -640,10 +640,10 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	/*
 	 * Allocate a size of 4096 for the peer stats comprising
 	 * each of size = sizeof (tSirWifiPeerInfo) + numRate *
-	 * sizeof (tSirWifiRateStat).Each field is put with an
+	 * sizeof (struct wifi_rate_stat).Each field is put with an
 	 * NL attribute.The size of 4096 is considered assuming
 	 * that number of rates shall not exceed beyond 50 with
-	 * the sizeof (tSirWifiRateStat) being 32.
+	 * the sizeof (struct wifi_rate_stat) being 32.
 	 */
 	vendor_event = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
 				LL_STATS_EVENT_BUF_SIZE);
@@ -698,16 +698,10 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 				return;
 			}
 
-			peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
-							     peer_stat->
-							     peerInfo +
-							     (i *
-							      sizeof
-							      (tSirWifiPeerInfo))
-							     +
-							     (numRate *
-							      sizeof
-							      (tSirWifiRateStat)));
+			peer_info = (tpSirWifiPeerInfo)
+				((uint8_t *)peer_stat->peerInfo +
+				 (i * sizeof(tSirWifiPeerInfo)) +
+				 (numRate * sizeof(struct wifi_rate_stat)));
 			nla_nest_end(vendor_event, peers);
 		}
 		nla_nest_end(vendor_event, peerInfo);

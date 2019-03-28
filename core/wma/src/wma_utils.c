@@ -1394,7 +1394,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 
 	peer_stats_size = sizeof(tSirWifiPeerStat);
 	peer_info_size = sizeof(tSirWifiPeerInfo);
-	rate_stats_size = sizeof(tSirWifiRateStat);
+	rate_stats_size = sizeof(struct wifi_rate_stat);
 	link_stats_results_size =
 		sizeof(*link_stats_results) + peer_stats_size +
 		(fixed_param->num_peers * peer_info_size) +

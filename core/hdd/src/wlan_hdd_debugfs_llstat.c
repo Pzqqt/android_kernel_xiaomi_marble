@@ -156,7 +156,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 {
 	tpSirWifiPeerStat peer_stat;
 	tpSirWifiPeerInfo peer_info;
-	tpSirWifiRateStat rate_stat;
+	struct wifi_rate_stat *rate_stat;
 	int i, j, num_rate;
 	ssize_t len = 0;
 	uint8_t *buffer;
@@ -191,9 +191,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 
 		num_rate = peer_info->numRate;
 		for (j = 0; j < num_rate; j++) {
-			rate_stat = (tpSirWifiRateStat) ((uint8_t *)
-					peer_info->rateStats + (j *
-					sizeof(tSirWifiRateStat)));
+			rate_stat = &peer_info->rateStats[j];
 			buffer += len;
 			ll_stats.len += len;
 			len = scnprintf(buffer,
@@ -201,15 +199,15 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 				"\npreamble: %0x, nss: %0x, bw: %0x, mcs: %0x, bitrate: %0x, txmpdu: %u, rxmpdu: %u, mpdu_lost: %u, retries: %u, retries_short: %u, retries_long: %u",
 				rate_stat->rate.preamble, rate_stat->rate.nss,
 				rate_stat->rate.bw, rate_stat->rate.rateMcsIdx,
-				rate_stat->rate.bitrate, rate_stat->txMpdu,
-				rate_stat->rxMpdu, rate_stat->mpduLost,
-				rate_stat->retries, rate_stat->retriesShort,
-				rate_stat->retriesLong);
+				rate_stat->rate.bitrate, rate_stat->tx_mpdu,
+				rate_stat->rx_mpdu, rate_stat->mpdu_lost,
+				rate_stat->retries, rate_stat->retries_short,
+				rate_stat->retries_long);
 		}
 		peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
 				peer_stat->peerInfo + (i *
 				sizeof(tSirWifiPeerInfo)) +
-				(num_rate * sizeof(tSirWifiRateStat)));
+				(num_rate * sizeof(struct wifi_rate_stat)));
 	}
 	ll_stats.len += len;
 	mutex_unlock(&llstats_mutex);

@@ -3671,23 +3671,25 @@ typedef struct {
 	tSirWifiChannelStats *channels;
 } tSirWifiRadioStat, *tpSirWifiRadioStat;
 
-/* per rate statistics */
-typedef struct {
-	/* rate information */
+/**
+ * struct wifi_rate_stat - per rate statistics
+ * @rate: rate information
+ * @tx_mpdu: number of successfully transmitted data pkts (ACK rcvd)
+ * @rx_mpdu: number of received data pkts
+ * @mpdu_lost: number of data packet losses (no ACK)
+ * @retries: total number of data pkt retries *
+ * @retries_short: number of short data pkt retries
+ * @retries_long: number of long data pkt retries
+ */
+struct wifi_rate_stat {
 	tSirWifiRate rate;
-	/* number of successfully transmitted data pkts (ACK rcvd) */
-	uint32_t txMpdu;
-	/* number of received data pkts */
-	uint32_t rxMpdu;
-	/* number of data packet losses (no ACK) */
-	uint32_t mpduLost;
-	/* total number of data pkt retries * */
+	uint32_t tx_mpdu;
+	uint32_t rx_mpdu;
+	uint32_t mpdu_lost;
 	uint32_t retries;
-	/* number of short data pkt retries */
-	uint32_t retriesShort;
-	/* number of long data pkt retries */
-	uint32_t retriesLong;
-} tSirWifiRateStat, *tpSirWifiRateStat;
+	uint32_t retries_short;
+	uint32_t retries_long;
+};
 
 /* wifi peer type */
 typedef enum {
@@ -3715,7 +3717,7 @@ typedef struct {
 		uint32_t numRate;
 	};
 	/* per rate statistics, number of entries  = num_rate */
-	tSirWifiRateStat rateStats[0];
+	struct wifi_rate_stat rateStats[0];
 } tSirWifiPeerInfo, *tpSirWifiPeerInfo;
 
 /* Interface statistics - corresponding to 2nd most
