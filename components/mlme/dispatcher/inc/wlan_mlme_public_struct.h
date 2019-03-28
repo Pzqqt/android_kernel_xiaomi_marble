@@ -1259,6 +1259,16 @@ struct bss_load_trigger {
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
  * @lfr3_roaming_offload:           Enable/disable roam offload feature
+ * @enable_disconnect_roam_offload: enable disassoc/deauth roam scan.
+ * @enable_idle_roam: flag to enable/disable idle roam in fw
+ * @idle_roam_rssi_delta: rssi delta of connected ap which is used to
+ * identify if the AP is idle or in motion
+ * @idle_roam_inactive_time: Timeout value in seconds, above which the
+ * connection is idle
+ * @idle_data_packet_count: data packet count measured during inactive time,
+ * below which the connection is idle.
+ * @idle_roam_min_rssi: Minimum rssi of connected AP to be considered for
+ * idle roam trigger.
  * @early_stop_scan_enable:         Set early stop scan
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
@@ -1340,6 +1350,13 @@ struct wlan_mlme_lfr_cfg {
 	bool enable_fast_roam_in_concurrency;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool lfr3_roaming_offload;
+	bool enable_disconnect_roam_offload;
+	bool enable_idle_roam;
+	uint32_t idle_roam_rssi_delta;
+	uint32_t idle_roam_inactive_time;
+	uint32_t idle_data_packet_count;
+	uint32_t idle_roam_band;
+	int32_t idle_roam_min_rssi;
 #endif
 	bool early_stop_scan_enable;
 	bool enable_5g_band_pref;

@@ -1458,6 +1458,19 @@ static void mlme_init_roam_offload_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	lfr->lfr3_roaming_offload =
 		cfg_get(psoc, CFG_LFR3_ROAMING_OFFLOAD);
+
+	lfr->enable_disconnect_roam_offload =
+		cfg_get(psoc, CFG_LFR_ENABLE_DISCONNECT_ROAM);
+	lfr->enable_idle_roam =
+		cfg_get(psoc, CFG_LFR_ENABLE_IDLE_ROAM);
+	lfr->idle_roam_rssi_delta =
+		cfg_get(psoc, CFG_LFR_IDLE_ROAM_RSSI_DELTA);
+	lfr->idle_roam_inactive_time =
+		cfg_get(psoc, CFG_LFR_IDLE_ROAM_INACTIVE_TIME);
+	lfr->idle_data_packet_count =
+		cfg_get(psoc, CFG_LFR_IDLE_ROAM_PACKET_COUNT);
+	lfr->idle_roam_min_rssi = cfg_get(psoc, CFG_LFR_IDLE_ROAM_MIN_RSSI);
+	lfr->idle_roam_band = cfg_get(psoc, CFG_LFR_IDLE_ROAM_BAND);
 }
 
 #else
