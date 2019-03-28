@@ -154,7 +154,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 
 void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 {
-	tpSirWifiPeerStat peer_stat;
+	struct wifi_peer_stat *peer_stat;
 	struct wifi_peer_info *peer_info;
 	struct wifi_rate_stat *rate_stat;
 	int i, j, num_rate;
@@ -170,16 +170,16 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 		return;
 	}
 
-	peer_stat = (tpSirWifiPeerStat) data;
+	peer_stat = data;
 
 	buffer = ll_stats.result;
 	buffer += ll_stats.len;
 	len = scnprintf(buffer, DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 			"\n\n===LL_STATS_PEER_ALL : num_peers %u===",
-			peer_stat->numPeers);
+			peer_stat->num_peers);
 
-	peer_info = (struct wifi_peer_info *) ((uint8_t *) peer_stat->peerInfo);
-	for (i = 1; i <= peer_stat->numPeers; i++) {
+	peer_info = peer_stat->peer_info;
+	for (i = 1; i <= peer_stat->num_peers; i++) {
 		buffer += len;
 		ll_stats.len += len;
 		len = scnprintf(buffer,
@@ -205,7 +205,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 				rate_stat->retries_long);
 		}
 		peer_info = (struct wifi_peer_info *) ((uint8_t *)
-				peer_stat->peerInfo + (i *
+				peer_stat->peer_info + (i *
 				sizeof(struct wifi_peer_info)) +
 				(num_rate * sizeof(struct wifi_rate_stat)));
 	}

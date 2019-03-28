@@ -616,10 +616,10 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
  */
 static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 					      u32 more_data,
-					      tpSirWifiPeerStat pData)
+					      struct wifi_peer_stat *pData)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tpSirWifiPeerStat peer_stat;
+	struct wifi_peer_stat *peer_stat;
 	struct wifi_peer_info *peer_info;
 	struct sk_buff *vendor_event;
 	int status, i;
@@ -634,8 +634,8 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	if (0 != status)
 		return;
 
-	hdd_debug("LL_STATS_PEER_ALL : numPeers %u, more data = %u",
-		   peer_stat->numPeers, more_data);
+	hdd_debug("LL_STATS_PEER_ALL : num_peers %u, more data = %u",
+		  peer_stat->num_peers, more_data);
 
 	/*
 	 * Allocate a size of 4096 for the peer stats comprising
@@ -661,7 +661,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 			more_data) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_NUM_PEERS,
-			peer_stat->numPeers)) {
+			peer_stat->num_peers)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 
 		kfree_skb(vendor_event);
@@ -669,20 +669,20 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	}
 
 	peer_info = (struct wifi_peer_info *) ((uint8_t *)
-					     peer_stat->peerInfo);
+					     peer_stat->peer_info);
 
-	if (peer_stat->numPeers) {
-		struct nlattr *peerInfo;
+	if (peer_stat->num_peers) {
+		struct nlattr *peer_nest;
 
-		peerInfo = nla_nest_start(vendor_event,
-					  QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO);
-		if (!peerInfo) {
+		peer_nest = nla_nest_start(vendor_event,
+					   QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO);
+		if (!peer_nest) {
 			hdd_err("nla_nest_start failed");
 			kfree_skb(vendor_event);
 			return;
 		}
 
-		for (i = 1; i <= peer_stat->numPeers; i++) {
+		for (i = 1; i <= peer_stat->num_peers; i++) {
 			peers = nla_nest_start(vendor_event, i);
 			if (!peers) {
 				hdd_err("nla_nest_start failed");
@@ -699,12 +699,12 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 			}
 
 			peer_info = (struct wifi_peer_info *)
-				((uint8_t *)peer_stat->peerInfo +
+				((uint8_t *)peer_stat->peer_info +
 				 (i * sizeof(struct wifi_peer_info)) +
 				 (num_rate * sizeof(struct wifi_rate_stat)));
 			nla_nest_end(vendor_event, peers);
 		}
-		nla_nest_end(vendor_event, peerInfo);
+		nla_nest_end(vendor_event, peer_nest);
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
@@ -1077,8 +1077,7 @@ static void hdd_ll_process_peer_stats(struct hdd_adapter *adapter,
 	if (DEBUGFS_LLSTATS_REQID == resp_id)
 		hdd_debugfs_process_peer_stats(adapter, data);
 	else
-		hdd_link_layer_process_peer_stats(adapter, more_data,
-						  (tpSirWifiPeerStat) data);
+		hdd_link_layer_process_peer_stats(adapter, more_data, data);
 }
 
 void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
@@ -1780,7 +1779,7 @@ hdd_populate_per_peer_ps_info(struct wifi_peer_info *wifi_peer_info,
  *
  * Return: 0 success
  */
-static int hdd_populate_wifi_peer_ps_info(tSirWifiPeerStat *data,
+static int hdd_populate_wifi_peer_ps_info(struct wifi_peer_stat *data,
 					  struct sk_buff *vendor_event)
 {
 	uint32_t peer_num, i;
@@ -1792,7 +1791,7 @@ static int hdd_populate_wifi_peer_ps_info(tSirWifiPeerStat *data,
 		return -EINVAL;
 	}
 
-	peer_num = data->numPeers;
+	peer_num = data->num_peers;
 	if (peer_num == 0) {
 		hdd_err("Peer number is zero.");
 		return -EINVAL;
@@ -1813,7 +1812,7 @@ static int hdd_populate_wifi_peer_ps_info(tSirWifiPeerStat *data,
 	}
 
 	for (i = 0; i < peer_num; i++) {
-		wifi_peer_info = &data->peerInfo[i];
+		wifi_peer_info = &data->peer_info[i];
 		peers = nla_nest_start(vendor_event, i);
 
 		if (!peers) {
@@ -2327,7 +2326,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 	uint32_t param_id, index;
 	struct hdd_adapter *adapter = NULL;
 	tSirLLStatsResults *linkLayer_stats_results;
-	tSirWifiPeerStat *peer_stats;
+	struct wifi_peer_stat *peer_stats;
 	uint8_t *results;
 	int status;
 
@@ -2370,7 +2369,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 		 linkLayer_stats_results->ifaceId,
 		 linkLayer_stats_results->results);
 	if (param_id & WMI_LL_STATS_EXT_PS_CHG) {
-		peer_stats = (tSirWifiPeerStat *)results;
+		peer_stats = (struct wifi_peer_stat *)results;
 		status = hdd_populate_wifi_peer_ps_info(peer_stats, skb);
 	} else if (param_id & WMI_LL_STATS_EXT_TX_FAIL) {
 		struct sir_wifi_iface_tx_fail *tx_fail;

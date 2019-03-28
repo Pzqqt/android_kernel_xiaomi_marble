@@ -3744,15 +3744,18 @@ typedef struct {
 	wmi_iface_offload_stats offload_stats[WMI_OFFLOAD_STATS_TYPE_MAX];
 } tSirWifiIfaceStat, *tpSirWifiIfaceStat;
 
-/* Peer statistics - corresponding to 3rd most LSB in
- * wifi statistics bitmap  for getting statistics
+/**
+ * struct wifi_peer_stat - peer statistics
+ * @num_peers: number of peers
+ * @peer_info: per peer statistics
+ *
+ * Peer statistics - corresponding to 3rd most LSB in
+ * wifi statistics bitmap for getting statistics
  */
-typedef struct {
-	/* number of peers */
-	uint32_t numPeers;
-	/* per peer statistics */
-	struct wifi_peer_info peerInfo[0];
-} tSirWifiPeerStat, *tpSirWifiPeerStat;
+struct wifi_peer_stat {
+	uint32_t num_peers;
+	struct wifi_peer_info peer_info[0];
+};
 
 /* wifi statistics bitmap  for getting statistics */
 #define WMI_LINK_STATS_RADIO          0x00000001
