@@ -1816,13 +1816,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			sap_event->sapevt.sapStartBssCompleteEvent.status;
 
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
-
-		status = policy_mgr_set_chan_switch_complete_evt(
-						hdd_ctx->psoc);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("set event failed");
-			goto stopbss;
-		}
 		wlansap_get_dfs_ignore_cac(mac_handle, &ignoreCAC);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
@@ -2620,6 +2613,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		 * is completed
 		 */
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+		policy_mgr_set_chan_switch_complete_evt(hdd_ctx->psoc);
 		wlan_hdd_enable_roaming(adapter);
 		return QDF_STATUS_SUCCESS;
 
@@ -2941,13 +2935,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 				target_channel,
 				adapter->vdev_id)) {
 		hdd_err("Channel switch failed due to concurrency check failure");
-		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
-		return -EINVAL;
-	}
-
-	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->psoc);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("clear event failed");
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
 		return -EINVAL;
 	}

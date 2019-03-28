@@ -2635,6 +2635,32 @@ static enum policy_mgr_con_mode wlan_hdd_get_mode_for_non_connected_vdev(
 			adapter->device_mode);
 }
 
+/**
+ * hdd_is_chan_switch_in_progress() - Check if any adapter has channel switch in
+ * progress
+ *
+ * Return: true, if any adapter has channel switch in
+ * progress else false
+ */
+static bool hdd_is_chan_switch_in_progress(void)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if ((adapter->device_mode == QDF_SAP_MODE ||
+		     adapter->device_mode == QDF_P2P_GO_MODE) &&
+		    qdf_atomic_read(&adapter->ch_switch_in_progress)) {
+			hdd_debug("channel switch progress for vdev_id %d",
+				  adapter->vdev_id);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
 static void hdd_register_policy_manager_callback(
 			struct wlan_objmgr_psoc *psoc)
 {
@@ -2650,6 +2676,9 @@ static void hdd_register_policy_manager_callback(
 	hdd_cbacks.hdd_get_device_mode = hdd_get_device_mode;
 	hdd_cbacks.hdd_wapi_security_sta_exist =
 		hdd_wapi_security_sta_exist;
+	hdd_cbacks.hdd_is_chan_switch_in_progress =
+				hdd_is_chan_switch_in_progress;
+
 	if (QDF_STATUS_SUCCESS !=
 	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {
 		hdd_err("HDD callback registration with policy manager failed");

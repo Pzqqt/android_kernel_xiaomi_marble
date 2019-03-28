@@ -1391,6 +1391,10 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 				return status;
 			}
 
+			status = policy_mgr_reset_chan_switch_complete_evt(
+								mac->psoc);
+			if (QDF_IS_STATUS_ERROR(status))
+				return status;
 			/*
 			 * Copy the requested target channel
 			 * to sap context.
