@@ -2902,6 +2902,9 @@ static void hdd_ini_tcp_settings(struct hdd_config *config,
 static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 {
 	uint32_t rx_mode = hdd_ctx->config->rx_mode;
+	enum QDF_GLOBAL_MODE con_mode = 0;
+
+	con_mode = hdd_get_conparam();
 
 	/* RPS has higher priority than dynamic RPS when both bits are set */
 	if (rx_mode & CFG_ENABLE_RPS && rx_mode & CFG_ENABLE_DYNAMIC_RPS)
@@ -2914,8 +2917,12 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 
 	if (rx_mode & CFG_ENABLE_RX_THREAD)
 		hdd_ctx->enable_rxthread = true;
-	else if (rx_mode & CFG_ENABLE_DP_RX_THREADS)
-		hdd_ctx->enable_dp_rx_threads = true;
+	else if (rx_mode & CFG_ENABLE_DP_RX_THREADS) {
+		if (con_mode == QDF_GLOBAL_MONITOR_MODE)
+			hdd_ctx->enable_dp_rx_threads = false;
+		else
+			hdd_ctx->enable_dp_rx_threads = true;
+	}
 
 	if (rx_mode & CFG_ENABLE_RPS)
 		hdd_ctx->rps = true;
