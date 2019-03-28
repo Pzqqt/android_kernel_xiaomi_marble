@@ -106,8 +106,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
 	cdp_rx_ppdu->num_bytes = ppdu_info->rx_status.ppdu_len;
-	if (CDP_FC_IS_RETRY_SET(cdp_rx_ppdu->frame_ctrl))
-		cdp_rx_ppdu->retries += ppdu_info->com_info.mpdu_cnt_fcs_ok;
+	cdp_rx_ppdu->retries = CDP_FC_IS_RETRY_SET(cdp_rx_ppdu->frame_ctrl) ?
+					ppdu_info->com_info.mpdu_cnt_fcs_ok : 0;
 
 	if (ppdu_info->com_info.mpdu_cnt_fcs_ok > 1)
 		cdp_rx_ppdu->is_ampdu = 1;
@@ -188,6 +188,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	dp_ath_rate_lpf(peer->stats.rx.avg_rx_rate, ratekbps);
 	ppdu_rx_rate = dp_ath_rate_out(peer->stats.rx.avg_rx_rate);
 	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
+	ppdu->rx_ratekbps = ratekbps;
 
 	if (peer->vdev)
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;

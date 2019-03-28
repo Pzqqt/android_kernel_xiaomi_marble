@@ -3265,6 +3265,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	int entries;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	int nss_cfg;
+	void *sojourn_buf;
 
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = NULL;
@@ -3472,6 +3473,10 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			      sizeof(struct cdp_tx_sojourn_stats), 0, 4,
 			      TRUE);
 
+	if (pdev->sojourn_buf) {
+		sojourn_buf = qdf_nbuf_data(pdev->sojourn_buf);
+		qdf_mem_zero(sojourn_buf, sizeof(struct cdp_tx_sojourn_stats));
+	}
 	/* initlialize cal client timer */
 	dp_cal_client_attach(&pdev->cal_client_ctx, pdev, pdev->soc->osdev,
 			     &dp_iterate_update_peer_list);

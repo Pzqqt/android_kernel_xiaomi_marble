@@ -1714,6 +1714,8 @@ struct dp_peer {
 
 	/* rdk statistics context */
 	struct cdp_peer_rate_stats_ctx *wlanstats_ctx;
+	/* average sojourn time */
+	qdf_ewma_tx_lag avg_sojourn_msdu[CDP_DATA_TID_MAX];
 };
 
 #ifdef CONFIG_WIN

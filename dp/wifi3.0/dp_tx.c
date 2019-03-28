@@ -2978,47 +2978,36 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 {
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
-	uint8_t tidno;
 
-	if (pdev->enhanced_stats_en == 0)
+	if (qdf_unlikely(pdev->enhanced_stats_en == 0))
 		return;
 
-	if (pdev->sojourn_stats.ppdu_seq_id == 0)
-		pdev->sojourn_stats.ppdu_seq_id = ppdu_id;
-
-	if (ppdu_id != pdev->sojourn_stats.ppdu_seq_id) {
-		if (!pdev->sojourn_buf)
-			return;
-
-		sojourn_stats = (struct cdp_tx_sojourn_stats *)
-					qdf_nbuf_data(pdev->sojourn_buf);
-
-		qdf_mem_copy(sojourn_stats, &pdev->sojourn_stats,
-			     sizeof(struct cdp_tx_sojourn_stats));
-
-		sojourn_stats->cookie = (void *)peer->wlanstats_ctx;
-
-		for (tidno = 0; tidno < CDP_DATA_TID_MAX; tidno++) {
-			pdev->sojourn_stats.sum_sojourn_msdu[tidno] = 0;
-			pdev->sojourn_stats.num_msdus[tidno] = 0;
-		}
-
-		dp_wdi_event_handler(WDI_EVENT_TX_SOJOURN_STAT, pdev->soc,
-				     pdev->sojourn_buf, HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
-
-		pdev->sojourn_stats.ppdu_seq_id = ppdu_id;
-	}
-
-	if (tid == HTT_INVALID_TID)
+	if (qdf_unlikely(tid == HTT_INVALID_TID ||
+			 tid >= CDP_DATA_TID_MAX))
 		return;
+
+	if (qdf_unlikely(!pdev->sojourn_buf))
+		return;
+
+	sojourn_stats = (struct cdp_tx_sojourn_stats *)
+		qdf_nbuf_data(pdev->sojourn_buf);
+
+	sojourn_stats->cookie = (void *)peer->wlanstats_ctx;
 
 	delta_ms = qdf_ktime_to_ms(qdf_ktime_get()) -
 				txdesc_ts;
-	qdf_ewma_tx_lag_add(&pdev->sojourn_stats.avg_sojourn_msdu[tid],
+	qdf_ewma_tx_lag_add(&peer->avg_sojourn_msdu[tid],
 			    delta_ms);
-	pdev->sojourn_stats.sum_sojourn_msdu[tid] += delta_ms;
-	pdev->sojourn_stats.num_msdus[tid]++;
+	sojourn_stats->sum_sojourn_msdu[tid] = delta_ms;
+	sojourn_stats->num_msdus[tid] = 1;
+	sojourn_stats->avg_sojourn_msdu[tid].internal =
+		peer->avg_sojourn_msdu[tid].internal;
+	dp_wdi_event_handler(WDI_EVENT_TX_SOJOURN_STAT, pdev->soc,
+			     pdev->sojourn_buf, HTT_INVALID_PEER,
+			     WDI_NO_VAL, pdev->pdev_id);
+	sojourn_stats->sum_sojourn_msdu[tid] = 0;
+	sojourn_stats->num_msdus[tid] = 0;
+	sojourn_stats->avg_sojourn_msdu[tid].internal = 0;
 }
 #else
 static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,

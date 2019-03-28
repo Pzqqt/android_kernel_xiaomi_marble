@@ -114,10 +114,9 @@
 #define CDP_WDI_NUM_EVENTS 26
 #endif
 
-#define CDP_FC_RETRY_OFFSET 0x4
-#define CDP_FC_RETRY_MASK (CDP_FC_RETRY_OFFSET << 1)
+#define CDP_FCTL_RETRY 0x0800
 #define CDP_FC_IS_RETRY_SET(_fc) \
-	((_fc) && CDP_FC_RETRY_MASK)
+	((_fc) & qdf_cpu_to_le16(CDP_FCTL_RETRY))
 
 /* Different Packet Types */
 enum cdp_packet_type {
