@@ -2611,7 +2611,13 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
-		if (ppdu_desc->user[i].tid < CDP_DATA_TID_MAX) {
+		/**
+		 * Update tx stats for data frames having Qos as well as
+		 * non-Qos data tid
+		 */
+		if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
+		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
+		      (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA)) {
 
 			dp_tx_stats_update(pdev->soc, peer,
 					&ppdu_desc->user[i],

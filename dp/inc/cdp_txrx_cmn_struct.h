@@ -97,6 +97,7 @@
 #define CDP_INVALID_TID	 31
 
 #define CDP_DATA_TID_MAX 8
+#define CDP_DATA_NON_QOS_TID 16
 /*
  * advance rx monitor filter
  * */
