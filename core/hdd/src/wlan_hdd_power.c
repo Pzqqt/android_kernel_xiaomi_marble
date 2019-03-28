@@ -1684,7 +1684,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter;
-	struct hdd_scan_info *scan_info;
 	mac_handle_t mac_handle;
 	int rc;
 
@@ -1750,8 +1749,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	/* Stop ongoing scan on each interface */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		scan_info = &adapter->scan_info;
-
 		if (sme_neighbor_middle_of_roaming(mac_handle,
 		    adapter->vdev_id) ||
 		    hdd_is_roaming_in_progress(hdd_ctx)) {
