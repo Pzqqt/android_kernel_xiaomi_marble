@@ -984,6 +984,8 @@
  * ROAM_TRIGGER_REASON_BTM        - B10,
  * ROAM_TRIGGER_REASON_UNIT_TEST  - B11,
  * ROAM_TRIGGER_REASON_BSS_LOAD   - B12
+ * ROAM_TRIGGER_REASON_DISASSOC   - B13
+ * ROAM_TRIGGER_REASON_IDLE_ROAM  - B14
  *
  * When the bit corresponding to a particular roam trigger reason
  * is set, the value of "roam_score_delta" is expected over the
