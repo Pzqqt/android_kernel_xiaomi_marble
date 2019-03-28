@@ -3702,23 +3702,25 @@ typedef enum {
 	WIFI_PEER_INVALID,
 } tSirWifiPeerType;
 
-/* per peer statistics */
-typedef struct {
-	/* peer type (AP, TDLS, GO etc.) */
+/**
+ * struct wifi_peer_info - per peer information
+ * @type: peer type (AP, TDLS, GO etc.)
+ * @peer_macaddr: mac address
+ * @capabilities: peer WIFI_CAPABILITY_XXX
+ * @power_saving: peer power saving mode
+ * @num_rate: number of rates
+ * @rate_stats: per rate statistics, number of entries  = @num_rate
+ */
+struct wifi_peer_info {
 	enum wmi_peer_type type;
-	/* mac address */
-	struct qdf_mac_addr peerMacAddress;
-	/* peer WIFI_CAPABILITY_XXX */
+	struct qdf_mac_addr peer_macaddr;
 	uint32_t capabilities;
 	union {
-		/* peer power saving mode */
 		uint32_t power_saving;
-		/* number of rates */
-		uint32_t numRate;
+		uint32_t num_rate;
 	};
-	/* per rate statistics, number of entries  = num_rate */
-	struct wifi_rate_stat rateStats[0];
-} tSirWifiPeerInfo, *tpSirWifiPeerInfo;
+	struct wifi_rate_stat rate_stats[0];
+};
 
 /* Interface statistics - corresponding to 2nd most
  * LSB in wifi statistics bitmap  for getting statistics
@@ -3749,7 +3751,7 @@ typedef struct {
 	/* number of peers */
 	uint32_t numPeers;
 	/* per peer statistics */
-	tSirWifiPeerInfo peerInfo[0];
+	struct wifi_peer_info peerInfo[0];
 } tSirWifiPeerStat, *tpSirWifiPeerStat;
 
 /* wifi statistics bitmap  for getting statistics */

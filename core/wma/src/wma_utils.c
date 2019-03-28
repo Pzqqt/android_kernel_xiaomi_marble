@@ -1393,7 +1393,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	}
 
 	peer_stats_size = sizeof(tSirWifiPeerStat);
-	peer_info_size = sizeof(tSirWifiPeerInfo);
+	peer_info_size = sizeof(struct wifi_peer_info);
 	rate_stats_size = sizeof(struct wifi_rate_stat);
 	link_stats_results_size =
 		sizeof(*link_stats_results) + peer_stats_size +
@@ -1892,7 +1892,7 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 	WMI_PEER_STA_PS_STATECHG_EVENTID_param_tlvs *param_buf;
 	wmi_peer_sta_ps_statechange_event_fixed_param *fixed_param;
 	tSirWifiPeerStat *peer_stat;
-	tSirWifiPeerInfo *peer_info;
+	struct wifi_peer_info *peer_info;
 	tSirLLStatsResults *link_stats_results;
 	tSirMacAddr mac_address;
 	uint32_t result_len;
@@ -1918,7 +1918,7 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 
 	result_len = sizeof(tSirLLStatsResults) +
 			sizeof(tSirWifiPeerStat) +
-			sizeof(tSirWifiPeerInfo);
+			sizeof(struct wifi_peer_info);
 	link_stats_results = qdf_mem_malloc(result_len);
 	if (!link_stats_results)
 		return -EINVAL;
@@ -1938,8 +1938,8 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 
 	peer_stat = (tSirWifiPeerStat *)link_stats_results->results;
 	peer_stat->numPeers = 1;
-	peer_info = (tSirWifiPeerInfo *)peer_stat->peerInfo;
-	qdf_mem_copy(&peer_info->peerMacAddress,
+	peer_info = (struct wifi_peer_info *)peer_stat->peerInfo;
+	qdf_mem_copy(&peer_info->peer_macaddr,
 		     &mac_address,
 		     sizeof(tSirMacAddr));
 	peer_info->power_saving = fixed_param->peer_ps_state;

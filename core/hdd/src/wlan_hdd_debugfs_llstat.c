@@ -155,7 +155,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 {
 	tpSirWifiPeerStat peer_stat;
-	tpSirWifiPeerInfo peer_info;
+	struct wifi_peer_info *peer_info;
 	struct wifi_rate_stat *rate_stat;
 	int i, j, num_rate;
 	ssize_t len = 0;
@@ -178,7 +178,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 			"\n\n===LL_STATS_PEER_ALL : num_peers %u===",
 			peer_stat->numPeers);
 
-	peer_info = (tpSirWifiPeerInfo) ((uint8_t *) peer_stat->peerInfo);
+	peer_info = (struct wifi_peer_info *) ((uint8_t *) peer_stat->peerInfo);
 	for (i = 1; i <= peer_stat->numPeers; i++) {
 		buffer += len;
 		ll_stats.len += len;
@@ -186,12 +186,12 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 				"\nType: %d, peer_mac: %pM, capabilities: %u\nnum_rates: %d",
 				wmi_to_sir_peer_type(peer_info->type),
-				&peer_info->peerMacAddress.bytes[0],
-				peer_info->capabilities, peer_info->numRate);
+				&peer_info->peer_macaddr.bytes[0],
+				peer_info->capabilities, peer_info->num_rate);
 
-		num_rate = peer_info->numRate;
+		num_rate = peer_info->num_rate;
 		for (j = 0; j < num_rate; j++) {
-			rate_stat = &peer_info->rateStats[j];
+			rate_stat = &peer_info->rate_stats[j];
 			buffer += len;
 			ll_stats.len += len;
 			len = scnprintf(buffer,
@@ -204,9 +204,9 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 				rate_stat->retries, rate_stat->retries_short,
 				rate_stat->retries_long);
 		}
-		peer_info = (tpSirWifiPeerInfo) ((uint8_t *)
+		peer_info = (struct wifi_peer_info *) ((uint8_t *)
 				peer_stat->peerInfo + (i *
-				sizeof(tSirWifiPeerInfo)) +
+				sizeof(struct wifi_peer_info)) +
 				(num_rate * sizeof(struct wifi_rate_stat)));
 	}
 	ll_stats.len += len;
