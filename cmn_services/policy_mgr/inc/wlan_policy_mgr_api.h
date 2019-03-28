@@ -1159,6 +1159,8 @@ struct policy_mgr_sme_cbacks {
  * @hdd_wapi_security_sta_exist: Get whether wapi encription station existing
  * or not. Some hw doesn't support WAPI encryption concurrency with other
  * encryption type.
+ * @hdd_is_chan_switch_in_progress: Check if in any adater channel switch is in
+ * progress
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -1174,6 +1176,7 @@ struct policy_mgr_hdd_cbacks {
 				uint8_t vdev_id);
 	enum QDF_OPMODE (*hdd_get_device_mode)(uint32_t session_id);
 	bool (*hdd_wapi_security_sta_exist)(void);
+	bool (*hdd_is_chan_switch_in_progress)(void);
 };
 
 

@@ -1409,14 +1409,16 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		goto end;
 	}
 
-	policy_mgr_debug("wait if channel switch is already in progress");
-	status = qdf_wait_single_event(
-				&pm_ctx->channel_switch_complete_evt,
-				CHANNEL_SWITCH_COMPLETE_TIMEOUT);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		policy_mgr_err("wait for event failed, still continue with channel switch");
+	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
+		policy_mgr_debug("wait as channel switch is already in progress");
+		status = qdf_wait_single_event(
+					&pm_ctx->channel_switch_complete_evt,
+					CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+		if (QDF_IS_STATUS_ERROR(status))
+			policy_mgr_err("wait for event failed, still continue with channel switch");
 	}
+
 	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
 		policy_mgr_err("SAP restart get channel callback in NULL");
 		goto end;
@@ -1433,8 +1435,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 				break;
 			}
 		}
-	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Failed to switch SAP channel");
+
 end:
 	if (work_info) {
 		qdf_mem_free(work_info);
@@ -1777,16 +1778,27 @@ QDF_STATUS policy_mgr_set_chan_switch_complete_evt(
 		struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
-	struct policy_mgr_psoc_priv_obj *policy_mgr_context;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	policy_mgr_context = policy_mgr_get_context(psoc);
+	pm_ctx = policy_mgr_get_context(psoc);
 
-	if (!policy_mgr_context) {
+	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/*
+	 * Set channel_switch_complete_evt only if no vdev has channel switch
+	 * in progress.
+	 */
+	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
+		policy_mgr_info("Not all channel switch completed");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	status = qdf_event_set(
-			&policy_mgr_context->channel_switch_complete_evt);
+			&pm_ctx->channel_switch_complete_evt);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		policy_mgr_err("set event failed");
