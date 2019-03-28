@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,6 +207,7 @@ struct wlan_pmo_tx_ops {
 			struct wlan_objmgr_psoc *psoc);
 	void (*update_target_suspend_flag)(
 		struct wlan_objmgr_psoc *psoc, uint8_t value);
+	bool (*is_target_suspended)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*psoc_send_wow_enable_req)(struct wlan_objmgr_psoc *psoc,
 		struct pmo_wow_cmd_params *param);
 	QDF_STATUS (*psoc_send_supend_req)(struct wlan_objmgr_psoc *psoc,
