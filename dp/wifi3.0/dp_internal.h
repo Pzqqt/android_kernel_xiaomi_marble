@@ -23,6 +23,15 @@
 
 #define RX_BUFFER_SIZE_PKTLOG_LITE 1024
 
+
+#define DP_RSSI_AVG_WEIGHT 2
+/*
+ * Formula to derive avg_rssi is taken from wifi2.o firmware
+ */
+#define DP_GET_AVG_RSSI(avg_rssi, last_rssi) \
+	(((avg_rssi) - (((uint8_t)(avg_rssi)) >> DP_RSSI_AVG_WEIGHT)) \
+	+ ((((uint8_t)(last_rssi)) >> DP_RSSI_AVG_WEIGHT)))
+
 /* Macro For NYSM value received in VHT TLV */
 #define VHT_SGI_NYSM 3
 

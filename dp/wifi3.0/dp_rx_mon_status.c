@@ -199,6 +199,11 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		return;
 
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
+	if (!peer->stats.rx.avg_rssi)
+		peer->stats.rx.avg_rssi = ppdu->rssi;
+	else
+		peer->stats.rx.avg_rssi =
+			DP_GET_AVG_RSSI(peer->stats.rx.avg_rssi, ppdu->rssi);
 
 	if ((preamble == DOT11_A) || (preamble == DOT11_B))
 		ppdu->u.nss = 1;
