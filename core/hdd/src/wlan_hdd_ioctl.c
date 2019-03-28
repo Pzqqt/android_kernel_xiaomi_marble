@@ -2170,8 +2170,8 @@ static int hdd_get_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command,
 static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 {
 	uint8_t *value = command;
-	int val = 0, temp = 0;
-	int retval = 0;
+	int retval = 0, temp = 0;
+	uint32_t val = 0;
 
 	if (!psoc) {
 		hdd_err("psoc is null");
