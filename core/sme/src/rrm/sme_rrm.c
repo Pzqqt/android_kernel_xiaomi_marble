@@ -654,12 +654,26 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	uint32_t time_tick;
 	QDF_STATUS qdf_status;
+	uint32_t session_id;
+	bool valid_result = true;
+
+	/*
+	 * RRM scan response received after roaming to different AP.
+	 * Post message to PE for rrm cleanup.
+	 */
+	qdf_status = csr_roam_get_session_id_from_bssid(mac,
+						&pSmeRrmContext->sessionBssId,
+						&session_id);
+	if (qdf_status == QDF_STATUS_E_FAILURE) {
+		sme_debug("Cleanup RRM context due to STA roaming");
+		valid_result = false;
+	}
 
 	/* if any more channels are pending, start a timer of a random value
 	 * within randomization interval.
 	 */
-	if ((pSmeRrmContext->currentIndex + 1) <
-	    pSmeRrmContext->channelList.numOfChannels) {
+	if (((pSmeRrmContext->currentIndex + 1) <
+	     pSmeRrmContext->channelList.numOfChannels) && valid_result) {
 		sme_rrm_send_scan_result(mac, 1,
 					 &pSmeRrmContext->channelList.
 					 ChannelList[pSmeRrmContext
