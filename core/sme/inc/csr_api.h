@@ -1181,6 +1181,7 @@ struct csr_roam_info {
 	struct sir_sae_info *sae_info;
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
+	uint8_t roam_reason;
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {
