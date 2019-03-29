@@ -279,7 +279,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 			ll_stats.len += len;
 			len = scnprintf(buffer,
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
-				"\nChan width: %d, center_freq: %d, center_freq0: %d, center_freq1: %d, on_time: %d, cca_busy_time: %d",
+				"\nChan width: %u, center_freq: %u, center_freq0: %u, center_freq1: %u, on_time: %u, cca_busy_time: %u",
 				chan_stat->channel.width,
 				chan_stat->channel.centerFreq,
 				chan_stat->channel.centerFreq0,

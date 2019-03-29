@@ -3480,7 +3480,6 @@ typedef struct {
 /******************************LINK LAYER Statistics**********************/
 
 typedef int tSirWifiRadio;
-typedef int tSirWifiChannel;
 
 typedef struct {
 	uint32_t reqId;
@@ -3569,11 +3568,11 @@ typedef struct {
 	/* channel width (20, 40, 80, 80+80, 160) */
 	enum phy_ch_width width;
 	/* primary 20 MHz channel */
-	tSirWifiChannel centerFreq;
+	uint32_t centerFreq;
 	/* center frequency (MHz) first segment */
-	tSirWifiChannel centerFreq0;
+	uint32_t centerFreq0;
 	/* center frequency (MHz) second segment */
-	tSirWifiChannel centerFreq1;
+	uint32_t centerFreq1;
 } tSirWifiChannelInfo, *tpSirWifiChannelInfo;
 
 /* wifi rate info */
