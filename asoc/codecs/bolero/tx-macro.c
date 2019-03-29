@@ -8,6 +8,7 @@
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
+#include <linux/pm_runtime.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
@@ -18,6 +19,7 @@
 #include "bolero-cdc-registers.h"
 #include "bolero-clk-rsc.h"
 
+#define AUTO_SUSPEND_DELAY  50 /* delay in msec */
 #define TX_MACRO_MAX_OFFSET 0x1000
 
 #define NUM_DECIMATORS 8
@@ -1469,9 +1471,10 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 {
 	int ret = 0;
 
-	dev_dbg(tx_priv->dev, "%s: clock type %s, enable: %s\n",
+	dev_dbg(tx_priv->dev,
+		"%s: clock type %s, enable: %s tx_mclk_users: %d\n",
 		__func__, (clk_type ? "VA_MCLK" : "TX_MCLK"),
-		(enable ? "enable" : "disable"));
+		(enable ? "enable" : "disable"), tx_priv->tx_mclk_users);
 
 	if (enable) {
 		if (tx_priv->swr_clk_users == 0) {
@@ -1518,6 +1521,8 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 						0x01, 0x01);
 				}
 			}
+			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
+				__func__, tx_priv->reset_swr);
 			if (tx_priv->reset_swr)
 				regmap_update_bits(regmap,
 					BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
@@ -1608,6 +1613,7 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 		__func__, (enable ? "enable" : "disable"));
 
 	if (enable) {
+		pm_runtime_get_sync(tx_priv->dev);
 		/*For standalone VA usecase, enable VA macro clock */
 		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt
 			&& (tx_priv->swr_clk_type == TX_MCLK)) {
@@ -1627,6 +1633,8 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 				goto done;
 			tx_priv->swr_clk_type = TX_MCLK;
 		}
+		pm_runtime_mark_last_busy(tx_priv->dev);
+		pm_runtime_put_autosuspend(tx_priv->dev);
 	} else {
 		if (tx_priv->swr_clk_type == VA_MCLK) {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
@@ -2014,6 +2022,11 @@ static int tx_macro_probe(struct platform_device *pdev)
 	}
 
 	schedule_work(&tx_priv->tx_macro_add_child_devices_work);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+
 	return 0;
 err_reg_macro:
 	mutex_destroy(&tx_priv->mclk_lock);
@@ -2036,6 +2049,8 @@ static int tx_macro_remove(struct platform_device *pdev)
 		count < TX_MACRO_CHILD_DEVICES_MAX; count++)
 		platform_device_unregister(tx_priv->pdev_child_devices[count]);
 
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 	mutex_destroy(&tx_priv->mclk_lock);
 	mutex_destroy(&tx_priv->swr_clk_lock);
 	bolero_unregister_macro(&pdev->dev, TX_MACRO);
@@ -2048,10 +2063,19 @@ static const struct of_device_id tx_macro_dt_match[] = {
 	{}
 };
 
+static const struct dev_pm_ops bolero_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(
+		bolero_runtime_suspend,
+		bolero_runtime_resume,
+		NULL
+	)
+};
+
 static struct platform_driver tx_macro_driver = {
 	.driver = {
 		.name = "tx_macro",
 		.owner = THIS_MODULE,
+		.pm = &bolero_dev_pm_ops,
 		.of_match_table = tx_macro_dt_match,
 	},
 	.probe = tx_macro_probe,

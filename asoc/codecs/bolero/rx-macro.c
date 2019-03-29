@@ -7,6 +7,7 @@
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/pm_runtime.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
@@ -20,6 +21,7 @@
 #include "bolero-cdc-registers.h"
 #include "bolero-clk-rsc.h"
 
+#define AUTO_SUSPEND_DELAY  50 /* delay in msec */
 #define RX_MACRO_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
 			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
@@ -3235,6 +3237,7 @@ static int rx_swrm_clock(void *handle, bool enable)
 	dev_dbg(rx_priv->dev, "%s: swrm clock %s\n",
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
+		pm_runtime_get_sync(rx_priv->dev);
 		if (rx_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_active_state(
 						rx_priv->rx_swr_gpio_p);
@@ -3260,6 +3263,8 @@ static int rx_swrm_clock(void *handle, bool enable)
 					0x02, 0x00);
 			rx_priv->reset_swr = false;
 		}
+		pm_runtime_mark_last_busy(rx_priv->dev);
+		pm_runtime_put_autosuspend(rx_priv->dev);
 		rx_priv->swr_clk_users++;
 	} else {
 		if (rx_priv->swr_clk_users <= 0) {
@@ -3647,6 +3652,10 @@ static int rx_macro_probe(struct platform_device *pdev)
 		goto err_reg_macro;
 	}
 	schedule_work(&rx_priv->rx_macro_add_child_devices_work);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
 
 	return 0;
 
@@ -3670,6 +3679,8 @@ static int rx_macro_remove(struct platform_device *pdev)
 		count < RX_MACRO_CHILD_DEVICES_MAX; count++)
 		platform_device_unregister(rx_priv->pdev_child_devices[count]);
 
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 	bolero_unregister_macro(&pdev->dev, RX_MACRO);
 	mutex_destroy(&rx_priv->mclk_lock);
 	mutex_destroy(&rx_priv->swr_clk_lock);
@@ -3682,10 +3693,19 @@ static const struct of_device_id rx_macro_dt_match[] = {
 	{}
 };
 
+static const struct dev_pm_ops bolero_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(
+		bolero_runtime_suspend,
+		bolero_runtime_resume,
+		NULL
+	)
+};
+
 static struct platform_driver rx_macro_driver = {
 	.driver = {
 		.name = "rx_macro",
 		.owner = THIS_MODULE,
+		.pm = &bolero_dev_pm_ops,
 		.of_match_table = rx_macro_dt_match,
 	},
 	.probe = rx_macro_probe,
