@@ -11565,7 +11565,7 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		}
 	}
 
-	roam_info = qdf_mem_malloc(sizeof(!roam_info));
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
 		return;
 	roam_info->chan_info.chan_id = pSwitchChnInd->newChannelId;
