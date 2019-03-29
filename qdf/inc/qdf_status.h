@@ -78,6 +78,7 @@
  * @QDF_STATUS_CRYPTO_ENCRYPT_FAILED: encryption failed
  * @QDF_STATUS_CRYPTO_DECRYPT_FAILED: decryption failed
  * @QDF_STATUS_E_RANGE: result/parameter/operation was out of range
+ * @QDF_STATUS_E_GRO_DROP: return code for GRO drop
  * @QDF_STATUS_MAX: not a realy value just a place holder for max
  */
 typedef enum {
@@ -133,6 +134,7 @@ typedef enum {
 	QDF_STATUS_CRYPTO_DECRYPT_FAILED,
 	QDF_STATUS_E_DEFRAG_ERROR,
 	QDF_STATUS_E_RANGE,
+	QDF_STATUS_E_GRO_DROP,
 	QDF_STATUS_MAX
 } QDF_STATUS;
 
