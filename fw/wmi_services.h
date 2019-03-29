@@ -382,6 +382,12 @@ typedef  enum  {
     WMI_SERVICE_VOW_ENABLE=197, /* FW supports a set of features to optimize VoW performance */
     WMI_SERVICE_CFR_CAPTURE_IND_EVT_TYPE_1 = 198, /* support WMI_PEER_CFR_CAPTURE_EVENT msg */
     WMI_SERVICE_BROADCAST_TWT = 199,  /* support of Broadcast TWT (Target Wake Time) for STA/AP */
+    WMI_SERVICE_RAP_DETECTION_SUPPORT = 200, /* indicate FW supports rogue AP detection */
+    WMI_SERVICE_PS_TDCC = 201, /* FW support tx_duty_cycle_control powersave */
+    WMI_SERVICE_THREE_WAY_COEX_CONFIG_LEGACY   = 202, /* BTCOEX Three-way CoEx Config Legacy Feature support */
+    WMI_SERVICE_THREE_WAY_COEX_CONFIG_OVERRIDE = 203, /* BTCOEX Three-way CoEx Config Override Feature support */
+    WMI_SERVICE_TX_PWR_PER_PEER = 204, /* target supports per-peer tx pwr spec via WMI_PEER_USE_FIXED_PWR */
+    WMI_SERVICE_NO_STA_PLUS_STA_SUPPORT = 205, /* indicates target doesn't support STA + STA concurrency */
 
 
     /******* ADD NEW SERVICES HERE *******/
