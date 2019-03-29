@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,8 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
+#include "wlan_utility.h"
+
 
 /* Get/Put Ref */
 

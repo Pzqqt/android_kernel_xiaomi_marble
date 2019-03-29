@@ -370,7 +370,7 @@ static int __tdls_get_all_peers_from_list(
 	buf = get_tdls_peers->buf;
 	buf_len = get_tdls_peers->buf_len;
 
-	if (!tdls_is_vdev_connected(get_tdls_peers->vdev)) {
+	if (wlan_vdev_is_up(get_tdls_peers->vdev) != QDF_STATUS_SUCCESS) {
 		len = qdf_scnprintf(buf, buf_len,
 				"\nSTA is not associated\n");
 		return len;

@@ -286,26 +286,6 @@ bool pmo_core_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
 	return true;
 }
 
-bool pmo_core_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
-{
-	struct wlan_objmgr_peer *peer;
-	enum wlan_peer_state peer_state;
-
-	peer = wlan_vdev_get_bsspeer(vdev);
-	if (!peer) {
-		pmo_debug("bss peer is null");
-		return false;
-	}
-
-	peer_state = wlan_peer_mlme_get_state(peer);
-	if (peer_state != WLAN_ASSOC_STATE) {
-		pmo_debug("peer is not associated; state:%d", peer_state);
-		return false;
-	}
-
-	return true;
-}
-
 bool pmo_core_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 {
 	enum QDF_OPMODE opmode;

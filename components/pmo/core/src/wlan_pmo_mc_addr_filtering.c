@@ -514,7 +514,7 @@ QDF_STATUS pmo_core_enable_mc_addr_filtering_in_fwr(
 	if (status != QDF_STATUS_SUCCESS)
 		goto put_vdev;
 
-	if (!pmo_core_is_vdev_connected(vdev)) {
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_INVAL;
 		goto put_vdev;
 	}
@@ -615,7 +615,7 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 	if (status != QDF_STATUS_SUCCESS)
 		goto put_ref;
 
-	if (!pmo_core_is_vdev_connected(vdev)) {
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_INVAL;
 		goto put_ref;
 	}
