@@ -3502,17 +3502,6 @@ typedef struct {
 	uint8_t stopReq;
 } tSirLLStatsClearReq, *tpSirLLStatsClearReq;
 
-/* channel operating width */
-typedef enum {
-	WIFI_CHAN_WIDTH_20 = 0,
-	WIFI_CHAN_WIDTH_40 = 1,
-	WIFI_CHAN_WIDTH_80 = 2,
-	WIFI_CHAN_WIDTH_160 = 3,
-	WIFI_CHAN_WIDTH_80P80 = 4,
-	WIFI_CHAN_WIDTH_5 = 5,
-	WIFI_CHAN_WIDTH_10 = 6,
-} tSirWifiChannelWidth;
-
 typedef enum {
 	WIFI_DISCONNECTED = 0,
 	WIFI_AUTHENTICATING = 1,
@@ -3578,7 +3567,7 @@ struct wifi_interface_info {
 /* channel information */
 typedef struct {
 	/* channel width (20, 40, 80, 80+80, 160) */
-	tSirWifiChannelWidth width;
+	enum phy_ch_width width;
 	/* primary 20 MHz channel */
 	tSirWifiChannel centerFreq;
 	/* center frequency (MHz) first segment */
