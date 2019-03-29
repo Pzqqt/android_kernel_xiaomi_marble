@@ -1786,7 +1786,7 @@ bool ucfg_ie_whitelist_enabled(struct wlan_objmgr_psoc *psoc,
 		return false;
 
 	if ((wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE) ||
-	    wlan_vdev_is_connected(vdev))
+	    wlan_vdev_is_up(vdev) == QDF_STATUS_SUCCESS)
 		return false;
 
 	if (!scan_obj->ie_whitelist.white_list)

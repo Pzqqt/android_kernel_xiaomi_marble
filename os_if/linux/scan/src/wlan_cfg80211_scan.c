@@ -79,7 +79,7 @@ static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
 		return;
 
-	if (wlan_vdev_is_connected(vdev))
+	if (wlan_vdev_is_up(vdev) == QDF_STATUS_SUCCESS)
 		return;
 
 	*randomize = true;

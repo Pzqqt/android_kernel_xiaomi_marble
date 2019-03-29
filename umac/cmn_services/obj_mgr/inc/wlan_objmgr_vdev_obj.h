@@ -1532,14 +1532,6 @@ static inline uint16_t wlan_vdev_get_max_peer_count(
 }
 
 /**
- * wlan_vdev_is_connected() - Check whether peer is associated or not
- * @vdev: pointer to objmgr vdev
- *
- * Return: true in case success else false
- */
-bool wlan_vdev_is_connected(struct wlan_objmgr_vdev *vdev);
-
-/**
  * wlan_vdev_set_dp_handle() - set dp handle
  * @vdev: vdev object pointer
  * @dp_handle: Data path module handle
