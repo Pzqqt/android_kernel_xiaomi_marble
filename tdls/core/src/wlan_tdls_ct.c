@@ -27,28 +27,6 @@
 #include "wlan_tdls_ct.h"
 #include "wlan_tdls_cmds_process.h"
 
-bool tdls_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
-{
-	struct wlan_objmgr_peer *peer;
-	enum wlan_peer_state peer_state;
-
-	peer = wlan_vdev_get_bsspeer(vdev);
-
-	if (!peer) {
-		tdls_err("peer is null");
-		return false;
-	}
-
-	peer_state = wlan_peer_mlme_get_state(peer);
-
-	if (peer_state != WLAN_ASSOC_STATE) {
-		tdls_err("peer state: %d", peer_state);
-		return false;
-	}
-
-	return true;
-}
-
 bool tdls_is_vdev_authenticated(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_peer *peer;
@@ -1032,7 +1010,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 		return -EINVAL;
 	}
 
-	if (!tdls_is_vdev_connected(vdev)) {
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		tdls_err("tdls off channel req in not associated state %d",
 			offchanmode);
 		return -EPERM;

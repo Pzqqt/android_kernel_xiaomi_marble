@@ -684,7 +684,7 @@ int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req)
 	 * STA or P2P client should be connected and authenticated before
 	 *  sending any TDLS frames
 	 */
-	if (!tdls_is_vdev_connected(vdev) ||
+	if ((wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) ||
 	    !tdls_is_vdev_authenticated(vdev)) {
 		tdls_err("STA is not connected or not authenticated.");
 		return -EAGAIN;

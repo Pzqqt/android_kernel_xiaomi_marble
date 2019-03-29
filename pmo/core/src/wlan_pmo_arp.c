@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -216,7 +216,7 @@ static QDF_STATUS pmo_core_arp_offload_sanity(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!pmo_core_is_vdev_connected(vdev))
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_INVAL;
 
 	return QDF_STATUS_SUCCESS;

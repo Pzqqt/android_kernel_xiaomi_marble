@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -139,14 +139,6 @@ bool pmo_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode);
 
 bool pmo_core_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
 	enum QDF_OPMODE vdev_opmode);
-
-/**
- * pmo_core_is_vdev_connected() -  to check whether peer is associated or not
- * @vdev: objmgr vdev
- *
- * Return: true in case success else false
- */
-bool pmo_core_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
 
 /**
  * pmo_core_is_vdev_supports_offload() - Check offload is supported on vdev

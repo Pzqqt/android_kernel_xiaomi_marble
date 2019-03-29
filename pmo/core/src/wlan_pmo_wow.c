@@ -341,7 +341,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
-		if (pmo_core_is_vdev_connected(vdev)) {
+		if (wlan_vdev_is_up(vdev) == QDF_STATUS_SUCCESS) {
 			pmo_debug("STA is connected, enabling wow");
 			is_wow_applicable = true;
 		} else if (ucfg_scan_get_pno_in_progress(vdev)) {

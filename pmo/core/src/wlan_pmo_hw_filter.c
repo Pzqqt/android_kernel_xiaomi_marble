@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,7 +39,7 @@ QDF_STATUS pmo_core_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto exit_with_status;
 
-	if (!pmo_core_is_vdev_connected(vdev)) {
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_NOSUPPORT;
 		goto exit_with_status;
 	}
@@ -75,7 +75,7 @@ QDF_STATUS pmo_core_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto exit_with_status;
 
-	if (!pmo_core_is_vdev_connected(vdev)) {
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_NOSUPPORT;
 		goto exit_with_status;
 	}

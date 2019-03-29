@@ -34,6 +34,8 @@
 #include <wlan_tdls_public_structs.h>
 #include <scheduler_api.h>
 #include "wlan_serialization_api.h"
+#include <wlan_utility.h>
+
 
 /* Bit mask flag for tdls_option to FW */
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
