@@ -6229,13 +6229,13 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 				  i, stats->rx_packets[i], stats->rx_dropped[i],
 				  stats->rx_delivered[i], stats->rx_refused[i]);
 		}
-		hdd_debug("RX - packets %u, dropped %u, unsolict_arp_n_mcast_drp %u, delivered %u, refused %u GRO - agg %u non-agg %u flushes(%u %u) disabled(conc %u low-tput %u)",
+		hdd_debug("RX - packets %u, dropped %u, unsolict_arp_n_mcast_drp %u, delivered %u, refused %u GRO - agg %u drop %u non-agg %u flushes(%u %u) disabled(conc %u low-tput %u)",
 			  total_rx_pkt, total_rx_dropped,
 			  qdf_atomic_read(&stats->rx_usolict_arp_n_mcast_drp),
 			  total_rx_delv,
 			  total_rx_refused, stats->rx_aggregated,
-			  stats->rx_non_aggregated, stats->rx_gro_flushes,
-			  stats->rx_gro_force_flushes,
+			  stats->rx_gro_dropped, stats->rx_non_aggregated,
+			  stats->rx_gro_flushes, stats->rx_gro_force_flushes,
 			  qdf_atomic_read(&ctx->disable_rx_ol_in_concurrency),
 			  qdf_atomic_read(&ctx->disable_rx_ol_in_low_tput));
 	}

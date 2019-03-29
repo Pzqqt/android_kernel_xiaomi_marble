@@ -1569,7 +1569,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 					struct napi_struct *napi_to_use,
 					struct sk_buff *skb)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	gro_result_t gro_res;
 	bool flush_ind = QDF_NBUF_CB_RX_FLUSH_IND(skb);
 
@@ -1581,8 +1581,8 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 		napi_gro_flush(napi_to_use, false);
 	local_bh_enable();
 
-	if (gro_res != GRO_DROP)
-		status = QDF_STATUS_SUCCESS;
+	if (gro_res == GRO_DROP)
+		status = QDF_STATUS_E_GRO_DROP;
 
 	if (flush_ind)
 		adapter->hdd_stats.tx_rx_stats.rx_gro_flushes++;
@@ -1936,12 +1936,18 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 		skb_receive_offload_ok = true;
 
-	if (skb_receive_offload_ok && hdd_ctx->receive_offload_cb)
+	if (skb_receive_offload_ok && hdd_ctx->receive_offload_cb) {
 		status = hdd_ctx->receive_offload_cb(adapter, skb);
 
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		adapter->hdd_stats.tx_rx_stats.rx_aggregated++;
-		return status;
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			adapter->hdd_stats.tx_rx_stats.rx_aggregated++;
+			return status;
+		}
+
+		if (status == QDF_STATUS_E_GRO_DROP) {
+			adapter->hdd_stats.tx_rx_stats.rx_gro_dropped++;
+			return status;
+		}
 	}
 
 	adapter->hdd_stats.tx_rx_stats.rx_non_aggregated++;

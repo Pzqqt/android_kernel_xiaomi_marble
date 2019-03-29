@@ -440,6 +440,7 @@ struct hdd_tx_rx_stats {
 	qdf_atomic_t rx_usolict_arp_n_mcast_drp;
 	/* rx gro */
 	__u32 rx_aggregated;
+	__u32 rx_gro_dropped;
 	__u32 rx_non_aggregated;
 	__u32 rx_gro_flushes;
 	/* Dynamic GRO disable/enable, flush may be required for UDP GRO */
