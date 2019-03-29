@@ -248,6 +248,10 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		ret = va_macro_mclk_enable(va_priv, 1, true);
+		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   va_priv->default_clk_id,
+						   TX_CORE_CLK,
+						   true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		va_macro_mclk_enable(va_priv, 0, true);
@@ -584,6 +588,10 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read32(component, tx_gain_ctl_reg));
+		bolero_clk_rsc_request_clock(va_priv->dev,
+					   va_priv->default_clk_id,
+					   TX_CORE_CLK,
+					   false);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
