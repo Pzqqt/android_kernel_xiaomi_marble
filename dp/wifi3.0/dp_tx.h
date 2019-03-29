@@ -229,4 +229,8 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 	return;
 }
 /* TODO TX_FEATURE_NOT_YET */
+
+void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc);
+void dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id);
+
 #endif
