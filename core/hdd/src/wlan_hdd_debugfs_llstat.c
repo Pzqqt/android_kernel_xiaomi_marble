@@ -223,7 +223,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 	ssize_t len = 0;
 	uint8_t *buffer;
 	tSirWifiRadioStat *radio_stat = (tpSirWifiRadioStat) data;
-	tSirWifiChannelStats *chan_stat;
+	struct wifi_channel_stats *chan_stat;
 
 	hdd_enter();
 
@@ -272,9 +272,9 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 			"\nNum channels: %d", radio_stat->numChannels);
 
 		for (j = 0; j < radio_stat->numChannels; j++) {
-			chan_stat = (tSirWifiChannelStats *)
+			chan_stat = (struct wifi_channel_stats *)
 					((uint8_t *)radio_stat->channels +
-					  (j * sizeof(tSirWifiChannelStats)));
+					  (j * sizeof(struct wifi_channel_stats)));
 
 			buffer += len;
 			ll_stats.len += len;
@@ -285,7 +285,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 				chan_stat->channel.center_freq,
 				chan_stat->channel.center_freq0,
 				chan_stat->channel.center_freq1,
-				chan_stat->onTime, chan_stat->ccaBusyTime);
+				chan_stat->on_time, chan_stat->cca_busy_time);
 		}
 
 		radio_stat++;

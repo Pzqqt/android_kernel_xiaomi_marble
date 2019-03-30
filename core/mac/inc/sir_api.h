@@ -3597,15 +3597,17 @@ struct wifi_rate_info {
 	uint32_t bitrate;
 };
 
-/* channel statistics */
-typedef struct {
-	/* channel */
+/**
+ * struct wifi_channel_stats - channel statistics
+ * @channel: channel for which the stats are applicable
+ * @on_time: msecs the radio is awake
+ * @cca_busy_time: secs the CCA register is busy
+ */
+struct wifi_channel_stats {
 	struct wifi_channel_info channel;
-	/* msecs the radio is awake (32 bits number accruing over time) */
-	uint32_t onTime;
-	/* msecs the CCA register is busy (32 bits number accruing over time) */
-	uint32_t ccaBusyTime;
-} tSirWifiChannelStats, *tpSirWifiChannelStats;
+	uint32_t on_time;
+	uint32_t cca_busy_time;
+};
 
 #define MAX_TPC_LEVELS 64
 /* radio statistics */
@@ -3660,8 +3662,8 @@ typedef struct {
 	uint32_t on_time_host_scan;
 	uint32_t on_time_lpi_scan;
 
-	/* channel statistics tSirWifiChannelStats */
-	tSirWifiChannelStats *channels;
+	/* channel statistics struct wifi_channel_stats */
+	struct wifi_channel_stats *channels;
 } tSirWifiRadioStat, *tpSirWifiRadioStat;
 
 /**

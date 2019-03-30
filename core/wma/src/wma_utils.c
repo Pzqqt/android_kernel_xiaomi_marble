@@ -1681,7 +1681,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	size_t radio_stats_size, chan_stats_size;
 	size_t link_stats_results_size;
 	tSirWifiRadioStat *rs_results;
-	tSirWifiChannelStats *chn_results;
+	struct wifi_channel_stats *chn_results;
 
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -1725,7 +1725,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	}
 
 	radio_stats_size = sizeof(tSirWifiRadioStat);
-	chan_stats_size = sizeof(tSirWifiChannelStats);
+	chan_stats_size = sizeof(struct wifi_channel_stats);
 	if (fixed_param->num_radio >
 		(UINT_MAX - sizeof(*link_stats_results))/radio_stats_size) {
 		WMA_LOGE("excess num_radio %d is leading to int overflow",
@@ -1831,7 +1831,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 			return -ENOMEM;
 		}
 
-		chn_results = (tSirWifiChannelStats *) &rs_results->channels[0];
+		chn_results = (struct wifi_channel_stats *) &rs_results->channels[0];
 		next_chan_offset = WMI_TLV_HDR_SIZE;
 		WMA_LOGD("Channel Stats Info");
 		for (count = 0; count < radio_stats->num_channels; count++) {

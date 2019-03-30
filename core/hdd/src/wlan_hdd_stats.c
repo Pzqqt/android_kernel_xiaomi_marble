@@ -785,7 +785,7 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 					   tSirWifiRadioStat *radiostat,
 					   struct sk_buff *vendor_event)
 {
-	tSirWifiChannelStats *channel_stats;
+	struct wifi_channel_stats *channel_stats;
 	struct nlattr *chlist;
 	struct nlattr *chinfo;
 	int i;
@@ -798,9 +798,9 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 	}
 
 	for (i = 0; i < radiostat->numChannels; i++) {
-		channel_stats = (tSirWifiChannelStats *) ((uint8_t *)
+		channel_stats = (struct wifi_channel_stats *) ((uint8_t *)
 				     radiostat->channels +
-				     (i * sizeof(tSirWifiChannelStats)));
+				     (i * sizeof(struct wifi_channel_stats)));
 
 		chinfo = nla_nest_start(vendor_event, i);
 		if (!chinfo) {
@@ -822,10 +822,10 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 				channel_stats->channel.center_freq1) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_ON_TIME,
-				channel_stats->onTime) ||
+				channel_stats->on_time) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_CCA_BUSY_TIME,
-				channel_stats->ccaBusyTime)) {
+				channel_stats->cca_busy_time)) {
 			hdd_err("nla_put failed");
 			return -EINVAL;
 		}
@@ -857,10 +857,10 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 	/*
 	 * Allocate a size of 4096 for the Radio stats comprising
 	 * sizeof (tSirWifiRadioStat) + numChannels * sizeof
-	 * (tSirWifiChannelStats).Each channel data is put with an
+	 * (struct wifi_channel_stats).Each channel data is put with an
 	 * NL attribute.The size of 4096 is considered assuming that
 	 * number of channels shall not exceed beyond  60 with the
-	 * sizeof (tSirWifiChannelStats) being 24 bytes.
+	 * sizeof (struct wifi_channel_stats) being 24 bytes.
 	 */
 
 	vendor_event = cfg80211_vendor_cmd_alloc_reply_skb(
