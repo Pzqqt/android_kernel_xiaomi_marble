@@ -1554,7 +1554,7 @@ typedef struct {
     A_UINT32 ax_mu_mimo_brpoll_5; /* MU user 5 */
     A_UINT32 ax_mu_mimo_brpoll_6; /* MU user 6 */
     A_UINT32 ax_mu_mimo_brpoll_7; /* MU user 7 */
-    A_UINT32 ax_basic_trigger;    
+    A_UINT32 ax_basic_trigger;
     A_UINT32 ax_bsr_trigger;
     A_UINT32 ax_mu_bar_trigger;
     A_UINT32 ax_mu_rts_trigger;
@@ -1587,7 +1587,7 @@ typedef struct {
     A_UINT32 ax_mu_mimo_brp5_err;
     A_UINT32 ax_mu_mimo_brp6_err;
     A_UINT32 ax_mu_mimo_brp7_err;
-    A_UINT32 ax_basic_trigger_err;    
+    A_UINT32 ax_basic_trigger_err;
     A_UINT32 ax_bsr_trigger_err;
     A_UINT32 ax_mu_bar_trigger_err;
     A_UINT32 ax_mu_rts_trigger_err;

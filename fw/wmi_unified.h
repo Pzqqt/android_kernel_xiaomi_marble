@@ -9428,6 +9428,11 @@ typedef enum {
      */
     WMI_VDEV_PARAM_MAX_MTU_SIZE,                          /* 0x91 */
 
+    /** Send every nth beacon to host
+     * if value of n is 0, it means this Nth beacon upload is disabled
+     */
+    WMI_VDEV_PARAM_NTH_BEACON_TO_HOST,                    /* 0x92 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -13013,6 +13018,7 @@ typedef enum wake_reason_e {
     WOW_REASON_TKIP_MIC_ERR_FRAME_RECVD_DETECT,
     WOW_REASON_WLAN_MD, /* motion detected */
     WOW_REASON_WLAN_BL, /* baselining done */
+    WOW_REASON_NTH_BCN_OFLD, /* nth beacon forward to host */
 
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
