@@ -1095,6 +1095,14 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 					&head, &tail);
 
 		if (ppdu_id != pdev->ppdu_info.com_info.ppdu_id) {
+			rx_mon_stats->stat_ring_ppdu_id_hist[
+				rx_mon_stats->ppdu_id_hist_idx] =
+				pdev->ppdu_info.com_info.ppdu_id;
+			rx_mon_stats->dest_ring_ppdu_id_hist[
+				rx_mon_stats->ppdu_id_hist_idx] = ppdu_id;
+			rx_mon_stats->ppdu_id_hist_idx =
+				(rx_mon_stats->ppdu_id_hist_idx + 1) &
+					(MAX_PPDU_ID_HIST - 1);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 				sizeof(pdev->ppdu_info.rx_status));

@@ -6914,6 +6914,9 @@ static inline void
 dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 {
 	struct cdp_pdev_mon_stats *rx_mon_stats;
+	uint32_t *stat_ring_ppdu_ids;
+	uint32_t *dest_ring_ppdu_ids;
+	int i, idx;
 
 	rx_mon_stats = &pdev->rx_mon_stats;
 
@@ -6933,6 +6936,34 @@ dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 		       rx_mon_stats->dup_mon_linkdesc_cnt);
 	DP_PRINT_STATS("dup_mon_buf_cnt = %d",
 		       rx_mon_stats->dup_mon_buf_cnt);
+	stat_ring_ppdu_ids =
+		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	dest_ring_ppdu_ids =
+		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+
+	if (!stat_ring_ppdu_ids || !dest_ring_ppdu_ids)
+		DP_PRINT_STATS("Unable to allocate ppdu id hist mem\n");
+
+	qdf_spin_lock_bh(&pdev->mon_lock);
+	idx = rx_mon_stats->ppdu_id_hist_idx;
+	qdf_mem_copy(stat_ring_ppdu_ids,
+		     rx_mon_stats->stat_ring_ppdu_id_hist,
+		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	qdf_mem_copy(dest_ring_ppdu_ids,
+		     rx_mon_stats->dest_ring_ppdu_id_hist,
+		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	qdf_spin_unlock_bh(&pdev->mon_lock);
+
+	DP_PRINT_STATS("PPDU Id history:");
+	DP_PRINT_STATS("stat_ring_ppdu_ids\t dest_ring_ppdu_ids");
+	for (i = 0; i < MAX_PPDU_ID_HIST; i++) {
+		idx = (idx + 1) & (MAX_PPDU_ID_HIST - 1);
+		DP_PRINT_STATS("%*u\t%*u", 16,
+			       rx_mon_stats->stat_ring_ppdu_id_hist[idx], 16,
+			       rx_mon_stats->dest_ring_ppdu_id_hist[idx]);
+	}
+	qdf_mem_free(stat_ring_ppdu_ids);
+	qdf_mem_free(dest_ring_ppdu_ids);
 }
 
 /**
