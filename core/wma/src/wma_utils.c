@@ -1463,13 +1463,13 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 int wma_unified_radio_tx_mem_free(void *handle)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	tSirWifiRadioStat *rs_results;
+	struct wifi_radio_stats *rs_results;
 	uint32_t i = 0;
 
 	if (!wma_handle->link_stats_results)
 		return 0;
 
-	rs_results = (tSirWifiRadioStat *)
+	rs_results = (struct wifi_radio_stats *)
 				&wma_handle->link_stats_results->results[0];
 	for (i = 0; i < wma_handle->link_stats_results->num_radio; i++) {
 		if (rs_results->tx_time_per_power_level) {
@@ -1509,7 +1509,7 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 	wmi_tx_power_level_stats_evt_fixed_param *fixed_param;
 	uint8_t *tx_power_level_values;
 	tSirLLStatsResults *link_stats_results;
-	tSirWifiRadioStat *rs_results;
+	struct wifi_radio_stats *rs_results;
 	uint32_t max_total_num_tx_power_levels = MAX_TPC_LEVELS * NUM_OF_BANDS *
 						MAX_SPATIAL_STREAM_ANY_V3;
 
@@ -1575,7 +1575,7 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	rs_results = (tSirWifiRadioStat *) &link_stats_results->results[0] +
+	rs_results = (struct wifi_radio_stats *) &link_stats_results->results[0] +
 							 fixed_param->radio_id;
 	tx_power_level_values = (uint8_t *) param_tlvs->tx_time_per_power_level;
 
@@ -1680,7 +1680,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	uint32_t next_chan_offset, count;
 	size_t radio_stats_size, chan_stats_size;
 	size_t link_stats_results_size;
-	tSirWifiRadioStat *rs_results;
+	struct wifi_radio_stats *rs_results;
 	struct wifi_channel_stats *chn_results;
 
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
@@ -1724,7 +1724,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	radio_stats_size = sizeof(tSirWifiRadioStat);
+	radio_stats_size = sizeof(struct wifi_radio_stats);
 	chan_stats_size = sizeof(struct wifi_channel_stats);
 	if (fixed_param->num_radio >
 		(UINT_MAX - sizeof(*link_stats_results))/radio_stats_size) {
@@ -1799,17 +1799,17 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	t_radio_stats = (uint8_t *) radio_stats;
 	t_channel_stats = (uint8_t *) channel_stats;
 
-	rs_results = (tSirWifiRadioStat *) &results[0] + radio_stats->radio_id;
+	rs_results = (struct wifi_radio_stats *) &results[0] + radio_stats->radio_id;
 	rs_results->radio = radio_stats->radio_id;
-	rs_results->onTime = radio_stats->on_time;
-	rs_results->txTime = radio_stats->tx_time;
-	rs_results->rxTime = radio_stats->rx_time;
-	rs_results->onTimeScan = radio_stats->on_time_scan;
-	rs_results->onTimeNbd = radio_stats->on_time_nbd;
-	rs_results->onTimeGscan = radio_stats->on_time_gscan;
-	rs_results->onTimeRoamScan = radio_stats->on_time_roam_scan;
-	rs_results->onTimePnoScan = radio_stats->on_time_pno_scan;
-	rs_results->onTimeHs20 = radio_stats->on_time_hs20;
+	rs_results->on_time = radio_stats->on_time;
+	rs_results->tx_time = radio_stats->tx_time;
+	rs_results->rx_time = radio_stats->rx_time;
+	rs_results->on_time_scan = radio_stats->on_time_scan;
+	rs_results->on_time_nbd = radio_stats->on_time_nbd;
+	rs_results->on_time_gscan = radio_stats->on_time_gscan;
+	rs_results->on_time_roam_scan = radio_stats->on_time_roam_scan;
+	rs_results->on_time_pno_scan = radio_stats->on_time_pno_scan;
+	rs_results->on_time_hs20 = radio_stats->on_time_hs20;
 	rs_results->total_num_tx_power_levels = 0;
 	if (rs_results->tx_time_per_power_level) {
 		qdf_mem_free(rs_results->tx_time_per_power_level);
@@ -1819,10 +1819,10 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		qdf_mem_free(rs_results->channels);
 		rs_results->channels = NULL;
 	}
-	rs_results->numChannels = radio_stats->num_channels;
+	rs_results->num_channels = radio_stats->num_channels;
 	rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
 	rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
-	if (rs_results->numChannels) {
+	if (rs_results->num_channels) {
 		rs_results->channels = qdf_mem_malloc(
 					radio_stats->num_channels *
 					chan_stats_size);

@@ -782,7 +782,7 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
  * Return: 0 on success; errno on failure
  */
 static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
-					   tSirWifiRadioStat *radiostat,
+					   struct wifi_radio_stats *radiostat,
 					   struct sk_buff *vendor_event)
 {
 	struct wifi_channel_stats *channel_stats;
@@ -797,7 +797,7 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	for (i = 0; i < radiostat->numChannels; i++) {
+	for (i = 0; i < radiostat->num_channels; i++) {
 		channel_stats = (struct wifi_channel_stats *) ((uint8_t *)
 				     radiostat->channels +
 				     (i * sizeof(struct wifi_channel_stats)));
@@ -847,7 +847,7 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
  */
 static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 					u32 more_data,
-					tSirWifiRadioStat *radiostat,
+					struct wifi_radio_stats *radiostat,
 					u32 num_radio)
 {
 	struct sk_buff *vendor_event;
@@ -856,7 +856,7 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 
 	/*
 	 * Allocate a size of 4096 for the Radio stats comprising
-	 * sizeof (tSirWifiRadioStat) + numChannels * sizeof
+	 * sizeof (struct wifi_radio_stats) + num_channels * sizeof
 	 * (struct wifi_channel_stats).Each channel data is put with an
 	 * NL attribute.The size of 4096 is considered assuming that
 	 * number of channels shall not exceed beyond  60 with the
@@ -886,37 +886,37 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 			radiostat->radio) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME,
-			radiostat->onTime) ||
+			radiostat->on_time) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME,
-			radiostat->txTime) ||
+			radiostat->tx_time) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_RX_TIME,
-			radiostat->rxTime) ||
+			radiostat->rx_time) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_SCAN,
-			radiostat->onTimeScan) ||
+			radiostat->on_time_scan) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_NBD,
-			radiostat->onTimeNbd) ||
+			radiostat->on_time_nbd) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_GSCAN,
-			radiostat->onTimeGscan) ||
+			radiostat->on_time_gscan) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_ROAM_SCAN,
-			radiostat->onTimeRoamScan) ||
+			radiostat->on_time_roam_scan) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_PNO_SCAN,
-			radiostat->onTimePnoScan) ||
+			radiostat->on_time_pno_scan) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_ON_TIME_HS20,
-			radiostat->onTimeHs20) ||
+			radiostat->on_time_hs20) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_TX_LEVELS,
 			radiostat->total_num_tx_power_levels)    ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
-			radiostat->numChannels)) {
+			radiostat->num_channels)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		goto failure;
 	}
@@ -932,7 +932,7 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 		}
 	}
 
-	if (radiostat->numChannels) {
+	if (radiostat->num_channels) {
 		ret = hdd_llstats_radio_fill_channels(adapter, radiostat,
 						      vendor_event);
 		if (ret)
@@ -962,11 +962,11 @@ failure:
  */
 static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 					       u32 more_data,
-					       tpSirWifiRadioStat pData,
+					       struct wifi_radio_stats *pData,
 					       u32 num_radio)
 {
 	int status, i, nr, ret;
-	tSirWifiRadioStat *pWifiRadioStat = pData;
+	struct wifi_radio_stats *pWifiRadioStat = pData;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_enter();
@@ -979,19 +979,20 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 
 	for (i = 0; i < num_radio; i++) {
 		hdd_debug("LL_STATS_RADIO"
-		       " radio: %u onTime: %u txTime: %u rxTime: %u"
-		       " onTimeScan: %u onTimeNbd: %u"
-		       " onTimeGscan: %u onTimeRoamScan: %u"
-		       " onTimePnoScan: %u  onTimeHs20: %u"
-		       " numChannels: %u total_num_tx_pwr_levels: %u"
+		       " radio: %u on_time: %u tx_time: %u rx_time: %u"
+		       " on_time_scan: %u on_time_nbd: %u"
+		       " on_time_gscan: %u on_time_roam_scan: %u"
+		       " on_time_pno_scan: %u  on_time_hs20: %u"
+		       " num_channels: %u total_num_tx_pwr_levels: %u"
 		       " on_time_host_scan: %u, on_time_lpi_scan: %u",
-		       pWifiRadioStat->radio, pWifiRadioStat->onTime,
-		       pWifiRadioStat->txTime, pWifiRadioStat->rxTime,
-		       pWifiRadioStat->onTimeScan, pWifiRadioStat->onTimeNbd,
-		       pWifiRadioStat->onTimeGscan,
-		       pWifiRadioStat->onTimeRoamScan,
-		       pWifiRadioStat->onTimePnoScan,
-		       pWifiRadioStat->onTimeHs20, pWifiRadioStat->numChannels,
+		       pWifiRadioStat->radio, pWifiRadioStat->on_time,
+		       pWifiRadioStat->tx_time, pWifiRadioStat->rx_time,
+		       pWifiRadioStat->on_time_scan, pWifiRadioStat->on_time_nbd,
+		       pWifiRadioStat->on_time_gscan,
+		       pWifiRadioStat->on_time_roam_scan,
+		       pWifiRadioStat->on_time_pno_scan,
+		       pWifiRadioStat->on_time_hs20,
+		       pWifiRadioStat->num_channels,
 		       pWifiRadioStat->total_num_tx_power_levels,
 		       pWifiRadioStat->on_time_host_scan,
 		       pWifiRadioStat->on_time_lpi_scan);
@@ -1030,10 +1031,10 @@ static void hdd_ll_process_radio_stats(struct hdd_adapter *adapter,
 {
 	if (DEBUGFS_LLSTATS_REQID == resp_id)
 		hdd_debugfs_process_radio_stats(adapter, more_data,
-			(tpSirWifiRadioStat)data, num_radio);
+			(struct wifi_radio_stats *)data, num_radio);
 	else
 		hdd_link_layer_process_radio_stats(adapter, more_data,
-			(tpSirWifiRadioStat)data, num_radio);
+			(struct wifi_radio_stats *)data, num_radio);
 }
 
 /**

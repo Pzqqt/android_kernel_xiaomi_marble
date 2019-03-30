@@ -222,7 +222,7 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 	int i, j;
 	ssize_t len = 0;
 	uint8_t *buffer;
-	tSirWifiRadioStat *radio_stat = (tpSirWifiRadioStat) data;
+	struct wifi_radio_stats *radio_stat = (struct wifi_radio_stats *) data;
 	struct wifi_channel_stats *chan_stat;
 
 	hdd_enter();
@@ -246,13 +246,13 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 		len = scnprintf(buffer,
 			DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 			"\nRadio: %u on_time: %u, tx_time: %u, rx_time: %u, on_time_scan: %u, on_time_nbd: %u, on_time_gscan: %u, on_time_roam_scan: %u, on_time_pno_scan: %u  on_time_hs20: %u, on_time_host_scan: %u, on_time_lpi_scan: %u\ntotal_num_tx_pwr_levels: %u\n",
-			radio_stat->radio, radio_stat->onTime,
-			radio_stat->txTime, radio_stat->rxTime,
-			radio_stat->onTimeScan, radio_stat->onTimeNbd,
-			radio_stat->onTimeGscan,
-			radio_stat->onTimeRoamScan,
-			radio_stat->onTimePnoScan,
-			radio_stat->onTimeHs20,
+			radio_stat->radio, radio_stat->on_time,
+			radio_stat->tx_time, radio_stat->rx_time,
+			radio_stat->on_time_scan, radio_stat->on_time_nbd,
+			radio_stat->on_time_gscan,
+			radio_stat->on_time_roam_scan,
+			radio_stat->on_time_pno_scan,
+			radio_stat->on_time_hs20,
 			radio_stat->on_time_host_scan,
 			radio_stat->on_time_lpi_scan,
 			radio_stat->total_num_tx_power_levels);
@@ -269,9 +269,9 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 		ll_stats.len += len;
 		len = scnprintf(buffer,
 			DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
-			"\nNum channels: %d", radio_stat->numChannels);
+			"\nNum channels: %d", radio_stat->num_channels);
 
-		for (j = 0; j < radio_stat->numChannels; j++) {
+		for (j = 0; j < radio_stat->num_channels; j++) {
 			chan_stat = (struct wifi_channel_stats *)
 					((uint8_t *)radio_stat->channels +
 					  (j * sizeof(struct wifi_channel_stats)));

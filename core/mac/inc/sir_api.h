@@ -3609,62 +3609,43 @@ struct wifi_channel_stats {
 	uint32_t cca_busy_time;
 };
 
-#define MAX_TPC_LEVELS 64
-/* radio statistics */
-typedef struct {
-	/* wifi radio (if multiple radio supported) */
+/**
+ * struct wifi_radio_stats - per-radio statistics
+ * @radio: wifi radio for which the stats are applicable
+ * @on_time: msecs the radio is awake
+ * @tx_time: msecs the radio is transmitting
+ * @rx_time: msecs the radio is in active receive
+ * @on_time_scan: msecs the radio is awake due to all scan
+ * @on_time_nbd: msecs the radio is awake due to NAN
+ * @on_time_gscan: msecs the radio is awake due to Gscan
+ * @on_time_roam_scan: msecs the radio is awake due to roam scan
+ * @on_time_pno_scan: msecs the radio is awake due to PNO scan
+ * @on_time_hs20: msecs the radio is awake due to HS2.0 scans and GAS exchange
+ * @on_time_host_scan: msecs the radio is awake due to Host initiated scan
+ * @on_time_lpi_scan: msecs the radio is awake due to LPI scan
+ * @total_num_tx_power_levels: @tx_time_per_power_level record count
+ * @tx_time_per_power_level:  tx time (in milliseconds) per TPC level (0.5 dBm)
+ * @num_channels: @channels record count
+ * @channels: per-channel statistics
+ */
+struct wifi_radio_stats {
 	tSirWifiRadio radio;
-	/* msecs the radio is awake (32 bits number accruing over time) */
-	uint32_t onTime;
-	/* msecs the radio is transmitting
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t txTime;
-	/* msecs the radio is in active receive
-	   *(32 bits number accruing over time)
-	 */
-	uint32_t rxTime;
-	/* msecs the radio is awake due to all scan
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimeScan;
-	/* msecs the radio is awake due to NAN
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimeNbd;
-	/* msecs the radio is awake due to Gscan
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimeGscan;
-	/* msecs the radio is awake due to roam?scan
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimeRoamScan;
-	/* msecs the radio is awake due to PNO scan
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimePnoScan;
-	/* msecs the radio is awake due to HS2.0 scans and GAS exchange
-	 * (32 bits number accruing over time)
-	 */
-	uint32_t onTimeHs20;
-
-	/* tx time (in milliseconds) per TPC level (0.5 dBm) */
-	uint32_t total_num_tx_power_levels;
-	uint32_t *tx_time_per_power_level;
-
-	/* number of channels */
-	uint32_t numChannels;
-
-	/* tx time (in milliseconds) per TPC level (0.5 dBm) */
-	uint32_t tx_time_per_tpc[MAX_TPC_LEVELS];
-
+	uint32_t on_time;
+	uint32_t tx_time;
+	uint32_t rx_time;
+	uint32_t on_time_scan;
+	uint32_t on_time_nbd;
+	uint32_t on_time_gscan;
+	uint32_t on_time_roam_scan;
+	uint32_t on_time_pno_scan;
+	uint32_t on_time_hs20;
 	uint32_t on_time_host_scan;
 	uint32_t on_time_lpi_scan;
-
-	/* channel statistics struct wifi_channel_stats */
+	uint32_t total_num_tx_power_levels;
+	uint32_t *tx_time_per_power_level;
+	uint32_t num_channels;
 	struct wifi_channel_stats *channels;
-} tSirWifiRadioStat, *tpSirWifiRadioStat;
+};
 
 /**
  * struct wifi_rate_stat - per rate statistics
