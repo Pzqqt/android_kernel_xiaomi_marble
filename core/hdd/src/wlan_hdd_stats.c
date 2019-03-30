@@ -207,28 +207,28 @@ static bool put_wifi_rate_stat(struct wifi_rate_stat *stats,
 		       stats->rate.bw) ||
 	    nla_put_u8(vendor_event,
 		       QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_MCS_INDEX,
-		       stats->rate.rateMcsIdx) ||
+		       stats->rate.rate_or_mcs_index) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_BIT_RATE,
 			stats->rate.bitrate) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_TX_MPDU,
-			   stats->tx_mpdu) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_TX_MPDU,
+			stats->tx_mpdu) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RX_MPDU,
-			   stats->rx_mpdu) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RX_MPDU,
+			stats->rx_mpdu) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_MPDU_LOST,
-			   stats->mpdu_lost) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_MPDU_LOST,
+			stats->mpdu_lost) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES,
-			   stats->retries) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES,
+			stats->retries) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_SHORT,
-			   stats->retries_short) ||
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_SHORT,
+			stats->retries_short) ||
 	    nla_put_u32(vendor_event,
-			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_LONG,
-			   stats->retries_long)) {
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_LONG,
+			stats->retries_long)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
 		return false;
 	}

@@ -3577,22 +3577,25 @@ struct wifi_channel_info {
 	uint32_t center_freq1;
 };
 
-/* wifi rate info */
-typedef struct {
-	/* 0: OFDM, 1:CCK, 2:HT 3:VHT 4..7 reserved */
+/**
+ * struct wifi_rate_info - wifi rate information
+ * @preamble: 0:OFDM, 1:CCK, 2:HT 3:VHT 4..7 reserved
+ * @nss: 0:1x1, 1:2x2, 3:3x3, 4:4x4
+ * @bw: 0:20MHz, 1:40Mhz, 2:80Mhz, 3:160Mhz
+ * @rate_or_mcs_index:
+ * * OFDM/CCK: rate code per ieee std in units of 0.5mbps
+ * * HT/VHT: mcs index
+ * @reserved: reserved
+ * @bitrate: bitrate units of 100 Kbps
+ */
+struct wifi_rate_info {
 	uint32_t preamble:3;
-	/* 0:1x1, 1:2x2, 3:3x3, 4:4x4 */
 	uint32_t nss:2;
-	/* 0:20MHz, 1:40Mhz, 2:80Mhz, 3:160Mhz */
 	uint32_t bw:3;
-	/* OFDM/CCK rate code would be as per ieee std in units of 0.5mbps */
-	/* HT/VHT it would be mcs index */
-	uint32_t rateMcsIdx:8;
-	/* reserved */
+	uint32_t rate_or_mcs_index:8;
 	uint32_t reserved:16;
-	/* units of 100 Kbps */
 	uint32_t bitrate;
-} tSirWifiRate, *tpSirWifiRate;
+};
 
 /* channel statistics */
 typedef struct {
@@ -3672,7 +3675,7 @@ typedef struct {
  * @retries_long: number of long data pkt retries
  */
 struct wifi_rate_stat {
-	tSirWifiRate rate;
+	struct wifi_rate_info rate;
 	uint32_t tx_mpdu;
 	uint32_t rx_mpdu;
 	uint32_t mpdu_lost;
