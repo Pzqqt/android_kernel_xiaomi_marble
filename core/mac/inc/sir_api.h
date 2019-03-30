@@ -3563,17 +3563,19 @@ struct wifi_interface_info {
 	uint8_t countryStr[CFG_COUNTRY_CODE_LEN];
 };
 
-/* channel information */
-typedef struct {
-	/* channel width (20, 40, 80, 80+80, 160) */
+/**
+ * struct wifi_channel_info - channel information
+ * @width: channel width (20, 40, 80, 80+80, 160)
+ * @center_freq: primary 20 MHz channel
+ * @center_freq0: center frequency (MHz) first segment
+ * @center_freq1: center frequency (MHz) second segment
+ */
+struct wifi_channel_info {
 	enum phy_ch_width width;
-	/* primary 20 MHz channel */
-	uint32_t centerFreq;
-	/* center frequency (MHz) first segment */
-	uint32_t centerFreq0;
-	/* center frequency (MHz) second segment */
-	uint32_t centerFreq1;
-} tSirWifiChannelInfo, *tpSirWifiChannelInfo;
+	uint32_t center_freq;
+	uint32_t center_freq0;
+	uint32_t center_freq1;
+};
 
 /* wifi rate info */
 typedef struct {
@@ -3595,7 +3597,7 @@ typedef struct {
 /* channel statistics */
 typedef struct {
 	/* channel */
-	tSirWifiChannelInfo channel;
+	struct wifi_channel_info channel;
 	/* msecs the radio is awake (32 bits number accruing over time) */
 	uint32_t onTime;
 	/* msecs the CCA register is busy (32 bits number accruing over time) */

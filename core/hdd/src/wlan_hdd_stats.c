@@ -813,13 +813,13 @@ static int hdd_llstats_radio_fill_channels(struct hdd_adapter *adapter,
 				channel_stats->channel.width) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ,
-				channel_stats->channel.centerFreq) ||
+				channel_stats->channel.center_freq) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ0,
-				channel_stats->channel.centerFreq0) ||
+				channel_stats->channel.center_freq0) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_INFO_CENTER_FREQ1,
-				channel_stats->channel.centerFreq1) ||
+				channel_stats->channel.center_freq1) ||
 		    nla_put_u32(vendor_event,
 				QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_ON_TIME,
 				channel_stats->onTime) ||

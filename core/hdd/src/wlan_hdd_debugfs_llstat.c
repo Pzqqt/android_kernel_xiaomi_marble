@@ -281,9 +281,9 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 				DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
 				"\nChan width: %u, center_freq: %u, center_freq0: %u, center_freq1: %u, on_time: %u, cca_busy_time: %u",
 				chan_stat->channel.width,
-				chan_stat->channel.centerFreq,
-				chan_stat->channel.centerFreq0,
-				chan_stat->channel.centerFreq1,
+				chan_stat->channel.center_freq,
+				chan_stat->channel.center_freq0,
+				chan_stat->channel.center_freq1,
 				chan_stat->onTime, chan_stat->ccaBusyTime);
 		}
 
