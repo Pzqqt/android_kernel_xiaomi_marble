@@ -3479,8 +3479,6 @@ typedef struct {
 
 /******************************LINK LAYER Statistics**********************/
 
-typedef int tSirWifiRadio;
-
 typedef struct {
 	uint32_t reqId;
 	uint8_t staId;
@@ -3629,7 +3627,7 @@ struct wifi_channel_stats {
  * @channels: per-channel statistics
  */
 struct wifi_radio_stats {
-	tSirWifiRadio radio;
+	uint32_t radio;
 	uint32_t on_time;
 	uint32_t tx_time;
 	uint32_t rx_time;
