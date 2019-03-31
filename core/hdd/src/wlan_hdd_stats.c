@@ -966,7 +966,7 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 					       u32 num_radio)
 {
 	int status, i, nr, ret;
-	struct wifi_radio_stats *pWifiRadioStat = pData;
+	struct wifi_radio_stats *radio_stat = pData;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_enter();
@@ -985,28 +985,28 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 		       " on_time_pno_scan: %u  on_time_hs20: %u"
 		       " num_channels: %u total_num_tx_pwr_levels: %u"
 		       " on_time_host_scan: %u, on_time_lpi_scan: %u",
-		       pWifiRadioStat->radio, pWifiRadioStat->on_time,
-		       pWifiRadioStat->tx_time, pWifiRadioStat->rx_time,
-		       pWifiRadioStat->on_time_scan, pWifiRadioStat->on_time_nbd,
-		       pWifiRadioStat->on_time_gscan,
-		       pWifiRadioStat->on_time_roam_scan,
-		       pWifiRadioStat->on_time_pno_scan,
-		       pWifiRadioStat->on_time_hs20,
-		       pWifiRadioStat->num_channels,
-		       pWifiRadioStat->total_num_tx_power_levels,
-		       pWifiRadioStat->on_time_host_scan,
-		       pWifiRadioStat->on_time_lpi_scan);
-		pWifiRadioStat++;
+		       radio_stat->radio, radio_stat->on_time,
+		       radio_stat->tx_time, radio_stat->rx_time,
+		       radio_stat->on_time_scan, radio_stat->on_time_nbd,
+		       radio_stat->on_time_gscan,
+		       radio_stat->on_time_roam_scan,
+		       radio_stat->on_time_pno_scan,
+		       radio_stat->on_time_hs20,
+		       radio_stat->num_channels,
+		       radio_stat->total_num_tx_power_levels,
+		       radio_stat->on_time_host_scan,
+		       radio_stat->on_time_lpi_scan);
+		radio_stat++;
 	}
 
-	pWifiRadioStat = pData;
+	radio_stat = pData;
 	for (nr = 0; nr < num_radio; nr++) {
 		ret = hdd_llstats_post_radio_stats(adapter, more_data,
-						   pWifiRadioStat, num_radio);
+						   radio_stat, num_radio);
 		if (ret)
 			return;
 
-		pWifiRadioStat++;
+		radio_stat++;
 	}
 
 	hdd_exit();
