@@ -543,7 +543,6 @@ static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int deviceMode)
 bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			    struct wifi_interface_info *info)
 {
-	uint8_t *staMac = NULL;
 	struct hdd_station_ctx *sta_ctx;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	/* pre-existing layering violation */
@@ -570,12 +569,9 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		if ((eConnectionState_Associated ==
 		     sta_ctx->conn_info.conn_state) &&
 		    (!sta_ctx->conn_info.is_authenticated)) {
-			staMac =
-				(uint8_t *) &(adapter->mac_addr.
-					      bytes[0]);
 			hdd_err("client " MAC_ADDRESS_STR
 				" is in the middle of WPS/EAPOL exchange.",
-				MAC_ADDR_ARRAY(staMac));
+				MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 			info->state = WIFI_AUTHENTICATING;
 		}
 		if (eConnectionState_Associated ==
