@@ -517,13 +517,13 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat if_stat,
 
 /**
  * hdd_map_device_to_ll_iface_mode() - map device to link layer interface mode
- * @deviceMode: Device mode
+ * @device_mode: Device mode
  *
  * Return: interface mode
  */
-static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int deviceMode)
+static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int device_mode)
 {
-	switch (deviceMode) {
+	switch (device_mode) {
 	case QDF_STA_MODE:
 		return WIFI_INTERFACE_STA;
 	case QDF_SAP_MODE:

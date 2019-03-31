@@ -183,7 +183,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	tAniMsgHdr *ani_hdr;
 	uint8_t *buf;
 	uint8_t *numInterfaces;
-	uint8_t *deviceMode;
+	uint8_t *device_mode;
 	uint8_t *vdevId;
 	struct hdd_adapter *adapter;
 
@@ -217,13 +217,13 @@ static void send_oem_reg_rsp_nlink_msg(void)
 
 	/* Iterate through each adapter and fill device mode and vdev id */
 	hdd_for_each_adapter(p_hdd_ctx, adapter) {
-		deviceMode = buf++;
+		device_mode = buf++;
 		vdevId = buf++;
-		*deviceMode = adapter->device_mode;
+		*device_mode = adapter->device_mode;
 		*vdevId = adapter->vdev_id;
 		(*numInterfaces)++;
-		hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
-			  *numInterfaces, *deviceMode,
+		hdd_debug("numInterfaces: %d, device_mode: %d, vdevId: %d",
+			  *numInterfaces, *device_mode,
 			  *vdevId);
 	}
 
