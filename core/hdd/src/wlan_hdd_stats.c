@@ -541,7 +541,7 @@ static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int deviceMode)
 }
 
 bool hdd_get_interface_info(struct hdd_adapter *adapter,
-			    struct wifi_interface_info *pInfo)
+			    struct wifi_interface_info *info)
 {
 	uint8_t *staMac = NULL;
 	struct hdd_station_ctx *sta_ctx;
@@ -549,9 +549,9 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	/* pre-existing layering violation */
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	pInfo->mode = hdd_map_device_to_ll_iface_mode(adapter->device_mode);
+	info->mode = hdd_map_device_to_ll_iface_mode(adapter->device_mode);
 
-	qdf_copy_macaddr(&pInfo->macAddr, &adapter->mac_addr);
+	qdf_copy_macaddr(&info->macAddr, &adapter->mac_addr);
 
 	if (((QDF_STA_MODE == adapter->device_mode) ||
 	     (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
@@ -559,13 +559,13 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (eConnectionState_NotConnected ==
 		    sta_ctx->conn_info.conn_state) {
-			pInfo->state = WIFI_DISCONNECTED;
+			info->state = WIFI_DISCONNECTED;
 		}
 		if (eConnectionState_Connecting ==
 		    sta_ctx->conn_info.conn_state) {
 			hdd_err("Session ID %d, Connection is in progress",
 				adapter->vdev_id);
-			pInfo->state = WIFI_ASSOCIATING;
+			info->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
 		     sta_ctx->conn_info.conn_state) &&
@@ -576,27 +576,27 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			hdd_err("client " MAC_ADDRESS_STR
 				" is in the middle of WPS/EAPOL exchange.",
 				MAC_ADDR_ARRAY(staMac));
-			pInfo->state = WIFI_AUTHENTICATING;
+			info->state = WIFI_AUTHENTICATING;
 		}
 		if (eConnectionState_Associated ==
 		    sta_ctx->conn_info.conn_state) {
-			pInfo->state = WIFI_ASSOCIATED;
-			qdf_copy_macaddr(&pInfo->bssid,
+			info->state = WIFI_ASSOCIATED;
+			qdf_copy_macaddr(&info->bssid,
 					 &sta_ctx->conn_info.bssid);
-			qdf_mem_copy(pInfo->ssid,
+			qdf_mem_copy(info->ssid,
 				     sta_ctx->conn_info.ssid.SSID.ssId,
 				     sta_ctx->conn_info.ssid.SSID.length);
 			/*
 			 * NULL Terminate the string
 			 */
-			pInfo->ssid[sta_ctx->conn_info.ssid.SSID.length] = 0;
+			info->ssid[sta_ctx->conn_info.ssid.SSID.length] = 0;
 		}
 	}
 
-	qdf_mem_copy(pInfo->countryStr,
+	qdf_mem_copy(info->countryStr,
 		     mac->scan.countryCodeCurrent, CFG_COUNTRY_CODE_LEN);
 
-	qdf_mem_copy(pInfo->apCountryStr,
+	qdf_mem_copy(info->apCountryStr,
 		     mac->scan.countryCodeCurrent, CFG_COUNTRY_CODE_LEN);
 
 	return true;
