@@ -606,7 +606,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
  * hdd_link_layer_process_peer_stats() - This function is called after
  * @adapter: Pointer to device adapter
  * @more_data: More data
- * @pData: Pointer to stats data
+ * @peer_stat: Pointer to stats data
  *
  * Receiving Link Layer Peer statistics from FW.This function converts
  * the firmware data to the NL data and sends the same to the kernel/upper
@@ -616,10 +616,9 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
  */
 static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 					      u32 more_data,
-					      struct wifi_peer_stat *pData)
+					      struct wifi_peer_stat *peer_stat)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct wifi_peer_stat *peer_stat;
 	struct wifi_peer_info *peer_info;
 	struct sk_buff *vendor_event;
 	int status, i;
@@ -627,8 +626,6 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	int num_rate;
 
 	hdd_enter();
-
-	peer_stat = pData;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
@@ -714,7 +711,7 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 /**
  * hdd_link_layer_process_iface_stats() - This function is called after
  * @adapter: Pointer to device adapter
- * @pData: Pointer to stats data
+ * @if_stat: Pointer to stats data
  * @num_peers: Number of peers
  *
  * Receiving Link Layer Interface statistics from FW.This function converts
@@ -724,17 +721,14 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
  * Return: None
  */
 static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
-					       tpSirWifiIfaceStat pData,
+					       tpSirWifiIfaceStat if_stat,
 					       u32 num_peers)
 {
-	tpSirWifiIfaceStat if_stat;
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
 
 	hdd_enter();
-
-	if_stat = pData;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
@@ -951,7 +945,7 @@ failure:
  * hdd_link_layer_process_radio_stats() - This function is called after
  * @adapter: Pointer to device adapter
  * @more_data: More data
- * @pData: Pointer to stats data
+ * @radio_stat: Pointer to stats data
  * @num_radios: Number of radios
  *
  * Receiving Link Layer Radio statistics from FW.This function converts
@@ -960,13 +954,14 @@ failure:
  *
  * Return: None
  */
-static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
-					       u32 more_data,
-					       struct wifi_radio_stats *pData,
-					       u32 num_radio)
+static void
+hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
+				   u32 more_data,
+				   struct wifi_radio_stats *radio_stat,
+				   u32 num_radio)
 {
 	int status, i, nr, ret;
-	struct wifi_radio_stats *radio_stat = pData;
+	struct wifi_radio_stats *radio_stat_save = radio_stat;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	hdd_enter();
@@ -999,7 +994,7 @@ static void hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 		radio_stat++;
 	}
 
-	radio_stat = pData;
+	radio_stat = radio_stat_save;
 	for (nr = 0; nr < num_radio; nr++) {
 		ret = hdd_llstats_post_radio_stats(adapter, more_data,
 						   radio_stat, num_radio);
