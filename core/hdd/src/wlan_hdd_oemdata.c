@@ -182,7 +182,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	struct nlmsghdr *nlh;
 	tAniMsgHdr *ani_hdr;
 	uint8_t *buf;
-	uint8_t *numInterfaces;
+	uint8_t *num_interfaces;
 	uint8_t *device_mode;
 	uint8_t *vdevId;
 	struct hdd_adapter *adapter;
@@ -212,8 +212,8 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	 *     - one byte for vdev id
 	 */
 	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
-	numInterfaces = buf++;
-	*numInterfaces = 0;
+	num_interfaces = buf++;
+	*num_interfaces = 0;
 
 	/* Iterate through each adapter and fill device mode and vdev id */
 	hdd_for_each_adapter(p_hdd_ctx, adapter) {
@@ -221,14 +221,14 @@ static void send_oem_reg_rsp_nlink_msg(void)
 		vdevId = buf++;
 		*device_mode = adapter->device_mode;
 		*vdevId = adapter->vdev_id;
-		(*numInterfaces)++;
-		hdd_debug("numInterfaces: %d, device_mode: %d, vdevId: %d",
-			  *numInterfaces, *device_mode,
+		(*num_interfaces)++;
+		hdd_debug("num_interfaces: %d, device_mode: %d, vdevId: %d",
+			  *num_interfaces, *device_mode,
 			  *vdevId);
 	}
 
 	ani_hdr->length =
-		sizeof(uint8_t) + (*numInterfaces) * 2 * sizeof(uint8_t);
+		sizeof(uint8_t) + (*num_interfaces) * 2 * sizeof(uint8_t);
 	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
