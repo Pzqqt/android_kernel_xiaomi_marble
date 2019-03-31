@@ -2242,6 +2242,10 @@ struct roam_offload_scan_req {
 	uint32_t R0KH_ID_Length;
 	uint8_t RoamKeyMgmtOffloadEnabled;
 	struct pmkid_mode_bits pmkid_modes;
+
+	/* Idle/Disconnect roam parameters */
+	struct wmi_idle_roam_params idle_roam_params;
+	struct wmi_disconnect_roam_params disconnect_roam_params;
 #endif
 	struct roam_ext_params roam_params;
 	uint8_t  middle_of_roaming;

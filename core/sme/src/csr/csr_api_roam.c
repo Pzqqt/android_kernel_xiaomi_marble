@@ -17628,8 +17628,8 @@ void csr_update_roam_scan_ese_params(struct roam_offload_scan_req *req_buf,
  * csr_update_roam_scan_offload_request() - updates req msg with roam offload
  * parameters
  * @mac:          mac global context
- * @req_buf:       out param, roam offload scan request packet
- * @session:       roam session
+ * @req_buf:      out param, roam offload scan request packet
+ * @session:      roam session
  *
  * Return: void
  */
@@ -17638,6 +17638,16 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 				     struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
 {
+	req_buf->roam_offload_enabled = csr_is_roam_offload_enabled(mac_ctx);
+	if (!req_buf->roam_offload_enabled)
+		return;
+
+	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
+	req_buf->pmkid_modes = session->pmkid_modes;
+	qdf_mem_copy(&req_buf->roam_params,
+		     &mac_ctx->roam.configParam.roam_params,
+		     sizeof(req_buf->roam_params));
+
 	qdf_mem_copy(req_buf->PSK_PMK, session->psk_pmk,
 		     sizeof(req_buf->PSK_PMK));
 	req_buf->pmk_len = session->pmk_len;
@@ -17662,12 +17672,33 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 
 	/* fill bss load triggered roam related configs */
 	req_buf->bss_load_trig_enabled =
-			mac_ctx->mlme_cfg->lfr.bss_load_trig.enabled;
+		mac_ctx->mlme_cfg->lfr.bss_load_trig.enabled;
 	req_buf->bss_load_config.bss_load_threshold =
 		mac_ctx->mlme_cfg->lfr.bss_load_trig.threshold;
 	req_buf->bss_load_config.bss_load_sample_time =
 		mac_ctx->mlme_cfg->lfr.bss_load_trig.sample_time;
 	req_buf->bss_load_config.vdev_id = session->sessionId;
+
+	/*
+	 * Fill the Idle/Disconect roaming ini parameters to be sent to
+	 * firmware
+	 */
+	req_buf->disconnect_roam_params.enable =
+		mac_ctx->mlme_cfg->lfr.enable_disconnect_roam_offload;
+	req_buf->disconnect_roam_params.vdev_id = session->vdev_id;
+	req_buf->idle_roam_params.enable =
+		mac_ctx->mlme_cfg->lfr.enable_idle_roam;
+	req_buf->idle_roam_params.vdev_id = session->vdev_id;
+	req_buf->idle_roam_params.conn_ap_rssi_delta =
+		mac_ctx->mlme_cfg->lfr.idle_roam_rssi_delta;
+	req_buf->idle_roam_params.inactive_time =
+		mac_ctx->mlme_cfg->lfr.idle_roam_inactive_time;
+	req_buf->idle_roam_params.data_pkt_count =
+		mac_ctx->mlme_cfg->lfr.idle_data_packet_count;
+	req_buf->idle_roam_params.conn_ap_min_rssi =
+		mac_ctx->mlme_cfg->lfr.idle_roam_min_rssi;
+	req_buf->idle_roam_params.band =
+		mac_ctx->mlme_cfg->lfr.idle_roam_band;
 
 	req_buf->ReassocFailureTimeout =
 		mac_ctx->mlme_cfg->timeouts.reassoc_failure_timeout;
@@ -17680,8 +17711,13 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 
 	req_buf->roaming_scan_policy =
 			mac_ctx->mlme_cfg->lfr.roaming_scan_policy;
-
 }
+#else
+static inline void
+csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
+				     struct roam_offload_scan_req *req_buf,
+				     struct csr_roam_session *session)
+{}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -18108,12 +18144,12 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.nRoamBeaconRssiWeight;
 	csr_copy_mawc_config(mac_ctx, &req_buf->mawc_roam_params);
 	sme_debug("MAWC:global=%d,roam=%d,traffic=%d,ap_rssi=%d,high=%d,low=%d",
-			req_buf->mawc_roam_params.mawc_enabled,
-			req_buf->mawc_roam_params.mawc_roam_enabled,
-			req_buf->mawc_roam_params.mawc_roam_traffic_threshold,
-			req_buf->mawc_roam_params.mawc_roam_ap_rssi_threshold,
-			req_buf->mawc_roam_params.mawc_roam_rssi_high_adjust,
-			req_buf->mawc_roam_params.mawc_roam_rssi_low_adjust);
+		  req_buf->mawc_roam_params.mawc_enabled,
+		  req_buf->mawc_roam_params.mawc_roam_enabled,
+		  req_buf->mawc_roam_params.mawc_roam_traffic_threshold,
+		  req_buf->mawc_roam_params.mawc_roam_ap_rssi_threshold,
+		  req_buf->mawc_roam_params.mawc_roam_rssi_high_adjust,
+		  req_buf->mawc_roam_params.mawc_roam_rssi_low_adjust);
 #ifdef FEATURE_WLAN_ESE
 	req_buf->IsESEAssoc =
 		csr_roam_is_ese_assoc(mac_ctx, session_id) &&
@@ -18122,12 +18158,12 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		(csr_is_auth_type_ese(req_buf->
 			ConnectedNetwork.authentication)));
 	req_buf->is_11r_assoc = roam_info->is11rAssoc;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"IsEseAssoc: %d is_11r_assoc: %d middle of roaming: %d ese_neighbor_list_recvd: %d cur no of chan: %d",
-			req_buf->IsESEAssoc, req_buf->is_11r_assoc,
-			req_buf->middle_of_roaming,
-			ese_neighbor_list_recvd,
-			curr_ch_lst_info->numOfChannels);
+	sme_debug("IsEseAssoc: %d is_11r_assoc: %d middle of roaming: %d",
+		  req_buf->IsESEAssoc, req_buf->is_11r_assoc,
+		  req_buf->middle_of_roaming);
+
+	sme_debug("ese_neighbor_list_recvd: %d cur no of chan: %d",
+		  ese_neighbor_list_recvd, curr_ch_lst_info->numOfChannels);
 #endif
 
 	if (!CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
@@ -18172,8 +18208,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		/* Maintain the Valid Channels List */
 		status = csr_fetch_valid_ch_lst(mac_ctx, req_buf, session_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-					"Fetch channel list fail");
+			sme_err("Fetch channel list fail");
 			qdf_mem_free(req_buf);
 			return NULL;
 		}
@@ -18188,8 +18223,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		} else
 			break;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		 FL("ChnlCacheType:%d, No of Chnls:%d,Channels: %s"),
+	sme_debug("ChnlCacheType:%d, No of Chnls:%d,Channels: %s",
 		  req_buf->ChannelCacheType,
 		  req_buf->ConnectedNetwork.ChannelCount, ch_cache_str);
 
@@ -18204,10 +18238,10 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	 * where RFS is the RF Switching time. It is twice RFS to consider the
 	 * time to go off channel and return to the home channel.
 	 */
-	if (req_buf->HomeAwayTime < (req_buf->NeighborScanChannelMaxTime +
+	if (req_buf->HomeAwayTime <
+	    (req_buf->NeighborScanChannelMaxTime +
 	     (2 * CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			 "Invalid config, Home away time(%d) is less than (twice RF switching time + channel max time)(%d). Hence enforcing home away time to disable (0)",
+		sme_debug("Disable Home away time(%d) as it is less than (2*RF switching time + channel max time)(%d)",
 			  req_buf->HomeAwayTime,
 			  (req_buf->NeighborScanChannelMaxTime +
 			   (2 * CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME)));
@@ -18228,12 +18262,25 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		mac_ctx->mlme_cfg->lfr.early_stop_scan_max_threshold;
 	req_buf->roamscan_adaptive_dwell_mode =
 		mac_ctx->mlme_cfg->lfr.adaptive_roamscan_dwell_mode;
+
 	req_buf->lca_config_params.disallow_duration =
 		mac_ctx->mlme_cfg->lfr.lfr3_disallow_duration;
 	req_buf->lca_config_params.rssi_channel_penalization =
 		mac_ctx->mlme_cfg->lfr.lfr3_rssi_channel_penalization;
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
+
+	sme_debug("HomeAwayTime=%d EarlyStopFeature Enable=%d",
+		  req_buf->HomeAwayTime, req_buf->early_stop_scan_enable);
+
+	sme_debug("MinThresh=%d, MaxThresh=%d",
+		  req_buf->early_stop_scan_min_threshold,
+		  req_buf->early_stop_scan_max_threshold);
+
+	sme_debug("disallow_dur=%d rssi_chan_pen=%d num_disallowed_aps=%d",
+		  req_buf->lca_config_params.disallow_duration,
+		  req_buf->lca_config_params.rssi_channel_penalization,
+		  req_buf->lca_config_params.num_disallowed_aps);
 
 	/* For RSO Stop, we need to notify FW to deinit BTM */
 	if (command == ROAM_SCAN_OFFLOAD_STOP)
@@ -18254,28 +18301,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->btm_query_bitmask =
 		mac_ctx->mlme_cfg->btm.btm_query_bitmask;
 
+	csr_update_roam_scan_offload_request(mac_ctx, req_buf, session);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL("HomeAwayTime=%d EarlyStopFeature Enable=%d, MinThresh=%d, MaxThresh=%d PMK len=%d disallow_dur=%d rssi_chan_pen=%d num_disallowed_aps=%d"),
-		  req_buf->HomeAwayTime,
-		  req_buf->early_stop_scan_enable,
-		  req_buf->early_stop_scan_min_threshold,
-		  req_buf->early_stop_scan_max_threshold,
-		  req_buf->pmk_len,
-		  req_buf->lca_config_params.disallow_duration,
-		  req_buf->lca_config_params.rssi_channel_penalization,
-		  req_buf->lca_config_params.num_disallowed_aps);
-	req_buf->roam_offload_enabled = csr_is_roam_offload_enabled(mac_ctx);
-	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
-	req_buf->pmkid_modes = session->pmkid_modes;
-	/* Roam Offload piggybacks upon the Roam Scan offload command. */
-	if (req_buf->roam_offload_enabled)
-		csr_update_roam_scan_offload_request(mac_ctx, req_buf, session);
-	qdf_mem_copy(&req_buf->roam_params,
-		&mac_ctx->roam.configParam.roam_params,
-		sizeof(req_buf->roam_params));
-#endif
 	return req_buf;
 }
 

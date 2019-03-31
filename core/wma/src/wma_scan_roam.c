@@ -1513,6 +1513,94 @@ QDF_STATUS wma_send_offload_11k_params(WMA_HANDLE handle,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wma_send_disconnect_roam_params() - Send the disconnect roam parameters
+ * to wmi
+ * @handle: WMA handle
+ * @roam_req: Pointer to roam_offload_scan_req sent from CSR
+ *
+ * Return: None
+ */
+static void
+wma_send_disconnect_roam_params(tp_wma_handle wma_handle,
+				struct roam_offload_scan_req *roam_req)
+{
+	QDF_STATUS status;
+	struct wmi_disconnect_roam_params *params =
+				&roam_req->disconnect_roam_params;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send disconnect roam params");
+		return;
+	}
+
+	switch (roam_req->Command) {
+	case ROAM_SCAN_OFFLOAD_START:
+	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
+		if (!params->enable)
+			return;
+	case ROAM_SCAN_OFFLOAD_STOP:
+		params->enable = false;
+		break;
+	default:
+		break;
+	}
+
+	status = wmi_unified_send_disconnect_roam_params(wma_handle->wmi_handle,
+							 params);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("failed to send disconnect roam parameters");
+}
+
+/**
+ * wma_send_idle_roam_params() - Send the idle roam parameters to wmi
+ * @handle: WMA handle
+ * @roam_req: Pointer to roam_offload_scan_req sent from CSR
+ *
+ * Return: None
+ */
+static void
+wma_send_idle_roam_params(tp_wma_handle wma_handle,
+			  struct roam_offload_scan_req *roam_req)
+{
+	QDF_STATUS status;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send idle roam params");
+		return;
+	}
+
+	switch (roam_req->Command) {
+	case ROAM_SCAN_OFFLOAD_START:
+	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
+		if (!roam_req->idle_roam_params.enable)
+			return;
+	case ROAM_SCAN_OFFLOAD_STOP:
+		roam_req->idle_roam_params.enable = false;
+		break;
+	default:
+		break;
+	}
+
+	status = wmi_unified_send_idle_roam_params(wma_handle->wmi_handle,
+						   &roam_req->idle_roam_params);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("failed to send idle roam parameters");
+}
+
+#else
+static inline void
+wma_send_disconnect_roam_params(tp_wma_handle wma_handle,
+				struct roam_offload_scan_req *roam_req)
+{}
+
+static inline void
+wma_send_idle_roam_params(tp_wma_handle wma_handle,
+			  struct roam_offload_scan_req *roam_req)
+{}
+#endif
+
 /**
  * wma_process_roaming_config() - process roam request
  * @wma_handle: wma handle
@@ -1681,6 +1769,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 							      bss_load_cfg);
 			}
 		}
+
+		wma_send_disconnect_roam_params(wma_handle, roam_req);
+		wma_send_idle_roam_params(wma_handle, roam_req);
 		break;
 
 	case ROAM_SCAN_OFFLOAD_STOP:
@@ -1772,6 +1863,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 				break;
 			}
 		}
+
+		wma_send_disconnect_roam_params(wma_handle, roam_req);
+		wma_send_idle_roam_params(wma_handle, roam_req);
 
 		if (roam_req->reason ==
 		    REASON_OS_REQUESTED_ROAMING_NOW) {
@@ -1924,6 +2018,10 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
 						   roam_req, mode,
 						   roam_req->sessionId);
+
+		wma_send_disconnect_roam_params(wma_handle, roam_req);
+		wma_send_idle_roam_params(wma_handle, roam_req);
+
 		break;
 
 	default:
