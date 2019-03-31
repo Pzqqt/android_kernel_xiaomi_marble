@@ -8383,32 +8383,32 @@ static void hdd_init_offloaded_packets_ctx(struct hdd_context *hdd_ctx)
 #ifdef WLAN_FEATURE_WOW_PULSE
 /**
  * wlan_hdd_set_wow_pulse() - call SME to send wmi cmd of wow pulse
- * @phddctx: struct hdd_context structure pointer
+ * @hdd_ctx: struct hdd_context structure pointer
  * @enable: enable or disable this behaviour
  *
  * Return: int
  */
-static int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
+static int wlan_hdd_set_wow_pulse(struct hdd_context *hdd_ctx, bool enable)
 {
 	struct wow_pulse_mode wow_pulse_set_info;
 	QDF_STATUS status;
 
 	hdd_debug("wow pulse enable flag is %d", enable);
 
-	if (!ucfg_pmo_is_wow_pulse_enabled(phddctx->psoc))
+	if (!ucfg_pmo_is_wow_pulse_enabled(hdd_ctx->psoc))
 		return 0;
 
 	/* prepare the request to send to SME */
 	if (enable == true) {
 		wow_pulse_set_info.wow_pulse_enable = true;
 		wow_pulse_set_info.wow_pulse_pin =
-			ucfg_pmo_get_wow_pulse_pin(phddctx->psoc);
+			ucfg_pmo_get_wow_pulse_pin(hdd_ctx->psoc);
 
 		wow_pulse_set_info.wow_pulse_interval_high =
-		    ucfg_pmo_get_wow_pulse_interval_high(phddctx->psoc);
+		    ucfg_pmo_get_wow_pulse_interval_high(hdd_ctx->psoc);
 
 		wow_pulse_set_info.wow_pulse_interval_low =
-		    ucfg_pmo_get_wow_pulse_interval_low(phddctx->psoc);
+		    ucfg_pmo_get_wow_pulse_interval_low(hdd_ctx->psoc);
 	} else {
 		wow_pulse_set_info.wow_pulse_enable = false;
 		wow_pulse_set_info.wow_pulse_pin = 0;
@@ -8430,7 +8430,7 @@ static int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
 	return 0;
 }
 #else
-static inline int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
+static inline int wlan_hdd_set_wow_pulse(struct hdd_context *hdd_ctx, bool enable)
 {
 	return 0;
 }

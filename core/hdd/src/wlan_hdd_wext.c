@@ -3933,15 +3933,15 @@ static int iw_get_wlm_stats(struct net_device *net_dev,
 int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 {
 	struct net_device *net = adapter->dev;
-	struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
-	mac_handle_t mac_handle = phddctx->mac_handle;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool band_24 = false, band_5g = false;
 	bool ch_bond24 = false, ch_bond5g = false;
 	struct sme_config_params *sme_config;
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint8_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
-	enum hdd_dot11_mode hdd_dot11mode = phddctx->config->dot11Mode;
+	enum hdd_dot11_mode hdd_dot11mode = hdd_ctx->config->dot11Mode;
 	enum band_info curr_band = BAND_ALL;
 	int retval = 0;
 	uint8_t band_capability;
@@ -3953,19 +3953,19 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 
 	old_phymode = sme_get_phy_mode(mac_handle);
 
-	ucfg_mlme_get_channel_bonding_24ghz(phddctx->psoc,
+	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 					    &channel_bonding_mode);
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
 	    sme_get_cb_phy_state_from_cb_ini_value(channel_bonding_mode))
 		ch_bond24 = true;
 
-	ucfg_mlme_get_channel_bonding_5ghz(phddctx->psoc,
+	ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
 					   &channel_bonding_mode);
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
 	    sme_get_cb_phy_state_from_cb_ini_value(channel_bonding_mode))
 		ch_bond5g = true;
 
-	status = wlan_mlme_get_band_capability(phddctx->psoc, &band_capability);
+	status = wlan_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get MLME Band capability");
 		return -EIO;
@@ -3978,7 +3978,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 	else if (band_capability == BAND_5G)
 		band_5g = true;
 
-	status = ucfg_mlme_get_vht_channel_width(phddctx->psoc, &vhtchanwidth);
+	status = ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc, &vhtchanwidth);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to get channel_width");
 
@@ -4164,7 +4164,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		vhtchanwidth = eHT_CHANNEL_WIDTH_80MHZ;
 		break;
 	default:
-		status = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
+		status = ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
 							 &vhtchanwidth);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Failed to get channel_width");
@@ -4205,7 +4205,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			}
 		}
 #endif
-		status = ucfg_mlme_set_band_capability(phddctx->psoc,
+		status = ucfg_mlme_set_band_capability(hdd_ctx->psoc,
 						       curr_band);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("failed to set MLME band capability");
@@ -4213,7 +4213,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		}
 
 		if (curr_band == BAND_2G) {
-			status = ucfg_mlme_set_11h_enabled(phddctx->psoc, 0);
+			status = ucfg_mlme_set_11h_enabled(hdd_ctx->psoc, 0);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("Failed to set 11h_enable flag");
 				goto free;
@@ -4229,14 +4229,14 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		}
 		sme_update_config(mac_handle, sme_config);
 
-		phddctx->config->dot11Mode = hdd_dot11mode;
+		hdd_ctx->config->dot11Mode = hdd_dot11mode;
 		ucfg_mlme_set_channel_bonding_24ghz(
-			phddctx->psoc,
+			hdd_ctx->psoc,
 			sme_config->csrConfig.channelBondingMode24GHz);
 		ucfg_mlme_set_channel_bonding_5ghz(
-			phddctx->psoc,
+			hdd_ctx->psoc,
 			sme_config->csrConfig.channelBondingMode5GHz);
-		if (hdd_update_config_cfg(phddctx) == false) {
+		if (hdd_update_config_cfg(hdd_ctx) == false) {
 			hdd_err("could not update config_dat");
 			retval = -EIO;
 			goto free;
@@ -4246,8 +4246,8 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			struct ieee80211_supported_band *band;
 
 			ucfg_mlme_get_channel_bonding_5ghz(
-					phddctx->psoc, &channel_bonding_mode);
-			band = phddctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
+					hdd_ctx->psoc, &channel_bonding_mode);
+			band = hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
 			if (channel_bonding_mode)
 				band->ht_cap.cap |=
 					IEEE80211_HT_CAP_SUP_WIDTH_20_40;
