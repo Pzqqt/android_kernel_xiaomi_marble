@@ -6166,7 +6166,7 @@ void hdd_update_hlp_info(struct net_device *dev,
 	uint16_t hlp_data_len;
 	struct fils_join_rsp_params *roam_fils_params
 				= roam_info->fils_join_rsp;
-	struct hdd_adapter *padapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	if (!roam_fils_params) {
 		hdd_err("FILS Roam Param NULL");
@@ -6211,7 +6211,7 @@ void hdd_update_hlp_info(struct net_device *dev,
 	 */
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-	status = hdd_rx_packet_cbk(padapter, skb);
+	status = hdd_rx_packet_cbk(adapter, skb);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Sending HLP packet fails");
 		return;
@@ -6381,9 +6381,9 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			bool connect_timeout,
 			tSirResultCodes timeout_reason)
 {
-	struct hdd_adapter *padapter = (struct hdd_adapter *) netdev_priv(dev);
+	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct cfg80211_bss *bss = NULL;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(padapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
@@ -6397,8 +6397,8 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			freq = ieee80211_channel_to_frequency(chan_no,
 				HDD_NL80211_BAND_5GHZ);
 
-		chan = ieee80211_get_channel(padapter->wdev.wiphy, freq);
-		bss = wlan_cfg80211_get_bss(padapter->wdev.wiphy, chan, bssid,
+		chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
+		bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy, chan, bssid,
 			roam_info->u.pConnectedProfile->SSID.ssId,
 			roam_info->u.pConnectedProfile->SSID.length);
 	}
@@ -6423,8 +6423,8 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			bool connect_timeout,
 			tSirResultCodes timeout_reason)
 {
-	struct hdd_adapter *padapter = (struct hdd_adapter *) netdev_priv(dev);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(padapter);
+	struct hdd_adapter *adapter = netdev_priv(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
@@ -14965,14 +14965,6 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter)
 	return ret;
 }
 
-/**
- * hdd_set_rx_mode_rps() - Enable/disable RPS in SAP mode
- * @struct hdd_context *hdd_ctx
- * @struct hdd_adapter *padapter
- * @bool enble
- *
- * Return: none
- */
 void hdd_set_rx_mode_rps(bool enable)
 {
 	struct cds_config_info *cds_cfg = cds_get_ini_config();

@@ -3274,6 +3274,14 @@ static inline
 void hdd_dp_trace_init(struct hdd_config *config) {}
 #endif
 
+/**
+ * hdd_set_rx_mode_rps() - Enable/disable RPS in SAP mode
+ * @enable: Set true to enable RPS in SAP mode
+ *
+ * Callback function registered with datapath
+ *
+ * Return: none
+ */
 void hdd_set_rx_mode_rps(bool enable);
 
 /**
