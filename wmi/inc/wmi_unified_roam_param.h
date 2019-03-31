@@ -549,6 +549,36 @@ struct wmi_bss_load_config {
 };
 
 /**
+ * struct wmi_idle_roam_params - Idle roam trigger parameters
+ * @vdev_id: VDEV on which the parameters should be applied
+ * @enable: Enable/Disable Idle roaming
+ * @band: Connected AP band
+ * @conn_ap_rssi_delta: Rssi change of connected AP in dBm
+ * @conn_ap_min_rssi: If connected AP rssi is less than min rssi trigger roam
+ * @inactive_time: Connected AP idle time
+ * @data_pkt_count: Data packet count allowed during idle time
+ */
+struct wmi_idle_roam_params {
+	uint32_t vdev_id;
+	bool enable;
+	uint32_t band;
+	uint32_t conn_ap_rssi_delta;
+	int32_t conn_ap_min_rssi;
+	uint32_t inactive_time;
+	uint32_t data_pkt_count;
+};
+
+/**
+ * struct wmi_disconnect_roam_params - Emergency deauth/disconnect roam params
+ * @vdev_id: VDEV on which the parameters should be applied
+ * @enable: Enable or disable disconnect roaming.
+ */
+struct wmi_disconnect_roam_params {
+	uint32_t vdev_id;
+	bool enable;
+};
+
+/**
  * @time_offset: time offset after 11k offload command to trigger a neighbor
  *	report request (in seconds)
  * @low_rssi_offset: Offset from rssi threshold to trigger a neighbor

@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -297,6 +297,26 @@ QDF_STATUS wmi_unified_send_bss_load_config(void *wmi_hdl,
 		return wmi_handle->ops->send_roam_bss_load_config(wmi_handle,
 								  params);
 
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_send_disconnect_roam_params(wmi_unified_t wmi_handle,
+					struct wmi_disconnect_roam_params *req)
+{
+	if (wmi_handle->ops->send_disconnect_roam_params)
+		return wmi_handle->ops->send_disconnect_roam_params(wmi_handle,
+								    req);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_send_idle_roam_params(wmi_unified_t wmi_handle,
+				  struct wmi_idle_roam_params *req)
+{
+	if (wmi_handle->ops->send_idle_roam_params)
+		return wmi_handle->ops->send_idle_roam_params(wmi_handle,
+							      req);
 	return QDF_STATUS_E_FAILURE;
 }
 

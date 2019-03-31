@@ -2102,6 +2102,122 @@ send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * send_disconnect_roam_params_tlv() - send disconnect roam trigger parameters
+ * @wmi_handle: wmi handle
+ * @disconnect_roam: pointer to wmi_disconnect_roam_params which carries the
+ * disconnect_roam_trigger parameters from CSR
+ *
+ * This function sends the disconnect roam trigger parameters to fw.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
+				struct wmi_disconnect_roam_params *req)
+{
+	wmi_roam_deauth_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_roam_deauth_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(
+	    &cmd->tlv_header,
+	    WMITLV_TAG_STRUC_wmi_roam_deauth_config_cmd_fixed_param,
+	    WMITLV_GET_STRUCT_TLVLEN(wmi_roam_deauth_config_cmd_fixed_param));
+
+	cmd->vdev_id = req->vdev_id;
+	cmd->enable = req->enable;
+	WMI_LOGD("%s: Send WMI_ROAM_DEAUTH_CONFIG vdev_id:%d enable:%d",
+		 __func__, cmd->vdev_id, cmd->enable);
+
+	wmi_mtrace(WMI_ROAM_DEAUTH_CONFIG_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_ROAM_DEAUTH_CONFIG_CMDID)) {
+		WMI_LOGE("%s: failed to send WMI_ROAM_DEAUTH_CONFIG_CMDID",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_idle_roam_params_tlv() - send idle roam trigger parameters
+ * @wmi_handle: wmi handle
+ * @idle_roam_params: pointer to wmi_idle_roam_params which carries the
+ * idle roam parameters from CSR
+ *
+ * This function sends the idle roam trigger parameters to fw.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
+			  struct wmi_idle_roam_params *idle_roam_params)
+{
+	wmi_roam_idle_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_roam_idle_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(
+	    &cmd->tlv_header,
+	    WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param,
+	    WMITLV_GET_STRUCT_TLVLEN(wmi_roam_idle_config_cmd_fixed_param));
+
+	cmd->vdev_id = idle_roam_params->vdev_id;
+	cmd->enable = idle_roam_params->enable;
+	cmd->band = idle_roam_params->band;
+	cmd->rssi_delta = idle_roam_params->conn_ap_rssi_delta;
+	cmd->min_rssi = idle_roam_params->conn_ap_min_rssi;
+	cmd->idle_time = idle_roam_params->inactive_time;
+	cmd->data_packet_count = idle_roam_params->data_pkt_count;
+	WMI_LOGD("%s: Send WMI_ROAM_IDLE_CONFIG_CMDID vdev_id:%d enable:%d",
+		 __func__, cmd->vdev_id, cmd->enable);
+	WMI_LOGD("%s: band:%d rssi_delta:%d min_rssi:%d idle_time:%d data_pkt:%d",
+		 __func__, cmd->band, cmd->rssi_delta, cmd->min_rssi,
+		 cmd->idle_time, cmd->data_packet_count);
+
+	wmi_mtrace(WMI_ROAM_IDLE_CONFIG_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_ROAM_IDLE_CONFIG_CMDID)) {
+		WMI_LOGE("%s: failed to send WMI_ROAM_IDLE_CONFIG_CMDID",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
+				struct wmi_disconnect_roam_params *req)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
+			  struct wmi_idle_roam_params *idle_roam_params)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * send_offload_11k_cmd_tlv() - send wmi cmd with 11k offload params
  * @wmi_handle: wmi handler
@@ -2271,6 +2387,8 @@ void wmi_roam_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_invoke_neighbor_report_cmd =
 			send_invoke_neighbor_report_cmd_tlv;
 	ops->send_roam_bss_load_config = send_roam_bss_load_config_tlv;
+	ops->send_idle_roam_params = send_idle_roam_params_tlv;
+	ops->send_disconnect_roam_params = send_disconnect_roam_params_tlv;
 
 	wmi_lfr_subnet_detection_attach_tlv(wmi_handle);
 	wmi_rssi_monitor_attach_tlv(wmi_handle);
