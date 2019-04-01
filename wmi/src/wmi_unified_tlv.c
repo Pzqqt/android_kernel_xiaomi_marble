@@ -12084,6 +12084,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_ndi_sap_support] = WMI_SERVICE_NDI_SAP_SUPPORT;
 	wmi_service[wmi_service_nan_disable_support] =
 			WMI_SERVICE_NAN_DISABLE_SUPPORT;
+	wmi_service[wmi_service_sta_plus_sta_support] =
+				WMI_SERVICE_STA_PLUS_STA_SUPPORT;
 	wmi_service[wmi_service_hw_db2dbm_support] =
 			WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT;
 	wmi_service[wmi_service_wlm_stats_support] =

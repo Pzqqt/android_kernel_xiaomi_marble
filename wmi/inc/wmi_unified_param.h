@@ -5291,6 +5291,7 @@ typedef enum {
 	wmi_service_nan_sap_support,
 	wmi_service_ndi_sap_support,
 	wmi_service_nan_disable_support,
+	wmi_service_sta_plus_sta_support,
 	wmi_service_hw_db2dbm_support,
 	wmi_service_wlm_stats_support,
 	wmi_service_ul_ru26_allowed,
