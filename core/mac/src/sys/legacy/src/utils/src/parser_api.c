@@ -516,7 +516,7 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 {
 	QDF_STATUS nsir_status;
 	qdf_size_t nRates = 0;
-	uint8_t rates[SIR_MAC_RATESET_EID_MAX];
+	uint8_t rates[WLAN_SUPPORTED_RATES_IE_MAX_LEN];
 
 	/* Use the ext rates present in session entry whenever nChannelNum is set to OPERATIONAL
 	   else use the ext supported rate set from CFG, which is fixed and does not change dynamically and is used for
@@ -3256,28 +3256,28 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 		eseBcnReportMandatoryIe.fhParamPresent = 1;
 		convert_fh_params(mac, &eseBcnReportMandatoryIe.fhParamSet,
 				  &pBies->FHParamSet);
-		numBytes += 1 + 1 + SIR_MAC_FH_PARAM_SET_EID_MAX;
+		numBytes += 1 + 1 + WLAN_FH_PARAM_IE_MAX_LEN;
 	}
 
 	if (pBies->DSParams.present) {
 		eseBcnReportMandatoryIe.dsParamsPresent = 1;
 		eseBcnReportMandatoryIe.dsParamSet.channelNumber =
 			pBies->DSParams.curr_channel;
-		numBytes += 1 + 1 + SIR_MAC_DS_PARAM_SET_EID_MAX;
+		numBytes += 1 + 1 + WLAN_DS_PARAM_IE_MAX_LEN;
 	}
 
 	if (pBies->CFParams.present) {
 		eseBcnReportMandatoryIe.cfPresent = 1;
 		convert_cf_params(mac, &eseBcnReportMandatoryIe.cfParamSet,
 				  &pBies->CFParams);
-		numBytes += 1 + 1 + SIR_MAC_CF_PARAM_SET_EID_MAX;
+		numBytes += 1 + 1 + WLAN_CF_PARAM_IE_MAX_LEN;
 	}
 
 	if (pBies->IBSSParams.present) {
 		eseBcnReportMandatoryIe.ibssParamPresent = 1;
 		eseBcnReportMandatoryIe.ibssParamSet.atim =
 			pBies->IBSSParams.atim;
-		numBytes += 1 + 1 + SIR_MAC_IBSS_PARAM_SET_EID_MAX;
+		numBytes += 1 + 1 + WLAN_IBSS_IE_MAX_LEN;
 	}
 
 	if (pBies->TIM.present) {
@@ -3294,7 +3294,7 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 		qdf_mem_copy(&eseBcnReportMandatoryIe.rmEnabledCapabilities,
 			     &pBies->RRMEnabledCap,
 			     sizeof(tDot11fIERRMEnabledCap));
-		numBytes += 1 + 1 + SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX;
+		numBytes += 1 + 1 + WLAN_RM_CAPABILITY_IE_MAX_LEN;
 	}
 
 	*outIeBuf = qdf_mem_malloc(numBytes);
@@ -3314,7 +3314,7 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_SSID_EID;
+		*pos = WLAN_ELEMID_SSID;
 		pos++;
 		*pos = eseBcnReportMandatoryIe.ssId.length;
 		pos++;
@@ -3334,8 +3334,8 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 			goto err_bcnrep;
 		}
 		if (eseBcnReportMandatoryIe.supportedRates.numRates <=
-			SIR_MAC_RATESET_EID_MAX) {
-			*pos = SIR_MAC_RATESET_EID;
+			WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
+			*pos = WLAN_ELEMID_RATES;
 			pos++;
 			*pos = eseBcnReportMandatoryIe.supportedRates.numRates;
 			pos++;
@@ -3352,72 +3352,72 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 
 	/* Fill FH Parameter set IE */
 	if (eseBcnReportMandatoryIe.fhParamPresent) {
-		if (freeBytes < (1 + 1 + SIR_MAC_FH_PARAM_SET_EID_MAX)) {
+		if (freeBytes < (1 + 1 + WLAN_FH_PARAM_IE_MAX_LEN)) {
 			pe_err("Insufficient memory to copy FHIE");
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_FH_PARAM_SET_EID;
+		*pos = WLAN_ELEMID_FHPARMS;
 		pos++;
-		*pos = SIR_MAC_FH_PARAM_SET_EID_MAX;
+		*pos = WLAN_FH_PARAM_IE_MAX_LEN;
 		pos++;
 		qdf_mem_copy(pos,
 			     (uint8_t *) &eseBcnReportMandatoryIe.fhParamSet,
-			     SIR_MAC_FH_PARAM_SET_EID_MAX);
-		pos += SIR_MAC_FH_PARAM_SET_EID_MAX;
-		freeBytes -= (1 + 1 + SIR_MAC_FH_PARAM_SET_EID_MAX);
+			     WLAN_FH_PARAM_IE_MAX_LEN);
+		pos += WLAN_FH_PARAM_IE_MAX_LEN;
+		freeBytes -= (1 + 1 + WLAN_FH_PARAM_IE_MAX_LEN);
 	}
 
 	/* Fill DS Parameter set IE */
 	if (eseBcnReportMandatoryIe.dsParamsPresent) {
-		if (freeBytes < (1 + 1 + SIR_MAC_DS_PARAM_SET_EID_MAX)) {
+		if (freeBytes < (1 + 1 + WLAN_DS_PARAM_IE_MAX_LEN)) {
 			pe_err("Insufficient memory to copy DS IE");
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_DS_PARAM_SET_EID;
+		*pos = WLAN_ELEMID_DSPARMS;
 		pos++;
-		*pos = SIR_MAC_DS_PARAM_SET_EID_MAX;
+		*pos = WLAN_DS_PARAM_IE_MAX_LEN;
 		pos++;
 		*pos = eseBcnReportMandatoryIe.dsParamSet.channelNumber;
-		pos += SIR_MAC_DS_PARAM_SET_EID_MAX;
-		freeBytes -= (1 + 1 + SIR_MAC_DS_PARAM_SET_EID_MAX);
+		pos += WLAN_DS_PARAM_IE_MAX_LEN;
+		freeBytes -= (1 + 1 + WLAN_DS_PARAM_IE_MAX_LEN);
 	}
 
 	/* Fill CF Parameter set */
 	if (eseBcnReportMandatoryIe.cfPresent) {
-		if (freeBytes < (1 + 1 + SIR_MAC_CF_PARAM_SET_EID_MAX)) {
+		if (freeBytes < (1 + 1 + WLAN_CF_PARAM_IE_MAX_LEN)) {
 			pe_err("Insufficient memory to copy CF IE");
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_CF_PARAM_SET_EID;
+		*pos = WLAN_ELEMID_CFPARMS;
 		pos++;
-		*pos = SIR_MAC_CF_PARAM_SET_EID_MAX;
+		*pos = WLAN_CF_PARAM_IE_MAX_LEN;
 		pos++;
 		qdf_mem_copy(pos,
 			     (uint8_t *) &eseBcnReportMandatoryIe.cfParamSet,
-			     SIR_MAC_CF_PARAM_SET_EID_MAX);
-		pos += SIR_MAC_CF_PARAM_SET_EID_MAX;
-		freeBytes -= (1 + 1 + SIR_MAC_CF_PARAM_SET_EID_MAX);
+			     WLAN_CF_PARAM_IE_MAX_LEN);
+		pos += WLAN_CF_PARAM_IE_MAX_LEN;
+		freeBytes -= (1 + 1 + WLAN_CF_PARAM_IE_MAX_LEN);
 	}
 
 	/* Fill IBSS Parameter set IE */
 	if (eseBcnReportMandatoryIe.ibssParamPresent) {
-		if (freeBytes < (1 + 1 + SIR_MAC_IBSS_PARAM_SET_EID_MAX)) {
+		if (freeBytes < (1 + 1 + WLAN_IBSS_IE_MAX_LEN)) {
 			pe_err("Insufficient memory to copy IBSS IE");
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_IBSS_PARAM_SET_EID;
+		*pos = WLAN_ELEMID_IBSSPARMS;
 		pos++;
-		*pos = SIR_MAC_IBSS_PARAM_SET_EID_MAX;
+		*pos = WLAN_IBSS_IE_MAX_LEN;
 		pos++;
 		qdf_mem_copy(pos,
 			     (uint8_t *) &eseBcnReportMandatoryIe.ibssParamSet.
-			     atim, SIR_MAC_IBSS_PARAM_SET_EID_MAX);
-		pos += SIR_MAC_IBSS_PARAM_SET_EID_MAX;
-		freeBytes -= (1 + 1 + SIR_MAC_IBSS_PARAM_SET_EID_MAX);
+			     atim, WLAN_IBSS_IE_MAX_LEN);
+		pos += WLAN_IBSS_IE_MAX_LEN;
+		freeBytes -= (1 + 1 + WLAN_IBSS_IE_MAX_LEN);
 	}
 
 	/* Fill TIM IE */
@@ -3427,7 +3427,7 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_TIM_EID;
+		*pos = WLAN_ELEMID_TIM;
 		pos++;
 		*pos = SIR_MAC_TIM_EID_MIN;
 		pos++;
@@ -3440,20 +3440,20 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 
 	/* Fill RM Capability IE */
 	if (eseBcnReportMandatoryIe.rrmPresent) {
-		if (freeBytes < (1 + 1 + SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX)) {
+		if (freeBytes < (1 + 1 + WLAN_RM_CAPABILITY_IE_MAX_LEN)) {
 			pe_err("Insufficient memory to copy RRM IE");
 			retStatus = QDF_STATUS_E_FAILURE;
 			goto err_bcnrep;
 		}
-		*pos = SIR_MAC_RM_ENABLED_CAPABILITY_EID;
+		*pos = WLAN_ELEMID_RRM;
 		pos++;
-		*pos = SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX;
+		*pos = WLAN_RM_CAPABILITY_IE_MAX_LEN;
 		pos++;
 		qdf_mem_copy(pos,
 			     (uint8_t *) &eseBcnReportMandatoryIe.
 			     rmEnabledCapabilities,
-			     SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX);
-		freeBytes -= (1 + 1 + SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX);
+			     WLAN_RM_CAPABILITY_IE_MAX_LEN);
+		freeBytes -= (1 + 1 + WLAN_RM_CAPABILITY_IE_MAX_LEN);
 	}
 
 	if (freeBytes != 0) {
@@ -4241,7 +4241,7 @@ sir_convert_auth_frame2_struct(struct mac_context *mac,
 	pAuth->authStatusCode = auth.Status.status;
 
 	if (auth.ChallengeText.present) {
-		pAuth->type = SIR_MAC_CHALLENGE_TEXT_EID;
+		pAuth->type = WLAN_ELEMID_CHALLENGE;
 		pAuth->length = auth.ChallengeText.num_text;
 		qdf_mem_copy(pAuth->challengeText, auth.ChallengeText.text,
 			     auth.ChallengeText.num_text);

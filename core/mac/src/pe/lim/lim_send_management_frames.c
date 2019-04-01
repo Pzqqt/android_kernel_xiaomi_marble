@@ -464,7 +464,7 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(struct mac_context *mac,
 				qdf_mem_free(tempbuf);
 				return QDF_STATUS_E_FAILURE;
 			}
-			if (!((SIR_MAC_EID_VENDOR == elem_id) &&
+			if (!((WLAN_ELEMID_VENDOR == elem_id) &&
 			      (memcmp
 				       (&ptr[2], SIR_MAC_P2P_OUI,
 				       SIR_MAC_P2P_OUI_SIZE) == 0))) {
@@ -1919,7 +1919,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			goto end;
 
 		qdf_status = lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
-					  SIR_MAC_EID_VENDOR, ONE_BYTE,
+					  WLAN_ELEMID_VENDOR, ONE_BYTE,
 					  SIR_MAC_MBO_OUI,
 					  SIR_MAC_MBO_OUI_SIZE,
 					  mbo_ie, DOT11F_IE_MBO_IE_MAX_LEN);
@@ -2462,7 +2462,7 @@ alloc_packet:
 			} else if (session->ftPEContext.
 					pFTPreAuthReq->pbssDescription) {
 				/* MDID attr is 54 */
-				*body = SIR_MDIE_ELEMENT_ID;
+				*body = WLAN_ELEMID_MOBILITY_DOMAIN;
 				body++;
 				*body = SIR_MDIE_SIZE;
 				body++;
@@ -4015,7 +4015,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	/* in the middle of other fixed fields in the link report frame(IEEE Std. 802.11k section7.4.6.4 */
 	/* and frame parser always expects IEs to come after all fixed fields. It is easier to handle */
 	/* such case this way than changing the frame parser. */
-	frm.TPCEleID.TPCId = SIR_MAC_TPC_RPT_EID;
+	frm.TPCEleID.TPCId = WLAN_ELEMID_TPCREP;
 	frm.TPCEleLen.TPCLen = 2;
 	frm.TxPower.txPower = pLinkReport->txPower;
 	frm.LinkMargin.linkMargin = 0;

@@ -5049,7 +5049,7 @@ uint8_t lim_build_p2p_ie(struct mac_context *mac, uint8_t *ie, uint8_t *data,
 	int length = 0;
 	uint8_t *ptr = ie;
 
-	ptr[length++] = SIR_MAC_EID_VENDOR;
+	ptr[length++] = WLAN_ELEMID_VENDOR;
 	ptr[length++] = ie_len + SIR_MAC_P2P_OUI_SIZE;
 	qdf_mem_copy(&ptr[length], SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
 	qdf_mem_copy(&ptr[length + SIR_MAC_P2P_OUI_SIZE], data, ie_len);

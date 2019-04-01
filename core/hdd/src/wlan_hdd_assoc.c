@@ -149,13 +149,13 @@ u8 ccp_rsn_oui_13[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x01};
  * beacon_filter_table - table of IEs used for beacon filtering
  */
 static const int beacon_filter_table[] = {
-	SIR_MAC_DS_PARAM_SET_EID,
-	SIR_MAC_ERP_INFO_EID,
-	SIR_MAC_EDCA_PARAM_SET_EID,
-	SIR_MAC_QOS_CAPABILITY_EID,
-	SIR_MAC_HT_INFO_EID,
-	SIR_MAC_VHT_OPMODE_EID,
-	SIR_MAC_VHT_OPERATION_EID,
+	WLAN_ELEMID_DSPARMS,
+	WLAN_ELEMID_ERP,
+	WLAN_ELEMID_EDCAPARMS,
+	WLAN_ELEMID_QOS_CAPABILITY,
+	WLAN_ELEMID_HTINFO_ANA,
+	WLAN_ELEMID_OP_MODE_NOTIFY,
+	WLAN_ELEMID_VHTOP,
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 	/*
 	 * EID: 221 vendor IE is being used temporarily by 11AX
@@ -163,7 +163,7 @@ static const int beacon_filter_table[] = {
 	 * vendor EID needs to be replaced with bss-color-change IE
 	 * number.
 	 */
-	SIR_MAC_EID_VENDOR,
+	WLAN_ELEMID_VENDOR,
 #endif
 };
 
@@ -2371,7 +2371,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	if (!bss)
 		hdd_warn("Get BSS returned NULL");
 	buf_ptr = buf_ssid_ie;
-	*buf_ptr = SIR_MAC_SSID_EID;
+	*buf_ptr = WLAN_ELEMID_SSID;
 	buf_ptr++;
 	*buf_ptr = roam_profile.SSID.length; /*len of ssid*/
 	buf_ptr++;

@@ -56,7 +56,6 @@ struct mac_context;
 #define CFG_VALID_CHANNEL_LIST_LEN              100
 #define CFG_COUNTRY_CODE_LEN 3
 
-#define SIR_MDIE_ELEMENT_ID         54
 #define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
 
 #define SIR_MAX_ELEMENT_ID         255

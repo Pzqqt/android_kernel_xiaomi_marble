@@ -3978,7 +3978,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 		if (!fRSNMatch)
 			break;
 
-		pRSNIe->IeHeader.ElementID = SIR_MAC_RSN_EID;
+		pRSNIe->IeHeader.ElementID = WLAN_ELEMID_RSN;
 
 		pRSNIe->Version = CSR_RSN_VERSION_SUPPORTED;
 

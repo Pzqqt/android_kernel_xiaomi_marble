@@ -56,7 +56,7 @@
  * - AUTH1 and AUTH3 must be received in AP mode
  * - AUTH2 and AUTH4 must be received in STA mode
  * - AUTH3 and AUTH4 must have challenge text IE, that is,'type' field has been set to
- *                 SIR_MAC_CHALLENGE_TEXT_EID by parser
+ *                 WLAN_ELEMID_CHALLENGE by parser
  * -
  *
  ***ASSUMPTIONS:
@@ -86,7 +86,7 @@ static inline unsigned int is_auth_valid(struct mac_context *mac,
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_3) ||
 	    (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4)) &&
-	    (auth->type != SIR_MAC_CHALLENGE_TEXT_EID) &&
+	    (auth->type != WLAN_ELEMID_CHALLENGE) &&
 	    (auth->authAlgoNumber != eSIR_SHARED_KEY))
 		valid = 0;
 
@@ -223,7 +223,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		auth_frame->authTransactionSeqNumber =
 			rx_auth_frm_body->authTransactionSeqNumber + 1;
 		auth_frame->authStatusCode = eSIR_MAC_SUCCESS_STATUS;
-		auth_frame->type = SIR_MAC_CHALLENGE_TEXT_EID;
+		auth_frame->type = WLAN_ELEMID_CHALLENGE;
 		auth_frame->length = SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH;
 		qdf_mem_copy(auth_frame->challengeText,
 				auth_node->challengeText,
@@ -806,7 +806,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 					pe_session);
 			return;
 		}
-		if (rx_auth_frm_body->type != SIR_MAC_CHALLENGE_TEXT_EID) {
+		if (rx_auth_frm_body->type != WLAN_ELEMID_CHALLENGE) {
 			pe_err("rx auth frm with invalid challenge txtie");
 			return;
 		}
@@ -857,7 +857,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		((tpSirMacAuthFrameBody)plainbody)->authStatusCode =
 			eSIR_MAC_SUCCESS_STATUS;
 		((tpSirMacAuthFrameBody)plainbody)->type =
-			SIR_MAC_CHALLENGE_TEXT_EID;
+			WLAN_ELEMID_CHALLENGE;
 		((tpSirMacAuthFrameBody)plainbody)->length =
 			rx_auth_frm_body->length;
 		qdf_mem_copy((uint8_t *) (

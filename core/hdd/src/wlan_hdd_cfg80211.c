@@ -17672,7 +17672,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 			break;
 		}
 #ifdef FEATURE_WLAN_WAPI
-		case WLAN_EID_WAPI:
+		case WLAN_ELEMID_WAPI:
 			/* Setting WAPI Mode to ON=1 */
 			adapter->wapi_info.wapi_mode = 1;
 			hdd_debug("WAPI MODE IS %u", adapter->wapi_info.wapi_mode);
@@ -17730,7 +17730,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					return status;
 				break;
 			}
-		case SIR_MAC_REQUEST_EID_MAX:
+		case WLAN_REQUEST_IE_MAX_LEN:
 			{
 				if (genie[0] == SIR_FILS_HLP_EXT_EID) {
 					hdd_debug("Set HLP EXT IE(len %d)",

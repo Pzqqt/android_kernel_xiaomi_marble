@@ -1008,7 +1008,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 
 		if (bss_desc->mdiePresent) {
 			/* Populate MDIE received from AP */
-			*body = SIR_MDIE_ELEMENT_ID;
+			*body = WLAN_ELEMID_MOBILITY_DOMAIN;
 			body++;
 			*body = SIR_MDIE_SIZE;
 			body++;
@@ -1523,7 +1523,7 @@ static QDF_STATUS find_ie_data_after_fils_session_ie(struct mac_context *mac_ctx
 		if (elem_len > left)
 			return QDF_STATUS_E_FAILURE;
 
-		if (elem_id == SIR_MAC_REQUEST_EID_MAX &&
+		if (elem_id == WLAN_REQUEST_IE_MAX_LEN &&
 			ptr[2] == SIR_FILS_SESSION_EXT_EID) {
 			(*ie) = ((&ptr[1]) + ptr[1] + 1);
 			(*ie_len) = (left - elem_len);

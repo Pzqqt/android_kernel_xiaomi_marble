@@ -4095,7 +4095,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 #ifdef FEATURE_WLAN_WAPI
 	if (QDF_SAP_MODE == adapter->device_mode) {
 		wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
-				      WLAN_EID_WAPI);
+				      WLAN_ELEMID_WAPI);
 	}
 #endif
 
@@ -5345,7 +5345,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 		if (ie) {
 			ie++;
-			if (ie[0] > SIR_MAC_RATESET_EID_MAX) {
+			if (ie[0] > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 				hdd_err("Invalid supported rates %d",
 					ie[0]);
 				ret = -EINVAL;
@@ -5367,7 +5367,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					      beacon->tail_len);
 		if (ie) {
 			ie++;
-			if (ie[0] > SIR_MAC_RATESET_EID_MAX) {
+			if (ie[0] > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 				hdd_err("Invalid supported rates %d",
 					ie[0]);
 				ret = -EINVAL;

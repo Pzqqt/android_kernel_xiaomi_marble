@@ -337,11 +337,11 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 		mlm_start_req->cfParamSet.cfpDurRemaining;
 
 	addbss_param->rateSet.numRates = mlm_start_req->rateSet.numRates;
-	if (addbss_param->rateSet.numRates > SIR_MAC_RATESET_EID_MAX) {
+	if (addbss_param->rateSet.numRates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 		pe_warn("num of sup rates %d exceeding the limit %d, resetting",
 			addbss_param->rateSet.numRates,
-			SIR_MAC_RATESET_EID_MAX);
-		addbss_param->rateSet.numRates = SIR_MAC_RATESET_EID_MAX;
+			WLAN_SUPPORTED_RATES_IE_MAX_LEN);
+		addbss_param->rateSet.numRates = WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 	}
 	qdf_mem_copy(addbss_param->rateSet.rate, mlm_start_req->rateSet.rate,
 		     addbss_param->rateSet.numRates);

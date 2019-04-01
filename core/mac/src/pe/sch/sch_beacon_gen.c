@@ -122,14 +122,14 @@ sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 	 * expect P2P IE at the end of beacon buffer and will result in
 	 * beacon corruption if P2P IE is not at end of beacon buffer.
 	 */
-	status = lim_strip_ie(mac_ctx, addn_ie, &addn_ielen, SIR_MAC_EID_VENDOR,
+	status = lim_strip_ie(mac_ctx, addn_ie, &addn_ielen, WLAN_ELEMID_VENDOR,
 			      ONE_BYTE, SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
 			      ext_p2p_ie, DOT11F_IE_P2PBEACON_MAX_LEN);
 
 	qdf_mem_copy(&add_ie[0], addn_ie, addn_ielen);
 
 	if (status == QDF_STATUS_SUCCESS &&
-	    ext_p2p_ie[0] == SIR_MAC_EID_VENDOR &&
+	    ext_p2p_ie[0] == WLAN_ELEMID_VENDOR &&
 	    !qdf_mem_cmp(&ext_p2p_ie[2], SIR_MAC_P2P_OUI,
 			 SIR_MAC_P2P_OUI_SIZE)) {
 		qdf_mem_copy(&add_ie[addn_ielen], ext_p2p_ie,
@@ -577,7 +577,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 		populate_dot11f_operating_mode(mac_ctx, &bcn_2->OperatingMode,
 					       session);
 		lim_strip_ie(mac_ctx, addn_ie, &addn_ielen,
-			     SIR_MAC_VHT_OPMODE_EID, ONE_BYTE, NULL, 0,
+			     WLAN_ELEMID_OP_MODE_NOTIFY, ONE_BYTE, NULL, 0,
 			     NULL, SIR_MAC_VHT_OPMODE_SIZE - 2);
 	}
 
@@ -670,13 +670,13 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(struct mac_context *mac,
 
 	/* SSID */
 	if (beacon1->SSID.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_SSID_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_SSID);
 		/* populating it, because probe response has to go with SSID even in hidden case */
 		populate_dot11f_ssid(mac, &pe_session->ssId, &prb_rsp->SSID);
 	}
 	/* supported rates */
 	if (beacon1->SuppRates.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_RATESET_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_RATES);
 		qdf_mem_copy((void *)&prb_rsp->SuppRates,
 			     (void *)&beacon1->SuppRates,
 			     sizeof(beacon1->SuppRates));
@@ -685,7 +685,7 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(struct mac_context *mac,
 	/* DS Parameter set */
 	if (beacon1->DSParams.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_DS_PARAM_SET_EID);
+					WLAN_ELEMID_DSPARMS);
 		qdf_mem_copy((void *)&prb_rsp->DSParams,
 			     (void *)&beacon1->DSParams,
 			     sizeof(beacon1->DSParams));
@@ -704,7 +704,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* IBSS parameter set - will not be present in probe response tx by AP */
 	/* country */
 	if (beacon2->Country.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_COUNTRY_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_COUNTRY);
 		qdf_mem_copy((void *)&prb_rsp->Country,
 			     (void *)&beacon2->Country,
 			     sizeof(beacon2->Country));
@@ -713,16 +713,16 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* Power constraint */
 	if (beacon2->PowerConstraints.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_PWR_CONSTRAINT_EID);
+					WLAN_ELEMID_PWRCNSTR);
 		qdf_mem_copy((void *)&prb_rsp->PowerConstraints,
 			     (void *)&beacon2->PowerConstraints,
 			     sizeof(beacon2->PowerConstraints));
 
 	}
-	/* Channel Switch Annoouncement SIR_MAC_CHNL_SWITCH_ANN_EID */
+	/* Channel Switch Annoouncement WLAN_ELEMID_CHANSWITCHANN */
 	if (beacon2->ChanSwitchAnn.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_CHNL_SWITCH_ANN_EID);
+					WLAN_ELEMID_CHANSWITCHANN);
 		qdf_mem_copy((void *)&prb_rsp->ChanSwitchAnn,
 			     (void *)&beacon2->ChanSwitchAnn,
 			     sizeof(beacon2->ChanSwitchAnn));
@@ -732,7 +732,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* EXT Channel Switch Announcement CHNL_EXTENDED_SWITCH_ANN_EID*/
 	if (beacon2->ext_chan_switch_ann.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-			SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID);
+			WLAN_ELEMID_EXTCHANSWITCHANN);
 		qdf_mem_copy((void *)&prb_rsp->ext_chan_switch_ann,
 			(void *)&beacon2->ext_chan_switch_ann,
 			sizeof(beacon2->ext_chan_switch_ann));
@@ -741,7 +741,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* Supported operating class */
 	if (beacon2->SuppOperatingClasses.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_OPERATING_CLASS_EID);
+					WLAN_ELEMID_SUPP_OP_CLASS);
 		qdf_mem_copy((void *)&prb_rsp->SuppOperatingClasses,
 				(void *)&beacon2->SuppOperatingClasses,
 				sizeof(beacon2->SuppOperatingClasses));
@@ -759,7 +759,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 
 	/* ERP information */
 	if (beacon2->ERPInfo.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_ERP_INFO_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_ERP);
 		qdf_mem_copy((void *)&prb_rsp->ERPInfo,
 			     (void *)&beacon2->ERPInfo,
 			     sizeof(beacon2->ERPInfo));
@@ -768,7 +768,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* Extended supported rates */
 	if (beacon2->ExtSuppRates.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_EXTENDED_RATE_EID);
+					WLAN_ELEMID_XRATES);
 		qdf_mem_copy((void *)&prb_rsp->ExtSuppRates,
 			     (void *)&beacon2->ExtSuppRates,
 			     sizeof(beacon2->ExtSuppRates));
@@ -785,7 +785,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 
 	/* RSN */
 	if (beacon2->RSNOpaque.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_RSN_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_RSN);
 		qdf_mem_copy((void *)&prb_rsp->RSNOpaque,
 			     (void *)&beacon2->RSNOpaque,
 			     sizeof(beacon2->RSNOpaque));
@@ -794,7 +794,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* EDCA Parameter set */
 	if (beacon2->EDCAParamSet.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_EDCA_PARAM_SET_EID);
+					WLAN_ELEMID_EDCAPARMS);
 		qdf_mem_copy((void *)&prb_rsp->EDCAParamSet,
 			     (void *)&beacon2->EDCAParamSet,
 			     sizeof(beacon2->EDCAParamSet));
@@ -805,33 +805,33 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 	/* HT capability IE */
 	if (beacon2->HTCaps.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_HT_CAPABILITIES_EID);
+					WLAN_ELEMID_HTCAP_ANA);
 		qdf_mem_copy((void *)&prb_rsp->HTCaps, (void *)&beacon2->HTCaps,
 			     sizeof(beacon2->HTCaps));
 	}
 	/* HT Info IE */
 	if (beacon2->HTInfo.present) {
-		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_HT_INFO_EID);
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_HTINFO_ANA);
 		qdf_mem_copy((void *)&prb_rsp->HTInfo, (void *)&beacon2->HTInfo,
 			     sizeof(beacon2->HTInfo));
 	}
 	if (beacon2->VHTCaps.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_VHT_CAPABILITIES_EID);
+					WLAN_ELEMID_VHTCAP);
 		qdf_mem_copy((void *)&prb_rsp->VHTCaps,
 			     (void *)&beacon2->VHTCaps,
 			     sizeof(beacon2->VHTCaps));
 	}
 	if (beacon2->VHTOperation.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_VHT_OPERATION_EID);
+					WLAN_ELEMID_VHTOP);
 		qdf_mem_copy((void *)&prb_rsp->VHTOperation,
 			     (void *)&beacon2->VHTOperation,
 			     sizeof(beacon2->VHTOperation));
 	}
 	if (beacon2->VHTExtBssLoad.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
-					SIR_MAC_VHT_EXT_BSS_LOAD_EID);
+					WLAN_ELEMID_EXT_BSS_LOAD);
 		qdf_mem_copy((void *)&prb_rsp->VHTExtBssLoad,
 			     (void *)&beacon2->VHTExtBssLoad,
 			     sizeof(beacon2->VHTExtBssLoad));
@@ -986,7 +986,7 @@ void sch_generate_tim(struct mac_context *mac, uint8_t **pPtr, uint16_t *timLeng
 	 * field after host driver downloaded beacon template if end-user complaints
 	 * that DTIM count and bitmapControl is 0xFF.
 	 */
-	*ptr++ = SIR_MAC_TIM_EID;
+	*ptr++ = WLAN_ELEMID_TIM;
 	*ptr++ = (uint8_t) (*timLength);
 	/* location for dtimCount. will be filled in by FW. */
 	*ptr++ = 0xFF;

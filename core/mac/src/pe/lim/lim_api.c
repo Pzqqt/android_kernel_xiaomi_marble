@@ -1104,7 +1104,7 @@ static bool pe_filter_bcn_probe_frame(struct mac_context *mac_ctx,
 		if (!bcn_caps->ibss)
 			return false;
 
-		ssid_ie = wlan_get_ie_ptr_from_eid(SIR_MAC_SSID_EID,
+		ssid_ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_SSID,
 				body + SIR_MAC_B_PR_SSID_OFFSET,
 				frame_len);
 

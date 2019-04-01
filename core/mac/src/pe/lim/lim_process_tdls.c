@@ -2315,10 +2315,10 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 	 * Copy received rates in temp_rate_set, the parser has ensured
 	 * unicity of the rates so there cannot be more than 12 .
 	 */
-	if (supp_rates_len > SIR_MAC_RATESET_EID_MAX) {
+	if (supp_rates_len > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 		pe_warn("Supported rates length: %d more than the Max limit, reset to Max",
 			supp_rates_len);
-		supp_rates_len = SIR_MAC_RATESET_EID_MAX;
+		supp_rates_len = WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 	}
 
 	for (i = 0; i < supp_rates_len; i++)

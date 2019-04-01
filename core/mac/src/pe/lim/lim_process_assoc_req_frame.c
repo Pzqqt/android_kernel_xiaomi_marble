@@ -399,13 +399,13 @@ static bool lim_chk_rates(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	basic_rates.numRates = 0;
 
 	for (i = 0; i < assoc_req->supportedRates.numRates
-			&& (i < SIR_MAC_RATESET_EID_MAX); i++) {
+			&& (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++) {
 		basic_rates.rate[i] = assoc_req->supportedRates.rate[i];
 		basic_rates.numRates++;
 	}
 
 	for (j = 0; (j < assoc_req->extendedRates.numRates)
-			&& (i < SIR_MAC_RATESET_EID_MAX); i++, j++) {
+			&& (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++, j++) {
 		basic_rates.rate[i] = assoc_req->extendedRates.rate[j];
 		basic_rates.numRates++;
 	}
@@ -2385,7 +2385,7 @@ static void lim_fill_assoc_ind_wapi_info(struct mac_context *mac_ctx,
 	if (assoc_req->wapiPresent && (!wpsie)) {
 		pe_debug("Received WAPI IE length in Assoc Req is %d",
 			assoc_req->wapi.length);
-		assoc_ind->wapiIE.wapiIEdata[0] = SIR_MAC_WAPI_EID;
+		assoc_ind->wapiIE.wapiIEdata[0] = WLAN_ELEMID_WAPI;
 		assoc_ind->wapiIE.wapiIEdata[1] = assoc_req->wapi.length;
 		qdf_mem_copy(&assoc_ind->wapiIE.wapiIEdata[2],
 			assoc_req->wapi.info, assoc_req->wapi.length);
@@ -2612,7 +2612,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 			pe_debug("Assoc Req RSN IE len: %d",
 				assoc_req->rsn.length);
 			assoc_ind->rsnIE.length = 2 + assoc_req->rsn.length;
-			assoc_ind->rsnIE.rsnIEdata[0] = SIR_MAC_RSN_EID;
+			assoc_ind->rsnIE.rsnIEdata[0] = WLAN_ELEMID_RSN;
 			assoc_ind->rsnIE.rsnIEdata[1] =
 				assoc_req->rsn.length;
 			qdf_mem_copy(&assoc_ind->rsnIE.rsnIEdata[2],
@@ -2676,7 +2676,7 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 			if (assoc_ind->addIE.length + DOT11F_IE_HTCAPS_MIN_LEN
 				+ 2 < WLAN_MAX_IE_LEN) {
 				assoc_ind->addIE.addIEdata[rsn_len] =
-					SIR_MAC_HT_CAPABILITIES_EID;
+					WLAN_ELEMID_HTCAP_ANA;
 				assoc_ind->addIE.addIEdata[rsn_len + 1] =
 					DOT11F_IE_HTCAPS_MIN_LEN;
 				qdf_mem_copy(

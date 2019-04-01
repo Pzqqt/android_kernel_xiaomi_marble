@@ -239,15 +239,15 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 	if (!rsn_ie->length)
 		return true;
 
-	if ((rsn_ie->rsnIEdata[0] != SIR_MAC_RSN_EID) &&
+	if ((rsn_ie->rsnIEdata[0] != WLAN_ELEMID_RSN) &&
 	    (rsn_ie->rsnIEdata[0] != SIR_MAC_WPA_EID)) {
 		pe_err("RSN/WPA EID: %d not [%d || %d]",
-			rsn_ie->rsnIEdata[0], SIR_MAC_RSN_EID,
+			rsn_ie->rsnIEdata[0], WLAN_ELEMID_RSN,
 			SIR_MAC_WPA_EID);
 		return false;
 	}
 	/* Check validity of RSN IE */
-	if ((rsn_ie->rsnIEdata[0] == SIR_MAC_RSN_EID) &&
+	if ((rsn_ie->rsnIEdata[0] == WLAN_ELEMID_RSN) &&
 	    (rsn_ie->rsnIEdata[1] < SIR_MAC_RSN_IE_MIN_LENGTH)) {
 		pe_err("RSN IE len: %d not [%d,%d]",
 			rsn_ie->rsnIEdata[1], SIR_MAC_RSN_IE_MIN_LENGTH,
@@ -256,7 +256,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 	}
 
 	if (rsn_ie->length > rsn_ie->rsnIEdata[1] + 2) {
-		if (rsn_ie->rsnIEdata[0] != SIR_MAC_RSN_EID) {
+		if (rsn_ie->rsnIEdata[0] != WLAN_ELEMID_RSN) {
 			pe_err("First byte: %d in rsnIEdata isn't RSN_EID",
 				rsn_ie->rsnIEdata[1]);
 			return false;
@@ -264,7 +264,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 		pe_debug("WPA IE is present along with WPA2 IE");
 		wpa_idx = 2 + rsn_ie->rsnIEdata[1];
 	} else if ((rsn_ie->length == rsn_ie->rsnIEdata[1] + 2) &&
-		   (rsn_ie->rsnIEdata[0] == SIR_MAC_RSN_EID)) {
+		   (rsn_ie->rsnIEdata[0] == WLAN_ELEMID_RSN)) {
 		pe_debug("Only RSN IE is present");
 		ret = dot11f_unpack_ie_rsn(mac_ctx, &rsn_ie->rsnIEdata[2],
 					   rsn_ie->rsnIEdata[1],

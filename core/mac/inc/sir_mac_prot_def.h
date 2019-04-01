@@ -252,56 +252,10 @@
 /* and their min/max lengths */
 /* ----------------------------------------------------------------------------- */
 
-#define SIR_MAC_SSID_EID               0
-#define SIR_MAC_RATESET_EID            1
-#define SIR_MAC_RATESET_EID_MAX            12
-#define SIR_MAC_FH_PARAM_SET_EID       2
-#define SIR_MAC_FH_PARAM_SET_EID_MAX       5
-#define SIR_MAC_DS_PARAM_SET_EID       3
-#define SIR_MAC_DS_PARAM_SET_EID_MAX       1
-#define SIR_MAC_CF_PARAM_SET_EID       4
-#define SIR_MAC_CF_PARAM_SET_EID_MAX       6
-#define SIR_MAC_TIM_EID                5
 #define SIR_MAC_TIM_EID_MIN                3
-#define SIR_MAC_IBSS_PARAM_SET_EID     6
-#define SIR_MAC_IBSS_PARAM_SET_EID_MAX     2
-#define SIR_MAC_COUNTRY_EID            7
-#define SIR_MAC_COUNTRY_EID_MAX            254
-#define SIR_MAC_FH_PARAMS_EID          8
-#define SIR_MAC_FH_PARAMS_EID_MAX          4
-#define SIR_MAC_FH_PATTERN_EID         9
-#define SIR_MAC_REQUEST_EID_MAX            255
-#define SIR_MAC_EDCA_PARAM_SET_EID     12       /* EDCA parameter set */
-#define SIR_MAC_CHALLENGE_TEXT_EID     16
-/* reserved       17-31 */
-#define SIR_MAC_PWR_CONSTRAINT_EID     32
-#define SIR_MAC_TPC_RPT_EID            35
-#define SIR_MAC_CHNL_SWITCH_ANN_EID    37
-#define SIR_MAC_ERP_INFO_EID           42
-#define SIR_MAC_QOS_CAPABILITY_EID     46
-#define SIR_MAC_RSN_EID                48
 
-#define SIR_MAC_EXTENDED_RATE_EID      50
-#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID 60
-
-#define SIR_MAC_OPERATING_CLASS_EID    59
-/* reserved       51-69 */
-#define SIR_MAC_RM_ENABLED_CAPABILITY_EID      70
-#define SIR_MAC_RM_ENABLED_CAPABILITY_EID_MAX  5
-/* reserved       71-220 */
 #define SIR_MAC_WPA_EID                221
 
-#define SIR_MAC_EID_VENDOR                221
-
-#define SIR_MAC_WAPI_EID                68
-/* reserved                            222-254 */
-#define SIR_MAC_HT_CAPABILITIES_EID    45
-#define SIR_MAC_HT_INFO_EID      61
-
-#define SIR_MAC_VHT_CAPABILITIES_EID   191
-#define SIR_MAC_VHT_OPERATION_EID      192
-#define SIR_MAC_VHT_EXT_BSS_LOAD_EID   193
-#define SIR_MAC_VHT_OPMODE_EID         199
 #define SIR_MAC_MAX_SUPPORTED_MCS_SET    16
 
 #define VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1       390
@@ -797,7 +751,7 @@ typedef struct sSirMacTim {
 /* The parser assume this to be at least 12 */
 typedef struct sSirMacRateSet {
 	uint8_t numRates;
-	uint8_t rate[SIR_MAC_RATESET_EID_MAX];
+	uint8_t rate[WLAN_SUPPORTED_RATES_IE_MAX_LEN];
 } qdf_packed tSirMacRateSet;
 
 /** struct merged_mac_rate_set - merged mac rate set
@@ -806,7 +760,7 @@ typedef struct sSirMacRateSet {
  */
 struct merged_mac_rate_set {
 	uint8_t num_rates;
-	uint8_t rate[2 * SIR_MAC_RATESET_EID_MAX];
+	uint8_t rate[2 * WLAN_SUPPORTED_RATES_IE_MAX_LEN];
 };
 
 /* Reserve 1 byte for NULL character in the SSID name field to print in %s */
@@ -1507,7 +1461,7 @@ typedef struct sSirMacAuthFrameBody {
 	uint16_t authAlgoNumber;
 	uint16_t authTransactionSeqNumber;
 	uint16_t authStatusCode;
-	uint8_t type;           /* = SIR_MAC_CHALLENGE_TEXT_EID */
+	uint8_t type;           /* = WLAN_ELEMID_CHALLENGE */
 	uint8_t length;         /* = SIR_MAC_AUTH_CHALLENGE_LENGTH */
 	uint8_t challengeText[SIR_MAC_AUTH_CHALLENGE_LENGTH];
 #ifdef WLAN_FEATURE_FILS_SK

@@ -4240,7 +4240,7 @@ static void lim_set_pdev_ht_ie(struct mac_context *mac_ctx, uint8_t pdev_id,
 			qdf_mem_free(ie_params);
 			return;
 		}
-		*ie_params->ie_ptr = SIR_MAC_HT_CAPABILITIES_EID;
+		*ie_params->ie_ptr = WLAN_ELEMID_HTCAP_ANA;
 		*(ie_params->ie_ptr + 1) = ie_params->ie_len - 2;
 		lim_set_ht_caps(mac_ctx, NULL, ie_params->ie_ptr,
 				ie_params->ie_len);
@@ -4310,7 +4310,7 @@ static void lim_set_pdev_vht_ie(struct mac_context *mac_ctx, uint8_t pdev_id,
 			qdf_mem_free(ie_params);
 			return;
 		}
-		*ie_params->ie_ptr = SIR_MAC_VHT_CAPABILITIES_EID;
+		*ie_params->ie_ptr = WLAN_ELEMID_VHTCAP;
 		*(ie_params->ie_ptr + 1) = ie_params->ie_len - 2;
 		lim_set_vht_caps(mac_ctx, NULL, ie_params->ie_ptr,
 				ie_params->ie_len);

@@ -4548,7 +4548,7 @@ static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 					      struct csr_roam_profile *pProfile)
 {
-	tSirMacRateSetIE DefaultSupportedRates11a = { SIR_MAC_RATESET_EID,
+	tSirMacRateSetIE DefaultSupportedRates11a = { WLAN_ELEMID_RATES,
 						      {8,
 						       {SIR_MAC_RATE_6,
 							SIR_MAC_RATE_9,
@@ -4558,7 +4558,7 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 							SIR_MAC_RATE_36,
 							SIR_MAC_RATE_48,
 							SIR_MAC_RATE_54} } };
-	tSirMacRateSetIE DefaultSupportedRates11b = { SIR_MAC_RATESET_EID,
+	tSirMacRateSetIE DefaultSupportedRates11b = { WLAN_ELEMID_RATES,
 						      {4,
 						       {SIR_MAC_RATE_1,
 							SIR_MAC_RATE_2,
@@ -11184,7 +11184,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/* Refused due to Mac filtering */
 			roam_info->statusCode = eSIR_SME_ASSOC_REFUSED;
-		} else if (pAssocInd->rsnIE.length && SIR_MAC_RSN_EID ==
+		} else if (pAssocInd->rsnIE.length && WLAN_ELEMID_RSN ==
 			   pAssocInd->rsnIE.rsnIEdata[0]) {
 			tDot11fIERSN rsn_ie = {0};
 
@@ -13644,11 +13644,13 @@ static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
 			profile->supported_rates.numRates,
 			profile->extended_rates.numRates);
 
-	if (profile->supported_rates.numRates > SIR_MAC_RATESET_EID_MAX)
-		profile->supported_rates.numRates = SIR_MAC_RATESET_EID_MAX;
+	if (profile->supported_rates.numRates > WLAN_SUPPORTED_RATES_IE_MAX_LEN)
+		profile->supported_rates.numRates =
+			WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 
-	if (profile->extended_rates.numRates > SIR_MAC_RATESET_EID_MAX)
-		profile->extended_rates.numRates = SIR_MAC_RATESET_EID_MAX;
+	if (profile->extended_rates.numRates > WLAN_SUPPORTED_RATES_IE_MAX_LEN)
+		profile->extended_rates.numRates =
+			WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 
 	if (profile->supported_rates.numRates) {
 		opr_rates->numRates = profile->supported_rates.numRates;
@@ -13827,11 +13829,12 @@ csr_roam_get_bss_start_parms_from_bss_desc(
 
 	if (pIes->SuppRates.present) {
 		pParam->operationalRateSet.numRates = pIes->SuppRates.num_rates;
-		if (pIes->SuppRates.num_rates > SIR_MAC_RATESET_EID_MAX) {
+		if (pIes->SuppRates.num_rates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 			sme_err(
 				"num_rates: %d > max val, resetting",
 				pIes->SuppRates.num_rates);
-			pIes->SuppRates.num_rates = SIR_MAC_RATESET_EID_MAX;
+			pIes->SuppRates.num_rates =
+				WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 		}
 		qdf_mem_copy(pParam->operationalRateSet.rate,
 			     pIes->SuppRates.rates,
@@ -13840,11 +13843,12 @@ csr_roam_get_bss_start_parms_from_bss_desc(
 	}
 	if (pIes->ExtSuppRates.present) {
 		pParam->extendedRateSet.numRates = pIes->ExtSuppRates.num_rates;
-		if (pIes->ExtSuppRates.num_rates > SIR_MAC_RATESET_EID_MAX) {
+		if (pIes->ExtSuppRates.num_rates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
 			sme_err(
 				"num_rates: %d > max val, resetting",
 				pIes->ExtSuppRates.num_rates);
-			pIes->ExtSuppRates.num_rates = SIR_MAC_RATESET_EID_MAX;
+			pIes->ExtSuppRates.num_rates =
+				WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 		}
 		qdf_mem_copy(pParam->extendedRateSet.rate,
 			     pIes->ExtSuppRates.rates,
@@ -14837,7 +14841,7 @@ void csr_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
 				elem_id, elem_len, left);
 			return;
 		}
-		if (elem_id == SIR_MAC_EID_VENDOR) {
+		if (elem_id == WLAN_ELEMID_VENDOR) {
 			sme_debug("Dumping Vendor IE of len %d", elem_len);
 			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 					   QDF_TRACE_LEVEL_DEBUG,
