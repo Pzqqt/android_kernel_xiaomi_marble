@@ -242,19 +242,11 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	}
 
 	if (oper_channel == SAP_CHANNEL_NOT_SELECTED) {
-#ifdef SOFTAP_CHANNEL_RANGE
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL("No suitable channel selected"));
-
-		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
-		sap_ctx->sap_status = eSAP_STATUS_FAILURE;
-		goto close_session;
-	} else {
-#else
+			  FL("No suitable channel, so select default channel"));
 		sap_ctx->channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	} else {
-#endif
 		/* Valid Channel Found from scan results. */
 		sap_ctx->acs_cfg->pri_ch = oper_channel;
 		sap_ctx->channel = oper_channel;
