@@ -2149,7 +2149,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	wmi_wmm_ac_stats *ac_stats, *iface_ac_stats;
 	wmi_iface_offload_stats *offload_stats, *iface_offload_stats;
 	tSirLLStatsResults *link_stats_results;
-	tSirWifiIfaceStat *iface_stat;
+	struct wifi_interface_stats *iface_stat;
 	uint32_t count;
 	size_t link_stats_size, ac_stats_size, iface_info_size;
 	size_t link_stats_results_size, offload_stats_size;
@@ -2205,7 +2205,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	link_stats_size = sizeof(tSirWifiIfaceStat);
+	link_stats_size = sizeof(struct wifi_interface_stats);
 	iface_info_size = sizeof(struct wifi_interface_info);
 
 	ac_stats_size = sizeof(wmi_wmm_ac_stats);
@@ -2213,7 +2213,8 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	total_ac_size = ac_stats_size * WIFI_AC_MAX;
 	total_offload_size = offload_stats_size * WMI_OFFLOAD_STATS_TYPE_MAX +
-			      member_size(tSirWifiIfaceStat, num_offload_stats);
+			      member_size(struct wifi_interface_stats,
+					  num_offload_stats);
 
 	link_stats_results_size = sizeof(*link_stats_results) +	link_stats_size;
 
@@ -2230,17 +2231,18 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	link_stats_results->peer_event_number = 0;
 	link_stats_results->moreResultToFollow = 0;
 
-	/* results is copied to tSirWifiIfaceStat in upper layer
-	 *   tSirWifiIfaceStat
+	/* results is copied to struct wifi_interface_stats in upper layer
+	 *   struct wifi_interface_stats
 	 *    - struct wifi_interface_info (all fields except roaming is
 	 *                             filled by host in the upper layer)
-	 *    - various members of tSirWifiIfaceStat (from wmi_iface_link_stats)
+	 *    - various members of struct wifi_interface_stats (from
+	 *                             wmi_iface_link_stats)
 	 *    - ACs information (from wmi_wmm_ac_stats)
 	 *    - num_offload_stats (from fixed param)
 	 *    - offload stats (from wmi_iface_offload_stats)
 	 */
 
-	iface_stat = (tSirWifiIfaceStat *)link_stats_results->results;
+	iface_stat = (struct wifi_interface_stats *)link_stats_results->results;
 
 	iface_link_stats = &iface_stat->link_stats;
 	*iface_link_stats = *link_stats;

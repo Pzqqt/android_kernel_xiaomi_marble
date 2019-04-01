@@ -419,7 +419,7 @@ static bool put_wifi_interface_info(struct wifi_interface_info *stats,
  *
  * Return: bool
  */
-static bool put_wifi_iface_stats(tpSirWifiIfaceStat if_stat,
+static bool put_wifi_iface_stats(struct wifi_interface_stats *if_stat,
 				 u32 num_peers, struct sk_buff *vendor_event)
 {
 	int i = 0;
@@ -716,9 +716,10 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
  *
  * Return: None
  */
-static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
-					       tpSirWifiIfaceStat if_stat,
-					       u32 num_peers)
+static void
+hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
+				   struct wifi_interface_stats *if_stat,
+				   u32 num_peers)
 {
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -732,7 +733,7 @@ static void hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 
 	/*
 	 * Allocate a size of 4096 for the interface stats comprising
-	 * sizeof (tpSirWifiIfaceStat).The size of 4096 is considered
+	 * sizeof (struct wifi_interface_stats *).The size of 4096 is considered
 	 * assuming that all these fit with in the limit.Please take
 	 * a call on the limit based on the data requirements on
 	 * interface statistics.
@@ -1041,14 +1042,13 @@ static void hdd_ll_process_radio_stats(struct hdd_adapter *adapter,
  * Return: None
  */
 static void hdd_ll_process_iface_stats(struct hdd_adapter *adapter,
-			void *data, uint32_t num_peers, uint32_t resp_id)
+				       void *data, uint32_t num_peers,
+				       uint32_t resp_id)
 {
 	if (DEBUGFS_LLSTATS_REQID == resp_id)
-		hdd_debugfs_process_iface_stats(adapter,
-				(tpSirWifiIfaceStat) data, num_peers);
+		hdd_debugfs_process_iface_stats(adapter, data, num_peers);
 	else
-		hdd_link_layer_process_iface_stats(adapter,
-				(tpSirWifiIfaceStat) data, num_peers);
+		hdd_link_layer_process_iface_stats(adapter, data, num_peers);
 }
 
 /**

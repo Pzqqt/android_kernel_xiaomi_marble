@@ -41,7 +41,7 @@ static DEFINE_MUTEX(llstats_mutex);
 void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 		void *data, uint32_t num_peers)
 {
-	tpSirWifiIfaceStat iface_stat;
+	struct wifi_interface_stats *iface_stat;
 	struct wifi_interface_info *iface_info;
 	wmi_iface_link_stats *link_stats;
 	wmi_wmm_ac_stats *ac_stats;

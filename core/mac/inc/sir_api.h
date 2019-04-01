@@ -3696,27 +3696,32 @@ struct wifi_peer_info {
 	struct wifi_rate_stat rate_stats[0];
 };
 
-/* Interface statistics - corresponding to 2nd most
- * LSB in wifi statistics bitmap  for getting statistics
+/**
+ * struct wifi_interface_stats - Interface statistics
+ * @info: struct containing the current state of the interface
+ * @rts_succ_cnt: number of RTS/CTS sequence success
+ * @rts_fail_cnt: number of RTS/CTS sequence failures
+ * @ppdu_succ_cnt: number of PPDUs transmitted
+ * @ppdu_fail_cnt: number of PPDUs that failed to transmit
+ * @link_stats: link-level statistics
+ * @ac_stats: per-Access Category statistics
+ * @num_offload_stats: @offload_stats record count
+ * @offload_stats: per-offload statistics
+ *
+ * Statistics corresponding to 2nd most LSB in wifi statistics bitmap
+ * for getting statistics
  */
-typedef struct {
-	/* current state of the interface */
+struct wifi_interface_stats {
 	struct wifi_interface_info info;
-
 	uint32_t rts_succ_cnt;
 	uint32_t rts_fail_cnt;
 	uint32_t ppdu_succ_cnt;
 	uint32_t ppdu_fail_cnt;
-
-	/* link statistics */
 	wmi_iface_link_stats link_stats;
-
-	/* per ac data packet statistics */
 	wmi_wmm_ac_stats ac_stats[WIFI_AC_MAX];
-
 	uint32_t num_offload_stats;
 	wmi_iface_offload_stats offload_stats[WMI_OFFLOAD_STATS_TYPE_MAX];
-} tSirWifiIfaceStat, *tpSirWifiIfaceStat;
+};
 
 /**
  * struct wifi_peer_stat - peer statistics
@@ -3916,7 +3921,7 @@ struct sir_wifi_ll_ext_wmm_ac_stats {
  * struct sir_wifi_ll_ext_peer_stats - per peer stats
  * @peer_id: peer ID
  * @vdev_id: VDEV ID
- * mac_address: MAC address
+ * @mac_address: MAC address
  * @sta_ps_inds: how many times STAs go to sleep
  * @sta_ps_durs: total sleep time of STAs (units in ms)
  * @rx_probe_reqs: number of probe requests received
