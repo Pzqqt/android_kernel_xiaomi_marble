@@ -184,7 +184,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	uint8_t *buf;
 	uint8_t *num_interfaces;
 	uint8_t *device_mode;
-	uint8_t *vdevId;
+	uint8_t *vdev_id;
 	struct hdd_adapter *adapter;
 
 	/* OEM msg is always to a specific process & cannot be a broadcast */
@@ -218,13 +218,13 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	/* Iterate through each adapter and fill device mode and vdev id */
 	hdd_for_each_adapter(p_hdd_ctx, adapter) {
 		device_mode = buf++;
-		vdevId = buf++;
+		vdev_id = buf++;
 		*device_mode = adapter->device_mode;
-		*vdevId = adapter->vdev_id;
+		*vdev_id = adapter->vdev_id;
 		(*num_interfaces)++;
-		hdd_debug("num_interfaces: %d, device_mode: %d, vdevId: %d",
+		hdd_debug("num_interfaces: %d, device_mode: %d, vdev_id: %d",
 			  *num_interfaces, *device_mode,
-			  *vdevId);
+			  *vdev_id);
 	}
 
 	ani_hdr->length =
@@ -731,7 +731,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 
 	hdd_info("sending peer " MAC_ADDRESS_STR
-		  " status(%d), peer_capability(%d), vdevId(%d), chanId(%d)"
+		  " status(%d), peer_capability(%d), vdev_id(%d), chanId(%d)"
 		  " to oem app pid(%d), center freq 1 (%d), center freq 2 (%d),"
 		  " info (0x%x), frequency (%d),reg info 1 (0x%x),"
 		  " reg info 2 (0x%x)",
