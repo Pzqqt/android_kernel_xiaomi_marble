@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -53,6 +53,28 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
 #define spectral_debug_nofl(format, args...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+
+#define spectral_fatal_rl(format, args...) \
+	QDF_TRACE_FATAL_RL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_err_rl(format, args...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_warn_rl(format, args...) \
+	QDF_TRACE_WARN_RL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_info_rl(format, args...) \
+	QDF_TRACE_INFO_RL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_debug_rl(format, args...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+
+#define spectral_fatal_rl_nofl(format, args...) \
+	QDF_TRACE_FATAL_RL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_err_rl_nofl(format, args...) \
+	QDF_TRACE_ERROR_RL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_warn_rl_nofl(format, args...) \
+	QDF_TRACE_WARN_RL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_info_rl_nofl(format, args...) \
+	QDF_TRACE_INFO_RL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_debug_rl_nofl(format, args...) \
+	QDF_TRACE_DEBUG_RL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
 
 /**
  * struct pdev_spectral - Radio specific spectral object
