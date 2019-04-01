@@ -1516,6 +1516,8 @@ static int wcd938x_event_notify(struct notifier_block *block,
 					0x80, 0x00);
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
+		mbhc = &wcd938x->mbhc->wcd_mbhc;
+		wcd938x_mbhc_ssr_down(wcd938x->mbhc, component);
 		wcd938x_reset_low(wcd938x->dev);
 		break;
 	case BOLERO_WCD_EVT_SSR_UP:
