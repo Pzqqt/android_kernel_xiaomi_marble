@@ -8221,10 +8221,14 @@ lim_get_dot11d_transmit_power(struct mac_context *mac, uint8_t channel)
 		goto error;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
+			goto error;
 		qdf_mem_copy(country_info,
 			     mac->mlme_cfg->power.max_tx_power_5.data,
 			     cfg_length);
 	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
+			goto error;
 		qdf_mem_copy(country_info,
 			     mac->mlme_cfg->power.max_tx_power_24.data,
 			     cfg_length);

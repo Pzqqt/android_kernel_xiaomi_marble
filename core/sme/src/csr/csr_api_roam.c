@@ -13147,7 +13147,7 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac, uint8_t *pChannel
 
 int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 {
-	uint32_t cfgLength = 0;
+	uint32_t cfg_length = 0;
 	int8_t maxTxPwr = 0;
 	uint8_t *pCountryInfo = NULL;
 	uint8_t count = 0;
@@ -13155,29 +13155,33 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel)
 	uint8_t maxChannels;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel)) {
-		cfgLength = mac->mlme_cfg->power.max_tx_power_5.len;
+		cfg_length = mac->mlme_cfg->power.max_tx_power_5.len;
 	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
-		cfgLength = mac->mlme_cfg->power.max_tx_power_24.len;
+		cfg_length = mac->mlme_cfg->power.max_tx_power_24.len;
 
 	} else
 		return maxTxPwr;
 
-	pCountryInfo = qdf_mem_malloc(cfgLength);
+	pCountryInfo = qdf_mem_malloc(cfg_length);
 	if (!pCountryInfo)
 		goto error;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
+			goto error;
 		qdf_mem_copy(pCountryInfo,
 			     mac->mlme_cfg->power.max_tx_power_5.data,
-			     cfgLength);
+			     cfg_length);
 	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
+			goto error;
 		qdf_mem_copy(pCountryInfo,
 			     mac->mlme_cfg->power.max_tx_power_24.data,
-			     cfgLength);
+			     cfg_length);
 	}
 
 	/* Identify the channel and maxtxpower */
-	while (count <= (cfgLength - (sizeof(tSirMacChanInfo)))) {
+	while (count <= (cfg_length - (sizeof(tSirMacChanInfo)))) {
 		firstChannel = pCountryInfo[count++];
 		maxChannels = pCountryInfo[count++];
 		maxTxPwr = pCountryInfo[count++];
