@@ -5251,8 +5251,10 @@ static bool csr_validate_any_default(struct mac_context *mac_ctx,
 		return match;
 	}
 
-	*neg_auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	*mc_cipher = eCSR_ENCRYPT_TYPE_NONE;
+	if (neg_auth_type)
+		*neg_auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	if (mc_cipher)
+		*mc_cipher = eCSR_ENCRYPT_TYPE_NONE;
 	*uc_cipher = eCSR_ENCRYPT_TYPE_NONE;
 	return match;
 
