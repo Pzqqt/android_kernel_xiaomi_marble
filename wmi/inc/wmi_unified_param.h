@@ -1270,7 +1270,7 @@ typedef struct {
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
  * @peer_he_ops: Peer HE operation info
  * @peer_he_cap_phyinfo: Peer HE Cap PHY info
- * @peer_he_cap_info_internal: Peer HE Proprietary PHY capability info
+ * @peer_he_cap_info_internal: Peer HE internal PHY capability info
  * @peer_he_mcs_count: Peer HE MCS TX/RX MAP count
  * @peer_he_rx_mcs_set: Peer HE RX MCS MAP
  * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
