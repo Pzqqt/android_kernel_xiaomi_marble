@@ -97,7 +97,9 @@
 /* Individual element IEs length checks */
 
 #define WLAN_SUPPORTED_RATES_IE_MAX_LEN          12
+#define WLAN_FH_PARAM_IE_MAX_LEN                 5
 #define WLAN_DS_PARAM_IE_MAX_LEN                 1
+#define WLAN_CF_PARAM_IE_MAX_LEN                 6
 #define WLAN_COUNTRY_IE_MIN_LEN                  3
 #define WLAN_QUIET_IE_MAX_LEN                    6
 #define WLAN_CSA_IE_MAX_LEN                      3
@@ -109,6 +111,9 @@
 #define WLAN_MOBILITY_DOMAIN_IE_MAX_LEN          3
 #define WLAN_OPMODE_IE_MAX_LEN                   1
 #define WLAN_IBSSDFS_IE_MIN_LEN                  7
+#define WLAN_IBSS_IE_MAX_LEN                     2
+#define WLAN_REQUEST_IE_MAX_LEN                  255
+#define WLAN_RM_CAPABILITY_IE_MAX_LEN            5
 
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
@@ -289,8 +294,10 @@ enum element_ie {
 	WLAN_ELEMID_TIM              = 5,
 	WLAN_ELEMID_IBSSPARMS        = 6,
 	WLAN_ELEMID_COUNTRY          = 7,
+	/* 8-9 reserved */
 	WLAN_ELEMID_REQINFO          = 10,
 	WLAN_ELEMID_QBSS_LOAD        = 11,
+	WLAN_ELEMID_EDCAPARMS        = 12,
 	WLAN_ELEMID_TCLAS            = 14,
 	WLAN_ELEMID_CHALLENGE        = 16,
 	/* 17-31 reserved for challenge text extension */
@@ -307,6 +314,7 @@ enum element_ie {
 	WLAN_ELEMID_ERP              = 42,
 	WLAN_ELEMID_TCLAS_PROCESS    = 44,
 	WLAN_ELEMID_HTCAP_ANA        = 45,
+	WLAN_ELEMID_QOS_CAPABILITY   = 46,
 	WLAN_ELEMID_RSN              = 48,
 	WLAN_ELEMID_XRATES           = 50,
 	WLAN_ELEMID_HTCAP_VENDOR     = 51,
