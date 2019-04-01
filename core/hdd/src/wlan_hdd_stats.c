@@ -3156,7 +3156,7 @@ static uint32_t hdd_get_max_rate_legacy(struct hdd_station_info *stainfo,
 	    maxidx < stainfo->max_ext_idx)
 		maxidx = stainfo->max_ext_idx;
 
-	for (i = 0; QDF_ARRAY_SIZE(supported_data_rate); i++) {
+	for (i = 0; i < QDF_ARRAY_SIZE(supported_data_rate); i++) {
 		if (supported_data_rate[i].beacon_rate_index == maxidx)
 			maxrate =
 				supported_data_rate[i].supported_rate[rssidx];
