@@ -4094,7 +4094,6 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	struct dp_tx_seg_info_s *seg_info_head = NULL;
 	struct dp_tx_seg_info_s *seg_info_tail = NULL;
 	struct dp_tx_seg_info_s *seg_info_new;
-	struct dp_tx_frag_info_s data_frag;
 	qdf_dma_addr_t paddr_data;
 	qdf_dma_addr_t paddr_mcbuf = 0;
 	uint8_t empty_entry_mac[QDF_MAC_ADDR_SIZE] = {0};
@@ -4122,13 +4121,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		return 1;
 	}
 
-	paddr_data = qdf_nbuf_get_frag_paddr(nbuf, 0) + QDF_MAC_ADDR_SIZE;
-
-	/*preparing data fragment*/
-	data_frag.vaddr = qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE;
-	data_frag.paddr_lo = (uint32_t)paddr_data;
-	data_frag.paddr_hi = (((uint64_t) paddr_data)  >> 32);
-	data_frag.len = len - QDF_MAC_ADDR_SIZE;
+	paddr_data = qdf_nbuf_mapped_paddr_get(nbuf) + QDF_MAC_ADDR_SIZE;
 
 	for (new_mac_idx = 0; new_mac_idx < new_mac_cnt; new_mac_idx++) {
 		dstmac = newmac[new_mac_idx];
@@ -4195,10 +4188,17 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		seg_info_new->frags[0].vaddr =  (uint8_t *)mc_uc_buf;
 		seg_info_new->frags[0].paddr_lo = (uint32_t) paddr_mcbuf;
 		seg_info_new->frags[0].paddr_hi =
-			((uint64_t) paddr_mcbuf >> 32);
+			(uint16_t)((uint64_t)paddr_mcbuf >> 32);
 		seg_info_new->frags[0].len = QDF_MAC_ADDR_SIZE;
 
-		seg_info_new->frags[1] = data_frag;
+		/*preparing data fragment*/
+		seg_info_new->frags[1].vaddr =
+			qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE;
+		seg_info_new->frags[1].paddr_lo = (uint32_t)paddr_data;
+		seg_info_new->frags[1].paddr_hi =
+			(uint16_t)(((uint64_t)paddr_data) >> 32);
+		seg_info_new->frags[1].len = len - QDF_MAC_ADDR_SIZE;
+
 		seg_info_new->nbuf = nbuf_clone;
 		seg_info_new->frag_cnt = 2;
 		seg_info_new->total_len = len;
