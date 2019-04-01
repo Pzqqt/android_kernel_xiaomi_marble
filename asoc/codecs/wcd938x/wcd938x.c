@@ -177,7 +177,7 @@ static int wcd938x_set_port_params(struct snd_soc_component *component,
 			u8 *port_type, u8 path)
 {
 	int i, j;
-	u8 num_ports;
+	u8 num_ports = 0;
 	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT];
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 
@@ -190,6 +190,10 @@ static int wcd938x_set_port_params(struct snd_soc_component *component,
 		map = &wcd938x->tx_port_mapping;
 		num_ports = wcd938x->num_tx_ports;
 		break;
+	default:
+		dev_err(component->dev, "%s Invalid path selected %u\n",
+					__func__, path);
+		return -EINVAL;
 	}
 
 	for (i = 0; i <= num_ports; i++) {
@@ -217,11 +221,11 @@ static int wcd938x_parse_port_mapping(struct device *dev,
 			char *prop, u8 path)
 {
 	u32 *dt_array, map_size, map_length;
-	u32 port_num, ch_mask, ch_rate, old_port_num = 0;
+	u32 port_num = 0, ch_mask, ch_rate, old_port_num = 0;
 	u32 slave_port_type, master_port_type;
 	u32 i, ch_iter = 0;
 	int ret = 0;
-	u8 *num_ports;
+	u8 *num_ports = NULL;
 	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT];
 	struct wcd938x_priv *wcd938x = dev_get_drvdata(dev);
 
@@ -234,6 +238,10 @@ static int wcd938x_parse_port_mapping(struct device *dev,
 		map = &wcd938x->tx_port_mapping;
 		num_ports = &wcd938x->num_tx_ports;
 		break;
+	default:
+		dev_err(dev, "%s Invalid path selected %u\n",
+			      __func__, path);
+		return -EINVAL;
 	}
 
 	if (!of_find_property(dev->of_node, prop,

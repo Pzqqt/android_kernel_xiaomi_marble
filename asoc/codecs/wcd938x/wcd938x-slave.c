@@ -22,6 +22,11 @@ static int wcd938x_slave_bind(struct device *dev,
 	uint8_t devnum = 0;
 	struct swr_device *pdev = to_swr_device(dev);
 
+	if (!pdev) {
+		pr_err("%s: invalid swr device handle\n", __func__);
+		return -EINVAL;
+	}
+
 	ret = swr_get_logical_dev_num(pdev, pdev->addr, &devnum);
 	if (ret) {
 		dev_dbg(&pdev->dev,
