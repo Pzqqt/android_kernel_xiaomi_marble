@@ -2314,10 +2314,9 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 						     tSirLLStatsResults *rsp)
 {
 	struct hdd_context *hdd_ctx;
-	struct sk_buff *skb = NULL;
+	struct sk_buff *skb;
 	uint32_t param_id, index;
-	struct hdd_adapter *adapter = NULL;
-	tSirLLStatsResults *linkLayer_stats_results;
+	struct hdd_adapter *adapter;
 	struct wifi_peer_stat *peer_stats;
 	uint8_t *results;
 	int status;
@@ -2330,18 +2329,15 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 	}
 
 	hdd_ctx = hdd_handle_to_context(ctx);
-	linkLayer_stats_results = rsp;
-
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return;
 
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-					  linkLayer_stats_results->ifaceId);
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->ifaceId);
 
 	if (!adapter) {
 		hdd_err("vdev_id %d does not exist with host.",
-			linkLayer_stats_results->ifaceId);
+			rsp->ifaceId);
 		return;
 	}
 
@@ -2354,12 +2350,10 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(hdd_handle_t ctx,
 		return;
 	}
 
-	results = linkLayer_stats_results->results;
-	param_id = linkLayer_stats_results->paramId;
+	results = rsp->results;
+	param_id = rsp->paramId;
 	hdd_info("LL_STATS RESP paramID = 0x%x, ifaceId = %u, result = %pK",
-		 linkLayer_stats_results->paramId,
-		 linkLayer_stats_results->ifaceId,
-		 linkLayer_stats_results->results);
+		 rsp->paramId, rsp->ifaceId, rsp->results);
 	if (param_id & WMI_LL_STATS_EXT_PS_CHG) {
 		peer_stats = (struct wifi_peer_stat *)results;
 		status = hdd_populate_wifi_peer_ps_info(peer_stats, skb);
