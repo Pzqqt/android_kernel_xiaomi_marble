@@ -857,9 +857,15 @@ struct wlan_crypto_key *wlan_crypto_vdev_getkey(struct wlan_objmgr_vdev *vdev,
 		crypto_err("crypto_priv NULL");
 		return NULL;
 	}
-
-	if (keyix == WLAN_CRYPTO_KEYIX_NONE || keyix >= WLAN_CRYPTO_MAXKEYIDX)
+	/* for keyix 4,5 we return the igtk keys for keyix more than 5
+	 * we return the default key, for all other keyix we return the
+	 * key accordingly.
+	 */
+	if (keyix == WLAN_CRYPTO_KEYIX_NONE ||
+	    keyix >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX))
 		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+	else if (keyix >= WLAN_CRYPTO_MAXKEYIDX)
+		key = crypto_priv->igtk_key[keyix - WLAN_CRYPTO_MAXKEYIDX];
 	else
 		key = crypto_priv->key[keyix];
 
@@ -892,8 +898,15 @@ struct wlan_crypto_key *wlan_crypto_peer_getkey(struct wlan_objmgr_peer *peer,
 		return NULL;
 	}
 
-	if (keyix == WLAN_CRYPTO_KEYIX_NONE || keyix >= WLAN_CRYPTO_MAXKEYIDX)
+	/* for keyix 4,5 we return the igtk keys for keyix more than 5
+	 * we return the default key, for all other keyix we return the
+	 * key accordingly.
+	 */
+	if (keyix == WLAN_CRYPTO_KEYIX_NONE ||
+	    keyix >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX))
 		key = crypto_priv->key[crypto_priv->def_tx_keyid];
+	else if (keyix >= WLAN_CRYPTO_MAXKEYIDX)
+		key = crypto_priv->igtk_key[keyix - WLAN_CRYPTO_MAXKEYIDX];
 	else
 		key = crypto_priv->key[keyix];
 
@@ -923,12 +936,6 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE] =
 			{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
-	if ((req_key->keyix != WLAN_CRYPTO_KEYIX_NONE) &&
-		(req_key->keyix >= WLAN_CRYPTO_MAXKEYIDX)) {
-		crypto_err("invalid keyix %d", req_key->keyix);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	wlan_vdev_obj_lock(vdev);
 	qdf_mem_copy(macaddr, wlan_vdev_mlme_get_macaddr(vdev),
