@@ -625,6 +625,32 @@ int wlan_hdd_send_mode_change_event(void);
 int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 			      bool notify_sap_event);
 
+/**
+ * hdd_store_sar_config() - Store SAR config in HDD context
+ * @hdd_ctx: The HDD context
+ * @sar_limit_cmd: The sar_limit_cmd_params struct to save
+ *
+ * After SSR, the SAR configuration is lost. As SSR is hidden from
+ * userland, this command will not come from userspace after a SSR. To
+ * restore this configuration, save this in hdd context and restore
+ * after re-init.
+ *
+ * Return: None
+ */
+void hdd_store_sar_config(struct hdd_context *hdd_ctx,
+			  struct sar_limit_cmd_params *sar_limit_cmd);
+
+/**
+ * hdd_free_sar_config() - Free the resources allocated while storing SAR config
+ * @hdd_ctx: HDD context
+ *
+ * The driver stores the SAR config values in HDD context so that it can be
+ * restored in the case SSR is invoked. Free those resources.
+ *
+ * Return: None
+ */
+void wlan_hdd_free_sar_config(struct hdd_context *hdd_ctx);
+
 /*
  * wlan_hdd_send_sta_authorized_event: Function to send station authorized
  * event to user space in case of SAP

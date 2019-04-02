@@ -10430,16 +10430,115 @@ static int wlan_hdd_cfg80211_sar_convert_modulation(u32 nl80211_value,
 	return ret;
 }
 
+void hdd_store_sar_config(struct hdd_context *hdd_ctx,
+			  struct sar_limit_cmd_params *sar_limit_cmd)
+{
+	/* Free the previously stored sar_limit_cmd */
+	wlan_hdd_free_sar_config(hdd_ctx);
+
+	hdd_ctx->sar_cmd_params = sar_limit_cmd;
+}
+
+void wlan_hdd_free_sar_config(struct hdd_context *hdd_ctx)
+{
+	struct sar_limit_cmd_params *sar_limit_cmd;
+
+	if (!hdd_ctx->sar_cmd_params)
+		return;
+
+	sar_limit_cmd = hdd_ctx->sar_cmd_params;
+	hdd_ctx->sar_cmd_params = NULL;
+	qdf_mem_free(sar_limit_cmd->sar_limit_row_list);
+	qdf_mem_free(sar_limit_cmd);
+}
+
+#define SAR_LIMITS_SAR_ENABLE QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE
+#define SAR_LIMITS_NUM_SPECS QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS
+#define SAR_LIMITS_SPEC QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC
+#define SAR_LIMITS_SPEC_BAND QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND
+#define SAR_LIMITS_SPEC_CHAIN QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN
+#define SAR_LIMITS_SPEC_MODULATION \
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION
+#define SAR_LIMITS_SPEC_POWER_LIMIT \
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT
+#define SAR_LIMITS_SPEC_POWER_LIMIT_INDEX \
+	QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX
+#define SAR_LIMITS_MAX QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX
+
 static const struct nla_policy
-sar_limits_policy[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX] = {.type = NLA_U32},
+sar_limits_policy[SAR_LIMITS_MAX + 1] = {
+	[SAR_LIMITS_SAR_ENABLE] = {.type = NLA_U32},
+	[SAR_LIMITS_NUM_SPECS] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC_BAND] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC_CHAIN] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC_MODULATION] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC_POWER_LIMIT] = {.type = NLA_U32},
+	[SAR_LIMITS_SPEC_POWER_LIMIT_INDEX] = {.type = NLA_U32},
 };
+
+/**
+ * hdd_extract_sar_nested_attrs() - Extract nested SAR attribute
+ * @spec: nested nla attribue
+ * @row: output to hold extract nested attribute
+ *
+ * This function extracts nested SAR attribute one at a time which means
+ * for each nested attribute this has to be invoked from
+ * __wlan_hdd_set_sar_power_limits().
+ *
+ * Return: On success - 0
+ *         On Failure - Negative value
+ */
+static int hdd_extract_sar_nested_attrs(struct nlattr *spec[],
+					struct sar_limit_cmd_row *row)
+{
+	uint32_t limit;
+	uint32_t band;
+	uint32_t modulation;
+	int ret;
+
+	row->validity_bitmap = 0;
+
+	if (spec[SAR_LIMITS_SPEC_POWER_LIMIT]) {
+		limit = nla_get_u32(spec[SAR_LIMITS_SPEC_POWER_LIMIT]);
+		row->limit_value = limit;
+	} else if (spec[SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]) {
+		limit = nla_get_u32(spec[SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]);
+		row->limit_value = limit;
+	} else {
+		hdd_err("SAR Spec does not have power limit or index value");
+		return -EINVAL;
+	}
+
+	if (spec[SAR_LIMITS_SPEC_BAND]) {
+		band = nla_get_u32(spec[SAR_LIMITS_SPEC_BAND]);
+		ret = wlan_hdd_cfg80211_sar_convert_band(band, &row->band_id);
+		if (ret) {
+			hdd_err("Invalid SAR Band attr");
+			return ret;
+		}
+
+		row->validity_bitmap |= WMI_SAR_BAND_ID_VALID_MASK;
+	}
+
+	if (spec[SAR_LIMITS_SPEC_CHAIN]) {
+		row->chain_id = nla_get_u32(spec[SAR_LIMITS_SPEC_CHAIN]);
+		row->validity_bitmap |= WMI_SAR_CHAIN_ID_VALID_MASK;
+	}
+
+	if (spec[SAR_LIMITS_SPEC_MODULATION]) {
+		modulation = nla_get_u32(spec[SAR_LIMITS_SPEC_MODULATION]);
+		ret = wlan_hdd_cfg80211_sar_convert_modulation(modulation,
+							       &row->mod_id);
+		if (ret) {
+			hdd_err("Invalid SAR Modulation attr");
+			return ret;
+		}
+
+		row->validity_bitmap |= WMI_SAR_MOD_ID_VALID_MASK;
+	}
+
+	return 0;
+}
 
 /**
  * __wlan_hdd_set_sar_power_limits() - Set SAR power limits
@@ -10457,12 +10556,14 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 					   const void *data, int data_len)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct nlattr *sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1],
-		      *tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1],
-		      *sar_spec_list;
-	struct sar_limit_cmd_params sar_limit_cmd = {0};
+	struct nlattr *spec[SAR_LIMITS_MAX + 1];
+	struct nlattr *tb[SAR_LIMITS_MAX + 1];
+	struct nlattr *spec_list;
+	struct sar_limit_cmd_params *sar_limit_cmd;
 	int ret = -EINVAL, i = 0, rem = 0;
-	mac_handle_t mac_handle;
+	QDF_STATUS status;
+	uint32_t num_limit_rows = 0;
+	struct sar_limit_cmd_row *row;
 
 	hdd_enter();
 
@@ -10474,136 +10575,131 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
-				    data, data_len, sar_limits_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, SAR_LIMITS_MAX, data, data_len,
+				    sar_limits_policy)) {
 		hdd_err("Invalid SAR attributes");
 		return -EINVAL;
 	}
 
+	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
+	if (!sar_limit_cmd)
+		return -ENOMEM;
+
 	/* is special SAR V1 => SAR V2 logic enabled and applicable? */
-	if (hdd_convert_sarv1_to_sarv2(hdd_ctx, tb, &sar_limit_cmd))
+	if (hdd_convert_sarv1_to_sarv2(hdd_ctx, tb, sar_limit_cmd))
 		goto send_sar_limits;
 
 	/* Vendor command manadates all SAR Specs in single call */
-	sar_limit_cmd.commit_limits = 1;
-	sar_limit_cmd.sar_enable = WMI_SAR_FEATURE_NO_CHANGE;
-	if (tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE]) {
-		if (wlan_hdd_cfg80211_sar_convert_limit_set(nla_get_u32(
-				tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SAR_ENABLE]),
-				&sar_limit_cmd.sar_enable) < 0) {
+	sar_limit_cmd->commit_limits = 1;
+	sar_limit_cmd->sar_enable = WMI_SAR_FEATURE_NO_CHANGE;
+	if (tb[SAR_LIMITS_SAR_ENABLE]) {
+		uint32_t sar_enable = nla_get_u32(tb[SAR_LIMITS_SAR_ENABLE]);
+		uint32_t *sar_ptr = &sar_limit_cmd->sar_enable;
+
+		ret = wlan_hdd_cfg80211_sar_convert_limit_set(sar_enable,
+							      sar_ptr);
+		if (ret) {
 			hdd_err("Invalid SAR Enable attr");
 			goto fail;
 		}
 	}
-	hdd_debug("attr sar sar_enable %d", sar_limit_cmd.sar_enable);
 
-	if (tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS]) {
-		sar_limit_cmd.num_limit_rows = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_NUM_SPECS]);
-		hdd_debug("attr sar num_limit_rows %d",
-			sar_limit_cmd.num_limit_rows);
+	hdd_debug("attr sar sar_enable %d", sar_limit_cmd->sar_enable);
+
+	if (tb[SAR_LIMITS_NUM_SPECS]) {
+		num_limit_rows = nla_get_u32(tb[SAR_LIMITS_NUM_SPECS]);
+		hdd_debug("attr sar num_limit_rows %u", num_limit_rows);
 	}
-	if (sar_limit_cmd.num_limit_rows > MAX_SAR_LIMIT_ROWS_SUPPORTED) {
+
+	if (num_limit_rows > MAX_SAR_LIMIT_ROWS_SUPPORTED) {
 		hdd_err("SAR Spec list exceed supported size");
 		goto fail;
 	}
-	if (sar_limit_cmd.num_limit_rows == 0)
+
+	if (num_limit_rows == 0)
 		goto send_sar_limits;
-	sar_limit_cmd.sar_limit_row_list = qdf_mem_malloc(sizeof(
-						struct sar_limit_cmd_row) *
-						sar_limit_cmd.num_limit_rows);
-	if (!sar_limit_cmd.sar_limit_row_list) {
-		ret = -ENOMEM;
-		goto fail;
-	}
-	if (!tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC]) {
-		hdd_err("Invalid SAR SPECs list");
+
+	row = qdf_mem_malloc(sizeof(*row) * num_limit_rows);
+	if (!row) {
+		hdd_err("Failed to allocate memory for sar_limit_row_list");
 		goto fail;
 	}
 
-	nla_for_each_nested(sar_spec_list,
-			    tb[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC], rem) {
-		if (i == sar_limit_cmd.num_limit_rows) {
+	sar_limit_cmd->num_limit_rows = num_limit_rows;
+	sar_limit_cmd->sar_limit_row_list = row;
+
+	if (!tb[SAR_LIMITS_SPEC]) {
+		hdd_err("Invalid SAR specification list");
+		goto fail;
+	}
+
+	nla_for_each_nested(spec_list, tb[SAR_LIMITS_SPEC], rem) {
+		if (i == num_limit_rows) {
 			hdd_warn("SAR Cmd has excess SPECs in list");
 			break;
 		}
 
-		if (wlan_cfg80211_nla_parse(sar_spec,
-					    QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX,
-					    nla_data(sar_spec_list),
-					    nla_len(sar_spec_list),
+		if (wlan_cfg80211_nla_parse(spec,
+					    SAR_LIMITS_MAX,
+					    nla_data(spec_list),
+					    nla_len(spec_list),
 					    sar_limits_policy)) {
 			hdd_err("nla_parse failed for SAR Spec list");
 			goto fail;
 		}
-		sar_limit_cmd.sar_limit_row_list[i].validity_bitmap = 0;
-		if (sar_spec[
-			    QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT]) {
-			sar_limit_cmd.sar_limit_row_list[i].limit_value =
-				nla_get_u32(sar_spec[
-				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT]);
-		} else if (sar_spec[
-			    QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]) {
-			sar_limit_cmd.sar_limit_row_list[i].limit_value =
-				nla_get_u32(sar_spec[
-				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_POWER_LIMIT_INDEX]);
-		} else {
-			hdd_err("SAR Spec does not have power limit or index value");
+
+		ret = hdd_extract_sar_nested_attrs(spec, row);
+		if (ret) {
+			hdd_err("Failed to extract SAR nested attrs");
 			goto fail;
 		}
 
-		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND]) {
-			if (wlan_hdd_cfg80211_sar_convert_band(nla_get_u32(
-					sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_BAND]),
-					&sar_limit_cmd.sar_limit_row_list[i].band_id)
-					< 0) {
-				hdd_err("Invalid SAR Band attr");
-				goto fail;
-			}
-			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
-						WMI_SAR_BAND_ID_VALID_MASK;
-		}
-		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN]) {
-			sar_limit_cmd.sar_limit_row_list[i].chain_id =
-				nla_get_u32(sar_spec[
-				QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_CHAIN]);
-			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
-						WMI_SAR_CHAIN_ID_VALID_MASK;
-		}
-		if (sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION]) {
-			if (wlan_hdd_cfg80211_sar_convert_modulation(nla_get_u32(
-					sar_spec[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_SPEC_MODULATION]),
-					&sar_limit_cmd.sar_limit_row_list[i].mod_id)
-					< 0) {
-				hdd_err("Invalid SAR Modulation attr");
-				goto fail;
-			}
-			sar_limit_cmd.sar_limit_row_list[i].validity_bitmap |=
-						WMI_SAR_MOD_ID_VALID_MASK;
-		}
 		hdd_debug("Spec_ID: %d, Band: %d Chain: %d Mod: %d POW_Limit: %d Validity_Bitmap: %d",
-			 i, sar_limit_cmd.sar_limit_row_list[i].band_id,
-			 sar_limit_cmd.sar_limit_row_list[i].chain_id,
-			 sar_limit_cmd.sar_limit_row_list[i].mod_id,
-			 sar_limit_cmd.sar_limit_row_list[i].limit_value,
-			 sar_limit_cmd.sar_limit_row_list[i].validity_bitmap);
+			  i, row->band_id, row->chain_id, row->mod_id,
+			  row->limit_value, row->validity_bitmap);
+
 		i++;
+		row++;
 	}
 
-	if (i < sar_limit_cmd.num_limit_rows) {
+	if (i < sar_limit_cmd->num_limit_rows) {
 		hdd_warn("SAR Cmd has less SPECs in list");
-		sar_limit_cmd.num_limit_rows = i;
+		sar_limit_cmd->num_limit_rows = i;
 	}
 
 send_sar_limits:
-	mac_handle = hdd_ctx->mac_handle;
-	if (sme_set_sar_power_limits(mac_handle, &sar_limit_cmd) ==
-							QDF_STATUS_SUCCESS)
-		ret = 0;
+	status = sme_set_sar_power_limits(hdd_ctx->mac_handle, sar_limit_cmd);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set sar power limits");
+		goto fail;
+	}
+
+	/* After SSR, the SAR configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_store_sar_config(hdd_ctx, sar_limit_cmd);
+	return 0;
+
 fail:
-	qdf_mem_free(sar_limit_cmd.sar_limit_row_list);
+	if (sar_limit_cmd) {
+		qdf_mem_free(sar_limit_cmd->sar_limit_row_list);
+		qdf_mem_free(sar_limit_cmd);
+	}
+
 	return ret;
 }
+
+#undef SAR_LIMITS_SAR_ENABLE
+#undef SAR_LIMITS_NUM_SPECS
+#undef SAR_LIMITS_SPEC
+#undef SAR_LIMITS_SPEC_BAND
+#undef SAR_LIMITS_SPEC_CHAIN
+#undef SAR_LIMITS_SPEC_MODULATION
+#undef SAR_LIMITS_SPEC_POWER_LIMIT
+#undef SAR_LIMITS_SPEC_POWER_LIMIT_INDEX
+#undef SAR_LIMITS_MAX
 
 /**
  * wlan_hdd_cfg80211_set_sar_power_limits() - Set SAR power limits

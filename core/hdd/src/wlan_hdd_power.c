@@ -1367,6 +1367,27 @@ static void hdd_is_interface_down_during_ssr(struct hdd_context *hdd_ctx)
 	hdd_exit();
 }
 
+/**
+ * hdd_restore_sar_config - Restore the saved SAR config after SSR
+ * @hdd_ctx: HDD context
+ *
+ * Restore the SAR config that was lost during SSR.
+ *
+ * Return: None
+ */
+static void hdd_restore_sar_config(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	if (!hdd_ctx->sar_cmd_params)
+		return;
+
+	status = sme_set_sar_power_limits(hdd_ctx->mac_handle,
+					  hdd_ctx->sar_cmd_params);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Unable to configured SAR after SSR");
+}
+
 QDF_STATUS hdd_wlan_re_init(void)
 {
 	struct hdd_context *hdd_ctx = NULL;
@@ -1417,6 +1438,8 @@ QDF_STATUS hdd_wlan_re_init(void)
 	/* set chip power save failure detected callback */
 	sme_set_chip_pwr_save_fail_cb(hdd_ctx->mac_handle,
 				      hdd_chip_pwr_save_fail_detected_cb);
+
+	hdd_restore_sar_config(hdd_ctx);
 
 	hdd_send_default_scan_ies(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");

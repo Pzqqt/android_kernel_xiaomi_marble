@@ -11522,6 +11522,14 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	/* Free the cache channels of the command SET_DISABLE_CHANNEL_LIST */
 	wlan_hdd_free_cache_channels(hdd_ctx);
 
+	/* Free the resources allocated while storing SAR config. These needs
+	 * to be freed only in the case when it is not SSR. As in the case of
+	 * SSR, the values needs to be intact so that it can be restored during
+	 * reinit path.
+	 */
+	if (!is_recovery_stop)
+		wlan_hdd_free_sar_config(hdd_ctx);
+
 	hdd_sap_destroy_ctx_all(hdd_ctx, is_recovery_stop);
 
 	hdd_check_for_leaks(hdd_ctx, is_recovery_stop);

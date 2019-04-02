@@ -1592,6 +1592,7 @@ struct hdd_dynamic_mac {
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
+ * @sar_cmd_params: SAR command params to be configured to the FW
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1866,6 +1867,8 @@ struct hdd_context {
 	uint32_t num_derived_addr;
 	unsigned long provisioned_intf_addr_mask;
 	unsigned long derived_intf_addr_mask;
+
+	struct sar_limit_cmd_params *sar_cmd_params;
 };
 
 /**
