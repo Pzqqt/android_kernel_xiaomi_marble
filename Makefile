@@ -1,3 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
-ccflags-y := -Wno-unused-function
-obj-y := disp.o
+
+# auto-detect subdirs
+ifeq ($(CONFIG_ARCH_KONA), y)
+include $(srctree)/techpack/display/config/konadisp.conf
+export
+endif
+
+ifeq ($(CONFIG_ARCH_KONA), y)
+LINUXINCLUDE    += -include $(srctree)/techpack/display/config/konadispconf.h
+endif
+
+obj-y += msm/
+obj-y += rotator/
+obj-y += pll/
