@@ -309,6 +309,7 @@ static void cfg_store_set_defaults(struct cfg_value_store *store)
 #undef __CFG_INI_STRING
 #define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
 	qdf_str_lcopy((char *)&store->values.id##_internal, id, (max_len) + 1);
+
 #undef __CFG_INI
 #define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
 	*(ctype *)&store->values.id##_internal = id;
@@ -518,6 +519,60 @@ QDF_STATUS cfg_parse_to_global_store(const char *path)
 }
 
 qdf_export_symbol(cfg_parse_to_global_store);
+
+
+static QDF_STATUS
+cfg_store_print(struct wlan_objmgr_psoc *psoc)
+{
+	struct cfg_value_store *store;
+	struct cfg_psoc_ctx *psoc_ctx;
+
+	cfg_enter();
+
+	psoc_ctx = cfg_psoc_get_ctx(psoc);
+	if (!psoc_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	store = psoc_ctx->store;
+	if (!store)
+		return QDF_STATUS_E_FAILURE;
+
+#undef __CFG_INI_MAC
+#define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
+	cfg_nofl_debug("%s %pM", name, (&store->values.id##_internal)->bytes);
+
+#undef __CFG_INI_IPV4
+#define __CFG_INI_IPV4(id, mtype, ctype, name, desc, def...) \
+	cfg_nofl_debug("%s %pI4", name, (&store->values.id##_internal)->bytes);
+
+#undef __CFG_INI_IPV6
+#define __CFG_INI_IPV6(id, mtype, ctype, name, desc, def...) \
+	cfg_nofl_debug("%s %pI6c", name, (&store->values.id##_internal)->bytes);
+
+#undef __CFG_INI
+#define __CFG_INI(id, mtype, ctype, name, min, max, fallback, desc, def...) \
+	cfg_nofl_debug("%s %u", name, *(ctype *)&store->values.id##_internal);
+
+#undef __CFG_INI_STRING
+#define __CFG_INI_STRING(id, mtype, ctype, name, min_len, max_len, ...) \
+	cfg_nofl_debug("%s %s", name, (char *)&store->values.id##_internal);
+
+	CFG_ALL
+
+#undef __CFG_INI_MAC
+#undef __CFG_INI_IPV4
+#undef __CFG_INI_IPV6
+#undef __CFG_INI
+#undef __CFG_INI_STRING
+
+	cfg_exit();
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_cfg_store_print(struct wlan_objmgr_psoc *psoc)
+{
+	return cfg_store_print(psoc);
+}
 
 static QDF_STATUS
 cfg_on_psoc_create(struct wlan_objmgr_psoc *psoc, void *context)

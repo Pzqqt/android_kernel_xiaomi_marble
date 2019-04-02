@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,20 @@
 #define cfg_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_CONFIG, params)
 #define cfg_enter() QDF_TRACE_ENTER(QDF_MODULE_ID_CONFIG, "enter")
 #define cfg_exit() QDF_TRACE_EXIT(QDF_MODULE_ID_CONFIG, "exit")
+
+#define cfg_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_info_rl(params...) QDF_TRACE_INFO_RL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_CONFIG, params)
+
+#define cfg_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_CONFIG, params)
+#define cfg_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_CONFIG, params)
 
 /* define global config values structure */
 
