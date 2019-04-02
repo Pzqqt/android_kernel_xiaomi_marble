@@ -276,9 +276,11 @@ QDF_STATUS _dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
 {
 	QDF_STATUS status;
 
-	dsc_enter_str(func);
+	/* do not log from here because it can flood log message because vdev
+	 * op protect is per vdev operation
+	 */
+
 	status = __dsc_vdev_op_start(vdev, func);
-	dsc_exit_status(status);
 
 	return status;
 }
@@ -299,9 +301,10 @@ static void __dsc_vdev_op_stop(struct dsc_vdev *vdev, const char *func)
 
 void _dsc_vdev_op_stop(struct dsc_vdev *vdev, const char *func)
 {
-	dsc_enter_str(func);
+	/* do not log from here because it can flood log message because vdev
+	 * op protect is per vdev operation
+	 */
 	__dsc_vdev_op_stop(vdev, func);
-	dsc_exit();
 }
 
 static void __dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
