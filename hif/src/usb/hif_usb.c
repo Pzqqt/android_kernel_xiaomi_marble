@@ -347,8 +347,6 @@ void hif_usb_device_deinit(struct hif_usb_softc *sc)
 
 	usb_hif_cleanup_pipe_resources(device);
 
-	usb_set_intfdata(device->interface, NULL);
-
 	if (device->diag_cmd_buffer)
 		qdf_mem_free(device->diag_cmd_buffer);
 
@@ -377,7 +375,6 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 
 	do {
 
-		usb_set_intfdata(interface, device);
 		qdf_spinlock_create(&(device->cs_lock));
 		qdf_spinlock_create(&(device->rx_lock));
 		qdf_spinlock_create(&(device->tx_lock));
