@@ -7246,6 +7246,10 @@ dp_print_tx_rates(struct dp_vdev *vdev)
 	DP_PRINT_STATS("Last ack rssi = %d\n", pdev->stats.tx.last_ack_rssi);
 
 	DP_PRINT_STATS("Aggregation:\n");
+	DP_PRINT_STATS("Number of Msdu's Part of Ampdus = %d",
+		       pdev->stats.tx.ampdu_cnt);
+	DP_PRINT_STATS("Number of Msdu's With No Mpdu Level Aggregation : %d",
+		       pdev->stats.tx.non_ampdu_cnt);
 	DP_PRINT_STATS("Number of Msdu's Part of Amsdu = %d",
 			pdev->stats.tx.amsdu_cnt);
 	DP_PRINT_STATS("Number of Msdu's With No Msdu Level Aggregation = %d",
@@ -7299,6 +7303,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.retries);
 	DP_PRINT_STATS("MSDU's Part of AMSDU = %d",
 			peer->stats.tx.amsdu_cnt);
+	DP_PRINT_STATS("Msdu's As Part of Ampdu = %d",
+		       peer->stats.tx.non_ampdu_cnt);
+	DP_PRINT_STATS("Msdu's As Ampdu = %d",
+		       peer->stats.tx.ampdu_cnt);
 	DP_PRINT_STATS("Last Packet RSSI = %d",
 			peer->stats.tx.last_ack_rssi);
 	DP_PRINT_STATS("Dropped At FW: Removed Pkts = %u",

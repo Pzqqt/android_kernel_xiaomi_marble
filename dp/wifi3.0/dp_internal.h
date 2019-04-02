@@ -325,6 +325,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 	tgtobj->stats.tx.retries += srcobj->tx.retries;
 	tgtobj->stats.tx.non_amsdu_cnt += srcobj->tx.non_amsdu_cnt;
 	tgtobj->stats.tx.amsdu_cnt += srcobj->tx.amsdu_cnt;
+	tgtobj->stats.tx.non_ampdu_cnt += srcobj->tx.non_ampdu_cnt;
+	tgtobj->stats.tx.ampdu_cnt += srcobj->tx.ampdu_cnt;
 	tgtobj->stats.tx.dropped.fw_rem.num += srcobj->tx.dropped.fw_rem.num;
 	tgtobj->stats.tx.dropped.fw_rem.bytes +=
 			srcobj->tx.dropped.fw_rem.bytes;
@@ -509,6 +511,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 	tgtobj->tx.retries += srcobj->stats.tx.retries;
 	tgtobj->tx.non_amsdu_cnt += srcobj->stats.tx.non_amsdu_cnt;
 	tgtobj->tx.amsdu_cnt += srcobj->stats.tx.amsdu_cnt;
+	tgtobj->tx.non_ampdu_cnt += srcobj->stats.tx.non_ampdu_cnt;
+	tgtobj->tx.ampdu_cnt += srcobj->stats.tx.ampdu_cnt;
 	tgtobj->tx.dropped.fw_rem.num += srcobj->stats.tx.dropped.fw_rem.num;
 	tgtobj->tx.dropped.fw_rem.bytes +=
 			srcobj->stats.tx.dropped.fw_rem.bytes;
@@ -623,6 +627,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.retries); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.non_amsdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.amsdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.non_ampdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ampdu_cnt); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.dropped.fw_rem); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_tx); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_notx); \

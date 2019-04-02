@@ -269,6 +269,8 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
+	DP_STATS_INCC(peer, tx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
+	DP_STATS_INCC(peer, tx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
 
 	dp_peer_stats_notify(peer);
 
