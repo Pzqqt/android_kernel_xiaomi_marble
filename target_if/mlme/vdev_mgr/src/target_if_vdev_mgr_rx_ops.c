@@ -105,10 +105,12 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 	}
 
 	if (target_if_vdev_mgr_is_panic_on_bug()) {
-		QDF_DEBUG_PANIC("VDEV_%d: Panic on bug enabled, rsp status:%d",
+		QDF_DEBUG_PANIC("PSOC_%d VDEV_%d: Panic on bug, rsp status:%d",
+				wlan_psoc_get_id(psoc),
 			        vdev_id, vdev_rsp->rsp_status);
 	} else {
-		mlme_err("VDEV_%d: Trigger Self recovery, rsp status%d",
+		mlme_err("PSOC_%d VDEV_%d: Trigger Self recovery, rsp status%d",
+			 wlan_psoc_get_id(psoc),
 			 vdev_id, vdev_rsp->rsp_status);
 		wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
 

@@ -92,6 +92,13 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 {
 	uint8_t vdev_id;
 	uint8_t rsp_pos;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	/* it is expected to be only one command with FW at a time */
@@ -100,7 +107,8 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 		if (rsp_pos != set_bit) {
 			if (qdf_atomic_test_bit(rsp_pos,
 						&vdev_rsp->rsp_status)) {
-				mlme_err("VDEV_%d: Response bit is set %d",
+				mlme_err("PSOC_%d VDEV_%d: Response bit is set %d",
+					 wlan_psoc_get_id(psoc),
 					 vdev_id, vdev_rsp->rsp_status);
 				QDF_ASSERT(0);
 			}
@@ -108,7 +116,8 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 	}
 
 	if (qdf_atomic_test_and_set_bit(set_bit, &vdev_rsp->rsp_status)) {
-		mlme_err("VDEV_%d: Response bit is set %d",
+		mlme_err("PSOC_%d VDEV_%d: Response bit is set %d",
+			 wlan_psoc_get_id(psoc),
 			 vdev_id, vdev_rsp->rsp_status);
 		QDF_ASSERT(0);
 	}

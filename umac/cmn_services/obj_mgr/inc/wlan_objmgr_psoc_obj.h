@@ -1532,4 +1532,21 @@ wlan_psoc_get_lmac_if_txops(struct wlan_objmgr_psoc *psoc)
 {
 	return &((psoc->soc_cb.tx_ops));
 }
+
+/**
+ * wlan_psoc_get_id() - get psoc id
+ * @psoc: PSOC object
+ *
+ * API to get psoc id
+ *
+ * Return: @psoc_id: psoc id
+ */
+static inline uint8_t wlan_psoc_get_id(
+			struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc)
+		return (uint8_t)-1;
+
+	return psoc->soc_objmgr.psoc_id;
+}
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
