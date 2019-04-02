@@ -8904,12 +8904,14 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			       "raw packets %u msdus ( %llu bytes),",
 			       pdev->stats.rx.raw.num,
 			       pdev->stats.rx.raw.bytes);
-		DP_TRACE_STATS(INFO_HIGH, "dropped: error %u msdus",
+		DP_TRACE_STATS(INFO_HIGH, "mic errors %u",
 			       pdev->stats.rx.err.mic_err);
 		DP_TRACE_STATS(INFO_HIGH, "Invalid peer on rx path: %u",
 			       pdev->soc->stats.rx.err.rx_invalid_peer.num);
 		DP_TRACE_STATS(INFO_HIGH, "sw_peer_id invalid %u",
 			       pdev->soc->stats.rx.err.rx_invalid_peer_id.num);
+		DP_TRACE_STATS(INFO_HIGH, "packet_len invalid %u",
+			       pdev->soc->stats.rx.err.rx_invalid_pkt_len.num);
 
 
 		DP_TRACE_STATS(INFO_HIGH, "Reo Statistics");
