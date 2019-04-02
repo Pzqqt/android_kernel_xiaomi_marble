@@ -5593,6 +5593,43 @@ csr_roam_trigger_reassociate(struct mac_context *mac_ctx, tSmeCmd *cmd,
 	return status;
 }
 
+/**
+ * csr_allow_concurrent_sta_connections() - Wrapper for policy_mgr api
+ * @mac: mac context
+ * @vdev_id: vdev id
+ *
+ * This function invokes policy mgr api to check for support of
+ * simultaneous connections on concurrent STA interfaces.
+ *
+ *  Return: If supports return true else false.
+ */
+static
+bool csr_allow_concurrent_sta_connections(struct mac_context *mac,
+					  uint32_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE vdev_mode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("vdev object not found for vdev_id %u", vdev_id);
+		return false;
+	}
+	vdev_mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	/* If vdev mode is STA then proceed further */
+	if (vdev_mode != QDF_STA_MODE)
+		return true;
+
+	if (policy_mgr_allow_concurrency(mac->psoc, PM_STA_MODE, 0,
+					 HW_MODE_20_MHZ))
+		return true;
+
+	return false;
+}
+
 QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 {
 	QDF_STATUS lock_status, status = QDF_STATUS_SUCCESS;
@@ -5705,6 +5742,21 @@ QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 		status = csr_roam_issue_ft_preauth_req(mac, sessionId,
 				pCommand->u.roamCmd.pLastRoamBss);
 		break;
+
+	case eCsrHddIssued:
+		/*
+		 * Check for simultaneous connection support on
+		 * multiple STA interfaces.
+		 */
+		if (!csr_allow_concurrent_sta_connections(mac, sessionId)) {
+			sme_err("No support of conc STA con");
+			csr_roam_complete(mac, eCsrNothingToJoin, NULL,
+					  sessionId);
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+		/* Fall through for success case */
+
 	default:
 		csr_roam_state_change(mac, eCSR_ROAMING_STATE_JOINING,
 				sessionId);

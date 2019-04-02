@@ -14090,32 +14090,6 @@ static int wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	return errno;
 }
 
-/**
- * hdd_nl_to_policy_mgr_iface_type() - map nl80211_iftype to policy_mgr_con_mode
- * @type: the input NL80211 interface type to map
- *
- * Return: policy_mgr_con_mode
- */
-static enum policy_mgr_con_mode
-hdd_nl_to_policy_mgr_iface_type(enum nl80211_iftype type)
-{
-	switch (type) {
-	case NL80211_IFTYPE_STATION:
-		return PM_STA_MODE;
-	case NL80211_IFTYPE_P2P_CLIENT:
-		return PM_P2P_CLIENT_MODE;
-	case NL80211_IFTYPE_P2P_GO:
-		return PM_P2P_GO_MODE;
-	case NL80211_IFTYPE_AP:
-		return PM_SAP_MODE;
-	case NL80211_IFTYPE_ADHOC:
-		return PM_IBSS_MODE;
-	default:
-		hdd_err("Unsupported interface type: %d", type);
-		return PM_MAX_NUM_OF_MODE;
-	}
-}
-
 static bool hdd_is_client_mode(enum QDF_OPMODE mode)
 {
 	switch (mode) {
@@ -14201,13 +14175,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	errno = hdd_psoc_idle_restart(hdd_ctx);
 	if (errno) {
 		hdd_err("Failed to restart psoc; errno:%d", errno);
-		return -EINVAL;
-	}
-
-	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
-					  hdd_nl_to_policy_mgr_iface_type(type),
-					  0, HW_MODE_20_MHZ)) {
-		hdd_debug("This concurrency combination is not allowed");
 		return -EINVAL;
 	}
 
