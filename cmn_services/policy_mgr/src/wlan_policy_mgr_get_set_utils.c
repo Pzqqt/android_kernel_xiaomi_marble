@@ -1981,14 +1981,22 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  list);
+
+	/* Check for STA+STA concurrency */
+	if (mode == PM_STA_MODE && count &&
+	    !policy_mgr_allow_multiple_sta_connections(psoc)) {
+		policy_mgr_err("No 2nd STA connection, already one STA is connected");
+		goto done;
+	}
+
 	/*
 	 * Check all IBSS+STA concurrencies
 	 *
 	 * don't allow IBSS + STA MCC
 	 * don't allow IBSS + STA SCC if IBSS is on DFS channel
 	 */
-	count = policy_mgr_mode_specific_connection_count(psoc,
-				PM_STA_MODE, list);
 	if ((PM_IBSS_MODE == mode) &&
 		(policy_mgr_mode_specific_connection_count(psoc,
 		PM_IBSS_MODE, list)) && count) {
@@ -3412,6 +3420,24 @@ bool policy_mgr_allow_sap_go_concurrency(struct wlan_objmgr_psoc *psoc,
 
 	/* Don't block the second interface */
 	return true;
+}
+
+bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *psoc)
+{
+	struct wmi_unified *wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return false;
+	}
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_sta_plus_sta_support))
+		return true;
+
+	policy_mgr_debug("Concurrent STA connections are not supported");
+	return false;
 }
 
 bool policy_mgr_dual_beacon_on_single_mac_scc_capable(
