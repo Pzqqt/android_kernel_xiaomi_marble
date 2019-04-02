@@ -1151,7 +1151,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get mcc to scc switch");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.cc_switch_mode = mcc_to_scc_switch;
+	sme_cfg->csr_config.cc_switch_mode = mcc_to_scc_switch;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc,
@@ -1159,7 +1159,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get conc rule1");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.conc_custom_rule1 = conc_rule1;
+	sme_cfg->csr_config.conc_custom_rule1 = conc_rule1;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_conc_rule2(hdd_ctx->psoc,
@@ -1167,7 +1167,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get conc rule2");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.conc_custom_rule2 = conc_rule2;
+	sme_cfg->csr_config.conc_custom_rule2 = conc_rule2;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_sta_cxn_5g_band(hdd_ctx->psoc,
@@ -1175,7 +1175,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get conc rule2");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.is_sta_connection_in_5gz_enabled = sta_cxn_5g;
+	sme_cfg->csr_config.is_sta_connection_in_5gz_enabled = sta_cxn_5g;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_force_1x1(hdd_ctx->psoc,
@@ -1183,7 +1183,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get force 1x1 flag");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.is_force_1x1 = is_force_1x1;
+	sme_cfg->csr_config.is_force_1x1 = is_force_1x1;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_allow_mcc_go_diff_bi(hdd_ctx->psoc,
@@ -1191,7 +1191,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		hdd_err("can't get allow mcc go diff BI flag");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.fAllowMCCGODiffBI = allow_diff_bi;
+	sme_cfg->csr_config.fAllowMCCGODiffBI = allow_diff_bi;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1200,7 +1200,7 @@ hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(struct sme_config_params *sme_cfg,
 					     uint8_t val)
 {
-	sme_cfg->csrConfig.sap_channel_avoidance = val;
+	sme_cfg->csr_config.sap_channel_avoidance = val;
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -1227,14 +1227,14 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 		hdd_err("Get b80211e_enabled failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.Is11eSupportEnabled = b80211e_enabled;
+	sme_cfg->csr_config.Is11eSupportEnabled = b80211e_enabled;
 
 	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Get wmm_mode failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.WMMSupportMode = hdd_to_csr_wmm_mode(wmm_mode);
+	sme_cfg->csr_config.WMMSupportMode = hdd_to_csr_wmm_mode(wmm_mode);
 	hdd_debug("wmm_mode=%d 802_11e_enabled=%d", wmm_mode, b80211e_enabled);
 
 	status = ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc);
@@ -1242,14 +1242,14 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 		hdd_err("ucfg_mlme_get_mcc_feature fail, use def");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.fEnableMCCMode = enable_mcc;
+	sme_cfg->csr_config.fEnableMCCMode = enable_mcc;
 
 	status = ucfg_mlme_get_mcc_rts_cts_prot(hdd_ctx->psoc, &mcc_rts_cts);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("ucfg_mlme_get_mcc_rts_cts_prot fail, use def");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.mcc_rts_cts_prot_enable = mcc_rts_cts;
+	sme_cfg->csr_config.mcc_rts_cts_prot_enable = mcc_rts_cts;
 
 	status = ucfg_mlme_get_mcc_bcast_prob_resp(hdd_ctx->psoc,
 						   &mcc_bcast_prob_rsp);
@@ -1257,7 +1257,7 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 		hdd_err("ucfg_mlme_get_mcc_bcast_prob_resp fail, use def");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.mcc_bcast_prob_resp_enable = mcc_bcast_prob_rsp;
+	sme_cfg->csr_config.mcc_bcast_prob_resp_enable = mcc_bcast_prob_rsp;
 
 	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
 							  &mcast_mcc_rest_time);
@@ -1265,7 +1265,7 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
 		hdd_err("ucfg_mlme_get_sta_miracast_mcc_rest_time, use def");
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_cfg->csrConfig.f_sta_miracast_mcc_rest_time_val =
+	sme_cfg->csr_config.f_sta_miracast_mcc_rest_time_val =
 							mcast_mcc_rest_time;
 	status = ucfg_mlme_get_sap_mcc_chnl_avoid(hdd_ctx->psoc,
 						  &sap_mcc_avoid);
@@ -1317,7 +1317,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
 	 */
-	sme_config->csrConfig.phyMode =
+	sme_config->csr_config.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
 
 	if (config->dot11Mode == eHDD_DOT11_MODE_abg ||
@@ -1325,31 +1325,31 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	    config->dot11Mode == eHDD_DOT11_MODE_11g ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11b_ONLY ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11g_ONLY) {
-		sme_config->csrConfig.channelBondingMode24GHz = 0;
-		sme_config->csrConfig.channelBondingMode5GHz = 0;
+		sme_config->csr_config.channelBondingMode24GHz = 0;
+		sme_config->csr_config.channelBondingMode5GHz = 0;
 	} else {
 		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 						    &channel_bonding_mode);
-		sme_config->csrConfig.channelBondingMode24GHz =
+		sme_config->csr_config.channelBondingMode24GHz =
 			channel_bonding_mode;
 		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
 						   &channel_bonding_mode);
-		sme_config->csrConfig.channelBondingMode5GHz =
+		sme_config->csr_config.channelBondingMode5GHz =
 			channel_bonding_mode;
 	}
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
 	/* This param cannot be configured from INI */
-	sme_config->csrConfig.send_smps_action = true;
-	sme_config->csrConfig.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
-	sme_config->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
-	sme_config->csrConfig.ProprietaryRatesEnabled = 0;
-	sme_config->csrConfig.HeartbeatThresh50 = 40;
+	sme_config->csr_config.send_smps_action = true;
+	sme_config->csr_config.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
+	sme_config->csr_config.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
+	sme_config->csr_config.ProprietaryRatesEnabled = 0;
+	sme_config->csr_config.HeartbeatThresh50 = 40;
 	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
 						&enable_dfs_scan);
-	sme_config->csrConfig.fEnableDFSChnlScan = enable_dfs_scan;
-	sme_config->csrConfig.Csr11dinfo.Channels.numChannels = 0;
+	sme_config->csr_config.fEnableDFSChnlScan = enable_dfs_scan;
+	sme_config->csr_config.Csr11dinfo.Channels.numChannels = 0;
 
 	hdd_set_power_save_offload_config(hdd_ctx);
 
@@ -1370,19 +1370,19 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc, false);
 	}
 
-	sme_config->csrConfig.isCoalesingInIBSSAllowed =
+	sme_config->csr_config.isCoalesingInIBSSAllowed =
 						ibss_cfg.coalesing_enable;
 
 	/* Update maximum interfaces information */
-	sme_config->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
+	sme_config->csr_config.max_intf_count = hdd_ctx->max_intf_count;
 
 	hdd_set_fine_time_meas_cap(hdd_ctx);
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	sme_config->csrConfig.sta_roam_policy_params.dfs_mode =
+	sme_config->csr_config.sta_roam_policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
-	sme_config->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
+	sme_config->csr_config.sta_roam_policy_params.skip_unsafe_channels = 0;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))

@@ -3938,6 +3938,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 	bool band_24 = false, band_5g = false;
 	bool ch_bond24 = false, ch_bond5g = false;
 	struct sme_config_params *sme_config;
+	struct csr_config_params *csr_config;
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint8_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
@@ -4179,11 +4180,12 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		}
 		qdf_mem_zero(sme_config, sizeof(*sme_config));
 		sme_get_config_param(mac_handle, sme_config);
-		sme_config->csrConfig.phyMode = phymode;
+		csr_config = &sme_config->csr_config;
+		csr_config->phyMode = phymode;
 #ifdef QCA_HT_2040_COEX
 		if (phymode == eCSR_DOT11_MODE_11n &&
 		    chwidth == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE) {
-			sme_config->csrConfig.obssEnabled = false;
+			csr_config->obssEnabled = false;
 			status = sme_set_ht2040_mode(mac_handle,
 						     adapter->vdev_id,
 						     eHT_CHAN_HT20, false);
@@ -4194,7 +4196,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			}
 		} else if (phymode == eCSR_DOT11_MODE_11n &&
 			   chwidth == WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
-			sme_config->csrConfig.obssEnabled = true;
+			csr_config->obssEnabled = true;
 			status = sme_set_ht2040_mode(mac_handle,
 						     adapter->vdev_id,
 						     eHT_CHAN_HT20, true);
@@ -4220,22 +4222,22 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			}
 		}
 		if (curr_band == BAND_2G)
-			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
+			csr_config->channelBondingMode24GHz = chwidth;
 		else if (curr_band == BAND_5G)
-			sme_config->csrConfig.channelBondingMode5GHz = chwidth;
+			csr_config->channelBondingMode5GHz = chwidth;
 		else {
-			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
-			sme_config->csrConfig.channelBondingMode5GHz = chwidth;
+			csr_config->channelBondingMode24GHz = chwidth;
+			csr_config->channelBondingMode5GHz = chwidth;
 		}
 		sme_update_config(mac_handle, sme_config);
 
 		hdd_ctx->config->dot11Mode = hdd_dot11mode;
 		ucfg_mlme_set_channel_bonding_24ghz(
 			hdd_ctx->psoc,
-			sme_config->csrConfig.channelBondingMode24GHz);
+			csr_config->channelBondingMode24GHz);
 		ucfg_mlme_set_channel_bonding_5ghz(
 			hdd_ctx->psoc,
-			sme_config->csrConfig.channelBondingMode5GHz);
+			csr_config->channelBondingMode5GHz);
 		if (hdd_update_config_cfg(hdd_ctx) == false) {
 			hdd_err("could not update config_dat");
 			retval = -EIO;
@@ -4341,8 +4343,8 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 		goto free_config;
 
 	sme_get_config_param(mac_handle, sme_config);
-	sme_config->csrConfig.channelBondingMode5GHz = bonding_mode;
-	sme_config->csrConfig.channelBondingMode24GHz = bonding_mode;
+	sme_config->csr_config.channelBondingMode5GHz = bonding_mode;
+	sme_config->csr_config.channelBondingMode24GHz = bonding_mode;
 	sme_update_config(mac_handle, sme_config);
 
 free_config:
@@ -7264,11 +7266,11 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		sme_get_config_param(mac_handle, sme_config);
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-		    sme_config->csrConfig.channelBondingMode24GHz)
+		    sme_config->csr_config.channelBondingMode24GHz)
 			ch_bond24 = true;
 
 		if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE !=
-		    sme_config->csrConfig.channelBondingMode5GHz)
+		    sme_config->csr_config.channelBondingMode5GHz)
 			ch_bond5g = true;
 
 		qdf_mem_free(sme_config);

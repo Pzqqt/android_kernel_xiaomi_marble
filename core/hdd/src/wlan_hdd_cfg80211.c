@@ -6836,7 +6836,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]);
 		if (!cfg_val) {
-			sme_config->csrConfig.WMMSupportMode =
+			sme_config->csr_config.WMMSupportMode =
 				hdd_to_csr_wmm_mode(HDD_WMM_USER_MODE_NO_QOS);
 			hdd_debug("wmm is disabled");
 		} else {
@@ -6846,7 +6846,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				hdd_err("Get wmm_mode failed");
 				return QDF_STATUS_E_FAILURE;
 			}
-			sme_config->csrConfig.WMMSupportMode =
+			sme_config->csr_config.WMMSupportMode =
 				hdd_to_csr_wmm_mode(wmm_mode);
 			hdd_debug("using wmm default value");
 		}
@@ -6896,7 +6896,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE]) {
 		cfg_val = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE]);
-		sme_config->csrConfig.wep_tkip_in_he = cfg_val;
+		sme_config->csr_config.wep_tkip_in_he = cfg_val;
 		hdd_debug("Set WEP/TKIP allow in HE %d", cfg_val);
 
 		update_sme_cfg = true;
@@ -16556,11 +16556,11 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		 */
 		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
 						   &channel_bonding_mode);
-		sme_config->csrConfig.channelBondingMode5GHz =
+		sme_config->csr_config.channelBondingMode5GHz =
 			channel_bonding_mode;
 		ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 						    &channel_bonding_mode);
-		sme_config->csrConfig.channelBondingMode24GHz =
+		sme_config->csr_config.channelBondingMode24GHz =
 			channel_bonding_mode;
 		sme_update_config(mac_handle, sme_config);
 		qdf_mem_free(sme_config);

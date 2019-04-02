@@ -3663,7 +3663,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			switch (channel_type) {
 			case NL80211_CHAN_HT20:
 			case NL80211_CHAN_NO_HT:
-				sme_config->csrConfig.obssEnabled = false;
+				sme_config->csr_config.obssEnabled = false;
 				sap_config->sec_ch = 0;
 				break;
 			case NL80211_CHAN_HT40MINUS:
@@ -3677,7 +3677,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 				qdf_mem_free(sme_config);
 				return -EINVAL;
 			}
-			sme_config->csrConfig.obssEnabled =
+			sme_config->csr_config.obssEnabled =
 				wlan_hdd_get_sap_obss(adapter);
 
 			sme_update_config(mac_handle, sme_config);
@@ -5434,13 +5434,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	 * may not be good with non QOS 11N AP
 	 * Default: enable QOS for SAP unless WMM IE not present for 11bga
 	 */
-	sme_config->csrConfig.WMMSupportMode = eCsrRoamWmmAuto;
+	sme_config->csr_config.WMMSupportMode = eCsrRoamWmmAuto;
 	ie = wlan_get_vendor_ie_ptr_from_oui(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
 					     beacon->tail, beacon->tail_len);
 	if (!ie && (config->SapHw_mode == eCSR_DOT11_MODE_11a ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11g ||
 		config->SapHw_mode == eCSR_DOT11_MODE_11b))
-		sme_config->csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
+		sme_config->csr_config.WMMSupportMode = eCsrRoamWmmNoQos;
 	sme_update_config(mac_handle, sme_config);
 
 	if (!((adapter->device_mode == QDF_SAP_MODE) &&

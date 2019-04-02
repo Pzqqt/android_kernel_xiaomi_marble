@@ -800,7 +800,7 @@ QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
 		return status;
 	}
 
-	status = csr_set_channels(mac_ctx, &pSmeConfigParams->csrConfig);
+	status = csr_set_channels(mac_ctx, &pSmeConfigParams->csr_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("csr_set_channels failed with status: %d", status);
 
@@ -908,9 +908,9 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 		sme_err("SME config params empty");
 		return status;
 	}
-	sme_update_neighbor_report_config(mac, &pSmeConfigParams->csrConfig);
+	sme_update_neighbor_report_config(mac, &pSmeConfigParams->csr_config);
 	status = csr_change_default_config_param(mac, &pSmeConfigParams->
-						csrConfig);
+						csr_config);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("csr_change_default_config_param failed status: %d",
@@ -3237,7 +3237,7 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 			 TRACE_CODE_SME_RX_HDD_GET_CONFIGPARAM, NO_SESSION, 0));
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_config_param(mac, &pParam->csrConfig);
+		status = csr_get_config_param(mac, &pParam->csr_config);
 		if (status != QDF_STATUS_SUCCESS) {
 			sme_err("csr_get_config_param failed");
 			sme_release_global_lock(&mac->sme);
@@ -13187,11 +13187,11 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 	qdf_mem_zero(sme_config, sizeof(*sme_config));
 	sme_get_config_param(mac_handle, sme_config);
 
-	sme_config->csrConfig.sta_roam_policy_params.dfs_mode =
+	sme_config->csr_config.sta_roam_policy_params.dfs_mode =
 		dfs_mode;
-	sme_config->csrConfig.sta_roam_policy_params.skip_unsafe_channels =
+	sme_config->csr_config.sta_roam_policy_params.skip_unsafe_channels =
 		skip_unsafe_channels;
-	sme_config->csrConfig.sta_roam_policy_params.sap_operating_band =
+	sme_config->csr_config.sta_roam_policy_params.sap_operating_band =
 		sap_operating_band;
 
 	sme_update_config(mac_handle, sme_config);
