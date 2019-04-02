@@ -693,6 +693,10 @@ typedef enum {
     WMI_REQUEST_ROAM_SCAN_STATS_CMDID,
     /** Configure BSS load parameters for roam trigger */
     WMI_ROAM_BSS_LOAD_CONFIG_CMDID,
+    /** Configure deauth roam trigger parameters */
+    WMI_ROAM_DEAUTH_CONFIG_CMDID,
+    /** Configure idle roam trigger parameters */
+    WMI_ROAM_IDLE_CONFIG_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -968,6 +972,8 @@ typedef enum {
     WMI_RUNTIME_DPD_RECAL_CMDID,
     /* get TX power for input HALPHY parameters */
     WMI_GET_TPC_POWER_CMDID,
+    /* Specify when to start monitoring for idle state */
+    WMI_IDLE_TRIGGER_MONITOR_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -23604,6 +23610,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_REQUEST_WLM_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_RAP_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_STA_TDCC_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_DEAUTH_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_IDLE_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_IDLE_TRIGGER_MONITOR_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -24623,6 +24632,8 @@ typedef enum {
     WMI_ROAM_TRIGGER_REASON_BTM,
     WMI_ROAM_TRIGGER_REASON_UNIT_TEST,
     WMI_ROAM_TRIGGER_REASON_BSS_LOAD,
+    WMI_ROAM_TRIGGER_REASON_DEAUTH,
+    WMI_ROAM_TRIGGER_REASON_IDLE,
     WMI_ROAM_TRIGGER_REASON_MAX,
 } WMI_ROAM_TRIGGER_REASON_ID;
 
@@ -24661,6 +24672,71 @@ typedef struct {
     /** BSS load threshold after which roam scan should trigger */
     A_UINT32 bss_load_threshold;
 } wmi_roam_bss_load_config_cmd_fixed_param;
+
+/** Deauth roam trigger parameters */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_deauth_config_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /* 1-Enable, 0-Disable */
+    A_UINT32 enable;
+} wmi_roam_deauth_config_cmd_fixed_param;
+
+/** IDLE roam trigger parameters */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /* 1-Enable, 0-Disable */
+    A_UINT32 enable;
+    /* Connected AP band. 0 - Any Band, 1 - 2.4Ghz Band, 2 - 5Ghz Band */
+    A_UINT32 band;
+    /* Trigger Idle roaming only if rssi change of connected AP is within rssi_delta during idle time */
+    A_UINT32 rssi_delta; /* units = dB */
+    /* Trigger idle roam only if connected RSSI is better than min_rssi */
+    A_INT32 min_rssi; /* units = dBm */
+    /* Inactive/Idle time duration
+     * After screen is OFF (or whatever condition is suitable in a given
+     * system as an indication that the system is likely idle)
+     * and if below conditions are met then idle roaming will be triggered.
+     * 1. Connected AP band is matching with band value configured
+     * 2. No TX/RX data for more than idle_time configured
+     *    or TX/RX data packets count is less than data_packet_count
+     *    during idle_time
+     * 3. Connected AP rssi change is not more than rssi_delta
+     * 4. Connected AP rssi is better than min_rssi.
+     *    The purpose of this trigger for idle scan is to issue the scan
+     *    even if (moreover, particularly if) the connection to the
+     *    existing AP is still good, to keep the STA from getting locked
+     *    onto the current good AP and thus missing out on an available
+     *    even better AP.  This min_rssi threshold can be used to adjust
+     *    the connection quality level at which the STA considers doing an
+     *    idle scan.
+     */
+    A_UINT32 idle_time; /* units = seconds */
+    /* Maximum allowed data packets count during idle time */
+    A_UINT32 data_packet_count;
+} wmi_roam_idle_config_cmd_fixed_param;
+
+/** trigger to start/stop monitoring if system is idle command parameters */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param */
+    /* idle_trigger_monitor values are from WMI_IDLE_TRIGGER_MONITOR_ID */
+    A_UINT32 idle_trigger_monitor;
+} wmi_idle_trigger_monitor_cmd_fixed_param;
+
+typedef enum {
+    WMI_IDLE_TRIGGER_MONITOR_NONE = 0, /* no-op */
+    /* IDLE_TRIGGER_MONITOR_ON
+     * The host's screen has turned off (or some other event indicating that
+     * the system is likely idle) -
+     * start monitoring to check if the system is idle.
+     */
+    WMI_IDLE_TRIGGER_MONITOR_ON,
+    /* IDLE_TRIGGER_MONITOR_OFF
+     * The host's screen has turned on (or some other event indicating that
+     * the system is not idle)
+     */
+    WMI_IDLE_TRIGGER_MONITOR_OFF,
+} WMI_SCREEN_STATUS_NOTIFY_ID;
 
 typedef struct {
     /*

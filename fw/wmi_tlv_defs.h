@@ -971,6 +971,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_set_rap_config_on_sta_ps_tlv_param,
     WMITLV_TAG_STRUC_wmi_pdev_rap_info_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_sta_tdcc_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_deauth_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1366,6 +1369,9 @@ typedef enum {
     OP(WMI_VDEV_GET_MWS_COEX_INFO_CMDID) \
     OP(WMI_REQUEST_WLM_STATS_CMDID) \
     OP(WMI_PDEV_SET_RAP_CONFIG_CMDID) \
+    OP(WMI_ROAM_DEAUTH_CONFIG_CMDID) \
+    OP(WMI_ROAM_IDLE_CONFIG_CMDID) \
+    OP(WMI_IDLE_TRIGGER_MONITOR_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3018,6 +3024,21 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
 #define WMITLV_TABLE_WMI_ROAM_BSS_LOAD_CONFIG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_bss_load_config_cmd_fixed_param, wmi_roam_bss_load_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_BSS_LOAD_CONFIG_CMDID);
+
+/* Deauth roam trigger parameters */
+#define WMITLV_TABLE_WMI_ROAM_DEAUTH_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_deauth_config_cmd_fixed_param, wmi_roam_deauth_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_DEAUTH_CONFIG_CMDID);
+
+/* Idle roam trigger parameters */
+#define WMITLV_TABLE_WMI_ROAM_IDLE_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param, wmi_roam_idle_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_IDLE_CONFIG_CMDID);
+
+/* Screen Status Command parameters */
+#define WMITLV_TABLE_WMI_IDLE_TRIGGER_MONITOR_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param, wmi_idle_trigger_monitor_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_IDLE_TRIGGER_MONITOR_CMDID);
 
 #define WMITLV_TABLE_WMI_ROAM_BLACKLIST_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param, wmi_roam_blacklist_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
