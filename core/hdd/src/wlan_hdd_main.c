@@ -1357,7 +1357,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	bool tdls_buffer_sta;
 	uint32_t tdls_uapsd_mask;
 #endif
-	bool value;
+	bool get_peer_info_enable;
 
 	/* Set up UAPSD */
 	ucfg_mlme_set_sap_uapsd_flag(hdd_ctx->psoc, cfg->uapsd);
@@ -1406,9 +1406,12 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 #endif
 	hdd_update_roam_offload(hdd_ctx, cfg);
 
-	if (ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc, &value) ==
-	   QDF_STATUS_SUCCESS)
-		value &= cfg->get_peer_info_enabled;
+	if (ucfg_mlme_get_sap_get_peer_info(
+		hdd_ctx->psoc, &get_peer_info_enable) == QDF_STATUS_SUCCESS) {
+		get_peer_info_enable &= cfg->get_peer_info_enabled;
+		ucfg_mlme_set_sap_get_peer_info(hdd_ctx->psoc,
+						get_peer_info_enable);
+	}
 
 	ucfg_mlme_is_mawc_enabled(hdd_ctx->psoc, &mawc_enabled);
 	ucfg_mlme_set_mawc_enabled(hdd_ctx->psoc,
