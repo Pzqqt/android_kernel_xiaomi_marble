@@ -136,64 +136,10 @@ struct sme_config_params {
 };
 
 #ifdef FEATURE_WLAN_TDLS
-#define SME_TDLS_MAX_SUPP_CHANNELS       128
-#define SME_TDLS_MAX_SUPP_OPER_CLASSES   32
-
-typedef struct _smeTdlsPeerCapParams {
-	uint8_t isPeerResponder;
-	uint8_t peerUapsdQueue;
-	uint8_t peerMaxSp;
-	uint8_t peerBuffStaSupport;
-	uint8_t peerOffChanSupport;
-	uint8_t peerCurrOperClass;
-	uint8_t selfCurrOperClass;
-	uint8_t peerChanLen;
-	uint8_t peerChan[SME_TDLS_MAX_SUPP_CHANNELS];
-	uint8_t peerOperClassLen;
-	uint8_t peerOperClass[SME_TDLS_MAX_SUPP_OPER_CLASSES];
-	uint8_t prefOffChanNum;
-	uint8_t prefOffChanBandwidth;
-	uint8_t opClassForPrefOffChan;
-} tSmeTdlsPeerCapParams;
-
-/**
- * eSmeTdlsPeerState - tdls peer state
- * @eSME_TDLS_PEER_STATE_PEERING: tdls connection in progress
- * @eSME_TDLS_PEER_STATE_CONNECTED: tdls peer is connected
- * @eSME_TDLS_PEER_STATE_TEARDOWN: tdls peer is tear down
- * @eSME_TDLS_PEER_ADD_MAC_ADDR: add peer mac into connection table
- * @eSME_TDLS_PEER_REMOVE_MAC_ADDR: remove peer mac from connection table
- */
-typedef enum {
-	eSME_TDLS_PEER_STATE_PEERING,
-	eSME_TDLS_PEER_STATE_CONNECTED,
-	eSME_TDLS_PEER_STATE_TEARDOWN,
-	eSME_TDLS_PEER_ADD_MAC_ADDR,
-	eSME_TDLS_PEER_REMOVE_MAC_ADDR,
-} eSmeTdlsPeerState;
-
-typedef struct _smeTdlsPeerStateParams {
-	uint32_t vdevId;
-	tSirMacAddr peerMacAddr;
-	uint32_t peerState;
-	tSmeTdlsPeerCapParams peerCap;
-} tSmeTdlsPeerStateParams;
-
-#define ENABLE_CHANSWITCH  1
-#define DISABLE_CHANSWITCH 2
 #define BW_20_OFFSET_BIT   0
 #define BW_40_OFFSET_BIT   1
 #define BW_80_OFFSET_BIT   2
 #define BW_160_OFFSET_BIT  3
-typedef struct sme_tdls_chan_switch_param_struct {
-	uint32_t vdev_id;
-	tSirMacAddr peer_mac_addr;
-	uint16_t tdls_off_ch_bw_offset;/* Target Off Channel Bandwidth offset */
-	uint8_t tdls_off_channel;      /* Target Off Channel */
-	uint8_t tdls_off_ch_mode;      /* TDLS Off Channel Mode */
-	uint8_t is_responder;          /* is peer responder or initiator */
-	uint8_t opclass;           /* tdls operating class */
-} sme_tdls_chan_switch_params;
 #endif /* FEATURE_WLAN_TDLS */
 
 /* Thermal Mitigation*/
