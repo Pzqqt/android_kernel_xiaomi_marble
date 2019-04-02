@@ -2575,6 +2575,9 @@ int os_if_nan_legacy_req(struct wlan_objmgr_psoc *psoc, const void *data,
 	}
 
 	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
+	if (!nan_req)
+		return -ENOMEM;
+
 	nan_req->psoc = psoc;
 	nan_req->params.request_data_len = data_len;
 	qdf_mem_copy(nan_req->params.request_data, data, data_len);
