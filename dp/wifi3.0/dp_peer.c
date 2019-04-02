@@ -789,7 +789,6 @@ add_ast_entry:
 		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
 
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
-	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
 	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
@@ -801,10 +800,13 @@ add_ast_entry:
 				(struct cdp_peer *)peer,
 				mac_addr,
 				next_node_mac,
-				flags))
+				flags)) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
+		}
 	}
 
+	qdf_spin_unlock_bh(&soc->ast_lock);
 	return ret;
 }
 
