@@ -851,8 +851,9 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
  *
  * Return: None
  */
-static void sme_update_neighbor_report_config(struct mac_context *mac,
-					      tCsrConfigParam *csr_config)
+static void
+sme_update_neighbor_report_config(struct mac_context *mac,
+				  struct csr_config_params *csr_config)
 {
 	struct wlan_fwol_neighbor_report_cfg fwol_neighbor_report_cfg = {0};
 	QDF_STATUS status;

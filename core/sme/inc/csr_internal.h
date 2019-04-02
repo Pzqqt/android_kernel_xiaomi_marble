@@ -945,9 +945,9 @@ QDF_STATUS csr_get_rssi(struct mac_context *mac, tCsrRssiCallback callback,
 QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 QDF_STATUS csr_get_config_param(struct mac_context *mac,
-					  tCsrConfigParam *pParam);
+					  struct csr_config_params *pParam);
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
-		tCsrConfigParam *pParam);
+		struct csr_config_params *pParam);
 QDF_STATUS csr_msg_processor(struct mac_context *mac, void *pMsgBuf);
 QDF_STATUS csr_open(struct mac_context *mac);
 QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2);

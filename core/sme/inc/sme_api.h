@@ -132,7 +132,7 @@
   Type declarations
   ------------------------------------------------------------------------*/
 struct sme_config_params {
-	tCsrConfigParam csrConfig;
+	struct csr_config_params csrConfig;
 };
 
 #ifdef FEATURE_WLAN_TDLS

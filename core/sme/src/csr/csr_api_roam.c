@@ -707,7 +707,8 @@ QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2)
 	return status;
 }
 
-QDF_STATUS csr_set_channels(struct mac_context *mac, tCsrConfigParam *pParam)
+QDF_STATUS csr_set_channels(struct mac_context *mac,
+			    struct csr_config_params *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t index = 0;
@@ -2402,7 +2403,7 @@ void csr_start_bss_copy_he_cap(struct start_bss_req *req,
  */
 static
 void csr_set_11k_offload_config_param(struct csr_config *csr_config,
-					tCsrConfigParam *param)
+					struct csr_config_params *param)
 {
 	csr_config->offload_11k_enable_bitmask =
 		param->offload_11k_enable_bitmask;
@@ -2445,7 +2446,7 @@ csr_copy_mawc_config(struct mac_context *mac,
 }
 
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
-					   tCsrConfigParam *pParam)
+					   struct csr_config_params *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -2642,7 +2643,7 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
  */
 static
 void csr_get_11k_offload_config_param(struct csr_config *csr_config,
-					tCsrConfigParam *param)
+					struct csr_config_params *param)
 {
 	param->offload_11k_enable_bitmask =
 		csr_config->offload_11k_enable_bitmask;
@@ -2664,7 +2665,8 @@ void csr_get_11k_offload_config_param(struct csr_config *csr_config,
 		max_neighbor_report_req_cap;
 }
 
-QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam)
+QDF_STATUS csr_get_config_param(struct mac_context *mac,
+				struct csr_config_params *pParam)
 {
 	struct csr_config *cfg_params = &mac->roam.configParam;
 

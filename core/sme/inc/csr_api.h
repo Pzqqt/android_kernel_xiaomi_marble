@@ -951,7 +951,7 @@ struct csr_neighbor_report_offload_params {
 	uint32_t max_neighbor_report_req_cap;
 };
 
-typedef struct tagCsrConfigParam {
+struct csr_config_params {
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
@@ -1033,7 +1033,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;
-} tCsrConfigParam;
+};
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define csr_is_roam_offload_enabled(mac) \
@@ -1387,7 +1387,8 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) (false)
 #endif
 
-QDF_STATUS csr_set_channels(struct mac_context *mac, tCsrConfigParam *pParam);
+QDF_STATUS csr_set_channels(struct mac_context *mac,
+			    struct csr_config_params *pParam);
 
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
