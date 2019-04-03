@@ -1491,7 +1491,6 @@ static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
 		dev_err(&swr_dev->dev,
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, swr_dev->addr);
-		swr_remove_device(swr_dev);
 		return ret;
 	}
 	swr_dev->dev_num = devnum;
