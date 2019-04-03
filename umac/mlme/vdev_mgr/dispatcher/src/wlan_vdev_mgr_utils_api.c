@@ -322,6 +322,9 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_BCN_TX_RATE_CODE:
 		is_wmi_cmd = 1;
 		break;
+	case WLAN_MLME_CFG_TX_MGMT_RATE_CODE:
+		is_wmi_cmd = 1;
+		break;
 	default:
 		break;
 	}

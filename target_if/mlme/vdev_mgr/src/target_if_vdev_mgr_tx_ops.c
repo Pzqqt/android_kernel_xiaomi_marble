@@ -302,6 +302,9 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_BCN_TX_RATE_CODE:
 		wmi_id = wmi_vdev_param_beacon_rate;
 		break;
+	case WLAN_MLME_CFG_TX_MGMT_RATE_CODE:
+		wmi_id = wmi_vdev_param_mgmt_rate;
+		break;
 	case WLAN_MLME_CFG_LISTEN_INTERVAL:
 		wmi_id = wmi_vdev_param_listen_interval;
 		break;
