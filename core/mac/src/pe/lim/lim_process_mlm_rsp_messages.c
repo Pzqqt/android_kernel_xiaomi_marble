@@ -2825,9 +2825,6 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	sme_session_id = set_key_params->smesessionId;
 	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
 							  sme_session_id);
-	session_id = session_entry->peSessionId;
-	pe_debug("PE session ID %d, SME session id %d", session_id,
-		 sme_session_id);
 	if (!session_entry) {
 		pe_err("session does not exist for given session_id");
 		qdf_mem_zero(msg->bodyptr, sizeof(*set_key_params));
@@ -2839,6 +2836,9 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 					     sme_session_id);
 		return;
 	}
+	session_id = session_entry->peSessionId;
+	pe_debug("PE session ID %d, SME session id %d", session_id,
+		 sme_session_id);
 	result_status = set_key_params->status;
 	if (!lim_is_set_key_req_converged()) {
 		if (eLIM_MLM_WT_SET_STA_KEY_STATE !=
@@ -2923,9 +2923,6 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	sme_session_id = ((tpSetBssKeyParams) msg->bodyptr)->smesessionId;
 	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
 							  sme_session_id);
-	session_id = session_entry->peSessionId;
-	pe_debug("PE session ID %d, SME session id %d", session_id,
-		 sme_session_id);
 	if (!session_entry) {
 		pe_err("session does not exist for given sessionId [%d]",
 			session_id);
@@ -2937,6 +2934,9 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 					     sme_session_id);
 		return;
 	}
+	session_id = session_entry->peSessionId;
+	pe_debug("PE session ID %d, SME session id %d", session_id,
+		 sme_session_id);
 	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState) {
 		result_status =
 			(uint16_t)(((tpSetBssKeyParams)msg->bodyptr)->status);
