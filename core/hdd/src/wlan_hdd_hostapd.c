@@ -4092,10 +4092,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
 			      WLAN_EID_INTERWORKING);
 
-	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
-		wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
-				      WLAN_EID_RSN);
-
 #ifdef FEATURE_WLAN_WAPI
 	if (QDF_SAP_MODE == adapter->device_mode) {
 		wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
