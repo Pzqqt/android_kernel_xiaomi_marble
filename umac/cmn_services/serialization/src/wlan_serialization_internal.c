@@ -550,8 +550,7 @@ void wlan_serialization_generic_timer_cb(void *arg)
 	struct wlan_serialization_command *cmd = timer->cmd;
 
 	if (!cmd) {
-		ser_err("command not found");
-		QDF_ASSERT(0);
+		ser_err("Command not found");
 		return;
 	}
 
