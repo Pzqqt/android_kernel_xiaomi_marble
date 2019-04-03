@@ -4095,6 +4095,13 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 				restore_last_peer);
 	}
 
+	if (TDLS_PEER_STATE_CONNECTED == peer_state->peer_state) {
+		peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
+		if (peer_mac_addr)
+			cdp_peer_state_update(soc, pdev, peer_mac_addr,
+					      OL_TXRX_PEER_STATE_AUTH);
+	}
+
 end_tdls_peer_state:
 	if (ch_mhz)
 		qdf_mem_free(ch_mhz);
