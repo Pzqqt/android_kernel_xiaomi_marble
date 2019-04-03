@@ -299,7 +299,7 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_UAPSD:
 		wmi_id = WMI_HOST_STA_PS_PARAM_UAPSD;
 		break;
-	case WLAN_MLME_CFG_BCN_TX_RATE:
+	case WLAN_MLME_CFG_BCN_TX_RATE_CODE:
 		wmi_id = wmi_vdev_param_beacon_rate;
 		break;
 	case WLAN_MLME_CFG_LISTEN_INTERVAL:
