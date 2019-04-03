@@ -4547,6 +4547,7 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	vdev->osif_get_key = txrx_ops->get_key;
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
 	vdev->osif_tx_free_ext = txrx_ops->tx.tx_free_ext;
+	vdev->tx_comp = txrx_ops->tx.tx_comp;
 #ifdef notyet
 #if ATH_SUPPORT_WAPI
 	vdev->osif_check_wai = txrx_ops->rx.wai_check;

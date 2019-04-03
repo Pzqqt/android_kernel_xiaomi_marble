@@ -3200,6 +3200,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 	struct dp_tx_desc_s *next;
 	struct hal_tx_completion_status ts = {0};
 	struct dp_peer *peer;
+	qdf_nbuf_t netbuf;
 
 	DP_HIST_INIT();
 	desc = comp_head;
@@ -3208,6 +3209,12 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		dp_tx_comp_process_tx_status(desc, &ts, peer);
+
+		netbuf = desc->nbuf;
+		/* check tx complete notification */
+		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(netbuf))
+			dp_tx_notify_completion(soc, desc, netbuf);
+
 		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
 		if (peer)
