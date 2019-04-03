@@ -14781,6 +14781,39 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.max_nc = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.trigger_frm_mac_pad =
 					QCA_WLAN_HE_16US_OF_PROCESS_TIME;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.flex_twt_sched = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ofdma_ra = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_4x_ltf_3200_gi_ndp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.qtp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.bsrp_ampdu_aggr = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.a_bqr = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_sub_ch_sel_tx_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ndp_feedback_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ops_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.srp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.power_boost = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.num_sounding_lt_80 = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.num_sounding_gt_80 = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dl_mu_mimo_part_bw = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.non_trig_cqi_feedback = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_1024_qam_lt_242_tone_ru = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_1024_qam_lt_242_tone_ru = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_full_bw_su_he_mu_compress_sigb = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.su_beamformer = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.multi_tid_aggr_rx_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.multi_tid_aggr_tx_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_dynamic_smps = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.punctured_sounding_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ht_vht_trg_frm_rx_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.su_feedback_tone16 = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.mu_feedback_tone16 = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.codebook_su = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.codebook_mu = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ul_2x996_tone_ru_supp = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.beamforming_feedback = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_er_su_ppdu = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dl_mu_mimo_part_bw = 0;
 	csr_update_session_he_cap(mac_ctx, session);
 }
 
