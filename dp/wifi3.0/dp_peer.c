@@ -177,7 +177,10 @@ static int dp_peer_find_hash_attach(struct dp_soc *soc)
 
 static void dp_peer_find_hash_detach(struct dp_soc *soc)
 {
-	qdf_mem_free(soc->peer_hash.bins);
+	if (soc->peer_hash.bins) {
+		qdf_mem_free(soc->peer_hash.bins);
+		soc->peer_hash.bins = NULL;
+	}
 }
 
 static inline unsigned dp_peer_find_hash_index(struct dp_soc *soc,
@@ -289,6 +292,9 @@ static void dp_peer_ast_hash_detach(struct dp_soc *soc)
 	if (!soc->ast_hash.mask)
 		return;
 
+	if (!soc->ast_hash.bins)
+		return;
+
 	qdf_spin_lock_bh(&soc->ast_lock);
 	for (index = 0; index <= soc->ast_hash.mask; index++) {
 		if (!TAILQ_EMPTY(&soc->ast_hash.bins[index])) {
@@ -304,6 +310,7 @@ static void dp_peer_ast_hash_detach(struct dp_soc *soc)
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	qdf_mem_free(soc->ast_hash.bins);
+	soc->ast_hash.bins = NULL;
 }
 
 /*
@@ -1200,12 +1207,18 @@ void dp_peer_find_hash_erase(struct dp_soc *soc)
 
 static void dp_peer_ast_table_detach(struct dp_soc *soc)
 {
-	qdf_mem_free(soc->ast_table);
+	if (soc->ast_table) {
+		qdf_mem_free(soc->ast_table);
+		soc->ast_table = NULL;
+	}
 }
 
 static void dp_peer_find_map_detach(struct dp_soc *soc)
 {
-	qdf_mem_free(soc->peer_id_to_obj_map);
+	if (soc->peer_id_to_obj_map) {
+		qdf_mem_free(soc->peer_id_to_obj_map);
+		soc->peer_id_to_obj_map = NULL;
+	}
 }
 
 int dp_peer_find_attach(struct dp_soc *soc)
