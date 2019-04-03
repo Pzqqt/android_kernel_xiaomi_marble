@@ -2244,7 +2244,7 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	if (status) {
 		rx_tid->num_addba_rsp_failed++;
-		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2401,14 +2401,12 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	rx_tid->num_of_addba_req++;
 	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE &&
 	     rx_tid->hw_qdesc_vaddr_unaligned)) {
-		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		peer->active_ba_session_cnt--;
-		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Rx Tid- %d hw qdesc is already setup",
-			__func__, tid);
-		return QDF_STATUS_E_FAILURE;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Addba recvd for Rx Tid-%d hw qdesc is already setup",
+			  __func__, tid);
 	}
 
 	if (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
@@ -2482,7 +2480,7 @@ int dp_delba_process_wifi3(void *peer_handle,
 	 */
 	rx_tid->delba_rcode = reasoncode;
 	rx_tid->num_of_delba_req++;
-	dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+	dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
 
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
 	peer->active_ba_session_cnt--;
@@ -2534,12 +2532,12 @@ int dp_delba_tx_completion_wifi3(void *peer_handle,
 		rx_tid->delba_tx_status = 0;
 	}
 	if (rx_tid->ba_status == DP_RX_BA_ACTIVE) {
-		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		peer->active_ba_session_cnt--;
 	}
 	if (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS) {
-		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 	}
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
