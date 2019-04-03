@@ -111,21 +111,33 @@
 
 /*
  * <ini>
- * gTxChainMask1ss - Enables/disables tx chain Mask1ss
+ * gTxChainMask1ss - Enables/disables tx chain mask1ss, used by Rome
  * @Min: 0
  * @Max: 3
- * @Default: 1
+ * @Default: 0
  *
- * This ini is used to set default tx chain Mask for 1ss
+ * This ini is used to set default tx chain mask for 1ss
  *
- * 0 - 3X3
- * 1 - 2X2
- * 2 - 3X2
- * 3 - 2X3
+ * gTxChainMask1ss=0 : 1ss data tx chain mask set to 3 and self gen chain mask
+ *    set to 3. This is default setting of fw side. For 1x1 case, WIFI will
+ *    using chain0 to sent 1ss data and selfgen packets. 2x2 case, WIFI will
+ *    using chain0 and chain1 to sent 1ss data and selfgen packets.
+ *
+ * gTxChainMask1ss=1 : 1ss data tx chain mask set to 2 and self gen chain mask
+ *    set to 2. This setting can work only when 2x2 case, WIFI will use chain1
+ *    to sent 1ss data packets and selfgen packets, this can improve BTC
+ *    performance a little, but have side affect when chain0 and chain1 RSSI
+ *    is unbalance or green AP is enabled. So we recommend not using it.
+ *
+ * gTxChainMask1ss=2 : 1ss data tx chain mask set to 3 and self gen chain mask
+ * set to 2. This setting never used before.
+ *
+ * gTxChainMask1ss=3 : 1ss data tx chain mask set to 2 and self gen chain mask
+ * set to 3. This setting never used before.
  *
  * Related: None
  *
- * Supported Feature: STA
+ * Supported Feature: STA/SAP
  *
  * Usage: Internal/External
  *
@@ -135,7 +147,7 @@
 			"gTxChainMask1ss", \
 			0, \
 			3, \
-			1, \
+			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"1SS Tx Chainmask")
 
