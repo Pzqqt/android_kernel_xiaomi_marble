@@ -727,29 +727,12 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		goto close_adapter;
 	}
 
-	/*
-	 * Once the support for session creation/deletion from
-	 * hdd_hostapd_open/hdd_host_stop is in place.
-	 * The support for starting adapter from here can be removed.
-	 */
-	if (mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) {
-		ret = hdd_start_adapter(adapter);
-		if (ret) {
-			hdd_err("Failed to start %s", name);
-			goto stop_modules;
-		}
-	}
-
 	if (hdd_ctx->rps)
 		hdd_send_rps_ind(adapter);
 
 	hdd_exit();
 
 	return adapter->dev->ieee80211_ptr;
-
-stop_modules:
-	if (!hdd_is_any_interface_open(hdd_ctx))
-		hdd_psoc_idle_timer_start(hdd_ctx);
 
 close_adapter:
 	hdd_close_adapter(hdd_ctx, adapter, true);
