@@ -7380,6 +7380,31 @@ typedef enum {
     TRIGGER_COND_ID_ONE_TIME_REQUEST =  0x3,
 } wmi_report_stats_event_trigger_cond_id;
 
+typedef struct
+{
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stats_interference */
+
+    /** For cases where a single rx chain has options to be connected to
+     * different rx antennas, show which rx antennas were in use during
+     * receipt of a given PPDU.
+     * This sa_ant_matrix provides a bitmask of the antennas used while
+     * receiving this frame.
+     */
+    A_UINT32 sa_ant_matrix;
+
+    /** Count how many times the hal_rxerr_phy is marked, in this time period.
+     * The counter value is reset each period. The host specifies the period
+     * via WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD.
+     */
+    A_UINT32 phyerr_count;
+
+    /** The timestamp at which the WMI event is reported.
+     * In targets that have a WBTIMER_1 timer, this timestamp is taken
+     * from WBTIMER_1.
+     */
+    A_UINT32 timestamp;
+} wmi_stats_interference;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_report_stats_event_fixed_param */
     /** Indicate what triggered this event, check wmi_report_stats_event_trigger_cond_id for details */
@@ -7460,6 +7485,7 @@ typedef struct {
      *    A_UINT32                 rx_mcs[][][];             Array length is (num_peer_ac_rx_stats * WLAN_MAX_AC) * rx_mcs_array_len,
      *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mcs_array_len + MCS index
      *    wmi_stats_period         stats_period[];           Array length is specified by stats_period_array_len
+     *    wmi_stats_interference   stats_interference[];     Array length is determied by dividing array level TLV header's length value by array-element TLV header's length value.
      **/
 } wmi_report_stats_event_fixed_param;
 

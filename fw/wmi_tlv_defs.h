@@ -974,6 +974,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_deauth_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_idle_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_stats_interference,
 } WMITLV_TAG_ID;
 
 /*
@@ -5092,6 +5093,7 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RMC_NEW_LEADER_EVENTID);
  *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mcs_array_len + MCS index
  *                                                       Contains a count of rx PPDUs for each MCS of each AC of each peer.
  *    wmi_stats_period         stats_period[];           Array length is specified by stats_period_array_len
+ *    wmi_stats_interference   stats_interference[];     Array length is determied by dividing array level TLV header's length value by array-element TLV header's length value.
  *
  * For example, if there were 2 peers (X and Y) whose stats were being reported,
  * the message and its TLV arrays would look like this:
@@ -5182,7 +5184,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_RMC_NEW_LEADER_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_rx_stats, rx_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_mpdu_aggr, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, rx_mcs, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_stats_period, stats_period, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_stats_period, stats_period, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_stats_interference, stats_interference, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_REPORT_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID(id, op, buf, len) \
