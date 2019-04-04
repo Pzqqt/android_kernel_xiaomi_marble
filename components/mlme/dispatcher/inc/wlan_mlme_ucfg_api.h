@@ -1808,6 +1808,22 @@ QDF_STATUS ucfg_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_update_oce_flags: Update the OCE flags
+ *
+ * @pdev: pointer to pdev object
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to update the
+ * OCE feature flags
+ *
+ * Return: void
+ */
+static inline
+void ucfg_mlme_update_oce_flags(struct wlan_objmgr_pdev *pdev)
+{
+	wlan_mlme_update_oce_flags(pdev);
+}
+
+/**
  * ucfg_mlme_is_ap_prot_enabled() - Check if sap is enabled
  * @psoc: pointer to psoc object
  *

@@ -996,6 +996,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	}
 
 	hdd_ctx->sta_to_adapter[sta_id] = NULL;
+	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 
 	return qdf_status;
 }
@@ -1111,7 +1112,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	wlan_hdd_netif_queue_control(adapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
-
+	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 	return qdf_status;
 }
 

@@ -16742,6 +16742,33 @@ static QDF_STATUS csr_roam_session_opened(struct mac_context *mac,
 	return status;
 }
 
+/**
+ * csr_store_oce_cfg_flags_in_vdev() - fill OCE flags from ini
+ * @mac: mac_context.
+ * @vdev: Pointer to pdev obj
+ * @vdev_id: vdev_id
+ *
+ * This API will store the oce flags in vdev mlme priv object
+ *
+ * Return: none
+ */
+static void csr_store_oce_cfg_flags_in_vdev(struct mac_context *mac,
+					    struct wlan_objmgr_pdev *pdev,
+					    uint8_t vdev_id)
+{
+	uint8_t *vdev_dynamic_oce;
+	struct wlan_objmgr_vdev *vdev =
+	wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id, WLAN_LEGACY_MAC_ID);
+
+	if (!vdev)
+		return;
+
+	vdev_dynamic_oce = mlme_get_dynamic_oce_flags(vdev);
+
+	*vdev_dynamic_oce = mac->mlme_cfg->oce.feature_bitmap;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
+
 QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg)
 {
 	struct add_sta_self_params *rsp;
@@ -16775,6 +16802,12 @@ QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMs
 
 	csr_roam_session_opened(mac, rsp->status, rsp->session_id);
 
+	if (QDF_IS_STATUS_SUCCESS(rsp->status) &&
+	    rsp->type == WMI_VDEV_TYPE_STA) {
+		csr_store_oce_cfg_flags_in_vdev(mac, mac->pdev,
+						rsp->session_id);
+		wlan_mlme_update_oce_flags(mac->pdev);
+	}
 	if (QDF_IS_STATUS_ERROR(rsp->status))
 		csr_cleanup_session(mac, rsp->session_id);
 

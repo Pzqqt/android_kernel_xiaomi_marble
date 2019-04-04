@@ -27,6 +27,7 @@
 #include "wma.h"
 #include "wma_internal.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_utility.h"
 
 QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
 				 qdf_size_t *len)
@@ -1933,6 +1934,73 @@ QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 
 	*value = mlme_obj->cfg.oce.oce_sap_enabled;
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_mlme_send_oce_flags_fw() - Send the oce flags to FW
+ * @pdev: pointer to pdev object
+ * @object: vdev object
+ * @arg: Arguments to the handler
+ *
+ * Return: void
+ */
+static void wlan_mlme_send_oce_flags_fw(struct wlan_objmgr_pdev *pdev,
+					void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	uint8_t *updated_fw_value = arg;
+	uint8_t *dynamic_fw_value = 0;
+	uint8_t vdev_id;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
+		dynamic_fw_value = mlme_get_dynamic_oce_flags(vdev);
+		if (*updated_fw_value == *dynamic_fw_value) {
+			mlme_debug("Current FW flags matches with updated value.");
+			return;
+		}
+		*dynamic_fw_value = *updated_fw_value;
+		vdev_id = wlan_vdev_get_id(vdev);
+		if (wma_cli_set_command(vdev_id,
+					WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES,
+					*updated_fw_value, VDEV_CMD))
+			mlme_err("Failed to send OCE update to FW");
+	}
+}
+
+void wlan_mlme_update_oce_flags(struct wlan_objmgr_pdev *pdev)
+{
+	uint16_t sap_connected_peer, go_connected_peer;
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	uint8_t updated_fw_value = 0;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return;
+
+	sap_connected_peer =
+	wlan_util_get_peer_count_for_mode(pdev, QDF_SAP_MODE);
+	go_connected_peer =
+	wlan_util_get_peer_count_for_mode(pdev, QDF_P2P_GO_MODE);
+	mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (sap_connected_peer || go_connected_peer) {
+		updated_fw_value = mlme_obj->cfg.oce.feature_bitmap;
+		updated_fw_value &=
+		~(WMI_VDEV_OCE_PROBE_REQUEST_RATE_FEATURE_BITMAP);
+		updated_fw_value &=
+		~(WMI_VDEV_OCE_PROBE_REQUEST_DEFERRAL_FEATURE_BITMAP);
+		mlme_debug("Disable STA OCE probe req rate and defferal updated_fw_value :%d",
+			   updated_fw_value);
+	} else {
+		updated_fw_value = mlme_obj->cfg.oce.feature_bitmap;
+		mlme_debug("Update the STA OCE flags to default INI updated_fw_value :%d",
+			   updated_fw_value);
+	}
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+				wlan_mlme_send_oce_flags_fw,
+				&updated_fw_value, 0, WLAN_MLME_NB_ID);
 }
 
 bool wlan_mlme_is_ap_prot_enabled(struct wlan_objmgr_psoc *psoc)
