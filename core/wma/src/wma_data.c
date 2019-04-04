@@ -78,6 +78,7 @@
 #include "wlan_lmac_if_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_crypto_global_api.h>
+#include <wlan_mlme_main.h>
 
 struct wma_search_rate {
 	int32_t rate;
@@ -2545,19 +2546,23 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if (!QDF_IS_ADDR_BROADCAST(wh->i_addr1) &&
 		    !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 			if (pFc->wep) {
-				uint8_t mic_len, hdr_len;
+				uint8_t mic_len, hdr_len, pdev_id;
 
 				/* Allocate extra bytes for privacy header and
 				 * trailer
 				 */
-				if (iface->ucast_key_cipher ==
-				    WMI_CIPHER_AES_GCM) {
-					hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
-					mic_len = WLAN_IEEE80211_GCMP_MICLEN;
-				} else {
-					hdr_len = IEEE80211_CCMP_HEADERLEN;
-					mic_len = IEEE80211_CCMP_MICLEN;
-				}
+				pdev_id = wlan_objmgr_pdev_get_pdev_id(
+							wma_handle->pdev);
+				qdf_status =
+					mlme_get_peer_mic_len(wma_handle->psoc,
+							      pdev_id,
+							      wh->i_addr1,
+							      &mic_len,
+							      &hdr_len);
+
+				if (QDF_IS_STATUS_ERROR(qdf_status))
+					return qdf_status;
+
 				newFrmLen = frmLen + hdr_len + mic_len;
 				qdf_status =
 					cds_packet_alloc((uint16_t) newFrmLen,

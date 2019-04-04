@@ -74,6 +74,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wma_nan_datapath.h"
 #include "wlan_mlme_api.h"
+#include <wlan_mlme_main.h>
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
@@ -2307,6 +2308,52 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	return 0;
 }
 
+static void wma_update_roamed_peer_unicast_cipher(tp_wma_handle wma,
+						  uint32_t uc_cipher,
+						  uint8_t *peer_mac)
+{
+	struct wlan_objmgr_peer *peer;
+
+	if (!peer_mac) {
+		WMA_LOGE("peer_mac is NULL");
+		return;
+	}
+
+	peer = wlan_objmgr_get_peer(wma->psoc,
+				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				    peer_mac, WLAN_LEGACY_WMA_ID);
+	if (!peer) {
+		WMA_LOGE("Peer of peer_mac %pM not found", peer_mac);
+		return;
+	}
+
+	wlan_peer_set_unicast_cipher(peer, uc_cipher);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+}
+
+static uint32_t wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac)
+{
+	uint32_t uc_cipher;
+	struct wlan_objmgr_peer *peer;
+
+	if (!peer_mac) {
+		WMA_LOGE("peer_mac is NULL");
+		return 0;
+	}
+	peer = wlan_objmgr_get_peer(wma->psoc,
+				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
+				    peer_mac, WLAN_LEGACY_WMA_ID);
+	if (!peer) {
+		WMA_LOGE("Peer of peer_mac %pM not found", peer_mac);
+		return 0;
+	}
+
+	uc_cipher = wlan_peer_get_unicast_cipher(peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+
+	return uc_cipher;
+}
+
 /**
  * wma_roam_update_vdev() - Update the STA and BSS
  * @wma: Global WMA Handle
@@ -2325,6 +2372,7 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	tDeleteStaParams *del_sta_params;
 	tLinkStateParams *set_link_params;
 	tAddStaParams *add_sta_params;
+	uint32_t uc_cipher;
 	uint8_t vdev_id;
 
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
@@ -2358,9 +2406,18 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
 
+	/*
+	 * Get uc cipher of old peer to update new peer as it doesnt
+	 * change in roaming
+	 */
+	uc_cipher = wma_get_peer_uc_cipher(wma, del_bss_params->bssid);
+
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, del_bss_params);
 	wma_set_linkstate(wma, set_link_params);
+	/* Update new peer's uc cipher */
+	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher,
+					      roam_synch_ind_ptr->bssid.bytes);
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
 	wma_vdev_set_mlme_state_run(wma, vdev_id);

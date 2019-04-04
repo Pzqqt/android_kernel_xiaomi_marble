@@ -239,6 +239,102 @@ out:
 	return status;
 }
 
+QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+				 uint8_t *peer_mac, uint8_t *mic_len,
+				 uint8_t *mic_hdr_len)
+{
+	struct wlan_objmgr_peer *peer;
+	uint32_t key_cipher;
+
+	if (!psoc || !mic_len || !mic_hdr_len || !peer_mac) {
+		mlme_debug("psoc/mic_len/mic_hdr_len/peer_mac null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	peer = wlan_objmgr_get_peer(psoc, pdev_id,
+				    peer_mac, WLAN_LEGACY_MAC_ID);
+	if (!peer) {
+		mlme_debug("Peer of peer_mac %pM not found", peer_mac);
+		return QDF_STATUS_E_INVAL;
+	}
+	key_cipher = wlan_peer_get_unicast_cipher(peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+
+	if (key_cipher == WMI_CIPHER_AES_GCM) {
+		*mic_hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
+		*mic_len = WLAN_IEEE80211_GCMP_MICLEN;
+	} else {
+		*mic_hdr_len = IEEE80211_CCMP_HEADERLEN;
+		*mic_len = IEEE80211_CCMP_MICLEN;
+	}
+	mlme_debug("peer %pM hdr_len %d mic_len %d key_cipher %d", peer_mac,
+		   *mic_hdr_len, *mic_len, key_cipher);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
+				      void *arg)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+	QDF_STATUS status;
+
+	if (!peer) {
+		mlme_err(" peer is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer_priv = qdf_mem_malloc(sizeof(*peer_priv));
+	if (!peer_priv) {
+		mlme_err(" peer_priv component object alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = wlan_objmgr_peer_component_obj_attach(peer,
+						       WLAN_UMAC_COMP_MLME,
+						       (void *)peer_priv,
+						       QDF_STATUS_SUCCESS);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("unable to attach peer_priv obj to peer obj");
+		qdf_mem_free(peer_priv);
+	}
+
+	return status;
+}
+
+QDF_STATUS
+mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
+					void *arg)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+	QDF_STATUS status;
+
+	if (!peer) {
+		mlme_err(" peer is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		mlme_err(" peer MLME component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_objmgr_peer_component_obj_detach(peer,
+						       WLAN_UMAC_COMP_MLME,
+						       peer_priv);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to detach peer_priv obj to peer obj");
+
+	qdf_mem_free(peer_priv);
+
+	return status;
+}
+
 static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_chainmask *chainmask_info)
 {
