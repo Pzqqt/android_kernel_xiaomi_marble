@@ -2297,7 +2297,7 @@ static int cdc_dma_rx_ch_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
@@ -2313,7 +2313,7 @@ static int cdc_dma_rx_ch_put(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
@@ -2330,7 +2330,7 @@ static int cdc_dma_rx_format_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
@@ -2363,7 +2363,7 @@ static int cdc_dma_rx_format_put(struct snd_kcontrol *kcontrol,
 	int rc = 0;
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
@@ -2498,7 +2498,7 @@ static int cdc_dma_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
@@ -2516,7 +2516,7 @@ static int cdc_dma_rx_sample_rate_put(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0) {
+	if (ch_num < 0 || ch_num >= CDC_DMA_RX_MAX) {
 		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
 	}
