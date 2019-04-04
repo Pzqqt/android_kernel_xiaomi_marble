@@ -4449,7 +4449,12 @@ sme_modify_nss_chains_tgt_cfg(mac_handle_t mac_handle,
 	}
 
 	max_supported_rx_nss = QDF_MIN(ini_rx_nss, max_supported_rx_nss);
+	if (!max_supported_rx_nss)
+		return;
+
 	max_supported_tx_nss = QDF_MIN(ini_tx_nss, max_supported_tx_nss);
+	if (!max_supported_tx_nss)
+		return;
 
 	ini_rx_chains = GET_VDEV_NSS_CHAIN(nss_chains_ini_cfg->
 						num_rx_chains[band],
@@ -4468,8 +4473,13 @@ sme_modify_nss_chains_tgt_cfg(mac_handle_t mac_handle,
 
 	max_supported_rx_chains = QDF_MIN(ini_rx_chains,
 					  max_supported_rx_chains);
+	if (!max_supported_rx_chains)
+		return;
+
 	max_supported_tx_chains = QDF_MIN(ini_tx_chains,
 					  max_supported_tx_chains);
+	if (!max_supported_tx_chains)
+		return;
 
 	sme_modify_chains_in_mlme_cfg(mac_handle, max_supported_rx_chains,
 				      max_supported_tx_chains, vdev_op_mode,
