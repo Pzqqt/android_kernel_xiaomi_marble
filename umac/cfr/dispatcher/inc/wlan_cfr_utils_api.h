@@ -78,6 +78,14 @@ enum cfrradiotype {
 	CFR_CAPTURE_RADIO_MAX = 0xFF,
 };
 
+enum ack_capture_mode {
+	CFR_LEGACY_ACK     = 0,
+	CFR_DUP_LEGACY_ACK = 1,
+	CFR_HT_ACK         = 2,
+	CFR_VHT_ACK        = 3,
+	CFR_INVALID_ACK, /*Always keep this at last*/
+};
+
 struct cfr_metadata_version_1 {
 	u_int8_t    peer_addr[IEEE80211_ADDR_LEN];
 	u_int8_t    status;
