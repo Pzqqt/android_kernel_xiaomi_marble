@@ -1049,13 +1049,11 @@ int bolero_runtime_suspend(struct device *dev)
 {
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
 
-	mutex_lock(&priv->clk_lock);
 	if (priv->lpass_core_hw_vote != NULL)
 		clk_disable_unprepare(priv->lpass_core_hw_vote);
 	else
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n",
 			__func__);
-	mutex_unlock(&priv->clk_lock);
 	return 0;
 }
 EXPORT_SYMBOL(bolero_runtime_suspend);
