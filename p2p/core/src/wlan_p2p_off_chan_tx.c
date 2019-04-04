@@ -33,6 +33,7 @@
 #include "wlan_p2p_main.h"
 #include "wlan_p2p_off_chan_tx.h"
 #include "wlan_osif_request_manager.h"
+#include <wlan_mlme_main.h>
 
 /**
  * p2p_psoc_get_tx_ops() - get p2p tx ops
@@ -1509,9 +1510,21 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	}
 	if (!qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
 	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1)) {
+		uint8_t mic_len, mic_hdr_len, pdev_id;
 
-		frame_len = *size + IEEE80211_CCMP_HEADERLEN +
-			    IEEE80211_CCMP_MICLEN;
+		pdev_id =
+			wlan_get_pdev_id_from_vdev_id(tx_ctx->p2p_soc_obj->soc,
+						      tx_ctx->vdev_id,
+						      WLAN_P2P_ID);
+		status = mlme_get_peer_mic_len(p2p_soc_obj->soc, pdev_id,
+					       wh->i_addr1, &mic_len,
+					       &mic_hdr_len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			p2p_err("Failed to get peer mic length.");
+			return status;
+		}
+
+		frame_len = *size + mic_hdr_len + mic_len;
 		status = p2p_packet_alloc((uint16_t)frame_len, (void **)&frame,
 			 &pkt);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -1521,7 +1534,7 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 		}
 
 		qdf_mem_copy(frame, wh, sizeof(*wh));
-		qdf_mem_copy(frame + sizeof(*wh) + IEEE80211_CCMP_HEADERLEN,
+		qdf_mem_copy(frame + sizeof(*wh) + mic_hdr_len,
 			     *ppbuf + sizeof(*wh),
 			     *size - sizeof(*wh));
 		rmf_wh = (struct wlan_frame_hdr *)frame;

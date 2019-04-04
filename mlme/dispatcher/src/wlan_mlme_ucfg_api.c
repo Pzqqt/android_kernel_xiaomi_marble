@@ -125,7 +125,28 @@ QDF_STATUS ucfg_mlme_init(void)
 		mlme_err("unable to register psoc create handle");
 		return status;
 	}
+
 	status = ucfg_mlme_vdev_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = wlan_objmgr_register_peer_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_peer_object_created_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("peer create register notification failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_objmgr_register_peer_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_peer_object_destroyed_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("peer destroy register notification failed");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	return status;
 }
@@ -133,6 +154,20 @@ QDF_STATUS ucfg_mlme_init(void)
 QDF_STATUS ucfg_mlme_deinit(void)
 {
 	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_peer_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_peer_object_destroyed_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to unregister peer destroy handle");
+
+	status = wlan_objmgr_unregister_peer_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_peer_object_created_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to unregister peer create handle");
 
 	status = ucfg_mlme_vdev_deinit();
 	if (QDF_IS_STATUS_ERROR(status))
