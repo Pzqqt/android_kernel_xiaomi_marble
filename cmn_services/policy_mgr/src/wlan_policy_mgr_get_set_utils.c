@@ -3324,6 +3324,12 @@ void policy_mgr_trim_acs_channel_list(uint8_t *pcl, uint8_t pcl_count,
 		return;
 	}
 
+	if (pcl_count >= QDF_MAX_NUM_CHAN) {
+		policy_mgr_err("pcl_count is too big %d",
+			       pcl_count);
+		return;
+	}
+
 	policy_mgr_debug("Update ACS channels with PCL");
 	for (j = 0; j < *org_ch_list_count; j++)
 		for (i = 0; i < pcl_count; i++)
