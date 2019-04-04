@@ -75,6 +75,7 @@ enum vdev_assoc_type {
  * @assoc_type: vdev associate/reassociate type
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
+ * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -84,18 +85,20 @@ struct mlme_legacy_priv {
 	enum vdev_assoc_type assoc_type;
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;
+	uint8_t sta_dynamic_oce_value;
 };
 
 #else
-
 /**
  * struct vdev_mlme_obj - VDEV MLME component object
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
+ * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
  */
 struct vdev_mlme_priv_obj {
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;
+	uint8_t sta_dynamic_oce_value;
 };
 
 /**
@@ -210,6 +213,16 @@ mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
 QDF_STATUS
 mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
 					void *arg);
+
+/**
+ * mlme_get_dynamic_oce_flags(): mlme get dynamic oce flags
+ * @vdev: pointer to vdev object
+ *
+ * This api is used to get the dynamic oce flags pointer
+ *
+ * Return: QDF_STATUS status in case of success else return error
+ */
+uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_get_dynamic_vdev_config() - get the vdev dynamic config params

@@ -79,6 +79,22 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 	return &mlme_priv->ini_cfg;
 }
 
+uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	return &mlme_priv->sta_dynamic_oce_value;
+}
+
 #else
 
 static struct vdev_mlme_priv_obj *
@@ -99,6 +115,19 @@ wlan_vdev_mlme_get_priv_obj(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return vdev_mlme;
+}
+
+uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_priv_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	return &vdev_mlme->sta_dynamic_oce_value;
 }
 
 struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(

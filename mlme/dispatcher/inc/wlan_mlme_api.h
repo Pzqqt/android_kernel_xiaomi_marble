@@ -782,6 +782,14 @@ QDF_STATUS wlan_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
 
+/**
+ * wlan_mlme_update_oce_flags() - Update the oce flags to FW
+ * @pdev: pointer to pdev object
+ *
+ * Return: void
+ */
+void wlan_mlme_update_oce_flags(struct wlan_objmgr_pdev *pdev);
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * wlan_mlme_cfg_get_he_ul_mumimo() - Get the HE Ul Mumio
