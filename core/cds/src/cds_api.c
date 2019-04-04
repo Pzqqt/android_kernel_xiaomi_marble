@@ -71,6 +71,7 @@
 #endif
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_cp_stats_mc_ucfg_api.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -665,6 +666,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		cds_alert("Failed to open PSOC Components");
 		goto deregister_modules;
 	}
+
+	ucfg_mc_cp_stats_register_pmo_handler();
 
 	return QDF_STATUS_SUCCESS;
 
