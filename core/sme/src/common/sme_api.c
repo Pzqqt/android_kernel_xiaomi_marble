@@ -1469,6 +1469,9 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 	struct csr_roam_session *session;
 	struct plm_req_params *body;
 
+	if (!req)
+		return QDF_STATUS_E_FAILURE;
+
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
@@ -1489,8 +1492,12 @@ QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle,
 
 	/* per contract must make a copy of the params when messaging */
 	body = qdf_mem_malloc(sizeof(*body));
-	if (!req)
+
+	if (!body) {
+		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_NOMEM;
+	}
+
 	*body = *req;
 
 	if (!body->enable)
