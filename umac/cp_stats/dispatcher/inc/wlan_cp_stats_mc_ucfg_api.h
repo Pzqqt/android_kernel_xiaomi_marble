@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -204,6 +204,17 @@ QDF_STATUS ucfg_mc_cp_stats_cca_stats_get(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS ucfg_mc_cp_stats_set_rate_flags(struct wlan_objmgr_vdev *vdev,
 					   enum tx_rate_info flags);
+
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+/**
+ * ucfg_mc_cp_stats_register_pmo_handler() - API to register pmo handler
+ *
+ * Return: none
+ */
+void ucfg_mc_cp_stats_register_pmo_handler(void);
+#else
+void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
+#endif
 
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

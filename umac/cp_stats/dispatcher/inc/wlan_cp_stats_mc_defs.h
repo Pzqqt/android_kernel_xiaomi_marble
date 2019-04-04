@@ -173,10 +173,12 @@ struct cca_stats {
 
 /**
  * struct psoc_mc_cp_stats: psoc specific stats
+ * @is_cp_stats_suspended: is cp stats suspended or not
  * @pending: details of pending requests
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
  */
 struct psoc_mc_cp_stats {
+	bool is_cp_stats_suspended;
 	struct pending_stats_requests pending;
 	uint32_t wow_unspecified_wake_up_count;
 };
