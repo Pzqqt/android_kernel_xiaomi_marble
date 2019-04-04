@@ -37,6 +37,9 @@
 #define cfr_debug(format, args...) \
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_CFR, format, ## args)
 
+#define DBR_EVENT_TIMEOUT_IN_MS_CFR 1
+#define DBR_NUM_RESP_PER_EVENT_CFR 1
+
 #define IEEE80211_ADDR_LEN 6
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
