@@ -234,7 +234,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		return -ENOMEM;
 	}
 
-	hal_srng_access_start(soc->hal_soc, (void *)wbm_srng);
+	hal_srng_access_start_unlocked(soc->hal_soc, (void *)wbm_srng);
 
 	/*
 	 * Allocate Tx buffers as many as possible
@@ -276,7 +276,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, true);
 	}
 
-	hal_srng_access_end(soc->hal_soc, wbm_srng);
+	hal_srng_access_end_unlocked(soc->hal_soc, wbm_srng);
 
 	soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
 
