@@ -5985,17 +5985,47 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
 	return status;
 }
 
-#ifdef WLAN_FEATURE_FILS_SK
-QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
-				  struct csr_roam_profile *src_profile)
+void sme_update_session_assoc_ie(mac_handle_t mac_handle,
+				 uint8_t vdev_id,
+				 struct csr_roam_profile *src_profile)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
+
+	if (!session) {
+		sme_err("Session: %d not found", vdev_id);
+		return;
+	}
+
+	qdf_mem_free(session->pAddIEAssoc);
+	session->pAddIEAssoc = NULL;
+	session->nAddIEAssocLength = 0;
+
+	if (!src_profile->nAddIEAssocLength) {
+		sme_debug("Assoc IE len 0");
+		return;
+	}
+
+	session->pAddIEAssoc = qdf_mem_malloc(src_profile->nAddIEAssocLength);
+	if (!session->pAddIEAssoc)
+		return;
+
+	session->nAddIEAssocLength = src_profile->nAddIEAssocLength;
+	qdf_mem_copy(session->pAddIEAssoc, src_profile->pAddIEAssoc,
+		     src_profile->nAddIEAssocLength);
+}
+
+QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
+				       uint8_t vdev_id,
+				       struct csr_roam_profile *src_profile)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
-			&mac->roam.neighborRoamInfo[session_id];
+			&mac->roam.neighborRoamInfo[vdev_id];
 
-	if (session_id >= WLAN_MAX_VDEVS) {
-		sme_err("Invalid sme session id: %d", session_id);
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		sme_err("Invalid sme vdev id: %d", vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -6008,16 +6038,15 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 	    (neighbor_roam_info->neighborRoamState !=
 	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
 		sme_info("Fast roam is disabled or not connected(%d)",
-				neighbor_roam_info->neighborRoamState);
+			 neighbor_roam_info->neighborRoamState);
 		return QDF_STATUS_E_PERM;
 	}
 
-	csr_update_fils_config(mac, session_id, src_profile);
 	if (csr_is_roam_offload_enabled(mac)) {
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			sme_debug("Updating fils config to fw");
-			csr_roam_offload_scan(mac, session_id,
+			csr_roam_offload_scan(mac, vdev_id,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_FILS_PARAMS_CHANGED);
 			sme_release_global_lock(&mac->sme);
@@ -6032,7 +6061,19 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 	return status;
 }
 
-void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
+				  struct csr_roam_profile *src_profile)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	csr_update_fils_config(mac, vdev_id, src_profile);
+
+	return status;
+}
+
+void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  struct csr_roam_profile *profile, uint32_t if_addr)
 {
 	int i;
@@ -6040,9 +6081,9 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
 	QDF_STATUS status;
 	struct hlp_params *params;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
-				&mac->roam.neighborRoamInfo[session_id];
+				&mac->roam.neighborRoamInfo[vdev_id];
 
 	if (!session) {
 		sme_err("session NULL");
@@ -6069,7 +6110,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
 		return;
 	}
 
-	params->vdev_id = session_id;
+	params->vdev_id = vdev_id;
 	params->hlp_ie_len = profile->hlp_ie_len + SIR_IPV4_ADDR_LEN;
 
 	for (i = 0; i < SIR_IPV4_ADDR_LEN; i++)
@@ -6125,7 +6166,7 @@ void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 }
 
 #else
-inline void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
+inline void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  struct csr_roam_profile *profile, uint32_t if_addr)
 {}
 #endif

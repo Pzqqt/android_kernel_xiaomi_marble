@@ -2304,31 +2304,61 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 /**
  * sme_send_hlp_ie_info() - API to send HLP IE info to fw
  * @mac_handle: Opaque handle to the global MAC context
- * @session_id: Session id
+ * @vdev_id: vdev id
  * @profile: CSR Roam profile
  * @if_addr: IP address
  *
  * This API is used to send HLP IE info along with IP address
  * to fw if LFR3 is enabled.
  *
- * Return: QDF_STATUS
+ * Return: None
  */
-void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
+void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  struct csr_roam_profile *profile, uint32_t if_addr);
+
+/**
+ * sme_update_session_assoc_ie() - Updates the assoc IEs to csr_roam_session
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev id
+ * @src_profile: Pointer to Roam profile in HDD
+ *
+ * This API is used to copy the assoc IE sent from user space to
+ * csr_roam_session
+ *
+ * Return: None
+ */
+void sme_update_session_assoc_ie(mac_handle_t mac_handle,
+				 uint8_t vdev_id,
+				 struct csr_roam_profile *src_profile);
+
+/**
+ * sme_send_rso_connect_params() - Updates the assoc IEs to csr_roam_session
+ * @mac_handle: Opaque handle to the global MAC context
+ * @vdev_id: vdev id
+ * @src_profile: CSR Roam profile
+ *
+ * When the user space updates the assoc IEs or FILS auth type or FILS ERP info,
+ * host driver needs to send these updated parameters to firmware via
+ * RSO update command.
+ *
+ * Return: None
+ */
+QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
+				       uint8_t vdev_id,
+				       struct csr_roam_profile *src_profile);
 
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
  * sme_update_fils_config - Update FILS config to CSR roam session
  * @mac_handle: Opaque handle to the global MAC context
- * @session_id: session id
- * @src_profile: Source profile having latest FILS config
+ * @vdev_id: vdev id
+ * @src_profile: Source roam profile having latest FILS config
  *
- * API to update FILS config to roam csr session and update the same
- * to fw if LFR3 is enabled.
+ * API to update FILS config to roam csr session.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 				  struct csr_roam_profile *src_profile);
 
 /**
@@ -2340,7 +2370,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info);
 #else
 static inline
-QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
+QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t vdev_id,
 				  struct csr_roam_profile *src_profile)
 {
 	return QDF_STATUS_SUCCESS;
