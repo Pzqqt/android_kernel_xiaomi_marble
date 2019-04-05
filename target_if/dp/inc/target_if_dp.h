@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,28 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <target_if.h>
 #include <cdp_txrx_ops.h>
+
+/**
+ * struct reorder_q_setup - reorder queue setup params
+ * @pdev: pdev
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @hw_qdesc: hw queue descriptor
+ * @tid: tid number
+ * @queue_no: queue number
+ * @ba_window_size_valid: BA window size validity flag
+ * @ba_window_size: BA window size
+ */
+struct reorder_q_setup {
+	struct cdp_ctrl_objmgr_pdev *pdev;
+	uint8_t vdev_id;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	qdf_dma_addr_t hw_qdesc_paddr;
+	uint8_t tid;
+	uint16_t queue_no;
+	uint8_t ba_window_size_valid;
+	uint16_t ba_window_size;
+};
 
 /**
  * target_if_peer_set_default_routing() - set peer default routing

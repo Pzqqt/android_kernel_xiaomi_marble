@@ -58,6 +58,87 @@ target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_pdev *pdev,
 	}
 }
 
+#ifdef SERIALIZE_QUEUE_SETUP
+static QDF_STATUS
+target_if_rx_reorder_queue_setup(struct scheduler_msg *msg)
+{
+	struct rx_reorder_queue_setup_params param;
+	struct common_wmi_handle *pdev_wmi_handle;
+	struct reorder_q_setup *q_params;
+	struct cdp_ctrl_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	if (!(msg->bodyptr)) {
+		target_if_err("rx_reorder: Invalid message body");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	q_params = msg->bodyptr;
+	pdev = q_params->pdev;
+	pdev_wmi_handle =
+		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
+	if (!pdev_wmi_handle) {
+		target_if_err("pdev wmi handle NULL");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	param.tid = q_params->tid;
+	param.vdev_id = q_params->vdev_id;
+	param.peer_macaddr = q_params->peer_mac;
+	param.hw_qdesc_paddr_lo = q_params->hw_qdesc_paddr & 0xffffffff;
+	param.hw_qdesc_paddr_hi = (uint64_t)q_params->hw_qdesc_paddr >> 32;
+	param.queue_no = q_params->queue_no;
+	param.ba_window_size_valid = q_params->ba_window_size_valid;
+	param.ba_window_size = q_params->ba_window_size;
+
+	status = wmi_unified_peer_rx_reorder_queue_setup_send(pdev_wmi_handle,
+							      &param);
+out:
+	qdf_mem_free(q_params);
+
+	return status;
+}
+
+QDF_STATUS
+target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
+				      uint8_t vdev_id, uint8_t *peer_macaddr,
+				      qdf_dma_addr_t hw_qdesc, int tid,
+				      uint16_t queue_no,
+				      uint8_t ba_window_size_valid,
+				      uint16_t ba_window_size)
+{
+	struct scheduler_msg msg = {0};
+	struct reorder_q_setup *q_params;
+	QDF_STATUS status;
+
+	q_params = qdf_mem_malloc(sizeof(*q_params));
+	if (!q_params)
+		return QDF_STATUS_E_NOMEM;
+
+	q_params->pdev = pdev;
+	q_params->vdev_id = vdev_id;
+	q_params->hw_qdesc_paddr = hw_qdesc;
+	q_params->tid = tid;
+	q_params->queue_no = queue_no;
+	q_params->ba_window_size_valid = ba_window_size_valid;
+	q_params->ba_window_size = ba_window_size;
+	qdf_mem_copy(q_params->peer_mac, peer_macaddr, QDF_MAC_ADDR_SIZE);
+
+	msg.bodyptr = q_params;
+	msg.callback = target_if_rx_reorder_queue_setup;
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_mem_free(q_params);
+
+	return status;
+}
+
+#else
+
 QDF_STATUS
 target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
 				      uint8_t vdev_id, uint8_t *peer_macaddr,
@@ -87,6 +168,7 @@ target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
 	return wmi_unified_peer_rx_reorder_queue_setup_send(pdev_wmi_handle,
 							    &param);
 }
+#endif
 
 QDF_STATUS
 target_if_peer_rx_reorder_queue_remove(struct cdp_ctrl_objmgr_pdev *pdev,
