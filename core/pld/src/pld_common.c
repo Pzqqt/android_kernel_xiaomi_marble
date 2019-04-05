@@ -1797,42 +1797,52 @@ void pld_block_shutdown(struct device *dev, bool status)
 	}
 }
 
-void pld_idle_shutdown(struct device *dev,
-		       void (*shutdown_cb)(struct device *dev))
+int pld_idle_shutdown(struct device *dev,
+		      int (*shutdown_cb)(struct device *dev))
 {
+	int errno = -EINVAL;
 	enum pld_bus_type type;
 
 	if (!shutdown_cb)
-		return;
+		return -EINVAL;
 
 	type = pld_get_bus_type(dev);
 	switch (type) {
+		case PLD_BUS_TYPE_SDIO:
+		case PLD_BUS_TYPE_USB:
 		case PLD_BUS_TYPE_SNOC:
-			shutdown_cb(dev);
-			break;
 		case PLD_BUS_TYPE_PCIE:
+			errno = shutdown_cb(dev);
 			break;
 		default:
+			pr_err("Invalid device type %d\n", type);
 			break;
 	}
+
+	return errno;
 }
 
-void pld_idle_restart(struct device *dev,
-		      void (*restart_cb)(struct device *dev))
+int pld_idle_restart(struct device *dev,
+		     int (*restart_cb)(struct device *dev))
 {
+	int errno = -EINVAL;
 	enum pld_bus_type type;
 
 	if (!restart_cb)
-		return;
+		return -EINVAL;
 
 	type = pld_get_bus_type(dev);
 	switch (type) {
+		case PLD_BUS_TYPE_SDIO:
+		case PLD_BUS_TYPE_USB:
 		case PLD_BUS_TYPE_SNOC:
-			restart_cb(dev);
-			break;
 		case PLD_BUS_TYPE_PCIE:
+			errno = restart_cb(dev);
 			break;
 		default:
+			pr_err("Invalid device type %d\n", type);
 			break;
 	}
+
+	return errno;
 }

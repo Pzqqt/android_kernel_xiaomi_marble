@@ -758,7 +758,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	}
 
 	/* ensure physcial soc is up */
-	ret = hdd_psoc_idle_restart(hdd_ctx);
+	ret = hdd_trigger_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start the wlan_modules");
 		goto close_adapter;
@@ -876,7 +876,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		return errno;
 
 	/* ensure physical soc is up */
-	errno = hdd_psoc_idle_restart(hdd_ctx);
+	errno = hdd_trigger_psoc_idle_restart(hdd_ctx);
 	if (errno)
 		return errno;
 

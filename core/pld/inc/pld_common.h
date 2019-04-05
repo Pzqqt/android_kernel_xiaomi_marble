@@ -335,9 +335,9 @@ struct pld_driver_ops {
 		     void *bdev, void *id);
 	void (*remove)(struct device *dev,
 		       enum pld_bus_type bus_type);
-	void (*idle_shutdown)(struct device *dev,
+	int (*idle_shutdown)(struct device *dev,
 			      enum pld_bus_type bus_type);
-	void (*idle_restart)(struct device *dev,
+	int (*idle_restart)(struct device *dev,
 			     enum pld_bus_type bus_type);
 	void (*shutdown)(struct device *dev,
 			 enum pld_bus_type bus_type);
@@ -649,20 +649,20 @@ bool pld_have_platform_driver_support(struct device *dev);
  * @dev: pointer to struct dev
  * @shutdown_cb: pointer to hdd psoc idle shutdown callback handler
  *
- * Return: none
+ * Return: 0 for success and non-zero negative error code for failure
  */
-void pld_idle_shutdown(struct device *dev,
-		       void (*shutdown_cb)(struct device *dev));
+int pld_idle_shutdown(struct device *dev,
+		      int (*shutdown_cb)(struct device *dev));
 
 /**
  * pld_idle_restart - request idle restart callback from platform driver
  * @dev: pointer to struct dev
  * @restart_cb: pointer to hdd psoc idle restart callback handler
  *
- * Return: none
+ * Return: 0 for success and non-zero negative error code for failure
  */
-void pld_idle_restart(struct device *dev,
-		      void (*restart_cb)(struct device *dev));
+int pld_idle_restart(struct device *dev,
+		     int (*restart_cb)(struct device *dev));
 
 #if defined(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 

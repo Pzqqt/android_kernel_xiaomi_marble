@@ -2858,14 +2858,15 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx);
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_psoc_idle_restart() - restart a previously shutdown idle psoc, if needed
+ * hdd_trigger_psoc_idle_restart() - trigger restart of a previously shutdown
+ *                                   idle psoc, if needed
  * @hdd_ctx: the hdd context which should be restarted
  *
  * This API does nothing if the given psoc is already active.
  *
  * Return: Errno
  */
-int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx);
+int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx);
 
 int hdd_start_adapter(struct hdd_adapter *adapter);
 void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);
@@ -3668,5 +3669,22 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 {
 }
 #endif
+
+/**
+ * hdd_psoc_idle_shutdown - perform idle shutdown after interface inactivity
+ *                          timeout
+ * @device: pointer to struct device
+ *
+ * Return: 0 for success non-zero error code for failure
+ */
+int hdd_psoc_idle_shutdown(struct device *dev);
+
+/**
+ * hdd_psoc_idle_restart - perform idle restart after idle shutdown
+ * @device: pointer to struct device
+ *
+ * Return: 0 for success non-zero error code for failure
+ */
+int hdd_psoc_idle_restart(struct device *dev);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

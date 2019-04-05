@@ -435,7 +435,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 		return ret;
 
 	/* ensure the physical soc is up */
-	ret = hdd_psoc_idle_restart(hdd_ctx);
+	ret = hdd_trigger_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start WLAN modules return");
 		return ret;

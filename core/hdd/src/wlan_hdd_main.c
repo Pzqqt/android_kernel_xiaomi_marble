@@ -2181,7 +2181,7 @@ static int __hdd_mon_open(struct net_device *dev)
 	hdd_mon_mode_ether_setup(dev);
 
 	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
-		ret = hdd_psoc_idle_restart(hdd_ctx);
+		ret = hdd_trigger_psoc_idle_restart(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to start WLAN modules return");
 			return ret;
@@ -3164,7 +3164,7 @@ static int __hdd_open(struct net_device *dev)
 		return -EIO;
 	}
 
-	ret = hdd_psoc_idle_restart(hdd_ctx);
+	ret = hdd_trigger_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start WLAN modules return");
 		return ret;
@@ -9162,7 +9162,7 @@ enum hdd_block_shutdown {
 };
 
 /**
- * hdd_psoc_idle_shutdown() - perform an idle shutdown on the given psoc
+ * __hdd_psoc_idle_shutdown() - perform an idle shutdown on the given psoc
  * @hdd_ctx: the hdd context which should be shutdown
  *
  * When no interfaces are "up" on a psoc, an idle shutdown timer is started.
@@ -9172,7 +9172,7 @@ enum hdd_block_shutdown {
  *
  * Return: None
  */
-static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
+static int __hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 {
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
@@ -9197,13 +9197,41 @@ static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 
 exit:
 	hdd_exit();
+	return errno;
 }
 
-int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
+int hdd_psoc_idle_shutdown(struct device *dev)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	return __hdd_psoc_idle_shutdown(hdd_ctx);
+}
+
+static int __hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
+{
+	return hdd_wlan_start_modules(hdd_ctx, false);
+}
+
+int hdd_psoc_idle_restart(struct device *dev)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	return __hdd_psoc_idle_restart(hdd_ctx);
+}
+
+int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
 {
 	QDF_BUG(rtnl_is_locked());
 
-	return hdd_wlan_start_modules(hdd_ctx, false);
+	if (hdd_ctx->driver_status == DRIVER_MODULES_ENABLED) {
+		hdd_psoc_idle_timer_stop(hdd_ctx);
+		hdd_info("Driver modules already Enabled");
+		return 0;
+	}
+
+	pld_idle_restart(hdd_ctx->parent_dev, hdd_psoc_idle_restart);
+
+	return 0;
 }
 
 /**
@@ -9219,8 +9247,9 @@ static void hdd_psoc_idle_timeout_callback(void *priv)
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	hdd_debug("Psoc idle timeout elapsed; starting psoc shutdown");
-	hdd_psoc_idle_shutdown(hdd_ctx);
+	hdd_info("Psoc idle timeout elapsed; starting psoc shutdown");
+
+	pld_idle_shutdown(hdd_ctx->parent_dev, hdd_psoc_idle_shutdown);
 }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
