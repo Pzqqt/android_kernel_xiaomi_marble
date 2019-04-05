@@ -129,7 +129,7 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 			struct cdp_tx_completion_ppdu_user *ppdu)
 {
 	uint32_t ratekbps = 0;
-	uint32_t ppdu_tx_rate = 0;
+	uint64_t ppdu_tx_rate = 0;
 	uint32_t rix;
 
 	if (!peer || !ppdu)

@@ -418,8 +418,8 @@ struct cdp_tx_stats {
 	uint32_t mcast_last_tx_rate;
 	uint32_t mcast_last_tx_rate_mcs;
 	uint32_t last_per;
-	uint32_t rnd_avg_tx_rate;
-	uint32_t avg_tx_rate;
+	uint64_t rnd_avg_tx_rate;
+	uint64_t avg_tx_rate;
 	uint32_t last_ack_rssi;
 	uint32_t tx_bytes_success_last;
 	uint32_t tx_data_success_last;

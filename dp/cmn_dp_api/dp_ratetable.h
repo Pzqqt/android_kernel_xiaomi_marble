@@ -65,14 +65,14 @@ enum CMN_BW_TYPES {
 #define DUMMY_MARKER	  0
 #define DP_ATH_RATE_IN(c)  (DP_ATH_EP_MUL((c), DP_ATH_RATE_EP_MULTIPLIER))
 
-static inline int dp_ath_rate_lpf(int _d, int _e)
+static inline int dp_ath_rate_lpf(uint64_t _d, int _e)
 {
 	_e = DP_ATH_RATE_IN((_e));
 	return (((_d) != DUMMY_MARKER) ? ((((_d) << 3) + (_e) - (_d)) >> 3) :
 			(_e));
 }
 
-static inline int dp_ath_rate_out(int _i)
+static inline int dp_ath_rate_out(uint64_t _i)
 {
 	int _mul = DP_ATH_RATE_EP_MULTIPLIER;
 
