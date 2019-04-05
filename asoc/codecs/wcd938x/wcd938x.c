@@ -1355,6 +1355,13 @@ int wcd938x_micbias_control(struct snd_soc_component *component,
 			__func__, micb_index);
 		return -EINVAL;
 	}
+
+	if (NULL == wcd938x) {
+		dev_err(component->dev,
+			"%s: wcd938x private data is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	switch (micb_num) {
 	case MIC_BIAS_1:
 		micb_reg = WCD938X_ANA_MICB1;
