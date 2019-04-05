@@ -1753,55 +1753,6 @@ static int wcd938x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int wcd938x_tx_hdr_get(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int hdr = ((struct soc_multi_mixer_control *)
-			kcontrol->private_value)->shift;
-
-	ucontrol->value.integer.value[0] = wcd938x->hdr_en[hdr];
-
-	return 0;
-}
-
-static int wcd938x_tx_hdr_put(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component =
-					snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int hdr = ((struct soc_multi_mixer_control *)
-			kcontrol->private_value)->shift;
-	int val = ucontrol->value.integer.value[0];
-	u8 mask = 0;
-
-	wcd938x->hdr_en[hdr] = val;
-
-	switch(val) {
-	case TX_HDR12:
-		mask = (1 << 4);
-		val = (val << 4);
-		break;
-	case TX_HDR34:
-		mask = (1 << 3);
-		val = (val << 3);
-		break;
-	default:
-		dev_err(component->dev, "%s: unknown HDR input: %d\n",
-			__func__, hdr);
-		break;
-	}
-
-	if (mask)
-		snd_soc_component_update_bits(component,
-					WCD938X_TX_NEW_AMIC_MUX_CFG, mask, val);
-
-	return 0;
-}
-
 static const char * const tx_mode_mux_text[] = {
 	"ADC_INVALID", "ADC_HIFI", "ADC_LO_HIF", "ADC_NORMAL", "ADC_LP",
 	"ADC_ULP1", "ADC_ULP2",
@@ -1837,12 +1788,6 @@ static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
 		wcd938x_get_compander, wcd938x_set_compander),
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
 		wcd938x_get_compander, wcd938x_set_compander),
-
-	SOC_SINGLE_EXT("TX HDR12", SND_SOC_NOPM, TX_HDR12, 1, 0,
-		wcd938x_tx_hdr_get, wcd938x_tx_hdr_put),
-
-	SOC_SINGLE_EXT("TX HDR34", SND_SOC_NOPM, TX_HDR34, 1, 0,
-		wcd938x_tx_hdr_get, wcd938x_tx_hdr_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD938X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD938X_HPH_R_EN, 0, 20, 1, line_gain),
@@ -1957,6 +1902,28 @@ static const char * const rdac3_mux_text[] = {
 	"RX1", "RX3"
 };
 
+static const char * const hdr12_mux_text[] = {
+	"NO_HDR12", "HDR12"
+};
+
+static const struct soc_enum hdr12_enum =
+	SOC_ENUM_SINGLE(WCD938X_TX_NEW_AMIC_MUX_CFG, 4,
+		ARRAY_SIZE(hdr12_mux_text), hdr12_mux_text);
+
+static const struct snd_kcontrol_new tx_hdr12_mux =
+	SOC_DAPM_ENUM("HDR12 MUX Mux", hdr12_enum);
+
+static const char * const hdr34_mux_text[] = {
+	"NO_HDR34", "HDR34"
+};
+
+static const struct soc_enum hdr34_enum =
+	SOC_ENUM_SINGLE(WCD938X_TX_NEW_AMIC_MUX_CFG, 3,
+		ARRAY_SIZE(hdr34_mux_text), hdr34_mux_text);
+
+static const struct snd_kcontrol_new tx_hdr34_mux =
+	SOC_DAPM_ENUM("HDR34 MUX Mux", hdr34_enum);
+
 static const struct soc_enum rdac3_enum =
 	SOC_ENUM_SINGLE(WCD938X_DIGITAL_CDC_EAR_PATH_CTL, 0,
 		ARRAY_SIZE(rdac3_mux_text), rdac3_mux_text);
@@ -2035,6 +2002,10 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 				&tx_adc3_mux),
 	SND_SOC_DAPM_MUX("ADC4 MUX", SND_SOC_NOPM, 0, 0,
 				&tx_adc4_mux),
+	SND_SOC_DAPM_MUX("HDR12 MUX", SND_SOC_NOPM, 0, 0,
+				&tx_hdr12_mux),
+	SND_SOC_DAPM_MUX("HDR34 MUX", SND_SOC_NOPM, 0, 0,
+				&tx_hdr34_mux),
 	/*tx mixers*/
 	SND_SOC_DAPM_MIXER_E("ADC1_MIXER", SND_SOC_NOPM, 0, 0,
 				adc1_switch, ARRAY_SIZE(adc1_switch),
@@ -2193,14 +2164,18 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"ADC2_OUTPUT", NULL, "ADC2_MIXER"},
 	{"ADC2_MIXER", "Switch", "ADC2 REQ"},
 	{"ADC2 REQ", NULL, "ADC2"},
-	{"ADC2", NULL, "ADC2 MUX"},
+	{"ADC2", NULL, "HDR12 MUX"},
+	{"HDR12 MUX", "NO_HDR12", "ADC2 MUX"},
+	{"HDR12 MUX", "HDR12", "AMIC1"},
 	{"ADC2 MUX", "INP3", "AMIC3"},
 	{"ADC2 MUX", "INP2", "AMIC2"},
 
 	{"ADC3_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_MIXER", "Switch", "ADC3 REQ"},
 	{"ADC3 REQ", NULL, "ADC3"},
-	{"ADC3", NULL, "ADC3 MUX"},
+	{"ADC3", NULL, "HDR34 MUX"},
+	{"HDR34 MUX", "NO_HDR34", "ADC3 MUX"},
+	{"HDR34 MUX", "HDR34", "AMIC5"},
 	{"ADC3 MUX", "INP4", "AMIC4"},
 	{"ADC3 MUX", "INP6", "AMIC6"},
 
