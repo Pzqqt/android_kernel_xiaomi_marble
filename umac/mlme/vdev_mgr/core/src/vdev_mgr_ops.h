@@ -145,14 +145,12 @@ QDF_STATUS vdev_mgr_sifs_trigger_send(
  * vdev_mgr_set_custom_aggr_size_cmd_send() – MLME API to send custom aggr
  * size
  * @mlme_obj: pointer to vdev_mlme_obj
- * @val: aggregate size value
  * @is_amsdu: boolean to indicate value corresponds to amsdu/ampdu
  *
  * Return: QDF_STATUS - Success or Failure
  */
 QDF_STATUS vdev_mgr_set_custom_aggr_size_send(
-			struct vdev_mlme_obj *mlme_obj,
-			uint32_t val, bool is_amsdu);
+			struct vdev_mlme_obj *mlme_obj, bool is_amsdu);
 
 /**
  * vdev_mgr_onfig_ratemask_cmd_send() – MLME API to send ratemask

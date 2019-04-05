@@ -3041,17 +3041,19 @@ struct set_custom_aggr_size_params {
 };
 #endif
 
+#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
- * enum wmi_host_custom_aggr_type_t: custon aggregate type
+ * enum wmi_host_custom_aggr_type: custon aggregate type
  * @WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU: A-MPDU aggregation
  * @WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU: A-MSDU aggregation
  * @WMI_HOST_CUSTOM_AGGR_TYPE_MAX: Max type
  */
-enum wmi_host_custom_aggr_type_t {
+enum wmi_host_custom_aggr_type {
 	WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU = 0,
 	WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU = 1,
 	WMI_HOST_CUSTOM_AGGR_TYPE_MAX,
 };
+#endif
 
 /*
  * msduq_update_params - MSDUQ update param structure

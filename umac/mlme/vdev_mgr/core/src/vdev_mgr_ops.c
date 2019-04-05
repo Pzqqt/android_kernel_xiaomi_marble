@@ -481,3 +481,47 @@ QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(vdev_mgr_multiple_restart_send);
+
+static QDF_STATUS vdev_mgr_set_custom_aggr_size_param_update(
+				struct vdev_mlme_obj *mlme_obj,
+				struct set_custom_aggr_size_params *param,
+				bool is_amsdu)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = mlme_obj->vdev;
+	if (!vdev) {
+		mlme_err("VDEV is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->aggr_type = is_amsdu ? WLAN_MLME_CUSTOM_AGGR_TYPE_AMSDU
+				    : WLAN_MLME_CUSTOM_AGGR_TYPE_AMPDU;
+	/*
+	 * We are only setting TX params, therefore
+	 * we are disabling rx_aggr_size
+	 */
+	param->rx_aggr_size_disable = true;
+	param->tx_aggr_size = is_amsdu ? mlme_obj->mgmt.generic.amsdu
+				       : mlme_obj->mgmt.generic.ampdu;
+	param->vdev_id = wlan_vdev_get_id(vdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS vdev_mgr_set_custom_aggr_size_send(
+				struct vdev_mlme_obj *vdev_mlme,
+				bool is_amsdu)
+{
+	QDF_STATUS status;
+	struct set_custom_aggr_size_params param = {0};
+
+	status = vdev_mgr_set_custom_aggr_size_param_update(vdev_mlme,
+							    &param, is_amsdu);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Param Update Error: %d", status);
+		return status;
+	}
+
+	return tgt_vdev_mgr_set_custom_aggr_size_send(vdev_mlme, &param);
+}

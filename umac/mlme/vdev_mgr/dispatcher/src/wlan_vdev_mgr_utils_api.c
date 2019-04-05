@@ -201,10 +201,16 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		mlme_cfg.value = (mlme_cfg.value << 8) + 0xFF;
 		is_wmi_cmd = 1;
 		break;
+	case WLAN_MLME_CFG_AMPDU_SIZE:
+		mlme_mgmt->generic.ampdu = mlme_cfg.value;
+		break;
 	case WLAN_MLME_CFG_AMSDU:
 		mlme_mgmt->generic.amsdu = mlme_cfg.value;
 		mlme_cfg.value = (mlme_cfg.value << 8) + 0xFF;
 		is_wmi_cmd = 1;
+		break;
+	case WLAN_MLME_CFG_AMSDU_SIZE:
+		mlme_mgmt->generic.amsdu = mlme_cfg.value;
 		break;
 	case WLAN_MLME_CFG_BMISS_FIRST_BCNT:
 		inactivity_params->bmiss_first_bcnt = mlme_cfg.value;

@@ -95,6 +95,18 @@ enum wlan_mlme_host_start_event_param {
 };
 
 /**
+ * enum wlan_mlme_custom_aggr_type: custon aggregate type
+ * @WLAN_MLME_CUSTOM_AGGR_TYPE_AMPDU: A-MPDU aggregation
+ * @WLAN_MLME_CUSTOM_AGGR_TYPE_AMSDU: A-MSDU aggregation
+ * @WLAN_MLME_CUSTOM_AGGR_TYPE_MAX: Max type
+ */
+enum wlan_mlme_custom_aggr_type {
+	WLAN_MLME_CUSTOM_AGGR_TYPE_AMPDU = 0,
+	WLAN_MLME_CUSTOM_AGGR_TYPE_AMSDU = 1,
+	WLAN_MLME_CUSTOM_AGGR_TYPE_MAX,
+};
+
+/**
  * struct sta_ps_params - sta ps cmd parameter
  * @vdev_id: vdev id
  * @param_id: sta ps parameter
