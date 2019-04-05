@@ -59,9 +59,6 @@ static void *hal_rx_link_desc_msdu0_ptr_generic(void *link_desc)
  *
  * Return: none
  */
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 static inline void hal_tx_comp_get_status_generic(void *desc,
 		void *ts1, void *hal)
 {
@@ -117,25 +114,6 @@ static inline void hal_tx_comp_get_status_generic(void *desc,
 	ts->tsf = HAL_TX_DESC_GET(desc, UNIFIED_WBM_RELEASE_RING_6,
 			TX_RATE_STATS_INFO_TX_RATE_STATS);
 }
-#else
-static inline void hal_tx_comp_get_status_generic(void *desc,
-		struct hal_tx_completion_status *ts, void *hal)
-{
-
-	ts->ppdu_id = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_3,
-			TQM_STATUS_NUMBER);
-	ts->ack_frame_rssi = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			ACK_FRAME_RSSI);
-	ts->first_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, FIRST_MSDU);
-	ts->last_msdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4, LAST_MSDU);
-	ts->msdu_part_of_amsdu = HAL_TX_DESC_GET(desc, WBM_RELEASE_RING_4,
-			MSDU_PART_OF_AMSDU);
-
-	ts->release_src = hal_tx_comp_get_buffer_source(desc);
-	ts->status = hal_tx_comp_get_release_reason(desc, hal);
-}
-#endif
-
 
 /**
  * hal_tx_desc_set_buf_addr - Fill Buffer Address information in Tx Descriptor
@@ -1541,14 +1519,7 @@ static inline void hal_srng_src_hw_init_generic(void *halsoc,
 		srng->entry_size * srng->num_entries);
 	SRNG_SRC_REG_WRITE(srng, BASE_MSB, reg_val);
 
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, ENTRY_SIZE), srng->entry_size);
-#else
-	reg_val = SRNG_SM(SRNG_SRC_FLD(ID, RING_ID), srng->ring_id) |
-		SRNG_SM(SRNG_SRC_FLD(ID, ENTRY_SIZE), srng->entry_size);
-#endif
 	SRNG_SRC_REG_WRITE(srng, ID, reg_val);
 
 	/**

@@ -619,21 +619,13 @@ struct rx_pkt_hdr_tlv {
  * 2) TLV's don't span across 128 byte lines
  * 3) Rx Buffer is nicely aligned on the 128 byte boundary
  */
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION >= 96)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define RX_PADDING0_BYTES	4
-#endif
 #define RX_PADDING1_BYTES	16
 struct rx_pkt_tlvs {
 	struct rx_msdu_end_tlv   msdu_end_tlv;	/*  72 bytes */
 	struct rx_attention_tlv  attn_tlv;	/*  16 bytes */
 	struct rx_msdu_start_tlv msdu_start_tlv;/*  40 bytes */
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION >= 96)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 	uint8_t rx_padding0[RX_PADDING0_BYTES];	/*   4 bytes */
-#endif
 	struct rx_mpdu_start_tlv mpdu_start_tlv;/*  96 bytes */
 	struct rx_mpdu_end_tlv   mpdu_end_tlv;	/*  12 bytes */
 	uint8_t rx_padding1[RX_PADDING1_BYTES];	/*  16 bytes */
@@ -951,21 +943,11 @@ hal_rx_mpdu_peer_meta_data_set(uint8_t *buf, uint32_t peer_mdata)
 	HAL_RX_MPDU_PEER_META_DATA_SET(mpdu_info, peer_mdata);
 }
 
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
 		RX_MSDU_END_5_L3_HEADER_PADDING_OFFSET)),	\
 		RX_MSDU_END_5_L3_HEADER_PADDING_MASK,		\
 		RX_MSDU_END_5_L3_HEADER_PADDING_LSB))
-#else
-#define HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,		\
-		RX_MSDU_END_9_L3_HEADER_PADDING_OFFSET)),	\
-		RX_MSDU_END_9_L3_HEADER_PADDING_MASK,		\
-		RX_MSDU_END_9_L3_HEADER_PADDING_LSB))
-#endif
 
 /**
 * LRO information needed from the TLVs
@@ -1297,21 +1279,11 @@ hal_rx_mpdu_start_sw_peer_id_get(uint8_t *buf)
 	return sw_peer_id;
 }
 
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define HAL_RX_MSDU_START_SGI_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
 		RX_MSDU_START_5_SGI_OFFSET)),		\
 		RX_MSDU_START_5_SGI_MASK,		\
 		RX_MSDU_START_5_SGI_LSB))
-#else
-#define HAL_RX_MSDU_START_SGI_GET(_rx_msdu_start)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
-		RX_MSDU_START_6_SGI_OFFSET)),		\
-		RX_MSDU_START_6_SGI_MASK,		\
-		RX_MSDU_START_6_SGI_LSB))
-#endif
 /**
  * hal_rx_msdu_start_msdu_sgi_get(): API to get the Short Gaurd
  * Interval from rx_msdu_start TLV
@@ -1332,21 +1304,11 @@ hal_rx_msdu_start_sgi_get(uint8_t *buf)
 	return sgi;
 }
 
-#if defined(WCSS_VERSION) && \
-	((defined(CONFIG_WIN) && (WCSS_VERSION > 81)) || \
-	 (defined(CONFIG_MCL) && (WCSS_VERSION >= 72)))
 #define HAL_RX_MSDU_START_RATE_MCS_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
 		RX_MSDU_START_5_RATE_MCS_OFFSET)),	\
 		RX_MSDU_START_5_RATE_MCS_MASK,		\
 		RX_MSDU_START_5_RATE_MCS_LSB))
-#else
-#define HAL_RX_MSDU_START_RATE_MCS_GET(_rx_msdu_start)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR((_rx_msdu_start),\
-		RX_MSDU_START_6_RATE_MCS_OFFSET)),	\
-		RX_MSDU_START_6_RATE_MCS_MASK,		\
-		RX_MSDU_START_6_RATE_MCS_LSB))
-#endif
 /**
  * hal_rx_msdu_start_msdu_rate_mcs_get(): API to get the MCS rate
  * from rx_msdu_start TLV
