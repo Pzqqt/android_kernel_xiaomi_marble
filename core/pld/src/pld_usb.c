@@ -197,6 +197,43 @@ static void pld_usb_shutdown(struct usb_interface *interface)
 		pld_context->ops->shutdown(&pdev->dev, PLD_BUS_TYPE_USB);
 }
 
+/**
+ * pld_usb_uevent() - update wlan driver status callback function
+ * @interface: USB interface
+ * @status driver uevent status
+ *
+ * This function will be called when platform driver wants to update wlan
+ * driver's status.
+ *
+ * Return: void
+ */
+static void pld_usb_uevent(struct usb_interface *interface, uint32_t status)
+{
+	struct pld_context *pld_context;
+	struct pld_uevent_data data;
+	struct usb_device *pdev = interface_to_usbdev(interface);
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return;
+
+	switch (status) {
+	case CNSS_RECOVERY:
+		data.uevent = PLD_FW_RECOVERY_START;
+		break;
+	case CNSS_FW_DOWN:
+		data.uevent = PLD_FW_DOWN;
+		break;
+	default:
+		goto out;
+	}
+
+	if (pld_context->ops->uevent)
+		pld_context->ops->uevent(&pdev->dev, &data);
+
+out:
+	return;
+}
 struct cnss_usb_wlan_driver pld_usb_ops = {
 	.name = "pld_usb_cnss",
 	.id_table = pld_usb_id_table,
@@ -204,6 +241,7 @@ struct cnss_usb_wlan_driver pld_usb_ops = {
 	.remove = pld_usb_remove,
 	.shutdown = pld_usb_shutdown,
 	.reinit = pld_usb_reinit,
+	.update_status  = pld_usb_uevent,
 #ifdef CONFIG_PM
 	.suspend = pld_usb_suspend,
 	.resume = pld_usb_resume,
