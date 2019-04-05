@@ -1690,6 +1690,7 @@ int pld_collect_rddm(struct device *dev)
 		return pld_pcie_collect_rddm(dev);
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
 		return 0;
 	default:
 		pr_err("Invalid device type %d\n", type);
