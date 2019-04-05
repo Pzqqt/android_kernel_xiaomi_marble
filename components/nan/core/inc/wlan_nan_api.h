@@ -226,7 +226,7 @@ static inline QDF_STATUS
 wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 			     struct policy_mgr_vdev_entry_info *conn_info)
 {
-	return QDF_STATUS_SUCCESS;
+	return QDF_STATUS_E_FAILURE;
 }
 
 static inline uint8_t wlan_nan_get_disc_5g_ch(struct wlan_objmgr_psoc *psoc)

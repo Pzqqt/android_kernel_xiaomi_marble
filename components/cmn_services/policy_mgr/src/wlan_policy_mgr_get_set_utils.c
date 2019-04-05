@@ -1609,7 +1609,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t conn_index;
-	struct policy_mgr_vdev_entry_info conn_table_entry;
+	struct policy_mgr_vdev_entry_info conn_table_entry = {0};
 	enum policy_mgr_chain_mode chain_mask = POLICY_MGR_ONE_ONE;
 	uint8_t nss_2g = 0, nss_5g = 0;
 	enum policy_mgr_con_mode mode;
