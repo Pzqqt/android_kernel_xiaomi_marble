@@ -10950,6 +10950,9 @@ typedef struct {
 /* update peer flag for M4 sent */
 #define  WMI_PEER_PARAM_M4_SENT                         0x21
 
+/* Per peer MISC stats enable or disable */
+#define  WMI_PEER_PARAM_MISC_STATS_ENABLE               0x22
+
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
 #define WMI_PEER_MIMO_PS_STATIC                        0x1
