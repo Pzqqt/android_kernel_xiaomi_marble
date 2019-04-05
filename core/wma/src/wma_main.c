@@ -2033,7 +2033,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"nwType %d\n"
 			"tx_streams %d\n"
 			"rx_streams %d\n"
-			"chain_mask %d\n",
+			"chain_mask %d",
 			vdev_id,
 			stats.pno_match_wake_up_count,
 			stats.pno_complete_wake_up_count,
@@ -2115,7 +2115,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"\tipv6_mcast_ns %u\n"
 			"\tipv6_mcast_na %u\n"
 			"\toem_response %u\n"
-			"conn_state %d\n"
 			"dtimPeriod %d\n"
 			"chanmode %d\n"
 			"vht_capable %d\n"
@@ -2131,9 +2130,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			"nwType %d\n"
 			"tx_streams %d\n"
 			"rx_streams %d\n"
-			"chain_mask %d\n"
-			"nss_2g %d\n"
-			"nss_5g %d",
+			"chain_mask %d",
 			vdev_id,
 			stats->pno_match,
 			stats->pno_complete,
@@ -2150,7 +2147,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			stats->ipv6_mcast_ns,
 			stats->ipv6_mcast_na,
 			stats->oem_response,
-			iface->conn_state,
 			iface->dtimPeriod,
 			iface->chanmode,
 			iface->vht_capable,
@@ -2166,9 +2162,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 			iface->nwType,
 			iface->tx_streams,
 			iface->rx_streams,
-			iface->chain_mask,
-			iface->nss_2g,
-			iface->nss_5g);
+			iface->chain_mask);
 	}
 
 	*size -= len;
