@@ -561,11 +561,18 @@ static QDF_STATUS hdd_apply_cfg_ini(struct hdd_context *hdd_ctx,
 static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
 {
 	uint32_t listen_interval = 0;
+	char *power_usage = NULL;
 
-	if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Min") == 0)
+	power_usage = ucfg_mlme_get_power_usage(hdd_ctx->psoc);
+	if (!power_usage) {
+		hdd_err("invalid power usage");
+		return;
+	}
+
+	if (strcmp(power_usage, "Min") == 0)
 		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
 						       &listen_interval);
-	else if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Max") == 0)
+	else if (strcmp(power_usage, "Max") == 0)
 		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
 						       &listen_interval);
 	/*
