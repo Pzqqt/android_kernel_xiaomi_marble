@@ -146,6 +146,18 @@ typedef bool (*wlan_serialization_apply_rules_cb)(
 		uint8_t comp_id);
 
 /**
+ * wlan_ser_umac_cmd_cb() - callback to validate umac_cmd
+ * @umac_cmd: umac data associated with the serialization cmd
+ *
+ * This callback can be called at run time for a command in active queue to
+ * fetch the required information from the umac cmd data stored in serialization
+ * command buffer.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
+
+/**
  * enum wlan_umac_cmd_id - Command Type
  * @WLAN_SER_CMD_SCAN:     Scan command
  */
@@ -565,7 +577,7 @@ enum wlan_serialization_cmd_type
 wlan_serialization_get_vdev_active_cmd_type(struct wlan_objmgr_vdev *vdev);
 
 /**
- * wlan_ser_get_cmd_activation_status - Return active command status
+ * wlan_ser_get_cmd_activation_status() - Return active command status
  * @vdev: vdev object
  *
  * This API fetches active command state in the vdev active queue
@@ -576,4 +588,20 @@ wlan_serialization_get_vdev_active_cmd_type(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS
 wlan_ser_get_cmd_activation_status(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * wlan_ser_validate_umac_cmd() - validate umac cmd data
+ * @vdev: objmgr vdev pointer
+ * @cmd_type: cmd type to match
+ * @umac_cmd_cb: Callback to be called to validate the data
+ *
+ * This API returns the validation status of the umac cmd cb.
+ * The umac_cmd_cb callback is called with serialization lock held, and hence
+ * only atomic operations are allowed in the callback.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS
+wlan_ser_validate_umac_cmd(struct wlan_objmgr_vdev *vdev,
+			   enum wlan_serialization_cmd_type cmd_type,
+			   wlan_ser_umac_cmd_cb umac_cmd_cb);
 #endif
