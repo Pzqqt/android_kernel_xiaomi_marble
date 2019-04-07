@@ -140,6 +140,10 @@ enum {
 	SLIM_TX_MAX,
 };
 
+enum {
+	AFE_LOOPBACK_TX_IDX = 0,
+	AFE_LOOPBACK_TX_IDX_MAX,
+};
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
 	int usbc_en2_gpio; /* used by gpio driver API */
@@ -370,6 +374,10 @@ static struct dev_config cdc_dma_tx_cfg[] = {
 	[VA_CDC_DMA_TX_2] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8},
 };
 
+static struct dev_config afe_loopback_tx_cfg[] = {
+	[AFE_LOOPBACK_TX_IDX] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+};
+
 static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE",
 					  "S32_LE"};
 static char const *ch_text[] = {"Two", "Three", "Four", "Five",
@@ -420,6 +428,7 @@ static char const *bt_sample_rate_rx_text[] = {"KHZ_8", "KHZ_16",
 static char const *bt_sample_rate_tx_text[] = {"KHZ_8", "KHZ_16",
 					"KHZ_44P1", "KHZ_48",
 					"KHZ_88P2", "KHZ_96"};
+static const char *const afe_loopback_tx_ch_text[] = {"One", "Two"};
 
 static SOC_ENUM_SINGLE_EXT_DECL(usb_rx_sample_rate, usb_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_tx_sample_rate, usb_sample_rate_text);
@@ -526,6 +535,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(ext_disp_rx_sample_rate,
 static SOC_ENUM_SINGLE_EXT_DECL(bt_sample_rate, bt_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(bt_sample_rate_rx, bt_sample_rate_rx_text);
 static SOC_ENUM_SINGLE_EXT_DECL(bt_sample_rate_tx, bt_sample_rate_tx_text);
+static SOC_ENUM_SINGLE_EXT_DECL(afe_loopback_tx_chs, afe_loopback_tx_ch_text);
 
 static bool is_initial_boot;
 static bool codec_reg_done;
@@ -807,6 +817,27 @@ static int usb_audio_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
 		__func__, ucontrol->value.integer.value[0],
 		usb_tx_cfg.sample_rate);
 	return 0;
+}
+static int afe_loopback_tx_ch_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: afe_loopback_tx_ch  = %d\n", __func__,
+		afe_loopback_tx_cfg[0].channels);
+	ucontrol->value.enumerated.item[0] =
+		afe_loopback_tx_cfg[0].channels - 1;
+
+	return 0;
+}
+
+static int afe_loopback_tx_ch_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	afe_loopback_tx_cfg[0].channels =
+			ucontrol->value.enumerated.item[0] + 1;
+	pr_debug("%s: afe_loopback_tx_ch  = %d\n", __func__,
+			afe_loopback_tx_cfg[0].channels);
+
+	return 1;
 }
 
 static int usb_audio_rx_format_get(struct snd_kcontrol *kcontrol,
@@ -3299,6 +3330,8 @@ static const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("BT SampleRate TX", bt_sample_rate_tx,
 			msm_bt_sample_rate_tx_get,
 			msm_bt_sample_rate_tx_put),
+	SOC_ENUM_EXT("AFE_LOOPBACK_TX Channels", afe_loopback_tx_chs,
+			afe_loopback_tx_ch_get, afe_loopback_tx_ch_put),
 };
 
 static const struct snd_kcontrol_new msm_snd_controls[] = {
@@ -3339,7 +3372,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 					SNDRV_PCM_HW_PARAM_RATE);
 	struct snd_interval *channels = hw_param_interval(params,
 					SNDRV_PCM_HW_PARAM_CHANNELS);
-	int idx, rc = 0;
+	int idx = 0, rc = 0;
 
 	pr_debug("%s: format = %d, rate = %d\n",
 		  __func__, params_format(params), params_rate(params));
@@ -3576,6 +3609,14 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max = slim_tx_cfg[SLIM_TX_7].sample_rate;
 		channels->min = channels->max =
 			slim_tx_cfg[SLIM_TX_7].channels;
+		break;
+
+	case MSM_BACKEND_DAI_AFE_LOOPBACK_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				afe_loopback_tx_cfg[idx].bit_format);
+		rate->min = rate->max = afe_loopback_tx_cfg[idx].sample_rate;
+		channels->min = channels->max =
+				afe_loopback_tx_cfg[idx].channels;
 		break;
 
 	default:
@@ -5475,6 +5516,23 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_afe_rxtx_lb_be_dai_link[] = {
+	{
+		.name = LPASS_BE_AFE_LOOPBACK_TX,
+		.stream_name = "AFE Loopback Capture",
+		.cpu_dai_name = "msm-dai-q6-dev.24577",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_AFE_LOOPBACK_TX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+	},
+};
+
 static struct snd_soc_dai_link msm_kona_dai_links[
 			ARRAY_SIZE(msm_common_dai_links) +
 			ARRAY_SIZE(msm_bolero_fe_dai_links) +
@@ -5486,7 +5544,8 @@ static struct snd_soc_dai_link msm_kona_dai_links[
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(ext_disp_be_dai_link) +
-			ARRAY_SIZE(msm_wcn_be_dai_links)];
+			ARRAY_SIZE(msm_wcn_be_dai_links) +
+			ARRAY_SIZE(msm_afe_rxtx_lb_be_dai_link)];
 
 static int msm_populate_dai_link_component_of_node(
 					struct snd_soc_card *card)
@@ -5792,6 +5851,15 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			total_links += ARRAY_SIZE(msm_wcn_be_dai_links);
 		}
 
+		rc = of_property_read_u32(dev->of_node, "qcom,afe-rxtx-lb",
+				&val);
+		if (!rc && val) {
+			memcpy(msm_kona_dai_links + total_links,
+				msm_afe_rxtx_lb_be_dai_link,
+				sizeof(msm_afe_rxtx_lb_be_dai_link));
+			total_links +=
+				ARRAY_SIZE(msm_afe_rxtx_lb_be_dai_link);
+		}
 		dailink = msm_kona_dai_links;
 	} else if(!strcmp(match->data, "stub_codec")) {
 		card = &snd_soc_card_stub_msm;
