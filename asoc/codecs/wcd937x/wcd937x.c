@@ -1271,12 +1271,17 @@ static int wcd937x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 
 	struct snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
+	struct wcd937x_priv *wcd937x =
+			snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_clk_count++;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
 		snd_soc_component_update_bits(component,
@@ -1300,6 +1305,8 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
+	struct wcd937x_priv *wcd937x =
+			snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1328,8 +1335,15 @@ static int wcd937x_enable_req(struct snd_soc_dapm_widget *w,
 				WCD937X_ANA_TX_CH2, 0x80, 0x00);
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_DIG_CLK_CTL, 0x10, 0x00);
-		snd_soc_component_update_bits(component,
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_clk_count--;
+		if (wcd937x->ana_clk_count <= 0) {
+			snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
+			wcd937x->ana_clk_count = 0;
+		}
+
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x00);
 		break;
@@ -1393,6 +1407,9 @@ int wcd937x_micbias_control(struct snd_soc_component *component,
 		break;
 	case MICB_ENABLE:
 		wcd937x->micb_ref[micb_index]++;
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_clk_count++;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		if (wcd937x->micb_ref[micb_index] == 1) {
 			snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_DIG_CLK_CTL, 0xE0, 0xE0);
@@ -1417,6 +1434,9 @@ int wcd937x_micbias_control(struct snd_soc_component *component,
 				&wcd937x->mbhc->wcd_mbhc);
 		break;
 	case MICB_DISABLE:
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		wcd937x->ana_clk_count--;
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		if (wcd937x->micb_ref[micb_index] > 0)
 			wcd937x->micb_ref[micb_index]--;
 		if ((wcd937x->micb_ref[micb_index] == 0) &&
@@ -1437,6 +1457,14 @@ int wcd937x_micbias_control(struct snd_soc_component *component,
 					post_off_event,
 					&wcd937x->mbhc->wcd_mbhc);
 		}
+		mutex_lock(&wcd937x->ana_tx_clk_lock);
+		if (wcd937x->ana_clk_count <= 0) {
+			snd_soc_component_update_bits(component,
+					    WCD937X_DIGITAL_CDC_ANA_CLK_CTL,
+					    0x10, 0x00);
+			wcd937x->ana_clk_count = 0;
+		}
+		mutex_unlock(&wcd937x->ana_tx_clk_lock);
 		if (is_dapm && post_dapm_off && wcd937x->mbhc)
 			blocking_notifier_call_chain(
 				&wcd937x->mbhc->notifier, post_dapm_off,
@@ -2761,6 +2789,7 @@ static int wcd937x_bind(struct device *dev)
 	}
 
 	mutex_init(&wcd937x->micb_lock);
+	mutex_init(&wcd937x->ana_tx_clk_lock);
 	/* Request for watchdog interrupt */
 	wcd_request_irq(&wcd937x->irq_info, WCD937X_IRQ_HPHR_PDM_WD_INT,
 			"HPHR PDM WD INT", wcd937x_wd_handle_irq, NULL);
@@ -2797,6 +2826,7 @@ static void wcd937x_unbind(struct device *dev)
 	snd_soc_unregister_component(dev);
 	component_unbind_all(dev, wcd937x);
 	mutex_destroy(&wcd937x->micb_lock);
+	mutex_destroy(&wcd937x->ana_tx_clk_lock);
 }
 
 static const struct of_device_id wcd937x_dt_match[] = {
