@@ -45,6 +45,16 @@ struct wlan_vdev_ch_check_filter {
 #endif
 
 /**
+ * struct wlan_peer_count- vdev connected peer count
+ * @opmode: QDF mode
+ * @peer_count: peer count
+ **/
+struct wlan_op_mode_peer_count {
+	enum QDF_OPMODE opmode;
+	uint16_t peer_count;
+};
+
+/**
  * wlan_chan_to_freq() - converts channel to frequency
  * @chan: channel number
  *
@@ -297,4 +307,16 @@ QDF_STATUS wlan_util_is_pdev_restart_progress(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
 					  wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_util_get_mode_specific_peer_coun - This api gives vdev mode specific
+ * peer count`
+ * @pdev: PDEV object
+ * @mode: Operation mode.
+ *
+ * Return: int- peer count
+ */
+uint16_t wlan_util_get_peer_count_for_mode(struct wlan_objmgr_pdev *pdev,
+					   enum QDF_OPMODE mode);
+
 #endif /* _WLAN_UTILITY_H_ */
