@@ -541,6 +541,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->limWsmEnabled = pe_session->limWsmEnabled;
 	ft_session->lim11hEnable = pe_session->lim11hEnable;
 	ft_session->isOSENConnection = pe_session->isOSENConnection;
+	ft_session->connected_akm = pe_session->connected_akm;
 
 	/* Fields to be filled later */
 	ft_session->pLimJoinReq = NULL;

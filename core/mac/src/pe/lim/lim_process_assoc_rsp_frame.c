@@ -646,7 +646,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	roam_session =
 		&mac_ctx->roam.roamSession[sme_sessionid];
-	if (assoc_rsp->FTInfo.R0KH_ID.present) {
+	if (assoc_rsp->sha384_ft_subelem.r0kh_id.present) {
+		roam_session->ftSmeContext.r0kh_id_len =
+			assoc_rsp->sha384_ft_subelem.r0kh_id.num_PMK_R0_ID;
+		qdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
+			     assoc_rsp->sha384_ft_subelem.r0kh_id.PMK_R0_ID,
+			     roam_session->ftSmeContext.r0kh_id_len);
+	} else if (assoc_rsp->FTInfo.R0KH_ID.present) {
 		roam_session->ftSmeContext.r0kh_id_len =
 			assoc_rsp->FTInfo.R0KH_ID.num_PMK_R0_ID;
 		qdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
@@ -655,7 +661,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	} else {
 		roam_session->ftSmeContext.r0kh_id_len = 0;
 		qdf_mem_zero(roam_session->ftSmeContext.r0kh_id,
-			SIR_ROAM_R0KH_ID_MAX_LEN);
+			     SIR_ROAM_R0KH_ID_MAX_LEN);
 	}
 #endif
 
@@ -1070,6 +1076,8 @@ assocReject:
 	}
 
 	qdf_mem_free(beacon);
+	qdf_mem_free(assoc_rsp->sha384_ft_subelem.gtk);
+	qdf_mem_free(assoc_rsp->sha384_ft_subelem.igtk);
 	qdf_mem_free(assoc_rsp);
 	return;
 }

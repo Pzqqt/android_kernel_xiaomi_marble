@@ -276,7 +276,8 @@ static bool lim_chk_assoc_req_parse_error(struct mac_context *mac_ctx,
 
 	if (sub_type == LIM_ASSOC)
 		status = sir_convert_assoc_req_frame2_struct(mac_ctx, frm_body,
-							frame_len, assoc_req);
+							     frame_len,
+							     assoc_req);
 	else
 		status = sir_convert_reassoc_req_frame2_struct(mac_ctx,
 						frm_body, frame_len, assoc_req);

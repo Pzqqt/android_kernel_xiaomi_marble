@@ -10951,6 +10951,128 @@ static QDF_STATUS csr_send_reset_ap_caps_changed(struct mac_context *mac,
 	return status;
 }
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * csr_convert_ese_akm_to_ani() - Convert eCsrAuthType ESE akm value to
+ * equivalent enum ani_akm_type value
+ * @akm_type: value of type enum ani_akm_type
+ *
+ * Return: ani_akm_type value corresponding
+ */
+static enum ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
+{
+	switch (akm_type) {
+	case eCSR_AUTH_TYPE_CCKM_RSN:
+		return ANI_AKM_TYPE_CCKM;
+	default:
+		return ANI_AKM_TYPE_UNKNOWN;
+	}
+}
+#else
+static inline enum
+ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
+{
+	return ANI_AKM_TYPE_UNKNOWN;
+}
+#endif
+
+#ifdef WLAN_FEATURE_SAE
+/**
+ * csr_convert_sae_akm_to_ani() - Convert eCsrAuthType SAE akm value to
+ * equivalent enum ani_akm_type value
+ * @akm_type: value of type enum ani_akm_type
+ *
+ * Return: ani_akm_type value corresponding
+ */
+static enum ani_akm_type csr_convert_sae_akm_to_ani(eCsrAuthType akm_type)
+{
+	switch (akm_type) {
+	case eCSR_AUTH_TYPE_SAE:
+		return ANI_AKM_TYPE_SAE;
+	case eCSR_AUTH_TYPE_FT_SAE:
+		return ANI_AKM_TYPE_FT_SAE;
+	default:
+		return ANI_AKM_TYPE_UNKNOWN;
+	}
+}
+#else
+static inline
+enum ani_akm_type csr_convert_sae_akm_to_ani(eCsrAuthType akm_type)
+{
+	return ANI_AKM_TYPE_UNKNOWN;
+}
+#endif
+
+/**
+ * csr_convert_csr_to_ani_akm_type() - Convert eCsrAuthType value to equivalent
+ * enum ani_akm_type value
+ * @akm_type: value of type enum ani_akm_type
+ *
+ * Return: ani_akm_type value corresponding
+ */
+static enum ani_akm_type csr_convert_csr_to_ani_akm_type(eCsrAuthType akm_type)
+{
+	enum ani_akm_type ani_akm;
+
+	switch (akm_type) {
+	case eCSR_AUTH_TYPE_NONE:
+		return ANI_AKM_TYPE_NONE;
+	case eCSR_AUTH_TYPE_WPA:
+		return ANI_AKM_TYPE_WPA;
+	case eCSR_AUTH_TYPE_WPA_PSK:
+		return ANI_AKM_TYPE_WPA_PSK;
+	case eCSR_AUTH_TYPE_RSN:
+		return ANI_AKM_TYPE_RSN;
+	case eCSR_AUTH_TYPE_RSN_PSK:
+		return ANI_AKM_TYPE_RSN_PSK;
+	case eCSR_AUTH_TYPE_FT_RSN:
+		return ANI_AKM_TYPE_FT_RSN;
+	case eCSR_AUTH_TYPE_FT_RSN_PSK:
+		return ANI_AKM_TYPE_FT_RSN_PSK;
+	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
+		return ANI_AKM_TYPE_RSN_PSK_SHA256;
+	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
+		return ANI_AKM_TYPE_RSN_8021X_SHA256;
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+		return ANI_AKM_TYPE_FILS_SHA256;
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+		return ANI_AKM_TYPE_FILS_SHA384;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return ANI_AKM_TYPE_FT_FILS_SHA256;
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return ANI_AKM_TYPE_FT_FILS_SHA384;
+	case eCSR_AUTH_TYPE_DPP_RSN:
+		return ANI_AKM_TYPE_DPP_RSN;
+	case eCSR_AUTH_TYPE_OWE:
+		return ANI_AKM_TYPE_OWE;
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
+		return ANI_AKM_TYPE_SUITEB_EAP_SHA256;
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
+		return ANI_AKM_TYPE_SUITEB_EAP_SHA384;
+	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
+		return ANI_AKM_TYPE_FT_SUITEB_EAP_SHA384;
+	case eCSR_AUTH_TYPE_OSEN:
+		return ANI_AKM_TYPE_OSEN;
+	default:
+		ani_akm = ANI_AKM_TYPE_UNKNOWN;
+	}
+
+	if (ani_akm == ANI_AKM_TYPE_UNKNOWN)
+		ani_akm = csr_convert_sae_akm_to_ani(akm_type);
+
+	if (ani_akm == ANI_AKM_TYPE_UNKNOWN)
+		ani_akm = csr_convert_ese_akm_to_ani(akm_type);
+
+	return ani_akm;
+}
+
+/**
+ * csr_translate_akm_type() - Convert ani_akm_type value to equivalent
+ * eCsrAuthType
+ * @akm_type: value of type ani_akm_type
+ *
+ * Return: eCsrAuthType value
+ */
 static eCsrAuthType csr_translate_akm_type(enum ani_akm_type akm_type)
 {
 	eCsrAuthType csr_akm_type;
@@ -15048,6 +15170,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	struct action_oui_search_attr vendor_ap_search_attr;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	bool bvalue = 0;
+	eCsrAuthType akm;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15142,6 +15265,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			csr_translate_to_wni_cfg_dot11_mode(mac,
 							    pSession->bssParams.
 							    uCfgDot11Mode);
+		akm = pProfile->negotiatedAuthType;
+		csr_join_req->akm = csr_convert_csr_to_ani_akm_type(akm);
+
 		if (pBssDescription->channelId <= 14 &&
 		    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 		    dot11mode == MLME_DOT11_MODE_11AC) {

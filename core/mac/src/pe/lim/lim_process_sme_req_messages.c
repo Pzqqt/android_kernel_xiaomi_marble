@@ -1504,6 +1504,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 * to connect to, So input is coming from supplicant
 		 */
 		session->is11Rconnection = sme_join_req->is11Rconnection;
+		session->connected_akm = sme_join_req->akm;
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif

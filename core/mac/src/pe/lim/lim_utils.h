@@ -1747,4 +1747,14 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pCap,
  */
 void lim_flush_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
 
+/**
+ * lim_is_sha384_akm() - Function to check if the negotiated AKM for the
+ * current session is based on sha384 key derivation function.
+ * @mac_ctx: pointer to mac data
+ * @akm: negotiated AKM for the current session
+ *
+ * Return: true if akm is sha384 based kdf or false
+ */
+bool lim_is_sha384_akm(enum ani_akm_type akm);
+
 #endif /* __LIM_UTILS_H */

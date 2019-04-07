@@ -116,6 +116,7 @@ struct obss_detection_cfg {
  * @peSessionId: unique ID assigned to the entry
  * @vdev_id: ID of the vdev for which this entry is applicable
  * @vdev: the actual vdev for which this entry is applicable
+ * @connected_akm: AKM of current connection
  */
 struct pe_session {
 	/* To check session table is in use or free */
@@ -151,6 +152,8 @@ struct pe_session {
 	uint16_t channelChangeReasonCode;
 	uint8_t dot11mode;
 	uint8_t htCapability;
+	enum ani_akm_type connected_akm;
+
 	/* Supported Channel Width Set: 0-20MHz 1 - 40MHz */
 	uint8_t htSupportedChannelWidthSet;
 	/* Recommended Tx Width Set

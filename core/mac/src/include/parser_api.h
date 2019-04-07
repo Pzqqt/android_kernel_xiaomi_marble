@@ -360,6 +360,51 @@ typedef struct sSirAssocReq {
 	bool is_sae_authenticated;
 } tSirAssocReq, *tpSirAssocReq;
 
+#define FTIE_SUBELEM_R1KH_ID 1
+#define FTIE_SUBELEM_GTK     2
+#define FTIE_SUBELEM_R0KH_ID 3
+#define FTIE_SUBELEM_IGTK    4
+#define FTIE_SUBELEM_OCI     5
+
+#define FTIE_R1KH_LEN 6
+#define FTIE_R0KH_MAX_LEN 48
+
+/**
+ * struct wlan_sha384_ftinfo_subelem - subelements of FTIE
+ * @r1kh_id: FT R1 Key holder ID
+ * @gtk: Ft group temporal key
+ * @gtk_len: GTK length
+ * @r0kh_id: FT R0 Key Holder ID
+ * @igtk: FT IGTK used for 11w
+ * @igtk_len: IGTK length
+ */
+struct wlan_sha384_ftinfo_subelem {
+	tDot11fIER1KH_ID r1kh_id;
+	uint8_t *gtk;
+	uint8_t gtk_len;
+	tDot11fIER0KH_ID r0kh_id;
+	uint8_t *igtk;
+	uint8_t igtk_len;
+};
+
+#define MIC_CONTROL_BYTES 2
+#define MIC_SHA384_BYTES  24
+#define NONCE_BYTES       32
+
+/**
+ * struct wlan_sha384_ftinfo - FTE for sha384 based AKMs
+ * @mic_control: FTIE mic control field of 2 bytes
+ * @mic: MIC present in the FTIE assoc Response
+ * @anonce: Anonce sent by the AP
+ * @snonce: Snonce field in the FTIE
+ */
+struct wlan_sha384_ftinfo {
+	uint8_t mic_control[MIC_CONTROL_BYTES];
+	uint8_t mic[MIC_SHA384_BYTES];
+	uint8_t anonce[NONCE_BYTES];
+	uint8_t snonce[NONCE_BYTES];
+};
+
 /* / Association Response structure (one day to be replaced by */
 /* / tDot11fAssocRequest) */
 typedef struct sSirAssocRsp {
@@ -374,6 +419,8 @@ typedef struct sSirAssocRsp {
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEHTInfo HTInfo;
 	tDot11fIEFTInfo FTInfo;
+	struct wlan_sha384_ftinfo sha384_ft_info;
+	struct wlan_sha384_ftinfo_subelem sha384_ft_subelem;
 	uint8_t mdie[SIR_MDIE_SIZE];
 	uint8_t num_RICData;
 	tDot11fIERICDataDesc RICData[2];
@@ -585,8 +632,20 @@ sir_convert_probe_frame2_struct(struct mac_context *mac, uint8_t *frame,
 
 QDF_STATUS
 sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
-				uint8_t *frame, uint32_t len,
-				tpSirAssocReq assoc);
+				    uint8_t *frame, uint32_t len,
+				    tpSirAssocReq assoc);
+/**
+ * wlan_parse_ftie_sha384() - Parse the FT IE if akm uses sha384 KDF
+ * @frame: Pointer to the association response frame
+ * @frame_len: Length of the assoc response frame
+ * @assoc_rsp: Destination assoc response structure in PE to which the FTIE
+ * needs to be parsed and copied
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_parse_ftie_sha384(uint8_t *frame, uint32_t frame_len,
+		       struct sSirAssocRsp *assoc_rsp);
 
 QDF_STATUS
 sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
