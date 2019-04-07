@@ -217,7 +217,7 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 	bool is_pause = false;
-	enum netif_action_type act = WLAN_WAKE_NON_PRIORITY_QUEUE;
+	enum netif_action_type act = WLAN_NETIF_ACTION_TYPE_NONE;
 	enum dp_fl_ctrl_threshold level = DP_TH_BE_BK;
 
 	if (qdf_likely(pool)) {
@@ -255,18 +255,22 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 					level = DP_TH_HI;
 					pool->status = FLOW_POOL_ACTIVE_PAUSED;
 					break;
+				case FLOW_POOL_ACTIVE_PAUSED:
+					act = WLAN_NETIF_ACTION_TYPE_NONE;
+					break;
 				default:
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  "%s %d pool is %d status!",
-						  __func__, __LINE__,
+					dp_err_rl("pool status is %d!",
 						  pool->status);
 					break;
 				}
-				pool->latest_pause_time[level] =
-					qdf_get_system_timestamp();
-				soc->pause_cb(desc_pool_id,
-					      act, WLAN_DATA_FLOW_CONTROL);
+
+				if (act != WLAN_NETIF_ACTION_TYPE_NONE) {
+					pool->latest_pause_time[level] =
+						qdf_get_system_timestamp();
+					soc->pause_cb(desc_pool_id,
+						      act,
+						      WLAN_DATA_FLOW_CONTROL);
+				}
 			}
 		} else {
 			pool->pkt_drop_no_desc++;

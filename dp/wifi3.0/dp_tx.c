@@ -1431,9 +1431,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id,
 			msdu_info, tx_exc_metadata);
 	if (!tx_desc) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s Tx_desc prepare Fail vdev %pK queue %d",
-			  __func__, vdev, tx_q->desc_pool_id);
+		dp_err_rl("Tx_desc prepare Fail vdev %pK queue %d",
+			  vdev, tx_q->desc_pool_id);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
 		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
 		tid_stats->swdrop_cnt[TX_DESC_ERR]++;
