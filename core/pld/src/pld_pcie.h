@@ -285,6 +285,16 @@ static inline int pld_pcie_power_off(struct device *dev)
 	return 0;
 }
 
+static inline int pld_pcie_idle_restart(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_pcie_idle_shutdown(struct device *dev)
+{
+	return 0;
+}
+
 static inline int pld_pcie_force_assert_target(struct device *dev)
 {
 	return -EINVAL;
@@ -450,6 +460,16 @@ static inline int pld_pcie_power_on(struct device *dev)
 static inline int pld_pcie_power_off(struct device *dev)
 {
 	return cnss_power_down(dev);
+}
+
+static inline int pld_pcie_idle_restart(struct device *dev)
+{
+	return cnss_idle_restart(dev);
+}
+
+static inline int pld_pcie_idle_shutdown(struct device *dev)
+{
+	return cnss_idle_shutdown(dev);
 }
 
 static inline int pld_pcie_force_assert_target(struct device *dev)

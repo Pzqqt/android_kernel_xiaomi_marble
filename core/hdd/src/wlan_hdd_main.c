@@ -239,6 +239,7 @@ static struct kparam_string fwpath = {
 static char *country_code;
 static int enable_11d = -1;
 static int enable_dfs_chan_scan = -1;
+static bool is_mode_change_psoc_idle_shutdown;
 
 #define WLAN_NLINK_CESIUM 30
 
@@ -9256,11 +9257,20 @@ exit:
 	return errno;
 }
 
+static int __hdd_mode_change_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
+{
+	is_mode_change_psoc_idle_shutdown = false;
+	return hdd_wlan_stop_modules(hdd_ctx, true);
+}
+
 int hdd_psoc_idle_shutdown(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	return __hdd_psoc_idle_shutdown(hdd_ctx);
+	if (is_mode_change_psoc_idle_shutdown)
+		return __hdd_mode_change_psoc_idle_shutdown(hdd_ctx);
+	else
+		return __hdd_psoc_idle_shutdown(hdd_ctx);
 }
 
 static int __hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
@@ -13506,6 +13516,20 @@ hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
 	return 0;
 }
 
+static int hdd_mode_change_psoc_idle_shutdown(struct device *dev)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	return hdd_wlan_stop_modules(hdd_ctx, true);
+}
+
+static int hdd_mode_change_psoc_idle_restart(struct device *dev)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	return hdd_wlan_start_modules(hdd_ctx, false);
+}
+
 /**
  * __hdd_driver_mode_change() - Handles a driver mode change
  * @hdd_ctx: Pointer to the global HDD context
@@ -13542,8 +13566,11 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 	/* ensure adapters are stopped */
 	hdd_stop_present_mode(hdd_ctx, curr_mode);
 
-	errno = hdd_wlan_stop_modules(hdd_ctx, true);
+	is_mode_change_psoc_idle_shutdown = true;
+	errno = pld_idle_shutdown(hdd_ctx->parent_dev,
+				  hdd_mode_change_psoc_idle_shutdown);
 	if (errno) {
+		is_mode_change_psoc_idle_shutdown = false;
 		hdd_err("Stop wlan modules failed");
 		return errno;
 	}
@@ -13553,7 +13580,8 @@ static int __hdd_driver_mode_change(struct hdd_context *hdd_ctx,
 
 	hdd_set_conparam(next_mode);
 
-	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	errno = pld_idle_restart(hdd_ctx->parent_dev,
+				 hdd_mode_change_psoc_idle_restart);
 	if (errno) {
 		hdd_err("Start wlan modules failed: %d", errno);
 		return errno;
