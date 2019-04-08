@@ -117,6 +117,16 @@ QDF_STATUS reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
 				  bool fcc_constraint);
 
 /**
+ * reg_get_fcc_constraint() - Check FCC constraint on given frequency
+ * @pdev: physical dev to get
+ * @freq: frequency to be checked
+ *
+ * Return: If FCC constraint is applied on given frequency return true
+ *	   else return false.
+ */
+bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq);
+
+/**
  * reg_read_current_country() - Get the current regulatory country
  * @psoc: The physical SoC to get current country from
  * @country_code: the buffer to populate the country code into
@@ -392,6 +402,20 @@ bool reg_ignore_default_country(struct wlan_regulatory_psoc_priv_obj *soc_reg,
 {
 	return false;
 }
+
+static inline
+QDF_STATUS reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
+				  bool fcc_constraint)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+{
+	return false;
+}
+
 #endif
 
 #if defined(WLAN_FEATURE_DSRC) && defined(CONFIG_REG_CLIENT)

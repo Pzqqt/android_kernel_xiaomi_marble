@@ -556,6 +556,11 @@ bool wlan_reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev
 	return reg_is_etsi13_srd_chan_allowed_master_mode(pdev);
 }
 
+bool wlan_reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
+{
+	return reg_get_fcc_constraint(pdev, freq);
+}
+
 QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 		uint32_t *chip_mode)
 {

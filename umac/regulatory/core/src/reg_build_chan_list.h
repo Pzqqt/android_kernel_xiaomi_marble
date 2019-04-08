@@ -26,6 +26,9 @@
 #ifndef __REG_BUILD_CHAN_LIST_H__
 #define __REG_BUILD_CHAN_LIST_H__
 
+#define CHAN_12_CENT_FREQ 2467
+#define CHAN_13_CENT_FREQ 2472
+
 /**
  * reg_reset_reg_rules() - provides the reg domain rules info
  * @reg_rules: reg rules pointer
