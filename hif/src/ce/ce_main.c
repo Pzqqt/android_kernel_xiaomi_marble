@@ -1279,7 +1279,7 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
-#if defined(CONFIG_MCL)
+#ifndef HIF_CE_DEBUG_DATA_DYNAMIC_BUF
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
 
@@ -1336,7 +1336,7 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id,
 static inline void
 free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
 #endif /* (HIF_CONFIG_SLUB_DEBUG_ON) || (HIF_CE_DEBUG_DATA_BUF) */
-#elif defined(CONFIG_WIN)
+#else
 #if defined(HIF_CE_DEBUG_DATA_BUF)
 
 static QDF_STATUS
@@ -1385,7 +1385,7 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id,
 static inline void
 free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
-#endif /* CONFIG_MCL */
+#endif /* HIF_CE_DEBUG_DATA_DYNAMIC_BUF */
 
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /**

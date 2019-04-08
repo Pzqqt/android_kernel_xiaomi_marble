@@ -229,10 +229,6 @@ _failed:
 }
 #endif
 
-#ifdef CONFIG_WIN
-#define HTC_MSG_NACK_SUSPEND 7
-#endif
-
 QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				   uint8_t pipeID)
 {
