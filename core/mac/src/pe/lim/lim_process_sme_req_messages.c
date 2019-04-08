@@ -4587,12 +4587,29 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 	struct disassoc_cnf sme_disassoc_cnf;
 	struct pe_session *session;
 	uint8_t session_id;
+	uint32_t *err_msg = NULL;
+	QDF_STATUS status;
 
 	qdf_mem_copy(&sme_disassoc_cnf, msg->bodyptr, sizeof(sme_disassoc_cnf));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   sme_disassoc_cnf.bssid.bytes,
 					   &session_id);
+	if (!session) {
+		pe_err("session not found for bssid:%pM",
+		       sme_disassoc_cnf.bssid.bytes);
+		status = lim_prepare_disconnect_done_ind
+						(mac_ctx, &err_msg,
+						sme_disassoc_cnf.sme_session_id,
+						eSIR_SME_INVALID_SESSION,
+						NULL);
+
+		if (QDF_IS_STATUS_SUCCESS(status))
+			lim_send_sme_disassoc_deauth_ntf(mac_ctx,
+							 QDF_STATUS_SUCCESS,
+							 err_msg);
+		return;
+	}
 
 	if (LIM_IS_STA_ROLE(session))
 		lim_process_disconnect_sta(session, msg);
@@ -4613,6 +4630,18 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 					   disassoc_req.bssid.bytes,
 					   &session_id);
+	if (!session) {
+		pe_err("session not found for bssid:%pM",
+		       disassoc_req.bssid.bytes);
+		lim_send_sme_disassoc_ntf(mac_ctx,
+					  disassoc_req.peer_macaddr.bytes,
+					  eSIR_SME_INVALID_PARAMETERS,
+					  eLIM_HOST_DISASSOC, 1,
+					  disassoc_req.sessionId, NULL);
+
+		return;
+	}
+
 	if (LIM_IS_STA_ROLE(session))
 		lim_process_disconnect_sta(session, msg);
 	else
@@ -4632,6 +4661,18 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 					   sme_deauth_req.bssid.bytes,
 					   &session_id);
+	if (!session) {
+		pe_err("session not found for bssid:%pM",
+		       sme_deauth_req.bssid.bytes);
+		lim_send_sme_deauth_ntf(mac_ctx,
+					sme_deauth_req.peer_macaddr.bytes,
+					eSIR_SME_INVALID_PARAMETERS,
+					eLIM_HOST_DEAUTH, 1,
+					sme_deauth_req.sessionId);
+
+		return;
+	}
+
 	if (LIM_IS_STA_ROLE(session))
 		lim_process_disconnect_sta(session, msg);
 	else

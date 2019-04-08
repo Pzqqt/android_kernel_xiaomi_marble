@@ -7473,8 +7473,13 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: Invoked on session %d with UAPSD mask 0x%X",
 		  __func__, __LINE__, sessionId, pModFields->uapsd_mask);
-	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
+	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
+		sme_err("Invalid session for sessionId: %d", sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	status = ucfg_mlme_get_roaming_offload(mac->psoc, &roam_offload_enable);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
