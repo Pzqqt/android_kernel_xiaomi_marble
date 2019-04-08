@@ -8341,6 +8341,9 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	case WMI_REQUEST_BCN_STAT:
 		stats_param->stats_id |= WMI_HOST_REQUEST_BCN_STAT;
 		break;
+	case WMI_REQUEST_PEER_EXTD_STAT:
+		stats_param->stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
+		break;
 
 	case WMI_REQUEST_PEER_EXTD2_STAT:
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_ADV_STATS;
@@ -8377,6 +8380,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_pdev_ext_stats = 0;
 	stats_param->num_vdev_stats = ev->num_vdev_stats;
 	stats_param->num_peer_stats = ev->num_peer_stats;
+	stats_param->num_peer_extd_stats = ev->num_peer_extd_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = ev->num_chan_stats;
 	stats_param->num_bcn_stats = ev->num_bcn_stats;
@@ -8821,7 +8825,37 @@ static QDF_STATUS extract_peer_extd_stats_tlv(wmi_unified_t wmi_handle,
 		void *evt_buf, uint32_t index,
 		wmi_host_peer_extd_stats *peer_extd_stats)
 {
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_stats_event_fixed_param *ev_param;
+	uint8_t *data;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
+	ev_param = (wmi_stats_event_fixed_param *)param_buf->fixed_param;
+	data = (uint8_t *)param_buf->data;
+	if (!data)
+		return QDF_STATUS_E_FAILURE;
+
+	if (index < ev_param->num_peer_extd_stats) {
+		wmi_peer_extd_stats *ev = (wmi_peer_extd_stats *) (data +
+			(ev_param->num_pdev_stats * sizeof(wmi_pdev_stats)) +
+			(ev_param->num_vdev_stats * sizeof(wmi_vdev_stats)) +
+			(ev_param->num_peer_stats * sizeof(wmi_peer_stats)) +
+			(ev_param->num_bcnflt_stats *
+			sizeof(wmi_bcnfilter_stats_t)) +
+			(ev_param->num_chan_stats * sizeof(wmi_chan_stats)) +
+			(ev_param->num_mib_stats * sizeof(wmi_mib_stats)) +
+			(ev_param->num_bcn_stats * sizeof(wmi_bcn_stats)) +
+			(index * sizeof(wmi_peer_extd_stats)));
+
+		qdf_mem_zero(peer_extd_stats, sizeof(wmi_host_peer_extd_stats));
+		qdf_mem_copy(&peer_extd_stats->peer_macaddr, &ev->peer_macaddr,
+			     sizeof(wmi_mac_addr));
+
+		peer_extd_stats->rx_mc_bc_cnt = ev->rx_mc_bc_cnt;
+	}
+
 	return QDF_STATUS_SUCCESS;
+
 }
 
 /**

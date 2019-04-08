@@ -394,8 +394,11 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
+	enum QDF_OPMODE op_mode;
 
-	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	if (op_mode != QDF_STA_MODE && op_mode != QDF_SAP_MODE)
 		return QDF_STATUS_E_NOSUPPORT;
 
 	if (!pmksa && set) {
@@ -1642,6 +1645,36 @@ bool wlan_crypto_vdev_is_pmf_enabled(struct wlan_objmgr_vdev *vdev)
 
 	return false;
 }
+
+/**
+ * wlan_crypto_vdev_is_pmf_required - called to check is pmf required in vdev
+ * @vdev: vdev
+ *
+ * This function gets called to check is pmf required or not in vdev.
+ *
+ * Return: true or false
+ */
+bool wlan_crypto_vdev_is_pmf_required(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *vdev_crypto_params;
+
+	if (!vdev)
+		return false;
+
+	vdev_crypto_params = wlan_crypto_vdev_get_comp_params(vdev,
+							      &crypto_priv);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (vdev_crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED)
+		return true;
+
+	return false;
+}
+
 /**
  * wlan_crypto_is_pmf_enabled - called by mgmt txrx to check is pmf enabled
  * @vdev: vdev
@@ -2805,7 +2838,7 @@ bool wlan_crypto_rsn_info(struct wlan_objmgr_vdev *vdev,
 		crypto_debug("Key mgmt match failed");
 		return false;
 	}
-	if (wlan_crypto_vdev_is_pmf_enabled(vdev) &&
+	if (wlan_crypto_vdev_is_pmf_required(vdev) &&
 	    !(crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)) {
 		crypto_debug("Peer is not PMF capable");
 		return false;
