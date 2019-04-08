@@ -51,6 +51,7 @@
 #include "sap_api.h"
 #include <lim_ft.h>
 #include "cds_regdomain.h"
+#include <wlan_reg_services_api.h>
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
 #include <wlan_crypto_global_api.h>
@@ -1242,6 +1243,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	const uint8_t *vendor_ie;
 	tSirBssDescription *bss_desc;
 	QDF_STATUS status;
+	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
 
 	if (!mac_ctx || !msg_buf) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
@@ -1598,9 +1600,16 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			&session->gLimCurrentBssUapsd,
 			&local_power_constraint, session);
 
-		session->maxTxPower = lim_get_max_tx_power(reg_max,
-					local_power_constraint,
-					mac_ctx->mlme_cfg->power.max_tx_power);
+		tx_pwr_attr.reg_max = reg_max;
+		tx_pwr_attr.ap_tx_power = local_power_constraint;
+		tx_pwr_attr.ini_tx_power =
+				mac_ctx->mlme_cfg->power.max_tx_power;
+		tx_pwr_attr.frequency =
+			wlan_reg_get_channel_freq(mac_ctx->pdev,
+						  session->currentOperChannel);
+
+		session->maxTxPower = lim_get_max_tx_power(mac_ctx,
+							   &tx_pwr_attr);
 		session->def_max_tx_pwr = session->maxTxPower;
 
 		pe_debug("Reg max %d local power con %d max tx pwr %d",
@@ -1698,21 +1707,29 @@ end:
 		eSIR_MAC_UNSPEC_FAILURE_STATUS, session, sme_session_id);
 }
 
-uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
-			     uint8_t iniTxPower)
+uint8_t lim_get_max_tx_power(struct mac_context *mac,
+			     struct lim_max_tx_pwr_attr *attr)
 {
-	uint8_t maxTxPower = 0;
-	uint8_t txPower = QDF_MIN(regMax, (apTxPower));
+	uint8_t max_tx_power = 0;
+	uint8_t tx_power;
 
-	txPower = QDF_MIN(txPower, iniTxPower);
-	if ((txPower >= MIN_TX_PWR_CAP) && (txPower <= MAX_TX_PWR_CAP))
-		maxTxPower = txPower;
-	else if (txPower < MIN_TX_PWR_CAP)
-		maxTxPower = MIN_TX_PWR_CAP;
+	if (!attr)
+		return 0;
+
+	if (wlan_reg_get_fcc_constraint(mac->pdev, attr->frequency))
+		return attr->reg_max;
+
+	tx_power = QDF_MIN(attr->reg_max, attr->ap_tx_power);
+	tx_power = QDF_MIN(tx_power, attr->ini_tx_power);
+
+	if (tx_power >= MIN_TX_PWR_CAP && tx_power <= MAX_TX_PWR_CAP)
+		max_tx_power = tx_power;
+	else if (tx_power < MIN_TX_PWR_CAP)
+		max_tx_power = MIN_TX_PWR_CAP;
 	else
-		maxTxPower = MAX_TX_PWR_CAP;
+		max_tx_power = MAX_TX_PWR_CAP;
 
-	return maxTxPower;
+	return max_tx_power;
 }
 
 /**

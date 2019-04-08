@@ -6856,10 +6856,10 @@ static int drv_cmd_invalid(struct hdd_adapter *adapter,
 }
 
 /**
- * drv_cmd_set_fcc_channel() - handle fcc constraint request
+ * drv_cmd_set_fcc_channel() - Handle fcc constraint request
  * @adapter: HDD adapter
  * @hdd_ctx: HDD context
- * @command: command ptr, SET_FCC_CHANNEL 0/1 is the command
+ * @command: command ptr, SET_FCC_CHANNEL 0/-1 is the command
  * @command_len: command len
  * @priv_data: private data
  *
@@ -6872,30 +6872,34 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 				   struct hdd_priv_data *priv_data)
 {
 	QDF_STATUS status;
-	uint8_t fcc_constraint;
+	int8_t input_value;
+	bool fcc_constraint;
 	int err;
 
 	/*
-	 * this command would be called by user-space when it detects WLAN
+	 * This command would be called by user-space when it detects WLAN
 	 * ON after airplane mode is set. When APM is set, WLAN turns off.
 	 * But it can be turned back on. Otherwise; when APM is turned back
 	 * off, WLAN would turn back on. So at that point the command is
-	 * expected to come down. 0 means disable, 1 means enable. The
-	 * constraint is removed when parameter 1 is set or different
-	 * country code is set
+	 * expected to come down. 0 means reduce power as per fcc constraint
+	 * and -1 means remove constraint.
 	 */
 
-	err = kstrtou8(command + command_len + 1, 10, &fcc_constraint);
+	err = kstrtos8(command + command_len + 1, 10, &input_value);
 	if (err) {
 		hdd_err("error %d parsing userspace fcc parameter", err);
 		return err;
 	}
 
+	fcc_constraint = input_value ? false : true;
+	hdd_debug("input_value = %d && fcc_constraint = %u",
+		  input_value, fcc_constraint);
+
 	status = ucfg_reg_set_fcc_constraint(hdd_ctx->pdev, fcc_constraint);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to %s tx power for channels 12/13",
-			fcc_constraint ? "reduce" : "restore");
+			fcc_constraint ? "restore" : "reduce");
 
 	return qdf_status_to_os_return(status);
 }

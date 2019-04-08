@@ -817,6 +817,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	uint8_t sendProbeReq = false;
 	tpSirMacMgmtHdr pMh = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	int8_t regMax = 0, maxTxPower = 0, local_constraint;
+	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -886,12 +887,17 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			}
 	}
 
-	maxTxPower = lim_get_max_tx_power(regMax, local_constraint,
-					mac_ctx->mlme_cfg->power.max_tx_power);
+	tx_pwr_attr.reg_max = regMax;
+	tx_pwr_attr.ap_tx_power = local_constraint;
+	tx_pwr_attr.ini_tx_power = mac_ctx->mlme_cfg->power.max_tx_power;
+	tx_pwr_attr.frequency =
+			wlan_reg_get_channel_freq(mac_ctx->pdev,
+						  session->currentOperChannel);
+
+	maxTxPower = lim_get_max_tx_power(mac_ctx, &tx_pwr_attr);
 
 	pe_debug("RegMax = %d, MaxTx pwr = %d",
 			regMax, maxTxPower);
-
 
 	/* If maxTxPower is increased or decreased */
 	if (maxTxPower != session->maxTxPower) {
