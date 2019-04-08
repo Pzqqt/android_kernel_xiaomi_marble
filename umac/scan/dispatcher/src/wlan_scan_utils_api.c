@@ -1463,9 +1463,8 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 						frm_subtype, rx_param,
 						scan_list);
 
-	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err_rl("Failed to create a scan entry");
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		scm_debug_rl("Failed to create a scan entry");
 
 	return status;
 }
