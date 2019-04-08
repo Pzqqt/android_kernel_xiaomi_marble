@@ -304,6 +304,10 @@ enum pld_recovery_reason {
  * struct pld_driver_ops - driver callback functions
  * @probe: required operation, will be called when device is detected
  * @remove: required operation, will be called when device is removed
+ * @idle_shutdown: required operation, will be called when device is doing
+ *                 idle shutdown after interface inactivity timer has fired
+ * @idle_restart: required operation, will be called when device is doing
+ *                idle restart after idle shutdown
  * @shutdown: optional operation, will be called during SSR
  * @reinit: optional operation, will be called during SSR
  * @crash_shutdown: optional operation, will be called when a crash is
@@ -331,6 +335,10 @@ struct pld_driver_ops {
 		     void *bdev, void *id);
 	void (*remove)(struct device *dev,
 		       enum pld_bus_type bus_type);
+	void (*idle_shutdown)(struct device *dev,
+			      enum pld_bus_type bus_type);
+	void (*idle_restart)(struct device *dev,
+			     enum pld_bus_type bus_type);
 	void (*shutdown)(struct device *dev,
 			 enum pld_bus_type bus_type);
 	int (*reinit)(struct device *dev,
@@ -624,6 +632,26 @@ int pld_is_fw_rejuvenate(struct device *dev);
  * Return: true if platform driver support.
  */
 bool pld_have_platform_driver_support(struct device *dev);
+
+/**
+ * pld_idle_shutdown - request idle shutdown callback from platform driver
+ * @dev: pointer to struct dev
+ * @shutdown_cb: pointer to hdd psoc idle shutdown callback handler
+ *
+ * Return: none
+ */
+void pld_idle_shutdown(struct device *dev,
+		       void (*shutdown_cb)(struct device *dev));
+
+/**
+ * pld_idle_restart - request idle restart callback from platform driver
+ * @dev: pointer to struct dev
+ * @restart_cb: pointer to hdd psoc idle restart callback handler
+ *
+ * Return: none
+ */
+void pld_idle_restart(struct device *dev,
+		      void (*restart_cb)(struct device *dev));
 
 #if defined(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 

@@ -1776,3 +1776,43 @@ void pld_block_shutdown(struct device *dev, bool status)
 		break;
 	}
 }
+
+void pld_idle_shutdown(struct device *dev,
+		       void (*shutdown_cb)(struct device *dev))
+{
+	enum pld_bus_type type;
+
+	if (!shutdown_cb)
+		return;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+		case PLD_BUS_TYPE_SNOC:
+			shutdown_cb(dev);
+			break;
+		case PLD_BUS_TYPE_PCIE:
+			break;
+		default:
+			break;
+	}
+}
+
+void pld_idle_restart(struct device *dev,
+		      void (*restart_cb)(struct device *dev))
+{
+	enum pld_bus_type type;
+
+	if (!restart_cb)
+		return;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+		case PLD_BUS_TYPE_SNOC:
+			restart_cb(dev);
+			break;
+		case PLD_BUS_TYPE_PCIE:
+			break;
+		default:
+			break;
+	}
+}
