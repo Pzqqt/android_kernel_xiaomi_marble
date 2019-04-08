@@ -1009,7 +1009,7 @@ struct hdd_multicast_addr_list {
 	uint8_t addr[WLAN_HDD_MAX_MC_ADDR_LIST][ETH_ALEN];
 };
 
-#define WLAN_HDD_MAX_HISTORY_ENTRY		10
+#define WLAN_HDD_MAX_HISTORY_ENTRY 25
 
 /**
  * struct hdd_netif_queue_stats - netif queue operation statistics
@@ -1028,12 +1028,14 @@ struct hdd_netif_queue_stats {
  * @netif_action: action type
  * @netif_reason: reason type
  * @pause_map: pause map
+ * @tx_q_state: state of the netdev TX queues
  */
 struct hdd_netif_queue_history {
 	qdf_time_t time;
 	uint16_t netif_action;
 	uint16_t netif_reason;
 	uint32_t pause_map;
+	unsigned long tx_q_state[NUM_TX_QUEUES];
 };
 
 /**

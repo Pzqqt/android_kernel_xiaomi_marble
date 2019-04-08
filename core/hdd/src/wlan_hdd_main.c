@@ -8287,6 +8287,8 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	qdf_mem_free(comb_log_str);
 }
 
+/* Max size of a single netdev tx queue state string. e.g. "1: 0x1" */
+#define HDD_NETDEV_TX_Q_STATE_STRLEN 15
 /**
  * wlan_hdd_display_netif_queue_history() - display netif queue history
  * @hdd_ctx: hdd context
@@ -8297,10 +8299,11 @@ void
 wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				     enum qdf_stats_verbosity_level verb_lvl)
 {
-
-	struct hdd_adapter *adapter = NULL;
 	int i;
+	struct hdd_adapter *adapter = NULL;
 	qdf_time_t total, pause, unpause, curr_time, delta;
+	struct hdd_netif_queue_history *q_hist_ptr;
+	char q_status_buf[NUM_TX_QUEUES * HDD_NETDEV_TX_Q_STATE_STRLEN] = {0};
 
 	if (verb_lvl == QDF_STATS_VERBOSITY_LEVEL_LOW) {
 		hdd_display_netif_queue_history_compact(hdd_ctx);
@@ -8308,6 +8311,8 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->vdev_id == CDP_INVALID_VDEV_ID)
+			continue;
 		hdd_nofl_info("Netif queue operation statistics:");
 		hdd_nofl_info("vdev_id %d device mode %d",
 			      adapter->vdev_id, adapter->device_mode);
@@ -8345,18 +8350,24 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 					total_pause_time + pause_delta));
 		}
 
-		hdd_nofl_info("Netif queue operation history:");
-		hdd_nofl_info("Total entries: %d current index %d",
+		hdd_nofl_info("Netif queue operation history: Total entries: %d current index %d(-1) time %u",
 			      WLAN_HDD_MAX_HISTORY_ENTRY,
-			      adapter->history_index);
+			      adapter->history_index,
+			      qdf_system_ticks_to_msecs(qdf_system_ticks()));
 
-		hdd_nofl_info("index: time: action_type: reason_type: pause_map");
+		hdd_nofl_info("%2s%20s%50s%30s%10s  %s",
+			      "#", "time(ms)", "action_type", "reason_type",
+			      "pause_map", "netdev-queue-status");
 
 		for (i = 0; i < WLAN_HDD_MAX_HISTORY_ENTRY; i++) {
 			/* using hdd_log to avoid printing function name */
 			if (adapter->queue_oper_history[i].time == 0)
 				continue;
-			hdd_nofl_info("%d: %u: %s: %s: %x",
+			q_hist_ptr = &adapter->queue_oper_history[i];
+			wlan_hdd_dump_queue_history_state(q_hist_ptr,
+							  q_status_buf,
+							  sizeof(q_status_buf));
+			hdd_nofl_info("%2d%20u%50s%30s%10x  %s",
 				      i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
 				      hdd_action_type_to_string(
@@ -8365,7 +8376,8 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				      hdd_reason_type_to_string(
 					adapter->queue_oper_history[i].
 						netif_reason),
-				      adapter->queue_oper_history[i].pause_map);
+				      adapter->queue_oper_history[i].pause_map,
+				      q_status_buf);
 		}
 	}
 }
