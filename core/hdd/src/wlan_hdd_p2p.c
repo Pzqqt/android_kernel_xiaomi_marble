@@ -993,7 +993,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			 * we are dropping action frame
 			 */
 			hdd_err("adapter for action frame is NULL Macaddr = "
-				MAC_ADDRESS_STR, MAC_ADDR_ARRAY(dest_addr));
+				MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(dest_addr));
 			hdd_debug("Frame Type = %d Frame Length = %d subType = %d",
 				  frame_type, frm_len, sub_type);
 			/*

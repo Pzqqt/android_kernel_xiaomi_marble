@@ -161,8 +161,8 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 
 	iface = &wma->interfaces[cdp_get_vdev_id(soc, vdev)];
-	WMA_LOGD(FL("vdev: %d, peer_mac_addr: "MAC_ADDRESS_STR),
-		add_sta->smesessionId, MAC_ADDR_ARRAY(add_sta->staMac));
+	wma_debug("vdev: %d, peer_mac_addr: "MAC_ADDRESS_STR,
+		add_sta->smesessionId, QDF_MAC_ADDR_ARRAY(add_sta->staMac));
 
 	peer = cdp_peer_find_by_addr_and_vdev(soc,
 			pdev, vdev,

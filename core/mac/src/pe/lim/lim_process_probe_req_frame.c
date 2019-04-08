@@ -284,7 +284,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				frame_len, &probe_req) == QDF_STATUS_E_FAILURE) {
 			pe_err("Parse error ProbeReq, length: %d, SA is: "
 					MAC_ADDRESS_STR, frame_len,
-					MAC_ADDR_ARRAY(mac_hdr->sa));
+					QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			return;
 		}
 		if (session->pePersona == QDF_P2P_GO_MODE) {

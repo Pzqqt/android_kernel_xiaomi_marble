@@ -1504,7 +1504,7 @@ QDF_STATUS lim_process_obss_detection_ind(struct mac_context *mac_ctx,
 	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " MAC_ADDRESS_STR,
 		 obss_detection->vdev_id, obss_detection->reason,
 		 obss_detection->matched_detection_masks,
-		 MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));
+		 QDF_MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));
 
 	session = pe_find_session_by_sme_session_id(mac_ctx,
 						    obss_detection->vdev_id);

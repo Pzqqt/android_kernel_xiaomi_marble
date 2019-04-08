@@ -518,7 +518,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		session_entry->peSessionId, GET_LIM_SYSTEM_ROLE(session_entry),
 		session_entry->limMlmState,
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)),
-		MAC_ADDR_ARRAY(hdr->sa));
+		QDF_MAC_ADDR_ARRAY(hdr->sa));
 
 	beacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (!beacon)
@@ -574,7 +574,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			 * Ignore this and wait until Assoc Failure Timeout
 			 */
 			pe_warn("received AssocRsp from unexpected peer "MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
 		}
@@ -588,7 +588,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			 * Ignore this and wait until Reassoc Failure Timeout.
 			 */
 			pe_warn("received ReassocRsp from unexpected peer "MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
 		}
@@ -939,7 +939,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 	pe_debug("Successfully Associated with BSS " MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY(hdr->sa));
+		 QDF_MAC_ADDR_ARRAY(hdr->sa));
 #ifdef FEATURE_WLAN_ESE
 	if (session_entry->eseContext.tsm.tsmInfo.state)
 		session_entry->eseContext.tsm.tsmMetrics.RoamingCount = 0;
@@ -1045,7 +1045,7 @@ assocReject:
 			MAC_ADDRESS_STR,
 			session_entry->limMlmState,
 			session_entry->peSessionId,
-			assoc_cnf.resultCode, MAC_ADDR_ARRAY(hdr->sa));
+			assoc_cnf.resultCode, QDF_MAC_ADDR_ARRAY(hdr->sa));
 		session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId,

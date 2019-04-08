@@ -641,8 +641,8 @@ static void wma_process_send_addba_req(tp_wma_handle wma_handle,
 	if (QDF_STATUS_SUCCESS != status) {
 		WMA_LOGE(FL("Failed to process WMA_SEND_ADDBA_REQ"));
 	}
-	WMA_LOGD(FL("sent ADDBA req to" MAC_ADDRESS_STR "tid %d buff_size %d"),
-			MAC_ADDR_ARRAY(send_addba->mac_addr),
+	wma_debug("sent ADDBA req to" MAC_ADDRESS_STR "tid %d buff_size %d",
+			QDF_MAC_ADDR_ARRAY(send_addba->mac_addr),
 			send_addba->param.tidno,
 			send_addba->param.buffersize);
 
@@ -3838,8 +3838,8 @@ static int wma_set_base_macaddr_indicate(tp_wma_handle wma_handle,
 				     (uint8_t *)customAddr);
 	if (err)
 		return -EIO;
-	WMA_LOGD("Base MAC Addr: " MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY((*customAddr)));
+	wma_debug("Base MAC Addr: " MAC_ADDRESS_STR,
+		 QDF_MAC_ADDR_ARRAY((*customAddr)));
 
 	return 0;
 }

@@ -735,7 +735,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peer_mac,
 		  " to oem app pid(%d), center freq 1 (%d), center freq 2 (%d),"
 		  " info (0x%x), frequency (%d),reg info 1 (0x%x),"
 		  " reg info 2 (0x%x)",
-		  MAC_ADDR_ARRAY(peer_mac->bytes),
+		  QDF_MAC_ADDR_ARRAY(peer_mac->bytes),
 		  peer_status, peer_capability,
 		  vdev_id, peer_info->peer_chan_info.chan_id,
 		  p_hdd_ctx->oem_pid,

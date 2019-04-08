@@ -997,7 +997,7 @@ static void lim_process_mlm_deauth_ind(struct mac_context *mac_ctx,
 					   &session_id);
 	if (!session) {
 		pe_err("session does not exist for Addr:" MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(deauth_ind->peerMacAddr));
+		       QDF_MAC_ADDR_ARRAY(deauth_ind->peerMacAddr));
 		return;
 	}
 	role = GET_LIM_SYSTEM_ROLE(session);
@@ -3146,7 +3146,7 @@ static void lim_process_switch_channel_join_req(
 				pe_err("Index %d Sessionid: %d Send deauth on "
 				"channel %d to BSSID: "MAC_ADDRESS_STR, apCount,
 				session_entry->peSessionId, session_entry->currentOperChannel,
-				MAC_ADDR_ARRAY(session_entry->pLimMlmJoinReq->bssDescription.
+				QDF_MAC_ADDR_ARRAY(session_entry->pLimMlmJoinReq->bssDescription.
 											bssId));
 
 				lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
@@ -3189,7 +3189,7 @@ static void lim_process_switch_channel_join_req(
 	pe_debug("Sessionid: %d Send Probe req on channel %d ssid:%.*s "
 		"BSSID: " MAC_ADDRESS_STR, session_entry->peSessionId,
 		session_entry->currentOperChannel, ssId.length, ssId.ssId,
-		MAC_ADDR_ARRAY(
+		QDF_MAC_ADDR_ARRAY(
 		session_entry->pLimMlmJoinReq->bssDescription.bssId));
 
 	/*

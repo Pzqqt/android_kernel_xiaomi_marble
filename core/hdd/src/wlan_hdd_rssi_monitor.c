@@ -207,7 +207,7 @@ void hdd_rssi_threshold_breached(hdd_handle_t hdd_handle,
 	hdd_debug("Req Id: %u Current rssi: %d",
 		  data->request_id, data->curr_rssi);
 	hdd_debug("Current BSSID: "MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(data->curr_bssid.bytes));
+		  QDF_MAC_ADDR_ARRAY(data->curr_bssid.bytes));
 
 	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_REQUEST_ID,
 			data->request_id) ||

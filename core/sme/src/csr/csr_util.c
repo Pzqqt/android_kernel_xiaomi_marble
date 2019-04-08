@@ -3694,8 +3694,8 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 	for (i = 0; i < session->NumPmkidCache; i++) {
 		session_pmk = &session->PmkidCacheInfo[i];
 		sme_debug("Matching BSSID: " MAC_ADDRESS_STR " to cached BSSID:"
-			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pmk_cache->BSSID.bytes),
-			MAC_ADDR_ARRAY(session_pmk->BSSID.bytes));
+			MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(pmk_cache->BSSID.bytes),
+			QDF_MAC_ADDR_ARRAY(session_pmk->BSSID.bytes));
 		if (qdf_is_macaddr_equal(&pmk_cache->BSSID,
 					 &session_pmk->BSSID)) {
 			/* match found */
@@ -4275,7 +4275,7 @@ static bool csr_lookup_bkid(struct mac_context *mac, uint32_t sessionId,
 	do {
 		for (Index = 0; Index < pSession->NumBkidCache; Index++) {
 			sme_debug("match BKID " MAC_ADDRESS_STR " to ",
-				MAC_ADDR_ARRAY(pBSSId));
+				QDF_MAC_ADDR_ARRAY(pBSSId));
 			if (!qdf_mem_cmp
 			    (pBSSId, pSession->BkidCacheInfo[Index].BSSID.bytes,
 				    sizeof(struct qdf_mac_addr))) {

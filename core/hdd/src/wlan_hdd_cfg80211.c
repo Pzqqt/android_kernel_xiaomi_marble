@@ -3804,7 +3804,7 @@ static int hdd_set_bssid_prefs(struct hdd_context *hdd_ctx,
 			  tb2[PARAM_ROAM_BSSID],
 			  QDF_MAC_ADDR_SIZE);
 		hdd_debug(MAC_ADDRESS_STR,
-			  MAC_ADDR_ARRAY(roam_params->bssid_favored[i].bytes));
+			  QDF_MAC_ADDR_ARRAY(roam_params->bssid_favored[i].bytes));
 		/* Parse and fetch preference factor*/
 		if (!tb2[PARAM_RSSI_MODIFIER]) {
 			hdd_err("BSSID Preference score failed");
@@ -3890,7 +3890,7 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 			nla_memcpy(roam_params->bssid_avoid_list[i].bytes,
 				   tb2[PARAM_SET_BSSID], QDF_MAC_ADDR_SIZE);
 			hdd_debug(MAC_ADDRESS_STR,
-				  MAC_ADDR_ARRAY(roam_params->bssid_avoid_list[i].bytes));
+				  QDF_MAC_ADDR_ARRAY(roam_params->bssid_avoid_list[i].bytes));
 			i++;
 		}
 	}
@@ -7817,7 +7817,7 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 	nla_memcpy(add_req->mac_address.bytes, tb[PARAM_SRC_MAC_ADDR],
 			QDF_MAC_ADDR_SIZE);
 	hdd_debug("input src mac address: "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
+			QDF_MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
 	if (!qdf_is_macaddr_equal(&add_req->mac_address,
 				  &adapter->mac_addr)) {
@@ -7831,7 +7831,7 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 	}
 	nla_memcpy(dst_addr.bytes, tb[PARAM_DST_MAC_ADDR], QDF_MAC_ADDR_SIZE);
 	hdd_debug("input dst mac address: "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(dst_addr.bytes));
+			QDF_MAC_ADDR_ARRAY(dst_addr.bytes));
 
 	if (!tb[PARAM_IP_PACKET]) {
 		hdd_err("attr ip packet failed");
@@ -7941,7 +7941,8 @@ wlan_hdd_del_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		return -ENOMEM;
 
 	qdf_copy_macaddr(&del_req->mac_address, &adapter->mac_addr);
-	hdd_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
+	hdd_debug(MAC_ADDRESS_STR,
+		  QDF_MAC_ADDR_ARRAY(del_req->mac_address.bytes));
 	del_req->ucPtrnId = pattern_id;
 	hdd_debug("Request Id: %u Pattern id: %d",
 			 request_id, del_req->ucPtrnId);
@@ -8631,7 +8632,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	qdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
 		     QDF_MAC_ADDR_SIZE);
 	hdd_debug("peerMac="MAC_ADDRESS_STR" for device_mode:%d",
-	       MAC_ADDR_ARRAY(peer_mac), adapter->device_mode);
+		  QDF_MAC_ADDR_ARRAY(peer_mac), adapter->device_mode);
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
@@ -8641,7 +8642,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssid.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
 			hdd_err("Not Associated to mac "MAC_ADDRESS_STR,
-			       MAC_ADDR_ARRAY(peer_mac));
+			       QDF_MAC_ADDR_ARRAY(peer_mac));
 			return -EINVAL;
 		}
 
@@ -8664,7 +8665,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 		if (WLAN_MAX_STA_COUNT == sta_id) {
 			hdd_err("No active peer with mac="MAC_ADDRESS_STR,
-			       MAC_ADDR_ARRAY(peer_mac));
+			       QDF_MAC_ADDR_ARRAY(peer_mac));
 			return -EINVAL;
 		}
 
@@ -8674,7 +8675,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		rate_flags = adapter->sta_info[sta_id].rate_flags;
 	} else {
 		hdd_err("Not Associated! with mac "MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(peer_mac));
+		       QDF_MAC_ADDR_ARRAY(peer_mac));
 		return -EINVAL;
 	}
 
@@ -14256,7 +14257,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				       QDF_MAC_ADDR_SIZE);
 				pr_info("wlan: Generated HotSpot BSSID "
 					MAC_ADDRESS_STR "\n",
-					MAC_ADDR_ARRAY(ndev->dev_addr));
+					QDF_MAC_ADDR_ARRAY(ndev->dev_addr));
 			}
 
 			hdd_set_ap_ops(adapter->dev);
@@ -15052,8 +15053,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     params->key, params->key_len);
 
 		hdd_debug("Set key for peerMac "MAC_ADDRESS_STR" direction %d",
-		       MAC_ADDR_ARRAY(set_key.peerMac.bytes),
-		       set_key.keyDirection);
+			  QDF_MAC_ADDR_ARRAY(set_key.peerMac.bytes),
+			  set_key.keyDirection);
 
 		/* The supplicant may attempt to set the PTK once
 		 * pre-authentication is done. Save the key in the
@@ -15106,7 +15107,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			qdf_set_macaddr_broadcast(&set_key.peerMac);
 
 			hdd_debug("Set key peerMac "MAC_ADDRESS_STR" direction %d",
-			       MAC_ADDR_ARRAY(set_key.peerMac.bytes),
+			       QDF_MAC_ADDR_ARRAY(set_key.peerMac.bytes),
 			       set_key.keyDirection);
 
 			status = sme_roam_set_key(mac_handle,
@@ -15606,7 +15607,7 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 		hdd_err("BSS not present");
 	} else {
 		hdd_debug("cfg80211_unlink_bss called for BSSID "
-			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(bssid));
+			MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(bssid));
 		cfg80211_unlink_bss(wiphy, bss);
 		/* cfg80211_get_bss get bss with ref count so release it */
 		cfg80211_put_bss(wiphy, bss);
@@ -15773,7 +15774,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 		bss_data.per_chain_rssi[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
 	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u seq %d",
-		  MAC_ADDR_ARRAY(bss_data.mgmt->bssid),
+		  QDF_MAC_ADDR_ARRAY(bss_data.mgmt->bssid),
 		  bss_data.chan->center_freq, (int)(bss_data.rssi / 100),
 		  bss_desc->timeStamp[0], ((bss_desc->seq_ctrl.seqNumHi <<
 		  HIGH_SEQ_NUM_OFFSET) | bss_desc->seq_ctrl.seqNumLo));
@@ -15846,7 +15847,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+	hdd_info(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 	cfg80211_pmksa_candidate_notify(dev, index,
 					roam_info->bssid.bytes,
 					preauth, GFP_KERNEL);
@@ -15886,7 +15887,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 	wrqu.data.length = scnprintf(metrics_notification,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_INIT " MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
@@ -15927,7 +15928,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 
 	scnprintf(metrics_notification, sizeof(metrics_notification),
 		  "QCOM: LFR_PREAUTH_STATUS " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+		  QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	if (1 == preauth_status)
 		strlcat(metrics_notification, " true",
@@ -15979,7 +15980,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_HANDOVER "
 				     MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(roam_info->bssid.bytes));
+				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
@@ -18161,7 +18162,7 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 
 	if (bssid && channel && req->prev_bssid) {
 		hdd_debug("REASSOC Attempt on channel %d to " MAC_ADDRESS_STR,
-			  channel, MAC_ADDR_ARRAY(bssid));
+			  channel, QDF_MAC_ADDR_ARRAY(bssid));
 		/*
 		 * Save BSSID in a separate variable as
 		 * roam_profile's BSSID is getting zeroed out in the
@@ -18320,7 +18321,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	if (bssid && hdd_get_adapter_by_macaddr(hdd_ctx, (uint8_t *)bssid)) {
 		hdd_err("adapter exist with same mac address " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(bssid));
+			QDF_MAC_ADDR_ARRAY(bssid));
 		return -EINVAL;
 	}
 
@@ -19503,7 +19504,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 
 					hdd_debug("Delete STA with MAC::"
 						  MAC_ADDRESS_STR,
-					       MAC_ADDR_ARRAY(mac));
+					       QDF_MAC_ADDR_ARRAY(mac));
 
 					if (hdd_ctx->dev_dfs_cac_status ==
 							DFS_CAC_IN_PROGRESS)
@@ -19535,7 +19536,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_debug("Skip DEL STA as this is not used::"
 					  MAC_ADDRESS_STR,
-				       MAC_ADDR_ARRAY(mac));
+				       QDF_MAC_ADDR_ARRAY(mac));
 				return -ENOENT;
 			}
 
@@ -19543,14 +19544,14 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			    true) {
 				hdd_debug("Skip DEL STA as deauth is in progress::"
 					  MAC_ADDRESS_STR,
-					  MAC_ADDR_ARRAY(mac));
+					  QDF_MAC_ADDR_ARRAY(mac));
 				return -ENOENT;
 			}
 
 			adapter->sta_info[sta_id].is_deauth_in_progress = true;
 
 			hdd_debug("ucast, Delete STA with MAC:" MAC_ADDRESS_STR,
-				  MAC_ADDR_ARRAY(mac));
+				  QDF_MAC_ADDR_ARRAY(mac));
 
 			/* Case: SAP in ACS selected DFS ch and client connected
 			 * Now Radar detected. Then if random channel is another
@@ -19574,7 +19575,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					false;
 				hdd_debug("STA removal failed for ::"
 					  MAC_ADDRESS_STR,
-				       MAC_ADDR_ARRAY(mac));
+				       QDF_MAC_ADDR_ARRAY(mac));
 				return -ENOENT;
 			}
 			qdf_status = qdf_wait_for_event_completion(
@@ -19723,7 +19724,7 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	set = params->sta_flags_set;
 
 	hdd_debug("mask 0x%x set 0x%x " MAC_ADDRESS_STR, mask, set,
-		MAC_ADDR_ARRAY(mac));
+		  QDF_MAC_ADDR_ARRAY(mac));
 
 	if (mask & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
 		if (set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
@@ -19905,7 +19906,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 	if (pmksa->bssid) {
 		hdd_debug("%s PMKSA for " MAC_ADDRESS_STR,
 			  is_delete ? "Delete" : "Set",
-			  MAC_ADDR_ARRAY(pmksa->bssid));
+			  QDF_MAC_ADDR_ARRAY(pmksa->bssid));
 		qdf_mem_copy(pmk_cache->BSSID.bytes,
 			     pmksa->bssid, QDF_MAC_ADDR_SIZE);
 	} else {
@@ -19962,7 +19963,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 
 	hdd_debug("%s PMKSA for " MAC_ADDRESS_STR, is_delete ? "Delete" : "Set",
-	MAC_ADDR_ARRAY(pmksa->bssid));
+		  QDF_MAC_ADDR_ARRAY(pmksa->bssid));
 	qdf_mem_copy(pmk_cache->BSSID.bytes,
 				pmksa->bssid, QDF_MAC_ADDR_SIZE);
 
@@ -20131,7 +20132,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	if (QDF_STATUS_SUCCESS !=
 	    wlan_hdd_del_pmksa_cache(adapter, &pmk_cache)) {
 		hdd_err("Failed to delete PMKSA for " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(pmksa->bssid));
+		       QDF_MAC_ADDR_ARRAY(pmksa->bssid));
 		status = -EINVAL;
 	}
 
@@ -20662,7 +20663,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			for (i = 0; i < params->n_acl_entries; i++) {
 				hdd_debug("** Add ACL MAC entry %i in WhiletList :"
 					MAC_ADDRESS_STR, i,
-					MAC_ADDR_ARRAY(
+					QDF_MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
 				qdf_mem_copy(&config->accept_mac[i],
@@ -20674,7 +20675,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			for (i = 0; i < params->n_acl_entries; i++) {
 				hdd_debug("** Add ACL MAC entry %i in BlackList :"
 					MAC_ADDRESS_STR, i,
-					MAC_ADDR_ARRAY(
+					QDF_MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
 				qdf_mem_copy(&config->deny_mac[i],

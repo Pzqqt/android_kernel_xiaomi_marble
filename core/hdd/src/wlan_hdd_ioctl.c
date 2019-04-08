@@ -1723,7 +1723,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 		}
 
 		hdd_debug("MAC addr " MAC_ADDRESS_STR,
-			  MAC_ADDR_ARRAY(req->mac_addr.bytes));
+			  QDF_MAC_ADDR_ARRAY(req->mac_addr.bytes));
 
 		in_ptr = strpbrk(in_ptr, " ");
 
@@ -5769,8 +5769,8 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 		hdd_debug("Device mode %d max tx power %d selfMac: "
 			  MAC_ADDRESS_STR " bssId: " MAC_ADDRESS_STR,
 			  adapter->device_mode, tx_power,
-			  MAC_ADDR_ARRAY(selfmac.bytes),
-			  MAC_ADDR_ARRAY(bssid.bytes));
+			  QDF_MAC_ADDR_ARRAY(selfmac.bytes),
+			  QDF_MAC_ADDR_ARRAY(bssid.bytes));
 
 		status = sme_set_max_tx_power(hdd_ctx->mac_handle,
 					      bssid, selfmac, tx_power);
@@ -6221,7 +6221,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 				hdd_debug("%s RX filter : addr ="
 				    MAC_ADDRESS_STR,
 				    action ? "setting" : "clearing",
-				    MAC_ADDR_ARRAY(filter->multicastAddr[j].bytes));
+				    QDF_MAC_ADDR_ARRAY(filter->multicastAddr[j].bytes));
 				j++;
 			}
 			if (j == SIR_MAX_NUM_MULTICAST_ADDRESS)

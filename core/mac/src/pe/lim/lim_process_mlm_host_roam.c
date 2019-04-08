@@ -74,7 +74,8 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 
 	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " MAC_ADDRESS_STR,
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
-		session->limMlmState, MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
+		session->limMlmState,
+		QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 
 	if (LIM_IS_AP_ROLE(session) ||
 		(session->limMlmState !=
@@ -87,7 +88,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 
 		pe_warn("unexpect msg state: %X role: %d MAC" MAC_ADDRESS_STR,
 			session->limMlmState, GET_LIM_SYSTEM_ROLE(session),
-			MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
+			QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
 		reassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;

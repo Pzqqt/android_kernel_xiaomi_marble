@@ -686,7 +686,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 			return 0;
 		hdd_err("%s adapter exist with same address " MAC_ADDRESS_STR,
 			adapter_temp->dev->name,
-			MAC_ADDR_ARRAY(mac_addr.bytes));
+			QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
 		return -EINVAL;
 	}
 
@@ -706,7 +706,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	}
 
 	hdd_info("Changing MAC to " MAC_ADDRESS_STR " of interface %s ",
-		 MAC_ADDR_ARRAY(mac_addr.bytes),
+		 QDF_MAC_ADDR_ARRAY(mac_addr.bytes),
 		 dev->name);
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
@@ -2128,7 +2128,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		       &sap_event->sapevt.sapStationMICFailureEvent.
 		       staMac, QDF_MAC_ADDR_SIZE);
 		hdd_debug("MIC MAC " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(msg.src_addr.sa_data));
+			  QDF_MAC_ADDR_ARRAY(msg.src_addr.sa_data));
 		if (sap_event->sapevt.sapStationMICFailureEvent.
 		    multicast == true)
 			msg.flags = IW_MICFAILURE_GROUP;
@@ -2162,7 +2162,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		event = &sap_event->sapevt.sapStationAssocReassocCompleteEvent;
 		if (eSAP_STATUS_FAILURE == event->status) {
 			hdd_info("assoc failure: " MAC_ADDRESS_STR,
-				 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+				 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 			break;
 		}
 
@@ -2172,7 +2172,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		memcpy(wrqu.addr.sa_data,
 		       &event->staMac, QDF_MAC_ADDR_SIZE);
 		hdd_info("associated " MAC_ADDRESS_STR,
-			 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
 		if ((eCSR_ENCRYPT_TYPE_NONE == ap_ctx->encryption_type) ||
@@ -2194,8 +2194,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					  MAC_ADDRESS_STR "", qdf_status,
-				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+					MAC_ADDRESS_STR "", qdf_status,
+					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		} else {
 			qdf_status = hdd_softap_register_sta(
 						adapter,
@@ -2207,8 +2207,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					  MAC_ADDRESS_STR "", qdf_status,
-				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+					MAC_ADDRESS_STR "", qdf_status,
+					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
 		sta_id = event->staId;
@@ -2326,7 +2326,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			cache_stainfo->disassoc_ts = qdf_system_ticks();
 		}
 		hdd_info(" disassociated " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -5475,7 +5475,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 #endif
 
 	hdd_debug("SOftAP macaddress : " MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
+		  QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 	hdd_debug("ssid =%s, beaconint=%d, channel=%d",
 	       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,
 	       (int)config->channel);

@@ -1756,7 +1756,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 					pe_debug("bssId"
 						MAC_ADDRESS_STR
 						" ctWin=%d oppPsFlag=%d",
-						MAC_ADDR_ARRAY(
+						QDF_MAC_ADDR_ARRAY(
 							session_entry->bssId),
 						session_entry->p2pGoPsUpdate.ctWin,
 						session_entry->p2pGoPsUpdate.oppPsFlag);

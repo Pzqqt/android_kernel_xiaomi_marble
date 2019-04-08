@@ -597,11 +597,11 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGD("%s: WMA --> WMI_PEER_SET_PARAM triggered by DHCP, msgType=%s, device_mode=%d, macAddr=" MAC_ADDRESS_STR,
-		__func__, ta_dhcp_ind->msgType == WMA_DHCP_START_IND ?
+	wma_debug("WMA --> WMI_PEER_SET_PARAM triggered by DHCP, msgType=%s, device_mode=%d, macAddr=" MAC_ADDRESS_STR,
+		ta_dhcp_ind->msgType == WMA_DHCP_START_IND ?
 		"WMA_DHCP_START_IND" : "WMA_DHCP_STOP_IND",
 		ta_dhcp_ind->device_mode,
-		MAC_ADDR_ARRAY(ta_dhcp_ind->peerMacAddr.bytes));
+		QDF_MAC_ADDR_ARRAY(ta_dhcp_ind->peerMacAddr.bytes));
 
 	/* fill in values */
 	peer_set_param_fp.vdev_id = vdev_id;
@@ -2323,8 +2323,8 @@ static void wma_wow_parse_data_pkt(t_wma_handle *wma,
 
 	src_mac = data + QDF_NBUF_SRC_MAC_OFFSET;
 	dest_mac = data + QDF_NBUF_DEST_MAC_OFFSET;
-	WMA_LOGI("Src_mac: " MAC_ADDRESS_STR ", Dst_mac: " MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY(src_mac), MAC_ADDR_ARRAY(dest_mac));
+	wma_info("Src_mac: " MAC_ADDRESS_STR ", Dst_mac: " MAC_ADDRESS_STR,
+		 QDF_MAC_ADDR_ARRAY(src_mac), QDF_MAC_ADDR_ARRAY(dest_mac));
 
 	wma_wow_inc_wake_lock_stats_by_dst_addr(wma, vdev_id, dest_mac);
 
@@ -2414,9 +2414,9 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 		uint8_t to_from_ds, frag_num;
 		uint32_t seq_num;
 
-		WMA_LOGE("RA: " MAC_ADDRESS_STR " TA: " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(wh->i_addr1),
-			MAC_ADDR_ARRAY(wh->i_addr2));
+		wma_err("RA: " MAC_ADDRESS_STR " TA: " MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_ARRAY(wh->i_addr1),
+			QDF_MAC_ADDR_ARRAY(wh->i_addr2));
 
 		WMA_LOGE("TO_DS: %u, FROM_DS: %u",
 			wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
@@ -2426,23 +2426,23 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 
 		switch (to_from_ds) {
 		case IEEE80211_FC1_DIR_NODS:
-			WMA_LOGE("BSSID: " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(wh->i_addr3));
+			wma_err("BSSID: " MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_TODS:
-			WMA_LOGE("DA: " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(wh->i_addr3));
+			wma_err("DA: " MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
-			WMA_LOGE("SA: " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(wh->i_addr3));
+			wma_err("SA: " MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
 			if (buf_len >= sizeof(struct ieee80211_frame_addr4))
-				WMA_LOGE("DA: " MAC_ADDRESS_STR " SA: "
+				wma_err("DA: " MAC_ADDRESS_STR " SA: "
 					MAC_ADDRESS_STR,
-					MAC_ADDR_ARRAY(wh->i_addr3),
-					MAC_ADDR_ARRAY(wh->i_addr4));
+					QDF_MAC_ADDR_ARRAY(wh->i_addr3),
+					QDF_MAC_ADDR_ARRAY(wh->i_addr4));
 			break;
 		}
 
@@ -4079,9 +4079,9 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		restore_last_peer = cdp_peer_is_vdev_restore_last_peer(
 						soc, peer);
 
-		WMA_LOGD("%s: calling wma_remove_peer for peer " MAC_ADDRESS_STR
-			 " vdevId: %d", __func__,
-			 MAC_ADDR_ARRAY(peer_mac_addr),
+		wma_debug("calling wma_remove_peer for peer " MAC_ADDRESS_STR
+			 " vdevId: %d",
+			 QDF_MAC_ADDR_ARRAY(peer_mac_addr),
 			 peer_state->vdev_id);
 		qdf_status = wma_remove_peer(wma_handle, peer_mac_addr,
 					     peer_state->vdev_id, peer, false);
@@ -5472,7 +5472,7 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	qdf_mem_zero(&chain_rssi_result, sizeof(chain_rssi_result));
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->macaddr, macaddr);
-	WMA_LOGD(FL("macaddr: " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(macaddr));
+	wma_debug("macaddr: " MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(macaddr));
 
 	WMA_LOGD(FL("num_chains_valid: %d"), event->num_chains_valid);
 	chain_rssi_result.num_chains_valid = event->num_chains_valid;

@@ -173,7 +173,7 @@ static QDF_STATUS csr_sae_callback(struct mac_context *mac_ctx,
 
 	sme_debug("vdev_id %d "MAC_ADDRESS_STR"",
 		sae_info->vdev_id,
-		MAC_ADDR_ARRAY(sae_info->peer_mac_addr.bytes));
+		QDF_MAC_ADDR_ARRAY(sae_info->peer_mac_addr.bytes));
 
 	session_id = sae_info->vdev_id;
 	if (session_id == WLAN_UMAC_VDEV_ID_MAX)
@@ -1976,7 +1976,7 @@ static void csr_send_ese_adjacent_ap_rep_ind(struct mac_context *mac,
 	roamTS2 = qdf_mc_timer_get_system_time();
 	roam_info->tsmRoamDelay = roamTS2 - pSession->roamTS1;
 	sme_debug("Bssid(" MAC_ADDRESS_STR ") Roaming Delay(%u ms)",
-		MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
+		QDF_MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
 		roam_info->tsmRoamDelay);
 
 	pe_session = pe_find_session_by_bssid(mac,
@@ -3644,7 +3644,7 @@ QDF_STATUS csr_roam_issue_disassociate(struct mac_context *mac, uint32_t session
 	}
 
 	sme_debug("CSR Attempting to Disassociate Bssid=" MAC_ADDRESS_STR
-		   " subState: %s reason: %d", MAC_ADDR_ARRAY(bssId.bytes),
+		   " subState: %s reason: %d", QDF_MAC_ADDR_ARRAY(bssId.bytes),
 		mac_trace_getcsr_roam_sub_state(NewSubstate), reasonCode);
 
 	csr_roam_substate_change(mac, NewSubstate, sessionId);
@@ -3770,7 +3770,7 @@ QDF_STATUS csr_roam_issue_deauth(struct mac_context *mac, uint32_t sessionId,
 			     sizeof(struct qdf_mac_addr));
 	}
 	sme_debug("CSR Attempting to Deauth Bssid= " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(bssId.bytes));
+		  QDF_MAC_ADDR_ARRAY(bssId.bytes));
 	csr_roam_substate_change(mac, NewSubstate, sessionId);
 
 	status =
@@ -3781,7 +3781,7 @@ QDF_STATUS csr_roam_issue_deauth(struct mac_context *mac, uint32_t sessionId,
 	else {
 		sme_err("csr_send_mb_deauth_req_msg failed with status %d Session ID: %d"
 			MAC_ADDRESS_STR, status, sessionId,
-			MAC_ADDR_ARRAY(bssId.bytes));
+			QDF_MAC_ADDR_ARRAY(bssId.bytes));
 	}
 
 	return status;
@@ -7939,7 +7939,7 @@ static void csr_roam_print_candidate_aps(tScanResultHandle results)
 		bss_desc = GET_BASE_ADDR(entry,
 				struct tag_csrscan_result, Link);
 		sme_debug("BSSID" MAC_ADDRESS_STR "score is %d",
-			  MAC_ADDR_ARRAY(bss_desc->Result.BssDescriptor.bssId),
+			  QDF_MAC_ADDR_ARRAY(bss_desc->Result.BssDescriptor.bssId),
 			  bss_desc->bss_score);
 
 		entry = csr_ll_next(&bss_list->List, entry,
@@ -8799,7 +8799,7 @@ static QDF_STATUS csr_roam_issue_join(struct mac_context *mac, uint32_t sessionI
 	QDF_STATUS status;
 
 	sme_debug("Attempting to Join Bssid= " MAC_ADDRESS_STR,
-		MAC_ADDR_ARRAY(pSirBssDesc->bssId));
+		QDF_MAC_ADDR_ARRAY(pSirBssDesc->bssId));
 
 	/* Set the roaming substate to 'join attempt'... */
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_JOIN_REQ, sessionId);
@@ -9499,7 +9499,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "LFR2DBG: preauthed bss_node->pBssDescription BSSID"\
 		  MAC_ADDRESS_STR",Ch:%d",
-		  MAC_ADDR_ARRAY(bss_node->pBssDescription->bssId),
+		  QDF_MAC_ADDR_ARRAY(bss_node->pBssDescription->bssId),
 		  (int)bss_node->pBssDescription->channelId);
 
 	status = policy_mgr_handle_conc_multiport(mac->psoc, session_id,
@@ -10878,7 +10878,7 @@ static QDF_STATUS csr_send_reset_ap_caps_changed(struct mac_context *mac,
 		qdf_copy_macaddr(&pMsg->bssId, bssId);
 		sme_debug(
 			"CSR reset caps change for Bssid= " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(pMsg->bssId.bytes));
+			QDF_MAC_ADDR_ARRAY(pMsg->bssId.bytes));
 		status = umac_send_mb_message_to_mac(pMsg);
 	} else {
 		sme_err("Memory allocation failed");
@@ -11290,7 +11290,7 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 				&pDisassocInd->bssid, &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Session Id not found for BSSID "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(pDisassocInd->bssid.bytes));
+			QDF_MAC_ADDR_ARRAY(pDisassocInd->bssid.bytes));
 		qdf_mem_free(cmd);
 		return;
 	}
@@ -11302,7 +11302,7 @@ csr_roam_chk_lnk_disassoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 
 	sme_err("DISASSOCIATION from peer =" MAC_ADDRESS_STR "reason: %d status: %d session: %d",
-		MAC_ADDR_ARRAY(pDisassocInd->peer_macaddr.bytes),
+		QDF_MAC_ADDR_ARRAY(pDisassocInd->peer_macaddr.bytes),
 		pDisassocInd->reasonCode,
 		pDisassocInd->statusCode, sessionId);
 	/*
@@ -12135,7 +12135,7 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 			"CSR: setkey command failed(err=%d) PeerMac "
 			MAC_ADDRESS_STR,
 			pRsp->statusCode,
-			MAC_ADDR_ARRAY(pRsp->peer_macaddr.bytes));
+			QDF_MAC_ADDR_ARRAY(pRsp->peer_macaddr.bytes));
 	}
 	/* keeping roam_id = 0 as nobody is using roam_id for set_key */
 	csr_roam_call_callback(mac_ctx, sessionId, roam_info,
@@ -14767,7 +14767,7 @@ static void csr_update_sae_config(struct join_req *csr_join_req,
 
 	sme_debug("pmk_cached %d for BSSID=" MAC_ADDRESS_STR,
 		csr_join_req->sae_pmk_cached,
-		MAC_ADDR_ARRAY(csr_join_req->bssDescription.bssId));
+		QDF_MAC_ADDR_ARRAY(csr_join_req->bssDescription.bssId));
 }
 #else
 static void csr_update_sae_config(struct join_req *csr_join_req,
@@ -15060,7 +15060,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			     sizeof(tSirMacAddr));
 		sme_info("Connecting to ssid:%.*s bssid: "MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
 			 csr_join_req->ssId.length, csr_join_req->ssId.ssId,
-			 MAC_ADDR_ARRAY(pBssDescription->bssId),
+			 QDF_MAC_ADDR_ARRAY(pBssDescription->bssId),
 			 pBssDescription->rssi, pBssDescription->channelId,
 			 mac->scan.countryCodeCurrent[0],
 			 mac->scan.countryCodeCurrent[1]);
@@ -15933,9 +15933,9 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 		pMsg->length = len;
 
 		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
-		sme_debug(
-			"CSR Attempting to change BI for Bssid= "
-			   MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pMsg->bssid.bytes));
+		sme_debug("CSR Attempting to change BI for Bssid= "
+			  MAC_ADDRESS_STR,
+			  QDF_MAC_ADDR_ARRAY(pMsg->bssid.bytes));
 		pMsg->sessionId = sessionId;
 		sme_debug("session %d BeaconInterval %d",
 			sessionId,
@@ -15977,7 +15977,8 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		sme_debug(
 			"CSR Attempting to set HT20/40 mode for Bssid= "
-			   MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pMsg->bssid.bytes));
+			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_ARRAY(pMsg->bssid.bytes));
 		pMsg->sessionId = sessionId;
 		sme_debug("  session %d HT20/40 mode %d",
 			sessionId, cbMode);
@@ -16615,7 +16616,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(struct mac_context *mac,
 
 	sme_debug(
 		"Send WMA_ADD_STA_SELF_REQ for selfMac=" MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY(add_sta_self_req->self_mac_addr));
+		 QDF_MAC_ADDR_ARRAY(add_sta_self_req->self_mac_addr));
 	status = scheduler_post_message(QDF_MODULE_ID_SME,
 					QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_WMA, &msg);
@@ -16650,7 +16651,7 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Session %d exists with mac address " MAC_ADDRESS_STR,
 			existing_session_id,
-			MAC_ADDR_ARRAY(session_param->self_mac_addr));
+			QDF_MAC_ADDR_ARRAY(session_param->self_mac_addr));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -17000,7 +17001,7 @@ static void csr_roam_link_up(struct mac_context *mac, struct qdf_mac_addr bssid)
 	 */
 
 	sme_debug("WLAN link UP with AP= " MAC_ADDRESS_STR,
-		MAC_ADDR_ARRAY(bssid.bytes));
+		QDF_MAC_ADDR_ARRAY(bssid.bytes));
 	/* Indicate the neighbor roal algorithm about the connect indication */
 	csr_roam_get_session_id_from_bssid(mac, &bssid,
 					   &sessionId);
@@ -19369,7 +19370,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"Blacklist Bssid:"MAC_ADDRESS_STR")",
-			MAC_ADDR_ARRAY(roam_params_dst->bssid_avoid_list[i].
+			QDF_MAC_ADDR_ARRAY(roam_params_dst->bssid_avoid_list[i].
 				bytes));
 	}
 	for (i = 0; i < roam_params_dst->num_ssid_allowed_list; i++) {
@@ -19381,7 +19382,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	for (i = 0; i < roam_params_dst->num_bssid_favored; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"Preferred Bssid:"MAC_ADDRESS_STR") score: %d",
-			MAC_ADDR_ARRAY(roam_params_dst->bssid_favored[i].bytes),
+			QDF_MAC_ADDR_ARRAY(roam_params_dst->bssid_favored[i].bytes),
 			roam_params_dst->bssid_favored_factor[i]);
 	}
 

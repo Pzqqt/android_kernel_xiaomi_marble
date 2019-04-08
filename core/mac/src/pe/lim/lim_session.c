@@ -443,7 +443,7 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 		filter->num_sta_sessions++;
 		sir_copy_mac_addr(filter->sta_bssid[session_id], *bssid);
 		pe_debug("Set filter for STA Session %d bssid "MAC_ADDRESS_STR,
-			session_id, MAC_ADDR_ARRAY(*bssid));
+			session_id, QDF_MAC_ADDR_ARRAY(*bssid));
 	} else if (eSIR_IBSS_MODE == bss_type) {
 		if (!ibss_ssid) {
 			pe_err("IBSS Type with NULL SSID");
@@ -640,7 +640,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 		mac->mlme_cfg->obss_ht40.obss_color_collision_offload_enabled;
 
 	pe_debug("Create a new PE session: %d BSSID: "MAC_ADDRESS_STR" Max No of STA: %d",
-		*sessionId, MAC_ADDR_ARRAY(bssid), numSta);
+		*sessionId, QDF_MAC_ADDR_ARRAY(bssid), numSta);
 
 	if (eSIR_INFRA_AP_MODE == bssType || eSIR_IBSS_MODE == bssType) {
 		session_ptr->pSchProbeRspTemplate =
@@ -879,7 +879,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	pe_debug("Trying to delete PE session: %d Opmode: %d BssIdx: %d BSSID: "MAC_ADDRESS_STR,
 		session->peSessionId, session->operMode,
 		session->bssIdx,
-		MAC_ADDR_ARRAY(session->bssId));
+		QDF_MAC_ADDR_ARRAY(session->bssId));
 
 	lim_reset_bcn_probe_filter(mac_ctx, session);
 

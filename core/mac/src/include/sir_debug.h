@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015, 2017-2018 The Linux Foundation. All
+ * Copyright (c) 2011-2012, 2014-2015, 2017-2019 The Linux Foundation. All
  * rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -35,7 +35,6 @@
 #define LOG4    7
 #define LOGD    8
 
-#define MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
 #define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 
 #define pe_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_PE, params)

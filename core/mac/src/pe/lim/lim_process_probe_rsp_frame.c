@@ -129,7 +129,7 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 
 	pe_debug("Rx Probe Response with length = %d from "MAC_ADDRESS_STR,
 		WMA_GET_RX_MPDU_LEN(rx_Packet_info),
-		MAC_ADDR_ARRAY(header->sa));
+		QDF_MAC_ADDR_ARRAY(header->sa));
 
 	/* Validate IE information before processing Probe Response Frame */
 	if (lim_validate_ie_information_in_probe_rsp_frame(mac_ctx,
@@ -144,7 +144,7 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 		FL("Probe Resp Frame Received: BSSID "
 		MAC_ADDRESS_STR " (RSSI %d)"),
-		MAC_ADDR_ARRAY(header->bssId),
+		QDF_MAC_ADDR_ARRAY(header->bssId),
 		(uint) abs((int8_t)WMA_GET_RX_RSSI_NORMALIZED(rx_Packet_info)));
 	/* Get pointer to Probe Response frame body */
 	body = WMA_GET_RX_MPDU_DATA(rx_Packet_info);

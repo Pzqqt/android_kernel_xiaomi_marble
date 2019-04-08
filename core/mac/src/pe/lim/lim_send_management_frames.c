@@ -2245,7 +2245,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		 * 4 bytes each for IV & ICV.
 		 */
 		pe_debug("Sending encrypted auth frame to " MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(peer_addr));
+				QDF_MAC_ADDR_ARRAY(peer_addr));
 
 		body_len = wep_challenge_len + LIM_ENCR_AUTH_INFO_LEN;
 		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
@@ -2258,7 +2258,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		auth_frame->authTransactionSeqNumber,
 		auth_frame->authStatusCode,
 		(auth_frame->authStatusCode == eSIR_MAC_SUCCESS_STATUS),
-		MAC_ADDR_ARRAY(peer_addr));
+		QDF_MAC_ADDR_ARRAY(peer_addr));
 
 	switch (auth_frame->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_1:
@@ -2394,7 +2394,7 @@ alloc_packet:
 		qdf_mem_copy(body, (uint8_t *) auth_frame, body_len);
 
 		pe_debug("Sending Auth seq# 3 to " MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(mac_hdr->da));
+			QDF_MAC_ADDR_ARRAY(mac_hdr->da));
 
 	} else {
 		*((uint16_t *) (body)) =
@@ -2485,7 +2485,7 @@ alloc_packet:
 			auth_frame->authStatusCode,
 			(auth_frame->authStatusCode ==
 				eSIR_MAC_SUCCESS_STATUS),
-			MAC_ADDR_ARRAY(mac_hdr->da));
+			QDF_MAC_ADDR_ARRAY(mac_hdr->da));
 	}
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 			   QDF_TRACE_LEVEL_DEBUG,
@@ -2892,8 +2892,8 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	pe_debug("***Sessionid %d Sending Disassociation frame with "
 		   "reason %u and waitForAck %d to " MAC_ADDRESS_STR " ,From "
 		   MAC_ADDRESS_STR, pe_session->peSessionId, nReason,
-		waitForAck, MAC_ADDR_ARRAY(pMacHdr->da),
-		MAC_ADDR_ARRAY(pe_session->selfMacAddr));
+		waitForAck, QDF_MAC_ADDR_ARRAY(pMacHdr->da),
+		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
@@ -3068,8 +3068,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		       "reason %u and waitForAck %d to " MAC_ADDRESS_STR
 		       " ,From " MAC_ADDRESS_STR,
 		pe_session->peSessionId, nReason, waitForAck,
-		MAC_ADDR_ARRAY(pMacHdr->da),
-		MAC_ADDR_ARRAY(pe_session->selfMacAddr));
+		QDF_MAC_ADDR_ARRAY(pMacHdr->da),
+		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
@@ -3653,7 +3653,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("Send Ext channel Switch to :"MAC_ADDRESS_STR" with swcount %d, swmode %d , newchannel %d newops %d",
-		MAC_ADDR_ARRAY(mac_hdr->da),
+		QDF_MAC_ADDR_ARRAY(mac_hdr->da),
 		frm.ext_chan_switch_ann_action.switch_count,
 		frm.ext_chan_switch_ann_action.switch_mode,
 		frm.ext_chan_switch_ann_action.new_channel,
@@ -3807,7 +3807,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 	}
 	pe_debug("Send frame on channel %d to mac "
 		MAC_ADDRESS_STR, session_entry->currentOperChannel,
-		MAC_ADDR_ARRAY(peer));
+		QDF_MAC_ADDR_ARRAY(peer));
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			session_entry->peSessionId, mac_hdr->fc.subType));

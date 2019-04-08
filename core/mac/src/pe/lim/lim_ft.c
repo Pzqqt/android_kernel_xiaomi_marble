@@ -809,7 +809,7 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 		pAddBssParams->extSetStaKeyParam.staIdx = 0;
 
 		pe_debug("BSSID: " MAC_ADDRESS_STR,
-			       MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));
+			       QDF_MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));
 
 		qdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
 				 &pKeyInfo->bssid);

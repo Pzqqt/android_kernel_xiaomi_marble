@@ -2203,7 +2203,7 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 		pSmeRsp->txRate = peer_info->data_rate;
 
 		WMA_LOGE("peer " MAC_ADDRESS_STR "rssi %d txRate %d",
-			MAC_ADDR_ARRAY(peer_mac),
+			QDF_MAC_ADDR_ARRAY(peer_mac),
 			pSmeRsp->rssi, pSmeRsp->txRate);
 
 		peer_info++;
@@ -3311,10 +3311,10 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
 	WMA_LOGD("%s: RA:" MAC_ADDRESS_STR,
 		 __func__,
-		 MAC_ADDR_ARRAY(rx_inv_msg->ra));
+		 QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
 	WMA_LOGD("%s: TA:" MAC_ADDRESS_STR,
 		 __func__,
-		 MAC_ADDR_ARRAY(rx_inv_msg->ta));
+		 QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
 
 	wma_send_msg(wma, SIR_LIM_RX_INVALID_PEER, (void *)rx_inv_msg, 0);
 

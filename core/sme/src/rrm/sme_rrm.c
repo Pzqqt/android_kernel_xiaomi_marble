@@ -211,7 +211,7 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 				beacon_rep->pBssDescription[i];
 			sme_debug("RRM Result Bssid = " MAC_ADDRESS_STR
 				" chan= %d, rssi = -%d",
-				MAC_ADDR_ARRAY(
+				QDF_MAC_ADDR_ARRAY(
 				beacon_rep->pBssDescription[i]->bssId),
 				beacon_rep->pBssDescription[i]->channelId,
 				beacon_rep->pBssDescription[i]->rssi * (-1));
@@ -358,7 +358,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
 			sme_debug("Bssid"MAC_ADDRESS_STR" Channel: %d Rssi: %d",
-				MAC_ADDR_ARRAY(bss_desc->bssId),
+				QDF_MAC_ADDR_ARRAY(bss_desc->bssId),
 				bss_desc->channelId, (-1) * bss_desc->rssi);
 			bcn_report->numBss++;
 			if (++j >= SIR_BCN_REPORT_MAX_BSS_DESC)
@@ -766,7 +766,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 			&sme_rrm_ctx->sessionBssId, &session_id);
 	if (status != QDF_STATUS_SUCCESS) {
 		sme_err("sme session ID not found for bssid= "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(sme_rrm_ctx->sessionBssId.bytes));
+			QDF_MAC_ADDR_ARRAY(sme_rrm_ctx->sessionBssId.bytes));
 		status = QDF_STATUS_E_FAILURE;
 		goto free_ch_lst;
 	}
@@ -1340,7 +1340,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
 
 		sme_debug("Received neighbor report with Neighbor BSSID: "
 			MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(
+			QDF_MAC_ADDR_ARRAY(
 			       neighbor_rpt->sNeighborBssDescription[i].bssId));
 
 		rrm_calculate_neighbor_ap_roam_score(mac, neighbor_rpt_desc);
@@ -1351,7 +1351,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
 		} else {
 			sme_err("Roam score of BSSID  " MAC_ADDRESS_STR
 				" is 0, Ignoring..",
-				MAC_ADDR_ARRAY(neighbor_rpt->
+				QDF_MAC_ADDR_ARRAY(neighbor_rpt->
 					       sNeighborBssDescription[i].
 					       bssId));
 

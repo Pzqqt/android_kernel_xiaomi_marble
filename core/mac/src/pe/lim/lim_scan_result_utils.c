@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,7 +115,7 @@ lim_collect_bss_description(struct mac_context *mac,
 
 	if (!pBssDescr->beaconInterval) {
 		pe_warn("Beacon Interval is ZERO, making it to default 100 "
-			   MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pHdr->bssId));
+			   MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(pHdr->bssId));
 		pBssDescr->beaconInterval = 100;
 	}
 	/*
@@ -148,7 +148,7 @@ lim_collect_bss_description(struct mac_context *mac,
 	/* SINR no longer reported by HW */
 	pBssDescr->sinr = 0;
 	pe_debug(MAC_ADDRESS_STR " rssi: normalized: %d, absolute: %d",
-		MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
+		QDF_MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
 		pBssDescr->rssi_raw);
 
 	pBssDescr->received_time = (uint64_t)qdf_mc_timer_get_system_time();

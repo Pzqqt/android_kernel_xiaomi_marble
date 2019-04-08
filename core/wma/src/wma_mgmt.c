@@ -3992,8 +3992,9 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		rx_pkt->pkt_meta.mpdu_data_ptr =
 		rx_pkt->pkt_meta.mpdu_hdr_ptr +
 		rx_pkt->pkt_meta.mpdu_hdr_len;
-		WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u"),
-		    MAC_ADDR_ARRAY(wh->i_addr3), rx_pkt->pkt_meta.tsf_delta);
+		wma_debug("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u",
+			  QDF_MAC_ADDR_ARRAY(wh->i_addr3),
+			  rx_pkt->pkt_meta.tsf_delta);
 	} else {
 		if (QDF_IS_ADDR_BROADCAST(wh->i_addr1) ||
 		    IEEE80211_IS_MULTICAST(wh->i_addr1)) {
@@ -4176,9 +4177,9 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	 * If the mpdu_data_len is greater than Max (2k), drop the frame
 	 */
 	if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
-		WMA_LOGE("Data Len %d greater than max, dropping frame from "MAC_ADDRESS_STR,
+		wma_err("Data Len %d greater than max, dropping frame from "MAC_ADDRESS_STR,
 			 rx_pkt->pkt_meta.mpdu_data_len,
-			 MAC_ADDR_ARRAY(wh->i_addr3));
+			 QDF_MAC_ADDR_ARRAY(wh->i_addr3));
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
@@ -4225,8 +4226,8 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		if (mgmt_rx_params->buf_len <=
 			(sizeof(struct ieee80211_frame) +
 			offsetof(struct wlan_bcn_frame, ie))) {
-			WMA_LOGD("Dropping frame from "MAC_ADDRESS_STR,
-				 MAC_ADDR_ARRAY(wh->i_addr3));
+			wma_debug("Dropping frame from "MAC_ADDRESS_STR,
+				 QDF_MAC_ADDR_ARRAY(wh->i_addr3));
 			cds_pkt_return_packet(rx_pkt);
 			return -EINVAL;
 		}

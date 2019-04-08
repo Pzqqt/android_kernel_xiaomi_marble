@@ -8879,7 +8879,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
 		hdd_debug("Dest MAC address: "MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
+		       QDF_MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
 		break;
 	}
 
