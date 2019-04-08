@@ -616,9 +616,6 @@ qdf_export_symbol(wlan_objmgr_peer_get_ref);
 QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 						 wlan_objmgr_ref_dbgid id)
 {
-
-	uint8_t *macaddr;
-
 	if (!peer) {
 		obj_mgr_err("peer obj is NULL for %d", id);
 		QDF_ASSERT(0);
@@ -626,15 +623,18 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 	}
 
 	wlan_peer_obj_lock(peer);
-	macaddr = wlan_peer_get_macaddr(peer);
 	if (peer->obj_state != WLAN_OBJ_STATE_CREATED) {
 		wlan_peer_obj_unlock(peer);
 		if (peer->peer_objmgr.print_cnt++ <=
-				WLAN_OBJMGR_RATELIMIT_THRESH)
+				WLAN_OBJMGR_RATELIMIT_THRESH) {
+			uint8_t *macaddr;
+
+			macaddr = wlan_peer_get_macaddr(peer);
 			obj_mgr_warn(
 			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
 			QDF_MAC_ADDR_ARRAY(macaddr),
-				peer->obj_state);
+			peer->obj_state);
+		}
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -650,10 +650,10 @@ static void
 wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
 				      wlan_objmgr_ref_dbgid id)
 {
-	uint8_t *macaddr;
-
-	macaddr = wlan_peer_get_macaddr(peer);
 	if (!qdf_atomic_read(&peer->peer_objmgr.ref_id_dbg[id])) {
+		uint8_t *macaddr;
+
+		macaddr = wlan_peer_get_macaddr(peer);
 		obj_mgr_err(
 		"peer(%02x:%02x:%02x:%02x:%02x:%02x) ref was not taken by %d",
 			macaddr[0], macaddr[1], macaddr[2],
@@ -674,17 +674,16 @@ wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
 void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 				  wlan_objmgr_ref_dbgid id)
 {
-	uint8_t *macaddr;
-
 	if (!peer) {
 		obj_mgr_err("peer obj is NULL for %d", id);
 		QDF_ASSERT(0);
 		return;
 	}
 
-	macaddr = wlan_peer_get_macaddr(peer);
-
 	if (!qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
+		uint8_t *macaddr;
+
+		macaddr = wlan_peer_get_macaddr(peer);
 		obj_mgr_err("peer(%02x:%02x:%02x:%02x:%02x:%02x) ref cnt is 0",
 				macaddr[0], macaddr[1], macaddr[2],
 				macaddr[3], macaddr[4], macaddr[5]);
