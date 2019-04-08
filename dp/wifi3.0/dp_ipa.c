@@ -803,6 +803,7 @@ static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
 	/* WBM Tail Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx) =
 		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(tx) = true;
 
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(tx) =
 		qdf_mem_get_dma_addr(soc->osdev,
@@ -814,6 +815,7 @@ static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
 	/* TCL Head Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
 		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(tx) = true;
 
 	QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
 		ipa_res->tx_num_alloc_buffer;
@@ -856,6 +858,7 @@ static void dp_ipa_wdi_rx_params(struct dp_soc *soc,
 	/* REO Tail Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) =
 		soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(rx) = true;
 
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(rx) =
 		qdf_mem_get_dma_addr(soc->osdev,
@@ -867,6 +870,7 @@ static void dp_ipa_wdi_rx_params(struct dp_soc *soc,
 	/* FW Head Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) =
 		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(rx) = false;
 
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) =
 		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
@@ -898,6 +902,7 @@ dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
 	/* WBM Tail Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(tx_smmu) =
 		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(tx_smmu) = true;
 
 	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(tx_smmu),
 		     &ipa_res->tx_ring.sgtable,
@@ -908,6 +913,7 @@ dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
 	/* TCL Head Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(tx_smmu) =
 		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(tx_smmu) = true;
 
 	QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(tx_smmu) =
 		ipa_res->tx_num_alloc_buffer;
@@ -949,6 +955,7 @@ dp_ipa_wdi_rx_smmu_params(struct dp_soc *soc,
 	/* REO Tail Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(rx_smmu) =
 		soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(rx_smmu) = true;
 
 	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(rx_smmu),
 		     &ipa_res->rx_refill_ring.sgtable,
@@ -960,6 +967,7 @@ dp_ipa_wdi_rx_smmu_params(struct dp_soc *soc,
 	/* FW Head Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(rx_smmu) =
 		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(rx_smmu) = false;
 
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) =
 		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;

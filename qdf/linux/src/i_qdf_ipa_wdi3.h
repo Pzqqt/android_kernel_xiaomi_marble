@@ -135,12 +135,16 @@ typedef struct ipa_wdi_pipe_setup_info  __qdf_ipa_wdi_pipe_setup_info_t;
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->transfer_ring_size)
 #define __QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->transfer_ring_doorbell_pa)
+#define __QDF_IPA_WDI_SETUP_INFO_IS_TXR_RN_DB_PCIE_ADDR(txrx)  \
+	(((struct ipa_wdi_pipe_setup_info *)(txrx))->is_txr_rn_db_pcie_addr)
 #define __QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->event_ring_base_pa)
 #define __QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->event_ring_size)
 #define __QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->event_ring_doorbell_pa)
+#define __QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(txrx) \
+	(((struct ipa_wdi_pipe_setup_info *)(txrx))->is_evt_rn_db_pcie_addr)
 #define __QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info *)(txrx))->num_pkt_buffers)
 #define __QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(txrx)	\
@@ -164,12 +168,18 @@ typedef struct ipa_wdi_pipe_setup_info_smmu __qdf_ipa_wdi_pipe_setup_info_smmu_t
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->transfer_ring_size)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_DOORBELL_PA(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->transfer_ring_doorbell_pa)
+#define __QDF_IPA_WDI_SETUP_INFO_SMMU_IS_TXR_RN_DB_PCIE_ADDR(txrx)  \
+	(((struct ipa_wdi_pipe_setup_info_smmu *) \
+	  (txrx))->is_txr_rn_db_pcie_addr)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->event_ring_base)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->event_ring_size)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->event_ring_doorbell_pa)
+#define __QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(txrx) \
+	(((struct ipa_wdi_pipe_setup_info_smmu *) \
+	  (txrx))->is_evt_rn_db_pcie_addr)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(txrx)	\
 	(((struct ipa_wdi_pipe_setup_info_smmu *)(txrx))->num_pkt_buffers)
 #define __QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(txrx)	\
