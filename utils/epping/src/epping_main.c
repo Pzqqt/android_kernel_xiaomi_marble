@@ -198,13 +198,6 @@ static void epping_update_ol_config(void)
 static
 QDF_STATUS epping_bmi_download_fw(struct ol_context *ol_ctx)
 {
-	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
-	if (!ol_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: ol_ctx is NULL", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
 	epping_update_ol_config();
 
 	/* Initialize BMI and Download firmware */
@@ -279,6 +272,13 @@ int epping_enable(struct device *parent_dev, bool rtnl_held)
 	}
 
 	tgt_info = hif_get_target_info_handle(scn);
+
+	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+	if (!ol_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: ol_ctx is NULL", __func__);
+		return A_ERROR;
+	}
 
 	if (epping_bmi_download_fw(ol_ctx) != QDF_STATUS_SUCCESS)
 		return A_ERROR;

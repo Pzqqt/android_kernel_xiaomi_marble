@@ -5903,13 +5903,16 @@ static QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
 	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
 	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
-	if (pdev->mcopy_mode)
+
+	if (pdev->mcopy_mode) {
 		htt_tlv_filter.fp_data_filter = 0;
-	else
+		htt_tlv_filter.mo_data_filter = 0;
+	} else {
 		htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+		htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+	}
 	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
-	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 	htt_tlv_filter.offset_valid = false;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
