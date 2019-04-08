@@ -57,20 +57,12 @@ static QDF_STATUS send_vdev_create_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_vdev_create_cmd *)wmi_buf_data(buf);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->vdev_id = param->vdev_id;
-#else
-	cmd->vdev_id = param->if_id;
-#endif
 	cmd->vdev_type = param->type;
 	cmd->vdev_subtype = param->subtype;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
 	WMI_LOGD("%s: ID = %d Type = %d, Subtype = %d VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x:",
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		  __func__, param->vdev_id, param->type, param->subtype,
-#else
-		  __func__, param->if_id, param->type, param->subtype,
-#endif
 		  macaddr[0], macaddr[1], macaddr[2],
 		  macaddr[3], macaddr[4], macaddr[5]);
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1397,11 +1389,7 @@ static QDF_STATUS send_set_sta_ps_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 	cmd = (wmi_sta_powersave_param_cmd *)wmi_buf_data(buf);
 	cmd->vdev_id = param->vdev_id;
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->param = param->param_id;
-#else
-	cmd->param = param->param;
-#endif
 	cmd->value = param->value;
 
 	return wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
@@ -1532,11 +1520,7 @@ static QDF_STATUS send_vdev_set_param_cmd_non_tlv(wmi_unified_t wmi_handle,
 			return QDF_STATUS_E_FAILURE;
 		}
 		cmd = (wmi_vdev_set_param_cmd *)wmi_buf_data(buf);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 		cmd->vdev_id = param->vdev_id;
-#else
-		cmd->vdev_id = param->if_id;
-#endif
 		cmd->param_id = wmi_handle->soc->vdev_param[param->param_id];
 		cmd->param_value = param->param_value;
 		return wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1565,11 +1549,7 @@ QDF_STATUS send_vdev_sifs_trigger_cmd_non_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_vdev_sifs_trigger_time_cmd *)wmi_buf_data(buf);
-#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
 	cmd->vdev_id = param->vdev_id;
-#else
-	cmd->vdev_id = param->if_id;
-#endif
 	cmd->sifs_trigger_time = param->param_value;
 
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -8956,11 +8936,7 @@ QDF_STATUS send_multiple_vdev_restart_req_cmd_non_tlv(
 	int i;
 	wmi_buf_t buf;
 	wmi_channel *chan_info;
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-	struct channel_param *tchan_info;
-#else
 	struct mlme_channel_param *tchan_info;
-#endif
 	wmi_pdev_multiple_vdev_restart_request_cmd *cmd;
 	uint16_t len = sizeof(*cmd);
 
