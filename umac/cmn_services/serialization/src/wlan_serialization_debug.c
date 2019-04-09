@@ -117,13 +117,11 @@ static void wlan_ser_print_all_history(
 		uint32_t vdev_id)
 {
 	uint8_t idx;
+	uint8_t data_idx;
 	struct ser_history *history_info;
 	struct ser_data *data;
 
 	history_info = &pdev_queue->history;
-
-	if (!history_info->index)
-		return;
 
 	ser_err_no_fl(WLAN_SER_LINE WLAN_SER_LINE);
 	ser_err_no_fl("Queue Commands History");
@@ -131,13 +129,18 @@ static void wlan_ser_print_all_history(
 	ser_err_no_fl(WLAN_SER_HISTORY_HEADER);
 	ser_err_no_fl(WLAN_SER_LINE WLAN_SER_LINE);
 
-	for (idx = 0; idx < history_info->index; idx++) {
-		data = &history_info->data[idx];
+	for (idx = 0; idx < SER_MAX_HISTORY_CMDS; idx++) {
+		data_idx = (history_info->index + idx) % SER_MAX_HISTORY_CMDS;
+
+		data = &history_info->data[data_idx];
 
 		if (data->ser_reason >= SER_QUEUE_ACTION_MAX) {
-			ser_err("Invalid Serialization Reason");
+			ser_debug("Invalid Serialization Reason");
 			continue;
 		}
+
+		if (!data->data_updated)
+			continue;
 
 		if (for_vdev_queue) {
 			if (vdev_id != data->vdev_id)
@@ -243,6 +246,7 @@ void wlan_ser_update_cmd_history(
 	ser_data_info->active_pending = active_queue;
 	ser_data_info->ser_reason = ser_reason;
 	ser_data_info->vdev_id = wlan_vdev_get_id(cmd->vdev);
+	ser_data_info->data_updated = true;
 
 	ser_history_info->index++;
 }

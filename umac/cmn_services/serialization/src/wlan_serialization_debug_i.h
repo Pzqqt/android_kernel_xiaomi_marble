@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,8 @@ struct ser_data {
 		is_high_priority:1,
 		add_remove:1,
 		active_pending:1,
-		ser_reason:6;
+		data_updated:1,
+		ser_reason:5;
 
 		uint16_t vdev_id;
 };
