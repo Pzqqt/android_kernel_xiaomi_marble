@@ -11740,6 +11740,8 @@ enum {
     WMI_AUTH_RSNA_SUITE_B_8021X_SHA384,
     WMI_AUTH_FT_RSNA_SAE,
     WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384,
+    WMI_AUTH_FT_RSNA_FILS_SHA256,
+    WMI_AUTH_FT_RSNA_FILS_SHA384,
 };
 
 typedef enum {
@@ -17833,7 +17835,11 @@ typedef struct {
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_key_material_ext */
     A_UINT32 tlv_header;
-    A_UINT8  key_buffer[GTK_OFFLOAD_KEK_EXTENDED_BYTES+GTK_OFFLOAD_KCK_EXTENDED_BYTES+GTK_REPLAY_COUNTER_BYTES]; /*the split of kck, kek should be known to host based on akmp*/
+    /*
+     * key_buffer contains kck,kck2,kek,kek2,replay counter, in order
+     * The split between kck vs. kek should be known to host based on akmp.
+     */
+    A_UINT8  key_buffer[GTK_OFFLOAD_KEK_EXTENDED_BYTES+GTK_OFFLOAD_KCK_EXTENDED_BYTES+GTK_REPLAY_COUNTER_BYTES];
 } wmi_key_material_ext;
 
 typedef struct {
