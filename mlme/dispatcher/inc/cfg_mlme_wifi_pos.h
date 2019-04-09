@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
  * gfine_time_meas_cap - fine timing measurement capability information
  * @Min: 0x0000
  * @Max: 0x00BD
- * @Default: 0x00BD
+ * @Default: 0x000D
  *
  * fine timing measurement capability information
  *
@@ -64,7 +64,7 @@
 			"gfine_time_meas_cap", \
 			0x0000, \
 			0x00BD, \
-			0x00BD, \
+			0x000D, \
 			CFG_VALUE_OR_DEFAULT, \
 			"fine timing measurement capability")
 
