@@ -150,6 +150,8 @@ struct tx_macro_priv {
 	struct platform_device *pdev_child_devices
 			[TX_MACRO_CHILD_DEVICES_MAX];
 	int child_count;
+	int tx_swr_clk_cnt;
+	int va_swr_clk_cnt;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -251,6 +253,44 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 exit:
 	mutex_unlock(&tx_priv->mclk_lock);
 	return ret;
+}
+
+static int tx_macro_va_swr_clk_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	if (SND_SOC_DAPM_EVENT_ON(event))
+		++tx_priv->va_swr_clk_cnt;
+	if (SND_SOC_DAPM_EVENT_OFF(event))
+		--tx_priv->va_swr_clk_cnt;
+
+	return 0;
+}
+
+static int tx_macro_tx_swr_clk_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	if (SND_SOC_DAPM_EVENT_ON(event))
+		++tx_priv->tx_swr_clk_cnt;
+	if (SND_SOC_DAPM_EVENT_OFF(event))
+		--tx_priv->tx_swr_clk_cnt;
+
+	return 0;
 }
 
 static int tx_macro_mclk_event(struct snd_soc_dapm_widget *w,
@@ -1137,6 +1177,14 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets[] = {
 
 	SND_SOC_DAPM_SUPPLY_S("TX_MCLK", 0, SND_SOC_NOPM, 0, 0,
 	tx_macro_mclk_event, SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("TX_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+			tx_macro_tx_swr_clk_event,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_CLK", 0, SND_SOC_NOPM, 0, 0,
+			tx_macro_va_swr_clk_event,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_route tx_audio_map[] = {
@@ -1184,6 +1232,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX0", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC0 MUX", "SWR_MIC", "TX SMIC MUX0"},
+	{"TX SMIC MUX0", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX0", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX0", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX0", "ADC2", "TX SWR_ADC2"},
@@ -1209,6 +1258,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX1", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC1 MUX", "SWR_MIC", "TX SMIC MUX1"},
+	{"TX SMIC MUX1", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX1", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX1", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX1", "ADC2", "TX SWR_ADC2"},
@@ -1234,6 +1284,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX2", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC2 MUX", "SWR_MIC", "TX SMIC MUX2"},
+	{"TX SMIC MUX2", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX2", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX2", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX2", "ADC2", "TX SWR_ADC2"},
@@ -1259,6 +1310,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX3", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC3 MUX", "SWR_MIC", "TX SMIC MUX3"},
+	{"TX SMIC MUX3", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX3", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX3", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX3", "ADC2", "TX SWR_ADC2"},
@@ -1284,6 +1336,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX4", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC4 MUX", "SWR_MIC", "TX SMIC MUX4"},
+	{"TX SMIC MUX4", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX4", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX4", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX4", "ADC2", "TX SWR_ADC2"},
@@ -1309,6 +1362,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX5", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC5 MUX", "SWR_MIC", "TX SMIC MUX5"},
+	{"TX SMIC MUX5", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX5", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX5", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX5", "ADC2", "TX SWR_ADC2"},
@@ -1334,6 +1388,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX6", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC6 MUX", "SWR_MIC", "TX SMIC MUX6"},
+	{"TX SMIC MUX6", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX6", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX6", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX6", "ADC2", "TX SWR_ADC2"},
@@ -1359,6 +1414,7 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 	{"TX DMIC MUX7", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC7 MUX", "SWR_MIC", "TX SMIC MUX7"},
+	{"TX SMIC MUX7", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX7", "ADC0", "TX SWR_ADC0"},
 	{"TX SMIC MUX7", "ADC1", "TX SWR_ADC1"},
 	{"TX SMIC MUX7", "ADC2", "TX SWR_ADC2"},
