@@ -42,7 +42,7 @@
 #include "pld_common.h"
 #include "csr_internal.h"
 #include <wlan_scan_ucfg_api.h>
-#include <wlan_scan_tgt_api.h>
+#include <wlan_scan_api.h>
 #include <wlan_scan_utils_api.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -429,8 +429,8 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 
 	qdf_mem_copy(data, bss_desc->ieFields,
 		GET_IE_LEN_IN_BSS(bss_desc->length));
-	tgt_scan_bcn_probe_rx_callback(mac_ctx->psoc, NULL, buf, &rx_param,
-		frm_type);
+	wlan_scan_process_bcn_probe_rx_sync(mac_ctx->psoc, buf, &rx_param,
+					    frm_type);
 }
 
 /*
