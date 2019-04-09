@@ -7363,6 +7363,7 @@ struct coex_config_params {
 #define WMI_HOST_PDEV_ID_0   0
 #define WMI_HOST_PDEV_ID_1   1
 #define WMI_HOST_PDEV_ID_2   2
+#define WMI_HOST_PDEV_ID_INVALID 0xFFFFFFFF
 
 #ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
 /**
