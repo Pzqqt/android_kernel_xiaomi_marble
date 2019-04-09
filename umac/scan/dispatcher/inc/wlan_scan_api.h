@@ -154,4 +154,23 @@ void wlan_scan_cfg_get_conc_min_resttime(struct wlan_objmgr_psoc *psoc,
  */
 bool wlan_scan_is_snr_monitor_enabled(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_scan_process_bcn_probe_rx_sync() - handle bcn without posting to
+ * scheduler thread
+ * @psoc: psoc context
+ * @buf: frame buf
+ * @params: rx event params
+ * @frm_type: frame type
+ *
+ * handle bcn without posting to scheduler thread, this should be called
+ * while caller is already in scheduler thread context
+ *
+ * Return: success or error code.
+ */
+QDF_STATUS
+wlan_scan_process_bcn_probe_rx_sync(struct wlan_objmgr_psoc *psoc,
+				    qdf_nbuf_t buf,
+				    struct mgmt_rx_event_params *rx_param,
+				    enum mgmt_frame_type frm_type);
+
 #endif

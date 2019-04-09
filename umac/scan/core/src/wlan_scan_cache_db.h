@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,13 +65,24 @@ struct scan_bcn_probe_event {
 
 /**
  * scm_handle_bcn_probe() - Process beacon and probe rsp
- * @bcn: beacon info;
+ * @msg: schedular msg with bcn info;
  *
  * API to handle the beacon/probe resp
  *
  * Return: QDF status.
  */
 QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg);
+
+/**
+ * __scm_handle_bcn_probe() - Process beacon and probe rsp
+ * @bcn: beacon info;
+ *
+ * API to handle the beacon/probe resp
+ *
+ * Return: QDF status.
+ */
+QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn);
+
 
 /**
  * scm_age_out_entries() - Age out entries older than aging time

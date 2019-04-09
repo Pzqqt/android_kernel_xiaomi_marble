@@ -175,3 +175,60 @@ bool wlan_scan_is_snr_monitor_enabled(struct wlan_objmgr_psoc *psoc)
 
 	return scan_obj->scan_def.scan_f_chan_stat_evnt;
 }
+
+QDF_STATUS
+wlan_scan_process_bcn_probe_rx_sync(struct wlan_objmgr_psoc *psoc,
+				    qdf_nbuf_t buf,
+				    struct mgmt_rx_event_params *rx_param,
+				    enum mgmt_frame_type frm_type)
+{
+	struct scan_bcn_probe_event *bcn = NULL;
+	QDF_STATUS status;
+
+	if ((frm_type != MGMT_PROBE_RESP) &&
+	   (frm_type != MGMT_BEACON)) {
+		scm_err("frame is not beacon or probe resp");
+		status = QDF_STATUS_E_INVAL;
+		goto free;
+	}
+	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
+
+	if (!bcn) {
+		scm_debug_rl("Failed to allocate memory for bcn");
+		status = QDF_STATUS_E_NOMEM;
+		goto free;
+	}
+	bcn->rx_data =
+		qdf_mem_malloc_atomic(sizeof(*rx_param));
+	if (!bcn->rx_data) {
+		scm_debug_rl("Failed to allocate memory for rx_data");
+		status = QDF_STATUS_E_NOMEM;
+		goto free;
+	}
+
+	if (frm_type == MGMT_PROBE_RESP)
+		bcn->frm_type = MGMT_SUBTYPE_PROBE_RESP;
+	else
+		bcn->frm_type = MGMT_SUBTYPE_BEACON;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_SCAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_info("unable to get reference");
+		goto free;
+	}
+
+	bcn->psoc = psoc;
+	bcn->buf = buf;
+	qdf_mem_copy(bcn->rx_data, rx_param, sizeof(*rx_param));
+
+	return __scm_handle_bcn_probe(bcn);
+free:
+	if (bcn && bcn->rx_data)
+		qdf_mem_free(bcn->rx_data);
+	if (bcn)
+		qdf_mem_free(bcn);
+	if (buf)
+		qdf_nbuf_free(buf);
+
+	return status;
+}

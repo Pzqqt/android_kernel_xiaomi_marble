@@ -731,9 +731,8 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
+QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 {
-	struct scan_bcn_probe_event *bcn;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct scan_cache_entry *scan_entry;
@@ -745,7 +744,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	struct scan_cache_node *scan_node;
 	struct wlan_frame_hdr *hdr = NULL;
 
-	bcn = msg->bodyptr;
 	if (!bcn) {
 		scm_err("bcn is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -868,6 +866,16 @@ free_nbuf:
 	qdf_mem_free(bcn);
 
 	return status;
+}
+
+QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
+{
+	if (!msg) {
+		scm_err("msg is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return __scm_handle_bcn_probe(msg->bodyptr);
 }
 
 /**
