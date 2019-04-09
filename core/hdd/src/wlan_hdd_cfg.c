@@ -129,89 +129,6 @@ static char *i_trim(char *str)
 	return str;
 }
 
-/* Maximum length of the confgiuration name and value */
-#define CFG_VALUE_MAX_LEN 256
-#define CFG_ENTRY_MAX_LEN (32+CFG_VALUE_MAX_LEN)
-
-/**
- * hdd_cfg_get_config() - get the configuration content
- * @reg_table: pointer to configuration table
- * @reg_table_count: number of @reg_table entries
- * @ini_struct: pointer to the hdd config blob
- * @hdd_ctx: pointer to hdd context
- * @print_fn: print function pointer
- *
- * Return: none
- */
-static void hdd_cfg_get_config(struct reg_table_entry *reg_table,
-			       unsigned long reg_table_count,
-			       uint8_t *ini_struct, struct hdd_context *hdd_ctx,
-			       void (*print_fn)(const char *))
-{
-	unsigned int idx;
-	struct reg_table_entry *reg_entry = reg_table;
-	uint32_t value;
-	char value_str[CFG_VALUE_MAX_LEN];
-	char config_str[CFG_ENTRY_MAX_LEN];
-	char *fmt;
-	void *field;
-	struct qdf_mac_addr *mac_addr;
-	int curlen;
-
-	for (idx = 0; idx < reg_table_count; idx++, reg_entry++) {
-		field = ini_struct + reg_entry->VarOffset;
-
-		if ((WLAN_PARAM_Integer == reg_entry->RegType) ||
-		    (WLAN_PARAM_SignedInteger == reg_entry->RegType) ||
-		    (WLAN_PARAM_HexInteger == reg_entry->RegType)) {
-			value = 0;
-
-			if ((reg_entry->VarSize > sizeof(value)) ||
-			    (reg_entry->VarSize == 0)) {
-				pr_warn("Invalid length of %s: %d",
-					reg_entry->RegName, reg_entry->VarSize);
-				continue;
-			}
-
-			memcpy(&value, field, reg_entry->VarSize);
-			if (WLAN_PARAM_HexInteger == reg_entry->RegType) {
-				fmt = "%x";
-			} else if (WLAN_PARAM_SignedInteger ==
-				   reg_entry->RegType) {
-				fmt = "%d";
-				value = sign_extend32(
-						value,
-						reg_entry->VarSize * 8 - 1);
-			} else {
-				fmt = "%u";
-			}
-			snprintf(value_str, CFG_VALUE_MAX_LEN, fmt, value);
-		} else if (WLAN_PARAM_String == reg_entry->RegType) {
-			snprintf(value_str, CFG_VALUE_MAX_LEN, "%s",
-				 (char *)field);
-		} else if (WLAN_PARAM_MacAddr == reg_entry->RegType) {
-			mac_addr = (struct qdf_mac_addr *) field;
-			snprintf(value_str, CFG_VALUE_MAX_LEN,
-				 "%02x:%02x:%02x:%02x:%02x:%02x",
-				 mac_addr->bytes[0],
-				 mac_addr->bytes[1],
-				 mac_addr->bytes[2],
-				 mac_addr->bytes[3],
-				 mac_addr->bytes[4], mac_addr->bytes[5]);
-		} else {
-			snprintf(value_str, CFG_VALUE_MAX_LEN, "(unhandled)");
-		}
-		curlen = scnprintf(config_str, CFG_ENTRY_MAX_LEN,
-				   "%s=%s%s\n",
-				   reg_entry->RegName,
-				   value_str,
-				   test_bit(idx,
-					    (void *)&hdd_ctx->config->
-					    bExplicitCfg) ? "*" : "");
-		(*print_fn)(config_str);
-	}
-}
-
 /** struct hdd_cfg_entry - ini configuration entry
  * @name: name of the entry
  * @value: value of the entry
@@ -1407,20 +1324,10 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-static void print_info_handler(const char *buf)
-{
-	hdd_nofl_info("%s", buf);
-}
-
-static void print_debug_handler(const char *buf)
-{
-	hdd_nofl_debug("%s", buf);
-}
-
 /**
  * hdd_cfg_get_global_config() - get the configuration table
  * @hdd_ctx: pointer to hdd context
- * @pBuf: buffer to store the configuration
+ * @buf: buffer to store the configuration
  * @buflen: size of the buffer
  *
  * Return: none
@@ -1428,13 +1335,10 @@ static void print_debug_handler(const char *buf)
 void hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *buf,
 			       int buflen)
 {
-	hdd_cfg_get_config(g_registry_table,
-			   ARRAY_SIZE(g_registry_table),
-			   (uint8_t *)hdd_ctx->config, hdd_ctx,
-			   &print_info_handler);
+	ucfg_cfg_store_print(hdd_ctx->psoc);
 
 	snprintf(buf, buflen,
-		 "WLAN configuration written to system log");
+		 "WLAN configuration written to debug log");
 }
 
 /**
@@ -1445,10 +1349,11 @@ void hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *buf,
  */
 void hdd_cfg_print_global_config(struct hdd_context *hdd_ctx)
 {
-	hdd_cfg_get_config(g_registry_table,
-			   ARRAY_SIZE(g_registry_table),
-			   (uint8_t *)hdd_ctx->config, hdd_ctx,
-			   &print_debug_handler);
+	QDF_STATUS status;
+
+	status = ucfg_cfg_store_print(hdd_ctx->psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to log cfg ini");
 }
 
 /**
