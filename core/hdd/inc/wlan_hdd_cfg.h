@@ -154,7 +154,8 @@ struct hdd_config {
 	bool enable_packet_log;
 #endif
 	uint32_t rx_mode;
-#ifdef MSM_PLATFORM
+
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	uint32_t bus_bw_high_threshold;
 	uint32_t bus_bw_medium_threshold;
 	uint32_t bus_bw_low_threshold;
@@ -167,7 +168,8 @@ struct hdd_config {
 	uint32_t tcp_tx_high_tput_thres;
 	uint32_t tcp_delack_timer_count;
 	bool     enable_tcp_param_update;
-#endif /* MSM_PLATFORM */
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t tx_flow_low_watermark;
 	uint32_t tx_flow_hi_watermark_offset;

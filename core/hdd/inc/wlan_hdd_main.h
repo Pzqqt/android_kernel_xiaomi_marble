@@ -103,7 +103,7 @@
 #include "wma_sar_public_structs.h"
 #include "wlan_mlme_ucfg_api.h"
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 #include "qdf_periodic_work.h"
 #endif
 
@@ -1256,12 +1256,14 @@ struct hdd_adapter {
 	struct work_struct scan_block_work;
 	qdf_list_t blocked_scan_request_q;
 	qdf_mutex_t blocked_scan_request_q_lock;
-#ifdef MSM_PLATFORM
+
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	unsigned long prev_rx_packets;
 	unsigned long prev_tx_packets;
 	uint64_t prev_fwd_tx_packets;
 	uint64_t prev_fwd_rx_packets;
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
+
 #if  defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
 				defined(QCA_HL_NETDEV_FLOW_CONTROL)
 	qdf_mc_timer_t tx_flow_control_timer;
@@ -1658,7 +1660,7 @@ struct hdd_context {
 	/* Flag keeps track of wiphy suspend/resume */
 	bool is_wiphy_suspended;
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	struct qdf_periodic_work bus_bw_work;
 	int cur_vote_level;
 	spinlock_t bus_bw_lock;
@@ -1667,7 +1669,7 @@ struct hdd_context {
 	uint64_t prev_rx_offload_pkts;
 	int cur_tx_level;
 	uint64_t prev_tx;
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 	struct completion ready_to_suspend;
 	/* defining the solution type */
@@ -2181,7 +2183,8 @@ bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 
 QDF_STATUS __wlan_hdd_validate_mac_address(struct qdf_mac_addr *mac_addr,
 					   const char *func);
-#ifdef MSM_PLATFORM
+
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_bus_bw_compute_timer_start() - start the bandwidth timer
  * @hdd_ctx: the global hdd context
@@ -2242,7 +2245,6 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->bus_bw_compute_interval)
-
 #else
 
 static inline
@@ -2279,7 +2281,7 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 #define GET_CUR_RX_LVL(config) 0
 #define GET_BW_COMPUTE_INTV(config) 0
 
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask);
 
@@ -3547,7 +3549,7 @@ void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
 			    struct qdf_mac_addr *curr_mac_addr,
 			    struct qdf_mac_addr *new_mac_addr);
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * wlan_hdd_send_tcp_param_update_event() - Send vendor event to update
  * TCP parameter through Wi-Fi HAL
@@ -3595,8 +3597,7 @@ void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
 					  uint8_t dir)
 {
 }
-
-#endif /* MSM_PLATFORM */
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 /**

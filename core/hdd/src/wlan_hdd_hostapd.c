@@ -2234,7 +2234,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_ASSOC));
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 		/* start timer in sap/p2p_go */
 		if (ap_ctx->ap_active == false) {
 			spin_lock_bh(&hdd_ctx->bus_bw_lock);
@@ -2411,7 +2411,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						NULL,
 						adapter->device_mode);
 		}
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 		/*stop timer in sap/p2p_go */
 		if (ap_ctx->ap_active == false) {
 			spin_lock_bh(&hdd_ctx->bus_bw_lock);

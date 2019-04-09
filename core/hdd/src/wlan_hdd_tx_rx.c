@@ -2829,7 +2829,7 @@ void hdd_tx_queue_cb(hdd_handle_t hdd_handle, uint32_t vdev_id,
 	wlan_hdd_netif_queue_control(adapter, action, reason);
 }
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_reset_tcp_delack() - Reset tcp delack value to default
  * @hdd_ctx: Handle to hdd context
@@ -2864,7 +2864,7 @@ bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
 	else
 		return true;
 }
-#endif /* MSM_PLATFORM */
+#endif
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 /**
@@ -2903,7 +2903,7 @@ static void hdd_ini_tx_flow_control(struct hdd_config *config,
 }
 #endif
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_ini_tx_flow_control() - Initialize INIs concerned about bus bandwidth
  * @config: pointer to hdd config
@@ -2953,7 +2953,7 @@ static void hdd_ini_tcp_settings(struct hdd_config *config,
 }
 #else
 static void hdd_ini_bus_bandwidth(struct hdd_config *config,
-				  struct wlan_objmgr_psoc *psoc)
+				 struct wlan_objmgr_psoc *psoc)
 {
 }
 
@@ -2961,7 +2961,7 @@ static void hdd_ini_tcp_settings(struct hdd_config *config,
 				 struct wlan_objmgr_psoc *psoc)
 {
 }
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 /**
  * hdd_set_rx_mode_value() - set rx_mode values

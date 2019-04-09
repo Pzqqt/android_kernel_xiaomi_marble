@@ -1436,7 +1436,7 @@ static void hdd_send_association_event(struct net_device *dev,
 				       adapter->vdev);
 #endif
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 		/* start timer in sta/p2p_cli */
 		spin_lock_bh(&hdd_ctx->bus_bw_lock);
 		adapter->prev_tx_packets = adapter->stats.tx_packets;
@@ -1488,7 +1488,7 @@ static void hdd_send_association_event(struct net_device *dev,
 					  false,
 					  adapter->vdev);
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 		/* stop timer in sta/p2p_cli */
 		spin_lock_bh(&hdd_ctx->bus_bw_lock);
 		adapter->prev_tx_packets = 0;

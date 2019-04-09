@@ -287,7 +287,7 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter);
 void hdd_send_rps_disable_ind(struct hdd_adapter *adapter);
 void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx);
 bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx);
 #define HDD_MSM_CFG(msm_cfg)	msm_cfg

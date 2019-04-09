@@ -80,6 +80,11 @@
 #include <linux/compat.h>
 #include <linux/reboot.h>
 #include <linux/ethtool.h>
+
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
+#include "qdf_periodic_work.h"
+#endif
+
 #ifdef MSM_PLATFORM
 #include <soc/qcom/subsystem_restart.h>
 #endif
@@ -375,7 +380,7 @@ void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
 }
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 void wlan_hdd_update_tcp_rx_param(struct hdd_context *hdd_ctx, void *data)
 {
 	if (!hdd_ctx) {
@@ -533,7 +538,7 @@ tcp_param_change_nla_failed:
 	hdd_err("nla_put api failed");
 	kfree_skb(vendor_event);
 }
-#endif /* MSM_PLATFORM */
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 /**
  * wlan_hdd_txrx_pause_cb() - pause callback from txrx layer
@@ -7682,7 +7687,7 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 	return ret_val;
 }
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_display_periodic_stats() - Function to display periodic stats
  * @hdd_ctx - handle to hdd context
@@ -8087,8 +8092,7 @@ void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx)
 
 	hdd_exit();
 }
-
-#endif /* MSM_PLATFORM */
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 /**
  * wlan_hdd_init_tx_rx_histogram() - init tx/rx histogram stats
@@ -8148,7 +8152,7 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	int i;
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 	hdd_nofl_info("BW compute Interval: %dms",
 		      hdd_ctx->config->bus_bw_compute_interval);
 	hdd_nofl_info("BW High TH: %d BW Med TH: %d BW Low TH: %d",
@@ -8162,7 +8166,7 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 		      hdd_ctx->config->tcp_delack_thres_low);
 	hdd_nofl_info("TCP TX HIGH TP TH: %d (Use to set tcp_output_bytes_limit)",
 		      hdd_ctx->config->tcp_tx_high_tput_thres);
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 	hdd_nofl_info("Total entries: %d Current index: %d",
 		      NUM_TX_RX_HISTOGRAM, hdd_ctx->hdd_txrx_hist_idx);
@@ -12629,7 +12633,7 @@ hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 	return con_sap_adapter;
 }
 
-#ifdef MSM_PLATFORM
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 static inline bool hdd_adapter_is_sta(struct hdd_adapter *adapter)
 {
 	return adapter->device_mode == QDF_STA_MODE ||
@@ -12714,7 +12718,7 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 
 	hdd_exit();
 }
-#endif
+#endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 /**
  * wlan_hdd_stop_sap() - This function stops bss of SAP.
