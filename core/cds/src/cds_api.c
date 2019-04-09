@@ -415,6 +415,7 @@ static QDF_STATUS cds_deregister_all_modules(void)
 
 	scheduler_deregister_wma_legacy_handler();
 	scheduler_deregister_sys_legacy_handler();
+	status = scheduler_deregister_module(QDF_MODULE_ID_SCAN);
 	status = scheduler_deregister_module(QDF_MODULE_ID_SYS);
 	status = scheduler_deregister_module(QDF_MODULE_ID_TARGET_IF);
 	status = scheduler_deregister_module(QDF_MODULE_ID_PE);
