@@ -7332,6 +7332,7 @@ void hdd_context_destroy(struct hdd_context *hdd_ctx)
 	hdd_ctx->config = NULL;
 	cfg_release();
 
+	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
 	wiphy_free(hdd_ctx->wiphy);
 }
 
@@ -7466,7 +7467,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_exit_netlink_services(hdd_ctx);
-	qdf_delayed_work_destroy(&hdd_ctx->psoc_idle_timeout_work);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
