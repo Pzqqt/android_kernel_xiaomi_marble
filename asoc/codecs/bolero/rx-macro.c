@@ -18,6 +18,7 @@
 #include <asoc/msm-cdc-pinctrl.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
+#include "bolero-clk-rsc.h"
 
 #define RX_MACRO_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
@@ -331,8 +332,6 @@ enum {
  * @swr_plat_data: Soundwire platform data
  * @rx_macro_add_child_devices_work: work for adding child devices
  * @rx_swr_gpio_p: used by pinctrl API
- * @rx_core_clk: MCLK for rx macro
- * @rx_npl_clk: NPL clock for RX soundwire
  * @component: codec handle
  */
 struct rx_macro_priv {
@@ -353,15 +352,12 @@ struct rx_macro_priv {
 	bool dev_up;
 	bool hph_pwr_mode;
 	bool hph_hd2_mode;
-	u16 mclk_mux;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
 	struct rx_swr_ctrl_data *swr_ctrl_data;
 	struct rx_swr_ctrl_platform_data swr_plat_data;
 	struct work_struct rx_macro_add_child_devices_work;
 	struct device_node *rx_swr_gpio_p;
-	struct clk *rx_core_clk;
-	struct clk *rx_npl_clk;
 	struct snd_soc_component *component;
 	unsigned long active_ch_mask[RX_MACRO_MAX_DAIS];
 	unsigned long active_ch_cnt[RX_MACRO_MAX_DAIS];
@@ -378,6 +374,8 @@ struct rx_macro_priv {
 	int is_softclip_on;
 	int softclip_clk_users;
 	struct rx_macro_bcl_pmic_params bcl_pmic_params;
+	u16 clk_id;
+	u16 default_clk_id;
 };
 
 static struct snd_soc_dai_driver rx_macro_dai[];
@@ -1059,7 +1057,7 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 				 bool mclk_enable, bool dapm)
 {
 	struct regmap *regmap = dev_get_regmap(rx_priv->dev->parent, NULL);
-	int ret = 0, mclk_mux = MCLK_MUX0;
+	int ret = 0;
 
 	if (regmap == NULL) {
 		dev_err(rx_priv->dev, "%s: regmap is NULL\n", __func__);
@@ -1073,16 +1071,19 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 	if (mclk_enable) {
 		if (rx_priv->rx_mclk_users == 0) {
 			if (rx_priv->is_native_on)
-				mclk_mux = MCLK_MUX1;
-			ret = bolero_request_clock(rx_priv->dev,
-					RX_MACRO, mclk_mux, true);
+				rx_priv->clk_id = RX_CORE_CLK;
+			ret = bolero_clk_rsc_request_clock(rx_priv->dev,
+							   rx_priv->default_clk_id,
+							   rx_priv->clk_id,
+							   true);
 			if (ret < 0) {
 				dev_err(rx_priv->dev,
 					"%s: rx request clock enable failed\n",
 					__func__);
 				goto exit;
 			}
-			rx_priv->mclk_mux = mclk_mux;
+			bolero_clk_rsc_fs_gen_request(rx_priv->dev,
+							true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					RX_START_OFFSET,
@@ -1113,10 +1114,13 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-			mclk_mux = rx_priv->mclk_mux;
-			bolero_request_clock(rx_priv->dev,
-					RX_MACRO, mclk_mux, false);
-			rx_priv->mclk_mux = MCLK_MUX0;
+			bolero_clk_rsc_fs_gen_request(rx_priv->dev,
+			   false);
+			bolero_clk_rsc_request_clock(rx_priv->dev,
+						 rx_priv->default_clk_id,
+						 rx_priv->clk_id,
+						 false);
+			rx_priv->clk_id = rx_priv->default_clk_id;
 		}
 	}
 exit:
@@ -1142,9 +1146,9 @@ static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		/* if swr_clk_users > 0, call device down */
 		if (rx_priv->swr_clk_users > 0) {
-			if ((rx_priv->mclk_mux == MCLK_MUX0 &&
+			if ((rx_priv->clk_id == rx_priv->default_clk_id &&
 			     rx_priv->is_native_on) ||
-			    (rx_priv->mclk_mux == MCLK_MUX1 &&
+			    (rx_priv->clk_id == RX_CORE_CLK &&
 			     !rx_priv->is_native_on)) {
 				swrm_wcd_notify(
 				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
@@ -1174,51 +1178,13 @@ static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
-static int rx_macro_mclk_ctrl(struct device *dev, bool enable)
-{
-	struct rx_macro_priv *rx_priv = dev_get_drvdata(dev);
-	int ret = 0;
-
-	if (enable) {
-		ret = clk_prepare_enable(rx_priv->rx_core_clk);
-		if (ret < 0) {
-			dev_err(dev, "%s:rx mclk enable failed\n", __func__);
-			return ret;
-		}
-		ret = clk_prepare_enable(rx_priv->rx_npl_clk);
-		if (ret < 0) {
-			clk_disable_unprepare(rx_priv->rx_core_clk);
-			dev_err(dev, "%s:rx npl_clk enable failed\n",
-				__func__);
-			return ret;
-		}
-		if (rx_priv->rx_mclk_cnt++ == 0) {
-			if (rx_priv->dev_up)
-				iowrite32(0x1, rx_priv->rx_mclk_mode_muxsel);
-		}
-	} else {
-		if (rx_priv->rx_mclk_cnt <= 0) {
-			dev_dbg(dev, "%s:rx mclk already disabled\n", __func__);
-			rx_priv->rx_mclk_cnt = 0;
-			return 0;
-		}
-		if (--rx_priv->rx_mclk_cnt == 0) {
-			if (rx_priv->dev_up)
-				iowrite32(0x0, rx_priv->rx_mclk_mode_muxsel);
-		}
-		clk_disable_unprepare(rx_priv->rx_npl_clk);
-		clk_disable_unprepare(rx_priv->rx_core_clk);
-	}
-
-	return 0;
-}
-
 static int rx_macro_event_handler(struct snd_soc_component *component,
 				  u16 event, u32 data)
 {
 	u16 reg = 0, reg_mix = 0, rx_idx = 0, mute = 0x0, val = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
+	int ret = 0;
 
 	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
@@ -1256,17 +1222,25 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		rx_priv->dev_up = true;
 		/* reset swr after ssr/pdr */
 		rx_priv->reset_swr = true;
-		/* enable&disable MCLK_MUX1 to reset GFMUX reg */
-		bolero_request_clock(rx_priv->dev,
-				RX_MACRO, MCLK_MUX1, true);
-		bolero_request_clock(rx_priv->dev,
-				RX_MACRO, MCLK_MUX1, false);
+		/* enable&disable RX_CORE_CLK to reset GFMUX reg */
+		ret = bolero_clk_rsc_request_clock(rx_priv->dev,
+						rx_priv->default_clk_id,
+						RX_CORE_CLK, true);
+		if (ret < 0)
+			dev_err_ratelimited(rx_priv->dev,
+				"%s, failed to enable clk, ret:%d\n",
+				__func__, ret);
+		else
+			bolero_clk_rsc_request_clock(rx_priv->dev,
+						rx_priv->default_clk_id,
+						RX_CORE_CLK, false);
+
 		swrm_wcd_notify(
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 			SWR_DEVICE_SSR_UP, NULL);
 		break;
 	}
-	return 0;
+	return ret;
 }
 
 static int rx_macro_find_playback_dai_id_for_port(int port_id,
@@ -3573,7 +3547,6 @@ static void rx_macro_init_ops(struct macro_ops *ops, char __iomem *rx_io_base)
 	ops->io_base = rx_io_base;
 	ops->dai_ptr = rx_macro_dai;
 	ops->num_dais = ARRAY_SIZE(rx_macro_dai);
-	ops->mclk_fn = rx_macro_mclk_ctrl;
 	ops->event_handler = rx_macro_event_handler;
 	ops->set_port_map = rx_macro_set_port_map;
 }
@@ -3585,8 +3558,8 @@ static int rx_macro_probe(struct platform_device *pdev)
 	u32 rx_base_addr = 0, muxsel = 0;
 	char __iomem *rx_io_base = NULL, *muxsel_io = NULL;
 	int ret = 0;
-	struct clk *rx_core_clk = NULL, *rx_npl_clk = NULL;
 	u8 bcl_pmic_params[3];
+	u32 default_clk_id = 0;
 
 	rx_priv = devm_kzalloc(&pdev->dev, sizeof(struct rx_macro_priv),
 			    GFP_KERNEL);
@@ -3607,6 +3580,13 @@ static int rx_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: could not find %s entry in dt\n",
 			__func__, "reg");
 		return ret;
+	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,default-clk-id",
+				   &default_clk_id);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: could not find %s entry in dt\n",
+			__func__, "qcom,default-clk-id");
+		default_clk_id = RX_CORE_CLK;
 	}
 	rx_priv->rx_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					"qcom,rx-swr-gpios", 0);
@@ -3639,25 +3619,6 @@ static int rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.clk = rx_swrm_clock;
 	rx_priv->swr_plat_data.handle_irq = NULL;
 
-	/* Register MCLK for rx macro */
-	rx_core_clk = devm_clk_get(&pdev->dev, "rx_core_clk");
-	if (IS_ERR(rx_core_clk)) {
-		ret = PTR_ERR(rx_core_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed %d\n",
-			__func__, "rx_core_clk", ret);
-		return ret;
-	}
-	rx_priv->rx_core_clk = rx_core_clk;
-	/* Register npl clk for soundwire */
-	rx_npl_clk = devm_clk_get(&pdev->dev, "rx_npl_clk");
-	if (IS_ERR(rx_npl_clk)) {
-		ret = PTR_ERR(rx_npl_clk);
-		dev_err(&pdev->dev, "%s: clk get %s failed %d\n",
-			__func__, "rx_npl_clk", ret);
-		return ret;
-	}
-	rx_priv->rx_npl_clk = rx_npl_clk;
-
 	ret = of_property_read_u8_array(pdev->dev.of_node,
 				"qcom,rx-bcl-pmic-params", bcl_pmic_params,
 				sizeof(bcl_pmic_params));
@@ -3669,6 +3630,10 @@ static int rx_macro_probe(struct platform_device *pdev)
 		rx_priv->bcl_pmic_params.sid = bcl_pmic_params[1];
 		rx_priv->bcl_pmic_params.ppid = bcl_pmic_params[2];
 	}
+	rx_priv->clk_id = default_clk_id;
+	rx_priv->default_clk_id  = default_clk_id;
+	ops.clk_id_req = rx_priv->clk_id;
+	ops.default_clk_id = default_clk_id;
 
 	dev_set_drvdata(&pdev->dev, rx_priv);
 	mutex_init(&rx_priv->mclk_lock);

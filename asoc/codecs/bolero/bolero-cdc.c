@@ -16,6 +16,7 @@
 #include <soc/swr-common.h>
 #include "bolero-cdc.h"
 #include "internal.h"
+#include "bolero-clk-rsc.h"
 
 #define DRV_NAME "bolero_codec"
 
@@ -93,43 +94,44 @@ static void bolero_ahb_read_device(char __iomem *io_base,
 static int __bolero_reg_read(struct bolero_priv *priv,
 			     u16 macro_id, u16 reg, u8 *val)
 {
-	int ret = -EINVAL;
-	u16 current_mclk_mux_macro;
+	int ret = 0;
 
 	mutex_lock(&priv->clk_lock);
 	if (!priv->dev_up) {
 		dev_dbg_ratelimited(priv->dev,
 			"%s: SSR in progress, exit\n", __func__);
-		goto err;
+		ret = -EINVAL;
+		goto ssr_err;
 	}
 
 	if (priv->macro_params[VA_MACRO].dev)
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
-	current_mclk_mux_macro =
-		priv->current_mclk_mux_macro[macro_id];
-	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
-		dev_dbg_ratelimited(priv->dev,
-			"%s: mclk_fn not init for macro-id:%d, current_mclk_mux_macro:%d\n",
-			__func__, macro_id, current_mclk_mux_macro);
+
+	/* Request Clk before register access */
+	ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+				priv->macro_params[macro_id].default_clk_id,
+				priv->macro_params[macro_id].clk_id_req,
+				true);
+	if (ret < 0) {
+		dev_err_ratelimited(priv->dev,
+			"%s: Failed to enable clock, ret:%d\n", __func__, ret);
 		goto err;
 	}
-	ret = priv->macro_params[current_mclk_mux_macro].mclk_fn(
-			priv->macro_params[current_mclk_mux_macro].dev, true);
-	if (ret) {
-		dev_dbg_ratelimited(priv->dev,
-			"%s: clock enable failed for macro-id:%d, current_mclk_mux_macro:%d\n",
-			__func__, macro_id, current_mclk_mux_macro);
-		goto err;
-	}
+
 	bolero_ahb_read_device(
 		priv->macro_params[macro_id].io_base, reg, val);
-	priv->macro_params[current_mclk_mux_macro].mclk_fn(
-			priv->macro_params[current_mclk_mux_macro].dev, false);
+
+	bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+				priv->macro_params[macro_id].default_clk_id,
+				priv->macro_params[macro_id].clk_id_req,
+				false);
+
 err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	}
+ssr_err:
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
@@ -137,42 +139,43 @@ err:
 static int __bolero_reg_write(struct bolero_priv *priv,
 			      u16 macro_id, u16 reg, u8 val)
 {
-	int ret = -EINVAL;
-	u16 current_mclk_mux_macro;
+	int ret = 0;
 
 	mutex_lock(&priv->clk_lock);
 	if (!priv->dev_up) {
 		dev_dbg_ratelimited(priv->dev,
 			"%s: SSR in progress, exit\n", __func__);
-		goto err;
+		ret = -EINVAL;
+		goto ssr_err;
 	}
 	if (priv->macro_params[VA_MACRO].dev)
-		ret = pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
-	current_mclk_mux_macro =
-		priv->current_mclk_mux_macro[macro_id];
-	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
-		dev_dbg_ratelimited(priv->dev,
-			"%s: mclk_fn not init for macro-id:%d, current_mclk_mux_macro:%d\n",
-			__func__, macro_id, current_mclk_mux_macro);
+		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
+
+	/* Request Clk before register access */
+	ret = bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+				priv->macro_params[macro_id].default_clk_id,
+				priv->macro_params[macro_id].clk_id_req,
+				true);
+	if (ret < 0) {
+		dev_err_ratelimited(priv->dev,
+			"%s: Failed to enable clock, ret:%d\n", __func__, ret);
 		goto err;
 	}
-	ret = priv->macro_params[current_mclk_mux_macro].mclk_fn(
-			priv->macro_params[current_mclk_mux_macro].dev, true);
-	if (ret) {
-		dev_dbg_ratelimited(priv->dev,
-			"%s: clock enable failed for macro-id:%d, current_mclk_mux_macro:%d\n",
-			__func__, macro_id, current_mclk_mux_macro);
-		goto err;
-	}
+
 	bolero_ahb_write_device(
-		priv->macro_params[macro_id].io_base, reg, val);
-	priv->macro_params[current_mclk_mux_macro].mclk_fn(
-			priv->macro_params[current_mclk_mux_macro].dev, false);
+			priv->macro_params[macro_id].io_base, reg, val);
+
+	bolero_clk_rsc_request_clock(priv->macro_params[macro_id].dev,
+				priv->macro_params[macro_id].default_clk_id,
+				priv->macro_params[macro_id].clk_id_req,
+				false);
+
 err:
 	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
 		pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	}
+ssr_err:
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
@@ -239,7 +242,7 @@ static void bolero_cdc_notifier_call(struct bolero_priv *priv,
 				     data, (void *)priv->wcd_dev);
 }
 
-static bool bolero_is_valid_macro_dev(struct device *dev)
+static bool bolero_is_valid_child_dev(struct device *dev)
 {
 	if (of_device_is_compatible(dev->parent->of_node, "qcom,bolero-codec"))
 		return true;
@@ -326,6 +329,36 @@ struct device *bolero_get_device_ptr(struct device *dev, u16 macro_id)
 }
 EXPORT_SYMBOL(bolero_get_device_ptr);
 
+/**
+ * bolero_get_rsc_clk_device_ptr - Get rsc clk device ptr
+ *
+ * @dev: bolero device ptr.
+ *
+ * Returns dev ptr on success or NULL on error.
+ */
+struct device *bolero_get_rsc_clk_device_ptr(struct device *dev)
+{
+	struct bolero_priv *priv;
+
+	if (!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return NULL;
+	}
+
+	if (!bolero_is_valid_codec_dev(dev)) {
+		pr_err("%s: invalid codec\n", __func__);
+		return NULL;
+	}
+	priv = dev_get_drvdata(dev);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return NULL;
+	}
+
+	return priv->clk_dev;
+}
+EXPORT_SYMBOL(bolero_get_rsc_clk_device_ptr);
+
 static int bolero_copy_dais_from_macro(struct bolero_priv *priv)
 {
 	struct snd_soc_dai_driver *dai_ptr;
@@ -356,6 +389,69 @@ static int bolero_copy_dais_from_macro(struct bolero_priv *priv)
 }
 
 /**
+ * bolero_register_res_clk - Registers rsc clk driver to bolero
+ *
+ * @dev: rsc clk device ptr.
+ * @rsc_clk_cb: event handler callback for notifications like SSR
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t rsc_clk_cb)
+{
+	struct bolero_priv *priv;
+
+	if (!dev || !rsc_clk_cb) {
+		pr_err("%s: dev or rsc_clk_cb is null\n", __func__);
+		return -EINVAL;
+	}
+	if (!bolero_is_valid_child_dev(dev)) {
+		dev_err(dev, "%s: child device :%pK not added yet\n",
+			__func__, dev);
+		return -EINVAL;
+	}
+	priv = dev_get_drvdata(dev->parent);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return -EINVAL;
+	}
+
+	priv->clk_dev = dev;
+	priv->rsc_clk_cb = rsc_clk_cb;
+
+	return 0;
+}
+EXPORT_SYMBOL(bolero_register_res_clk);
+
+/**
+ * bolero_unregister_res_clk - Unregisters rsc clk driver from bolero
+ *
+ * @dev: resource clk device ptr.
+ */
+void bolero_unregister_res_clk(struct device *dev)
+{
+	struct bolero_priv *priv;
+
+	if (!dev) {
+		pr_err("%s: dev is NULL\n", __func__);
+		return;
+	}
+	if (!bolero_is_valid_child_dev(dev)) {
+		dev_err(dev, "%s: child device :%pK not added\n",
+			__func__, dev);
+		return;
+	}
+	priv = dev_get_drvdata(dev->parent);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return;
+	}
+
+	priv->clk_dev = NULL;
+	priv->rsc_clk_cb = NULL;
+}
+EXPORT_SYMBOL(bolero_unregister_res_clk);
+
+/**
  * bolero_register_macro - Registers macro to bolero
  *
  * @dev: macro device ptr.
@@ -374,7 +470,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		pr_err("%s: dev or ops is null\n", __func__);
 		return -EINVAL;
 	}
-	if (!bolero_is_valid_macro_dev(dev)) {
+	if (!bolero_is_valid_child_dev(dev)) {
 		dev_err(dev, "%s: child device for macro:%d not added yet\n",
 			__func__, macro_id);
 		return -EINVAL;
@@ -385,12 +481,13 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		return -EINVAL;
 	}
 
+	priv->macro_params[macro_id].clk_id_req = ops->clk_id_req;
+	priv->macro_params[macro_id].default_clk_id = ops->default_clk_id;
 	priv->macro_params[macro_id].init = ops->init;
 	priv->macro_params[macro_id].exit = ops->exit;
 	priv->macro_params[macro_id].io_base = ops->io_base;
 	priv->macro_params[macro_id].num_dais = ops->num_dais;
 	priv->macro_params[macro_id].dai_ptr = ops->dai_ptr;
-	priv->macro_params[macro_id].mclk_fn = ops->mclk_fn;
 	priv->macro_params[macro_id].event_handler = ops->event_handler;
 	priv->macro_params[macro_id].set_port_map = ops->set_port_map;
 	priv->macro_params[macro_id].dev = dev;
@@ -441,7 +538,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		pr_err("%s: dev is null\n", __func__);
 		return;
 	}
-	if (!bolero_is_valid_macro_dev(dev)) {
+	if (!bolero_is_valid_child_dev(dev)) {
 		dev_err(dev, "%s: macro:%d not in valid registered macro-list\n",
 			__func__, macro_id);
 		return;
@@ -455,7 +552,6 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].init = NULL;
 	priv->macro_params[macro_id].num_dais = 0;
 	priv->macro_params[macro_id].dai_ptr = NULL;
-	priv->macro_params[macro_id].mclk_fn = NULL;
 	priv->macro_params[macro_id].event_handler = NULL;
 	priv->macro_params[macro_id].dev = NULL;
 	if (macro_id == TX_MACRO)
@@ -469,150 +565,6 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		snd_soc_unregister_component(dev->parent);
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
-
-static void bolero_fs_gen_enable(struct bolero_priv *priv, bool enable)
-{
-	if (enable) {
-		if (++priv->clk_users == 1) {
-			mutex_unlock(&priv->clk_lock);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
-				0x01, 0x01);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
-				0x01, 0x01);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
-				0x02, 0x02);
-			mutex_lock(&priv->clk_lock);
-		}
-	} else {
-		if (priv->clk_users <= 0) {
-			dev_err(priv->dev,
-				"%s:clock already disabled\n",
-				__func__);
-			priv->clk_users = 0;
-			return;
-		}
-		if (--priv->clk_users == 0) {
-			mutex_unlock(&priv->clk_lock);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
-				0x02, 0x00);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_FS_CNT_CONTROL,
-				0x01, 0x00);
-			regmap_update_bits(priv->regmap,
-				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
-				0x01, 0x00);
-			mutex_lock(&priv->clk_lock);
-		}
-	}
-}
-
-/**
- * bolero_request_clock - request for clock enable/disable
- *
- * @dev: macro device ptr.
- * @macro_id: ID of macro calling this API.
- * @mclk_mux_id: MCLK_MUX ID.
- * @enable: enable or disable clock flag
- *
- * Returns 0 on success or -EINVAL on error.
- */
-int bolero_request_clock(struct device *dev, u16 macro_id,
-			 enum mclk_mux mclk_mux_id,
-			 bool enable)
-{
-	struct bolero_priv *priv;
-	u16 mclk_mux0_macro, mclk_mux1_macro;
-	int ret = 0, ret1 = 0;
-
-	if (!dev) {
-		pr_err("%s: dev is null\n", __func__);
-		return -EINVAL;
-	}
-	if (!bolero_is_valid_macro_dev(dev)) {
-		dev_err(dev, "%s: macro:%d not in valid registered macro-list\n",
-			__func__, macro_id);
-		return -EINVAL;
-	}
-	priv = dev_get_drvdata(dev->parent);
-	if (!priv || (macro_id >= MAX_MACRO)) {
-		dev_err(dev, "%s: priv is null or invalid macro\n", __func__);
-		return -EINVAL;
-	}
-	mclk_mux0_macro =  bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
-	mutex_lock(&priv->clk_lock);
-	switch (mclk_mux_id) {
-	case MCLK_MUX0:
-		ret = priv->macro_params[mclk_mux0_macro].mclk_fn(
-			priv->macro_params[mclk_mux0_macro].dev, enable);
-		if (ret < 0) {
-			dev_err(dev,
-				"%s: MCLK_MUX0 %s failed for macro:%d, mclk_mux0_macro:%d\n",
-				__func__,
-				enable ? "enable" : "disable",
-				macro_id, mclk_mux0_macro);
-			goto err;
-		}
-		bolero_fs_gen_enable(priv, enable);
-		break;
-	case MCLK_MUX1:
-		mclk_mux1_macro =  bolero_mclk_mux_tbl[macro_id][MCLK_MUX1];
-		ret = priv->macro_params[mclk_mux0_macro].mclk_fn(
-			priv->macro_params[mclk_mux0_macro].dev,
-			true);
-		if (ret < 0) {
-			dev_err(dev,
-				"%s: MCLK_MUX0 en failed for macro:%d mclk_mux0_macro:%d\n",
-				__func__, macro_id, mclk_mux0_macro);
-			/*
-			 * for disable case, need to proceed still for mclk_mux1
-			 * counter to decrement
-			 */
-			if (enable)
-				goto err;
-		}
-		bolero_fs_gen_enable(priv, enable);
-		/*
-		 * need different return value as ret variable
-		 * is used to track mclk_mux0 enable success or fail
-		 */
-		ret1 = priv->macro_params[mclk_mux1_macro].mclk_fn(
-			priv->macro_params[mclk_mux1_macro].dev, enable);
-		if (ret1 < 0)
-			dev_err(dev,
-				"%s: MCLK_MUX1 %s failed for macro:%d, mclk_mux1_macro:%d\n",
-				__func__,
-				enable ? "enable" : "disable",
-				macro_id, mclk_mux1_macro);
-		/* disable mclk_mux0 only if ret is success(0) */
-		if (!ret)
-			priv->macro_params[mclk_mux0_macro].mclk_fn(
-				priv->macro_params[mclk_mux0_macro].dev,
-				false);
-		if (enable && ret1)
-			goto err;
-		break;
-	case MCLK_MUX_MAX:
-	default:
-		dev_err(dev, "%s: invalid mclk_mux_id: %d\n",
-			__func__, mclk_mux_id);
-		ret = -EINVAL;
-		goto err;
-	}
-	if (enable)
-		priv->current_mclk_mux_macro[macro_id] =
-				bolero_mclk_mux_tbl[macro_id][mclk_mux_id];
-	else
-		priv->current_mclk_mux_macro[macro_id] =
-				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
-err:
-	mutex_unlock(&priv->clk_lock);
-	return ret;
-}
-EXPORT_SYMBOL(bolero_request_clock);
 
 static ssize_t bolero_version_read(struct snd_info_entry *entry,
 				   void *file_private_data,
@@ -657,6 +609,9 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 		return 0;
 	}
 
+	if (priv->rsc_clk_cb)
+		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_UP);
+
 	if (priv->macro_params[VA_MACRO].event_handler)
 		priv->macro_params[VA_MACRO].event_handler(
 			priv->component,
@@ -682,6 +637,9 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 {
 	struct bolero_priv *priv = data;
 	int macro_idx;
+
+	if (priv->rsc_clk_cb)
+		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_DOWN);
 
 	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_OFF_PRE_SSR);
 	regcache_cache_only(priv->regmap, true);
@@ -1074,7 +1032,30 @@ static struct platform_driver bolero_drv = {
 	.remove = bolero_remove,
 };
 
-module_platform_driver(bolero_drv);
+static int bolero_drv_init(void)
+{
+	return platform_driver_register(&bolero_drv);
+}
+
+static void bolero_drv_exit(void)
+{
+	platform_driver_unregister(&bolero_drv);
+}
+
+static int __init bolero_init(void)
+{
+	bolero_drv_init();
+	bolero_clk_rsc_mgr_init();
+	return 0;
+}
+module_init(bolero_init);
+
+static void __exit bolero_exit(void)
+{
+	bolero_clk_rsc_mgr_exit();
+	bolero_drv_exit();
+}
+module_exit(bolero_exit);
 
 MODULE_DESCRIPTION("Bolero driver");
 MODULE_LICENSE("GPL v2");

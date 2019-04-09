@@ -70,6 +70,7 @@ ifdef CONFIG_SND_SOC_BOLERO
 	BOLERO_OBJS += bolero-cdc-utils.o
 	BOLERO_OBJS += bolero-cdc-regmap.o
 	BOLERO_OBJS += bolero-cdc-tables.o
+	BOLERO_OBJS += bolero-clk-rsc.o
 endif
 
 ifdef CONFIG_WSA_MACRO

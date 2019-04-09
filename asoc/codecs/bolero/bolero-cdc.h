@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef BOLERO_CDC_H
@@ -54,16 +54,20 @@ struct macro_ops {
 	int (*set_port_map)(struct snd_soc_component *component, u32 uc,
 			    u32 size, void *data);
 	char __iomem *io_base;
+	u16 clk_id_req;
+	u16 default_clk_id;
 };
 
+typedef int (*rsc_clk_cb_t)(struct device *dev, u16 event);
+
 #if IS_ENABLED(CONFIG_SND_SOC_BOLERO)
+int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb);
+void bolero_unregister_res_clk(struct device *dev);
 int bolero_register_macro(struct device *dev, u16 macro_id,
 			  struct macro_ops *ops);
 void bolero_unregister_macro(struct device *dev, u16 macro_id);
 struct device *bolero_get_device_ptr(struct device *dev, u16 macro_id);
-int bolero_request_clock(struct device *dev, u16 macro_id,
-			 enum mclk_mux mclk_mux_id,
-			 bool enable);
+struct device *bolero_get_rsc_clk_device_ptr(struct device *dev);
 int bolero_info_create_codec_entry(
 		struct snd_info_entry *codec_root,
 		struct snd_soc_component *component);
@@ -73,6 +77,14 @@ int bolero_runtime_resume(struct device *dev);
 int bolero_runtime_suspend(struct device *dev);
 int bolero_set_port_map(struct snd_soc_component *component, u32 size, void *data);
 #else
+static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
+{
+	return 0;
+}
+static inline void bolero_unregister_res_clk(struct device *dev)
+{
+}
+
 static inline int bolero_register_macro(struct device *dev,
 					u16 macro_id,
 					struct macro_ops *ops)
@@ -88,13 +100,6 @@ static inline struct device *bolero_get_device_ptr(struct device *dev,
 						   u16 macro_id)
 {
 	return NULL;
-}
-
-static inline int bolero_request_clock(struct device *dev, u16 macro_id,
-				       enum mclk_mux mclk_mux_id,
-				       bool enable)
-{
-	return 0;
 }
 
 static int bolero_info_create_codec_entry(
