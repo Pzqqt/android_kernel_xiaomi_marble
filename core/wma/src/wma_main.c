@@ -8018,6 +8018,11 @@ int wma_motion_det_host_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
+	if (!pmac || !pmac->sme.md_host_evt_cb) {
+		WMA_LOGE("Invalid motion detect callback");
+		return -EINVAL;
+	}
+
 	motion_det_event_hdr = param_buf->fixed_param;
 	WMA_LOGA("motion detect host event received, vdev_id=%d, status=%d",
 		 motion_det_event_hdr->vdev_id, motion_det_event_hdr->status);
