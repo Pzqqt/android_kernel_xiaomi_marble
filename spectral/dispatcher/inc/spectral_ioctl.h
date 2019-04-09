@@ -20,6 +20,10 @@
 #define _SPECTRAL_IOCTL_H_
 #include <wlan_dfs_ioctl.h>
 
+#ifndef AH_MAX_CHAINS
+#define AH_MAX_CHAINS 3
+#endif
+
 /*
  * ioctl defines
  */
@@ -95,6 +99,91 @@ enum spectral_cap_hw_gen {
 	SPECTRAL_CAP_HW_GEN_1 = 0,
 	SPECTRAL_CAP_HW_GEN_2 = 1,
 	SPECTRAL_CAP_HW_GEN_3 = 2,
+};
+
+/**
+ * struct spectral_config - spectral config parameters
+ * @ss_fft_period:        Skip interval for FFT reports
+ * @ss_period:            Spectral scan period
+ * @ss_count:             # of reports to return from ss_active
+ * @ss_short_report:      Set to report only 1 set of FFT results
+ * @radar_bin_thresh_sel: Select threshold to classify strong bin for FFT
+ * @ss_spectral_pri:      Priority, and are we doing a noise power cal ?
+ * @ss_fft_size:          Defines the number of FFT data points to compute,
+ *                        defined as a log index num_fft_pts =
+ *                        2^ss_fft_size
+ * @ss_gc_ena:            Set, to enable targeted gain change before
+ *                        starting the spectral scan FFT
+ * @ss_restart_ena:       Set, to enable abort of receive frames when in high
+ *                        priority and a spectral scan is queued
+ * @ss_noise_floor_ref:   Noise floor reference number (signed) for the
+ *                        calculation of bin power (dBm) Though stored as an
+ *                        unsigned this should be treated as a signed 8-bit int.
+ * @ss_init_delay:        Disallow spectral scan triggers after tx/rx packets
+ *                        by setting this delay value to roughly SIFS time
+ *                        period or greater Delay timer count in units of 0.25us
+ * @ss_nb_tone_thr:       Number of strong bins (inclusive) per sub-channel,
+ *                        below which a signal is declared a narrowband tone
+ * @ss_str_bin_thr:       Bin/max_bin ratio threshold over which a bin is
+ *                        declared strong (for spectral scan bandwidth analysis)
+ * @ss_wb_rpt_mode:       Set this bit to report spectral scans as EXT_BLOCKER
+ *                        (phy_error=36), if none of the sub-channels are
+ *                        deemed narrowband
+ * @ss_rssi_rpt_mode:     Set this bit to report spectral scans as EXT_BLOCKER
+ *                        (phy_error=36), if the ADC RSSI is below the
+ *                        threshold ss_rssi_thr
+ * @ss_rssi_thr:          ADC RSSI must be greater than or equal to this
+ *                        threshold (signed Db) to ensure spectral scan
+ *                        reporting with normal phy error codes (please see
+ *                        ss_rssi_rpt_mode above).Though stored as an unsigned
+ *                        value, this should be treated as a signed 8-bit int
+ * @ss_pwr_format:        Format of frequency bin magnitude for spectral scan
+ *                        triggered FFTs 0: linear magnitude
+ *                        1: log magnitude (20*log10(lin_mag), 1/2 dB step size)
+ * @ss_rpt_mode:          Format of per-FFT reports to software for spectral
+ *                        scan triggered FFTs
+ *                        0: No FFT report (only pulse end summary)
+ *                        1: 2-dword summary of metrics for each completed FFT
+ *                        2: 2-dword summary + 1x-oversampled bins(in-band) per
+ *                           FFT
+ *                        3: 2-dword summary + 2x-oversampled bins (all) per FFT
+ * @ss_bin_scale:         Number of LSBs to shift out to scale the FFT bins
+ *                        for spectral scan triggered FFTs
+ * @ss_dbm_adj:           Set (with ss_pwr_format=1), to report bin
+ *                        magnitudes
+ *                        converted to dBm power using the noisefloor
+ *                        calibration results
+ * @ss_chn_mask:          Per chain enable mask to select input ADC for search
+ *                        FFT
+ * @ss_nf_cal:            nf calibrated values for ctl+ext
+ * @ss_nf_pwr:            nf pwr values for ctl+ext
+ * @ss_nf_temp_data:      temperature data taken during nf scan
+ */
+struct spectral_config {
+	uint16_t ss_fft_period;
+	uint16_t ss_period;
+	uint16_t ss_count;
+	uint16_t ss_short_report;
+	uint8_t radar_bin_thresh_sel;
+	uint16_t ss_spectral_pri;
+	uint16_t ss_fft_size;
+	uint16_t ss_gc_ena;
+	uint16_t ss_restart_ena;
+	uint16_t ss_noise_floor_ref;
+	uint16_t ss_init_delay;
+	uint16_t ss_nb_tone_thr;
+	uint16_t ss_str_bin_thr;
+	uint16_t ss_wb_rpt_mode;
+	uint16_t ss_rssi_rpt_mode;
+	uint16_t ss_rssi_thr;
+	uint16_t ss_pwr_format;
+	uint16_t ss_rpt_mode;
+	uint16_t ss_bin_scale;
+	uint16_t ss_dbm_adj;
+	uint16_t ss_chn_mask;
+	int8_t ss_nf_cal[AH_MAX_CHAINS * 2];
+	int8_t ss_nf_pwr[AH_MAX_CHAINS * 2];
+	int32_t ss_nf_temp_data;
 };
 
 /**
