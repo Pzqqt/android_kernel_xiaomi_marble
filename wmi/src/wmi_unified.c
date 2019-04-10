@@ -1719,7 +1719,7 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		wmi_nofl_err("%s:%d, MAX %d WMI Pending cmds reached",
 			     func, line, wmi_handle->wmi_max_cmds);
 		wmi_unified_debug_dump(wmi_handle);
-		qdf_trigger_self_recovery();
+		qdf_trigger_self_recovery(QDF_WMI_EXCEED_MAX_PENDING_CMDS);
 		return QDF_STATUS_E_BUSY;
 	}
 

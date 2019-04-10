@@ -1164,16 +1164,17 @@ enum qdf_suspend_type {
 
 /**
  * enum qdf_hang_reason - host hang/ssr reason
- * @CDS_REASON_UNSPECIFIED: Unspecified reason
- * @CDS_RX_HASH_NO_ENTRY_FOUND: No Map for the MAC entry for the received frame
- * @CDS_PEER_DELETION_TIMEDOUT: peer deletion timeout happened
- * @CDS_PEER_UNMAP_TIMEDOUT: peer unmap timeout
- * @CDS_SCAN_REQ_EXPIRED: Scan request timed out
- * @CDS_SCAN_ATTEMPT_FAILURES: Consecutive Scan attempt failures
- * @CDS_GET_MSG_BUFF_FAILURE: Unable to get the message buffer
- * @CDS_ACTIVE_LIST_TIMEOUT: Current command processing is timedout
- * @CDS_SUSPEND_TIMEOUT: Timeout for an ACK from FW for suspend request
- * @CDS_RESUME_TIMEOUT: Timeout for an ACK from FW for resume request
+ * @QDF_REASON_UNSPECIFIED: Unspecified reason
+ * @QDF_RX_HASH_NO_ENTRY_FOUND: No Map for the MAC entry for the received frame
+ * @QDF_PEER_DELETION_TIMEDOUT: peer deletion timeout happened
+ * @QDF_PEER_UNMAP_TIMEDOUT: peer unmap timeout
+ * @QDF_SCAN_REQ_EXPIRED: Scan request timed out
+ * @QDF_SCAN_ATTEMPT_FAILURES: Consecutive Scan attempt failures
+ * @QDF_GET_MSG_BUFF_FAILURE: Unable to get the message buffer
+ * @QDF_ACTIVE_LIST_TIMEOUT: Current command processing is timedout
+ * @QDF_SUSPEND_TIMEOUT: Timeout for an ACK from FW for suspend request
+ * @QDF_RESUME_TIMEOUT: Timeout for an ACK from FW for resume request
+ * @QDF_WMI_EXCEED_MAX_PENDING_CMDS: wmi exceed max pending cmd
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED = 0,
@@ -1186,6 +1187,7 @@ enum qdf_hang_reason {
 	QDF_ACTIVE_LIST_TIMEOUT = 7,
 	QDF_SUSPEND_TIMEOUT = 8,
 	QDF_RESUME_TIMEOUT = 9,
+	QDF_WMI_EXCEED_MAX_PENDING_CMDS = 10,
 };
 
 /**

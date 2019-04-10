@@ -69,6 +69,7 @@ void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
 
 /**
  * qdf_trigger_self_recovery () - trigger self recovery
+ * @reason: the reason for the recovery request
  *
  * Call API only in case of fatal error,
  * if self_recovery_cb callback is registered, injcets fw crash and recovers
@@ -76,9 +77,10 @@ void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
  *
  * Return: None
  */
-#define qdf_trigger_self_recovery() \
-	__qdf_trigger_self_recovery(__func__, __LINE__)
-void __qdf_trigger_self_recovery(const char *func, const uint32_t line);
+#define qdf_trigger_self_recovery(reason) \
+	__qdf_trigger_self_recovery(reason, __func__, __LINE__)
+void __qdf_trigger_self_recovery(enum qdf_hang_reason reason,
+				 const char *func, const uint32_t line);
 
 /**
  * qdf_is_recovering_callback() - callback to get driver recovering in progress
