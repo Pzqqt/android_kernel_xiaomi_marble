@@ -5019,6 +5019,15 @@ wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct wma_target_req *req = (struct wma_target_req *)data;
 
+	if (req->msg_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
+		tpDeleteBssParams params =
+			(tpDeleteBssParams)req->user_data;
+		params->status = QDF_STATUS_SUCCESS;
+		wma_send_msg_high_priority(wma, WMA_DELETE_BSS_HO_FAIL_RSP,
+					   (void *)params, 0);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev))
 		if (req->msg_type == WMA_SET_LINK_STATE ||
 			req->type == WMA_SET_LINK_PEER_RSP)
