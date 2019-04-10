@@ -93,6 +93,44 @@ static inline unsigned int is_auth_valid(struct mac_context *mac,
 	return valid;
 }
 
+/**
+ * lim_get_wep_key_sap() - get sap's wep key for shared wep auth
+ * @pe_session: pointer to pe session
+ * @wep_params: pointer to wlan_mlme_wep_cfg
+ * @key_id: key id
+ * @default_key: output of the key
+ * @key_len: output of ket length
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static QDF_STATUS lim_get_wep_key_sap(struct pe_session *pe_session,
+				      struct wlan_mlme_wep_cfg *wep_params,
+				      uint8_t key_id,
+				      uint8_t *default_key,
+				      qdf_size_t *key_len)
+{
+	return mlme_get_wep_key(pe_session->vdev,
+				wep_params,
+				(MLME_WEP_DEFAULT_KEY_1 + key_id),
+				default_key,
+				key_len);
+}
+#else
+static QDF_STATUS lim_get_wep_key_sap(struct pe_session *pe_session,
+				      struct wlan_mlme_wep_cfg *wep_params,
+				      uint8_t key_id,
+				      uint8_t *default_key,
+				      qdf_size_t *key_len)
+{
+	*key_len = pe_session->WEPKeyMaterial[key_id].key[0].keyLength;
+	qdf_mem_copy(default_key, pe_session->WEPKeyMaterial[key_id].key[0].key,
+		     *key_len);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
@@ -814,11 +852,11 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		key_id = mac_ctx->mlme_cfg->wep_params.wep_default_key_id;
 		val = SIR_MAC_KEY_LENGTH;
 		if (LIM_IS_AP_ROLE(pe_session)) {
-			qdf_status = mlme_get_wep_key(pe_session->vdev,
-						      wep_params,
-						      (MLME_WEP_DEFAULT_KEY_1 +
-						       key_id), defaultkey,
-						      &val);
+			qdf_status = lim_get_wep_key_sap(pe_session,
+							 wep_params,
+							 key_id,
+							 defaultkey,
+							 &val);
 		} else {
 			qdf_status = mlme_get_wep_key(pe_session->vdev,
 						      wep_params,
@@ -1420,11 +1458,11 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		val = SIR_MAC_KEY_LENGTH;
 
 		if (LIM_IS_AP_ROLE(pe_session)) {
-			qdf_status = mlme_get_wep_key(pe_session->vdev,
-						      wep_params,
-						      (MLME_WEP_DEFAULT_KEY_1 +
-						       key_id), defaultkey,
-						      &val);
+			qdf_status = lim_get_wep_key_sap(pe_session,
+							 wep_params,
+							 key_id,
+							 defaultkey,
+							 &val);
 		} else {
 			qdf_status = mlme_get_wep_key(pe_session->vdev,
 						      wep_params,
