@@ -9836,14 +9836,8 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		break;
 
 	case eWNI_SME_UPPER_LAYER_ASSOC_CNF:
-	{
-		tSirSmeAssocIndToUpperLayerCnf *upper_layer_assoc_cnf =
-			(tSirSmeAssocIndToUpperLayerCnf *)pMsgBuf;
-		if (upper_layer_assoc_cnf->ies) {
-			qdf_mem_free(upper_layer_assoc_cnf->ies);
-			sme_debug("free ies");
-		}
-	}
+		csr_roam_joined_state_msg_processor(mac, pSmeRsp);
+		break;
 	default:
 		sme_debug("Unexpected message type: %d[0x%X] received in substate %s",
 			pSmeRsp->messageType, pSmeRsp->messageType,
@@ -9874,9 +9868,6 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		QDF_STATUS status;
 
 		sme_debug("ASSOCIATION confirmation can be given to upper layer ");
-		roam_info = qdf_mem_malloc(sizeof(*roam_info));
-		if (!roam_info)
-			return;
 		pUpperLayerAssocCnf =
 			(tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
 		status = csr_roam_get_session_id_from_bssid(mac,
@@ -9887,7 +9878,16 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 
 		if (!pSession) {
 			sme_err("session %d not found", sessionId);
-			qdf_mem_free(roam_info);
+			if (pUpperLayerAssocCnf->ies)
+				qdf_mem_free(pUpperLayerAssocCnf->ies);
+			return;
+		}
+
+		roam_info = qdf_mem_malloc(sizeof(*roam_info));
+		if (!roam_info) {
+			sme_err("roam_info not allocated");
+			if (pUpperLayerAssocCnf->ies)
+				qdf_mem_free(pUpperLayerAssocCnf->ies);
 			return;
 		}
 		/* send the status code as Success */
@@ -9960,9 +9960,9 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 						       roam_info, 0,
 						       eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
-			if (pUpperLayerAssocCnf->ies)
-				qdf_mem_free(pUpperLayerAssocCnf->ies);
 		}
+		if (pUpperLayerAssocCnf->ies)
+			qdf_mem_free(pUpperLayerAssocCnf->ies);
 		qdf_mem_free(roam_info);
 	}
 	break;
