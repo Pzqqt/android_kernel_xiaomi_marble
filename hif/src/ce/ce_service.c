@@ -723,44 +723,6 @@ unsigned int ce_recv_entries_avail(struct CE_handle *copyeng)
 }
 
 /*
- * Guts of ce_send_entries_done.
- * The caller takes responsibility for any necessary locking.
- */
-unsigned int ce_send_entries_done(struct CE_handle *copyeng)
-{
-	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	unsigned int nentries;
-	struct hif_softc *scn = CE_state->scn;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-
-	qdf_spin_lock(&CE_state->ce_index_lock);
-	nentries = hif_state->ce_services->ce_send_entries_done_nolock(
-						CE_state->scn, CE_state);
-	qdf_spin_unlock(&CE_state->ce_index_lock);
-
-	return nentries;
-}
-
-/*
- * Guts of ce_recv_entries_done.
- * The caller takes responsibility for any necessary locking.
- */
-unsigned int ce_recv_entries_done(struct CE_handle *copyeng)
-{
-	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	unsigned int nentries;
-	struct hif_softc *scn = CE_state->scn;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-
-	qdf_spin_lock(&CE_state->ce_index_lock);
-	nentries = hif_state->ce_services->ce_recv_entries_done_nolock(
-						CE_state->scn, CE_state);
-	qdf_spin_unlock(&CE_state->ce_index_lock);
-
-	return nentries;
-}
-
-/*
  * Guts of ce_completed_recv_next.
  * The caller takes responsibility for any necessary locking.
  */

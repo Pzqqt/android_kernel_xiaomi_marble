@@ -328,7 +328,7 @@ ce_send_entries_done_nolock_srng(struct hif_softc *scn,
 
 	count = hal_srng_src_done_val(scn->hal_soc, src_ring->srng_ctx);
 
-	hal_srng_access_end(scn->hal_soc, src_ring->srng_ctx);
+	hal_srng_access_end_reap(scn->hal_soc, src_ring->srng_ctx);
 
 	return count;
 }

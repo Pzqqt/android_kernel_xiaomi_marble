@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -297,20 +297,6 @@ void ce_recv_watermarks_set(struct CE_handle *copyeng,
  */
 unsigned int ce_send_entries_avail(struct CE_handle *copyeng);
 unsigned int ce_recv_entries_avail(struct CE_handle *copyeng);
-
-/*
- * Return the number of entries in the ring that are ready
- * to be processed by software.
- *
- * For source ring, the number of descriptors that have
- * been completed and can now be overwritten with new send
- * descriptors.
- *
- * For destination ring, the number of descriptors that
- * are available to be processed (newly received buffers).
- */
-unsigned int ce_send_entries_done(struct CE_handle *copyeng);
-unsigned int ce_recv_entries_done(struct CE_handle *copyeng);
 
 /* recv flags */
 /* Data is byte-swapped */
