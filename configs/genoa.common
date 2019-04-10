@@ -201,4 +201,6 @@ CONFIG_BEACON_TX_OFFLOAD_MAX_VDEV := 3
 #Beacon offload config
 CONFIG_WMI_BCN_OFFLOAD := y
 
+#Flag to enable Supported Operating class
+CONFIG_HOST_OPCLASS := y
 ###################################
