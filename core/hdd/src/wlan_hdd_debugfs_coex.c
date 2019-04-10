@@ -463,11 +463,11 @@ static QDF_STATUS __hdd_debugfs_mws_coex_idrx_read(struct hdd_context *hdd_ctx,
 				 "sub0_is_link_critical = %u\n"
 				 "sub0_static_power = %u\n"
 				 "sub0_rssi = %d\n"
-				 "sub0_techid = %d\n"
-				 "sub0_policy = %d\n"
-				 "sub0_is_link_critical = %d\n"
-				 "sub0_static_power = %u\n"
-				 "sub0_rssi = %d\n",
+				 "sub1_techid = %d\n"
+				 "sub1_policy = %d\n"
+				 "sub1_is_link_critical = %d\n"
+				 "sub1_static_power = %u\n"
+				 "sub1_rssi = %d\n",
 			   idrx_state->vdev_id,
 			   idrx_state->sub0_techid,
 			   idrx_state->sub0_policy,
