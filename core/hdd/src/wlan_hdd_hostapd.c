@@ -5085,10 +5085,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		config->countryCode[0] = hdd_ctx->reg.alpha2[0];
 		config->countryCode[1] = hdd_ctx->reg.alpha2[1];
 
-		ret = wlan_hdd_sap_cfg_dfs_override(adapter);
-		if (ret < 0)
-			goto error;
-
+		/* Overwrite second AP's channel with first only when:
+		 * 1. If operating mode is single mac
+		 * 2. or if 2nd AP is coming up on 5G band channel
+		 */
+		ret = 0;
+		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) ||
+		    WLAN_REG_IS_5GHZ_CH(config->channel)) {
+			ret = wlan_hdd_sap_cfg_dfs_override(adapter);
+			if (ret < 0)
+				goto error;
+		}
 		if (!ret && wlan_reg_is_dfs_ch(hdd_ctx->pdev, config->channel))
 			hdd_ctx->dev_dfs_cac_status = DFS_CAC_NEVER_DONE;
 

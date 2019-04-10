@@ -2195,11 +2195,6 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 					    sap_ctx->secondary_ch,
 					    &sap_ctx->ch_params);
 	}
-	if (sap_ctx->channel > 14 &&
-	    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
-	     sap_ctx->csr_roamProfile.phyMode ==
-					eCSR_DOT11_MODE_11g_ONLY))
-		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
 
 	/*
 	 * when AP2 is started while AP1 is performing ACS, we may not
@@ -2212,13 +2207,24 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 
 		con_ch = sme_get_beaconing_concurrent_operation_channel(
 				mac_handle, sap_ctx->sessionId);
-		if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
+		/* Overwrite second AP's channel with first only when:
+		 * 1. If operating mode is single mac
+		 * 2. or if 2nd AP is coming up on 5G band channel
+		 */
+		if ((!policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
+		     WLAN_REG_IS_5GHZ_CH(sap_ctx->channel)) &&
+		     con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
 			sap_ctx->channel = con_ch;
 			wlan_reg_set_channel_params(mac_ctx->pdev,
 						    sap_ctx->channel, 0,
 						    &sap_ctx->ch_params);
 		}
 	}
+	if (sap_ctx->channel > 14 &&
+	    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
+	     sap_ctx->csr_roamProfile.phyMode ==
+					eCSR_DOT11_MODE_11g_ONLY))
+		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
 
 	/*
 	 * Transition from SAP_INIT to SAP_STARTING
