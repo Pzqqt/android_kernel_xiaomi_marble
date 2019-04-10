@@ -3113,6 +3113,19 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 		scn->ce_count = QCA_6390_CE_COUNT;
 		break;
+	case TARGET_TYPE_ADRASTEA:
+		if (hif_is_attribute_set(scn, HIF_LOWDESC_CE_NO_PKTLOG_CFG))
+			hif_state->host_ce_config =
+				host_lowdesc_ce_config_wlan_adrastea_nopktlog;
+		else
+			hif_state->host_ce_config =
+				host_ce_config_wlan_adrastea;
+
+		hif_state->target_ce_config = target_ce_config_wlan_adrastea;
+		hif_state->target_ce_config_sz =
+					sizeof(target_ce_config_wlan_adrastea);
+		break;
+
 	}
 	QDF_BUG(scn->ce_count <= CE_COUNT_MAX);
 }
