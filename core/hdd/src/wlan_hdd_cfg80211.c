@@ -20369,7 +20369,7 @@ __wlan_hdd_cfg80211_update_owe_info(struct wiphy *wiphy,
 	hdd_debug("owe_status %d", owe_info->status);
 
 	status = wlansap_update_owe_info(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-					 owe_info->bssid, owe_info->ie,
+					 owe_info->peer, owe_info->ie,
 					 owe_info->ie_len, owe_info->status);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to update OWE info");
@@ -21834,7 +21834,7 @@ void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 
 	hdd_enter_dev(dev);
 
-	qdf_mem_copy(owe_info.bssid, sta_addr, ETH_ALEN);
+	qdf_mem_copy(owe_info.peer, sta_addr, ETH_ALEN);
 	owe_info.ie = owe_ie;
 	owe_info.ie_len = owe_ie_len;
 
