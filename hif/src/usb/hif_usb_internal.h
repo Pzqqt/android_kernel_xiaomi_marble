@@ -51,7 +51,8 @@
 
 #define HIF_USB_FLUSH_WORK(pipe) flush_work(&pipe->io_complete_work)
 #else
-#define HIF_USB_SCHEDULE_WORK(pipe) schedule_work(&pipe->io_complete_work)
+#define HIF_USB_SCHEDULE_WORK(pipe) queue_work(system_highpri_wq,\
+		&(pipe)->io_complete_work)
 #define HIF_USB_INIT_WORK(pipe)\
 		INIT_WORK(&pipe->io_complete_work,\
 				usb_hif_io_comp_work)
