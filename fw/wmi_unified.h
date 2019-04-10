@@ -5682,6 +5682,24 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SET_TEST_CMD_TWT_SCHED_CONFIG,
 
+    /* Parameter used to configure OBSS Packet Detect threshold
+     * for Spatial Reuse feature.
+     * The accepted values are in between 62 and 95, inclusive.
+     * The parameter value is programmed into the spatial reuse register,
+     * to specify how low the background signal strength from neighboring
+     * BSS cells must be, for this AP to employ spatial reuse.
+     * The value of the parameter is multiplied by -1 to get the
+     * OBSS RSSI threshold, in dBm, below which spatial reuse will
+     * be allowed.
+     * For example, if the parameter value is 62, the target will
+     * allow spatial reuse if the RSSI detected from other BSS
+     * is below -62 dBm.
+     * Similarly, if the parameter value is 80, the target will
+     * allow spatial reuse only if the RSSI detected from neighboring
+     * BSS cells is no more than -80 dBm.
+     */
+    WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
