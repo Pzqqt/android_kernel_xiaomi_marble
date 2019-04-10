@@ -980,6 +980,9 @@ hdd_convert_hang_reason(enum qdf_hang_reason reason)
 	case QDF_RESUME_TIMEOUT:
 		ret_val = QCA_WLAN_HANG_RESUME_TIMEOUT;
 		break;
+	case QDF_WMI_EXCEED_MAX_PENDING_CMDS:
+		ret_val = QCA_WLAN_HANG_WMI_EXCEED_MAX_PENDING_CMDS;
+		break;
 	case QDF_REASON_UNSPECIFIED:
 	default:
 		ret_val = QCA_WLAN_HANG_REASON_UNSPECIFIED;
