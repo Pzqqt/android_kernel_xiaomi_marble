@@ -1510,7 +1510,7 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 	}
 
 	adm_callback_debug_print(data);
-	if (data->payload_size) {
+	if (data->payload_size >= sizeof(uint32_t)) {
 		copp_idx = (data->token) & 0XFF;
 		port_idx = ((data->token) >> 16) & 0xFF;
 		client_id = ((data->token) >> 8) & 0xFF;
@@ -1530,13 +1530,20 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 			return 0;
 		}
 		if (data->opcode == APR_BASIC_RSP_RESULT) {
-			if (data->payload_size < (2 * sizeof(uint32_t))) {
-				pr_err("%s: Invalid payload size %d\n", __func__,
-					data->payload_size);
-				return 0;
-			}
 			pr_debug("%s: APR_BASIC_RSP_RESULT id 0x%x\n",
 				__func__, payload[0]);
+
+			if (!((client_id != ADM_CLIENT_ID_SOURCE_TRACKING) &&
+			     ((payload[0] == ADM_CMD_SET_PP_PARAMS_V5) ||
+			      (payload[0] == ADM_CMD_SET_PP_PARAMS_V6)))) {
+				if (data->payload_size <
+						(2 * sizeof(uint32_t))) {
+					pr_err("%s: Invalid payload size %d\n",
+						__func__, data->payload_size);
+					return 0;
+				}
+			}
+
 			if (payload[1] != 0) {
 				pr_err("%s: cmd = 0x%x returned error = 0x%x\n",
 					__func__, payload[0], payload[1]);
@@ -1718,21 +1725,28 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 		case ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST_V2:
 			pr_debug("%s: ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST\n",
 				 __func__);
-			num_modules = payload[1];
-			pr_debug("%s: Num modules %d\n", __func__, num_modules);
-			if (payload[0]) {
-				pr_err("%s: ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST, error = %d\n",
-				       __func__, payload[0]);
-			} else if (num_modules > MAX_MODULES_IN_TOPO) {
-				pr_err("%s: ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST invalid num modules received, num modules = %d\n",
-				       __func__, num_modules);
+			if (data->payload_size >= (2 * sizeof(uint32_t))) {
+				num_modules = payload[1];
+				pr_debug("%s: Num modules %d\n", __func__,
+					 num_modules);
+				if (payload[0]) {
+					pr_err("%s: ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST, error = %d\n",
+					       __func__, payload[0]);
+				} else if (num_modules > MAX_MODULES_IN_TOPO) {
+					pr_err("%s: ADM_CMDRSP_GET_PP_TOPO_MODULE_LIST invalid num modules received, num modules = %d\n",
+					       __func__, num_modules);
+				} else {
+					ret = adm_process_get_topo_list_response(
+						data->opcode, copp_idx,
+						num_modules, payload,
+						data->payload_size);
+					if (ret)
+						pr_err("%s: Failed to process get topo modules list response, error %d\n",
+						       __func__, ret);
+				}
 			} else {
-				ret = adm_process_get_topo_list_response(
-					data->opcode, copp_idx, num_modules,
-					payload, data->payload_size);
-				if (ret)
-					pr_err("%s: Failed to process get topo modules list response, error %d\n",
-					       __func__, ret);
+				pr_err("%s: Invalid payload size %d\n",
+					__func__, data->payload_size);
 			}
 			atomic_set(&this_adm.copp.stat[port_idx][copp_idx],
 				   payload[0]);
