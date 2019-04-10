@@ -115,7 +115,7 @@ lim_collect_bss_description(struct mac_context *mac,
 
 	if (!pBssDescr->beaconInterval) {
 		pe_warn("Beacon Interval is ZERO, making it to default 100 "
-			   MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(pHdr->bssId));
+			   QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(pHdr->bssId));
 		pBssDescr->beaconInterval = 100;
 	}
 	/*
@@ -147,7 +147,7 @@ lim_collect_bss_description(struct mac_context *mac,
 
 	/* SINR no longer reported by HW */
 	pBssDescr->sinr = 0;
-	pe_debug(MAC_ADDRESS_STR " rssi: normalized: %d, absolute: %d",
+	pe_debug(QDF_MAC_ADDR_STR " rssi: normalized: %d, absolute: %d",
 		QDF_MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
 		pBssDescr->rssi_raw);
 

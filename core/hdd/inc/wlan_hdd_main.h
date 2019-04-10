@@ -246,8 +246,7 @@ enum hdd_driver_flags {
 /* Maximum time(ms) to wait for external acs response */
 #define WLAN_VENDOR_ACS_WAIT_TIME 1000
 
-/** Mac Address string **/
-#define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
+/* Mac Address string length */
 #define MAC_ADDRESS_STR_LEN 18  /* Including null terminator */
 /* Max and min IEs length in bytes */
 #define MAX_GENIE_LEN (512)

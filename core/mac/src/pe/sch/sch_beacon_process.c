@@ -1501,7 +1501,7 @@ QDF_STATUS lim_process_obss_detection_ind(struct mac_context *mac_ctx,
 	enum band_info rf_band = BAND_UNKNOWN;
 	struct obss_detection_cfg *cur_detect;
 
-	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " MAC_ADDRESS_STR,
+	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " QDF_MAC_ADDR_STR,
 		 obss_detection->vdev_id, obss_detection->reason,
 		 obss_detection->matched_detection_masks,
 		 QDF_MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));

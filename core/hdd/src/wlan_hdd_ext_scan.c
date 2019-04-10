@@ -423,7 +423,7 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(struct hdd_context *hdd_ctx,
 			ap->ts += hdd_ctx->ext_scan_start_since_boot;
 			hdd_debug("Timestamp %llu "
 				"Ssid: %s "
-				"Bssid (" MAC_ADDRESS_STR ") "
+				"Bssid (" QDF_MAC_ADDR_STR ") "
 				"Channel %u "
 				"Rssi %d "
 				"RTT %u "
@@ -587,7 +587,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(struct hdd_context *hdd_ctx,
 
 		hdd_debug("[i=%d] Timestamp %llu "
 		       "Ssid: %s "
-		       "Bssid (" MAC_ADDRESS_STR ") "
+		       "Bssid (" QDF_MAC_ADDR_STR ") "
 		       "Channel %u "
 		       "Rssi %d "
 		       "RTT %u "
@@ -717,7 +717,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 	ap_info = &data->ap[0];
 	for (i = 0; i < data->numResults; i++) {
 		hdd_debug("[i=%d] "
-		       "Bssid (" MAC_ADDRESS_STR ") "
+		       "Bssid (" QDF_MAC_ADDR_STR ") "
 		       "Channel %u "
 		       "numOfRssi %d",
 		       i,
@@ -854,7 +854,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(struct hdd_context *hdd_ctx,
 	hdd_debug("Req Id %u More Data %u", data->requestId,
 		  data->moreData);
 	hdd_debug("AP Info: Timestamp %llu Ssid: %s "
-	       "Bssid (" MAC_ADDRESS_STR ") "
+	       "Bssid (" QDF_MAC_ADDR_STR ") "
 	       "Channel %u "
 	       "Rssi %d "
 	       "RTT %u "
@@ -1131,7 +1131,7 @@ wlan_hdd_cfg80211_extscan_epno_match_found(struct hdd_context *hdd_ctx,
 	for (i = 0; i < data->num_results; i++) {
 		data->ap[i].channel = cds_chan_to_freq(data->ap[i].channel);
 		hdd_debug("AP Info: Timestamp %llu) Ssid: %s "
-					"Bssid (" MAC_ADDRESS_STR ") "
+					"Bssid (" QDF_MAC_ADDR_STR ") "
 					"Channel %u "
 					"Rssi %d "
 					"RTT %u "
@@ -1237,7 +1237,7 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 		data->request_id, data->id, data->anqp_len, num_matches);
 	for (i = 0; i < num_matches; i++) {
 		hdd_debug("AP Info: Timestamp %llu Ssid: %s "
-					"Bssid (" MAC_ADDRESS_STR ") "
+					"Bssid (" QDF_MAC_ADDR_STR ") "
 					"Channel %u "
 					"Rssi %d "
 					"RTT %u "
@@ -1880,7 +1880,7 @@ static int hdd_parse_ap_rssi_threshold(struct nlattr *attr,
 		return -EINVAL;
 	}
 	nla_memcpy(ap->bssid.bytes, tb[id], QDF_MAC_ADDR_SIZE);
-	hdd_debug("BSSID: " MAC_ADDRESS_STR,
+	hdd_debug("BSSID: " QDF_MAC_ADDR_STR,
 		  QDF_MAC_ADDR_ARRAY(ap->bssid.bytes));
 
 	/* Parse and fetch low RSSI */

@@ -569,7 +569,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		if ((eConnectionState_Associated ==
 		     sta_ctx->conn_info.conn_state) &&
 		    (!sta_ctx->conn_info.is_authenticated)) {
-			hdd_err("client " MAC_ADDRESS_STR
+			hdd_err("client " QDF_MAC_ADDR_STR
 				" is in the middle of WPS/EAPOL exchange.",
 				QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 			info->state = WIFI_AUTHENTICATING;

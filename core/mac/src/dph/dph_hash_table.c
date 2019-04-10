@@ -274,7 +274,7 @@ tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 
 	pe_debug("assocId %d index %d STA addr",
 		       assocId, index);
-	pe_debug(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(staAddr));
+	pe_debug(QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(staAddr));
 
 	if (assocId >= hash_table->size) {
 		pe_err("invalid STA id %d", assocId);
@@ -346,7 +346,7 @@ QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 	uint16_t index = hash_function(mac, staAddr, hash_table->size);
 
 	pe_debug("assocId %d index %d STA addr", assocId, index);
-	pe_debug(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(staAddr));
+	pe_debug(QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(staAddr));
 
 	if (assocId >= hash_table->size) {
 		pe_err("invalid STA id %d", assocId);
@@ -384,7 +384,7 @@ QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 		ptr->next = 0;
 	} else {
 		pe_err("Entry not present STA addr");
-		pe_err(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(staAddr));
+		pe_err(QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(staAddr));
 		return QDF_STATUS_E_FAILURE;
 	}
 

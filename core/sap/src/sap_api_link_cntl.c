@@ -689,14 +689,14 @@ wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 				(void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  FL("CSR roam_result = (%d) MAC ("MAC_ADDRESS_STR") fail"),
+				  FL("CSR roam_result = (%d) MAC ("QDF_MAC_ADDR_STR") fail"),
 				  roam_result, QDF_MAC_ADDR_ARRAY(
 					csr_roam_info->peerMac.bytes));
 		*ret_status = QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
-			  FL("CSR roam_result = (%d) MAC ("MAC_ADDRESS_STR") not allowed"),
+			  FL("CSR roam_result = (%d) MAC ("QDF_MAC_ADDR_STR") not allowed"),
 			  roam_result,
 			  QDF_MAC_ADDR_ARRAY(csr_roam_info->peerMac.bytes));
 		*ret_status = QDF_STATUS_E_FAILURE;

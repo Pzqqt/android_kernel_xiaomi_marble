@@ -35,8 +35,6 @@
 #define LOG4    7
 #define LOGD    8
 
-#define MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
-
 #define pe_alert_rl(params...) QDF_TRACE_FATAL_RL(QDF_MODULE_ID_PE, params)
 #define pe_err_rl(params...) QDF_TRACE_ERROR_RL(QDF_MODULE_ID_PE, params)
 #define pe_warn_rl(params...) QDF_TRACE_WARN_RL(QDF_MODULE_ID_PE, params)

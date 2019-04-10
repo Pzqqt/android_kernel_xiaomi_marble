@@ -684,7 +684,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	if (adapter_temp) {
 		if (!qdf_str_cmp(adapter_temp->dev->name, dev->name))
 			return 0;
-		hdd_err("%s adapter exist with same address " MAC_ADDRESS_STR,
+		hdd_err("%s adapter exist with same address " QDF_MAC_ADDR_STR,
 			adapter_temp->dev->name,
 			QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
 		return -EINVAL;
@@ -705,7 +705,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 		return -EINVAL;
 	}
 
-	hdd_info("Changing MAC to " MAC_ADDRESS_STR " of interface %s ",
+	hdd_info("Changing MAC to " QDF_MAC_ADDR_STR " of interface %s ",
 		 QDF_MAC_ADDR_ARRAY(mac_addr.bytes),
 		 dev->name);
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
@@ -2127,7 +2127,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		memcpy(msg.src_addr.sa_data,
 		       &sap_event->sapevt.sapStationMICFailureEvent.
 		       staMac, QDF_MAC_ADDR_SIZE);
-		hdd_debug("MIC MAC " MAC_ADDRESS_STR,
+		hdd_debug("MIC MAC " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(msg.src_addr.sa_data));
 		if (sap_event->sapevt.sapStationMICFailureEvent.
 		    multicast == true)
@@ -2161,7 +2161,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_STA_REASSOC_EVENT:
 		event = &sap_event->sapevt.sapStationAssocReassocCompleteEvent;
 		if (eSAP_STATUS_FAILURE == event->status) {
-			hdd_info("assoc failure: " MAC_ADDRESS_STR,
+			hdd_info("assoc failure: " QDF_MAC_ADDR_STR,
 				 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 			break;
 		}
@@ -2171,7 +2171,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
 		       &event->staMac, QDF_MAC_ADDR_SIZE);
-		hdd_info("associated " MAC_ADDRESS_STR,
+		hdd_info("associated " QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
@@ -2194,7 +2194,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					MAC_ADDRESS_STR "", qdf_status,
+					QDF_MAC_ADDR_STR "", qdf_status,
 					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		} else {
 			qdf_status = hdd_softap_register_sta(
@@ -2207,7 +2207,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					MAC_ADDRESS_STR "", qdf_status,
+					QDF_MAC_ADDR_STR "", qdf_status,
 					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
@@ -2325,7 +2325,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			cache_stainfo->reason_code = disassoc_comp->reason_code;
 			cache_stainfo->disassoc_ts = qdf_system_ticks();
 		}
-		hdd_info(" disassociated " MAC_ADDRESS_STR,
+		hdd_info(" disassociated " QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
@@ -2432,13 +2432,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 	case eSAP_UNKNOWN_STA_JOIN:
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
-			 "JOIN_UNKNOWN_STA-%02x:%02x:%02x:%02x:%02x:%02x",
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[0],
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[1],
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[2],
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[3],
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[4],
-			 sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes[5]);
+			 "JOIN_UNKNOWN_STA-"QDF_MAC_ADDR_STR,
+			 QDF_MAC_ADDR_ARRAY(sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes));
 		we_event = IWEVCUSTOM;  /* Discovered a new node (AP mode). */
 		wrqu.data.pointer = unknownSTAEvent;
 		wrqu.data.length = strlen(unknownSTAEvent);
@@ -2448,16 +2443,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 	case eSAP_MAX_ASSOC_EXCEEDED:
 		snprintf(maxAssocExceededEvent, IW_CUSTOM_MAX,
-			 "Peer %02x:%02x:%02x:%02x:%02x:%02x denied"
+			 "Peer "QDF_MAC_ADDR_STR" denied"
 			 " assoc due to Maximum Mobile Hotspot connections reached. Please disconnect"
 			 " one or more devices to enable the new device connection",
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[0],
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[1],
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[2],
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[3],
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes[4],
-			 sap_event->sapevt.sapMaxAssocExceeded.macaddr.
-			 bytes[5]);
+			 QDF_MAC_ADDR_ARRAY(sap_event->sapevt.sapMaxAssocExceeded.macaddr.bytes));
 		we_event = IWEVCUSTOM;  /* Discovered a new node (AP mode). */
 		wrqu.data.pointer = maxAssocExceededEvent;
 		wrqu.data.length = strlen(maxAssocExceededEvent);
@@ -5481,7 +5470,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		  config->mfpCapable, config->mfpRequired);
 #endif
 
-	hdd_debug("SOftAP macaddress : " MAC_ADDRESS_STR,
+	hdd_debug("SOftAP macaddress : " QDF_MAC_ADDR_STR,
 		  QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 	hdd_debug("ssid =%s, beaconint=%d, channel=%d",
 	       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,

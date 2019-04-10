@@ -410,14 +410,9 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: STA %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast DA tx data frame w/o association\n",
+					  "Error: STA %pK ("QDF_MAC_ADDR_STR") trying to send bcast DA tx data frame w/o association\n",
 					  vdev,
-					  vdev->mac_addr.raw[0],
-					  vdev->mac_addr.raw[1],
-					  vdev->mac_addr.raw[2],
-					  vdev->mac_addr.raw[3],
-					  vdev->mac_addr.raw[4],
-					  vdev->mac_addr.raw[5]);
+					  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 				return NULL; /* error */
 			} else if ((peer->security[
 				OL_TXRX_PEER_SECURITY_MULTICAST].sec_type
@@ -462,14 +457,9 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast/mcast, but no self-peer found\n",
+					  "Error: vdev %pK ("QDF_MAC_ADDR_STR") trying to send bcast/mcast, but no self-peer found\n",
 					  vdev,
-					  vdev->mac_addr.raw[0],
-					  vdev->mac_addr.raw[1],
-					  vdev->mac_addr.raw[2],
-					  vdev->mac_addr.raw[3],
-					  vdev->mac_addr.raw[4],
-					  vdev->mac_addr.raw[5]);
+					  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 				return NULL; /* error */
 			}
 		}
@@ -529,11 +519,9 @@ ol_tx_classify(
 			 */
 			QDF_TRACE(QDF_MODULE_ID_TXRX,
 				  QDF_TRACE_LEVEL_ERROR,
-				  "Error: vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send unicast tx data frame to an unknown peer\n",
+				  "Error: vdev %pK ("QDF_MAC_ADDR_STR") trying to send unicast tx data frame to an unknown peer\n",
 				  vdev,
-				  vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-				  vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-				  vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+				  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 			return NULL; /* error */
 		}
 		TX_SCHED_DEBUG_PRINT("Peer found\n");

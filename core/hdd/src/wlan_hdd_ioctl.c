@@ -1722,7 +1722,7 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			req->mac_addr.bytes[count] = content;
 		}
 
-		hdd_debug("MAC addr " MAC_ADDRESS_STR,
+		hdd_debug("MAC addr " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(req->mac_addr.bytes));
 
 		in_ptr = strpbrk(in_ptr, " ");
@@ -2023,7 +2023,7 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	if (6 != sscanf(mac_addr, "%02x:%02x:%02x:%02x:%02x:%02x",
+	if (6 != sscanf(mac_addr, QDF_MAC_ADDR_STR,
 			&gateway_mac[0], &gateway_mac[1], &gateway_mac[2],
 			&gateway_mac[3], &gateway_mac[4], &gateway_mac[5])) {
 		hdd_err("Invalid MacAddress Input %s", mac_addr);
@@ -5173,9 +5173,8 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 
 			length += scnprintf(extra + length,
 				user_size - length,
-				"%02x:%02x:%02x:%02x:%02x:%02x %d %d ",
-				mac_addr[0], mac_addr[1], mac_addr[2],
-				mac_addr[3], mac_addr[4], mac_addr[5],
+				QDF_MAC_ADDR_STR" %d %d ",
+				QDF_MAC_ADDR_ARRAY(mac_addr),
 				tx_rate, rssi);
 			/*
 			 * cdf_trace_msg has limitation of 512 bytes for the
@@ -5767,7 +5766,7 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 				 &adapter->mac_addr);
 
 		hdd_debug("Device mode %d max tx power %d selfMac: "
-			  MAC_ADDRESS_STR " bssId: " MAC_ADDRESS_STR,
+			  QDF_MAC_ADDR_STR " bssId: " QDF_MAC_ADDR_STR,
 			  adapter->device_mode, tx_power,
 			  QDF_MAC_ADDR_ARRAY(selfmac.bytes),
 			  QDF_MAC_ADDR_ARRAY(bssid.bytes));
@@ -6219,7 +6218,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 					sizeof(adapter->mc_addr_list.addr[i]));
 
 				hdd_debug("%s RX filter : addr ="
-				    MAC_ADDRESS_STR,
+				    QDF_MAC_ADDR_STR,
 				    action ? "setting" : "clearing",
 				    QDF_MAC_ADDR_ARRAY(filter->multicastAddr[j].bytes));
 				j++;

@@ -514,7 +514,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("received Re/Assoc: %d resp on sessionid: %d systemrole: %d"
-		" and mlmstate: %d RSSI: %d from "MAC_ADDRESS_STR, subtype,
+		" and mlmstate: %d RSSI: %d from "QDF_MAC_ADDR_STR, subtype,
 		session_entry->peSessionId, GET_LIM_SYSTEM_ROLE(session_entry),
 		session_entry->limMlmState,
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)),
@@ -573,7 +573,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			 * other than one to which request was initiated.
 			 * Ignore this and wait until Assoc Failure Timeout
 			 */
-			pe_warn("received AssocRsp from unexpected peer "MAC_ADDRESS_STR,
+			pe_warn("received AssocRsp from unexpected peer "QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
@@ -587,7 +587,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			 * other than one to which request was initiated.
 			 * Ignore this and wait until Reassoc Failure Timeout.
 			 */
-			pe_warn("received ReassocRsp from unexpected peer "MAC_ADDRESS_STR,
+			pe_warn("received ReassocRsp from unexpected peer "QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(hdr->sa));
 			qdf_mem_free(beacon);
 			return;
@@ -938,7 +938,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		qdf_mem_free(beacon);
 		return;
 	}
-	pe_debug("Successfully Associated with BSS " MAC_ADDRESS_STR,
+	pe_debug("Successfully Associated with BSS " QDF_MAC_ADDR_STR,
 		 QDF_MAC_ADDR_ARRAY(hdr->sa));
 #ifdef FEATURE_WLAN_ESE
 	if (session_entry->eseContext.tsm.tsmInfo.state)
@@ -1042,7 +1042,7 @@ assocReject:
 		&& (session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE))) {
 		pe_err("Assoc Rejected by the peer mlmestate: %d sessionid: %d Reason: %d MACADDR:"
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			session_entry->limMlmState,
 			session_entry->peSessionId,
 			assoc_cnf.resultCode, QDF_MAC_ADDR_ARRAY(hdr->sa));

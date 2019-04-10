@@ -658,7 +658,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		 * Duplicate entry is removed at LIM.
 		 * Initiate new entry for other session
 		 */
-		pe_debug("Rcvd eLIM_DUPLICATE_ENTRY for " MAC_ADDRESS_STR,
+		pe_debug("Rcvd eLIM_DUPLICATE_ENTRY for " QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(peerMacAddr));
 
 		for (i = 0; i < mac->lim.maxBssId; i++) {
@@ -705,7 +705,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			goto error;
 		}
 		pe_debug("send eWNI_SME_DISASSOC_RSP with retCode: %d for "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocRsp->messageType = eWNI_SME_DISASSOC_RSP;
 		pSirSmeDisassocRsp->length = sizeof(struct disassoc_rsp);
@@ -746,7 +746,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			goto error;
 		}
 		pe_debug("send eWNI_SME_DISASSOC_IND with retCode: %d for "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
@@ -918,7 +918,7 @@ lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode sta,
 {
 	struct tdls_event_info info;
 
-	pe_debug("Delete TDLS Peer "MAC_ADDRESS_STR "with reason code: %d",
+	pe_debug("Delete TDLS Peer "QDF_MAC_ADDR_STR "with reason code: %d",
 			QDF_MAC_ADDR_ARRAY(sta->staAddr), reasonCode);
 	info.vdev_id = pe_session->smeSessionId;
 	qdf_mem_copy(info.peermac.bytes, sta->staAddr, QDF_MAC_ADDR_SIZE);
@@ -1045,7 +1045,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		if (!pSirSmeDeauthRsp)
 			return;
 		pe_debug("send eWNI_SME_DEAUTH_RSP with retCode: %d for "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthRsp->messageType = eWNI_SME_DEAUTH_RSP;
 		pSirSmeDeauthRsp->length = sizeof(*pSirSmeDeauthRsp);
@@ -1083,7 +1083,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		if (!pSirSmeDeauthInd)
 			return;
 		pe_debug("send eWNI_SME_DEAUTH_IND with retCode: %d for "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
@@ -1960,7 +1960,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(struct mac_context *mac, tSirMacAddr pe
 	pSmeMaxAssocInd->sessionId = smesessionId;
 	mmhMsg.type = pSmeMaxAssocInd->mesgType;
 	mmhMsg.bodyptr = pSmeMaxAssocInd;
-	pe_debug("msgType: %s peerMacAddr "MAC_ADDRESS_STR "sme session id %d",
+	pe_debug("msgType: %s peerMacAddr "QDF_MAC_ADDR_STR "sme session id %d",
 		"eWNI_SME_MAX_ASSOC_EXCEEDED", QDF_MAC_ADDR_ARRAY(peerMacAddr),
 		pSmeMaxAssocInd->sessionId);
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,

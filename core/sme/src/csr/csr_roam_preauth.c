@@ -241,7 +241,7 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac_ctx,
 	if ((QDF_STATUS_SUCCESS == lim_status) && (preauth_rsp_node)) {
 		sme_debug("Preauth completed successfully after %d tries",
 			neighbor_roam_info->FTRoamInfo.numPreAuthRetries);
-		sme_debug("After Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d",
+		sme_debug("After Pre-Auth: BSSID " QDF_MAC_ADDR_STR ", Ch:%d",
 			QDF_MAC_ADDR_ARRAY(
 				preauth_rsp_node->pBssDescription->bssId),
 			(int)preauth_rsp_node->pBssDescription->channelId);
@@ -374,7 +374,7 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(struct mac_context *mac_ctx
 	uint8_t num_mac_addr = neighbor_roam_info->FTRoamInfo.preAuthFailList.
 				numMACAddress;
 
-	sme_warn("Added BSSID " MAC_ADDRESS_STR " to Preauth failed list",
+	sme_warn("Added BSSID " QDF_MAC_ADDR_STR " to Preauth failed list",
 		QDF_MAC_ADDR_ARRAY(bssid));
 
 	for (i = 0;
@@ -383,7 +383,7 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(struct mac_context *mac_ctx
 		if (!qdf_mem_cmp(
 		   neighbor_roam_info->FTRoamInfo.preAuthFailList.macAddress[i],
 		   bssid, sizeof(tSirMacAddr))) {
-			sme_warn("BSSID "MAC_ADDRESS_STR" already fail list",
+			sme_warn("BSSID "QDF_MAC_ADDR_STR" already fail list",
 			QDF_MAC_ADDR_ARRAY(bssid));
 			return QDF_STATUS_SUCCESS;
 		}
@@ -429,7 +429,7 @@ bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
 		if (!qdf_mem_cmp(pNeighborRoamInfo->FTRoamInfo.
 				    preAuthFailList.macAddress[i], bssId,
 				    sizeof(tSirMacAddr))) {
-			sme_err("BSSID exists in fail list" MAC_ADDRESS_STR,
+			sme_err("BSSID exists in fail list" QDF_MAC_ADDR_STR,
 					QDF_MAC_ADDR_ARRAY(bssId));
 			return false;
 		}
@@ -761,7 +761,7 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac_ctx,
 				neighbor_bss_node->pBssDescription,
 				eCsrPerformPreauth, true);
 
-	sme_debug("Before Pre-Auth: BSSID " MAC_ADDRESS_STR ", Ch:%d",
+	sme_debug("Before Pre-Auth: BSSID " QDF_MAC_ADDR_STR ", Ch:%d",
 			QDF_MAC_ADDR_ARRAY(
 				neighbor_bss_node->pBssDescription->bssId),
 			(int)neighbor_bss_node->pBssDescription->channelId);

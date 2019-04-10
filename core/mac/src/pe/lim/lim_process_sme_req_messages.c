@@ -1025,7 +1025,7 @@ static void lim_update_sae_config(struct pe_session *session,
 {
 	session->sae_pmk_cached = sme_join_req->sae_pmk_cached;
 
-	pe_debug("pmk_cached %d for BSSID=" MAC_ADDRESS_STR,
+	pe_debug("pmk_cached %d for BSSID=" QDF_MAC_ADDR_STR,
 		session->sae_pmk_cached,
 		QDF_MAC_ADDR_ARRAY(sme_join_req->bssDescription.bssId));
 }
@@ -1296,7 +1296,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		if (session) {
 			pe_err("Session(%d) Already exists for BSSID: "
-				   MAC_ADDRESS_STR " in limSmeState = %X",
+				   QDF_MAC_ADDR_STR " in limSmeState = %X",
 				session_id,
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId),
 				session->limSmeState);
@@ -2065,14 +2065,14 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 				&sessionId);
 	if (!pe_session) {
 		pe_err("session does not exist for given bssId "
-			   MAC_ADDRESS_STR,
+			   QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(smeDisassocReq.bssid.bytes));
 		retCode = eSIR_SME_INVALID_PARAMETERS;
 		disassocTrigger = eLIM_HOST_DISASSOC;
 		goto sendDisassoc;
 	}
 	pe_debug("received DISASSOC_REQ message on sessionid %d Systemrole %d Reason: %u SmeState: %d from: "
-			MAC_ADDRESS_STR, smesessionId,
+			QDF_MAC_ADDR_STR, smesessionId,
 		GET_LIM_SYSTEM_ROLE(pe_session), smeDisassocReq.reasonCode,
 		mac->lim.gLimSmeState,
 		QDF_MAC_ADDR_ARRAY(smeDisassocReq.peer_macaddr.bytes));
@@ -2336,7 +2336,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 				&pe_session->dph.dphHashTable);
 		if (!sta) {
 			pe_err("DISASSOC_CNF for a STA with no context, addr= "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes));
 			status = lim_prepare_disconnect_done_ind(mac, &msg,
 						pe_session->smeSessionId,
@@ -2353,7 +2353,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 				eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
 			(sta->mlmStaContext.mlmState ==
 				eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
-			pe_err("No need of cleanup for addr:" MAC_ADDRESS_STR "as MLM state is %d",
+			pe_err("No need of cleanup for addr:" QDF_MAC_ADDR_STR "as MLM state is %d",
 				QDF_MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes),
 				sta->mlmStaContext.mlmState);
 			status = lim_prepare_disconnect_done_ind(mac, &msg,
@@ -2427,7 +2427,7 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		goto send_deauth;
 	}
 	pe_debug("received DEAUTH_REQ sessionid %d Systemrole %d reasoncode %u limSmestate %d from "
-		MAC_ADDRESS_STR, sme_session_id,
+		QDF_MAC_ADDR_STR, sme_session_id,
 		GET_LIM_SYSTEM_ROLE(session_entry), sme_deauth_req.reasonCode,
 		session_entry->limSmeState,
 		QDF_MAC_ADDR_ARRAY(sme_deauth_req.peer_macaddr.bytes));
@@ -3333,7 +3333,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 	}
 
 	pe_debug("Sent DELTS request to station with assocId = %d MacAddr = "
-		MAC_ADDRESS_STR,
+		QDF_MAC_ADDR_STR,
 		pDeltsReq->aid, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 
 	lim_send_delts_req_action_frame(mac, peerMacAddr,
@@ -4267,12 +4267,12 @@ static void __lim_process_send_disassoc_frame(struct mac_context *mac_ctx,
 							  req->session_id);
 	if (!session_entry) {
 		pe_err("session does not exist for given bssId "
-		       MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(req->peer_mac));
+		       QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(req->peer_mac));
 		return;
 	}
 
 	pe_debug("msg_type->%d len->%d sess_id->%d mac->"
-		 MAC_ADDRESS_STR " reason->%d wait_for_ack->%d",
+		 QDF_MAC_ADDR_STR " reason->%d wait_for_ack->%d",
 		 req->msg_type, req->length,  req->session_id,
 		 QDF_MAC_ADDR_ARRAY(req->peer_mac), req->reason, req->wait_for_ack);
 
@@ -5379,7 +5379,7 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 
 	if (!session_entry) {
 		pe_err("Session not found for given bssid"
-					MAC_ADDRESS_STR,
+					QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(modify_add_ies->modifyIE.bssid.bytes));
 		goto end;
 	}
@@ -5470,7 +5470,7 @@ static void lim_process_update_add_ies(struct mac_context *mac_ctx,
 
 	if (!session_entry) {
 		pe_debug("Session not found for given bssid"
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(update_ie->bssid.bytes));
 		goto end;
 	}
@@ -5700,7 +5700,7 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			dfs_csa_ie_req->bssid, &session_id);
 	if (!session_entry) {
-		pe_err("Session not found for given BSSID" MAC_ADDRESS_STR,
+		pe_err("Session not found for given BSSID" QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(dfs_csa_ie_req->bssid));
 		return;
 	}

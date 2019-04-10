@@ -282,7 +282,7 @@ static void print_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 
 	for (i = 0; i < size; i++) {
 		macArray = (macList + i)->bytes;
-		pr_info("ACL entry %i - %02x:%02x:%02x:%02x:%02x:%02x\n",
+		pr_info("ACL entry %i - "QDF_MAC_ADDR_STR"\n",
 			i, QDF_MAC_ADDR_ARRAY(macArray));
 	}
 }
@@ -390,7 +390,7 @@ static int hdd_set_peer_rate(struct hdd_adapter *adapter, int set_value)
 	    (OL_TXRX_PEER_STATE_CONN == adapter->sta_info[aid].peer_state)) {
 		peer_mac =
 		    (uint8_t *)&(adapter->sta_info[aid].sta_mac.bytes[0]);
-		hdd_info("Peer AID: %d MAC_ADDR: "MAC_ADDRESS_STR,
+		hdd_info("Peer AID: %d MAC_ADDR: "QDF_MAC_ADDR_STR,
 			 aid, QDF_MAC_ADDR_ARRAY(peer_mac));
 	} else {
 		hdd_err("No matching peer found for AID: %d", aid);
@@ -1500,7 +1500,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	i++;
 	cmd = (int)(*(value + i));
 
-	hdd_debug("Modify ACL mac:" MAC_ADDRESS_STR " type: %d cmd: %d",
+	hdd_debug("Modify ACL mac:" QDF_MAC_ADDR_STR " type: %d cmd: %d",
 	       QDF_MAC_ADDR_ARRAY(peer_mac), list_type, cmd);
 
 	qdf_status = wlansap_modify_acl(
@@ -1895,7 +1895,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	 */
 	peer_macaddr = (uint8_t *) (extra);
 
-	hdd_debug("data " MAC_ADDRESS_STR,
+	hdd_debug("data " QDF_MAC_ADDR_STR,
 		  QDF_MAC_ADDR_ARRAY(peer_macaddr));
 	wlansap_populate_del_sta_params(peer_macaddr,
 					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
@@ -2297,7 +2297,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 			continue;
 
 		written += scnprintf(buf + written, size - written,
-				     "%5d %02x:%02x:%02x:%02x:%02x:%02x ecsa=%d\n",
+				     "%5d "QDF_MAC_ADDR_STR" ecsa=%d\n",
 				     sta->sta_id,
 				     sta->sta_mac.bytes[0],
 				     sta->sta_mac.bytes[1],

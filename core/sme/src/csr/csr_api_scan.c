@@ -479,7 +479,7 @@ static bool csr_scan_save_bss_description(struct mac_context *mac,
 	pCsrBssDescription->AgingCount =
 		(int32_t) mac->roam.configParam.agingCount;
 	sme_debug(
-		"Set Aging Count = %d for BSS " MAC_ADDRESS_STR " ",
+		"Set Aging Count = %d for BSS " QDF_MAC_ADDR_STR " ",
 		pCsrBssDescription->AgingCount,
 		QDF_MAC_ADDR_ARRAY(pCsrBssDescription->Result.BssDescriptor.
 			       bssId));
@@ -1788,9 +1788,9 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 	if (!pSession) {
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_debug("Current bssid::"MAC_ADDRESS_STR,
+	sme_debug("Current bssid::"QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(pSession->pConnectBssDesc->bssId));
-	sme_debug("My bssid::"MAC_ADDRESS_STR" channel %d",
+	sme_debug("My bssid::"QDF_MAC_ADDR_STR" channel %d",
 		QDF_MAC_ADDR_ARRAY(bssid.bytes), channel);
 
 	size = pSession->pConnectBssDesc->length +
@@ -1855,7 +1855,7 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 			bss_desc_ptr,
 			(sizeof(tSirBssDescription) + length));
 
-	sme_debug("LFR3:Add BSSID to scan cache" MAC_ADDRESS_STR,
+	sme_debug("LFR3:Add BSSID to scan cache" QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(scan_res_ptr->Result.BssDescriptor.bssId));
 	csr_scan_add_result(mac, scan_res_ptr);
 	csr_free_scan_result_entry(mac, scan_res_ptr);

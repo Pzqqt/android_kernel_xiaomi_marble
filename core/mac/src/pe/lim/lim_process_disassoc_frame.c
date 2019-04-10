@@ -146,9 +146,9 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 	/* Get reasonCode from Disassociation frame body */
 	reasonCode = sir_read_u16(pBody);
 
-	pe_debug("Received Disassoc frame for Addr: " MAC_ADDRESS_STR
+	pe_debug("Received Disassoc frame for Addr: " QDF_MAC_ADDR_STR
 		 "(mlm state=%s, sme state=%d RSSI=%d),"
-		 "with reason code %d [%s] from " MAC_ADDRESS_STR,
+		 "with reason code %d [%s] from " QDF_MAC_ADDR_STR,
 		 QDF_MAC_ADDR_ARRAY(pHdr->da),
 		 lim_mlm_state_str(pe_session->limMlmState),
 		 pe_session->limSmeState, frame_rssi, reasonCode,
@@ -179,7 +179,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		 * Log error.
 		 */
 		pe_err("received Disassoc frame from STA that does not have context"
-			"reasonCode=%d, addr " MAC_ADDRESS_STR,
+			"reasonCode=%d, addr " QDF_MAC_ADDR_STR,
 			reasonCode, QDF_MAC_ADDR_ARRAY(pHdr->sa));
 		return;
 	}
@@ -245,7 +245,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 		default:
 			/* Invalid reasonCode in received Disassociation frame */
-			pe_warn("received Disassoc frame with invalid reasonCode: %d from " MAC_ADDRESS_STR,
+			pe_warn("received Disassoc frame with invalid reasonCode: %d from " QDF_MAC_ADDR_STR,
 				reasonCode, QDF_MAC_ADDR_ARRAY(pHdr->sa));
 			break;
 		}
@@ -261,7 +261,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			/* as long as we're not about to channel switch */
 			if (pe_session->gLimChannelSwitch.state !=
 			    eLIM_CHANNEL_SWITCH_IDLE) {
-				pe_err("Ignoring disassoc frame due to upcoming channel switch, from "MAC_ADDRESS_STR,
+				pe_err("Ignoring disassoc frame due to upcoming channel switch, from "QDF_MAC_ADDR_STR,
 					QDF_MAC_ADDR_ARRAY(pHdr->sa));
 				return;
 			}
@@ -274,7 +274,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		/* Received Disassociation frame in either IBSS */
 		/* or un-known role. Log and ignore it */
 		pe_err("received Disassoc frame with invalid reasonCode: %d in role:"
-				"%d in sme state: %d from " MAC_ADDRESS_STR, reasonCode,
+				"%d in sme state: %d from " QDF_MAC_ADDR_STR, reasonCode,
 			GET_LIM_SYSTEM_ROLE(pe_session), pe_session->limSmeState,
 			QDF_MAC_ADDR_ARRAY(pHdr->sa));
 
@@ -304,7 +304,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		    eLIM_MLM_WT_ASSOC_CNF_STATE)
 			sta->mlmStaContext.updateContext = 1;
 
-		pe_err("received Disassoc frame from peer that is in state: %X, addr "MAC_ADDRESS_STR,
+		pe_err("received Disassoc frame from peer that is in state: %X, addr "QDF_MAC_ADDR_STR,
 			sta->mlmStaContext.mlmState,
 			       QDF_MAC_ADDR_ARRAY(pHdr->sa));
 

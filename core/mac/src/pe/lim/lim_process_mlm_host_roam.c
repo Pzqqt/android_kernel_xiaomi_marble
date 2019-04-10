@@ -72,7 +72,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " MAC_ADDRESS_STR,
+	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " QDF_MAC_ADDR_STR,
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
 		QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
@@ -86,7 +86,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		 * parameters code.
 		 */
 
-		pe_warn("unexpect msg state: %X role: %d MAC" MAC_ADDRESS_STR,
+		pe_warn("unexpect msg state: %X role: %d MAC" QDF_MAC_ADDR_STR,
 			session->limMlmState, GET_LIM_SYSTEM_ROLE(session),
 			QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);

@@ -996,7 +996,7 @@ static void lim_process_mlm_deauth_ind(struct mac_context *mac_ctx,
 					   deauth_ind->peerMacAddr,
 					   &session_id);
 	if (!session) {
-		pe_err("session does not exist for Addr:" MAC_ADDRESS_STR,
+		pe_err("session does not exist for Addr:" QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(deauth_ind->peerMacAddr));
 		return;
 	}
@@ -3144,7 +3144,7 @@ static void lim_process_switch_channel_join_req(
 				mac_ctx->lim.gLimHeartBeatApMac[apCount], sizeof(tSirMacAddr))) {
 
 				pe_err("Index %d Sessionid: %d Send deauth on "
-				"channel %d to BSSID: "MAC_ADDRESS_STR, apCount,
+				"channel %d to BSSID: "QDF_MAC_ADDR_STR, apCount,
 				session_entry->peSessionId, session_entry->currentOperChannel,
 				QDF_MAC_ADDR_ARRAY(session_entry->pLimMlmJoinReq->bssDescription.
 											bssId));
@@ -3187,7 +3187,7 @@ static void lim_process_switch_channel_join_req(
 	mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId =
 		session_entry->peSessionId;
 	pe_debug("Sessionid: %d Send Probe req on channel %d ssid:%.*s "
-		"BSSID: " MAC_ADDRESS_STR, session_entry->peSessionId,
+		"BSSID: " QDF_MAC_ADDR_STR, session_entry->peSessionId,
 		session_entry->currentOperChannel, ssId.length, ssId.ssId,
 		QDF_MAC_ADDR_ARRAY(
 		session_entry->pLimMlmJoinReq->bssDescription.bssId));

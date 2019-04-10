@@ -636,7 +636,7 @@ void lim_cleanup_mlm(struct mac_context *mac_ctx)
 
 void lim_print_mac_addr(struct mac_context *mac, tSirMacAddr macAddr, uint8_t logLevel)
 {
-	pe_debug(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(macAddr));
+	pe_debug(QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(macAddr));
 } /****** end lim_print_mac_addr() ******/
 
 /*
@@ -6612,7 +6612,7 @@ bool lim_is_valid_frame(last_processed_msg *last_processed_frm,
 
 	if (last_processed_frm->seq_num == seq_num &&
 		qdf_mem_cmp(last_processed_frm->sa, pHdr->sa, ETH_ALEN) == 0) {
-		pe_err("Duplicate frame from "MAC_ADDRESS_STR " Seq Number %d",
+		pe_err("Duplicate frame from "QDF_MAC_ADDR_STR " Seq Number %d",
 		QDF_MAC_ADDR_ARRAY(pHdr->sa), seq_num);
 		return false;
 	}
@@ -7586,7 +7586,7 @@ struct csr_roam_session *lim_get_session_by_macaddr(struct mac_context *mac_ctx,
 
 			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 				  FL("session %d exists with mac address "
-				  MAC_ADDRESS_STR), session->sessionId,
+				  QDF_MAC_ADDR_STR), session->sessionId,
 				  QDF_MAC_ADDR_ARRAY(self_mac));
 
 			return session;

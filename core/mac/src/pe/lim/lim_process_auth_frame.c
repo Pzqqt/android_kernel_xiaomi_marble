@@ -151,7 +151,7 @@ static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 	cfg_privacy_opt_imp = (uint8_t) val;
 	if (!cfg_privacy_opt_imp) {
 		pe_err("rx Auth frame for unsupported auth algorithm %d "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -442,7 +442,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 				&pMlmDisassocReq->peer_macaddr.bytes,
 				QDF_MAC_ADDR_SIZE))) {
 			pe_debug("TODO:Ack for disassoc frame is pending Issue delsta for "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(
 					pMlmDisassocReq->peer_macaddr.bytes));
 			lim_process_disassoc_ack_timeout(mac_ctx);
@@ -455,7 +455,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 				&pMlmDeauthReq->peer_macaddr.bytes,
 				QDF_MAC_ADDR_SIZE))) {
 			pe_debug("TODO:Ack for deauth frame is pending Issue delsta for "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(
 					pMlmDeauthReq->peer_macaddr.bytes));
 			lim_process_deauth_ack_timeout(mac_ctx);
@@ -608,7 +608,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 			break;
 		default:
 			pe_err("rx Auth frm for unsupported auth algo %d "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				rx_auth_frm_body->authAlgoNumber,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -632,7 +632,7 @@ static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		}
 	} else {
 		pe_err("received Authentication frame for unsupported auth algorithm %d "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -721,7 +721,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		 */
 
 		pe_warn("received Auth frame2 from unexpected peer"
-			MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
+			QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
 	}
 
@@ -760,7 +760,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 			 */
 
 			pe_warn("rx Auth frame2 for unexpected auth algo %d"
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				rx_auth_frm_body->authAlgoNumber,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			return;
@@ -773,7 +773,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		 * Return Auth confirm with received failure code to SME
 		 */
 		pe_err("rx Auth frame from peer with failure code %d "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authStatusCode,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_AUTH_REFUSED,
@@ -829,7 +829,7 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 			 */
 
 			pe_err("rx Auth frm from peer for unsupported auth algo %d "
-						MAC_ADDRESS_STR,
+						QDF_MAC_ADDR_STR,
 					rx_auth_frm_body->authAlgoNumber,
 					QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 
@@ -933,7 +933,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 	/* AuthFrame 3 */
 	if (rx_auth_frm_body->authAlgoNumber != eSIR_SHARED_KEY) {
 		pe_err("rx Auth frame3 from peer with auth algo number %d "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		/*
@@ -960,7 +960,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		 */
 		if (!mac_hdr->fc.wep) {
 			pe_err("received Auth frame3 from peer with no WEP bit set "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/* WEP bit is not set in FC of Auth Frame3 */
 			auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
@@ -978,7 +978,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
 		if (!auth_node) {
 			pe_warn("received AuthFrame3 from peer that has no preauth context "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * No 'pre-auth' context exists for this STA that sent
@@ -998,7 +998,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 
 		if (auth_node->mlmState == eLIM_MLM_AUTH_RSP_TIMEOUT_STATE) {
 			pe_warn("auth response timer timedout for peer "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Received Auth Frame3 after Auth Response timeout.
@@ -1026,7 +1026,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 			 * to delete STA context.
 			 */
 			pe_err("rx Auth frm3 from peer with status code %d "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				rx_auth_frm_body->authStatusCode,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 				return;
@@ -1061,7 +1061,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 				pe_session);
 			return;
 		} else {
-			pe_warn("Challenge failure for peer "MAC_ADDRESS_STR,
+			pe_warn("Challenge failure for peer "QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Challenge Failure.
@@ -1096,7 +1096,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		 * Log error and ignore the frame.
 		 */
 		pe_warn("received unexpected Auth frame4 from peer in state %d, addr "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			pe_session->limMlmState,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -1110,7 +1110,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		 * failure to SME.
 		 */
 		pe_err("received Auth frame4 from peer with invalid auth algo %d"
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authAlgoNumber,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -1125,7 +1125,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		 * Wait until Authentication Failure Timeout.
 		 */
 
-		pe_warn("received Auth frame4 from unexpected peer "MAC_ADDRESS_STR,
+		pe_warn("received Auth frame4 from unexpected peer "QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
 	}
@@ -1139,7 +1139,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		 */
 
 		pe_err("received Authentication frame from peer with invalid auth seq number %d "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			rx_auth_frm_body->authTransactionSeqNumber,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		return;
@@ -1175,7 +1175,7 @@ static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		 * Authentication failure.
 		 * Return Auth confirm with received failure code to SME
 		 */
-		pe_err("Authentication failure from peer "MAC_ADDRESS_STR,
+		pe_err("Authentication failure from peer "QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_AUTH_REFUSED,
 				rx_auth_frm_body->authStatusCode,
@@ -1256,7 +1256,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	curr_seq_num = (mac_hdr->seqControl.seqNumHi << 4) |
 		(mac_hdr->seqControl.seqNumLo);
 
-	pe_debug("Sessionid: %d System role: %d limMlmState: %d: Auth response Received BSSID: "MAC_ADDRESS_STR" RSSI: %d",
+	pe_debug("Sessionid: %d System role: %d limMlmState: %d: Auth response Received BSSID: "QDF_MAC_ADDR_STR" RSSI: %d",
 		 pe_session->peSessionId, GET_LIM_SYSTEM_ROLE(pe_session),
 		 pe_session->limMlmState, QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
 		 (uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
@@ -1378,7 +1378,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 
 		if (!cfg_privacy_opt_imp) {
 			pe_err("received Authentication frame3 from peer that while privacy option is turned OFF "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * Privacy option is not implemented.
@@ -1407,7 +1407,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		auth_node = lim_search_pre_auth_list(mac_ctx, mac_hdr->sa);
 		if (!auth_node) {
 			pe_err("rx Auth frame with no preauth ctx with WEP bit set "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
 			 * No 'pre-auth' context exists for this STA
@@ -1434,7 +1434,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			(auth_node->mlmState !=
 				eLIM_MLM_AUTH_RSP_TIMEOUT_STATE)) {
 			pe_err("received Authentication frame from peer that is in state %d "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				auth_node->mlmState,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
@@ -1495,7 +1495,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 							SIR_MAC_WEP_IV_LENGTH));
 		if (decrypt_result == LIM_DECRYPT_ICV_FAIL) {
 			pe_err("received Authentication frame from peer that failed decryption: "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			/* ICV failure */
 			lim_delete_pre_auth_node(mac_ctx, mac_hdr->sa);
@@ -1629,7 +1629,7 @@ QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac, uint8_t *p
 	pBody = WMA_GET_RX_MPDU_DATA(pBd);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);
 
-	pe_debug("Auth Frame Received: BSSID " MAC_ADDRESS_STR " (RSSI %d)",
+	pe_debug("Auth Frame Received: BSSID " QDF_MAC_ADDR_STR " (RSSI %d)",
 		 QDF_MAC_ADDR_ARRAY(pHdr->bssId),
 		 (uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pBd)));
 

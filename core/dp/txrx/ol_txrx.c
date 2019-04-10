@@ -1691,11 +1691,9 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 		pdev->monitor_vdev = vdev;
 
 	ol_txrx_dbg(
-		   "Created vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		   "Created vdev %pK ("QDF_MAC_ADDR_STR")\n",
 		   vdev,
-		   vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-		   vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-		   vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+		   QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 
 	/*
 	 * We've verified that htt_op_mode == wlan_op_mode,
@@ -1903,11 +1901,9 @@ ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 	if (!TAILQ_EMPTY(&vdev->peer_list)) {
 		/* debug print - will be removed later */
 		ol_txrx_dbg(
-			   "not deleting vdev object %pK (%02x:%02x:%02x:%02x:%02x:%02x) until deletion finishes for all its peers\n",
+			   "not deleting vdev object %pK ("QDF_MAC_ADDR_STR") until deletion finishes for all its peers\n",
 			   vdev,
-			   vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-			   vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-			   vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+			   QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 		/* indicate that the vdev needs to be deleted */
 		vdev->delete.pending = 1;
 		vdev->delete.callback = callback;
@@ -1919,11 +1915,9 @@ ol_txrx_vdev_detach(struct cdp_vdev *pvdev,
 	qdf_event_destroy(&vdev->wait_delete_comp);
 
 	ol_txrx_dbg(
-		   "deleting vdev obj %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		   "deleting vdev obj %pK ("QDF_MAC_ADDR_STR")\n",
 		   vdev,
-		   vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
-		   vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
-		   vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
+		   QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 
 	htt_vdev_detach(pdev->htt_pdev, vdev->vdev_id);
 
@@ -2107,11 +2101,9 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 			(union ol_txrx_align_mac_addr_t *)peer_mac_addr) &&
 			(check_valid == 0 || temp_peer->valid)) {
 			ol_txrx_info_high(
-				"vdev_id %d (%02x:%02x:%02x:%02x:%02x:%02x) already exists.\n",
+				"vdev_id %d ("QDF_MAC_ADDR_STR") already exists.\n",
 				vdev->vdev_id,
-				peer_mac_addr[0], peer_mac_addr[1],
-				peer_mac_addr[2], peer_mac_addr[3],
-				peer_mac_addr[4], peer_mac_addr[5]);
+				QDF_MAC_ADDR_ARRAY(peer_mac_addr));
 			if (qdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
 				qdf_event_reset(&vdev->wait_delete_comp);
@@ -2128,14 +2120,9 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 					(check_valid == 0 ||
 					 temp_peer->valid)) {
 			ol_txrx_info_high(
-				"vdev_id %d (%02x:%02x:%02x:%02x:%02x:%02x) old peer exists.\n",
+				"vdev_id %d ("QDF_MAC_ADDR_STR") old peer exists.\n",
 				vdev->vdev_id,
-				vdev->last_peer_mac_addr.raw[0],
-				vdev->last_peer_mac_addr.raw[1],
-				vdev->last_peer_mac_addr.raw[2],
-				vdev->last_peer_mac_addr.raw[3],
-				vdev->last_peer_mac_addr.raw[4],
-				vdev->last_peer_mac_addr.raw[5]);
+				QDF_MAC_ADDR_ARRAY(vdev->last_peer_mac_addr.raw));
 			if (qdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
 				qdf_event_reset(&vdev->wait_delete_comp);
@@ -2226,11 +2213,9 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr,
 	ol_txrx_peer_find_hash_add(pdev, peer);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		   "vdev %pK created peer %pK ref_cnt %d (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		   "vdev %pK created peer %pK ref_cnt %d ("QDF_MAC_ADDR_STR")\n",
 		   vdev, peer, qdf_atomic_read(&peer->ref_cnt),
-		   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+		   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
@@ -3024,14 +3009,9 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 				 */
 				ol_txrx_tx_desc_reset_vdev(vdev);
 				ol_txrx_dbg(
-					"deleting vdev object %pK (%02x:%02x:%02x:%02x:%02x:%02x) - its last peer is done",
+					"deleting vdev object %pK ("QDF_MAC_ADDR_STR") - its last peer is done",
 					vdev,
-					vdev->mac_addr.raw[0],
-					vdev->mac_addr.raw[1],
-					vdev->mac_addr.raw[2],
-					vdev->mac_addr.raw[3],
-					vdev->mac_addr.raw[4],
-					vdev->mac_addr.raw[5]);
+					QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
 				/* all peers are gone, go ahead and delete it */
 				qdf_mem_free(vdev);
 				if (vdev_delete_cb)
@@ -3171,11 +3151,9 @@ void peer_unmap_timer_handler(void *data)
 
 	ol_txrx_err("all unmap events not received for peer %pK, ref_cnt %d",
 		    peer, qdf_atomic_read(&peer->ref_cnt));
-	ol_txrx_err("peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)",
+	ol_txrx_err("peer %pK ("QDF_MAC_ADDR_STR")",
 		    peer,
-		    peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		    peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		    peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+		    QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
 	if (!cds_is_driver_recovering() && !cds_is_fw_down()) {
 		qdf_create_work(0, &txrx_pdev->peer_unmap_timer_work,
 				peer_unmap_timer_work_function,
@@ -3218,11 +3196,9 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 	/* htt_rx_reorder_log_print(vdev->pdev->htt_pdev); */
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		   "%s:peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)",
+		   "%s:peer %pK ("QDF_MAC_ADDR_STR")",
 		   __func__, peer,
-		   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-		   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-		   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
+		   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
 
 	qdf_spin_lock_bh(&vdev->pdev->last_real_peer_mutex);
 	if (vdev->last_real_peer == peer)

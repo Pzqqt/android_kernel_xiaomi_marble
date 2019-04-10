@@ -72,7 +72,7 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 		pe_err("NDI Peer already exists!!");
 		return QDF_STATUS_SUCCESS;
 	}
-	pe_info("Need to create NDI Peer :" MAC_ADDRESS_STR,
+	pe_info("Need to create NDI Peer :" QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(peer_mac_addr.bytes));
 
 	peer_idx = lim_assign_peer_idx(mac_ctx, session);
@@ -136,7 +136,7 @@ static void lim_ndp_delete_peer_by_addr(struct mac_context *mac_ctx, uint8_t vde
 		return;
 	}
 
-	pe_info("deleting peer: "MAC_ADDRESS_STR" confirm rejected",
+	pe_info("deleting peer: "QDF_MAC_ADDR_STR" confirm rejected",
 		QDF_MAC_ADDR_ARRAY(peer_ndi_mac_addr.bytes));
 
 	session = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
@@ -200,7 +200,7 @@ static void lim_ndp_delete_peers(struct mac_context *mac_ctx,
 		return;
 
 	for (i = 0; i < num_peers; i++) {
-		pe_info("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d",
+		pe_info("ndp_map[%d]: MAC: " QDF_MAC_ADDR_STR " num_active %d",
 			i,
 			QDF_MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
 			ndp_map[i].num_active_ndp_sessions);
@@ -305,7 +305,7 @@ void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 		pe_err("DEL STA failed!");
 		goto skip_event;
 	}
-	pe_info("Deleted STA AssocID %d staId %d MAC " MAC_ADDRESS_STR,
+	pe_info("Deleted STA AssocID %d staId %d MAC " QDF_MAC_ADDR_STR,
 		sta_ds->assocId, sta_ds->staIndex,
 		QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
 
@@ -508,7 +508,7 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 				    &session->dph.dphHashTable);
 	if (!sta_ds) {
 		pe_err("NAN: ADD_STA_RSP for unknown MAC addr "
-			MAC_ADDRESS_STR,
+			QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(add_sta_rsp->staMac));
 		qdf_mem_free(add_sta_rsp);
 		return;

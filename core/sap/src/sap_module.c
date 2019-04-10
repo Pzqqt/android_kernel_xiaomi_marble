@@ -975,7 +975,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 	if (qdf_mem_cmp(sap_ctx->bssid.bytes, peer_sta_mac,
 			QDF_MAC_ADDR_SIZE) == 0) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "requested peer mac is" MAC_ADDRESS_STR
+			  "requested peer mac is" QDF_MAC_ADDR_STR
 			  "our own SAP BSSID. Do not blacklist or whitelist this BSSID",
 			  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 		return QDF_STATUS_E_FAULT;
@@ -1004,7 +1004,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 
 	if (sta_white_list && sta_black_list) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Peer mac " MAC_ADDRESS_STR
+			  "Peer mac " QDF_MAC_ADDR_STR
 			  " found in white and black lists."
 			  "Initial lists passed incorrect. Cannot execute this command.",
 			  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
@@ -1023,7 +1023,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "White list is already maxed out. Cannot accept "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1032,7 +1032,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "MAC address already present in white list "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_SUCCESS;
 			}
@@ -1082,7 +1082,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "MAC address to be deleted is not present in the white list "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1103,7 +1103,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "Black list is already maxed out. Cannot accept "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1112,7 +1112,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "MAC address already present in black list "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_SUCCESS;
 			}
@@ -1158,7 +1158,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "MAC address to be deleted is not present in the black list "
-					  MAC_ADDRESS_STR,
+					  QDF_MAC_ADDR_STR,
 					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1598,7 +1598,7 @@ QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 				sap_ctx->pStaWpaRsnReqIE,
 				sap_ctx->nStaWPARSnReqIeLength);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				FL("WPAIE: %02x:%02x:%02x:%02x:%02x:%02x"),
+				FL("WPAIE: "QDF_MAC_ADDR_STR""),
 				buf[0], buf[1], buf[2], buf[3], buf[4],
 				buf[5]);
 			qdf_status = QDF_STATUS_SUCCESS;
@@ -2362,7 +2362,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  FL("Delete STA with RC:%hu subtype:%hhu MAC::"
-		     MAC_ADDRESS_STR),
+		     QDF_MAC_ADDR_STR),
 		  params->reason_code, params->subtype,
 		  QDF_MAC_ADDR_ARRAY(params->peerMacAddr.bytes));
 }

@@ -2244,7 +2244,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		 * status code, 128 bytes for challenge text and
 		 * 4 bytes each for IV & ICV.
 		 */
-		pe_debug("Sending encrypted auth frame to " MAC_ADDRESS_STR,
+		pe_debug("Sending encrypted auth frame to " QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(peer_addr));
 
 		body_len = wep_challenge_len + LIM_ENCR_AUTH_INFO_LEN;
@@ -2254,7 +2254,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("Sending Auth seq# %d status %d (%d) to "
-		MAC_ADDRESS_STR,
+		QDF_MAC_ADDR_STR,
 		auth_frame->authTransactionSeqNumber,
 		auth_frame->authStatusCode,
 		(auth_frame->authStatusCode == eSIR_MAC_SUCCESS_STATUS),
@@ -2393,7 +2393,7 @@ alloc_packet:
 	if (wep_challenge_len) {
 		qdf_mem_copy(body, (uint8_t *) auth_frame, body_len);
 
-		pe_debug("Sending Auth seq# 3 to " MAC_ADDRESS_STR,
+		pe_debug("Sending Auth seq# 3 to " QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(mac_hdr->da));
 
 	} else {
@@ -2480,7 +2480,7 @@ alloc_packet:
 		}
 
 		pe_debug("*** Sending Auth seq# %d status %d (%d) to "
-				MAC_ADDRESS_STR,
+				QDF_MAC_ADDR_STR,
 			auth_frame->authTransactionSeqNumber,
 			auth_frame->authStatusCode,
 			(auth_frame->authStatusCode ==
@@ -2890,8 +2890,8 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	}
 
 	pe_debug("***Sessionid %d Sending Disassociation frame with "
-		   "reason %u and waitForAck %d to " MAC_ADDRESS_STR " ,From "
-		   MAC_ADDRESS_STR, pe_session->peSessionId, nReason,
+		   "reason %u and waitForAck %d to " QDF_MAC_ADDR_STR " ,From "
+		   QDF_MAC_ADDR_STR, pe_session->peSessionId, nReason,
 		waitForAck, QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
 
@@ -3065,8 +3065,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 			nStatus);
 	}
 	pe_debug("***Sessionid %d Sending Deauth frame with "
-		       "reason %u and waitForAck %d to " MAC_ADDRESS_STR
-		       " ,From " MAC_ADDRESS_STR,
+		       "reason %u and waitForAck %d to " QDF_MAC_ADDR_STR
+		       " ,From " QDF_MAC_ADDR_STR,
 		pe_session->peSessionId, nReason, waitForAck,
 		QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
@@ -3652,7 +3652,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	pe_debug("Send Ext channel Switch to :"MAC_ADDRESS_STR" with swcount %d, swmode %d , newchannel %d newops %d",
+	pe_debug("Send Ext channel Switch to :"QDF_MAC_ADDR_STR" with swcount %d, swmode %d , newchannel %d newops %d",
 		QDF_MAC_ADDR_ARRAY(mac_hdr->da),
 		frm.ext_chan_switch_ann_action.switch_count,
 		frm.ext_chan_switch_ann_action.switch_mode,
@@ -3806,7 +3806,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 	pe_debug("Send frame on channel %d to mac "
-		MAC_ADDRESS_STR, session_entry->currentOperChannel,
+		QDF_MAC_ADDR_STR, session_entry->currentOperChannel,
 		QDF_MAC_ADDR_ARRAY(peer));
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,

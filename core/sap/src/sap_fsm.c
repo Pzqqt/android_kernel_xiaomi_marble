@@ -3366,7 +3366,7 @@ void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
 	for (i = 0; i < size; i++) {
 		macArray = (macList + i)->bytes;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "** ACL entry %i - " MAC_ADDRESS_STR, i,
+			  "** ACL entry %i - " QDF_MAC_ADDR_STR, i,
 			  QDF_MAC_ADDR_ARRAY(macArray));
 	}
 	return;
@@ -3385,7 +3385,7 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 	if (sap_search_mac_list
 		    (sap_ctx->denyMacList, sap_ctx->nDenyMac, peerMac, NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " MAC_ADDRESS_STR " in deny list",
+			  "In %s, Peer " QDF_MAC_ADDR_STR " in deny list",
 			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3396,7 +3396,7 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 	/* A new station CANNOT associate, unless in accept list. More stringent mode */
 	if (eSAP_DENY_UNLESS_ACCEPTED == sap_ctx->eSapMacAddrAclMode) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " MAC_ADDRESS_STR
+			  "In %s, Peer " QDF_MAC_ADDR_STR
 			  " denied, Mac filter mode is eSAP_DENY_UNLESS_ACCEPTED",
 			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
 		return QDF_STATUS_E_FAILURE;
@@ -3409,7 +3409,7 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_UNKNOWN_STA_JOIN,
 				     (void *) peerMac);
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " MAC_ADDRESS_STR
+			  "In %s, Peer " QDF_MAC_ADDR_STR
 			  " denied, Mac filter mode is eSAP_SUPPORT_ACCEPT_AND_DENY",
 			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
 		return QDF_STATUS_E_FAILURE;

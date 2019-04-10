@@ -7231,7 +7231,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				buf = snprintf
 					      ((extra + length),
 					      WE_MAX_STR_LEN - length,
-					      "\n%d .%02x:%02x:%02x:%02x:%02x:%02x\n",
+					      "\n%d ."QDF_MAC_ADDR_STR"\n",
 					      sta_ctx->conn_info.sta_id[idx],
 					      sta_ctx->conn_info.
 					      peer_macaddr[idx].bytes[0],
@@ -8878,7 +8878,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		       request->destIpv4Addr[0], request->destIpv4Addr[1],
 		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
-		hdd_debug("Dest MAC address: "MAC_ADDRESS_STR,
+		hdd_debug("Dest MAC address: "QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
 		break;
 	}

@@ -832,14 +832,9 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 				      hash_list_elem) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  "%*shash idx %d -> %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+					  "%*shash idx %d -> %pK ("QDF_MAC_ADDR_STR")\n",
 					indent + 4, " ", i, peer,
-					peer->mac_addr.raw[0],
-					peer->mac_addr.raw[1],
-					peer->mac_addr.raw[2],
-					peer->mac_addr.raw[3],
-					peer->mac_addr.raw[4],
-					peer->mac_addr.raw[5]);
+					QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
 			}
 		}
 	}

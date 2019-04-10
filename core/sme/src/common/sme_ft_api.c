@@ -276,7 +276,7 @@ QDF_STATUS sme_ft_send_update_key_ind(struct mac_context *mac, uint32_t session_
 
 	qdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
 	msg->smeSessionId = session_id;
-	sme_debug("BSSID = " MAC_ADDRESS_STR,
+	sme_debug("BSSID = " QDF_MAC_ADDR_STR,
 		  QDF_MAC_ADDR_ARRAY(msg->bssid.bytes));
 	status = umac_send_mb_message_to_mac(msg);
 

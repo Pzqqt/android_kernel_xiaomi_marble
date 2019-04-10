@@ -1220,7 +1220,7 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 			     hw_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 		hdd_ctx->num_provisioned_addr++;
 		hdd_info("hdd_ctx->provisioned_mac_addr[0]: "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(hdd_ctx->
 					provisioned_mac_addr[0].bytes));
 	} else {
@@ -1229,7 +1229,7 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 			     QDF_MAC_ADDR_SIZE);
 		hdd_ctx->num_derived_addr++;
 		hdd_info("hdd_ctx->derived_mac_addr[0]: "
-			 MAC_ADDRESS_STR,
+			 QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(hdd_ctx->derived_mac_addr[0].bytes));
 	}
 	for (i = hdd_ctx->num_derived_addr; i < (QDF_MAX_CONCURRENCY_PERSONA -
@@ -1252,7 +1252,7 @@ void hdd_update_macaddr(struct hdd_context *hdd_ctx,
 		hdd_ctx->derived_mac_addr[i].bytes[0] |= 0x02;
 		hdd_ctx->derived_mac_addr[i].bytes[3] = macaddr_b3;
 		hdd_info("hdd_ctx->derived_mac_addr[%d]: "
-			MAC_ADDRESS_STR, i,
+			QDF_MAC_ADDR_STR, i,
 			QDF_MAC_ADDR_ARRAY(hdd_ctx->derived_mac_addr[i].bytes));
 		hdd_ctx->num_derived_addr++;
 	}
@@ -3462,7 +3462,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	if (adapter_temp) {
 		if (!qdf_str_cmp(adapter_temp->dev->name, dev->name))
 			return 0;
-		hdd_err("%s adapter exist with same address " MAC_ADDRESS_STR,
+		hdd_err("%s adapter exist with same address " QDF_MAC_ADDR_STR,
 			adapter_temp->dev->name,
 			QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
 		return -EINVAL;
@@ -3472,7 +3472,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	if (QDF_IS_STATUS_ERROR(qdf_ret_status))
 		return -EINVAL;
 
-	hdd_info("Changing MAC to " MAC_ADDRESS_STR " of the interface %s ",
+	hdd_info("Changing MAC to " QDF_MAC_ADDR_STR " of the interface %s ",
 		 QDF_MAC_ADDR_ARRAY(mac_addr.bytes), dev->name);
 
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
@@ -3518,7 +3518,7 @@ static uint8_t *wlan_hdd_get_derived_intf_addr(struct hdd_context *hdd_ctx)
 	if (i < 0 || i >= hdd_ctx->num_derived_addr)
 		return NULL;
 	qdf_atomic_set_bit(i, &hdd_ctx->derived_intf_addr_mask);
-	hdd_info("Assigning MAC from derived list" MAC_ADDRESS_STR,
+	hdd_info("Assigning MAC from derived list" QDF_MAC_ADDR_STR,
 		 QDF_MAC_ADDR_ARRAY(hdd_ctx->derived_mac_addr[i].bytes));
 
 	/* Copy the mac in dynamic mac list at first free position */
@@ -3549,7 +3549,7 @@ static uint8_t *wlan_hdd_get_provisioned_intf_addr(struct hdd_context *hdd_ctx)
 	if (i < 0 || i >= hdd_ctx->num_provisioned_addr)
 		return NULL;
 	qdf_atomic_set_bit(i, &hdd_ctx->provisioned_intf_addr_mask);
-	hdd_info("Assigning MAC from provisioned list" MAC_ADDRESS_STR,
+	hdd_info("Assigning MAC from provisioned list" QDF_MAC_ADDR_STR,
 		 QDF_MAC_ADDR_ARRAY(hdd_ctx->provisioned_mac_addr[i].bytes));
 
 	/* Copy the mac in dynamic mac list at first free position */
@@ -3611,14 +3611,14 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 						   provisioned_intf_addr_mask);
 				hdd_info("Releasing MAC from provisioned list");
 				hdd_info(
-					MAC_ADDRESS_STR,
+					QDF_MAC_ADDR_STR,
 					QDF_MAC_ADDR_ARRAY(releaseAddr));
 			} else {
 				qdf_atomic_clear_bit(
 						mac_pos_in_mask, &hdd_ctx->
 						derived_intf_addr_mask);
 				hdd_info("Releasing MAC from derived list");
-				hdd_info(MAC_ADDRESS_STR,
+				hdd_info(QDF_MAC_ADDR_STR,
 					 QDF_MAC_ADDR_ARRAY(releaseAddr));
 			}
 			qdf_zero_macaddr(&hdd_ctx->
@@ -3631,7 +3631,7 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 
 	}
 	if (i == QDF_MAX_CONCURRENCY_PERSONA)
-		hdd_err("Releasing non existing MAC" MAC_ADDRESS_STR,
+		hdd_err("Releasing non existing MAC" QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(releaseAddr));
 }
 
@@ -3697,7 +3697,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			goto free_req;
 		}
 		netdev_for_each_mc_addr(ha, dev) {
-			hdd_debug("ha_addr[%d] "MAC_ADDRESS_STR,
+			hdd_debug("ha_addr[%d] "QDF_MAC_ADDR_STR,
 				i, QDF_MAC_ADDR_ARRAY(ha->addr));
 			if (i == mc_count)
 				break;
@@ -5041,7 +5041,7 @@ static void hdd_reset_locally_admin_bit(struct hdd_context *hdd_ctx,
 	 */
 	WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(mac_addr);
 	hdd_debug("locally administered bit reset in sta mode: "
-		 MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(mac_addr));
+		 QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(mac_addr));
 }
 
 static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
@@ -5101,7 +5101,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	status = hdd_check_for_existing_macaddr(hdd_ctx, mac_addr);
 	if (QDF_STATUS_E_FAILURE == status) {
-		hdd_err("Duplicate MAC addr: " MAC_ADDRESS_STR
+		hdd_err("Duplicate MAC addr: " QDF_MAC_ADDR_STR
 				" already exists",
 				QDF_MAC_ADDR_ARRAY(mac_addr));
 		return NULL;
@@ -5119,7 +5119,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			status = hdd_check_for_existing_macaddr(hdd_ctx,
 								mac_addr);
 			if (QDF_STATUS_E_FAILURE == status) {
-				hdd_err("Duplicate MAC addr: " MAC_ADDRESS_STR
+				hdd_err("Duplicate MAC addr: " QDF_MAC_ADDR_STR
 					" already exists",
 					QDF_MAC_ADDR_ARRAY(mac_addr));
 				return NULL;
@@ -10258,7 +10258,7 @@ void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num)
 		macaddr_b3 ^= (1 << INTF_MACADDR_MASK);
 		buf[0] |= 0x02;
 		buf[3] = macaddr_b3;
-		hdd_debug(MAC_ADDRESS_STR, QDF_MAC_ADDR_ARRAY(buf));
+		hdd_debug(QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(buf));
 		hdd_ctx->num_derived_addr++;
 	}
 }
@@ -10298,7 +10298,7 @@ static int hdd_platform_wlan_mac(struct hdd_context *hdd_ctx)
 	for (iter = 0; iter < no_of_mac_addr; ++iter, addr += mac_addr_size) {
 		buf = hdd_ctx->provisioned_mac_addr[iter].bytes;
 		qdf_mem_copy(buf, addr, QDF_MAC_ADDR_SIZE);
-		hdd_info("provisioned MAC Addr [%d]" MAC_ADDRESS_STR, iter,
+		hdd_info("provisioned MAC Addr [%d]" QDF_MAC_ADDR_STR, iter,
 			 QDF_MAC_ADDR_ARRAY(buf));
 	}
 
@@ -10320,7 +10320,7 @@ static int hdd_platform_wlan_mac(struct hdd_context *hdd_ctx)
 		     addr += mac_addr_size) {
 			buf = hdd_ctx->derived_mac_addr[iter].bytes;
 			qdf_mem_copy(buf, addr, QDF_MAC_ADDR_SIZE);
-			hdd_debug("derived MAC Addr [%d]" MAC_ADDRESS_STR, iter,
+			hdd_debug("derived MAC Addr [%d]" QDF_MAC_ADDR_STR, iter,
 				  QDF_MAC_ADDR_ARRAY(buf));
 		}
 		hdd_ctx->num_derived_addr = no_of_mac_addr;
@@ -14711,7 +14711,7 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 			    mac_handle, adapter->vdev_id)) {
 				sta_mac = (uint8_t *)
 					&(adapter->mac_addr.bytes[0]);
-				hdd_debug("client " MAC_ADDRESS_STR
+				hdd_debug("client " QDF_MAC_ADDR_STR
 					" is in middle of WPS/EAPOL exchange.",
 					QDF_MAC_ADDR_ARRAY(sta_mac));
 				if (out_vdev_id && out_reason) {
@@ -14732,7 +14732,7 @@ bool hdd_is_connection_in_progress(uint8_t *out_vdev_id,
 				sta_mac = (uint8_t *)
 						&(adapter->sta_info[sta_id].
 							sta_mac.bytes[0]);
-				hdd_debug("client " MAC_ADDRESS_STR
+				hdd_debug("client " QDF_MAC_ADDR_STR
 				" of SAP/GO is in middle of WPS/EAPOL exchange",
 				QDF_MAC_ADDR_ARRAY(sta_mac));
 				if (out_vdev_id && out_reason) {

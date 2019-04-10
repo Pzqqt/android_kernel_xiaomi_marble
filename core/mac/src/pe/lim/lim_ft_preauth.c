@@ -142,7 +142,7 @@ int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
 					   &session_id);
 	if (!session) {
 		pe_err("Unable to find session for the bssid"
-			   MAC_ADDRESS_STR,
+			   QDF_MAC_ADDR_STR,
 			   QDF_MAC_ADDR_ARRAY(ft_pre_auth_req->currbssId));
 		/* Post the FT Pre Auth Response to SME */
 		lim_post_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0,

@@ -283,7 +283,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		if (sir_convert_probe_req_frame2_struct(mac_ctx, body_ptr,
 				frame_len, &probe_req) == QDF_STATUS_E_FAILURE) {
 			pe_err("Parse error ProbeReq, length: %d, SA is: "
-					MAC_ADDRESS_STR, frame_len,
+					QDF_MAC_ADDR_STR, frame_len,
 					QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			return;
 		}

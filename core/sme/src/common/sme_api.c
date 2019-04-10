@@ -11640,7 +11640,7 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 		 omi_data.ch_bw, omi_data.tx_nsts, omi_data.rx_nss,
 		 omi_data.ul_mu_dis, omi_data.omi_in_vht, omi_data.omi_in_he);
 	qdf_mem_copy(&param_val, &omi_data, sizeof(omi_data));
-	sme_debug("param val %08X, bssid:"MAC_ADDRESS_STR, param_val,
+	sme_debug("param val %08X, bssid:"QDF_MAC_ADDR_STR, param_val,
 		  QDF_MAC_ADDR_ARRAY(session->connectedProfile.bssid.bytes));
 	status = wma_set_peer_param(wma_handle,
 				    session->connectedProfile.bssid.bytes,
@@ -14468,7 +14468,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 	 */
 	if ((bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_thres) &&
 	    (conn_bss_desc->rssi > mbo_cfg->mbo_current_rssi_thres)) {
-		sme_err("Candidate BSS "MAC_ADDRESS_STR" has LOW RSSI(%d), hence reject",
+		sme_err("Candidate BSS "QDF_MAC_ADDR_STR" has LOW RSSI(%d), hence reject",
 			QDF_MAC_ADDR_ARRAY(bss_desc->bssId), bss_desc->rssi);
 		info->status = QCA_STATUS_REJECT_LOW_RSSI;
 		return true;
@@ -14486,7 +14486,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		current_rssi_mcc_thres = mbo_cfg->mbo_current_rssi_mcc_thres;
 		if ((conn_bss_desc->rssi > current_rssi_mcc_thres) &&
 		    csr_is_mcc_channel(mac_ctx, bss_desc->channelId)) {
-			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes MCC, hence reject",
+			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes MCC, hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
 				QCA_STATUS_REJECT_INSUFFICIENT_QOS_CAPACITY;
@@ -14504,7 +14504,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		    WLAN_REG_IS_24GHZ_CH(bss_desc->channelId) &&
 		    is_bt_in_progress &&
 		    (bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_btc_thres)) {
-			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes BT coex, hence reject",
+			sme_err("Candidate BSS "QDF_MAC_ADDR_STR" causes BT coex, hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
 				QCA_STATUS_REJECT_EXCESSIVE_DELAY_EXPECTED;
@@ -14521,7 +14521,7 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 		    !(policy_mgr_is_safe_channel(mac_ctx->psoc,
 		    bss_desc->channelId))) {
 			sme_err("High interference expected if transitioned to BSS "
-				MAC_ADDRESS_STR" hence reject",
+				QDF_MAC_ADDR_STR" hence reject",
 				QDF_MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
 				QCA_STATUS_REJECT_HIGH_INTERFERENCE;
@@ -14573,7 +14573,7 @@ QDF_STATUS sme_get_bss_transition_status(mac_handle_t mac_handle,
 						       &info[i].bssid,
 						       res);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("BSS "MAC_ADDRESS_STR" not present in scan list",
+			sme_err("BSS "QDF_MAC_ADDR_STR" not present in scan list",
 				QDF_MAC_ADDR_ARRAY(info[i].bssid.bytes));
 			info[i].status = QCA_STATUS_REJECT_UNKNOWN;
 			continue;
@@ -14741,7 +14741,7 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 				     peer_mac_addr.bytes,
 				     QDF_MAC_ADDR_SIZE);
 			sme_debug("SAE: sae_status %d session_id %d Peer: "
-				  MAC_ADDRESS_STR, sae_msg->sae_status,
+				  QDF_MAC_ADDR_STR, sae_msg->sae_status,
 				  sae_msg->session_id,
 				  QDF_MAC_ADDR_ARRAY(sae_msg->peer_mac_addr));
 

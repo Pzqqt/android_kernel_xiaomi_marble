@@ -423,8 +423,8 @@ static uint32_t lim_prepare_tdls_frame_header(struct mac_context *mac, uint8_t *
 		     (uint8_t *) (addr3), sizeof(tSirMacAddr));
 
 	pe_debug("Preparing TDLS frame header to %s A1:"
-		   MAC_ADDRESS_STR", A2:"MAC_ADDRESS_STR", A3:"
-		   MAC_ADDRESS_STR,
+		   QDF_MAC_ADDR_STR", A2:"QDF_MAC_ADDR_STR", A3:"
+		   QDF_MAC_ADDR_STR,
 		(tdlsLinkType == TDLS_LINK_AP) ? "AP" : "DIRECT",
 		QDF_MAC_ADDR_ARRAY(pMacHdr->addr1),
 		QDF_MAC_ADDR_ARRAY(pMacHdr->addr2),
@@ -635,7 +635,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 	}
 #endif
 
-	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_DIS_REQ,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_REQ),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -938,7 +938,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 		qdf_mem_copy(pFrame + sizeof(tSirMacMgmtHdr) + nPayload, addIe,
 			     addIeLen);
 	}
-	pe_debug("[TDLS] action: %d (%s) -DIRECT-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -DIRECT-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_DIS_RSP,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_RSP),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -1002,7 +1002,7 @@ static void populate_dotf_tdls_vht_aid(struct mac_context *mac, uint32_t selfDot
 			} else {
 				Aid->present = 0;
 				pe_err("sta is NULL for "
-					   MAC_ADDRESS_STR,
+					   QDF_MAC_ADDR_STR,
 					QDF_MAC_ADDR_ARRAY(peerMac.bytes));
 			}
 		}
@@ -1312,7 +1312,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 			     addIeLen);
 	}
 
-	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_SETUP_REQ,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_REQ),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -1503,7 +1503,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 				    padLen - MIN_VENDOR_SPECIFIC_IE_SIZE);
 	}
 #endif
-	pe_debug("[TDLS] action: %d (%s) -%s-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -%s-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_TEARDOWN,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_TEARDOWN),
 		((reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE) ? "AP" :
@@ -1764,7 +1764,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 			     addIeLen);
 	}
 
-	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_SETUP_RSP,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_RSP),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -1971,7 +1971,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	}
 #endif
 
-	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR,
+	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
 		SIR_MAC_TDLS_SETUP_CNF,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_CNF),
 	       QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -2554,13 +2554,13 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 				       &pe_session->dph.dphHashTable);
 
 	if (sta && pAddStaReq->tdls_oper == TDLS_OPER_ADD) {
-		pe_err("TDLS entry for peer: "MAC_ADDRESS_STR " already exist, cannot add new entry",
+		pe_err("TDLS entry for peer: "QDF_MAC_ADDR_STR " already exist, cannot add new entry",
 			QDF_MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
 	}
 
 	if (sta && sta->staType != STA_ENTRY_TDLS_PEER) {
-		pe_err("Non TDLS entry for peer: "MAC_ADDRESS_STR " already exist",
+		pe_err("Non TDLS entry for peer: "QDF_MAC_ADDR_STR " already exist",
 			QDF_MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
 	}
@@ -2569,7 +2569,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 		aid = lim_assign_peer_idx(mac, pe_session);
 
 		if (!aid) {
-			pe_err("No more free AID for peer: "MAC_ADDRESS_STR,
+			pe_err("No more free AID for peer: "QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -2577,7 +2577,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 		/* Set the aid in peerAIDBitmap as it has been assigned to TDLS peer */
 		SET_PEER_AID_BITMAP(pe_session->peerAIDBitmap, aid);
 
-		pe_debug("Aid: %d, for peer: " MAC_ADDRESS_STR,
+		pe_debug("Aid: %d, for peer: " QDF_MAC_ADDR_STR,
 			aid, QDF_MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 		sta =
 			dph_get_hash_entry(mac, aid,
@@ -2632,7 +2632,7 @@ static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 				       &pe_session->dph.dphHashTable);
 
 	if (sta) {
-		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR,
+		pe_debug("DEL STA peer MAC: "QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(sta->staAddr));
 
 		pe_debug("STA type: %x, sta idx: %x resp_reqd: %d",
@@ -2642,7 +2642,7 @@ static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 
 		status = lim_del_sta(mac, sta, resp_reqd, pe_session);
 	} else {
-		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR" not found",
+		pe_debug("DEL STA peer MAC: "QDF_MAC_ADDR_STR" not found",
 			 QDF_MAC_ADDR_ARRAY(peerMac.bytes));
 	}
 
@@ -2709,7 +2709,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 	uint16_t aid = 0;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	pe_debug("staIdx: %d, staMac: "MAC_ADDRESS_STR,
+	pe_debug("staIdx: %d, staMac: "QDF_MAC_ADDR_STR,
 	       pAddStaParams->staIdx,
 	       QDF_MAC_ADDR_ARRAY(pAddStaParams->staMac));
 
@@ -3110,7 +3110,7 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 			if (!stads)
 				goto skip;
 
-			pe_debug("Deleting "MAC_ADDRESS_STR,
+			pe_debug("Deleting "QDF_MAC_ADDR_STR,
 				QDF_MAC_ADDR_ARRAY(stads->staAddr));
 
 			if (!lim_is_roam_synch_in_progress(session_entry)) {
@@ -3125,7 +3125,7 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 				status = lim_tdls_del_sta(p_mac, mac_addr,
 							 session_entry, false);
 				if (status != QDF_STATUS_SUCCESS)
-					pe_debug("peer "MAC_ADDRESS_STR" not found",
+					pe_debug("peer "QDF_MAC_ADDR_STR" not found",
 						QDF_MAC_ADDR_ARRAY(stads->staAddr));
 			}
 

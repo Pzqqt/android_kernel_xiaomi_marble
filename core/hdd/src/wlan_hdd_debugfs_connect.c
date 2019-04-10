@@ -358,7 +358,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 	}
 	ret_val = scnprintf(buf + length, buf_avail_len - length,
 			    "ssid = %s\n"
-			    "bssid = " MAC_ADDRESS_STR "\n"
+			    "bssid = " QDF_MAC_ADDR_STR "\n"
 			    "connect_time = %s\n"
 			    "auth_time = %s\n"
 			    "freq = %u\n"

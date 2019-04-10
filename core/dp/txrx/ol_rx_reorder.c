@@ -647,16 +647,12 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 						current_time_ms;
 					ol_txrx_warn(
 					   "Tgt PN check failed - TID %d, peer %pK "
-					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
+					   "("QDF_MAC_ADDR_STR")\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",
 					   tid, peer,
-					   peer->mac_addr.raw[0],
-					   peer->mac_addr.raw[1],
-					   peer->mac_addr.raw[2],
-					   peer->mac_addr.raw[3],
-					   peer->mac_addr.raw[4],
-					   peer->mac_addr.raw[5], pn.pn128[1],
+					   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+					   pn.pn128[1],
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,
 					   htt_rx_mpdu_desc_seq_num(htt_pdev,
@@ -664,16 +660,12 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 				} else {
 					ol_txrx_dbg(
 					   "Tgt PN check failed - TID %d, peer %pK "
-					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
+					   "("QDF_MAC_ADDR_STR")\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",
 					   tid, peer,
-					   peer->mac_addr.raw[0],
-					   peer->mac_addr.raw[1],
-					   peer->mac_addr.raw[2],
-					   peer->mac_addr.raw[3],
-					   peer->mac_addr.raw[4],
-					   peer->mac_addr.raw[5], pn.pn128[1],
+					   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+					   pn.pn128[1],
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,
 					   htt_rx_mpdu_desc_seq_num(htt_pdev,
