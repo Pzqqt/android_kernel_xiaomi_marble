@@ -21399,7 +21399,7 @@ hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 }
 #else
 
-static int
+static inline int
 hdd_update_connect_params_fils_info(struct hdd_adapter *adapter,
 				    struct hdd_context *hdd_ctx,
 				    struct cfg80211_connect_params *req,
