@@ -1378,11 +1378,7 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	uint8_t *buf_ptr;
 	uint32_t *vdev_ids;
 	wmi_channel *chan_info;
-#ifndef CMN_VDEV_MGR_TGT_IF_ENABLE
-	struct channel_param *tchan_info;
-#else
 	struct mlme_channel_param *tchan_info;
-#endif
 	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 
 	len += sizeof(wmi_channel);
