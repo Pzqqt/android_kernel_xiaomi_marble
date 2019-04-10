@@ -1708,7 +1708,7 @@ done:
 					QDF_TRACE_LEVEL_INFO);
 			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
 			qdf_nbuf_free(nbuf);
-			qdf_assert_always(0);
+			qdf_assert(0);
 			nbuf = next;
 			continue;
 		}
