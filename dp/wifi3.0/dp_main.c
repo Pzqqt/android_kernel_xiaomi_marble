@@ -5495,17 +5495,11 @@ static void dp_peer_authorize(struct cdp_peer *peer_handle, uint32_t authorize)
 static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 					  struct dp_pdev *pdev,
 					  struct dp_peer *peer,
-					  uint32_t vdev_id)
+					  struct dp_vdev *vdev)
 {
-	struct dp_vdev *vdev = NULL;
 	struct dp_peer *bss_peer = NULL;
 	uint8_t *m_addr = NULL;
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (vdev->vdev_id == vdev_id)
-			break;
-	}
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "vdev is NULL");
@@ -5523,8 +5517,6 @@ static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 		    DP_UPDATE_STATS(vdev, peer);
 		}
 	}
-	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-
 	/*
 	 * Peer AST list hast to be empty here
 	 */
@@ -5662,6 +5654,7 @@ void dp_peer_unref_delete(void *peer_handle)
 
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer);
+		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev);
 
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
@@ -5684,7 +5677,6 @@ void dp_peer_unref_delete(void *peer_handle)
 		} else {
 			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		}
-		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev_id);
 
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
