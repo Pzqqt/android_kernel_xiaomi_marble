@@ -83,6 +83,33 @@ static inline bool wlan_ipa_is_ipv6_enabled(struct wlan_ipa_config *ipa_cfg)
 }
 
 /**
+ * wlan_ipa_is_sta_only_offload_enabled() - Is IPA STA only offload enabled
+ *
+ * STA only IPA offload is needed on MDM platforms to support
+ * tethering scenarios in STA-SAP configurations when SAP is idle.
+ *
+ * Currently in STA-SAP configurations, IPA pipes are enabled only
+ * when a wifi client is connected to SAP.
+ *
+ * Impact of this API is only limited to when IPA pipes are enabled
+ * and disabled. To take effect, WLAN_IPA_UC_STA_ENABLE_MASK needs to
+ * set to 1.
+ *
+ * Return: true if MDM_PLATFORM is defined, false otherwise
+ */
+#ifdef MDM_PLATFORM
+static inline bool wlan_ipa_is_sta_only_offload_enabled(void)
+{
+	return true;
+}
+#else
+static inline bool wlan_ipa_is_sta_only_offload_enabled(void)
+{
+	return false;
+}
+#endif
+
+/**
  * wlan_ipa_msg_free_fn() - Free an IPA message
  * @buff: pointer to the IPA message
  * @len: length of the IPA message
@@ -1718,13 +1745,32 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
-		    (ipa_ctx->sap_num_connected_sta > 0) &&
+		    (ipa_ctx->sap_num_connected_sta > 0 ||
+		     wlan_ipa_is_sta_only_offload_enabled()) &&
 		    !ipa_ctx->sta_connected) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 				SIR_STA_RX_DATA_OFFLOAD, session_id,
 				true);
 			qdf_mutex_acquire(&ipa_ctx->event_lock);
+		}
+
+		if (!wlan_ipa_is_sta_only_offload_enabled()) {
+			ipa_debug("IPA STA only offload not enabled");
+		} else if (ipa_ctx->uc_loaded &&
+			   !ipa_ctx->sap_num_connected_sta &&
+			   !ipa_ctx->sta_connected) {
+			status = wlan_ipa_uc_handle_first_con(ipa_ctx);
+			if (status) {
+				qdf_mutex_release(&ipa_ctx->event_lock);
+				ipa_info("handle 1st conn failed %d", status);
+				wlan_ipa_uc_offload_enable_disable(
+						ipa_ctx,
+						SIR_STA_RX_DATA_OFFLOAD,
+						session_id,
+						false);
+				goto end;
+			}
 		}
 
 		ipa_ctx->vdev_to_iface[session_id] =
@@ -1802,8 +1848,15 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			ipa_debug("%s: IPA UC OFFLOAD NOT ENABLED",
 				  msg_ex->name);
 		} else {
-			/* Disable IPA UC TX PIPE when STA disconnected */
-			if ((ipa_ctx->num_iface == 1) &&
+			/*
+			 * Disable IPA pipes when
+			 * 1. STA is the last interface or
+			 * 2. STA only offload enabled and no clients connected
+			 * to SAP
+			 */
+			if ((ipa_ctx->num_iface == 1 ||
+			     (wlan_ipa_is_sta_only_offload_enabled() &&
+			      !ipa_ctx->sap_num_connected_sta)) &&
 			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 			    !ipa_ctx->ipa_pipes_down &&
 			    (ipa_ctx->resource_unloading == false)) {
@@ -1822,7 +1875,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 
 		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
-		    (ipa_ctx->sap_num_connected_sta > 0)) {
+		    (ipa_ctx->sap_num_connected_sta > 0 ||
+		     wlan_ipa_is_sta_only_offload_enabled())) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 				SIR_STA_RX_DATA_OFFLOAD, session_id, false);
@@ -1918,7 +1972,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 				ipa_ctx->uc_loaded == true) {
 
 			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
-			    ipa_ctx->sta_connected) {
+			    ipa_ctx->sta_connected &&
+			    !wlan_ipa_is_sta_only_offload_enabled()) {
 				qdf_mutex_release(&ipa_ctx->event_lock);
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 							SIR_STA_RX_DATA_OFFLOAD,
@@ -1926,14 +1981,21 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 				qdf_mutex_acquire(&ipa_ctx->event_lock);
 			}
 
-			status = wlan_ipa_uc_handle_first_con(ipa_ctx);
-			if (status != QDF_STATUS_SUCCESS) {
+			/*
+			 * IPA pipes already enabled if STA only offload
+			 * is enabled and STA is connected to remote AP.
+			 */
+			if (wlan_ipa_is_sta_only_offload_enabled() &&
+			    ipa_ctx->sta_connected) {
+				ipa_debug("IPA pipes already enabled");
+			} else if (wlan_ipa_uc_handle_first_con(ipa_ctx)) {
 				ipa_info("%s: handle 1st con fail",
 					 net_dev->name);
 
 				if (wlan_ipa_uc_sta_is_enabled(
 					ipa_ctx->config) &&
-				    ipa_ctx->sta_connected) {
+				    ipa_ctx->sta_connected &&
+				    !wlan_ipa_is_sta_only_offload_enabled()) {
 					qdf_mutex_release(&ipa_ctx->event_lock);
 					wlan_ipa_uc_offload_enable_disable(
 							ipa_ctx,
@@ -1943,10 +2005,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					qdf_mutex_release(&ipa_ctx->event_lock);
 				}
 
-				return status;
-			} else
-				ipa_debug("%s: handle 1st con success",
-					  net_dev->name);
+				return QDF_STATUS_E_BUSY;
+			}
 		}
 
 		ipa_ctx->sap_num_connected_sta++;
@@ -2016,9 +2076,15 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		}
 		ipa_ctx->sap_num_connected_sta--;
 
-		/* Disable IPA UC TX PIPE when last STA disconnected */
+		/*
+		 * Disable IPA pipes when
+		 * 1. last client disconnected and
+		 * 2. STA is not connected if STA only offload is enabled
+		 */
 		if (!ipa_ctx->sap_num_connected_sta &&
-				ipa_ctx->uc_loaded == true) {
+		    ipa_ctx->uc_loaded &&
+		    !(wlan_ipa_is_sta_only_offload_enabled() &&
+		      ipa_ctx->sta_connected)) {
 			if ((false == ipa_ctx->resource_unloading) &&
 			    wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 			    !ipa_ctx->ipa_pipes_down) {
@@ -2036,7 +2102,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			}
 
 			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config) &&
-			    ipa_ctx->sta_connected) {
+			    ipa_ctx->sta_connected &&
+			    !wlan_ipa_is_sta_only_offload_enabled()) {
 				qdf_mutex_release(&ipa_ctx->event_lock);
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 							SIR_STA_RX_DATA_OFFLOAD,
@@ -2797,8 +2864,14 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 
 	cdp_ipa_set_doorbell_paddr(ipa_ctx->dp_soc, ipa_ctx->dp_pdev);
 
-	/* If already any STA connected, enable IPA/FW PIPEs */
-	if (ipa_ctx->sap_num_connected_sta) {
+	/*
+	 * Enable IPA/FW PIPEs if
+	 * 1. any clients connected to SAP or
+	 * 2. STA connected to remote AP if STA only offload is enabled
+	 */
+	if (ipa_ctx->sap_num_connected_sta ||
+	    (wlan_ipa_is_sta_only_offload_enabled() &&
+	     ipa_ctx->sta_connected)) {
 		ipa_debug("Client already connected, enable IPA/FW PIPEs");
 		wlan_ipa_uc_handle_first_con(ipa_ctx);
 	}
