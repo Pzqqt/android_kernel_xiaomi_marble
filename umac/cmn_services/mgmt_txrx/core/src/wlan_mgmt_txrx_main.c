@@ -130,8 +130,6 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 
 	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
 
-	mgmt_txrx_info("retrieved mgmt desc: %pK with desc id: %d",
-			mgmt_txrx_desc, mgmt_txrx_desc->desc_id);
 	return mgmt_txrx_desc;
 }
 
@@ -161,6 +159,4 @@ void wlan_mgmt_txrx_desc_put(
 
 	qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
 
-	mgmt_txrx_info("put mgmt desc: %pK with desc id: %d into freelist",
-			desc, desc->desc_id);
 }
