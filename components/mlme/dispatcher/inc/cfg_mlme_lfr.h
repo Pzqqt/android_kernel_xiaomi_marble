@@ -1895,6 +1895,62 @@
 
 /*
  * <ini>
+ * bss_load_trigger_5g_rssi_threshold - Current AP minimum RSSI in dBm below
+ * which roaming can be triggered if BSS load exceeds bss_load_threshold.
+ * @Min: -120
+ * @Max: 0
+ * @Default: -70
+ *
+ * If connected AP is in 5Ghz, then consider bss load roam triggered only if
+ * load % > bss_load_threshold && connected AP rssi is worse than
+ * bss_load_trigger_5g_rssi_threshold
+ *
+ * Related: "bss_load_threshold"
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BSS_LOAD_TRIG_5G_RSSI_THRES CFG_INI_INT( \
+	"bss_load_trigger_5g_rssi_threshold", \
+	-120, \
+	0, \
+	-70, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum RSSI of current AP in 5GHz band for BSS load roam trigger")
+
+/*
+ * <ini>
+ * bss_load_trigger_2g_rssi_threshold - Current AP minimum RSSI in dBm below
+ * which roaming can be triggered if BSS load exceeds bss_load_threshold.
+ * @Min: -120
+ * @Max: 0
+ * @Default: -60
+ *
+ * If connected AP is in 2Ghz, then consider bss load roam triggered only if
+ * load % > bss_load_threshold && connected AP rssi is worse than
+ * bss_load_trigger_2g_rssi_threshold.
+ *
+ * Related: "bss_load_threshold"
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BSS_LOAD_TRIG_2G_RSSI_THRES CFG_INI_INT( \
+	"bss_load_trigger_2g_rssi_threshold", \
+	-120, \
+	0, \
+	-60, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum RSSI of current AP in 2.4GHz band for BSS load roam trigger")
+
+/*
+ * <ini>
  * ho_delay_for_rx - Delay hand-off (in msec) by this duration to receive
  * pending rx frames from current BSS
  * @Min: 0
@@ -2353,6 +2409,103 @@
 		0, \
 		"Config roam scan policy")
 
+/*
+ * <ini>
+ * roam_scan_inactivity_time - Device inactivity monitoring time in
+ * milliseconds for which the device is considered to be inactive with data
+ * packets count is less than configured roam_inactive_data_count.
+ *
+ * @Min: 0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0
+ *
+ * The below three ini values are used to control the roam scan after the
+ * firmware gets empty roam scan results during periodic roam scans.
+ * 1. roam_scan_inactivity_time
+ * 2. roam_inactive_data_count
+ * 3. roam_scan_period_after_inactivity
+ * The first two ini "roam_scan_inactivity_time" and "roam_inactive_data_count"
+ * is frames the criteria to detect if the DUT is inactive. If the device is
+ * identified to be inactive based on the above two ini, then the value,
+ * "roam_scan_period_after_inactivity" will be used as periodic roam scan
+ * duration.
+ *
+ * Related: roam_inactive_data_count
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_SCAN_INACTIVITY_TIME CFG_INI_UINT( \
+	"roam_scan_inactivity_time", \
+	0, \
+	0xFFFFFFFF, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Device inactivity monitoring time")
+
+/*
+ * <ini>
+ * roam_inactive_data_count - Maximum allowed data packets count during
+ * roam_scan_inactivity_time.
+ *
+ * @Min: 0
+ * @Max: 0xFFFFFFFF
+ * @Default: 10
+ *
+ * The DUT is said to be inactive only if the data packets count
+ * during this  roam_scan_inactivity_time is less than the configured
+ * roam_inactive_data_count.
+ *
+ * Related: roam_scan_inactivity_time
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_INACTIVE_COUNT CFG_INI_UINT( \
+	"roam_inactive_data_count", \
+	0, \
+	0xFFFFFFFF, \
+	10, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Roam scan inactivity period data pkt count")
+
+/*
+ * <ini>
+ * roam_scan_period_after_inactivity - Roam scan duration in ms after device is
+ * out of inactivity state.
+ *
+ * @Min: 0
+ * @Max: 0xFFFFFFFF
+ * @Default: 120000
+ *
+ * If there is empty scan results during roam scan, firmware will move to
+ * roam scan inactive state if roam_scan_inactivity and
+ * roam_inactive_data_count criteria are met.
+ * This ini is used to configure the roam scan duration in ms once the
+ * inactivity is finished and roam scan can be started.
+ *
+ * Related: roam_scan_inactivity_time, roam_inactive_data_count
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD CFG_INI_UINT( \
+	"roam_scan_period_after_inactivity", \
+	0, \
+	0xFFFFFFFF, \
+	120000, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Roam scan period post inactivity")
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -2431,6 +2584,11 @@
 	CFG(CFG_LFR_ROAM_FT_OPEN_ENABLE) \
 	CFG(CFG_LFR_ROAM_FORCE_RSSI_TRIGGER) \
 	CFG(CFG_ROAM_SCAN_SCAN_POLICY) \
+	CFG(CFG_ROAM_SCAN_INACTIVITY_TIME) \
+	CFG(CFG_ROAM_INACTIVE_COUNT) \
+	CFG(CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD) \
+	CFG(CFG_BSS_LOAD_TRIG_5G_RSSI_THRES) \
+	CFG(CFG_BSS_LOAD_TRIG_2G_RSSI_THRES) \
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL \
 	LFR_SUBNET_DETECTION_ALL

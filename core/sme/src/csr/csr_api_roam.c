@@ -17732,6 +17732,10 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 		mac_ctx->mlme_cfg->lfr.bss_load_trig.threshold;
 	req_buf->bss_load_config.bss_load_sample_time =
 		mac_ctx->mlme_cfg->lfr.bss_load_trig.sample_time;
+	req_buf->bss_load_config.rssi_threshold_5ghz =
+		 mac_ctx->mlme_cfg->lfr.bss_load_trig.rssi_threshold_5ghz;
+	req_buf->bss_load_config.rssi_threshold_24ghz =
+		 mac_ctx->mlme_cfg->lfr.bss_load_trig.rssi_threshold_24ghz;
 	req_buf->bss_load_config.vdev_id = session->sessionId;
 
 	/*
@@ -18191,6 +18195,13 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.maxChannelScanTime;
 	req_buf->EmptyRefreshScanPeriod =
 		roam_info->cfgParams.emptyScanRefreshPeriod;
+	req_buf->roam_scan_inactivity_time =
+		mac_ctx->mlme_cfg->lfr.roam_scan_inactivity_time;
+	req_buf->roam_inactive_data_packet_count =
+		mac_ctx->mlme_cfg->lfr.roam_inactive_data_packet_count;
+	req_buf->roam_scan_period_after_inactivity =
+		mac_ctx->mlme_cfg->lfr.roam_scan_period_after_inactivity;
+
 	req_buf->RoamBmissFirstBcnt =
 		roam_info->cfgParams.nRoamBmissFirstBcnt;
 	req_buf->RoamBmissFinalBcnt =
@@ -18205,6 +18216,16 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		  req_buf->mawc_roam_params.mawc_roam_ap_rssi_threshold,
 		  req_buf->mawc_roam_params.mawc_roam_rssi_high_adjust,
 		  req_buf->mawc_roam_params.mawc_roam_rssi_low_adjust);
+
+	req_buf->min_rssi_params[DEAUTH_MIN_RSSI] =
+			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
+	req_buf->min_rssi_params[BMISS_MIN_RSSI] =
+			mac_ctx->mlme_cfg->trig_min_rssi[BMISS_MIN_RSSI];
+	req_buf->score_delta_param[IDLE_ROAM_TRIGGER] =
+			mac_ctx->mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
+	req_buf->score_delta_param[BTM_ROAM_TRIGGER] =
+			mac_ctx->mlme_cfg->trig_score_delta[BTM_ROAM_TRIGGER];
+
 #ifdef FEATURE_WLAN_ESE
 	req_buf->IsESEAssoc =
 		csr_roam_is_ese_assoc(mac_ctx, session_id) &&
@@ -18355,6 +18376,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		mac_ctx->mlme_cfg->btm.disassoc_timer_threshold;
 	req_buf->btm_query_bitmask =
 		mac_ctx->mlme_cfg->btm.btm_query_bitmask;
+	req_buf->btm_trig_min_candidate_score =
+		 mac_ctx->mlme_cfg->btm.btm_trig_min_candidate_score;
 
 	csr_update_roam_scan_offload_request(mac_ctx, req_buf, session);
 

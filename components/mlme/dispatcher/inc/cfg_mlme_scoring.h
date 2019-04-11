@@ -1065,11 +1065,133 @@
  * @Min: 0
  * @Max: 1
  * @Default: 0
+ *
+ * Supported Feature: Power save
+ *
+ * Usage: Internal
+ *
+ * </cfg>
  */
 #define CFG_APSD_ENABLED CFG_BOOL( \
 		"apsd_enabled", \
 		0, \
 		"Enable APSD")
+
+/*
+ * <ini>
+ * candidate_min_rssi_for_disconnect - Candidate AP minimum RSSI in
+ * idle roam trigger(in dBm).
+ * @Min: -120
+ * @Max: 0
+ * @Default: -70
+ *
+ * Minimum RSSI value of the candidate AP to consider it as candidate for
+ * roaming when roam trigger is Deauthentication/Disconnection from current
+ * AP. This value will be sent to firmware over the WMI_ROAM_AP_PROFILE
+ * wmi command in the roam_min_rssi_param_list tlv.
+ *
+ * Related: enable_idle_roam.
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI CFG_INI_INT( \
+		"candidate_min_rssi_for_disconnect", \
+		-120, \
+		0, \
+		-70, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Minimum RSSI of candidate AP for Disconnect roam trigger")
+
+/*
+ * <ini>
+ * candidate_min_rssi_for_beacon_miss - Candidate AP minimum RSSI for beacon
+ * miss roam trigger (in dBm)
+ * @Min: -120
+ * @Max: 0
+ * @Default: -70
+ *
+ * Minimum RSSI value of the candidate AP to consider it as candidate for
+ * roaming when roam trigger is disconnection from current AP due to beacon
+ * miss. This value will be sent to firmware over the WMI_ROAM_AP_PROFILE
+ * wmi command in the roam_min_rssi_param_list tlv.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BMISS_ROAM_MIN_RSSI CFG_INI_INT( \
+	"candidate_min_rssi_for_beacon_miss", \
+	-120, \
+	0, \
+	-70, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum RSSI of candidate AP for Bmiss roam trigger")
+
+/*
+ * <ini>
+ * idle_roam_score_delta - Roam score delta value in percentage for idle roam.
+ * @Min: 0
+ * @Max: 100
+ * @Default: 10
+ *
+ * This ini is used to configure the minimum change in roam score
+ * value of the AP to consider it as candidate for
+ * roaming when roam trigger is due to idle state of sta.
+ * This value will be sent to firmware over the WMI_ROAM_AP_PROFILE wmi
+ * command in the roam_score_delta_param_list tlv.
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_IDLE_ROAM_SCORE_DELTA CFG_INI_UINT( \
+		"idle_roam_score_delta", \
+		0, \
+		100, \
+		10, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Roam score delta for Idle roam trigger")
+
+/*
+ * <ini>
+ * btm_roam_score_delta - Roam score delta value in percentage for BTM triggered
+ * roaming.
+ * @Min: 0
+ * @Max: 100
+ * @Default: 10
+ *
+ * This ini is used to configure the minimum change in roam score
+ * value of the AP to consider it as candidate when the sta is disconnected
+ * from the current AP due to BTM kickout.
+ * This value will be sent to firmware over the WMI_ROAM_AP_PROFILE wmi
+ * command in the roam_score_delta_param_list tlv.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BTM_ROAM_SCORE_DELTA CFG_INI_UINT( \
+	"btm_roam_score_delta", \
+	0, \
+	100, \
+	10, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Roam score delta for BTM roam trigger")
 
 #define CFG_SCORING_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
@@ -1107,6 +1229,10 @@
 	CFG(CFG_ROAM_TRIGGER_BITMAP) \
 	CFG(CFG_ROAM_SCORE_DELTA) \
 	CFG(CFG_ENABLE_SCORING_FOR_ROAM) \
-	CFG(CFG_APSD_ENABLED)
+	CFG(CFG_APSD_ENABLED) \
+	CFG(CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI) \
+	CFG(CFG_BMISS_ROAM_MIN_RSSI) \
+	CFG(CFG_IDLE_ROAM_SCORE_DELTA) \
+	CFG(CFG_BTM_ROAM_SCORE_DELTA) \
 
 #endif /* __CFG_MLME_SCORING_H */
