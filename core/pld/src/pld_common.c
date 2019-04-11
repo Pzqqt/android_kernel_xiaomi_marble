@@ -1623,6 +1623,7 @@ int pld_is_fw_down(struct device *dev)
 {
 	int ret = 0;
 	enum pld_bus_type type = pld_get_bus_type(dev);
+	struct device *ifdev;
 
 	switch (type) {
 	case PLD_BUS_TYPE_SNOC:
@@ -1634,7 +1635,8 @@ int pld_is_fw_down(struct device *dev)
 	case PLD_BUS_TYPE_SDIO:
 		break;
 	case PLD_BUS_TYPE_USB:
-		ret = pld_usb_is_fw_down(dev);
+		ifdev = pld_get_if_dev(dev);
+		ret = pld_usb_is_fw_down(ifdev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
