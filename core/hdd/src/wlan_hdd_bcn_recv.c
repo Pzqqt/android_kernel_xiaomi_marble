@@ -77,6 +77,92 @@ int get_beacon_report_data_len(struct wlan_beacon_report *report)
 }
 
 /**
+ * get_pause_ind_data_len() - Calculate skb buffer length
+ * @report: Required beacon report
+ *
+ * Calculate length for pause indication to allocate skb buffer
+ *
+ * Return: skb buffer length
+ */
+static int get_pause_ind_data_len(void)
+{
+	uint32_t data_len = NLMSG_HDRLEN;
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE */
+	data_len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PAUSE_REASON */
+	data_len += nla_total_size(sizeof(u32));
+
+	return data_len;
+}
+
+/**
+ * hdd_beacon_recv_pause_indication()- Send vendor event to user space
+ * to inform SCAN started indication
+ * @hdd_handle: hdd handler
+ * @vdev_id: vdev id
+ * @type: scan event type
+ *
+ * Return: None
+ */
+static void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
+					     uint8_t vdev_id,
+					     enum scan_event_type type)
+{
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	struct hdd_adapter *adapter;
+	struct sk_buff *vendor_event;
+	uint32_t data_len;
+	int flags;
+	uint32_t abort_reason;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	data_len = get_pause_ind_data_len();
+	flags = cds_get_gfp_flags();
+
+	vendor_event =
+		cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy, NULL,
+			data_len,
+			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
+			flags);
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	switch (type) {
+	case SCAN_EVENT_TYPE_STARTED:
+		abort_reason =
+		  QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_SCAN_STARTED;
+		break;
+	default:
+		abort_reason =
+		     QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_UNSPECIFIED;
+	}
+	/* Send vendor event to user space to inform ABORT */
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE,
+			QCA_WLAN_VENDOR_BEACON_REPORTING_OP_PAUSE) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PAUSE_REASON,
+			abort_reason)) {
+		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	cfg80211_vendor_event(vendor_event, flags);
+}
+
+/**
  * hdd_send_bcn_recv_info() - Send beacon info to userspace for
  * connected AP
  * @hdd_handle: hdd_handle to get hdd_adapter
@@ -211,6 +297,16 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 				return errno;
 			}
 		}
+		qdf_status =
+			sme_register_bcn_recv_pause_ind_cb(hdd_ctx->mac_handle,
+					hdd_beacon_recv_pause_indication);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			hdd_err("bcn_recv_abort_ind cb reg failed = %d",
+				qdf_status);
+			errno = qdf_status_to_os_return(qdf_status);
+			return errno;
+		}
+
 		qdf_status =
 			sme_handle_bcn_recv_start(hdd_ctx->mac_handle,
 						  adapter->vdev_id);

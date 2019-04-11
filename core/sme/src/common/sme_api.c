@@ -15526,3 +15526,67 @@ sme_get_mws_coex_info(mac_handle_t mac_handle, uint32_t vdev_id,
 	return status;
 }
 #endif /* WLAN_MWS_INFO_DEBUGFS */
+
+#ifdef WLAN_BCN_RECV_FEATURE
+/**
+ * sme_scan_event_handler() - Scan complete event handler
+ * @vdev: vdev obj manager
+ * @event: scan event
+ * @arg: arg of scan event
+ *
+ * This function is getting called after Host receive scan start
+ *
+ * Return: None
+ */
+static void sme_scan_event_handler(struct wlan_objmgr_vdev *vdev,
+				   struct scan_event *event,
+				   void *arg)
+{
+	struct mac_context *mac = arg;
+	struct csr_roam_session *session;
+
+	if (!mac) {
+		sme_err("Invalid mac context");
+		return;
+	}
+
+	if (!CSR_IS_SESSION_VALID(mac, vdev->vdev_objmgr.vdev_id)) {
+		sme_err("Invalid vdev_id: %d", vdev->vdev_objmgr.vdev_id);
+		return;
+	}
+
+	session = CSR_GET_SESSION(mac, vdev->vdev_objmgr.vdev_id);
+
+	if (event->type == SCAN_EVENT_TYPE_STARTED) {
+		if (mac->sme.beacon_pause_cb)
+			mac->sme.beacon_pause_cb(mac->hdd_handle,
+				vdev->vdev_objmgr.vdev_id, event->type);
+	}
+}
+
+QDF_STATUS sme_register_bcn_recv_pause_ind_cb(mac_handle_t mac_handle,
+					      beacon_pause_cb cb)
+{
+	QDF_STATUS status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	if (!mac) {
+		sme_err("Invalid mac context");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.beacon_pause_cb = cb;
+		sme_release_global_lock(&mac->sme);
+	}
+
+	/* scan event registration */
+	status = ucfg_scan_register_event_handler(mac->pdev,
+						  sme_scan_event_handler, mac);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("scan event register failed ");
+
+	return status;
+}
+#endif
