@@ -2025,6 +2025,17 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					       tSirMacAddr mac_addr);
 
+/**
+ * hdd_get_adapter_home_channel() - return home channel of adapter
+ * @adapter: hdd adapter of vdev
+ *
+ * This function returns operation channel of station/p2p-cli if
+ * connected, returns opration channel of sap/p2p-go if started.
+ *
+ * Return: home channel if connected/started or invalid channel 0
+ */
+uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter);
+
 /*
  * hdd_get_adapter_by_rand_macaddr() - find Random mac adapter
  * @hdd_ctx: hdd context

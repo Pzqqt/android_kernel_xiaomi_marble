@@ -1548,6 +1548,13 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 		*ppbuf = frame;
 		*ppkt = pkt;
 		*size = frame_len;
+		/*
+		 * Some target which support sending mgmt frame based on htt
+		 * would DMA write this PMF tx frame buffer, it may cause smmu
+		 * check permission fault, set a flag to do bi-direction DMA
+		 * map, normal tx unmap is enough for this case.
+		 */
+		QDF_NBUF_CB_TX_DMA_BI_MAP(pkt) = 1;
 	}
 
 	return status;

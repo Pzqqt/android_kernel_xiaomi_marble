@@ -699,6 +699,25 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 	return 0;
 }
 
+uint8_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
+{
+	uint8_t home_channel = 0;
+
+	if ((adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
+	    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		home_channel = adapter->session.ap.operating_channel;
+	} else if ((adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+		   adapter->session.station.conn_info.conn_state ==
+		   eConnectionState_Associated) {
+		home_channel =
+			adapter->session.station.conn_info.channel;
+	}
+
+	return home_channel;
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static inline struct net_device *hdd_net_dev_from_notifier(void *context)
 {
