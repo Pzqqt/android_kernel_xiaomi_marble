@@ -225,6 +225,32 @@ __osif_vdev_sync_start_callback(struct net_device *net_dev,
 	return 0;
 }
 
+static int
+__osif_vdev_sync_start_wait_callback(struct net_device *net_dev,
+				     struct osif_vdev_sync **out_vdev_sync,
+				     const char *desc,
+				     vdev_start_func vdev_start_cb)
+{
+	QDF_STATUS status;
+	struct osif_vdev_sync *vdev_sync;
+
+	*out_vdev_sync = NULL;
+
+	osif_vdev_sync_lock();
+	vdev_sync = osif_vdev_sync_lookup(net_dev);
+	osif_vdev_sync_unlock();
+	if (!vdev_sync)
+		return -EAGAIN;
+
+	status = vdev_start_cb(vdev_sync->dsc_vdev, desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	*out_vdev_sync = vdev_sync;
+
+	return 0;
+}
+
 int __osif_vdev_sync_trans_start(struct net_device *net_dev,
 				 struct osif_vdev_sync **out_vdev_sync,
 				 const char *desc)
@@ -245,10 +271,10 @@ int __osif_vdev_sync_trans_start_wait(struct net_device *net_dev,
 {
 	int errno;
 
-	osif_vdev_sync_lock();
-	errno = __osif_vdev_sync_start_callback(net_dev, out_vdev_sync, desc,
-						dsc_vdev_trans_start_wait);
-	osif_vdev_sync_unlock();
+	/* since dsc_vdev_trans_start_wait may sleep do not take lock here */
+	errno = __osif_vdev_sync_start_wait_callback(net_dev,
+						     out_vdev_sync, desc,
+						     dsc_vdev_trans_start_wait);
 
 	return errno;
 }
