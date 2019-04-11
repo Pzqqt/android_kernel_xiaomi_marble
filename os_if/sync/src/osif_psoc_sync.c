@@ -220,6 +220,32 @@ __osif_psoc_sync_start_callback(struct device *dev,
 	return 0;
 }
 
+static int
+__osif_psoc_sync_start_wait_callback(struct device *dev,
+				     struct osif_psoc_sync **out_psoc_sync,
+				     const char *desc,
+				     psoc_start_func psoc_start_cb)
+{
+	QDF_STATUS status;
+	struct osif_psoc_sync *psoc_sync;
+
+	*out_psoc_sync = NULL;
+
+	osif_psoc_sync_lock();
+	psoc_sync = osif_psoc_sync_lookup(dev);
+	osif_psoc_sync_unlock();
+	if (!psoc_sync)
+		return -EAGAIN;
+
+	status = psoc_start_cb(psoc_sync->dsc_psoc, desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	*out_psoc_sync = psoc_sync;
+
+	return 0;
+}
+
 int __osif_psoc_sync_trans_start(struct device *dev,
 				 struct osif_psoc_sync **out_psoc_sync,
 				 const char *desc)
@@ -240,10 +266,9 @@ int __osif_psoc_sync_trans_start_wait(struct device *dev,
 {
 	int errno;
 
-	osif_psoc_sync_lock();
-	errno = __osif_psoc_sync_start_callback(dev, out_psoc_sync, desc,
-						dsc_psoc_trans_start_wait);
-	osif_psoc_sync_unlock();
+	/* since dsc_psoc_trans_start_wait may sleep do not take lock here */
+	errno = __osif_psoc_sync_start_wait_callback(dev, out_psoc_sync, desc,
+						     dsc_psoc_trans_start_wait);
 
 	return errno;
 }
