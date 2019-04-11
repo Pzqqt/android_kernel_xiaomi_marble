@@ -1419,20 +1419,11 @@ target_if_verify_sig_and_tag_gen3(struct target_if_spectral *spectral,
 	signature = *(data + PHYERR_HDR_SIG_POS);
 
 	if (signature != SPECTRAL_PHYERR_SIGNATURE_GEN3) {
-		if (spectral_debug_level & DEBUG_SPECTRAL4)
-			spectral_err("Unexpected sig %x in spectral phyerror",
-				  signature);
-			spectral_err("Expected sig is %x\n",
-				  SPECTRAL_PHYERR_SIGNATURE_GEN3);
 		spectral->diag_stats.spectral_mismatch++;
 		return -EINVAL;
 	}
 
 	if (tag != exp_tag) {
-		if (spectral_debug_level & DEBUG_SPECTRAL4)
-			spectral_err("Unexpected tag %x in spectral phyerror",
-				  tag);
-			spectral_err("Expected tag is %x\n", exp_tag);
 		spectral->diag_stats.spectral_mismatch++;
 		return -EINVAL;
 	}
@@ -1507,7 +1498,7 @@ target_if_consume_spectral_report_gen3(
 		if (target_if_verify_sig_and_tag_gen3(
 				spectral, data,
 				TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0) {
-			spectral_err("Wrong tag/signature in sscan summary(0)");
+			spectral_err_rl("Wrong tag/sig in sscan summary(0)");
 			goto fail;
 		}
 
@@ -1533,7 +1524,7 @@ target_if_consume_spectral_report_gen3(
 		if (target_if_verify_sig_and_tag_gen3(
 				spectral, data,
 				TLV_TAG_SEARCH_FFT_REPORT_GEN3) != 0) {
-			spectral_err("Unexpected tag/signature in sfft(0)");
+			spectral_err_rl("Unexpected tag/signature in sfft(0)");
 			goto fail;
 		}
 		p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
@@ -1651,7 +1642,7 @@ target_if_consume_spectral_report_gen3(
 		if (target_if_verify_sig_and_tag_gen3(
 				spectral, data,
 				TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0) {
-			spectral_err("Wrong tag/signature in sscan summary(1)");
+			spectral_err_rl("Wrong tag/sig in sscan summary(1)");
 			goto fail;
 		}
 
@@ -1677,7 +1668,7 @@ target_if_consume_spectral_report_gen3(
 		if (target_if_verify_sig_and_tag_gen3(
 				spectral, data,
 				TLV_TAG_SEARCH_FFT_REPORT_GEN3) != 0) {
-			spectral_err("Unexpected tag/signature in sfft(1)");
+			spectral_err_rl("Unexpected tag/signature in sfft(1)");
 			goto fail;
 		}
 		p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
@@ -1794,7 +1785,7 @@ target_if_consume_spectral_report_gen3(
 	return 0;
 
  fail:
-	spectral_err("Error while processing Spectral report");
+	spectral_err_rl("Error while processing Spectral report");
 	reset_160mhz_delivery_state_machine(spectral);
 	return -EPERM;
 }
