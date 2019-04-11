@@ -199,6 +199,31 @@ __osif_driver_sync_start_callback(struct osif_driver_sync **out_driver_sync,
 	return 0;
 }
 
+static int
+__osif_driver_sync_start_wait_callback(
+				struct osif_driver_sync **out_driver_sync,
+				const char *desc,
+				driver_start_func driver_start_cb)
+{
+	QDF_STATUS status;
+	struct osif_driver_sync *driver_sync;
+
+	*out_driver_sync = NULL;
+
+	osif_driver_sync_lock();
+	driver_sync = osif_driver_sync_lookup();
+	osif_driver_sync_unlock();
+	if (!driver_sync)
+		return -EAGAIN;
+
+	status = driver_start_cb(driver_sync->dsc_driver, desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	*out_driver_sync = driver_sync;
+
+	return 0;
+}
 int __osif_driver_sync_trans_start(struct osif_driver_sync **out_driver_sync,
 				   const char *desc)
 {
@@ -218,10 +243,9 @@ __osif_driver_sync_trans_start_wait(struct osif_driver_sync **out_driver_sync,
 {
 	int errno;
 
-	osif_driver_sync_lock();
-	errno = __osif_driver_sync_start_callback(out_driver_sync, desc,
-						  dsc_driver_trans_start_wait);
-	osif_driver_sync_unlock();
+	/* since dsc_driver_trans_start_wait may sleep do not take lock here */
+	errno = __osif_driver_sync_start_wait_callback(out_driver_sync, desc,
+			dsc_driver_trans_start_wait);
 
 	return errno;
 }
