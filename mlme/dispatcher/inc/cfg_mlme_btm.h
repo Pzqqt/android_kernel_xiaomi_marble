@@ -269,6 +269,33 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"btm query with candidate list bitmask")
 
+/*
+ * <ini>
+ * minimum_btm_candidate_score - Consider the AP as roam candidate only if
+ * its score is greater than minimum_btm_candidate_score.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 1800
+ *
+ * This ini is applicable only for candidate selection during BTM roam trigger.
+ * For this roam_score_delta_bitmap bit 10 should be set to 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MIN_BTM_CANDIDATE_SCORE CFG_INI_UINT( \
+	"minimum_btm_candidate_score", \
+	0, \
+	10000, \
+	1800, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum BTM candidate score")
+
 #define CFG_BTM_ALL \
 	CFG(CFG_PREFER_BTM_QUERY) \
 	CFG(CFG_ENABLE_BTM_ABRIDGE) \
@@ -278,6 +305,7 @@
 	CFG(CFG_BTM_STICKY_TIME) \
 	CFG(CFG_BTM_VALIDITY_TIMER) \
 	CFG(CFG_BTM_DISASSOC_TIMER_THRESHOLD) \
-	CFG(CFG_BTM_QUERY_BITMASK)
+	CFG(CFG_BTM_QUERY_BITMASK) \
+	CFG(CFG_MIN_BTM_CANDIDATE_SCORE)
 
 #endif /* CFG_MLME_BTM_H_ */

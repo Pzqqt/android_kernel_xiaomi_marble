@@ -1516,6 +1516,10 @@ mlme_init_bss_load_trigger_params(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM);
 	bss_load_trig->threshold = cfg_get(psoc, CFG_BSS_LOAD_THRESHOLD);
 	bss_load_trig->sample_time = cfg_get(psoc, CFG_BSS_LOAD_SAMPLE_TIME);
+	bss_load_trig->rssi_threshold_5ghz =
+			cfg_get(psoc, CFG_BSS_LOAD_TRIG_5G_RSSI_THRES);
+	bss_load_trig->rssi_threshold_24ghz =
+			cfg_get(psoc, CFG_BSS_LOAD_TRIG_2G_RSSI_THRES);
 }
 
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1675,6 +1679,13 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_ROAM_FORCE_RSSI_TRIGGER);
 	lfr->roaming_scan_policy =
 		cfg_get(psoc, CFG_ROAM_SCAN_SCAN_POLICY);
+
+	lfr->roam_scan_inactivity_time =
+		cfg_get(psoc, CFG_ROAM_SCAN_INACTIVITY_TIME);
+	lfr->roam_inactive_data_packet_count =
+		cfg_get(psoc, CFG_ROAM_INACTIVE_COUNT);
+	lfr->roam_scan_period_after_inactivity =
+		cfg_get(psoc, CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD);
 
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
@@ -2129,7 +2140,36 @@ static void mlme_init_btm_cfg(struct wlan_objmgr_psoc *psoc,
 	btm->disassoc_timer_threshold =
 			cfg_get(psoc, CFG_BTM_DISASSOC_TIMER_THRESHOLD);
 	btm->btm_query_bitmask = cfg_get(psoc, CFG_BTM_QUERY_BITMASK);
+	btm->btm_trig_min_candidate_score =
+			cfg_get(psoc, CFG_MIN_BTM_CANDIDATE_SCORE);
+}
 
+static void
+mlme_init_roam_score_config(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_mlme_cfg *mlme_cfg)
+{
+	struct roam_trigger_score_delta *score_delta_param;
+	struct roam_trigger_min_rssi *min_rssi_param;
+
+	score_delta_param = &mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
+	score_delta_param->roam_score_delta =
+			cfg_get(psoc, CFG_IDLE_ROAM_SCORE_DELTA);
+	score_delta_param->trigger_reason = ROAM_TRIGGER_REASON_IDLE;
+
+	score_delta_param = &mlme_cfg->trig_score_delta[BTM_ROAM_TRIGGER];
+	score_delta_param->roam_score_delta =
+			cfg_get(psoc, CFG_BTM_ROAM_SCORE_DELTA);
+	score_delta_param->trigger_reason = ROAM_TRIGGER_REASON_BTM;
+
+	min_rssi_param = &mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
+	min_rssi_param->min_rssi =
+		cfg_get(psoc, CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI);
+	min_rssi_param->trigger_reason = ROAM_TRIGGER_REASON_DEAUTH;
+
+	min_rssi_param = &mlme_cfg->trig_min_rssi[BMISS_MIN_RSSI];
+	min_rssi_param->min_rssi =
+		cfg_get(psoc, CFG_BMISS_ROAM_MIN_RSSI);
+	min_rssi_param->trigger_reason = ROAM_TRIGGER_REASON_BMISS;
 }
 
 /**
@@ -2286,6 +2326,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_mwc_cfg(psoc, &mlme_cfg->mwc);
 	mlme_init_reg_cfg(psoc, &mlme_cfg->reg);
 	mlme_init_btm_cfg(psoc, &mlme_cfg->btm);
+	mlme_init_roam_score_config(psoc, mlme_cfg);
 
 	return status;
 }

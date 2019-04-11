@@ -1248,11 +1248,19 @@ enum roaming_dfs_channel_type {
  * @threshold: Bss load threshold value above which roaming should start
  * @sample_time: Time duration in milliseconds for which the bss load value
  * should be monitored
+ * @rssi_threshold_5ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 5GHz band.
+ * @rssi_threshold_24ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 2.4 GHz band.
  */
 struct bss_load_trigger {
 	bool enabled;
 	uint32_t threshold;
 	uint32_t sample_time;
+	int32_t rssi_threshold_5ghz;
+	int32_t rssi_threshold_24ghz;
 };
 
 /*
@@ -1344,6 +1352,12 @@ struct bss_load_trigger {
  * @enable_ftopen:                  Enable/disable FT open feature
  * @roam_force_rssi_trigger:        Force RSSI trigger or not
  * @roaming_scan_policy:            Config roaming scan policy in fw
+ * @roam_scan_inactivity_time:         Device inactivity monitoring time in
+ * milliseconds for which the device is considered to be inactive.
+ * @roam_inactive_data_packet_count:   Maximum allowed data packets count
+ * during roam_scan_inactivity_time.
+ * @roam_scan_period_after_inactivity: Roam scan period after device was in
+ * inactive state
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1438,6 +1452,9 @@ struct wlan_mlme_lfr_cfg {
 	bool roam_force_rssi_trigger;
 	struct bss_load_trigger bss_load_trig;
 	bool roaming_scan_policy;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
 };
 
 /**
@@ -1883,6 +1900,8 @@ struct wlan_mlme_wifi_pos_cfg {
  * not be triggered
  * @btm_query_bitmask: Bitmask to send BTM query with candidate list on
  * various roam
+ * @btm_trig_min_candidate_score: Minimum score to consider the AP as candidate
+ * when the roam trigger is BTM.
  */
 struct wlan_mlme_btm {
 	bool prefer_btm_query;
@@ -1894,6 +1913,7 @@ struct wlan_mlme_btm {
 	uint32_t rct_validity_timer;
 	uint32_t disassoc_timer_threshold;
 	uint32_t btm_query_bitmask;
+	uint32_t btm_trig_min_candidate_score;
 };
 
 /**
@@ -2035,6 +2055,9 @@ struct wlan_mlme_ibss_cfg {
  * @mwc: MWC related CFG items
  * @dot11_mode: dot11 mode supported
  * @reg: REG related CFG itmes
+ * @trig_score_delta: Roam score delta value for various roam triggers
+ * @trig_min_rssi: Expected minimum RSSI value of candidate AP for
+ * various roam triggers
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -2077,6 +2100,8 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_mwc mwc;
 	struct wlan_mlme_dot11_mode dot11_mode;
 	struct wlan_mlme_reg reg;
+	struct roam_trigger_score_delta trig_score_delta[NUM_OF_ROAM_TRIGGERS];
+	struct roam_trigger_min_rssi trig_min_rssi[NUM_OF_ROAM_TRIGGERS];
 };
 
 #endif
