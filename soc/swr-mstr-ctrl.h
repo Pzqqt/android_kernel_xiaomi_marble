@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWR_WCD_CTRL_H
@@ -155,6 +155,7 @@ struct swr_mstr_ctrl {
 	u32 intr_mask;
 	struct port_params **port_param;
 	u8 num_usecase;
+	u32 swr_irq_wakeup_capable;
 };
 
 #endif /* _SWR_WCD_CTRL_H */
