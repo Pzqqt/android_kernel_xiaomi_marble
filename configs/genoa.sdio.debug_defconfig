@@ -48,4 +48,5 @@ else
 endif
 CONFIG_LINUX_QCMBR :=y
 CONFIG_TGT_NUM_MSDU_DESC := 0
+CONFIG_RX_PN_CHECK_OFFLOAD := y
 ###################################

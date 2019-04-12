@@ -76,8 +76,8 @@ void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
 	cfg_ctx->tx_download_size = 1500;
 	ol_pdev_cfg_credit_update(cfg_ctx);
 }
-#else
 
+#else /* CONFIG_HL_SUPPORT */
 static inline
 void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
 {
@@ -88,6 +88,22 @@ void ol_pdev_cfg_param_update(struct txrx_pdev_cfg_t *cfg_ctx)
 	cfg_ctx->tx_download_size = 16;
 }
 #endif
+
+#ifdef CONFIG_RX_PN_CHECK_OFFLOAD
+static inline
+void ol_pdev_cfg_rx_pn_check(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	/* Do not do pn check on host */
+	cfg_ctx->rx_pn_check = 0;
+}
+#else
+static inline
+void ol_pdev_cfg_rx_pn_check(struct txrx_pdev_cfg_t *cfg_ctx)
+{
+	/* Do pn check on host */
+	cfg_ctx->rx_pn_check = 1;
+}
+#endif /* CONFIG_RX_PN_CHECK_OFFLOAD */
 
 #if CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK
 static inline
@@ -119,9 +135,8 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 		return NULL;
 
 	ol_pdev_cfg_param_update(cfg_ctx);
+	ol_pdev_cfg_rx_pn_check(cfg_ctx);
 
-	/* temporarily disabled PN check for Riva/Pronto */
-	cfg_ctx->rx_pn_check = 1;
 	cfg_ctx->defrag_timeout_check = ol_defrag_timeout_check();
 	cfg_ctx->max_peer_id = 511;
 	cfg_ctx->max_vdev = CFG_TGT_NUM_VDEV;
