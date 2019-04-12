@@ -692,7 +692,8 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 	struct dp_soc *soc = pdev->soc;
-	uint32_t remap_val;
+	uint32_t ix0;
+	uint32_t ix2;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -704,15 +705,25 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	remap_val = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW4) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW4) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW4) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW4) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
-	hal_reo_remap_IX0(soc->hal_soc, remap_val);
+	ix0 = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW4) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW4) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW4) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW4) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
+
+	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
+		ix2 = ((REO_REMAP_SW4 << 0) | (REO_REMAP_SW4 << 3) |
+		       (REO_REMAP_SW4 << 6) | (REO_REMAP_SW4 << 9) |
+		       (REO_REMAP_SW4 << 12) | (REO_REMAP_SW4 << 15) |
+		       (REO_REMAP_SW4 << 18) | (REO_REMAP_SW4 << 21)) << 8;
+
+		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+					   &ix2, &ix2);
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -728,21 +739,29 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 	struct dp_soc *soc = pdev->soc;
-	uint32_t remap_val;
+	uint32_t ix0;
+	uint32_t ix2;
+	uint32_t ix3;
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	remap_val = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW1) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW2) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW3) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW2) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
-		    HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
-	hal_reo_remap_IX0(soc->hal_soc, remap_val);
+	ix0 = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW1) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW2, REO_REMAP_SW2) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW3, REO_REMAP_SW3) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_SW4, REO_REMAP_SW2) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_RELEASE, REO_REMAP_RELEASE) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_FW, REO_REMAP_FW) |
+	      HAL_REO_REMAP_VAL(REO_REMAP_UNUSED, REO_REMAP_FW);
+
+	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
+		dp_reo_remap_config(soc, &ix2, &ix3);
+
+		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
+					   &ix2, &ix3);
+	}
 
 	qdf_spin_lock_bh(&soc->remap_lock);
 	soc->reo_remapped = false;

@@ -480,11 +480,17 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 	  _ORIGINAL_DEST ## _SHFT))
 
 /**
- * hal_reo_remap_IX0 - Remap REO ring destination
+ * hal_reo_read_write_ctrl_ix - Read or write REO_DESTINATION_RING_CTRL_IX
  * @hal: HAL SOC handle
- * @remap_val: Remap value
+ * @read: boolean value to indicate if read or write
+ * @ix0: pointer to store IX0 reg value
+ * @ix1: pointer to store IX1 reg value
+ * @ix2: pointer to store IX2 reg value
+ * @ix3: pointer to store IX3 reg value
  */
-extern void hal_reo_remap_IX0(struct hal_soc *hal, uint32_t remap_val);
+extern void hal_reo_read_write_ctrl_ix(struct hal_soc *hal, bool read,
+				       uint32_t *ix0, uint32_t *ix1,
+				       uint32_t *ix2, uint32_t *ix3);
 
 /**
  * hal_srng_set_hp_paddr() - Set physical address to dest SRNG head pointer

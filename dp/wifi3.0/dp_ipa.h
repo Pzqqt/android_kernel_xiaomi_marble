@@ -108,6 +108,9 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 					     qdf_nbuf_t nbuf,
 					     bool create);
+
+bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1,
+			 uint32_t *remap2);
 #else
 static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
