@@ -591,7 +591,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 		pBeaconReq->measurement_request.Beacon.regClass;
 	pSmeBcnReportReq->channelInfo.channelNum =
 		pBeaconReq->measurement_request.Beacon.channel;
-	pSmeBcnReportReq->measurementDuration[0] = SYS_TU_TO_MS(measDuration);
+	pSmeBcnReportReq->measurementDuration[0] = measDuration;
 	pSmeBcnReportReq->fMeasurementtype[0] =
 		pBeaconReq->measurement_request.Beacon.meas_mode;
 	qdf_mem_copy(pSmeBcnReportReq->macaddrBssid,
@@ -859,7 +859,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 					bss_desc->startTSF,
 					sizeof(bss_desc->startTSF));
 				beacon_report->measDuration =
-					SYS_MS_TO_TU(beacon_xmit_ind->duration);
+					beacon_xmit_ind->duration;
 				beacon_report->phyType = bss_desc->nwType;
 				beacon_report->bcnProbeRsp = 1;
 				beacon_report->rsni = bss_desc->sinr;
