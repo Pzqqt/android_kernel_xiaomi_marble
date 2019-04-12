@@ -354,13 +354,15 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
 		void *vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
 						       iface_ctx->session_id);
+		if (!vdev)
+			goto drop_pkt;
+
 		if (cdp_tx_desc_thresh_reached(soc, vdev)) {
 			/* Drop the packet*/
 			ipa_ctx->stats.num_tx_fwd_err++;
-			dev_kfree_skb_any(skb);
-			ret = WLAN_IPA_FORWARD_PKT_DISCARD;
-			return ret;
+			goto drop_pkt;
 		}
+
 		ipa_debug_rl("Forward packet to Tx (fw_desc=%d)", desc);
 		ipa_ctx->ipa_tx_forward++;
 
@@ -380,7 +382,11 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 			ret = WLAN_IPA_FORWARD_PKT_LOCAL_STACK;
 		}
 	}
+	return ret;
 
+drop_pkt:
+	dev_kfree_skb_any(skb);
+	ret = WLAN_IPA_FORWARD_PKT_DISCARD;
 	return ret;
 }
 
