@@ -2126,7 +2126,6 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 				(struct cdp_pdev *)pdev,
 				adapter->vdev_id);
 	if (!adapter->txrx_vdev) {
-		hdd_err("%s find vdev fail", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -4020,6 +4019,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct cdp_vdev *txrx_vdev;
 
 	/*
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
@@ -4039,12 +4039,16 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx = hdd_rx_packet_cbk;
 		txrx_ops.rx.rx_stack = NULL;
 	}
+	txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
+					      (struct cdp_pdev *)pdev,
+					      adapter->vdev_id);
+	if (!txrx_vdev)
+		return QDF_STATUS_E_FAILURE;
 
-	cdp_vdev_register(soc,
-		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->vdev_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
-		&txrx_ops);
+	cdp_vdev_register(soc, txrx_vdev,
+			  adapter,
+			  (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
+			  &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 

@@ -1013,6 +1013,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct cdp_vdev *txrx_vdev = NULL;
 
 	hdd_info("STA:%u, Auth:%u, Priv:%u, WMM:%u",
 		 sta_id, auth_required, privacy_required, wmm_enabled);
@@ -1048,11 +1049,17 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		txrx_ops.rx.rx_stack = NULL;
 	}
 
+	txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
+					      (struct cdp_pdev *)pdev,
+					      adapter->vdev_id);
+	if (!txrx_vdev)
+		return QDF_STATUS_E_FAILURE;
+
 	cdp_vdev_register(soc,
-		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->vdev_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
-		&txrx_ops);
+			  txrx_vdev,
+			  adapter,
+			  (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
+			  &txrx_ops);
 	adapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,
 					adapter->vdev_id);

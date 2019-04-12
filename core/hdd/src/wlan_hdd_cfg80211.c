@@ -4470,6 +4470,7 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	mac_handle_t mac_handle;
+	struct cdp_vdev *txrx_vdev = NULL;
 
 	hdd_enter_dev(dev);
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
@@ -4503,12 +4504,15 @@ static int __wlan_hdd_cfg80211_handle_wisa_cmd(struct wiphy *wiphy,
 		hdd_err("Unable to set WISA mode: %d to FW", wisa_mode);
 		ret_val = -EINVAL;
 	}
-	if (QDF_IS_STATUS_SUCCESS(status) || wisa_mode == false)
-		cdp_set_wisa_mode(soc,
-			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-				(struct cdp_pdev *)pdev,
-				adapter->vdev_id),
-			wisa_mode);
+	if (QDF_IS_STATUS_SUCCESS(status) || !wisa_mode) {
+		txrx_vdev = cdp_get_vdev_from_vdev_id(soc,
+						      (struct cdp_pdev *)pdev,
+						      adapter->vdev_id);
+		if (!txrx_vdev)
+			ret_val = -EINVAL;
+		else
+			cdp_set_wisa_mode(soc, txrx_vdev, wisa_mode);
+	}
 err:
 	hdd_exit();
 	return ret_val;

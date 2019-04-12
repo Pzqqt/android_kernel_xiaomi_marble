@@ -222,6 +222,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct cdp_vdev *vdev;
 
 	qdf_status = cdp_peer_register_ocb_peer(soc,
 				adapter->mac_addr.bytes,
@@ -239,16 +240,19 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
-	cdp_vdev_register(soc,
-		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->vdev_id),
-		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
-		&txrx_ops);
+	vdev = cdp_get_vdev_from_vdev_id(soc,
+					 (struct cdp_pdev *)pdev,
+					 adapter->vdev_id);
+	if (!vdev)
+		return -EINVAL;
+
+	cdp_vdev_register(soc, vdev, adapter,
+			  (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
+			  &txrx_ops);
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 	adapter->tx_fn = txrx_ops.tx.tx;
 
-	qdf_status = cdp_peer_register(soc,
-			(struct cdp_pdev *)pdev, &sta_desc);
+	qdf_status = cdp_peer_register(soc, (struct cdp_pdev *)pdev, &sta_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to register. Status= %d [0x%08X]",
 		       qdf_status, qdf_status);
