@@ -1473,6 +1473,10 @@ struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_tbttoffset_update_handle)(
 						uint32_t num_vdevs,
 						bool is_ext);
+#ifdef FEATURE_VDEV_RSP_WAKELOCK
+	struct vdev_mlme_wakelock *(*vdev_mgr_get_wakelock_info)(
+					struct wlan_objmgr_vdev *vdev);
+#endif
 #endif
 };
 

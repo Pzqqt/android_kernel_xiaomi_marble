@@ -28,6 +28,7 @@
 #include <init_deinit_lmac.h>
 #include <target_if_vdev_mgr_tx_ops.h>
 #include <target_if_vdev_mgr_rx_ops.h>
+#include <target_if_vdev_mgr_wake_lock.h>
 #include <target_if.h>
 #include <target_type.h>
 #include <wlan_mlme_dbg.h>
@@ -412,6 +413,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 		mlme_err("VDEV_%d: Invalid response structure", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+	target_if_wake_lock_timeout_acquire(vdev, START_WAKELOCK);
 
 	vdev_rsp->expire_time = START_RESPONSE_TIMER;
 	if (param->is_restart)
@@ -425,6 +427,7 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 	if (QDF_IS_STATUS_ERROR(status)) {
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
 		vdev_rsp->expire_time = 0;
+		target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
 		if (param->is_restart)
 			target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
 							  RESTART_RESPONSE_BIT);
@@ -446,6 +449,7 @@ static QDF_STATUS target_if_vdev_mgr_delete_response_send(
 
 	rsp.vdev_id = wlan_vdev_get_id(vdev);
 	status = rx_ops->vdev_mgr_delete_response(psoc, &rsp);
+	target_if_wake_lock_timeout_release(vdev, DELETE_WAKELOCK);
 
 	return status;
 }
@@ -485,7 +489,7 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 		mlme_err("VDEV_%d: Invalid response structure", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
-
+	target_if_wake_lock_timeout_acquire(vdev, DELETE_WAKELOCK);
 	vdev_rsp->expire_time = DELETE_RESPONSE_TIMER;
 	target_if_vdev_mgr_rsp_timer_start(vdev, vdev_rsp,
 					   DELETE_RESPONSE_BIT);
@@ -501,6 +505,7 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 					       WLAN_SOC_F_TESTMODE_ENABLE))
 			target_if_vdev_mgr_delete_response_send(vdev, rx_ops);
 	} else {
+		target_if_wake_lock_timeout_release(vdev, DELETE_WAKELOCK);
 		vdev_rsp->expire_time = 0;
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
 		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
@@ -547,6 +552,7 @@ static QDF_STATUS target_if_vdev_mgr_stop_send(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	target_if_wake_lock_timeout_acquire(vdev, STOP_WAKELOCK);
 	vdev_rsp->expire_time = STOP_RESPONSE_TIMER;
 	target_if_vdev_mgr_rsp_timer_start(vdev, vdev_rsp, STOP_RESPONSE_BIT);
 
@@ -554,6 +560,7 @@ static QDF_STATUS target_if_vdev_mgr_stop_send(
 	if (QDF_IS_STATUS_ERROR(status)) {
 		vdev_rsp->expire_time = 0;
 		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
+		target_if_wake_lock_timeout_release(vdev, STOP_WAKELOCK);
 		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
 						  STOP_RESPONSE_BIT);
 	}
@@ -580,6 +587,7 @@ static QDF_STATUS target_if_vdev_mgr_down_send(
 	}
 
 	status = wmi_unified_vdev_down_send(wmi_handle, param->vdev_id);
+	target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
 
 	return status;
 }
@@ -618,6 +626,7 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
 
 	status = wmi_unified_vdev_up_send(wmi_handle, bssid, param);
+	target_if_wake_lock_timeout_release(vdev, START_WAKELOCK);
 
 	return status;
 }

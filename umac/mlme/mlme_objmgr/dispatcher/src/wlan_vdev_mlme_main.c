@@ -31,6 +31,7 @@
 #include "wlan_serialization_api.h"
 #include "wlan_utility.h"
 #include <cdp_txrx_cmn.h>
+#include "target_if_vdev_mgr_wake_lock.h"
 
 static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					       void *arg)
@@ -83,6 +84,7 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					      (void *)vdev_mlme,
 					      QDF_STATUS_SUCCESS);
 
+	target_if_wake_lock_init(vdev);
 	if (mlme_vdev_ops_ext_hdl_post_create(vdev_mlme) !=
 						QDF_STATUS_SUCCESS) {
 		mlme_err("Legacy vdev object post creation failed");
@@ -130,6 +132,7 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 		mlme_err(" VDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	target_if_wake_lock_deinit(vdev);
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
