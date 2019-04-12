@@ -4528,8 +4528,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	if (pdev->vdev_count == 1)
 		dp_lro_hash_setup(soc, pdev);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"Created vdev %pK (%pM)", vdev, vdev->mac_addr.raw);
+	dp_info("Created vdev %pK (%pM)", vdev, vdev->mac_addr.raw);
 	DP_STATS_INIT(vdev);
 
 	if (wlan_op_mode_sta == vdev->opmode)
@@ -4699,13 +4698,15 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	ol_txrx_vdev_delete_cb callback, void *cb_context)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-	struct dp_pdev *pdev = vdev->pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_pdev *pdev;
+	struct dp_soc *soc;
 	struct dp_neighbour_peer *peer = NULL;
 	struct dp_neighbour_peer *temp_peer = NULL;
 
 	/* preconditions */
-	qdf_assert(vdev);
+	qdf_assert_always(vdev);
+	pdev = vdev->pdev;
+	soc = pdev->soc;
 
 	if (wlan_op_mode_monitor == vdev->opmode)
 		goto free_vdev;
@@ -4729,9 +4730,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	/* check that the vdev has no peers allocated */
 	if (!TAILQ_EMPTY(&vdev->peer_list)) {
 		/* debug print - will be removed later */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-			FL("not deleting vdev object %pK (%pM)"
-			"until deletion finishes for all its peers"),
+		dp_warn("not deleting vdev object %pK (%pM) until deletion finishes for all its peers",
 			vdev, vdev->mac_addr.raw);
 		/* indicate that the vdev needs to be deleted */
 		vdev->delete.pending = 1;
@@ -4994,16 +4993,14 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	/* Initialize the peer state */
 	peer->state = OL_TXRX_PEER_STATE_DISC;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		"vdev %pK created peer %pK (%pM) ref_cnt: %d",
+	dp_info("vdev %pK created peer %pK (%pM) ref_cnt: %d",
 		vdev, peer, peer->mac_addr.raw,
 		qdf_atomic_read(&peer->ref_cnt));
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
 	if (memcmp(peer->mac_addr.raw, vdev->mac_addr.raw, 6) == 0) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			"vdev bss_peer!!!!");
+		dp_info("vdev bss_peer!!");
 		peer->bss_peer = 1;
 		vdev->vap_bss_peer = peer;
 	}
@@ -5751,6 +5748,9 @@ static struct cdp_vdev *dp_get_vdev_from_vdev_id_wifi3(struct cdp_pdev *dev,
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->delete.pending)
+			continue;
+
 		if (vdev->vdev_id == vdev_id)
 			break;
 	}

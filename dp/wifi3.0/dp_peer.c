@@ -1413,10 +1413,8 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 	struct dp_peer *peer = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "peer_map_event (soc:%pK): peer_id %di, hw_peer_id %d, peer_mac %02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d",
-		  soc, peer_id,
-		  hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
+	dp_info("peer_map_event (soc:%pK): peer_id %d, hw_peer_id %d, peer_mac %02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d",
+		soc, peer_id, hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
 		  peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
 		  peer_mac_addr[5], vdev_id);
 
@@ -1443,9 +1441,7 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 			if (!(qdf_mem_cmp(peer->mac_addr.raw,
 					  peer->vdev->mac_addr.raw,
 					  QDF_MAC_ADDR_SIZE))) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "vdev bss_peer!!!!");
+				dp_info("vdev bss_peer!!!!");
 				peer->bss_peer = 1;
 				peer->vdev->vap_bss_peer = peer;
 			}
@@ -1462,10 +1458,8 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 			 * referring it
 			 */
 			if (!peer->self_ast_entry) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "Add self ast from map %pM",
-					  peer_mac_addr);
+				dp_info("Add self ast from map %pM",
+					peer_mac_addr);
 				dp_peer_add_ast(soc, peer,
 						peer_mac_addr,
 						type, 0);
@@ -1506,9 +1500,7 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
 	 * in peer_id_to_obj_map will be NULL.
 	 */
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Received unmap event for invalid peer_id %u",
-			  __func__, peer_id);
+		dp_err("Received unmap event for invalid peer_id %u", peer_id);
 		return;
 	}
 
@@ -1526,17 +1518,15 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
 			return;
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			  "%s:%d AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u\n",
-			  __func__, __LINE__, peer, peer->peer_ids[0],
-			  peer->mac_addr.raw, mac_addr, vdev_id,
-			  is_wds);
+		dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
+			 peer, peer->peer_ids[0],
+			 peer->mac_addr.raw, mac_addr, vdev_id,
+			 is_wds);
 
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_unmap_event (soc:%pK) peer_id %d peer %pK",
+	dp_info("peer_unmap_event (soc:%pK) peer_id %d peer %pK",
 		soc, peer_id, peer);
 
 	soc->peer_id_to_obj_map[peer_id] = NULL;
@@ -2915,9 +2905,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer;
 
-	DP_TRACE(INFO, "vdev %pK peer_addr %pK", vdev, peer_addr);
 	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0, 0);
-	DP_TRACE(INFO, "peer %pK vdev %pK", peer, vdev);
 
 	if (!peer)
 		return NULL;
@@ -2928,7 +2916,6 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	}
 
 	*local_id = peer->local_id;
-	DP_TRACE(INFO, "peer %pK vdev %pK local id %d", peer, vdev, *local_id);
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
