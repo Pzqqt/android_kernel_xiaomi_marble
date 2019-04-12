@@ -640,6 +640,15 @@ void cds_copy_hlp_info(struct qdf_mac_addr *input_dst_mac,
 		return;
 	}
 
+	if (!input_dst_mac) {
+		cds_debug("HLP destination mac NULL");
+		return;
+	}
+
+	if (!input_src_mac) {
+		cds_debug("HLP source mac NULL");
+		return;
+	}
 	qdf_copy_macaddr(output_dst_mac, input_dst_mac);
 	qdf_copy_macaddr(output_src_mac, input_src_mac);
 	*output_hlp_data_len = input_hlp_data_len;

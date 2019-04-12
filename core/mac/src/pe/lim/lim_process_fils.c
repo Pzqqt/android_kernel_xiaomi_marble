@@ -1426,6 +1426,34 @@ static QDF_STATUS lim_parse_kde_elements(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+void lim_update_fils_hlp_data(struct qdf_mac_addr *hlp_frm_src_mac,
+			      struct qdf_mac_addr *hlp_frm_dest_mac,
+			      uint16_t frm_hlp_len, uint8_t *frm_hlp_data,
+			      struct pe_session *pe_session)
+{
+	struct pe_fils_session *pe_fils_info = pe_session->fils_info;
+
+	if (!pe_fils_info) {
+		pe_err("Not a fils connection");
+		return;
+	}
+
+	if (frm_hlp_data && frm_hlp_len) {
+		qdf_mem_free(pe_fils_info->hlp_data);
+		pe_fils_info->hlp_data = qdf_mem_malloc(frm_hlp_len);
+		if (!pe_fils_info->hlp_data)
+			return;
+
+		pe_debug("FILS: hlp_data_len:%d", frm_hlp_len);
+		cds_copy_hlp_info(hlp_frm_dest_mac, hlp_frm_src_mac,
+				  frm_hlp_len, frm_hlp_data,
+				  &pe_fils_info->dst_mac,
+				  &pe_fils_info->src_mac,
+				  &pe_fils_info->hlp_data_len,
+				  pe_fils_info->hlp_data);
+	}
+}
+
 bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 				      struct pe_session *session_entry,
 				      tpSirAssocRsp assoc_rsp,
@@ -1483,6 +1511,12 @@ bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 		pe_err("KDE parsing fails");
 		goto verify_fils_params_fails;
 	}
+
+	lim_update_fils_hlp_data(&assoc_rsp->dst_mac,
+				 &assoc_rsp->src_mac,
+				 assoc_rsp->hlp_data_len,
+				 assoc_rsp->hlp_data,
+				 session_entry);
 	return true;
 
 verify_fils_params_fails:
