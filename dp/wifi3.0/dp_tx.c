@@ -936,6 +936,13 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	DP_STATS_INC_PKT(vdev, tx_i.raw.raw_pkt, 1, qdf_nbuf_len(nbuf));
 
+	/* Continue only if frames are of DATA type */
+	if (!DP_FRAME_IS_DATA(qos_wh)) {
+		DP_STATS_INC(vdev, tx_i.raw.invalid_raw_pkt_datatype, 1);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "Pkt. recd is of not data type");
+		goto error;
+	}
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
 	if (vdev->raw_mode_war &&
 	    (qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) &&

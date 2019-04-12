@@ -679,6 +679,7 @@ struct cdp_tx_ingress_stats {
 	struct {
 		struct cdp_pkt_info raw_pkt;
 		uint32_t dma_map_error;
+		uint32_t invalid_raw_pkt_datatype;
 	} raw;
 
 	/* TSO packets info */
