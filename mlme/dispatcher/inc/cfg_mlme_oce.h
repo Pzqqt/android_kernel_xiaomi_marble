@@ -120,7 +120,7 @@
  * oce_enable_probe_req_rate - Set probe request rate
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set probe request rate to 5.5Mbps as per OCE requirement
  * in 2.4G band
@@ -135,7 +135,7 @@
  */
 #define CFG_OCE_PROBE_REQ_RATE CFG_INI_BOOL( \
 		"oce_enable_probe_req_rate", \
-		0, \
+		1, \
 		"Set probe request rate for OCE")
 
 /*
@@ -188,7 +188,7 @@
  * oce_enable_probe_req_deferral - Enable/disable probe request deferral
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable probe request deferral as per OCE spec
  *
@@ -202,7 +202,7 @@
  */
 #define CFG_ENABLE_PROBE_REQ_DEFERRAL CFG_INI_BOOL( \
 		"oce_enable_probe_req_deferral", \
-		0, \
+		1, \
 		"Enable/disable probe request deferral for OCE")
 
 /*
@@ -232,7 +232,7 @@
  * enable_esp_for_roam - Enable/disable esp feature
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable ESP(Estimated service parameters) IE
  * parsing and decides whether firmware will include this in its scoring algo.
@@ -247,7 +247,7 @@
  */
 #define CFG_ENABLE_ESP_FEATURE CFG_INI_BOOL( \
 		"enable_esp_for_roam", \
-		0, \
+		1, \
 		"Enable/disable esp feature")
 
 /*
