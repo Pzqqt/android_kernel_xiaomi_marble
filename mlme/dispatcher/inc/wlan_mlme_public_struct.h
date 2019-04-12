@@ -789,10 +789,12 @@ struct wlan_mlme_vht_caps {
  * @tx_aggr_sw_retry_threshold_bk: aggr sw retry threshold for BK
  * @tx_aggr_sw_retry_threshold_vi: aggr sw retry threshold for VI
  * @tx_aggr_sw_retry_threshold_vo: aggr sw retry threshold for VO
+ * @tx_aggr_sw_retry_threshold: aggr sw retry threshold
  * @tx_non_aggr_sw_retry_threshold_be: non aggr sw retry threshold for BE
  * @tx_non_aggr_sw_retry_threshold_bk: non aggr sw retry threshold for BK
  * @tx_non_aggr_sw_retry_threshold_vi: non aggr sw retry threshold for VI
  * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for VO
+ * @tx_non_aggr_sw_retry_threshold: non aggr sw retry threshold
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
  * @sap_uapsd_enabled: Flag to enable/disable UAPSD for SAP
@@ -808,10 +810,12 @@ struct wlan_mlme_qos {
 	uint32_t tx_aggr_sw_retry_threshold_bk;
 	uint32_t tx_aggr_sw_retry_threshold_vi;
 	uint32_t tx_aggr_sw_retry_threshold_vo;
+	uint32_t tx_aggr_sw_retry_threshold;
 	uint32_t tx_non_aggr_sw_retry_threshold_be;
 	uint32_t tx_non_aggr_sw_retry_threshold_bk;
 	uint32_t tx_non_aggr_sw_retry_threshold_vi;
 	uint32_t tx_non_aggr_sw_retry_threshold_vo;
+	uint32_t tx_non_aggr_sw_retry_threshold;
 	bool sap_max_inactivity_override;
 	bool sap_uapsd_enabled;
 };
