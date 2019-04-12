@@ -45,9 +45,9 @@
 #include "wma_types.h"
 #include "lim_api.h"
 #include "lim_session_utils.h"
-
+#include "cfg_ucfg_api.h"
 #include "cds_utils.h"
-
+#include "cfg_qos.h"
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
 #endif /* REMOVE_PKT_LOG */
@@ -4679,7 +4679,7 @@ static QDF_STATUS wma_set_sw_retry_by_qos(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_set_sw_retry_threshold(
+QDF_STATUS wma_set_sw_retry_threshold_per_ac(
 	WMA_HANDLE handle,
 	struct sir_set_tx_sw_retry_threshold *tx_sw_retry_threshold)
 {
@@ -4743,6 +4743,29 @@ QDF_STATUS wma_set_sw_retry_threshold(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_set_sw_retry_threshold(uint8_t vdev_id, uint32_t retry,
+				      uint32_t param_id)
+{
+	uint32_t max, min;
+	uint32_t ret;
+
+	if (param_id == WMI_PDEV_PARAM_AGG_SW_RETRY_TH) {
+		max = cfg_max(CFG_TX_AGGR_SW_RETRY);
+		min = cfg_min(CFG_TX_AGGR_SW_RETRY);
+	} else {
+		max = cfg_max(CFG_TX_NON_AGGR_SW_RETRY);
+		min = cfg_min(CFG_TX_NON_AGGR_SW_RETRY);
+	}
+
+	retry = (retry > max) ? max : retry;
+	retry = (retry < min) ? min : retry;
+
+	ret = wma_cli_set_command(vdev_id, param_id, retry, PDEV_CMD);
+	if (ret)
+		return QDF_STATUS_E_IO;
+
+	return QDF_STATUS_SUCCESS;
+}
 #ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_get_wakelock_stats() - Populates wake lock stats

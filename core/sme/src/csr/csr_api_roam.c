@@ -16786,6 +16786,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(struct mac_context *mac,
 			qos_aggr->tx_aggr_sw_retry_threshold_vi;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_vo =
 			qos_aggr->tx_aggr_sw_retry_threshold_vo;
+	add_sta_self_req->tx_aggr_sw_retry_threshold =
+			qos_aggr->tx_aggr_sw_retry_threshold;
 	add_sta_self_req->tx_non_aggr_sw_retry_threshold_be =
 			qos_aggr->tx_non_aggr_sw_retry_threshold_be;
 	add_sta_self_req->tx_non_aggr_sw_retry_threshold_bk =
@@ -16794,6 +16796,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(struct mac_context *mac,
 			qos_aggr->tx_non_aggr_sw_retry_threshold_vi;
 	add_sta_self_req->tx_non_aggr_sw_retry_threshold_vo =
 			qos_aggr->tx_non_aggr_sw_retry_threshold_vo;
+	add_sta_self_req->tx_non_aggr_sw_retry_threshold =
+			qos_aggr->tx_non_aggr_sw_retry_threshold;
 
 	add_sta_self_req->enable_bcast_probe_rsp =
 			mac->mlme_cfg->oce.enable_bcast_probe_rsp;

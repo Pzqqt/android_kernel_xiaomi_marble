@@ -889,10 +889,12 @@ typedef struct sMaxTxPowerPerBandParams {
  * @tx_aggr_sw_retry_threshold_bk: aggr sw retry threshold for bk
  * @tx_aggr_sw_retry_threshold_vi: aggr sw retry threshold for vi
  * @tx_aggr_sw_retry_threshold_vo: aggr sw retry threshold for vo
+ * @tx_aggr_sw_retry_threshold: aggr sw retry threshold
  * @tx_non_aggr_sw_retry_threshold_be: non aggr sw retry threshold for be
  * @tx_non_aggr_sw_retry_threshold_bk: non aggr sw retry threshold for bk
  * @tx_non_aggr_sw_retry_threshold_vi: non aggr sw retry threshold for vi
  * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for vo
+ * @tx_non_aggr_sw_retry_threshold: non aggr sw retry threshold
  */
 struct add_sta_self_params {
 	tSirMacAddr self_mac_addr;
@@ -917,10 +919,12 @@ struct add_sta_self_params {
 	uint32_t tx_aggr_sw_retry_threshold_bk;
 	uint32_t tx_aggr_sw_retry_threshold_vi;
 	uint32_t tx_aggr_sw_retry_threshold_vo;
+	uint32_t tx_aggr_sw_retry_threshold;
 	uint32_t tx_non_aggr_sw_retry_threshold_be;
 	uint32_t tx_non_aggr_sw_retry_threshold_bk;
 	uint32_t tx_non_aggr_sw_retry_threshold_vi;
 	uint32_t tx_non_aggr_sw_retry_threshold_vo;
+	uint32_t tx_non_aggr_sw_retry_threshold;
 };
 
 /**

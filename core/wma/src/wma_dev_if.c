@@ -2866,6 +2866,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_objmgr_peer *obj_peer;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t retry;
 
 	qdf_mem_zero(&tx_rx_aggregation_size, sizeof(tx_rx_aggregation_size));
 	WMA_LOGD("mac %pM, vdev_id %hu, type %d, sub_type %d, nss 2g %d, 5g %d",
@@ -2975,6 +2976,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				self_sta_req->tx_aggr_sw_retry_threshold_vi;
 	tx_sw_retry_threshold.tx_aggr_sw_retry_threshold_vo =
 				self_sta_req->tx_aggr_sw_retry_threshold_vo;
+	tx_sw_retry_threshold.tx_aggr_sw_retry_threshold =
+				self_sta_req->tx_aggr_sw_retry_threshold;
 
 	tx_sw_retry_threshold.tx_non_aggr_sw_retry_threshold_be =
 				self_sta_req->tx_non_aggr_sw_retry_threshold_be;
@@ -2984,6 +2987,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				self_sta_req->tx_non_aggr_sw_retry_threshold_vi;
 	tx_sw_retry_threshold.tx_non_aggr_sw_retry_threshold_vo =
 				self_sta_req->tx_non_aggr_sw_retry_threshold_vo;
+	tx_sw_retry_threshold.tx_non_aggr_sw_retry_threshold =
+				self_sta_req->tx_non_aggr_sw_retry_threshold;
 
 	tx_sw_retry_threshold.vdev_id = self_sta_req->session_id;
 
@@ -3007,8 +3012,25 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			wma_set_sta_sa_query_param(wma_handle, vdev_id);
 		}
 
-		ret = wma_set_sw_retry_threshold(wma_handle,
-						 &tx_sw_retry_threshold);
+		vdev_id = tx_sw_retry_threshold.vdev_id;
+		retry = tx_sw_retry_threshold.tx_aggr_sw_retry_threshold;
+		if (retry) {
+			ret = wma_set_sw_retry_threshold(vdev_id, retry,
+					WMI_PDEV_PARAM_AGG_SW_RETRY_TH);
+			if (QDF_IS_STATUS_ERROR(ret))
+				WMA_LOGE("failed set agg retry threshold");
+		}
+
+		retry = tx_sw_retry_threshold.tx_non_aggr_sw_retry_threshold;
+		if (retry) {
+			ret = wma_set_sw_retry_threshold(vdev_id, retry,
+					WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH);
+			if (QDF_IS_STATUS_ERROR(ret))
+				WMA_LOGE("failed set non-agg retry threshold");
+		}
+
+		ret = wma_set_sw_retry_threshold_per_ac(wma_handle,
+						&tx_sw_retry_threshold);
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("failed to set retry threshold(err=%d)", ret);
 		break;

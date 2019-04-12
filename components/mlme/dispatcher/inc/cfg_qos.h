@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -397,7 +397,56 @@
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx non aggregation retry value for VO")
-
+/*
+ * <ini>
+ * gTxAggSwRetry - Configure Tx aggregation sw retry
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxAggSwRetry gives an option to configure Tx aggregation sw
+ * retry. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TX_AGGR_SW_RETRY CFG_INI_UINT( \
+			"gTxAggSwRetry", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx aggregation retry value")
+/*
+ * <ini>
+ * gTxNonAggSwRetry - Configure Tx non aggregation sw retry
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetry gives an option to configure Tx non aggregation sw
+ * retry. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TX_NON_AGGR_SW_RETRY CFG_INI_UINT( \
+			"gTxNonAggSwRetry", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx non aggregation retry value")
 /*
  * <ini>
  * gSapMaxInactivityOverride - Configure
@@ -459,10 +508,12 @@
 	CFG(CFG_TX_AGGR_SW_RETRY_BK) \
 	CFG(CFG_TX_AGGR_SW_RETRY_VI) \
 	CFG(CFG_TX_AGGR_SW_RETRY_VO) \
+	CFG(CFG_TX_AGGR_SW_RETRY) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_BE) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_BK) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_VI) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_VO) \
+	CFG(CFG_TX_NON_AGGR_SW_RETRY) \
 	CFG(CFG_SAP_QOS_UAPSD)
 
 #endif /* __CFG_MLME_QOS_H */
