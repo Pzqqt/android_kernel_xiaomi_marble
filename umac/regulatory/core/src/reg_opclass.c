@@ -123,20 +123,58 @@ static const struct reg_dmn_op_class_map_t japan_op_class[] = {
 };
 
 #ifdef HOST_OPCLASS
+/**
+ * reg_get_class_from_country()- Get Class from country
+ * @country- Country
+ *
+ * Return: class.
+ */
+static
+const struct reg_dmn_op_class_map_t *reg_get_class_from_country(uint8_t
+								   *country)
+{
+	const struct reg_dmn_op_class_map_t *class = NULL;
+
+	qdf_debug("Country %c%c 0x%x",
+		  country[0], country[1], country[2]);
+
+	switch (country[2]) {
+	case OP_CLASS_US:
+		class = us_op_class;
+		break;
+
+	case OP_CLASS_EU:
+		class = euro_op_class;
+		break;
+
+	case OP_CLASS_JAPAN:
+		class = japan_op_class;
+		break;
+
+	case OP_CLASS_GLOBAL:
+		class = global_op_class;
+		break;
+
+	default:
+		if (!qdf_mem_cmp(country, "US", 2))
+			class = us_op_class;
+		else if (!qdf_mem_cmp(country, "EU", 2))
+			class = euro_op_class;
+		else if (!qdf_mem_cmp(country, "JP", 2))
+			class = japan_op_class;
+		else
+			class = global_op_class;
+	}
+	return class;
+}
+
 uint16_t reg_dmn_get_chanwidth_from_opclass(uint8_t *country, uint8_t channel,
 					    uint8_t opclass)
 {
 	const struct reg_dmn_op_class_map_t *class;
 	uint16_t i;
 
-	if (!qdf_mem_cmp(country, "US", 2))
-		class = us_op_class;
-	else if (!qdf_mem_cmp(country, "EU", 2))
-		class = euro_op_class;
-	else if (!qdf_mem_cmp(country, "JP", 2))
-		class = japan_op_class;
-	else
-		class = global_op_class;
+	class = reg_get_class_from_country(country);
 
 	while (class->op_class) {
 		if (opclass == class->op_class) {
@@ -158,16 +196,8 @@ uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	const struct reg_dmn_op_class_map_t *class = NULL;
 	uint16_t i = 0;
 
-	if (!qdf_mem_cmp(country, "US", 2))
-		class = us_op_class;
-	else if (!qdf_mem_cmp(country, "EU", 2))
-		class = euro_op_class;
-	else if (!qdf_mem_cmp(country, "JP", 2))
-		class = japan_op_class;
-	else
-		class = global_op_class;
-
-	while (class->op_class) {
+	class = reg_get_class_from_country(country);
+	while (class && class->op_class) {
 		if ((offset == class->offset) || (offset == BWALL)) {
 			for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
 				     class->channels[i]); i++) {
@@ -179,6 +209,29 @@ uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	}
 
 	return 0;
+}
+
+void reg_dmn_print_channels_in_opclass(uint8_t *country, uint8_t op_class)
+{
+	const struct reg_dmn_op_class_map_t *class = NULL;
+	uint16_t i = 0;
+
+	class = reg_get_class_from_country(country);
+	while (class && class->op_class) {
+		if (class->op_class == op_class) {
+			for (i = 0;
+			     (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+			      class->channels[i]); i++) {
+				reg_debug("Valid channel(%d) in requested RC(%d)",
+					  class->channels[i], op_class);
+			}
+			break;
+		}
+		class++;
+	}
+	if (!class->op_class)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid requested RC (%d)", op_class);
 }
 
 uint16_t reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class)

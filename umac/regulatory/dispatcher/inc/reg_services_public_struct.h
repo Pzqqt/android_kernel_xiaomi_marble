@@ -74,6 +74,18 @@ enum dfs_reg {
 	DFS_UNDEF_REGION = 0xFFFF,
 };
 
+/** enum op_class_table_num
+ * OP_CLASS_US- Class corresponds to US
+ * OP_CLASS_EU- Class corresponds to EU
+ * OP_CLASS_JAPAN- Class corresponds to JAPAN
+ * OP_CLASS_GLOBAL- Class corresponds to GLOBAL
+ */
+enum op_class_table_num {
+	OP_CLASS_US = 1,
+	OP_CLASS_EU,
+	OP_CLASS_JAPAN,
+	OP_CLASS_GLOBAL
+};
 #ifdef CONFIG_LEGACY_CHAN_ENUM
 
 /**

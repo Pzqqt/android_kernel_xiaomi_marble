@@ -254,6 +254,12 @@ uint16_t wlan_reg_dmn_get_opclass_from_channel(uint8_t *country,
 						offset);
 }
 
+void wlan_reg_dmn_print_channels_in_opclass(uint8_t *country,
+					    uint8_t opclass)
+{
+	reg_dmn_print_channels_in_opclass(country, opclass);
+}
+
 uint16_t wlan_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
 						 uint8_t channel,
 						 uint8_t opclass)
