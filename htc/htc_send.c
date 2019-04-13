@@ -635,10 +635,13 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			}
 
 			/* only unmap if we mapped in this function */
-			if (IS_TX_CREDIT_FLOW_ENABLED(pEndpoint))
+			if (IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
 				qdf_nbuf_unmap(target->osdev,
 					GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
 					QDF_DMA_TO_DEVICE);
+				pPacket->PktInfo.AsTx.Flags &=
+					~HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
+			}
 
 			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
