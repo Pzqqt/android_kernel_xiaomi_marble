@@ -663,6 +663,7 @@ struct bss_description {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct fils_ind_elements fils_info_element;
 #endif
+	uint32_t assoc_disallowed;
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 };

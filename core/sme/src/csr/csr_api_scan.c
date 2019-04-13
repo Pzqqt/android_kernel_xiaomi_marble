@@ -2532,6 +2532,38 @@ static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 { }
 #endif
 
+/**
+ * csr_is_assoc_disallowed() - Find if assoc disallowed
+ * bit is set in AP's beacon or probe response
+ * @mac_ctx: mac context
+ * @scan_entry: scan entry
+ *
+ * Return: True if assoc disallowed is set else false
+ */
+static bool csr_is_assoc_disallowed(struct mac_context *mac_ctx,
+				    struct scan_cache_entry *scan_entry)
+{
+	int ret;
+	tDot11fIEMBO_IE mbo_ie = {0};
+	uint8_t *mbo_oce;
+
+	mbo_oce = util_scan_entry_mbo_oce(scan_entry);
+
+	if (!mbo_oce)
+		return false;
+
+	ret = dot11f_unpack_ie_MBO_IE(mac_ctx, mbo_oce + SIR_MBO_ELEM_OFFSET,
+				      *(mbo_oce + 1) - SIR_MAC_MBO_OUI_SIZE,
+				      &mbo_ie, false);
+
+	if (DOT11F_FAILED(ret)) {
+		sme_err("unpack failed ret: 0x%x", ret);
+		return false;
+	}
+
+	return mbo_ie.assoc_disallowed.present;
+}
+
 static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 					struct scan_cache_entry *scan_entry,
 					struct tag_csrscan_result **p_result)
@@ -2619,6 +2651,8 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 			  MGMT_SUBTYPE_PROBE_RESP);
 	bss_desc->seq_ctrl = hdr->seqControl;
 	bss_desc->tsf_delta = scan_entry->tsf_delta;
+	bss_desc->assoc_disallowed = csr_is_assoc_disallowed(mac_ctx,
+							     scan_entry);
 	qdf_mem_copy(&bss_desc->mbssid_info, &scan_entry->mbssid_info,
 		     sizeof(struct scan_mbssid_info));
 
@@ -2817,6 +2851,42 @@ static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
 	}
 }
 
+/**
+ * csr_remove_ap_with_assoc_disallowed() - Remove APs with assoc
+ * disallowed bit set
+ * @mac_ctx: mac context
+ * @scan_list: candidate list for the connection
+ *
+ * Return: None
+ */
+static void csr_remove_ap_with_assoc_disallowed(struct mac_context *mac_ctx,
+					     struct scan_result_list *scan_list)
+{
+	tListElem *cur_entry;
+	tListElem *next_entry;
+	struct tag_csrscan_result *scan_res;
+
+	if (!scan_list)
+		return;
+
+	cur_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
+	while (cur_entry) {
+		scan_res = GET_BASE_ADDR(cur_entry, struct tag_csrscan_result,
+					 Link);
+		next_entry = csr_ll_next(&scan_list->List, cur_entry,
+					 LL_ACCESS_NOLOCK);
+
+		if (!mac_ctx->ignore_assoc_disallowed &&
+		    scan_res->Result.BssDescriptor.assoc_disallowed) {
+			csr_ll_remove_entry(&scan_list->List, cur_entry,
+					    LL_ACCESS_NOLOCK);
+			csr_free_scan_result_entry(mac_ctx, scan_res);
+		}
+		cur_entry = next_entry;
+		next_entry = NULL;
+	}
+}
+
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 			       tCsrScanResultFilter *pFilter,
 			       tScanResultHandle *results)
@@ -2826,6 +2896,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	qdf_list_t *list = NULL;
 	struct scan_filter *filter = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
+	uint32_t num_bss;
 
 	if (results)
 		*results = CSR_INVALID_SCANRESULT_HANDLE;
@@ -2872,19 +2943,30 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	ret_list->pCurEntry = NULL;
 	status = csr_parse_scan_list(mac_ctx,
 		ret_list, list);
+	num_bss = csr_ll_count(&ret_list->List);
 	sme_debug("status: %d No of BSS: %d",
-		  status, csr_ll_count(&ret_list->List));
+		  status, num_bss);
 	if (QDF_IS_STATUS_ERROR(status) || !results)
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (pFilter)
+		if (pFilter) {
 			csr_filter_ap_due_to_rssi_reject(mac_ctx, ret_list);
+			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
+		}
 		if (!csr_ll_count(&ret_list->List)) {
 			/* This mean that there is no match */
 			csr_ll_close(&ret_list->List);
 			qdf_mem_free(ret_list);
-			status = QDF_STATUS_E_NULL_VALUE;
+			/*
+			 * Do not trigger scan for ssid if the scan entries
+			 * are removed either due to rssi reject or assoc
+			 * disallowed.
+			 */
+			if (num_bss)
+				status = QDF_STATUS_E_EXISTS;
+			else
+				status = QDF_STATUS_E_NULL_VALUE;
 		} else if (results) {
 			*results = ret_list;
 		}

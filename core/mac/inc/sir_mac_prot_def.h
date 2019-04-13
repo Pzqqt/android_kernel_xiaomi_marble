@@ -315,6 +315,7 @@
 /* MBO OUI definitions */
 #define SIR_MAC_MBO_OUI "\x50\x6f\x9a\x16"
 #define SIR_MAC_MBO_OUI_SIZE 4
+#define SIR_MBO_ELEM_OFFSET  (2 + SIR_MAC_MBO_OUI_SIZE)
 
 /* min size of wme oui header: oui(3) + type + subtype + version */
 #define SIR_MAC_OUI_WME_HDR_MIN       6
