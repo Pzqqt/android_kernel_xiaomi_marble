@@ -1958,6 +1958,12 @@ struct roam_fils_params {
  * @roam_fils_params: roam fils params
  * @rct_validity_timer: duration value for which the entries in
  * roam candidate table are valid
+ * @roam_scan_inactivity_time: inactivity monitoring time in ms for which the
+ * device is considered to be inactive
+ * @roam_inactive_data_packet_count: Maximum allowed data packets count during
+ * roam_scan_inactivity_time.
+ * @roam_scan_period_after_inactivity: Roam scan period in ms after device is
+ * in inactive state.
  */
 struct roam_offload_scan_params {
 	uint8_t is_roam_req_valid;
@@ -1992,6 +1998,9 @@ struct roam_offload_scan_params {
 	uint32_t assoc_ie_length;
 	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
 	bool add_fils_tlv;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct roam_fils_params roam_fils_params;
 #endif

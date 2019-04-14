@@ -193,16 +193,13 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
-					     uint32_t scan_period,
-					     uint32_t scan_age,
-					     uint32_t vdev_id)
+QDF_STATUS
+wmi_unified_roam_scan_offload_scan_period(wmi_unified_t wmi_handle,
+					  struct roam_scan_period_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_roam_scan_offload_scan_period_cmd)
-		return wmi_handle->ops->send_roam_scan_offload_scan_period_cmd(wmi_handle,
-				  scan_period, scan_age, vdev_id);
+		return wmi_handle->ops->send_roam_scan_offload_scan_period_cmd(
+							wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }

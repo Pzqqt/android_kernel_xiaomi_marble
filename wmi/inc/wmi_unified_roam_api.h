@@ -207,18 +207,15 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
 /**
  * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
  * @wmi_handle: wmi handle
- * @scan_period: scan period
- * @scan_age: scan age
- * @vdev_id: vdev id
+ * @param: pointer to roam scan period params to be sent to fw
  *
  * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
-						     uint32_t scan_period,
-						     uint32_t scan_age,
-						     uint32_t vdev_id);
+QDF_STATUS
+wmi_unified_roam_scan_offload_scan_period(wmi_unified_t wmi_handle,
+					  struct roam_scan_period_params *param);
 
 /**
  * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list

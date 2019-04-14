@@ -127,6 +127,27 @@ struct roam_offload_scan_rssi_params {
 };
 
 /**
+ * struct roam_scan_period_params - Roam scan period parameters
+ * @vdev_id: Vdev for which the scan period parameters are sent
+ * @scan_period: Opportunistic scan runs on a timer for scan_period
+ * @scan_age: Duration after which the scan entries are to be aged out
+ * @roam_scan_inactivity_time: inactivity monitoring time in ms for which the
+ * device is considered to be inactive
+ * @roam_inactive_data_packet_count: Maximum allowed data packets count during
+ * roam_scan_inactivity_time.
+ * @roam_scan_period_after_inactivity: Roam scan period in ms after device is
+ * in inactive state.
+ */
+struct roam_scan_period_params {
+	uint32_t vdev_id;
+	uint32_t scan_period;
+	uint32_t scan_age;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
+};
+
+/**
  * struct wmi_mawc_roam_params - Motion Aided wireless connectivity params
  * @vdev_id: VDEV on which the parameters should be applied
  * @enable: MAWC roaming feature enable/disable
@@ -407,16 +428,102 @@ struct scoring_param {
 	struct param_slot_scoring oce_wan_scoring;
 };
 
+/*
+ * Currently roam score delta value and min rssi values are sent
+ * for 2 triggers
+ */
+#define NUM_OF_ROAM_TRIGGERS 2
+#define IDLE_ROAM_TRIGGER 0
+#define BTM_ROAM_TRIGGER  1
+
+#define DEAUTH_MIN_RSSI 0
+#define BMISS_MIN_RSSI  1
+
+/**
+ * enum roam_trigger_reason - Reason for triggering roam
+ * ROAM_TRIGGER_REASON_NONE: Roam trigger reason none
+ * ROAM_TRIGGER_REASON_PER:  Roam triggered due to packet error
+ * ROAM_TRIGGER_REASON_BMISS: Roam triggered due to beacon miss
+ * ROAM_TRIGGER_REASON_LOW_RSSI: Roam triggered due to low RSSI of current
+ * connected AP.
+ * ROAM_TRIGGER_REASON_HIGH_RSSI: Roam triggered because sta is connected to
+ * a AP in 2.4GHz band and a better 5GHz AP is available
+ * ROAM_TRIGGER_REASON_PERIODIC: Roam triggered as better AP was found during
+ * periodic roam scan.
+ * ROAM_TRIGGER_REASON_MAWC: Motion Aided WiFi Connectivity triggered roam.
+ * ROAM_TRIGGER_REASON_DENSE: Roaming triggered due to dense environment
+ * detected.
+ * ROAM_TRIGGER_REASON_BACKGROUND: Roam triggered due to current AP having
+ * poor rssi and scan candidate found in scan results provided by other
+ * scan clients.
+ * ROAM_TRIGGER_REASON_FORCED: Forced roam trigger.
+ * ROAM_TRIGGER_REASON_BTM: Roam triggered due to AP sent BTM query with
+ * Disassoc imminent bit set.
+ * ROAM_TRIGGER_REASON_UNIT_TEST: Roam triggered due to unit test command.
+ * ROAM_TRIGGER_REASON_BSS_LOAD: Roam triggered due to high channel utilization
+ * in the current connected channel
+ * ROAM_TRIGGER_REASON_DEAUTH: Roam triggered due to deauth received from the
+ * current connected AP.
+ * ROAM_TRIGGER_REASON_IDLE: Roam triggered due to inactivity of the device.
+ * ROAM_TRIGGER_REASON_MAX: Maximum number of roam triggers
+ */
+enum roam_trigger_reason {
+	ROAM_TRIGGER_REASON_NONE = 0,
+	ROAM_TRIGGER_REASON_PER,
+	ROAM_TRIGGER_REASON_BMISS,
+	ROAM_TRIGGER_REASON_LOW_RSSI,
+	ROAM_TRIGGER_REASON_HIGH_RSSI,
+	ROAM_TRIGGER_REASON_PERIODIC,
+	ROAM_TRIGGER_REASON_MAWC,
+	ROAM_TRIGGER_REASON_DENSE,
+	ROAM_TRIGGER_REASON_BACKGROUND,
+	ROAM_TRIGGER_REASON_FORCED,
+	ROAM_TRIGGER_REASON_BTM,
+	ROAM_TRIGGER_REASON_UNIT_TEST,
+	ROAM_TRIGGER_REASON_BSS_LOAD,
+	ROAM_TRIGGER_REASON_DEAUTH,
+	ROAM_TRIGGER_REASON_IDLE,
+	ROAM_TRIGGER_REASON_MAX,
+};
+
+/**
+ * struct roam_trigger_min_rssi - structure to hold minimum rssi value of
+ * candidate APs for each roam trigger
+ * @min_rssi: minimum RSSI of candidate AP for the trigger reason specified in
+ * trigger_id
+ * @trigger_reason: Roam trigger reason
+ */
+struct roam_trigger_min_rssi {
+	int32_t  min_rssi;
+	enum roam_trigger_reason trigger_reason;
+};
+
+/**
+ * struct roam_trigger_score_delta - structure to hold roam score delta value of
+ * candidate APs for each roam trigger
+ * @roam_score_delta: delta value in score of the candidate AP for the roam
+ * trigger mentioned in the trigger_id.
+ * @trigger_reason: Roam trigger reason
+ */
+struct roam_trigger_score_delta {
+	uint32_t roam_score_delta;
+	enum roam_trigger_reason trigger_reason;
+};
+
 /**
  * struct ap_profile_params - ap profile params
  * @vdev_id: vdev id
  * @profile: ap profile to match candidate
  * @param: scoring params to short candidate
+ * @min_rssi_params: Min RSSI values for different roam triggers
+ * @score_delta_params: Roam score delta values for different triggers
  */
 struct ap_profile_params {
 	uint8_t vdev_id;
 	struct ap_profile profile;
 	struct scoring_param param;
+	struct roam_trigger_min_rssi min_rssi_params[NUM_OF_ROAM_TRIGGERS];
+	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
 };
 
 /**
@@ -524,6 +631,8 @@ struct hlp_params {
  * @disassoc_timer_threshold: threshold value till which the firmware can
  * wait before triggering the roam scan after receiving the disassoc iminent
  * @btm_query_bitmask: bitmask to btm query with candidate list
+ * @btm_candidate_min_score: Minimum score of the AP to consider it as a
+ * candidate if the roam trigger is BTM kickout.
  */
 struct wmi_btm_config {
 	uint8_t vdev_id;
@@ -533,6 +642,7 @@ struct wmi_btm_config {
 	uint32_t btm_sticky_time;
 	uint32_t disassoc_timer_threshold;
 	uint32_t btm_query_bitmask;
+	uint32_t btm_candidate_min_score;
 };
 
 /**
@@ -541,11 +651,19 @@ struct wmi_btm_config {
  * @bss_load_threshold: BSS load threshold after which roam scan should trigger
  * @bss_load_sample_time: Time duration in milliseconds for which the bss load
  * trigger needs to be enabled
+ * @rssi_threshold_5ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 5GHz band.
+ * @rssi_threshold_24ghz: RSSI threshold of the current connected AP below which
+ * roam should be triggered if bss load threshold exceeds the configured value.
+ * This value is applicable only when we are connected in 2.4GHz band.
  */
 struct wmi_bss_load_config {
 	uint32_t vdev_id;
 	uint32_t bss_load_threshold;
 	uint32_t bss_load_sample_time;
+	int32_t rssi_threshold_5ghz;
+	int32_t rssi_threshold_24ghz;
 };
 
 /**
