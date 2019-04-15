@@ -3167,7 +3167,43 @@ static QDF_STATUS send_set_sta_ps_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	return 0;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_idle_roam_monitor_cmd_tlv() - send idle monitor command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code.
+ */
+static QDF_STATUS send_idle_roam_monitor_cmd_tlv(wmi_unified_t wmi_handle,
+						 uint8_t val)
+{
+	wmi_idle_trigger_monitor_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	size_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_idle_trigger_monitor_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_idle_trigger_monitor_cmd_fixed_param));
+
+	cmd->idle_trigger_monitor = (val ? WMI_IDLE_TRIGGER_MONITOR_ON :
+					   WMI_IDLE_TRIGGER_MONITOR_OFF);
+
+	WMI_LOGD("val:%d", cmd->idle_trigger_monitor);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_IDLE_TRIGGER_MONITOR_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -11298,6 +11334,7 @@ struct wmi_ops tlv_ops =  {
 	.send_offchan_data_tx_cmd = send_offchan_data_tx_cmd_tlv,
 	.send_modem_power_state_cmd = send_modem_power_state_cmd_tlv,
 	.send_set_sta_ps_mode_cmd = send_set_sta_ps_mode_cmd_tlv,
+	.send_idle_roam_monitor_cmd = send_idle_roam_monitor_cmd_tlv,
 	.send_set_sta_uapsd_auto_trig_cmd =
 		send_set_sta_uapsd_auto_trig_cmd_tlv,
 	.send_get_temperature_cmd = send_get_temperature_cmd_tlv,

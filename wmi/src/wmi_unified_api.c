@@ -952,6 +952,16 @@ QDF_STATUS wmi_unified_set_sta_ps_mode(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_unified_send_idle_trigger_monitor(wmi_unified_t wmi_handle, uint8_t val)
+{
+	if (wmi_handle->ops->send_idle_roam_monitor_cmd)
+		return wmi_handle->ops->send_idle_roam_monitor_cmd(wmi_handle,
+								   val);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_set_mimops() - set MIMO powersave
  * @wmi_hdl: wmi handle

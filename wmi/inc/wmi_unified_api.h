@@ -1808,6 +1808,17 @@ enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
 QDF_STATUS wmi_unified_send_mws_coex_req_cmd(struct wmi_unified *wmi_handle,
 					     uint32_t vdev_id, uint32_t cmd_id);
 
+/**
+ * wmi_unified_send_idle_trigger_monitor() - send idle trigger monitor command
+ * @wmi_handle: WMI handle
+ * @val: idle trigger monitor value - 1 for idle monitor on, 0 for idle monitor
+ * off
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_unified_send_idle_trigger_monitor(wmi_unified_t wmi_handle, uint8_t val);
+
 #ifdef WLAN_CFR_ENABLE
 /**
  * wmi_unified_send_peer_cfr_capture_cmd() - WMI function to start CFR capture
@@ -1832,5 +1843,6 @@ wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
 QDF_STATUS
 wmi_extract_cfr_peer_tx_event_param(void *wmi_hdl, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event);
+
 #endif /* WLAN_CFR_ENABLE */
 #endif /* _WMI_UNIFIED_API_H_ */

@@ -418,6 +418,9 @@ QDF_STATUS (*send_modem_power_state_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_sta_ps_mode_cmd)(wmi_unified_t wmi_handle,
 			       uint32_t vdev_id, uint8_t val);
 
+QDF_STATUS (*send_idle_roam_monitor_cmd)(wmi_unified_t wmi_handle,
+					 uint8_t val);
+
 QDF_STATUS (*send_get_temperature_cmd)(wmi_unified_t wmi_handle);
 
 #ifdef CONVERGED_P2P_ENABLE
