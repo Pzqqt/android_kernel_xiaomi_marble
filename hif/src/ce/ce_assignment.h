@@ -110,20 +110,20 @@ static struct CE_attr host_ce_config_wlan_qcn7605[] = {
 
 static struct CE_pipe_config target_ce_config_wlan_qcn7605[] = {
 	/* host->target HTC control and raw streams */
-	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE0 */ 0, PIPEDIR_OUT, 4, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */
 	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI  + HTC control */
-	{ /* CE2 */ 2, PIPEDIR_IN,  64, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */
 	{ /* CE3 */ 3, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
-	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
+	{ /* CE4 */ 4, PIPEDIR_OUT, 128, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 	/* NB: 50% of src nentries, since tx has 2 frags */
 #ifdef IPA_OFFLOAD
 	/* ipa_uc->target */
-	{ /* CE5 */ 5, PIPEDIR_OUT, 1024,   64,
+	{ /* CE5 */ 5, PIPEDIR_OUT, 512,   64,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 #else
 	/* unused */
