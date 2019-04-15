@@ -1946,9 +1946,7 @@ static int wsa_macro_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
 	bst_state_max =  ucontrol->value.integer.value[0] << 2;
-	snd_soc_component_update_bits(component,
-				BOLERO_CDC_WSA_BOOST0_BOOST_CTL,
-				0x0c, bst_state_max);
+	/* bolero does not need to limit the boost levels */
 
 	return 0;
 }
@@ -1980,9 +1978,7 @@ static int wsa_macro_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
 		__func__, ucontrol->value.integer.value[0]);
 	bst_state_max =  ucontrol->value.integer.value[0] << 2;
-	snd_soc_component_update_bits(component,
-			BOLERO_CDC_WSA_BOOST1_BOOST_CTL,
-			0x0c, bst_state_max);
+	/* bolero does not need to limit the boost levels */
 
 	return 0;
 }
