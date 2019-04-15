@@ -110,6 +110,11 @@ enum {
 	ANC_FB_TUNE1
 };
 
+enum {
+	TX_MCLK,
+	VA_MCLK,
+};
+
 struct tx_mute_work {
 	struct tx_macro_priv *tx_priv;
 	u32 decimator;
@@ -152,6 +157,7 @@ struct tx_macro_priv {
 	int child_count;
 	int tx_swr_clk_cnt;
 	int va_swr_clk_cnt;
+	int swr_clk_type;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -1457,33 +1463,60 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 			  0, -84, 40, digital_gain),
 };
 
-static int tx_macro_swrm_clock(void *handle, bool enable)
+static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
+				      struct regmap *regmap, int clk_type,
+				      bool enable)
 {
-	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
-	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
 	int ret = 0;
 
-	if (regmap == NULL) {
-		dev_err(tx_priv->dev, "%s: regmap is NULL\n", __func__);
-		return -EINVAL;
-	}
+	dev_dbg(tx_priv->dev, "%s: clock type %s, enable: %s\n",
+		__func__, (clk_type ? "VA_MCLK" : "TX_MCLK"),
+		(enable ? "enable" : "disable"));
 
-	mutex_lock(&tx_priv->swr_clk_lock);
-
-	dev_dbg(tx_priv->dev, "%s: swrm clock %s\n",
-		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
 		if (tx_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_active_state(
 						tx_priv->tx_swr_gpio_p);
-			ret = tx_macro_mclk_enable(tx_priv, 1);
-			if (ret < 0) {
-				msm_cdc_pinctrl_select_sleep_state(
-						tx_priv->tx_swr_gpio_p);
-				dev_err(tx_priv->dev,
-					"%s: request clock enable failed\n",
-					__func__);
-				goto exit;
+
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   true);
+			if (clk_type == TX_MCLK) {
+				ret = tx_macro_mclk_enable(tx_priv, 1);
+				if (ret < 0) {
+					msm_cdc_pinctrl_select_sleep_state(
+							tx_priv->tx_swr_gpio_p);
+					dev_err_ratelimited(tx_priv->dev,
+						"%s: request clock enable failed\n",
+						__func__);
+					goto done;
+				}
+			}
+			if (clk_type == VA_MCLK) {
+				ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+								   TX_CORE_CLK,
+								   VA_CORE_CLK,
+								   true);
+				if (ret < 0) {
+					msm_cdc_pinctrl_select_sleep_state(
+							tx_priv->tx_swr_gpio_p);
+					dev_err_ratelimited(tx_priv->dev,
+						"%s: swr request clk failed\n",
+						__func__);
+					goto done;
+				}
+				if (tx_priv->tx_mclk_users == 0) {
+					regmap_update_bits(regmap,
+						BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
+						0x01, 0x01);
+					regmap_update_bits(regmap,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+						0x01, 0x01);
+					regmap_update_bits(regmap,
+				      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+						0x01, 0x01);
+				}
 			}
 			if (tx_priv->reset_swr)
 				regmap_update_bits(regmap,
@@ -1496,29 +1529,126 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 				regmap_update_bits(regmap,
 					BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   false);
 			tx_priv->reset_swr = false;
 		}
 		tx_priv->swr_clk_users++;
 	} else {
 		if (tx_priv->swr_clk_users <= 0) {
-			dev_err(tx_priv->dev,
+			dev_err_ratelimited(tx_priv->dev,
 				"tx swrm clock users already 0\n");
 			tx_priv->swr_clk_users = 0;
-			goto exit;
+			return 0;
 		}
 		tx_priv->swr_clk_users--;
 		if (tx_priv->swr_clk_users == 0) {
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   true);
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
-			tx_macro_mclk_enable(tx_priv, 0);
+			if (clk_type == TX_MCLK)
+				tx_macro_mclk_enable(tx_priv, 0);
+			if (clk_type == VA_MCLK) {
+				if (tx_priv->tx_mclk_users == 0) {
+					regmap_update_bits(regmap,
+				      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+						0x01, 0x00);
+					regmap_update_bits(regmap,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+						0x01, 0x00);
+				}
+				ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+								   TX_CORE_CLK,
+								   VA_CORE_CLK,
+								   false);
+				if (ret < 0) {
+					dev_err_ratelimited(tx_priv->dev,
+						"%s: swr request clk failed\n",
+						__func__);
+					goto done;
+				}
+			}
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+							   TX_CORE_CLK,
+							   TX_CORE_CLK,
+							   false);
 			msm_cdc_pinctrl_select_sleep_state(
 						tx_priv->tx_swr_gpio_p);
 		}
 	}
+	return 0;
+
+done:
+	bolero_clk_rsc_request_clock(tx_priv->dev,
+				TX_CORE_CLK,
+				TX_CORE_CLK,
+				false);
+	return ret;
+}
+
+static int tx_macro_swrm_clock(void *handle, bool enable)
+{
+	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
+	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
+	int ret = 0;
+
+	if (regmap == NULL) {
+		dev_err(tx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&tx_priv->swr_clk_lock);
+	dev_dbg(tx_priv->dev, "%s: swrm clock %s\n",
+		__func__, (enable ? "enable" : "disable"));
+
+	if (enable) {
+		/*For standalone VA usecase, enable VA macro clock */
+		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt
+			&& (tx_priv->swr_clk_type == TX_MCLK)) {
+			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+							VA_MCLK, enable);
+			if (ret)
+				goto done;
+			tx_priv->swr_clk_type = VA_MCLK;
+		} else {
+			/* Disable VA MCLK if its already enabled */
+			if (tx_priv->swr_clk_type == VA_MCLK)
+				tx_macro_tx_va_mclk_enable(tx_priv,
+							regmap, VA_MCLK, false);
+			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+							TX_MCLK, enable);
+			if (ret)
+				goto done;
+			tx_priv->swr_clk_type = TX_MCLK;
+		}
+	} else {
+		if (tx_priv->swr_clk_type == VA_MCLK) {
+			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+							VA_MCLK, enable);
+			if (ret)
+				goto done;
+			tx_priv->swr_clk_type = TX_MCLK;
+		} else {
+			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+							TX_MCLK, enable);
+			if (tx_priv->va_swr_clk_cnt) {
+				ret = tx_macro_tx_va_mclk_enable(tx_priv,
+						regmap, VA_MCLK, true);
+				if (ret)
+					goto done;
+				tx_priv->swr_clk_type = VA_MCLK;
+			}
+		}
+	}
 	dev_dbg(tx_priv->dev, "%s: swrm clock users %d\n",
 		__func__, tx_priv->swr_clk_users);
-exit:
+done:
 	mutex_unlock(&tx_priv->swr_clk_lock);
 	return ret;
 }
