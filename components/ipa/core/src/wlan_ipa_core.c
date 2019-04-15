@@ -1542,9 +1542,12 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	psoc = wlan_pdev_get_psoc(pdev);
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
 						    WLAN_IPA_ID);
-	QDF_BUG((session_id < WLAN_IPA_MAX_SESSION) && vdev);
+	QDF_BUG(session_id < WLAN_IPA_MAX_SESSION);
+
 	if (vdev)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_IPA_ID);
+	else
+		ipa_err("vdev is NULL, session_id: %u", session_id);
 
 	if (ipa_ctx->sta_connected) {
 		iface_ctx = wlan_ipa_get_iface(ipa_ctx, QDF_STA_MODE);
