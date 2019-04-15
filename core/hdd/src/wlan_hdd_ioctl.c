@@ -55,6 +55,7 @@
  */
 #define SIZE_OF_SETROAMMODE             11      /* size of SETROAMMODE */
 #define SIZE_OF_GETROAMMODE             11      /* size of GETROAMMODE */
+#define SIZE_OF_SETSUSPENDMODE          14
 
 /*
  * Size of GETCOUNTRYREV output = (sizeof("GETCOUNTRYREV") = 14) + one (space) +
@@ -3266,6 +3267,46 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 
 exit:
 	return ret;
+}
+
+static int drv_cmd_set_suspend_mode(struct hdd_adapter *adapter,
+				    struct hdd_context *hdd_ctx,
+				    uint8_t *command,
+				    uint8_t command_len,
+				    struct hdd_priv_data *priv_data)
+{
+	int errno;
+	uint8_t *value = command;
+	QDF_STATUS status;
+	uint8_t idle_monitor;
+
+	if (QDF_STA_MODE != adapter->device_mode) {
+		hdd_debug("Non-STA interface");
+		return 0;
+	}
+
+	/* Move pointer to ahead of SETSUSPENDMODE<delimiter> */
+	value = value + SIZE_OF_SETSUSPENDMODE + 1;
+
+	/* Convert the value from ascii to integer */
+	errno = kstrtou8(value, 10, &idle_monitor);
+	if (errno < 0) {
+		/*
+		 * If the input value is greater than max value of datatype,
+		 * then also kstrtou8 fails
+		 */
+		hdd_err("Range validation failed");
+		return -EINVAL;
+	}
+
+	hdd_debug("idle_monitor:%d", idle_monitor);
+	status = ucfg_pmo_tgt_psoc_send_idle_roam_suspend_mode(hdd_ctx->psoc,
+							       idle_monitor);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("Send suspend mode to fw failed");
+		return -EINVAL;
+	}
+	return 0;
 }
 
 static int drv_cmd_get_roam_mode(struct hdd_adapter *adapter,
@@ -7393,7 +7434,7 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"COUNTRY",                   drv_cmd_country, true},
 	{"SETCOUNTRYREV",             drv_cmd_country, true},
 	{"GETCOUNTRYREV",             drv_cmd_get_country, false},
-	{"SETSUSPENDMODE",            drv_cmd_dummy, false},
+	{"SETSUSPENDMODE",            drv_cmd_set_suspend_mode, true},
 	{"SET_AP_WPS_P2P_IE",         drv_cmd_dummy, false},
 	{"SETROAMTRIGGER",            drv_cmd_set_roam_trigger, true},
 	{"GETROAMTRIGGER",            drv_cmd_get_roam_trigger, false},

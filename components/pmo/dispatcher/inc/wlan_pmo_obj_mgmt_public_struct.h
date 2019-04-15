@@ -121,6 +121,8 @@ typedef int (*pmo_pld_auto_resume_cb)(void);
  * @psoc_send_target_resume_req: fp to send target resume request
  * @psoc_send_d0wow_enable_req: fp to send D0 WOW enable request
  * @psoc_send_d0wow_disable_req: fp to send D0 WOW disable request
+ * @psoc_send_idle_roam_suspend_mode: fp to send suspend mode for
+ * idle roam  trigger to firmware.
  */
 struct wlan_pmo_tx_ops {
 	QDF_STATUS (*send_arp_offload_req)(struct wlan_objmgr_vdev *vdev,
@@ -222,6 +224,8 @@ struct wlan_pmo_tx_ops {
 			struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*psoc_send_d0wow_disable_req)(
 			struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*psoc_send_idle_roam_suspend_mode)(
+			struct wlan_objmgr_psoc *psoc, uint8_t val);
 
 };
 
