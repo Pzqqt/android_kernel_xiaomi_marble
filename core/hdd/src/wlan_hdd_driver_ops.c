@@ -693,7 +693,8 @@ static void hdd_psoc_shutdown_notify(struct hdd_context *hdd_ctx)
 	if (ucfg_ipa_is_enabled()) {
 		ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
 
-		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev))
+		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev) ||
+		    pld_is_pdr(hdd_ctx->parent_dev))
 			ucfg_ipa_fw_rejuvenate_send_msg(hdd_ctx->pdev);
 	}
 

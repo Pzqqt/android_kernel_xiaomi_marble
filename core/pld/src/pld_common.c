@@ -1722,6 +1722,21 @@ bool pld_is_fw_dump_skipped(struct device *dev)
 	return ret;
 }
 
+int pld_is_pdr(struct device *dev)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_is_pdr();
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
 int pld_is_fw_rejuvenate(struct device *dev)
 {
 	int ret = 0;

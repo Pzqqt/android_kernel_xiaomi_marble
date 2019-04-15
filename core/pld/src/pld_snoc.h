@@ -127,6 +127,11 @@ static inline int pld_snoc_force_assert_target(struct device *dev)
 	return 0;
 }
 
+static inline int pld_snoc_is_pdr(void)
+{
+	return 0;
+}
+
 static inline int pld_snoc_is_fw_rejuvenate(void)
 {
 	return 0;
@@ -252,6 +257,11 @@ static inline int pld_snoc_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 static inline int pld_snoc_force_assert_target(struct device *dev)
 {
 	return icnss_trigger_recovery(dev);
+}
+
+static inline int pld_snoc_is_pdr(void)
+{
+	return icnss_is_pdr();
 }
 
 static inline int pld_snoc_is_fw_rejuvenate(void)

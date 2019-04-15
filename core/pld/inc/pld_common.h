@@ -615,6 +615,17 @@ int pld_collect_rddm(struct device *dev);
 bool pld_is_fw_dump_skipped(struct device *dev);
 
 /**
+ * pld_is_pdr() - Check WLAN PD is Restarted
+ *
+ * Help the driver decide whether FW down is due to
+ * WLAN PD Restart.
+ *
+ * Return: 1 WLAN PD is Restarted
+ *         0 WLAN PD is not Restarted
+ */
+int pld_is_pdr(struct device *dev);
+
+/**
  * pld_is_fw_rejuvenate() - Check WLAN fw is rejuvenating
  *
  * Help the driver decide whether FW down is due to
