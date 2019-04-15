@@ -483,6 +483,7 @@ int afe_get_doa_tracking_mon(u16 port_id,
 #define AFE_LPASS_CORE_HW_BLOCK_ID_NONE                        0
 #define AFE_LPASS_CORE_HW_BLOCK_ID_AVTIMER                     2
 #define AFE_LPASS_CORE_HW_MACRO_BLOCK                          3
+#define AFE_LPASS_CORE_HW_DCODEC_BLOCK                         4
 
 /* Handles audio-video timer (avtimer) and BTSC vote requests from clients.
  */

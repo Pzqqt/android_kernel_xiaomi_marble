@@ -28,6 +28,7 @@ enum {
 	AUDIO_EXT_CLK_LPASS7,
 	AUDIO_EXT_CLK_LPASS_CORE_HW_VOTE,
 	AUDIO_EXT_CLK_LPASS8,
+	AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE,
 	AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_EXTERNAL_PLL = AUDIO_EXT_CLK_LPASS_MAX,
 	AUDIO_EXT_CLK_MAX,
@@ -52,6 +53,7 @@ struct audio_ext_clk_priv {
 	struct audio_ext_clk audio_clk;
 	const char *clk_name;
 	uint32_t lpass_core_hwvote_client_handle;
+	uint32_t lpass_audio_hwvote_client_handle;
 };
 
 static inline struct audio_ext_clk_priv *to_audio_clk(struct clk_hw *hw)
@@ -154,6 +156,17 @@ static int lpass_hw_vote_prepare(struct clk_hw *hw)
 		}
 	}
 
+	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE)  {
+		ret = afe_vote_lpass_core_hw(AFE_LPASS_CORE_HW_DCODEC_BLOCK,
+			"LPASS_HW_DCODEC",
+			&clk_priv->lpass_audio_hwvote_client_handle);
+		if (ret < 0) {
+			pr_err("%s lpass audio hw vote failed %d\n",
+				__func__, ret);
+			return ret;
+		}
+	}
+
 	return 0;
 }
 
@@ -168,6 +181,16 @@ static void lpass_hw_vote_unprepare(struct clk_hw *hw)
 			clk_priv->lpass_core_hwvote_client_handle);
 		if (ret < 0) {
 			pr_err("%s lpass core hw vote failed %d\n",
+				__func__, ret);
+		}
+	}
+
+	if (clk_priv->clk_src == AUDIO_EXT_CLK_LPASS_AUDIO_HW_VOTE) {
+		ret = afe_unvote_lpass_core_hw(
+			AFE_LPASS_CORE_HW_DCODEC_BLOCK,
+			clk_priv->lpass_audio_hwvote_client_handle);
+		if (ret < 0) {
+			pr_err("%s lpass audio hw unvote failed %d\n",
 				__func__, ret);
 		}
 	}
@@ -329,6 +352,15 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.hw.init = &(struct clk_init_data){
 				.name = "audio_lpass_mclk8",
 				.ops = &audio_ext_clk_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.hw.init = &(struct clk_init_data){
+				.name = "lpass_audio_hw_vote_clk",
+				.ops = &lpass_hw_vote_ops,
 			},
 		},
 	},

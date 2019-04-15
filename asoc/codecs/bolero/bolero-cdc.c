@@ -909,6 +909,7 @@ static int bolero_probe(struct platform_device *pdev)
 	u32 num_macros = 0;
 	int ret;
 	struct clk *lpass_core_hw_vote = NULL;
+	struct clk *lpass_audio_hw_vote = NULL;
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(struct bolero_priv),
 			    GFP_KERNEL);
@@ -968,6 +969,17 @@ static int bolero_probe(struct platform_device *pdev)
 	}
 	priv->lpass_core_hw_vote = lpass_core_hw_vote;
 
+	/* Register LPASS audio hw vote */
+	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
+	if (IS_ERR(lpass_audio_hw_vote)) {
+		ret = PTR_ERR(lpass_audio_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_audio_hw_vote", ret);
+		lpass_audio_hw_vote = NULL;
+		ret = 0;
+	}
+	priv->lpass_audio_hw_vote = lpass_audio_hw_vote;
+
 	return 0;
 }
 
@@ -999,6 +1011,16 @@ int bolero_runtime_resume(struct device *dev)
 		dev_err(dev, "%s:lpass core hw enable failed\n",
 			__func__);
 
+	if (priv->lpass_audio_hw_vote == NULL) {
+		dev_dbg(dev, "%s: Invalid lpass audio hw node\n", __func__);
+		return 0;
+	}
+
+	ret = clk_prepare_enable(priv->lpass_audio_hw_vote);
+	if (ret < 0)
+		dev_err(dev, "%s:lpass audio hw enable failed\n",
+			__func__);
+
 	pm_runtime_set_autosuspend_delay(priv->dev, BOLERO_AUTO_SUSPEND_DELAY);
 	return 0;
 }
@@ -1012,6 +1034,12 @@ int bolero_runtime_suspend(struct device *dev)
 		clk_disable_unprepare(priv->lpass_core_hw_vote);
 	else
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n",
+			__func__);
+
+	if (priv->lpass_audio_hw_vote != NULL)
+		clk_disable_unprepare(priv->lpass_audio_hw_vote);
+	else
+		dev_dbg(dev, "%s: Invalid lpass audio hw node\n",
 			__func__);
 	return 0;
 }
