@@ -39,7 +39,6 @@
 #include "qdf_event.h"
 #include "wlan_pmo_hw_filter_public_struct.h"
 
-#define PMO_IPV4_ADDR_LEN         4
 
 #define PMO_IPV4_ARP_REPLY_OFFLOAD                  0
 #define PMO_IPV6_NEIGHBOR_DISCOVERY_OFFLOAD         1
@@ -49,7 +48,6 @@
 
 #define PMO_MAC_NS_OFFLOAD_SIZE               1
 #define PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA 16
-#define PMO_MAC_IPV6_ADDR_LEN                 16
 #define PMO_IPV6_ADDR_VALID                   1
 #define PMO_IPV6_ADDR_UC_TYPE                 0
 #define PMO_IPV6_ADDR_AC_TYPE                 1
