@@ -39,8 +39,7 @@
 
 enum {
 	WCD9380 = 0,
-	WCD9385,
-	WCD9385FX,
+	WCD9385 = 5,
 };
 
 enum {
@@ -1762,6 +1761,14 @@ static int wcd938x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static const char * const tx_mode_mux_text_wcd9380[] = {
+	"ADC_INVALID", "ADC_HIFI", "ADC_LO_HIF", "ADC_NORMAL", "ADC_LP",
+};
+
+static const struct soc_enum tx_mode_mux_enum_wcd9380 =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tx_mode_mux_text_wcd9380),
+			    tx_mode_mux_text_wcd9380);
+
 static const char * const tx_mode_mux_text[] = {
 	"ADC_INVALID", "ADC_HIFI", "ADC_LO_HIF", "ADC_NORMAL", "ADC_LP",
 	"ADC_ULP1", "ADC_ULP2",
@@ -1780,10 +1787,18 @@ static const struct soc_enum rx_hph_mode_mux_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(rx_hph_mode_mux_text),
 			    rx_hph_mode_mux_text);
 
-static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
-	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum,
-		wcd938x_rx_hph_mode_get, wcd938x_rx_hph_mode_put),
+static const struct snd_kcontrol_new wcd9380_snd_controls[] = {
+	SOC_ENUM_EXT("TX0 MODE", tx_mode_mux_enum_wcd9380,
+			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
+	SOC_ENUM_EXT("TX1 MODE", tx_mode_mux_enum_wcd9380,
+			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
+	SOC_ENUM_EXT("TX2 MODE", tx_mode_mux_enum_wcd9380,
+			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
+	SOC_ENUM_EXT("TX3 MODE", tx_mode_mux_enum_wcd9380,
+			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
+};
 
+static const struct snd_kcontrol_new wcd9385_snd_controls[] = {
 	SOC_ENUM_EXT("TX0 MODE", tx_mode_mux_enum,
 			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
 	SOC_ENUM_EXT("TX1 MODE", tx_mode_mux_enum,
@@ -1792,6 +1807,11 @@ static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
 			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
 	SOC_ENUM_EXT("TX3 MODE", tx_mode_mux_enum,
 			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
+};
+
+static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
+	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum,
+		wcd938x_rx_hph_mode_get, wcd938x_rx_hph_mode_put),
 
 	SOC_SINGLE_EXT("HPHL_COMP Switch", SND_SOC_NOPM, 0, 1, 0,
 		wcd938x_get_compander, wcd938x_set_compander),
@@ -2413,6 +2433,26 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 	wcd_cls_h_init(&wcd938x->clsh_info);
 	wcd938x_init_reg(component);
 
+	if (wcd938x->variant == WCD9380) {
+		ret = snd_soc_add_component_controls(component, wcd9380_snd_controls,
+					ARRAY_SIZE(wcd9380_snd_controls));
+		if (ret < 0) {
+			dev_err(component->dev,
+				"%s: Failed to add snd ctrls for variant: %d\n",
+				__func__, wcd938x->variant);
+			goto err_hwdep;
+		}
+	}
+	if (wcd938x->variant == WCD9385) {
+		ret = snd_soc_add_component_controls(component, wcd9385_snd_controls,
+					ARRAY_SIZE(wcd9385_snd_controls));
+		if (ret < 0) {
+			dev_err(component->dev,
+				"%s: Failed to add snd ctrls for variant: %d\n",
+				__func__, wcd938x->variant);
+			goto err_hwdep;
+		}
+	}
 	wcd938x->version = WCD938X_VERSION_1_0;
        /* Register event notifier */
 	wcd938x->nblock.notifier_call = wcd938x_event_notify;
