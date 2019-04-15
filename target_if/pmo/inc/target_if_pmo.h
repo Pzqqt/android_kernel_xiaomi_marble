@@ -470,6 +470,17 @@ QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
+ * target_if_pmo_psoc_send_idle_monitor_cmd() - send screen status to firmware
+ * @psoc: objmgr psoc
+ * @val: Idle monitor value
+ *
+ * Return: QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS
+target_if_pmo_psoc_send_idle_monitor_cmd(struct wlan_objmgr_psoc *psoc,
+					 uint8_t val);
+
+/**
  * target_if_pmo_register_tx_ops() - Register PMO component TX OPS
  * @tx_ops: PMO if transmit ops
  *

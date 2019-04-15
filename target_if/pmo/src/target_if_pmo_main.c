@@ -121,6 +121,8 @@ void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 		target_if_pmo_psoc_send_d0wow_enable_req;
 	pmo_tx_ops->psoc_send_d0wow_disable_req =
 		target_if_pmo_psoc_send_d0wow_disable_req;
+	pmo_tx_ops->psoc_send_idle_roam_suspend_mode =
+		target_if_pmo_psoc_send_idle_monitor_cmd;
 	tgt_if_pmo_reg_pkt_filter_ops(pmo_tx_ops);
 }
 

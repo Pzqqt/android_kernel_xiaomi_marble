@@ -246,6 +246,19 @@ uint8_t
 ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_pmo_tgt_psoc_send_idle_roam_suspend_mode() - Send suspend mode to
+ * firmware
+ * @psoc: pointer to psoc object
+ * @val: Set suspend mode on/off sent from userspace
+ *
+ * Return: QDF_STATUS_SUCCESS if suspend mode is sent to fw else return
+ * corresponding QDF_STATUS failure code.
+ */
+QDF_STATUS
+ucfg_pmo_tgt_psoc_send_idle_roam_suspend_mode(struct wlan_objmgr_psoc *psoc,
+					      uint8_t val);
+
+/**
  * ucfg_pmo_enable_wakeup_event() -  enable wow wakeup events
  * @psoc: objmgr psoc
  * @vdev_id: vdev id

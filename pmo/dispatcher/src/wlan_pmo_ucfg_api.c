@@ -696,6 +696,13 @@ ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc)
 	return powersave_offload_enabled;
 }
 
+QDF_STATUS
+ucfg_pmo_tgt_psoc_send_idle_roam_suspend_mode(struct wlan_objmgr_psoc *psoc,
+					      uint8_t val)
+{
+	return pmo_tgt_psoc_send_idle_roam_monitor(psoc, val);
+}
+
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 bool
 ucfg_pmo_extwow_is_goto_suspend_enabled(struct wlan_objmgr_psoc *psoc)
@@ -825,4 +832,3 @@ ucfg_pmo_get_active_mc_bc_apf_mode(struct wlan_objmgr_psoc *psoc)
 
 	return pmo_psoc_ctx->psoc_cfg.active_mc_bc_apf_mode;
 }
-

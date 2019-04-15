@@ -444,4 +444,15 @@ QDF_STATUS pmo_tgt_psoc_send_host_wakeup_ind(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS pmo_tgt_psoc_send_target_resume_req(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * pmo_tgt_psoc_send_idle_roam_monitor() - Send idle roam set suspend mode
+ * command to firmware
+ * @psoc: objmgr psoc
+ * @val: Set suspend mode value
+ *
+ * Return: QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS pmo_tgt_psoc_send_idle_roam_monitor(struct wlan_objmgr_psoc *psoc,
+					       uint8_t val);
+
 #endif /* end  of _WLAN_PMO_TGT_API_H_ */

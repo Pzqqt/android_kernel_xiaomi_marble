@@ -249,3 +249,15 @@ QDF_STATUS pmo_tgt_psoc_send_target_resume_req(struct wlan_objmgr_psoc *psoc)
 	return pmo_tx_ops.psoc_send_target_resume_req(psoc);
 }
 
+QDF_STATUS pmo_tgt_psoc_send_idle_roam_monitor(struct wlan_objmgr_psoc *psoc,
+					       uint8_t val)
+{
+	struct wlan_pmo_tx_ops pmo_tx_ops;
+
+	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+	if (!pmo_tx_ops.psoc_send_idle_roam_suspend_mode) {
+		pmo_err("NULL fp");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	return pmo_tx_ops.psoc_send_idle_roam_suspend_mode(psoc, val);
+}
