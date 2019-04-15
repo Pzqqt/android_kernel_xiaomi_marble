@@ -676,6 +676,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			snd_soc_rtdcom_lookup(soc_prtd, DRV_NAME);
 	struct msm_audio *prtd;
 	struct msm_plat_data *pdata;
+	enum apr_subsys_state subsys_state;
 	int ret = 0;
 
 	if (!component) {
@@ -689,6 +690,13 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 		pr_err("%s: platform data not populated\n", __func__);
 		return -EINVAL;
 	}
+
+	subsys_state = apr_get_subsys_state();
+	if (subsys_state == APR_SUBSYS_DOWN) {
+		pr_debug("%s: adsp is down\n", __func__);
+		return -ENETRESET;
+	}
+
 	prtd = kzalloc(sizeof(struct msm_audio), GFP_KERNEL);
 	if (prtd == NULL)
 		return -ENOMEM;

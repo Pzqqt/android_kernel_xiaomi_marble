@@ -1640,6 +1640,7 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 	struct snd_soc_component *component = NULL;
 	struct msm_compr_audio *prtd = NULL;
 	struct msm_compr_pdata *pdata = NULL;
+	enum apr_subsys_state subsys_state;
 
 	pr_debug("%s\n", __func__);
 	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
@@ -1653,6 +1654,13 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 			__func__, rtd->dai_link->cpu_dai_name, -EBUSY);
 		return -EBUSY;
 	}
+
+	subsys_state = apr_get_subsys_state();
+	if (subsys_state == APR_SUBSYS_DOWN) {
+		pr_debug("%s: adsp is down\n", __func__);
+		return -ENETRESET;
+	}
+
 	prtd = kzalloc(sizeof(struct msm_compr_audio), GFP_KERNEL);
 	if (prtd == NULL) {
 		pr_err("Failed to allocate memory for msm_compr_audio\n");
@@ -1747,6 +1755,7 @@ static int msm_compr_capture_open(struct snd_compr_stream *cstream)
 	struct snd_soc_component *component = NULL;
 	struct msm_compr_audio *prtd;
 	struct msm_compr_pdata *pdata = NULL;
+	enum apr_subsys_state subsys_state;
 
 	pr_debug("%s\n", __func__);
 	component = snd_soc_rtdcom_lookup(rtd, DRV_NAME);
@@ -1758,6 +1767,12 @@ static int msm_compr_capture_open(struct snd_compr_stream *cstream)
 	if (!pdata) {
 		pr_err("%s: pdata is NULL\n", __func__);
 		return -EINVAL;
+	}
+
+	subsys_state = apr_get_subsys_state();
+	if (subsys_state == APR_SUBSYS_DOWN) {
+		pr_debug("%s: adsp is down\n", __func__);
+		return -ENETRESET;
 	}
 	prtd = kzalloc(sizeof(struct msm_compr_audio), GFP_KERNEL);
 	if (!prtd) {
