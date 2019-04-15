@@ -89,6 +89,13 @@ static int q6lsm_memory_map_regions(struct lsm_client *client,
 static int q6lsm_memory_unmap_regions(struct lsm_client *client,
 				      uint32_t handle);
 
+struct lsm_client_afe_data {
+	uint64_t fe_id;
+	uint16_t unprocessed_data;
+};
+
+static struct lsm_client_afe_data lsm_client_afe_data[LSM_MAX_SESSION_ID + 1];
+
 static int q6lsm_get_session_id_from_lsm_client(struct lsm_client *client)
 {
 	int n;
@@ -255,6 +262,8 @@ static void q6lsm_session_free(struct lsm_client *client)
 	pr_debug("%s: Freeing session ID %d\n", __func__, client->session);
 	spin_lock_irqsave(&lsm_session_lock, flags);
 	lsm_session[client->session] = NULL;
+	lsm_client_afe_data[client->session].fe_id = 0;
+	lsm_client_afe_data[client->session].unprocessed_data = 0;
 	spin_unlock_irqrestore(&lsm_session_lock, flags);
 	client->session = LSM_INVALID_SESSION_ID;
 }
@@ -1063,6 +1072,72 @@ int get_lsm_port(void)
 }
 
 /**
+ * q6lsm_set_afe_data_format -
+ * command to set afe data format
+ *
+ * @fe_id: FrontEnd DAI link ID
+ * @afe_data_format: afe data format
+ *
+ * Returns 0 on success or -EINVAL on failure
+ */
+int q6lsm_set_afe_data_format(uint64_t fe_id, uint16_t afe_data_format)
+{
+	int n = 0;
+
+	if (0 != afe_data_format && 1 != afe_data_format)
+		goto done;
+
+	pr_debug("%s: afe data is %s\n", __func__,
+		 afe_data_format ? "unprocessed" : "processed");
+
+	for (n = LSM_MIN_SESSION_ID; n <= LSM_MAX_SESSION_ID; n++) {
+		if (0 == lsm_client_afe_data[n].fe_id) {
+			lsm_client_afe_data[n].fe_id = fe_id;
+			lsm_client_afe_data[n].unprocessed_data =
+							afe_data_format;
+			pr_debug("%s: session ID is %d, fe_id is %d\n",
+				 __func__, n, fe_id);
+			return 0;
+		}
+	}
+
+	pr_err("%s: all lsm sessions are taken\n", __func__);
+done:
+	return -EINVAL;
+}
+EXPORT_SYMBOL(q6lsm_set_afe_data_format);
+
+/**
+ * q6lsm_get_afe_data_format -
+ * command to get afe data format
+ *
+ * @fe_id: FrontEnd DAI link ID
+ * @afe_data_format: afe data format
+ *
+ */
+void q6lsm_get_afe_data_format(uint64_t fe_id, uint16_t *afe_data_format)
+{
+	int n = 0;
+
+	if (NULL == afe_data_format) {
+		pr_err("%s: Pointer afe_data_format is NULL\n", __func__);
+		return;
+	}
+
+	for (n = LSM_MIN_SESSION_ID; n <= LSM_MAX_SESSION_ID; n++) {
+		if (fe_id == lsm_client_afe_data[n].fe_id) {
+			*afe_data_format =
+				lsm_client_afe_data[n].unprocessed_data;
+			pr_debug("%s: session: %d, fe_id: %d, afe data: %s\n",
+				__func__, n, fe_id,
+				*afe_data_format ? "unprocessed" : "processed");
+			return;
+		}
+	}
+}
+EXPORT_SYMBOL(q6lsm_get_afe_data_format);
+
+/**
  * q6lsm_set_port_connected -
  *       command to set LSM port connected
  *
@@ -1092,14 +1167,19 @@ int q6lsm_set_port_connected(struct lsm_client *client)
 	connectport_hdr.param_size = sizeof(connect_port);
 
 	client->connect_to_port = get_lsm_port();
+	if (ADM_LSM_PORT_ID != client->connect_to_port)
+		q6lsm_get_afe_data_format(client->fe_id,
+					  &client->unprocessed_data);
 	connect_port.minor_version = QLSM_PARAM_ID_MINOR_VERSION;
 	connect_port.port_id = client->connect_to_port;
+	connect_port.unprocessed_data = client->unprocessed_data;
 
 	rc = q6lsm_pack_and_set_params(client, &connectport_hdr,
 				       (uint8_t *) &connect_port,
 				       set_param_opcode);
 	if (rc)
 		pr_err("%s: Failed set_params, rc %d\n", __func__, rc);
+
 	return rc;
 }
 EXPORT_SYMBOL(q6lsm_set_port_connected);
