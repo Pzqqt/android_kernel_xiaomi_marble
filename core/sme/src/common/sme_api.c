@@ -6120,7 +6120,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 		return;
 
 	if ((profile->hlp_ie_len +
-	     SIR_IPV4_ADDR_LEN) > FILS_MAX_HLP_DATA_LEN) {
+	     QDF_IPV4_ADDR_SIZE) > FILS_MAX_HLP_DATA_LEN) {
 		sme_err("HLP IE len exceeds %d",
 				profile->hlp_ie_len);
 		qdf_mem_free(params);
@@ -6128,12 +6128,12 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 	}
 
 	params->vdev_id = vdev_id;
-	params->hlp_ie_len = profile->hlp_ie_len + SIR_IPV4_ADDR_LEN;
+	params->hlp_ie_len = profile->hlp_ie_len + QDF_IPV4_ADDR_SIZE;
 
-	for (i = 0; i < SIR_IPV4_ADDR_LEN; i++)
+	for (i = 0; i < QDF_IPV4_ADDR_SIZE; i++)
 		params->hlp_ie[i] = (if_addr >> (i * 8)) & 0xFF;
 
-	qdf_mem_copy(params->hlp_ie + SIR_IPV4_ADDR_LEN,
+	qdf_mem_copy(params->hlp_ie + QDF_IPV4_ADDR_SIZE,
 		     profile->hlp_ie, profile->hlp_ie_len);
 
 	msg.type = SIR_HAL_HLP_IE_INFO;

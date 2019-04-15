@@ -54,7 +54,7 @@ static void pmo_core_fill_ns_addr(struct pmo_ns_offload_params *request,
 					ns_req->ipv6_addr[i][15];
 		request->slot_idx = i;
 		qdf_mem_copy(&request->target_ipv6_addr[i],
-			&ns_req->ipv6_addr[i][0], PMO_MAC_IPV6_ADDR_LEN);
+			&ns_req->ipv6_addr[i][0], QDF_IPV6_ADDR_SIZE);
 
 		request->target_ipv6_addr_valid[i] =
 			PMO_IPV6_ADDR_VALID;

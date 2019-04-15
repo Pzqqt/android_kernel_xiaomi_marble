@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +50,7 @@ struct pmo_arp_req {
  */
 struct pmo_arp_offload_params {
 	uint8_t enable;
-	uint8_t host_ipv4_addr[PMO_IPV4_ADDR_LEN];
+	uint8_t host_ipv4_addr[QDF_IPV4_ADDR_SIZE];
 	struct qdf_mac_addr bssid;
 	bool is_offload_applied;
 };

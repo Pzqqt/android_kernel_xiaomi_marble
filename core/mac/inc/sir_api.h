@@ -65,9 +65,7 @@ struct mac_context;
 #define SIR_NUM_11B_RATES 4     /* 1,2,5.5,11 */
 #define SIR_NUM_11A_RATES 8     /* 6,9,12,18,24,36,48,54 */
 
-#define SIR_IPV4_ADDR_LEN       4
-
-typedef uint8_t tSirIpv4Addr[SIR_IPV4_ADDR_LEN];
+typedef uint8_t tSirIpv4Addr[QDF_IPV4_ADDR_SIZE];
 
 #define SIR_VERSION_STRING_LEN 64
 typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
@@ -1933,8 +1931,8 @@ struct sir_host_offload_req {
 	uint8_t enableOrDisable;
 	uint32_t num_ns_offload_count;
 	union {
-		uint8_t hostIpv4Addr[SIR_IPV4_ADDR_LEN];
-		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
+		uint8_t hostIpv4Addr[QDF_IPV4_ADDR_SIZE];
+		uint8_t hostIpv6Addr[QDF_IPV6_ADDR_SIZE];
 	} params;
 	struct qdf_mac_addr bssid;
 };

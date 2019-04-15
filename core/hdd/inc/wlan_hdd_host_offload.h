@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,8 +41,8 @@ struct host_offload_req {
 	uint8_t offloadType;
 	uint8_t enableOrDisable;
 	union {
-		uint8_t hostIpv4Addr[SIR_IPV4_ADDR_LEN];
-		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
+		uint8_t hostIpv4Addr[QDF_IPV4_ADDR_SIZE];
+		uint8_t hostIpv6Addr[QDF_IPV6_ADDR_SIZE];
 	} params;
 	struct qdf_mac_addr bssId;
 };

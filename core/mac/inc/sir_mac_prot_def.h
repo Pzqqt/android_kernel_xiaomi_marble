@@ -319,7 +319,6 @@
 /* min size of wme oui header: oui(3) + type + subtype + version */
 #define SIR_MAC_OUI_WME_HDR_MIN       6
 
-#define SIR_MAC_IPV6_ADDR_LEN               16
 /* ----------------------------------------------------------------------------- */
 
 /* OFFSET definitions for fixed fields in Management frames */

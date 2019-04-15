@@ -280,7 +280,7 @@ int wlan_hdd_ipv6_changed(struct notifier_block *nb,
  * Return: 0 on success, error number otherwise.
  */
 static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
-				uint8_t ipv6_uc_addr[][SIR_MAC_IPV6_ADDR_LEN],
+				uint8_t ipv6_uc_addr[][QDF_IPV6_ADDR_SIZE],
 				uint8_t *ipv6addr_type,
 				enum pmo_ns_addr_scope *scope_array,
 				uint32_t *count)
@@ -333,7 +333,7 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
  * Return: 0 on success, error number otherwise.
  */
 static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
-				uint8_t ipv6_ac_addr[][SIR_MAC_IPV6_ADDR_LEN],
+				uint8_t ipv6_ac_addr[][QDF_IPV6_ADDR_SIZE],
 				uint8_t *ipv6addr_type,
 				enum pmo_ns_addr_scope *scope_array,
 				uint32_t *count)

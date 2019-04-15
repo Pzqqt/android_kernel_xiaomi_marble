@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,11 +62,11 @@ enum pmo_ns_addr_scope {
 struct pmo_ns_offload_params {
 	uint8_t enable;
 	uint32_t num_ns_offload_count;
-	uint8_t src_ipv6_addr[PMO_MAC_IPV6_ADDR_LEN];
+	uint8_t src_ipv6_addr[QDF_IPV6_ADDR_SIZE];
 	uint8_t self_ipv6_addr[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-		[PMO_MAC_IPV6_ADDR_LEN];
+		[QDF_IPV6_ADDR_SIZE];
 	uint8_t target_ipv6_addr[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-		[PMO_MAC_IPV6_ADDR_LEN];
+		[QDF_IPV6_ADDR_SIZE];
 	struct qdf_mac_addr self_macaddr;
 	uint8_t src_ipv6_addr_valid;
 	uint8_t target_ipv6_addr_valid[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
@@ -92,7 +92,7 @@ struct pmo_ns_req {
 	enum pmo_offload_trigger trigger;
 	uint32_t count;
 	uint8_t ipv6_addr[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA]
-				[PMO_MAC_IPV6_ADDR_LEN];
+				[QDF_IPV6_ADDR_SIZE];
 	uint8_t ipv6_addr_type[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	enum pmo_ns_addr_scope scope[PMO_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 };
