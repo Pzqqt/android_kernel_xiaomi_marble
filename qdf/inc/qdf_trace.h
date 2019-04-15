@@ -938,6 +938,11 @@ void qdf_dp_trace_clear_buffer(void)
 }
 
 static inline
+void qdf_dp_trace_apply_tput_policy(bool is_data_traffic)
+{
+}
+
+static inline
 void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 			   enum QDF_DP_TRACE_ID code, uint16_t msdu_id,
 			   enum qdf_proto_dir dir)
