@@ -7,6 +7,7 @@
 #include <linux/io.h>
 #include <linux/platform_device.h>
 #include <linux/clk.h>
+#include <linux/pm_runtime.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
@@ -19,6 +20,7 @@
 #include "wsa-macro.h"
 #include "bolero-clk-rsc.h"
 
+#define AUTO_SUSPEND_DELAY  50 /* delay in msec */
 #define WSA_MACRO_MAX_OFFSET 0x1000
 
 #define WSA_MACRO_RX_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
@@ -2548,6 +2550,7 @@ static int wsa_swrm_clock(void *handle, bool enable)
 	dev_dbg(wsa_priv->dev, "%s: swrm clock %s\n",
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
+		pm_runtime_get_sync(wsa_priv->dev);
 		if (wsa_priv->swr_clk_users == 0) {
 			msm_cdc_pinctrl_select_active_state(
 						wsa_priv->wsa_swr_gpio_p);
@@ -2573,6 +2576,8 @@ static int wsa_swrm_clock(void *handle, bool enable)
 					0x02, 0x00);
 			wsa_priv->reset_swr = false;
 		}
+		pm_runtime_mark_last_busy(wsa_priv->dev);
+		pm_runtime_put_autosuspend(wsa_priv->dev);
 		wsa_priv->swr_clk_users++;
 	} else {
 		if (wsa_priv->swr_clk_users <= 0) {
@@ -2871,6 +2876,11 @@ static int wsa_macro_probe(struct platform_device *pdev)
 		goto reg_macro_fail;
 	}
 	schedule_work(&wsa_priv->wsa_macro_add_child_devices_work);
+	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+
 	return ret;
 reg_macro_fail:
 	mutex_destroy(&wsa_priv->mclk_lock);
@@ -2892,6 +2902,8 @@ static int wsa_macro_remove(struct platform_device *pdev)
 		count < WSA_MACRO_CHILD_DEVICES_MAX; count++)
 		platform_device_unregister(wsa_priv->pdev_child_devices[count]);
 
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 	bolero_unregister_macro(&pdev->dev, WSA_MACRO);
 	mutex_destroy(&wsa_priv->mclk_lock);
 	mutex_destroy(&wsa_priv->swr_clk_lock);
@@ -2903,10 +2915,19 @@ static const struct of_device_id wsa_macro_dt_match[] = {
 	{}
 };
 
+static const struct dev_pm_ops bolero_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(
+		bolero_runtime_suspend,
+		bolero_runtime_resume,
+		NULL
+	)
+};
+
 static struct platform_driver wsa_macro_driver = {
 	.driver = {
 		.name = "wsa_macro",
 		.owner = THIS_MODULE,
+		.pm = &bolero_dev_pm_ops,
 		.of_match_table = wsa_macro_dt_match,
 	},
 	.probe = wsa_macro_probe,
