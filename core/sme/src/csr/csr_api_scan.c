@@ -333,10 +333,9 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 
 /* Add the channel to the occupiedChannels array */
 static void csr_scan_add_to_occupied_channels(struct mac_context *mac,
-					struct tag_csrscan_result *pResult,
+					struct scan_cache_entry *entry,
 					uint8_t sessionId,
 					struct csr_channel *occupied_ch,
-					tDot11fBeaconIEs *pIes,
 					bool is_init_list)
 {
 	QDF_STATUS status;
@@ -344,10 +343,7 @@ static void csr_scan_add_to_occupied_channels(struct mac_context *mac,
 	uint8_t num_occupied_ch = occupied_ch->numChannels;
 	uint8_t *occupied_ch_lst = occupied_ch->channelList;
 
-	ch = pResult->Result.BssDescriptor.channelId;
-	if (!csr_neighbor_roam_connected_profile_match(mac,
-						sessionId, pResult, pIes))
-		return;
+	ch = entry->channel.chan_idx;
 
 	if (is_init_list)
 		mac->scan.roam_candidate_count[sessionId]++;
@@ -3102,15 +3098,21 @@ void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
 void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 				     uint8_t sessionId)
 {
-	tScanResultHandle results;
-	struct scan_result_list *scan_list = NULL;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *scan_entry = NULL;
-	struct tag_csrscan_result *bss_desc = NULL;
-	tDot11fBeaconIEs *ie_ptr = NULL;
+	qdf_list_t *list = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	qdf_list_node_t *cur_lst = NULL;
+	qdf_list_node_t *next_lst = NULL;
+	struct scan_cache_node *cur_node = NULL;
+	struct scan_filter *filter;
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionId];
+	tCsrRoamConnectedProfile *profile = NULL;
 
+	if (!(mac_ctx && mac_ctx->roam.roamSession &&
+	      CSR_IS_SESSION_VALID(mac_ctx, sessionId))) {
+		sme_debug("Invalid session");
+		return;
+	}
 	if (neighbor_roam_info->cfgParams.channelInfo.numOfChannels) {
 		/*
 		 * Ini file contains neighbor scan channel list, hence NO need
@@ -3129,41 +3131,68 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		return;
 	}
 
+	profile = &mac_ctx->roam.roamSession[sessionId].connectedProfile;
+	if (!profile)
+		return;
+
+	filter = qdf_mem_malloc(sizeof(*filter));
+	if (!filter) {
+		sme_err("filter is NULL");
+		return;
+	}
+
+	filter->num_of_auth = 1;
+	filter->auth_type[0] = csr_covert_auth_type_new(profile->AuthType);
+	filter->num_of_enc_type = 1;
+	filter->enc_type[0] = csr_covert_enc_type_new(profile->EncryptionType);
+	filter->num_of_mc_enc_type = 1;
+	filter->mc_enc_type[0] =
+		csr_covert_enc_type_new(profile->mcEncryptionType);
+	filter->num_of_ssid = 1;
+	filter->ssid_list[0].length = profile->SSID.length;
+	qdf_mem_copy(filter->ssid_list[0].ssid, profile->SSID.ssId,
+		     profile->SSID.length);
+
+	pdev = wlan_objmgr_get_pdev_by_id(mac_ctx->psoc, 0, WLAN_LEGACY_MAC_ID);
+
+	if (!pdev) {
+		sme_err("pdev is NULL");
+		qdf_mem_free(filter);
+		return;
+	}
+
 	/* Empty occupied channels here */
 	mac_ctx->scan.occupiedChannels[sessionId].numChannels = 0;
 	mac_ctx->scan.roam_candidate_count[sessionId] = 0;
-
-	status = csr_scan_get_result(mac_ctx, NULL, &results);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			return;
-	scan_list = results;
-	scan_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
-	while (scan_entry) {
-		bss_desc = GET_BASE_ADDR(scan_entry, struct tag_csrscan_result,
-					 Link);
-		ie_ptr = (tDot11fBeaconIEs *) (bss_desc->Result.pvIes);
-		if (!ie_ptr && !QDF_IS_STATUS_SUCCESS(
-			csr_get_parsed_bss_description_ies(mac_ctx,
-				&bss_desc->Result.BssDescriptor, &ie_ptr))) {
-			/* Pick next bss entry before continuing */
-			scan_entry = csr_ll_next(&scan_list->List, scan_entry,
-				     LL_ACCESS_NOLOCK);
-			continue;
-		}
-		csr_scan_add_to_occupied_channels(mac_ctx, bss_desc, sessionId,
-				&mac_ctx->scan.occupiedChannels[sessionId], ie_ptr,
-				true);
-		/*
-		 * Free the memory allocated for pIes in
-		 * csr_get_parsed_bss_description_ies
-		 */
-		if ((!bss_desc->Result.pvIes) && ie_ptr)
-			qdf_mem_free(ie_ptr);
-		scan_entry = csr_ll_next(&scan_list->List, scan_entry,
-				     LL_ACCESS_NOLOCK);
+	list = ucfg_scan_get_result(pdev, filter);
+	if (list)
+		sme_debug("num_entries %d", qdf_list_size(list));
+	if (!list || (list && !qdf_list_size(list))) {
+		sme_err("get scan result failed");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+		qdf_mem_free(filter);
+		if (list)
+			ucfg_scan_purge_results(list);
+		return;
 	}
 
-	csr_scan_result_purge(mac_ctx, scan_list);
+	qdf_list_peek_front(list, &cur_lst);
+	while (cur_lst) {
+		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
+					    node);
+		csr_scan_add_to_occupied_channels(
+				mac_ctx, cur_node->entry,
+				sessionId,
+				&mac_ctx->scan.occupiedChannels[sessionId],
+				true);
+		qdf_list_peek_next(list, cur_lst, &next_lst);
+		cur_lst = next_lst;
+		next_lst = NULL;
+	}
+
+	qdf_mem_free(filter);
+	ucfg_scan_purge_results(list);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 }
 
 /**
