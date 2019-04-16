@@ -93,8 +93,8 @@
 #ifdef WLAN_SUSPEND_RESUME_TEST
 #include "wlan_hdd_driver_ops.h"
 #include "hif.h"
-#include "pld_common.h"
 #endif
+#include "pld_common.h"
 #include "wlan_hdd_lro.h"
 #include "cds_utils.h"
 #include "wlan_osif_request_manager.h"
@@ -4530,6 +4530,29 @@ static int hdd_we_set_max_tx_power_5_0(struct hdd_adapter *adapter, int power)
 
 #ifdef HASTINGS_BT_WAR
 
+static bool hdd_hastings_bt_war_applicable(struct hdd_context *hdd_ctx)
+{
+	struct pld_soc_info info;
+	int errno;
+
+	errno = pld_get_soc_info(hdd_ctx->parent_dev, &info);
+	if (errno)
+		return false;
+
+	/* check for HST 1.1 values */
+
+	if (info.device_version.family_number != 0x04)
+		return false;
+
+	if (info.device_version.device_number != 0x0A)
+		return false;
+
+	if (info.device_version.major_version != 0x01)
+		return false;
+
+	return true;
+}
+
 /*
  * replicate logic:
  * iwpriv wlan0 setUnitTestCmd 19 2 23 1 => enable WAR
@@ -4546,6 +4569,9 @@ static int hdd_hastings_bt_war_set_fw(struct hdd_context *hdd_ctx,
 	uint32_t arg_count = 2;
 	uint32_t arg[2] = {HASTINGS_WAR_FW_PARAM_ID, value};
 	QDF_STATUS status;
+
+	if (!hdd_hastings_bt_war_applicable(hdd_ctx))
+		return 0;
 
 	status = wma_form_unit_test_cmd_and_send(vdev_id, module_id,
 						 arg_count, arg);
@@ -4613,6 +4639,9 @@ static int hdd_we_set_hastings_bt_war(struct hdd_adapter *adapter, int enable)
 		return errno;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_hastings_bt_war_applicable(hdd_ctx))
+		return 0;
+
 	checkpoint_iface_change_wait_time(hdd_ctx);
 
 	return enable ?
