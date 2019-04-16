@@ -18091,6 +18091,9 @@ static int msm_audio_sound_focus_derive_port_id(struct snd_kcontrol *kcontrol,
 	} else if (!strcmp(kcontrol->id.name + strlen(prefix),
 					"QUIN_TDM_TX_0")) {
 		*port_id = AFE_PORT_ID_QUINARY_TDM_TX;
+	} else if (!strcmp(kcontrol->id.name + strlen(prefix),
+					"PRIMARY_TDM")) {
+		*port_id = AFE_PORT_ID_PRIMARY_TDM_TX;
 	} else {
 		pr_err("%s: mixer ctl name=%s, could not derive valid port id\n",
 			__func__, kcontrol->id.name);
@@ -18467,6 +18470,21 @@ static const struct snd_kcontrol_new msm_source_tracking_controls[] = {
 		.name	= "Source Tracking Audio Tx QUIN_TDM_TX_0",
 		.info	= msm_source_tracking_info,
 		.get	= msm_audio_source_tracking_get,
+	},
+	{
+		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.iface  = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name   = "Sound Focus Audio Tx PRIMARY_TDM",
+		.info   = msm_sound_focus_info,
+		.get    = msm_audio_sound_focus_get,
+		.put    = msm_audio_sound_focus_put,
+	},
+	{
+		.access = SNDRV_CTL_ELEM_ACCESS_READ,
+		.iface  = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name   = "Source Tracking Audio Tx PRIMARY_TDM",
+		.info   = msm_source_tracking_info,
+		.get    = msm_audio_source_tracking_get,
 	},
 	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
