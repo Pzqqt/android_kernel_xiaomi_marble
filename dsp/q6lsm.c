@@ -153,7 +153,8 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 		struct lsm_cmd_read_done read_done;
 
 		token = data->token;
-		if (data->payload_size > sizeof(read_done)) {
+		if (data->payload_size > sizeof(read_done) ||
+				data->payload_size < 6 * sizeof(payload[0])) {
 			pr_err("%s: read done error payload size %d expected size %zd\n",
 				__func__, data->payload_size,
 				sizeof(read_done));
@@ -171,6 +172,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 		if (client->cb)
 			client->cb(data->opcode, data->token,
 					(void *)&read_done,
+					sizeof(read_done),
 					client->priv);
 		return 0;
 	} else if (data->opcode == APR_BASIC_RSP_RESULT) {
@@ -198,6 +200,11 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 					__func__, token, client->session);
 				return -EINVAL;
 			}
+			if (data->payload_size < 2 * sizeof(payload[0])) {
+				pr_err("%s: payload has invalid size[%d]\n",
+					__func__, data->payload_size);
+				return -EINVAL;
+			}
 			client->cmd_err_code = payload[1];
 			if (client->cmd_err_code)
 				pr_err("%s: cmd 0x%x failed status %d\n",
@@ -218,7 +225,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 
 	if (client->cb)
 		client->cb(data->opcode, data->token, data->payload,
-			   client->priv);
+				data->payload_size, client->priv);
 
 	return 0;
 }
@@ -1793,6 +1800,8 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 			 "proc 0x%x SID 0x%x\n", __func__, data->opcode,
 			 data->reset_event, data->reset_proc, sid);
 
+		if (sid < LSM_MIN_SESSION_ID || sid > LSM_MAX_SESSION_ID)
+			pr_err("%s: Invalid session %d\n", __func__, sid);
 		apr_reset(lsm_common.apr);
 		lsm_common.apr = NULL;
 		atomic_set(&lsm_common.apr_users, 0);
@@ -1857,7 +1866,8 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 	}
 	if (client->cb)
 		client->cb(data->opcode, data->token,
-			   data->payload, client->priv);
+			   data->payload, data->payload_size,
+			   client->priv);
 	return 0;
 }
 
