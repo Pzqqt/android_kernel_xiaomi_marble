@@ -6600,6 +6600,8 @@ static void dp_vdev_getstats(void *vdev_handle,
 		vdev_stats->rx.multicast.bytes +
 		vdev_stats->rx.bcast.bytes;
 
+	qdf_mem_free(vdev_stats);
+
 }
 
 
