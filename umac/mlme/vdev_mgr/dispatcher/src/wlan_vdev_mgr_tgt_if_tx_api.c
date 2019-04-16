@@ -127,6 +127,8 @@ QDF_STATUS tgt_vdev_mgr_create_complete(struct vdev_mlme_obj *vdev_mlme)
 
 	inactivity = &vdev_mlme->mgmt.inactivity_params;
 
+	param.vdev_id = vdev_id;
+
 	param.param_value =
 		inactivity->keepalive_min_idle_inactive_time_secs;
 	param.param_id = WLAN_MLME_CFG_MIN_IDLE_INACTIVE_TIME;
