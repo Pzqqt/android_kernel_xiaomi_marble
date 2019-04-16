@@ -2328,6 +2328,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		goto exit_with_success;
 	case QDF_FTM_MODE:
 		/* vdevs are dynamically managed by firmware in FTM */
+		hdd_register_wext(adapter->dev);
 		goto exit_with_success;
 	default:
 		hdd_err("Invalid session type %d", device_mode);
