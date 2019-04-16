@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,7 +33,11 @@
 
 #define dsc_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_QDF, params)
 #define dsc_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_QDF, params)
+#ifdef WLAN_DSC_DEBUG
 #define dsc_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_QDF, params)
+#else
+#define dsc_debug(params...) /* no-op */
+#endif
 
 #define dsc_enter_exit dsc_debug
 #define dsc_enter() dsc_enter_exit("enter")
