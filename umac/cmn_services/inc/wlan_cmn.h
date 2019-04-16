@@ -49,7 +49,7 @@
 #endif
 
 /* Max no. of Peers, a device can support */
-#define WLAN_UMAC_PSOC_MAX_PEERS (1024 + WLAN_UMAC_PSOC_MAX_VDEVS)
+#define WLAN_UMAC_PSOC_MAX_PEERS (1536 + WLAN_UMAC_PSOC_MAX_VDEVS)
 
 /* Max no. of Temporary Peers, a pdev can support */
 #define WLAN_MAX_PDEV_TEMP_PEERS 128
