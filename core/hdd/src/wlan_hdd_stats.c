@@ -3935,24 +3935,11 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	return status;
 }
 
-/**
- * hdd_report_max_rate() - Fill the max rate stats in the station info structure
- * to be sent to the userspace.
- *
- * @mac_handle: The mac handle
- * @sinfo: The station_info struct to be filled
- * @tx_rate_flags: The TX rate flags computed from tx rate
- * @tx_mcs_index; The TX mcs index computed from tx rate
- * @my_tx_rate: The tx_rate from fw stats
- * @tx_nss: The TX NSS from fw stats
- *
- * Return: 0 for success
- */
-static int hdd_report_max_rate(mac_handle_t mac_handle,
-			       struct station_info *sinfo,
-			       uint8_t tx_rate_flags,
-			       uint8_t tx_mcs_index,
-			       uint16_t my_tx_rate, uint8_t tx_nss)
+int hdd_report_max_rate(mac_handle_t mac_handle,
+			struct station_info *sinfo,
+			uint8_t tx_rate_flags,
+			uint8_t tx_mcs_index,
+			uint16_t my_tx_rate, uint8_t tx_nss)
 {
 	uint8_t i, j, rssidx;
 	uint16_t max_rate = 0;

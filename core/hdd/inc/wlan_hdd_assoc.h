@@ -170,6 +170,8 @@ struct hdd_conn_flag {
  * @auth_time: last authentication established time
  * @connect_time: last association established time
  * @ch_width: channel width of operating channel
+ * @max_tx_bitrate: Max tx bitrate supported by the AP
+ * to which currently sta is connected.
  */
 struct hdd_connection_info {
 	eConnectionState conn_state;
@@ -206,6 +208,7 @@ struct hdd_connection_info {
 	char auth_time[HDD_TIME_STRING_LEN];
 	char connect_time[HDD_TIME_STRING_LEN];
 	enum phy_ch_width ch_width;
+	struct rate_info max_tx_bitrate;
 };
 
 /* Forward declarations */
