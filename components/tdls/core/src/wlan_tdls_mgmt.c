@@ -133,7 +133,6 @@ static QDF_STATUS tdls_process_rx_mgmt(
 	else
 		tdls_debug("rx mgmt, but no valid up layer callback");
 
-	qdf_mem_free(rx_mgmt);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -163,6 +162,7 @@ QDF_STATUS tdls_process_rx_frame(struct scheduler_msg *msg)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 	}
 
+	qdf_mem_free(tdls_rx->rx_mgmt);
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
 
