@@ -4995,6 +4995,7 @@ typedef enum {
 	wmi_pdev_param_set_prb_rsp_ttl,
 	wmi_pdev_param_set_mu_ppdu_duration,
 	wmi_pdev_param_set_tbtt_ctrl,
+	wmi_pdev_param_set_cmd_obss_pd_threshold,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
