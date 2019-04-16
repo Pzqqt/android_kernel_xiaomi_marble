@@ -1738,7 +1738,6 @@ void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 {
-	struct tdls_peer *curr_peer;
 	struct tdls_vdev_priv_obj *tdls_vdev;
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1756,20 +1755,12 @@ QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 	if (!tdls_vdev)
 		goto  return_success;
 
-	curr_peer = tdls_is_progress(tdls_vdev, NULL, 0);
-	if (curr_peer) {
+	if (tdls_is_progress(tdls_vdev, NULL, 0)) {
 		if (tdls_soc->scan_reject_count++ >= TDLS_SCAN_REJECT_MAX) {
-			tdls_notice(QDF_MAC_ADDR_STR
-				    ". scan rejected %d. force it to idle",
-				    QDF_MAC_ADDR_ARRAY(
-						curr_peer->peer_mac.bytes),
-				    tdls_soc->scan_reject_count);
+			tdls_notice("Allow this scan req. as already max no of scan's are rejected");
 			tdls_soc->scan_reject_count = 0;
-
-			tdls_set_peer_link_status(curr_peer,
-						  TDLS_LINK_IDLE,
-						  TDLS_LINK_UNSPECIFIED);
 			status = QDF_STATUS_SUCCESS;
+
 		} else {
 			tdls_warn("tdls in progress. scan rejected %d",
 				  tdls_soc->scan_reject_count);
