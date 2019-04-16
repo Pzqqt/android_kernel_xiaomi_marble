@@ -307,7 +307,17 @@ QDF_STATUS wlan_serialization_activate_cmd(
 	 * command is already pushed to active queue above
 	 * now start the timer and notify requestor
 	 */
-	wlan_serialization_find_and_start_timer(psoc, &cmd_list->cmd);
+
+	status = wlan_serialization_find_and_start_timer(psoc, &cmd_list->cmd,
+							 ser_reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ser_err("Failed to start timer cmd type[%d] id[%d] vdev[%d]",
+			cmd_list->cmd.cmd_type,
+			cmd_list->cmd.cmd_id,
+			wlan_vdev_get_id(cmd_list->cmd.vdev));
+		goto timer_failed;
+	}
+
 	/*
 	 * Remember that serialization module may send
 	 * this callback in same context through which it
@@ -335,6 +345,7 @@ QDF_STATUS wlan_serialization_activate_cmd(
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
+timer_failed:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wlan_serialization_dequeue_cmd(&cmd_list->cmd,
 					       SER_ACTIVATION_FAILED,
@@ -500,7 +511,9 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	}
 
 	if (active_cmd)
-		wlan_serialization_find_and_stop_timer(psoc, &cmd_list->cmd);
+		wlan_serialization_find_and_stop_timer(
+				psoc, &cmd_list->cmd,
+				ser_reason);
 
 	qdf_mem_copy(&cmd_bkup, &cmd_list->cmd,
 		     sizeof(struct wlan_serialization_command));
@@ -548,14 +561,22 @@ void wlan_serialization_generic_timer_cb(void *arg)
 {
 	struct wlan_serialization_timer *timer = arg;
 	struct wlan_serialization_command *cmd = timer->cmd;
+	struct wlan_objmgr_vdev *vdev = NULL;
+
 
 	if (!cmd) {
 		ser_err("Command not found");
 		return;
 	}
 
-	ser_err("active cmd timeout for cmd_type[%d] vdev[%pK]",
-		cmd->cmd_type, cmd->vdev);
+	vdev = cmd->vdev;
+	if (!vdev) {
+		ser_err("Invalid vdev");
+		return;
+	}
+
+	ser_err("active cmd timeout for cmd_type[%d] vdev[%d]",
+		cmd->cmd_type, wlan_vdev_get_id(cmd->vdev));
 
 	if (cmd->cmd_cb)
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
@@ -565,6 +586,9 @@ void wlan_serialization_generic_timer_cb(void *arg)
 	 * dequeue command then we have to destroy the timer.
 	 */
 	wlan_serialization_dequeue_cmd(cmd, SER_TIMEOUT, true);
+
+	/* Release the ref taken before the timer was started */
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 }
 
 static QDF_STATUS wlan_serialization_mc_flush_noop(struct scheduler_msg *msg)
@@ -595,11 +619,19 @@ wlan_serialization_timer_cb_mc_ctx(void *arg)
 
 static void wlan_serialization_timer_handler(void *arg)
 {
-	ser_enter();
+	struct wlan_serialization_timer *timer = arg;
+	struct wlan_serialization_command *cmd = timer->cmd;
+
+	if (!cmd) {
+		ser_err("Command not found");
+		return;
+	}
+
+	ser_err("active cmd timeout for cmd_type[%d] vdev[%d]",
+		cmd->cmd_type, wlan_vdev_get_id(cmd->vdev));
 
 	wlan_serialization_timer_cb_mc_ctx(arg);
 
-	ser_exit();
 }
 
 QDF_STATUS
@@ -644,7 +676,7 @@ wlan_serialization_find_and_update_timer(
 		ser_debug("Updated the timer for cmd type:%d, id: %d",
 			  cmd->cmd_type, cmd->cmd_id);
 	else
-		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
+		ser_debug("Can't find timer for cmd_type[%d]", cmd->cmd_type);
 
 exit:
 	return status;
@@ -652,13 +684,15 @@ exit:
 
 QDF_STATUS
 wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_serialization_command *cmd)
+				       struct wlan_serialization_command *cmd,
+				       enum ser_queue_reason ser_reason)
 {
 	struct wlan_ser_psoc_obj *psoc_ser_obj;
 	struct wlan_serialization_timer *ser_timer;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i = 0;
 	uint32_t phy_version;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!psoc || !cmd) {
 		ser_err("invalid param");
@@ -689,8 +723,21 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		    (ser_timer->cmd->vdev != cmd->vdev))
 			continue;
 
+		vdev = ser_timer->cmd->vdev;
 		status = wlan_serialization_stop_timer(ser_timer);
+		/*
+		 * Release the vdev reference when the active cmd is removed
+		 * through remove/cancel request.
+		 *
+		 * In case the command removal is because of timer expiry,
+		 * the vdev is released when the timer handler completes.
+		 */
+		if (vdev && ser_reason != SER_TIMEOUT)
+			wlan_objmgr_vdev_release_ref(
+					vdev, WLAN_SERIALIZATION_ID);
+
 		break;
+
 	}
 
 	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
@@ -708,7 +755,8 @@ exit:
 
 QDF_STATUS
 wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
-					struct wlan_serialization_command *cmd)
+					struct wlan_serialization_command *cmd,
+					enum ser_queue_reason ser_reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wlan_ser_psoc_obj *psoc_ser_obj;
@@ -742,6 +790,24 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 		/* Remember timer is pointing to command */
 		ser_timer->cmd = cmd;
 		status = QDF_STATUS_SUCCESS;
+
+		/*
+		 * Get vdev reference before starting the timer
+		 * Remove the reference before removing the command
+		 * in any one of the cases:
+		 * 1. Active command is removed through remove/cancel request
+		 * 2. Timer expiry handler is completed.
+		 */
+
+		status = wlan_objmgr_vdev_try_get_ref(ser_timer->cmd->vdev,
+						      WLAN_SERIALIZATION_ID);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wlan_serialization_release_lock(
+					&psoc_ser_obj->timer_lock);
+			ser_err("Unbale to get vdev reference");
+			status = QDF_STATUS_E_FAILURE;
+			goto error;
+		}
 		break;
 	}
 
@@ -771,7 +837,6 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 
 error:
 exit:
-
 	return status;
 }
 

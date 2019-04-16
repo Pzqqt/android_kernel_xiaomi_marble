@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,6 +136,7 @@ void wlan_serialization_generic_timer_cb(void *arg);
  * wlan_serialization_find_and_start_timer() - to find and start the timer
  * @psoc: pointer to psoc
  * @cmd: pointer to actual command
+ * @ser_reason: serialization reason
  *
  * find the free timer, initialize it, and start it
  *
@@ -143,7 +144,8 @@ void wlan_serialization_generic_timer_cb(void *arg);
  */
 QDF_STATUS
 wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
-					struct wlan_serialization_command *cmd);
+					struct wlan_serialization_command *cmd,
+					enum ser_queue_reason ser_reason);
 
 /**
  * wlan_serialization_find_and_update_timer() - to find and update the timer
@@ -163,6 +165,7 @@ wlan_serialization_find_and_update_timer(
  * wlan_serialization_find_and_stop_timer() - to find and stop the timer
  * @psoc: pointer to psoc
  * @cmd: pointer to actual command
+ * @ser_reason: serialization reason
  *
  * find the timer associated with command, stop it and destroy it
  *
@@ -170,7 +173,9 @@ wlan_serialization_find_and_update_timer(
  */
 QDF_STATUS
 wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_serialization_command *cmd);
+				       struct wlan_serialization_command *cmd,
+				       enum ser_queue_reason ser_reason);
+
 
 /**
  * wlan_serialization_find_and_cancel_cmd() - to find cmd from queue and cancel

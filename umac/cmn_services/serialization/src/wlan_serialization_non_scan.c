@@ -567,7 +567,8 @@ wlan_ser_cancel_non_scan_cmd(
 			}
 
 			qdf_status = wlan_serialization_find_and_stop_timer(
-							psoc, &cmd_list->cmd);
+							psoc, &cmd_list->cmd,
+							SER_CANCEL);
 			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				ser_err("Can't find timer for active cmd");
 				status = WLAN_SER_CMD_NOT_FOUND;
