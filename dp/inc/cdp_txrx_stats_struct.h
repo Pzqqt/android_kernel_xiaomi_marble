@@ -1607,6 +1607,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ACS_NEAR_RANGE_WEIGHTAGE = 413,
 	OL_ATH_PARAM_ACS_MID_RANGE_WEIGHTAGE = 414,
 	OL_ATH_PARAM_ACS_FAR_RANGE_WEIGHTAGE = 415,
+	/* Set SELF AP OBSS_PD_THRESHOLD value */
+	OL_ATH_PARAM_SET_CMD_OBSS_PD_THRESHOLD = 416,
 	/* Enable/Disable/Set MGMT_TTL in milliseconds. */
 	OL_ATH_PARAM_MGMT_TTL = 417,
 	/* Enable/Disable/Set PROBE_RESP_TTL in milliseconds */
@@ -1615,6 +1617,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_MU_PPDU_DURATION = 419,
 	/* Set TBTT_CTRL_CFG */
 	OL_ATH_PARAM_TBTT_CTRL = 420,
+	/* Enable/disable AP OBSS_PD_THRESHOLD */
+	OL_ATH_PARAM_SET_CMD_OBSS_PD_THRESHOLD_ENABLE = 421,
 };
 #endif
 /* Bitmasks for stats that can block */
