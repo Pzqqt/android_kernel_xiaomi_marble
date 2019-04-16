@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -264,22 +264,20 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	uint32_t scan_queue_size = 0;
 
 	if ((frm_type != MGMT_PROBE_RESP) &&
-	   (frm_type != MGMT_BEACON)) {
+	    (frm_type != MGMT_BEACON)) {
 		scm_err("frame is not beacon or probe resp");
 		status = QDF_STATUS_E_INVAL;
 		goto free;
 	}
-	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
 
+	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
 	if (!bcn) {
-		scm_debug_rl("Failed to allocate memory for bcn");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}
 	bcn->rx_data =
 		qdf_mem_malloc_atomic(sizeof(*rx_param));
 	if (!bcn->rx_data) {
-		scm_debug_rl("Failed to allocate memory for rx_data");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}

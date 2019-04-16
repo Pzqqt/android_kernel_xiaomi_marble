@@ -186,22 +186,20 @@ wlan_scan_process_bcn_probe_rx_sync(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	if ((frm_type != MGMT_PROBE_RESP) &&
-	   (frm_type != MGMT_BEACON)) {
+	    (frm_type != MGMT_BEACON)) {
 		scm_err("frame is not beacon or probe resp");
 		status = QDF_STATUS_E_INVAL;
 		goto free;
 	}
-	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
 
+	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
 	if (!bcn) {
-		scm_debug_rl("Failed to allocate memory for bcn");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}
 	bcn->rx_data =
 		qdf_mem_malloc_atomic(sizeof(*rx_param));
 	if (!bcn->rx_data) {
-		scm_debug_rl("Failed to allocate memory for rx_data");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}

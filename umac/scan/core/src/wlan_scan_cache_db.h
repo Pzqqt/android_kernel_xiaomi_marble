@@ -67,7 +67,8 @@ struct scan_bcn_probe_event {
  * scm_handle_bcn_probe() - Process beacon and probe rsp
  * @msg: schedular msg with bcn info;
  *
- * API to handle the beacon/probe resp
+ * API to handle the beacon/probe resp. msg->bodyptr will be consumed and freed
+ * by this func
  *
  * Return: QDF status.
  */
@@ -77,12 +78,12 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg);
  * __scm_handle_bcn_probe() - Process beacon and probe rsp
  * @bcn: beacon info;
  *
- * API to handle the beacon/probe resp
+ * API to handle the beacon/probe resp. bcn will be consumed and freed by this
+ * func
  *
  * Return: QDF status.
  */
 QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn);
-
 
 /**
  * scm_age_out_entries() - Age out entries older than aging time
