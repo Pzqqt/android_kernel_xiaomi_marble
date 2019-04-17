@@ -694,19 +694,23 @@ struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
  * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
  * @soc: DP SOC handle
  * @mpdu: mpdu for which peer is invalid
+ * @mac_id: mac_id which is one of 3 mac_ids(Assuming mac_id and
+ * pool_id has same mapping)
  *
  * return: integer type
  */
-uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
+				   uint8_t mac_id)
 {
 	struct dp_invalid_peer_msg msg;
 	struct dp_vdev *vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	struct ieee80211_frame *wh;
-	uint8_t i;
 	qdf_nbuf_t curr_nbuf, next_nbuf;
 	uint8_t *rx_tlv_hdr = qdf_nbuf_data(mpdu);
 	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
+
+	rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
 
 	if (!HAL_IS_DECAP_FORMAT_RAW(rx_tlv_hdr)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -718,53 +722,51 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 
 	if (!DP_FRAME_IS_DATA(wh)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"NAWDS valid only for data frames");
+			  "NAWDS valid only for data frames");
 		goto free;
 	}
 
 	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"Invalid nbuf length");
+			"Invalid nbuf length");
 		goto free;
 	}
 
+	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		pdev = soc->pdev_list[i];
-		if (!pdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"PDEV not found");
-			continue;
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "PDEV not found");
+		goto free;
+	}
+
+	if (pdev->filter_neighbour_peers) {
+		/* Next Hop scenario not yet handle */
+		vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
+		if (vdev) {
+			dp_rx_mon_deliver(soc, pdev->pdev_id,
+					  pdev->invalid_peer_head_msdu,
+					  pdev->invalid_peer_tail_msdu);
+
+			pdev->invalid_peer_head_msdu = NULL;
+			pdev->invalid_peer_tail_msdu = NULL;
+
+			return 0;
 		}
-
-		if (pdev->filter_neighbour_peers) {
-			/* Next Hop scenario not yet handle */
-			vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
-			if (vdev) {
-				dp_rx_mon_deliver(soc, i,
-						pdev->invalid_peer_head_msdu,
-						pdev->invalid_peer_tail_msdu);
-
-				pdev->invalid_peer_head_msdu = NULL;
-				pdev->invalid_peer_tail_msdu = NULL;
-
-				return 0;
-			}
-		}
+	}
 
 
-		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
-			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
-						QDF_MAC_ADDR_SIZE) == 0) {
-				goto out;
-			}
+		if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
+				QDF_MAC_ADDR_SIZE) == 0) {
+			goto out;
 		}
 	}
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"VDEV not found");
+			"VDEV not found");
 		goto free;
 	}
 
@@ -794,22 +796,25 @@ free:
  * @soc: DP SOC handle
  * @mpdu: mpdu for which peer is invalid
  * @mpdu_done: if an mpdu is completed
+ * @mac_id: mac_id which is one of 3 mac_ids(Assuming mac_id and
+ * pool_id has same mapping)
  *
  * return: integer type
  */
 void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
-					qdf_nbuf_t mpdu, bool mpdu_done)
+					qdf_nbuf_t mpdu, bool mpdu_done,
+					uint8_t mac_id)
 {
 	/* Only trigger the process when mpdu is completed */
 	if (mpdu_done)
-		dp_rx_process_invalid_peer(soc, mpdu);
+		dp_rx_process_invalid_peer(soc, mpdu, mac_id);
 }
 #else
-uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
+				   uint8_t mac_id)
 {
 	qdf_nbuf_t curr_nbuf, next_nbuf;
 	struct dp_pdev *pdev;
-	uint8_t i;
 	struct dp_vdev *vdev = NULL;
 	struct ieee80211_frame *wh;
 	uint8_t *rx_tlv_hdr = qdf_nbuf_data(mpdu);
@@ -829,25 +834,23 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 		goto free;
 	}
 
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		pdev = soc->pdev_list[i];
-		if (!pdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "PDEV not found");
-			continue;
-		}
-
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
-					QDF_MAC_ADDR_SIZE) == 0) {
-				qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-				goto out;
-			}
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+			  QDF_TRACE_LEVEL_ERROR,
+			  "PDEV not found");
+		goto free;
 	}
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
+				QDF_MAC_ADDR_SIZE) == 0) {
+			qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+			goto out;
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -860,15 +863,8 @@ out:
 		soc->cdp_soc.ol_ops->rx_invalid_peer(vdev->vdev_id, wh);
 free:
 	/* reset the head and tail pointers */
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		pdev = soc->pdev_list[i];
-		if (!pdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "PDEV not found");
-			continue;
-		}
-
+	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	if (pdev) {
 		pdev->invalid_peer_head_msdu = NULL;
 		pdev->invalid_peer_tail_msdu = NULL;
 	}
@@ -885,10 +881,11 @@ free:
 }
 
 void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
-					qdf_nbuf_t mpdu, bool mpdu_done)
+					qdf_nbuf_t mpdu, bool mpdu_done,
+					uint8_t mac_id)
 {
 	/* Process the nbuf */
-	dp_rx_process_invalid_peer(soc, mpdu);
+	dp_rx_process_invalid_peer(soc, mpdu, mac_id);
 }
 #endif
 

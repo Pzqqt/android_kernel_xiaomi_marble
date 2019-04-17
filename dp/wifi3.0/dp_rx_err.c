@@ -735,7 +735,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		/* Trigger invalid peer handler wrapper */
 		dp_rx_process_invalid_peer_wrapper(soc,
 						   pdev->invalid_peer_head_msdu,
-						   mpdu_done);
+						   mpdu_done, pool_id);
 
 		if (mpdu_done) {
 			pdev->invalid_peer_head_msdu = NULL;
@@ -858,13 +858,15 @@ drop_nbuf:
  * @rx_tlv_hdr: start of rx tlv header
  * @peer: peer reference
  * @err_code: rxdma err code
+ * @mac_id: mac_id which is one of 3 mac_ids(Assuming mac_id and
+ * pool_id has same mapping)
  *
  * Return: None
  */
 void
 dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			uint8_t *rx_tlv_hdr, struct dp_peer *peer,
-			uint8_t err_code)
+			uint8_t err_code, uint8_t mac_id)
 {
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
@@ -903,7 +905,7 @@ dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 				qdf_nbuf_len(nbuf));
 		/* Trigger invalid peer handler wrapper */
-		dp_rx_process_invalid_peer_wrapper(soc, nbuf, true);
+		dp_rx_process_invalid_peer_wrapper(soc, nbuf, true, mac_id);
 		return;
 	}
 
@@ -1500,9 +1502,13 @@ done:
 				case HAL_RXDMA_ERR_UNENCRYPTED:
 
 				case HAL_RXDMA_ERR_WIFI_PARSE:
+					pool_id = wbm_err_info.pool_id;
 					dp_rx_process_rxdma_err(soc, nbuf,
-								rx_tlv_hdr, peer,
-								wbm_err_info.rxdma_err_code);
+								rx_tlv_hdr,
+								peer,
+								wbm_err_info.
+								rxdma_err_code,
+								pool_id);
 					nbuf = next;
 					if (peer)
 						dp_peer_unref_del_find_by_id(peer);

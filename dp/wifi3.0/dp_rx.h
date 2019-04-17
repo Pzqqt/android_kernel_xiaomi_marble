@@ -562,9 +562,10 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 
 }
 
-uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
+uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
+				   uint8_t mac_id);
 void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
-		qdf_nbuf_t mpdu, bool mpdu_done);
+		qdf_nbuf_t mpdu, bool mpdu_done, uint8_t mac_id);
 void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer);
 void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
@@ -1173,7 +1174,7 @@ static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 
 void dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
-			     uint8_t err_code);
+			     uint8_t err_code, uint8_t mac_id);
 
 #ifdef PEER_CACHE_RX_PKTS
 /**
