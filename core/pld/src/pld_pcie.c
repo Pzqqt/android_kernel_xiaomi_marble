@@ -717,6 +717,14 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 	info->fw_version = cnss_info.fw_version;
 	strlcpy(info->fw_build_timestamp, cnss_info.fw_build_timestamp,
 		sizeof(info->fw_build_timestamp));
+	info->device_version.family_number =
+		cnss_info.device_version.family_number;
+	info->device_version.device_number =
+		cnss_info.device_version.device_number;
+	info->device_version.major_version =
+		cnss_info.device_version.major_version;
+	info->device_version.minor_version =
+		cnss_info.device_version.minor_version;
 
 	return 0;
 }

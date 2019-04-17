@@ -264,6 +264,23 @@ enum pld_driver_mode {
 	PLD_COLDBOOT_CALIBRATION = 7
 };
 
+/**
+ * struct pld_device_version - WLAN device version info
+ * @family_number: family number of WLAN SOC HW
+ * @device_number: device number of WLAN SOC HW
+ * @major_version: major version of WLAN SOC HW
+ * @minor_version: minor version of WLAN SOC HW
+ *
+ * pld_device_version is used to store WLAN device version info
+ */
+
+struct pld_device_version {
+	u32 family_number;
+	u32 device_number;
+	u32 major_version;
+	u32 minor_version;
+};
+
 #define PLD_MAX_TIMESTAMP_LEN 32
 
 /**
@@ -276,6 +293,7 @@ enum pld_driver_mode {
  * @soc_id: SOC ID
  * @fw_version: FW version
  * @fw_build_timestamp: FW build timestamp
+ * @device_version: WLAN device version info
  *
  * pld_soc_info is used to store WLAN SOC information.
  */
@@ -288,6 +306,7 @@ struct pld_soc_info {
 	u32 soc_id;
 	u32 fw_version;
 	char fw_build_timestamp[PLD_MAX_TIMESTAMP_LEN + 1];
+	struct pld_device_version device_version;
 };
 
 /**
