@@ -748,8 +748,6 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *ppdev)
 	soc->reo_remapped = false;
 	qdf_spin_unlock_bh(&soc->remap_lock);
 
-	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1508,17 +1506,19 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
  */
 QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *ppdev)
 {
+	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+	struct dp_soc *soc = pdev->soc;
 	QDF_STATUS result;
 
 	result = qdf_ipa_wdi_disable_pipes();
-	if (result) {
+	if (result)
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Disable WDI PIPE fail, code %d",
 			  __func__, result);
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	return QDF_STATUS_SUCCESS;
+	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
+
+	return result ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
 
 /**
