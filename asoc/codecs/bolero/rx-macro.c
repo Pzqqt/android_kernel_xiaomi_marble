@@ -1625,6 +1625,9 @@ static int rx_macro_config_classh(struct snd_soc_component *component,
 	case INTERP_AUX:
 		snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_RX2_RX_PATH_CFG0,
+				0x08, 0x08);
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX2_RX_PATH_CFG0,
 				0x10, 0x10);
 		break;
 	}
@@ -2197,16 +2200,18 @@ static int rx_macro_enable_interp_clk(struct snd_soc_component *component,
 			(interp_idx * RX_MACRO_RX_PATH_OFFSET);
 	dsm_reg = BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL +
 			(interp_idx * RX_MACRO_RX_PATH_OFFSET);
+	if (interp_idx == INTERP_AUX)
+		dsm_reg = BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL;
 	rx_cfg2_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG2 +
 			(interp_idx * RX_MACRO_RX_PATH_OFFSET);
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		if (rx_priv->main_clk_users[interp_idx] == 0) {
-			snd_soc_component_update_bits(component, dsm_reg,
-					0x01, 0x01);
 			/* Main path PGA mute enable */
 			snd_soc_component_update_bits(component, main_reg,
 					0x10, 0x10);
+			snd_soc_component_update_bits(component, dsm_reg,
+					0x01, 0x01);
 			/* Clk enable */
 			snd_soc_component_update_bits(component, main_reg,
 					0x20, 0x20);
