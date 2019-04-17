@@ -31,29 +31,24 @@
 #define SDE_HW_STEP(rev)		((rev) & 0xFFFF)
 #define SDE_HW_MAJOR_MINOR(rev)		((rev) >> 16)
 
-#define IS_SDE_MAJOR_SAME(rev1, rev2)   \
-	(SDE_HW_MAJOR((rev1)) == SDE_HW_MAJOR((rev2)))
-
-#define IS_SDE_MAJOR_MINOR_SAME(rev1, rev2)   \
-	(SDE_HW_MAJOR_MINOR((rev1)) == SDE_HW_MAJOR_MINOR((rev2)))
-
-#define SDE_HW_VER_170	SDE_HW_VER(1, 7, 0) /* 8996 v1.0 */
-#define SDE_HW_VER_171	SDE_HW_VER(1, 7, 1) /* 8996 v2.0 */
-#define SDE_HW_VER_172	SDE_HW_VER(1, 7, 2) /* 8996 v3.0 */
-#define SDE_HW_VER_300	SDE_HW_VER(3, 0, 0) /* 8998 v1.0 */
-#define SDE_HW_VER_301	SDE_HW_VER(3, 0, 1) /* 8998 v1.1 */
-#define SDE_HW_VER_400	SDE_HW_VER(4, 0, 0) /* sdm845 v1.0 */
-#define SDE_HW_VER_401	SDE_HW_VER(4, 0, 1) /* sdm845 v2.0 */
-#define SDE_HW_VER_410	SDE_HW_VER(4, 1, 0) /* sdm670 v1.0 */
-#define SDE_HW_VER_500	SDE_HW_VER(5, 0, 0) /* sm8150 v1.0 */
-#define SDE_HW_VER_501	SDE_HW_VER(5, 0, 1) /* sm8150 v2.0 */
-#define SDE_HW_VER_510	SDE_HW_VER(5, 1, 0) /* sdmshrike v1.0 */
-#define SDE_HW_VER_520	SDE_HW_VER(5, 2, 0) /* sdmmagpie v1.0 */
-#define SDE_HW_VER_530	SDE_HW_VER(5, 3, 0) /* sm6150 v1.0 */
-#define SDE_HW_VER_540	SDE_HW_VER(5, 4, 0) /* sdmtrinket v1.0 */
+#define SDE_HW_VER_170	SDE_HW_VER(1, 7, 0) /* 8996 */
+#define SDE_HW_VER_300	SDE_HW_VER(3, 0, 0) /* 8998 */
+#define SDE_HW_VER_400	SDE_HW_VER(4, 0, 0) /* sdm845 */
+#define SDE_HW_VER_410	SDE_HW_VER(4, 1, 0) /* sdm670 */
+#define SDE_HW_VER_500	SDE_HW_VER(5, 0, 0) /* sm8150 */
+#define SDE_HW_VER_510	SDE_HW_VER(5, 1, 0) /* sdmshrike */
+#define SDE_HW_VER_520	SDE_HW_VER(5, 2, 0) /* sdmmagpie */
+#define SDE_HW_VER_530	SDE_HW_VER(5, 3, 0) /* sm6150 */
+#define SDE_HW_VER_540	SDE_HW_VER(5, 4, 0) /* sdmtrinket */
 #define SDE_HW_VER_600	SDE_HW_VER(6, 0, 0) /* kona */
 #define SDE_HW_VER_610	SDE_HW_VER(6, 1, 0) /* sm7250 */
 #define SDE_HW_VER_630	SDE_HW_VER(6, 3, 0) /* bengal */
+
+/* Avoid using below IS_XXX macros outside catalog, use feature bit instead */
+#define IS_SDE_MAJOR_SAME(rev1, rev2)   \
+		(SDE_HW_MAJOR((rev1)) == SDE_HW_MAJOR((rev2)))
+#define IS_SDE_MAJOR_MINOR_SAME(rev1, rev2)   \
+		(SDE_HW_MAJOR_MINOR((rev1)) == SDE_HW_MAJOR_MINOR((rev2)))
 
 #define IS_MSM8996_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_170)
 #define IS_MSM8998_TARGET(rev) IS_SDE_MAJOR_MINOR_SAME((rev), SDE_HW_VER_300)
@@ -212,6 +207,7 @@ enum {
  * @SDE_SSPP_BLOCK_SEC_UI    Blocks secure-ui layers
  * @SDE_SSPP_SCALER_QSEED3LITE Qseed3lite algorithm support
  * @SDE_SSPP_TRUE_INLINE_ROT_V1, Support of SSPP true inline rotation v1
+ * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
  * @SDE_SSPP_MAX             maximum value
  */
 enum {
@@ -240,6 +236,7 @@ enum {
 	SDE_SSPP_BLOCK_SEC_UI,
 	SDE_SSPP_SCALER_QSEED3LITE,
 	SDE_SSPP_TRUE_INLINE_ROT_V1,
+	SDE_SSPP_INLINE_CONST_CLR,
 	SDE_SSPP_MAX
 };
 
@@ -276,6 +273,7 @@ enum {
  * @SDE_DISP_CWB_PREF         Layer mixer preferred for CWB
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
  * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
+ * @SDE_MIXER_COMBINED_ALPHA  Layer mixer bg and fg alpha in single register
  * @SDE_MIXER_MAX             maximum value
  */
 enum {
@@ -286,6 +284,7 @@ enum {
 	SDE_DISP_PRIMARY_PREF,
 	SDE_DISP_SECONDARY_PREF,
 	SDE_DISP_CWB_PREF,
+	SDE_MIXER_COMBINED_ALPHA,
 	SDE_MIXER_MAX
 };
 
@@ -460,11 +459,13 @@ enum {
  * VBIF sub-blocks and features
  * @SDE_VBIF_QOS_OTLIM        VBIF supports OT Limit
  * @SDE_VBIF_QOS_REMAP        VBIF supports QoS priority remap
+ * @SDE_VBIF_DISABLE_SHAREABLE: VBIF requires inner/outer shareables disabled
  * @SDE_VBIF_MAX              maximum value
  */
 enum {
 	SDE_VBIF_QOS_OTLIM = 0x1,
 	SDE_VBIF_QOS_REMAP,
+	SDE_VBIF_DISABLE_SHAREABLE,
 	SDE_VBIF_MAX
 };
 
@@ -1273,6 +1274,10 @@ struct sde_limit_cfg {
  * @has_3d_merge_reset Supports 3D merge reset
  * @has_decimation     Supports decimation
  * @has_qos_fl_nocalc  flag to indicate QoS fill level needs no calculation
+ * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
+ * @has_intf_te        TE logic resides in INTF block
+ * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
+ * @inline_disable_const_clr     Disable constant color during inline rotate
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1333,6 +1338,10 @@ struct sde_mdss_cfg {
 	bool has_3d_merge_reset;
 	bool has_decimation;
 	bool has_qos_fl_nocalc;
+	bool has_mixer_combined_alpha;
+	bool has_intf_te;
+	bool vbif_disable_inner_outer_shareable;
+	bool inline_disable_const_clr;
 
 	struct sde_sc_cfg sc_cfg;
 

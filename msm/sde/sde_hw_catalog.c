@@ -1210,6 +1210,9 @@ static void _sde_sspp_setup_vig(struct sde_mdss_cfg *sde_cfg,
 		sblk->llcc_slice_size =
 			sde_cfg->sc_cfg.llcc_slice_size;
 	}
+
+	if (sde_cfg->inline_disable_const_clr)
+		set_bit(SDE_SSPP_INLINE_CONST_CLR, &sspp->features);
 }
 
 static void _sde_sspp_setup_rgb(struct sde_mdss_cfg *sde_cfg,
@@ -1850,6 +1853,8 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			set_bit(SDE_MIXER_SOURCESPLIT, &mixer->features);
 		if (sde_cfg->has_dim_layer)
 			set_bit(SDE_DIM_LAYER, &mixer->features);
+		if (sde_cfg->has_mixer_combined_alpha)
+			set_bit(SDE_MIXER_COMBINED_ALPHA, &mixer->features);
 
 		of_property_read_string_index(np,
 			mixer_prop[MIXER_DISP].prop_name, i, &disp_pref);
@@ -1968,10 +1973,7 @@ static int sde_intf_parse_dt(struct device_node *np,
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_INTF_INPUT_CTRL, &intf->features);
 
-		if (IS_SDE_MAJOR_SAME((sde_cfg->hwversion),
-				SDE_HW_VER_500) ||
-				IS_SDE_MAJOR_SAME((sde_cfg->hwversion),
-				SDE_HW_VER_600))
+		if (sde_cfg->has_intf_te)
 			set_bit(SDE_INTF_TE, &intf->features);
 	}
 
@@ -2902,6 +2904,8 @@ static int _sde_vbif_populate(struct sde_mdss_cfg *sde_cfg,
 	for (j = 0; j < prop_count[VBIF_MEMTYPE_1]; j++)
 		vbif->memtype[k++] = PROP_VALUE_ACCESS(
 				prop_value, VBIF_MEMTYPE_1, j);
+	if (sde_cfg->vbif_disable_inner_outer_shareable)
+		set_bit(SDE_VBIF_DISABLE_SHAREABLE, &vbif->features);
 
 	return 0;
 }
@@ -4050,14 +4054,18 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 	if (!sde_cfg)
 		return -EINVAL;
 
+	/* default settings for *MOST* targets */
+	sde_cfg->has_mixer_combined_alpha = true;
 	for (i = 0; i < MDSS_INTR_MAX; i++)
 		set_bit(i, sde_cfg->mdss_irqs);
 
+	/* target specific settings */
 	if (IS_MSM8996_TARGET(hw_rev)) {
 		sde_cfg->perf.min_prefill_lines = 21;
 		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
 		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
+		sde_cfg->has_mixer_combined_alpha = false;
 	} else if (IS_MSM8998_TARGET(hw_rev)) {
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->perf.min_prefill_lines = 25;
@@ -4068,6 +4076,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_cursor = true;
 		sde_cfg->has_hdr = true;
+		sde_cfg->has_mixer_combined_alpha = false;
 	} else if (IS_SDM845_TARGET(hw_rev)) {
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->has_cwb_support = true;
@@ -4113,6 +4122,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
 		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else if (IS_SDMSHRIKE_TARGET(hw_rev)) {
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->perf.min_prefill_lines = 24;
@@ -4125,6 +4136,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
+		sde_cfg->has_intf_te = true;
 	} else if (IS_SM6150_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_qsync = true;
@@ -4144,6 +4156,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else if (IS_SDMMAGPIE_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
@@ -4159,6 +4173,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else if (IS_KONA_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
@@ -4191,6 +4207,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->true_inline_prefill_lines_nv12 = 32;
 		sde_cfg->true_inline_prefill_lines = 48;
 		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_0;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->inline_disable_const_clr = true;
 	} else if (IS_SAIPAN_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
@@ -4222,6 +4240,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->true_inline_prefill_fudge_lines = 2;
 		sde_cfg->true_inline_prefill_lines_nv12 = 32;
 		sde_cfg->true_inline_prefill_lines = 48;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->inline_disable_const_clr = true;
 	} else if (IS_SDMTRINKET_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_qsync = true;
@@ -4235,6 +4255,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sui_block_xin_mask = 0xC61;
 		sde_cfg->has_hdr = false;
 		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else if (IS_BENGAL_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = false;
 		sde_cfg->has_qsync = true;
@@ -4248,6 +4270,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sui_block_xin_mask = 0xC01;
 		sde_cfg->has_hdr = false;
 		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->has_intf_te = true;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
