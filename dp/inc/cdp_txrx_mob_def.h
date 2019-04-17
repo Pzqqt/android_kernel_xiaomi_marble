@@ -286,12 +286,10 @@ struct txrx_pdev_cfg_param_t {
 	bool enable_rxthread;
 	/* CE classification enabled through INI */
 	bool ce_classify_enabled;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	/* Threshold to stop queue in percentage */
 	uint32_t tx_flow_stop_queue_th;
 	/* Start queue offset in percentage */
 	uint32_t tx_flow_start_queue_offset;
-#endif
 
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 	bool gro_enable;
