@@ -686,17 +686,7 @@ static void tdls_ct_process_connected_link(
 				struct tdls_vdev_priv_obj *tdls_vdev,
 				struct tdls_soc_priv_obj *tdls_soc)
 {
-
-	if ((int32_t)curr_peer->rssi <
-	    (int32_t)tdls_vdev->threshold_config.rssi_teardown_threshold) {
-		tdls_warn("Tear down - low RSSI: " QDF_MAC_ADDR_STR "!",
-			 QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
-		tdls_indicate_teardown(tdls_vdev,
-					curr_peer,
-					TDLS_TEARDOWN_PEER_UNSPEC_REASON);
-		return;
-	}
-
+	/* Don't trigger low rssi tear down here since FW will do it */
 	/* Only teardown based on non zero idle packet threshold, to address
 	 * a use case where this threshold does not get consider for TEAR DOWN
 	 */
