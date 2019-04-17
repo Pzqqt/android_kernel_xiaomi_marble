@@ -332,18 +332,15 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 }
 
 /* Add the channel to the occupiedChannels array */
-static void csr_scan_add_to_occupied_channels(struct mac_context *mac,
-					struct scan_cache_entry *entry,
-					uint8_t sessionId,
-					struct csr_channel *occupied_ch,
-					bool is_init_list)
+static void csr_add_to_occupied_channels(struct mac_context *mac,
+					 uint8_t ch,
+					 uint8_t sessionId,
+					 struct csr_channel *occupied_ch,
+					 bool is_init_list)
 {
 	QDF_STATUS status;
-	uint8_t ch;
 	uint8_t num_occupied_ch = occupied_ch->numChannels;
 	uint8_t *occupied_ch_lst = occupied_ch->channelList;
-
-	ch = entry->channel.chan_idx;
 
 	if (is_init_list)
 		mac->scan.roam_candidate_count[sessionId]++;
@@ -3107,6 +3104,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionId];
 	tCsrRoamConnectedProfile *profile = NULL;
+	uint8_t ch;
 
 	if (!(mac_ctx && mac_ctx->roam.roamSession &&
 	      CSR_IS_SESSION_VALID(mac_ctx, sessionId))) {
@@ -3164,6 +3162,12 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	/* Empty occupied channels here */
 	mac_ctx->scan.occupiedChannels[sessionId].numChannels = 0;
 	mac_ctx->scan.roam_candidate_count[sessionId] = 0;
+
+	csr_add_to_occupied_channels(
+			mac_ctx, profile->operationChannel,
+			sessionId,
+			&mac_ctx->scan.occupiedChannels[sessionId],
+			true);
 	list = ucfg_scan_get_result(pdev, filter);
 	if (list)
 		sme_debug("num_entries %d", qdf_list_size(list));
@@ -3180,8 +3184,9 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
-		csr_scan_add_to_occupied_channels(
-				mac_ctx, cur_node->entry,
+		ch = cur_node->entry->channel.chan_idx;
+		csr_add_to_occupied_channels(
+				mac_ctx, ch,
 				sessionId,
 				&mac_ctx->scan.occupiedChannels[sessionId],
 				true);
