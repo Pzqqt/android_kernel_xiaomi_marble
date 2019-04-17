@@ -72,8 +72,10 @@ static QDF_STATUS tgt_vdev_mgr_start_response_handler(
 	}
 
 	vdev_rsp = &vdev_mlme->vdev_rt;
-	if (!vdev_rsp)
+	if (!vdev_rsp) {
+		mlme_err("VDEV_%d: Invalid response", rsp->vdev_id);
 		goto tgt_vdev_mgr_start_response_handler_end;
+	}
 
 	tx_ops = target_if_vdev_mgr_get_tx_ops(psoc);
 	if (rsp->resp_type == RESTART_RESPONSE)
@@ -125,8 +127,10 @@ static QDF_STATUS tgt_vdev_mgr_stop_response_handler(
 	}
 
 	vdev_rsp = &vdev_mlme->vdev_rt;
-	if (!vdev_rsp)
+	if (!vdev_rsp) {
+		mlme_err("VDEV_%d: Invalid response", rsp->vdev_id);
 		goto tgt_vdev_mgr_stop_response_handler_end;
+	}
 
 	tx_ops = target_if_vdev_mgr_get_tx_ops(psoc);
 	status = tx_ops->vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
@@ -175,8 +179,10 @@ QDF_STATUS tgt_vdev_mgr_delete_response_handler(
 	}
 
 	vdev_rsp = &vdev_mlme->vdev_rt;
-	if (!vdev_rsp)
+	if (!vdev_rsp) {
+		mlme_err("VDEV_%d: Invalid response", rsp->vdev_id);
 		goto tgt_vdev_mgr_delete_response_handler_end;
+	}
 
 	tx_ops = target_if_vdev_mgr_get_tx_ops(psoc);
 	status = tx_ops->vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
