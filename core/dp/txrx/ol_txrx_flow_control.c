@@ -106,25 +106,6 @@ bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev)
 }
 
 /**
- * ol_txrx_register_pause_cb() - register pause callback
- * @pause_cb: pause callback
- *
- * Return: QDF status
- */
-QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
-				     tx_pause_callback pause_cb)
-{
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev || !pause_cb) {
-		ol_txrx_err("pdev or pause_cb is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	pdev->pause_cb = pause_cb;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * ol_tx_set_desc_global_pool_size() - set global pool size
  * @num_msdu_desc: total number of descriptors
  *

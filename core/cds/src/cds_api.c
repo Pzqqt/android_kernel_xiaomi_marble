@@ -294,7 +294,6 @@ cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
 	}
 }
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 static inline void
 cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
 				struct txrx_pdev_cfg_param_t *cdp_cfg)
@@ -304,12 +303,6 @@ cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
 	cdp_cfg->tx_flow_start_queue_offset =
 		cfg_get(psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 }
-#else
-static inline void
-cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
-				struct txrx_pdev_cfg_param_t *cdp_cfg)
-{}
-#endif
 
 /**
  * cds_cdp_cfg_attach() - attach data path config module

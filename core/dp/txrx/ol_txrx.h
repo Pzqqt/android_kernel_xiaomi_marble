@@ -296,8 +296,6 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
 uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev);
-QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
-				     tx_pause_callback pause_cb);
 /**
  * ol_txrx_fwd_desc_thresh_check() - check to forward packet to tx path
  * @vdev: which virtual device the frames were addressed to
