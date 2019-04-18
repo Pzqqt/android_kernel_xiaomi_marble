@@ -31,7 +31,7 @@
 
 /* Change this to a lower value to enforce scattered idle list mode */
 #define WLAN_CFG_MAX_ALLOC_SIZE 0x200000
-#define WLAN_CFG_MAX_ALLOC_SIZE_MIN 0x200000
+#define WLAN_CFG_MAX_ALLOC_SIZE_MIN 0x80000
 #define WLAN_CFG_MAX_ALLOC_SIZE_MAX 0x200000
 
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3
