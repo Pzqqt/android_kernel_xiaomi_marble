@@ -6299,6 +6299,7 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 	struct csr_roam_session *session;
 	struct csr_roam_info *roam_info;
 	QDF_STATUS status;
+	struct csr_roam_connectedinfo *prev_connect_info = NULL;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("Invalid session id %d", session_id);
@@ -6308,6 +6309,8 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 	if (!roam_info)
 		return;
 	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	prev_connect_info = &session->prev_assoc_ap_info;
 
 	sme_debug("receives no association indication; FILS %d",
 		  session->is_fils_connection);
@@ -6360,7 +6363,15 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 		qdf_mem_copy(&roam_info->bssid,
 			     &session->joinFailStatusCode.bssId,
 			     sizeof(struct qdf_mac_addr));
-
+		if (prev_connect_info->pbFrames) {
+			roam_info->nAssocReqLength =
+					prev_connect_info->nAssocReqLength;
+			roam_info->nAssocRspLength =
+					prev_connect_info->nAssocRspLength;
+			roam_info->nBeaconLength =
+				prev_connect_info->nBeaconLength;
+			roam_info->pbFrames = prev_connect_info->pbFrames;
+		}
 		/*
 		 * If Join fails while Handoff is in progress, indicate
 		 * disassociated event to supplicant to reconnect
@@ -8732,6 +8743,8 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
 	struct csr_roam_session *session_ptr;
+	struct csr_roam_connectedinfo *prev_connect_info;
+	uint32_t len = 0;
 
 	if (pSmeJoinRsp) {
 		session_ptr = CSR_GET_SESSION(mac, pSmeJoinRsp->sessionId);
@@ -8745,6 +8758,8 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 			("session %d not found"), pSmeJoinRsp->sessionId);
 		return;
 	}
+
+	prev_connect_info = &session_ptr->prev_assoc_ap_info;
 	/* The head of the active list is the request we sent */
 	pEntry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (pEntry)
@@ -8809,6 +8824,25 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 							 pSmeJoinRsp->sessionId,
 							 QDF_STATUS_E_FAILURE);
 		}
+
+		len = pSmeJoinRsp->assocReqLength +
+		      pSmeJoinRsp->assocRspLength + pSmeJoinRsp->beaconLength;
+		if (prev_connect_info->pbFrames)
+			csr_roam_free_connected_info(mac, prev_connect_info);
+
+		prev_connect_info->pbFrames = qdf_mem_malloc(len);
+		if (!prev_connect_info->pbFrames)
+			sme_err("memory allocation failed for previous assoc profile");
+		else {
+			qdf_mem_copy(prev_connect_info->pbFrames,
+				     pSmeJoinRsp->frames, len);
+			prev_connect_info->nAssocReqLength =
+						pSmeJoinRsp->assocReqLength;
+			prev_connect_info->nAssocRspLength =
+						pSmeJoinRsp->assocRspLength;
+			prev_connect_info->nBeaconLength =
+						pSmeJoinRsp->beaconLength;
+		}
 		/*
 		 * if userspace has issued disconnection,
 		 * driver should not continue connecting
@@ -8816,9 +8850,9 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 		is_dis_pending = is_disconnect_pending(mac,
 							session_ptr->sessionId);
 		if (pCommand && (session_ptr->join_bssid_count <
-				CSR_MAX_BSSID_COUNT) && !is_dis_pending)
+				CSR_MAX_BSSID_COUNT) && !is_dis_pending) {
 			csr_roam(mac, pCommand);
-		else {
+		} else {
 			/*
 			 * When the upper layers issue a connect command, there
 			 * is a roam command with reason eCsrHddIssued that
@@ -8854,6 +8888,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 			csr_roam_complete(mac, eCsrNothingToJoin, NULL,
 					pSmeJoinRsp->sessionId);
 		}
+		csr_roam_free_connected_info(mac, prev_connect_info);
 	} /*else: ( eSIR_SME_SUCCESS == pSmeJoinRsp->statusCode ) */
 }
 
@@ -17183,6 +17218,8 @@ void csr_cleanup_session(struct mac_context *mac, uint32_t sessionId)
 		csr_reset_cfg_privacy(mac);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);
+		csr_roam_free_connected_info(mac,
+					     &pSession->prev_assoc_ap_info);
 		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
 		qdf_mc_timer_destroy(&pSession->roaming_offload_timer);
 		csr_purge_vdev_pending_ser_cmd_list(mac, sessionId);
@@ -17249,6 +17286,8 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 	csr_free_roam_profile(mac, sessionId);
 	csr_roam_free_connect_profile(&pSession->connectedProfile);
 	csr_roam_free_connected_info(mac, &pSession->connectedInfo);
+	csr_roam_free_connected_info(mac,
+				     &pSession->prev_assoc_ap_info);
 	csr_free_connect_bss_desc(mac, sessionId);
 	qdf_mem_zero(&pSession->selfMacAddr, sizeof(struct qdf_mac_addr));
 	if (pSession->pWpaRsnReqIE) {

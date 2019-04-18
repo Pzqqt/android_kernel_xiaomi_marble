@@ -191,43 +191,47 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	struct ht_profile *ht_profile;
 #endif
+	if (session_entry->beacon) {
+		sme_join_rsp->beaconLength = session_entry->bcnLen;
+		qdf_mem_copy(sme_join_rsp->frames,
+			     session_entry->beacon,
+			     sme_join_rsp->beaconLength);
+		qdf_mem_free(session_entry->beacon);
+		session_entry->beacon = NULL;
+		session_entry->bcnLen = 0;
+		pe_debug("Beacon: %d",
+			sme_join_rsp->beaconLength);
+	}
+
+	if (session_entry->assocReq) {
+		sme_join_rsp->assocReqLength =
+			session_entry->assocReqLen;
+		qdf_mem_copy(sme_join_rsp->frames +
+			     sme_join_rsp->beaconLength,
+			     session_entry->assocReq,
+			     sme_join_rsp->assocReqLength);
+		qdf_mem_free(session_entry->assocReq);
+		session_entry->assocReq = NULL;
+		session_entry->assocReqLen = 0;
+		pe_debug("AssocReq: %d",
+			sme_join_rsp->assocReqLength);
+	}
+	if (session_entry->assocRsp) {
+		sme_join_rsp->assocRspLength =
+			session_entry->assocRspLen;
+		qdf_mem_copy(sme_join_rsp->frames +
+			     sme_join_rsp->beaconLength +
+			     sme_join_rsp->assocReqLength,
+			     session_entry->assocRsp,
+			     sme_join_rsp->assocRspLength);
+		qdf_mem_free(session_entry->assocRsp);
+		session_entry->assocRsp = NULL;
+		session_entry->assocRspLen = 0;
+		pe_debug("AssocRsp: %d",
+			sme_join_rsp->assocRspLength);
+	}
+
 	if (result_code == eSIR_SME_SUCCESS) {
-		if (session_entry->beacon) {
-			sme_join_rsp->beaconLength = session_entry->bcnLen;
-			qdf_mem_copy(sme_join_rsp->frames,
-				session_entry->beacon,
-				sme_join_rsp->beaconLength);
-			qdf_mem_free(session_entry->beacon);
-			session_entry->beacon = NULL;
-			session_entry->bcnLen = 0;
-			pe_debug("Beacon: %d",
-				sme_join_rsp->beaconLength);
-		}
-		if (session_entry->assocReq) {
-			sme_join_rsp->assocReqLength =
-				session_entry->assocReqLen;
-			qdf_mem_copy(sme_join_rsp->frames +
-				sme_join_rsp->beaconLength,
-				session_entry->assocReq,
-				sme_join_rsp->assocReqLength);
-			qdf_mem_free(session_entry->assocReq);
-			session_entry->assocReq = NULL;
-			session_entry->assocReqLen = 0;
-			pe_debug("AssocReq: %d",
-				sme_join_rsp->assocReqLength);
-		}
-		if (session_entry->assocRsp) {
-			sme_join_rsp->assocRspLength =
-				session_entry->assocRspLen;
-			qdf_mem_copy(sme_join_rsp->frames +
-				sme_join_rsp->beaconLength +
-				sme_join_rsp->assocReqLength,
-				session_entry->assocRsp,
-				sme_join_rsp->assocRspLength);
-			qdf_mem_free(session_entry->assocRsp);
-			session_entry->assocRsp = NULL;
-			session_entry->assocRspLen = 0;
-		}
 		if (session_entry->ricData) {
 			sme_join_rsp->parsedRicRspLen =
 				session_entry->RICDataLen;
@@ -262,8 +266,6 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 		}
 #endif
 		sme_join_rsp->aid = session_entry->limAID;
-		pe_debug("AssocRsp: %d",
-			sme_join_rsp->assocRspLength);
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
