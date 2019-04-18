@@ -1989,6 +1989,10 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 	if (!route_check_fe_id_adm_support(val)) {
 		/* ignore adm open if not supported for fe_id */
 		pr_debug("%s: No ADM support for fe id %d\n", __func__, val);
+		if (set)
+			set_bit(val, &msm_bedais[reg].fe_sessions[0]);
+		else
+			clear_bit(val, &msm_bedais[reg].fe_sessions[0]);
 		return;
 	}
 
