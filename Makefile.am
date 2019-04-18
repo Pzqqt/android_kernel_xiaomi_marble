@@ -42,6 +42,7 @@ obj-m := ipc/
 obj-m += dsp/
 obj-m += asoc/
 obj-m += asoc/codecs/
+obj-m += soc/
 KBUILD_OPTIONS += CONFIG_SND_SOC_SA8155=m
 endif
 
