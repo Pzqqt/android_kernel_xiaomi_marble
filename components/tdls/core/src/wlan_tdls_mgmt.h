@@ -75,5 +75,18 @@ QDF_STATUS tdls_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS tdls_process_rx_frame(struct scheduler_msg *msg);
+
+/**
+ * tdls_set_rssi() - Set TDLS RSSI on peer given by mac
+ * @vdev: vdev object
+ * @mac: MAC address of Peer
+ * @rssi: rssi value
+ *
+ * Set RSSI on TDSL peer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
+			 uint8_t *mac, int8_t rssi);
 #endif
 

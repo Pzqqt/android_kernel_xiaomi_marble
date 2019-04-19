@@ -44,31 +44,37 @@ const char *const tdls_action_frames_type[] = { "TDLS Setup Request",
 					 "TDLS Peer Traffic Response",
 					 "TDLS Discovery Request"};
 
-/**
- * tdls_set_rssi() - Set TDLS RSSI on peer given by mac
- * @tdls_vdev: tdls vdev object
- * @mac: MAC address of Peer
- * @rx_rssi: rssi value
- *
- * Set RSSI on TDSL peer
- *
- * Return: 0 for success or -EINVAL otherwise
- */
-static int tdls_set_rssi(struct tdls_vdev_priv_obj *tdls_vdev,
-		  const uint8_t *mac,
-		  int8_t rx_rssi)
+QDF_STATUS tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
+			 uint8_t *mac, int8_t rssi)
 {
+	struct tdls_vdev_priv_obj *tdls_vdev;
 	struct tdls_peer *curr_peer;
+
+	if (!vdev || !mac) {
+		tdls_err("null pointer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tdls_debug("rssi %d, peer " QDF_MAC_ADDR_STR,
+		   rssi, QDF_MAC_ADDR_ARRAY(mac));
+
+	tdls_vdev = wlan_objmgr_vdev_get_comp_private_obj(
+			vdev, WLAN_UMAC_COMP_TDLS);
+
+	if (!tdls_vdev) {
+		tdls_err("null tdls vdev");
+		return QDF_STATUS_E_EXISTS;
+	}
 
 	curr_peer = tdls_find_peer(tdls_vdev, mac);
 	if (!curr_peer) {
-		tdls_err("curr_peer is NULL");
-		return -EINVAL;
+		tdls_debug("null peer");
+		return QDF_STATUS_E_EXISTS;
 	}
 
-	curr_peer->rssi = rx_rssi;
+	curr_peer->rssi = rssi;
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -110,7 +116,7 @@ static QDF_STATUS tdls_process_rx_mgmt(
 		       QDF_MAC_ADDR_STR " RSSI[%d] <--- OTA",
 		       QDF_MAC_ADDR_ARRAY(mac), rx_mgmt->rx_rssi);
 			tdls_recv_discovery_resp(tdls_vdev, mac);
-			tdls_set_rssi(tdls_vdev, mac, rx_mgmt->rx_rssi);
+			tdls_set_rssi(tdls_vdev->vdev, mac, rx_mgmt->rx_rssi);
 	}
 
 	if (rx_mgmt->buf[TDLS_PUBLIC_ACTION_FRAME_OFFSET] ==

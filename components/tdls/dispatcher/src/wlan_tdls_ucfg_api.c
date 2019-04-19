@@ -1110,3 +1110,9 @@ free:
 	qdf_mem_free(req);
 	return status;
 }
+
+QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
+			      uint8_t *mac, int8_t rssi)
+{
+	return tdls_set_rssi(vdev, mac, rssi);
+}

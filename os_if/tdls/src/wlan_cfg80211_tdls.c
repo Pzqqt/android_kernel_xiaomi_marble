@@ -33,6 +33,9 @@
 #include <qdf_mem.h>
 #include <wlan_utility.h>
 #include <wlan_reg_services_api.h>
+#ifdef QCA_SUPPORT_CP_STATS
+#include "wlan_cfg80211_mc_cp_stats.h"
+#endif
 
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 
@@ -642,6 +645,34 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static void wlan_cfg80211_update_tdls_peers_rssi(struct wlan_objmgr_vdev *vdev)
+{
+	int ret = 0, i;
+	struct stats_event *rssi_info;
+	struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BCAST_INIT;
+
+	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(
+			vdev, bcast_mac.bytes,
+			&ret);
+	if (ret || !rssi_info) {
+		cfg80211_err("get peer rssi fail");
+		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
+		return;
+	}
+
+	for (i = 0; i < rssi_info->num_peer_stats; i++)
+		ucfg_tdls_set_rssi(vdev, rssi_info->peer_stats[i].peer_macaddr,
+				   rssi_info->peer_stats[i].peer_rssi);
+
+	wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
+}
+#else
+static void wlan_cfg80211_update_tdls_peers_rssi(struct wlan_objmgr_vdev *vdev)
+{
+}
+#endif
+
 int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 				char *buf, int buflen)
 {
@@ -653,6 +684,8 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	tdls_priv = osif_priv->osif_tdls;
+
+	wlan_cfg80211_update_tdls_peers_rssi(vdev);
 
 	reinit_completion(&tdls_priv->tdls_user_cmd_comp);
 	status = ucfg_tdls_get_all_peers(vdev, buf, buflen);
