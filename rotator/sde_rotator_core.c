@@ -21,6 +21,7 @@
 #include <soc/qcom/secure_buffer.h>
 #include <asm/cacheflush.h>
 #include <uapi/linux/sched/types.h>
+#include <soc/qcom/qtee_shmbridge.h>
 
 #include "sde_rotator_base.h"
 #include "sde_rotator_core.h"
@@ -593,18 +594,33 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 	struct scm_desc desc = {0};
 	unsigned int resp = 0;
 	int ret = 0;
+	struct qtee_shm shm;
+	bool qtee_en = qtee_shmbridge_is_enabled();
 
 	if (test_bit(SDE_CAPS_SEC_ATTACH_DETACH_SMMU, mdata->sde_caps_map)) {
 
-		sid_info = kzalloc(sizeof(uint32_t), GFP_KERNEL);
-		if (!sid_info)
-			return -ENOMEM;
-
-		sid_info[0] = mdata->sde_smmu[SDE_IOMMU_DOMAIN_ROT_SECURE].sid;
 		desc.arginfo = SCM_ARGS(4, SCM_VAL, SCM_RW, SCM_VAL, SCM_VAL);
 		desc.args[0] = SDE_ROTATOR_DEVICE;
-		desc.args[1] = SCM_BUFFER_PHYS(sid_info);
-		desc.args[2] = sizeof(uint32_t);
+
+		if (qtee_en) {
+			ret = qtee_shmbridge_allocate_shm(sizeof(uint32_t),
+				&shm);
+			if (ret)
+				return -ENOMEM;
+
+			sid_info = (uint32_t *) shm.paddr;
+			desc.args[1] = shm.paddr;
+			desc.args[2] = shm.size;
+		} else {
+			sid_info = kzalloc(sizeof(uint32_t), GFP_KERNEL);
+			if (!sid_info)
+				return -ENOMEM;
+
+			desc.args[1] = SCM_BUFFER_PHYS(sid_info);
+			desc.args[2] = sizeof(uint32_t);
+		}
+
+		sid_info[0] = mdata->sde_smmu[SDE_IOMMU_DOMAIN_ROT_SECURE].sid;
 
 		if (!mdata->sec_cam_en && enable) {
 			/*
@@ -632,12 +648,11 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			}
 
 			SDEROT_DBG(
-			  "scm(1) sid0x%x dev0x%llx vmid0x%llx ret%d resp%x\n",
+			  "scm(1) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d resp%x\n",
 				sid_info[0], desc.args[0], desc.args[3],
-				ret, resp);
-			SDEROT_EVTLOG(1, sid_info, sid_info[0],
-					desc.args[0], desc.args[3],
-					ret, resp);
+				qtee_en, ret, resp);
+			SDEROT_EVTLOG(1, sid_info, sid_info[0], desc.args[0],
+					desc.args[3], qtee_en, ret, resp);
 		} else if (mdata->sec_cam_en && !enable) {
 			/*
 			 * Disable secure camera operation
@@ -653,23 +668,25 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			resp = desc.ret[0];
 
 			SDEROT_DBG(
-			  "scm(0) sid0x%x dev0x%llx vmid0x%llx ret%d resp%d\n",
+			  "scm(0) sid0x%x dev0x%llx vmid0x%llx qtee_en%d ret%d resp%d\n",
 				sid_info[0], desc.args[0], desc.args[3],
-				ret, resp);
+				qtee_en, ret, resp);
 
 			/* force smmu to reattach */
 			sde_smmu_secure_ctrl(1);
 
-			SDEROT_EVTLOG(0, sid_info, sid_info[0],
-					desc.args[0], desc.args[3],
-					ret, resp);
+			SDEROT_EVTLOG(0, sid_info, sid_info[0], desc.args[0],
+					desc.args[3], qtee_en, ret, resp);
 		}
 	} else {
 		return 0;
 	}
 
 end:
-	kfree(sid_info);
+	if (qtee_en)
+		qtee_shmbridge_free_shm(&shm);
+	else
+		kfree(sid_info);
 
 	if (ret)
 		return ret;
