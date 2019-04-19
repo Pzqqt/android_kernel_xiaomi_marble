@@ -1405,13 +1405,15 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.scan_type = SCAN_TYPE_P2P_SEARCH;
 
 	/* Set dwell time mode according to scan policy type flags */
-	if (req->scan_req.scan_policy_high_accuracy)
-		req->scan_req.adaptive_dwell_time_mode =
-					SCAN_DWELL_MODE_STATIC;
-	if ((req->scan_req.scan_policy_low_power) ||
-	   (req->scan_req.scan_policy_low_span))
-		req->scan_req.adaptive_dwell_time_mode =
-					SCAN_DWELL_MODE_AGGRESSIVE;
+	if (ucfg_scan_cfg_honour_nl_scan_policy_flags(psoc)) {
+		if (req->scan_req.scan_policy_high_accuracy)
+			req->scan_req.adaptive_dwell_time_mode =
+						SCAN_DWELL_MODE_STATIC;
+		if (req->scan_req.scan_policy_low_power ||
+		    req->scan_req.scan_policy_low_span)
+			req->scan_req.adaptive_dwell_time_mode =
+						SCAN_DWELL_MODE_AGGRESSIVE;
+	}
 
 	/*
 	 * FW require at least 1 MAC to send probe request.

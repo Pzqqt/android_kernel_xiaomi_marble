@@ -806,6 +806,19 @@ void ucfg_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
 bool ucfg_scan_wake_lock_in_user_scan(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_scan_cfg_honour_nl_scan_policy_flags() - API to get nl scan policy
+ * flags honoured.
+ * @psoc: pointer to psoc object
+ *
+ * Return: nl scan flags is honoured or not
+ */
+static inline
+bool ucfg_scan_cfg_honour_nl_scan_policy_flags(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_scan_cfg_honour_nl_scan_policy_flags(psoc);
+}
+
+/**
  * ucfg_scan_cfg_get_conc_max_resttime() - API to get max rest time
  * @psoc: pointer to psoc object
  * @rest_time: scan concurrent max resttime

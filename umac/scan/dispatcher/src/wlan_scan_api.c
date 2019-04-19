@@ -141,6 +141,17 @@ wlan_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.allow_dfs_chan_in_scan = enable_dfs_scan;
 }
 
+bool wlan_scan_cfg_honour_nl_scan_policy_flags(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return false;
+
+	return scan_obj->scan_def.honour_nl_scan_policy_flags;
+}
+
 void wlan_scan_cfg_get_conc_max_resttime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *rest_time)
 {

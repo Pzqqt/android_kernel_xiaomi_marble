@@ -312,6 +312,7 @@ struct extscan_def_config {
  * @scan_priority: default scan priority
  * @adaptive_dwell_time_mode: adaptive dwell mode with connection
  * @adaptive_dwell_time_mode_nc: adaptive dwell mode without connection
+ * @honour_nl_scan_policy_flags: honour nl80211 scan policy flags
  * @extscan_adaptive_dwell_mode: Adaptive dwell mode during ext scan
  * @scan_f_passive: passively scan all channels including active channels
  * @scan_f_bcast_probe: add wild card ssid prbreq even if ssid_list is specified
@@ -396,6 +397,7 @@ struct scan_default_params {
 	enum scan_priority scan_priority;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode_nc;
+	bool honour_nl_scan_policy_flags;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	union {
 		struct {

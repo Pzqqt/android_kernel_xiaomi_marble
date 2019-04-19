@@ -992,6 +992,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE);
 	scan_obj->scan_def.adaptive_dwell_time_mode_nc =
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE_NC);
+	scan_obj->scan_def.honour_nl_scan_policy_flags =
+			cfg_get(psoc, CFG_HONOUR_NL_SCAN_POLICY_FLAGS);
 	scan_obj->scan_def.enable_mac_spoofing =
 			cfg_get(psoc, CFG_ENABLE_MAC_ADDR_SPOOFING);
 	scan_obj->scan_def.extscan_adaptive_dwell_mode =

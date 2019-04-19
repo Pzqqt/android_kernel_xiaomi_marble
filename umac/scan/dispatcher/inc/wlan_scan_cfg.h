@@ -252,6 +252,35 @@
 			0, 4, MCL_OR_WIN_VALUE(4, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode without connection")
+
+/*
+ * <ini>
+ * honour_nl_scan_policy_flags - This ini will decide whether to honour
+ * NL80211 scan policy flags
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This parameter will decide whether to honour scan flags such as
+ * NL80211_SCAN_FLAG_HIGH_ACCURACY , NL80211_SCAN_FLAG_LOW_SPAN,
+ * NL80211_SCAN_FLAG_LOW_POWER.
+ * Acceptable values for this:
+ * 0: Config is disabled
+ * 1: Config is enabled
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_HONOUR_NL_SCAN_POLICY_FLAGS CFG_INI_BOOL(\
+			"honour_nl_scan_policy_flags",\
+			true, \
+			"honour NL80211 scan policy flags")
+
 /*
  * <ini>
  * is_bssid_hint_priority - Set priority for connection with bssid_hint
@@ -1124,6 +1153,7 @@
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE_NC) \
+	CFG(CFG_HONOUR_NL_SCAN_POLICY_FLAGS) \
 	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC) \

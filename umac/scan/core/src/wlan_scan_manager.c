@@ -443,6 +443,11 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 		goto end;
 	}
 
+	if (!wlan_scan_cfg_honour_nl_scan_policy_flags(psoc)) {
+		scm_debug("nl scan policy flags not honoured, goto end");
+		goto end;
+	}
+
 	if (req->scan_req.scan_policy_high_accuracy) {
 		scm_debug("high accuracy scan received, going for non-dbs scan");
 		scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
