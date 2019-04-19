@@ -256,6 +256,18 @@ QDF_STATUS ucfg_set_tdls_offchan_mode(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
 					     int offchanoffset);
 
+/**
+ * ucfg_tdls_set_rssi() - API to set TDLS RSSI on peer given by mac
+ * @vdev: vdev object
+ * @mac: MAC address of Peer
+ * @rssi: rssi value
+ *
+ * Set RSSI on TDLS peer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
+			      uint8_t *mac, int8_t rssi);
 #else
 
 static inline
@@ -313,5 +325,11 @@ QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline
+QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
+			      uint8_t *mac, int8_t rssi)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* FEATURE_WLAN_TDLS */
 #endif
