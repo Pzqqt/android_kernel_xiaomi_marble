@@ -1512,7 +1512,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	tListElem *pEntry;
 	uint32_t cbLen = 0, dataLen, tmp_len;
 	struct csr_channel_powerinfo *ch_set;
-	uint32_t idx;
+	uint32_t idx, count = 0;
 	tSirMacChanInfo *ch_pwr_set;
 	uint8_t *p_buf = NULL;
 
@@ -1569,6 +1569,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 					ch_pwr_set->maxTxPower);
 				cbLen += sizeof(tSirMacChanInfo);
 				ch_pwr_set++;
+				count++;
 			}
 		} else {
 			if (cbLen >= dataLen) {
@@ -1592,17 +1593,22 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				mac->mlme_cfg->power.max_tx_power);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
+			count++;
 		}
 		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
 	}
-	if (band == BAND_2G)
+	if (band == BAND_2G) {
+		mac->mlme_cfg->power.max_tx_power_24.len = 3 * count;
 		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_24.data,
 			     (uint8_t *)p_buf,
 			     mac->mlme_cfg->power.max_tx_power_24.len);
-	if (band == BAND_5G)
+	}
+	if (band == BAND_5G) {
+		mac->mlme_cfg->power.max_tx_power_5.len = 3 * count;
 		qdf_mem_copy(mac->mlme_cfg->power.max_tx_power_5.data,
 			     (uint8_t *)p_buf,
 			     mac->mlme_cfg->power.max_tx_power_5.len);
+	}
 	qdf_mem_free(p_buf);
 }
 
