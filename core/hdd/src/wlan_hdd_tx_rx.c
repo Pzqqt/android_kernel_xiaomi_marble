@@ -416,6 +416,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 uint32_t hdd_txrx_get_tx_ack_count(struct hdd_adapter *adapter)
 {
 	return cdp_get_tx_ack_stats(cds_get_context(QDF_MODULE_ID_SOC),
+				    cds_get_context(QDF_MODULE_ID_TXRX),
 				    adapter->vdev_id);
 }
 

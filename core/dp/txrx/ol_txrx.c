@@ -4329,11 +4329,13 @@ static void ol_txrx_update_mac_id(uint8_t vdev_id, uint8_t mac_id)
 
 /**
  * ol_txrx_get_tx_ack_count() - get tx ack count
+ * @pdev: pdev reference
  * @vdev_id: vdev_id
  *
  * Return: tx ack count
  */
-static uint32_t ol_txrx_get_tx_ack_stats(uint8_t vdev_id)
+static uint32_t ol_txrx_get_tx_ack_stats(struct cdp_pdev *pdev,
+					 uint8_t vdev_id)
 {
 	struct ol_txrx_vdev_t *vdev =
 		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
