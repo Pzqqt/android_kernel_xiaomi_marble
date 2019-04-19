@@ -274,4 +274,17 @@ QDF_STATUS wmi_unified_vdev_pcp_tid_map_cmd_send(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_vdev_tidmap_prec_cmd_send(void *wmi_hdl,
 					struct vap_tidmap_prec_params *param);
+
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * wmi_unified_set_rx_pkt_type_routing_tag() - api to add/delete
+ * the protocols to be tagged by CCE
+ * @wmi_hdl: wmi handle
+ * @param: Packet routing/tagging info
+ *
+ * @return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_set_rx_pkt_type_routing_tag(
+	void *wmi_hdl, struct wmi_rx_pkt_protocol_routing_info *param);
+#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 #endif /* _WMI_UNIFIED_AP_API_H_ */
