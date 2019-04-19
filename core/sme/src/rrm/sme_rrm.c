@@ -887,6 +887,15 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 				req->scan_req.dwell_time_active,
 				chan_num,
 				req->scan_req.chan_list.chan[0].freq);
+		/*
+		 * Fill RRM scan type for these requests. This is done
+		 * because in scan concurrency update params we update the
+		 * dwell time active which was not the expectation.
+		 * So doing a check of RRM scan request, we would not
+		 * update the dwell time.
+		 */
+		req->scan_req.scan_type = SCAN_TYPE_RRM;
+
 		status = ucfg_scan_start(req);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		if (QDF_IS_STATUS_ERROR(status))

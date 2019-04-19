@@ -109,7 +109,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	roc_ctx->scan_id = ucfg_scan_get_scan_id(p2p_soc_obj->soc);
 	req->vdev = vdev;
 	req->scan_req.scan_id = roc_ctx->scan_id;
-	req->scan_req.p2p_scan_type = SCAN_P2P_LISTEN;
+	req->scan_req.scan_type = SCAN_TYPE_P2P_LISTEN;
 	req->scan_req.scan_req_id = p2p_soc_obj->scan_req_id;
 	req->scan_req.chan_list.num_chan = 1;
 	req->scan_req.chan_list.chan[0].freq = wlan_chan_to_freq(roc_ctx->chan);
