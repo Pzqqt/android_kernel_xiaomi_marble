@@ -162,10 +162,14 @@ static void _sde_core_perf_calc_crtc(struct sde_kms *kms,
 		perf->core_clk_rate = 0;
 	} else if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED) {
 		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
-			perf->bw_ctl[i] = kms->perf.fix_core_ab_vote;
-			perf->max_per_pipe_ib[i] = kms->perf.fix_core_ib_vote;
+			perf->bw_ctl[i] = max(kms->perf.fix_core_ab_vote,
+						perf->bw_ctl[i]);
+			perf->max_per_pipe_ib[i] = max(
+						kms->perf.fix_core_ib_vote,
+						perf->max_per_pipe_ib[i]);
 		}
-		perf->core_clk_rate = kms->perf.fix_core_clk_rate;
+		perf->core_clk_rate = max(kms->perf.fix_core_clk_rate,
+						perf->core_clk_rate);
 	}
 
 	SDE_EVT32(crtc->base.id, perf->core_clk_rate);
@@ -632,8 +636,10 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 	bus_ib_quota = perf.max_per_pipe_ib[bus_id];
 
 	if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED) {
-		bus_ab_quota = kms->perf.fix_core_ab_vote;
-		bus_ib_quota = kms->perf.fix_core_ib_vote;
+		bus_ab_quota = max(kms->perf.fix_core_ab_vote,
+					bus_ab_quota);
+		bus_ib_quota = max(kms->perf.fix_core_ib_vote,
+					bus_ib_quota);
 	}
 
 	client_vote = _get_sde_client_type(curr_client_type, &kms->perf);
@@ -775,7 +781,7 @@ static u64 _sde_core_perf_get_core_clk_rate(struct sde_kms *kms)
 	}
 
 	if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED)
-		clk_rate = kms->perf.fix_core_clk_rate;
+		clk_rate = max(kms->perf.fix_core_clk_rate, clk_rate);
 
 	SDE_DEBUG("clk:%llu\n", clk_rate);
 
