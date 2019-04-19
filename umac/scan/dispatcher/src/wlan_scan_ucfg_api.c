@@ -1142,7 +1142,7 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 
 	req->vdev = vdev;
 	req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
-	req->scan_req.p2p_scan_type = SCAN_NON_P2P_DEFAULT;
+	req->scan_req.scan_type = SCAN_TYPE_DEFAULT;
 	req->scan_req.scan_priority = def->scan_priority;
 	req->scan_req.dwell_time_active = def->active_dwell;
 	req->scan_req.dwell_time_active_2g = def->active_dwell_2g;

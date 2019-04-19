@@ -783,15 +783,17 @@ struct chan_list {
 };
 
 /**
- * enum scan_type: scan type
- * @SCAN_NON_P2P_DEFAULT: Def scan
- * @SCAN_P2P_SEARCH: P2P Search
- * @SCAN_P2P_LISTEN: P2P listed
+ * enum scan_request_type: scan type
+ * @SCAN_TYPE_DEFAULT: Def scan
+ * @SCAN_TYPE_P2P_SEARCH: P2P Search
+ * @SCAN_TYPE_P2P_LISTEN: P2P listed
+ * @SCAN_TYPE_RRM: RRM scan request
  */
-enum p2p_scan_type {
-	SCAN_NON_P2P_DEFAULT = 0,
-	SCAN_P2P_SEARCH = 1,
-	SCAN_P2P_LISTEN = 2,
+enum scan_request_type {
+	SCAN_TYPE_DEFAULT = 0,
+	SCAN_TYPE_P2P_SEARCH = 1,
+	SCAN_TYPE_P2P_LISTEN = 2,
+	SCAN_TYPE_RRM = 3
 };
 
 /**
@@ -876,7 +878,7 @@ struct scan_req_params {
 	uint32_t vdev_id;
 	uint32_t pdev_id;
 	enum scan_priority scan_priority;
-	enum p2p_scan_type p2p_scan_type;
+	enum scan_request_type scan_type;
 	union {
 		struct {
 			uint32_t scan_ev_started:1,

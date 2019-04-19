@@ -1402,7 +1402,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		is_p2p_scan = true;
 
 	if (is_p2p_scan && request->no_cck)
-		req->scan_req.p2p_scan_type = SCAN_P2P_SEARCH;
+		req->scan_req.scan_type = SCAN_TYPE_P2P_SEARCH;
 
 	/* Set dwell time mode according to scan policy type flags */
 	if (req->scan_req.scan_policy_high_accuracy)

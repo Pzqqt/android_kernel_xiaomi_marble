@@ -590,6 +590,9 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 		go_peer_count =
 		wlan_util_get_peer_count_for_mode(pdev, QDF_P2P_GO_MODE);
 
+	if (!req->scan_req.scan_f_passive)
+		scm_update_passive_dwell_time(vdev, req);
+
 	if (policy_mgr_get_connection_count(psoc)) {
 		if (req->scan_req.scan_f_passive)
 			req->scan_req.dwell_time_passive =
@@ -625,7 +628,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE)
 		req->scan_req.dwell_time_active_2g = 0;
 
-	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
+	if (req->scan_req.scan_type == SCAN_TYPE_DEFAULT) {
 		/*
 		 * Decide burst_duration and dwell_time_active based on
 		 * what type of devices are active.
@@ -748,12 +751,6 @@ void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 }
 
 static inline void
-scm_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
-			      struct scan_start_request *req)
-{
-}
-
-static inline void
 scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 {
 }
@@ -792,7 +789,7 @@ scm_update_channel_list(struct scan_start_request *req,
 		scan_vdev_obj->first_scan_done = true;
 	}
 
-	if(req->scan_req.p2p_scan_type == SCAN_P2P_SEARCH)
+	if (req->scan_req.scan_type == SCAN_TYPE_P2P_SEARCH)
 		p2p_search = true;
 	/*
 	 * No need to update channels if req is passive scan and single channel
@@ -864,17 +861,11 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 					  req->scan_req.dwell_time_active /
 					  req->scan_req.repeat_probe_time : 0;
 
-	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
-		req->scan_req.scan_f_cck_rates = true;
-		if (!req->scan_req.num_ssids)
-			req->scan_req.scan_f_bcast_probe = true;
-		req->scan_req.scan_f_add_ds_ie_in_probe = true;
-		req->scan_req.scan_f_filter_prb_req = true;
-		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
-	} else {
+	if (req->scan_req.scan_type == SCAN_TYPE_P2P_SEARCH ||
+	    req->scan_req.scan_type == SCAN_TYPE_P2P_LISTEN) {
 		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;
 		req->scan_req.dwell_time_active_2g = 0;
-		if (req->scan_req.p2p_scan_type == SCAN_P2P_LISTEN) {
+		if (req->scan_req.scan_type == SCAN_TYPE_P2P_LISTEN) {
 			req->scan_req.repeat_probe_time = 0;
 		} else {
 			req->scan_req.scan_f_filter_prb_req = true;
@@ -922,10 +913,15 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 			}
 			req->scan_req.scan_ev_bss_chan = false;
 		}
+	} else {
+		req->scan_req.scan_f_cck_rates = true;
+		if (!req->scan_req.num_ssids)
+			req->scan_req.scan_f_bcast_probe = true;
+		req->scan_req.scan_f_add_ds_ie_in_probe = true;
+		req->scan_req.scan_f_filter_prb_req = true;
+		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
 	}
 
-	if (!req->scan_req.scan_f_passive)
-		scm_update_passive_dwell_time(vdev, req);
 	scm_update_dbs_scan_ctrl_ext_flag(req);
 
 	/*
@@ -933,7 +929,8 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	 * single channel ie ROC, Preauth etc
 	 */
 	if (!(req->scan_req.scan_f_passive &&
-	      req->scan_req.chan_list.num_chan == 1))
+	      req->scan_req.chan_list.num_chan == 1) &&
+	      req->scan_req.scan_type != SCAN_TYPE_RRM)
 		scm_req_update_concurrency_params(vdev, req, scan_obj);
 
 	/*
