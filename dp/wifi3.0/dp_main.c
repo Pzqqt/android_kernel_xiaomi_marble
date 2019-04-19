@@ -10081,6 +10081,46 @@ static QDF_STATUS dp_runtime_resume(struct cdp_pdev *opaque_pdev)
 }
 #endif /* FEATURE_RUNTIME_PM */
 
+/**
+ * dp_tx_get_success_ack_stats() - get tx success completion count
+ * @opaque_pdev: dp pdev context
+ * @vdevid: vdev identifier
+ *
+ * Return: tx success ack count
+ */
+static uint32_t dp_tx_get_success_ack_stats(struct cdp_pdev *pdev,
+					    uint8_t vdev_id)
+{
+	struct dp_vdev *vdev =
+		(struct dp_vdev *)dp_get_vdev_from_vdev_id_wifi3(pdev,
+								 vdev_id);
+	struct dp_soc *soc = ((struct dp_pdev *)pdev)->soc;
+	struct cdp_vdev_stats *vdev_stats = NULL;
+	uint32_t tx_success;
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid vdev id %d"), vdev_id);
+		return 0;
+	}
+
+	vdev_stats = qdf_mem_malloc_atomic(sizeof(struct cdp_vdev_stats));
+	if (!vdev_stats) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "DP alloc failure - unable to get alloc vdev stats");
+		return 0;
+	}
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	dp_aggregate_vdev_stats(vdev, vdev_stats);
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+
+	tx_success = vdev_stats->tx.tx_success.num;
+	qdf_mem_free(vdev_stats);
+
+	return tx_success;
+}
+
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
@@ -10094,6 +10134,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.pkt_log_init = dp_pkt_log_init,
 	.pkt_log_con_service = dp_pkt_log_con_service,
 	.get_num_rx_contexts = dp_get_num_rx_contexts,
+	.get_tx_ack_stats = dp_tx_get_success_ack_stats,
 };
 
 static struct cdp_flowctl_ops dp_ops_flowctl = {

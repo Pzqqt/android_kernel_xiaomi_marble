@@ -989,7 +989,7 @@ struct cdp_misc_ops {
 	qdf_nbuf_t (*tx_non_std)(struct cdp_vdev *vdev,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 	uint16_t (*get_vdev_id)(struct cdp_vdev *vdev);
-	uint32_t (*get_tx_ack_stats)(uint8_t vdev_id);
+	uint32_t (*get_tx_ack_stats)(struct cdp_pdev *pdev, uint8_t vdev_id);
 	QDF_STATUS (*set_wisa_mode)(struct cdp_vdev *vdev, bool enable);
 	QDF_STATUS (*txrx_data_stall_cb_register)(data_stall_detect_cb cb);
 	QDF_STATUS (*txrx_data_stall_cb_deregister)(data_stall_detect_cb cb);

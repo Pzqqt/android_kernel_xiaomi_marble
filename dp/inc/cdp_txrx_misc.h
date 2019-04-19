@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -336,13 +336,15 @@ cdp_get_vdev_id(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 /**
  * cdp_get_tx_ack_stats() - get tx ack count for vdev
  * @soc - data path soc handle
+ * @pdev - data path device instance
  * @vdev_id - vdev id
  *
  * return tx ack count
  *          0 invalid count
  */
 static inline uint32_t
-cdp_get_tx_ack_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
+cdp_get_tx_ack_stats(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		     uint8_t vdev_id)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -351,7 +353,8 @@ cdp_get_tx_ack_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 	}
 
 	if (soc->ops->misc_ops->get_tx_ack_stats)
-		return soc->ops->misc_ops->get_tx_ack_stats(vdev_id);
+		return soc->ops->misc_ops->get_tx_ack_stats(pdev, vdev_id);
+
 	return 0;
 }
 
