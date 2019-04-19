@@ -82,6 +82,7 @@
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
 #define MAX_REO_DEST_RINGS 4
+#define EXCEPTION_DEST_RING_ID 0
 #define MAX_TCL_DATA_RINGS 4
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
@@ -1139,6 +1140,13 @@ struct rx_protocol_tag_map {
 	/* This is the user configured tag for the said protocol type */
 	uint16_t tag;
 };
+
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+struct rx_protocol_tag_stats {
+	uint32_t tag_ctr;
+};
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
+
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
 /* PDEV level structure for data path */
@@ -1442,13 +1450,25 @@ struct dp_pdev {
 	 * Run time enabled when the first protocol tag is added,
 	 * run time disabled when the last protocol tag is deleted
 	 */
-	bool  rx_protocol_tagging_enabled;
+	bool  is_rx_protocol_tagging_enabled;
 
 	/*
 	 * The protocol type is used as array index to save
 	 * user provided tag info
 	 */
 	struct rx_protocol_tag_map rx_proto_tag_map[RX_PROTOCOL_TAG_MAX];
+
+#ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
+	/*
+	 * Track msdus received from each reo ring separately to avoid
+	 * simultaneous writes from different core
+	 */
+	struct rx_protocol_tag_stats
+		reo_proto_tag_stats[MAX_REO_DEST_RINGS][RX_PROTOCOL_TAG_MAX];
+	/* Track msdus received from expection ring separately */
+	struct rx_protocol_tag_stats
+		rx_err_proto_tag_stats[RX_PROTOCOL_TAG_MAX];
+#endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 };
 

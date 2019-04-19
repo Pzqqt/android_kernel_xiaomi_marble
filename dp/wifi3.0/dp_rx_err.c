@@ -820,8 +820,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			 * Update the protocol tag in SKB based on
 			 * CCE metadata
 			 */
-			dp_rx_update_protocol_tag(soc, vdev, nbuf,
-						  rx_tlv_hdr, true);
+			dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
+						  EXCEPTION_DEST_RING_ID,
+						  true, true);
 
 			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
 						rx_tlv_hdr) &&
@@ -1000,8 +1001,8 @@ process_rx:
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
 		/* Update the protocol tag in SKB based on CCE metadata */
-		dp_rx_update_protocol_tag(soc, vdev, nbuf,
-					  rx_tlv_hdr, true);
+		dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
+					  EXCEPTION_DEST_RING_ID, true, true);
 		DP_STATS_INC(peer, rx.to_stack.num, 1);
 		vdev->osif_rx(vdev->osif_vdev, nbuf);
 	}
