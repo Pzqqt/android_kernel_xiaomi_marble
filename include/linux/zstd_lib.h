@@ -118,7 +118,7 @@ ZSTDLIB_API const char* ZSTD_versionString(void);
 #define ZSTD_MAGIC_SKIPPABLE_START  0x184D2A50    /* all 16 values, from 0x184D2A50 to 0x184D2A5F, signal the beginning of a skippable frame */
 #define ZSTD_MAGIC_SKIPPABLE_MASK   0xFFFFFFF0
 
-#define ZSTD_BLOCKSIZELOG_MAX  17
+#define ZSTD_BLOCKSIZELOG_MAX  12
 #define ZSTD_BLOCKSIZE_MAX     (1<<ZSTD_BLOCKSIZELOG_MAX)
 
 
