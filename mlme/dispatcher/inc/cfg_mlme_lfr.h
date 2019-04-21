@@ -535,7 +535,7 @@
  * roamscan_adaptive_dwell_mode - Sets dwell time adaptive mode
  * @Min: 0
  * @Max: 4
- * @Default: 1
+ * @Default: 4
  *
  * This parameter will set the algo used in dwell time optimization during
  * roam scan. see enum scan_dwelltime_adaptive_mode.
@@ -558,7 +558,7 @@
 	"roamscan_adaptive_dwell_mode", \
 	0, \
 	4, \
-	1, \
+	4, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Sets dwell time adaptive mode")
 
