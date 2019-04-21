@@ -8891,6 +8891,11 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (req->mac_id >= WLAN_CFG_MAC_PER_TARGET) {
+		dp_err("Invalid mac id request");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	stats = req->stats;
 	if (stats >= CDP_TXRX_MAX_STATS)
 		return QDF_STATUS_E_INVAL;

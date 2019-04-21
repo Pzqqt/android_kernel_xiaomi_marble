@@ -58,6 +58,7 @@
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define WLAN_CFG_PER_PDEV_LMAC_RING 0
 #define WLAN_LRO_ENABLE 0
+#define WLAN_CFG_MAC_PER_TARGET 2
 #ifdef IPA_OFFLOAD
 /* Size of TCL TX Ring */
 #define WLAN_CFG_TX_RING_SIZE 1024
@@ -98,7 +99,7 @@
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define WLAN_CFG_PER_PDEV_LMAC_RING 1
 #define WLAN_LRO_ENABLE 0
-
+#define WLAN_CFG_MAC_PER_TARGET 3
 /* Tx Descriptor and Tx Extension Descriptor pool sizes */
 #ifndef QCA_WIFI_QCA8074_VP
 #define WLAN_CFG_NUM_TX_DESC  0x320000
