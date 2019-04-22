@@ -32,6 +32,8 @@
  */
 enum sde_hdcp_2x_wakeup_cmd {
 	HDCP_2X_CMD_INVALID,
+	HDCP_2X_CMD_ENABLE,
+	HDCP_2X_CMD_DISABLE,
 	HDCP_2X_CMD_START,
 	HDCP_2X_CMD_START_AUTH,
 	HDCP_2X_CMD_STOP,
@@ -79,6 +81,7 @@ enum sde_hdcp_2x_device_type {
 /**
  * struct sde_hdcp_2x_lib_wakeup_data - command and data send to HDCP driver
  * @cmd:                       command type
+ * @device_type                type of device in use by the HDCP driver
  * @context:                   void pointer to the HDCP driver instance
  * @buf:                       message received from the sink
  * @buf_len:                   length of message received from the sink
@@ -88,6 +91,7 @@ enum sde_hdcp_2x_device_type {
  */
 struct sde_hdcp_2x_wakeup_data {
 	enum sde_hdcp_2x_wakeup_cmd cmd;
+	enum sde_hdcp_2x_device_type device_type;
 	void *context;
 	uint32_t total_message_length;
 	uint32_t timeout;
@@ -211,7 +215,5 @@ struct sde_hdcp_2x_register_data {
 
 /* functions for the HDCP 2.2 state machine module */
 int sde_hdcp_2x_register(struct sde_hdcp_2x_register_data *data);
-int sde_hdcp_2x_enable(void *data, enum sde_hdcp_2x_device_type device_type);
-void sde_hdcp_2x_disable(void *data);
 void sde_hdcp_2x_deregister(void *data);
 #endif
