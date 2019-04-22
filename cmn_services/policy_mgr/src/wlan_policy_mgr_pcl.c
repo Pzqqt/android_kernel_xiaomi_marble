@@ -463,10 +463,10 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 }
 
 static QDF_STATUS
-policy_mgr_modify_sap_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *pcl_list_org,
-				       uint8_t *weight_list_org,
-				       uint32_t *pcl_len_org)
+policy_mgr_modify_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *pcl_list_org,
+				   uint8_t *weight_list_org,
+				   uint32_t *pcl_len_org)
 {
 	uint32_t i, pcl_len = 0;
 	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
@@ -550,7 +550,7 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 		policy_mgr_debug("chan:%d weight:%d",
 				 pcl_channels[i], pcl_weight[i]);
 
-	status = policy_mgr_modify_sap_pcl_based_on_srd
+	status = policy_mgr_modify_pcl_based_on_srd
 			(psoc, pcl_channels, pcl_weight, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("failed to get srd modified pcl for SAP");
@@ -583,6 +583,13 @@ static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
 			pm_ctx, pcl_channels, pcl_weight, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("failed to get modified pcl for GO");
+		return status;
+	}
+
+	status = policy_mgr_modify_pcl_based_on_srd
+			(psoc, pcl_channels, pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get srd modified pcl for P2P-GO");
 		return status;
 	}
 	policy_mgr_debug("modified pcl len:%d", *len);
