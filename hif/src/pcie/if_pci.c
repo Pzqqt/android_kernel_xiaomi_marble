@@ -3638,8 +3638,12 @@ static void hif_pci_get_soc_info_nopld(struct hif_pci_softc *sc,
 				       struct device *dev)
 {}
 
-static bool hif_is_pld_based_target(int device_id)
+static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
+				    int device_id)
 {
+	if (!pld_have_platform_driver_support(sc->dev))
+		return false;
+
 	switch (device_id) {
 	case QCA6290_DEVICE_ID:
 	case QCA6290_EMULATION_DEVICE_ID:
@@ -3656,7 +3660,7 @@ static bool hif_is_pld_based_target(int device_id)
 static void hif_pci_init_deinit_ops_attach(struct hif_pci_softc *sc,
 					   int device_id)
 {
-	if (hif_is_pld_based_target(device_id)) {
+	if (hif_is_pld_based_target(sc, device_id)) {
 		sc->hif_enable_pci = hif_enable_pci_pld;
 		sc->hif_pci_deinit = hif_pci_deinit_pld;
 		sc->hif_pci_get_soc_info = hif_pci_get_soc_info_pld;
