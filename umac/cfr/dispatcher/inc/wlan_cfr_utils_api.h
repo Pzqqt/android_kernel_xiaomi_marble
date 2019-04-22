@@ -40,7 +40,6 @@
 #define DBR_EVENT_TIMEOUT_IN_MS_CFR 1
 #define DBR_NUM_RESP_PER_EVENT_CFR 1
 
-#define IEEE80211_ADDR_LEN 6
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
 	CFR_META_VERSION_1,
@@ -87,7 +86,7 @@ enum ack_capture_mode {
 };
 
 struct cfr_metadata_version_1 {
-	u_int8_t    peer_addr[IEEE80211_ADDR_LEN];
+	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
 	u_int8_t    status;
 	u_int8_t    capture_bw;
 	u_int8_t    channel_bw;
