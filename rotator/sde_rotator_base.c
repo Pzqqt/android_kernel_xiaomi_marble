@@ -24,6 +24,7 @@
 #include "sde_rotator_trace.h"
 #include "sde_rotator_debug.h"
 #include "sde_rotator_dev.h"
+#include "sde_rotator_vbif.h"
 
 static inline u64 fudge_factor(u64 val, u32 numer, u32 denom)
 {
@@ -70,6 +71,7 @@ u32 sde_apply_comp_ratio_factor(u32 quota,
 
 #define RES_1080p		(1088*1920)
 #define RES_UHD		(3840*2160)
+#define RES_WQXGA	(2560*1600)
 #define XIN_HALT_TIMEOUT_US	0x4000
 
 static int sde_mdp_wait_for_xin_halt(u32 xin_id)
@@ -132,24 +134,44 @@ static bool force_on_xin_clk(u32 bit_off, u32 clk_ctl_reg_off, bool enable)
 	return clk_forced_on;
 }
 
+void vbif_lock(struct platform_device *parent_pdev)
+{
+	if (!parent_pdev)
+		return;
+
+	mdp_vbif_lock(parent_pdev, true);
+}
+
+void vbif_unlock(struct platform_device *parent_pdev)
+{
+	if (!parent_pdev)
+		return;
+
+	mdp_vbif_lock(parent_pdev, false);
+}
+
 void sde_mdp_halt_vbif_xin(struct sde_mdp_vbif_halt_params *params)
 {
 	struct sde_rot_data_type *mdata = sde_rot_get_mdata();
 	u32 reg_val;
 	bool forced_on;
+	int rc = 0;
 
 	if (!mdata || !params || !params->reg_off_mdp_clk_ctrl) {
 		SDEROT_ERR("null input parameter\n");
 		return;
 	}
 
-	if (params->xin_id > MMSS_VBIF_NRT_VBIF_CLK_FORCE_CTRL0_XIN1) {
+	if (!mdata->parent_pdev &&
+		params->xin_id > MMSS_VBIF_NRT_VBIF_CLK_FORCE_CTRL0_XIN1) {
 		SDEROT_ERR("xin_id:%d exceed max limit\n", params->xin_id);
 		return;
 	}
 
 	forced_on = force_on_xin_clk(params->bit_off_mdp_clk_ctrl,
 		params->reg_off_mdp_clk_ctrl, true);
+
+	vbif_lock(mdata->parent_pdev);
 
 	SDEROT_EVTLOG(forced_on, params->xin_id);
 
@@ -158,11 +180,15 @@ void sde_mdp_halt_vbif_xin(struct sde_mdp_vbif_halt_params *params)
 		reg_val | BIT(params->xin_id));
 
 	/* this is a polling operation */
-	sde_mdp_wait_for_xin_halt(params->xin_id);
+	rc = sde_mdp_wait_for_xin_halt(params->xin_id);
+	if (rc == -ETIMEDOUT)
+		params->xin_timeout = BIT(params->xin_id);
 
 	reg_val = SDE_VBIF_READ(mdata, MMSS_VBIF_XIN_HALT_CTRL0);
 	SDE_VBIF_WRITE(mdata, MMSS_VBIF_XIN_HALT_CTRL0,
 		reg_val & ~BIT(params->xin_id));
+
+	vbif_unlock(mdata->parent_pdev);
 
 	if (forced_on)
 		force_on_xin_clk(params->bit_off_mdp_clk_ctrl,
@@ -209,18 +235,36 @@ u32 sde_mdp_get_ot_limit(u32 width, u32 height, u32 pixfmt, u32 fps, u32 is_rd)
 	SDEROT_DBG("w:%d h:%d fps:%d pixfmt:%8.8x yuv:%d res:%llu rd:%d\n",
 		width, height, fps, pixfmt, is_yuv, res, is_rd);
 
-	if (!is_yuv)
-		goto exit;
-
 	/*
 	 * If (total_source_pixels <= 62208000  && YUV) -> RD/WROT=2 //1080p30
 	 * If (total_source_pixels <= 124416000 && YUV) -> RD/WROT=4 //1080p60
 	 * If (total_source_pixels <= 2160p && YUV && FPS <= 30) -> RD/WROT = 32
 	 */
-	if (res <= (RES_1080p * 30))
-		ot_lim = 2;
-	else if (res <= (RES_1080p * 60))
-		ot_lim = 4;
+	switch (mdata->mdss_version) {
+	case SDE_MDP_HW_REV_540:
+		if (is_yuv) {
+			if (res <= (RES_1080p * 30))
+				ot_lim = 2;
+			else if (res <= (RES_1080p * 60))
+				ot_lim = 4;
+			else if (res <= (RES_WQXGA * 60))
+				ot_lim = 4;
+			else if (res <= (RES_UHD * 30))
+				ot_lim = 8;
+		} else if (fmt->bpp == 4 && res <= (RES_WQXGA * 60)) {
+			ot_lim = 16;
+		}
+
+		break;
+	default:
+		if (is_yuv) {
+			if (res <= (RES_1080p * 30))
+				ot_lim = 2;
+			else if (res <= (RES_1080p * 60))
+				ot_lim = 4;
+		}
+		break;
+	}
 
 exit:
 	SDEROT_DBG("ot_lim=%d\n", ot_lim);
@@ -274,6 +318,8 @@ void sde_mdp_set_ot_limit(struct sde_mdp_set_ot_params *params)
 	u32 sts;
 	bool forced_on;
 
+	vbif_lock(mdata->parent_pdev);
+
 	ot_lim = get_ot_limit(
 		reg_off_vbif_lim_conf,
 		bit_off_vbif_lim_conf,
@@ -319,6 +365,7 @@ void sde_mdp_set_ot_limit(struct sde_mdp_set_ot_params *params)
 
 	SDEROT_EVTLOG(params->num, params->xin_id, ot_lim);
 exit:
+	vbif_unlock(mdata->parent_pdev);
 	return;
 }
 
@@ -465,7 +512,7 @@ static int sde_mdp_parse_dt_handler(struct platform_device *pdev,
 	rc = of_property_read_u32_array(pdev->dev.of_node, prop_name,
 					offsets, len);
 	if (rc) {
-		SDEROT_ERR("Error from prop %s : u32 array read\n", prop_name);
+		SDEROT_DBG("Error from prop %s : u32 array read\n", prop_name);
 		return -EINVAL;
 	}
 
@@ -499,7 +546,7 @@ static void sde_mdp_parse_vbif_memtype(struct platform_device *pdev,
 			"qcom,mdss-rot-vbif-memtype");
 	mdata->vbif_memtype = kcalloc(mdata->vbif_memtype_count,
 			sizeof(u32), GFP_KERNEL);
-	if (!mdata->vbif_memtype) {
+	if (!mdata->vbif_memtype || !mdata->vbif_memtype_count) {
 		mdata->vbif_memtype_count = 0;
 		return;
 	}
@@ -527,7 +574,7 @@ static void sde_mdp_parse_vbif_qos(struct platform_device *pdev,
 			"qcom,mdss-rot-vbif-qos-setting");
 	mdata->vbif_nrt_qos = kcalloc(mdata->npriority_lvl,
 			sizeof(u32), GFP_KERNEL);
-	if (!mdata->vbif_nrt_qos) {
+	if (!mdata->vbif_nrt_qos || !mdata->npriority_lvl) {
 		mdata->npriority_lvl = 0;
 		return;
 	}
@@ -542,6 +589,16 @@ static void sde_mdp_parse_vbif_qos(struct platform_device *pdev,
 		mdata->npriority_lvl = 0;
 		return;
 	}
+}
+
+static void sde_mdp_parse_vbif_xin_id(struct platform_device *pdev,
+		struct sde_rot_data_type *mdata)
+{
+	mdata->vbif_xin_id[XIN_SSPP] = XIN_SSPP;
+	mdata->vbif_xin_id[XIN_WRITEBACK] = XIN_WRITEBACK;
+
+	sde_mdp_parse_dt_handler(pdev, "qcom,mdss-rot-xin-id",
+					mdata->vbif_xin_id, MAX_XIN);
 }
 
 static void sde_mdp_parse_cdp_setting(struct platform_device *pdev,
@@ -674,6 +731,35 @@ static void sde_mdp_parse_inline_rot_lut_setting(struct platform_device *pdev,
 	}
 }
 
+static void sde_mdp_parse_rt_rotator(struct device_node *np)
+{
+	struct sde_rot_data_type *mdata = sde_rot_get_mdata();
+	struct platform_device *pdev;
+	struct of_phandle_args phargs;
+	int rc = 0;
+
+	rc = of_parse_phandle_with_args(np,
+			"qcom,mdss-rot-parent", "#list-cells", 0, &phargs);
+
+	if (rc)
+		return;
+
+	if (!phargs.np || !phargs.args_count) {
+		SDEROT_ERR("invalid args\n");
+		return;
+	}
+
+	pdev = of_find_device_by_node(phargs.np);
+	if (pdev) {
+		mdata->parent_pdev = pdev;
+	} else {
+		mdata->parent_pdev = NULL;
+		SDEROT_ERR("Parent mdp node not available\n");
+	}
+
+	of_node_put(phargs.np);
+}
+
 static int sde_mdp_parse_dt_misc(struct platform_device *pdev,
 		struct sde_rot_data_type *mdata)
 {
@@ -701,6 +787,8 @@ static int sde_mdp_parse_dt_misc(struct platform_device *pdev,
 	sde_mdp_parse_cdp_setting(pdev, mdata);
 
 	sde_mdp_parse_vbif_qos(pdev, mdata);
+
+	sde_mdp_parse_vbif_xin_id(pdev, mdata);
 
 	sde_mdp_parse_vbif_memtype(pdev, mdata);
 
@@ -820,6 +908,13 @@ int sde_rotator_base_init(struct sde_rot_data_type **pmdata,
 	int rc;
 	struct sde_rot_data_type *mdata;
 
+
+	/* if probe deferral happened, return early*/
+	if (sde_rot_res) {
+		SDEROT_ERR("Rotator data already initialized, skip init\n");
+		return 0;
+	}
+
 	mdata = devm_kzalloc(&pdev->dev, sizeof(*mdata), GFP_KERNEL);
 	if (mdata == NULL)
 		return -ENOMEM;
@@ -845,6 +940,8 @@ int sde_rotator_base_init(struct sde_rot_data_type **pmdata,
 	}
 	SDEROT_DBG("SDE ROT VBIF HW Base addr=%pK len=0x%x\n",
 			mdata->vbif_nrt_io.base, mdata->vbif_nrt_io.len);
+
+	sde_mdp_parse_rt_rotator(pdev->dev.of_node);
 
 	rc = sde_mdp_parse_dt_misc(pdev, mdata);
 	if (rc) {
