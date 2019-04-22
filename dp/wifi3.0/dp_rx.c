@@ -1429,7 +1429,15 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 
 	DP_STATS_INC(peer, rx.bw[bw], 1);
-	DP_STATS_INC(peer, rx.nss[nss], 1);
+	/*
+	 * only if nss > 0 and pkt_type is 11N/AC/AX,
+	 * then increase index [nss - 1] in array counter.
+	 */
+	if (nss > 0 && (pkt_type == DOT11_N ||
+			pkt_type == DOT11_AC ||
+			pkt_type == DOT11_AX))
+		DP_STATS_INC(peer, rx.nss[nss - 1], 1);
+
 	DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
 	DP_STATS_INCC(peer, rx.err.mic_err, 1,
 		      hal_rx_mpdu_end_mic_err_get(rx_tlv_hdr));

@@ -55,16 +55,11 @@ hal_rx_msdu_start_nss_get_6390(uint8_t *buf)
 	struct rx_msdu_start *msdu_start =
 				&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
 	uint8_t mimo_ss_bitmap;
-	uint32_t ss_index;
 
 	mimo_ss_bitmap = HAL_RX_MSDU_START_MIMO_SS_BITMAP(msdu_start);
-	ss_index = qdf_get_hweight8(mimo_ss_bitmap);
 
-	/* Hot fix only, maxinum nss number for MCL set to 1 (nss 2)*/
-	if ((ss_index > 1) && (ss_index <= 3))
-		ss_index = 1;
+	return qdf_get_hweight8(mimo_ss_bitmap);
 
-	return ss_index;
 }
 
 /**
