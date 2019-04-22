@@ -309,12 +309,12 @@ QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
 					  wlan_objmgr_ref_dbgid dbg_id);
 
 /**
- * wlan_util_get_mode_specific_peer_coun - This api gives vdev mode specific
+ * wlan_util_get_peer_count_for_mode - This api gives vdev mode specific
  * peer count`
  * @pdev: PDEV object
  * @mode: Operation mode.
  *
- * Return: int- peer count
+ * Return: int- peer count for operating mode
  */
 uint16_t wlan_util_get_peer_count_for_mode(struct wlan_objmgr_pdev *pdev,
 					   enum QDF_OPMODE mode);

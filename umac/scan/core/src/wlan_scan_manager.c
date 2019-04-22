@@ -611,9 +611,9 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.adaptive_dwell_time_mode =
 			scan_obj->scan_def.adaptive_dwell_time_mode_nc;
 	/*
-	 * If AP is active set min rest time same as max rest time, so that
-	 * firmware spends more time on home channel which will increase the
-	 * probability of sending beacon at TBTT
+	 * If AP/GO is active and has connected clients set min rest time
+	 * same as max rest time, so that firmware spends more time on home
+	 * channel which will increase the probability of sending beacon at TBTT
 	 */
 	if ((ap_present && sap_peer_count) ||
 	    (go_present && go_peer_count)) {

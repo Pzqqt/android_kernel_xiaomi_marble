@@ -547,10 +547,9 @@ uint16_t wlan_util_get_peer_count_for_mode(struct wlan_objmgr_pdev *pdev,
 
 	count.opmode = mode;
 	count.peer_count = 0;
-	wlan_objmgr_pdev_iterate_obj_list(pdev,
-					  WLAN_VDEV_OP,
-				wlan_util_get_mode_specific_peer_count,
-				&count, 0, WLAN_OBJMGR_ID);
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+				wlan_util_get_mode_specific_peer_count, &count,
+				0, WLAN_OBJMGR_ID);
 
 	return count.peer_count;
 }
