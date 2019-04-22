@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -280,6 +280,36 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 
 #if defined(FEATURE_TSO)
 /**
+ * ol_tx_tso_adjust_pkt_dnld_len() Update download len for TSO pkt
+ *
+ * @msdu: tso mdsu for which download length is updated
+ * @msdu_info: tso msdu_info for the msdu
+ * @download_len: packet download length
+ *
+ * Return: Updated download length
+ */
+
+static uint32_t
+ol_tx_tso_adjust_pkt_dnld_len(qdf_nbuf_t msdu,
+			      struct ol_txrx_msdu_info_t msdu_info,
+			      uint32_t download_len)
+{
+	uint32_t frag0_len = 0, delta = 0, eit_hdr_len = 0;
+	uint32_t loc_download_len = download_len;
+
+	frag0_len = qdf_nbuf_get_frag_len(msdu, 0);
+	loc_download_len -= frag0_len;
+	eit_hdr_len = msdu_info.tso_info.curr_seg->seg.tso_frags[0].length;
+
+	if (eit_hdr_len < loc_download_len) {
+		delta = loc_download_len - eit_hdr_len;
+		download_len -= delta;
+	}
+
+	return download_len;
+}
+
+/**
  * ol_tx_ll_fast() Update metadata information and send msdu to HIF/CE
  *
  * @vdev: handle to ol_txrx_vdev_t
@@ -407,6 +437,10 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 						sent_to_target = 1;
 					next_seg = msdu_info.tso_info.
 						curr_seg->next;
+					pkt_download_len =
+						ol_tx_tso_adjust_pkt_dnld_len(
+							msdu, msdu_info,
+							pkt_download_len);
 				} else {
 					next_seg = NULL;
 				}
