@@ -1339,6 +1339,8 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 	int32_t ret = 0;
 	uint32_t concurrent_state;
 	struct hdd_context *hdd_ctx;
+	uint32_t sta_cli_bit_mask = QDF_STA_MASK | QDF_P2P_CLIENT_MASK;
+	uint32_t sta_go_bit_mask = QDF_STA_MASK | QDF_P2P_GO_MASK;
 
 	if (!adapter) {
 		hdd_err("Invalid adapter");
@@ -1356,9 +1358,8 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 	 * Check if concurrency mode is active.
 	 * Need to modify this code to support MCC modes other than STA/P2P
 	 */
-	if ((concurrent_state ==
-	     (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
-	    (concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
+	if (((concurrent_state & sta_cli_bit_mask) == sta_cli_bit_mask) ||
+	    ((concurrent_state & sta_go_bit_mask) == sta_go_bit_mask)) {
 		hdd_info("STA & P2P are both enabled");
 
 		/*
@@ -1374,7 +1375,6 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 
 		set_value = set_first_connection_operating_channel(
 			hdd_ctx, set_value, adapter->device_mode);
-
 
 		set_value = set_second_connection_operating_channel(
 			hdd_ctx, set_value, adapter->vdev_id);
@@ -1398,6 +1398,8 @@ void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value)
 {
 	uint32_t concurrent_state;
 	struct hdd_context *hdd_ctx;
+	uint32_t sta_cli_bit_mask = QDF_STA_MASK | QDF_P2P_CLIENT_MASK;
+	uint32_t sta_go_bit_mask = QDF_STA_MASK | QDF_P2P_GO_MASK;
 
 	if (!adapter) {
 		hdd_err("Invalid adapter");
@@ -1416,9 +1418,8 @@ void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value)
 	 * Check if concurrency mode is active.
 	 * Need to modify this code to support MCC modes other than STA/P2P
 	 */
-	if ((concurrent_state ==
-	     (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
-	    (concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
+	if (((concurrent_state & sta_cli_bit_mask) == sta_cli_bit_mask) ||
+	    ((concurrent_state & sta_go_bit_mask) == sta_go_bit_mask)) {
 		hdd_info("STA & P2P are both enabled");
 		/*
 		 * The channel number and latency are formatted in
