@@ -691,7 +691,7 @@ static u32 sde_hw_ctl_get_reset_status(struct sde_hw_ctl *ctx)
 static u32 sde_hw_ctl_get_scheduler_status(struct sde_hw_ctl *ctx)
 {
 	if (!ctx)
-		return 0;
+		return INVALID_CTL_STATUS;
 	return (u32)SDE_REG_READ(&ctx->hw, CTL_STATUS);
 }
 
