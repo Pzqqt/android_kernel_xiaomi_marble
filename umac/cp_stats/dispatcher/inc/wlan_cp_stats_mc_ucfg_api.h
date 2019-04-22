@@ -214,7 +214,8 @@ QDF_STATUS ucfg_mc_cp_stats_set_rate_flags(struct wlan_objmgr_vdev *vdev,
 void ucfg_mc_cp_stats_register_pmo_handler(void);
 #else
 void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
-#endif
-
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
+#else
+void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */
