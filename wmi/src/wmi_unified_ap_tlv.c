@@ -1898,7 +1898,7 @@ static QDF_STATUS extract_pdev_caldata_version_check_ev_param_tlv(
  *			QDF_STATUS_E_NOMEM/QDF_STATUS_E_FAILURE on failure
 */
 static QDF_STATUS set_rx_pkt_type_routing_tag_update_tlv(
-			void *wmi_hdl,
+			wmi_unified_t wmi_hdl,
 			struct wmi_rx_pkt_protocol_routing_info *param)
 {
 	wmi_pdev_update_pkt_routing_cmd_fixed_param *cmd;
