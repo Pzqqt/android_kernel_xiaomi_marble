@@ -188,6 +188,13 @@ ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
 						      sta_sap_scc_on_dfs_chnl);
 }
 
+bool
+ucfg_policy_mgr_get_dfs_master_dynamic_enabled(struct wlan_objmgr_psoc *psoc,
+					       uint8_t vdev_id)
+{
+	return policy_mgr_get_dfs_master_dynamic_enabled(psoc, vdev_id);
+}
+
 QDF_STATUS
 ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
 					      uint8_t *sta_sap_scc_lte_coex)
