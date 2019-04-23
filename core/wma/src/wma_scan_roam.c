@@ -2998,24 +2998,24 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 
 	if (!event) {
 		wma_err_rl("event param null");
-		goto cleanup;
+		return status;
 	}
 
 	param_buf = (WMI_ROAM_SYNCH_EVENTID_param_tlvs *)event;
 	if (!param_buf) {
 		wma_err_rl("received null buf from target");
-		goto cleanup;
+		return status;
 	}
 	synch_event = param_buf->fixed_param;
 	if (!synch_event) {
 		wma_err_rl("received null event data from target");
-		goto cleanup;
+		return status;
 	}
 
 	if (synch_event->vdev_id >= wma->max_bssid) {
 		wma_err_rl("received invalid vdev_id %d",
 			   synch_event->vdev_id);
-		goto cleanup;
+		return status;
 	}
 
 	iface = &wma->interfaces[synch_event->vdev_id];
@@ -3025,16 +3025,10 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 						   event);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		wma_err("Failed to send the EV_ROAM");
-	} else {
-		wma_debug("Posted EV_ROAM to VDEV SM");
-		return 0;
+		return status;
 	}
-
-cleanup:
-	if (wma && synch_event)
-		iface->roam_synch_in_progress = false;
-
-	return status;
+	wma_debug("Posted EV_ROAM to VDEV SM");
+	return 0;
 }
 #else
 int wma_roam_synch_event_handler(void *handle, uint8_t *event,
