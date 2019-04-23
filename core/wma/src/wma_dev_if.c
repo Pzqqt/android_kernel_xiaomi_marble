@@ -2156,6 +2156,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		WMA_LOGD("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
 			 __func__, peer, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
+		cdp_peer_setup(dp_soc, vdev, peer);
 		return QDF_STATUS_SUCCESS;
 	}
 	param.peer_addr = peer_addr;
