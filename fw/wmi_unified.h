@@ -2472,6 +2472,13 @@ typedef struct {
 
     /* 2nd DWORD of HE MAC Capabilities */
     A_UINT32 he_cap_info_ext;
+
+    /*
+     * A variable-length TLV array of wmi_chan_rf_characterization_info will
+     * follow this fixed_param TLV, containing rx characterization info for
+     * primary channels.
+     *   WMI_CHAN_RF_CHARACTERIZATION_INFO wmi_chan_rf_characterization_info[];
+     */
 } wmi_service_ready_ext_event_fixed_param;
 
 typedef enum {
@@ -24679,6 +24686,12 @@ typedef struct {
     A_UINT32 min_buf_size; /* minimum size in bytes of each buffer in the DMA ring */
     A_UINT32 min_buf_align; /* minimum alignment in bytes of each buffer in the DMA ring */
 } WMI_DMA_RING_CAPABILITIES;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_ wmi_chan_rf_characterization_info */
+    A_UINT32 freq; /* channel frequency of rf characteristic info (MHz) */
+    A_UINT32 chan_metric; /* 0 = unusable, 1 = worst, 10 = best */
+} WMI_CHAN_RF_CHARACTERIZATION_INFO;
 
 #define WMI_DMA_RING_PADDR_LO_S 0
 #define WMI_DMA_RING_PADDR_LO   0xffffffff
