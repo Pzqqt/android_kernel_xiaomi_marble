@@ -923,7 +923,7 @@ static int _sde_encoder_atomic_check_pu_roi(struct sde_encoder_virt *sde_enc,
 {
 	int ret = 0;
 
-	if (drm_atomic_crtc_needs_modeset(crtc_state)) {
+	if (crtc_state->mode_changed || crtc_state->active_changed) {
 		struct sde_rect mode_roi, roi;
 
 		mode_roi.x = 0;
