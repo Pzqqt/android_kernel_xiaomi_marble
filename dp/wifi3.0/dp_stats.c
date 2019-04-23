@@ -16,9 +16,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 #include "qdf_types.h"
-#include "htt_stats.h"
+#include "dp_peer.h"
 #include "dp_types.h"
 #include "dp_internal.h"
+#include "htt_stats.h"
+#include "htt_ppdu_stats.h"
+#include "dp_htt.h"
 
 #define DP_MAX_STRING_LEN 500
 
@@ -78,6 +81,10 @@ const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"41 to 45 ms", "46 to 50 ms",
 	"51 to 55 ms", "56 to 60 ms", "60+ ms"
 };
+#endif
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
 #endif
 
 /*

@@ -843,6 +843,7 @@ enum cdp_pdev_param_type {
 	CDP_INGRESS_STATS,
 	CDP_OSIF_DROP,
 	CDP_CONFIG_ENH_RX_CAPTURE,
+	CDP_CONFIG_TX_CAPTURE,
 };
 
 /**
@@ -1211,6 +1212,81 @@ struct cdp_tx_completion_ppdu_user {
 };
 
 /**
+ * struct cdp_tx_indication_mpdu_info - Tx MPDU completion information
+ * @ppdu_id: PPDU id
+ * @duration: user duration in ppdu
+ * @frame_type: frame type MGMT/CTRL/DATA/BAR
+ * @frame_ctrl: frame control field in 802.11 header
+ * @qos_ctrl: QoS control field in 802.11 header
+ * @tid: TID number
+ * @num_msdu: number of msdu in MPDU
+ * @seq_no: Sequence number of first MPDU
+ * @ltf_size: ltf_size
+ * @stbc: stbc
+ * @he_re: he_re (range extension)
+ * @txbf: txbf
+ * @bw: Transmission bandwidth
+ *       <enum 2 transmit_bw_20_MHz>
+ *       <enum 3 transmit_bw_40_MHz>
+ *       <enum 4 transmit_bw_80_MHz>
+ *       <enum 5 transmit_bw_160_MHz>
+ * @nss: NSS 1,2, ...8
+ * @mcs: MCS index
+ * @preamble: preamble
+ * @gi: guard interval 800/400/1600/3200 ns
+ * @channel: frequency
+ * @channel_num: channel number
+ * @ack_rssi: ack rssi
+ * @ldpc: ldpc
+ * @tx_rate: Transmission Rate
+ * @mac_address: peer mac address
+ * @bss_mac_address: bss mac address
+ * @ppdu_start_timestamp: TSF at PPDU start
+ * @ppdu_end_timestamp: TSF at PPDU end
+ * @ba_start_seq: Block Ack sequence number
+ * @ba_bitmap: Block Ack bitmap
+ */
+struct cdp_tx_indication_mpdu_info {
+	uint32_t ppdu_id;
+	uint32_t tx_duration;
+	uint16_t frame_type;
+	uint16_t frame_ctrl;
+	uint16_t qos_ctrl;
+	uint8_t tid;
+	uint32_t num_msdu;
+	uint32_t seq_no;
+	uint32_t ltf_size:2,
+		 he_re:1,
+		 txbf:4,
+		 bw:4,
+		 nss:4,
+		 mcs:4,
+		 preamble:4,
+		 gi:4;
+	uint32_t channel;
+	uint8_t channel_num;
+	uint32_t ack_rssi;
+	uint32_t ldpc;
+	uint32_t tx_rate;
+	uint8_t mac_address[QDF_MAC_ADDR_SIZE];
+	uint8_t bss_mac_address[QDF_MAC_ADDR_SIZE];
+	uint32_t ppdu_start_timestamp;
+	uint32_t ppdu_end_timestamp;
+	uint32_t ba_start_seq;
+	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+};
+
+/**
+ * struct cdp_tx_indication_info - Tx capture information
+ * @mpdu_info: Tx MPDU completion information
+ * @mpdu_nbuf: reconstructed mpdu packet
+ */
+struct cdp_tx_indication_info {
+	struct cdp_tx_indication_mpdu_info mpdu_info;
+	qdf_nbuf_t mpdu_nbuf;
+};
+
+/**
  * struct cdp_tx_completion_ppdu - Tx PPDU completion information
  * @completion_status: completion status - OK/Filter/Abort/Timeout
  * @ppdu_id: PPDU Id
@@ -1228,6 +1304,7 @@ struct cdp_tx_completion_ppdu_user {
  * @ppdu_end_timestamp: TSF at PPDU end
  * @ack_timestamp: TSF at the reception of ACK
  * @user: per-User stats (array of per-user structures)
+ * @mpdu_q: queue of mpdu in a ppdu
  */
 struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
@@ -1247,6 +1324,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_end_timestamp;
 	uint32_t ack_timestamp;
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
+	qdf_nbuf_queue_t mpdu_q;
 };
 
 /**

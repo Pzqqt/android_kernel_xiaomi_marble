@@ -31,6 +31,7 @@
 #include "if_meta_hdr.h"
 #endif
 #include "enet.h"
+#include "dp_internal.h"
 
 #define DP_TX_QUEUE_MASK 0x3
 
@@ -58,6 +59,10 @@ static const uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {
 					HAL_TX_ENCRYPT_TYPE_AES_GCMP_128,
 					HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
 					HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
+#endif
 
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
@@ -3041,19 +3046,30 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 		time_latency = (qdf_ktime_to_ms(qdf_ktime_get()) -
 				desc->timestamp);
 	}
-	if (!(desc->msdu_ext_desc) &&
-	    (dp_get_completion_indication_for_stack(soc, desc->pdev,
-						    peer, ts, desc->nbuf,
-						    time_latency)
-			== QDF_STATUS_SUCCESS)) {
-		qdf_nbuf_unmap(soc->osdev, desc->nbuf,
-			       QDF_DMA_TO_DEVICE);
+	if (!(desc->msdu_ext_desc)) {
+		if (QDF_STATUS_SUCCESS ==
+		    dp_tx_add_to_comp_queue(soc, desc, ts, peer)) {
+			return;
+		}
 
-		dp_send_completion_to_stack(soc, desc->pdev, ts->peer_id,
-					    ts->ppdu_id, desc->nbuf);
-	} else {
-		dp_tx_comp_free_buf(soc, desc);
+		if (QDF_STATUS_SUCCESS ==
+		    dp_get_completion_indication_for_stack(soc,
+							   desc->pdev,
+							   peer, ts,
+							   desc->nbuf,
+							   time_latency)) {
+			qdf_nbuf_unmap(soc->osdev, desc->nbuf,
+				       QDF_DMA_TO_DEVICE);
+			dp_send_completion_to_stack(soc,
+						    desc->pdev,
+						    ts->peer_id,
+						    ts->ppdu_id,
+						    desc->nbuf);
+			return;
+		}
 	}
+
+	dp_tx_comp_free_buf(soc, desc);
 }
 
 /**

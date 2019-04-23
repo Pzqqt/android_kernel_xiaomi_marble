@@ -27,7 +27,6 @@
 #include <htt.h>
 #include <wdi_event.h>
 #include <queue.h>
-#include "dp_htt.h"
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_tx.h"
@@ -46,6 +45,8 @@
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
+#include "htt_ppdu_stats.h"
+#include "dp_htt.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cfg_ucfg_api.h"
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -79,6 +80,23 @@ extern int con_mode_monitor;
  */
 static QDF_STATUS
 dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, int val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+#endif
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
+#else
+/*
+ * dp_config_enh_tx_capture()- API to enable/disable enhanced tx capture
+ * @pdev_handle: DP_PDEV handle
+ * @val: user provided value
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dp_config_enh_tx_capture(struct cdp_pdev *pdev_handle, int val)
 {
 	return QDF_STATUS_E_INVAL;
 }
@@ -135,21 +153,6 @@ bool is_dp_verbose_debug_enabled;
 #endif
 
 #define STR_MAXLEN	64
-
-#define DP_PPDU_STATS_CFG_ALL 0xFFFF
-
-/* PPDU stats mask sent to FW to enable enhanced stats */
-#define DP_PPDU_STATS_CFG_ENH_STATS 0xE67
-/* PPDU stats mask sent to FW to support debug sniffer feature */
-#define DP_PPDU_STATS_CFG_SNIFFER 0x2FFF
-/* PPDU stats mask sent to FW to support BPR feature*/
-#define DP_PPDU_STATS_CFG_BPR 0x2000
-/* PPDU stats mask sent to FW to support BPR and enhanced stats feature */
-#define DP_PPDU_STATS_CFG_BPR_ENH (DP_PPDU_STATS_CFG_BPR | \
-				   DP_PPDU_STATS_CFG_ENH_STATS)
-/* PPDU stats mask sent to FW to support BPR and pcktlog stats feature */
-#define DP_PPDU_STATS_CFG_BPR_PKTLOG (DP_PPDU_STATS_CFG_BPR | \
-				      DP_PPDU_TXLITE_STATS_BITMASK_CFG)
 
 #define RNG_ERR		"SRNG setup failed for"
 
@@ -290,27 +293,20 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 };
 
 /**
- * dp_cpu_ring_map_type - dp tx cpu ring map
- * @DP_NSS_DEFAULT_MAP: Default mode with no NSS offloaded
- * @DP_NSS_FIRST_RADIO_OFFLOADED_MAP: Only First Radio is offloaded
- * @DP_NSS_SECOND_RADIO_OFFLOADED_MAP: Only second radio is offloaded
- * @DP_NSS_DBDC_OFFLOADED_MAP: Both radios are offloaded
- * @DP_NSS_DBTC_OFFLOADED_MAP: All three radios are offloaded
- * @DP_NSS_CPU_RING_MAP_MAX: Max cpu ring map val
- */
-enum dp_cpu_ring_map_types {
-	DP_NSS_DEFAULT_MAP,
-	DP_NSS_FIRST_RADIO_OFFLOADED_MAP,
-	DP_NSS_SECOND_RADIO_OFFLOADED_MAP,
-	DP_NSS_DBDC_OFFLOADED_MAP,
-	DP_NSS_DBTC_OFFLOADED_MAP,
-	DP_NSS_CPU_RING_MAP_MAX
-};
-
-/**
  * @brief Cpu to tx ring map
  */
 #ifdef CONFIG_WIN
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+uint8_t
+dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
+	{0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2},
+	{0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1},
+	{0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0},
+	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2},
+	{0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3},
+	{0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1, 0x1}
+};
+#else
 static uint8_t
 dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
 	{0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2},
@@ -319,6 +315,7 @@ dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
 	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2},
 	{0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3}
 };
+#endif
 #else
 static uint8_t
 dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -3484,6 +3481,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	qdf_event_create(&pdev->fw_peer_stats_event);
 
 	pdev->num_tx_allowed = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+	dp_tx_ppdu_stats_attach(pdev);
 
 	return (struct cdp_pdev *)pdev;
 
@@ -3768,6 +3766,8 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	dp_mon_link_free(pdev);
+
+	dp_tx_ppdu_stats_detach(pdev);
 
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
@@ -5200,6 +5200,8 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	qdf_atomic_set(&peer->is_default_route_set, 1);
 
 	dp_peer_rx_init(pdev, peer);
+	dp_peer_tx_init(pdev, peer);
+
 	return;
 }
 
@@ -6825,6 +6827,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		DP_PRINT_STATS("	Tag[%d] = %llu", index,
 				pdev->stats.ppdu_stats_counter[index]);
 	}
+	DP_PRINT_STATS("tx_ppdu_proc: %llu\n",
+		       pdev->tx_ppdu_proc);
 
 	for (i = 0; i < CDP_WDI_NUM_EVENTS; i++) {
 		if (!pdev->stats.wdi_event[i])
@@ -8100,6 +8104,8 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 		break;
 	case CDP_CONFIG_ENH_RX_CAPTURE:
 		return dp_config_enh_rx_capture(pdev_handle, val);
+	case CDP_CONFIG_TX_CAPTURE:
+		return dp_config_enh_tx_capture(pdev_handle, val);
 	default:
 		return QDF_STATUS_E_INVAL;
 	}
@@ -10137,7 +10143,7 @@ static struct cdp_ops dp_txrx_ops = {
  *
  * Return: Void
  */
-static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
+void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 {
 	uint32_t i;
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {

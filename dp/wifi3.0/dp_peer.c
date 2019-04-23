@@ -34,6 +34,10 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
+#endif
+
 #ifdef DP_LFR
 static inline void
 dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
@@ -2061,6 +2065,62 @@ static void dp_peer_setup_remaining_tids(struct dp_peer *peer)
 #else
 static void dp_peer_setup_remaining_tids(struct dp_peer *peer) {};
 #endif
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+/*
+ * dp_peer_tid_queue_init() – Initialize ppdu stats queue per TID
+ * @peer: Datapath peer
+ *
+ */
+static inline void dp_peer_tid_queue_init(struct dp_peer *peer)
+{
+}
+
+/*
+ * dp_peer_tid_queue_cleanup() – remove ppdu stats queue per TID
+ * @peer: Datapath peer
+ *
+ */
+static inline void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
+{
+}
+
+/*
+ * dp_peer_update_80211_hdr() – dp peer update 80211 hdr
+ * @vdev: Datapath vdev
+ * @peer: Datapath peer
+ *
+ */
+static inline void
+dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
+{
+}
+#endif
+
+/*
+ * dp_peer_tx_init() – Initialize receive TID state
+ * @pdev: Datapath pdev
+ * @peer: Datapath peer
+ *
+ */
+void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer)
+{
+	dp_peer_tid_queue_init(peer);
+	dp_peer_update_80211_hdr(peer->vdev, peer);
+}
+
+/*
+ * dp_peer_tx_cleanup() – Deinitialize receive TID state
+ * @vdev: Datapath vdev
+ * @peer: Datapath peer
+ *
+ */
+static inline void
+dp_peer_tx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
+{
+	dp_peer_tid_queue_cleanup(peer);
+}
+
 /*
  * dp_peer_rx_init() – Initialize receive TID state
  * @pdev: Datapath pdev
@@ -2161,6 +2221,8 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	peer->last_assoc_rcvd = 0;
 	peer->last_disassoc_rcvd = 0;
 	peer->last_deauth_rcvd = 0;
+
+	dp_peer_tx_cleanup(vdev, peer);
 
 	/* cleanup the Rx reorder queues for this peer */
 	dp_peer_rx_cleanup(vdev, peer);

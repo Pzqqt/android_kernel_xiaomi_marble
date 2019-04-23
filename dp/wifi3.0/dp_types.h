@@ -57,6 +57,10 @@
 #include <pktlog.h>
 #endif
 
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
+#endif
+
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
 #define DP_VO_TID 6
@@ -238,6 +242,32 @@ enum dp_nss_cfg {
 	dp_nss_cfg_dbdc = 0x3,
 	dp_nss_cfg_dbtc = 0x7,
 	dp_nss_cfg_max
+};
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#define DP_CPU_RING_MAP_1 1
+#endif
+
+/**
+ * dp_cpu_ring_map_type - dp tx cpu ring map
+ * @DP_NSS_DEFAULT_MAP: Default mode with no NSS offloaded
+ * @DP_NSS_FIRST_RADIO_OFFLOADED_MAP: Only First Radio is offloaded
+ * @DP_NSS_SECOND_RADIO_OFFLOADED_MAP: Only second radio is offloaded
+ * @DP_NSS_DBDC_OFFLOADED_MAP: Both radios are offloaded
+ * @DP_NSS_DBTC_OFFLOADED_MAP: All three radios are offloaded
+ * @DP_SINGLE_TX_RING_MAP: to avoid out of order all cpu mapped to single ring
+ * @DP_NSS_CPU_RING_MAP_MAX: Max cpu ring map val
+ */
+enum dp_cpu_ring_map_types {
+	DP_NSS_DEFAULT_MAP,
+	DP_NSS_FIRST_RADIO_OFFLOADED_MAP,
+	DP_NSS_SECOND_RADIO_OFFLOADED_MAP,
+	DP_NSS_DBDC_OFFLOADED_MAP,
+	DP_NSS_DBTC_OFFLOADED_MAP,
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+	DP_SINGLE_TX_RING_MAP,
+#endif
+	DP_NSS_CPU_RING_MAP_MAX
 };
 
 /**
@@ -1113,9 +1143,16 @@ struct dp_neighbour_peer {
 	TAILQ_ENTRY(dp_neighbour_peer) neighbour_peer_list_elem;
 };
 
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#define WLAN_TX_PKT_CAPTURE_ENH 1
+#define DP_TX_PPDU_PROC_THRESHOLD 8
+#define DP_TX_PPDU_PROC_TIMEOUT 10
+#endif
+
 /**
  * struct ppdu_info - PPDU Status info descriptor
  * @ppdu_id         - Unique ppduid assigned by firmware for every tx packet
+ * @sched_cmdid     - schedule command id, which will be same in a burst
  * @max_ppdu_id     - wrap around for ppdu id
  * @last_tlv_cnt    - Keep track for missing ppdu tlvs
  * @last_user       - last ppdu processed for user
@@ -1123,9 +1160,11 @@ struct dp_neighbour_peer {
  * @nbuf            - ppdu descriptor payload
  * @ppdu_desc       - ppdu descriptor
  * @ppdu_info_list_elem - linked list of ppdu tlvs
+ * @ppdu_info_queue_elem - Singly linked list (queue) of ppdu tlvs
  */
 struct ppdu_info {
 	uint32_t ppdu_id;
+	uint32_t sched_cmdid;
 	uint32_t max_ppdu_id;
 	uint16_t tlv_bitmap;
 	uint16_t last_tlv_cnt;
@@ -1133,7 +1172,38 @@ struct ppdu_info {
 		 is_ampdu:1;
 	qdf_nbuf_t nbuf;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+	union {
+		TAILQ_ENTRY(ppdu_info) ppdu_info_dlist_elem;
+		STAILQ_ENTRY(ppdu_info) ppdu_info_slist_elem;
+	} ulist;
+#define ppdu_info_list_elem ulist.ppdu_info_dlist_elem
+#define ppdu_info_queue_elem ulist.ppdu_info_slist_elem
+#else
 	TAILQ_ENTRY(ppdu_info) ppdu_info_list_elem;
+#endif
+};
+
+/**
+ * struct msdu_completion_info - wbm msdu completion info
+ * @ppdu_id            - Unique ppduid assigned by firmware for every tx packet
+ * @peer_id            - peer_id
+ * @tid                - tid which used during transmit
+ * @first_msdu         - first msdu indication
+ * @last_msdu          - last msdu indication
+ * @msdu_part_of_amsdu - msdu part of amsdu
+ * @transmit_cnt       - retried count
+ * @tsf                - timestamp which it transmitted
+ */
+struct msdu_completion_info {
+	uint32_t ppdu_id;
+	uint16_t peer_id;
+	uint8_t tid;
+	uint8_t first_msdu:1,
+		last_msdu:1,
+		msdu_part_of_amsdu:1;
+	uint8_t transmit_cnt;
+	uint32_t tsf;
 };
 
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
@@ -1149,6 +1219,14 @@ struct rx_protocol_tag_stats {
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+struct dp_pdev_tx_capture {
+};
+
+struct dp_peer_tx_capture {
+};
+#endif
 
 /* PDEV level structure for data path */
 struct dp_pdev {
@@ -1401,6 +1479,7 @@ struct dp_pdev {
 	uint32_t ppdu_id;
 	bool first_nbuf;
 	struct {
+		qdf_nbuf_t last_nbuf; /*Ptr to mgmt last buf */
 		uint8_t *mgmt_buf; /* Ptr to mgmt. payload in HTT ppdu stats */
 		uint32_t mgmt_buf_len; /* Len of mgmt. payload in ppdu stats */
 		uint32_t ppdu_id;
@@ -1471,6 +1550,12 @@ struct dp_pdev {
 		rx_err_proto_tag_stats[RX_PROTOCOL_TAG_MAX];
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+
+	/* tx packet capture enhancement */
+	bool tx_capture_enabled;
+	struct dp_pdev_tx_capture tx_capture;
+	/* stats counter for tx ppdu processed */
+	uint64_t tx_ppdu_proc;
 };
 
 struct dp_peer;
@@ -1702,6 +1787,8 @@ struct dp_peer {
 
 	/* TID structures */
 	struct dp_rx_tid rx_tid[DP_MAX_TIDS];
+	struct dp_peer_tx_capture tx_capture;
+
 
 	/* TBD: No transmit TID state required? */
 

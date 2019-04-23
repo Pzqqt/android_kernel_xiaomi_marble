@@ -24,6 +24,9 @@
 #include <qdf_nbuf.h>
 #include <htc_api.h>
 
+#include "cdp_txrx_cmn_struct.h"
+#include "dp_types.h"
+
 #define HTT_TX_MUTEX_TYPE qdf_spinlock_t
 
 #define HTT_TX_MUTEX_INIT(_mutex)				\
@@ -39,6 +42,22 @@
 	qdf_spinlock_destroy(_mutex)
 
 #define DP_HTT_MAX_SEND_QUEUE_DEPTH 64
+
+#ifndef HTT_MAC_ADDR_LEN
+#define HTT_MAC_ADDR_LEN 6
+#endif
+
+#define HTT_FRAMECTRL_TYPE_MASK 0x0C
+#define HTT_GET_FRAME_CTRL_TYPE(_val)	\
+		(((_val) & HTT_FRAMECTRL_TYPE_MASK) >> 2)
+#define FRAME_CTRL_TYPE_MGMT	0x0
+#define FRAME_CTRL_TYPE_CTRL	0x1
+#define FRAME_CTRL_TYPE_DATA	0x2
+#define FRAME_CTRL_TYPE_RESV	0x3
+
+#define HTT_FRAMECTRL_DATATYPE 0x08
+#define HTT_PPDU_DESC_MAX_DEPTH 16
+#define DP_SCAN_PEER_ID 0xFFFF
 
 #define DP_HTT_HTC_PKT_MISCLIST_SIZE          256
 
@@ -222,5 +241,19 @@ struct htt_stats_context {
 	qdf_nbuf_queue_t msg;
 	uint32_t msg_len;
 };
+
+int
+dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap);
+
+/**
+ * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
+ * @pdev: DP pdev handle
+ * @ppdu_info: per PPDU TLV descriptor
+ *
+ * return: void
+ */
+void
+dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
+			       struct ppdu_info *ppdu_info);
 
 #endif /* _DP_HTT_H_ */

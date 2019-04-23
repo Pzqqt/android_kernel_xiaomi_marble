@@ -19,13 +19,13 @@
 #include <htt.h>
 #include <hal_hw_headers.h>
 #include <hal_api.h>
-#include "dp_htt.h"
 #include "dp_peer.h"
 #include "dp_types.h"
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 #include "htt_stats.h"
 #include "htt_ppdu_stats.h"
+#include "dp_htt.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cdp_txrx_cmn_struct.h"
 
@@ -53,47 +53,6 @@ do {                                                             \
 
 #define HTT_MGMT_CTRL_TLV_HDR_RESERVERD_LEN 16
 
-/**
- * Bitmap of HTT PPDU TLV types for Default mode
- */
-#define HTT_PPDU_DEFAULT_TLV_BITMAP \
-	(1 << HTT_PPDU_STATS_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_RATE_TLV) | \
-	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
-
-/**
- * Bitmap of HTT PPDU TLV types for Sniffer mode bitmap 64
- */
-#define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64 \
-	((1 << HTT_PPDU_STATS_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_RATE_TLV) | \
-	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV))
-
-/**
- * Bitmap of HTT PPDU TLV types for Sniffer mode bitmap 256
- */
-#define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_256 \
-	((1 << HTT_PPDU_STATS_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_RATE_TLV) | \
-	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV) | \
-	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV))
-
-#define HTT_FRAMECTRL_DATATYPE 0x08
-#define HTT_PPDU_DESC_MAX_DEPTH 16
-#define DP_SCAN_PEER_ID 0xFFFF
-
 /*
  * dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap() - Get ppdu stats tlv
  * bitmap for sniffer mode
@@ -102,8 +61,7 @@ do {                                                             \
  * Return: expected bitmap value, returns zero if doesn't match with
  * either 64-bit Tx window or 256-bit window tlv bitmap
  */
-
-static inline int
+int
 dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap)
 {
 	if (bitmap == (HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64))
@@ -114,17 +72,15 @@ dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap)
 	return 0;
 }
 
+#ifdef FEATURE_PERPKT_INFO
 /*
- * dp_tx_stats_update() - Update per-peer statistics
- * @soc: Datapath soc handle
+ * dp_tx_rate_stats_update() - Update rate per-peer statistics
  * @peer: Datapath peer handle
  * @ppdu: PPDU Descriptor
- * @ack_rssi: RSSI of last ack received
  *
  * Return: None
  */
-#ifdef FEATURE_PERPKT_INFO
-static inline void
+static void
 dp_tx_rate_stats_update(struct dp_peer *peer,
 			struct cdp_tx_completion_ppdu_user *ppdu)
 {
@@ -134,7 +90,6 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 
 	if (!peer || !ppdu)
 		return;
-
 
 	ratekbps = dp_getrateindex(ppdu->gi,
 				   ppdu->mcs,
@@ -166,8 +121,19 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	}
 }
 
-static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
-		struct cdp_tx_completion_ppdu_user *ppdu, uint32_t ack_rssi)
+/*
+ * dp_tx_stats_update() - Update per-peer statistics
+ * @soc: Datapath soc handle
+ * @peer: Datapath peer handle
+ * @ppdu: PPDU Descriptor
+ * @ack_rssi: RSSI of last ack received
+ *
+ * Return: None
+ */
+static void
+dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
+		   struct cdp_tx_completion_ppdu_user *ppdu,
+		   uint32_t ack_rssi)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	uint8_t preamble, mcs;
@@ -280,6 +246,18 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 			     &peer->stats, ppdu->peer_id,
 			     UPDATE_PEER_STATS, pdev->pdev_id);
 #endif
+}
+#endif
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH
+#include "dp_tx_capture.h"
+#else
+static inline void
+dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
+					   void *data,
+					   uint32_t ppdu_id,
+					   uint32_t size)
+{
 }
 #endif
 
@@ -1848,19 +1826,33 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
 	tag_buf += 2;
+	ppdu_info->sched_cmdid =
+		HTT_PPDU_STATS_COMMON_TLV_SCH_CMDID_GET(*tag_buf);
 	ppdu_desc->num_users =
 		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
 	tag_buf++;
 	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
 
-	if ((frame_type == HTT_STATS_FTYPE_TIDQ_DATA_SU) ||
-			(frame_type == HTT_STATS_FTYPE_TIDQ_DATA_MU))
-		ppdu_desc->frame_type = CDP_PPDU_FTYPE_DATA;
-	else if ((frame_type == HTT_STATS_FTYPE_SGEN_MU_BAR) ||
-		 (frame_type == HTT_STATS_FTYPE_SGEN_BAR))
+	switch (frame_type) {
+	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
+	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
+		/*
+		 * for management packet, frame type come as DATA_SU
+		 * need to check frame_ctrl before setting frame_type
+		 */
+		if (HTT_GET_FRAME_CTRL_TYPE(frame_type) <= FRAME_CTRL_TYPE_CTRL)
+			ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+		else
+			ppdu_desc->frame_type = CDP_PPDU_FTYPE_DATA;
+	break;
+	case HTT_STATS_FTYPE_SGEN_MU_BAR:
+	case HTT_STATS_FTYPE_SGEN_BAR:
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_BAR;
-	else
+	break;
+	default:
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+	break;
+	}
 
 	tag_buf += 2;
 	ppdu_desc->tx_duration = *tag_buf;
@@ -2067,6 +2059,7 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
+	uint32_t size = CDP_BA_64_BIT_MAP_SIZE_DWORDS;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
@@ -2085,7 +2078,12 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
 	qdf_mem_copy(&ppdu_user_desc->enq_bitmap, &dp_stats_buf->enq_bitmap,
-					CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+		     sizeof(uint32_t) * CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+
+	dp_process_ppdu_stats_update_failed_bitmap(pdev,
+						   (void *)ppdu_user_desc,
+						   ppdu_info->ppdu_id,
+						   size);
 }
 
 /*
@@ -2108,6 +2106,7 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
 	uint8_t curr_user_index = 0;
 	uint16_t peer_id;
+	uint32_t size = CDP_BA_256_BIT_MAP_SIZE_DWORDS;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
 
@@ -2126,7 +2125,12 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
 	qdf_mem_copy(&ppdu_user_desc->enq_bitmap, &dp_stats_buf->enq_bitmap,
-					CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+		     sizeof(uint32_t) * CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+
+	dp_process_ppdu_stats_update_failed_bitmap(pdev,
+						   (void *)ppdu_user_desc,
+						   ppdu_info->ppdu_id,
+						   size);
 }
 
 /*
@@ -2238,7 +2242,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
 	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
-			CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+		     sizeof(uint32_t) * CDP_BA_64_BIT_MAP_SIZE_DWORDS);
 }
 
 /*
@@ -2278,7 +2282,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
 	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
-			CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+		     sizeof(uint32_t) * CDP_BA_256_BIT_MAP_SIZE_DWORDS);
 }
 
 /*
@@ -2421,6 +2425,24 @@ static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
 	dp_peer_unref_del_find_by_id(peer);
 }
 
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+/*
+ * dp_deliver_mgmt_frm: Process
+ * @pdev: DP PDEV handle
+ * @nbuf: buffer containing the htt_ppdu_stats_tx_mgmtctrl_payload_tlv
+ *
+ * return: void
+ */
+static void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
+{
+	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
+				     nbuf, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+	}
+}
+#endif
+
 /*
  * dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv: Process
  * htt_ppdu_stats_tx_mgmtctrl_payload_tlv
@@ -2439,7 +2461,7 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 	uint8_t trim_size;
 
 	if ((!pdev->tx_sniffer_enable) && (!pdev->mcopy_mode) &&
-	    (!pdev->bpr_enable))
+	    (!pdev->bpr_enable) && (!pdev->tx_capture_enabled))
 		return QDF_STATUS_SUCCESS;
 
 	trim_size = ((pdev->mgmtctrl_frm_info.mgmt_buf +
@@ -2461,11 +2483,8 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 				     tag_buf, HTT_INVALID_PEER,
 				     WDI_NO_VAL, pdev->pdev_id);
 	}
-	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
-		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
-				     tag_buf, HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
-	}
+
+	dp_deliver_mgmt_frm(pdev, tag_buf);
 
 	return QDF_STATUS_E_ALREADY;
 }
@@ -2555,23 +2574,21 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 }
 
 /**
- * dp_ppdu_desc_deliver(): Function to deliver Tx PPDU status descriptor
- * to upper layer
+ * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
  * @pdev: DP pdev handle
  * @ppdu_info: per PPDU TLV descriptor
  *
  * return: void
  */
-static
-void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
-			  struct ppdu_info *ppdu_info)
+void
+dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
+			       struct ppdu_info *ppdu_info)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 	struct dp_peer *peer = NULL;
-	qdf_nbuf_t nbuf;
-	uint16_t i;
 	uint32_t tlv_bitmap_expected;
 	uint32_t tlv_bitmap_default;
+	uint16_t i;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 		qdf_nbuf_data(ppdu_info->nbuf);
@@ -2589,7 +2606,6 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 
 	tlv_bitmap_default = tlv_bitmap_expected;
 	for (i = 0; i < ppdu_desc->num_users; i++) {
-
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
 		ppdu_desc->num_msdu += ppdu_desc->user[i].num_msdu;
 
@@ -2620,14 +2636,37 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		      (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA)) {
 
 			dp_tx_stats_update(pdev->soc, peer,
-					&ppdu_desc->user[i],
-					ppdu_desc->ack_rssi);
+					   &ppdu_desc->user[i],
+					   ppdu_desc->ack_rssi);
 		}
 
 		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		dp_peer_unref_del_find_by_id(peer);
 		tlv_bitmap_expected = tlv_bitmap_default;
 	}
+}
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+
+/**
+ * dp_ppdu_desc_deliver(): Function to deliver Tx PPDU status descriptor
+ * to upper layer
+ * @pdev: DP pdev handle
+ * @ppdu_info: per PPDU TLV descriptor
+ *
+ * return: void
+ */
+static
+void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
+			  struct ppdu_info *ppdu_info)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	qdf_nbuf_t nbuf;
+
+	ppdu_desc = (struct cdp_tx_completion_ppdu *)
+		qdf_nbuf_data(ppdu_info->nbuf);
+
+	dp_ppdu_desc_user_stats_update(pdev, ppdu_info);
 
 	/*
 	 * Remove from the list
@@ -2664,6 +2703,8 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	}
 	return;
 }
+
+#endif
 
 /**
  * dp_get_ppdu_desc(): Function to allocate new PPDU status
@@ -2898,9 +2939,11 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		    QDF_STATUS_SUCCESS)
 			free_buf = false;
 
-		pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
-		pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
-		pdev->mgmtctrl_frm_info.ppdu_id = 0;
+		if (free_buf) {
+			pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
+			pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
+			pdev->mgmtctrl_frm_info.ppdu_id = 0;
+		}
 	}
 
 	if (ppdu_info)

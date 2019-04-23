@@ -1751,6 +1751,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_RX_MON_LITE = 407,
 	/* wifi down indication used in MBSS feature */
 	OL_ATH_PARAM_WIFI_DOWN_IND = 408,
+	OL_ATH_PARAM_TX_CAPTURE = 409,
 };
 
 /* Enumeration of PDEV Configuration parameter */
