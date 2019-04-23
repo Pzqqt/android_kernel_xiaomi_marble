@@ -318,6 +318,34 @@ void dfs_reset_etsi_precac_lists(struct wlan_dfs *dfs)
 	dfs_reset_etsiprecaclists(dfs);
 }
 
+void dfs_add_to_etsi_precac_required_list(struct wlan_dfs *dfs, uint8_t *chan)
+{
+	struct dfs_etsi_precac_entry *etsi_precac_entry;
+
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return;
+	}
+
+	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_REGION &&
+	    dfs->dfs_precac_enable) {
+		etsi_precac_entry = qdf_mem_malloc(sizeof(*etsi_precac_entry));
+
+		if (!etsi_precac_entry) {
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"etsi_precac_entry is NULL");
+			return;
+		}
+		etsi_precac_entry->ieee = *chan;
+		etsi_precac_entry->dfs = dfs;
+		PRECAC_LIST_LOCK(dfs);
+		TAILQ_INSERT_TAIL(&dfs->dfs_etsiprecac_required_list,
+				  etsi_precac_entry,
+				  pe_list);
+		PRECAC_LIST_UNLOCK(dfs);
+	}
+}
+
 int dfs_add_chan_to_etsi_done_list(struct wlan_dfs *dfs, uint8_t channel)
 {
 	struct dfs_etsi_precac_entry *precac_entry, *tmp_precac_entry;
