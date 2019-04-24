@@ -1157,7 +1157,7 @@ static int audio_aio_async_read(struct q6audio_aio *audio,
 	/* Write command will populate session_id as token */
 	buf_node->token = ac->session;
 	rc = q6asm_async_read(ac, &param);
-	if (rc < 0)
+	if (rc < 0 && rc != -ENETRESET)
 		pr_err_ratelimited("%s[%pK]:failed\n", __func__, audio);
 	return rc;
 }
