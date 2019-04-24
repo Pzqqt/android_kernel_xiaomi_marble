@@ -104,6 +104,7 @@ enum sde_hw_blk_type {
 	SDE_HW_BLK_WB,
 	SDE_HW_BLK_DSC,
 	SDE_HW_BLK_MERGE_3D,
+	SDE_HW_BLK_QDSS,
 	SDE_HW_BLK_MAX,
 };
 
@@ -322,6 +323,11 @@ enum sde_merge_3d {
 	MERGE_3D_MAX
 };
 
+enum sde_qdss {
+	QDSS_0,
+	QDSS_MAX
+};
+
 /**
  * SDE HW,Component order color map
  */
@@ -512,6 +518,7 @@ struct sde_mdss_color {
 #define SDE_DBG_MASK_REGDMA   (1 << 14)
 #define SDE_DBG_MASK_UIDLE    (1 << 15)
 #define SDE_DBG_MASK_SID      (1 << 15)
+#define SDE_DBG_MASK_QDSS     (1 << 16)
 
 /**
  * struct sde_hw_cp_cfg: hardware dspp/lm feature payload.

@@ -126,6 +126,7 @@
 /**
  * Concurrent WB overflow interrupt status bit definitions
  */
+#define SDE_INTR_CWB_1_OVERFLOW BIT(8)
 #define SDE_INTR_CWB_2_OVERFLOW BIT(14)
 #define SDE_INTR_CWB_3_OVERFLOW BIT(15)
 #define SDE_INTR_CWB_4_OVERFLOW BIT(20)

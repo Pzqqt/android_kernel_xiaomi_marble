@@ -65,11 +65,11 @@ struct msm_gem_address_space;
 struct msm_gem_vma;
 
 #define NUM_DOMAINS    4    /* one for KMS, then one per gpu core (?) */
-#define MAX_CRTCS      8
+#define MAX_CRTCS      16
 #define MAX_PLANES     20
-#define MAX_ENCODERS   8
-#define MAX_BRIDGES    8
-#define MAX_CONNECTORS 8
+#define MAX_ENCODERS   16
+#define MAX_BRIDGES    16
+#define MAX_CONNECTORS 16
 
 #define TEARDOWN_DEADLOCK_RETRY_MAX 5
 

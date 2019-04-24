@@ -216,10 +216,6 @@ int sde_core_perf_crtc_check(struct drm_crtc *crtc,
 		return 0;
 	}
 
-	/* we only need bandwidth check on real-time clients (interfaces) */
-	if (sde_crtc_get_client_type(crtc) == NRT_CLIENT)
-		return 0;
-
 	sde_cstate = to_sde_crtc_state(state);
 
 	/* obtain new values */

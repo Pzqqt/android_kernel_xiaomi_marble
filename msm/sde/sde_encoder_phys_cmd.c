@@ -217,6 +217,7 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 				SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE);
 			atomic_add_unless(&phys_enc->pending_ctlstart_cnt,
 				-1, 0);
+			atomic_set(&phys_enc->ctlstart_timeout, 0);
 		}
 	}
 
@@ -317,6 +318,7 @@ static void sde_encoder_phys_cmd_ctl_start_irq(void *arg, int irq_idx)
 
 	ctl = phys_enc->hw_ctl;
 	atomic_add_unless(&phys_enc->pending_ctlstart_cnt, -1, 0);
+	atomic_set(&phys_enc->ctlstart_timeout, 0);
 
 	time_diff_us = ktime_us_delta(ktime_get(), cmd_enc->rd_ptr_timestamp);
 
@@ -1283,6 +1285,7 @@ static void sde_encoder_phys_cmd_disable(struct sde_encoder_phys *phys_enc)
 		SDE_ERROR("invalid encoder\n");
 		return;
 	}
+	atomic_set(&phys_enc->ctlstart_timeout, 0);
 	SDE_DEBUG_CMDENC(cmd_enc, "pp %d intf %d state %d\n",
 			phys_enc->hw_pp->idx - PINGPONG_0,
 			phys_enc->hw_intf->idx - INTF_0,
@@ -1455,6 +1458,7 @@ static int _sde_encoder_phys_cmd_wait_for_ctl_start(
 				 SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE);
 			atomic_add_unless(
 				&phys_enc->pending_ctlstart_cnt, -1, 0);
+			atomic_inc_return(&phys_enc->ctlstart_timeout);
 		}
 	} else if ((ret == 0) &&
 	    (phys_enc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START) &&
@@ -1806,6 +1810,7 @@ struct sde_encoder_phys *sde_encoder_phys_cmd_init(
 	atomic_set(&phys_enc->pending_retire_fence_cnt, 0);
 	atomic_set(&cmd_enc->pending_rd_ptr_cnt, 0);
 	atomic_set(&cmd_enc->pending_vblank_cnt, 0);
+	atomic_set(&phys_enc->ctlstart_timeout, 0);
 	init_waitqueue_head(&phys_enc->pending_kickoff_wq);
 	init_waitqueue_head(&cmd_enc->pending_vblank_wq);
 	atomic_set(&cmd_enc->autorefresh.kickoff_cnt, 0);

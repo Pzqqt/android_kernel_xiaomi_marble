@@ -449,6 +449,26 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 	return true;
 }
 
+static int _sde_crtc_get_ctlstart_timeout(struct drm_crtc *crtc)
+{
+	struct drm_encoder *encoder;
+	int rc = 0;
+
+	if (!crtc || !crtc->dev)
+		return 0;
+
+	list_for_each_entry(encoder,
+			&crtc->dev->mode_config.encoder_list, head) {
+		if (encoder->crtc != crtc)
+			continue;
+
+		if (sde_encoder_get_intf_mode(encoder) == INTF_MODE_CMD)
+			rc += sde_encoder_get_ctlstart_timeout_state(encoder);
+	}
+
+	return rc;
+}
+
 static void _sde_crtc_setup_blend_cfg(struct sde_crtc_mixer *mixer,
 	struct sde_plane_state *pstate, struct sde_format *format)
 {
@@ -885,6 +905,11 @@ static u32 _sde_crtc_get_displays_affected(struct drm_crtc *crtc,
 	struct sde_crtc_state *crtc_state;
 	u32 disp_bitmask = 0;
 	int i;
+
+	if (!crtc || !state) {
+		pr_err("Invalid crtc or state\n");
+		return 0;
+	}
 
 	sde_crtc = to_sde_crtc(crtc);
 	crtc_state = to_sde_crtc_state(state);
@@ -3132,7 +3157,13 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	if (unlikely(!sde_crtc->num_mixers))
 		goto end;
 
-	_sde_crtc_blend_setup(crtc, old_state, true);
+	if (_sde_crtc_get_ctlstart_timeout(crtc)) {
+		_sde_crtc_blend_setup(crtc, old_state, false);
+		SDE_ERROR("border fill only commit after ctlstart timeout\n");
+	} else {
+		_sde_crtc_blend_setup(crtc, old_state, true);
+	}
+
 	_sde_crtc_dest_scaler_setup(crtc);
 
 	/* cancel the idle notify delayed work */
@@ -4982,6 +5013,10 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			catalog->perf.amortizable_threshold);
 	sde_kms_info_add_keyint(info, "min_prefill_lines",
 			catalog->perf.min_prefill_lines);
+	sde_kms_info_add_keyint(info, "num_mnoc_ports",
+			catalog->perf.num_mnoc_ports);
+	sde_kms_info_add_keyint(info, "axi_bus_width",
+			catalog->perf.axi_bus_width);
 	sde_kms_info_add_keyint(info, "sec_ui_blendstage",
 			catalog->sui_supported_blendstage);
 
