@@ -101,6 +101,11 @@ ifdef CONFIG_SND_EVENT
 	SND_EVENT_OBJS += snd_event.o
 endif
 
+ifdef CONFIG_WCD_SPI_AC
+	WCD_SPI_ACC_CTL_OBJS += wcd-spi-ac.o
+	WCD_SPI_ACC_CTL_OBJS += wcd_spi_ctl_v01.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \
@@ -158,6 +163,9 @@ snd_event_dlkm-y := $(SND_EVENT_OBJS)
 obj-$(CONFIG_SOUNDWIRE_WCD_CTRL) += swr_ctrl_dlkm.o
 obj-$(CONFIG_SOUNDWIRE_MSTR_CTRL) += swr_ctrl_dlkm.o
 swr_ctrl_dlkm-y := $(SWR_CTRL_OBJS)
+
+obj-$(CONFIG_WCD_SPI_AC) += wcd_spi_acc_ctl_dlkm.o
+wcd_spi_acc_ctl_dlkm-y := $(WCD_SPI_ACC_CTL_OBJS)
 
 # inject some build related information
 DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
