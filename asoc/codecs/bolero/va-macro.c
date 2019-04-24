@@ -588,10 +588,6 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read32(component, tx_gain_ctl_reg));
-		bolero_clk_rsc_request_clock(va_priv->dev,
-					   va_priv->default_clk_id,
-					   TX_CORE_CLK,
-					   false);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -630,6 +626,37 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		break;
 	}
 	return 0;
+}
+
+static int va_macro_enable_tx(struct snd_soc_dapm_widget *w,
+		struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+				snd_soc_dapm_to_component(w->dapm);
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	int ret = 0;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
+
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   va_priv->default_clk_id,
+						   TX_CORE_CLK,
+						   false);
+		break;
+	default:
+		dev_err(va_priv->dev,
+			"%s: invalid DAPM event %d\n", __func__, event);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
 }
 
 static int va_macro_enable_micbias(struct snd_soc_dapm_widget *w,
@@ -1007,14 +1034,17 @@ static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
 };
 
 static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
-	SND_SOC_DAPM_AIF_OUT("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
-		SND_SOC_NOPM, VA_MACRO_AIF1_CAP, 0),
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF1_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
 
-	SND_SOC_DAPM_AIF_OUT("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
-		SND_SOC_NOPM, VA_MACRO_AIF2_CAP, 0),
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF2_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
 
-	SND_SOC_DAPM_AIF_OUT("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
-		SND_SOC_NOPM, VA_MACRO_AIF3_CAP, 0),
+	SND_SOC_DAPM_AIF_OUT_E("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF3_CAP, 0,
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
 
 	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
 		VA_MACRO_AIF1_CAP, 0,
