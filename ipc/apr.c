@@ -419,8 +419,13 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 			rc = -EINVAL;
 		}
 	} else {
-		pr_err("%s: Write APR pkt failed with error %d\n",
+		pr_err_ratelimited("%s: Write APR pkt failed with error %d\n",
 			__func__, rc);
+		if (rc == -ECONNRESET) {
+			pr_err_ratelimited("%s: Received reset error from tal\n",
+					__func__);
+			rc = -ENETRESET;
+		}
 	}
 	spin_unlock_irqrestore(&svc->w_lock, flags);
 
