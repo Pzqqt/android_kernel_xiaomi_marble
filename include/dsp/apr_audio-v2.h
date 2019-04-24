@@ -1354,6 +1354,8 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_LOOPBACK_TX	0x6001
 #define DISPLAY_PORT_RX	0x6020
 
+#define AFE_LANE_MASK_INVALID 0
+
 #define AFE_PORT_INVALID 0xFFFF
 #define SLIMBUS_INVALID AFE_PORT_INVALID
 
@@ -12429,5 +12431,36 @@ struct afe_param_id_vad_cfg_t {
 } __packed;
 
 #define AFE_PARAM_ID_VAD_CORE_CFG                              0x000102BB
+
+/**
+ * This parameter is should be used to configure the AFE TDM
+ * interface lane configuration.
+ * Regular TDM interface ports:
+ * This parameter ID must be used with module ID
+ * AFE_MODULE_AUDIO_DEV_INTERFACE and set using the AFE_PORT_CMD_SET_PARAM_V3
+ * command for the AFE TDM interface port IDs.
+ * Group device TDM interface ports:
+ * This parameter ID must be used with module ID AFE_MODULE_GROUP_DEVICE
+ * and set using the AFE_SVC_CMD_SET_PARAM_V2 command for the AFE TDM group IDs.
+ */
+#define AFE_PARAM_ID_TDM_LANE_CONFIG                           0x000102C1
+
+/* Payload of the AFE_PARAM_ID_TDM_LANE_CONFIG parameter used by
+ * AFE_MODULE_AUDIO_DEV_INTERFACE.
+ */
+struct afe_param_id_tdm_lane_cfg {
+	uint16_t port_id;
+	/** ID of the TDM interface.
+	 * For regular TDM interfaces value corresponds to valid port ID.
+	 * For group devices TDM interface value corresponds to valid group device ID.
+	 */
+
+	uint16_t lane_mask;
+	/** Position of the active lanes. Bits 0 to N correspond to lanes 0 to N.
+	 * 1 to 2^N-1 When a bit is set, the corresponding lane is active.
+	 * The number of active lanes can be inferred from the number of bits
+	 * set in the mask.
+	 */
+};
 
 #endif /*_APR_AUDIO_V2_H_ */

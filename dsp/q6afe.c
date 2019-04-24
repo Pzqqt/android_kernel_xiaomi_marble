@@ -5423,18 +5423,67 @@ int afe_port_group_set_param(u16 group_id,
 }
 
 /**
+ * afe_port_tdm_lane_config -
+ * to configure group TDM lane mask with specified configuration
+ *
+ * @group_id: AFE group id number
+ * @lane_cfg: TDM lane mask configutation
+ *
+ * Returns 0 on success or error value on failure.
+ */
+static int afe_port_tdm_lane_config(u16 group_id,
+	struct afe_param_id_tdm_lane_cfg *lane_cfg)
+{
+	struct param_hdr_v3 param_hdr;
+	int ret = 0;
+
+	if (lane_cfg == NULL ||
+		lane_cfg->lane_mask == AFE_LANE_MASK_INVALID) {
+		pr_debug("%s: lane cfg not supported for group id: 0x%x\n",
+			__func__, group_id);
+		return ret;
+	}
+
+	pr_debug("%s: group id: 0x%x lane mask 0x%x\n", __func__,
+		group_id, lane_cfg->lane_mask);
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	ret = afe_q6_interface_prepare();
+	if (ret != 0) {
+		pr_err("%s: Q6 interface prepare failed %d\n", __func__, ret);
+		return ret;
+	}
+
+	param_hdr.module_id = AFE_MODULE_GROUP_DEVICE;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_TDM_LANE_CONFIG;
+	param_hdr.param_size = sizeof(struct afe_param_id_tdm_lane_cfg);
+
+	ret = q6afe_svc_pack_and_set_param_in_band(IDX_GLOBAL_CFG, param_hdr,
+						   (u8 *)lane_cfg);
+	if (ret)
+		pr_err("%s: AFE_PARAM_ID_TDM_LANE_CONFIG failed %d\n",
+			__func__, ret);
+
+	return ret;
+}
+
+/**
  * afe_port_group_enable -
  *         command to enable AFE port group
  *
  * @group_id: group ID for AFE port group
  * @afe_group_config: config for AFE group
  * @enable: flag to indicate enable or disable
+ * @lane_cfg: TDM lane mask configutation
  *
  * Returns 0 on success or error on failure
  */
 int afe_port_group_enable(u16 group_id,
 	union afe_port_group_config *afe_group_config,
-	u16 enable)
+	u16 enable,
+	struct afe_param_id_tdm_lane_cfg *lane_cfg)
 {
 	struct afe_group_device_enable group_enable;
 	struct param_hdr_v3 param_hdr;
@@ -5456,6 +5505,12 @@ int afe_port_group_enable(u16 group_id,
 		ret = afe_port_group_set_param(group_id, afe_group_config);
 		if (ret < 0) {
 			pr_err("%s: afe send failed %d\n", __func__, ret);
+			return ret;
+		}
+		ret = afe_port_tdm_lane_config(group_id, lane_cfg);
+		if (ret < 0) {
+			pr_err("%s: afe send lane config failed %d\n",
+				__func__, ret);
 			return ret;
 		}
 	}
@@ -8998,4 +9053,3 @@ done:
 	return ret;
 }
 EXPORT_SYMBOL(afe_unvote_lpass_core_hw);
-

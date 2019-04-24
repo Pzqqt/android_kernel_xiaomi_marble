@@ -432,7 +432,8 @@ int afe_set_aanc_noise_level(int val);
 int afe_port_group_set_param(u16 group_id,
 	union afe_port_group_config *afe_group_config);
 int afe_port_group_enable(u16 group_id,
-	union afe_port_group_config *afe_group_config, u16 enable);
+	union afe_port_group_config *afe_group_config, u16 enable,
+	struct afe_param_id_tdm_lane_cfg *lane_cfg);
 int afe_unmap_rtac_block(uint32_t *mem_map_handle);
 int afe_map_rtac_block(struct rtac_cal_block_data *cal_block);
 int afe_send_slot_mapping_cfg(
