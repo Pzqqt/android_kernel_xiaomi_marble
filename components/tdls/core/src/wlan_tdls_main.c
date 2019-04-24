@@ -256,6 +256,11 @@ QDF_STATUS tdls_vdev_obj_create_notification(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	if (tdls_soc_obj->tdls_osif_init_cb) {
+		status = tdls_soc_obj->tdls_osif_init_cb(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
+	}
 	tdls_feature_flags = tdls_soc_obj->tdls_configs.tdls_feature_flags;
 	if (!TDLS_IS_ENABLED(tdls_feature_flags)) {
 		tdls_debug("disabled in ini");
@@ -342,6 +347,8 @@ QDF_STATUS tdls_vdev_obj_destroy_notification(struct wlan_objmgr_vdev *vdev,
 
 	tdls_vdev_deinit(tdls_vdev_obj);
 	qdf_mem_free(tdls_vdev_obj);
+	if (tdls_soc_obj->tdls_osif_deinit_cb)
+		tdls_soc_obj->tdls_osif_deinit_cb(vdev);
 
 	return status;
 }

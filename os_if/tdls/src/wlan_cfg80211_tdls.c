@@ -55,9 +55,16 @@ static int wlan_cfg80211_tdls_validate_mac_addr(const uint8_t *mac)
 	return 0;
 }
 
-QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
+QDF_STATUS wlan_cfg80211_tdls_osif_priv_init(struct wlan_objmgr_vdev *vdev)
 {
 	struct osif_tdls_vdev *tdls_priv;
+	struct vdev_osif_priv *osif_priv;
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		cfg80211_err("osif_priv is NULL!");
+		return QDF_STATUS_E_FAULT;
+	}
 
 	cfg80211_debug("initialize tdls os if layer private structure");
 	tdls_priv = qdf_mem_malloc(sizeof(*tdls_priv));
@@ -78,13 +85,17 @@ QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_cfg80211_tdls_priv_deinit(struct vdev_osif_priv *osif_priv)
+void wlan_cfg80211_tdls_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
 {
-	cfg80211_debug("deinitialize tdls os if layer private structure");
+	struct vdev_osif_priv *osif_priv;
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
-		cfg80211_err("OS private structure of vdev is null ");
+		cfg80211_err("osif_priv is NULL!");
 		return;
 	}
+
+	cfg80211_debug("deinitialize tdls os if layer private structure");
 	if (osif_priv->osif_tdls)
 		qdf_mem_free(osif_priv->osif_tdls);
 	osif_priv->osif_tdls = NULL;
@@ -103,6 +114,8 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 
 	tdls_priv = osif_priv->osif_tdls;
+	if (!tdls_priv)
+		return;
 
 	reinit_completion(&tdls_priv->tdls_teardown_comp);
 	status = ucfg_tdls_teardown_links(vdev);

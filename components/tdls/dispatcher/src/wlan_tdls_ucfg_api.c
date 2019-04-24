@@ -307,6 +307,8 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	soc_obj->tdls_del_all_peers = req->tdls_del_all_peers;
 	soc_obj->tdls_update_dp_vdev_flags = req->tdls_update_dp_vdev_flags;
 	soc_obj->tdls_dp_vdev_update = req->tdls_dp_vdev_update;
+	soc_obj->tdls_osif_init_cb = req->tdls_osif_init_cb;
+	soc_obj->tdls_osif_deinit_cb = req->tdls_osif_deinit_cb;
 	tdls_pm_call_backs.tdls_notify_increment_session =
 			tdls_notify_increment_session;
 

@@ -1275,6 +1275,8 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 	tdls_cfg.tdls_rx_cb = wlan_cfg80211_tdls_rx_callback;
 	tdls_cfg.tdls_rx_cb_data = psoc;
 	tdls_cfg.tdls_dp_vdev_update = hdd_update_dp_vdev_flags;
+	tdls_cfg.tdls_osif_init_cb = wlan_cfg80211_tdls_osif_priv_init;
+	tdls_cfg.tdls_osif_deinit_cb = wlan_cfg80211_tdls_osif_priv_deinit;
 
 	status = ucfg_tdls_update_config(psoc, &tdls_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

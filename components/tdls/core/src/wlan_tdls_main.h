@@ -183,6 +183,8 @@ struct tdls_set_state_info {
  * @tdls_update_dp_vdev_flags store CDP_UPDATE_TDLS_FLAGS
  * @tdls_idle_peer_data: provide information about idle peer
  * @tdls_ct_spinlock: connection tracker spin lock
+ * @tdls_osif_init_cb: Callback to initialize the tdls private
+ * @tdls_osif_deinit_cb: Callback to deinitialize the tdls private
  */
 struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
@@ -224,6 +226,8 @@ struct tdls_soc_priv_obj {
 	uint16_t tdls_del_all_peers;
 	uint32_t tdls_update_dp_vdev_flags;
 	qdf_spinlock_t tdls_ct_spinlock;
+	tdls_vdev_init_cb tdls_osif_init_cb;
+	tdls_vdev_deinit_cb tdls_osif_deinit_cb;
 };
 
 /**
