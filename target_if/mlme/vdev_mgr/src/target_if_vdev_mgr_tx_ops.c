@@ -62,7 +62,7 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_mod(
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
+QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
 					uint8_t clear_bit)
@@ -488,8 +488,11 @@ static QDF_STATUS target_if_vdev_mgr_delete_send(
 		if (!wmi_service_enabled(wmi_handle,
 					 wmi_service_sync_delete_cmds) ||
 		    wlan_psoc_nif_feat_cap_get(psoc,
-					       WLAN_SOC_F_TESTMODE_ENABLE))
+					       WLAN_SOC_F_TESTMODE_ENABLE)) {
+			target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
+							  DELETE_RESPONSE_BIT);
 			target_if_vdev_mgr_delete_response_send(vdev, rx_ops);
+		}
 	} else {
 		target_if_wake_lock_timeout_release(vdev, DELETE_WAKELOCK);
 		vdev_rsp->expire_time = 0;
@@ -1065,8 +1068,6 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_rsp_timer_init;
 	mlme_tx_ops->vdev_mgr_rsp_timer_mod =
 			target_if_vdev_mgr_rsp_timer_mod;
-	mlme_tx_ops->vdev_mgr_rsp_timer_stop =
-			target_if_vdev_mgr_rsp_timer_stop;
 	mlme_tx_ops->peer_delete_all_send =
 			target_if_vdev_mgr_peer_delete_all_send;
 

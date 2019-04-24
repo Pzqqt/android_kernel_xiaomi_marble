@@ -193,7 +193,6 @@ struct wlan_lmac_if_ftm_tx_ops {
  * @vdev_mlme_detach: function to unregister events
  * @vdev_mgr_rsp_timer_init: function to initialize vdev response timer
  * @vdev_mgr_rsp_timer_mod: function to timer_mod vdev response timer
- * @vdev_mgr_rsp_timer_stop: function to stop vdev response timer
  * @vdev_create_send: function to send vdev create
  * @vdev_start_send: function to send vdev start
  * @vdev_up_send: function to send vdev up
@@ -230,10 +229,6 @@ struct wlan_lmac_if_mlme_tx_ops {
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
 					int mseconds);
-	QDF_STATUS (*vdev_mgr_rsp_timer_stop)(
-					struct wlan_objmgr_vdev *vdev,
-					struct vdev_response_timer *vdev_rsp,
-					uint8_t clear_bit);
 	QDF_STATUS (*vdev_create_send)(struct wlan_objmgr_vdev *vdev,
 				       struct vdev_create_params *param);
 	QDF_STATUS (*vdev_start_send)(struct wlan_objmgr_vdev *vdev,
