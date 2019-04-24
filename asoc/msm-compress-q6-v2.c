@@ -1779,6 +1779,11 @@ static int msm_compr_capture_open(struct snd_compr_stream *cstream)
 	atomic_set(&prtd->wait_on_close, 0);
 	atomic_set(&prtd->error, 0);
 
+	init_waitqueue_head(&prtd->eos_wait);
+	init_waitqueue_head(&prtd->drain_wait);
+	init_waitqueue_head(&prtd->close_wait);
+	init_waitqueue_head(&prtd->wait_for_stream_avail);
+
 	runtime->private_data = prtd;
 
 	return 0;
