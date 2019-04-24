@@ -361,6 +361,7 @@ typedef enum {
     HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG         = 86, /* htt_sched_txq_sched_order_su_tlv */
     HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG    = 87, /* htt_sched_txq_sched_eligibility_tlv */
     HTT_STATS_PDEV_OBSS_PD_TAG                     = 88, /* htt_pdev_obss_pd_stats_tlv */
+    HTT_STATS_HW_WAR_TAG                           = 89, /* htt_hw_war_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -572,6 +573,26 @@ typedef struct {
     A_UINT32 tx_active_dur_us_high;
     /* Number of MPDUs dropped after max retries */
     A_UINT32 remove_mpdus_max_retries;
+    /* Num HTT cookies dispatched */
+    A_UINT32 comp_delivered;
+    /* successful ppdu transmissions */
+    A_UINT32 ppdu_ok;
+    /* Scheduler self triggers */
+    A_UINT32 self_triggers;
+    /* FES duration of last tx data PPDU in us (sch_eval_end - ppdu_start) */
+    A_UINT32 tx_time_dur_data;
+    /* Num of times sequence terminated due to ppdu duration < burst limit */
+    A_UINT32 seq_qdepth_repost_stop;
+    /* Num of times MU sequence terminated due to MSDUs reaching threshold */
+    A_UINT32 mu_seq_min_msdu_repost_stop;
+    /* Num of times SU sequence terminated due to MSDUs reaching threshold */
+    A_UINT32 seq_min_msdu_repost_stop;
+    /* Num of times sequence terminated due to no TXOP available */
+    A_UINT32 seq_txop_repost_stop;
+    /* Num of times the next sequence got cancelled */
+    A_UINT32 next_seq_cancel;
+    /* Num of times fes offset was misaligned */
+    A_UINT32 fes_offsets_err_cnt;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
@@ -750,12 +771,37 @@ typedef struct {
     A_UINT32 sch_rx_sifs_resp_trigger;
 } htt_hw_stats_whal_tx_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    union {
+        struct {
+            A_UINT32 mac_id:    8,
+                     reserved: 24;
+        };
+        A_UINT32 mac_id__word;
+    };
+
+    /*
+     * hw_wars is a variable-length array, with each element counting
+     * the number of occurrences of the corresponding type of HW WAR.
+     * That is, hw_wars[0] indicates how many times HW WAR 0 occurred,
+     * hw_wars[1] indicates how many times HW WAR 1 occurred, etc.
+     * The target has an internal HW WAR mapping that it uses to keep
+     * track of which HW WAR is WAR 0, which HW WAR is WAR 1, etc.
+     */
+    A_UINT32 hw_wars[1/*or more*/];
+} htt_hw_war_stats_tlv;
+
 /* STATS_TYPE: HTT_DBG_EXT_STATS_PDEV_ERROR
  * TLV_TAGS:
  *     - HTT_STATS_HW_PDEV_ERRS_TAG
  *     - HTT_STATS_HW_INTR_MISC_TAG (multiple)
  *     - HTT_STATS_HW_WD_TIMEOUT_TAG (multiple)
  *     - HTT_STATS_WHAL_TX_TAG
+ *     - HTT_STATS_HW_WAR_TAG
  */
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -766,6 +812,7 @@ typedef struct _htt_pdev_err_stats {
     htt_hw_stats_intr_misc_tlv  misc_stats[1];
     htt_hw_stats_wd_timeout_tlv wd_timeout[1];
     htt_hw_stats_whal_tx_tlv    whal_tx_stats;
+    htt_hw_war_stats_tlv        hw_war;
 } htt_hw_err_stats_t;
 
 /* ============ PEER STATS ============ */
@@ -1850,6 +1897,16 @@ typedef struct {
     A_UINT32 notify_sched;
     /* Duration based sendn termination */
     A_UINT32 dur_based_sendn_term;
+    /* scheduled via NOTIFY2 */
+    A_UINT32 su_notify2_sched;
+    /* schedule if queued packets are greater than avg MSDUs in PPDU */
+    A_UINT32 su_optimal_queued_msdus_sched;
+    /* schedule due to timeout */
+    A_UINT32 su_delay_timeout_sched;
+    /* delay if txtime is less than 500us */
+    A_UINT32 su_min_txtime_sched_delay;
+    /* scheduled via no delay */
+    A_UINT32 su_no_delay;
 } htt_tx_pdev_stats_sched_per_txq_tlv;
 
 #define HTT_STATS_TX_SCHED_CMN_MAC_ID_M 0x000000ff
@@ -2006,6 +2063,8 @@ typedef struct {
     A_UINT32 q_not_empty;
     A_UINT32 drop_notification;
     A_UINT32 desc_threshold;
+    A_UINT32 hwsch_tqm_invalid_status;
+    A_UINT32 missed_tqm_gen_mpdus;
 } htt_tx_tqm_cmn_stats_tlv;
 
 typedef struct {
@@ -2113,6 +2172,11 @@ typedef struct {
     A_UINT32      m4_packets;
     A_UINT32      g1_packets;
     A_UINT32      g2_packets;
+    A_UINT32      rc4_packets;
+    A_UINT32      eap_packets;
+    A_UINT32      eapol_start_packets;
+    A_UINT32      eapol_logoff_packets;
+    A_UINT32      eapol_encap_asf_packets;
 } htt_tx_de_eapol_packets_stats_tlv;
 
 typedef struct {
@@ -2130,6 +2194,12 @@ typedef struct {
     A_UINT32      fse_tid_override;
     A_UINT32      ipv6_jumbogram_zero_length;
     A_UINT32      qos_to_non_qos_in_prog;
+    A_UINT32      ap_bcast_mcast_eapol;
+    A_UINT32      unicast_on_ap_bss_peer;
+    A_UINT32      ap_vdev_invalid;
+    A_UINT32      incomplete_llc;
+    A_UINT32      eapol_duplicate_m3;
+    A_UINT32      eapol_duplicate_m4;
 } htt_tx_de_classify_failed_stats_tlv;
 
 typedef struct {
@@ -2253,6 +2323,9 @@ typedef struct {
     A_UINT32 tcl_res_invalid_addrx;
     A_UINT32 wbm2fw_entry_count;
     A_UINT32 invalid_pdev;
+    A_UINT32 tcl_res_addrx_timeout;
+    A_UINT32 invalid_vdev;
+    A_UINT32 invalid_tcl_exp_frame_desc;
 } htt_tx_de_cmn_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_DE_INFO
@@ -2877,6 +2950,7 @@ typedef struct {
     A_UINT32 ax_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_UINT32 ofdma_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_UINT32 trigger_type_11ax[HTT_TX_PDEV_STATS_NUM_11AX_TRIGGER_TYPES];
+    A_UINT32 tx_11ax_su_ext;
 } htt_tx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
