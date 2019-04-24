@@ -1513,6 +1513,30 @@ static void mlme_init_stats_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_REPORT_MAX_LINK_SPEED);
 }
 
+#ifdef WLAN_ADAPTIVE_11R
+/**
+ * mlme_init_adaptive_11r_cfg() - initialize enable_adaptive_11r
+ * flag
+ * @psoc: Pointer to PSOC
+ * @lfr:  pointer to mlme lfr config
+ *
+ * Return: None
+ */
+static void
+mlme_init_adaptive_11r_cfg(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_mlme_lfr_cfg *lfr)
+{
+	lfr->enable_adaptive_11r = cfg_get(psoc, CFG_ADAPTIVE_11R);
+}
+
+#else
+static inline void
+mlme_init_adaptive_11r_cfg(struct wlan_objmgr_psoc *psoc,
+			   struct wlan_mlme_lfr_cfg *lfr)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void mlme_init_roam_offload_cfg(struct wlan_objmgr_psoc *psoc,
 				       struct wlan_mlme_lfr_cfg *lfr)
@@ -1752,6 +1776,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
 	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);
+	mlme_init_adaptive_11r_cfg(psoc, lfr);
 	mlme_init_subnet_detection(psoc, lfr);
 }
 

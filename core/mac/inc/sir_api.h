@@ -671,6 +671,7 @@ struct bss_description {
 	struct fils_ind_elements fils_info_element;
 #endif
 	uint32_t assoc_disallowed;
+	uint32_t adaptive_11r_ap;
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 };
@@ -912,6 +913,7 @@ struct join_req {
 #endif
 
 	bool is11Rconnection;
+	bool is_adaptive_11r_connection;
 #ifdef FEATURE_WLAN_ESE
 	bool isESEFeatureIniEnabled;
 	bool isESEconnection;
@@ -2249,6 +2251,7 @@ struct roam_offload_scan_req {
 	uint32_t R0KH_ID_Length;
 	uint8_t RoamKeyMgmtOffloadEnabled;
 	struct pmkid_mode_bits pmkid_modes;
+	bool is_adaptive_11r_connection;
 
 	/* Idle/Disconnect roam parameters */
 	struct wmi_idle_roam_params idle_roam_params;

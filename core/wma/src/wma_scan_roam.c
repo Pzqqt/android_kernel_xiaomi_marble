@@ -320,6 +320,7 @@ static void wma_roam_scan_offload_set_params(
 	params->fw_okc = roam_req->pmkid_modes.fw_okc;
 	params->fw_pmksa_cache = roam_req->pmkid_modes.fw_pmksa_cache;
 	params->rct_validity_timer = roam_req->rct_validity_timer;
+	params->is_adaptive_11r = roam_req->is_adaptive_11r_connection;
 	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, ho_delay_for_rx: %d, roam_scan_mode: %d"),
 		 params->roam_offload_params.qos_caps,
 		 params->roam_offload_params.qos_enabled,

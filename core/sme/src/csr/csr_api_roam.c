@@ -15208,6 +15208,27 @@ csr_update_he_caps_mcs(struct wlan_mlme_cfg *mlme_cfg,
 }
 #endif
 
+#ifdef WLAN_ADAPTIVE_11R
+/**
+ * csr_get_adaptive_11r_enabled() - Function to check if adaptive 11r
+ * ini is enabled or disabled
+ * @mac: pointer to mac context
+ *
+ * Return: true if adaptive 11r is enabled
+ */
+static bool
+csr_get_adaptive_11r_enabled(struct mac_context *mac)
+{
+	return mac->mlme_cfg->lfr.enable_adaptive_11r;
+}
+#else
+static inline bool
+csr_get_adaptive_11r_enabled(struct mac_context *mac)
+{
+	return false;
+}
+#endif
+
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
  * Both sides will access the data structure "struct join_req".
@@ -15525,6 +15546,16 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			csr_join_req->operationalRateSet.numRates = 0;
 			csr_join_req->extendedRateSet.numRates = 0;
 		}
+
+		if (pBssDescription->adaptive_11r_ap)
+			pSession->is_adaptive_11r_connection =
+				csr_get_adaptive_11r_enabled(mac);
+		else
+			pSession->is_adaptive_11r_connection = false;
+
+		csr_join_req->is_adaptive_11r_connection =
+				pSession->is_adaptive_11r_connection;
+
 		/* rsnIE */
 		if (csr_is_profile_wpa(pProfile)) {
 			/* Insert the Wpa IE into the join request */
@@ -17897,6 +17928,25 @@ void csr_update_roam_scan_ese_params(struct roam_offload_scan_req *req_buf,
 }
 #endif
 
+#ifdef WLAN_ADAPTIVE_11R
+static void
+csr_update_roam_req_adaptive_11r(struct csr_roam_session *session,
+				 struct mac_context *mac_ctx,
+				 struct roam_offload_scan_req *req_buf)
+{
+	req_buf->is_adaptive_11r_connection =
+		  session->is_adaptive_11r_connection;
+}
+#else
+static void
+csr_update_roam_req_adaptive_11r(struct csr_roam_session *session,
+				 struct mac_context *mac_ctx,
+				 struct roam_offload_scan_req *req_buf)
+{
+	req_buf->is_adaptive_11r_connection = false;
+}
+#endif
+
 /**
  * csr_update_roam_scan_offload_request() - updates req msg with roam offload
  * parameters
@@ -17942,6 +17992,7 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->lfr.roam_trigger_reason_bitmask;
 	req_buf->roam_force_rssi_trigger =
 			mac_ctx->mlme_cfg->lfr.roam_force_rssi_trigger;
+	csr_update_roam_req_adaptive_11r(session, mac_ctx, req_buf);
 
 	/* fill bss load triggered roam related configs */
 	req_buf->bss_load_trig_enabled =
@@ -19460,6 +19511,24 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 	return WLAN_UMAC_VDEV_ID_MAX;
 }
 
+#ifdef WLAN_ADAPTIVE_11R
+static bool
+csr_is_adaptive_11r_roam_supported(struct mac_context *mac_ctx,
+				   struct csr_roam_session *session)
+{
+	return session->is_adaptive_11r_connection &&
+	       mac_ctx->mlme_cfg->lfr.tgt_adaptive_11r_cap;
+}
+#else
+static bool
+csr_is_adaptive_11r_roam_supported(struct mac_context *mac_ctx,
+				   struct csr_roam_session *session)
+
+{
+	return true;
+}
+#endif
+
 /**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
  * WMA
@@ -19556,6 +19625,11 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	if (CSR_IS_AKM_FILS(roam_profile_akm) &&
 	    !mac_ctx->is_fils_roaming_supported) {
 		sme_info("FILS Roaming not suppprted by fw");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!csr_is_adaptive_11r_roam_supported(mac_ctx, session)) {
+		sme_info("Adaptive 11r Roaming not suppprted by fw");
 		return QDF_STATUS_SUCCESS;
 	}
 

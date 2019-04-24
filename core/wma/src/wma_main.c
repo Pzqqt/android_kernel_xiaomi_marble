@@ -5818,9 +5818,37 @@ static void wma_set_pmo_caps(struct wlan_objmgr_psoc *psoc)
 		WMA_LOGE("Failed to set PMO capabilities; status:%d", status);
 }
 
+/**
+ * wma_set_mlme_caps() - Populate the MLME related target capabilities to the
+ * mlme component
+ * @psoc: Pointer to psoc object
+ *
+ * Return: None
+ */
+static void wma_set_mlme_caps(struct wlan_objmgr_psoc *psoc)
+{
+	tp_wma_handle wma;
+	bool tgt_cap;
+	QDF_STATUS status;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: wma handler is null", __func__);
+		return;
+	}
+
+	tgt_cap = wmi_service_enabled(wma->wmi_handle,
+				      wmi_service_adaptive_11r_support);
+
+	status = ucfg_mlme_set_tgt_adaptive_11r_cap(psoc, tgt_cap);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to set adaptive 11r cap");
+}
+
 static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
 {
 	wma_set_pmo_caps(psoc);
+	wma_set_mlme_caps(psoc);
 }
 
 #if defined(WLAN_FEATURE_GTK_OFFLOAD) && defined(WLAN_POWER_MANAGEMENT_OFFLOAD)

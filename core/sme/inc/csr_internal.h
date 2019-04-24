@@ -689,6 +689,7 @@ struct csr_roam_session {
 	bool is_fils_connection;
 	uint16_t fils_seq_num;
 	bool discon_in_progress;
+	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
 };
 
