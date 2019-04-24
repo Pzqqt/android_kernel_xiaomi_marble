@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,7 +108,7 @@ static uint32_t qdf_types_ut_int32_parse(void)
 	errors += ut_int32_fail("1;", QDF_STATUS_E_FAILURE);
 	errors += ut_int32_pass(" 2147483647", 2147483647);
 	errors += ut_int32_fail(" 2147483648", QDF_STATUS_E_RANGE);
-	errors += ut_int32_pass("-2147483648", -2147483648);
+	errors += ut_int32_pass("-2147483648", -2147483647 - 1);
 	errors += ut_int32_fail("-2147483649", QDF_STATUS_E_RANGE);
 	errors += ut_int32_fail("日本", QDF_STATUS_E_FAILURE);
 
@@ -196,7 +196,7 @@ static uint32_t qdf_types_ut_uint32_parse(void)
 	errors += ut_uint32_pass("+1", 1);
 	errors += ut_uint32_pass(WHITESPACE "1" WHITESPACE, 1);
 	errors += ut_uint32_fail("1;", QDF_STATUS_E_FAILURE);
-	errors += ut_uint32_pass("4294967295", 4294967295);
+	errors += ut_uint32_pass("4294967295", 4294967295U);
 	errors += ut_uint32_fail("4294967296", QDF_STATUS_E_RANGE);
 	errors += ut_uint32_pass(" 0", 0);
 	errors += ut_uint32_fail("-1", QDF_STATUS_E_RANGE);
