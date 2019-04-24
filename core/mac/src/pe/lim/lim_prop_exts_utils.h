@@ -31,6 +31,9 @@
 #ifndef __LIM_PROP_EXTS_UTILS_H
 #define __LIM_PROP_EXTS_UTILS_H
 
+#define LIM_ADAPTIVE_11R_OUI      "\x00\x40\x96\x2C"
+#define LIM_ADAPTIVE_11R_OUI_SIZE 4
+
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure

@@ -116,6 +116,14 @@ struct obss_detection_cfg {
 	uint8_t obss_ht_20mhz_detect_mode;
 };
 
+#define ADAPTIVE_11R_STA_IE_LEN   0x0B
+#define ADAPTIVE_11R_STA_OUI      "\x00\x00\x0f\x22"
+#define ADAPTIVE_11R_OUI_LEN      0x04
+#define ADAPTIVE_11R_OUI_SUBTYPE  0x00
+#define ADAPTIVE_11R_OUI_VERSION  0x01
+#define ADAPTIVE_11R_DATA_LEN      0x04
+#define ADAPTIVE_11R_OUI_DATA     "\x00\x00\x00\x01"
+
 /**
  * struct pe_session - per-vdev PE context
  * @available: true if the entry is available, false if it is in use
@@ -123,6 +131,8 @@ struct obss_detection_cfg {
  * @vdev_id: ID of the vdev for which this entry is applicable
  * @vdev: the actual vdev for which this entry is applicable
  * @connected_akm: AKM of current connection
+ * @is_adaptive_11R_connection: flag to check if we are connecting
+ * to Adaptive 11R network
  */
 struct pe_session {
 	/* To check session table is in use or free */
@@ -312,6 +322,7 @@ struct pe_session {
 	enum QDF_OPMODE pePersona;
 	int8_t txMgmtPower;
 	bool is11Rconnection;
+	bool is_adaptive_11r_connection;
 
 #ifdef FEATURE_WLAN_ESE
 	bool isESEconnection;

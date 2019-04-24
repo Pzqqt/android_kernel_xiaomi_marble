@@ -1506,6 +1506,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 */
 		session->is11Rconnection = sme_join_req->is11Rconnection;
 		session->connected_akm = sme_join_req->akm;
+		session->is_adaptive_11r_connection =
+				sme_join_req->is_adaptive_11r_connection;
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif
