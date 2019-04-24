@@ -176,7 +176,7 @@
  * 3.59 Add HTT_RXDMA_HOST_BUF_RING2 def
  * 3.60 Add HTT_T2H_MSG_TYPE_PEER_STATS_IND def
  * 3.61 Add rx offset fields to HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG msg
- * 3.62 Add antenna mask to reserved space in htt_rx_ind_hl_rx_desc_t
+ * 3.62 Add antenna mask to reserved space in htt_rx_ppdu_desc_t
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
 #define HTT_CURRENT_VERSION_MINOR 62
@@ -6173,9 +6173,17 @@ PREPACK struct htt_rx_ppdu_desc_t
         preamble_type: 8;
 
     #define HTT_RX_IND_PPDU_OFFSET_WORD_VHT_SIG_A2    8
+    #define HTT_RX_IND_PPDU_OFFSET_WORD_SA_ANT_MATRIX 8
     A_UINT32 /* word 8 */
         vht_sig_a2: 24,
-        reserved0: 8;
+        /* sa_ant_matrix
+         * For cases where a single rx chain has options to be connected to
+         * different rx antennas, show which rx antennas were in use during
+         * receipt of a given PPDU.
+         * This sa_ant_matrix provides a bitmask of the antennas used while
+         * receiving this frame.
+         */
+        sa_ant_matrix: 8;
 } POSTPACK;
 
 #define HTT_RX_PPDU_DESC_BYTES (sizeof(struct htt_rx_ppdu_desc_t))
@@ -6667,6 +6675,8 @@ A_COMPILE_TIME_ASSERT(HTT_RX_IND_hdr_size_quantum,
 #define HTT_RX_IND_PREAMBLE_TYPE_S         24
 #define HTT_RX_IND_SERVICE_M               0xff000000
 #define HTT_RX_IND_SERVICE_S               24
+#define HTT_RX_IND_SA_ANT_MATRIX_M         0xff000000
+#define HTT_RX_IND_SA_ANT_MATRIX_S         24
 
 /* rx MSDU descriptor fields */
 #define HTT_RX_IND_FW_RX_DESC_BYTES_M   0xffff
@@ -6911,6 +6921,14 @@ A_COMPILE_TIME_ASSERT(HTT_RX_IND_hdr_size_quantum,
     (((word) & HTT_RX_IND_SERVICE_M) >> \
     HTT_RX_IND_SERVICE_S)
 
+#define HTT_RX_IND_SA_ANT_MATRIX_SET(word, value)           \
+    do {                                                    \
+        HTT_CHECK_SET_VAL(HTT_RX_IND_SA_ANT_MATRIX, value); \
+        (word) |= (value)  << HTT_RX_IND_SA_ANT_MATRIX_S;   \
+    } while (0)
+#define HTT_RX_IND_SA_ANT_MATRIX_GET(word)    \
+    (((word) & HTT_RX_IND_SA_ANT_MATRIX_M) >> \
+    HTT_RX_IND_SA_ANT_MATRIX_S)
 
 #define HTT_RX_IND_MPDU_COUNT_SET(word, value)                          \
     do {                                                                \
@@ -6951,7 +6969,9 @@ PREPACK struct hl_htt_rx_ind_base {
 /*
  * HTT_RX_IND_HL_RX_DESC_BASE_OFFSET
  * Currently, we use a resv field in hl_htt_rx_ind_base to store some
- * HL host needed info. The field is just after the msdu fw rx desc.
+ * HL host needed info; refer to fw_rx_desc_base in wal_rx_desc.h.
+ * The field is just after the MSDU FW rx desc, and 1 byte ahead of
+ * htt_rx_ind_hl_rx_desc_t.
  */
 #define HTT_RX_IND_HL_RX_DESC_BASE_OFFSET (HTT_RX_IND_FW_RX_DESC_BYTE_OFFSET + 1)
 struct htt_rx_ind_hl_rx_desc_t {
@@ -6968,14 +6988,7 @@ struct htt_rx_ind_hl_rx_desc_t {
             udp: 1,
             reserved: 1;
     } flags;
-    /* sa_ant_matrix
-     * For cases where a single rx chain has options to be connected to
-     * different rx antennas, show which rx antennas were in use during
-     * receipt of a given PPDU.
-     * This sa_ant_matrix provides a bitmask of the antennas used while
-     * receiving this frame.
-     */
-    A_UINT8 sa_ant_matrix;
+    /* NOTE: no reserved space - don't append any new fields here */
 };
 
 #define HTT_RX_IND_HL_RX_DESC_VER_OFFSET \
@@ -6990,10 +7003,6 @@ struct htt_rx_ind_hl_rx_desc_t {
 #define HTT_RX_IND_HL_FLAG_OFFSET \
     (HTT_RX_IND_HL_RX_DESC_BASE_OFFSET \
      + offsetof(struct htt_rx_ind_hl_rx_desc_t, flags))
-
-#define HTT_RX_IND_HL_SA_ANT_MATRIX_OFFSET \
-    (HTT_RX_IND_HL_RX_DESC_BASE_OFFSET \
-     + offsetof(struct htt_rx_ind_hl_rx_desc_t, sa_ant_matrix))
 
 #define HTT_RX_IND_HL_FLAG_FIRST_MSDU   (0x01 << 0)
 #define HTT_RX_IND_HL_FLAG_LAST_MSDU    (0x01 << 1)
