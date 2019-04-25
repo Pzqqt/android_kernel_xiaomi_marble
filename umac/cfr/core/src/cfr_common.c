@@ -139,7 +139,7 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 {
 	struct peer_cfr *pe = NULL;
 	struct wlan_objmgr_vdev *vdev;
-	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_pdev *pdev = NULL;
 	struct pdev_cfr *pa = NULL;
 
 	if (NULL == peer) {

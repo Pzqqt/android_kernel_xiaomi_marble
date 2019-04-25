@@ -166,7 +166,7 @@ int tgt_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 int
 tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer)
 {
-	int status;
+	int status = 0;
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
