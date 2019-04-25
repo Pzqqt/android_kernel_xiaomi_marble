@@ -12142,6 +12142,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_WPA3_FT_SUITE_B_SUPPORT;
 	wmi_service[wmi_service_ft_fils] =
 			WMI_SERVICE_WPA3_FT_FILS;
+	wmi_service[wmi_service_adaptive_11r_support] =
+			WMI_SERVICE_ADAPTIVE_11R_ROAM;
 }
 
 /**
