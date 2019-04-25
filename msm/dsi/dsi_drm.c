@@ -71,11 +71,18 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_DMS;
 	if (msm_is_mode_seamless_vrr(drm_mode))
 		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_VRR;
+	if (msm_is_mode_seamless_poms(drm_mode))
+		dsi_mode->dsi_mode_flags |= DSI_MODE_FLAG_POMS;
 
 	dsi_mode->timing.h_sync_polarity =
 			!!(drm_mode->flags & DRM_MODE_FLAG_PHSYNC);
 	dsi_mode->timing.v_sync_polarity =
 			!!(drm_mode->flags & DRM_MODE_FLAG_PVSYNC);
+
+	if (drm_mode->flags & DRM_MODE_FLAG_VID_MODE_PANEL)
+		dsi_mode->panel_mode = DSI_OP_VIDEO_MODE;
+	if (drm_mode->flags & DRM_MODE_FLAG_CMD_MODE_PANEL)
+		dsi_mode->panel_mode = DSI_OP_CMD_MODE;
 }
 
 void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
@@ -113,11 +120,18 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_DMS;
 	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_VRR)
 		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_VRR;
+	if (dsi_mode->dsi_mode_flags & DSI_MODE_FLAG_POMS)
+		drm_mode->private_flags |= MSM_MODE_FLAG_SEAMLESS_POMS;
 
 	if (dsi_mode->timing.h_sync_polarity)
 		drm_mode->flags |= DRM_MODE_FLAG_PHSYNC;
 	if (dsi_mode->timing.v_sync_polarity)
 		drm_mode->flags |= DRM_MODE_FLAG_PVSYNC;
+
+	if (dsi_mode->panel_mode == DSI_OP_VIDEO_MODE)
+		drm_mode->flags |= DRM_MODE_FLAG_VID_MODE_PANEL;
+	if (dsi_mode->panel_mode == DSI_OP_CMD_MODE)
+		drm_mode->flags |= DRM_MODE_FLAG_CMD_MODE_PANEL;
 
 	drm_mode_set_name(drm_mode);
 }
@@ -233,8 +247,18 @@ static void dsi_bridge_disable(struct drm_bridge *bridge)
 	}
 	display = c_bridge->display;
 
-	if (display && display->drm_conn)
-		sde_connector_helper_bridge_disable(display->drm_conn);
+	if (display && display->drm_conn) {
+		if (bridge->encoder->crtc->state->adjusted_mode.private_flags &
+			MSM_MODE_FLAG_SEAMLESS_POMS) {
+			display->poms_pending = true;
+			/* Disable ESD thread, during panel mode switch */
+			sde_connector_schedule_status_work(display->drm_conn,
+				false);
+		} else {
+			display->poms_pending = false;
+			sde_connector_helper_bridge_disable(display->drm_conn);
+		}
+	}
 
 	rc = dsi_display_pre_disable(c_bridge->display);
 	if (rc) {
@@ -363,9 +387,17 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 
 		cur_mode = crtc_state->crtc->mode;
 
+		/* No panel mode switch when drm pipeline is changing */
+		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
+			(!crtc_state->active_changed ||
+			display->is_cont_splash_enabled))
+			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_POMS;
+
 		/* No DMS/VRR when drm pipeline is changing */
 		if (!drm_mode_equal(&cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
+			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS)) &&
 			(!crtc_state->active_changed ||
 			 display->is_cont_splash_enabled))
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_DMS;
