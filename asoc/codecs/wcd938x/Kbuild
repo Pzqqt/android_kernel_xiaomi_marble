@@ -19,6 +19,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_LITO), y)
+		include $(AUDIO_ROOT)/config/litoauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
+	endif
 
 endif
 

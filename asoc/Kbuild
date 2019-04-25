@@ -34,6 +34,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_LITO), y)
+		include $(AUDIO_ROOT)/config/litoauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/litoautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
@@ -91,6 +96,10 @@ endif
 
 # for KONA sound card driver
 ifdef CONFIG_SND_SOC_KONA
+	MACHINE_OBJS += kona.o
+endif
+
+ifdef CONFIG_SND_SOC_LITO
 	MACHINE_OBJS += kona.o
 endif
 
@@ -190,6 +199,9 @@ obj-$(CONFIG_SND_SOC_QCS405) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_KONA) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_LITO) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_CPE) += cpe_lsm_dlkm.o

@@ -15,9 +15,13 @@ ifeq ($(call is-board-platform,kona),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_KONA=m
 endif
 
+ifeq ($(call is-board-platform,lito),true)
+AUDIO_SELECT  := CONFIG_SND_SOC_LITO=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona),true)
+ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona lito),true)
 
 LOCAL_PATH := $(call my-dir)
 
@@ -44,7 +48,7 @@ KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(AUDIO_SELECT)
 
 ###########################################################
-ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona),true)
+ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_pinctrl_lpi.ko
 LOCAL_MODULE_KBUILD_NAME  := pinctrl_lpi_dlkm.ko
@@ -78,7 +82,7 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 ###########################################################
-ifeq ($(call is-board-platform-in-list, $(MSMSTEPPE) kona),true)
+ifeq ($(call is-board-platform-in-list, $(MSMSTEPPE) kona lito),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_snd_event.ko
 LOCAL_MODULE_KBUILD_NAME  := snd_event_dlkm.ko

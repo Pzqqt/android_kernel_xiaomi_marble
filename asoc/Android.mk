@@ -23,9 +23,14 @@ TARGET := kona
 AUDIO_SELECT  := CONFIG_SND_SOC_KONA=m
 endif
 
+ifeq ($(call is-board-platform,lito),true)
+TARGET := lito
+AUDIO_SELECT  := CONFIG_SND_SOC_LITO=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona),true)
+ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona lito),true)
 
 LOCAL_PATH := $(call my-dir)
 
