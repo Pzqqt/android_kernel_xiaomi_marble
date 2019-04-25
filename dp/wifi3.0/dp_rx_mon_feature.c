@@ -74,7 +74,9 @@ dp_rx_populate_cdp_indication_mpdu_info(
 	int i;
 
 	cdp_mpdu_info->ppdu_id = ppdu_info->com_info.ppdu_id;
+	cdp_mpdu_info->channel = ppdu_info->rx_status.chan_num;
 	cdp_mpdu_info->duration = ppdu_info->rx_status.duration;
+	cdp_mpdu_info->timestamp = ppdu_info->rx_status.tsft;
 	cdp_mpdu_info->bw = ppdu_info->rx_status.bw;
 	if ((ppdu_info->rx_status.sgi == VHT_SGI_NYSM) &&
 	    (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC))
@@ -85,10 +87,17 @@ dp_rx_populate_cdp_indication_mpdu_info(
 	cdp_mpdu_info->preamble = ppdu_info->rx_status.preamble_type;
 	cdp_mpdu_info->ppdu_type = ppdu_info->rx_status.reception_type;
 	cdp_mpdu_info->rssi_comb = ppdu_info->rx_status.rssi_comb;
+	cdp_mpdu_info->nf = ppdu_info->rx_status.chan_noise_floor;
 	cdp_mpdu_info->timestamp = ppdu_info->rx_status.tsft;
 
-	cdp_mpdu_info->nss = ppdu_info->rx_user_status[user].nss;
-	cdp_mpdu_info->mcs = ppdu_info->rx_user_status[user].mcs;
+	if (ppdu_info->rx_status.reception_type == HAL_RX_TYPE_MU_OFDMA) {
+		cdp_mpdu_info->nss = ppdu_info->rx_user_status[user].nss;
+		cdp_mpdu_info->mcs = ppdu_info->rx_user_status[user].mcs;
+	} else {
+		cdp_mpdu_info->nss = ppdu_info->rx_status.nss;
+		cdp_mpdu_info->mcs = ppdu_info->rx_status.mcs;
+	}
+	cdp_mpdu_info->rate = ppdu_info->rx_status.rate;
 	for (i = 0; i < MAX_CHAIN; i++)
 		cdp_mpdu_info->per_chain_rssi[i] = ppdu_info->rx_status.rssi[i];
 }
@@ -177,7 +186,7 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 		}
 
 		dp_nbuf_set_data_and_len(nbuf, ppdu_info->data,
-					  ppdu_info->hdr_len);
+					  ppdu_info->hdr_len - 4);
 
 		if (pdev->is_mpdu_hdr[user_id]) {
 			qdf_nbuf_queue_add(&pdev->mpdu_q[user_id],

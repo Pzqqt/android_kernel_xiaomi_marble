@@ -47,6 +47,7 @@
  * @fcs_err: FCS error
  * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
  * UL_BSR_TRIG/UNKNOWN
+ * @rate: legacy packet rate
  * @rssi_comb: Combined RSSI value (units = dB above noise floor)
  * @nf: noise floor
  * @timestamp: TSF at the reception of PPDU
@@ -72,7 +73,8 @@ struct cdp_rx_indication_mpdu_info {
 		 dcm:1,
 		 ldpc:1,
 		 fcs_err:1,
-		 ppdu_type:5;
+		 ppdu_type:5,
+		 rate:8;
 	uint32_t rssi_comb;
 	uint32_t nf;
 	uint64_t timestamp;
