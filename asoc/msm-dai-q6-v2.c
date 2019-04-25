@@ -57,6 +57,8 @@ enum {
 	ENC_FMT_APTX_ADAPTIVE = ASM_MEDIA_FMT_APTX_ADAPTIVE,
 	DEC_FMT_APTX_ADAPTIVE = ASM_MEDIA_FMT_APTX_ADAPTIVE,
 	DEC_FMT_MP3 = ASM_MEDIA_FMT_MP3,
+	ENC_FMT_APTX_AD_SPEECH = ASM_MEDIA_FMT_APTX_AD_SPEECH,
+	DEC_FMT_APTX_AD_SPEECH = ASM_MEDIA_FMT_APTX_AD_SPEECH,
 };
 
 enum {
@@ -2833,6 +2835,12 @@ static int msm_dai_q6_afe_enc_cfg_get(struct snd_kcontrol *kcontrol,
 				&dai_data->enc_config.data,
 				sizeof(struct asm_aptx_ad_enc_cfg_t));
 			break;
+		case ENC_FMT_APTX_AD_SPEECH:
+			memcpy(ucontrol->value.bytes.data + format_size,
+				&dai_data->enc_config.data,
+				sizeof(struct asm_aptx_ad_speech_enc_cfg_t));
+			break;
+
 		default:
 			pr_debug("%s: unknown format = %d\n",
 				 __func__, dai_data->enc_config.format);
@@ -2896,6 +2904,12 @@ static int msm_dai_q6_afe_enc_cfg_put(struct snd_kcontrol *kcontrol,
 				ucontrol->value.bytes.data + format_size,
 				sizeof(struct asm_aptx_ad_enc_cfg_t));
 			break;
+		case ENC_FMT_APTX_AD_SPEECH:
+			memcpy(&dai_data->enc_config.data,
+				ucontrol->value.bytes.data + format_size,
+				sizeof(struct asm_aptx_ad_speech_enc_cfg_t));
+			break;
+
 		default:
 			pr_debug("%s: Ignore enc config for unknown format = %d\n",
 				 __func__, dai_data->enc_config.format);
@@ -3222,6 +3236,7 @@ static int msm_dai_q6_afe_feedback_dec_cfg_get(struct snd_kcontrol *kcontrol,
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 	u32 format_size = 0;
+	u32 abr_size = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3235,9 +3250,24 @@ static int msm_dai_q6_afe_feedback_dec_cfg_get(struct snd_kcontrol *kcontrol,
 
 	pr_debug("%s: abr_dec_cfg for %d format\n",
 			__func__, dai_data->dec_config.format);
+	abr_size = sizeof(dai_data->dec_config.abr_dec_cfg.imc_info);
 	memcpy(ucontrol->value.bytes.data + format_size,
 		&dai_data->dec_config.abr_dec_cfg,
 		sizeof(struct afe_imc_dec_enc_info));
+
+	switch (dai_data->dec_config.format) {
+	case DEC_FMT_APTX_AD_SPEECH:
+		pr_debug("%s: afe_dec_cfg for %d format\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(ucontrol->value.bytes.data + format_size + abr_size,
+			&dai_data->dec_config.data,
+			sizeof(struct asm_aptx_ad_speech_dec_cfg_t));
+		break;
+	default:
+		pr_debug("%s: no afe_dec_cfg for format %d\n",
+				__func__, dai_data->dec_config.format);
+		break;
+	}
 
 	return 0;
 }
@@ -3247,6 +3277,7 @@ static int msm_dai_q6_afe_feedback_dec_cfg_put(struct snd_kcontrol *kcontrol,
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 	u32 format_size = 0;
+	u32 abr_size = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3262,10 +3293,25 @@ static int msm_dai_q6_afe_feedback_dec_cfg_put(struct snd_kcontrol *kcontrol,
 
 	pr_debug("%s: abr_dec_cfg for %d format\n",
 			__func__, dai_data->dec_config.format);
+	abr_size = sizeof(dai_data->dec_config.abr_dec_cfg.imc_info);
 	memcpy(&dai_data->dec_config.abr_dec_cfg,
 		ucontrol->value.bytes.data + format_size,
 		sizeof(struct afe_imc_dec_enc_info));
 	dai_data->dec_config.abr_dec_cfg.is_abr_enabled = true;
+
+	switch (dai_data->dec_config.format) {
+	case DEC_FMT_APTX_AD_SPEECH:
+		pr_debug("%s: afe_dec_cfg for %d format\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(&dai_data->dec_config.data,
+			ucontrol->value.bytes.data + format_size + abr_size,
+			sizeof(struct asm_aptx_ad_speech_dec_cfg_t));
+		break;
+	default:
+		pr_debug("%s: no afe_dec_cfg for format %d\n",
+				__func__, dai_data->dec_config.format);
+		break;
+	}
 	return 0;
 }
 

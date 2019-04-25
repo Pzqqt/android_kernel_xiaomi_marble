@@ -91,6 +91,11 @@ enum {
 	APTX_AD_44_1 = 1
 };
 
+enum {
+	AFE_MATCHED_PORT_DISABLE,
+	AFE_MATCHED_PORT_ENABLE
+};
+
 struct wlock {
 	struct wakeup_source ws;
 };
@@ -3656,6 +3661,8 @@ static int q6afe_send_dec_config(u16 port_id,
 	struct avs_dec_congestion_buffer_param_t dec_buffer_id_param;
 	struct afe_enc_dec_imc_info_param_t imc_info_param;
 	struct afe_port_media_type_t media_type;
+	struct afe_matched_port_t matched_port_param;
+	struct asm_aptx_ad_speech_mode_cfg_t speech_codec_init_param;
 	struct param_hdr_v3 param_hdr;
 	int ret;
 	u32 dec_fmt;
@@ -3664,6 +3671,8 @@ static int q6afe_send_dec_config(u16 port_id,
 	memset(&dec_media_fmt, 0, sizeof(dec_media_fmt));
 	memset(&imc_info_param, 0, sizeof(imc_info_param));
 	memset(&media_type, 0, sizeof(media_type));
+	memset(&matched_port_param, 0, sizeof(matched_port_param));
+	memset(&speech_codec_init_param, 0, sizeof(speech_codec_init_param));
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	param_hdr.module_id = AFE_MODULE_ID_DECODER;
@@ -3782,6 +3791,9 @@ static int q6afe_send_dec_config(u16 port_id,
 			break;
 		}
 		/* fall through for abr enabled case */
+	case ASM_MEDIA_FMT_APTX_AD_SPEECH:
+		media_type.sample_rate = AFE_PORT_SAMPLE_RATE_32K;
+		break;
 	default:
 		media_type.sample_rate =
 			afe_config.slim_sch.sample_rate;
@@ -3808,7 +3820,8 @@ static int q6afe_send_dec_config(u16 port_id,
 	}
 
 	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2 &&
-		format != ASM_MEDIA_FMT_APTX_ADAPTIVE) {
+		format != ASM_MEDIA_FMT_APTX_ADAPTIVE &&
+		format != ASM_MEDIA_FMT_APTX_AD_SPEECH) {
 		pr_debug("%s:Unsuppported dec format. Ignore AFE config %u\n",
 				__func__, format);
 		goto exit;
@@ -3818,6 +3831,24 @@ static int q6afe_send_dec_config(u16 port_id,
 		cfg->abr_dec_cfg.is_abr_enabled) {
 		pr_debug("%s: Ignore AFE config for abr case\n", __func__);
 		goto exit;
+	}
+	if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		pr_debug("%s: sending AFE_PARAM_ID_RATE_MATCHED_PORT to DSP payload\n",
+			__func__);
+		param_hdr.param_id = AFE_PARAM_ID_RATE_MATCHED_PORT;
+		param_hdr.param_size =
+			sizeof(struct afe_matched_port_t);
+		matched_port_param.minor_version = AFE_API_VERSION_PORT_MEDIA_TYPE;
+		matched_port_param.enable = AFE_MATCHED_PORT_ENABLE;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &matched_port_param);
+		if (ret) {
+			pr_err("%s: AFE_PARAM_ID_RATE_MATCHED_PORT for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
 	}
 
 	pr_debug("%s: sending AFE_DECODER_PARAM_ID_DEC_MEDIA_FMT to DSP payload\n",
@@ -3855,6 +3886,26 @@ static int q6afe_send_dec_config(u16 port_id,
 			goto exit;
 		}
 		break;
+	case ASM_MEDIA_FMT_APTX_AD_SPEECH:
+		param_hdr.param_size =
+				sizeof(struct asm_aptx_ad_speech_dec_cfg_t);
+
+		pr_debug("%s: send AVS_DECODER_PARAM_ID_APTX_AD_SPEECH_DEC_INIT to DSP payload\n",
+			 __func__);
+		param_hdr.param_id =
+				AVS_DECODER_PARAM_ID_APTX_AD_SPEECH_DEC_INIT;
+		speech_codec_init_param =
+				cfg->data.aptx_ad_speech_config.speech_mode;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_hdr,
+					(u8 *) &speech_codec_init_param);
+		if (ret) {
+			pr_err("%s: AVS_DECODER_PARAM_ID_APTX_ADAPTIVE_SPEECH_DEC_INIT for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
+		break;
 	default:
 		pr_debug("%s:No need to send DEC_MEDIA_FMT to DSP payload\n",
 			 __func__);
@@ -3881,6 +3932,8 @@ static int q6afe_send_enc_config(u16 port_id,
 	struct asm_aac_frame_size_control_t frame_ctl_param;
 	struct afe_port_media_type_t media_type;
 	struct aptx_channel_mode_param_t channel_mode_param;
+	struct afe_matched_port_t matched_port_param;
+	struct asm_aptx_ad_speech_mode_cfg_t speech_codec_init_param;
 	struct param_hdr_v3 param_hdr;
 	int ret;
 
@@ -3895,12 +3948,15 @@ static int q6afe_send_enc_config(u16 port_id,
 	memset(&imc_info_param, 0, sizeof(imc_info_param));
 	memset(&frame_ctl_param, 0, sizeof(frame_ctl_param));
 	memset(&media_type, 0, sizeof(media_type));
+	memset(&matched_port_param, 0, sizeof(matched_port_param));
+	memset(&speech_codec_init_param, 0, sizeof(speech_codec_init_param));
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
 	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2 &&
 		format != ASM_MEDIA_FMT_APTX && format != ASM_MEDIA_FMT_APTX_HD &&
 		format != ASM_MEDIA_FMT_CELT && format != ASM_MEDIA_FMT_LDAC &&
-		format != ASM_MEDIA_FMT_APTX_ADAPTIVE) {
+		format != ASM_MEDIA_FMT_APTX_ADAPTIVE &&
+		format != ASM_MEDIA_FMT_APTX_AD_SPEECH) {
 		pr_err("%s:Unsuppported enc format. Ignore AFE config\n",
 				__func__);
 		return 0;
@@ -3935,6 +3991,9 @@ static int q6afe_send_enc_config(u16 port_id,
 		enc_blk_param.enc_cfg_blk_size =
 				sizeof(enc_blk_param.enc_blk_config)
 				- sizeof(struct asm_aac_frame_size_control_t);
+	} else if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		param_hdr.param_size = sizeof(struct afe_enc_aptx_ad_speech_cfg_blk_param_t);
+		enc_blk_param.enc_cfg_blk_size = sizeof(struct asm_custom_enc_cfg_t);
 	} else {
 		param_hdr.param_size = sizeof(struct afe_enc_cfg_blk_param_t);
 		enc_blk_param.enc_cfg_blk_size =
@@ -4016,6 +4075,24 @@ static int q6afe_send_enc_config(u16 port_id,
 			goto exit;
 		}
 	}
+	if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		pr_debug("%s: sending AVS_DECODER_PARAM_ID_APTX_AD_SPEECH_ENC_INIT to DSP\n",
+			__func__);
+		param_hdr.param_id = AVS_DECODER_PARAM_ID_APTX_AD_SPEECH_ENC_INIT;
+		param_hdr.param_size =
+			sizeof(struct asm_aptx_ad_speech_dec_cfg_t);
+		speech_codec_init_param = cfg->aptx_ad_speech_config.speech_mode;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_hdr,
+					(u8 *) &speech_codec_init_param);
+		if (ret) {
+			pr_err("%s: AFE_ID_APTX_ADAPTIVE_ENC_INIT for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
+	}
+
 	pr_debug("%s:sending AFE_ENCODER_PARAM_ID_PACKETIZER to DSP\n",
 		 __func__);
 	param_hdr.param_id = AFE_ENCODER_PARAM_ID_PACKETIZER_ID;
@@ -4031,19 +4108,21 @@ static int q6afe_send_enc_config(u16 port_id,
 		goto exit;
 	}
 
-	pr_debug("%s:sending AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING mode= %d to DSP payload\n",
-		  __func__, scrambler_mode);
-	param_hdr.param_id = AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING;
-	param_hdr.param_size = sizeof(struct avs_enc_set_scrambler_param_t);
-	enc_set_scrambler_param.enable_scrambler = scrambler_mode;
-	ret = q6afe_pack_and_set_param_in_band(port_id,
-					       q6audio_get_port_index(port_id),
-					       param_hdr,
-					       (u8 *) &enc_set_scrambler_param);
-	if (ret) {
-		pr_err("%s: AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING for port 0x%x failed %d\n",
-			__func__, port_id, ret);
-		goto exit;
+	if (format != ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		pr_debug("%s:sending AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING mode= %d to DSP payload\n",
+			  __func__, scrambler_mode);
+		param_hdr.param_id = AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING;
+		param_hdr.param_size = sizeof(struct avs_enc_set_scrambler_param_t);
+		enc_set_scrambler_param.enable_scrambler = scrambler_mode;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						       q6audio_get_port_index(port_id),
+						       param_hdr,
+						       (u8 *) &enc_set_scrambler_param);
+		if (ret) {
+			pr_err("%s: AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
 	}
 
 	if (format == ASM_MEDIA_FMT_APTX) {
@@ -4065,22 +4144,25 @@ static int q6afe_send_enc_config(u16 port_id,
 
 	if ((format == ASM_MEDIA_FMT_LDAC &&
 	     cfg->ldac_config.abr_config.is_abr_enabled) ||
-	     format == ASM_MEDIA_FMT_APTX_ADAPTIVE) {
-		pr_debug("%s:sending AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP to DSP payload",
-			__func__);
-		param_hdr.param_id = AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP;
-		param_hdr.param_size =
-			sizeof(struct afe_enc_level_to_bitrate_map_param_t);
-		map_param.mapping_table =
-			cfg->ldac_config.abr_config.mapping_info;
-		ret = q6afe_pack_and_set_param_in_band(port_id,
-						q6audio_get_port_index(port_id),
-						param_hdr,
-						(u8 *) &map_param);
-		if (ret) {
-			pr_err("%s: AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP for port 0x%x failed %d\n",
-				__func__, port_id, ret);
-			goto exit;
+	     format == ASM_MEDIA_FMT_APTX_ADAPTIVE ||
+	     format == ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		if (format != ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+			pr_debug("%s:sending AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP to DSP payload",
+				__func__);
+			param_hdr.param_id = AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP;
+			param_hdr.param_size =
+				sizeof(struct afe_enc_level_to_bitrate_map_param_t);
+			map_param.mapping_table =
+				cfg->ldac_config.abr_config.mapping_info;
+			ret = q6afe_pack_and_set_param_in_band(port_id,
+							q6audio_get_port_index(port_id),
+							param_hdr,
+							(u8 *) &map_param);
+			if (ret) {
+				pr_err("%s: AFE_ENCODER_PARAM_ID_BIT_RATE_LEVEL_MAP for port 0x%x failed %d\n",
+					__func__, port_id, ret);
+				goto exit;
+			}
 		}
 
 		pr_debug("%s: sending AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION to DSP payload",
@@ -4092,6 +4174,9 @@ static int q6afe_send_enc_config(u16 port_id,
 		if (format == ASM_MEDIA_FMT_APTX_ADAPTIVE)
 			imc_info_param.imc_info =
 			cfg->aptx_ad_config.abr_cfg.imc_info;
+		else if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH)
+			imc_info_param.imc_info =
+			cfg->aptx_ad_speech_config.imc_info;
 		else
 			imc_info_param.imc_info =
 			cfg->ldac_config.abr_config.imc_info;
@@ -4117,6 +4202,9 @@ static int q6afe_send_enc_config(u16 port_id,
 	else if (format == ASM_MEDIA_FMT_APTX_ADAPTIVE)
 		media_type.sample_rate =
 			cfg->aptx_ad_config.custom_cfg.sample_rate;
+	else if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH)
+		media_type.sample_rate =
+			cfg->aptx_ad_speech_config.custom_cfg.sample_rate;
 	else
 		media_type.sample_rate =
 			afe_config.slim_sch.sample_rate;
@@ -4140,6 +4228,25 @@ static int q6afe_send_enc_config(u16 port_id,
 		pr_err("%s: AFE_API_VERSION_PORT_MEDIA_TYPE for port 0x%x failed %d\n",
 			__func__, port_id, ret);
 		goto exit;
+	}
+
+	if (format == ASM_MEDIA_FMT_APTX_AD_SPEECH) {
+		pr_debug("%s: sending AFE_PARAM_ID_RATE_MATCHED_PORT to DSP payload",
+			__func__);
+		param_hdr.param_id = AFE_PARAM_ID_RATE_MATCHED_PORT;
+		param_hdr.param_size =
+			sizeof(struct afe_matched_port_t);
+		matched_port_param.minor_version = AFE_API_VERSION_PORT_MEDIA_TYPE;
+		matched_port_param.enable = AFE_MATCHED_PORT_ENABLE;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &matched_port_param);
+		if (ret) {
+			pr_err("%s: AFE_PARAM_ID_RATE_MATCHED_PORT for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
 	}
 
 exit:
