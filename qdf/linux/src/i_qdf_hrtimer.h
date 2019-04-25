@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,6 +40,20 @@ typedef struct {
 } __qdf_hrtimer_data_t;
 
 /**
+ * __qdf_hrtimer_get_mode() - Get hrtimer_mode with qdf mode
+ * @mode: mode of hrtimer
+ *
+ * Get hrtimer_mode with qdf hrtimer mode
+ *
+ * Return: void
+ */
+static inline
+enum hrtimer_mode __qdf_hrtimer_get_mode(enum qdf_hrtimer_mode mode)
+{
+	return (enum hrtimer_mode)mode;
+}
+
+/**
  * __qdf_hrtimer_start() - Starts hrtimer in given context
  * @timer: pointer to the hrtimer object
  * @interval: interval to forward as qdf_ktime_t object
@@ -53,11 +67,13 @@ static inline
 void __qdf_hrtimer_start(__qdf_hrtimer_data_t *timer, ktime_t interval,
 			 enum qdf_hrtimer_mode mode)
 {
+	enum hrtimer_mode hrt_mode = __qdf_hrtimer_get_mode(mode);
+
 	if (timer->ctx == QDF_CONTEXT_HARDWARE)
-		hrtimer_start(&timer->u.hrtimer, interval, mode);
+		hrtimer_start(&timer->u.hrtimer, interval, hrt_mode);
 	else if (timer->ctx == QDF_CONTEXT_TASKLET)
 		tasklet_hrtimer_start(&timer->u.tasklet_hrtimer,
-				      interval, mode);
+				      interval, hrt_mode);
 }
 
 /**
@@ -98,14 +114,15 @@ static inline void  __qdf_hrtimer_init(__qdf_hrtimer_data_t *timer,
 {
 	struct hrtimer *hrtimer = &timer->u.hrtimer;
 	struct tasklet_hrtimer *tasklet_hrtimer = &timer->u.tasklet_hrtimer;
+	enum hrtimer_mode hrt_mode = __qdf_hrtimer_get_mode(mode);
 
 	timer->ctx = ctx;
 
 	if (timer->ctx == QDF_CONTEXT_HARDWARE) {
-		hrtimer_init(hrtimer, clock, mode);
+		hrtimer_init(hrtimer, clock, hrt_mode);
 		hrtimer->function = cback;
 	} else if (timer->ctx == QDF_CONTEXT_TASKLET) {
-		tasklet_hrtimer_init(tasklet_hrtimer, cback, clock, mode);
+		tasklet_hrtimer_init(tasklet_hrtimer, cback, clock, hrt_mode);
 	}
 }
 

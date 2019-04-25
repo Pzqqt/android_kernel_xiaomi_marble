@@ -620,4 +620,55 @@ static inline void cdp_deregister_packetdump_cb(ol_txrx_soc_handle soc)
 	if (soc->ops->misc_ops->unregister_pktdump_cb)
 		return soc->ops->misc_ops->unregister_pktdump_cb();
 }
+
+/**
+ * cdp_pdev_reset_driver_del_ack() - reset driver TCP delayed ack flag
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ *
+ * Return: none
+ */
+static inline void cdp_pdev_reset_driver_del_ack(void *psoc,
+						 struct cdp_pdev *pdev)
+{
+	ol_txrx_soc_handle soc = psoc;
+
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->pdev_reset_driver_del_ack)
+		return soc->ops->misc_ops->pdev_reset_driver_del_ack(pdev);
+}
+
+/*
+ * cdp_vdev_set_driver_del_ack_enable() - set driver delayed ack enabled flag
+ * @soc - data path soc handle
+ * @vdev_id: vdev id
+ * @rx_packets: number of rx packets
+ * @time_in_ms: time in ms
+ * @high_th: high threshold
+ * @low_th: low threshold
+ *
+ * Return: none
+ */
+static inline void cdp_vdev_set_driver_del_ack_enable(ol_txrx_soc_handle soc,
+						      uint8_t vdev_id,
+						      unsigned long rx_packets,
+						      uint32_t time_in_ms,
+						      uint32_t high_th,
+						      uint32_t low_th)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->vdev_set_driver_del_ack_enable)
+		return soc->ops->misc_ops->vdev_set_driver_del_ack_enable(
+			vdev_id, rx_packets, time_in_ms, high_th, low_th);
+}
 #endif /* _CDP_TXRX_MISC_H_ */

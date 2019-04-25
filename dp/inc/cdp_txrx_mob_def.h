@@ -291,6 +291,15 @@ struct txrx_pdev_cfg_param_t {
 	/* Start queue offset in percentage */
 	uint32_t tx_flow_start_queue_offset;
 
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+	/* enable the tcp delay ack feature in the driver */
+	bool  del_ack_enable;
+	/* timeout if no more tcp ack frames, unit is ms */
+	uint16_t del_ack_timer_value;
+	/* the maximum number of replaced tcp ack frames */
+	uint16_t del_ack_pkt_count;
+#endif
+
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 	bool gro_enable;
 	bool tso_enable;

@@ -986,6 +986,8 @@ struct ol_if_ops {
  * @runtime_resume:
  * @register_packetdump_cb:
  * @unregister_packetdump_cb:
+ * @pdev_reset_driver_del_ack:
+ * @vdev_set_driver_del_ack_enable:
  */
 struct cdp_misc_ops {
 	uint16_t (*set_ibss_vdev_heart_beat_timer)(struct cdp_vdev *vdev,
@@ -1023,6 +1025,12 @@ struct cdp_misc_ops {
 	void (*register_pktdump_cb)(ol_txrx_pktdump_cb tx_cb,
 				    ol_txrx_pktdump_cb rx_cb);
 	void (*unregister_pktdump_cb)(void);
+	void (*pdev_reset_driver_del_ack)(struct cdp_pdev *ppdev);
+	void (*vdev_set_driver_del_ack_enable)(uint8_t vdev_id,
+					       unsigned long rx_packets,
+					       uint32_t time_in_ms,
+					       uint32_t high_th,
+					       uint32_t low_th);
 };
 
 /**
