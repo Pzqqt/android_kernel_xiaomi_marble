@@ -36,8 +36,8 @@
 			  STOP_RESPONSE_BIT | DELETE_RESPONSE_BIT)
 
 #define START_RESPONSE_TIMER 6000 /* 6 seconds */
-#define STOP_RESPONSE_TIMER  2000 /* 2 seconds */
-#define DELETE_RESPONSE_TIMER  2000 /* 2 seconds */
+#define STOP_RESPONSE_TIMER  3000 /* 3 seconds */
+#define DELETE_RESPONSE_TIMER  3000 /* 3 seconds */
 
 /**
  * struct vdev_response_timer - vdev mgmt response ops timer
