@@ -382,16 +382,18 @@ scm_is_rsn_mcast_cipher_match(struct wlan_rsn_ie *rsn,
  * Return: true if RSN security else false
  */
 static bool scm_is_rsn_security(struct scan_filter *filter,
-	struct scan_cache_entry *db_entry,
-	struct security_info *security)
+				struct scan_cache_entry *db_entry,
+				struct security_info *security)
 {
 	int i;
 	uint8_t cipher_type;
 	bool match_any_akm, match = false;
 	enum wlan_auth_type neg_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
+	enum wlan_auth_type filter_akm;
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 	struct wlan_rsn_ie rsn = {0};
 	QDF_STATUS status;
+	bool is_adaptive_11r;
 
 	if (!security)
 		return false;
@@ -425,11 +427,15 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		return false;
 	}
 
+	is_adaptive_11r = (db_entry->adaptive_11r_ap &&
+			   filter->enable_adaptive_11r);
+
 	/* Initializing with false as it has true value already */
 	match = false;
 	for (i = 0; i < filter->num_of_auth; i++) {
 
-		if (filter->auth_type[i] == WLAN_AUTH_TYPE_ANY)
+		filter_akm = filter->auth_type[i];
+		if (filter_akm == WLAN_AUTH_TYPE_ANY)
 			match_any_akm = true;
 		else
 			match_any_akm = false;
@@ -440,8 +446,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FILS_FT_SHA384))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FT_FILS_SHA384 ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FT_FILS_SHA384)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_FILS_SHA384;
 				match = true;
 				break;
@@ -450,8 +456,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FILS_FT_SHA256))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FT_FILS_SHA256 ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FT_FILS_SHA256)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_FILS_SHA256;
 				match = true;
 				break;
@@ -460,8 +466,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FILS_SHA384))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FILS_SHA384 ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FILS_SHA384)) {
 				neg_auth = WLAN_AUTH_TYPE_FILS_SHA384;
 				match = true;
 				break;
@@ -470,8 +476,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FILS_SHA256))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FILS_SHA256 ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FILS_SHA256)) {
 				neg_auth = WLAN_AUTH_TYPE_FILS_SHA256;
 				match = true;
 				break;
@@ -481,8 +487,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		    rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_SAE))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_SAE ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_SAE)) {
 				neg_auth = WLAN_AUTH_TYPE_SAE;
 				match = true;
 				break;
@@ -491,8 +497,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count, WLAN_RSN_DPP_AKM)) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_DPP_RSN ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_DPP_RSN)) {
 				neg_auth = WLAN_AUTH_TYPE_DPP_RSN;
 				match = true;
 				break;
@@ -502,7 +508,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 					rsn.akm_suite_count,
 					WLAN_RSN_OSEN_AKM)) {
 			if (match_any_akm ||
-			    WLAN_AUTH_TYPE_OSEN == filter->auth_type[i]) {
+			    (filter_akm == WLAN_AUTH_TYPE_OSEN)) {
 				neg_auth = WLAN_AUTH_TYPE_OSEN;
 				match = true;
 				break;
@@ -511,8 +517,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_OWE))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_OWE ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_OWE)) {
 				neg_auth = WLAN_AUTH_TYPE_OWE;
 				match = true;
 				break;
@@ -521,8 +527,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FT_IEEE8021X))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FT_RSN ==
-			    filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_RSN;
 				match = true;
 				break;
@@ -532,8 +538,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_FT_PSK))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FT_RSN_PSK ==
-			   filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN_PSK)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_RSN_PSK;
 				match = true;
 				break;
@@ -543,8 +549,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_CCKM_AKM)) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_CCKM_RSN ==
-			   filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_CCKM_RSN)) {
 				neg_auth = WLAN_AUTH_TYPE_CCKM_RSN;
 				match = true;
 				break;
@@ -554,8 +560,15 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_IEEE8021X))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_RSN ==
-			   filter->auth_type[i])) {
+			if (is_adaptive_11r &&
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN)) {
+				neg_auth = WLAN_AUTH_TYPE_FT_RSN;
+				match = true;
+				break;
+			}
+
+			if (match_any_akm ||
+			    (WLAN_AUTH_TYPE_RSN == filter_akm)) {
 				neg_auth = WLAN_AUTH_TYPE_RSN;
 				match = true;
 				break;
@@ -565,8 +578,15 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_PSK))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_RSN_PSK ==
-			   filter->auth_type[i])) {
+			if (is_adaptive_11r &&
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN_PSK)) {
+				neg_auth = WLAN_AUTH_TYPE_FT_RSN_PSK;
+				match = true;
+				break;
+			}
+
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_RSN_PSK)) {
 				neg_auth = WLAN_AUTH_TYPE_RSN_PSK;
 				match = true;
 				break;
@@ -576,10 +596,16 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_SHA256_PSK))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_RSN_PSK_SHA256 ==
-			   filter->auth_type[i])) {
-				neg_auth =
-					WLAN_AUTH_TYPE_RSN_PSK_SHA256;
+			if (is_adaptive_11r &&
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN_PSK)) {
+				neg_auth = WLAN_AUTH_TYPE_FT_RSN_PSK;
+				match = true;
+				break;
+			}
+
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_RSN_PSK_SHA256)) {
+				neg_auth = WLAN_AUTH_TYPE_RSN_PSK_SHA256;
 				match = true;
 				break;
 			}
@@ -588,10 +614,16 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_SHA256_IEEE8021X))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_RSN_8021X_SHA256 ==
-			   filter->auth_type[i])) {
-				neg_auth =
-					WLAN_AUTH_TYPE_RSN_8021X_SHA256;
+			if (is_adaptive_11r &&
+			    (filter_akm == WLAN_AUTH_TYPE_FT_RSN)) {
+				neg_auth = WLAN_AUTH_TYPE_FT_RSN;
+				match = true;
+				break;
+			}
+
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_RSN_8021X_SHA256)) {
+				neg_auth = WLAN_AUTH_TYPE_RSN_8021X_SHA256;
 				match = true;
 				break;
 			}
@@ -600,8 +632,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_SUITEB_EAP_SHA256))) {
 			if (match_any_akm ||
-			    (WLAN_AUTH_TYPE_SUITEB_EAP_SHA256 ==
-			     filter->auth_type[i])) {
+			    (filter_akm == WLAN_AUTH_TYPE_SUITEB_EAP_SHA256)) {
 				neg_auth = WLAN_AUTH_TYPE_SUITEB_EAP_SHA256;
 				match = true;
 				break;
@@ -611,8 +642,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 		   rsn.akm_suite_count,
 		   WLAN_RSN_SEL(WLAN_AKM_SUITEB_EAP_SHA384))) {
 			if (match_any_akm ||
-			    (WLAN_AUTH_TYPE_SUITEB_EAP_SHA384 ==
-			     filter->auth_type[i])) {
+			    (filter_akm == WLAN_AUTH_TYPE_SUITEB_EAP_SHA384)) {
 				neg_auth = WLAN_AUTH_TYPE_SUITEB_EAP_SHA384;
 				match = true;
 				break;
@@ -621,8 +651,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 		if (scm_is_cipher_match(rsn.akm_suites, rsn.akm_suite_count,
 					WLAN_RSN_SEL(WLAN_AKM_FT_SAE))) {
-			if (match_any_akm || (WLAN_AUTH_TYPE_FT_SAE ==
-					      filter->auth_type[i])) {
+			if (match_any_akm ||
+			    (filter_akm == WLAN_AUTH_TYPE_FT_SAE)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_SAE;
 				match = true;
 				break;
@@ -633,8 +663,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 					WLAN_RSN_SEL(
 					WLAN_AKM_FT_SUITEB_EAP_SHA384))) {
 			if (match_any_akm ||
-			    (WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384 ==
-			     filter->auth_type[i])) {
+			    (filter_akm ==
+			     WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384)) {
 				neg_auth = WLAN_AUTH_TYPE_FT_SUITEB_EAP_SHA384;
 				match = true;
 				break;
@@ -923,8 +953,8 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
  * Return: true if any security else false
  */
 static bool scm_is_def_security(struct scan_filter *filter,
-	struct scan_cache_entry *db_entry,
-	struct security_info *security)
+				struct scan_cache_entry *db_entry,
+				struct security_info *security)
 {
 
 	/* It is allowed to match anything. Try the more secured ones first. */
@@ -1045,8 +1075,8 @@ static bool scm_is_fils_config_match(struct scan_filter *filter,
  * Return: true if security match else false
  */
 static bool scm_is_security_match(struct scan_filter *filter,
-	struct scan_cache_entry *db_entry,
-	struct security_info *security)
+				  struct scan_cache_entry *db_entry,
+				  struct security_info *security)
 {
 	int i;
 	bool match = false;
@@ -1078,8 +1108,8 @@ static bool scm_is_security_match(struct scan_filter *filter,
 		case WLAN_ENCRYPT_TYPE_AES_GCMP:
 		case WLAN_ENCRYPT_TYPE_AES_GCMP_256:
 			/* First check if there is a RSN match */
-			match = scm_is_rsn_security(filter,
-				    db_entry, &local_security);
+			match = scm_is_rsn_security(filter, db_entry,
+						    &local_security);
 			/* If not RSN, then check WPA match */
 			if (!match)
 				match = scm_is_wpa_security(filter,
@@ -1091,23 +1121,22 @@ static bool scm_is_security_match(struct scan_filter *filter,
 			break;
 		case WLAN_ENCRYPT_TYPE_ANY:
 		default:
-			match  = scm_is_def_security(filter,
-				    db_entry, &local_security);
+			match  = scm_is_def_security(filter, db_entry,
+						     &local_security);
 			break;
 		}
 	}
 
 	if (match && security)
-		qdf_mem_copy(security,
-			&local_security, sizeof(*security));
+		qdf_mem_copy(security, &local_security, sizeof(*security));
 
 	return match;
 }
 
 bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
-	struct scan_cache_entry *db_entry,
-	struct scan_filter *filter,
-	struct security_info *security)
+		      struct scan_cache_entry *db_entry,
+		      struct scan_filter *filter,
+		      struct security_info *security)
 {
 	int i;
 	bool match = false;
@@ -1191,15 +1220,13 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	/* TODO match phyMode */
 
 	if (!filter->ignore_auth_enc_type &&
-	   !scm_is_security_match(filter,
-	   db_entry, security)) {
+	    !scm_is_security_match(filter, db_entry, security)) {
 		scm_debug("%pM : Ignore as security profile didn't match",
 			  db_entry->bssid.bytes);
 		return false;
 	}
 
-	if (!util_is_bss_type_match(filter->bss_type,
-	   db_entry->cap_info)) {
+	if (!util_is_bss_type_match(filter->bss_type, db_entry->cap_info)) {
 		scm_debug("%pM : Ignore as bss type didn't match cap_info %x bss_type %d",
 			  db_entry->bssid.bytes, db_entry->cap_info.value,
 			  filter->bss_type);

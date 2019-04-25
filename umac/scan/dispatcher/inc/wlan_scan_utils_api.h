@@ -673,6 +673,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
 	ie_lst->mbo_oce = conv_ptr(ie_lst->mbo_oce, old_ptr, new_ptr);
 	ie_lst->extender = conv_ptr(ie_lst->extender, old_ptr, new_ptr);
+	ie_lst->adaptive_11r = conv_ptr(ie_lst->adaptive_11r, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -807,6 +808,20 @@ static inline uint8_t*
 util_scan_entry_rsn(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.rsn;
+}
+
+/**
+ * util_scan_entry_adaptive_11r()- function to read adaptive 11r Vendor IE
+ * @scan_entry: scan entry
+ *
+ * API, function to read adaptive 11r IE
+ *
+ * Return:  apaptive 11r ie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_adaptive_11r(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.adaptive_11r;
 }
 
 /**
