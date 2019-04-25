@@ -51,6 +51,25 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 }
 #endif
 
+#ifdef FEATURE_PERPKT_INFO
+static inline void
+dp_rx_populate_rx_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
+			     struct cdp_rx_indication_ppdu *cdp_rx_ppdu)
+{
+	uint8_t chain, bw;
+	int8_t rssi;
+
+	for (chain = 0; chain < SS_COUNT; chain++) {
+		for (bw = 0; bw < MAX_BW; bw++) {
+			rssi = ppdu_info->rx_status.rssi_chain[chain][bw];
+			if (rssi != DP_RSSI_INVAL)
+				cdp_rx_ppdu->rssi_chain[chain][bw] = rssi;
+			else
+				cdp_rx_ppdu->rssi_chain[chain][bw] = 0;
+		}
+	}
+}
+
 /**
 * dp_rx_populate_cdp_indication_ppdu() - Populate cdp rx indication structure
 * @pdev: pdev ctx
@@ -59,7 +78,6 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 *
 * Return: none
 */
-#ifdef FEATURE_PERPKT_INFO
 static inline void
 dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	struct hal_rx_ppdu_info *ppdu_info,
@@ -138,6 +156,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
+
+	dp_rx_populate_rx_rssi_chain(ppdu_info, cdp_rx_ppdu);
 }
 #else
 static inline void

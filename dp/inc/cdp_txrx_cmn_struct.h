@@ -1513,7 +1513,7 @@ struct cdp_rx_indication_ppdu {
 	uint8_t rx_ratecode;
 	uint8_t fcs_error_mpdus;
 	uint16_t frame_ctrl;
-	uint32_t rssi_chain[SS_COUNT][MAX_BW];
+	int8_t rssi_chain[SS_COUNT][MAX_BW];
 	struct cdp_stats_cookie *cookie;
 };
 

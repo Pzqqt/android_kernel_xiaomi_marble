@@ -24,6 +24,7 @@
 #define RX_BUFFER_SIZE_PKTLOG_LITE 1024
 
 
+#define DP_RSSI_INVAL 0x80
 #define DP_RSSI_AVG_WEIGHT 2
 /*
  * Formula to derive avg_rssi is taken from wifi2.o firmware

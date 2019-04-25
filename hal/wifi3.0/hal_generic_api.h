@@ -265,6 +265,53 @@ hal_rx_handle_ofdma_info(void *rx_tlv,
 }
 #endif
 
+#define HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(chain, word_1, word_2, \
+					ppdu_info, rssi_info_tlv) \
+	{						\
+	ppdu_info->rx_status.rssi_chain[chain][0] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_1,\
+				   RSSI_PRI20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][1] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_1,\
+				   RSSI_EXT20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][2] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_1,\
+				   RSSI_EXT40_LOW20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][3] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_1,\
+				   RSSI_EXT40_HIGH20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][4] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_2,\
+				   RSSI_EXT80_LOW20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][5] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_2,\
+				   RSSI_EXT80_LOW_HIGH20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][6] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_2,\
+				   RSSI_EXT80_HIGH_LOW20_CHAIN##chain); \
+	ppdu_info->rx_status.rssi_chain[chain][7] = \
+			HAL_RX_GET(rssi_info_tlv, RECEIVE_RSSI_INFO_##word_2,\
+				   RSSI_EXT80_HIGH20_CHAIN##chain); \
+	}						\
+
+#define HAL_RX_PPDU_UPDATE_RSSI(ppdu_info, rssi_info_tlv) \
+	{HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(0, 0, 1, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(1, 2, 3, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(2, 4, 5, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(3, 6, 7, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(4, 8, 9, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(5, 10, 11, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(6, 12, 13, ppdu_info, rssi_info_tlv) \
+	HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(7, 14, 15, ppdu_info, rssi_info_tlv)} \
+
+static inline uint32_t
+hal_rx_update_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
+			 uint8_t *rssi_info_tlv)
+{
+	HAL_RX_PPDU_UPDATE_RSSI(ppdu_info, rssi_info_tlv)
+	return 0;
+}
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -1103,6 +1150,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		default:
 			break;
 		}
+		hal_rx_update_rssi_chain(ppdu_info, rssi_info_tlv);
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);
 		ppdu_info->rx_status.rssi[0] = value;
