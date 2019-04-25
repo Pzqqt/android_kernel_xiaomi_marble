@@ -1316,7 +1316,8 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 
 	status = wma_register_roaming_callbacks(
 			ready_req->csr_roam_synch_cb,
-			ready_req->pe_roam_synch_cb);
+			ready_req->pe_roam_synch_cb,
+			ready_req->pe_disconnect_cb);
 	if (status != QDF_STATUS_SUCCESS)
 		pe_err("Registering roaming callbacks with WMA failed");
 }
@@ -2081,6 +2082,23 @@ lim_copy_and_free_hlp_data_from_session(struct pe_session *session_ptr,
 					*roam_sync_ind_ptr)
 {}
 #endif
+
+QDF_STATUS
+pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id)
+{
+	struct pe_session *session;
+
+	session = pe_find_session_by_sme_session_id(mac, vdev_id);
+	if (!session) {
+		pe_err("LFR3: Vdev %d doesn't exist", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	lim_tear_down_link_with_ap(mac, vdev_id,
+				   eSIR_MAC_UNSPEC_FAILURE_REASON);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,

@@ -726,7 +726,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
 			struct bss_description *bss_desc_ptr,
-			enum sir_roam_op_code reason));
+			enum sir_roam_op_code reason),
+		QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
+						uint8_t vdev_id));
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
 		QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
@@ -736,7 +738,9 @@ static inline QDF_STATUS wma_register_roaming_callbacks(
 		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			struct roam_offload_synch_ind *roam_synch_data,
 			struct bss_description *bss_desc_ptr,
-			enum sir_roam_op_code reason))
+			enum sir_roam_op_code reason),
+		QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
+						uint8_t vdev_id))
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

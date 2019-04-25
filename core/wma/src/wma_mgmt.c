@@ -4449,7 +4449,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc_ptr,
-		enum sir_roam_op_code reason))
+		enum sir_roam_op_code reason),
+	QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
+					uint8_t vdev_id))
 {
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -4460,6 +4462,7 @@ QDF_STATUS wma_register_roaming_callbacks(
 	}
 	wma->csr_roam_synch_cb = csr_roam_synch_cb;
 	wma->pe_roam_synch_cb = pe_roam_synch_cb;
+	wma->pe_disconnect_cb = pe_disconnect_cb;
 	WMA_LOGD("Registered roam synch callbacks with WMA successfully");
 	return QDF_STATUS_SUCCESS;
 }

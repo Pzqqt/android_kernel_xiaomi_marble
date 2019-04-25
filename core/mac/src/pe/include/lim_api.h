@@ -283,12 +283,30 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason);
+
+/**
+ * pe_disconnect_callback() - Callback to handle deauth event is received
+ * from firmware
+ * @mac: pointer to global mac context
+ * @vdev_id: VDEV in which the event was received
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id);
+
 #else
 static inline QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
 		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
