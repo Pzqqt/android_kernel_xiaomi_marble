@@ -221,8 +221,27 @@ PREPACK struct htt_tx_ppdu_stats_info {
      * If bit 2 is set, tx_retry_bytes is valid
      * ...
      * If bit 14 is set, tx_duration is valid
+     * If bit 15 is set, all of ack_rssi_chain are valid,
+     *     for each validation of chain, need to check value in field
+     * If bit 16 is set, tx_timestamp is valid
+     * If bit 16 is set, sa_ant_matrix is valid
+     * If bit 17 is set, tid is valid
      */
     A_UINT32 valid_bitmap;
+    A_UINT32 ext_valid_bitmap; /* reserved for future extension valid bitmap */
+    /* ack rssi for each chain */
+    A_UINT32 ack_rssi_chain0:   8, /* Units: dB w.r.t noise floor, RSSI of Ack of all active chains. Value of 0x80 indicates invalid.*/
+             ack_rssi_chain1:   8, /* same as above */
+             ack_rssi_chain2:   8, /* same as above */
+             ack_rssi_chain3:   8; /* same as above */
+    A_UINT32 ack_rssi_chain4:   8, /* same as above */
+             ack_rssi_chain5:   8, /* same as above */
+             ack_rssi_chain6:   8, /* same as above */
+             ack_rssi_chain7:   8; /* same as above */
+    A_UINT32 tx_timestamp; /* HW assigned timestamp with microsecond unit */
+    A_UINT32 sa_ant_matrix:     8, /* This sa_ant_matrix provides a bitmask of the antennas used while frame transmit */
+             tid:               8,
+             reserved_1:       16;
 } POSTPACK;
 
 typedef struct {
