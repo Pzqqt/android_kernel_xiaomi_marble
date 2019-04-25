@@ -538,17 +538,6 @@ bool policy_mgr_is_hwmode_set_for_given_chnl(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	/*
-	 * If HW supports 1x1 chains DBS HW mode and if first connection is
-	 * 2G or 5G band and if second connection is coming up in diffrent
-	 * band than the first connection and if current HW mode is not yet
-	 * set in DBS then this is the right time to block the connection.
-	 */
-	if (policy_mgr_is_chnl_in_diff_band(psoc, channel) && !is_hwmode_dbs) {
-		policy_mgr_err("Given channel & existing conn is diff band & HW mode is not yet in DBS !!!!");
-		return false;
-	}
-
 	return true;
 }
 
