@@ -2245,6 +2245,8 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 	if (connector_type == DRM_MODE_CONNECTOR_DisplayPort) {
 		struct drm_msm_ext_hdr_properties hdr = {0};
 
+		c_conn->hdr_capable = true;
+
 		msm_property_install_blob(&c_conn->property_info,
 				"ext_hdr_properties",
 				DRM_MODE_PROP_IMMUTABLE,
