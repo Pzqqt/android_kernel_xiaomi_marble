@@ -267,6 +267,15 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_OBSS_PD_STATS = 23,
 
+    /* HTT_DBG_EXT_STATS_RING_BACKPRESSURE_STATS
+     * PARAMS:
+     *   - config_param0:
+     *      No params
+     * RESP MSG:
+     *   - htt_stats_ring_backpressure_stats_t
+     */
+    HTT_DBG_EXT_STATS_RING_BACKPRESSURE_STATS = 24,
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -362,6 +371,7 @@ typedef enum {
     HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG    = 87, /* htt_sched_txq_sched_eligibility_tlv */
     HTT_STATS_PDEV_OBSS_PD_TAG                     = 88, /* htt_pdev_obss_pd_stats_tlv */
     HTT_STATS_HW_WAR_TAG                           = 89, /* htt_hw_war_stats_tlv */
+    HTT_STATS_RING_BACKPRESSURE_STATS_TAG          = 90, /* htt_ring_backpressure_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -3781,5 +3791,48 @@ typedef struct {
 typedef struct {
     htt_pdev_obss_pd_stats_tlv obss_pd_stat;
 } htt_pdev_obss_pd_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 pdev_id;
+    A_UINT32 current_head_idx;
+    A_UINT32 current_tail_idx;
+    A_UINT32 num_htt_msgs_sent;
+    /*
+     * Time in milliseconds for which the ring has been in
+     * its current backpressure condition
+     */
+    A_UINT32 backpressure_time_ms;
+    /* backpressure_hist - histogram showing how many times different degrees
+     * of backpressure duration occurred:
+     * Index 0 indicates the number of times ring was
+     * continously in backpressure state for 100 - 200ms.
+     * Index 1 indicates the number of times ring was
+     * continously in backpressure state for 200 - 300ms.
+     * Index 2 indicates the number of times ring was
+     * continously in backpressure state for 300 - 400ms.
+     * Index 3 indicates the number of times ring was
+     * continously in backpressure state for 400 - 500ms.
+     * Index 4 indicates the number of times ring was
+     * continously in backpressure state beyond 500ms.
+     */
+    A_UINT32 backpressure_hist[5];
+} htt_ring_backpressure_stats_tlv;
+
+/* STATS_TYPE : HTT_STATS_RING_BACKPRESSURE_STATS_INFO
+ * TLV_TAGS:
+ *      - HTT_STATS_RING_BACKPRESSURE_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_sring_cmn_tlv cmn_tlv;
+    struct {
+        htt_stats_string_tlv sring_str_tlv;
+        htt_ring_backpressure_stats_tlv backpressure_stats_tlv;
+    } r[1]; /* variable-length array */
+} htt_ring_backpressure_stats_t;
 
 #endif /* __HTT_STATS_H__ */

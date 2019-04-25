@@ -177,9 +177,10 @@
  * 3.60 Add HTT_T2H_MSG_TYPE_PEER_STATS_IND def
  * 3.61 Add rx offset fields to HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG msg
  * 3.62 Add antenna mask to reserved space in htt_rx_ppdu_desc_t
+ * 3.63 Add HTT_HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND def
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 62
+#define HTT_CURRENT_VERSION_MINOR 63
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5755,6 +5756,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE         = 0x21,
     HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND       = 0x22,
     HTT_T2H_MSG_TYPE_PEER_STATS_IND           = 0x23,
+    HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND     = 0x24,
 
     HTT_T2H_MSG_TYPE_TEST,
     /* keep this last */
@@ -11431,5 +11433,183 @@ PREPACK struct htt_cfr_dump_compl_ind {
  * @tx_failed_msdus  : MSDUs dropped in FW after max retry
  * @tx_duration      : Tx duration for the PPDU (microsecond units)
  */
+
+
+/**
+ * @brief HTT_T2H_MSG_TYPE_BKPRESSURE_EVENTID Message
+ *
+ * @details
+ *  HTT_T2H_MSG_TYPE_BKPRESSURE_EVENTID message is sent by the target when
+ *  continuous backpressure is seen in the LMAC/ UMAC rings software rings.
+ *  This message will only be sent if the backpressure condition has existed
+ *  continuously for an initial period (100 ms).
+ *  Repeat messages with updated information will be sent after each
+ *  subsequent period (100 ms) as long as the backpressure remains unabated.
+ *  This message indicates the ring id along with current head and tail index
+ *  locations (i.e. write and read indices).
+ *  The backpressure time indicates the time in ms for which continous
+ *  backpressure has been observed in the ring.
+ *
+ *  The message format is as follows:
+ *
+ *     |31            24|23            16|15             8|7              0|
+ *     |----------------+----------------+----------------+----------------|
+ *     |    ring_id     |   ring_type    |     pdev_id    |     msg_type   |
+ *     |-------------------------------------------------------------------|
+ *     |             tail_idx            |             head_idx            |
+ *     |-------------------------------------------------------------------|
+ *     |                      backpressure_time_ms                         |
+ *     |-------------------------------------------------------------------|
+ *
+ *  The message is interpreted as follows:
+ *  dword0 - b'0:7   - msg_type: This will be set to
+ *                               HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND
+ *           b'8:15  - pdev_id:  0 indicates msg is for UMAC ring.
+ *                               1, 2, 3 indicates pdev_id 0,1,2 and
+                                 the msg is for LMAC ring.
+ *           b'16:23 - ring_type: Refer to enum htt_backpressure_ring_type.
+ *           b'24:31 - ring_id:  Refer enum htt_backpressure_umac_ring_id/
+ *                               htt_backpressure_lmac_ring_id. This represents
+ *                               the ring id for which continous backpressure is seen
+ *
+ *  dword1 - b'0:15  - head_idx: This indicates the current head index of
+ *                               the ring indicated by the ring_id
+ *
+ *  dword1 - b'16:31 - tail_idx: This indicates the current tail index of
+ *                               the ring indicated by the ring id
+ *
+ *  dword2 - b'0:31  - backpressure_time_ms: Indicates how long continous
+ *                               backpressure has been seen in the ring
+ *                               indicated by the ring_id.
+ *                               Units = milliseconds
+ */
+#define HTT_T2H_RX_BKPRESSURE_PDEV_ID_M   0x0000ff00
+#define HTT_T2H_RX_BKPRESSURE_PDEV_ID_S   8
+#define HTT_T2H_RX_BKPRESSURE_RING_TYPE_M 0x00ff0000
+#define HTT_T2H_RX_BKPRESSURE_RING_TYPE_S 16
+#define HTT_T2H_RX_BKPRESSURE_RINGID_M    0xff000000
+#define HTT_T2H_RX_BKPRESSURE_RINGID_S    24
+#define HTT_T2H_RX_BKPRESSURE_HEAD_IDX_M  0x0000ffff
+#define HTT_T2H_RX_BKPRESSURE_HEAD_IDX_S  0
+#define HTT_T2H_RX_BKPRESSURE_TAIL_IDX_M  0xffff0000
+#define HTT_T2H_RX_BKPRESSURE_TAIL_IDX_S  16
+#define HTT_T2H_RX_BKPRESSURE_TIME_MS_M   0xffffffff
+#define HTT_T2H_RX_BKPRESSURE_TIME_MS_S   0
+
+#define HTT_T2H_RX_BKPRESSURE_PDEV_ID_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_PDEV_ID, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_PDEV_ID_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_PDEV_ID_M) >> \
+            HTT_T2H_RX_BKPRESSURE_PDEV_ID_S)
+
+#define HTT_T2H_RX_BKPRESSURE_RING_TYPE_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_RING_TYPE, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_RING_TYPE_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_RING_TYPE_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_RING_TYPE_M) >> \
+            HTT_T2H_RX_BKPRESSURE_RING_TYPE_S)
+
+#define HTT_T2H_RX_BKPRESSURE_RINGID_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_RINGID, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_RINGID_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_RINGID_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_RINGID_M) >> \
+            HTT_T2H_RX_BKPRESSURE_RINGID_S)
+
+#define HTT_T2H_RX_BKPRESSURE_HEAD_IDX_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_HEAD_IDX, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_HEAD_IDX_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_HEAD_IDX_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_HEAD_IDX_M) >> \
+            HTT_T2H_RX_BKPRESSURE_HEAD_IDX_S)
+
+#define HTT_T2H_RX_BKPRESSURE_TAIL_IDX_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_TAIL_IDX, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_TAIL_IDX_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_TAIL_IDX_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_TAIL_IDX_M) >> \
+            HTT_T2H_RX_BKPRESSURE_TAIL_IDX_S)
+
+#define HTT_T2H_RX_BKPRESSURE_TIME_MS_SET(word, value) \
+   do { \
+          HTT_CHECK_SET_VAL(HTT_T2H_RX_BKPRESSURE_TIME_MS, value); \
+          (word) |= (value)  << HTT_T2H_RX_BKPRESSURE_TIME_MS_S; \
+      } while (0)
+#define HTT_T2H_RX_BKPRESSURE_TIME_MS_GET(word) \
+        (((word) & HTT_T2H_RX_BKPRESSURE_TIME_MS_M) >> \
+            HTT_T2H_RX_BKPRESSURE_TIME_MS_S)
+
+enum htt_backpressure_ring_type {
+     HTT_SW_RING_TYPE_UMAC,
+     HTT_SW_RING_TYPE_LMAC,
+     HTT_SW_RING_TYPE_MAX,
+};
+
+/* Ring id for which the message is sent to host */
+enum htt_backpressure_umac_ringid {
+    HTT_SW_RING_IDX_REO_REO2SW1_RING,
+    HTT_SW_RING_IDX_REO_REO2SW2_RING,
+    HTT_SW_RING_IDX_REO_REO2SW3_RING,
+    HTT_SW_RING_IDX_REO_REO2SW4_RING,
+    HTT_SW_RING_IDX_REO_WBM2REO_LINK_RING,
+    HTT_SW_RING_IDX_REO_REO2TCL_RING,
+    HTT_SW_RING_IDX_REO_REO2FW_RING,
+    HTT_SW_RING_IDX_REO_REO_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_PPE_RELEASE_RING,
+    HTT_SW_RING_IDX_TCL_TCL2TQM_RING,
+    HTT_SW_RING_IDX_WBM_TQM_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_REO_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_WBM2SW0_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_WBM2SW1_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_WBM2SW2_RELEASE_RING,
+    HTT_SW_RING_IDX_WBM_WBM2SW3_RELEASE_RING,
+    HTT_SW_RING_IDX_REO_REO_CMD_RING,
+    HTT_SW_RING_IDX_REO_REO_STATUS_RING,
+    HTT_SW_UMAC_RING_IDX_MAX,
+};
+
+enum htt_backpressure_lmac_ringid {
+    HTT_SW_RING_IDX_FW2RXDMA_BUF_RING,
+    HTT_SW_RING_IDX_FW2RXDMA_STATUS_RING,
+    HTT_SW_RING_IDX_FW2RXDMA_LINK_RING,
+    HTT_SW_RING_IDX_SW2RXDMA_BUF_RING,
+    HTT_SW_RING_IDX_WBM2RXDMA_LINK_RING,
+    HTT_SW_RING_IDX_RXDMA2FW_RING,
+    HTT_SW_RING_IDX_RXDMA2SW_RING,
+    HTT_SW_RING_IDX_RXDMA2RELEASE_RING,
+    HTT_SW_RING_IDX_RXDMA2REO_RING,
+    HTT_SW_RING_IDX_MONITOR_STATUS_RING,
+    HTT_SW_RING_IDX_MONITOR_BUF_RING,
+    HTT_SW_RING_IDX_MONITOR_DESC_RING,
+    HTT_SW_RING_IDX_MONITOR_DEST_RING,
+    HTT_SW_LMAC_RING_IDX_MAX,
+};
+
+PREPACK struct htt_t2h_msg_bkpressure_event_ind_t {
+     A_UINT32 msg_type:  8, /* HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND */
+              pdev_id:   8,
+              ring_type: 8, /* htt_backpressure_ring_type */
+              /*
+               * ring_id holds an enum value from either
+               * htt_backpressure_umac_ringid or
+               * htt_backpressure_lmac_ringid, based on
+               * the ring_type setting.
+               */
+              ring_id:   8;
+     A_UINT16 head_idx;
+     A_UINT16 tail_idx;
+     A_UINT32 backpressure_time_ms; /* Time in milliseconds for which backpressure is seen continuously */
+} POSTPACK;
 
 #endif
