@@ -54,6 +54,7 @@
 #include <pktlog_ac_fmt.h>
 #include <cdp_txrx_handle.h>
 #include <wlan_reg_services_api.h>
+#include "qdf_hrtimer.h"
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 static u16 ol_txrx_tx_desc_alloc_table[TXRX_FC_MAX] = {
@@ -492,6 +493,7 @@ out:
  * @tx_spec: indicate what non-standard transmission actions to apply
  * @msdu_list: the tx frames to send
  * @tx_comp_req: tx completion req
+ * @call_sched: will schedule the tx if true
  *
  * Return: NULL if all MSDUs are accepted
  */
@@ -500,7 +502,8 @@ ol_tx_hl_base(
 	ol_txrx_vdev_handle vdev,
 	enum ol_tx_spec tx_spec,
 	qdf_nbuf_t msdu_list,
-	int tx_comp_req)
+	int tx_comp_req,
+	bool call_sched)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	qdf_nbuf_t msdu = msdu_list;
@@ -697,9 +700,733 @@ ol_tx_hl_base(
 MSDU_LOOP_BOTTOM:
 			msdu = next;
 		}
-		ol_tx_sched(pdev);
+
+		if (call_sched)
+			ol_tx_sched(pdev);
 		return NULL; /* all MSDUs were accepted */
 }
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+
+/**
+ * ol_tx_pdev_reset_driver_del_ack() - reset driver delayed ack enabled flag
+ * @ppdev: the data physical device
+ *
+ * Return: none
+ */
+void
+ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_vdev_t *vdev;
+
+	if (!pdev)
+		return;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		vdev->driver_del_ack_enabled = false;
+
+		dp_debug("vdev_id %d driver_del_ack_enabled %d",
+			 vdev->vdev_id, vdev->driver_del_ack_enabled);
+	}
+}
+
+/**
+ * ol_tx_vdev_set_driver_del_ack_enable() - set driver delayed ack enabled flag
+ * @vdev_id: vdev id
+ * @rx_packets: number of rx packets
+ * @time_in_ms: time in ms
+ * @high_th: high threshold
+ * @low_th: low threshold
+ *
+ * Return: none
+ */
+void
+ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+				     unsigned long rx_packets,
+				     uint32_t time_in_ms,
+				     uint32_t high_th,
+				     uint32_t low_th)
+{
+	struct ol_txrx_vdev_t *vdev =
+			(struct ol_txrx_vdev_t *)
+			ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	bool old_driver_del_ack_enabled;
+
+	if ((!vdev) || (low_th > high_th))
+		return;
+
+	old_driver_del_ack_enabled = vdev->driver_del_ack_enabled;
+	if (rx_packets > high_th)
+		vdev->driver_del_ack_enabled = true;
+	else if (rx_packets < low_th)
+		vdev->driver_del_ack_enabled = false;
+
+	if (old_driver_del_ack_enabled != vdev->driver_del_ack_enabled) {
+		dp_debug("vdev_id %d driver_del_ack_enabled %d rx_packets %ld time_in_ms %d high_th %d low_th %d",
+			 vdev->vdev_id, vdev->driver_del_ack_enabled,
+			 rx_packets, time_in_ms, high_th, low_th);
+	}
+}
+
+/**
+ * ol_tx_hl_send_all_tcp_ack() - send all queued tcp ack packets
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_tx_hl_send_all_tcp_ack(struct ol_txrx_vdev_t *vdev)
+{
+	int i;
+	struct tcp_stream_node *tcp_node_list;
+	struct tcp_stream_node *temp;
+
+	for (i = 0; i < OL_TX_HL_DEL_ACK_HASH_SIZE; i++) {
+		tcp_node_list = NULL;
+		qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[i].hash_node_lock);
+		if (vdev->tcp_ack_hash.node[i].no_of_entries)
+			tcp_node_list = vdev->tcp_ack_hash.node[i].head;
+
+		vdev->tcp_ack_hash.node[i].no_of_entries = 0;
+		vdev->tcp_ack_hash.node[i].head = NULL;
+		qdf_spin_unlock_bh(&vdev->tcp_ack_hash.node[i].hash_node_lock);
+
+		/* Send all packets */
+		while (tcp_node_list) {
+			int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+			qdf_nbuf_t msdu_list;
+
+			temp = tcp_node_list;
+			tcp_node_list = temp->next;
+
+			msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+						  temp->head,
+						  tx_comp_req, false);
+			if (msdu_list)
+				qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+			ol_txrx_vdev_free_tcp_node(vdev, temp);
+		}
+	}
+	ol_tx_sched(vdev->pdev);
+}
+
+/**
+ * tcp_del_ack_tasklet() - tasklet function to send ack packets
+ * @data: vdev handle
+ *
+ * Return: none
+ */
+void tcp_del_ack_tasklet(void *data)
+{
+	struct ol_txrx_vdev_t *vdev = data;
+
+	ol_tx_hl_send_all_tcp_ack(vdev);
+}
+
+/**
+ * ol_tx_get_stream_id() - get stream_id from packet info
+ * @info: packet info
+ *
+ * Return: stream_id
+ */
+uint16_t ol_tx_get_stream_id(struct packet_info *info)
+{
+	return ((info->dst_port + info->dst_ip + info->src_port + info->src_ip)
+					 & (OL_TX_HL_DEL_ACK_HASH_SIZE - 1));
+}
+
+/**
+ * ol_tx_is_tcp_ack() - check whether the packet is tcp ack frame
+ * @msdu: packet
+ *
+ * Return: true if the packet is tcp ack frame
+ */
+static bool
+ol_tx_is_tcp_ack(qdf_nbuf_t msdu)
+{
+	uint16_t ether_type;
+	uint8_t  protocol;
+	uint8_t  flag, ip_header_len, tcp_header_len;
+	uint32_t seg_len;
+	uint8_t  *skb_data;
+	uint32_t skb_len;
+	bool tcp_acked = false;
+	uint32_t tcp_header_off;
+
+	qdf_nbuf_peek_header(msdu, &skb_data, &skb_len);
+	if (skb_len < (QDF_NBUF_TRAC_IPV4_OFFSET +
+	    QDF_NBUF_TRAC_IPV4_HEADER_SIZE +
+	    QDF_NBUF_TRAC_TCP_FLAGS_OFFSET))
+		goto exit;
+
+	ether_type = (uint16_t)(*(uint16_t *)
+			(skb_data + QDF_NBUF_TRAC_ETH_TYPE_OFFSET));
+	protocol = (uint16_t)(*(uint16_t *)
+			(skb_data + QDF_NBUF_TRAC_IPV4_PROTO_TYPE_OFFSET));
+
+	if ((QDF_SWAP_U16(QDF_NBUF_TRAC_IPV4_ETH_TYPE) == ether_type) &&
+	    (protocol == QDF_NBUF_TRAC_TCP_TYPE)) {
+		ip_header_len = ((uint8_t)(*(uint8_t *)
+				(skb_data + QDF_NBUF_TRAC_IPV4_OFFSET)) &
+				QDF_NBUF_TRAC_IPV4_HEADER_MASK) << 2;
+		tcp_header_off = QDF_NBUF_TRAC_IPV4_OFFSET + ip_header_len;
+
+		tcp_header_len = ((uint8_t)(*(uint8_t *)
+			(skb_data + tcp_header_off +
+			QDF_NBUF_TRAC_TCP_HEADER_LEN_OFFSET))) >> 2;
+		seg_len = skb_len - tcp_header_len - tcp_header_off;
+		flag = (uint8_t)(*(uint8_t *)
+			(skb_data + tcp_header_off +
+			QDF_NBUF_TRAC_TCP_FLAGS_OFFSET));
+
+		if ((flag == QDF_NBUF_TRAC_TCP_ACK_MASK) && (seg_len == 0))
+			tcp_acked = true;
+	}
+
+exit:
+
+	return tcp_acked;
+}
+
+/**
+ * ol_tx_get_packet_info() - update packet info for passed msdu
+ * @msdu: packet
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_get_packet_info(qdf_nbuf_t msdu, struct packet_info *info)
+{
+	uint16_t ether_type;
+	uint8_t  protocol;
+	uint8_t  flag, ip_header_len, tcp_header_len;
+	uint32_t seg_len;
+	uint8_t  *skb_data;
+	uint32_t skb_len;
+	uint32_t tcp_header_off;
+
+	info->type = NO_TCP_PKT;
+
+	qdf_nbuf_peek_header(msdu, &skb_data, &skb_len);
+	if (skb_len < (QDF_NBUF_TRAC_IPV4_OFFSET +
+	    QDF_NBUF_TRAC_IPV4_HEADER_SIZE +
+	    QDF_NBUF_TRAC_TCP_FLAGS_OFFSET))
+		return;
+
+	ether_type = (uint16_t)(*(uint16_t *)
+			(skb_data + QDF_NBUF_TRAC_ETH_TYPE_OFFSET));
+	protocol = (uint16_t)(*(uint16_t *)
+			(skb_data + QDF_NBUF_TRAC_IPV4_PROTO_TYPE_OFFSET));
+
+	if ((QDF_SWAP_U16(QDF_NBUF_TRAC_IPV4_ETH_TYPE) == ether_type) &&
+	    (protocol == QDF_NBUF_TRAC_TCP_TYPE)) {
+		ip_header_len = ((uint8_t)(*(uint8_t *)
+				(skb_data + QDF_NBUF_TRAC_IPV4_OFFSET)) &
+				QDF_NBUF_TRAC_IPV4_HEADER_MASK) << 2;
+		tcp_header_off = QDF_NBUF_TRAC_IPV4_OFFSET + ip_header_len;
+
+		tcp_header_len = ((uint8_t)(*(uint8_t *)
+			(skb_data + tcp_header_off +
+			QDF_NBUF_TRAC_TCP_HEADER_LEN_OFFSET))) >> 2;
+		seg_len = skb_len - tcp_header_len - tcp_header_off;
+		flag = (uint8_t)(*(uint8_t *)
+			(skb_data + tcp_header_off +
+			QDF_NBUF_TRAC_TCP_FLAGS_OFFSET));
+
+		info->src_ip = QDF_SWAP_U32((uint32_t)(*(uint32_t *)
+			(skb_data + QDF_NBUF_TRAC_IPV4_SRC_ADDR_OFFSET)));
+		info->dst_ip = QDF_SWAP_U32((uint32_t)(*(uint32_t *)
+			(skb_data + QDF_NBUF_TRAC_IPV4_DEST_ADDR_OFFSET)));
+		info->src_port = QDF_SWAP_U16((uint16_t)(*(uint16_t *)
+				(skb_data + tcp_header_off +
+				QDF_NBUF_TRAC_TCP_SPORT_OFFSET)));
+		info->dst_port = QDF_SWAP_U16((uint16_t)(*(uint16_t *)
+				(skb_data + tcp_header_off +
+				QDF_NBUF_TRAC_TCP_DPORT_OFFSET)));
+		info->stream_id = ol_tx_get_stream_id(info);
+
+		if ((flag == QDF_NBUF_TRAC_TCP_ACK_MASK) && (seg_len == 0)) {
+			info->type = TCP_PKT_ACK;
+			info->ack_number = (uint32_t)(*(uint32_t *)
+				(skb_data + tcp_header_off +
+				QDF_NBUF_TRAC_TCP_ACK_OFFSET));
+			info->ack_number = QDF_SWAP_U32(info->ack_number);
+		} else {
+			info->type = TCP_PKT_NO_ACK;
+		}
+	}
+}
+
+/**
+ * ol_tx_hl_find_and_send_tcp_stream() - find and send tcp stream for passed
+ *                                       stream info
+ * @vdev: vdev handle
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_hl_find_and_send_tcp_stream(struct ol_txrx_vdev_t *vdev,
+				       struct packet_info *info)
+{
+	uint8_t no_of_entries;
+	struct tcp_stream_node *node_to_be_remove = NULL;
+
+	/* remove tcp node from hash */
+	qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[info->stream_id].
+			hash_node_lock);
+
+	no_of_entries = vdev->tcp_ack_hash.node[info->stream_id].
+			no_of_entries;
+	if (no_of_entries > 1) {
+		/* collision case */
+		struct tcp_stream_node *head =
+			vdev->tcp_ack_hash.node[info->stream_id].head;
+		struct tcp_stream_node *temp;
+
+		if ((head->dst_ip == info->dst_ip) &&
+		    (head->src_ip == info->src_ip) &&
+		    (head->src_port == info->src_port) &&
+		    (head->dst_port == info->dst_port)) {
+			node_to_be_remove = head;
+			vdev->tcp_ack_hash.node[info->stream_id].head =
+				head->next;
+			vdev->tcp_ack_hash.node[info->stream_id].
+				no_of_entries--;
+		} else {
+			temp = head;
+			while (temp->next) {
+				if ((temp->next->dst_ip == info->dst_ip) &&
+				    (temp->next->src_ip == info->src_ip) &&
+				    (temp->next->src_port == info->src_port) &&
+				    (temp->next->dst_port == info->dst_port)) {
+					node_to_be_remove = temp->next;
+					temp->next = temp->next->next;
+					vdev->tcp_ack_hash.
+						node[info->stream_id].
+						no_of_entries--;
+					break;
+				}
+				temp = temp->next;
+			}
+		}
+	} else if (no_of_entries == 1) {
+		/* Only one tcp_node */
+		node_to_be_remove =
+			 vdev->tcp_ack_hash.node[info->stream_id].head;
+		vdev->tcp_ack_hash.node[info->stream_id].head = NULL;
+		vdev->tcp_ack_hash.node[info->stream_id].no_of_entries = 0;
+	}
+	qdf_spin_unlock_bh(&vdev->tcp_ack_hash.
+			  node[info->stream_id].hash_node_lock);
+
+	/* send packets */
+	if (node_to_be_remove) {
+		int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+		qdf_nbuf_t msdu_list;
+
+		msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+					  node_to_be_remove->head,
+					  tx_comp_req, true);
+		if (msdu_list)
+			qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+		ol_txrx_vdev_free_tcp_node(vdev, node_to_be_remove);
+	}
+}
+
+static struct tcp_stream_node *
+ol_tx_hl_rep_tcp_ack(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu,
+		     struct packet_info *info, bool *is_found,
+		     bool *start_timer)
+{
+	struct tcp_stream_node *node_to_be_remove = NULL;
+	struct tcp_stream_node *head =
+		 vdev->tcp_ack_hash.node[info->stream_id].head;
+	struct tcp_stream_node *temp;
+
+	if ((head->dst_ip == info->dst_ip) &&
+	    (head->src_ip == info->src_ip) &&
+	    (head->src_port == info->src_port) &&
+	    (head->dst_port == info->dst_port)) {
+		*is_found = true;
+		if ((head->ack_number < info->ack_number) &&
+		    (head->no_of_ack_replaced <
+		    ol_cfg_get_del_ack_count_value(vdev->pdev->ctrl_pdev))) {
+			/* replace ack packet */
+			qdf_nbuf_tx_free(head->head, 1);
+			head->head = msdu;
+			head->ack_number = info->ack_number;
+			head->no_of_ack_replaced++;
+			*start_timer = true;
+
+			vdev->no_of_tcpack_replaced++;
+
+			if (head->no_of_ack_replaced ==
+			    ol_cfg_get_del_ack_count_value(
+			    vdev->pdev->ctrl_pdev)) {
+				node_to_be_remove = head;
+				vdev->tcp_ack_hash.node[info->stream_id].head =
+					head->next;
+				vdev->tcp_ack_hash.node[info->stream_id].
+					no_of_entries--;
+			}
+		} else {
+			/* append and send packets */
+			head->head->next = msdu;
+			node_to_be_remove = head;
+			vdev->tcp_ack_hash.node[info->stream_id].head =
+				head->next;
+			vdev->tcp_ack_hash.node[info->stream_id].
+				no_of_entries--;
+		}
+	} else {
+		temp = head;
+		while (temp->next) {
+			if ((temp->next->dst_ip == info->dst_ip) &&
+			    (temp->next->src_ip == info->src_ip) &&
+			    (temp->next->src_port == info->src_port) &&
+			    (temp->next->dst_port == info->dst_port)) {
+				*is_found = true;
+				if ((temp->next->ack_number <
+					info->ack_number) &&
+				    (temp->next->no_of_ack_replaced <
+					 ol_cfg_get_del_ack_count_value(
+					 vdev->pdev->ctrl_pdev))) {
+					/* replace ack packet */
+					qdf_nbuf_tx_free(temp->next->head, 1);
+					temp->next->head  = msdu;
+					temp->next->ack_number =
+						info->ack_number;
+					temp->next->no_of_ack_replaced++;
+					*start_timer = true;
+
+					vdev->no_of_tcpack_replaced++;
+
+					if (temp->next->no_of_ack_replaced ==
+					   ol_cfg_get_del_ack_count_value(
+					   vdev->pdev->ctrl_pdev)) {
+						node_to_be_remove = temp->next;
+						temp->next = temp->next->next;
+						vdev->tcp_ack_hash.
+							node[info->stream_id].
+							no_of_entries--;
+					}
+				} else {
+					/* append and send packets */
+					temp->next->head->next = msdu;
+					node_to_be_remove = temp->next;
+					temp->next = temp->next->next;
+					vdev->tcp_ack_hash.
+						node[info->stream_id].
+						no_of_entries--;
+				}
+				break;
+			}
+			temp = temp->next;
+		}
+	}
+	return node_to_be_remove;
+}
+
+/**
+ * ol_tx_hl_find_and_replace_tcp_ack() - find and replace tcp ack packet for
+ *                                       passed packet info
+ * @vdev: vdev handle
+ * @msdu: packet
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_hl_find_and_replace_tcp_ack(struct ol_txrx_vdev_t *vdev,
+				       qdf_nbuf_t msdu,
+				       struct packet_info *info)
+{
+	uint8_t no_of_entries;
+	struct tcp_stream_node *node_to_be_remove = NULL;
+	bool is_found = false, start_timer = false;
+
+	/* replace ack if required or send packets */
+	qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[info->stream_id].
+			hash_node_lock);
+
+	no_of_entries = vdev->tcp_ack_hash.node[info->stream_id].no_of_entries;
+	if (no_of_entries > 0) {
+		node_to_be_remove = ol_tx_hl_rep_tcp_ack(vdev, msdu, info,
+							 &is_found,
+							 &start_timer);
+	}
+
+	if (no_of_entries == 0 || !is_found) {
+		/* Alloc new tcp node */
+		struct tcp_stream_node *new_node;
+
+		new_node = ol_txrx_vdev_alloc_tcp_node(vdev);
+		if (!new_node) {
+			qdf_spin_unlock_bh(&vdev->tcp_ack_hash.
+					  node[info->stream_id].hash_node_lock);
+			dp_alert("Malloc failed");
+			return;
+		}
+		new_node->stream_id = info->stream_id;
+		new_node->dst_ip = info->dst_ip;
+		new_node->src_ip = info->src_ip;
+		new_node->dst_port = info->dst_port;
+		new_node->src_port = info->src_port;
+		new_node->ack_number = info->ack_number;
+		new_node->head = msdu;
+		new_node->next = NULL;
+		new_node->no_of_ack_replaced = 0;
+
+		start_timer = true;
+		/* insert new_node */
+		if (!vdev->tcp_ack_hash.node[info->stream_id].head) {
+			vdev->tcp_ack_hash.node[info->stream_id].head =
+				new_node;
+			vdev->tcp_ack_hash.node[info->stream_id].
+				no_of_entries = 1;
+		} else {
+			struct tcp_stream_node *temp =
+				 vdev->tcp_ack_hash.node[info->stream_id].head;
+			while (temp->next)
+				temp = temp->next;
+
+			temp->next = new_node;
+			vdev->tcp_ack_hash.node[info->stream_id].
+				no_of_entries++;
+		}
+	}
+	qdf_spin_unlock_bh(&vdev->tcp_ack_hash.node[info->stream_id].
+			  hash_node_lock);
+
+	/* start timer */
+	if (start_timer &&
+	    (!qdf_atomic_read(&vdev->tcp_ack_hash.is_timer_running))) {
+		qdf_hrtimer_start(&vdev->tcp_ack_hash.timer,
+				  qdf_ns_to_ktime((
+						ol_cfg_get_del_ack_timer_value(
+						vdev->pdev->ctrl_pdev) *
+						1000000)),
+			__QDF_HRTIMER_MODE_REL);
+		qdf_atomic_set(&vdev->tcp_ack_hash.is_timer_running, 1);
+	}
+
+	/* send packets */
+	if (node_to_be_remove) {
+		int tx_comp_req = vdev->pdev->cfg.default_tx_comp_req;
+		qdf_nbuf_t msdu_list = NULL;
+
+		msdu_list = ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+					  node_to_be_remove->head,
+					  tx_comp_req, true);
+		if (msdu_list)
+			qdf_nbuf_tx_free(msdu_list, 1/*error*/);
+		ol_txrx_vdev_free_tcp_node(vdev, node_to_be_remove);
+	}
+}
+
+/**
+ * ol_tx_hl_vdev_tcp_del_ack_timer() - delayed ack timer function
+ * @timer: timer handle
+ *
+ * Return: enum
+ */
+enum qdf_hrtimer_restart_status
+ol_tx_hl_vdev_tcp_del_ack_timer(qdf_hrtimer_data_t *timer)
+{
+	struct ol_txrx_vdev_t *vdev = qdf_container_of(timer,
+						       struct ol_txrx_vdev_t,
+						       tcp_ack_hash.timer);
+	enum qdf_hrtimer_restart_status ret = __QDF_HRTIMER_NORESTART;
+
+	qdf_sched_bh(&vdev->tcp_ack_hash.tcp_del_ack_tq);
+	qdf_atomic_set(&vdev->tcp_ack_hash.is_timer_running, 0);
+	return ret;
+}
+
+/**
+ * ol_tx_hl_del_ack_queue_flush_all() - drop all queued packets
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_tx_hl_del_ack_queue_flush_all(struct ol_txrx_vdev_t *vdev)
+{
+	int i;
+	struct tcp_stream_node *tcp_node_list;
+	struct tcp_stream_node *temp;
+
+	qdf_hrtimer_cancel(&vdev->tcp_ack_hash.timer);
+	for (i = 0; i < OL_TX_HL_DEL_ACK_HASH_SIZE; i++) {
+		tcp_node_list = NULL;
+		qdf_spin_lock_bh(&vdev->tcp_ack_hash.node[i].hash_node_lock);
+
+		if (vdev->tcp_ack_hash.node[i].no_of_entries)
+			tcp_node_list = vdev->tcp_ack_hash.node[i].head;
+
+		vdev->tcp_ack_hash.node[i].no_of_entries = 0;
+		vdev->tcp_ack_hash.node[i].head = NULL;
+		qdf_spin_unlock_bh(&vdev->tcp_ack_hash.node[i].hash_node_lock);
+
+		/* free all packets */
+		while (tcp_node_list) {
+			temp = tcp_node_list;
+			tcp_node_list = temp->next;
+
+			qdf_nbuf_tx_free(temp->head, 1/*error*/);
+			ol_txrx_vdev_free_tcp_node(vdev, temp);
+		}
+	}
+	ol_txrx_vdev_deinit_tcp_del_ack(vdev);
+}
+
+/**
+ * ol_txrx_vdev_init_tcp_del_ack() - initialize tcp delayed ack structure
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_init_tcp_del_ack(struct ol_txrx_vdev_t *vdev)
+{
+	int i;
+
+	vdev->driver_del_ack_enabled = false;
+
+	dp_debug("vdev-id=%u, driver_del_ack_enabled=%d",
+		 vdev->vdev_id,
+		 vdev->driver_del_ack_enabled);
+
+	vdev->no_of_tcpack = 0;
+	vdev->no_of_tcpack_replaced = 0;
+
+	qdf_hrtimer_init(&vdev->tcp_ack_hash.timer,
+			 ol_tx_hl_vdev_tcp_del_ack_timer,
+			 __QDF_CLOCK_MONOTONIC,
+			 __QDF_HRTIMER_MODE_REL,
+			 QDF_CONTEXT_HARDWARE
+			 );
+	qdf_create_bh(&vdev->tcp_ack_hash.tcp_del_ack_tq,
+		      tcp_del_ack_tasklet,
+		      vdev);
+	qdf_atomic_init(&vdev->tcp_ack_hash.is_timer_running);
+	qdf_atomic_init(&vdev->tcp_ack_hash.tcp_node_in_use_count);
+	qdf_spinlock_create(&vdev->tcp_ack_hash.tcp_free_list_lock);
+	vdev->tcp_ack_hash.tcp_free_list = NULL;
+	for (i = 0; i < OL_TX_HL_DEL_ACK_HASH_SIZE; i++) {
+		qdf_spinlock_create(&vdev->tcp_ack_hash.node[i].hash_node_lock);
+		vdev->tcp_ack_hash.node[i].no_of_entries = 0;
+		vdev->tcp_ack_hash.node[i].head = NULL;
+	}
+}
+
+/**
+ * ol_txrx_vdev_deinit_tcp_del_ack() - deinitialize tcp delayed ack structure
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_deinit_tcp_del_ack(struct ol_txrx_vdev_t *vdev)
+{
+	struct tcp_stream_node *temp;
+
+	qdf_destroy_bh(&vdev->tcp_ack_hash.tcp_del_ack_tq);
+
+	qdf_spin_lock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+	while (vdev->tcp_ack_hash.tcp_free_list) {
+		temp = vdev->tcp_ack_hash.tcp_free_list;
+		vdev->tcp_ack_hash.tcp_free_list = temp->next;
+		qdf_mem_free(temp);
+	}
+	qdf_spin_unlock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+}
+
+/**
+ * ol_txrx_vdev_free_tcp_node() - add tcp node in free list
+ * @vdev: vdev handle
+ * @node: tcp stream node
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_free_tcp_node(struct ol_txrx_vdev_t *vdev,
+				struct tcp_stream_node *node)
+{
+	qdf_atomic_dec(&vdev->tcp_ack_hash.tcp_node_in_use_count);
+
+	qdf_spin_lock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+	if (vdev->tcp_ack_hash.tcp_free_list) {
+		node->next = vdev->tcp_ack_hash.tcp_free_list;
+		vdev->tcp_ack_hash.tcp_free_list = node;
+	} else {
+		vdev->tcp_ack_hash.tcp_free_list = node;
+		node->next = NULL;
+	}
+	qdf_spin_unlock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+}
+
+/**
+ * ol_txrx_vdev_alloc_tcp_node() - allocate tcp node
+ * @vdev: vdev handle
+ *
+ * Return: tcp stream node
+ */
+struct tcp_stream_node *ol_txrx_vdev_alloc_tcp_node(struct ol_txrx_vdev_t *vdev)
+{
+	struct tcp_stream_node *node = NULL;
+
+	qdf_spin_lock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+	if (vdev->tcp_ack_hash.tcp_free_list) {
+		node = vdev->tcp_ack_hash.tcp_free_list;
+		vdev->tcp_ack_hash.tcp_free_list = node->next;
+	}
+	qdf_spin_unlock_bh(&vdev->tcp_ack_hash.tcp_free_list_lock);
+
+	if (!node) {
+		node = qdf_mem_malloc(sizeof(struct ol_txrx_vdev_t));
+		if (!node)
+			return NULL;
+	}
+	qdf_atomic_inc(&vdev->tcp_ack_hash.tcp_node_in_use_count);
+	return node;
+}
+
+qdf_nbuf_t
+ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
+{
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
+	int tx_comp_req = pdev->cfg.default_tx_comp_req;
+	struct packet_info pkt_info;
+	qdf_nbuf_t temp;
+
+	if (ol_tx_is_tcp_ack(msdu_list))
+		vdev->no_of_tcpack++;
+
+	/* check Enable through ini */
+	if (!ol_cfg_get_del_ack_enable_value(vdev->pdev->ctrl_pdev) ||
+	    (!vdev->driver_del_ack_enabled)) {
+		if (qdf_atomic_read(&vdev->tcp_ack_hash.tcp_node_in_use_count))
+			ol_tx_hl_send_all_tcp_ack(vdev);
+
+		return ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list,
+				    tx_comp_req, true);
+	}
+
+	ol_tx_get_packet_info(msdu_list, &pkt_info);
+
+	if (pkt_info.type == TCP_PKT_NO_ACK) {
+		ol_tx_hl_find_and_send_tcp_stream(vdev, &pkt_info);
+		temp = ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list,
+				     tx_comp_req, true);
+		return temp;
+	}
+
+	if (pkt_info.type == TCP_PKT_ACK) {
+		ol_tx_hl_find_and_replace_tcp_ack(vdev, msdu_list, &pkt_info);
+		return NULL;
+	}
+
+	temp = ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list,
+			     tx_comp_req, true);
+	return temp;
+}
+#else
 
 qdf_nbuf_t
 ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
@@ -708,8 +1435,10 @@ ol_tx_hl(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 	int tx_comp_req = pdev->cfg.default_tx_comp_req ||
 				pdev->cfg.request_tx_comp;
 
-	return ol_tx_hl_base(vdev, OL_TX_SPEC_STD, msdu_list, tx_comp_req);
+	return ol_tx_hl_base(vdev, OL_TX_SPEC_STD,
+			     msdu_list, tx_comp_req, true);
 }
+#endif
 
 qdf_nbuf_t ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
 			    enum ol_tx_spec tx_spec,
@@ -724,7 +1453,7 @@ qdf_nbuf_t ol_tx_non_std_hl(struct ol_txrx_vdev_t *vdev,
 		    (pdev->tx_data_callback.func))
 			tx_comp_req = 1;
 	}
-	return ol_tx_hl_base(vdev, tx_spec, msdu_list, tx_comp_req);
+	return ol_tx_hl_base(vdev, tx_spec, msdu_list, tx_comp_req, true);
 }
 
 #ifdef FEATURE_WLAN_TDLS

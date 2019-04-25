@@ -119,6 +119,15 @@ struct txrx_pdev_cfg_t {
 	uint32_t uc_tx_partition_base;
 	/* Flag to indicate whether new htt format is supported */
 	bool new_htt_format_enabled;
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+	/* enable the tcp delay ack feature in the driver */
+	bool  del_ack_enable;
+	/* timeout if no more tcp ack frames, unit is ms */
+	uint16_t del_ack_timer_value;
+	/* the maximum number of replaced tcp ack frames */
+	uint16_t del_ack_pkt_count;
+#endif
 };
 
 /**
@@ -720,6 +729,55 @@ ol_cfg_is_htt_new_format_enabled(struct cdp_cfg *cfg_pdev)
 
 	return cfg->new_htt_format_enabled;
 }
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+/**
+ * ol_cfg_get_del_ack_timer_value() - get delayed ack timer value
+ * @cfg_pdev: pdev handle
+ *
+ * Return: timer value
+ */
+int ol_cfg_get_del_ack_timer_value(struct cdp_cfg *cfg_pdev);
+
+/**
+ * ol_cfg_get_del_ack_enable_value() - get delayed ack enable value
+ * @cfg_pdev: pdev handle
+ *
+ * Return: enable/disable
+ */
+bool ol_cfg_get_del_ack_enable_value(struct cdp_cfg *cfg_pdev);
+
+/**
+ * ol_cfg_get_del_ack_count_value() - get delayed ack count value
+ * @cfg_pdev: pdev handle
+ *
+ * Return: count value
+ */
+int ol_cfg_get_del_ack_count_value(struct cdp_cfg *cfg_pdev);
+
+/**
+ * ol_cfg_update_del_ack_params() - update delayed ack params
+ * @cfg_ctx: cfg context
+ * @cfg_param: parameters
+ *
+ * Return: none
+ */
+void ol_cfg_update_del_ack_params(struct txrx_pdev_cfg_t *cfg_ctx,
+				  struct txrx_pdev_cfg_param_t *cfg_param);
+#else
+/**
+ * ol_cfg_update_del_ack_params() - update delayed ack params
+ * @cfg_ctx: cfg context
+ * @cfg_param: parameters
+ *
+ * Return: none
+ */
+static inline
+void ol_cfg_update_del_ack_params(struct txrx_pdev_cfg_t *cfg_ctx,
+				  struct txrx_pdev_cfg_param_t *cfg_param)
+{
+}
+#endif
 
 /**
  * ol_cfg_get_wrr_skip_weight() - brief Query for the param of wrr_skip_weight

@@ -3045,6 +3045,28 @@ hdd_dp_nud_tracking_cfg_update(struct hdd_config *config,
 }
 #endif
 
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+static void hdd_ini_tcp_del_ack_settings(struct hdd_config *config,
+					 struct wlan_objmgr_psoc *psoc)
+{
+	config->del_ack_threshold_high =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_HIGH_THRESHOLD);
+	config->del_ack_threshold_low =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_LOW_THRESHOLD);
+	config->del_ack_enable =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_ENABLE);
+	config->del_ack_pkt_count =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_PKT_CNT);
+	config->del_ack_timer_value =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_TIMER_VALUE);
+}
+#else
+static void hdd_ini_tcp_del_ack_settings(struct hdd_config *config,
+					 struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 		       struct hdd_context *hdd_ctx)
 {
@@ -3055,6 +3077,9 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	hdd_ini_tx_flow_control(config, psoc);
 	hdd_ini_bus_bandwidth(config, psoc);
 	hdd_ini_tcp_settings(config, psoc);
+
+	hdd_ini_tcp_del_ack_settings(config, psoc);
+
 	config->napi_cpu_affinity_mask =
 		cfg_get(psoc, CFG_DP_NAPI_CE_CPU_MASK);
 	config->rx_thread_affinity_mask =

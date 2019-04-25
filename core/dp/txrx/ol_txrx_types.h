@@ -42,6 +42,7 @@
 #include "cdp_txrx_flow_ctrl_v2.h"
 #include "cdp_txrx_peer_ops.h"
 #include <qdf_trace.h>
+#include "qdf_hrtimer.h"
 
 /*
  * The target may allocate multiple IDs for a peer.
@@ -1075,6 +1076,76 @@ struct ol_txrx_pdev_t {
 	bool enable_tx_compl_tsf64;
 };
 
+#define OL_TX_HL_DEL_ACK_HASH_SIZE    256
+
+/**
+ * enum ol_tx_hl_packet_type - type for tcp packet
+ * @TCP_PKT_ACK: TCP ACK frame
+ * @TCP_PKT_NO_ACK: TCP frame, but not the ack
+ * @NO_TCP_PKT: Not the TCP frame
+ */
+enum ol_tx_hl_packet_type {
+	TCP_PKT_ACK,
+	TCP_PKT_NO_ACK,
+	NO_TCP_PKT
+};
+
+/**
+ * struct packet_info - tcp packet information
+ */
+struct packet_info {
+	/** @type: flag the packet type */
+	enum ol_tx_hl_packet_type type;
+	/** @stream_id: stream identifier */
+	uint16_t stream_id;
+	/** @ack_number: tcp ack number */
+	uint32_t ack_number;
+	/** @dst_ip: destination ip address */
+	uint32_t dst_ip;
+	/** @src_ip: source ip address */
+	uint32_t src_ip;
+	/** @dst_port: destination port */
+	uint16_t dst_port;
+	/** @src_port: source port */
+	uint16_t src_port;
+};
+
+/**
+ * struct tcp_stream_node - tcp stream node
+ */
+struct tcp_stream_node {
+	/** @next: next tcp stream node */
+	struct tcp_stream_node *next;
+	/** @no_of_ack_replaced: count for ack replaced frames */
+	uint8_t no_of_ack_replaced;
+	/** @stream_id: stream identifier */
+	uint16_t stream_id;
+	/** @dst_ip: destination ip address */
+	uint32_t dst_ip;
+	/** @src_ip: source ip address */
+	uint32_t src_ip;
+	/** @dst_port: destination port */
+	uint16_t dst_port;
+	/** @src_port: source port */
+	uint16_t src_port;
+	/** @ack_number: tcp ack number */
+	uint32_t ack_number;
+	/** @head: point to the tcp ack frame */
+	qdf_nbuf_t head;
+};
+
+/**
+ * struct tcp_del_ack_hash_node - hash node for tcp delayed ack
+ */
+struct tcp_del_ack_hash_node {
+	/** @hash_node_lock: spin lock */
+	qdf_spinlock_t hash_node_lock;
+	/** @no_of_entries: number of entries */
+	uint8_t no_of_entries;
+	/** @head: the head of the steam node list */
+	struct tcp_stream_node *head;
+};
+
 struct ol_txrx_vdev_t {
 	struct ol_txrx_pdev_t *pdev; /* pdev - the physical device that is
 				      * the parent of this virtual device
@@ -1168,6 +1239,33 @@ struct ol_txrx_vdev_t {
 	ol_txrx_tx_flow_control_fp osif_flow_control_cb;
 	ol_txrx_tx_flow_control_is_pause_fp osif_flow_control_is_pause;
 	void *osif_fc_ctx;
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+	/** @driver_del_ack_enabled: true if tcp delayed ack enabled*/
+	bool driver_del_ack_enabled;
+	/** @no_of_tcpack_replaced: number of tcp ack replaced */
+	uint32_t no_of_tcpack_replaced;
+	/** @no_of_tcpack: number of tcp ack frames */
+	uint32_t no_of_tcpack;
+
+	/** @tcp_ack_hash: hash table for tcp delay ack running information */
+	struct {
+		/** @node: tcp ack frame will be stored in this hash table */
+		struct tcp_del_ack_hash_node node[OL_TX_HL_DEL_ACK_HASH_SIZE];
+		/** @timer: timeout if no more tcp ack feeding */
+		__qdf_hrtimer_data_t timer;
+		/** @is_timer_running: is timer running? */
+		qdf_atomic_t is_timer_running;
+		/** @tcp_node_in_use_count: number of nodes in use */
+		qdf_atomic_t tcp_node_in_use_count;
+		/** @tcp_del_ack_tq: bh to handle the tcp delayed ack */
+		qdf_bh_t tcp_del_ack_tq;
+		/** @tcp_free_list: free list */
+		struct tcp_stream_node *tcp_free_list;
+		/** @tcp_free_list_lock: spin lock */
+		qdf_spinlock_t tcp_free_list_lock;
+	} tcp_ack_hash;
+#endif
 
 #if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
 	union ol_txrx_align_mac_addr_t hl_tdls_ap_mac_addr;

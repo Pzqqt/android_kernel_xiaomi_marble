@@ -329,6 +329,25 @@ cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+static inline void
+cds_cdp_update_del_ack_params(struct wlan_objmgr_psoc *psoc,
+			      struct txrx_pdev_cfg_param_t *cdp_cfg)
+{
+	cdp_cfg->del_ack_enable =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_ENABLE);
+	cdp_cfg->del_ack_pkt_count =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_PKT_CNT);
+	cdp_cfg->del_ack_timer_value =
+		cfg_get(psoc, CFG_DP_DRIVER_TCP_DELACK_TIMER_VALUE);
+}
+#else
+static inline void
+cds_cdp_update_del_ack_params(struct wlan_objmgr_psoc *psoc,
+			      struct txrx_pdev_cfg_param_t *cdp_cfg)
+{}
+#endif
+
 /**
  * cds_cdp_cfg_attach() - attach data path config module
  * @cds_cfg: generic platform level config instance
@@ -365,6 +384,8 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	cdp_cfg.disable_intra_bss_fwd =
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
+
+	cds_cdp_update_del_ack_params(psoc, &cdp_cfg);
 
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));

@@ -173,6 +173,14 @@ struct hdd_config {
 	bool     enable_tcp_param_update;
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+	bool del_ack_enable;
+	uint32_t del_ack_threshold_high;
+	uint32_t del_ack_threshold_low;
+	uint16_t del_ack_timer_value;
+	uint16_t del_ack_pkt_count;
+#endif
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t tx_flow_low_watermark;
 	uint32_t tx_flow_hi_watermark_offset;

@@ -25,6 +25,7 @@
 #include <cdp_txrx_handle.h>
 #include <ol_txrx_types.h>
 #include <ol_txrx_internal.h>
+#include <qdf_hrtimer.h>
 
 /*
  * Pool of tx descriptors reserved for
@@ -438,4 +439,170 @@ bool ol_txrx_get_tx_compl_tsf64(void);
  * return NONE
  */
 void ol_txrx_set_tx_compl_tsf64(bool val);
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+
+/**
+ * ol_txrx_vdev_init_tcp_del_ack() - initialize tcp delayed ack structure
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_init_tcp_del_ack(struct ol_txrx_vdev_t *vdev);
+
+/**
+ * ol_txrx_vdev_deinit_tcp_del_ack() - deinitialize tcp delayed ack structure
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_deinit_tcp_del_ack(struct ol_txrx_vdev_t *vdev);
+
+/**
+ * ol_txrx_vdev_free_tcp_node() - add tcp node in free list
+ * @vdev: vdev handle
+ * @node: tcp stream node
+ *
+ * Return: none
+ */
+void ol_txrx_vdev_free_tcp_node(struct ol_txrx_vdev_t *vdev,
+				struct tcp_stream_node *node);
+
+/**
+ * ol_txrx_vdev_alloc_tcp_node() - allocate tcp node
+ * @vdev: vdev handle
+ *
+ * Return: tcp stream node
+ */
+struct tcp_stream_node *
+ol_txrx_vdev_alloc_tcp_node(struct ol_txrx_vdev_t *vdev);
+
+/**
+ * ol_tx_pdev_reset_driver_del_ack() - reset driver delayed ack enabled flag
+ * @ppdev: the data physical device
+ *
+ * Return: none
+ */
+void
+ol_tx_pdev_reset_driver_del_ack(struct cdp_pdev *ppdev);
+
+/**
+ * ol_tx_vdev_set_driver_del_ack_enable() - set driver delayed ack enabled flag
+ * @vdev_id: vdev id
+ * @rx_packets: number of rx packets
+ * @time_in_ms: time in ms
+ * @high_th: high threshold
+ * @low_th: low threshold
+ *
+ * Return: none
+ */
+void
+ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+				     unsigned long rx_packets,
+				     uint32_t time_in_ms,
+				     uint32_t high_th,
+				     uint32_t low_th);
+
+/**
+ * ol_tx_hl_send_all_tcp_ack() - send all queued tcp ack packets
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_tx_hl_send_all_tcp_ack(struct ol_txrx_vdev_t *vdev);
+
+/**
+ * tcp_del_ack_tasklet() - tasklet function to send ack packets
+ * @data: vdev handle
+ *
+ * Return: none
+ */
+void tcp_del_ack_tasklet(void *data);
+
+/**
+ * ol_tx_get_stream_id() - get stream_id from packet info
+ * @info: packet info
+ *
+ * Return: stream_id
+ */
+uint16_t ol_tx_get_stream_id(struct packet_info *info);
+
+/**
+ * ol_tx_get_packet_info() - update packet info for passed msdu
+ * @msdu: packet
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_get_packet_info(qdf_nbuf_t msdu, struct packet_info *info);
+
+/**
+ * ol_tx_hl_find_and_send_tcp_stream() - find and send tcp stream for passed
+ *                                       stream info
+ * @vdev: vdev handle
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_hl_find_and_send_tcp_stream(struct ol_txrx_vdev_t *vdev,
+				       struct packet_info *info);
+
+/**
+ * ol_tx_hl_find_and_replace_tcp_ack() - find and replace tcp ack packet for
+ *                                       passed packet info
+ * @vdev: vdev handle
+ * @msdu: packet
+ * @info: packet info
+ *
+ * Return: none
+ */
+void ol_tx_hl_find_and_replace_tcp_ack(struct ol_txrx_vdev_t *vdev,
+				       qdf_nbuf_t msdu,
+				       struct packet_info *info);
+
+/**
+ * ol_tx_hl_vdev_tcp_del_ack_timer() - delayed ack timer function
+ * @timer: timer handle
+ *
+ * Return: enum
+ */
+enum qdf_hrtimer_restart_status
+ol_tx_hl_vdev_tcp_del_ack_timer(qdf_hrtimer_data_t *timer);
+
+/**
+ * ol_tx_hl_del_ack_queue_flush_all() - drop all queued packets
+ * @vdev: vdev handle
+ *
+ * Return: none
+ */
+void ol_tx_hl_del_ack_queue_flush_all(struct ol_txrx_vdev_t *vdev);
+
+#else
+
+static inline
+void ol_txrx_vdev_init_tcp_del_ack(struct ol_txrx_vdev_t *vdev)
+{
+}
+
+static inline
+void ol_txrx_vdev_deinit_tcp_del_ack(struct ol_txrx_vdev_t *vdev)
+{
+}
+
+static inline
+void ol_tx_pdev_reset_driver_del_ack(void)
+{
+}
+
+static inline
+void ol_tx_vdev_set_driver_del_ack_enable(uint8_t vdev_id,
+					  unsigned long rx_packets,
+					  uint32_t time_in_ms,
+					  uint32_t high_th,
+					  uint32_t low_th)
+{
+}
+
+#endif
+
 #endif /* _OL_TXRX__H_ */

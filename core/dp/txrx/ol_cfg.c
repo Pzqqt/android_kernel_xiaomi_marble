@@ -119,6 +119,23 @@ uint8_t ol_defrag_timeout_check(void)
 }
 #endif
 
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+/**
+ * ol_cfg_update_del_ack_params() - update delayed ack params
+ * @cfg_ctx: cfg context
+ * @cfg_param: parameters
+ *
+ * Return: none
+ */
+void ol_cfg_update_del_ack_params(struct txrx_pdev_cfg_t *cfg_ctx,
+				  struct txrx_pdev_cfg_param_t *cfg_param)
+{
+	cfg_ctx->del_ack_enable = cfg_param->del_ack_enable;
+	cfg_ctx->del_ack_timer_value = cfg_param->del_ack_timer_value;
+	cfg_ctx->del_ack_pkt_count = cfg_param->del_ack_pkt_count;
+}
+#endif
+
 /* FIX THIS -
  * For now, all these configuration parameters are hardcoded.
  * Many of these should actually be determined dynamically instead.
@@ -176,6 +193,8 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 	cfg_ctx->enable_flow_steering = cfg_param->enable_flow_steering;
 	cfg_ctx->disable_intra_bss_fwd = cfg_param->disable_intra_bss_fwd;
 
+	ol_cfg_update_del_ack_params(cfg_ctx, cfg_param);
+
 	ol_tx_set_flow_control_parameters((struct cdp_cfg *)cfg_ctx, cfg_param);
 
 	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
@@ -193,6 +212,47 @@ struct cdp_cfg *ol_pdev_cfg_attach(qdf_device_t osdev, void *pcfg_param)
 
 	return (struct cdp_cfg *)cfg_ctx;
 }
+
+#ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
+/**
+ * ol_cfg_get_del_ack_timer_value() - get delayed ack timer value
+ * @cfg_pdev: pdev handle
+ *
+ * Return: timer value
+ */
+int ol_cfg_get_del_ack_timer_value(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->del_ack_timer_value;
+}
+
+/**
+ * ol_cfg_get_del_ack_enable_value() - get delayed ack enable value
+ * @cfg_pdev: pdev handle
+ *
+ * Return: enable/disable
+ */
+bool ol_cfg_get_del_ack_enable_value(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->del_ack_enable;
+}
+
+/**
+ * ol_cfg_get_del_ack_count_value() - get delayed ack count value
+ * @pdev: cfg_pdev handle
+ *
+ * Return: count value
+ */
+int ol_cfg_get_del_ack_count_value(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->del_ack_pkt_count;
+}
+#endif
 
 int ol_cfg_is_high_latency(struct cdp_cfg *cfg_pdev)
 {
