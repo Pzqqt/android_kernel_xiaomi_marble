@@ -219,6 +219,164 @@ error:
 		protStatusCode, pe_session, smesessionId);
 }
 
+#ifdef CONFIG_VDEV_SM
+/**
+ * lim_process_mlm_reassoc_cnf() - process mlm reassoc cnf msg
+ *
+ * @mac_ctx:       Pointer to Global MAC structure
+ * @msg_buf:       A pointer to the MLM message buffer
+ *
+ * This function is called to process MLM_REASSOC_CNF message from MLM State
+ * machine.
+ *
+ * @Return: void
+ */
+void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
+{
+	struct pe_session *session;
+	tLimMlmReassocCnf *lim_mlm_reassoc_cnf;
+	struct reassoc_params param;
+	QDF_STATUS status;
+
+	if (!msg_buf) {
+		pe_err("Buffer is Pointing to NULL");
+		return;
+	}
+	lim_mlm_reassoc_cnf = (tLimMlmReassocCnf *)msg_buf;
+	session = pe_find_session_by_session_id(
+					mac_ctx,
+					lim_mlm_reassoc_cnf->sessionId);
+	if (!session) {
+		pe_err("session Does not exist for given session Id");
+		return;
+	}
+	if (session->limSmeState != eLIM_SME_WT_REASSOC_STATE ||
+	    LIM_IS_AP_ROLE(session)) {
+		/*
+		 * Should not have received Reassocication confirm
+		 * from MLM in other states OR on AP.
+		 */
+		pe_err("Rcv unexpected MLM_REASSOC_CNF role: %d sme 0x%X",
+		       GET_LIM_SYSTEM_ROLE(session), session->limSmeState);
+		return;
+	}
+
+	/*
+	 * Upon Reassoc success or failure, freeup the cached preauth request,
+	 * to ensure that channel switch is now allowed following any change in
+	 * HT params.
+	 */
+	if (session->ftPEContext.pFTPreAuthReq) {
+		pe_debug("Freeing pFTPreAuthReq: %pK",
+			 session->ftPEContext.pFTPreAuthReq);
+		if (session->ftPEContext.pFTPreAuthReq->pbssDescription) {
+			qdf_mem_free(
+			  session->ftPEContext.pFTPreAuthReq->pbssDescription);
+			session->ftPEContext.pFTPreAuthReq->pbssDescription =
+									NULL;
+		}
+		qdf_mem_free(session->ftPEContext.pFTPreAuthReq);
+		session->ftPEContext.pFTPreAuthReq = NULL;
+		session->ftPEContext.ftPreAuthSession = false;
+	}
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	if (session->bRoamSynchInProgress) {
+		pe_debug("LFR3:Re-set the LIM Ctxt Roam Synch In Progress");
+		session->bRoamSynchInProgress = false;
+	}
+#endif
+
+	pe_debug("Rcv MLM_REASSOC_CNF with result code: %d",
+		 lim_mlm_reassoc_cnf->resultCode);
+	if (lim_mlm_reassoc_cnf->resultCode == eSIR_SME_SUCCESS) {
+		/* Successful Reassociation */
+		pe_debug("*** Reassociated with new BSS ***");
+
+		session->limSmeState = eLIM_SME_LINK_EST_STATE;
+		MTRACE(mac_trace(
+			mac_ctx, TRACE_CODE_SME_STATE,
+			session->peSessionId, session->limSmeState));
+
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_START_SUCCESS,
+					      0, NULL);
+
+		/* Need to send Reassoc rsp with Reassoc success to Host. */
+		lim_send_sme_join_reassoc_rsp(
+					mac_ctx, eWNI_SME_REASSOC_RSP,
+					lim_mlm_reassoc_cnf->resultCode,
+					lim_mlm_reassoc_cnf->protStatusCode,
+					session, session->smeSessionId);
+	} else {
+		param.result_code = lim_mlm_reassoc_cnf->resultCode;
+		param.prot_status_code = lim_mlm_reassoc_cnf->protStatusCode;
+		param.session = session;
+
+		mlme_set_connection_fail(session->vdev, true);
+		status = wlan_vdev_mlme_sm_deliver_evt(
+					session->vdev,
+					WLAN_VDEV_SM_EV_CONNECTION_FAIL,
+					sizeof(param), &param);
+	}
+
+	if (session->pLimReAssocReq) {
+		qdf_mem_free(session->pLimReAssocReq);
+		session->pLimReAssocReq = NULL;
+	}
+}
+
+QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param)
+{
+	struct pe_session *session;
+	struct mac_context *mac_ctx;
+
+	if (!param) {
+		pe_err("param is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	session = param->session;
+	if (param->result_code
+			== eSIR_SME_REASSOC_REFUSED) {
+		/*
+		 * Reassociation failure With the New AP but we still have the
+		 * link with the Older AP
+		 */
+		session->limSmeState = eLIM_SME_LINK_EST_STATE;
+		MTRACE(mac_trace(
+			mac_ctx, TRACE_CODE_SME_STATE,
+			session->peSessionId, session->limSmeState));
+
+		/* Need to send Reassoc rsp with Assoc failure to Host. */
+		lim_send_sme_join_reassoc_rsp(
+					mac_ctx, eWNI_SME_REASSOC_RSP,
+					param->result_code,
+					param->prot_status_code,
+					session, session->smeSessionId);
+	} else {
+		/* Reassociation failure */
+		session->limSmeState = eLIM_SME_JOIN_FAILURE_STATE;
+		MTRACE(mac_trace(
+			mac_ctx, TRACE_CODE_SME_STATE,
+			session->peSessionId, session->limSmeState));
+		/* Need to send Reassoc rsp with Assoc failure to Host. */
+		lim_handle_sme_reaasoc_result(
+					mac_ctx,
+					param->result_code,
+					param->prot_status_code,
+					session);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
 /**
  * lim_process_mlm_reassoc_cnf() - process mlm reassoc cnf msg
  *
@@ -330,6 +488,7 @@ void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 		session->pLimReAssocReq = NULL;
 	}
 }
+#endif
 
 /**
  * lim_process_sta_mlm_add_bss_rsp_ft() - Handle the ADD BSS response

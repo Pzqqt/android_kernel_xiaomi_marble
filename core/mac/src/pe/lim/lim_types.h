@@ -732,6 +732,7 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac,
 void lim_process_switch_channel_rsp(struct mac_context *mac, void *);
 
 QDF_STATUS lim_sta_send_down_link(join_params *param);
+QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param);
 
 #ifdef WLAN_FEATURE_11W
 /* 11w send SA query request action frame */

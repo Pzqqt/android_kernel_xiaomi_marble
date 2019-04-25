@@ -76,6 +76,12 @@ typedef struct join_params {
 	tSirResultCodes result_code;
 } join_params;
 
+struct reassoc_params {
+	uint16_t prot_status_code;
+	tSirResultCodes result_code;
+	struct pe_session *session;
+};
+
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 #define MAX_BSS_COLOR_VALUE 63
 #define TIME_BEACON_NOT_UPDATED 30000

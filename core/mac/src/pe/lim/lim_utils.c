@@ -7923,8 +7923,9 @@ QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
-	QDF_STATUS status;
-	bool connection_fail;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool connection_fail = false;
+	enum vdev_assoc_type assoc_type;
 
 	if (!vdev_mlme) {
 		pe_err("vdev_mlme is NULL");
@@ -7938,7 +7939,21 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 	connection_fail = mlme_is_connection_fail(vdev_mlme->vdev);
 	pe_info("Send vdev stop, connection_fail %d", connection_fail);
 	if (connection_fail) {
-		status = lim_sta_send_down_link((join_params *)data);
+		assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
+		switch (assoc_type) {
+		case VDEV_ASSOC:
+			status = lim_sta_send_down_link((join_params *)data);
+			break;
+		case VDEV_REASSOC:
+		case VDEV_FT_REASSOC:
+			status = lim_sta_reassoc_error_handler(
+					(struct reassoc_params *)data);
+			break;
+		default:
+			pe_info("Invalid assoc_type %d", assoc_type);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
 		mlme_set_connection_fail(vdev_mlme->vdev, false);
 	} else {
 		status = lim_sta_send_del_bss((struct pe_session *)data);
