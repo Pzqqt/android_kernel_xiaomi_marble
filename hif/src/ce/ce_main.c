@@ -1238,6 +1238,7 @@ QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 	if (!hist_ev)
 		return QDF_STATUS_E_NOMEM;
 
+	scn->hif_ce_desc_hist.data_enable[ce_id] = true;
 	for (index = 0; index < HIF_CE_HISTORY_MAX; index++) {
 		event = &hist_ev[index];
 		event->data =
@@ -1278,23 +1279,30 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
-#if defined(HIF_CONFIG_SLUB_DEBUG_ON) /* MCL */
+#if defined(CONFIG_MCL)
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
 
 /**
  * alloc_mem_ce_debug_history() - Allocate CE descriptor history
  * @scn: hif scn handle
  * @ce_id: Copy Engine Id
- *
+ * @src_nentries: source ce ring entries
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id,
+			   uint32_t src_nentries)
 {
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
 
 	ce_hist->hist_ev[ce_id] = hif_ce_desc_history[ce_id];
 	ce_hist->enable[ce_id] = 1;
+
+	if (src_nentries)
+		alloc_mem_ce_debug_hist_data(scn, ce_id);
+	else
+		ce_hist->data_enable[ce_id] = false;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1312,12 +1320,28 @@ static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
 
 	ce_hist->enable[ce_id] = 0;
 	ce_hist->hist_ev[ce_id] = NULL;
+	if (ce_hist->data_enable[ce_id]) {
+		ce_hist->data_enable[ce_id] = false;
+		free_mem_ce_debug_hist_data(scn, ce_id);
+	}
+}
+#else
+static inline QDF_STATUS
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id,
+			   uint32_t src_nentries)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
-#elif defined(HIF_CE_DEBUG_DATA_BUF) /* WIN */
+static inline void
+free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
+#endif /* (HIF_CONFIG_SLUB_DEBUG_ON) || (HIF_CE_DEBUG_DATA_BUF) */
+#elif defined(CONFIG_WIN)
+#if defined(HIF_CE_DEBUG_DATA_BUF)
 
 static QDF_STATUS
-alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id,
+			   uint32_t src_nentries)
 {
 	scn->hif_ce_desc_hist.hist_ev[CE_id] = (struct hif_ce_desc_event *)
 	qdf_mem_malloc(HIF_CE_HISTORY_MAX * sizeof(struct hif_ce_desc_event));
@@ -1339,8 +1363,8 @@ static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
 	if (!hist_ev)
 		return;
 
-	if (ce_hist->data_enable[CE_id] == 1) {
-		ce_hist->data_enable[CE_id] = 0;
+	if (ce_hist->data_enable[CE_id]) {
+		ce_hist->data_enable[CE_id] = false;
 		free_mem_ce_debug_hist_data(scn, CE_id);
 	}
 
@@ -1349,17 +1373,19 @@ static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
 	ce_hist->hist_ev[CE_id] = NULL;
 }
 
-#else /* Disabled */
+#else
 
 static inline QDF_STATUS
-alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id,
+			   uint32_t src_nentries)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline void
 free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
-#endif
+#endif /* HIF_CE_DEBUG_DATA_BUF */
+#endif /* CONFIG_MCL */
 
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /**
@@ -1606,7 +1632,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	ce_mark_datapath(CE_state);
 	scn->ce_id_to_state[CE_id] = CE_state;
 
-	alloc_mem_ce_debug_history(scn, CE_id);
+	alloc_mem_ce_debug_history(scn, CE_id, attr->src_nentries);
 
 	return (struct CE_handle *)CE_state;
 

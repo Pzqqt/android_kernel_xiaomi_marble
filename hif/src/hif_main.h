@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,7 +129,7 @@ struct hif_ce_stats {
 struct ce_desc_hist {
 	qdf_atomic_t history_index[CE_COUNT_MAX];
 	uint32_t enable[CE_COUNT_MAX];
-	uint32_t data_enable[CE_COUNT_MAX];
+	bool data_enable[CE_COUNT_MAX];
 	qdf_mutex_t ce_dbg_datamem_lock[CE_COUNT_MAX];
 	uint32_t hist_index;
 	uint32_t hist_id;

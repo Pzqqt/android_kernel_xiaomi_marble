@@ -123,12 +123,15 @@ static int get_next_record_index(qdf_atomic_t *table_index, int array_size)
  * @len: length of the data
  * Return:
  */
-static void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
+static inline
+void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 {
 	uint8_t *data = NULL;
 
-	if (!event->data)
+	if (!event->data) {
+		hif_err("No memory allocated");
 		return;
+	}
 
 	if (event->memory && len > 0)
 		data = qdf_nbuf_data((qdf_nbuf_t)event->memory);
@@ -143,7 +146,12 @@ static void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 		event->actual_data_len = len;
 	}
 }
-#endif
+#else
+static inline
+void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
+{
+}
+#endif /* HIF_CE_DEBUG_DATA_BUF */
 
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
@@ -197,10 +205,8 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	event->memory = memory;
 	event->index = index;
 
-#ifdef HIF_CE_DEBUG_DATA_BUF
 	if (ce_hist->data_enable[ce_id])
 		hif_ce_desc_data_record(event, len);
-#endif
 }
 qdf_export_symbol(hif_record_ce_desc_event);
 
@@ -1575,7 +1581,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 			ce_event_type_to_str(event->type),
 			event->index, event->memory);
 #ifdef HIF_CE_DEBUG_DATA_BUF
-	len += snprintf(buf + len, PAGE_SIZE - len, ", Data len=%d",
+	len += snprintf(buf + len, PAGE_SIZE - len, ", Data len=%lu",
 			event->actual_data_len);
 #endif
 
@@ -1692,18 +1698,18 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn, const char *buf, size_t size)
 	qdf_mutex_acquire(&ce_hist->ce_dbg_datamem_lock[ce_id]);
 	if (cfg == 1) {
 		if (ce_hist->data_enable[ce_id] == 1) {
-			qdf_print("\nAlready Enabled");
+			qdf_debug("Already Enabled");
 		} else {
 			if (alloc_mem_ce_debug_hist_data(scn, ce_id)
 							== QDF_STATUS_E_NOMEM){
 				ce_hist->data_enable[ce_id] = 0;
-				qdf_print("%s:Memory Alloc failed");
+				qdf_err("%s:Memory Alloc failed", __func__);
 			} else
 				ce_hist->data_enable[ce_id] = 1;
 		}
 	} else if (cfg == 0) {
 		if (ce_hist->data_enable[ce_id] == 0) {
-			qdf_print("\nAlready Disabled");
+			qdf_debug("Already Disabled");
 		} else {
 			ce_hist->data_enable[ce_id] = 0;
 				free_mem_ce_debug_hist_data(scn, ce_id);

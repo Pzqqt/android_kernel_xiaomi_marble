@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -542,15 +542,24 @@ struct hif_ce_desc_event {
 	void *memory;
 #ifdef HIF_CE_DEBUG_DATA_BUF
 	uint8_t *data;
-	ssize_t actual_data_len;
-#endif
+	size_t actual_data_len;
+#endif /* HIF_CE_DEBUG_DATA_BUF */
 };
+#endif /*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
 
 #ifdef HIF_CE_DEBUG_DATA_BUF
 QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
+#else
+static inline
+QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id) { }
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
-#endif/*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 /**
