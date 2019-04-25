@@ -444,6 +444,8 @@ static int msm_smmu_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "iommu get domain for dev failed\n");
 		return -EINVAL;
 	}
+	client->secure = domain->secure;
+	client->domain_attached = true;
 
 	if (!client->dev->dma_parms)
 		client->dev->dma_parms = devm_kzalloc(client->dev,
