@@ -1230,6 +1230,11 @@ typedef enum {
      */
     WMI_SERVICE_AVAILABLE_EVENTID,
 
+    /** Specify what numbers and kinds of interfaces (a.k.a. vdevs)
+     * the target supports
+     */
+    WMI_IFACE_COMBINATION_IND_EVENTID,
+
     /** Scan specific events */
     WMI_SCAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SCAN),
 
@@ -26433,6 +26438,159 @@ typedef struct {
     A_UINT32 type; /** type of the rogue ap, see WMI_ROGUE_AP_TYPE */
     wmi_mac_addr bssid; /** bssid of the rogue ap */
 } wmi_pdev_rap_info_event_fixed_param;
+
+/*
+ * WMI API for Firmware to indicate iface combinations which Firmware
+ * support to Host
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* tag = WMITLV_TAG_STRUC_wmi_wlanfw_iface_cmb_ind_event_fixed_param */
+
+    /* common part */
+    /* Consider DBS/DBDC for this new implementation */
+    A_UINT32 pdev_n;
+
+    /* iface combinations part -
+     * Use subsequent TLV arrays to list supported combinations of interfaces.
+     */
+
+/*
+ * The TLVs listing interface combinations, will follow this TLV.
+ * The number of combinations can be calculated by dividing the
+ * TLV array length by the TLV array element length.
+ *
+ * The fixed_param TLV is directly followed by a list of
+ * wlanfw_iface_combination elements:
+ *     wlanfw_iface_combination combinations[0];
+ *     wlanfw_iface_combination combinations[1];
+ *     ...
+ *     wlanfw_iface_combination combinations[N];
+ *
+ * After the list of wlanfw_iface_combinations is a list of interface limits.
+ * The cmb_limits field of each wlanfw_iface_combination show which of the
+ * limits within the "wlanfw_ifact_limit limits" list belong to that
+ * iface_combination:
+ *     limits[0]                                     <- cmb 0, limit 0
+ *     ...
+ *     limits[cmb[0].cmb_limits-1]                   <- cmb 0, limit N
+ *     limits[cmb[0].cmb_limits]                     <- cmb 1, limit 0
+ *     ...
+ *     limits[cmb[0].cmb_limits+cmb[1].cmb_limits-1] <- cmb 1, limit N
+ *     limits[cmb[0].cmb_limits+cmb[1].cmb_limits]   <- cmb 2, limit 0
+ *     ...
+ */
+} wmi_wlanfw_iface_cmb_ind_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* tag = WMITLV_TAG_STRUC_wmi_wlanfw_iface_limit_param */
+    /*
+     * How many vdevs can work as below vdev_type/vdev_subtype
+     * in one combination.
+     */
+    A_UINT32 vdev_limit_n;
+    /*
+     * Indicate what role above vdevs can work as.
+     * Refer to "WMI_VDEV_TYPE_xx, WMI_UNIFIED_VDEV_SUBTYPE_xx"
+     * for roles definition.
+     */
+    A_UINT32 vdev_type;
+    A_UINT32 vdev_subtype;
+} wlanfw_iface_limit;
+
+/**
+ * @brief specific configuration of valid_fields for host.
+ * These flags are used for indicating which fields in wlanfw_iface_combination
+ * contains valid value for Host Driver.
+ * 0: Host can ignore this field
+ * 1: field contains valid value for Host Driver
+ */
+
+#define WMI_CMB_VALID_FIELDS_FLAG_PEER_MAX_S 0
+#define WMI_CMB_VALID_FIELDS_FLAG_PEER_MAX_M 0x1
+
+#define WMI_CMB_VALID_FIELDS_FLAG_STA_AP_BCN_INT_MATCH_S 1
+#define WMI_CMB_VALID_FIELDS_FLAG_STA_AP_BCN_INT_MATCH_M 0x2
+
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_MIN_S 2
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_MIN_M 0x4
+
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_N_S 3
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_N_M 0x8
+
+#define WMI_CMB_VALID_FIELDS_FLAG_SET(word32, flag, value) \
+    do { \
+        (word32) &= ~WMI_CMB_VALID_FIELDS_FLAG_ ## flag ## _M; \
+        (word32) |= ((value) << WMI_CMB_VALID_FIELDS_FLAG_ ## flag ## _S) & \
+            WMI_CMB_VALID_FIELDS_FLAG_ ## flag ## _M; \
+    } while (0)
+
+#define WMI_CMB_VALID_FIELDS_FLAG_GET(word32, flag) \
+    (((word32) & WMI_CMB_VALID_FIELDS_FLAG_ ## flag ## _M) >> \
+    WMI_CMB_VALID_FIELDS_FLAG_ ## flag ## _S)
+
+#define WMI_CMB_VALID_FIELDS_FLAG_PEER_MAX_SET(word32, value) \
+    WMI_CMB_VALID_FIELDS_FLAG_SET((word32), PEER_MAX, (value))
+#define WMI_CMB_VALID_FIELDS_FLAG_PEER_MAX_GET(word32) \
+    WMI_CMB_VALID_FIELDS_FLAG_GET((word32), PEER_MAX)
+
+#define WMI_CMB_VALID_FIELDS_FLAG_STA_AP_BCN_INT_MATCH_SET(word32, value) \
+    WMI_CMB_VALID_FIELDS_FLAG_SET((word32), STA_AP_BCN_INT_MATCH, (value))
+#define WMI_CMB_VALID_FIELDS_FLAG_STA_AP_BCN_INT_MATCH_GET(word32) \
+    WMI_CMB_VALID_FIELDS_FLAG_GET((word32), STA_AP_BCN_INT_MATCH)
+
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_MIN_SET(word32, value) \
+    WMI_CMB_VALID_FIELDS_FLAG_SET((word32), BCN_INT_MIN, (value))
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_MIN_GET(word32) \
+    WMI_CMB_VALID_FIELDS_FLAG_GET((word32), BCN_INT_MIN)
+
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_N_SET(word32, value) \
+    WMI_CMB_VALID_FIELDS_FLAG_SET((word32), BCN_INT_N, (value))
+#define WMI_CMB_VALID_FIELDS_FLAG_BCN_INT_N_GET(word32) \
+    WMI_CMB_VALID_FIELDS_FLAG_GET((word32), BCN_INT_N)
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /*
+     * Max num Peers can be supported in this combination.
+     * It excludes the self-peers associated with each vdev.
+     * It's the number of real remote peers.
+     * eg: when working as AP mode, indicating how many clients can be
+     * supported to connect with this AP.
+     */
+    A_UINT32 peer_max;
+    /* Home Channels supported on one single phy concurrently */
+    A_UINT32 channel_n;
+    /*
+     * The number of "wlanfw_iface_limit" for a specified combination.
+     * eg: there is 2 vdev, including 1 AP vdev and 1 STA vdev, then this
+     * cmb_limits will be 2 for this combination.
+     */
+    A_UINT32 cmb_limits;
+    /*
+     * Beacon intervals for STA and AP types need to be match or not.
+     * 1: need to be match
+     * 0: not need
+     */
+    A_UINT32 sta_ap_bcn_int_match;
+    /*
+     * This combination supports different beacon intervals or not.
+     * 0: Beacon interval is same for all interface
+     * !0: STA Beacon interval AND GCD of AP Beacon intervals
+     *     should be greater or equal to this value.
+     */
+    A_UINT32 bcn_int_min;
+    /*
+     * Number of different Beacon intervals
+     */
+    A_UINT32 bcn_int_n;
+
+    /*
+     * This indicates which field in this struct
+     * contains valid value for Host Driver.
+     * Refer to definitions for "WMI_CMB_VALID_FIELDS_FLAG_xx".
+     */
+    A_UINT32 valid_fields;
+} wlanfw_iface_combination;
 
 
 
