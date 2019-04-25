@@ -6294,6 +6294,7 @@ void sde_crtc_update_cont_splash_settings(struct drm_crtc *crtc)
 	struct sde_kms *kms = NULL;
 	struct msm_drm_private *priv;
 	struct sde_crtc *sde_crtc;
+	u64 rate;
 
 	if (!crtc || !crtc->state || !crtc->dev || !crtc->dev->dev_private) {
 		SDE_ERROR("invalid crtc\n");
@@ -6312,5 +6313,8 @@ void sde_crtc_update_cont_splash_settings(struct drm_crtc *crtc)
 
 	/* update core clk value for initial state with cont-splash */
 	sde_crtc = to_sde_crtc(crtc);
+	rate = sde_power_clk_get_rate(&priv->phandle, kms->perf.clk_name);
+	sde_crtc->cur_perf.core_clk_rate = (rate > 0) ?
+					rate : kms->perf.max_core_clk_rate;
 	sde_crtc->cur_perf.core_clk_rate = kms->perf.max_core_clk_rate;
 }
