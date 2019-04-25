@@ -440,6 +440,12 @@ static struct dev_config aux_pcm_tx_cfg[] = {
 	[SEN_AUX_PCM]  = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 };
 
+static struct dev_config afe_lb_tx_cfg = {
+	.sample_rate = SAMPLING_RATE_48KHZ,
+	.bit_format = SNDRV_PCM_FORMAT_S16_LE,
+	.channels = 2,
+};
+
 static int msm_vi_feed_tx_ch = 2;
 static const char *const slim_rx_ch_text[] = {"One", "Two"};
 static const char *const slim_tx_ch_text[] = {"One", "Two", "Three", "Four",
@@ -602,6 +608,10 @@ static SOC_ENUM_SINGLE_EXT_DECL(spdif_rx_chs, spdif_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(spdif_tx_chs, spdif_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(spdif_rx_format, spdif_bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(spdif_tx_format, spdif_bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(afe_lb_tx_chs, cdc_dma_tx_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(afe_lb_tx_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(afe_lb_tx_sample_rate,
+				cdc_dma_sample_rate_text);
 
 static struct platform_device *spdev;
 
@@ -3444,6 +3454,184 @@ static int msm_spdif_tx_format_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int afe_lb_tx_ch_get(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: afe_lb_tx_ch  = %d\n", __func__,
+		 afe_lb_tx_cfg.channels);
+	ucontrol->value.integer.value[0] = afe_lb_tx_cfg.channels - 1;
+	return 0;
+}
+
+static int afe_lb_tx_ch_put(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_value *ucontrol)
+{
+	afe_lb_tx_cfg.channels = ucontrol->value.integer.value[0] + 1;
+
+	pr_debug("%s: afe_lb_tx_ch = %d\n", __func__, afe_lb_tx_cfg.channels);
+	return 0;
+}
+
+static int afe_lb_tx_sample_rate_get(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	int sample_rate_val;
+
+	switch (afe_lb_tx_cfg.sample_rate) {
+	case SAMPLING_RATE_384KHZ:
+		sample_rate_val = 12;
+		break;
+	case SAMPLING_RATE_352P8KHZ:
+		sample_rate_val = 11;
+		break;
+	case SAMPLING_RATE_192KHZ:
+		sample_rate_val = 10;
+		break;
+	case SAMPLING_RATE_176P4KHZ:
+		sample_rate_val = 9;
+		break;
+	case SAMPLING_RATE_96KHZ:
+		sample_rate_val = 8;
+		break;
+	case SAMPLING_RATE_88P2KHZ:
+		sample_rate_val = 7;
+		break;
+	case SAMPLING_RATE_48KHZ:
+		sample_rate_val = 6;
+		break;
+	case SAMPLING_RATE_44P1KHZ:
+		sample_rate_val = 5;
+		break;
+	case SAMPLING_RATE_32KHZ:
+		sample_rate_val = 4;
+		break;
+	case SAMPLING_RATE_22P05KHZ:
+		sample_rate_val = 3;
+		break;
+	case SAMPLING_RATE_16KHZ:
+		sample_rate_val = 2;
+		break;
+	case SAMPLING_RATE_11P025KHZ:
+		sample_rate_val = 1;
+		break;
+	case SAMPLING_RATE_8KHZ:
+		sample_rate_val = 0;
+		break;
+	default:
+		sample_rate_val = 6;
+		break;
+	}
+
+	ucontrol->value.integer.value[0] = sample_rate_val;
+	pr_debug("%s: afe_lb_tx_sample_rate = %d\n", __func__,
+		 afe_lb_tx_cfg.sample_rate);
+	return 0;
+}
+
+static int afe_lb_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	switch (ucontrol->value.integer.value[0]) {
+	case 12:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_384KHZ;
+		break;
+	case 11:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_352P8KHZ;
+		break;
+	case 10:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_192KHZ;
+		break;
+	case 9:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_176P4KHZ;
+		break;
+	case 8:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_96KHZ;
+		break;
+	case 7:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_88P2KHZ;
+		break;
+	case 6:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	case 5:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_44P1KHZ;
+		break;
+	case 4:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_32KHZ;
+		break;
+	case 3:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_22P05KHZ;
+		break;
+	case 2:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_16KHZ;
+		break;
+	case 1:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_11P025KHZ;
+		break;
+	case 0:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_8KHZ;
+		break;
+	default:
+		afe_lb_tx_cfg.sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	}
+
+	pr_debug("%s: control value = %ld, afe_lb_tx_sample_rate = %d\n",
+		__func__, ucontrol->value.integer.value[0],
+		afe_lb_tx_cfg.sample_rate);
+	return 0;
+}
+
+static int afe_lb_tx_format_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	switch (afe_lb_tx_cfg.bit_format) {
+	case SNDRV_PCM_FORMAT_S32_LE:
+		ucontrol->value.integer.value[0] = 3;
+		break;
+	case SNDRV_PCM_FORMAT_S24_3LE:
+		ucontrol->value.integer.value[0] = 2;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		ucontrol->value.integer.value[0] = 1;
+		break;
+	case SNDRV_PCM_FORMAT_S16_LE:
+	default:
+		ucontrol->value.integer.value[0] = 0;
+		break;
+	}
+
+	pr_debug("%s: afe_lb_tx_format = %d, ucontrol value = %ld\n",
+		 __func__, afe_lb_tx_cfg.bit_format,
+		 ucontrol->value.integer.value[0]);
+	return 0;
+}
+
+static int afe_lb_tx_format_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	switch (ucontrol->value.integer.value[0]) {
+	case 3:
+		afe_lb_tx_cfg.bit_format = SNDRV_PCM_FORMAT_S32_LE;
+		break;
+	case 2:
+		afe_lb_tx_cfg.bit_format = SNDRV_PCM_FORMAT_S24_3LE;
+		break;
+	case 1:
+		afe_lb_tx_cfg.bit_format = SNDRV_PCM_FORMAT_S24_LE;
+		break;
+	case 0:
+	default:
+		afe_lb_tx_cfg.bit_format = SNDRV_PCM_FORMAT_S16_LE;
+		break;
+	}
+
+	pr_debug("%s: afe_lb_tx_format = %d, ucontrol value = %ld\n",
+		 __func__, afe_lb_tx_cfg.bit_format,
+		 ucontrol->value.integer.value[0]);
+	return 0;
+}
+
 static const struct snd_kcontrol_new msm_snd_sb_controls[] = {
 	SOC_ENUM_EXT("SLIM_0_RX Channels", slim_0_rx_chs,
 			slim_rx_ch_get, slim_rx_ch_put),
@@ -3826,6 +4014,13 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			msm_spdif_rx_format_get, msm_spdif_rx_format_put),
 	SOC_ENUM_EXT("SEC_SPDIF_TX Format", spdif_tx_format,
 			msm_spdif_tx_format_get, msm_spdif_tx_format_put),
+	SOC_ENUM_EXT("AFE_LOOPBACK_TX Channels", afe_lb_tx_chs,
+			afe_lb_tx_ch_get, afe_lb_tx_ch_put),
+	SOC_ENUM_EXT("AFE_LOOPBACK_TX Format", afe_lb_tx_format,
+			afe_lb_tx_format_get, afe_lb_tx_format_put),
+	SOC_ENUM_EXT("AFE_LOOPBACK_TX SampleRate", afe_lb_tx_sample_rate,
+			afe_lb_tx_sample_rate_get,
+			afe_lb_tx_sample_rate_put),
 };
 
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_component *component,
@@ -4609,6 +4804,13 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		channels->min = channels->max =
 			spdif_tx_cfg[SEC_SPDIF_TX].channels;
 	break;
+
+	case MSM_BACKEND_DAI_AFE_LOOPBACK_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				afe_lb_tx_cfg.bit_format);
+		rate->min = rate->max = afe_lb_tx_cfg.sample_rate;
+		channels->min = channels->max = afe_lb_tx_cfg.channels;
+		break;
 
 	default:
 		rate->min = rate->max = SAMPLING_RATE_48KHZ;
@@ -7630,6 +7832,7 @@ static struct snd_soc_dai_link msm_afe_rxtx_lb_be_dai_link[] = {
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_AFE_LOOPBACK_TX,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
 	},
