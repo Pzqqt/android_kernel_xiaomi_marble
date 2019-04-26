@@ -1385,6 +1385,11 @@ static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 	struct hal_tx_completion_status ts = {0};
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 
+	if (qdf_unlikely(!vdev)) {
+		dp_err("vdev is null!");
+		return;
+	}
+
 	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 	if (vdev->tx_non_std_data_callback.func) {
 		qdf_nbuf_set_next(tx_desc->nbuf, NULL);
@@ -2532,6 +2537,11 @@ void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc)
 
 	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 
+	if (qdf_unlikely(!vdev)) {
+		qdf_nbuf_free(nbuf);
+		return;
+	}
+
 	if (qdf_likely(!vdev->mesh_vdev))
 		qdf_nbuf_free(nbuf);
 	else {
@@ -3363,7 +3373,7 @@ more_data:
 		 * If the descriptor is already freed in vdev_detach,
 		 * continue to next descriptor
 		 */
-		if (!tx_desc->vdev) {
+		if (!tx_desc->vdev && !tx_desc->flags) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				  QDF_TRACE_LEVEL_INFO,
 				  "Descriptor freed in vdev_detach %d",
@@ -3577,25 +3587,78 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
 }
 
+static inline bool
+dp_is_tx_desc_flush_match(struct dp_pdev *pdev,
+			  struct dp_vdev *vdev,
+			  struct dp_tx_desc_s *tx_desc)
+{
+	if (!(tx_desc && (tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)))
+		return false;
+
+	/*
+	 * if vdev is given, then only check whether desc
+	 * vdev match. if vdev is NULL, then check whether
+	 * desc pdev match.
+	 */
+	return vdev ? (tx_desc->vdev == vdev) : (tx_desc->pdev == pdev);
+}
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-/* dp_tx_desc_flush() - release resources associated
- *                      to tx_desc
- * @vdev: virtual device instance
+/**
+ * dp_tx_desc_reset_vdev() - reset vdev to NULL in TX Desc
  *
- * This function will free all outstanding Tx buffers,
- * including ME buffer for which either free during
- * completion didn't happened or completion is not
- * received.
+ * @soc: Handle to DP SoC structure
+ * @tx_desc: pointer of one TX desc
+ * @desc_pool_id: TX Desc pool id
  */
-static void dp_tx_desc_flush(struct dp_vdev *vdev)
+static inline void
+dp_tx_desc_reset_vdev(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
+		      uint8_t desc_pool_id)
+{
+	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
+
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
+
+	tx_desc->vdev = NULL;
+
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
+}
+
+/**
+ * dp_tx_desc_flush() - release resources associated
+ *                      to TX Desc
+ *
+ * @dp_pdev: Handle to DP pdev structure
+ * @vdev: virtual device instance
+ * NULL: no specific Vdev is required and check all allcated TX desc
+ * on this pdev.
+ * Non-NULL: only check the allocated TX Desc associated to this Vdev.
+ *
+ * @force_free:
+ * true: flush the TX desc.
+ * false: only reset the Vdev in each allocated TX desc
+ * that associated to current Vdev.
+ *
+ * This function will go through the TX desc pool to flush
+ * the outstanding TX data or reset Vdev to NULL in associated TX
+ * Desc.
+ */
+static void dp_tx_desc_flush(struct dp_pdev *pdev,
+			     struct dp_vdev *vdev,
+			     bool force_free)
 {
 	uint8_t i;
 	uint32_t j;
 	uint32_t num_desc, page_id, offset;
 	uint16_t num_desc_per_page;
-	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+
+	if (!vdev && !force_free) {
+		dp_err("Reset TX desc vdev, Vdev param is required!");
+		return;
+	}
 
 	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
 		tx_desc_pool = &soc->tx_desc[i];
@@ -3616,24 +3679,53 @@ static void dp_tx_desc_flush(struct dp_vdev *vdev)
 				break;
 
 			tx_desc = dp_tx_desc_find(soc, i, page_id, offset);
-			if (tx_desc && (tx_desc->vdev == vdev) &&
-			    (tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
-				dp_tx_comp_free_buf(soc, tx_desc);
-				dp_tx_desc_release(tx_desc, i);
+
+			if (dp_is_tx_desc_flush_match(pdev, vdev, tx_desc)) {
+				/*
+				 * Free TX desc if force free is
+				 * required, otherwise only reset vdev
+				 * in this TX desc.
+				 */
+				if (force_free) {
+					dp_tx_comp_free_buf(soc, tx_desc);
+					dp_tx_desc_release(tx_desc, i);
+				} else {
+					dp_tx_desc_reset_vdev(soc, tx_desc,
+							      i);
+				}
 			}
 		}
 	}
 }
 #else /* QCA_LL_TX_FLOW_CONTROL_V2! */
-static void dp_tx_desc_flush(struct dp_vdev *vdev)
+
+static inline void
+dp_tx_desc_reset_vdev(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
+		      uint8_t desc_pool_id)
+{
+	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
+
+	tx_desc->vdev = NULL;
+
+	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+}
+
+static void dp_tx_desc_flush(struct dp_pdev *pdev,
+			     struct dp_vdev *vdev,
+			     bool force_free)
 {
 	uint8_t i, num_pool;
 	uint32_t j;
 	uint32_t num_desc, page_id, offset;
 	uint16_t num_desc_per_page;
-	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+
+	if (!vdev && !force_free) {
+		dp_err("Reset TX desc vdev, Vdev param is required!");
+		return;
+	}
 
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
@@ -3650,16 +3742,20 @@ static void dp_tx_desc_flush(struct dp_vdev *vdev)
 			offset = j % num_desc_per_page;
 			tx_desc = dp_tx_desc_find(soc, i, page_id, offset);
 
-			if (tx_desc && (tx_desc->vdev == vdev) &&
-			    (tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
-				dp_tx_comp_free_buf(soc, tx_desc);
-				dp_tx_desc_release(tx_desc, i);
+			if (dp_is_tx_desc_flush_match(pdev, vdev, tx_desc)) {
+				if (force_free) {
+					dp_tx_comp_free_buf(soc, tx_desc);
+					dp_tx_desc_release(tx_desc, i);
+				} else {
+					dp_tx_desc_reset_vdev(soc, tx_desc,
+							      i);
+				}
 			}
 		}
 	}
 }
-
 #endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
+
 /**
  * dp_tx_vdev_detach() - detach vdev from dp tx
  * @vdev: virtual device instance
@@ -3669,7 +3765,11 @@ static void dp_tx_desc_flush(struct dp_vdev *vdev)
  */
 QDF_STATUS dp_tx_vdev_detach(struct dp_vdev *vdev)
 {
-	dp_tx_desc_flush(vdev);
+	struct dp_pdev *pdev = vdev->pdev;
+
+	/* Reset TX desc associated to this Vdev as NULL */
+	dp_tx_desc_flush(pdev, vdev, false);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3706,6 +3806,8 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev)
  */
 QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
 {
+	/* flush TX outstanding data per pdev */
+	dp_tx_desc_flush(pdev, NULL, true);
 	dp_tx_me_exit(pdev);
 	return QDF_STATUS_SUCCESS;
 }

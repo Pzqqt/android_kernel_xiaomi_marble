@@ -301,6 +301,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	enum netif_action_type act = WLAN_WAKE_ALL_NETIF_QUEUE;
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	tx_desc->vdev = NULL;
+	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	dp_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
@@ -456,6 +458,8 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
+	tx_desc->vdev = NULL;
+	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
 	dp_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
@@ -510,7 +514,6 @@ dp_tx_desc_thresh_reached(struct cdp_vdev *vdev)
 
 	return  dp_tx_is_threshold_reached(pool, pool->avail_desc);
 }
-
 #else /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 static inline void dp_tx_flow_control_init(struct dp_soc *handle)
