@@ -9043,6 +9043,51 @@ static void hdd_set_mtrace_for_each(struct hdd_context *hdd_ctx)
 #endif
 
 /**
+ * hdd_log_level_to_bitmask() - user space log level to host log bitmask
+ * @user_log_level: user space log level
+ *
+ * Convert log level from user space to host log level bitmask.
+ *
+ * Return: Bitmask of log levels to be enabled
+ */
+static uint32_t hdd_log_level_to_bitmask(enum host_log_level user_log_level)
+{
+	QDF_TRACE_LEVEL host_trace_level;
+	uint32_t bitmask;
+
+	switch (user_log_level) {
+	case HOST_LOG_LEVEL_NONE:
+		host_trace_level = QDF_TRACE_LEVEL_NONE;
+		break;
+	case HOST_LOG_LEVEL_FATAL:
+		host_trace_level = QDF_TRACE_LEVEL_FATAL;
+		break;
+	case HOST_LOG_LEVEL_ERROR:
+		host_trace_level = QDF_TRACE_LEVEL_ERROR;
+		break;
+	case HOST_LOG_LEVEL_WARN:
+		host_trace_level = QDF_TRACE_LEVEL_WARN;
+		break;
+	case HOST_LOG_LEVEL_INFO:
+		host_trace_level = QDF_TRACE_LEVEL_INFO_LOW;
+		break;
+	case HOST_LOG_LEVEL_DEBUG:
+		host_trace_level = QDF_TRACE_LEVEL_DEBUG;
+		break;
+	case HOST_LOG_LEVEL_TRACE:
+		host_trace_level = QDF_TRACE_LEVEL_TRACE;
+		break;
+	default:
+		host_trace_level = QDF_TRACE_LEVEL_TRACE;
+		break;
+	}
+
+	bitmask = (1 << (host_trace_level + 1)) - 1;
+
+	return bitmask;
+}
+
+/**
  * hdd_set_trace_level_for_each - Set trace level for each INI config
  * @hdd_ctx - HDD context
  *
@@ -9052,10 +9097,27 @@ static void hdd_set_mtrace_for_each(struct hdd_context *hdd_ctx)
  */
 static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 {
+	uint8_t host_module_log[QDF_MODULE_ID_MAX * 2];
+	qdf_size_t host_module_log_num = 0;
+	QDF_MODULE_ID module_id;
+	uint32_t bitmask;
+	uint32_t i;
+
 	hdd_qdf_trace_enable(QDF_MODULE_ID_DP, 0x7f);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_FWOL, 0xffff);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_CRYPTO, 0xffff);
+
+	qdf_uint8_array_parse(cfg_get(hdd_ctx->psoc,
+				      CFG_ENABLE_HOST_MODULE_LOG_LEVEL),
+			      host_module_log,
+			      QDF_MODULE_ID_MAX * 2,
+			      &host_module_log_num);
+
+	for (i = 0; i + 1 < host_module_log_num; i += 2) {
+		module_id = host_module_log[i];
+		bitmask = hdd_log_level_to_bitmask(host_module_log[i + 1]);
+		if (module_id < QDF_MODULE_ID_MAX &&
+		    module_id >= QDF_MODULE_ID_MIN)
+			hdd_qdf_trace_enable(module_id, bitmask);
+	}
 
 	hdd_set_mtrace_for_each(hdd_ctx);
 }
