@@ -10500,7 +10500,7 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 	}
 }
 
-#ifdef QCA_WIFI_QCA8074
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
 
 #ifndef QCA_MEM_ATTACH_ON_WIFI3
 

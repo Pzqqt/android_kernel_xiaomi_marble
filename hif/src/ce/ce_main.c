@@ -52,8 +52,8 @@
 #endif
 #include "mp_dev.h"
 
-#if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6290)) && \
-	!defined(QCA_WIFI_SUPPORT_SRNG)
+#if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6290) || \
+	defined(QCA_WIFI_QCA6018)) && !defined(QCA_WIFI_SUPPORT_SRNG)
 #define QCA_WIFI_SUPPORT_SRNG
 #endif
 

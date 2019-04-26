@@ -352,7 +352,7 @@ void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
 qdf_export_symbol(__qdf_nbuf_count_dec);
 #endif
 
-#if defined(QCA_WIFI_QCA8074) && defined (BUILD_X86)
+#if defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86)
 struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 				 int align, int prio, const char *func,
 				 uint32_t line)

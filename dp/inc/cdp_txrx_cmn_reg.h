@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,7 @@ ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-#ifdef QCA_WIFI_QCA8074
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
 void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			  struct ol_if_ops *ol_ops, uint16_t device_id);

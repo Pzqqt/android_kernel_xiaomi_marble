@@ -38,7 +38,7 @@
 #include "qdf_status.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
-#ifdef QCA_WIFI_QCA8074
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
 #include "hal_api.h"
 #endif
 #include "hif_napi.h"
@@ -486,7 +486,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
-#if defined(QCA_WIFI_QCA8074) || \
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
