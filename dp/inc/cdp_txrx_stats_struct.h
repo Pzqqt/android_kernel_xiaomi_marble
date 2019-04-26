@@ -1747,6 +1747,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_DCS_RE_ENABLE_TIMER = 406,
 	/* Enable/disable Rx lite monitor mode */
 	OL_ATH_PARAM_RX_MON_LITE = 407,
+	/* wifi down indication used in MBSS feature */
+	OL_ATH_PARAM_WIFI_DOWN_IND = 408,
 };
 
 /* Enumeration of PDEV Configuration parameter */
