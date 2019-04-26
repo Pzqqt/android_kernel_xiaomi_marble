@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
+#include <linux/ratelimit.h>
 #include <sound/compress_params.h>
 #include <sound/devdep_params.h>
 #include <dsp/apr_audio-v2.h>
@@ -15,7 +16,8 @@
 #define GET_NEXT(ptr, upper_limit, rc)                                  \
 ({                                                                      \
 	if (((ptr) + 1) > (upper_limit)) {                              \
-		pr_err("%s: param list out of boundary\n", __func__);   \
+		pr_err_ratelimited("%s: param list out of boundary\n",  \
+				   __func__);				\
 		(rc) = -EINVAL;                                         \
 	}                                                               \
 	((rc) == 0) ? *(ptr)++ :  -EINVAL;                              \
@@ -24,7 +26,8 @@
 #define CHECK_PARAM_LEN(len, max_len, tag, rc)                          \
 do {                                                                    \
 	if ((len) > (max_len)) {                                        \
-		pr_err("%s: params length overflows\n", (tag));         \
+		pr_err_ratelimited("%s: params length overflows\n",	\
+				   (tag));				\
 		(rc) = -EINVAL;                                         \
 	}                                                               \
 } while (0)
@@ -244,7 +247,8 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 			param_data = (u8 *) &virtualizer->gain_adjust;
 			break;
 		default:
-			pr_err("%s: Invalid command to set config\n", __func__);
+			pr_err_ratelimited("%s: Invalid command to set config\n",
+					   __func__);
 			continue;
 		}
 		if (rc)
@@ -678,7 +682,8 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 			param_data = (u8 *) &reverb->density;
 			break;
 		default:
-			pr_err("%s: Invalid command to set config\n", __func__);
+			pr_err_ratelimited("%s: Invalid command to set config\n",
+					   __func__);
 			continue;
 		}
 		if (rc)
@@ -831,7 +836,8 @@ int msm_audio_effects_bass_boost_handler(struct audio_client *ac,
 			param_data = (u8 *) &bass_boost->strength;
 			break;
 		default:
-			pr_err("%s: Invalid command to set config\n", __func__);
+			pr_err_ratelimited("%s: Invalid command to set config\n",
+					   __func__);
 			continue;
 		}
 		if (rc)
@@ -956,7 +962,8 @@ int msm_audio_effects_pbe_handler(struct audio_client *ac,
 			param_data = (u8 *) values;
 			break;
 		default:
-			pr_err("%s: Invalid command to set config\n", __func__);
+			pr_err_ratelimited("%s: Invalid command to set config\n",
+					   __func__);
 			continue;
 		}
 		if (rc)
@@ -1214,7 +1221,8 @@ int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 			param_data = (u8 *) &eq->freq_millihertz;
 			break;
 		default:
-			pr_err("%s: Invalid command to set config\n", __func__);
+			pr_err_ratelimited("%s: Invalid command to set config\n",
+					   __func__);
 			continue;
 		}
 		if (rc)
@@ -1335,7 +1343,7 @@ static int __msm_audio_effects_volume_handler(struct audio_client *ac,
 					"VOLUME/VOLUME2_GAIN_MASTER", rc);
 			break;
 		default:
-			pr_err("%s: Invalid command id: %d to set config\n",
+			pr_err_ratelimited("%s: Invalid command id: %d to set config\n",
 				__func__, command_id);
 			continue;
 		}
