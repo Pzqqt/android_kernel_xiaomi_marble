@@ -2552,7 +2552,10 @@ static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 
 	sta = dph_lookup_hash_entry(mac, pAddStaReq->peermac.bytes, &aid,
 				       &pe_session->dph.dphHashTable);
-
+	if (!sta && pAddStaReq->tdls_oper == TDLS_OPER_UPDATE) {
+		pe_err("TDLS update peer is given without peer creation");
+		return QDF_STATUS_E_FAILURE;
+	}
 	if (sta && pAddStaReq->tdls_oper == TDLS_OPER_ADD) {
 		pe_err("TDLS entry for peer: "QDF_MAC_ADDR_STR " already exist, cannot add new entry",
 			QDF_MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
@@ -3169,6 +3172,9 @@ QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 
 	lim_check_aid_and_delete_peer(mac_ctx, session_entry);
 
+	tgt_tdls_delete_all_peers_indication(mac_ctx->psoc,
+					     session_entry->smeSessionId);
+
 	if (lim_is_roam_synch_in_progress(session_entry))
 		return QDF_STATUS_SUCCESS;
 	/* In case of CSA, Only peers in lim and TDLS component
@@ -3181,9 +3187,6 @@ QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 						    session_entry->
 						    smeSessionId);
 	}
-
-	tgt_tdls_delete_all_peers_indication(mac_ctx->psoc,
-					     session_entry->smeSessionId);
 
 	/* reset the set_state_disable flag */
 	session_entry->tdls_send_set_state_disable = true;

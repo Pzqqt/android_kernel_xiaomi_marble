@@ -898,7 +898,7 @@ tdls_activate_update_peer(struct tdls_update_peer_request *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto updatersp;
 
-	curr_peer = tdls_get_peer(vdev_obj, mac);
+	curr_peer = tdls_find_peer(vdev_obj, mac);
 	if (!curr_peer) {
 		tdls_err(QDF_MAC_ADDR_STR " not exist. return invalid",
 			 QDF_MAC_ADDR_ARRAY(mac));
