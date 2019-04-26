@@ -1704,17 +1704,17 @@ struct he_cap_network_endian {
 } qdf_packed;
 
 struct he_ops_network_endian {
-	uint32_t            bss_color:6;
-	uint32_t           default_pe:3;
-	uint32_t         twt_required:1;
-	uint32_t        txop_rts_threshold:10;
-	uint32_t      partial_bss_col:1;
-	uint32_t     vht_oper_present:1;
-	uint32_t            reserved1:6;
-	uint32_t            co_located_bss:1;
-	uint32_t     bss_col_disabled:1;
-	uint32_t            reserved2:1;
-	uint8_t             basic_mcs_nss[2];
+	uint16_t default_pe:3;
+	uint16_t twt_required:1;
+	uint16_t txop_rts_threshold:10;
+	uint16_t vht_oper_present:1;
+	uint16_t co_located_bss:1;
+	uint8_t  er_su_disable:1;
+	uint8_t  reserved1:7;
+	uint8_t  bss_color:6;
+	uint8_t  partial_bss_col:1;
+	uint8_t  bss_col_disabled:1;
+	uint8_t  basic_mcs_nss[2];
 	union {
 		struct {
 			uint8_t chan_width;
