@@ -1699,12 +1699,21 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 {
 	struct sde_rm_rsvp *rsvp;
 	struct drm_connector *conn;
+	struct msm_drm_private *priv;
+	struct sde_kms *sde_kms;
 	uint64_t top_ctrl;
 
 	if (!rm || !enc) {
 		SDE_ERROR("invalid params\n");
 		return;
 	}
+
+	priv = enc->dev->dev_private;
+	if (!priv->kms) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
+	sde_kms = to_sde_kms(priv->kms);
 
 	mutex_lock(&rm->rm_lock);
 
@@ -1715,6 +1724,11 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	if (!rsvp) {
 		SDE_DEBUG("failed to find rsvp for enc %d, nxt %d",
 				enc->base.id, nxt);
+		goto end;
+	}
+
+	if (_sde_rm_is_display_in_cont_splash(sde_kms, enc)) {
+		_sde_rm_release_rsvp(rm, rsvp, conn);
 		goto end;
 	}
 
