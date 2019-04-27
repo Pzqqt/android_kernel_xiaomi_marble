@@ -3,7 +3,6 @@
 # auto-detect subdirs
 ifeq ($(CONFIG_ARCH_KONA), y)
 include $(srctree)/techpack/display/config/konadisp.conf
-export
 endif
 
 ifeq ($(CONFIG_ARCH_KONA), y)
