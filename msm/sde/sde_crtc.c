@@ -3978,6 +3978,8 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
+	drm_crtc_vblank_off(crtc);
+
 	if (sde_kms_is_suspend_state(crtc->dev))
 		_sde_crtc_set_suspend(crtc, true);
 
@@ -4115,6 +4117,8 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 	sde_crtc = to_sde_crtc(crtc);
+
+	drm_crtc_vblank_on(crtc);
 
 	mutex_lock(&sde_crtc->crtc_lock);
 	SDE_EVT32(DRMID(crtc), sde_crtc->enabled, sde_crtc->suspend,
