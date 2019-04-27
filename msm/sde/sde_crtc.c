@@ -3626,7 +3626,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 static int _sde_crtc_vblank_enable_no_lock(
 		struct sde_crtc *sde_crtc, bool enable)
 {
-	struct drm_device *dev;
 	struct drm_crtc *crtc;
 	struct drm_encoder *enc;
 
@@ -3636,7 +3635,6 @@ static int _sde_crtc_vblank_enable_no_lock(
 	}
 
 	crtc = &sde_crtc->base;
-	dev = crtc->dev;
 
 	if (enable) {
 		int ret;
@@ -3648,27 +3646,25 @@ static int _sde_crtc_vblank_enable_no_lock(
 		if (ret < 0)
 			return ret;
 
-		list_for_each_entry(enc, &dev->mode_config.encoder_list, head) {
+		drm_for_each_encoder_mask(enc, crtc->dev,
+			crtc->state->encoder_mask) {
 			if (enc->crtc != crtc)
 				continue;
 
 			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
-					sde_crtc->enabled,
-					sde_crtc->suspend,
-					sde_crtc->vblank_requested);
+					sde_crtc->enabled);
 
 			sde_encoder_register_vblank_callback(enc,
 					sde_crtc_vblank_cb, (void *)crtc);
 		}
 	} else {
-		list_for_each_entry(enc, &dev->mode_config.encoder_list, head) {
+		drm_for_each_encoder_mask(enc, crtc->dev,
+			crtc->state->encoder_mask) {
 			if (enc->crtc != crtc)
 				continue;
 
 			SDE_EVT32(DRMID(&sde_crtc->base), DRMID(enc), enable,
-					sde_crtc->enabled,
-					sde_crtc->suspend,
-					sde_crtc->vblank_requested);
+					sde_crtc->enabled);
 
 			sde_encoder_register_vblank_callback(enc, NULL, NULL);
 		}
@@ -3680,56 +3676,6 @@ static int _sde_crtc_vblank_enable_no_lock(
 	}
 
 	return 0;
-}
-
-/**
- * _sde_crtc_set_suspend - notify crtc of suspend enable/disable
- * @crtc: Pointer to drm crtc object
- * @enable: true to enable suspend, false to indicate resume
- */
-static void _sde_crtc_set_suspend(struct drm_crtc *crtc, bool enable)
-{
-	struct sde_crtc *sde_crtc;
-	struct msm_drm_private *priv;
-	struct sde_kms *sde_kms;
-	int ret = 0;
-
-	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
-		SDE_ERROR("invalid crtc\n");
-		return;
-	}
-	sde_crtc = to_sde_crtc(crtc);
-	priv = crtc->dev->dev_private;
-
-	if (!priv->kms) {
-		SDE_ERROR("invalid crtc kms\n");
-		return;
-	}
-	sde_kms = to_sde_kms(priv->kms);
-
-	SDE_DEBUG("crtc%d suspend = %d\n", crtc->base.id, enable);
-	SDE_EVT32_VERBOSE(DRMID(crtc), enable);
-
-	mutex_lock(&sde_crtc->crtc_lock);
-
-	/*
-	 * If the vblank is enabled, release a power reference on suspend
-	 * and take it back during resume (if it is still enabled).
-	 */
-	SDE_EVT32(DRMID(&sde_crtc->base), enable, sde_crtc->enabled,
-			sde_crtc->suspend, sde_crtc->vblank_requested);
-	if (sde_crtc->suspend == enable)
-		SDE_DEBUG("crtc%d suspend already set to %d, ignoring update\n",
-				crtc->base.id, enable);
-	else if (sde_crtc->enabled && sde_crtc->vblank_requested) {
-		ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, !enable);
-		if (ret)
-			SDE_ERROR("%s vblank enable failed: %d\n",
-					sde_crtc->name, ret);
-	}
-
-	sde_crtc->suspend = enable;
-	mutex_unlock(&sde_crtc->crtc_lock);
 }
 
 /**
@@ -3786,14 +3732,9 @@ static void sde_crtc_reset(struct drm_crtc *crtc)
 	}
 
 	/* revert suspend actions, if necessary */
-	if (sde_kms_is_suspend_state(crtc->dev)) {
-		_sde_crtc_set_suspend(crtc, false);
-
-		if (!sde_crtc_is_reset_required(crtc)) {
-			SDE_DEBUG("avoiding reset for crtc:%d\n",
-					crtc->base.id);
-			return;
-		}
+	if (!sde_crtc_is_reset_required(crtc)) {
+		SDE_DEBUG("avoiding reset for crtc:%d\n", crtc->base.id);
+		return;
 	}
 
 	/* remove previous state, if present */
@@ -3980,9 +3921,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 
 	drm_crtc_vblank_off(crtc);
 
-	if (sde_kms_is_suspend_state(crtc->dev))
-		_sde_crtc_set_suspend(crtc, true);
-
 	mutex_lock(&sde_crtc->crtc_lock);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 
@@ -4000,16 +3938,8 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 
 	_sde_crtc_flush_event_thread(crtc);
 
-	SDE_EVT32(DRMID(crtc), sde_crtc->enabled, sde_crtc->suspend,
-			sde_crtc->vblank_requested,
+	SDE_EVT32(DRMID(crtc), sde_crtc->enabled,
 			crtc->state->active, crtc->state->enable);
-	if (sde_crtc->enabled && !sde_crtc->suspend &&
-			sde_crtc->vblank_requested) {
-		ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, false);
-		if (ret)
-			SDE_ERROR("%s vblank enable failed: %d\n",
-					sde_crtc->name, ret);
-	}
 	sde_crtc->enabled = false;
 
 	/* Try to disable uidle */
@@ -4121,8 +4051,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	drm_crtc_vblank_on(crtc);
 
 	mutex_lock(&sde_crtc->crtc_lock);
-	SDE_EVT32(DRMID(crtc), sde_crtc->enabled, sde_crtc->suspend,
-			sde_crtc->vblank_requested);
+	SDE_EVT32(DRMID(crtc), sde_crtc->enabled);
 
 	/*
 	 * Try to enable uidle (if possible), we do this before the call
@@ -4149,13 +4078,6 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 				sde_crtc_frame_event_cb, crtc);
 	}
 
-	if (!sde_crtc->enabled && !sde_crtc->suspend &&
-			sde_crtc->vblank_requested) {
-		ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, true);
-		if (ret)
-			SDE_ERROR("%s vblank enable failed: %d\n",
-					sde_crtc->name, ret);
-	}
 	sde_crtc->enabled = true;
 
 	/* update color processing on resume */
@@ -4747,15 +4669,12 @@ int sde_crtc_vblank(struct drm_crtc *crtc, bool en)
 	sde_crtc = to_sde_crtc(crtc);
 
 	mutex_lock(&sde_crtc->crtc_lock);
-	SDE_EVT32(DRMID(&sde_crtc->base), en, sde_crtc->enabled,
-			sde_crtc->suspend, sde_crtc->vblank_requested);
-	if (sde_crtc->enabled && !sde_crtc->suspend) {
-		ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, en);
-		if (ret)
-			SDE_ERROR("%s vblank enable failed: %d\n",
-					sde_crtc->name, ret);
-	}
-	sde_crtc->vblank_requested = en;
+	SDE_EVT32(DRMID(&sde_crtc->base), en, sde_crtc->enabled);
+	ret = _sde_crtc_vblank_enable_no_lock(sde_crtc, en);
+	if (ret)
+		SDE_ERROR("%s vblank enable failed: %d\n",
+				sde_crtc->name, ret);
+
 	mutex_unlock(&sde_crtc->crtc_lock);
 
 	return 0;
@@ -5473,8 +5392,6 @@ static int _sde_debugfs_status_show(struct seq_file *s, void *data)
 		sde_crtc->vblank_cb_count = 0;
 		sde_crtc->vblank_cb_time = ktime_set(0, 0);
 	}
-
-	seq_printf(s, "vblank_enable:%d\n", sde_crtc->vblank_requested);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 
