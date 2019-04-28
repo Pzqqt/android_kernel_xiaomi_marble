@@ -74,37 +74,10 @@ enum SDE_POWER_HANDLE_DBUS_ID {
 };
 
 /**
- * struct sde_power_client: stores the power client for sde driver
- * @name:	name of the client
- * @usecase_ndx: current regs bus vote type
- * @refcount:	current refcount if multiple modules are using same
- *              same client for enable/disable. Power module will
- *              aggregate the refcount and vote accordingly for this
- *              client.
- * @id:		assigned during create. helps for debugging.
- * @list:	list to attach power handle master list
- * @ab:         arbitrated bandwidth for each bus client
- * @ib:         instantaneous bandwidth for each bus client
- * @active:	inidcates the state of sde power handle
- */
-struct sde_power_client {
-	char name[MAX_CLIENT_NAME_LEN];
-	short usecase_ndx;
-	short refcount;
-	u32 id;
-	struct list_head list;
-	u64 ab[SDE_POWER_HANDLE_DATA_BUS_CLIENT_MAX];
-	u64 ib[SDE_POWER_HANDLE_DATA_BUS_CLIENT_MAX];
-	bool active;
-};
-
-/**
  * struct sde_power_data_handle: power handle struct for data bus
  * @data_bus_scale_table: pointer to bus scaling table
  * @data_bus_hdl: current data bus handle
  * @data_paths_cnt: number of rt data path ports
- * @nrt_data_paths_cnt: number of nrt data path ports
- * @bus_channels: number of memory bus channels
  * @curr_bw_uc_idx: current use case index of data bus
  * @ao_bw_uc_idx: active only use case index of data bus
  * @ab_rt: realtime ab quota
@@ -117,8 +90,6 @@ struct sde_power_data_bus_handle {
 	struct msm_bus_scale_pdata *data_bus_scale_table;
 	u32 data_bus_hdl;
 	u32 data_paths_cnt;
-	u32 nrt_data_paths_cnt;
-	u32 bus_channels;
 	u32 curr_bw_uc_idx;
 	u32 ao_bw_uc_idx;
 	u64 ab_rt;
@@ -149,7 +120,6 @@ struct sde_power_event {
 /**
  * struct sde_power_handle: power handle main struct
  * @mp:		module power for clock and regulator
- * @client_clist: master list to store all clients
  * @phandle_lock: lock to synchronize the enable/disable
  * @dev: pointer to device structure
  * @usecase_ndx: current usecase index
@@ -162,7 +132,6 @@ struct sde_power_event {
  */
 struct sde_power_handle {
 	struct dss_module_power mp;
-	struct list_head power_client_clist;
 	struct mutex phandle_lock;
 	struct device *dev;
 	u32 current_usecase_ndx;
@@ -196,40 +165,17 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 	struct sde_power_handle *pdata);
 
 /**
- * sde_power_client_create() - create the client on power handle
- * @pdata:  power handle containing the resources
- * @client_name: new client name for registration
- *
- * Return: error code.
- */
-struct sde_power_client *sde_power_client_create(struct sde_power_handle *pdata,
-	char *client_name);
-
-/**
- * sde_power_client_destroy() - destroy the client on power handle
- * @pdata:  power handle containing the resources
- * @client_name: new client name for registration
- *
- * Return: none
- */
-void sde_power_client_destroy(struct sde_power_handle *phandle,
-	struct sde_power_client *client);
-
-/**
  * sde_power_resource_enable() - enable/disable the power resources
  * @pdata:  power handle containing the resources
- * @client: client information to enable/disable its vote
  * @enable: boolean request for enable/disable
  *
  * Return: error code.
  */
-int sde_power_resource_enable(struct sde_power_handle *pdata,
-	struct sde_power_client *pclient, bool enable);
+int sde_power_resource_enable(struct sde_power_handle *pdata, bool enable);
 
 /**
  * sde_power_scale_reg_bus() - Scale the registers bus for the specified client
  * @phandle:  power handle containing the resources
- * @pclient: client information to scale its vote
  * @usecase_ndx: new use case to scale the reg bus
  * @skip_lock: will skip holding the power rsrc mutex during the call, this is
  *		for internal callers that already hold this required lock.
@@ -237,15 +183,7 @@ int sde_power_resource_enable(struct sde_power_handle *pdata,
  * Return: error code.
  */
 int sde_power_scale_reg_bus(struct sde_power_handle *phandle,
-	struct sde_power_client *pclient, u32 usecase_ndx, bool skip_lock);
-
-/**
- * sde_power_resource_is_enabled() - return true if power resource is enabled
- * @pdata:  power handle containing the resources
- *
- * Return: true if enabled; false otherwise
- */
-int sde_power_resource_is_enabled(struct sde_power_handle *pdata);
+	u32 usecase_ndx, bool skip_lock);
 
 /**
  * sde_power_data_bus_state_update() - update data bus state
@@ -311,8 +249,6 @@ int sde_power_clk_set_flags(struct sde_power_handle *pdata,
 /**
  * sde_power_data_bus_set_quota() - set data bus quota for power client
  * @phandle:  power handle containing the resources
- * @client: client information to set quota
- * @bus_client: real-time or non-real-time bus client
  * @bus_id: identifier of data bus, see SDE_POWER_HANDLE_DBUS_ID
  * @ab_quota: arbitrated bus bandwidth
  * @ib_quota: instantaneous bus bandwidth
@@ -320,20 +256,17 @@ int sde_power_clk_set_flags(struct sde_power_handle *pdata,
  * Return: zero if success, or error code otherwise
  */
 int sde_power_data_bus_set_quota(struct sde_power_handle *phandle,
-		struct sde_power_client *pclient,
-		int bus_client, u32 bus_id,
-		u64 ab_quota, u64 ib_quota);
+	u32 bus_id, u64 ab_quota, u64 ib_quota);
 
 /**
  * sde_power_data_bus_bandwidth_ctrl() - control data bus bandwidth enable
  * @phandle:  power handle containing the resources
- * @client: client information to bandwidth control
  * @enable: true to enable bandwidth for data base
  *
  * Return: none
  */
 void sde_power_data_bus_bandwidth_ctrl(struct sde_power_handle *phandle,
-		struct sde_power_client *pclient, int enable);
+		int enable);
 
 /**
  * sde_power_handle_register_event - register a callback function for an event.

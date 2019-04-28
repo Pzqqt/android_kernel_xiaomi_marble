@@ -213,11 +213,9 @@ void sde_dbg_init_dbg_buses(u32 hwversion);
 /**
  * sde_dbg_init - initialize global sde debug facilities: evtlog, regdump
  * @dev:		device handle
- * @power_ctrl:		power control callback structure for enabling clocks
- *			during register dumping
  * Returns:		0 or -ERROR
  */
-int sde_dbg_init(struct device *dev, struct sde_dbg_power_ctrl *power_ctrl);
+int sde_dbg_init(struct device *dev);
 
 /**
  * sde_dbg_debugfs_register - register entries at the given debugfs dir

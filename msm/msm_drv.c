@@ -401,7 +401,6 @@ static int msm_drm_uninit(struct device *dev)
 	sde_dbg_destroy();
 	debugfs_remove_recursive(priv->debug_root);
 
-	sde_power_client_destroy(&priv->phandle, priv->pclient);
 	sde_power_resource_deinit(pdev, &priv->phandle);
 
 	msm_mdss_destroy(ddev);
@@ -534,11 +533,6 @@ static int msm_component_bind_all(struct device *dev,
 	return 0;
 }
 #endif
-
-static int msm_power_enable_wrapper(void *handle, void *client, bool enable)
-{
-	return sde_power_resource_enable(handle, client, enable);
-}
 
 static int msm_drm_display_thread_create(struct sched_param param,
 	struct msm_drm_private *priv, struct drm_device *ddev,
@@ -703,7 +697,6 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	struct drm_device *ddev;
 	struct msm_drm_private *priv;
 	struct msm_kms *kms = NULL;
-	struct sde_dbg_power_ctrl dbg_power_ctrl = { 0 };
 	int ret;
 	struct sched_param param = { 0 };
 
@@ -741,17 +734,7 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 		goto power_init_fail;
 	}
 
-	priv->pclient = sde_power_client_create(&priv->phandle, "sde");
-	if (IS_ERR_OR_NULL(priv->pclient)) {
-		pr_err("sde power client create failed\n");
-		ret = -EINVAL;
-		goto power_client_fail;
-	}
-
-	dbg_power_ctrl.handle = &priv->phandle;
-	dbg_power_ctrl.client = priv->pclient;
-	dbg_power_ctrl.enable_fn = msm_power_enable_wrapper;
-	ret = sde_dbg_init(&pdev->dev, &dbg_power_ctrl);
+	ret = sde_dbg_init(&pdev->dev);
 	if (ret) {
 		dev_err(dev, "failed to init sde dbg: %d\n", ret);
 		goto dbg_init_fail;
@@ -851,8 +834,6 @@ fail:
 bind_fail:
 	sde_dbg_destroy();
 dbg_init_fail:
-	sde_power_client_destroy(&priv->phandle, priv->pclient);
-power_client_fail:
 	sde_power_resource_deinit(pdev, &priv->phandle);
 power_init_fail:
 	msm_mdss_destroy(ddev);
@@ -927,8 +908,7 @@ static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 	mutex_lock(&ctx->power_lock);
 	if (ctx->enable_refcnt) {
 		SDE_EVT32(ctx->enable_refcnt);
-		sde_power_resource_enable(&priv->phandle,
-				priv->pclient, false);
+		pm_runtime_put_sync(dev->dev);
 	}
 	mutex_unlock(&ctx->power_lock);
 
@@ -1602,10 +1582,12 @@ int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
 	}
 
 	if (vote_req) {
-		rc = sde_power_resource_enable(&priv->phandle,
-				priv->pclient, power_ctrl->enable);
+		if (power_ctrl->enable)
+			rc = pm_runtime_get_sync(dev->dev);
+		else
+			pm_runtime_put_sync(dev->dev);
 
-		if (rc)
+		if (rc < 0)
 			ctx->enable_refcnt = old_cnt;
 	}
 
@@ -1756,7 +1738,9 @@ static int msm_runtime_suspend(struct device *dev)
 	DBG("");
 
 	if (priv->mdss)
-		return msm_mdss_disable(priv->mdss);
+		msm_mdss_disable(priv->mdss);
+	else
+		sde_power_resource_enable(&priv->phandle, false);
 
 	return 0;
 }
@@ -1765,13 +1749,16 @@ static int msm_runtime_resume(struct device *dev)
 {
 	struct drm_device *ddev = dev_get_drvdata(dev);
 	struct msm_drm_private *priv = ddev->dev_private;
+	int ret;
 
 	DBG("");
 
 	if (priv->mdss)
-		return msm_mdss_enable(priv->mdss);
+		ret = msm_mdss_enable(priv->mdss);
+	else
+		ret = sde_power_resource_enable(&priv->phandle, true);
 
-	return 0;
+	return ret;
 }
 #endif
 

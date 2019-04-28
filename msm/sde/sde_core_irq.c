@@ -441,25 +441,16 @@ void sde_debugfs_core_irq_destroy(struct sde_kms *sde_kms)
 
 void sde_core_irq_preinstall(struct sde_kms *sde_kms)
 {
-	struct msm_drm_private *priv;
 	int i;
 	int rc;
 
-	if (!sde_kms) {
-		SDE_ERROR("invalid sde_kms\n");
-		return;
-	} else if (!sde_kms->dev) {
-		SDE_ERROR("invalid drm device\n");
-		return;
-	} else if (!sde_kms->dev->dev_private) {
-		SDE_ERROR("invalid device private\n");
+	if (!sde_kms || !sde_kms->dev) {
+		SDE_ERROR("invalid sde_kms or dev\n");
 		return;
 	}
-	priv = sde_kms->dev->dev_private;
 
-	rc = sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-			true);
-	if (rc) {
+	rc = pm_runtime_get_sync(sde_kms->dev->dev);
+	if (rc < 0) {
 		SDE_ERROR("failed to enable power resource %d\n", rc);
 		SDE_EVT32(rc, SDE_EVTLOG_ERROR);
 		return;
@@ -467,7 +458,7 @@ void sde_core_irq_preinstall(struct sde_kms *sde_kms)
 
 	sde_clear_all_irqs(sde_kms);
 	sde_disable_all_irqs(sde_kms);
-	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
+	pm_runtime_put_sync(sde_kms->dev->dev);
 
 	spin_lock_init(&sde_kms->irq_obj.cb_lock);
 
@@ -493,26 +484,17 @@ int sde_core_irq_postinstall(struct sde_kms *sde_kms)
 
 void sde_core_irq_uninstall(struct sde_kms *sde_kms)
 {
-	struct msm_drm_private *priv;
 	int i;
 	int rc;
 	unsigned long irq_flags;
 
-	if (!sde_kms) {
-		SDE_ERROR("invalid sde_kms\n");
-		return;
-	} else if (!sde_kms->dev) {
-		SDE_ERROR("invalid drm device\n");
-		return;
-	} else if (!sde_kms->dev->dev_private) {
-		SDE_ERROR("invalid device private\n");
+	if (!sde_kms || !sde_kms->dev) {
+		SDE_ERROR("invalid sde_kms or dev\n");
 		return;
 	}
-	priv = sde_kms->dev->dev_private;
 
-	rc = sde_power_resource_enable(&priv->phandle, sde_kms->core_client,
-			true);
-	if (rc) {
+	rc = pm_runtime_get_sync(sde_kms->dev->dev);
+	if (rc < 0) {
 		SDE_ERROR("failed to enable power resource %d\n", rc);
 		SDE_EVT32(rc, SDE_EVTLOG_ERROR);
 		return;
@@ -525,7 +507,7 @@ void sde_core_irq_uninstall(struct sde_kms *sde_kms)
 
 	sde_clear_all_irqs(sde_kms);
 	sde_disable_all_irqs(sde_kms);
-	sde_power_resource_enable(&priv->phandle, sde_kms->core_client, false);
+	pm_runtime_put_sync(sde_kms->dev->dev);
 
 	spin_lock_irqsave(&sde_kms->irq_obj.cb_lock, irq_flags);
 	kfree(sde_kms->irq_obj.irq_cb_tbl);

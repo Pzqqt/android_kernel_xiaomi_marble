@@ -1213,7 +1213,8 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_power;
 	}
 
-	rc = dp->power->power_client_init(dp->power, &dp->priv->phandle);
+	rc = dp->power->power_client_init(dp->power, &dp->priv->phandle,
+		dp->dp_display.drm_dev);
 	if (rc) {
 		pr_err("Power client create failed\n");
 		goto error_aux;

@@ -4105,19 +4105,14 @@ int dsi_display_cont_splash_config(void *dsi_display)
 		return -EINVAL;
 	}
 
-	mutex_lock(&display->display_lock);
-
-	/* Vote for gdsc required to read register address space */
-	display->cont_splash_client = sde_power_client_create(display->phandle,
-						"cont_splash_client");
-	rc = sde_power_resource_enable(display->phandle,
-			display->cont_splash_client, true);
-	if (rc) {
+	rc = pm_runtime_get_sync(display->drm_dev->dev);
+	if (rc < 0) {
 		pr_err("failed to vote gdsc for continuous splash, rc=%d\n",
 							rc);
-		mutex_unlock(&display->display_lock);
-		return -EINVAL;
+		return rc;
 	}
+
+	mutex_lock(&display->display_lock);
 
 	/* Verify whether continuous splash is enabled or not */
 	display->is_cont_splash_enabled =
@@ -4172,8 +4167,7 @@ clk_manager_update:
 				false);
 
 splash_disabled:
-	(void)sde_power_resource_enable(display->phandle,
-			display->cont_splash_client, false);
+	pm_runtime_put_sync(display->drm_dev->dev);
 	display->is_cont_splash_enabled = false;
 	mutex_unlock(&display->display_lock);
 	return rc;
@@ -4197,11 +4191,7 @@ int dsi_display_splash_res_cleanup(struct  dsi_display *display)
 		pr_err("[%s] failed to disable DSI link clocks, rc=%d\n",
 		       display->name, rc);
 
-	rc = sde_power_resource_enable(display->phandle,
-			display->cont_splash_client, false);
-	if (rc)
-		pr_err("failed to remove vote on gdsc for continuous splash, rc=%d\n",
-				rc);
+	pm_runtime_put_sync(display->drm_dev->dev);
 
 	display->is_cont_splash_enabled = false;
 	/* Update splash status for clock manager */
@@ -4448,12 +4438,10 @@ static int dsi_display_bind(struct device *dev,
 	struct dsi_display *display;
 	struct dsi_clk_info info;
 	struct clk_ctrl_cb clk_cb;
-	struct msm_drm_private *priv;
 	void *handle = NULL;
 	struct platform_device *pdev = to_platform_device(dev);
 	char *client1 = "dsi_clk_client";
 	char *client2 = "mdp_event_client";
-	char dsi_client_name[DSI_CLIENT_NAME_SIZE];
 	int i, rc = 0;
 
 	if (!dev || !pdev || !master) {
@@ -4469,7 +4457,6 @@ static int dsi_display_bind(struct device *dev,
 				drm, display);
 		return -EINVAL;
 	}
-	priv = drm->dev_private;
 	if (!display->panel_node)
 		return 0;
 
@@ -4522,22 +4509,12 @@ static int dsi_display_bind(struct device *dev,
 				(&display_ctrl->ctrl->clk_info.lp_link_clks),
 				sizeof(struct dsi_link_lp_clk_info));
 
-		info.c_clks[i].phandle = &priv->phandle;
+		info.c_clks[i].drm = drm;
 		info.bus_handle[i] =
 			display_ctrl->ctrl->axi_bus_info.bus_handle;
 		info.ctrl_index[i] = display_ctrl->ctrl->cell_index;
-		snprintf(dsi_client_name, DSI_CLIENT_NAME_SIZE,
-						"dsi_core_client%u", i);
-		info.c_clks[i].dsi_core_client = sde_power_client_create(
-				info.c_clks[i].phandle, dsi_client_name);
-		if (IS_ERR_OR_NULL(info.c_clks[i].dsi_core_client)) {
-			pr_err("[%s] client creation failed for ctrl[%d]\n",
-					dsi_client_name, i);
-			goto error_ctrl_deinit;
-		}
 	}
 
-	display->phandle = &priv->phandle;
 	info.pre_clkoff_cb = dsi_pre_clkoff_cb;
 	info.pre_clkon_cb = dsi_pre_clkon_cb;
 	info.post_clkoff_cb = dsi_post_clkoff_cb;

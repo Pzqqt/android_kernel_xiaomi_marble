@@ -19,6 +19,8 @@
  * @clk_get_rate: get the current rate for provided clk_name
  */
 struct dp_power {
+	struct drm_device *drm_dev;
+	struct sde_power_handle *phandle;
 	int (*init)(struct dp_power *power, bool flip);
 	int (*deinit)(struct dp_power *power);
 	int (*clk_enable)(struct dp_power *power, enum dp_pm_type pm_type,
@@ -26,7 +28,8 @@ struct dp_power {
 	int (*set_pixel_clk_parent)(struct dp_power *power, u32 stream_id);
 	u64 (*clk_get_rate)(struct dp_power *power, char *clk_name);
 	int (*power_client_init)(struct dp_power *power,
-				struct sde_power_handle *phandle);
+		struct sde_power_handle *phandle,
+		struct drm_device *drm_dev);
 	void (*power_client_deinit)(struct dp_power *power);
 };
 

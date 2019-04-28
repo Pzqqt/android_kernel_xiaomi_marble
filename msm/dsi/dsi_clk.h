@@ -10,7 +10,7 @@
 #include <linux/platform_device.h>
 #include <linux/types.h>
 #include <linux/clk.h>
-#include "sde_power_handle.h"
+#include <drm/drmP.h>
 
 #define MAX_STRING_LEN 32
 #define MAX_DSI_CTRL 2
@@ -72,8 +72,7 @@ struct clk_ctrl_cb {
  * @core_mmss_clk:       Handle to MMSS core clock.
  * @bus_clk:             Handle to bus clock.
  * @mnoc_clk:            Handle to MMSS NOC clock.
- * @dsi_core_client:	 Pointer to SDE power client
- * @phandle:             Pointer to SDE power handle
+ * @drm:                 Pointer to drm device node
  */
 struct dsi_core_clk_info {
 	struct clk *mdp_core_clk;
@@ -81,8 +80,7 @@ struct dsi_core_clk_info {
 	struct clk *core_mmss_clk;
 	struct clk *bus_clk;
 	struct clk *mnoc_clk;
-	struct sde_power_client *dsi_core_client;
-	struct sde_power_handle *phandle;
+	struct drm_device *drm;
 };
 
 /**

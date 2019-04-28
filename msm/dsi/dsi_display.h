@@ -239,9 +239,6 @@ struct dsi_display {
 	struct dsi_bridge    *bridge;
 	u32 cmd_engine_refcount;
 
-	struct sde_power_handle *phandle;
-	struct sde_power_client *cont_splash_client;
-
 	void *clk_mngr;
 	void *dsi_clk_handle;
 	void *mdp_clk_handle;

@@ -86,23 +86,20 @@ TRACE_EVENT(sde_perf_set_ot,
 )
 
 TRACE_EVENT(sde_perf_update_bus,
-	TP_PROTO(int client, u32 bus_id, unsigned long long ab_quota,
+	TP_PROTO(u32 bus_id, unsigned long long ab_quota,
 	unsigned long long ib_quota),
-	TP_ARGS(client, bus_id, ab_quota, ib_quota),
+	TP_ARGS(bus_id, ab_quota, ib_quota),
 	TP_STRUCT__entry(
-			__field(int, client)
 			__field(u32, bus_id);
 			__field(u64, ab_quota)
 			__field(u64, ib_quota)
 	),
 	TP_fast_assign(
-			__entry->client = client;
 			__entry->bus_id = bus_id;
 			__entry->ab_quota = ab_quota;
 			__entry->ib_quota = ib_quota;
 	),
-	TP_printk("Request client:%d bus_id:%d ab=%llu ib=%llu",
-			__entry->client,
+	TP_printk("Request bus_id:%d ab=%llu ib=%llu",
 			__entry->bus_id,
 			__entry->ab_quota,
 			__entry->ib_quota)
