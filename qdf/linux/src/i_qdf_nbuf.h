@@ -151,6 +151,7 @@ typedef union {
  * @rx.ftype: mcast2ucast, TSO, SG, MESH
  * @rx.is_raw_frame: RAW frame
  * @rx.fcs_err: FCS error
+ * @rx.tid_val: tid value
  * @rx.reserved: reserved
  *
  * @tx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
@@ -265,7 +266,8 @@ struct qdf_nbuf_cb {
 			uint8_t ftype;
 			uint8_t is_raw_frame:1,
 				fcs_err:1,
-				reserved:6;
+				tid_val:4,
+				reserved:2;
 		} rx;
 
 		/* Note: MAX: 40 bytes */
@@ -407,6 +409,10 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_RX_RAW_FRAME(skb) \
 	(((struct qdf_nbuf_cb *) \
 	((skb)->cb))->u.rx.is_raw_frame)
+
+#define QDF_NBUF_CB_RX_TID_VAL(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.tid_val)
 
 #define QDF_NBUF_CB_RX_IS_FRAG(skb) \
 	(((struct qdf_nbuf_cb *) \
@@ -644,6 +650,12 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 
 #define __qdf_nbuf_is_raw_frame(skb) \
 	(QDF_NBUF_CB_RX_RAW_FRAME((skb)))
+
+#define __qdf_nbuf_get_tid_val(skb) \
+	(QDF_NBUF_CB_RX_TID_VAL((skb)))
+
+#define __qdf_nbuf_set_tid_val(skb, val) \
+	((QDF_NBUF_CB_RX_TID_VAL((skb))) = val)
 
 #define __qdf_nbuf_set_is_frag(skb, val) \
 	((QDF_NBUF_CB_RX_IS_FRAG((skb))) = val)

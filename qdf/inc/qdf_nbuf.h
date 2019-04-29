@@ -1238,6 +1238,27 @@ static inline int qdf_nbuf_is_raw_frame(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_nbuf_set_tid_val() - set  tid_val
+ * @buf: Network buffer
+ * @val: 4 bits tid value
+ */
+static inline void qdf_nbuf_set_tid_val(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_tid_val(buf, val);
+}
+
+/**
+ * qdf_nbuf_get_tid_val() - get  tid_val
+ * @buf: Network buffer
+ *
+ * Return: integer value[4 bits tid value]
+ */
+static inline uint8_t qdf_nbuf_get_tid_val(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_tid_val(buf);
+}
+
+/**
  * qdf_nbuf_set_frag_list() - set  frag list bit
  * @buf: Network buffer
  * @val: 0/1

@@ -2112,6 +2112,11 @@ enum hal_rx_reo_buf_type {
 		REO_DESTINATION_RING_7_REO_DEST_BUFFER_TYPE_MASK) >> \
 		REO_DESTINATION_RING_7_REO_DEST_BUFFER_TYPE_LSB)
 
+#define HAL_RX_REO_QUEUE_NUMBER_GET(reo_desc) (((*(((uint32_t *)reo_desc) + \
+		(REO_DESTINATION_RING_7_RECEIVE_QUEUE_NUMBER_OFFSET >> 2))) & \
+		REO_DESTINATION_RING_7_RECEIVE_QUEUE_NUMBER_MASK) >> \
+		REO_DESTINATION_RING_7_RECEIVE_QUEUE_NUMBER_LSB)
+
 /**
  * enum hal_reo_error_code: Error code describing the type of error detected
  *

@@ -440,7 +440,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
-	uint8_t tid = qdf_nbuf_get_priority(nbuf);
+	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
 	struct cdp_tid_rx_stats *tid_stats =
 		&ta_peer->vdev->pdev->stats.tid_stats.tid_rx_stats[tid];
 
@@ -1128,7 +1128,7 @@ void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
 	int64_t current_ts = qdf_ktime_to_ms(qdf_ktime_get());
 	uint32_t to_stack = qdf_nbuf_get_timedelta_ms(nbuf);
-	uint8_t tid = qdf_nbuf_get_priority(nbuf);
+	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
 	uint32_t interframe_delay =
 		(uint32_t)(current_ts - vdev->prev_rx_deliver_tstamp);
 
@@ -1164,7 +1164,7 @@ static inline int dp_rx_drop_nbuf_list(struct dp_pdev *pdev,
 	buf = buf_list;
 	while (buf) {
 		next_buf = qdf_nbuf_queue_next(buf);
-		tid = qdf_nbuf_get_priority(buf);
+		tid = qdf_nbuf_get_tid_val(buf);
 		stats = &pdev->stats.tid_stats.tid_rx_stats[tid];
 		stats->fail_cnt[INVALID_PEER_VDEV]++;
 		stats->delivered_to_stack--;
@@ -1427,7 +1427,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 
 	sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
 	mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
-	tid = hal_rx_mpdu_start_tid_get(soc->hal_soc, rx_tlv_hdr);
+	tid = qdf_nbuf_get_tid_val(nbuf);
 	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
 	reception_type = hal_rx_msdu_start_reception_type_get(soc->hal_soc,
 							      rx_tlv_hdr);
@@ -1888,6 +1888,9 @@ more_data:
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_SA_IS_VALID)
 			qdf_nbuf_set_sa_valid(rx_desc->nbuf, 1);
 
+		qdf_nbuf_set_tid_val(rx_desc->nbuf,
+				     HAL_RX_REO_QUEUE_NUMBER_GET(ring_desc));
+
 		QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_desc_info.msdu_len;
 
 		QDF_NBUF_CB_RX_CTX_ID(rx_desc->nbuf) = reo_ring_num;
@@ -1949,10 +1952,9 @@ done:
 	while (nbuf) {
 		next = nbuf->next;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
-		/* Get TID from first msdu per MPDU, save to skb->priority */
+		/* Get TID from struct cb->tid_val, save to tid */
 		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
-			tid = hal_rx_mpdu_start_tid_get(soc->hal_soc,
-							rx_tlv_hdr);
+			tid = qdf_nbuf_get_tid_val(nbuf);
 
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
