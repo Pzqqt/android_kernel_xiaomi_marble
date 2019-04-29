@@ -646,7 +646,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 qdf_export_symbol(wlan_objmgr_peer_try_get_ref);
 
 #ifdef WLAN_OBJMGR_REF_ID_DEBUG
-static void
+static QDF_STATUS
 wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
 				      wlan_objmgr_ref_dbgid id)
 {
@@ -661,19 +661,26 @@ wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
 		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg,
 					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_atomic_dec(&peer->peer_objmgr.ref_id_dbg[id]);
+	return QDF_STATUS_SUCCESS;
 }
 #else
-static inline void
+static QDF_STATUS
 wlan_objmgr_peer_release_debug_id_ref(struct wlan_objmgr_peer *peer,
-				      wlan_objmgr_ref_dbgid id) {}
+				      wlan_objmgr_ref_dbgid id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 				  wlan_objmgr_ref_dbgid id)
 {
+	QDF_STATUS status;
+
 	if (!peer) {
 		obj_mgr_err("peer obj is NULL for %d", id);
 		QDF_ASSERT(0);
@@ -690,7 +697,10 @@ void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 		WLAN_OBJMGR_BUG(0);
 		return;
 	}
-	wlan_objmgr_peer_release_debug_id_ref(peer, id);
+
+	status = wlan_objmgr_peer_release_debug_id_ref(peer, id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
 
 	/* Provide synchronization from the access to add peer
 	 * to logically deleted peer list.

@@ -848,6 +848,7 @@ void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 		wlan_objmgr_print_ref_ids(pdev->pdev_objmgr.ref_id_dbg,
 					  QDF_TRACE_LEVEL_FATAL);
 		WLAN_OBJMGR_BUG(0);
+		return;
 	}
 
 	if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_cnt)) {
