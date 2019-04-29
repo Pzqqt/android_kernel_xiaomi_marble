@@ -670,7 +670,7 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 		if (cstate->ds_cfg[i].scl3_cfg.enable) {
 			ds_in_use = true;
 			ds_outw += cstate->ds_cfg[i].scl3_cfg.dst_width;
-			ds_outh += cstate->ds_cfg[i].scl3_cfg.dst_height;
+			ds_outh = cstate->ds_cfg[i].scl3_cfg.dst_height;
 		}
 
 	/* if ds in use check wb roi against ds output dimensions */
