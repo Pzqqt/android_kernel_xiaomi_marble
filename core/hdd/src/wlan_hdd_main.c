@@ -9424,6 +9424,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	config->is_unit_test_framework_enabled =
 			cfg_get(psoc, CFG_ENABLE_UNIT_TEST_FRAMEWORK);
 	config->disable_channel = cfg_get(psoc, CFG_ENABLE_DISABLE_CHANNEL);
+	config->sar_version = cfg_get(psoc, CFG_SAR_VERSION);
 
 	hdd_init_vc_mode_cfg_bitmap(config, psoc);
 	hdd_init_runtime_pm(config, psoc);

@@ -10369,7 +10369,6 @@ hdd_convert_sarv1_to_sarv2(struct hdd_context *hdd_ctx,
 }
 
 #else /* WLAN_FEATURE_SARV1_TO_SARV2 */
-
 static bool
 hdd_convert_sarv1_to_sarv2(struct hdd_context *hdd_ctx,
 			   struct nlattr *tb[],
@@ -10587,7 +10586,8 @@ static int __wlan_hdd_set_sar_power_limits(struct wiphy *wiphy,
 		return -ENOMEM;
 
 	/* is special SAR V1 => SAR V2 logic enabled and applicable? */
-	if (hdd_convert_sarv1_to_sarv2(hdd_ctx, tb, sar_limit_cmd))
+	if (hdd_ctx->config->sar_version == 2 &&
+	    (hdd_convert_sarv1_to_sarv2(hdd_ctx, tb, sar_limit_cmd)))
 		goto send_sar_limits;
 
 	/* Vendor command manadates all SAR Specs in single call */

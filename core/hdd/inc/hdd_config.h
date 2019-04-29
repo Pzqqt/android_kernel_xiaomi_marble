@@ -1215,6 +1215,29 @@ struct dhcp_server {
 			0, \
 			"Enable/Disable to disable channels specified")
 
+/*
+ * <ini>
+ * gSarVersion - Used to specify SAR version
+ *
+ * @Min: 1
+ * @Max: 2
+ * Default: 1
+ *
+ * This ini is used to specify the SAR feature version.
+ * If value of this ini is set to 2, SAR version 2 will
+ * be used.
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAR_VERSION  CFG_INI_UINT( \
+			"gSarVersion", \
+			1, \
+			2, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Specify the SAR version")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
@@ -1250,5 +1273,6 @@ struct dhcp_server {
 	CFG(CFG_PROVISION_INTERFACE_POOL) \
 	CFG(CFG_TIMER_MULTIPLIER) \
 	CFG(CFG_HDD_DOT11_MODE) \
-	CFG(CFG_ENABLE_DISABLE_CHANNEL)
+	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
+	CFG(CFG_SAR_VERSION)
 #endif

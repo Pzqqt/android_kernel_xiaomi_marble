@@ -209,6 +209,7 @@ struct hdd_config {
 	uint32_t derived_intf_pool;
 	uint8_t enable_rtt_support;
 	uint32_t cfg_wmi_credit_cnt;
+	uint32_t sar_version;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
