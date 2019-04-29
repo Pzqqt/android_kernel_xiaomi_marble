@@ -1698,18 +1698,11 @@ static int wlan_hdd_pld_runtime_suspend(struct device *dev,
 static int wlan_hdd_pld_runtime_resume(struct device *dev,
 				       enum pld_bus_type bus_type)
 {
-	struct osif_psoc_sync *psoc_sync;
-	int errno;
-
-	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
-	if (errno)
-		return errno;
-
-	errno = wlan_hdd_runtime_resume(dev);
-
-	osif_psoc_sync_op_stop(psoc_sync);
-
-	return errno;
+	/* As opposite to suspend, Runtime PM resume can happen
+	 * synchronously during driver shutdown or idle shutown,
+	 * so remove PSOC sync protection here.
+	 */
+	return wlan_hdd_runtime_resume(dev);
 }
 #endif
 
