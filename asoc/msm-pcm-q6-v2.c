@@ -1934,9 +1934,9 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	chmixer_pspd->output_channel = ucontrol->value.integer.value[3];
 	chmixer_pspd->port_idx = ucontrol->value.integer.value[4];
 
-	if (chmixer_pspd->input_channel <= 0 ||
+	if (chmixer_pspd->input_channel < 0 ||
 		chmixer_pspd->input_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8 ||
-		chmixer_pspd->output_channel <= 0 ||
+		chmixer_pspd->output_channel < 0 ||
 		chmixer_pspd->output_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
 		pr_err("%s: Invalid channels, in %d, out %d\n",
 				__func__, chmixer_pspd->input_channel,
