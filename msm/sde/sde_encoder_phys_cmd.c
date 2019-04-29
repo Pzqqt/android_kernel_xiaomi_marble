@@ -254,13 +254,15 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
 	struct sde_encoder_phys_cmd *cmd_enc;
-	u32 event = 0;
+	u32 event = 0, scheduler_status = INVALID_CTL_STATUS;
+	struct sde_hw_ctl *ctl;
 
 	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_intf)
 		return;
 
 	SDE_ATRACE_BEGIN("rd_ptr_irq");
 	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
+	ctl = phys_enc->hw_ctl;
 
 	/**
 	 * signal only for master, when the ctl_start irq is
@@ -277,10 +279,13 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 				phys_enc->parent, phys_enc, event);
 	}
 
+	if (ctl && ctl->ops.get_scheduler_status)
+		scheduler_status = ctl->ops.get_scheduler_status(ctl);
+
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
 			phys_enc->hw_pp->idx - PINGPONG_0,
 			phys_enc->hw_intf->idx - INTF_0,
-			event, 0xfff);
+			event, scheduler_status, 0xfff);
 
 	if (phys_enc->parent_ops.handle_vblank_virt)
 		phys_enc->parent_ops.handle_vblank_virt(phys_enc->parent,
