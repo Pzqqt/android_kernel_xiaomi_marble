@@ -3138,7 +3138,7 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 }
 qdf_export_symbol(qdf_print_ctrl_register);
 
-#ifndef CONFIG_MCL
+#ifdef QDF_TRACE_PRINT_ENABLE
 void qdf_shared_print_ctrl_cleanup(void)
 {
 	qdf_print_ctrl_cleanup(qdf_pidx);
