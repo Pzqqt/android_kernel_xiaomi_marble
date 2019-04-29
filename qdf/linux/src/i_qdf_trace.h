@@ -29,6 +29,9 @@
 /* older kernels have a bug in kallsyms, so ensure module.h is included */
 #include <linux/module.h>
 #include <linux/kallsyms.h>
+#ifdef CONFIG_QCA_MINIDUMP
+#include <linux/minidump_tlv.h>
+#endif
 
 #if !defined(__printf)
 #define __printf(a, b)
@@ -337,4 +340,18 @@ static inline void __qdf_bug(void)
 #define __QDF_SYMBOL_LEN 1
 #endif
 
+#ifdef CONFIG_QCA_MINIDUMP
+static inline void
+__qdf_minidump_log(void *start_addr, size_t size, const char *name)
+{
+	if (fill_minidump_segments((uintptr_t)start_addr, size,
+	    QCA_WDT_LOG_DUMP_TYPE_WLAN_MOD, (char *)name) < 0)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+			"%s: failed to log %pK (%s)\n",
+			__func__, start_addr, name);
+}
+#else
+static inline void
+__qdf_minidump_log(void *start_addr, size_t size, const char *name) {}
+#endif
 #endif /* __I_QDF_TRACE_H */

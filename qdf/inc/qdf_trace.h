@@ -1386,4 +1386,16 @@ void qdf_logging_exit(void);
  */
 int qdf_sprint_symbol(char *buffer, void *addr);
 
+/**
+ * qdf_minidump_log() - Log memory address to be included in minidump
+ * @start_addr: Start address of the memory to be dumped
+ * @size: Size in bytes
+ * @name: String to identify this entry
+ */
+static inline
+void qdf_minidump_log(void *start_addr, size_t size, const char *name)
+{
+	__qdf_minidump_log(start_addr, size, name);
+}
+
 #endif /* __QDF_TRACE_H */
