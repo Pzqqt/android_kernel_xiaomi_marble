@@ -78,7 +78,6 @@
 #include <linux/semaphore.h>
 #include <linux/ctype.h>
 #include <linux/compat.h>
-#include <linux/reboot.h>
 #include <linux/ethtool.h>
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
@@ -193,7 +192,6 @@
 #define PANIC_ON_BUG_STR ""
 #endif
 
-bool g_is_system_reboot_triggered;
 int wlan_start_ret_val;
 static DECLARE_COMPLETION(wlan_start_comp);
 static unsigned int dev_num = 1;
@@ -324,7 +322,6 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 };
 
 struct notifier_block hdd_netdev_notifier;
-struct notifier_block system_reboot_notifier;
 
 struct sock *cesium_nl_srv_sock;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -860,27 +857,6 @@ static int hdd_netdev_notifier_call(struct notifier_block *nb,
 
 struct notifier_block hdd_netdev_notifier = {
 	.notifier_call = hdd_netdev_notifier_call,
-};
-
-static int system_reboot_notifier_call(struct notifier_block *nb,
-				       unsigned long msg_type, void *_unused)
-{
-	switch (msg_type) {
-	case SYS_DOWN:
-	case SYS_HALT:
-	case SYS_POWER_OFF:
-		g_is_system_reboot_triggered = true;
-		hdd_info("reboot, reason: %ld", msg_type);
-		break;
-	default:
-		break;
-	}
-
-	return NOTIFY_OK;
-}
-
-struct notifier_block system_reboot_notifier = {
-	.notifier_call = system_reboot_notifier_call,
 };
 
 /* variable to hold the insmod parameters */
@@ -7478,7 +7454,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		hdd_deinit_all_adapters(hdd_ctx, false);
 	}
 
-	unregister_reboot_notifier(&system_reboot_notifier);
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
 	qdf_dp_trace_deinit();
@@ -11883,19 +11858,13 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 		goto unregister_wiphy;
 	}
 
-	errno = register_reboot_notifier(&system_reboot_notifier);
-	if (errno) {
-		hdd_err("Failed to register reboot notifier; errno:%d", errno);
-		goto unregister_netdev;
-	}
-
 	wlan_hdd_update_11n_mode(hdd_ctx);
 
 	hdd_lpass_notify_wlan_version(hdd_ctx);
 
 	errno = hdd_register_notifiers(hdd_ctx);
 	if (errno)
-		goto unregister_reboot;
+		goto unregister_netdev;
 
 	status = wlansap_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
@@ -11911,9 +11880,6 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 
 unregister_notifiers:
 	hdd_unregister_notifiers(hdd_ctx);
-
-unregister_reboot:
-	unregister_reboot_notifier(&system_reboot_notifier);
 
 unregister_netdev:
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
@@ -13737,11 +13703,6 @@ static void hdd_driver_unload(void)
 
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
-
-	if (g_is_system_reboot_triggered) {
-		hdd_info("System rebooting; Skipping unload");
-		return;
-	}
 
 	if (hdd_ctx)
 		hdd_psoc_idle_timer_stop(hdd_ctx);
