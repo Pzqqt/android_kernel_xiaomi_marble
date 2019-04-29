@@ -1552,6 +1552,36 @@ void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 }
 
 /**
+ * pld_is_drv_connected() - Check if DRV subsystem is connected
+ * @dev: device structure
+ *
+ *  Return: 1 DRV is connected
+ *          0 DRV is not connected
+ *          Non zero failure code for errors
+ */
+int pld_is_drv_connected(struct device *dev)
+{
+	enum pld_bus_type type = pld_get_bus_type(dev);
+	int ret = 0;
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_is_drv_connected(dev);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
  * pld_socinfo_get_serial_number() - Get SOC serial number
  * @dev: device
  *

@@ -316,6 +316,11 @@ static inline void pld_pcie_get_msi_address(struct device *dev,
 	return;
 }
 
+static inline int pld_pcie_is_drv_connected(struct device *dev)
+{
+	return 0;
+}
+
 static inline bool pld_pcie_platform_driver_support(void)
 {
 	return false;
@@ -472,6 +477,11 @@ static inline void pld_pcie_get_msi_address(struct device *dev,
 					    uint32_t *msi_addr_high)
 {
 	cnss_get_msi_address(dev, msi_addr_low, msi_addr_high);
+}
+
+static inline int pld_pcie_is_drv_connected(struct device *dev)
+{
+	return cnss_pci_is_drv_connected(dev);
 }
 
 static inline bool pld_pcie_platform_driver_support(void)

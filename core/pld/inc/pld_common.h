@@ -625,6 +625,7 @@ int pld_get_user_msi_assignment(struct device *dev, char *user_name,
 int pld_get_msi_irq(struct device *dev, unsigned int vector);
 void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 			 uint32_t *msi_addr_high);
+int pld_is_drv_connected(struct device *dev);
 unsigned int pld_socinfo_get_serial_number(struct device *dev);
 int pld_is_qmi_disable(struct device *dev);
 int pld_is_fw_down(struct device *dev);
