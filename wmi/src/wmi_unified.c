@@ -2542,21 +2542,6 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->wmi_events = soc->wmi_events;
 	wmi_handle->services = soc->services;
 	wmi_handle->scn_handle = scn_handle;
-	if (param->enable_vdev_pdev_param_conversion) {
-		if (wmi_pdev_param_max > SIZE_MAX / sizeof(uint32_t))
-			goto error;
-		soc->pdev_param = qdf_mem_malloc(
-				wmi_pdev_param_max * sizeof(uint32_t));
-		if (!soc->pdev_param)
-			goto error;
-
-		if (wmi_vdev_param_max > SIZE_MAX / sizeof(uint32_t))
-			goto error;
-		soc->vdev_param = qdf_mem_malloc(
-				wmi_vdev_param_max * sizeof(uint32_t));
-		if (!soc->vdev_param)
-			goto error;
-	}
 	soc->scn_handle = scn_handle;
 	qdf_atomic_init(&wmi_handle->pending_cmds);
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
@@ -2607,14 +2592,6 @@ void *wmi_unified_attach(void *scn_handle,
 	return wmi_handle;
 
 error:
-	if (soc->pdev_param) {
-		qdf_mem_free(soc->pdev_param);
-		soc->pdev_param = NULL;
-	}
-	if (soc->vdev_param) {
-		qdf_mem_free(soc->vdev_param);
-		soc->vdev_param = NULL;
-	}
 	qdf_mem_free(soc);
 	qdf_mem_free(wmi_handle);
 
@@ -2666,16 +2643,6 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 		}
 	}
 	qdf_spinlock_destroy(&soc->ctx_lock);
-
-	if (soc->pdev_param) {
-		qdf_mem_free(soc->pdev_param);
-		soc->pdev_param = NULL;
-	}
-
-	if (soc->vdev_param) {
-		qdf_mem_free(soc->vdev_param);
-		soc->vdev_param = NULL;
-	}
 
 	if (soc->wmi_service_bitmap) {
 		qdf_mem_free(soc->wmi_service_bitmap);

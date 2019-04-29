@@ -66,6 +66,398 @@ static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
 				WMI_CONTROL_SVC_WMAC1,
 				WMI_CONTROL_SVC_WMAC2};
 
+#ifdef ENABLE_HOST_TO_TARGET_CONVERSION
+/*Populate peer_param array whose index as host id and
+ *value as target id
+ */
+static const uint32_t peer_param_tlv[] = {
+	[WMI_HOST_PEER_MIMO_PS_STATE] = WMI_PEER_MIMO_PS_STATE,
+	[WMI_HOST_PEER_AMPDU] = WMI_PEER_AMPDU,
+	[WMI_HOST_PEER_AUTHORIZE] =  WMI_PEER_AUTHORIZE,
+	[WMI_HOST_PEER_CHWIDTH] = WMI_PEER_CHWIDTH,
+	[WMI_HOST_PEER_NSS] = WMI_PEER_NSS,
+	[WMI_HOST_PEER_USE_4ADDR] =  WMI_PEER_USE_4ADDR,
+	[WMI_HOST_PEER_MEMBERSHIP] = WMI_PEER_MEMBERSHIP,
+	[WMI_HOST_PEER_USERPOS] = WMI_PEER_USERPOS,
+	[WMI_HOST_PEER_CRIT_PROTO_HINT_ENABLED] =
+				   WMI_PEER_CRIT_PROTO_HINT_ENABLED,
+	[WMI_HOST_PEER_TX_FAIL_CNT_THR] = WMI_PEER_TX_FAIL_CNT_THR,
+	[WMI_HOST_PEER_SET_HW_RETRY_CTS2S] = WMI_PEER_SET_HW_RETRY_CTS2S,
+	[WMI_HOST_PEER_IBSS_ATIM_WINDOW_LENGTH] =
+				  WMI_PEER_IBSS_ATIM_WINDOW_LENGTH,
+	[WMI_HOST_PEER_PHYMODE] = WMI_PEER_PHYMODE,
+	[WMI_HOST_PEER_USE_FIXED_PWR] = WMI_PEER_USE_FIXED_PWR,
+	[WMI_HOST_PEER_PARAM_FIXED_RATE] = WMI_PEER_PARAM_FIXED_RATE,
+	[WMI_HOST_PEER_SET_MU_WHITELIST] = WMI_PEER_SET_MU_WHITELIST,
+	[WMI_HOST_PEER_SET_MAC_TX_RATE] = WMI_PEER_SET_MAX_TX_RATE,
+	[WMI_HOST_PEER_SET_MIN_TX_RATE] = WMI_PEER_SET_MIN_TX_RATE,
+	[WMI_HOST_PEER_SET_DEFAULT_ROUTING] = WMI_PEER_SET_DEFAULT_ROUTING,
+	[WMI_HOST_PEER_NSS_VHT160] = WMI_PEER_NSS_VHT160,
+	[WMI_HOST_PEER_NSS_VHT80_80] = WMI_PEER_NSS_VHT80_80,
+	[WMI_HOST_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL] =
+				    WMI_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL,
+	[WMI_HOST_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL] =
+	     WMI_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL,
+	[WMI_HOST_PEER_PARAM_TXBF_SOUNDING_ENABLE] =
+				  WMI_PEER_PARAM_TXBF_SOUNDING_ENABLE,
+	[WMI_HOST_PEER_PARAM_MU_ENABLE] = WMI_PEER_PARAM_MU_ENABLE,
+	[WMI_HOST_PEER_PARAM_OFDMA_ENABLE] = WMI_PEER_PARAM_OFDMA_ENABLE,
+	[WMI_HOST_PEER_PARAM_ENABLE_FT] = WMI_PEER_PARAM_ENABLE_FT,
+};
+
+/**
+ * Populate pdev_param_value whose index is host param and value is target
+ * param
+ */
+static const uint32_t pdev_param_tlv[] = {
+	[wmi_pdev_param_tx_chain_mask] = WMI_PDEV_PARAM_TX_CHAIN_MASK,
+	[wmi_pdev_param_rx_chain_mask] = WMI_PDEV_PARAM_RX_CHAIN_MASK,
+	[wmi_pdev_param_txpower_limit2g] = WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
+	[wmi_pdev_param_txpower_limit5g] = WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
+	[wmi_pdev_param_txpower_scale] = WMI_PDEV_PARAM_TXPOWER_SCALE,
+	[wmi_pdev_param_beacon_gen_mode] = WMI_PDEV_PARAM_BEACON_GEN_MODE,
+	[wmi_pdev_param_beacon_tx_mode] = WMI_PDEV_PARAM_BEACON_TX_MODE,
+	[wmi_pdev_param_resmgr_offchan_mode] =
+				WMI_PDEV_PARAM_RESMGR_OFFCHAN_MODE,
+	[wmi_pdev_param_protection_mode] = WMI_PDEV_PARAM_PROTECTION_MODE,
+	[wmi_pdev_param_dynamic_bw] = WMI_PDEV_PARAM_DYNAMIC_BW,
+	[wmi_pdev_param_non_agg_sw_retry_th] =
+				WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH,
+	[wmi_pdev_param_agg_sw_retry_th] = WMI_PDEV_PARAM_AGG_SW_RETRY_TH,
+	[wmi_pdev_param_sta_kickout_th] = WMI_PDEV_PARAM_STA_KICKOUT_TH,
+	[wmi_pdev_param_ac_aggrsize_scaling] =
+					WMI_PDEV_PARAM_AC_AGGRSIZE_SCALING,
+	[wmi_pdev_param_ltr_enable] = WMI_PDEV_PARAM_LTR_ENABLE,
+	[wmi_pdev_param_ltr_ac_latency_be] =
+				WMI_PDEV_PARAM_LTR_AC_LATENCY_BE,
+	[wmi_pdev_param_ltr_ac_latency_bk] = WMI_PDEV_PARAM_LTR_AC_LATENCY_BK,
+	[wmi_pdev_param_ltr_ac_latency_vi] = WMI_PDEV_PARAM_LTR_AC_LATENCY_VI,
+	[wmi_pdev_param_ltr_ac_latency_vo] = WMI_PDEV_PARAM_LTR_AC_LATENCY_VO,
+	[wmi_pdev_param_ltr_ac_latency_timeout] =
+					WMI_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT,
+	[wmi_pdev_param_ltr_sleep_override] = WMI_PDEV_PARAM_LTR_SLEEP_OVERRIDE,
+	[wmi_pdev_param_ltr_rx_override] = WMI_PDEV_PARAM_LTR_RX_OVERRIDE,
+	[wmi_pdev_param_ltr_tx_activity_timeout] =
+					WMI_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT,
+	[wmi_pdev_param_l1ss_enable] = WMI_PDEV_PARAM_L1SS_ENABLE,
+	[wmi_pdev_param_dsleep_enable] = WMI_PDEV_PARAM_DSLEEP_ENABLE,
+	[wmi_pdev_param_pcielp_txbuf_flush] = WMI_PDEV_PARAM_PCIELP_TXBUF_FLUSH,
+	[wmi_pdev_param_pcielp_txbuf_watermark] =
+					 WMI_PDEV_PARAM_PCIELP_TXBUF_WATERMARK,
+	[wmi_pdev_param_pcielp_txbuf_tmo_en] =
+					 WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_EN,
+	[wmi_pdev_param_pcielp_txbuf_tmo_value] =
+				WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_VALUE,
+	[wmi_pdev_param_pdev_stats_update_period] =
+				WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,
+	[wmi_pdev_param_vdev_stats_update_period] =
+				WMI_PDEV_PARAM_VDEV_STATS_UPDATE_PERIOD,
+	[wmi_pdev_param_peer_stats_update_period] =
+				WMI_PDEV_PARAM_PEER_STATS_UPDATE_PERIOD,
+	[wmi_pdev_param_bcnflt_stats_update_period] =
+				WMI_PDEV_PARAM_BCNFLT_STATS_UPDATE_PERIOD,
+	[wmi_pdev_param_pmf_qos] = WMI_PDEV_PARAM_PMF_QOS,
+	[wmi_pdev_param_arp_ac_override] = WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
+	[wmi_pdev_param_dcs] = WMI_PDEV_PARAM_DCS,
+	[wmi_pdev_param_ani_enable] = WMI_PDEV_PARAM_ANI_ENABLE,
+	[wmi_pdev_param_ani_poll_period] = WMI_PDEV_PARAM_ANI_POLL_PERIOD,
+	[wmi_pdev_param_ani_listen_period] = WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,
+	[wmi_pdev_param_ani_ofdm_level] = WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
+	[wmi_pdev_param_ani_cck_level] = WMI_PDEV_PARAM_ANI_CCK_LEVEL,
+	[wmi_pdev_param_dyntxchain] = WMI_PDEV_PARAM_DYNTXCHAIN,
+	[wmi_pdev_param_proxy_sta] = WMI_PDEV_PARAM_PROXY_STA,
+	[wmi_pdev_param_idle_ps_config] = WMI_PDEV_PARAM_IDLE_PS_CONFIG,
+	[wmi_pdev_param_power_gating_sleep] = WMI_PDEV_PARAM_POWER_GATING_SLEEP,
+	[wmi_pdev_param_rfkill_enable] = WMI_PDEV_PARAM_RFKILL_ENABLE,
+	[wmi_pdev_param_burst_dur] = WMI_PDEV_PARAM_BURST_DUR,
+	[wmi_pdev_param_burst_enable] = WMI_PDEV_PARAM_BURST_ENABLE,
+	[wmi_pdev_param_hw_rfkill_config] = WMI_PDEV_PARAM_HW_RFKILL_CONFIG,
+	[wmi_pdev_param_low_power_rf_enable] =
+					WMI_PDEV_PARAM_LOW_POWER_RF_ENABLE,
+	[wmi_pdev_param_l1ss_track] = WMI_PDEV_PARAM_L1SS_TRACK,
+	[wmi_pdev_param_hyst_en] = WMI_PDEV_PARAM_HYST_EN,
+	[wmi_pdev_param_power_collapse_enable] =
+					WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE,
+	[wmi_pdev_param_led_sys_state] = WMI_PDEV_PARAM_LED_SYS_STATE,
+	[wmi_pdev_param_led_enable] = WMI_PDEV_PARAM_LED_ENABLE,
+	[wmi_pdev_param_audio_over_wlan_latency] =
+				WMI_PDEV_PARAM_AUDIO_OVER_WLAN_LATENCY,
+	[wmi_pdev_param_audio_over_wlan_enable] =
+				WMI_PDEV_PARAM_AUDIO_OVER_WLAN_ENABLE,
+	[wmi_pdev_param_whal_mib_stats_update_enable] =
+		WMI_PDEV_PARAM_WHAL_MIB_STATS_UPDATE_ENABLE,
+	[wmi_pdev_param_vdev_rate_stats_update_period] =
+		WMI_PDEV_PARAM_VDEV_RATE_STATS_UPDATE_PERIOD,
+	[wmi_pdev_param_cts_cbw] = WMI_PDEV_PARAM_CTS_CBW,
+	[wmi_pdev_param_wnts_config] = WMI_PDEV_PARAM_WNTS_CONFIG,
+	[wmi_pdev_param_adaptive_early_rx_enable] =
+		WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_ENABLE,
+	[wmi_pdev_param_adaptive_early_rx_min_sleep_slop] =
+		WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_MIN_SLEEP_SLOP,
+	[wmi_pdev_param_adaptive_early_rx_inc_dec_step] =
+		WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_INC_DEC_STEP,
+	[wmi_pdev_param_early_rx_fix_sleep_slop] =
+		WMI_PDEV_PARAM_EARLY_RX_FIX_SLEEP_SLOP,
+	[wmi_pdev_param_bmiss_based_adaptive_bto_enable] =
+		WMI_PDEV_PARAM_BMISS_BASED_ADAPTIVE_BTO_ENABLE,
+	[wmi_pdev_param_bmiss_bto_min_bcn_timeout] =
+		WMI_PDEV_PARAM_BMISS_BTO_MIN_BCN_TIMEOUT,
+	[wmi_pdev_param_bmiss_bto_inc_dec_step] =
+		WMI_PDEV_PARAM_BMISS_BTO_INC_DEC_STEP,
+	[wmi_pdev_param_bto_fix_bcn_timeout] =
+		WMI_PDEV_PARAM_BTO_FIX_BCN_TIMEOUT,
+	[wmi_pdev_param_ce_based_adaptive_bto_enable] =
+		WMI_PDEV_PARAM_CE_BASED_ADAPTIVE_BTO_ENABLE,
+	[wmi_pdev_param_ce_bto_combo_ce_value] =
+		WMI_PDEV_PARAM_CE_BTO_COMBO_CE_VALUE,
+	[wmi_pdev_param_tx_chain_mask_2g] = WMI_PDEV_PARAM_TX_CHAIN_MASK_2G,
+	[wmi_pdev_param_rx_chain_mask_2g] = WMI_PDEV_PARAM_RX_CHAIN_MASK_2G,
+	[wmi_pdev_param_tx_chain_mask_5g] = WMI_PDEV_PARAM_TX_CHAIN_MASK_5G,
+	[wmi_pdev_param_rx_chain_mask_5g] = WMI_PDEV_PARAM_RX_CHAIN_MASK_5G,
+	[wmi_pdev_param_tx_chain_mask_cck] = WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK,
+	[wmi_pdev_param_tx_chain_mask_1ss] = WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
+	[wmi_pdev_param_rx_filter] = WMI_PDEV_PARAM_RX_FILTER,
+	[wmi_pdev_set_mcast_to_ucast_tid] = WMI_PDEV_SET_MCAST_TO_UCAST_TID,
+	[wmi_pdev_param_mgmt_retry_limit] = WMI_PDEV_PARAM_MGMT_RETRY_LIMIT,
+	[wmi_pdev_param_aggr_burst] = WMI_PDEV_PARAM_AGGR_BURST,
+	[wmi_pdev_peer_sta_ps_statechg_enable] =
+		WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE,
+	[wmi_pdev_param_proxy_sta_mode] = WMI_PDEV_PARAM_PROXY_STA_MODE,
+	[wmi_pdev_param_mu_group_policy] = WMI_PDEV_PARAM_MU_GROUP_POLICY,
+	[wmi_pdev_param_noise_detection] = WMI_PDEV_PARAM_NOISE_DETECTION,
+	[wmi_pdev_param_noise_threshold] = WMI_PDEV_PARAM_NOISE_THRESHOLD,
+	[wmi_pdev_param_dpd_enable] = WMI_PDEV_PARAM_DPD_ENABLE,
+	[wmi_pdev_param_set_mcast_bcast_echo] =
+		WMI_PDEV_PARAM_SET_MCAST_BCAST_ECHO,
+	[wmi_pdev_param_atf_strict_sch] = WMI_PDEV_PARAM_ATF_STRICT_SCH,
+	[wmi_pdev_param_atf_sched_duration] = WMI_PDEV_PARAM_ATF_SCHED_DURATION,
+	[wmi_pdev_param_ant_plzn] = WMI_PDEV_PARAM_ANT_PLZN,
+	[wmi_pdev_param_sensitivity_level] = WMI_PDEV_PARAM_SENSITIVITY_LEVEL,
+	[wmi_pdev_param_signed_txpower_2g] = WMI_PDEV_PARAM_SIGNED_TXPOWER_2G,
+	[wmi_pdev_param_signed_txpower_5g] = WMI_PDEV_PARAM_SIGNED_TXPOWER_5G,
+	[wmi_pdev_param_enable_per_tid_amsdu] =
+			WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU,
+	[wmi_pdev_param_enable_per_tid_ampdu] =
+			WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU,
+	[wmi_pdev_param_cca_threshold] = WMI_PDEV_PARAM_CCA_THRESHOLD,
+	[wmi_pdev_param_rts_fixed_rate] = WMI_PDEV_PARAM_RTS_FIXED_RATE,
+	[wmi_pdev_param_cal_period] = WMI_UNAVAILABLE_PARAM,
+	[wmi_pdev_param_pdev_reset] = WMI_PDEV_PARAM_PDEV_RESET,
+	[wmi_pdev_param_wapi_mbssid_offset] = WMI_PDEV_PARAM_WAPI_MBSSID_OFFSET,
+	[wmi_pdev_param_arp_srcaddr] = WMI_PDEV_PARAM_ARP_DBG_SRCADDR,
+	[wmi_pdev_param_arp_dstaddr] = WMI_PDEV_PARAM_ARP_DBG_DSTADDR,
+	[wmi_pdev_param_txpower_decr_db] = WMI_PDEV_PARAM_TXPOWER_DECR_DB,
+	[wmi_pdev_param_rx_batchmode] = WMI_UNAVAILABLE_PARAM,
+	[wmi_pdev_param_packet_aggr_delay] = WMI_UNAVAILABLE_PARAM,
+	[wmi_pdev_param_atf_obss_noise_sch] =
+		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH,
+	[wmi_pdev_param_atf_obss_noise_scaling_factor] =
+		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR,
+	[wmi_pdev_param_cust_txpower_scale] = WMI_PDEV_PARAM_CUST_TXPOWER_SCALE,
+	[wmi_pdev_param_atf_dynamic_enable] = WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE,
+	[wmi_pdev_param_atf_ssid_group_policy] = WMI_UNAVAILABLE_PARAM,
+	[wmi_pdev_param_igmpmld_override] = WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE,
+	[wmi_pdev_param_igmpmld_tid] = WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE,
+	[wmi_pdev_param_antenna_gain] = WMI_PDEV_PARAM_ANTENNA_GAIN,
+	[wmi_pdev_param_block_interbss] = WMI_PDEV_PARAM_BLOCK_INTERBSS,
+	[wmi_pdev_param_set_disable_reset_cmdid] =
+			WMI_PDEV_PARAM_SET_DISABLE_RESET_CMDID,
+	[wmi_pdev_param_set_msdu_ttl_cmdid] = WMI_PDEV_PARAM_SET_MSDU_TTL_CMDID,
+	[wmi_pdev_param_txbf_sound_period_cmdid] =
+			WMI_PDEV_PARAM_TXBF_SOUND_PERIOD_CMDID,
+	[wmi_pdev_param_set_burst_mode_cmdid] =
+			WMI_PDEV_PARAM_SET_BURST_MODE_CMDID,
+	[wmi_pdev_param_en_stats] = WMI_PDEV_PARAM_EN_STATS,
+	[wmi_pdev_param_mesh_mcast_enable] = WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
+	[wmi_pdev_param_set_promisc_mode_cmdid] =
+				WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID,
+	[wmi_pdev_param_set_ppdu_duration_cmdid] =
+			WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID,
+	[wmi_pdev_param_remove_mcast2ucast_buffer] =
+		WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER,
+	[wmi_pdev_param_set_mcast2ucast_buffer] =
+		WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER,
+	[wmi_pdev_param_set_mcast2ucast_mode] =
+		WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE,
+	[wmi_pdev_param_smart_antenna_default_antenna] =
+		WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA,
+	[wmi_pdev_param_fast_channel_reset] =
+		WMI_PDEV_PARAM_FAST_CHANNEL_RESET,
+	[wmi_pdev_param_rx_decap_mode] = WMI_PDEV_PARAM_RX_DECAP_MODE,
+	[wmi_pdev_param_tx_ack_timeout] = WMI_PDEV_PARAM_ACK_TIMEOUT,
+	[wmi_pdev_param_cck_tx_enable] = WMI_PDEV_PARAM_CCK_TX_ENABLE,
+	[wmi_pdev_param_antenna_gain_half_db] =
+		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB,
+	[wmi_pdev_param_esp_indication_period] =
+				WMI_PDEV_PARAM_ESP_INDICATION_PERIOD,
+	[wmi_pdev_param_esp_ba_window] = WMI_PDEV_PARAM_ESP_BA_WINDOW,
+	[wmi_pdev_param_esp_airtime_fraction] =
+			WMI_PDEV_PARAM_ESP_AIRTIME_FRACTION,
+	[wmi_pdev_param_esp_ppdu_duration] = WMI_PDEV_PARAM_ESP_PPDU_DURATION,
+	[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_UL_RU26_ALLOWED,
+	[wmi_pdev_param_use_nol] = WMI_PDEV_PARAM_USE_NOL,
+	/* Trigger interval for all trigger types. */
+	[wmi_pdev_param_ul_trig_int] = WMI_PDEV_PARAM_SET_UL_BSR_TRIG_INTERVAL,
+	[wmi_pdev_param_sub_channel_marking] =
+					WMI_PDEV_PARAM_SUB_CHANNEL_MARKING,
+	[wmi_pdev_param_ul_ppdu_duration] = WMI_PDEV_PARAM_SET_UL_PPDU_DURATION,
+	[wmi_pdev_param_equal_ru_allocation_enable] =
+				WMI_PDEV_PARAM_EQUAL_RU_ALLOCATION_ENABLE,
+	[wmi_pdev_param_per_peer_prd_cfr_enable] =
+			WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE,
+};
+
+/**
+ * Populate vdev_param_value_tlv array whose index is host param
+ * and value is target param
+ */
+static const uint32_t vdev_param_tlv[] = {
+	[wmi_vdev_param_rts_threshold] = WMI_VDEV_PARAM_RTS_THRESHOLD,
+	[wmi_vdev_param_fragmentation_threshold] =
+			WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
+	[wmi_vdev_param_beacon_interval] = WMI_VDEV_PARAM_BEACON_INTERVAL,
+	[wmi_vdev_param_listen_interval] = WMI_VDEV_PARAM_LISTEN_INTERVAL,
+	[wmi_vdev_param_multicast_rate] = WMI_VDEV_PARAM_MULTICAST_RATE,
+	[wmi_vdev_param_mgmt_tx_rate] = WMI_VDEV_PARAM_MGMT_TX_RATE,
+	[wmi_vdev_param_slot_time] = WMI_VDEV_PARAM_SLOT_TIME,
+	[wmi_vdev_param_preamble] = WMI_VDEV_PARAM_PREAMBLE,
+	[wmi_vdev_param_swba_time] = WMI_VDEV_PARAM_SWBA_TIME,
+	[wmi_vdev_stats_update_period] = WMI_VDEV_STATS_UPDATE_PERIOD,
+	[wmi_vdev_pwrsave_ageout_time] = WMI_VDEV_PWRSAVE_AGEOUT_TIME,
+	[wmi_vdev_host_swba_interval] = WMI_VDEV_HOST_SWBA_INTERVAL,
+	[wmi_vdev_param_dtim_period] = WMI_VDEV_PARAM_DTIM_PERIOD,
+	[wmi_vdev_oc_scheduler_air_time_limit] =
+			WMI_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT,
+	[wmi_vdev_param_wds] = WMI_VDEV_PARAM_WDS,
+	[wmi_vdev_param_atim_window] = WMI_VDEV_PARAM_ATIM_WINDOW,
+	[wmi_vdev_param_bmiss_count_max] = WMI_VDEV_PARAM_BMISS_COUNT_MAX,
+	[wmi_vdev_param_bmiss_first_bcnt] = WMI_VDEV_PARAM_BMISS_FIRST_BCNT,
+	[wmi_vdev_param_bmiss_final_bcnt] = WMI_VDEV_PARAM_BMISS_FINAL_BCNT,
+	[wmi_vdev_param_feature_wmm] = WMI_VDEV_PARAM_FEATURE_WMM,
+	[wmi_vdev_param_chwidth] = WMI_VDEV_PARAM_CHWIDTH,
+	[wmi_vdev_param_chextoffset] = WMI_VDEV_PARAM_CHEXTOFFSET,
+	[wmi_vdev_param_disable_htprotection] =
+			WMI_VDEV_PARAM_DISABLE_HTPROTECTION,
+	[wmi_vdev_param_sta_quickkickout] = WMI_VDEV_PARAM_STA_QUICKKICKOUT,
+	[wmi_vdev_param_mgmt_rate] = WMI_VDEV_PARAM_MGMT_RATE,
+	[wmi_vdev_param_protection_mode] = WMI_VDEV_PARAM_PROTECTION_MODE,
+	[wmi_vdev_param_fixed_rate] = WMI_VDEV_PARAM_FIXED_RATE,
+	[wmi_vdev_param_sgi] = WMI_VDEV_PARAM_SGI,
+	[wmi_vdev_param_ldpc] = WMI_VDEV_PARAM_LDPC,
+	[wmi_vdev_param_tx_stbc] = WMI_VDEV_PARAM_TX_STBC,
+	[wmi_vdev_param_rx_stbc] = WMI_VDEV_PARAM_RX_STBC,
+	[wmi_vdev_param_intra_bss_fwd] = WMI_VDEV_PARAM_INTRA_BSS_FWD,
+	[wmi_vdev_param_def_keyid] = WMI_VDEV_PARAM_DEF_KEYID,
+	[wmi_vdev_param_nss] = WMI_VDEV_PARAM_NSS,
+	[wmi_vdev_param_bcast_data_rate] = WMI_VDEV_PARAM_BCAST_DATA_RATE,
+	[wmi_vdev_param_mcast_data_rate] = WMI_VDEV_PARAM_MCAST_DATA_RATE,
+	[wmi_vdev_param_mcast_indicate] = WMI_VDEV_PARAM_MCAST_INDICATE,
+	[wmi_vdev_param_dhcp_indicate] = WMI_VDEV_PARAM_DHCP_INDICATE,
+	[wmi_vdev_param_unknown_dest_indicate] =
+			WMI_VDEV_PARAM_UNKNOWN_DEST_INDICATE,
+	[wmi_vdev_param_ap_keepalive_min_idle_inactive_time_secs] =
+		WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
+	[wmi_vdev_param_ap_keepalive_max_idle_inactive_time_secs] =
+			WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
+	[wmi_vdev_param_ap_keepalive_max_unresponsive_time_secs] =
+			WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
+	[wmi_vdev_param_ap_enable_nawds] = WMI_VDEV_PARAM_AP_ENABLE_NAWDS,
+	[wmi_vdev_param_enable_rtscts] = WMI_VDEV_PARAM_ENABLE_RTSCTS,
+	[wmi_vdev_param_txbf] = WMI_VDEV_PARAM_TXBF,
+	[wmi_vdev_param_packet_powersave] = WMI_VDEV_PARAM_PACKET_POWERSAVE,
+	[wmi_vdev_param_drop_unencry] = WMI_VDEV_PARAM_DROP_UNENCRY,
+	[wmi_vdev_param_tx_encap_type] = WMI_VDEV_PARAM_TX_ENCAP_TYPE,
+	[wmi_vdev_param_ap_detect_out_of_sync_sleeping_sta_time_secs] =
+		WMI_VDEV_PARAM_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS,
+	[wmi_vdev_param_early_rx_adjust_enable] =
+			WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE,
+	[wmi_vdev_param_early_rx_tgt_bmiss_num] =
+		WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM,
+	[wmi_vdev_param_early_rx_bmiss_sample_cycle] =
+		WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE,
+	[wmi_vdev_param_early_rx_slop_step] = WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP,
+	[wmi_vdev_param_early_rx_init_slop] = WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP,
+	[wmi_vdev_param_early_rx_adjust_pause] =
+		WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE,
+	[wmi_vdev_param_tx_pwrlimit] = WMI_VDEV_PARAM_TX_PWRLIMIT,
+	[wmi_vdev_param_snr_num_for_cal] = WMI_VDEV_PARAM_SNR_NUM_FOR_CAL,
+	[wmi_vdev_param_roam_fw_offload] = WMI_VDEV_PARAM_ROAM_FW_OFFLOAD,
+	[wmi_vdev_param_enable_rmc] = WMI_VDEV_PARAM_ENABLE_RMC,
+	[wmi_vdev_param_ibss_max_bcn_lost_ms] =
+			WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
+	[wmi_vdev_param_max_rate] = WMI_VDEV_PARAM_MAX_RATE,
+	[wmi_vdev_param_early_rx_drift_sample] =
+			WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE,
+	[wmi_vdev_param_set_ibss_tx_fail_cnt_thr] =
+			WMI_VDEV_PARAM_SET_IBSS_TX_FAIL_CNT_THR,
+	[wmi_vdev_param_ebt_resync_timeout] =
+			WMI_VDEV_PARAM_EBT_RESYNC_TIMEOUT,
+	[wmi_vdev_param_aggr_trig_event_enable] =
+			WMI_VDEV_PARAM_AGGR_TRIG_EVENT_ENABLE,
+	[wmi_vdev_param_is_ibss_power_save_allowed] =
+			WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED,
+	[wmi_vdev_param_is_power_collapse_allowed] =
+			WMI_VDEV_PARAM_IS_POWER_COLLAPSE_ALLOWED,
+	[wmi_vdev_param_is_awake_on_txrx_enabled] =
+			WMI_VDEV_PARAM_IS_AWAKE_ON_TXRX_ENABLED,
+	[wmi_vdev_param_inactivity_cnt] = WMI_VDEV_PARAM_INACTIVITY_CNT,
+	[wmi_vdev_param_txsp_end_inactivity_time_ms] =
+			WMI_VDEV_PARAM_TXSP_END_INACTIVITY_TIME_MS,
+	[wmi_vdev_param_dtim_policy] = WMI_VDEV_PARAM_DTIM_POLICY,
+	[wmi_vdev_param_ibss_ps_warmup_time_secs] =
+			WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS,
+	[wmi_vdev_param_ibss_ps_1rx_chain_in_atim_window_enable] =
+		WMI_VDEV_PARAM_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE,
+	[wmi_vdev_param_rx_leak_window] = WMI_VDEV_PARAM_RX_LEAK_WINDOW,
+	[wmi_vdev_param_stats_avg_factor] =
+			WMI_VDEV_PARAM_STATS_AVG_FACTOR,
+	[wmi_vdev_param_disconnect_th] = WMI_VDEV_PARAM_DISCONNECT_TH,
+	[wmi_vdev_param_rtscts_rate] = WMI_VDEV_PARAM_RTSCTS_RATE,
+	[wmi_vdev_param_mcc_rtscts_protection_enable] =
+			WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE,
+	[wmi_vdev_param_mcc_broadcast_probe_enable] =
+			WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE,
+	[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER,
+	[wmi_vdev_param_beacon_rate] = WMI_VDEV_PARAM_BEACON_RATE,
+	[wmi_vdev_param_rx_decap_type] = WMI_VDEV_PARAM_RX_DECAP_TYPE,
+	[wmi_vdev_param_he_dcm_enable] = WMI_VDEV_PARAM_HE_DCM,
+	[wmi_vdev_param_he_range_ext_enable] = WMI_VDEV_PARAM_HE_RANGE_EXT,
+	[wmi_vdev_param_he_bss_color] = WMI_VDEV_PARAM_BSS_COLOR,
+	[wmi_vdev_param_set_hemu_mode] = WMI_VDEV_PARAM_SET_HEMU_MODE,
+	[wmi_vdev_param_set_he_sounding_mode] =
+			WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE,
+	[wmi_vdev_param_set_heop] = WMI_VDEV_PARAM_HEOPS_0_31,
+	[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP,
+	[wmi_vdev_param_dtim_enable_cts] = WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
+	[wmi_vdev_param_atf_ssid_sched_policy] =
+			WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,
+	[wmi_vdev_param_disable_dyn_bw_rts] = WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,
+	[wmi_vdev_param_mcast2ucast_set] = WMI_VDEV_PARAM_MCAST2UCAST_SET,
+	[wmi_vdev_param_rc_num_retries] = WMI_VDEV_PARAM_RC_NUM_RETRIES,
+	[wmi_vdev_param_cabq_maxdur] = WMI_VDEV_PARAM_CABQ_MAXDUR,
+	[wmi_vdev_param_mfptest_set] = WMI_VDEV_PARAM_MFPTEST_SET,
+	[wmi_vdev_param_rts_fixed_rate] = WMI_VDEV_PARAM_RTS_FIXED_RATE,
+	[wmi_vdev_param_vht_sgimask] = WMI_VDEV_PARAM_VHT_SGIMASK,
+	[wmi_vdev_param_vht80_ratemask] = WMI_VDEV_PARAM_VHT80_RATEMASK,
+	[wmi_vdev_param_proxy_sta] = WMI_VDEV_PARAM_PROXY_STA,
+	[wmi_vdev_param_bw_nss_ratemask] = WMI_VDEV_PARAM_BW_NSS_RATEMASK,
+	[wmi_vdev_param_set_he_ltf] = WMI_VDEV_PARAM_HE_LTF,
+	[wmi_vdev_param_disable_cabq] = WMI_VDEV_PARAM_DISABLE_CABQ,
+	[wmi_vdev_param_rate_dropdown_bmap] = WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP,
+	[wmi_vdev_param_set_ba_mode] = WMI_VDEV_PARAM_BA_MODE,
+	[wmi_vdev_param_capabilities] = WMI_VDEV_PARAM_CAPABILITIES,
+	[wmi_vdev_param_autorate_misc_cfg] = WMI_VDEV_PARAM_AUTORATE_MISC_CFG,
+	[wmi_vdev_param_ul_shortgi] = WMI_VDEV_PARAM_UL_GI,
+	[wmi_vdev_param_ul_he_ltf] = WMI_VDEV_PARAM_UL_HE_LTF,
+	[wmi_vdev_param_ul_nss] = WMI_VDEV_PARAM_UL_NSS,
+	[wmi_vdev_param_ul_ppdu_bw] = WMI_VDEV_PARAM_UL_PPDU_BW,
+	[wmi_vdev_param_ul_ldpc] = WMI_VDEV_PARAM_UL_LDPC,
+	[wmi_vdev_param_ul_stbc] = WMI_VDEV_PARAM_UL_STBC,
+	[wmi_vdev_param_ul_fixed_rate] = WMI_VDEV_PARAM_UL_FIXED_RATE,
+	[wmi_vdev_param_rawmode_open_war] = WMI_VDEV_PARAM_RAW_IS_ENCRYPTED,
+};
+#endif
+
 /**
  * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
  *	   host to target defines.
@@ -718,24 +1110,6 @@ static QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 }
 
 /**
- * convert_host_peer_id_to_target_id_tlv - convert host peer param_id
- * to target id.
- * @targ_paramid: Target parameter id to hold the result.
- * @peer_param_id: host param id.
- *
- * Return: QDF_STATUS_SUCCESS for success
- *	 QDF_STATUS_E_NOSUPPORT when the param_id in not supported in tareget
- */
-#ifdef CONFIG_MCL
-static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
-		uint32_t *targ_paramid,
-		uint32_t peer_param_id)
-{
-	*targ_paramid = peer_param_id;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * crash_on_send_peer_rx_reorder_queue_remove_cmd() - crash on reorder queue cmd
  *
  * On MCL side, we are suspecting this cmd to trigger drop of ARP
@@ -745,110 +1119,41 @@ static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
  *
  * Return: None
  */
+#ifdef CONFIG_MCL
 static void crash_on_send_peer_rx_reorder_queue_remove_cmd(void)
 {
 	QDF_BUG(0);
 }
 #else
-static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
-		uint32_t *targ_paramid,
-		uint32_t peer_param_id)
-{
-	switch (peer_param_id) {
-	case WMI_HOST_PEER_MIMO_PS_STATE:
-		*targ_paramid = WMI_PEER_MIMO_PS_STATE;
-		break;
-	case WMI_HOST_PEER_AMPDU:
-		*targ_paramid = WMI_PEER_AMPDU;
-		break;
-	case WMI_HOST_PEER_AUTHORIZE:
-		*targ_paramid = WMI_PEER_AUTHORIZE;
-		break;
-	case WMI_HOST_PEER_CHWIDTH:
-		*targ_paramid = WMI_PEER_CHWIDTH;
-		break;
-	case WMI_HOST_PEER_NSS:
-		*targ_paramid = WMI_PEER_NSS;
-		break;
-	case WMI_HOST_PEER_USE_4ADDR:
-		*targ_paramid = WMI_PEER_USE_4ADDR;
-		break;
-	case WMI_HOST_PEER_MEMBERSHIP:
-		*targ_paramid = WMI_PEER_MEMBERSHIP;
-		break;
-	case WMI_HOST_PEER_USERPOS:
-		*targ_paramid = WMI_PEER_USERPOS;
-		break;
-	case WMI_HOST_PEER_CRIT_PROTO_HINT_ENABLED:
-		*targ_paramid = WMI_PEER_CRIT_PROTO_HINT_ENABLED;
-		break;
-	case WMI_HOST_PEER_TX_FAIL_CNT_THR:
-		*targ_paramid = WMI_PEER_TX_FAIL_CNT_THR;
-		break;
-	case WMI_HOST_PEER_SET_HW_RETRY_CTS2S:
-		*targ_paramid = WMI_PEER_SET_HW_RETRY_CTS2S;
-		break;
-	case WMI_HOST_PEER_IBSS_ATIM_WINDOW_LENGTH:
-		*targ_paramid = WMI_PEER_IBSS_ATIM_WINDOW_LENGTH;
-		break;
-	case WMI_HOST_PEER_PHYMODE:
-		*targ_paramid = WMI_PEER_PHYMODE;
-		break;
-	case WMI_HOST_PEER_USE_FIXED_PWR:
-		*targ_paramid = WMI_PEER_USE_FIXED_PWR;
-		break;
-	case WMI_HOST_PEER_PARAM_FIXED_RATE:
-		*targ_paramid = WMI_PEER_PARAM_FIXED_RATE;
-		break;
-	case WMI_HOST_PEER_SET_MU_WHITELIST:
-		*targ_paramid = WMI_PEER_SET_MU_WHITELIST;
-		break;
-	case WMI_HOST_PEER_SET_MAC_TX_RATE:
-		*targ_paramid = WMI_PEER_SET_MAX_TX_RATE;
-		break;
-	case WMI_HOST_PEER_SET_MIN_TX_RATE:
-		*targ_paramid = WMI_PEER_SET_MIN_TX_RATE;
-		break;
-	case WMI_HOST_PEER_SET_DEFAULT_ROUTING:
-		*targ_paramid = WMI_PEER_SET_DEFAULT_ROUTING;
-		break;
-	case WMI_HOST_PEER_NSS_VHT160:
-		*targ_paramid = WMI_PEER_NSS_VHT160;
-		break;
-	case WMI_HOST_PEER_NSS_VHT80_80:
-		*targ_paramid = WMI_PEER_NSS_VHT80_80;
-		break;
-	case WMI_HOST_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL:
-		*targ_paramid = WMI_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL;
-		break;
-	case WMI_HOST_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL:
-		*targ_paramid = WMI_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL;
-		break;
-	case WMI_HOST_PEER_PARAM_TXBF_SOUNDING_ENABLE:
-		*targ_paramid = WMI_PEER_PARAM_TXBF_SOUNDING_ENABLE;
-		break;
-	case WMI_HOST_PEER_PARAM_MU_ENABLE:
-		*targ_paramid = WMI_PEER_PARAM_MU_ENABLE;
-		break;
-	case WMI_HOST_PEER_PARAM_OFDMA_ENABLE:
-		*targ_paramid = WMI_PEER_PARAM_OFDMA_ENABLE;
-		break;
-	case WMI_HOST_PEER_PARAM_ENABLE_FT:
-		*targ_paramid = WMI_PEER_PARAM_ENABLE_FT;
-		break;
-	default:
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 static void crash_on_send_peer_rx_reorder_queue_remove_cmd(void)
 {
 	/* No-OP */
 }
-
 #endif
+
+/**
+ * convert_host_peer_param_id_to_target_id_tlv - convert host peer param_id
+ * to target id.
+ * @peer_param_id: host param id.
+ *
+ * Return: Target param id.
+ */
+#ifdef ENABLE_HOST_TO_TARGET_CONVERSION
+static inline uint32_t convert_host_peer_param_id_to_target_id_tlv(
+		uint32_t peer_param_id)
+{
+	if (peer_param_id < QDF_ARRAY_SIZE(peer_param_tlv))
+		return peer_param_tlv[peer_param_id];
+	return WMI_UNAVAILABLE_PARAM;
+}
+#else
+static inline uint32_t convert_host_peer_param_id_to_target_id_tlv(
+		uint32_t peer_param_id)
+{
+	return peer_param_id;
+}
+#endif
+
 /**
  * send_peer_param_cmd_tlv() - set peer parameter in fw
  * @wmi: wmi handle
@@ -866,9 +1171,11 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 	int32_t err;
 	uint32_t param_id;
 
-	if (convert_host_peer_id_to_target_id_tlv(&param_id,
-				param->param_id) != QDF_STATUS_SUCCESS)
+	param_id = convert_host_peer_param_id_to_target_id_tlv(param->param_id);
+	if (param_id == WMI_UNAVAILABLE_PARAM) {
+		WMI_LOGW("%s: Unavailable param %d", __func__, param->param_id);
 		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	buf = wmi_buf_alloc(wmi, sizeof(*cmd));
 	if (!buf)
@@ -1207,17 +1514,19 @@ send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
-static inline uint32_t convert_host_pdev_param_tlv(wmi_unified_t wmi_handle,
-				uint32_t host_param)
+#ifdef ENABLE_HOST_TO_TARGET_CONVERSION
+static inline uint32_t convert_host_pdev_param_tlv(uint32_t host_param)
 {
-	if (wmi_handle->soc->pdev_param) {
-		if (host_param < wmi_pdev_param_max)
-			return wmi_handle->soc->pdev_param[host_param];
-		return WMI_UNAVAILABLE_PARAM;
-	}
-
+	if (host_param < QDF_ARRAY_SIZE(pdev_param_tlv))
+		return pdev_param_tlv[host_param];
+	return WMI_UNAVAILABLE_PARAM;
+}
+#else
+static inline uint32_t convert_host_pdev_param_tlv(uint32_t host_param)
+{
 	return host_param;
 }
+#endif
 
 /**
  * send_pdev_param_cmd_tlv() - set pdev parameters
@@ -1238,7 +1547,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 	uint16_t len = sizeof(*cmd);
 	uint32_t pdev_param;
 
-	pdev_param = convert_host_pdev_param_tlv(wmi_handle, param->param_id);
+	pdev_param = convert_host_pdev_param_tlv(param->param_id);
 	if (pdev_param == WMI_UNAVAILABLE_PARAM) {
 		WMI_LOGW("%s: Unavailable param %d",
 				__func__, param->param_id);
@@ -1594,17 +1903,19 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
-static inline uint32_t convert_host_vdev_param_tlv(wmi_unified_t wmi_handle,
-				uint32_t host_param)
+#ifdef ENABLE_HOST_TO_TARGET_CONVERSION
+static inline uint32_t convert_host_vdev_param_tlv(uint32_t host_param)
 {
-	if (wmi_handle->soc->vdev_param) {
-		if (host_param < wmi_vdev_param_max)
-			return wmi_handle->soc->vdev_param[host_param];
-		return WMI_UNAVAILABLE_PARAM;
-	}
-
+	if (host_param < QDF_ARRAY_SIZE(vdev_param_tlv))
+		return vdev_param_tlv[host_param];
+	return WMI_UNAVAILABLE_PARAM;
+}
+#else
+static inline uint32_t convert_host_vdev_param_tlv(uint32_t host_param)
+{
 	return host_param;
 }
+#endif
 
 /**
  *  send_vdev_set_param_cmd_tlv() - WMI vdev set parameter function
@@ -1623,7 +1934,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 	uint16_t len = sizeof(*cmd);
 	uint32_t vdev_param;
 
-	vdev_param = convert_host_vdev_param_tlv(wmi_handle, param->param_id);
+	vdev_param = convert_host_vdev_param_tlv(param->param_id);
 	if (vdev_param == WMI_UNAVAILABLE_PARAM) {
 		WMI_LOGW("%s:Vdev param %d not available", __func__,
 				param->param_id);
@@ -12156,471 +12467,6 @@ static void populate_tlv_service(uint32_t *wmi_service)
 }
 
 /**
- * populate_pdev_param_tlv() - populates pdev params
- *
- * @param pdev_param: Pointer to hold pdev params
- * Return: None
- */
-static void populate_pdev_param_tlv(uint32_t *pdev_param)
-{
-	pdev_param[wmi_pdev_param_tx_chain_mask] = WMI_PDEV_PARAM_TX_CHAIN_MASK;
-	pdev_param[wmi_pdev_param_rx_chain_mask] = WMI_PDEV_PARAM_RX_CHAIN_MASK;
-	pdev_param[wmi_pdev_param_txpower_limit2g] =
-				WMI_PDEV_PARAM_TXPOWER_LIMIT2G;
-	pdev_param[wmi_pdev_param_txpower_limit5g] =
-				WMI_PDEV_PARAM_TXPOWER_LIMIT5G;
-	pdev_param[wmi_pdev_param_txpower_scale] = WMI_PDEV_PARAM_TXPOWER_SCALE;
-	pdev_param[wmi_pdev_param_beacon_gen_mode] =
-				WMI_PDEV_PARAM_BEACON_GEN_MODE;
-	pdev_param[wmi_pdev_param_beacon_tx_mode] =
-				WMI_PDEV_PARAM_BEACON_TX_MODE;
-	pdev_param[wmi_pdev_param_resmgr_offchan_mode] =
-				WMI_PDEV_PARAM_RESMGR_OFFCHAN_MODE;
-	pdev_param[wmi_pdev_param_protection_mode] =
-				WMI_PDEV_PARAM_PROTECTION_MODE;
-	pdev_param[wmi_pdev_param_dynamic_bw] = WMI_PDEV_PARAM_DYNAMIC_BW;
-	pdev_param[wmi_pdev_param_non_agg_sw_retry_th] =
-				WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
-	pdev_param[wmi_pdev_param_agg_sw_retry_th] =
-				WMI_PDEV_PARAM_AGG_SW_RETRY_TH;
-	pdev_param[wmi_pdev_param_sta_kickout_th] =
-				WMI_PDEV_PARAM_STA_KICKOUT_TH;
-	pdev_param[wmi_pdev_param_ac_aggrsize_scaling] =
-				WMI_PDEV_PARAM_AC_AGGRSIZE_SCALING;
-	pdev_param[wmi_pdev_param_ltr_enable] = WMI_PDEV_PARAM_LTR_ENABLE;
-	pdev_param[wmi_pdev_param_ltr_ac_latency_be] =
-				WMI_PDEV_PARAM_LTR_AC_LATENCY_BE;
-	pdev_param[wmi_pdev_param_ltr_ac_latency_bk] =
-				WMI_PDEV_PARAM_LTR_AC_LATENCY_BK;
-	pdev_param[wmi_pdev_param_ltr_ac_latency_vi] =
-				WMI_PDEV_PARAM_LTR_AC_LATENCY_VI;
-	pdev_param[wmi_pdev_param_ltr_ac_latency_vo] =
-				WMI_PDEV_PARAM_LTR_AC_LATENCY_VO;
-	pdev_param[wmi_pdev_param_ltr_ac_latency_timeout] =
-				WMI_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT;
-	pdev_param[wmi_pdev_param_ltr_sleep_override] =
-				WMI_PDEV_PARAM_LTR_SLEEP_OVERRIDE;
-	pdev_param[wmi_pdev_param_ltr_rx_override] =
-				WMI_PDEV_PARAM_LTR_RX_OVERRIDE;
-	pdev_param[wmi_pdev_param_ltr_tx_activity_timeout] =
-				WMI_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT;
-	pdev_param[wmi_pdev_param_l1ss_enable] = WMI_PDEV_PARAM_L1SS_ENABLE;
-	pdev_param[wmi_pdev_param_dsleep_enable] = WMI_PDEV_PARAM_DSLEEP_ENABLE;
-	pdev_param[wmi_pdev_param_pcielp_txbuf_flush] =
-				WMI_PDEV_PARAM_PCIELP_TXBUF_FLUSH;
-	pdev_param[wmi_pdev_param_pcielp_txbuf_watermark] =
-				WMI_PDEV_PARAM_PCIELP_TXBUF_WATERMARK;
-	pdev_param[wmi_pdev_param_pcielp_txbuf_tmo_en] =
-				WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_EN;
-	pdev_param[wmi_pdev_param_pcielp_txbuf_tmo_value] =
-				WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_VALUE;
-	pdev_param[wmi_pdev_param_pdev_stats_update_period] =
-				WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD;
-	pdev_param[wmi_pdev_param_vdev_stats_update_period] =
-				WMI_PDEV_PARAM_VDEV_STATS_UPDATE_PERIOD;
-	pdev_param[wmi_pdev_param_peer_stats_update_period] =
-				WMI_PDEV_PARAM_PEER_STATS_UPDATE_PERIOD;
-	pdev_param[wmi_pdev_param_bcnflt_stats_update_period] =
-				WMI_PDEV_PARAM_BCNFLT_STATS_UPDATE_PERIOD;
-	pdev_param[wmi_pdev_param_pmf_qos] = WMI_PDEV_PARAM_PMF_QOS;
-	pdev_param[wmi_pdev_param_arp_ac_override] =
-				WMI_PDEV_PARAM_ARP_AC_OVERRIDE;
-	pdev_param[wmi_pdev_param_dcs] = WMI_PDEV_PARAM_DCS;
-	pdev_param[wmi_pdev_param_ani_enable] = WMI_PDEV_PARAM_ANI_ENABLE;
-	pdev_param[wmi_pdev_param_ani_poll_period] =
-				WMI_PDEV_PARAM_ANI_POLL_PERIOD;
-	pdev_param[wmi_pdev_param_ani_listen_period] =
-				WMI_PDEV_PARAM_ANI_LISTEN_PERIOD;
-	pdev_param[wmi_pdev_param_ani_ofdm_level] =
-				WMI_PDEV_PARAM_ANI_OFDM_LEVEL;
-	pdev_param[wmi_pdev_param_ani_cck_level] = WMI_PDEV_PARAM_ANI_CCK_LEVEL;
-	pdev_param[wmi_pdev_param_dyntxchain] = WMI_PDEV_PARAM_DYNTXCHAIN;
-	pdev_param[wmi_pdev_param_proxy_sta] = WMI_PDEV_PARAM_PROXY_STA;
-	pdev_param[wmi_pdev_param_idle_ps_config] =
-				WMI_PDEV_PARAM_IDLE_PS_CONFIG;
-	pdev_param[wmi_pdev_param_power_gating_sleep] =
-				WMI_PDEV_PARAM_POWER_GATING_SLEEP;
-	pdev_param[wmi_pdev_param_rfkill_enable] = WMI_PDEV_PARAM_RFKILL_ENABLE;
-	pdev_param[wmi_pdev_param_burst_dur] = WMI_PDEV_PARAM_BURST_DUR;
-	pdev_param[wmi_pdev_param_burst_enable] = WMI_PDEV_PARAM_BURST_ENABLE;
-	pdev_param[wmi_pdev_param_hw_rfkill_config] =
-				WMI_PDEV_PARAM_HW_RFKILL_CONFIG;
-	pdev_param[wmi_pdev_param_low_power_rf_enable] =
-				WMI_PDEV_PARAM_LOW_POWER_RF_ENABLE;
-	pdev_param[wmi_pdev_param_l1ss_track] = WMI_PDEV_PARAM_L1SS_TRACK;
-	pdev_param[wmi_pdev_param_hyst_en] = WMI_PDEV_PARAM_HYST_EN;
-	pdev_param[wmi_pdev_param_power_collapse_enable] =
-				WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE;
-	pdev_param[wmi_pdev_param_led_sys_state] = WMI_PDEV_PARAM_LED_SYS_STATE;
-	pdev_param[wmi_pdev_param_led_enable] = WMI_PDEV_PARAM_LED_ENABLE;
-	pdev_param[wmi_pdev_param_audio_over_wlan_latency] =
-				WMI_PDEV_PARAM_AUDIO_OVER_WLAN_LATENCY;
-	pdev_param[wmi_pdev_param_audio_over_wlan_enable] =
-				WMI_PDEV_PARAM_AUDIO_OVER_WLAN_ENABLE;
-	pdev_param[wmi_pdev_param_whal_mib_stats_update_enable] =
-				WMI_PDEV_PARAM_WHAL_MIB_STATS_UPDATE_ENABLE;
-	pdev_param[wmi_pdev_param_vdev_rate_stats_update_period] =
-				WMI_PDEV_PARAM_VDEV_RATE_STATS_UPDATE_PERIOD;
-	pdev_param[wmi_pdev_param_cts_cbw] = WMI_PDEV_PARAM_CTS_CBW;
-	pdev_param[wmi_pdev_param_wnts_config] = WMI_PDEV_PARAM_WNTS_CONFIG;
-	pdev_param[wmi_pdev_param_adaptive_early_rx_enable] =
-				WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_ENABLE;
-	pdev_param[wmi_pdev_param_adaptive_early_rx_min_sleep_slop] =
-				WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_MIN_SLEEP_SLOP;
-	pdev_param[wmi_pdev_param_adaptive_early_rx_inc_dec_step] =
-				WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_INC_DEC_STEP;
-	pdev_param[wmi_pdev_param_early_rx_fix_sleep_slop] =
-				WMI_PDEV_PARAM_EARLY_RX_FIX_SLEEP_SLOP;
-	pdev_param[wmi_pdev_param_bmiss_based_adaptive_bto_enable] =
-				WMI_PDEV_PARAM_BMISS_BASED_ADAPTIVE_BTO_ENABLE;
-	pdev_param[wmi_pdev_param_bmiss_bto_min_bcn_timeout] =
-				WMI_PDEV_PARAM_BMISS_BTO_MIN_BCN_TIMEOUT;
-	pdev_param[wmi_pdev_param_bmiss_bto_inc_dec_step] =
-				WMI_PDEV_PARAM_BMISS_BTO_INC_DEC_STEP;
-	pdev_param[wmi_pdev_param_bto_fix_bcn_timeout] =
-				WMI_PDEV_PARAM_BTO_FIX_BCN_TIMEOUT;
-	pdev_param[wmi_pdev_param_ce_based_adaptive_bto_enable] =
-				WMI_PDEV_PARAM_CE_BASED_ADAPTIVE_BTO_ENABLE;
-	pdev_param[wmi_pdev_param_ce_bto_combo_ce_value] =
-				WMI_PDEV_PARAM_CE_BTO_COMBO_CE_VALUE;
-	pdev_param[wmi_pdev_param_tx_chain_mask_2g] =
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_2G;
-	pdev_param[wmi_pdev_param_rx_chain_mask_2g] =
-				WMI_PDEV_PARAM_RX_CHAIN_MASK_2G;
-	pdev_param[wmi_pdev_param_tx_chain_mask_5g] =
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_5G;
-	pdev_param[wmi_pdev_param_rx_chain_mask_5g] =
-				WMI_PDEV_PARAM_RX_CHAIN_MASK_5G;
-	pdev_param[wmi_pdev_param_tx_chain_mask_cck] =
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK;
-	pdev_param[wmi_pdev_param_tx_chain_mask_1ss] =
-				WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS;
-	pdev_param[wmi_pdev_param_rx_filter] = WMI_PDEV_PARAM_RX_FILTER;
-	pdev_param[wmi_pdev_set_mcast_to_ucast_tid] =
-				WMI_PDEV_SET_MCAST_TO_UCAST_TID;
-	pdev_param[wmi_pdev_param_mgmt_retry_limit] =
-					WMI_PDEV_PARAM_MGMT_RETRY_LIMIT;
-	pdev_param[wmi_pdev_param_aggr_burst] = WMI_PDEV_PARAM_AGGR_BURST;
-	pdev_param[wmi_pdev_peer_sta_ps_statechg_enable] =
-					WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE;
-	pdev_param[wmi_pdev_param_proxy_sta_mode] =
-				WMI_PDEV_PARAM_PROXY_STA_MODE;
-	pdev_param[wmi_pdev_param_mu_group_policy] =
-				WMI_PDEV_PARAM_MU_GROUP_POLICY;
-	pdev_param[wmi_pdev_param_noise_detection] =
-				WMI_PDEV_PARAM_NOISE_DETECTION;
-	pdev_param[wmi_pdev_param_noise_threshold] =
-				WMI_PDEV_PARAM_NOISE_THRESHOLD;
-	pdev_param[wmi_pdev_param_dpd_enable] = WMI_PDEV_PARAM_DPD_ENABLE;
-	pdev_param[wmi_pdev_param_set_mcast_bcast_echo] =
-				WMI_PDEV_PARAM_SET_MCAST_BCAST_ECHO;
-	pdev_param[wmi_pdev_param_atf_strict_sch] =
-		WMI_PDEV_PARAM_ATF_STRICT_SCH;
-	pdev_param[wmi_pdev_param_atf_sched_duration] =
-		WMI_PDEV_PARAM_ATF_SCHED_DURATION;
-	pdev_param[wmi_pdev_param_ant_plzn] = WMI_PDEV_PARAM_ANT_PLZN;
-	pdev_param[wmi_pdev_param_sensitivity_level] =
-				WMI_PDEV_PARAM_SENSITIVITY_LEVEL;
-	pdev_param[wmi_pdev_param_signed_txpower_2g] =
-				WMI_PDEV_PARAM_SIGNED_TXPOWER_2G;
-	pdev_param[wmi_pdev_param_signed_txpower_5g] =
-				WMI_PDEV_PARAM_SIGNED_TXPOWER_5G;
-	pdev_param[wmi_pdev_param_enable_per_tid_amsdu] =
-		WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU;
-	pdev_param[wmi_pdev_param_enable_per_tid_ampdu] =
-		WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU;
-	pdev_param[wmi_pdev_param_cca_threshold] =
-				WMI_PDEV_PARAM_CCA_THRESHOLD;
-	pdev_param[wmi_pdev_param_rts_fixed_rate] =
-				WMI_PDEV_PARAM_RTS_FIXED_RATE;
-	pdev_param[wmi_pdev_param_cal_period] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_pdev_reset] = WMI_PDEV_PARAM_PDEV_RESET;
-	pdev_param[wmi_pdev_param_wapi_mbssid_offset] =
-				WMI_PDEV_PARAM_WAPI_MBSSID_OFFSET;
-	pdev_param[wmi_pdev_param_arp_srcaddr] =
-				WMI_PDEV_PARAM_ARP_DBG_SRCADDR;
-	pdev_param[wmi_pdev_param_arp_dstaddr] =
-				WMI_PDEV_PARAM_ARP_DBG_DSTADDR;
-	pdev_param[wmi_pdev_param_txpower_decr_db] =
-				WMI_PDEV_PARAM_TXPOWER_DECR_DB;
-	pdev_param[wmi_pdev_param_rx_batchmode] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_packet_aggr_delay] = WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_atf_obss_noise_sch] =
-		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH;
-	pdev_param[wmi_pdev_param_atf_obss_noise_scaling_factor] =
-		WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR;
-	pdev_param[wmi_pdev_param_cust_txpower_scale] =
-				WMI_PDEV_PARAM_CUST_TXPOWER_SCALE;
-	pdev_param[wmi_pdev_param_atf_dynamic_enable] =
-		WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE;
-	pdev_param[wmi_pdev_param_atf_ssid_group_policy] =
-						WMI_UNAVAILABLE_PARAM;
-	pdev_param[wmi_pdev_param_igmpmld_override] =
-					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
-	pdev_param[wmi_pdev_param_igmpmld_tid] =
-					WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE;
-	pdev_param[wmi_pdev_param_antenna_gain] = WMI_PDEV_PARAM_ANTENNA_GAIN;
-	pdev_param[wmi_pdev_param_block_interbss] =
-				WMI_PDEV_PARAM_BLOCK_INTERBSS;
-	pdev_param[wmi_pdev_param_set_disable_reset_cmdid] =
-				WMI_PDEV_PARAM_SET_DISABLE_RESET_CMDID;
-	pdev_param[wmi_pdev_param_set_msdu_ttl_cmdid] =
-				WMI_PDEV_PARAM_SET_MSDU_TTL_CMDID;
-	pdev_param[wmi_pdev_param_txbf_sound_period_cmdid] =
-				WMI_PDEV_PARAM_TXBF_SOUND_PERIOD_CMDID;
-	pdev_param[wmi_pdev_param_set_burst_mode_cmdid] =
-					WMI_PDEV_PARAM_SET_BURST_MODE_CMDID;
-	pdev_param[wmi_pdev_param_en_stats] = WMI_PDEV_PARAM_EN_STATS;
-	pdev_param[wmi_pdev_param_mesh_mcast_enable] =
-					WMI_PDEV_PARAM_MESH_MCAST_ENABLE;
-	pdev_param[wmi_pdev_param_set_promisc_mode_cmdid] =
-					WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID;
-	pdev_param[wmi_pdev_param_set_ppdu_duration_cmdid] =
-					WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID;
-	pdev_param[wmi_pdev_param_remove_mcast2ucast_buffer] =
-				WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER;
-	pdev_param[wmi_pdev_param_set_mcast2ucast_buffer] =
-				WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER;
-	pdev_param[wmi_pdev_param_set_mcast2ucast_mode] =
-				WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE;
-	pdev_param[wmi_pdev_param_smart_antenna_default_antenna] =
-				WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA;
-	pdev_param[wmi_pdev_param_fast_channel_reset] =
-				WMI_PDEV_PARAM_FAST_CHANNEL_RESET;
-	pdev_param[wmi_pdev_param_rx_decap_mode] = WMI_PDEV_PARAM_RX_DECAP_MODE;
-	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_PDEV_PARAM_ACK_TIMEOUT;
-	pdev_param[wmi_pdev_param_cck_tx_enable] = WMI_PDEV_PARAM_CCK_TX_ENABLE;
-	pdev_param[wmi_pdev_param_antenna_gain_half_db] =
-		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
-	pdev_param[wmi_pdev_param_esp_indication_period] =
-				WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
-	pdev_param[wmi_pdev_param_esp_ba_window] = WMI_PDEV_PARAM_ESP_BA_WINDOW;
-	pdev_param[wmi_pdev_param_esp_airtime_fraction] =
-				WMI_PDEV_PARAM_ESP_AIRTIME_FRACTION;
-	pdev_param[wmi_pdev_param_esp_ppdu_duration] =
-				WMI_PDEV_PARAM_ESP_PPDU_DURATION;
-	pdev_param[wmi_pdev_param_ru26_allowed] =
-				WMI_PDEV_PARAM_UL_RU26_ALLOWED;
-	pdev_param[wmi_pdev_param_use_nol] = WMI_PDEV_PARAM_USE_NOL;
-	/* Trigger interval for all trigger types. */
-	pdev_param[wmi_pdev_param_ul_trig_int] =
-				WMI_PDEV_PARAM_SET_UL_BSR_TRIG_INTERVAL;
-	pdev_param[wmi_pdev_param_sub_channel_marking] =
-				WMI_PDEV_PARAM_SUB_CHANNEL_MARKING;
-	pdev_param[wmi_pdev_param_ul_ppdu_duration] =
-				WMI_PDEV_PARAM_SET_UL_PPDU_DURATION;
-	pdev_param[wmi_pdev_param_equal_ru_allocation_enable] =
-				WMI_PDEV_PARAM_EQUAL_RU_ALLOCATION_ENABLE;
-	pdev_param[wmi_pdev_param_per_peer_prd_cfr_enable] =
-				WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE;
-	pdev_param[wmi_pdev_param_nav_override_config] =
-				WMI_PDEV_PARAM_NAV_OVERRIDE_CONFIG;
-}
-
-/**
- * populate_vdev_param_tlv() - populates vdev params
- *
- * @param vdev_param: Pointer to hold vdev params
- * Return: None
- */
-static void populate_vdev_param_tlv(uint32_t *vdev_param)
-{
-	vdev_param[wmi_vdev_param_rts_threshold] = WMI_VDEV_PARAM_RTS_THRESHOLD;
-	vdev_param[wmi_vdev_param_fragmentation_threshold] =
-				WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD;
-	vdev_param[wmi_vdev_param_beacon_interval] =
-				WMI_VDEV_PARAM_BEACON_INTERVAL;
-	vdev_param[wmi_vdev_param_listen_interval] =
-				WMI_VDEV_PARAM_LISTEN_INTERVAL;
-	vdev_param[wmi_vdev_param_multicast_rate] =
-				WMI_VDEV_PARAM_MULTICAST_RATE;
-	vdev_param[wmi_vdev_param_mgmt_tx_rate] = WMI_VDEV_PARAM_MGMT_TX_RATE;
-	vdev_param[wmi_vdev_param_slot_time] = WMI_VDEV_PARAM_SLOT_TIME;
-	vdev_param[wmi_vdev_param_preamble] = WMI_VDEV_PARAM_PREAMBLE;
-	vdev_param[wmi_vdev_param_swba_time] = WMI_VDEV_PARAM_SWBA_TIME;
-	vdev_param[wmi_vdev_stats_update_period] = WMI_VDEV_STATS_UPDATE_PERIOD;
-	vdev_param[wmi_vdev_pwrsave_ageout_time] = WMI_VDEV_PWRSAVE_AGEOUT_TIME;
-	vdev_param[wmi_vdev_host_swba_interval] = WMI_VDEV_HOST_SWBA_INTERVAL;
-	vdev_param[wmi_vdev_param_dtim_period] = WMI_VDEV_PARAM_DTIM_PERIOD;
-	vdev_param[wmi_vdev_oc_scheduler_air_time_limit] =
-				WMI_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT;
-	vdev_param[wmi_vdev_param_wds] = WMI_VDEV_PARAM_WDS;
-	vdev_param[wmi_vdev_param_atim_window] = WMI_VDEV_PARAM_ATIM_WINDOW;
-	vdev_param[wmi_vdev_param_bmiss_count_max] =
-				WMI_VDEV_PARAM_BMISS_COUNT_MAX;
-	vdev_param[wmi_vdev_param_bmiss_first_bcnt] =
-				WMI_VDEV_PARAM_BMISS_FIRST_BCNT;
-	vdev_param[wmi_vdev_param_bmiss_final_bcnt] =
-				WMI_VDEV_PARAM_BMISS_FINAL_BCNT;
-	vdev_param[wmi_vdev_param_feature_wmm] = WMI_VDEV_PARAM_FEATURE_WMM;
-	vdev_param[wmi_vdev_param_chwidth] = WMI_VDEV_PARAM_CHWIDTH;
-	vdev_param[wmi_vdev_param_chextoffset] = WMI_VDEV_PARAM_CHEXTOFFSET;
-	vdev_param[wmi_vdev_param_disable_htprotection] =
-				WMI_VDEV_PARAM_DISABLE_HTPROTECTION;
-	vdev_param[wmi_vdev_param_sta_quickkickout] =
-				WMI_VDEV_PARAM_STA_QUICKKICKOUT;
-	vdev_param[wmi_vdev_param_mgmt_rate] = WMI_VDEV_PARAM_MGMT_RATE;
-	vdev_param[wmi_vdev_param_protection_mode] =
-				WMI_VDEV_PARAM_PROTECTION_MODE;
-	vdev_param[wmi_vdev_param_fixed_rate] = WMI_VDEV_PARAM_FIXED_RATE;
-	vdev_param[wmi_vdev_param_sgi] = WMI_VDEV_PARAM_SGI;
-	vdev_param[wmi_vdev_param_ldpc] = WMI_VDEV_PARAM_LDPC;
-	vdev_param[wmi_vdev_param_tx_stbc] = WMI_VDEV_PARAM_TX_STBC;
-	vdev_param[wmi_vdev_param_rx_stbc] = WMI_VDEV_PARAM_RX_STBC;
-	vdev_param[wmi_vdev_param_intra_bss_fwd] = WMI_VDEV_PARAM_INTRA_BSS_FWD;
-	vdev_param[wmi_vdev_param_def_keyid] = WMI_VDEV_PARAM_DEF_KEYID;
-	vdev_param[wmi_vdev_param_nss] = WMI_VDEV_PARAM_NSS;
-	vdev_param[wmi_vdev_param_bcast_data_rate] =
-				WMI_VDEV_PARAM_BCAST_DATA_RATE;
-	vdev_param[wmi_vdev_param_mcast_data_rate] =
-				WMI_VDEV_PARAM_MCAST_DATA_RATE;
-	vdev_param[wmi_vdev_param_mcast_indicate] =
-				WMI_VDEV_PARAM_MCAST_INDICATE;
-	vdev_param[wmi_vdev_param_dhcp_indicate] =
-				WMI_VDEV_PARAM_DHCP_INDICATE;
-	vdev_param[wmi_vdev_param_unknown_dest_indicate] =
-				WMI_VDEV_PARAM_UNKNOWN_DEST_INDICATE;
-	vdev_param[wmi_vdev_param_ap_keepalive_min_idle_inactive_time_secs] =
-		WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS;
-	vdev_param[wmi_vdev_param_ap_keepalive_max_idle_inactive_time_secs] =
-		WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS;
-	vdev_param[wmi_vdev_param_ap_keepalive_max_unresponsive_time_secs] =
-		WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS;
-	vdev_param[wmi_vdev_param_ap_enable_nawds] =
-				WMI_VDEV_PARAM_AP_ENABLE_NAWDS;
-	vdev_param[wmi_vdev_param_enable_rtscts] = WMI_VDEV_PARAM_ENABLE_RTSCTS;
-	vdev_param[wmi_vdev_param_txbf] = WMI_VDEV_PARAM_TXBF;
-	vdev_param[wmi_vdev_param_packet_powersave] =
-				WMI_VDEV_PARAM_PACKET_POWERSAVE;
-	vdev_param[wmi_vdev_param_drop_unencry] = WMI_VDEV_PARAM_DROP_UNENCRY;
-	vdev_param[wmi_vdev_param_tx_encap_type] = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
-	vdev_param[wmi_vdev_param_ap_detect_out_of_sync_sleeping_sta_time_secs] =
-		WMI_VDEV_PARAM_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS;
-	vdev_param[wmi_vdev_param_early_rx_adjust_enable] =
-				WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE;
-	vdev_param[wmi_vdev_param_early_rx_tgt_bmiss_num] =
-				WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM;
-	vdev_param[wmi_vdev_param_early_rx_bmiss_sample_cycle] =
-				WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE;
-	vdev_param[wmi_vdev_param_early_rx_slop_step] =
-				WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP;
-	vdev_param[wmi_vdev_param_early_rx_init_slop] =
-				WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP;
-	vdev_param[wmi_vdev_param_early_rx_adjust_pause] =
-				WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE;
-	vdev_param[wmi_vdev_param_tx_pwrlimit] = WMI_VDEV_PARAM_TX_PWRLIMIT;
-	vdev_param[wmi_vdev_param_snr_num_for_cal] =
-				WMI_VDEV_PARAM_SNR_NUM_FOR_CAL;
-	vdev_param[wmi_vdev_param_roam_fw_offload] =
-				WMI_VDEV_PARAM_ROAM_FW_OFFLOAD;
-	vdev_param[wmi_vdev_param_enable_rmc] = WMI_VDEV_PARAM_ENABLE_RMC;
-	vdev_param[wmi_vdev_param_ibss_max_bcn_lost_ms] =
-				WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS;
-	vdev_param[wmi_vdev_param_max_rate] = WMI_VDEV_PARAM_MAX_RATE;
-	vdev_param[wmi_vdev_param_early_rx_drift_sample] =
-				WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE;
-	vdev_param[wmi_vdev_param_set_ibss_tx_fail_cnt_thr] =
-				WMI_VDEV_PARAM_SET_IBSS_TX_FAIL_CNT_THR;
-	vdev_param[wmi_vdev_param_ebt_resync_timeout] =
-				WMI_VDEV_PARAM_EBT_RESYNC_TIMEOUT;
-	vdev_param[wmi_vdev_param_aggr_trig_event_enable] =
-				WMI_VDEV_PARAM_AGGR_TRIG_EVENT_ENABLE;
-	vdev_param[wmi_vdev_param_is_ibss_power_save_allowed] =
-				WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED;
-	vdev_param[wmi_vdev_param_is_power_collapse_allowed] =
-				WMI_VDEV_PARAM_IS_POWER_COLLAPSE_ALLOWED;
-	vdev_param[wmi_vdev_param_is_awake_on_txrx_enabled] =
-				WMI_VDEV_PARAM_IS_AWAKE_ON_TXRX_ENABLED;
-	vdev_param[wmi_vdev_param_inactivity_cnt] =
-		WMI_VDEV_PARAM_INACTIVITY_CNT;
-	vdev_param[wmi_vdev_param_txsp_end_inactivity_time_ms] =
-				WMI_VDEV_PARAM_TXSP_END_INACTIVITY_TIME_MS;
-	vdev_param[wmi_vdev_param_dtim_policy] = WMI_VDEV_PARAM_DTIM_POLICY;
-	vdev_param[wmi_vdev_param_ibss_ps_warmup_time_secs] =
-				WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS;
-	vdev_param[wmi_vdev_param_ibss_ps_1rx_chain_in_atim_window_enable] =
-			WMI_VDEV_PARAM_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE;
-	vdev_param[wmi_vdev_param_rx_leak_window] =
-			WMI_VDEV_PARAM_RX_LEAK_WINDOW;
-	vdev_param[wmi_vdev_param_stats_avg_factor] =
-				WMI_VDEV_PARAM_STATS_AVG_FACTOR;
-	vdev_param[wmi_vdev_param_disconnect_th] = WMI_VDEV_PARAM_DISCONNECT_TH;
-	vdev_param[wmi_vdev_param_rtscts_rate] = WMI_VDEV_PARAM_RTSCTS_RATE;
-	vdev_param[wmi_vdev_param_mcc_rtscts_protection_enable] =
-				WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE;
-	vdev_param[wmi_vdev_param_mcc_broadcast_probe_enable] =
-				WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE;
-	vdev_param[wmi_vdev_param_mgmt_tx_power] = WMI_VDEV_PARAM_MGMT_TX_POWER;
-	vdev_param[wmi_vdev_param_beacon_rate] = WMI_VDEV_PARAM_BEACON_RATE;
-	vdev_param[wmi_vdev_param_rx_decap_type] = WMI_VDEV_PARAM_RX_DECAP_TYPE;
-	vdev_param[wmi_vdev_param_he_dcm_enable] = WMI_VDEV_PARAM_HE_DCM;
-	vdev_param[wmi_vdev_param_he_range_ext_enable] =
-				 WMI_VDEV_PARAM_HE_RANGE_EXT;
-	vdev_param[wmi_vdev_param_he_bss_color] = WMI_VDEV_PARAM_BSS_COLOR;
-	vdev_param[wmi_vdev_param_set_hemu_mode] = WMI_VDEV_PARAM_SET_HEMU_MODE;
-	vdev_param[wmi_vdev_param_set_he_sounding_mode]
-					= WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE;
-	vdev_param[wmi_vdev_param_set_heop]      = WMI_VDEV_PARAM_HEOPS_0_31;
-	vdev_param[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP;
-	vdev_param[wmi_vdev_param_dtim_enable_cts] =
-					WMI_VDEV_PARAM_DTIM_ENABLE_CTS;
-	vdev_param[wmi_vdev_param_atf_ssid_sched_policy] =
-					WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY;
-	vdev_param[wmi_vdev_param_disable_dyn_bw_rts] =
-					WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS;
-	vdev_param[wmi_vdev_param_mcast2ucast_set] =
-					WMI_VDEV_PARAM_MCAST2UCAST_SET;
-	vdev_param[wmi_vdev_param_rc_num_retries] =
-					WMI_VDEV_PARAM_RC_NUM_RETRIES;
-	vdev_param[wmi_vdev_param_cabq_maxdur] = WMI_VDEV_PARAM_CABQ_MAXDUR;
-	vdev_param[wmi_vdev_param_mfptest_set] = WMI_VDEV_PARAM_MFPTEST_SET;
-	vdev_param[wmi_vdev_param_rts_fixed_rate] =
-					WMI_VDEV_PARAM_RTS_FIXED_RATE;
-	vdev_param[wmi_vdev_param_vht_sgimask] = WMI_VDEV_PARAM_VHT_SGIMASK;
-	vdev_param[wmi_vdev_param_vht80_ratemask] =
-					WMI_VDEV_PARAM_VHT80_RATEMASK;
-	vdev_param[wmi_vdev_param_proxy_sta] = WMI_VDEV_PARAM_PROXY_STA;
-	vdev_param[wmi_vdev_param_bw_nss_ratemask] =
-					WMI_VDEV_PARAM_BW_NSS_RATEMASK;
-	vdev_param[wmi_vdev_param_set_he_ltf] =
-					WMI_VDEV_PARAM_HE_LTF;
-	vdev_param[wmi_vdev_param_disable_cabq] =
-					WMI_VDEV_PARAM_DISABLE_CABQ;
-	vdev_param[wmi_vdev_param_rate_dropdown_bmap] =
-					WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP;
-	vdev_param[wmi_vdev_param_set_ba_mode] =
-					WMI_VDEV_PARAM_BA_MODE;
-	vdev_param[wmi_vdev_param_capabilities] =
-					WMI_VDEV_PARAM_CAPABILITIES;
-	vdev_param[wmi_vdev_param_autorate_misc_cfg] =
-					WMI_VDEV_PARAM_AUTORATE_MISC_CFG;
-	vdev_param[wmi_vdev_param_ul_shortgi] = WMI_VDEV_PARAM_UL_GI;
-	vdev_param[wmi_vdev_param_ul_he_ltf] = WMI_VDEV_PARAM_UL_HE_LTF;
-	vdev_param[wmi_vdev_param_ul_nss] = WMI_VDEV_PARAM_UL_NSS;
-	vdev_param[wmi_vdev_param_ul_ppdu_bw] = WMI_VDEV_PARAM_UL_PPDU_BW;
-	vdev_param[wmi_vdev_param_ul_ldpc] = WMI_VDEV_PARAM_UL_LDPC;
-	vdev_param[wmi_vdev_param_ul_stbc] = WMI_VDEV_PARAM_UL_STBC;
-	vdev_param[wmi_vdev_param_ul_fixed_rate] = WMI_VDEV_PARAM_UL_FIXED_RATE;
-	vdev_param[wmi_vdev_param_rawmode_open_war] =
-					WMI_VDEV_PARAM_RAW_IS_ENCRYPTED;
-}
-
-/**
- * populate_target_defines_tlv() - Populate target defines and params
- * @wmi_handle: pointer to wmi handle
- *
- * Return: None
- */
-static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
-{
-	if (wmi_handle->soc->pdev_param)
-		populate_pdev_param_tlv(wmi_handle->soc->pdev_param);
-	if (wmi_handle->soc->vdev_param)
-		populate_vdev_param_tlv(wmi_handle->soc->vdev_param);
-
-}
-
-/**
  * wmi_ocb_ut_attach() - Attach OCB test framework
  * @wmi_handle: wmi handle
  *
@@ -12653,7 +12499,6 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 #endif
 	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_tlv_service(wmi_handle->services);
-	populate_target_defines_tlv(wmi_handle);
 	wmi_twt_attach_tlv(wmi_handle);
 	wmi_extscan_attach_tlv(wmi_handle);
 	wmi_smart_ant_attach_tlv(wmi_handle);
