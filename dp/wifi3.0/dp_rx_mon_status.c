@@ -220,7 +220,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 		return;
 
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
-	if (!peer->stats.rx.avg_rssi)
+	if (peer->stats.rx.avg_rssi == INVALID_RSSI)
 		peer->stats.rx.avg_rssi = ppdu->rssi;
 	else
 		peer->stats.rx.avg_rssi =

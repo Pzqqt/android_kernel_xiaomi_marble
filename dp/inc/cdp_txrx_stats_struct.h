@@ -118,6 +118,8 @@
 #define CDP_FC_IS_RETRY_SET(_fc) \
 	((_fc) & qdf_cpu_to_le16(CDP_FCTL_RETRY))
 
+#define INVALID_RSSI 255
+
 /* Different Packet Types */
 enum cdp_packet_type {
 	DOT11_A = 0,
