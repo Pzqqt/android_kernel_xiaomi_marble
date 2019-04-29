@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -164,6 +164,8 @@ void qdf_debugfs_printf(qdf_debugfs_file_t file, const char *f, ...)
 	seq_vprintf(file, f, args);
 	va_end(args);
 }
+
+qdf_export_symbol(qdf_debugfs_printf);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 

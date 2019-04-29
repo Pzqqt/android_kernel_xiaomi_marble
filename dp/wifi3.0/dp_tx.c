@@ -17,6 +17,7 @@
  */
 
 #include "htt.h"
+#include "dp_htt.h"
 #include "hal_hw_headers.h"
 #include "dp_tx.h"
 #include "dp_tx_desc.h"
@@ -3187,6 +3188,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 	uint32_t *htt_desc = (uint32_t *)status;
 	struct dp_peer *peer;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
+	struct htt_soc *htt_handle;
 
 	qdf_assert(tx_desc->pdev);
 
@@ -3196,8 +3198,9 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 
 	if (!vdev)
 		return;
-
 	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
+	htt_handle = (struct htt_soc *)soc->htt_handle;
+	htt_wbm_event_record(htt_handle->htt_logger_handle, tx_status, status);
 
 	switch (tx_status) {
 	case HTT_TX_FW2WBM_TX_STATUS_OK:

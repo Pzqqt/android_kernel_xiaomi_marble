@@ -26,6 +26,42 @@
 
 #include "cdp_txrx_cmn_struct.h"
 #include "dp_types.h"
+#ifdef HTT_LOGGER
+#include "dp_htt_logger.h"
+#else
+struct htt_logger;
+static inline
+void htt_interface_logging_init(struct htt_logger **htt_logger_handle)
+{
+}
+
+static inline
+void htt_interface_logging_deinit(struct htt_logger *htt_logger_handle)
+{
+}
+
+static inline
+int htt_command_record(struct htt_logger *h, uint8_t msg_type,
+		       uint8_t *msg_data)
+{
+	return 0;
+}
+
+static inline
+int htt_event_record(struct htt_logger *h, uint8_t msg_type,
+		     uint8_t *msg_data)
+{
+	return 0;
+}
+
+static inline
+int htt_wbm_event_record(struct htt_logger *h, uint8_t tx_status,
+			 uint8_t *msg_data)
+{
+	return 0;
+}
+
+#endif
 
 #define HTT_TX_MUTEX_TYPE qdf_spinlock_t
 
@@ -81,6 +117,8 @@ struct htt_soc {
 	void *ctrl_psoc;
 	void *dp_soc;
 	void *hal_soc;
+	/* htt_logger handle */
+	struct htt_logger *htt_logger_handle;
 	HTC_HANDLE htc_soc;
 	qdf_device_t osdev;
 	HTC_ENDPOINT_ID htc_endpoint;
