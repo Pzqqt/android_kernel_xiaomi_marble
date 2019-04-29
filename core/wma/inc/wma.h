@@ -2558,6 +2558,17 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
 struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle);
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
+
+/**
+ * wma_set_peer_ucast_cipher() - Update unicast cipher fof the peer
+ * @mac_addr: peer mac address
+ * @cipher: peer cipher type
+ *
+ * Return: None
+ */
+void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
+			       enum wlan_crypto_cipher_type cipher);
+
 /**
  * wma_update_set_key() - Update WMA layer for set key
  * @session_id: vdev session identifier
