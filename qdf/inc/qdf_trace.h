@@ -54,10 +54,7 @@
  */
 #define QDF_WMI_MTRACE_CMD_ID(message_id) ((message_id) & 0x7F)
 
-#ifdef CONFIG_MCL
-#define QDF_DEFAULT_TRACE_LEVEL \
-	((1 << QDF_TRACE_LEVEL_FATAL) | (1 << QDF_TRACE_LEVEL_ERROR))
-#else
+#ifdef QDF_TRACE_PRINT_ENABLE
 #define QDF_DEFAULT_TRACE_LEVEL (1 << QDF_TRACE_LEVEL_INFO)
 #endif
 
