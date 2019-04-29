@@ -1609,14 +1609,14 @@ static int dp_display_post_enable(struct dp_display *dp_display, void *panel)
 
 	dp_display_stream_post_enable(dp, dp_panel);
 
+	cancel_delayed_work_sync(&dp->hdcp_cb_work);
+	queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
+
 	if (dp_panel->audio_supported) {
 		dp_panel->audio->bw_code = dp->link->link_params.bw_code;
 		dp_panel->audio->lane_count = dp->link->link_params.lane_count;
 		dp_panel->audio->on(dp_panel->audio);
 	}
-
-	cancel_delayed_work_sync(&dp->hdcp_cb_work);
-	queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
 end:
 	dp->aux->state |= DP_STATE_CTRL_POWERED_ON;
 
