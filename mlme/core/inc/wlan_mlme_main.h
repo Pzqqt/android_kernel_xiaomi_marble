@@ -127,6 +127,7 @@ mlme_vdev_object_destroyed_notification(struct wlan_objmgr_vdev *vdev,
 
 #endif
 
+#ifndef CRYPTO_SET_KEY_CONVERGED
 /**
  * wlan_peer_set_unicast_cipher() - set unicast cipher
  * @peer: PEER object
@@ -168,7 +169,7 @@ uint32_t wlan_peer_get_unicast_cipher(struct wlan_objmgr_peer *peer)
 
 	return peer_priv->ucast_key_cipher;
 }
-
+#endif
 /**
  * wma_get_peer_mic_len() - get mic hdr len and mic length for peer
  * @psoc: psoc

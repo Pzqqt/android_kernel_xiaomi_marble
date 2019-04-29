@@ -26,6 +26,7 @@
 #include "wlan_scan_public_structs.h"
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_mlme_api.h"
+#include <wlan_crypto_global_api.h>
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
@@ -239,6 +240,61 @@ out:
 	return status;
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+				 uint8_t *peer_mac, uint8_t *mic_len,
+				 uint8_t *mic_hdr_len)
+{
+	struct wlan_objmgr_peer *peer;
+	uint32_t key_cipher;
+
+	if (!psoc || !mic_len || !mic_hdr_len || !peer_mac) {
+		mlme_debug("psoc/mic_len/mic_hdr_len/peer_mac null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	peer = wlan_objmgr_get_peer(psoc, pdev_id,
+				    peer_mac, WLAN_LEGACY_MAC_ID);
+	if (!peer) {
+		mlme_debug("Peer of peer_mac %pM not found", peer_mac);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	key_cipher =
+		wlan_crypto_get_peer_param(peer,
+					   WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+
+	if (key_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM) ||
+	    key_cipher & (1 << WLAN_CRYPTO_CIPHER_AES_GCM_256)) {
+		*mic_hdr_len = WLAN_IEEE80211_GCMP_HEADERLEN;
+		*mic_len = WLAN_IEEE80211_GCMP_MICLEN;
+	} else {
+		*mic_hdr_len = IEEE80211_CCMP_HEADERLEN;
+		*mic_len = IEEE80211_CCMP_MICLEN;
+	}
+	mlme_debug("peer %pM hdr_len %d mic_len %d key_cipher 0x%x", peer_mac,
+		   *mic_hdr_len, *mic_len, key_cipher);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+mlme_peer_object_created_notification(struct wlan_objmgr_peer *peer,
+				      void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
+					void *arg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+
 QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 				 uint8_t *peer_mac, uint8_t *mic_len,
 				 uint8_t *mic_hdr_len)
@@ -334,6 +390,7 @@ mlme_peer_object_destroyed_notification(struct wlan_objmgr_peer *peer,
 
 	return status;
 }
+#endif
 
 static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_chainmask *chainmask_info)
