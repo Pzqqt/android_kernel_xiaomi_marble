@@ -8103,6 +8103,8 @@ typedef struct {
 /* NAN Data Interface */
 #define WMI_VDEV_TYPE_NDI        0x7
 
+#define WMI_VDEV_TYPE_MESH_POINT 0x8
+
 /*
  * Param values to be sent for WMI_VDEV_PARAM_SGI command
  * which are used in 11ax systems
