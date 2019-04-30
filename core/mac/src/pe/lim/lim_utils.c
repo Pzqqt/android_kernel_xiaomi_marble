@@ -7144,6 +7144,10 @@ void lim_update_sta_he_capable(struct mac_context *mac,
 {
 	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry))
 		add_sta_params->he_capable = sta_ds->mlmStaContext.he_capable;
+#ifdef FEATURE_WLAN_TDLS
+	else if (STA_ENTRY_TDLS_PEER == sta_ds->staType)
+		add_sta_params->he_capable = sta_ds->mlmStaContext.he_capable;
+#endif
 	else
 		add_sta_params->he_capable = session_entry->he_capable;
 
