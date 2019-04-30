@@ -3887,6 +3887,9 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 		  val);
 
 	ucfg_mlme_set_roam_intra_band(hdd_ctx->psoc, (bool)val);
+	policy_mgr_set_pcl_for_existing_combo(
+					hdd_ctx->psoc,
+					PM_STA_MODE);
 
 exit:
 	return ret;
