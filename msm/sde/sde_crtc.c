@@ -3313,7 +3313,7 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
-	if (sde_kms && enc && !sde_encoder_in_cont_splash(enc))
+	if (sde_kms && enc)
 		sde_rm_release(&sde_kms->rm, enc, true);
 
 	__drm_atomic_helper_crtc_destroy_state(state);
