@@ -259,7 +259,7 @@ static QDF_STATUS dispatcher_regulatory_pdev_open(struct wlan_objmgr_pdev
 }
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
-#ifdef CONFIG_WIN
+#ifdef SPECTRAL_MODULIZED_ENABLE
 QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
 			spectral_pdev_open_handler handler)
 {
@@ -566,7 +566,7 @@ static QDF_STATUS dispatcher_splitmac_deinit(void)
 #endif  /* WLAN_SUPPORT_SPLITMAC */
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
-#ifdef CONFIG_MCL
+#ifndef SPECTRAL_MODULIZED_ENABLE
 static QDF_STATUS dispatcher_spectral_init(void)
 {
 	return wlan_spectral_init();

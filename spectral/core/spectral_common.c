@@ -66,13 +66,13 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 	return vdev;
 }
 
-#ifndef CONFIG_MCL
+#ifdef SPECTRAL_MODULIZED_ENABLE
 /**
  * spectral_register_cfg80211_handlers() - Register spectral cfg80211 handlers
  * @pdev: Pointer to pdev
  *
  * Register spectral cfg80211 handlers
- * Handlers can be different for WIN and MCL
+ * Handlers can be different depending on whether spectral modulized or not
  *
  * Return: None
  */
