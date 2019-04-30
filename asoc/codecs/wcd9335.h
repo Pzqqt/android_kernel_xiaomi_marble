@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 #ifndef WCD9335_H
 #define WCD9335_H
@@ -81,6 +81,8 @@ enum wcd9335_codec_event {
 
 enum tasha_on_demand_supply {
 	ON_DEMAND_MICBIAS = 0,
+	ON_DEMAND_TX_SUPPLY,
+	ON_DEMAND_RX_SUPPLY,
 	ON_DEMAND_SUPPLIES_MAX,
 };
 

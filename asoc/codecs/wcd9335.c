@@ -151,6 +151,8 @@ MODULE_PARM_DESC(cpe_debug_mode, "boot cpe in debug mode");
 
 static char on_demand_supply_name[][MAX_ON_DEMAND_SUPPLY_NAME_LENGTH] = {
 	"cdc-vdd-mic-bias",
+	"cdc-vdd-tx-h",
+	"cdc-vdd-rx-h"
 };
 
 enum {
@@ -5634,6 +5636,9 @@ static int tasha_codec_enable_on_demand_supply(
 			snd_soc_dapm_to_component(w->dapm);
 	struct tasha_priv *tasha = snd_soc_component_get_drvdata(component);
 	struct on_demand_supply *supply;
+	struct wcd9xxx *wcd9xxx = tasha->wcd9xxx;
+	struct wcd9xxx_pdata *pdata = dev_get_platdata(component->dev->parent);
+	const char *supply_name;
 
 	if (w->shift >= ON_DEMAND_SUPPLIES_MAX) {
 		dev_err(component->dev, "%s: error index > MAX Demand supplies",
@@ -5646,6 +5651,7 @@ static int tasha_codec_enable_on_demand_supply(
 		__func__, on_demand_supply_name[w->shift], event);
 
 	supply = &tasha->on_demand_list[w->shift];
+	supply_name = on_demand_supply_name[w->shift];
 	WARN_ONCE(!supply->supply, "%s isn't defined\n",
 		on_demand_supply_name[w->shift]);
 	if (!supply->supply) {
@@ -5656,6 +5662,15 @@ static int tasha_codec_enable_on_demand_supply(
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		if (pdata->vote_regulator_on_demand) {
+			ret = wcd9xxx_vote_ondemand_regulator(wcd9xxx, pdata,
+							      supply_name,
+							      true);
+			if (ret)
+				dev_err(component->dev, "%s: Failed to vote %s\n",
+					__func__,
+					on_demand_supply_name[w->shift]);
+		}
 		ret = regulator_enable(supply->supply);
 		if (ret)
 			dev_err(component->dev, "%s: Failed to enable %s\n",
@@ -5668,6 +5683,15 @@ static int tasha_codec_enable_on_demand_supply(
 			dev_err(component->dev, "%s: Failed to disable %s\n",
 				__func__,
 				on_demand_supply_name[w->shift]);
+		if (pdata->vote_regulator_on_demand) {
+			ret = wcd9xxx_vote_ondemand_regulator(wcd9xxx, pdata,
+							      supply_name,
+							      false);
+			if (ret)
+				dev_err(component->dev, "%s: Failed to unvote %s\n",
+					__func__,
+					on_demand_supply_name[w->shift]);
+		}
 		break;
 	default:
 		break;
@@ -11130,7 +11154,14 @@ static const struct snd_soc_dapm_widget tasha_dapm_widgets[] = {
 	SND_SOC_DAPM_SUPPLY(DAPM_LDO_H_STANDALONE, SND_SOC_NOPM, 0, 0,
 			    tasha_codec_force_enable_ldo_h,
 			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
+	SND_SOC_DAPM_SUPPLY("tx regulator", SND_SOC_NOPM,
+			    ON_DEMAND_TX_SUPPLY, 0,
+			    tasha_codec_enable_on_demand_supply,
+			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_SUPPLY("rx regulator", SND_SOC_NOPM,
+			    ON_DEMAND_RX_SUPPLY, 0,
+			    tasha_codec_enable_on_demand_supply,
+			    SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_MUX("ANC0 FB MUX", SND_SOC_NOPM, 0, 0, &anc0_fb_mux),
 	SND_SOC_DAPM_MUX("ANC1 FB MUX", SND_SOC_NOPM, 0, 0, &anc1_fb_mux),
 
@@ -13899,12 +13930,14 @@ static int tasha_codec_probe(struct snd_soc_component *component)
 		goto err;
 	}
 
-	supply = tasha_codec_find_ondemand_regulator(component,
-		on_demand_supply_name[ON_DEMAND_MICBIAS]);
-	if (supply) {
-		tasha->on_demand_list[ON_DEMAND_MICBIAS].supply = supply;
-		tasha->on_demand_list[ON_DEMAND_MICBIAS].ondemand_supply_count =
-				0;
+	for (i = ON_DEMAND_MICBIAS; i < ON_DEMAND_SUPPLIES_MAX; i++) {
+		supply = tasha_codec_find_ondemand_regulator(component,
+			on_demand_supply_name[i]);
+		if (supply) {
+			tasha->on_demand_list[i].supply = supply;
+			tasha->on_demand_list[i].ondemand_supply_count =
+					0;
+		}
 	}
 
 	tasha->fw_data = devm_kzalloc(component->dev,

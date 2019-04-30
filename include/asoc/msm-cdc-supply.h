@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2016, 2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016, 2018-2019 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __CODEC_POWER_SUPPLY_H__
@@ -45,4 +45,9 @@ extern int msm_cdc_init_supplies(struct device *dev,
 				 struct regulator_bulk_data **supplies,
 				 struct cdc_regulator *cdc_vreg,
 				 int num_supplies);
+extern int msm_cdc_init_supplies_v2(struct device *dev,
+				 struct regulator_bulk_data **supplies,
+				 struct cdc_regulator *cdc_vreg,
+				 int num_supplies,
+				 u32 vote_regulator_on_demand);
 #endif
