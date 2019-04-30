@@ -254,7 +254,6 @@ static const char *current_process_name(void)
 	return current->comm;
 }
 
-#ifdef QCA_WIFI_3_0_ADRASTEA
 /**
  * wlan_add_user_log_time_stamp() - populate firmware and kernel timestamps
  * @tbuf: Pointer to time stamp buffer
@@ -283,20 +282,6 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 	return scnprintf(tbuf, tbuf_sz, "[%.16s][0x%llx]%s",
 			 current_process_name(), ts, time_buf);
 }
-#else
-static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
-{
-	uint32_t rem;
-	char time_buf[20];
-
-	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
-
-	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
-	return scnprintf(tbuf, tbuf_sz, "[%.16s][%lu.%06lu]%s",
-			 current_process_name(), (unsigned long)ts,
-			 (unsigned long)rem, time_buf);
-}
-#endif /* QCA_WIFI_3_0_ADRASTEA */
 
 #ifdef WLAN_MAX_LOGS_PER_SEC
 static qdf_time_t __log_window_end_ticks;
