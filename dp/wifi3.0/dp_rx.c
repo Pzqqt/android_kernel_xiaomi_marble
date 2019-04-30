@@ -1807,29 +1807,6 @@ done:
 		if (qdf_nbuf_is_rx_chfrag_start(nbuf))
 			tid = qdf_nbuf_get_tid_val(nbuf);
 
-		/*
-		 * Check if DMA completed -- msdu_done is the last bit
-		 * to be written
-		 */
-		rx_pdev = soc->pdev_list[rx_desc->pool_id];
-		DP_RX_TID_SAVE(nbuf, tid);
-		if (qdf_unlikely(rx_pdev->delay_stats_flag))
-			qdf_nbuf_set_timestamp(nbuf);
-
-		tid_stats = &rx_pdev->stats.tid_stats.
-			    tid_rx_stats[ring_id][tid];
-		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
-			dp_err("MSDU DONE failure");
-			DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);
-			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
-					QDF_TRACE_LEVEL_INFO);
-			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
-			qdf_nbuf_free(nbuf);
-			qdf_assert(0);
-			nbuf = next;
-			continue;
-		}
-
 		peer_mdata =  QDF_NBUF_CB_RX_PEER_ID(nbuf);
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 		peer = dp_peer_find_by_id(soc, peer_id);
@@ -1856,18 +1833,42 @@ done:
 		} else {
 			DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 					 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
-			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			continue;
 		}
 
 		if (qdf_unlikely(!vdev)) {
-			tid_stats->fail_cnt[INVALID_PEER_VDEV]++;
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 			dp_peer_unref_del_find_by_id(peer);
+			continue;
+		}
+
+		rx_pdev = vdev->pdev;
+		DP_RX_TID_SAVE(nbuf, tid);
+		if (qdf_unlikely(rx_pdev->delay_stats_flag))
+			qdf_nbuf_set_timestamp(nbuf);
+
+		ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+		tid_stats =
+			&rx_pdev->stats.tid_stats.tid_rx_stats[ring_id][tid];
+
+		/*
+		 * Check if DMA completed -- msdu_done is the last bit
+		 * to be written
+		 */
+		if (qdf_unlikely(!qdf_nbuf_is_raw_frame(nbuf) &&
+				 !hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
+			dp_err("MSDU DONE failure");
+			DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);
+			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
+					     QDF_TRACE_LEVEL_INFO);
+			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
+			qdf_nbuf_free(nbuf);
+			qdf_assert(0);
+			nbuf = next;
 			continue;
 		}
 
