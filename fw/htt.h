@@ -178,9 +178,11 @@
  * 3.61 Add rx offset fields to HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG msg
  * 3.62 Add antenna mask to reserved space in htt_rx_ppdu_desc_t
  * 3.63 Add HTT_HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND def
+ * 3.64 Add struct htt_tx_compl_ind_append_tx_tsf64 and add tx_tsf64
+ *      array to the end of HTT_T2H TX_COMPL_IND msg
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 63
+#define HTT_CURRENT_VERSION_MINOR 64
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -8245,27 +8247,36 @@ PREPACK struct htt_txq_group {
  * The following diagram shows the format of the TX completion indication sent
  * from the target to the host
  *
- *          |31 28|27|26|25|24|23        16| 15 |14 11|10   8|7          0|
- *          |-------------------------------------------------------------|
- * header:  |rsvd |A2|TP|A1|A0|     num    | t_i| tid |status|  msg_type  |
- *          |-------------------------------------------------------------|
- * payload: |            MSDU1 ID          |         MSDU0 ID             |
- *          |-------------------------------------------------------------|
- *          :            MSDU3 ID          :         MSDU2 ID             :
- *          |-------------------------------------------------------------|
- *          |          struct htt_tx_compl_ind_append_retries             |
- *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
- *          |          struct htt_tx_compl_ind_append_tx_tstamp           |
- *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
- *          |           MSDU1 ACK RSSI     |        MSDU0 ACK RSSI        |
- *          |-------------------------------------------------------------|
- *          :           MSDU3 ACK RSSI     :        MSDU2 ACK RSSI        :
- *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *          |31 29|28|27|26|25|24|23        16| 15 |14 11|10   8|7          0|
+ *          |----------------------------------------------------------------|
+ * header:  |rsvd |A3|A2|TP|A1|A0|     num    | t_i| tid |status|  msg_type  |
+ *          |----------------------------------------------------------------|
+ * payload: |            MSDU1 ID             |         MSDU0 ID             |
+ *          |----------------------------------------------------------------|
+ *          :            MSDU3 ID             |         MSDU2 ID             :
+ *          |----------------------------------------------------------------|
+ *          |            struct htt_tx_compl_ind_append_retries              |
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+ *          |            struct htt_tx_compl_ind_append_tx_tstamp            |
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+ *          |           MSDU1 ACK RSSI        |        MSDU0 ACK RSSI        |
+ *          |----------------------------------------------------------------|
+ *          :           MSDU3 ACK RSSI        |        MSDU2 ACK RSSI        :
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+ *          |                        MSDU0 tx_tsf64_low                      |
+ *          |----------------------------------------------------------------|
+ *          |                        MSDU0 tx_tsf64_high                     |
+ *          |----------------------------------------------------------------|
+ *          |                        MSDU1 tx_tsf64_low                      |
+ *          |----------------------------------------------------------------|
+ *          |                        MSDU1 tx_tsf64_high                     |
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
  * Where:
  *     A0 = append (a.k.a. append0)
  *     A1 = append1
  *     TP = MSDU tx power presence
  *     A2 = append2
+ *     A3 = append3
  *
  * The following field definitions describe the format of the TX completion
  * indication sent from the target to the host
@@ -8332,6 +8343,18 @@ PREPACK struct htt_txq_group {
  *            dB above the noise floor.
  *   Value: 0 indicates MSDU ACK RSSI values are not appended,
  *          1 indicates MSDU ACK RSSI values are appended.
+ * - append3
+ *   Bits 28:28
+ *   Purpose: Append the struct htt_tx_compl_ind_append_tx_tsf64 which
+ *            contains the tx tsf info based on wlan global TSF for
+ *            each TX msdu id in payload.
+ *            The order of the tx tsf matches the order of the MSDU IDs.
+ *            The struct htt_tx_compl_ind_append_tx_tsf64 contains two 32-bits
+ *            values to indicate the the lower 32 bits and higher 32 bits of
+ *            the tx tsf.
+ *            The tx_tsf64 here represents the time MSDU was acked and the
+ *            tx_tsf64 has microseconds units.
+ *   Value: 0 indicates no appending; 1 indicates appending
  * Payload fields:
  * - hmsdu_id
  *   Bits 15:0
@@ -8355,6 +8378,8 @@ PREPACK struct htt_txq_group {
 #define HTT_TX_COMPL_IND_TX_POWER_M    0x04000000
 #define HTT_TX_COMPL_IND_APPEND2_S     27
 #define HTT_TX_COMPL_IND_APPEND2_M     0x08000000
+#define HTT_TX_COMPL_IND_APPEND3_S     28
+#define HTT_TX_COMPL_IND_APPEND3_M     0x10000000
 
 #define HTT_TX_COMPL_IND_STATUS_SET(_info, _val)                        \
     do {                                                                \
@@ -8413,6 +8438,13 @@ PREPACK struct htt_txq_group {
     } while (0)
 #define HTT_TX_COMPL_IND_APPEND2_GET(_info)                            \
     (((_info) & HTT_TX_COMPL_IND_APPEND2_M) >> HTT_TX_COMPL_IND_APPEND2_S)
+#define HTT_TX_COMPL_IND_APPEND3_SET(_info, _val)                      \
+    do {                                                               \
+        HTT_CHECK_SET_VAL(HTT_TX_COMPL_IND_APPEND3, _val);             \
+        ((_info) |= ((_val) << HTT_TX_COMPL_IND_APPEND3_S));           \
+    } while (0)
+#define HTT_TX_COMPL_IND_APPEND3_GET(_info)                            \
+    (((_info) & HTT_TX_COMPL_IND_APPEND3_M) >> HTT_TX_COMPL_IND_APPEND3_S)
 
 #define HTT_TX_COMPL_INV_TX_POWER           0xffff
 
@@ -8470,6 +8502,11 @@ PREPACK struct htt_tx_compl_ind_append_retries {
 
 PREPACK struct htt_tx_compl_ind_append_tx_tstamp {
     A_UINT32 timestamp[1/*or more*/];
+} POSTPACK;
+
+PREPACK struct htt_tx_compl_ind_append_tx_tsf64 {
+    A_UINT32 tx_tsf64_low;
+    A_UINT32 tx_tsf64_high;
 } POSTPACK;
 
 /**
