@@ -183,7 +183,7 @@ struct reg_bus_client {
 
 struct sde_smmu_client {
 	struct device *dev;
-	struct dma_iommu_mapping *mmu_mapping;
+	struct iommu_domain *rot_domain;
 	struct sde_module_power mp;
 	struct reg_bus_client *reg_bus_clt;
 	bool domain_attached;
