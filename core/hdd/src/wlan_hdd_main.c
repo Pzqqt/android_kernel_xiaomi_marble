@@ -11338,7 +11338,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		hdd_ctx->target_hw_name = NULL;
 	}
 
-	if (hdd_get_conparam() != QDF_GLOBAL_EPPING_MODE) {
+	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		epping_disable();
 		epping_close();
 	}

@@ -580,7 +580,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	if (!pSmeBcnReportReq)
 		return eRRM_FAILURE;
 
-	/* Allocated memory for pSmeBcnReportReq....will be freed by other modulea */
+	/* Alloc memory for pSmeBcnReportReq, will be freed by other modules */
 	qdf_mem_copy(pSmeBcnReportReq->bssId, pe_session->bssId,
 		     sizeof(tSirMacAddr));
 	pSmeBcnReportReq->messageType = eWNI_SME_BEACON_REPORT_REQ_IND;
