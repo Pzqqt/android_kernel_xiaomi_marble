@@ -1197,10 +1197,6 @@ void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop)
 	bufqi = &peer->bufq_info;
 
 	qdf_spin_lock_bh(&bufqi->bufq_lock);
-	if (qdf_list_empty(&bufqi->cached_bufq)) {
-		qdf_spin_unlock_bh(&bufqi->bufq_lock);
-		return;
-	}
 	qdf_list_remove_front(&bufqi->cached_bufq,
 			      (qdf_list_node_t **)&cache_buf);
 	while (cache_buf) {
