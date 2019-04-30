@@ -318,7 +318,7 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 	ssize_t length = 0;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_connection_info *conn_info;
-	uint32_t bit_rate;
+	uint32_t tx_bit_rate, rx_bit_rate;
 	int ret_val;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -350,7 +350,8 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 	}
 
 	conn_info = &hdd_sta_ctx->conn_info;
-	bit_rate = cfg80211_calculate_bitrate(&conn_info->txrate);
+	tx_bit_rate = cfg80211_calculate_bitrate(&conn_info->txrate);
+	rx_bit_rate = cfg80211_calculate_bitrate(&conn_info->rxrate);
 
 	if (length >= buf_avail_len) {
 		hdd_err("No sufficient buf_avail_len");
@@ -364,7 +365,8 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 			    "freq = %u\n"
 			    "ch_width = %s\n"
 			    "signal = %ddBm\n"
-			    "bit_rate = %u\n"
+			    "tx_bit_rate = %u\n"
+			    "rx_bit_rate = %u\n"
 			    "last_auth_type = %s\n"
 			    "dot11mode = %s\n",
 			    conn_info->last_ssid.SSID.ssId,
@@ -374,7 +376,8 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 			    conn_info->freq,
 			    hdd_ch_width_str(conn_info->ch_width),
 			    conn_info->signal,
-			    bit_rate,
+			    tx_bit_rate,
+			    rx_bit_rate,
 			    hdd_auth_type_str(conn_info->last_auth_type),
 			    hdd_dot11_mode_str(conn_info->dot11mode));
 

@@ -406,8 +406,8 @@ static void hdd_get_max_tx_bitrate(struct hdd_context *hdd_ctx,
 			tx_nss--;
 		}
 	}
-	if (hdd_report_max_rate(hdd_ctx->mac_handle, &sinfo,
-				tx_rate_flags, tx_mcs_index,
+	if (hdd_report_max_rate(hdd_ctx->mac_handle, &sinfo.txrate,
+				sinfo.signal, tx_rate_flags, tx_mcs_index,
 				my_tx_rate, tx_nss)) {
 		hdd_sta_ctx->cache_conn_info.max_tx_bitrate = sinfo.txrate;
 		hdd_debug("Reporting max tx rate flags %d mcs %d nss %d bw %d",

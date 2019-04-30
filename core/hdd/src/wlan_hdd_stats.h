@@ -470,18 +470,20 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx);
  * to be sent to the userspace.
  *
  * @mac_handle: The mac handle
- * @sinfo: The station_info struct to be filled
- * @tx_rate_flags: The TX rate flags computed from tx rate
- * @tx_mcs_index; The TX mcs index computed from tx rate
- * @my_tx_rate: The tx_rate from fw stats
- * @tx_nss: The TX NSS from fw stats
+ * @rate: The station_info tx/rx rate to be filled
+ * @signal: signal from station_info
+ * @rate_flags: TX/RX rate flags computed from tx/rx rate
+ * @mcs_index; The TX/RX mcs index computed from tx/rx rate
+ * @fw_rate: The tx/rx rate from fw stats
+ * @nss: The TX/RX NSS from fw stats
  *
- * Return: 0 for success
+ * Return: True if fill is successful
  */
-int hdd_report_max_rate(mac_handle_t mac_handle,
-			struct station_info *sinfo,
-			uint8_t tx_rate_flags,
-			uint8_t tx_mcs_index,
-			uint16_t my_tx_rate, uint8_t tx_nss);
+bool hdd_report_max_rate(mac_handle_t mac_handle,
+			 struct rate_info *rate,
+			 int8_t signal,
+			 uint8_t rate_flags,
+			 uint8_t mcs_index,
+			 uint16_t fw_rate, uint8_t nss);
 
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */
