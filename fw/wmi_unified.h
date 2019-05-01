@@ -24696,9 +24696,51 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_ wmi_chan_rf_characterization_info */
-    A_UINT32 freq; /* channel frequency of rf characteristic info (MHz) */
-    A_UINT32 chan_metric; /* 0 = unusable, 1 = worst, 10 = best */
+
+    /**
+     * [3:0]  : channel metric -  0 = unusable, 1 = worst, 10 = best
+     * [4:7]  : channel BW -
+     *          0 = 20MHz
+     *          1 = 40MHz
+     *          2 = 80MHz
+     *          3 = 160MHz
+     *          (4-10 unused)
+     *          11 = 5MHz
+     *          12 = 10MHz
+     *          (13-15 unused)
+     * [15:8 ]: Reserved
+     * [31:16]: Frequency -  channel frequency of RF characteristic info (MHz)
+     */
+    A_UINT32 freq_info;
 } WMI_CHAN_RF_CHARACTERIZATION_INFO;
+
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_CHAN_METRIC   0x0000000f
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_CHAN_METRIC_S 0
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_BW            0x000000f0
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_BW_S          4
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_FREQ          0xffff0000
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_FREQ_S        16
+
+#define WMI_CHAN_RF_CHARACTERIZATION_CHAN_METRIC_SET(dword,val) \
+            WMI_F_RMW((dword)->freq_info,(val) & 0xff,          \
+            WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_CHAN_METRIC)
+#define WMI_CHAN_RF_CHARACTERIZATION_CHAN_METRIC_GET(dword)     \
+            WMI_F_MS((dword)->freq_info,WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_CHAN_METRIC)
+
+#define WMI_CHAN_RF_CHARACTERIZATION_BW_SET(dword, val) \
+            WMI_F_RMW((dword)->freq_info,(val) & 0xf0, \
+            WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_BW)
+#define WMI_CHAN_RF_CHARACTERIZATION_BW_GET(dword)      \
+            WMI_F_MS((dword)->freq_info,WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_BW)
+
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_SET(dword, val) \
+            WMI_F_RMW((dword)->freq_info,(val) & 0xffff, \
+            WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_FREQ)
+
+#define WMI_CHAN_RF_CHARACTERIZATION_FREQ_GET(dword)      \
+            WMI_F_MS((dword)->freq_info,WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_FREQ)
+
+
 
 #define WMI_DMA_RING_PADDR_LO_S 0
 #define WMI_DMA_RING_PADDR_LO   0xffffffff
