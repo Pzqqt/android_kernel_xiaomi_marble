@@ -724,6 +724,36 @@ typedef struct {
         };
     };
 
+    /*
+     * Data fields containing the physical address info of a MSDU buffer
+     * as well as the owner and a SW cookie info that can be used by the host
+     * to look up the virtual address of the MSDU buffer.
+     * These fields are only valid if is_buffer_addr_info_valid is set to 1.
+     */
+     A_UINT32 buffer_paddr_31_0       : 32;
+     A_UINT32 buffer_paddr_39_32      :  8,
+              return_buffer_manager   :  3,
+              sw_buffer_cookie        : 21;
+
+    /*
+     * host_opaque_cookie : Host can send upto 2 bytes of opaque
+     * cookie in TCL_DATA_CMD and FW will replay this back in
+     * HTT PPDU stats. Valid only if sent to FW through
+     * exception mechanism.
+     *
+     * is_standalone : This msdu was sent as a single MSDU/MPDU
+     * PPDU as indicated by host via TCL_DATA_CMD using
+     * the send_as_standalone bit.
+     *
+     * is_buffer_addr_info_valid : This will be set whenever a MSDU is sent as
+     * a singleton (single-MSDU PPDU) for FW use-cases or as indicated by host
+     * via send_as_standalone in TCL_DATA_CMD.
+     */
+    A_UINT32 host_opaque_cookie:        16,
+             is_host_opaque_valid:       1,
+             is_standalone:              1,
+             is_buffer_addr_info_valid:  1,
+             reserved1:                 13;
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
@@ -819,6 +849,104 @@ typedef struct {
      do { \
          HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_RATE_TLV_RESP_TYPE_VALID, _val); \
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_RATE_TLV_RESP_TYPE_VALID_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_BUF_ADDR_39_32_M     0x000000ff
+#define HTT_PPDU_STATS_BUF_ADDR_39_32_S              0
+
+#define HTT_PPDU_STATS_BUF_ADDR_39_32__GET(_var) \
+    (((_var) & HTT_PPDU_STATS_BUF_ADDR_39_32_M) >> \
+    HTT_PPDU_STATS_BUF_ADDR_39_32_S)
+
+#define HTT_PPDU_STATS_BUF_ADDR_39_32_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_BUF_ADDR_39_32, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_BUF_ADDR_39_32_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_RETURN_BUF_MANAGER_M     0x00000700
+#define HTT_PPDU_STATS_RETURN_BUF_MANAGER_S              8
+
+#define HTT_PPDU_STATS_RETURN_BUF_MANAGER_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_RETURN_BUF_MANAGER_M) >> \
+    HTT_PPDU_STATS_RETURN_BUF_MANAGER_S)
+
+#define HTT_PPDU_STATS_RETURN_BUF_MANAGER_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_RETURN_BUF_MANAGER, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_RETURN_BUF_MANAGER_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_SW_BUFFER_COOKIE_M     0xfffff800
+#define HTT_PPDU_STATS_SW_BUFFER_COOKIE_S             11
+
+#define HTT_PPDU_STATS_SW_BUFFER_COOKIE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_SW_BUFFER_COOKIE_M) >> \
+    HTT_PPDU_STATS_SW_BUFFER_COOKIE_S)
+
+#define HTT_PPDU_STATS_SW_BUFFER_COOKIE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_SW_BUFFER_COOKIE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_SW_BUFFER_COOKIE_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_M     0x0000FFFF
+#define HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_S              0
+
+#define HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_M) >> \
+    HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_S)
+
+#define HTT_PPDU_STAT_HOST_OPAQUE_COOKIE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_HOST_OPAQUE_COOKIE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_IS_OPAQUE_VALID_M        0x00010000
+#define HTT_PPDU_STATS_IS_OPAQUE_VALID_S                16
+
+#define HTT_PPDU_STATS_IS_OPAQUE_VALID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_IS_OPAQUE_VALID_M) >> \
+    HTT_PPDU_STATS_IS_OPAQUE_VALID_S)
+
+#define HTT_PPDU_STATS_IS_OPAQUE_VALID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_IS_OPAQUE_VALID, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_IS_OPAQUE_VALID_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_IS_STANDALONE_M          0x00020000
+#define HTT_PPDU_STATS_IS_STANDALONE_S                  17
+
+#define HTT_PPDU_STATS_IS_STANDALONE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_IS_STANDALONE_M) >> \
+    HTT_PPDU_STATS_IS_OPAQUE_VALID_S)
+
+#define HTT_PPDU_STATS_IS_STANDALONE_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_IS_STANDALONE, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_IS_STANDALONE_S)); \
+     } while (0)
+
+
+#define HTT_PPDU_STATS_IS_BUFF_INFO_VALID_M          0x000400000
+#define HTT_PPDU_STATS_IS_BUFF_INFO_VALID_S                   18
+
+#define HTT_PPDU_STATS_IS_BUFF_INFO_VALID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_IS_BUFF_INFO_VALID_M) >> \
+    HTT_PPDU_STATS_IS_BUFF_INFO_VALID_S)
+
+#define HTT_PPDU_STATS_IS_BUFF_INFO_VALID_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_IS_BUFF_INFO_VALID, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_IS_BUFF_INFO_VALID_S)); \
      } while (0)
 
 enum HTT_PPDU_STATS_PPDU_TYPE {

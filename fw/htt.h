@@ -180,9 +180,12 @@
  * 3.63 Add HTT_HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND def
  * 3.64 Add struct htt_tx_compl_ind_append_tx_tsf64 and add tx_tsf64
  *      array to the end of HTT_T2H TX_COMPL_IND msg
+ * 3.65 Add fields in htt_tx_msdu_desc_ext2_t to allow the host to provide
+ *      a "cookie" to identify a MSDU, and to specify to not apply aggregation
+ *      for a MSDU.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 64
+#define HTT_CURRENT_VERSION_MINOR 65
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -1660,18 +1663,34 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
     /* DWORD 4: tx expiry time (TSF) MSBs */
     A_UINT32 expire_tsf_hi;
 
-    /* DWORD 5: reserved
-     * This structure can be expanded further up to 60 bytes
-     * by adding further DWORDs as needed.
-     */
+    /* DWORD 5: flags to control routing / processing of the MSDU */
     A_UINT32
         /* learning_frame
          * When this flag is set, this frame will be dropped by FW
          * rather than being enqueued to the Transmit Queue Manager (TQM) HW.
          */
-        learning_frame      :  1,
-        rsvd0               : 31;
+        learning_frame       :  1,
+        /* send_as_standalone
+         * This will indicate if the msdu needs to be sent as a singleton PPDU,
+         * i.e. with no A-MSDU or A-MPDU aggregation.
+         * The scope is extended to other use-cases.
+         */
+        send_as_standalone   :  1,
+        /* is_host_opaque_valid
+         * Host should set this bit to 1 if the host_opaque_cookie is populated
+         * with valid information.
+         */
+        is_host_opaque_valid :  1,
+        rsvd0                : 29;
 
+    /* DWORD 6 : Host opaque cookie for special frames */
+    A_UINT32 host_opaque_cookie  : 16, /* see is_host_opaque_valid */
+             rsvd1               : 16;
+
+    /*
+     * This structure can be expanded further up to 40 bytes
+     * by adding further DWORDs as needed.
+     */
 } POSTPACK;
 
 /* DWORD 0 */
@@ -1739,6 +1758,15 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 /* DWORD 5 */
 #define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_M           0x00000001
 #define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_S           0
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_M       0x00000002
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_S       1
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_M        0x00000004
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_S        2
+
+/* DWORD 6 */
+#define HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_M            0x0000FFFF
+#define HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_S            0
+
 
 /* DWORD 0 */
 #define HTT_TX_MSDU_EXT2_DESC_FLAG_VALID_PWR_GET(_var) \
@@ -2009,6 +2037,36 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
         HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME, _val); \
         ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_S)); \
     } while (0)
+
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_GET(_var) \
+    (((_var) & HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_M) >> \
+    HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_S)
+
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE, _val); \
+        ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_S)); \
+    } while (0)
+
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_GET(_var) \
+    (((_var) & HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_M) >> \
+    HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_S)
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID, _val); \
+        ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_S)); \
+    } while (0)
+
+/* DWORD 6 */
+#define HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_GET(_var) \
+    (((_var) & HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_M) >> \
+    HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_S)
+#define HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE, _val); \
+        ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_S)); \
+    } while (0)
+
 
 typedef enum {
     HTT_TCL_METADATA_TYPE_PEER_BASED = 0,
