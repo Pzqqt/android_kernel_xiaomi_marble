@@ -483,7 +483,7 @@ static void dsi_pll_setup_config(struct dsi_pll_7nm *pll,
 	config->frac_bits = 18;
 	config->lock_timer = 64;
 	config->ssc_freq = 31500;
-	config->ssc_offset = 5000;
+	config->ssc_offset = 4800;
 	config->ssc_adj_per = 2;
 	config->thresh_cycles = 32;
 	config->refclk_cycles = 256;
