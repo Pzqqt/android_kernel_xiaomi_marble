@@ -1934,20 +1934,24 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	chmixer_pspd->output_channel = ucontrol->value.integer.value[3];
 	chmixer_pspd->port_idx = ucontrol->value.integer.value[4];
 
-	if (chmixer_pspd->enable) {
+	if (chmixer_pspd->input_channel <= 0 ||
+		chmixer_pspd->input_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8 ||
+		chmixer_pspd->output_channel <= 0 ||
+		chmixer_pspd->output_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
+		pr_err("%s: Invalid channels, in %d, out %d\n",
+				__func__, chmixer_pspd->input_channel,
+				chmixer_pspd->output_channel);
+		return -EINVAL;
+	}
+
+	prtd = substream->runtime ? substream->runtime->private_data : NULL;
+	if (chmixer_pspd->enable && prtd) {
 		if (session_type == SESSION_TYPE_RX &&
 			!chmixer_pspd->override_in_ch_map) {
-			if (pdata->ch_map[fe_id] &&
-				pdata->ch_map[fe_id]->set_ch_map) {
+			if (prtd->set_channel_map) {
 				for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
-					chmixer_pspd->in_ch_map[i] =
-						pdata->ch_map[fe_id]->channel_map[i];
+					chmixer_pspd->in_ch_map[i] = prtd->channel_map[i];
 			} else {
-				if (chmixer_pspd->input_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
-					pr_err("%s: Invalid channel count %d\n",
-						__func__, chmixer_pspd->input_channel);
-					return -EINVAL;
-				}
 				q6asm_map_channels(asm_ch_map,
 					chmixer_pspd->input_channel, false);
 				for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
@@ -1957,22 +1961,14 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 			reset_override_in_ch_map = true;
 		} else if (session_type == SESSION_TYPE_TX &&
 				!chmixer_pspd->override_out_ch_map) {
-			if (pdata->ch_map[fe_id] &&
-				pdata->ch_map[fe_id]->set_ch_map) {
-				for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
-					chmixer_pspd->out_ch_map[i] =
-						pdata->ch_map[fe_id]->channel_map[i];
-			} else {
-				if (chmixer_pspd->output_channel > PCM_FORMAT_MAX_NUM_CHANNEL_V8) {
-					pr_err("%s: Invalid channel count %d\n",
-						__func__, chmixer_pspd->output_channel);
-					return -EINVAL;
-				}
-				q6asm_map_channels(asm_ch_map,
-					chmixer_pspd->output_channel, false);
-				for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
-					chmixer_pspd->out_ch_map[i] = asm_ch_map[i];
-			}
+			/*
+			 * Channel map set in prtd is for plyback only,
+			 * hence always use default for capture path.
+			 */
+			q6asm_map_channels(asm_ch_map,
+				chmixer_pspd->output_channel, false);
+			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
+				chmixer_pspd->out_ch_map[i] = asm_ch_map[i];
 			chmixer_pspd->override_out_ch_map = true;
 			reset_override_out_ch_map = true;
 		}
@@ -1986,22 +1982,13 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 			session_type,
 			chmixer_pspd);
 
-	if (chmixer_pspd->enable && substream->runtime) {
-		prtd = substream->runtime->private_data;
-		if (!prtd) {
-			pr_err("%s find invalid prtd fail\n", __func__);
-			ret = -EINVAL;
-			goto done;
-		}
-
-		if (prtd->audio_client) {
-			stream_id = prtd->audio_client->session;
-			be_id = chmixer_pspd->port_idx;
-			msm_pcm_routing_set_channel_mixer_runtime(be_id,
-					stream_id,
-					session_type,
-					chmixer_pspd);
-		}
+	if (chmixer_pspd->enable && prtd && prtd->audio_client) {
+		stream_id = prtd->audio_client->session;
+		be_id = chmixer_pspd->port_idx;
+		msm_pcm_routing_set_channel_mixer_runtime(be_id,
+				stream_id,
+				session_type,
+				chmixer_pspd);
 	}
 
 	if (reset_override_out_ch_map)
@@ -2009,7 +1996,6 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	if (reset_override_in_ch_map)
 		chmixer_pspd->override_in_ch_map = false;
 
-done:
 	return ret;
 }
 
