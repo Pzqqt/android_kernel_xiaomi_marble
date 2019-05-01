@@ -28,7 +28,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 	ifeq ($(CONFIG_ARCH_KONA), y)
 		include $(AUDIO_ROOT)/config/konaauto.conf
-		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_LITO), y)
