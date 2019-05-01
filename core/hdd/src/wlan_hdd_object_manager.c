@@ -365,26 +365,18 @@ int hdd_objmgr_set_peer_mlme_auth_state(struct wlan_objmgr_vdev *vdev,
 					bool is_authenticated)
 {
 	struct wlan_objmgr_peer *peer;
-	QDF_STATUS status;
 
-	wlan_vdev_obj_lock(vdev);
-	peer = wlan_vdev_get_bsspeer(vdev);
-	wlan_vdev_obj_unlock(vdev);
-
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_OSIF_ID);
 	if (!peer) {
 		hdd_err("peer is null");
-
 		return -EINVAL;
 	}
-	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
-	if (status != QDF_STATUS_SUCCESS)
-		return -EINVAL;
 
 	wlan_peer_obj_lock(peer);
 	wlan_peer_mlme_set_auth_state(peer, is_authenticated);
 	wlan_peer_obj_unlock(peer);
 
-	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_NB_ID);
+	wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 	return 0;
 }
 
@@ -393,13 +385,9 @@ int hdd_objmgr_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_objmgr_peer *peer;
 
-	wlan_vdev_obj_lock(vdev);
-	peer = wlan_vdev_get_bsspeer(vdev);
-	wlan_vdev_obj_unlock(vdev);
-
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_OSIF_ID);
 	if (!peer) {
 		hdd_err("peer is null");
-
 		return -EINVAL;
 	}
 
@@ -407,6 +395,7 @@ int hdd_objmgr_set_peer_mlme_state(struct wlan_objmgr_vdev *vdev,
 	wlan_peer_mlme_set_state(peer, WLAN_ASSOC_STATE);
 	wlan_peer_obj_unlock(peer);
 
+	wlan_objmgr_peer_release_ref(peer, WLAN_OSIF_ID);
 	return 0;
 }
 
