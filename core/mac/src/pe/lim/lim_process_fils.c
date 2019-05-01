@@ -1491,61 +1491,60 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 			    struct pe_session *session,
 			    struct join_req *sme_join_req)
 {
-	struct pe_fils_session *csr_fils_info;
+	struct pe_fils_session *pe_fils_info;
 	struct cds_fils_connection_info *fils_config_info;
 	tDot11fIERSN dot11f_ie_rsn = {0};
 	uint32_t ret;
 
 	fils_config_info = &sme_join_req->fils_con_info;
-	csr_fils_info = session->fils_info;
+	pe_fils_info = session->fils_info;
 
-	if (!csr_fils_info)
+	if (!pe_fils_info)
 		return;
 
 	if (fils_config_info->is_fils_connection == false)
 		return;
 
-	csr_fils_info->is_fils_connection =
+	pe_fils_info->is_fils_connection =
 		fils_config_info->is_fils_connection;
-	csr_fils_info->keyname_nai_length =
+	pe_fils_info->keyname_nai_length =
 		fils_config_info->key_nai_length;
-	csr_fils_info->fils_rrk_len =
+	pe_fils_info->fils_rrk_len =
 		fils_config_info->r_rk_length;
-	csr_fils_info->akm = fils_config_info->akm_type;
-	csr_fils_info->auth = fils_config_info->auth_type;
-	csr_fils_info->sequence_number = fils_config_info->sequence_number;
+	pe_fils_info->akm = fils_config_info->akm_type;
+	pe_fils_info->auth = fils_config_info->auth_type;
+	pe_fils_info->sequence_number = fils_config_info->sequence_number;
 	if (fils_config_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) {
-		pe_err("Restricting the key_nai_length of  %d to max %d",
+		pe_err("Restricting the key_nai_length of %d to max %d",
 		       fils_config_info->key_nai_length,
 		       FILS_MAX_KEYNAME_NAI_LENGTH);
 		fils_config_info->key_nai_length = FILS_MAX_KEYNAME_NAI_LENGTH;
 	}
-	csr_fils_info->keyname_nai_data =
+	pe_fils_info->keyname_nai_data =
 		qdf_mem_malloc(fils_config_info->key_nai_length);
-	if (!csr_fils_info->keyname_nai_data)
+	if (!pe_fils_info->keyname_nai_data)
 		return;
 
-	qdf_mem_copy(csr_fils_info->keyname_nai_data,
-			fils_config_info->keyname_nai,
-			fils_config_info->key_nai_length);
-	csr_fils_info->fils_rrk =
+	qdf_mem_copy(pe_fils_info->keyname_nai_data,
+		     fils_config_info->keyname_nai,
+		     fils_config_info->key_nai_length);
+	pe_fils_info->fils_rrk =
 		qdf_mem_malloc(fils_config_info->r_rk_length);
-	if (!csr_fils_info->fils_rrk) {
-		qdf_mem_free(csr_fils_info->keyname_nai_data);
+	if (!pe_fils_info->fils_rrk) {
+		qdf_mem_free(pe_fils_info->keyname_nai_data);
 		return;
 	}
 
 	if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
-		qdf_mem_copy(csr_fils_info->fils_rrk,
-				fils_config_info->r_rk,
-				fils_config_info->r_rk_length);
+		qdf_mem_copy(pe_fils_info->fils_rrk, fils_config_info->r_rk,
+			     fils_config_info->r_rk_length);
 
-	qdf_mem_copy(csr_fils_info->fils_pmkid,
-			fils_config_info->pmkid, PMKID_LEN);
-	csr_fils_info->rsn_ie_len = sme_join_req->rsnIE.length;
-	qdf_mem_copy(csr_fils_info->rsn_ie,
-			sme_join_req->rsnIE.rsnIEdata,
-			sme_join_req->rsnIE.length);
+	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_config_info->pmkid,
+		     PMKID_LEN);
+	pe_fils_info->rsn_ie_len = sme_join_req->rsnIE.length;
+	qdf_mem_copy(pe_fils_info->rsn_ie,
+		     sme_join_req->rsnIE.rsnIEdata,
+		     sme_join_req->rsnIE.length);
 	/*
 	 * When AP is MFP capable and STA is also MFP capable,
 	 * the supplicant fills the RSN IE with PMKID count as 0
@@ -1557,35 +1556,34 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 	 * suite is present and based on this RSN IE will be constructed in
 	 * lim_generate_fils_pmkr1_name() for FT-FILS connection.
 	 */
-	ret = dot11f_unpack_ie_rsn(mac_ctx, csr_fils_info->rsn_ie + 2,
-				   csr_fils_info->rsn_ie_len - 2,
+	ret = dot11f_unpack_ie_rsn(mac_ctx, pe_fils_info->rsn_ie + 2,
+				   pe_fils_info->rsn_ie_len - 2,
 				   &dot11f_ie_rsn, 0);
-	if (DOT11F_SUCCEEDED(ret)) {
-		csr_fils_info->group_mgmt_cipher_present =
+	if (DOT11F_SUCCEEDED(ret))
+		pe_fils_info->group_mgmt_cipher_present =
 			dot11f_ie_rsn.gp_mgmt_cipher_suite_present;
-	} else {
+	else
 		pe_err("FT-FILS: Invalid RSN IE");
-	}
 
-	csr_fils_info->fils_pmk_len = fils_config_info->pmk_len;
+	pe_fils_info->fils_pmk_len = fils_config_info->pmk_len;
 	if (fils_config_info->pmk_len) {
-		csr_fils_info->fils_pmk =
+		pe_fils_info->fils_pmk =
 			qdf_mem_malloc(fils_config_info->pmk_len);
-		if (!csr_fils_info->fils_pmk) {
-			qdf_mem_free(csr_fils_info->keyname_nai_data);
-			qdf_mem_free(csr_fils_info->fils_rrk);
+		if (!pe_fils_info->fils_pmk) {
+			qdf_mem_free(pe_fils_info->keyname_nai_data);
+			qdf_mem_free(pe_fils_info->fils_rrk);
 			return;
 		}
-		qdf_mem_copy(csr_fils_info->fils_pmk, fils_config_info->pmk,
-			fils_config_info->pmk_len);
+		qdf_mem_copy(pe_fils_info->fils_pmk, fils_config_info->pmk,
+			     fils_config_info->pmk_len);
 	}
 	pe_debug("fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
-		fils_config_info->is_fils_connection,
-		fils_config_info->key_nai_length,
-		fils_config_info->r_rk_length,
-		fils_config_info->akm_type,
-		fils_config_info->auth_type,
-		fils_config_info->pmk_len);
+		 fils_config_info->is_fils_connection,
+		 fils_config_info->key_nai_length,
+		 fils_config_info->r_rk_length,
+		 fils_config_info->akm_type,
+		 fils_config_info->auth_type,
+		 fils_config_info->pmk_len);
 }
 
 #define EXTENDED_IE_HEADER_LEN 3
