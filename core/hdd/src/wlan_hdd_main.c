@@ -9065,8 +9065,6 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 	hdd_qdf_trace_enable(QDF_MODULE_ID_CRYPTO, 0xffff);
 
 	hdd_set_mtrace_for_each(hdd_ctx);
-
-	hdd_cfg_print_global_config(hdd_ctx);
 }
 
 /**
@@ -9465,15 +9463,6 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	if (!hdd_ctx->config) {
 		ret = -ENOMEM;
 		goto err_free_hdd_context;
-	}
-
-	/* Read and parse the qcom_cfg.ini file */
-	status = hdd_parse_config_ini(hdd_ctx);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Error (status: %d) parsing INI file: %s", status,
-			  WLAN_INI_FILE);
-		ret = -EINVAL;
-		goto err_free_config;
 	}
 
 	status = cfg_parse(WLAN_INI_FILE);
@@ -10443,14 +10432,11 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 		goto out;
 	}
 
-	/* Apply the cfg.ini to cfg.dat */
 	if (!hdd_update_config_cfg(hdd_ctx)) {
 		hdd_err("config update failed");
 		ret = -EINVAL;
 		goto out;
 	}
-
-
 	hdd_init_channel_avoidance(hdd_ctx);
 
 out:

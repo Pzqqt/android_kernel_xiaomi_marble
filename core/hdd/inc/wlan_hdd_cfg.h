@@ -212,68 +212,6 @@ struct hdd_config {
 	uint32_t sar_version;
 };
 
-#define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
-#define VAR_SIZE(_Struct, _Var) (sizeof(((_Struct *)0)->_Var))
-
-#define VAR_FLAGS_NONE         (0)
-
-/* bit 0 is Required or Optional */
-#define VAR_FLAGS_REQUIRED     (1 << 0)
-#define VAR_FLAGS_OPTIONAL     (0 << 0)
-
-/*
- * bit 1 tells if range checking is required.
- * If less than MIN, assume MIN.
- * If greater than MAX, assume MAX.
- */
-#define VAR_FLAGS_RANGE_CHECK  (1 << 1)
-#define VAR_FLAGS_RANGE_CHECK_ASSUME_MINMAX (VAR_FLAGS_RANGE_CHECK)
-
-/*
- * bit 2 is range checking that assumes the DEFAULT value
- * If less than MIN, assume DEFAULT,
- * If greater than MAX, assume DEFAULT.
- */
-#define VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT (1 << 2)
-
-enum wlan_parameter_type {
-	WLAN_PARAM_Integer,
-	WLAN_PARAM_SignedInteger,
-	WLAN_PARAM_HexInteger,
-	WLAN_PARAM_String,
-	WLAN_PARAM_MacAddr,
-};
-
-#define REG_VARIABLE(_Name, _Type,  _Struct, _VarName,		\
-		      _Flags, _Default, _Min, _Max)		\
-	{							\
-		(_Name),					\
-		(_Type),					\
-		(_Flags),					\
-		0,						\
-		VAR_OFFSET(_Struct, _VarName),			\
-		VAR_SIZE(_Struct, _VarName),			\
-		(_Default),					\
-		(_Min),						\
-		(_Max),						\
-		NULL						\
-	}
-
-struct reg_table_entry {
-	char *RegName;          /* variable name in the qcom_cfg.ini file */
-	unsigned char RegType;    /* variable type in hdd_config struct */
-	unsigned char Flags;    /* Specify optional parms and if RangeCheck is performed */
-	unsigned char notifyId; /* Dynamic modification identifier */
-	unsigned short VarOffset;       /* offset to field from the base address of the structure */
-	unsigned short VarSize; /* size (in bytes) of the field */
-	unsigned long VarDefault;       /* default value to use */
-	unsigned long VarMin;   /* minimum value, for range checking */
-	unsigned long VarMax;   /* maximum value, for range checking */
-	/* Dynamic modification notifier */
-	void (*pfnDynamicnotify)(struct hdd_context *hdd_ctx,
-				 unsigned long notifyId);
-};
-
 /**
  * hdd_to_csr_wmm_mode() - Utility function to convert HDD to CSR WMM mode
  *
@@ -282,9 +220,6 @@ struct reg_table_entry {
  * Return: CSR WMM mode
  */
 eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(uint8_t mode);
-
-/* Function declarations and documenation */
-QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx);

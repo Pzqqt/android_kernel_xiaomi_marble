@@ -20,17 +20,6 @@
 #define __WNICFG_H
 
 /*
- * Configuration Parameter ID for STA
- */
-
-enum {
-	WNI_CFG_VALID_CHANNEL_LIST,
-	WNI_CFG_COUNTRY_CODE,
-	WNI_CFG_REMOVE_TIME_SYNC_CMD,
-	/* Any new items to be added should be above this strictly */
-	CFG_PARAM_MAX_NUM
-};
-/*
  * String parameter lengths
  */
 
