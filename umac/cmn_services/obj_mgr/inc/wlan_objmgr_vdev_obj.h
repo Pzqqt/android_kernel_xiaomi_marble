@@ -1399,6 +1399,20 @@ static inline struct wlan_objmgr_peer *wlan_vdev_get_bsspeer(
 }
 
 /**
+ * wlan_objmgr_vdev_try_get_bsspeer() - get and increment ref count of BSS peer
+ * of VDEV
+ * @vdev: VDEV object
+ * @id:   Object Manager ref debug id
+ *
+ * API to get and increment ref count of BSS peer of VDEV
+ *
+ * Return:
+ * @peer: BSS peer pointer if bss peer is present and valid else NULL
+ */
+struct wlan_objmgr_peer *wlan_objmgr_vdev_try_get_bsspeer(
+					struct wlan_objmgr_vdev *vdev,
+					wlan_objmgr_ref_dbgid id);
+/**
  * wlan_vdev_get_ospriv() - get os priv pointer
  * @vdev: VDEV object
  *
