@@ -54,6 +54,7 @@
 #include "pktlog_ac_fmt.h"
 #include <cdp_txrx_handle.h>
 #include <pld_common.h>
+#include <htt_internal.h>
 
 #ifndef OL_RX_INDICATION_MAX_RECORDS
 #define OL_RX_INDICATION_MAX_RECORDS 2048
@@ -1118,6 +1119,7 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 #endif
 
 #ifdef WLAN_FEATURE_TSF_PLUS
+#ifdef CONFIG_HL_SUPPORT
 static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
 				   void *rx_desc, qdf_nbuf_t msdu)
 {
@@ -1134,6 +1136,32 @@ static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
 	msdu->tstamp = ns_to_ktime((u_int64_t)rx_ppdu_desc->tsf32 *
 				   NSEC_PER_USEC);
 }
+#else
+static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
+				   void *rx_desc, qdf_nbuf_t msdu)
+{
+	struct htt_host_rx_desc_base *rx_mpdu_desc = rx_desc;
+	uint32_t tsf64_low32, tsf64_high32;
+	uint64_t tsf64, tsf64_ns;
+
+	if (!ol_cfg_is_ptp_rx_opt_enabled(cfg_pdev))
+		return;
+
+	if (!rx_mpdu_desc || !msdu)
+		return;
+
+	tsf64_low32 = rx_mpdu_desc->ppdu_end.wb_timestamp_lower_32;
+	tsf64_high32 = rx_mpdu_desc->ppdu_end.wb_timestamp_upper_32;
+
+	tsf64 = (uint64_t)tsf64_high32 << 32 | tsf64_low32;
+	if (tsf64 * NSEC_PER_USEC < tsf64)
+		tsf64_ns = 0;
+	else
+		tsf64_ns = tsf64 * NSEC_PER_USEC;
+
+	msdu->tstamp = ns_to_ktime(tsf64_ns);
+}
+#endif
 #else
 static inline void ol_rx_timestamp(struct cdp_cfg *cfg_pdev,
 				   void *rx_desc, qdf_nbuf_t msdu)
@@ -1425,6 +1453,8 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	uint32_t msdu_count;
 	uint8_t pktlog_bit;
 	uint32_t filled = 0;
+	struct htt_host_rx_desc_base *rx_desc;
+	qdf_nbuf_t loop_msdu;
 
 	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
 		ol_txrx_err("invalid tid, %u", tid);
@@ -1508,6 +1538,15 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 			htt_rx_desc_frame_free(htt_pdev, msdu);
 		}
 		return;
+	}
+	/*Loop msdu to fill tstamp with tsf64 time in ol_rx_timestamp*/
+	loop_msdu = head_msdu;
+	while (loop_msdu) {
+		qdf_nbuf_t msdu = head_msdu;
+
+		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, loop_msdu);
+		ol_rx_timestamp(pdev->ctrl_pdev, rx_desc, msdu);
+		loop_msdu = qdf_nbuf_next(loop_msdu);
 	}
 
 	peer->rx_opt_proc(vdev, peer, tid, head_msdu);

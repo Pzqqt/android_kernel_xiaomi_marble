@@ -664,6 +664,60 @@ static inline int32_t hdd_get_targettime_from_hosttime(
 	return ret;
 }
 
+/**
+ * hdd_get_soctime_from_tsf64time() - return get status
+ *
+ * @adapter: Adapter pointer
+ * @tsf64_time: current tsf64time, us
+ * @soc_time: current soc time(qtime), ns
+ *
+ * This function get current soc time from current tsf64 time
+ * Returun int32_t value to tell get success or fail.
+ *
+ * Return:
+ * 0:        success
+ * other: fail
+ *
+ */
+static inline int32_t hdd_get_soctime_from_tsf64time(
+	struct hdd_adapter *adapter, uint64_t tsf64_time,
+	uint64_t *soc_time)
+{
+	int32_t ret = -EINVAL;
+	uint64_t delta64_tsf64time;
+	uint64_t delta64_soctime;
+	bool in_cap_state;
+
+	in_cap_state = hdd_tsf_is_in_cap(adapter);
+
+	/*
+	 * To avoid check the lock when it's not capturing tsf
+	 * (the tstamp-pair won't be changed)
+	 */
+	if (in_cap_state)
+		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
+
+	/* at present, target_time is 64bit (g_tsf64), us*/
+	if (tsf64_time > adapter->last_target_global_tsf_time)
+		delta64_tsf64time = tsf64_time -
+				 adapter->last_target_global_tsf_time;
+	else {
+		if (in_cap_state)
+			qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
+		return -EINVAL;
+	}
+
+	delta64_soctime = delta64_tsf64time * NSEC_PER_USEC;
+
+	/* soc_time (ns)*/
+	ret = hdd_uint64_plus(adapter->last_tsf_sync_soc_time,
+			      delta64_soctime, soc_time);
+	if (in_cap_state)
+		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
+
+	return ret;
+}
+
 static inline
 uint64_t hdd_get_monotonic_host_time(struct hdd_context *hdd_ctx)
 {
@@ -811,12 +865,16 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter)
 		 */
 	case HDD_TS_STATUS_READY:
 		adapter->last_target_time = adapter->cur_target_time;
+		adapter->last_target_global_tsf_time =
+			adapter->cur_target_global_tsf_time;
 		adapter->last_tsf_sync_soc_time =
 				adapter->cur_tsf_sync_soc_time;
 		adapter->cur_target_time = 0;
+		adapter->cur_target_global_tsf_time = 0;
 		adapter->cur_tsf_sync_soc_time = 0;
-		hdd_info("ts-pair updated: target: %llu; Qtime: %llu",
+		hdd_info("ts-pair updated: target: %llu; g_target:%llu, Qtime: %llu",
 			 adapter->last_target_time,
+			 adapter->last_target_global_tsf_time,
 			 adapter->last_tsf_sync_soc_time);
 
 		/*
@@ -1171,6 +1229,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(struct hdd_adapter *adapter)
 	return HDD_TSF_OP_SUCC;
 }
 
+#ifdef CONFIG_HL_SUPPORT
 static inline
 enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
 					    uint64_t target_time)
@@ -1195,6 +1254,34 @@ enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
 
 	return HDD_TSF_OP_FAIL;
 }
+
+#else
+static inline
+enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
+					    uint64_t target_time)
+{
+	struct hdd_adapter *adapter;
+	struct net_device *net_dev = netbuf->dev;
+
+	if (!net_dev)
+		return HDD_TSF_OP_FAIL;
+
+	adapter = (struct hdd_adapter *)(netdev_priv(net_dev));
+	if (adapter && adapter->magic == WLAN_HDD_ADAPTER_MAGIC &&
+	    hdd_get_th_sync_status(adapter)) {
+		uint64_t tsf64_time = target_time;
+		uint64_t soc_time = 0;/*ns*/
+		int32_t ret = hdd_get_soctime_from_tsf64time(adapter,
+				tsf64_time, &soc_time);
+		if (!ret) {
+			netbuf->tstamp = soc_time;
+			return HDD_TSF_OP_SUCC;
+		}
+	}
+
+	return HDD_TSF_OP_FAIL;
+}
+#endif
 
 int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 {
@@ -1819,12 +1906,13 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	adapter->cur_target_time = ((uint64_t)ptsf->tsf_high << 32 |
 			 ptsf->tsf_low);
 
+	adapter->cur_target_global_tsf_time =
+		((uint64_t)ptsf->global_tsf_high << 32 |
+			 ptsf->global_tsf_low);
 	tsf_sync_soc_time = ((uint64_t)ptsf->soc_timer_high << 32 |
 			ptsf->soc_timer_low);
-
 	adapter->cur_tsf_sync_soc_time =
 		qdf_log_timestamp_to_usecs(tsf_sync_soc_time) * NSEC_PER_USEC;
-
 	complete(&tsf_sync_get_completion_evt);
 	hdd_update_tsf(adapter, adapter->cur_target_time);
 	hdd_info("Vdev=%u, tsf_low=%u, tsf_high=%u ptsf->soc_timer_low=%u ptsf->soc_timer_high=%u",

@@ -43,6 +43,7 @@
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_types.h>
 #include <ol_tx_send.h>
+#include <ol_htt_rx_api.h>
 
 #include <htt_internal.h>
 #include <wlan_policy_mgr_api.h>
@@ -540,6 +541,7 @@ QDF_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 			  __func__, __LINE__);
 	}
 
+	htt_rx_enable_ppdu_end(&enable_ppdu_end);
 	HTT_RX_RING_CFG_ENABLED_802_11_HDR_SET(*msg_word, enable_hdr);
 	HTT_RX_RING_CFG_ENABLED_MSDU_PAYLD_SET(*msg_word, 1);
 	HTT_RX_RING_CFG_ENABLED_PPDU_START_SET(*msg_word, enable_ppdu_start);

@@ -4525,6 +4525,8 @@ struct sir_sme_ext_cng_chan_ind {
  * @tsf_high: high 32bits of tsf
  * @soc_timer_low: low 32bits of synced SOC timer value
  * @soc_timer_high: high 32bits of synced SOC timer value
+ * @global_tsf_low: low 32bits of tsf64
+ * @global_tsf_high: high 32bits of tsf64
  *
  * driver use this struct to store the tsf info
  */
@@ -4534,6 +4536,8 @@ struct stsf {
 	uint32_t tsf_high;
 	uint32_t soc_timer_low;
 	uint32_t soc_timer_high;
+	uint32_t global_tsf_low;
+	uint32_t global_tsf_high;
 };
 
 #define SIR_BCN_FLT_MAX_ELEMS_IE_LIST 8

@@ -1007,4 +1007,18 @@ uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg);
  * Return: QDF_STATUS
  */
 QDF_STATUS htt_rx_update_smmu_map(struct htt_pdev_t *pdev, bool map);
+
+/** htt_tx_enable_ppdu_end
+ * @enable_ppdu_end - set it to 1 if WLAN_FEATURE_TSF_PLUS is defined,
+ *                    else do nothing
+ */
+#ifdef WLAN_FEATURE_TSF_PLUS
+void htt_rx_enable_ppdu_end(int *enable_ppdu_end);
+#else
+static inline
+void htt_rx_enable_ppdu_end(int *enable_ppdu_end)
+{
+}
+#endif
+
 #endif /* _OL_HTT_RX_API__H_ */

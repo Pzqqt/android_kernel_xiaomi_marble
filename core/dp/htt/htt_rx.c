@@ -422,3 +422,10 @@ void htt_deregister_rx_pkt_dump_callback(struct htt_pdev_t *pdev)
 	pdev->rx_pkt_dump_cb = NULL;
 }
 #endif
+
+#ifdef WLAN_FEATURE_TSF_PLUS
+void htt_rx_enable_ppdu_end(int *enable_ppdu_end)
+{
+	*enable_ppdu_end = 1;
+}
+#endif
