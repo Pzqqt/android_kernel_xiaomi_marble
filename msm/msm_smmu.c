@@ -21,7 +21,6 @@
 #include <linux/pm_runtime.h>
 #include <linux/msm_dma_iommu_mapping.h>
 
-#include <asm/dma-iommu.h>
 #include <soc/qcom/secure_buffer.h>
 
 #include "msm_drv.h"

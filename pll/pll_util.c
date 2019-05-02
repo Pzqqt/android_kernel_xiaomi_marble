@@ -346,7 +346,6 @@ pnode_err:
 	if (pnode)
 		of_node_put(pnode);
 
-	dma_release_declared_memory(&pdev->dev);
 	return rc;
 }
 

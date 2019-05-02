@@ -2913,7 +2913,7 @@ static int sde_vbif_parse_dt(struct device_node *np,
 	struct sde_prop_value *prop_value = NULL;
 	bool prop_exists[VBIF_PROP_MAX];
 	u32 off_count, vbif_len;
-	struct sde_vbif_cfg *vbif;
+	struct sde_vbif_cfg *vbif = NULL;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");

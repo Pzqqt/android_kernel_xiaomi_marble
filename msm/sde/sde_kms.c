@@ -25,7 +25,8 @@
 #include <linux/of_irq.h>
 #include <linux/dma-buf.h>
 #include <linux/memblock.h>
-#include <linux/bootmem.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
 #include "msm_mmu.h"
@@ -506,7 +507,7 @@ static int _sde_kms_secure_ctrl(struct sde_kms *sde_kms, struct drm_crtc *crtc,
 	if (smmu_state->sui_misr_state == SUI_MISR_ENABLE_REQ) {
 		ret = _sde_kms_sui_misr_ctrl(sde_kms, crtc, true);
 		if (ret) {
-			smmu_state->sui_misr_state == NONE;
+			smmu_state->sui_misr_state = NONE;
 			goto end;
 		}
 	}
@@ -2467,9 +2468,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		/* currently consider modes[0] as the preferred mode */
 		drm_mode = list_first_entry(&connector->modes,
 				struct drm_display_mode, head);
-		SDE_DEBUG("drm_mode->name = %s, id=%d, type=0x%x, flags=0x%x\n",
-				drm_mode->name, drm_mode->base.id,
-				drm_mode->type, drm_mode->flags);
+		SDE_DEBUG("drm_mode->name = %s, type=0x%x, flags=0x%x\n",
+				drm_mode->name, drm_mode->type,
+				drm_mode->flags);
 
 		/* Update CRTC drm structure */
 		crtc->state->active = true;

@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 
 #include <uapi/drm/sde_drm.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_kms.h"
 #include "sde_kms.h"

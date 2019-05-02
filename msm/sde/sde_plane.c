@@ -1406,6 +1406,7 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 {
 	struct sde_hw_pixel_ext *pe;
 	uint32_t chroma_subsmpl_h, chroma_subsmpl_v;
+	const struct drm_format_info *info = drm_format_info(fmt->base.pixel_format);
 
 	if (!psde || !fmt || !pstate) {
 		SDE_ERROR("invalid arg(s), plane %d fmt %d state %d\n",
@@ -1421,10 +1422,8 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 		sde_plane_get_property(pstate, PLANE_PROP_V_DECIMATE);
 
 	/* don't chroma subsample if decimating */
-	chroma_subsmpl_h = psde->pipe_cfg.horz_decimation ? 1 :
-		drm_format_horz_chroma_subsampling(fmt->base.pixel_format);
-	chroma_subsmpl_v = psde->pipe_cfg.vert_decimation ? 1 :
-		drm_format_vert_chroma_subsampling(fmt->base.pixel_format);
+	chroma_subsmpl_h = psde->pipe_cfg.horz_decimation ? 1 : info->hsub;
+	chroma_subsmpl_v = psde->pipe_cfg.vert_decimation ? 1 : info->vsub;
 
 	/* update scaler */
 	if (psde->features & BIT(SDE_SSPP_SCALER_QSEED3) ||
@@ -4006,8 +4005,6 @@ static void sde_plane_destroy(struct drm_plane *plane)
 			drm_property_blob_put(psde->blob_info);
 		msm_property_destroy(&psde->property_info);
 		mutex_destroy(&psde->lock);
-
-		drm_plane_helper_disable(plane, NULL);
 
 		/* this will destroy the states as well */
 		drm_plane_cleanup(plane);

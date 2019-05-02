@@ -16,6 +16,7 @@
 #include "dsi_display.h"
 #include "sde_crtc.h"
 #include "sde_rm.h"
+#include <drm/drm_probe_helper.h>
 
 #define BL_NODE_NAME_SIZE 32
 #define HDR10_PLUS_VSIF_TYPE_CODE      0x81
@@ -2105,23 +2106,26 @@ sde_connector_atomic_best_encoder(struct drm_connector *connector,
 }
 
 static int sde_connector_atomic_check(struct drm_connector *connector,
-		struct drm_connector_state *new_conn_state)
+		struct drm_atomic_state *state)
 {
 	struct sde_connector *c_conn;
 	struct sde_connector_state *c_state;
 	bool qsync_dirty = false, has_modeset = false;
+	struct drm_connector_state *new_conn_state;
 
 	if (!connector) {
 		SDE_ERROR("invalid connector\n");
 		return -EINVAL;
 	}
 
+	c_conn = to_sde_connector(connector);
+	new_conn_state = drm_atomic_get_new_connector_state(state, connector);
+
 	if (!new_conn_state) {
 		SDE_ERROR("invalid connector state\n");
 		return -EINVAL;
 	}
 
-	c_conn = to_sde_connector(connector);
 	c_state = to_sde_connector_state(new_conn_state);
 
 	has_modeset = sde_crtc_atomic_check_has_modeset(new_conn_state->state,
@@ -2135,10 +2139,11 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 		SDE_ERROR("invalid qsync update during modeset\n");
 		return -EINVAL;
 	}
+	new_conn_state = drm_atomic_get_new_connector_state(state, connector);
 
 	if (c_conn->ops.atomic_check)
 		return c_conn->ops.atomic_check(connector,
-				c_conn->display, new_conn_state);
+				c_conn->display, state);
 
 	return 0;
 }

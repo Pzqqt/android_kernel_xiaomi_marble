@@ -109,13 +109,12 @@ static struct page **get_pages(struct drm_gem_object *obj)
 			return ptr;
 		}
 
-		/*
-		 * Make sure to flush the CPU cache for newly allocated memory
-		 * so we don't get ourselves into trouble with a dirty cache
+		/* For non-cached buffers, ensure the new pages are clean
+		 * because display controller, GPU, etc. are not coherent:
 		 */
 		if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED)) {
 			aspace_dev = msm_gem_get_aspace_device(msm_obj->aspace);
-			dma_sync_sg_for_device(aspace_dev, msm_obj->sgt->sgl,
+			dma_map_sg(aspace_dev, msm_obj->sgt->sgl,
 				msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
 		}
 	}
@@ -403,19 +402,14 @@ put_iova(struct drm_gem_object *obj)
 }
 
 /* get iova, taking a reference.  Should have a matching put */
-int msm_gem_get_iova(struct drm_gem_object *obj,
+static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 		struct msm_gem_address_space *aspace, uint64_t *iova)
 {
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 	struct msm_gem_vma *vma;
 	int ret = 0;
 
-	mutex_lock(&msm_obj->lock);
-
-	if (WARN_ON(msm_obj->madv != MSM_MADV_WILLNEED)) {
-		mutex_unlock(&msm_obj->lock);
-		return -EBUSY;
-	}
+	WARN_ON(!mutex_is_locked(&msm_obj->lock));
 
 	vma = lookup_vma(obj, aspace);
 
@@ -468,6 +462,64 @@ unlock:
 	mutex_unlock(&msm_obj->lock);
 	return ret;
 }
+static int msm_gem_pin_iova(struct drm_gem_object *obj,
+		struct msm_gem_address_space *aspace)
+{
+	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct msm_gem_vma *vma;
+	struct page **pages;
+
+	WARN_ON(!mutex_is_locked(&msm_obj->lock));
+
+	if (WARN_ON(msm_obj->madv != MSM_MADV_WILLNEED))
+		return -EBUSY;
+
+	vma = lookup_vma(obj, aspace);
+	if (WARN_ON(!vma))
+		return -EINVAL;
+
+	pages = get_pages(obj);
+	if (IS_ERR(pages))
+		return PTR_ERR(pages);
+
+	return msm_gem_map_vma(aspace, vma, msm_obj->sgt,
+			obj->size >> PAGE_SHIFT, msm_obj->flags);
+}
+
+/* get iova and pin it. Should have a matching put */
+int msm_gem_get_and_pin_iova(struct drm_gem_object *obj,
+		struct msm_gem_address_space *aspace, uint64_t *iova)
+{
+	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	u64 local;
+	int ret;
+
+	mutex_lock(&msm_obj->lock);
+
+	ret = msm_gem_get_iova_locked(obj, aspace, &local);
+
+	if (!ret)
+		ret = msm_gem_pin_iova(obj, aspace);
+
+	if (!ret)
+		*iova = local;
+
+	mutex_unlock(&msm_obj->lock);
+	return ret;
+}
+
+int msm_gem_get_iova(struct drm_gem_object *obj,
+		struct msm_gem_address_space *aspace, uint64_t *iova)
+{
+	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	int ret;
+
+	mutex_lock(&msm_obj->lock);
+	ret = msm_gem_get_iova_locked(obj, aspace, iova);
+	mutex_unlock(&msm_obj->lock);
+
+	return ret;
+}
 
 /* get iova without taking a reference, used in places where you have
  * already done a 'msm_gem_get_iova()'.
@@ -484,6 +536,27 @@ uint64_t msm_gem_iova(struct drm_gem_object *obj,
 	WARN_ON(!vma);
 
 	return vma ? vma->iova : 0;
+}
+
+/*
+ * Unpin a iova by updating the reference counts. The memory isn't actually
+ * purged until something else (shrinker, mm_notifier, destroy, etc) decides
+ * to get rid of it
+ */
+void msm_gem_unpin_iova(struct drm_gem_object *obj,
+		struct msm_gem_address_space *aspace)
+{
+	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct msm_gem_vma *vma;
+
+	mutex_lock(&msm_obj->lock);
+	vma = lookup_vma(obj, aspace);
+
+	if (!WARN_ON(!vma))
+		msm_gem_unmap_vma(vma->aspace, vma, msm_obj->sgt,
+				msm_obj->flags);
+
+	mutex_unlock(&msm_obj->lock);
 }
 
 void msm_gem_put_iova(struct drm_gem_object *obj,
@@ -560,7 +633,7 @@ int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
 	args->pitch = align_pitch(args->width, args->bpp);
 	args->size  = PAGE_ALIGN(args->pitch * args->height);
 	return msm_gem_new_handle(dev, file, args->size,
-			MSM_BO_SCANOUT | MSM_BO_WC, &args->handle);
+			MSM_BO_SCANOUT | MSM_BO_WC, &args->handle, "dumb");
 }
 
 int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
@@ -766,7 +839,7 @@ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op, ktime_t *timeout)
 		op & MSM_PREP_NOSYNC ? 0 : timeout_to_jiffies(timeout);
 	long ret;
 
-	ret = reservation_object_wait_timeout_rcu(msm_obj->resv, write,
+	ret = dma_resv_wait_timeout_rcu(msm_obj->resv, write,
 						  true,  remain);
 	if (ret == 0)
 		return remain == 0 ? -EBUSY : -ETIMEDOUT;
@@ -789,7 +862,7 @@ static void describe_fence(struct dma_fence *fence, const char *type,
 		struct seq_file *m)
 {
 	if (!dma_fence_is_signaled(fence))
-		seq_printf(m, "\t%9s: %s %s seq %u\n", type,
+		seq_printf(m, "\t%9s: %s %s seq %llu\n", type,
 				fence->ops->get_driver_name(fence),
 				fence->ops->get_timeline_name(fence),
 				fence->seqno);
@@ -798,8 +871,8 @@ static void describe_fence(struct dma_fence *fence, const char *type,
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m)
 {
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
-	struct reservation_object *robj = msm_obj->resv;
-	struct reservation_object_list *fobj;
+	struct dma_resv *robj = msm_obj->resv;
+	struct dma_resv_list *fobj;
 	struct dma_fence *fence;
 	struct msm_gem_vma *vma;
 	uint64_t off = drm_vma_node_start(&obj->vma_node);
@@ -825,11 +898,19 @@ void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m)
 			obj->name, kref_read(&obj->refcount),
 			off, msm_obj->vaddr);
 
-	/* FIXME: we need to print the address space here too */
-	list_for_each_entry(vma, &msm_obj->vmas, list)
-		seq_printf(m, " %08llx", vma->iova);
+	seq_printf(m, " %08zu %9s %-32s\n", obj->size, madv, msm_obj->name);
 
-	seq_printf(m, " %zu%s\n", obj->size, madv);
+	if (!list_empty(&msm_obj->vmas)) {
+
+		seq_puts(m, "      vmas:");
+
+		list_for_each_entry(vma, &msm_obj->vmas, list)
+			seq_printf(m, " [%s: %08llx,%s,inuse=%d]", vma->aspace->name,
+				vma->iova, vma->mapped ? "mapped" : "unmapped",
+				vma->inuse);
+
+		seq_puts(m, "\n");
+	}
 
 	rcu_read_lock();
 	fobj = rcu_dereference(robj->fence);
@@ -856,9 +937,10 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 	int count = 0;
 	size_t size = 0;
 
+	seq_puts(m, "   flags       id ref  offset   kaddr            size     madv      name\n");
 	list_for_each_entry(msm_obj, list, mm_list) {
 		struct drm_gem_object *obj = &msm_obj->base;
-		seq_printf(m, "   ");
+		seq_puts(m, "   ");
 		msm_gem_describe(obj, m);
 		count++;
 		size += obj->size;
@@ -908,7 +990,7 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 	}
 
 	if (msm_obj->resv == &msm_obj->_resv)
-		reservation_object_fini(msm_obj->resv);
+		dma_resv_fini(msm_obj->resv);
 
 	drm_gem_object_release(obj);
 
@@ -918,7 +1000,8 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 
 /* convenience method to construct a GEM buffer object, and userspace handle */
 int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
-		uint32_t size, uint32_t flags, uint32_t *handle)
+		uint32_t size, uint32_t flags, uint32_t *handle,
+		char *name)
 {
 	struct drm_gem_object *obj;
 	int ret;
@@ -927,6 +1010,9 @@ int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 
 	if (IS_ERR(obj))
 		return PTR_ERR(obj);
+
+	if (name)
+		msm_gem_object_set_name(obj, "%s", name);
 
 	ret = drm_gem_handle_create(file, obj, handle);
 
@@ -938,7 +1024,7 @@ int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 
 static int msm_gem_new_impl(struct drm_device *dev,
 		uint32_t size, uint32_t flags,
-		struct reservation_object *resv,
+		struct dma_resv *resv,
 		struct drm_gem_object **obj,
 		bool struct_mutex_locked)
 {
@@ -969,7 +1055,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 		msm_obj->resv = resv;
 	} else {
 		msm_obj->resv = &msm_obj->_resv;
-		reservation_object_init(msm_obj->resv);
+		dma_resv_init(msm_obj->resv);
 	}
 
 	INIT_LIST_HEAD(&msm_obj->submit_entry);
@@ -1004,7 +1090,7 @@ static struct drm_gem_object *_msm_gem_new(struct drm_device *dev,
 
 	if (!iommu_present(&platform_bus_type))
 		use_vram = true;
-	else if ((flags & MSM_BO_STOLEN) && priv->vram.size)
+	else if ((flags & (MSM_BO_STOLEN | MSM_BO_SCANOUT)) && priv->vram.size)
 		use_vram = true;
 
 	if (WARN_ON(use_vram && !priv->vram.size))
@@ -1190,23 +1276,29 @@ static void *_msm_gem_kernel_new(struct drm_device *dev, uint32_t size,
 
 	if (iova) {
 		ret = msm_gem_get_iova(obj, aspace, iova);
-		if (ret) {
-			drm_gem_object_put(obj);
-			return ERR_PTR(ret);
-		}
+		if (ret)
+			goto err;
 	}
 
 	vaddr = msm_gem_get_vaddr(obj);
 	if (IS_ERR(vaddr)) {
 		msm_gem_put_iova(obj, aspace);
-		drm_gem_object_put(obj);
-		return ERR_CAST(vaddr);
+		ret = PTR_ERR(vaddr);
+		goto err;
 	}
 
 	if (bo)
 		*bo = obj;
 
 	return vaddr;
+err:
+	if (locked)
+		drm_gem_object_put(obj);
+	else
+		drm_gem_object_put_unlocked(obj);
+
+	return ERR_PTR(ret);
+
 }
 
 void *msm_gem_kernel_new(struct drm_device *dev, uint32_t size,
@@ -1221,4 +1313,32 @@ void *msm_gem_kernel_new_locked(struct drm_device *dev, uint32_t size,
 		struct drm_gem_object **bo, uint64_t *iova)
 {
 	return _msm_gem_kernel_new(dev, size, flags, aspace, bo, iova, true);
+}
+
+void msm_gem_kernel_put(struct drm_gem_object *bo,
+		struct msm_gem_address_space *aspace, bool locked)
+{
+	if (IS_ERR_OR_NULL(bo))
+		return;
+
+	msm_gem_put_vaddr(bo);
+	msm_gem_unpin_iova(bo, aspace);
+
+	if (locked)
+		drm_gem_object_put(bo);
+	else
+		drm_gem_object_put_unlocked(bo);
+}
+
+void msm_gem_object_set_name(struct drm_gem_object *bo, const char *fmt, ...)
+{
+	struct msm_gem_object *msm_obj = to_msm_bo(bo);
+	va_list ap;
+
+	if (!fmt)
+		return;
+
+	va_start(ap, fmt);
+	vsnprintf(msm_obj->name, sizeof(msm_obj->name), fmt, ap);
+	va_end(ap);
 }

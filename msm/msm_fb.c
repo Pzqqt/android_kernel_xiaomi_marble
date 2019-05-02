@@ -19,8 +19,9 @@
 #include <linux/dma-mapping.h>
 #include <linux/dma-buf.h>
 #include <drm/drm_crtc.h>
-#include <drm/drm_crtc_helper.h>
+#include <drm/drm_damage_helper.h>
 #include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
 #include "msm_kms.h"
@@ -40,6 +41,7 @@ struct msm_framebuffer {
 static const struct drm_framebuffer_funcs msm_framebuffer_funcs = {
 	.create_handle = drm_gem_fb_create_handle,
 	.destroy = drm_gem_fb_destroy,
+	.dirty = drm_atomic_helper_dirtyfb,
 };
 
 #ifdef CONFIG_DEBUG_FS
@@ -283,9 +285,11 @@ const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb)
 struct drm_framebuffer *msm_framebuffer_create(struct drm_device *dev,
 		struct drm_file *file, const struct drm_mode_fb_cmd2 *mode_cmd)
 {
+	const struct drm_format_info *info = drm_get_format_info(dev,
+								mode_cmd);
 	struct drm_gem_object *bos[4] = {0};
 	struct drm_framebuffer *fb;
-	int ret, i, n = drm_format_num_planes(mode_cmd->pixel_format);
+	int ret, i, n = info->num_planes;
 
 	for (i = 0; i < n; i++) {
 		bos[i] = drm_gem_object_lookup(file, mode_cmd->handles[i]);
@@ -310,24 +314,24 @@ out_unref:
 }
 
 struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
-		const struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_object **bos)
+		const struct drm_mode_fb_cmd2 *mode_cmd,
+		struct drm_gem_object **bos)
 {
+	const struct drm_format_info *info = drm_get_format_info(dev,
+								mode_cmd);
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
 	struct msm_framebuffer *msm_fb = NULL;
 	struct drm_framebuffer *fb;
 	const struct msm_format *format;
 	int ret, i, num_planes;
-	unsigned int hsub, vsub;
 	bool is_modified = false;
 
 	DBG("create framebuffer: dev=%pK, mode_cmd=%pK (%dx%d@%4.4s)",
 			dev, mode_cmd, mode_cmd->width, mode_cmd->height,
 			(char *)&mode_cmd->pixel_format);
 
-	num_planes = drm_format_num_planes(mode_cmd->pixel_format);
-	hsub = drm_format_horz_chroma_subsampling(mode_cmd->pixel_format);
-	vsub = drm_format_vert_chroma_subsampling(mode_cmd->pixel_format);
+	num_planes = info->num_planes;
 
 	format = kms->funcs->get_format(kms, mode_cmd->pixel_format,
 			mode_cmd->modifier[0]);
@@ -370,7 +374,7 @@ struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
 			goto fail;
 		} else {
 			ret = kms->funcs->check_modified_format(
-				kms, msm_fb->format, mode_cmd, bos);
+					kms, msm_fb->format, mode_cmd, bos);
 			if (ret)
 				goto fail;
 		}
@@ -384,16 +388,15 @@ struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
 		}
 
 		for (i = 0; i < num_planes; i++) {
-			unsigned int width = mode_cmd->width / (i ? hsub : 1);
-			unsigned int height = mode_cmd->height / (i ? vsub : 1);
+			unsigned int width = mode_cmd->width / (i ?
+					info->hsub : 1);
+			unsigned int height = mode_cmd->height / (i ?
+					info->vsub : 1);
 			unsigned int min_size;
-			unsigned int cpp = 0;
-
-			cpp = drm_format_plane_cpp(mode_cmd->pixel_format, i);
 
 			min_size = (height - 1) * mode_cmd->pitches[i]
-				 + width * cpp
-				 + mode_cmd->offsets[i];
+				+ width * info->cpp[i]
+				+ mode_cmd->offsets[i];
 
 			if (!bos[i] || bos[i]->size < min_size) {
 				ret = -EINVAL;
@@ -449,6 +452,8 @@ msm_alloc_stolen_fb(struct drm_device *dev, int w, int h, int p, uint32_t format
 		dev_err(dev->dev, "failed to allocate buffer object\n");
 		return ERR_CAST(bo);
 	}
+
+	msm_gem_object_set_name(bo, "stolenfb");
 
 	fb = msm_framebuffer_init(dev, &mode_cmd, &bo);
 	if (IS_ERR(fb)) {

@@ -197,9 +197,9 @@ msm_gem_address_space_destroy(struct kref *kref)
 	struct msm_gem_address_space *aspace = container_of(kref,
 			struct msm_gem_address_space, kref);
 
-	if (aspace && aspace->ops->destroy)
-		aspace->ops->destroy(aspace);
-
+	drm_mm_takedown(&aspace->mm);
+	if (aspace->mmu)
+		aspace->mmu->funcs->destroy(aspace->mmu);
 	kfree(aspace);
 }
 
@@ -232,8 +232,7 @@ static void iommu_aspace_unmap_vma(struct msm_gem_address_space *aspace,
 	msm_gem_address_space_put(aspace);
 }
 
-void
-msm_gem_unmap_vma(struct msm_gem_address_space *aspace,
+void msm_gem_unmap_vma(struct msm_gem_address_space *aspace,
 		struct msm_gem_vma *vma, struct sg_table *sgt,
 		unsigned int flags)
 {

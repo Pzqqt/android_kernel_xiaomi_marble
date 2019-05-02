@@ -41,8 +41,10 @@
 #include <linux/kthread.h>
 #include <uapi/linux/sched/types.h>
 #include <drm/drm_of.h>
+#include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
+#include "msm_gem.h"
 #include "msm_kms.h"
 #include "msm_mmu.h"
 #include "sde_wb.h"
@@ -56,9 +58,11 @@
  * - 1.3.0 - adds GMEM_BASE + NR_RINGS params, SUBMITQUEUE_NEW +
  *           SUBMITQUEUE_CLOSE ioctls, and MSM_INFO_IOVA flag for
  *           MSM_GEM_INFO ioctl.
+ * - 1.4.0 - softpin, MSM_RELOC_BO_DUMP, and GEM_INFO support to set/get
+ *           GEM object's debug name
  */
 #define MSM_VERSION_MAJOR	1
-#define MSM_VERSION_MINOR	3
+#define MSM_VERSION_MINOR	4
 #define MSM_VERSION_PATCHLEVEL	0
 
 static void msm_fb_output_poll_changed(struct drm_device *dev)
@@ -349,6 +353,13 @@ static int msm_drm_uninit(struct device *dev)
 	struct msm_kms *kms = priv->kms;
 	int i;
 
+	/* We must cancel and cleanup any pending vblank enable/disable
+	 * work before drm_irq_uninstall() to avoid work re-enabling an
+	 * irq after uninstall has disabled it.
+	 */
+
+	flush_workqueue(priv->wq);
+	destroy_workqueue(priv->wq);
 	/* clean up display commit/event worker threads */
 	for (i = 0; i < priv->num_crtcs; i++) {
 		if (priv->disp_thread[i].thread) {
@@ -377,14 +388,12 @@ static int msm_drm_uninit(struct device *dev)
 	if (fbdev && priv->fbdev)
 		msm_fbdev_free(ddev);
 #endif
+	drm_atomic_helper_shutdown(ddev);
 	drm_mode_config_cleanup(ddev);
 
 	pm_runtime_get_sync(dev);
 	drm_irq_uninstall(ddev);
 	pm_runtime_put_sync(dev);
-
-	flush_workqueue(priv->wq);
-	destroy_workqueue(priv->wq);
 
 	if (kms && kms->funcs)
 		kms->funcs->destroy(kms);
@@ -702,9 +711,9 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	struct drm_crtc *crtc;
 
 	ddev = drm_dev_alloc(drv, dev);
-	if (!ddev) {
+	if (IS_ERR(ddev)) {
 		dev_err(dev, "failed to allocate drm_device\n");
-		return -ENOMEM;
+		return PTR_ERR(ddev);
 	}
 
 	drm_mode_config_init(ddev);
@@ -1089,7 +1098,11 @@ static int msm_irq_postinstall(struct drm_device *dev)
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_kms *kms = priv->kms;
 	BUG_ON(!kms);
-	return kms->funcs->irq_postinstall(kms);
+
+	if (kms->funcs->irq_postinstall)
+		return kms->funcs->irq_postinstall(kms);
+
+	return 0;
 }
 
 static void msm_irq_uninstall(struct drm_device *dev)
@@ -1135,7 +1148,7 @@ static int msm_ioctl_gem_new(struct drm_device *dev, void *data,
 	}
 
 	return msm_gem_new_handle(dev, file, args->size,
-			args->flags, &args->handle);
+			args->flags, &args->handle, NULL);
 }
 
 static inline ktime_t to_ktime(struct drm_msm_timespec timeout)
@@ -1640,9 +1653,7 @@ static const struct file_operations fops = {
 };
 
 static struct drm_driver msm_driver = {
-	.driver_features    = DRIVER_HAVE_IRQ |
-				DRIVER_GEM |
-				DRIVER_PRIME |
+	.driver_features    = DRIVER_GEM |
 				DRIVER_RENDER |
 				DRIVER_ATOMIC |
 				DRIVER_MODESET,
@@ -1664,7 +1675,6 @@ static struct drm_driver msm_driver = {
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
 	.gem_prime_export   = drm_gem_prime_export,
 	.gem_prime_import   = msm_gem_prime_import,
-	.gem_prime_res_obj  = msm_gem_prime_res_obj,
 	.gem_prime_pin      = msm_gem_prime_pin,
 	.gem_prime_unpin    = msm_gem_prime_unpin,
 	.gem_prime_get_sg_table = msm_gem_prime_get_sg_table,

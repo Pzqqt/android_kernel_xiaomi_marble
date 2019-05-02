@@ -1025,8 +1025,8 @@ static void dp_mst_bridge_post_disable(struct drm_bridge *drm_bridge)
 }
 
 static void dp_mst_bridge_mode_set(struct drm_bridge *drm_bridge,
-				struct drm_display_mode *mode,
-				struct drm_display_mode *adjusted_mode)
+				const struct drm_display_mode *mode,
+				const struct drm_display_mode *adjusted_mode)
 {
 	struct dp_mst_bridge *bridge;
 	struct dp_display *dp;

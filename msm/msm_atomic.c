@@ -21,6 +21,7 @@
 #include "msm_gem.h"
 #include "msm_kms.h"
 #include "sde_trace.h"
+#include <drm/drm_atomic_uapi.h>
 
 #define MULTIPLE_CONN_DETECTED(x) (x > 1)
 
@@ -512,7 +513,7 @@ int msm_atomic_prepare_fb(struct drm_plane *plane,
 
 	obj = msm_framebuffer_bo(new_state->fb, 0);
 	msm_obj = to_msm_bo(obj);
-	fence = reservation_object_get_excl_rcu(msm_obj->resv);
+	fence = dma_resv_get_excl_rcu(msm_obj->resv);
 
 	drm_atomic_set_fence_for_plane(new_state, fence);
 
@@ -715,7 +716,7 @@ int msm_atomic_commit(struct drm_device *dev,
 				msm_framebuffer_bo(new_plane_state->fb, 0);
 			struct msm_gem_object *msm_obj = to_msm_bo(obj);
 			struct dma_fence *fence =
-				reservation_object_get_excl_rcu(msm_obj->resv);
+				dma_resv_get_excl_rcu(msm_obj->resv);
 
 			drm_atomic_set_fence_for_plane(new_plane_state, fence);
 		}
@@ -826,7 +827,13 @@ void msm_atomic_commit_tail(struct drm_atomic_state *state)
 
 	drm_atomic_helper_commit_modeset_enables(dev, state);
 
-	msm_atomic_wait_for_commit_done(dev, state);
+	if (kms->funcs->commit) {
+		DRM_DEBUG_ATOMIC("triggering commit\n");
+		kms->funcs->commit(kms, state);
+	}
+
+	if (!state->legacy_cursor_update)
+		msm_atomic_wait_for_commit_done(dev, state);
 
 	kms->funcs->complete_commit(kms, state);
 
