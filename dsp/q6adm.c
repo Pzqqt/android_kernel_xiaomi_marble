@@ -2651,6 +2651,21 @@ static int adm_arrange_mch_map_v8(
 			ep_payload->dev_channel_mapping[9] = PCM_CHANNEL_TFR;
 			ep_payload->dev_channel_mapping[10] = PCM_CHANNEL_TSL;
 			ep_payload->dev_channel_mapping[11] = PCM_CHANNEL_TSR;
+		} else if (channel_mode == 14) {
+			ep_payload->dev_channel_mapping[0] = PCM_CHANNEL_FL;
+			ep_payload->dev_channel_mapping[1] = PCM_CHANNEL_FR;
+			ep_payload->dev_channel_mapping[2] = PCM_CHANNEL_LFE;
+			ep_payload->dev_channel_mapping[3] = PCM_CHANNEL_FC;
+			ep_payload->dev_channel_mapping[4] = PCM_CHANNEL_LB;
+			ep_payload->dev_channel_mapping[5] = PCM_CHANNEL_RB;
+			ep_payload->dev_channel_mapping[6] = PCM_CHANNEL_LS;
+			ep_payload->dev_channel_mapping[7] = PCM_CHANNEL_RS;
+			ep_payload->dev_channel_mapping[8] = PCM_CHANNEL_TFL;
+			ep_payload->dev_channel_mapping[9] = PCM_CHANNEL_TFR;
+			ep_payload->dev_channel_mapping[10] = PCM_CHANNEL_TSL;
+			ep_payload->dev_channel_mapping[11] = PCM_CHANNEL_TSR;
+			ep_payload->dev_channel_mapping[12] = PCM_CHANNEL_FLC;
+			ep_payload->dev_channel_mapping[13] = PCM_CHANNEL_FRC;
 		} else if (channel_mode == 16) {
 			ep_payload->dev_channel_mapping[0] = PCM_CHANNEL_FL;
 			ep_payload->dev_channel_mapping[1] = PCM_CHANNEL_FR;
