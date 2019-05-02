@@ -486,7 +486,7 @@ struct msm_mode_info {
  * @max_height:         Max height of display. In case of hot pluggable display
  *                      this is max height supported by controller
  * @clk_rate:           DSI bit clock per lane in HZ.
- * @is_primary:         Set to true if display is primary display
+ * @display_type:       Enum for type of display
  * @is_te_using_watchdog_timer:  Boolean to indicate watchdog TE is
  *				 used instead of panel TE in cmd mode panels
  * @roi_caps:           Region of interest capability info
@@ -509,7 +509,7 @@ struct msm_display_info {
 	uint32_t max_height;
 	uint64_t clk_rate;
 
-	bool is_primary;
+	uint32_t display_type;
 	bool is_te_using_watchdog_timer;
 	struct msm_roi_caps roi_caps;
 

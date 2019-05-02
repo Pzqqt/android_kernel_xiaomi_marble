@@ -5075,9 +5075,9 @@ static int dsi_display_ext_get_info(struct drm_connector *connector,
 	info->is_connected = connector->status != connector_status_disconnected;
 
 	if (!strcmp(display->display_type, "primary"))
-		info->is_primary = true;
-	else
-		info->is_primary = false;
+		info->display_type = SDE_CONNECTOR_PRIMARY;
+	else if (!strcmp(display->display_type, "secondary"))
+		info->display_type = SDE_CONNECTOR_SECONDARY;
 
 	info->capabilities |= (MSM_DISPLAY_CAP_VID_MODE |
 			MSM_DISPLAY_CAP_EDID | MSM_DISPLAY_CAP_HOT_PLUG);
@@ -5431,10 +5431,11 @@ int dsi_display_get_info(struct drm_connector *connector,
 		info->h_tile_instance[i] = display->ctrl[i].ctrl->cell_index;
 
 	info->is_connected = true;
-	info->is_primary = false;
 
 	if (!strcmp(display->display_type, "primary"))
-		info->is_primary = true;
+		info->display_type = SDE_CONNECTOR_PRIMARY;
+	else if (!strcmp(display->display_type, "secondary"))
+		info->display_type = SDE_CONNECTOR_SECONDARY;
 
 	info->width_mm = phy_props.panel_width_mm;
 	info->height_mm = phy_props.panel_height_mm;

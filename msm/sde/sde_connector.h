@@ -315,6 +315,16 @@ struct sde_connector_ops {
 };
 
 /**
+ * enum sde_connector_display_type - list of display types
+ */
+enum sde_connector_display {
+	SDE_CONNECTOR_UNDEFINED,
+	SDE_CONNECTOR_PRIMARY,
+	SDE_CONNECTOR_SECONDARY,
+	SDE_CONNECTOR_MAX
+};
+
+/**
  * enum sde_connector_events - list of recognized connector events
  */
 enum sde_connector_events {

@@ -15,6 +15,7 @@
 #include "sde_hw_catalog_format.h"
 #include "sde_kms.h"
 #include "sde_hw_uidle.h"
+#include "sde_connector.h"
 
 /*************************************************************
  * MACRO DEFINITION
@@ -1613,16 +1614,50 @@ end:
 	return rc;
 }
 
-void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm)
+void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
+		uint32_t disp_type)
 {
-	u32 i;
+	u32 i, cnt = 0, sec_cnt = 0;
 
-	for (i = 0; i < sde_cfg->mixer_count; i++) {
-		clear_bit(SDE_DISP_PRIMARY_PREF,
-				&sde_cfg->mixer[i].features);
-		if (i < num_lm)
-			set_bit(SDE_DISP_PRIMARY_PREF,
+	if (disp_type == SDE_CONNECTOR_PRIMARY) {
+		for (i = 0; i < sde_cfg->mixer_count; i++) {
+			/* Check if lm was previously set for secondary */
+			/* Clear pref, primary has higher priority */
+			if (sde_cfg->mixer[i].features &
+					BIT(SDE_DISP_SECONDARY_PREF)) {
+				clear_bit(SDE_DISP_SECONDARY_PREF,
+						&sde_cfg->mixer[i].features);
+				sec_cnt++;
+			}
+			clear_bit(SDE_DISP_PRIMARY_PREF,
 					&sde_cfg->mixer[i].features);
+
+			/* Set lm for primary pref */
+			if (cnt < num_lm) {
+				set_bit(SDE_DISP_PRIMARY_PREF,
+						&sde_cfg->mixer[i].features);
+				cnt++;
+			}
+
+			/* After primary pref is set, now re apply secondary */
+			if (cnt >= num_lm && cnt < (num_lm + sec_cnt)) {
+				set_bit(SDE_DISP_SECONDARY_PREF,
+						&sde_cfg->mixer[i].features);
+				cnt++;
+			}
+		}
+	} else if (disp_type == SDE_CONNECTOR_SECONDARY) {
+		for (i = 0; i < sde_cfg->mixer_count; i++) {
+			clear_bit(SDE_DISP_SECONDARY_PREF,
+					&sde_cfg->mixer[i].features);
+
+			if (cnt < num_lm && !(sde_cfg->mixer[i].features &
+					BIT(SDE_DISP_PRIMARY_PREF))) {
+				set_bit(SDE_DISP_SECONDARY_PREF,
+						&sde_cfg->mixer[i].features);
+				cnt++;
+			}
+		}
 	}
 }
 

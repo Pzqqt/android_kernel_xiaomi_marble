@@ -408,7 +408,9 @@ bool sde_encoder_is_primary_display(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 
-	return sde_enc && sde_enc->disp_info.is_primary;
+	return sde_enc &&
+		(sde_enc->disp_info.display_type ==
+		SDE_CONNECTOR_PRIMARY);
 }
 
 int sde_encoder_in_cont_splash(struct drm_encoder *drm_enc)
@@ -659,7 +661,7 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 
 	sde_connector_get_mode_info(conn_state, &sde_enc->mode_info);
 	hw_res->topology = sde_enc->mode_info.topology;
-	hw_res->is_primary = sde_enc->disp_info.is_primary;
+	hw_res->display_type = sde_enc->disp_info.display_type;
 }
 
 void sde_encoder_destroy(struct drm_encoder *drm_enc)
@@ -1900,8 +1902,9 @@ static int _sde_encoder_update_rsc_client(
 		qsync_mode = sde_connector_get_qsync_mode(
 				sde_enc->cur_master->connector);
 
-	if (sde_encoder_in_clone_mode(drm_enc) || !disp_info->is_primary ||
-			  (disp_info->is_primary && qsync_mode))
+	if (sde_encoder_in_clone_mode(drm_enc) ||
+			(disp_info->display_type != SDE_CONNECTOR_PRIMARY) ||
+			(disp_info->display_type && qsync_mode))
 		rsc_state = enable ? SDE_RSC_CLK_STATE : SDE_RSC_IDLE_STATE;
 	else if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		rsc_state = enable ? SDE_RSC_CMD_STATE : SDE_RSC_IDLE_STATE;
@@ -1927,7 +1930,7 @@ static int _sde_encoder_update_rsc_client(
 	}
 
 	if (rsc_state != SDE_RSC_IDLE_STATE && !sde_enc->rsc_state_init
-			&& disp_info->is_primary) {
+			&& (disp_info->display_type == SDE_CONNECTOR_PRIMARY)) {
 		/* update it only once */
 		sde_enc->rsc_state_init = true;
 
@@ -2043,7 +2046,7 @@ static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms;
 	struct sde_encoder_virt *sde_enc;
 	int rc;
-	bool is_cmd_mode = false, is_primary;
+	bool is_cmd_mode = false;
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	priv = drm_enc->dev->dev_private;
@@ -2051,8 +2054,6 @@ static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
-
-	is_primary = sde_enc->disp_info.is_primary;
 
 	SDE_DEBUG_ENC(sde_enc, "enable:%d\n", enable);
 	SDE_EVT32(DRMID(drm_enc), enable);
@@ -3258,7 +3259,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	 * they have been fully disabled, so delay the pre-stop operations
 	 * until after the physical disable calls have returned.
 	 */
-	if (sde_enc->disp_info.is_primary &&
+	if (sde_enc->disp_info.display_type == SDE_CONNECTOR_PRIMARY &&
 	    (intf_mode == INTF_MODE_CMD || intf_mode == INTF_MODE_VIDEO)) {
 		sde_encoder_resource_control(drm_enc,
 				SDE_ENC_RC_EVENT_PRE_STOP);
@@ -4640,7 +4641,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	SDE_ATRACE_BEGIN("sde_encoder_prepare_for_kickoff");
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		phys = sde_enc->phys_encs[i];
-		params->is_primary = sde_enc->disp_info.is_primary;
 		params->frame_trigger_mode = sde_enc->frame_trigger_mode;
 		params->recovery_events_enabled =
 					sde_enc->recovery_events_enabled;
@@ -5476,7 +5476,8 @@ struct drm_encoder *sde_encoder_init(
 	}
 	snprintf(name, SDE_NAME_SIZE, "rsc_enc%u", drm_enc->base.id);
 	sde_enc->rsc_client = sde_rsc_client_create(SDE_RSC_INDEX, name,
-		disp_info->is_primary ? SDE_RSC_PRIMARY_DISP_CLIENT :
+		(disp_info->display_type == SDE_CONNECTOR_PRIMARY) ?
+		SDE_RSC_PRIMARY_DISP_CLIENT :
 		SDE_RSC_EXTERNAL_DISP_CLIENT, intf_index + 1);
 	if (IS_ERR_OR_NULL(sde_enc->rsc_client)) {
 		SDE_DEBUG("sde rsc client create failed :%ld\n",

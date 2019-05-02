@@ -796,7 +796,8 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	*dspp = NULL;
 	*ds = NULL;
 	*pp = NULL;
-	display_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF);
+	display_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF) ||
+			lm_cfg->features & BIT(SDE_DISP_SECONDARY_PREF);
 	cwb_pref = lm_cfg->features & BIT(SDE_DISP_CWB_PREF);
 
 	SDE_DEBUG("check lm %d: dspp %d ds %d pp %d disp_pref: %d cwb_pref%d\n",
@@ -831,10 +832,10 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 			SDE_DEBUG("fail: cwb supported lm not allocated\n");
 			return false;
 		}
-	} else if (!(reqs->hw_res.is_primary && display_pref)) {
+	} else if (!(reqs->hw_res.display_type && display_pref)) {
 		SDE_DEBUG(
-			"display preference is not met. is_primary: %d display_pref: %d\n",
-			(int)reqs->hw_res.is_primary, (int)display_pref);
+			"display preference is not met. display_type: %d display_pref: %d\n",
+			(int)reqs->hw_res.display_type, (int)display_pref);
 		return false;
 	}
 
@@ -1022,11 +1023,11 @@ static int _sde_rm_reserve_ctls(
 			if (top->top_name == SDE_RM_TOPOLOGY_PPSPLIT &&
 					!has_ppsplit)
 				continue;
-		} else if (!(reqs->hw_res.is_primary && primary_pref) &&
-				!_ctl_ids) {
+		} else if (!(reqs->hw_res.display_type ==
+				SDE_CONNECTOR_PRIMARY && primary_pref) && !_ctl_ids) {
 			SDE_DEBUG(
-				"display pref not met. is_primary: %d primary_pref: %d\n",
-				reqs->hw_res.is_primary, primary_pref);
+				"display pref not met. display_type: %d primary_pref: %d\n",
+				reqs->hw_res.display_type, primary_pref);
 			continue;
 		}
 
