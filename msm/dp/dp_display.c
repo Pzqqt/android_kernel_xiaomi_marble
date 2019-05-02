@@ -382,12 +382,12 @@ static void dp_display_hdcp_cb_work(struct work_struct *work)
 				return;
 			}
 			dp_display_hdcp_register_streams(dp);
-			status->hdcp_state = HDCP_STATE_AUTHENTICATING;
 			if (ops && ops->reauthenticate) {
 				rc = ops->reauthenticate(data);
 				if (rc)
 					pr_err("failed rc=%d\n", rc);
 			}
+			status->hdcp_state = HDCP_STATE_AUTHENTICATING;
 		} else {
 			pr_debug("not reauthenticating, cable disconnected\n");
 		}

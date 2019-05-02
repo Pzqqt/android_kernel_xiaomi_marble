@@ -829,8 +829,15 @@ static int sde_hdcp_2x_wakeup(struct sde_hdcp_2x_wakeup_data *data)
 		if (!atomic_cmpxchg(&hdcp->enable_pending, 0, 1)) {
 			hdcp->device_type = data->device_type;
 			kfifo_put(&hdcp->cmd_q, data->cmd);
+			kthread_unpark(hdcp->thread);
 			wake_up(&hdcp->wait_q);
 		}
+		break;
+	case HDCP_2X_CMD_DISABLE:
+		if (!atomic_xchg(&hdcp->hdcp_off, 1))
+			kfifo_put(&hdcp->cmd_q, HDCP_2X_CMD_STOP);
+		kfifo_put(&hdcp->cmd_q, data->cmd);
+		kthread_park(hdcp->thread);
 		break;
 	case HDCP_2X_CMD_STOP:
 		atomic_set(&hdcp->hdcp_off, 1);
@@ -926,8 +933,6 @@ static int sde_hdcp_2x_main(void *data)
 			atomic_set(&hdcp->enable_pending, 0);
 			break;
 		case HDCP_2X_CMD_DISABLE:
-			if (!atomic_xchg(&hdcp->hdcp_off, 1))
-				sde_hdcp_2x_clean(hdcp);
 			sde_hdcp_2x_disable(hdcp);
 			break;
 		case HDCP_2X_CMD_START:
