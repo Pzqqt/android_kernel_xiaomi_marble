@@ -189,7 +189,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 					RX_BUFFER_ALIGNMENT,
 					FALSE);
 
-		if (!rx_netbuf) {
+		if (qdf_unlikely(!rx_netbuf)) {
 			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
 			continue;
 		}
@@ -2153,7 +2153,7 @@ done:
 				continue;
 			}
 			/* WDS Source Port Learning */
-			if (vdev->wds_enabled)
+			if (qdf_likely(vdev->wds_enabled))
 				dp_rx_wds_srcport_learn(soc, rx_tlv_hdr,
 							peer, nbuf);
 
