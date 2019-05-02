@@ -210,6 +210,7 @@ struct hdd_config {
 	uint8_t enable_rtt_support;
 	uint32_t cfg_wmi_credit_cnt;
 	uint32_t sar_version;
+	bool is_wow_disabled;
 };
 
 /**

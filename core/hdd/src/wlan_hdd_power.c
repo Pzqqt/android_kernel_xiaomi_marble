@@ -1606,6 +1606,11 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	hdd_enter();
 
+	if (hdd_ctx->config->is_wow_disabled) {
+		hdd_err("wow is disabled");
+		return -EINVAL;
+	}
+
 	if (cds_is_driver_recovering()) {
 		hdd_debug("Driver is recovering; Skipping resume");
 		exit_code = 0;
@@ -1714,6 +1719,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (hdd_ctx->config->is_wow_disabled) {
+		hdd_err("wow is disabled");
 		return -EINVAL;
 	}
 

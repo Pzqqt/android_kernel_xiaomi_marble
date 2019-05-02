@@ -9423,6 +9423,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 			cfg_get(psoc, CFG_ENABLE_UNIT_TEST_FRAMEWORK);
 	config->disable_channel = cfg_get(psoc, CFG_ENABLE_DISABLE_CHANNEL);
 	config->sar_version = cfg_get(psoc, CFG_SAR_VERSION);
+	config->is_wow_disabled = cfg_get(psoc, CFG_WOW_DISABLE);
 
 	hdd_init_vc_mode_cfg_bitmap(config, psoc);
 	hdd_init_runtime_pm(config, psoc);

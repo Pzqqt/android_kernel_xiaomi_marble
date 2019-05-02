@@ -1238,6 +1238,30 @@ struct dhcp_server {
 			CFG_VALUE_OR_DEFAULT, \
 			"Specify the SAR version")
 
+/*
+ * <ini>
+ * gDisableWow - Used to disable wow feature
+ *
+ * @Min: 0
+ * @Max: 1
+ * Default: 0
+ *
+ * This ini is used to disable wow feature for all modes
+ * that means hlos platform suspend(cfg80211 suspend) will
+ * be rejected by wifi kernel driver.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_WOW_DISABLE  CFG_INI_UINT( \
+			"gDisableWow", \
+			0, \
+			1, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Disable wow feature")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
@@ -1274,5 +1298,6 @@ struct dhcp_server {
 	CFG(CFG_TIMER_MULTIPLIER) \
 	CFG(CFG_HDD_DOT11_MODE) \
 	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
-	CFG(CFG_SAR_VERSION)
+	CFG(CFG_SAR_VERSION) \
+	CFG(CFG_WOW_DISABLE)
 #endif
