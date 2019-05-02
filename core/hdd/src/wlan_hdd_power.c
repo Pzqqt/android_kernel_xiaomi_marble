@@ -1766,7 +1766,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
-			if (!!ucfg_pmo_get_enable_sap_suspend(
+			if (!ucfg_pmo_get_enable_sap_suspend(
 				   hdd_ctx->psoc)) {
 				/* return -EOPNOTSUPP if GO does not support
 				 * suspend
