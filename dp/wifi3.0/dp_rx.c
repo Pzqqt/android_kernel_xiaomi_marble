@@ -1390,7 +1390,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
 	struct dp_vdev *vdev = peer->vdev;
 	qdf_ether_header_t *eh;
-	uint16_t msdu_len = qdf_nbuf_len(nbuf);
+	uint16_t msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
 			       hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr));
