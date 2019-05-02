@@ -439,7 +439,7 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 #ifdef FEATURE_WDS
 static inline void
 dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
-			    uint8_t *wds_src_mac, uint8_t is_ad4_valid,
+			    qdf_nbuf_t nbuf, uint8_t is_ad4_valid,
 			    uint8_t is_sa_valid, uint8_t is_chfrag_start,
 			    uint16_t sa_idx, uint16_t sa_sw_peer_id)
 {
@@ -449,6 +449,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 	uint32_t ret = 0;
 	struct dp_neighbour_peer *neighbour_peer = NULL;
 	struct dp_pdev *pdev = ta_peer->vdev->pdev;
+	uint8_t wds_src_mac[QDF_MAC_ADDR_SIZE];
 
 	/* For AP mode : Do wds source port learning only if it is a
 	 * 4-address mpdu
@@ -470,6 +471,10 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 	}
 
 	if (qdf_unlikely(!is_sa_valid)) {
+		qdf_mem_copy(wds_src_mac,
+			     (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
+			     QDF_MAC_ADDR_SIZE);
+
 		ret = dp_peer_add_ast(soc,
 					ta_peer,
 					wds_src_mac,
@@ -497,6 +502,10 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 		 * cached.
 		 */
 		if (!soc->ast_override_support) {
+			qdf_mem_copy(wds_src_mac,
+				     (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
+				     QDF_MAC_ADDR_SIZE);
+
 			ret = dp_peer_add_ast(soc,
 					      ta_peer,
 					      wds_src_mac,
@@ -512,6 +521,11 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			 * to FW.
 			 */
 			if (pdev->neighbour_peers_added) {
+				qdf_mem_copy(wds_src_mac,
+					     (qdf_nbuf_data(nbuf) +
+					      QDF_MAC_ADDR_SIZE),
+					     QDF_MAC_ADDR_SIZE);
+
 				qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
 				TAILQ_FOREACH(neighbour_peer,
 					      &pdev->neighbour_peers_list,
@@ -624,7 +638,6 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 {
 	uint16_t sa_sw_peer_id = hal_rx_msdu_end_sa_sw_peer_id_get(rx_tlv_hdr);
 	uint8_t sa_is_valid = hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr);
-	uint8_t wds_src_mac[QDF_MAC_ADDR_SIZE];
 	uint16_t sa_idx;
 	uint8_t is_chfrag_start = 0;
 	uint8_t is_ad4_valid = 0;
@@ -636,15 +649,12 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	if (is_chfrag_start)
 		is_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr);
 
-	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + QDF_MAC_ADDR_SIZE),
-	       QDF_MAC_ADDR_SIZE);
-
 	/*
 	 * Get the AST entry from HW SA index and mark it as active
 	 */
 	sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
-	dp_rx_wds_add_or_update_ast(soc, ta_peer, wds_src_mac, is_ad4_valid,
+	dp_rx_wds_add_or_update_ast(soc, ta_peer, nbuf, is_ad4_valid,
 				    sa_is_valid, is_chfrag_start,
 				    sa_idx, sa_sw_peer_id);
 

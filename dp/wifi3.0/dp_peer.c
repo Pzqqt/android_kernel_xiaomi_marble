@@ -626,6 +626,10 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, mac_addr,
 							    pdev->pdev_id);
 		if (ast_entry) {
+			if ((type == CDP_TXRX_AST_TYPE_MEC) &&
+			    (ast_entry->type == CDP_TXRX_AST_TYPE_MEC))
+				ast_entry->is_active = TRUE;
+
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
@@ -835,6 +839,13 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	dp_peer_ast_send_wds_del(soc, ast_entry);
 
 	/*
+	 * release the reference only if it is mapped
+	 * to ast_table
+	 */
+	if (ast_entry->is_mapped)
+		soc->ast_table[ast_entry->ast_idx] = NULL;
+
+	/*
 	 * if peer map v2 is enabled we are not freeing ast entry
 	 * here and it is supposed to be freed in unmap event (after
 	 * we receive delete confirmation from target)
@@ -852,13 +863,6 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 		    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF))
 			return;
 	}
-
-	/*
-	 * release the reference only if it is mapped
-	 * to ast_table
-	 */
-	if (ast_entry->is_mapped)
-		soc->ast_table[ast_entry->ast_idx] = NULL;
 
 	/* SELF and STATIC entries are removed in teardown itself */
 	if (ast_entry->next_hop)
