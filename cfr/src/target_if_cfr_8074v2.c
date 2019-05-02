@@ -32,6 +32,7 @@
 #include <target_if_direct_buf_rx_api.h>
 #endif
 
+#ifdef DIRECT_BUF_RX_ENABLE
 static u_int32_t end_magic = 0xBEAFDEAD;
 
 int dump_lut(struct wlan_objmgr_pdev *pdev)
@@ -55,7 +56,7 @@ int dump_lut(struct wlan_objmgr_pdev *pdev)
 
 	return 0;
 }
-#ifdef DIRECT_BUF_RX_ENABLE
+
 void dump_dma_hdr(struct whal_cfir_dma_hdr *dma_hdr, int error)
 {
 	if (!error) {
@@ -276,7 +277,6 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 
 	return true;
 }
-#endif
 
 void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 {
@@ -472,6 +472,13 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	return 0;
 }
+#else
+static int
+target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
+{
+	return 0;
+}
+#endif
 
 int
 target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
@@ -601,11 +608,13 @@ int cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 	if (!pdev_cfrobj)
 		return -EINVAL;
 
+#if DIRECT_BUF_RX_ENABLE
 	status = target_if_register_to_dbr(pdev);
 	if (QDF_STATUS_SUCCESS != status) {
 		cfr_err("Failed to register with dbr");
 		return -EINVAL;
 	}
+#endif
 
 	status = target_if_register_tx_completion_event_handler(psoc);
 	if (QDF_STATUS_SUCCESS != status) {
