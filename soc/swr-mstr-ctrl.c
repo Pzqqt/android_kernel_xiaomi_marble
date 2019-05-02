@@ -1441,8 +1441,15 @@ static irqreturn_t swr_mstr_interrupt_v2(int irq, void *dev)
 	}
 
 	mutex_lock(&swrm->reslock);
-	if (swrm->lpass_core_hw_vote)
-		clk_prepare_enable(swrm->lpass_core_hw_vote);
+	if (swrm->lpass_core_hw_vote) {
+		ret = clk_prepare_enable(swrm->lpass_core_hw_vote);
+		if (ret < 0) {
+			dev_err(dev, "%s:lpass core hw enable failed\n",
+				__func__);
+			ret = IRQ_NONE;
+			goto exit;
+		}
+	}
 	swrm_clk_request(swrm, true);
 	mutex_unlock(&swrm->reslock);
 
@@ -1612,6 +1619,7 @@ handle_irq:
 	swrm_clk_request(swrm, false);
 	if (swrm->lpass_core_hw_vote)
 		clk_disable_unprepare(swrm->lpass_core_hw_vote);
+exit:
 	mutex_unlock(&swrm->reslock);
 	swrm_unlock_sleep(swrm);
 	return ret;
