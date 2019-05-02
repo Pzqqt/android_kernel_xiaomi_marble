@@ -790,7 +790,40 @@ uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
 void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
 			   uint8_t tid, uint8_t mode);
 
-/*
+/**
+ * dp_print_ring_stats(): Print tail and head pointer
+ * @pdev: DP_PDEV handle
+ *
+ * Return:void
+ */
+void dp_print_ring_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_print_pdev_cfg_params() - Print the pdev cfg parameters
+ * @pdev_handle: DP pdev handle
+ *
+ * Return - void
+ */
+void dp_print_pdev_cfg_params(struct dp_pdev *pdev);
+
+/**
+ * dp_print_soc_cfg_params()- Dump soc wlan config parameters
+ * @soc_handle: Soc handle
+ *
+ * Return: void
+ */
+void dp_print_soc_cfg_params(struct dp_soc *soc);
+
+/**
+ * dp_srng_get_str_from_ring_type() - Return string name for a ring
+ * @ring_type: Ring
+ *
+ * Return: char const pointer
+ */
+const
+char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type);
+
+/**
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
  *
  * @mac_id: MAC id
