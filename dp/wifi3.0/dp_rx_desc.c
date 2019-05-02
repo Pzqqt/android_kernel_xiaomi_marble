@@ -95,7 +95,7 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 								  false);
 
 				qdf_nbuf_unmap_single(soc->osdev, nbuf,
-						      QDF_DMA_BIDIRECTIONAL);
+						      QDF_DMA_FROM_DEVICE);
 			}
 			qdf_nbuf_free(nbuf);
 		}
@@ -129,7 +129,7 @@ void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
 								  false);
 
 				qdf_nbuf_unmap_single(soc->osdev, nbuf,
-						      QDF_DMA_BIDIRECTIONAL);
+						      QDF_DMA_FROM_DEVICE);
 			}
 
 			qdf_nbuf_free(nbuf);

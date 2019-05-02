@@ -712,7 +712,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 			nbuf_retry++;
 			if ((*rx_netbuf)) {
 				qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
-						QDF_DMA_BIDIRECTIONAL);
+						QDF_DMA_FROM_DEVICE);
 				/* Not freeing buffer intentionally.
 				 * Observed that same buffer is getting
 				 * re-allocated resulting in longer load time
@@ -731,7 +731,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 				return QDF_STATUS_E_FAILURE;
 
 			ret = qdf_nbuf_map_single(dp_soc->osdev, *rx_netbuf,
-							QDF_DMA_BIDIRECTIONAL);
+							QDF_DMA_FROM_DEVICE);
 
 			if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
 				qdf_nbuf_free(*rx_netbuf);
@@ -745,7 +745,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 
 	if ((*rx_netbuf)) {
 		qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
-					QDF_DMA_BIDIRECTIONAL);
+					QDF_DMA_FROM_DEVICE);
 		qdf_nbuf_free(*rx_netbuf);
 	}
 

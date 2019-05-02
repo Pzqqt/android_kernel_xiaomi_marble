@@ -195,7 +195,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		}
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
-					  QDF_DMA_BIDIRECTIONAL);
+					  QDF_DMA_FROM_DEVICE);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 			qdf_nbuf_free(rx_netbuf);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
@@ -1846,7 +1846,7 @@ more_data:
 		 * phyiscal address
 		 */
 		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
-					QDF_DMA_BIDIRECTIONAL);
+					QDF_DMA_FROM_DEVICE);
 		rx_desc->unmapped = 1;
 
 		core_id = smp_processor_id();
@@ -2291,7 +2291,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 		}
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, nbuf,
-					  QDF_DMA_BIDIRECTIONAL);
+					  QDF_DMA_FROM_DEVICE);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 			qdf_nbuf_free(nbuf);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2305,7 +2305,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 		ret = check_x86_paddr(dp_soc, &nbuf, &paddr, dp_pdev);
 		if (ret == QDF_STATUS_E_FAILURE) {
 			qdf_nbuf_unmap_single(dp_soc->osdev, nbuf,
-					      QDF_DMA_BIDIRECTIONAL);
+					      QDF_DMA_FROM_DEVICE);
 			qdf_nbuf_free(nbuf);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "nbuf check x86 failed");
@@ -2440,7 +2440,7 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
 		memset(buf, 0, RX_BUFFER_SIZE);
 
 		ret = qdf_nbuf_map_single(soc->osdev, nbuf,
-				    QDF_DMA_BIDIRECTIONAL);
+				    QDF_DMA_FROM_DEVICE);
 
 		/* nbuf map failed */
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {

@@ -1058,7 +1058,7 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	/* map the nbuf before reinject it into HW */
 	ret = qdf_nbuf_map_single(soc->osdev, head,
-					QDF_DMA_BIDIRECTIONAL);
+					QDF_DMA_FROM_DEVICE);
 
 	if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1666,7 +1666,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 
 	msdu = rx_desc->nbuf;
 
-	qdf_nbuf_unmap_single(soc->osdev, msdu,	QDF_DMA_BIDIRECTIONAL);
+	qdf_nbuf_unmap_single(soc->osdev, msdu,	QDF_DMA_FROM_DEVICE);
 
 	rx_desc->rx_buf_start = qdf_nbuf_data(msdu);
 

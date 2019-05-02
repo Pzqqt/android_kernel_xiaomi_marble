@@ -1007,7 +1007,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 					"[%s][%d] rxdma_ring_entry is NULL, count - %d",
 					__func__, __LINE__, count);
 			qdf_nbuf_unmap_single(dp_soc->osdev, rx_netbuf,
-					      QDF_DMA_BIDIRECTIONAL);
+					      QDF_DMA_FROM_DEVICE);
 			qdf_nbuf_free(rx_netbuf);
 			break;
 		}
