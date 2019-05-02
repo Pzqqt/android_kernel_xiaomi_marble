@@ -28,6 +28,17 @@
 		value;\
 	})
 
+#define DSI_H_ACTIVE_DSC(t) \
+	({\
+		u64 value;\
+		if ((t)->dsc_enabled && (t)->dsc)\
+			value = (t)->dsc->pclk_per_line;\
+		else\
+			value = (t)->h_active;\
+		value;\
+	})
+
+
 #define DSI_DEBUG_NAME_LEN		32
 #define display_for_each_ctrl(index, display) \
 	for (index = 0; (index < (display)->ctrl_count) &&\
@@ -370,8 +381,10 @@ struct dsi_panel_cmd_set {
  * @v_sync_polarity:  Polarity of VSYNC (false is active low).
  * @refresh_rate:     Refresh rate in Hz.
  * @clk_rate_hz:      DSI bit clock rate per lane in Hz.
+ * @min_dsi_clk_hz:   Min DSI bit clock to transfer in vsync time.
  * @mdp_transfer_time_us:   Specifies the mdp transfer time for command mode
  *                    panels in microseconds.
+ * @dsi_transfer_time_us:   Specifies dsi transfer time for command mode.
  * @dsc_enabled:      DSC compression enabled.
  * @dsc:              DSC compression configuration.
  * @roi_caps:         Panel ROI capabilities.
@@ -392,7 +405,9 @@ struct dsi_mode_info {
 
 	u32 refresh_rate;
 	u64 clk_rate_hz;
+	u64 min_dsi_clk_hz;
 	u32 mdp_transfer_time_us;
+	u32 dsi_transfer_time_us;
 	bool dsc_enabled;
 	struct msm_display_dsc_info *dsc;
 	struct msm_roi_caps roi_caps;
@@ -402,6 +417,8 @@ struct dsi_mode_info {
  * struct dsi_host_common_cfg - Host configuration common to video and cmd mode
  * @dst_format:          Destination pixel format.
  * @data_lanes:          Physical data lanes to be enabled.
+ * @num_data_lanes:      Number of physical data lanes.
+ * @bpp:                 Number of bits per pixel.
  * @en_crc_check:        Enable CRC checks.
  * @en_ecc_check:        Enable ECC checks.
  * @te_mode:             Source for TE signalling.
@@ -427,6 +444,8 @@ struct dsi_mode_info {
 struct dsi_host_common_cfg {
 	enum dsi_pixel_format dst_format;
 	enum dsi_data_lanes data_lanes;
+	u8 num_data_lanes;
+	u8 bpp;
 	bool en_crc_check;
 	bool en_ecc_check;
 	enum dsi_te_mode te_mode;
@@ -529,7 +548,9 @@ struct dsi_host_config {
  * @panel_prefill_lines:  Panel prefill lines for RSC
  * @mdp_transfer_time_us:   Specifies the mdp transfer time for command mode
  *                          panels in microseconds.
+ * @dsi_transfer_time_us: Specifies the dsi transfer time for cmd panels.
  * @clk_rate_hz:          DSI bit clock per lane in hz.
+ * @min_dsi_clk_hz:       Min dsi clk per lane to transfer frame in vsync time.
  * @topology:             Topology selected for the panel
  * @dsc:                  DSC compression info
  * @dsc_enabled:          DSC compression enabled
@@ -545,7 +566,9 @@ struct dsi_display_mode_priv_info {
 	u32 panel_jitter_denom;
 	u32 panel_prefill_lines;
 	u32 mdp_transfer_time_us;
+	u32 dsi_transfer_time_us;
 	u64 clk_rate_hz;
+	u64 min_dsi_clk_hz;
 
 	struct msm_display_topology topology;
 	struct msm_display_dsc_info dsc;
