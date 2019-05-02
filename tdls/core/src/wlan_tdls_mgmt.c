@@ -279,16 +279,18 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 	tdls_mgmt_req->responder = action_req->tdls_mgmt.responder;
 	tdls_mgmt_req->peer_capability = action_req->tdls_mgmt.peer_capability;
 
-	peer = wlan_vdev_get_bsspeer(action_req->vdev);
-
-	status =  wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_SB_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
+	peer = wlan_objmgr_vdev_try_get_bsspeer(action_req->vdev,
+						WLAN_TDLS_SB_ID);
+	if (!peer) {
+		tdls_err("bss peer is null");
 		qdf_mem_free(tdls_mgmt_req);
 		goto release_cmd;
 	}
 
 	qdf_mem_copy(tdls_mgmt_req->bssid.bytes,
 		     wlan_peer_get_macaddr(peer), QDF_MAC_ADDR_SIZE);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 
 	qdf_mem_copy(tdls_mgmt_req->peer_mac.bytes,
 		     action_req->tdls_mgmt.peer_mac.bytes, QDF_MAC_ADDR_SIZE);
@@ -320,8 +322,6 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 					QDF_MODULE_ID_PE, &msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(tdls_mgmt_req);
-
-	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 
 release_cmd:
 	/*update tdls nss infornation based on action code */

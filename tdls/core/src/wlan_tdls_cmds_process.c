@@ -150,15 +150,10 @@ static QDF_STATUS tdls_pe_add_peer(struct tdls_add_peer_request *req)
 	addstareq->transaction_id = 0;
 
 	addstareq->session_id = wlan_vdev_get_id(vdev);
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TDLS_NB_ID);
 	if (!peer) {
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
-		goto error;
-	}
-	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("can't get bss peer");
 		goto error;
 	}
 	wlan_peer_obj_lock(peer);
@@ -217,17 +212,13 @@ QDF_STATUS tdls_pe_del_peer(struct tdls_del_peer_request *req)
 	delstareq->transaction_id = 0;
 
 	delstareq->session_id = wlan_vdev_get_id(vdev);
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TDLS_NB_ID);
 	if (!peer) {
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
-	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("can't get bss peer");
-		goto error;
-	}
+
 	wlan_peer_obj_lock(peer);
 	qdf_mem_copy(delstareq->bssid.bytes,
 		     wlan_peer_get_macaddr(peer), QDF_MAC_ADDR_SIZE);
@@ -287,15 +278,10 @@ static QDF_STATUS tdls_pe_update_peer(struct tdls_update_peer_request *req)
 	addstareq->transaction_id = 0;
 
 	addstareq->session_id = wlan_vdev_get_id(vdev);
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TDLS_NB_ID);
 	if (!peer) {
 		tdls_err("bss peer is NULL");
 		status = QDF_STATUS_E_INVAL;
-		goto error;
-	}
-	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_NB_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("can't get bss peer");
 		goto error;
 	}
 	wlan_peer_obj_lock(peer);
@@ -1613,7 +1599,7 @@ tdls_update_uapsd(struct wlan_objmgr_psoc *psoc, struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_SUCCESS;
 	}
 	vdev_id = wlan_vdev_get_id(vdev);
-	bsspeer = wlan_vdev_get_bsspeer(vdev);
+	bsspeer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_TDLS_SB_ID);
 	if (!bsspeer) {
 		tdls_err("bss peer is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -1622,6 +1608,7 @@ tdls_update_uapsd(struct wlan_objmgr_psoc *psoc, struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(macaddr,
 		     wlan_peer_get_macaddr(bsspeer), QDF_MAC_ADDR_SIZE);
 	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_peer_release_ref(bsspeer, WLAN_TDLS_SB_ID);
 
 	tdls_debug("TDLS uapsd id %d, srvc %d, sus %d, dir %d psb %d delay %d",
 		   sta_id, srvc_int, sus_int, dir, psb, delay_interval);
