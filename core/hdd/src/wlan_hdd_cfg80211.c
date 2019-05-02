@@ -5315,11 +5315,11 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 static const struct nla_policy qca_wlan_vendor_twt_add_dialog_policy[
 		QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST] = {.type = NLA_FLAG },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER] = {.type = NLA_FLAG },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION] = {.type = NLA_FLAG },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA] = {
@@ -7222,9 +7222,9 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		     adapter->device_mode != QDF_P2P_CLIENT_MODE) ||
 		    hdd_sta_ctx->conn_info.conn_state !=
 		    eConnectionState_Associated) {
-			hdd_err("Invalid state, vdev %d mode %d state %d",
-				adapter->vdev_id, adapter->device_mode,
-				hdd_sta_ctx->conn_info.conn_state);
+			hdd_err_rl("Invalid state, vdev %d mode %d state %d",
+				   adapter->vdev_id, adapter->device_mode,
+				   hdd_sta_ctx->conn_info.conn_state);
 			goto send_err;
 		}
 
@@ -7242,75 +7242,93 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 					nla_len(twt_session),
 					qca_wlan_vendor_twt_add_dialog_policy);
 			if (rc) {
-				hdd_err("Invalid twt ATTR");
+				hdd_err_rl("Invalid twt ATTR");
 				goto send_err;
 			}
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
-			if (tb2[cmd_id])
-				wake_intvl_exp = nla_get_u8(tb2[cmd_id]);
+			if (!tb2[cmd_id]) {
+				hdd_err_rl("TWT_SETUP_WAKE_INTVL_EXP is must");
+				goto send_err;
+			}
+			wake_intvl_exp = nla_get_u8(tb2[cmd_id]);
+			if (wake_intvl_exp > TWT_SETUP_WAKE_INTVL_EXP_MAX) {
+				hdd_err_rl("Invalid wake_intvl_exp %u > %u",
+					   wake_intvl_exp,
+					   TWT_SETUP_WAKE_INTVL_EXP_MAX);
+				goto send_err;
+			}
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
 			if (tb2[cmd_id])
-				params.flag_bcast = nla_get_u8(tb2[cmd_id]);
+				params.flag_bcast = nla_get_flag(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
-			if (tb2[cmd_id])
-				params.twt_cmd = nla_get_u8(tb2[cmd_id]);
+			if (!tb2[cmd_id]) {
+				hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
+				goto send_err;
+			}
+			params.twt_cmd = nla_get_u8(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
 			if (tb2[cmd_id])
-				params.flag_trigger = nla_get_u8(tb2[cmd_id]);
+				params.flag_trigger = nla_get_flag(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
-			if (tb2[cmd_id])
-				params.flag_flow_type = nla_get_u8(tb2[cmd_id]);
+			if (!tb2[cmd_id]) {
+				hdd_err_rl("TWT_SETUP_FLOW_TYPE is must");
+				goto send_err;
+			}
+			params.flag_flow_type = nla_get_u8(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
 			if (tb2[cmd_id])
 				params.flag_protection =
-					nla_get_u8(tb2[cmd_id]);
+					nla_get_flag(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
 			if (tb2[cmd_id])
 				params.sp_offset_us = nla_get_u32(tb2[cmd_id]);
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
-			if (tb2[cmd_id])
-				params.wake_dura_us =
-					256 * nla_get_u32(tb2[cmd_id]);
+			if (!tb2[cmd_id]) {
+				hdd_err_rl("TWT_SETUP_WAKE_DURATION is must");
+				goto send_err;
+			}
+			params.wake_dura_us = 256 * nla_get_u32(tb2[cmd_id]);
+			if (params.wake_dura_us > TWT_SETUP_WAKE_DURATION_MAX) {
+				hdd_err_rl("Invalid wake_dura_us %u",
+					   params.wake_dura_us);
+				goto send_err;
+			}
 
 			cmd_id =
 			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
-			if (tb2[cmd_id])
-				params.wake_intvl_mantis =
-					nla_get_u32(tb2[cmd_id]);
+			if (!tb2[cmd_id]) {
+				hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
+				goto send_err;
+			}
+			params.wake_intvl_mantis = nla_get_u32(tb2[cmd_id]);
+			if (params.wake_intvl_mantis >
+			    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
+				hdd_err_rl("Invalid wake_intvl_mantis %u",
+					   params.wake_dura_us);
+				goto send_err;
+			}
 
-			if (wake_intvl_exp) {
-				if (((sizeof(UINT_MAX) / 8) - 2) <
-				    (wake_intvl_exp - 1)) {
-					hdd_err("Invalid wake_intvl_exp %d",
-						wake_intvl_exp);
-					goto send_err;
-				}
+			if (wake_intvl_exp && params.wake_intvl_mantis) {
 				result = 2 << (wake_intvl_exp - 1);
 				if (result >
 				    (UINT_MAX / params.wake_intvl_mantis)) {
-					hdd_err("Invalid exp %d mantissa %d",
-						wake_intvl_exp,
-						params.wake_intvl_mantis);
+					hdd_err_rl("Invalid exp %d mantissa %d",
+						   wake_intvl_exp,
+						   params.wake_intvl_mantis);
 					goto send_err;
 				}
 				params.wake_intvl_us =
 					params.wake_intvl_mantis * result;
 			} else {
 				params.wake_intvl_us = params.wake_intvl_mantis;
-			}
-
-			if (params.wake_dura_us > 0xFFFF) {
-				hdd_err("Invalid wake_dura_us %d",
-					params.wake_dura_us);
-				goto send_err;
 			}
 
 			hdd_debug("twt: vdev %d, intvl_us %d, mantis %d",

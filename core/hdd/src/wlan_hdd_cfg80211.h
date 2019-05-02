@@ -147,6 +147,10 @@ struct hdd_context;
 #define USE_CFG80211_DEL_STA_V2
 #endif
 
+#define TWT_SETUP_WAKE_INTVL_MANTISSA_MAX 0xFFFF
+#define TWT_SETUP_WAKE_DURATION_MAX       0xFFFF
+#define TWT_SETUP_WAKE_INTVL_EXP_MAX      31
+
 /**
  * enum eDFS_CAC_STATUS: CAC status
  *
