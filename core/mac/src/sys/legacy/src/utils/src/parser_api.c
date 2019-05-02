@@ -2808,9 +2808,8 @@ QDF_STATUS wlan_parse_ftie_sha384(uint8_t *frame, uint32_t frame_len,
 
 		id = *pos++;
 		len = *pos++;
-		if (len < 1 ||
-		    (len > (ie_end - pos))) {
-			pe_err("Invalid FT subelem length %d", len);
+		if (len < 1) {
+			pe_err("Invalid FT subelem length");
 			return QDF_STATUS_E_FAILURE;
 		}
 
