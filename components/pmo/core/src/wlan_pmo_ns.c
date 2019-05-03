@@ -94,7 +94,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 	/* set number of ns offload address count */
 	request.num_ns_offload_count = ns_req->count;
 
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_PMO_ID);
 	if (!peer) {
 		pmo_err("peer is null");
 		status = QDF_STATUS_E_INVAL;
@@ -107,6 +107,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 	qdf_mem_copy(&request.bssid,
 		wlan_peer_get_macaddr(peer),
 		QDF_MAC_ADDR_SIZE);
+	wlan_objmgr_peer_release_ref(peer, WLAN_PMO_ID);
 	/* cache ns request */
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	qdf_mem_copy(&vdev_ctx->vdev_ns_req, &request,

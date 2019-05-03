@@ -255,16 +255,17 @@ QDF_STATUS pmo_get_vdev_bss_peer_mac_addr(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_PMO_ID);
 	if (!peer) {
 		pmo_err("peer is null");
 		return QDF_STATUS_E_INVAL;
 	}
-
 	wlan_peer_obj_lock(peer);
 	qdf_mem_copy(bss_peer_mac_address->bytes, wlan_peer_get_macaddr(peer),
 		QDF_MAC_ADDR_SIZE);
 	wlan_peer_obj_unlock(peer);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_PMO_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
