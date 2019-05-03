@@ -3484,6 +3484,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	return (struct cdp_pdev *)pdev;
 
 fail1:
+	if (pdev->invalid_peer)
+		qdf_mem_free(pdev->invalid_peer);
 	dp_pdev_detach((struct cdp_pdev *)pdev, 0);
 
 fail0:
@@ -3501,12 +3503,8 @@ fail0:
 static void dp_rxdma_ring_cleanup(struct dp_soc *soc,
 	 struct dp_pdev *pdev)
 {
-	int max_mac_rings =
-		 wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
 	int i;
 
-	max_mac_rings = max_mac_rings < MAX_RX_MAC_RINGS ?
-				max_mac_rings : MAX_RX_MAC_RINGS;
 	for (i = 0; i < MAX_RX_MAC_RINGS; i++)
 		dp_srng_cleanup(soc, &pdev->rx_mac_buf_ring[i],
 			 RXDMA_BUF, 1);
@@ -3720,7 +3718,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 
 	soc->pdev_count--;
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
-	qdf_mem_free(pdev->invalid_peer);
+	if (pdev->invalid_peer)
+		qdf_mem_free(pdev->invalid_peer);
 	qdf_mem_free(pdev->dp_txrx_handle);
 	dp_pdev_mem_reset(pdev);
 }
@@ -3772,8 +3771,11 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 		dp_srng_cleanup(soc, &soc->reo_dest_ring[pdev->pdev_id],
 				REO_DST, pdev->pdev_id);
 	}
+	dp_rxdma_ring_cleanup(soc, pdev);
+	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 
 	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
+	dp_cleanup_ipa_rx_refill_buf_ring(soc, pdev);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		dp_mon_ring_cleanup(soc, pdev, mac_id);
@@ -4031,6 +4033,7 @@ static void dp_soc_detach(void *txrx_soc)
 
 	/* Rx release ring */
 	dp_srng_cleanup(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 0);
+	dp_srng_cleanup(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 3);
 
 	/* Rx exception ring */
 	/* TODO: Better to store ring_type and ring_num in

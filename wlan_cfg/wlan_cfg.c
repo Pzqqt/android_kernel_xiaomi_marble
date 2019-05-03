@@ -365,7 +365,8 @@ struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_pdev_attach(void *psoc)
 
 void wlan_cfg_pdev_detach(struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx)
 {
-	qdf_mem_free(wlan_cfg_ctx);
+	if (wlan_cfg_ctx)
+		qdf_mem_free(wlan_cfg_ctx);
 }
 
 void wlan_cfg_set_num_contexts(struct wlan_cfg_dp_soc_ctxt *cfg, int num)
