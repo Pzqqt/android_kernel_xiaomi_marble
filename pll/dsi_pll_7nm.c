@@ -1240,13 +1240,6 @@ static int pixel_clk_get_div(void *context, unsigned int reg, unsigned int *div)
 	reg_val = MDSS_PLL_REG_R(pll->phy_base, PHY_CMN_CLK_CFG0);
 	*div = (reg_val & 0xF0) >> 4;
 
-	/**
-	 * Common clock framework the divider value is interpreted as one less
-	 * hence we return one less for all dividers except when zero
-	 */
-	if (*div != 0)
-		*div -= 1;
-
 	(void)mdss_pll_resource_enable(pll, false);
 
 	return rc;
@@ -1272,12 +1265,7 @@ static int pixel_clk_set_div(void *context, unsigned int reg, unsigned int div)
 		pr_err("Failed to enable dsi pll resources, rc=%d\n", rc);
 		return rc;
 	}
-	/**
-	 * In common clock framework the divider value provided is one less and
-	 * and hence adjusting the divider value by one prior to writing it to
-	 * hardware
-	 */
-	div++;
+
 	pixel_clk_set_div_sub(pll, div);
 	if (pll->slave)
 		pixel_clk_set_div_sub(pll->slave, div);
@@ -1301,12 +1289,6 @@ static int bit_clk_get_div(void *context, unsigned int reg, unsigned int *div)
 	reg_val = MDSS_PLL_REG_R(pll->phy_base, PHY_CMN_CLK_CFG0);
 	*div = (reg_val & 0x0F);
 
-	/**
-	 *Common clock framework the divider value is interpreted as one less
-	 * hence we return one less for all dividers except when zero
-	 */
-	if (*div != 0)
-		*div -= 1;
 	(void)mdss_pll_resource_enable(pll, false);
 
 	return rc;
@@ -1344,13 +1326,6 @@ static int bit_clk_set_div(void *context, unsigned int reg, unsigned int div)
 		pr_err("Failed to enable dsi pll resources, rc=%d\n", rc);
 		return rc;
 	}
-
-	/**
-	 * In common clock framework the divider value provided is one less and
-	 * and hence adjusting the divider value by one prior to writing it to
-	 * hardware
-	 */
-	div++;
 
 	bit_clk_set_div_sub(rsc, div);
 	/* For slave PLL, this divider always should be set to 1 */
@@ -1517,6 +1492,7 @@ static struct clk_regmap_div dsi1pll_pll_out_div = {
 static struct clk_regmap_div dsi0pll_bitclk_src = {
 	.shift = 0,
 	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_bitclk_src",
@@ -1531,6 +1507,7 @@ static struct clk_regmap_div dsi0pll_bitclk_src = {
 static struct clk_regmap_div dsi1pll_bitclk_src = {
 	.shift = 0,
 	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1pll_bitclk_src",
@@ -1677,6 +1654,7 @@ static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 static struct clk_regmap_div dsi0pll_pclk_src = {
 	.shift = 0,
 	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_pclk_src",
@@ -1692,6 +1670,7 @@ static struct clk_regmap_div dsi0pll_pclk_src = {
 static struct clk_regmap_div dsi1pll_pclk_src = {
 	.shift = 0,
 	.width = 4,
+	.flags = CLK_DIVIDER_ONE_BASED | CLK_DIVIDER_ALLOW_ZERO,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1pll_pclk_src",
