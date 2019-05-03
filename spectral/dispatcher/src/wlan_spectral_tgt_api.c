@@ -49,9 +49,7 @@ tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 int
 tgt_spectral_control(
 	struct wlan_objmgr_pdev *pdev,
-	u_int id,
-	void *indata,
-	u_int32_t insize, void *outdata, u_int32_t *outsize)
+	struct spectral_cp_request *sscan_req)
 {
 	struct spectral_context *sc;
 
@@ -64,7 +62,7 @@ tgt_spectral_control(
 		spectral_err("spectral context is NULL!");
 		return -EPERM;
 	}
-	return spectral_control_cmn(pdev, id, indata, insize, outdata, outsize);
+	return spectral_control_cmn(pdev, sscan_req);
 }
 
 void *

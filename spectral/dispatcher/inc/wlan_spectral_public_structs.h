@@ -188,6 +188,20 @@ enum spectral_capability_type {
 };
 
 /**
+ * enum spectral_cp_error_code - Spectral control path response code
+ * @SPECTRAL_SCAN_RESP_ERR_PARAM_UNSUPPORTED: parameter unsupported
+ * @SPECTRAL_SCAN_RESP_ERR_MODE_UNSUPPORTED: mode unsupported
+ * @SPECTRAL_SCAN_RESP_ERR_PARAM_INVALID_VALUE: invalid parameter value
+ * @SPECTRAL_SCAN_RESP_ERR_PARAM_NOT_INITIALIZED: parameter uninitialized
+ */
+enum spectral_cp_error_code {
+	SPECTRAL_SCAN_ERR_PARAM_UNSUPPORTED,
+	SPECTRAL_SCAN_ERR_MODE_UNSUPPORTED,
+	SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE,
+	SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED,
+};
+
+/**
  * struct spectral_chan_stats - channel status info
  * @cycle_count:         Cycle count
  * @channel_load:        Channel load
@@ -255,6 +269,97 @@ struct spectral_nl_cb {
 	int (*send_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 	int (*send_nl_unicast)(struct wlan_objmgr_pdev *pdev);
 	void (*free_nbuff)(struct wlan_objmgr_pdev *pdev);
+};
+
+/**
+ * struct spectral_scan_config_request - Config request
+ * @sscan_config: Spectral parameters
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_config_request {
+	struct spectral_config sscan_config;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_action_request - Action request
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_action_request {
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_get_caps_request - Get caps request
+ * @sscan_caps: Spectral capabilities
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_get_caps_request {
+	struct spectral_caps sscan_caps;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_get_diag_request - Get diag request
+ * @sscan_diag: Spectral diag stats
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_get_diag_request {
+	struct spectral_diag_stats sscan_diag;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_get_chan_width_request - Get channel width request
+ * @chan_width: Channel width
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_get_chan_width_request {
+	uint32_t chan_width;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_get_status_request - Get status request
+ * @is_active: is Spectral scan active
+ * @is_enabled: is Spectral scan enabled
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_get_status_request {
+	bool is_active;
+	bool is_enabled;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_scan_debug_request - Get/set debug level request
+ * @spectral_dbg_level: Spectral debug level
+ * @sscan_err_code: Spectral scan error code
+ */
+struct spectral_scan_debug_request {
+	uint32_t spectral_dbg_level;
+	enum spectral_cp_error_code sscan_err_code;
+};
+
+/**
+ * struct spectral_cp_request - Spectral control path request
+ *                              Creating request and extracting response has to
+ *                              be atomic.
+ * @ss_mode: Spectral scan mode
+ * @req_id: Request identifier
+ */
+struct spectral_cp_request {
+	enum spectral_scan_mode ss_mode;
+	uint8_t req_id;
+	union {
+		struct spectral_scan_config_request config_req;
+		struct spectral_scan_action_request action_req;
+		struct spectral_scan_get_caps_request caps_req;
+		struct spectral_scan_get_diag_request diag_req;
+		struct spectral_scan_get_chan_width_request chan_width_req;
+		struct spectral_scan_get_status_request status_req;
+		struct spectral_scan_debug_request debug_req;
+	};
 };
 
 #ifndef __KERNEL__

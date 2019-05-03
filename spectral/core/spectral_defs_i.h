@@ -123,9 +123,7 @@ struct spectral_context {
 	struct wlan_objmgr_psoc *psoc_obj;
 	struct spectral_legacy_cbacks legacy_cbacks;
 	int (*sptrlc_spectral_control)(struct wlan_objmgr_pdev *pdev,
-				       u_int id, void *indata,
-				       uint32_t insize, void *outdata,
-				       uint32_t *outsize);
+				       struct spectral_cp_request *sscan_req);
 	int (*sptrlc_ucfg_phyerr_config)(struct wlan_objmgr_pdev *pdev,
 					 void *ad);
 	void * (*sptrlc_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);

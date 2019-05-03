@@ -37,12 +37,8 @@ void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_spectral_control()- handler for demultiplexing requests from higher layer
- * @pdev:    reference to global pdev object
- * @id:      spectral config command id
- * @indata:  reference to input data
- * @insize:  input data size
- * @outdata: reference to output data
- * @outsize: output data size
+ * @pdev:      reference to global pdev object
+ * @sscan_req: pointer to Spectral scan request
  *
  * This function processes the spectral config command
  * and appropriate handlers are invoked.
@@ -50,8 +46,7 @@ void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev);
  * Return: 0 success else failure
  */
 int tgt_spectral_control(struct wlan_objmgr_pdev *pdev,
-			 u_int id, void *indata, u_int32_t insize,
-			 void *outdata, u_int32_t *outsize);
+			 struct spectral_cp_request *sscan_req);
 
 /**
  * tgt_pdev_spectral_init() - implementation for spectral init

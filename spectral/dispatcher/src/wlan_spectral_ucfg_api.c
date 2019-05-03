@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -23,11 +23,9 @@
 #include <qdf_module.h>
 #include <cfg_ucfg_api.h>
 
-int
+QDF_STATUS
 ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
-		      u_int id,
-		      void *indata,
-		      uint32_t insize, void *outdata, uint32_t *outsize)
+		      struct spectral_cp_request *sscan_req)
 {
 	struct spectral_context *sc;
 
@@ -47,9 +45,7 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 		return -EPERM;
 	}
 
-	return sc->sptrlc_spectral_control(pdev,
-					   id,
-					   indata, insize, outdata, outsize);
+	return sc->sptrlc_spectral_control(pdev, sscan_req);
 }
 qdf_export_symbol(ucfg_spectral_control);
 
@@ -72,3 +68,152 @@ void ucfg_spectral_scan_set_ppid(struct wlan_objmgr_pdev *pdev, uint32_t ppid)
 
 	return;
 }
+
+QDF_STATUS ucfg_spectral_create_cp_req(struct spectral_cp_request *sscan_req,
+				       void *indata, u_int32_t insize)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	switch (sscan_req->req_id) {
+	case SPECTRAL_SET_CONFIG:
+		{
+			if (insize < sizeof(struct spectral_config) ||
+			    !indata) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			qdf_mem_copy(&sscan_req->config_req.sscan_config,
+				     indata,
+				     sizeof(struct spectral_config));
+		}
+		break;
+
+	case SPECTRAL_SET_DEBUG_LEVEL:
+		{
+			if (insize < sizeof(uint32_t) || !indata) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			sscan_req->debug_req.spectral_dbg_level =
+							*(uint32_t *)indata;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+bad:
+	return status;
+}
+
+qdf_export_symbol(ucfg_spectral_create_cp_req);
+
+QDF_STATUS ucfg_spectral_extract_response(struct spectral_cp_request *sscan_req,
+					  void *outdata, u_int32_t *outsize)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	switch (sscan_req->req_id) {
+	case SPECTRAL_GET_CONFIG:
+		{
+			if (!outdata || !outsize ||
+			    (*outsize < sizeof(struct spectral_config))) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(struct spectral_config);
+			qdf_mem_copy(outdata,
+				     &sscan_req->config_req.sscan_config,
+				     sizeof(struct spectral_config));
+		}
+		break;
+
+	case SPECTRAL_IS_ACTIVE:
+		{
+			if (!outdata || !outsize ||
+			    *outsize < sizeof(uint32_t)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(uint32_t);
+			*((uint32_t *)outdata) =
+				sscan_req->status_req.is_active;
+		}
+		break;
+
+	case SPECTRAL_IS_ENABLED:
+		{
+			if (!outdata || !outsize ||
+			    *outsize < sizeof(uint32_t)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(uint32_t);
+			*((uint32_t *)outdata) =
+				sscan_req->status_req.is_enabled;
+		}
+		break;
+
+	case SPECTRAL_GET_DEBUG_LEVEL:
+		{
+			if (!outdata || !outsize ||
+			    *outsize < sizeof(uint32_t)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(uint32_t);
+			*((uint32_t *)outdata) =
+				sscan_req->debug_req.spectral_dbg_level;
+		}
+		break;
+
+	case SPECTRAL_GET_CAPABILITY_INFO:
+		{
+			if (!outdata || !outsize ||
+			    *outsize < sizeof(struct spectral_caps)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(struct spectral_caps);
+			qdf_mem_copy(outdata, &sscan_req->caps_req.sscan_caps,
+				     sizeof(struct spectral_caps));
+		}
+		break;
+
+	case SPECTRAL_GET_DIAG_STATS:
+		{
+			if (!outdata || !outsize ||
+			    (*outsize < sizeof(struct spectral_diag_stats))) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(struct spectral_diag_stats);
+			qdf_mem_copy(outdata, &sscan_req->diag_req.sscan_diag,
+				     sizeof(struct spectral_diag_stats));
+		}
+		break;
+
+	case SPECTRAL_GET_CHAN_WIDTH:
+		{
+			if (!outdata || !outsize ||
+			    *outsize < sizeof(uint32_t)) {
+				status = QDF_STATUS_E_FAILURE;
+				goto bad;
+			}
+			*outsize = sizeof(uint32_t);
+			*((uint32_t *)outdata) =
+				sscan_req->chan_width_req.chan_width;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+bad:
+	return status;
+}
+
+qdf_export_symbol(ucfg_spectral_extract_response);
+

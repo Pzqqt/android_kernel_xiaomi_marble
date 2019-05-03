@@ -113,9 +113,7 @@ spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
 
 int
 spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
-		     u_int id,
-		     void *indata,
-		     uint32_t insize, void *outdata, uint32_t *outsize)
+		     struct spectral_cp_request *sscan_req)
 {
 	int error = 0;
 	int temp_debug;
@@ -138,15 +136,10 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		goto bad;
 	}
 
-	switch (id) {
+	switch (sscan_req->req_id) {
 	case SPECTRAL_SET_CONFIG:
 		{
-			if (insize < sizeof(struct spectral_config) ||
-			    !indata) {
-				error = -EINVAL;
-				break;
-			}
-			sp_in = (struct spectral_config *)indata;
+			sp_in = &sscan_req->config_req.sscan_config;
 			if (sp_in->ss_count !=
 			    SPECTRAL_PHYERR_PARAM_NOVAL) {
 				if (sc->sptrlc_set_spectral_config(
@@ -345,14 +338,8 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 	case SPECTRAL_GET_CONFIG:
 		{
-			if (!outdata || !outsize ||
-			    (*outsize < sizeof(struct spectral_config))) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(struct spectral_config);
 			sc->sptrlc_get_spectral_config(pdev, &sp_out);
-			spectralparams = (struct spectral_config *)outdata;
+			spectralparams = &sscan_req->config_req.sscan_config;
 			spectralparams->ss_fft_period = sp_out.ss_fft_period;
 			spectralparams->ss_period = sp_out.ss_period;
 			spectralparams->ss_count = sp_out.ss_count;
@@ -382,51 +369,29 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 	case SPECTRAL_IS_ACTIVE:
 		{
-			if (!outdata || !outsize ||
-			    *outsize < sizeof(uint32_t)) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(uint32_t);
-			*((uint32_t *)outdata) =
-			    (uint32_t)sc->sptrlc_is_spectral_active(pdev);
+			sscan_req->status_req.is_active =
+				(bool)sc->sptrlc_is_spectral_active(pdev);
 		}
 		break;
 
 	case SPECTRAL_IS_ENABLED:
 		{
-			if (!outdata || !outsize ||
-			    *outsize < sizeof(uint32_t)) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(uint32_t);
-			*((uint32_t *)outdata) =
-			    (uint32_t)sc->sptrlc_is_spectral_enabled(pdev);
+			sscan_req->status_req.is_enabled =
+				(bool)sc->sptrlc_is_spectral_enabled(pdev);
 		}
 		break;
 
 	case SPECTRAL_SET_DEBUG_LEVEL:
 		{
-			if (insize < sizeof(uint32_t) || !indata) {
-				error = -EINVAL;
-				break;
-			}
-			temp_debug = *(uint32_t *)indata;
+			temp_debug = sscan_req->debug_req.spectral_dbg_level;
 			sc->sptrlc_set_debug_level(pdev, temp_debug);
 		}
 		break;
 
 	case SPECTRAL_GET_DEBUG_LEVEL:
 		{
-			if (!outdata || !outsize ||
-			    *outsize < sizeof(uint32_t)) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(uint32_t);
-			*((uint32_t *)outdata) =
-			    (uint32_t)sc->sptrlc_get_debug_level(pdev);
+			sscan_req->debug_req.spectral_dbg_level =
+				(uint32_t)sc->sptrlc_get_debug_level(pdev);
 		}
 		break;
 
@@ -444,25 +409,19 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 	case SPECTRAL_GET_CAPABILITY_INFO:
 		{
-			if (!outdata || !outsize ||
-			    *outsize < sizeof(struct spectral_caps)) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(struct spectral_caps);
-			sc->sptrlc_get_spectral_capinfo(pdev, outdata);
+			struct spectral_caps *caps;
+
+			caps  = &sscan_req->caps_req.sscan_caps;
+			sc->sptrlc_get_spectral_capinfo(pdev, caps);
 		}
 		break;
 
 	case SPECTRAL_GET_DIAG_STATS:
 		{
-			if (!outdata || !outsize ||
-			    (*outsize < sizeof(struct spectral_diag_stats))) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(struct spectral_diag_stats);
-			sc->sptrlc_get_spectral_diagstats(pdev, outdata);
+			struct spectral_diag_stats *diag;
+
+			diag  = &sscan_req->diag_req.sscan_diag;
+			sc->sptrlc_get_spectral_diagstats(pdev, diag);
 		}
 		break;
 
@@ -477,13 +436,8 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 			chan_width = spectral_vdev_get_ch_width(vdev);
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 
-			if (!outdata || !outsize ||
-			    *outsize < sizeof(chan_width)) {
-				error = -EINVAL;
-				break;
-			}
-			*outsize = sizeof(chan_width);
-			*((uint32_t *)outdata) = (uint32_t)chan_width;
+			sscan_req->chan_width_req.chan_width =
+							(uint32_t)chan_width;
 		}
 		break;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -28,20 +28,14 @@
 /**
  * ucfg_spectral_control() - Carry out Spectral control operations
  * @pdev: Pointer to pdev
- * @id: Spectral operation ID
- * @indata: Pointer to input data
- * @insize: Size of indata buffer
- * @outdata: Pointer to buffer where the output should be stored
- * @outsize: Size of outdata buffer
+ * @sscan_req: spectral related control request
  *
  * Carry out Spectral specific UCFG control get/set operations
  *
  * Return: 0 on success, negative value on failure
  */
-int ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
-			  u_int id,
-			  void *indata,
-			  uint32_t insize, void *outdata, uint32_t *outsize);
+QDF_STATUS ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
+				 struct spectral_cp_request *sscan_req);
 
 /**
  * ucfg_spectral_scan_set_ppid() - configure pid of spectral tool
@@ -55,4 +49,29 @@ int ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 void ucfg_spectral_scan_set_ppid(struct wlan_objmgr_pdev *pdev,
 					uint32_t ppid);
 
+/**
+ * ucfg_spectral_create_cp_req() - Create Spectral control path request
+ * @sscan_req: Pointer to Spectral scan request
+ * @indata: pointer input data
+ * @insize: Size of input data
+ *
+ * Create Spectral control path request structure
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS ucfg_spectral_create_cp_req(struct spectral_cp_request *sscan_req,
+				       void *indata, u_int32_t insize);
+
+/**
+ * ucfg_spectral_create_cp_req() - Extract response from Spectral CP request
+ * @sscan_req: Pointer to Spectral scan request
+ * @outdata: pointer output data
+ * @outsize: Size of output data
+ *
+ * Extract response from Spectral control path request
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS ucfg_spectral_extract_response(struct spectral_cp_request *sscan_req,
+					  void *outdata, u_int32_t *outsize);
 #endif /* _WLAN_SPECTRAL_UCFG_API_H_ */
