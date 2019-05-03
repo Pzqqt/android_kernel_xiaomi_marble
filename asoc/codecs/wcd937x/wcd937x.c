@@ -134,6 +134,12 @@ static int wcd937x_init_reg(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component,
 				WCD937X_HPH_SURGE_HPHLR_SURGE_EN,
 				0xFF, 0xD9);
+	snd_soc_component_update_bits(component, WCD937X_MICB1_TEST_CTL_1,
+				0xFF, 0xFA);
+	snd_soc_component_update_bits(component, WCD937X_MICB2_TEST_CTL_1,
+				0xFF, 0xFA);
+	snd_soc_component_update_bits(component, WCD937X_MICB3_TEST_CTL_1,
+				0xFF, 0xFA);
 	return 0;
 }
 
