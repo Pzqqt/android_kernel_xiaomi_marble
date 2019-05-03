@@ -1491,6 +1491,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	if (is_p2p_scan)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 
+	if (params->priority != SCAN_PRIORITY_COUNT)
+		req->scan_req.scan_priority = params->priority;
+
 	if (request->ie_len)
 		extra_ie_len = request->ie_len;
 	else if (params->default_ie.ptr && params->default_ie.len)
