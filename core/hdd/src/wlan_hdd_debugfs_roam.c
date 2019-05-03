@@ -460,8 +460,8 @@ wlan_hdd_update_roam_stats(struct hdd_context *hdd_ctx,
 		}
 
 		ret = scnprintf(buf + length, buf_avail_len - length,
-			"\nRaom Scan time: 0x%llx\n",
-			roam_stats->roam_scan[rsi].time_stamp);
+				"\nRoam Scan time: 0x%llx\n",
+				roam_stats->roam_scan[rsi].time_stamp);
 		if (ret <= 0)
 			goto free_mem;
 		length += ret;
