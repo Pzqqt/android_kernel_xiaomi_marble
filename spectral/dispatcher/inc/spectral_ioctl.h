@@ -55,30 +55,45 @@
 /*
  * ioctl parameter types
  */
+enum spectral_params {
+	SPECTRAL_PARAM_FFT_PERIOD = 1,
+	SPECTRAL_PARAM_SCAN_PERIOD,
+	SPECTRAL_PARAM_SCAN_COUNT,
+	SPECTRAL_PARAM_SHORT_REPORT,
+	SPECTRAL_PARAM_SPECT_PRI,
+	SPECTRAL_PARAM_FFT_SIZE,
+	SPECTRAL_PARAM_GC_ENA,
+	SPECTRAL_PARAM_RESTART_ENA,
+	SPECTRAL_PARAM_NOISE_FLOOR_REF,
+	SPECTRAL_PARAM_INIT_DELAY,
+	SPECTRAL_PARAM_NB_TONE_THR,
+	SPECTRAL_PARAM_STR_BIN_THR,
+	SPECTRAL_PARAM_WB_RPT_MODE,
+	SPECTRAL_PARAM_RSSI_RPT_MODE,
+	SPECTRAL_PARAM_RSSI_THR,
+	SPECTRAL_PARAM_PWR_FORMAT,
+	SPECTRAL_PARAM_RPT_MODE,
+	SPECTRAL_PARAM_BIN_SCALE,
+	SPECTRAL_PARAM_DBM_ADJ,
+	SPECTRAL_PARAM_CHN_MASK,
+	SPECTRAL_PARAM_ACTIVE,
+	SPECTRAL_PARAM_STOP,
+	SPECTRAL_PARAM_ENABLE,
+	SPECTRAL_PARAM_FREQUENCY,
+	SPECTRAL_PARAM_AFTER_LAST,
+	SPECTRAL_PARAM_MAX = SPECTRAL_PARAM_AFTER_LAST - 1,
+};
 
-#define SPECTRAL_PARAM_FFT_PERIOD        (1)
-#define SPECTRAL_PARAM_SCAN_PERIOD       (2)
-#define SPECTRAL_PARAM_SCAN_COUNT        (3)
-#define SPECTRAL_PARAM_SHORT_REPORT      (4)
-#define SPECTRAL_PARAM_SPECT_PRI         (5)
-#define SPECTRAL_PARAM_FFT_SIZE          (6)
-#define SPECTRAL_PARAM_GC_ENA            (7)
-#define SPECTRAL_PARAM_RESTART_ENA       (8)
-#define SPECTRAL_PARAM_NOISE_FLOOR_REF   (9)
-#define SPECTRAL_PARAM_INIT_DELAY        (10)
-#define SPECTRAL_PARAM_NB_TONE_THR       (11)
-#define SPECTRAL_PARAM_STR_BIN_THR       (12)
-#define SPECTRAL_PARAM_WB_RPT_MODE       (13)
-#define SPECTRAL_PARAM_RSSI_RPT_MODE     (14)
-#define SPECTRAL_PARAM_RSSI_THR          (15)
-#define SPECTRAL_PARAM_PWR_FORMAT        (16)
-#define SPECTRAL_PARAM_RPT_MODE          (17)
-#define SPECTRAL_PARAM_BIN_SCALE         (18)
-#define SPECTRAL_PARAM_DBM_ADJ           (19)
-#define SPECTRAL_PARAM_CHN_MASK          (20)
-#define SPECTRAL_PARAM_ACTIVE            (21)
-#define SPECTRAL_PARAM_STOP              (22)
-#define SPECTRAL_PARAM_ENABLE            (23)
+/**
+ * enum spectral_scan_mode - Spectral scan mode
+ * @SPECTRAL_SCAN_MODE_NORMAL: Normal mode
+ * @SPECTRAL_SCAN_MODE_AGILE: Agile mode
+ */
+enum spectral_scan_mode {
+	SPECTRAL_SCAN_MODE_NORMAL,
+	SPECTRAL_SCAN_MODE_AGILE,
+	SPECTRAL_SCAN_MODE_MAX,
+};
 
 struct spectral_ioctl_params {
 	int16_t   spectral_fft_period;
@@ -158,6 +173,16 @@ enum spectral_cap_hw_gen {
  * @ss_nf_cal:            nf calibrated values for ctl+ext
  * @ss_nf_pwr:            nf pwr values for ctl+ext
  * @ss_nf_temp_data:      temperature data taken during nf scan
+ * @ss_frequency:         This specifies the frequency span over which Spectral
+ *                        scan would be carried out. Its value depends on the
+ *                        Spectral scan mode.
+ *                        Normal mode:-
+ *                          Not applicable. Spectral scan would happen in the
+ *                          operating span.
+ *                        Agile mode:-
+ *                          Center frequency (in MHz) of the interested span
+ *                          or center frequency (in MHz) of any WLAN channel
+ *                          in the interested span.
  */
 struct spectral_config {
 	uint16_t ss_fft_period;
@@ -184,6 +209,7 @@ struct spectral_config {
 	int8_t ss_nf_cal[AH_MAX_CHAINS * 2];
 	int8_t ss_nf_pwr[AH_MAX_CHAINS * 2];
 	int32_t ss_nf_temp_data;
+	uint32_t ss_frequency;
 };
 
 /**
@@ -199,6 +225,7 @@ struct spectral_config {
  * @high_level_offset: high_level_offset
  * @rssi_thr: rssi_thr
  * @default_agc_max_gain: default_agc_max_gain
+ * @agile_spectral_cap: agile Spectral capability
  */
 struct spectral_caps {
 	uint8_t phydiag_cap;
@@ -212,6 +239,7 @@ struct spectral_caps {
 	int16_t high_level_offset;
 	int16_t rssi_thr;
 	uint8_t default_agc_max_gain;
+	bool agile_spectral_cap;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)
@@ -314,6 +342,7 @@ struct spectral_classifier_params {
  * @noise_floor_sec80:        Indicates the current noise floor for secondary 80
  *                            segment
  * @ch_width:                 Channel width 20/40/80/160 MHz
+ * @spectral_mode:            Spectral scan mode
  */
 struct spectral_samp_data {
 	int16_t spectral_data_len;
@@ -370,6 +399,7 @@ struct spectral_samp_data {
 	uint8_t spectral_agc_total_gain_sec80;
 	uint8_t spectral_gainchange;
 	uint8_t spectral_gainchange_sec80;
+	enum spectral_scan_mode spectral_mode;
 } __packed;
 
 /**
