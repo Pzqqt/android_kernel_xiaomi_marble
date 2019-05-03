@@ -303,6 +303,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 			"%s: hal_soc allocation failed", __func__);
 		goto fail0;
 	}
+	qdf_minidump_log((void *)hal, sizeof(*hal), "hal_soc");
 	hal->hif_handle = hif_handle;
 	hal->dev_base_addr = hif_get_dev_ba(hif_handle);
 	hal->qdf_dev = qdf_dev;

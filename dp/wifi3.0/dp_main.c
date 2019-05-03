@@ -1972,6 +1972,8 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				FL("Link descriptor memory alloc failed"));
 			goto fail;
 		}
+		qdf_minidump_log((void *)(soc->link_desc_banks[i].base_vaddr),
+			soc->link_desc_banks[i].size, "link_desc_bank");
 	}
 
 	if (last_bank_size) {
@@ -2001,6 +2003,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			((unsigned long)(soc->link_desc_banks[i].base_vaddr) -
 			(unsigned long)(
 			soc->link_desc_banks[i].base_vaddr_unaligned));
+
+		qdf_minidump_log((void *)(soc->link_desc_banks[i].base_vaddr),
+			soc->link_desc_banks[i].size, "link_desc_bank");
 	}
 
 
@@ -2017,6 +2022,11 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				FL("Link desc idle ring setup failed"));
 			goto fail;
 		}
+
+		qdf_minidump_log(
+			(void *)(soc->wbm_idle_link_ring.base_vaddr_unaligned),
+			soc->wbm_idle_link_ring.alloc_size,
+			"wbm_idle_link_ring");
 
 		hal_srng_access_start_unlocked(soc->hal_soc,
 			soc->wbm_idle_link_ring.hal_srng);
@@ -2709,6 +2719,10 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
+	qdf_minidump_log(
+		(void *)(soc->wbm_desc_rel_ring.base_vaddr_unaligned),
+		soc->wbm_desc_rel_ring.alloc_size, "wbm_desc_rel_ring");
+
 	soc->num_tcl_data_rings = 0;
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc_cfg_ctx)) {
@@ -3278,6 +3292,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			FL("DP PDEV memory allocation failed"));
 		goto fail0;
 	}
+	qdf_minidump_log((void *)pdev, sizeof(*pdev), "dp_pdev");
 
 	/*
 	 * Variable to prevent double pdev deinitialization during
@@ -4404,6 +4419,8 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
+
+	qdf_minidump_log((void *)soc, sizeof(*soc), "dp_soc");
 
 	return QDF_STATUS_SUCCESS;
 }
