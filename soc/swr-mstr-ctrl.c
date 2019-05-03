@@ -2293,7 +2293,12 @@ static int swrm_runtime_resume(struct device *dev)
 			enable_bank_switch(swrm, 0, SWR_ROW_50, SWR_MIN_COL);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_up(swr_dev);
-				if (ret) {
+				if (ret == -ENODEV) {
+					dev_dbg(dev,
+						"%s slave device up not implemented\n",
+						__func__);
+					ret = 0;
+				} else if (ret) {
 					dev_err(dev,
 						"%s: failed to wakeup swr dev %d\n",
 						__func__, swr_dev->dev_num);
@@ -2358,7 +2363,12 @@ static int swrm_runtime_suspend(struct device *dev)
 			swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_down(swr_dev);
-				if (ret) {
+				if (ret == -ENODEV) {
+					dev_dbg_ratelimited(dev,
+						"%s slave device down not implemented\n",
+						__func__);
+					ret = 0;
+				} else if (ret) {
 					dev_err(dev,
 						"%s: failed to shutdown swr dev %d\n",
 						__func__, swr_dev->dev_num);
