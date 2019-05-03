@@ -289,9 +289,8 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		tx_stats = &stats_ctx->tx;
 		RATE_STATS_LOCK_ACQUIRE(&tx_stats->lock);
 
-		if (qdf_unlikely(!ppdu_user->rix ||
+		if (qdf_unlikely(!ppdu_user->tx_ratekbps ||
 				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
-			qdf_warn("Invalid rate index, continue.");
 			RATE_STATS_LOCK_RELEASE(&tx_stats->lock);
 			continue;
 		}
