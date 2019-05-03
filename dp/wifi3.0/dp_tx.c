@@ -4217,6 +4217,7 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	msdu_info.num_seg = new_mac_cnt;
 	msdu_info.frm_type = dp_tx_frm_me;
 
+	msdu_info.tid = HTT_INVALID_TID;
 	if (qdf_unlikely(vdev->mcast_enhancement_en > 0) &&
 	    qdf_unlikely(pdev->hmmc_tid_override_en))
 		msdu_info.tid = pdev->hmmc_tid;
