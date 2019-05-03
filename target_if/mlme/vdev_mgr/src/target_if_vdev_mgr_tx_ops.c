@@ -604,11 +604,6 @@ static QDF_STATUS target_if_vdev_mgr_up_send(
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("VDEV_%d: Failed to set beacon interval!", vdev_id);
 
-	sparam.param_id = WLAN_MLME_CFG_TXBF_CAPS;
-	status = target_if_vdev_mgr_set_param_send(vdev, &sparam);
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_err("VDEV_%d: Failed to set TxBF caps!", vdev_id);
-
 	ucfg_wlan_vdev_mgr_get_param_bssid(vdev, bssid);
 
 	status = wmi_unified_vdev_up_send(wmi_handle, bssid, param);
