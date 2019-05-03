@@ -204,8 +204,8 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 						   struct direct_buf_rx_data *payload)
 {
-	uint8_t *data = payload->vaddr;
-	uint32_t cookie = payload->cookie;
+	uint8_t *data = NULL;
+	uint32_t cookie = 0;
 	struct whal_cfir_dma_hdr dma_hdr = {0};
 	int  length = 8, tones = 0, status = 0;
 	struct wlan_objmgr_psoc *psoc;
@@ -230,6 +230,9 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		cfr_err("pdev object for CFR is null");
 		return true;
 	}
+
+	data = payload->vaddr;
+	cookie = payload->cookie;
 
 	cfr_debug("bufferaddr: 0x%pK cookie: %u", payload->paddr, cookie);
 	qdf_mem_copy(&dma_hdr, &data[0], sizeof(struct whal_cfir_dma_hdr));

@@ -149,7 +149,7 @@ int tgt_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			 struct wlan_objmgr_peer *peer)
 {
 	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
-	int status;
+	int status = 0;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
 	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
