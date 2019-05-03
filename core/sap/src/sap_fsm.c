@@ -854,7 +854,8 @@ sap_validate_chan(struct sap_context *sap_context,
 				if (QDF_IS_STATUS_ERROR(
 					policy_mgr_valid_sap_conc_channel_check(
 						mac_ctx->psoc, &con_ch,
-						sap_context->channel)))	{
+						sap_context->channel,
+						sap_context->sessionId))) {
 					QDF_TRACE(QDF_MODULE_ID_SAP,
 						QDF_TRACE_LEVEL_WARN,
 						FL("SAP can't start (no MCC)"));

@@ -1997,18 +1997,49 @@ uint8_t policy_mgr_mode_specific_get_channel(
 }
 
 uint8_t policy_mgr_get_alternate_channel_for_sap(
-	struct wlan_objmgr_psoc *psoc)
+	struct wlan_objmgr_psoc *psoc, uint8_t sap_vdev_id,
+	uint8_t sap_channel)
 {
 	uint8_t pcl_channels[QDF_MAX_NUM_CHAN];
 	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];
 	uint8_t channel = 0;
 	uint32_t pcl_len = 0;
+	struct policy_mgr_conc_connection_info info;
+	uint8_t num_cxn_del = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t i;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return 0;
+	}
+
+	/*
+	 * Store the connection's parameter and temporarily delete it
+	 * from the concurrency table. This way the get pcl can be used as a
+	 * new connection is coming up, after check, restore the connection to
+	 * concurrency table.
+	 */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
+						      &info, &num_cxn_del);
 
 	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl(psoc, PM_SAP_MODE,
-		&pcl_channels[0], &pcl_len,
+		pcl_channels, &pcl_len,
 		pcl_weight, QDF_ARRAY_SIZE(pcl_weight))) {
-		channel = pcl_channels[0];
+		for (i = 0; i < pcl_len; i++) {
+			if (pcl_channels[i] == sap_channel)
+				continue;
+			channel = pcl_channels[i];
+			break;
+		}
 	}
+	/* Restore the connection entry */
+	if (num_cxn_del > 0)
+		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return channel;
 }
+

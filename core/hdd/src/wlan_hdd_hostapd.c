@@ -3045,7 +3045,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 {
 	mac_handle_t mac_handle;
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	uint8_t intf_ch = 0;
+	uint8_t intf_ch = 0, sap_ch = 0;
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *sta_adapter;
@@ -3053,6 +3053,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct ch_params ch_params;
 	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
+
 	if (!ap_adapter) {
 		hdd_err("ap_adapter is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -3115,12 +3116,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	hdd_info("intf_ch: %d", intf_ch);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
 		mcc_to_scc_switch) {
+		policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch);
 		if (QDF_IS_STATUS_ERROR(
 			policy_mgr_valid_sap_conc_channel_check(
-				hdd_ctx->psoc,
-				&intf_ch,
-				policy_mgr_mode_specific_get_channel(
-					hdd_ctx->psoc, PM_SAP_MODE)))) {
+				hdd_ctx->psoc, &intf_ch, sap_ch, vdev_id))) {
 			hdd_debug("can't move sap to %d",
 				hdd_sta_ctx->conn_info.channel);
 			return QDF_STATUS_E_FAILURE;
