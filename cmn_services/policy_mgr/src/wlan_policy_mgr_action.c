@@ -1742,7 +1742,8 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
-	struct wlan_objmgr_psoc *psoc, uint8_t *con_ch, uint8_t sap_ch)
+	struct wlan_objmgr_psoc *psoc, uint8_t *con_ch, uint8_t sap_ch,
+	uint8_t sap_vdev_id)
 {
 	uint8_t channel = *con_ch;
 	uint8_t temp_channel = 0;
@@ -1795,7 +1796,9 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 
 			if (policy_mgr_is_hw_dbs_capable(psoc)) {
 				temp_channel =
-				policy_mgr_get_alternate_channel_for_sap(psoc);
+				policy_mgr_get_alternate_channel_for_sap(psoc,
+								sap_vdev_id,
+								sap_ch);
 				policy_mgr_debug("temp_channel is %d",
 					temp_channel);
 				if (temp_channel) {
