@@ -1371,6 +1371,7 @@ static inline void dp_rx_cksum_offload(struct dp_pdev *pdev,
  * @rx_tlv_hdr: pointer to the start of RX TLV headers.
  * @peer: pointer to the peer object.
  * @ring_id: reo dest ring number on which pkt is reaped.
+ * @tid_stats: per tid rx stats.
  *
  * update all the per msdu stats for that nbuf.
  * Return: void
@@ -1379,7 +1380,8 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 				    qdf_nbuf_t nbuf,
 				    uint8_t *rx_tlv_hdr,
 				    struct dp_peer *peer,
-				    uint8_t ring_id)
+				    uint8_t ring_id,
+				    struct cdp_tid_rx_stats *tid_stats)
 {
 	bool is_ampdu, is_not_amsdu;
 	uint16_t peer_id;
@@ -1398,13 +1400,15 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	DP_STATS_INCC(peer, rx.non_amsdu_cnt, 1, is_not_amsdu);
 	DP_STATS_INCC(peer, rx.amsdu_cnt, 1, !is_not_amsdu);
 
+	tid_stats->msdu_cnt++;
 	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
+		tid_stats->mcast_msdu_cnt++;
 		if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
 			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
-
+			tid_stats->bcast_msdu_cnt++;
 		}
 	}
 
@@ -1878,13 +1882,6 @@ done:
 			continue;
 		}
 
-		tid_stats->msdu_cnt++;
-		if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
-			tid_stats->mcast_msdu_cnt++;
-			if (qdf_nbuf_is_bcast_pkt(nbuf))
-				tid_stats->bcast_msdu_cnt++;
-		}
-
 		peer_mdata = hal_rx_mpdu_peer_meta_data_get(rx_tlv_hdr);
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 		peer = dp_peer_find_by_id(soc, peer_id);
@@ -2035,7 +2032,8 @@ done:
 			FL("rxhash: flow id toeplitz: 0x%x"),
 			hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr));
 
-		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer, ring_id);
+		dp_rx_msdu_stats_update(soc, nbuf, rx_tlv_hdr, peer,
+					ring_id, tid_stats);
 
 		if (qdf_unlikely(vdev->mesh_vdev)) {
 			if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
