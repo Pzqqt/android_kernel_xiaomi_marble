@@ -29,11 +29,11 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 
-#define mlme_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
-#define mlme_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
-#define mlme_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MLME, params)
-#define mlme_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_MLME, params)
-#define mlme_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MLME, params)
+#define mlme_legacy_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
+#define mlme_legacy_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
+#define mlme_legacy_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MLME, params)
+#define mlme_legacy_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_MLME, params)
+#define mlme_legacy_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MLME, params)
 
 /**
  * struct wlan_mlme_psoc_obj -MLME psoc priv object
@@ -146,7 +146,7 @@ void wlan_peer_set_unicast_cipher(struct wlan_objmgr_peer *peer, uint32_t value)
 	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							  WLAN_UMAC_COMP_MLME);
 	if (!peer_priv) {
-		mlme_err(" peer mlme component object is NULL");
+		mlme_legacy_err(" peer mlme component object is NULL");
 		return;
 	}
 	peer_priv->ucast_key_cipher  = value;
@@ -166,7 +166,7 @@ uint32_t wlan_peer_get_unicast_cipher(struct wlan_objmgr_peer *peer)
 	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
 							  WLAN_UMAC_COMP_MLME);
 	if (!peer_priv) {
-		mlme_err("peer mlme component object is NULL");
+		mlme_legacy_err("peer mlme component object is NULL");
 		return 0;
 	}
 
