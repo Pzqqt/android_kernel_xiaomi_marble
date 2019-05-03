@@ -33,7 +33,7 @@ QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
 				 qdf_size_t *len)
 {
 	if (*len < cfg_str->len) {
-		mlme_err("Invalid len %zd", *len);
+		mlme_legacy_err("Invalid len %zd", *len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -47,8 +47,8 @@ QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
 				 qdf_size_t len)
 {
 	if (len > dst_cfg_str->max_len) {
-		mlme_err("Invalid len %zd (>%zd)", len,
-			 dst_cfg_str->max_len);
+		mlme_legacy_err("Invalid len %zd (>%zd)", len,
+				dst_cfg_str->max_len);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -143,7 +143,7 @@ QDF_STATUS wlan_mlme_set_max_amsdu_num(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	if (!cfg_in_range(CFG_MAX_AMSDU_NUM, value)) {
-		mlme_err("Error in setting Max AMSDU Num");
+		mlme_legacy_err("Error in setting Max AMSDU Num");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -176,7 +176,7 @@ QDF_STATUS wlan_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	if (!cfg_in_range(CFG_MPDU_DENSITY, value)) {
-		mlme_err("Invalid value %d", value);
+		mlme_legacy_err("Invalid value %d", value);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -465,7 +465,8 @@ QDF_STATUS wlan_mlme_cfg_set_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	if (!cfg_in_range(CFG_HE_UL_MUMIMO, value)) {
-		mlme_debug("Failed to set CFG_HE_UL_MUMIMO with %d", value);
+		mlme_legacy_debug("Failed to set CFG_HE_UL_MUMIMO with %d",
+				  value);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -849,15 +850,15 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	mlme_debug("txchainmask1x1: %d rxchainmask1x1: %d",
-		   mlme_obj->cfg.chainmask_cfg.txchainmask1x1,
-		   mlme_obj->cfg.chainmask_cfg.rxchainmask1x1);
-	mlme_debug("tx_chain_mask_2g: %d, rx_chain_mask_2g: %d",
-		   mlme_obj->cfg.chainmask_cfg.tx_chain_mask_2g,
-		   mlme_obj->cfg.chainmask_cfg.rx_chain_mask_2g);
-	mlme_debug("tx_chain_mask_5g: %d, rx_chain_mask_5g: %d",
-		   mlme_obj->cfg.chainmask_cfg.tx_chain_mask_5g,
-		   mlme_obj->cfg.chainmask_cfg.rx_chain_mask_5g);
+	mlme_legacy_debug("txchainmask1x1: %d rxchainmask1x1: %d",
+			  mlme_obj->cfg.chainmask_cfg.txchainmask1x1,
+			  mlme_obj->cfg.chainmask_cfg.rxchainmask1x1);
+	mlme_legacy_debug("tx_chain_mask_2g: %d, rx_chain_mask_2g: %d",
+			  mlme_obj->cfg.chainmask_cfg.tx_chain_mask_2g,
+			  mlme_obj->cfg.chainmask_cfg.rx_chain_mask_2g);
+	mlme_legacy_debug("tx_chain_mask_5g: %d, rx_chain_mask_5g: %d",
+			  mlme_obj->cfg.chainmask_cfg.tx_chain_mask_5g,
+			  mlme_obj->cfg.chainmask_cfg.rx_chain_mask_5g);
 
 	if (mlme_obj->cfg.chainmask_cfg.txchainmask1x1) {
 		ch_msk_val = mlme_obj->cfg.chainmask_cfg.txchainmask1x1;
@@ -879,7 +880,7 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 
 	if (mlme_obj->cfg.chainmask_cfg.txchainmask1x1 ||
 	    mlme_obj->cfg.chainmask_cfg.rxchainmask1x1) {
-		mlme_debug("band agnostic tx/rx chain mask set. skip per band chain mask");
+		mlme_legacy_debug("band agnostic tx/rx chain mask set. skip per band chain mask");
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -1956,7 +1957,7 @@ static void wlan_mlme_send_oce_flags_fw(struct wlan_objmgr_pdev *pdev,
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
 		dynamic_fw_value = mlme_get_dynamic_oce_flags(vdev);
 		if (*updated_fw_value == *dynamic_fw_value) {
-			mlme_debug("Current FW flags matches with updated value.");
+			mlme_legacy_debug("Current FW flags matches with updated value.");
 			return;
 		}
 		*dynamic_fw_value = *updated_fw_value;
@@ -1964,7 +1965,7 @@ static void wlan_mlme_send_oce_flags_fw(struct wlan_objmgr_pdev *pdev,
 		if (wma_cli_set_command(vdev_id,
 					WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES,
 					*updated_fw_value, VDEV_CMD))
-			mlme_err("Failed to send OCE update to FW");
+			mlme_legacy_err("Failed to send OCE update to FW");
 	}
 }
 
@@ -1991,12 +1992,12 @@ void wlan_mlme_update_oce_flags(struct wlan_objmgr_pdev *pdev)
 		~(WMI_VDEV_OCE_PROBE_REQUEST_RATE_FEATURE_BITMAP);
 		updated_fw_value &=
 		~(WMI_VDEV_OCE_PROBE_REQUEST_DEFERRAL_FEATURE_BITMAP);
-		mlme_debug("Disable STA OCE probe req rate and defferal updated_fw_value :%d",
-			   updated_fw_value);
+		mlme_legacy_debug("Disable STA OCE probe req rate and defferal updated_fw_value :%d",
+				  updated_fw_value);
 	} else {
 		updated_fw_value = mlme_obj->cfg.oce.feature_bitmap;
-		mlme_debug("Update the STA OCE flags to default INI updated_fw_value :%d",
-			   updated_fw_value);
+		mlme_legacy_debug("Update the STA OCE flags to default INI updated_fw_value :%d",
+				  updated_fw_value);
 	}
 
 	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
@@ -2357,7 +2358,7 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acvo_b, &len);
 		break;
 	default:
-		mlme_err("Invalid edca access category");
+		mlme_legacy_err("Invalid edca access category");
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -2372,17 +2373,17 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_key *crypto_key = NULL;
 
 	if (wep_keyid >= WLAN_CRYPTO_MAXKEYIDX) {
-		mlme_err("Incorrect wep key index %d", wep_keyid);
+		mlme_legacy_err("Incorrect wep key index %d", wep_keyid);
 		return QDF_STATUS_E_INVAL;
 	}
 	crypto_key = wlan_crypto_get_key(vdev, wep_keyid);
 	if (!crypto_key) {
-		mlme_err("Crypto KEY not present");
+		mlme_legacy_err("Crypto KEY not present");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (crypto_key->keylen > WLAN_CRYPTO_KEY_WEP104_LEN) {
-		mlme_err("Key too large to hold");
+		mlme_legacy_err("Key too large to hold");
 		return QDF_STATUS_E_INVAL;
 	}
 	*key_len = crypto_key->keylen;
@@ -2422,10 +2423,10 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 		break;
 
 	default:
-		mlme_err("Invalid key id:%d", wep_keyid);
+		mlme_legacy_err("Invalid key id:%d", wep_keyid);
 		return QDF_STATUS_E_INVAL;
 	}
-	mlme_debug("key_id:%d key_len:%zd", wep_keyid, *key_len);
+	mlme_legacy_debug("key_id:%d key_len:%zd", wep_keyid, *key_len);
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* CRYPTO_SET_KEY_CONVERGED */
@@ -2437,7 +2438,8 @@ QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 	if (len == 0)
 		return QDF_STATUS_E_FAILURE;
 
-	mlme_debug("WEP set key for key_id:%d key_len:%zd", wep_keyid, len);
+	mlme_legacy_debug("WEP set key for key_id:%d key_len:%zd",
+			  wep_keyid, len);
 	switch (wep_keyid) {
 	case MLME_WEP_DEFAULT_KEY_1:
 		wlan_mlme_set_cfg_str(key_to_set,
@@ -2464,7 +2466,7 @@ QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 		break;
 
 	default:
-		mlme_err("Invalid key id:%d", wep_keyid);
+		mlme_legacy_err("Invalid key id:%d", wep_keyid);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3300,7 +3302,7 @@ wlan_mlme_get_self_gen_frm_pwr(struct wlan_objmgr_psoc *psoc,
 	mlme_obj = mlme_get_psoc_obj(psoc);
 	if (!mlme_obj) {
 		*value = cfg_default(CFG_SELF_GEN_FRM_PWR);
-		mlme_err("Failed to get MLME Obj");
+		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3326,7 +3328,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->atim_win_size,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("atim window set failed: %d", ret);
+		mlme_legacy_err("atim window set failed: %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3335,7 +3337,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->power_save_allow,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("power save allow failed %d", ret);
+		mlme_legacy_err("power save allow failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3344,7 +3346,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->power_collapse_allow,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("power collapse allow failed %d", ret);
+		mlme_legacy_err("power collapse allow failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3353,7 +3355,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->awake_on_tx_rx,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("set awake on tx/rx failed %d", ret);
+		mlme_legacy_err("set awake on tx/rx failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3362,7 +3364,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->inactivity_bcon_count,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("set inactivity time failed %d", ret);
+		mlme_legacy_err("set inactivity time failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3371,7 +3373,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->txsp_end_timeout,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("set txsp end failed %d", ret);
+		mlme_legacy_err("set txsp end failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3380,7 +3382,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->ps_warm_up_time,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("set ps warmup failed %d", ret);
+		mlme_legacy_err("set ps warmup failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3389,7 +3391,7 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 				  ibss_cfg->ps_1rx_chain_atim_win,
 				  VDEV_CMD);
 	if (ret) {
-		mlme_err("set 1rx chain atim failed %d", ret);
+		mlme_legacy_err("set 1rx chain atim failed %d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 

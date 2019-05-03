@@ -107,7 +107,8 @@ static QDF_STATUS sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t event_data_len,
 					   void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_sta_mlme_vdev_start_send(vdev_mlme, event_data_len,
 					    event_data);
 }
@@ -125,7 +126,8 @@ static QDF_STATUS sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS sta_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_sta_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
@@ -143,7 +145,8 @@ static QDF_STATUS sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t event_data_len,
 					     void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_sta_mlme_vdev_restart_send(vdev_mlme, event_data_len,
 					    event_data);
 }
@@ -162,7 +165,8 @@ static QDF_STATUS sta_mlme_vdev_start_connection(struct vdev_mlme_obj *vdev_mlme
 						 uint16_t event_data_len,
 						 void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -180,7 +184,8 @@ static QDF_STATUS sta_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 					uint16_t event_data_len,
 					void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_sta_vdev_up_send(vdev_mlme, event_data_len, event_data);
 }
 
@@ -199,7 +204,8 @@ static QDF_STATUS sta_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_ml
 						   uint16_t event_data_len,
 						   void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -219,7 +225,8 @@ QDF_STATUS sta_mlme_vdev_notify_roam_start(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t event_data_len,
 					   void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_sta_mlme_vdev_roam_notify(vdev_mlme, event_data_len,
 					     event_data);
 }
@@ -238,7 +245,8 @@ static QDF_STATUS sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t event_data_len,
 					       void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_sta_mlme_vdev_disconnect_bss(vdev_mlme, event_data_len,
 						event_data);
 }
@@ -257,7 +265,8 @@ static QDF_STATUS sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len,
 					  void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_sta_mlme_vdev_stop_send(vdev_mlme, data_len, data);
 }
 
@@ -276,7 +285,8 @@ static QDF_STATUS vdevmgr_mlme_stop_continue(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len,
 					     void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_mlme_vdev_stop_continue(vdev_mlme, data_len, data);
 }
 
@@ -293,7 +303,8 @@ static QDF_STATUS vdevmgr_mlme_stop_continue(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_start_send(vdev_mlme, data_len, data);
 }
 
@@ -310,7 +321,8 @@ static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					 uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_ap_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
@@ -329,7 +341,8 @@ static QDF_STATUS ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 					     enum beacon_update_op op,
 					     uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_update_beacon(vdev_mlme, op, data_len, data);
 }
 
@@ -346,7 +359,8 @@ static QDF_STATUS ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_up_send(vdev_mlme, data_len, data);
 }
 
@@ -365,7 +379,7 @@ ap_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
 				uint16_t data_len, void *data)
 {
 	if (!vdev_mlme) {
-		mlme_err("data is NULL");
+		mlme_legacy_err("data is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -387,7 +401,8 @@ ap_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 						uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_disconnect_peers(vdev_mlme, data_len, data);
 }
 
@@ -404,7 +419,8 @@ static QDF_STATUS ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 					 uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_stop_send(vdev_mlme, data_len, data);
 }
 
@@ -421,7 +437,8 @@ static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS vdevmgr_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 					      uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_ap_mlme_vdev_down_send(vdev_mlme, data_len, data);
 }
 /**
@@ -437,7 +454,8 @@ static QDF_STATUS vdevmgr_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS vdevmgr_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_mlme_vdev_notify_down_complete(vdev_mlme, data_len, data);
 }
 
@@ -454,7 +472,8 @@ static QDF_STATUS vdevmgr_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 						uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_start_req_failed(vdev_mlme, data_len, data);
 }
 
@@ -471,7 +490,8 @@ static QDF_STATUS ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return lim_ap_mlme_vdev_restart_send(vdev_mlme, data_len, data);
 }
 
@@ -490,7 +510,8 @@ static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					       enum vdev_cmd_type type,
 					       uint16_t data_len, void *data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_ap_mlme_vdev_stop_start_send(vdev_mlme, type,
 						data_len, data);
 }
@@ -503,7 +524,7 @@ QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -521,7 +542,7 @@ bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return false;
 	}
 
@@ -539,7 +560,7 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -557,7 +578,7 @@ bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return false;
 	}
 
@@ -573,7 +594,7 @@ QDF_STATUS mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -591,7 +612,7 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return false;
 	}
 
@@ -608,7 +629,7 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -626,7 +647,7 @@ enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return false;
 	}
 
@@ -643,7 +664,7 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -661,7 +682,7 @@ bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
+		mlme_legacy_err("vdev component object is NULL");
 		return false;
 	}
 
@@ -680,11 +701,12 @@ bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 static
 QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	vdev_mlme->ext_vdev_ptr =
 		qdf_mem_malloc(sizeof(struct mlme_legacy_priv));
 	if (!vdev_mlme->ext_vdev_ptr) {
-		mlme_err("failed to allocate meory for ext_vdev_ptr");
+		mlme_legacy_err("failed to allocate meory for ext_vdev_ptr");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -700,7 +722,8 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 static
 QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
 	vdev_mlme->ext_vdev_ptr = NULL;
 
@@ -721,7 +744,8 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t event_data_len,
 					     void *event_data)
 {
-	mlme_debug("vdev id = %d ", vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	mlme_legacy_debug("vdev id = %d ",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return QDF_STATUS_SUCCESS;
 }
 
