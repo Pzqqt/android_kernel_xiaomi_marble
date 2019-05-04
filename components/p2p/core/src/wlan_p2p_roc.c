@@ -304,7 +304,7 @@ static QDF_STATUS p2p_execute_cancel_roc_req(
 
 	roc_ctx->roc_state = ROC_STATE_CANCEL_IN_PROG;
 	qdf_event_reset(&p2p_soc_obj->cancel_roc_done);
-	status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
+	status = qdf_mc_timer_stop_sync(&roc_ctx->roc_timer);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to stop roc timer, roc %pK", roc_ctx);
 
@@ -539,7 +539,7 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 
 	if (QDF_TIMER_STATE_RUNNING ==
 		qdf_mc_timer_get_current_state(&roc_ctx->roc_timer)) {
-		status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
+		status = qdf_mc_timer_stop_sync(&roc_ctx->roc_timer);
 		if (status != QDF_STATUS_SUCCESS)
 			p2p_err("Failed to stop roc timer");
 	}
