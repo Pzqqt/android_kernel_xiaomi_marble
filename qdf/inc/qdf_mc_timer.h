@@ -227,6 +227,22 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time);
 QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer);
 
 /**
+ * qdf_mc_timer_stop_sync() - stop a QDF Timer
+ * @timer: Pointer to timer object
+ * qdf_mc_timer_stop_sync() function stops a timer synchronously
+ * that has been started but has not expired, essentially
+ * cancelling the 'start' request.
+ *
+ * After a timer is stopped, it goes back to the state it was in after it
+ * was created and can be started again via a call to qdf_mc_timer_start().
+ *
+ * Return:
+ * QDF_STATUS_SUCCESS - Timer is initialized successfully
+ * QDF failure status - Timer initialization failed
+ */
+QDF_STATUS qdf_mc_timer_stop_sync(qdf_mc_timer_t *timer);
+
+/**
  * qdf_mc_timer_get_system_ticks() - get the system time in 10ms ticks
  *
  * qdf_mc_timer_get_system_ticks() function returns the current number
