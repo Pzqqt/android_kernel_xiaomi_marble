@@ -2962,4 +2962,21 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
 					       uint8_t nan_vdev_id,
 					       uint8_t mac_id);
+
+/**
+ * policy_mgr_get_mode_specific_conn_info() - Get active mode specific
+ * channel and vdev id
+ * @psoc: PSOC object information
+ * @channel: Mode specific channel (list)
+ * @vdev_id: Mode specific vdev id (list)
+ * @mode: Connection Mode
+ *
+ * Get active mode specific channel and vdev id
+ *
+ * Return: number of connection found as per given mode
+ */
+uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
+						uint8_t *channel,
+						uint8_t *vdev_id,
+						enum policy_mgr_con_mode mode);
 #endif /* __WLAN_POLICY_MGR_API_H */

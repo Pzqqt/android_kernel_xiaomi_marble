@@ -538,22 +538,6 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 		struct policy_mgr_psoc_priv_obj *pm_ctx);
 
 /**
- * policy_mgr_get_mode_specific_conn_info() - Get active mode specific
- * channel and vdev id
- * @psoc: PSOC object information
- * @channel: Mode specific channel (list)
- * @vdev_id: Mode specific vdev id (list)
- * @mode: Connection Mode
- *
- * Get active mode specific channel and vdev id
- *
- * Return: number of connection found as per given mode
- */
-uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
-				  uint8_t *channel, uint8_t *vdev_id,
-				  enum policy_mgr_con_mode mode);
-
-/**
  * policy_mgr_reg_chan_change_callback() - Callback to be
  * invoked by regulatory module when valid channel list changes
  * @psoc: PSOC object information
