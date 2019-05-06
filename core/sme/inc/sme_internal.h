@@ -277,6 +277,15 @@ typedef void (*beacon_pause_cb)(hdd_handle_t hdd_handle,
 				enum scan_event_type type,
 				bool is_disconnected);
 
+/**
+ * typedef sme_get_isolation_cb - get isolation callback fun
+ * @param: isolation result reported by firmware
+ * @pcontext: Opaque context that the client can use to associate the
+ *    callback with the request
+ */
+typedef void (*sme_get_isolation_cb)(struct sir_isolation_resp *param,
+				     void *pcontext);
+
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, struct sir_md_evt *event);
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
@@ -325,6 +334,8 @@ struct sme_context {
 	void (*pget_peer_info_ext_ind_cb)(struct sir_peer_info_ext_resp *param,
 		void *pcontext);
 	void *pget_peer_info_ext_cb_context;
+	sme_get_isolation_cb get_isolation_cb;
+	void *get_isolation_cb_context;
 #ifdef FEATURE_WLAN_EXTSCAN
 	ext_scan_ind_cb ext_scan_ind_cb;
 #endif /* FEATURE_WLAN_EXTSCAN */

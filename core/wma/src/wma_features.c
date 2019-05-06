@@ -901,6 +901,46 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_get_isolation(tp_wma_handle wma)
+{
+	wmi_coex_get_antenna_isolation_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t  len;
+	uint8_t *buf_ptr;
+
+	WMA_LOGD("%s: get isolation", __func__);
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue get isolation",
+			 __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	len  = sizeof(wmi_coex_get_antenna_isolation_cmd_fixed_param);
+	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *)wmi_buf_data(wmi_buf);
+
+	cmd = (wmi_coex_get_antenna_isolation_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(
+	&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_coex_get_antenna_isolation_cmd_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(
+	wmi_coex_get_antenna_isolation_cmd_fixed_param));
+
+	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
+				 WMI_COEX_GET_ANTENNA_ISOLATION_CMDID)) {
+		WMA_LOGE("Failed to get isolation request from fw");
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wma_add_beacon_filter() - Issue WMI command to set beacon filter
  * @wma: wma handler

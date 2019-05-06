@@ -2712,6 +2712,20 @@ struct sir_peer_sta_ext_info {
 	struct sir_peer_info_ext info[MAX_PEER_STA];
 };
 
+/**
+ * struct sir_isolation_resp - isolation info related structure
+ * @isolation_chain0: isolation value for chain 0
+ * @isolation_chain1: isolation value for chain 1
+ * @isolation_chain2: isolation value for chain 2
+ * @isolation_chain3: isolation value for chain 3
+ */
+struct sir_isolation_resp {
+	uint32_t isolation_chain0:8,
+		 isolation_chain1:8,
+		 isolation_chain2:8,
+		 isolation_chain3:8;
+};
+
 typedef struct sSirAddPeriodicTxPtrn {
 	/* MAC Address for the adapter */
 	struct qdf_mac_addr mac_address;

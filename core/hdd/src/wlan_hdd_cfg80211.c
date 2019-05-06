@@ -142,6 +142,7 @@
 #include "wlan_hdd_coex_config.h"
 #include "wlan_hdd_bcn_recv.h"
 #include "wlan_blm_ucfg_api.h"
+#include "wlan_hdd_hw_capability.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -13139,6 +13140,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_FW_STATE_COMMANDS
 	FEATURE_COEX_CONFIG_COMMANDS
 	FEATURE_MPTA_HELPER_COMMANDS
+	FEATURE_HW_CAPABILITY_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)

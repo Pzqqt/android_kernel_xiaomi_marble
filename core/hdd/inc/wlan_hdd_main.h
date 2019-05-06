@@ -237,6 +237,8 @@ enum hdd_driver_flags {
 
 #define WLAN_WAIT_TIME_FW_ROAM_STATS 1000
 
+#define WLAN_WAIT_TIME_ANTENNA_ISOLATION 8000
+
 /* Maximum time(ms) to wait for RSO CMD status event */
 #define WAIT_TIME_RSO_CMD_STATUS 2000
 

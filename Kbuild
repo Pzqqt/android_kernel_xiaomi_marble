@@ -245,6 +245,10 @@ ifeq ($(CONFIG_WLAN_BCN_RECV_FEATURE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_bcn_recv.o
 endif
 
+ifeq ($(CONFIG_QCACLD_FEATURE_HW_CAPABILITY), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_hw_capability.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -2606,6 +2610,9 @@ cppflags-$(CONFIG_QCACLD_FEATURE_COEX_CONFIG) += -DFEATURE_COEX_CONFIG
 
 #Flag to enable MPTA helper feature
 cppflags-$(CONFIG_QCACLD_FEATURE_MPTA_HELPER) += -DFEATURE_MPTA_HELPER
+
+#Flag to enable get hw capability
+cppflags-$(CONFIG_QCACLD_FEATURE_HW_CAPABILITY) += -DFEATURE_HW_CAPABILITY
 
 cppflags-$(CONFIG_DATA_CE_SW_INDEX_NO_INLINE_UPDATE) += -DDATA_CE_SW_INDEX_NO_INLINE_UPDATE
 

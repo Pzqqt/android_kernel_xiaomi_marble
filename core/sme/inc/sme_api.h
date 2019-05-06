@@ -2271,6 +2271,20 @@ QDF_STATUS sme_get_chain_rssi(mac_handle_t mac_handle,
 			      get_chain_rssi_callback callback,
 			      void *context);
 
+/**
+ * sme_get_isolation() - sme api to get antenna isolation
+ * @mac_handle: hal handle for getting global mac struct
+ * @context: context of callback function
+ * @callbackfn: hdd callback function when receive response
+ *
+ * This function will send WMA_GET_ISOLATION to WMA
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_get_isolation(mac_handle_t mac_handle,
+			     void *context,
+			     sme_get_isolation_cb callbackfn);
+
 #ifdef FEATURE_FW_STATE
 /**
  * sme_get_fw_state() - Get fw state

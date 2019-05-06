@@ -129,6 +129,11 @@ CONFIG_QCACLD_FEATURE_FW_STATE := y
 #Flag to enable set coex configuration
 CONFIG_QCACLD_FEATURE_COEX_CONFIG := n
 
+#Flag to enable get hw capability
+ifeq ($(CONFIG_ARCH_QCS405), y)
+CONFIG_QCACLD_FEATURE_HW_CAPABILITY := y
+endif
+
 ifeq ($(CONFIG_ARCH_MSM8998), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 endif

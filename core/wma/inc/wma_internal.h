@@ -1061,6 +1061,16 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 				struct sir_peer_info_ext_req *peer_info_req);
 
 /**
+ * wma_get_isolation() - get antenna isolation
+ * @handle: wma interface
+ *
+ * This function will send WMI_COEX_GET_ANTENNA_ISOLATION_CMDID to FW
+ *
+ * Return: 0 on success, otherwise error value
+ */
+QDF_STATUS wma_get_isolation(tp_wma_handle wma);
+
+/**
  * wma_peer_info_event_handler() - Handler for WMI_PEER_STATS_INFO_EVENTID
  * @handle: WMA global handle
  * @cmd_param_info: Command event data
