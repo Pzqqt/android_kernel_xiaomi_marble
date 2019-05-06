@@ -35,6 +35,9 @@ struct vdev_mlme_obj;
 #define WLAN_VDEV_MLME_TYPE_STA  0x2
 #define WLAN_VDEV_MLME_TYPE_IBSS 0x3
 #define WLAN_VDEV_MLME_TYPE_MONITOR 0x4
+#define WLAN_VDEV_MLME_TYPE_NAN 0x5
+#define WLAN_VDEV_MLME_TYPE_OCB 0x6
+#define WLAN_VDEV_MLME_TYPE_NDI 0x7
 
 /* values for vdev_subtype */
 #define WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE 0x1

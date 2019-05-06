@@ -60,6 +60,7 @@
 #ifdef WMI_AP_SUPPORT
 #include "wmi_unified_ap_api.h"
 #endif
+#include <wmi_unified_vdev_api.h>
 
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
@@ -11941,6 +11942,9 @@ struct wmi_ops tlv_ops =  {
 #endif /* WIFI_POS_CONVERGED */
 #ifdef WLAN_MWS_INFO_DEBUGFS
 	.send_mws_coex_status_req_cmd = send_mws_coex_status_req_cmd_tlv,
+#endif
+#ifdef TGT_IF_VDEV_MGR_CONV
+	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
 #endif
 };
 

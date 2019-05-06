@@ -71,14 +71,14 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
  * Return: NA
  */
 #ifdef VDEV_ASSERT_MANAGEMENT
-static void target_if_vdev_mgr_assert_mgmt(
+static inline void target_if_vdev_mgr_assert_mgmt(
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
 					uint8_t set_bit)
 {
 }
 #else
-static void target_if_vdev_mgr_assert_mgmt(
+static inline void target_if_vdev_mgr_assert_mgmt(
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
 					uint8_t set_bit)

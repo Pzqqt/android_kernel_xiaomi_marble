@@ -208,7 +208,7 @@ tgt_vdev_mgr_tbttoffset_update_handler(uint32_t num_vdevs, bool is_ext)
 	return status;
 }
 
-static QDF_STATUS
+QDF_STATUS
 tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;

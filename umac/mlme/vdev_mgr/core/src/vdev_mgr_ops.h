@@ -223,11 +223,11 @@ QDF_STATUS vdev_mgr_bcn_miss_offload_send(struct vdev_mlme_obj *mlme_obj);
  *
  * Return: QDF_STATUS - Success or Failure
  */
-QDF_STATUS vdev_mlme_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
-					   struct mlme_channel_param *chan,
-					   uint32_t disable_hw_ack,
-					   uint32_t *vdev_ids,
-					   uint32_t num_vdevs);
+QDF_STATUS vdev_mgr_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
+					  struct mlme_channel_param *chan,
+					  uint32_t disable_hw_ack,
+					  uint32_t *vdev_ids,
+					  uint32_t num_vdevs);
 
 /**
  * vdev_mgr_peer_delete_all_send() – MLME API to send peer delete all request

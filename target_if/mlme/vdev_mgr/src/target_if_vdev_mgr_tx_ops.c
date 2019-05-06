@@ -35,6 +35,7 @@
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_vdev_mgr_utils_api.h>
 #include <wlan_cmn.h>
+#include <wmi_unified_vdev_api.h>
 
 static QDF_STATUS target_if_vdev_mgr_register_event_handler(
 					struct wlan_objmgr_psoc *psoc)
@@ -760,7 +761,6 @@ static QDF_STATUS target_if_vdev_mgr_config_ratemask_cmd_send(
 
 	status = wmi_unified_vdev_config_ratemask_cmd_send(wmi_handle,
 							   param);
-
 	return status;
 }
 

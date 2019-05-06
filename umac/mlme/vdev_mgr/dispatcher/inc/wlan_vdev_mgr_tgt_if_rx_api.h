@@ -30,15 +30,27 @@
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 
 /**
- * tgt_vdev_mgr_register_rx_ops(): API to register rx ops with lmac
+ * tgt_vdev_mgr_register_rx_ops() - API to register rx ops with lmac
  * @rx_ops: rx ops struct
  *
  * Return: none
  */
 void tgt_vdev_mgr_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
+
+/**
+ * tgt_vdev_mgr_ext_tbttoffset_update_handle() - API to handle ext tbtt offset
+ * update event
+ * @num_vdevs: number of vdevs
+ * @is_ext: ext is set/reset
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS
+tgt_vdev_mgr_ext_tbttoffset_update_handle(uint32_t num_vdevs, bool is_ext);
+
 #else
 /**
- * tgt_vdev_mgr_register_rx_ops(): API to register rx ops with lmac
+ * tgt_vdev_mgr_register_rx_ops() - API to register rx ops with lmac
  * @rx_ops: rx ops struct
  *
  * Return: none

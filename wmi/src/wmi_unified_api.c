@@ -20,6 +20,7 @@
 #include "wmi_unified_param.h"
 #include "qdf_module.h"
 #include "cdp_txrx_cmn_struct.h"
+#include <wmi_unified_vdev_api.h>
 
 static const wmi_host_channel_width mode_to_width[WMI_HOST_MODE_MAX] = {
 	[WMI_HOST_MODE_11A]           = WMI_HOST_CHAN_WIDTH_20,

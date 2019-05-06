@@ -40,6 +40,59 @@ static inline bool target_if_vdev_mgr_is_driver_unloading(void)
 }
 
 /**
+ * target_if_vdev_mgr_delete_response_handler() - API to handle vdev delete
+ * response
+ * @scn: pointer to scan object
+ * @data: pointer to data
+ * @datalen: length of data
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+int target_if_vdev_mgr_delete_response_handler(
+						ol_scn_t scn,
+						uint8_t *data,
+						uint32_t datalen);
+
+/**
+ * target_if_vdev_mgr_offload_bcn_tx_status_handler() - API to handle beacon
+ * tx status event
+ * @scn: pointer to scan object
+ * @data: pointer to data
+ * @datalen: length of data
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+int target_if_vdev_mgr_offload_bcn_tx_status_handler(ol_scn_t scn,
+						     uint8_t *data,
+						     uint32_t datalen);
+
+/**
+ * target_if_vdev_mgr_tbttoffset_update_handler() - API to handle tbtt offset
+ * update event
+ * @scn: pointer to scan object
+ * @data: pointer to data
+ * @datalen: length of data
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+int target_if_vdev_mgr_tbttoffset_update_handler(ol_scn_t scn,
+						 uint8_t *data,
+						 uint32_t datalen);
+
+/**
+ * target_if_vdev_mgr_ext_tbttoffset_update_handler() - API to handle ext tbtt
+ * offset update event
+ * @scn: pointer to scan object
+ * @data: pointer to data
+ * @datalen: length of data
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+int target_if_vdev_mgr_ext_tbttoffset_update_handler(ol_scn_t scn,
+						     uint8_t *data,
+						     uint32_t datalen);
+
+/**
  * target_if_vdev_mgr_is_panic_on_bug: API to get panic on bug
  *
  * Return: TRUE or FALSE
