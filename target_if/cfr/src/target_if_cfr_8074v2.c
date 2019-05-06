@@ -255,7 +255,6 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 
 	header = &lut->header;
 	header->u.meta_v1.channel_bw = dma_hdr.upload_pkt_bw;
-	header->u.meta_v1.num_rx_chain = dma_hdr.num_chains + 1;
 	header->u.meta_v1.length = length;
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_DBR_MODULE_ID);
@@ -442,6 +441,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	header->u.meta_v1.capture_mode = tx_evt_param.bandwidth ?
 					 CFR_DUP_LEGACY_ACK : CFR_LEGACY_ACK;
 	header->u.meta_v1.capture_type = tx_evt_param.capture_method;
+	header->u.meta_v1.num_rx_chain = wlan_vdev_mlme_get_rxchainmask(vdev);
 	header->u.meta_v1.sts_count    = tx_evt_param.spatial_streams;
 	header->u.meta_v1.timestamp    = tx_evt_param.timestamp_us;
 
