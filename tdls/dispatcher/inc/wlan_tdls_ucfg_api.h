@@ -268,6 +268,16 @@ QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 			      uint8_t *mac, int8_t rssi);
+
+/**
+ * ucfg_tdls_notify_connect_failure() - This api is called if STA/P2P
+ * connection fails on one iface and to enable/disable TDLS on the other
+ * STA/P2P iface which is already connected.
+ * @psoc: psoc object
+ *
+ * Return: void
+ */
+void ucfg_tdls_notify_connect_failure(struct wlan_objmgr_psoc *psoc);
 #else
 
 static inline
@@ -330,6 +340,11 @@ QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 			      uint8_t *mac, int8_t rssi)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+void ucfg_tdls_notify_connect_failure(struct wlan_objmgr_psoc *psoc)
+{
 }
 #endif /* FEATURE_WLAN_TDLS */
 #endif
