@@ -1606,11 +1606,6 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	hdd_enter();
 
-	if (hdd_ctx->config->is_wow_disabled) {
-		hdd_err("wow is disabled");
-		return -EINVAL;
-	}
-
 	if (cds_is_driver_recovering()) {
 		hdd_debug("Driver is recovering; Skipping resume");
 		exit_code = 0;
@@ -1627,6 +1622,11 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (exit_code) {
 		hdd_err("Invalid HDD context");
 		goto exit_with_code;
+	}
+
+	if (hdd_ctx->config->is_wow_disabled) {
+		hdd_err("wow is disabled");
+		return -EINVAL;
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
@@ -1722,15 +1722,14 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (hdd_ctx->config->is_wow_disabled) {
-		hdd_err("wow is disabled");
-		return -EINVAL;
-	}
-
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc)
 		return rc;
 
+	if (hdd_ctx->config->is_wow_disabled) {
+		hdd_err("wow is disabled");
+		return -EINVAL;
+	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
 		hdd_debug("Driver Modules not Enabled ");
