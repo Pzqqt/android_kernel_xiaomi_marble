@@ -354,6 +354,40 @@ void pld_sdio_unregister_driver(void)
 {
 	cnss_sdio_wlan_unregister_driver(&pld_sdio_ops);
 }
+
+/**
+ * pld_sdio_wlan_enable() - Enable WLAN
+ * @dev: device
+ * @config: NA
+ * @mode: WLAN mode
+ * @host_version: host software version
+ *
+ * This function enables WLAN FW. It passed
+ * WLAN mode and host software version to FW.
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_sdio_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			 enum pld_driver_mode mode, const char *host_version)
+{
+	struct cnss_wlan_enable_cfg cfg;
+	enum cnss_driver_mode cnss_mode;
+
+	switch (mode) {
+	case PLD_FTM:
+		cnss_mode = CNSS_FTM;
+		break;
+	case PLD_EPPING:
+		cnss_mode = CNSS_EPPING;
+		break;
+	default:
+		cnss_mode = CNSS_MISSION;
+		break;
+	}
+	return cnss_wlan_enable(dev, &cfg, cnss_mode, host_version);
+}
+
 #else
 
 #ifdef CONFIG_PM

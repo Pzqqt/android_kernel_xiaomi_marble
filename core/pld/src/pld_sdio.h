@@ -244,6 +244,17 @@ struct sdio_al_channel_handle *ch_handle
 {
 	cnss_sdio_wlan_unregister_sdio_al_channel(ch_handle);
 }
+
+int pld_sdio_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			 enum pld_driver_mode mode, const char *host_version);
+#else
+static inline int pld_sdio_wlan_enable(struct device *dev,
+				       struct pld_wlan_enable_cfg *config,
+				       enum pld_driver_mode mode,
+				       const char *host_version)
+{
+	return 0;
+}
 #endif /* CONFIG_PLD_SDIO_CNSS2 */
 
 /**
