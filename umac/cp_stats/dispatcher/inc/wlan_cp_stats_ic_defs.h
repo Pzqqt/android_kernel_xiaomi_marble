@@ -129,8 +129,6 @@ struct pdev_80211_stats {
 	uint64_t cs_wmi_tx_mgmt;
 	uint64_t cs_wmi_tx_mgmt_completions;
 	uint32_t cs_wmi_tx_mgmt_completion_err;
-	uint32_t cs_peer_delete_req;
-	uint32_t cs_peer_delete_resp;
 	uint32_t cs_rx_mgmt_rssi_drop;
 	uint32_t cs_tx_retries;
 	uint32_t cs_tx_frame_count;
@@ -295,6 +293,8 @@ struct pdev_ic_cp_stats {
  * @mlme_auth_success: no of 802.11 MLME Auth Success
  * @authorize_attempt: no of Authorization Attempt
  * @authorize_success: no of Authorization successful
+ * @peer_delete_req: no of peer delete req sent to target
+ * @peer_delete_resp: no of peer delete resp rcvd from target
  */
 struct vdev_80211_stats {
 	uint64_t cs_rx_wrongbss;
@@ -360,6 +360,8 @@ struct vdev_80211_stats {
 	uint64_t cs_mlme_auth_success;
 	uint64_t cs_authorize_attempt;
 	uint64_t cs_authorize_success;
+	uint64_t cs_peer_delete_req;
+	uint64_t cs_peer_delete_resp;
 };
 
 /**
