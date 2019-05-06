@@ -1118,3 +1118,8 @@ QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 {
 	return tdls_set_rssi(vdev, mac, rssi);
 }
+
+void ucfg_tdls_notify_connect_failure(struct wlan_objmgr_psoc *psoc)
+{
+	return tdls_notify_decrement_session(psoc);
+}
