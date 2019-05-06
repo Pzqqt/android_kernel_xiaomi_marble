@@ -631,6 +631,19 @@ void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
 	sap_ctx->ch_params.ch_width = vht_channel_width;
 }
 
+bool wlan_sap_get_ch_params(struct sap_context *sap_ctx,
+			    struct ch_params *ch_params)
+{
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid SAP pointer"));
+		return false;
+	}
+
+	*ch_params = sap_ctx->ch_params;
+	return true;
+}
+
 /**
  * wlan_sap_validate_channel_switch() - validate target channel switch w.r.t
  *      concurreny rules set to avoid channel interference.

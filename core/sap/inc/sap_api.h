@@ -1204,6 +1204,18 @@ void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
 			       uint32_t vht_channel_width);
 
 /**
+ * wlan_sap_get_ch_params() - get ch params
+ * @sap_ctx: Pointer to Sap Context
+ * @ch_params: returned ch_params
+ *
+ * This function get sap's ch_params
+ *
+ * Return: true for success
+ */
+bool wlan_sap_get_ch_params(struct sap_context *sap_ctx,
+			    struct ch_params *ch_params);
+
+/**
  * wlan_sap_set_sap_ctx_acs_cfg() - Sets acs cfg
  * @sap_ctx:  Pointer to Sap Context
  * @sap_config:  Pointer to sap config

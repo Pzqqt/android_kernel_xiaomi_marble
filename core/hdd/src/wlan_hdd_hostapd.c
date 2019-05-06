@@ -5925,6 +5925,135 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
 }
 #endif
 
+/**
+ * wlan_hdd_ap_ap_force_scc_override() - force Same band SCC chan override
+ * @adapter: SAP adapter pointer
+ * @channel: SAP starting channel
+ * @new_chandef: new override SAP channel
+ *
+ * The function will override the second SAP chan to the first SAP's home
+ * channel if the FW doesn't support MCC and force SCC enabled in INI.
+ *
+ * Return: true if channel override
+ */
+static bool
+wlan_hdd_ap_ap_force_scc_override(struct hdd_adapter *adapter,
+				  uint8_t channel,
+				  struct cfg80211_chan_def *new_chandef)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t cc_count, i;
+	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct ch_params ch_params;
+	enum nl80211_channel_type channel_type;
+	struct hdd_adapter *con_adapter;
+	uint8_t con_vdev_id;
+	uint8_t con_chan;
+	uint8_t mcc_to_scc_switch;
+	struct ieee80211_channel *ieee_chan;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return false;
+	}
+
+	if (!policy_mgr_concurrent_beaconing_sessions_running(hdd_ctx->psoc))
+		return false;
+	if (policy_mgr_dual_beacon_on_single_mac_mcc_capable(hdd_ctx->psoc))
+		return false;
+	if (!policy_mgr_dual_beacon_on_single_mac_scc_capable(hdd_ctx->psoc))
+		return false;
+	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+					   &mcc_to_scc_switch);
+	if ((mcc_to_scc_switch !=
+		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) &&
+	    (mcc_to_scc_switch != QDF_MCC_TO_SCC_WITH_PREFERRED_BAND))
+		return false;
+	cc_count = policy_mgr_get_mode_specific_conn_info(hdd_ctx->psoc,
+							  &op_ch[0],
+							  &vdev_id[0],
+							  PM_SAP_MODE);
+	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
+		cc_count = cc_count +
+				policy_mgr_get_mode_specific_conn_info(
+					hdd_ctx->psoc,
+					&op_ch[cc_count],
+					&vdev_id[cc_count],
+					PM_P2P_GO_MODE);
+	for (i = 0 ; i < cc_count; i++) {
+		if (channel == op_ch[i])
+			continue;
+		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc))
+			break;
+		if (wlan_reg_is_same_band_channels(channel,
+						   op_ch[i]))
+			break;
+	}
+	if (i >= cc_count)
+		return false;
+	con_chan = op_ch[i];
+	con_vdev_id = vdev_id[i];
+	con_adapter = hdd_get_adapter_by_vdev(hdd_ctx, con_vdev_id);
+	if (!con_adapter)
+		return false;
+	ieee_chan = ieee80211_get_channel(hdd_ctx->wiphy,
+					  cds_chan_to_freq(con_chan));
+	if (!ieee_chan) {
+		hdd_err("channel converion failed");
+		return false;
+	}
+
+	if (!wlan_sap_get_ch_params(WLAN_HDD_GET_SAP_CTX_PTR(con_adapter),
+				    &ch_params))
+		wlan_reg_set_channel_params(hdd_ctx->pdev,
+					    con_chan, 0,
+					    &ch_params);
+	switch (ch_params.sec_ch_offset) {
+	case PHY_SINGLE_CHANNEL_CENTERED:
+		channel_type = NL80211_CHAN_HT20;
+		break;
+	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+		channel_type = NL80211_CHAN_HT40MINUS;
+		break;
+	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+		channel_type = NL80211_CHAN_HT40PLUS;
+		break;
+	default:
+		channel_type = NL80211_CHAN_NO_HT;
+		break;
+	}
+	cfg80211_chandef_create(new_chandef, ieee_chan, channel_type);
+	switch (ch_params.ch_width) {
+	case CH_WIDTH_80MHZ:
+		new_chandef->width = NL80211_CHAN_WIDTH_80;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		new_chandef->width = NL80211_CHAN_WIDTH_80P80;
+		if (ch_params.center_freq_seg1)
+			new_chandef->center_freq2 = cds_chan_to_freq(
+				ch_params.center_freq_seg1);
+		break;
+	case CH_WIDTH_160MHZ:
+		new_chandef->width = NL80211_CHAN_WIDTH_160;
+		break;
+	default:
+		break;
+	}
+	if ((ch_params.ch_width == CH_WIDTH_80MHZ) ||
+	    (ch_params.ch_width == CH_WIDTH_80P80MHZ) ||
+	    (ch_params.ch_width == CH_WIDTH_160MHZ)) {
+		if (ch_params.center_freq_seg0)
+			new_chandef->center_freq1 = cds_chan_to_freq(
+				ch_params.center_freq_seg0);
+	}
+
+	hdd_debug("override AP ch %d to first AP(vdev_id %d) chan:%d width:%d freq1:%d freq2:%d ",
+		  channel, con_vdev_id, new_chandef->chan->center_freq,
+		  new_chandef->width, new_chandef->center_freq1,
+		  new_chandef->center_freq2);
+	return true;
+}
 
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
@@ -5948,6 +6077,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	uint16_t sta_cnt, sap_cnt;
 	bool val;
 	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct cfg80211_chan_def new_chandef;
+	struct cfg80211_chan_def *chandef;
 
 	hdd_enter();
 
@@ -5994,6 +6125,16 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("Invalid channel");
 		return -EINVAL;
 	}
+	chandef = &params->chandef;
+	if ((adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
+	    wlan_hdd_ap_ap_force_scc_override(adapter, channel,
+					      &new_chandef)) {
+		chandef = &new_chandef;
+		channel = ieee80211_frequency_to_channel(
+				chandef->chan->center_freq);
+		channel_width = wlan_hdd_get_channel_bw(chandef->width);
+	}
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_sap_mandt_chnl(hdd_ctx->psoc, &mandt_chnl_list))
@@ -6001,7 +6142,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (mandt_chnl_list) {
 		if (WLAN_REG_IS_5GHZ_CH(channel)) {
 			hdd_debug("channel %hu, sap mandatory chan list enabled",
-			          channel);
+				  channel);
 			if (!policy_mgr_get_sap_mandatory_chan_list_len(
 							hdd_ctx->psoc))
 				policy_mgr_init_sap_mandatory_2g_chan(
@@ -6016,9 +6157,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	adapter->session.ap.sap_config.ch_params.center_freq_seg0 =
-				cds_freq_to_chan(params->chandef.center_freq1);
+				cds_freq_to_chan(chandef->center_freq1);
 	adapter->session.ap.sap_config.ch_params.center_freq_seg1 =
-				cds_freq_to_chan(params->chandef.center_freq2);
+				cds_freq_to_chan(chandef->center_freq2);
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
@@ -6175,15 +6316,15 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 		adapter->session.ap.beacon = new;
 
-		if (params->chandef.width < NL80211_CHAN_WIDTH_80)
+		if (chandef->width < NL80211_CHAN_WIDTH_80)
 			channel_type = cfg80211_get_chandef_type(
-						&(params->chandef));
+						chandef);
 		else
 			channel_type = NL80211_CHAN_HT40PLUS;
 
 
 		wlan_hdd_set_channel(wiphy, dev,
-				     &params->chandef,
+				     chandef,
 				     channel_type);
 
 		hdd_update_beacon_rate(adapter, wiphy, params);
@@ -6203,7 +6344,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				eSAP_AUTO_SWITCH;
 		}
 		adapter->session.ap.sap_config.ch_width_orig =
-						params->chandef.width;
+						chandef->width;
 
 		status =
 			wlan_hdd_cfg80211_start_bss(adapter,
