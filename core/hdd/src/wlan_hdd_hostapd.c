@@ -101,6 +101,8 @@
 /* Defines the BIT position of HE caps is support mode field of stainfo */
 #define HDD_HE_CAPS_PRESENT 2
 
+#define HDD_MAX_CUSTOM_START_EVENT_SIZE 64
+
 /*
  * 11B, 11G Rate table include Basic rate and Extended rate
  * The IDX field is the rate index
@@ -1721,9 +1723,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	uint8_t sta_id;
 	QDF_STATUS qdf_status;
 	bool bAuthRequired = true;
-	char unknownSTAEvent[IW_CUSTOM_MAX + 1];
-	char maxAssocExceededEvent[IW_CUSTOM_MAX + 1];
-	uint8_t we_custom_start_event[64];
+	char *unknownSTAEvent = NULL;
+	char *maxAssocExceededEvent = NULL;
+	uint8_t *we_custom_start_event = NULL;
 	char *startBssEvent;
 	struct hdd_context *hdd_ctx;
 	struct iw_michaelmicfailure msg;
@@ -1911,10 +1913,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		/* Fill the params for sending IWEVCUSTOM Event
 		 * with SOFTAP.enabled
 		 */
+		we_custom_start_event =
+				qdf_mem_malloc(HDD_MAX_CUSTOM_START_EVENT_SIZE);
+		if (!we_custom_start_event)
+			goto stopbss;
+
 		startBssEvent = "SOFTAP.enabled";
-		memset(&we_custom_start_event, '\0',
-		       sizeof(we_custom_start_event));
-		memcpy(&we_custom_start_event, startBssEvent,
+		memset(we_custom_start_event, '\0',
+		       sizeof(HDD_MAX_CUSTOM_START_EVENT_SIZE));
+		memcpy(we_custom_start_event, startBssEvent,
 		       strlen(startBssEvent));
 		memset(&wrqu, 0, sizeof(wrqu));
 		wrqu.data.length = strlen(startBssEvent);
@@ -2433,6 +2440,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_UNKNOWN_STA_JOIN:
+		unknownSTAEvent = qdf_mem_malloc(IW_CUSTOM_MAX + 1);
+		if (!unknownSTAEvent)
+			return QDF_STATUS_E_NOMEM;
+
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
 			 "JOIN_UNKNOWN_STA-"QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(sap_event->sapevt.sapUnknownSTAJoin.macaddr.bytes));
@@ -2444,6 +2455,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		break;
 
 	case eSAP_MAX_ASSOC_EXCEEDED:
+		maxAssocExceededEvent = qdf_mem_malloc(IW_CUSTOM_MAX + 1);
+		if (!maxAssocExceededEvent)
+			return QDF_STATUS_E_NOMEM;
+
 		snprintf(maxAssocExceededEvent, IW_CUSTOM_MAX,
 			 "Peer "QDF_MAC_ADDR_STR" denied"
 			 " assoc due to Maximum Mobile Hotspot connections reached. Please disconnect"
@@ -2617,12 +2632,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	}
 	wireless_send_event(dev, we_event, &wrqu,
 			    (char *)we_custom_event_generic);
+	qdf_mem_free(we_custom_start_event);
+	qdf_mem_free(unknownSTAEvent);
+	qdf_mem_free(maxAssocExceededEvent);
 
 	return QDF_STATUS_SUCCESS;
 
 stopbss:
 	{
-		uint8_t we_custom_event[64];
+		uint8_t *we_custom_event;
 		char *stopBssEvent = "STOP-BSS.response";       /* 17 */
 		int event_len = strlen(stopBssEvent);
 
@@ -2662,15 +2680,26 @@ stopbss:
 			}
 		}
 
+		we_custom_event =
+			qdf_mem_malloc(HDD_MAX_CUSTOM_START_EVENT_SIZE);
+		if (!we_custom_event)
+			return QDF_STATUS_E_NOMEM;
+
 		/* notify userspace that the BSS has stopped */
-		memset(&we_custom_event, '\0', sizeof(we_custom_event));
-		memcpy(&we_custom_event, stopBssEvent, event_len);
+		memset(we_custom_event, '\0',
+		       sizeof(HDD_MAX_CUSTOM_START_EVENT_SIZE));
+		memcpy(we_custom_event, stopBssEvent, event_len);
 		memset(&wrqu, 0, sizeof(wrqu));
 		wrqu.data.length = event_len;
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_event;
 		wireless_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
+
+		qdf_mem_free(we_custom_start_event);
+		qdf_mem_free(unknownSTAEvent);
+		qdf_mem_free(maxAssocExceededEvent);
+		qdf_mem_free(we_custom_event);
 
 		/* once the event is set, structure dev/adapter should
 		 * not be touched since they are now subject to being deleted
