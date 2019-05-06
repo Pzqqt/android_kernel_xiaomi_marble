@@ -646,10 +646,9 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			key = crypto_priv->key[req_key->keyix];
 		}
 		if (vdev_mode == QDF_STA_MODE) {
-			peer = wlan_vdev_get_bsspeer(vdev);
-			if (!(peer && (QDF_STATUS_SUCCESS
-				== wlan_objmgr_peer_try_get_ref(peer,
-							WLAN_CRYPTO_ID)))) {
+			peer = wlan_objmgr_vdev_try_get_bsspeer(vdev,
+								WLAN_CRYPTO_ID);
+			if (!peer) {
 				crypto_err("peer %pK failed", peer);
 				if (IS_MGMT_CIPHER(req_key->type)) {
 					crypto_priv->igtk_key[igtk_idx] = NULL;
@@ -3115,6 +3114,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 	uint8_t *mac_addr;
 	int i;
 	enum QDF_OPMODE opmode;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!vdev)
 		return QDF_STATUS_E_NULL_VALUE;
@@ -3148,7 +3148,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 
 	if (opmode == QDF_STA_MODE) {
-		peer = wlan_vdev_get_bsspeer(vdev);
+		peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CRYPTO_ID);
 		if (!peer) {
 			crypto_err("peer NULL");
 			return QDF_STATUS_E_INVAL;
@@ -3158,7 +3158,8 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 	wlan_crypto_peer_get_comp_params(peer, &sta_crypto_priv);
 	if (!sta_crypto_priv) {
 		crypto_err("sta priv is null");
-		return QDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
+		goto exit;
 	}
 
 	for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
@@ -3173,8 +3174,10 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 			if (cipher_table->cipher == WLAN_CRYPTO_CIPHER_WEP) {
 				sta_key = qdf_mem_malloc(
 						sizeof(struct wlan_crypto_key));
-				if (!sta_key)
-					return QDF_STATUS_E_NOMEM;
+				if (!sta_key) {
+					status = QDF_STATUS_E_NOMEM;
+					goto exit;
+				}
 
 				sta_crypto_priv->key[i] = sta_key;
 				qdf_mem_copy(sta_key, key,
@@ -3209,7 +3212,11 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+exit:
+	if (opmode == QDF_STA_MODE)
+		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
+
+	return status;
 }
 
 /**
