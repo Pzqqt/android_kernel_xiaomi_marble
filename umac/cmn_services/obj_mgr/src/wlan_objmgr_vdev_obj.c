@@ -523,6 +523,110 @@ QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * wlan_obj_vdev_populate_logically_del_peerlist() - get peer
+ * from vdev peer list
+ * @obj_list: peer object list
+ * @vdev_obj: vdev object mgr substructure
+ * @dbg_id: id of the caller
+ *
+ * API to finds peer object pointer by vdev from peer hash list for a node
+ * which is in logically deleted state
+ *
+ * Caller to free the list allocated in this function
+ *
+ * Return: list of peer pointers
+ *         NULL on FAILURE
+ */
+static qdf_list_t *wlan_obj_vdev_populate_logically_del_peerlist(
+				qdf_list_t *obj_list,
+				struct wlan_objmgr_vdev_objmgr *vdev_obj,
+				wlan_objmgr_ref_dbgid dbg_id)
+{
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_peer *peer_next;
+	struct wlan_logically_del_peer *peer_list;
+	qdf_list_t *logical_del_peerlist;
+	bool lock_released = false;
+
+	logical_del_peerlist = qdf_mem_malloc(sizeof(*logical_del_peerlist));
+	if (!logical_del_peerlist)
+		return NULL;
+
+	qdf_list_create(logical_del_peerlist, vdev_obj->max_peer_count);
+
+	peer = wlan_vdev_peer_list_peek_head(obj_list);
+	while (peer) {
+		wlan_peer_obj_lock(peer);
+		peer_next = wlan_peer_get_next_peer_of_vdev(obj_list, peer);
+		if (peer->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED &&
+		    qdf_atomic_read(&peer->peer_objmgr.ref_cnt)) {
+			wlan_objmgr_peer_get_ref(peer, dbg_id);
+			wlan_peer_obj_unlock(peer);
+			lock_released = true;
+
+			peer_list = qdf_mem_malloc(sizeof(*peer_list));
+			if (!peer_list) {
+				wlan_objmgr_peer_release_ref(peer, dbg_id);
+				WLAN_OBJMGR_BUG(0);
+				break;
+			}
+
+			peer_list->peer = peer;
+			qdf_list_insert_front(logical_del_peerlist,
+					      &peer_list->list);
+		}
+
+		if (!lock_released)
+			wlan_peer_obj_unlock(peer);
+
+		peer = peer_next;
+		lock_released = false;
+	}
+
+	/* Not found, return NULL */
+	if (qdf_list_empty(logical_del_peerlist)) {
+		qdf_mem_free(logical_del_peerlist);
+		return NULL;
+	}
+
+	return logical_del_peerlist;
+}
+
+qdf_list_t *wlan_objmgr_vdev_get_log_del_peer_list(
+		struct wlan_objmgr_vdev *vdev,
+		wlan_objmgr_ref_dbgid dbg_id)
+{
+	qdf_list_t *peer_list;
+	qdf_list_t *log_del_peer_list = NULL;
+
+	if (vdev->obj_state != WLAN_OBJ_STATE_CREATED) {
+		obj_mgr_err("Invalid state vdev:%d state:%d",
+			    wlan_vdev_get_id(vdev), vdev->obj_state);
+		return NULL;
+	}
+
+	wlan_vdev_obj_lock(vdev);
+	if (vdev->vdev_objmgr.wlan_peer_count == 0) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
+	wlan_objmgr_vdev_get_ref(vdev, dbg_id);
+	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
+	if (peer_list) {
+		log_del_peer_list =
+			wlan_obj_vdev_populate_logically_del_peerlist(
+					peer_list, &vdev->vdev_objmgr,
+					dbg_id);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, dbg_id);
+	wlan_vdev_obj_unlock(vdev);
+
+	return log_del_peer_list;
+}
+
 QDF_STATUS wlan_objmgr_trigger_vdev_comp_priv_object_creation(
 		struct wlan_objmgr_vdev *vdev,
 		enum wlan_umac_comp_id id)

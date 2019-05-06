@@ -484,6 +484,25 @@ QDF_STATUS wlan_objmgr_iterate_peerobj_list(
 		void *arg, wlan_objmgr_ref_dbgid dbg_id);
 
 /**
+ * wlan_objmgr_vdev_get_log_del_peer_list() - vdev logically deleted peer list
+ * @vdev: vdev object
+ * @dbg_id: id of the caller
+ *
+ * API to be used for populating the list of logically deleted peers from the
+ * vdev's peer list
+ *
+ * The caller of this function should free the memory allocated for the
+ * peerlist and the peer member in the list
+ * Also the peer ref release is handled by the caller
+ *
+ * Return: list of peer pointers
+ *         NULL on FAILURE
+ */
+qdf_list_t *wlan_objmgr_vdev_get_log_del_peer_list(
+		struct wlan_objmgr_vdev *vdev,
+		wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_objmgr_trigger_vdev_comp_priv_object_creation() - vdev
  * comp object creation
  * @vdev: VDEV object
