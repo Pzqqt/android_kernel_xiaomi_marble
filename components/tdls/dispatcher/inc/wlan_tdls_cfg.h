@@ -385,13 +385,13 @@
 
 /*
  * <ini>
- * gTDLSRSSITeardownThreshold - RSSI threshold for TDLS teardown.
- * @Min: -120
+ * gTDLSRSSIDelta - Delta value for the peer RSSI that can trigger teardown.
+ * @Min: -30
  * @Max: 0
- * @Default: -75
+ * @Default: -20
  *
- * This ini is used to configure the absolute value (in dB) of the peer RSSI,
- * when exceed, a TDLS teardown is triggered.
+ * This ini is used to configure delta for peer RSSI such that if Peer RSSI
+ * is less than AP RSSI plus delta will trigger a teardown.
  *
  * Related: gEnableTDLSSupport.
  *
