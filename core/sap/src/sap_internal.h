@@ -176,6 +176,8 @@ struct sap_context {
 	bool enableOverLapCh;
 	struct sap_acs_cfg *acs_cfg;
 
+	qdf_time_t acs_req_timestamp;
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif

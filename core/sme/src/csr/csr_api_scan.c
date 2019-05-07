@@ -2396,6 +2396,8 @@ static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
 			pFilter->BSSIDs.bssid[i].bytes,
 			QDF_MAC_ADDR_SIZE);
 
+	filter->age_threshold = pFilter->age_threshold;
+
 	filter->num_of_ssid = pFilter->SSIDs.numOfSSIDs;
 	if (filter->num_of_ssid > WLAN_SCAN_FILTER_NUM_SSID)
 		filter->num_of_ssid = WLAN_SCAN_FILTER_NUM_SSID;
@@ -2978,7 +2980,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (pFilter) {
+		if (pFilter && pFilter->csrPersona == QDF_STA_MODE) {
 			csr_filter_ap_due_to_rssi_reject(mac_ctx, ret_list);
 			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
 		}

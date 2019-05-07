@@ -185,6 +185,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	QDF_STATUS scan_get_result_status = QDF_STATUS_E_FAILURE;
 	uint8_t oper_channel = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tCsrScanResultFilter *filter;
 
 	host_log_acs_scan_done(acs_scan_done_status_str(scan_status),
 			  sessionid, scanid);
@@ -204,6 +205,16 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("CSR scan_status = eCSR_SCAN_SUCCESS (%d)"), scan_status);
+
+	filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	if (!filter) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Memory allocation for filter failed"));
+	} else {
+		filter->csrPersona = QDF_SAP_MODE;
+		filter->age_threshold = qdf_get_time_of_the_day_ms() -
+						sap_ctx->acs_req_timestamp;
+	}
 	/*
 	* Now do
 	* 1. Get scan results
@@ -212,7 +223,10 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	*/
 	scan_get_result_status = sme_scan_get_result(mac_handle,
 					sap_ctx->sessionId,
-					NULL, &presult);
+					filter, &presult);
+	if (filter)
+		qdf_mem_free(filter);
+
 	if ((scan_get_result_status != QDF_STATUS_SUCCESS) &&
 		(scan_get_result_status != QDF_STATUS_E_NULL_VALUE)) {
 		/*

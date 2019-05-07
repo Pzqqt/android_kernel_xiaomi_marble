@@ -317,6 +317,7 @@ typedef struct tagCsrScanResultFilter {
 	bool realm_check;
 	uint8_t fils_realm[2];
 	bool force_rsne_override;
+	qdf_time_t age_threshold;
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {

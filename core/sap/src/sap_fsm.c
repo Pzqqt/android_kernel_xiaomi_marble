@@ -1036,11 +1036,8 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		/* Set requestType to Full scan */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("calling ucfg_scan_start"));
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-		if (sap_context->acs_cfg->skip_scan_status ==
-		    eSAP_DO_NEW_ACS_SCAN)
-#endif
-			sme_scan_flush_result(mac_handle);
+
+		sap_context->acs_req_timestamp = qdf_get_time_of_the_day_ms();
 		qdf_ret_status = ucfg_scan_start(req);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
