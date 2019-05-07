@@ -2797,6 +2797,11 @@ static int adm_copp_set_ec_ref_mfc_cfg(int port_id, int copp_idx,
 			__func__, port_id, copp_idx, sample_rate,
 			bps, in_channels, out_channels);
 
+	if (out_channels <= 0 || out_channels > AUDPROC_MFC_OUT_CHANNELS_MAX) {
+		pr_err("%s: unsupported out channels=%d\n", __func__, out_channels);
+		return -EINVAL;
+	}
+
 	/* 1. Update Media Format */
 	param_hdr.param_id = AUDPROC_PARAM_ID_MFC_OUTPUT_MEDIA_FORMAT;
 	param_hdr.param_size = sizeof(mfc_cfg);
