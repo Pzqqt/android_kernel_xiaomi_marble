@@ -196,16 +196,20 @@ static int dp_hdcp2p2_wakeup(struct hdcp_transport_wakeup_data *data)
 	switch (data->cmd) {
 	case HDCP_TRANSPORT_CMD_STATUS_SUCCESS:
 		atomic_set(&ctrl->auth_state, HDCP_STATE_AUTHENTICATED);
+		kfifo_put(&ctrl->cmd_q, data->cmd);
+		wake_up(&ctrl->wait_q);
 		break;
 	case HDCP_TRANSPORT_CMD_STATUS_FAILED:
 		atomic_set(&ctrl->auth_state, HDCP_STATE_AUTH_FAIL);
+		kfifo_put(&ctrl->cmd_q, data->cmd);
+		kthread_park(ctrl->thread);
 		break;
 	default:
+		kfifo_put(&ctrl->cmd_q, data->cmd);
+		wake_up(&ctrl->wait_q);
 		break;
 	}
 
-	kfifo_put(&ctrl->cmd_q, data->cmd);
-	wake_up(&ctrl->wait_q);
 exit:
 	return 0;
 }
@@ -310,6 +314,8 @@ static int dp_hdcp2p2_authenticate(void *input)
 	ctrl->sink_status = SINK_CONNECTED;
 	atomic_set(&ctrl->auth_state, HDCP_STATE_AUTHENTICATING);
 
+	kthread_park(ctrl->thread);
+	kfifo_reset(&ctrl->cmd_q);
 	kthread_unpark(ctrl->thread);
 
 	cdata.context = input;
