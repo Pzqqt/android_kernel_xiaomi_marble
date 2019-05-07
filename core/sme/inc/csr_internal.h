@@ -564,6 +564,7 @@ struct csr_disconnect_stats {
 /**
  * struct csr_roam_session - CSR per-vdev context
  * @vdev_id: ID of the vdev for which this entry is applicable
+ * @is_bcn_recv_start: Allow to process bcn recv indication
  */
 struct csr_roam_session {
 	union {
@@ -637,6 +638,9 @@ struct csr_roam_session {
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
 	qdf_mc_timer_t hTimerRoaming;
+#ifdef WLAN_BCN_RECV_FEATURE
+	bool is_bcn_recv_start;
+#endif
 	/* the roamResult that is used when the roaming timer fires */
 	eCsrRoamResult roamResult;
 	/* This is the reason code for join(assoc) failure */

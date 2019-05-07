@@ -240,6 +240,10 @@ ifeq ($(CONFIG_QCACLD_FEATURE_MPTA_HELPER), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mpta_helper.o
 endif
 
+ifeq ($(CONFIG_WLAN_BCN_RECV_FEATURE), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_bcn_recv.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
@@ -2535,6 +2539,9 @@ cppflags-$(CONFIG_WLAN_NUD_TRACKING) += -DWLAN_NUD_TRACKING
 
 #Flag to enable set and get disable channel list feature
 cppflags-$(CONFIG_DISABLE_CHANNEL_LIST) += -DDISABLE_CHANNEL_LIST
+
+#Flag to enable/disable WIPS feature
+cppflags-$(CONFIG_WLAN_BCN_RECV_FEATURE) += -DWLAN_BCN_RECV_FEATURE
 
 #Flag to enable/disable LTE COEX support
 cppflags-$(CONFIG_LTE_COEX) += -DLTE_COEX

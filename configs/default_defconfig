@@ -613,6 +613,9 @@ CONFIG_WLAN_WBUFF := y
 #Flag to enable set and get disable channel list feature
 CONFIG_DISABLE_CHANNEL_LIST :=y
 
+#Flag to enable beacon receive feature
+CONFIG_WLAN_BCN_RECV_FEATURE := y
+
 #Flag to enable LTE COEX feature
 CONFIG_LTE_COEX := y
 

@@ -12614,6 +12614,54 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_BCN_RECV_FEATURE
+QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
+				     uint32_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	QDF_STATUS status;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("CSR session not valid: %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session) {
+		sme_err("vdev_id %d not found", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if (session->is_bcn_recv_start) {
+			sme_release_global_lock(&mac_ctx->sme);
+			sme_err("Beacon receive already started");
+			return QDF_STATUS_SUCCESS;
+		}
+		session->is_bcn_recv_start = true;
+		sme_release_global_lock(&mac_ctx->sme);
+
+		/*
+		 * Remove beacon filter. It allows fw to send all
+		 * beacons of connected AP to driver.
+		 */
+		status = sme_remove_beacon_filter(mac_handle, vdev_id);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			status = sme_acquire_global_lock(&mac_ctx->sme);
+			if (QDF_IS_STATUS_SUCCESS(status)) {
+				session->is_bcn_recv_start = false;
+				sme_release_global_lock(&mac_ctx->sme);
+			}
+			sme_err("sme_remove_beacon_filter() failed");
+		}
+	}
+
+	return status;
+}
+#endif
+
 /**
  * sme_add_beacon_filter() - set the beacon filter configuration
  * @mac_handle: The handle returned by macOpen

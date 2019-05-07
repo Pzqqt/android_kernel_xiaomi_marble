@@ -139,6 +139,7 @@
 #include "wlan_cfg80211_crypto.h"
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_hdd_coex_config.h"
+#include "wlan_hdd_bcn_recv.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -12992,6 +12993,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 #endif
 	FEATURE_SAR_LIMITS_VENDOR_COMMANDS
+	BCN_RECV_FEATURE_VENDOR_COMMANDS
 
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
