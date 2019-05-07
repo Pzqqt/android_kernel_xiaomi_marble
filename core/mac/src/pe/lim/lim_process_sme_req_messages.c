@@ -390,6 +390,36 @@ static bool __lim_process_sme_sys_ready_ind(struct mac_context *mac,
 	return false;
 }
 
+#ifdef WLAN_BCN_RECV_FEATURE
+/**
+ * lim_register_bcn_report_send_cb() - Register bcn receive start
+ * indication handler callback
+ * @mac: Pointer to Global MAC structure
+ * @msg: A pointer to the SME message buffer
+ *
+ * Once driver gets QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING vendor
+ * command with attribute for start only. LIM layer register a sme
+ * callback through this function.
+ *
+ * Return: None.
+ */
+static void lim_register_bcn_report_send_cb(struct mac_context *mac,
+					    struct scheduler_msg *msg)
+{
+	if (!msg) {
+		pe_err("Invalid message");
+		return;
+	}
+
+	mac->lim.sme_bcn_rcv_callback = msg->callback;
+}
+#else
+static inline
+void lim_register_bcn_report_send_cb(struct mac_context *mac,
+				     struct scheduler_msg *msg)
+{
+}
+#endif
 /**
  *lim_configure_ap_start_bss_session() - Configure the AP Start BSS in session.
  *@mac_ctx: Pointer to Global MAC structure
@@ -4981,6 +5011,9 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU:
 		lim_process_sme_cfg_action_frm_in_tb_ppdu(mac,
 				(struct  sir_cfg_action_frm_tb_ppdu *)pMsgBuf);
+		break;
+	case WNI_SME_REGISTER_BCN_REPORT_SEND_CB:
+		lim_register_bcn_report_send_cb(mac, pMsg);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

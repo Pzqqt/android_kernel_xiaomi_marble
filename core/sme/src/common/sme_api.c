@@ -1135,6 +1135,26 @@ QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle)
 	return status;
 }
 
+#ifdef WLAN_BCN_RECV_FEATURE
+QDF_STATUS
+sme_register_bcn_report_pe_cb(mac_handle_t mac_handle, beacon_report_cb cb)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	msg.type = WNI_SME_REGISTER_BCN_REPORT_SEND_CB;
+	msg.callback = cb;
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to post message to LIM");
+
+	return status;
+}
+#endif
+
 QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 {
 	struct mac_context *mac_ctx = sme_get_mac_context();

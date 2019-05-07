@@ -673,6 +673,8 @@ typedef struct sAniSirLim {
 	uint8_t retry_packet_cnt;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
+	QDF_STATUS (*sme_bcn_rcv_callback)(hdd_handle_t hdd_handle,
+				struct wlan_beacon_report *beacon_report);
 } tAniSirLim, *tpAniSirLim;
 
 struct mgmt_frm_reg_info {

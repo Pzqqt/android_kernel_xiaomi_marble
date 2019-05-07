@@ -30,6 +30,8 @@
 #include "osif_sync.h"
 #include "wlan_hdd_bcn_recv.h"
 
+#define BOOTTIME QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BOOTTIME_WHEN_RECEIVED
+
 static const struct nla_policy
 beacon_reporting_params[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE] = {.type = NLA_U8},
@@ -37,6 +39,101 @@ beacon_reporting_params[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1] = {
 								     NLA_FLAG},
 	[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PERIOD] = {.type = NLA_U8},
 };
+
+/**
+ * get_beacon_report_data_len() - Calculate length for beacon
+ * report to allocate skb buffer
+ * @report: beacon report structure
+ *
+ * Return: skb buffer length
+ */
+static
+int get_beacon_report_data_len(struct wlan_beacon_report *report)
+{
+	uint32_t data_len = NLMSG_HDRLEN;
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE */
+	data_len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_SSID */
+	data_len += nla_total_size(report->ssid.length);
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BSSID */
+	data_len += nla_total_size(ETH_ALEN);
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_FREQ */
+	data_len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BI */
+	data_len += nla_total_size(sizeof(u16));
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_TSF */
+	data_len += nla_total_size(sizeof(uint64_t));
+
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BOOTTIME_WHEN_RECEIVED */
+	data_len += nla_total_size(sizeof(uint64_t));
+
+	return data_len;
+}
+
+/**
+ * hdd_send_bcn_recv_info() - Send beacon info to userspace for
+ * connected AP
+ * @hdd_handle: hdd_handle to get hdd_adapter
+ * @beacon_report: Required beacon report
+ *
+ * Send beacon info to userspace for connected AP through a vendor event:
+ * QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING.
+ */
+static void hdd_send_bcn_recv_info(hdd_handle_t hdd_handle,
+				   struct wlan_beacon_report *beacon_report)
+{
+	struct sk_buff *vendor_event;
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	uint32_t data_len;
+	int flags = cds_get_gfp_flags();
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	data_len = get_beacon_report_data_len(beacon_report);
+
+	vendor_event =
+		cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy, NULL,
+			data_len,
+			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
+			flags);
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE,
+			QCA_WLAN_VENDOR_BEACON_REPORTING_OP_BEACON_INFO) ||
+	    nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_SSID,
+		    beacon_report->ssid.length, beacon_report->ssid.ssid) ||
+	    nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BSSID,
+		    ETH_ALEN, beacon_report->bssid.bytes) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_FREQ,
+			beacon_report->frequency) ||
+	    nla_put_u16(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BI,
+			beacon_report->beacon_interval) ||
+	    wlan_cfg80211_nla_put_u64(vendor_event,
+				      QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_TSF,
+				      beacon_report->time_stamp) ||
+	    wlan_cfg80211_nla_put_u64(vendor_event, BOOTTIME,
+				      beacon_report->boot_time)) {
+		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	cfg80211_vendor_event(vendor_event, flags);
+}
 
 /**
  * __wlan_hdd_cfg80211_bcn_rcv_start() - enable/disable beacon reporting
@@ -62,6 +159,7 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 	uint32_t bcn_report;
 	int errno;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	bool active_report;
 
 	hdd_enter_dev(dev);
 
@@ -71,6 +169,11 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 
 	if (adapter->device_mode != QDF_STA_MODE) {
 		hdd_err("Command not allowed as device not in STA mode");
+		return -EINVAL;
+	}
+
+	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+		hdd_err("STA not in connected state");
 		return -EINVAL;
 	}
 
@@ -88,13 +191,26 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 		hdd_err("attr beacon report OP type failed");
 		return -EINVAL;
 	}
+	active_report =
+		!!tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_ACTIVE_REPORTING];
+	hdd_debug("attr active_report %d", active_report);
 
 	bcn_report =
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE]);
 	hdd_debug("Bcn Report: OP type:%d", bcn_report);
 
 	if (bcn_report == QCA_WLAN_VENDOR_BEACON_REPORTING_OP_START) {
-		/* Vendor event is intended for Start*/
+		if (active_report) {
+			qdf_status = sme_register_bcn_report_pe_cb(
+							hdd_ctx->mac_handle,
+							hdd_send_bcn_recv_info);
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
+				hdd_err("bcn recv info cb reg failed = %d",
+					qdf_status);
+				errno = qdf_status_to_os_return(qdf_status);
+				return errno;
+			}
+		}
 		qdf_status =
 			sme_handle_bcn_recv_start(hdd_ctx->mac_handle,
 						  adapter->vdev_id);

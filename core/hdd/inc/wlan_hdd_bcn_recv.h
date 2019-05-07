@@ -50,7 +50,14 @@ int wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 		WIPHY_VENDOR_CMD_NEED_RUNNING,				\
 	.doit = wlan_hdd_cfg80211_bcn_rcv_start				\
 },
+
+#define BCN_RECV_FEATURE_VENDOR_EVENTS			\
+[QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX] = {		\
+	.vendor_id = QCA_NL80211_VENDOR_ID,			\
+	.subcmd = QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING	\
+},
 #else
 #define BCN_RECV_FEATURE_VENDOR_COMMANDS
+#define BCN_RECV_FEATURE_VENDOR_EVENTS
 #endif
 

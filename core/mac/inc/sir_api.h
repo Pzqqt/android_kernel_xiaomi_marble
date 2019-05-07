@@ -186,6 +186,25 @@ struct rsn_caps {
 	uint16_t Reserved:8;
 };
 
+/**
+ * struct wlan_beacon_report - Beacon info to be send to userspace
+ * @ssid: ssid present in beacon
+ * @bssid: bssid present in beacon
+ * @frequency: channel frequency in MHz
+ * @beacon_interval: Interval between two consecutive beacons
+ * @time_stamp: time stamp at which beacon received from AP
+ * @boot_time: Boot time when beacon received
+ */
+struct wlan_beacon_report {
+	struct wlan_ssid ssid;
+	struct qdf_mac_addr bssid;
+	uint32_t frequency;
+	uint16_t beacon_interval;
+	qdf_time_t time_stamp;
+	qdf_time_t boot_time;
+};
+
+
 /* / Result codes Firmware return to Host SW */
 typedef enum eSirResultCodes {
 	eSIR_SME_SUCCESS,
