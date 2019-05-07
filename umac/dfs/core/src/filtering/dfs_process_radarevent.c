@@ -427,7 +427,9 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 					(uint32_t) deltaT, re->re_dur,
 					ext_chan_event_flag);
 
-				if (*found) {
+				if (*found &&
+				    (utils_get_dfsdomain(dfs->dfs_pdev_obj) !=
+				     DFS_CN_DOMAIN)) {
 					ori_rf_check_delta_peak =
 						rf->rf_check_delta_peak;
 					/*
