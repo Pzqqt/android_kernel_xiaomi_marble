@@ -82,11 +82,11 @@ extern int con_mode_monitor;
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, int val)
+dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint8_t val)
 {
 	return QDF_STATUS_E_INVAL;
 }
-#endif
+#endif /* WLAN_RX_PKT_CAPTURE_ENH */
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
@@ -6053,6 +6053,9 @@ QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev)
 			   CDP_RX_ENH_CAPTURE_MPDU_MSDU) {
 			htt_tlv_filter.header_per_msdu = 1;
 			htt_tlv_filter.enable_mo = 0;
+			if (pdev->is_rx_protocol_tagging_enabled ||
+			    pdev->is_rx_enh_capture_trailer_enabled)
+				htt_tlv_filter.msdu_end = 1;
 		}
 	}
 

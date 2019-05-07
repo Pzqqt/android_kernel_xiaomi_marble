@@ -405,15 +405,25 @@ struct hal_rx_msdu_payload_info {
 /**
  * struct hal_rx_nac_info - struct for neighbour info
  * @fc_valid: flag indicate if it has valid frame control information
+ * @frame_control: frame control from each MPDU
  * @to_ds_flag: flag indicate to_ds bit
  * @mac_addr2_valid: flag indicate if mac_addr2 is valid
  * @mac_addr2: mac address2 in wh
  */
 struct hal_rx_nac_info {
 	uint8_t fc_valid;
+	uint16_t frame_control;
 	uint8_t to_ds_flag;
 	uint8_t mac_addr2_valid;
 	uint8_t mac_addr2[QDF_MAC_ADDR_SIZE];
+};
+
+/**
+ * struct hal_rx_ppdu_msdu_info - struct for msdu info from HW TLVs
+ * @cce_metadata: cached metadata value received in the MSDU_END TLV
+ */
+struct hal_rx_ppdu_msdu_info {
+	uint16_t cce_metadata;
 };
 
 struct hal_rx_ppdu_info {
@@ -432,6 +442,7 @@ struct hal_rx_ppdu_info {
 	uint32_t hdr_len;
 	/* MPDU FCS error */
 	bool fcs_err;
+	struct hal_rx_ppdu_msdu_info rx_msdu_info[HAL_MAX_UL_MU_USERS];
 };
 
 static inline uint32_t

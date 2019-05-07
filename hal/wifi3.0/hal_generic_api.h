@@ -1183,6 +1183,11 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				   RX_MPDU_INFO_2,
 				   TO_DS);
 
+		ppdu_info->nac_info.frame_control =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_14,
+				   MPDU_FRAME_CONTROL_FIELD);
+
 		ppdu_info->nac_info.mac_addr2_valid =
 			HAL_RX_GET(rx_mpdu_start,
 				   RX_MPDU_INFO_2,
@@ -1225,6 +1230,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			HAL_RX_GET(rx_tlv, RX_MPDU_END_1,
 				   FCS_ERR);
 		return HAL_TLV_STATUS_MPDU_END;
+	case WIFIRX_MSDU_END_E:
+		ppdu_info->rx_msdu_info[user_id].cce_metadata =
+			HAL_RX_MSDU_END_CCE_METADATA_GET(rx_tlv);
+		return HAL_TLV_STATUS_MSDU_END;
 	case 0:
 		return HAL_TLV_STATUS_PPDU_DONE;
 

@@ -1190,7 +1190,6 @@ struct cdp_htt_rx_pdev_stats {
  * protocol types
  */
 #define RX_PROTOCOL_TAG_ALL 0xff
-
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
 /* struct cdp_pdev_stats - pdev stats

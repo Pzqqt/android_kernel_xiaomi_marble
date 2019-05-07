@@ -1269,6 +1269,25 @@ struct dp_pdev_tx_capture {
 struct dp_peer_tx_capture {
 };
 #endif
+#ifdef WLAN_RX_PKT_CAPTURE_ENH
+/* Template data to be set for Enhanced RX Monitor packets */
+#define RX_MON_CAP_ENH_TRAILER 0xdeadc0dedeadda7a
+
+/**
+ * struct dp_rx_mon_enh_trailer_data - Data structure to set a known pattern
+ * at end of each MSDU in monitor-lite mode
+ * @reserved1: reserved for future use
+ * @reserved2: reserved for future use
+ * @reserved3: reserved for future use
+ * @protocol_tag: protocol tag value read from skb->cb
+ */
+struct dp_rx_mon_enh_trailer_data {
+	uint16_t reserved1;
+	uint16_t reserved2;
+	uint16_t reserved3;
+	uint16_t protocol_tag;
+};
+#endif /* WLAN_RX_PKT_CAPTURE_ENH */
 
 /* PDEV level structure for data path */
 struct dp_pdev {
@@ -1441,7 +1460,9 @@ struct dp_pdev {
 	/* per user 128 bytes msdu header list for MPDU */
 	struct msdu_list msdu_list[MAX_MU_USERS];
 	/* RX enhanced capture mode */
-	uint32_t rx_enh_capture_mode;
+	uint8_t rx_enh_capture_mode;
+	/* RX enhanced capture trailer enable/disable flag */
+	bool is_rx_enh_capture_trailer_enabled;
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 	/* RX per MPDU/PPDU information */
 	struct cdp_rx_indication_mpdu mpdu_ind[MAX_MU_USERS];
@@ -1567,13 +1588,14 @@ struct dp_pdev {
 
 	/* unique cookie required for peer session */
 	uint32_t next_peer_cookie;
-#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+
 	/*
 	 * Run time enabled when the first protocol tag is added,
 	 * run time disabled when the last protocol tag is deleted
 	 */
 	bool  is_rx_protocol_tagging_enabled;
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 	/*
 	 * The protocol type is used as array index to save
 	 * user provided tag info

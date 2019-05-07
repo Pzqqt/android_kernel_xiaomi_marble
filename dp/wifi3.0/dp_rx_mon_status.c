@@ -46,8 +46,7 @@ static void
 dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 			      qdf_nbuf_t status_nbuf,
 			      struct hal_rx_ppdu_info *ppdu_info,
-			      bool *nbuf_used,
-			      uint32_t rx_enh_capture_mode)
+			      bool *nbuf_used)
 {
 }
 #endif
@@ -589,7 +588,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 				dp_rx_mon_enh_capture_process(pdev, tlv_status,
 					status_nbuf, ppdu_info,
-					&nbuf_used, rx_enh_capture_mode);
+					&nbuf_used);
 
 				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
 
@@ -598,7 +597,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 			} while ((tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE) ||
 				 (tlv_status == HAL_TLV_STATUS_HEADER) ||
-				 (tlv_status == HAL_TLV_STATUS_MPDU_END));
+				 (tlv_status == HAL_TLV_STATUS_MPDU_END) ||
+				 (tlv_status == HAL_TLV_STATUS_MSDU_END));
 		}
 		if (pdev->dp_peer_based_pktlog) {
 			dp_rx_process_peer_based_pktlog(soc, ppdu_info,
