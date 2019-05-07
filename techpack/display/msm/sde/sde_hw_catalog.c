@@ -2061,12 +2061,14 @@ static int _sde_sspp_setup_cmn(struct device_node *np,
 				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].bit_off =
 						PROP_BITVALUE_ACCESS(props->values,
 						SSPP_CLK_CTRL, i, 1);
+				sde_cfg->mdp[j].clk_ctrls[sspp->clk_ctrl].val = -1;
 				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].reg_off =
 						PROP_BITVALUE_ACCESS(props->values,
 						SSPP_CLK_STATUS, i, 0);
 				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].bit_off =
 						PROP_BITVALUE_ACCESS(props->values,
 						SSPP_CLK_STATUS, i, 1);
+				sde_cfg->mdp[j].clk_status[sspp->clk_ctrl].val = -1;
 			}
 
 			SDE_DEBUG("xin:%d ram:%d clk%d:%x/%d\n",
@@ -2641,12 +2643,14 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 				sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].bit_off =
 					PROP_BITVALUE_ACCESS(prop_value,
 							WB_CLK_CTRL, i, 1);
+				sde_cfg->mdp[j].clk_ctrls[wb->clk_ctrl].val = -1;
 				sde_cfg->mdp[j].clk_status[wb->clk_ctrl].reg_off =
 					PROP_BITVALUE_ACCESS(prop_value,
 							WB_CLK_STATUS, i, 0);
 				sde_cfg->mdp[j].clk_status[wb->clk_ctrl].bit_off =
 					PROP_BITVALUE_ACCESS(prop_value,
 							WB_CLK_STATUS, i, 1);
+				sde_cfg->mdp[j].clk_status[wb->clk_ctrl].val = -1;
 			}
 
 			SDE_DEBUG("wb:%d xin:%d vbif:%d clk%d:%x/%d\n", wb->id - WB_0,
