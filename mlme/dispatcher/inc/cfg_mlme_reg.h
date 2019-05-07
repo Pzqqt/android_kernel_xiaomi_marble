@@ -179,16 +179,14 @@
 
  /*
   * valid_chan_list - Configure valid channel list
-  * @Min: 0
-  * @Max: 256
-  * @Default: 64
+  * @Default: VALID_CHANNEL_LIST_DEFAULT
   *
-  * This ini is used to configure the data max number of pre-auth
+  * This ini is used to configure valid channel list
   *
   * Usage: Internal
   *
   */
-#define CFG_VALID_CHANNEL_LIST CFG_INI_STRING( \
+#define CFG_VALID_CHANNEL_LIST CFG_STRING( \
 		 "valid_chan_list", \
 		 0, \
 		 CFG_VALID_CHANNEL_LIST_STRING_LEN, \
@@ -196,17 +194,15 @@
 		 "valid channel list")
 
  /*
-  * max_num_pre_auth - Configure max number of pre-auth
-  * @Min: 0
-  * @Max: 256
-  * @Default: 64
+  * country_code - Set country code
+  * @Default: NA
   *
-  * This ini is used to configure the data max number of pre-auth
+  * This ini is used to set country code
   *
   * Usage: Internal
   *
   */
-#define CFG_COUNTRY_CODE CFG_INI_STRING( \
+#define CFG_COUNTRY_CODE CFG_STRING( \
 		 "country_code", \
 		 0, \
 		 CFG_COUNTRY_CODE_LEN, \
