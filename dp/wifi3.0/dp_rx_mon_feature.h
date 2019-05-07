@@ -55,7 +55,6 @@ dp_rx_handle_enh_capture(struct dp_soc *soc, struct dp_pdev *pdev,
  * @status_nbuf: monitor status ring buffer
  * @ppdu_info: ppdu info structure from monitor status ring
  * @nbuf_used: nbuf need a clone
- * @rx_enh_capture_mode: Rx enhanced capture mode
  *
  * Return: none
  */
@@ -63,8 +62,7 @@ void
 dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 			      qdf_nbuf_t status_nbuf,
 			      struct hal_rx_ppdu_info *ppdu_info,
-			      bool *nbuf_used,
-			      uint32_t rx_enh_capture_mode);
+			      bool *nbuf_used);
 
 /*
  * dp_config_enh_rx_capture()- API to enable/disable enhanced rx capture
@@ -74,6 +72,6 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
  * Return: 0 for success. nonzero for failure.
  */
 QDF_STATUS
-dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, int val);
-#endif
-#endif
+dp_config_enh_rx_capture(struct cdp_pdev *pdev_handle, uint8_t val);
+#endif /* WLAN_RX_PKT_CAPTURE_ENH */
+#endif /* _DP_RX_MON_FEATURE_H_ */

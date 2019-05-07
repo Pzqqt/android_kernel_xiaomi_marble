@@ -27,6 +27,10 @@
 #define RX_ENH_CB_BUF_RESERVATION 256
 #define RX_ENH_CB_BUF_ALIGNMENT 4
 
+#define RX_ENH_CAPTURE_TRAILER_LEN 8
+#define RX_ENH_CAPTURE_MODE_MASK 0x0F
+#define RX_ENH_CAPTURE_TRAILER_ENABLE_MASK 0x10
+
 /**
  * struct cdp_rx_indication_mpdu_info - Rx MPDU info
  * @ppdu_id: PPDU Id
