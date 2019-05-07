@@ -3015,7 +3015,7 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	if (!sde_enc || !sde_enc->cur_master) {
-		SDE_ERROR("invalid sde encoder/master\n");
+		SDE_DEBUG("invalid sde encoder/master\n");
 		return;
 	}
 
