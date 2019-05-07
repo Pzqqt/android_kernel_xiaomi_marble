@@ -380,7 +380,7 @@ struct scan_default_params {
 	uint32_t burst_duration;
 	uint32_t max_scan_time;
 	uint32_t num_probes;
-	uint32_t scan_cache_aging_time;
+	qdf_time_t scan_cache_aging_time;
 	uint32_t select_5ghz_margin;
 	bool enable_mac_spoofing;
 	bool is_bssid_hint_priority;

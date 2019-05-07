@@ -566,7 +566,7 @@ struct fils_filter_info {
 struct scan_filter {
 	bool bss_scoring_required;
 	bool enable_adaptive_11r;
-	uint32_t age_threshold;
+	qdf_time_t age_threshold;
 	uint32_t p2p_results;
 	uint32_t rrm_measurement_filter;
 	uint32_t num_of_bssid;

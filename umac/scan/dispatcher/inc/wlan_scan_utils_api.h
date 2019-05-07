@@ -1140,10 +1140,10 @@ util_scan_entry_wmeparam(struct scan_cache_entry *scan_entry)
  *
  * Return: age in ms
  */
-static inline uint32_t
+static inline qdf_time_t
 util_scan_entry_age(struct scan_cache_entry *scan_entry)
 {
-	unsigned long ts = scan_entry->scan_entry_time;
+	qdf_time_t ts = scan_entry->scan_entry_time;
 
 	return qdf_mc_timer_get_system_time() - ts;
 }

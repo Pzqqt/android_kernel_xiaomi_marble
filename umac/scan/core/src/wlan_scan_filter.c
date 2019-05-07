@@ -1150,6 +1150,10 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	roam_params = &def_param->roam_params;
 
+	if (filter->age_threshold && filter->age_threshold <
+					util_scan_entry_age(db_entry))
+		return false;
+
 	if (filter->p2p_results && !db_entry->is_p2p)
 		return false;
 
