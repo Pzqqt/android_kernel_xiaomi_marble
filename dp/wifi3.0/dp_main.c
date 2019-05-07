@@ -1095,6 +1095,60 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 }
 
 /*
+ * dp_srng_mem_alloc() - Allocate memory for SRNG
+ * @soc  : Data path soc handle
+ * @srng : SRNG pointer
+ * @align : Align size
+ *
+ * return: QDF_STATUS_SUCCESS on successful allocation
+ *         QDF_STATUS_E_NOMEM on failure
+ */
+static QDF_STATUS
+dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align)
+{
+	srng->base_vaddr_unaligned =
+		qdf_mem_alloc_consistent(soc->osdev,
+					 soc->osdev->dev,
+					 srng->alloc_size,
+					 &srng->base_paddr_unaligned);
+	if (!srng->base_vaddr_unaligned) {
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* Re-allocate additional bytes to align base address only if
+	 * above allocation returns unaligned address. Reason for
+	 * trying exact size allocation above is, OS tries to allocate
+	 * blocks of size power-of-2 pages and then free extra pages.
+	 * e.g., of a ring size of 1MB, the allocation below will
+	 * request 1MB plus 7 bytes for alignment, which will cause a
+	 * 2MB block allocation,and that is failing sometimes due to
+	 * memory fragmentation.
+	 * dp_srng_mem_alloc should be replaced with
+	 * qdf_aligned_mem_alloc_consistent after fixing some known
+	 * shortcomings with this QDF function
+	 */
+	if ((unsigned long)(srng->base_paddr_unaligned) &
+	    (align - 1)) {
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+					srng->alloc_size,
+					srng->base_vaddr_unaligned,
+					srng->base_paddr_unaligned, 0);
+		srng->alloc_size = srng->alloc_size + align - 1;
+		srng->base_vaddr_unaligned =
+			qdf_mem_alloc_consistent(soc->osdev,
+						 soc->osdev->dev,
+						 srng->alloc_size,
+						 &srng->base_paddr_unaligned);
+
+		if (!srng->base_vaddr_unaligned) {
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/*
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
@@ -1114,29 +1168,28 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 
 	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
 	srng->hal_srng = NULL;
-	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
+	srng->alloc_size = num_entries * entry_size;
 	srng->num_entries = num_entries;
 
 	if (!dp_is_soc_reinit(soc)) {
-		srng->base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev,
-						 soc->osdev->dev,
-						 srng->alloc_size,
-						 &srng->base_paddr_unaligned);
+		if (dp_srng_mem_alloc(soc, srng, ring_base_align) !=
+		    QDF_STATUS_SUCCESS) {
+			dp_err("alloc failed - ring_type: %d, ring_num %d",
+			       ring_type, ring_num);
+			return QDF_STATUS_E_NOMEM;
+		}
 	}
 
-	if (!srng->base_vaddr_unaligned) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("alloc failed - ring_type: %d, ring_num %d"),
-			ring_type, ring_num);
-		return QDF_STATUS_E_NOMEM;
-	}
+	ring_params.ring_base_paddr =
+		(qdf_dma_addr_t)qdf_align(
+			(unsigned long)(srng->base_paddr_unaligned),
+			ring_base_align);
 
-	ring_params.ring_base_vaddr = srng->base_vaddr_unaligned +
-		((unsigned long)srng->base_vaddr_unaligned % ring_base_align);
-	ring_params.ring_base_paddr = srng->base_paddr_unaligned +
-		((unsigned long)(ring_params.ring_base_vaddr) -
-		(unsigned long)srng->base_vaddr_unaligned);
+	ring_params.ring_base_vaddr =
+		(void *)((unsigned long)(srng->base_vaddr_unaligned) +
+			((unsigned long)(ring_params.ring_base_paddr) -
+			(unsigned long)(srng->base_paddr_unaligned)));
+
 	ring_params.num_entries = num_entries;
 
 	dp_verbose_debug("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u",
