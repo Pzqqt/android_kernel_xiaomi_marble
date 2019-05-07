@@ -698,6 +698,7 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 		mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_lt_80 = 0;
 		mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_gt_80 = 0;
 	}
+	mlme_obj->cfg.he_caps.dot11_he_cap.ul_mu = he_cap->ul_mu;
 	mlme_obj->cfg.he_caps.dot11_he_cap.su_feedback_tone16 =
 					he_cap->su_feedback_tone16;
 	mlme_obj->cfg.he_caps.dot11_he_cap.mu_feedback_tone16 =

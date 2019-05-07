@@ -569,12 +569,13 @@
  * he_ul_mumimo - configure ul mu capabilities
  * @Min: 0
  * @Max: 3
- * @Default: 2
+ * @Default: 0
  *
  * This ini is used to configure capabilities of ul mu-mimo
  * 0-> no support
- * 1-> partial bandwidth support
- * 2-> full and partial bandwidth support
+ * 1-> full bandwidth support
+ * 2-> partial bandwidth support
+ * 3-> full and partial bandwidth support
  *
  * Related: NA
  *
@@ -588,7 +589,7 @@
 				"he_ul_mumimo", \
 				0, \
 				3, \
-				2, \
+				0, \
 				CFG_VALUE_OR_DEFAULT, \
 				"He Ul Mumimo")
 
