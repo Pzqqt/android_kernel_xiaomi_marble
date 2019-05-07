@@ -1655,13 +1655,20 @@ static int wcd938x_tx_mode_get(struct snd_kcontrol *kcontrol,
 			snd_soc_dapm_kcontrol_widget(kcontrol);
 	struct snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	u32 path = 0;
+	struct wcd938x_priv *wcd938x = NULL;
+	int path = 0;
 
-	if (!widget || !widget->name || !wcd938x || !component)
+	if (!component)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (!widget || !widget->name || !wcd938x)
 		return -EINVAL;
 
 	path = wcd938x_tx_path_get(widget->name);
+	if (path < 0 || path >= TX_ADC_MAX)
+		return -EINVAL;
 
 	ucontrol->value.integer.value[0] = wcd938x->tx_mode[path];
 
@@ -1675,14 +1682,22 @@ static int wcd938x_tx_mode_put(struct snd_kcontrol *kcontrol,
 			snd_soc_dapm_kcontrol_widget(kcontrol);
 	struct snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	struct wcd938x_priv *wcd938x = NULL;
 	u32 mode_val;
-	u32 path = 0;
+	int path = 0;
 
-	if (!widget || !widget->name || !wcd938x || !component)
+	if (!component)
+		return -EINVAL;
+
+	wcd938x  = snd_soc_component_get_drvdata(component);
+
+	if (!widget || !widget->name || !wcd938x)
 		return -EINVAL;
 
 	path = wcd938x_tx_path_get(widget->name);
+	if (path < 0 || path >= TX_ADC_MAX)
+		return -EINVAL;
+
 	mode_val = ucontrol->value.enumerated.item[0];
 
 	dev_dbg(component->dev, "%s: mode: %d\n", __func__, mode_val);
