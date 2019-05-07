@@ -56,6 +56,8 @@
 
 #define NSS_1x1_MODE 1
 #define NSS_2x2_MODE 2
+#define NSS_3x3_MODE 3
+#define NSS_4x4_MODE 4
 #define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
 
 /* QCN IE definitions */

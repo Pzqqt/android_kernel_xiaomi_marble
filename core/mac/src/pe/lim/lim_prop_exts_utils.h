@@ -56,4 +56,15 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 
+/**
+ * lim_objmgr_update_vdev_nss() - update nss in vdev object
+ * @psoc: Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ * @nss: nss
+ *
+ * Return: None
+ */
+void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t nss);
+
 #endif /* __LIM_PROP_EXTS_UTILS_H */

@@ -159,8 +159,8 @@ static void lim_check_he_ldpc_cap(struct pe_session *session,
 {}
 #endif
 
-static void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
-				       uint8_t vdev_id, uint8_t nss)
+void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t nss)
 {
 	struct wlan_objmgr_vdev *vdev;
 

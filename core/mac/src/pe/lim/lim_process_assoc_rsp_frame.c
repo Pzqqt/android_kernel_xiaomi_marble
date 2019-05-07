@@ -511,6 +511,39 @@ lim_handle_assoc_reject_status(struct mac_context *mac_ctx,
 #endif
 
 /**
+ * lim_get_nss_supported_by_ap() - finds out nss from AP's beacons
+ * @vht_caps: VHT capabilities
+ * @ht_caps: HT capabilities
+ *
+ * Return: nss advertised by AP in beacon
+ */
+static uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
+					   tDot11fIEHTCaps *ht_caps)
+{
+	if (vht_caps->present) {
+		if ((vht_caps->rxMCSMap & 0xC0) != 0xC0)
+			return NSS_4x4_MODE;
+
+		if ((vht_caps->rxMCSMap & 0x30) != 0x30)
+			return NSS_3x3_MODE;
+
+		if ((vht_caps->rxMCSMap & 0x0C) != 0x0C)
+			return NSS_2x2_MODE;
+	} else if (ht_caps->present) {
+		if (ht_caps->supportedMCSSet[3])
+			return NSS_4x4_MODE;
+
+		if (ht_caps->supportedMCSSet[2])
+			return NSS_3x3_MODE;
+
+		if (ht_caps->supportedMCSSet[1])
+			return NSS_2x2_MODE;
+	}
+
+	return NSS_1x1_MODE;
+}
+
+/**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
  * @rx_packet_info    - A pointer to Rx packet info structure
@@ -541,6 +574,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	uint8_t sme_sessionid = 0;
 	struct csr_roam_session *roam_session;
 #endif
+	uint8_t ap_nss;
+
 	/* Initialize status code to success. */
 	if (lim_is_roam_synch_in_progress(session_entry))
 		hdr = (tpSirMacMgmtHdr) mac_ctx->roam.pReassocResp;
@@ -842,6 +877,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			session_entry, assoc_rsp->statusCode ? QDF_STATUS_E_FAILURE :
 			QDF_STATUS_SUCCESS, assoc_rsp->statusCode);
 
+	ap_nss = lim_get_nss_supported_by_ap(&assoc_rsp->VHTCaps,
+					     &assoc_rsp->HTCaps);
+
 	if (subtype == LIM_REASSOC) {
 		pe_debug("Successfully Reassociated with BSS");
 #ifdef FEATURE_WLAN_ESE
@@ -877,6 +915,14 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 				session_entry, false);
 			goto assocReject;
 		}
+
+		if (ap_nss < session_entry->nss) {
+			session_entry->nss = ap_nss;
+			lim_objmgr_update_vdev_nss(mac_ctx->psoc,
+						   session_entry->smeSessionId,
+						   ap_nss);
+		}
+
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
 			lim_is_roam_synch_in_progress(session_entry)) {
@@ -962,6 +1008,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	/* Delete Pre-auth context for the associated BSS */
 	if (lim_search_pre_auth_list(mac_ctx, hdr->sa))
 		lim_delete_pre_auth_node(mac_ctx, hdr->sa);
+
+	if (ap_nss < session_entry->nss) {
+		session_entry->nss = ap_nss;
+		lim_objmgr_update_vdev_nss(mac_ctx->psoc,
+					   session_entry->smeSessionId,
+					   ap_nss);
+	}
 
 	lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp, session_entry);
 	/*

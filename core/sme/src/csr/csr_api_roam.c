@@ -8785,6 +8785,11 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 #endif
 		}
 
+		if (pSmeJoinRsp->nss < session_ptr->nss) {
+			session_ptr->nss = pSmeJoinRsp->nss;
+			session_ptr->vdev_nss = pSmeJoinRsp->nss;
+		}
+
 		session_ptr->supported_nss_1x1 =
 			pSmeJoinRsp->supported_nss_1x1;
 		sme_debug("SME session supported nss: %d",
@@ -9199,6 +9204,10 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(struct mac_context *mac
 		result = eCsrReassocSuccess;
 		csr_session = CSR_GET_SESSION(mac, pSmeJoinRsp->sessionId);
 		if (csr_session) {
+			if (pSmeJoinRsp->nss < csr_session->nss) {
+				csr_session->nss = pSmeJoinRsp->nss;
+				csr_session->vdev_nss = pSmeJoinRsp->nss;
+			}
 			csr_session->supported_nss_1x1 =
 				pSmeJoinRsp->supported_nss_1x1;
 			sme_debug("SME session supported nss: %d",
@@ -15310,6 +15319,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	bool bvalue = 0;
 	eCsrAuthType akm;
+	bool force_max_nss;
+	uint8_t ap_nss;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15414,32 +15425,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			dot11mode = MLME_DOT11_MODE_11N;
 		}
 
-		if (IS_5G_CH(pBssDescription->channelId))
-			vdev_type_nss = &mac->vdev_type_nss_5g;
-		else
-			vdev_type_nss = &mac->vdev_type_nss_2g;
-		if (pSession->pCurRoamProfile->csrPersona ==
-		    QDF_P2P_CLIENT_MODE)
-			pSession->vdev_nss = vdev_type_nss->p2p_cli;
-		else
-			pSession->vdev_nss = vdev_type_nss->sta;
-		pSession->nss = pSession->vdev_nss;
-
-		if (pSession->nss > csr_get_nss_supported_by_sta_and_ap(
-						&pIes->VHTCaps,
-						&pIes->HTCaps, dot11mode)) {
-			pSession->nss = csr_get_nss_supported_by_sta_and_ap(
-						&pIes->VHTCaps, &pIes->HTCaps,
-						dot11mode);
-			pSession->vdev_nss = pSession->nss;
-		}
-
-		if (!mac->mlme_cfg->vht_caps.vht_cap_info.enable2x2)
-			pSession->nss = 1;
-
-		if (pSession->nss == 1)
-			pSession->supported_nss_1x1 = true;
-
 		ieLen = csr_get_ielen_from_bss_description(pBssDescription);
 
 		/* Dump the Vendor Specific IEs*/
@@ -15460,6 +15445,38 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 					IS_24G_CH(pBssDescription->channelId);
 		vendor_ap_search_attr.enable_5g =
 					IS_5G_CH(pBssDescription->channelId);
+
+		if (IS_5G_CH(pBssDescription->channelId))
+			vdev_type_nss = &mac->vdev_type_nss_5g;
+		else
+			vdev_type_nss = &mac->vdev_type_nss_2g;
+		if (pSession->pCurRoamProfile->csrPersona ==
+		    QDF_P2P_CLIENT_MODE)
+			pSession->vdev_nss = vdev_type_nss->p2p_cli;
+		else
+			pSession->vdev_nss = vdev_type_nss->sta;
+		pSession->nss = pSession->vdev_nss;
+
+		force_max_nss = ucfg_action_oui_search(mac->psoc,
+						&vendor_ap_search_attr,
+						ACTION_OUI_FORCE_MAX_NSS);
+
+		if (!mac->mlme_cfg->vht_caps.vht_cap_info.enable2x2) {
+			force_max_nss = false;
+			pSession->nss = 1;
+		}
+
+		if (!force_max_nss)
+			ap_nss = csr_get_nss_supported_by_sta_and_ap(
+						&pIes->VHTCaps,
+						&pIes->HTCaps, dot11mode);
+		if (!force_max_nss && pSession->nss > ap_nss) {
+			pSession->nss = ap_nss;
+			pSession->vdev_nss = pSession->nss;
+		}
+
+		if (pSession->nss == 1)
+			pSession->supported_nss_1x1 = true;
 
 		is_vendor_ap_present =
 				ucfg_action_oui_search(mac->psoc,
