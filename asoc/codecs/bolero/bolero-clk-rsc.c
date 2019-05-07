@@ -326,6 +326,10 @@ void bolero_clk_rsc_fs_gen_request(struct device *dev, bool enable)
 		return;
 	}
 	regmap = dev_get_regmap(priv->dev->parent, NULL);
+	if (!regmap) {
+		pr_err("%s: regmap is null\n", __func__);
+		return;
+	}
 	if (enable) {
 		if (priv->reg_seq_en_cnt++ == 0) {
 			for (i = 0; i < (priv->num_fs_reg * 2); i += 2) {
@@ -495,6 +499,10 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 	}
 	clk_name_array = devm_kzalloc(&pdev->dev, clk_cnt * sizeof(char *),
 					  GFP_KERNEL);
+	if (!clk_name_array) {
+		ret = -ENOMEM;
+		goto err;
+	}
 
 	ret = of_property_read_string_array(pdev->dev.of_node, "clock-names",
 					clk_name_array, clk_cnt);
