@@ -66,8 +66,6 @@
 #define MAX_PHYS_ENCODERS_PER_VIRTUAL \
 	(MAX_H_TILES_PER_DISPLAY * NUM_PHYS_ENCODER_TYPES)
 
-#define MAX_CHANNELS_PER_ENC 2
-
 #define MISR_BUFF_SIZE			256
 
 #define IDLE_SHORT_TIMEOUT	1
@@ -4782,6 +4780,32 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error)
 	}
 
 	SDE_ATRACE_END("encoder_kickoff");
+}
+
+void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
+			struct sde_hw_pp_vsync_info *info)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *phys;
+	int i, ret;
+
+	if (!drm_enc || !info)
+		return;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+
+	for (i = 0; i < sde_enc->num_phys_encs; i++) {
+		phys = sde_enc->phys_encs[i];
+		if (phys && phys->hw_intf && phys->hw_pp
+				&& phys->hw_intf->ops.get_vsync_info) {
+			ret = phys->hw_intf->ops.get_vsync_info(
+						phys->hw_intf, &info[i]);
+			if (!ret) {
+				info[i].pp_idx = phys->hw_pp->idx - PINGPONG_0;
+				info[i].intf_idx = phys->hw_intf->idx - INTF_0;
+			}
+		}
+	}
 }
 
 int sde_encoder_helper_reset_mixers(struct sde_encoder_phys *phys_enc,
