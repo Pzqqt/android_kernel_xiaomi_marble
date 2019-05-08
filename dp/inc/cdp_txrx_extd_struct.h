@@ -22,14 +22,15 @@
 #define CDP_MAX_RX_CHAINS 8
 
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
+
+#define RX_ENH_CB_BUF_SIZE 0
+#define RX_ENH_CB_BUF_RESERVATION 256
+#define RX_ENH_CB_BUF_ALIGNMENT 4
+
 /**
  * struct cdp_rx_indication_mpdu_info - Rx MPDU info
  * @ppdu_id: PPDU Id
  * @duration: PPDU duration
- * @first_data_seq_ctrl: Sequence control field of first data frame
- * @ltf_size: ltf_size
- * @stbc: When set, STBC rate was used
- * @he_re: he_re (range extension)
  * @bw: Bandwidth
  *       <enum 0 bw_20_MHz>
  *       <enum 1 bw_40_MHz>
@@ -42,7 +43,6 @@
  *       <enum 1     0_4_us_sgi > Legacy short GI
  *       <enum 2     1_6_us_sgi > HE related GI
  *       <enum 3     3_2_us_sgi > HE
- * @dcm: dcm
  * @ldpc: ldpc
  * @fcs_err: FCS error
  * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
@@ -58,11 +58,7 @@
 struct cdp_rx_indication_mpdu_info {
 	uint32_t ppdu_id;
 	uint16_t duration;
-	uint16_t first_data_seq_ctrl;
-	uint64_t ltf_size:2,
-		 stbc:1,
-		 he_re:1,
-		 bw:4,
+	uint64_t bw:4,
 		 ofdma_info_valid:1,
 		 ofdma_ru_start_index:7,
 		 ofdma_ru_width:7,
@@ -70,7 +66,6 @@ struct cdp_rx_indication_mpdu_info {
 		 mcs:4,
 		 preamble:4,
 		 gi:4,
-		 dcm:1,
 		 ldpc:1,
 		 fcs_err:1,
 		 ppdu_type:5,
@@ -87,8 +82,7 @@ struct cdp_rx_indication_mpdu_info {
 /**
  * struct cdp_rx_indication_mpdu- Rx MPDU plus MPDU info
  * @mpdu_info: defined in cdp_rx_indication_mpdu_info
- * @data: skb chain of a MPDU. The first of 128 Byte of MPDU
- *        chained with first of 128 Byte of MSDUs.
+ * @nbuf: nbuf of mpdu control block
  */
 struct cdp_rx_indication_mpdu {
 	struct cdp_rx_indication_mpdu_info mpdu_info;

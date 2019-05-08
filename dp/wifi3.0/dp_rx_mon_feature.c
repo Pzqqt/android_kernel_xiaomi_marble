@@ -29,6 +29,7 @@
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
+
 static inline void
 dp_rx_free_msdu_list(struct msdu_list *msdu_list)
 {
@@ -46,8 +47,9 @@ dp_rx_free_msdu_list(struct msdu_list *msdu_list)
  *
  * Return: none
  */
-static inline void dp_nbuf_set_data_and_len(qdf_nbuf_t buf, unsigned char *data
-					    , int len)
+static inline void
+dp_nbuf_set_data_and_len(qdf_nbuf_t buf, unsigned char *data,
+			 int len)
 {
 	qdf_nbuf_set_data_pointer(buf, data);
 	qdf_nbuf_set_len(buf, len);
@@ -88,7 +90,6 @@ dp_rx_populate_cdp_indication_mpdu_info(
 	cdp_mpdu_info->ppdu_type = ppdu_info->rx_status.reception_type;
 	cdp_mpdu_info->rssi_comb = ppdu_info->rx_status.rssi_comb;
 	cdp_mpdu_info->nf = ppdu_info->rx_status.chan_noise_floor;
-	cdp_mpdu_info->timestamp = ppdu_info->rx_status.tsft;
 
 	if (ppdu_info->rx_status.reception_type == HAL_RX_TYPE_MU_OFDMA) {
 		cdp_mpdu_info->nss = ppdu_info->rx_user_status[user].nss;
@@ -113,7 +114,7 @@ QDF_STATUS
 dp_rx_handle_enh_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 			 struct hal_rx_ppdu_info *ppdu_info)
 {
-	qdf_nbuf_t  nbuf;
+	qdf_nbuf_t  mpdu_head;
 	uint32_t user;
 	qdf_nbuf_queue_t *mpdu_q;
 	struct cdp_rx_indication_mpdu *mpdu_ind;
@@ -132,10 +133,12 @@ dp_rx_handle_enh_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 		dp_rx_populate_cdp_indication_mpdu_info(
 			pdev, &pdev->ppdu_info, mpdu_info, user);
 
-		while (!qdf_nbuf_is_queue_empty(mpdu_q)) {
-			nbuf = qdf_nbuf_queue_remove(mpdu_q);
-			mpdu_ind->nbuf = nbuf;
-			mpdu_info->fcs_err = QDF_NBUF_CB_RX_FCS_ERR(nbuf);
+		while ((mpdu_head = qdf_nbuf_queue_remove(mpdu_q))) {
+
+			mpdu_ind->nbuf = mpdu_head;
+			mpdu_info->fcs_err =
+				QDF_NBUF_CB_RX_FCS_ERR(mpdu_head);
+
 			dp_wdi_event_handler(WDI_EVENT_RX_MPDU,
 					     soc, mpdu_ind, HTT_INVALID_PEER,
 					     WDI_NO_VAL, pdev->pdev_id);
@@ -168,6 +171,8 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 	qdf_nbuf_t nbuf;
 	struct msdu_list *msdu_list;
 	uint32_t user_id;
+	struct dp_soc *soc;
+	qdf_nbuf_t mpdu_head;
 
 	if (rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_DISABLED)
 		return;
@@ -178,6 +183,7 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 	    (rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU_MSDU) ||
 	    ((rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU) &&
 	    pdev->is_mpdu_hdr[user_id]))) {
+
 		if (*nbuf_used) {
 			nbuf = qdf_nbuf_clone(status_nbuf);
 		} else {
@@ -185,40 +191,53 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 			nbuf = status_nbuf;
 		}
 
-		dp_nbuf_set_data_and_len(nbuf, ppdu_info->data,
-					  ppdu_info->hdr_len - 4);
+		if (!nbuf)
+			return;
 
+		dp_nbuf_set_data_and_len(nbuf, ppdu_info->data,
+					 ppdu_info->hdr_len
+					 - 4);
 		if (pdev->is_mpdu_hdr[user_id]) {
+			soc = pdev->soc;
+			mpdu_head = qdf_nbuf_alloc(soc->osdev,
+				RX_ENH_CB_BUF_SIZE + RX_ENH_CB_BUF_RESERVATION,
+				RX_ENH_CB_BUF_RESERVATION,
+				RX_ENH_CB_BUF_ALIGNMENT,
+				FALSE);
+
+			if (mpdu_head == NULL)
+				return;
+
 			qdf_nbuf_queue_add(&pdev->mpdu_q[user_id],
-					   nbuf);
+					   mpdu_head);
 			pdev->is_mpdu_hdr[user_id] = false;
-		} else {
-			msdu_list = &pdev->msdu_list[user_id];
-			if (!msdu_list->head)
-				msdu_list->head = nbuf;
-			else
-				msdu_list->tail->next = nbuf;
-			msdu_list->tail = nbuf;
-			msdu_list->sum_len += qdf_nbuf_len(nbuf);
 		}
+		msdu_list = &pdev->msdu_list[user_id];
+		if (!msdu_list->head)
+			msdu_list->head = nbuf;
+		else
+			msdu_list->tail->next = nbuf;
+		msdu_list->tail = nbuf;
+		msdu_list->sum_len += qdf_nbuf_len(nbuf);
 	}
 
 	if (tlv_status == HAL_TLV_STATUS_MPDU_END) {
 		msdu_list = &pdev->msdu_list[user_id];
-		nbuf = qdf_nbuf_queue_last(&pdev->mpdu_q[user_id]);
+		mpdu_head = qdf_nbuf_queue_last(&pdev->mpdu_q[user_id]);
 
-		if (nbuf) {
-			qdf_nbuf_append_ext_list(nbuf,
+		if (mpdu_head) {
+			qdf_nbuf_append_ext_list(mpdu_head,
 						 msdu_list->head,
 						 msdu_list->sum_len);
 			msdu_list->head = NULL;
 			msdu_list->tail = NULL;
 			msdu_list->sum_len = 0;
-			QDF_NBUF_CB_RX_FCS_ERR(nbuf) =  ppdu_info->fcs_err;
-			pdev->is_mpdu_hdr[user_id] = true;
+			QDF_NBUF_CB_RX_FCS_ERR(mpdu_head)
+					       =  ppdu_info->fcs_err;
 		} else {
 			dp_rx_free_msdu_list(msdu_list);
 		}
+		pdev->is_mpdu_hdr[user_id] = true;
 	}
 }
 
