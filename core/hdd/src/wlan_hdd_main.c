@@ -685,14 +685,6 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 		}
 	}
 
-	if (WLAN_REG_IS_5GHZ_CH(chan_number)) {
-		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_number == 165) &&
-				(chan_bw != CH_WIDTH_MAX)) {
-			hdd_err("Only BW20 possible on channel 165");
-			return -EINVAL;
-		}
-	}
-
 	return 0;
 }
 
