@@ -1378,6 +1378,9 @@ typedef enum {
     /* provide LTE-Coex antenna sharing info */
     WMI_VDEV_GET_MWS_COEX_ANTENNA_SHARING_STATE_EVENTID,
 
+    /* Event to handle FW offloaded mgmt packets */
+    WMI_VDEV_MGMT_OFFLOAD_EVENTID,
+
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -3041,6 +3044,12 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_S 26
     #define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_M 0x4000000
 
+    /*
+     * If this BIT is set, then the target should support Packet capture(SMART MU FR)
+     */
+    #define WMI_RSRC_CFG_FLAG_PACKET_CAPTURE_SUPPORT_S 27
+    #define WMI_RSRC_CFG_FLAG_PACKET_CAPTURE_SUPPORT_M 0x8000000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3313,6 +3322,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), TX_COMPLETION_TX_TSF64_ENABLE, (value))
 #define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), TX_COMPLETION_TX_TSF64_ENABLE)
+
+#define WMI_RSRC_CFG_FLAG_PACKET_CAPTURE_SUPPORT_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), PACKET_CAPTURE_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_PACKET_CAPTURE_SUPPORT_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), PACKET_CAPTURE_SUPPORT)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -4038,7 +4052,7 @@ typedef struct {
     /** length of the frame */
     A_UINT32 buf_len;
     /** rx status */
-    A_UINT32 status;
+    A_UINT32 status; /* capture mode indication */
     /** RSSI of PRI 20MHz for each chain. */
     A_UINT32 rssi_ctl[ATH_MAX_ANTENNA];
     /** information about the management frame e.g. can give a scan source for a scan result mgmt frame */
@@ -4077,6 +4091,83 @@ typedef struct {
  *  wmi_rssi_ctl_ext rssi_ctl_ext;
  */
 } wmi_mgmt_rx_hdr;
+
+typedef enum {
+    PKT_CAPTURE_MODE_DISABLE = 0,
+    PKT_CAPTURE_MODE_MGMT_ONLY,
+    PKT_CAPTURE_MODE_DATA_ONLY,
+    PKT_CAPTURE_MODE_DATA_MGMT,
+} WMI_PKT_CAPTURE_MODE_CONFIG;
+
+/* This information sending to host during offloaded MGMT local TX and host TX */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_hdr */
+    /* channel frequency in MHz */
+    A_UINT32 chan_freq;
+    /** snr information used to cal rssi in dB */
+    A_UINT32 snr;
+    /** Rate kbps */
+    A_UINT32 rate_kbps;
+    /** phy mode WLAN_PHY_MODE */
+    A_UINT32 phy_mode;
+    /** length of the frame in bytes */
+    A_UINT32 buf_len;
+    /** status:
+     * 0x00: CRC ERR
+     * 0x08: DECRYPT ERR
+     * 0x10: MIC ERR
+     * 0x20: KEY CACHE MISS
+     */
+    A_UINT32 status;
+    /** flags:
+     * Information about the management frame e.g. can give a scan source
+     * for a scan result mgmt frame
+     * Refer to WMI_MGMT_RX_HDR_ definitions.
+     * ex: WMI_MGMT_RX_HDR_EXTSCAN,WMI_MGMT_RX_HDR_ENLO
+     */
+    A_UINT32 flags;
+    /** combined RSSI, i.e. the sum of the snr + noise floor (dBm units) */
+    A_INT32 rssi;
+    /** delta between local TSF (TSF timestamp when frame was RXd)
+     *  and remote TSF (TSF timestamp in the IE for mgmt frame -
+     *  beacon, proberesp for example). If remote TSF is not available,
+     *  delta is set to 0.
+     *  Although tsf_delta is stored as A_UINT32, it can be negative,
+     *  and thus would need to be sign-extended if added to a value
+     *  larger than 32 bits.
+     */
+    A_UINT32 tsf_delta;
+
+    /* The lower 32 bits of the TSF (tsf_l32) is copied by FW from
+     * TSF timestamp in the TX MAC descriptor provided by HW.
+     */
+    A_UINT32 tsf_l32;
+
+    /* The upper 32 bits of the TSF (tsf_u32) is copied by FW from
+     * TSF timestamp in the TX MAC descriptor provided by HW.
+     */
+    A_UINT32 tsf_u32;
+
+    /** pdev_id for identifying the MAC the tx mgmt frame transmitted.
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+
+    A_UINT32 direction; /* tx:0,rx:1*/
+
+    /** tx_status:
+     * 0: xmit ok
+     * 1: excessive retries
+     * 2: blocked by tx filtering
+     * 4: fifo underrun
+     * 8: swabort
+     */
+    A_UINT32 tx_status;
+
+/* This TLV may be followed by array of bytes:
+ *   A_UINT8 bufp[]; <-- management frame buffer
+ */
+} wmi_mgmt_hdr;
 
 /*
  * Instead of universally increasing the RX_HDR_HEADROOM size which may cause problems for older targets,
@@ -9696,6 +9787,13 @@ typedef enum {
      */
     WMI_VDEV_PARAM_NTH_BEACON_TO_HOST,                    /* 0x92 */
 
+    /**
+     * To capture the MGMT OR DATA OR BOTH packets.
+     * Refer to enum WMI_PKT_CAPTURE_MODE_CONFIG for specifications of
+     * which parameter value enables which kind of packet captures.
+     */
+    WMI_VDEV_PARAM_PACKET_CAPTURE_MODE,         /* 0x93 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -13339,6 +13437,7 @@ typedef enum wake_reason_e {
     WOW_REASON_WLAN_MD, /* motion detected */
     WOW_REASON_WLAN_BL, /* baselining done */
     WOW_REASON_NTH_BCN_OFLD, /* nth beacon forward to host */
+    WOW_REASON_PKT_CAPTURE_MODE_WAKE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
@@ -13796,6 +13895,7 @@ typedef struct {
 #define WMI_RXERR_DECRYPT           0x08    /* non-Michael decrypt error */
 #define WMI_RXERR_MIC               0x10    /* Michael MIC decrypt error */
 #define WMI_RXERR_KEY_CACHE_MISS    0x20    /* No/incorrect key matter in h/w */
+#define WMI_RX_OFFLOAD_MON_MODE     0x40    /* Offload dropped mgmt pkt's for only in capture mode*/
 
 typedef enum {
     PKT_PWR_SAVE_PAID_MATCH =           0x00000001,

@@ -983,6 +983,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_wlanfw_iface_limit_param,
     WMITLV_TAG_STRUC_wmi_roam_dsm_filter_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_bssid_disallow_list_config_param,
+    WMITLV_TAG_STRUC_wmi_mgmt_hdr,
 } WMITLV_TAG_ID;
 
 /*
@@ -1608,6 +1609,7 @@ typedef enum {
     OP(WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID) \
     OP(WMI_PDEV_RAP_INFO_EVENTID) \
     OP(WMI_IFACE_COMBINATION_IND_EVENTID) \
+    OP(WMI_VDEV_MGMT_OFFLOAD_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4139,7 +4141,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TX_PAUSE_EVENTID);
 
 /* Mgmt TX completion event */
 #define WMITLV_TABLE_WMI_MGMT_TX_COMPLETION_EVENTID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_event_fixed_param, wmi_mgmt_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_tx_compl_event_fixed_param, wmi_mgmt_tx_compl_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_hdr, mgmt_hdr, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_COMPLETION_EVENTID);
 
 /* offchan data TX completion event */
@@ -4153,7 +4156,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, desc_ids, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, status, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ppdu_id, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ack_rssi, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ack_rssi, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_mgmt_hdr, mgmt_hdr, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID);
 
 /* VDEV Start response Event */
@@ -5367,6 +5371,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_COLD_BOOT_CAL_DATA_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_RAP_INFO_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_rap_info_event_fixed_param, wmi_pdev_rap_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_RAP_INFO_EVENTID);
+
+/* Offload TX mgmt frames */
+#define WMITLV_TABLE_WMI_VDEV_MGMT_OFFLOAD_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_hdr, wmi_mgmt_hdr, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_MGMT_OFFLOAD_EVENTID);
 
 #ifdef __cplusplus
 }
