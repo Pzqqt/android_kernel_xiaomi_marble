@@ -697,6 +697,8 @@ typedef enum {
     WMI_ROAM_DEAUTH_CONFIG_CMDID,
     /** Configure idle roam trigger parameters */
     WMI_ROAM_IDLE_CONFIG_CMDID,
+    /** roaming filter cmd with DSM filters along with existing roam filters */
+    WMI_ROAM_DSM_FILTER_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -3001,6 +3003,44 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_S 23
     #define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_M 0x800000
 
+    /*
+     * If the THREE_WAY_COEX_CONFIG_LEGACY flag is set, the target will use
+     * the configuration parameters given by Host driver to WLAN FW and
+     * apply them along with the existing CoEx Weights Override logic to
+     * prioritize the WLAN-BT-Zigbee packets accordingly.
+     *
+     * The host shall only set the THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT
+     * RSRC_CFG flag if the target has set the WMI_SERVICE
+     * THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT flag.
+     *
+     * The logic to send GPM to BT-SOC with BT-ZB priorities remains the same.
+     */
+    #define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_S 24
+    #define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_M 0x1000000
+
+    /*
+     * If the THREE_WAY_COEX_CONFIG_OVERRIDE flag is set, the target will use
+     * the configuration parameters given by Host driver to WLAN FW and
+     * apply them by OVERRIDing the existing CoEx Weights Override logic to
+     * prioritize the WLAN-BT-Zigbee packets accordingly.
+     *
+     * The host shall only set the THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT
+     * RSRC_CFG flag if the target has set the WMI_SERVICE
+     * THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT flag.
+     *
+     * The logic to send GPM to BT-SOC with BT-ZB priorities remains the same.
+     */
+    #define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT_S 25
+    #define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT_M 0x2000000
+
+    /*
+     * If the TX_COMPLETION_TX_TSF64 flag is set, the target should
+     * populate the htt_tx_compl_ind_append_tx_tsf64 array within the
+     * HTT_T2H TX_COMPL_IND message.
+     */
+    #define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_S 26
+    #define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_M 0x4000000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3259,6 +3299,20 @@ typedef struct {
 #define WMI_RSRC_CFG_FLAG_VIDEO_OVER_WIFI_ENABLE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), VIDEO_OVER_WIFI_ENABLE)
 
+#define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), THREE_WAY_COEX_CONFIG_LEGACY_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), THREE_WAY_COEX_CONFIG_OVERRIDE_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), TX_COMPLETION_TX_TSF64_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_TX_COMPLETION_TX_TSF64_ENABLE_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), TX_COMPLETION_TX_TSF64_ENABLE)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -20343,6 +20397,10 @@ typedef struct {
      */
     A_UINT32 mac_id;
     A_UINT32 mac_id_valid;
+    /* low 32 bits of wlan global tsf */
+    A_UINT32 wlan_global_tsf_low;
+    /* high 32 bits of wlan global tsf */
+    A_UINT32 wlan_global_tsf_high;
 } wmi_vdev_tsf_report_event_fixed_param;
 
 /* ie_id values:
@@ -23833,6 +23891,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_DEAUTH_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_IDLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_IDLE_TRIGGER_MONITOR_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_DSM_FILTER_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -24459,13 +24518,21 @@ typedef struct {
 #define TWT_EN_DIS_FLAGS_GET_BTWT(flag)         WMI_GET_BITS(flag, 0, 1)
 #define TWT_EN_DIS_FLAGS_SET_BTWT(flag, val)    WMI_SET_BITS(flag, 0, 1, val)
 
+/* legacy MBSSID enable/disable */
+#define TWT_EN_DIS_FLAGS_GET_L_MBSSID(flag)       WMI_GET_BITS(flag, 1, 1)
+#define TWT_EN_DIS_FLAGS_SET_L_MBSSID(flag, val)  WMI_SET_BITS(flag, 1, 1, val)
+
+/* 11ax MBSSID enable/disable */
+#define TWT_EN_DIS_FLAGS_GET_AX_MBSSID(flag)      WMI_GET_BITS(flag, 2, 1)
+#define TWT_EN_DIS_FLAGS_SET_AX_MBSSID(flag, val) WMI_SET_BITS(flag, 2, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param  */
     /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0
      */
     A_UINT32 pdev_id;
     A_UINT32 sta_cong_timer_ms;     /* STA TWT congestion timer TO value in terms of ms */
-    A_UINT32 mbss_support;          /* Flag indicating if AP TWT feature supported in MBSS mode or not */
+    A_UINT32 mbss_support;          /* Reserved */
     A_UINT32 default_slot_size;              /* This is the default value for the TWT slot setup by AP (units = microseconds) */
     A_UINT32 congestion_thresh_setup;        /* Minimum congestion required to start setting up TWT sessions */
     /*
@@ -24559,7 +24626,7 @@ typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
     wmi_mac_addr peer_macaddr;      /* peer MAC address */
-    A_UINT32 dialog_id; /* TWT dialog_id is per peer */
+    A_UINT32 dialog_id; /* TWT dialog_id (< 0xFF) is per peer, I-TWT & B-TWT use different diaglog ID */
 
     /* 1. wake_intvl_mantis must be <= 0xFFFF
      * 2. wake_intvl_us must be divided evenly by wake_intvl_mantis,
@@ -24571,10 +24638,17 @@ typedef struct {
     A_UINT32 wake_intvl_mantis;     /* TWT Wake Interval Mantissa */
 
     /* wake_dura_us must be divided evenly by 256, i.e., wake_dura_us % 256 == 0 */
-    A_UINT32 wake_dura_us;          /* TWT Wake Duration in units of us, must be <= 0xFFFF  */
+    A_UINT32 wake_dura_us;          /* TWT Wake Duration in units of us, must be <= 65280 (0xFF00) */
 
     A_UINT32 sp_offset_us;          /* this long time after TWT setup the 1st SP will start */
     A_UINT32 flags;                 /* TWT flags, refer to MACROs TWT_FLAGS_*(TWT_FLAGS_GET_CMD etc) */
+
+    /* Broadcast TWT(B-TWT) Persistence, when used in Add/update Dialog,
+     * indicates for how long(in units of TBTTs) current B-TWT session
+     * parameters will not be changed.
+     * Refer to 11ax spec session "9.4.2.199 TWT element" for more info.
+     */
+    A_UINT32 b_twt_persistence;
 } wmi_twt_add_dialog_cmd_fixed_param;
 
 /* status code of adding TWT dialog */
@@ -24604,6 +24678,12 @@ typedef struct {
     A_UINT32 vdev_id;       /* VDEV identifier */
     wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
+    /* Broadcast TWT(B-TWT) Persistence, when used in Del Dialog,
+     * indicates for how long(in units of TBTTs) current B-TWT session
+     * parameters will be present.
+     * Refer to 11ax spec session "9.4.2.199 TWT element" for more info.
+     */
+    A_UINT32 b_twt_persistence;
 } wmi_twt_del_dialog_cmd_fixed_param;
 
 /* status code of deleting TWT dialog */
@@ -24709,7 +24789,8 @@ typedef struct {
      *          12 = 10MHz
      *          (13-15 unused)
      * [15:8 ]: Reserved
-     * [31:16]: Frequency -  channel frequency of RF characteristic info (MHz)
+     * [31:16]: Frequency - Center frequency of the channel for which
+     *          the RF characterisation info applies (MHz)
      */
     A_UINT32 freq_info;
 } WMI_CHAN_RF_CHARACTERIZATION_INFO;
@@ -25042,6 +25123,60 @@ typedef enum {
      */
     WMI_IDLE_TRIGGER_MONITOR_OFF,
 } WMI_SCREEN_STATUS_NOTIFY_ID;
+
+typedef struct {
+    /** TLV tag and len; tag equals wmi_roam_dsm_filter_fixed_param */
+    A_UINT32 tlv_header;
+    /** Unique id identifying the VDEV on which new roaming filter(data stall AP mitigation) is adopted */
+    A_UINT32 vdev_id;
+    /**
+     * TLV (tag length value) parameter's following roam_dsm_filter_cmd are,
+     *
+     *  wmi_roam_bssid_disallow_list_config_param bssid_disallow_list[]; i.e array containing
+     *  all roam filter lists including the new DSM lists(avoidlist/driver_blacklist) and
+     *  existing roam lists(supplicant_blacklist/rssi_rejectlist etc.)
+     */
+} wmi_roam_dsm_filter_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bssid_disallow_list_config_param */
+    A_UINT32 tlv_header;
+    /** bssid type i.e whether bssid falls in avoid list or driver_blacklist etc.
+      see WMI_BSSID_DISALLOW_LIST_TYPE **/
+    A_UINT32 bssid_type;
+    /** mac address of disallow BSSID */
+    wmi_mac_addr bssid;
+    /** Disallow AP for certain duration, in units of milliseconds */
+    A_UINT32 remaining_disallow_duration;
+    /** AP will be allowed for candidate, when AP RSSI better than expected RSSI units in dBm */
+    A_INT32 expected_rssi;
+} wmi_roam_bssid_disallow_list_config_param;
+
+typedef enum {
+    /* USER_SPACE_BLACK_LIST
+     * Black Listed AP's by host's user space
+     */
+    WMI_BSSID_DISALLOW_USER_SPACE_BLACK_LIST = 0,
+    /* DRIVER_BLACK_LIST
+     * Black Listed AP's by host driver
+     * used for data stall migitation
+     */
+    WMI_BSSID_DISALLOW_DRIVER_BLACK_LIST,
+    /* USER_SPACE_AVOID_LIST
+     * Avoid List AP's by host's user space
+     * used for data stall migitation
+     */
+    WMI_BSSID_DISALLOW_USER_SPACE_AVOID_LIST,
+    /* DRIVER_AVOID_LIST
+     * Avoid List AP's by host driver
+     * used for data stall migitation
+     */
+    WMI_BSSID_DISALLOW_DRIVER_AVOID_LIST,
+    /* RSSI_REJECT_LIST
+     * OCE AP's
+     */
+    WMI_BSSID_DISALLOW_RSSI_REJECT_LIST,
+} WMI_BSSID_DISALLOW_LIST_TYPE;
 
 typedef struct {
     /*
