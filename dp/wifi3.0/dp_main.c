@@ -5209,10 +5209,6 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	pdev = vdev->pdev;
 	soc = pdev->soc;
 
-	peer->last_assoc_rcvd = 0;
-	peer->last_disassoc_rcvd = 0;
-	peer->last_deauth_rcvd = 0;
-
 	dp_peer_setup_get_reo_hash(vdev, &reo_dest, &hash_based);
 
 	dp_info("pdev: %d vdev :%d opmode:%u hash-based-steering:%d default-reo_dest:%u",

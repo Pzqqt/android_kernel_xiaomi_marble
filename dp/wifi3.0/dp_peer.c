@@ -2228,10 +2228,6 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
  */
 void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 {
-	peer->last_assoc_rcvd = 0;
-	peer->last_disassoc_rcvd = 0;
-	peer->last_deauth_rcvd = 0;
-
 	dp_peer_tx_cleanup(vdev, peer);
 
 	/* cleanup the Rx reorder queues for this peer */

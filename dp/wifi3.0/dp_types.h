@@ -1871,9 +1871,6 @@ struct dp_peer {
 	enum ol_txrx_peer_state state;
 	qdf_spinlock_t peer_info_lock;
 
-	qdf_time_t last_assoc_rcvd;
-	qdf_time_t last_disassoc_rcvd;
-	qdf_time_t last_deauth_rcvd;
 	/* Peer Stats */
 	struct cdp_peer_stats stats;
 
