@@ -1091,17 +1091,6 @@ static int msm_dai_q6_auxpcm_prepare(struct snd_pcm_substream *substream,
 	}
 
 	afe_open(aux_dai_data->rx_pid, &dai_data->port_config, dai_data->rate);
-	if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-		/*
-		 * send island mode config
-		 * This should be the first configuration
-		 */
-		rc = afe_send_port_island_mode(aux_dai_data->tx_pid);
-		if (rc)
-			dev_err(dai->dev, "%s: afe send island mode failed %d\n",
-				__func__, rc);
-	}
 	afe_open(aux_dai_data->tx_pid, &dai_data->port_config, dai_data->rate);
 	goto exit;
 
@@ -5029,18 +5018,6 @@ static int msm_dai_q6_mi2s_prepare(struct snd_pcm_substream *substream,
 		dai->id, port_id, dai_data->channels, dai_data->rate);
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-			/*
-			 * send island mode config.
-			 * This should be the first configuration
-			 */
-			rc = afe_send_port_island_mode(port_id);
-			if (rc)
-				dev_err(dai->dev, "%s: afe send island mode failed %d\n",
-					__func__, rc);
-		}
-
 		/* PORT START should be set if prepare called
 		 * in active state.
 		 */
@@ -8296,17 +8273,6 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 	group_ref = &tdm_group_ref[group_idx];
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-			/*
-			 * send island mode config.
-			 * This should be the first configuration
-			 */
-			rc = afe_send_port_island_mode(dai->id);
-			if (rc)
-				dev_err(dai->dev, "%s: afe send island mode failed %d\n",
-					__func__, rc);
-		}
 
 		if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
 			/* TX and RX share the same clk. So enable the clk
@@ -10573,17 +10539,6 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 	int rc = 0;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
-		if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-			/*
-			 * send island mode config.
-			 * This should be the first configuration
-			 */
-			rc = afe_send_port_island_mode(dai->id);
-			if (rc)
-				pr_err("%s: afe send island mode failed %d\n",
-					__func__, rc);
-		}
 		if ((dai->id == AFE_PORT_ID_WSA_CODEC_DMA_TX_0) &&
 			(dai_data->port_config.cdc_dma.data_format == 1))
 			dai_data->port_config.cdc_dma.data_format =

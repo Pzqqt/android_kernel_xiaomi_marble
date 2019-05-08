@@ -2258,6 +2258,13 @@ int afe_send_port_island_mode(u16 port_id)
 	u32 island_mode = 0;
 	int ret = 0;
 
+	if (!(q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4)) {
+		pr_debug("%s: AFE port[%d] API version is invalid!\n",
+				__func__, port_id);
+		return 0;
+	}
+
 	memset(&island_cfg, 0, sizeof(island_cfg));
 	memset(&param_info, 0, sizeof(param_info));
 
@@ -2306,66 +2313,105 @@ static int afe_get_vad_preroll_cfg(u16 port_id, u32 *preroll_cfg)
 	return ret;
 }
 
-static int afe_send_port_vad_cfg_params(u16 port_id)
+int afe_send_port_vad_cfg_params(u16 port_id)
 {
 	struct afe_param_id_vad_cfg_t vad_cfg;
+	struct afe_mod_enable_param vad_enable;
 	struct param_hdr_v3 param_info;
 	u32 pre_roll_cfg = 0;
 	struct firmware_cal *hwdep_cal = NULL;
 	int ret = 0;
+	uint16_t port_index = 0;
 
-	memset(&vad_cfg, 0, sizeof(vad_cfg));
-	memset(&param_info, 0, sizeof(param_info));
-
-	ret = afe_get_vad_preroll_cfg(port_id, &pre_roll_cfg);
-	if (ret) {
-		pr_err("%s: AFE port[%d] get preroll cfg is invalid!\n",
-				__func__, port_id);
-		return ret;
-	}
-	param_info.module_id = AFE_MODULE_VAD;
-	param_info.instance_id = INSTANCE_ID_0;
-	param_info.param_id = AFE_PARAM_ID_VAD_CFG;
-	param_info.param_size = sizeof(vad_cfg);
-
-	vad_cfg.vad_cfg_minor_version = AFE_API_VERSION_VAD_CFG;
-	vad_cfg.pre_roll_in_ms = pre_roll_cfg;
-
-	ret = q6afe_pack_and_set_param_in_band(port_id,
-					       q6audio_get_port_index(port_id),
-					       param_info, (u8 *) &vad_cfg);
-	if (ret) {
-		pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
-			__func__, port_id, ret);
-		return ret;
+	if (!(q6core_get_avcs_api_version_per_service(
+	APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4)) {
+		pr_err("%s: AFE port[%d]: AFE API version doesn't support VAD config\n",
+		__func__, port_id);
+		return 0;
 	}
 
-	memset(&param_info, 0, sizeof(param_info));
+	port_index = afe_get_port_index(port_id);
 
-	hwdep_cal = q6afecal_get_fw_cal(this_afe.fw_data, Q6AFE_VAD_CORE_CAL);
-	if (!hwdep_cal) {
-		pr_err("%s: error in retrieving vad core calibration",
-			__func__);
-		return -EINVAL;
+	if (this_afe.vad_cfg[port_index].is_enable) {
+		memset(&vad_cfg, 0, sizeof(vad_cfg));
+		memset(&param_info, 0, sizeof(param_info));
+
+		ret = afe_get_vad_preroll_cfg(port_id, &pre_roll_cfg);
+		if (ret) {
+			pr_err("%s: AFE port[%d] get preroll cfg is invalid!\n",
+					__func__, port_id);
+			return ret;
+		}
+		param_info.module_id = AFE_MODULE_VAD;
+		param_info.instance_id = INSTANCE_ID_0;
+		param_info.param_id = AFE_PARAM_ID_VAD_CFG;
+		param_info.param_size = sizeof(vad_cfg);
+
+		vad_cfg.vad_cfg_minor_version = AFE_API_VERSION_VAD_CFG;
+		vad_cfg.pre_roll_in_ms = pre_roll_cfg;
+
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_info, (u8 *) &vad_cfg);
+		if (ret) {
+			pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			return ret;
+		}
+
+		memset(&param_info, 0, sizeof(param_info));
+
+		hwdep_cal = q6afecal_get_fw_cal(this_afe.fw_data,
+						Q6AFE_VAD_CORE_CAL);
+		if (!hwdep_cal) {
+			pr_err("%s: error in retrieving vad core calibration",
+				__func__);
+			return -EINVAL;
+		}
+
+		param_info.module_id = AFE_MODULE_VAD;
+		param_info.instance_id = INSTANCE_ID_0;
+		param_info.param_id = AFE_PARAM_ID_VAD_CORE_CFG;
+		param_info.param_size = hwdep_cal->size;
+
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_info,
+						(u8 *) hwdep_cal->data);
+		if (ret) {
+			pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			return ret;
+		}
 	}
 
-	param_info.module_id = AFE_MODULE_VAD;
-	param_info.instance_id = INSTANCE_ID_0;
-	param_info.param_id = AFE_PARAM_ID_VAD_CORE_CFG;
-	param_info.param_size = hwdep_cal->size;
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V6) {
+		memset(&vad_enable, 0, sizeof(vad_enable));
+		memset(&param_info, 0, sizeof(param_info));
+		param_info.module_id = AFE_MODULE_VAD;
+		param_info.instance_id = INSTANCE_ID_0;
+		param_info.param_id = AFE_PARAM_ID_ENABLE;
+		param_info.param_size = sizeof(vad_enable);
 
-	ret = q6afe_pack_and_set_param_in_band(port_id,
-					q6audio_get_port_index(port_id),
-					param_info, (u8 *) hwdep_cal->data);
-	if (ret) {
-		pr_err("%s: AFE set vad cfg for port 0x%x failed %d\n",
-			__func__, port_id, ret);
-		return ret;
+		port_index = afe_get_port_index(port_id);
+		vad_enable.enable = this_afe.vad_cfg[port_index].is_enable;
+
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_info, (u8 *) &vad_enable);
+		if (ret) {
+			pr_err("%s: AFE set vad enable for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			return ret;
+		}
 	}
+
 	pr_debug("%s: AFE set preroll cfg %d vad core cfg  port 0x%x ret %d\n",
 			__func__, pre_roll_cfg, port_id, ret);
 	return ret;
 }
+EXPORT_SYMBOL(afe_send_port_vad_cfg_params);
 
 static int remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 {
@@ -3402,19 +3448,6 @@ int afe_tdm_port_start(u16 port_id, struct afe_tdm_port_config *tdm_port,
 
 	port_index = afe_get_port_index(port_id);
 
-	if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-		/* send VAD configuration if enabled */
-		if (this_afe.vad_cfg[port_index].is_enable) {
-			ret = afe_send_port_vad_cfg_params(port_id);
-			if (ret) {
-				pr_err("%s: afe send VAD config failed %d\n",
-					__func__, ret);
-				goto fail_cmd;
-			}
-		}
-	}
-
 	/* Also send the topology id here: */
 	if (!(this_afe.afe_cal_mode[port_index] == AFE_CAL_MODE_NONE)) {
 		/* One time call: only for first time */
@@ -4364,19 +4397,6 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 
 	mutex_lock(&this_afe.afe_cmd_lock);
 	port_index = afe_get_port_index(port_id);
-
-	if (q6core_get_avcs_api_version_per_service(
-		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
-		/* send VAD configuration if is enabled */
-		if (this_afe.vad_cfg[port_index].is_enable) {
-			ret = afe_send_port_vad_cfg_params(port_id);
-			if (ret) {
-				pr_err("%s: afe send VAD config failed %d\n",
-					__func__, ret);
-				goto fail_cmd;
-			}
-		}
-	}
 
 	/* Also send the topology id here: */
 	if (!(this_afe.afe_cal_mode[port_index] == AFE_CAL_MODE_NONE)) {
