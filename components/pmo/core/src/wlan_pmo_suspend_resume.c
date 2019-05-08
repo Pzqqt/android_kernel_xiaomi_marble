@@ -879,6 +879,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	void *txrx_pdev;
 	void *htc_ctx;
 	QDF_STATUS status;
+	int ret;
 	struct pmo_wow_enable_params wow_params = {0};
 
 	pmo_enter();
@@ -909,15 +910,21 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	wow_params.interface_pause = PMO_WOW_INTERFACE_PAUSE_ENABLE;
 	wow_params.resume_trigger = PMO_WOW_RESUME_TRIGGER_GPIO;
 
-	if (hif_pre_runtime_suspend(hif_ctx))
+	ret = hif_pre_runtime_suspend(hif_ctx);
+	if (ret) {
+		status = qdf_status_from_os_return(ret);
 		goto runtime_failure;
+	}
 
 	status = cdp_runtime_suspend(dp_soc, txrx_pdev);
 	if (status != QDF_STATUS_SUCCESS)
 		goto runtime_failure;
 
-	if (htc_runtime_suspend(htc_ctx))
+	ret = htc_runtime_suspend(htc_ctx);
+	if (ret) {
+		status = qdf_status_from_os_return(ret);
 		goto cdp_runtime_resume;
+	}
 
 	status = pmo_tgt_psoc_set_runtime_pm_inprogress(psoc, true);
 	if (status != QDF_STATUS_SUCCESS)
@@ -932,11 +939,19 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		goto pmo_resume_configure;
 
-	if (hif_runtime_suspend(hif_ctx))
+	ret = hif_runtime_suspend(hif_ctx);
+	if (ret) {
+		status = qdf_status_from_os_return(ret);
 		goto pmo_bus_resume;
+	}
 
-	if (pld_cb && pld_cb())
-		goto resume_hif;
+	if (pld_cb) {
+		ret = pld_cb();
+		if (ret) {
+			status = qdf_status_from_os_return(ret);
+			goto resume_hif;
+		}
+	}
 
 	hif_process_runtime_suspend_success(hif_ctx);
 
