@@ -18160,7 +18160,9 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		 *
 		 */
 		INIT_COMPLETION(adapter->roaming_comp_var);
-		if (hdd_is_roaming_in_progress(hdd_ctx)) {
+		if (hdd_is_roaming_in_progress(hdd_ctx) ||
+		    sme_neighbor_middle_of_roaming(mac_handle,
+						   adapter->vdev_id)) {
 			rc = wait_for_completion_timeout(
 				&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
