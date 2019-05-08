@@ -241,8 +241,10 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 
 	mutex_lock(&swrm->clklock);
 	if (enable) {
-		if (!swrm->dev_up)
+		if (!swrm->dev_up) {
+			ret = -ENODEV;
 			goto exit;
+		}
 		swrm->clk_ref_count++;
 		if (swrm->clk_ref_count == 1) {
 			ret = swrm->clk(swrm->handle, true);
@@ -1274,7 +1276,10 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	}
 
 	mutex_lock(&swrm->reslock);
-	swrm_clk_request(swrm, true);
+	if (swrm_clk_request(swrm, true)) {
+		mutex_unlock(&swrm->reslock);
+		goto exit;
+	}
 	mutex_unlock(&swrm->reslock);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
@@ -1420,6 +1425,7 @@ handle_irq:
 	mutex_lock(&swrm->reslock);
 	swrm_clk_request(swrm, false);
 	mutex_unlock(&swrm->reslock);
+exit:
 	swrm_unlock_sleep(swrm);
 	return ret;
 }
