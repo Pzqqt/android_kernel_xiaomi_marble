@@ -2783,6 +2783,19 @@ void lim_delete_all_peers(struct pe_session *session)
 	struct mac_context *mac_ctx = session->mac_ctx;
 	tpDphHashNode sta_ds = NULL;
 	QDF_STATUS status;
+	tSirMacAddr bc_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+	/* IBSS and NDI doesn't send Disassoc frame */
+	if (!LIM_IS_IBSS_ROLE(session) &&
+	    !LIM_IS_NDI_ROLE(session)) {
+		pe_debug("stop_bss_reason: %d", session->stop_bss_reason);
+		if (session->stop_bss_reason == eSIR_SME_MIC_COUNTER_MEASURES)
+			__lim_counter_measures(mac_ctx, session);
+		else
+			lim_send_disassoc_mgmt_frame(mac_ctx,
+				eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+				bc_addr, session, false);
+	}
 
 	for (i = 1; i < session->dph.dphHashTable.size; i++) {
 		sta_ds = dph_get_hash_entry(mac_ctx, i,
@@ -2940,20 +2953,7 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 		       pe_session->limSmeState));
 
 	pe_session->smeSessionId = smesessionId;
-
-	/* STA_IN_IBSS and NDI should NOT send Disassoc frame */
-	if (!LIM_IS_IBSS_ROLE(pe_session) &&
-	    !LIM_IS_NDI_ROLE(pe_session)) {
-		tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-
-		if (stop_bss_req.reasonCode == eSIR_SME_MIC_COUNTER_MEASURES)
-			/* Send disassoc all stations associated thru TKIP */
-			__lim_counter_measures(mac, pe_session);
-		else
-			lim_send_disassoc_mgmt_frame(mac,
-				eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-				bcAddr, pe_session, false);
-	}
+	pe_session->stop_bss_reason = stop_bss_req.reasonCode;
 
 	if (!LIM_IS_NDI_ROLE(pe_session)) {
 		/* Free the buffer allocated in START_BSS_REQ */

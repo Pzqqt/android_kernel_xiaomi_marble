@@ -54,6 +54,7 @@
 #include <wlan_crypto_global_api.h>
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 
 #define SAP_DEBUG
 static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
@@ -1758,6 +1759,53 @@ void wlansap_get_sec_channel(uint8_t sec_ch_offset,
 		  __func__, sec_ch_offset, *sec_channel);
 }
 
+#ifdef CONFIG_VDEV_SM
+static void
+wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
+				  struct sap_context *sap_ctx)
+{
+	bool is_ch_dfs = false;
+	bool cac_required;
+
+	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
+		is_ch_dfs = true;
+	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
+		if ((wlan_reg_get_channel_state(mac_ctx->pdev,
+						sap_ctx->channel) ==
+						CHANNEL_STATE_DFS) ||
+		    (wlan_reg_get_channel_state(mac_ctx->pdev,
+					sap_ctx->ch_params.center_freq_seg1 -
+					SIR_80MHZ_START_CENTER_CH_DIFF) ==
+					CHANNEL_STATE_DFS))
+			is_ch_dfs = true;
+	} else if (wlan_reg_get_channel_state(mac_ctx->pdev,
+					      sap_ctx->channel) ==
+					      CHANNEL_STATE_DFS) {
+		is_ch_dfs = true;
+	}
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: vdev id %d chan %d is_ch_dfs %d pre_cac_complete %d ignore_cac %d cac_state %d",
+		  __func__, sap_ctx->sessionId, sap_ctx->channel, is_ch_dfs,
+		  sap_ctx->pre_cac_complete, mac_ctx->sap.SapDfsInfo.ignore_cac,
+		  mac_ctx->sap.SapDfsInfo.cac_state);
+
+	if (!is_ch_dfs || sap_ctx->pre_cac_complete ||
+	    mac_ctx->sap.SapDfsInfo.ignore_cac ||
+	    (mac_ctx->sap.SapDfsInfo.cac_state == eSAP_DFS_SKIP_CAC))
+		cac_required = false;
+	else
+		cac_required = true;
+
+	mlme_set_cac_required(sap_ctx->vdev, cac_required);
+}
+#else
+static inline void
+wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
+				  struct sap_context *sap_ctx)
+{
+}
+#endif
+
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					  uint8_t target_channel)
 {
@@ -1831,6 +1879,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 	sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
 						ch_params->center_freq_seg1;
 	sap_dfs_set_current_channel(sap_ctx);
+	wlansap_set_cac_required_for_chan(mac_ctx, sap_ctx);
 
 	status = sme_roam_channel_change_req(MAC_HANDLE(mac_ctx),
 					     sap_ctx->bssid,

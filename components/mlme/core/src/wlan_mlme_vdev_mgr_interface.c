@@ -425,6 +425,33 @@ static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * ap_mlme_vdev_is_newchan_no_cac - VDEV SM CSA complete notification
+ * @vdev_mlme:  VDEV MLME comp object
+ *
+ * On CSA complete, checks whether Channel does not needs CAC period, if
+ * it doesn't need cac return SUCCESS else FAILURE
+ *
+ * Return: SUCCESS if new channel doesn't need cac
+ *         else FAILURE
+ */
+static QDF_STATUS
+ap_mlme_vdev_is_newchan_no_cac(struct vdev_mlme_obj *vdev_mlme)
+{
+	bool cac_required;
+
+	cac_required = mlme_get_cac_required(vdev_mlme->vdev);
+	mlme_legacy_debug("vdev id = %d cac_required %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id, cac_required);
+
+	if (!cac_required)
+		return QDF_STATUS_SUCCESS;
+
+	mlme_set_cac_required(vdev_mlme->vdev, false);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * ap_mlme_vdev_down_send() - callback to send vdev down req
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
@@ -691,6 +718,39 @@ bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->vdev_start_failed;
 }
 
+QDF_STATUS mlme_set_cac_required(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
+
+	mlme_priv->cac_required_for_new_channel = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_get_cac_required(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
+
+	return mlme_priv->cac_required_for_new_channel;
+}
 
 /**
  * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
@@ -818,6 +878,8 @@ static struct vdev_mlme_ops sta_mlme_ops = {
  *                                      MLME down operation
  * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
  *                                      to INIT state
+ * @mlme_vdev_is_newchan_no_cac:        callback to check if new channel is DFS
+ *                                      and cac is not required
  */
 static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_start_send = ap_mlme_vdev_start_send,
@@ -834,6 +896,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
+	.mlme_vdev_is_newchan_no_cac = ap_mlme_vdev_is_newchan_no_cac,
 };
 
 /**

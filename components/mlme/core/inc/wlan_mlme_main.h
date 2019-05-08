@@ -72,6 +72,7 @@ enum vdev_assoc_type {
  *                                   in progress
  * @vdev_start_failed: flag to indicate that vdev start failed.
  * @connection_fail: flag to indicate connection failed
+ * @cac_required_for_new_channel: if CAC is required for new channel
  * @assoc_type: vdev associate/reassociate type
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
@@ -82,6 +83,7 @@ struct mlme_legacy_priv {
 	bool hidden_ssid_restart_in_progress;
 	bool vdev_start_failed;
 	bool connection_fail;
+	bool cac_required_for_new_channel;
 	enum vdev_assoc_type assoc_type;
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;

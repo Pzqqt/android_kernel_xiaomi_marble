@@ -2940,6 +2940,8 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL
 				  ("CAC timer is running, drop disassoc from going out"));
+		if (waitForAck)
+			lim_send_disassoc_cnf(mac);
 		return;
 	}
 	smeSessionId = pe_session->smeSessionId;
@@ -2966,6 +2968,8 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("Failed to allocate %d bytes for a Disassociation",
 			nBytes);
+		if (waitForAck)
+			lim_send_disassoc_cnf(mac);
 		return;
 	}
 	/* Paranoia: */
@@ -2988,6 +2992,8 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		pe_err("Failed to pack a Disassociation (0x%08x)",
 			nStatus);
 		cds_packet_free((void *)pPacket);
+		if (waitForAck)
+			lim_send_disassoc_cnf(mac);
 		return;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_warn("There were warnings while packing a Disassociation (0x%08x)",
@@ -3117,6 +3123,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL
 				  ("CAC timer is running, drop the deauth from going out"));
+		if (waitForAck)
+			lim_send_deauth_cnf(mac);
 		return;
 	}
 	smeSessionId = pe_session->smeSessionId;
@@ -3143,6 +3151,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("Failed to allocate %d bytes for a De-Authentication",
 			nBytes);
+		if (waitForAck)
+			lim_send_deauth_cnf(mac);
 		return;
 	}
 	/* Paranoia: */
@@ -3164,6 +3174,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		pe_err("Failed to pack a DeAuthentication (0x%08x)",
 			nStatus);
 		cds_packet_free((void *)pPacket);
+		if (waitForAck)
+			lim_send_deauth_cnf(mac);
 		return;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_warn("There were warnings while packing a De-Authentication (0x%08x)",
