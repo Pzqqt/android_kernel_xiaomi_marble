@@ -130,6 +130,24 @@ mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val);
 bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * mlme_get_cac_required() - get if cac is required for new channel
+ * @vdev: vdev pointer
+ *
+ * Return: if cac is required
+ */
+bool mlme_get_cac_required(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_cac_required() - set if cac is required for new channel
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_set_cac_required(struct wlan_objmgr_vdev *vdev, bool val);
+
+/**
  * mlme_is_vdev_in_beaconning_mode() - check if vdev is beaconing mode
  * @vdev_opmode: vdev opmode
  *
