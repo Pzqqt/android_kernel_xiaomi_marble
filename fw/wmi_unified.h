@@ -13340,6 +13340,8 @@ typedef enum wake_reason_e {
     WOW_REASON_WLAN_BL, /* baselining done */
     WOW_REASON_NTH_BCN_OFLD, /* nth beacon forward to host */
 
+    /* add new WOW_REASON_ defs before this line */
+    WOW_REASON_MAX,
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
