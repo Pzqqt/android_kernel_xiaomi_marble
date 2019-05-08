@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -216,10 +216,11 @@ wmi_extract_apf_read_memory_resp_event_tlv(wmi_unified_t wmi_handle,
 			 param_buf->num_data);
 		return QDF_STATUS_E_INVAL;
 	}
-	resp->length = data_event->length;
 
-	if (resp->length)
+	if (data_event->length && param_buf->data) {
+		resp->length = data_event->length;
 		resp->data = (uint8_t *)param_buf->data;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
