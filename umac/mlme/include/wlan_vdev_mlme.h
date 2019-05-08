@@ -437,6 +437,7 @@ enum vdev_start_resp_type {
  *                                      MLME down operation
  * @mlme_vdev_notify_start_state_exit:  callback to notify on vdev start
  *                                      start state exit
+ * @mlme_vdev_is_newchan_no_cac:        callback to check CAC is required
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -505,6 +506,8 @@ struct vdev_mlme_ops {
 				struct vdev_mlme_obj *vdev_mlme,
 				struct vdev_start_response *rsp);
 	QDF_STATUS (*mlme_vdev_notify_start_state_exit)(
+				struct vdev_mlme_obj *vdev_mlme);
+	QDF_STATUS (*mlme_vdev_is_newchan_no_cac)(
 				struct vdev_mlme_obj *vdev_mlme);
 };
 
@@ -991,6 +994,28 @@ static inline QDF_STATUS mlme_vdev_notify_start_state_exit(
 	    vdev_mlme->ops->mlme_vdev_notify_start_state_exit)
 		ret = vdev_mlme->ops->mlme_vdev_notify_start_state_exit(
 								vdev_mlme);
+
+	return ret;
+}
+
+/**
+ * mlme_vdev_is_newchan_no_cac - Checks new channel requires CAC
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * API checks whether Channel needs CAC period,
+ * if yes, it moves to SUSPEND_RESTART to disconnect stations before
+ * sending RESTART to FW, otherwise, it moves to RESTART_PROGRESS substate
+ *
+ * Return: SUCCESS to move to RESTART_PROGRESS substate
+ *         FAILURE, move to SUSPEND_RESTART state
+ */
+static inline QDF_STATUS mlme_vdev_is_newchan_no_cac(
+				struct vdev_mlme_obj *vdev_mlme)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_is_newchan_no_cac)
+		ret = vdev_mlme->ops->mlme_vdev_is_newchan_no_cac(vdev_mlme);
 
 	return ret;
 }
