@@ -473,6 +473,7 @@
  * CFG_SET_TSF_PTP_OPT_TX                    (0x2)
  * CFG_SET_TSF_PTP_OPT_RAW                   (0x4)
  * CFG_SET_TSF_DBG_FS                        (0x8)
+ * CFG_SET_TSF_PTP_OPT_TSF64_TX              (0x10)
  *
  * Related: None
  *
@@ -484,6 +485,7 @@
 #define CFG_SET_TSF_PTP_OPT_TX                    (0x2)
 #define CFG_SET_TSF_PTP_OPT_RAW                   (0x4)
 #define CFG_SET_TSF_DBG_FS                        (0x8)
+#define CFG_SET_TSF_PTP_OPT_TSF64_TX              (0x10)
 
 #define CFG_SET_TSF_PTP_OPT CFG_INI_UINT( \
 		"gtsf_ptp_options", \

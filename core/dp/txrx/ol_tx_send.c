@@ -562,21 +562,29 @@ void ol_tx_flow_pool_unlock(struct ol_tx_desc_t *tx_desc)
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
-		u_int32_t *msg_word, int num_msdus)
+		u_int32_t *msg_word_header, u_int32_t **msg_word_payload,
+		int num_msdus)
 {
 	u_int32_t has_tx_tsf;
 	u_int32_t has_retry;
+
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
 	struct htt_tx_compl_ind_append_retries *retry_list = NULL;
 	int offset_dwords;
 
-	has_tx_tsf = HTT_TX_COMPL_IND_APPEND1_GET(*msg_word);
-	if (num_msdus <= 0 || !has_tx_tsf)
+	if (num_msdus <= 0)
 		return NULL;
 
-	offset_dwords = 1 + ((num_msdus + 1) >> 1);
+	has_tx_tsf = HTT_TX_COMPL_IND_APPEND1_GET(*msg_word_header);
 
-	has_retry = HTT_TX_COMPL_IND_APPEND_GET(*msg_word);
+	/* skip header and MSDUx ID part*/
+	offset_dwords = ((num_msdus + 1) >> 1);
+	*msg_word_payload += offset_dwords;
+
+	if (!has_tx_tsf)
+		return NULL;
+
+	has_retry = HTT_TX_COMPL_IND_APPEND_GET(*msg_word_header);
 	if (has_retry) {
 		int retry_index = 0;
 		int width_for_each_retry =
@@ -584,17 +592,49 @@ static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
 			3) >> 2;
 
 		retry_list = (struct htt_tx_compl_ind_append_retries *)
-			(msg_word + offset_dwords);
+			(*msg_word_payload + offset_dwords);
 		while (retry_list) {
 			if (retry_list[retry_index++].flag == 0)
 				break;
 		}
-		offset_dwords += retry_index * width_for_each_retry;
+		offset_dwords = retry_index * width_for_each_retry;
 	}
-	txtstamp_list = (struct htt_tx_compl_ind_append_tx_tstamp *)
-		(msg_word + offset_dwords);
 
+	*msg_word_payload +=  offset_dwords;
+	txtstamp_list = (struct htt_tx_compl_ind_append_tx_tstamp *)
+		(*msg_word_payload);
 	return txtstamp_list;
+}
+
+static inline
+struct htt_tx_compl_ind_append_tx_tsf64 *ol_tx_get_txtstamp64s(
+		u_int32_t *msg_word_header, u_int32_t **msg_word_payload,
+		int num_msdus)
+{
+	u_int32_t has_tx_tstamp64;
+	u_int32_t has_rssi;
+	struct htt_tx_compl_ind_append_tx_tsf64 *txtstamp64_list = NULL;
+
+	int offset_dwords = 0;
+
+	if (num_msdus <= 0)
+		return NULL;
+
+	has_tx_tstamp64 = HTT_TX_COMPL_IND_APPEND3_GET(*msg_word_header);
+	if (!has_tx_tstamp64)
+		return NULL;
+
+	/*skip MSDUx ACK RSSI part*/
+	has_rssi = HTT_TX_COMPL_IND_APPEND2_GET(*msg_word_header);
+	if (has_rssi)
+		offset_dwords = ((num_msdus + 1) >> 1);
+
+	*msg_word_payload = *msg_word_payload + offset_dwords;
+	txtstamp64_list =
+		(struct htt_tx_compl_ind_append_tx_tsf64 *)
+		(*msg_word_payload);
+
+	return txtstamp64_list;
 }
 
 static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
@@ -608,7 +648,16 @@ static inline void ol_tx_timestamp(ol_txrx_pdev_handle pdev,
 }
 #else
 static inline struct htt_tx_compl_ind_append_tx_tstamp *ol_tx_get_txtstamps(
-		u_int32_t *msg_word, int num_msdus)
+		u_int32_t *msg_word_header, u_int32_t **msg_word_payload,
+		int num_msdus)
+{
+	return NULL;
+}
+
+static inline
+struct htt_tx_compl_ind_append_tx_tsf64 *ol_tx_get_txtstamp64s(
+		u_int32_t *msg_word_header, u_int32_t **msg_word_payload,
+		int num_msdus)
 {
 	return NULL;
 }
@@ -765,17 +814,27 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 #endif
 	uint32_t is_tx_desc_freed = 0;
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
+	struct htt_tx_compl_ind_append_tx_tsf64 *txtstamp64_list = NULL;
+	u_int32_t *msg_word_header = (u_int32_t *)msg;
+	/*msg_word skip header*/
+	u_int32_t *msg_word_payload = msg_word_header + 1;
 	u_int32_t *msg_word = (u_int32_t *)msg;
 	u_int16_t *desc_ids = (u_int16_t *)(msg_word + 1);
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
 	ol_tx_desc_list tx_descs;
+	uint64_t tx_tsf64;
 
 	TAILQ_INIT(&tx_descs);
 
 	ol_tx_delay_compute(pdev, status, desc_ids, num_msdus);
-	if (status == htt_tx_status_ok)
-		txtstamp_list = ol_tx_get_txtstamps(msg_word, num_msdus);
+	if (status == htt_tx_status_ok) {
+		txtstamp_list = ol_tx_get_txtstamps(
+			msg_word_header, &msg_word_payload, num_msdus);
+		if (pdev->enable_tx_compl_tsf64)
+			txtstamp64_list = ol_tx_get_txtstamp64s(
+				msg_word_header, &msg_word_payload, num_msdus);
+	}
 
 	for (i = 0; i < num_msdus; i++) {
 		tx_desc_id = desc_ids[i];
@@ -791,7 +850,13 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
 
-		if (txtstamp_list)
+		if (txtstamp64_list) {
+			tx_tsf64 =
+			(u_int64_t)txtstamp64_list[i].tx_tsf64_high << 32 |
+			txtstamp64_list[i].tx_tsf64_low;
+
+			ol_tx_timestamp(pdev, netbuf, tx_tsf64);
+		} else if (txtstamp_list)
 			ol_tx_timestamp(pdev, netbuf,
 					(u_int64_t)txtstamp_list->timestamp[i]
 					);
@@ -801,7 +866,8 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		if (QDF_NBUF_CB_GET_PACKET_TYPE(netbuf) ==
 		    QDF_NBUF_CB_PACKET_TYPE_ARP) {
 			if (qdf_nbuf_data_is_arp_req(netbuf))
-				ol_tx_update_arp_stats(tx_desc, netbuf, status);
+				ol_tx_update_arp_stats(tx_desc, netbuf,
+						       status);
 		}
 
 		/* check tx completion notification */

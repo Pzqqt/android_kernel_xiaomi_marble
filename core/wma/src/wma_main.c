@@ -3303,6 +3303,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	target_psoc_set_htc_hdl(tgt_psoc_info, htc_handle);
 	wma_handle->cds_context = cds_context;
 	wma_handle->qdf_dev = qdf_dev;
+	wma_handle->enable_tx_compl_tsf64 =
+			cds_cfg->enable_tx_compl_tsf64;
+
 	/* Register Converged Event handlers */
 	init_deinit_register_tgt_psoc_ev_handlers(psoc);
 
@@ -6837,6 +6840,16 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	} else {
 		wlan_res_cfg->peer_unmap_conf_support = false;
 		cdp_cfg_set_peer_unmap_conf_support(soc, false);
+	}
+
+	if (wma_handle->enable_tx_compl_tsf64 &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_tx_compl_tsf64)) {
+		wlan_res_cfg->tstamp64_en = true;
+		cdp_cfg_set_tx_compl_tsf64(soc, true);
+	} else {
+		wlan_res_cfg->tstamp64_en = false;
+		cdp_cfg_set_tx_compl_tsf64(soc, false);
 	}
 
 	return 0;

@@ -396,10 +396,14 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	ptsf->tsf_high = tsf_event->tsf_high;
 	ptsf->soc_timer_low = tsf_event->qtimer_low;
 	ptsf->soc_timer_high = tsf_event->qtimer_high;
-
+	ptsf->global_tsf_low = tsf_event->wlan_global_tsf_low;
+	ptsf->global_tsf_high = tsf_event->wlan_global_tsf_high;
 	wma_nofl_debug("receive WMI_VDEV_TSF_REPORT_EVENTID on %d, tsf: %d %d",
 		       ptsf->vdev_id, ptsf->tsf_low, ptsf->tsf_high);
 
+	wma_nofl_debug("g_tsf: %d %d; soc_timer: %d %d",
+		       ptsf->global_tsf_low, ptsf->global_tsf_high,
+			   ptsf->soc_timer_low, ptsf->soc_timer_high);
 	tsf_msg.type = eWNI_SME_TSF_EVENT;
 	tsf_msg.bodyptr = ptsf;
 	tsf_msg.bodyval = 0;

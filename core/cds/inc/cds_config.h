@@ -100,6 +100,7 @@ struct cds_config_info {
 	uint8_t bandcapability;
 	bool rps_enabled;
 	uint32_t num_vdevs;
+	bool enable_tx_compl_tsf64;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK

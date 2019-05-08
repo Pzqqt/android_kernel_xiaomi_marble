@@ -261,6 +261,17 @@ bool hdd_tsf_is_dbg_fs_set(struct hdd_context *hdd)
 	else
 		return false;
 }
+
+bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd)
+{
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return tsf_ptp_options & CFG_SET_TSF_PTP_OPT_TSF64_TX;
+	else
+		return false;
+}
 #endif
 
 static enum hdd_tsf_op_result hdd_capture_tsf_internal(

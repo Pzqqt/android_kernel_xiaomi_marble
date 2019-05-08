@@ -214,6 +214,9 @@ struct hdd_config {
 	uint32_t cfg_wmi_credit_cnt;
 	uint32_t sar_version;
 	bool is_wow_disabled;
+#ifdef WLAN_FEATURE_TSF_PLUS
+	uint8_t tsf_ptp_options;
+#endif /* WLAN_FEATURE_TSF_PLUS */
 };
 
 /**

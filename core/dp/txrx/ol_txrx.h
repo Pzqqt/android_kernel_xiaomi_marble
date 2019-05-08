@@ -419,4 +419,23 @@ void ol_txrx_set_peer_unmap_conf_support(bool val);
  * return true is peer unmap conf feature is enabled else false
  */
 bool ol_txrx_get_peer_unmap_conf_support(void);
+
+/**
+ * ol_txrx_get_tx_compl_tsf64() - check tx compl tsf64 feature
+ *
+ * Check if tx compl tsf64 feature is enabled
+ *
+ * return true is tx compl tsf64 feature is enabled else false
+ */
+bool ol_txrx_get_tx_compl_tsf64(void);
+
+/**
+ * ol_txrx_set_tx_compl_tsf64() - set tx compl tsf64 feature
+ * @val - enable or disable tx compl tsf64 feature
+ *
+ * Set if tx compl tsf64 feature is supported FW
+ *
+ * return NONE
+ */
+void ol_txrx_set_tx_compl_tsf64(bool val);
 #endif /* _OL_TXRX__H_ */

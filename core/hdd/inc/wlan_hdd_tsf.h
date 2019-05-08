@@ -279,6 +279,15 @@ int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time);
 
 void hdd_capture_req_timer_expired_handler(void *arg);
 
+/**
+ * hdd_tsf_is_tsf64_tx_set() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp on tsf64 tx
+ *
+ * Return: true on enable, false on disable
+ */
+bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd);
 #else
 static inline int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 {
@@ -313,6 +322,12 @@ int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
 static inline
 void hdd_capture_req_timer_expired_handler(void *arg)
 {
+}
+
+static inline
+bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd)
+{
+	return FALSE;
 }
 #endif
 
