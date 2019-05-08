@@ -1634,6 +1634,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		reassoc_complete->ies = (csr_roaminfo->assocReqPtr +
 					 ASSOC_REQ_IE_OFFSET);
 
+		/* skip current AP address in reassoc frame */
+		if (csr_roaminfo->fReassocReq) {
+			reassoc_complete->ies_len -= QDF_MAC_ADDR_SIZE;
+			reassoc_complete->ies += QDF_MAC_ADDR_SIZE;
+		}
+
 		if (csr_roaminfo->addIELen) {
 			if (wlan_get_vendor_ie_ptr_from_oui(
 			    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
