@@ -74,6 +74,8 @@ enum dsi_op_mode {
  * @DSI_MODE_FLAG_DMS: Seamless transition is dynamic mode switch
  * @DSI_MODE_FLAG_VRR: Seamless transition is DynamicFPS.
  *                     New timing values are sent from DAL.
+ * @DSI_MODE_FLAG_POMS:
+ *         Seamless transition is dynamic panel operating mode switch
  */
 enum dsi_mode_flags {
 	DSI_MODE_FLAG_SEAMLESS			= BIT(0),
@@ -81,6 +83,7 @@ enum dsi_mode_flags {
 	DSI_MODE_FLAG_VBLANK_PRE_MODESET	= BIT(2),
 	DSI_MODE_FLAG_DMS			= BIT(3),
 	DSI_MODE_FLAG_VRR			= BIT(4),
+	DSI_MODE_FLAG_POMS			= BIT(5),
 };
 
 /**
@@ -555,12 +558,14 @@ struct dsi_display_mode_priv_info {
  * @timing:         Timing parameters for the panel.
  * @pixel_clk_khz:  Pixel clock in Khz.
  * @dsi_mode_flags: Flags to signal other drm components via private flags
+ * @panel_mode:      Panel mode
  * @priv_info:      Mode private info
  */
 struct dsi_display_mode {
 	struct dsi_mode_info timing;
 	u32 pixel_clk_khz;
 	u32 dsi_mode_flags;
+	enum dsi_op_mode panel_mode;
 	struct dsi_display_mode_priv_info *priv_info;
 };
 
