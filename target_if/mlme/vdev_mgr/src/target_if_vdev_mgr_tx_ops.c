@@ -74,6 +74,7 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
 		if (vdev_rsp->timer_status != QDF_STATUS_E_TIMEOUT)
 			qdf_timer_stop(&vdev_rsp->rsp_timer);
 
+		vdev_rsp->timer_status = QDF_STATUS_SUCCESS;
 		/*
 		 * Releasing reference taken at the time of
 		 * starting response timer
@@ -143,21 +144,6 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_init(
 		       (void *)vdev, QDF_TIMER_TYPE_WAKE_APPS);
 	mlme_debug("VDEV_%d: Response timer initialized",
 		   wlan_vdev_get_id(vdev));
-
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS target_if_vdev_mgr_rsp_timer_deinit(
-					struct wlan_objmgr_vdev *vdev,
-					qdf_timer_t *rsp_timer)
-{
-	if (!vdev || !rsp_timer) {
-		mlme_err("Invalid input");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	qdf_timer_free(rsp_timer);
-	mlme_debug("VDEV_%d: Response timer free", wlan_vdev_get_id(vdev));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -951,8 +937,6 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_sta_ps_param_send;
 	mlme_tx_ops->vdev_mgr_rsp_timer_init =
 			target_if_vdev_mgr_rsp_timer_init;
-	mlme_tx_ops->vdev_mgr_rsp_timer_deinit =
-			target_if_vdev_mgr_rsp_timer_deinit;
 	mlme_tx_ops->vdev_mgr_rsp_timer_mod =
 			target_if_vdev_mgr_rsp_timer_mod;
 	mlme_tx_ops->vdev_mgr_rsp_timer_stop =

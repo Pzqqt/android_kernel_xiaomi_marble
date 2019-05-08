@@ -187,9 +187,7 @@ QDF_STATUS tgt_vdev_mgr_delete_response_handler(
 	tx_ops = target_if_vdev_mgr_get_tx_ops(psoc);
 	status = tx_ops->vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
 						 DELETE_RESPONSE_BIT);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		tx_ops->vdev_mgr_rsp_timer_deinit(vdev, &vdev_rsp->rsp_timer);
-	} else {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("VDEV_%d: Unexpected response", rsp->vdev_id);
 		goto tgt_vdev_mgr_delete_response_handler_end;
 	}
