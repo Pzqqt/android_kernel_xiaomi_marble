@@ -185,9 +185,10 @@
  *      for a MSDU.
  * 3.66 Add HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND msg.
  *      Add PKT_CAPTURE_MODE flag within HTT_T2H TX_I_ORD_PADDR_IND msg.
+ * 3.67 Add drop threshold field to HTT_H2T RX_RING_SELECTION_CFG msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 66
+#define HTT_CURRENT_VERSION_MINOR 67
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -4793,9 +4794,9 @@ enum htt_srng_ring_id {
  *
  *    The message would appear as follows:
  *
- *    |31    27|26|25|24|23            16|15             8|7             0|
- *    |-----------------+----------------+----------------+---------------|
- *    |  rsvd1 |OV|PS|SS|     ring_id    |     pdev_id    |    msg_type   |
+ *    |31 28|27|26|25|24|23            16|15          |9 8|7             0|
+ *    |-----+--+--+--+--+----------------+------------+---+---------------|
+ *    |rsvd1|DT|OV|PS|SS|     ring_id    |     pdev_id    |    msg_type   |
  *    |-------------------------------------------------------------------|
  *    |              rsvd2               |           ring_buffer_size     |
  *    |-------------------------------------------------------------------|
@@ -4817,10 +4818,13 @@ enum htt_srng_ring_id {
  *    |-------------------------------------------------------------------|
  *    |              rsvd3               |      rx_attention_offset       |
  *    |-------------------------------------------------------------------|
+ *    |              rsvd4                            | rx_drop_threshold |
+ *    |-------------------------------------------------------------------|
  * Where:
  *     PS = pkt_swap
  *     SS = status_swap
  *     OV = rx_offsets_valid
+ *     DT = drop_thresh_valid
  * The message is interpreted as follows:
  * dword0 - b'0:7   - msg_type: This will be set to
  *                    HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG
@@ -4837,7 +4841,9 @@ enum htt_srng_ring_id {
  *                    e.g. wmac_top_reg_seq_hwioreg.h
  *          b'26    - rx_offset_valid (OV): flag to indicate rx offsets
  *                    configuration fields are valid
- *          b'27:31 - rsvd1:  reserved for future use
+ *          b'27    - drop_thresh_valid (DT): flag to indicate if the
+ *                    rx_drop_threshold field is valid
+ *          b'28:31 - rsvd1:  reserved for future use
  * dword1 - b'0:16  - ring_buffer_size: size of bufferes referenced by rx ring,
  *                    in byte units.
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
@@ -4896,12 +4902,16 @@ enum htt_srng_ring_id {
  *                    A value of 0 will be considered as ignore this config.
  *                    Refer to BUF_RING_CFG_3 defs within HW .h files,
  *                    e.g. wmac_top_reg_seq_hwioreg.h
- * dword10 - b'0:15 - rx_attention_offset: rx_attention_offset in byte units
+ * dword10- b'0:15 - rx_attention_offset: rx_attention_offset in byte units
  *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
  *                    A value of 0 will be considered as ignore this config.
  *                    Refer to BUF_RING_CFG_4 defs within HW .h files,
  *                    e.g. wmac_top_reg_seq_hwioreg.h
- *        - b'16-31 - rsvd3 for future use
+ *        - b'16:31 - rsvd3 for future use
+ * dword11- b'9:0 -   rx_drop_threshold: Threshold configured in monitor mode
+ *                    to source rings. Consumer drops packets if the available
+ *                    words in the ring falls below the configured threshold
+ *                    value.    
  */
 PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 msg_type:          8,
@@ -4910,7 +4920,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              status_swap:       1,
              pkt_swap:          1,
              rx_offsets_valid:  1,
-             rsvd1:             5;
+             drop_thresh_valid: 1,
+             rsvd1:             4;
     A_UINT32 ring_buffer_size: 16,
              rsvd2:            16;
     A_UINT32 packet_type_enable_flags_0;
@@ -4926,6 +4937,8 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
              rx_msdu_start_offset: 16;
     A_UINT32 rx_attn_offset:       16,
              rsvd3:                16;
+    A_UINT32 rx_drop_threshold:    10,
+             rsvd4:                22;
 } POSTPACK;
 
 #define HTT_RX_RING_SELECTION_CFG_SZ    (sizeof(struct htt_rx_ring_selection_cfg_t))
@@ -4983,6 +4996,17 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_OFFSETS_VALID, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_OFFSETS_VALID_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_M       0x08000000
+#define HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_S       27
+#define HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_S)
+#define HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_DROP_THRESHOLD_VALID_S)); \
             } while (0)
 
 #define HTT_RX_RING_SELECTION_CFG_RING_BUFFER_SIZE_M           0x0000ffff
@@ -5126,6 +5150,17 @@ PREPACK struct htt_rx_ring_selection_cfg_t {
             do { \
                 HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET, _val); \
                 ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_ATTENTION_OFFSET_S)); \
+            } while (0)
+
+#define HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_M         0x000003ff
+#define HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_S         0
+#define HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_GET(_var) \
+            (((_var) & HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_M) >> \
+                    HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_S)
+#define HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_SET(_var, _val) \
+            do { \
+                HTT_CHECK_SET_VAL(HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD, _val); \
+                ((_var) |= ((_val) << HTT_RX_RING_SELECTION_CFG_RX_DROP_THRESHOLD_S)); \
             } while (0)
 
 /*
