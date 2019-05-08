@@ -811,8 +811,8 @@ qdf_export_symbol(hif_register_ext_group);
 struct hif_exec_context *hif_exec_create(enum hif_exec_type type,
 						uint32_t scale)
 {
-	HIF_INFO("%s: create exec_type %d budget %d\n",
-			__func__, type, QCA_NAPI_BUDGET * scale);
+	hif_debug("%s: create exec_type %d budget %d\n",
+		  __func__, type, QCA_NAPI_BUDGET * scale);
 
 	switch (type) {
 	case HIF_EXEC_NAPI_TYPE:
@@ -861,10 +861,10 @@ void hif_deregister_exec_group(struct hif_opaque_softc *hif_ctx,
 		if (!hif_ext_group)
 			continue;
 
-		HIF_INFO("%s: Deregistering grp id %d name %s\n",
-				__func__,
-				hif_ext_group->grp_id,
-				hif_ext_group->context_name);
+		hif_debug("%s: Deregistering grp id %d name %s\n",
+			  __func__,
+			  hif_ext_group->grp_id,
+			  hif_ext_group->context_name);
 
 		if (strcmp(hif_ext_group->context_name, context_name) == 0) {
 			hif_ext_group->sched_ops->kill(hif_ext_group);

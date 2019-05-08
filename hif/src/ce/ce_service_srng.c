@@ -651,7 +651,7 @@ static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 {
 	struct hal_srng_params ring_params = {0};
 
-	HIF_INFO("%s: ce_id %d", __func__, ce_id);
+	hif_debug("%s: ce_id %d", __func__, ce_id);
 
 	ring_params.ring_base_paddr = src_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = src_ring->base_addr_owner_space;
