@@ -12160,8 +12160,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	sme_reset_link_layer_stats_ind_cb(mac_handle);
 	sme_reset_rssi_threshold_breached_cb(mac_handle);
 
-	sme_stats_ext_register_callback(mac_handle,
-					wlan_hdd_cfg80211_stats_ext_callback);
+	sme_stats_ext_deregister_callback(mac_handle);
 
 	status = sme_reset_tsfcb(mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))

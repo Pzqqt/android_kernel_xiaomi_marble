@@ -1060,6 +1060,11 @@ sme_stats_ext_register_callback(mac_handle_t mac_handle,
 }
 
 static inline void
+sme_stats_ext_deregister_callback(mac_handle_t mac_handle)
+{
+}
+
+static inline void
 sme_stats_ext2_register_callback(mac_handle_t mac_handle,
 				 stats_ext2_cb callback)
 {
