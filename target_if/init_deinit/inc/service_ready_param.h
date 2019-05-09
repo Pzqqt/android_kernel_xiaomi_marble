@@ -24,6 +24,10 @@
 #define _SERVICE_READY_PARAM_H_
 
 #include "qdf_types.h"
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+#include "wmi_unified_param.h"
+#endif
+
 
 /**
  * struct wlan_psoc_hal_reg_capability - hal reg table in psoc
@@ -285,6 +289,20 @@ struct wlan_psoc_host_chainmask_table {
 	struct wlan_psoc_host_chainmask_capabilities *cap_list;
 };
 
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+/**
+ * struct wlan_psoc_host_rf_characterization_entry - rf characterization table
+ * @freq: center frequency of primary channel
+ * @bw: bandwidth of primary channel
+ * @chan_metric: primary channel-specific metric
+ */
+struct wlan_psoc_host_rf_characterization_entry {
+	uint16_t freq;
+	wmi_host_channel_width bw;
+	uint8_t chan_metric;
+};
+#endif
+
 /**
  * struct wlan_psoc_host_service_ext_param - EXT service base params in event
  * @default_conc_scan_config_bits: Default concurrenct scan config
@@ -304,6 +322,8 @@ struct wlan_psoc_host_chainmask_table {
  * @max_bssid_indicator: Maximum number of VAPs in MBSS IE
  * @num_bin_scaling_params: Number of Spectral bin scaling parameters
  * @chainmask_table: Available chain mask tables.
+ * @num_rf_characterization_entries: Number of RF characterization info entries
+ * @rf_characterization_entries: Channel RF characterization information entries
  * @sar_version: SAR version info
  */
 struct wlan_psoc_host_service_ext_param {
@@ -322,6 +342,11 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_bin_scaling_params;
 	struct wlan_psoc_host_chainmask_table
 		chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+	uint32_t num_rf_characterization_entries;
+	struct wlan_psoc_host_rf_characterization_entry
+		*rf_characterization_entries;
+#endif
 	uint32_t sar_version;
 };
 

@@ -27,6 +27,50 @@
 #include "service_ready_param.h"
 #include "target_if.h"
 
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+/**
+ * init_deinit_populate_rf_characterization_entries()
+ *	- allocates space for and populates the RF characterization information
+ * @handle: WMI handle pointer
+ * @evt: event buffer received from FW
+ * @service_ext_param: pointer to server ext param
+ *
+ * Allocates space for and populates the RF characterization information
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
+		uint8_t *evt,
+		struct wlan_psoc_host_service_ext_param *service_ext_par);
+
+/**
+ * init_deinit_rf_characterization_entries_free()
+ *	- free RF characterization information
+ * @service_ext_param: pointer to server ext param
+ *
+ * Frees RF characterization information
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS init_deinit_rf_characterization_entries_free(
+		struct wlan_psoc_host_service_ext_param *service_ext_par);
+#else
+static inline
+QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
+			uint8_t *evt,
+			struct wlan_psoc_host_service_ext_param *ser_ext_par)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS init_deinit_rf_characterization_entries_free(
+		struct wlan_psoc_host_service_ext_param *ser_ext_par)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * init_deinit_chainmask_table_alloc()
  *	- allocate chainmask table capability list.

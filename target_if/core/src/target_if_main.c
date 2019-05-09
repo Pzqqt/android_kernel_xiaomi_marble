@@ -577,6 +577,7 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 	init_deinit_chainmask_table_free(ext_param);
+	init_deinit_rf_characterization_entries_free(ext_param);
 	init_deinit_dbr_ring_cap_free(tgt_psoc_info);
 	init_deinit_spectral_scaling_params_free(tgt_psoc_info);
 

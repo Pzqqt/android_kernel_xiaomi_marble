@@ -26,6 +26,51 @@
 #include <target_type.h>
 #include <qdf_module.h>
 
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
+			uint8_t *evt,
+			struct wlan_psoc_host_service_ext_param *ser_ext_par)
+{
+	uint32_t alloc_size;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (ser_ext_par->num_rf_characterization_entries == 0)
+		return QDF_STATUS_SUCCESS;
+
+	alloc_size = (sizeof(struct wlan_psoc_host_rf_characterization_entry) *
+				ser_ext_par->num_rf_characterization_entries);
+
+	ser_ext_par->rf_characterization_entries = qdf_mem_malloc(alloc_size);
+	if (!ser_ext_par->rf_characterization_entries) {
+		init_deinit_rf_characterization_entries_free(ser_ext_par);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	status = wmi_extract_rf_characterization_entries(handle, evt,
+				ser_ext_par->rf_characterization_entries);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to parse wmi service ready ext param");
+		init_deinit_rf_characterization_entries_free(ser_ext_par);
+	}
+
+	return status;
+}
+
+qdf_export_symbol(init_deinit_populate_rf_characterization_entries);
+
+QDF_STATUS init_deinit_rf_characterization_entries_free(
+		struct wlan_psoc_host_service_ext_param *ser_ext_par)
+{
+	qdf_mem_free(ser_ext_par->rf_characterization_entries);
+	ser_ext_par->rf_characterization_entries = NULL;
+	ser_ext_par->num_rf_characterization_entries = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(init_deinit_rf_characterization_entries_free);
+#endif
+
 QDF_STATUS init_deinit_chainmask_table_alloc(
 		struct wlan_psoc_host_service_ext_param *ser_ext_par)
 {

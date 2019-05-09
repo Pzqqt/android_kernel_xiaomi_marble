@@ -1738,6 +1738,12 @@ QDF_STATUS (*extract_reg_ch_avoid_event)(wmi_unified_t wmi_handle,
 		struct ch_avoid_ind_type *ch_avoid_event,
 		uint32_t len);
 
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+QDF_STATUS (*extract_rf_characterization_entries)(wmi_unified_t wmi_handle,
+	uint8_t *evt_buf,
+	struct wlan_psoc_host_rf_characterization_entry *rf_characterization_entries);
+#endif
+
 QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_chainmask_table *chainmask_table);

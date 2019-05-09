@@ -4237,6 +4237,19 @@ wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
+QDF_STATUS wmi_extract_rf_characterization_entries(wmi_unified_t wmi_hdl,
+	uint8_t *evt_buf,
+	struct wlan_psoc_host_rf_characterization_entry *rf_characterization_entries)
+{
+	if (wmi_hdl->ops->extract_rf_characterization_entries)
+		return wmi_hdl->ops->extract_rf_characterization_entries(wmi_hdl,
+					evt_buf, rf_characterization_entries);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /*
  * wmi_extract_chainmask_tables_tlv() - extract chain mask tables
  * @wmi_handle: wmi handle

@@ -270,6 +270,13 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 			goto exit;
 	}
 
+	err_code = init_deinit_populate_rf_characterization_entries(
+						wmi_handle,
+						event,
+						&info->service_ext_param);
+	if (err_code)
+		goto exit;
+
 	err_code = init_deinit_populate_dbr_ring_cap(psoc, wmi_handle,
 						event, info);
 	if (err_code)
