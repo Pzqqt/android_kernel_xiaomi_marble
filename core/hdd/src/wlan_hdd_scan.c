@@ -681,6 +681,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	     !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		ucfg_p2p_status_scan(vdev);
 
+	/* set priority as SCAN_PRIORITY_COUNT to use default scan priority */
+	params.priority = SCAN_PRIORITY_COUNT;
 	status = wlan_cfg80211_scan(vdev, request, &params);
 	hdd_objmgr_put_vdev(vdev);
 error:
