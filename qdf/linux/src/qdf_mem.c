@@ -1009,7 +1009,7 @@ void *qdf_mem_malloc_debug(size_t size, const char *func, uint32_t line,
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_err("Failed to insert memory header; status %d", status);
 
-	qdf_mem_kmalloc_inc(size);
+	qdf_mem_kmalloc_inc(ksize(header));
 
 	return ptr;
 }
@@ -1048,7 +1048,7 @@ void qdf_mem_free_debug(void *ptr, const char *func, uint32_t line)
 	qdf_mem_header_assert_valid(header, current_domain, error_bitmap,
 				    func, line);
 
-	qdf_mem_kmalloc_dec(header->size);
+	qdf_mem_kmalloc_dec(ksize(header));
 	kfree(header);
 }
 qdf_export_symbol(qdf_mem_free_debug);
