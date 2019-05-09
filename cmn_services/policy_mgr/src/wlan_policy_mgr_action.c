@@ -1320,37 +1320,121 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 }
 
 bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
-			struct wlan_objmgr_psoc *psoc, uint8_t *intf_ch)
+			struct wlan_objmgr_psoc *psoc,
+			uint32_t sap_vdev_id, uint8_t *intf_ch)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint8_t sap_chan = policy_mgr_mode_specific_get_channel(psoc,
-								PM_SAP_MODE);
+	uint8_t curr_sap_chan = 0, new_sap_ch = 0;
 	bool sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
-
-	*intf_ch = 0;
+	bool sta_sap_scc_on_lte_coex_chan =
+		policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc);
+	uint32_t cc_count, i, go_index_start, pcl_len = 0;
+	uint8_t op_ch[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	enum policy_mgr_con_mode mode;
+	uint8_t pcl_channels[QDF_MAX_NUM_CHAN + 1];
+	uint8_t pcl_weight[QDF_MAX_NUM_CHAN + 1];
+	struct policy_mgr_conc_connection_info info = {0};
+	uint8_t num_cxn_del = 0;
+	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid pm context");
 		return false;
 	}
-
-	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_chan %u",
-			 sta_sap_scc_on_dfs_chan, sap_chan);
-
-	if ((!sta_sap_scc_on_dfs_chan ||
-	     !(sap_chan && WLAN_REG_IS_5GHZ_CH(sap_chan) &&
-	       (wlan_reg_get_channel_state(pm_ctx->pdev, sap_chan) ==
-			CHANNEL_STATE_DFS))) &&
-	    (!policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
-	      policy_mgr_is_safe_channel(psoc, sap_chan))) {
+	if (!pm_ctx->do_sap_unsafe_ch_check)
 		return false;
+	if (!sta_sap_scc_on_dfs_chan && !sta_sap_scc_on_lte_coex_chan)
+		return false;
+
+	if (!policy_mgr_is_hw_dbs_capable(psoc))
+		if (policy_mgr_get_connection_count(psoc) > 1)
+			return false;
+
+	cc_count = policy_mgr_get_mode_specific_conn_info(
+					psoc,
+					&op_ch[0],
+					&vdev_id[0],
+					PM_SAP_MODE);
+	go_index_start = cc_count;
+	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
+		cc_count += policy_mgr_get_mode_specific_conn_info(psoc,
+					&op_ch[cc_count],
+					&vdev_id[cc_count],
+					PM_P2P_GO_MODE);
+
+	for (i = 0 ; i < cc_count; i++) {
+		if (sap_vdev_id != INVALID_VDEV_ID &&
+		    sap_vdev_id != vdev_id[i])
+			continue;
+		if (policy_mgr_is_any_mode_active_on_band_along_with_session(
+				psoc,  vdev_id[i],
+				WLAN_REG_IS_24GHZ_CH(op_ch[i]) ?
+				POLICY_MGR_BAND_24 : POLICY_MGR_BAND_5))
+			continue;
+		if (sta_sap_scc_on_dfs_chan &&
+		    wlan_reg_is_dfs_ch(pm_ctx->pdev, op_ch[i])) {
+			sap_vdev_id = vdev_id[i];
+			curr_sap_chan = op_ch[i];
+			policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, dfs sap_chan %u",
+					 sta_sap_scc_on_dfs_chan,
+					 curr_sap_chan);
+			break;
+		}
+		if (sta_sap_scc_on_lte_coex_chan &&
+		    !policy_mgr_is_safe_channel(psoc, op_ch[i])) {
+			sap_vdev_id = vdev_id[i];
+			curr_sap_chan = op_ch[i];
+			policy_mgr_debug("sta_sap_scc_on_lte_coex_chan %u unsafe sap_chan %u",
+					 sta_sap_scc_on_lte_coex_chan,
+					 curr_sap_chan);
+			break;
+		}
 	}
 
-	*intf_ch = pm_ctx->user_config_sap_channel;
-	policy_mgr_debug("Standalone SAP is not allowed on DFS channel, Move it to channel %u",
-			 *intf_ch);
+	if (!curr_sap_chan)
+		return false;
+	mode = i >= go_index_start ? PM_P2P_GO_MODE : PM_SAP_MODE;
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	policy_mgr_store_and_del_conn_info_by_vdev_id(psoc, sap_vdev_id,
+						      &info, &num_cxn_del);
+	/* Add the user config ch as first condidate */
+	pcl_channels[0] = pm_ctx->user_config_sap_channel;
+	pcl_weight[0] = 0;
+	status = policy_mgr_get_pcl(psoc, mode, &pcl_channels[1], &pcl_len,
+				    &pcl_weight[1],
+				    QDF_ARRAY_SIZE(pcl_weight) - 1);
+	if (status == QDF_STATUS_SUCCESS)
+		pcl_len++;
+	else
+		pcl_len = 1;
+	for (i = 0; i < pcl_len; i++) {
+		if (pcl_channels[i] == curr_sap_chan)
+			continue;
+		if (!wlan_reg_is_same_band_channels(
+				curr_sap_chan, pcl_channels[i]))
+			continue;
+		if (!policy_mgr_is_safe_channel(psoc, pcl_channels[i]) ||
+		    wlan_reg_is_dfs_ch(pm_ctx->pdev, pcl_channels[i]))
+			continue;
+		new_sap_ch = pcl_channels[i];
+		break;
+	}
+	/* Restore the connection entry */
+	if (num_cxn_del > 0)
+		policy_mgr_restore_deleted_conn_info(psoc, &info, num_cxn_del);
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (new_sap_ch == 0 || curr_sap_chan == new_sap_ch)
+		return false;
+	if (!intf_ch)
+		return true;
+
+	*intf_ch = new_sap_ch;
+	policy_mgr_debug("Standalone SAP(vdev_id %d) is not allowed on DFS/Unsafe channel, Move it to channel %u",
+			 sap_vdev_id, *intf_ch);
 
 	return true;
 }
@@ -1717,6 +1801,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		}
 
 end:
+	pm_ctx->do_sap_unsafe_ch_check = false;
 	if (work_info) {
 		qdf_mem_free(work_info);
 		if (pm_ctx)
@@ -1886,22 +1971,20 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		policy_mgr_err("Invalid context");
 		return;
 	}
-	if (policy_mgr_get_connection_count(psoc) == 1) {
-		/*
-		 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
-		 * enabled on DFS channel then move the SAP out of DFS channel
-		 * as soon as STA gets disconnect.
-		 * If STA+SAP sessions are on unsafe channel and STA+SAP SCC is
-		 * enabled on unsafe channel then move the SAP to safe channel
-		 * as soon as STA disconnected.
-		 */
-		if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
-							psoc, &sap_ch)) {
-			policy_mgr_debug("move the SAP to configured channel %u",
-					 sap_ch);
-			restart_sap = true;
-			goto sap_restart;
-		}
+	/*
+	 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
+	 * enabled on DFS channel then move the SAP out of DFS channel
+	 * as soon as STA gets disconnect.
+	 * If STA+SAP sessions are on unsafe channel and STA+SAP SCC is
+	 * enabled on unsafe channel then move the SAP to safe channel
+	 * as soon as STA disconnected.
+	 */
+	if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
+					psoc, INVALID_VDEV_ID, &sap_ch)) {
+		policy_mgr_debug("move the SAP to configured channel %u",
+				 sap_ch);
+		restart_sap = true;
+		goto sap_restart;
 	}
 
 	/*

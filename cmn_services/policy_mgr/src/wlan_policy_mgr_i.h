@@ -333,6 +333,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
+	bool do_sap_unsafe_ch_check;
 	uint32_t concurrency_mode;
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];

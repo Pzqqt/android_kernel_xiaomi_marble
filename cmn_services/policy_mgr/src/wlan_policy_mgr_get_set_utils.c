@@ -1733,6 +1733,16 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
 			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
 	}
+	/*
+	 * When STA disconnected, we need to move DFS SAP
+	 * to Non-DFS if g_sta_sap_scc_on_dfs_chan enabled.
+	 * The same if g_sta_sap_scc_on_lte_coex_chan enabled,
+	 * need to move SAP on unsafe channel to safe channel.
+	 * The flag will be checked by
+	 * policy_mgr_is_sap_restart_required_after_sta_disconnect.
+	 */
+	if (mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE)
+		pm_ctx->do_sap_unsafe_ch_check = true;
 
 	return qdf_status;
 }
