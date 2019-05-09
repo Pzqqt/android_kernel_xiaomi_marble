@@ -1580,8 +1580,8 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	hal_soc = soc->hal_soc;
 	qdf_assert_always(hal_soc);
 
-	hif_pm_runtime_mark_last_busy(soc->osdev->dev);
 	scn = soc->hif_handle;
+	hif_pm_runtime_mark_last_busy(scn);
 	intr_id = int_ctx->dp_intr_id;
 
 more_data:

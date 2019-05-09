@@ -978,27 +978,38 @@ static int hif_pci_pm_runtime_debugfs_show(struct seq_file *s, void *data)
 	static const char * const autopm_state[] = {"NONE", "ON", "INPROGRESS",
 		"SUSPENDED"};
 	unsigned int msecs_age;
+	qdf_time_t usecs_age;
 	int pm_state = atomic_read(&sc->pm_state);
 	unsigned long timer_expires;
 	struct hif_pm_runtime_lock *ctx;
 
 	seq_printf(s, "%30s: %s\n", "Runtime PM state",
-			autopm_state[pm_state]);
+		   autopm_state[pm_state]);
 	seq_printf(s, "%30s: %pf\n", "Last Resume Caller",
-			sc->pm_stats.last_resume_caller);
+		   sc->pm_stats.last_resume_caller);
+	seq_printf(s, "%30s: %pf\n", "Last Busy Marker",
+		   sc->pm_stats.last_busy_marker);
+
+	usecs_age = qdf_get_log_timestamp_usecs() -
+		sc->pm_stats.last_busy_timestamp;
+	seq_printf(s, "%30s: %lu.%06lus\n", "Last Busy Timestamp",
+		   sc->pm_stats.last_busy_timestamp / 1000000,
+		   sc->pm_stats.last_busy_timestamp % 1000000);
+	seq_printf(s, "%30s: %lu.%06lus\n", "Last Busy Since",
+		   usecs_age / 1000000, usecs_age % 1000000);
 
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED) {
-		msecs_age = jiffies_to_msecs(
-				jiffies - sc->pm_stats.suspend_jiffies);
+		msecs_age = jiffies_to_msecs(jiffies -
+					     sc->pm_stats.suspend_jiffies);
 		seq_printf(s, "%30s: %d.%03ds\n", "Suspended Since",
-				msecs_age / 1000, msecs_age % 1000);
+			   msecs_age / 1000, msecs_age % 1000);
 	}
 
 	seq_printf(s, "%30s: %d\n", "PM Usage count",
-			atomic_read(&sc->dev->power.usage_count));
+		   atomic_read(&sc->dev->power.usage_count));
 
 	seq_printf(s, "%30s: %u\n", "prevent_suspend_cnt",
-			sc->prevent_suspend_cnt);
+		   sc->prevent_suspend_cnt);
 
 	HIF_PCI_RUNTIME_PM_STATS(s, sc, suspended);
 	HIF_PCI_RUNTIME_PM_STATS(s, sc, suspend_err);
@@ -1016,7 +1027,7 @@ static int hif_pci_pm_runtime_debugfs_show(struct seq_file *s, void *data)
 	if (timer_expires > 0) {
 		msecs_age = jiffies_to_msecs(timer_expires - jiffies);
 		seq_printf(s, "%30s: %d.%03ds\n", "Prevent suspend timeout",
-				msecs_age / 1000, msecs_age % 1000);
+			   msecs_age / 1000, msecs_age % 1000);
 	}
 
 	spin_lock_bh(&sc->runtime_lock);
@@ -2746,12 +2757,10 @@ static void hif_log_runtime_resume_success(void *hif_ctx)
  */
 void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_log_runtime_suspend_failure(hif_ctx);
-	if (hif_pci_sc)
-		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
+	hif_pm_runtime_mark_last_busy(hif_ctx);
 	hif_runtime_pm_set_state_on(scn);
 }
 
@@ -2813,12 +2822,10 @@ void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx)
  */
 void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_log_runtime_resume_success(hif_ctx);
-	if (hif_pci_sc)
-		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
+	hif_pm_runtime_mark_last_busy(hif_ctx);
 	hif_runtime_pm_set_state_on(scn);
 }
 
@@ -3868,6 +3875,19 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 	return hif_pm_request_resume(sc->dev);
 }
 
+void hif_pm_runtime_mark_last_busy(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (!sc)
+		return;
+
+	sc->pm_stats.last_busy_marker = (void *)_RET_IP_;
+	sc->pm_stats.last_busy_timestamp = qdf_get_log_timestamp_usecs();
+
+	return pm_runtime_mark_last_busy(sc->dev);
+}
+
 void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
@@ -3979,7 +3999,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
 
 	sc->pm_stats.runtime_put++;
 
-	hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_pm_runtime_mark_last_busy(hif_ctx);
 	hif_pm_runtime_put_auto(sc->dev);
 
 	return 0;
@@ -4046,6 +4066,7 @@ static int __hif_pm_runtime_prevent_suspend(struct hif_pci_softc
 static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
 		struct hif_pm_runtime_lock *lock)
 {
+	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(hif_sc);
 	int ret = 0;
 	int usage_count;
 
@@ -4079,7 +4100,7 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
 	lock->active = false;
 	lock->timeout = 0;
 
-	hif_pm_runtime_mark_last_busy(hif_sc->dev);
+	hif_pm_runtime_mark_last_busy(hif_ctx);
 	ret = hif_pm_runtime_put_auto(hif_sc->dev);
 
 	HIF_ERROR("%s: in pm_state:%s ret: %d", __func__,
@@ -4250,7 +4271,7 @@ int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 	 */
 	if (delay <= hif_sc->dev->power.autosuspend_delay) {
 		hif_pm_request_resume(hif_sc->dev);
-		hif_pm_runtime_mark_last_busy(hif_sc->dev);
+		hif_pm_runtime_mark_last_busy(ol_sc);
 		return ret;
 	}
 
