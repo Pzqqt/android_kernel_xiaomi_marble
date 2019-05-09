@@ -2764,6 +2764,40 @@ bool policy_mgr_is_any_dfs_beaconing_session_present(
 	return status;
 }
 
+bool policy_mgr_scan_trim_5g_chnls_for_dfs_ap(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t ap_dfs_channel = 0;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	policy_mgr_is_any_dfs_beaconing_session_present(
+		psoc, &ap_dfs_channel);
+	if (!ap_dfs_channel)
+		return false;
+	/*
+	 * 1) if agile & DFS scans are supportet
+	 * 2) if hardware is DBS capable
+	 * 3) if current hw mode is non-dbs
+	 * if all above 3 conditions are true then don't skip any
+	 * channel from scan list
+	 */
+	if (policy_mgr_is_hw_dbs_capable(psoc) &&
+	    !policy_mgr_is_current_hwmode_dbs(psoc) &&
+	    policy_mgr_get_dbs_plus_agile_scan_config(psoc) &&
+	    policy_mgr_get_single_mac_scan_with_dfs_config(psoc))
+		return false;
+
+	policy_mgr_err("scan skip 5g chan due to dfs ap(ch %d) present",
+		       ap_dfs_channel);
+
+	return true;
+}
+
 QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_con_mode mode,
 				uint8_t *nss_2g, uint8_t *nss_5g)
