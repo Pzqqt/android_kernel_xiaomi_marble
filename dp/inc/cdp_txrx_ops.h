@@ -1055,19 +1055,28 @@ struct cdp_pmf_ops {
 
 /**
  * struct cdp_cfg_ops - mcl configuration ops
- * @set_cfg_rx_fwd_disabled:
- * @set_cfg_packet_log_enabled:
- * @cfg_attach:
- * @vdev_rx_set_intrabss_fwd:
- * @is_rx_fwd_disabled:
- * @tx_set_is_mgmt_over_wmi_enabled:
- * @is_high_latency:
- * @set_flow_control_parameters:
- * @set_flow_steering:
- * @set_ptp_rx_opt_enabled:
- * @set_new_htt_msg_format:
- * @set_peer_unmap_conf_support:
- * @get_peer_unmap_conf_support:
+ * @set_cfg_rx_fwd_disabled: set rx_fwd_disabled flag
+ * @set_cfg_packet_log_enabled: set is_packet_log_enabled flag
+ * @cfg_attach: hardcode the configuration parameters
+ * @vdev_rx_set_intrabss_fwd: set disable_intrabss_fwd flag
+ * @is_rx_fwd_disabled: get the rx_fwd_disabled flag,
+ *                      1 enabled, 0 disabled.
+ * @tx_set_is_mgmt_over_wmi_enabled: set is_mgmt_over_wmi_enabled flag to
+ *                                   indicate that mgmt over wmi is enabled
+ *                                   or not,
+ *                                   1 for enabled, 0 for disable
+ * @is_high_latency: get device is high or low latency device,
+ *                   1 high latency bus, 0 low latency bus
+ * @set_flow_control_parameters: set flow control parameters
+ * @set_flow_steering: set flow_steering_enabled flag
+ * @set_ptp_rx_opt_enabled: set is_ptp_rx_opt_enabled flag
+ * @set_new_htt_msg_format: set new_htt_msg_format flag
+ * @set_peer_unmap_conf_support: set enable_peer_unmap_conf_support flag
+ * @get_peer_unmap_conf_support: get enable_peer_unmap_conf_support flag
+ * @set_tx_compl_tsf64: set enable_tx_compl_tsf64 flag,
+ *                      1 enabled, 0 disabled.
+ * @get_tx_compl_tsf64: get enable_tx_compl_tsf64 flag,
+ *                      1 enabled, 0 disabled.
  */
 struct cdp_cfg_ops {
 	void (*set_cfg_rx_fwd_disabled)(struct cdp_cfg *cfg_pdev,
@@ -1086,6 +1095,8 @@ struct cdp_cfg_ops {
 	void (*set_new_htt_msg_format)(uint8_t val);
 	void (*set_peer_unmap_conf_support)(bool val);
 	bool (*get_peer_unmap_conf_support)(void);
+	void (*set_tx_compl_tsf64)(bool val);
+	bool (*get_tx_compl_tsf64)(void);
 };
 
 /**
