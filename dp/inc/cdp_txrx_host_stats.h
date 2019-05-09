@@ -464,6 +464,37 @@ cdp_update_pdev_host_stats(ol_txrx_soc_handle soc,
 }
 
 /**
+ * @brief Update vdev host stats
+ *
+ * @param soc	   - soc handle
+ * @param vdev     - the physical device object
+ * @param data     - pdev stats
+ * @param stats_id - type of stats
+ *
+ * @return - void
+ */
+static inline void
+cdp_update_vdev_host_stats(ol_txrx_soc_handle soc,
+			   struct cdp_vdev *vdev,
+			   void *data,
+			   uint16_t stats_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_update_vdev_stats)
+		return;
+
+	return soc->ops->host_stats_ops->txrx_update_vdev_stats(vdev, data,
+								stats_id);
+}
+
+/**
  * @brief Call to get peer stats
  *
  * @param peer - dp peer object

@@ -7501,6 +7501,72 @@ dp_txrx_get_pdev_stats(struct cdp_pdev *pdev_handle)
 	return &pdev->stats;
 }
 
+/* dp_txrx_update_vdev_me_stats(): Update vdev ME stats sent from CDP
+ * @vdev_handle: DP vdev handle
+ * @buf: buffer containing specific stats structure
+ *
+ * Returns: void
+ */
+static void dp_txrx_update_vdev_me_stats(struct cdp_vdev *vdev_handle,
+					 void *buf)
+{
+	struct dp_vdev *vdev = NULL;
+	struct cdp_tx_ingress_stats *host_stats = NULL;
+
+	if (!vdev_handle) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid vdev handle");
+		return;
+	}
+	vdev = (struct dp_vdev *)vdev_handle;
+
+	if (!buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid host stats buf");
+		return;
+	}
+	host_stats = (struct cdp_tx_ingress_stats *)buf;
+
+	DP_STATS_INC_PKT(vdev, tx_i.mcast_en.mcast_pkt,
+			 host_stats->mcast_en.mcast_pkt.num,
+			 host_stats->mcast_en.mcast_pkt.bytes);
+	DP_STATS_INC(vdev, tx_i.mcast_en.dropped_map_error,
+		     host_stats->mcast_en.dropped_map_error);
+	DP_STATS_INC(vdev, tx_i.mcast_en.dropped_self_mac,
+		     host_stats->mcast_en.dropped_self_mac);
+	DP_STATS_INC(vdev, tx_i.mcast_en.dropped_send_fail,
+		     host_stats->mcast_en.dropped_send_fail);
+	DP_STATS_INC(vdev, tx_i.mcast_en.ucast,
+		     host_stats->mcast_en.ucast);
+	DP_STATS_INC(vdev, tx_i.mcast_en.fail_seg_alloc,
+		     host_stats->mcast_en.fail_seg_alloc);
+	DP_STATS_INC(vdev, tx_i.mcast_en.clone_fail,
+		     host_stats->mcast_en.clone_fail);
+}
+
+/* dp_txrx_update_vdev_host_stats(): Update stats sent through CDP
+ * @vdev_handle: DP vdev handle
+ * @buf: buffer containing specific stats structure
+ * @stats_id: stats type
+ *
+ * Returns: void
+ */
+static void dp_txrx_update_vdev_host_stats(struct cdp_vdev *vdev_handle,
+					   void *buf,
+					   uint16_t stats_id)
+{
+	switch (stats_id) {
+	case DP_VDEV_STATS_PKT_CNT_ONLY:
+		break;
+	case DP_VDEV_STATS_TX_ME:
+		dp_txrx_update_vdev_me_stats(vdev_handle, buf);
+		break;
+	default:
+		qdf_info("Invalid stats_id %d", stats_id);
+		break;
+	}
+}
+
 /* dp_txrx_get_peer_stats - will return cdp_peer_stats
  * @peer_handle: DP_PEER handle
  *
@@ -8806,6 +8872,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
 	.txrx_get_ratekbps = dp_txrx_get_ratekbps,
 	.configure_rate_stats = dp_set_rate_stats_cap,
+	.txrx_update_vdev_stats = dp_txrx_update_vdev_host_stats,
 	/* TODO */
 };
 
