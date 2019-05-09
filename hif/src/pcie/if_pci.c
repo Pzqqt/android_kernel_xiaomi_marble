@@ -3858,6 +3858,15 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 }
 
 #ifdef FEATURE_RUNTIME_PM
+int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (!sc)
+		return -EINVAL;
+
+	return hif_pm_request_resume(sc->dev);
+}
 
 void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 {
