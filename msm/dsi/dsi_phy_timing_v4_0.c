@@ -9,21 +9,24 @@
 void dsi_phy_hw_v4_0_get_default_phy_params(
 		struct phy_clk_params *params)
 {
-	params->clk_prep_buf = 0;
-	params->clk_zero_buf = 0;
-	params->clk_trail_buf = 0;
-	params->hs_prep_buf = 0;
-	params->hs_zero_buf = 0;
-	params->hs_trail_buf = 0;
+	params->clk_prep_buf = 50;
+	params->clk_zero_buf = 2;
+	params->clk_trail_buf = 30;
+	params->hs_prep_buf = 50;
+	params->hs_zero_buf = 10;
+	params->hs_trail_buf = 30;
 	params->hs_rqst_buf = 0;
-	params->hs_exit_buf = 0;
+	params->hs_exit_buf = 10;
+	/* 1.25 is used in code for precision */
+	params->clk_pre_buf = 1;
+	params->clk_post_buf = 5;
 }
 
 int32_t dsi_phy_hw_v4_0_calc_clk_zero(s64 rec_temp1, s64 mult)
 {
 	s64 rec_temp2, rec_temp3;
 
-	rec_temp2 = (rec_temp1 - mult);
+	rec_temp2 = rec_temp1;
 	rec_temp3 = roundup(div_s64(rec_temp2, 8), mult);
 	return (div_s64(rec_temp3, mult) - 1);
 }
@@ -33,7 +36,7 @@ int32_t dsi_phy_hw_v4_0_calc_clk_trail_rec_min(s64 temp_mul,
 {
 	s64 rec_temp1, rec_temp2, rec_temp3;
 
-	rec_temp1 = temp_mul + frac;
+	rec_temp1 = temp_mul;
 	rec_temp2 = div_s64(rec_temp1, 8);
 	rec_temp3 = roundup(rec_temp2, mult);
 	return (div_s64(rec_temp3, mult) - 1);
@@ -84,11 +87,11 @@ void dsi_phy_hw_v4_0_update_timing_params(
 	timing->lane_v4[6] = desc->hs_prepare.reg_value;
 	timing->lane_v4[7] = desc->hs_trail.reg_value;
 	timing->lane_v4[8] = desc->hs_rqst.reg_value;
-	timing->lane_v4[9] = 0x03;
+	timing->lane_v4[9] = 0x02;
 	timing->lane_v4[10] = 0x04;
 	timing->lane_v4[11] = 0x00;
-	timing->lane_v4[12] = 0x00;
-	timing->lane_v4[13] = 0x00;
+	timing->lane_v4[12] = desc->clk_pre.reg_value;
+	timing->lane_v4[13] = desc->clk_post.reg_value;
 
 	pr_debug("[%d %d %d %d]\n", timing->lane_v4[0],
 		timing->lane_v4[1], timing->lane_v4[2], timing->lane_v4[3]);

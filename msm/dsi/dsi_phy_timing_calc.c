@@ -474,9 +474,8 @@ static int calc_clk_post(struct dsi_phy_hw *phy,
 	t->rec_max = 255;
 
 	/* register value */
-	rec_cal1 = (t->rec_max - t->rec_min);
-	rec_cal2 = clk_params->clk_post_buf/100;
-	t->rec = rec_cal1 * rec_cal2 + t->rec_min;
+	t->rec = DIV_ROUND_UP((((t->rec_max - t->rec_min) *
+		clk_params->clk_post_buf) + (t->rec_min * 100)), 100);
 
 	rc = dsi_phy_cmn_validate_and_set(t, "clk_post");
 	if (rc)
@@ -501,7 +500,6 @@ static int calc_clk_pre(struct dsi_phy_hw *phy,
 	s64 rec_temp1;
 	s64 clk_prepare, clk_zero, clk_16;
 	u32 input1;
-	s64 rec_cal1, rec_cal2;
 
 	/* mipi min */
 	t->mipi_min = cal_clk_pulse_time(8, 0, clk_params->bitclk_mbps);
@@ -526,9 +524,8 @@ static int calc_clk_pre(struct dsi_phy_hw *phy,
 	t->rec_max = 255;
 
 	/* register value */
-	rec_cal1 = (t->rec_max - t->rec_min);
-	rec_cal2 = clk_params->clk_pre_buf/100;
-	t->rec = rec_cal1 * rec_cal2 + t->rec_min;
+	t->rec =DIV_ROUND_UP((((t->rec_max - t->rec_min) *
+		125) + (t->rec_min * 100 * 100)), 100 * 100);
 
 	rc = dsi_phy_cmn_validate_and_set(t, "clk_pre");
 	if (rc)
