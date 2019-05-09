@@ -3865,6 +3865,27 @@ bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch)
 	return is_scc;
 }
 
+bool policy_mgr_go_scc_enforced(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t mcc_to_scc_switch;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+	mcc_to_scc_switch = policy_mgr_get_mcc_to_scc_switch_mode(psoc);
+	if (mcc_to_scc_switch ==
+	    QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		return true;
+
+	if (pm_ctx->cfg.go_force_scc && policy_mgr_is_force_scc(psoc))
+		return true;
+
+	return false;
+}
+
 QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
 					       uint8_t nan_vdev_id,
 					       uint8_t mac_id)
