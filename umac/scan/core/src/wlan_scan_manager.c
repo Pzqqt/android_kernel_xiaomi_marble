@@ -747,6 +747,46 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+/**
+ * scm_scan_chlist_concurrency_modify() - modify chan list to skip 5G if
+ *    required
+ * @vdev: vdev object
+ * @req: scan request
+ *
+ * Check and skip 5G chan list based on DFS AP present and current hw mode.
+ *
+ * Return: void
+ */
+static inline void scm_scan_chlist_concurrency_modify(
+	struct wlan_objmgr_vdev *vdev, struct scan_start_request *req)
+{
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t i;
+	uint32_t num_scan_channels;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+	/* do this only for STA and P2P-CLI mode */
+	if (!(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_STA_MODE) &&
+	    !(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_P2P_CLIENT_MODE))
+		return;
+	if (!policy_mgr_scan_trim_5g_chnls_for_dfs_ap(psoc))
+		return;
+	num_scan_channels = 0;
+	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
+		if (WLAN_REG_IS_5GHZ_CH_FREQ(
+			req->scan_req.chan_list.chan[i].freq)) {
+			continue;
+		}
+		req->scan_req.chan_list.chan[num_scan_channels++] =
+			req->scan_req.chan_list.chan[i];
+	}
+	if (num_scan_channels < req->scan_req.chan_list.num_chan)
+		scm_debug("5g chan skipped (%d, %d)",
+			  req->scan_req.chan_list.num_chan, num_scan_channels);
+	req->scan_req.chan_list.num_chan = num_scan_channels;
+}
 #else
 static inline
 void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
@@ -757,6 +797,11 @@ void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 
 static inline void
 scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
+{
+}
+
+static inline void scm_scan_chlist_concurrency_modify(
+	struct wlan_objmgr_vdev *vdev, struct scan_start_request *req)
 {
 }
 #endif
@@ -831,6 +876,7 @@ scm_update_channel_list(struct scan_start_request *req,
 			req->scan_req.chan_list.chan[i];
 	}
 	req->scan_req.chan_list.num_chan = num_scan_channels;
+	scm_scan_chlist_concurrency_modify(req->vdev, req);
 }
 
 /**
