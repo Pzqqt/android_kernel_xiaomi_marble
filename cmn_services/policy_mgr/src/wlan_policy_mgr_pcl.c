@@ -1439,6 +1439,76 @@ static enum policy_mgr_two_connection_mode
 }
 
 static enum policy_mgr_two_connection_mode
+		policy_mgr_get_third_connection_pcl_table_index_go_go(void)
+{
+	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
+	/* SCC */
+	if (pm_conc_connection_list[0].chan ==
+		pm_conc_connection_list[1].chan) {
+		if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[0].chan)) {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_SCC_24_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_SCC_24_2x2;
+		} else {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_SCC_5_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_SCC_5_2x2;
+		}
+	/* MCC */
+	} else if (pm_conc_connection_list[0].mac ==
+		pm_conc_connection_list[1].mac) {
+		if ((WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[0].chan)) &&
+			(WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[1].chan))) {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_MCC_24_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_MCC_24_2x2;
+		} else if ((WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[0].chan)) &&
+			(WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[1].chan))) {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_MCC_5_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_MCC_5_2x2;
+		} else {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_MCC_24_5_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_MCC_24_5_2x2;
+		}
+	/* SBS or DBS */
+	} else if (pm_conc_connection_list[0].mac !=
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_GO_DBS_1x1;
+			else
+				index = PM_P2P_GO_P2P_GO_DBS_2x2;
+		}
+	}
+	return index;
+}
+
+static enum policy_mgr_two_connection_mode
 		policy_mgr_get_third_connection_pcl_table_index_nan_ndi(void)
 {
 	enum policy_mgr_two_connection_mode index = PM_MAX_TWO_CONNECTION_MODE;
@@ -1572,6 +1642,10 @@ enum policy_mgr_two_connection_mode
 		(PM_NAN_DISC_MODE == pm_conc_connection_list[1].mode)))
 		index =
 		policy_mgr_get_third_connection_pcl_table_index_nan_ndi();
+	else if ((pm_conc_connection_list[0].mode == PM_P2P_GO_MODE) &&
+		 (pm_conc_connection_list[1].mode == PM_P2P_GO_MODE))
+		index =
+		policy_mgr_get_third_connection_pcl_table_index_go_go();
 
 	policy_mgr_debug("mode0:%d mode1:%d chan0:%d chan1:%d chain:%d index:%d",
 		pm_conc_connection_list[0].mode,
