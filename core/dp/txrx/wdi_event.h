@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,33 +21,15 @@
 
 #include "athdefs.h"
 #include "qdf_nbuf.h"
-#define WDI_EVENT_BASE 0x100    /* Event starting number */
+#include <cdp_txrx_stats_struct.h>
 
 #define WDI_NO_VAL (-1)
-enum WDI_EVENT {
-	WDI_EVENT_TX_STATUS = WDI_EVENT_BASE,
-	WDI_EVENT_OFFLOAD_ALL,
-	WDI_EVENT_RX_DESC,
-	WDI_EVENT_RX_DESC_REMOTE,
-	WDI_EVENT_RATE_FIND,
-	WDI_EVENT_RATE_UPDATE,
-	WDI_EVENT_SW_EVENT,
-	WDI_EVENT_RX_PEER_INVALID,
-	/* From WIN definations */
-	WDI_EVENT_LITE_RX,
-	WDI_EVENT_LITE_T2H,
-	/* End of new event items */
-
-	WDI_EVENT_LAST
-};
 
 struct wdi_event_rx_peer_invalid_msg {
 	qdf_nbuf_t msdu;
 	struct ieee80211_frame *wh;
 	uint8_t vdev_id;
 };
-
-#define WDI_NUM_EVENTS  (WDI_EVENT_LAST - WDI_EVENT_BASE)
 
 #define WDI_EVENT_NOTIFY_BASE   0x200
 enum WDI_EVENT_NOTIFY {
