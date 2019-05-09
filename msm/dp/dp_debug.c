@@ -1241,93 +1241,14 @@ static ssize_t dp_debug_tpg_read(struct file *file,
 	return len;
 }
 
-static ssize_t dp_debug_write_hdr(struct file *file,
-	const char __user *user_buff, size_t count, loff_t *ppos)
+static int dp_debug_print_hdr_params_to_buf(struct drm_connector *connector,
+		char *buf, u32 size)
 {
-	struct drm_connector *connector;
-	struct sde_connector *c_conn;
-	struct sde_connector_state *c_state;
-	struct dp_debug_private *debug = file->private_data;
-	char buf[SZ_512];
-	size_t len = 0;
-
-	if (!debug)
-		return -ENODEV;
-
-	if (*ppos)
-		return 0;
-
-	connector = *debug->connector;
-	c_conn = to_sde_connector(connector);
-	c_state = to_sde_connector_state(connector->state);
-
-	/* Leave room for termination char */
-	len = min_t(size_t, count, SZ_512 - 1);
-	if (copy_from_user(buf, user_buff, len))
-		goto end;
-
-	buf[len] = '\0';
-
-	if (sscanf(buf, "%x %x %x %x %x %x %x %x %x %x %x %x %x %x %x",
-			&c_state->hdr_meta.hdr_supported,
-			&c_state->hdr_meta.hdr_state,
-			&c_state->hdr_meta.eotf,
-			&c_state->hdr_meta.display_primaries_x[0],
-			&c_state->hdr_meta.display_primaries_x[1],
-			&c_state->hdr_meta.display_primaries_x[2],
-			&c_state->hdr_meta.display_primaries_y[0],
-			&c_state->hdr_meta.display_primaries_y[1],
-			&c_state->hdr_meta.display_primaries_y[2],
-			&c_state->hdr_meta.white_point_x,
-			&c_state->hdr_meta.white_point_y,
-			&c_state->hdr_meta.max_luminance,
-			&c_state->hdr_meta.min_luminance,
-			&c_state->hdr_meta.max_content_light_level,
-			&c_state->hdr_meta.max_average_light_level) != 15) {
-		pr_err("invalid input\n");
-		len = -EINVAL;
-	}
-
-	debug->panel->setup_hdr(debug->panel, &c_state->hdr_meta, false, 0);
-end:
-	return len;
-}
-
-static ssize_t dp_debug_read_hdr(struct file *file,
-		char __user *user_buff, size_t count, loff_t *ppos)
-{
-	struct dp_debug_private *debug = file->private_data;
-	char *buf;
-	u32 len = 0, i;
-	u32 max_size = SZ_4K;
-	int rc = 0;
-	struct drm_connector *connector;
+	int rc;
+	u32 i, len = 0, max_size = size;
 	struct sde_connector *c_conn;
 	struct sde_connector_state *c_state;
 	struct drm_msm_ext_hdr_metadata *hdr;
-
-	if (!debug) {
-		pr_err("invalid data\n");
-		rc = -ENODEV;
-		goto error;
-	}
-
-	connector = *debug->connector;
-
-	if (!connector) {
-		pr_err("connector is NULL\n");
-		rc = -EINVAL;
-		goto error;
-	}
-
-	if (*ppos)
-		goto error;
-
-	buf = kzalloc(SZ_4K, GFP_KERNEL);
-	if (ZERO_OR_NULL_PTR(buf)) {
-		rc = -ENOMEM;
-		goto error;
-	}
 
 	c_conn = to_sde_connector(connector);
 	c_state = to_sde_connector_state(connector->state);
@@ -1346,6 +1267,11 @@ static ssize_t dp_debug_read_hdr(struct file *file,
 
 	rc = snprintf(buf + len, max_size, "type_one = %d\n",
 		connector->hdr_metadata_type_one);
+	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
+		goto error;
+
+	rc = snprintf(buf + len, max_size, "hdr_plus_app_ver = %d\n",
+		connector->hdr_plus_app_ver);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
@@ -1424,18 +1350,142 @@ static ssize_t dp_debug_read_hdr(struct file *file,
 			goto error;
 	}
 
+	if (hdr->hdr_plus_payload && hdr->hdr_plus_payload_size) {
+		u32 rowsize = 16, rem;
+		struct sde_connector_dyn_hdr_metadata *dhdr =
+				&c_state->dyn_hdr_meta;
+
+		/**
+		 * Do not use user pointer from hdr->hdr_plus_payload directly,
+		 * instead use kernel's cached copy of payload data.
+		 */
+		for (i = 0; i < dhdr->dynamic_hdr_payload_size; i += rowsize) {
+			rc = snprintf(buf + len, max_size, "DHDR: ");
+			if (dp_debug_check_buffer_overflow(rc, &max_size,
+					&len))
+				goto error;
+
+			rem = dhdr->dynamic_hdr_payload_size - i;
+			rc = hex_dump_to_buffer(&dhdr->dynamic_hdr_payload[i],
+				min(rowsize, rem), rowsize, 1, buf + len,
+				max_size, false);
+			if (dp_debug_check_buffer_overflow(rc, &max_size,
+					&len))
+				goto error;
+
+			rc = snprintf(buf + len, max_size, "\n");
+			if (dp_debug_check_buffer_overflow(rc, &max_size,
+					&len))
+				goto error;
+		}
+	}
+
+	return len;
+error:
+	return -EOVERFLOW;
+}
+
+static ssize_t dp_debug_read_hdr(struct file *file,
+		char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_debug_private *debug = file->private_data;
+	char *buf = NULL;
+	u32 len = 0;
+	u32 max_size = SZ_4K;
+	struct drm_connector *connector;
+
+	if (!debug) {
+		pr_err("invalid data\n");
+		return -ENODEV;
+	}
+
+	connector = *debug->connector;
+
+	if (!connector) {
+		pr_err("connector is NULL\n");
+		return -EINVAL;
+	}
+
+	if (*ppos)
+		return 0;
+
+	buf = kzalloc(max_size, GFP_KERNEL);
+	if (ZERO_OR_NULL_PTR(buf))
+		return -ENOMEM;
+
+	len = dp_debug_print_hdr_params_to_buf(connector, buf, max_size);
+	if (len == -EOVERFLOW) {
+		kfree(buf);
+		return len;
+	}
+
 	if (copy_to_user(user_buff, buf, len)) {
 		kfree(buf);
-		rc = -EFAULT;
-		goto error;
+		return -EFAULT;
 	}
 
 	*ppos += len;
 	kfree(buf);
-
 	return len;
-error:
-	return rc;
+}
+
+static ssize_t dp_debug_read_hdr_mst(struct file *file,
+		char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_debug_private *debug = file->private_data;
+	char *buf = NULL;
+	u32 len = 0, max_size = SZ_4K;
+	struct dp_mst_connector *mst_connector;
+	struct drm_connector *connector;
+	bool in_list = false;
+
+	if (!debug) {
+		pr_err("invalid data\n");
+		return -ENODEV;
+	}
+
+	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
+	list_for_each_entry(mst_connector,
+			&debug->dp_debug.dp_mst_connector_list.list, list) {
+		if (mst_connector->con_id == debug->mst_con_id) {
+			connector = mst_connector->conn;
+			in_list = true;
+		}
+	}
+	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
+
+	if (!in_list) {
+		pr_err("connector %u not in mst list\n", debug->mst_con_id);
+		return -EINVAL;
+	}
+
+	if (!connector) {
+		pr_err("connector is NULL\n");
+		return -EINVAL;
+	}
+
+	if (*ppos)
+		return 0;
+
+
+	buf = kzalloc(max_size, GFP_KERNEL);
+	if (ZERO_OR_NULL_PTR(buf))
+		return -ENOMEM;
+
+	len = dp_debug_print_hdr_params_to_buf(connector, buf, max_size);
+	if (len == -EOVERFLOW) {
+		kfree(buf);
+		return len;
+	}
+
+	if (copy_to_user(user_buff, buf, len)) {
+		kfree(buf);
+		return -EFAULT;
+	}
+
+	*ppos += len;
+	kfree(buf);
+	return len;
 }
 
 static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
@@ -1674,8 +1724,12 @@ static const struct file_operations tpg_fops = {
 
 static const struct file_operations hdr_fops = {
 	.open = simple_open,
-	.write = dp_debug_write_hdr,
 	.read = dp_debug_read_hdr,
+};
+
+static const struct file_operations hdr_mst_fops = {
+	.open = simple_open,
+	.read = dp_debug_read_hdr_mst,
 };
 
 static const struct file_operations sim_fops = {
@@ -1848,12 +1902,22 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 		goto error_remove_dir;
 	}
 
-	file = debugfs_create_file("hdr", 0644, dir,
+	file = debugfs_create_file("hdr", 0400, dir,
 		debug, &hdr_fops);
 
 	if (IS_ERR_OR_NULL(file)) {
 		rc = PTR_ERR(file);
 		pr_err("[%s] debugfs hdr failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		goto error_remove_dir;
+	}
+
+	file = debugfs_create_file("hdr_mst", 0400, dir,
+		debug, &hdr_mst_fops);
+
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		pr_err("[%s] debugfs hdr_mst failed, rc=%d\n",
 			DEBUG_NAME, rc);
 		goto error_remove_dir;
 	}
