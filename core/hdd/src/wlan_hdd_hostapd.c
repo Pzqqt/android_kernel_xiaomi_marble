@@ -3136,19 +3136,18 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (policy_mgr_get_connection_count(psoc) == 1) {
-		/*
-		 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
-		 * enabled on DFS channel then move the SAP out of DFS channel
-		 * as soon as STA gets disconnect.
-		 */
-		if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
-			psoc, &intf_ch)) {
-			hdd_debug("Move the sap to user configured channel %u",
-				  intf_ch);
-			goto sap_restart;
-		}
+	/*
+	 * If STA+SAP sessions are on DFS channel and STA+SAP SCC is
+	 * enabled on DFS channel then move the SAP out of DFS channel
+	 * as soon as STA gets disconnect.
+	 */
+	if (policy_mgr_is_sap_restart_required_after_sta_disconnect(
+		psoc, vdev_id, &intf_ch)) {
+		hdd_debug("Move the sap (vdev %d) to user configured channel %u",
+			  vdev_id, intf_ch);
+		goto sap_restart;
 	}
+
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
 					   &mcc_to_scc_switch);
 	/*

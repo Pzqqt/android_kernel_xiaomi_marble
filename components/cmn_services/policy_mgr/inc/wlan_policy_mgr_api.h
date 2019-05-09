@@ -3020,6 +3020,7 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc);
  * required
  * after sta disconnection
  * @psoc: psoc object data
+ * @sap_vdev_id: sap vdev id
  * @intf_ch: sap channel
  *
  * Check if SAP should be moved to a non dfs channel after STA disconnection.
@@ -3029,7 +3030,8 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc);
  * Return: true if sap restart is required, otherwise false
  */
 bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
-			struct wlan_objmgr_psoc *psoc, uint8_t *intf_ch);
+				struct wlan_objmgr_psoc *psoc,
+				uint32_t sap_vdev_id, uint8_t *intf_ch);
 
 /**
  * policy_mgr_is_sta_sap_scc() - check whether SAP is doing SCC with
