@@ -881,10 +881,11 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 
 	priv = sde_kms->dev->dev_private;
 
-	SDE_EVT32(crtc->base.id, crtc->state->active,
-			sde_kms->splash_data.num_splash_displays);
 	if (!crtc->state->active || !sde_kms->splash_data.num_splash_displays)
 		return;
+
+	SDE_EVT32(DRMID(crtc), crtc->state->active,
+			sde_kms->splash_data.num_splash_displays);
 
 	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
 		splash_display = &sde_kms->splash_data.splash_display[i];

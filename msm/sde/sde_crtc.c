@@ -5374,8 +5374,8 @@ static int _sde_debugfs_status_show(struct seq_file *s, void *data)
 		if (!pstate || !state)
 			continue;
 
-		seq_printf(s, "\tplane:%u stage:%d\n", plane->base.id,
-			pstate->stage);
+		seq_printf(s, "\tplane:%u stage:%d rotation:%d\n",
+			plane->base.id, pstate->stage, pstate->rotation);
 
 		if (plane->state->fb) {
 			fb = plane->state->fb;
@@ -5405,7 +5405,8 @@ static int _sde_debugfs_status_show(struct seq_file *s, void *data)
 		}
 
 		seq_printf(s, "\tsrc_x:%4d src_y:%4d src_w:%4d src_h:%4d\n",
-			state->src_x, state->src_y, state->src_w, state->src_h);
+			state->src_x >> 16, state->src_y >> 16,
+			state->src_w >> 16, state->src_h >> 16);
 
 		seq_printf(s, "\tdst x:%4d dst_y:%4d dst_w:%4d dst_h:%4d\n",
 			state->crtc_x, state->crtc_y, state->crtc_w,
