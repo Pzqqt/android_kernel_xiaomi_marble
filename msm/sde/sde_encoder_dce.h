@@ -8,13 +8,24 @@
 
 #include "sde_encoder.h"
 
-bool sde_encoder_dsc_is_dirty(struct sde_encoder_virt *sde_enc);
+/**
+ * sde_encoder_dce_disable : function to disable compression
+ * @sde_enc: pointer to virtual encoder structure
+ */
+void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc);
 
-void sde_encoder_dsc_disable(struct sde_encoder_virt *sde_enc);
-
-int sde_encoder_dsc_setup(struct sde_encoder_virt *sde_enc,
+/**
+ * sde_encoder_dce_setup : function to configure compression block
+ * @sde_enc: pointer to virtual encoder structure
+ * @params: pointer to kickoff params
+ */
+int sde_encoder_dce_setup(struct sde_encoder_virt *sde_enc,
 		struct sde_encoder_kickoff_params *params);
 
-void sde_encoder_dsc_helper_flush_dsc(struct sde_encoder_virt *sde_enc);
+/**
+ * sde_encoder_dce_flush :function to flush the compression configuration
+ * @sde_enc: pointer to virtual encoder structure
+ */
+void sde_encoder_dce_flush(struct sde_encoder_virt *sde_enc);
 
 #endif /* __SDE_ENCODER_DCE_H__ */

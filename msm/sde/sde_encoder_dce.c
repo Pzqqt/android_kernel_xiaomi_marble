@@ -474,7 +474,7 @@ static int _sde_encoder_dsc_2_lm_2_enc_1_intf(struct sde_encoder_virt *sde_enc,
 	return 0;
 }
 
-int sde_encoder_dsc_setup(struct sde_encoder_virt *sde_enc,
+static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 		struct sde_encoder_kickoff_params *params)
 {
 	enum sde_rm_topology_name topology;
@@ -530,7 +530,7 @@ int sde_encoder_dsc_setup(struct sde_encoder_virt *sde_enc,
 	return ret;
 }
 
-void sde_encoder_dsc_disable(struct sde_encoder_virt *sde_enc)
+static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 {
 	int i;
 	struct sde_hw_pingpong *hw_pp = NULL;
@@ -576,7 +576,7 @@ void sde_encoder_dsc_disable(struct sde_encoder_virt *sde_enc)
 	 */
 }
 
-bool sde_encoder_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
+static bool _dce_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
 {
 	int i;
 
@@ -593,7 +593,7 @@ bool sde_encoder_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
 }
 
 
-void sde_encoder_dsc_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
+static void _dce_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
 {
 	int i;
 	struct sde_hw_ctl *hw_ctl = NULL;
@@ -611,4 +611,45 @@ void sde_encoder_dsc_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
 	}
 }
 
+void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc)
+{
+	enum msm_display_compression_type comp_type;
 
+	if (!sde_enc)
+		return;
+
+	comp_type = sde_enc->mode_info.comp_info.comp_type;
+
+	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC)
+		_dce_dsc_disable(sde_enc);
+}
+
+int sde_encoder_dce_flush(struct sde_encoder_virt *sde_enc)
+{
+	int rc = 0;
+
+	if (!sde_enc)
+		return -EINVAL;
+
+	if (_dce_dsc_is_dirty(sde_enc))
+		_dce_helper_flush_dsc(sde_enc);
+
+	return rc;
+}
+
+int sde_encoder_dce_setup(struct sde_encoder_virt *sde_enc,
+		struct sde_encoder_kickoff_params *params)
+{
+	enum msm_display_compression_type comp_type;
+	int rc = 0;
+
+	if (!sde_enc)
+		return -EINVAL;
+
+	comp_type = sde_enc->mode_info.comp_info.comp_type;
+
+	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC)
+		rc = _dce_dsc_setup(sde_enc, params);
+
+	return rc;
+}

@@ -170,20 +170,6 @@ static bool _sde_encoder_is_autorefresh_enabled(
 			CONNECTOR_PROP_AUTOREFRESH) ? true : false;
 }
 
-static bool _sde_encoder_is_dsc_enabled(struct drm_encoder *drm_enc)
-{
-	struct sde_encoder_virt *sde_enc;
-	struct msm_compression_info *comp_info;
-
-	if (!drm_enc)
-		return false;
-
-	sde_enc  = to_sde_encoder_virt(drm_enc);
-	comp_info = &sde_enc->mode_info.comp_info;
-
-	return (comp_info->comp_type == MSM_DISPLAY_COMPRESSION_DSC);
-}
-
 static void sde_configure_qdss(struct sde_encoder_virt *sde_enc,
 				struct sde_hw_qdss *hw_qdss,
 				struct sde_encoder_phys *phys, bool enable)
@@ -2122,10 +2108,10 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		}
 
 		/*
-		 * Disable dsc before switch the mode and after pre_modeset,
+		 * Disable dce before switch the mode and after pre_modeset,
 		 * to guarantee that previous kickoff finished.
 		 */
-		sde_encoder_dsc_disable(sde_enc);
+		sde_encoder_dce_disable(sde_enc);
 	} else if (msm_is_mode_seamless_poms(adj_mode)) {
 		_sde_encoder_modeset_helper_locked(drm_enc,
 					SDE_ENC_RC_EVENT_PRE_MODESET);
@@ -2637,11 +2623,11 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	}
 
 	/*
-	 * disable dsc after the transfer is complete (for command mode)
+	 * disable dce after the transfer is complete (for command mode)
 	 * and after physical encoder is disabled, to make sure timing
 	 * engine is already disabled (for video mode).
 	 */
-	sde_encoder_dsc_disable(sde_enc);
+	sde_encoder_dce_disable(sde_enc);
 
 	sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_STOP);
 
@@ -3985,18 +3971,17 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 		}
 	}
 
-	if (_sde_encoder_is_dsc_enabled(drm_enc) && sde_enc->cur_master &&
+	if (sde_enc->cur_master &&
 		((is_cmd_mode && sde_enc->cur_master->cont_splash_enabled) ||
 			!sde_enc->cur_master->cont_splash_enabled)) {
-		rc = sde_encoder_dsc_setup(sde_enc, params);
+		rc = sde_encoder_dce_setup(sde_enc, params);
 		if (rc) {
 			SDE_ERROR_ENC(sde_enc, "failed to setup DSC: %d\n", rc);
 			ret = rc;
 		}
 	}
 
-	if (sde_encoder_dsc_is_dirty(sde_enc))
-		sde_encoder_dsc_helper_flush_dsc(sde_enc);
+	sde_encoder_dce_flush(sde_enc);
 
 	if (sde_enc->cur_master && !sde_enc->cur_master->cont_splash_enabled)
 		sde_configure_qdss(sde_enc, sde_enc->cur_master->hw_qdss,
