@@ -5655,7 +5655,9 @@ void dp_peer_unref_delete(void *peer_handle)
 
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer);
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		dp_reset_and_release_peer_mem(soc, pdev, peer, vdev);
+		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
