@@ -49,6 +49,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include "wlan_reg_services_api.h"
+#include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_utils_api.h>
 
 /*----------------------------------------------------------------------------
@@ -175,17 +176,81 @@ static const char *acs_scan_done_status_str(eCsrScanStatus status)
 	}
 }
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+static void wlansap_send_acs_success_event(struct sap_context *sap_ctx,
+					   uint32_t scan_id)
+{
+	if (scan_id) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("Sending ACS Scan skip event"));
+		sap_signal_hdd_event(sap_ctx, NULL,
+				     eSAP_ACS_SCAN_SUCCESS_EVENT,
+				     (void *)eSAP_STATUS_SUCCESS);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("ACS scanid: %d (skipped ACS SCAN)"),
+			  scan_id);
+	}
+}
+#else
+static inline void wlansap_send_acs_success_event(struct sap_context *sap_ctx,
+						  uint32_t scan_id)
+{
+}
+#endif
+
+static uint8_t
+wlansap_calculate_chan_from_scan_result(mac_handle_t mac_handle,
+					struct sap_context *sap_ctx,
+					uint32_t scan_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	qdf_list_t *list = NULL;
+	struct scan_filter *filter;
+	uint8_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
+
+	filter = qdf_mem_malloc(sizeof(*filter));
+
+	if (filter)
+		filter->age_threshold = qdf_get_time_of_the_day_ms() -
+						sap_ctx->acs_req_timestamp;
+
+	list = ucfg_scan_get_result(mac_ctx->pdev, filter);
+
+	if (filter)
+		qdf_mem_free(filter);
+
+	if (list)
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("num_entries %d"), qdf_list_size(list));
+	if (!list || (list && !qdf_list_size(list))) {
+		sme_err("get scan result failed");
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Failed to get scan results"));
+		if (list)
+			ucfg_scan_purge_results(list);
+		/*
+		 * No scan results So, set the operation channel not selected
+		 * to allow the default channel to be set when reporting to HDD
+		 */
+		return oper_channel;
+	}
+
+	wlansap_send_acs_success_event(sap_ctx, scan_id);
+
+	oper_channel = sap_select_channel(mac_handle, sap_ctx, list);
+	ucfg_scan_purge_results(list);
+
+	return oper_channel;
+}
+
 QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
 						   uint32_t scanid,
 						   eCsrScanStatus scan_status)
 {
-	tScanResultHandle presult = NULL;
-	QDF_STATUS scan_get_result_status = QDF_STATUS_E_FAILURE;
-	uint8_t oper_channel = 0;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tCsrScanResultFilter *filter;
+	uint8_t oper_channel = SAP_CHANNEL_NOT_SELECTED;
 
 	host_log_acs_scan_done(acs_scan_done_status_str(scan_status),
 			  sessionid, scanid);
@@ -206,54 +271,8 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("CSR scan_status = eCSR_SCAN_SUCCESS (%d)"), scan_status);
 
-	filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (!filter) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("Memory allocation for filter failed"));
-	} else {
-		filter->csrPersona = QDF_SAP_MODE;
-		filter->age_threshold = qdf_get_time_of_the_day_ms() -
-						sap_ctx->acs_req_timestamp;
-	}
-	/*
-	* Now do
-	* 1. Get scan results
-	* 2. Run channel selection algorithm
-	* select channel and store in sap_context->Channel
-	*/
-	scan_get_result_status = sme_scan_get_result(mac_handle,
-					sap_ctx->sessionId,
-					filter, &presult);
-	if (filter)
-		qdf_mem_free(filter);
-
-	if ((scan_get_result_status != QDF_STATUS_SUCCESS) &&
-		(scan_get_result_status != QDF_STATUS_E_NULL_VALUE)) {
-		/*
-		* No scan results So, set the operation channel not selected
-		* to allow the default channel to be set when reporting to HDD
-		*/
-		oper_channel = SAP_CHANNEL_NOT_SELECTED;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("Get scan result failed! ret = %d"),
-		scan_get_result_status);
-	} else {
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-		if (scanid != 0) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  FL("Sending ACS Scan skip event"));
-			sap_signal_hdd_event(sap_ctx, NULL,
-					     eSAP_ACS_SCAN_SUCCESS_EVENT,
-					     (void *) eSAP_STATUS_SUCCESS);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  FL("ACS scanid: %d (skipped ACS SCAN)"),
-				  scanid);
-		}
-#endif
-		oper_channel = sap_select_channel(mac_handle, sap_ctx, presult);
-		sme_scan_result_purge(presult);
-	}
+	oper_channel = wlansap_calculate_chan_from_scan_result(mac_handle,
+							       sap_ctx, scanid);
 
 	if (oper_channel == SAP_CHANNEL_NOT_SELECTED) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
@@ -286,7 +305,8 @@ close_session:
 	}
 #endif
 	sap_hdd_signal_event_handler(sap_ctx);
-	return status;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

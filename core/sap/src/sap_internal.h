@@ -285,7 +285,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
  * sap_select_channel() - select SAP channel
  * @mac_handle: Opaque handle to the global MAC context
  * @sap_ctx: Sap context
- * @scan_result: Handle to scan results
+ * @scan_list: scan entry list
  *
  * Runs a algorithm to select the best channel to operate in based on BSS
  * rssi and bss count on each channel
@@ -293,7 +293,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
  * Returns: channel number if success, 0 otherwise
  */
 uint8_t sap_select_channel(mac_handle_t mac_handle, struct sap_context *sap_ctx,
-			   tScanResultHandle scan_result);
+			   qdf_list_t *scan_list);
 
 QDF_STATUS
 sap_signal_hdd_event(struct sap_context *sap_ctx,
