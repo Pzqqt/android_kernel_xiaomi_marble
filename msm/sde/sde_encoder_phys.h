@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_ENCODER_PHYS_H__
@@ -693,6 +693,7 @@ static inline bool _sde_encoder_phys_is_dual_ctl(
 {
 	struct sde_kms *sde_kms;
 	enum sde_rm_topology_name topology;
+	const struct sde_rm_topology_def* def;
 
 	if (!phys_enc) {
 		pr_err("invalid phys_enc\n");
@@ -706,8 +707,13 @@ static inline bool _sde_encoder_phys_is_dual_ctl(
 	}
 
 	topology = sde_connector_get_topology_name(phys_enc->connector);
+	def = sde_rm_topology_get_topology_def(&sde_kms->rm, topology);
+	if (IS_ERR_OR_NULL(def)) {
+		pr_err("invalid topology\n");
+		return false;
+	}
 
-	return sde_rm_topology_is_dual_ctl(&sde_kms->rm, topology);
+	return (def->num_ctl == 2) ? true : false;
 }
 
 /**

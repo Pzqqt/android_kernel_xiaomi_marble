@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_RM_H__
@@ -277,12 +277,15 @@ int sde_rm_update_topology(struct drm_connector_state *conn_state,
 	struct msm_display_topology *topology);
 
 /**
- * sde_rm_topology_is_dual_ctl - checks if topoloy requires two control paths
+ * sde_rm_topology_get_topology_def - returns the information about num
+ *	of hw blocks used in this topology
  * @rm: SDE Resource Manager handle
  * @topology: topology selected for the display
- * @return: true if two control paths are required or false
+ * @return: pointer to struct containing topology definition
  */
-static inline bool sde_rm_topology_is_dual_ctl(struct sde_rm *rm,
+static inline const struct sde_rm_topology_def*
+	sde_rm_topology_get_topology_def(
+		struct sde_rm *rm,
 		enum sde_rm_topology_name topology)
 {
 	if ((!rm) || (topology <= SDE_RM_TOPOLOGY_NONE) ||
@@ -290,10 +293,10 @@ static inline bool sde_rm_topology_is_dual_ctl(struct sde_rm *rm,
 		pr_err("invalid arguments: rm:%d topology:%d\n",
 				rm == NULL, topology);
 
-		return false;
+		return ERR_PTR(-EINVAL);
 	}
 
-	return rm->topology_tbl[topology].num_ctl == DUAL_CTL;
+	return &rm->topology_tbl[topology];
 }
 
 /**
