@@ -860,8 +860,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 				return -ETIMEDOUT;
 			}
 		}
-
-		sme_scan_flush_result(mac_handle);
+		ucfg_scan_flush_results(hdd_ctx->pdev, NULL);
 	}
 
 	if (QDF_IS_STATUS_ERROR(ucfg_reg_set_band(hdd_ctx->pdev, band))) {

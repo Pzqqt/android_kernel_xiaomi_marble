@@ -1293,7 +1293,7 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 		csr_neighbor_roam_close(mac, sessionId);
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			csr_scan_flush_result(mac);
+			ucfg_scan_flush_results(mac->pdev, NULL);
 
 	/* Reset the domain back to the deault */
 	mac->scan.domainIdCurrent = mac->scan.domainIdDefault;

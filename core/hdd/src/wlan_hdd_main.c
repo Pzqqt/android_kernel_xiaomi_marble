@@ -7524,7 +7524,6 @@ static void hdd_skip_acs_scan_timer_handler(void *data)
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle)
 		return;
-	sme_scan_flush_result(mac_handle);
 }
 #endif
 

@@ -391,15 +391,6 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 					 tCsrScanResultInfo *res);
 
 /*
- * csr_scan_flush_result() -
- * Clear scan results.
- *
- * mac - mac global pointer
- * sessionId - Session Identifier
- * Return QDF_STATUS
- */
-QDF_STATUS csr_scan_flush_result(struct mac_context *mac_ctx);
-/*
  * csr_scan_filter_results() -
  *  Filter scan results based on valid channel list.
  *

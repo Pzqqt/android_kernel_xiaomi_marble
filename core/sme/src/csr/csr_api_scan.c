@@ -426,31 +426,6 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 					    frm_type);
 }
 
-/*
- * NOTE: This routine is being added to make
- * sure that scan results are not being flushed
- * while roaming. If the scan results are flushed,
- * we are unable to recover from
- * csr_roam_roaming_state_disassoc_rsp_processor.
- * If it is needed to remove this routine,
- * first ensure that we recover gracefully from
- * csr_roam_roaming_state_disassoc_rsp_processor if
- * csr_scan_get_result returns with a failure because
- * of not being able to find the roaming BSS.
- */
-static bool csr_scan_flush_denied(struct mac_context *mac)
-{
-	uint8_t sessionId;
-
-	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-			if (csr_neighbor_middle_of_roaming(mac, sessionId))
-				return 1;
-		}
-	}
-	return 0;
-}
-
 static bool csr_scan_save_bss_description(struct mac_context *mac,
 					  tSirBssDescription *pBSSDescription)
 {
@@ -3091,17 +3066,6 @@ csr_flush_scan_results(struct mac_context *mac_ctx,
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
 	return status;
-}
-
-QDF_STATUS csr_scan_flush_result(struct mac_context *mac_ctx)
-{
-
-	if (csr_scan_flush_denied(mac_ctx)) {
-		sme_err("scan flush denied in roam state");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return csr_flush_scan_results(mac_ctx, NULL);
 }
 
 static inline void csr_flush_bssid(struct mac_context *mac_ctx,

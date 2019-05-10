@@ -2680,30 +2680,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 }
 
 /*
- * sme_scan_flush_result() -
- * A wrapper function to request CSR to clear scan results.
- * This is a synchronous call
- *
- * Return QDF_STATUS
- */
-QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_SCAN_FLUSH_RESULTS,
-			 0, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_flush_result(mac);
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_scan_result_get_first() -
  * A wrapper function to request CSR to returns the first element of
  * scan result.
