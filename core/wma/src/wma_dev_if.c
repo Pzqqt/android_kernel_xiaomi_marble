@@ -5801,6 +5801,16 @@ static void wma_delete_sta_req_sta_mode(tp_wma_handle wma,
 	}
 }
 
+static void wma_sap_prevent_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_prevent_suspend(&wma->sap_prevent_runtime_pm_lock);
+}
+
+static void wma_sap_allow_runtime_pm(tp_wma_handle wma)
+{
+	qdf_runtime_pm_allow_suspend(&wma->sap_prevent_runtime_pm_lock);
+}
+
 /**
  * wma_add_sta() - process add sta request as per opmode
  * @wma: wma handle
@@ -5840,7 +5850,13 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	/* IBSS should share the same code as AP mode */
 	case BSS_OPERATIONAL_MODE_IBSS:
 	case BSS_OPERATIONAL_MODE_AP:
-		htc_vote_link_up(htc_handle);
+		if (qdf_is_drv_connected()) {
+			wma_debug("drv wow enabled prevent runtime pm");
+			wma_sap_prevent_runtime_pm(wma);
+		} else {
+			wma_debug("non-drv wow enabled vote for link up");
+			htc_vote_link_up(htc_handle);
+		}
 		wma_add_sta_req_ap_mode(wma, add_sta);
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
@@ -5907,7 +5923,13 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS shares AP code */
 	case BSS_OPERATIONAL_MODE_AP:
-		htc_vote_link_down(htc_handle);
+		if (qdf_is_drv_connected()) {
+			wma_debug("drv wow enabled allow runtime pm");
+			wma_sap_allow_runtime_pm(wma);
+		} else {
+			wma_debug("drv wow disabled vote for link down");
+			htc_vote_link_down(htc_handle);
+		}
 		wma_delete_sta_req_ap_mode(wma, del_sta);
 		/* free the memory here only if sync feature is not enabled */
 		if (!rsp_requested &&

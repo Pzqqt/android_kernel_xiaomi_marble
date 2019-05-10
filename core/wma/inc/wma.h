@@ -1138,6 +1138,7 @@ typedef struct {
 					uint8_t vdev_id);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
+	qdf_runtime_lock_t sap_prevent_runtime_pm_lock;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 	struct wma_ini_config ini_config;
