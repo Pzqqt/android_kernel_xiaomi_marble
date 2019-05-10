@@ -206,6 +206,7 @@ struct sde_dbg_regbuf {
  * @dbgbus_sde: debug bus structure for the sde
  * @dbgbus_vbif_rt: debug bus structure for the realtime vbif
  * @dump_all: dump all entries in register dump
+ * @dump_secure: dump entries excluding few as it is in secure-session
  * @dsi_dbg_bus: dump dsi debug bus register
  * @regbuf: buffer data to track the register dumping in hw recovery
  * @cur_evt_index: index used for tracking event logs dump in hw recovery
@@ -229,6 +230,7 @@ static struct sde_dbg_base {
 	struct sde_dbg_vbif_debug_bus dbgbus_vbif_rt;
 	struct sde_dbg_dsi_debug_bus dbgbus_dsi;
 	bool dump_all;
+	bool dump_secure;
 	bool dsi_dbg_bus;
 	u32 debugfs_ctrl;
 
@@ -2958,13 +2960,33 @@ static int _sde_dump_reg_range_cmp(void *priv, struct list_head *a,
 	return ar->offset.start - br->offset.start;
 }
 
+static const char *const exclude_modules[] = {
+	"vbif_rt",
+	"vbif_nrt",
+	"wb_2",
+	NULL
+};
+
+static bool is_block_exclude(char **modules, char *name)
+{
+	char **ptr = modules;
+
+	while (*ptr != NULL) {
+		if (!strcmp(name, *ptr))
+			return true;
+		++ptr;
+	}
+	return false;
+}
+
 /**
  * _sde_dump_reg_by_ranges - dump ranges or full range of the register blk base
  * @dbg: register blk base structure
  * @reg_dump_flag: dump target, memory, kernel log, or both
+ * @dump_secure: flag to indicate dumping in secure-session
  */
 static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
-	u32 reg_dump_flag)
+	u32 reg_dump_flag, bool dump_secure)
 {
 	char *addr;
 	size_t len;
@@ -2987,6 +3009,12 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
 			len = _sde_dbg_get_dump_range(&range_node->offset,
 				dbg->max_offset);
 			addr = dbg->base + range_node->offset.start;
+
+			if (dump_secure &&
+				is_block_exclude((char**)exclude_modules,
+					range_node->range_name))
+				continue;
+
 			pr_debug("%s: range_base=0x%pK start=0x%x end=0x%x\n",
 				range_node->range_name,
 				addr, range_node->offset.start,
@@ -3012,8 +3040,9 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
 /**
  * _sde_dump_reg_by_blk - dump a named register base region
  * @blk_name: register blk name
+ * @dump_secure: flag to indicate dumping in secure-session
  */
-static void _sde_dump_reg_by_blk(const char *blk_name)
+static void _sde_dump_reg_by_blk(const char *blk_name, bool dump_secure)
 {
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	struct sde_dbg_reg_base *blk_base;
@@ -3025,7 +3054,7 @@ static void _sde_dump_reg_by_blk(const char *blk_name)
 		if (strlen(blk_base->name) &&
 			!strcmp(blk_base->name, blk_name)) {
 			_sde_dump_reg_by_ranges(blk_base,
-				dbg_base->enable_reg_dump);
+				dbg_base->enable_reg_dump, dump_secure);
 			break;
 		}
 	}
@@ -3034,7 +3063,7 @@ static void _sde_dump_reg_by_blk(const char *blk_name)
 /**
  * _sde_dump_reg_all - dump all register regions
  */
-static void _sde_dump_reg_all(void)
+static void _sde_dump_reg_all(bool dump_secure)
 {
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	struct sde_dbg_reg_base *blk_base;
@@ -3042,9 +3071,18 @@ static void _sde_dump_reg_all(void)
 	if (!dbg_base)
 		return;
 
-	list_for_each_entry(blk_base, &dbg_base->reg_base_list, reg_base_head)
-		if (strlen(blk_base->name))
-			_sde_dump_reg_by_blk(blk_base->name);
+	list_for_each_entry(blk_base, &dbg_base->reg_base_list, reg_base_head) {
+
+		if (!strlen(blk_base->name))
+			continue;
+
+		if (dump_secure &&
+			is_block_exclude((char **)exclude_modules,
+				blk_base->name))
+			continue;
+
+		_sde_dump_reg_by_blk(blk_base->name, dump_secure);
+	}
 }
 
 /**
@@ -3349,10 +3387,11 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
  * @name: string indicating origin of dump
  * @dump_dbgbus_sde: whether to dump the sde debug bus
  * @dump_dbgbus_vbif_rt: whether to dump the vbif rt debug bus
+ * @dump_secure: flag to indicate dumping in secure-session
  */
 static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	u32 len, bool do_panic, const char *name, bool dump_dbgbus_sde,
-	bool dump_dbgbus_vbif_rt, bool dump_all)
+	bool dump_dbgbus_vbif_rt, bool dump_all, bool dump_secure)
 {
 	int i;
 
@@ -3362,12 +3401,13 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 		sde_evtlog_dump_all(sde_dbg_base.evtlog);
 
 	if (dump_all || !blk_arr || !len) {
-		_sde_dump_reg_all();
+		_sde_dump_reg_all(dump_secure);
 	} else {
 		for (i = 0; i < len; i++) {
 			if (blk_arr[i] != NULL)
 				_sde_dump_reg_by_ranges(blk_arr[i],
-					sde_dbg_base.enable_reg_dump);
+					sde_dbg_base.enable_reg_dump,
+					dump_secure);
 		}
 	}
 
@@ -3398,7 +3438,7 @@ static void _sde_dump_work(struct work_struct *work)
 		sde_dbg_base.work_panic, "evtlog_workitem",
 		sde_dbg_base.dbgbus_sde.cmn.include_in_deferred_work,
 		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work,
-		sde_dbg_base.dump_all);
+		sde_dbg_base.dump_all, sde_dbg_base.dump_secure);
 }
 
 void sde_dbg_dump(bool queue_work, const char *name, ...)
@@ -3408,6 +3448,7 @@ void sde_dbg_dump(bool queue_work, const char *name, ...)
 	bool dump_dbgbus_sde = false;
 	bool dump_dbgbus_vbif_rt = false;
 	bool dump_all = false;
+	bool dump_secure = false;
 	va_list args;
 	char *blk_name = NULL;
 	struct sde_dbg_reg_base *blk_base = NULL;
@@ -3462,6 +3503,9 @@ void sde_dbg_dump(bool queue_work, const char *name, ...)
 
 		if (!strcmp(blk_name, "panic"))
 			do_panic = true;
+
+		if (!strcmp(blk_name, "secure"))
+			dump_secure = true;
 	}
 	va_end(args);
 
@@ -3476,7 +3520,8 @@ void sde_dbg_dump(bool queue_work, const char *name, ...)
 		schedule_work(&sde_dbg_base.dump_work);
 	} else {
 		_sde_dump_array(blk_arr, blk_len, do_panic, name,
-				dump_dbgbus_sde, dump_dbgbus_vbif_rt, dump_all);
+				dump_dbgbus_sde, dump_dbgbus_vbif_rt,
+				dump_all, dump_secure);
 	}
 }
 
@@ -3596,7 +3641,7 @@ static ssize_t sde_evtlog_dump_write(struct file *file,
 	const char __user *user_buf, size_t count, loff_t *ppos)
 {
 	_sde_dump_array(NULL, 0, sde_dbg_base.panic_on_err, "dump_debugfs",
-		true, true, true);
+		true, true, true, false);
 
 	return count;
 }
