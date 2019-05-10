@@ -4870,9 +4870,10 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!params)
+	if (!params) {
 		wma_err("NULL param");
 		return QDF_STATUS_E_NOMEM;
+	}
 
 	status = wmi_unified_start_extscan_cmd(wma->wmi_handle, params);
 	if (QDF_IS_STATUS_SUCCESS(status))
