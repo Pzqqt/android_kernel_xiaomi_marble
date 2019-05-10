@@ -298,8 +298,14 @@ uint16_t hif_get_free_queue_number(struct hif_opaque_softc *scn,
 				   uint8_t pipe_id)
 {
 	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(scn);
+	struct HIF_USB_PIPE *pipe = &device->pipes[pipe_id];
+	u16 urb_cnt;
 
-	return device->pipes[pipe_id].urb_cnt;
+	qdf_spin_lock_irqsave(&pipe->device->cs_lock);
+	urb_cnt =  pipe->urb_cnt;
+	qdf_spin_unlock_irqrestore(&pipe->device->cs_lock);
+
+	return urb_cnt;
 }
 
 /**
