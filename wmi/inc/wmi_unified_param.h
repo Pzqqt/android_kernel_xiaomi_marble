@@ -1454,9 +1454,7 @@ struct fw_hang_params {
 struct pdev_utf_params {
 	uint8_t *utf_payload;
 	uint32_t len;
-#ifndef CONFIG_MCL
 	bool is_ar900b;
-#endif
 };
 
 /*Adding this due to dependency on wmi_unified.h
@@ -1494,9 +1492,7 @@ struct dbglog_params {
 	uint32_t val;
 	uint32_t *module_id_bitmap;
 	uint32_t bitmap_len;
-#ifndef CONFIG_MCL
 	uint32_t cfgvalid[2];
-#endif
 };
 
 /**
