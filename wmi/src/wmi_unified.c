@@ -384,7 +384,7 @@ static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
 #define CUSTOM_MGMT_CMD_DATA_SIZE 4
 #endif
 
-#ifdef CONFIG_MCL
+#ifndef WMI_INTERFACE_EVENT_LOGGING_DYNAMIC_ALLOC
 /* WMI commands */
 uint32_t g_wmi_command_buf_idx = 0;
 struct wmi_command_debug wmi_command_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
@@ -481,7 +481,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 	h->log_info.wmi_rx_event_log_buf_info.length++;			\
 }
 
-#ifdef CONFIG_MCL
+#ifndef WMI_INTERFACE_EVENT_LOGGING_DYNAMIC_ALLOC
 uint32_t g_wmi_mgmt_command_buf_idx = 0;
 struct
 wmi_command_debug wmi_mgmt_command_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
@@ -598,7 +598,7 @@ uint32_t wmi_display_size = 100;
  *
  * Return: Initialization status
  */
-#ifdef CONFIG_MCL
+#ifndef WMI_INTERFACE_EVENT_LOGGING_DYNAMIC_ALLOC
 static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 {
 	struct wmi_log_buf_t *cmd_log_buf =
@@ -824,7 +824,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
  *
  * Return: None
  */
-#ifndef CONFIG_MCL
+#ifdef WMI_INTERFACE_EVENT_LOGGING_DYNAMIC_ALLOC
 static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle)
 {
 	if (wmi_handle->log_info.wmi_command_log_buf_info.buf)
@@ -1608,13 +1608,11 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 }
 qdf_export_symbol(wmi_get_max_msg_len);
 
-#ifdef CONFIG_MCL
 #ifndef WMI_CMD_STRINGS
 static uint8_t *wmi_id_to_name(uint32_t wmi_command)
 {
 	return "Invalid WMI cmd";
 }
-
 #endif
 
 static inline void wmi_log_cmd_id(uint32_t cmd_id, uint32_t tag)
@@ -1629,6 +1627,7 @@ static inline void wmi_log_cmd_id(uint32_t cmd_id, uint32_t tag)
  *
  * Return: true if the command is part of the resume sequence.
  */
+#ifdef CONFIG_MCL
 static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 {
 	switch (cmd_id) {
@@ -1731,9 +1730,7 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 			       wmi_handle->wmi_endpoint_id, htc_tag);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
-#ifdef CONFIG_MCL
 	wmi_log_cmd_id(cmd_id, htc_tag);
-#endif
 	wmi_ext_dbg_msg_cmd_record(wmi_handle,
 				   qdf_nbuf_data(buf), qdf_nbuf_len(buf));
 #ifdef WMI_INTERFACE_EVENT_LOGGING
@@ -2915,7 +2912,6 @@ wmi_stop(wmi_unified_t wmi_handle)
 	return 0;
 }
 
-#ifndef CONFIG_MCL
 /**
  * API to flush all the previous packets  associated with the wmi endpoint
  *
@@ -2941,5 +2937,3 @@ void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
 		wmi_handle->ops->wmi_pdev_id_conversion_enable(wmi_handle);
 }
-
-#endif
