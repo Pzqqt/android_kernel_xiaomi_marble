@@ -2845,6 +2845,27 @@ fail1:
 	return QDF_STATUS_E_FAILURE;
 }
 
+/*
+ * dp_soc_cmn_cleanup() - Common SoC level De-initializion
+ *
+ * @soc: Datapath SOC handle
+ *
+ * This function is responsible for cleaning up DP resource of Soc
+ * initialled in dp_pdev_attach_wifi3-->dp_soc_cmn_setup, since
+ * dp_soc_detach_wifi3 could not identify some of them
+ * whether they have done initialized or not accurately.
+ *
+ */
+static void dp_soc_cmn_cleanup(struct dp_soc *soc)
+{
+	dp_tx_soc_detach(soc);
+
+	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
+
+	dp_reo_cmdlist_destroy(soc);
+	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
+}
+
 static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force);
 
 static QDF_STATUS dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
@@ -3794,6 +3815,11 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		dp_pdev_deinit(txrx_pdev, force);
 		dp_pdev_detach(txrx_pdev, force);
 	}
+
+	/* only do soc common cleanup when last pdev do detach */
+	if (!(soc->pdev_count))
+		dp_soc_cmn_cleanup(soc);
+
 }
 
 /*
@@ -3867,8 +3893,6 @@ static void dp_soc_deinit(void *txrx_soc)
 	/* Free pending htt stats messages */
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
 
-	dp_reo_cmdlist_destroy(soc);
-
 	dp_peer_find_detach(soc);
 
 	/* Free the ring memories */
@@ -3924,10 +3948,6 @@ static void dp_soc_deinit(void *txrx_soc)
 
 	htt_soc_htc_dealloc(soc->htt_handle);
 
-	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
-
-	dp_reo_cmdlist_destroy(soc);
-	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 	dp_reo_desc_freelist_destroy(soc);
 
 	qdf_spinlock_destroy(&soc->ast_lock);
@@ -3975,8 +3995,6 @@ static void dp_soc_detach(void *txrx_soc)
 	/* Free the ring memories */
 	/* Common rings */
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
-
-	dp_tx_soc_detach(soc);
 
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
