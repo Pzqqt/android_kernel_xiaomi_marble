@@ -1223,7 +1223,6 @@ typedef struct {
  * @vdev_id: vdev id
  * @peer_new_assoc: peer association type
  * @peer_associd: peer association id
- * @peer_flags: peer flags
  * @peer_caps: peer capabalities
  * @peer_listen_intval: peer listen interval
  * @peer_ht_caps: HT capabalities
@@ -1279,7 +1278,6 @@ struct peer_assoc_params {
 	uint32_t vdev_id;
 	uint32_t peer_new_assoc;
 	uint32_t peer_associd;
-	uint32_t peer_flags;
 	uint32_t peer_caps;
 	uint32_t peer_listen_intval;
 	uint32_t peer_ht_caps;
@@ -1298,30 +1296,29 @@ struct peer_assoc_params {
 	uint32_t tx_mcs_set;
 	uint8_t vht_capable;
 	uint32_t peer_bw_rxnss_override;
-#ifndef CONFIG_MCL
 	uint32_t tx_max_mcs_nss;
-	bool is_pmf_enabled;
-	bool is_wme_set;
-	bool qos_flag;
-	bool apsd_flag;
-	bool ht_flag;
-	bool bw_40;
-	bool bw_80;
-	bool bw_160;
-	bool stbc_flag;
-	bool ldpc_flag;
-	bool static_mimops_flag;
-	bool dynamic_mimops_flag;
-	bool spatial_mux_flag;
-	bool vht_flag;
-	bool vht_ng_flag;
-	bool need_ptk_4_way;
-	bool need_gtk_2_way;
-	bool auth_flag;
-	bool safe_mode_enabled;
-	bool amsdu_disable;
+	uint32_t is_pmf_enabled:1,
+		 is_wme_set:1,
+		 qos_flag:1,
+		 apsd_flag:1,
+		 ht_flag:1,
+		 bw_40:1,
+		 bw_80:1,
+		 bw_160:1,
+		 stbc_flag:1,
+		 ldpc_flag:1,
+		 static_mimops_flag:1,
+		 dynamic_mimops_flag:1,
+		 spatial_mux_flag:1,
+		 vht_flag:1,
+		 vht_ng_flag:1,
+		 need_ptk_4_way:1,
+		 need_gtk_2_way:1,
+		 auth_flag:1,
+		 safe_mode_enabled:1,
+		 amsdu_disable:1,
+		 p2p_capable_sta:1;
 	/* Use common structure */
-#endif
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	bool he_flag;
 	bool twt_requester;

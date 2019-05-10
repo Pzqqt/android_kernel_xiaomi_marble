@@ -2325,14 +2325,6 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
-#ifdef CONFIG_MCL
-static inline void copy_peer_flags_tlv(
-			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
-			struct peer_assoc_params *param)
-{
-	cmd->peer_flags = param->peer_flags;
-}
-#else
 static inline void copy_peer_flags_tlv(
 			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 			struct peer_assoc_params *param)
@@ -2383,6 +2375,8 @@ static inline void copy_peer_flags_tlv(
 			cmd->peer_flags |= WMI_PEER_VHT;
 		if (param->he_flag)
 			cmd->peer_flags |= WMI_PEER_HE;
+		if (param->p2p_capable_sta)
+			cmd->peer_flags |= WMI_PEER_IS_P2P_CAPABLE;
 	}
 
 	if (param->is_pmf_enabled)
@@ -2423,7 +2417,6 @@ static inline void copy_peer_flags_tlv(
 	if (param->twt_responder)
 		cmd->peer_flags |= WMI_PEER_TWT_RESP;
 }
-#endif
 
 static inline void copy_peer_mac_addr_tlv(
 		wmi_peer_assoc_complete_cmd_fixed_param * cmd,
