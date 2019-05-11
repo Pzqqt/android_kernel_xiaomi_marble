@@ -886,6 +886,54 @@ void dp_print_soc_cfg_params(struct dp_soc *soc);
 const
 char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type);
 
+/*
+ * dp_txrx_path_stats() - Function to display dump stats
+ * @soc - soc handle
+ *
+ * return: none
+ */
+void dp_txrx_path_stats(struct dp_soc *soc);
+
+/*
+ * dp_print_per_ring_stats(): Packet count per ring
+ * @soc - soc handle
+ *
+ * Return - None
+ */
+void dp_print_per_ring_stats(struct dp_soc *soc);
+
+/**
+ * dp_aggregate_pdev_stats(): Consolidate stats at PDEV level
+ * @pdev: DP PDEV handle
+ *
+ * return: void
+ */
+void dp_aggregate_pdev_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_print_rx_rates(): Print Rx rate stats
+ * @vdev: DP_VDEV handle
+ *
+ * Return:void
+ */
+void dp_print_rx_rates(struct dp_vdev *vdev);
+
+/**
+ * dp_print_tx_rates(): Print tx rates
+ * @vdev: DP_VDEV handle
+ *
+ * Return:void
+ */
+void dp_print_tx_rates(struct dp_vdev *vdev);
+
+/**
+ * dp_print_peer_stats():print peer stats
+ * @peer: DP_PEER handle
+ *
+ * return void
+ */
+void dp_print_peer_stats(struct dp_peer *peer);
+
 /**
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
  *
