@@ -428,6 +428,20 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 			hdd_inspect_dhcp_packet(adapter, sta_id, skb, QDF_RX);
 	}
 
+	qdf_dp_trace_set_track(skb, QDF_RX);
+
+	hdd_event_eapol_log(skb, QDF_RX);
+	qdf_dp_trace_log_pkt(adapter->vdev_id,
+			     skb, QDF_RX, QDF_TRACE_DEFAULT_PDEV_ID);
+	DPTRACE(qdf_dp_trace(skb,
+			     QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
+			     QDF_TRACE_DEFAULT_PDEV_ID,
+			     qdf_nbuf_data_addr(skb),
+			     sizeof(qdf_nbuf_data(skb)), QDF_RX));
+	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+				      QDF_DP_TRACE_RX_PACKET_RECORD, 0,
+				      QDF_RX));
+
 	/*
 	 * Set PF_WAKE_UP_IDLE flag in the task structure
 	 * This task and any task woken by this will be waken to idle CPU
@@ -451,20 +465,6 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 
 	++adapter->stats.rx_packets;
 	adapter->stats.rx_bytes += skb->len;
-
-	qdf_dp_trace_set_track(skb, QDF_RX);
-
-	hdd_event_eapol_log(skb, QDF_RX);
-	qdf_dp_trace_log_pkt(adapter->vdev_id,
-			     skb, QDF_RX, QDF_TRACE_DEFAULT_PDEV_ID);
-	DPTRACE(qdf_dp_trace(skb,
-			     QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
-			     QDF_TRACE_DEFAULT_PDEV_ID,
-			     qdf_nbuf_data_addr(skb),
-			     sizeof(qdf_nbuf_data(skb)), QDF_RX));
-	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
-				      QDF_DP_TRACE_RX_PACKET_RECORD, 0,
-				      QDF_RX));
 
 	result = hdd_ipa_aggregated_rx_ind(skb);
 	if (result == NET_RX_SUCCESS)
