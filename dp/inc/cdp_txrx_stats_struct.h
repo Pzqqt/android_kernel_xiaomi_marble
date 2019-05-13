@@ -1594,6 +1594,8 @@ enum _ol_ath_param_t {
 	/* wifi down indication used in MBSS feature */
 	OL_ATH_PARAM_WIFI_DOWN_IND = 408,
 	OL_ATH_PARAM_TX_CAPTURE = 409,
+	/* Enable fw dump collectin if wmi disconnects */
+	OL_ATH_PARAM_WMI_DIS_DUMP = 410,
 };
 #endif
 /* Bitmasks for stats that can block */
