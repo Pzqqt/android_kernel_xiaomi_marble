@@ -673,7 +673,7 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
-	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 128, NULL,},
+	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
 	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  WMI_MAX_BUF_SIZE, 512, NULL,},
 	/* host->target WMI (mac0) */
@@ -730,7 +730,7 @@ static struct CE_attr host_ce_config_wlan_qca8074_pci[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ EPPING_CE_FLAGS_POLL, 0, 16, 2048, 0, NULL,},
 	/* target->host HTT + HTC control */
-	{ /* CE1 */ EPPING_CE_FLAGS_POLL, 0, 0,  2048, 128, NULL,},
+	{ /* CE1 */ EPPING_CE_FLAGS_POLL, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
 	{ /* CE2 */ EPPING_CE_FLAGS_POLL, 0, 0,  2048, 256, NULL,},
 	/* host->target WMI (mac0) */
