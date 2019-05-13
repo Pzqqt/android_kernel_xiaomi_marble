@@ -2638,9 +2638,9 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 			dp_tx_stats_update(pdev->soc, peer,
 					   &ppdu_desc->user[i],
 					   ppdu_desc->ack_rssi);
+			dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		}
 
-		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		dp_peer_unref_del_find_by_id(peer);
 		tlv_bitmap_expected = tlv_bitmap_default;
 	}
