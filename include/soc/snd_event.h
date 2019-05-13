@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SND_EVENT_H_
@@ -33,7 +33,7 @@ int snd_event_notify(struct device *dev, unsigned int state);
 void snd_event_mstr_add_client(struct snd_event_clients **snd_clients,
 			    int (*compare)(struct device *, void *),
 			    void *data);
-inline bool is_snd_event_fwk_enabled(void)
+static inline bool is_snd_event_fwk_enabled(void)
 {
 	return 1;
 }
