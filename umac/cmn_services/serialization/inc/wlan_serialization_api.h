@@ -604,4 +604,20 @@ QDF_STATUS
 wlan_ser_validate_umac_cmd(struct wlan_objmgr_vdev *vdev,
 			   enum wlan_serialization_cmd_type cmd_type,
 			   wlan_ser_umac_cmd_cb umac_cmd_cb);
+
+/**
+ * wlan_serialization_purge_all_pdev_cmd() - purge all command for given pdev
+ * @pdev: objmgr pdev pointer
+ *
+ * Return: void
+ */
+void wlan_serialization_purge_all_pdev_cmd(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_serialization_purge_all_cmd() - purge all command for psoc
+ * @psoc: objmgr psoc pointer
+ *
+ * Return: void
+ */
+void wlan_serialization_purge_all_cmd(struct wlan_objmgr_psoc *psoc);
 #endif

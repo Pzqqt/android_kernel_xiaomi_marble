@@ -41,6 +41,12 @@ QDF_STATUS wlan_serialization_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		ser_err("invalid ser_soc_obj");
 		goto error;
 	}
+
+	/*
+	 * purge all serialization command if there are any pending to make
+	 * sure memory and vdev ref are freed.
+	 */
+	wlan_serialization_purge_all_cmd(psoc);
 	/* clean up all timers before exiting */
 	status = wlan_serialization_cleanup_all_timers(ser_soc_obj);
 	if (status != QDF_STATUS_SUCCESS)

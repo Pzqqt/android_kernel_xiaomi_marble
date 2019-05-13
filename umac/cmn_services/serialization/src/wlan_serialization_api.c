@@ -781,3 +781,44 @@ wlan_ser_validate_umac_cmd(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
+
+void wlan_serialization_purge_all_pdev_cmd(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+
+	if (!pdev) {
+		ser_err("NULL pdev");
+		return;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser_pdev_obj");
+		return;
+	}
+
+	wlan_ser_cancel_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
+				 WLAN_SER_CMD_SCAN, false);
+	wlan_ser_cancel_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
+				 WLAN_SER_CMD_SCAN, true);
+	wlan_ser_cancel_non_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
+				     WLAN_SER_CMD_NONSCAN, false);
+	wlan_ser_cancel_non_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
+				     WLAN_SER_CMD_NONSCAN, true);
+}
+
+static inline
+void wlan_ser_purge_pdev_cmd_cb(struct wlan_objmgr_psoc *psoc,
+				void *object, void *arg)
+{
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)object;
+
+	wlan_serialization_purge_all_pdev_cmd(pdev);
+}
+
+void wlan_serialization_purge_all_cmd(struct wlan_objmgr_psoc *psoc)
+{
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+				     wlan_ser_purge_pdev_cmd_cb, NULL, 1,
+				     WLAN_SERIALIZATION_ID);
+}
