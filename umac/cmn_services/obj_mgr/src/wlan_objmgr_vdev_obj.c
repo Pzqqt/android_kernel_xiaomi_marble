@@ -107,6 +107,7 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 
 	qdf_mem_free(vdev->vdev_mlme.bss_chan);
 	qdf_mem_free(vdev->vdev_mlme.des_chan);
+	qdf_mem_free(vdev->vdev_nif.osdev);
 	qdf_mem_free(vdev);
 
 	return QDF_STATUS_SUCCESS;
