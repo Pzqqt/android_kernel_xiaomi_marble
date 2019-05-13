@@ -445,6 +445,14 @@ void hdd_copy_ht_caps(struct ieee80211_ht_cap *hdd_ht_cap,
 		      tDot11fIEHTCaps *roam_ht_cap);
 
 /**
+ * hdd_add_beacon_filter() - add beacon filter
+ * @adapter: Pointer to the hdd adapter
+ *
+ * Return: 0 on success and errno on failure
+ */
+int hdd_add_beacon_filter(struct hdd_adapter *adapter);
+
+/**
  * hdd_copy_vht_caps()- copy vht caps info from roam vht caps
  * info to source vht_cap info of type ieee80211_vht_cap.
  * @hdd_vht_cap: pointer to Source vht_cap info of type ieee80211_vht_cap

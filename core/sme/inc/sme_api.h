@@ -1580,6 +1580,43 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 				     uint32_t vdev_id);
+
+/**
+ * sme_is_beacon_report_started() - Check bcn recv started
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ *
+ * This function is to check beacon report started or not.
+ *
+ * Return: true on success
+ */
+bool sme_is_beacon_report_started(mac_handle_t mac_handle,
+				  uint32_t session_id);
+
+/**
+ * stop_beacon_report() - To stop beacon report
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ *
+ * Return: None
+ */
+void sme_stop_beacon_report(mac_handle_t mac_handle,
+			    uint32_t session_id);
+
+#else
+static inline
+bool sme_is_beacon_report_started(mac_handle_t mac_handle,
+				  uint32_t session_id)
+{
+	return true;
+}
+
+static inline
+void sme_stop_beacon_report(mac_handle_t mac_handle,
+			    uint32_t session_id)
+{
+}
+
 #endif
 
 QDF_STATUS sme_add_beacon_filter(mac_handle_t mac_handle,

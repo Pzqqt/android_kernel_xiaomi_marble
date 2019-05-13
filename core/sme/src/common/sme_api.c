@@ -12656,6 +12656,48 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 
 	return status;
 }
+
+void sme_stop_beacon_report(mac_handle_t mac_handle, uint32_t session_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	QDF_STATUS status;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session not valid: %d", session_id);
+		return;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sme_err("vdev_id %d not found", session_id);
+		return;
+	}
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		session->is_bcn_recv_start = false;
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+}
+
+bool sme_is_beacon_report_started(mac_handle_t mac_handle, uint32_t session_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session not valid: %d", session_id);
+		return false;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sme_err("vdev_id %d not found", session_id);
+		return false;
+	}
+
+	return session->is_bcn_recv_start;
+}
 #endif
 
 /**
@@ -15536,7 +15578,7 @@ static void sme_scan_event_handler(struct wlan_objmgr_vdev *vdev,
 	if (event->type == SCAN_EVENT_TYPE_STARTED) {
 		if (mac->sme.beacon_pause_cb)
 			mac->sme.beacon_pause_cb(mac->hdd_handle,
-				vdev->vdev_objmgr.vdev_id, event->type);
+				vdev->vdev_objmgr.vdev_id, event->type, false);
 	}
 }
 
@@ -15551,6 +15593,12 @@ QDF_STATUS sme_register_bcn_recv_pause_ind_cb(mac_handle_t mac_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	/* scan event de-registration */
+	if (!cb) {
+		ucfg_scan_unregister_event_handler(mac->pdev,
+						   sme_scan_event_handler, mac);
+		return QDF_STATUS_SUCCESS;
+	}
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->sme.beacon_pause_cb = cb;

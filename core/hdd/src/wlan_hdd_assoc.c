@@ -63,6 +63,7 @@
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_hdd_bcn_recv.h"
 
 #include "wlan_hdd_nud_tracking.h"
 #include <wlan_cfg80211_crypto.h>
@@ -442,13 +443,7 @@ static int hdd_remove_beacon_filter(struct hdd_adapter *adapter)
 	return 0;
 }
 
-/**
- * hdd_add_beacon_filter() - add beacon filter
- * @adapter: Pointer to the hdd adapter
- *
- * Return: 0 on success and errno on failure
- */
-static int hdd_add_beacon_filter(struct hdd_adapter *adapter)
+int hdd_add_beacon_filter(struct hdd_adapter *adapter)
 {
 	int i;
 	uint32_t ie_map[SIR_BCN_FLT_MAX_ELEMS_IE_LIST] = {0};
@@ -1807,8 +1802,15 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
-	if (hdd_remove_beacon_filter(adapter) != 0)
-		hdd_err("hdd_remove_beacon_filter() failed");
+	if (!hdd_remove_beacon_filter(adapter)) {
+		if (sme_is_beacon_report_started(mac_handle,
+						 adapter->vdev_id)) {
+			hdd_beacon_recv_pause_indication((hdd_handle_t)hdd_ctx,
+							 adapter->vdev_id,
+							 SCAN_EVENT_TYPE_MAX,
+							 true);
+		}
+	}
 
 	if (eCSR_ROAM_IBSS_LEAVE == roam_status) {
 		uint8_t i;

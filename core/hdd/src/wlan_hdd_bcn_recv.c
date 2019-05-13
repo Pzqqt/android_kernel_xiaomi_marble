@@ -78,13 +78,13 @@ int get_beacon_report_data_len(struct wlan_beacon_report *report)
 
 /**
  * get_pause_ind_data_len() - Calculate skb buffer length
- * @report: Required beacon report
+ * @is_disconnected: Connection state
  *
  * Calculate length for pause indication to allocate skb buffer
  *
  * Return: skb buffer length
  */
-static int get_pause_ind_data_len(void)
+static int get_pause_ind_data_len(bool is_disconnected)
 {
 	uint32_t data_len = NLMSG_HDRLEN;
 
@@ -94,72 +94,11 @@ static int get_pause_ind_data_len(void)
 	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PAUSE_REASON */
 	data_len += nla_total_size(sizeof(u32));
 
+	/* QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_AUTO_RESUMES */
+	if (!is_disconnected)
+		data_len += nla_total_size(sizeof(u8));
+
 	return data_len;
-}
-
-/**
- * hdd_beacon_recv_pause_indication()- Send vendor event to user space
- * to inform SCAN started indication
- * @hdd_handle: hdd handler
- * @vdev_id: vdev id
- * @type: scan event type
- *
- * Return: None
- */
-static void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
-					     uint8_t vdev_id,
-					     enum scan_event_type type)
-{
-	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
-	struct hdd_adapter *adapter;
-	struct sk_buff *vendor_event;
-	uint32_t data_len;
-	int flags;
-	uint32_t abort_reason;
-
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return;
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (hdd_validate_adapter(adapter))
-		return;
-
-	data_len = get_pause_ind_data_len();
-	flags = cds_get_gfp_flags();
-
-	vendor_event =
-		cfg80211_vendor_event_alloc(
-			hdd_ctx->wiphy, NULL,
-			data_len,
-			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
-			flags);
-	if (!vendor_event) {
-		hdd_err("cfg80211_vendor_event_alloc failed");
-		return;
-	}
-
-	switch (type) {
-	case SCAN_EVENT_TYPE_STARTED:
-		abort_reason =
-		  QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_SCAN_STARTED;
-		break;
-	default:
-		abort_reason =
-		     QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_UNSPECIFIED;
-	}
-	/* Send vendor event to user space to inform ABORT */
-	if (nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE,
-			QCA_WLAN_VENDOR_BEACON_REPORTING_OP_PAUSE) ||
-	    nla_put_u32(vendor_event,
-			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PAUSE_REASON,
-			abort_reason)) {
-		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
-		kfree_skb(vendor_event);
-		return;
-	}
-
-	cfg80211_vendor_event(vendor_event, flags);
 }
 
 /**
@@ -222,6 +161,101 @@ static void hdd_send_bcn_recv_info(hdd_handle_t hdd_handle,
 }
 
 /**
+ * hdd_handle_beacon_reporting_start_op() - Process bcn recv start op
+ * @hdd_ctx: Pointer to hdd context
+ * @adapter: Pointer to network adapter
+ * @active_report: Active reporting flag
+ *
+ * This function process beacon reporting start operation.
+ */
+static int hdd_handle_beacon_reporting_start_op(struct hdd_context *hdd_ctx,
+						struct hdd_adapter *adapter,
+						bool active_report)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	int errno;
+
+	if (active_report) {
+		/* Register beacon report callback */
+		qdf_status =
+			sme_register_bcn_report_pe_cb(hdd_ctx->mac_handle,
+						      hdd_send_bcn_recv_info);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			hdd_err("bcn recv info cb reg failed = %d", qdf_status);
+			errno = qdf_status_to_os_return(qdf_status);
+			return errno;
+		}
+
+		/* Register pause indication callback */
+		qdf_status =
+			sme_register_bcn_recv_pause_ind_cb(hdd_ctx->mac_handle,
+					hdd_beacon_recv_pause_indication);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			hdd_err("pause_ind_cb reg failed = %d", qdf_status);
+			errno = qdf_status_to_os_return(qdf_status);
+			return errno;
+		}
+	}
+	/* Handle beacon receive start indication */
+	qdf_status = sme_handle_bcn_recv_start(hdd_ctx->mac_handle,
+					       adapter->vdev_id);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("bcn rcv start failed with status=%d", qdf_status);
+		errno = qdf_status_to_os_return(qdf_status);
+		return errno;
+	}
+
+	errno = qdf_status_to_os_return(qdf_status);
+
+	return errno;
+}
+
+/**
+ * hdd_handle_beacon_reporting_stop_op() - Process bcn recv stop op
+ * @hdd_ctx: Pointer to hdd context
+ * @adapter: Pointer to network adapter
+ *
+ * This function process beacon reporting stop operation.
+ */
+static int hdd_handle_beacon_reporting_stop_op(struct hdd_context *hdd_ctx,
+					       struct hdd_adapter *adapter)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	int errno;
+
+	/* Reset bcn recv start flag */
+	sme_stop_beacon_report(hdd_ctx->mac_handle, adapter->vdev_id);
+
+	/* Deregister beacon report callback */
+	qdf_status = sme_register_bcn_report_pe_cb(hdd_ctx->mac_handle, NULL);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("Callback de-registration failed = %d", qdf_status);
+		errno = qdf_status_to_os_return(qdf_status);
+		return errno;
+	}
+
+	/* Deregister pause indication callback */
+	qdf_status = sme_register_bcn_recv_pause_ind_cb(hdd_ctx->mac_handle,
+							NULL);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("scan even deregister failed = %d", qdf_status);
+		errno = qdf_status_to_os_return(qdf_status);
+		return errno;
+	}
+
+	if (hdd_adapter_is_connected_sta(adapter))
+		/* Add beacon filter */
+		if (hdd_add_beacon_filter(adapter)) {
+			hdd_err("Beacon filter addition failed");
+			return -EINVAL;
+		}
+
+	errno = qdf_status_to_os_return(qdf_status);
+
+	return errno;
+}
+
+/**
  * __wlan_hdd_cfg80211_bcn_rcv_start() - enable/disable beacon reporting
  * indication
  * @wiphy: Pointer to wireless phy
@@ -244,7 +278,6 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1];
 	uint32_t bcn_report;
 	int errno;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	bool active_report;
 
 	hdd_enter_dev(dev);
@@ -285,38 +318,111 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE]);
 	hdd_debug("Bcn Report: OP type:%d", bcn_report);
 
-	if (bcn_report == QCA_WLAN_VENDOR_BEACON_REPORTING_OP_START) {
-		if (active_report) {
-			qdf_status = sme_register_bcn_report_pe_cb(
-							hdd_ctx->mac_handle,
-							hdd_send_bcn_recv_info);
-			if (QDF_IS_STATUS_ERROR(qdf_status)) {
-				hdd_err("bcn recv info cb reg failed = %d",
-					qdf_status);
-				errno = qdf_status_to_os_return(qdf_status);
-				return errno;
-			}
-		}
-		qdf_status =
-			sme_register_bcn_recv_pause_ind_cb(hdd_ctx->mac_handle,
-					hdd_beacon_recv_pause_indication);
-		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			hdd_err("bcn_recv_abort_ind cb reg failed = %d",
-				qdf_status);
-			errno = qdf_status_to_os_return(qdf_status);
+	switch (bcn_report) {
+	case QCA_WLAN_VENDOR_BEACON_REPORTING_OP_START:
+		if (sme_is_beacon_report_started(hdd_ctx->mac_handle,
+						 adapter->vdev_id)) {
+			hdd_debug("Start cmd already in progress");
 			return errno;
 		}
-
-		qdf_status =
-			sme_handle_bcn_recv_start(hdd_ctx->mac_handle,
-						  adapter->vdev_id);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			hdd_err("beacon receive start failed with status=%d",
-				qdf_status);
+		errno = hdd_handle_beacon_reporting_start_op(hdd_ctx,
+							     adapter,
+							     active_report);
+		break;
+	case QCA_WLAN_VENDOR_BEACON_REPORTING_OP_STOP:
+		if (sme_is_beacon_report_started(hdd_ctx->mac_handle,
+						 adapter->vdev_id)) {
+			errno = hdd_handle_beacon_reporting_stop_op(hdd_ctx,
+								    adapter);
+		} else {
+			hdd_err_rl("BCN_RCV_STOP rej as no START CMD active");
+		}
+		break;
+	default:
+		hdd_debug("Invalid bcn report type %d", bcn_report);
 	}
 
-	errno = qdf_status_to_os_return(qdf_status);
 	return errno;
+}
+
+void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
+				      uint8_t vdev_id,
+				      enum scan_event_type type,
+				      bool is_disconnected)
+{
+	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
+	struct hdd_adapter *adapter;
+	struct sk_buff *vendor_event;
+	uint32_t data_len;
+	int flags;
+	uint32_t abort_reason;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	data_len = get_pause_ind_data_len(is_disconnected);
+	flags = cds_get_gfp_flags();
+
+	vendor_event =
+		cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy, NULL,
+			data_len,
+			QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING_INDEX,
+			flags);
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (is_disconnected) {
+		abort_reason =
+		     QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_DISCONNECTED;
+		/* Deregister callbacks and Reset bcn recv start flag */
+		if (sme_is_beacon_report_started(hdd_ctx->mac_handle,
+						 adapter->vdev_id))
+			hdd_handle_beacon_reporting_stop_op(hdd_ctx,
+							    adapter);
+	} else {
+		switch (type) {
+		case SCAN_EVENT_TYPE_STARTED:
+			abort_reason =
+		     QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_SCAN_STARTED;
+			break;
+		default:
+			abort_reason =
+		      QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_UNSPECIFIED;
+		}
+	}
+	/* Send vendor event to user space to inform ABORT */
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE,
+			QCA_WLAN_VENDOR_BEACON_REPORTING_OP_PAUSE) ||
+	    nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PAUSE_REASON,
+			abort_reason)) {
+		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	/*
+	 * Send auto resume flag to user space to specify the driver will
+	 * automatically resume reporting beacon events only in case of
+	 * pause indication due to scan started.
+	 */
+	if (!is_disconnected)
+		if (nla_put_flag(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_AUTO_RESUMES)) {
+			hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+			kfree_skb(vendor_event);
+			return;
+		}
+
+	cfg80211_vendor_event(vendor_event, flags);
 }
 
 int wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,

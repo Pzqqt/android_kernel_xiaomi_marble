@@ -60,6 +60,12 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 					PMO_WOW_MAX_EVENT_BM_LEN,
 					event_bitmap);
 		}
+
+		/* Configure WOW_BEACON_EVENT */
+		pmo_set_wow_event_bitmap(WOW_BEACON_EVENT,
+					 PMO_WOW_MAX_EVENT_BM_LEN,
+					 event_bitmap);
+
 	/* fallthrough */
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:

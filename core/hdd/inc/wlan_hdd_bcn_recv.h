@@ -42,6 +42,21 @@ int wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 				    struct wireless_dev *wdev,
 				    const void *data, int data_len);
 
+/**
+ * hdd_beacon_recv_pause_indication()- Send vendor event to user space
+ * to inform SCAN started indication
+ * @hdd_handle: hdd handler
+ * @vdev_id: vdev id
+ * @type: scan event type
+ * @is_disconnected: Connection state of driver
+ *
+ * Return: None
+ */
+void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
+				      uint8_t vdev_id,
+				      enum scan_event_type type,
+				      bool is_disconnected);
+
 #define BCN_RECV_FEATURE_VENDOR_COMMANDS				\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -59,5 +74,13 @@ int wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 #else
 #define BCN_RECV_FEATURE_VENDOR_COMMANDS
 #define BCN_RECV_FEATURE_VENDOR_EVENTS
+
+static inline
+void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
+				      uint8_t vdev_id,
+				      enum scan_event_type type,
+				      bool is_disconnected)
+{
+}
 #endif
 
