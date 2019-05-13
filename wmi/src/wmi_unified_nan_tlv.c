@@ -859,6 +859,8 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	WMI_NDP_CONFIRM_EVENTID_param_tlvs *event;
 	wmi_ndp_confirm_event_fixed_param *fixed_params;
 	size_t total_array_len;
+	bool ndi_dbs = wmi_service_enabled(wmi_handle,
+					   wmi_service_ndi_dbs_support);
 
 	event = (WMI_NDP_CONFIRM_EVENTID_param_tlvs *) data;
 	fixed_params = (wmi_ndp_confirm_event_fixed_param *)event->fixed_param;
@@ -905,12 +907,18 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	}
 
 	if (fixed_params->num_ndp_channels > event->num_ndp_channel_list ||
-	    fixed_params->num_ndp_channels > event->num_nss_list ||
-	    fixed_params->num_ndp_channels > event->num_ndp_channel_info) {
-		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len(%d) or NSS TLV len(%d) or NDP Ch info(%d)"),
+	    fixed_params->num_ndp_channels > event->num_nss_list) {
+		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len(%d) or NSS TLV len(%d)"),
 			 fixed_params->num_ndp_channels,
 			 event->num_ndp_channel_list,
-			 event->num_nss_list,
+			 event->num_nss_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (ndi_dbs &&
+	    fixed_params->num_ndp_channels > event->num_ndp_channel_info) {
+		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch info(%d)"),
+			 fixed_params->num_ndp_channels,
 			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -950,8 +958,7 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 			 rsp->ch[i].ch_width,
 			 rsp->ch[i].nss);
 
-		if (wmi_service_enabled(wmi_handle,
-					wmi_service_ndi_dbs_support)) {
+		if (ndi_dbs) {
 			rsp->ch[i].mac_id = event->ndp_channel_info[i].mac_id;
 			WMI_LOGD("mac_id: %d", rsp->ch[i].mac_id);
 		}
@@ -1105,6 +1112,8 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 	WMI_HOST_WLAN_PHY_MODE ch_mode;
 	WMI_NDL_SCHEDULE_UPDATE_EVENTID_param_tlvs *event;
 	wmi_ndl_schedule_update_fixed_param *fixed_params;
+	bool ndi_dbs = wmi_service_enabled(wmi_handle,
+					   wmi_service_ndi_dbs_support);
 
 	event = (WMI_NDL_SCHEDULE_UPDATE_EVENTID_param_tlvs *)data;
 	fixed_params = event->fixed_param;
@@ -1114,15 +1123,22 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->num_ndp_instances);
 
 	if (fixed_params->num_channels > event->num_ndl_channel_list ||
-	    fixed_params->num_channels > event->num_nss_list ||
-	    fixed_params->num_channels > event->num_ndp_channel_info) {
-		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len(%d) or NSS list TLV len(%d) or NDP Ch info(%d)"),
+	    fixed_params->num_channels > event->num_nss_list) {
+		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len(%d) or NSS list TLV len(%d)"),
 			 fixed_params->num_channels,
 			 event->num_ndl_channel_list,
-			 event->num_nss_list,
+			 event->num_nss_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (ndi_dbs &&
+	    fixed_params->num_channels > event->num_ndp_channel_info) {
+		WMI_LOGE(FL("Channel count %d greater than NDP Ch info(%d)"),
+			 fixed_params->num_channels,
 			 event->num_ndp_channel_info);
 		return QDF_STATUS_E_INVAL;
 	}
+
 	if (fixed_params->num_ndp_instances > event->num_ndp_instance_list) {
 		WMI_LOGE(FL("NDP Instance count %d greater than NDP Instancei TLV len %d"),
 			 fixed_params->num_ndp_instances,
@@ -1170,8 +1186,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 			 ind->ch[i].ch_width,
 			 ind->ch[i].nss);
 
-		if (wmi_service_enabled(wmi_handle,
-					wmi_service_ndi_dbs_support)) {
+		if (ndi_dbs) {
 			ind->ch[i].mac_id = event->ndp_channel_info[i].mac_id;
 			WMI_LOGD("mac_id: %d", ind->ch[i].mac_id);
 		}
