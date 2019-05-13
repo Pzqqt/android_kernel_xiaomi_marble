@@ -228,7 +228,8 @@ int voice_mhi_start(void)
 			goto done;
 		}
 		if (voice_mhi_lcl.vote_count == 0) {
-			ret = mhi_device_get_sync(voice_mhi_lcl.mhi_dev);
+			ret = mhi_device_get_sync(voice_mhi_lcl.mhi_dev,
+					MHI_VOTE_DEVICE);
 			if (ret) {
 				pr_err("%s: mhi_device_get_sync failed\n",
 					   __func__);
@@ -269,7 +270,7 @@ int voice_mhi_end(void)
 		}
 
 		if (voice_mhi_lcl.vote_count == 1)
-			mhi_device_put(voice_mhi_lcl.mhi_dev);
+			mhi_device_put(voice_mhi_lcl.mhi_dev, MHI_VOTE_DEVICE);
 		voice_mhi_lcl.vote_count--;
 	}
 	mutex_unlock(&voice_mhi_lcl.mutex);
