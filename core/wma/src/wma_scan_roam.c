@@ -1841,14 +1841,13 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		/*
 		 * Send 11k offload disable command to FW as part of RSO Stop
 		 */
-		if (roam_req->reason == REASON_DISCONNECTED) {
-			qdf_status = wma_send_offload_11k_params(wma_handle,
+		qdf_status =
+		    wma_send_offload_11k_params(wma_handle,
 						&roam_req->offload_11k_params);
-			if (qdf_status != QDF_STATUS_SUCCESS) {
-				WMA_LOGE("11k offload disable not sent, status %d",
-					 qdf_status);
-				break;
-			}
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			WMA_LOGE("11k offload disable not sent, status %d",
+				 qdf_status);
+			break;
 		}
 
 		/* Send BTM config as disabled during RSO Stop */

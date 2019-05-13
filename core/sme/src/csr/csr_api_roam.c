@@ -19928,11 +19928,9 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	 * 11k offload is enabled during RSO Start after connect indication and
 	 * 11k offload is disabled during RSO Stop after disconnect indication
 	 */
-	if (command == ROAM_SCAN_OFFLOAD_START &&
-	    reason == REASON_CTX_INIT)
+	if (command == ROAM_SCAN_OFFLOAD_START)
 		csr_update_11k_offload_params(mac_ctx, session, req_buf, TRUE);
-	else if (command == ROAM_SCAN_OFFLOAD_STOP &&
-		 reason == REASON_DISCONNECTED)
+	else if (command == ROAM_SCAN_OFFLOAD_STOP)
 		csr_update_11k_offload_params(mac_ctx, session, req_buf, FALSE);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
