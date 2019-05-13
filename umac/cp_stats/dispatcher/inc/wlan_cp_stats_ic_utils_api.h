@@ -259,6 +259,8 @@ VDEV_CP_STATS_SET_FUNCS(mlme_auth_attempt);
 VDEV_CP_STATS_SET_FUNCS(mlme_auth_success);
 VDEV_CP_STATS_SET_FUNCS(authorize_attempt);
 VDEV_CP_STATS_SET_FUNCS(authorize_success);
+VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
+VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 
 #define VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -326,8 +328,6 @@ PDEV_CP_STATS_SET_FUNCS(chan_nf_sec80);
 PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt);
 PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completions);
 PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completion_err);
-PDEV_CP_STATS_SET_FUNCS(peer_delete_req);
-PDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 PDEV_CP_STATS_SET_FUNCS(rx_mgmt_rssi_drop);
 PDEV_CP_STATS_SET_FUNCS(tx_retries);
 PDEV_CP_STATS_SET_FUNCS(tx_frame_count);

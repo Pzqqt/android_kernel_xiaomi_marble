@@ -102,8 +102,6 @@ UCFG_PDEV_CP_STATS_SET_FUNCS(chan_nf_sec80);
 UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt);
 UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completions);
 UCFG_PDEV_CP_STATS_SET_FUNCS(wmi_tx_mgmt_completion_err);
-UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_req);
-UCFG_PDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 UCFG_PDEV_CP_STATS_SET_FUNCS(rx_mgmt_rssi_drop);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_retries);
 UCFG_PDEV_CP_STATS_SET_FUNCS(tx_frame_count);
@@ -378,6 +376,8 @@ UCFG_VDEV_CP_STATS_SET_FUNCS(mlme_auth_attempt);
 UCFG_VDEV_CP_STATS_SET_FUNCS(mlme_auth_success);
 UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_attempt);
 UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_success);
+UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
+UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 
 #define UCFG_VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
