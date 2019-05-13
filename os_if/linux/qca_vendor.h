@@ -336,6 +336,14 @@
  *
  *	All the attributes used with this command are defined in
  *	enum qca_wlan_vendor_attr_beacon_reporting_params.
+ * @QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP: In practice, some aps have
+ *	interop issues with the DUT. This sub command is used to transfer the
+ *	ap info between driver and user space. This works both as a command
+ *	or event. As a command, it configs the stored list of aps from user
+ *	space to firmware; as an event, it indicates the ap info detected by
+ *	firmware to user space for persistent storage. The attributes defined
+ *	in enum qca_vendor_attr_interop_issues_ap are used to deliver the
+ *	parameters.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -549,6 +557,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_PEER_STATS_CACHE_FLUSH = 178,
 	QCA_NL80211_VENDOR_SUBCMD_MPTA_HELPER_CONFIG = 179,
 	QCA_NL80211_VENDOR_SUBCMD_BEACON_REPORTING = 180,
+	QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP = 181,
 };
 
 enum qca_wlan_vendor_tos {
@@ -885,6 +894,8 @@ enum qca_wlan_vendor_attr_get_station_info {
  *	vendor scan complete event  index
  * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX:
  *	update gateway parameters index
+ * @QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP_INDEX:
+ *	update aps info which has interop issues events index
  * @QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX: TSF response events index
  * @QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX:
  *      P2P listen offload index
@@ -962,6 +973,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_SCAN_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP_INDEX,
 #ifdef WLAN_FEATURE_TSF
 	QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX,
 #endif
@@ -1761,6 +1773,49 @@ enum qca_wlan_vendor_attr_extscan_results {
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_MAX =
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_vendor_interop_issues_ap_type - interop issues type
+ * This enum defines the valid set of values of interop issues type. These
+ * values are used by attribute %QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_TYPE.
+ *
+ * @QCA_VENDOR_INTEROP_ISSUES_AP_ON_STA_PS: the ap has power save interop issue
+ * when the STA's Qpower feature is enabled.
+ */
+enum qca_vendor_interop_issues_ap_type {
+	QCA_VENDOR_INTEROP_ISSUES_AP_INVALID = 0,
+	QCA_VENDOR_INTEROP_ISSUES_AP_ON_STA_PS = 1,
+};
+
+/**
+ * enum qca_vendor_attr_interop_issues_ap - attribute for ap with interop issues
+ * values are used by %QCA_NL80211_VENDOR_SUBCMD_INTEROP_ISSUES_AP.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_TYPE: interop issues type
+ * 32-bit unsigned value, The type defined in enum
+ * qca_vendor_interop_issues_ap_type are used.
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_LIST: aps' bssid container
+ * array of nested QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID attributes,
+ * it is present and mandatory for the command but is not used for
+ * the event since only a single BSSID is reported in an event.
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID: ap's bssid
+ * 6-byte MAC address. It is used within the nested
+ * QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_LIST attribute in command case
+ * and without such encapsulation in the event case.
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX: max value
+ */
+enum qca_vendor_attr_interop_issues_ap {
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_INVALID,
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_TYPE,
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_LIST,
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX =
+		QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_AFTER_LAST - 1
 };
 #endif
 
