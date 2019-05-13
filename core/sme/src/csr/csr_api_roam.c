@@ -9617,7 +9617,7 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 		qdf_mem_free(scan_filter);
 		qdf_mem_free(roam_info);
 		return;
-	} else if (status != QDF_STATUS_E_NOSUPPORT)
+	} else if (status == QDF_STATUS_E_FAILURE)
 		goto POST_ROAM_FAILURE;
 
 	status = csr_roam_lfr2_issue_connect(mac, session_id,
