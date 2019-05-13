@@ -73,6 +73,7 @@ static const DECLARE_TLV_DB_LINEAR(sec_auxpcm_lb_vol_gain, 0,
 				INT_RX_VOL_MAX_STEPS);
 
 static int msm_multichannel_ec_primary_mic_ch;
+static int msm_ffecns_effect;
 
 static void msm_qti_pp_send_eq_values_(int eq_idx)
 {
@@ -1364,6 +1365,50 @@ static const struct  snd_kcontrol_new msm_multichannel_ec_controls[] = {
 		msm_multichannel_ec_primary_mic_ch_put),
 };
 
+static char const *ffecns_effect_text[] = {"NO_EFFECT", "EC_ONLY", "NS_ONLY", "ECNS"};
+
+static int msm_ffecns_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = -EINVAL;
+
+	if (ucontrol->value.integer.value[0] < 0 ||
+		ucontrol->value.integer.value[0] >= ARRAY_SIZE(ffecns_effect_text)) {
+		pr_err("%s: invalid ffecns effect value %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+		return -EINVAL;
+	}
+
+	msm_ffecns_effect = ucontrol->value.integer.value[0];
+
+	pr_debug("%s: set %s for ffecns\n", __func__,
+		ffecns_effect_text[msm_ffecns_effect]);
+
+	ret = adm_set_ffecns_effect(msm_ffecns_effect);
+	if (ret)
+		pr_err("%s: failed to set %s for ffecns\n",
+			__func__, ffecns_effect_text[msm_ffecns_effect]);
+
+	return ret;
+}
+
+static int msm_ffecns_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = msm_ffecns_effect;
+	pr_debug("%s: ffecns effect = %ld\n",
+		__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static SOC_ENUM_SINGLE_EXT_DECL(ffecns_effect_enum, ffecns_effect_text);
+
+static const struct snd_kcontrol_new ec_ffecns_controls[] = {
+	SOC_ENUM_EXT("FFECNS Effect", ffecns_effect_enum,
+		msm_ffecns_get, msm_ffecns_put),
+};
+
 static const struct snd_kcontrol_new int_fm_vol_mixer_controls[] = {
 	SOC_SINGLE_EXT_TLV("Internal FM RX Volume", SND_SOC_NOPM, 0,
 	INT_RX_VOL_GAIN, 0, msm_qti_pp_get_fm_vol_mixer,
@@ -1668,5 +1713,8 @@ void msm_qti_pp_add_controls(struct snd_soc_component *component)
 
 	snd_soc_add_component_controls(component, dsp_bit_width_controls,
 			ARRAY_SIZE(dsp_bit_width_controls));
+
+	snd_soc_add_component_controls(component, ec_ffecns_controls,
+			ARRAY_SIZE(ec_ffecns_controls));
 }
 #endif /* CONFIG_QTI_PP */
