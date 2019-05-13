@@ -316,6 +316,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_get_current_regdomain =
 		wlan_reg_get_curr_regdomain;
+
+	rx_ops->reg_rx_ops.reg_enable_dfs_channels =
+		ucfg_reg_enable_dfs_channels;
 }
 
 #ifdef CONVERGED_P2P_ENABLE
