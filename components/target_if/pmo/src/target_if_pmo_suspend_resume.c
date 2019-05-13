@@ -50,6 +50,11 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	/* Any new param_id added here please also add it to
+	 * wmi_tag_vdev_set_cmd to be tagged for runtime PM feature
+	 * so that it will not invoke runtime PM "get" which will
+	 * result resume right after suspend (WOW_ENABLE).
+	 */
 	switch (param_id) {
 	case pmo_vdev_param_listen_interval:
 		param_id = WMI_VDEV_PARAM_LISTEN_INTERVAL;
