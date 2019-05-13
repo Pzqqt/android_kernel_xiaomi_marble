@@ -4911,7 +4911,7 @@ enum htt_srng_ring_id {
  * dword11- b'9:0 -   rx_drop_threshold: Threshold configured in monitor mode
  *                    to source rings. Consumer drops packets if the available
  *                    words in the ring falls below the configured threshold
- *                    value.    
+ *                    value.
  */
 PREPACK struct htt_rx_ring_selection_cfg_t {
     A_UINT32 msg_type:          8,
