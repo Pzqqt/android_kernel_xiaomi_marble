@@ -658,6 +658,11 @@ void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
 	dfs->dfs_is_nol_ie_sent = is_nol_ie_sent;
 }
 
+static void dfs_reset_nol_ie_bitmap(struct wlan_dfs *dfs)
+{
+	dfs->dfs_nol_ie_bitmap = 0;
+}
+
 bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 			       uint16_t nol_ie_startfreq, uint8_t nol_ie_bitmap)
 {
@@ -800,6 +805,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		(dfs->dfs_is_rcsa_ie_sent = false) :
 		(dfs->dfs_is_rcsa_ie_sent = true);
 	if (dfs->dfs_use_nol_subchannel_marking) {
+		dfs_reset_nol_ie_bitmap(dfs);
 		dfs_prepare_nol_ie_bitmap(dfs, radar_found, channels,
 					  num_channels);
 		dfs->dfs_is_nol_ie_sent = true;
