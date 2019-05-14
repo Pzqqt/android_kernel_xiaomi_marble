@@ -148,6 +148,27 @@ QDF_STATUS
 mlme_set_cac_required(struct wlan_objmgr_vdev *vdev, bool val);
 
 /**
+ * mlme_set_mbssid_info() - save mbssid info
+ * @vdev: vdev pointer
+ * @mbssid_info: mbssid info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_set_mbssid_info(struct wlan_objmgr_vdev *vdev,
+		     struct scan_mbssid_info *mbssid_info);
+
+/**
+ * mlme_get_mbssid_info() - get mbssid info
+ * @vdev: vdev pointer
+ * @mbss_11ax: mbss 11ax info
+ *
+ * Return: None
+ */
+void mlme_get_mbssid_info(struct wlan_objmgr_vdev *vdev,
+			  struct vdev_mlme_mbss_11ax *mbss_11ax);
+
+/**
  * mlme_is_vdev_in_beaconning_mode() - check if vdev is beaconing mode
  * @vdev_opmode: vdev opmode
  *

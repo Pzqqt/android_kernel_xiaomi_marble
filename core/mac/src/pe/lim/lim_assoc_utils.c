@@ -2698,6 +2698,25 @@ lim_del_sta(struct mac_context *mac,
 	return retCode;
 }
 
+/**
+ * lim_set_mbssid_info() - Save mbssid info
+ * @pe_session: pe session entry
+ *
+ * Return: None
+ */
+#ifdef CONFIG_VDEV_SM
+static void lim_set_mbssid_info(struct pe_session *pe_session)
+{
+	struct scan_mbssid_info *mbssid_info;
+
+	mbssid_info = &pe_session->pLimJoinReq->bssDescription.mbssid_info;
+	mlme_set_mbssid_info(pe_session->vdev, mbssid_info);
+}
+#else
+static void lim_set_mbssid_info(struct pe_session *pe_session)
+{
+}
+#endif
 
 /**
  * lim_add_sta_self()
@@ -2775,6 +2794,8 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	qdf_mem_copy(&pAddStaParams->mbssid_info,
 		     &pe_session->pLimJoinReq->bssDescription.mbssid_info,
 		     sizeof(struct scan_mbssid_info));
+
+	lim_set_mbssid_info(pe_session);
 
 	pAddStaParams->shortPreambleSupported =
 					mac->mlme_cfg->ht_caps.short_preamble;

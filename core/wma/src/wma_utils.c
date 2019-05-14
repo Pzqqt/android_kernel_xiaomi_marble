@@ -4872,6 +4872,7 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
+	struct vdev_mlme_mbss_11ax mbss_11ax = {0};
 
 	if (!wma) {
 		WMA_LOGE("%s wma handle is NULL", __func__);
@@ -4881,6 +4882,13 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	param.vdev_id = vdev_id;
 	iface = &wma->interfaces[vdev_id];
 	param.assoc_id = iface->aid;
+
+	mlme_get_mbssid_info(vdev_mlme->vdev, &mbss_11ax);
+	param.profile_idx = mbss_11ax.profile_idx;
+	param.profile_num = mbss_11ax.profile_num;
+	qdf_mem_copy(param.trans_bssid,
+		     mbss_11ax.trans_bssid,
+		     QDF_MAC_ADDR_SIZE);
 
 	status = wma_send_vdev_up_to_fw(wma, &param, iface->bssid);
 

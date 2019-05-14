@@ -752,6 +752,41 @@ bool mlme_get_cac_required(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->cac_required_for_new_channel;
 }
 
+QDF_STATUS mlme_set_mbssid_info(struct wlan_objmgr_vdev *vdev,
+				struct scan_mbssid_info *mbssid_info)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct vdev_mlme_mbss_11ax *mbss_11ax;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mbss_11ax = &vdev_mlme->mgmt.mbss_11ax;
+	mbss_11ax->profile_idx = mbssid_info->profile_num;
+	mbss_11ax->profile_num = mbssid_info->profile_count;
+	qdf_mem_copy(mbss_11ax->trans_bssid,
+		     mbssid_info->trans_bssid, QDF_MAC_ADDR_SIZE);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void mlme_get_mbssid_info(struct wlan_objmgr_vdev *vdev,
+			  struct vdev_mlme_mbss_11ax *mbss_11ax)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_legacy_err("vdev component object is NULL");
+		return;
+	}
+
+	mbss_11ax = &vdev_mlme->mgmt.mbss_11ax;
+}
+
 /**
  * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object
