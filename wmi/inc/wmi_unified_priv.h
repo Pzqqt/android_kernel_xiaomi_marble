@@ -60,6 +60,10 @@
 #include "wmi_unified_atf_param.h"
 #endif
 
+#ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
+#include <wlan_interop_issues_ap_public_structs.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -1487,6 +1491,15 @@ QDF_STATUS
 					struct p2p_set_mac_filter_evt *param);
 #endif
 
+#ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
+QDF_STATUS
+(*extract_interop_issues_ap_ev_param)(wmi_unified_t wmi_handle, void *evt_buf,
+				  struct wlan_interop_issues_ap_event *param);
+QDF_STATUS
+(*send_set_rap_ps_cmd)(wmi_unified_t wmi_handle,
+		       struct wlan_interop_issues_ap_info *interop_issues_ap);
+#endif
+
 QDF_STATUS (*extract_peer_sta_ps_statechange_ev)(wmi_unified_t wmi_handle,
 	void *evt_buf, wmi_host_peer_sta_ps_statechange_event *ev);
 
@@ -2162,6 +2175,15 @@ void wmi_p2p_listen_offload_attach_tlv(wmi_unified_t wmi_handle)
 void wmi_p2p_attach_tlv(wmi_unified_t wmi_handle);
 #else
 static inline void wmi_p2p_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
+void wmi_interop_issues_ap_attach_tlv(wmi_unified_t wmi_handle);
+#else
+static inline void
+wmi_interop_issues_ap_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif

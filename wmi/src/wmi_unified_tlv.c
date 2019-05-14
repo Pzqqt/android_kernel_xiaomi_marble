@@ -12187,6 +12187,10 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
 	event_ids[wmi_esp_estimate_event_id] = WMI_ESP_ESTIMATE_EVENTID;
 	event_ids[wmi_roam_scan_stats_event_id] = WMI_ROAM_SCAN_STATS_EVENTID;
+#ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
+	event_ids[wmi_pdev_interop_issues_ap_event_id] =
+						WMI_PDEV_RAP_INFO_EVENTID;
+#endif
 #ifdef AST_HKV1_WORKAROUND
 	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
 #endif
@@ -12516,6 +12520,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_ocb_attach_tlv(wmi_handle);
 	wmi_nan_attach_tlv(wmi_handle);
 	wmi_p2p_attach_tlv(wmi_handle);
+	wmi_interop_issues_ap_attach_tlv(wmi_handle);
 	wmi_roam_attach_tlv(wmi_handle);
 	wmi_concurrency_attach_tlv(wmi_handle);
 	wmi_pmo_attach_tlv(wmi_handle);
