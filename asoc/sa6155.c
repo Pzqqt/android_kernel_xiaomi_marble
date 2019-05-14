@@ -53,6 +53,7 @@
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/info.h>
+#include <soc/snd_event.h>
 #include <dsp/audio_notifier.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
@@ -696,8 +697,6 @@ static SOC_ENUM_SINGLE_EXT_DECL(mi2s_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(mi2s_tx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_rx_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(aux_pcm_tx_format, bit_format_text);
-
-static bool is_initial_boot = true;
 
 static struct afe_clk_set mi2s_clk[MI2S_MAX] = {
 	{
@@ -6985,6 +6984,78 @@ static void msm_i2s_auxpcm_deinit(void)
 		mi2s_intf_conf[count].msm_is_mi2s_master = 0;
 	}
 }
+
+static int sa6155_ssr_enable(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+	int ret = 0;
+
+	if (!card) {
+		dev_err(dev, "%s: card is NULL\n", __func__);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	dev_info(dev, "%s: setting snd_card to ONLINE\n", __func__);
+	snd_soc_card_change_online_state(card, 1);
+
+err:
+	return ret;
+}
+
+static void sa6155_ssr_disable(struct device *dev, void *data)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+
+	if (!card) {
+		dev_err(dev, "%s: card is NULL\n", __func__);
+		return;
+	}
+
+	dev_info(dev, "%s: setting snd_card to OFFLINE\n", __func__);
+	snd_soc_card_change_online_state(card, 0);
+}
+
+static const struct snd_event_ops sa6155_ssr_ops = {
+	.enable = sa6155_ssr_enable,
+	.disable = sa6155_ssr_disable,
+};
+
+static int msm_audio_ssr_compare(struct device *dev, void *data)
+{
+	struct device_node *node = data;
+
+	dev_dbg(dev, "%s: dev->of_node = 0x%p, node = 0x%p\n",
+		__func__, dev->of_node, node);
+	return (dev->of_node && dev->of_node == node);
+}
+
+static int msm_audio_ssr_register(struct device *dev)
+{
+	struct device_node *np = dev->of_node;
+	struct snd_event_clients *ssr_clients = NULL;
+	struct device_node *node;
+	int ret;
+	int i;
+
+	for (i = 0; ; i++) {
+		node = of_parse_phandle(np, "qcom,msm_audio_ssr_devs", i);
+		if (!node)
+			break;
+		snd_event_mstr_add_client(&ssr_clients,
+					msm_audio_ssr_compare, node);
+	}
+
+	ret = snd_event_master_register(dev, &sa6155_ssr_ops,
+					ssr_clients, NULL);
+	if (!ret)
+		snd_event_notify(dev, SND_EVENT_UP);
+
+	return ret;
+}
+
 static int msm_asoc_machine_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card;
@@ -7065,6 +7136,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	msm_i2s_auxpcm_init(pdev);
 
+	ret = msm_audio_ssr_register(&pdev->dev);
+	if (ret)
+		pr_err("%s: Registration with SND event FWK failed ret = %d\n",
+			__func__, ret);
+
 	return 0;
 err:
 	msm_release_pinctrl(pdev);
@@ -7091,61 +7167,9 @@ static struct platform_driver sa6155_asoc_machine_driver = {
 	.remove = msm_asoc_machine_remove,
 };
 
-static int dummy_asoc_machine_probe(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static int dummy_asoc_machine_remove(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static struct platform_device sa6155_dummy_asoc_machine_device = {
-	.name = "sa6155-asoc-snd-dummy",
-};
-
-static struct platform_driver sa6155_dummy_asoc_machine_driver = {
-	.driver = {
-		.name = "sa6155-asoc-snd-dummy",
-		.owner = THIS_MODULE,
-	},
-	.probe = dummy_asoc_machine_probe,
-	.remove = dummy_asoc_machine_remove,
-};
-
-static int sa6155_notifier_service_cb(struct notifier_block *this,
-					 unsigned long opcode, void *ptr)
-{
-	pr_debug("%s: Service opcode 0x%lx\n", __func__, opcode);
-
-	switch (opcode) {
-	case AUDIO_NOTIFIER_SERVICE_DOWN:
-		break;
-	case AUDIO_NOTIFIER_SERVICE_UP:
-		if (is_initial_boot) {
-			platform_driver_register(&sa6155_dummy_asoc_machine_driver);
-			platform_device_register(&sa6155_dummy_asoc_machine_device);
-			is_initial_boot = false;
-		}
-		break;
-	default:
-		break;
-	}
-
-	return NOTIFY_OK;
-}
-
-static struct notifier_block service_nb = {
-	.notifier_call  = sa6155_notifier_service_cb,
-	.priority = -INT_MAX,
-};
-
 int __init sa6155_init(void)
 {
 	pr_debug("%s\n", __func__);
-	audio_notifier_register("sa6155", AUDIO_NOTIFIER_ADSP_DOMAIN,
-				      &service_nb);
 	return platform_driver_register(&sa6155_asoc_machine_driver);
 }
 
@@ -7153,7 +7177,6 @@ void sa6155_exit(void)
 {
 	pr_debug("%s\n", __func__);
 	platform_driver_unregister(&sa6155_asoc_machine_driver);
-	audio_notifier_deregister("sa6155");
 }
 
 module_init(sa6155_init);

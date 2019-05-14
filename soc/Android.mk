@@ -12,7 +12,11 @@ endif
 endif
 
 ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET)),true)
+ifeq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), sm6150_au))
+AUDIO_SELECT  := CONFIG_SND_SOC_SA6155=m
+else
 AUDIO_SELECT  := CONFIG_SND_SOC_SM6150=m
+endif
 endif
 
 ifeq ($(call is-board-platform,kona),true)
@@ -53,6 +57,7 @@ KBUILD_OPTIONS += $(AUDIO_SELECT)
 
 ###########################################################
 ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona lito),true)
+ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), sm6150_au))
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_pinctrl_lpi.ko
 LOCAL_MODULE_KBUILD_NAME  := pinctrl_lpi_dlkm.ko
@@ -61,8 +66,10 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 endif
+endif
 ###########################################################
 ifeq ($(call is-board-platform-in-list,$(MSMSTEPPE) $(TRINKET) kona), true)
+ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), sm6150_au))
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_pinctrl_wcd.ko
 LOCAL_MODULE_KBUILD_NAME  := pinctrl_wcd_dlkm.ko
@@ -71,8 +78,9 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 endif
+endif
 ###########################################################
-ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au msmnile_gvmq))
+ifneq ($(TARGET_PRODUCT), $(filter $(TARGET_PRODUCT), msmnile_au msmnile_gvmq sm6150_au))
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_swr.ko
 LOCAL_MODULE_KBUILD_NAME  := swr_dlkm.ko
