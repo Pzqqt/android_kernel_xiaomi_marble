@@ -961,6 +961,11 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (dbr_rsp.mod_id >= dbr_pdev_obj->num_modules) {
+		direct_buf_rx_err("Invalid module id:%d", dbr_rsp.mod_id);
+		wlan_objmgr_pdev_release_ref(pdev, dbr_mod_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 	mod_param = &(dbr_pdev_obj->dbr_mod_param[dbr_rsp.mod_id]);
 
 	if (!mod_param) {
