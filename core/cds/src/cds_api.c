@@ -672,14 +672,16 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_wma_close;
 	}
 
-	cds_debug("target_type %d 8074:%d 6290:%d 6390: %d",
+	cds_debug("target_type %d 8074:%d 6290:%d 6390: %d 6490: %d",
 		  hdd_ctx->target_type,
 		  TARGET_TYPE_QCA8074,
 		  TARGET_TYPE_QCA6290,
-		  TARGET_TYPE_QCA6390);
+		  TARGET_TYPE_QCA6390,
+		  TARGET_TYPE_QCA6490);
 
 	if (TARGET_TYPE_QCA6290 == hdd_ctx->target_type ||
-	    TARGET_TYPE_QCA6390 == hdd_ctx->target_type)
+	    TARGET_TYPE_QCA6390 == hdd_ctx->target_type ||
+	    TARGET_TYPE_QCA6490 == hdd_ctx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
 			gp_cds_context->hif_context, psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,

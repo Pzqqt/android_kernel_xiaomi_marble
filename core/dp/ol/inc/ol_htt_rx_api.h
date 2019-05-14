@@ -919,7 +919,8 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
  * @return network buffer handle to the MPDU
  */
 #if defined(FEATURE_MONITOR_MODE_SUPPORT)
-#if !defined(QCA6290_HEADERS_DEF) && !defined(QCA6390_HEADERS_DEF)
+#if !defined(QCA6290_HEADERS_DEF) && !defined(QCA6390_HEADERS_DEF) && \
+	!defined(QCA6490_HEADERS_DEF)
 qdf_nbuf_t
 htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 				qdf_nbuf_t head_msdu,
