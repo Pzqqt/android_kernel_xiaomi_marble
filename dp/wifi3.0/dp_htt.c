@@ -36,7 +36,6 @@
 #define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 64
-#define HTT_T2H_MAX_MSG_SIZE 2048
 
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
@@ -2490,6 +2489,38 @@ dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(struct dp_pdev *pdev,
 }
 
 /**
+ * dp_validate_fix_ppdu_tlv(): Function to validate the length of PPDU
+ *
+ * If the TLV length sent as part of PPDU TLV is less that expected size i.e
+ * size of corresponding data structure, pad the remaining bytes with zeros
+ * and continue processing the TLVs
+ *
+ * @pdev: DP pdev handle
+ * @tag_buf: TLV buffer
+ * @tlv_expected_size: Expected size of Tag
+ * @tlv_len: TLV length received from FW
+ *
+ * Return: Pointer to updated TLV
+ */
+static inline uint32_t *dp_validate_fix_ppdu_tlv(struct dp_pdev *pdev,
+						 uint32_t *tag_buf,
+						 uint16_t tlv_expected_size,
+						 uint16_t tlv_len)
+{
+	uint32_t *tlv_desc = tag_buf;
+
+	qdf_assert_always(tlv_len != 0);
+
+	if (tlv_len < tlv_expected_size) {
+		qdf_mem_zero(pdev->ppdu_tlv_buf, tlv_expected_size);
+		qdf_mem_copy(pdev->ppdu_tlv_buf, tag_buf, tlv_len);
+		tlv_desc = pdev->ppdu_tlv_buf;
+	}
+
+	return tlv_desc;
+}
+
+/**
  * dp_process_ppdu_tag(): Function to process the PPDU TLVs
  * @pdev: DP pdev handle
  * @tag_buf: TLV buffer
@@ -2502,71 +2533,92 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 		uint32_t tlv_len, struct ppdu_info *ppdu_info)
 {
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
+	uint16_t tlv_expected_size;
+	uint32_t *tlv_desc;
 
 	switch (tlv_type) {
 	case HTT_PPDU_STATS_COMMON_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_common_tlv));
-		dp_process_ppdu_stats_common_tlv(pdev, tag_buf, ppdu_info);
+		tlv_expected_size = sizeof(htt_ppdu_stats_common_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
+		dp_process_ppdu_stats_common_tlv(pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMMON_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_user_common_tlv));
-		dp_process_ppdu_stats_user_common_tlv(
-				pdev, tag_buf, ppdu_info);
+		tlv_expected_size = sizeof(htt_ppdu_stats_user_common_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
+		dp_process_ppdu_stats_user_common_tlv(pdev, tlv_desc,
+						      ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_RATE_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_user_rate_tlv));
-		dp_process_ppdu_stats_user_rate_tlv(pdev, tag_buf, ppdu_info);
+		tlv_expected_size = sizeof(htt_ppdu_stats_user_rate_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
+		dp_process_ppdu_stats_user_rate_tlv(pdev, tlv_desc,
+						    ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_enq_mpdu_bitmap_64_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_enq_mpdu_bitmap_64_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_enq_mpdu_bitmap_256_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_enq_mpdu_bitmap_256_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV:
-		qdf_assert_always(tlv_len >=
-				sizeof(htt_ppdu_stats_user_cmpltn_common_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_user_cmpltn_common_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_cmpltn_common_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV:
-		qdf_assert_always(tlv_len >=
-			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV:
-		qdf_assert_always(tlv_len >=
-			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV:
-		qdf_assert_always(tlv_len >=
-			sizeof(htt_ppdu_stats_user_compltn_ack_ba_status_tlv));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_user_compltn_ack_ba_status_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV:
-		qdf_assert_always(tlv_len >=
-			sizeof(htt_ppdu_stats_usr_common_array_tlv_v));
+		tlv_expected_size =
+			sizeof(htt_ppdu_stats_usr_common_array_tlv_v);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_common_array_tlv(
-				pdev, tag_buf, ppdu_info);
+				pdev, tlv_desc, ppdu_info);
 		break;
 	case HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV:
-		qdf_assert_always(tlv_len >=
-			sizeof(htt_ppdu_stats_flush_tlv));
+		tlv_expected_size = sizeof(htt_ppdu_stats_flush_tlv);
+		tlv_desc = dp_validate_fix_ppdu_tlv(pdev, tag_buf,
+						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_compltn_flush_tlv(
-				pdev, tag_buf);
+				pdev, tlv_desc);
 		break;
 	default:
 		break;

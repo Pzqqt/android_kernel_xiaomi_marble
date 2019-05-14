@@ -3240,6 +3240,26 @@ void  dp_iterate_update_peer_list(void *pdev_hdl)
 {
 }
 #endif
+
+/*
+ * dp_htt_ppdu_stats_attach() - attach resources for HTT PPDU stats processing
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+static QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev)
+{
+	pdev->ppdu_tlv_buf = qdf_mem_malloc(HTT_T2H_MAX_MSG_SIZE);
+
+	if (!pdev->ppdu_tlv_buf) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_DP, "ppdu_tlv_buf alloc fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @ctrl_pdev: Opaque PDEV object
@@ -3479,6 +3499,10 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	qdf_event_create(&pdev->fw_peer_stats_event);
 
 	pdev->num_tx_allowed = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+
+	if (dp_htt_ppdu_stats_attach(pdev) != QDF_STATUS_SUCCESS)
+		goto fail1;
+
 	dp_tx_ppdu_stats_attach(pdev);
 
 	return (struct cdp_pdev *)pdev;
@@ -3558,6 +3582,10 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 		qdf_nbuf_free(ppdu_info->nbuf);
 		qdf_mem_free(ppdu_info);
 	}
+
+	if (pdev->ppdu_tlv_buf)
+		qdf_mem_free(pdev->ppdu_tlv_buf);
+
 }
 
 #if !defined(DISABLE_MON_CONFIG)
