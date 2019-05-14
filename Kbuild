@@ -1155,6 +1155,11 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_tlv.o
 endif
 
+ifeq ($(CONFIG_FEATURE_INTEROP_ISSUES_AP), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_interop_issues_ap_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_interop_issues_ap_tlv.o
+endif
+
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_tlv.o
@@ -1435,6 +1440,25 @@ CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o        \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_tgt_api.o       \
 		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_ucfg_api.o
+endif
+
+###### INTEROP ISSUES AP ########
+INTEROP_ISSUES_AP_OS_IF_SRC      := os_if/interop_issues_ap/src
+INTEROP_ISSUES_AP_TGT_SRC        := components/target_if/interop_issues_ap/src
+INTEROP_ISSUES_AP_CORE_SRC       := components/interop_issues_ap/core/src
+INTEROP_ISSUES_AP_DISPATCHER_SRC := components/interop_issues_ap/dispatcher/src
+
+INTEROP_ISSUES_AP_OS_IF_INC      := -I$(WLAN_ROOT)/os_if/interop_issues_ap/inc
+INTEROP_ISSUES_AP_TGT_INC        := -I$(WLAN_ROOT)/components/target_if/interop_issues_ap/inc
+INTEROP_ISSUES_AP_DISPATCHER_INC := -I$(WLAN_ROOT)/components/interop_issues_ap/dispatcher/inc
+INTEROP_ISSUES_AP_CORE_INC       := -I$(WLAN_ROOT)/components/interop_issues_ap/core/inc
+
+ifeq ($(CONFIG_FEATURE_INTEROP_ISSUES_AP), y)
+INTEROP_ISSUES_AP_OBJS := $(INTEROP_ISSUES_AP_TGT_SRC)/target_if_interop_issues_ap.o \
+		$(INTEROP_ISSUES_AP_CORE_SRC)/wlan_interop_issues_ap_api.o \
+		$(INTEROP_ISSUES_AP_OS_IF_SRC)/wlan_cfg80211_interop_issues_ap.o \
+		$(INTEROP_ISSUES_AP_DISPATCHER_SRC)/wlan_interop_issues_ap_tgt_api.o \
+		$(INTEROP_ISSUES_AP_DISPATCHER_SRC)/wlan_interop_issues_ap_ucfg_api.o
 endif
 
 ######################### NAN #########################
@@ -1773,6 +1797,11 @@ INCS +=		$(WIFI_POS_OS_IF_INC)
 INCS +=		$(CP_STATS_OS_IF_INC)
 INCS +=		$(CP_STATS_TGT_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
+################ INTEROP ISSUES AP ################
+INCS +=		$(INTEROP_ISSUES_AP_OS_IF_INC)
+INCS +=		$(INTEROP_ISSUES_AP_TGT_INC)
+INCS +=		$(INTEROP_ISSUES_AP_DISPATCHER_INC)
+INCS +=		$(INTEROP_ISSUES_AP_CORE_INC)
 ################ NAN POS ################
 INCS +=		$(NAN_CORE_INC)
 INCS +=		$(NAN_UCFG_INC)
@@ -1867,6 +1896,7 @@ endif
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(CP_STATS_OBJS)
+OBJS +=		$(INTEROP_ISSUES_AP_OBJS)
 OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(TDLS_OBJS)
@@ -1975,6 +2005,7 @@ cppflags-$(CONFIG_WLAN_LOGGING_SOCK_SVC) += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY) += -DWLAN_LOGGING_BUFFERS_DYNAMICALLY
 cppflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_CP_STATS
+cppflags-$(CONFIG_FEATURE_INTEROP_ISSUES_AP) += -DWLAN_FEATURE_INTEROP_ISSUES_AP
 cppflags-$(CONFIG_FEATURE_MEMDUMP_ENABLE) += -DWLAN_FEATURE_MEMDUMP_ENABLE
 cppflags-$(CONFIG_FEATURE_FW_LOG_PARSING) += -DFEATURE_FW_LOG_PARSING
 

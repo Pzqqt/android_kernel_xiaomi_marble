@@ -152,6 +152,7 @@
 #include "wlan_mlme_main.h"
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_cfg80211_p2p.h"
+#include "wlan_cfg80211_interop_issues_ap.h"
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
@@ -165,6 +166,7 @@
 #include <wlan_hdd_spectralscan.h>
 #include "wlan_green_ap_ucfg_api.h"
 #include <wlan_p2p_ucfg_api.h>
+#include <wlan_interop_issues_ap_ucfg_api.h>
 #include <target_type.h>
 #include <wlan_hdd_debugfs_coex.h>
 
@@ -319,6 +321,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_CMN_MLME] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_NAN] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_CP_STATS] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_INTEROP_ISSUES_AP] = {QDF_TRACE_LEVEL_ALL},
 };
 
 struct notifier_block hdd_netdev_notifier;
@@ -11945,6 +11948,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
 	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
 	hdd_debugfs_mws_coex_info_init(hdd_ctx);
+	wlan_cfg80211_init_interop_issues_ap(hdd_ctx->pdev);
 
 	hdd_exit();
 
@@ -13102,9 +13106,13 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto nan_deinit;
 
-	status = policy_mgr_init();
+	status = ucfg_interop_issues_ap_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto p2p_deinit;
+
+	status = policy_mgr_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto interop_issues_ap_deinit;
 
 	status = ucfg_tdls_init();
 	if (QDF_IS_STATUS_ERROR(status))
@@ -13114,6 +13122,8 @@ static QDF_STATUS hdd_component_init(void)
 
 policy_deinit:
 	policy_mgr_deinit();
+interop_issues_ap_deinit:
+	ucfg_interop_issues_ap_deinit();
 p2p_deinit:
 	ucfg_p2p_deinit();
 nan_deinit:
@@ -13152,6 +13162,7 @@ static void hdd_component_deinit(void)
 	/* deinitialize non-converged components */
 	ucfg_tdls_deinit();
 	policy_mgr_deinit();
+	ucfg_interop_issues_ap_deinit();
 	ucfg_p2p_deinit();
 	nan_deinit();
 	ucfg_action_oui_deinit();
@@ -13228,6 +13239,7 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	disa_psoc_enable(psoc);
 	nan_psoc_enable(psoc);
 	p2p_psoc_enable(psoc);
+	ucfg_interop_issues_ap_psoc_enable(psoc);
 	policy_mgr_psoc_enable(psoc);
 	ucfg_tdls_psoc_enable(psoc);
 }
@@ -13236,6 +13248,7 @@ void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	ucfg_tdls_psoc_disable(psoc);
 	policy_mgr_psoc_disable(psoc);
+	ucfg_interop_issues_ap_psoc_disable(psoc);
 	p2p_psoc_disable(psoc);
 	nan_psoc_disable(psoc);
 	disa_psoc_disable(psoc);

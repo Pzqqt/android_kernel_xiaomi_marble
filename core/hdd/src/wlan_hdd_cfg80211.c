@@ -137,6 +137,7 @@
 #include "nan_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "wlan_cfg80211_crypto.h"
+#include "wlan_cfg80211_interop_issues_ap.h"
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_hdd_coex_config.h"
 #include "wlan_hdd_bcn_recv.h"
@@ -1461,6 +1462,8 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG
 	},
 #endif /*FEATURE_LFR_SUBNET_DETECTION */
+
+	FEATURE_INTEROP_ISSUES_AP_VENDOR_COMMANDS_INDEX
 
 	[QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -12803,6 +12806,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 #endif
 	FEATURE_RSSI_MONITOR_VENDOR_COMMANDS
+	FEATURE_INTEROP_ISSUES_AP_VENDOR_COMMANDS
 
 #ifdef WLAN_NS_OFFLOAD
 	{
