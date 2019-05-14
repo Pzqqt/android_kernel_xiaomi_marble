@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/list.h>
@@ -1669,6 +1669,9 @@ static void adjust_timing_by_ctrl_count(const struct dsi_display *display,
 		mode->timing.h_back_porch /= display->ctrl_count;
 		mode->timing.h_skew /= display->ctrl_count;
 		mode->pixel_clk_khz /= display->ctrl_count;
+		if (mode->priv_info->dsc_enabled)
+			mode->priv_info->dsc.config.pic_width *=
+				display->ctrl_count;
 	}
 }
 
@@ -7236,7 +7239,6 @@ int dsi_display_enable(struct dsi_display *display)
 	/* Block sending pps command if modeset is due to fps difference */
 	if ((mode->priv_info->dsc_enabled) &&
 			!(mode->dsi_mode_flags & DSI_MODE_FLAG_DMS_FPS)) {
-		mode->priv_info->dsc.pic_width *= display->ctrl_count;
 		rc = dsi_panel_update_pps(display->panel);
 		if (rc) {
 			DSI_ERR("[%s] panel pps cmd update failed, rc=%d\n",

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -2085,8 +2085,9 @@ static enum drm_mode_status dp_display_validate_mode(
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
 	dsc_en = dp_mode.timing.comp_info.comp_ratio ? true : false;
-	mode_bpp = dsc_en ? dp_mode.timing.comp_info.dsc_info.bpp :
-			dp_mode.timing.bpp;
+	mode_bpp = dsc_en ?
+		DSC_BPP(dp_mode.timing.comp_info.dsc_info.config)
+		: dp_mode.timing.bpp;
 
 	mode_rate_khz = mode->clock * mode_bpp;
 	rate = drm_dp_bw_code_to_link_rate(dp->link->link_params.bw_code);

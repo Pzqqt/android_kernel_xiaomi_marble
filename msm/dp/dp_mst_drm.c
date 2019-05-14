@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 /*
@@ -527,8 +527,9 @@ static int dp_mst_calc_pbn_mode(struct dp_display_mode *dp_mode)
 	s64 pbn_fp;
 
 	dsc_en = dp_mode->timing.comp_info.comp_ratio ? true : false;
-	bpp = dsc_en ? dp_mode->timing.comp_info.dsc_info.bpp :
-		dp_mode->timing.bpp;
+	bpp = dsc_en ?
+		DSC_BPP(dp_mode->timing.comp_info.dsc_info.config)
+		: dp_mode->timing.bpp;
 
 	pbn = drm_dp_calc_pbn_mode(dp_mode->timing.pixel_clk_khz, bpp);
 	pbn_fp = drm_fixp_from_fraction(pbn, 1);

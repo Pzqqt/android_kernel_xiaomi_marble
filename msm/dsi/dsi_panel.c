@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -13,6 +13,7 @@
 #include "dsi_panel.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
+#include "sde_dsc_helper.h"
 
 /**
  * topology is currently defined by a set of following 3 values:
@@ -32,75 +33,13 @@
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define MIN_PREFILL_LINES      35
 
-enum dsi_dsc_ratio_type {
-	DSC_8BPC_8BPP,
-	DSC_10BPC_8BPP,
-	DSC_12BPC_8BPP,
-	DSC_10BPC_10BPP,
-	DSC_RATIO_TYPE_MAX
-};
-
-static u32 dsi_dsc_rc_buf_thresh[] = {0x0e, 0x1c, 0x2a, 0x38, 0x46, 0x54,
-		0x62, 0x69, 0x70, 0x77, 0x79, 0x7b, 0x7d, 0x7e};
-
-/*
- * DSC 1.1
- * Rate control - Min QP values for each ratio type in dsi_dsc_ratio_type
- */
-static char dsi_dsc_rc_range_min_qp_1_1[][15] = {
-	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 7, 12},
-	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 17},
-	{0, 4, 9, 9, 11, 11, 11, 11, 11, 11, 13, 13, 13, 15, 21},
-	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
-	};
-
-/*
- * DSC 1.1 SCR
- * Rate control - Min QP values for each ratio type in dsi_dsc_ratio_type
- */
-static char dsi_dsc_rc_range_min_qp_1_1_scr1[][15] = {
-	{0, 0, 1, 1, 3, 3, 3, 3, 3, 3, 5, 5, 5, 9, 12},
-	{0, 4, 5, 5, 7, 7, 7, 7, 7, 7, 9, 9, 9, 13, 16},
-	{0, 4, 9, 9, 11, 11, 11, 11, 11, 11, 13, 13, 13, 17, 20},
-	{0, 4, 5, 6, 7, 7, 7, 7, 7, 7, 9, 9, 9, 11, 15},
-	};
-
-/*
- * DSC 1.1
- * Rate control - Max QP values for each ratio type in dsi_dsc_ratio_type
- */
-static char dsi_dsc_rc_range_max_qp_1_1[][15] = {
-	{4, 4, 5, 6, 7, 7, 7, 8, 9, 10, 11, 12, 13, 13, 15},
-	{4, 8, 9, 10, 11, 11, 11, 12, 13, 14, 15, 16, 17, 17, 19},
-	{12, 12, 13, 14, 15, 15, 15, 16, 17, 18, 19, 20, 21, 21, 23},
-	{7, 8, 9, 10, 11, 11, 11, 12, 13, 13, 14, 14, 15, 15, 16},
-	};
-
-/*
- * DSC 1.1 SCR
- * Rate control - Max QP values for each ratio type in dsi_dsc_ratio_type
- */
-static char dsi_dsc_rc_range_max_qp_1_1_scr1[][15] = {
-	{4, 4, 5, 6, 7, 7, 7, 8, 9, 10, 10, 11, 11, 12, 13},
-	{8, 8, 9, 10, 11, 11, 11, 12, 13, 14, 14, 15, 15, 16, 17},
-	{12, 12, 13, 14, 15, 15, 15, 16, 17, 18, 18, 19, 19, 20, 23},
-	{7, 8, 9, 10, 11, 11, 11, 12, 13, 13, 14, 14, 15, 15, 16},
-	};
-
-/*
- * DSC 1.1 and DSC 1.1 SCR
- * Rate control - bpg offset values
- */
-static char dsi_dsc_rc_range_bpg_offset[] = {2, 0, 0, -2, -4, -6, -8, -8,
-		-8, -10, -10, -12, -12, -12, -12};
 
 int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
-				int pps_id)
+				int pps_id, u32 size)
 {
 	char *bp;
-	char data;
-	int i, bpp;
 	char *dbgbp;
+	u32 header_size = 7;
 
 	dbgbp = buf;
 	bp = buf;
@@ -113,99 +52,7 @@ int dsi_dsc_create_pps_buf_cmd(struct msm_display_dsc_info *dsc, char *buf,
 	*bp++ = 0;
 	*bp++ = 128;
 
-	*bp++ = (dsc->version & 0xff);		/* pps0 */
-	*bp++ = (pps_id & 0xff);		/* pps1 */
-	bp++;					/* pps2, reserved */
-
-	data = dsc->line_buf_depth & 0x0f;
-	data |= ((dsc->bpc & 0xf) << 4);
-	*bp++ = data;				/* pps3 */
-
-	bpp = dsc->bpp;
-	bpp <<= 4;				/* 4 fraction bits */
-	data = (bpp >> 8);
-	data &= 0x03;				/* upper two bits */
-	data |= ((dsc->block_pred_enable & 0x1) << 5);
-	data |= ((dsc->convert_rgb & 0x1) << 4);
-	data |= ((dsc->enable_422 & 0x1) << 3);
-	data |= ((dsc->vbr_enable & 0x1) << 2);
-	*bp++ = data;				/* pps4 */
-	*bp++ = (bpp & 0xff);			/* pps5 */
-
-	*bp++ = ((dsc->pic_height >> 8) & 0xff); /* pps6 */
-	*bp++ = (dsc->pic_height & 0x0ff);	/* pps7 */
-	*bp++ = ((dsc->pic_width >> 8) & 0xff);	/* pps8 */
-	*bp++ = (dsc->pic_width & 0x0ff);	/* pps9 */
-
-	*bp++ = ((dsc->slice_height >> 8) & 0xff);/* pps10 */
-	*bp++ = (dsc->slice_height & 0x0ff);	/* pps11 */
-	*bp++ = ((dsc->slice_width >> 8) & 0xff); /* pps12 */
-	*bp++ = (dsc->slice_width & 0x0ff);	/* pps13 */
-
-	*bp++ = ((dsc->chunk_size >> 8) & 0xff);/* pps14 */
-	*bp++ = (dsc->chunk_size & 0x0ff);	/* pps15 */
-
-	*bp++ = (dsc->initial_xmit_delay >> 8) & 0x3; /* pps16, bit 0, 1 */
-	*bp++ = (dsc->initial_xmit_delay & 0xff);/* pps17 */
-
-	*bp++ = ((dsc->initial_dec_delay >> 8) & 0xff); /* pps18 */
-	*bp++ = (dsc->initial_dec_delay & 0xff);/* pps19 */
-
-	bp++;					/* pps20, reserved */
-
-	*bp++ = (dsc->initial_scale_value & 0x3f); /* pps21 */
-
-	*bp++ = ((dsc->scale_increment_interval >> 8) & 0xff); /* pps22 */
-	*bp++ = (dsc->scale_increment_interval & 0xff); /* pps23 */
-
-	*bp++ = ((dsc->scale_decrement_interval >> 8) & 0xf); /* pps24 */
-	*bp++ = (dsc->scale_decrement_interval & 0x0ff);/* pps25 */
-
-	bp++;					/* pps26, reserved */
-
-	*bp++ = (dsc->first_line_bpg_offset & 0x1f);/* pps27 */
-
-	*bp++ = ((dsc->nfl_bpg_offset >> 8) & 0xff);/* pps28 */
-	*bp++ = (dsc->nfl_bpg_offset & 0x0ff);	/* pps29 */
-	*bp++ = ((dsc->slice_bpg_offset >> 8) & 0xff);/* pps30 */
-	*bp++ = (dsc->slice_bpg_offset & 0x0ff);/* pps31 */
-
-	*bp++ = ((dsc->initial_offset >> 8) & 0xff);/* pps32 */
-	*bp++ = (dsc->initial_offset & 0x0ff);	/* pps33 */
-
-	*bp++ = ((dsc->final_offset >> 8) & 0xff);/* pps34 */
-	*bp++ = (dsc->final_offset & 0x0ff);	/* pps35 */
-
-	*bp++ = (dsc->min_qp_flatness & 0x1f);	/* pps36 */
-	*bp++ = (dsc->max_qp_flatness & 0x1f);	/* pps37 */
-
-	*bp++ = ((dsc->rc_model_size >> 8) & 0xff);/* pps38 */
-	*bp++ = (dsc->rc_model_size & 0x0ff);	/* pps39 */
-
-	*bp++ = (dsc->edge_factor & 0x0f);	/* pps40 */
-
-	*bp++ = (dsc->quant_incr_limit0 & 0x1f);	/* pps41 */
-	*bp++ = (dsc->quant_incr_limit1 & 0x1f);	/* pps42 */
-
-	data = ((dsc->tgt_offset_hi & 0xf) << 4);
-	data |= (dsc->tgt_offset_lo & 0x0f);
-	*bp++ = data;				/* pps43 */
-
-	for (i = 0; i < 14; i++)
-		*bp++ = (dsc->buf_thresh[i] & 0xff); /* pps44 - pps57 */
-
-	for (i = 0; i < 15; i++) {		/* pps58 - pps87 */
-		data = (dsc->range_min_qp[i] & 0x1f);
-		data <<= 3;
-		data |= ((dsc->range_max_qp[i] >> 2) & 0x07);
-		*bp++ = data;
-		data = (dsc->range_max_qp[i] & 0x03);
-		data <<= 6;
-		data |= (dsc->range_bpg_offset[i] & 0x3f);
-		*bp++ = data;
-	}
-
-	return 128;
+	return sde_dsc_create_pps_buf_cmd(dsc, bp, pps_id, size - header_size);
 }
 
 static int dsi_panel_vreg_get(struct dsi_panel *panel)
@@ -2300,198 +2147,6 @@ error:
 	return rc;
 }
 
-void dsi_dsc_pclk_param_calc(struct msm_display_dsc_info *dsc, int intf_width)
-{
-	int slice_per_pkt, slice_per_intf;
-	int bytes_in_slice, total_bytes_per_intf;
-
-	if (!dsc || !dsc->slice_width || !dsc->slice_per_pkt ||
-	    (intf_width < dsc->slice_width)) {
-		DSI_ERR("invalid input, intf_width=%d slice_width=%d\n",
-			intf_width, dsc ? dsc->slice_width : -1);
-		return;
-	}
-
-	slice_per_pkt = dsc->slice_per_pkt;
-	slice_per_intf = DIV_ROUND_UP(intf_width, dsc->slice_width);
-
-	/*
-	 * If slice_per_pkt is greater than slice_per_intf then default to 1.
-	 * This can happen during partial update.
-	 */
-	if (slice_per_pkt > slice_per_intf)
-		slice_per_pkt = 1;
-
-	bytes_in_slice = DIV_ROUND_UP(dsc->slice_width * dsc->bpp, 8);
-	total_bytes_per_intf = bytes_in_slice * slice_per_intf;
-
-	dsc->eol_byte_num = total_bytes_per_intf % 3;
-	dsc->pclk_per_line =  DIV_ROUND_UP(total_bytes_per_intf, 3);
-	dsc->bytes_in_slice = bytes_in_slice;
-	dsc->bytes_per_pkt = bytes_in_slice * slice_per_pkt;
-	dsc->pkt_per_line = slice_per_intf / slice_per_pkt;
-}
-
-
-int dsi_dsc_populate_static_param(struct msm_display_dsc_info *dsc)
-{
-	int bpp, bpc;
-	int mux_words_size;
-	int groups_per_line, groups_total;
-	int min_rate_buffer_size;
-	int hrd_delay;
-	int pre_num_extra_mux_bits, num_extra_mux_bits;
-	int slice_bits;
-	int data;
-	int final_value, final_scale;
-	int ratio_index, mod_offset;
-
-	dsc->rc_model_size = 8192;
-
-	if (dsc->version == 0x11 && dsc->scr_rev == 0x1)
-		dsc->first_line_bpg_offset = 15;
-	else
-		dsc->first_line_bpg_offset = 12;
-
-	dsc->edge_factor = 6;
-	dsc->tgt_offset_hi = 3;
-	dsc->tgt_offset_lo = 3;
-	dsc->enable_422 = 0;
-	dsc->convert_rgb = 1;
-	dsc->vbr_enable = 0;
-
-	dsc->buf_thresh = dsi_dsc_rc_buf_thresh;
-
-	bpp = dsc->bpp;
-	bpc = dsc->bpc;
-
-	if ((bpc == 12) && (bpp == 8))
-		ratio_index = DSC_12BPC_8BPP;
-	else if ((bpc == 10) && (bpp == 8))
-		ratio_index = DSC_10BPC_8BPP;
-	else if ((bpc == 10) && (bpp == 10))
-		ratio_index = DSC_10BPC_10BPP;
-	else
-		ratio_index = DSC_8BPC_8BPP;
-
-	if (dsc->version == 0x11 && dsc->scr_rev == 0x1) {
-		dsc->range_min_qp =
-			dsi_dsc_rc_range_min_qp_1_1_scr1[ratio_index];
-		dsc->range_max_qp =
-			dsi_dsc_rc_range_max_qp_1_1_scr1[ratio_index];
-	} else {
-		dsc->range_min_qp = dsi_dsc_rc_range_min_qp_1_1[ratio_index];
-		dsc->range_max_qp = dsi_dsc_rc_range_max_qp_1_1[ratio_index];
-	}
-	dsc->range_bpg_offset = dsi_dsc_rc_range_bpg_offset;
-
-	if (bpp == 8) {
-		dsc->initial_offset = 6144;
-		dsc->initial_xmit_delay = 512;
-	} else if (bpp == 10) {
-		dsc->initial_offset = 5632;
-		dsc->initial_xmit_delay = 410;
-	} else {
-		dsc->initial_offset = 2048;
-		dsc->initial_xmit_delay = 341;
-	}
-
-	dsc->line_buf_depth = bpc + 1;
-
-	if (bpc == 8) {
-		dsc->input_10_bits = 0;
-		dsc->min_qp_flatness = 3;
-		dsc->max_qp_flatness = 12;
-		dsc->quant_incr_limit0 = 11;
-		dsc->quant_incr_limit1 = 11;
-		mux_words_size = 48;
-	} else if (bpc == 10) { /* 10bpc */
-		dsc->input_10_bits = 1;
-		dsc->min_qp_flatness = 7;
-		dsc->max_qp_flatness = 16;
-		dsc->quant_incr_limit0 = 15;
-		dsc->quant_incr_limit1 = 15;
-		mux_words_size = 48;
-	} else { /* 12 bpc */
-		dsc->input_10_bits = 0;
-		dsc->min_qp_flatness = 11;
-		dsc->max_qp_flatness = 20;
-		dsc->quant_incr_limit0 = 19;
-		dsc->quant_incr_limit1 = 19;
-		mux_words_size = 64;
-	}
-
-	mod_offset = dsc->slice_width % 3;
-	switch (mod_offset) {
-	case 0:
-		dsc->slice_last_group_size = 2;
-		break;
-	case 1:
-		dsc->slice_last_group_size = 0;
-		break;
-	case 2:
-		dsc->slice_last_group_size = 1;
-		break;
-	default:
-		break;
-	}
-
-	dsc->det_thresh_flatness = 2 << (bpc - 8);
-
-	groups_per_line = DIV_ROUND_UP(dsc->slice_width, 3);
-
-	dsc->chunk_size = dsc->slice_width * bpp / 8;
-	if ((dsc->slice_width * bpp) % 8)
-		dsc->chunk_size++;
-
-	/* rbs-min */
-	min_rate_buffer_size =  dsc->rc_model_size - dsc->initial_offset +
-			dsc->initial_xmit_delay * bpp +
-			groups_per_line * dsc->first_line_bpg_offset;
-
-	hrd_delay = DIV_ROUND_UP(min_rate_buffer_size, bpp);
-
-	dsc->initial_dec_delay = hrd_delay - dsc->initial_xmit_delay;
-
-	dsc->initial_scale_value = 8 * dsc->rc_model_size /
-			(dsc->rc_model_size - dsc->initial_offset);
-
-	slice_bits = 8 * dsc->chunk_size * dsc->slice_height;
-
-	groups_total = groups_per_line * dsc->slice_height;
-
-	data = dsc->first_line_bpg_offset * 2048;
-
-	dsc->nfl_bpg_offset = DIV_ROUND_UP(data, (dsc->slice_height - 1));
-
-	pre_num_extra_mux_bits = 3 * (mux_words_size + (4 * bpc + 4) - 2);
-
-	num_extra_mux_bits = pre_num_extra_mux_bits - (mux_words_size -
-		((slice_bits - pre_num_extra_mux_bits) % mux_words_size));
-
-	data = 2048 * (dsc->rc_model_size - dsc->initial_offset
-		+ num_extra_mux_bits);
-	dsc->slice_bpg_offset = DIV_ROUND_UP(data, groups_total);
-
-	data = dsc->initial_xmit_delay * bpp;
-	final_value =  dsc->rc_model_size - data + num_extra_mux_bits;
-
-	final_scale = 8 * dsc->rc_model_size /
-		(dsc->rc_model_size - final_value);
-
-	dsc->final_offset = final_value;
-
-	data = (final_scale - 9) * (dsc->nfl_bpg_offset +
-		dsc->slice_bpg_offset);
-	dsc->scale_increment_interval = (2048 * dsc->final_offset) / data;
-
-	dsc->scale_decrement_interval = groups_per_line /
-		(dsc->initial_scale_value - 8);
-
-	return 0;
-}
-
-
 static int dsi_panel_parse_phy_timing(struct dsi_display_mode *mode,
 		struct dsi_parser_utils *utils)
 {
@@ -2565,14 +2220,25 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-version", &data);
 	if (rc) {
-		priv_info->dsc.version = 0x11;
+		priv_info->dsc.config.dsc_version_major = 0x1;
+		priv_info->dsc.config.dsc_version_minor = 0x1;
 		rc = 0;
 	} else {
-		priv_info->dsc.version = data & 0xff;
-		/* only support DSC 1.1 rev */
-		if (priv_info->dsc.version != 0x11) {
-			DSI_ERR("%s: DSC version:%d not supported\n", __func__,
-					priv_info->dsc.version);
+		/* BITS[0..3] provides minor version and BITS[4..7] provide
+		 * major version information
+		 */
+		priv_info->dsc.config.dsc_version_major = (data >> 4) & 0x0F;
+		priv_info->dsc.config.dsc_version_minor = data & 0x0F;
+		if ((priv_info->dsc.config.dsc_version_major != 0x1) &&
+				((priv_info->dsc.config.dsc_version_minor
+				  != 0x1) ||
+				 (priv_info->dsc.config.dsc_version_minor
+				  != 0x2))) {
+			DSI_ERR("%s:unsupported major:%d minor:%d version\n",
+					__func__,
+					priv_info->dsc.config.dsc_version_major,
+					priv_info->dsc.config.dsc_version_minor
+					);
 			rc = -EINVAL;
 			goto error;
 		}
@@ -2598,25 +2264,25 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		DSI_ERR("failed to parse qcom,mdss-dsc-slice-height\n");
 		goto error;
 	}
-	priv_info->dsc.slice_height = data;
+	priv_info->dsc.config.slice_height = data;
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-slice-width", &data);
 	if (rc) {
 		DSI_ERR("failed to parse qcom,mdss-dsc-slice-width\n");
 		goto error;
 	}
-	priv_info->dsc.slice_width = data;
+	priv_info->dsc.config.slice_width = data;
 
 	intf_width = mode->timing.h_active;
-	if (intf_width % priv_info->dsc.slice_width) {
+	if (intf_width % priv_info->dsc.config.slice_width) {
 		DSI_ERR("invalid slice width for the intf width:%d slice width:%d\n",
-			intf_width, priv_info->dsc.slice_width);
+			intf_width, priv_info->dsc.config.slice_width);
 		rc = -EINVAL;
 		goto error;
 	}
 
-	priv_info->dsc.pic_width = mode->timing.h_active;
-	priv_info->dsc.pic_height = mode->timing.v_active;
+	priv_info->dsc.config.pic_width = mode->timing.h_active;
+	priv_info->dsc.config.pic_height = mode->timing.v_active;
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsc-slice-per-pkt", &data);
 	if (rc) {
@@ -2634,7 +2300,7 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		DSI_ERR("failed to parse qcom,mdss-dsc-bit-per-component\n");
 		goto error;
 	}
-	priv_info->dsc.bpc = data;
+	priv_info->dsc.config.bits_per_component = data;
 
 	rc = utils->read_u32(utils->data, "qcom,mdss-pps-delay-ms", &data);
 	if (rc) {
@@ -2649,16 +2315,28 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		DSI_ERR("failed to parse qcom,mdss-dsc-bit-per-pixel\n");
 		goto error;
 	}
-	priv_info->dsc.bpp = data;
+	priv_info->dsc.config.bits_per_pixel = data << 4;
 
-	priv_info->dsc.block_pred_enable = utils->read_bool(utils->data,
+	priv_info->dsc.config.block_pred_enable = utils->read_bool(utils->data,
 		"qcom,mdss-dsc-block-prediction-enable");
 
-	priv_info->dsc.full_frame_slices = DIV_ROUND_UP(intf_width,
-		priv_info->dsc.slice_width);
+	priv_info->dsc.config.slice_count = DIV_ROUND_UP(intf_width,
+		priv_info->dsc.config.slice_width);
 
-	dsi_dsc_populate_static_param(&priv_info->dsc);
-	dsi_dsc_pclk_param_calc(&priv_info->dsc, intf_width);
+	rc = sde_dsc_populate_dsc_config(&priv_info->dsc.config,
+			priv_info->dsc.scr_rev);
+	if (rc) {
+		DSI_DEBUG("failed populating dsc params \n");
+		rc = -EINVAL;
+		goto error;
+	}
+
+	rc = sde_dsc_populate_dsc_private_params(&priv_info->dsc, intf_width);
+	if (rc) {
+		DSI_DEBUG("failed populating other dsc params \n");
+		rc = -EINVAL;
+		goto error;
+	}
 
 	mode->timing.dsc_enabled = true;
 	mode->timing.dsc = &priv_info->dsc;
@@ -3588,6 +3266,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	struct dsi_display_mode *display_mode;
 	u32 jitter_numer, jitter_denom, prefill_lines;
 	u32 min_threshold_us, prefill_time_us;
+	u16 bpp;
 
 	/* Packet overlead in bits,2 bytes header + 2 bytes checksum
 	 * + 1 byte dcs data command.
@@ -3602,11 +3281,12 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	frame_time_us = mult_frac(1000, 1000, (timing->refresh_rate));
 
 	if (timing->dsc_enabled) {
-		nslices = (timing->h_active)/(dsc->slice_width);
+		nslices = (timing->h_active)/(dsc->config.slice_width);
 		/* (slice width x bit-per-pixel + packet overhead) x
 		 * number of slices x height x fps / lane
 		 */
-		bits_per_line = ((dsc->slice_width * dsc->bpp) +
+		bpp = DSC_BPP(dsc->config);
+		bits_per_line = ((dsc->config.slice_width * bpp) +
 				packet_overhead) * nslices;
 		bits_per_line = bits_per_line / (config->num_data_lanes);
 
@@ -3880,7 +3560,12 @@ int dsi_panel_update_pps(struct dsi_panel *panel)
 
 	set = &priv_info->cmd_sets[DSI_CMD_SET_PPS];
 
-	dsi_dsc_create_pps_buf_cmd(&priv_info->dsc, panel->dsc_pps_cmd, 0);
+	rc = dsi_dsc_create_pps_buf_cmd(&priv_info->dsc, panel->dsc_pps_cmd, 0,
+			DSI_CMD_PPS_SIZE);
+	if (rc) {
+		DSI_ERR("failed to create pps cmd, rc=%d\n", rc);
+		goto error;
+	}
 	rc = dsi_panel_create_cmd_packets(panel->dsc_pps_cmd,
 					  DSI_CMD_PPS_SIZE, 1, set->cmds);
 	if (rc) {

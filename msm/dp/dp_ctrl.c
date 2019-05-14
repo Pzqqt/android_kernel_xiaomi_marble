@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -1003,7 +1003,7 @@ static void dp_ctrl_mst_calculate_rg(struct dp_ctrl_private *ctrl,
 	u64 target_strm_sym, ts_int_fixp, ts_frac_fixp, y_frac_enum_fixp;
 
 	if (panel->pinfo.comp_info.comp_ratio)
-		bpp = panel->pinfo.comp_info.dsc_info.bpp;
+		bpp = DSC_BPP(panel->pinfo.comp_info.dsc_info.config);
 
 	/* min_slot_cnt */
 	numerator = pclk * bpp * 64 * 1000;

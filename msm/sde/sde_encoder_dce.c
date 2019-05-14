@@ -23,6 +23,7 @@
 #include "sde_crtc.h"
 #include "sde_trace.h"
 #include "sde_core_irq.h"
+#include "sde_dsc_helper.h"
 
 #define SDE_DEBUG_DCE(e, fmt, ...) SDE_DEBUG("enc%d " fmt,\
 		(e) ? (e)->base.base.id : -1, ##__VA_ARGS__)
@@ -55,7 +56,6 @@ bool sde_encoder_is_dsc_merge(struct drm_encoder *drm_enc)
 }
 
 static int _dce_dsc_update_pic_dim(struct msm_display_dsc_info *dsc,
-
 		int pic_width, int pic_height)
 {
 	if (!dsc || !pic_width || !pic_height) {
@@ -64,51 +64,18 @@ static int _dce_dsc_update_pic_dim(struct msm_display_dsc_info *dsc,
 		return -EINVAL;
 	}
 
-	if ((pic_width % dsc->slice_width) ||
-	    (pic_height % dsc->slice_height)) {
+	if ((pic_width % dsc->config.slice_width) ||
+	    (pic_height % dsc->config.slice_height)) {
 		SDE_ERROR("pic_dim=%dx%d has to be multiple of slice=%dx%d\n",
 			pic_width, pic_height,
-			dsc->slice_width, dsc->slice_height);
+			dsc->config.slice_width, dsc->config.slice_height);
 		return -EINVAL;
 	}
 
-	dsc->pic_width = pic_width;
-	dsc->pic_height = pic_height;
+	dsc->config.pic_width = pic_width;
+	dsc->config.pic_height = pic_height;
 
 	return 0;
-}
-
-static void _dce_dsc_pclk_param_calc(struct msm_display_dsc_info *dsc,
-		int intf_width)
-{
-	int slice_per_pkt, slice_per_intf;
-	int bytes_in_slice, total_bytes_per_intf;
-
-	if (!dsc || !dsc->slice_width || !dsc->slice_per_pkt ||
-	    (intf_width < dsc->slice_width)) {
-		SDE_ERROR("invalid input: intf_width=%d slice_width=%d\n",
-			intf_width, dsc ? dsc->slice_width : -1);
-		return;
-	}
-
-	slice_per_pkt = dsc->slice_per_pkt;
-	slice_per_intf = DIV_ROUND_UP(intf_width, dsc->slice_width);
-
-	/*
-	 * If slice_per_pkt is greater than slice_per_intf then default to 1.
-	 * This can happen during partial update.
-	 */
-	if (slice_per_pkt > slice_per_intf)
-		slice_per_pkt = 1;
-
-	bytes_in_slice = DIV_ROUND_UP(dsc->slice_width * dsc->bpp, 8);
-	total_bytes_per_intf = bytes_in_slice * slice_per_intf;
-
-	dsc->eol_byte_num = total_bytes_per_intf % 3;
-	dsc->pclk_per_line =  DIV_ROUND_UP(total_bytes_per_intf, 3);
-	dsc->bytes_in_slice = bytes_in_slice;
-	dsc->bytes_per_pkt = bytes_in_slice * slice_per_pkt;
-	dsc->pkt_per_line = slice_per_intf / slice_per_pkt;
 }
 
 static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
@@ -124,20 +91,23 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 	int output_rate_ratio_complement, container_slice_width;
 	int rtl_num_components, multi_hs_c, multi_hs_d;
 
+	int bpc = dsc->config.bits_per_component;
+	int bpp = DSC_BPP(dsc->config);
+	int num_of_active_ss = dsc->config.slice_count;
+	bool native_422 = dsc->config.native_422;
+	bool native_420 = dsc->config.native_420;
+
 	/* Hardent core config */
 	int multiplex_mode_enable = 0, split_panel_enable = 0;
 	int rtl_max_bpc = 10, rtl_output_data_width = 64;
 	int pipeline_latency = 28;
-	int bpc = dsc->bpc, bpp = dsc->bpp;
-	int num_of_active_ss = dsc->full_frame_slices;
-	bool native_422 = false, native_420 = false;
 
 	if (dsc_cmn_mode & DSC_MODE_MULTIPLEX)
 		multiplex_mode_enable = 1;
 	if (dsc_cmn_mode & DSC_MODE_SPLIT_PANEL)
 		split_panel_enable = 0;
 	container_slice_width = (native_422 ?
-			dsc->slice_width / 2 : dsc->slice_width);
+			dsc->config.slice_width / 2 : dsc->config.slice_width);
 	max_muxword_size = ((rtl_max_bpc >= 12) ? 64 : 48);
 	max_se_size = 4 * (rtl_max_bpc + 1);
 	max_ssm_delay = max_se_size + max_muxword_size - 1;
@@ -156,9 +126,9 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 			ob_data_width_4comps : ob_data_width_3comps);
 	obuf_latency = DIV_ROUND_UP((9 * ob_data_width + mux_word_size),
 			compress_bpp_group) + 1;
-	base_hs_latency = dsc->initial_xmit_delay + input_ssm_out_latency
-		+ obuf_latency;
-	chunk_bits = 8 * dsc->chunk_size;
+	base_hs_latency = dsc->config.initial_xmit_delay +
+		input_ssm_out_latency + obuf_latency;
+	chunk_bits = 8 * dsc->config.slice_chunk_size;
 	output_rate_ratio_complement = ob_data_width - compress_bpp_group;
 	output_rate_extra_budget_bits =
 		(output_rate_ratio_complement * chunk_bits) >>
@@ -196,8 +166,8 @@ static bool _dce_dsc_ich_reset_override_needed(bool pu_en,
 	 * then HW will generate ich_reset at end of the slice. This is a
 	 * mismatch. Prevent this by overriding HW's decision.
 	 */
-	return pu_en && dsc && (dsc->full_frame_slices > 1) &&
-		(dsc->slice_width == dsc->pic_width);
+	return pu_en && dsc && (dsc->config.slice_count > 1) &&
+		(dsc->config.slice_width == dsc->config.pic_width);
 }
 
 static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
@@ -330,13 +300,13 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	if (enc_master->intf_mode == INTF_MODE_VIDEO)
 		dsc_common_mode |= DSC_MODE_VIDEO;
 
-	this_frame_slices = roi->w / dsc->slice_width;
-	intf_ip_w = this_frame_slices * dsc->slice_width;
+	this_frame_slices = roi->w / dsc->config.slice_width;
+	intf_ip_w = this_frame_slices * dsc->config.slice_width;
 
 	if ((!half_panel_partial_update) && (num_intf > 1))
 		intf_ip_w /= 2;
 
-	_dce_dsc_pclk_param_calc(dsc, intf_ip_w);
+	sde_dsc_populate_dsc_private_params(dsc, intf_ip_w);
 
 	/*
 	 * in dsc merge case: when using 2 encoders for the same stream,

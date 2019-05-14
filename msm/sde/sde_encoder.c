@@ -3492,6 +3492,7 @@ static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 	struct msm_display_dsc_info *dsc = NULL;
 	struct sde_encoder_virt *sde_enc;
 	struct sde_hw_pingpong *hw_pp;
+	u16 bpp;
 
 	if (!phys || !phys->connector || !phys->hw_pp ||
 			!phys->hw_pp->ops.setup_dither || !phys->parent)
@@ -3506,7 +3507,8 @@ static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	dsc = &sde_enc->mode_info.comp_info.dsc_info;
 	/* disable dither for 10 bpp or 10bpc dsc config */
-	if (dsc->bpp == 10 || dsc->bpc == 10) {
+	bpp = DSC_BPP(dsc->config);
+	if (bpp == 10 || dsc->config.bits_per_component == 10) {
 		phys->hw_pp->ops.setup_dither(phys->hw_pp, NULL, 0);
 		return;
 	}

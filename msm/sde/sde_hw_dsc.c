@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -58,101 +58,101 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 
 	data |= (initial_lines << 20);
 	data |= (dsc->slice_last_group_size << 18);
-	data |= (dsc->bpp << 12);
-	data |= (dsc->block_pred_enable << 7);
-	data |= (dsc->line_buf_depth << 3);
-	data |= (dsc->enable_422 << 2);
-	data |= (dsc->convert_rgb << 1);
-	data |= dsc->input_10_bits;
+	/* integer bpp support only */
+	data |= (dsc->config.bits_per_pixel << 8);
+	data |= (dsc->config.block_pred_enable << 7);
+	data |= (dsc->config.line_buf_depth << 3);
+	data |= (dsc->config.simple_422 << 2);
+	data |= (dsc->config.convert_rgb << 1);
+	if (dsc->config.bits_per_component == 10)
+		data |= BIT(0);
 
 	SDE_REG_WRITE(dsc_c, DSC_ENC, data);
 
-	data = dsc->pic_width << 16;
-	data |= dsc->pic_height;
+	data = dsc->config.pic_width << 16;
+	data |= dsc->config.pic_height;
 	SDE_REG_WRITE(dsc_c, DSC_PICTURE, data);
 
-	data = dsc->slice_width << 16;
-	data |= dsc->slice_height;
+	data = dsc->config.slice_width << 16;
+	data |= dsc->config.slice_height;
 	SDE_REG_WRITE(dsc_c, DSC_SLICE, data);
 
-	data = dsc->chunk_size << 16;
+	data = dsc->config.slice_chunk_size << 16;
 	SDE_REG_WRITE(dsc_c, DSC_CHUNK_SIZE, data);
 
-	data = dsc->initial_dec_delay << 16;
-	data |= dsc->initial_xmit_delay;
+	data = dsc->config.initial_dec_delay << 16;
+	data |= dsc->config.initial_xmit_delay;
 	SDE_REG_WRITE(dsc_c, DSC_DELAY, data);
 
-	data = dsc->initial_scale_value;
+	data = dsc->config.initial_scale_value;
 	SDE_REG_WRITE(dsc_c, DSC_SCALE_INITIAL, data);
 
-	data = dsc->scale_decrement_interval;
+	data = dsc->config.scale_decrement_interval;
 	SDE_REG_WRITE(dsc_c, DSC_SCALE_DEC_INTERVAL, data);
 
-	data = dsc->scale_increment_interval;
+	data = dsc->config.scale_increment_interval;
 	SDE_REG_WRITE(dsc_c, DSC_SCALE_INC_INTERVAL, data);
 
-	data = dsc->first_line_bpg_offset;
+	data = dsc->config.first_line_bpg_offset;
 	SDE_REG_WRITE(dsc_c, DSC_FIRST_LINE_BPG_OFFSET, data);
 
-	data = dsc->nfl_bpg_offset << 16;
-	data |= dsc->slice_bpg_offset;
+	data = dsc->config.nfl_bpg_offset << 16;
+	data |= dsc->config.slice_bpg_offset;
 	SDE_REG_WRITE(dsc_c, DSC_BPG_OFFSET, data);
 
-	data = dsc->initial_offset << 16;
-	data |= dsc->final_offset;
+	data = dsc->config.initial_offset << 16;
+	data |= dsc->config.final_offset;
 	SDE_REG_WRITE(dsc_c, DSC_DSC_OFFSET, data);
 
 	data = dsc->det_thresh_flatness << 10;
-	data |= dsc->max_qp_flatness << 5;
-	data |= dsc->min_qp_flatness;
+	data |= dsc->config.flatness_max_qp << 5;
+	data |= dsc->config.flatness_min_qp;
 	SDE_REG_WRITE(dsc_c, DSC_FLATNESS, data);
 
-	data = dsc->rc_model_size;
+	data = dsc->config.rc_model_size;
 	SDE_REG_WRITE(dsc_c, DSC_RC_MODEL_SIZE, data);
 
-	data = dsc->tgt_offset_lo << 18;
-	data |= dsc->tgt_offset_hi << 14;
-	data |= dsc->quant_incr_limit1 << 9;
-	data |= dsc->quant_incr_limit0 << 4;
-	data |= dsc->edge_factor;
+	data = dsc->config.rc_tgt_offset_low << 18;
+	data |= dsc->config.rc_tgt_offset_high << 14;
+	data |= dsc->config.rc_quant_incr_limit1 << 9;
+	data |= dsc->config.rc_quant_incr_limit0 << 4;
+	data |= dsc->config.rc_edge_factor;
 	SDE_REG_WRITE(dsc_c, DSC_RC, data);
 }
 
 static void sde_hw_dsc_config_thresh(struct sde_hw_dsc *hw_dsc,
 		struct msm_display_dsc_info *dsc)
 {
-	u32 *lp;
-	char *cp;
+	u16 *lp;
 	int i;
 
 	struct sde_hw_blk_reg_map *dsc_c = &hw_dsc->hw;
 	u32 off = 0x0;
+	struct drm_dsc_rc_range_parameters *rc =
+		dsc->config.rc_range_params;
 
-	lp = dsc->buf_thresh;
+	lp = dsc->config.rc_buf_thresh;
 	off = DSC_RC_BUF_THRESH;
-	for (i = 0; i < 14; i++) {
+	for (i = 0; i < DSC_NUM_BUF_RANGES - 1; i++) {
 		SDE_REG_WRITE(dsc_c, off, *lp++);
 		off += 4;
 	}
 
-	cp = dsc->range_min_qp;
 	off = DSC_RANGE_MIN_QP;
-	for (i = 0; i < 15; i++) {
-		SDE_REG_WRITE(dsc_c, off, *cp++);
+	for (i = 0; i < DSC_NUM_BUF_RANGES; i++) {
+		SDE_REG_WRITE(dsc_c, off, rc[i].range_min_qp);
 		off += 4;
 	}
 
-	cp = dsc->range_max_qp;
 	off = DSC_RANGE_MAX_QP;
-	for (i = 0; i < 15; i++) {
-		SDE_REG_WRITE(dsc_c, off, *cp++);
+	for (i = 0; i < DSC_NUM_BUF_RANGES; i++) {
+		SDE_REG_WRITE(dsc_c, off, rc[i].range_max_qp);
 		off += 4;
 	}
 
-	cp = dsc->range_bpg_offset;
 	off = DSC_RANGE_BPG_OFFSET;
-	for (i = 0; i < 15; i++) {
-		SDE_REG_WRITE(dsc_c, off, *cp++);
+	for (i = 0; i < DSC_NUM_BUF_RANGES; i++) {
+		SDE_REG_WRITE(dsc_c, off, rc[i].range_bpg_offset);
 		off += 4;
 	}
 }

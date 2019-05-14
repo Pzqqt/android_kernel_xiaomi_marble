@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -13,6 +13,7 @@
 #include "dsi_panel.h"
 #include "dsi_catalog.h"
 #include "sde_dbg.h"
+#include "sde_dsc_helper.h"
 
 #define MMSS_MISC_CLAMP_REG_OFF           0x0014
 #define DSI_CTRL_DYNAMIC_FORCE_ON         (0x23F|BIT(8)|BIT(9)|BIT(11)|BIT(21))
@@ -369,9 +370,9 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 
 		memcpy(&dsc, mode->dsc, sizeof(dsc));
 		pic_width = roi ? roi->w : mode->h_active;
-		this_frame_slices = pic_width / dsc.slice_width;
-		intf_ip_w = this_frame_slices * dsc.slice_width;
-		dsi_dsc_pclk_param_calc(&dsc, intf_ip_w);
+		this_frame_slices = pic_width / dsc.config.slice_width;
+		intf_ip_w = this_frame_slices * dsc.config.slice_width;
+		sde_dsc_populate_dsc_private_params(&dsc, intf_ip_w);
 
 		if (vc_id != 0)
 			offset = 16;
