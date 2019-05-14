@@ -305,7 +305,7 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	uint64_t dma_addr = buffer;
 	struct hif_softc *scn = CE_state->scn;
-	struct ce_srng_dest_desc *dest_desc;
+	struct ce_srng_dest_desc *dest_desc = NULL;
 
 	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	write_index = dest_ring->write_index;

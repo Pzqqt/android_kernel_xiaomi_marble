@@ -142,6 +142,14 @@ void hif_target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 		break;
 #endif /* QCA6390_HEADERS_DEF */
 
+#if defined(QCA6490_HEADERS_DEF)
+	case TARGET_TYPE_QCA6490:
+		scn->targetdef = QCA6490_TARGETdef;
+		scn->target_ce_def = QCA6490_CE_TARGETdef;
+		HIF_TRACE("%s: TARGET_TYPE_QCA6490", __func__);
+		break;
+#endif /* QCA6490_HEADERS_DEF */
+
 	default:
 		break;
 	}
@@ -242,6 +250,13 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 		HIF_TRACE("%s: HIF_TYPE_QCA6390", __func__);
 		break;
 #endif /* QCA6390_HEADERS_DEF */
+
+#if defined(QCA6490_HEADERS_DEF)
+	case HIF_TYPE_QCA6490:
+		scn->hostdef = QCA6490_HOSTdef;
+		HIF_TRACE("%s: HIF_TYPE_QCA6490", __func__);
+		break;
+#endif /* QCA6490_HEADERS_DEF */
 
 	default:
 		break;

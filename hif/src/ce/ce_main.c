@@ -611,6 +611,26 @@ static struct service_to_pipe target_service_to_ce_map_qca6390[] = {
 };
 #endif
 
+static struct service_to_pipe target_service_to_ce_map_qca6490[] = {
+	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_VO_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_IN, 2, },
+	{ WMI_CONTROL_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_CONTROL_SVC, PIPEDIR_IN, 2, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_OUT, 0, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_IN, 2, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
+	{ PACKET_LOG_SVC, PIPEDIR_IN, 5, },
+	/* (Additions here) */
+	{ 0, 0, 0, },
+};
+
 static struct service_to_pipe target_service_to_ce_map_ar900b[] = {
 	{
 		WMI_DATA_VO_SVC,
@@ -801,6 +821,11 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 			*tgt_svc_map_to_use = target_service_to_ce_map_qca6390;
 			*sz_tgt_svc_map_to_use =
 				sizeof(target_service_to_ce_map_qca6390);
+			break;
+		case TARGET_TYPE_QCA6490:
+			*tgt_svc_map_to_use = target_service_to_ce_map_qca6490;
+			*sz_tgt_svc_map_to_use =
+				sizeof(target_service_to_ce_map_qca6490);
 			break;
 		case TARGET_TYPE_QCA8074:
 			*tgt_svc_map_to_use = target_service_to_ce_map_qca8074;
@@ -1032,6 +1057,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6290:
 	case TARGET_TYPE_QCA6390:
+	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6018:
 	case TARGET_TYPE_QCN9000:
 		return true;
@@ -3176,6 +3202,14 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 					sizeof(target_ce_config_wlan_qca6390);
 
 		scn->ce_count = QCA_6390_CE_COUNT;
+		break;
+	case TARGET_TYPE_QCA6490:
+		hif_state->host_ce_config = host_ce_config_wlan_qca6490;
+		hif_state->target_ce_config = target_ce_config_wlan_qca6490;
+		hif_state->target_ce_config_sz =
+					sizeof(target_ce_config_wlan_qca6490);
+
+		scn->ce_count = QCA_6490_CE_COUNT;
 		break;
 	case TARGET_TYPE_ADRASTEA:
 		if (hif_is_attribute_set(scn, HIF_LOWDESC_CE_NO_PKTLOG_CFG)) {

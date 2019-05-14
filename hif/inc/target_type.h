@@ -54,6 +54,10 @@ extern "C" {
 #ifndef TARGET_TYPE_QCN9000
 #define TARGET_TYPE_QCN9000      26
 #endif
+/* HastingsPrime */
+#ifndef TARGET_TYPE_QCA6490
+#define TARGET_TYPE_QCA6490   27
+#endif
 
 #ifdef __cplusplus
 }

@@ -3659,9 +3659,8 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
 	case QCA6290_EMULATION_DEVICE_ID:
-#ifdef QCA_WIFI_QCA6390
 	case QCA6390_DEVICE_ID:
-#endif
+	case QCA6490_DEVICE_ID:
 	case AR6320_DEVICE_ID:
 	case QCN7605_DEVICE_ID:
 		return true;
@@ -4596,6 +4595,7 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 
 	if (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA6390 ||
+	    tgt_info->target_type == TARGET_TYPE_QCA6490 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA8074) {
 		/*
 		 * Need to consider offset's memtype for QCA6290/QCA8074,
