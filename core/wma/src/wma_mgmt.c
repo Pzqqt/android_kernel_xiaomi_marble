@@ -2628,6 +2628,8 @@ out:
 	if (key_info->sendRsp)
 		wma_send_msg_high_priority(wma_handle, WMA_SET_STAKEY_RSP,
 					   (void *)key_info, 0);
+	else
+		qdf_mem_free(key_info);
 }
 #endif
 
