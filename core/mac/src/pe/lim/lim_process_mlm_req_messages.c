@@ -1166,19 +1166,6 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	/* map the session entry pointer to the AssocFailureTimer */
 	mac_ctx->lim.limTimers.gLimAssocFailureTimer.sessionId =
 		mlm_assoc_req->sessionId;
-#ifdef WLAN_FEATURE_11W
-	/*
-	 * Store current MLM state in case ASSOC response returns with
-	 * TRY_AGAIN_LATER return code.
-	 */
-	if (session_entry->limRmfEnabled) {
-		session_entry->pmfComebackTimerInfo.lim_prev_mlm_state =
-			session_entry->limPrevMlmState;
-		session_entry->pmfComebackTimerInfo.lim_mlm_state =
-			session_entry->limMlmState;
-	}
-#endif /* WLAN_FEATURE_11W */
-
 	session_entry->limPrevMlmState = session_entry->limMlmState;
 	session_entry->limMlmState = eLIM_MLM_WT_ASSOC_RSP_STATE;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,

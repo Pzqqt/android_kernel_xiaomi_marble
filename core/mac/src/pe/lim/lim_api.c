@@ -601,9 +601,6 @@ static void pe_shutdown_notifier_cb(void *ctx)
 			if (LIM_IS_AP_ROLE(session))
 				qdf_mc_timer_stop(&session->
 						 protection_fields_reset_timer);
-#ifdef WLAN_FEATURE_11W
-			qdf_mc_timer_stop(&session->pmfComebackTimer);
-#endif
 		}
 	}
 }

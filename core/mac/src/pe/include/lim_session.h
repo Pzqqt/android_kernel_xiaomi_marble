@@ -487,10 +487,6 @@ struct pe_session {
 	/* Fast Transition (FT) */
 	tftPEContext ftPEContext;
 	bool isNonRoamReassoc;
-#ifdef WLAN_FEATURE_11W
-	qdf_mc_timer_t pmfComebackTimer;
-	struct comeback_timer_info pmfComebackTimerInfo;
-#endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
 	/* timer for resetting protection fileds at regular intervals */
 	qdf_mc_timer_t protection_fields_reset_timer;
