@@ -65,9 +65,9 @@ QDF_STATUS wlan_sm_dispatch(struct wlan_sm *sm, uint16_t event,
 		event_handled = (*sm->state_info[state].wlan_sm_event) (
 				 sm->ctx, event, event_data_len, event_data);
 		if (!event_handled) {
-			sm_engine_nofl_err("%s: event %d not handled in state %s",
-					   sm->name, event,
-					   sm->state_info[sm->cur_state].name);
+			sm_engine_nofl_info("%s: event %d not handled in state %s",
+					    sm->name, event,
+					    sm->state_info[sm->cur_state].name);
 			return QDF_STATUS_E_INVAL;
 		}
 	}
