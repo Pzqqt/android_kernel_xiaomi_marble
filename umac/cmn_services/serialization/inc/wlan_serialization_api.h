@@ -620,4 +620,28 @@ void wlan_serialization_purge_all_pdev_cmd(struct wlan_objmgr_pdev *pdev);
  * Return: void
  */
 void wlan_serialization_purge_all_cmd(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_serialization_purge_all_pending_cmd_by_vdev_id() - Purge all pending
+ * scan and non scan commands for vdev id
+ * @pdev: pointer to pdev
+ * @vdev_id: vdev_id variable
+ *
+ * Return: none
+ */
+void wlan_serialization_purge_all_pending_cmd_by_vdev_id(
+					struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
+
+/**
+ * wlan_serialization_purge_all_scan_cmd_by_vdev_id() - Purge all pending/active
+ * scan commands for vdev id
+ * @pdev: pointer to pdev
+ * @vdev_id: vdev_id variable
+ *
+ * Return: none
+ */
+void wlan_serialization_purge_all_scan_cmd_by_vdev_id(
+					struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
 #endif

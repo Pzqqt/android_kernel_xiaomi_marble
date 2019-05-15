@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -123,74 +123,4 @@ uint32_t wlan_serialization_get_active_list_count(struct wlan_objmgr_psoc *psoc,
 uint32_t wlan_serialization_get_pending_list_count(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t is_cmd_from_pending_scan_queue);
-
-/**
- * wlan_serialization_purge_cmd_list_by_vdev_id() - Purge given list
- * @psoc: pointer to soc
- * @vdev_id: vdev_id variable
- * @purge_scan_active_queue: whether to purge active scan queue
- * @purge_scan_pending_queue: whether to purge pending scan queue
- * @purge_nonscan_active_queue: whether to purge active nonscan queue
- * @purge_nonscan_pending_queue: whether to purge pending nonscan queue
- * @purge_all_queues: whether to purge all queues.
- *
- * This API will purge queue based given flags and vdev_id. If vdev
- * is invalid then it will return immediately. If correct vdev_id is given then
- * it will purge the queues per vdev.
- *
- * Example:
- * 1) If you want to purge scan active queue for particular vdev then
- *    provide correct vdev_id value and purge_scan_active_queue flag set to
- *    TRUE and rest of the flags set to false.
- * 2) If you want to purge all queues for particular vdev then provide
- *    correct vdev_id value and set purge_all_queues flag set to TRUE and rest
- *    of the flags set to false.
- * 3) If you want to purge active scan and active non-scan queues to be flushed
- *    then set purge_scan_active_queue and purge_nonscan_active_queue flags to
- *    be set TRUE and rest of the flags to be FALSE
- *
- * Return: none
- */
-void wlan_serialization_purge_cmd_list_by_vdev_id(struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id,
-		bool purge_scan_active_queue,
-		bool purge_scan_pending_queue,
-		bool purge_nonscan_active_queue,
-		bool purge_nonscan_pending_queue,
-		bool purge_all_queues);
-/**
- * wlan_serialization_purge_cmd_list() - Purge given list
- * @psoc: pointer to soc
- * @vdev: pointer to vdev object
- * @purge_scan_active_queue: whether to purge active scan queue
- * @purge_scan_pending_queue: whether to purge pending scan queue
- * @purge_nonscan_active_queue: whether to purge active nonscan queue
- * @purge_nonscan_pending_queue: whether to purge pending nonscan queue
- * @purge_all_queues: whether to purge all queues.
- *
- * This API will purge queue based given flags and vdev object. If vdev
- * is null then it will purge the queues per pdev by default.
- * If vdev is given then it will purge the queues per vdev.
- *
- * Example:
- * 1) If you want to purge scan active queue for particular vdev then
- *    provide correct vdev object and purge_scan_active_queue flag set to
- *    TRUE and rest of the flags set to false.
- * 2) If you want to purge all queues for particular vdev then provide
- *    correct vdev object value & set purge_all_queues flag set to TRUE and rest
- *    of the flags set to false.
- * 3) If you want to purge active scan and active non-scan queues to be flushed
- *    for pdev then set purge_scan_active_queue and purge_nonscan_active_queue
- *    flags to be set TRUE and rest of the flags to be FALSE with vdev object
- *    passed as NULL.
- *
- * Return: none
- */
-void wlan_serialization_purge_cmd_list(struct wlan_objmgr_psoc *psoc,
-		struct wlan_objmgr_vdev *vdev,
-		bool purge_scan_active_queue,
-		bool purge_scan_pending_queue,
-		bool purge_nonscan_active_queue,
-		bool purge_nonscan_pending_queue,
-		bool purge_all_queues);
 #endif
