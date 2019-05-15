@@ -497,6 +497,22 @@ int dp_usbpd_register(struct dp_hpd *dp_hpd)
 	return rc;
 }
 
+static void dp_usbpd_wakeup_phy(struct dp_hpd *dp_hpd, bool wakeup)
+{
+	struct dp_usbpd *dp_usbpd;
+	struct dp_usbpd_private *usbpd;
+
+	dp_usbpd = container_of(dp_hpd, struct dp_usbpd, base);
+	usbpd = container_of(dp_usbpd, struct dp_usbpd_private, dp_usbpd);
+
+	if (!usbpd->pd) {
+		pr_err("usbpd pointer invalid");
+		return;
+	}
+
+	usbpd_vdm_in_suspend(usbpd->pd, wakeup);
+}
+
 struct dp_hpd *dp_usbpd_get(struct device *dev, struct dp_hpd_cb *cb)
 {
 	int rc = 0;
@@ -540,6 +556,7 @@ struct dp_hpd *dp_usbpd_get(struct device *dev, struct dp_hpd_cb *cb)
 	dp_usbpd->base.simulate_connect = dp_usbpd_simulate_connect;
 	dp_usbpd->base.simulate_attention = dp_usbpd_simulate_attention;
 	dp_usbpd->base.register_hpd = dp_usbpd_register;
+	dp_usbpd->base.wakeup_phy = dp_usbpd_wakeup_phy;
 
 	return &dp_usbpd->base;
 error:
