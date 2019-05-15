@@ -32,6 +32,34 @@ static u8 const vm_voltage_swing[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 	{0xFF, 0xFF, 0xFF, 0xFF}  /* sw1, 1.2 v, optional */
 };
 
+static u8 const dp_pre_emp_hbr2_hbr3[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
+	{0x00, 0x0C, 0x15, 0x1A}, /* pe0, 0 db */
+	{0x02, 0x0E, 0x16, 0xFF}, /* pe1, 3.5 db */
+	{0x02, 0x11, 0xFF, 0xFF}, /* pe2, 6.0 db */
+	{0x04, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
+};
+
+static u8 const dp_swing_hbr2_hbr3[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
+	{0x02, 0x12, 0x16, 0x1A}, /* sw0, 0.4v  */
+	{0x09, 0x19, 0x1F, 0xFF}, /* sw1, 0.6v */
+	{0x10, 0x1F, 0xFF, 0xFF}, /* sw1, 0.8v */
+	{0x1F, 0xFF, 0xFF, 0xFF}  /* sw1, 1.2v */
+};
+
+static u8 const dp_pre_emp_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
+	{0x00, 0x0E, 0x15, 0x1A}, /* pe0, 0 db */
+	{0x00, 0x0E, 0x15, 0xFF}, /* pe1, 3.5 db */
+	{0x00, 0x0E, 0xFF, 0xFF}, /* pe2, 6.0 db */
+	{0x04, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
+};
+
+static u8 const dp_swing_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
+	{0x08, 0x0F, 0x16, 0x1F}, /* sw0, 0.4v */
+	{0x11, 0x1E, 0x1F, 0xFF}, /* sw1, 0.6v */
+	{0x1A, 0x1F, 0xFF, 0xFF}, /* sw1, 0.8v */
+	{0x1F, 0xFF, 0xFF, 0xFF}  /* sw1, 1.2v */
+};
+
 struct dp_catalog_io {
 	struct dp_io_data *dp_ahb;
 	struct dp_io_data *dp_aux;
@@ -212,11 +240,12 @@ static void dp_catalog_ctrl_phy_lane_cfg_v420(struct dp_catalog_ctrl *ctrl,
 }
 
 static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
-		u8 v_level, u8 p_level)
+		u8 v_level, u8 p_level, bool high)
 {
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
 	u8 value0, value1;
+	u32 version;
 
 	if (!ctrl || !((v_level < MAX_VOLTAGE_LEVELS)
 		&& (p_level < MAX_PRE_EMP_LEVELS))) {
@@ -224,12 +253,25 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 		return;
 	}
 
+	pr_debug("hw: v=%d p=%d, high=%d\n", v_level, p_level, high);
+
 	catalog = dp_catalog_get_priv_v420(ctrl);
 
-	pr_debug("hw: v=%d p=%d\n", v_level, p_level);
+	io_data = catalog->io->dp_ahb;
+	version = dp_read(catalog->exe_mode, io_data, DP_HW_VERSION);
 
-	value0 = vm_voltage_swing[v_level][p_level];
-	value1 = vm_pre_emphasis[v_level][p_level];
+	if (version == 0x10020003) {
+		if (high) {
+			value0 = dp_swing_hbr2_hbr3[v_level][p_level];
+			value1 = dp_pre_emp_hbr2_hbr3[v_level][p_level];
+		} else {
+			value0 = dp_swing_hbr_rbr[v_level][p_level];
+			value1 = dp_pre_emp_hbr_rbr[v_level][p_level];
+		}
+	} else {
+		value0 = vm_voltage_swing[v_level][p_level];
+		value1 = vm_pre_emphasis[v_level][p_level];
+	}
 
 	/* program default setting first */
 	io_data = catalog->io->dp_ln_tx0;

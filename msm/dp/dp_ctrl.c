@@ -211,9 +211,14 @@ static int dp_ctrl_update_sink_vx_px(struct dp_ctrl_private *ctrl,
 static int dp_ctrl_update_vx_px(struct dp_ctrl_private *ctrl)
 {
 	struct dp_link *link = ctrl->link;
+	bool high = false;
+
+	if (ctrl->link->link_params.bw_code == DP_LINK_BW_5_4 ||
+	    ctrl->link->link_params.bw_code == DP_LINK_BW_8_1)
+		high = true;
 
 	ctrl->catalog->update_vx_px(ctrl->catalog,
-		link->phy_params.v_level, link->phy_params.p_level);
+		link->phy_params.v_level, link->phy_params.p_level, high);
 
 	return dp_ctrl_update_sink_vx_px(ctrl, link->phy_params.v_level,
 		link->phy_params.p_level);
@@ -396,9 +401,12 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 		ret = -EINVAL;
 		goto end;
 	}
+
+	if (pattern != DP_TRAINING_PATTERN_4)
+		pattern |= DP_LINK_SCRAMBLING_DISABLE;
+
 	ctrl->catalog->set_pattern(ctrl->catalog, pattern);
-	ret = dp_ctrl_train_pattern_set(ctrl,
-		pattern | DP_RECOVERED_CLOCK_OUT_EN);
+	ret = dp_ctrl_train_pattern_set(ctrl, pattern);
 	if (ret <= 0) {
 		ret = -EINVAL;
 		goto end;
