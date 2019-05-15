@@ -628,6 +628,48 @@ static QDF_STATUS policy_mgr_mode_specific_modification_on_pcl(
 	return status;
 }
 
+#ifdef FEATURE_FOURTH_CONNECTION
+static enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
+				struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_con_mode mode,
+				enum policy_mgr_conc_priority_mode pref)
+{
+	enum policy_mgr_three_connection_mode fourth_index = 0;
+	enum policy_mgr_pcl_type pcl;
+
+	/* Will be enhanced for other types of 4 port conc (NaN etc.)
+	 * in future.
+	 */
+	if (mode !=  PM_STA_MODE && mode != PM_SAP_MODE) {
+		policy_mgr_err("Can't start 4th port if not STA, SAP");
+		return PM_MAX_PCL_TYPE;
+	}
+
+	fourth_index =
+		policy_mgr_get_fourth_connection_pcl_table_index(psoc);
+	if (PM_MAX_THREE_CONNECTION_MODE == fourth_index) {
+		policy_mgr_err("Can't find index for 4th port pcl table");
+		return PM_MAX_PCL_TYPE;
+	}
+	policy_mgr_debug("Index for 4th port pcl table: %d", fourth_index);
+
+	if (policy_mgr_is_hw_dbs_capable(psoc) == true) {
+		pcl = fourth_connection_pcl_dbs_table
+			[fourth_index][mode][pref];
+		return pcl;
+	}
+	policy_mgr_err("Can't find index for 4th port pcl table for non dbs capable");
+
+	return PM_MAX_PCL_TYPE;
+}
+#else
+static inline enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
+				struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_con_mode mode,
+				enum policy_mgr_conc_priority_mode pref)
+{return PM_MAX_PCL_TYPE; }
+#endif
+
 QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			enum policy_mgr_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len,
@@ -717,6 +759,9 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			pcl = third_connection_pcl_nodbs_table
 				[third_index][mode][conc_system_pref];
 		}
+		break;
+	case 3:
+		pcl = policy_mgr_get_pcl_4_port(psoc, mode, conc_system_pref);
 		break;
 	default:
 		policy_mgr_err("unexpected num_connections value %d",
@@ -1656,6 +1701,127 @@ enum policy_mgr_two_connection_mode
 
 	return index;
 }
+
+#ifdef FEATURE_FOURTH_CONNECTION
+enum policy_mgr_three_connection_mode
+		policy_mgr_get_fourth_connection_pcl_table_index(
+		struct wlan_objmgr_psoc *psoc)
+{
+	enum policy_mgr_three_connection_mode index =
+			PM_MAX_THREE_CONNECTION_MODE;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t count_sap = 0;
+	uint32_t count_sta = 0;
+	uint32_t list_sap[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t list_sta[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return index;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+
+	/* For 4 port concurrency case,
+	 * 1st step: (SAP+STA) (2.4G MAC SCC)+(SAP+STA) (5G MAC SCC)
+	 */
+	count_sap += policy_mgr_mode_specific_connection_count(
+				psoc, PM_SAP_MODE, &list_sap[count_sap]);
+	count_sta = policy_mgr_mode_specific_connection_count(
+				psoc, PM_STA_MODE, list_sta);
+	policy_mgr_debug("sap/ago num: %d, sta num: %d", count_sap, count_sta);
+	if (count_sap == 2 && count_sta == 1) {
+		policy_mgr_debug(
+			"channel: sap0: %d, sap1: %d, sta0: %d",
+			pm_conc_connection_list[list_sap[0]].chan,
+			pm_conc_connection_list[list_sap[1]].chan,
+			pm_conc_connection_list[list_sta[0]].chan);
+		if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[1]].chan)) {
+			index = PM_STA_SAP_SCC_24_SAP_5_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[1]].chan) &&
+		     WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan)) {
+			index = PM_STA_SAP_SCC_24_SAP_5_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[1]].chan)) {
+			index = PM_STA_SAP_SCC_5_SAP_24_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[1]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan)) {
+			index = PM_STA_SAP_SCC_5_SAP_24_DBS;
+		} else {
+			index =  PM_MAX_THREE_CONNECTION_MODE;
+		}
+	} else if (count_sap == 1 && count_sta == 2) {
+		policy_mgr_debug(
+			"channel: sap0: %d, sta0: %d, sta1: %d",
+			pm_conc_connection_list[list_sap[0]].chan,
+			pm_conc_connection_list[list_sta[0]].chan,
+			pm_conc_connection_list[list_sta[1]].chan);
+		if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[1]].chan)) {
+			index = PM_STA_SAP_SCC_24_STA_5_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[1]].chan) &&
+		     WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan)) {
+			index = PM_STA_SAP_SCC_24_STA_5_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[1]].chan)) {
+			index = PM_STA_SAP_SCC_5_STA_24_DBS;
+		} else if (WLAN_REG_IS_24GHZ_CH(
+			pm_conc_connection_list[list_sta[1]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sap[0]].chan) &&
+		     WLAN_REG_IS_5GHZ_CH(
+			pm_conc_connection_list[list_sta[0]].chan)) {
+			index = PM_STA_SAP_SCC_5_STA_24_DBS;
+		} else {
+			index =  PM_MAX_THREE_CONNECTION_MODE;
+		}
+	}
+
+	policy_mgr_debug(
+		"mode0:%d mode1:%d mode2:%d chan0:%d chan1:%d chan2:%d chain:%d index:%d",
+		pm_conc_connection_list[0].mode,
+		pm_conc_connection_list[1].mode,
+		pm_conc_connection_list[2].mode,
+		pm_conc_connection_list[0].chan,
+		pm_conc_connection_list[1].chan,
+		pm_conc_connection_list[2].chan,
+		pm_conc_connection_list[0].chain_mask, index);
+
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return index;
+}
+#endif
 
 uint8_t
 policy_mgr_get_nondfs_preferred_channel(struct wlan_objmgr_psoc *psoc,
