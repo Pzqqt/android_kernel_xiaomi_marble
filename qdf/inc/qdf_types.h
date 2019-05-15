@@ -269,6 +269,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
 
 /**
  * typedef enum QDF_MODULE_ID  - Debug category level
+ * @QDF_MODULE_ID_MIN: The smallest/starting module id
  * @QDF_MODULE_ID_TDLS: TDLS
  * @QDF_MODULE_ID_ACS: auto channel selection
  * @QDF_MODULE_ID_SCAN_SM: scan state machine
@@ -368,7 +369,8 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
 typedef enum {
-	QDF_MODULE_ID_TDLS      = 0,
+	QDF_MODULE_ID_MIN       = 0,
+	QDF_MODULE_ID_TDLS      = QDF_MODULE_ID_MIN,
 	QDF_MODULE_ID_ACS,
 	QDF_MODULE_ID_SCAN_SM,
 	QDF_MODULE_ID_SCANENTRY,
