@@ -870,8 +870,8 @@
 /*
  * <ini>
  * 5g_rssi_boost_threshold - A_band_boost_threshold above which 5G is favored.
- * @Min: -55
- * @Max: -70
+ * @Min: -70
+ * @Max: -55
  * @Default: -60
  * This ini is used to set threshold for 5GHz band preference.
  *
@@ -886,8 +886,8 @@
  */
 #define CFG_LFR_5G_RSSI_BOOST_THRESHOLD CFG_INI_INT( \
 	"5g_rssi_boost_threshold", \
-	-55, \
 	-70, \
+	-55, \
 	-60, \
 	CFG_VALUE_OR_DEFAULT, \
 	"A_band_boost_threshold above which 5 GHz is favored")
@@ -946,8 +946,8 @@
  * <ini>
  * 5g_rssi_penalize_threshold - A_band_penalize_threshold above which
  * 5 GHz is not favored.
- * @Min: -65
- * @Max: -80
+ * @Min: -80
+ * @Max: -65
  * @Default: -70
  * This ini is used to set threshold for 5GHz band preference.
  *
@@ -962,8 +962,8 @@
  */
 #define CFG_LFR_5G_RSSI_PENALIZE_THRESHOLD CFG_INI_INT( \
 	"5g_rssi_penalize_threshold", \
-	-65, \
 	-80, \
+	-65, \
 	-70, \
 	CFG_VALUE_OR_DEFAULT, \
 	"A_band_penalize_threshold above which 5 GHz is not favored")
