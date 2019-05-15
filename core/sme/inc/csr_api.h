@@ -1447,6 +1447,9 @@ typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
 QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
 					 struct bss_description *bss_desc);
+
+QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
+				     uint32_t session_id);
 #else
 static inline
 QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
@@ -1455,11 +1458,13 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif
 
-#ifdef WLAN_FEATURE_HOST_ROAM
+static inline
 QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
-				     uint32_t session_id);
+				     uint32_t session_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
 
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);

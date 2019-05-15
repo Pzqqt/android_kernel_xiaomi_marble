@@ -9320,6 +9320,7 @@ static void csr_roam_roaming_state_stop_bss_rsp_processor(struct mac_context *ma
 	}
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * csr_dequeue_command() - removes a command from active cmd list
  * @mac:          mac global context
@@ -9457,7 +9458,6 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 	return true;
 }
 
-#ifdef WLAN_FEATURE_HOST_ROAM
 static
 QDF_STATUS csr_roam_lfr2_issue_connect(struct mac_context *mac,
 				uint32_t session_id,
