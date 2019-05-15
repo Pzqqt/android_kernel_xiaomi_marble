@@ -420,23 +420,20 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode)
 void csr_purge_vdev_pending_ser_cmd_list(struct mac_context *mac_ctx,
 					 uint32_t vdev_id)
 {
-	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-						     false, true, false,
-						     true, false);
+	wlan_serialization_purge_all_pending_cmd_by_vdev_id(mac_ctx->pdev,
+							    vdev_id);
 }
 
 void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
 					  uint32_t vdev_id)
 {
-	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-						     true, true, false,
-						     false, false);
+	wlan_serialization_purge_all_scan_cmd_by_vdev_id(mac_ctx->pdev,
+							 vdev_id);
 }
 
 void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx)
 {
-	wlan_serialization_purge_cmd_list(mac_ctx->psoc, NULL, true, true,
-					  true, true, true);
+	wlan_serialization_purge_all_pdev_cmd(mac_ctx->pdev);
 }
 
 uint32_t csr_nonscan_active_ll_count(struct mac_context *mac_ctx)
