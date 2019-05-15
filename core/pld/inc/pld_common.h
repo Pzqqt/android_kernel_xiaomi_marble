@@ -616,7 +616,11 @@ int pld_athdiag_read(struct device *dev, uint32_t offset, uint32_t memtype,
 		     uint32_t datalen, uint8_t *output);
 int pld_athdiag_write(struct device *dev, uint32_t offset, uint32_t memtype,
 		      uint32_t datalen, uint8_t *input);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+void *pld_smmu_get_domain(struct device *dev);
+#else
 void *pld_smmu_get_mapping(struct device *dev);
+#endif
 int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		 uint32_t *iova_addr, size_t size);
 int pld_get_user_msi_assignment(struct device *dev, char *user_name,
