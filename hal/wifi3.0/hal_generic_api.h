@@ -321,7 +321,7 @@ hal_rx_update_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
  */
 static inline uint32_t
 hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
-			   void *halsoc)
+			   void *halsoc, qdf_nbuf_t nbuf)
 {
 	struct hal_soc *hal = (struct hal_soc *)halsoc;
 	uint32_t tlv_tag, user_id, tlv_len, value;
@@ -348,6 +348,9 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	switch (tlv_tag) {
 
 	case WIFIRX_PPDU_START_E:
+	{
+		struct hal_rx_ppdu_common_info *com_info = &ppdu_info->com_info;
+
 		ppdu_info->com_info.ppdu_id =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
 				PHY_PPDU_ID);
@@ -361,7 +364,18 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->rx_status.ppdu_timestamp =
 			ppdu_info->com_info.ppdu_timestamp;
 		ppdu_info->rx_state = HAL_RX_MON_PPDU_START;
+
+		/* If last ppdu_id doesn't match new ppdu_id,
+		 * 1. reset mpdu_cnt
+		 * 2. update last_ppdu_id with new
+		 */
+		if (com_info->ppdu_id != com_info->last_ppdu_id) {
+			com_info->mpdu_cnt = 0;
+			com_info->last_ppdu_id =
+				com_info->ppdu_id;
+		}
 		break;
+	}
 
 	case WIFIRX_PPDU_START_USER_INFO_E:
 		break;
@@ -475,6 +489,20 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		else
 			ppdu_info->rx_status.rs_flags &=
 				(~IEEE80211_AMPDU_FLAG);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap =
+			(((ppdu_info->com_info.mpdu_fcs_ok_bitmap |
+			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_8,
+				    FCS_OK_BITMAP_63_32)) <<
+				    HAL_RX_MPDU_FCS_BITMAP_LSB) &
+				    HAL_RX_MPDU_FCS_BITMAP_32_63_OFFSET);
+
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap =
+			((ppdu_info->com_info.mpdu_fcs_ok_bitmap |
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_7,
+				   FCS_OK_BITMAP_31_0)) &
+				   HAL_RX_MPDU_FCS_BITMAP_0_31_OFFSET);
+
 		break;
 	}
 
@@ -1207,13 +1235,28 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 								ppdu_info);
 		break;
 	case WIFIRX_HEADER_E:
+	{
+		struct hal_rx_ppdu_common_info *com_info = &ppdu_info->com_info;
+		uint16_t mpdu_cnt = com_info->mpdu_cnt;
+
+		/* Update first_msdu_payload for every mpdu and increment
+		 * com_info->mpdu_cnt for every WIFIRX_HEADER_E TLV
+		 */
+		ppdu_info->ppdu_msdu_info[mpdu_cnt].first_msdu_payload =
+			rx_tlv;
+		ppdu_info->ppdu_msdu_info[mpdu_cnt].payload_len = tlv_len;
+		ppdu_info->ppdu_msdu_info[mpdu_cnt].nbuf = nbuf;
 		ppdu_info->msdu_info.first_msdu_payload = rx_tlv;
 		ppdu_info->msdu_info.payload_len = tlv_len;
 		ppdu_info->user_id = user_id;
 		ppdu_info->hdr_len = tlv_len;
 		ppdu_info->data = rx_tlv;
 		ppdu_info->data += 4;
+
+		/* for every RX_HEADER TLV increment mpdu_cnt */
+		com_info->mpdu_cnt++;
 		return HAL_TLV_STATUS_HEADER;
+	}
 	case WIFIRX_MPDU_START_E:
 	{
 		uint8_t *rx_mpdu_start =

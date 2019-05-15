@@ -148,6 +148,13 @@
 #define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
 #endif
 
+#define HAL_RX_MPDU_FCS_BITMAP_0_31_OFFSET 0x00000000FFFFFFFF
+#define HAL_RX_MPDU_FCS_BITMAP_LSB 32
+#define HAL_RX_MPDU_FCS_BITMAP_32_63_OFFSET 0xFFFFFFFF00000000
+
+/* Max MPDUs per status buffer */
+#define HAL_RX_MAX_MPDU 64
+
 enum {
 	DP_PPDU_STATUS_START,
 	DP_PPDU_STATUS_DONE,
@@ -395,11 +402,21 @@ struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_timestamp;
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
+	uint64_t mpdu_fcs_ok_bitmap;
+	uint32_t last_ppdu_id;
+	uint32_t mpdu_cnt;
 };
 
+/**
+ * struct hal_rx_msdu_payload_info - msdu payload info
+ * @first_msdu_payload: pointer to first msdu payload
+ * @payload_len: payload len
+ * @nbuf: status network buffer to which msdu belongs to
+ */
 struct hal_rx_msdu_payload_info {
 	uint8_t *first_msdu_payload;
 	uint32_t payload_len;
+	qdf_nbuf_t nbuf;
 };
 
 /**
@@ -431,6 +448,7 @@ struct hal_rx_ppdu_info {
 	struct mon_rx_status rx_status;
 	struct mon_rx_user_status rx_user_status[HAL_MAX_UL_MU_USERS];
 	struct hal_rx_msdu_payload_info msdu_info;
+	struct hal_rx_msdu_payload_info fcs_ok_msdu_info;
 	struct hal_rx_nac_info nac_info;
 	/* status ring PPDU start and end state */
 	uint32_t rx_state;
@@ -443,6 +461,8 @@ struct hal_rx_ppdu_info {
 	/* MPDU FCS error */
 	bool fcs_err;
 	struct hal_rx_ppdu_msdu_info rx_msdu_info[HAL_MAX_UL_MU_USERS];
+	/* first msdu payload for all mpdus in ppdu */
+	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU];
 };
 
 static inline uint32_t
@@ -491,15 +511,19 @@ static inline void hal_rx_proc_phyrx_other_receive_info_tlv(struct hal_soc *hal_
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
  * @ppdu_info: pointer to ppdu_info
+ * @hal_soc: HAL soc handle
+ * @nbuf: PPDU status netowrk buffer
  *
  * Return: HAL_TLV_STATUS_PPDU_NOT_DONE or HAL_TLV_STATUS_PPDU_DONE from tlv
  */
 static inline uint32_t
 hal_rx_status_get_tlv_info(void *rx_tlv_hdr, void *ppdu_info,
-			   struct hal_soc *hal_soc)
+			   struct hal_soc *hal_soc,
+			   qdf_nbuf_t nbuf)
 {
 	return hal_soc->ops->hal_rx_status_get_tlv_info(rx_tlv_hdr,
-							ppdu_info, hal_soc);
+							ppdu_info, hal_soc,
+							nbuf);
 }
 
 static inline

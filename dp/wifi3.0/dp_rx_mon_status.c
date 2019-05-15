@@ -311,6 +311,56 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 }
 #endif
 
+/*
+ * dp_rx_get_fcs_ok_msdu() - get ppdu status buffer containing fcs_ok msdu
+ * @pdev: pdev object
+ * @ppdu_info: ppdu info object
+ *
+ * Return: nbuf
+ */
+
+static inline qdf_nbuf_t
+dp_rx_get_fcs_ok_msdu(struct dp_pdev *pdev,
+		      struct hal_rx_ppdu_info *ppdu_info)
+{
+	uint16_t mpdu_fcs_ok;
+	qdf_nbuf_t status_nbuf = NULL;
+	unsigned long int fcs_ok_bitmap;
+
+	/* If fcs_ok_bitmap is zero, no need to procees further */
+	if (qdf_unlikely(!ppdu_info->com_info.mpdu_fcs_ok_bitmap))
+		return NULL;
+
+	/* Obtain fcs_ok passed index from bitmap
+	 * this index is used to get fcs passed first msdu payload
+	 */
+
+	fcs_ok_bitmap = ppdu_info->com_info.mpdu_fcs_ok_bitmap;
+	mpdu_fcs_ok = qdf_find_first_bit(&fcs_ok_bitmap, HAL_RX_MAX_MPDU);
+
+	/* Get status buffer by indexing mpdu_fcs_ok index
+	 * containing first msdu payload with fcs passed
+	 * and clone the buffer
+	 */
+	status_nbuf = ppdu_info->ppdu_msdu_info[mpdu_fcs_ok].nbuf;
+	/* Take ref of status nbuf as this nbuf is to be
+	 * freeed by upper layer.
+	 */
+	qdf_nbuf_ref(status_nbuf);
+
+	/* Free the ppdu status buffer queue */
+	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
+
+	return status_nbuf;
+}
+
+static inline void
+dp_rx_handle_ppdu_status_buf(struct dp_pdev *pdev,
+			     struct hal_rx_ppdu_info *ppdu_info,
+			     qdf_nbuf_t status_nbuf)
+{
+	qdf_nbuf_queue_add(&pdev->rx_ppdu_buf_q, status_nbuf);
+}
 /**
  * dp_rx_handle_mcopy_mode() - Allocate and deliver first MSDU payload
  * @soc: core txrx main context
@@ -329,7 +379,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	struct ieee80211_frame *wh;
 	uint32_t *nbuf_data;
 
-	if (!ppdu_info->msdu_info.first_msdu_payload)
+	if (!ppdu_info->fcs_ok_msdu_info.first_msdu_payload)
 		return QDF_STATUS_SUCCESS;
 
 	if (pdev->m_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
@@ -337,11 +387,12 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 
 	pdev->m_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
 
-	wh = (struct ieee80211_frame *)(ppdu_info->msdu_info.first_msdu_payload
-					+ 4);
-	size = (ppdu_info->msdu_info.first_msdu_payload -
+	wh = (struct ieee80211_frame *)
+		(ppdu_info->fcs_ok_msdu_info.first_msdu_payload + 4);
+
+	size = (ppdu_info->fcs_ok_msdu_info.first_msdu_payload -
 				qdf_nbuf_data(nbuf));
-	ppdu_info->msdu_info.first_msdu_payload = NULL;
+	ppdu_info->fcs_ok_msdu_info.first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
 		return QDF_STATUS_SUCCESS;
@@ -357,7 +408,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	*nbuf_data = pdev->ppdu_info.com_info.ppdu_id;
 	/* only retain RX MSDU payload in the skb */
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
-				ppdu_info->msdu_info.payload_len);
+				ppdu_info->fcs_ok_msdu_info.payload_len);
 	dp_wdi_event_handler(WDI_EVENT_RX_DATA, soc,
 			nbuf, HTT_INVALID_PEER, WDI_NO_VAL, pdev->pdev_id);
 	return QDF_STATUS_E_ALREADY;
@@ -368,6 +419,49 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
 {
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef FEATURE_PERPKT_INFO
+static inline void
+dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+			 struct hal_rx_ppdu_info *ppdu_info,
+			 uint32_t tlv_status,
+			 qdf_nbuf_t status_nbuf)
+{
+	QDF_STATUS mcopy_status;
+
+	if (qdf_unlikely(!ppdu_info->com_info.mpdu_cnt)) {
+		qdf_nbuf_free(status_nbuf);
+		return;
+	}
+	/* Add buffers to queue until we receive
+	 * HAL_TLV_STATUS_PPDU_DONE
+	 */
+	dp_rx_handle_ppdu_status_buf(pdev, ppdu_info, status_nbuf);
+
+	/* If tlv_status is PPDU_DONE, process rx_ppdu_buf_q
+	 * and devliver fcs_ok msdu buffer
+	 */
+	if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+		/* Get rx ppdu status buffer having fcs ok msdu */
+		status_nbuf = dp_rx_get_fcs_ok_msdu(pdev, ppdu_info);
+		if (status_nbuf) {
+			mcopy_status = dp_rx_handle_mcopy_mode(soc, pdev,
+							       ppdu_info,
+							       status_nbuf);
+			if (mcopy_status == QDF_STATUS_SUCCESS)
+				qdf_nbuf_free(status_nbuf);
+		}
+	}
+}
+#else
+static inline void
+dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+			 struct hal_rx_ppdu_info *ppdu_info,
+			 uint32_t tlv_status,
+			 qdf_nbuf_t status_nbuf)
+{
 }
 #endif
 
@@ -571,7 +665,6 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t *rx_tlv;
 	uint8_t *rx_tlv_start;
 	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
-	QDF_STATUS m_copy_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS enh_log_status = QDF_STATUS_SUCCESS;
 	struct cdp_pdev_mon_stats *rx_mon_stats;
 	int smart_mesh_status;
@@ -601,7 +694,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		    (rx_enh_capture_mode != CDP_RX_ENH_CAPTURE_DISABLED)) {
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
-						ppdu_info, pdev->soc->hal_soc);
+						ppdu_info, pdev->soc->hal_soc,
+						status_nbuf);
 
 				dp_rx_mon_update_dbg_ppdu_stats(ppdu_info,
 								rx_mon_stats);
@@ -643,11 +737,10 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 						pdev, ppdu_info, status_nbuf);
 			if (smart_mesh_status)
 				qdf_nbuf_free(status_nbuf);
-		} else if (pdev->mcopy_mode) {
-			m_copy_status = dp_rx_handle_mcopy_mode(soc,
-						pdev, ppdu_info, status_nbuf);
-			if (m_copy_status == QDF_STATUS_SUCCESS)
-				qdf_nbuf_free(status_nbuf);
+		} else if (qdf_unlikely(pdev->mcopy_mode)) {
+			dp_rx_process_mcopy_mode(soc, pdev,
+						 ppdu_info, tlv_status,
+						 status_nbuf);
 		} else if (rx_enh_capture_mode != CDP_RX_ENH_CAPTURE_DISABLED) {
 			if (!nbuf_used)
 				qdf_nbuf_free(status_nbuf);
@@ -1118,6 +1211,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 		return status;
 
 	qdf_nbuf_queue_init(&pdev->rx_status_q);
+	qdf_nbuf_queue_init(&pdev->rx_ppdu_buf_q);
 
 	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 

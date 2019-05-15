@@ -338,7 +338,7 @@ struct hal_hw_txrx_ops {
 	void (*hal_reo_status_get_header)(uint32_t *d, int b, void *h);
 	uint32_t (*hal_rx_status_get_tlv_info)(void *rx_tlv_hdr,
 			void *ppdu_info,
-			void *hal);
+			void *hal, qdf_nbuf_t nbuf);
 	void (*hal_rx_wbm_err_info_get)(void *wbm_desc,
 				void *wbm_er_info);
 	void (*hal_rx_dump_mpdu_start_tlv)(void *mpdustart,
