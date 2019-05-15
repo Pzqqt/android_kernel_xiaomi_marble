@@ -107,10 +107,6 @@ static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 
 /* vendor element ID */
 #define IE_EID_VENDOR        (221) /* 0xDD */
-#define IE_LEN_SIZE          (1)
-#define IE_EID_SIZE          (1)
-/* Minimum size of vendor IE = 3 bytes of oui_data + 1 byte of data */
-#define IE_VENDOR_OUI_SIZE   (4)
 
 /**
  * enum log_event_type - Type of event initiating bug report

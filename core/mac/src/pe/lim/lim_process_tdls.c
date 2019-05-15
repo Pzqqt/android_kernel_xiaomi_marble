@@ -121,10 +121,7 @@ enum tdls_peer_capability {
 	TDLS_PEER_WMM_CAP = 2
 } e_tdls_peer_capability;
 
-/* some local defines */
 #define LINK_IDEN_ADDR_OFFSET(x) (&x.LinkIdentifier)
-#define PTI_LINK_IDEN_OFFSET     (5)
-#define PTI_BUF_STATUS_OFFSET    (25)
 
 /* TODO, Move this parameters to configuration */
 #define PEER_PSM_SUPPORT          (0)

@@ -55,8 +55,6 @@
 #define RC_2_RATE_IDX_11AC(_rc)        ((_rc) & 0xf)
 #define HT_RC_2_STREAMS_11AC(_rc)    ((((_rc) & 0x30) >> 4) + 1)
 
-#define SAP_24GHZ_CH_COUNT (14)
-
 static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 {
 	struct sap_context *sap_ctx;

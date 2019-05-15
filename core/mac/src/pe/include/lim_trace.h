@@ -36,7 +36,6 @@
 
 #define LIM_TRACE_GET_SSN(data)    (((data) >> 16) & 0xff)
 #define LIM_TRACE_GET_SUBTYPE(data)    (data & 0xff)
-#define LIM_TRACE_GET_DEFERRED(data) (data & 0x80000000)
 #define LIM_TRACE_GET_DEFRD_OR_DROPPED(data) (data & 0xc0000000)
 
 #define LIM_MSG_PROCESSED 0

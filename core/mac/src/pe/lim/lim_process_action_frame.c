@@ -52,15 +52,8 @@
 #include <cdp_txrx_peer_ops.h>
 #include "dot11f.h"
 
-#define BA_DEFAULT_TX_BUFFER_SIZE 64
-
 static last_processed_msg rrm_link_action_frm;
 
-/* Note: The test passes if the STAUT stops sending any frames, and no further
-   frames are transmitted on this channel by the station when the AP has sent
-   the last 6 beacons, with the channel switch information elements as seen
-   with the sniffer.*/
-#define SIR_CHANSW_TX_STOP_MAX_COUNT 6
 /**-----------------------------------------------------------------
    \fn     lim_stop_tx_and_switch_channel
    \brief  Stops the transmission if channel switch mode is silent and

@@ -34,9 +34,6 @@
 #include "lim_types.h"
 #include "lim_admit_control.h"
 
-#define ADMIT_CONTROL_LOGLEVEL        LOGD
-#define ADMIT_CONTROL_POLICY_LOGLEVEL LOGD
-
 /* total available bandwidth in bps in each phy mode
  * these should be defined in hal or dph - replace these later
  */

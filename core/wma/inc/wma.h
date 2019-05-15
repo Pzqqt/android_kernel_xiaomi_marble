@@ -117,15 +117,12 @@
 #define WMA_BCAST_MAC_ADDR (0xFF)
 #define WMA_MCAST_IPV4_MAC_ADDR (0x01)
 #define WMA_MCAST_IPV6_MAC_ADDR (0x33)
-#define WMA_ICMP_PROTOCOL (0x01)
 
-#define WMA_IS_EAPOL_GET_MIN_LEN          14
 #define WMA_EAPOL_SUBTYPE_GET_MIN_LEN     21
 #define WMA_EAPOL_INFO_GET_MIN_LEN        23
 #define WMA_IS_DHCP_GET_MIN_LEN           38
 #define WMA_DHCP_SUBTYPE_GET_MIN_LEN      0x11D
 #define WMA_DHCP_INFO_GET_MIN_LEN         50
-#define WMA_IS_ARP_GET_MIN_LEN            14
 #define WMA_ARP_SUBTYPE_GET_MIN_LEN       22
 #define WMA_IPV4_PROTO_GET_MIN_LEN        24
 #define WMA_IPV4_PKT_INFO_GET_MIN_LEN     42
@@ -169,16 +166,10 @@
 #define WMA_MIN_RF_CHAINS               (1)
 #define WMA_MAX_NSS               (2)
 
-#define WMA_BCN_BUF_MAX_SIZE 512
 #define WMA_NOA_IE_SIZE(num_desc) (2 + (13 * (num_desc)))
 #define WMA_MAX_NOA_DESCRIPTORS 4
 
 #define WMA_TIM_SUPPORTED_PVB_LENGTH ((HAL_NUM_STA / 8) + 1)
-
-#define WMA_WOW_PTRN_MASK_VALID     0xFF
-#define WMA_NUM_BITS_IN_BYTE           8
-
-#define WMA_AP_WOW_DEFAULT_PTRN_MAX    4
 
 #define WMA_BSS_STATUS_STARTED 0x1
 #define WMA_BSS_STATUS_STOPPED 0x2
@@ -221,8 +212,6 @@
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
 #define WMA_MAX_NUM_ARGS 8
 
-#define WMA_SMPS_MASK_LOWER_16BITS 0xFF
-#define WMA_SMPS_MASK_UPPER_3BITS 0x7
 #define WMA_SMPS_PARAM_VALUE_S 29
 
 /*
@@ -242,11 +231,7 @@
 #define WMI_CMDID_MAX (WMI_TXBF_CMDID + 1)
 
 #define WMA_NLO_FREQ_THRESH          1000       /* in MHz */
-#define WMA_SEC_TO_MSEC(sec)         (sec * 1000)       /* sec to msec */
 #define WMA_MSEC_TO_USEC(msec)	     (msec * 1000) /* msec to usec */
-
-/* Default rssi threshold defined in CFG80211 */
-#define WMA_RSSI_THOLD_DEFAULT   -300
 
 #define WMA_AUTH_REQ_RECV_WAKE_LOCK_TIMEOUT     WAKELOCK_DURATION_RECOMMENDED
 #define WMA_ASSOC_REQ_RECV_WAKE_LOCK_DURATION   WAKELOCK_DURATION_RECOMMENDED
