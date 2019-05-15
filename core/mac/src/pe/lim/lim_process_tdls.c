@@ -2634,7 +2634,7 @@ static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 	sta = dph_lookup_hash_entry(mac, peerMac.bytes, &peerIdx,
 				       &pe_session->dph.dphHashTable);
 
-	if (sta) {
+	if (sta && sta->staType == STA_ENTRY_TDLS_PEER) {
 		pe_debug("DEL STA peer MAC: "QDF_MAC_ADDR_STR,
 			 QDF_MAC_ADDR_ARRAY(sta->staAddr));
 
@@ -2645,7 +2645,7 @@ static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 
 		status = lim_del_sta(mac, sta, resp_reqd, pe_session);
 	} else {
-		pe_debug("DEL STA peer MAC: "QDF_MAC_ADDR_STR" not found",
+		pe_debug("TDLS peer "QDF_MAC_ADDR_STR" not found",
 			 QDF_MAC_ADDR_ARRAY(peerMac.bytes));
 	}
 
