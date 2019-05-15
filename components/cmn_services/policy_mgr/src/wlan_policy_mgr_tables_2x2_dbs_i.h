@@ -1882,6 +1882,27 @@ pm_third_connection_pcl_dbs_2x2_table = {
 	[PM_IBSS_MODE] = {PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE, PM_MAX_PCL_TYPE} },
 };
 
+#ifdef FEATURE_FOURTH_CONNECTION
+/**
+ * fourth_connection_pcl_dbs_table - table which provides PCL for
+ * the 4th connection, when we have 3 connections already in
+ * the system (with DBS supported by HW)
+ */
+const enum policy_mgr_pcl_type
+fourth_connection_pcl_dbs_table
+	[PM_MAX_THREE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
+	[PM_MAX_CONC_PRIORITY_MODE] = {
+	[PM_STA_SAP_SCC_24_SAP_5_DBS] = {
+	[PM_STA_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_STA_SAP_SCC_5_SAP_24_DBS] = {
+	[PM_STA_MODE] = { PM_24G, PM_24G, PM_24G } },
+	[PM_STA_SAP_SCC_24_STA_5_DBS] = {
+	[PM_SAP_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_STA_SAP_SCC_5_STA_24_DBS] = {
+	[PM_SAP_MODE] = { PM_24G, PM_24G, PM_24G } }
+};
+#endif
+
 /**
  * next_action_two_connection_table - table which provides next
  * action while a new connection is coming up, with one

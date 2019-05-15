@@ -2044,6 +2044,56 @@ static bool policy_mgr_check_privacy_for_new_conn(
 	return true;
 }
 
+#ifdef FEATURE_FOURTH_CONNECTION
+static bool policy_mgr_is_concurrency_allowed_4_port(
+					struct wlan_objmgr_psoc *psoc,
+					enum policy_mgr_con_mode mode,
+					uint8_t channel,
+					struct policy_mgr_pcl_list pcl)
+{
+	uint32_t i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	/* new STA may just have ssid, no channel until bssid assigned */
+	if (channel == 0 && mode == PM_STA_MODE)
+		return true;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("context is NULL");
+		return false;
+	}
+
+	if (policy_mgr_get_mcc_to_scc_switch_mode(psoc) !=
+	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) {
+		policy_mgr_err("couldn't start 4th port for bad force scc cfg");
+		return false;
+	}
+	if (pm_ctx->cfg.dual_mac_feature ||
+	    !pm_ctx->cfg.sta_sap_scc_on_dfs_chnl  ||
+	    !pm_ctx->cfg.sta_sap_scc_on_lte_coex_chnl) {
+		policy_mgr_err(
+			"Couldn't start 4th port for bad cfg of dual mac, dfs scc, lte coex scc");
+		return false;
+	}
+
+	for (i = 0; i < pcl.pcl_len; i++)
+		if (channel == pcl.pcl_list[i])
+			return true;
+
+	policy_mgr_err("4th port failed on channel %d with mode %d",
+		       channel, mode);
+
+	return false;
+}
+#else
+static inline bool policy_mgr_is_concurrency_allowed_4_port(
+				struct wlan_objmgr_psoc *psoc,
+				enum policy_mgr_con_mode mode,
+				uint8_t channel,
+				struct policy_mgr_pcl_list pcl) {return false; }
+#endif
+
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint8_t channel,
@@ -2268,6 +2318,7 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
+	bool allowed;
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
 	status = policy_mgr_get_pcl(psoc, mode, pcl.pcl_list, &pcl.pcl_len,
@@ -2278,7 +2329,17 @@ bool policy_mgr_allow_concurrency(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	return policy_mgr_is_concurrency_allowed(psoc, mode, channel, bw);
+	allowed = policy_mgr_is_concurrency_allowed(
+					psoc, mode, channel, bw);
+
+	/* Fourth connection concurrency check */
+	if (allowed && policy_mgr_get_connection_count(psoc) == 3)
+		allowed = policy_mgr_is_concurrency_allowed_4_port(
+				psoc,
+				mode,
+				channel,
+				pcl);
+	return allowed;
 }
 
 bool  policy_mgr_allow_concurrency_csa(struct wlan_objmgr_psoc *psoc,

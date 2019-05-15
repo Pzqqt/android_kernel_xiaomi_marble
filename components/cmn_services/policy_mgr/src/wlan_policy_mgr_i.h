@@ -198,6 +198,14 @@ extern policy_mgr_next_action_two_connection_table_type
 		*next_action_two_connection_table;
 extern policy_mgr_next_action_three_connection_table_type
 		*next_action_three_connection_table;
+
+#ifdef FEATURE_FOURTH_CONNECTION
+extern const enum policy_mgr_pcl_type
+	fourth_connection_pcl_dbs_table
+	[PM_MAX_THREE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
+	[PM_MAX_CONC_PRIORITY_MODE];
+#endif
+
 extern policy_mgr_next_action_two_connection_table_type
 		*next_action_two_connection_2x2_2g_1x1_5g_table;
 extern policy_mgr_next_action_three_connection_table_type
