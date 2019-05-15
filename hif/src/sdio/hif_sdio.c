@@ -37,6 +37,7 @@
 #include "hif_sdio_dev.h"
 #include "if_sdio.h"
 #include "regtable_sdio.h"
+#include <transfer/transfer.h>
 
 #define ATH_MODULE_NAME hif_sdio
 
@@ -53,8 +54,16 @@ uint32_t hif_start(struct hif_opaque_softc *hif_ctx)
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
 	struct hif_sdio_device *htc_sdio_device = hif_dev_from_hif(hif_device);
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	int ret = 0;
 
 	HIF_ENTER();
+	ret = hif_sdio_bus_configure(hif_sc);
+	if (ret) {
+		HIF_ERROR("%s: hif_sdio_bus_configure failed", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	hif_dev_enable_interrupts(htc_sdio_device);
 	HIF_EXIT();
 	return QDF_STATUS_SUCCESS;

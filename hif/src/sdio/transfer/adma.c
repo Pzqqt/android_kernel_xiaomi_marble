@@ -144,6 +144,30 @@ QDF_STATUS hif_dev_map_service_to_pipe(struct hif_sdio_dev *pdev, uint16_t svc,
 	return status;
 }
 
+/**
+ * hif_bus_configure() - configure the bus
+ * @hif_sc: pointer to the hif context.
+ *
+ * return: 0 for success. nonzero for failure.
+ */
+int hif_sdio_bus_configure(struct hif_softc *hif_sc)
+{
+	struct pld_wlan_enable_cfg cfg;
+	enum pld_driver_mode mode;
+	uint32_t con_mode = hif_get_conparam(hif_sc);
+
+	if (con_mode == QDF_GLOBAL_FTM_MODE)
+		mode = PLD_FTM;
+	else if (con_mode == QDF_GLOBAL_COLDBOOT_CALIB_MODE)
+		mode = PLD_COLDBOOT_CALIBRATION;
+	else if (QDF_IS_EPPING_ENABLED(con_mode))
+		mode = PLD_EPPING;
+	else
+		mode = PLD_MISSION;
+
+	return pld_wlan_enable(hif_sc->qdf_dev->dev, &cfg, mode);
+}
+
 /** hif_dev_setup_device() - Setup device specific stuff here required for hif
  * @pdev : HIF layer object
  *

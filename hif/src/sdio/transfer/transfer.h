@@ -98,12 +98,20 @@ static inline uint32_t hif_get_send_buffer_flags(struct hif_sdio_device *pdev)
 
 	return 0;
 }
+
+static inline int hif_sdio_bus_configure(struct hif_softc *hif_sc)
+{
+	return 0;
+}
+
 #elif defined(CONFIG_SDIO_TRANSFER_ADMA)
 static inline uint32_t hif_get_send_buffer_flags(struct hif_sdio_device *pdev)
 {
 	/* ADAM-TODO */
 	return (uint32_t)HIF_WR_ASYNC_BLOCK_FIX;
 }
+
+int hif_sdio_bus_configure(struct hif_softc *hif_sc);
 #endif
 
 #endif /* __TRANSFER_H__ */
