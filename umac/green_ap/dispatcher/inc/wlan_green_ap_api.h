@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,10 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <qdf_status.h>
+
+/* Green ap mode of operation */
+#define WLAN_GREEN_AP_MODE_NO_STA       1 /* PS if no sta connected */
+#define WLAN_GREEN_AP_MODE_NUM_STREAM   2 /* PS if 1x1 clients only connected */
 
 /**
  * struct wlan_green_ap_egap_params - enhance green ap params
@@ -110,6 +114,16 @@ QDF_STATUS wlan_green_ap_pdev_open(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS wlan_green_ap_add_sta(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * wlan_green_ap_add_multistream_sta() - On association
+ * @pdev: pdev pointer
+ *
+ * Call this function when new multistream node is associated
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_green_ap_add_multistream_sta(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_green_ap_del_sta() - On disassociation
  * @pdev: pdev pointer
  *
@@ -118,6 +132,16 @@ QDF_STATUS wlan_green_ap_add_sta(struct wlan_objmgr_pdev *pdev);
  * Return: Success or Failure
  */
 QDF_STATUS wlan_green_ap_del_sta(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_green_ap_del_multistream_sta() - On disassociation
+ * @pdev: pdev pointer
+ *
+ * Call this function when new multistream node is disassociated
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_green_ap_del_multistream_sta(struct wlan_objmgr_pdev *pdev);
 
 /**
  * wlan_green_ap_is_ps_enabled() - is power save enabled

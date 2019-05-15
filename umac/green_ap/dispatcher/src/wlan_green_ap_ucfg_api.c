@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,6 +79,11 @@ QDF_STATUS ucfg_green_ap_set_ps_config(struct wlan_objmgr_pdev *pdev,
 	}
 
 	green_ap_ctx->ps_enable = value;
+	if (value == WLAN_GREEN_AP_MODE_NUM_STREAM)
+		green_ap_ctx->ps_mode = WLAN_GREEN_AP_MODE_NUM_STREAM;
+	else
+		green_ap_ctx->ps_mode = WLAN_GREEN_AP_MODE_NO_STA;
+
 	qdf_spin_unlock_bh(&green_ap_ctx->lock);
 
 	return QDF_STATUS_SUCCESS;
