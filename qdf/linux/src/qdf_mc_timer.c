@@ -29,6 +29,7 @@
 #include "qdf_list.h"
 #include "qdf_mem.h"
 #include <qdf_module.h>
+#include "qdf_timer.h"
 
 /* Preprocessor definitions and constants */
 #define LINUX_TIMER_COOKIE 0x12341234
@@ -662,9 +663,6 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* update expiration time based on if emulation platform */
-	expiration_time *= qdf_timer_get_multiplier();
-
 	/* make sure the remainer of the logic isn't interrupted */
 	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
 
@@ -679,7 +677,7 @@ QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time)
 
 	/* start the timer */
 	mod_timer(&(timer->platform_info.timer),
-		  jiffies + msecs_to_jiffies(expiration_time));
+		  jiffies + qdf_msecs_to_jiffies(expiration_time));
 
 	timer->state = QDF_TIMER_STATE_RUNNING;
 

@@ -36,14 +36,14 @@
 
 typedef void (*qdf_timer_func_t)(void *);
 
-#define qdf_msecs_to_jiffies(msec) \
-	(qdf_timer_get_multiplier() * msecs_to_jiffies(msec))
 
 struct __qdf_timer_t {
 	struct timer_list os_timer;
 	qdf_timer_func_t callback;
 	void *context;
 };
+
+#define __qdf_msecs_to_jiffies(msec) msecs_to_jiffies(msec)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 static inline void __os_timer_shim(struct timer_list *os_timer)
@@ -121,13 +121,13 @@ static inline void __qdf_timer_start(struct __qdf_timer_t *timer, uint32_t msec)
 {
 	struct timer_list *os_timer = &timer->os_timer;
 
-	os_timer->expires = jiffies + qdf_msecs_to_jiffies(msec);
+	os_timer->expires = jiffies + __qdf_msecs_to_jiffies(msec);
 	add_timer(os_timer);
 }
 
 static inline void __qdf_timer_mod(struct __qdf_timer_t *timer, uint32_t msec)
 {
-	mod_timer(&timer->os_timer, jiffies + qdf_msecs_to_jiffies(msec));
+	mod_timer(&timer->os_timer, jiffies + __qdf_msecs_to_jiffies(msec));
 }
 
 static inline bool __qdf_timer_stop(struct __qdf_timer_t *timer)

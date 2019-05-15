@@ -28,6 +28,7 @@
 /* Include Files */
 #include "qdf_event.h"
 #include "qdf_mc_timer.h"
+#include "qdf_timer.h"
 #include <qdf_module.h>
 
 struct qdf_evt_node {
@@ -211,10 +212,9 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 	if (timeout) {
 		long ret;
 
-		/* update the timeout if it's on an emulation platform */
-		timeout *= qdf_timer_get_multiplier();
-		ret = wait_for_completion_timeout(&event->complete,
-						  msecs_to_jiffies(timeout));
+		ret = wait_for_completion_timeout(
+				&event->complete,
+				qdf_msecs_to_jiffies(timeout));
 
 		if (ret <= 0)
 			return QDF_STATUS_E_TIMEOUT;
