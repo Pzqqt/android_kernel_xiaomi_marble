@@ -1278,62 +1278,70 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
 
 	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
-		DP_TRACE_STATS(FATAL, "REO stats failure %d for TID %d\n",
-			queue_status->header.status, rx_tid->tid);
+		DP_PRINT_STATS("REO stats failure %d for TID %d\n",
+			       queue_status->header.status, rx_tid->tid);
 		return;
 	}
 
-	DP_TRACE_STATS(FATAL, "REO queue stats (TID: %d): \n"
-		"ssn: %d\n"
-		"curr_idx  : %d\n"
-		"pn_31_0   : %08x\n"
-		"pn_63_32  : %08x\n"
-		"pn_95_64  : %08x\n"
-		"pn_127_96 : %08x\n"
-		"last_rx_enq_tstamp : %08x\n"
-		"last_rx_deq_tstamp : %08x\n"
-		"rx_bitmap_31_0     : %08x\n"
-		"rx_bitmap_63_32    : %08x\n"
-		"rx_bitmap_95_64    : %08x\n"
-		"rx_bitmap_127_96   : %08x\n"
-		"rx_bitmap_159_128  : %08x\n"
-		"rx_bitmap_191_160  : %08x\n"
-		"rx_bitmap_223_192  : %08x\n"
-		"rx_bitmap_255_224  : %08x\n",
-		rx_tid->tid,
-		queue_status->ssn, queue_status->curr_idx,
-		queue_status->pn_31_0, queue_status->pn_63_32,
-		queue_status->pn_95_64, queue_status->pn_127_96,
-		queue_status->last_rx_enq_tstamp,
-		queue_status->last_rx_deq_tstamp,
-		queue_status->rx_bitmap_31_0, queue_status->rx_bitmap_63_32,
-		queue_status->rx_bitmap_95_64, queue_status->rx_bitmap_127_96,
-		queue_status->rx_bitmap_159_128,
-		queue_status->rx_bitmap_191_160,
-		queue_status->rx_bitmap_223_192,
-		queue_status->rx_bitmap_255_224);
+	DP_PRINT_STATS("REO queue stats (TID: %d):\n"
+		       "ssn: %d\n"
+		       "curr_idx  : %d\n"
+		       "pn_31_0   : %08x\n"
+		       "pn_63_32  : %08x\n"
+		       "pn_95_64  : %08x\n"
+		       "pn_127_96 : %08x\n"
+		       "last_rx_enq_tstamp : %08x\n"
+		       "last_rx_deq_tstamp : %08x\n"
+		       "rx_bitmap_31_0     : %08x\n"
+		       "rx_bitmap_63_32    : %08x\n"
+		       "rx_bitmap_95_64    : %08x\n"
+		       "rx_bitmap_127_96   : %08x\n"
+		       "rx_bitmap_159_128  : %08x\n"
+		       "rx_bitmap_191_160  : %08x\n"
+		       "rx_bitmap_223_192  : %08x\n"
+		       "rx_bitmap_255_224  : %08x\n",
+		       rx_tid->tid,
+		       queue_status->ssn, queue_status->curr_idx,
+		       queue_status->pn_31_0, queue_status->pn_63_32,
+		       queue_status->pn_95_64, queue_status->pn_127_96,
+		       queue_status->last_rx_enq_tstamp,
+		       queue_status->last_rx_deq_tstamp,
+		       queue_status->rx_bitmap_31_0,
+		       queue_status->rx_bitmap_63_32,
+		       queue_status->rx_bitmap_95_64,
+		       queue_status->rx_bitmap_127_96,
+		       queue_status->rx_bitmap_159_128,
+		       queue_status->rx_bitmap_191_160,
+		       queue_status->rx_bitmap_223_192,
+		       queue_status->rx_bitmap_255_224);
 
-	DP_TRACE_STATS(FATAL,
-		"curr_mpdu_cnt      : %d\n"
-		"curr_msdu_cnt      : %d\n"
-		"fwd_timeout_cnt    : %d\n"
-		"fwd_bar_cnt        : %d\n"
-		"dup_cnt            : %d\n"
-		"frms_in_order_cnt  : %d\n"
-		"bar_rcvd_cnt       : %d\n"
-		"mpdu_frms_cnt      : %d\n"
-		"msdu_frms_cnt      : %d\n"
-		"total_byte_cnt     : %d\n"
-		"late_recv_mpdu_cnt : %d\n"
-		"win_jump_2k 	    : %d\n"
-		"hole_cnt 	    : %d\n",
-		queue_status->curr_mpdu_cnt, queue_status->curr_msdu_cnt,
-		queue_status->fwd_timeout_cnt, queue_status->fwd_bar_cnt,
-		queue_status->dup_cnt, queue_status->frms_in_order_cnt,
-		queue_status->bar_rcvd_cnt, queue_status->mpdu_frms_cnt,
-		queue_status->msdu_frms_cnt, queue_status->total_cnt,
-		queue_status->late_recv_mpdu_cnt, queue_status->win_jump_2k,
-		queue_status->hole_cnt);
+	DP_PRINT_STATS(
+		       "curr_mpdu_cnt      : %d\n"
+		       "curr_msdu_cnt      : %d\n"
+		       "fwd_timeout_cnt    : %d\n"
+		       "fwd_bar_cnt        : %d\n"
+		       "dup_cnt            : %d\n"
+		       "frms_in_order_cnt  : %d\n"
+		       "bar_rcvd_cnt       : %d\n"
+		       "mpdu_frms_cnt      : %d\n"
+		       "msdu_frms_cnt      : %d\n"
+		       "total_byte_cnt     : %d\n"
+		       "late_recv_mpdu_cnt : %d\n"
+		       "win_jump_2k        : %d\n"
+		       "hole_cnt           : %d\n",
+		       queue_status->curr_mpdu_cnt,
+		       queue_status->curr_msdu_cnt,
+		       queue_status->fwd_timeout_cnt,
+		       queue_status->fwd_bar_cnt,
+		       queue_status->dup_cnt,
+		       queue_status->frms_in_order_cnt,
+		       queue_status->bar_rcvd_cnt,
+		       queue_status->mpdu_frms_cnt,
+		       queue_status->msdu_frms_cnt,
+		       queue_status->total_cnt,
+		       queue_status->late_recv_mpdu_cnt,
+		       queue_status->win_jump_2k,
+		       queue_status->hole_cnt);
 
 	DP_PRINT_STATS("Addba Req          : %d\n"
 			"Addba Resp         : %d\n"

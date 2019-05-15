@@ -57,6 +57,9 @@
 #define DP_MU_GROUP_LENGTH (6 * DP_MU_GROUP_SHOW)
 #define DP_MU_GROUP_SHOW 16
 #define DP_MAX_MCS_STRING_LEN 30
+#define DP_RXDMA_ERR_LENGTH (6 * HAL_RXDMA_ERR_MAX)
+#define DP_REO_ERR_LENGTH (6 * HAL_REO_ERR_MAX)
+#define STATS_PROC_TIMEOUT        (HZ / 1000)
 
 #define MCS_VALID 1
 #define MCS_INVALID 0
@@ -646,39 +649,39 @@ static inline void dp_print_tx_tid_stats_v1_tlv(uint32_t *tag_buf)
 		return;
 	}
 
-	DP_TRACE_STATS(FATAL, "HTT_TX_TID_STATS_V1_TLV:");
+	DP_PRINT_STATS("HTT_TX_TID_STATS_V1_TLV:");
 	for (i = 0; i <  DP_HTT_TID_NAME_LEN; i++) {
 		index += qdf_snprint(&tid_name[index],
 				DP_MAX_STRING_LEN - index,
 				" %u:%u,", i, dp_stats_buf->tid_name[i]);
 	}
-	DP_TRACE_STATS(FATAL, "tid_name = %s ", tid_name);
-	DP_TRACE_STATS(FATAL, "sw_peer_id__tid_num = %u",
-			dp_stats_buf->sw_peer_id__tid_num);
-	DP_TRACE_STATS(FATAL, "num_sched_pending__num_ppdu_in_hwq = %u",
-			dp_stats_buf->num_sched_pending__num_ppdu_in_hwq);
-	DP_TRACE_STATS(FATAL, "tid_flags = %u",
-			dp_stats_buf->tid_flags);
-	DP_TRACE_STATS(FATAL, "max_qdepth_bytes = %u",
-			dp_stats_buf->max_qdepth_bytes);
-	DP_TRACE_STATS(FATAL, "max_qdepth_n_msdus = %u",
-			dp_stats_buf->max_qdepth_n_msdus);
-	DP_TRACE_STATS(FATAL, "rsvd = %u",
-			dp_stats_buf->rsvd);
-	DP_TRACE_STATS(FATAL, "qdepth_bytes = %u",
-			dp_stats_buf->qdepth_bytes);
-	DP_TRACE_STATS(FATAL, "qdepth_num_msdu = %u",
-			dp_stats_buf->qdepth_num_msdu);
-	DP_TRACE_STATS(FATAL, "qdepth_num_mpdu = %u",
-			dp_stats_buf->qdepth_num_mpdu);
-	DP_TRACE_STATS(FATAL, "last_scheduled_tsmp = %u",
-			dp_stats_buf->last_scheduled_tsmp);
-	DP_TRACE_STATS(FATAL, "pause_module_id = %u",
-			dp_stats_buf->pause_module_id);
-	DP_TRACE_STATS(FATAL, "block_module_id = %u\n",
-			dp_stats_buf->block_module_id);
-	DP_TRACE_STATS(FATAL, "tid_tx_airtime = %u\n",
-			dp_stats_buf->tid_tx_airtime);
+	DP_PRINT_STATS("tid_name = %s ", tid_name);
+	DP_PRINT_STATS("sw_peer_id__tid_num = %u",
+		       dp_stats_buf->sw_peer_id__tid_num);
+	DP_PRINT_STATS("num_sched_pending__num_ppdu_in_hwq = %u",
+		       dp_stats_buf->num_sched_pending__num_ppdu_in_hwq);
+	DP_PRINT_STATS("tid_flags = %u",
+		       dp_stats_buf->tid_flags);
+	DP_PRINT_STATS("max_qdepth_bytes = %u",
+		       dp_stats_buf->max_qdepth_bytes);
+	DP_PRINT_STATS("max_qdepth_n_msdus = %u",
+		       dp_stats_buf->max_qdepth_n_msdus);
+	DP_PRINT_STATS("rsvd = %u",
+		       dp_stats_buf->rsvd);
+	DP_PRINT_STATS("qdepth_bytes = %u",
+		       dp_stats_buf->qdepth_bytes);
+	DP_PRINT_STATS("qdepth_num_msdu = %u",
+		       dp_stats_buf->qdepth_num_msdu);
+	DP_PRINT_STATS("qdepth_num_mpdu = %u",
+		       dp_stats_buf->qdepth_num_mpdu);
+	DP_PRINT_STATS("last_scheduled_tsmp = %u",
+		       dp_stats_buf->last_scheduled_tsmp);
+	DP_PRINT_STATS("pause_module_id = %u",
+		       dp_stats_buf->pause_module_id);
+	DP_PRINT_STATS("block_module_id = %u\n",
+		       dp_stats_buf->block_module_id);
+	DP_PRINT_STATS("tid_tx_airtime = %u\n",
+		       dp_stats_buf->tid_tx_airtime);
 	qdf_mem_free(tid_name);
 }
 
@@ -1550,36 +1553,36 @@ static inline void dp_print_tx_pdev_mu_mimo_mpdu_stats_tlv(uint32_t *tag_buf)
 	if (dp_stats_buf->tx_sched_mode ==
 			HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC) {
 		if (!dp_stats_buf->user_index)
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "HTT_TX_PDEV_MU_MIMO_AC_MPDU_STATS:\n");
 
 		if (dp_stats_buf->user_index <
 			HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS) {
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_mpdus_queued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_queued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_mpdus_tried_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_tried_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_mpdus_failed_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_failed_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_mpdus_requeued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_requeued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_err_no_ba_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->err_no_ba_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_mpdu_underrun_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdu_underrun_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ac_mu_mimo_ampdu_underrun_usr_%u = %u\n",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->ampdu_underrun_usr);
@@ -1588,36 +1591,36 @@ static inline void dp_print_tx_pdev_mu_mimo_mpdu_stats_tlv(uint32_t *tag_buf)
 
 	if (dp_stats_buf->tx_sched_mode == HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX) {
 		if (!dp_stats_buf->user_index)
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "HTT_TX_PDEV_MU_MIMO_AX_MPDU_STATS:\n");
 
 		if (dp_stats_buf->user_index <
 				HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS) {
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_mpdus_queued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_queued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_mpdus_tried_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_tried_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_mpdus_failed_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_failed_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_mpdus_requeued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_requeued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_err_no_ba_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->err_no_ba_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_mpdu_underrun_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdu_underrun_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_mimo_ampdu_underrun_usr_%u = %u\n",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->ampdu_underrun_usr);
@@ -1627,36 +1630,36 @@ static inline void dp_print_tx_pdev_mu_mimo_mpdu_stats_tlv(uint32_t *tag_buf)
 	if (dp_stats_buf->tx_sched_mode ==
 			HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX) {
 		if (!dp_stats_buf->user_index)
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "HTT_TX_PDEV_AX_MU_OFDMA_MPDU_STATS:\n");
 
 		if (dp_stats_buf->user_index <
 				HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS) {
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_mpdus_queued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_queued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_mpdus_tried_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_tried_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_mpdus_failed_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_failed_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_mpdus_requeued_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdus_requeued_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_err_no_ba_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->err_no_ba_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_mpdu_underrun_usr_%u = %u",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->mpdu_underrun_usr);
-			DP_TRACE_STATS(FATAL,
+			DP_PRINT_STATS(
 				       "ax_mu_ofdma_ampdu_underrun_usr_%u = %u\n",
 				       dp_stats_buf->user_index,
 				       dp_stats_buf->ampdu_underrun_usr);
@@ -5035,9 +5038,7 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_PRINT_STATS("   201+ Packets: %u",
 			       pdev->stats.rx_ind_histogram.pkts_201_plus);
 
-		DP_PRINT_STATS("%s: tso_enable: %u "
-			       "lro_enable: %u rx_hash: %u "
-			       "napi_enable: %u",
+		DP_PRINT_STATS("%s: tso_enable: %u lro_enable: %u rx_hash: %u napi_enable: %u",
 			       __func__,
 			       pdev->soc->wlan_cfg_ctx
 			       ->tso_enabled,
@@ -5048,8 +5049,7 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->wlan_cfg_ctx
 			       ->napi_enabled);
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-		DP_PRINT_STATS("%s: Tx flow stop queue: %u "
-			       "tx flow start queue offset: %u",
+		DP_PRINT_STATS("%s: Tx flow stop queue: %u tx flow start queue offset: %u",
 			       __func__,
 			       pdev->soc->wlan_cfg_ctx
 			       ->tx_flow_stop_queue_threshold,
@@ -5058,3 +5058,438 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 #endif
 	}
 }
+
+/*
+ * dp_aggregate_pdev_ctrl_frames_stats()- function to agreegate peer stats
+ * Current scope is bar received count
+ *
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
+{
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	uint32_t waitcnt;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (!peer) {
+				dp_err("DP Invalid Peer refernce");
+				return;
+			}
+
+			if (peer->delete_in_progress) {
+				dp_err("DP Peer deletion in progress");
+				continue;
+			}
+			qdf_atomic_inc(&peer->ref_cnt);
+			waitcnt = 0;
+			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
+			while (!(qdf_atomic_read(&pdev->stats_cmd_complete)) &&
+			       waitcnt < 10) {
+				schedule_timeout_interruptible(
+						STATS_PROC_TIMEOUT);
+				waitcnt++;
+			}
+			qdf_atomic_set(&pdev->stats_cmd_complete, 0);
+			dp_peer_unref_delete(peer);
+		}
+	}
+}
+
+void
+dp_print_pdev_tx_stats(struct dp_pdev *pdev)
+{
+	uint8_t i = 0, index = 0;
+
+	DP_PRINT_STATS("PDEV Tx Stats:\n");
+	DP_PRINT_STATS("Received From Stack:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.rcvd.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.rcvd.bytes);
+	DP_PRINT_STATS("Processed:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.processed.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.processed.bytes);
+	DP_PRINT_STATS("Total Completions:");
+	DP_PRINT_STATS("	Packets = %u",
+		       pdev->stats.tx.comp_pkt.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx.comp_pkt.bytes);
+	DP_PRINT_STATS("Successful Completions:");
+	DP_PRINT_STATS("	Packets = %u",
+		       pdev->stats.tx.tx_success.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx.tx_success.bytes);
+	DP_PRINT_STATS("Dropped:");
+	DP_PRINT_STATS("	Total = %d",
+		       pdev->stats.tx_i.dropped.dropped_pkt.num);
+	DP_PRINT_STATS("	Dma_map_error = %d",
+		       pdev->stats.tx_i.dropped.dma_error);
+	DP_PRINT_STATS("	Ring Full = %d",
+		       pdev->stats.tx_i.dropped.ring_full);
+	DP_PRINT_STATS("	Descriptor Not available = %d",
+		       pdev->stats.tx_i.dropped.desc_na.num);
+	DP_PRINT_STATS("	HW enqueue failed= %d",
+		       pdev->stats.tx_i.dropped.enqueue_fail);
+	DP_PRINT_STATS("	Resources Full = %d",
+		       pdev->stats.tx_i.dropped.res_full);
+	DP_PRINT_STATS("	FW removed Pkts = %u",
+		       pdev->stats.tx.dropped.fw_rem.num);
+	DP_PRINT_STATS("	FW removed bytes= %llu",
+		       pdev->stats.tx.dropped.fw_rem.bytes);
+	DP_PRINT_STATS("	FW removed transmitted = %d",
+		       pdev->stats.tx.dropped.fw_rem_tx);
+	DP_PRINT_STATS("	FW removed untransmitted = %d",
+		       pdev->stats.tx.dropped.fw_rem_notx);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason1 = %d",
+		       pdev->stats.tx.dropped.fw_reason1);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason2 = %d",
+		       pdev->stats.tx.dropped.fw_reason2);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason3 = %d",
+		       pdev->stats.tx.dropped.fw_reason3);
+	DP_PRINT_STATS("	Aged Out from msdu/mpdu queues = %d",
+		       pdev->stats.tx.dropped.age_out);
+	DP_PRINT_STATS("	headroom insufficient = %d",
+		       pdev->stats.tx_i.dropped.headroom_insufficient);
+	DP_PRINT_STATS("	Multicast:");
+	DP_PRINT_STATS("	Packets: %u",
+		       pdev->stats.tx.mcast.num);
+	DP_PRINT_STATS("	Bytes: %llu",
+		       pdev->stats.tx.mcast.bytes);
+	DP_PRINT_STATS("Scatter Gather:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.sg.sg_pkt.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.sg.sg_pkt.bytes);
+	DP_PRINT_STATS("	Dropped By Host = %d",
+		       pdev->stats.tx_i.sg.dropped_host.num);
+	DP_PRINT_STATS("	Dropped By Target = %d",
+		       pdev->stats.tx_i.sg.dropped_target);
+	DP_PRINT_STATS("TSO:");
+	DP_PRINT_STATS("	Number of Segments = %d",
+		       pdev->stats.tx_i.tso.num_seg);
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.tso.tso_pkt.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.tso.tso_pkt.bytes);
+	DP_PRINT_STATS("	Dropped By Host = %d",
+		       pdev->stats.tx_i.tso.dropped_host.num);
+	DP_PRINT_STATS("Mcast Enhancement:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.mcast_en.mcast_pkt.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.mcast_en.mcast_pkt.bytes);
+	DP_PRINT_STATS("	Dropped: Map Errors = %d",
+		       pdev->stats.tx_i.mcast_en.dropped_map_error);
+	DP_PRINT_STATS("	Dropped: Self Mac = %d",
+		       pdev->stats.tx_i.mcast_en.dropped_self_mac);
+	DP_PRINT_STATS("	Dropped: Send Fail = %d",
+		       pdev->stats.tx_i.mcast_en.dropped_send_fail);
+	DP_PRINT_STATS("	Unicast sent = %d",
+		       pdev->stats.tx_i.mcast_en.ucast);
+	DP_PRINT_STATS("Raw:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.raw.raw_pkt.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.raw.raw_pkt.bytes);
+	DP_PRINT_STATS("	DMA map error = %d",
+		       pdev->stats.tx_i.raw.dma_map_error);
+	DP_PRINT_STATS("Reinjected:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.reinject_pkts.num);
+	DP_PRINT_STATS("	Bytes = %llu\n",
+		       pdev->stats.tx_i.reinject_pkts.bytes);
+	DP_PRINT_STATS("Inspected:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.inspect_pkts.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.inspect_pkts.bytes);
+	DP_PRINT_STATS("Nawds Multicast:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.tx_i.nawds_mcast.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.tx_i.nawds_mcast.bytes);
+	DP_PRINT_STATS("CCE Classified:");
+	DP_PRINT_STATS("	CCE Classified Packets: %u",
+		       pdev->stats.tx_i.cce_classified);
+	DP_PRINT_STATS("	RAW CCE Classified Packets: %u",
+		       pdev->stats.tx_i.cce_classified_raw);
+	DP_PRINT_STATS("Mesh stats:");
+	DP_PRINT_STATS("	frames to firmware: %u",
+		       pdev->stats.tx_i.mesh.exception_fw);
+	DP_PRINT_STATS("	completions from fw: %u",
+		       pdev->stats.tx_i.mesh.completion_fw);
+	DP_PRINT_STATS("PPDU stats counter");
+	for (index = 0; index < CDP_PPDU_STATS_MAX_TAG; index++) {
+		DP_PRINT_STATS("	Tag[%d] = %llu", index,
+			       pdev->stats.ppdu_stats_counter[index]);
+	}
+	DP_PRINT_STATS("tx_ppdu_proc: %llu\n",
+		       pdev->tx_ppdu_proc);
+
+	for (i = 0; i < CDP_WDI_NUM_EVENTS; i++) {
+		if (!pdev->stats.wdi_event[i])
+			DP_PRINT_STATS("Wdi msgs received from fw[%d]:%d",
+				       i, pdev->stats.wdi_event[i]);
+	}
+}
+
+void
+dp_print_pdev_rx_stats(struct dp_pdev *pdev)
+{
+	DP_PRINT_STATS("PDEV Rx Stats:\n");
+	DP_PRINT_STATS("Received From HW (Per Rx Ring):");
+	DP_PRINT_STATS("	Packets = %d %d %d %d",
+		       pdev->stats.rx.rcvd_reo[0].num,
+		       pdev->stats.rx.rcvd_reo[1].num,
+		       pdev->stats.rx.rcvd_reo[2].num,
+		       pdev->stats.rx.rcvd_reo[3].num);
+	DP_PRINT_STATS("	Bytes = %llu %llu %llu %llu",
+		       pdev->stats.rx.rcvd_reo[0].bytes,
+		       pdev->stats.rx.rcvd_reo[1].bytes,
+		       pdev->stats.rx.rcvd_reo[2].bytes,
+		       pdev->stats.rx.rcvd_reo[3].bytes);
+	DP_PRINT_STATS("Replenished:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.replenish.pkts.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.replenish.pkts.bytes);
+	DP_PRINT_STATS("	Buffers Added To Freelist = %d",
+		       pdev->stats.buf_freelist);
+	DP_PRINT_STATS("	Low threshold intr = %d",
+		       pdev->stats.replenish.low_thresh_intrs);
+	DP_PRINT_STATS("Dropped:");
+	DP_PRINT_STATS("	msdu_not_done = %d",
+		       pdev->stats.dropped.msdu_not_done);
+	DP_PRINT_STATS("        wifi parse = %d",
+		       pdev->stats.dropped.wifi_parse);
+	DP_PRINT_STATS("        mon_rx_drop = %d",
+		       pdev->stats.dropped.mon_rx_drop);
+	DP_PRINT_STATS("        mec_drop = %d",
+		       pdev->stats.rx.mec_drop.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.rx.mec_drop.bytes);
+	DP_PRINT_STATS("Sent To Stack:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.rx.to_stack.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.rx.to_stack.bytes);
+	DP_PRINT_STATS("        vlan_tag_stp_cnt = %d",
+		       pdev->stats.vlan_tag_stp_cnt);
+	DP_PRINT_STATS("Multicast/Broadcast:");
+	DP_PRINT_STATS("	Packets = %d",
+		       pdev->stats.rx.multicast.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       pdev->stats.rx.multicast.bytes);
+	DP_PRINT_STATS("Errors:");
+	DP_PRINT_STATS("	Rxdma Ring Un-inititalized = %d",
+		       pdev->stats.replenish.rxdma_err);
+	DP_PRINT_STATS("	Desc Alloc Failed: = %d",
+		       pdev->stats.err.desc_alloc_fail);
+	DP_PRINT_STATS("	IP checksum error = %d",
+		       pdev->stats.err.ip_csum_err);
+	DP_PRINT_STATS("	TCP/UDP checksum error = %d",
+		       pdev->stats.err.tcp_udp_csum_err);
+
+	/* Get bar_recv_cnt */
+	dp_aggregate_pdev_ctrl_frames_stats(pdev);
+	DP_PRINT_STATS("BAR Received Count: = %d",
+		       pdev->stats.rx.bar_recv_cnt);
+}
+
+void
+dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
+{
+	struct cdp_pdev_mon_stats *rx_mon_stats;
+	uint32_t *stat_ring_ppdu_ids;
+	uint32_t *dest_ring_ppdu_ids;
+	int i, idx;
+
+	rx_mon_stats = &pdev->rx_mon_stats;
+
+	DP_PRINT_STATS("PDEV Rx Monitor Stats:\n");
+
+	DP_PRINT_STATS("status_ppdu_compl_cnt = %d",
+		       rx_mon_stats->status_ppdu_compl);
+	DP_PRINT_STATS("status_ppdu_start_cnt = %d",
+		       rx_mon_stats->status_ppdu_start);
+	DP_PRINT_STATS("status_ppdu_end_cnt = %d",
+		       rx_mon_stats->status_ppdu_end);
+	DP_PRINT_STATS("status_ppdu_start_mis_cnt = %d",
+		       rx_mon_stats->status_ppdu_start_mis);
+	DP_PRINT_STATS("status_ppdu_end_mis_cnt = %d",
+		       rx_mon_stats->status_ppdu_end_mis);
+	DP_PRINT_STATS("status_ppdu_done_cnt = %d",
+		       rx_mon_stats->status_ppdu_done);
+	DP_PRINT_STATS("dest_ppdu_done_cnt = %d",
+		       rx_mon_stats->dest_ppdu_done);
+	DP_PRINT_STATS("dest_mpdu_done_cnt = %d",
+		       rx_mon_stats->dest_mpdu_done);
+	DP_PRINT_STATS("dest_mpdu_drop_cnt = %d",
+		       rx_mon_stats->dest_mpdu_drop);
+	DP_PRINT_STATS("dup_mon_linkdesc_cnt = %d",
+		       rx_mon_stats->dup_mon_linkdesc_cnt);
+	DP_PRINT_STATS("dup_mon_buf_cnt = %d",
+		       rx_mon_stats->dup_mon_buf_cnt);
+	stat_ring_ppdu_ids =
+		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	dest_ring_ppdu_ids =
+		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+
+	if (!stat_ring_ppdu_ids || !dest_ring_ppdu_ids)
+		DP_PRINT_STATS("Unable to allocate ppdu id hist mem\n");
+
+	qdf_spin_lock_bh(&pdev->mon_lock);
+	idx = rx_mon_stats->ppdu_id_hist_idx;
+	qdf_mem_copy(stat_ring_ppdu_ids,
+		     rx_mon_stats->stat_ring_ppdu_id_hist,
+		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	qdf_mem_copy(dest_ring_ppdu_ids,
+		     rx_mon_stats->dest_ring_ppdu_id_hist,
+		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
+	qdf_spin_unlock_bh(&pdev->mon_lock);
+
+	DP_PRINT_STATS("PPDU Id history:");
+	DP_PRINT_STATS("stat_ring_ppdu_ids\t dest_ring_ppdu_ids");
+	for (i = 0; i < MAX_PPDU_ID_HIST; i++) {
+		idx = (idx + 1) & (MAX_PPDU_ID_HIST - 1);
+		DP_PRINT_STATS("%*u\t%*u", 16,
+			       rx_mon_stats->stat_ring_ppdu_id_hist[idx], 16,
+			       rx_mon_stats->dest_ring_ppdu_id_hist[idx]);
+	}
+	qdf_mem_free(stat_ring_ppdu_ids);
+	qdf_mem_free(dest_ring_ppdu_ids);
+}
+
+void
+dp_print_soc_tx_stats(struct dp_soc *soc)
+{
+	uint8_t desc_pool_id;
+
+	soc->stats.tx.desc_in_use = 0;
+
+	DP_PRINT_STATS("SOC Tx Stats:\n");
+
+	for (desc_pool_id = 0;
+	     desc_pool_id < wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
+	     desc_pool_id++)
+		soc->stats.tx.desc_in_use +=
+			soc->tx_desc[desc_pool_id].num_allocated;
+
+	DP_PRINT_STATS("Tx Descriptors In Use = %d",
+		       soc->stats.tx.desc_in_use);
+	DP_PRINT_STATS("Tx Invalid peer:");
+	DP_PRINT_STATS("	Packets = %d",
+		       soc->stats.tx.tx_invalid_peer.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+		       soc->stats.tx.tx_invalid_peer.bytes);
+	DP_PRINT_STATS("Packets dropped due to TCL ring full = %d %d %d",
+		       soc->stats.tx.tcl_ring_full[0],
+		       soc->stats.tx.tcl_ring_full[1],
+		       soc->stats.tx.tcl_ring_full[2]);
+	DP_PRINT_STATS("Tx invalid completion release = %d",
+		       soc->stats.tx.invalid_release_source);
+	DP_PRINT_STATS("Tx comp loop pkt limit hit = %d",
+		       soc->stats.tx.tx_comp_loop_pkt_limit_hit);
+	DP_PRINT_STATS("Tx comp HP out of sync2 = %d",
+		       soc->stats.tx.hp_oos2);
+}
+
+void dp_print_soc_interrupt_stats(struct dp_soc *soc)
+{
+	int i = 0;
+	struct dp_intr_stats *intr_stats;
+
+	DP_PRINT_STATS("INT:     Total  |txComps|reo[0] |reo[1] |reo[2] |reo[3] |mon    |rx_err | wbm   |reo_sta|rxdm2hst|hst2rxdm|");
+	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		intr_stats = &soc->intr_ctx[i].intr_stats;
+		DP_PRINT_STATS("%3u[%d]: %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %8u %8u",
+			       i,
+			       hif_get_int_ctx_irq_num(soc->hif_handle, i),
+			       intr_stats->num_masks,
+			       intr_stats->num_tx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[1],
+			       intr_stats->num_rx_ring_masks[2],
+			       intr_stats->num_rx_ring_masks[3],
+			       intr_stats->num_rx_mon_ring_masks,
+			       intr_stats->num_rx_err_ring_masks,
+			       intr_stats->num_rx_wbm_rel_ring_masks,
+			       intr_stats->num_reo_status_ring_masks,
+			       intr_stats->num_rxdma2host_ring_masks,
+			       intr_stats->num_host2rxdma_ring_masks);
+		}
+}
+
+void
+dp_print_soc_rx_stats(struct dp_soc *soc)
+{
+	uint32_t i;
+	char reo_error[DP_REO_ERR_LENGTH];
+	char rxdma_error[DP_RXDMA_ERR_LENGTH];
+	uint8_t index = 0;
+
+	DP_PRINT_STATS("No of AST Entries = %d", soc->num_ast_entries);
+	DP_PRINT_STATS("SOC Rx Stats:\n");
+	DP_PRINT_STATS("Fragmented packets: %u",
+		       soc->stats.rx.rx_frags);
+	DP_PRINT_STATS("Reo reinjected packets: %u",
+		       soc->stats.rx.reo_reinject);
+	DP_PRINT_STATS("Errors:\n");
+	DP_PRINT_STATS("Rx Decrypt Errors = %d",
+		       (soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_DECRYPT] +
+		       soc->stats.rx.err.rxdma_error[HAL_RXDMA_ERR_TKIP_MIC]));
+	DP_PRINT_STATS("Invalid RBM = %d",
+		       soc->stats.rx.err.invalid_rbm);
+	DP_PRINT_STATS("Invalid Vdev = %d",
+		       soc->stats.rx.err.invalid_vdev);
+	DP_PRINT_STATS("Invalid sa_idx or da_idx = %d",
+		       soc->stats.rx.err.invalid_sa_da_idx);
+	DP_PRINT_STATS("Invalid Pdev = %d",
+		       soc->stats.rx.err.invalid_pdev);
+	DP_PRINT_STATS("Invalid Peer = %d",
+		       soc->stats.rx.err.rx_invalid_peer.num);
+	DP_PRINT_STATS("HAL Ring Access Fail = %d",
+		       soc->stats.rx.err.hal_ring_access_fail);
+	DP_PRINT_STATS("MSDU Done failures = %d",
+		       soc->stats.rx.err.msdu_done_fail);
+	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);
+	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
+	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
+
+	DP_PRINT_STATS("RX HP out_of_sync: %d %d", soc->stats.rx.hp_oos,
+		       soc->stats.rx.hp_oos2);
+	DP_PRINT_STATS("RX Reap Loop Pkt Limit Hit: %d",
+		       soc->stats.rx.reap_loop_pkt_limit_hit);
+	DP_PRINT_STATS("RX DESC invalid magic: %u",
+		       soc->stats.rx.err.rx_desc_invalid_magic);
+	DP_PRINT_STATS("RX DUP DESC: %d",
+		       soc->stats.rx.err.hal_reo_dest_dup);
+	DP_PRINT_STATS("RX REL DUP DESC: %d",
+		       soc->stats.rx.err.hal_wbm_rel_dup);
+
+	DP_PRINT_STATS("RXDMA ERR DUP DESC: %d",
+		       soc->stats.rx.err.hal_rxdma_err_dup);
+
+	for (i = 0; i < HAL_RXDMA_ERR_MAX; i++) {
+		index += qdf_snprint(&rxdma_error[index],
+				DP_RXDMA_ERR_LENGTH - index,
+				" %d", soc->stats.rx.err.rxdma_error[i]);
+	}
+	DP_PRINT_STATS("RXDMA Error (0-31):%s", rxdma_error);
+
+	index = 0;
+	for (i = 0; i < HAL_REO_ERR_MAX; i++) {
+		index += qdf_snprint(&reo_error[index],
+				DP_REO_ERR_LENGTH - index,
+				" %d", soc->stats.rx.err.reo_error[i]);
+	}
+	DP_PRINT_STATS("REO Error(0-14):%s", reo_error);
+}
+

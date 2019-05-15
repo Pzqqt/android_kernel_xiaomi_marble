@@ -131,10 +131,6 @@ while (0)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		fmt, ## args)
 
-#define DP_TRACE_STATS(LVL, fmt, args ...)                             \
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
-		fmt, ## args)
-
 #ifdef CONFIG_MCL
 /* Stat prints should not go to console or kernel logs.*/
 #define DP_PRINT_STATS(fmt, args ...)\
@@ -940,6 +936,57 @@ void dp_print_tx_rates(struct dp_vdev *vdev);
  * return void
  */
 void dp_print_peer_stats(struct dp_peer *peer);
+
+/**
+ * dp_print_pdev_tx_stats(): Print Pdev level TX stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return:void
+ */
+void
+dp_print_pdev_tx_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_print_pdev_rx_stats(): Print Pdev level RX stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return: void
+ */
+void
+dp_print_pdev_rx_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_print_pdev_rx_mon_stats(): Print Pdev level RX monitor stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return: void
+ */
+void
+dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev);
+
+/**
+ * dp_print_soc_tx_stats(): Print SOC level  stats
+ * @soc DP_SOC Handle
+ *
+ * Return: void
+ */
+void dp_print_soc_tx_stats(struct dp_soc *soc);
+
+/**
+ * dp_print_soc_interrupt_stats() - Print interrupt stats for the soc
+ * @soc: dp_soc handle
+ *
+ * Return: None
+ */
+void dp_print_soc_interrupt_stats(struct dp_soc *soc);
+
+/**
+ * dp_print_soc_rx_stats: Print SOC level Rx stats
+ * @soc: DP_SOC Handle
+ *
+ * Return:void
+ */
+void dp_print_soc_rx_stats(struct dp_soc *soc);
 
 /**
  * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
