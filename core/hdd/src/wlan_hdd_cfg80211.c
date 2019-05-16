@@ -3701,7 +3701,11 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 
 	if (count && tb[PARAM_SSID_LIST]) {
 		nla_for_each_nested(curr_attr,
-			tb[PARAM_SSID_LIST], rem) {
+				    tb[PARAM_SSID_LIST], rem) {
+			if (i == MAX_SSID_ALLOWED_LIST) {
+				hdd_err("Excess MAX_SSID_ALLOWED_LIST");
+				goto fail;
+			}
 			if (wlan_cfg80211_nla_parse(tb2,
 					   QCA_WLAN_VENDOR_ATTR_ROAM_SUBCMD_MAX,
 					   nla_data(curr_attr),
@@ -3723,7 +3727,7 @@ static int hdd_set_white_list(struct hdd_context *hdd_ctx,
 			 * the NULL termination character to the driver
 			 * buffer.
 			 */
-			if (buf_len && (i < MAX_SSID_ALLOWED_LIST) &&
+			if (buf_len > 1 &&
 			    ((buf_len - 1) <= WLAN_SSID_MAX_LEN)) {
 				nla_memcpy(roam_params->ssid_allowed_list[i].ssId,
 					tb2[PARAM_LIST_SSID], buf_len - 1);
