@@ -1322,32 +1322,12 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
  *
  * Return: QDF_STATUS
  */
-#ifdef CONFIG_VDEV_SM
 static inline void sap_start_csa_restart(struct mac_context *mac,
 					 struct sap_context *sap_ctx)
 {
 	sme_csa_restart(mac, sap_ctx->sessionId);
 }
-#else
-static void sap_start_csa_restart(struct mac_context *mac,
-				  struct sap_context *sap_ctx)
-{
-	struct sap_sm_event sap_event;
 
-	/*
-	 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START
-	 * to SAP state machine to process the channel
-	 * request with CSA IE set in the beacons.
-	 */
-	sap_event.event =
-		eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START;
-	sap_event.params = 0;
-	sap_event.u1 = 0;
-	sap_event.u2 = 0;
-
-	sap_fsm(sap_ctx, &sap_event);
-}
-#endif
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
  * @sap_ctx: Pointer to SAP context
@@ -1772,7 +1752,6 @@ void wlansap_get_sec_channel(uint8_t sec_ch_offset,
 		  __func__, sec_ch_offset, *sec_channel);
 }
 
-#ifdef CONFIG_VDEV_SM
 static void
 wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
 				  struct sap_context *sap_ctx)
@@ -1811,13 +1790,6 @@ wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
 
 	mlme_set_cac_required(sap_ctx->vdev, cac_required);
 }
-#else
-static inline void
-wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
-				  struct sap_context *sap_ctx)
-{
-}
-#endif
 
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 					  uint8_t target_channel)

@@ -90,14 +90,12 @@
 /**
  * enum sap_fsm_state - SAP FSM states for Access Point role
  * @SAP_INIT: init state
- * @SAP_DFS_CAC_WAIT: cac wait
  * @SAP_STARTING: starting phase
  * @SAP_STARTED: up and running
  * @SAP_STOPPING: about to stop and transitions to init
  */
 enum sap_fsm_state {
 	SAP_INIT,
-	SAP_DFS_CAC_WAIT,
 	SAP_STARTING,
 	SAP_STARTED,
 	SAP_STOPPING
@@ -462,7 +460,6 @@ uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
  *
  * Return: true if sap is in cac wait state
  */
-#ifdef CONFIG_VDEV_SM
 static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
 {
 	if (!sap_ctx)
@@ -470,15 +467,6 @@ static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
 
 	return  QDF_IS_STATUS_SUCCESS(wlan_vdev_is_dfs_cac_wait(sap_ctx->vdev));
 }
-#else
-static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
-{
-	if (!sap_ctx)
-		return false;
-
-	return (sap_ctx->fsm_state == SAP_DFS_CAC_WAIT);
-}
-#endif
 
 /**
  * sap_channel_in_acs_channel_list() - check if channel in acs channel list

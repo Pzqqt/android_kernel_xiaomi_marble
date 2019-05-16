@@ -680,9 +680,6 @@ typedef struct {
 	A_UINT32 requestor_id;
 	A_UINT32 disable_hw_ack;
 	wmi_channel chan;
-#ifndef CONFIG_VDEV_SM
-	qdf_atomic_t hidden_ssid_restart_in_progress;
-#endif
 	uint8_t ssidHidden;
 } vdev_restart_params_t;
 
@@ -803,9 +800,6 @@ struct wma_txrx_node {
 	qdf_atomic_t bss_status;
 	uint8_t rate_flags;
 	uint8_t nss;
-#ifndef CONFIG_VDEV_SM
-	bool is_channel_switch;
-#endif
 	uint16_t pause_bitmap;
 	int8_t tx_power;
 	int8_t max_tx_power;
@@ -1967,69 +1961,6 @@ static inline void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
  */
 int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 						uint32_t len);
-
-#ifdef CONFIG_VDEV_SM
-static inline
-void wma_vdev_set_mlme_state_stop(tp_wma_handle wma, uint8_t vdev_id) {}
-
-static inline
-void wma_vdev_set_mlme_state_run(tp_wma_handle wma, uint8_t vdev_id) {}
-#else
-/**
- * wma_vdev_set_mlme_state() - Set vdev mlme state
- * @wma: wma handle
- * @vdev_id: the Id of the vdev to configure
- * @state: vdev state
- *
- * Return: None
- */
-static inline
-void wma_vdev_set_mlme_state(tp_wma_handle wma, uint8_t vdev_id,
-		enum wlan_vdev_state state)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
-		return;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
-			WLAN_LEGACY_WMA_ID);
-	if (vdev) {
-		wlan_vdev_obj_lock(vdev);
-		wlan_vdev_mlme_set_state(vdev, state);
-		wlan_vdev_obj_unlock(vdev);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	}
-}
-
-/**
- * wma_vdev_set_mlme_state_stop() - Set vdev mlme state to stop
- * @wma: wma handle
- * @vdev_id: the Id of the vdev to configure
- *
- * Return: None
- */
-static inline
-void wma_vdev_set_mlme_state_stop(tp_wma_handle wma, uint8_t vdev_id)
-{
-	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_STOP);
-}
-
-/**
- * wma_vdev_set_mlme_state_run() - Set vdev mlme state to run
- * @wma: wma handle
- * @vdev_id: the Id of the vdev to configure
- *
- * Return: None
- */
-static inline
-void wma_vdev_set_mlme_state_run(tp_wma_handle wma, uint8_t vdev_id)
-{
-	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
-}
-#endif
 
 /**
  * wma_update_vdev_pause_bitmap() - update vdev pause bitmap

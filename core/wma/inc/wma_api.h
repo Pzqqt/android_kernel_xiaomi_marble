@@ -451,16 +451,6 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface);
  */
 bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface);
 
-#ifdef CONFIG_VDEV_SM
-static inline
-void wma_set_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface,
-					     int val)
-{}
-
-static inline
-void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface)
-{}
-
 /**
  * wma_sta_mlme_vdev_start_continue - VDEV start response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
@@ -589,27 +579,6 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS wma_sta_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data);
-#else
-/**
- * wma_set_hidden_ssid_restart_in_progress() - set hidden ssid restart is
- * in progress
- * @iface: iface pointer
- * @val: value to be set
- *
- * Return: none
- */
-void wma_set_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface,
-					     int val);
-
-/**
- * wma_set_channel_switch_in_progress() - set channel switch is in progress
- * @iface: iface pointer
- *
- * Return: none
- */
-void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface);
-
-#endif
 
 #ifdef FEATURE_WLM_STATS
 /**

@@ -956,7 +956,6 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
 				     struct qdf_mac_addr bssid,
 				     uint8_t dfsCacWaitStatus);
 
-#ifdef CONFIG_VDEV_SM
 /**
  * sme_csa_restart() - request CSA IE transmission from PE
  * @mac_ctx: mac context
@@ -965,7 +964,6 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id);
-#endif
 
 QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
 				   struct qdf_mac_addr bssid,

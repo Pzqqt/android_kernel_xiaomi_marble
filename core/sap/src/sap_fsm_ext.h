@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,7 +42,6 @@ typedef enum {
 	eSAP_DFS_CHANNEL_CAC_END,
 	eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START,
 	eSAP_OPERATING_CHANNEL_CHANGED,
-	eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START,
 	eSAP_NO_MSG
 } eSapMsg_t;
 

@@ -386,7 +386,6 @@ ibss_coalesce_save(struct mac_context *mac,
 	qdf_mem_copy(mac->lim.ibss_info.beacon, pBeacon, sizeof(*pBeacon));
 }
 
-#ifdef CONFIG_VDEV_SM
 static QDF_STATUS lim_ibss_add_bss(
 			struct mac_context *mac,
 			struct pe_session *session,
@@ -402,50 +401,6 @@ void lim_ibss_delete(struct mac_context *mac, struct pe_session *session)
 {
 	ibss_coalesce_free(mac);
 }
-
-static void lim_ibss_delete_peers(struct mac_context *mac,
-				  struct pe_session *session)
-{}
-#else
-/**
- * lim_ibss_add_bss() - ibss add bss
- *
- * @mac: Pointer to Global MAC structure
- * @session: Pointer to session entry
- * @mlmStartReq: Pointer to mlme start request
- *
- * Return: none
- */
-static QDF_STATUS lim_ibss_add_bss(
-			struct mac_context *mac,
-			struct pe_session *session,
-			tLimMlmStartReq mlmStartReq)
-{
-	return lim_mlm_add_bss(mac, &mlmStartReq, session) ==
-		eSIR_SME_SUCCESS ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
-}
-
-void lim_ibss_delete(struct mac_context *mac, struct pe_session *session)
-{
-	lim_ibss_delete_all_peers(mac, session);
-	ibss_coalesce_free(mac);
-}
-
-/**
- * lim_ibss_delete_peers() - Delete ibss peer entries
- *
- * @mac: Pointer to Global MAC structure
- * @session: Pointer to session entry
- *
- * Return: none
- */
-static void lim_ibss_delete_peers(struct mac_context *mac,
-				  struct pe_session *session)
-{
-	/* Delete peer entries. */
-	lim_ibss_delete_all_peers(mac, session);
-}
-#endif
 
 /*
  * tries to add a new entry to dph hash node
@@ -1267,7 +1222,6 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 	}
 
 	/* Delete peer entries. */
-	lim_ibss_delete_peers(mac, pe_session);
 	/* add the new bss */
 	ibss_bss_add(mac, pe_session);
 end:
@@ -1389,7 +1343,6 @@ end:
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 static void lim_ibss_bss_delete(struct mac_context *mac,
 				struct pe_session *pe_session)
 {
@@ -1403,13 +1356,6 @@ static void lim_ibss_bss_delete(struct mac_context *mac,
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("Deliver WLAN_VDEV_SM_EV_DOWN failed");
 }
-#else
-static void lim_ibss_bss_delete(struct mac_context *mac,
-				struct pe_session *pe_session)
-{
-	ibss_bss_delete(mac, pe_session);
-}
-#endif
 
 /**
  * lim_ibss_coalesce()

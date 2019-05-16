@@ -22,7 +22,6 @@
 #ifndef _WLAN_MLME_VDEV_MGR_INT_API_H_
 #define _WLAN_MLME_VDEV_MGR_INT_API_H_
 
-#ifdef CONFIG_VDEV_SM
 #include <wlan_objmgr_vdev_obj.h>
 #include "include/wlan_vdev_mlme.h"
 #include "wlan_mlme_main.h"
@@ -195,5 +194,4 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
  * Return: associate type
  */
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
-#endif
 #endif

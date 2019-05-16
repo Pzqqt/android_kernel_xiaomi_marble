@@ -8967,7 +8967,6 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
 	return status;
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -8980,7 +8979,6 @@ QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 
 	return status;
 }
-#endif
 
 /**
  * sme_roam_csa_ie_request() - request CSA IE transmission from PE

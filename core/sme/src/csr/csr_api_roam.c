@@ -20871,7 +20871,6 @@ QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx, uint32_t cha
 	return status;
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 {
 	QDF_STATUS status;
@@ -20889,7 +20888,6 @@ QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id)
 
 	return status;
 }
-#endif
 
 /**
  * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE

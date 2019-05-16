@@ -1909,7 +1909,6 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 {
 	QDF_STATUS status;
@@ -1956,34 +1955,6 @@ void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_set_chan_switch_in_progress(session_entry->vdev, false);
 }
-#else
-void lim_disconnect_complete(struct pe_session *session, bool del_bss)
-{
-	if (del_bss)
-		lim_sta_send_del_bss(session);
-}
-
-/**
- * lim_process_channel_switch_timeout() - process chanel switch timeout
- * @mac: pointer to Global MAC structure
- *
- * Return: none
- */
-void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
-{
-	struct pe_session *session_entry;
-
-	session_entry = pe_find_session_by_session_id(
-		mac_ctx,
-		mac_ctx->lim.limTimers.gLimChannelSwitchTimer.sessionId);
-	if (!session_entry) {
-		pe_err("Session does not exist for given sessionID");
-		return;
-	}
-
-	__lim_process_channel_switch_timeout(session_entry);
-}
-#endif
 
 /**
  * lim_update_channel_switch() - This Function updates channel switch
@@ -2176,7 +2147,6 @@ lim_util_count_sta_del(struct mac_context *mac,
 	sch_edca_profile_update(mac, pe_session);
 }
 
-#ifdef CONFIG_VDEV_SM
 /**
  * lim_switch_channel_vdev_started() - Send vdev started when switch channel
  *
@@ -2195,9 +2165,6 @@ static void lim_switch_channel_vdev_started(struct pe_session *pe_session)
 				WLAN_VDEV_SM_EV_START_SUCCESS,
 				sizeof(*pe_session), pe_session);
 }
-#else
-static void lim_switch_channel_vdev_started(struct pe_session *pe_session) {}
-#endif
 
 /**
  * lim_switch_channel_cback()
@@ -3865,7 +3832,6 @@ QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_VDEV_SM
 static void lim_ht_width_switch_cback(struct mac_context *mac,
 				QDF_STATUS status, uint32_t *data,
 				struct pe_session *pe_session)
@@ -3875,15 +3841,6 @@ static void lim_ht_width_switch_cback(struct mac_context *mac,
 	if (QDF_IS_STATUS_SUCCESS(status))
 		lim_switch_channel_vdev_started(pe_session);
 }
-#else
-static void lim_ht_width_switch_cback(struct mac_context *mac,
-				QDF_STATUS status, uint32_t *data,
-				struct pe_session *pe_session)
-{
-	pe_debug("status %d for ht width switch for vdev %d", status,
-		 pe_session->smeSessionId);
-}
-#endif
 
 static void lim_ht_switch_chnl_params(struct pe_session *pe_session)
 {
@@ -3928,7 +3885,6 @@ static void lim_ht_switch_chnl_params(struct pe_session *pe_session)
 				    true, 0, 0);
 }
 
-#ifdef CONFIG_VDEV_SM
 static void lim_ht_switch_chnl_req(struct pe_session *session)
 {
 	struct mac_context *mac;
@@ -3954,13 +3910,6 @@ static void lim_ht_switch_chnl_req(struct pe_session *session)
 		mlme_set_chan_switch_in_progress(session->vdev, false);
 	}
 }
-#else
-static void lim_ht_switch_chnl_req(struct pe_session *session)
-{
-	lim_ht_switch_chnl_params(session);
-}
-#endif
-
 
 /**
  * \brief This function updates lim global structure, if CB parameters in the BSS
@@ -7858,7 +7807,6 @@ void lim_process_ap_ecsa_timeout(void *data)
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					uint16_t data_len, void *data)
 {
@@ -8191,25 +8139,6 @@ void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
 					      sizeof(*start_cnf), start_cnf);
 	}
 }
-
-#else
-
-void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
-				tLimMlmStartCnf *start_cnf)
-{
-	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
-			     (uint32_t *)start_cnf);
-}
-
-void lim_send_beacon(struct mac_context *mac_ctx, struct pe_session *session)
-{
-	lim_send_beacon_ind(mac_ctx, session, REASON_DEFAULT);
-}
-
-void lim_ndi_mlme_vdev_up_transition(struct pe_session *session)
-{
-}
-#endif
 
 /**
  * lim_get_dot11d_transmit_power() - regulatory max transmit power

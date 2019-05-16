@@ -3043,7 +3043,6 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 {
 	struct vdev_up_params param = {0};
@@ -3064,54 +3063,6 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 
 	return status;
 }
-
-static inline
-QDF_STATUS wma_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#else
-QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
-{
-	struct vdev_up_params param = {0};
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (!wma_get_hidden_ssid_restart_in_progress(
-	     &wma->interfaces[vdev_id]) ||
-	    (wma->interfaces[vdev_id].is_channel_switch)) {
-		if (wma_is_vdev_up(vdev_id))
-			return status;
-		param.vdev_id = vdev_id;
-		param.assoc_id = 0;
-		status = wma_send_vdev_up_to_fw(wma, &param,
-						wma->interfaces[vdev_id].bssid);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE(FL("failed to send vdev up"));
-			policy_mgr_set_do_hw_mode_change_flag(
-				wma->psoc, false);
-			return status;
-		}
-		wma_vdev_set_mlme_state_run(wma, vdev_id);
-		wma_set_sap_keepalive(wma, vdev_id);
-		wma_set_vdev_mgmt_rate(wma, vdev_id);
-	}
-
-	return status;
-}
-
-/**
- * wma_ap_vdev_up() - wrapper for vdev up req
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: QDF_STATUS
- */
-static inline
-QDF_STATUS wma_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
-{
-	return wma_set_ap_vdev_up(wma, vdev_id);
-}
-#endif
 
 /**
  * wma_send_beacon() - send beacon template
@@ -3168,7 +3119,6 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		WMA_LOGE("%s : wma_store_bcn_tmpl Failed", __func__);
 		goto send_rsp;
 	}
-	wma_ap_vdev_up(wma, vdev_id);
 
 send_rsp:
 	bcn_info->status = status;
@@ -3620,7 +3570,6 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	}
 
 	intr[vdev_id].vdev_restart_params.ssidHidden = pReq->ssidHidden;
-	wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 1);
 	WMA_LOGD(FL("hidden ssid set using IOCTL for vdev %d ssid_hidden %d"),
 		 vdev_id, pReq->ssidHidden);
 
@@ -3632,7 +3581,6 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	if (!msg) {
 		WMA_LOGE(FL("Failed to fill vdev request, vdev_id %d"),
 			 vdev_id);
-		wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 0);
 		qdf_mem_free(pReq);
 		return;
 	}
@@ -3660,12 +3608,10 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	params.reg_info_1 = intr[vdev_id].vdev_restart_params.chan.reg_info_1;
 	params.reg_info_2 = intr[vdev_id].vdev_restart_params.chan.reg_info_2;
 
-	wma_vdev_set_mlme_state_stop(wma, vdev_id);
 	status = wmi_unified_hidden_ssid_vdev_restart_send(wma->wmi_handle,
 							   &params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("Failed to send vdev restart command"));
-		wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 0);
 		wma_remove_vdev_req(wma, vdev_id,
 				    WMA_TARGET_REQ_TYPE_VDEV_START);
 		qdf_mem_free(pReq);

@@ -2071,11 +2071,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-#ifdef CONFIG_VDEV_SM
 	case eWNI_SME_CSA_RESTART_REQ:
 		lim_send_csa_restart_req(mac_ctx, msg->bodyval);
 		break;
-#endif
 	case eWNI_SME_STA_CSA_CONTINUE_REQ:
 		lim_continue_sta_csa_req(mac_ctx, msg->bodyval);
 		break;

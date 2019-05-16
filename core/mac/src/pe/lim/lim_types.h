@@ -1123,7 +1123,6 @@ void lim_process_mlm_join_req(struct mac_context *mac_ctx,
  */
 void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf);
 
-#ifdef CONFIG_VDEV_SM
 /**
  * lim_sta_mlme_vdev_disconnect_bss() - Disconnect from BSS
  * @vdev_mlme_obj:  VDEV MLME comp object
@@ -1137,7 +1136,7 @@ void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf);
  */
 QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data);
-#endif
+
 /**
  * lim_process_assoc_cleanup() - frees up resources used in function
  * lim_process_assoc_req_frame()

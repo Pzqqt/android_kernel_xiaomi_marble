@@ -44,7 +44,6 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
 	return mlme_obj;
 }
 
-#ifdef CONFIG_VDEV_SM
 struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 				struct wlan_objmgr_vdev *vdev)
 {
@@ -94,131 +93,6 @@ uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 
 	return &mlme_priv->sta_dynamic_oce_value;
 }
-
-#else
-
-static struct vdev_mlme_priv_obj *
-wlan_vdev_mlme_get_priv_obj(struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-
-	if (!vdev) {
-		mlme_legacy_err("vdev is NULL");
-		return NULL;
-	}
-
-	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-							  WLAN_UMAC_COMP_MLME);
-	if (!vdev_mlme) {
-		mlme_legacy_err(" MLME component object is NULL");
-		return NULL;
-	}
-
-	return vdev_mlme;
-}
-
-uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-
-	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
-		return NULL;
-	}
-
-	return &vdev_mlme->sta_dynamic_oce_value;
-}
-
-struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
-				struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-
-	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
-		return NULL;
-	}
-
-	return &vdev_mlme->dynamic_cfg;
-}
-
-struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
-				struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-
-	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_legacy_err("vdev component object is NULL");
-		return NULL;
-	}
-
-	return &vdev_mlme->ini_cfg;
-}
-
-QDF_STATUS
-mlme_vdev_object_created_notification(struct wlan_objmgr_vdev *vdev,
-				      void *arg)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-	QDF_STATUS status;
-
-	if (!vdev) {
-		mlme_legacy_err(" VDEV is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	vdev_mlme = qdf_mem_malloc(sizeof(*vdev_mlme));
-	if (!vdev_mlme) {
-		mlme_legacy_err(" MLME component object alloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	status = wlan_objmgr_vdev_component_obj_attach(vdev,
-						       WLAN_UMAC_COMP_MLME,
-						       (void *)vdev_mlme,
-						       QDF_STATUS_SUCCESS);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to attach vdev priv obj to vdev obj");
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-mlme_vdev_object_destroyed_notification(struct wlan_objmgr_vdev *vdev,
-					void *arg)
-{
-	struct vdev_mlme_priv_obj *vdev_mlme;
-	QDF_STATUS status;
-
-	if (!vdev) {
-		mlme_legacy_err(" VDEV is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(vdev,
-							  WLAN_UMAC_COMP_MLME);
-	if (!vdev_mlme) {
-		mlme_legacy_err(" VDEV MLME component object is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = wlan_objmgr_vdev_component_obj_detach(vdev,
-						       WLAN_UMAC_COMP_MLME,
-						       vdev_mlme);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to detach vdev priv obj to vdev obj");
-
-	qdf_mem_free(vdev_mlme);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
 
 QDF_STATUS
 mlme_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc,

@@ -1548,7 +1548,6 @@ void lim_ndi_mlme_vdev_up_transition(struct pe_session *session);
  */
 void lim_disconnect_complete(struct pe_session *session, bool del_bss);
 
-#ifdef CONFIG_VDEV_SM
 /**
  * lim_sta_mlme_vdev_stop_send() - send VDEV stop
  * @vdev_mlme_obj:  VDEV MLME comp object
@@ -1689,8 +1688,6 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data);
-
-#endif
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
 static inline bool lim_is_set_key_req_converged(void)

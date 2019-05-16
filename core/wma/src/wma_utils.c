@@ -4547,7 +4547,6 @@ static void wma_update_roam_offload_flag(tp_wma_handle wma, uint8_t vdev_id,
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,
 				  uint8_t bssid[QDF_MAC_ADDR_SIZE])
@@ -4567,33 +4566,6 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 
 	return status;
 }
-#else
-QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
-				  struct vdev_up_params *params,
-				  uint8_t bssid[QDF_MAC_ADDR_SIZE])
-{
-	QDF_STATUS status;
-	struct wma_txrx_node *vdev;
-
-	if (!wma_is_vdev_valid(params->vdev_id)) {
-		WMA_LOGE("%s: Invalid vdev id:%d", __func__, params->vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (wma_is_vdev_up(params->vdev_id)) {
-		WMA_LOGD("vdev %d is already up for bssid %pM. Do not send",
-			 params->vdev_id, bssid);
-		return QDF_STATUS_SUCCESS;
-	}
-	wma_update_roam_offload_flag(wma, params->vdev_id, true);
-	vdev = &wma->interfaces[params->vdev_id];
-
-	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
-	wma_release_wakelock(&vdev->vdev_start_wakelock);
-
-	return status;
-}
-#endif
 
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
@@ -4863,7 +4835,6 @@ void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 			peer, false);
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				uint16_t data_len, void *data)
 {
@@ -5063,45 +5034,6 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 
 	return wma_vdev_send_start_resp(wma, bss_params);
 }
-#else
-bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
-{
-	if (!iface)
-		return false;
-
-	if (qdf_atomic_read(
-		&iface->vdev_restart_params.hidden_ssid_restart_in_progress))
-		return true;
-
-	return false;
-}
-
-void wma_set_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface,
-					     int val)
-{
-	if (!iface)
-		return;
-
-	qdf_atomic_set(
-	     &iface->vdev_restart_params.hidden_ssid_restart_in_progress, val);
-}
-
-bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface)
-{
-	if (!iface)
-		return false;
-
-	return iface->is_channel_switch;
-}
-
-void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface)
-{
-	if (!iface)
-		return;
-
-	iface->is_channel_switch = true;
-}
-#endif
 
 #ifdef FEATURE_WLM_STATS
 int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,

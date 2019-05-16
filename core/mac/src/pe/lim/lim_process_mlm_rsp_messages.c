@@ -1271,7 +1271,6 @@ static void lim_join_result_callback(struct mac_context *mac, void *param,
 	qdf_mem_free(link_state_params);
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS lim_sta_send_down_link(join_params *param)
 {
 	struct pe_session *session;
@@ -1405,85 +1404,6 @@ void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 					       sizeof(param), &param);
 	return;
 }
-#else
-void lim_handle_sme_join_result(struct mac_context *mac_ctx,
-	tSirResultCodes result_code, uint16_t prot_status_code,
-	struct pe_session *session_entry)
-{
-	tpDphHashNode sta_ds = NULL;
-	uint8_t sme_session_id;
-	join_params *param = NULL;
-
-	if (!session_entry) {
-		pe_err("pe_session is NULL");
-		return;
-	}
-	sme_session_id = session_entry->smeSessionId;
-	/*
-	 * When associations is failed , delete the session created
-	 * and pass NULL  to  limsendsmeJoinReassocRsp()
-	 */
-	if (result_code != eSIR_SME_SUCCESS) {
-		sta_ds =
-			dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
-				&session_entry->dph.dphHashTable);
-		if (sta_ds) {
-			sta_ds->mlmStaContext.disassocReason =
-				eSIR_MAC_UNSPEC_FAILURE_REASON;
-			sta_ds->mlmStaContext.cleanupTrigger =
-				eLIM_JOIN_FAILURE;
-			sta_ds->mlmStaContext.resultCode = result_code;
-			sta_ds->mlmStaContext.protStatusCode = prot_status_code;
-			/*
-			 * FIX_ME: at the end of lim_cleanup_rx_path,
-			 * make sure PE is sending eWNI_SME_JOIN_RSP
-			 * to SME
-			 */
-			lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
-			qdf_mem_free(session_entry->pLimJoinReq);
-			session_entry->pLimJoinReq = NULL;
-			/* Cleanup if add bss failed */
-			if (session_entry->add_bss_failed) {
-				dph_delete_hash_entry(mac_ctx,
-					 sta_ds->staAddr, sta_ds->assocId,
-					 &session_entry->dph.dphHashTable);
-				goto error;
-			}
-			return;
-		}
-		qdf_mem_free(session_entry->pLimJoinReq);
-		session_entry->pLimJoinReq = NULL;
-	}
-error:
-	/* Delete the session if JOIN failure occurred.
-	 * if the peer is not created, then there is no
-	 * need to send down the set link state which will
-	 * try to delete the peer. Instead a join response
-	 * failure should be sent to the upper layers.
-	 */
-	if (result_code != eSIR_SME_SUCCESS &&
-	    result_code != eSIR_SME_PEER_CREATE_FAILED) {
-		param = qdf_mem_malloc(sizeof(join_params));
-		if (param) {
-			param->result_code = result_code;
-			param->prot_status_code = prot_status_code;
-			param->pe_session_id = session_entry->peSessionId;
-		}
-		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
-				       session_entry->bssId,
-				       session_entry->selfMacAddr,
-				       lim_join_result_callback,
-				       param) != QDF_STATUS_SUCCESS) {
-			qdf_mem_free(param);
-			pe_err("Failed to set the LinkState");
-		}
-		return;
-	}
-
-	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, result_code,
-		prot_status_code, session_entry, sme_session_id);
-}
-#endif
 
 
 /**

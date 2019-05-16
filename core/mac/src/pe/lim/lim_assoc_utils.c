@@ -2704,7 +2704,6 @@ lim_del_sta(struct mac_context *mac,
  *
  * Return: None
  */
-#ifdef CONFIG_VDEV_SM
 static void lim_set_mbssid_info(struct pe_session *pe_session)
 {
 	struct scan_mbssid_info *mbssid_info;
@@ -2712,11 +2711,6 @@ static void lim_set_mbssid_info(struct pe_session *pe_session)
 	mbssid_info = &pe_session->pLimJoinReq->bssDescription.mbssid_info;
 	mlme_set_mbssid_info(pe_session->vdev, mbssid_info);
 }
-#else
-static void lim_set_mbssid_info(struct pe_session *pe_session)
-{
-}
-#endif
 
 /**
  * lim_add_sta_self()

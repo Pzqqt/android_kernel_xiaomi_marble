@@ -2648,7 +2648,6 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 					      roam_synch_ind_ptr->bssid.bytes);
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
-	wma_vdev_set_mlme_state_run(wma, vdev_id);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_free(del_bss_params);
@@ -3043,7 +3042,6 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	return 0;
 }
 
-#ifdef CONFIG_VDEV_SM
 /**
  * __wma_roam_synch_event_handler() - roam synch event handler
  * @handle: wma handle
@@ -3099,15 +3097,6 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	wma_debug("Posted EV_ROAM to VDEV SM");
 	return 0;
 }
-#else
-int wma_roam_synch_event_handler(void *handle, uint8_t *event,
-				 uint32_t len)
-{
-	wma_mlme_roam_synch_event_handler_cb(handle, event, len);
-
-	return 0;
-}
-#endif
 
 #define RSN_CAPS_SHIFT               16
 /**
@@ -3475,8 +3464,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
 	    (params->restart_on_chan_switch == true)) {
-		wma_set_channel_switch_in_progress(
-						&wma->interfaces[req.vdev_id]);
 		req.hidden_ssid = intr[vdev_id].vdev_restart_params.ssidHidden;
 	}
 
@@ -3516,8 +3503,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	    wma_is_vdev_up(vdev_id)) {
 		WMA_LOGD("%s: setting channel switch to true for vdev_id:%d",
 			 __func__, req.vdev_id);
-		wma_set_channel_switch_in_progress(
-						&wma->interfaces[req.vdev_id]);
 	}
 
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,

@@ -1268,8 +1268,6 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
-	wma_set_channel_switch_in_progress(&wma->interfaces[vdev_id]);
-
 	wma_send_msg(wma, WMA_CSA_OFFLOAD_EVENT, (void *)csa_offload_event, 0);
 	return 0;
 }

@@ -477,7 +477,6 @@ lim_configure_ap_start_bss_session(struct mac_context *mac_ctx,
  *
  * Return: QDF_STATUS
  */
-#ifdef CONFIG_VDEV_SM
 static QDF_STATUS
 lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_req)
 {
@@ -486,15 +485,6 @@ lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_r
 					     sizeof(*mlm_start_req),
 					     mlm_start_req);
 }
-#else
-static QDF_STATUS
-lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_req)
-{
-	lim_process_mlm_start_req(session->mac_ctx, mlm_start_req);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
@@ -1074,8 +1064,6 @@ static inline void lim_update_sae_config(struct pe_session *session,
  *
  * Return: QDF_STATUS
  */
-
-#ifdef CONFIG_VDEV_SM
 static QDF_STATUS lim_send_join_req(struct pe_session *session,
 				    tLimMlmJoinReq *mlm_join_req)
 {
@@ -1090,15 +1078,6 @@ static QDF_STATUS lim_send_join_req(struct pe_session *session,
 					     sizeof(*mlm_join_req),
 					     mlm_join_req);
 }
-#else
-static QDF_STATUS lim_send_join_req(struct pe_session *session,
-				    tLimMlmJoinReq *mlm_join_req)
-{
-	lim_process_mlm_join_req(session->mac_ctx, mlm_join_req);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * lim_send_reassoc_req() - send vdev start request for reassoc
@@ -1107,8 +1086,6 @@ static QDF_STATUS lim_send_join_req(struct pe_session *session,
  *
  * Return: QDF_STATUS
  */
-
-#ifdef CONFIG_VDEV_SM
 static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 				       tLimMlmReassocReq *reassoc_req)
 {
@@ -1123,15 +1100,6 @@ static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 					     sizeof(*reassoc_req),
 					     reassoc_req);
 }
-#else
-static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
-				       tLimMlmReassocReq *reassoc_req)
-{
-	lim_process_mlm_reassoc_req(session->mac_ctx, reassoc_req);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * lim_send_ft_reassoc_req() - send vdev start request for ft_reassoc
@@ -1140,8 +1108,6 @@ static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
  *
  * Return: QDF_STATUS
  */
-
-#ifdef CONFIG_VDEV_SM
 static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					  tLimMlmReassocReq *reassoc_req)
 {
@@ -1156,15 +1122,6 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					     sizeof(*reassoc_req),
 					     reassoc_req);
 }
-#else
-static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
-					  tLimMlmReassocReq *reassoc_req)
-{
-	lim_process_mlm_ft_reassoc_req(session->mac_ctx, reassoc_req);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #ifdef WLAN_FEATURE_11W
 #ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
@@ -2887,7 +2844,6 @@ QDF_STATUS lim_send_vdev_stop(struct pe_session *session)
  *
  * Return None
  */
-#ifdef CONFIG_VDEV_SM
 static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 {
 	struct mac_context *mac_ctx = session->mac_ctx;
@@ -2907,14 +2863,6 @@ static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 	if (QDF_IS_STATUS_ERROR(status))
 		lim_send_stop_bss_failure_resp(mac_ctx, session);
 }
-#else
-static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
-{
-	lim_delete_all_peers(session);
-	/* send a delBss to HAL and wait for a response */
-	lim_send_vdev_stop(session);
-}
-#endif
 
 static void
 __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
@@ -3799,7 +3747,6 @@ static void lim_process_roam_invoke(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifdef CONFIG_VDEV_SM
 static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 				struct pe_session *session, uint8_t ssid_hidden)
 {
@@ -3818,37 +3765,7 @@ static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 				      WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
 				      sizeof(*session), session);
 }
-#else
-/*
- * lim_handle_update_ssid_hidden() - Processes SSID hidden update
- * @mac_ctx: Pointer to global mac context
- * @session: Pointer to PE session
- * @ssid_hidden: SSID hidden value to set; 0 - Broadcast SSID,
- *    1 - Disable broadcast SSID
- *
- * Return: None
- */
-static void lim_handle_update_ssid_hidden(
-				struct mac_context *mac_ctx,
-				struct pe_session *session,
-				uint8_t ssid_hidden)
-{
-	pe_debug("rcvd HIDE_SSID message old HIDE_SSID: %d new HIDE_SSID: %d",
-		 session->ssidHidden, ssid_hidden);
 
-	if (ssid_hidden != session->ssidHidden) {
-		session->ssidHidden = ssid_hidden;
-	} else {
-		pe_debug("Dont process HIDE_SSID msg with existing setting");
-		return;
-	}
-
-	/* Send vdev restart */
-	lim_send_vdev_restart(mac_ctx, session, session->smeSessionId);
-
-	return;
-}
-#endif
 /**
  * __lim_process_sme_session_update - process SME session update msg
  *
@@ -4582,7 +4499,6 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 	pe_session_entry->access_policy = update_vendor_ie->access_policy;
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
@@ -4730,55 +4646,6 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		__lim_process_sme_deauth_req(mac_ctx,
 					     (uint32_t *)msg->bodyptr);
 }
-#else
-/**
- * lim_process_sme_disassoc_cnf() - process sme disassoc cnf message
- * @mac_ctx: Pointer to Global MAC structure
- * @msg: pointer to message buffer
- *
- * This function is called to process SME_DISASSOC_CNF message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
-					 struct scheduler_msg *msg)
-{
-	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
-}
-
-/**
- * lim_process_sme_disassoc_req() - process sme deauth req
- * @mac_ctx: Pointer to Global MAC structure
- * @msg: pointer to message buffer
- *
- * This function is called to process SME_DISASSOC_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
-					 struct scheduler_msg *msg)
-{
-	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
-}
-
-/**
- * lim_process_sme_deauth_req() - process sme deauth req
- * @mac_ctx: Pointer to Global MAC structure
- * @msg: pointer to message buffer
- *
- * This function is called to process SME_DEAUTH_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
-				       struct scheduler_msg *msg)
-{
-	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
-}
-#endif
 
 /**
  * lim_process_sme_req_messages()
@@ -5089,7 +4956,6 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 	}
 }
 
-#ifdef CONFIG_VDEV_SM
 static void lim_change_channel(
 	struct mac_context *mac_ctx,
 	struct pe_session *session_entry)
@@ -5107,31 +4973,6 @@ static void lim_change_channel(
 					      sizeof(*session_entry),
 					      session_entry);
 }
-#else
-/**
- * lim_change_channel() - lim change channel api
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @session_entry: pointer to the SME message buffer
- *
- * This function is called to process SME_CHANNEL_CHANGE_REQ message
- *
- * Return: None
- */
-static void lim_change_channel(
-	struct mac_context *mac_ctx,
-	struct pe_session *session_entry)
-{
-	lim_set_channel(mac_ctx, session_entry->currentOperChannel,
-			session_entry->ch_center_freq_seg0,
-			session_entry->ch_center_freq_seg1,
-			session_entry->ch_width,
-			session_entry->maxTxPower,
-			session_entry->peSessionId,
-			session_entry->cac_duration_ms,
-			session_entry->dfs_regdomain);
-}
-#endif
 
 /**
  * lim_process_sme_channel_change_request() - process sme ch change req
@@ -6412,7 +6253,6 @@ void lim_process_obss_color_collision_info(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifdef CONFIG_VDEV_SM
 void lim_send_csa_restart_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 {
 	struct pe_session *session;
@@ -6428,7 +6268,6 @@ void lim_send_csa_restart_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 				      WLAN_VDEV_SM_EV_CSA_RESTART,
 				      sizeof(*session), session);
 }
-#endif
 
 void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 {

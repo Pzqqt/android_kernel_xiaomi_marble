@@ -832,7 +832,7 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 
 QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
 				uint32_t channel, uint8_t session_id);
-#ifdef CONFIG_VDEV_SM
+
 /**
  * csr_csa_start() - request CSA IE transmission from PE
  * @mac_ctx: handle returned by mac_open
@@ -841,7 +841,6 @@ QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS csr_csa_restart(struct mac_context *mac_ctx, uint8_t session_id);
-#endif
 
 /**
  * csr_sta_continue_csa() - Continue for CSA for STA after HW mode change
