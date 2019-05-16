@@ -1596,6 +1596,11 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_TX_CAPTURE = 409,
 	/* Enable fw dump collectin if wmi disconnects */
 	OL_ATH_PARAM_WMI_DIS_DUMP = 410,
+	OL_ATH_PARAM_ACS_CHAN_GRADE_ALGO = 411,
+	OL_ATH_PARAM_ACS_CHAN_EFFICIENCY_VAR = 412,
+	OL_ATH_PARAM_ACS_NEAR_RANGE_WEIGHTAGE = 413,
+	OL_ATH_PARAM_ACS_MID_RANGE_WEIGHTAGE = 414,
+	OL_ATH_PARAM_ACS_FAR_RANGE_WEIGHTAGE = 415,
 };
 #endif
 /* Bitmasks for stats that can block */
