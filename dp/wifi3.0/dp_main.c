@@ -3783,15 +3783,15 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 			mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
 							      pdev->pdev_id);
 			rx_desc_pool = &soc->rx_desc_status[mac_for_pdev];
-			dp_rx_desc_free_array(soc, rx_desc_pool);
+			dp_rx_desc_pool_free(soc, rx_desc_pool);
 			rx_desc_pool = &soc->rx_desc_mon[mac_for_pdev];
-			dp_rx_desc_free_array(soc, rx_desc_pool);
+			dp_rx_desc_pool_free(soc, rx_desc_pool);
 		}
 	}
 
 	if (dp_is_soc_reinit(soc)) {
 		rx_desc_pool = &soc->rx_desc_buf[pdev->pdev_id];
-		dp_rx_desc_free_array(soc, rx_desc_pool);
+		dp_rx_desc_pool_free(soc, rx_desc_pool);
 	}
 
 	soc->pdev_list[pdev->pdev_id] = NULL;

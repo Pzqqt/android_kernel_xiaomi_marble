@@ -102,6 +102,30 @@ struct dp_rx_desc {
 	unmapped:1;
 };
 
+/* RX Descriptor Multi Page memory alloc related */
+#define DP_RX_DESC_OFFSET_NUM_BITS 8
+#define DP_RX_DESC_PAGE_ID_NUM_BITS 8
+#define DP_RX_DESC_POOL_ID_NUM_BITS 4
+
+#define DP_RX_DESC_PAGE_ID_SHIFT DP_RX_DESC_OFFSET_NUM_BITS
+#define DP_RX_DESC_POOL_ID_SHIFT \
+		(DP_RX_DESC_OFFSET_NUM_BITS + DP_RX_DESC_PAGE_ID_NUM_BITS)
+#define RX_DESC_MULTI_PAGE_COOKIE_POOL_ID_MASK \
+	(((1 << DP_RX_DESC_POOL_ID_NUM_BITS) - 1) << DP_RX_DESC_POOL_ID_SHIFT)
+#define RX_DESC_MULTI_PAGE_COOKIE_PAGE_ID_MASK	\
+			(((1 << DP_RX_DESC_PAGE_ID_NUM_BITS) - 1) << \
+			 DP_RX_DESC_PAGE_ID_SHIFT)
+#define RX_DESC_MULTI_PAGE_COOKIE_OFFSET_MASK \
+			((1 << DP_RX_DESC_OFFSET_NUM_BITS) - 1)
+#define DP_RX_DESC_MULTI_PAGE_COOKIE_GET_POOL_ID(_cookie)		\
+	(((_cookie) & RX_DESC_MULTI_PAGE_COOKIE_POOL_ID_MASK) >>	\
+			DP_RX_DESC_POOL_ID_SHIFT)
+#define DP_RX_DESC_MULTI_PAGE_COOKIE_GET_PAGE_ID(_cookie)		\
+	(((_cookie) & RX_DESC_MULTI_PAGE_COOKIE_PAGE_ID_MASK) >>	\
+			DP_RX_DESC_PAGE_ID_SHIFT)
+#define DP_RX_DESC_MULTI_PAGE_COOKIE_GET_OFFSET(_cookie)		\
+	((_cookie) & RX_DESC_MULTI_PAGE_COOKIE_OFFSET_MASK)
+
 #define RX_DESC_COOKIE_INDEX_SHIFT		0
 #define RX_DESC_COOKIE_INDEX_MASK		0x3ffff /* 18 bits */
 #define RX_DESC_COOKIE_POOL_ID_SHIFT		18
@@ -276,6 +300,84 @@ union dp_rx_desc_list_elem_t {
 	struct dp_rx_desc rx_desc;
 };
 
+#ifdef RX_DESC_MULTI_PAGE_ALLOC
+/**
+ * dp_rx_desc_find() - find dp rx descriptor from page ID and offset
+ * @page_id: Page ID
+ * @offset: Offset of the descriptor element
+ *
+ * Return: RX descriptor element
+ */
+union dp_rx_desc_list_elem_t *dp_rx_desc_find(uint16_t page_id, uint16_t offset,
+					      struct rx_desc_pool *rx_pool);
+
+static inline
+struct dp_rx_desc *dp_get_rx_desc_from_cookie(struct dp_soc *soc,
+					      struct rx_desc_pool *pool,
+					      uint32_t cookie)
+{
+	uint8_t pool_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_POOL_ID(cookie);
+	uint16_t page_id = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_PAGE_ID(cookie);
+	uint8_t offset = DP_RX_DESC_MULTI_PAGE_COOKIE_GET_OFFSET(cookie);
+	struct rx_desc_pool *rx_desc_pool;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+
+	if (qdf_unlikely(pool_id >= MAX_RXDESC_POOLS))
+		return NULL;
+
+	rx_desc_pool = &pool[pool_id];
+	rx_desc_elem = (union dp_rx_desc_list_elem_t *)
+		(rx_desc_pool->desc_pages.cacheable_pages[page_id] +
+		rx_desc_pool->elem_size * offset);
+
+	return &rx_desc_elem->rx_desc;
+}
+
+/**
+ * dp_rx_cookie_2_va_rxdma_buf() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on Rx DMA source ring buffer
+ * @soc: core txrx main context
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: Pointer to the Rx descriptor
+ */
+static inline
+struct dp_rx_desc *dp_rx_cookie_2_va_rxdma_buf(struct dp_soc *soc,
+					       uint32_t cookie)
+{
+	return dp_get_rx_desc_from_cookie(soc, &soc->rx_desc_buf[0], cookie);
+}
+
+/**
+ * dp_rx_cookie_2_va_mon_buf() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on monitor ring buffer
+ * @soc: core txrx main context
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: Pointer to the Rx descriptor
+ */
+static inline
+struct dp_rx_desc *dp_rx_cookie_2_va_mon_buf(struct dp_soc *soc,
+					     uint32_t cookie)
+{
+	return dp_get_rx_desc_from_cookie(soc, &soc->rx_desc_mon[0], cookie);
+}
+
+/**
+ * dp_rx_cookie_2_va_mon_status() - Converts cookie to a virtual address of
+ *			 the Rx descriptor on monitor status ring buffer
+ * @soc: core txrx main context
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: Pointer to the Rx descriptor
+ */
+static inline
+struct dp_rx_desc *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc,
+						uint32_t cookie)
+{
+	return dp_get_rx_desc_from_cookie(soc, &soc->rx_desc_status[0], cookie);
+}
+#else
 /**
  * dp_rx_cookie_2_va_rxdma_buf() - Converts cookie to a virtual address of
  *			 the Rx descriptor on Rx DMA source ring buffer
@@ -337,6 +439,7 @@ void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
 	/* Add sanity for pool_id & index */
 	return &(soc->rx_desc_status[pool_id].array[index].rx_desc);
 }
+#endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,
@@ -378,20 +481,57 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
  */
 qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr);
 
-QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
-				uint32_t pool_id,
-				uint32_t pool_size,
-				struct rx_desc_pool *rx_desc_pool);
+/*
+ * dp_rx_desc_pool_alloc() - create a pool of software rx_descs
+ *			     at the time of dp rx initialization
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @pool_size: number of Rx descriptor in the pool
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: QDF status
+ */
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
+				 uint32_t pool_size, struct rx_desc_pool *pool);
 
+/*
+ * dp_rx_desc_nbuf_and_pool_free() - free the sw rx desc pool called during
+ *				     de-initialization of wifi module.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: None
+ */
+void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
+				   struct rx_desc_pool *rx_desc_pool);
+
+/*
+ * dp_rx_desc_nbuf_free() - free the sw rx desc nbufs called during
+ *			    de-initialization of wifi module.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: None
+ */
+void dp_rx_desc_nbuf_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool);
+
+/*
+ * dp_rx_desc_pool_free() - free the sw rx desc array called during
+ *			    de-initialization of wifi module.
+ *
+ * @soc: core txrx main context
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: None
+ */
 void dp_rx_desc_pool_free(struct dp_soc *soc,
-				uint32_t pool_id,
-				struct rx_desc_pool *rx_desc_pool);
-
-void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
-			       struct rx_desc_pool *rx_desc_pool);
-
-void dp_rx_desc_free_array(struct dp_soc *soc,
-			   struct rx_desc_pool *rx_desc_pool);
+			  struct rx_desc_pool *rx_desc_pool);
 
 void dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 				struct dp_peer *peer);

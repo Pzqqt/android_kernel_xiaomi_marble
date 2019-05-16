@@ -20,17 +20,152 @@
 #include "dp_rx.h"
 #include "dp_ipa.h"
 
-/*
- * dp_rx_desc_pool_alloc() - create a pool of software rx_descs
- *			     at the time of dp rx initialization
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @pool_size: number of Rx descriptor in the pool
- * @rx_desc_pool: rx descriptor pool pointer
- *
- * return success or failure
- */
+#ifdef RX_DESC_MULTI_PAGE_ALLOC
+A_COMPILE_TIME_ASSERT(cookie_size_check,
+		      PAGE_SIZE / sizeof(union dp_rx_desc_list_elem_t) <=
+		      1 << DP_RX_DESC_PAGE_ID_SHIFT);
+
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
+				 uint32_t num_elem,
+				 struct rx_desc_pool *rx_desc_pool)
+{
+	uint32_t id, page_id, offset, desc_size, num_desc_per_page;
+	uint32_t count = 0;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+
+	desc_size = sizeof(*rx_desc_elem);
+	rx_desc_pool->elem_size = desc_size;
+	if (!dp_is_soc_reinit(soc)) {
+		qdf_mem_multi_pages_alloc(soc->osdev, &rx_desc_pool->desc_pages,
+					  desc_size, num_elem, 0, true);
+		if (!rx_desc_pool->desc_pages.num_pages) {
+			qdf_err("Multi page alloc fail,size=%d, elem=%d",
+				desc_size, num_elem);
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	num_desc_per_page = rx_desc_pool->desc_pages.num_element_per_page;
+	rx_desc_pool->freelist = (union dp_rx_desc_list_elem_t *)
+				  *rx_desc_pool->desc_pages.cacheable_pages;
+	if (qdf_mem_multi_page_link(soc->osdev,
+				    &rx_desc_pool->desc_pages,
+				    desc_size, num_elem, true)) {
+		qdf_err("overflow num link,size=%d, elem=%d",
+			desc_size, num_elem);
+		goto free_rx_desc_pool;
+	}
+	/* Initialize the lock */
+	qdf_spinlock_create(&rx_desc_pool->lock);
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
+	rx_desc_pool->pool_size = num_elem;
+
+	rx_desc_elem = rx_desc_pool->freelist;
+	while (rx_desc_elem) {
+		page_id = count / num_desc_per_page;
+		offset = count % num_desc_per_page;
+		/*
+		 * Below cookie size is from REO destination ring
+		 * reo_destination_ring -> buffer_addr_info -> sw_buffer_cookie
+		 * cookie size = 21 bits
+		 * 8 bits - offset
+		 * 8 bits - page ID
+		 * 4 bits - pool ID
+		 */
+		id = ((pool_id << DP_RX_DESC_POOL_ID_SHIFT) |
+		      (page_id << DP_RX_DESC_PAGE_ID_SHIFT) |
+		      offset);
+		rx_desc_elem->rx_desc.cookie = id;
+		rx_desc_elem->rx_desc.pool_id = pool_id;
+		rx_desc_elem->rx_desc.in_use = 0;
+		rx_desc_elem = rx_desc_elem->next;
+		count++;
+	}
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+	return QDF_STATUS_SUCCESS;
+
+free_rx_desc_pool:
+	dp_rx_desc_pool_free(soc, rx_desc_pool);
+
+	return QDF_STATUS_E_FAULT;
+}
+
+union dp_rx_desc_list_elem_t *dp_rx_desc_find(uint16_t page_id, uint16_t offset,
+					      struct rx_desc_pool *rx_desc_pool)
+{
+	return rx_desc_pool->desc_pages.cacheable_pages[page_id] +
+		rx_desc_pool->elem_size * offset;
+}
+
+static QDF_STATUS __dp_rx_desc_nbuf_free(struct dp_soc *soc,
+					 struct rx_desc_pool *rx_desc_pool)
+{
+	uint32_t i, num_desc, page_id, offset, num_desc_per_page;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+	struct dp_rx_desc *rx_desc;
+	qdf_nbuf_t nbuf;
+
+	if (qdf_unlikely(!(rx_desc_pool->
+					desc_pages.cacheable_pages))) {
+		qdf_err("No pages found on this desc pool");
+		return QDF_STATUS_E_INVAL;
+	}
+	num_desc = rx_desc_pool->pool_size;
+	num_desc_per_page =
+		rx_desc_pool->desc_pages.num_element_per_page;
+	for (i = 0; i < num_desc; i++) {
+		page_id = i / num_desc_per_page;
+		offset = i % num_desc_per_page;
+		rx_desc_elem = dp_rx_desc_find(page_id, offset, rx_desc_pool);
+		rx_desc = &rx_desc_elem->rx_desc;
+		if (rx_desc->in_use) {
+			nbuf = rx_desc->nbuf;
+			if (!rx_desc->unmapped) {
+				dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+								  false);
+				qdf_nbuf_unmap_single(soc->osdev, nbuf,
+						      QDF_DMA_BIDIRECTIONAL);
+			}
+			qdf_nbuf_free(nbuf);
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
+				   struct rx_desc_pool *rx_desc_pool)
+{
+	QDF_STATUS qdf_status;
+
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
+	qdf_status = __dp_rx_desc_nbuf_free(soc, rx_desc_pool);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		dp_rx_desc_pool_free(soc, rx_desc_pool);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+
+	qdf_spinlock_destroy(&rx_desc_pool->lock);
+}
+
+void dp_rx_desc_nbuf_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool)
+{
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
+	__dp_rx_desc_nbuf_free(soc, rx_desc_pool);
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+
+	qdf_spinlock_destroy(&rx_desc_pool->lock);
+}
+
+void dp_rx_desc_pool_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool)
+{
+	if (qdf_unlikely(!(rx_desc_pool->desc_pages.cacheable_pages)))
+		return;
+	qdf_mem_multi_pages_free(soc->osdev,
+				 &rx_desc_pool->desc_pages, 0, true);
+}
+#else
 QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 	uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
 {
@@ -71,16 +206,8 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * dp_rx_desc_pool_free() - free the sw rx desc pool called during
- *			    de-initialization of wifi module.
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @rx_desc_pool: rx descriptor pool pointer
- */
-void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
-	struct rx_desc_pool *rx_desc_pool)
+void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
+				   struct rx_desc_pool *rx_desc_pool)
 {
 	qdf_nbuf_t nbuf;
 	int i;
@@ -105,16 +232,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
-/*
- * dp_rx_desc_pool_free_nbuf() - free the sw rx desc nbufs called during
- *			         de-initialization of wifi module.
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @rx_desc_pool: rx descriptor pool pointer
- */
-void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
-			       struct rx_desc_pool *rx_desc_pool)
+void dp_rx_desc_nbuf_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool)
 {
 	qdf_nbuf_t nbuf;
 	int i;
@@ -139,20 +258,12 @@ void dp_rx_desc_nbuf_pool_free(struct dp_soc *soc,
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
-/*
- * dp_rx_desc_pool_free_array() - free the sw rx desc array called during
- *			         de-initialization of wifi module.
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @rx_desc_pool: rx descriptor pool pointer
- */
-void dp_rx_desc_free_array(struct dp_soc *soc,
-			   struct rx_desc_pool *rx_desc_pool)
+void dp_rx_desc_pool_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool)
 {
 	qdf_mem_free(rx_desc_pool->array);
 }
-
+#endif /* RX_DESC_MULTI_PAGE_ALLOC */
 /*
  * dp_rx_get_free_desc_list() - provide a list of descriptors from
  *				the free rx desc pool.

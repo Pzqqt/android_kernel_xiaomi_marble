@@ -94,7 +94,7 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem)
 {
 	uint32_t id, count, page_id, offset, pool_id_32;
-	uint16_t num_page, num_desc_per_page;
+	uint16_t num_desc_per_page;
 	struct dp_tx_desc_s *tx_desc_elem;
 	uint32_t desc_size;
 	struct dp_tx_desc_pool_s *tx_desc_pool = &((soc)->tx_desc[(pool_id)]);
@@ -113,7 +113,6 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	}
 
 
-	num_page = tx_desc_pool->desc_pages.num_pages;
 	num_desc_per_page =
 		tx_desc_pool->desc_pages.num_element_per_page;
 	tx_desc_pool->freelist = (struct dp_tx_desc_s *)

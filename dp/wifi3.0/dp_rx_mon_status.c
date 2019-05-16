@@ -888,9 +888,10 @@ dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
 	rx_desc_pool = &soc->rx_desc_status[mac_id];
 	if (rx_desc_pool->pool_size != 0) {
 		if (!dp_is_soc_reinit(soc))
-			dp_rx_desc_pool_free(soc, mac_id, rx_desc_pool);
+			dp_rx_desc_nbuf_and_pool_free(soc, mac_id,
+						      rx_desc_pool);
 		else
-			dp_rx_desc_nbuf_pool_free(soc, rx_desc_pool);
+			dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 	}
 
 	return QDF_STATUS_SUCCESS;

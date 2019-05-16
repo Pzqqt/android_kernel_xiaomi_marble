@@ -268,6 +268,8 @@ enum dp_cpu_ring_map_types {
 /**
  * struct rx_desc_pool
  * @pool_size: number of RX descriptor in the pool
+ * @elem_size: Element size
+ * @desc_pages: Multi page descriptors
  * @array: pointer to array of RX descriptor
  * @freelist: pointer to free RX descriptor link list
  * @lock: Protection for the RX descriptor pool
@@ -275,7 +277,12 @@ enum dp_cpu_ring_map_types {
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
+#ifdef RX_DESC_MULTI_PAGE_ALLOC
+	uint16_t elem_size;
+	struct qdf_mem_multi_page_t desc_pages;
+#else
 	union dp_rx_desc_list_elem_t *array;
+#endif
 	union dp_rx_desc_list_elem_t *freelist;
 	qdf_spinlock_t lock;
 	uint8_t owner;
