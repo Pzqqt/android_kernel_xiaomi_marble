@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -309,4 +309,43 @@ QDF_STATUS ucfg_dfs_get_override_status_timeout(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(ucfg_dfs_get_override_status_timeout);
+#endif
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
+void ucfg_dfs_allow_hw_pulses(struct wlan_objmgr_pdev *pdev,
+			      bool allow_hw_pulses)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs_allow_hw_pulses(dfs, allow_hw_pulses);
+}
+
+qdf_export_symbol(ucfg_dfs_allow_hw_pulses);
+
+bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return false;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  false;
+	}
+
+	return dfs_is_hw_pulses_allowed(dfs);
+}
+
+qdf_export_symbol(ucfg_dfs_is_hw_pulses_allowed);
 #endif

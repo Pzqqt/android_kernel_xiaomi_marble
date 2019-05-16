@@ -705,6 +705,20 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_reset_precac_lists(dfs);
 		dfs_reset_etsi_precac_lists(dfs);
 		break;
+	case DFS_INJECT_SEQUENCE:
+		error = dfs_inject_synthetic_pulse_sequence(dfs, indata);
+		if (error)
+			dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				  "Not injected Synthetic pulse");
+		break;
+
+	case DFS_ALLOW_HW_PULSES:
+		if (insize < sizeof(u_int8_t) || !indata) {
+			error = -EINVAL;
+			break;
+		}
+		dfs_allow_hw_pulses(dfs, !!(*(u_int8_t *)indata));
+		break;
 	default:
 		error = -EINVAL;
 	}

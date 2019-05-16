@@ -1031,8 +1031,13 @@ struct dfs_event_log {
  * @dfs_nol_ie_bitmap:               The bitmap of radar affected subchannels
  *                                   in the current channel list
  *                                   to be sent in NOL IE with RCSA.
- * @dfs_is_rcsa_ie_sent              To send or to not send RCSA IE.
- * @dfs_is_nol_ie_sent               To send or to not send NOL IE.
+ * @dfs_is_rcsa_ie_sent:             To send or to not send RCSA IE.
+ * @dfs_is_nol_ie_sent:              To send or to not send NOL IE.
+ * @dfs_allow_hw_pulses:             Allow/Block HW pulses. When synthetic
+ *                                   pulses are injected, the HW pulses should
+ *                                   be blocked and this variable should be
+ *                                   false so that HW pulses and synthetic
+ *                                   pulses do not get mixed up.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1174,6 +1179,9 @@ struct wlan_dfs {
 	bool           dfs_is_rcsa_ie_sent;
 	bool           dfs_is_nol_ie_sent;
 	bool           dfs_agile_precac_enable;
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
+	bool           dfs_allow_hw_pulses;
+#endif
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)

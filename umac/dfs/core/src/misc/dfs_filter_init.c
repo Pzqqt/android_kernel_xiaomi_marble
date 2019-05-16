@@ -218,6 +218,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	/*Verify : Passing NULL to qdf_timer_init().*/
 	dfs_main_task_timer_init(dfs);
 
+	dfs_allow_hw_pulses(dfs, true);
 	dfs_host_wait_timer_init(dfs);
 
 	WLAN_DFSQ_LOCK_CREATE(dfs);

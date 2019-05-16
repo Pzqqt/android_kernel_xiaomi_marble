@@ -345,6 +345,46 @@ QDF_STATUS ucfg_dfs_set_override_status_timeout(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
+/**
+ * ucfg_dfs_allow_hw_pulses() - Set or unset dfs-allow_hw_pulses
+ * which isolates synthetic radar pulse detection from actual radar detection.
+ * @pdev: Pointer to DFS pdev object.
+ * @allow_hw_pulses: Allow synthetic pulse detection true/false.
+ *
+ * Wrapper function for dfs_set_allow_hw_pulses().
+ * This function called from outside of dfs component.
+ *
+ * Return: void
+ */
+void ucfg_dfs_allow_hw_pulses(struct wlan_objmgr_pdev *pdev,
+			      bool allow_hw_pulses);
+
+/**
+ * ucfg_dfs_is_hw_pulses_allowed() - Check if actual radar detection is allowed
+ * or synthetic pulse detection is enabled.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Wrapper function for dfs_is_hw_pulses_allowed().
+ * This function called from outside of dfs component.
+ *
+ * Return: bool
+ */
+bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+void ucfg_dfs_allow_hw_pulses(struct wlan_objmgr_pdev *pdev,
+			      bool allow_hw_pulses)
+{
+}
+
+static inline
+bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
+{
+	return true;
+}
+#endif
+
 /**
  * ucfg_dfs_get_override_status_timeout() - Get the value of host dfs status
  * wait timeout.

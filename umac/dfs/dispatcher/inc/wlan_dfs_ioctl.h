@@ -53,12 +53,15 @@
 #define DFS_SET_DISABLE_RADAR_MARKING 25
 #define DFS_GET_DISABLE_RADAR_MARKING 26
 
+#define DFS_INJECT_SEQUENCE 27
+#define DFS_ALLOW_HW_PULSES 28
+
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
  * This must always be the last IOCTL in DFS and have
  * the highest value.
  */
-#define DFS_LAST_IOCTL 27
+#define DFS_LAST_IOCTL 29
 
 #ifndef DFS_CHAN_MAX
 #define DFS_CHAN_MAX 1023
@@ -271,4 +274,69 @@ enum WLAN_DFS_EVENTS {
 	WLAN_EV_NOL_FINISHED,
 };
 
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
+/**
+ * Structure of Pulse to be injected into the DFS Module
+ * ******************************************************
+ * Header
+ * ======
+ * ----------|--------------|
+ * num_pulses| total_len_seq|
+ * ----------|--------------|
+ * Buffer Contents per pulse:
+ * ==========================
+ * ------|----------|-----------|----------|-----------|---------------|--------
+ * r_rssi|r_ext_rssi|r_rs_tstamp|r_fulltsf |fft_datalen|total_len_pulse|FFT
+ *       |          |           |          |           |               |Buffer..
+ * ------|----------|-----------|----------|-----------|---------------|--------
+ */
+
+/**
+ * struct synthetic_pulse - Radar Pulse Structure to be filled on reading the
+ * user file.
+ * @r_rssi:          RSSI of the pulse.
+ * @r_ext_rssi:      Extension Channel RSSI.
+ * @r_rs_tstamp:     Timestamp.
+ * @r_fulltsf:       TSF64.
+ * @fft_datalen:     Total len of FFT.
+ * @total_len_pulse: Total len of the pulse.
+ * @fft_buf:         Pointer to fft data.
+ */
+
+struct synthetic_pulse {
+	uint8_t r_rssi;
+	uint8_t r_ext_rssi;
+	uint32_t r_rs_tstamp;
+	uint64_t r_fulltsf;
+	uint16_t fft_datalen;
+	uint16_t total_len_pulse;
+	unsigned char *fft_buf;
+} qdf_packed;
+
+/**
+ * struct synthetic_seq - Structure to hold an array of pointers to the
+ * pulse structure.
+ * @num_pulses:    Total num of pulses in the sequence.
+ * @total_len_seq: Total len of the sequence.
+ * @pulse:         Array of pointers to synthetic_pulse structure.
+ */
+
+struct synthetic_seq {
+	uint8_t num_pulses;
+	uint32_t total_len_seq;
+	struct synthetic_pulse *pulse[0];
+};
+
+/**
+ * struct seq_store - Structure to hold an array of pointers to the synthetic
+ * sequence structure.
+ * @num_sequence: Total number of "sequence of pulses" in the file.
+ * @seq_arr:      Array of pointers to synthetic_seq structure.
+ */
+
+struct seq_store {
+	uint8_t num_sequence;
+	struct synthetic_seq *seq_arr[0];
+};
+#endif /* WLAN_DFS_PARTIAL_OFFLOAD && WLAN_DFS_SYNTHETIC_RADAR */
 #endif  /* _DFS_IOCTL_H_ */
