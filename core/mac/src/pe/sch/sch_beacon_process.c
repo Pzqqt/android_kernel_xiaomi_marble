@@ -1101,15 +1101,11 @@ void sch_send_beacon_report(struct mac_context *mac_ctx,
 {
 	struct wlan_beacon_report beacon_report;
 
-	if (!mac_ctx->lim.sme_bcn_rcv_callback) {
-		pe_err("sme_bcn_rcv_callback is NULL");
+	if (!mac_ctx->lim.sme_bcn_rcv_callback)
 		return;
-	}
 
-	if (!LIM_IS_STA_ROLE(session)) {
-		pe_err("Session is not for STA");
+	if (!LIM_IS_STA_ROLE(session))
 		return;
-	}
 
 	if (sir_compare_mac_addr(session->bssId, beacon_struct->bssid)) {
 		/* Prepare beacon report from incoming beacon */
