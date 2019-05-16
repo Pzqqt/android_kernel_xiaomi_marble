@@ -10034,7 +10034,7 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		roam_info->ampdu = pUpperLayerAssocCnf->ampdu;
 		roam_info->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
 		roam_info->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
-		roam_info->tx_stbc = pUpperLayerAssocCnf->rx_stbc;
+		roam_info->rx_stbc = pUpperLayerAssocCnf->rx_stbc;
 		roam_info->ch_width = pUpperLayerAssocCnf->ch_width;
 		roam_info->mode = pUpperLayerAssocCnf->mode;
 		roam_info->max_supp_idx = pUpperLayerAssocCnf->max_supp_idx;
