@@ -7563,7 +7563,7 @@ bool lim_check_if_vendor_oui_match(struct mac_context *mac_ctx,
 
 	elem_id = *ie;
 
-	if (elem_id == IE_EID_VENDOR &&
+	if (elem_id == WLAN_ELEMID_VENDOR &&
 		!qdf_mem_cmp(&ptr[2], oui, oui_len))
 		return true;
 	else

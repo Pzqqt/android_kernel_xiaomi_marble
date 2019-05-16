@@ -362,7 +362,7 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 						      scan_ie, *scan_ie_len))
 				add_ie = true;
 			break;
-		case IE_EID_VENDOR:
+		case WLAN_ELEMID_VENDOR:
 			if ((0 != qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
 							MBO_OUI_TYPE_SIZE)) ||
 				(0 == qdf_mem_cmp(&temp_ie[0], QCN_OUI_TYPE,

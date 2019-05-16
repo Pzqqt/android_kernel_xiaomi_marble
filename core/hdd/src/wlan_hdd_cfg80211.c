@@ -5460,7 +5460,7 @@ static QDF_STATUS wlan_hdd_add_qcn_ie(uint8_t *ie_data, uint16_t *ie_len)
 {
 	tDot11fIEQCN_IE qcn_ie;
 	uint8_t qcn_ie_hdr[QCN_IE_HDR_LEN]
-		= {IE_EID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
+		= {WLAN_ELEMID_VENDOR, DOT11F_IE_QCN_IE_MAX_LEN,
 			0x8C, 0xFD, 0xF0, 0x1};
 
 	if (((*ie_len) + QCN_IE_HDR_LEN +

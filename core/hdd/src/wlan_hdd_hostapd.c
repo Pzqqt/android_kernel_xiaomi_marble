@@ -3838,7 +3838,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(struct hdd_adapter *adapter,
 				elem_id, elem_len, left);
 			return;
 		}
-		if (IE_EID_VENDOR == elem_id) {
+		if (WLAN_ELEMID_VENDOR == elem_id) {
 			/*
 			 * skipping the Vendor IE's which we don't want to
 			 * include or it will be included by existing code.

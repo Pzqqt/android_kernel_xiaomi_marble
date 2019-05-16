@@ -1590,7 +1590,7 @@ static QDF_STATUS lim_fill_adaptive_11r_ie(struct pe_session *pe_session,
 
 	/* Fill the Vendor IE Type (0xDD) */
 	buf = adaptive_11r_ie;
-	*buf = IE_EID_VENDOR;
+	*buf = WLAN_ELEMID_VENDOR;
 	buf++;
 
 	/* Fill the Vendor IE length (0x0B) */

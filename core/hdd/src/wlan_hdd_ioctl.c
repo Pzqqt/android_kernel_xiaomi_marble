@@ -4717,7 +4717,7 @@ static int hdd_parse_set_ibss_oui_data_command(uint8_t *command, uint8_t *ie,
 		limit -= 2;
 	}
 
-	ie[0] = IE_EID_VENDOR;
+	ie[0] = WLAN_ELEMID_VENDOR;
 	ie[1] = len - 2;
 
 	return len;
@@ -4806,7 +4806,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 
 	modify_ie.smeSessionId = adapter->vdev_id;
 	modify_ie.notify = true;
-	modify_ie.ieID = IE_EID_VENDOR;
+	modify_ie.ieID = WLAN_ELEMID_VENDOR;
 	modify_ie.ieIDLen = ibss_ie_length;
 	modify_ie.ieBufferlength = ibss_ie_length;
 	modify_ie.pIEBuffer = ibss_ie;

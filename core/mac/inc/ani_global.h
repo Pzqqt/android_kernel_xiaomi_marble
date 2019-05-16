@@ -105,9 +105,6 @@ static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 #define HIGH_SEQ_NUM_OFFSET                             4
 #define DEF_HE_AUTO_SGI_LTF                             0x0F07
 
-/* vendor element ID */
-#define IE_EID_VENDOR        (221) /* 0xDD */
-
 /**
  * enum log_event_type - Type of event initiating bug report
  * @WLAN_LOG_TYPE_NON_FATAL: Non fatal event
