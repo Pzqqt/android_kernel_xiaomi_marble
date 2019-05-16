@@ -994,6 +994,7 @@ dp_tx_update_user_mpdu_info(uint32_t ppdu_id,
 	mpdu_info->ack_rssi = user->ack_rssi[0];
 	mpdu_info->tx_rate = user->tx_rate;
 	mpdu_info->ldpc = user->ldpc;
+	mpdu_info->ppdu_cookie = user->ppdu_cookie;
 
 	qdf_mem_copy(mpdu_info->mac_address, user->mac_addr, 6);
 
