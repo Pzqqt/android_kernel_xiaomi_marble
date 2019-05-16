@@ -2063,6 +2063,8 @@ typedef enum {
 #define WMI_HE_CAP_1X_LTF_400NS_GI_SUPPORT      0x00000001
 #define WMI_HE_CAP_2X_LTF_400NS_GI_SUPPORT      0x00000002
 #define WMI_HE_CAP_2X_LTF_160_80_80_SUPPORT     0x00000004
+#define WMI_HE_CAP_RX_DL_OFDMA_SUPPORT          0x00000018
+#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT         0x00000030
 
 #define WMI_HE_CAP_1X_LTF_400NS_GI_SUPPORT_GET(he_cap_info_dword1) \
     WMI_GET_BITS(he_cap_info_dword1, 0, 1)
@@ -2079,6 +2081,16 @@ typedef enum {
 #define WMI_HE_CAP_2X_LTF_160_80_80_SUPPORT_SET(he_cap_info_dword1, value) \
     WMI_SET_BITS(he_cap_info_dword1, 2, 1, value)
 
+#define WMI_HE_CAP_RX_DL_OFDMA_SUPPORT_GET(he_cap_info_dword1) \
+    WMI_GET_BITS(he_cap_info_dword1, 3, 2)
+#define WMI_HE_CAP_RX_DL_OFDMA_SUPPORT_SET(he_cap_info_dword1, value) \
+    WMI_SET_BITS(he_cap_info_dword1, 3, 2, value)
+
+#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_GET() \
+    WMI_GET_BITS(he_cap_info_dword1, 5, 2)
+#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_SET() \
+    WMI_SET_BITS(he_cap_info_dword1, 5, 2, value)
+
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in 802.11ax
  */
 #define WMI_HE_MAX_MCS_4_SS_MASK(r,ss)      ((3 & (r)) << (((ss) - 1) << 1))
@@ -2089,6 +2101,20 @@ enum {
     WMI_HE_FRAG_SUPPORT_LEVEL1, /* support for fragments within a VHT single MPDU, no support for fragments within AMPDU */
     WMI_HE_FRAG_SUPPORT_LEVEL2, /* support for up to 1 fragment per MSDU within a single A-MPDU */
     WMI_HE_FRAG_SUPPORT_LEVEL3, /* support for multiple fragments per MSDU within an A-MPDU */
+};
+
+enum {
+    WMI_HE_RX_DL_OFDMA_SUPPORT_DEFAULT, /* Default */
+    WMI_HE_RX_DL_OFDMA_SUPPORT_DISABLE, /* RX DL OFDMA Support Disabled */
+    WMI_HE_RX_DL_OFDMA_SUPPORT_ENABLE,  /* RX DL OFDMA Support Enabled */
+    WMI_HE_RX_DL_OFDMA_SUPPORT_INVALID, /* INVALID  */
+};
+
+enum {
+    WMI_HE_RX_DL_MUMIMO_SUPPORT_DEFAULT, /* Default */
+    WMI_HE_RX_DL_MUMIMO_SUPPORT_DISABLE, /* RX DL MU-MIMO Support Disabled */
+    WMI_HE_RX_DL_MUMIMO_SUPPORT_ENABLE,  /* RX DL MU-MIMO Support Enabled */
+    WMI_HE_RX_DL_MUMIMO_SUPPORT_INVALID, /* INVALID  */
 };
 
 /** NOTE: This defs cannot be changed in the future without breaking WMI compatibility */
@@ -11523,7 +11549,11 @@ typedef struct {
      * bit 0     : Indicated support for RX 1xLTF + 0.4us
      * bit 1     : Indicates support for RX 2xLTF + 0.4us
      * bit 2     : Indicates support for 2xLTF in 160/80+80 MHz HE PPDU
-     * bit[31:3] : Reserved
+     * bit[4:3]  : Indicates support for DL OFDMA
+     *             Refer to enum WMI_HE_RX_DL_OFDMA_SUPPORT_x
+     * bit[6:5]  : Indicates support for DL MU-MIMO
+     *             Refer to enum WMI_HE_RX_DL_MUMIMO_SUPPORT_x
+     * bit[31:7] : Reserved
      * Refer to WMI_HE_CAP_xx_LTF_xxx_SUPPORT_GET/SET macros
      */
     A_UINT32 peer_he_cap_info_internal;
