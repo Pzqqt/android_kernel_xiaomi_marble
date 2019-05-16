@@ -208,7 +208,7 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
  *
  * Return:
  */
-void
+static void
 dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 {
 	struct dp_pdev *pdev = tx_desc->pdev;
@@ -2510,7 +2510,8 @@ dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
  *
  * Return: none
  */
-void dp_tx_comp_free_buf(struct dp_soc *soc, struct dp_tx_desc_s *desc)
+static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
+				       struct dp_tx_desc_s *desc)
 {
 	struct dp_vdev *vdev = desc->vdev;
 	qdf_nbuf_t nbuf = desc->nbuf;
