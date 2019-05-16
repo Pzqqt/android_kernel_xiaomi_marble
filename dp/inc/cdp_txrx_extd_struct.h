@@ -79,10 +79,11 @@ struct cdp_rx_indication_mpdu_info {
 	uint32_t nf;
 	uint64_t timestamp;
 	uint32_t length;
-	uint8_t per_chain_rssi[MAX_CHAIN];
+	uint8_t per_chain_rssi[CDP_MAX_RX_CHAINS];
 	uint8_t channel;
 };
 
+#ifdef __KERNEL__
 /**
  * struct cdp_rx_indication_mpdu- Rx MPDU plus MPDU info
  * @mpdu_info: defined in cdp_rx_indication_mpdu_info
@@ -93,5 +94,84 @@ struct cdp_rx_indication_mpdu {
 	struct cdp_rx_indication_mpdu_info mpdu_info;
 	qdf_nbuf_t nbuf;
 };
+#endif
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
+struct ol_ath_dbg_rx_rssi {
+	uint8_t     rx_rssi_pri20;
+	uint8_t     rx_rssi_sec20;
+	uint8_t     rx_rssi_sec40;
+	uint8_t     rx_rssi_sec80;
+};
+
+struct ol_ath_radiostats {
+	uint64_t    tx_beacon;
+	uint32_t    tx_buf_count;
+	int32_t     tx_mgmt;
+	int32_t     rx_mgmt;
+	uint32_t    rx_num_mgmt;
+	uint32_t    rx_num_ctl;
+	uint32_t    tx_rssi;
+	uint32_t    rx_rssi_comb;
+	struct      ol_ath_dbg_rx_rssi rx_rssi_chain0;
+	struct      ol_ath_dbg_rx_rssi rx_rssi_chain1;
+	struct      ol_ath_dbg_rx_rssi rx_rssi_chain2;
+	struct      ol_ath_dbg_rx_rssi rx_rssi_chain3;
+	uint32_t    rx_overrun;
+	uint32_t    rx_phyerr;
+	uint32_t    ackrcvbad;
+	uint32_t    rtsbad;
+	uint32_t    rtsgood;
+	uint32_t    fcsbad;
+	uint32_t    nobeacons;
+	uint32_t    mib_int_count;
+	uint32_t    rx_looplimit_start;
+	uint32_t    rx_looplimit_end;
+	uint8_t     ap_stats_tx_cal_enable;
+	uint8_t     self_bss_util;
+	uint8_t     obss_util;
+	uint8_t     ap_rx_util;
+	uint8_t     free_medium;
+	uint8_t     ap_tx_util;
+	uint8_t     obss_rx_util;
+	uint8_t     non_wifi_util;
+	uint32_t    tgt_asserts;
+	int16_t     chan_nf;
+	int16_t     chan_nf_sec80;
+	uint64_t    wmi_tx_mgmt;
+	uint64_t    wmi_tx_mgmt_completions;
+	uint32_t    wmi_tx_mgmt_completion_err;
+	uint32_t    peer_delete_req;
+	uint32_t    peer_delete_resp;
+	uint32_t    rx_mgmt_rssi_drop;
+	uint32_t    tx_frame_count;
+	uint32_t    rx_frame_count;
+	uint32_t    rx_clear_count;
+	uint32_t    cycle_count;
+	uint32_t    phy_err_count;
+	uint32_t    chan_tx_pwr;
+	uint32_t    be_nobuf;
+	uint32_t    tx_packets;
+	uint32_t    rx_packets;
+	uint32_t    tx_num_data;
+	uint32_t    rx_num_data;
+	uint32_t    tx_mcs[10];
+	uint32_t    rx_mcs[10];
+	uint64_t    rx_bytes;
+	uint64_t    tx_bytes;
+	uint32_t    tx_compaggr;
+	uint32_t    rx_aggr;
+	uint32_t    tx_bawadv;
+	uint32_t    tx_compunaggr;
+	uint32_t    rx_badcrypt;
+	uint32_t    rx_badmic;
+	uint32_t    rx_crcerr;
+	uint32_t    rx_last_msdu_unset_cnt;
+	uint32_t    rx_data_bytes;
+	uint32_t    tx_retries;
+};
+
+/* Enumeration of PDEV Configuration parameter */
+enum _ol_hal_param_t {
+	OL_HAL_CONFIG_DMA_BEACON_RESPONSE_TIME = 0
+};
 #endif /* _CDP_TXRX_EXTD_STRUCT_H_ */
