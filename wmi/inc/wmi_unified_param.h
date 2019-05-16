@@ -872,9 +872,6 @@ struct hidden_ssid_vdev_restart_params {
 	uint32_t info;
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
-#ifndef CONFIG_VDEV_SM
-	qdf_atomic_t hidden_ssid_restart_in_progress;
-#endif
 };
 
 #ifdef WLAN_CFR_ENABLE

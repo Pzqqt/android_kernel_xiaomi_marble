@@ -411,10 +411,6 @@ static QDF_STATUS fake_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		req->regdomain, req->he_ops);
 	wma_remove_vdev_req(wma, req->vdev_id,
 			    WMA_TARGET_REQ_TYPE_VDEV_START);
-#ifndef CONFIG_VDEV_SM
-	wma_vdev_set_mlme_state(wma, req->vdev_id,
-			WLAN_VDEV_S_RUN);
-#endif
 	ucfg_ocb_config_channel(wma->pdev);
 	return QDF_STATUS_SUCCESS;
 }
