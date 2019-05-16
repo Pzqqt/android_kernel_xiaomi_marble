@@ -165,7 +165,7 @@ void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
 	uint32_t cpu_id = qdf_get_cpu();
 
 	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
-	poll_time_us = poll_time_ns / 1000;
+	poll_time_us = qdf_do_div(poll_time_ns, 1000);
 
 	napi_stat = &hif_ext_group->stats[cpu_id];
 	if (poll_time_ns > hif_ext_group->stats[cpu_id].napi_max_poll_time)
@@ -275,7 +275,8 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 				  napi_stats->napi_completes,
 				  napi_stats->napi_workdone,
 				  napi_stats->time_limit_reached,
-				  (napi_stats->napi_max_poll_time / 1000),
+				  qdf_do_div(napi_stats->napi_max_poll_time,
+					     1000),
 				  hist_str);
 		}
 	}
