@@ -26,21 +26,8 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
-#ifdef CONFIG_VDEV_SM
 #include <include/wlan_pdev_mlme.h>
 #include "wlan_pdev_mlme_api.h"
-#endif
-
-#ifdef CONFIG_VDEV_SM
-static QDF_STATUS ucfg_mlme_vdev_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS ucfg_mlme_vdev_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 QDF_STATUS ucfg_mlme_global_init(void)
 {
@@ -53,56 +40,6 @@ QDF_STATUS ucfg_mlme_global_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
-#else
-static QDF_STATUS ucfg_mlme_vdev_init(void)
-{
-	QDF_STATUS status;
-
-	status = wlan_objmgr_register_vdev_create_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_vdev_object_created_notification,
-			NULL);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_legacy_err("unable to register vdev create handle");
-		return status;
-	}
-
-	status = wlan_objmgr_register_vdev_destroy_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_vdev_object_destroyed_notification,
-			NULL);
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to register vdev create handle");
-
-	return status;
-
-}
-
-static QDF_STATUS ucfg_mlme_vdev_deinit(void)
-{
-	QDF_STATUS status;
-
-	status = wlan_objmgr_unregister_vdev_destroy_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_vdev_object_destroyed_notification,
-			NULL);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to unregister vdev destroy handle");
-
-	status = wlan_objmgr_unregister_vdev_create_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_vdev_object_created_notification,
-			NULL);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to unregister vdev create handle");
-
-	return status;
-}
-
-#endif
 
 QDF_STATUS ucfg_mlme_init(void)
 {
@@ -125,10 +62,6 @@ QDF_STATUS ucfg_mlme_init(void)
 		mlme_legacy_err("unable to register psoc create handle");
 		return status;
 	}
-
-	status = ucfg_mlme_vdev_init();
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
 
 	status = wlan_objmgr_register_peer_create_handler(
 			WLAN_UMAC_COMP_MLME,
@@ -169,10 +102,6 @@ QDF_STATUS ucfg_mlme_deinit(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_legacy_err("unable to unregister peer create handle");
 
-	status = ucfg_mlme_vdev_deinit();
-	if (QDF_IS_STATUS_ERROR(status))
-		mlme_legacy_err("unable to unregister vdev destroy handle");
-
 	status = wlan_objmgr_unregister_psoc_destroy_handler(
 			WLAN_UMAC_COMP_MLME,
 			mlme_psoc_object_destroyed_notification,
@@ -207,7 +136,6 @@ void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
 	/* Clear the MLME CFG Structure */
 }
 
-#ifdef CONFIG_VDEV_SM
 QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_mlme_obj *pdev_mlme;
@@ -226,7 +154,6 @@ QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 QDF_STATUS
 ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,

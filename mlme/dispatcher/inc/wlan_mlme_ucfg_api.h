@@ -68,7 +68,6 @@ QDF_STATUS ucfg_mlme_psoc_open(struct wlan_objmgr_psoc *psoc);
  */
 void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc);
 
-#ifdef CONFIG_VDEV_SM
 /**
  * ucfg_mlme_pdev_open() - MLME component pdev Open
  * @pdev: pointer to pdev object
@@ -101,53 +100,6 @@ QDF_STATUS ucfg_mlme_global_init(void);
  * Return: QDF Status
  */
 QDF_STATUS ucfg_mlme_global_deinit(void);
-#else
-/**
- * ucfg_mlme_pdev_open() - MLME component pdev Open
- * @pdev: pointer to pdev object
- *
- * Open the MLME component and initialize the MLME pdev strucutre
- *
- * Return: QDF Status
- */
-static inline QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ucfg_mlme_pdev_close() - MLME component pdev close
- * @pdev: pointer to pdev object
- *
- * close the MLME pdev information
- *
- * Return: QDF Status
- */
-static inline QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ucfg_mlme_global_init() - initialize global mlme ops and structure
- *
- * Return: QDF Status
- */
-static inline QDF_STATUS ucfg_mlme_global_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ucfg_mlme_global_deinit() - deinitialize global mlme ops and structure
- *
- * Return: QDF Status
- */
-static inline QDF_STATUS ucfg_mlme_global_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * wlan_mlme_get_power_usage() - Get the power usage info

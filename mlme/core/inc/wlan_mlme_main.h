@@ -51,8 +51,6 @@ struct peer_mlme_priv_obj {
 	uint32_t ucast_key_cipher;
 };
 
-#ifdef CONFIG_VDEV_SM
-
 /**
  * enum vdev_assoc_type - VDEV associate/reassociate type
  * @VDEV_ASSOC: associate
@@ -89,48 +87,6 @@ struct mlme_legacy_priv {
 	struct wlan_mlme_nss_chains ini_cfg;
 	uint8_t sta_dynamic_oce_value;
 };
-
-#else
-/**
- * struct vdev_mlme_obj - VDEV MLME component object
- * @dynamic_cfg: current configuration of nss, chains for vdev.
- * @ini_cfg: Max configuration of nss, chains supported for vdev.
- * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
- */
-struct vdev_mlme_priv_obj {
-	struct wlan_mlme_nss_chains dynamic_cfg;
-	struct wlan_mlme_nss_chains ini_cfg;
-	uint8_t sta_dynamic_oce_value;
-};
-
-/**
- * mlme_vdev_object_created_notification(): mlme vdev create handler
- * @vdev: vdev which is going to created by objmgr
- * @arg: argument for vdev create handler
- *
- * Register this api with objmgr to detect vdev is created
- *
- * Return: QDF_STATUS status in case of success else return error
- */
-
-QDF_STATUS
-mlme_vdev_object_created_notification(struct wlan_objmgr_vdev *vdev,
-				      void *arg);
-
-/**
- * mlme_vdev_object_destroyed_notification(): mlme vdev delete handler
- * @psoc: vdev which is going to delete by objmgr
- * @arg: argument for vdev delete handler
- *
- * Register this api with objmgr to detect vdev is deleted
- *
- * Return: QDF_STATUS status in case of success else return error
- */
-QDF_STATUS
-mlme_vdev_object_destroyed_notification(struct wlan_objmgr_vdev *vdev,
-					void *arg);
-
-#endif
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
 /**
