@@ -211,13 +211,36 @@ static inline bool __qdf_mem_smmu_s1_enabled(qdf_device_t osdev)
 }
 
 #ifdef CONFIG_ARM_SMMU
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+/**
+ * __qdf_dev_get_domain() - get iommu domain from osdev
+ * @osdev: parent device instance
+ *
+ * Return: iommu domain
+ */
+static inline struct iommu_domain *
+__qdf_dev_get_domain(qdf_device_t osdev)
+{
+	return osdev->domain;
+}
+#else
+static inline struct iommu_domain *
+__qdf_dev_get_domain(qdf_device_t osdev)
+{
+	if (osdev->iommu_mapping)
+		return osdev->iommu_mapping->domain;
+
+	return NULL;
+}
+#endif
+
 /**
  * __qdf_mem_paddr_from_dmaaddr() - get actual physical address from dma_addr
  * @osdev: parent device instance
  * @dma_addr: dma_addr
  *
  * Get actual physical address from dma_addr based on SMMU enablement status.
- * IF SMMU Stage 1 tranlation is enabled, DMA APIs return IO virtual address
+ * IF SMMU Stage 1 translation is enabled, DMA APIs return IO virtual address
  * (IOVA) otherwise returns physical address. So get SMMU physical address
  * mapping from IOVA.
  *
@@ -227,12 +250,12 @@ static inline unsigned long
 __qdf_mem_paddr_from_dmaaddr(qdf_device_t osdev,
 			     qdf_dma_addr_t dma_addr)
 {
-	struct dma_iommu_mapping *mapping;
+	struct iommu_domain *domain;
 
 	if (__qdf_mem_smmu_s1_enabled(osdev)) {
-		mapping = osdev->iommu_mapping;
-		if (mapping)
-			return iommu_iova_to_phys(mapping->domain, dma_addr);
+		domain = __qdf_dev_get_domain(osdev);
+		if (domain)
+			return iommu_iova_to_phys(domain, dma_addr);
 	}
 
 	return dma_addr;
