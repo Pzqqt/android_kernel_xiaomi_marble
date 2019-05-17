@@ -95,7 +95,7 @@ wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 		wlan_serialization_is_cmd_present_in_pending_queue(NULL, cmd);
 	wlan_vdev_mlme_ser_cancel_request(cmd->vdev,
 					  WLAN_SER_CMD_NONSCAN,
-					  WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD);
+					  WLAN_SER_CANCEL_VDEV_NON_SCAN_NB_CMD);
 
 	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, cmd)) {
 		mlme_debug("Cmd already exist in the active queue");
@@ -111,7 +111,7 @@ wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 }
 
 enum wlan_serialization_status
-wlan_vdev_mlme_ser_restart_bss(struct wlan_serialization_command *cmd)
+wlan_vdev_mlme_ser_vdev_restart(struct wlan_serialization_command *cmd)
 {
 	if (!cmd || !cmd->vdev) {
 		mlme_err("Null input");
@@ -122,13 +122,83 @@ wlan_vdev_mlme_ser_restart_bss(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
-	 * a. Cancel any existing RESTART cmd in the pending queue
-	 * b. Enqueue the new RESTART cmd
+	 * a. If there exists START or PDEV/VDEV restart command in the pending
+	 * queue then ignore this new vdev restart request.
+	 * b. Else enqueue the new VDEV RESTART cmd
+	 */
+	cmd->cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
+	if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, cmd)) {
+		mlme_debug("Start cmd already in the pending queue");
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+	}
+
+	cmd->cmd_type = WLAN_SER_CMD_PDEV_RESTART;
+	if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, cmd)) {
+		mlme_debug("Pdev restart already in the pending queue");
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+	}
+
+	cmd->cmd_type = WLAN_SER_CMD_VDEV_RESTART;
+	if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, cmd)) {
+		mlme_debug("Vdev restart already in the pending queue");
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+	}
+
+	return wlan_serialization_request(cmd);
+}
+
+void wlan_mlme_restart_pdev_iter_cb(struct wlan_objmgr_pdev *pdev,
+				    void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	uint8_t *pdev_restart_pending = (uint8_t *)arg;
+	struct wlan_serialization_command cmd = {0};
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	cmd.vdev = vdev;
+	cmd.cmd_id = vdev_id;
+	cmd.cmd_type = WLAN_SER_CMD_PDEV_RESTART;
+	/*
+	 * Serialization command filtering logic
+	 * a. Cancel any existing VDEV restart cmd in the pending queue
+	 * b. If Pdev restart already exist in pending queue then return else
+	 * enqueue the new PDEV RESTART cmd
 	 */
 	wlan_vdev_mlme_ser_cancel_request(
-			cmd->vdev,
+			vdev,
 			WLAN_SER_CMD_VDEV_RESTART,
 			WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE);
+
+	if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, &cmd)) {
+		mlme_debug("Cmd already exist in the pending queue vdev:%u",
+			   vdev_id);
+		*pdev_restart_pending = 1;
+	}
+}
+
+enum wlan_serialization_status
+wlan_vdev_mlme_ser_pdev_restart(struct wlan_serialization_command *cmd)
+{
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t pdev_restart_in_pending = 0;
+
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Null input");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
+
+	pdev = wlan_vdev_get_pdev(cmd->vdev);
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_mlme_restart_pdev_iter_cb,
+					  &pdev_restart_in_pending, 0,
+					  WLAN_MLME_SER_IF_ID);
+
+	if (pdev_restart_in_pending)
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+
 	return wlan_serialization_request(cmd);
 }
 
@@ -181,14 +251,14 @@ wlan_vdev_mlme_ser_disconnect(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
-	 * a.Cancel any existing CONNECT/DISCONNECT/RESTART command in the
+	 * a.Cancel any existing non-blocking non-scan command in the
 	 * pending queue
 	 * b.If there is a DISCONNECT cmd in active queue then return
 	 * c.Else enqueue the DISCONNECT cmd
 	 */
 	wlan_vdev_mlme_ser_cancel_request(cmd->vdev,
 					  WLAN_SER_CMD_NONSCAN,
-					  WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD);
+					  WLAN_SER_CANCEL_VDEV_NON_SCAN_NB_CMD);
 
 	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, cmd)) {
 		mlme_debug("Cmd already exist in the active queue");
@@ -205,7 +275,7 @@ wlan_vdev_mlme_ser_remove_request(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_serialization_queued_cmd_info cmd = {0};
 
-	mlme_debug("Remove the cmd type:%d", cmd_type);
+	mlme_debug("Vdev:%d remove cmd:%d", wlan_vdev_get_id(vdev), cmd_type);
 
 	cmd.vdev = vdev;
 	cmd.cmd_id = cmd_id;
