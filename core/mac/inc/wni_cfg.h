@@ -73,7 +73,6 @@
  * the same to WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED.
  * Otherwise, fall back and set fw default value[3].
  */
-#define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF    3
 
 #define WNI_CFG_WPS_ENABLE_AP    1
 

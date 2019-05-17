@@ -41,6 +41,16 @@
 #define CFG_VHT_TX_MCS_MAP_STAMAX    0xFFFF
 #define CFG_VHT_TX_MCS_MAP_STADEF    0xFFFE
 
+/*
+ * MLME_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF + 1 is
+ * assumed to be the default fw supported BF antennas, if fw
+ * says it supports 8 antennas in rx ready event and if
+ * gTxBFCsnValue INI value is configured above 3, set
+ * the same to MLME_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED.
+ * Otherwise, fall back and set fw default value[3].
+ */
+#define MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF 3
+
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
 #define CFG_MAX_TX_POWER_2_4_LEN    128

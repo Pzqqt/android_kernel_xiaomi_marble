@@ -16663,7 +16663,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->vht_config.su_beam_formee =
 		(uint8_t)value &&
 		(uint8_t)mac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_sap;
-	value = mac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp;
+	value = MLME_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
 	pMsg->vht_config.csnof_beamformer_antSup = (uint8_t)value;
 	pMsg->vht_config.mu_beam_formee = 0;
 
