@@ -103,6 +103,21 @@ init_failed:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef CMN_VDEV_MGR_TGT_IF_ENABLE
+static void mlme_vdev_obj_timer_deinit(
+				struct vdev_mlme_obj *vdev_mlme)
+{
+	struct vdev_response_timer *vdev_rsp;
+
+	vdev_rsp = &vdev_mlme->vdev_rt;
+	qdf_timer_free(&vdev_rsp->rsp_timer);
+}
+#else
+static void mlme_vdev_obj_timer_deinit(
+				struct vdev_mlme_obj *vdev_mlme)
+{
+}
+#endif
 static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 						void *arg)
 {
@@ -110,7 +125,6 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct cdp_soc_t *soc_txrx_handle;
 	struct cdp_vdev *vdev_txrx_handle;
-	struct vdev_response_timer *vdev_rsp;
 
 	if (!vdev) {
 		mlme_err(" VDEV is NULL");
@@ -132,8 +146,8 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 				NULL, NULL);
 	}
 
-	vdev_rsp = &vdev_mlme->vdev_rt;
-	qdf_timer_free(&vdev_rsp->rsp_timer);
+	mlme_vdev_obj_timer_deinit(vdev_mlme);
+
 	mlme_vdev_sm_destroy(vdev_mlme);
 
 	mlme_vdev_ops_ext_hdl_destroy(vdev_mlme);
