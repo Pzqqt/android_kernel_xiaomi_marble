@@ -75,6 +75,19 @@
 struct wlan_cfg_dp_pdev_ctxt;
 
 /**
+ * struct wlan_srng_cfg - Per ring configuration parameters
+ * @timer_threshold: Config to control interrupts based on timer duration
+ * @batch_count_threshold: Config to control interrupts based on
+ * number of packets in the ring
+ * @low_threshold: Config to control low threshold interrupts for SRC rings
+ */
+struct wlan_srng_cfg {
+	uint32_t timer_threshold;
+	uint32_t batch_count_threshold;
+	uint32_t low_threshold;
+};
+
+/**
  * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
  * @num_int_ctxts: Number of NAPI/Interrupt contexts to be registered for DP
  * @max_clients: Maximum number of peers/stations supported by device
@@ -1002,6 +1015,16 @@ wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 bool
 wlan_cfg_get_dp_caps(struct wlan_cfg_dp_soc_ctxt *cfg,
 		     enum cdp_capabilities dp_caps);
+
+/**
+ * wlan_set_srng_cfg() - Fill per ring specific
+ * configuration parameters
+ * @wlan_cfg: global srng configuration table
+ *
+ * Return: None
+ */
+void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg);
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg);
 
