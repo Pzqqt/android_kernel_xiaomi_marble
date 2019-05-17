@@ -40,6 +40,28 @@
 
 #define FORCE_INLINE __always_inline
 
+/* LZ4_FORCE_O2_GCC_PPC64LE and LZ4_FORCE_O2_INLINE_GCC_PPC64LE
+ * gcc on ppc64le generates an unrolled SIMDized loop for LZ4_wildCopy8,
+ * together with a simple 8-byte copy loop as a fall-back path.
+ * However, this optimization hurts the decompression speed by >30%,
+ * because the execution does not go to the optimized loop
+ * for typical compressible data, and all of the preamble checks
+ * before going to the fall-back path become useless overhead.
+ * This optimization happens only with the -O3 flag, and -O2 generates
+ * a simple 8-byte copy loop.
+ * With gcc on ppc64le, all of the LZ4_decompress_* and LZ4_wildCopy8
+ * functions are annotated with __attribute__((optimize("O2"))),
+ * and also LZ4_wildCopy8 is forcibly inlined, so that the O2 attribute
+ * of LZ4_wildCopy8 does not affect the compression speed.
+ */
+#if defined(__PPC64__) && defined(__LITTLE_ENDIAN__) && defined(__GNUC__) && !defined(__clang__)
+#  define FORCE_O2_GCC_PPC64LE __attribute__((optimize("O2")))
+#  define FORCE_O2_INLINE_GCC_PPC64LE (__attribute__((optimize("O2"))) FORCE_INLINE)
+#else
+#  define FORCE_O2_GCC_PPC64LE		FORCE_INLINE
+#  define FORCE_O2_INLINE_GCC_PPC64LE	FORCE_INLINE
+#endif
+
 /*-************************************
  *	Basic Types
  **************************************/
@@ -98,6 +120,9 @@ typedef uintptr_t uptrval;
 #define ML_MASK	((1U << ML_BITS) - 1)
 #define RUN_BITS (8 - ML_BITS)
 #define RUN_MASK ((1U << RUN_BITS) - 1)
+
+static const unsigned inc32table[8] = { 0, 1, 2, 1, 0, 4, 4, 4 };
+static const int dec64table[8] = { 0, 0, 0, -1, -4, 1, 2, 3 };
 
 /*-************************************
  *	Reading and writing into memory
@@ -167,7 +192,7 @@ static FORCE_INLINE void LZ4_copy8(void *dst, const void *src)
  * customized variant of memcpy,
  * which can overwrite up to 7 bytes beyond dstEnd
  */
-static FORCE_INLINE void LZ4_wildCopy(void *dstPtr,
+static FORCE_O2_INLINE_GCC_PPC64LE void LZ4_wildCopy8(void *dstPtr,
 	const void *srcPtr, void *dstEnd)
 {
 	BYTE *d = (BYTE *)dstPtr;
@@ -229,6 +254,39 @@ static FORCE_INLINE unsigned int LZ4_count(
 		pIn++;
 
 	return (unsigned int)(pIn - pStart);
+}
+
+/* Read the variable-length literal or match length.
+ *
+ * ip - pointer to use as input.
+ * lencheck - end ip.  Return an error if ip advances >= lencheck.
+ * loop_check - check ip >= lencheck in body of loop.  Returns loop_error if so.
+ * initial_check - check ip >= lencheck before start of loop.  Returns initial_error if so.
+ * error (output) - error code.  Should be set to 0 before call.
+ */
+typedef enum { loop_error = -2, initial_error = -1, ok = 0} variable_length_error;
+static FORCE_INLINE unsigned read_variable_length(const BYTE **ip,
+					   const BYTE *lencheck,
+					   int loop_check, int initial_check,
+					   variable_length_error *error)
+{
+	unsigned length = 0;
+	unsigned s;
+	if (initial_check && unlikely((*ip) >= lencheck)) {	/* overflow detection */
+		*error = initial_error;
+		return length;
+	}
+	do {
+		s = **ip;
+		(*ip)++;
+		length += s;
+		if (loop_check && unlikely((*ip) >= lencheck)) {	/* overflow detection */
+			*error = loop_error;
+			return length;
+		}
+	} while (s == 255);
+
+	return length;
 }
 
 typedef enum { noLimit = 0, limitedOutput = 1 } limitedOutput_directive;
