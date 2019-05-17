@@ -744,10 +744,9 @@ static QDF_STATUS extract_ocb_dcc_stats_tlv(wmi_unified_t wmi_handle,
 	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
 	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel)) ||
 	    fix_param->num_channels > param_tlvs->num_stats_per_channel_list) {
-		WMI_LOGE("%s: too many channels:%d actual:%d", __func__,
+		WMI_LOGW("%s: too many channels:%d actual:%d", __func__,
 			 fix_param->num_channels,
 			 param_tlvs->num_stats_per_channel_list);
-		QDF_ASSERT(0);
 		*resp = NULL;
 		return QDF_STATUS_E_INVAL;
 	}
