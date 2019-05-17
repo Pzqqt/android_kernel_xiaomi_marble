@@ -1809,27 +1809,27 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 	switch (action_hdr->category) {
 	case ACTION_CATEGORY_QOS:
 		if ((session->limQosEnabled) ||
-		    (action_hdr->actionID == SIR_MAC_QOS_MAP_CONFIGURE)) {
+		    (action_hdr->actionID == QOS_MAP_CONFIGURE)) {
 			switch (action_hdr->actionID) {
-			case SIR_MAC_QOS_ADD_TS_REQ:
+			case QOS_ADD_TS_REQ:
 				__lim_process_add_ts_req(mac_ctx,
 						(uint8_t *) rx_pkt_info,
 						session);
 				break;
 
-			case SIR_MAC_QOS_ADD_TS_RSP:
+			case QOS_ADD_TS_RSP:
 				__lim_process_add_ts_rsp(mac_ctx,
 						 (uint8_t *) rx_pkt_info,
 						 session);
 				break;
 
-			case SIR_MAC_QOS_DEL_TS_REQ:
+			case QOS_DEL_TS_REQ:
 				__lim_process_del_ts_req(mac_ctx,
 						(uint8_t *) rx_pkt_info,
 						session);
 				break;
 
-			case SIR_MAC_QOS_MAP_CONFIGURE:
+			case QOS_MAP_CONFIGURE:
 				__lim_process_qos_map_configure_frame(mac_ctx,
 						(uint8_t *)rx_pkt_info,
 						session);
@@ -1879,22 +1879,22 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			break;
 		}
 		switch (action_hdr->actionID) {
-		case SIR_MAC_QOS_ADD_TS_REQ:
+		case QOS_ADD_TS_REQ:
 			__lim_process_add_ts_req(mac_ctx,
 				(uint8_t *) rx_pkt_info, session);
 			break;
 
-		case SIR_MAC_QOS_ADD_TS_RSP:
+		case QOS_ADD_TS_RSP:
 			__lim_process_add_ts_rsp(mac_ctx,
 				(uint8_t *) rx_pkt_info, session);
 			break;
 
-		case SIR_MAC_QOS_DEL_TS_REQ:
+		case QOS_DEL_TS_REQ:
 			__lim_process_del_ts_req(mac_ctx,
 				(uint8_t *) rx_pkt_info, session);
 			break;
 
-		case SIR_MAC_QOS_MAP_CONFIGURE:
+		case QOS_MAP_CONFIGURE:
 			__lim_process_qos_map_configure_frame(mac_ctx,
 				(uint8_t *)rx_pkt_info, session);
 			break;

@@ -839,7 +839,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	if (!pAddTS->wmeTspecPresent) {
 		qdf_mem_zero((uint8_t *) &AddTSReq, sizeof(AddTSReq));
 
-		AddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
+		AddTSReq.Action.action = QOS_ADD_TS_REQ;
 		AddTSReq.DialogToken.token = pAddTS->dialogToken;
 		AddTSReq.Category.category = ACTION_CATEGORY_QOS;
 		if (pAddTS->lleTspecPresent) {
@@ -893,7 +893,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	} else {
 		qdf_mem_zero((uint8_t *) &WMMAddTSReq, sizeof(WMMAddTSReq));
 
-		WMMAddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
+		WMMAddTSReq.Action.action = QOS_ADD_TS_REQ;
 		WMMAddTSReq.DialogToken.token = pAddTS->dialogToken;
 		WMMAddTSReq.Category.category = ACTION_CATEGORY_WMM;
 
@@ -1404,7 +1404,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 		qdf_mem_zero((uint8_t *) &DelTS, sizeof(DelTS));
 
 		DelTS.Category.category = ACTION_CATEGORY_QOS;
-		DelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
+		DelTS.Action.action = QOS_DEL_TS_REQ;
 		populate_dot11f_ts_info(pTsinfo, &DelTS.TSInfo);
 
 		nStatus = dot11f_get_packed_del_ts_size(mac, &DelTS, &nPayload);
@@ -1421,7 +1421,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 		qdf_mem_zero((uint8_t *) &WMMDelTS, sizeof(WMMDelTS));
 
 		WMMDelTS.Category.category = ACTION_CATEGORY_WMM;
-		WMMDelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
+		WMMDelTS.Action.action = QOS_DEL_TS_REQ;
 		WMMDelTS.DialogToken.token = 0;
 		WMMDelTS.StatusCode.statusCode = 0;
 		populate_dot11f_wmmtspec(pTspecIe, &WMMDelTS.WMMTSPEC);

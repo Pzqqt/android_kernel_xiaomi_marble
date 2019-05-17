@@ -4460,7 +4460,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 	uint16_t i;
 	uint32_t status;
 
-	if (SIR_MAC_QOS_ADD_TS_RSP != *(pFrame + 1)) {
+	if (QOS_ADD_TS_RSP != *(pFrame + 1)) {
 		pe_err("Action of %d; this is not supported & is probably an error",
 			*(pFrame + 1));
 		return QDF_STATUS_E_FAILURE;
@@ -4626,7 +4626,7 @@ sir_convert_delts_req2_struct(struct mac_context *mac,
 	tDot11fWMMDelTS wmmdelts = { {0} };
 	uint32_t status;
 
-	if (SIR_MAC_QOS_DEL_TS_REQ != *(pFrame + 1)) {
+	if (QOS_DEL_TS_REQ != *(pFrame + 1)) {
 		pe_err("sirConvertDeltsRsp2Struct invoked "
 			"with an Action of %d; this is not "
 			"supported & is probably an error",
