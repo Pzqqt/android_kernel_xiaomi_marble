@@ -797,14 +797,13 @@ scm_update_channel_list(struct scan_start_request *req,
 	if (req->scan_req.scan_type == SCAN_TYPE_P2P_SEARCH)
 		p2p_search = true;
 	/*
-	 * No need to update channels if req is passive scan and single channel
-	 * ie ROC, Preauth etc.
+	 * No need to update channels if req is single channel* ie ROC,
+	 * Preauth or a single channel scan etc.
 	 * If the single chan in the scan channel list is an NOL channel,it is
 	 * not removed as it would reduce the number of scan channels to 0
 	 * and FW would scan all chans which is unexpected in this scenerio.
 	 */
-	if (req->scan_req.scan_f_passive &&
-	    req->scan_req.chan_list.num_chan == 1)
+	if (req->scan_req.chan_list.num_chan == 1)
 		return;
 
 	/* do this only for STA and P2P-CLI mode */
