@@ -197,9 +197,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 		return;
 
 	soc = vdev->pdev->soc;
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
-	peer = TAILQ_FIRST(&vdev->peer_list);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	peer = vdev->vap_bss_peer;
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
