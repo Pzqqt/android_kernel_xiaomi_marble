@@ -2588,19 +2588,16 @@ static int sde_uidle_parse_dt(struct device_node *np,
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
 	if (!sde_cfg->uidle_cfg.uidle_rev)
-		goto end;
+		return 0;
 
 	prop_value = kcalloc(UIDLE_PROP_MAX,
 		sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
+	if (!prop_value)
+		return -ENOMEM;
 
 	rc = _validate_dt_entry(np, uidle_prop, ARRAY_SIZE(uidle_prop),
 			prop_count, &off_count);

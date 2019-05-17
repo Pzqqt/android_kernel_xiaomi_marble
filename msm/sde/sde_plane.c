@@ -2818,10 +2818,7 @@ static void _sde_plane_setup_uidle(struct drm_crtc *crtc,
 		SDE_ERROR("invalid settings, will disable UIDLE %d %d %d %d\n",
 			line_time, fal10_threshold, fal10_target_idle_time_ns,
 			fal1_target_idle_time_ns);
-		cfg.enable = false;
-		cfg.fal10_threshold = 0;
-		cfg.fal1_threshold = 0;
-		cfg.fal_allowed_threshold = 0;
+		memset(&cfg, 0, sizeof(struct sde_hw_pipe_uidle_cfg));
 	}
 
 	SDE_DEBUG_PLANE(psde,
@@ -2863,6 +2860,7 @@ static void _sde_plane_update_roi_config(struct drm_plane *plane,
 	struct drm_crtc *crtc, struct drm_framebuffer *fb)
 {
 	const struct sde_format *fmt;
+	const struct msm_format *msm_fmt;
 	struct sde_plane *psde;
 	struct drm_plane_state *state;
 	struct sde_plane_state *pstate;
@@ -2875,7 +2873,15 @@ static void _sde_plane_update_roi_config(struct drm_plane *plane,
 	state = plane->state;
 
 	pstate = to_sde_plane_state(state);
-	fmt = to_sde_format(msm_framebuffer_format(fb));
+
+	msm_fmt = msm_framebuffer_format(fb);
+	if (!msm_fmt) {
+		SDE_ERROR("crtc%d plane%d: null format\n",
+			DRMID(crtc), DRMID(plane));
+		return;
+	}
+
+	fmt = to_sde_format(msm_fmt);
 
 	POPULATE_RECT(&src, state->src_x, state->src_y,
 		state->src_w, state->src_h, q16_data);
@@ -3033,6 +3039,7 @@ static void _sde_plane_update_properties(struct drm_plane *plane,
 	struct drm_crtc *crtc, struct drm_framebuffer *fb)
 {
 	uint32_t nplanes;
+	const struct msm_format *msm_fmt;
 	const struct sde_format *fmt;
 	struct sde_plane *psde;
 	struct drm_plane_state *state;
@@ -3042,7 +3049,15 @@ static void _sde_plane_update_properties(struct drm_plane *plane,
 	state = plane->state;
 
 	pstate = to_sde_plane_state(state);
-	fmt = to_sde_format(msm_framebuffer_format(fb));
+
+	msm_fmt = msm_framebuffer_format(fb);
+	if (!msm_fmt) {
+		SDE_ERROR("crtc%d plane%d: null format\n",
+			DRMID(crtc), DRMID(plane));
+		return;
+	}
+
+	fmt = to_sde_format(msm_fmt);
 	nplanes = fmt->num_planes;
 
 	/* update secure session flag */
