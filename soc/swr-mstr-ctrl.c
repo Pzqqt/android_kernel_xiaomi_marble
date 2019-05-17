@@ -984,6 +984,26 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 
 	mutex_lock(&swrm->mlock);
 
+	/*
+	 * During disable if master is already down, which implies an ssr/pdr
+	 * scenario, just mark ports as disabled and exit
+	 */
+	if (swrm->state == SWR_MSTR_SSR && !enable) {
+		if (!test_bit(DISABLE_PENDING, &swrm->port_req_pending)) {
+			dev_dbg(swrm->dev, "%s:No pending disconn port req\n",
+				__func__);
+			goto exit;
+		}
+		clear_bit(DISABLE_PENDING, &swrm->port_req_pending);
+		swrm_cleanup_disabled_port_reqs(master);
+		if (!swrm_is_port_en(master)) {
+			dev_dbg(&master->dev, "%s: pm_runtime auto suspend triggered\n",
+				__func__);
+			pm_runtime_mark_last_busy(swrm->dev);
+			pm_runtime_put_autosuspend(swrm->dev);
+		}
+		goto exit;
+	}
 	bank = get_inactive_bank_num(swrm);
 
 	if (enable) {
