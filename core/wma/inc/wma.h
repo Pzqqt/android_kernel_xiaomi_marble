@@ -114,10 +114,6 @@
 
 #define WMA_HW_DEF_SCAN_MAX_DURATION      30000 /* 30 secs */
 
-#define WMA_BCAST_MAC_ADDR (0xFF)
-#define WMA_MCAST_IPV4_MAC_ADDR (0x01)
-#define WMA_MCAST_IPV6_MAC_ADDR (0x33)
-
 #define WMA_EAPOL_SUBTYPE_GET_MIN_LEN     21
 #define WMA_EAPOL_INFO_GET_MIN_LEN        23
 #define WMA_IS_DHCP_GET_MIN_LEN           38

@@ -2242,13 +2242,13 @@ static void wma_wow_inc_wake_lock_stats_by_dst_addr(t_wma_handle *wma,
 	stats = &vdev->wow_stats;
 
 	switch (*dest_mac) {
-	case WMA_BCAST_MAC_ADDR:
+	case QDF_BCAST_MAC_ADDR:
 		stats->bcast++;
 		break;
-	case WMA_MCAST_IPV4_MAC_ADDR:
+	case QDF_MCAST_IPV4_MAC_ADDR:
 		stats->ipv4_mcast++;
 		break;
-	case WMA_MCAST_IPV6_MAC_ADDR:
+	case QDF_MCAST_IPV6_MAC_ADDR:
 		stats->ipv6_mcast++;
 		break;
 	default:
