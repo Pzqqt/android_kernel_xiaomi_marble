@@ -26,14 +26,19 @@
 #define _DP_RATE_STATS_UAPI_
 
 #define WLANSTATS_CACHE_SIZE 10
-#define MAX_RSSI_ANT 4
-#define MAX_RSSI_HT 4
+#define WLANSTATS_MAX_CHAIN_LEGACY 4
+#define WLANSTATS_MAX_BW_LEGACY 4
+#define WLANSTATS_MAX_CHAIN 8
+#define WLANSTATS_MAX_BW 8
 #define WLAN_DATA_TID_MAX 8
 #define WLAN_MAC_ADDR_LEN 6
 #define WLANSTATS_RSSI_OFFSET 8
 #define WLANSTATS_RSSI_MASK 0xff
 #define WLANSTATS_RSSI_MAX 0x80
 #define INVALID_CACHE_IDX (-1)
+#define WLANSTATS_PEER_COOKIE_LSB 32
+#define WLANSTATS_COOKIE_PLATFORM_OFFSET 0xFFFFFFFF00000000
+#define WLANSTATS_COOKIE_PEER_COOKIE_OFFSET 0x00000000FFFFFFFF
 
 #ifndef __KERNEL__
 #define qdf_ewma_tx_lag unsigned long
@@ -88,7 +93,7 @@ struct wlan_rx_rate_stats {
 	uint32_t num_retries;
 	uint32_t num_sgi;
 	qdf_ewma_rx_rssi avg_rssi;
-	qdf_ewma_rx_rssi avg_rssi_ant[MAX_RSSI_ANT][MAX_RSSI_HT];
+	qdf_ewma_rx_rssi avg_rssi_ant[WLANSTATS_MAX_CHAIN][WLANSTATS_MAX_BW];
 };
 
 /*

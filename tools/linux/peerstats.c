@@ -46,8 +46,11 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 {
 	int i = 0;
 	struct wlan_rx_rate_stats *rx_stats;
+	uint8_t is_lithium;
+	uint8_t chain, max_chain, bw, max_bw;
+	struct wlan_rx_rate_stats *tmp_rx_stats;;
 
-	rx_stats = (struct wlan_rx_rate_stats *)buffer;
+	rx_stats = tmp_rx_stats = (struct wlan_rx_rate_stats *)buffer;
 	PRINT("\n......................................");
 	PRINT("......................................");
 	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx\n",
@@ -57,75 +60,168 @@ static void dp_peer_rx_rate_stats_print(uint8_t *peer_mac,
 	      peer_mac[3],
 	      peer_mac[4],
 	      peer_mac[5]);
-	PRINT("\tpeer cookie: %016llx\n", peer_cookie);
+	PRINT("\tpeer cookie: %016llx\n", (peer_cookie & 0xFFFFFFFF00000000)
+					>> WLANSTATS_PEER_COOKIE_LSB);
+	is_lithium =  (peer_cookie & WLANSTATS_COOKIE_PLATFORM_OFFSET)
+					>> WLANSTATS_PEER_COOKIE_LSB;
+	if (is_lithium) {
+		max_chain = 8;
+		max_bw = 8;
+	} else {
+		max_chain = 4;
+		max_bw = 4;
+	}
 	PRINT("\n..............................................");
 	PRINT("................................");
 	PRINT("................................................");
 	PRINT(".................................\n");
 	PRINT("\tRx statistics:");
-	PRINT(" %10s | %10s | %10s | %10s | %10s | %10s",
+	PRINT(" %10s | %10s | %10s | %10s | %10s | %10s|",
 	      "rate",
 	      "rix",
 	      "bytes",
 	      "msdus",
 	      "mpdus",
 	      "ppdus");
-	PRINT("\t\t%10s | %10s | %10s | %10s | %10s | %10s |",
+	PRINT(" %10s | %10s | %10s |",
 	      "retries",
-	      "rssi",
-	      "rssi 1 p20",
-	      "rssi 1 e20",
-	      "rssi 1 e40",
-	      "rssi 1 e80");
-	PRINT(" | %10s | | %10s | %10s | %10s | %10s | %10s",
-	      "rssi 2 p20",
-	      "rssi 2 e20",
-	      "rssi 2 e40",
-	      "rssi 2 e80",
-	      "rssi 3 p20",
-	      "rssi 3 e20");
-	PRINT(" | %10s | %10s | %10s | %10s | %10s | %10s\n\n\n",
-	      "rssi 3 e40",
-	      "rssi 3 e80",
-	      "rssi 4 p20",
-	      "rssi 4 e20",
-	      "rssi 4 e40",
-	      "rssi 4 e80");
+	      "sgi",
+	      "rssi\n");
 
 	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
 		if (rx_stats->rix != INVALID_CACHE_IDX) {
-			PRINT(" %10u | %10u | %10u | %10u | %10u |",
+			PRINT(" %10u | %10u | %10u | %10u | %10u | %10u |",
 			      rx_stats->rate,
 			      rx_stats->rix,
 			      rx_stats->num_bytes,
 			      rx_stats->num_msdus,
-			      rx_stats->num_mpdus);
-			PRINT(" %10u | %10u | %10u | %10lu | %10lu |",
-			      rx_stats->num_ppdus,
+			      rx_stats->num_mpdus,
+			      rx_stats->num_ppdus);
+			PRINT(" %10u | %10u | %10u |\n",
 			      rx_stats->num_retries,
 			      rx_stats->num_sgi,
-			      rx_stats->avg_rssi,
-			      rx_stats->avg_rssi_ant[0][0]);
-			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu |",
-			      rx_stats->avg_rssi_ant[0][1],
-			      rx_stats->avg_rssi_ant[0][2],
-			      rx_stats->avg_rssi_ant[0][3],
-			      rx_stats->avg_rssi_ant[1][0],
-			      rx_stats->avg_rssi_ant[1][1]);
-			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu |",
-			      rx_stats->avg_rssi_ant[1][2],
-			      rx_stats->avg_rssi_ant[1][3],
-			      rx_stats->avg_rssi_ant[2][0],
-			      rx_stats->avg_rssi_ant[2][1],
-			      rx_stats->avg_rssi_ant[2][2]);
-			PRINT(" %10lu | %10lu | %10lu | %10lu | %10lu\n\n\n",
-			      rx_stats->avg_rssi_ant[2][3],
-			      rx_stats->avg_rssi_ant[3][0],
-			      rx_stats->avg_rssi_ant[3][1],
-			      rx_stats->avg_rssi_ant[3][2],
-			      rx_stats->avg_rssi_ant[3][3]);
+			      rx_stats->avg_rssi);
 		}
 		rx_stats = rx_stats + 1;
+	}
+	if (is_lithium) {
+	PRINT("\n %10s | %10s | %10s | %10s | %10s |",
+	      "rate",
+	      "rssi 1 p20",
+	      "rssi 1 e20",
+	      "rssi 1 e40 low20",
+	      "rssi 1 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 1 ext80 low20",
+	      "rssi 1 ext80 low_high20",
+	      "rssi 1 ext80 high_low20",
+	      "rssi 1 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 2 p20",
+	      "rssi 2 e20",
+	      "rssi 2 e40 low20",
+	      "rssi 2 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 2 ext80 low20",
+	      "rssi 2 ext80 low_high20",
+	      "rssi 2 ext80 high_low20",
+	      "rssi 2 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 3 p20",
+	      "rssi 3 e20",
+	      "rssi 3 e40 low20",
+	      "rssi 3 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 3 ext80 low20",
+	      "rssi 3 ext80 low_high20",
+	      "rssi 3 ext80 high_low20",
+	      "rssi 3 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 4 p20",
+	      "rssi 4 e20",
+	      "rssi 4 e40 low20",
+	      "rssi 4 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 4 ext80 low20",
+	      "rssi 4 ext80 low_high20",
+	      "rssi 4 ext80 high_low20",
+	      "rssi 4 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 5 p20",
+	      "rssi 5 e20",
+	      "rssi 5 e40 low20",
+	      "rssi 5 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 5 ext80 low20",
+	      "rssi 5 ext80 low_high20",
+	      "rssi 5 ext80 high_low20",
+	      "rssi 5 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 6 p20",
+	      "rssi 6 e20",
+	      "rssi 6 e40 low20",
+	      "rssi 6 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 6 ext80 low20",
+	      "rssi 6 ext80 low_high20",
+	      "rssi 6 ext80 high_low20",
+	      "rssi 6 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 7 p20",
+	      "rssi 7 e20",
+	      "rssi 7 e40 low20",
+	      "rssi 7 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 7 ext80 low20",
+	      "rssi 7 ext80 low_high20",
+	      "rssi 7 ext80 high_low20",
+	      "rssi 7 ext80 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |",
+	      "rssi 8 p20",
+	      "rssi 8 e20",
+	      "rssi 8 e40 low20",
+	      "rssi 8 e40 high20");
+	PRINT("\n            | %10s | %10s | %10s | %10s |\n\n\n",
+	      "rssi 8 ext80 low20",
+	      "rssi 8 ext80 low_high20",
+	      "rssi 8 ext80 high_low20",
+	      "rssi 8 ext80 high20");
+	} else {
+	PRINT("\n %10s | %10s | %10s | %10s | %10s |",
+	      "rate",
+	      "rssi 1 p20",
+	      "rssi 1 e20",
+	      "rssi 1 e40",
+	      "rssi 1 e80");
+	PRINT("            | %10s | %10s | %10s | %10s |",
+	      "rssi 2 p20",
+	      "rssi 2 e20",
+	      "rssi 2 e40",
+	      "rssi 2 e80");
+	PRINT("            | %10s | %10s | %10s | %10s |",
+	      "rssi 3 p20",
+	      "rssi 3 e20",
+	      "rssi 3 e40",
+	      "rssi 3 e80");
+	PRINT("            | %10s | %10s | %10s | %10s |\n\n\n",
+	      "rssi 4 p20",
+	      "rssi 4 e20",
+	      "rssi 4 e40",
+	      "rssi 4 e80");
+	}
+	for (i = 0; i < WLANSTATS_CACHE_SIZE; i++) {
+		if (tmp_rx_stats->rix != INVALID_CACHE_IDX) {
+			printf(" %10u |", tmp_rx_stats->rate);
+			for (chain = 0; chain < max_chain; chain++) {
+				for (bw = 0; bw < max_bw; bw++) {
+					printf(" %10d |",
+					tmp_rx_stats->avg_rssi_ant[chain][bw]);
+				}
+				printf("            \n\t     ");
+			}
+			PRINT("");
+		}
+		tmp_rx_stats = tmp_rx_stats + 1;
 	}
 }
 
