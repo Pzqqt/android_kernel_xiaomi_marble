@@ -100,29 +100,6 @@
 #define SIR_MAC_MGMT_ACTION       0xD
 #define SIR_MAC_MGMT_RESERVED15   0xF
 
-/* Action frame categories */
-
-#define SIR_MAC_ACTION_SPECTRUM_MGMT   0
-#define SIR_MAC_ACTION_QOS_MGMT        1
-#define SIR_MAC_ACTION_DLP             2
-#define SIR_MAC_ACTION_BLKACK          3
-#define SIR_MAC_ACTION_PUBLIC_USAGE    4
-#define SIR_MAC_ACTION_RRM             5
-#define SIR_MAC_ACTION_FAST_BSS_TRNST  6
-#define SIR_MAC_ACTION_HT              7
-#define SIR_MAC_ACTION_SA_QUERY        8
-#define SIR_MAC_ACTION_PROT_DUAL_PUB   9
-#define SIR_MAC_ACTION_WNM            10
-#define SIR_MAC_ACTION_UNPROT_WNM     11
-#define SIR_MAC_ACTION_TDLS           12
-#define SIR_MAC_ACITON_MESH           13
-#define SIR_MAC_ACTION_MHF            14
-#define SIR_MAC_SELF_PROTECTED        15
-#define SIR_MAC_ACTION_WME            17
-#define SIR_MAC_ACTION_FST            18
-#define SIR_MAC_ACTION_VHT            21
-#define SIR_MAC_ACTION_MAX            256
-
 #define SIR_MAC_ACTION_TX             1
 #define SIR_MAC_ACTION_RX             2
 

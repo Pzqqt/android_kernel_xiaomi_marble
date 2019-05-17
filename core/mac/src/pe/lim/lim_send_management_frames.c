@@ -841,7 +841,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 
 		AddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
 		AddTSReq.DialogToken.token = pAddTS->dialogToken;
-		AddTSReq.Category.category = SIR_MAC_ACTION_QOS_MGMT;
+		AddTSReq.Category.category = ACTION_CATEGORY_QOS;
 		if (pAddTS->lleTspecPresent) {
 			populate_dot11f_tspec(&pAddTS->tspec, &AddTSReq.TSPEC);
 		} else {
@@ -895,7 +895,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 
 		WMMAddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
 		WMMAddTSReq.DialogToken.token = pAddTS->dialogToken;
-		WMMAddTSReq.Category.category = SIR_MAC_ACTION_WME;
+		WMMAddTSReq.Category.category = ACTION_CATEGORY_WMM;
 
 		/* WMM spec 2.2.10 - status code is only filled in for ADDTS response */
 		WMMAddTSReq.StatusCode.statusCode = 0;
@@ -1403,7 +1403,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	if (!wmmTspecPresent) {
 		qdf_mem_zero((uint8_t *) &DelTS, sizeof(DelTS));
 
-		DelTS.Category.category = SIR_MAC_ACTION_QOS_MGMT;
+		DelTS.Category.category = ACTION_CATEGORY_QOS;
 		DelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
 		populate_dot11f_ts_info(pTsinfo, &DelTS.TSInfo);
 
@@ -1420,7 +1420,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	} else {
 		qdf_mem_zero((uint8_t *) &WMMDelTS, sizeof(WMMDelTS));
 
-		WMMDelTS.Category.category = SIR_MAC_ACTION_WME;
+		WMMDelTS.Category.category = ACTION_CATEGORY_WMM;
 		WMMDelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
 		WMMDelTS.DialogToken.token = 0;
 		WMMDelTS.StatusCode.statusCode = 0;
@@ -3319,7 +3319,7 @@ lim_send_meas_report_frame(struct mac_context *mac,
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
-	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
+	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_MEASURE_REPORT_ID;
 	frm.DialogToken.token = pMeasReqFrame->actionHeader.dialogToken;
 
@@ -3445,7 +3445,7 @@ lim_send_tpc_report_frame(struct mac_context *mac,
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
-	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
+	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_TPC_REPORT_ID;
 	frm.DialogToken.token = pTpcReqFrame->actionHeader.dialogToken;
 
@@ -3567,7 +3567,7 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
-	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
+	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_CHANNEL_SWITCH_ID;
 	frm.ChanSwitchAnn.switchMode = nMode;
 	frm.ChanSwitchAnn.newChannel = nNewChannel;
@@ -3687,7 +3687,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 
 	qdf_mem_zero(&frm, sizeof(frm));
 
-	frm.Category.category     = SIR_MAC_ACTION_PUBLIC_USAGE;
+	frm.Category.category     = ACTION_CATEGORY_PUBLIC;
 	frm.Action.action         = SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID;
 
 	frm.ext_chan_switch_ann_action.switch_mode = mode;
@@ -3986,7 +3986,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	smeSessionId = pe_session->smeSessionId;
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
-	frm.Category.category = SIR_MAC_ACTION_RRM;
+	frm.Category.category = ACTION_CATEGORY_RRM;
 	frm.Action.action = SIR_MAC_RRM_NEIGHBOR_REQ;
 	frm.DialogToken.token = pNeighborReq->dialogToken;
 
@@ -4123,7 +4123,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
-	frm.Category.category = SIR_MAC_ACTION_RRM;
+	frm.Category.category = ACTION_CATEGORY_RRM;
 	frm.Action.action = SIR_MAC_RRM_LINK_MEASUREMENT_RPT;
 	frm.DialogToken.token = pLinkReport->dialogToken;
 
@@ -4265,7 +4265,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 	pe_debug("dialog_token %d num_report %d is_last_frame %d",
 		 dialog_token, num_report, is_last_frame);
 
-	frm->Category.category = SIR_MAC_ACTION_RRM;
+	frm->Category.category = ACTION_CATEGORY_RRM;
 	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;
 	frm->DialogToken.token = dialog_token;
 
@@ -4440,7 +4440,7 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	uint8_t smeSessionId = 0;
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
-	frm.Category.category = SIR_MAC_ACTION_SA_QUERY;
+	frm.Category.category = ACTION_CATEGORY_SA_QUERY;
 	/* 11w action  field is :
 	   action: 0 --> SA Query Request action frame
 	   action: 1 --> SA Query Response action frame */
@@ -4572,7 +4572,7 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 	smeSessionId = pe_session->smeSessionId;
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
-	frm.Category.category = SIR_MAC_ACTION_SA_QUERY;
+	frm.Category.category = ACTION_CATEGORY_SA_QUERY;
 	/*11w action  field is :
 	   action: 0 --> SA query request action frame
 	   action: 1 --> SA query response action frame */
@@ -4738,7 +4738,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
-	frm.Category.category = SIR_MAC_ACTION_BLKACK;
+	frm.Category.category = ACTION_CATEGORY_BACK;
 	frm.Action.action = SIR_MAC_ADDBA_RSP;
 
 	frm.DialogToken.token = dialog_token;

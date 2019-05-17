@@ -520,7 +520,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 	/*
 	 * setup Fixed fields,
 	 */
-	tdlsDisReq.Category.category = SIR_MAC_ACTION_TDLS;
+	tdlsDisReq.Category.category = ACTION_CATEGORY_TDLS;
 	tdlsDisReq.Action.action = SIR_MAC_TDLS_DIS_REQ;
 	tdlsDisReq.DialogToken.token = dialog;
 
@@ -807,7 +807,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	/*
 	 * setup Fixed fields,
 	 */
-	tdlsDisRsp.Category.category = SIR_MAC_ACTION_PUBLIC_USAGE;
+	tdlsDisRsp.Category.category = ACTION_CATEGORY_PUBLIC;
 	tdlsDisRsp.Action.action = SIR_MAC_TDLS_DIS_RSP;
 	tdlsDisRsp.DialogToken.token = dialog;
 
@@ -1116,7 +1116,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	smeSessionId = pe_session->smeSessionId;
 
 	qdf_mem_zero((uint8_t *) &tdlsSetupReq, sizeof(tDot11fTDLSSetupReq));
-	tdlsSetupReq.Category.category = SIR_MAC_ACTION_TDLS;
+	tdlsSetupReq.Category.category = ACTION_CATEGORY_TDLS;
 	tdlsSetupReq.Action.action = SIR_MAC_TDLS_SETUP_REQ;
 	tdlsSetupReq.DialogToken.token = dialog;
 
@@ -1375,7 +1375,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	 * serialization).  We start by zero-initializing the structure:
 	 */
 	qdf_mem_zero((uint8_t *) &teardown, sizeof(tDot11fTDLSTeardown));
-	teardown.Category.category = SIR_MAC_ACTION_TDLS;
+	teardown.Category.category = ACTION_CATEGORY_TDLS;
 	teardown.Action.action = SIR_MAC_TDLS_TEARDOWN;
 	teardown.Reason.code = reason;
 
@@ -1576,7 +1576,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	/*
 	 * setup Fixed fields,
 	 */
-	tdlsSetupRsp.Category.category = SIR_MAC_ACTION_TDLS;
+	tdlsSetupRsp.Category.category = ACTION_CATEGORY_TDLS;
 	tdlsSetupRsp.Action.action = SIR_MAC_TDLS_SETUP_RSP;
 	tdlsSetupRsp.DialogToken.token = dialog;
 
@@ -1824,7 +1824,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	/*
 	 * setup Fixed fields,
 	 */
-	tdlsSetupCnf.Category.category = SIR_MAC_ACTION_TDLS;
+	tdlsSetupCnf.Category.category = ACTION_CATEGORY_TDLS;
 	tdlsSetupCnf.Action.action = SIR_MAC_TDLS_SETUP_CNF;
 	tdlsSetupCnf.DialogToken.token = dialog;
 
@@ -2831,7 +2831,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 		goto lim_tdls_send_mgmt_error;
 	}
 
-	cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
+	cds_tdls_tx_rx_mgmt_event(ACTION_CATEGORY_TDLS,
 		SIR_MAC_ACTION_TX, SIR_MAC_MGMT_ACTION,
 		send_req->req_type, send_req->peer_mac.bytes);
 

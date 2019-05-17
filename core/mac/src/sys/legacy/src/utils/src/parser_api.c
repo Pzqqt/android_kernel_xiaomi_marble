@@ -4472,12 +4472,12 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 
 	/* delegate to the framesc-generated code, */
 	switch (*pFrame) {
-	case SIR_MAC_ACTION_QOS_MGMT:
+	case ACTION_CATEGORY_QOS:
 		status =
 			dot11f_unpack_add_ts_response(mac, pFrame, nFrame,
 						      &addts, false);
 		break;
-	case SIR_MAC_ACTION_WME:
+	case ACTION_CATEGORY_WMM:
 		status =
 			dot11f_unpack_wmm_add_ts_response(mac, pFrame, nFrame,
 							  &wmmaddts, false);
@@ -4500,7 +4500,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 	}
 	/* & "transliterate" from a 'tDot11fAddTSResponse' or a */
 	/* 'tDot11WMMAddTSResponse' to a 'tSirMacAddtsRspInfo'... */
-	if (SIR_MAC_ACTION_QOS_MGMT == *pFrame) {
+	if (ACTION_CATEGORY_QOS == *pFrame) {
 		pAddTs->dialogToken = addts.DialogToken.token;
 		pAddTs->status = (tSirMacStatusCodes) addts.Status.status;
 
@@ -4638,11 +4638,11 @@ sir_convert_delts_req2_struct(struct mac_context *mac,
 
 	/* delegate to the framesc-generated code, */
 	switch (*pFrame) {
-	case SIR_MAC_ACTION_QOS_MGMT:
+	case ACTION_CATEGORY_QOS:
 		status = dot11f_unpack_del_ts(mac, pFrame, nFrame,
 					      &delts, false);
 		break;
-	case SIR_MAC_ACTION_WME:
+	case ACTION_CATEGORY_WMM:
 		status = dot11f_unpack_wmm_del_ts(mac, pFrame, nFrame,
 						  &wmmdelts, false);
 		break;
@@ -4666,7 +4666,7 @@ sir_convert_delts_req2_struct(struct mac_context *mac,
 	}
 	/* & "transliterate" from a 'tDot11fDelTSResponse' or a */
 	/* 'tDot11WMMDelTSResponse' to a 'tSirMacDeltsReqInfo'... */
-	if (SIR_MAC_ACTION_QOS_MGMT == *pFrame) {
+	if (ACTION_CATEGORY_QOS == *pFrame) {
 		pDelTs->tsinfo.traffic.trafficType =
 			(uint16_t) delts.TSInfo.traffic_type;
 		pDelTs->tsinfo.traffic.tsid = (uint16_t) delts.TSInfo.tsid;

@@ -6419,18 +6419,18 @@ bool lim_is_robust_mgmt_action_frame(uint8_t action_category)
 	 * is required then this function need few more arguments
 	 * and little change in logic.
 	 */
-	case SIR_MAC_ACTION_SPECTRUM_MGMT:
-	case SIR_MAC_ACTION_QOS_MGMT:
-	case SIR_MAC_ACTION_DLP:
-	case SIR_MAC_ACTION_BLKACK:
-	case SIR_MAC_ACTION_RRM:
-	case SIR_MAC_ACTION_FAST_BSS_TRNST:
-	case SIR_MAC_ACTION_SA_QUERY:
-	case SIR_MAC_ACTION_PROT_DUAL_PUB:
-	case SIR_MAC_ACTION_WNM:
-	case SIR_MAC_ACITON_MESH:
-	case SIR_MAC_ACTION_MHF:
-	case SIR_MAC_ACTION_FST:
+	case ACTION_CATEGORY_SPECTRUM_MGMT:
+	case ACTION_CATEGORY_QOS:
+	case ACTION_CATEGORY_DLS:
+	case ACTION_CATEGORY_BACK:
+	case ACTION_CATEGORY_RRM:
+	case ACTION_FAST_BSS_TRNST:
+	case ACTION_CATEGORY_SA_QUERY:
+	case ACTION_CATEGORY_PROTECTED_DUAL_OF_PUBLIC_ACTION:
+	case ACTION_CATEGORY_WNM:
+	case ACTION_CATEGORY_MESH_ACTION:
+	case ACTION_CATEGORY_MULTIHOP_ACTION:
+	case ACTION_CATEGORY_FST:
 		return true;
 	default:
 		pe_debug("non-PMF action category: %d", action_category);

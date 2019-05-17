@@ -1807,7 +1807,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 #endif
 
 	switch (action_hdr->category) {
-	case SIR_MAC_ACTION_QOS_MGMT:
+	case ACTION_CATEGORY_QOS:
 		if ((session->limQosEnabled) ||
 		    (action_hdr->actionID == SIR_MAC_QOS_MAP_CONFIGURE)) {
 			switch (action_hdr->actionID) {
@@ -1843,7 +1843,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-	case SIR_MAC_ACTION_SPECTRUM_MGMT:
+	case ACTION_CATEGORY_SPECTRUM_MGMT:
 		switch (action_hdr->actionID) {
 #ifdef ANI_SUPPORT_11H
 		case SIR_MAC_ACTION_MEASURE_REQUEST_ID:
@@ -1872,7 +1872,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-	case SIR_MAC_ACTION_WME:
+	case ACTION_CATEGORY_WMM:
 		if (!session->limWmeEnabled) {
 			pe_warn("WME mode disabled - dropping frame: %d",
 				action_hdr->actionID);
@@ -1906,7 +1906,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-	case SIR_MAC_ACTION_HT:
+	case ACTION_CATEGORY_HT:
 		/** Type of HT Action to be performed*/
 		switch (action_hdr->actionID) {
 		case SIR_MAC_SM_POWER_SAVE:
@@ -1922,7 +1922,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-	case SIR_MAC_ACTION_WNM:
+	case ACTION_CATEGORY_WNM:
 		pe_debug("WNM Action category: %d action: %d",
 			action_hdr->category, action_hdr->actionID);
 		switch (action_hdr->actionID) {
@@ -1949,7 +1949,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 
-	case SIR_MAC_ACTION_RRM:
+	case ACTION_CATEGORY_RRM:
 		/* Ignore RRM measurement request until DHCP is set */
 		if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 		    mac_ctx->roam.roamSession
@@ -2044,7 +2044,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 				GET_LIM_SYSTEM_ROLE(session));
 		}
 	break;
-	case SIR_MAC_ACTION_PUBLIC_USAGE:
+	case ACTION_CATEGORY_PUBLIC:
 		mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 
 		switch (action_hdr->actionID) {
@@ -2099,7 +2099,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		break;
 
 #ifdef WLAN_FEATURE_11W
-	case SIR_MAC_ACTION_SA_QUERY:
+	case ACTION_CATEGORY_SA_QUERY:
 		pe_debug("SA Query Action category: %d action: %d",
 			action_hdr->category, action_hdr->actionID);
 		switch (action_hdr->actionID) {
@@ -2122,7 +2122,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 #endif
-	case SIR_MAC_ACTION_VHT:
+	case ACTION_CATEGORY_VHT:
 		if (!session->vhtCapability)
 			break;
 		switch (action_hdr->actionID) {
@@ -2140,7 +2140,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			break;
 		}
 		break;
-	case SIR_MAC_ACTION_FST: {
+	case ACTION_CATEGORY_FST: {
 		tpSirMacMgmtHdr     hdr;
 
 		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
@@ -2157,7 +2157,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					    rx_pkt_info), RXMGMT_FLAG_NONE);
 		break;
 	}
-	case SIR_MAC_ACTION_PROT_DUAL_PUB:
+	case ACTION_CATEGORY_PROTECTED_DUAL_OF_PUBLIC_ACTION:
 		pe_debug("Rcvd Protected Dual of Public Action: %d",
 			action_hdr->actionID);
 		switch (action_hdr->actionID) {
@@ -2179,7 +2179,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			break;
 		}
 		break;
-	case SIR_MAC_ACTION_BLKACK:
+	case ACTION_CATEGORY_BACK:
 		pe_debug("Rcvd Block Ack for %pM; action: %d",
 			session->selfMacAddr, action_hdr->actionID);
 		switch (action_hdr->actionID) {
@@ -2238,7 +2238,7 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pBd)
 	}
 
 	switch (action_hdr->category) {
-	case SIR_MAC_ACTION_PUBLIC_USAGE:
+	case ACTION_CATEGORY_PUBLIC:
 		switch (action_hdr->actionID) {
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
 			vendor_specific =
