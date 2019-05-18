@@ -5698,6 +5698,7 @@ void dp_peer_unref_delete(void *peer_handle)
 #ifdef PEER_CACHE_RX_PKTS
 static inline void dp_peer_rx_bufq_resources_deinit(struct dp_peer *peer)
 {
+	dp_rx_flush_rx_cached(peer, true);
 	qdf_list_destroy(&peer->bufq_info.cached_bufq);
 	qdf_spinlock_destroy(&peer->bufq_info.bufq_lock);
 }
@@ -5738,9 +5739,10 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
 
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
-	qdf_spinlock_destroy(&peer->peer_info_lock);
 
 	dp_peer_rx_bufq_resources_deinit(peer);
+
+	qdf_spinlock_destroy(&peer->peer_info_lock);
 
 	/*
 	 * Remove the reference added during peer_attach.
