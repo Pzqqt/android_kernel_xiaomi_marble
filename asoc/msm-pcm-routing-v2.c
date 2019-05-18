@@ -82,6 +82,8 @@ static bool swap_ch;
 static int aanc_level;
 static int num_app_cfg_types;
 static int msm_ec_ref_port_id;
+static int afe_loopback_tx_port_index;
+static int afe_loopback_tx_port_id = -1;
 
 #define WEIGHT_0_DB 0x4000
 /* all the FEs which can support channel mixer */
@@ -857,7 +859,20 @@ static int msm_pcm_routing_get_lsm_app_type_idx(int app_type)
 
 static int get_port_id(int port_id)
 {
-	return (port_id == AFE_LOOPBACK_TX ? msm_ec_ref_port_id : port_id);
+	int ret = port_id;
+
+	if (port_id == AFE_LOOPBACK_TX) {
+		/*
+		 * Return afe_loopback_tx_port_id if set. Else return
+		 * msm_ec_ref_port_id to maintain backward compatibility.
+		 */
+		if (afe_loopback_tx_port_id != -1)
+			ret = afe_loopback_tx_port_id;
+		else
+			ret = msm_ec_ref_port_id;
+	}
+
+	return ret;
 }
 
 static bool is_mm_lsm_fe_id(int fe_id)
@@ -3611,7 +3626,7 @@ static const struct snd_kcontrol_new channel_mixer_controls[] = {
 			msm_pcm_put_channel_rule_index),
 
 	SOC_SINGLE_EXT("MultiMedia1 Channels", SND_SOC_NOPM,
-			MSM_FRONTEND_DAI_MULTIMEDIA1, 8, 0,
+			MSM_FRONTEND_DAI_MULTIMEDIA1, 10, 0,
 			msm_pcm_get_out_chs,
 			msm_pcm_put_out_chs),
 	SOC_SINGLE_EXT("MultiMedia2 Channels", SND_SOC_NOPM,
@@ -3749,6 +3764,26 @@ static const struct snd_kcontrol_new channel_mixer_controls[] = {
 	.put = msm_pcm_channel_weight_put,
 	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
 		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 7,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel9",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 8,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel10",
+	.info = msm_pcm_channel_weight_info,
+	.get = msm_pcm_channel_weight_get,
+	.put = msm_pcm_channel_weight_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1, .rshift = 9,}
 	},
 	{
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
@@ -4030,6 +4065,191 @@ static int msm_ec_ref_rate_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int get_ec_ref_port_id(int value, int *index)
+{
+	int port_id;
+
+	switch (value) {
+	case 0:
+		*index = 0;
+		port_id = AFE_PORT_INVALID;
+		break;
+	case 1:
+		*index = 1;
+		port_id = SLIMBUS_0_RX;
+		break;
+	case 2:
+		*index = 2;
+		port_id = AFE_PORT_ID_PRIMARY_MI2S_RX;
+		break;
+	case 3:
+		*index = 3;
+		port_id = AFE_PORT_ID_PRIMARY_MI2S_TX;
+		break;
+	case 4:
+		*index = 4;
+		port_id = AFE_PORT_ID_SECONDARY_MI2S_TX;
+		break;
+	case 5:
+		*index = 5;
+		port_id = AFE_PORT_ID_TERTIARY_MI2S_TX;
+		break;
+	case 6:
+		*index = 6;
+		port_id = AFE_PORT_ID_QUATERNARY_MI2S_TX;
+		break;
+	case 7:
+		*index = 7;
+		port_id = AFE_PORT_ID_SECONDARY_MI2S_RX;
+		break;
+	case 9:
+		*index = 9;
+		port_id = SLIMBUS_5_RX;
+		break;
+	case 10:
+		*index = 10;
+		port_id = SLIMBUS_1_TX;
+		break;
+	case 11:
+		*index = 11;
+		port_id = AFE_PORT_ID_QUATERNARY_TDM_TX_1;
+		break;
+	case 12:
+		*index = 12;
+		port_id = AFE_PORT_ID_QUATERNARY_TDM_RX;
+		break;
+	case 13:
+		*index = 13;
+		port_id = AFE_PORT_ID_QUATERNARY_TDM_RX_1;
+		break;
+	case 14:
+		*index = 14;
+		port_id = AFE_PORT_ID_QUATERNARY_TDM_RX_2;
+		break;
+	case 15:
+		*index = 15;
+		port_id = SLIMBUS_6_RX;
+		break;
+	case 16:
+		*index = 16;
+		port_id = AFE_PORT_ID_TERTIARY_MI2S_RX;
+		break;
+	case 17:
+		*index = 17;
+		port_id = AFE_PORT_ID_QUATERNARY_MI2S_RX;
+		break;
+	case 18:
+		*index = 18;
+		port_id = AFE_PORT_ID_TERTIARY_TDM_TX;
+		break;
+	case 19:
+		*index = 19;
+		port_id = AFE_PORT_ID_USB_RX;
+		break;
+	case 20:
+		*index = 20;
+		port_id = AFE_PORT_ID_INT0_MI2S_RX;
+		break;
+	case 21:
+		*index = 21;
+		port_id = AFE_PORT_ID_INT4_MI2S_RX;
+		break;
+	case 22:
+		*index = 22;
+		port_id = AFE_PORT_ID_INT3_MI2S_TX;
+		break;
+	case 23:
+		*index = 23;
+		port_id = AFE_PORT_ID_HDMI_OVER_DP_RX;
+		break;
+	case 24:
+		*index = 24;
+		port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0;
+		break;
+	case 25:
+		*index = 25;
+		port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1;
+		break;
+	case 26:
+		*index = 26;
+		port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_0;
+		break;
+	case 27:
+		*index = 27;
+		port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_1;
+		break;
+	case 28:
+		*index = 28;
+		port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2;
+		break;
+	case 29:
+		*index = 29;
+		port_id = SLIMBUS_7_RX;
+		break;
+	case 30:
+		*index = 30;
+		port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_0;
+		break;
+	case 31:
+		*index = 31;
+		port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_1;
+		break;
+	case 32:
+		*index = 32;
+		port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_2;
+		break;
+	case 33:
+		*index = 33;
+		port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_3;
+		break;
+	case 34:
+		*index = 34;
+		port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_0;
+		break;
+	case 35:
+		*index = 35;
+		port_id = AFE_PORT_ID_TERTIARY_TDM_RX_2;
+		break;
+	case 36:
+		*index = 36;
+		port_id = AFE_PORT_ID_SECONDARY_TDM_TX;
+		break;
+	default:
+		*index = 0; /* NONE */
+		pr_err("%s: Invalid value %d\n", __func__, value);
+		port_id = AFE_PORT_INVALID;
+		break;
+	}
+
+	return port_id;
+}
+
+static int msm_routing_afe_lb_tx_port_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: port index = %d", __func__, afe_loopback_tx_port_index);
+	mutex_lock(&routing_lock);
+	ucontrol->value.integer.value[0] = afe_loopback_tx_port_index;
+	mutex_unlock(&routing_lock);
+
+	return 0;
+}
+
+static int msm_routing_afe_lb_tx_port_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int value = ucontrol->value.integer.value[0];
+
+	mutex_lock(&routing_lock);
+	afe_loopback_tx_port_id = get_ec_ref_port_id(value,
+			&afe_loopback_tx_port_index);
+	pr_debug("%s: afe_loopback_tx_port_index = %d\n",
+	    __func__, afe_loopback_tx_port_index);
+	mutex_unlock(&routing_lock);
+
+	return 0;
+}
+
 static const char *const ec_ref_rate_text[] = {"0", "8000", "16000",
 	"32000", "44100", "48000", "96000", "192000", "384000"};
 
@@ -4038,218 +4258,6 @@ static const struct soc_enum msm_route_ec_ref_params_enum[] = {
 	SOC_ENUM_SINGLE_EXT(3, ec_ref_bit_format_text),
 	SOC_ENUM_SINGLE_EXT(9, ec_ref_rate_text),
 };
-
-static const struct snd_kcontrol_new ec_ref_param_controls[] = {
-	SOC_ENUM_EXT("EC Reference Channels", msm_route_ec_ref_params_enum[0],
-		msm_ec_ref_ch_get, msm_ec_ref_ch_put),
-	SOC_ENUM_EXT("EC Reference Bit Format", msm_route_ec_ref_params_enum[1],
-		msm_ec_ref_bit_format_get, msm_ec_ref_bit_format_put),
-	SOC_ENUM_EXT("EC Reference SampleRate", msm_route_ec_ref_params_enum[2],
-		msm_ec_ref_rate_get, msm_ec_ref_rate_put),
-	SOC_ENUM_EXT("EC Reference Downmixed Channels", msm_route_ec_ref_params_enum[0],
-		msm_ec_ref_ch_downmixed_get, msm_ec_ref_ch_downmixed_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch1", SND_SOC_NOPM, 0,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch2", SND_SOC_NOPM, 1,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch3", SND_SOC_NOPM, 2,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch4", SND_SOC_NOPM, 3,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch5", SND_SOC_NOPM, 4,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch6", SND_SOC_NOPM, 5,
-		16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8,
-		NULL, msm_ec_ref_chmixer_weights_put),
-};
-
-static int msm_routing_ec_ref_rx_get(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	pr_debug("%s: ec_ref_rx  = %d", __func__, msm_route_ec_ref_rx);
-	mutex_lock(&routing_lock);
-	ucontrol->value.integer.value[0] = msm_route_ec_ref_rx;
-	mutex_unlock(&routing_lock);
-	return 0;
-}
-
-static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	int ec_ref_port_id;
-	struct snd_soc_dapm_widget *widget =
-		snd_soc_dapm_kcontrol_widget(kcontrol);
-	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
-	struct snd_soc_dapm_update *update = NULL;
-
-
-	mutex_lock(&routing_lock);
-	switch (ucontrol->value.integer.value[0]) {
-	case 0:
-		msm_route_ec_ref_rx = 0;
-		ec_ref_port_id = AFE_PORT_INVALID;
-		break;
-	case 1:
-		msm_route_ec_ref_rx = 1;
-		ec_ref_port_id = SLIMBUS_0_RX;
-		break;
-	case 2:
-		msm_route_ec_ref_rx = 2;
-		ec_ref_port_id = AFE_PORT_ID_PRIMARY_MI2S_RX;
-		break;
-	case 3:
-		msm_route_ec_ref_rx = 3;
-		ec_ref_port_id = AFE_PORT_ID_PRIMARY_MI2S_TX;
-		break;
-	case 4:
-		msm_route_ec_ref_rx = 4;
-		ec_ref_port_id = AFE_PORT_ID_SECONDARY_MI2S_TX;
-		break;
-	case 5:
-		msm_route_ec_ref_rx = 5;
-		ec_ref_port_id = AFE_PORT_ID_TERTIARY_MI2S_TX;
-		break;
-	case 6:
-		msm_route_ec_ref_rx = 6;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_MI2S_TX;
-		break;
-	case 7:
-		msm_route_ec_ref_rx = 7;
-		ec_ref_port_id = AFE_PORT_ID_SECONDARY_MI2S_RX;
-		break;
-	case 9:
-		msm_route_ec_ref_rx = 9;
-		ec_ref_port_id = SLIMBUS_5_RX;
-		break;
-	case 10:
-		msm_route_ec_ref_rx = 10;
-		ec_ref_port_id = SLIMBUS_1_TX;
-		break;
-	case 11:
-		msm_route_ec_ref_rx = 11;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_TDM_TX_1;
-		break;
-	case 12:
-		msm_route_ec_ref_rx = 12;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_TDM_RX;
-		break;
-	case 13:
-		msm_route_ec_ref_rx = 13;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_TDM_RX_1;
-		break;
-	case 14:
-		msm_route_ec_ref_rx = 14;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_TDM_RX_2;
-		break;
-	case 15:
-		msm_route_ec_ref_rx = 15;
-		ec_ref_port_id = SLIMBUS_6_RX;
-		break;
-	case 16:
-		msm_route_ec_ref_rx = 16;
-		ec_ref_port_id = AFE_PORT_ID_TERTIARY_MI2S_RX;
-		break;
-	case 17:
-		msm_route_ec_ref_rx = 17;
-		ec_ref_port_id = AFE_PORT_ID_QUATERNARY_MI2S_RX;
-		break;
-	case 18:
-		msm_route_ec_ref_rx = 18;
-		ec_ref_port_id = AFE_PORT_ID_TERTIARY_TDM_TX;
-		break;
-	case 19:
-		msm_route_ec_ref_rx = 19;
-		ec_ref_port_id = AFE_PORT_ID_USB_RX;
-		break;
-	case 20:
-		msm_route_ec_ref_rx = 20;
-		ec_ref_port_id = AFE_PORT_ID_INT0_MI2S_RX;
-		break;
-	case 21:
-		msm_route_ec_ref_rx = 21;
-		ec_ref_port_id = AFE_PORT_ID_INT4_MI2S_RX;
-		break;
-	case 22:
-		msm_route_ec_ref_rx = 22;
-		ec_ref_port_id = AFE_PORT_ID_INT3_MI2S_TX;
-		break;
-	case 23:
-		msm_route_ec_ref_rx = 23;
-		ec_ref_port_id = AFE_PORT_ID_HDMI_OVER_DP_RX;
-		break;
-	case 24:
-		msm_route_ec_ref_rx = 24;
-		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0;
-		break;
-	case 25:
-		msm_route_ec_ref_rx = 25;
-		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1;
-		break;
-	case 26:
-		msm_route_ec_ref_rx = 26;
-		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_0;
-		break;
-	case 27:
-		msm_route_ec_ref_rx = 27;
-		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_1;
-		break;
-	case 28:
-		msm_route_ec_ref_rx = 28;
-		ec_ref_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2;
-		break;
-	case 29:
-		msm_route_ec_ref_rx = 29;
-		ec_ref_port_id = SLIMBUS_7_RX;
-		break;
-	case 30:
-		msm_route_ec_ref_rx = 30;
-		ec_ref_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_0;
-		break;
-	case 31:
-		msm_route_ec_ref_rx = 31;
-		ec_ref_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_1;
-		break;
-	case 32:
-		msm_route_ec_ref_rx = 32;
-		ec_ref_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_2;
-		break;
-	case 33:
-		msm_route_ec_ref_rx = 33;
-		ec_ref_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_3;
-		break;
-	case 34:
-		msm_route_ec_ref_rx = 34;
-		ec_ref_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_0;
-		break;
-	case 35:
-		msm_route_ec_ref_rx = 35;
-		ec_ref_port_id = AFE_PORT_ID_TERTIARY_TDM_RX_2;
-		break;
-	case 36:
-		msm_route_ec_ref_rx = 36;
-		ec_ref_port_id = AFE_PORT_ID_SECONDARY_TDM_TX;
-		break;
-	default:
-		msm_route_ec_ref_rx = 0; /* NONE */
-		pr_err("%s EC ref rx %ld not valid\n",
-			__func__, ucontrol->value.integer.value[0]);
-		ec_ref_port_id = AFE_PORT_INVALID;
-		break;
-	}
-	msm_ec_ref_port_id = ec_ref_port_id;
-	adm_ec_ref_rx_id(ec_ref_port_id);
-	pr_debug("%s: msm_route_ec_ref_rx = %d\n",
-	    __func__, msm_route_ec_ref_rx);
-	mutex_unlock(&routing_lock);
-	snd_soc_dapm_mux_update_power(widget->dapm, kcontrol,
-					msm_route_ec_ref_rx, e, update);
-	return 0;
-}
 
 static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 	"PRI_MI2S_TX", "SEC_MI2S_TX",
@@ -4267,6 +4275,70 @@ static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 static const struct soc_enum msm_route_ec_ref_rx_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ec_ref_rx), ec_ref_rx),
 };
+
+static const struct snd_kcontrol_new ec_ref_param_controls[] = {
+	SOC_ENUM_EXT("EC Reference Channels", msm_route_ec_ref_params_enum[0],
+		msm_ec_ref_ch_get, msm_ec_ref_ch_put),
+	SOC_ENUM_EXT("EC Reference Bit Format", msm_route_ec_ref_params_enum[1],
+		msm_ec_ref_bit_format_get, msm_ec_ref_bit_format_put),
+	SOC_ENUM_EXT("EC Reference SampleRate", msm_route_ec_ref_params_enum[2],
+		msm_ec_ref_rate_get, msm_ec_ref_rate_put),
+	SOC_ENUM_EXT("EC Reference Downmixed Channels",
+		msm_route_ec_ref_params_enum[0],
+		msm_ec_ref_ch_downmixed_get, msm_ec_ref_ch_downmixed_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch1", SND_SOC_NOPM,
+		0, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch2", SND_SOC_NOPM,
+		1, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch3", SND_SOC_NOPM,
+		2, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch4", SND_SOC_NOPM,
+		3, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch5", SND_SOC_NOPM,
+		4, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_SINGLE_MULTI_EXT("EC Reference ChMixer Weights Ch6", SND_SOC_NOPM,
+		5, 16384, 0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, NULL,
+		msm_ec_ref_chmixer_weights_put),
+	SOC_ENUM_EXT("AFE_LOOPBACK_TX Port", msm_route_ec_ref_rx_enum[0],
+		msm_routing_afe_lb_tx_port_get, msm_routing_afe_lb_tx_port_put),
+};
+
+static int msm_routing_ec_ref_rx_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	pr_debug("%s: ec_ref_rx  = %d", __func__, msm_route_ec_ref_rx);
+	mutex_lock(&routing_lock);
+	ucontrol->value.integer.value[0] = msm_route_ec_ref_rx;
+	mutex_unlock(&routing_lock);
+
+	return 0;
+}
+
+static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	int value = ucontrol->value.integer.value[0];
+	struct snd_soc_dapm_widget *widget =
+		snd_soc_dapm_kcontrol_widget(kcontrol);
+	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
+	struct snd_soc_dapm_update *update = NULL;
+
+	mutex_lock(&routing_lock);
+	msm_ec_ref_port_id = get_ec_ref_port_id(value, &msm_route_ec_ref_rx);
+	adm_ec_ref_rx_id(msm_ec_ref_port_id);
+	pr_debug("%s: msm_route_ec_ref_rx = %d\n",
+	    __func__, msm_route_ec_ref_rx);
+	mutex_unlock(&routing_lock);
+
+	snd_soc_dapm_mux_update_power(widget->dapm, kcontrol,
+					msm_route_ec_ref_rx, e, update);
+	return 0;
+}
 
 static const struct snd_kcontrol_new ext_ec_ref_mux_ul1 =
 	SOC_DAPM_ENUM_EXT("AUDIO_REF_EC_UL1 MUX Mux",
