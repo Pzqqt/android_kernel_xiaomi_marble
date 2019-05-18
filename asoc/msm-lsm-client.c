@@ -2425,6 +2425,7 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	int ret = 0;
 
 	pr_debug("%s\n", __func__);
@@ -2488,6 +2489,8 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 	prtd->lsm_client->perf_mode = 0;
 	prtd->lsm_client->event_mode = LSM_EVENT_NON_TIME_STAMP_MODE;
 	prtd->lsm_client->event_type = LSM_DET_EVENT_TYPE_LEGACY;
+	prtd->lsm_client->fe_id = rtd->dai_link->id;
+	prtd->lsm_client->unprocessed_data = 0;
 
 	return 0;
 }
@@ -2958,13 +2961,81 @@ static int msm_lsm_add_app_type_controls(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 }
 
+static int msm_lsm_afe_data_ctl_put(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *ucontrol)
+{
+	u64 fe_id = kcontrol->private_value;
+	uint16_t afe_data_format = 0;
+	int ret = 0;
+
+	afe_data_format = ucontrol->value.integer.value[0];
+	pr_debug("%s: afe data is %s\n", __func__,
+		 afe_data_format ? "unprocessed" : "processed");
+
+	ret = q6lsm_set_afe_data_format(fe_id, afe_data_format);
+	if (ret)
+		pr_err("%s: q6lsm_set_afe_data_format failed, ret = %d\n",
+			__func__, ret);
+
+	return ret;
+}
+
+static int msm_lsm_afe_data_ctl_get(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_value *ucontrol)
+{
+	u64 fe_id = kcontrol->private_value;
+	uint16_t afe_data_format = 0;
+	int ret = 0;
+
+	q6lsm_get_afe_data_format(fe_id, &afe_data_format);
+	ucontrol->value.integer.value[0] = afe_data_format;
+	pr_debug("%s: afe data is %s\n", __func__,
+		 afe_data_format ? "unprocessed" : "processed");
+
+	return ret;
+}
+
+static int msm_lsm_add_afe_data_controls(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_pcm *pcm = rtd->pcm;
+	struct snd_pcm_usr *afe_data_info;
+	struct snd_kcontrol *kctl;
+	const char *mixer_ctl_name	= "Listen Stream";
+	const char *deviceNo		= "NN";
+	const char *suffix		= "Unprocessed Data";
+	int ctl_len, ret = 0;
+
+	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1 +
+		  strlen(suffix) + 1;
+	pr_debug("%s: Adding Listen afe data cntrls\n", __func__);
+	ret = snd_pcm_add_usr_ctls(pcm, SNDRV_PCM_STREAM_CAPTURE,
+				   NULL, 1, ctl_len, rtd->dai_link->id,
+				   &afe_data_info);
+	if (ret < 0) {
+		pr_err("%s: Adding Listen afe data cntrls failed: %d\n",
+		       __func__, ret);
+		return ret;
+	}
+	kctl = afe_data_info->kctl;
+	snprintf(kctl->id.name, ctl_len, "%s %d %s",
+		 mixer_ctl_name, rtd->pcm->device, suffix);
+	kctl->put = msm_lsm_afe_data_ctl_put;
+	kctl->get = msm_lsm_afe_data_ctl_get;
+
+	return 0;
+}
+
 static int msm_lsm_add_controls(struct snd_soc_pcm_runtime *rtd)
 {
 	int ret = 0;
 
 	ret = msm_lsm_add_app_type_controls(rtd);
 	if (ret)
-		pr_err("%s, add  app type controls failed:%d\n", __func__, ret);
+		pr_err("%s, add app type controls failed:%d\n", __func__, ret);
+
+	ret = msm_lsm_add_afe_data_controls(rtd);
+	if (ret)
+		pr_err("%s, add afe data controls failed:%d\n", __func__, ret);
 
 	return ret;
 }
