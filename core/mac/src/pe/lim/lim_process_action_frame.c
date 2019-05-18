@@ -2183,10 +2183,10 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		pe_debug("Rcvd Block Ack for %pM; action: %d",
 			session->selfMacAddr, action_hdr->actionID);
 		switch (action_hdr->actionID) {
-		case SIR_MAC_ADDBA_REQ:
+		case ADDBA_REQUEST:
 			lim_process_addba_req(mac_ctx, rx_pkt_info, session);
 			break;
-		case SIR_MAC_DELBA_REQ:
+		case DELBA:
 			lim_process_delba_req(mac_ctx, rx_pkt_info, session);
 			break;
 		default:

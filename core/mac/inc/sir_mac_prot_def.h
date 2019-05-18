@@ -103,10 +103,6 @@
 #define SIR_MAC_ACTION_TX             1
 #define SIR_MAC_ACTION_RX             2
 
-#define SIR_MAC_ADDBA_REQ     0
-#define SIR_MAC_ADDBA_RSP     1
-#define SIR_MAC_DELBA_REQ     2
-
 #define SIR_MAC_BA_POLICY_DELAYED       0
 #define SIR_MAC_BA_POLICY_IMMEDIATE     1
 #define SIR_MAC_BA_AMSDU_SUPPORTED      1

@@ -4739,7 +4739,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 	frm.Category.category = ACTION_CATEGORY_BACK;
-	frm.Action.action = SIR_MAC_ADDBA_RSP;
+	frm.Action.action = ADDBA_RESPONSE;
 
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
