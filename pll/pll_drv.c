@@ -208,9 +208,12 @@ static inline int mdss_pll_get_ioresurces(struct platform_device *pdev,
 	struct resource *rsc = platform_get_resource_byname(pdev,
 						IORESOURCE_MEM, resource_name);
 	if (rsc) {
+		if (!regmap)
+			return -ENOMEM;
+
 		*regmap = devm_ioremap(&pdev->dev,
 					rsc->start, resource_size(rsc));
-		if (!regmap)
+		if (!*regmap)
 			return -ENOMEM;
 	}
 	return rc;

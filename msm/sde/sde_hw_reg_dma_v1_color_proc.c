@@ -2267,6 +2267,7 @@ void reg_dmav1_setup_vig_igcv5(struct sde_hw_pipe *ctx, void *cfg)
 	if (!igc_lut) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
 		vig_igcv5_off(ctx, hw_cfg);
+		return;
 	}
 
 	dma_ops = sde_reg_dma_get_ops();
@@ -2317,6 +2318,7 @@ void reg_dmav1_setup_vig_igcv6(struct sde_hw_pipe *ctx, void *cfg)
 		DRM_DEBUG_DRIVER("disable igc feature\n");
 		/* Both v5 and v6 call same igcv5_off */
 		vig_igcv5_off(ctx, hw_cfg);
+		return;
 	}
 
 	dma_ops = sde_reg_dma_get_ops();
