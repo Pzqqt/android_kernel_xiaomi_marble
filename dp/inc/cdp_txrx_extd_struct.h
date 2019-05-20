@@ -140,8 +140,6 @@ struct ol_ath_radiostats {
 	uint64_t    wmi_tx_mgmt;
 	uint64_t    wmi_tx_mgmt_completions;
 	uint32_t    wmi_tx_mgmt_completion_err;
-	uint32_t    peer_delete_req;
-	uint32_t    peer_delete_resp;
 	uint32_t    rx_mgmt_rssi_drop;
 	uint32_t    tx_frame_count;
 	uint32_t    rx_frame_count;
