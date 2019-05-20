@@ -24528,11 +24528,11 @@ typedef enum {
 /*
 * Lay out of flags in wmi_wlm_config_cmd_fixed_param
 *
-* |31  17|16 14| 13 | 12 |  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
-* +------+-----+----+----+------+------+------+------+------+------+-----+-----+
-* | RSVD | NSS |EDCA| TRY| SSLP | CSLP | RSVD | Roam | RSVD | DWLT | DFS | SUP |
-* +----------------------+-------------+-------------+-------------------------+
-* |          WAL         |      PS     |     Roam    |         Scan            |
+* |31 19|  18 | 17|16 14| 13 | 12| 11 | 10 |  9  |  8 |7  6|5  4|3  2| 1 | 0 |
+* +-----+-----+---+-----+----+---+----+----+-----+----+----+----+----+---+---+
+* | RSVD|SRATE|RTS| NSS |EDCA|TRY|SSLP|CSLP|DBMPS|RSVD|Roam|RSVD|DWLT|DFS|SUP|
+* +------------------------------+---------------+---------+-----------------+
+* |              WAL             |    PS         |  Roam   |     Scan        |
 *
 * Flag values:
 *     TRY: (1) enable short limit for retrying unacked tx, where the limit is
@@ -24543,6 +24543,10 @@ typedef enum {
 *     NSS: (0) no Nss limits, other than those negotiatied during association
 *          (1) during 2-chain operation, tx only a single spatial stream
 *          (2) - (7) reserved / invalid
+*     RTS: (0) default protection
+*          (1) always enable RTS/CTS protection
+*   SRATE: (0) default secondary rate policy
+*          (1) disable secondary rate
 */
 /* bit 0-3 of flags is used for scan operation */
 /* bit 0: WLM_FLAGS_SCAN_SUPPRESS, suppress all scan and other bits would be ignored if bit is set */
@@ -24619,6 +24623,10 @@ typedef enum {
 #define WLM_FLAGS_WAL_ADJUST_EDCA_SET(flag, val)          WMI_SET_BITS(flag, 13, 1, val)
 #define WLM_FLAGS_WAL_1NSS_ENABLED(flag)                 (WMI_GET_BITS(flag, 14, 3) & 0x1)
 #define WLM_FLAGS_WAL_NSS_SET(flag, val)                  WMI_SET_BITS(flag, 14, 3, val)
+#define WLM_FLAGS_WAL_ALWAYS_RTS_PROTECTION(flag)         WMI_GET_BITS(flag, 17, 1)
+#define WLM_FLAGS_WAL_RTS_PROTECTION_SET(flag, val)       WMI_SET_BITS(flag, 17, 1, val)
+#define WLM_FLAGS_WAL_DISABLE_SECONDARY_RATE(flag)        WMI_GET_BITS(flag, 18, 1)
+#define WLM_FLAGS_WAL_SECONDARY_RATE_SET(flag, val)       WMI_SET_BITS(flag, 18, 1, val)
 
 typedef struct {
     /** TLV tag and len; tag equals
