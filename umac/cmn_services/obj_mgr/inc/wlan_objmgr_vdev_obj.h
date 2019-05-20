@@ -1406,7 +1406,9 @@ static inline void wlan_vdev_set_bsspeer(struct wlan_objmgr_vdev *vdev,
  * wlan_vdev_get_bsspeer() - get bss peer
  * @vdev: VDEV object
  *
- * API to get the BSS peer of VDEV
+ * API to get the BSS peer of VDEV, wlan_objmgr_vdev_try_get_bsspeer API
+ * preferred to use outside obj manager to take and handle ref count of
+ * bss_peer with ref debug ID.
  *
  * Return:
  * @peer: BSS peer pointer

@@ -254,12 +254,14 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 	info.u.get_tx_power_cb = get_tx_power_cb;
 	info.vdev_id = wlan_vdev_get_id(vdev);
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
 	if (!peer) {
 		ret = -EINVAL;
 		goto peer_is_null;
 	}
 	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 
 	status = ucfg_mc_cp_stats_send_stats_request(vdev,
 						     TYPE_CONNECTION_TX_POWER,
@@ -506,13 +508,15 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	info.u.get_station_stats_cb = get_station_stats_cb;
 	info.vdev_id = wlan_vdev_get_id(vdev);
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
 	if (!peer) {
 		cfg80211_err("peer is null");
 		*errno = -EINVAL;
 		goto get_station_stats_fail;
 	}
 	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
 						     &info);

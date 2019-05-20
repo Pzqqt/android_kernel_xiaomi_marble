@@ -649,7 +649,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			peer = wlan_objmgr_vdev_try_get_bsspeer(vdev,
 								WLAN_CRYPTO_ID);
 			if (!peer) {
-				crypto_err("peer %pK failed", peer);
+				crypto_err("peer NULL");
 				if (IS_MGMT_CIPHER(req_key->type)) {
 					crypto_priv->igtk_key[igtk_idx] = NULL;
 					crypto_priv->igtk_key_type
