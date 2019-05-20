@@ -2152,6 +2152,7 @@ done:
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
 				DP_STATS_INC(soc, rx.err.invalid_sa_da_idx, 1);
+				dp_peer_unref_del_find_by_id(peer);
 				continue;
 			}
 			/* WDS Source Port Learning */
