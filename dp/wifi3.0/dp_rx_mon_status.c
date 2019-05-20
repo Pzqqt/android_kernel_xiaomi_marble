@@ -281,7 +281,8 @@ static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 	if (is_invalid_peer)
 		return;
 
-	dp_rx_rate_stats_update(peer, ppdu);
+	if (dp_is_subtype_data(ppdu->frame_ctrl))
+		dp_rx_rate_stats_update(peer, ppdu);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc,

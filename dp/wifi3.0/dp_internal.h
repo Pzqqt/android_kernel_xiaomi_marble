@@ -1035,6 +1035,30 @@ static inline int dp_get_mac_id_for_mac(struct dp_soc *soc, uint32_t mac_id)
 
 bool dp_is_soc_reinit(struct dp_soc *soc);
 
+/*
+ * dp_is_subtype_data() - check if the frame subtype is data
+ *
+ * @frame_ctrl: Frame control field
+ *
+ * check the frame control field and verify if the packet
+ * is a data packet.
+ *
+ * Return: true or false
+ */
+static inline bool dp_is_subtype_data(uint16_t frame_ctrl)
+{
+	if (((qdf_cpu_to_le16(frame_ctrl) & QDF_IEEE80211_FC0_TYPE_MASK) ==
+	    QDF_IEEE80211_FC0_TYPE_DATA) &&
+	    (((qdf_cpu_to_le16(frame_ctrl) & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+	    QDF_IEEE80211_FC0_SUBTYPE_DATA) ||
+	    ((qdf_cpu_to_le16(frame_ctrl) & QDF_IEEE80211_FC0_SUBTYPE_MASK) ==
+	    QDF_IEEE80211_FC0_SUBTYPE_QOS))) {
+		return true;
+	}
+
+	return false;
+}
+
 #ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 				uint32_t stats_type_upload_mask,
