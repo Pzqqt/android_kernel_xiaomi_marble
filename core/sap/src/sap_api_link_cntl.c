@@ -223,18 +223,6 @@ wlansap_calculate_chan_from_scan_result(mac_handle_t mac_handle,
 	if (list)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("num_entries %d"), qdf_list_size(list));
-	if (!list || (list && !qdf_list_size(list))) {
-		sme_err("get scan result failed");
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to get scan results"));
-		if (list)
-			ucfg_scan_purge_results(list);
-		/*
-		 * No scan results So, set the operation channel not selected
-		 * to allow the default channel to be set when reporting to HDD
-		 */
-		return oper_channel;
-	}
 
 	wlansap_send_acs_success_event(sap_ctx, scan_id);
 

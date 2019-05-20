@@ -339,7 +339,8 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	spect_ch = spect_info->pSpectCh;
 
-	qdf_list_peek_front(scan_list, &cur_lst);
+	if (scan_list)
+		qdf_list_peek_front(scan_list, &cur_lst);
 	while (cur_lst) {
 		cur_node = qdf_container_of(cur_lst, struct scan_cache_node,
 					    node);
@@ -1553,7 +1554,8 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	 */
 	SET_ACS_BAND(operatingBand, sap_ctx);
 
-	qdf_list_peek_front(scan_list, &cur_lst);
+	if (scan_list)
+		qdf_list_peek_front(scan_list, &cur_lst);
 	while (cur_lst) {
 		uint32_t ie_len = 0;
 		uint8_t *ie_ptr;
@@ -2649,7 +2651,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	 * If ACS weight is not enabled on noise_floor/channel_free/tx_power,
 	 * then skip acs process if no bss found.
 	 */
-	if (!scan_list &&
+	if ((!scan_list || !qdf_list_size(scan_list)) &&
 	    !(sap_ctx->auto_channel_select_weight & 0xffff00)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("No external AP present"));
