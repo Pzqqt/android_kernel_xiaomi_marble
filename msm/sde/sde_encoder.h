@@ -25,6 +25,8 @@
 #include "sde_hw_mdss.h"
 #include "sde_kms.h"
 
+#define MAX_CHANNELS_PER_ENC 2
+
 #define SDE_ENCODER_FRAME_EVENT_DONE			BIT(0)
 #define SDE_ENCODER_FRAME_EVENT_ERROR			BIT(1)
 #define SDE_ENCODER_FRAME_EVENT_PANEL_DEAD		BIT(2)

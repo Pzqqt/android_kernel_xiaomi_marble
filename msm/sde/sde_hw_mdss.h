@@ -667,12 +667,16 @@ struct sde_hw_autorefresh {
 /**
  * struct sde_hw_pp_vsync_info - Struct contains parameters to configure
  *        read and write pointers for command mode panels
+ * @pp_idx:		Ping-pong block index
+ * @intf_idx:		Interface block index
  * @rd_ptr_init_val:	Value of rd pointer at vsync edge
  * @rd_ptr_frame_count:	num frames sent since enabling interface
  * @rd_ptr_line_count:	current line on panel (rd ptr)
  * @wr_ptr_line_count:	current line within pp fifo (wr ptr)
  */
 struct sde_hw_pp_vsync_info {
+	u32 pp_idx;
+	u32 intf_idx;
 	u32 rd_ptr_init_val;
 	u32 rd_ptr_frame_count;
 	u32 rd_ptr_line_count;
