@@ -34,41 +34,200 @@
  * it or we reset or restart the device.
  *
  * Design:-
- * The pre-CAC is done in a RADIO that has  VHT80_80 capable radio where the
- * primary and secondary HT80s can be programmed independently with two
- * different HT80 channels. Three new lists are introduced to handle pre-CAC.
- * The lists are:
- * 1)Pre-CAC-required list
- * 2)Pre-CAC-done list
- * 3)Pre-CAC-NOL list
- * At the beginning the Pre-CAC-required list is populated with the unique
- * secondary HT80 frequencies of HT80_80 channels.  Whenever a HT80 channel
- * change happens we convert the HT80 channel change to a HT80_80 channel and
- * the secondary HT80 is set to the first element(HT80 frequency) from the
- * Pre-CAC-required list.  Pre-CAC period is same as the CAC period. After
- * the pre-CAC period is over the pre-CAC timer expires and the HT80 frequency
- * (the pre-CAC-required list element) is removed from the Pre-CAC-required
- * list and inserted into the Pre-CAC-done list. While Pre-CAC timer is running
- * if there is any RADAR detect then the current HT80 frequency is removed from
- * the Pre-CAC-required list and inserted into the Pre-CAC-NOL list. Each
- * element of pre-CAC-NOL times out individually after 30 minutes of its
- * insertion. Pre-CAC-NOL timeout is just like the regular NOL timeout. Upon
- * Pre-CAC-NOL expiry of an element (HT80 frequency), the element is removed
- * from the Pre-CAC-NOL list and inserted into the Pre-CAC-required list.
- * At any point of time if there is a channel change and the new channel is
- * DFS, the Pre-CAC-done list is consulted to check if pre-CAC has been
- * completed for the entire bandwidth of the new channel. If Pre-CAC has
- * already been done  for the entire bandwidth of the channel then regular CAC
- * can be skipped(this is what is known as Zero wait DFS) if we are in ETSI
- * domain.
+ * When Zero-CAC is enabled and the current regulatory domain is ETSI,
+ * a Binary Search Forest (BSForest) is initialized and maintained, indexed by
+ * DFS IEEE channels of different bandwidths (20/40/80 MHz).
+ *
+ * The structure of precac BSForest is:
+ *   1). A preCAC list of 80MHz channels which contains the Binary Search Tree
+ *       (BSTree) root pointer.
+ *   2). The BSTree consists of nodes of different IEEEs of different
+ *       bandwidths (80/40/20 MHz) of that 80MHz channel in the list.
+ *
+ * Each Binary Search Tree (BSTree) node has a unique IEEE channel and
+ * three values that indicate three statuses (Channel valid / CAC Done /
+ * Channel in NOL) of the subchannels of the node.
+ *
+ * A sample Precac BSForest:
+ *
+ * List HEAD --------> 58 -------------> 106 --------------> 122
+ *                      |                 |                   |
+ *                     58                106                 122
+ *                     /\                / \                 / \
+ *                    /  \              /   \               /   \
+ *                   /    \            /     \             /     \
+ *                  /      \          /       \           /       \
+ *                 54      62       102       110       118       126
+ *                 /\      /\       / \       / \       / \       / \
+ *                /  \    /  \     /   \     /   \     /   \     /   \
+ *               52  56  60  64  100  104  108  112  116  120  124   128
+ *
+ * Consider the BSTree 106, where all subchannels of 106HT80 are available
+ * in the regulatory (100, 104, 108, 112 are valid channels) and 100HT20 is
+ * preCAC done and 104HT20 is in NOL. The BSTree would look like:
+ *
+ *                               _________
+ *                              |   | | | |
+ *                              |106|4|1|1|
+ *                              |___|_|_|_|
+ *                                 _/ \_
+ *                               _/     \_
+ *                             _/         \_
+ *                           _/             \_
+ *                         _/                 \_
+ *                 _______/_                   _\_______
+ *                |   | | | |                 |   | | | |
+ *                |102|2|1|1|                 |110|2|0|0|
+ *                |___|_|_|_|                 |___|_|_|_|
+ *                    / \                           / \
+ *                   /   \                         /   \
+ *                  /     \                       /     \
+ *                 /       \                     /       \
+ *          ______/__     __\______       ______/__     __\______
+ *         |   | | | |   |   | | | |     |   | | | |   |   | | | |
+ *         |100|1|1|0|   |104|1|0|1|     |108|1|0|0|   |112|1|0|0|
+ *         |___|_|_|_|   |___|_|_|_|     |___|_|_|_|   |___|_|_|_|
+ *
+ *
+ *  Syntax of each node:
+ *      _______________________________
+ *     |      |       |          |     |
+ *     | IEEE | Valid | CAC done | NOL |
+ *     |______|_______|__________|_____|
+ *
+ * where,
+ * IEEE     - Unique IEEE channel that the node represents.
+ * Valid    - Number of valid subchannels of the node (for the current country).
+ * CAC done - Number of subchannels of the node that are CAC
+ *            (primary or preCAC) done.
+ * NOL      - Number of subchannels of the node in NOL.
+ *
+ * PreCAC (legacy chipsets. e.g. QCA9984):
+ *   The pre-CAC is done in a RADIO that has  VHT80_80 capable radio where the
+ *   primary and secondary HT80s can be programmed independently with two
+ *   different HT80 channels.
+ *   The bandwidth of preCAC channels are always 80MHz.
+ *
+ * Agile CAC (e.g. Hawkeye V2):
+ *   The Agile CAC is done in a chipset that has a separate Agile detector,
+ *   which can perform Rx on the channel provided by stealing the chains
+ *   from one of the primary pdevs.
+ *   Note: This impliess that the bandwidth of the Agile detector is always
+ *   the same as the pdev it is attached to.
+ *   The bandwidth of Agile CAC channels may vary from 20/40/80 MHz.
+ *
+ * Operations on preCAC list:
+ *
+ *  Initialize the list:
+ *    To initialize the preCAC list,
+ *      1. Find a 80MHz DFS channel.
+ *      2. Add an entry to the list with this channel as index and create
+ *         a BSTree for this channel. This is done by level order insertion
+ *         where the channel for each node is determined by adding the
+ *         respective level offsets to the 80MHz channel.
+ *      3. Repeat step 1 & 2 until no 80MHz DFS channels are found.
+ *
+ *  Remove the list:
+ *   To remove the preCAC list,
+ *      1. Iterate through the list and for every entry,
+ *         a). Convert the tree into a left child only list, removing the
+ *             root node on the way. O(n) deletion.
+ *         b). Remove the preCAC list entry.
+ *
+ *   Algorithm to convert the tree to a left child only list:
+ *     1. Find the leftmost leaf node of the BSTree.
+ *     2. Set current node as root node.
+ *     3. If current node has right child, add right child of current node
+ *        as left child of leftmost leaf.
+ *     4. Update the leftmost leaf.
+ *     5. Update current node to left child and remove the node.
+ *     6. Repeat steps 3 to 5 till current node is NULL.
+ *
+ *  Print the list:
+ *   To print the contents of the preCAC list,
+ *    1. Iterate through the list and for every entry,
+ *       a) Perform a morris preorder traversal (iterative and O(n)) and
+ *          for every node, print the Channel IEEE and CAC and NOL values.
+ *          Use the level information to create a tree(3) command like
+ *          structure for printing each nodes of the BSTree.
+ *
+ *   A sample BSTree print output:
+ *
+ *        A                  A(C,N)
+ *       / \                 |
+ *      B   C                |------- B(C,N)
+ *     / \                   |        |
+ *    D   E                  |        |------- D(C,N)
+ *                           |        |
+ *                           |        |------- E(C,N)
+ *                           |
+ *                           |------- E(C,N)
+ *
+ *    Where C is number of CACed subchannels, and N is number of
+ *    NOL subchannels.
+ *
+ *  Find a channel to preCAC/Agile CAC:
+ *   1. Given a requested bandwidth (80MHz always in case of preCAC, XMHz in
+ *      case of Agile CAC where X is the current operating bandwidth of the
+ *      pdev the detector is attached to), iterate through the preCAC list.
+ *   2. For every entry, find if there a valid channel that is not in NOL
+ *      and not in CAC done and is of the requested mode.
+ *   3. If such channel exists and is not equal to the current operating
+ *      channel, then return the channel. Else, go to the next entry.
+ *
+ *  Find if the channel is preCAC done:
+ *   1. Given a IEEE channel, go through the preCAC list and find the entry
+ *      which has the channel provided.
+ *   2. Traverse through the BSTree and check if the channel's CACed
+ *      subchannels value is equal to the number of subchannels of that level.
+ *   3. If the above condition is true, return 1, else 0.
+ *
+ *  Mark the channel as CAC done:
+ *   1. Given a channel, find all the subchannels.
+ *   2. For every subchannel, iterate through the list, and find the entry
+ *      the channel belongs to.
+ *   3. Traverse through the BSTree of this entry, going to left or right
+ *      child based on the channel IEEE.
+ *   4. Increment the CACed subchannels count (by 1) along the way till
+ *      (and including) the node that contains the subchannel that
+ *      was searched for.
+ *
+ *  Unmark the channel as CAC done:
+ *   1. Given a 20MHz channel, iterate through the list, and find the entry
+ *      the channel belongs to.
+ *   2. Traverse through the BSTree of this entry, going to left or right
+ *      child based on the channel IEEE.
+ *   3. Decrement the CACed subchannels count (by 1) along the way till
+ *      (and including) the node that contains the subchannel that
+ *      was searched for.
+ *
+ *  Mark the channel as NOL:
+ *   1. Given a 20MHz channel, iterate through the list, and find the entry
+ *      the channel belongs to.
+ *   3. Traverse through the BSTree of this entry, going to left or right
+ *      child based on the channel IEEE.
+ *   4. Increment the NOL subchannels count (by 1) along the way till
+ *      (and including) the node that contains the subchannel that
+ *      was searched for.
+ *   5. If the subchannel node's CAC subchannels value is non-zero, unmark
+ *      the channel as CAC done.
+ *
+ *  Unmark the channel as NOL:
+ *   1. Given a 20MHz channel, iterate through the list, and find the entry
+ *      the channel belongs to.
+ *   3. Traverse through the BSTree of this entry, going to left or right
+ *      child based on the channel IEEE.
+ *   4. Decrement the NOL subchannels count (by 1) along the way till
+ *      (and including) the node that contains the subchannel that
+ *      was searched for.
  *
  * New RadarTool commands:-
- * 1)radartool -i wifi[X] secondSegmentBangradar
+ * 1)radartool -i wifi[X] bangradar 1 (where 1 is the segment ID)
  * It simulates RADAR from the secondary HT80 when the
  * secondary HT80 is doing pre-CAC. If secondary is not
  * doing any pre-CAC then this command has no effect.
  * 2)radartool -i wifi[X] showPreCACLists
- * It shows all 3 pre-CAC Lists' contents.
+ * It shows all the pre-CAC Lists' contents.
  *
  * New iwpriv commands:-
  * 1)iwpriv wifi[X] preCACEn 0/1
@@ -78,15 +237,16 @@
  *
  * FAQ(Frequently Asked Questions):-
  * 1)
- * Question)We already have NOL list. Why do we need separate pre-CAC-NOL
- * list?
- * Answer) pre-CAC is done on an HT80 channel and  the same HT80 channel is
- * inserted into pre-CAC-NOL list after pre-CAC radar detection. NOL list
- * contains HT20 channels. Since after pre-CAC-NOL expiry we need
- * to move the HT80 channel from pre-CAC-NOL list  to pre-CAC-required list
- * it is very easy to remove the HT80 channel and insert it. Having
- * a separate pre-CAC-NOL also provides some separation from the existing
- * code and helps modularize.
+ * Question:
+ *    Why was the separate HT80 preCAC NOL timer removed?
+ * Answer:
+ *    In previous design, the channels that were preCACed were always
+ *    80MHz channels. Since NOL timers were maintained for 20MHz channels,
+ *    a separate preCAC NOL timer was created to modularize and move
+ *    lists accordingly at the expiry of the timer.
+ *    With the current support of 20/40/80MHz preCAC channels, and
+ *    the introduction of subchannel marking, the existing NOL timer
+ *    can be used to mark the preCAC lists aswell.
  */
 
 #include "dfs_zero_cac.h"
@@ -95,30 +255,18 @@
 #include "wlan_dfs_utils_api.h"
 #include "dfs_internal.h"
 #include "dfs_etsi_precac.h"
+#include "dfs_process_radar_found_ind.h"
 #include "target_if.h"
 #include "wlan_dfs_init_deinit_api.h"
 
+/* Given a bandwidth, find the number of subchannels in that bandwidth */
+#define N_SUBCHS_FOR_BANDWIDTH(_bw) ((_bw) / MIN_DFS_SUBCHAN_BW)
+
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 {
-	struct dfs_precac_entry *tmp_precac_entry, *precac_entry;
-
-	dfs_get_override_precac_timeout(dfs,
-			&(dfs->dfs_precac_timeout_override));
+	dfs->dfs_precac_timeout_override = -1;
 	dfs->dfs_precac_primary_freq = 0;
 	dfs->dfs_precac_secondary_freq = 0;
-
-	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list))
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_nol_list,
-				pe_list,
-				tmp_precac_entry) {
-			qdf_timer_free(&precac_entry->precac_nol_timer);
-			TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-				     precac_entry, pe_list);
-			qdf_mem_free(precac_entry);
-		}
-	PRECAC_LIST_UNLOCK(dfs);
 }
 
 void dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj)
@@ -149,12 +297,100 @@ int dfs_get_override_precac_timeout(struct wlan_dfs *dfs, int *precac_timeout)
 	return 0;
 }
 
+/* dfs_descend_precac_tree() - Descend into the precac BSTree based on the
+ *                             channel provided. If the channel is less than
+ *                             given node's channel, descend left, else right.
+ * @node:    Precac BSTree node.
+ * @channel: Channel whose node is to be found.
+ *
+ * Return: the next precac_tree_node (left child or right child of current node).
+ */
+static struct precac_tree_node *
+dfs_descend_precac_tree(struct precac_tree_node *node,
+			uint8_t channel)
+{
+	if (!node)
+		return NULL;
+
+	if (channel < node->ch_ieee)
+		return node->left_child;
+	else
+		return node->right_child;
+}
+
+void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
+				      enum phy_ch_width *chwidth,
+				      uint8_t *primary_chan_ieee,
+				      uint8_t *secondary_chan_ieee)
+{
+	struct dfs_channel *curchan = dfs->dfs_curchan;
+
+	if (!curchan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "curchan is NULL");
+		return;
+	}
+
+	if (primary_chan_ieee)
+		*primary_chan_ieee = curchan->dfs_ch_vhtop_ch_freq_seg1;
+	if (WLAN_IS_CHAN_MODE_20(curchan)) {
+		*chwidth = CH_WIDTH_20MHZ;
+	} else if (WLAN_IS_CHAN_MODE_40(curchan)) {
+		*chwidth = CH_WIDTH_40MHZ;
+	} else if (WLAN_IS_CHAN_MODE_80(curchan)) {
+		*chwidth = CH_WIDTH_80MHZ;
+	} else if (WLAN_IS_CHAN_MODE_80_80(curchan)) {
+		*chwidth = CH_WIDTH_80P80MHZ;
+		if (secondary_chan_ieee)
+			*secondary_chan_ieee =
+				curchan->dfs_ch_vhtop_ch_freq_seg2;
+	} else if (WLAN_IS_CHAN_MODE_160(curchan)) {
+		*chwidth = CH_WIDTH_160MHZ;
+		if (primary_chan_ieee)
+			*primary_chan_ieee =
+				curchan->dfs_ch_vhtop_ch_freq_seg2;
+	}
+}
+
+/* dfs_find_cac_status_for_chan() - Find CAC-done status for the channel in the
+ *                                  precac Binary Search Tree (BSTree).
+ *				    Return true if CAC done, else false.
+ * @dfs_precac_entry: Precac entry which has the root of the precac BSTree.
+ * @chan_ieee:        IEEE channel. This ieee channel is the center of a
+ *                    20/40/80 MHz channel and the center channel is unique
+ *                    irrespective of the bandwidth(20/40/80 MHz).
+ *
+ * Note: For each tree node of a level, the number of CACed subchannels is
+ * the total number of leaf nodes of the sub tree for the node, which are
+ * CACed.
+ * That is, at a level (1..n, n being the depth of the BSTree), the maximum
+ * number of CACed subchannels is: Number of subchannels of root / level.
+ * Num_subchannels = Num_subchannels_of_root_level / level.
+ *
+ * Return: true if CAC done on channel, else false.
+ */
+static bool dfs_find_cac_status_for_chan(struct dfs_precac_entry *precac_entry,
+					 uint8_t chan_ieee)
+{
+	struct precac_tree_node *node = precac_entry->tree_root;
+	uint8_t n_cur_lvl_subchs = N_SUBCHANS_FOR_80BW;
+
+	while (node) {
+		if (node->ch_ieee == chan_ieee)
+			return (node->n_caced_subchs == n_cur_lvl_subchs) ?
+				true : false;
+
+		n_cur_lvl_subchs /= 2;
+		node = dfs_descend_precac_tree(node, chan_ieee);
+	}
+
+	return false;
+}
+
 #define VHT80_OFFSET 6
 #define IS_WITHIN_RANGE(_A, _B, _C)  \
 	(((_A) >= ((_B)-(_C))) && ((_A) <= ((_B)+(_C))))
-
-bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
-						struct dfs_channel *chan)
+bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
+					   uint8_t chan)
 {
 	struct dfs_precac_entry *precac_entry;
 	bool ret_val = 0;
@@ -164,85 +400,61 @@ bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
 	 * (B-C) <= A <= (B+C)
 	 */
 	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_done_list))
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_list))
 		TAILQ_FOREACH(precac_entry,
-				&dfs->dfs_precac_done_list,
+				&dfs->dfs_precac_list,
 				pe_list) {
-			/* Find if the VHT80 freq1 is in Pre-CAC done list */
-			if (IS_WITHIN_RANGE(chan->dfs_ch_ieee,
-					    precac_entry->vht80_freq,
+			/* Find if the VHT80 ieee_chan is in this precac_list */
+			if (IS_WITHIN_RANGE(chan, precac_entry->vht80_ch_ieee,
 					    VHT80_OFFSET)) {
-				ret_val = 1;
+				ret_val = dfs_find_cac_status_for_chan(
+						precac_entry, chan);
 				break;
 			}
 		}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS, "vht80_freq = %u ret_val = %d",
-		 dfs->dfs_curchan->dfs_ch_ieee, ret_val);
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "ch_ieee = %u cac_done = %d",
+		  chan, ret_val);
 
 	return ret_val;
 }
 
-bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
-						  struct dfs_channel *chan)
+bool dfs_is_precac_done_on_ht8080_ht160_chan(struct wlan_dfs *dfs,
+					     struct dfs_channel *chan)
 {
-	struct dfs_precac_entry *precac_entry;
-	bool ret_val = 0;
-	u_int8_t sec_freq = 0;
+	bool ret_val = 0, primary_found = 0;
+	u_int8_t pri_chan, sec_chan = 0;
 
+	pri_chan = chan->dfs_ch_vhtop_ch_freq_seg1;
 	if (WLAN_IS_CHAN_MODE_160(chan)) {
 		if (chan->dfs_ch_ieee < chan->dfs_ch_vhtop_ch_freq_seg2)
-			sec_freq = chan->dfs_ch_vhtop_ch_freq_seg1 +
+			sec_chan = chan->dfs_ch_vhtop_ch_freq_seg1 +
 				   VHT160_IEEE_FREQ_DIFF;
 		else
-			sec_freq = chan->dfs_ch_vhtop_ch_freq_seg1 -
+			sec_chan = chan->dfs_ch_vhtop_ch_freq_seg1 -
 				   VHT160_IEEE_FREQ_DIFF;
 	} else
-		sec_freq = chan->dfs_ch_vhtop_ch_freq_seg2;
+		sec_chan = chan->dfs_ch_vhtop_ch_freq_seg2;
 
-	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
-		bool primary_found = 0;
-		/* Check if primary is DFS then search */
-		if (WLAN_IS_CHAN_DFS(chan)) {
-			TAILQ_FOREACH(precac_entry,
-					&dfs->dfs_precac_done_list,
-					pe_list) {
-				if (chan->dfs_ch_vhtop_ch_freq_seg1
-						== precac_entry->vht80_freq) {
-					primary_found = 1;
-					break;
-				}
-			}
-		} else {
-			primary_found = 1;
-		}
+	/* Check if primary is DFS then search */
+	if (WLAN_IS_CHAN_DFS(chan))
+		primary_found = dfs_is_precac_done_on_ht20_40_80_chan(dfs,
+								      pri_chan);
+	else
+		primary_found = 1;
 
-		/* Check if secondary DFS then search */
-		if (WLAN_IS_CHAN_DFS_CFREQ2(chan) &&
-		    primary_found) {
-			TAILQ_FOREACH(precac_entry,
-					&dfs->dfs_precac_done_list,
-					pe_list) {
-				if (sec_freq == precac_entry->vht80_freq) {
-					/* Now secondary also found */
-					ret_val = 1;
-					break;
-				}
-			}
-		} else {
-			if (primary_found)
-				ret_val = 1;
-		}
+	/* Check if secondary DFS then search */
+	if (WLAN_IS_CHAN_DFS_CFREQ2(chan) && primary_found) {
+		ret_val = dfs_is_precac_done_on_ht20_40_80_chan(dfs, sec_chan);
+	} else {
+		if (primary_found)
+			ret_val = 1;
 	}
-	PRECAC_LIST_UNLOCK(dfs);
-
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"freq_seg1 = %u freq_seq2 = %u sec_freq = %u ret_val = %d",
-		chan->dfs_ch_vhtop_ch_freq_seg1,
-		chan->dfs_ch_vhtop_ch_freq_seg2,
-		sec_freq,
+		"seg1_ieee = %u seg2_ieee = %u ret_val = %d",
+		pri_chan,
+		sec_chan,
 		ret_val);
 
 	return ret_val;
@@ -251,18 +463,19 @@ bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
 bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan)
 {
 	bool ret_val = 0;
+	uint8_t pri_chan = chan->dfs_ch_vhtop_ch_freq_seg1;
 
 	if (WLAN_IS_CHAN_MODE_20(chan) ||
 	    WLAN_IS_CHAN_MODE_40(chan) ||
 	    WLAN_IS_CHAN_MODE_80(chan)) {
-		ret_val = dfs_is_ht20_40_80_chan_in_precac_done_list(dfs, chan);
+		ret_val = dfs_is_precac_done_on_ht20_40_80_chan(dfs,
+								pri_chan);
 	} else if (WLAN_IS_CHAN_MODE_80_80(chan) ||
 		   WLAN_IS_CHAN_MODE_160(chan)) {
-		ret_val = dfs_is_ht8080_ht160_chan_in_precac_done_list(dfs, chan);
+		ret_val = dfs_is_precac_done_on_ht8080_ht160_chan(dfs, chan);
 	}
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS, "ret_val = %d", ret_val);
-
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "precac_done_status = %d", ret_val);
 	return ret_val;
 }
 
@@ -283,6 +496,7 @@ void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 	   (dfs_soc_obj->cur_precac_dfs_index + 1) % dfs_soc_obj->num_dfs_privs;
 }
 
+#define DFS_160MHZ_SECSEG_CHAN_OFFSET 8
 void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -292,6 +506,7 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint8_t ch_freq = 0;
 	uint8_t cur_dfs_idx = 0;
+	uint8_t vhtop_ch_freq_seg1, vhtop_ch_freq_seg2;
 	int i;
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
@@ -309,10 +524,22 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 		if (!dfs_soc_obj->dfs_priv[cur_dfs_idx].agile_precac_active)
 			continue;
 
-		dfs_find_vht80_chan_for_agile_precac(temp_dfs,
-						     &ch_freq,
-			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
-			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2);
+		vhtop_ch_freq_seg1 =
+			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
+		vhtop_ch_freq_seg2 =
+			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
+		if (WLAN_IS_CHAN_MODE_160(temp_dfs->dfs_curchan)) {
+			if (vhtop_ch_freq_seg2 < vhtop_ch_freq_seg1)
+				vhtop_ch_freq_seg2 -=
+					DFS_160MHZ_SECSEG_CHAN_OFFSET;
+			else
+				vhtop_ch_freq_seg2 +=
+					DFS_160MHZ_SECSEG_CHAN_OFFSET;
+		}
+		dfs_get_ieeechan_for_agilecac(temp_dfs,
+					      &ch_freq,
+					      vhtop_ch_freq_seg1,
+					      vhtop_ch_freq_seg2);
 
 		if (!ch_freq) {
 			qdf_info(" %s : %d No preCAC required channels left in current pdev: %pK",
@@ -332,164 +559,334 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 			dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
 				"dfs_tx_ops=%pK", dfs_tx_ops);
 	} else {
+		dfs->dfs_soc_obj->precac_state_started = false;
 		qdf_info("No channels in preCAC required list");
 	}
 }
 #endif
 
-#define VHT80_IEEE_FREQ_OFFSET 6
+/* dfs_mark_tree_node_as_cac_done() - Mark the preCAC BSTree node as CAC done.
+ * @dfs:          Pointer to WLAN DFS structure.
+ * @precac_entry: Precac_list entry pointer.
+ * @channel:      IEEE channel to be marked.
+ *
+ * Note: The input channel is always of 20MHz bandwidth.
+ */
+static void
+dfs_mark_tree_node_as_cac_done(struct wlan_dfs *dfs,
+			       struct dfs_precac_entry *precac_entry,
+			       uint8_t channel)
+{
+	struct precac_tree_node *curr_node;
 
-void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg, uint8_t detector_id)
+	if (!precac_entry->tree_root) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Precac tree root pointer is NULL!");
+		return;
+	}
+
+	curr_node = precac_entry->tree_root;
+	while (curr_node) {
+		/* Update the current node's CACed subchannels count only
+		 * if it's less than maximum subchannels, else return.
+		 */
+		if (curr_node->n_caced_subchs <
+		    N_SUBCHS_FOR_BANDWIDTH(curr_node->bandwidth)) {
+			curr_node->n_caced_subchs++;
+		} else {
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"CAC was done on an already preCACed channel!");
+			return;
+		}
+		curr_node = dfs_descend_precac_tree(curr_node, channel);
+	}
+}
+
+/* dfs_unmark_tree_node_as_cac_done() - Unmark the preCAC BSTree node as CAC
+ *                                      done.
+ * @precac_entry: Precac_list entry pointer.
+ * @channel:      IEEE channel to be marked.
+ *
+ * Note: The input channel is always of 20MHz bandwidth.
+ */
+static void
+dfs_unmark_tree_node_as_cac_done(struct dfs_precac_entry *precac_entry,
+				 uint8_t channel)
+{
+	struct precac_tree_node *curr_node = precac_entry->tree_root;
+
+	while (curr_node) {
+		if (curr_node->n_caced_subchs)
+			curr_node->n_caced_subchs--;
+		else
+			return;
+		curr_node = dfs_descend_precac_tree(curr_node, channel);
+	}
+}
+
+void dfs_mark_precac_done(struct wlan_dfs *dfs,
+			  uint8_t pri_ch_ieee,
+			  uint8_t sec_ch_ieee,
+			  enum phy_ch_width ch_width)
 {
 	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
-	uint8_t found = 0;
+	uint8_t channels[NUM_CHANNELS_160MHZ];
+	uint8_t i, nchannels = 0;
+
+	if (!pri_ch_ieee)
+		return;
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		nchannels = 1;
+		channels[0] = pri_ch_ieee;
+		break;
+	case CH_WIDTH_40MHZ:
+		nchannels = 2;
+		channels[0] = pri_ch_ieee - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[1] = pri_ch_ieee + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		break;
+	case CH_WIDTH_80MHZ:
+		nchannels = 4;
+		channels[0] = pri_ch_ieee - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[1] = pri_ch_ieee - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[2] = pri_ch_ieee + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[3] = pri_ch_ieee + DFS_5GHZ_2ND_CHAN_OFFSET;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		nchannels = 8;
+		channels[0] = pri_ch_ieee - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[1] = pri_ch_ieee - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[2] = pri_ch_ieee + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[3] = pri_ch_ieee + DFS_5GHZ_2ND_CHAN_OFFSET;
+		/* secondary channels */
+		channels[4] = sec_ch_ieee - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[5] = sec_ch_ieee - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[6] = sec_ch_ieee + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[7] = sec_ch_ieee + DFS_5GHZ_2ND_CHAN_OFFSET;
+		break;
+	case CH_WIDTH_160MHZ:
+		nchannels = 8;
+		channels[0] = pri_ch_ieee - DFS_5GHZ_4TH_CHAN_OFFSET;
+		channels[1] = pri_ch_ieee - DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[2] = pri_ch_ieee - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[3] = pri_ch_ieee - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[4] = pri_ch_ieee + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[5] = pri_ch_ieee + DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[6] = pri_ch_ieee + DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[7] = pri_ch_ieee + DFS_5GHZ_4TH_CHAN_OFFSET;
+		break;
+	default:
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "invalid channel width");
+		return;
+	}
+
+	PRECAC_LIST_LOCK(dfs);
+	if (TAILQ_EMPTY(&dfs->dfs_precac_list)) {
+		PRECAC_LIST_UNLOCK(dfs);
+		return;
+	}
+	for (i = 0; i < nchannels; i++) {
+		TAILQ_FOREACH_SAFE(precac_entry,
+				   &dfs->dfs_precac_list,
+				   pe_list,
+				   tmp_precac_entry) {
+			if (IS_WITHIN_RANGE(channels[i],
+					    precac_entry->vht80_ch_ieee,
+					    VHT80_OFFSET)) {
+				dfs_mark_tree_node_as_cac_done(dfs,
+							       precac_entry,
+							       channels[i]);
+				break;
+			}
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
+}
+
+/* dfs_mark_tree_node_as_nol() - Mark the preCAC BSTree node as NOL.
+ * @dfs:          Pointer to WLAN DFS structure.
+ * @precac_entry: Precac_list entry pointer.
+ * @channel:      IEEE channel to be marked.
+ *
+ * Note: The input channel is always of 20MHz bandwidth.
+ */
+static void
+dfs_mark_tree_node_as_nol(struct wlan_dfs *dfs,
+			  struct dfs_precac_entry *precac_entry,
+			  uint8_t channel)
+{
+	struct precac_tree_node *curr_node;
+
+	if (!precac_entry->tree_root) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Precac tree root pointer is NULL!");
+		return;
+	}
+	curr_node = precac_entry->tree_root;
+	while (curr_node) {
+		if (curr_node->n_nol_subchs <
+		    N_SUBCHS_FOR_BANDWIDTH(curr_node->bandwidth)) {
+			curr_node->n_nol_subchs++;
+		} else {
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Radarfound on an already marked NOL channel!");
+			return;
+		}
+		if (channel == curr_node->ch_ieee) {
+			if (curr_node->n_caced_subchs) {
+				/* remove cac done status for this node
+				 * and it's parents, since this node
+				 * now requires cac (after NOL expiry)
+				 */
+				dfs_unmark_tree_node_as_cac_done(precac_entry,
+								 channel);
+			}
+		}
+		curr_node = dfs_descend_precac_tree(curr_node, channel);
+	}
+}
+
+/* dfs_unmark_tree_node_as_nol() - Unmark the preCAC BSTree node as NOL.
+ * @dfs:          Pointer to WLAN DFS structure.
+ * @precac_entry: Precac_list entry pointer.
+ * @channel:      IEEE channel to be marked.
+ *
+ * Note: The input channel is always of 20MHz bandwidth.
+ */
+static void
+dfs_unmark_tree_node_as_nol(struct wlan_dfs *dfs,
+			    struct dfs_precac_entry *precac_entry,
+			    uint8_t channel)
+{
+	struct precac_tree_node *curr_node;
+
+	if (!precac_entry->tree_root) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Precac tree root pointer is NULL!");
+		return;
+	}
+	curr_node = precac_entry->tree_root;
+	while (curr_node) {
+		if (curr_node->n_nol_subchs)
+			curr_node->n_nol_subchs--;
+		else
+			return;
+		curr_node = dfs_descend_precac_tree(curr_node, channel);
+	}
+}
+
+void dfs_unmark_precac_nol(struct wlan_dfs *dfs, uint8_t channel)
+{
+	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
+	uint8_t pri_ch_ieee = 0, chwidth_80 = DFS_CHWIDTH_80_VAL;
+
+	PRECAC_LIST_LOCK(dfs);
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_list)) {
+		TAILQ_FOREACH_SAFE(precac_entry, &dfs->dfs_precac_list,
+				   pe_list, tmp_precac_entry) {
+			if (IS_WITHIN_RANGE(channel,
+					    precac_entry->vht80_ch_ieee,
+					    VHT80_OFFSET)) {
+				dfs_unmark_tree_node_as_nol(dfs, precac_entry,
+							    channel);
+				break;
+			}
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
+
+	/* If preCAC / agile CAC is not running, restart the timer
+	 * to check if the NOL expired channels can be CACed again.
+	 */
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "NOL expired for channel %u, trying to start preCAC",
+		 channel);
+	if (!dfs->dfs_soc_obj->dfs_precac_timer_running) {
+		if (dfs->dfs_precac_enable) {
+			if (dfs_is_ap_cac_timer_running(dfs)) {
+				dfs->dfs_defer_precac_channel_change = 1;
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					  "Primary CAC is running, deferred"
+					  );
+			} else if (WLAN_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
+				pri_ch_ieee = dfs->dfs_curchan->
+						dfs_ch_vhtop_ch_freq_seg1;
+
+				/* Check if there is a new channel to preCAC
+				 * and only then do vdev restart.
+				 */
+				if (!dfs_get_ieeechan_for_precac(dfs,
+								 pri_ch_ieee,
+								 0,
+								 chwidth_80))
+					return;
+				dfs_mlme_channel_change_by_precac(
+						dfs->dfs_pdev_obj);
+			}
+		} else if (dfs->dfs_agile_precac_enable &&
+			   !dfs->dfs_soc_obj->precac_state_started) {
+			/* precac_state_started will be set to false if
+			 * agile CAC is not begun for any channels or
+			 * all channels were CACed. If it's not set, defer
+			 * changing the current Agile CAC channel.
+			 */
+			dfs_prepare_agile_precac_chan(dfs);
+		}
+	}
+}
+
+void dfs_mark_precac_nol(struct wlan_dfs *dfs,
+			 uint8_t is_radar_found_on_secondary_seg,
+			 uint8_t detector_id,
+			 uint8_t *channels,
+			 uint8_t num_channels)
+{
+	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
 	struct wlan_objmgr_psoc *psoc;
+	uint8_t i;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	dfs_soc_obj = dfs->dfs_soc_obj;
 
-	if (is_radar_found_on_secondary_seg) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "is_radar_found_on_secondary_seg = %u secondary_freq = %u primary_freq = %u",
-			  is_radar_found_on_secondary_seg,
-			  dfs->dfs_precac_secondary_freq,
-			  dfs->dfs_precac_primary_freq);
-	} else {
-		dfs->dfs_precac_secondary_freq = dfs->dfs_agile_precac_freq;
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "agile_precac_freq = %u ",
-			  dfs->dfs_agile_precac_freq);
-	}
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "is_radar_found_on_secondary_seg = %u subchannel_marking = %u detector_id = %u",
+		  is_radar_found_on_secondary_seg,
+		  dfs->dfs_use_nol_subchannel_marking,
+		  detector_id);
 
-	if (detector_id != AGILE_DETECTOR_ID) {
-		/*
-		 * Even if radar found on primary, we need to move
-		 * the channel from precac-required-list and precac-done-list
-		 * to precac-nol-list.
-		 */
-		PRECAC_LIST_LOCK(dfs);
-		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-			TAILQ_FOREACH_SAFE(precac_entry,
-					   &dfs->dfs_precac_required_list,
-					   pe_list,
-					   tmp_precac_entry) {
-			/*
-			 * If on primary then use IS_WITHIN_RANGE else use
-			 * equality directly.
-			 */
-			if (is_radar_found_on_secondary_seg ?
-				(dfs->dfs_precac_secondary_freq ==
-				 precac_entry->vht80_freq) : IS_WITHIN_RANGE(
-				     dfs->dfs_curchan->dfs_ch_ieee,
-				     precac_entry->vht80_freq,
-				     VHT80_IEEE_FREQ_OFFSET)) {
-				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-					     precac_entry, pe_list);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		  "agile detector ieee = %u primary_ieee = %u secondary_ieee = %u",
+		  dfs->dfs_agile_precac_freq,
+		  dfs->dfs_precac_secondary_freq,
+		  dfs->dfs_precac_primary_freq);
 
-				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					  "removing the freq = %u from required list and adding to NOL list",
-					  precac_entry->vht80_freq);
-				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
-						  precac_entry, pe_list);
-				qdf_timer_mod(&precac_entry->precac_nol_timer,
-					      dfs_get_nol_timeout(dfs) * 1000);
-				found = 1;
-				break;
-				}
-			}
-		}
-
-		/*
-		 * If not found in precac-required-list
-		 * remove from precac-done-list
-		 */
-		if (!found && !TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
-			TAILQ_FOREACH_SAFE(precac_entry,
-					   &dfs->dfs_precac_done_list,
-					   pe_list,
-					   tmp_precac_entry) {
-				/*
-				 * If on primary then use IS_WITHIN_RANGE
-				 * else use equality directly.
-				 */
-				if (is_radar_found_on_secondary_seg ?
-					(dfs->dfs_precac_secondary_freq ==
-					 precac_entry->vht80_freq) :
-					IS_WITHIN_RANGE(
-						dfs->dfs_curchan->dfs_ch_ieee,
-						precac_entry->vht80_freq, 6)) {
-					TAILQ_REMOVE(&dfs->dfs_precac_done_list,
-						     precac_entry, pe_list);
-
-					dfs_debug(dfs, WLAN_DEBUG_DFS,
-						  "removing the freq = %u from done list and adding to NOL list",
-						  precac_entry->vht80_freq);
-					TAILQ_INSERT_TAIL(
-						&dfs->dfs_precac_nol_list,
-						precac_entry, pe_list);
-					qdf_timer_mod(
-					&precac_entry->precac_nol_timer,
-					dfs_get_nol_timeout(dfs) * 1000);
-					break;
-				}
-			}
-		}
+	/*
+	 * Even if radar found on primary, we need to move
+	 * the channel from precac-required-list and precac-done-list
+	 * to precac-nol-list.
+	 */
+	PRECAC_LIST_LOCK(dfs);
+	if (TAILQ_EMPTY(&dfs->dfs_precac_list)) {
 		PRECAC_LIST_UNLOCK(dfs);
-	} else {
-		PRECAC_LIST_LOCK(dfs);
-		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-			TAILQ_FOREACH_SAFE(precac_entry,
-					   &dfs->dfs_precac_required_list,
-					   pe_list,
-					   tmp_precac_entry) {
-			if (dfs->dfs_precac_secondary_freq ==
-				 precac_entry->vht80_freq) {
-				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-					     precac_entry, pe_list);
-
-				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					  "removing the freq = %u from required list and adding to NOL list",
-					  precac_entry->vht80_freq);
-				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
-						  precac_entry, pe_list);
-				qdf_timer_mod(&precac_entry->precac_nol_timer,
-					      dfs_get_nol_timeout(dfs) * 1000);
-				found = 1;
-				break;
-				}
-			}
-		}
-
-		/* If not found in precac-required-list
-		 * remove from precac-done-list
-		 */
-		if (!found && !TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
-			TAILQ_FOREACH_SAFE(precac_entry,
-					   &dfs->dfs_precac_done_list,
-					   pe_list,
-					   tmp_precac_entry) {
-				if (dfs->dfs_precac_secondary_freq ==
-					 precac_entry->vht80_freq) {
-					TAILQ_REMOVE(&dfs->dfs_precac_done_list,
-						     precac_entry, pe_list);
-
-					dfs_debug(dfs, WLAN_DEBUG_DFS,
-						  "removing the the freq = %u from done list and adding to NOL list",
-						  precac_entry->vht80_freq);
-					TAILQ_INSERT_TAIL(
-						&dfs->dfs_precac_nol_list,
-						precac_entry, pe_list);
-					qdf_timer_mod(
-					&precac_entry->precac_nol_timer,
-					dfs_get_nol_timeout(dfs) * 1000);
-					break;
-				}
-			}
-		}
-		PRECAC_LIST_UNLOCK(dfs);
+		return;
 	}
+	for (i = 0; i < num_channels; i++) {
+		TAILQ_FOREACH_SAFE(precac_entry,
+				   &dfs->dfs_precac_list,
+				   pe_list,
+				   tmp_precac_entry) {
+			if (IS_WITHIN_RANGE(channels[i],
+					    precac_entry->vht80_ch_ieee,
+					    VHT80_OFFSET)) {
+				dfs_mark_tree_node_as_nol(dfs,
+							  precac_entry,
+							  channels[i]);
+				break;
+			}
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
 
 	/* TO BE DONE  xxx:- Need to lock the channel change */
 	/*
@@ -499,7 +896,7 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 
 	if (dfs_soc_obj->dfs_precac_timer_running) {
 		/* Cancel the PreCAC timer */
-		qdf_timer_stop(&dfs_soc_obj->dfs_precac_timer);
+		qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
 		dfs_soc_obj->dfs_precac_timer_running = 0;
 
 		/*
@@ -664,7 +1061,6 @@ static inline bool dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
  */
 static os_timer_func(dfs_precac_timeout)
 {
-	struct dfs_precac_entry *precac_entry, *tmp_precac_entry;
 	struct wlan_dfs *dfs = NULL;
 	struct dfs_soc_priv_obj *dfs_soc_obj = NULL;
 	uint32_t current_time;
@@ -680,29 +1076,8 @@ static os_timer_func(dfs_precac_timeout)
 		 * Remove the HT80 freq from the precac-required-list
 		 * and add it to the precac-done-list
 		 */
-
-		PRECAC_LIST_LOCK(dfs);
-		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-			TAILQ_FOREACH_SAFE(precac_entry,
-					   &dfs->dfs_precac_required_list,
-					   pe_list,
-					   tmp_precac_entry) {
-				if (dfs->dfs_precac_secondary_freq !=
-						precac_entry->vht80_freq)
-					continue;
-
-				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-					     precac_entry, pe_list);
-				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					  "removing the the freq = %u from required list and adding to done list",
-					  precac_entry->vht80_freq);
-				TAILQ_INSERT_TAIL(&dfs->dfs_precac_done_list,
-						  precac_entry, pe_list);
-				break;
-			}
-		}
-		PRECAC_LIST_UNLOCK(dfs);
-
+		dfs_mark_precac_done(dfs, dfs->dfs_precac_secondary_freq, 0,
+				     dfs->dfs_precac_chwidth);
 		current_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "Pre-cac expired, Precac Secondary chan %u curr time %d",
@@ -733,31 +1108,10 @@ static os_timer_func(dfs_precac_timeout)
 			 current_time / 1000);
 		if (dfs_soc_obj->ocac_status == OCAC_SUCCESS) {
 			dfs_soc_obj->ocac_status = OCAC_RESET;
-			PRECAC_LIST_LOCK(dfs);
-				if (!TAILQ_EMPTY(
-					&dfs->dfs_precac_required_list)) {
-					TAILQ_FOREACH_SAFE(
-						precac_entry,
-						&dfs->dfs_precac_required_list,
-						pe_list,
-						tmp_precac_entry) {
-					if (dfs->dfs_agile_precac_freq !=
-						precac_entry->vht80_freq)
-						continue;
-
-					TAILQ_REMOVE(
-						&dfs->dfs_precac_required_list,
-						precac_entry, pe_list);
-					dfs_info(dfs, WLAN_DEBUG_DFS,
-						 "removing the freq = %u from required list and adding to done list",
-						 precac_entry->vht80_freq);
-					TAILQ_INSERT_TAIL(
-						&dfs->dfs_precac_done_list,
-						precac_entry, pe_list);
-					break;
-				}
-			}
-			PRECAC_LIST_UNLOCK(dfs);
+			dfs_mark_precac_done(dfs,
+					     dfs->dfs_agile_precac_freq,
+					     0,
+					     dfs->dfs_precac_chwidth);
 		}
 		/* check if CAC done on home channel */
 		is_cac_done_on_des_chan = dfs_precac_check_home_chan_change(dfs);
@@ -789,43 +1143,130 @@ void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 	PRECAC_LIST_LOCK_CREATE(dfs);
 }
 
-/**
- * dfs_precac_nol_timeout() - NOL timeout for precac channel.
- *
- * Removes the VHT80 channel from precac nol list and adds it to precac required
- * list.
+/* dfs_init_precac_tree_node() - Initialise the preCAC BSTree node with the
+ *                               provided values.
+ * @node:      Precac_tree_node to be filled.
+ * @chan:      IEEE channel value.
+ * @bandwidth: Bandwidth of the channel.
  */
-static os_timer_func(dfs_precac_nol_timeout)
+static inline void dfs_init_precac_tree_node(struct precac_tree_node *node,
+					     int chan,
+					     uint8_t bandwidth)
 {
-	struct dfs_precac_entry *precac_entry;
-	struct wlan_dfs *dfs = NULL;
+	node->left_child = NULL;
+	node->right_child = NULL;
+	node->ch_ieee = (uint8_t)chan;
+	node->n_caced_subchs = 0;
+	node->n_nol_subchs = 0;
+	node->n_valid_subchs = N_SUBCHS_FOR_BANDWIDTH(bandwidth);
+	node->bandwidth = bandwidth;
+}
 
-	OS_GET_TIMER_ARG(precac_entry, struct dfs_precac_entry *);
-	dfs = (struct wlan_dfs *)precac_entry->dfs;
+/* dfs_insert_node_into_bstree() - Insert a new preCAC BSTree node.
+ * @root:      The preCAC BSTree root pointer.
+ * @chan:      IEEE channel value of the new node.
+ * @bandwidth: Bandwidth of the channel.
+ *
+ * Return: EOK if new node is allocated, else return ENOMEM.
+ */
+static QDF_STATUS
+dfs_insert_node_into_bstree(struct precac_tree_node **root,
+			    int chan,
+			    uint8_t bandwidth)
+{
+	struct precac_tree_node *new_node = NULL;
+	struct precac_tree_node *curr_node, *prev_node = NULL;
+	QDF_STATUS status = EOK;
 
-	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list)) {
-		/* Move the channel from precac-NOL to precac-required-list */
-		TAILQ_REMOVE(&dfs->dfs_precac_nol_list, precac_entry, pe_list);
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "removing the the freq = %u from PreCAC NOL-list and adding Precac-required list",
-			  precac_entry->vht80_freq);
-		TAILQ_INSERT_TAIL(&dfs->dfs_precac_required_list,
-				  precac_entry,
-				  pe_list);
+	new_node = qdf_mem_malloc(sizeof(*new_node));
+	if (!new_node)
+		return -ENOMEM;
+	dfs_init_precac_tree_node(new_node, chan, bandwidth);
+
+	/* If root node is null, assign the newly allocated node
+	 * to this node and return.
+	 */
+	if (!(*root)) {
+		*root = new_node;
+		return status;
 	}
-	PRECAC_LIST_UNLOCK(dfs);
 
-	if (!dfs->dfs_agile_precac_enable) {
-		/* TO BE DONE xxx : Need to lock the channel change */
-		/* Do a channel change */
-		dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
-	} else {
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "Precac NOL timeout, sending agile channel set command"
-			  );
-		dfs_prepare_agile_precac_chan(dfs);
+	curr_node = *root;
+	/* Find the leaf node which will be the new node's parent */
+	while (curr_node) {
+		prev_node = curr_node;
+		curr_node = dfs_descend_precac_tree(curr_node, chan);
 	}
+
+	/* Add to the leaf node */
+	if (chan < prev_node->ch_ieee)
+		prev_node->left_child = new_node;
+	else
+		prev_node->right_child = new_node;
+
+	return status;
+}
+
+/* dfs fill_precac_tree_for_entry() - Fill precac entry tree (level insertion).
+ * @dfs:     WLAN DFS structure
+ * @ch_ieee: root_node ieee channel.
+ *
+ * Since every node at a tree level is equally spaced (fixed BW for a level),
+ * insertion of tree nodes are level order insertion.
+ * For each depth starting from root depth (0),
+ *       1. start from initial chan offset and fill node with ch_ieee
+ *          provided and this offset.
+ *       2. increment offset with next chan offset and fill node
+ *       3. repeat step 2 till boundary offset is reached.
+ *
+ * If the above sequence is not maintained, the tree will not be balanced
+ * as expected and would require rebalancing. Hence maintain the above
+ * sequence for insertion.
+ *
+ */
+
+#define N_OFFSETS 2
+#define START_INDEX 0
+#define STEP_INDEX 1
+static QDF_STATUS
+dfs_create_precac_tree(struct wlan_dfs *dfs,
+		       struct dfs_precac_entry *precac_entry,
+		       uint8_t ch_ieee)
+{
+	struct precac_tree_node *root = NULL;
+	int chan, i, bandwidth = DFS_CHWIDTH_80_VAL;
+	QDF_STATUS status = EOK;
+	static const int initial_and_next_offsets[TREE_DEPTH][N_OFFSETS] = {
+		{INITIAL_80_CHAN_OFFSET, NEXT_80_CHAN_OFFSET},
+		{INITIAL_40_CHAN_OFFSET, NEXT_40_CHAN_OFFSET},
+		{INITIAL_20_CHAN_OFFSET, NEXT_20_CHAN_OFFSET}
+	};
+
+	for (i = 0; i < TREE_DEPTH; i++) {
+		/* In offset array,
+		 * column 0 is initial chan offset,
+		 * column 1 is next chan offset.
+		 * Boundary offset is initial offset and next offset
+		 * of root level (since root level can have only 1 node)
+		 */
+		int offset = initial_and_next_offsets[i][START_INDEX];
+		int step = initial_and_next_offsets[i][STEP_INDEX];
+		uint8_t top_lvl_step = NEXT_80_CHAN_OFFSET;
+		int boundary_offset = offset + top_lvl_step;
+
+		for (; offset < boundary_offset; offset += step) {
+			chan = (int)ch_ieee + offset;
+			status = dfs_insert_node_into_bstree(&root,
+							     chan,
+							     bandwidth);
+			if (status)
+				return status;
+		}
+		bandwidth /= 2;
+	}
+
+	precac_entry->tree_root = root;
+	return status;
 }
 
 void dfs_init_precac_list(struct wlan_dfs *dfs)
@@ -834,6 +1275,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	uint8_t found;
 	struct dfs_precac_entry *tmp_precac_entry;
 	int nchans = 0;
+	QDF_STATUS status;
 
 	/*
 	 * We need to prepare list of uniq VHT80 center frequencies. But at the
@@ -843,15 +1285,14 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	 * and copy the uniq list of frequencies to the final list with exact
 	 * size.
 	 */
-	TAILQ_INIT(&dfs->dfs_precac_required_list);
-	TAILQ_INIT(&dfs->dfs_precac_done_list);
-	TAILQ_INIT(&dfs->dfs_precac_nol_list);
+	TAILQ_INIT(&dfs->dfs_precac_list);
 	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
 
 	PRECAC_LIST_LOCK(dfs);
-	/* Fill the  precac-required-list with unique elements */
+	/* Fill the  precac_list with unique elements */
 	for (i = 0; i < nchans; i++) {
 		struct dfs_channel *ichan = NULL, lc;
+		uint8_t pri_cntr_chan = 0;
 
 		ichan = &lc;
 		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
@@ -862,21 +1303,21 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 				&(ichan->dfs_ch_vhtop_ch_freq_seg1),
 				&(ichan->dfs_ch_vhtop_ch_freq_seg2),
 				i);
+		pri_cntr_chan = ichan->dfs_ch_vhtop_ch_freq_seg1;
 
 		if (WLAN_IS_CHAN_11AC_VHT80(ichan) &&
 				WLAN_IS_CHAN_DFS(ichan)) {
 			found = 0;
 			TAILQ_FOREACH(tmp_precac_entry,
-					&dfs->dfs_precac_required_list,
+					&dfs->dfs_precac_list,
 					pe_list) {
-				if (tmp_precac_entry->vht80_freq ==
-						ichan->
-						dfs_ch_vhtop_ch_freq_seg1) {
+				if (tmp_precac_entry->vht80_ch_ieee ==
+						pri_cntr_chan) {
 					found = 1;
 					break;
 				}
 			}
-			if (!found) {
+			if (!found && pri_cntr_chan) {
 				struct dfs_precac_entry *precac_entry;
 
 				precac_entry = qdf_mem_malloc(
@@ -886,21 +1327,18 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 						"entry alloc fail for : %d", i);
 					continue;
 				}
-				precac_entry->vht80_freq =
-					ichan->dfs_ch_vhtop_ch_freq_seg1;
+				precac_entry->vht80_ch_ieee = pri_cntr_chan;
 				precac_entry->dfs = dfs;
-
-				/*
-				 * Initialize per entry timer. Shall be used
-				 * when the entry moves to precac_nol_list.
-				 */
-				qdf_timer_init(NULL,
-					&(precac_entry->precac_nol_timer),
-					dfs_precac_nol_timeout,
-					(void *) (precac_entry),
-					QDF_TIMER_TYPE_WAKE_APPS);
+				status = dfs_create_precac_tree(dfs,
+								precac_entry,
+								pri_cntr_chan);
+				if (status) {
+					dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+						"tree_node alloc failed");
+					continue;
+				}
 				TAILQ_INSERT_TAIL(
-						&dfs->dfs_precac_required_list,
+						&dfs->dfs_precac_list,
 						precac_entry, pe_list);
 			}
 		}
@@ -910,10 +1348,111 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"Print the list of VHT80 frequencies from linked list");
 	TAILQ_FOREACH(tmp_precac_entry,
-			&dfs->dfs_precac_required_list,
+			&dfs->dfs_precac_list,
 			pe_list)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "freq=%u",
-				tmp_precac_entry->vht80_freq);
+				tmp_precac_entry->vht80_ch_ieee);
+}
+
+/* dfs_find_leftmost_leaf_of_precac_tree() - Find the leftmost leaf node of
+ *                                           BSTree rooted by the given node.
+ * @node: PreCAC BSTree node whose leftmost leaf is required.
+ *
+ * Return: Pointer of struct precac_tree_node.
+ */
+static inline struct precac_tree_node *
+dfs_find_leftmost_leaf_of_precac_tree(struct precac_tree_node *node)
+{
+	if (!node)
+		return NULL;
+
+	while (node->left_child)
+		node = node->left_child;
+
+	return node;
+}
+
+/*
+ * dfs_free_precac_tree_nodes() - Free the tree nodes starting from
+ *                                the root node.
+ *                                NOTE: This changes tree structure, hence
+ *                                caller should be in a lock.
+ * @dfs:          Pointer to WLAN DFS structure.
+ * @precac_entry: Precac list entry whose BSTree is to be freed.
+ *
+ * Consider the below Binary tree,
+ *
+ *                         A
+ *                        / \
+ *                       B   C
+ *                        \
+ *                         D
+ *
+ * Steps for freeing this tree,
+ *
+ * 1. Find the leftmost leaf node of the Binary Tree.
+ * 2. Set current node as root node.
+ * 3. If current node has right child, add right child of current node as left
+ *    child of leftmost leaf.
+ * 4. Update the leftmost leaf.
+ * 5. Update current node to left child and remove the node.
+ * 6. Repeat steps 3 to 5 till current node is NULL.
+ *
+ * The above Binary Tree structure during the afore mentioned steps:
+ *
+ *    A            A
+ *   / \          /
+ *  B   C  -->    B     -->    B     -->    B   -->   C   -->  D   -->  .
+ *   \           / \          / \          /         /
+ *    D         C   D        C   D        C         D
+ *                                       /
+ *                                      D
+ *
+ */
+
+static void dfs_free_precac_tree_nodes(struct wlan_dfs *dfs,
+				       struct dfs_precac_entry *precac_entry)
+{
+	struct precac_tree_node *root_node, *left_most_leaf, *prev_root_node;
+
+	root_node = precac_entry->tree_root;
+	if (!root_node) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "tree root is null");
+		return;
+	}
+
+	/* Find leftmost leaf node */
+	left_most_leaf = root_node;
+	left_most_leaf = dfs_find_leftmost_leaf_of_precac_tree(left_most_leaf);
+	if (!left_most_leaf) {
+		/* should've been caught in previous check, assert here */
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Could not find leaf, deletion failed! Asserting");
+		QDF_ASSERT(0);
+		return;
+	}
+
+	while (root_node) {
+		if (root_node->right_child) {
+			/* Add the right subtree as the left child of the
+			 * leftmost leaf
+			 */
+			left_most_leaf->left_child = root_node->right_child;
+			/* Update left most leaf */
+			left_most_leaf = dfs_find_leftmost_leaf_of_precac_tree(
+						left_most_leaf);
+			if (!left_most_leaf) {
+				dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"Could not find leaf, deletion failed");
+				QDF_ASSERT(0);
+				return;
+			}
+		}
+		/* Free current node */
+		prev_root_node = root_node;
+		root_node = root_node->left_child;
+		qdf_mem_free(prev_root_node);
+	}
 }
 
 void dfs_deinit_precac_list(struct wlan_dfs *dfs)
@@ -921,41 +1460,15 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 	struct dfs_precac_entry *tmp_precac_entry, *precac_entry;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"Free the list of VHT80 frequencies from linked list(precac_required)"
-		);
+		"Free the list of VHT80 frequencies from linked list");
 	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list))
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_list))
 		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_required_list,
-				pe_list, tmp_precac_entry) {
-			TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-					precac_entry, pe_list);
-			qdf_mem_free(precac_entry);
-		}
-
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"Free the list of VHT80 frequencies from linked list(precac_done)"
-		);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_done_list))
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_done_list,
-				pe_list, tmp_precac_entry) {
-			TAILQ_REMOVE(&dfs->dfs_precac_done_list,
-					precac_entry, pe_list);
-			qdf_mem_free(precac_entry);
-		}
-
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"Free the list of VHT80 frequencies from linked list(precac_nol)"
-		);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list))
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_nol_list,
-				pe_list,
-				tmp_precac_entry) {
-			qdf_timer_stop(&precac_entry->precac_nol_timer);
-			TAILQ_REMOVE(&dfs->dfs_precac_nol_list,
-					precac_entry, pe_list);
+				   &dfs->dfs_precac_list,
+				   pe_list, tmp_precac_entry) {
+			dfs_free_precac_tree_nodes(dfs, precac_entry);
+			TAILQ_REMOVE(&dfs->dfs_precac_list,
+				     precac_entry, pe_list);
 			qdf_mem_free(precac_entry);
 		}
 	PRECAC_LIST_UNLOCK(dfs);
@@ -988,31 +1501,120 @@ void dfs_zero_cac_detach(struct wlan_dfs *dfs)
 	PRECAC_LIST_LOCK_DESTROY(dfs);
 }
 
-uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
-		uint8_t exclude_ieee_freq)
+/* dfs_is_cac_needed_for_bst_node() - For a requested bandwidth, find
+ *                                    if the current preCAC BSTree node needs
+ *                                    CAC.
+ * @node:          Node to be checked.
+ * @req_bandwidth: bandwidth of channel requested.
+ *
+ * Return: TRUE/FALSE.
+ * Return true if there exists a channel of the requested bandwidth
+ * for the node which is not CAC done, else false.
+ */
+static bool
+dfs_is_cac_needed_for_bst_node(struct precac_tree_node *node,
+			       uint8_t req_bandwidth)
+{
+	uint8_t n_subchs_for_req_bw, non_nol_subchs;
+
+	if (!node)
+		return false;
+
+	/* Find the number of subchannels for the requested bandwidth */
+	n_subchs_for_req_bw = N_SUBCHS_FOR_BANDWIDTH(req_bandwidth);
+	non_nol_subchs = node->n_valid_subchs - node->n_nol_subchs;
+
+	/* Return false if,
+	 * 1. Number of non-NOL subchannels in the current node is less than
+	 *    the requested number of subchannels.
+	 * 2. All the subchannels of the node are CAC done.
+	 * 3. If the number CAC done subchannels + NOL subchannels in the
+	 *    current node is equal to number of valid subchannels in the node.
+	 * else, return true.
+	 */
+	if ((non_nol_subchs < n_subchs_for_req_bw) ||
+	    (node->n_caced_subchs == node->n_valid_subchs) ||
+	    (node->n_caced_subchs + node->n_nol_subchs == node->n_valid_subchs))
+		return false;
+
+	return true;
+}
+
+/* dfs_find_ieee_ch_from_precac_tree() - from the given preCAC tree, find a IEEE
+ *                                       channel of the given bandwidth which
+ *                                       is valid and needs CAC.
+ * @root:   PreCAC BSTree root pointer.
+ * @req_bw: Bandwidth of channel requested.
+ *
+ * Return: IEEE channel number.
+ * Return a valid IEEE value which needs CAC for the given bandwidth, else
+ * return 0.
+ */
+static uint8_t
+dfs_find_ieee_ch_from_precac_tree(struct precac_tree_node *root,
+				  uint8_t req_bw)
+{
+	struct precac_tree_node *curr_node;
+
+	if (!dfs_is_cac_needed_for_bst_node(root, req_bw))
+		return 0;
+
+	curr_node = root;
+	while (curr_node) {
+		if (curr_node->bandwidth == req_bw) {
+			/* find if current node in valid state (req.) */
+			if (dfs_is_cac_needed_for_bst_node(curr_node, req_bw))
+				return curr_node->ch_ieee;
+			else
+				return 0;
+		}
+
+		/* Find if we need to go to left or right subtree.
+		 * Note: If both are available, go to left.
+		 */
+		if (!dfs_is_cac_needed_for_bst_node(curr_node->left_child,
+						    req_bw))
+			curr_node = curr_node->right_child;
+		else
+			curr_node = curr_node->left_child;
+	}
+	/* If requested bandwidth is invalid, return 0 here */
+	return 0;
+}
+
+uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
+				    uint8_t exclude_pri_ch_ieee,
+				    uint8_t exclude_sec_ch_ieee,
+				    uint8_t bandwidth)
 {
 	struct dfs_precac_entry *precac_entry;
-	uint8_t ieee_freq = 0;
+	struct precac_tree_node *root = NULL;
+	uint8_t ieee_chan = 0;
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "exclude_ieee_freq = %u",
-		 exclude_ieee_freq);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "current operating channel(s) to be excluded = [%u] [%u]",
+		 exclude_pri_ch_ieee,
+		 exclude_sec_ch_ieee);
 
 	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-		TAILQ_FOREACH(precac_entry, &dfs->dfs_precac_required_list,
-				pe_list) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				 "freq: %d ", precac_entry->vht80_freq);
-			if (precac_entry->vht80_freq != exclude_ieee_freq) {
-				ieee_freq = precac_entry->vht80_freq;
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_list)) {
+		TAILQ_FOREACH(precac_entry, &dfs->dfs_precac_list,
+			      pe_list) {
+			root = precac_entry->tree_root;
+			ieee_chan =
+				dfs_find_ieee_ch_from_precac_tree(root,
+								  bandwidth);
+			if (ieee_chan &&
+			    (ieee_chan != exclude_pri_ch_ieee) &&
+			    (ieee_chan != exclude_sec_ch_ieee))
 				break;
-			}
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ieee_freq = %u", ieee_freq);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Channel picked for preCAC = %u",
+		 ieee_chan);
 
-	return ieee_freq;
+	return ieee_chan;
 }
 
 void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
@@ -1020,39 +1622,24 @@ void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
-	qdf_timer_stop(&dfs_soc_obj->dfs_precac_timer);
+	qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
 	dfs_soc_obj->dfs_precac_timer_running = 0;
 }
 
 #ifdef QCA_SUPPORT_AGILE_DFS
+#define DEFAULT_CAC_DURATION 62
 void dfs_start_agile_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan,
 				  uint8_t ocac_status)
 {
-	struct dfs_channel *ichan, lc;
-	uint8_t first_primary_dfs_ch_ieee;
 	int agile_cac_timeout;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs_soc_obj->dfs_precac_timer_running = 1;
 
-	first_primary_dfs_ch_ieee = precac_chan - VHT80_IEEE_FREQ_OFFSET;
-	ichan = &lc;
-	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
-				    first_primary_dfs_ch_ieee, 0,
-				    WLAN_PHYMODE_11AC_VHT80,
-				    &ichan->dfs_ch_freq,
-				    &ichan->dfs_ch_flags,
-				    &ichan->dfs_ch_flagext,
-				    &ichan->dfs_ch_ieee,
-				    &ichan->dfs_ch_vhtop_ch_freq_seg1,
-				    &ichan->dfs_ch_vhtop_ch_freq_seg2);
 	agile_cac_timeout = (dfs->dfs_precac_timeout_override != -1) ?
 				dfs->dfs_precac_timeout_override :
-	dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
-				 ichan->dfs_ch_freq,
-				 ichan->dfs_ch_vhtop_ch_freq_seg2,
-				 ichan->dfs_ch_flags);
+				DEFAULT_CAC_DURATION;
 	if (ocac_status == OCAC_SUCCESS) {
 		dfs_soc_obj->ocac_status = OCAC_SUCCESS;
 		agile_cac_timeout = 0;
@@ -1139,6 +1726,151 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs,
 	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer, (precac_timeout) * 1000);
 }
 
+/* dfs_print_node_data() - Print the precac tree node data.
+ * @dfs:  Pointer to WLAN DFS structure.
+ * @node: Precac tree node pointer.
+ *
+ * Sample print for below tree:
+ *
+ *      A                  A(C,N)
+ *     / \                 |
+ *    B   C                |------- B(C,N)
+ *   / \                   |        |
+ *  D   E                  |        |------- D(C,N)
+ *                         |        |
+ *                         |        |------- E(C,N)
+ *                         |
+ *                         |------- E(C,N)
+ *
+ * Where C is number of CACed subchannels, and N is number of NOL subchannels.
+ * For each node, the prefix and previous line prefix to be printed will be
+ * based on the level (and by our logic, bandwidth) of the current node.
+ *
+ */
+#define MAX_PREFIX_CHAR 20
+static void dfs_print_node_data(struct wlan_dfs *dfs,
+				struct precac_tree_node *node)
+{
+	char prefix[MAX_PREFIX_CHAR] = "";
+	char prev_line_prefix[MAX_PREFIX_CHAR] = "";
+	char inv[4] = "inv";
+
+	switch (node->bandwidth) {
+	case DFS_CHWIDTH_80_VAL:
+		break;
+	case DFS_CHWIDTH_40_VAL:
+		qdf_str_lcopy(prev_line_prefix, "|", MAX_PREFIX_CHAR);
+		qdf_str_lcopy(prefix, "|------- ", MAX_PREFIX_CHAR);
+		break;
+	case DFS_CHWIDTH_20_VAL:
+		qdf_str_lcopy(prev_line_prefix, "|        |", MAX_PREFIX_CHAR);
+		qdf_str_lcopy(prefix, "|        |------- ", MAX_PREFIX_CHAR);
+		break;
+	default:
+		return;
+	}
+
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "%s", prev_line_prefix);
+	/* if current node is not a valid ic channel, print invalid */
+	if (node->n_valid_subchs != N_SUBCHS_FOR_BANDWIDTH(node->bandwidth))
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "%s%s", prefix, inv);
+	else
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "%s%u(%u,%u)",
+			 prefix,
+			 node->ch_ieee,
+			 node->n_caced_subchs,
+			 node->n_nol_subchs);
+}
+
+/* dfs_print_precac_tree_nodes() - print the precac tree nodes using
+ *                                 preorder traversal. (Root-Left-Right)
+ * @dfs:          WLAN DFS structure.
+ * @precac_entry: A single entry in the precac list.
+ *
+ * Algorithm used - Morris preorder tree traversal (iterative).
+ *
+ * Description of Algorithm:
+ * Consider the below tree, Preorder sequence (A, B, D, E, C)
+ *
+ *                         A
+ *                        / \
+ *                       B   C
+ *                      / \
+ *                     D   E
+ *
+ * What is inorder predecessor?
+ *
+ *    For a given node, the inorder predecessor of the node is
+ *    the rightmost node of the left subtree.
+ *    For e.g.: In our tree, E is the predecessor of A,
+ *    D is the predecessor of B.
+ *
+ * Steps for Algorithm:
+ * Starting from the root node as the current node,
+ * 1) If there is no left child, print current node data and go to right child.
+ * 2) If the left child exists,
+ *    2.1) Find the inorder predecessor of the current node.
+ *    2.2) If the predecessor's right child is
+ *         2.2.1) NULL, then
+ *                A) Print current node.
+ *                B) Make the predecessor's right child as the current node.
+ *                C) Go to left child.
+ *         2.2.2) Current node, then
+ *                A) Make the predecessor's right child as NULL.
+ *                B) Go to the right child.
+ * 3) Repeat 1 & 2 till current node is NULL.
+ *
+ * The above Binary Tree structure during the afore mentioned steps:
+ * Note: Nodes with '[]' are printed.
+ *
+ *     A         [A]         [A]         [A]        [A]        [A]       [A]
+ *    / \        /|\         /|\         /|\        /|\        / \       / \
+ *   B   C -->  B | C --> [B] | C --> [B] | C --> [B]| C --> [B]  C --> [B] [C]
+ *  / \        / \|       // \|       // \|       / \|       / \        / \
+ * D   E      D   E      D    E      [D]  E     [D]  E     [D] [E]    [D] [E]
+ *
+ */
+static void dfs_print_precac_tree_nodes(struct wlan_dfs *dfs,
+					struct dfs_precac_entry *precac_entry)
+{
+	struct precac_tree_node *root = precac_entry->tree_root;
+	struct precac_tree_node *curr_node, *inorder_predecessor;
+
+	if (!root)
+		return;
+	curr_node = root;
+	while (curr_node) {
+		if (!curr_node->left_child) {
+			dfs_print_node_data(dfs, curr_node);
+			curr_node = curr_node->right_child;
+		} else {
+			/* Find the right most leaf node of the left subtree. */
+			inorder_predecessor = curr_node->left_child;
+			while (inorder_predecessor->right_child &&
+			       inorder_predecessor->right_child != curr_node)
+				inorder_predecessor =
+					inorder_predecessor->right_child;
+
+			/* If the right most child of left subtree already
+			 * is linked to current node. We have traversed
+			 * left subtree. Remove the link and go to right
+			 * subtree
+			 */
+			if (inorder_predecessor->right_child == curr_node) {
+				inorder_predecessor->right_child = NULL;
+				curr_node = curr_node->right_child;
+			} else {
+			/* Print current node data, make current node
+			 * as predecessor's right child, and move to left child.
+			 */
+				dfs_print_node_data(dfs, curr_node);
+				inorder_predecessor->right_child = curr_node;
+				curr_node = curr_node->left_child;
+			}
+		}
+	}
+}
+
 void dfs_print_precaclists(struct wlan_dfs *dfs)
 {
 	struct dfs_precac_entry *tmp_precac_entry;
@@ -1152,34 +1884,14 @@ void dfs_print_precaclists(struct wlan_dfs *dfs)
 
 	/* Print the Pre-CAC required List */
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"Pre-cac-required list of VHT80 frequencies");
-	TAILQ_FOREACH(tmp_precac_entry,
-			&dfs->dfs_precac_required_list,
-			pe_list) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"freq=%u", tmp_precac_entry->vht80_freq);
-	}
-
-	/* Print the Pre-CAC done List */
+			"Precac status of all nodes in the list:");
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"Pre-cac-done list of VHT80 frequencies");
+			"NOTE: Syntax for each node: <ch_ieee>(<CAC>,<NOL>)");
 	TAILQ_FOREACH(tmp_precac_entry,
-			&dfs->dfs_precac_done_list,
+			&dfs->dfs_precac_list,
 			pe_list) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "freq=%u",
-			 tmp_precac_entry->vht80_freq);
+		dfs_print_precac_tree_nodes(dfs, tmp_precac_entry);
 	}
-
-	/* Print the Pre-CAC NOL List */
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"Pre-cac-NOL list of VHT80 frequencies");
-	TAILQ_FOREACH(tmp_precac_entry,
-			&dfs->dfs_precac_nol_list,
-			pe_list) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"freq=%u", tmp_precac_entry->vht80_freq);
-	}
-
 	PRECAC_LIST_UNLOCK(dfs);
 }
 
@@ -1219,15 +1931,15 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 	 */
 	PRECAC_LIST_LOCK(dfs);
 	if (WLAN_IS_CHAN_DFS(chan) &&
-	    !TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
+	    !TAILQ_EMPTY(&dfs->dfs_precac_list)) {
 		TAILQ_FOREACH(precac_entry,
-			      &dfs->dfs_precac_required_list, pe_list) {
-			if (precac_entry->vht80_freq ==
+			      &dfs->dfs_precac_list, pe_list) {
+			if (precac_entry->vht80_ch_ieee ==
 			    chan->dfs_ch_vhtop_ch_freq_seg1) {
 				found = true;
-				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+				TAILQ_REMOVE(&dfs->dfs_precac_list,
 					     precac_entry, pe_list);
-				TAILQ_INSERT_HEAD(&dfs->dfs_precac_required_list,
+				TAILQ_INSERT_HEAD(&dfs->dfs_precac_list,
 						  precac_entry, pe_list);
 				break;
 			}
@@ -1235,7 +1947,7 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 	}
 
 	if (WLAN_IS_CHAN_MODE_160(chan) && WLAN_IS_CHAN_DFS(chan) &&
-	    !TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
+	    !TAILQ_EMPTY(&dfs->dfs_precac_list)) {
 		if (chan->dfs_ch_ieee < chan->dfs_ch_vhtop_ch_freq_seg2)
 			freq_160_sec = chan->dfs_ch_vhtop_ch_freq_seg1 +
 				       VHT160_IEEE_FREQ_DIFF;
@@ -1245,13 +1957,13 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 
 		found = false;
 		TAILQ_FOREACH(precac_entry,
-			      &dfs->dfs_precac_required_list, pe_list) {
-			if (precac_entry->vht80_freq ==
+			      &dfs->dfs_precac_list, pe_list) {
+			if (precac_entry->vht80_ch_ieee ==
 			    freq_160_sec) {
 				found = true;
-				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+				TAILQ_REMOVE(&dfs->dfs_precac_list,
 					     precac_entry, pe_list);
-				TAILQ_INSERT_HEAD(&dfs->dfs_precac_required_list,
+				TAILQ_INSERT_HEAD(&dfs->dfs_precac_list,
 						  precac_entry, pe_list);
 				break;
 			}
@@ -1318,6 +2030,7 @@ dfs_get_precac_chan_state(struct wlan_dfs *dfs, uint8_t precac_chan)
 {
 	struct dfs_channel chan;
 	struct dfs_precac_entry *tmp_precac_entry;
+	struct precac_tree_node *root = NULL;
 	enum precac_chan_state ret = PRECAC_ERR;
 
 	qdf_mem_zero(&chan, sizeof(struct dfs_channel));
@@ -1344,8 +2057,8 @@ dfs_get_precac_chan_state(struct wlan_dfs *dfs, uint8_t precac_chan)
 
 	PRECAC_LIST_LOCK(dfs);
 	if (dfs_is_precac_timer_running(dfs)) {
-		tmp_precac_entry = TAILQ_FIRST(&dfs->dfs_precac_required_list);
-		if (tmp_precac_entry && (tmp_precac_entry->vht80_freq ==
+		tmp_precac_entry = TAILQ_FIRST(&dfs->dfs_precac_list);
+		if (tmp_precac_entry && (tmp_precac_entry->vht80_ch_ieee ==
 			chan.dfs_ch_vhtop_ch_freq_seg1)) {
 			ret = PRECAC_NOW;
 			goto end;
@@ -1353,32 +2066,20 @@ dfs_get_precac_chan_state(struct wlan_dfs *dfs, uint8_t precac_chan)
 	}
 
 	TAILQ_FOREACH(tmp_precac_entry,
-		      &dfs->dfs_precac_required_list, pe_list) {
-		if (tmp_precac_entry->vht80_freq ==
+		      &dfs->dfs_precac_list, pe_list) {
+		if (tmp_precac_entry->vht80_ch_ieee ==
 		    chan.dfs_ch_vhtop_ch_freq_seg1) {
-			ret = PRECAC_REQUIRED;
+			root = tmp_precac_entry->tree_root;
+			if (root->n_nol_subchs)
+				ret = PRECAC_NOL;
+			else if (root->n_caced_subchs ==
+				 N_SUBCHS_FOR_BANDWIDTH(root->bandwidth))
+				ret = PRECAC_DONE;
+			else
+				ret = PRECAC_REQUIRED;
 			goto end;
 		}
 	}
-
-	TAILQ_FOREACH(tmp_precac_entry,
-		      &dfs->dfs_precac_done_list, pe_list) {
-		if (tmp_precac_entry->vht80_freq ==
-		    chan.dfs_ch_vhtop_ch_freq_seg1) {
-			ret = PRECAC_DONE;
-			goto end;
-		}
-	}
-
-	TAILQ_FOREACH(tmp_precac_entry,
-		      &dfs->dfs_precac_nol_list, pe_list) {
-		if (tmp_precac_entry->vht80_freq ==
-		    chan.dfs_ch_vhtop_ch_freq_seg1) {
-			ret = PRECAC_NOL;
-			goto end;
-		}
-	}
-
 end:
 	PRECAC_LIST_UNLOCK(dfs);
 	return ret;
@@ -1386,26 +2087,93 @@ end:
 #endif
 
 #ifdef QCA_SUPPORT_AGILE_DFS
-void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
-					  uint8_t *ch_freq,
-					  uint8_t ch_freq_seg1,
-					  uint8_t ch_freq_seg2)
+/* dfs_translate_chwidth_enum2val() - Translate the given channel width enum
+ *                                    to it's value.
+ * @dfs:     Pointer to WLAN DFS structure.
+ * @chwidth: Channel width enum of the pdev's current channel.
+ *
+ * Return: The Bandwidth value for the given channel width enum.
+ */
+static uint8_t
+dfs_translate_chwidth_enum2val(struct wlan_dfs *dfs,
+			       enum phy_ch_width chwidth)
 {
-	uint8_t ieee_freq;
+	switch (chwidth) {
+	case CH_WIDTH_20MHZ:
+		return DFS_CHWIDTH_20_VAL;
+	case CH_WIDTH_40MHZ:
+		return DFS_CHWIDTH_40_VAL;
+	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
+		return DFS_CHWIDTH_80_VAL;
+	case CH_WIDTH_160MHZ:
+		return DFS_CHWIDTH_160_VAL;
+	default:
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "cannot find mode!");
+		return 0;
+	}
+}
+
+/* dfs_find_agile_width() - Given a channel width enum, find the corresponding
+ *                          translation for Agile channel width.
+ *                          Translation schema of different operating modes:
+ *                          20 -> 20, 40 -> 40, (80 & 160 & 80_80) -> 80.
+ * @dfs:     Pointer to WLAN DFS structure.
+ * @chwidth: Channel width enum.
+ *
+ * Return: The translated channel width enum.
+ */
+static enum phy_ch_width
+dfs_find_agile_width(struct wlan_dfs *dfs, enum phy_ch_width chwidth)
+{
+	switch (chwidth) {
+	case CH_WIDTH_20MHZ:
+		return CH_WIDTH_20MHZ;
+	case CH_WIDTH_40MHZ:
+		return CH_WIDTH_40MHZ;
+	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
+	case CH_WIDTH_160MHZ:
+		return CH_WIDTH_80MHZ;
+	default:
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid chwidth enum!");
+		return 0;
+	}
+}
+
+void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
+				   uint8_t *ch_ieee,
+				   uint8_t pri_ch_ieee,
+				   uint8_t sec_ch_ieee)
+{
+	uint8_t ieee_chan, chwidth_val;
+	enum phy_ch_width chwidth = CH_WIDTH_INVALID;
+
+	/*
+	 * Agile detector's band of operation depends on current pdev.
+	 * Find the current channel's width and apply the translate rules
+	 * to find the Agile detector bandwidth.
+	 * Translate rules (all numbers are in MHz) from current pdev's width
+	 * to Agile detector's width:
+	 * 20 - 20, 40 - 40, 80 - 80, 160 - 80, 160 (non contiguous) - 80.
+	 */
+	dfs_find_chwidth_and_center_chan(dfs, &chwidth, NULL, NULL);
+	dfs->dfs_precac_chwidth = dfs_find_agile_width(dfs, chwidth);
+	if (!dfs->dfs_precac_chwidth) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "cannot start agile CAC!");
+		return;
+	}
+	/* Find chwidth value for the given enum */
+	chwidth_val = dfs_translate_chwidth_enum2val(dfs,
+						     dfs->dfs_precac_chwidth);
 
 	dfs->dfs_soc_obj->ocac_status = OCAC_RESET;
-	ieee_freq = dfs_get_freq_from_precac_required_list(
-				dfs,
-				ch_freq_seg1);
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		 "ieee_freq: %d  ch_freq_seg1: %d , ch_freq_seg2 : %d ",
-		 ieee_freq, ch_freq_seg1, ch_freq_seg2);
-	if (ieee_freq == ch_freq_seg2 && ieee_freq != 0)
-		ieee_freq = dfs_get_freq_from_precac_required_list(
-				dfs,
-				ch_freq_seg2);
-	if (ieee_freq) {
-		dfs->dfs_agile_precac_freq = ieee_freq;
+	ieee_chan = dfs_get_ieeechan_for_precac(dfs,
+						pri_ch_ieee,
+						sec_ch_ieee,
+						chwidth_val);
+	if (ieee_chan) {
+		dfs->dfs_agile_precac_freq = ieee_chan;
 		/* Start the pre_cac_timer */
 		dfs_start_agile_precac_timer(dfs,
 					     dfs->dfs_agile_precac_freq,
@@ -1414,7 +2182,7 @@ void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
 		dfs->dfs_agile_precac_freq = 0;
 	}
 
-	*ch_freq = dfs->dfs_agile_precac_freq;
+	*ch_ieee = dfs->dfs_agile_precac_freq;
 }
 #endif
 
@@ -1428,10 +2196,12 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 				    bool *set_agile)
 {
 	uint8_t ieee_freq;
+	uint8_t chwidth_val = DFS_CHWIDTH_80_VAL;
 
 	if (chan_mode != WLAN_PHYMODE_11AC_VHT80)
 		return;
 
+	dfs->dfs_precac_chwidth = CH_WIDTH_80MHZ;
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		  "precac_secondary_freq = %u precac_running = %u",
 		  dfs->dfs_precac_secondary_freq,
@@ -1447,28 +2217,29 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		 * If precac timer is running then do not change the
 		 * secondary channel use the old secondary VHT80
 		 * channel. If precac timer is not running then try to
-		 * find a new channel from precac-required-list.
+		 * find a new channel from precac-list.
 		 */
 		if (dfs->dfs_soc_obj->dfs_precac_timer_running) {
 			/*
 			 * Primary and secondary VHT80 cannot be the
 			 * same. Therefore exclude the primary
 			 * frequency while getting new channel from
-			 * precac-required-list.
+			 * precac-list.
 			 */
 			if (ch_freq_seg1 ==
 					dfs->dfs_precac_secondary_freq)
 				ieee_freq =
-				dfs_get_freq_from_precac_required_list(
-						dfs,
-						ch_freq_seg1);
+				dfs_get_ieeechan_for_precac(dfs,
+							    ch_freq_seg1,
+							    0,
+							    chwidth_val);
 			else
-				ieee_freq =
-					dfs->dfs_precac_secondary_freq;
+				ieee_freq = dfs->dfs_precac_secondary_freq;
 		} else
-			ieee_freq =
-				dfs_get_freq_from_precac_required_list(
-						dfs, ch_freq_seg1);
+			ieee_freq = dfs_get_ieeechan_for_precac(dfs,
+								ch_freq_seg1,
+								0,
+								chwidth_val);
 		if (ieee_freq) {
 			if (ieee_freq == (ch_freq_seg1 +
 					  VHT160_IEEE_FREQ_DIFF)) {
