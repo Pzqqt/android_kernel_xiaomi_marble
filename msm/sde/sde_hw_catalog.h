@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CATALOG_H
@@ -368,13 +368,23 @@ enum {
 	SDE_PINGPONG_MAX
 };
 
-/** DSC sub-blocks
+/** DSC sub-blocks/features
  * @SDE_DSC_OUTPUT_CTRL         Supports the control of the pp id which gets
  *                              the pixel output from this DSC.
+ * @SDE_DSC_HW_REV_1_1          dsc block supports dsc 1.1 only
+ * @SDE_DSC_HW_REV_1_2          dsc block supports dsc 1.1 and 1.2
+ * @SDE_DSC_NATIVE_422_EN,      Supports native422 and native420 encoding
+ * @SDE_DSC_ENC,                DSC encoder sub block
+ * @SDE_DSC_CTL,                DSC ctl sub block
  * @SDE_DSC_MAX
  */
 enum {
 	SDE_DSC_OUTPUT_CTRL = 0x1,
+	SDE_DSC_HW_REV_1_1,
+	SDE_DSC_HW_REV_1_2,
+	SDE_DSC_NATIVE_422_EN,
+	SDE_DSC_ENC,
+	SDE_DSC_CTL,
 	SDE_DSC_MAX
 };
 
@@ -549,6 +559,14 @@ struct sde_pp_blk {
 };
 
 /**
+ * struct sde_dsc_blk : DSC Encoder sub-blk information
+ * @info:   HW register and features supported by this sub-blk
+ */
+struct sde_dsc_blk {
+	SDE_HW_SUBBLK_INFO;
+};
+
+/**
  * struct sde_format_extended - define sde specific pixel format+modifier
  * @fourcc_format: Base FOURCC pixel format code
  * @modifier: 64-bit drm format modifier, same modifier must be applied to all
@@ -703,6 +721,15 @@ struct sde_pingpong_sub_blks {
 	struct sde_pp_blk te2;
 	struct sde_pp_blk dsc;
 	struct sde_pp_blk dither;
+};
+
+/**
+ * struct sde_dsc_sub_blks : DSC sub-blks
+ *
+ */
+struct sde_dsc_sub_blks {
+	struct sde_dsc_blk enc;
+	struct sde_dsc_blk ctl;
 };
 
 struct sde_wb_sub_blocks {
@@ -935,6 +962,7 @@ struct sde_pingpong_cfg  {
 struct sde_dsc_cfg {
 	SDE_HW_BLK_INFO;
 	DECLARE_BITMAP(dsc_pair_mask, DSC_MAX);
+	struct sde_dsc_sub_blks *sblk;
 };
 
 /**

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -311,6 +311,10 @@ enum {
 	DSC_OFF,
 	DSC_LEN,
 	DSC_PAIR_MASK,
+	DSC_REV,
+	DSC_ENC,
+	DSC_CTL,
+	DSC_422,
 	DSC_PROP_MAX,
 };
 
@@ -700,6 +704,10 @@ static struct sde_prop_type dsc_prop[] = {
 	{DSC_OFF, "qcom,sde-dsc-off", false, PROP_TYPE_U32_ARRAY},
 	{DSC_LEN, "qcom,sde-dsc-size", false, PROP_TYPE_U32},
 	{DSC_PAIR_MASK, "qcom,sde-dsc-pair-mask", false, PROP_TYPE_U32_ARRAY},
+	{DSC_REV, "qcom,sde-dsc-hw-rev", false, PROP_TYPE_STRING},
+	{DSC_ENC, "qcom,sde-dsc-enc", false, PROP_TYPE_U32_ARRAY},
+	{DSC_CTL, "qcom,sde-dsc-ctl", false, PROP_TYPE_U32_ARRAY},
+	{DSC_422, "qcom,sde-dsc-native422-supp", false, PROP_TYPE_U32_ARRAY}
 };
 
 static struct sde_prop_type cdm_prop[] = {
@@ -2687,23 +2695,22 @@ static int sde_dsc_parse_dt(struct device_node *np,
 			struct sde_mdss_cfg *sde_cfg)
 {
 	int rc, prop_count[MAX_BLOCKS], i;
-	struct sde_prop_value *prop_value = NULL;
+	struct sde_prop_value *prop_value;
 	bool prop_exists[DSC_PROP_MAX];
-	u32 off_count, dsc_pair_mask;
+	u32 off_count, dsc_pair_mask, dsc_rev;
+	const char *rev;
 	struct sde_dsc_cfg *dsc;
+	struct sde_dsc_sub_blks *sblk;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
 	prop_value = kzalloc(DSC_PROP_MAX *
 			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
+	if (!prop_value)
+		return -ENOMEM;
 
 	rc = _validate_dt_entry(np, dsc_prop, ARRAY_SIZE(dsc_prop), prop_count,
 		&off_count);
@@ -2712,6 +2719,15 @@ static int sde_dsc_parse_dt(struct device_node *np,
 
 	sde_cfg->dsc_count = off_count;
 
+	rc = of_property_read_string(np, dsc_prop[DSC_REV].prop_name, &rev);
+	if (!rc && !strcmp(rev, "dsc_1_2"))
+		dsc_rev = SDE_DSC_HW_REV_1_2;
+	else if (!rc && !strcmp(rev, "dsc_1_1"))
+		dsc_rev = SDE_DSC_HW_REV_1_1;
+	else
+		/* default configuration */
+		dsc_rev = SDE_DSC_HW_REV_1_1;
+
 	rc = _read_dt_entry(np, dsc_prop, ARRAY_SIZE(dsc_prop), prop_count,
 		prop_exists, prop_value);
 	if (rc)
@@ -2719,6 +2735,15 @@ static int sde_dsc_parse_dt(struct device_node *np,
 
 	for (i = 0; i < off_count; i++) {
 		dsc = sde_cfg->dsc + i;
+
+		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
+		if (!sblk) {
+			rc = -ENOMEM;
+			/* catalog deinit will release the allocated blocks */
+			goto end;
+		}
+		dsc->sblk = sblk;
+
 		dsc->base = PROP_VALUE_ACCESS(prop_value, DSC_OFF, i);
 		dsc->id = DSC_0 + i;
 		dsc->len = PROP_VALUE_ACCESS(prop_value, DSC_LEN, 0);
@@ -2735,6 +2760,20 @@ static int sde_dsc_parse_dt(struct device_node *np,
 				DSC_PAIR_MASK, i);
 		if (dsc_pair_mask)
 			set_bit(dsc_pair_mask, dsc->dsc_pair_mask);
+
+		if (dsc_rev == SDE_DSC_HW_REV_1_2) {
+			sblk->enc.base = PROP_VALUE_ACCESS(prop_value,
+					DSC_ENC, i);
+			sblk->ctl.base = PROP_VALUE_ACCESS(prop_value,
+					DSC_CTL, i);
+			set_bit(SDE_DSC_HW_REV_1_2, &dsc->features);
+			if (PROP_VALUE_ACCESS(prop_value, DSC_422, i))
+					set_bit(SDE_DSC_NATIVE_422_EN,
+						&dsc->features);
+
+		} else {
+			set_bit(SDE_DSC_HW_REV_1_1, &dsc->features);
+		}
 	}
 
 end:
