@@ -5083,6 +5083,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_debug("****config->dtim_period=%d***",
 		config->dtim_period);
 
+	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc, &mcc_to_scc_switch);
+
 	if (adapter->device_mode == QDF_SAP_MODE) {
 		ie = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
 					      beacon->tail, beacon->tail_len);
@@ -5149,8 +5151,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("can't get sta-sap scc on dfs chnl, use def");
 
-		ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
-						   &mcc_to_scc_switch);
 		if (ignore_cac ||
 		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 		     scc_on_dfs_chan))
