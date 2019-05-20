@@ -4428,7 +4428,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 				ARRAY_SIZE(vbif_dbg_bus_msm8998);
 		dbg->dbgbus_dsi.entries = NULL;
 		dbg->dbgbus_dsi.size = 0;
-	} else if (IS_KONA_TARGET(hwversion)) {
+	} else if (IS_KONA_TARGET(hwversion) || IS_SAIPAN_TARGET(hwversion)) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_kona;
 		dbg->dbgbus_sde.cmn.entries_size =
 				ARRAY_SIZE(dbg_bus_sde_kona);
