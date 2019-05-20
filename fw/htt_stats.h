@@ -771,6 +771,14 @@ typedef struct {
     A_UINT32 phy_warm_reset_reason_num_cca_rx_frame_stuck;
     A_UINT32 phy_warm_reset_reason_wal_rx_recovery_rst_rx_busy;
     A_UINT32 phy_warm_reset_reason_wal_rx_recovery_rst_mac_hang;
+    A_UINT32 phy_warm_reset_reason_mac_reset_converted_phy_reset;
+
+    A_UINT32 wal_rx_recovery_rst_mac_hang_count;
+    A_UINT32 wal_rx_recovery_rst_known_sig_count;
+    A_UINT32 wal_rx_recovery_rst_no_rx_count;
+    A_UINT32 wal_rx_recovery_rst_no_rx_consecutive_count;
+    A_UINT32 wal_rx_recovery_rst_rx_busy_count;
+    A_UINT32 wal_rx_recovery_rst_phy_mac_hang_count;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
