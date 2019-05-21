@@ -10,6 +10,7 @@
 #include "sde_hw_pingpong.h"
 #include "sde_dbg.h"
 #include "sde_kms.h"
+#include "sde_hw_dsc_1_2.h"
 
 #define DSC_COMMON_MODE	                0x000
 #define DSC_ENC                         0X004
@@ -223,7 +224,7 @@ struct sde_hw_dsc *sde_hw_dsc_init(enum sde_dsc idx,
 	struct sde_hw_dsc *c;
 	struct sde_dsc_cfg *cfg;
 	u32 dsc_ctl_offset;
-	int rc;
+	int rc = -EINVAL;
 
 	c = kzalloc(sizeof(*c), GFP_KERNEL);
 	if (!c)
@@ -237,7 +238,14 @@ struct sde_hw_dsc *sde_hw_dsc_init(enum sde_dsc idx,
 
 	c->idx = idx;
 	c->caps = cfg;
-	_setup_dsc_ops(&c->ops, c->caps->features);
+	if (test_bit(SDE_DSC_HW_REV_1_1, &c->caps->features)) {
+		_setup_dsc_ops(&c->ops, c->caps->features);
+	} else if (test_bit(SDE_DSC_HW_REV_1_2, &c->caps->features)) {
+		sde_dsc1_2_setup_ops(&c->ops, c->caps->features);
+	} else {
+		SDE_ERROR("failed to setup ops\n");
+		goto blk_init_error;
+	}
 
 	rc = sde_hw_blk_init(&c->base, SDE_HW_BLK_DSC, idx, &sde_hw_ops);
 	if (rc) {
