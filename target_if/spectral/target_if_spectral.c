@@ -1971,6 +1971,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		    TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3;
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
 		spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
+		spectral->fft_size_min = SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3;
+		spectral->fft_size_max = SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3;
 	} else {
 		spectral->spectral_gen = SPECTRAL_GEN2;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN2;
@@ -1978,6 +1980,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		    TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN2;
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN2;
 		spectral->tlvhdr_size = sizeof(struct spectral_phyerr_tlv_gen2);
+		spectral->fft_size_min = SPECTRAL_PARAM_FFT_SIZE_MIN_GEN2;
+		spectral->fft_size_max = SPECTRAL_PARAM_FFT_SIZE_MAX_GEN2;
 	}
 
 	spectral->params_valid = false;
@@ -2106,6 +2110,9 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 		spectral->params.ss_spectral_pri = (!!value) ? true : false;
 		break;
 	case SPECTRAL_PARAM_FFT_SIZE:
+		if ((value < spectral->fft_size_min) ||
+		    (value > spectral->fft_size_max))
+			return -EINVAL;
 		spectral->params.ss_fft_size = value;
 		break;
 	case SPECTRAL_PARAM_GC_ENA:
@@ -2139,6 +2146,9 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 		spectral->params.ss_pwr_format = !!value;
 		break;
 	case SPECTRAL_PARAM_RPT_MODE:
+		if ((value < SPECTRAL_PARAM_RPT_MODE_MIN) ||
+		    (value > SPECTRAL_PARAM_RPT_MODE_MAX))
+			return -EINVAL;
 		spectral->params.ss_rpt_mode = value;
 		break;
 	case SPECTRAL_PARAM_BIN_SCALE:

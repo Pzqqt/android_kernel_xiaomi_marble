@@ -79,6 +79,14 @@
 #define OFFSET_CH_WIDTH_80	56
 #define OFFSET_CH_WIDTH_160	50
 
+/* Min and max for relevant Spectral params */
+#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN2   (1)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN2   (9)
+#define SPECTRAL_PARAM_FFT_SIZE_MIN_GEN3   (5)
+#define SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3   (9)
+#define SPECTRAL_PARAM_RPT_MODE_MIN        (0)
+#define SPECTRAL_PARAM_RPT_MODE_MAX        (3)
+
 #ifdef BIG_ENDIAN_HOST
 #define SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(destp, srcp, len)  do { \
 	int j; \
@@ -908,6 +916,8 @@ struct target_if_spectral {
 	void *spectral_report_cache;
 	uint32_t last_fft_timestamp;
 	uint32_t timestamp_war_offset;
+	uint16_t fft_size_min;
+	uint16_t fft_size_max;
 };
 
 /**
