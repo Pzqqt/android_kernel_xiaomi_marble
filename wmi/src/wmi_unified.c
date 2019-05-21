@@ -1054,9 +1054,9 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 		int i;							\
 		uint64_t secs, usecs;					\
 									\
-		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		if (!wmi_log->length) {					\
-			qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);\
+			qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 			return wmi_bp_seq_printf(m,			\
 			"no elements to read from ring buffer!\n");	\
 		}							\
@@ -1073,7 +1073,7 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 			pos = *(wmi_log->p_buf_tail_idx) - 1;		\
 									\
 		outlen = wmi_bp_seq_printf(m, "Length = %d\n", wmi_log->length);\
-		qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		while (nread--) {					\
 			struct wmi_command_debug *wmi_record;		\
 									\
@@ -1112,9 +1112,9 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 		int i;							\
 		uint64_t secs, usecs;					\
 									\
-		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		if (!wmi_log->length) {					\
-			qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);\
+			qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 			return wmi_bp_seq_printf(m,			\
 			"no elements to read from ring buffer!\n");	\
 		}							\
@@ -1131,7 +1131,7 @@ wmi_print_mgmt_event_log(wmi_unified_t wmi, uint32_t count,
 			pos = *(wmi_log->p_buf_tail_idx) - 1;		\
 									\
 		outlen = wmi_bp_seq_printf(m, "Length = %d\n", wmi_log->length);\
-		qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		while (nread--) {					\
 			struct wmi_event_debug *wmi_record;		\
 									\
@@ -1239,12 +1239,12 @@ static int debug_wmi_log_size_show(struct seq_file *m, void *v)
 			return -EINVAL;					\
 		}							\
 									\
-		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);\
 		qdf_mem_zero(wmi_log->buf, wmi_ring_size *		\
 				sizeof(struct wmi_record_type));	\
 		wmi_log->length = 0;					\
 		*(wmi_log->p_buf_tail_idx) = 0;				\
-		qdf_spin_unlock(&wmi_handle->log_info.wmi_record_lock);	\
+		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);\
 									\
 		return count;						\
 	}
