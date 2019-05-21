@@ -700,7 +700,6 @@ int dfs_control(struct wlan_dfs *dfs,
 		break;
 	case DFS_SHOW_PRECAC_LISTS:
 		dfs_print_precaclists(dfs);
-		dfs_print_etsi_precaclists(dfs);
 		break;
 	case DFS_RESET_PRECAC_LISTS:
 		dfs_reset_precac_lists(dfs);

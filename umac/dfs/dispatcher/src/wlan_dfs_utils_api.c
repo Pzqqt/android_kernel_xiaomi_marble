@@ -100,6 +100,19 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_reset_precaclists);
 
+void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return;
+
+	dfs_unmark_precac_nol(dfs, chan);
+}
+
+qdf_export_symbol(utils_dfs_unmark_precac_nol);
+
 #ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
 QDF_STATUS utils_dfs_reset_etsi_precaclists(struct wlan_objmgr_pdev *pdev)
 {

@@ -39,18 +39,41 @@
 #define OCAC_RESET 1
 #define OCAC_CANCEL 2
 
+#define TREE_DEPTH                        3
+#define N_SUBCHANS_FOR_80BW               4
+
+#define INITIAL_20_CHAN_OFFSET           -6
+#define INITIAL_40_CHAN_OFFSET           -4
+#define INITIAL_80_CHAN_OFFSET            0
+
+#define NEXT_20_CHAN_OFFSET               4
+#define NEXT_40_CHAN_OFFSET               8
+#define NEXT_80_CHAN_OFFSET              16
+
+#define DFS_CHWIDTH_20_VAL               20
+#define DFS_CHWIDTH_40_VAL               40
+#define DFS_CHWIDTH_80_VAL               80
+#define DFS_CHWIDTH_160_VAL             160
 /**
- * struct dfs_precac_entry - PreCAC entry.
- * @pe_list:           PreCAC entry.
- * @vht80_freq:        VHT80 freq.
- * @precac_nol_timer:  Per element precac NOL timer.
- * @dfs:               Pointer to wlan_dfs structure.
+ * struct precac_tree_node - Individual tree node structure for every node in
+ *                           the precac forest maintained.
+ * @left_child:        Pointer to the left child of the node.
+ * @right_child:       Pointer to the right child of the node.
+ * @ch_ieee:           Center channel ieee value (BSTree node key value).
+ * @n_caced_subchs:    Number of CACed subchannels of the ch_ieee.
+ * @n_nol_subchs:      Number of subchannels of the ch_ieee in NOL.
+ * @n_valid_subchs:    Number of subchannels of the ch_ieee available (as per
+ *                     the country's channel list).
+ * @bandwidth:         Bandwidth of the ch_ieee (in the current node).
  */
-struct dfs_precac_entry {
-	TAILQ_ENTRY(dfs_precac_entry) pe_list;
-	uint8_t             vht80_freq;
-	qdf_timer_t         precac_nol_timer;
-	struct wlan_dfs     *dfs;
+struct precac_tree_node {
+	struct precac_tree_node *left_child;
+	struct precac_tree_node *right_child;
+	uint8_t ch_ieee;
+	uint8_t n_caced_subchs;
+	uint8_t n_nol_subchs;
+	uint8_t n_valid_subchs;
+	uint8_t bandwidth;
 };
 
 /**
@@ -67,6 +90,20 @@ enum precac_chan_state {
 	PRECAC_NOW,
 	PRECAC_DONE,
 	PRECAC_NOL,
+};
+
+/**
+ * struct dfs_precac_entry - PreCAC entry.
+ * @pe_list:           PreCAC entry.
+ * @vht80_ch_ieee:     VHT80 centre channel IEEE value.
+ * @dfs:               Pointer to wlan_dfs structure.
+ * @tree_root:         Tree root node with 80MHz channel key.
+ */
+struct dfs_precac_entry {
+	TAILQ_ENTRY(dfs_precac_entry) pe_list;
+	uint8_t             vht80_ch_ieee;
+	struct wlan_dfs     *dfs;
+	struct precac_tree_node *tree_root;
 };
 
 /**
@@ -106,9 +143,7 @@ static inline void dfs_reset_precac_lists(struct wlan_dfs *dfs)
 #endif
 
 /**
- * dfs_reset_precaclists() - Clears and initiakizes precac_required_list,
- *                           precac_done_list and precac_nol_list.
- *
+ * dfs_reset_precaclists() - Clears and initializes precac_list.
  * @dfs: Pointer to wlan_dfs structure.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
@@ -252,14 +287,17 @@ static inline void dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_get_freq_from_precac_required_list() - Get VHT80 freq from
- *                                            precac_required_list.
- * @dfs: Pointer to wlan_dfs structure.
- * @exclude_ieee_freq: Find a VHT80 freqency that is not equal to
- *                     exclude_ieee_freq.
+ * dfs_get_ieeechan_for_precac() - Get chan of required bandwidth from
+ *                                 precac_list.
+ * @dfs:                 Pointer to wlan_dfs structure.
+ * @exclude_pri_ch_ieee: Primary channel IEEE to be excluded for preCAC.
+ * @exclude_sec_ch_ieee: Secondary channel IEEE to be excluded for preCAC.
+ * @bandwidth:           Bandwidth of requested channel.
  */
-uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
-		uint8_t exclude_ieee_freq);
+uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
+				    uint8_t exclude_pri_ch_ieee,
+				    uint8_t exclude_sec_ch_ieee,
+				    uint8_t bandwidth);
 
 /**
  * dfs_override_precac_timeout() - Override the default precac timeout.
@@ -376,16 +414,19 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			       uint32_t center_freq);
 
 /**
- * dfs_find_vht80_chan_for_agile_precac() - .
- * @pdev :Pointer to wlan_objmgr_pdev structure.
- * @*ch_freq: Pointer to channel number for agile set request.
- * @ch_freq_seg1 : Current primary beaconing channel number.
- * @ch_freq_seg2 : Current secondary segment channel number.
+ * dfs_get_ieeechan_for_agilecac() - Find an IEEE channel for agile CAC.
+ * @dfs:         Pointer to wlan_dfs structure.
+ * @ch_ieee:     Pointer to channel number for agile set request.
+ * @pri_ch_ieee: Current primary IEEE channel.
+ * @sec_ch_ieee: Current secondary IEEE channel (in HT80_80 mode).
+ *
+ * Find an IEEE channel for agileCAC which is not the current operating
+ * channels (indicated by pri_ch_ieee, sec_ch_ieee).
  */
-void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
-					  uint8_t *ch_freq,
-					  uint8_t ch_freq_seg1,
-					  uint8_t ch_freq_seg2);
+void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
+				   uint8_t *ch_ieee,
+				   uint8_t pri_ch_ieee,
+				   uint8_t sec_ch_ieee);
 /**
  * dfs_agile_precac_start() - Start agile precac.
  * @dfs: Pointer to wlan_dfs structure.
@@ -418,10 +459,10 @@ dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 {
 }
 
-static inline void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
-							uint8_t *ch_freq,
-							uint8_t ch_freq_seg1,
-							uint8_t ch_freq_seg2)
+static inline void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
+						 uint8_t *ch_ieee,
+						 uint8_t pri_ch_ieee,
+						 uint8_t sec_ch_ieee)
 {
 }
 
@@ -526,8 +567,8 @@ static inline uint32_t dfs_get_intermediate_chan(struct wlan_dfs *dfs)
  * Return:
  * * PRECAC_REQUIRED: Precac has not done on precac_chan.
  * * PRECAC_NOW     : Precac is running on precac_chan.
- * * PRECAC_DONE    : precac_chan is in precac done list.
- * * PRECAC_NOL     : precac_chan is in precac NOL list.
+ * * PRECAC_DONE    : precac_chan is in CAC done state in precac list.
+ * * PRECAC_NOL     : precac_chan is in NOL state in precac list.
  * * PRECAC_ERR     : Invalid precac state.
  */
 enum precac_chan_state
@@ -548,46 +589,105 @@ dfs_get_precac_chan_state(struct wlan_dfs *dfs,
 void dfs_zero_cac_reset(struct wlan_dfs *dfs);
 
 /**
- * dfs_is_ht20_40_80_chan_in_precac_done_list() - Is precac done on a
- *                                                VHT20/40/80 channel.
+ * dfs_is_precac_done_on_ht20_40_80_chan() - Is precac done on a
+ *                                           VHT20/40/80 channel.
  *@dfs: Pointer to wlan_dfs structure.
- *@chan: Pointer to dfs_channel for which preCAC done is checked.
+ *@chan: Channel IEEE value.
  *
  * Return:
- * * True:  If channel is present in precac-done list.
- * * False: If channel is not present in precac-done list.
+ * * True:  If CAC is done on channel.
+ * * False: If CAC is not done on channel.
  */
-bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs,
-						struct dfs_channel *chan);
+bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
+					   uint8_t chan);
 
 /**
- * dfs_is_ht8080_ht160_chan_in_precac_done_list() - Is precac done on
- *                                                  VHT80+80 or VHT160
- *                                                  channel.
+ * dfs_is_precac_done_on_ht8080_ht160_chan() - Is precac done on
+ *                                             VHT80+80 or VHT160
+ *                                             channel.
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Pointer to dfs_channel for which preCAC done is checked.
  *
  * Return:
- * * True:  If channel is present in precac-done list.
- * * False: If channel is not present in precac-done list.
+ * * True:  If CAC is done on channel.
+ * * False: If CAC is not done on channel.
  */
-bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
-						  struct dfs_channel *chan);
+bool dfs_is_precac_done_on_ht8080_ht160_chan(struct wlan_dfs *dfs,
+					     struct dfs_channel *chan);
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
+/**
+ * dfs_find_chwidth_and_center_chan() - Find the channel width enum and
+ *                                      primary and secondary center channel
+ *                                      value of the current channel.
+ * @dfs:                  Pointer to wlan_dfs structure.
+ * @chwidth:              Channel width enum of current channel.
+ * @primary_chan_ieee:    Primary IEEE channel.
+ * @secondary_chan_ieee:  Secondary IEEE channel (in HT80_80 mode).
+ */
+void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
+				      enum phy_ch_width *chwidth,
+				      uint8_t *primary_chan_ieee,
+				      uint8_t *secondary_chan_ieee);
 
 /**
- * dfs_mark_precac_dfs() - Mark the precac channel as radar.
- * @dfs: Pointer to wlan_dfs structure.
- * @is_radar_found_on_secondary_seg: Radar found on secondary seg for Cascade.
- * @detector_id: detector id which found RADAR in HW.
+ * dfs_mark_precac_done() - Mark the channel as preCAC done.
+ * @dfs:           Pointer to wlan_dfs structure.
+ * @pri_ch_ieee:   Primary channel IEEE.
+ * @sec_ch_ieee:   Secondary channel IEEE (only in HT80_80 mode).
+ * @ch_width:      Channel width enum.
  */
-#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
-void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg,
-		uint8_t detector_id);
+void dfs_mark_precac_done(struct wlan_dfs *dfs,
+			  uint8_t pri_ch_ieee,
+			  uint8_t sec_ch_ieee,
+			  enum phy_ch_width ch_width);
+
+/**
+ * dfs_mark_precac_nol() - Mark the precac channel as radar.
+ * @dfs:                              Pointer to wlan_dfs structure.
+ * @is_radar_found_on_secondary_seg:  Radar found on secondary seg for Cascade.
+ * @detector_id:                      detector id which found RADAR in HW.
+ * @channels:                         Array of radar found subchannels.
+ * @num_channels:                     Number of radar found subchannels.
+ */
+void dfs_mark_precac_nol(struct wlan_dfs *dfs,
+			 uint8_t is_radar_found_on_secondary_seg,
+			 uint8_t detector_id,
+			 uint8_t *channels,
+			 uint8_t num_channels);
+
+/**
+ * dfs_unmark_precac_nol() - Unmark the precac channel as radar.
+ * @dfs:      Pointer to wlan_dfs structure.
+ * @channel:  channel marked as radar.
+ */
+void dfs_unmark_precac_nol(struct wlan_dfs *dfs, uint8_t channel);
+
 #else
-static inline void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg,
-		uint8_t detector_id)
+static inline void
+dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
+				 enum phy_ch_width *chwidth,
+				 uint8_t *primary_chan_ieee,
+				 uint8_t *secondary_chan_ieee)
+{
+}
+
+static inline void dfs_mark_precac_done(struct wlan_dfs *dfs,
+					uint8_t pri_ch_ieee,
+					uint8_t sec_ch_ieee,
+					enum phy_ch_width ch_width)
+{
+}
+
+static inline void dfs_mark_precac_nol(struct wlan_dfs *dfs,
+				       uint8_t is_radar_found_on_secondary_seg,
+				       uint8_t detector_id,
+				       uint8_t *channels,
+				       uint8_t num_channels)
+{
+}
+
+static inline void dfs_unmark_precac_nol(struct wlan_dfs *dfs, uint8_t channel)
 {
 }
 #endif

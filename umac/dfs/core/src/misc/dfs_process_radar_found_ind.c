@@ -789,8 +789,9 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "%s: %d Radar found on agile detector:%d , STAY in Same operating Channel",
 			  __func__, __LINE__, radar_found->detector_id);
-		dfs_mark_precac_dfs(dfs, dfs->is_radar_found_on_secondary_seg,
-				    radar_found->detector_id);
+		dfs_mark_precac_nol(dfs, dfs->is_radar_found_on_secondary_seg,
+				    radar_found->detector_id, channels,
+				    num_channels);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -831,9 +832,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "%s: %d Radar found on dfs detector:%d",
 			  __func__, __LINE__, radar_found->detector_id);
-		dfs_mark_precac_dfs(dfs,
+		dfs_mark_precac_nol(dfs,
 				    dfs->is_radar_found_on_secondary_seg,
-				    radar_found->detector_id);
+				    radar_found->detector_id, channels,
+				    num_channels);
 	}
 
 	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN) {

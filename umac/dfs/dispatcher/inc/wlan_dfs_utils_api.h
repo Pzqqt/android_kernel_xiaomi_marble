@@ -116,14 +116,22 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev);
 bool utils_dfs_is_freq_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 
 /**
- * utils_dfs_reset_precaclists() - Clears and initiakizes precac_required_list,
- *                                 precac_done_list and precac_nol_list.
+ * utils_dfs_reset_precaclists() - Clears and initializes precac_list.
  * @pdev: Pointer to DFS pdev object.
  *
  * Wrapper function for dfs_reset_precaclists(). This function called from
  * outside of DFS component.
  */
 QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * utils_dfs_unmark_precac_nol() - Clears precac channel marked as NOL.
+ * @pdev: Pointer to DFS pdev object.
+ * @chan: channel to be unmarked as NOL.
+ *
+ * Return void.
+ */
+void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 
 /**
  * utils_dfs_reset_etsi_precaclists() - Clears and initializes etsi

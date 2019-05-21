@@ -29,6 +29,7 @@
 #include <qdf_lock.h>        /* qdf_spinlock */
 #include <qdf_time.h>
 #include <qdf_timer.h>
+#include <qdf_str.h>         /* qdf_str_lcopy */
 
 #include <wlan_dfs_ioctl.h>
 #include "dfs_structs.h"
@@ -39,6 +40,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <osdep.h>
+#include <wlan_cmn.h>
 
 /* File Line and Submodule String */
 #define FLSM(x, str)   #str " : " FL(x)
@@ -979,9 +981,8 @@ struct dfs_event_log {
  *                                   not be re-done.
  * @dfs_precac_timeout_override:     Overridden precac timeout.
  * @dfs_num_precac_freqs:            Number of PreCAC VHT80 frequencies.
- * @dfs_precac_required_list:        PreCAC required list.
- * @dfs_precac_done_list:            PreCAC done list.
- * @dfs_precac_nol_list:             PreCAC NOL List.
+ * @dfs_precac_list:                 PreCAC list (contains individual trees).
+ * @dfs_precac_chwidth:              PreCAC channel width enum.
  * @dfs_curchan:                     DFS current channel.
  * @dfs_cac_started_chan:            CAC started channel.
  * @dfs_pdev_obj:                    DFS pdev object.
@@ -1126,10 +1127,8 @@ struct wlan_dfs {
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 	uint8_t        dfs_disable_radar_marking;
 #endif
-	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_required_list;
-	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_done_list;
-	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_nol_list;
-
+	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_list;
+	enum phy_ch_width dfs_precac_chwidth;
 #ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
 	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_required_list;
 	TAILQ_HEAD(, dfs_etsi_precac_entry) dfs_etsiprecac_done_list;
