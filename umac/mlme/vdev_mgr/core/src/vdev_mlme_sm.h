@@ -23,7 +23,6 @@
 #ifndef _VDEV_MLME_SM_H_
 #define _VDEV_MLME_SM_H_
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * mlme_vdev_sm_deliver_event() - Delivers event to VDEV MLME SM
  * @vdev_mlme: MLME VDEV comp object
@@ -245,5 +244,4 @@ static inline void mlme_vdev_cmd_mutex_acquire(struct vdev_mlme_obj *vdev_mlme)
 static inline void mlme_vdev_cmd_mutex_release(struct vdev_mlme_obj *vdev_mlme)
 {
 }
-#endif
 #endif

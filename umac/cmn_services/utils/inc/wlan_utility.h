@@ -32,7 +32,6 @@
 #define TGT_IS_VALID_SNR(x)     ((x) >= 0 && (x) < TGT_MAX_SNR)
 #define TGT_IS_VALID_RSSI(x)    ((x) != 0xFF)
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * struct wlan_vdev_ch_check_filter - vdev chan check filter object
  * @flag:     matches or not
@@ -42,7 +41,6 @@ struct wlan_vdev_ch_check_filter {
 	uint8_t flag;
 	struct wlan_objmgr_vdev *vdev;
 };
-#endif
 
 /**
  * struct wlan_peer_count- vdev connected peer count

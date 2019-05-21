@@ -36,7 +36,6 @@ wlan_mlme_get_lmac_tx_ops(struct wlan_objmgr_psoc *psoc)
 	return &psoc->soc_cb.tx_ops.mops;
 }
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * enum wlan_vdev_state - VDEV state
  * @WLAN_VDEV_S_INIT:                     Default state, IDLE state
@@ -151,33 +150,6 @@ enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_STOP_REQ = 29,
 };
 
-#else
-
-/**
- * enum wlan_vdev_state - VDEV state
- * @WLAN_VDEV_S_INIT:    Default state, IDLE state
- * @WLAN_VDEV_S_SCAN:    SCAN state
- * @WLAN_VDEV_S_JOIN:    Join state
- * @WLAN_VDEV_S_DFS_WAIT:CAC period
- * @WLAN_VDEV_S_RUN:     RUN state
- * @WLAN_VDEV_S_STOP:    STOP state
- * @WLAN_VDEV_S_RESET:   RESET state, STOP+INIT+JOIN
- * @WLAN_VDEV_S_MAX:     MAX state
- */
-enum wlan_vdev_state {
-	WLAN_VDEV_S_INIT     = 0,
-	WLAN_VDEV_S_SCAN     = 1,
-	WLAN_VDEV_S_JOIN     = 2,
-	WLAN_VDEV_S_DFS_WAIT = 3,
-	WLAN_VDEV_S_RUN      = 4,
-	WLAN_VDEV_S_STOP     = 5,
-	WLAN_VDEV_S_RESET    = 6,
-	WLAN_VDEV_S_MAX,
-};
-#endif
-
-#ifdef CMN_VDEV_MLME_CMPT_ENABLE
-
 /**
  * wlan_vdev_mlme_init - Initializes VDEV MLME component
  *
@@ -217,59 +189,4 @@ QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc);
  *         FAILURE, if cleanup fails
  */
 QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc);
-#else
-
-/**
- * wlan_vdev_mlme_init - Initializes MLME component
- *
- * Registers callbacks with object manager for create/destroy
- *
- * Return: SUCCESS on successful registration
- *         FAILURE, if registration fails
- */
-static inline QDF_STATUS wlan_vdev_mlme_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wlan_vdev_mlme_deinit - Uninitializes MLME component
- *
- * Unregisters callbacks with object manager for create/destroy
- *
- * Return: SUCCESS on successful registration
- *         FAILURE, if registration fails
- */
-static inline QDF_STATUS wlan_vdev_mlme_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wlan_mlme_psoc_enable - MLME initializations on PSOC enable
- *
- * Initializes MLME params on PSOC eable
- *
- * Return: SUCCESS on successful initialization
- *         FAILURE, if initialization fails
- */
-static inline QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wlan_mlme_psoc_disable - MLME clean up on PSOC disable
- *
- * cleanup MLME params on PSOC eable
- *
- * Return: SUCCESS on successful cleanup
- *         FAILURE, if cleanup fails
- */
-static inline QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
 #endif

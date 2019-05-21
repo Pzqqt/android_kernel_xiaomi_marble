@@ -183,7 +183,6 @@ uint32_t wlan_get_pdev_id_from_vdev_id(struct wlan_objmgr_psoc *psoc,
 }
 qdf_export_symbol(wlan_get_pdev_id_from_vdev_id);
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 static void wlan_vdev_active(struct wlan_objmgr_pdev *pdev, void *object,
 			     void *arg)
 {
@@ -201,38 +200,7 @@ QDF_STATUS wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
 {
 	return wlan_vdev_allow_connect_n_tx(vdev);
 }
-
 qdf_export_symbol(wlan_vdev_is_up);
-#else
-static void wlan_vdev_active(struct wlan_objmgr_pdev *pdev, void *object,
-			     void *arg)
-{
-	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
-	uint8_t *flag = (uint8_t *)arg;
-
-	wlan_vdev_obj_lock(vdev);
-	if ((wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_RUN) ||
-		(wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_DFS_WAIT))
-		*flag = 1;
-
-	wlan_vdev_obj_unlock(vdev);
-}
-
-QDF_STATUS wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
-{
-	QDF_STATUS is_up = QDF_STATUS_E_FAILURE;
-
-	wlan_vdev_obj_lock(vdev);
-	if (wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_RUN)
-		is_up = QDF_STATUS_SUCCESS;
-
-	wlan_vdev_obj_unlock(vdev);
-
-	return is_up;
-}
-
-qdf_export_symbol(wlan_vdev_is_up);
-#endif
 
 QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
 				    wlan_objmgr_ref_dbgid dbg_id)
@@ -253,7 +221,6 @@ QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_util_is_vdev_active);
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 void wlan_util_change_map_index(unsigned long *map, uint8_t id, uint8_t set)
 {
 	if (set)
@@ -479,13 +446,6 @@ QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
-					  wlan_objmgr_ref_dbgid dbg_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 void
 wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,

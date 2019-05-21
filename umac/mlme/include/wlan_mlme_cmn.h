@@ -20,7 +20,6 @@
 #ifndef _WLAN_MLME_CMN_H_
 #define _WLAN_MLME_CMN_H_
 
-#ifdef CMN_VDEV_MLME_CMPT_ENABLE
 #include <include/wlan_pdev_mlme.h>
 #include <include/wlan_vdev_mlme.h>
 
@@ -213,16 +212,4 @@ QDF_STATUS wlan_cmn_mlme_init(void);
  *         FAILURE, if registration fails
  */
 QDF_STATUS wlan_cmn_mlme_deinit(void);
-#else
-static inline QDF_STATUS wlan_cmn_mlme_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wlan_cmn_mlme_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 #endif

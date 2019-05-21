@@ -55,7 +55,6 @@ void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl);
  */
 void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * wlan_vdev_mlme_sm_deliver_evt() - Delivers event to VDEV MLME SM
  * @vdev: Object manager VDEV object
@@ -208,5 +207,4 @@ void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev);
  *         FAILURE: otherwise failure
  */
 QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev);
-#endif
 #endif

@@ -75,7 +75,6 @@ void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev)
 
 qdf_export_symbol(wlan_vdev_mlme_get_ext_hdl);
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 QDF_STATUS wlan_vdev_mlme_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
 					 enum wlan_vdev_sm_evt event,
 					 uint16_t event_data_len,
@@ -283,4 +282,3 @@ QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif

@@ -1325,7 +1325,6 @@ static inline enum wlan_vdev_state wlan_vdev_mlme_get_state(
 	return vdev->vdev_mlme.mlme_state;
 }
 
-#ifdef CMN_VDEV_MLME_SM_ENABLE
 /**
  * wlan_vdev_mlme_get_substate() - get mlme substate
  * @vdev: VDEV object
@@ -1339,23 +1338,6 @@ static inline enum wlan_vdev_state wlan_vdev_mlme_get_substate(
 {
 	return vdev->vdev_mlme.mlme_substate;
 }
-#else
-/**
- * wlan_vdev_mlme_set_state() - set mlme state
- * @vdev: VDEV object
- * @state: MLME state
- *
- * API to set MLME state
- *
- * Return: void
- */
-static inline void wlan_vdev_mlme_set_state(struct wlan_objmgr_vdev *vdev,
-						enum wlan_vdev_state state)
-{
-	if (state < WLAN_VDEV_S_MAX)
-		vdev->vdev_mlme.mlme_state = state;
-}
-#endif
 
 /**
  * wlan_vdev_set_selfpeer() - set self peer
