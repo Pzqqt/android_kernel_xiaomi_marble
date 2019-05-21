@@ -117,6 +117,8 @@ struct dp_display {
 			struct dp_display_mode *dp_mode);
 	int (*update_pps)(struct dp_display *dp_display,
 			struct drm_connector *connector, char *pps_cmd);
+	void (*wakeup_phy_layer)(struct dp_display *dp_display,
+			bool wakeup);
 };
 
 #ifdef CONFIG_DRM_MSM_DP
