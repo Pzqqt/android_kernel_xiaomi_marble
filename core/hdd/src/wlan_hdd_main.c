@@ -9644,14 +9644,17 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	}
 
 	status = cfg_parse(WLAN_INI_FILE);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to parse cfg %s; status:%d\n",
 			WLAN_INI_FILE, status);
+		ret = qdf_status_to_os_return(status);
+		goto err_free_config;
+	}
 
 	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
 	if (ret) {
 		QDF_DEBUG_PANIC("Psoc creation fails!");
-		goto err_free_config;
+		goto err_release_store;
 	}
 
 	hdd_cfg_params_init(hdd_ctx);
@@ -9705,6 +9708,9 @@ err_deinit_hdd_context:
 
 err_hdd_objmgr_destroy:
 	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
+
+err_release_store:
+	cfg_release();
 
 err_free_config:
 	qdf_mem_free(hdd_ctx->config);
