@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -88,26 +88,12 @@ static inline void dfs_main_timer_detach(struct wlan_dfs *dfs)
 }
 #endif
 
-#ifdef CONFIG_WIN
-#if DA_SUPPORT
-#if defined(WLAN_DFS_DIRECT_ATTACH)
+#if defined(DA_SUPPORT) && defined(WLAN_DFS_DIRECT_ATTACH)
 void dfs_get_da_radars(struct wlan_dfs *dfs);
 #else
 static inline void dfs_get_da_radars(struct wlan_dfs *dfs)
 {
 }
 #endif
-#else
-#define dfs_get_da_radars(dfs) /**/
-#endif /* _DA_SUPPORT_ */
-#else
-#if defined(WLAN_DFS_DIRECT_ATTACH)
-void dfs_get_da_radars(struct wlan_dfs *dfs);
-#else
-static inline void dfs_get_da_radars(struct wlan_dfs *dfs)
-{
-}
-#endif
-#endif /* _CONFIG_WIN_ */
 
 #endif /* _DFS_FILTER_INIT_H_ */
