@@ -13402,8 +13402,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	uint32_t *cipher_suites;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
 	bool mac_spoofing_enabled;
-	bool is_oce_sta_enabled;
-	QDF_STATUS status;
 
 	hdd_enter();
 
@@ -13441,14 +13439,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 
 	wlan_hdd_cfg80211_set_wiphy_scan_flags(wiphy);
-
-	is_oce_sta_enabled = false;
-	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc,
-						    &is_oce_sta_enabled);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("could not get OCE STA enable info");
-	if (is_oce_sta_enabled)
-		wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(wiphy);
 
 	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
 
@@ -13764,7 +13754,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
 	int value;
 	bool fils_enabled;
-	bool dfs_master_capable = true;
+	bool dfs_master_capable = true, is_oce_sta_enabled = false;
 	QDF_STATUS status;
 
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
@@ -13785,6 +13775,13 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 						     &dfs_master_capable);
 	if (QDF_IS_STATUS_SUCCESS(status) && dfs_master_capable)
 		wlan_hdd_cfg80211_set_dfs_offload_feature(hdd_ctx->wiphy);
+
+	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc,
+						    &is_oce_sta_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get OCE STA enable info");
+	if (is_oce_sta_enabled)
+		wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(hdd_ctx->wiphy);
 }
 
 /**
