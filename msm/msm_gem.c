@@ -137,23 +137,10 @@ static void put_pages_vram(struct drm_gem_object *obj)
 
 static void put_pages(struct drm_gem_object *obj)
 {
-	struct device *aspace_dev;
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 
 	if (msm_obj->pages) {
 		if (msm_obj->sgt) {
-			/* For non-cached buffers, ensure the new
-			 * pages are clean because display controller,
-			 * GPU, etc. are not coherent:
-			 */
-			if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED)) {
-				aspace_dev =
-				    msm_gem_get_aspace_device(msm_obj->aspace);
-				dma_unmap_sg(aspace_dev, msm_obj->sgt->sgl,
-					     msm_obj->sgt->nents,
-					     DMA_BIDIRECTIONAL);
-			}
-
 			sg_free_table(msm_obj->sgt);
 			kfree(msm_obj->sgt);
 		}
