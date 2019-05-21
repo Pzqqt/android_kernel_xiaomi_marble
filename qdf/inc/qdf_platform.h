@@ -147,5 +147,32 @@ void __qdf_op_unprotect(struct qdf_op_sync *sync, const char *func);
 void qdf_op_callbacks_register(qdf_op_protect_cb on_protect,
 			       qdf_op_unprotect_cb on_unprotect);
 
+/**
+ * qdf_is_drv_connected_callback() - callback to query if drv is connected
+ *
+ * Return: true if drv is connected else false
+ */
+typedef bool (*qdf_is_drv_connected_callback)(void);
+
+/**
+ * qdf_is_drv_connected() - API to check if drv is connected or not
+ *
+ * DRV is dynamic request voting using which fw can do page fault and
+ * bring in page back without apps wake up
+ *
+ * Return: true: if drv is connected
+ *	   false: if drv is not connected
+ */
+bool qdf_is_drv_connected(void);
+
+/**
+ * qdf_register_drv_connected_callback() - API to register drv connected cb
+ * @is_drv_connected: callback to query if drv is connected or not
+ *
+ * Return: none
+ */
+void qdf_register_drv_connected_callback(qdf_is_drv_connected_callback
+					 is_drv_connected);
+
 #endif /*_QDF_PLATFORM_H*/
 

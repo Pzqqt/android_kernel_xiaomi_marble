@@ -27,6 +27,7 @@
 static qdf_self_recovery_callback	self_recovery_cb;
 static qdf_is_fw_down_callback		is_fw_down_cb;
 static qdf_is_recovering_callback	is_recovering_cb;
+static qdf_is_drv_connected_callback    is_drv_connected_cb;
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
@@ -108,3 +109,20 @@ void __qdf_op_unprotect(struct qdf_op_sync *sync, const char *func)
 }
 qdf_export_symbol(__qdf_op_unprotect);
 
+void qdf_register_drv_connected_callback(qdf_is_drv_connected_callback
+					 is_drv_connected)
+{
+	is_drv_connected_cb = is_drv_connected;
+}
+qdf_export_symbol(qdf_register_drv_connected_callback);
+
+bool qdf_is_drv_connected(void)
+{
+	if (!is_drv_connected_cb) {
+		qdf_err("drv connected callback is not registered");
+		return false;
+	}
+
+	return is_drv_connected_cb();
+}
+qdf_export_symbol(qdf_is_drv_connected);
