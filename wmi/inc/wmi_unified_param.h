@@ -5311,6 +5311,7 @@ typedef enum {
 	wmi_service_wpa3_ft_suite_b_support,
 	wmi_service_ft_fils,
 	wmi_service_adaptive_11r_support,
+	wmi_service_tx_compl_tsf64,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5513,6 +5514,7 @@ typedef struct {
 	uint32_t max_bssid_indicator;
 	uint32_t eapol_minrate_set:1,
 		 eapol_minrate_ac_set:2;
+	bool tstamp64_en;
 } target_resource_config;
 
 /**
