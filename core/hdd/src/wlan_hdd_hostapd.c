@@ -5096,10 +5096,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc, &mcc_to_scc_switch);
 
-	if (adapter->device_mode == QDF_SAP_MODE) {
+	if (adapter->device_mode == QDF_SAP_MODE ||
+	    adapter->device_mode == QDF_P2P_GO_MODE) {
 		ie = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
 					      beacon->tail, beacon->tail_len);
-		if (ie) {
+		if ((adapter->device_mode == QDF_SAP_MODE) && ie) {
 			if (ie[1] < IEEE80211_COUNTRY_IE_MIN_LEN) {
 				hdd_err("Invalid Country IE len: %d", ie[1]);
 				ret = -EINVAL;
@@ -5172,10 +5173,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlansap_set_dfs_preferred_channel_location(mac_handle);
 
 		wlan_hdd_set_sap_mcc_chnl_avoid(hdd_ctx);
-	} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
-		config->countryCode[0] = hdd_ctx->reg.alpha2[0];
-		config->countryCode[1] = hdd_ctx->reg.alpha2[1];
-		config->ieee80211d = 0;
 	} else {
 		config->ieee80211d = 0;
 	}
