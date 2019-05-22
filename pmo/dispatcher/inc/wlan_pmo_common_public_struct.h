@@ -60,14 +60,10 @@
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
  * @pmo_vdev_max_param: Max vdev param id
- * @pmo_vdev_param_inactivity_time: inactivity time value
- * @pmo_vdev_param_ito_repeat_count: Indicates ito repeated count
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
-	pmo_vdev_param_inactivity_time,
-	pmo_vdev_param_ito_repeat_count,
 	pmo_vdev_max_param
 };
 
@@ -98,6 +94,7 @@ enum pmo_beacon_dtim_policy {
  * @pmo_sta_ps_enable_qpower:  Enable QPower
  * @pmo_sta_ps_param_qpower_max_tx_before_wake: Number of TX frames before the
     entering the Active state
+ * @pmo_sta_ps_param_ito_repeat_count: Indicates ito repeated count
  */
 enum pmo_sta_powersave_param {
 	pmo_sta_ps_param_rx_wake_policy = 0,
@@ -108,6 +105,7 @@ enum pmo_sta_powersave_param {
 	pmo_sta_ps_param_qpower_pspoll_count = 5,
 	pmo_sta_ps_enable_qpower = 6,
 	pmo_sta_ps_param_qpower_max_tx_before_wake = 7,
+	pmo_sta_ps_param_ito_repeat_count = 8,
 };
 
 /**
