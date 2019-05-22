@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CTL_H
@@ -13,6 +13,7 @@
 #include "sde_hw_blk.h"
 
 #define INVALID_CTL_STATUS 0xfffff88e
+#define CTL_MAX_DSPP_COUNT (DSPP_MAX - DSPP_0)
 
 /**
  * sde_ctl_mode_sel: Interface mode selection
@@ -136,6 +137,7 @@ struct sde_ctl_dsc_cfg {
  * @pending_merge_3d_flush_mask: pending 3d merge block flush
  * @pending_cwb_flush_mask: pending flush for concurrent writeback
  * @pending_periph_flush_mask: pending flush for peripheral module
+ * @pending_dspp_flush_masks: pending flush masks for sub-blks of each DSPP
  */
 struct sde_ctl_flush_cfg {
 	u32 pending_flush_mask;
@@ -146,6 +148,7 @@ struct sde_ctl_flush_cfg {
 	u32 pending_merge_3d_flush_mask;
 	u32 pending_cwb_flush_mask;
 	u32 pending_periph_flush_mask;
+	u32 pending_dspp_flush_masks[CTL_MAX_DSPP_COUNT];
 };
 
 /**
@@ -346,6 +349,18 @@ struct sde_hw_ctl_ops {
 	 */
 	int (*update_bitmask_dspp_pavlut)(struct sde_hw_ctl *ctx,
 		enum sde_dspp blk, bool enable);
+
+	/**
+	 * Program DSPP sub block specific bit of dspp flush register.
+	 * @ctx       : ctl path ctx pointer
+	 * @dspp      : HW block ID of dspp block
+	 * @sub_blk   : enum of DSPP sub block to flush
+	 * @enable    : true to enable, 0 to disable
+	 *
+	 * This API is for CTL with DSPP flush hierarchy registers.
+	 */
+	int (*update_bitmask_dspp_subblk)(struct sde_hw_ctl *ctx,
+			enum sde_dspp dspp, u32 sub_blk, bool enable);
 
 	/**
 	 * update_bitmask_sspp: updates mask corresponding to sspp

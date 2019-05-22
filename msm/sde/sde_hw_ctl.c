@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -45,6 +45,7 @@
 #define   CTL_INTF_FLUSH               0x110
 #define   CTL_CDM_FLUSH                0x114
 #define   CTL_PERIPH_FLUSH             0x128
+#define   CTL_DSPP_0_FLUSH             0x13c
 
 #define  CTL_INTF_MASTER               0x134
 #define  CTL_UIDLE_ACTIVE              0x138
@@ -152,6 +153,28 @@ static const u32 cwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, 1, 2, 3,
 	4, 5};
 
 /**
+ * list of DSPP sub-blk flush bits in CTL_DSPP_x_FLUSH
+ */
+static const u32 dspp_sub_blk_flush_tbl[SDE_DSPP_MAX] = {
+	[SDE_DSPP_IGC] = 2,
+	[SDE_DSPP_PCC] = 4,
+	[SDE_DSPP_GC] = 5,
+	[SDE_DSPP_HSIC] = 0,
+	[SDE_DSPP_MEMCOLOR] = 0,
+	[SDE_DSPP_SIXZONE] = 0,
+	[SDE_DSPP_GAMUT] = 3,
+	[SDE_DSPP_DITHER] = 0,
+	[SDE_DSPP_HIST] = 0,
+	[SDE_DSPP_VLUT] = 1,
+	[SDE_DSPP_AD] = 0,
+	[SDE_DSPP_LTM] = 7,
+	[SDE_DSPP_SPR] = 8,
+	[SDE_DSPP_DEMURA] = 9,
+	[SDE_DSPP_RC] = 10,
+	[SDE_DSPP_SB] = 31,
+};
+
+/**
  * struct ctl_sspp_stage_reg_map: Describes bit layout for a sspp stage cfg
  * @ext: Index to indicate LAYER_x_EXT id for given sspp
  * @start: Start position of blend stage bits for given sspp
@@ -193,6 +216,7 @@ sspp_reg_cfg_tbl[SSPP_MAX][CTL_SSPP_MAX_RECTS] = {
 #define  MERGE_3D_IDX   23
 #define  CDM_IDX        26
 #define  CWB_IDX        28
+#define  DSPP_IDX       29
 #define  PERIPH_IDX     30
 #define  INTF_IDX       31
 
@@ -230,6 +254,18 @@ static int _mixer_stages(const struct sde_lm_cfg *mixer, int count,
 	}
 
 	return stages;
+}
+
+static inline bool _is_dspp_flush_pending(struct sde_hw_ctl *ctx)
+{
+	int i;
+
+	for (i = 0; i < CTL_MAX_DSPP_COUNT; i++) {
+		if (ctx->flush.pending_dspp_flush_masks[i])
+			return true;
+	}
+
+	return false;
 }
 
 static inline int sde_hw_ctl_trigger_start(struct sde_hw_ctl *ctx)
@@ -583,6 +619,8 @@ static inline int sde_hw_ctl_update_pending_flush_v1(
 		struct sde_hw_ctl *ctx,
 		struct sde_ctl_flush_cfg *cfg)
 {
+	int i;
+
 	if (!ctx || !cfg)
 		return -EINVAL;
 
@@ -595,7 +633,48 @@ static inline int sde_hw_ctl_update_pending_flush_v1(
 		cfg->pending_merge_3d_flush_mask;
 	ctx->flush.pending_cwb_flush_mask |= cfg->pending_cwb_flush_mask;
 	ctx->flush.pending_periph_flush_mask |= cfg->pending_periph_flush_mask;
+	for (i = 0; i < CTL_MAX_DSPP_COUNT; i++)
+		ctx->flush.pending_dspp_flush_masks[i] |=
+				cfg->pending_dspp_flush_masks[i];
+
 	return 0;
+}
+
+static inline int sde_hw_ctl_update_bitmask_dspp_subblk(struct sde_hw_ctl *ctx,
+		enum sde_dspp dspp, u32 sub_blk, bool enable)
+{
+	if (!ctx || dspp < DSPP_0 || dspp >= DSPP_MAX ||
+			sub_blk < SDE_DSPP_IGC || sub_blk >= SDE_DSPP_MAX) {
+		SDE_ERROR("invalid args - ctx %s, dspp %d sub_block %d\n",
+				ctx ? "valid" : "invalid", dspp, sub_blk);
+		return -EINVAL;
+	}
+
+	UPDATE_MASK(ctx->flush.pending_dspp_flush_masks[dspp - DSPP_0],
+			dspp_sub_blk_flush_tbl[sub_blk], enable);
+	if (_is_dspp_flush_pending(ctx))
+		UPDATE_MASK(ctx->flush.pending_flush_mask, DSPP_IDX, 1);
+	else
+		UPDATE_MASK(ctx->flush.pending_flush_mask, DSPP_IDX, 0);
+
+	return 0;
+}
+
+static inline void _sde_hw_ctl_write_dspp_flushes(struct sde_hw_ctl *ctx) {
+	int i;
+	bool has_dspp_flushes = ctx->caps->features &
+			BIT(SDE_CTL_UNIFIED_DSPP_FLUSH);
+
+	if (!has_dspp_flushes)
+		return;
+
+	for (i = 0; i < CTL_MAX_DSPP_COUNT; i++) {
+		u32 pending = ctx->flush.pending_dspp_flush_masks[i];
+
+		if (pending)
+			SDE_REG_WRITE(&ctx->hw, CTL_DSPP_0_FLUSH + (i * 4),
+					pending);
+	}
 }
 
 static inline int sde_hw_ctl_trigger_flush_v1(struct sde_hw_ctl *ctx)
@@ -624,6 +703,8 @@ static inline int sde_hw_ctl_trigger_flush_v1(struct sde_hw_ctl *ctx)
 	if (ctx->flush.pending_flush_mask & BIT(PERIPH_IDX))
 		SDE_REG_WRITE(&ctx->hw, CTL_PERIPH_FLUSH,
 				ctx->flush.pending_periph_flush_mask);
+	if (ctx->flush.pending_flush_mask & BIT(DSPP_IDX))
+		_sde_hw_ctl_write_dspp_flushes(ctx);
 
 	SDE_REG_WRITE(&ctx->hw, CTL_FLUSH, ctx->flush.pending_flush_mask);
 	return 0;
@@ -1287,10 +1368,17 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 	ops->get_staged_sspp = sde_hw_ctl_get_staged_sspp;
 	ops->update_bitmask_sspp = sde_hw_ctl_update_bitmask_sspp;
 	ops->update_bitmask_mixer = sde_hw_ctl_update_bitmask_mixer;
-	ops->update_bitmask_dspp = sde_hw_ctl_update_bitmask_dspp;
-	ops->update_bitmask_dspp_pavlut = sde_hw_ctl_update_bitmask_dspp_pavlut;
 	ops->reg_dma_flush = sde_hw_reg_dma_flush;
 	ops->get_start_state = sde_hw_ctl_get_start_state;
+
+	if (cap & BIT(SDE_CTL_UNIFIED_DSPP_FLUSH)) {
+		ops->update_bitmask_dspp_subblk =
+				sde_hw_ctl_update_bitmask_dspp_subblk;
+	} else {
+		ops->update_bitmask_dspp = sde_hw_ctl_update_bitmask_dspp;
+		ops->update_bitmask_dspp_pavlut =
+				sde_hw_ctl_update_bitmask_dspp_pavlut;
+	}
 
 	if (cap & BIT(SDE_CTL_UIDLE))
 		ops->uidle_enable = sde_hw_ctl_uidle_enable;

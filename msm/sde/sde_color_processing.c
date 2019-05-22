@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -1252,6 +1252,68 @@ static void sde_cp_crtc_setfeature(struct sde_cp_node *prop_node,
 	list_del_init(&prop_node->dirty_list);
 }
 
+static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
+	[SDE_CP_CRTC_DSPP_IGC] = SDE_DSPP_IGC,
+	[SDE_CP_CRTC_DSPP_PCC] = SDE_DSPP_PCC,
+	[SDE_CP_CRTC_DSPP_GC] = SDE_DSPP_GC,
+	[SDE_CP_CRTC_DSPP_HSIC] = SDE_DSPP_HSIC,
+	[SDE_CP_CRTC_DSPP_MEMCOL_SKIN] = SDE_DSPP_MEMCOLOR,
+	[SDE_CP_CRTC_DSPP_MEMCOL_SKY] = SDE_DSPP_MEMCOLOR,
+	[SDE_CP_CRTC_DSPP_MEMCOL_FOLIAGE] = SDE_DSPP_MEMCOLOR,
+	[SDE_CP_CRTC_DSPP_MEMCOL_PROT] = SDE_DSPP_MEMCOLOR,
+	[SDE_CP_CRTC_DSPP_SIXZONE] = SDE_DSPP_SIXZONE,
+	[SDE_CP_CRTC_DSPP_GAMUT] = SDE_DSPP_GAMUT,
+	[SDE_CP_CRTC_DSPP_DITHER] = SDE_DSPP_DITHER,
+	[SDE_CP_CRTC_DSPP_HIST_CTRL] = SDE_DSPP_HIST,
+	[SDE_CP_CRTC_DSPP_HIST_IRQ] = SDE_DSPP_HIST,
+	[SDE_CP_CRTC_DSPP_AD] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_VLUT] = SDE_DSPP_VLUT,
+	[SDE_CP_CRTC_DSPP_AD_MODE] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_INIT] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_CFG] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_INPUT] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_ASSERTIVENESS] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_BACKLIGHT] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_STRENGTH] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_AD_ROI] = SDE_DSPP_AD,
+	[SDE_CP_CRTC_DSPP_LTM] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_INIT] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_ROI] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_HIST_CTL] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_HIST_THRESH] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_SET_BUF] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_LTM_VLUT] = SDE_DSPP_LTM,
+	[SDE_CP_CRTC_DSPP_MAX] = SDE_DSPP_MAX,
+	[SDE_CP_CRTC_LM_GC] = SDE_DSPP_MAX,
+};
+
+void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
+{
+	u32 i, sub_blk, num_mixers;
+	enum sde_dspp dspp;
+	struct sde_hw_ctl *ctl;
+
+	if (!sde_crtc || feature >= SDE_CP_CRTC_MAX_FEATURES) {
+		SDE_ERROR("invalid args: sde_crtc %s for feature %d",
+				sde_crtc ? "valid" : "invalid", feature);
+		return;
+	}
+
+	num_mixers = sde_crtc->num_mixers;
+	sub_blk = dspp_feature_to_sub_blk_tbl[feature];
+
+	for (i = 0; i < num_mixers; i++) {
+		ctl = sde_crtc->mixers[i].hw_ctl;
+		dspp = sde_crtc->mixers[i].hw_dspp->idx;
+		if (ctl && ctl->ops.update_bitmask_dspp_subblk)
+			ctl->ops.update_bitmask_dspp_subblk(
+					ctl, dspp, sub_blk, true);
+	}
+}
+
 void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = NULL;
@@ -1299,6 +1361,7 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	list_for_each_entry_safe(prop_node, n, &sde_crtc->dirty_list,
 				dirty_list) {
 		sde_cp_crtc_setfeature(prop_node, sde_crtc);
+		sde_cp_dspp_flush_helper(sde_crtc, prop_node->feature);
 		/* Set the flush flag to true */
 		if (prop_node->is_dspp_feature)
 			set_dspp_flush = true;

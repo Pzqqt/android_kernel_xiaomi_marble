@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CATALOG_H
@@ -314,6 +314,10 @@ enum {
  * @SDE_DSPP_VLUT            PA VLUT block
  * @SDE_DSPP_AD              AD block
  * @SDE_DSPP_LTM             LTM block
+ * @SDE_DSPP_SPR             SPR block
+ * @SDE_DSPP_DEMURA          Demura block
+ * @SDE_DSPP_RC              RC block
+ * @SDE_DSPP_SB              SB LUT DMA
  * @SDE_DSPP_MAX             maximum value
  */
 enum {
@@ -329,6 +333,10 @@ enum {
 	SDE_DSPP_VLUT,
 	SDE_DSPP_AD,
 	SDE_DSPP_LTM,
+	SDE_DSPP_SPR,
+	SDE_DSPP_DEMURA,
+	SDE_DSPP_RC,
+	SDE_DSPP_SB,
 	SDE_DSPP_MAX
 };
 
@@ -386,6 +394,7 @@ enum {
  * @SDE_CTL_ACTIVE_CFG          CTL configuration is specified using active
  *                              blocks
  * @SDE_CTL_UIDLE               CTL supports uidle
+ * @SDE_CTL_UNIFIED_DSPP_FLUSH  CTL supports only one flush bit for DSPP
  * @SDE_CTL_MAX
  */
 enum {
@@ -394,6 +403,7 @@ enum {
 	SDE_CTL_PRIMARY_PREF,
 	SDE_CTL_ACTIVE_CFG,
 	SDE_CTL_UIDLE,
+	SDE_CTL_UNIFIED_DSPP_FLUSH,
 	SDE_CTL_MAX
 };
 
