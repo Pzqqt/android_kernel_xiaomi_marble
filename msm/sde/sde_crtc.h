@@ -224,6 +224,7 @@ struct sde_crtc_misr_info {
  * @vblank_last_cb_time  : ktime at last vblank notification
  * @sysfs_dev  : sysfs device node for crtc
  * @vsync_event_sf : vsync event notifier sysfs device
+ * @vblank_requested : whether the user has requested vblank events
  * @suspend         : whether or not a suspend operation is in progress
  * @enabled       : whether the SDE CRTC is currently enabled. updated in the
  *                  commit-thread, not state-swap time which is earlier, so
@@ -293,6 +294,7 @@ struct sde_crtc {
 	struct sde_crtc_fps_info fps_info;
 	struct device *sysfs_dev;
 	struct kernfs_node *vsync_event_sf;
+	bool vblank_requested;
 	bool suspend;
 	bool enabled;
 
