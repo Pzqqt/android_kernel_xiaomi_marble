@@ -5572,11 +5572,16 @@ struct asm_softvolume_params {
 /* Left side direct channel. */
 #define PCM_CHANNEL_LSD  33
 
-/* Right side direct channel. */
+/* Right side direct channel. Update PCM_MAX_CHMAP_ID when
+ * this list is extended.
+ */
 #define PCM_CHANNEL_RSD  34
 
 /* Mark unused channel. */
 #define PCM_CHANNEL_UNUSED  47
+
+/* Max valid channel map index */
+#define PCM_MAX_CHMAP_ID PCM_CHANNEL_RSD
 
 #define PCM_FORMAT_MAX_NUM_CHANNEL  8
 #define PCM_FORMAT_MAX_CHANNELS_9   9
