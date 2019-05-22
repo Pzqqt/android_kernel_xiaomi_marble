@@ -29,6 +29,7 @@
 
 #define MISR_BUFF_SIZE	256
 #define ESD_MODE_STRING_MAX_LEN 256
+#define ESD_TRIGGER_STRING_MAX_LEN 10
 
 #define MAX_NAME_SIZE	64
 
@@ -1249,6 +1250,7 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 	char *buf;
 	int rc = 0;
 	u32 esd_trigger;
+	size_t len;
 
 	if (!display)
 		return -ENODEV;
@@ -1266,16 +1268,17 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 		atomic_read(&display->panel->esd_recovery_pending))
 		return user_len;
 
-	buf = kzalloc(user_len, GFP_KERNEL);
+	buf = kzalloc(ESD_TRIGGER_STRING_MAX_LEN, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
-	if (copy_from_user(buf, user_buf, user_len)) {
+	len = min_t(size_t, user_len, ESD_TRIGGER_STRING_MAX_LEN - 1);
+	if (copy_from_user(buf, user_buf, len)) {
 		rc = -EINVAL;
 		goto error;
 	}
 
-	buf[user_len] = '\0'; /* terminate the string */
+	buf[len] = '\0'; /* terminate the string */
 
 	if (kstrtouint(buf, 10, &esd_trigger)) {
 		rc = -EINVAL;
@@ -1298,7 +1301,7 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 		}
 	}
 
-	rc = user_len;
+	rc = len;
 error:
 	kfree(buf);
 	return rc;
@@ -1313,7 +1316,7 @@ static ssize_t debugfs_alter_esd_check_mode(struct file *file,
 	struct drm_panel_esd_config *esd_config;
 	char *buf;
 	int rc = 0;
-	size_t len = min_t(size_t, user_len, ESD_MODE_STRING_MAX_LEN);
+	size_t len;
 
 	if (!display)
 		return -ENODEV;
@@ -1321,10 +1324,11 @@ static ssize_t debugfs_alter_esd_check_mode(struct file *file,
 	if (*ppos)
 		return 0;
 
-	buf = kzalloc(len, GFP_KERNEL);
+	buf = kzalloc(ESD_MODE_STRING_MAX_LEN, GFP_KERNEL);
 	if (ZERO_OR_NULL_PTR(buf))
 		return -ENOMEM;
 
+	len = min_t(size_t, user_len, ESD_MODE_STRING_MAX_LEN - 1);
 	if (copy_from_user(buf, user_buf, len)) {
 		rc = -EINVAL;
 		goto error;
@@ -1387,7 +1391,7 @@ static ssize_t debugfs_read_esd_check_mode(struct file *file,
 	struct drm_panel_esd_config *esd_config;
 	char *buf;
 	int rc = 0;
-	size_t len = min_t(size_t, user_len, ESD_MODE_STRING_MAX_LEN);
+	size_t len;
 
 	if (!display)
 		return -ENODEV;
@@ -1400,7 +1404,7 @@ static ssize_t debugfs_read_esd_check_mode(struct file *file,
 		return -EINVAL;
 	}
 
-	buf = kzalloc(len, GFP_KERNEL);
+	buf = kzalloc(ESD_MODE_STRING_MAX_LEN, GFP_KERNEL);
 	if (ZERO_OR_NULL_PTR(buf))
 		return -ENOMEM;
 
@@ -1411,6 +1415,7 @@ static ssize_t debugfs_read_esd_check_mode(struct file *file,
 		goto error;
 	}
 
+	len = min_t(size_t, user_len, ESD_MODE_STRING_MAX_LEN - 1);
 	if (!esd_config->esd_enabled) {
 		rc = snprintf(buf, len, "ESD feature not enabled");
 		goto output_mode;
