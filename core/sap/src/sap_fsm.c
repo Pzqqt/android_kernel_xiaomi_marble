@@ -924,7 +924,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	QDF_STATUS qdf_ret_status;
 	struct mac_context *mac_ctx;
 	struct scan_start_request *req;
-	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_vdev *vdev = NULL;
 	uint8_t i;
 	uint8_t pdev_id;
 
@@ -1039,8 +1039,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 
 		sap_context->acs_req_timestamp = qdf_get_time_of_the_day_ms();
 		qdf_ret_status = ucfg_scan_start(req);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
+		if (qdf_ret_status != QDF_STATUS_SUCCESS) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("scan request  fail %d!!!"),
 				  qdf_ret_status);
@@ -1065,7 +1064,8 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 			* return failure so that the calling
 			* function can use the default channel.
 			*/
-			return QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
+			goto release_vdev_ref;
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				 FL("return sme_ScanReq, scanID=%d, Ch=%d"),
@@ -1099,7 +1099,12 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		  FL("Channel: %d"),
 		  sap_context->channel);
 
-	return QDF_STATUS_SUCCESS;
+	qdf_ret_status = QDF_STATUS_SUCCESS;
+
+release_vdev_ref:
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	return qdf_ret_status;
 }
 
 /**
