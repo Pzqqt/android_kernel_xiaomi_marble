@@ -474,6 +474,22 @@ struct msm_mode_info {
 };
 
 /**
+ * struct msm_resource_caps_info - defines hw resources
+ * @num_lm              number of layer mixers available
+ * @num_dsc             number of dsc available
+ * @num_ctl             number of ctl available
+ * @num_3dmux           number of 3d mux available
+ * @max_mixer_width:    max width supported by layer mixer
+ */
+struct msm_resource_caps_info {
+	uint32_t num_lm;
+	uint32_t num_dsc;
+	uint32_t num_ctl;
+	uint32_t num_3dmux;
+	uint32_t max_mixer_width;
+};
+
+/**
  * struct msm_display_info - defines display properties
  * @intf_type:          DRM_MODE_CONNECTOR_ display type
  * @capabilities:       Bitmask of display flags

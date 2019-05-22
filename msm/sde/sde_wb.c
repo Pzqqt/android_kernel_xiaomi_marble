@@ -61,7 +61,8 @@ sde_wb_connector_detect(struct drm_connector *connector,
 	return rc;
 }
 
-int sde_wb_connector_get_modes(struct drm_connector *connector, void *display)
+int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
+		const struct msm_resource_caps_info *avail_res)
 {
 	struct sde_wb_device *wb_dev;
 	int num_modes = 0;
@@ -318,7 +319,7 @@ int sde_wb_get_info(struct drm_connector *connector,
 int sde_wb_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	const u32 dual_lm = 2;
 	const u32 single_lm = 1;
@@ -329,7 +330,8 @@ int sde_wb_get_mode_info(struct drm_connector *connector,
 	u16 hdisplay;
 	int i;
 
-	if (!drm_mode || !mode_info || !max_mixer_width || !display) {
+	if (!drm_mode || !mode_info || !avail_res ||
+			!avail_res->max_mixer_width || !display) {
 		pr_err("invalid params\n");
 		return -EINVAL;
 	}
@@ -341,7 +343,8 @@ int sde_wb_get_mode_info(struct drm_connector *connector,
 		hdisplay = max(hdisplay, wb_dev->modes[i].hdisplay);
 
 	topology = &mode_info->topology;
-	topology->num_lm = (max_mixer_width <= hdisplay) ? dual_lm : single_lm;
+	topology->num_lm = (avail_res->max_mixer_width <= hdisplay) ?
+			dual_lm : single_lm;
 	topology->num_enc = no_enc;
 	topology->num_intf = single_intf;
 

@@ -357,7 +357,7 @@ end:
 int dp_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_mode_info *mode_info,
-		u32 max_mixer_width, void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	const u32 dual_lm = 2;
 	const u32 single_lm = 1;
@@ -369,8 +369,8 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 	struct dp_display_mode dp_mode;
 	struct dp_display *dp_disp = display;
 
-	if (!drm_mode || !mode_info || !max_mixer_width || !connector ||
-			!display) {
+	if (!drm_mode || !mode_info || !avail_res ||
+			!avail_res->max_mixer_width || !connector || !display) {
 		pr_err("invalid params\n");
 		return -EINVAL;
 	}
@@ -381,7 +381,7 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 	dp_panel = sde_conn->drv_panel;
 
 	topology = &mode_info->topology;
-	topology->num_lm = (max_mixer_width <= drm_mode->hdisplay) ?
+	topology->num_lm = (avail_res->max_mixer_width <= drm_mode->hdisplay) ?
 							dual_lm : single_lm;
 	topology->num_enc = no_enc;
 	topology->num_intf = single_intf;
@@ -472,7 +472,7 @@ void dp_connector_post_open(struct drm_connector *connector, void *display)
 }
 
 int dp_connector_get_modes(struct drm_connector *connector,
-		void *display)
+		void *display, const struct msm_resource_caps_info *avail_res)
 {
 	int rc = 0;
 	struct dp_display *dp;
@@ -580,7 +580,8 @@ void dp_drm_bridge_deinit(void *data)
 }
 
 enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
-		struct drm_display_mode *mode, void *display)
+		struct drm_display_mode *mode, void *display,
+		const struct msm_resource_caps_info *avail_res)
 {
 	struct dp_display *dp_disp;
 	struct sde_connector *sde_conn;

@@ -5134,7 +5134,8 @@ static enum drm_connector_status dsi_display_drm_ext_detect(
 }
 
 static int dsi_display_drm_ext_get_modes(
-		struct drm_connector *connector, void *disp)
+		struct drm_connector *connector, void *disp,
+		const struct msm_resource_caps_info *avail_res)
 {
 	struct dsi_display *display = disp;
 	struct drm_display_mode *pmode, *pt;
@@ -5142,7 +5143,7 @@ static int dsi_display_drm_ext_get_modes(
 
 	/* if there are modes defined in panel, ignore external modes */
 	if (display->panel->num_timing_nodes)
-		return dsi_connector_get_modes(connector, disp);
+		return dsi_connector_get_modes(connector, disp, avail_res);
 
 	count = display->ext_conn->helper_private->get_modes(
 			display->ext_conn);
@@ -5160,13 +5161,13 @@ static int dsi_display_drm_ext_get_modes(
 static enum drm_mode_status dsi_display_drm_ext_mode_valid(
 		struct drm_connector *connector,
 		struct drm_display_mode *mode,
-		void *disp)
+		void *disp, const struct msm_resource_caps_info *avail_res)
 {
 	struct dsi_display *display = disp;
 	enum drm_mode_status status;
 
 	/* always do internal mode_valid check */
-	status = dsi_conn_mode_valid(connector, mode, disp);
+	status = dsi_conn_mode_valid(connector, mode, disp, avail_res);
 	if (status != MODE_OK)
 		return status;
 
@@ -5228,11 +5229,12 @@ static int dsi_display_ext_get_info(struct drm_connector *connector,
 static int dsi_display_ext_get_mode_info(struct drm_connector *connector,
 	const struct drm_display_mode *drm_mode,
 	struct msm_mode_info *mode_info,
-	u32 max_mixer_width, void *display)
+	void *display, const struct msm_resource_caps_info *avail_res)
 {
 	struct msm_display_topology *topology;
 
-	if (!drm_mode || !mode_info)
+	if (!drm_mode || !mode_info ||
+			!avail_res || !avail_res->max_mixer_width)
 		return -EINVAL;
 
 	memset(mode_info, 0, sizeof(*mode_info));
@@ -5240,7 +5242,8 @@ static int dsi_display_ext_get_mode_info(struct drm_connector *connector,
 	mode_info->vtotal = drm_mode->vtotal;
 
 	topology = &mode_info->topology;
-	topology->num_lm = (max_mixer_width <= drm_mode->hdisplay) ? 2 : 1;
+	topology->num_lm = (avail_res->max_mixer_width
+			<= drm_mode->hdisplay) ? 2 : 1;
 	topology->num_enc = 0;
 	topology->num_intf = topology->num_lm;
 
