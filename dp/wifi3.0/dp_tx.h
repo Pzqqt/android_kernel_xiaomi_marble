@@ -131,7 +131,7 @@ struct dp_tx_msdu_info_s {
 		struct qdf_tso_info_t tso_info;
 		struct dp_tx_sg_info_s sg_info;
 	} u;
-	uint32_t meta_data[6];
+	uint32_t meta_data[7];
 	uint8_t exception_fw;
 };
 
