@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2010-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2017, 2019, The Linux Foundation. All rights reserved.
  */
 #ifndef __APR_H_
 #define __APR_H_
@@ -129,6 +129,10 @@ struct apr_svc {
 	struct mutex m_lock;
 	spinlock_t w_lock;
 	uint8_t pkt_owner;
+#ifdef CONFIG_MSM_QDSP6_APRV2_VM
+	uint16_t vm_dest_svc;
+	uint32_t vm_handle;
+#endif
 };
 
 struct apr_client {
