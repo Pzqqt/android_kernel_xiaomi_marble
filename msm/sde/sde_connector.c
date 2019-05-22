@@ -1918,7 +1918,8 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	return 0;
 }
 
-static void _sde_connector_report_panel_dead(struct sde_connector *conn)
+static void _sde_connector_report_panel_dead(struct sde_connector *conn,
+	bool skip_pre_kickoff)
 {
 	struct drm_event event;
 
@@ -1938,7 +1939,8 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn)
 	event.length = sizeof(bool);
 	msm_mode_object_event_notify(&conn->base.base,
 		conn->base.dev, &event, (u8 *)&conn->panel_dead);
-	sde_encoder_display_failure_notification(conn->encoder);
+	sde_encoder_display_failure_notification(conn->encoder,
+		skip_pre_kickoff);
 	SDE_EVT32(SDE_EVTLOG_ERROR);
 	SDE_ERROR("esd check failed report PANEL_DEAD conn_id: %d enc_id: %d\n",
 			conn->base.base.id, conn->encoder->base.id);
@@ -1973,7 +1975,7 @@ int sde_connector_esd_status(struct drm_connector *conn)
 	if (ret <= 0) {
 		/* cancel if any pending esd work */
 		sde_connector_schedule_status_work(conn, false);
-		_sde_connector_report_panel_dead(sde_conn);
+		_sde_connector_report_panel_dead(sde_conn, true);
 		ret = -ETIMEDOUT;
 	} else {
 		SDE_DEBUG("Successfully received TE from panel\n");
@@ -2021,7 +2023,7 @@ static void sde_connector_check_status_work(struct work_struct *work)
 		return;
 	}
 
-	_sde_connector_report_panel_dead(conn);
+	_sde_connector_report_panel_dead(conn, false);
 }
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
