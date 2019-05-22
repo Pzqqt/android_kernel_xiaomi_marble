@@ -437,98 +437,98 @@ static inline int __init wcd9xxx_irq_of_init(struct device_node *node,
 int wcd9xxx_init(void);
 void wcd9xxx_exit(void);
 #else
-int wcd9xxx_interface_reg_read(struct wcd9xxx *wcd9xxx, unsigned short reg)
+static inline int wcd9xxx_interface_reg_read(struct wcd9xxx *wcd9xxx, unsigned short reg)
 {
 	return 0;
 }
-int wcd9xxx_interface_reg_write(struct wcd9xxx *wcd9xxx, unsigned short reg,
+static inline int wcd9xxx_interface_reg_write(struct wcd9xxx *wcd9xxx, unsigned short reg,
 		u8 val)
 {
 	return 0;
 }
-int wcd9xxx_get_logical_addresses(u8 *pgd_la, u8 *inf_la)
+static inline int wcd9xxx_get_logical_addresses(u8 *pgd_la, u8 *inf_la)
 {
 	return 0;
 }
-int wcd9xxx_slim_write_repeat(struct wcd9xxx *wcd9xxx, unsigned short reg,
+static inline int wcd9xxx_slim_write_repeat(struct wcd9xxx *wcd9xxx, unsigned short reg,
 			     int bytes, void *src)
 {
 	return 0;
 }
-int wcd9xxx_slim_reserve_bw(struct wcd9xxx *wcd9xxx,
+static inline int wcd9xxx_slim_reserve_bw(struct wcd9xxx *wcd9xxx,
 			    u32 bw_ops, bool commit)
 {
 	return 0;
 }
-int wcd9xxx_set_power_state(struct wcd9xxx *wcd9xxx, enum codec_power_states
+static inline int wcd9xxx_set_power_state(struct wcd9xxx *wcd9xxx, enum codec_power_states
 			    cdc_power_state, enum wcd_power_regions pwr_region)
 {
 	return 0;
 }
-int wcd9xxx_get_current_power_state(struct wcd9xxx *wcd9xxx,
+static inline int wcd9xxx_get_current_power_state(struct wcd9xxx *wcd9xxx,
 				    enum wcd_power_regions pwr_region)
 {
 	return 0;
 }
 
-int wcd9xxx_page_write(struct wcd9xxx *wcd9xxx, unsigned short *reg)
+static inline int wcd9xxx_page_write(struct wcd9xxx *wcd9xxx, unsigned short *reg)
 {
 	return 0;
 }
 
-int wcd9xxx_slim_bulk_write(struct wcd9xxx *wcd9xxx,
+static inline int wcd9xxx_slim_bulk_write(struct wcd9xxx *wcd9xxx,
 			    struct wcd9xxx_reg_val *bulk_reg,
 			    unsigned int size, bool interface)
 {
 	return 0;
 }
 
-extern int wcd9xxx_core_res_init(
+static inline int wcd9xxx_core_res_init(
 	struct wcd9xxx_core_resource *wcd9xxx_core_res,
 	int num_irqs, int num_irq_regs, struct regmap *wcd_regmap)
 {
 	return 0;
 }
 
-extern void wcd9xxx_core_res_deinit(
+static inline void wcd9xxx_core_res_deinit(
 	struct wcd9xxx_core_resource *wcd9xxx_core_res)
 {
 }
 
-extern int wcd9xxx_core_res_suspend(
+static inline int wcd9xxx_core_res_suspend(
 	struct wcd9xxx_core_resource *wcd9xxx_core_res,
 	pm_message_t pmesg)
 {
 	return 0;
 }
 
-extern int wcd9xxx_core_res_resume(
+static inline int wcd9xxx_core_res_resume(
 	struct wcd9xxx_core_resource *wcd9xxx_core_res)
 {
 	return 0;
 }
 
-extern int wcd9xxx_core_irq_init(
+static inline int wcd9xxx_core_irq_init(
 	struct wcd9xxx_core_resource *wcd9xxx_core_res)
 {
 	return 0;
 }
-extern int wcd9xxx_assign_irq(struct wcd9xxx_core_resource *wcd9xxx_core_res,
+static inline int wcd9xxx_assign_irq(struct wcd9xxx_core_resource *wcd9xxx_core_res,
 			      unsigned int irq,
 			      unsigned int irq_base)
 {
 	return 0;
 }
 
-extern enum wcd9xxx_intf_status wcd9xxx_get_intf_type(void)
+static inline  enum wcd9xxx_intf_status wcd9xxx_get_intf_type(void)
 {
 	return 0;
 }
-extern void wcd9xxx_set_intf_type(enum wcd9xxx_intf_status int_state)
+static inline void wcd9xxx_set_intf_type(enum wcd9xxx_intf_status int_state)
 {
 }
 
-extern enum wcd9xxx_pm_state wcd9xxx_pm_cmpxchg(
+static inline enum wcd9xxx_pm_state wcd9xxx_pm_cmpxchg(
 			struct wcd9xxx_core_resource *wcd9xxx_core_res,
 			enum wcd9xxx_pm_state o,
 			enum wcd9xxx_pm_state n)
@@ -541,11 +541,11 @@ static inline int __init wcd9xxx_irq_of_init(struct device_node *node,
 	return 0;
 }
 
-int wcd9xxx_init(void)
+static inline int wcd9xxx_init(void)
 {
 	return 0;
 }
-void wcd9xxx_exit(void)
+static inline void wcd9xxx_exit(void)
 {
 }
 
