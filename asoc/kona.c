@@ -2205,6 +2205,15 @@ static int msm_get_port_id(int be_id)
 	case MSM_BACKEND_DAI_TERTIARY_MI2S_TX:
 		afe_port_id = AFE_PORT_ID_TERTIARY_MI2S_TX;
 		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+		afe_port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
+		afe_port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		afe_port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_2;
+		break;
 	default:
 		pr_err("%s: Invalid BE id: %d\n", __func__, be_id);
 		afe_port_id = -EINVAL;
@@ -3388,6 +3397,30 @@ static int msm_ext_disp_get_idx_from_beid(int32_t be_id)
 	return idx;
 }
 
+static int kona_send_island_va_config(int32_t be_id)
+{
+	int rc = 0;
+	int port_id = 0xFFFF;
+
+	port_id = msm_get_port_id(be_id);
+	if (port_id < 0) {
+		pr_err("%s: Invalid island interface, be_id: %d\n",
+		       __func__, be_id);
+		rc = -EINVAL;
+	} else {
+		/*
+		 * send island mode config
+		 * This should be the first configuration
+		 */
+		rc = afe_send_port_island_mode(port_id);
+		if (rc)
+			pr_err("%s: afe send island mode failed %d\n",
+				__func__, rc);
+	}
+
+	return rc;
+}
+
 static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				struct snd_pcm_hw_params *params)
 {
@@ -3812,6 +3845,26 @@ end:
 	return ret;
 }
 
+static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
+{
+	int ret = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai_link *dai_link = rtd->dai_link;
+
+	switch (dai_link->id) {
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		ret = kona_send_island_va_config(dai_link->id);
+		if (ret)
+			pr_err("%s: send island va cfg failed, err: %d\n",
+			       __func__, ret);
+		break;
+	}
+
+	return ret;
+}
+
 static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 			     struct snd_pcm_hw_params *params)
 {
@@ -4084,6 +4137,7 @@ static struct snd_soc_ops msm_fe_qos_ops = {
 };
 
 static struct snd_soc_ops msm_cdc_dma_be_ops = {
+	.startup = msm_snd_cdc_dma_startup,
 	.hw_params = msm_snd_cdc_dma_hw_params,
 };
 
