@@ -24,10 +24,10 @@
 #include <scheduler_api.h>
 #include <qdf_list.h>
 
-#ifdef CONFIG_MCL
-#define SCHEDULER_CORE_MAX_MESSAGES 1000
-#else
+#ifndef SCHEDULER_CORE_MAX_MESSAGES
 #define SCHEDULER_CORE_MAX_MESSAGES 4000
+#endif
+#ifndef WLAN_SCHED_REDUCTION_LIMIT
 #define WLAN_SCHED_REDUCTION_LIMIT 32
 #endif
 #define SCHEDULER_NUMBER_OF_MSG_QUEUE 6

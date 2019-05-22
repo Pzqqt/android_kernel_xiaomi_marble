@@ -23,10 +23,6 @@
 static struct scheduler_ctx g_sched_ctx;
 static struct scheduler_ctx *gp_sched_ctx;
 
-#ifndef WLAN_SCHED_REDUCTION_LIMIT
-#define WLAN_SCHED_REDUCTION_LIMIT 0
-#endif
-
 DEFINE_QDF_FLEX_MEM_POOL(sched_pool, sizeof(struct scheduler_msg),
 			 WLAN_SCHED_REDUCTION_LIMIT);
 
