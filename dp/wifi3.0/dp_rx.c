@@ -30,6 +30,13 @@
 #include "dp_rx_mon.h"
 #include "dp_ipa.h"
 
+#ifdef ATH_RX_PRI_SAVE
+#define DP_RX_TID_SAVE(_nbuf, _tid) \
+	(qdf_nbuf_set_priority(_nbuf, _tid))
+#else
+#define DP_RX_TID_SAVE(_nbuf, _tid)
+#endif
+
 #ifdef CONFIG_MCL
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
@@ -42,23 +49,6 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
 	return vdev->ap_bridge_enabled;
-}
-#endif
-
-#ifdef ATH_RX_PRI_SAVE
-static inline void dp_rx_save_tid_ts(qdf_nbuf_t nbuf, uint8_t tid, bool flag)
-{
-	qdf_nbuf_set_priority(nbuf, tid);
-	if (qdf_unlikely(flag))
-		qdf_nbuf_set_timestamp(nbuf);
-}
-#else
-static inline void dp_rx_save_tid_ts(qdf_nbuf_t nbuf, uint8_t tid, bool flag)
-{
-	if (qdf_unlikely(flag)) {
-		qdf_nbuf_set_priority(nbuf, tid);
-		qdf_nbuf_set_timestamp(nbuf);
-	}
 }
 #endif
 
@@ -1942,7 +1932,10 @@ done:
 		 * to be written
 		 */
 		rx_pdev = soc->pdev_list[rx_desc->pool_id];
-		dp_rx_save_tid_ts(nbuf, tid, rx_pdev->delay_stats_flag);
+		DP_RX_TID_SAVE(nbuf, tid);
+		if (qdf_unlikely(rx_pdev->delay_stats_flag))
+			qdf_nbuf_set_timestamp(nbuf);
+
 		tid_stats = &rx_pdev->stats.tid_stats.tid_rx_stats[tid];
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
 			dp_err("MSDU DONE failure");
