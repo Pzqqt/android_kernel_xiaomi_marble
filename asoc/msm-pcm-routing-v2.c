@@ -27128,6 +27128,8 @@ static int msm_routing_probe(struct snd_soc_component *component)
 {
 	snd_soc_dapm_new_controls(&component->dapm, msm_qdsp6_widgets,
 			   ARRAY_SIZE(msm_qdsp6_widgets));
+	snd_soc_dapm_ignore_suspend(&component->dapm, "BE_OUT");
+	snd_soc_dapm_ignore_suspend(&component->dapm, "BE_IN");
 	snd_soc_dapm_add_routes(&component->dapm, intercon,
 		ARRAY_SIZE(intercon));
 
