@@ -178,10 +178,9 @@ static void pmo_configure_vdev_suspend_params(
 	vdev_id = pmo_vdev_get_id(vdev);
 	if (!PMO_VDEV_IN_STA_MODE(opmode))
 		return;
-	ret = pmo_tgt_vdev_update_param_req(
-				vdev,
-				pmo_vdev_param_inactivity_time,
-				psoc_cfg->wow_data_inactivity_timeout);
+	ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
+					pmo_sta_ps_param_inactivity_time,
+					psoc_cfg->wow_data_inactivity_timeout);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		pmo_debug("Failed to Set wow inactivity timeout vdevId %d",
 			  vdev_id);
@@ -197,9 +196,8 @@ static void pmo_configure_vdev_suspend_params(
 				  wow_inactivity_time) *
 					psoc_cfg->ito_repeat_count;
 	if (ito_repeat_count_value)
-		ret = pmo_tgt_vdev_update_param_req(
-					vdev,
-					pmo_vdev_param_ito_repeat_count,
+		ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
+					pmo_sta_ps_param_ito_repeat_count,
 					psoc_cfg->wow_data_inactivity_timeout);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		pmo_err("Failed to Set ito repeat count vdevId %d",
@@ -224,10 +222,9 @@ static void pmo_configure_vdev_resume_params(
 	vdev_id = pmo_vdev_get_id(vdev);
 	if (!PMO_VDEV_IN_STA_MODE(opmode))
 		return;
-	ret = pmo_tgt_vdev_update_param_req(
-					vdev,
-					pmo_vdev_param_inactivity_time,
-					psoc_cfg->ps_data_inactivity_timeout);
+	ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
+					 pmo_sta_ps_param_inactivity_time,
+					 psoc_cfg->ps_data_inactivity_timeout);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		pmo_debug("Failed to Set inactivity timeout vdevId %d",
 			  vdev_id);
