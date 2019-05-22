@@ -287,6 +287,8 @@ void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n)
 	event = BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR;
 	if (adc_n == BOLERO_ADC0)
 		amic = 0x1;
+	else if (adc_n == BOLERO_ADC1)
+		amic = 0x2;
 	else if (adc_n == BOLERO_ADC2)
 		amic = 0x2;
 	else if (adc_n == BOLERO_ADC3)
