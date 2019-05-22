@@ -2086,9 +2086,9 @@ typedef enum {
 #define WMI_HE_CAP_RX_DL_OFDMA_SUPPORT_SET(he_cap_info_dword1, value) \
     WMI_SET_BITS(he_cap_info_dword1, 3, 2, value)
 
-#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_GET() \
+#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_GET(he_cap_info_dword1) \
     WMI_GET_BITS(he_cap_info_dword1, 5, 2)
-#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_SET() \
+#define WMI_HE_CAP_RX_DL_MUMIMO_SUPPORT_SET(he_cap_info_dword1, value) \
     WMI_SET_BITS(he_cap_info_dword1, 5, 2, value)
 
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in 802.11ax
