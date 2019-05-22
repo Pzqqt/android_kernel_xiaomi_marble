@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2014, 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -333,6 +333,7 @@ static struct platform_driver adsp_loader_driver = {
 		.name = "adsp-loader",
 		.owner = THIS_MODULE,
 		.of_match_table = adsp_loader_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = adsp_loader_probe,
 	.remove = adsp_loader_remove,

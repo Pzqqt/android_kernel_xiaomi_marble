@@ -591,6 +591,7 @@ static struct platform_driver voice_mhi_platform_driver = {
 		.name = "voice_mhi_audio",
 		.owner = THIS_MODULE,
 		.of_match_table = voice_mhi_of_match,
+		.suppress_bind_attrs = true,
 	}
 };
 

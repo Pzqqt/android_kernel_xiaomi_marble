@@ -2077,6 +2077,7 @@ static struct platform_driver tx_macro_driver = {
 		.owner = THIS_MODULE,
 		.pm = &bolero_dev_pm_ops,
 		.of_match_table = tx_macro_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = tx_macro_probe,
 	.remove = tx_macro_remove,

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -233,6 +233,7 @@ static struct platform_driver msm_cdc_pinctrl_driver = {
 		.name = "msm-cdc-pinctrl",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_cdc_pinctrl_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_cdc_pinctrl_probe,
 	.remove = msm_cdc_pinctrl_remove,

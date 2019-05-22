@@ -1028,6 +1028,7 @@ static struct platform_driver bolero_drv = {
 		.name = "bolero-codec",
 		.owner = THIS_MODULE,
 		.of_match_table = bolero_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = bolero_probe,
 	.remove = bolero_remove,

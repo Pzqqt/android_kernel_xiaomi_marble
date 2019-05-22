@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -586,6 +586,7 @@ static struct platform_driver msm_dai_q6_hdmi_driver = {
 		.name = "msm-dai-q6-hdmi",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_dai_q6_hdmi_dt_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

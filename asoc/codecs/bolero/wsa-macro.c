@@ -3008,6 +3008,7 @@ static struct platform_driver wsa_macro_driver = {
 		.owner = THIS_MODULE,
 		.pm = &bolero_dev_pm_ops,
 		.of_match_table = wsa_macro_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = wsa_macro_probe,
 	.remove = wsa_macro_remove,

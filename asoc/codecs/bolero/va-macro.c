@@ -1756,6 +1756,7 @@ static struct platform_driver va_macro_driver = {
 		.owner = THIS_MODULE,
 		.pm = &bolero_dev_pm_ops,
 		.of_match_table = va_macro_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = va_macro_probe,
 	.remove = va_macro_remove,

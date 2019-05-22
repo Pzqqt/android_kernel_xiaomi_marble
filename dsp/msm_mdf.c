@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -694,6 +694,7 @@ static struct platform_driver msm_mdf_driver = {
 		.name = "msm-mdf",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_mdf_match_table,
+		.suppress_bind_attrs = true,
 	},
 };
 

@@ -1695,6 +1695,7 @@ static struct platform_driver msm_transcode_loopback_driver = {
 		.name = "msm-transcode-loopback",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_transcode_loopback_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_transcode_dev_probe,
 	.remove = msm_transcode_remove,

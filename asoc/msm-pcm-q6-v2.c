@@ -2695,6 +2695,7 @@ static struct platform_driver msm_pcm_driver = {
 		.name = "msm-pcm-dsp",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_pcm_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_pcm_probe,
 	.remove = msm_pcm_remove,

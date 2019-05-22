@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -1477,6 +1477,7 @@ static struct platform_driver msm_pcm_driver = {
 		.name = "msm-voice-host-pcm",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_voice_host_pcm_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_pcm_probe,
 	.remove = msm_pcm_remove,

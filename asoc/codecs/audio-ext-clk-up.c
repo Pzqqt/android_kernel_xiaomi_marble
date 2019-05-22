@@ -565,6 +565,7 @@ static struct platform_driver audio_ref_clk_driver = {
 		.name = "audio-ref-clk",
 		.owner = THIS_MODULE,
 		.of_match_table = audio_ref_clk_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = audio_ref_clk_probe,
 	.remove = audio_ref_clk_remove,

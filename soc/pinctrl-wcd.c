@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, 2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -416,6 +416,7 @@ static struct platform_driver wcd_pinctrl_driver = {
 	.driver = {
 		   .name = "qcom-wcd-pinctrl",
 		   .of_match_table = wcd_pinctrl_of_match,
+		   .suppress_bind_attrs = true,
 	},
 	.probe = wcd_pinctrl_probe,
 	.remove = wcd_pinctrl_remove,

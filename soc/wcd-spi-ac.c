@@ -979,6 +979,7 @@ static struct platform_driver wcd_spi_ac_driver = {
 	.driver = {
 		.name = "qcom,wcd-spi-ac",
 		.of_match_table = wcd_spi_ac_of_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = wcd_spi_ac_probe,
 	.remove = wcd_spi_ac_remove,

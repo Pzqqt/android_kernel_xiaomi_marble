@@ -801,6 +801,7 @@ static struct platform_driver lpi_pinctrl_driver = {
 		   .name = "qcom-lpi-pinctrl",
 		   .pm = &lpi_pinctrl_dev_pm_ops,
 		   .of_match_table = lpi_pinctrl_of_match,
+		   .suppress_bind_attrs = true,
 	},
 	.probe = lpi_pinctrl_probe,
 	.remove = lpi_pinctrl_remove,

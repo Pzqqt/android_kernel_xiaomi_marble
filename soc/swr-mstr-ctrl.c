@@ -2931,6 +2931,7 @@ static struct platform_driver swr_mstr_driver = {
 		.owner = THIS_MODULE,
 		.pm = &swrm_dev_pm_ops,
 		.of_match_table = swrm_dt_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

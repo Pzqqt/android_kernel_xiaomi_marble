@@ -806,6 +806,7 @@ static struct platform_driver msm_audio_ion_driver = {
 		.name = "msm-audio-ion",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_audio_ion_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_audio_ion_probe,
 	.remove = msm_audio_ion_remove,

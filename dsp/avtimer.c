@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2019 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -536,6 +536,7 @@ static struct platform_driver dev_avtimer_driver = {
 	.driver = {
 		.name = "dev_avtimer",
 		.of_match_table = avtimer_machine_of_match,
+		.suppress_bind_attrs = true,
 	},
 };
 

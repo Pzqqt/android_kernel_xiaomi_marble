@@ -3712,6 +3712,7 @@ static struct platform_driver rx_macro_driver = {
 		.owner = THIS_MODULE,
 		.pm = &bolero_dev_pm_ops,
 		.of_match_table = rx_macro_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = rx_macro_probe,
 	.remove = rx_macro_remove,

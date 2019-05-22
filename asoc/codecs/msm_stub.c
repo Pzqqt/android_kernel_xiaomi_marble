@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2014, 2017-2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2014, 2017-2019 The Linux Foundation. All rights reserved.
  */
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -63,6 +63,7 @@ static struct platform_driver msm_stub_driver = {
 		.name = "msm-stub-codec",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_stub_codec_dt_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe = msm_stub_dev_probe,
 	.remove = msm_stub_dev_remove,
