@@ -2747,6 +2747,12 @@ ifdef WLAN_HDD_ADAPTER_MAGIC
 ccflags-y += -DWLAN_HDD_ADAPTER_MAGIC=$(WLAN_HDD_ADAPTER_MAGIC)
 endif
 
+# Max no of Serialization msg queue depth for MCL. If it is not
+# defined, then SCHEDULER_CORE_MAX_MESSAGES will be 4000 for
+# WIN.
+
+ccflags-y += -DSCHEDULER_CORE_MAX_MESSAGES=1000
+
 # Determine if we are building against an arm architecture host
 ifeq ($(findstring arm, $(ARCH)),)
 	ccflags-y += -DWLAN_HOST_ARCH_ARM=0
