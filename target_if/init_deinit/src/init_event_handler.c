@@ -288,6 +288,8 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_qwrap_cfg_enable(psoc, tgt_hdl, event);
 
+	target_if_set_twt_ap_pdev_count(info, tgt_hdl);
+
 	info->wlan_res_cfg.num_vdevs = (target_psoc_get_num_radios(tgt_hdl) *
 					info->wlan_res_cfg.num_vdevs);
 	info->wlan_res_cfg.beacon_tx_offload_max_vdev =

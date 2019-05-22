@@ -2137,5 +2137,22 @@ static inline int32_t target_psoc_get_num_hw_modes
 
 	return tgt_hdl->info.service_ext_param.num_hw_modes;
 }
+
+#ifdef WLAN_SUPPORT_TWT
+static inline void target_if_set_twt_ap_pdev_count
+		(struct tgt_info *info, struct target_psoc_info *tgt_hdl)
+{
+	if (!tgt_hdl)
+		return;
+
+	info->wlan_res_cfg.twt_ap_pdev_count =
+					target_psoc_get_num_radios(tgt_hdl);
+}
+#else
+static inline void target_if_set_twt_ap_pdev_count
+		(struct tgt_info *info, struct target_psoc_info *tgt_hdl)
+{
+}
+#endif /* WLAN_SUPPORT_TWT */
 #endif
 
