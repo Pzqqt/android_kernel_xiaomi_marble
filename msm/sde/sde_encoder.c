@@ -227,7 +227,8 @@ enum sde_enc_rc_states {
  * @elevated_ahb_vote:		increase AHB bus speed for the first frame
  *				after power collapse
  * @pm_qos_cpu_req:		pm_qos request for cpu frequency
- * @mode_info:                  stores the current mode information
+ * @mode_info:                  stores the current mode and should be used
+ *				 only in commit phase
  */
 struct sde_encoder_virt {
 	struct drm_encoder base;
@@ -658,6 +659,7 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 		struct drm_connector_state *conn_state)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
+	struct msm_mode_info mode_info;
 	int i = 0;
 
 	if (!hw_res || !drm_enc || !conn_state) {
@@ -680,8 +682,13 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 			phys->ops.get_hw_resources(phys, hw_res, conn_state);
 	}
 
-	sde_connector_get_mode_info(conn_state, &sde_enc->mode_info);
-	hw_res->topology = sde_enc->mode_info.topology;
+	/*
+	 * NOTE: Do not use sde_encoder_get_mode_info here as this function is
+	 * called from atomic_check phase. Use the below API to get mode
+	 * information of the temporary conn_state passed
+	 */
+	sde_connector_get_mode_info(conn_state, &mode_info);
+	hw_res->topology = mode_info.topology;
 	hw_res->display_type = sde_enc->disp_info.display_type;
 }
 
@@ -2760,8 +2767,6 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms;
 	struct list_head *connector_list;
 	struct drm_connector *conn = NULL, *conn_iter;
-	struct sde_connector_state *sde_conn_state = NULL;
-	struct sde_connector *sde_conn = NULL;
 	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
 	struct sde_rm_hw_request request_hw;
 	enum sde_intf_mode intf_mode;
@@ -2812,20 +2817,10 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		return;
 	}
 
-	sde_conn = to_sde_connector(conn);
-	sde_conn_state = to_sde_connector_state(conn->state);
-	if (sde_conn && sde_conn_state) {
-		ret = sde_conn->ops.get_mode_info(&sde_conn->base, adj_mode,
-				&sde_conn_state->mode_info,
-				sde_kms->catalog->max_mixer_width,
-				sde_conn->display);
-		if (ret) {
-			SDE_ERROR_ENC(sde_enc,
-				"failed to get mode info from the display\n");
-			return;
-		}
-	}
 	intf_mode = sde_encoder_get_intf_mode(drm_enc);
+
+	/* store the mode_info */
+	sde_connector_get_mode_info(conn->state, &sde_enc->mode_info);
 
 	/* release resources before seamless mode change */
 	if (msm_is_mode_seamless_dms(adj_mode) ||
