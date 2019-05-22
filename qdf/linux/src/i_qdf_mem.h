@@ -288,8 +288,12 @@ __qdf_dma_get_sgtable_dma_addr(struct sg_table *sgt)
 	struct scatterlist *sg;
 	int i;
 
-	for_each_sg(sgt->sgl, sg, sgt->nents, i)
+	for_each_sg(sgt->sgl, sg, sgt->nents, i) {
+		if (!sg)
+			break;
+
 		sg->dma_address = sg_phys(sg);
+	}
 }
 
 /**
