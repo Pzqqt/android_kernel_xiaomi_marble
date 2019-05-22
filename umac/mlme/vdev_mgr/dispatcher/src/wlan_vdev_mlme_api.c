@@ -282,3 +282,14 @@ QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wlan_vdev_mlme_is_init_state(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	if (state == WLAN_VDEV_S_INIT)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}

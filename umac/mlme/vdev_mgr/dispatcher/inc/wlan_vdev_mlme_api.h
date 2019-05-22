@@ -207,4 +207,15 @@ void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev);
  *         FAILURE: otherwise failure
  */
 QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_mlme_is_init_state() - Checks whether vdev is in init state
+ * @vdev: Object manager VDEV object
+ *
+ * API to checks the VDEV MLME SM state is in init state or not
+ *
+ * Return: SUCCESS: if vdev is in init state
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_mlme_is_init_state(struct wlan_objmgr_vdev *vdev);
 #endif
