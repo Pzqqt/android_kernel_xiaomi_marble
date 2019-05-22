@@ -2700,6 +2700,11 @@ static void dp_reo_frag_dst_set(struct dp_soc *soc, uint8_t *frag_dst_ring)
 	case dp_nss_cfg_default:
 		*frag_dst_ring = HAL_SRNG_REO_EXCEPTION;
 		break;
+	case dp_nss_cfg_first_radio:
+		/*
+		 * This configuration is valid for single band radio which
+		 * is also NSS offload.
+		 */
 	case dp_nss_cfg_dbdc:
 	case dp_nss_cfg_dbtc:
 		*frag_dst_ring = HAL_SRNG_REO_ALTERNATE_SELECT;
@@ -4597,6 +4602,11 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 	switch (config) {
 	case dp_nss_cfg_default:
 		break;
+	case dp_nss_cfg_first_radio:
+		/*
+		 * This configuration is valid for single band radio which
+		 * is also NSS offload.
+		 */
 	case dp_nss_cfg_dbdc:
 	case dp_nss_cfg_dbtc:
 		wlan_cfg_set_num_tx_desc_pool(wlan_cfg_ctx, 0);
