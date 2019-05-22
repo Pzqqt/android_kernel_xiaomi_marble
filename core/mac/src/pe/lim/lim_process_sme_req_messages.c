@@ -4604,6 +4604,23 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 		return;
 	}
 
+	/* In LFR2.0 roaming scenario, if association is not completed with
+	 * new AP, there is possibality of trying to send disassoc in
+	 * failure handling. So, if vdev is in INIT state send
+	 * disassoc failure and cleanup session.
+	 */
+	if (QDF_IS_STATUS_SUCCESS(
+		wlan_vdev_mlme_is_init_state(session->vdev))) {
+		pe_err("vdev is in INIT state. Send failure.");
+		lim_send_sme_disassoc_ntf(mac_ctx,
+					  disassoc_req.peer_macaddr.bytes,
+					  eSIR_SME_INVALID_PARAMETERS,
+					  eLIM_HOST_DISASSOC, 1,
+					  disassoc_req.sessionId, session);
+
+		return;
+	}
+
 	if (LIM_IS_STA_ROLE(session))
 		lim_process_disconnect_sta(session, msg);
 	else
@@ -4632,6 +4649,17 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 					eLIM_HOST_DEAUTH, 1,
 					sme_deauth_req.sessionId);
 
+		return;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(
+		wlan_vdev_mlme_is_init_state(session->vdev))) {
+		pe_err("vdev is in INIT state. Send failure.");
+		lim_send_sme_deauth_ntf(mac_ctx,
+					sme_deauth_req.peer_macaddr.bytes,
+					eSIR_SME_INVALID_PARAMETERS,
+					eLIM_HOST_DEAUTH, 1,
+					sme_deauth_req.sessionId);
 		return;
 	}
 
