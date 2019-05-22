@@ -200,16 +200,16 @@ static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *bod
 		return;
 	}
 
-	if (session->pePersona != QDF_STA_MODE &&
-	    session->pePersona != QDF_SAP_MODE) {
+	if (session->opmode != QDF_STA_MODE &&
+	    session->opmode != QDF_SAP_MODE) {
 		pe_err("SAE:Not supported in this mode %d",
-				session->pePersona);
+				session->opmode);
 		return;
 	}
 
-	pe_debug("SAE:status %d limMlmState %d pePersona %d peer: "
+	pe_debug("SAE:status %d limMlmState %d opmode %d peer: "
 		 QDF_MAC_ADDR_STR, sae_msg->sae_status,
-		 session->limMlmState, session->pePersona,
+		 session->limMlmState, session->opmode,
 		 QDF_MAC_ADDR_ARRAY(sae_msg->peer_mac_addr));
 	if (LIM_IS_STA_ROLE(session))
 		lim_process_sae_msg_sta(mac, session, sae_msg);
@@ -1239,7 +1239,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 		pe_session = pe_find_session_by_bssid(mac,
 					pHdr->bssId, &sessionId);
 		if (pe_session &&
-		    (QDF_SAP_MODE == pe_session->pePersona)) {
+		    (QDF_SAP_MODE == pe_session->opmode)) {
 			pe_debug("CAC timer running - drop the frame");
 			goto end;
 		}
@@ -1747,26 +1747,24 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 			msg->type);
 		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 			session_entry = &mac_ctx->lim.gpSession[i];
-			if ((session_entry) && (session_entry->valid)
-				&& (session_entry->pePersona ==
-				QDF_P2P_GO_MODE)) { /* Save P2P attr for Go */
-					qdf_mem_copy(
-						&session_entry->p2pGoPsUpdate,
-						msg->bodyptr,
-						sizeof(tSirP2PNoaAttr));
-					pe_debug("bssId"
-						QDF_MAC_ADDR_STR
-						" ctWin=%d oppPsFlag=%d",
-						QDF_MAC_ADDR_ARRAY(
-							session_entry->bssId),
-						session_entry->p2pGoPsUpdate.ctWin,
-						session_entry->p2pGoPsUpdate.oppPsFlag);
-					pe_debug("uNoa1IntervalCnt=%d uNoa1Duration=%d uNoa1Interval=%d uNoa1StartTime=%d",
-						session_entry->p2pGoPsUpdate.uNoa1IntervalCnt,
-						session_entry->p2pGoPsUpdate.uNoa1Duration,
-						session_entry->p2pGoPsUpdate.uNoa1Interval,
-						session_entry->p2pGoPsUpdate.uNoa1StartTime);
-					break;
+			if ((session_entry) && (session_entry->valid) &&
+			    (session_entry->opmode == QDF_P2P_GO_MODE)) {
+				/* Save P2P attr for Go */
+				qdf_mem_copy(&session_entry->p2pGoPsUpdate,
+					     msg->bodyptr,
+					     sizeof(tSirP2PNoaAttr));
+				pe_debug("bssId"
+					 QDF_MAC_ADDR_STR
+					 " ctWin=%d oppPsFlag=%d",
+					 QDF_MAC_ADDR_ARRAY(session_entry->bssId),
+					 session_entry->p2pGoPsUpdate.ctWin,
+					 session_entry->p2pGoPsUpdate.oppPsFlag);
+				pe_debug("uNoa1IntervalCnt=%d uNoa1Duration=%d uNoa1Interval=%d uNoa1StartTime=%d",
+					 session_entry->p2pGoPsUpdate.uNoa1IntervalCnt,
+					 session_entry->p2pGoPsUpdate.uNoa1Duration,
+					 session_entry->p2pGoPsUpdate.uNoa1Interval,
+					 session_entry->p2pGoPsUpdate.uNoa1StartTime);
+				break;
 			}
 		}
 		qdf_mem_free(msg->bodyptr);

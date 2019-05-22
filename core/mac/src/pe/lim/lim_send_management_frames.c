@@ -238,8 +238,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * sent by P2P Client
 	 */
 	if ((MLME_DOT11_MODE_11B != dot11mode) && (p2pie) &&
-	    ((pesession) &&
-	      (QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
+	    ((pesession) && (QDF_P2P_CLIENT_MODE == pesession->opmode))) {
 		/*
 		 * In the below API pass channel number > 14, do that it fills
 		 * only 11a rates in supported rates
@@ -410,12 +409,10 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		/*
 		 * For unicast probe req mgmt from Join function we don't set
 		 * above variables. So we need to add one more check whether it
-		 * is pePersona is P2P_CLIENT or not
+		 * is opmode is P2P_CLIENT or not
 		 */
-	    ((pesession) &&
-		(QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
+	    ((pesession) && (QDF_P2P_CLIENT_MODE == pesession->opmode)))
 		txflag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	qdf_status =
 		wma_tx_frame(mac_ctx, packet,
@@ -523,8 +520,8 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	 * In case when cac timer is running for this SAP session then
 	 * avoid sending probe rsp out. It is violation of dfs specification.
 	 */
-	if (((pe_session->pePersona == QDF_SAP_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) &&
+	if (((pe_session->opmode == QDF_SAP_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)) &&
 	    (true == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("CAC timer is running, probe response dropped"));
@@ -776,10 +773,9 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		}
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    )
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	/* Queue Probe Response frame in high priority WQ */
@@ -985,13 +981,10 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending an Add TS Request frame to");
 	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
-	if ((BAND_5G ==
-	     lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
-	    || (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -1346,8 +1339,8 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	if ((BAND_5G ==
 		lim_get_rf_band(pe_session->currentOperChannel)) ||
-			(pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-			(pe_session->pePersona == QDF_P2P_GO_MODE))
+			(pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+			(pe_session->opmode == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -1492,13 +1485,10 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending DELTS REQ (size %d) to ", nBytes);
 	lim_print_mac_addr(mac, pMacHdr->da, LOGD);
 
-	if ((BAND_5G ==
-	     lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
-	    || (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -2134,14 +2124,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		pe_session->assocReqLen = payload;
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
-	    || (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    )
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (pe_session->pePersona == QDF_P2P_CLIENT_MODE ||
-		pe_session->pePersona == QDF_STA_MODE)
+	if (pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	mac_hdr = (tpSirMacMgmtHdr) frame;
@@ -2600,14 +2589,13 @@ alloc_packet:
 	    (BAND_5G == lim_get_rf_band(
 	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((BAND_5G ==
-		  lim_get_rf_band(session->currentOperChannel))
-		  || (session->pePersona == QDF_P2P_CLIENT_MODE)
-		  || (session->pePersona == QDF_P2P_GO_MODE))
+	else if ((BAND_5G == lim_get_rf_band(session->currentOperChannel)) ||
+		  (session->opmode == QDF_P2P_CLIENT_MODE) ||
+		  (session->opmode == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (session->pePersona == QDF_P2P_CLIENT_MODE ||
-		session->pePersona == QDF_STA_MODE)
+	if (session->opmode == QDF_P2P_CLIENT_MODE ||
+	    session->opmode == QDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -2934,12 +2922,11 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	 * In case when cac timer is running for this SAP session then
 	 * avoid sending disassoc out. It is violation of dfs specification.
 	 */
-	if (((pe_session->pePersona == QDF_SAP_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) &&
+	if (((pe_session->opmode == QDF_SAP_MODE) ||
+	     (pe_session->opmode == QDF_P2P_GO_MODE)) &&
 	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL
-				  ("CAC timer is running, drop disassoc from going out"));
+			  FL("CAC timer is running, drop disassoc from going out"));
 		if (waitForAck)
 			lim_send_disassoc_cnf(mac);
 		return;
@@ -3006,12 +2993,10 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		waitForAck, QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
@@ -3117,8 +3102,8 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 	 * In case when cac timer is running for this SAP session then
 	 * avoid deauth frame out. It is violation of dfs specification.
 	 */
-	if (((pe_session->pePersona == QDF_SAP_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) &&
+	if (((pe_session->opmode == QDF_SAP_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)) &&
 	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL
@@ -3188,12 +3173,10 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 #ifdef FEATURE_WLAN_TDLS
@@ -3620,12 +3603,10 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -3762,12 +3743,10 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 		 status);
 	}
 
-	if ((BAND_5G ==
-		lim_get_rf_band(session_entry->currentOperChannel)) ||
-		(session_entry->pePersona == QDF_P2P_CLIENT_MODE) ||
-		(session_entry->pePersona == QDF_P2P_GO_MODE)) {
+	if ((BAND_5G == lim_get_rf_band(session_entry->currentOperChannel)) ||
+	    (session_entry->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (session_entry->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	pe_debug("Send Ext channel Switch to :"QDF_MAC_ADDR_STR" with swcount %d, swmode %d , newchannel %d newops %d",
 		QDF_MAC_ADDR_ARRAY(mac_hdr->da),
@@ -3918,8 +3897,8 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 
 	if ((BAND_5G ==
 		lim_get_rf_band(session_entry->currentOperChannel)) ||
-		(session_entry->pePersona == QDF_P2P_CLIENT_MODE) ||
-		(session_entry->pePersona == QDF_P2P_GO_MODE)) {
+		(session_entry->opmode == QDF_P2P_CLIENT_MODE) ||
+		(session_entry->opmode == QDF_P2P_GO_MODE)) {
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 	pe_debug("Send frame on channel %d to mac "
@@ -4052,12 +4031,10 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	pe_debug("Sending a Neighbor Report Request to");
 	lim_print_mac_addr(mac, peer, LOGD);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -4198,11 +4175,10 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	pe_warn("Sending a Link Report to");
 	lim_print_mac_addr(mac, peer, LOGW);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -4370,12 +4346,10 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 	pe_warn("Sending a Radio Measure Report to");
 	lim_print_mac_addr(mac, peer, LOGW);
 
-	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
-	    ) {
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -4507,12 +4481,12 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
+	    || (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)
 #endif
-	    ) {
+	    )
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
+
 	smeSessionId = pe_session->smeSessionId;
 
 	qdf_status = wma_tx_frame(mac,
@@ -4638,12 +4612,11 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
-	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)
+	    || (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)
 #endif
-	    ) {
+	    )
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, pMacHdr->fc.subType));
@@ -4846,12 +4819,11 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	if ((BAND_5G == lim_get_rf_band(session->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
-	    || (session->pePersona == QDF_P2P_CLIENT_MODE) ||
-	    (session->pePersona == QDF_P2P_GO_MODE)
+	    || (session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (session->opmode == QDF_P2P_GO_MODE)
 #endif
-	    ) {
+	    )
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mgmt_hdr->fc.subType));

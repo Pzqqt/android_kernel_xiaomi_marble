@@ -5014,7 +5014,7 @@ uint8_t lim_get_noa_attr_stream(struct mac_context *mac, uint8_t *pNoaStream,
 	uint8_t *pBody = pNoaStream;
 
 	if ((pe_session) && (pe_session->valid) &&
-	    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
+	    (pe_session->opmode == QDF_P2P_GO_MODE)) {
 		if ((!(pe_session->p2pGoPsUpdate.uNoa1Duration))
 		    && (!(pe_session->p2pGoPsUpdate.uNoa2Duration))
 		    && (!pe_session->p2pGoPsUpdate.oppPsFlag)
@@ -5253,9 +5253,9 @@ void lim_get_short_slot_from_phy_mode(struct mac_context *mac, struct pe_session
 	/* only 2.4G band should have short slot enable, rest it should be default */
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		/* short slot is default in all other modes */
-		if ((pe_session->pePersona == QDF_SAP_MODE) ||
-		    (pe_session->pePersona == QDF_IBSS_MODE) ||
-		    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
+		if ((pe_session->opmode == QDF_SAP_MODE) ||
+		    (pe_session->opmode == QDF_IBSS_MODE) ||
+		    (pe_session->opmode == QDF_P2P_GO_MODE)) {
 			val = true;
 		}
 		/* Program Polaris based on AP capability */

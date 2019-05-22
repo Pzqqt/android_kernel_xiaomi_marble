@@ -3113,7 +3113,7 @@ static void lim_process_switch_channel_join_req(
 		&session_entry->pLimJoinReq->addIEScan.length,
 		session_entry->pLimJoinReq->addIEScan.addIEdata);
 
-	if (session_entry->pePersona == QDF_P2P_CLIENT_MODE) {
+	if (session_entry->opmode == QDF_P2P_CLIENT_MODE) {
 		/* Activate Join Periodic Probe Req timer */
 		if (tx_timer_activate
 			(&mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer)
@@ -3220,7 +3220,7 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 		 */
 		policy_mgr_update_connection_info(mac->psoc,
 			pe_session->smeSessionId);
-		if (pe_session->pePersona == QDF_P2P_CLIENT_MODE) {
+		if (pe_session->opmode == QDF_P2P_CLIENT_MODE) {
 			pe_debug("Send p2p operating channel change conf action frame once first beacon is received on new channel");
 			pe_session->send_p2p_conf_frame = true;
 		}

@@ -2885,9 +2885,8 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	listenInterval = mac->mlme_cfg->sap_cfg.listen_interval;
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
-	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona) {
+	if (QDF_P2P_CLIENT_MODE == pe_session->opmode)
 		pAddStaParams->p2pCapableSta = 1;
-	}
 
 	pe_debug(" StaIdx: %d updateSta = %d htcapable = %d ",
 		pAddStaParams->staIdx, pAddStaParams->updateSta,
@@ -3162,8 +3161,8 @@ lim_check_and_announce_join_success(struct mac_context *mac_ctx,
 	lim_deactivate_and_change_timer(mac_ctx,
 		eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 
-	if (QDF_P2P_CLIENT_MODE == session_entry->pePersona &&
-		beacon_probe_rsp->P2PProbeRes.NoticeOfAbsence.present) {
+	if (QDF_P2P_CLIENT_MODE == session_entry->opmode &&
+	    beacon_probe_rsp->P2PProbeRes.NoticeOfAbsence.present) {
 
 		noa_duration_from_beacon = (uint32_t *)
 		(beacon_probe_rsp->P2PProbeRes.NoticeOfAbsence.NoADesc + 1);
@@ -3997,9 +3996,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;
 	/* update persona */
-	pAddBssParams->halPersona = (uint8_t) pe_session->pePersona;
+	pAddBssParams->halPersona = (uint8_t)pe_session->opmode;
 
-	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona)
+	if (QDF_P2P_CLIENT_MODE == pe_session->opmode)
 		pAddBssParams->staContext.p2pCapableSta = 1;
 
 	pAddBssParams->bSpectrumMgtEnabled = pe_session->spectrumMgtEnabled;
@@ -4497,7 +4496,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	pAddBssParams->staContext.sessionId = pe_session->peSessionId;
 	pAddBssParams->sessionId = pe_session->peSessionId;
 
-	pAddBssParams->halPersona = (uint8_t) pe_session->pePersona; /* update persona */
+	pAddBssParams->halPersona = (uint8_t)pe_session->opmode;
 
 	pAddBssParams->bSpectrumMgtEnabled = pe_session->spectrumMgtEnabled;
 

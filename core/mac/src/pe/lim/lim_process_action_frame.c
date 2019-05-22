@@ -379,7 +379,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (session_entry->pePersona == QDF_P2P_GO_MODE) {
+	if (session_entry->opmode == QDF_P2P_GO_MODE) {
 
 		struct sir_sme_ext_cng_chan_ind *ext_cng_chan_ind;
 		struct scheduler_msg mmh_msg = {0};

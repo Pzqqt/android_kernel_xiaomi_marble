@@ -666,7 +666,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		for (i = 0; i < mac->lim.maxBssId; i++) {
 			session = &mac->lim.gpSession[i];
 			if (session->valid &&
-			    (session->pePersona == QDF_SAP_MODE)) {
+			    (session->opmode == QDF_SAP_MODE)) {
 				/* Find the sta ds entry in another session */
 				sta_ds = dph_lookup_hash_entry(mac,
 						peerMacAddr, &assoc_id,

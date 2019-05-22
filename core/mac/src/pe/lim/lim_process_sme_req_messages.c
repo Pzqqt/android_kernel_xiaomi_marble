@@ -444,7 +444,7 @@ lim_configure_ap_start_bss_session(struct mac_context *mac_ctx,
 	session->dtimPeriod = (uint8_t) sme_start_bss_req->dtimPeriod;
 	/* Enable/disable UAPSD */
 	session->apUapsdEnable = sme_start_bss_req->apUapsdEnable;
-	if (session->pePersona == QDF_P2P_GO_MODE) {
+	if (session->opmode == QDF_P2P_GO_MODE) {
 		session->proxyProbeRspEn = 0;
 	} else {
 		/*
@@ -625,9 +625,9 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			sme_start_bss_req->channelId;
 
 		/* Store Persona */
-		session->pePersona = sme_start_bss_req->bssPersona;
+		session->opmode = sme_start_bss_req->bssPersona;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			  FL("PE PERSONA=%d"), session->pePersona);
+			  FL("PE PERSONA=%d"), session->opmode);
 
 		/* Update the phymode */
 		session->gLimPhyMode = sme_start_bss_req->nwType;
@@ -678,7 +678,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		case eSIR_INFRA_AP_MODE:
 			lim_configure_ap_start_bss_session(mac_ctx, session,
 				sme_start_bss_req);
-			if (session->pePersona == QDF_SAP_MODE)
+			if (session->opmode == QDF_SAP_MODE)
 				session->vdev_nss = vdev_type_nss->sap;
 			else
 				session->vdev_nss = vdev_type_nss->p2p_go;
@@ -715,7 +715,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		}
 
 		pe_debug("persona - %d, nss - %d",
-				session->pePersona, session->vdev_nss);
+				session->opmode, session->vdev_nss);
 		session->nss = session->vdev_nss;
 		if (!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2)
 			session->nss = 1;
@@ -1399,20 +1399,17 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 */
 		session->supported_nss_1x1 = true;
 		/*Store Persona */
-		session->pePersona = sme_join_req->staPersona;
-		pe_debug("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d pePersona %d cbMode %d",
-			session->enableHtSmps,
-			session->htSmpsvalue,
-			session->send_smps_action,
-			session->supported_nss_1x1,
-			session->pePersona,
-			sme_join_req->cbMode);
+		session->opmode = sme_join_req->staPersona;
+		pe_debug("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d opmode %d cbMode %d",
+			 session->enableHtSmps, session->htSmpsvalue,
+			 session->send_smps_action, session->supported_nss_1x1,
+			 session->opmode, sme_join_req->cbMode);
 
 		/*Store Persona */
-		session->pePersona = sme_join_req->staPersona;
+		session->opmode = sme_join_req->staPersona;
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("PE PERSONA=%d cbMode %u nwType: %d dot11mode: %d force_24ghz_in_ht20 %d"),
-			  session->pePersona, sme_join_req->cbMode,
+			  session->opmode, sme_join_req->cbMode,
 			  session->nwType, session->dot11mode,
 			  sme_join_req->force_24ghz_in_ht20);
 
@@ -1422,7 +1419,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		if (session->vhtCapability) {
-			if (session->pePersona == QDF_STA_MODE) {
+			if (session->opmode == QDF_STA_MODE) {
 				session->vht_config.su_beam_formee =
 					sme_join_req->vht_config.su_beam_formee;
 			} else {
@@ -1802,7 +1799,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		IS_DOT11_MODE_VHT(reassoc_req->dot11mode);
 
 	if (session_entry->vhtCapability) {
-		if (session_entry->pePersona == QDF_STA_MODE) {
+		if (session_entry->opmode == QDF_STA_MODE) {
 			session_entry->vht_config.su_beam_formee =
 				reassoc_req->vht_config.su_beam_formee;
 		} else {

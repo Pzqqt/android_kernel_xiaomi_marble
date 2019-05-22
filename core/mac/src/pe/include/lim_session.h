@@ -319,7 +319,7 @@ struct pe_session {
 	uint32_t lim11hEnable;
 
 	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
-	enum QDF_OPMODE pePersona;
+	enum QDF_OPMODE opmode;
 	int8_t txMgmtPower;
 	bool is11Rconnection;
 	bool is_adaptive_11r_connection;

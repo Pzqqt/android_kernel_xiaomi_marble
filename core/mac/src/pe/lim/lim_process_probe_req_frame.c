@@ -287,7 +287,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 					QDF_MAC_ADDR_ARRAY(mac_hdr->sa));
 			return;
 		}
-		if (session->pePersona == QDF_P2P_GO_MODE) {
+		if (session->opmode == QDF_P2P_GO_MODE) {
 			uint8_t i = 0, rate_11b = 0, other_rates = 0;
 			/* Check 11b rates in supported rates */
 			for (i = 0; i < probe_req.supportedRates.numRates;
@@ -361,7 +361,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 						session,
 						probe_req.p2pIePresent);
 				return;
-			} else if (session->pePersona ==
+			} else if (session->opmode ==
 					QDF_P2P_GO_MODE) {
 				uint8_t direct_ssid[7] = "DIRECT-";
 				uint8_t direct_ssid_len = 7;

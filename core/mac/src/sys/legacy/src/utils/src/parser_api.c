@@ -665,7 +665,7 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 			pDot11f->supportedMCSSet[1] = 0;
 		} else if (IS_24G_CH(pe_session->currentOperChannel) &&
 			   disable_high_ht_mcs_2x2 &&
-			   (pe_session->pePersona == QDF_STA_MODE)) {
+			   (pe_session->opmode == QDF_STA_MODE)) {
 				pe_debug("Disabling high HT MCS [%d]",
 					 disable_high_ht_mcs_2x2);
 				pDot11f->supportedMCSSet[1] =
@@ -5989,10 +5989,10 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
 
-	if (pe_session->pePersona == QDF_STA_MODE)
+	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
 			mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled;
-	if (pe_session->pePersona == QDF_SAP_MODE)
+	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
 			mac_ctx->mlme_cfg->twt_cfg.is_twt_responder_enabled;
 

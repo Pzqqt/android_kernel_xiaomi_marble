@@ -411,10 +411,9 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	    (BAND_5G == lim_get_rf_band(
 	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((BAND_5G ==
-		  lim_get_rf_band(pe_session->currentOperChannel))
-		 || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
-		 || (pe_session->pePersona == QDF_P2P_GO_MODE))
+	else if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+		 (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+		 (pe_session->opmode == QDF_P2P_GO_MODE))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	if (pe_session->assocReq) {
@@ -762,14 +761,13 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 		pe_session->assocReqLen = nPayload;
 	}
 
-	if ((BAND_5G ==
-		lim_get_rf_band(pe_session->currentOperChannel))
-			|| (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
-			(pe_session->pePersona == QDF_P2P_GO_MODE))
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
+	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (pe_session->pePersona == QDF_P2P_CLIENT_MODE ||
-		pe_session->pePersona == QDF_STA_MODE)
+	if (pe_session->opmode == QDF_P2P_CLIENT_MODE ||
+	    pe_session->opmode == QDF_STA_MODE)
 		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,

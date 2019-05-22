@@ -150,7 +150,7 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		session = &mac_ctx->lim.gpSession[i];
 		if (session->valid &&
-		    (session->pePersona == QDF_SAP_MODE)) {
+		    (session->opmode == QDF_SAP_MODE)) {
 			sta_ds = dph_lookup_hash_entry(mac_ctx, hdr->sa,
 					&assoc_id, &session->dph.dphHashTable);
 			if (sta_ds

@@ -455,7 +455,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 			ft_session->peSessionId,
 			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
 	}
-	pAddBssParams->halPersona = (uint8_t) ft_session->pePersona;
+	pAddBssParams->halPersona = (uint8_t)ft_session->opmode;
 
 	ft_session->ftPEContext.pAddBssReq = pAddBssParams;
 

@@ -1281,7 +1281,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	pe_debug("auth_alg %d ", auth_alg);
 
 	/* Restore default failure timeout */
-	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona &&
+	if (QDF_P2P_CLIENT_MODE == pe_session->opmode &&
 	    pe_session->defaultAuthFailureTimeout) {
 		pe_debug("Restore default failure timeout");
 		if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT,

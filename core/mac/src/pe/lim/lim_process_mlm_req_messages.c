@@ -78,7 +78,7 @@ static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 		 * SAE authentication is not completed. Restore from
 		 * auth state.
 		 */
-		if (session->pePersona == QDF_STA_MODE)
+		if (session->opmode == QDF_STA_MODE)
 			lim_restore_from_auth_state(mac_ctx,
 				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
 				eSIR_MAC_UNSPEC_FAILURE_REASON, session);
@@ -279,7 +279,7 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 		sta_param->lsigTxopProtection, sta_param->fDsssCckMode40Mhz,
 		sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
 
-	if (QDF_P2P_GO_MODE == session_entry->pePersona)
+	if (QDF_P2P_GO_MODE == session_entry->opmode)
 		sta_param->p2pCapableSta = 1;
 }
 
@@ -404,7 +404,7 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 			 session->limMlmState));
 
 	/* pass on the session persona to hal */
-	addbss_param->halPersona = session->pePersona;
+	addbss_param->halPersona = session->opmode;
 
 	if (session->ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
@@ -2239,7 +2239,7 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx)
 		 * Failure timeout. Issue MLM auth confirm with timeout reason
 		 * code. Restore default failure timeout
 		 */
-		if (QDF_P2P_CLIENT_MODE == session->pePersona &&
+		if (QDF_P2P_CLIENT_MODE == session->opmode &&
 		    session->defaultAuthFailureTimeout) {
 			if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT,
 					 session->defaultAuthFailureTimeout)) {
