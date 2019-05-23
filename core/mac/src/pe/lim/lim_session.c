@@ -361,7 +361,7 @@ static void pe_init_fils_info(struct pe_session *session) { }
  */
 #ifdef FEATURE_WLAN_TDLS
 static inline uint8_t
-lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
+lim_get_peer_idxpool_size(uint16_t num_sta, enum bss_type bss_type)
 {
 	/*
 	 * In station role, index 1 is reserved for peer
@@ -376,7 +376,7 @@ lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
 }
 #else
 static inline uint8_t
-lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
+lim_get_peer_idxpool_size(uint16_t num_sta, enum bss_type bss_type)
 {
 	return num_sta + 1;
 }
@@ -388,7 +388,7 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 				uint8_t sap_channel)
 {
 	struct mgmt_beacon_probe_filter *filter;
-	tSirBssType bss_type;
+	enum bss_type bss_type;
 	uint8_t session_id;
 	tSirMacAddr *bssid;
 
@@ -447,7 +447,7 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
-	tSirBssType bss_type;
+	enum bss_type bss_type;
 	uint8_t session_id;
 
 	if (!session) {
@@ -495,7 +495,7 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 					struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
-	tSirBssType bss_type;
+	enum bss_type bss_type;
 	uint8_t session_id;
 
 	if (!session) {
@@ -531,7 +531,7 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 struct pe_session *pe_create_session(struct mac_context *mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
-			      uint16_t numSta, tSirBssType bssType,
+			      uint16_t numSta, enum bss_type bssType,
 			      uint8_t sme_session_id)
 {
 	QDF_STATUS status;

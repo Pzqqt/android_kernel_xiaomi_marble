@@ -144,7 +144,7 @@ enum eChannelChangeReasonCodes {
 
 typedef struct sLimMlmStartReq {
 	tSirMacSSid ssId;
-	tSirBssType bssType;
+	enum bss_type bssType;
 	tSirMacAddr bssId;
 	tSirMacBeaconInterval beaconPeriod;
 	uint8_t dtimPeriod;

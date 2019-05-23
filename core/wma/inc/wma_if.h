@@ -421,7 +421,7 @@ typedef struct sLimMlmSetKeysReq {
 typedef struct {
 	tSirMacAddr bssId;
 	tSirMacAddr selfMacAddr;
-	tSirBssType bssType;
+	enum bss_type bssType;
 	uint8_t operMode;
 	tSirNwType nwType;
 	uint8_t shortSlotTimeSupported;

@@ -432,7 +432,7 @@ struct sir_set_antenna_mode {
 };
 
 /**
- * enum tSirBssType - Enum for BSS type used in scanning/joining etc.
+ * enum bss_type - Enum for BSS type used in scanning/joining etc.
  *
  * @eSIR_INFRASTRUCTURE_MODE: Infrastructure station
  * @eSIR_INFRA_AP_MODE: softAP mode
@@ -441,7 +441,7 @@ struct sir_set_antenna_mode {
  * @eSIR_MONITOR_MODE: Monitor mode
  * @eSIR_NDI_MODE: NAN datapath mode
  */
-typedef enum eSirBssType {
+enum bss_type {
 	eSIR_INFRASTRUCTURE_MODE,
 	eSIR_INFRA_AP_MODE,
 	eSIR_IBSS_MODE,
@@ -449,7 +449,7 @@ typedef enum eSirBssType {
 	eSIR_MONITOR_MODE,
 	eSIR_NDI_MODE,
 	eSIR_DONOT_USE_BSS_TYPE = SIR_MAX_ENUM_SIZE
-} tSirBssType;
+};
 
 /* / Power Capability info used in 11H */
 struct power_cap_info {
@@ -570,7 +570,7 @@ struct start_bss_req {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	tSirBssType bssType;
+	enum bss_type bssType;
 	tSirMacSSid ssId;
 	uint8_t channelId;
 	ePhyChanBondState cbMode;
@@ -716,7 +716,7 @@ struct start_bss_rsp {
 	uint16_t length;
 	uint8_t sessionId;
 	tSirResultCodes statusCode;
-	tSirBssType bssType;    /* Add new type for WDS mode */
+	enum bss_type bssType;    /* Add new type for WDS mode */
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
 	uint32_t staId;         /* Station ID for Self */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -888,7 +888,7 @@ struct join_req {
 	uint8_t sessionId;
 	tSirMacSSid ssId;
 	tSirMacAddr selfMacAddr;        /* self Mac address */
-	tSirBssType bsstype;    /* add new type for BT-AMP STA and AP Modules */
+	enum bss_type bsstype;    /* add new type for BT-AMP STA and AP Modules */
 	uint8_t dot11mode;      /* to support BT-AMP */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;

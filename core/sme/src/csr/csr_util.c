@@ -5989,9 +5989,9 @@ tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId)
 	return scanType;
 }
 
-tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
+enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 {
-	tSirBssType ret;
+	enum bss_type ret;
 
 	switch (csrtype) {
 	case eCSR_BSS_TYPE_INFRASTRUCTURE:

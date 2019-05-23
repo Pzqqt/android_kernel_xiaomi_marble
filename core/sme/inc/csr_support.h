@@ -305,7 +305,7 @@ bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 void csr_add_rate_bitmap(uint8_t rate, uint16_t *pRateBitmap);
 bool csr_check_rate_bitmap(uint8_t rate, uint16_t RateBitmap);
 bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate);
-tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
+enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */
 QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
 					 tSirBssDescription *pBssDesc,

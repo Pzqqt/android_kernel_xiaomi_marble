@@ -2555,7 +2555,7 @@ void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	tLimMlmStartCnf mlm_start_cnf;
 	struct pe_session *session_entry;
 	tpAddBssParams add_bss_param = (tpAddBssParams) (msg->bodyptr);
-	tSirBssType bss_type;
+	enum bss_type bss_type;
 
 	if (!add_bss_param) {
 		pe_err("Encountered NULL Pointer");

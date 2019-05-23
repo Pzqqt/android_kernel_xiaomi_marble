@@ -156,7 +156,7 @@ struct pe_session {
 	tLimSmeStates limSmeState;      /* SME State */
 	tLimSmeStates limPrevSmeState;  /* Previous SME State */
 	tLimSystemRole limSystemRole;
-	tSirBssType bssType;
+	enum bss_type bssType;
 	uint8_t operMode;       /* AP - 0; STA - 1 ; */
 	tSirNwType nwType;
 	struct start_bss_req *pLimStartBssReq; /* handle to start bss req */
@@ -629,7 +629,7 @@ static inline void pe_free_dph_node_array_buffer(void)
 struct pe_session *pe_create_session(struct mac_context *mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
-			      uint16_t numSta, tSirBssType bssType,
+			      uint16_t numSta, enum bss_type bssType,
 			      uint8_t sme_session_id);
 
 /**
