@@ -3294,7 +3294,6 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		if (sde_enc->phys_encs[i]) {
 			sde_enc->phys_encs[i]->cont_splash_enabled = false;
-			sde_enc->phys_encs[i]->cont_splash_single_flush = 0;
 			sde_enc->phys_encs[i]->connector = NULL;
 		}
 	}
@@ -5854,8 +5853,6 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		/* update connector for master and slave phys encoders */
 		phys->connector = conn;
 		phys->cont_splash_enabled = true;
-		phys->cont_splash_single_flush =
-			splash_display->single_flush_en;
 
 		phys->hw_pp = sde_enc->hw_pp[i];
 		if (phys->ops.cont_splash_mode_set)

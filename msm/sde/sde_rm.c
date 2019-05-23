@@ -1467,7 +1467,8 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 	hw_mdp = sde_rm_get_mdp(rm);
 
 	sde_rm_init_hw_iter(&iter_c, 0, SDE_HW_BLK_CTL);
-	while (_sde_rm_get_hw_locked(rm, &iter_c)) {
+	while (_sde_rm_get_hw_locked(rm, &iter_c)
+			&& (index < splash_data->num_splash_displays)) {
 		struct sde_hw_ctl *ctl = to_sde_hw_ctl(iter_c.blk->hw);
 
 		if (!ctl->ops.get_ctl_intf) {
@@ -1486,26 +1487,8 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 			splash_display->cont_splash_enabled = true;
 			splash_display->ctl_ids[splash_display->ctl_cnt++] =
 				iter_c.blk->id;
-
-			if (hw_mdp && hw_mdp->ops.get_split_flush_status) {
-				splash_display->single_flush_en =
-					hw_mdp->ops.get_split_flush_status(
-							hw_mdp);
-			}
-
-			if (!splash_display->single_flush_en ||
-					(iter_c.blk->id != CTL_0))
-				index++;
-
-			if (index >= ARRAY_SIZE(splash_data->splash_display))
-				break;
 		}
-	}
-
-	if (index != splash_data->num_splash_displays) {
-		SDE_DEBUG("mismatch active displays vs actually enabled :%d/%d",
-				splash_data->num_splash_displays, index);
-		return -EINVAL;
+		index++;
 	}
 
 	return 0;

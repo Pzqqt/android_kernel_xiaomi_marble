@@ -735,21 +735,15 @@ static int _sde_kms_splash_mem_put(struct sde_kms *sde_kms,
 	struct msm_mmu *mmu = NULL;
 	int rc = 0;
 
-	if (!sde_kms)
-		return -EINVAL;
-
-	if (!sde_kms->aspace[0]) {
-		SDE_ERROR("aspace not found for sde kms node\n");
+	if (!sde_kms || !sde_kms->aspace[0] || !sde_kms->aspace[0]->mmu) {
+		SDE_ERROR("invalid params\n");
 		return -EINVAL;
 	}
 
 	mmu = sde_kms->aspace[0]->mmu;
-	if (!mmu) {
-		SDE_ERROR("mmu not found for aspace\n");
-		return -EINVAL;
-	}
 
-	if (!splash || !mmu->funcs || !mmu->funcs->one_to_one_unmap)
+	if (!splash || !splash->ref_cnt ||
+			!mmu || !mmu->funcs || !mmu->funcs->one_to_one_unmap)
 		return -EINVAL;
 
 	splash->ref_cnt--;
@@ -869,6 +863,20 @@ static void sde_kms_commit(struct msm_kms *kms,
 	SDE_ATRACE_END("sde_kms_commit");
 }
 
+static void _sde_kms_free_splash_region(struct sde_kms *sde_kms,
+		struct sde_splash_display *splash_display)
+{
+	if (!sde_kms || !splash_display ||
+			!sde_kms->splash_data.num_splash_displays)
+		return;
+
+	_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
+	sde_kms->splash_data.num_splash_displays--;
+	SDE_DEBUG("cont_splash handoff done, remaining:%d\n",
+				sde_kms->splash_data.num_splash_displays);
+	memset(splash_display, 0x0, sizeof(struct sde_splash_display));
+}
+
 static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 		struct drm_crtc *crtc)
 {
@@ -897,16 +905,10 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 	if (i >= MAX_DSI_DISPLAYS)
 		return;
 
-	_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
-
 	if (splash_display->cont_splash_enabled) {
 		sde_encoder_update_caps_for_cont_splash(splash_display->encoder,
 				splash_display, false);
-		splash_display->cont_splash_enabled = false;
-		sde_kms->splash_data.num_splash_displays--;
-		SDE_DEBUG("cont_splash handoff done for dpy:%d remaining:%d\n",
-				i, sde_kms->splash_data.num_splash_displays);
-		memset(splash_display, 0x0, sizeof(struct sde_splash_display));
+		_sde_kms_free_splash_region(sde_kms, splash_display);
 	}
 
 	/* remove the votes if all displays are done with splash */
@@ -2314,13 +2316,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		return rc;
 	}
 
-	if (sde_kms->dsi_display_count !=
-			sde_kms->splash_data.num_splash_displays) {
-		SDE_ERROR("mismatch - displays:%d vs splash-displays:%d\n",
-				sde_kms->dsi_display_count,
-				sde_kms->splash_data.num_splash_displays);
-		return rc;
-	}
+	DRM_INFO("cont_splash enabled in %d of %d display(s)\n",
+				sde_kms->splash_data.num_splash_displays,
+				sde_kms->dsi_display_count);
 
 	/* dsi */
 	for (i = 0; i < sde_kms->dsi_display_count; ++i) {
@@ -3205,14 +3203,23 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	 * splash memory is found & release resources on any error
 	 * in finding display hw config in splash
 	 */
-	if (sde_kms->splash_data.num_splash_regions &&
-			sde_rm_cont_splash_res_init(priv, &sde_kms->rm,
-					&sde_kms->splash_data,
-					sde_kms->catalog)) {
-		SDE_DEBUG("freeing continuous splash resources\n");
-		_sde_kms_unmap_all_splash_regions(sde_kms);
-		memset(&sde_kms->splash_data, 0x0,
-				sizeof(struct sde_splash_data));
+	if (sde_kms->splash_data.num_splash_regions) {
+		struct sde_splash_display *display;
+		int ret, display_count =
+			sde_kms->splash_data.num_splash_displays;
+
+		ret = sde_rm_cont_splash_res_init(priv, &sde_kms->rm,
+				&sde_kms->splash_data, sde_kms->catalog);
+
+		for (i = 0; i < display_count; i++) {
+			display = &sde_kms->splash_data.splash_display[i];
+			/*
+			 * free splash region on resource init failure and
+			 * cont-splash disabled case
+			 */
+			if (!display->cont_splash_enabled || ret)
+				_sde_kms_free_splash_region(sde_kms, display);
+		}
 	}
 
 	sde_kms->hw_mdp = sde_rm_get_mdp(&sde_kms->rm);
