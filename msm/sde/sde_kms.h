@@ -287,6 +287,7 @@ struct sde_kms {
 	struct mutex secure_transition_lock;
 
 	bool first_kickoff;
+	bool qdss_enabled;
 };
 
 struct vsync_info {

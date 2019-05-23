@@ -38,6 +38,7 @@ struct traffic_shaper_cfg {
  * @pp_split_idx:   Ping pong index for ping pong split
  * @split_flush_en: Allows both the paths to be flushed when master path is
  *              flushed
+ * @split_link_en:  Check if split link is enabled
  */
 struct split_pipe_cfg {
 	bool en;
@@ -46,6 +47,7 @@ struct split_pipe_cfg {
 	enum sde_intf pp_split_slave;
 	u32 pp_split_index;
 	bool split_flush_en;
+	bool split_link_en;
 };
 
 /**
@@ -187,6 +189,13 @@ struct sde_hw_mdp_ops {
 	 * @mdp: mdp top context driver
 	 */
 	void (*intf_audio_select)(struct sde_hw_mdp *mdp);
+
+	/**
+	 * set_mdp_hw_events - enable qdss hardware events for mdp
+	 * @mdp: mdp top context driver
+	 * @enable: enable/disable hw events
+	 */
+	void (*set_mdp_hw_events)(struct sde_hw_mdp *mdp, bool enable);
 
 	/**
 	 * set_cwb_ppb_cntl - select the data point for CWB
