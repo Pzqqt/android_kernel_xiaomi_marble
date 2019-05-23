@@ -449,6 +449,26 @@ QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
 		struct dfs_acs_info *acs_info);
 
 /**
+ * utils_dfs_get_vdev_random_channel() - Get random channel for vdev
+ * @pdev: Pointer to DFS pdev object.
+ * @vdev: vdev of the request
+ * @flags: random channel selection flags.
+ * @ch_params: current channel params.
+ * @hw_mode: current operating mode.
+ * @target_chan: Pointer to target_chan.
+ * @acs_info: acs range info.
+ *
+ * Get random channel based on vdev interface type. If the vdev is null,
+ * the function will get random channel by SAP interface type.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS utils_dfs_get_vdev_random_channel(
+	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
+	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
+	uint8_t *target_chan, struct dfs_acs_info *acs_info);
+
+/**
  * utils_dfs_bw_reduced_channel() - Get BW reduced channel.
  * @pdev: Pointer to DFS pdev object.
  * @ch_params: current channel params.

@@ -663,6 +663,7 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  * utils_dfs_get_channel_list() - Get channel list from regdb component, based
  * on current channel list.
  * @pdev: Pointer to pdev structure.
+ * @vdev: vdev of request
  * @chan: Pointer to channel list.
  * @num_chan: number of channels.
  *
@@ -672,6 +673,7 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  * channel.
  */
 static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
+				       struct wlan_objmgr_vdev *vdev,
 				       struct dfs_channel *chan_list,
 				       uint32_t *num_chan)
 {
@@ -735,15 +737,16 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 }
 
 #else
-
 void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
 					 void *clist, uint32_t *num_chan)
 {
 	utils_dfs_get_chan_list(pdev, clist, num_chan);
 }
 
-void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
-			     void *clist, uint32_t *num_chan)
+static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
+				       struct wlan_objmgr_vdev *vdev,
+				       struct dfs_channel *chan_list,
+				       uint32_t *num_chan)
 {
 	uint8_t pcl_ch[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
@@ -752,7 +755,7 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	int i;
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t conn_count = 0;
-	struct dfs_channel *chan_list = (struct dfs_channel *)clist;
+	enum policy_mgr_con_mode mode;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
@@ -763,14 +766,21 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 
 	len = QDF_ARRAY_SIZE(pcl_ch);
 	weight_len = QDF_ARRAY_SIZE(weight_list);
-	conn_count = policy_mgr_mode_specific_connection_count(
-			psoc, PM_SAP_MODE, NULL);
-	if (0 == conn_count)
-		policy_mgr_get_pcl(psoc, PM_SAP_MODE, pcl_ch,
-				&len, weight_list, weight_len);
+
+	if (vdev)
+		mode = policy_mgr_convert_device_mode_to_qdf_type(
+				wlan_vdev_mlme_get_opmode(vdev));
 	else
-		policy_mgr_get_pcl_for_existing_conn(psoc, PM_SAP_MODE, pcl_ch,
-				&len, weight_list, weight_len, true);
+		mode = PM_SAP_MODE;
+	conn_count = policy_mgr_mode_specific_connection_count(
+			psoc, mode, NULL);
+	if (0 == conn_count)
+		policy_mgr_get_pcl(psoc, mode, pcl_ch,
+				   &len, weight_list, weight_len);
+	else
+		policy_mgr_get_pcl_for_existing_conn(
+			psoc, mode, pcl_ch, &len, weight_list,
+			weight_len, true);
 
 	if (*num_chan < len) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
@@ -789,21 +799,18 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "num channels %d", i);
 }
 
-static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
-				       struct dfs_channel *chan_list,
-				       uint32_t *num_chan)
+void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
+			     void *clist, uint32_t *num_chan)
 {
-	utils_dfs_get_chan_list(pdev, (void *)chan_list, num_chan);
+	utils_dfs_get_channel_list(pdev, NULL, (struct dfs_channel *)clist,
+				   num_chan);
 }
 #endif
 
-QDF_STATUS utils_dfs_get_random_channel(
-	struct wlan_objmgr_pdev *pdev,
-	uint16_t flags,
-	struct ch_params *ch_params,
-	uint32_t *hw_mode,
-	uint8_t *target_chan,
-	struct dfs_acs_info *acs_info)
+QDF_STATUS utils_dfs_get_vdev_random_channel(
+	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
+	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
+	uint8_t *target_chan, struct dfs_acs_info *acs_info)
 {
 	uint32_t dfs_reg;
 	uint32_t num_chan = NUM_CHANNELS;
@@ -831,7 +838,7 @@ QDF_STATUS utils_dfs_get_random_channel(
 	if (!chan_list)
 		goto random_chan_error;
 
-	utils_dfs_get_channel_list(pdev, chan_list, &num_chan);
+	utils_dfs_get_channel_list(pdev, vdev, chan_list, &num_chan);
 	if (!num_chan) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "zero channels");
 		goto random_chan_error;
@@ -869,6 +876,21 @@ random_chan_error:
 	qdf_mem_free(chan_list);
 
 	return status;
+}
+
+qdf_export_symbol(utils_dfs_get_vdev_random_channel);
+
+QDF_STATUS utils_dfs_get_random_channel(
+	struct wlan_objmgr_pdev *pdev,
+	uint16_t flags,
+	struct ch_params *ch_params,
+	uint32_t *hw_mode,
+	uint8_t *target_chan,
+	struct dfs_acs_info *acs_info)
+{
+	return utils_dfs_get_vdev_random_channel(
+		pdev, NULL, flags, ch_params, hw_mode, target_chan,
+		acs_info);
 }
 qdf_export_symbol(utils_dfs_get_random_channel);
 
