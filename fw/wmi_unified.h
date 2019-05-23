@@ -24919,15 +24919,17 @@ typedef struct {
 
     /**
      * [7:0]  : channel metric -  0 = unusable, 1 = worst, 100 = best
-     * [11:8] : channel BW -
-     *          0 = 20MHz
-     *          1 = 40MHz
-     *          2 = 80MHz
-     *          3 = 160MHz
-     *          (4-10 unused)
-     *          11 = 5MHz
-     *          12 = 10MHz
-     *          (13-15 unused)
+     * [11:8] : channel BW - This bit-field uses values compatible with
+     *          enum definitions used internally within the target's
+     *          halphy code.  These values are specified below.
+     *              BW_20MHZ    = 0,
+     *              BW_40MHZ    = 1,
+     *              BW_80MHZ    = 2,
+     *              BW_160MHZ   = 3,
+     *              BW_80P80MHZ = 4,
+     *              BW_5MHZ     = 5,
+     *              BW_10MHZ    = 6,
+     *              BW_165MHZ   = 7,
      * [15:12]: Reserved
      * [31:16]: Frequency - Center frequency of the channel for which
      *          the RF characterisation info applies (MHz)
