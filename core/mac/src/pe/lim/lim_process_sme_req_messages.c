@@ -1229,7 +1229,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
 	const uint8_t *vendor_ie;
-	tSirBssDescription *bss_desc;
+	struct bss_description *bss_desc;
 	QDF_STATUS status;
 	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
 
@@ -1366,7 +1366,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		/* Store vendor specific IE for CISCO AP */
 		ie_len = (bss_desc->length + sizeof(bss_desc->length) -
-			 GET_FIELD_OFFSET(tSirBssDescription, ieFields));
+			 GET_FIELD_OFFSET(struct bss_description, ieFields));
 
 		vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
 				SIR_MAC_CISCO_OUI, SIR_MAC_CISCO_OUI_SIZE,

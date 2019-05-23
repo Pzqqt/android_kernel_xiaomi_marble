@@ -35,7 +35,7 @@ QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session_id,
 void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 				      uint32_t session_id,
 				      struct csr_roam_profile *roam_profile,
-				      tSirBssDescription *bss_desc);
+				      struct bss_description *bss_desc);
 
 void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,
 					uint32_t result,
@@ -55,7 +55,7 @@ static inline QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx,
 static inline void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 					uint32_t session_id,
 					struct csr_roam_profile *roam_profile,
-					tSirBssDescription *bss_desc)
+					struct bss_description *bss_desc)
 {
 }
 

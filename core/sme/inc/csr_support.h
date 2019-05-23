@@ -217,17 +217,20 @@ struct csr_timer_info {
 	 ((pIes)->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD)) || \
 	 ((pIes)->WMMInfoAp.present && (pIes)->WMMInfoAp.uapsd))
 
-bool csr_get_bss_id_bss_desc(tSirBssDescription *pSirBssDesc,
+bool csr_get_bss_id_bss_desc(struct bss_description *pSirBssDesc,
 			     struct qdf_mac_addr *pBssId);
-bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
-			 tSirBssDescription *pSirBssDesc2);
-eCsrMediaAccessType csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
-					      tSirBssDescription *pSirBssDesc,
-					      tDot11fBeaconIEs *pIes);
+bool csr_is_bss_id_equal(struct bss_description *pSirBssDesc1,
+			 struct bss_description *pSirBssDesc2);
+
+eCsrMediaAccessType
+csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
+			  struct bss_description *pSirBssDesc,
+			  tDot11fBeaconIEs *pIes);
+
 bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
-bool csr_is_infra_bss_desc(tSirBssDescription *pSirBssDesc);
-bool csr_is_ibss_bss_desc(tSirBssDescription *pSirBssDesc);
-bool csr_is_privacy(tSirBssDescription *pSirBssDesc);
+bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc);
+bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc);
+bool csr_is_privacy(struct bss_description *pSirBssDesc);
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
@@ -235,12 +238,12 @@ uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
 				     tDot11fIEPowerConstraints *constraints);
 uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
-			     tSirBssDescription *pSirBssDesc,
+			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
 
 uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
-			     tSirBssDescription *pSirBssDesc,
+			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 
 #ifdef FEATURE_WLAN_WAPI
@@ -253,12 +256,12 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
  */
 uint8_t csr_retrieve_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
-			    tSirBssDescription *pSirBssDesc,
+			    struct bss_description *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 
 bool csr_is_ssid_equal(struct mac_context *mac,
-		       tSirBssDescription *pSirBssDesc1,
-		       tSirBssDescription *pSirBssDesc2,
+		       struct bss_description *pSirBssDesc1,
+		       struct bss_description *pSirBssDesc2,
 		       tDot11fBeaconIEs *pIes2);
 
 /* Null ssid means match */
@@ -272,7 +275,7 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
  */
 uint8_t csr_retrieve_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			    struct csr_roam_profile *pProfile,
-			    tSirBssDescription *pSirBssDesc,
+			    struct bss_description *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
 #ifdef FEATURE_WLAN_WAPI
 /*
@@ -282,7 +285,7 @@ uint8_t csr_retrieve_rsn_ie(struct mac_context *mac, uint32_t sessionId,
  */
 uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
-			     tSirBssDescription *pSirBssDesc,
+			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
@@ -297,7 +300,7 @@ bool csr_is_security_match(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
 			   tCsrEncryptionList *uc_enc_type,
 			   tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
 			   uint8_t *mfp_required, uint8_t *mfp_capable,
-			   tSirBssDescription *bss_desc,
+			   struct bss_description *bss_desc,
 			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
@@ -308,7 +311,7 @@ bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */
 QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
-					 tSirBssDescription *pBssDesc,
+					 struct bss_description *pBssDesc,
 					 tDot11fBeaconIEs *pIEStruct);
 /*
  * This function will allocate memory for the parsed IEs to the caller.
@@ -316,13 +319,13 @@ QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
  * this function succeeds
  */
 QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
-					      tSirBssDescription *pBssDesc,
+					      struct bss_description *pBssDesc,
 					      tDot11fBeaconIEs **ppIEStruct);
 
 tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId);
 
 QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
-		tSirBssDescription *pBSSDescription,
+		struct bss_description *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
 /*
  * fForce -- force reassoc regardless of whether there is any change.

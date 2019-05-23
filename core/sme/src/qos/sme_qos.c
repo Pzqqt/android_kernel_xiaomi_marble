@@ -379,8 +379,11 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 				      uint8_t tspec_mask,
 				      struct sme_qos_wmmtspecinfo *pTspec_Info);
 static enum qca_wlan_ac_type sme_qos_up_to_ac(enum sme_qos_wmmuptype up);
-static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
-		    enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes);
+
+static bool
+sme_qos_is_acm(struct mac_context *mac, struct bss_description *pSirBssDesc,
+	       enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes);
+
 static tListElem *sme_qos_find_in_flow_list(struct sme_qos_searchinfo
 						search_key);
 static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac,
@@ -974,7 +977,7 @@ QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
  * pSirBssDesc - The event occurred of type sme_qos_csr_event_indType.
  * Return a bit mask indicating for which ACs AP has ACM set to 1
  */
-uint8_t sme_qos_get_acm_mask(struct mac_context *mac, tSirBssDescription
+uint8_t sme_qos_get_acm_mask(struct mac_context *mac, struct bss_description
 				*pSirBssDesc, tDot11fBeaconIEs *pIes)
 {
 	enum qca_wlan_ac_type ac;
@@ -5946,8 +5949,9 @@ static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac_ctx,
  *
  * Return true if the AC mandates Admission Control
  */
-static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
-		    enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes)
+static bool
+sme_qos_is_acm(struct mac_context *mac, struct bss_description *pSirBssDesc,
+	       enum qca_wlan_ac_type ac, tDot11fBeaconIEs *pIes)
 {
 	bool ret_val = false;
 	tDot11fBeaconIEs *pIesLocal;
@@ -6378,7 +6382,7 @@ static QDF_STATUS sme_qos_delete_buffered_requests(struct mac_context *mac,
 static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 				   sme_QosAssocInfo *pAssoc_info)
 {
-	tSirBssDescription *pBssDesc = NULL;
+	struct bss_description *pBssDesc = NULL;
 	uint32_t bssLen = 0;
 
 	if (!pAssoc_info) {

@@ -838,7 +838,7 @@ lim_post_mlm_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBu
  *
  ***FUNCTION:
  * This function is called in various places to get IE length
- * from tSirBssDescription structure
+ * from struct bss_description structure
  * number being scanned.
  *
  ***PARAMS:
@@ -868,7 +868,7 @@ lim_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 	 * length itself and length of pointer
 	 * that holds ieFields
 	 *
-	 * <------------sizeof(tSirBssDescription)-------------------->
+	 * <------------sizeof(struct bss_description)-------------------->
 	 * +--------+---------------------------------+---------------+
 	 * | length | other fields                    | pointer to IEs|
 	 * +--------+---------------------------------+---------------+
@@ -877,7 +877,7 @@ lim_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 	 */
 
 	ielen = (uint16_t)(pBssDescr->length + sizeof(pBssDescr->length) -
-			   GET_FIELD_OFFSET(tSirBssDescription, ieFields));
+			   GET_FIELD_OFFSET(struct bss_description, ieFields));
 
 	return ielen;
 } /*** end lim_get_ielen_from_bss_description() ***/

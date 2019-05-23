@@ -231,9 +231,9 @@ typedef struct tagCsrScanResultInfo {
 	unsigned long timer;           /* timer is variable for hidden SSID timer */
 	/*
 	 * This member must be the last in the structure because the
-	 * end of tSirBssDescription is an
+	 * end of struct bss_description is an
 	 * array with nonknown size at this time */
-	tSirBssDescription BssDescriptor;
+	struct bss_description BssDescriptor;
 } tCsrScanResultInfo;
 
 typedef struct tagCsrEncryptionList {
@@ -349,7 +349,7 @@ typedef enum {
 	/*
 	 * an association or start_IBSS operation starts,
 	 * callback may get a pointer to struct csr_roam_profile and
-	 * a pointer to tSirBssDescription
+	 * a pointer to struct bss_description
 	 */
 	eCSR_ROAM_ASSOCIATION_START,
 	/*
@@ -881,7 +881,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	 * which can be WSC IE and/or P2P IE
 	 */
 	uint8_t *pAddIEAssoc;
-	tSirBssDescription *pBssDesc;
+	struct bss_description *pBssDesc;
 	bool qap;               /* AP supports QoS */
 	struct mobility_domain_info mdid;
 #ifdef FEATURE_WLAN_ESE
@@ -1054,7 +1054,7 @@ struct csr_config_params {
 
 struct csr_roam_info {
 	struct csr_roam_profile *pProfile;
-	tSirBssDescription *pBssDesc;
+	struct bss_description *pBssDesc;
 	uint32_t nBeaconLength;
 	uint32_t nAssocReqLength;
 	uint32_t nAssocRspLength;

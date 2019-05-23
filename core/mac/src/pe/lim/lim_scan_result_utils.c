@@ -62,7 +62,7 @@
  */
 void
 lim_collect_bss_description(struct mac_context *mac,
-			    tSirBssDescription *pBssDescr,
+			    struct bss_description *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning)
 {
@@ -90,15 +90,16 @@ lim_collect_bss_description(struct mac_context *mac,
 	 * Length of BSS desription is without length of
 	 * length itself and length of pointer that holds ieFields.
 	 *
-	 * tSirBssDescription
+	 * struct bss_description
 	 * +--------+---------------------------------+---------------+
 	 * | length | other fields                    | pointer to IEs|
 	 * +--------+---------------------------------+---------------+
 	 *                                            ^
 	 *                                            ieFields
 	 */
-	pBssDescr->length = (uint16_t)(offsetof(tSirBssDescription, ieFields[0])
-					- sizeof(pBssDescr->length) + ieLen);
+	pBssDescr->length =
+		(uint16_t)(offsetof(struct bss_description, ieFields[0]) -
+			   sizeof(pBssDescr->length) + ieLen);
 
 	/* Copy BSS Id */
 	qdf_mem_copy((uint8_t *) &pBssDescr->bssId,

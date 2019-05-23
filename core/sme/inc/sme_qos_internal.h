@@ -83,7 +83,7 @@ typedef enum {
   reassoc is done
   ---------------------------------------------------------------------------*/
 typedef struct {
-	tSirBssDescription *pBssDesc;
+	struct bss_description *pBssDesc;
 	struct csr_roam_profile *pProfile;
 } sme_QosAssocInfo;
 
@@ -102,7 +102,7 @@ QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 		uint8_t sessionId,
 		sme_qos_csr_event_indType ind, void *pEvent_info);
 uint8_t sme_qos_get_acm_mask(struct mac_context *mac,
-		tSirBssDescription *pSirBssDesc, tDot11fBeaconIEs *pIes);
+		struct bss_description *pSirBssDesc, tDot11fBeaconIEs *pIes);
 #ifdef FEATURE_WLAN_ESE
 uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac, uint8_t sessionId,
 		tTspecInfo * pTspecInfo);

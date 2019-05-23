@@ -622,8 +622,8 @@ struct start_bss_req {
 };
 
 #define GET_IE_LEN_IN_BSS(lenInBss) (lenInBss + sizeof(lenInBss) - \
-				    ((uintptr_t)OFFSET_OF(tSirBssDescription,\
-							  ieFields)))
+			    ((uintptr_t)OFFSET_OF(struct bss_description,\
+						  ieFields)))
 
 #define WSCIE_PROBE_RSP_LEN (317 + 2)
 
@@ -694,7 +694,6 @@ struct bss_description {
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 };
-typedef struct bss_description tSirBssDescription;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 struct ht_profile {
@@ -722,7 +721,7 @@ struct start_bss_rsp {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	struct ht_profile ht_profile;
 #endif
-	tSirBssDescription bssDescription;      /* Peer BSS description */
+	struct bss_description bssDescription;      /* Peer BSS description */
 };
 
 struct report_channel_list {
@@ -976,7 +975,7 @@ struct join_req {
 	uint8_t nss;
 	bool nss_forced_1x1;
 	bool enable_session_twt_support;
-	tSirBssDescription bssDescription;
+	struct bss_description bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
 	 * join_req as it has ieFields followed after this bss

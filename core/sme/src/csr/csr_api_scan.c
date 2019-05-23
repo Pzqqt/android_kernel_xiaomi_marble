@@ -373,7 +373,7 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 	struct wlan_frame_hdr *hdr;
 	struct wlan_bcn_frame *fixed_frame;
 	uint32_t buf_len, i;
-	tSirBssDescription *bss_desc;
+	struct bss_description *bss_desc;
 	enum mgmt_frame_type frm_type = MGMT_BEACON;
 
 	if (!pResult) {
@@ -426,8 +426,9 @@ static void csr_scan_add_result(struct mac_context *mac_ctx,
 					    frm_type);
 }
 
-static bool csr_scan_save_bss_description(struct mac_context *mac,
-					  tSirBssDescription *pBSSDescription)
+static bool
+csr_scan_save_bss_description(struct mac_context *mac,
+			      struct bss_description *pBSSDescription)
 {
 	struct tag_csrscan_result *pCsrBssDescription = NULL;
 	uint32_t cbBSSDesc;
@@ -461,7 +462,7 @@ static bool csr_scan_save_bss_description(struct mac_context *mac,
 
 /* Append a Bss Description... */
 bool csr_scan_append_bss_description(struct mac_context *mac,
-				     tSirBssDescription *pSirBssDescription)
+				     struct bss_description *pSirBssDescription)
 {
 	return csr_scan_save_bss_description(mac, pSirBssDescription);
 }
@@ -864,7 +865,7 @@ bool csr_is_supported_channel(struct mac_context *mac, uint8_t channelId)
  * pAdapter->channels11d
  */
 bool csr_learn_11dcountry_information(struct mac_context *mac,
-				      tSirBssDescription *pSirBssDesc,
+				      struct bss_description *pSirBssDesc,
 				      tDot11fBeaconIEs *pIes, bool fForce)
 {
 	QDF_STATUS status;
@@ -1756,7 +1757,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	tSirBssDescription *pNewBssDescriptor = NULL;
+	struct bss_description *pNewBssDescriptor = NULL;
 	uint32_t size = 0;
 
 	if (!pSession) {
@@ -1827,7 +1828,7 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 
 	qdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
 			bss_desc_ptr,
-			(sizeof(tSirBssDescription) + length));
+			(sizeof(struct bss_description) + length));
 
 	sme_debug("LFR3:Add BSSID to scan cache" QDF_MAC_ADDR_STR,
 		QDF_MAC_ADDR_ARRAY(scan_res_ptr->Result.BssDescriptor.bssId));
@@ -1884,9 +1885,9 @@ csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
  *
  * Return: first bss descriptor from the scan handle.
  */
-tSirBssDescription *
+struct bss_description *
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
-				  tSirBssDescription *bss_descr)
+				  struct bss_description *bss_descr)
 {
 	tListElem *first_element = NULL;
 	struct tag_csrscan_result *scan_result = NULL;
@@ -1911,7 +1912,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				Link);
 		qdf_mem_copy(bss_descr,
 				&scan_result->Result.BssDescriptor,
-				sizeof(tSirBssDescription));
+				sizeof(struct bss_description));
 	}
 	return bss_descr;
 }
@@ -2493,7 +2494,7 @@ static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
  */
 static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 					  struct scan_cache_entry *scan_entry,
-					  tSirBssDescription *bss_descr)
+					  struct bss_description *bss_descr)
 {
 	int ret;
 	tDot11fIEfils_indication fils_indication = {0};
@@ -2532,7 +2533,7 @@ static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 #else
 static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 					  struct scan_cache_entry *scan_entry,
-					  tSirBssDescription *bss_descr)
+					  struct bss_description *bss_descr)
 { }
 #endif
 
@@ -2573,7 +2574,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 					struct tag_csrscan_result **p_result)
 {
 	tDot11fBeaconIEs *bcn_ies;
-	tSirBssDescription *bss_desc;
+	struct bss_description *bss_desc;
 	tCsrScanResultInfo *result_info;
 	tpSirMacMgmtHdr hdr;
 	uint8_t *ie_ptr;
@@ -2586,7 +2587,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 
 	hdr = (tpSirMacMgmtHdr)scan_entry->raw_frame.ptr;
 
-	bss_len = (uint16_t)(offsetof(tSirBssDescription,
+	bss_len = (uint16_t)(offsetof(struct bss_description,
 			   ieFields[0]) + ie_len);
 	alloc_len = sizeof(struct tag_csrscan_result) + bss_len;
 	bss = qdf_mem_malloc(alloc_len);
@@ -2612,7 +2613,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 
 	bss_desc = &result_info->BssDescriptor;
 
-	bss_desc->length = (uint16_t) (offsetof(tSirBssDescription,
+	bss_desc->length = (uint16_t) (offsetof(struct bss_description,
 			   ieFields[0]) - sizeof(bss_desc->length) + ie_len);
 
 	qdf_mem_copy(bss_desc->bssId,
@@ -2747,7 +2748,7 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
  * Return: true if connection cannot be tried with AP else false
  */
 static bool csr_remove_ap_due_to_rssi(qdf_list_t *list,
-				      tSirBssDescription *bss_descr)
+				      struct bss_description *bss_descr)
 {
 	QDF_STATUS status;
 	struct sir_rssi_disallow_lst *cur_node = NULL;
@@ -3033,7 +3034,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 			res->ssId.length);
 		res->timer = scan_result->timer;
 		qdf_mem_copy(&res->BssDescriptor, &scan_result->BssDescriptor,
-			sizeof(tSirBssDescription));
+			sizeof(struct bss_description));
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		status = QDF_STATUS_E_FAILURE;

@@ -643,7 +643,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
  */
 static bool csr_neighbor_roam_is_ssid_and_security_match(struct mac_context *mac,
 		tCsrRoamConnectedProfile *pCurProfile,
-		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes,
+		struct bss_description *pBssDesc, tDot11fBeaconIEs *pIes,
 		uint8_t session_id)
 {
 	tCsrAuthList authType;
@@ -709,7 +709,7 @@ bool csr_neighbor_roam_is_new_connected_profile(struct mac_context *mac,
 	tCsrRoamConnectedProfile *pCurrProfile = NULL;
 	tCsrRoamConnectedProfile *pPrevProfile = NULL;
 	tDot11fBeaconIEs *pIes = NULL;
-	tSirBssDescription *pBssDesc = NULL;
+	struct bss_description *pBssDesc = NULL;
 	bool fNew = true;
 
 	if (!(mac->roam.roamSession && CSR_IS_SESSION_VALID(mac, sessionId)))
@@ -747,7 +747,7 @@ bool csr_neighbor_roam_connected_profile_match(struct mac_context *mac,
 					       tDot11fBeaconIEs *pIes)
 {
 	tCsrRoamConnectedProfile *pCurProfile = NULL;
-	tSirBssDescription *pBssDesc = &pResult->Result.BssDescriptor;
+	struct bss_description *pBssDesc = &pResult->Result.BssDescriptor;
 
 	if (!(mac->roam.roamSession && CSR_IS_SESSION_VALID(mac, sessionId)))
 		return false;

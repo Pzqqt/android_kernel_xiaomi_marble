@@ -87,7 +87,7 @@ struct tag_csrscan_result {
 	 */
 	uint32_t capValue;
 	/* This member must be the last in the structure because the end of
-	 * tSirBssDescription (inside) is an
+	 * struct bss_description (inside) is an
 	 * array with nonknown size at this time
 	 */
 	/* Preferred Encryption type that matched with profile. */
@@ -101,7 +101,7 @@ struct tag_csrscan_result {
 	/*
 	 * WARNING - Do not add any element here
 	 * This member Result must be the last in the structure because the end
-	 * of tSirBssDescription (inside) is an array with nonknown size at
+	 * of struct bss_description (inside) is an array with nonknown size at
 	 * this time.
 	 */
 };
@@ -154,7 +154,7 @@ void csr_release_command_wm_status_change(struct mac_context *mac,
 
 QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 					    uint32_t sessionId,
-					    tSirBssDescription *pBssDesc);
+					    struct bss_description *pBssDesc);
 
 /*
  * Prepare a filter base on a profile for parsing the scan results.
@@ -174,8 +174,11 @@ void csr_roam_stop(struct mac_context *mac, uint32_t sessionId);
 
 QDF_STATUS csr_scan_open(struct mac_context *mac);
 QDF_STATUS csr_scan_close(struct mac_context *mac);
-bool csr_scan_append_bss_description(struct mac_context *mac,
-				     tSirBssDescription *pSirBssDescription);
+
+bool
+csr_scan_append_bss_description(struct mac_context *mac,
+				struct bss_description *pSirBssDescription);
+
 QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile, uint32_t roamId,
 			     bool notify);
@@ -197,7 +200,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 /* If fForce is true we will save the new String that is learn't. */
 /* Typically it will be true in case of Join or user initiated ioctl */
 bool csr_learn_11dcountry_information(struct mac_context *mac,
-				   tSirBssDescription *pSirBssDesc,
+				   struct bss_description *pSirBssDesc,
 				   tDot11fBeaconIEs *pIes, bool fForce);
 void csr_apply_country_information(struct mac_context *mac);
 void csr_free_scan_result_entry(struct mac_context *mac, struct tag_csrscan_result
@@ -223,7 +226,7 @@ QDF_STATUS
 csr_roam_issue_set_context_req_helper(struct mac_context *mac,
 				      uint32_t session_id,
 				      eCsrEncryptionType encr_type,
-				      tSirBssDescription *bss_descr,
+				      struct bss_description *bss_descr,
 				      tSirMacAddr *bssid, bool addkey,
 				      bool unicast,
 				      tAniKeyDirection key_direction,
@@ -233,11 +236,14 @@ csr_roam_issue_set_context_req_helper(struct mac_context *mac,
 QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 						tSmeCmd *pCommand,
 					    bool fDisassoc, bool fMICFailure);
-QDF_STATUS csr_roam_save_connected_information(struct mac_context *mac,
-					      uint32_t sessionId,
-					      struct csr_roam_profile *pProfile,
-					      tSirBssDescription *pSirBssDesc,
-					      tDot11fBeaconIEs *pIes);
+
+QDF_STATUS
+csr_roam_save_connected_information(struct mac_context *mac,
+				    uint32_t sessionId,
+				    struct csr_roam_profile *pProfile,
+				    struct bss_description *pSirBssDesc,
+				    tDot11fBeaconIEs *pIes);
+
 void csr_roam_check_for_link_status_change(struct mac_context *mac,
 					tSirSmeRsp *pSirMsg);
 
@@ -251,7 +257,7 @@ static inline void csr_roam_stats_rsp_processor(struct mac_context *mac,
 QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
 				    struct csr_roam_profile *pProfile,
-				    tSirBssDescription *pBssDesc,
+				    struct bss_description *pBssDesc,
 					uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
@@ -273,7 +279,7 @@ void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t session
 				       enum csr_roam_reason eRoamReason);
 
 QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
-				 tSirBssDescription *pBssDescription,
+				 struct bss_description *pBssDescription,
 				 struct csr_roam_profile *pProfile,
 				 tDot11fBeaconIEs *pIes, uint16_t messageType);
 QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessionId,
@@ -292,7 +298,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac,
 					 uint32_t sessionId,
 					 eCsrRoamBssType bssType,
 					 struct csr_roamstart_bssparams *pParam,
-					 tSirBssDescription *pBssDesc);
+					 struct bss_description *pBssDesc);
 QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 					uint32_t sessionId);
 
@@ -303,7 +309,7 @@ bool csr_is_ssid_match(struct mac_context *mac, uint8_t *ssid1, uint8_t ssid1Len
 		       uint8_t *bssSsid, uint8_t bssSsidLen,
 			bool fSsidRequired);
 bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
-			   tSirBssDescription *pSirBssDesc,
+			   struct bss_description *pSirBssDesc,
 			   struct csr_roam_profile *pProfile,
 			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes);
@@ -865,9 +871,10 @@ void csr_saved_scan_cmd_free_fields(struct mac_context *mac_ctx,
 struct bss_description*
 csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
-tSirBssDescription*
+struct bss_description*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
-				  tSirBssDescription *bss_descr);
+				  struct bss_description *bss_descr);
+
 bool is_disconnect_pending(struct mac_context *mac_ctx,
 				   uint8_t sessionid);
 
@@ -875,11 +882,14 @@ QDF_STATUS
 csr_roam_prepare_bss_config_from_profile(struct mac_context *mac_ctx,
 					 struct csr_roam_profile *profile,
 					 struct bss_config_param *bss_cfg,
-					 tSirBssDescription *bss_desc);
+					 struct bss_description *bss_desc);
 
-void csr_roam_prepare_bss_params(struct mac_context *mac_ctx, uint32_t session_id,
-		struct csr_roam_profile *profile, tSirBssDescription *bss_desc,
-		struct bss_config_param *bss_cfg, tDot11fBeaconIEs *ies);
+void
+csr_roam_prepare_bss_params(struct mac_context *mac_ctx, uint32_t session_id,
+			    struct csr_roam_profile *profile,
+			    struct bss_description *bss_desc,
+			    struct bss_config_param *bss_cfg,
+			    tDot11fBeaconIEs *ies);
 
 /**
  * csr_remove_bssid_from_scan_list() - remove the bssid from
@@ -892,13 +902,15 @@ void csr_roam_prepare_bss_params(struct mac_context *mac_ctx, uint32_t session_i
  * Return: void.
  */
 void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
-	tSirMacAddr bssid);
+				     tSirMacAddr bssid);
 
-QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx,
-		uint32_t session_id,
-		struct csr_roam_profile *profile, tSirBssDescription *bss_desc,
-		struct bss_config_param *bss_cfg, tDot11fBeaconIEs *ies,
-		bool reset_country);
+QDF_STATUS
+csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx, uint32_t session_id,
+			    struct csr_roam_profile *profile,
+			    struct bss_description *bss_desc,
+			    struct bss_config_param *bss_cfg,
+			    tDot11fBeaconIEs *ies, bool reset_country);
+
 void csr_prune_channel_list_for_mode(struct mac_context *mac,
 				     struct csr_channel *pChannelList);
 

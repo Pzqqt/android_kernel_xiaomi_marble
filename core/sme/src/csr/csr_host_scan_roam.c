@@ -45,7 +45,7 @@
  * Return: Success or Failure
  */
 QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-	uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+	uint32_t sessionId, struct bss_description *pSirBssDesc,
 	tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
 {
 	csr_roam_state_change(mac, eCSR_ROAMING_STATE_JOINING, sessionId);
@@ -193,7 +193,7 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 
 	do {
 		while (true) {
-			tSirBssDescription *descr;
+			struct bss_description *descr;
 
 			scan_result = csr_scan_result_get_next(
 						mac_ctx, *scan_results_list);

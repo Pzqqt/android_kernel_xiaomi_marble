@@ -278,7 +278,9 @@ struct roam_cmd {
 	 * It starts from head to tail
 	 * */
 	tListElem *pRoamBssEntry;
-	tSirBssDescription *pLastRoamBss; /* the last BSS we try and failed */
+
+	/* the last BSS we try and failed */
+	struct bss_description *pLastRoamBss;
 	bool fReleaseBssList;             /* whether to free hBSSList */
 	bool fReleaseProfile;             /* whether to free roamProfile */
 	bool fReassoc;                    /* whether this cmd is for reassoc */
@@ -586,7 +588,7 @@ struct csr_roam_session {
 	struct csr_roam_connectedinfo connectedInfo;
 	struct csr_roam_connectedinfo prev_assoc_ap_info;
 	struct csr_roam_profile *pCurRoamProfile;
-	tSirBssDescription *pConnectBssDesc;
+	struct bss_description *pConnectBssDesc;
 	uint16_t NumPmkidCache; /* valid number of pmkid in the cache*/
 	uint16_t curr_cache_idx; /* the index in pmkidcache to write next to */
 	tPmkidCacheInfo PmkidCacheInfo[CSR_MAX_PMKID_ALLOWED];
@@ -937,8 +939,8 @@ uint8_t csr_get_connected_infra(struct mac_context *mac_ctx);
 bool csr_is_concurrent_session_running(struct mac_context *mac);
 bool csr_is_infra_ap_started(struct mac_context *mac);
 bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
-							 uint32_t sessionId,
-						tSirBssDescription *pBssDesc);
+					uint32_t sessionId,
+					struct bss_description *pBssDesc);
 bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
 QDF_STATUS csr_get_statistics(struct mac_context *mac,
@@ -965,7 +967,7 @@ QDF_STATUS csr_ready(struct mac_context *mac);
 #ifdef FEATURE_WLAN_WAPI
 uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
-		tSirBssDescription *pSirBssDesc,
+		struct bss_description *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 

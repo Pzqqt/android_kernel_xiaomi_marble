@@ -33,7 +33,7 @@
 
 /* Scan result hash related functions */
 void lim_collect_bss_description(struct mac_context *mac,
-			    tSirBssDescription *pBssDescr,
+			    struct bss_description *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning);
 #endif /* __LIM_SCAN_UTILS_H */

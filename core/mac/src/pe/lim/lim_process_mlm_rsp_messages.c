@@ -2999,7 +2999,7 @@ static void lim_process_switch_channel_join_req(
 	tSirMacSSid ssId;
 	tLimMlmJoinCnf join_cnf;
 	uint8_t nontx_bss_id = 0;
-	tSirBssDescription *bss;
+	struct bss_description *bss;
 
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("Change channel failed!!");

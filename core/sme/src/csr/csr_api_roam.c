@@ -114,11 +114,11 @@
 #define ROAM_REASON_MASK 0x0F
 /**
  * csr_get_ielen_from_bss_description() - to get IE length
- *             from tSirBssDescription structure
+ *             from struct bss_description structure
  * @pBssDescr: pBssDescr
  *
  * This function is called in various places to get IE length
- * from tSirBssDescription structure
+ * from struct bss_description structure
  *
  * @Return: total IE length
  */
@@ -135,7 +135,7 @@ csr_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 	 * length itself and length of pointer
 	 * that holds ieFields
 	 *
-	 * <------------sizeof(tSirBssDescription)-------------------->
+	 * <------------sizeof(struct bss_description)-------------------->
 	 * +--------+---------------------------------+---------------+
 	 * | length | other fields                    | pointer to IEs|
 	 * +--------+---------------------------------+---------------+
@@ -144,7 +144,7 @@ csr_get_ielen_from_bss_description(struct bss_description *pBssDescr)
 	 */
 
 	ielen = (uint16_t)(pBssDescr->length + sizeof(pBssDescr->length) -
-			   GET_FIELD_OFFSET(tSirBssDescription, ieFields));
+			   GET_FIELD_OFFSET(struct bss_description, ieFields));
 
 	return ielen;
 }
@@ -469,7 +469,7 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
 				   uint8_t operationChn,
 				   enum band_info *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
-struct mac_context *mac, tSirBssDescription *pBssDesc);
+struct mac_context *mac, struct bss_description *pBssDesc);
 static uint32_t csr_find_ibss_session(struct mac_context *mac);
 static uint32_t csr_find_session_by_type(struct mac_context *,
 					enum QDF_OPMODE);
@@ -480,14 +480,17 @@ static bool csr_is_conn_allow_5g_band(struct mac_context *mac,
 static QDF_STATUS csr_roam_start_wds(struct mac_context *mac,
 						uint32_t sessionId,
 				     struct csr_roam_profile *pProfile,
-				     tSirBssDescription *pBssDesc);
+				     struct bss_description *pBssDesc);
 static void csr_init_session(struct mac_context *mac, uint32_t sessionId);
 static QDF_STATUS csr_roam_issue_set_key_command(struct mac_context *mac,
 						 uint32_t sessionId,
 						 tCsrRoamSetKey *pSetKey,
 						 uint32_t roamId);
-static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
-						 tSirBssDescription *pBssDesc);
+
+static QDF_STATUS
+csr_roam_get_qos_info_from_bss(struct mac_context *mac,
+			       struct bss_description *pBssDesc);
+
 static void csr_init_operating_classes(struct mac_context *mac);
 
 static void csr_add_len_of_social_channels(struct mac_context *mac,
@@ -3789,8 +3792,8 @@ QDF_STATUS csr_roam_issue_deauth(struct mac_context *mac, uint32_t sessionId,
 }
 
 QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
-						uint32_t sessionId,
-						tSirBssDescription *pBssDesc)
+					    uint32_t sessionId,
+					    struct bss_description *pBssDesc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -3832,7 +3835,7 @@ QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 static
 QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 				       struct csr_roam_profile *pProfile,
-				       tSirBssDescription *pBssDesc,
+				       struct bss_description *pBssDesc,
 				       struct bss_config_param *pBssConfig,
 				       tDot11fBeaconIEs *pIes)
 {
@@ -3993,7 +3996,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	struct mac_context *mac, struct csr_roam_profile *pProfile,
 					struct bss_config_param *pBssConfig,
-					tSirBssDescription *pBssDesc)
+					struct bss_description *pBssDesc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t operationChannel = 0;
@@ -4098,8 +4101,9 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	return status;
 }
 
-static QDF_STATUS csr_roam_get_qos_info_from_bss(struct mac_context *mac,
-						 tSirBssDescription *pBssDesc)
+static QDF_STATUS
+csr_roam_get_qos_info_from_bss(struct mac_context *mac,
+			       struct bss_description *pBssDesc)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tDot11fBeaconIEs *pIes = NULL;
@@ -4372,7 +4376,7 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile,
 				   eCsrPhyMode phyMode,
-				   tSirBssDescription *pBssDesc,
+				   struct bss_description *pBssDesc,
 				   tDot11fBeaconIEs *pIes,
 				   tSirMacRateSet *pOpRateSet,
 				   tSirMacRateSet *pExRateSet)
@@ -4446,7 +4450,7 @@ static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
 
 static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
 				 struct csr_roam_profile *pProfile,
-				 tSirBssDescription *pBssDesc,
+				 struct bss_description *pBssDesc,
 				 tDot11fBeaconIEs *pIes)
 {
 	int i;
@@ -4671,7 +4675,7 @@ static void csr_roam_ccm_cfg_set_callback(struct mac_context *mac,
 /* pIes may be NULL */
 QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t sessionId,
 				       struct csr_roam_profile *pProfile,
-				       tSirBssDescription *pBssDesc,
+				       struct bss_description *pBssDesc,
 				       struct bss_config_param *pBssConfig,
 				       struct sDot11fBeaconIEs *pIes,
 				       bool resetCountry)
@@ -4761,7 +4765,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 static
 QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 				 struct csr_roam_profile *roam_profile,
-				 tSirBssDescription *pBssDesc,
+				 struct bss_description *pBssDesc,
 				 tDot11fBeaconIEs *pIes)
 {
 	QDF_STATUS status;
@@ -4862,7 +4866,7 @@ static enum csr_join_state csr_roam_state_for_same_profile(
 	struct mac_context *mac_ctx, struct csr_roam_profile *profile,
 			struct csr_roam_session *session,
 			uint32_t session_id, tDot11fBeaconIEs *ies_local,
-			tSirBssDescription *bss_descr)
+			struct bss_description *bss_descr)
 {
 	QDF_STATUS status;
 	struct bss_config_param bssConfig;
@@ -4896,7 +4900,7 @@ static enum csr_join_state csr_roam_join(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile)
 {
 	enum csr_join_state eRoamState = eCsrContinueRoaming;
-	tSirBssDescription *pBssDesc = &pScanResult->BssDescriptor;
+	struct bss_description *pBssDesc = &pScanResult->BssDescriptor;
 	tDot11fBeaconIEs *pIesLocal = (tDot11fBeaconIEs *) (pScanResult->pvIes);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
@@ -4968,9 +4972,9 @@ static enum csr_join_state csr_roam_join(struct mac_context *mac,
 	return eRoamState;
 }
 
-static
-QDF_STATUS csr_roam_should_roam(struct mac_context *mac, uint32_t sessionId,
-				tSirBssDescription *pBssDesc, uint32_t roamId)
+static QDF_STATUS
+csr_roam_should_roam(struct mac_context *mac, uint32_t sessionId,
+		     struct bss_description *pBssDesc, uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info *roam_info;
@@ -5490,7 +5494,7 @@ QDF_STATUS csr_process_ft_reassoc_roam_command(struct mac_context *mac,
 	uint32_t sessionId;
 	struct csr_roam_session *pSession;
 	struct tag_csrscan_result *pScanResult = NULL;
-	tSirBssDescription *pBssDesc = NULL;
+	struct bss_description *pBssDesc = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	sessionId = pCommand->sessionId;
@@ -6043,11 +6047,11 @@ static QDF_STATUS csr_roam_save_params(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS csr_roam_save_security_rsp_ie(struct mac_context *mac,
-						uint32_t sessionId,
-						eCsrAuthType authType,
-						tSirBssDescription *pSirBssDesc,
-						tDot11fBeaconIEs *pIes)
+static QDF_STATUS
+csr_roam_save_security_rsp_ie(struct mac_context *mac,
+			      uint32_t sessionId, eCsrAuthType authType,
+			      struct bss_description *pSirBssDesc,
+			      tDot11fBeaconIEs *pIes)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -6524,7 +6528,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	uint32_t session_id = cmd->sessionId;
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
-	tSirBssDescription *bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	struct csr_roam_info *roam_info;
 	struct start_bss_rsp *start_bss_rsp = NULL;
 	eRoamCmdStatus roam_status;
@@ -6820,7 +6824,7 @@ static void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 					struct csr_roam_profile *profile,
 					uint32_t session_id,
 					struct csr_roam_info *roam_info,
-					tSirBssDescription *bss_desc,
+					struct bss_description *bss_desc,
 					struct join_rsp *join_rsp)
 {
 	tSirMacAddr bcast_mac = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -6870,7 +6874,7 @@ static inline void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 					     struct csr_roam_profile *profile,
 					     uint32_t session_id,
 					     struct csr_roam_info *roam_info,
-					     tSirBssDescription *bss_desc,
+					     struct bss_description *bss_desc,
 					     struct join_rsp *join_rsp)
 {}
 #endif
@@ -6896,7 +6900,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	uint32_t session_id = cmd->sessionId;
 	struct csr_roam_profile *profile = &cmd->u.roamCmd.roamProfile;
 	struct csr_roam_session *session;
-	tSirBssDescription *bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	struct tag_csrscan_result *scan_res = NULL;
 	sme_qos_csr_event_indType ind_qos;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -7300,7 +7304,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 					void *context)
 {
 	bool release_cmd = true;
-	tSirBssDescription *bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	struct csr_roam_info *roam_info;
 	uint32_t session_id = cmd->sessionId;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -7354,7 +7358,7 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 		}
 
 		if (context)
-			bss_desc = (tSirBssDescription *) context;
+			bss_desc = (struct bss_description *) context;
 		else
 			bss_desc = NULL;
 		roam_info->pBssDesc = bss_desc;
@@ -8022,7 +8026,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	uint32_t roamId = 0;
 	bool fCallCallback = false;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	tSirBssDescription *first_ap_profile;
+	struct bss_description *first_ap_profile;
 	uint8_t channel_id = 0;
 
 	if (!pSession) {
@@ -8551,11 +8555,12 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 	return csr_roam_disconnect_internal(mac_ctx, session_id, reason);
 }
 
-QDF_STATUS csr_roam_save_connected_information(struct mac_context *mac,
-					      uint32_t sessionId,
-					      struct csr_roam_profile *pProfile,
-					      tSirBssDescription *pSirBssDesc,
-					      tDot11fBeaconIEs *pIes)
+QDF_STATUS
+csr_roam_save_connected_information(struct mac_context *mac,
+				    uint32_t sessionId,
+				    struct csr_roam_profile *pProfile,
+				    struct bss_description *pSirBssDesc,
+				    tDot11fBeaconIEs *pIes)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tDot11fBeaconIEs *pIesTemp = pIes;
@@ -8893,7 +8898,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 }
 
 static QDF_STATUS csr_roam_issue_join(struct mac_context *mac, uint32_t sessionId,
-				      tSirBssDescription *pSirBssDesc,
+				      struct bss_description *pSirBssDesc,
 				      tDot11fBeaconIEs *pIes,
 				      struct csr_roam_profile *pProfile,
 				      uint32_t roamId)
@@ -9017,7 +9022,7 @@ csr_roaming_state_config_cnf_processor(struct mac_context *mac_ctx,
 				       uint8_t sme_session_id)
 {
 	struct tag_csrscan_result *scan_result = NULL;
-	tSirBssDescription *bss_desc = NULL;
+	struct bss_description *bss_desc = NULL;
 	uint32_t session_id;
 	struct csr_roam_session *session;
 	tDot11fBeaconIEs *local_ies = NULL;
@@ -10151,7 +10156,7 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 					struct mac_context *mac_ctx,
 					uint32_t session_id,
 					eCsrEncryptionType encr_type,
-					tSirBssDescription *bss_descr,
+					struct bss_description *bss_descr,
 					tSirMacAddr *bssid, bool addkey,
 					bool unicast,
 					tAniKeyDirection key_direction,
@@ -10182,7 +10187,7 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 static QDF_STATUS
 csr_roam_issue_set_context_req(struct mac_context *mac, uint32_t sessionId,
 			       eCsrEncryptionType EncryptType,
-			       tSirBssDescription *pBssDescription,
+			       struct bss_description *pBssDescription,
 			       tSirMacAddr *bssId, bool addKey, bool fUnicast,
 			       tAniKeyDirection aniKeyDirection, uint8_t keyId,
 			       uint16_t keyLength, uint8_t *pKey,
@@ -10228,7 +10233,7 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 					struct mac_context *mac_ctx,
 					uint32_t session_id,
 					eCsrEncryptionType encr_type,
-					tSirBssDescription *bss_descr,
+					struct bss_description *bss_descr,
 					tSirMacAddr *bssid, bool addkey,
 					bool unicast,
 					tAniKeyDirection key_direction,
@@ -14074,7 +14079,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 static void
 csr_roam_get_bss_start_parms_from_bss_desc(
 					struct mac_context *mac,
-					tSirBssDescription *pBssDesc,
+					struct bss_description *pBssDesc,
 					tDot11fBeaconIEs *pIes,
 					struct csr_roamstart_bssparams *pParam)
 {
@@ -14155,7 +14160,7 @@ static void csr_roam_determine_max_rate_for_ad_hoc(struct mac_context *mac,
 QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
 				    struct csr_roam_profile *pProfile,
-				    tSirBssDescription *pBssDesc,
+				    struct bss_description *pBssDesc,
 					uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -14268,7 +14273,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 
 void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 					struct csr_roam_profile *pProfile,
-					tSirBssDescription *pBssDesc,
+					struct bss_description *pBssDesc,
 					struct bss_config_param *pBssConfig,
 					tDot11fBeaconIEs *pIes)
 {
@@ -14806,7 +14811,7 @@ eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 
 static QDF_STATUS csr_roam_start_wds(struct mac_context *mac, uint32_t sessionId,
 				     struct csr_roam_profile *pProfile,
-				     tSirBssDescription *pBssDesc)
+				     struct bss_description *pBssDesc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -15271,12 +15276,12 @@ csr_get_adaptive_11r_enabled(struct mac_context *mac)
  * regular way like struct join_req.assocType, this guideline stops at component
  * tSirRSNie;
  * any acces to the components after tSirRSNie is forbidden because the space
- * from tSirRSNie is squeezed with the component "tSirBssDescription" and since
- * the size of actual 'tSirBssDescription' varies, the receiving side should
- * keep in mind not to access the components DIRECTLY after tSirRSNie.
+ * from tSirRSNie is squeezed with the component "struct bss_description" and
+ * since the size of actual 'struct bss_description' varies, the receiving side
+ * should keep in mind not to access the components DIRECTLY after tSirRSNie.
  */
 QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
-				 tSirBssDescription *pBssDescription,
+				 struct bss_description *pBssDescription,
 				 struct csr_roam_profile *pProfile,
 				 tDot11fBeaconIEs *pIes, uint16_t messageType)
 {
@@ -16572,7 +16577,7 @@ QDF_STATUS csr_send_mb_set_context_req_msg(struct mac_context *mac,
 QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 					sessionId, eCsrRoamBssType bssType,
 					 struct csr_roamstart_bssparams *pParam,
-					 tSirBssDescription *pBssDesc)
+					 struct bss_description *pBssDesc)
 {
 	struct start_bss_req *pMsg;
 	uint16_t wTmp;

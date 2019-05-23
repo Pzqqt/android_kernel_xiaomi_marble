@@ -658,7 +658,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(struct mac_context *pmac, uint8_t *rx_pkt_i
 	struct scheduler_msg         mmh_msg = {0};
 	tpSirMacMgmtHdr              hdr;
 	uint32_t frame_len;
-	tSirBssDescription *bssdescr;
+	struct bss_description *bssdescr;
 
 	result = qdf_mem_malloc(sizeof(*result) + ie_len);
 	if (!result)

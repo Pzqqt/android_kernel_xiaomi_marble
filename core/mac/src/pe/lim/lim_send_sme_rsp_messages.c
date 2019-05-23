@@ -564,7 +564,7 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 				     schBeaconOffsetEnd);
 
 			pSirSmeRsp->bssDescription.length = (uint16_t)
-				(offsetof(tSirBssDescription, ieFields[0])
+				(offsetof(struct bss_description, ieFields[0])
 				- sizeof(pSirSmeRsp->bssDescription.length)
 				+ ieLen);
 			/* This is the size of the message, subtracting the size of the pointer to ieFields */

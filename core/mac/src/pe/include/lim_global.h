@@ -163,7 +163,7 @@ typedef struct sLimMlmAuthReq {
 typedef struct sLimMlmJoinReq {
 	tSirMacRateSet operationalRateSet;
 	uint8_t sessionId;
-	tSirBssDescription bssDescription;
+	struct bss_description bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
 	 * tLimMlmJoinReq as it has ieFields followed after this bss

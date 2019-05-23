@@ -78,7 +78,7 @@ QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session,
 void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 				      uint32_t session_id,
 				      struct csr_roam_profile *roam_profile,
-				      tSirBssDescription *bssdesc)
+				      struct bss_description *bssdesc)
 {
 	struct csr_roam_session *roam_session;
 	tCsrRoamConnectedProfile *connect_profile;

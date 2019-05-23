@@ -2829,13 +2829,13 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 		WMA_LOGE("LFR3: Invalid Beacon Length");
 		goto cleanup_label;
 	}
-	bss_desc_ptr = qdf_mem_malloc(sizeof(tSirBssDescription) + ie_len);
+	bss_desc_ptr = qdf_mem_malloc(sizeof(struct bss_description) + ie_len);
 	if (!bss_desc_ptr) {
 		QDF_ASSERT(bss_desc_ptr);
 		status = -ENOMEM;
 		goto cleanup_label;
 	}
-	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
+	qdf_mem_zero(bss_desc_ptr, sizeof(struct bss_description) + ie_len);
 	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(
 			(struct mac_context *)wma->mac_context,
 			roam_synch_ind_ptr, bss_desc_ptr,

@@ -170,7 +170,7 @@ void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
 bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId);
 QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+		uint32_t sessionId, struct bss_description *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile);
 void csr_neighbor_roam_request_handoff(struct mac_context *mac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
@@ -194,7 +194,7 @@ static inline QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 static inline QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+		uint32_t sessionId, struct bss_description *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
 {
 	return QDF_STATUS_E_NOSUPPORT;

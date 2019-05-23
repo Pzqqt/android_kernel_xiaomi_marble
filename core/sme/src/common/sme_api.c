@@ -2599,7 +2599,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	struct mac_context *mac_ctx = sme_get_mac_context();
 	tCsrScanResultFilter *scan_filter = NULL;
 	tScanResultHandle filtered_scan_result = NULL;
-	tSirBssDescription first_ap_profile;
+	struct bss_description first_ap_profile;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -2610,7 +2610,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	if (!scan_filter)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_mem_zero(&first_ap_profile, sizeof(tSirBssDescription));
+	qdf_mem_zero(&first_ap_profile, sizeof(struct bss_description));
 	if (!profile) {
 		scan_filter->EncryptionType.numEntries = 1;
 		scan_filter->EncryptionType.encryptionType[0]
@@ -13605,7 +13605,7 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
  * Return: None
  */
 static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
-					      tSirBssDescription *bss_descp,
+					      struct bss_description *bss_descp,
 					      const tSirMacAddr bssid,
 					      uint32_t ie_len)
 {
@@ -13646,7 +13646,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 				     const uint8_t *bssid,
 				     int8_t *rssi, int8_t *snr)
 {
-	tSirBssDescription *bss_descp;
+	struct bss_description *bss_descp;
 	tCsrScanResultFilter *scan_filter;
 	struct scan_result_list *bss_list;
 	tScanResultHandle result_handle = NULL;
@@ -13725,7 +13725,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	tScanResultHandle result_handle = NULL;
 	tCsrScanResultFilter *scan_filter;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	tSirBssDescription *bss_descp;
+	struct bss_description *bss_descp;
 	struct scan_result_list *bss_list;
 	uint32_t ie_len;
 
@@ -13774,7 +13774,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	 * Length of BSS descriptor is without length of
 	 * length itself and length of pointer that holds ieFields.
 	 *
-	 * tSirBssDescription
+	 * struct bss_description
 	 * +--------+---------------------------------+---------------+
 	 * | length | other fields                    | pointer to IEs|
 	 * +--------+---------------------------------+---------------+
@@ -13782,7 +13782,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	 *                                            ieFields
 	 */
 	ie_len = bss_descp->length + sizeof(bss_descp->length)
-		- (uint16_t)(offsetof(tSirBssDescription, ieFields[0]));
+		- (uint16_t)(offsetof(struct bss_description, ieFields[0]));
 	sme_debug("found bss_descriptor ie_len: %d channel %d",
 					ie_len, bss_descp->channelId);
 
@@ -14497,8 +14497,8 @@ uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
  * @info->status. Otherwise returns false.
  */
 static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
-					 tSirBssDescription *conn_bss_desc,
-					 tSirBssDescription *bss_desc,
+					 struct bss_description *conn_bss_desc,
+					 struct bss_description *bss_desc,
 					 struct bss_candidate_info *info,
 					 uint8_t trans_reason,
 					 bool is_bt_in_progress)
@@ -14593,7 +14593,7 @@ QDF_STATUS sme_get_bss_transition_status(mac_handle_t mac_handle,
 					 bool is_bt_in_progress)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirBssDescription *bss_desc, *conn_bss_desc;
+	struct bss_description *bss_desc, *conn_bss_desc;
 	tCsrScanResultInfo *res, *conn_res;
 	uint16_t i;
 

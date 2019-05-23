@@ -1965,14 +1965,14 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	 * length itself and length of pointer
 	 * that holds ieFields
 	 *
-	 * tSirBssDescription
+	 * struct bss_description
 	 * +--------+---------------------------------+---------------+
 	 * | length | other fields                    | pointer to IEs|
 	 * +--------+---------------------------------+---------------+
 	 *                                            ^
 	 *                                            ieFields
 	 */
-	bss_desc_ptr->length = (uint16_t) (offsetof(tSirBssDescription,
+	bss_desc_ptr->length = (uint16_t) (offsetof(struct bss_description,
 					   ieFields[0]) -
 				sizeof(bss_desc_ptr->length) + ie_len);
 

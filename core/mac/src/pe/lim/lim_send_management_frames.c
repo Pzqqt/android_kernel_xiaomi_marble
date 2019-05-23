@@ -1906,7 +1906,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	if (pe_session->pLimJoinReq->is11Rconnection) {
-		tSirBssDescription *bssdescr;
+		struct bss_description *bssdescr;
 
 		bssdescr = &pe_session->pLimJoinReq->bssDescription;
 		pe_debug("mdie = %02x %02x %02x",
