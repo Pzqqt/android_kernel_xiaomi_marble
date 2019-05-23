@@ -441,7 +441,8 @@ bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
 	struct wlan_channel *bss_chan = NULL;
 
 	/* Get centre frequency */
-	chan_freq = dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1;
+	chan_freq = utils_dfs_chan_to_freq(
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1);
 	vdev = wlan_objmgr_pdev_get_first_vdev(dfs->dfs_pdev_obj, WLAN_DFS_ID);
 	if (!vdev) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "vdev is NULL");
