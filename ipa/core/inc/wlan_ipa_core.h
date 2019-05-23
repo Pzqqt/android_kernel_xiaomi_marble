@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -478,7 +478,8 @@ void wlan_ipa_uc_rt_debug_init(struct wlan_ipa_priv *ipa_ctx);
  * Return: None
  */
 static inline
-void wlan_ipa_reg_sap_xmit_cb(struct wlan_ipa_priv *ipa_ctx, void *cb)
+void wlan_ipa_reg_sap_xmit_cb(struct wlan_ipa_priv *ipa_ctx,
+			      wlan_ipa_softap_xmit cb)
 {
 	ipa_ctx->softap_xmit = cb;
 }
