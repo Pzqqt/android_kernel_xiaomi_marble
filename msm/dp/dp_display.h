@@ -12,7 +12,7 @@
 
 #include "dp_panel.h"
 
-#define DP_MST_SIM_MAX_PORTS	2
+#define DP_MST_SIM_MAX_PORTS	8
 
 enum dp_drv_state {
 	PM_DEFAULT,
@@ -24,6 +24,9 @@ struct dp_mst_hpd_info {
 	bool mst_hpd_sim;
 	u32 mst_port_cnt;
 	u8 *edid;
+	bool mst_sim_add_con;
+	bool mst_sim_remove_con;
+	int mst_sim_remove_con_id;
 };
 
 struct dp_mst_drm_cbs {
