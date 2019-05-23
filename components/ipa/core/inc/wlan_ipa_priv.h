@@ -566,7 +566,7 @@ struct wlan_ipa_tx_desc {
 	qdf_ipa_rx_data_t *ipa_tx_desc_ptr;
 };
 
-typedef int (*wlan_ipa_softap_xmit)(qdf_nbuf_t skb, qdf_netdev_t dev);
+typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 typedef void (*wlan_ipa_send_to_nw)(qdf_nbuf_t skb, qdf_netdev_t dev);
 
 /* IPA private context structure definition */

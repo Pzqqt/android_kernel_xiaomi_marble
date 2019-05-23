@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,18 @@
  */
 netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				       struct net_device *dev);
+
+/**
+ * hdd_softap_ipa_start_xmit() - Transmit a frame, request from IPA
+ * @nbuf: pointer to buffer/packet
+ * @dev: pointer to net_device structure
+ *
+ * Function registered as a xmit callback in SAP mode,
+ * called by IPA if any packet needs to be transmitted.
+ *
+ * Return: Status of the transmission
+ */
+QDF_STATUS hdd_softap_ipa_start_xmit(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 
 /**
  * hdd_softap_tx_timeout() - TX timeout handler

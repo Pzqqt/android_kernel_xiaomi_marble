@@ -663,6 +663,16 @@ netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	return NETDEV_TX_OK;
 }
 
+QDF_STATUS hdd_softap_ipa_start_xmit(qdf_nbuf_t nbuf, qdf_netdev_t dev)
+{
+	if (NETDEV_TX_OK == hdd_softap_hard_start_xmit(
+					(struct sk_buff *)nbuf,
+					(struct net_device *)dev))
+		return QDF_STATUS_SUCCESS;
+	else
+		return QDF_STATUS_E_FAILURE;
+}
+
 static void __hdd_softap_tx_timeout(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);

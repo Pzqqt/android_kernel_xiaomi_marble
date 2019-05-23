@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -243,7 +243,8 @@ void ipa_uc_stat_query(struct wlan_objmgr_pdev *pdev,
  *
  * Return: None
  */
-void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev,
+			 wlan_ipa_softap_xmit cb);
 
 /**
  * ipa_reg_send_to_nw_cb() - Register cb to send IPA Rx packet to network
@@ -429,5 +430,9 @@ void ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
  */
 
 uint32_t ipa_get_tx_buf_count(void);
+
+#else /* Not IPA_OFFLOAD */
+typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
+
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
