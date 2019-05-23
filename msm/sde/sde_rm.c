@@ -128,6 +128,101 @@ enum sde_rm_dbg_rsvp_stage {
 	SDE_RM_STAGE_FINAL
 };
 
+static void _sde_rm_inc_resource_info_lm(struct sde_rm *rm,
+	struct msm_resource_caps_info *avail_res,
+	struct sde_rm_hw_blk *blk)
+{
+	struct sde_rm_hw_blk *blk2;
+	const struct sde_lm_cfg *lm_cfg, *lm_cfg2;
+
+	avail_res->num_lm++;
+
+	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
+	/* Check for 3d muxes by comparing paired lms */
+	list_for_each_entry(blk2, &rm->hw_blks[SDE_HW_BLK_LM], list) {
+		lm_cfg2 = to_sde_hw_mixer(blk2->hw)->cap;
+		/*
+		 * If lm2 is free, or
+		 * lm1 & lm2 reserved by same enc, check mask
+		 */
+		if ((!blk2->rsvp || (blk->rsvp &&
+				blk2->rsvp->enc_id == blk->rsvp->enc_id
+				&& lm_cfg->id > lm_cfg2->id)) &&
+				test_bit(lm_cfg->id, &lm_cfg2->lm_pair_mask))
+			avail_res->num_3dmux++;
+	}
+}
+
+static void _sde_rm_dec_resource_info_lm(struct sde_rm *rm,
+	struct msm_resource_caps_info *avail_res,
+	struct sde_rm_hw_blk *blk)
+{
+	struct sde_rm_hw_blk *blk2;
+	const struct sde_lm_cfg *lm_cfg, *lm_cfg2;
+
+	avail_res->num_lm--;
+
+	lm_cfg = to_sde_hw_mixer(blk->hw)->cap;
+	/* Check for 3d muxes by comparing paired lms */
+	list_for_each_entry(blk2, &rm->hw_blks[SDE_HW_BLK_LM], list) {
+		lm_cfg2 = to_sde_hw_mixer(blk2->hw)->cap;
+		/* If lm2 is free and lm1 is now being reserved */
+		if (!blk2->rsvp &&
+				test_bit(lm_cfg->id, &lm_cfg2->lm_pair_mask))
+			avail_res->num_3dmux--;
+	}
+}
+
+static void _sde_rm_inc_resource_info(struct sde_rm *rm,
+		struct msm_resource_caps_info *avail_res,
+		struct sde_rm_hw_blk *blk)
+{
+	enum sde_hw_blk_type type = blk->type;
+
+	if (type == SDE_HW_BLK_LM)
+		_sde_rm_inc_resource_info_lm(rm, avail_res, blk);
+	else if (type == SDE_HW_BLK_CTL)
+		avail_res->num_ctl++;
+	else if (type == SDE_HW_BLK_DSC)
+		avail_res->num_dsc++;
+}
+
+static void _sde_rm_dec_resource_info(struct sde_rm *rm,
+		struct msm_resource_caps_info *avail_res,
+		struct sde_rm_hw_blk *blk)
+{
+	enum sde_hw_blk_type type = blk->type;
+
+	if (type == SDE_HW_BLK_LM)
+		_sde_rm_dec_resource_info_lm(rm, avail_res, blk);
+	else if (type == SDE_HW_BLK_CTL)
+		avail_res->num_ctl--;
+	else if (type == SDE_HW_BLK_DSC)
+		avail_res->num_dsc--;
+}
+
+void sde_rm_get_resource_info(struct sde_rm *rm,
+		struct drm_encoder *drm_enc,
+		struct msm_resource_caps_info *avail_res)
+{
+	struct sde_rm_hw_blk *blk;
+	enum sde_hw_blk_type type;
+	struct sde_rm_rsvp rsvp;
+
+	memcpy(avail_res, &rm->avail_res,
+			sizeof(rm->avail_res));
+
+	if (!drm_enc)
+		return;
+
+	rsvp.enc_id = drm_enc->base.id;
+
+	for (type = 0; type < SDE_HW_BLK_MAX; type++)
+		list_for_each_entry(blk, &rm->hw_blks[type], list)
+			if (blk->rsvp && blk->rsvp->enc_id == rsvp.enc_id)
+				_sde_rm_inc_resource_info(rm, avail_res, blk);
+}
+
 static void _sde_rm_print_rsvps(
 		struct sde_rm *rm,
 		enum sde_rm_dbg_rsvp_stage stage)
@@ -443,6 +538,8 @@ static int _sde_rm_hw_blk_create(
 	blk->id = id;
 	blk->hw = hw;
 	list_add_tail(&blk->list, &rm->hw_blks[type]);
+
+	_sde_rm_inc_resource_info(rm, &rm->avail_res, blk);
 
 	return 0;
 }
@@ -1744,6 +1841,8 @@ static void _sde_rm_release_rsvp(
 				SDE_DEBUG("rel rsvp %d enc %d %d %d\n",
 						rsvp->seq, rsvp->enc_id,
 						blk->type, blk->id);
+				_sde_rm_inc_resource_info(rm,
+						&rm->avail_res, blk);
 			}
 			if (blk->rsvp_nxt == rsvp) {
 				blk->rsvp_nxt = NULL;
@@ -1832,6 +1931,8 @@ static int _sde_rm_commit_rsvp(
 			if (blk->rsvp_nxt) {
 				blk->rsvp = blk->rsvp_nxt;
 				blk->rsvp_nxt = NULL;
+				_sde_rm_dec_resource_info(rm,
+						&rm->avail_res, blk);
 			}
 		}
 	}
