@@ -239,8 +239,8 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 		 sap_operating_chan_preferred_location == 2)
 		flag |= DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH;
 
-	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
-	    pdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {
+	if (QDF_IS_STATUS_ERROR(utils_dfs_get_vdev_random_channel(
+	    pdev, sap_ctx->vdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {
 		/* No available channel found */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("No available channel found!!!"));
