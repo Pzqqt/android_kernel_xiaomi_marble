@@ -4005,7 +4005,8 @@ static int dsi_display_set_mode_sub(struct dsi_display *display,
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		rc = dsi_ctrl_update_host_config(ctrl->ctrl, &display->config,
-				mode->dsi_mode_flags, display->dsi_clk_handle);
+				mode, mode->dsi_mode_flags,
+				display->dsi_clk_handle);
 		if (rc) {
 			pr_err("[%s] failed to update ctrl config, rc=%d\n",
 			       display->name, rc);
@@ -5552,11 +5553,28 @@ int dsi_display_get_modes(struct dsi_display *display,
 		memset(&panel_mode, 0, sizeof(panel_mode));
 
 		rc = dsi_panel_get_mode(display->panel, mode_idx,
-						&panel_mode, topology_override);
+						&panel_mode,
+						topology_override);
 		if (rc) {
 			pr_err("[%s] failed to get mode idx %d from panel\n",
 				   display->name, mode_idx);
 			goto error;
+		}
+
+		/* Calculate dsi frame transfer time */
+		if (display->panel->panel_mode == DSI_OP_CMD_MODE) {
+			dsi_panel_calc_dsi_transfer_time(
+					&display->panel->host_config,
+					&panel_mode.timing);
+			panel_mode.priv_info->dsi_transfer_time_us =
+				panel_mode.timing.dsi_transfer_time_us;
+			panel_mode.priv_info->min_dsi_clk_hz =
+				panel_mode.timing.min_dsi_clk_hz;
+
+			panel_mode.priv_info->mdp_transfer_time_us =
+				panel_mode.priv_info->dsi_transfer_time_us;
+			panel_mode.timing.mdp_transfer_time_us =
+				panel_mode.timing.dsi_transfer_time_us;
 		}
 
 		if (display->ctrl_count > 1) { /* TODO: remove if */
@@ -5899,6 +5917,7 @@ int dsi_display_set_mode(struct dsi_display *display,
 {
 	int rc = 0;
 	struct dsi_display_mode adj_mode;
+	struct dsi_mode_info timing;
 
 	if (!display || !mode || !display->panel) {
 		pr_err("Invalid params\n");
@@ -5908,6 +5927,7 @@ int dsi_display_set_mode(struct dsi_display *display,
 	mutex_lock(&display->display_lock);
 
 	adj_mode = *mode;
+	timing = adj_mode.timing;
 	adjust_timing_by_ctrl_count(display, &adj_mode);
 
 	/*For dynamic DSI setting, use specified clock rate */
@@ -5934,6 +5954,11 @@ int dsi_display_set_mode(struct dsi_display *display,
 			goto error;
 		}
 	}
+
+	pr_info("mdp_transfer_time_us=%d us\n",
+			adj_mode.priv_info->mdp_transfer_time_us);
+	pr_info("hactive= %d,vactive= %d,fps=%d",timing.h_active,
+			timing.v_active,timing.refresh_rate);
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:
