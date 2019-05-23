@@ -888,7 +888,7 @@ void
 lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 			uint8_t sub_type, uint8_t add_pre_auth_context,
 			tAniAuthType auth_type, uint16_t sta_id,
-			uint8_t delete_sta, enum eSirMacStatusCodes result_code,
+			uint8_t delete_sta, enum mac_status_code result_code,
 			struct pe_session *session_entry)
 {
 	tpDphHashNode sta_ds;

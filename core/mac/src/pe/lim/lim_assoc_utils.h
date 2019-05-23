@@ -54,7 +54,7 @@ QDF_STATUS lim_cleanup_rx_path(struct mac_context *, tpDphHashNode,
 			       struct pe_session *);
 void lim_reject_association(struct mac_context *, tSirMacAddr, uint8_t,
 			    uint8_t, tAniAuthType, uint16_t, uint8_t,
-			    enum eSirMacStatusCodes, struct pe_session *);
+			    enum mac_status_code, struct pe_session *);
 
 QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				      struct supported_rates *pRates,

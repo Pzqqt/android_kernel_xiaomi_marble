@@ -11211,7 +11211,7 @@ static bool csr_is_sae_peer_allowed(struct mac_context *mac_ctx,
 				    struct csr_roam_session *session,
 				    tSirMacAddr peer_mac_addr,
 				    tDot11fIERSN *rsn_ie,
-				    tSirMacStatusCodes *mac_status_code)
+				    enum mac_status_code *mac_status_code)
 {
 	bool is_allowed = false;
 
@@ -11318,7 +11318,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	QDF_STATUS status;
 	struct csr_roam_info *roam_info;
 	struct assoc_ind *pAssocInd;
-	tSirMacStatusCodes mac_status_code = eSIR_MAC_SUCCESS_STATUS;
+	enum mac_status_code mac_status_code = eSIR_MAC_SUCCESS_STATUS;
 	eCsrAuthType csr_akm_type;
 
 	sme_debug("Receive WNI_SME_ASSOC_IND from SME");
@@ -16445,7 +16445,7 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(struct mac_context *mac,
 QDF_STATUS csr_send_assoc_cnf_msg(struct mac_context *mac,
 				  struct assoc_ind *pAssocInd,
 				  QDF_STATUS Halstatus,
-				  tSirMacStatusCodes mac_status_code)
+				  enum mac_status_code mac_status_code)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct assoc_cnf *pMsg;

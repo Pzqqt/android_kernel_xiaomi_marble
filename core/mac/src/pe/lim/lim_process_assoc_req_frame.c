@@ -823,11 +823,12 @@ static void lim_print_ht_cap(struct mac_context *mac_ctx, struct pe_session *ses
 }
 
 #ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
-static tSirMacStatusCodes lim_check_rsn_ie(struct pe_session *session,
-					   struct mac_context *mac_ctx,
-					   tpSirAssocReq assoc_req,
-					   tDot11fIERSN *rsn,
-					   bool *pmf_connection)
+static
+enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
+				      struct mac_context *mac_ctx,
+				      tpSirAssocReq assoc_req,
+				      tDot11fIERSN *rsn,
+				      bool *pmf_connection)
 {
 	struct wlan_objmgr_vdev *vdev;
 
@@ -863,10 +864,10 @@ static tSirMacStatusCodes lim_check_rsn_ie(struct pe_session *session,
 	return eSIR_MAC_SUCCESS_STATUS;
 }
 
-static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
-					   struct mac_context *mac_ctx,
-					   tpSirAssocReq assoc_req,
-					   tDot11fIEWPA *wpa)
+static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
+					     struct mac_context *mac_ctx,
+					     tpSirAssocReq assoc_req,
+					     tDot11fIEWPA *wpa)
 {
 	uint8_t buffer[WLAN_MAX_IE_LEN];
 	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
@@ -888,21 +889,21 @@ static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
 	return eSIR_MAC_INVALID_IE_STATUS;
 }
 #else
-static tSirMacStatusCodes lim_check_rsn_ie(struct pe_session *session,
-					   struct mac_context *mac_ctx,
-					   tpSirAssocReq assoc_req,
-					   tDot11fIERSN *rsn,
-					   bool *pmf_connection)
+static enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
+					     struct mac_context *mac_ctx,
+					     tpSirAssocReq assoc_req,
+					     tDot11fIERSN *rsn,
+					     bool *pmf_connection)
 {
 	return lim_check_rx_rsn_ie_match(mac_ctx, rsn, session,
 					 assoc_req->HTCaps.present,
 					 pmf_connection);
 }
 
-static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
-					   struct mac_context *mac_ctx,
-					   tpSirAssocReq assoc_req,
-					   tDot11fIEWPA *wpa)
+static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
+					     struct mac_context *mac_ctx,
+					     tpSirAssocReq assoc_req,
+					     tDot11fIEWPA *wpa)
 {
 	return lim_check_rx_wpa_ie_match(mac_ctx, wpa, session,
 					 assoc_req->HTCaps.present);
@@ -918,13 +919,13 @@ static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
   * capable. Reject with eSIR_MAC_ROBUST_MGMT_FRAMES_POLICY_VIOLATION
   * if SAE STA is pmf disable.
   *
-  * Return: tSirMacStatusCodes
+  * Return: mac_status_code
   */
 #ifdef WLAN_FEATURE_SAE
-static tSirMacStatusCodes lim_check_sae_pmf_cap(struct pe_session *session,
-						tDot11fIERSN *rsn)
+static enum mac_status_code lim_check_sae_pmf_cap(struct pe_session *session,
+						  tDot11fIERSN *rsn)
 {
-	tSirMacStatusCodes status = eSIR_MAC_SUCCESS_STATUS;
+	enum mac_status_code status = eSIR_MAC_SUCCESS_STATUS;
 
 	if (session->pLimStartBssReq->pmfCapable &&
 	    (rsn->RSN_Cap[0] & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) == 0)
@@ -933,8 +934,8 @@ static tSirMacStatusCodes lim_check_sae_pmf_cap(struct pe_session *session,
 	return status;
 }
 #else
-static tSirMacStatusCodes lim_check_sae_pmf_cap(struct pe_session *session,
-						tDot11fIERSN *rsn)
+static enum mac_status_code lim_check_sae_pmf_cap(struct pe_session *session,
+						  tDot11fIERSN *rsn)
 {
 	return eSIR_MAC_SUCCESS_STATUS;
 }
@@ -964,7 +965,7 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 	uint32_t ret;
 	tDot11fIEWPA dot11f_ie_wpa = {0};
 	tDot11fIERSN dot11f_ie_rsn = {0};
-	tSirMacStatusCodes status = eSIR_MAC_SUCCESS_STATUS;
+	enum mac_status_code status = eSIR_MAC_SUCCESS_STATUS;
 
 	/*
 	 * Clear the buffers so that frame parser knows that there isn't a

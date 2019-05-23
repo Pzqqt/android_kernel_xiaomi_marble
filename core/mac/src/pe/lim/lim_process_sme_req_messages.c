@@ -3113,7 +3113,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 		 * denied STA we need to remove this HAL entry.
 		 * So to do that set updateContext to 1
 		 */
-		tSirMacStatusCodes mac_status_code =
+		enum mac_status_code mac_status_code =
 					eSIR_MAC_UNSPEC_FAILURE_STATUS;
 
 		if (!sta_ds->mlmStaContext.updateContext)

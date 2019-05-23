@@ -379,7 +379,7 @@
 /* Status Code (present in Management response frames) enum */
 /* (IEEE Std 802.11-2016, 9.4.1.9, Table 9-46) */
 
-typedef enum eSirMacStatusCodes {
+enum mac_status_code {
 	eSIR_MAC_SUCCESS_STATUS = 0,    /* Reserved */
 	eSIR_MAC_UNSPEC_FAILURE_STATUS = 1,     /* Unspecified reason */
 	/* 802.11 reserved                              2-9 */
@@ -466,8 +466,7 @@ typedef enum eSirMacStatusCodes {
 	eSIR_MAC_ESE_INVALID_PARAMETERS_STATUS = 203,   /* ESE-Invalid parameters. (Re)Assoc request had one or more TSPEC parameters with */
 	/* invalid values. */
 #endif
-
-} tSirMacStatusCodes;
+};
 
 /**
  * Reason Code (present in Deauthentication/Disassociation
