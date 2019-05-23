@@ -1292,7 +1292,17 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 			SDE_ERROR("dsi %d connector init failed\n", i);
 			dsi_display_drm_bridge_deinit(display);
 			sde_encoder_destroy(encoder);
+			continue;
 		}
+	}
+
+	rc = dsi_display_drm_ext_bridge_init(display,
+					encoder, connector);
+	if (rc) {
+		SDE_ERROR("dsi %d ext bridge init failed\n", rc);
+		dsi_display_drm_bridge_deinit(display);
+		sde_encoder_destroy(encoder);
+		sde_connector_destroy(connector);
 	}
 
 	/* wb */
@@ -2193,7 +2203,6 @@ static void _sde_kms_post_open(struct msm_kms *kms, struct drm_file *file)
 	struct drm_connector *connector = NULL;
 	struct drm_connector_list_iter conn_iter;
 	struct sde_connector *sde_conn = NULL;
-	int i;
 
 	if (!kms) {
 		SDE_ERROR("invalid kms\n");
@@ -2210,18 +2219,6 @@ static void _sde_kms_post_open(struct msm_kms *kms, struct drm_file *file)
 
 	if (!dev->mode_config.poll_enabled)
 		return;
-
-	/* init external dsi bridge here to make sure ext bridge is probed*/
-	for (i = 0; i < sde_kms->dsi_display_count; ++i) {
-		struct dsi_display *dsi_display;
-
-		dsi_display = sde_kms->dsi_displays[i];
-		if (dsi_display->bridge) {
-			dsi_display_drm_ext_bridge_init(dsi_display,
-				dsi_display->bridge->base.encoder,
-				dsi_display->drm_conn);
-		}
-	}
 
 	mutex_lock(&dev->mode_config.mutex);
 	drm_connector_list_iter_begin(dev, &conn_iter);

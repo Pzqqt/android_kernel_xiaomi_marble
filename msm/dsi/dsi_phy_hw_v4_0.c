@@ -182,12 +182,6 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 		DSI_W32(phy, DSIPHY_LNX_TX_DCTRL(i), tx_dctrl[i]);
 	}
 
-	if (cfg->force_clk_lane_hs) {
-		u32 reg = DSI_R32(phy, DSIPHY_CMN_LANE_CTRL1);
-
-		reg |= BIT(5) | BIT(6);
-		DSI_W32(phy, DSIPHY_CMN_LANE_CTRL1, reg);
-	}
 }
 
 /**
@@ -691,4 +685,19 @@ int dsi_phy_hw_v4_0_cache_phy_timings(struct dsi_phy_per_lane_cfgs *timings,
 		dst[i] = timings->lane_v4[i];
 
 	return 0;
+}
+
+void dsi_phy_hw_v4_0_set_continuous_clk(struct dsi_phy_hw *phy, bool enable)
+{
+	u32 reg = 0;
+
+	reg = DSI_R32(phy, DSIPHY_CMN_LANE_CTRL1);
+
+	if (enable)
+		reg |= BIT(5) | BIT(6);
+	else
+		reg &= ~(BIT(5) | BIT(6));
+
+	DSI_W32(phy, DSIPHY_CMN_LANE_CTRL1, reg);
+	wmb(); /* make sure request is set */
 }

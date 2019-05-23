@@ -330,5 +330,13 @@ void dsi_phy_dynamic_refresh_clear(struct msm_dsi_phy *phy);
  * @size:	   Number of phy lane settings.
  */
 int dsi_phy_dyn_refresh_cache_phy_timings(struct msm_dsi_phy *phy,
-					  u32 *dst, u32 size);
+
+		u32 *dst, u32 size);
+/**
+ * dsi_phy_set_continuous_clk() - API to set/unset force clock lane HS request.
+ * @phy:	DSI PHY Handle.
+ * @enable:	variable to control continuous clock.
+ */
+void dsi_phy_set_continuous_clk(struct msm_dsi_phy *phy, bool enable);
+
 #endif /* _DSI_PHY_H_ */

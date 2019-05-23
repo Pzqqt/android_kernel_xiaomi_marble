@@ -34,22 +34,6 @@
 
 #define TICKS_IN_MICRO_SECOND    1000000
 
-/**
- * enum dsi_ctrl_driver_ops - controller driver ops
- */
-enum dsi_ctrl_driver_ops {
-	DSI_CTRL_OP_POWER_STATE_CHANGE,
-	DSI_CTRL_OP_CMD_ENGINE,
-	DSI_CTRL_OP_VID_ENGINE,
-	DSI_CTRL_OP_HOST_ENGINE,
-	DSI_CTRL_OP_CMD_TX,
-	DSI_CTRL_OP_HOST_INIT,
-	DSI_CTRL_OP_TPG,
-	DSI_CTRL_OP_PHY_SW_RESET,
-	DSI_CTRL_OP_ASYNC_TIMING,
-	DSI_CTRL_OP_MAX
-};
-
 struct dsi_ctrl_list_item {
 	struct dsi_ctrl *ctrl;
 	struct list_head list;
@@ -833,6 +817,7 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 	u64 h_period, v_period, bit_rate, pclk_rate, bit_rate_per_lane,
 	    byte_clk_rate;
 	struct dsi_host_common_cfg *host_cfg = &config->common_config;
+	struct dsi_split_link_config *split_link = &host_cfg->split_link;
 	struct dsi_mode_info *timing = &config->video_timing;
 	u64 dsi_transfer_time_us = mode->priv_info->dsi_transfer_time_us;
 	u64 min_dsi_clk_hz = mode->priv_info->min_dsi_clk_hz;
@@ -849,6 +834,9 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		num_of_lanes++;
 	if (host_cfg->data_lanes & DSI_DATA_LANE_3)
 		num_of_lanes++;
+
+	if (split_link->split_link_enabled)
+		num_of_lanes = split_link->lanes_per_sublink;
 
 	config->common_config.num_data_lanes = num_of_lanes;
 	config->common_config.bpp = bpp;
@@ -943,6 +931,7 @@ static int dsi_ctrl_copy_and_pad_cmd(struct dsi_ctrl *dsi_ctrl,
 	int rc = 0;
 	u8 *buf = NULL;
 	u32 len, i;
+	u8 cmd_type = 0;
 
 	len = packet->size;
 	len += 0x3; len &= ~0x03; /* Align to 32 bits */
@@ -965,7 +954,11 @@ static int dsi_ctrl_copy_and_pad_cmd(struct dsi_ctrl *dsi_ctrl,
 
 
 	/* send embedded BTA for read commands */
-	if ((buf[2] & 0x3f) == MIPI_DSI_DCS_READ)
+	cmd_type = buf[2] & 0x3f;
+	if ((cmd_type == MIPI_DSI_DCS_READ) ||
+			(cmd_type == MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM) ||
+			(cmd_type == MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM) ||
+			(cmd_type == MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM))
 		buf[3] |= BIT(5);
 
 	*buffer = buf;
@@ -1509,7 +1502,7 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 	cmd = buff[0];
 	switch (cmd) {
 	case MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT:
-		pr_err("Rx ACK_ERROR\n");
+		pr_err("Rx ACK_ERROR 0x%x\n", cmd);
 		rc = 0;
 		break;
 	case MIPI_DSI_RX_GENERIC_SHORT_READ_RESPONSE_1BYTE:
@@ -1525,7 +1518,7 @@ static int dsi_message_rx(struct dsi_ctrl *dsi_ctrl,
 		rc = dsi_parse_long_read_resp(msg, buff);
 		break;
 	default:
-		pr_warn("Invalid response\n");
+		pr_warn("Invalid response: 0x%x\n", cmd);
 		rc = 0;
 	}
 
@@ -1599,6 +1592,18 @@ static int dsi_disable_ulps(struct dsi_ctrl *dsi_ctrl)
 	}
 
 	return rc;
+}
+
+static void dsi_ctrl_enable_error_interrupts(struct dsi_ctrl *dsi_ctrl)
+{
+	if (dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE &&
+			!dsi_ctrl->host_config.u.video_engine.bllp_lp11_en &&
+			!dsi_ctrl->host_config.u.video_engine.eof_bllp_lp11_en)
+		dsi_ctrl->hw.ops.enable_error_interrupts(&dsi_ctrl->hw,
+				0xFF00A0);
+	else
+		dsi_ctrl->hw.ops.enable_error_interrupts(&dsi_ctrl->hw,
+				0xFF00E0);
 }
 
 static int dsi_ctrl_drv_state_init(struct dsi_ctrl *dsi_ctrl)
@@ -1729,6 +1734,9 @@ static int dsi_ctrl_dts_parse(struct dsi_ctrl *dsi_ctrl,
 
 	dsi_ctrl->null_insertion_enabled = of_property_read_bool(of_node,
 					"qcom,null-insertion-enabled");
+
+	dsi_ctrl->split_link_supported = of_property_read_bool(of_node,
+					"qcom,split-link-supported");
 
 	rc = of_property_read_u32(of_node, "frame-threshold-time-us",
 			&frame_threshold_time_us);
@@ -2217,7 +2225,7 @@ int dsi_ctrl_setup(struct dsi_ctrl *dsi_ctrl)
 	}
 
 	dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw, 0x0);
-	dsi_ctrl->hw.ops.enable_error_interrupts(&dsi_ctrl->hw, 0xFF00E0);
+	dsi_ctrl_enable_error_interrupts(dsi_ctrl);
 	dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, true);
 
 	mutex_unlock(&dsi_ctrl->ctrl_lock);
@@ -2339,6 +2347,12 @@ static void dsi_ctrl_handle_error_status(struct dsi_ctrl *dsi_ctrl,
 	/* DTLN PHY error */
 	if (error & 0x3000E00)
 		pr_err("dsi PHY contention error: 0x%lx\n", error);
+
+	/* ignore TX timeout if blpp_lp11 is disabled */
+	if (dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE &&
+			!dsi_ctrl->host_config.u.video_engine.bllp_lp11_en &&
+			!dsi_ctrl->host_config.u.video_engine.eof_bllp_lp11_en)
+		error &= ~DSI_HS_TX_TIMEOUT;
 
 	/* TX timeout error */
 	if (error & 0xE0) {
@@ -2637,27 +2651,34 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl)
 }
 
 /**
- * dsi_ctrl_update_host_init_state() - Update the host initialization state.
+ * dsi_ctrl_update_host_state() - Update the host initialization state.
  * @dsi_ctrl:        DSI controller handle.
+ * @op:			ctrl driver ops
  * @enable:        boolean signifying host state.
  *
- * Update the host initialization status only while exiting from ulps during
- * suspend state.
+ * Update the host status only while exiting from ulps during suspend state.
  *
  * Return: error code.
  */
-int dsi_ctrl_update_host_init_state(struct dsi_ctrl *dsi_ctrl, bool enable)
+int dsi_ctrl_update_host_state(struct dsi_ctrl *dsi_ctrl,
+				enum dsi_ctrl_driver_ops op, bool enable)
 {
 	int rc = 0;
 	u32 state = enable ? 0x1 : 0x0;
 
-	rc = dsi_ctrl_check_state(dsi_ctrl, DSI_CTRL_OP_HOST_INIT, state);
+	if (!dsi_ctrl)
+		return rc;
+	mutex_lock(&dsi_ctrl->ctrl_lock);
+	rc = dsi_ctrl_check_state(dsi_ctrl, op, state);
 	if (rc) {
 		pr_err("[DSI_%d] Controller state check failed, rc=%d\n",
 		       dsi_ctrl->cell_index, rc);
+		mutex_unlock(&dsi_ctrl->ctrl_lock);
 		return rc;
 	}
-	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_HOST_INIT, state);
+
+	dsi_ctrl_update_state(dsi_ctrl, op, state);
+	mutex_unlock(&dsi_ctrl->ctrl_lock);
 	return rc;
 }
 
@@ -2720,7 +2741,7 @@ int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled)
 	}
 
 	dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw, 0x0);
-	dsi_ctrl->hw.ops.enable_error_interrupts(&dsi_ctrl->hw, 0xFF00E0);
+	dsi_ctrl_enable_error_interrupts(dsi_ctrl);
 
 	pr_debug("[DSI_%d]Host initialization complete, continuous splash status:%d\n",
 		dsi_ctrl->cell_index, is_splash_enabled);
@@ -2746,6 +2767,16 @@ void dsi_ctrl_isr_configure(struct dsi_ctrl *dsi_ctrl, bool enable)
 	else
 		_dsi_ctrl_destroy_isr(dsi_ctrl);
 
+	mutex_unlock(&dsi_ctrl->ctrl_lock);
+}
+
+void dsi_ctrl_hs_req_sel(struct dsi_ctrl *dsi_ctrl, bool sel_phy)
+{
+	if (!dsi_ctrl)
+		return;
+
+	mutex_lock(&dsi_ctrl->ctrl_lock);
+	dsi_ctrl->hw.ops.hs_req_sel(&dsi_ctrl->hw, sel_phy);
 	mutex_unlock(&dsi_ctrl->ctrl_lock);
 }
 
