@@ -576,7 +576,7 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 
 	beacon_tx_complete_ind->messageType = WMA_DFS_BEACON_TX_SUCCESS_IND;
 	beacon_tx_complete_ind->length = sizeof(tSirFirstBeaconTxCompleteInd);
-	beacon_tx_complete_ind->bssIdx = resp_event->vdev_id;
+	beacon_tx_complete_ind->bss_idx = resp_event->vdev_id;
 
 	wma_send_msg(wma, WMA_DFS_BEACON_TX_SUCCESS_IND,
 		     (void *)beacon_tx_complete_ind, 0);
@@ -2658,7 +2658,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	vdev_id = edca_params->bssIdx;
+	vdev_id = edca_params->bss_idx;
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: vdev id:%d is not active ", __func__, vdev_id);
 		goto fail;
@@ -3174,7 +3174,7 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 				     WLAN_CONTROL_PATH);
 	beacon_miss_ind->messageType = WMA_MISSED_BEACON_IND;
 	beacon_miss_ind->length = sizeof(*beacon_miss_ind);
-	beacon_miss_ind->bssIdx = vdev_id;
+	beacon_miss_ind->bss_idx = vdev_id;
 
 	wma_send_msg(wma, WMA_MISSED_BEACON_IND, beacon_miss_ind, 0);
 	if (!wmi_service_enabled(wma->wmi_handle,

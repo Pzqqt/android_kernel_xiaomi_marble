@@ -800,7 +800,7 @@ void lim_send_set_bss_key_req(struct mac_context *mac,
 	}
 
 	/* Update the WMA_SET_BSSKEY_REQ parameters */
-	pSetBssKeyParams->bssIdx = pe_session->bssIdx;
+	pSetBssKeyParams->bss_idx = pe_session->bss_idx;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
 	pSetBssKeyParams->singleTidRc =

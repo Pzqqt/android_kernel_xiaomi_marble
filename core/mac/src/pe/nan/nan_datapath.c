@@ -363,7 +363,7 @@ void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId,
 			session_entry->limMlmState));
-		session_entry->bssIdx = (uint8_t) add_bss_params->bssIdx;
+		session_entry->bss_idx = (uint8_t)add_bss_params->bss_idx;
 		session_entry->limSystemRole = eLIM_NDI_ROLE;
 		session_entry->statypeForBss = STA_ENTRY_SELF;
 		session_entry->staId = add_bss_params->staContext.staIdx;
@@ -414,7 +414,7 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 
 	if (del_bss->status != QDF_STATUS_SUCCESS) {
 		pe_err("NDI: DEL_BSS_RSP error (%x) Bss %d",
-			del_bss->status, del_bss->bssIdx);
+			del_bss->status, del_bss->bss_idx);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -523,7 +523,7 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
-	sta_ds->bssId = add_sta_rsp->bssIdx;
+	sta_ds->bssId = add_sta_rsp->bss_idx;
 	sta_ds->staIndex = add_sta_rsp->staIdx;
 	sta_ds->valid = 1;
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;

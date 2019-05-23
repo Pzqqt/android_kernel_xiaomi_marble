@@ -281,7 +281,7 @@ void lim_decide_sta_protection_on_assoc(struct mac_context *mac,
 		struct pe_session *pe_session);
 void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		tDot11fIEHTInfo *pHTInfo,
-		uint8_t bssIdx,
+		uint8_t bss_idx,
 		struct pe_session *pe_session);
 /* Print MAC address utility function */
 void lim_print_mac_addr(struct mac_context *, tSirMacAddr, uint8_t);

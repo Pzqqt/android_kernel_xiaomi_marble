@@ -472,10 +472,10 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	pe_debug("Set the mlm state: %d session: %d",
 		       pe_session->limMlmState, pe_session->peSessionId);
 
-	pe_session->bssIdx = (uint8_t) pAddBssParams->bssIdx;
+	pe_session->bss_idx = (uint8_t)pAddBssParams->bss_idx;
 
 	/* Success, handle below */
-	sta->bssId = pAddBssParams->bssIdx;
+	sta->bssId = pAddBssParams->bss_idx;
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
 	sta->staIndex = pAddBssParams->staContext.staIdx;
 

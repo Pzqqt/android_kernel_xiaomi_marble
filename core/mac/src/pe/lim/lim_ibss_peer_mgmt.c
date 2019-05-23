@@ -602,9 +602,9 @@ void ibss_bss_delete(struct mac_context *mac_ctx, struct pe_session *session)
 			session->limMlmState);
 		return;
 	}
-	status = lim_del_bss(mac_ctx, NULL, session->bssIdx, session);
+	status = lim_del_bss(mac_ctx, NULL, session->bss_idx, session);
 	if (QDF_IS_STATUS_ERROR(status))
-		pe_err("delBss failed for bss: %d", session->bssIdx);
+		pe_err("delBss failed for bss: %d", session->bss_idx);
 }
 
 /**
@@ -964,8 +964,8 @@ lim_ibss_sta_add(struct mac_context *mac, void *pBody, struct pe_session *pe_ses
 					pe_debug("---> Update Beacon Params");
 					sch_set_fixed_beacon_fields(mac,
 								    pe_session);
-					beaconParams.bssIdx =
-						pe_session->bssIdx;
+					beaconParams.bss_idx =
+						pe_session->bss_idx;
 					lim_send_beacon_params(mac, &beaconParams,
 							       pe_session);
 				}
@@ -1186,7 +1186,7 @@ lim_ibss_add_sta_rsp(struct mac_context *mac, void *msg, struct pe_session *pe_s
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sta->bssId = pAddStaParams->bssIdx;
+	sta->bssId = pAddStaParams->bss_idx;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->valid = 1;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
@@ -1217,7 +1217,7 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP(coalesce) error: %x Bss: %d",
-			pDelBss->status, pDelBss->bssIdx);
+			pDelBss->status, pDelBss->bss_idx);
 		goto end;
 	}
 
@@ -1299,7 +1299,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP error: %x Bss: %d",
-			       pDelBss->status, pDelBss->bssIdx);
+			       pDelBss->status, pDelBss->bss_idx);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -1514,7 +1514,7 @@ lim_ibss_coalesce(struct mac_context *mac,
 		if (beaconParams.paramChangeBitmap) {
 			pe_err("beaconParams.paramChangeBitmap=1 ---> Update Beacon Params");
 			sch_set_fixed_beacon_fields(mac, pe_session);
-			beaconParams.bssIdx = pe_session->bssIdx;
+			beaconParams.bss_idx = pe_session->bss_idx;
 			lim_send_beacon_params(mac, &beaconParams, pe_session);
 		}
 	} else

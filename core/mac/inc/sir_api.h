@@ -1360,7 +1360,7 @@ struct mic_failure_ind {
 struct missed_beacon_ind {
 	uint16_t messageType;   /* eWNI_SME_MISSED_BEACON_IND */
 	uint16_t length;
-	uint8_t bssIdx;
+	uint8_t bss_idx;
 };
 
 /* / Definition for Set Context request */
@@ -1674,7 +1674,7 @@ typedef struct sSmeIbssPeerInd {
 } tSmeIbssPeerInd, *tpSmeIbssPeerInd;
 
 struct ibss_peer_inactivity_ind {
-	uint8_t bssIdx;
+	uint8_t bss_idx;
 	uint8_t staIdx;
 	struct qdf_mac_addr peer_addr;
 };
@@ -2930,7 +2930,7 @@ typedef struct sSirDfsCsaIeRequest {
 typedef struct sSirFirstBeaconTxCompleteInd {
 	uint16_t messageType;   /* eWNI_SME_MISSED_BEACON_IND */
 	uint16_t length;
-	uint8_t bssIdx;
+	uint8_t bss_idx;
 } tSirFirstBeaconTxCompleteInd, *tpSirFirstBeaconTxCompleteInd;
 
 typedef struct sSirSmeCSAIeTxCompleteRsp {

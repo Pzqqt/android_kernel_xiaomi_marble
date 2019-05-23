@@ -228,7 +228,7 @@ static void pe_reset_protection_callback(void *ptr)
 		pe_debug("protection changed, update beacon template");
 		/* update beacon fix params and send update to FW */
 		qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
-		beacon_params.bssIdx = pe_session_entry->bssIdx;
+		beacon_params.bss_idx = pe_session_entry->bss_idx;
 		beacon_params.fShortPreamble =
 				pe_session_entry->beaconParams.fShortPreamble;
 		beacon_params.beaconInterval =
@@ -733,28 +733,28 @@ struct pe_session *pe_find_session_by_bssid(struct mac_context *mac, uint8_t *bs
 
 }
 
-/*--------------------------------------------------------------------------
-   \brief pe_find_session_by_bss_idx() - looks up the PE session given the bssIdx.
-
-   This function returns the session context  if the session
-   corresponding to the given bssIdx is found in the PE session table.
-   \param mac                   - pointer to global adapter context
-   \param bssIdx                   - bss index of the session
-   \return struct pe_session *         - pointer to the session context or NULL if session is not found.
-   \sa
-   --------------------------------------------------------------------------*/
-struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac, uint8_t bssIdx)
+/**
+ * pe_find_session_by_bss_idx() - looks up the PE session given the bss_idx.
+ *
+ * This function returns the session context  if the session
+ * corresponding to the given bss_idx is found in the PE session table.
+ * @mac:             pointer to global adapter context
+ * @bss_idx:         bss index of the session
+ *
+ * Return: pointer to the session context or NULL if session is not found.
+ */
+struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac,
+					      uint8_t bss_idx)
 {
 	uint8_t i;
 
 	for (i = 0; i < mac->lim.maxBssId; i++) {
 		/* If BSSID matches return corresponding tables address */
-		if ((mac->lim.gpSession[i].valid)
-		    && (mac->lim.gpSession[i].bssIdx == bssIdx)) {
+		if ((mac->lim.gpSession[i].valid) &&
+		    (mac->lim.gpSession[i].bss_idx == bss_idx))
 			return &mac->lim.gpSession[i];
-		}
 	}
-	pe_debug("Session lookup fails for bssIdx: %d", bssIdx);
+	pe_debug("Session lookup fails for bss_idx: %d", bss_idx);
 	return NULL;
 }
 
@@ -847,7 +847,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 
 	pe_debug("Trying to delete PE session: %d Opmode: %d BssIdx: %d BSSID: "QDF_MAC_ADDR_STR,
 		session->peSessionId, session->operMode,
-		session->bssIdx,
+		session->bss_idx,
 		QDF_MAC_ADDR_ARRAY(session->bssId));
 
 	lim_reset_bcn_probe_filter(mac_ctx, session);

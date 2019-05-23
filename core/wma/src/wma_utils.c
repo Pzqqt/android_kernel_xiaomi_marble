@@ -4831,7 +4831,7 @@ void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 		WMA_LOGE("%s wma handle is NULL", __func__);
 		return;
 	}
-	wma_remove_peer(wma, add_bss_params->bssId, add_bss_params->bssIdx,
+	wma_remove_peer(wma, add_bss_params->bssId, add_bss_params->bss_idx,
 			peer, false);
 }
 
@@ -4900,7 +4900,7 @@ static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
 					   tpAddBssParams add_bss)
 {
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
-		 add_bss->bssIdx, add_bss->status);
+		 add_bss->bss_idx, add_bss->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 
 	return QDF_STATUS_SUCCESS;
@@ -5026,9 +5026,9 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	tpAddBssParams bss_params = (tpAddBssParams)data;
 
-	if (wma_send_vdev_stop_to_fw(wma, bss_params->bssIdx))
+	if (wma_send_vdev_stop_to_fw(wma, bss_params->bss_idx))
 		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
-			 bss_params->bssIdx);
+			 bss_params->bss_idx);
 
 	wma_remove_peer_on_add_bss_failure(bss_params);
 

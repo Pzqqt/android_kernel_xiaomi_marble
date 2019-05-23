@@ -2817,7 +2817,7 @@ QDF_STATUS lim_sta_send_del_bss(struct pe_session *session)
 
 	status = lim_del_bss(mac_ctx, sta_ds, 0, session);
 	if (QDF_IS_STATUS_ERROR(status))
-		pe_err("delBss failed for bss %d", session->bssIdx);
+		pe_err("delBss failed for bss %d", session->bss_idx);
 
 end:
 	return status;
@@ -2828,10 +2828,10 @@ QDF_STATUS lim_send_vdev_stop(struct pe_session *session)
 	struct mac_context *mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
 
-	status = lim_del_bss(mac_ctx, NULL, session->bssIdx, session);
+	status = lim_del_bss(mac_ctx, NULL, session->bss_idx, session);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("delBss failed for bss %d", session->bssIdx);
+		pe_err("delBss failed for bss %d", session->bss_idx);
 		lim_send_stop_bss_failure_resp(mac_ctx, session);
 	}
 
@@ -3858,7 +3858,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 			/* Update beacon */
 			sch_set_fixed_beacon_fields(mac, pe_session);
 
-			beaconParams.bssIdx = pe_session->bssIdx;
+			beaconParams.bss_idx = pe_session->bss_idx;
 			/* Set change in beacon Interval */
 			beaconParams.beaconInterval =
 				pChangeBIParams->beaconInterval;

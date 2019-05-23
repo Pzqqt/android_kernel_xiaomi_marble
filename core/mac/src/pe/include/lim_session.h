@@ -149,7 +149,7 @@ struct pe_session {
 	tSirMacAddr bssId;
 	tSirMacAddr selfMacAddr;
 	tSirMacSSid ssId;
-	uint8_t bssIdx;
+	uint8_t bss_idx;
 	uint8_t valid;
 	tLimMlmStates limMlmState;      /* MLM State */
 	tLimMlmStates limPrevMlmState;  /* Previous MLM State */
@@ -648,17 +648,18 @@ struct pe_session *pe_find_session_by_bssid(struct mac_context *mac, uint8_t *bs
 				     uint8_t *sessionId);
 
 /**
- * pe_find_session_by_bss_idx() - looks up the PE session given the bssIdx.
+ * pe_find_session_by_bss_idx() - looks up the PE session given the bss_idx.
  *
  * @mac:          pointer to global adapter context
- * @bssIdx:        bss index of the session
+ * @bss_idx:        bss index of the session
  *
  * This function returns the session context  if the session
- * corresponding to the given bssIdx is found in the PE session table.
+ * corresponding to the given bss_idx is found in the PE session table.
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac, uint8_t bssIdx);
+struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac,
+					      uint8_t bss_idx);
 
 /**
  * pe_find_session_by_peer_sta() - looks up the PE session given the Peer

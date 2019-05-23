@@ -660,7 +660,7 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 	if (!pe_session->add_bss_failed) {
 		if (pe_session->limSmeState == eLIM_SME_JOIN_FAILURE_STATE) {
 			retCode =
-				lim_del_bss(mac, sta, pe_session->bssIdx,
+				lim_del_bss(mac, sta, pe_session->bss_idx,
 					    pe_session);
 		} else
 			retCode = lim_del_sta(mac,
@@ -3023,7 +3023,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 		return;
 	}
 
-	beacon_params.bssIdx = session_entry->bssIdx;
+	beacon_params.bss_idx = session_entry->bss_idx;
 	sta_ds = dph_lookup_hash_entry(mac_ctx, sta_addr, &aid,
 			 &session_entry->dph.dphHashTable);
 
@@ -3349,7 +3349,7 @@ QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac,
  */
 
 QDF_STATUS
-lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bssIdx,
+lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 	    struct pe_session *pe_session)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
@@ -3365,11 +3365,11 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bssIdx,
 	/* DPH was storing the AssocID in staID field, */
 	/* staID is actually assigned by HAL when AddSTA message is sent. */
 	if (sta) {
-		pDelBssParams->bssIdx = sta->bssId;
+		pDelBssParams->bss_idx = sta->bssId;
 		sta->valid = 0;
 		sta->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
 	} else
-		pDelBssParams->bssIdx = bssIdx;
+		pDelBssParams->bss_idx = bss_idx;
 	pe_session->limMlmState = eLIM_MLM_WT_DEL_BSS_RSP_STATE;
 	MTRACE(mac_trace
 		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
@@ -3389,7 +3389,7 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bssIdx,
 	pDelBssParams->smesessionId = pe_session->smeSessionId;
 	pe_debug("Sessionid %d : Sending HAL_DELETE_BSS_REQ "
 			  "for bss idx: %X BSSID:" QDF_MAC_ADDR_STR,
-		       pDelBssParams->sessionId, pDelBssParams->bssIdx,
+		       pDelBssParams->sessionId, pDelBssParams->bss_idx,
 		       QDF_MAC_ADDR_ARRAY(pe_session->bssId));
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);

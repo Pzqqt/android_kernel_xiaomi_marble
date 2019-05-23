@@ -1812,7 +1812,7 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 {
 	struct missed_beacon_ind *missed_beacon_ind = msg->bodyptr;
 	struct pe_session *pe_session =
-		pe_find_session_by_bss_idx(mac, missed_beacon_ind->bssIdx);
+		pe_find_session_by_bss_idx(mac, missed_beacon_ind->bss_idx);
 
 	if (!pe_session) {
 		pe_err("session does not exist for given BSSId");
@@ -2254,10 +2254,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	add_bss_params->bssIdx = roam_sync_ind_ptr->roamed_vdev_id;
-	ft_session_ptr->bssIdx = (uint8_t) add_bss_params->bssIdx;
+	add_bss_params->bss_idx = roam_sync_ind_ptr->roamed_vdev_id;
+	ft_session_ptr->bss_idx = (uint8_t)add_bss_params->bss_idx;
 
-	curr_sta_ds->bssId = add_bss_params->bssIdx;
+	curr_sta_ds->bssId = add_bss_params->bss_idx;
 	curr_sta_ds->staIndex = add_bss_params->staContext.staIdx;
 	rrm_cache_mgmt_tx_power(mac_ctx, add_bss_params->txMgmtPower,
 				ft_session_ptr);

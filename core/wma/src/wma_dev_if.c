@@ -1155,7 +1155,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			 __func__, bcn, bcn->buf);
 	}
 	add_bss->status = QDF_STATUS_SUCCESS;
-	add_bss->bssIdx = resp_event->vdev_id;
+	add_bss->bss_idx = resp_event->vdev_id;
 	add_bss->chainMask = resp_event->chain_mask;
 	if ((2 != resp_event->cfgd_rx_streams) ||
 		(2 != resp_event->cfgd_tx_streams)) {
@@ -4855,7 +4855,7 @@ send_bss_resp:
 		add_bss->status = QDF_STATUS_E_FAILURE;
 	else
 		add_bss->status = QDF_STATUS_SUCCESS;
-	add_bss->bssIdx = add_bss->staContext.smesessionId;
+	add_bss->bss_idx = add_bss->staContext.smesessionId;
 	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 

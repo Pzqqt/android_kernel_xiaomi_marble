@@ -226,7 +226,7 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
  */
 QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
-				   uint16_t bssIdx, bool mu_edca)
+				   uint16_t bss_idx, bool mu_edca)
 {
 	tEdcaParams *pEdcaParams = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -235,7 +235,7 @@ QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 	pEdcaParams = qdf_mem_malloc(sizeof(tEdcaParams));
 	if (!pEdcaParams)
 		return QDF_STATUS_E_NOMEM;
-	pEdcaParams->bssIdx = bssIdx;
+	pEdcaParams->bss_idx = bss_idx;
 	pEdcaParams->acbe = pUpdatedEdcaParams[QCA_WLAN_AC_BE];
 	pEdcaParams->acbk = pUpdatedEdcaParams[QCA_WLAN_AC_BK];
 	pEdcaParams->acvi = pUpdatedEdcaParams[QCA_WLAN_AC_VI];
@@ -603,8 +603,8 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-		"OBSS Scan Indication bssIdx- %d staId %d",
-		session->bssIdx, session->staId);
+		"OBSS Scan Indication bss_idx- %d staId %d",
+		session->bss_idx, session->staId);
 
 	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
 	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
@@ -644,7 +644,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	ht40_obss_scanind->channel_count = channel24gnum;
 	/* FW API requests BSS IDX */
 	ht40_obss_scanind->self_sta_idx = session->staId;
-	ht40_obss_scanind->bss_id = session->bssIdx;
+	ht40_obss_scanind->bss_id = session->bss_idx;
 	ht40_obss_scanind->fortymhz_intolerent = 0;
 	ht40_obss_scanind->iefield_len = 0;
 	msg.type = WMA_HT40_OBSS_SCAN_IND;

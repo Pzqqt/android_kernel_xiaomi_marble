@@ -878,7 +878,7 @@ void lim_handle_update_olbc_cache(struct mac_context *mac_ctx)
 		return;
 	}
 	qdf_mem_zero((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams));
-	beaconParams.bssIdx = pe_session->bssIdx;
+	beaconParams.bss_idx = pe_session->bss_idx;
 
 	beaconParams.paramChangeBitmap = 0;
 	/*
@@ -3926,14 +3926,14 @@ static void lim_ht_switch_chnl_req(struct pe_session *session)
  * \param pRcvdHTInfo Pointer to HT Info IE obtained from a  Beacon or
  * Probe Response
  *
- * \param bssIdx BSS Index of the Bss to which Station is associated.
+ * \param bss_idx BSS Index of the Bss to which Station is associated.
  *
  *
  */
 
 void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 						   tDot11fIEHTInfo *pHTInfo,
-						   uint8_t bssIdx,
+						   uint8_t bss_idx,
 						   struct pe_session *pe_session)
 {
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
@@ -4674,7 +4674,7 @@ void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 		 * Failure detected
 		 */
 		pe_debug("Sending Probe for Session: %d",
-			psession_entry->bssIdx);
+			psession_entry->bss_idx);
 		lim_deactivate_and_change_timer(mac_ctx,
 			eLIM_PROBE_AFTER_HB_TIMER);
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE, 0,

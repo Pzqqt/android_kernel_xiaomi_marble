@@ -1618,7 +1618,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 	}
 	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
 		pe_debug("STA received the DEL_BSS_RSP for BSSID: %X",
-			       pDelBssParams->bssIdx);
+			       pDelBssParams->bss_idx);
 		if (lim_set_link_state
 			    (mac, eSIR_LINK_IDLE_STATE, pe_session->bssId,
 			    pe_session->selfMacAddr, NULL,
@@ -1706,7 +1706,7 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 	}
 	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		pe_err("BSS: DEL_BSS_RSP error (%x) Bss %d",
-			pDelBss->status, pDelBss->bssIdx);
+			pDelBss->status, pDelBss->bss_idx);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
 		goto end;
 	}
@@ -1983,7 +1983,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				       pe_session);
 		goto end;
 	}
-	sta->bssId = pAddStaParams->bssIdx;
+	sta->bssId = pAddStaParams->bss_idx;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->nss = pAddStaParams->nss;
 	/* if the AssocRsp frame is not acknowledged, then keep alive timer will take care of the state */
@@ -2091,7 +2091,7 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 			pe_session->statypeForBss = STA_ENTRY_PEER; /* to know session created for self/peer */
 			limResetHBPktCount(pe_session);
 		}
-		pe_session->bssIdx = (uint8_t) pAddBssParams->bssIdx;
+		pe_session->bss_idx = (uint8_t)pAddBssParams->bss_idx;
 
 		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
 
@@ -2220,7 +2220,7 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 		 */
 		pe_session->limIbssActive = false;
 		limResetHBPktCount(pe_session);
-		pe_session->bssIdx = (uint8_t) pAddBssParams->bssIdx;
+		pe_session->bss_idx = (uint8_t)pAddBssParams->bss_idx;
 		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
 		pe_session->statypeForBss = STA_ENTRY_SELF;
 		sch_edca_profile_update(mac, pe_session);
@@ -2313,9 +2313,9 @@ lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 				pAddBssParams->staContext.staMac, LOGE);
 			goto joinFailure;
 		}
-		session_entry->bssIdx = (uint8_t) pAddBssParams->bssIdx;
+		session_entry->bss_idx = (uint8_t)pAddBssParams->bss_idx;
 		/* Success, handle below */
-		sta->bssId = pAddBssParams->bssIdx;
+		sta->bssId = pAddBssParams->bss_idx;
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
 		sta->staIndex = pAddBssParams->staContext.staIdx;
 		/* Trigger Authentication with AP */
@@ -2467,10 +2467,10 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
 		} else {
-			session_entry->bssIdx =
-				(uint8_t) add_bss_params->bssIdx;
+			session_entry->bss_idx =
+				(uint8_t)add_bss_params->bss_idx;
 			/* Success, handle below */
-			sta_ds->bssId = add_bss_params->bssIdx;
+			sta_ds->bssId = add_bss_params->bss_idx;
 			/*
 			 * STA Index(genr by HAL) for the BSS
 			 * entry is stored here

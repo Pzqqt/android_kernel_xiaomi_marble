@@ -2728,7 +2728,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 		goto add_sta_error;
 	}
 
-	sta->bssId = pAddStaParams->bssIdx;
+	sta->bssId = pAddStaParams->bss_idx;
 	sta->staIndex = pAddStaParams->staIdx;
 	sta->mlmStaContext.mlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	sta->valid = 1;

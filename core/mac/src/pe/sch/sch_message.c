@@ -360,7 +360,7 @@ void sch_qos_update_local(struct mac_context *mac, struct pe_session *pe_session
 
 	/* For AP, the bssID is stored in LIM Global context. */
 	lim_send_edca_params(mac, pe_session->gLimEdcaParams,
-			     pe_session->bssIdx, false);
+			     pe_session->bss_idx, false);
 }
 
 /**
