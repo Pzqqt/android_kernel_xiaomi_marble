@@ -3402,13 +3402,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	if (dp_rx_pdev_mon_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"dp_rx_pdev_mon_attach failed");
-		goto fail1;
+		goto rx_mon_attach_fail;
 	}
 
 	if (dp_wdi_event_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"dp_wdi_evet_attach failed");
-		goto fail1;
+		goto wdi_attach_fail;
 	}
 
 	/* set the reo destination during initialization */
@@ -3444,6 +3444,16 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	dp_tx_ppdu_stats_attach(pdev);
 
 	return (struct cdp_pdev *)pdev;
+
+wdi_attach_fail:
+	/*
+	 * dp_mon_link_desc_pool_cleanup is done in dp_pdev_detach
+	 * and hence need not to be done here.
+	 */
+	dp_rx_pdev_mon_detach(pdev);
+
+rx_mon_attach_fail:
+	dp_rx_pdev_detach(pdev);
 
 fail1:
 	if (pdev->invalid_peer)

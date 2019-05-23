@@ -1485,6 +1485,78 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
 #endif
 
 /**
+ * dp_rx_pdev_mon_cmn_detach() - detach dp rx for monitor mode
+ * @pdev: core txrx pdev context
+ * @mac_id: mac_id for which deinit is to be done
+ *
+ * This function will free DP Rx resources for
+ * monitor mode
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static QDF_STATUS
+dp_rx_pdev_mon_cmn_detach(struct dp_pdev *pdev, int mac_id) {
+	struct dp_soc *soc = pdev->soc;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+	dp_mon_link_desc_pool_cleanup(soc, mac_for_pdev);
+	dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
+	dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_rx_pdev_mon_cmn_attach() - attach DP RX for monitor mode
+ * @pdev: core txrx pdev context
+ * @mac_id: mac_id for which init is to be done
+ *
+ * This function Will allocate dp rx resource and
+ * initialize resources for monitor mode.
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static QDF_STATUS
+dp_rx_pdev_mon_cmn_attach(struct dp_pdev *pdev, int mac_id) {
+	struct dp_soc *soc = pdev->soc;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+	QDF_STATUS status;
+
+	status = dp_rx_pdev_mon_buf_attach(pdev, mac_for_pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("%s: dp_rx_pdev_mon_buf_attach() failed\n", __func__);
+		goto fail;
+	}
+
+	status = dp_rx_pdev_mon_status_attach(pdev, mac_for_pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("%s: dp_rx_pdev_mon_status_attach() failed", __func__);
+		goto mon_buf_detach;
+	}
+
+	status = dp_mon_link_desc_pool_setup(soc, mac_for_pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("%s: dp_mon_link_desc_pool_setup() failed", __func__);
+		goto mon_status_detach;
+	}
+
+	return status;
+
+mon_status_detach:
+	dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
+
+mon_buf_detach:
+	dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+
+fail:
+	return status;
+}
+
+/**
  * dp_rx_pdev_mon_attach() - attach DP RX for monitor mode
  * @pdev: core txrx pdev context
  *
@@ -1497,7 +1569,6 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
  */
 QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
-	struct dp_soc *soc = pdev->soc;
 	QDF_STATUS status;
 	uint8_t pdev_id = pdev->pdev_id;
 	int mac_id;
@@ -1506,37 +1577,25 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 			"%s: pdev attach id=%d", __func__, pdev_id);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
-
-		status = dp_rx_pdev_mon_buf_attach(pdev, mac_for_pdev);
+		status = dp_rx_pdev_mon_cmn_attach(pdev, mac_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: dp_rx_pdev_mon_buf_attach() failed\n",
-				   __func__);
-			return status;
-		}
-
-		status = dp_rx_pdev_mon_status_attach(pdev, mac_for_pdev);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_rx_pdev_mon_status_attach() failed",
-				__func__);
-			return status;
-		}
-
-		status = dp_mon_link_desc_pool_setup(soc, mac_for_pdev);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_mon_link_desc_pool_setup() failed",
-				__func__);
-			return status;
+				  "%s: dp_rx_pdev_mon_cmn_attach(%d) failed\n",
+				  __func__, mac_id);
+			goto fail;
 		}
 	}
 	pdev->mon_last_linkdesc_paddr = 0;
 	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
 	qdf_spinlock_create(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
+
+fail:
+	for (mac_id = mac_id - 1; mac_id >= 0; mac_id--)
+		dp_rx_pdev_mon_cmn_detach(pdev, mac_id);
+
+	return status;
 }
 
 QDF_STATUS
