@@ -4808,6 +4808,9 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		else
 			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
 				pps_val, status);
+
+		add_bss->staContext.no_ptk_4_way = add_bss->no_ptk_4_way;
+
 		status = wma_send_peer_assoc(wma, add_bss->nwType,
 					     &add_bss->staContext);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -5483,6 +5486,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			WMA_LOGD(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 		}
 
+		((tAddStaParams *)iface->addBssStaContext)->no_ptk_4_way =
+						params->no_ptk_4_way;
 		ret = wma_send_peer_assoc(wma,
 				iface->nwType,
 				(tAddStaParams *) iface->addBssStaContext);
