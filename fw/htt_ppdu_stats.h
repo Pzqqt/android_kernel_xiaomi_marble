@@ -1233,23 +1233,27 @@ typedef struct {
      * BIT [ 27:   24]   :- gi - HTT_PPDU_STATS_GI
      * BIT [ 28:   28]   :- dcm
      * BIT [ 29:   29]   :- ldpc
-     * BIT [ 31:   30]   :- reserved4
+     * BIT [ 30:   30]   :- valid_skipped_rate_ctrl
+     *                      This flag indicates whether the skipped_rate_ctrl
+     *                      flag should be ignored, or if it holds valid data.
+     * BIT [ 31:   31]   :- skipped_rate_ctrl
      */
     union {
         A_UINT32 rate_info;
         struct {
-            A_UINT32 ltf_size:           2,
-                     stbc:               1,
-                     he_re:              1,
-                     txbf:               4,
-                     bw:                 4,
-                     nss:                4,
-                     mcs:                4,
-                     preamble:           4,
-                     gi:                 4,
-                     dcm:                1,
-                     ldpc:               1,
-                     reserved4:          2;
+            A_UINT32 ltf_size:                2,
+                     stbc:                    1,
+                     he_re:                   1,
+                     txbf:                    4,
+                     bw:                      4,
+                     nss:                     4,
+                     mcs:                     4,
+                     preamble:                4,
+                     gi:                      4,
+                     dcm:                     1,
+                     ldpc:                    1,
+                     valid_skipped_rate_ctrl: 1,
+                     skipped_rate_ctrl:       1;
         };
     };
 
