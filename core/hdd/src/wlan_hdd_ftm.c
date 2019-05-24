@@ -46,13 +46,6 @@
 #include <wlan_ioctl_ftm.h>
 #include <wlan_cfg80211_ftm.h>
 
-struct qcmbr_data {
-	unsigned int cmd;
-	unsigned int length;
-	unsigned char buf[WLAN_FTM_DATA_MAX_LEN + 4];
-	unsigned int copy_to_user;
-};
-
 /**
  * hdd_update_cds_config_ftm() - API to update cds configuration parameters
  * for FTM mode.
@@ -92,74 +85,6 @@ int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
 #ifdef LINUX_QCMBR
 
 /**
- * wlan_hdd_qcmbr_command() - QCMBR command handler
- * @adapter: adapter upon which the command was received
- * @pqcmbr_data: QCMBR command
- *
- * Return: 0 on success, non-zero on error
- */
-static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
-				  struct qcmbr_data *pqcmbr_data)
-{
-	int ret = 0;
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
-
-	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->pdev,
-					  pqcmbr_data->cmd,
-					  pqcmbr_data->buf,
-					  pqcmbr_data->length);
-
-	return ret;
-}
-
-#ifdef CONFIG_COMPAT
-
-/**
- * wlan_hdd_qcmbr_ioctl() - Compatibility-mode QCMBR ioctl handler
- * @adapter: adapter upon which the ioctl was received
- * @ifr: the ioctl request
- *
- * Return: 0 on success, non-zero on error
- */
-static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
-				       struct ifreq *ifr)
-{
-	struct qcmbr_data *qcmbr_data;
-	int ret = 0;
-
-	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
-	if (!qcmbr_data)
-		return -ENOMEM;
-
-	if (copy_from_user(qcmbr_data, ifr->ifr_data, sizeof(*qcmbr_data))) {
-		ret = -EFAULT;
-		goto exit;
-	}
-
-	ret = wlan_hdd_qcmbr_command(adapter, qcmbr_data);
-	if ((ret == 0) && (qcmbr_data->cmd == 0x1001)) {
-		ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
-				   (WLAN_FTM_DATA_MAX_LEN + 4));
-	}
-
-exit:
-	qdf_mem_free(qcmbr_data);
-	return ret;
-}
-#else                           /* CONFIG_COMPAT */
-static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
-				       struct ifreq *ifr)
-{
-	return 0;
-}
-#endif /* CONFIG_COMPAT */
-
-/**
  * wlan_hdd_qcmbr_ioctl() - Standard QCMBR ioctl handler
  * @adapter: adapter upon which the ioctl was received
  * @ifr: the ioctl request
@@ -168,26 +93,19 @@ static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
  */
 static int wlan_hdd_qcmbr_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
-	struct qcmbr_data *qcmbr_data;
-	int ret = 0;
+	int ret, cmd;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
-	if (!qcmbr_data)
-		return -ENOMEM;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
 
-	if (copy_from_user(qcmbr_data, ifr->ifr_data, sizeof(*qcmbr_data))) {
-		ret = -EFAULT;
-		goto exit;
-	}
+	if (get_user(cmd, (int *)ifr->ifr_data) != 0)
+		return QDF_STATUS_E_FAILURE;
 
-	ret = wlan_hdd_qcmbr_command(adapter, qcmbr_data);
-	if ((ret == 0) && (qcmbr_data->cmd == 0x1001)) {
-		ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
-				   (WLAN_FTM_DATA_MAX_LEN + 4));
-	}
+	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->pdev, cmd,
+				(uint8_t *)ifr->ifr_data + sizeof(cmd));
 
-exit:
-	qdf_mem_free(qcmbr_data);
 	return ret;
 }
 
@@ -201,12 +119,9 @@ exit:
 int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter,
 				 struct ifreq *ifr)
 {
-	int ret = 0;
+	int ret;
 
-	if (in_compat_syscall())
-		ret = wlan_hdd_qcmbr_compat_ioctl(adapter, ifr);
-	else
-		ret = wlan_hdd_qcmbr_ioctl(adapter, ifr);
+	ret = wlan_hdd_qcmbr_ioctl(adapter, ifr);
 
 	return ret;
 }
