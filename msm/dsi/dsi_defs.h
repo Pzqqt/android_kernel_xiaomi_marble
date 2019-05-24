@@ -299,11 +299,15 @@ enum dsi_cmd_set_state {
  * @PIXEL_CLK:  DSI pixel clock.
  * @BYTE_CLK:   DSI byte clock.
  * @DSI_PHY:    DSI PHY.
+ * @DSI_CLK_ALL: All available DSI clocks
+ * @DSI_CLK_NONE: None of the clocks should be gated
  */
 enum dsi_clk_gate_type {
 	PIXEL_CLK = 1,
 	BYTE_CLK = 2,
 	DSI_PHY = 4,
+	DSI_CLK_ALL = (PIXEL_CLK | BYTE_CLK | DSI_PHY),
+	DSI_CLK_NONE = 8,
 };
 
 /**

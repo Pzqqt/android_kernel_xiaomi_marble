@@ -181,6 +181,7 @@ struct dsi_display_ext_bridge {
  * @misr_frame_count  Number of frames to accumulate the MISR value
  * @esd_trigger       field indicating ESD trigger through debugfs
  * @te_source         vsync source pin information
+ * @clk_gating_config Clocks for which clock gating needs to be enabled
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -264,6 +265,7 @@ struct dsi_display {
 	struct dsi_display_boot_param *boot_disp;
 
 	u32 te_source;
+	u32 clk_gating_config;
 };
 
 int dsi_display_dev_probe(struct platform_device *pdev);

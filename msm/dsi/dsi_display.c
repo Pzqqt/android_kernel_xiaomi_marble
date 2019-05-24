@@ -70,6 +70,8 @@ static int dsi_display_config_clk_gating(struct dsi_display *display,
 {
 	int rc = 0, i = 0;
 	struct dsi_display_ctrl *mctrl, *ctrl;
+	enum dsi_clk_gate_type clk_selection;
+	enum dsi_clk_gate_type const default_clk_select = PIXEL_CLK | DSI_PHY;
 
 	if (!display) {
 		pr_err("Invalid params\n");
@@ -82,12 +84,28 @@ static int dsi_display_config_clk_gating(struct dsi_display *display,
 		return -EINVAL;
 	}
 
-	rc = dsi_ctrl_config_clk_gating(mctrl->ctrl, enable, PIXEL_CLK |
-							DSI_PHY);
+	clk_selection = display->clk_gating_config;
+
+	if (!enable) {
+		/* for disable path, make sure to disable all clk gating */
+		clk_selection = DSI_CLK_ALL;
+	} else if (!clk_selection || clk_selection > DSI_CLK_NONE) {
+		/* Default selection, no overrides */
+		clk_selection = default_clk_select;
+	} else if (clk_selection == DSI_CLK_NONE) {
+		clk_selection = 0;
+	}
+
+	pr_debug("%s clock gating Byte:%s Pixel:%s PHY:%s\n",
+		enable ? "Enabling" : "Disabling",
+		clk_selection & BYTE_CLK ? "yes" : "no",
+		clk_selection & PIXEL_CLK ? "yes" : "no",
+		clk_selection & DSI_PHY ? "yes" : "no");
+	rc = dsi_ctrl_config_clk_gating(mctrl->ctrl, enable, clk_selection);
 	if (rc) {
-		pr_err("[%s] failed to %s clk gating, rc=%d\n",
+		pr_err("[%s] failed to %s clk gating for clocks %d, rc=%d\n",
 				display->name, enable ? "enable" : "disable",
-				rc);
+				clk_selection, rc);
 		return rc;
 	}
 
@@ -99,11 +117,13 @@ static int dsi_display_config_clk_gating(struct dsi_display *display,
 		 * In Split DSI usecase we should not enable clock gating on
 		 * DSI PHY1 to ensure no display atrifacts are seen.
 		 */
-		rc = dsi_ctrl_config_clk_gating(ctrl->ctrl, enable, PIXEL_CLK);
+		clk_selection &= ~DSI_PHY;
+		rc = dsi_ctrl_config_clk_gating(ctrl->ctrl, enable,
+				clk_selection);
 		if (rc) {
-			pr_err("[%s] failed to %s pixel clk gating, rc=%d\n",
+			pr_err("[%s] failed to %s clk gating for clocks %d, rc=%d\n",
 				display->name, enable ? "enable" : "disable",
-				rc);
+				clk_selection, rc);
 			return rc;
 		}
 	}
@@ -1592,6 +1612,13 @@ static int dsi_display_debugfs_init(struct dsi_display *display)
 	if (!debugfs_create_bool("ulps_status", 0400, dir,
 			&display->ulps_enabled)) {
 		pr_err("[%s] debugfs create ulps status file failed\n",
+		       display->name);
+		goto error_remove_dir;
+	}
+
+	if (!debugfs_create_u32("clk_gating_config", 0600, dir,
+			&display->clk_gating_config)) {
+		pr_err("[%s] debugfs create clk gating config failed\n",
 		       display->name);
 		goto error_remove_dir;
 	}
