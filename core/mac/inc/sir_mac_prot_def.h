@@ -137,14 +137,6 @@
 #define SIR_MAC_RRM_LOCATION_CIVIC_TYPE        11
 #define SIR_MAC_RRM_FINE_TIME_MEAS_TYPE        16
 
-/* RRM action codes */
-#define SIR_MAC_RRM_RADIO_MEASURE_REQ          0
-#define SIR_MAC_RRM_RADIO_MEASURE_RPT          1
-#define SIR_MAC_RRM_LINK_MEASUREMENT_REQ       2
-#define SIR_MAC_RRM_LINK_MEASUREMENT_RPT       3
-#define SIR_MAC_RRM_NEIGHBOR_REQ               4
-#define SIR_MAC_RRM_NEIGHBOR_RPT               5
-
 /* VHT Action Field */
 #define SIR_MAC_VHT_GID_NOTIFICATION           1
 #define SIR_MAC_VHT_OPMODE_NOTIFICATION        2

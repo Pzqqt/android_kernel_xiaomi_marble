@@ -1955,12 +1955,12 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		    mac_ctx->roam.roamSession
 		    [session->smeSessionId].dhcp_done) {
 			switch (action_hdr->actionID) {
-			case SIR_MAC_RRM_RADIO_MEASURE_REQ:
+			case RRM_RADIO_MEASURE_REQ:
 				__lim_process_radio_measure_request(mac_ctx,
 						(uint8_t *)rx_pkt_info,
 						session);
 				break;
-			case SIR_MAC_RRM_LINK_MEASUREMENT_REQ:
+			case RRM_LINK_MEASUREMENT_REQ:
 				if (!lim_is_valid_frame(
 					&rrm_link_action_frm,
 					rx_pkt_info))
@@ -1975,7 +1975,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 							rx_pkt_info);
 
 				break;
-			case SIR_MAC_RRM_NEIGHBOR_RPT:
+			case RRM_NEIGHBOR_RPT:
 				__lim_process_neighbor_report(mac_ctx,
 						(uint8_t *)rx_pkt_info,
 						session);

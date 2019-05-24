@@ -3987,7 +3987,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_RRM;
-	frm.Action.action = SIR_MAC_RRM_NEIGHBOR_REQ;
+	frm.Action.action = RRM_NEIGHBOR_REQ;
 	frm.DialogToken.token = pNeighborReq->dialogToken;
 
 	if (pNeighborReq->ssid_present) {
@@ -4124,7 +4124,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_RRM;
-	frm.Action.action = SIR_MAC_RRM_LINK_MEASUREMENT_RPT;
+	frm.Action.action = RRM_LINK_MEASUREMENT_RPT;
 	frm.DialogToken.token = pLinkReport->dialogToken;
 
 	/* IEEE Std. 802.11 7.3.2.18. for the report element. */
@@ -4266,7 +4266,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		 dialog_token, num_report, is_last_frame);
 
 	frm->Category.category = ACTION_CATEGORY_RRM;
-	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;
+	frm->Action.action = RRM_RADIO_MEASURE_RPT;
 	frm->DialogToken.token = dialog_token;
 
 	frm->num_MeasurementReport =
