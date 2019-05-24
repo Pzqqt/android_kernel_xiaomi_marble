@@ -2776,6 +2776,11 @@ endif
 
 ccflags-y += -DSCHEDULER_CORE_MAX_MESSAGES=1000
 
+# Defining Reduction Limit 0 for MCL. If it is not defined,
+#then WLAN_SCHED_REDUCTION_LIMIT will be 32 for
+# WIN.
+ccflags-y += -DWLAN_SCHED_REDUCTION_LIMIT=0
+
 # Determine if we are building against an arm architecture host
 ifeq ($(findstring arm, $(ARCH)),)
 	ccflags-y += -DWLAN_HOST_ARCH_ARM=0
