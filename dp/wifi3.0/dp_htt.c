@@ -26,6 +26,7 @@
 #include "htt_stats.h"
 #include "htt_ppdu_stats.h"
 #include "dp_htt.h"
+#include "dp_rx.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cdp_txrx_cmn_struct.h"
 
@@ -3488,6 +3489,57 @@ dp_pktlog_msg_handler(struct htt_soc *soc,
 {
 }
 #endif
+
+static void dp_htt_alert_print(enum htt_t2h_msg_type msg_type,
+			       u_int8_t pdev_id, u_int8_t ring_id,
+			       u_int16_t hp_idx, u_int16_t tp_idx,
+			       u_int32_t bkp_time, char *ring_stype)
+{
+	dp_alert("msg_type: %d pdev_id: %d ring_type: %s ",
+		 msg_type, pdev_id, ring_stype);
+	dp_alert("ring_id: %d hp_idx: %d tp_idx: %d bkpressure_time_ms: %d ",
+		 ring_id, hp_idx, tp_idx, bkp_time);
+}
+
+static void dp_htt_bkp_event_alert(u_int32_t *msg_word)
+{
+	u_int8_t ring_type;
+	u_int8_t pdev_id;
+	u_int8_t ring_id;
+	u_int16_t hp_idx;
+	u_int16_t tp_idx;
+	u_int32_t bkp_time;
+	enum htt_t2h_msg_type msg_type;
+
+	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
+	ring_type = HTT_T2H_RX_BKPRESSURE_RING_TYPE_GET(*msg_word);
+	pdev_id = HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(*msg_word);
+	pdev_id = DP_HW2SW_MACID(pdev_id);
+	ring_id = HTT_T2H_RX_BKPRESSURE_RINGID_GET(*msg_word);
+	hp_idx = HTT_T2H_RX_BKPRESSURE_HEAD_IDX_GET(*(msg_word + 1));
+	tp_idx = HTT_T2H_RX_BKPRESSURE_TAIL_IDX_GET(*(msg_word + 1));
+	bkp_time = HTT_T2H_RX_BKPRESSURE_TIME_MS_GET(*(msg_word + 2));
+
+	switch (ring_type) {
+	case HTT_SW_RING_TYPE_UMAC:
+		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
+	break;
+	case HTT_SW_RING_TYPE_LMAC:
+		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
+	break;
+	case HTT_SW_RING_TYPE_MAX:
+		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+				   bkp_time, "HTT_SW_RING_TYPE_MAX");
+	break;
+	default:
+		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+				   bkp_time, "UNKNOWN");
+	break;
+	}
+}
+
 /*
  * dp_htt_t2h_msg_handler() - Generic Target to host Msg/event handler
  * @context:	Opaque context (HTT SOC handle)
@@ -3517,6 +3569,22 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	htt_event_record(soc->htt_logger_handle,
 			 msg_type, (uint8_t *)msg_word);
 	switch (msg_type) {
+	case HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND:
+	{
+		u_int8_t pdev_id;
+		struct dp_soc *dpsoc;
+		struct dp_pdev *pdev;
+
+		pdev_id = HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(*msg_word);
+		pdev_id = DP_HW2SW_MACID(pdev_id);
+		dpsoc = (struct dp_soc *)soc->dp_soc;
+		pdev = (struct dp_pdev *)dpsoc->pdev_list[pdev_id];
+
+		dp_htt_bkp_event_alert(msg_word);
+		dp_print_ring_stats(pdev);
+		dp_print_napi_stats(pdev->soc);
+		break;
+	}
 	case HTT_T2H_MSG_TYPE_PEER_MAP:
 		{
 			u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];

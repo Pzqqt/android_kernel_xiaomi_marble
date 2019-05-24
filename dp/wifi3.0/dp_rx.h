@@ -443,6 +443,7 @@ QDF_STATUS dp_rx_pdev_attach(struct dp_pdev *pdev);
 
 void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
+void dp_print_napi_stats(struct dp_soc *soc);
 
 uint32_t
 dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,

@@ -6988,7 +6988,7 @@ char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type)
  * dp_print_napi_stats(): NAPI stats
  * @soc - soc handle
  */
-static void dp_print_napi_stats(struct dp_soc *soc)
+void dp_print_napi_stats(struct dp_soc *soc)
 {
 	hif_print_napi_stats(soc->hif_handle);
 }
