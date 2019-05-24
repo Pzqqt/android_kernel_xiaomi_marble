@@ -191,7 +191,7 @@ bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
 	bool ret_val = 0;
 	u_int8_t sec_freq = 0;
 
-	if (WLAN_IS_CHAN_11AC_VHT160(chan)) {
+	if (WLAN_IS_CHAN_MODE_160(chan)) {
 		if (chan->dfs_ch_ieee < chan->dfs_ch_vhtop_ch_freq_seg2)
 			sec_freq = chan->dfs_ch_vhtop_ch_freq_seg1 +
 				   VHT160_IEEE_FREQ_DIFF;
@@ -252,12 +252,12 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan)
 {
 	bool ret_val = 0;
 
-	if (WLAN_IS_CHAN_11AC_VHT20(chan) ||
-	    WLAN_IS_CHAN_11AC_VHT40(chan) ||
-	    WLAN_IS_CHAN_11AC_VHT80(chan)) {
+	if (WLAN_IS_CHAN_MODE_20(chan) ||
+	    WLAN_IS_CHAN_MODE_40(chan) ||
+	    WLAN_IS_CHAN_MODE_80(chan)) {
 		ret_val = dfs_is_ht20_40_80_chan_in_precac_done_list(dfs, chan);
-	} else if (WLAN_IS_CHAN_11AC_VHT80_80(chan) ||
-		   WLAN_IS_CHAN_11AC_VHT160(chan)) {
+	} else if (WLAN_IS_CHAN_MODE_80_80(chan) ||
+		   WLAN_IS_CHAN_MODE_160(chan)) {
 		ret_val = dfs_is_ht8080_ht160_chan_in_precac_done_list(dfs, chan);
 	}
 
@@ -613,12 +613,11 @@ void dfs_precac_csa(struct wlan_dfs *dfs)
  *
  * @dfs: Pointer to dfs handler.
  *
- * If precac is done on the home channel, then change the channel from
- * intermediate channel to home channel and continue precac on other channels.
+ * If precac is done on the home channel, then return true, else false.
  *
- * Return: Void.
+ * Return: true if precac done on home channel, else false.
  */
-static void dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
+static bool dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
 {
 	struct dfs_channel chan;
 
@@ -637,7 +636,7 @@ static void dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
 			"Channel %d not found for mode %d",
 			dfs->dfs_autoswitch_des_chan,
 			dfs->dfs_autoswitch_des_mode);
-		return;
+		return false;
 	}
 	/*
 	 * If desired channel is in precac done list,
@@ -645,28 +644,15 @@ static void dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
 	 */
 	if (dfs->dfs_autoswitch_des_chan && dfs_is_precac_done(dfs, &chan)) {
 		dfs_precac_csa(dfs);
-	} else {
-		/*
-		 * Use same home channel, only change preCAC channel.
-		 */
-
-		/*
-		 * TO BE DONE xxx : Need to lock the channel change.
-		 */
-		dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
+		dfs->dfs_soc_obj->precac_state_started = false;
+		return true;
 	}
+	return false;
 }
 #else
-static inline void dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
+static inline bool dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
 {
-	/*
-	 * Use same home channel, only change preCAC channel.
-	 */
-
-	/*
-	 * TO BE DONE xxx : Need to lock the channel change.
-	 */
-	dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
+	return false;
 }
 #endif
 
@@ -682,6 +668,7 @@ static os_timer_func(dfs_precac_timeout)
 	struct wlan_dfs *dfs = NULL;
 	struct dfs_soc_priv_obj *dfs_soc_obj = NULL;
 	uint32_t current_time;
+	bool is_cac_done_on_des_chan = false;
 
 	OS_GET_TIMER_ARG(dfs_soc_obj, struct dfs_soc_priv_obj *);
 
@@ -725,7 +712,19 @@ static os_timer_func(dfs_precac_timeout)
 		 * Do vdev restart so that we can change
 		 * the secondary VHT80 channel.
 		 */
-		dfs_precac_check_home_chan_change(dfs);
+
+		/* check if CAC done on home channel */
+		is_cac_done_on_des_chan = dfs_precac_check_home_chan_change(dfs);
+		if (!is_cac_done_on_des_chan) {
+			/*
+			 * Use same home channel, only change preCAC channel.
+			 */
+
+			/*
+			 * TO BE DONE xxx : Need to lock the channel change.
+			 */
+			dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
+		}
 	} else {
 		current_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -760,7 +759,18 @@ static os_timer_func(dfs_precac_timeout)
 			}
 			PRECAC_LIST_UNLOCK(dfs);
 		}
-		dfs_prepare_agile_precac_chan(dfs);
+		/* check if CAC done on home channel */
+		is_cac_done_on_des_chan = dfs_precac_check_home_chan_change(dfs);
+		if (!is_cac_done_on_des_chan) {
+			/*
+			 * Use same home channel, only change preCAC channel.
+			 */
+
+			/*
+			 * TO BE DONE xxx : Need to lock the channel change.
+			 */
+			dfs_prepare_agile_precac_chan(dfs);
+		}
 	}
 }
 
@@ -1199,7 +1209,7 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 	struct dfs_precac_entry *precac_entry;
 
 	if (dfs_is_precac_timer_running(dfs) &&
-	    mode == WLAN_PHYMODE_11AC_VHT80 &&
+	    WLAN_IS_CHAN_MODE_80(chan) &&
 	    (dfs->dfs_precac_secondary_freq == chan->dfs_ch_freq)) {
 		return;
 	}
@@ -1224,7 +1234,7 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 		}
 	}
 
-	if (mode == WLAN_PHYMODE_11AC_VHT160 && WLAN_IS_CHAN_DFS(chan) &&
+	if (WLAN_IS_CHAN_MODE_160(chan) && WLAN_IS_CHAN_DFS(chan) &&
 	    !TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
 		if (chan->dfs_ch_ieee < chan->dfs_ch_vhtop_ch_freq_seg2)
 			freq_160_sec = chan->dfs_ch_vhtop_ch_freq_seg1 +
@@ -1284,7 +1294,7 @@ dfs_decide_precac_preferred_chan(struct wlan_dfs *dfs,
 	 * non-DFS channel and trigger a precac on this channel.
 	 */
 	if ((WLAN_IS_CHAN_DFS(&chan) ||
-	    (mode == WLAN_PHYMODE_11AC_VHT160 &&
+	    (WLAN_IS_CHAN_MODE_160(&chan) &&
 	     WLAN_IS_CHAN_DFS_CFREQ2(&chan))) &&
 	    !dfs_is_precac_done(dfs, &chan)) {
 		dfs_set_precac_preferred_channel(dfs, &chan, mode);
