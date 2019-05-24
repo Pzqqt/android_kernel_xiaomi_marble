@@ -981,8 +981,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_wlanfw_iface_cmb_ind_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_wlanfw_iface_combination_param,
     WMITLV_TAG_STRUC_wmi_wlanfw_iface_limit_param,
-    WMITLV_TAG_STRUC_wmi_roam_dsm_filter_fixed_param,
-    WMITLV_TAG_STRUC_wmi_roam_bssid_disallow_list_config_param,
+    WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_bssid_disallow_list_config_param,
     WMITLV_TAG_STRUC_wmi_mgmt_hdr,
 } WMITLV_TAG_ID;
 
@@ -1382,7 +1382,7 @@ typedef enum {
     OP(WMI_ROAM_DEAUTH_CONFIG_CMDID) \
     OP(WMI_ROAM_IDLE_CONFIG_CMDID) \
     OP(WMI_IDLE_TRIGGER_MONITOR_CMDID) \
-    OP(WMI_ROAM_DSM_FILTER_CMDID) \
+    OP(WMI_PDEV_DSM_FILTER_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3055,11 +3055,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_IDLE_CONFIG_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_idle_trigger_monitor_cmd_fixed_param, wmi_idle_trigger_monitor_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_IDLE_TRIGGER_MONITOR_CMDID);
 
-/* DSM roam filter parameters */
-#define WMITLV_TABLE_WMI_ROAM_DSM_FILTER_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_dsm_filter_fixed_param, wmi_roam_dsm_filter_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_bssid_disallow_list_config_param, bssid_disallow_list, WMITLV_SIZE_VAR)
-WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_DSM_FILTER_CMDID);
+/* DSM filter parameters */
+#define WMITLV_TABLE_WMI_PDEV_DSM_FILTER_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param, wmi_pdev_dsm_filter_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_bssid_disallow_list_config_param, bssid_disallow_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DSM_FILTER_CMDID);
 
 #define WMITLV_TABLE_WMI_ROAM_BLACKLIST_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param, wmi_roam_blacklist_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \

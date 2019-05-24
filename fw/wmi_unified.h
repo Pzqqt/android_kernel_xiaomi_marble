@@ -407,6 +407,8 @@ typedef enum {
     WMI_PDEV_PKTLOG_FILTER_CMDID,
     /** wmi command for setting rogue ap configuration */
     WMI_PDEV_SET_RAP_CONFIG_CMDID,
+    /** Specify DSM filters along with disallow bssid filters */
+    WMI_PDEV_DSM_FILTER_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -697,8 +699,11 @@ typedef enum {
     WMI_ROAM_DEAUTH_CONFIG_CMDID,
     /** Configure idle roam trigger parameters */
     WMI_ROAM_IDLE_CONFIG_CMDID,
-    /** roaming filter cmd with DSM filters along with existing roam filters */
-    WMI_ROAM_DSM_FILTER_CMDID,
+    /**
+     * WMI_ROAM_DSM_FILTER_CMDID is deprecated and should be unused,
+     * but leave it reserved just to be safe.
+     */
+    DEPRECATED__WMI_ROAM_DSM_FILTER_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -12855,6 +12860,7 @@ typedef struct{
 #define WMI_ROAM_INVOKE_SCAN_MODE_CACHE_LIST    1   /* scan cached channel list */
 #define WMI_ROAM_INVOKE_SCAN_MODE_FULL_CH       2   /* scan full channel */
 #define WMI_ROAM_INVOKE_SCAN_MODE_SKIP          3   /* no scan is performed. use beacon/probe resp given by the host */
+#define WMI_ROAM_INVOKE_SCAN_MODE_CACHE_MAP     4   /* scan cached channel map */
 
 #define WMI_ROAM_INVOKE_AP_SEL_FIXED_BSSID      0   /* roam to given BSSID only */
 #define WMI_ROAM_INVOKE_AP_SEL_ANY_BSSID        1   /* roam to any BSSID */
@@ -24023,7 +24029,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_DEAUTH_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_IDLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_IDLE_TRIGGER_MONITOR_CMDID);
-        WMI_RETURN_STRING(WMI_ROAM_DSM_FILTER_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_DSM_FILTER_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -25267,21 +25273,20 @@ typedef enum {
 } WMI_SCREEN_STATUS_NOTIFY_ID;
 
 typedef struct {
-    /** TLV tag and len; tag equals wmi_roam_dsm_filter_fixed_param */
+    /** TLV tag and len; tag equals wmi_pdev_dsm_filter_fixed_param */
     A_UINT32 tlv_header;
-    /** Unique id identifying the VDEV on which new roaming filter(data stall AP mitigation) is adopted */
-    A_UINT32 vdev_id;
     /**
-     * TLV (tag length value) parameter's following roam_dsm_filter_cmd are,
+     * TLV (tag length value) parameter's following pdev_dsm_filter_cmd are,
      *
-     *  wmi_roam_bssid_disallow_list_config_param bssid_disallow_list[]; i.e array containing
-     *  all roam filter lists including the new DSM lists(avoidlist/driver_blacklist) and
-     *  existing roam lists(supplicant_blacklist/rssi_rejectlist etc.)
+     *  wmi_pdev_bssid_disallow_list_config_param bssid_disallow_list[];
+     *      i.e array containing all disallow AP filter lists including
+     *      the new DSM lists (avoidlist / driver_blacklist) and existing
+     *      lists (supplicant_blacklist / rssi_rejectlist etc.)
      */
-} wmi_roam_dsm_filter_fixed_param;
+} wmi_pdev_dsm_filter_fixed_param;
 
 typedef struct {
-    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bssid_disallow_list_config_param */
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_bssid_disallow_list_config_param */
     A_UINT32 tlv_header;
     /** bssid type i.e whether bssid falls in avoid list or driver_blacklist etc.
       see WMI_BSSID_DISALLOW_LIST_TYPE **/
@@ -25292,13 +25297,13 @@ typedef struct {
     A_UINT32 remaining_disallow_duration;
     /** AP will be allowed for candidate, when AP RSSI better than expected RSSI units in dBm */
     A_INT32 expected_rssi;
-} wmi_roam_bssid_disallow_list_config_param;
+} wmi_pdev_bssid_disallow_list_config_param;
 
 typedef enum {
     /* USER_SPACE_BLACK_LIST
      * Black Listed AP's by host's user space
      */
-    WMI_BSSID_DISALLOW_USER_SPACE_BLACK_LIST = 0,
+    WMI_BSSID_DISALLOW_USER_SPACE_BLACK_LIST = 1,
     /* DRIVER_BLACK_LIST
      * Black Listed AP's by host driver
      * used for data stall migitation
@@ -25319,6 +25324,12 @@ typedef enum {
      */
     WMI_BSSID_DISALLOW_RSSI_REJECT_LIST,
 } WMI_BSSID_DISALLOW_LIST_TYPE;
+
+/* WLAN_PDEV_MAX_NUM_BSSID_DISALLOW_LIST:
+ * Maximum number of BSSID disallow entries which host is allowed to send
+ * to firmware within the WMI_PDEV_DSM_FILTER_CMDID message.
+ */
+#define WLAN_PDEV_MAX_NUM_BSSID_DISALLOW_LIST  28
 
 typedef struct {
     /*
