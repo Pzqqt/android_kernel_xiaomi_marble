@@ -881,7 +881,7 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	pm_ctx = policy_mgr_get_context(context);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
-		return;
+		goto set_done_event;
 	}
 
 	policy_mgr_set_hw_mode_change_in_progress(context,
@@ -889,14 +889,14 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 
 	if (status != SET_HW_MODE_STATUS_OK) {
 		policy_mgr_err("Set HW mode failed with status %d", status);
-		return;
+		goto set_done_event;
 	}
 
 	/* vdev mac map for NAN Discovery is expected in NAN Enable resp */
 	if (reason != POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY &&
 	    !vdev_mac_map) {
 		policy_mgr_err("vdev_mac_map is NULL");
-		return;
+		goto set_done_event;
 	}
 
 	policy_mgr_debug("cfgd_hw_mode_index=%d", cfgd_hw_mode_index);
@@ -910,7 +910,7 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 			&hw_mode);
 	if (ret != QDF_STATUS_SUCCESS) {
 		policy_mgr_err("Get HW mode failed: %d", ret);
-		return;
+		goto set_done_event;
 	}
 
 	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d, band_cap %d",
@@ -940,12 +940,15 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 			next_action, reason);
 	else {
 		policy_mgr_debug("No action needed right now");
-		ret = policy_mgr_set_opportunistic_update(context);
-		if (!QDF_IS_STATUS_SUCCESS(ret))
-			policy_mgr_err("ERROR: set opportunistic_update event failed");
+		goto set_done_event;
 	}
 
 	return;
+
+set_done_event:
+	ret = policy_mgr_set_opportunistic_update(context);
+	if (!QDF_IS_STATUS_SUCCESS(ret))
+		policy_mgr_err("ERROR: set opportunistic_update event failed");
 }
 
 /**
