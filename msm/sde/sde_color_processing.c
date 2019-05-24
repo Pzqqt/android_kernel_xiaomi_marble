@@ -2898,6 +2898,9 @@ static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
 		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
 		return;
 	}
+
+	memset(&phase, 0, sizeof(phase));
+
 	/* read intr_status register value */
 	num_mixers = sde_crtc->num_mixers;
 	if (!num_mixers)

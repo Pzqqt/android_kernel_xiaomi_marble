@@ -162,6 +162,11 @@ static void sde_hw_wb_setup_format(struct sde_hw_wb *ctx,
 			SDE_REG_WRITE(c, WB_UBWC_STATIC_CTRL,
 					(ctx->mdp->ubwc_swizzle << 0) |
 					(ctx->mdp->highest_bank_bit << 4));
+		if (IS_UBWC_10_SUPPORTED(ctx->catalog->ubwc_version))
+			SDE_REG_WRITE(c, WB_UBWC_STATIC_CTRL,
+					(ctx->mdp->ubwc_swizzle << 0) |
+					BIT(8) |
+					(ctx->mdp->highest_bank_bit << 4));
 	}
 
 	if (data->is_secure)

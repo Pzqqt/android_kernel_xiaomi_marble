@@ -360,6 +360,11 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		if (IS_UBWC_40_SUPPORTED(ctx->catalog->ubwc_version)) {
 			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
 				SDE_FORMAT_IS_YUV(fmt) ? 0 : BIT(30));
+		} else if (IS_UBWC_10_SUPPORTED(ctx->catalog->ubwc_version)) {
+			alpha_en_mask = const_alpha_en ? BIT(31) : 0;
+			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+				alpha_en_mask | (ctx->mdp->ubwc_swizzle & 0x1) |
+				BIT(8) | (ctx->mdp->highest_bank_bit << 4));
 		} else if (IS_UBWC_20_SUPPORTED(ctx->catalog->ubwc_version)) {
 			alpha_en_mask = const_alpha_en ? BIT(31) : 0;
 			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
@@ -686,7 +691,8 @@ static void _sde_hw_sspp_setup_excl_rect(struct sde_hw_pipe *ctx,
 	u32 size, xy;
 	u32 idx;
 	u32 reg_xy, reg_size;
-	u32 excl_ctrl, enable_bit;
+	u32 excl_ctrl = BIT(0);
+	u32 enable_bit;
 
 	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx) || !excl_rect)
 		return;
@@ -706,7 +712,10 @@ static void _sde_hw_sspp_setup_excl_rect(struct sde_hw_pipe *ctx,
 	xy = (excl_rect->y << 16) | (excl_rect->x);
 	size = (excl_rect->h << 16) | (excl_rect->w);
 
-	excl_ctrl = SDE_REG_READ(c, SSPP_EXCL_REC_CTL + idx);
+	/* Set if multi-rect disabled, read+modify only if multi-rect enabled */
+	if (rect_index != SDE_SSPP_RECT_SOLO)
+		excl_ctrl = SDE_REG_READ(c, SSPP_EXCL_REC_CTL + idx);
+
 	if (!size) {
 		SDE_REG_WRITE(c, SSPP_EXCL_REC_CTL + idx,
 				excl_ctrl & ~enable_bit);

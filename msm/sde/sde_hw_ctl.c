@@ -138,7 +138,7 @@ static const u32 cdm_flush_tbl[CDM_MAX] = {SDE_NONE, 0};
 /**
  * list of CWB bits in CTL_CWB_FLUSH
  */
-static const u32 cwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, SDE_NONE, 2, 3,
+static const u32 cwb_flush_tbl[CWB_MAX] = {SDE_NONE, SDE_NONE, 1, 2, 3,
 	4, 5};
 
 /**
@@ -555,7 +555,7 @@ static inline int sde_hw_ctl_update_bitmask_cwb_v1(struct sde_hw_ctl *ctx,
 	if (!ctx)
 		return -EINVAL;
 
-	if ((cwb < CWB_2) || (cwb >= CWB_MAX)) {
+	if ((cwb < CWB_1) || (cwb >= CWB_MAX)) {
 		SDE_ERROR("Unsupported cwb %d\n", cwb);
 		return -EINVAL;
 	}

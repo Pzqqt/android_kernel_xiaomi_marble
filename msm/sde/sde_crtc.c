@@ -886,6 +886,11 @@ static u32 _sde_crtc_get_displays_affected(struct drm_crtc *crtc,
 	u32 disp_bitmask = 0;
 	int i;
 
+	if (!crtc || !state) {
+		pr_err("Invalid crtc or state\n");
+		return 0;
+	}
+
 	sde_crtc = to_sde_crtc(crtc);
 	crtc_state = to_sde_crtc_state(state);
 
@@ -5006,6 +5011,10 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			catalog->perf.amortizable_threshold);
 	sde_kms_info_add_keyint(info, "min_prefill_lines",
 			catalog->perf.min_prefill_lines);
+	sde_kms_info_add_keyint(info, "num_mnoc_ports",
+			catalog->perf.num_mnoc_ports);
+	sde_kms_info_add_keyint(info, "axi_bus_width",
+			catalog->perf.axi_bus_width);
 	sde_kms_info_add_keyint(info, "sec_ui_blendstage",
 			catalog->sui_supported_blendstage);
 

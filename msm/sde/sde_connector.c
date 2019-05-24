@@ -1154,7 +1154,7 @@ static int _sde_connector_set_ext_hdr_info(
 
 	/* verify 1st header byte, programmed in DP Infoframe SDP header */
 	if (payload_size < 1 || (payload[0] != HDR10_PLUS_VSIF_TYPE_CODE)) {
-		SDE_ERROR_CONN(c_conn, "invalid payload detected, size: %d\n",
+		SDE_ERROR_CONN(c_conn, "invalid payload detected, size: %zd\n",
 				payload_size);
 		rc = -EINVAL;
 		goto end;
