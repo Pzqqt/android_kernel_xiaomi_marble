@@ -575,6 +575,20 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *pdel_sta_self_req_param,
 			uint8_t generateRsp);
 
+/**
+ * wma_release_vdev_and_peer_ref() - release vdev ref taken by interface txrx
+ * node and delete all the peers attached to this vdev
+ * @wma - wma handle
+ * @iface: wma interface txrx node
+ *
+ * This API release vdev ref taken by iface and all the peers attached to this
+ * vdev, this need to be called on recovery to flush vdev and peer.
+ *
+ * Return: void.
+ */
+void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
+				   struct wma_txrx_node *iface);
+
 int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				       uint32_t len);
 

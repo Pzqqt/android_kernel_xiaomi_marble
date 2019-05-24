@@ -704,8 +704,7 @@ wma_cdp_vdev_detach(ol_txrx_soc_handle soc,
 
 /**
  * wma_release_vdev_ref() - Release vdev object reference count
- * @wma_handle: wma handle
- * @vdev_id: used to get wma interface txrx node
+ * @iface: wma interface txrx node
  *
  * Purpose of this function is to release vdev object reference count
  * from wma interface txrx node.
@@ -713,12 +712,10 @@ wma_cdp_vdev_detach(ol_txrx_soc_handle soc,
  * Return: None
  */
 static void
-wma_release_vdev_ref(tp_wma_handle wma_handle, uint8_t vdev_id)
+wma_release_vdev_ref(struct wma_txrx_node *iface)
 {
-	struct wma_txrx_node *iface;
 	struct wlan_objmgr_vdev *vdev;
 
-	iface = &wma_handle->interfaces[vdev_id];
 	vdev = iface->vdev;
 
 	iface->vdev = NULL;
@@ -797,7 +794,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 				     WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 	}
 	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
-	wma_release_vdev_ref(wma_handle, vdev_id);
+	wma_release_vdev_ref(iface);
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	/*
@@ -811,7 +808,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 out:
 	WMA_LOGE("Call txrx detach callback for vdev %d, generate_rsp %u",
 		vdev_id, generate_rsp);
-	wma_release_vdev_ref(wma_handle, vdev_id);
+	wma_release_vdev_ref(iface);
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	wma_vdev_deinit(iface);
@@ -827,35 +824,36 @@ out:
 /**
  * wma_force_objmgr_vdev_peer_cleanup() - Cleanup ObjMgr Vdev peers during SSR
  * @wma_handle: WMA handle
- * @vdev_id: vdev ID
+ * @iface: wma interface txrx node
  *
  * Return: none
  */
 static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
-					       uint8_t vdev_id)
+					       struct wma_txrx_node *iface)
 {
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer = NULL;
 	struct wlan_objmgr_peer *peer_next = NULL;
 	qdf_list_t *peer_list;
 
-	WMA_LOGE("%s: SSR: force cleanup peers in vdev(%d)",
-		 __func__, vdev_id);
-	iface->vdev_active = false;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
-						    WLAN_LEGACY_WMA_ID);
-
-	if (!vdev) {
-		WMA_LOGE("Failed to get Objmgr Vdev");
+	if (!iface->vdev)
 		return;
-	}
+
+	/*
+	 * No need to take ref as if iface->vdev is valid then WMA already hold
+	 * ref and this can be used diretly. ALso this API may get called after
+	 * vdev deleted logically so taking ref for vdev will fail and peer
+	 * wont be deleted for the vdev.
+	 */
+	vdev = iface->vdev;
+
+	WMA_LOGI("%s: SSR: force cleanup peers in vdev(%d)", __func__,
+		 wlan_vdev_get_id(vdev));
+	iface->vdev_active = false;
 
 	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
 	if (!peer_list) {
 		WMA_LOGE("%s: peer_list is NULL", __func__);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 		return;
 	}
 
@@ -876,10 +874,20 @@ static void wma_force_objmgr_vdev_peer_cleanup(tp_wma_handle wma,
 		peer = peer_next;
 	}
 
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-
 	/* Force delete all the peers, set the wma interface peer_count to 0 */
 	iface->peer_count = 0;
+}
+
+void wma_release_vdev_and_peer_ref(tp_wma_handle wma,
+				   struct wma_txrx_node *iface)
+{
+	if (!iface) {
+		WMA_LOGE("iface is NULL");
+		return;
+	}
+
+	wma_force_objmgr_vdev_peer_cleanup(wma, iface);
+	wma_release_vdev_ref(iface);
 }
 
 static bool wma_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
@@ -974,8 +982,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	 * CDP Vdev.
 	 */
 	if (!cds_is_target_ready()) {
-		wma_force_objmgr_vdev_peer_cleanup(wma_handle, vdev_id);
-		wma_release_vdev_ref(wma_handle, vdev_id);
+		wma_release_vdev_and_peer_ref(wma_handle, iface);
 		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 		goto send_rsp;
 	}
