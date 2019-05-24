@@ -771,6 +771,12 @@ void dp_local_peer_id_pool_init(struct dp_pdev *pdev);
 void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer);
 #else
+static inline
+QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 static inline void dp_local_peer_id_pool_init(struct dp_pdev *pdev)
 {
 }

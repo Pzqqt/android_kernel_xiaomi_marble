@@ -965,6 +965,8 @@ struct ol_if_ops {
 						uint8_t *dest_macaddr,
 						uint8_t *peer_macaddr,
 						uint32_t flags);
+
+	bool (*is_roam_inprogress)(uint32_t vdev_id);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

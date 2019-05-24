@@ -2315,13 +2315,26 @@ int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
 	rx_tid = &peer->rx_tid[tid];
 	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	if (status) {
+		struct ol_if_ops *ol_ops = NULL;
+		bool is_roaming = false;
+		uint8_t vdev_id = -1;
+
 		rx_tid->num_addba_rsp_failed++;
-		dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
-		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		ol_ops = peer->vdev->pdev->soc->cdp_soc.ol_ops;
+
+		if (ol_ops && ol_ops->is_roam_inprogress) {
+			dp_get_vdevid(peer, &vdev_id);
+			is_roaming = ol_ops->is_roam_inprogress(vdev_id);
+		}
+
+		if (!is_roaming) {
+			dp_rx_tid_update_wifi3(peer, tid, 1, IEEE80211_SEQ_MAX);
+			rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		}
+
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Rx Tid- %d addba rsp tx completion failed!",
-			 __func__, tid);
+		dp_err("RxTid- %d addba rsp tx completion failed, is_roaming %d",
+		       tid, is_roaming);
 		return QDF_STATUS_SUCCESS;
 	}
 
