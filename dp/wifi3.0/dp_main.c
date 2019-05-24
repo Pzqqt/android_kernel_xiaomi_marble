@@ -8489,7 +8489,7 @@ static void dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			if (peer)
+			if (peer && !peer->bss_peer)
 				dp_wdi_event_handler(
 					WDI_EVENT_FLUSH_RATE_STATS_REQ,
 					pdev->soc, peer->wlanstats_ctx,
