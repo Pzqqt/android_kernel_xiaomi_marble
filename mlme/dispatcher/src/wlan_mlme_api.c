@@ -3415,3 +3415,20 @@ QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+wlan_mlme_get_4way_hs_offload(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_DISABLE_4WAY_HS_OFFLOAD);
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.gen.disable_4way_hs_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
