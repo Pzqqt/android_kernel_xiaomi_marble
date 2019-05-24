@@ -3303,3 +3303,10 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 
 	return 0;
 }
+
+bool wma_is_roam_in_progress(uint32_t vdev_id)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	return wma->interfaces[vdev_id].roaming_in_progress;
+}

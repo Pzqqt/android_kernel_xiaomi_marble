@@ -2464,6 +2464,14 @@ void wma_check_and_set_wake_timer(uint32_t time);
 uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
 
 /**
+ * is_roam_inprogress() - Is vdev in progress
+ * @vdev_id: vdev of interest
+ *
+ * Return: true if roaming, false otherwise
+ */
+bool wma_is_roam_in_progress(uint32_t vdev_id);
+
+/**
  * wma_get_psoc_from_scn_handle() - API to get psoc from scn handle
  * @scn_handle: opaque wma handle
  *
