@@ -1063,6 +1063,7 @@ struct wlan_mlme_chainmask {
  * @data_stall_recovery_fw_support: whether FW supports Data stall recovery.
  * @enable_change_channel_bandwidth: enable/disable change channel bw in mission
  * mode
+ * @disable_4way_hs_offload: enable/disable 4 way handshake offload to firmware
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1093,6 +1094,7 @@ struct wlan_mlme_generic {
 	bool enable_remove_time_stamp_sync_cmd;
 	bool data_stall_recovery_fw_support;
 	bool enable_change_channel_bandwidth;
+	bool disable_4way_hs_offload;
 };
 
 /*
