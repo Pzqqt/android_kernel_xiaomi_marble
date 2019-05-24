@@ -165,6 +165,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	u32 const timeout_us = 1000;
 	struct dsi_phy_per_lane_cfgs *timing = &cfg->timing;
 	u32 data;
+	u32 minor_ver = 0;
 	bool less_than_1500_mhz = false;
 	u32 vreg_ctrl_0 = 0;
 	u32 glbl_str_swi_cal_sel_ctrl = 0;
@@ -203,6 +204,12 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 
 	/* turn off resync FIFO */
 	DSI_W32(phy, DSIPHY_CMN_RBUF_CTRL, 0x00);
+
+	/* program CMN_CTRL_4 for minor_ver 2 chipsets*/
+	minor_ver = DSI_R32(phy, DSIPHY_CMN_REVISION_ID0);
+	minor_ver = minor_ver & (0xf0);
+	if (minor_ver == 0x20)
+		DSI_W32(phy, DSIPHY_CMN_CTRL_4, 0x04);
 
 	/* Configure PHY lane swap */
 	dsi_phy_hw_v4_0_lane_swap_config(phy, &cfg->lane_map);
