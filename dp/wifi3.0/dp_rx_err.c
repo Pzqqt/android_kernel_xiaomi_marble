@@ -31,6 +31,9 @@
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 #include "qdf_net_types.h"
 
+/* Max buffer in invalid peer SG list*/
+#define DP_MAX_INVALID_BUFFERS 10
+
 /**
  * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
  *			      back on same vap or a different vap.
@@ -436,7 +439,16 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 	 */
 	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 
-	if (!dp_pdev->first_nbuf) {
+	/* if invalid peer SG list has max values free the buffers in list
+	 * and treat current buffer as start of list
+	 *
+	 * current logic to detect the last buffer from attn_tlv is not reliable
+	 * in OFDMA UL scenario hence add max buffers check to avoid list pile
+	 * up
+	 */
+	if (!dp_pdev->first_nbuf ||
+	    QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST
+		(dp_pdev->invalid_peer_head_msdu) >= DP_MAX_INVALID_BUFFERS) {
 		qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
 		dp_pdev->ppdu_id = HAL_RX_HW_DESC_GET_PPDUID_GET(rx_tlv_hdr);
 		dp_pdev->first_nbuf = true;
