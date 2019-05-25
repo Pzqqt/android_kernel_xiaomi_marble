@@ -34,40 +34,22 @@
 #include "mac_trace.h"
 #include "wlan_policy_mgr_api.h"
 
-/**
- * csr_roam_issue_reassociate() - Issue Reassociate
- * @mac: Global MAC Context
- * @sessionId: SME Session ID
- * @pSirBssDesc: BSS Descriptor
- * @pIes: Pointer to the IE's
- * @pProfile: Roaming profile
- *
- * Return: Success or Failure
- */
-QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-	uint32_t sessionId, struct bss_description *pSirBssDesc,
-	tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
+QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac, uint32_t vdev_id,
+				      struct bss_description *bss_desc,
+				      tDot11fBeaconIEs *ies,
+				      struct csr_roam_profile *roam_profile)
 {
-	csr_roam_state_change(mac, eCSR_ROAMING_STATE_JOINING, sessionId);
+	csr_roam_state_change(mac, eCSR_ROAMING_STATE_JOINING, vdev_id);
 	/* Set the roaming substate to 'join attempt'... */
-	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_REASSOC_REQ,
-			sessionId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL(" calling csr_send_join_req_msg (eWNI_SME_REASSOC_REQ)"));
+	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_REASSOC_REQ, vdev_id);
+	sme_debug("calling csr_send_join_req_msg (eWNI_SME_REASSOC_REQ)");
 	/* attempt to Join this BSS... */
-	return csr_send_join_req_msg(mac, sessionId, pSirBssDesc, pProfile,
-			pIes, eWNI_SME_REASSOC_REQ);
+	return csr_send_join_req_msg(mac, vdev_id, bss_desc, roam_profile, ies,
+				     eWNI_SME_REASSOC_REQ);
 }
 
-/**
- * csr_roam_issue_reassociate_cmd() - Issue the reassociate command
- * @mac: Global MAC Context
- * @sessionId: SME Session ID
- *
- * Return: Success or Failure status
- */
-QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
-		uint32_t sessionId)
+QDF_STATUS
+csr_roam_issue_reassociate_cmd(struct mac_context *mac,	uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *pCommand = NULL;
@@ -143,24 +125,8 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
 	return status;
 }
 
-/**
- * csr_neighbor_roam_process_scan_results() - build roaming candidate list
- *
- * @mac_ctx: The handle returned by mac_open.
- * @sessionid: Session information
- * @scan_results_list: List obtained from csr_scan_get_result()
- *
- * This function applies various candidate checks like LFR, 11r, preauth, ESE
- * and builds a roamable AP list. It applies age limit only if no suitable
- * recent candidates are found.
- *
- * Output list is built in mac_ctx->roam.neighborRoamInfo[sessionid].
- *
- * Return: void
- */
-
 void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
-		uint8_t sessionid, tScanResultHandle *scan_results_list)
+		    uint8_t sessionid, tScanResultHandle *scan_results_list)
 {
 	tCsrScanResultInfo *scan_result;
 	tpCsrNeighborRoamControlInfo n_roam_info =
@@ -375,31 +341,17 @@ void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 	csr_scan_result_purge(mac_ctx, *scan_results_list);
 }
 
-/**
- * csr_neighbor_roam_trigger_handoff() - Start roaming
- * @mac_ctx: Global MAC Context
- * @session_id: SME Session ID
- *
- * Return: None
- */
 void csr_neighbor_roam_trigger_handoff(struct mac_context *mac_ctx,
-				      uint8_t session_id)
+				       uint8_t vdev_id)
 {
-	if (csr_roam_is_fast_roam_enabled(mac_ctx, session_id))
-		csr_neighbor_roam_issue_preauth_req(mac_ctx, session_id);
+	if (csr_roam_is_fast_roam_enabled(mac_ctx, vdev_id))
+		csr_neighbor_roam_issue_preauth_req(mac_ctx, vdev_id);
 	else
 		sme_err("Roaming is disabled");
 }
 
-/**
- * csr_neighbor_roam_process_scan_complete() - Post process the scan results
- * @mac: Global MAC Context
- * @sessionId: SME Session ID
- *
- * Return: Success or Failure
- */
 QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
-		uint8_t sessionId)
+						   uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
@@ -455,19 +407,8 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 
 }
 
-/**
- * csr_neighbor_roam_candidate_found_ind_hdlr()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: pointer to msg buff
- *
- * This function is called by CSR as soon as TL posts the candidate
- * found indication to SME via MC thread
- *
- * Return: QDF_STATUS_SUCCESS on success, corresponding error code otherwise
- */
 QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
-		void *pMsg)
+						      void *pMsg)
 {
 	tSirSmeCandidateFoundInd *pSirSmeCandidateFoundInd =
 		(tSirSmeCandidateFoundInd *) pMsg;
@@ -503,22 +444,13 @@ QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
 	return status;
 }
 
-/**
- * csr_neighbor_roam_free_roamable_bss_list() - Frees roamable APs list
- * @mac_ctx: The handle returned by mac_open.
- * @llist: Neighbor Roam BSS List to be emptied
- *
- * Empties and frees all the nodes in the roamable AP list
- *
- * Return: none
- */
 void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
 					      tDblLinkList *llist)
 {
 	tpCsrNeighborRoamBSSInfo result = NULL;
 
 	sme_debug("Emptying the BSS list. Current count: %d",
-		csr_ll_count(llist));
+		  csr_ll_count(llist));
 
 	/*
 	 * Pick up the head, remove and free the node till
@@ -532,44 +464,21 @@ void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
 	}
 }
 
-/**
- * csr_neighbor_roam_remove_roamable_ap_list_entry()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @pList: The list from which the entry should be removed
- * @pNeighborEntry: Neighbor Roam BSS Node to be removed
- *
- * This function removes a given entry from the given list
- *
- * Return: true if successfully removed, else false
- */
 bool csr_neighbor_roam_remove_roamable_ap_list_entry(struct mac_context *mac,
 						     tDblLinkList *pList,
 						     tpCsrNeighborRoamBSSInfo
 						     pNeighborEntry)
 {
-	if (pList) {
+	if (pList)
 		return csr_ll_remove_entry(pList, &pNeighborEntry->List,
 					   LL_ACCESS_LOCK);
-	}
 
 	sme_debug("Remove neigh BSS node from fail list. Current count: %d",
-		csr_ll_count(pList));
+		  csr_ll_count(pList));
 
 	return false;
 }
 
-/**
- * csr_neighbor_roam_next_roamable_ap() - Get next AP from roamable AP list
- * @mac_ctx - The handle returned by mac_open.
- * @plist - The list from which the entry should be returned
- * @neighbor_entry - Neighbor Roam BSS Node whose next entry should be returned
- *
- * Gets the entry next to passed entry. If NULL is passed, return the entry
- * in the head of the list
- *
- * Return: Neighbor Roam BSS Node to be returned
- */
 tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
 				struct mac_context *mac_ctx, tDblLinkList *llist,
 				tpCsrNeighborRoamBSSInfo neighbor_entry)
@@ -591,18 +500,6 @@ tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
 	return result;
 }
 
-
-/**
- * csr_neighbor_roam_request_handoff() - Handoff to a different AP
- * @mac_ctx: Pointer to Global MAC structure
- * @session_id: Session ID
- *
- * This function triggers actual switching from one AP to the new AP.
- * It issues disassociate with reason code as Handoff and CSR as a part of
- * handling disassoc rsp, issues reassociate to the new AP
- *
- * Return: none
- */
 void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
@@ -692,24 +589,10 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 
 }
 
-
-/**
- * csr_neighbor_roam_get_handoff_ap_info - Identifies the best AP for roaming
- *
- * @mac:        mac context
- * @session_id:     Session Id
- * @hand_off_node:    AP node that is the handoff candidate returned
- *
- * This function returns the best possible AP for handoff. For 11R case, it
- * returns the 1st entry from pre-auth done list. For non-11r case, it returns
- * the 1st entry from roamable AP list
- *
- * Return: true if able find handoff AP, false otherwise
- */
-
-bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
-			tpCsrNeighborRoamBSSInfo hand_off_node,
-			uint8_t session_id)
+bool
+csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
+				      tpCsrNeighborRoamBSSInfo hand_off_node,
+				      uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&mac->roam.neighborRoamInfo[session_id];
@@ -764,19 +647,8 @@ bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 	return true;
 }
 
-/**
- * csr_neighbor_roam_is_handoff_in_progress()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @session_id: Session ID
- *
- * This function returns whether handoff is in progress or not based on
- * the current neighbor roam state
- *
- * Return: true if reassoc in progress, false otherwise
- */
 bool csr_neighbor_roam_is_handoff_in_progress(struct mac_context *mac,
-		uint8_t sessionId)
+					      uint8_t sessionId)
 {
 	if (eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING ==
 	    mac->roam.neighborRoamInfo[sessionId].neighborRoamState)
@@ -785,28 +657,18 @@ bool csr_neighbor_roam_is_handoff_in_progress(struct mac_context *mac,
 	return false;
 }
 
-/**
- * csr_neighbor_roam_free_neighbor_roam_bss_node()
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @neighborRoamBSSNode: Neighbor Roam BSS Node to be freed
- *
- * This function frees all the internal pointers CSR NeighborRoam BSS Info
- * and also frees the node itself
- *
- * Return: None
- */
 void csr_neighbor_roam_free_neighbor_roam_bss_node(struct mac_context *mac,
 						   tpCsrNeighborRoamBSSInfo
 						   neighborRoamBSSNode)
 {
-	if (neighborRoamBSSNode) {
-		if (neighborRoamBSSNode->pBssDescription) {
-			qdf_mem_free(neighborRoamBSSNode->pBssDescription);
-			neighborRoamBSSNode->pBssDescription = NULL;
-		}
-		qdf_mem_free(neighborRoamBSSNode);
-		neighborRoamBSSNode = NULL;
+	if (!neighborRoamBSSNode)
+		return;
+
+	if (neighborRoamBSSNode->pBssDescription) {
+		qdf_mem_free(neighborRoamBSSNode->pBssDescription);
+		neighborRoamBSSNode->pBssDescription = NULL;
 	}
+	qdf_mem_free(neighborRoamBSSNode);
+	neighborRoamBSSNode = NULL;
 }
 

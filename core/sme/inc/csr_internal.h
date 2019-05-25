@@ -35,6 +35,7 @@
 
 #include "sir_types.h"
 #include "wlan_mlme_public_struct.h"
+#include "csr_host_scan_roam.h"
 
 #define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
@@ -1179,12 +1180,6 @@ void csr_roam_substate_change(
 			struct mac_context *mac, enum csr_roam_substate
 					NewSubstate, uint32_t sessionId);
 
-void csr_neighbor_roam_process_scan_results(
-		struct mac_context *mac_ctx,
-		uint8_t sessionid, tScanResultHandle *scan_results_list);
-
-void csr_neighbor_roam_trigger_handoff(struct mac_context *mac_ctx,
-					uint8_t session_id);
 bool csr_is_ndi_started(struct mac_context *mac_ctx, uint32_t session_id);
 
 QDF_STATUS csr_roam_update_config(

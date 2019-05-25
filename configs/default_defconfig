@@ -96,11 +96,12 @@ ifeq ($(CONFIG_ARCH_QCS405), y)
 	CONFIG_TGT_NUM_MSDU_DESC := 900
 endif
 CONFIG_WLAN_FEATURE_MBSSID := y
-#Flag to enable Legacy Fast Roaming2(LFR2)
-CONFIG_QCACLD_WLAN_LFR2 := y
+
 #Flag to enable Legacy Fast Roaming3(LFR3)
 ifneq ($(CONFIG_ARCH_SDX20), y)
-CONFIG_QCACLD_WLAN_LFR3 := y
+	CONFIG_QCACLD_WLAN_LFR3 := y
+else
+	CONFIG_QCACLD_WLAN_LFR2 := y
 endif
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)

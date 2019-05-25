@@ -163,22 +163,6 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		struct mac_context *mac, uint8_t sessionId);
 bool csr_neighbor_roam_state_preauth_done(struct mac_context *mac,
 		uint8_t sessionId);
-QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
-		uint32_t sessionId);
-void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
-		tDblLinkList *llist);
-bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
-		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId);
-QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-		uint32_t sessionId, struct bss_description *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile);
-void csr_neighbor_roam_request_handoff(struct mac_context *mac, uint8_t sessionId);
-QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
-		void *pMsg);
-QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
-		uint8_t sessionId);
-bool csr_neighbor_roam_is_handoff_in_progress(struct mac_context *mac,
-		uint8_t sessionId);
 void csr_neighbor_roam_reset_preauth_control_info(
 		struct mac_context *mac_ctx, uint8_t session_id);
 void csr_neighbor_roam_purge_preauth_failed_list(struct mac_context *mac);
@@ -188,35 +172,8 @@ static inline bool csr_neighbor_roam_state_preauth_done(struct mac_context *mac,
 {
 	return false;
 }
-static inline QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
-		uint32_t sessionId)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-static inline QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
-		uint32_t sessionId, struct bss_description *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-static inline QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(
-		struct mac_context *mac, void *pMsg)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-static inline QDF_STATUS csr_neighbor_roam_process_scan_complete(
-		struct mac_context *mac, uint8_t sessionId)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
 static inline void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		struct mac_context *mac, uint8_t sessionId)
-{}
-static inline void csr_neighbor_roam_free_roamable_bss_list(
-		struct mac_context *mac_ctx, tDblLinkList *llist)
-{}
-static inline void csr_neighbor_roam_request_handoff(struct mac_context *mac,
-		uint8_t sessionId)
 {}
 static inline void csr_neighbor_roam_reset_preauth_control_info(
 		struct mac_context *mac_ctx, uint8_t session_id)
@@ -224,16 +181,6 @@ static inline void csr_neighbor_roam_reset_preauth_control_info(
 static inline void csr_neighbor_roam_purge_preauth_failed_list(
 		struct mac_context *mac)
 {}
-static inline bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
-		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId)
-{
-	return false;
-}
-static inline bool csr_neighbor_roam_is_handoff_in_progress(struct mac_context *mac,
-		uint8_t sessionId)
-{
-	return false;
-}
 #endif
 bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
@@ -372,13 +319,6 @@ static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
 		uint8_t newstate, uint8_t session);
 uint8_t *csr_neighbor_roam_state_to_string(uint8_t state);
-tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
-		struct mac_context *mac_ctx, tDblLinkList *llist,
-		tpCsrNeighborRoamBSSInfo neighbor_entry);
-bool csr_neighbor_roam_remove_roamable_ap_list_entry(struct mac_context *mac,
-		tDblLinkList *pList, tpCsrNeighborRoamBSSInfo pNeighborEntry);
-void csr_neighbor_roam_free_neighbor_roam_bss_node(struct mac_context *mac,
-		tpCsrNeighborRoamBSSInfo neighborRoamBSSNode);
 QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac,
 		uint8_t sessionId);
 bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
