@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -361,7 +361,7 @@ QDF_STATUS target_if_p2p_set_noa(struct wlan_objmgr_psoc *psoc,
 
 	target_if_debug("psoc:%pK, vdev_id:%d disable_noa:%d",
 				psoc, vdev_id, disable_noa);
-	param.if_id = vdev_id;
+	param.vdev_id = vdev_id;
 	param.param_id = WMI_VDEV_PARAM_DISABLE_NOA_P2P_GO;
 	param.param_value = (uint32_t)disable_noa;
 
