@@ -5042,56 +5042,6 @@ struct sme_ndp_peer_ind {
 #endif /* WLAN_FEATURE_NAN */
 
 /**
- * struct sir_set_tx_rx_aggregation_size - sets tx rx aggregation size
- * @vdev_id: vdev id of the session
- * @aggr_type: TX Aggregation Type (0=A-MPDU, 1=A-MSDU)
- * @tx_aggregation_size: Tx aggregation size
- * @tx_aggregation_size_be: Tx aggregation size for be queue
- * @tx_aggregation_size_bk: Tx aggregation size for bk queue
- * @tx_aggregation_size_vi: Tx aggregation size for vi queue
- * @tx_aggregation_size_vo: Tx aggregation size for vo queue
- * @rx_aggregation_size: Rx aggregation size
- */
-struct sir_set_tx_rx_aggregation_size {
-	uint8_t vdev_id;
-	wmi_vdev_custom_aggr_type_t aggr_type;
-	uint32_t tx_aggregation_size;
-	uint32_t tx_aggregation_size_be;
-	uint32_t tx_aggregation_size_bk;
-	uint32_t tx_aggregation_size_vi;
-	uint32_t tx_aggregation_size_vo;
-	uint32_t rx_aggregation_size;
-};
-
-/**
- * struct sir_set_tx_sw_retry_threshold - set sw retry threshold
- * @vdev_id: vdev id of the session
- * @tx_aggr_sw_retry_threshold_be: aggr sw retry threshold for BE
- * @tx_aggr_sw_retry_threshold_bk: aggr sw retry threshold for BK
- * @tx_aggr_sw_retry_threshold_vi: aggr sw retry threshold for VI
- * @tx_aggr_sw_retry_threshold_vo: aggr sw retry threshold for VO
- * @tx_aggr_sw_retry_threshold: aggr sw retry threshold
- * @tx_non_aggr_sw_retry_threshold_be: non aggr sw retry threshold for BE
- * @tx_non_aggr_sw_retry_threshold_bk: non aggr sw retry threshold for BK
- * @tx_non_aggr_sw_retry_threshold_vi: non aggr sw retry threshold for VI
- * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for VO
- * @tx_non_aggr_sw_retry_threshold: non aggr sw retry threshold
- */
-struct sir_set_tx_sw_retry_threshold {
-	uint8_t vdev_id;
-	uint32_t tx_aggr_sw_retry_threshold_be;
-	uint32_t tx_aggr_sw_retry_threshold_bk;
-	uint32_t tx_aggr_sw_retry_threshold_vi;
-	uint32_t tx_aggr_sw_retry_threshold_vo;
-	uint32_t tx_aggr_sw_retry_threshold;
-	uint32_t tx_non_aggr_sw_retry_threshold_be;
-	uint32_t tx_non_aggr_sw_retry_threshold_bk;
-	uint32_t tx_non_aggr_sw_retry_threshold_vi;
-	uint32_t tx_non_aggr_sw_retry_threshold_vo;
-	uint32_t tx_non_aggr_sw_retry_threshold;
-};
-
-/**
  * struct sir_p2p_lo_start - p2p listen offload start
  * @vdev_id: vdev identifier
  * @ctl_flags: control flag

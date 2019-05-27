@@ -120,7 +120,7 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-			      struct hdd_adapter *adapter);
+				     struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter

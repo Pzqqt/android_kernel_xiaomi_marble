@@ -641,10 +641,6 @@ __wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event);
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				      uint32_t len);
 
-struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
-				struct add_sta_self_params *self_sta_req,
-				uint8_t generateRsp);
-
 QDF_STATUS wma_vdev_start(tp_wma_handle wma, struct wma_vdev_start_req *req,
 			  bool isRestart);
 

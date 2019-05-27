@@ -4381,24 +4381,13 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 			csr_roam_complete_cb callback,
 			void *callback_ctx)
 {
-	uint32_t type;
-	uint32_t sub_type;
-	QDF_STATUS status;
-
-	/* determine vdev (sub)type */
-	status = cds_get_vdev_types(adapter->device_mode, &type, &sub_type);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("failed to get vdev type: %d", status);
-		return qdf_status_to_os_return(status);
-	}
-	session_param->sme_session_id = adapter->vdev_id;
+	session_param->vdev_id = adapter->vdev_id;
 	session_param->self_mac_addr = (uint8_t *)&adapter->mac_addr;
-	session_param->type_of_persona = type;
-	session_param->subtype_of_persona = sub_type;
 	session_param->session_open_cb = hdd_sme_open_session_callback;
 	session_param->session_close_cb = hdd_sme_close_session_callback;
 	session_param->callback = callback;
 	session_param->callback_ctx = callback_ctx;
+	session_param->vdev = adapter->vdev;
 
 	return 0;
 }
@@ -4470,14 +4459,15 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		hdd_err("failed to populating SME params");
 		goto objmgr_vdev_destroy_procedure;
 	}
-	status = sme_open_session(hdd_ctx->mac_handle, &sme_session_params);
+	status = sme_create_vdev(hdd_ctx->mac_handle,
+				 &sme_session_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to open sme session: %d", status);
+		hdd_err("failed to create vdev: %d", status);
 		errno = qdf_status_to_os_return(status);
 		goto objmgr_vdev_destroy_procedure;
 	}
 
-	/* block on a completion variable until sme session is opened */
+	/* block on a completion variable until vdev is created in firmware */
 	status = qdf_wait_for_event_completion(&adapter->qdf_session_open_event,
 			SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
 	if (QDF_STATUS_SUCCESS != status) {

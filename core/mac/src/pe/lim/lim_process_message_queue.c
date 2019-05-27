@@ -59,6 +59,7 @@
 #include "cds_ieee80211_common.h"
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_mlme_public_struct.h"
+#include "../../core/src/vdev_mgr_ops.h"
 
 void lim_log_session_states(struct mac_context *mac);
 static void lim_process_normal_hdd_msg(struct mac_context *mac_ctx,
@@ -1541,6 +1542,60 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 	return;
 }
 
+static void
+lim_process_vdev_create(struct mac_context *mac_ctx,
+			struct vdev_create_req_param *vdev_create_param)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct vdev_mlme_obj *vdev_mlme = NULL;
+	struct scheduler_msg message = {0};
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+						    vdev_create_param->vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_err("Failed to get vdev obj for vdev id %d",
+		       vdev_create_param->vdev_id);
+		status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		pe_err("Failed to get vdev mlme obj for vdev id %d",
+		       vdev_create_param->vdev_id);
+		status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+
+	status = vdev_mgr_create_send(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(vdev_create_param->status)) {
+		pe_err("Failed to create vdev for vdev id %d",
+		       vdev_create_param->vdev_id);
+		goto end;
+	}
+
+	status = wma_post_vdev_create_setup(vdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		vdev_mgr_delete_send(vdev_mlme);
+
+end:
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	vdev_create_param->status = status;
+	message.type = eWNI_SME_VDEV_CREATE_RSP;
+	message.bodyptr = vdev_create_param;
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_mem_free(vdev_create_param);
+		pe_err("scheduler_post_msg failed!(err=%d)", status);
+	}
+}
+
 /**
  * lim_process_messages() - Process messages from upper layers.
  *
@@ -2095,6 +2150,11 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 					  (struct roam_blacklist_event *)
 					  msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
+	case eWNI_SME_VDEV_CREATE_REQ:
+		lim_process_vdev_create(mac_ctx, msg->bodyptr);
+		/* Do not free msg->bodyptr, same memory used to send resp */
 		msg->bodyptr = NULL;
 		break;
 	default:

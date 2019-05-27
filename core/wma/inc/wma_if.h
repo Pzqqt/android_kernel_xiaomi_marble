@@ -875,60 +875,13 @@ typedef struct sMaxTxPowerPerBandParams {
 } tMaxTxPowerPerBandParams, *tpMaxTxPowerPerBandParams;
 
 /**
- * struct add_sta_self_params - Add Sta Self params
- * @self_mac_addr: self MAC Address
- * @curr_device_mode: operating device mode
- * @type: Vdev Type
- * @sub_type: Vdev Sub Type
- * @session_id: SME Session ID
- * @nss_2g: vdev nss in 2.4G
- * @nss_5g: vdev nss in 5G
+ * struct vdev_create_req_param - vdev create request params
+ * @vdev_id: vdev_id
  * @status: response status code
- * @tx_aggregation_size: Tx aggregation size
- * @rx_aggregation_size: Rx aggregation size
- * @enable_bcast_probe_rsp: enable broadcast probe response
- * @fils_max_chan_guard_time: FILS max channel guard time
- * @pkt_err_disconn_th: packet drop threshold
- * @tx_aggr_sw_retry_threshold_be: aggr sw retry threshold for be
- * @tx_aggr_sw_retry_threshold_bk: aggr sw retry threshold for bk
- * @tx_aggr_sw_retry_threshold_vi: aggr sw retry threshold for vi
- * @tx_aggr_sw_retry_threshold_vo: aggr sw retry threshold for vo
- * @tx_aggr_sw_retry_threshold: aggr sw retry threshold
- * @tx_non_aggr_sw_retry_threshold_be: non aggr sw retry threshold for be
- * @tx_non_aggr_sw_retry_threshold_bk: non aggr sw retry threshold for bk
- * @tx_non_aggr_sw_retry_threshold_vi: non aggr sw retry threshold for vi
- * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for vo
- * @tx_non_aggr_sw_retry_threshold: non aggr sw retry threshold
  */
-struct add_sta_self_params {
-	tSirMacAddr self_mac_addr;
-	enum QDF_OPMODE curr_device_mode;
-	uint32_t type;
-	uint32_t sub_type;
-	uint8_t session_id;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
-	uint32_t status;
-	uint32_t tx_aggregation_size;
-	uint32_t tx_aggregation_size_be;
-	uint32_t tx_aggregation_size_bk;
-	uint32_t tx_aggregation_size_vi;
-	uint32_t tx_aggregation_size_vo;
-	uint32_t rx_aggregation_size;
-	bool enable_bcast_probe_rsp;
-	uint8_t fils_max_chan_guard_time;
-	uint16_t pkt_err_disconn_th;
-	uint8_t oce_feature_bitmap;
-	uint32_t tx_aggr_sw_retry_threshold_be;
-	uint32_t tx_aggr_sw_retry_threshold_bk;
-	uint32_t tx_aggr_sw_retry_threshold_vi;
-	uint32_t tx_aggr_sw_retry_threshold_vo;
-	uint32_t tx_aggr_sw_retry_threshold;
-	uint32_t tx_non_aggr_sw_retry_threshold_be;
-	uint32_t tx_non_aggr_sw_retry_threshold_bk;
-	uint32_t tx_non_aggr_sw_retry_threshold_vi;
-	uint32_t tx_non_aggr_sw_retry_threshold_vo;
-	uint32_t tx_non_aggr_sw_retry_threshold;
+struct vdev_create_req_param {
+	uint32_t vdev_id;
+	QDF_STATUS status;
 };
 
 /**

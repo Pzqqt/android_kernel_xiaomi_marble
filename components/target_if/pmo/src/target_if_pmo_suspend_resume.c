@@ -74,7 +74,7 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	param.if_id = vdev_id;
+	param.vdev_id = vdev_id;
 	param.param_id = param_id;
 	param.param_value = param_value;
 	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
@@ -127,7 +127,7 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 	}
 
 	sta_ps_param.vdev_id = vdev_id;
-	sta_ps_param.param = param_id;
+	sta_ps_param.param_id = param_id;
 	sta_ps_param.value = param_value;
 	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
 			vdev_id, param_value, param_id);

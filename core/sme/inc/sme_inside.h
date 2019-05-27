@@ -163,7 +163,6 @@ QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum);
 QDF_STATUS sme_acquire_global_lock(struct sme_context *sme);
 QDF_STATUS sme_release_global_lock(struct sme_context *sme);
 
-QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
 QDF_STATUS csr_process_del_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
 
 QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,

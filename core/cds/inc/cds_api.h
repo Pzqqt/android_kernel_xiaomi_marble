@@ -329,8 +329,26 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context);
 
 QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context);
 
-QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
-			      uint32_t *subType);
+/**
+ * cds_get_vdev_types() - get vdev type and subtype from it's operation mode
+ * @mode: operation mode of vdev
+ * @type: type of vdev
+ * @sub_type: sub_type of vdev
+ *
+ * This API is called to get vdev type and subtype from it's operation mode.
+ * Vdev operation modes are defined in enum QDF_OPMODE.
+ *
+ * Type of vdev are WLAN_VDEV_MLME_TYPE_AP, WLAN_VDEV_MLME_TYPE_STA,
+ * WLAN_VDEV_MLME_TYPE_IBSS, ,WLAN_VDEV_MLME_TYPE_MONITOR,
+ * WLAN_VDEV_MLME_TYPE_NAN, WLAN_VDEV_MLME_TYPE_OCB, WLAN_VDEV_MLME_TYPE_NDI
+ *
+ * Sub_types of vdev are WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE,
+ * WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT, WLAN_VDEV_MLME_SUBTYPE_P2P_GO,
+ * WLAN_VDEV_MLME_SUBTYPE_PROXY_STA, WLAN_VDEV_MLME_SUBTYPE_MESH
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
+			      uint8_t *sub_type);
 
 void cds_flush_work(void *work);
 void cds_flush_delayed_work(void *dwork);

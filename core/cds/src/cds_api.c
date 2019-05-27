@@ -1607,16 +1607,8 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID module_id, void *module_context)
 	return QDF_STATUS_SUCCESS;
 } /* cds_free_context() */
 
-/**
- * cds_get_vdev_types() - get vdev type
- * @mode: mode
- * @type: type
- * @sub_type: sub_type
- *
- * Return: WMI vdev type
- */
-QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
-			      uint32_t *sub_type)
+QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
+			      uint8_t *sub_type)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	*type = 0;
@@ -1624,34 +1616,34 @@ QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
 
 	switch (mode) {
 	case QDF_STA_MODE:
-		*type = WMI_VDEV_TYPE_STA;
+		*type = WLAN_VDEV_MLME_TYPE_STA;
 		break;
 	case QDF_SAP_MODE:
-		*type = WMI_VDEV_TYPE_AP;
+		*type = WLAN_VDEV_MLME_TYPE_AP;
 		break;
 	case QDF_P2P_DEVICE_MODE:
-		*type = WMI_VDEV_TYPE_AP;
-		*sub_type = WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE;
+		*type = WLAN_VDEV_MLME_TYPE_AP;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE;
 		break;
 	case QDF_P2P_CLIENT_MODE:
-		*type = WMI_VDEV_TYPE_STA;
-		*sub_type = WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT;
+		*type = WLAN_VDEV_MLME_TYPE_STA;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT;
 		break;
 	case QDF_P2P_GO_MODE:
-		*type = WMI_VDEV_TYPE_AP;
-		*sub_type = WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO;
+		*type = WLAN_VDEV_MLME_TYPE_AP;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_GO;
 		break;
 	case QDF_OCB_MODE:
-		*type = WMI_VDEV_TYPE_OCB;
+		*type = WLAN_VDEV_MLME_TYPE_OCB;
 		break;
 	case QDF_IBSS_MODE:
-		*type = WMI_VDEV_TYPE_IBSS;
+		*type = WLAN_VDEV_MLME_TYPE_IBSS;
 		break;
 	case QDF_MONITOR_MODE:
-		*type = WMI_VDEV_TYPE_MONITOR;
+		*type = WMI_HOST_VDEV_TYPE_MONITOR;
 		break;
 	case QDF_NDI_MODE:
-		*type = WMI_VDEV_TYPE_NDI;
+		*type = WLAN_VDEV_MLME_TYPE_NDI;
 		break;
 	default:
 		cds_err("Invalid device mode %d", mode);

@@ -266,23 +266,44 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
  */
 QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
-QDF_STATUS wma_set_tx_rx_aggregation_size
-	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
 
 /**
- * wma_set_tx_rx_aggregation_size_per_ac() - set aggregation size per ac
- * @tx_rx_aggregation_size: the parameter for aggregation size
+ * wma_set_tx_rx_aggr_size() - set tx rx aggregation size
+ * @vdev_id: vdev id
+ * @tx_size: tx aggr size
+ * @rx_size: rx aggr size
+ * @aggr_type: aggregation type
  *
- *  This function try to set the aggregation size per AC.
+ *  This function try to set the aggregation size.
  *
  *  Return: QDF_STATUS enumeration
  */
-QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac
-	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
+QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
+				   uint32_t tx_size,
+				   uint32_t rx_size,
+				   wmi_vdev_custom_aggr_type_t aggr_type);
+/**
+ * wma_set_tx_rx_aggr_size_per_ac() - set aggregation size per ac
+ * @wma_handle: pointer to wma handle.
+ * @vdev_id: vdev_id
+ * @qos_aggr: QoS data
+ * @aggr_type: aggregation type
+ *
+ * This function try to set the aggregation size per AC.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS
+wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE wma_handle,
+			       uint8_t vdev_id,
+			       struct wlan_mlme_qos *qos_aggr,
+			       wmi_vdev_custom_aggr_type_t aggr_type);
+
 /**
  * wma_set_sw_retry_threshold_per_ac() - set sw retry threshold per AC for tx
  * @handle: wma handle
- * @tx_sw_retry_threshold: value needs to set to firmware
+ * @vdev_id: vdev id
+ * @qos_aggr: pointer to QOS TX/RX aggregation values
  *
  * This function sends WMI command to set the sw retry threshold per AC
  * for Tx.
@@ -291,19 +312,20 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac
  */
 QDF_STATUS wma_set_sw_retry_threshold_per_ac
 	(WMA_HANDLE handle,
-	 struct sir_set_tx_sw_retry_threshold *tx_sw_retry_threshold);
+	 uint8_t vdev_id, struct wlan_mlme_qos *qos_aggr);
 /**
  * wma_set_sw_retry_threshold() - set sw retry threshold for tx
  * @vdev_id: vdev
  * @retry: retry number
- * @param: for aggregation or non-aggregation
+ * @param_id: aggregrate sw retry threshold param id
  *
  * This function sends WMI command to set the sw retry threshold for Tx.
  *
  * Return: QDF_STATUS.
  */
 QDF_STATUS wma_set_sw_retry_threshold(uint8_t vdev_id, uint32_t retry,
-				      uint32_t param);
+				      uint32_t param_id);
+
 /**
  * wma_get_sar_limit() - get SAR limits from the target
  * @handle: wma handle
@@ -576,6 +598,17 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS wma_sta_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data);
+/**
+ * wma_post_vdev_create_setup() - Post vdev create setup
+ * @vdev: vdev obj
+ *
+ * This API is invoked after vded is created to perform post
+ * vdev create operations i.e. creating peer and setting vdev params.
+ *
+ * Return: SUCCESS on successful post vdev operations, FAILURE, if it
+ *         fails due to any
+ */
+QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wma_mon_mlme_vdev_start_continue() - VDEV start response handling

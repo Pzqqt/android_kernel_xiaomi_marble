@@ -16785,47 +16785,86 @@ static void csr_store_oce_cfg_flags_in_vdev(struct mac_context *mac,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
-QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg)
+static void csr_send_set_ie(uint8_t type, uint8_t sub_type,
+			    uint8_t vdev_id)
 {
-	struct add_sta_self_params *rsp;
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
 
-	if (!pMsg) {
-		sme_err("in %s msg ptr is NULL", __func__);
+	sme_debug("send SET IE msg to PE");
+
+	if (!(type == WLAN_VDEV_MLME_TYPE_STA ||
+	      (type == WLAN_VDEV_MLME_TYPE_AP &&
+	      sub_type == WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE))) {
+		sme_err("Failed to send set IE req for vdev_%d", vdev_id);
+		return;
+	}
+
+	msg = qdf_mem_malloc(sizeof(*msg));
+	if (!msg)
+		return;
+
+	msg->msg_type = eWNI_SME_SET_IE_REQ;
+	msg->session_id = vdev_id;
+	msg->length = sizeof(*msg);
+	status = umac_send_mb_message_to_mac(msg);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("Failed to send set IE req for vdev_%d", vdev_id);
+}
+
+QDF_STATUS csr_vdev_create_resp(struct mac_context *mac, uint8_t *pmsg)
+{
+	struct vdev_create_req_param *rsp;
+	struct vdev_mlme_obj *vdev_mlme;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!pmsg) {
+		sme_err("msg ptr is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	rsp = (struct add_sta_self_params *) pMsg;
-	sme_debug("Add Sta self rsp status = %d", rsp->status);
+	rsp = (struct vdev_create_req_param *)pmsg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
+						    rsp->vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("Failed to get vdev obj for vdev id %d",
+			rsp->vdev_id);
+		csr_cleanup_session(mac, rsp->vdev_id);
+		csr_roam_session_opened(mac, QDF_STATUS_E_FAILURE,
+					rsp->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sme_debug("create vdev status = %d", rsp->status);
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("Fail to get vdev priv object");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		csr_cleanup_session(mac, rsp->vdev_id);
+		csr_roam_session_opened(mac, QDF_STATUS_E_FAILURE,
+					rsp->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->status)) {
-		if ((WMI_VDEV_TYPE_STA == rsp->type ||
-		    (WMI_VDEV_TYPE_AP == rsp->type &&
-		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE == rsp->sub_type))) {
-			sme_debug("send SET IE msg to PE");
-			msg = qdf_mem_malloc(sizeof(*msg));
-			if (!msg)
-				return QDF_STATUS_E_NOMEM;
+		csr_send_set_ie(vdev_mlme->mgmt.generic.type,
+				vdev_mlme->mgmt.generic.subtype,
+				rsp->vdev_id);
 
-			msg->msg_type = eWNI_SME_SET_IE_REQ;
-			msg->session_id = rsp->session_id;
-			msg->length = sizeof(*msg);
-			status = umac_send_mb_message_to_mac(msg);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				sme_err("Failed to send down the set IE req ");
+		if (vdev_mlme->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_STA) {
+			csr_store_oce_cfg_flags_in_vdev(mac, mac->pdev,
+							rsp->vdev_id);
+			wlan_mlme_update_oce_flags(mac->pdev);
 		}
 	}
 
-	csr_roam_session_opened(mac, rsp->status, rsp->session_id);
+	csr_roam_session_opened(mac, rsp->status, rsp->vdev_id);
 
-	if (QDF_IS_STATUS_SUCCESS(rsp->status) &&
-	    rsp->type == WMI_VDEV_TYPE_STA) {
-		csr_store_oce_cfg_flags_in_vdev(mac, mac->pdev,
-						rsp->session_id);
-		wlan_mlme_update_oce_flags(mac->pdev);
-	}
 	if (QDF_IS_STATUS_ERROR(rsp->status))
-		csr_cleanup_session(mac, rsp->session_id);
+		csr_cleanup_session(mac, rsp->vdev_id);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16889,117 +16928,72 @@ void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
 		break;
 	}
 	sme_debug("mode - %d: nss_2g - %d, 5g - %d",
-			dev_mode, *nss_2g, *nss_5g);
+		  dev_mode, *nss_2g, *nss_5g);
 }
 
 static
-QDF_STATUS csr_issue_add_sta_for_session_req(struct mac_context *mac,
-					     uint32_t sessionId,
-					     tSirMacAddr sessionMacAddr,
-					     uint32_t type, uint32_t subType)
+QDF_STATUS csr_issue_vdev_create_req(struct mac_context *mac,
+				     uint32_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct add_sta_self_params *add_sta_self_req;
-	struct wlan_mlme_qos *qos_aggr = &mac->mlme_cfg->qos_mlme_params;
-	uint8_t nss_2g;
-	uint8_t nss_5g;
-	struct scheduler_msg msg = {0};
+	struct vdev_create_req_param *vdev_create_req;
+	struct scheduler_msg message = {0};
 
-	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
-	if (!add_sta_self_req)
+	vdev_create_req = qdf_mem_malloc(sizeof(*vdev_create_req));
+	if (!vdev_create_req)
 		return QDF_STATUS_E_NOMEM;
 
-	if (!(mac->mlme_cfg)) {
-		pe_err("Mlme cfg NULL");
-		return QDF_STATUS_E_FAILURE;
+	vdev_create_req->vdev_id = vdev_id;
+	/* Serialize the req through MC thread */
+	message.type    = eWNI_SME_VDEV_CREATE_REQ;
+	message.bodyptr = vdev_create_req;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("scheduler_post_msg failed!(err=%d)", status);
+		qdf_mem_free(vdev_create_req);
+		status = QDF_STATUS_E_FAILURE;
 	}
 
-	csr_get_vdev_type_nss(mac, mac->sme.curr_device_mode,
-			      &nss_2g, &nss_5g);
-	qdf_mem_copy(add_sta_self_req->self_mac_addr, sessionMacAddr,
-		     sizeof(tSirMacAddr));
-	add_sta_self_req->curr_device_mode = mac->sme.curr_device_mode;
-	add_sta_self_req->session_id = sessionId;
-	add_sta_self_req->type = type;
-	add_sta_self_req->sub_type = subType;
-	add_sta_self_req->nss_2g = nss_2g;
-	add_sta_self_req->nss_5g = nss_5g;
-
-	add_sta_self_req->tx_aggregation_size = qos_aggr->tx_aggregation_size;
-	add_sta_self_req->tx_aggregation_size_be =
-			qos_aggr->tx_aggregation_size_be;
-	add_sta_self_req->tx_aggregation_size_bk =
-			qos_aggr->tx_aggregation_size_bk;
-	add_sta_self_req->tx_aggregation_size_vi =
-			qos_aggr->tx_aggregation_size_vi;
-	add_sta_self_req->tx_aggregation_size_vo =
-			qos_aggr->tx_aggregation_size_vo;
-
-	add_sta_self_req->rx_aggregation_size = qos_aggr->rx_aggregation_size;
-	add_sta_self_req->tx_aggr_sw_retry_threshold_be =
-			qos_aggr->tx_aggr_sw_retry_threshold_be;
-	add_sta_self_req->tx_aggr_sw_retry_threshold_bk =
-			qos_aggr->tx_aggr_sw_retry_threshold_bk;
-	add_sta_self_req->tx_aggr_sw_retry_threshold_vi =
-			qos_aggr->tx_aggr_sw_retry_threshold_vi;
-	add_sta_self_req->tx_aggr_sw_retry_threshold_vo =
-			qos_aggr->tx_aggr_sw_retry_threshold_vo;
-	add_sta_self_req->tx_aggr_sw_retry_threshold =
-			qos_aggr->tx_aggr_sw_retry_threshold;
-	add_sta_self_req->tx_non_aggr_sw_retry_threshold_be =
-			qos_aggr->tx_non_aggr_sw_retry_threshold_be;
-	add_sta_self_req->tx_non_aggr_sw_retry_threshold_bk =
-			qos_aggr->tx_non_aggr_sw_retry_threshold_bk;
-	add_sta_self_req->tx_non_aggr_sw_retry_threshold_vi =
-			qos_aggr->tx_non_aggr_sw_retry_threshold_vi;
-	add_sta_self_req->tx_non_aggr_sw_retry_threshold_vo =
-			qos_aggr->tx_non_aggr_sw_retry_threshold_vo;
-	add_sta_self_req->tx_non_aggr_sw_retry_threshold =
-			qos_aggr->tx_non_aggr_sw_retry_threshold;
-
-	add_sta_self_req->enable_bcast_probe_rsp =
-			mac->mlme_cfg->oce.enable_bcast_probe_rsp;
-	add_sta_self_req->fils_max_chan_guard_time =
-			mac->mlme_cfg->sta.fils_max_chan_guard_time;
-	add_sta_self_req->pkt_err_disconn_th =
-			mac->mlme_cfg->gen.dropped_pkt_disconnect_thresh;
-	add_sta_self_req->oce_feature_bitmap =
-			mac->mlme_cfg->oce.feature_bitmap;
-
-	msg.type = WMA_ADD_STA_SELF_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = add_sta_self_req;
-	msg.bodyval = 0;
-
-	sme_debug(
-		"Send WMA_ADD_STA_SELF_REQ for selfMac=" QDF_MAC_ADDR_STR,
-		 QDF_MAC_ADDR_ARRAY(add_sta_self_req->self_mac_addr));
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA, &msg);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("wma_post_ctrl_msg failed");
-		qdf_mem_free(add_sta_self_req);
-		add_sta_self_req = NULL;
-	}
 	return status;
 }
 
-QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
-				 struct sme_session_params *session_param)
+QDF_STATUS csr_create_vdev(struct mac_context *mac_ctx,
+			   struct wlan_objmgr_vdev *vdev,
+			   struct sme_session_params *session_param)
 {
 	QDF_STATUS status;
 	uint32_t existing_session_id;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *session;
 	struct mlme_vht_capabilities_info *vht_cap_info;
+	struct vdev_mlme_obj *vdev_mlme;
+	enum QDF_OPMODE op_mode;
 
 	if (!(mac_ctx->mlme_cfg)) {
-		pe_err("invalid mlme cfg");
+		sme_err("invalid mlme cfg");
 		return QDF_STATUS_E_FAILURE;
 	}
 	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("Failed to get cmpt obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	op_mode = wlan_vdev_mlme_get_opmode(vdev);
+	csr_get_vdev_type_nss(mac_ctx, op_mode,
+			      &vdev_mlme->proto.generic.nss_2g,
+			      &vdev_mlme->proto.generic.nss_5g);
+
+	status = cds_get_vdev_types(op_mode,
+				    &vdev_mlme->mgmt.generic.type,
+				    &vdev_mlme->mgmt.generic.subtype);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Get vdev type failed; status:%d", status);
+		return status;
+	}
 
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
@@ -17013,22 +17007,22 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	}
 
 	/* attempt to retrieve session for Id */
-	session = CSR_GET_SESSION(mac_ctx, session_param->sme_session_id);
+	session = CSR_GET_SESSION(mac_ctx, session_param->vdev_id);
 	if (!session) {
 		sme_err("Session does not exist for interface %d",
-			session_param->sme_session_id);
+			session_param->vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* check to see if the session is already active */
 	if (session->sessionActive) {
 		sme_err("Cannot re-open active session with Id %d",
-			session_param->sme_session_id);
+			session_param->vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	session->sessionActive = true;
-	session->sessionId = session_param->sme_session_id;
+	session->sessionId = session_param->vdev_id;
 
 	/* Initialize FT related data structures only in STA mode */
 	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
@@ -17095,13 +17089,9 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	 * Do not advertise requester role for SAP & responder role
 	 * for STA
 	 */
-	csr_init_session_twt_cap(session, session_param->type_of_persona);
+	csr_init_session_twt_cap(session, vdev_mlme->mgmt.generic.type);
 
-	return csr_issue_add_sta_for_session_req(mac_ctx,
-				session_param->sme_session_id,
-				session_param->self_mac_addr,
-				session_param->type_of_persona,
-				session_param->subtype_of_persona);
+	return csr_issue_vdev_create_req(mac_ctx, session->sessionId);
 }
 
 QDF_STATUS csr_process_del_sta_session_rsp(struct mac_context *mac_ctx,

@@ -954,10 +954,8 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	struct pdev_params pdev_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
-	struct sir_set_tx_rx_aggregation_size aggr;
 
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
-	qdf_mem_zero(&aggr, sizeof(aggr));
 
 	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -1027,6 +1025,8 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	{
 		struct cdp_vdev *vdev = NULL;
 		struct wma_txrx_node *intr = wma->interfaces;
+		wmi_vdev_custom_aggr_type_t aggr_type =
+			WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
 
 		vdev = wma_find_vdev_by_id(wma, privcmd->param_vdev_id);
 		if (!vdev) {
@@ -1055,18 +1055,14 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					intr[privcmd->param_vdev_id].config.
 						ampdu = privcmd->param_value;
 
-				aggr.aggr_type =
+				aggr_type =
 					WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
-			} else {
-				aggr.aggr_type =
-					WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU;
 			}
 
-			aggr.vdev_id = vid;
-			aggr.tx_aggregation_size = privcmd->param_value;
-			aggr.rx_aggregation_size = privcmd->param_value;
-
-			ret = wma_set_tx_rx_aggregation_size(&aggr);
+			ret = wma_set_tx_rx_aggr_size(vid,
+						      privcmd->param_value,
+						      privcmd->param_value,
+						      aggr_type);
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				WMA_LOGE("set_aggr_size failed ret %d", ret);
 				return;
@@ -8413,9 +8409,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
-	struct cdp_vdev *txrx_vdev_handle = NULL;
-
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!msg) {
 		WMA_LOGE("msg is NULL");
@@ -8454,26 +8447,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_process_tsm_stats_req(wma_handle, (void *)msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_ESE */
-	case WMA_ADD_STA_SELF_REQ:
-		txrx_vdev_handle =
-			wma_vdev_attach(wma_handle,
-				(struct add_sta_self_params *) msg->
-				bodyptr, 1);
-		if (!txrx_vdev_handle) {
-			WMA_LOGE("Failed to attach vdev");
-		} else {
-			/* Register with TxRx Module for Data Ack Complete Cb */
-			if (soc) {
-				cdp_data_tx_cb_set(soc, txrx_vdev_handle,
-						wma_data_tx_ack_comp_hdlr,
-						wma_handle);
-			} else {
-				WMA_LOGE("%s: SOC context is NULL", __func__);
-				qdf_status = QDF_STATUS_E_FAILURE;
-				goto end;
-			}
-		}
-		break;
 	case WMA_DEL_STA_SELF_REQ:
 		wma_vdev_detach(wma_handle,
 				(struct del_sta_self_params *) msg->bodyptr, 1);

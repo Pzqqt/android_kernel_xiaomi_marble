@@ -116,7 +116,7 @@ QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 	iface = &wma->interfaces[vdev_id];
 
 	sta_ps_param.vdev_id = vdev_id;
-	sta_ps_param.param = param;
+	sta_ps_param.param_id = param;
 	sta_ps_param.value = value;
 	status = wmi_unified_sta_ps_cmd_send(wmi_handle, &sta_ps_param);
 	if (QDF_IS_STATUS_ERROR(status))

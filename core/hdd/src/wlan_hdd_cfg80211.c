@@ -5885,7 +5885,6 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 	struct nlattr *rx_attr =
 		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION];
 	uint8_t tx_size, rx_size;
-	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS status;
 
 	/* nothing to do if neither attribute is present */
@@ -5909,15 +5908,10 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	qdf_mem_zero(&request, sizeof(request));
-	request.tx_aggregation_size = tx_size;
-	request.rx_aggregation_size = rx_size;
-	request.vdev_id = adapter->vdev_id;
-	request.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
-
-	status = wma_set_tx_rx_aggregation_size(&request);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("failed to set aggr sizes err %d", status);
+	status = wma_set_tx_rx_aggr_size(adapter->vdev_id,
+					 tx_size,
+					 rx_size,
+					 WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU);
 
 	return qdf_status_to_os_return(status);
 }

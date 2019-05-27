@@ -212,21 +212,19 @@ struct sme_5g_band_pref_params {
  * @session_open_cb: callback to be registered with SME for opening the session
  * @session_close_cb: callback to be registered with SME for closing the session
  * @callback: callback to be invoked for roaming events
+ * @vdev: pointer to vdev object
  * @callback_ctx: user-supplied context to be passed back on roaming events
  * @self_mac_addr: Self mac address
- * @sme_session_id: SME session id
- * @type_of_persona: person type
- * @subtype_of_persona: sub type of persona
+ * @vdev_id: vdev id
  */
 struct sme_session_params {
 	csr_session_open_cb  session_open_cb;
 	csr_session_close_cb session_close_cb;
 	csr_roam_complete_cb callback;
+	struct wlan_objmgr_vdev *vdev;
 	void *callback_ctx;
 	uint8_t *self_mac_addr;
-	uint8_t sme_session_id;
-	uint32_t type_of_persona;
-	uint32_t subtype_of_persona;
+	uint8_t vdev_id;
 };
 
 #define MAX_CANDIDATE_INFO 10
@@ -370,21 +368,19 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		      uint8_t vdev_id);
 
 /**
- * sme_open_session() - Open a session for given persona
+ * sme_create_vdev() - Create vdev for given persona
+ * @mac_handle: The handle returned by mac_open
+ * @params: to initialize the session open params
  *
  * This is a synchronous API. For any protocol stack related activity
- * requires session to be opened. This API needs to be called to open
- * the session in SME module.
+ * requires vdev to be created. This API needs to be called to create
+ * vdev in SME module.
  *
- * mac_handle: The handle returned by mac_open.
- * params: to initialize the session open params
- *
- * Return:
- * QDF_STATUS_SUCCESS - session is opened.
- * Other status means SME is failed to open the session.
+ * Return: QDF_STATUS_SUCCESS - vdev is created
+ * Other status means SME is failed to create vdev
  */
-QDF_STATUS sme_open_session(mac_handle_t mac_handle,
-			    struct sme_session_params *params);
+QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
+			   struct sme_session_params *params);
 
 /**
  * sme_close_session() - Close a session for given persona

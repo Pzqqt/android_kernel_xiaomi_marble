@@ -248,6 +248,17 @@ csr_roam_save_connected_information(struct mac_context *mac,
 void csr_roam_check_for_link_status_change(struct mac_context *mac,
 					tSirSmeRsp *pSirMsg);
 
+/**
+ * csr_vdev_create_resp() - Vdev create response handler
+ * @mac_ctx: global mac context
+ * @pMsg: pointer to response data
+ *
+ * This API handles vdev create response.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS csr_vdev_create_resp(struct mac_context *mac, uint8_t *pmsg);
+
 QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
 				    struct csr_roam_profile *pProfile,
@@ -355,8 +366,6 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					*channelTable);
 QDF_STATUS csr_roam_set_key(struct mac_context *mac, uint32_t sessionId,
 			    tCsrRoamSetKey *pSetKey, uint32_t roamId);
-QDF_STATUS csr_roam_open_session(struct mac_context *mac,
-				 struct sme_session_params *session_param);
 QDF_STATUS csr_roam_close_session(struct mac_context *mac_ctx,
 				  uint32_t session_id, bool sync);
 void csr_cleanup_session(struct mac_context *mac, uint32_t sessionId);
@@ -1017,6 +1026,17 @@ uint8_t
 csr_scan_get_channel_for_hw_mode_change(
 	struct mac_context *mac_ctx, uint32_t session_id,
 	struct csr_roam_profile *profile);
+/**
+ * csr_create_vdev() - API to create vdev
+ * @mac_ctx: pointer to mac context
+ * @vdev: vdev object
+ * @session_param: Session params
+ *
+ * Returns: QDF_STATUS
+ */
+QDF_STATUS csr_create_vdev(struct mac_context *mac,
+			   struct wlan_objmgr_vdev *vdev,
+			   struct sme_session_params *session_param);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 /**

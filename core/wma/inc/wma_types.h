@@ -116,7 +116,6 @@
 
 #define WMA_ADD_STA_REQ                SIR_HAL_ADD_STA_REQ
 #define WMA_ADD_STA_RSP                SIR_HAL_ADD_STA_RSP
-#define WMA_ADD_STA_SELF_RSP           SIR_HAL_ADD_STA_SELF_RSP
 #define WMA_DELETE_STA_REQ             SIR_HAL_DELETE_STA_REQ
 #define WMA_DELETE_STA_RSP             SIR_HAL_DELETE_STA_RSP
 #define WMA_ADD_BSS_REQ                SIR_HAL_ADD_BSS_REQ
@@ -208,7 +207,6 @@
 #ifdef WLAN_NS_OFFLOAD
 #define WMA_SET_NS_OFFLOAD             SIR_HAL_SET_NS_OFFLOAD
 #endif /* WLAN_NS_OFFLOAD */
-#define WMA_ADD_STA_SELF_REQ           SIR_HAL_ADD_STA_SELF_REQ
 #define WMA_DEL_STA_SELF_REQ           SIR_HAL_DEL_STA_SELF_REQ
 
 #ifdef FEATURE_WLAN_TDLS

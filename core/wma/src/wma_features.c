@@ -4247,16 +4247,10 @@ QDF_STATUS wma_send_apf_read_work_memory_cmd(WMA_HANDLE handle,
 }
 #endif /* FEATURE_WLAN_APF */
 
-/**
- * wma_set_tx_rx_aggregation_size() - sets tx rx aggregation sizes
- * @tx_rx_aggregation_size: aggregation size parameters
- *
- * This function sets tx rx aggregation sizes
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_set_tx_rx_aggregation_size(
-	struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size)
+QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
+				   uint32_t tx_size,
+				   uint32_t rx_size,
+				   wmi_vdev_custom_aggr_type_t aggr_type)
 {
 	tp_wma_handle wma_handle;
 	wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd;
@@ -4267,10 +4261,6 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!tx_rx_aggregation_size) {
-		WMA_LOGE("%s: invalid pointer", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA context is invald!", __func__);
@@ -4291,12 +4281,11 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
 
-	cmd->vdev_id = tx_rx_aggregation_size->vdev_id;
-	cmd->tx_aggr_size = tx_rx_aggregation_size->tx_aggregation_size;
-	cmd->rx_aggr_size = tx_rx_aggregation_size->rx_aggregation_size;
+	cmd->vdev_id = vdev_id;
+	cmd->tx_aggr_size = tx_size;
+	cmd->rx_aggr_size = rx_size;
 	/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
-	if (tx_rx_aggregation_size->aggr_type ==
-	    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
+	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 		cmd->enable_bitmap |= 0x04;
 
 	WMA_LOGD("tx aggr: %d rx aggr: %d vdev: %d enable_bitmap %d",
@@ -4313,10 +4302,11 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
-	struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size)
+QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
+					  uint8_t vdev_id,
+					  struct wlan_mlme_qos *qos_aggr,
+					  wmi_vdev_custom_aggr_type_t aggr_type)
 {
-	tp_wma_handle wma_handle;
 	wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd;
 	int32_t len;
 	wmi_buf_t buf;
@@ -4324,23 +4314,17 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 	int ret;
 	int queue_num;
 	uint32_t tx_aggr_size[4];
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!tx_rx_aggregation_size) {
-		WMA_LOGE("%s: invalid pointer", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA context is invald!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tx_aggr_size[0] = tx_rx_aggregation_size->tx_aggregation_size_be;
-	tx_aggr_size[1] = tx_rx_aggregation_size->tx_aggregation_size_bk;
-	tx_aggr_size[2] = tx_rx_aggregation_size->tx_aggregation_size_vi;
-	tx_aggr_size[3] = tx_rx_aggregation_size->tx_aggregation_size_vo;
+	tx_aggr_size[0] = qos_aggr->tx_aggregation_size_be;
+	tx_aggr_size[1] = qos_aggr->tx_aggregation_size_bk;
+	tx_aggr_size[2] = qos_aggr->tx_aggregation_size_vi;
+	tx_aggr_size[3] = qos_aggr->tx_aggregation_size_vo;
 
 	for (queue_num = 0; queue_num < 4; queue_num++) {
 		if (tx_aggr_size[queue_num] == 0)
@@ -4360,16 +4344,13 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 			       WMITLV_GET_STRUCT_TLVLEN(
 					wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
 
-		cmd->vdev_id = tx_rx_aggregation_size->vdev_id;
-		cmd->rx_aggr_size =
-				  tx_rx_aggregation_size->rx_aggregation_size;
-
+		cmd->vdev_id = vdev_id;
+		cmd->rx_aggr_size = qos_aggr->rx_aggregation_size;
 		cmd->tx_aggr_size = tx_aggr_size[queue_num];
 		/* bit 5: tx_ac_enable, if set, ac bitmap is valid. */
 		cmd->enable_bitmap = 0x20 | queue_num;
 		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
-		if (tx_rx_aggregation_size->aggr_type ==
-		    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
+		if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 			cmd->enable_bitmap |= 0x04;
 
 		WMA_LOGD("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d, bitmap: %d",
@@ -4435,23 +4416,15 @@ static QDF_STATUS wma_set_sw_retry_by_qos(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_set_sw_retry_threshold_per_ac(
-	WMA_HANDLE handle,
-	struct sir_set_tx_sw_retry_threshold *tx_sw_retry_threshold)
+QDF_STATUS wma_set_sw_retry_threshold_per_ac(WMA_HANDLE handle,
+					     uint8_t vdev_id,
+					     struct wlan_mlme_qos *qos_aggr)
 {
 	QDF_STATUS ret;
-	tp_wma_handle wma_handle;
-	uint8_t vdev_id;
 	int retry_type, queue_num;
 	uint32_t tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_MAX][WMI_AC_MAX];
 	uint32_t sw_retry;
-
-	wma_handle = (tp_wma_handle)handle;
-
-	if (!tx_sw_retry_threshold) {
-		wma_err("%s: invalid pointer", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
+	tp_wma_handle wma_handle = (tp_wma_handle)handle;
 
 	if (!wma_handle) {
 		wma_err("%s: WMA context is invalid!", __func__);
@@ -4459,22 +4432,22 @@ QDF_STATUS wma_set_sw_retry_threshold_per_ac(
 	}
 
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_BE] =
-		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_be;
+		qos_aggr->tx_aggr_sw_retry_threshold_be;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_BK] =
-		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_bk;
+		qos_aggr->tx_aggr_sw_retry_threshold_bk;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_VI] =
-		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_vi;
+		qos_aggr->tx_aggr_sw_retry_threshold_vi;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_VO] =
-		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_vo;
+		qos_aggr->tx_aggr_sw_retry_threshold_vo;
 
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_BE] =
-		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_be;
+		qos_aggr->tx_non_aggr_sw_retry_threshold_be;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_BK] =
-		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_bk;
+		qos_aggr->tx_non_aggr_sw_retry_threshold_bk;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_VI] =
-		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_vi;
+		qos_aggr->tx_non_aggr_sw_retry_threshold_vi;
 	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_VO] =
-		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_vo;
+		qos_aggr->tx_non_aggr_sw_retry_threshold_vo;
 
 	retry_type = WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR;
 	while (retry_type < WMI_VDEV_CUSTOM_SW_RETRY_TYPE_MAX) {
@@ -4482,7 +4455,6 @@ QDF_STATUS wma_set_sw_retry_threshold_per_ac(
 			if (tx_sw_retry[retry_type][queue_num] == 0)
 				continue;
 
-			vdev_id = tx_sw_retry_threshold->vdev_id;
 			sw_retry = tx_sw_retry[retry_type][queue_num];
 			ret = wma_set_sw_retry_by_qos(wma_handle,
 						      vdev_id,
@@ -4522,6 +4494,7 @@ QDF_STATUS wma_set_sw_retry_threshold(uint8_t vdev_id, uint32_t retry,
 
 	return QDF_STATUS_SUCCESS;
 }
+
 /**
  * wma_process_fw_test_cmd() - send unit test command to fw.
  * @handle: wma handle
@@ -4972,6 +4945,8 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	struct mac_context *mac = NULL;
 	struct lim_channel_status *channel_status;
 	bool snr_monitor_enabled;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE mode;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -4983,21 +4958,20 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 		return -EINVAL;
 	}
 
+	param_buf = (WMI_CHAN_INFO_EVENTID_param_tlvs *)event_buf;
+	if (!param_buf)  {
+		WMA_LOGE("Invalid chan info event buffer");
+		return -EINVAL;
+	}
+	event = param_buf->fixed_param;
+	if (!event) {
+		WMA_LOGA("%s: Invalid fixed param", __func__);
+		return -EINVAL;
+	}
+
 	snr_monitor_enabled = wlan_scan_is_snr_monitor_enabled(mac->psoc);
 	WMA_LOGD("%s: monitor:%d", __func__, snr_monitor_enabled);
 	if (snr_monitor_enabled && mac->chan_info_cb) {
-		param_buf =
-			(WMI_CHAN_INFO_EVENTID_param_tlvs *)event_buf;
-		if (!param_buf) {
-			WMA_LOGA("%s: Invalid chan info event", __func__);
-			return -EINVAL;
-		}
-
-		event = param_buf->fixed_param;
-		if (!event) {
-			WMA_LOGA("%s: Invalid fixed param", __func__);
-			return -EINVAL;
-		}
 		buf.tx_frame_count = event->tx_frame_cnt;
 		buf.clock_freq = event->mac_clk_mhz;
 		buf.cmd_flag = event->cmd_flags;
@@ -5008,14 +4982,19 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 		mac->chan_info_cb(&buf);
 	}
 
-	if (mac->sap.acs_with_more_param &&
-	    mac->sme.curr_device_mode == QDF_SAP_MODE) {
-		param_buf = (WMI_CHAN_INFO_EVENTID_param_tlvs *) event_buf;
-		if (!param_buf)  {
-			WMA_LOGE("Invalid chan info event buffer");
-			return -EINVAL;
-		}
-		event = param_buf->fixed_param;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, event->vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+
+	if (!vdev) {
+		WMA_LOGE("%s: vdev is NULL for vdev %d",
+			 __func__, event->vdev_id);
+		return -EINVAL;
+	}
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	WMA_LOGD("Vdevid %d mode %d", event->vdev_id, mode);
+
+	if (mac->sap.acs_with_more_param && mode == QDF_SAP_MODE) {
 		channel_status = qdf_mem_malloc(sizeof(*channel_status));
 		if (!channel_status)
 			return -ENOMEM;

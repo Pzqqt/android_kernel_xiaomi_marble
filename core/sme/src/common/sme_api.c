@@ -1997,10 +1997,9 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-	case eWNI_SME_ADD_STA_SELF_RSP:
+	case eWNI_SME_VDEV_CREATE_RSP:
 		if (pMsg->bodyptr) {
-			status = csr_process_add_sta_session_rsp(mac,
-								pMsg->bodyptr);
+			status = csr_vdev_create_resp(mac, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);
@@ -4486,8 +4485,8 @@ release_ref:
 	return status;
 }
 
-QDF_STATUS sme_open_session(mac_handle_t mac_handle,
-			    struct sme_session_params *params)
+QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
+			   struct sme_session_params *params)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -4496,17 +4495,13 @@ QDF_STATUS sme_open_session(mac_handle_t mac_handle,
 	uint8_t peer_id;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: type=%d, session_id %d subType=%d addr:%pM",
-		  __func__, params->type_of_persona,
-		  params->sme_session_id, params->subtype_of_persona,
+	sme_debug("vdev_id %d addr:%pM", params->vdev_id,
 		  params->self_mac_addr);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to get pdev handler", __func__);
+		sme_err("Failed to get pdev handler");
 		return status;
 	}
 
@@ -4517,17 +4512,15 @@ QDF_STATUS sme_open_session(mac_handle_t mac_handle,
 	peer = cdp_peer_find_by_addr(soc, pdev, params->self_mac_addr,
 				     &peer_id);
 	if (peer) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Peer=%d exist with same MAC",
-			  __func__, peer_id);
+		sme_err("Peer=%d exist with same MAC", peer_id);
 		status = QDF_STATUS_E_INVAL;
 	} else {
-		status = csr_roam_open_session(mac_ctx, params);
+		status = csr_create_vdev(mac_ctx, params->vdev, params);
 	}
 	sme_release_global_lock(&mac_ctx->sme);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
-			 params->sme_session_id, 0));
+			 params->vdev_id, 0));
 
 	return status;
 }
