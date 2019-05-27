@@ -5094,6 +5094,9 @@ static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
 		if (vdev->opmode == wlan_op_mode_ap) {
 			*reo_dest = IPA_REO_DEST_RING_IDX + 1;
 			*hash_based = 0;
+		} else if (vdev->opmode == wlan_op_mode_sta &&
+			   dp_ipa_is_mdm_platform()) {
+			*reo_dest = IPA_REO_DEST_RING_IDX + 1;
 		}
 	}
 }

@@ -111,6 +111,8 @@ QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 
 bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1,
 			 uint32_t *remap2);
+bool dp_ipa_is_mdm_platform(void);
+
 #else
 static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {

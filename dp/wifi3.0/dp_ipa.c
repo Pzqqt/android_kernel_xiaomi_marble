@@ -1727,4 +1727,16 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_vdev *pvdev, qdf_nbuf_t nbuf,
 	return true;
 }
 
+#ifdef MDM_PLATFORM
+bool dp_ipa_is_mdm_platform(void)
+{
+	return true;
+}
+#else
+bool dp_ipa_is_mdm_platform(void)
+{
+	return false;
+}
+#endif
+
 #endif
