@@ -16477,13 +16477,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	/* Disable roaming on all other adapters before connect start */
 	wlan_hdd_disable_roaming(adapter);
 
-	vdev = hdd_objmgr_get_vdev(adapter);
-	if (!vdev) {
-		status = -EINVAL;
-		goto ret_status;
-	}
-	hdd_notify_teardown_tdls_links(vdev);
-	hdd_objmgr_put_vdev(vdev);
+	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
 
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));

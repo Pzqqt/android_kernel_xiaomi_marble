@@ -261,14 +261,14 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 
 /**
  * hdd_notify_teardown_tdls_links() - notify TDLS to teardown links
- * @vdev: vdev object manager
+ * @psoc: psoc object
  *
  * Notify tdls to teardown all the links, due to certain events
  * in the system
  *
  * Return: None
  */
-void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev);
+void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc);
 
 #else /* FEATURE_WLAN_TDLS */
 static inline
@@ -312,7 +312,7 @@ int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
 }
 
 static inline
-void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
+void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 {
 
 }

@@ -4942,7 +4942,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	hdd_enter();
 
-	hdd_notify_teardown_tdls_links(adapter->vdev);
+	hdd_notify_teardown_tdls_links(hdd_ctx->psoc);
 
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);

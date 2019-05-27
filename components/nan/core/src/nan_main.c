@@ -1084,6 +1084,7 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 		goto pre_enable_failure;
 	}
 	vdev_id = wlan_vdev_get_id(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 
 	status = policy_mgr_update_and_wait_for_connection_update(psoc,	vdev_id,
 					nan_social_channel,
@@ -1094,13 +1095,11 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Try to teardown TDLS links, but do not wait */
-	status = ucfg_tdls_teardown_links(vdev);
+	status = ucfg_tdls_teardown_links(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
 		nan_err("Failed to teardown TDLS links");
 
 pre_enable_failure:
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 	if (pdev)
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_NAN_ID);
 
