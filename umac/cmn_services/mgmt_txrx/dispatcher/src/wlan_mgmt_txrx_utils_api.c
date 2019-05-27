@@ -366,13 +366,18 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	struct wlan_objmgr_pdev *pdev;
 	struct mgmt_txrx_priv_pdev_context *txrx_ctx;
 	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
 
 	if (!peer) {
 		mgmt_txrx_err("peer passed is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wlan_objmgr_peer_get_ref(peer, WLAN_MGMT_NB_ID);
+	status = wlan_objmgr_peer_try_get_ref(peer, WLAN_MGMT_NB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_txrx_err("failed to get ref count for peer %pK", peer);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	vdev = wlan_peer_get_vdev(peer);
 	if (!vdev) {

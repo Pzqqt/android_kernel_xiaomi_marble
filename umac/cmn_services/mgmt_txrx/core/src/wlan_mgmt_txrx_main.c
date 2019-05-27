@@ -148,6 +148,13 @@ void wlan_mgmt_txrx_desc_put(
 		return;
 	}
 	desc->in_use = false;
+	desc->context = NULL;
+	desc->peer = NULL;
+	desc->nbuf = NULL;
+	desc->tx_dwnld_cmpl_cb = NULL;
+	desc->tx_ota_cmpl_cb = NULL;
+	desc->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+
 	qdf_list_insert_front(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list,
 			      &desc->entry);
 
