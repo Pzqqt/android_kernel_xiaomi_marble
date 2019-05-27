@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -425,16 +425,17 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	struct p2p_mgmt_tx mgmt_tx = {0};
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
+	uint32_t channel = 0;
 
 	if (!vdev) {
 		cfg80211_err("invalid vdev object");
 		return -EINVAL;
 	}
 
-	if (!chan) {
-		cfg80211_err("invalid channel");
-		return -EINVAL;
-	}
+	if (chan)
+		channel = (uint32_t)wlan_freq_to_chan(chan->center_freq);
+	else
+		cfg80211_debug("NULL chan, set channel to 0");
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
@@ -450,7 +451,6 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	if (wait > MAX_OFFCHAN_TIME_FOR_DNBS) {
 		int ret;
 		bool ok;
-		uint32_t channel = wlan_freq_to_chan(chan->center_freq);
 
 		ret = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, &ok);
 		if (QDF_IS_STATUS_ERROR(ret)) {
@@ -466,7 +466,7 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	}
 
 	mgmt_tx.vdev_id = (uint32_t)vdev_id;
-	mgmt_tx.chan = (uint32_t)wlan_freq_to_chan(chan->center_freq);
+	mgmt_tx.chan = channel;
 	mgmt_tx.wait = wait;
 	mgmt_tx.len = len;
 	mgmt_tx.no_cck = (uint32_t)no_cck;
