@@ -764,18 +764,14 @@ QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *req)
 	return status;
 }
 
-QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0, };
 
-	if (!vdev) {
-		tdls_err("vdev is NULL ");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
 	tdls_debug("Enter ");
 
-	msg.bodyptr = vdev;
+	msg.bodyptr = psoc;
 	msg.callback = tdls_process_cmd;
 	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	msg.type = TDLS_CMD_TEARDOWN_LINKS;
@@ -1122,4 +1118,10 @@ QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 void ucfg_tdls_notify_connect_failure(struct wlan_objmgr_psoc *psoc)
 {
 	return tdls_notify_decrement_session(psoc);
+}
+
+struct wlan_objmgr_vdev *ucfg_get_tdls_vdev(struct wlan_objmgr_psoc *psoc,
+					    wlan_objmgr_ref_dbgid dbg_id)
+{
+	return tdls_get_vdev(psoc, dbg_id);
 }
