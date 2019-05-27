@@ -1374,26 +1374,23 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	cmd->peer_new_assoc = 1;
 	cmd->peer_associd = params->assocId;
 
-	/*
-	 * The target only needs a subset of the flags maintained in the host.
-	 * Just populate those flags and send it down
-	 */
-	cmd->peer_flags = 0;
+	cmd->is_wme_set = 1;
 
 	if (params->wmmEnabled)
-		cmd->peer_flags |= WMI_PEER_QOS;
+		cmd->qos_flag = 1;
 
 	if (params->uAPSD) {
-		cmd->peer_flags |= WMI_PEER_APSD;
+		cmd->apsd_flag = 1;
 		WMA_LOGD("Set WMI_PEER_APSD: uapsd Mask %d", params->uAPSD);
 	}
 
 	if (params->htCapable) {
-		cmd->peer_flags |= (WMI_PEER_HT | WMI_PEER_QOS);
+		cmd->ht_flag = 1;
+		cmd->qos_flag = 1;
 		cmd->peer_rate_caps |= WMI_RC_HT_FLAG;
 
 		if (params->ch_width) {
-			cmd->peer_flags |= WMI_PEER_40MHZ;
+			cmd->bw_40 = 1;
 			cmd->peer_rate_caps |= WMI_RC_CW40_FLAG;
 			if (params->fShortGI40Mhz)
 				cmd->peer_rate_caps |= WMI_RC_SGI_FLAG;
@@ -1403,42 +1400,44 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	}
 
 	if (params->vhtCapable) {
-		cmd->peer_flags |= (WMI_PEER_HT | WMI_PEER_VHT | WMI_PEER_QOS);
+		cmd->ht_flag = 1;
+		cmd->qos_flag = 1;
+		cmd->vht_flag = 1;
 		cmd->peer_rate_caps |= WMI_RC_HT_FLAG;
 	}
 
 	if (params->ch_width == CH_WIDTH_80MHZ)
-		cmd->peer_flags |= WMI_PEER_80MHZ;
+		cmd->bw_80 = 1;
 	else if (params->ch_width == CH_WIDTH_160MHZ)
-		cmd->peer_flags |= WMI_PEER_160MHZ;
+		cmd->bw_160 = 1;
 	else if (params->ch_width == CH_WIDTH_80P80MHZ)
-		cmd->peer_flags |= WMI_PEER_160MHZ;
+		cmd->bw_160 = 1;
 
 	cmd->peer_vht_caps = params->vht_caps;
 	if (params->p2pCapableSta) {
-		cmd->peer_flags |= WMI_PEER_IS_P2P_CAPABLE;
+		cmd->p2p_capable_sta = 1;
 		wma_objmgr_set_peer_mlme_type(wma, params->staMac,
 					      WLAN_PEER_P2P_CLI);
 	}
 
 	if (params->rmfEnabled)
-		cmd->peer_flags |= WMI_PEER_PMF;
+		cmd->is_pmf_enabled = 1;
 
 	if (params->stbc_capable)
-		cmd->peer_flags |= WMI_PEER_STBC;
+		cmd->stbc_flag = 1;
 
 	if (params->htLdpcCapable || params->vhtLdpcCapable)
-		cmd->peer_flags |= WMI_PEER_LDPC;
+		cmd->ldpc_flag = 1;
 
 	switch (params->mimoPS) {
 	case eSIR_HT_MIMO_PS_STATIC:
-		cmd->peer_flags |= WMI_PEER_STATIC_MIMOPS;
+		cmd->static_mimops_flag = 1;
 		break;
 	case eSIR_HT_MIMO_PS_DYNAMIC:
-		cmd->peer_flags |= WMI_PEER_DYN_MIMOPS;
+		cmd->dynamic_mimops_flag = 1;
 		break;
 	case eSIR_HT_MIMO_PS_NO_LIMIT:
-		cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
+		cmd->spatial_mux_flag = 1;
 		break;
 	default:
 		break;
@@ -1447,7 +1446,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	wma_set_twt_peer_caps(params, cmd);
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType)
-		cmd->peer_flags |= WMI_PEER_AUTH;
+		cmd->auth_flag = 1;
 #endif /* FEATURE_WLAN_TDLS */
 
 	if (params->wpa_rsn
@@ -1456,7 +1455,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 #endif /* FEATURE_WLAN_WAPI */
 	    ) {
 		if (!params->no_ptk_4_way) {
-			cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
+			cmd->need_ptk_4_way = 1;
 			WMA_LOGD("no ptk 4 way %d", params->no_ptk_4_way);
 		}
 		WMA_LOGD("Acquire set key wake lock for %d ms",
@@ -1465,7 +1464,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 			WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT);
 	}
 	if (params->wpa_rsn >> 1)
-		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
+		cmd->need_gtk_2_way = 1;
 
 	wma_unified_peer_state_update(pdev, params->staMac,
 				      params->bssId, params->staType);
@@ -1556,8 +1555,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	intr->nss = cmd->peer_nss;
 	cmd->peer_phymode = phymode;
-	WMA_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x peer_caps %x",
-		 __func__,  cmd->vdev_id, cmd->peer_associd, cmd->peer_flags,
+	WMA_LOGD("%s: vdev_id %d associd %d rate_caps %x peer_caps %x",
+		 __func__,  cmd->vdev_id, cmd->peer_associd,
 		 cmd->peer_rate_caps, cmd->peer_caps);
 	WMA_LOGD("%s:listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d",
 		 __func__, cmd->peer_listen_intval, cmd->peer_ht_caps,

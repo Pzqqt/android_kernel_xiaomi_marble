@@ -1098,7 +1098,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	uint8_t temp, i, chan_width;
 
 	if (params->he_capable)
-		peer->peer_flags |= WMI_PEER_HE;
+		peer->he_flag = 1;
 	else
 		return;
 
