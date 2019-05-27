@@ -6488,7 +6488,9 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	else
 		csr_roam_reset_roam_params(mac_ctx);
 
+	/* Disable offload_11k_params for current vdev */
 	req->offload_11k_params.offload_11k_bitmask = 0;
+	req->offload_11k_params.vdev_id = session_id;
 
 	wma_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
 	wma_msg.bodyptr = req;
