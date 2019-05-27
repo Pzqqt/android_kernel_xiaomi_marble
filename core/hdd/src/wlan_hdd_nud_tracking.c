@@ -107,6 +107,9 @@ void hdd_nud_reset_tracking(struct hdd_adapter *adapter)
  */
 static void hdd_nud_stats_info(struct hdd_adapter *adapter)
 {
+	struct netdev_queue *txq;
+	int i = 0;
+
 	hdd_debug("**** NUD STATS: ****");
 	hdd_debug("NUD Probe Tx  : %d",
 		  adapter->nud_tracking.tx_rx_stats.pre_tx_packets);
@@ -123,6 +126,16 @@ static void hdd_nud_stats_info(struct hdd_adapter *adapter)
 	hdd_debug("NUD Gateway Rx  : %d",
 		  qdf_atomic_read(&adapter
 				  ->nud_tracking.tx_rx_stats.gw_rx_packets));
+
+	hdd_debug("carrier state: %d", netif_carrier_ok(adapter->dev));
+
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
+		txq = netdev_get_tx_queue(adapter->dev, i);
+		hdd_debug("Queue: %d status: %d txq->trans_start: %lu",
+			  i, netif_tx_queue_stopped(txq), txq->trans_start);
+	}
+
+	hdd_debug("Current pause_map value %x", adapter->pause_map);
 }
 
 /**
