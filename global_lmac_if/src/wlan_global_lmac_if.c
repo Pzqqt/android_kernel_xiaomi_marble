@@ -29,20 +29,6 @@
 QDF_STATUS (*wlan_global_lmac_if_tx_ops_register[MAX_DEV_TYPE])
 				(struct wlan_lmac_if_tx_ops *tx_ops);
 
-#ifdef WLAN_CONV_SPECTRAL_ENABLE
-/* Function pointer for spectral rx_ops registration function */
-void (*wlan_lmac_if_sptrl_rx_ops)(struct wlan_lmac_if_rx_ops *rx_ops);
-
-QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
-				(struct wlan_lmac_if_rx_ops *))
-{
-	wlan_lmac_if_sptrl_rx_ops = handler;
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
-#endif /* WLAN_CONV_SPECTRAL_ENABLE */
-
 /*
  * spectral scan is built as separate .ko for WIN where
  * MCL it is part of wlan.ko so the registration of
@@ -56,7 +42,20 @@ qdf_export_symbol(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
  *
  * Return: None
  */
-#ifdef CONFIG_WIN
+#ifdef SPECTRAL_MODULIZED_ENABLE
+/* Function pointer for spectral rx_ops registration function */
+void (*wlan_lmac_if_sptrl_rx_ops)(struct wlan_lmac_if_rx_ops *rx_ops);
+
+QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *))
+{
+	wlan_lmac_if_sptrl_rx_ops = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
+
 static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	wlan_lmac_if_sptrl_rx_ops(rx_ops);
@@ -66,7 +65,7 @@ static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	wlan_lmac_if_sptrl_register_rx_ops(rx_ops);
 }
-#endif /*CONFIG_WIN*/
+#endif /* SPECTRAL_MODULIZED_ENABLE */
 #else
 /**
  * wlan_spectral_register_rx_ops() - Dummy api to register spectral RX OPS
