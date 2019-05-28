@@ -466,13 +466,11 @@ static inline void hal_rx_mpdu_desc_info_get(void *desc_addr,
 				struct hal_rx_mpdu_desc_info *mpdu_desc_info)
 {
 	struct reo_destination_ring *reo_dst_ring;
-	uint32_t mpdu_info[NUM_OF_DWORDS_RX_MPDU_DESC_INFO];
+	uint32_t *mpdu_info;
 
 	reo_dst_ring = (struct reo_destination_ring *) desc_addr;
 
-	qdf_mem_copy(&mpdu_info,
-			(const void *)&reo_dst_ring->rx_mpdu_desc_info_details,
-			sizeof(struct rx_mpdu_desc_info));
+	mpdu_info = (uint32_t *)&reo_dst_ring->rx_mpdu_desc_info_details;
 
 	mpdu_desc_info->msdu_count = HAL_RX_MPDU_MSDU_COUNT_GET(mpdu_info);
 	mpdu_desc_info->mpdu_seq = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_info);
@@ -498,14 +496,11 @@ static inline void hal_rx_msdu_desc_info_get(void *desc_addr,
 			       struct hal_rx_msdu_desc_info *msdu_desc_info)
 {
 	struct reo_destination_ring *reo_dst_ring;
-	uint32_t msdu_info[NUM_OF_DWORDS_RX_MSDU_DESC_INFO];
+	uint32_t *msdu_info;
 
 	reo_dst_ring = (struct reo_destination_ring *) desc_addr;
 
-	qdf_mem_copy(&msdu_info,
-			(const void *)&reo_dst_ring->rx_msdu_desc_info_details,
-			sizeof(struct rx_msdu_desc_info));
-
+	msdu_info = (uint32_t *)&reo_dst_ring->rx_msdu_desc_info_details;
 	msdu_desc_info->msdu_flags = HAL_RX_MSDU_FLAGS_GET(msdu_info);
 	msdu_desc_info->msdu_len = HAL_RX_MSDU_PKT_LENGTH_GET(msdu_info);
 }

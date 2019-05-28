@@ -279,6 +279,8 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 	ewma_rx_rssi_read(rx_rssi)
 #endif
 
+#define __qdf_prefetch(x)     prefetch(x)
+
 #ifdef QCA_CONFIG_SMP
 /**
  * __qdf_get_cpu() - get cpu_index

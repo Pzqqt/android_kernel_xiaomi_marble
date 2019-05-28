@@ -149,6 +149,25 @@ static inline uint32_t __qdf_mem_map_nbytes_single(qdf_device_t osdev,
 	QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 20)
+static inline void __qdf_mem_dma_cache_sync(qdf_device_t osdev,
+					    qdf_dma_addr_t buf,
+					    qdf_dma_dir_t dir,
+					    int nbytes)
+{
+	dma_cache_sync(osdev->dev, buf, nbytes, __qdf_dma_dir_to_os(dir));
+}
+#else
+static inline void __qdf_mem_dma_cache_sync(qdf_device_t osdev,
+					    qdf_dma_addr_t buf,
+					    qdf_dma_dir_t dir,
+					    int nbytes)
+{
+	dma_sync_single_for_cpu(osdev->dev, buf, nbytes,
+				__qdf_dma_dir_to_os(dir));
+}
+#endif
+
 /**
  * __qdf_mem_unmap_nbytes_single() - un_map memory for DMA
  *

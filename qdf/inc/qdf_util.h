@@ -552,6 +552,13 @@ static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 #define qdf_ffz(mask) __qdf_ffz(mask)
 
 /**
+ * qdf_prefetch - prefetches the cacheline for read
+ *
+ * @x: address to be prefetched
+ */
+#define qdf_prefetch(x)                   __qdf_prefetch(x)
+
+/**
  * qdf_get_pwr2() - get next power of 2 integer from input value
  * @value: input value to find next power of 2 integer
  *

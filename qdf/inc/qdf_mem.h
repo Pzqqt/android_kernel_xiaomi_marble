@@ -310,6 +310,7 @@ void *qdf_aligned_mem_alloc_consistent_fl(
 	void **vaddr_unaligned, qdf_dma_addr_t *paddr_unaligned,
 	qdf_dma_addr_t *paddr_aligned, uint32_t ring_base_align,
 	const char *func, uint32_t line);
+#define qdf_mem_virt_to_phys(vaddr) virt_to_phys(vaddr)
 
 void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value);
 
@@ -412,6 +413,14 @@ static inline uint32_t qdf_mem_map_nbytes_single(qdf_device_t osdev, void *buf,
 #else
 	return 0;
 #endif
+}
+
+static inline void qdf_mem_dma_cache_sync(qdf_device_t osdev,
+					  qdf_dma_addr_t buf,
+					  qdf_dma_dir_t dir,
+					  int nbytes)
+{
+	__qdf_mem_dma_cache_sync(osdev, buf, dir, nbytes);
 }
 
 /**

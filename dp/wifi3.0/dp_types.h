@@ -478,6 +478,7 @@ struct dp_srng {
 	void *base_vaddr_unaligned;
 	qdf_dma_addr_t base_paddr_unaligned;
 	uint32_t alloc_size;
+	uint8_t cached;
 	int irq;
 	uint32_t num_entries;
 };

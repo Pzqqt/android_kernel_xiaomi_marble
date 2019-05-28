@@ -118,6 +118,9 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 bool is_dp_verbose_debug_enabled;
 #endif
 
+static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
+					    enum hal_ring_type ring_type,
+					    int ring_num);
 #define DP_INTR_POLL_TIMER_MS	10
 /* Generic AST entry aging timer value */
 #define DP_AST_AGING_TIMER_DEFAULT_MS	1000
@@ -1102,13 +1105,23 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
  *         QDF_STATUS_E_NOMEM on failure
  */
 static QDF_STATUS
-dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align)
+dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align,
+		  bool cached)
 {
-	srng->base_vaddr_unaligned =
-		qdf_mem_alloc_consistent(soc->osdev,
-					 soc->osdev->dev,
-					 srng->alloc_size,
-					 &srng->base_paddr_unaligned);
+	uint32_t align_alloc_size;
+
+	if (!cached) {
+		srng->base_vaddr_unaligned =
+			qdf_mem_alloc_consistent(soc->osdev,
+						 soc->osdev->dev,
+						 srng->alloc_size,
+						 &srng->base_paddr_unaligned);
+	} else {
+		srng->base_vaddr_unaligned = qdf_mem_malloc(srng->alloc_size);
+		srng->base_paddr_unaligned =
+			qdf_mem_virt_to_phys(srng->base_vaddr_unaligned);
+	}
+
 	if (!srng->base_vaddr_unaligned) {
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1127,21 +1140,36 @@ dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align)
 	 */
 	if ((unsigned long)(srng->base_paddr_unaligned) &
 	    (align - 1)) {
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-					srng->alloc_size,
-					srng->base_vaddr_unaligned,
-					srng->base_paddr_unaligned, 0);
-		srng->alloc_size = srng->alloc_size + align - 1;
-		srng->base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev,
-						 soc->osdev->dev,
-						 srng->alloc_size,
-						 &srng->base_paddr_unaligned);
+		align_alloc_size = srng->alloc_size + align - 1;
+
+		if (!cached) {
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+						srng->alloc_size,
+						srng->base_vaddr_unaligned,
+						srng->base_paddr_unaligned, 0);
+
+			srng->base_vaddr_unaligned =
+				qdf_mem_alloc_consistent(soc->osdev,
+							 soc->osdev->dev,
+							 align_alloc_size,
+							 &srng->base_paddr_unaligned);
+
+		} else {
+			qdf_mem_free(srng->base_vaddr_unaligned);
+			srng->base_vaddr_unaligned =
+				qdf_mem_malloc(align_alloc_size);
+
+			srng->base_paddr_unaligned =
+				qdf_mem_virt_to_phys(srng->base_vaddr_unaligned);
+		}
+
+		srng->alloc_size = align_alloc_size;
 
 		if (!srng->base_vaddr_unaligned) {
 			return QDF_STATUS_E_NOMEM;
 		}
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1150,7 +1178,8 @@ dp_srng_mem_alloc(struct dp_soc *soc, struct dp_srng *srng, uint32_t align)
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
  */
 static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
-	int ring_type, int ring_num, int mac_id, uint32_t num_entries)
+			 int ring_type, int ring_num, int mac_id,
+			 uint32_t num_entries, bool cached)
 {
 	void *hal_soc = soc->hal_soc;
 	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
@@ -1170,12 +1199,13 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	srng->num_entries = num_entries;
 
 	if (!dp_is_soc_reinit(soc)) {
-		if (dp_srng_mem_alloc(soc, srng, ring_base_align) !=
+		if (dp_srng_mem_alloc(soc, srng, ring_base_align, cached) !=
 		    QDF_STATUS_SUCCESS) {
 			dp_err("alloc failed - ring_type: %d, ring_num %d",
 			       ring_type, ring_num);
 			return QDF_STATUS_E_NOMEM;
 		}
+
 	}
 
 	ring_params.ring_base_paddr =
@@ -1245,14 +1275,23 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		ring_params.intr_batch_cntr_thres_entries = 0;
 	}
 
+	if (cached) {
+		ring_params.flags |= HAL_SRNG_CACHED_DESC;
+		srng->cached = 1;
+	}
+
 	srng->hal_srng = hal_srng_setup(hal_soc, ring_type, ring_num,
 		mac_id, &ring_params);
 
 	if (!srng->hal_srng) {
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				srng->alloc_size,
-				srng->base_vaddr_unaligned,
-				srng->base_paddr_unaligned, 0);
+		if (cached) {
+			qdf_mem_free(srng->base_vaddr_unaligned);
+		} else {
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+						srng->alloc_size,
+						srng->base_vaddr_unaligned,
+						srng->base_paddr_unaligned, 0);
+		}
 	}
 
 	return 0;
@@ -1304,12 +1343,17 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 	}
 
 	if (srng->alloc_size) {
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-					srng->alloc_size,
-					srng->base_vaddr_unaligned,
-					srng->base_paddr_unaligned, 0);
+		if (!srng->cached) {
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+						srng->alloc_size,
+						srng->base_vaddr_unaligned,
+						srng->base_paddr_unaligned, 0);
+		} else {
+			qdf_mem_free(srng->base_vaddr_unaligned);
+		}
 		srng->alloc_size = 0;
 	}
+	srng->hal_srng = NULL;
 }
 
 /* TODO: Need this interface from HIF */
@@ -2000,7 +2044,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		void *desc;
 
 		if (dp_srng_setup(soc, &soc->wbm_idle_link_ring,
-			WBM_IDLE_LINK, 0, 0, total_link_descs)) {
+				  WBM_IDLE_LINK, 0, 0, total_link_descs, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("Link desc idle ring setup failed"));
 			goto fail;
@@ -2695,8 +2739,10 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	/* Setup SRNG rings */
 	/* Common rings */
+	entries = wlan_cfg_get_dp_soc_wbm_release_ring_size(soc_cfg_ctx);
+
 	if (dp_srng_setup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0, 0,
-		wlan_cfg_get_dp_soc_wbm_release_ring_size(soc_cfg_ctx))) {
+			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for wbm_desc_rel_ring"));
 		goto fail1;
@@ -2717,7 +2763,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			wlan_cfg_tx_ring_size(soc_cfg_ctx);
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
 			if (dp_srng_setup(soc, &soc->tcl_data_ring[i],
-				TCL_DATA, i, 0, tx_ring_size)) {
+					  TCL_DATA, i, 0, tx_ring_size, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
@@ -2728,7 +2774,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			 * count
 			 */
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
-				WBM2SW_RELEASE, i, 0, tx_comp_ring_size)) {
+					  WBM2SW_RELEASE, i, 0,
+					  tx_comp_ring_size,
+					  WLAN_CFG_DST_RING_CACHED_DESC)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
@@ -2749,7 +2797,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	entries = wlan_cfg_get_dp_soc_tcl_cmd_ring_size(soc_cfg_ctx);
 	/* TCL command and status rings */
 	if (dp_srng_setup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0, 0,
-			  entries)) {
+			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for tcl_cmd_ring"));
 		goto fail1;
@@ -2757,7 +2805,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	entries = wlan_cfg_get_dp_soc_tcl_status_ring_size(soc_cfg_ctx);
 	if (dp_srng_setup(soc, &soc->tcl_status_ring, TCL_STATUS, 0, 0,
-			  entries)) {
+			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for tcl_status_ring"));
 		goto fail1;
@@ -2778,7 +2826,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			FL("num_reo_dest_rings %d"), soc->num_reo_dest_rings);
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
-				i, 0, reo_dst_ring_size)) {
+					  i, 0, reo_dst_ring_size,
+					  WLAN_CFG_DST_RING_CACHED_DESC)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "reo_dest_ring [%d]"), i);
@@ -2798,8 +2847,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 		for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
 			if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[i],
-					  RXDMA_DST, 0, i,
-					  entries)) {
+					  RXDMA_DST, 0, i, entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_err_dst_ring"));
@@ -2812,7 +2860,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* REO reinjection ring */
 	entries = wlan_cfg_get_dp_soc_reo_reinject_ring_size(soc_cfg_ctx);
 	if (dp_srng_setup(soc, &soc->reo_reinject_ring, REO_REINJECT, 0, 0,
-			  entries)) {
+			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for reo_reinject_ring"));
 		goto fail1;
@@ -2821,7 +2869,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	/* Rx release ring */
 	if (dp_srng_setup(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 3, 0,
-		wlan_cfg_get_dp_soc_rx_release_ring_size(soc_cfg_ctx))) {
+			  wlan_cfg_get_dp_soc_rx_release_ring_size(soc_cfg_ctx),
+			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for rx_rel_ring"));
 		goto fail1;
@@ -2831,7 +2880,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Rx exception ring */
 	entries = wlan_cfg_get_dp_soc_reo_exception_ring_size(soc_cfg_ctx);
 	if (dp_srng_setup(soc, &soc->reo_exception_ring,
-			  REO_EXCEPTION, 0, MAX_REO_DEST_RINGS, entries)) {
+			  REO_EXCEPTION, 0, MAX_REO_DEST_RINGS, entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_srng_setup failed for reo_exception_ring"));
 		goto fail1;
@@ -2840,7 +2889,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 
 	/* REO command and status rings */
 	if (dp_srng_setup(soc, &soc->reo_cmd_ring, REO_CMD, 0, 0,
-		wlan_cfg_get_dp_soc_reo_cmd_ring_size(soc_cfg_ctx))) {
+			  wlan_cfg_get_dp_soc_reo_cmd_ring_size(soc_cfg_ctx),
+			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for reo_cmd_ring"));
 		goto fail1;
@@ -2851,7 +2901,8 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	qdf_spinlock_create(&soc->rx.reo_cmd_lock);
 
 	if (dp_srng_setup(soc, &soc->reo_status_ring, REO_STATUS, 0, 0,
-		wlan_cfg_get_dp_soc_reo_status_ring_size(soc_cfg_ctx))) {
+			  wlan_cfg_get_dp_soc_reo_status_ring_size(soc_cfg_ctx),
+			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed for reo_status_ring"));
 		goto fail1;
@@ -2991,15 +3042,16 @@ static int dp_rxdma_ring_setup(struct dp_soc *soc,
 	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
 	int max_mac_rings;
 	int i;
+	int ring_size;
 
 	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
 	max_mac_rings = wlan_cfg_get_num_mac_rings(pdev_cfg_ctx);
+	ring_size =  wlan_cfg_get_rx_dma_buf_ring_size(pdev_cfg_ctx);
 
 	for (i = 0; i < max_mac_rings; i++) {
 		dp_verbose_debug("pdev_id %d mac_id %d", pdev->pdev_id, i);
 		if (dp_srng_setup(soc, &pdev->rx_mac_buf_ring[i],
-			RXDMA_BUF, 1, i,
-			wlan_cfg_get_rx_dma_buf_ring_size(pdev_cfg_ctx))) {
+				  RXDMA_BUF, 1, i, ring_size, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				 QDF_TRACE_LEVEL_ERROR,
 				 FL("failed rx mac ring setup"));
@@ -3083,9 +3135,8 @@ static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 
 	/* Setup second Rx refill buffer ring */
 	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
-			  IPA_RX_REFILL_BUF_RING_IDX,
-			  pdev->pdev_id,
-			  entries)) {
+			  IPA_RX_REFILL_BUF_RING_IDX, pdev->pdev_id, entries, 0)
+	   ) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("dp_srng_setup failed second rx refill ring"));
 		return QDF_STATUS_E_FAILURE;
@@ -3147,7 +3198,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			if (dp_srng_setup(soc,
 					  &pdev->rxdma_mon_buf_ring[mac_id],
 					  RXDMA_MONITOR_BUF, 0, mac_for_pdev,
-					  entries)) {
+					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_mon_buf_ring "));
@@ -3159,7 +3210,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			if (dp_srng_setup(soc,
 					  &pdev->rxdma_mon_dst_ring[mac_id],
 					  RXDMA_MONITOR_DST, 0, mac_for_pdev,
-					  entries)) {
+					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_mon_dst_ring"));
@@ -3171,7 +3222,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			if (dp_srng_setup(soc,
 					  &pdev->rxdma_mon_status_ring[mac_id],
 					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
-					  entries)) {
+					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_mon_status_ring"));
@@ -3183,7 +3234,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			if (dp_srng_setup(soc,
 					  &pdev->rxdma_mon_desc_ring[mac_id],
 					  RXDMA_MONITOR_DESC, 0, mac_for_pdev,
-					  entries)) {
+					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_mon_desc_ring"));
@@ -3195,7 +3246,7 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			if (dp_srng_setup(soc,
 					  &pdev->rxdma_mon_status_ring[mac_id],
 					  RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
-					  entries)) {
+					  entries, 0)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "rxdma_mon_status_ring"));
@@ -3274,9 +3325,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev, uint8_t pdev_id)
 {
-	int tx_ring_size;
-	int tx_comp_ring_size;
-	int reo_dst_ring_size;
+	int ring_size;
 	int entries;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	int nss_cfg;
@@ -3356,19 +3405,22 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	/* Setup per PDEV TCL rings if configured */
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
-		tx_ring_size =
+		ring_size =
 			wlan_cfg_tx_ring_size(soc_cfg_ctx);
-		tx_comp_ring_size =
-			wlan_cfg_tx_comp_ring_size(soc_cfg_ctx);
 
 		if (dp_srng_setup(soc, &soc->tcl_data_ring[pdev_id], TCL_DATA,
-			pdev_id, pdev_id, tx_ring_size)) {
+				  pdev_id, pdev_id, ring_size, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for tcl_data_ring"));
 			goto fail1;
 		}
+
+		ring_size =
+			wlan_cfg_tx_comp_ring_size(soc_cfg_ctx);
+
 		if (dp_srng_setup(soc, &soc->tx_comp_ring[pdev_id],
-			WBM2SW_RELEASE, pdev_id, pdev_id, tx_comp_ring_size)) {
+				  WBM2SW_RELEASE, pdev_id, pdev_id,
+				  ring_size, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for tx_comp_ring"));
 			goto fail1;
@@ -3383,11 +3435,11 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
-	reo_dst_ring_size = wlan_cfg_get_reo_dst_ring_size(soc->wlan_cfg_ctx);
+	ring_size = wlan_cfg_get_reo_dst_ring_size(soc->wlan_cfg_ctx);
 	/* Setup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc_cfg_ctx)) {
 		if (dp_srng_setup(soc, &soc->reo_dest_ring[pdev_id], REO_DST,
-			pdev_id, pdev_id, reo_dst_ring_size)) {
+				  pdev_id, pdev_id, ring_size, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("dp_srng_setup failed for reo_dest_ringn"));
 			goto fail1;
@@ -3395,8 +3447,12 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		soc->num_reo_dest_rings++;
 
 	}
+
+	ring_size =
+		wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc->wlan_cfg_ctx);
+
 	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0, pdev_id,
-		wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx))) {
+			  ring_size, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			 FL("dp_srng_setup failed rx refill ring"));
 		goto fail1;
@@ -3417,8 +3473,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	entries = wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(soc_cfg_ctx);
 	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
 		if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[0], RXDMA_DST,
-				  0, pdev_id,
-				  entries)) {
+				  0, pdev_id, entries, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  FL(RNG_ERR "rxdma_err_dst_ring"));
 			goto fail1;
