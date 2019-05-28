@@ -811,6 +811,7 @@ void htc_stop(HTC_HANDLE HTCHandle)
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+htc_stop\n"));
 
+	HTC_INFO("%s: endpoints cleanup\n", __func__);
 	/* cleanup endpoints */
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
@@ -829,6 +830,7 @@ void htc_stop(HTC_HANDLE HTCHandle)
 	 * buffer leak
 	 */
 
+	HTC_INFO("%s: stopping hif layer\n", __func__);
 	hif_stop(target->hif_dev);
 
 #ifdef RX_SG_SUPPORT
@@ -844,11 +846,13 @@ void htc_stop(HTC_HANDLE HTCHandle)
 	 * by TARGET_STATUS_RESET and HTC packets will be left unfreed on
 	 * lookup queue.
 	 */
+	HTC_INFO("%s: flush endpoints Tx lookup queue\n", __func__);
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
 		if (pEndpoint->service_id == WMI_CONTROL_SVC)
 			htc_flush_endpoint_txlookupQ(target, i, false);
 	}
+	HTC_INFO("%s: resetting endpoints state\n", __func__);
 
 	reset_endpoint_states(target);
 
