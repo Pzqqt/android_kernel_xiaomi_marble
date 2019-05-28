@@ -608,7 +608,7 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			if (ret)
 				return -ENOMEM;
 
-			sid_info = (uint32_t *) shm.paddr;
+			sid_info = (uint32_t *) shm.vaddr;
 			desc.args[1] = shm.paddr;
 			desc.args[2] = shm.size;
 		} else {

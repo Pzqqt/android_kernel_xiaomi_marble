@@ -286,7 +286,7 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 		if (ret)
 			return -ENOMEM;
 
-		sec_sid = (uint32_t *) shm.paddr;
+		sec_sid = (uint32_t *) shm.vaddr;
 		desc.args[1] = shm.paddr;
 		desc.args[2] = shm.size;
 	} else {
