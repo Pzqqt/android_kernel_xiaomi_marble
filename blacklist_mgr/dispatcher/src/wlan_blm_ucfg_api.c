@@ -119,7 +119,7 @@ QDF_STATUS
 ucfg_blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 				  struct reject_ap_info *ap_info)
 {
-	return wlan_blm_add_bssid_to_reject_list(pdev, ap_info);
+	return blm_add_bssid_to_reject_list(pdev, ap_info);
 }
 
 QDF_STATUS

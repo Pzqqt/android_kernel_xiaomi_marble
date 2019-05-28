@@ -195,7 +195,6 @@ blm_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 		cur_node = next_node;
 		next_node = NULL;
 	}
-
 	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 
 	return BLM_ACTION_NOP;
@@ -258,10 +257,553 @@ blm_filter_bssid(struct wlan_objmgr_pdev *pdev, qdf_list_t *scan_list)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+blm_handle_avoid_list(struct blm_reject_ap *entry,
+		      struct blm_config *cfg,
+		      struct reject_ap_info *ap_info)
+{
+	qdf_time_t cur_timestamp = qdf_mc_timer_get_system_time();
+
+	if (ap_info->reject_ap_type == USERSPACE_AVOID_TYPE) {
+		entry->userspace_avoidlist = true;
+		entry->ap_timestamp.userspace_avoid_timestamp = cur_timestamp;
+	} else if (ap_info->reject_ap_type == DRIVER_AVOID_TYPE) {
+		entry->driver_avoidlist = true;
+		entry->ap_timestamp.driver_avoid_timestamp = cur_timestamp;
+	} else {
+		return;
+	}
+	/* Update bssid info for new entry */
+	entry->bssid = ap_info->bssid;
+
+	/* Clear the monitor list bit if the AP was present in monitor list */
+	entry->driver_monitorlist = false;
+
+	/* Increment bad bssid counter as NUD failure happenend with this ap */
+	entry->bad_bssid_counter++;
+
+	/* If bad bssid counter has reached threshold, move it to blacklist */
+	if (entry->bad_bssid_counter >= cfg->bad_bssid_counter_thresh) {
+		if (ap_info->reject_ap_type == USERSPACE_AVOID_TYPE)
+			entry->userspace_avoidlist = false;
+		else if (ap_info->reject_ap_type == DRIVER_AVOID_TYPE)
+			entry->driver_avoidlist = false;
+
+		/* Move AP to blacklist list */
+		entry->driver_blacklist = true;
+		entry->ap_timestamp.driver_blacklist_timestamp = cur_timestamp;
+
+		blm_debug("%pM moved to black list with counter %d",
+			  entry->bssid.bytes, entry->bad_bssid_counter);
+		return;
+	}
+	blm_debug("Added %pM to avoid list type %d, counter %d",
+		  entry->bssid.bytes, ap_info->reject_ap_type,
+		  entry->bad_bssid_counter);
+}
+
+static void
+blm_handle_blacklist(struct blm_reject_ap *entry,
+		     struct reject_ap_info *ap_info)
+{
+	/*
+	 * No entity will blacklist an AP internal to driver, so only
+	 * userspace blacklist is the case to be taken care. Driver blacklist
+	 * will only happen when the bad bssid counter has reached the max
+	 * threshold.
+	 */
+	entry->bssid = ap_info->bssid;
+	entry->userspace_blacklist = true;
+	entry->ap_timestamp.userspace_blacklist_timestamp =
+						qdf_mc_timer_get_system_time();
+
+	blm_debug("%pM added to userspace blacklist", entry->bssid.bytes);
+}
+
+static void
+blm_handle_rssi_reject_list(struct blm_reject_ap *entry,
+			    struct reject_ap_info *ap_info)
+{
+	entry->bssid = ap_info->bssid;
+	entry->rssi_reject_list = true;
+	entry->ap_timestamp.rssi_reject_timestamp =
+					qdf_mc_timer_get_system_time();
+	entry->rssi_reject_params = ap_info->rssi_reject_params;
+
+	blm_debug("%pM Added to rssi reject list, expected RSSI %d retry delay %d",
+		  entry->bssid.bytes, entry->rssi_reject_params.expected_rssi,
+		  entry->rssi_reject_params.retry_delay);
+}
+
+static void
+blm_modify_entry(struct blm_reject_ap *entry, struct blm_config *cfg,
+		 struct reject_ap_info *ap_info)
+{
+	/* Modify the entry according to the ap_info */
+	switch (ap_info->reject_ap_type) {
+	case USERSPACE_AVOID_TYPE:
+	case DRIVER_AVOID_TYPE:
+		blm_handle_avoid_list(entry, cfg, ap_info);
+		break;
+	case USERSPACE_BLACKLIST_TYPE:
+		blm_handle_blacklist(entry, ap_info);
+		break;
+	case DRIVER_RSSI_REJECT_TYPE:
+		blm_handle_rssi_reject_list(entry, ap_info);
+		break;
+	default:
+		blm_debug("Invalid input of ap type %d",
+			  ap_info->reject_ap_type);
+	}
+}
+
+static bool
+blm_is_bssid_present_only_in_list_type(enum blm_reject_ap_type list_type,
+				       struct blm_reject_ap *blm_entry)
+{
+	switch (list_type) {
+	case USERSPACE_AVOID_TYPE:
+		return IS_AP_IN_USERSPACE_AVOID_LIST_ONLY(blm_entry);
+	case USERSPACE_BLACKLIST_TYPE:
+		return IS_AP_IN_USERSPACE_BLACKLIST_ONLY(blm_entry);
+	case DRIVER_AVOID_TYPE:
+		return IS_AP_IN_DRIVER_AVOID_LIST_ONLY(blm_entry);
+	case DRIVER_BLACKLIST_TYPE:
+		return IS_AP_IN_DRIVER_BLACKLIST_ONLY(blm_entry);
+	case DRIVER_RSSI_REJECT_TYPE:
+		return IS_AP_IN_RSSI_REJECT_LIST_ONLY(blm_entry);
+	case DRIVER_MONITOR_TYPE:
+		return IS_AP_IN_MONITOR_LIST_ONLY(blm_entry);
+	default:
+		blm_debug("Wrong list type %d passed", list_type);
+		return false;
+	}
+}
+
+static bool
+blm_is_bssid_of_type(enum blm_reject_ap_type reject_ap_type,
+		     struct blm_reject_ap *blm_entry)
+{
+	switch (reject_ap_type) {
+	case USERSPACE_AVOID_TYPE:
+		return BLM_IS_AP_AVOIDED_BY_USERSPACE(blm_entry);
+	case USERSPACE_BLACKLIST_TYPE:
+		return BLM_IS_AP_BLACKLISTED_BY_USERSPACE(blm_entry);
+	case DRIVER_AVOID_TYPE:
+		return BLM_IS_AP_AVOIDED_BY_DRIVER(blm_entry);
+	case DRIVER_BLACKLIST_TYPE:
+		return BLM_IS_AP_BLACKLISTED_BY_DRIVER(blm_entry);
+	case DRIVER_RSSI_REJECT_TYPE:
+		return BLM_IS_AP_IN_RSSI_REJECT_LIST(blm_entry);
+	case DRIVER_MONITOR_TYPE:
+		return BLM_IS_AP_IN_MONITOR_LIST(blm_entry);
+	default:
+		blm_err("Wrong list type %d passed", reject_ap_type);
+		return false;
+	}
+}
+
+static qdf_time_t
+blm_get_delta_of_bssid(enum blm_reject_ap_type list_type,
+		       struct blm_reject_ap *blm_entry)
+{
+	qdf_time_t cur_timestamp = qdf_mc_timer_get_system_time();
+
+	/*
+	 * For all the list types, delta would be the entry age only. Hence the
+	 * oldest entry would be removed first in case of list is full, and the
+	 * driver needs to make space for newer entries.
+	 */
+
+	switch (list_type) {
+	case USERSPACE_AVOID_TYPE:
+		return cur_timestamp -
+			      blm_entry->ap_timestamp.userspace_avoid_timestamp;
+	case USERSPACE_BLACKLIST_TYPE:
+		return cur_timestamp -
+			  blm_entry->ap_timestamp.userspace_blacklist_timestamp;
+	case DRIVER_AVOID_TYPE:
+		return cur_timestamp -
+			       blm_entry->ap_timestamp.driver_avoid_timestamp;
+	case DRIVER_BLACKLIST_TYPE:
+		return cur_timestamp -
+			     blm_entry->ap_timestamp.driver_blacklist_timestamp;
+
+	/*
+	 * For RSSI reject lowest delta would be the BSSID whose retry delay
+	 * is about to expire, hence the delta would be remaining duration for
+	 * de-blacklisting the AP from rssi reject list.
+	 */
+	case DRIVER_RSSI_REJECT_TYPE:
+		return blm_entry->rssi_reject_params.retry_delay -
+			(cur_timestamp -
+				blm_entry->ap_timestamp.rssi_reject_timestamp);
+	case DRIVER_MONITOR_TYPE:
+		return cur_timestamp -
+			       blm_entry->ap_timestamp.driver_monitor_timestamp;
+	default:
+		blm_debug("Wrong list type %d passed", list_type);
+		return 0;
+	}
+}
+
+static bool
+blm_is_oldest_entry(enum blm_reject_ap_type list_type,
+		    qdf_time_t cur_node_delta,
+		    qdf_time_t oldest_node_delta)
+{
+	switch (list_type) {
+	case DRIVER_RSSI_REJECT_TYPE:
+		if (cur_node_delta < oldest_node_delta)
+			return true;
+		break;
+	case USERSPACE_AVOID_TYPE:
+	case USERSPACE_BLACKLIST_TYPE:
+	case DRIVER_AVOID_TYPE:
+	case DRIVER_BLACKLIST_TYPE:
+	case DRIVER_MONITOR_TYPE:
+		if (cur_node_delta > oldest_node_delta)
+			return true;
+		break;
+	default:
+		blm_debug("Wrong list type passed %d", list_type);
+		return false;
+	}
+
+	return false;
+}
+
+static QDF_STATUS
+blm_try_delete_bssid_in_list(qdf_list_t *reject_ap_list,
+			     enum blm_reject_ap_type list_type)
+{
+	struct blm_reject_ap *blm_entry = NULL;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct blm_reject_ap *oldest_blm_entry = NULL;
+	qdf_time_t oldest_node_delta = 0;
+	qdf_time_t cur_node_delta = 0;
+
+	/*
+	 * For RSSI reject type, the lowest retry delay has to be found out,
+	 * hence for reference oldest node delta should be max, and then the
+	 * first entry entry would always be less than oldest entry delta. For
+	 * every other case the delta is the current timestamp minus the time
+	 * when the AP was added, hence it has to be maximum, so a greater than
+	 * check has to be there, so the oldest node delta should be minimum.
+	 */
+	if (list_type == DRIVER_RSSI_REJECT_TYPE)
+		oldest_node_delta = 0xFFFFFFFFFFFFFFFF;
+
+	qdf_list_peek_front(reject_ap_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(reject_ap_list, cur_node, &next_node);
+
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					    node);
+
+		if (blm_is_bssid_present_only_in_list_type(list_type,
+							   blm_entry)) {
+			cur_node_delta = blm_get_delta_of_bssid(list_type,
+								blm_entry);
+
+			if (blm_is_oldest_entry(list_type, cur_node_delta,
+						oldest_node_delta)) {
+				/* now this is the oldest entry*/
+				oldest_blm_entry = blm_entry;
+				oldest_node_delta = cur_node_delta;
+			}
+		}
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	if (oldest_blm_entry) {
+		/* Remove this entry to make space for the next entry */
+		blm_debug("Removed %pM, type = %d",
+			  oldest_blm_entry->bssid.bytes, list_type);
+		qdf_list_remove_node(reject_ap_list, &oldest_blm_entry->node);
+		qdf_mem_free(oldest_blm_entry);
+		return QDF_STATUS_SUCCESS;
+	}
+	/* If the flow has reached here, that means no entry could be removed */
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+static QDF_STATUS
+blm_remove_lowest_delta_entry(qdf_list_t *reject_ap_list)
+{
+	QDF_STATUS status;
+
+	/*
+	 * According to the Priority, the driver will try to remove the entries,
+	 * as the least priority list, that is monitor list would not penalize
+	 * the BSSIDs for connection. The priority order for the removal is:-
+	 * 1. Monitor list
+	 * 2. Driver avoid list
+	 * 3. Userspace avoid list.
+	 * 4. RSSI reject list.
+	 * 5. Driver Blacklist.
+	 * 6. Userspace Blacklist.
+	 */
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      DRIVER_MONITOR_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      DRIVER_AVOID_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      USERSPACE_AVOID_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      DRIVER_RSSI_REJECT_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      DRIVER_BLACKLIST_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	status = blm_try_delete_bssid_in_list(reject_ap_list,
+					      USERSPACE_BLACKLIST_TYPE);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	blm_debug("Failed to remove AP from blacklist manager");
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+static void blm_fill_reject_list(qdf_list_t *reject_db_list,
+				 struct reject_ap_config_params *reject_list,
+				 uint8_t *num_of_reject_bssid,
+				 enum blm_reject_ap_type reject_ap_type,
+				 uint8_t max_bssid_to_be_filled,
+				 struct blm_config *cfg)
+{
+	struct blm_reject_ap *blm_entry = NULL;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+
+	qdf_list_peek_front(reject_db_list, &cur_node);
+	while (cur_node) {
+		if (*num_of_reject_bssid == max_bssid_to_be_filled) {
+			blm_debug("Max size reached in list, reject_ap_type %d",
+				  reject_ap_type);
+			return;
+		}
+		qdf_list_peek_next(reject_db_list, cur_node, &next_node);
+
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					    node);
+
+		blm_update_ap_info(blm_entry, cfg, NULL);
+		if (!blm_entry->reject_ap_type) {
+			blm_debug("%pM cleared from list",
+				  blm_entry->bssid.bytes);
+			qdf_list_remove_node(reject_db_list, &blm_entry->node);
+			qdf_mem_free(blm_entry);
+			cur_node = next_node;
+			next_node = NULL;
+			continue;
+		}
+
+		if (blm_is_bssid_of_type(reject_ap_type, blm_entry)) {
+			reject_list[*num_of_reject_bssid].expected_rssi =
+				    blm_entry->rssi_reject_params.expected_rssi;
+			reject_list[*num_of_reject_bssid].reject_duration =
+			       blm_get_delta_of_bssid(reject_ap_type, blm_entry);
+			reject_list[*num_of_reject_bssid].reject_ap_type =
+						blm_entry->reject_ap_type;
+			reject_list[*num_of_reject_bssid].bssid =
+							blm_entry->bssid;
+			(*num_of_reject_bssid)++;
+			blm_debug("Adding BSSID %pM of type %d to reject ap list, total entries added yet = %d",
+				  blm_entry->bssid.bytes, reject_ap_type,
+				  *num_of_reject_bssid);
+		}
+		cur_node = next_node;
+		next_node = NULL;
+	}
+}
+
+static void
+blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
+			      qdf_list_t *reject_db_list,
+			      struct blm_config *cfg)
+{
+	struct reject_ap_config_params *reject_list;
+	uint8_t num_of_reject_bssid = 0;
+	QDF_STATUS status;
+
+	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
+				     PDEV_MAX_NUM_BSSID_DISALLOW_LIST);
+	if (!reject_list)
+		return;
+
+	/* The priority for filling is as below */
+	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+			     USERSPACE_BLACKLIST_TYPE,
+			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
+	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+			     DRIVER_BLACKLIST_TYPE,
+			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
+	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+			     DRIVER_RSSI_REJECT_TYPE,
+			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
+	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+			     USERSPACE_AVOID_TYPE,
+			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
+	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+			     DRIVER_AVOID_TYPE,
+			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
+
+	status = tgt_blm_send_reject_list_to_fw(pdev, reject_list,
+						num_of_reject_bssid);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		blm_err("failed to send the reject Ap list to FW");
+
+	qdf_mem_free(reject_list);
+}
+
 QDF_STATUS
 blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 			     struct reject_ap_info *ap_info)
 {
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	struct blm_config *cfg;
+	struct blm_reject_ap *blm_entry;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return status;
+	}
+
+	cfg = &blm_psoc_obj->blm_cfg;
+
+	qdf_list_peek_front(&blm_ctx->reject_ap_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(&blm_ctx->reject_ap_list,
+				   cur_node, &next_node);
+
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					    node);
+
+		/* Update the AP info to the latest list first */
+		blm_update_ap_info(blm_entry, cfg, NULL);
+		if (!blm_entry->reject_ap_type) {
+			blm_debug("%pM cleared from list",
+				  blm_entry->bssid.bytes);
+			qdf_list_remove_node(&blm_ctx->reject_ap_list,
+					     &blm_entry->node);
+			qdf_mem_free(blm_entry);
+			cur_node = next_node;
+			next_node = NULL;
+			continue;
+		}
+
+		if (qdf_is_macaddr_equal(&blm_entry->bssid, &ap_info->bssid)) {
+			blm_modify_entry(blm_entry, cfg, ap_info);
+			goto end;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	if (qdf_list_size(&blm_ctx->reject_ap_list) == MAX_BAD_AP_LIST_SIZE) {
+		/* List is FULL, need to delete entries */
+		status =
+			blm_remove_lowest_delta_entry(&blm_ctx->reject_ap_list);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+			return status;
+		}
+	}
+
+	blm_entry = qdf_mem_malloc(sizeof(*blm_entry));
+	if (!blm_entry) {
+		blm_err("Memory allocation of node failed");
+		qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_list_insert_back(&blm_ctx->reject_ap_list, &blm_entry->node);
+	blm_modify_entry(blm_entry, cfg, ap_info);
+
+end:
+	blm_send_reject_ap_list_to_fw(pdev, &blm_ctx->reject_ap_list, cfg);
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+blm_clear_userspace_blacklist_info(struct wlan_objmgr_pdev *pdev)
+{
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_reject_ap *blm_entry;
+	QDF_STATUS status;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	if (!blm_ctx) {
+		blm_err("blm_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	qdf_list_peek_front(&blm_ctx->reject_ap_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(&blm_ctx->reject_ap_list, cur_node,
+				   &next_node);
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					    node);
+
+		if (IS_AP_IN_USERSPACE_BLACKLIST_ONLY(blm_entry)) {
+			blm_debug("removing bssid: %pM", blm_entry->bssid.bytes);
+			qdf_list_remove_node(&blm_ctx->reject_ap_list,
+					     &blm_entry->node);
+			qdf_mem_free(blm_entry);
+		} else if (BLM_IS_AP_BLACKLISTED_BY_USERSPACE(blm_entry)) {
+			blm_debug("Clearing userspace blacklist bit for %pM",
+				  blm_entry->bssid.bytes);
+			blm_entry->userspace_blacklist = false;
+		}
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -270,7 +812,61 @@ blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 			     struct qdf_mac_addr *bssid_black_list,
 			     uint8_t num_of_bssid)
 {
+	uint8_t i = 0;
+	struct reject_ap_info ap_info;
+	QDF_STATUS status;
+
+	if (!bssid_black_list || !num_of_bssid) {
+		blm_debug("Userspace blacklist/num of blacklist NULL");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/* Clear all the info of APs already existing in BLM first */
+	blm_clear_userspace_blacklist_info(pdev);
+
+	for (i = 0; i < num_of_bssid; i++) {
+		ap_info.bssid = bssid_black_list[i];
+		ap_info.reject_ap_type = USERSPACE_BLACKLIST_TYPE;
+
+		status = blm_add_bssid_to_reject_list(pdev, &ap_info);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			blm_err("Failed to add bssid to userspace blacklist");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
 	return QDF_STATUS_SUCCESS;
+}
+
+void
+blm_delete_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx)
+{
+	struct blm_reject_ap *blm_entry = NULL;
+	QDF_STATUS status;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return;
+	}
+
+	qdf_list_peek_front(&blm_ctx->reject_ap_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(&blm_ctx->reject_ap_list, cur_node,
+				   &next_node);
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					    node);
+		qdf_list_remove_node(&blm_ctx->reject_ap_list,
+				     &blm_entry->node);
+		qdf_mem_free(blm_entry);
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	qdf_list_destroy(&blm_ctx->reject_ap_list);
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }
 
 uint8_t
@@ -279,5 +875,30 @@ blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 			  uint8_t max_bssid_to_be_filled,
 			  enum blm_reject_ap_type reject_ap_type)
 {
-	return 0;
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	uint8_t num_of_reject_bssid = 0;
+	QDF_STATUS status;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return 0;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return 0;
+	}
+
+	blm_fill_reject_list(&blm_ctx->reject_ap_list, reject_list,
+			     &num_of_reject_bssid, reject_ap_type,
+			     max_bssid_to_be_filled, &blm_psoc_obj->blm_cfg);
+
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+
+	return num_of_reject_bssid;
 }
