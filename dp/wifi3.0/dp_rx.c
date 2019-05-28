@@ -29,6 +29,9 @@
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
 #include "dp_ipa.h"
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
+#endif
 
 #ifdef ATH_RX_PRI_SAVE
 #define DP_RX_TID_SAVE(_nbuf, _tid) \
@@ -358,47 +361,7 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 }
 #endif
 
-/**
- * dp_rx_da_learn() - Add AST entry based on DA lookup
- *			This is a WAR for HK 1.0 and will
- *			be removed in HK 2.0
- *
- * @soc: core txrx main context
- * @rx_tlv_hdr	: start address of rx tlvs
- * @ta_peer	: Transmitter peer entry
- * @nbuf	: nbuf to retrieve destination mac for which AST will be added
- *
- */
-#ifdef FEATURE_WDS
-static void
-dp_rx_da_learn(struct dp_soc *soc,
-	       uint8_t *rx_tlv_hdr,
-	       struct dp_peer *ta_peer,
-	       qdf_nbuf_t nbuf)
-{
-	/* For HKv2 DA port learing is not needed */
-	if (qdf_likely(soc->ast_override_support))
-		return;
-
-	if (qdf_unlikely(!ta_peer))
-		return;
-
-	if (qdf_unlikely(ta_peer->vdev->opmode != wlan_op_mode_ap))
-		return;
-
-	if (!soc->da_war_enabled)
-		return;
-
-	if (qdf_unlikely(!qdf_nbuf_is_da_valid(nbuf) &&
-			 !qdf_nbuf_is_da_mcbc(nbuf))) {
-		dp_peer_add_ast(soc,
-				ta_peer,
-				qdf_nbuf_data(nbuf),
-				CDP_TXRX_AST_TYPE_DA,
-				IEEE80211_NODE_F_WDS_HM);
-	}
-}
-#else
+#ifndef FEATURE_WDS
 static void
 dp_rx_da_learn(struct dp_soc *soc,
 	       uint8_t *rx_tlv_hdr,
@@ -407,8 +370,7 @@ dp_rx_da_learn(struct dp_soc *soc,
 {
 }
 #endif
-
-/**
+/*
  * dp_rx_intrabss_fwd() - Implements the Intra-BSS forwarding logic
  *
  * @soc: core txrx main context
@@ -1487,85 +1449,7 @@ static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
 	return true;
 }
 
-#ifdef WDS_VENDOR_EXTENSION
-int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
-			   struct dp_vdev *vdev,
-			   struct dp_peer *peer)
-{
-	struct dp_peer *bss_peer;
-	int fr_ds, to_ds, rx_3addr, rx_4addr;
-	int rx_policy_ucast, rx_policy_mcast;
-	int rx_mcast = hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr);
-
-	if (vdev->opmode == wlan_op_mode_ap) {
-		TAILQ_FOREACH(bss_peer, &vdev->peer_list, peer_list_elem) {
-			if (bss_peer->bss_peer) {
-				/* if wds policy check is not enabled on this vdev, accept all frames */
-				if (!bss_peer->wds_ecm.wds_rx_filter) {
-					return 1;
-				}
-				break;
-			}
-		}
-		rx_policy_ucast = bss_peer->wds_ecm.wds_rx_ucast_4addr;
-		rx_policy_mcast = bss_peer->wds_ecm.wds_rx_mcast_4addr;
-	} else {             /* sta mode */
-		if (!peer->wds_ecm.wds_rx_filter) {
-			return 1;
-		}
-		rx_policy_ucast = peer->wds_ecm.wds_rx_ucast_4addr;
-		rx_policy_mcast = peer->wds_ecm.wds_rx_mcast_4addr;
-	}
-
-	/* ------------------------------------------------
-	 *                       self
-	 * peer-             rx  rx-
-	 * wds  ucast mcast dir policy accept note
-	 * ------------------------------------------------
-	 * 1     1     0     11  x1     1      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint met; so, accept
-	 * 1     1     0     01  x1     0      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint not met; so, drop
-	 * 1     1     0     10  x1     0      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint not met; so, drop
-	 * 1     1     0     00  x1     0      bad frame, won't see it
-	 * 1     0     1     11  1x     1      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint met; so, accept
-	 * 1     0     1     01  1x     0      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint not met; so, drop
-	 * 1     0     1     10  1x     0      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint not met; so, drop
-	 * 1     0     1     00  1x     0      bad frame, won't see it
-	 * 1     1     0     11  x0     0      AP configured to accept from-ds Rx ucast from wds peers, constraint not met; so, drop
-	 * 1     1     0     01  x0     0      AP configured to accept from-ds Rx ucast from wds peers, constraint not met; so, drop
-	 * 1     1     0     10  x0     1      AP configured to accept from-ds Rx ucast from wds peers, constraint met; so, accept
-	 * 1     1     0     00  x0     0      bad frame, won't see it
-	 * 1     0     1     11  0x     0      AP configured to accept from-ds Rx mcast from wds peers, constraint not met; so, drop
-	 * 1     0     1     01  0x     0      AP configured to accept from-ds Rx mcast from wds peers, constraint not met; so, drop
-	 * 1     0     1     10  0x     1      AP configured to accept from-ds Rx mcast from wds peers, constraint met; so, accept
-	 * 1     0     1     00  0x     0      bad frame, won't see it
-	 *
-	 * 0     x     x     11  xx     0      we only accept td-ds Rx frames from non-wds peers in mode.
-	 * 0     x     x     01  xx     1
-	 * 0     x     x     10  xx     0
-	 * 0     x     x     00  xx     0      bad frame, won't see it
-	 * ------------------------------------------------
-	 */
-
-	fr_ds = hal_rx_mpdu_get_fr_ds(rx_tlv_hdr);
-	to_ds = hal_rx_mpdu_get_to_ds(rx_tlv_hdr);
-	rx_3addr = fr_ds ^ to_ds;
-	rx_4addr = fr_ds & to_ds;
-
-	if (vdev->opmode == wlan_op_mode_ap) {
-		if ((!peer->wds_enabled && rx_3addr && to_ds) ||
-				(peer->wds_enabled && !rx_mcast && (rx_4addr == rx_policy_ucast)) ||
-				(peer->wds_enabled && rx_mcast && (rx_4addr == rx_policy_mcast))) {
-			return 1;
-		}
-	} else {           /* sta mode */
-		if ((!rx_mcast && (rx_4addr == rx_policy_ucast)) ||
-				(rx_mcast && (rx_4addr == rx_policy_mcast))) {
-			return 1;
-		}
-	}
-	return 0;
-}
-#else
+#ifndef WDS_VENDOR_EXTENSION
 int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
 			   struct dp_vdev *vdev,
 			   struct dp_peer *peer)

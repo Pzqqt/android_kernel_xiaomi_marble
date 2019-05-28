@@ -59,7 +59,6 @@ static inline int dp_peer_find_mac_addr_cmp(
 	union dp_align_mac_addr *mac_addr1,
 	union dp_align_mac_addr *mac_addr2)
 {
-	return !((mac_addr1->align4.bytes_abcd == mac_addr2->align4.bytes_abcd)
 		/*
 		 * Intentionally use & rather than &&.
 		 * because the operands are binary rather than generic boolean,
@@ -68,8 +67,8 @@ static inline int dp_peer_find_mac_addr_cmp(
 		 * but using & has the advantage of no conditional branching,
 		 * which is a more significant benefit.
 		 */
-		&
-		(mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
+	return !((mac_addr1->align4.bytes_abcd == mac_addr2->align4.bytes_abcd)
+		 & (mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
 }
 
 static int dp_peer_ast_table_attach(struct dp_soc *soc)
@@ -117,9 +116,9 @@ static int dp_peer_find_map_attach(struct dp_soc *soc)
 	return 0; /* success */
 }
 
-static int dp_log2_ceil(unsigned value)
+static int dp_log2_ceil(unsigned int value)
 {
-	unsigned tmp = value;
+	unsigned int tmp = value;
 	int log2 = -1;
 
 	while (tmp) {
@@ -1043,12 +1042,18 @@ uint8_t dp_peer_ast_get_pdev_id(struct dp_soc *soc,
 	return 0xff;
 }
 
-
 uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
 				struct dp_ast_entry *ast_entry)
 {
 	return 0xff;
 }
+
+int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
+		       struct dp_ast_entry *ast_entry, uint32_t flags)
+{
+	return 1;
+}
+
 #endif
 
 void dp_peer_ast_send_wds_del(struct dp_soc *soc,
@@ -1488,7 +1493,6 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 
 		}
 	}
-
 	dp_peer_map_ast(soc, peer, peer_mac_addr,
 			hw_peer_id, vdev_id, ast_hash);
 }

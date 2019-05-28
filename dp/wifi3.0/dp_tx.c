@@ -32,6 +32,9 @@
 #endif
 #include "enet.h"
 #include "dp_internal.h"
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
+#endif
 
 #define DP_TX_QUEUE_MASK 0x3
 
@@ -2555,57 +2558,6 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 	}
 }
 
-/**
- * dp_tx_mec_handler() - Tx  MEC Notify Handler
- * @vdev: pointer to dp dev handler
- * @status : Tx completion status from HTT descriptor
- *
- * Handles MEC notify event sent from fw to Host
- *
- * Return: none
- */
-#ifdef FEATURE_WDS
-void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
-{
-
-	struct dp_soc *soc;
-	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
-	struct dp_peer *peer;
-	uint8_t mac_addr[QDF_MAC_ADDR_SIZE], i;
-
-	if (!vdev->mec_enabled)
-		return;
-
-	/* MEC required only in STA mode */
-	if (vdev->opmode != wlan_op_mode_sta)
-		return;
-
-	soc = vdev->pdev->soc;
-	peer = vdev->vap_bss_peer;
-
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				FL("peer is NULL"));
-		return;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s Tx MEC Handler",
-			__func__);
-
-	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
-		mac_addr[(QDF_MAC_ADDR_SIZE - 1) - i] =
-					status[(QDF_MAC_ADDR_SIZE - 2) + i];
-
-	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
-		dp_peer_add_ast(soc,
-				peer,
-				mac_addr,
-				CDP_TXRX_AST_TYPE_MEC,
-				flags);
-}
-#endif
-
 #ifdef MESH_MODE_SUPPORT
 /**
  * dp_tx_comp_fill_tx_completion_stats() - Fill per packet Tx completion stats
@@ -3521,24 +3473,7 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_WDS
-static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
-{
-	struct dp_soc *soc = vdev->pdev->soc;
-
-	/*
-	 * If AST index override support is available (HKv2 etc),
-	 * DA search flag be enabled always
-	 *
-	 * If AST index override support is not available (HKv1),
-	 * DA search flag should be used for all modes except QWRAP
-	 */
-	if (soc->ast_override_support || !vdev->proxysta_vdev)
-		return true;
-
-	return false;
-}
-#else
+#ifndef FEATURE_WDS
 static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
 {
 	return false;

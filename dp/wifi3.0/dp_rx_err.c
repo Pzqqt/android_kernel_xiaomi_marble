@@ -28,6 +28,9 @@
 #include <cds_ieee80211_common.h>
 #endif
 #include "dp_rx_defrag.h"
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
+#endif
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 #include "qdf_net_types.h"
 
@@ -49,7 +52,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 					qdf_nbuf_t nbuf)
 {
 	struct dp_vdev *vdev = peer->vdev;
-	struct dp_ast_entry *ase;
+	struct dp_ast_entry *ase = NULL;
 	uint16_t sa_idx = 0;
 	uint8_t *data;
 
@@ -118,10 +121,11 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 				ase->is_mapped = TRUE;
 			}
 		}
-	} else
+	} else {
 		ase = dp_peer_ast_hash_find_by_pdevid(soc,
 						      &data[QDF_MAC_ADDR_SIZE],
 						      vdev->pdev->pdev_id);
+	}
 
 	if (ase) {
 
@@ -784,7 +788,6 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		dp_err_rl("mcast Policy Check Drop pkt");
 		goto drop_nbuf;
 	}
-
 	/* WDS Source Port Learning */
 	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet &&
 		vdev->wds_enabled))

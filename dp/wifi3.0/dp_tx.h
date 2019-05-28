@@ -196,9 +196,7 @@ uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 
-#ifdef FEATURE_WDS
-void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
-#else
+#ifndef FEATURE_WDS
 static inline void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 {
 	return;

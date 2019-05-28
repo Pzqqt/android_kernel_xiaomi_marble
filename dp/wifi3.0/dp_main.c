@@ -60,6 +60,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #endif
 #include "dp_ipa.h"
 #include "dp_cal_client_api.h"
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
+#endif
 #ifdef CONFIG_MCL
 extern int con_mode_monitor;
 #ifndef REMOVE_PKT_LOG
@@ -124,11 +127,6 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 #define DP_INTR_POLL_TIMER_MS	10
 /* Generic AST entry aging timer value */
 #define DP_AST_AGING_TIMER_DEFAULT_MS	1000
-
-/* WDS AST entry aging timer value */
-#define DP_WDS_AST_AGING_TIMER_DEFAULT_MS	120000
-#define DP_WDS_AST_AGING_TIMER_CNT \
-((DP_WDS_AST_AGING_TIMER_DEFAULT_MS / DP_AST_AGING_TIMER_DEFAULT_MS) - 1)
 #define DP_MCS_LENGTH (6*MAX_MCS)
 
 #define DP_CURR_FW_STATS_AVAIL 19
@@ -466,7 +464,6 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 					enum cdp_txrx_ast_entry_type type,
 					uint32_t flags)
 {
-
 	return dp_peer_add_ast((struct dp_soc *)soc_hdl,
 				(struct dp_peer *)peer_hdl,
 				mac_addr,
@@ -646,7 +643,7 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	 uint8_t *ast_mac_addr,
 	 struct cdp_ast_entry_info *ast_entry_info)
 {
-	struct dp_ast_entry *ast_entry;
+	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
@@ -736,7 +733,7 @@ static QDF_STATUS dp_peer_ast_entry_del_by_soc(struct cdp_soc_t *soc_handle,
 
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
-	struct dp_ast_entry *ast_entry;
+	struct dp_ast_entry *ast_entry = NULL;
 	txrx_ast_free_cb cb = NULL;
 	void *arg = NULL;
 
@@ -1022,31 +1019,32 @@ void dp_print_ast_stats(struct dp_soc *soc)
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
-					DP_PRINT_STATS("%6d mac_addr = %pM"
-							" peer_mac_addr = %pM"
-							" peer_id = %u"
-							" type = %s"
-							" next_hop = %d"
-							" is_active = %d"
-							" is_bss = %d"
-							" ast_idx = %d"
-							" ast_hash = %d"
-							" delete_in_progress = %d"
-							" pdev_id = %d"
-							" vdev_id = %d",
-							++num_entries,
-							ase->mac_addr.raw,
-							ase->peer->mac_addr.raw,
-							ase->peer->peer_ids[0],
-							type[ase->type],
-							ase->next_hop,
-							ase->is_active,
-							ase->is_bss,
-							ase->ast_idx,
-							ase->ast_hash_value,
-							ase->delete_in_progress,
-							ase->pdev_id,
-							ase->vdev_id);
+					DP_PRINT_STATS("%6d mac_addr = %pM",
+						       ++num_entries,
+						       ase->mac_addr.raw);
+					DP_PRINT_STATS(" peer_mac_addr = %pM",
+						       ase->peer->mac_addr.raw);
+					DP_PRINT_STATS(" peer_id = %u",
+						       ase->peer->peer_ids[0]);
+					DP_PRINT_STATS(" type = %s",
+						       type[ase->type]);
+					DP_PRINT_STATS(" next_hop = %d",
+						       ase->next_hop);
+					DP_PRINT_STATS(" is_active = %d",
+						       ase->is_active);
+					DP_PRINT_STATS(" is_bss = %d",
+						       ase->is_bss);
+					DP_PRINT_STATS(" ast_idx = %d",
+						       ase->ast_idx);
+					DP_PRINT_STATS(" ast_hash = %d",
+						       ase->ast_hash_value);
+					DP_PRINT_STATS("delete_in_progress= %d",
+						       ase->delete_in_progress
+						       );
+					DP_PRINT_STATS(" pdev_id = %d",
+						       ase->pdev_id);
+					DP_PRINT_STATS(" vdev_id = %d",
+						       ase->vdev_id);
 				}
 			}
 		}
@@ -2256,122 +2254,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #endif /* QCA_WIFI_QCA8074_VP */
 #endif /* IPA_OFFLOAD */
 
-/*
- * dp_ast_aging_timer_fn() - Timer callback function for WDS aging
- * @soc: Datapath SOC handle
- *
- * This is a timer function used to age out stale AST nodes from
- * AST table
- */
-#ifdef FEATURE_WDS
-static void dp_ast_aging_timer_fn(void *soc_hdl)
-{
-	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ase, *temp_ase;
-	int i;
-	bool check_wds_ase = false;
-
-	if (soc->wds_ast_aging_timer_cnt++ >= DP_WDS_AST_AGING_TIMER_CNT) {
-		soc->wds_ast_aging_timer_cnt = 0;
-		check_wds_ase = true;
-	}
-
-	 /* Peer list access lock */
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
-
-	/* AST list access lock */
-	qdf_spin_lock_bh(&soc->ast_lock);
-
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					/*
-					 * Do not expire static ast entries
-					 * and HM WDS entries
-					 */
-					if (ase->type !=
-					    CDP_TXRX_AST_TYPE_WDS &&
-					    ase->type !=
-					    CDP_TXRX_AST_TYPE_MEC &&
-					    ase->type !=
-					    CDP_TXRX_AST_TYPE_DA)
-						continue;
-
-					/* Expire MEC entry every n sec.
-					 * This needs to be expired in
-					 * case if STA backbone is made as
-					 * AP backbone, In this case it needs
-					 * to be re-added as a WDS entry.
-					 */
-					if (ase->is_active && ase->type ==
-					    CDP_TXRX_AST_TYPE_MEC) {
-						ase->is_active = FALSE;
-						continue;
-					} else if (ase->is_active &&
-						   check_wds_ase) {
-						ase->is_active = FALSE;
-						continue;
-					}
-
-					if (ase->type ==
-					    CDP_TXRX_AST_TYPE_MEC) {
-						DP_STATS_INC(soc,
-							     ast.aged_out, 1);
-						dp_peer_del_ast(soc, ase);
-					} else if (check_wds_ase) {
-						DP_STATS_INC(soc,
-							     ast.aged_out, 1);
-						dp_peer_del_ast(soc, ase);
-					}
-				}
-			}
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
-
-	qdf_spin_unlock_bh(&soc->ast_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
-
-	if (qdf_atomic_read(&soc->cmn_init_done))
-		qdf_timer_mod(&soc->ast_aging_timer,
-			      DP_AST_AGING_TIMER_DEFAULT_MS);
-}
-
-
-/*
- * dp_soc_wds_attach() - Setup WDS timer and AST table
- * @soc:		Datapath SOC handle
- *
- * Return: None
- */
-static void dp_soc_wds_attach(struct dp_soc *soc)
-{
-	soc->wds_ast_aging_timer_cnt = 0;
-	qdf_timer_init(soc->osdev, &soc->ast_aging_timer,
-		       dp_ast_aging_timer_fn, (void *)soc,
-		       QDF_TIMER_TYPE_WAKE_APPS);
-
-	qdf_timer_mod(&soc->ast_aging_timer, DP_AST_AGING_TIMER_DEFAULT_MS);
-}
-
-/*
- * dp_soc_wds_detach() - Detach WDS data structures and timers
- * @txrx_soc: DP SOC handle
- *
- * Return: None
- */
-static void dp_soc_wds_detach(struct dp_soc *soc)
-{
-	qdf_timer_stop(&soc->ast_aging_timer);
-	qdf_timer_free(&soc->ast_aging_timer);
-}
-#else
+#ifndef FEATURE_WDS
 static void dp_soc_wds_attach(struct dp_soc *soc)
 {
 }
@@ -2380,7 +2263,6 @@ static void dp_soc_wds_detach(struct dp_soc *soc)
 {
 }
 #endif
-
 /*
  * dp_soc_reset_ring_map() - Reset cpu ring map
  * @soc: Datapath soc handler
@@ -2950,6 +2832,7 @@ out:
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
+
 	dp_soc_wds_attach(soc);
 
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);
@@ -4866,6 +4749,7 @@ free_vdev:
 		callback(cb_context);
 }
 
+#ifdef FEATURE_AST
 /*
  * dp_peer_delete_ast_entries(): Delete all AST entries for a peer
  * @soc - datapath soc handle
@@ -4873,7 +4757,6 @@ free_vdev:
  *
  * Delete the AST entries belonging to a peer
  */
-#ifdef FEATURE_AST
 static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 					      struct dp_peer *peer)
 {
@@ -4890,7 +4773,6 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 {
 }
 #endif
-
 #if ATH_SUPPORT_WRAP
 static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 						uint8_t *peer_mac_addr)
@@ -4941,8 +4823,7 @@ static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 	else
 		ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
 
-	if (ast_entry && ast_entry->next_hop &&
-	    !ast_entry->delete_in_progress)
+	if (ast_entry && ast_entry->next_hop && !ast_entry->delete_in_progress)
 		dp_peer_del_ast(soc, ast_entry);
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -5007,9 +4888,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		     QDF_MAC_ADDR_SIZE)) {
 			ast_type = CDP_TXRX_AST_TYPE_SELF;
 		}
-
 		dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
-
 		/*
 		* Control path maintains a node count which is incremented
 		* for every new peer create command. Since new peer is not being
@@ -5063,9 +4942,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 			 QDF_MAC_ADDR_SIZE)) {
 		ast_type = CDP_TXRX_AST_TYPE_SELF;
 	}
-
 	dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
-
 	qdf_spinlock_create(&peer->peer_info_lock);
 
 	dp_peer_rx_bufq_resources_init(peer);
@@ -8035,75 +7912,6 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_txrx_set_wds_rx_policy() - API to store datapath
- *                            config parameters
- * @vdev_handle - datapath vdev handle
- * @cfg: ini parameter handle
- *
- * Return: status
- */
-#ifdef WDS_VENDOR_EXTENSION
-void
-dp_txrx_set_wds_rx_policy(
-		struct cdp_vdev *vdev_handle,
-		u_int32_t val)
-{
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-	struct dp_peer *peer;
-	if (vdev->opmode == wlan_op_mode_ap) {
-		/* for ap, set it on bss_peer */
-		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			if (peer->bss_peer) {
-				peer->wds_ecm.wds_rx_filter = 1;
-				peer->wds_ecm.wds_rx_ucast_4addr = (val & WDS_POLICY_RX_UCAST_4ADDR) ? 1:0;
-				peer->wds_ecm.wds_rx_mcast_4addr = (val & WDS_POLICY_RX_MCAST_4ADDR) ? 1:0;
-				break;
-			}
-		}
-	} else if (vdev->opmode == wlan_op_mode_sta) {
-		peer = TAILQ_FIRST(&vdev->peer_list);
-		peer->wds_ecm.wds_rx_filter = 1;
-		peer->wds_ecm.wds_rx_ucast_4addr = (val & WDS_POLICY_RX_UCAST_4ADDR) ? 1:0;
-		peer->wds_ecm.wds_rx_mcast_4addr = (val & WDS_POLICY_RX_MCAST_4ADDR) ? 1:0;
-	}
-}
-
-/**
- * dp_txrx_peer_wds_tx_policy_update() - API to set tx wds policy
- *
- * @peer_handle - datapath peer handle
- * @wds_tx_ucast: policy for unicast transmission
- * @wds_tx_mcast: policy for multicast transmission
- *
- * Return: void
- */
-void
-dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
-		int wds_tx_ucast, int wds_tx_mcast)
-{
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
-	if (wds_tx_ucast || wds_tx_mcast) {
-		peer->wds_enabled = 1;
-		peer->wds_ecm.wds_tx_ucast_4addr = wds_tx_ucast;
-		peer->wds_ecm.wds_tx_mcast_4addr = wds_tx_mcast;
-	} else {
-		peer->wds_enabled = 0;
-		peer->wds_ecm.wds_tx_ucast_4addr = 0;
-		peer->wds_ecm.wds_tx_mcast_4addr = 0;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			FL("Policy Update set to :\
-				peer->wds_enabled %d\
-				peer->wds_ecm.wds_tx_ucast_4addr %d\
-				peer->wds_ecm.wds_tx_mcast_4addr %d"),
-				peer->wds_enabled, peer->wds_ecm.wds_tx_ucast_4addr,
-				peer->wds_ecm.wds_tx_mcast_4addr);
-	return;
-}
-#endif
-
 static struct cdp_wds_ops dp_ops_wds = {
 	.vdev_set_wds = dp_vdev_set_wds,
 #ifdef WDS_VENDOR_EXTENSION
@@ -8223,9 +8031,9 @@ dp_get_cfg_capabilities(struct cdp_soc_t *soc_handle,
 #ifdef FEATURE_AST
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
-	struct dp_vdev *vdev = (struct dp_vdev *) vdev_hdl;
-	struct dp_peer *peer = (struct dp_peer *) peer_hdl;
-	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+	struct dp_peer *peer = (struct dp_peer *)peer_hdl;
+	struct dp_soc *soc = (struct dp_soc *)vdev->pdev->soc;
 
 	/*
 	 * For BSS peer, new peer is not created on alloc_node if the
@@ -8236,9 +8044,8 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	 * for bss_peer, unless only 2 reference remains (peer map reference
 	 * and peer hash table reference).
 	 */
-	if (peer->bss_peer && (qdf_atomic_read(&peer->ref_cnt) > 2)) {
+	if (peer->bss_peer && (qdf_atomic_read(&peer->ref_cnt) > 2))
 		return;
-	}
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	peer->delete_in_progress = true;
