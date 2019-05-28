@@ -74,12 +74,13 @@ static const uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {
  * @queue: queue ids container for nbuf
  *
  * TX packet queue has 2 instances, software descriptors id and dma ring id
- * Based on tx feature and hardware configuration queue id combination could be
- * different.
+ * Based on tx feature and hardware configuration queue id combination
+ * could be different.
  * For example -
- * With XPS enabled,all TX descriptor pools and dma ring are assigned per cpu id
- * With no XPS,lock based resource protection, Descriptor pool ids are different
- * for each vdev, dma ring id will be same as single pdev id
+ * With XPS enabled,all TX descriptor pools and dma ring are assigned
+ * per cpu id
+ * With no XPS,lock based resource protection, Descriptor pool ids are
+ * different for each vdev, dma ring id will be same as single pdev id
  *
  * Return: None
  */
@@ -256,6 +257,7 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  * dp_tx_htt_metadata_prepare() - Prepare HTT metadata for special frames
  * @vdev: DP vdev Handle
  * @nbuf: skb
+ * @msdu_info: msdu_info required to create HTT metadata
  *
  * Prepares and fills HTT metadata in the frame pre-header for special frames
  * that should be transmitted using varying transmit parameters.
@@ -267,8 +269,9 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
  *
  */
 static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint32_t *meta_data)
+		struct dp_tx_msdu_info_s *msdu_info)
 {
+	uint32_t *meta_data = msdu_info->meta_data;
 	struct htt_tx_msdu_desc_ext2_t *desc_ext =
 				(struct htt_tx_msdu_desc_ext2_t *) meta_data;
 
@@ -285,7 +288,7 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	htt_desc_size = sizeof(struct htt_tx_msdu_desc_ext2_t);
 	htt_desc_size_aligned = (htt_desc_size + 7) & ~0x7;
 
-	if (vdev->mesh_vdev) {
+	if (vdev->mesh_vdev || msdu_info->is_tx_sniffer) {
 		if (qdf_unlikely(qdf_nbuf_headroom(nbuf) <
 					htt_desc_size_aligned)) {
 			DP_STATS_INC(vdev,
@@ -732,8 +735,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	/* Initialize the SW tx descriptor */
 	tx_desc->nbuf = nbuf;
 	tx_desc->frm_type = dp_tx_frm_std;
-	tx_desc->tx_encap_type = (tx_exc_metadata ?
-			tx_exc_metadata->tx_encap_type : vdev->tx_encap_type);
+	tx_desc->tx_encap_type = ((tx_exc_metadata &&
+		(tx_exc_metadata->tx_encap_type != CDP_INVALID_TX_ENCAP_TYPE)) ?
+		tx_exc_metadata->tx_encap_type : vdev->tx_encap_type);
 	tx_desc->vdev = vdev;
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
@@ -773,7 +777,9 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 *  |-----------------------------|
 	 */
 	if (qdf_unlikely((msdu_info->exception_fw)) ||
-				(vdev->opmode == wlan_op_mode_ocb)) {
+				(vdev->opmode == wlan_op_mode_ocb) ||
+				(tx_exc_metadata &&
+				tx_exc_metadata->is_tx_sniffer)) {
 		align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
 
 		if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < align_pad)) {
@@ -789,7 +795,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		}
 
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
-				msdu_info->meta_data);
+				msdu_info);
 		if (htt_hdr_size == 0)
 			goto failure;
 		tx_desc->pkt_offset = align_pad + htt_hdr_size;
@@ -1009,7 +1015,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	qdf_dma_addr_t dma_addr;
 	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES];
 
-	enum cdp_sec_type sec_type = (tx_exc_metadata ?
+	enum cdp_sec_type sec_type = ((tx_exc_metadata &&
+			tx_exc_metadata->sec_type != CDP_INVALID_SEC_TYPE) ?
 			tx_exc_metadata->sec_type : vdev->sec_type);
 
 	/* Return Buffer Manager ID */
@@ -1758,6 +1765,36 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	return nbuf;
 }
 
+/**
+ * dp_tx_add_tx_sniffer_meta_data()- Add tx_sniffer meta hdr info
+ * @vdev: DP vdev handle
+ * @msdu_info: MSDU info to be setup in MSDU descriptor and MSDU extension desc.
+ * @ppdu_cookie: PPDU cookie that should be replayed in the ppdu completions
+ *
+ * Return: NULL on failure,
+ *         nbuf when extracted successfully
+ */
+static
+void dp_tx_add_tx_sniffer_meta_data(struct dp_vdev *vdev,
+				    struct dp_tx_msdu_info_s *msdu_info,
+				    uint16_t ppdu_cookie)
+{
+	struct htt_tx_msdu_desc_ext2_t *meta_data =
+		(struct htt_tx_msdu_desc_ext2_t *)&msdu_info->meta_data[0];
+
+	qdf_mem_zero(meta_data, sizeof(struct htt_tx_msdu_desc_ext2_t));
+
+	HTT_TX_MSDU_EXT2_DESC_FLAG_SEND_AS_STANDALONE_SET
+				(msdu_info->meta_data[5], 1);
+	HTT_TX_MSDU_EXT2_DESC_FLAG_HOST_OPAQUE_VALID_SET
+				(msdu_info->meta_data[5], 1);
+	HTT_TX_MSDU_EXT2_DESC_HOST_OPAQUE_COOKIE_SET
+				(msdu_info->meta_data[6], ppdu_cookie);
+
+	msdu_info->exception_fw = 1;
+	msdu_info->is_tx_sniffer = 1;
+}
+
 #ifdef MESH_MODE_SUPPORT
 
 /**
@@ -1862,9 +1899,17 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  */
 static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 {
-	if ((tx_exc->tid > DP_MAX_TIDS && tx_exc->tid != HTT_INVALID_TID) ||
-	    tx_exc->tx_encap_type > htt_cmn_pkt_num_types ||
-	    tx_exc->sec_type > cdp_num_sec_types) {
+	bool invalid_tid = (tx_exc->tid > DP_MAX_TIDS && tx_exc->tid !=
+			    HTT_INVALID_TID);
+	bool invalid_encap_type = (tx_exc->tid > DP_MAX_TIDS && tx_exc->tid !=
+				   HTT_INVALID_TID);
+	bool invalid_sec_type = (tx_exc->sec_type > cdp_num_sec_types &&
+				 tx_exc->sec_type != CDP_INVALID_SEC_TYPE);
+	bool invalid_cookie = (tx_exc->is_tx_sniffer == 1 &&
+			       tx_exc->ppdu_cookie == 0);
+
+	if (invalid_tid || invalid_encap_type || invalid_sec_type ||
+	    invalid_cookie) {
 		return false;
 	}
 
@@ -1891,6 +1936,9 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 	struct dp_tx_msdu_info_s msdu_info;
 
 	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
+
+	if (!tx_exc_metadata)
+		goto fail;
 
 	msdu_info.tid = tx_exc_metadata->tid;
 
@@ -1938,6 +1986,14 @@ qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					  "Ignoring mcast_enhancement_en which is set and sending the mcast packet to the FW");
 		}
+	}
+
+	if (qdf_likely(tx_exc_metadata->is_tx_sniffer)) {
+		DP_STATS_INC_PKT(vdev, tx_i.sniffer_rcvd, 1,
+				 qdf_nbuf_len(nbuf));
+
+		dp_tx_add_tx_sniffer_meta_data(vdev, &msdu_info,
+					       tx_exc_metadata->ppdu_cookie);
 	}
 
 	/*

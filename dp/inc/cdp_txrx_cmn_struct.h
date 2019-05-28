@@ -95,6 +95,8 @@
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 #define CDP_INVALID_PEER 0xffff
 #define CDP_INVALID_TID	 31
+#define CDP_INVALID_TX_ENCAP_TYPE	 6
+#define CDP_INVALID_SEC_TYPE		12
 
 #define CDP_DATA_TID_MAX 8
 #define CDP_DATA_NON_QOS_TID 16
@@ -406,6 +408,8 @@ enum cdp_sec_type {
  *  @tid: Transmit Identifier
  *  @tx_encap_type: Transmit encap type (i.e. Raw, Native Wi-Fi, Ethernet)
  *  @sec_type: sec_type to be passed to HAL
+ *  @is_tx_sniffer: Indicates if the packet has to be sniffed
+ *  @ppdu_cookie: 16-bit ppdu cookie that has to be replayed back in completions
  *
  *  This structure holds the parameters needed in the exception path of tx
  *
@@ -415,6 +419,8 @@ struct cdp_tx_exception_metadata {
 	uint8_t tid;
 	uint16_t tx_encap_type;
 	enum cdp_sec_type sec_type;
+	uint8_t is_tx_sniffer;
+	uint16_t ppdu_cookie;
 };
 
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
@@ -1157,6 +1163,8 @@ struct cdp_tx_sojourn_stats {
  * @mu_group_id: mu group id
  * @rix: rate index
  * @cookie: cookie to used by upper layer
+ * @is_ppdu_cookie_valid : Indicates that ppdu_cookie is valid
+ * @ppdu_cookie: 16-bit ppdu_cookie
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1213,6 +1221,8 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t mu_group_id;
 	uint32_t rix;
 	struct cdp_stats_cookie *cookie;
+	uint8_t is_ppdu_cookie_valid;
+	uint16_t ppdu_cookie;
 };
 
 /**
@@ -1249,6 +1259,7 @@ struct cdp_tx_completion_ppdu_user {
  * @ppdu_end_timestamp: TSF at PPDU end
  * @ba_start_seq: Block Ack sequence number
  * @ba_bitmap: Block Ack bitmap
+ * @ppdu_cookie: 16-bit ppdu_cookie
  */
 struct cdp_tx_indication_mpdu_info {
 	uint32_t ppdu_id;
@@ -1278,6 +1289,7 @@ struct cdp_tx_indication_mpdu_info {
 	uint32_t ppdu_end_timestamp;
 	uint32_t ba_start_seq;
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint16_t ppdu_cookie;
 };
 
 /**

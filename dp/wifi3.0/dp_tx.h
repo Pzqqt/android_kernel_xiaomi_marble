@@ -117,6 +117,8 @@ struct dp_tx_queue {
  * @u.sg_info: Scatter Gather information for non-TSO SG frames
  * @meta_data: Mesh meta header information
  * @exception_fw: Duplicate frame to be sent to firmware
+ * @ppdu_cookie: 16-bit ppdu_cookie that has to be replayed back in completions
+ * @ix_tx_sniffer: Indicates if the packet has to be sniffed
  *
  * This structure holds the complete MSDU information needed to program the
  * Hardware TCL and MSDU extension descriptors for different frame types
@@ -133,6 +135,8 @@ struct dp_tx_msdu_info_s {
 	} u;
 	uint32_t meta_data[7];
 	uint8_t exception_fw;
+	uint16_t ppdu_cookie;
+	uint8_t is_tx_sniffer;
 };
 
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);

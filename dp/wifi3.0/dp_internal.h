@@ -376,6 +376,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 		srcobj->tx.nawds_mcast.bytes;
 	tgtobj->stats.tx.nawds_mcast_drop +=
 		srcobj->tx.nawds_mcast_drop;
+	tgtobj->stats.tx.num_ppdu_cookie_valid +=
+		srcobj->tx.num_ppdu_cookie_valid;
 	tgtobj->stats.tx.tx_failed += srcobj->tx.tx_failed;
 	tgtobj->stats.tx.ofdma += srcobj->tx.ofdma;
 	tgtobj->stats.tx.stbc += srcobj->tx.stbc;
@@ -482,6 +484,7 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.dropped.headroom_insufficient);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.cce_classified);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.cce_classified_raw);
+	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.sniffer_rcvd);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mesh.exception_fw);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.mesh.completion_fw);
 
@@ -562,6 +565,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		srcobj->stats.tx.nawds_mcast.bytes;
 	tgtobj->tx.nawds_mcast_drop +=
 		srcobj->stats.tx.nawds_mcast_drop;
+	tgtobj->tx.num_ppdu_cookie_valid +=
+		srcobj->stats.tx.num_ppdu_cookie_valid;
 	tgtobj->tx.tx_failed += srcobj->stats.tx.tx_failed;
 	tgtobj->tx.ofdma += srcobj->stats.tx.ofdma;
 	tgtobj->tx.stbc += srcobj->stats.tx.stbc;

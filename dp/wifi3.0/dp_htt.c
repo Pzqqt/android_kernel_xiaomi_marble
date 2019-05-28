@@ -155,6 +155,9 @@ dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		return;
 	}
 
+	if (ppdu->is_ppdu_cookie_valid)
+		DP_STATS_INC(peer, tx.num_ppdu_cookie_valid, 1);
+
 	if (ppdu->mu_group_id <= MAX_MU_GROUP_ID &&
 	    ppdu->ppdu_type != HTT_PPDU_STATS_PPDU_TYPE_SU) {
 		if (unlikely(!(ppdu->mu_group_id & (MAX_MU_GROUP_ID - 1))))
@@ -1936,6 +1939,14 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		ppdu_user_desc->mpdu_success = 0;
 		ppdu_user_desc->mpdu_tried_mcast = 0;
 		ppdu_user_desc->mpdu_tried_ucast = 0;
+	}
+
+	tag_buf += 3;
+
+	if (HTT_PPDU_STATS_IS_OPAQUE_VALID_GET(*tag_buf)) {
+		ppdu_user_desc->ppdu_cookie =
+			HTT_PPDU_STATS_HOST_OPAQUE_COOKIE_GET(*tag_buf);
+		ppdu_user_desc->is_ppdu_cookie_valid = 1;
 	}
 }
 
