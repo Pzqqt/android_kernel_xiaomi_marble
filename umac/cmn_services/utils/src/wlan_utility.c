@@ -311,7 +311,7 @@ static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev, void *object,
 {
 	struct wlan_objmgr_vdev *comp_vdev = (struct wlan_objmgr_vdev *)object;
 	struct wlan_vdev_ch_check_filter *ch_filter = arg;
-	struct wlan_channel *vdev_chan;
+	struct wlan_channel vdev_chan, *chan;
 	struct wlan_channel *iter_vdev_chan;
 
 	if (ch_filter->flag)
@@ -321,39 +321,38 @@ static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev, void *object,
 		return;
 
 	wlan_vdev_obj_lock(comp_vdev);
-	wlan_vdev_obj_lock(ch_filter->vdev);
-
-	vdev_chan = wlan_vdev_get_active_channel(comp_vdev);
-	if (vdev_chan) {
-		iter_vdev_chan = wlan_vdev_mlme_get_des_chan(
-							ch_filter->vdev);
-		if (wlan_chan_eq(vdev_chan, iter_vdev_chan)
-						!= QDF_STATUS_SUCCESS) {
-			ch_filter->flag = 1;
-
-			qdf_nofl_err("==> iter vdev id: %d: ieee %d, mode %d",
-				     wlan_vdev_get_id(comp_vdev),
-				     vdev_chan->ch_ieee,
-				     vdev_chan->ch_phymode);
-			qdf_nofl_err("fl %016llx, fl-ext %08x, s1 %d, s2 %d ",
-				     vdev_chan->ch_flags, vdev_chan->ch_flagext,
-				     vdev_chan->ch_freq_seg1,
-				     vdev_chan->ch_freq_seg2);
-
-			qdf_nofl_err("==> base vdev id: %d: ieee %d mode %d",
-				     wlan_vdev_get_id(ch_filter->vdev),
-				     iter_vdev_chan->ch_ieee,
-				     iter_vdev_chan->ch_phymode);
-			qdf_nofl_err("fl %016llx, fl-ext %08x s1 %d, s2 %d",
-				     iter_vdev_chan->ch_flags,
-				     iter_vdev_chan->ch_flagext,
-				     iter_vdev_chan->ch_freq_seg1,
-				     iter_vdev_chan->ch_freq_seg2);
-		}
+	chan = wlan_vdev_get_active_channel(comp_vdev);
+	if (!chan) {
+		wlan_vdev_obj_unlock(comp_vdev);
+		return;
 	}
-
-	wlan_vdev_obj_unlock(ch_filter->vdev);
+	wlan_chan_copy(&vdev_chan, chan);
 	wlan_vdev_obj_unlock(comp_vdev);
+
+	wlan_vdev_obj_lock(ch_filter->vdev);
+	iter_vdev_chan = wlan_vdev_mlme_get_des_chan(ch_filter->vdev);
+	if (wlan_chan_eq(&vdev_chan, iter_vdev_chan)
+		!= QDF_STATUS_SUCCESS) {
+		ch_filter->flag = 1;
+		qdf_nofl_err("==> iter vdev id: %d: ieee %d, mode %d",
+			     wlan_vdev_get_id(comp_vdev),
+			     vdev_chan.ch_ieee,
+			     vdev_chan.ch_phymode);
+		qdf_nofl_err("fl %016llx, fl-ext %08x, s1 %d, s2 %d ",
+			     vdev_chan.ch_flags, vdev_chan.ch_flagext,
+			     vdev_chan.ch_freq_seg1,
+			     vdev_chan.ch_freq_seg2);
+		qdf_nofl_err("==> base vdev id: %d: ieee %d mode %d",
+			     wlan_vdev_get_id(ch_filter->vdev),
+			     iter_vdev_chan->ch_ieee,
+			     iter_vdev_chan->ch_phymode);
+		qdf_nofl_err("fl %016llx, fl-ext %08x s1 %d, s2 %d",
+			     iter_vdev_chan->ch_flags,
+			     iter_vdev_chan->ch_flagext,
+			     iter_vdev_chan->ch_freq_seg1,
+			     iter_vdev_chan->ch_freq_seg2);
+	}
+	wlan_vdev_obj_unlock(ch_filter->vdev);
 }
 
 QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
