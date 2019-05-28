@@ -492,7 +492,8 @@ void wlan_ipa_reg_sap_xmit_cb(struct wlan_ipa_priv *ipa_ctx,
  * Return: None
  */
 static inline
-void wlan_ipa_reg_send_to_nw_cb(struct wlan_ipa_priv *ipa_ctx, void *cb)
+void wlan_ipa_reg_send_to_nw_cb(struct wlan_ipa_priv *ipa_ctx,
+				wlan_ipa_send_to_nw cb)
 {
 	ipa_ctx->send_to_nw = cb;
 }
