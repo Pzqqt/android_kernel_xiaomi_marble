@@ -1088,6 +1088,107 @@ static QDF_STATUS send_set_base_macaddr_indicate_cmd_tlv(wmi_unified_t wmi_handl
 	return 0;
 }
 
+#ifdef FEATURE_BLACKLIST_MGR
+
+static WMI_BSSID_DISALLOW_LIST_TYPE
+wmi_get_wmi_reject_ap_type(enum blm_reject_ap_type reject_ap_type)
+{
+	switch (reject_ap_type) {
+	case USERSPACE_AVOID_TYPE:
+		return WMI_BSSID_DISALLOW_USER_SPACE_AVOID_LIST;
+	case DRIVER_AVOID_TYPE:
+		return WMI_BSSID_DISALLOW_DRIVER_AVOID_LIST;
+	case USERSPACE_BLACKLIST_TYPE:
+		return WMI_BSSID_DISALLOW_USER_SPACE_BLACK_LIST;
+	case DRIVER_BLACKLIST_TYPE:
+		return WMI_BSSID_DISALLOW_DRIVER_BLACK_LIST;
+	case DRIVER_RSSI_REJECT_TYPE:
+		return WMI_BSSID_DISALLOW_RSSI_REJECT_LIST;
+	default:
+		return WMI_BSSID_DISALLOW_DRIVER_AVOID_LIST;
+	}
+}
+
+static QDF_STATUS
+send_reject_ap_list_cmd_tlv(wmi_unified_t wmi_handle,
+			    struct reject_ap_params *reject_params)
+{
+	wmi_buf_t buf;
+	QDF_STATUS status;
+	uint32_t len, list_tlv_len;
+	int i;
+	uint8_t *buf_ptr;
+	wmi_pdev_dsm_filter_fixed_param *chan_list_fp;
+	wmi_pdev_bssid_disallow_list_config_param *chan_list;
+	struct reject_ap_config_params *reject_list = reject_params->bssid_list;
+	uint8_t num_of_reject_bssid = reject_params->num_of_reject_bssid;
+
+	if (!num_of_reject_bssid) {
+		WMI_LOGD("%s : invalid number of channels %d", __func__,
+			 num_of_reject_bssid);
+		return QDF_STATUS_E_EMPTY;
+	}
+
+	list_tlv_len = sizeof(*chan_list) * num_of_reject_bssid;
+
+	len = sizeof(*chan_list_fp) + list_tlv_len + WMI_TLV_HDR_SIZE;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	WMI_LOGD("num of reject BSSIDs %d", num_of_reject_bssid);
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	chan_list_fp = (wmi_pdev_dsm_filter_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&chan_list_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_dsm_filter_fixed_param));
+
+	buf_ptr += sizeof(wmi_pdev_dsm_filter_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, list_tlv_len);
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	chan_list = (wmi_pdev_bssid_disallow_list_config_param *)buf_ptr;
+	for (i = 0; i < num_of_reject_bssid; i++) {
+
+		WMITLV_SET_HDR(&chan_list->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_pdev_bssid_disallow_list_config_param,
+			       WMITLV_GET_STRUCT_TLVLEN
+				  (wmi_pdev_bssid_disallow_list_config_param));
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(reject_list[i].bssid.bytes,
+					   &chan_list->bssid);
+		chan_list->bssid_type =
+		    wmi_get_wmi_reject_ap_type(reject_list[i].reject_ap_type);
+		chan_list->expected_rssi = reject_list[i].expected_rssi;
+		chan_list->remaining_disallow_duration =
+					reject_list[i].reject_duration;
+		chan_list++;
+	}
+
+	wmi_mtrace(WMI_PDEV_DSM_FILTER_CMDID, NO_SESSION, 0);
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_PDEV_DSM_FILTER_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("wmi_unified_cmd_send WMI_PDEV_DSM_FILTER_CMDID returned Error %d",
+			 status);
+		goto error;
+	}
+
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+	return status;
+}
+
+void wmi_blacklist_mgr_attach_tlv(struct wmi_unified *wmi_handle)
+{
+	struct wmi_ops *ops = wmi_handle->ops;
+
+	ops->send_reject_ap_list_cmd = send_reject_ap_list_cmd_tlv;
+}
+#endif
+
 #ifdef WLAN_FEATURE_DISA
 /**
  * send_encrypt_decrypt_send_cmd() - send encrypt/decrypt cmd to fw
@@ -2498,5 +2599,6 @@ void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 	wmi_tdls_attach_tlv(wmi_handle);
 	wmi_disa_attach_tlv(wmi_handle);
 	wmi_policy_mgr_attach_tlv(wmi_handle);
+	wmi_blacklist_mgr_attach_tlv(wmi_handle);
 }
 

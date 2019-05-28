@@ -96,6 +96,20 @@ QDF_STATUS wmi_extract_encrypt_decrypt_resp_params(void *wmi_hdl,
 			struct disa_encrypt_decrypt_resp_params *resp);
 #endif /* WLAN_FEATURE_DISA */
 
+#ifdef FEATURE_BLACKLIST_MGR
+/**
+ * wmi_unified_send_reject_ap_list() - send the reject ap list maintained by
+ * BLM to FW for roaming cases.
+ * @wmi_handle: wmi handle
+ * @reject_params: This contains the reject ap list, and the num of BSSIDs.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_unified_send_reject_ap_list(struct wmi_unified *wmi_handle,
+				struct reject_ap_params *reject_params);
+#endif
+
 /**
  * wmi_unified_process_dhcp_ind() - process dhcp indication from SME
  * @wmi_handle: wmi handle

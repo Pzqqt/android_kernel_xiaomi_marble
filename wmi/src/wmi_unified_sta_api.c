@@ -223,6 +223,19 @@ QDF_STATUS wmi_extract_encrypt_decrypt_resp_params(void *wmi_hdl,
 }
 #endif /* WLAN_FEATURE_DISA */
 
+#ifdef FEATURE_BLACKLIST_MGR
+QDF_STATUS
+wmi_unified_send_reject_ap_list(struct wmi_unified *wmi_handle,
+				struct reject_ap_params *reject_params)
+{
+	if (wmi_handle->ops->send_reject_ap_list_cmd)
+		return wmi_handle->ops->send_reject_ap_list_cmd(wmi_handle,
+								reject_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS wmi_unified_send_sar_limit_cmd(void *wmi_hdl,
 				struct sar_limit_cmd_params *params)
 {

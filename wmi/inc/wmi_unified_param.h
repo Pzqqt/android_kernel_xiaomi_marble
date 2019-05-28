@@ -5310,6 +5310,7 @@ typedef enum {
 	wmi_service_wpa3_ft_suite_b_support,
 	wmi_service_ft_fils,
 	wmi_service_adaptive_11r_support,
+	wmi_service_data_stall_recovery_support,
 	wmi_service_tx_compl_tsf64,
 	wmi_services_max,
 } wmi_conv_service_ids;

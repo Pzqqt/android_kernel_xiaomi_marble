@@ -366,6 +366,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_CFR: CFR module ID
  * @QDF_MODULE_ID_TX_CAPTURE: Tx capture enhancement feature ID
  * @QDF_MODULE_ID_INTEROP_ISSUES_AP: interop issues ap module ID
+ * @QDF_MODULE_ID_BLACKLIST_MGR: Blacklist Manager module
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -481,6 +482,7 @@ typedef enum {
 	QDF_MODULE_ID_CFR,
 	QDF_MODULE_ID_TX_CAPTURE,
 	QDF_MODULE_ID_INTEROP_ISSUES_AP,
+	QDF_MODULE_ID_BLACKLIST_MGR,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

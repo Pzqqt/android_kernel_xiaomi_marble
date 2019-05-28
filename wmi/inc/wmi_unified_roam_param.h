@@ -23,6 +23,8 @@
 #ifndef _WMI_UNIFIED_ROAM_PARAM_H_
 #define _WMI_UNIFIED_ROAM_PARAM_H_
 
+#include <wlan_blm_public_struct.h>
+
 /**
  * struct gateway_update_req_param - gateway parameter update request
  * @request_id: request id
@@ -168,19 +170,6 @@ struct wmi_mawc_roam_params {
 #define MAX_SSID_ALLOWED_LIST    4
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
-#define MAX_RSSI_AVOID_BSSID_LIST 10
-
-/**
- * struct rssi_disallow_bssid - Structure holding Rssi based avoid candidate
- * @bssid: BSSID of the AP
- * @remaining_duration: remaining disallow duration in ms
- * @expected_rssi: RSSI at which STA can initate in dBm
- */
-struct rssi_disallow_bssid {
-	struct qdf_mac_addr bssid;
-	uint32_t remaining_duration;
-	int8_t expected_rssi;
-};
 
 /**
  * struct roam_scan_filter_params - Structure holding roaming scan
@@ -228,7 +217,8 @@ struct roam_scan_filter_params {
 	uint32_t rssi_channel_penalization;
 	uint32_t num_disallowed_aps;
 	uint32_t num_rssi_rejection_ap;
-	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
+	struct reject_ap_config_params
+				rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
 };
 
 #define WMI_CFG_VALID_CHANNEL_LIST_LEN    100
@@ -534,6 +524,7 @@ struct ap_profile_params {
  * @frame_len: frame length, includs mac header, fixed params and ies
  * @frame_buf: buffer contaning probe response or beacon
  * @is_same_bssid: flag to indicate if roaming is requested for same bssid
+ * @forced_roaming: Roam to any bssid in any ch (here bssid & ch is not given)
  */
 struct wmi_roam_invoke_cmd {
 	uint32_t vdev_id;
@@ -542,6 +533,7 @@ struct wmi_roam_invoke_cmd {
 	uint32_t frame_len;
 	uint8_t *frame_buf;
 	uint8_t is_same_bssid;
+	bool forced_roaming;
 };
 
 /**

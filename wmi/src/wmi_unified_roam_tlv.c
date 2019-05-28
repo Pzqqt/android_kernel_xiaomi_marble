@@ -511,7 +511,7 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 			roam_req->rssi_rejection_ap[i].bssid.bytes,
 			&rssi_rej->bssid);
 		rssi_rej->remaining_disallow_duration =
-			roam_req->rssi_rejection_ap[i].remaining_duration;
+			roam_req->rssi_rejection_ap[i].reject_duration;
 		rssi_rej->requested_rssi =
 			(int32_t)roam_req->rssi_rejection_ap[i].expected_rssi;
 		buf_ptr +=
@@ -836,7 +836,6 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mac_addr *bssid_list;
 	wmi_tlv_buf_len_param *buf_len_tlv;
 
-	/* Host sends only one channel and one bssid */
 	args_tlv_len = (4 * WMI_TLV_HDR_SIZE) + sizeof(uint32_t) +
 			sizeof(wmi_mac_addr) + sizeof(wmi_tlv_buf_len_param) +
 			roundup(roaminvoke->frame_len, sizeof(uint32_t));
@@ -870,6 +869,12 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->roam_delay = 0;
 	cmd->num_chan = 1;
 	cmd->num_bssid = 1;
+
+	if (roaminvoke->forced_roaming) {
+		cmd->num_chan = 0;
+		cmd->num_bssid = 0;
+		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_CACHE_MAP;
+	}
 
 	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,

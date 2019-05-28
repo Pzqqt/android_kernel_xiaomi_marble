@@ -12476,6 +12476,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_ADAPTIVE_11R_ROAM;
 	wmi_service[wmi_service_tx_compl_tsf64] =
 			WMI_SERVICE_TX_COMPL_TSF64;
+	wmi_service[wmi_service_data_stall_recovery_support] =
+			WMI_SERVICE_DSM_ROAM_FILTER;
 }
 
 /**

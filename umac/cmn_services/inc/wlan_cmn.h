@@ -271,6 +271,7 @@
  * @WLAN_UMAC_COMP_ACTION_OUI:    ACTION OUI
  * @WLAN_UMAC_COMP_FWOL           FW Offload
  * @WLAN_UMAC_COMP_INTEROP_ISSUES_AP       interop issues ap component
+ * @WLAN_UMAC_COMP_BLACKLIST_MGR:      Blacklist mgr component
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -308,7 +309,8 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_ACTION_OUI         = 28,
 	WLAN_UMAC_COMP_FWOL               = 29,
 	WLAN_UMAC_COMP_CFR                = 30,
-	WLAN_UMAC_COMP_INTEROP_ISSUES_AP           = 31,
+	WLAN_UMAC_COMP_INTEROP_ISSUES_AP  = 31,
+	WLAN_UMAC_COMP_BLACKLIST_MGR      = 32,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
