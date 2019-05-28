@@ -1846,13 +1846,13 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 	case ACTION_CATEGORY_SPECTRUM_MGMT:
 		switch (action_hdr->actionID) {
 #ifdef ANI_SUPPORT_11H
-		case SIR_MAC_ACTION_MEASURE_REQUEST_ID:
+		case ACTION_SPCT_MSR_REQ:
 			if (session->lim11hEnable)
 				__lim_process_measurement_request_frame(mac_ctx,
 							rx_pkt_info,
 							session);
 			break;
-		case SIR_MAC_ACTION_TPC_REQUEST_ID:
+		case ACTION_SPCT_TPC_REQ:
 			if ((LIM_IS_STA_ROLE(session) ||
 				LIM_IS_AP_ROLE(session)) &&
 				session->lim11hEnable)
@@ -1860,7 +1860,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 						rx_pkt_info, session);
 			break;
 #endif
-		case SIR_MAC_ACTION_CHANNEL_SWITCH_ID:
+		case ACTION_SPCT_CHL_SWITCH:
 			if (LIM_IS_STA_ROLE(session))
 				__lim_process_channel_switch_action_frame(
 					mac_ctx, rx_pkt_info, session);

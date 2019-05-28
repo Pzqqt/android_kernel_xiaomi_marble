@@ -3320,7 +3320,7 @@ lim_send_meas_report_frame(struct mac_context *mac,
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
-	frm.Action.action = SIR_MAC_ACTION_MEASURE_REPORT_ID;
+	frm.Action.action = ACTION_SPCT_MSR_RPRT;
 	frm.DialogToken.token = pMeasReqFrame->actionHeader.dialogToken;
 
 	switch (pMeasReqFrame->measReqIE.measType) {
@@ -3446,7 +3446,7 @@ lim_send_tpc_report_frame(struct mac_context *mac,
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
-	frm.Action.action = SIR_MAC_ACTION_TPC_REPORT_ID;
+	frm.Action.action = ACTION_SPCT_TPC_RPRT;
 	frm.DialogToken.token = pTpcReqFrame->actionHeader.dialogToken;
 
 	frm.TPCReport.tx_power = 0;
@@ -3568,7 +3568,7 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
 	frm.Category.category = ACTION_CATEGORY_SPECTRUM_MGMT;
-	frm.Action.action = SIR_MAC_ACTION_CHANNEL_SWITCH_ID;
+	frm.Action.action = ACTION_SPCT_CHL_SWITCH;
 	frm.ChanSwitchAnn.switchMode = nMode;
 	frm.ChanSwitchAnn.newChannel = nNewChannel;
 	frm.ChanSwitchAnn.switchCount = nCount;
