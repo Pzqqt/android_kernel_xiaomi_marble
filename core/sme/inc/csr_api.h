@@ -450,7 +450,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_SUCCESS = eCSR_ROAM_RESULT_NONE,
 	/*
 	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION,
-	 * struct csr_roam_info's pBssDesc may pass back
+	 * struct csr_roam_info's bss_desc may pass back
 	 */
 	eCSR_ROAM_RESULT_FAILURE,
 	/* Pass back pointer to struct csr_roam_info */
@@ -463,7 +463,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_CAP_CHANGED,
 	/*
 	 * This means we starts an IBSS struct csr_roam_info's
-	 * pBssDesc may pass back
+	 * bss_desc may pass back
 	 */
 	eCSR_ROAM_RESULT_IBSS_STARTED,
 	eCSR_ROAM_RESULT_IBSS_START_FAILED,
@@ -473,7 +473,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_IBSS_INACTIVE,
 	/*
 	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION struct
-	 * csr_roam_info's pBssDesc may pass back and the peer's MAC
+	 * csr_roam_info's bss_desc may pass back and the peer's MAC
 	 * address in peerMacOrBssid. If roamStatus is
 	 * eCSR_ROAM_IBSS_IND, the peer's MAC address in
 	 * peerMacOrBssid and a beacon frame of the IBSS in pbFrames
@@ -881,7 +881,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	 * which can be WSC IE and/or P2P IE
 	 */
 	uint8_t *pAddIEAssoc;
-	struct bss_description *pBssDesc;
+	struct bss_description *bss_desc;
 	bool qap;               /* AP supports QoS */
 	struct mobility_domain_info mdid;
 #ifdef FEATURE_WLAN_ESE
@@ -1054,7 +1054,7 @@ struct csr_config_params {
 
 struct csr_roam_info {
 	struct csr_roam_profile *pProfile;
-	struct bss_description *pBssDesc;
+	struct bss_description *bss_desc;
 	uint32_t nBeaconLength;
 	uint32_t nAssocReqLength;
 	uint32_t nAssocRspLength;

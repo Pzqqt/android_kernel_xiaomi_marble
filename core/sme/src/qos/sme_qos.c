@@ -617,9 +617,9 @@ QDF_STATUS sme_qos_close(struct mac_context *mac)
 		sme_qos_delete_existing_flows(mac, sessionId);
 
 		/* Clean up the assoc info if already allocated */
-		if (pSession->assocInfo.pBssDesc) {
-			qdf_mem_free(pSession->assocInfo.pBssDesc);
-			pSession->assocInfo.pBssDesc = NULL;
+		if (pSession->assocInfo.bss_desc) {
+			qdf_mem_free(pSession->assocInfo.bss_desc);
+			pSession->assocInfo.bss_desc = NULL;
 		}
 		/* close the session's buffered command list */
 		csr_ll_close(&pSession->bufferedCommandList);
@@ -1258,8 +1258,8 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *ma
 			 * needed on ACM = 0 below?
 			 */
 			if (CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) ||
-			    sme_qos_is_acm(mac, pSession->assocInfo.pBssDesc,
-					ac, NULL)) {
+			    sme_qos_is_acm(mac, pSession->assocInfo.bss_desc,
+					   ac, NULL)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_DEBUG,
 					  "%s: %d: tspec_mask_status = %d for AC = %d",
@@ -2350,8 +2350,8 @@ static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *
 			status = SME_QOS_STATUS_RELEASE_SUCCESS_RSP;
 			/* check if delts needs to be sent */
 			if (CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) ||
-			    sme_qos_is_acm(mac, pSession->assocInfo.pBssDesc,
-						ac, NULL)) {
+			    sme_qos_is_acm(mac, pSession->assocInfo.bss_desc,
+					   ac, NULL)) {
 				/* check if other TSPEC for this AC is also
 				 * in use
 				 */
@@ -2642,14 +2642,14 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 			  __func__, __LINE__, sessionId);
 		return status;
 	}
-	if (!pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.bss_desc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d has an Invalid BSS Descriptor",
 			  __func__, __LINE__, sessionId);
 		return status;
 	}
 	hstatus = csr_get_parsed_bss_description_ies(mac,
-						   pSession->assocInfo.pBssDesc,
+						   pSession->assocInfo.bss_desc,
 						      &pIes);
 	if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -2677,7 +2677,7 @@ static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 	do {
 		/* is ACM enabled for this AC? */
 		if (CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) ||
-		    sme_qos_is_acm(mac, pSession->assocInfo.pBssDesc,
+		    sme_qos_is_acm(mac, pSession->assocInfo.bss_desc,
 				   ac, NULL)) {
 			/* ACM is enabled for this AC so we must send an
 			 * AddTS
@@ -3424,7 +3424,7 @@ static QDF_STATUS sme_qos_ft_aggr_qos_req(struct mac_context *mac_ctx, uint8_t
 	aggr_req->timeout = 0;
 	aggr_req->rspReqd = true;
 	qdf_mem_copy(&aggr_req->bssid.bytes[0],
-		     &session->assocInfo.pBssDesc->bssId[0],
+		     &session->assocInfo.bss_desc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 
 	for (i = 0; i < QCA_WLAN_AC_ALL; i++) {
@@ -3906,7 +3906,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 		pTspec_Info->ts_info.ack_policy;
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
-	if (!pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.bss_desc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
@@ -3914,7 +3914,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_copy(&pMsg->bssid.bytes[0],
-		     &pSession->assocInfo.pBssDesc->bssId[0],
+		     &pSession->assocInfo.bss_desc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: up = %d, tid = %d",
@@ -4007,7 +4007,7 @@ static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 		pTspecInfo->ts_info.ack_policy;
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
-	if (!pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.bss_desc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
@@ -4015,7 +4015,7 @@ static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_copy(&pMsg->bssid.bytes[0],
-		     &pSession->assocInfo.pBssDesc->bssId[0],
+		     &pSession->assocInfo.bss_desc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -4240,19 +4240,19 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac, uin
 				  __func__, __LINE__);
 			return status;
 		}
-		if (!((sme_QosAssocInfo *) pEvent_info)->pBssDesc) {
+		if (!((sme_QosAssocInfo *)pEvent_info)->bss_desc) {
 			/* err msg */
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: pBssDesc is NULL",
+				  "%s: %d: bss_desc is NULL",
 				  __func__, __LINE__);
 			return status;
 		}
-		if ((pSession->assocInfo.pBssDesc) &&
+		if ((pSession->assocInfo.bss_desc) &&
 		    (csr_is_bssid_match
 			     ((struct qdf_mac_addr *)
-					&pSession->assocInfo.pBssDesc->bssId,
+					&pSession->assocInfo.bss_desc->bssId,
 			     (struct qdf_mac_addr *) &(((sme_QosAssocInfo *)
-					pEvent_info)->pBssDesc->bssId)))) {
+					pEvent_info)->bss_desc->bssId)))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: assoc with the same BSS, no update needed",
 				  __func__, __LINE__);
@@ -4575,9 +4575,9 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 		return status;
 	}
 
-	if (!((sme_QosAssocInfo *) event_info)->pBssDesc) {
+	if (!((sme_QosAssocInfo *)event_info)->bss_desc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("pBssDesc is NULL"));
+			  FL("bss_desc is NULL"));
 		return status;
 	}
 	status = sme_qos_save_assoc_info(qos_session, event_info);
@@ -4897,9 +4897,9 @@ static QDF_STATUS sme_qos_process_disconnect_ev(struct mac_context *mac, uint8_t
 	/* need to clean up flows */
 	sme_qos_delete_existing_flows(mac, sessionId);
 	/* clean up the assoc info */
-	if (pSession->assocInfo.pBssDesc) {
-		qdf_mem_free(pSession->assocInfo.pBssDesc);
-		pSession->assocInfo.pBssDesc = NULL;
+	if (pSession->assocInfo.bss_desc) {
+		qdf_mem_free(pSession->assocInfo.bss_desc);
+		pSession->assocInfo.bss_desc = NULL;
 	}
 	sme_qos_cb.sessionInfo[sessionId].sessionActive = false;
 	return QDF_STATUS_SUCCESS;
@@ -4947,9 +4947,9 @@ static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 		sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
 
 	/* clean up the assoc info if already set */
-	if (pSession->assocInfo.pBssDesc) {
-		qdf_mem_free(pSession->assocInfo.pBssDesc);
-		pSession->assocInfo.pBssDesc = NULL;
+	if (pSession->assocInfo.bss_desc) {
+		qdf_mem_free(pSession->assocInfo.bss_desc);
+		pSession->assocInfo.bss_desc = NULL;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -6382,7 +6382,7 @@ static QDF_STATUS sme_qos_delete_buffered_requests(struct mac_context *mac,
 static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 				   sme_QosAssocInfo *pAssoc_info)
 {
-	struct bss_description *pBssDesc = NULL;
+	struct bss_description *bss_desc = NULL;
 	uint32_t bssLen = 0;
 
 	if (!pAssoc_info) {
@@ -6391,19 +6391,19 @@ static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* clean up the assoc info if already set */
-	if (pSession->assocInfo.pBssDesc) {
-		qdf_mem_free(pSession->assocInfo.pBssDesc);
-		pSession->assocInfo.pBssDesc = NULL;
+	if (pSession->assocInfo.bss_desc) {
+		qdf_mem_free(pSession->assocInfo.bss_desc);
+		pSession->assocInfo.bss_desc = NULL;
 	}
-	bssLen = pAssoc_info->pBssDesc->length +
-		 sizeof(pAssoc_info->pBssDesc->length);
+	bssLen = pAssoc_info->bss_desc->length +
+		 sizeof(pAssoc_info->bss_desc->length);
 	/* save the bss Descriptor */
-	pBssDesc = qdf_mem_malloc(bssLen);
-	if (!pBssDesc)
+	bss_desc = qdf_mem_malloc(bssLen);
+	if (!bss_desc)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_copy(pBssDesc, pAssoc_info->pBssDesc, bssLen);
-	pSession->assocInfo.pBssDesc = pBssDesc;
+	qdf_mem_copy(bss_desc, pAssoc_info->bss_desc, bssLen);
+	pSession->assocInfo.bss_desc = bss_desc;
 	/* save the apsd info from assoc */
 	if (pAssoc_info->pProfile)
 		pSession->apsdMask |= pAssoc_info->pProfile->uapsd_mask;
@@ -7185,7 +7185,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 		return false;
 	}
 
-	if (!pSession->assocInfo.pBssDesc) {
+	if (!pSession->assocInfo.bss_desc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d has an Invalid BSS Descriptor",
 			  __func__, __LINE__, sessionId);
@@ -7193,7 +7193,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 	}
 
 	hstatus = csr_get_parsed_bss_description_ies(mac,
-						   pSession->assocInfo.pBssDesc,
+						   pSession->assocInfo.bss_desc,
 						      &pIes);
 	if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

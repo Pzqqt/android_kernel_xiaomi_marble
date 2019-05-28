@@ -15982,15 +15982,15 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 	sme_roam_get_connect_profile(mac_handle, adapter->vdev_id,
 				     &roamProfile);
 
-	if (roamProfile.pBssDesc) {
-		bss = wlan_hdd_inform_bss_frame(adapter, roamProfile.pBssDesc);
+	if (roamProfile.bss_desc) {
+		bss = wlan_hdd_inform_bss_frame(adapter, roamProfile.bss_desc);
 
 		if (!bss)
 			hdd_debug("wlan_hdd_inform_bss_frame returned NULL");
 
 		sme_roam_free_connect_profile(&roamProfile);
 	} else {
-		hdd_err("roamProfile.pBssDesc is NULL");
+		hdd_err("roamProfile.bss_desc is NULL");
 	}
 	return bss;
 }

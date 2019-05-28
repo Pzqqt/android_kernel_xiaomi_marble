@@ -1418,17 +1418,17 @@ csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 
 /* Caller allocates memory for pIEStruct */
 QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
-					 struct bss_description *pBssDesc,
+					 struct bss_description *bss_desc,
 					 tDot11fBeaconIEs *pIEStruct)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int ieLen =
-		(int)(pBssDesc->length + sizeof(pBssDesc->length) -
+		(int)(bss_desc->length + sizeof(bss_desc->length) -
 		      GET_FIELD_OFFSET(struct bss_description, ieFields));
 
 	if (ieLen > 0 && pIEStruct) {
 		if (!DOT11F_FAILED(dot11f_unpack_beacon_i_es
-				    (mac_ctx, (uint8_t *) pBssDesc->ieFields,
+				    (mac_ctx, (uint8_t *)bss_desc->ieFields,
 				    ieLen, pIEStruct, false)))
 		status = QDF_STATUS_SUCCESS;
 	}
@@ -1441,16 +1441,16 @@ QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
  * this function succeeds
  */
 QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
-					      struct bss_description *pBssDesc,
+					      struct bss_description *bss_desc,
 					      tDot11fBeaconIEs **ppIEStruct)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	if (pBssDesc && ppIEStruct) {
+	if (bss_desc && ppIEStruct) {
 		*ppIEStruct = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((*ppIEStruct) != NULL) {
 			status = csr_parse_bss_description_ies(mac_ctx,
-							       pBssDesc,
+							       bss_desc,
 							       *ppIEStruct);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				qdf_mem_free(*ppIEStruct);

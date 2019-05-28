@@ -632,7 +632,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
  * csr_neighbor_roam_is_ssid_and_security_match() - to match ssid/security
  * @mac: Pointer to mac context
  * @pCurProfile: pointer to current roam profile
- * @pBssDesc: pointer to bss description
+ * @bss_desc: pointer to bss description
  * @pIes: pointer to local ies
  * @session_id: Session ID
  *
@@ -643,7 +643,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
  */
 static bool csr_neighbor_roam_is_ssid_and_security_match(struct mac_context *mac,
 		tCsrRoamConnectedProfile *pCurProfile,
-		struct bss_description *pBssDesc, tDot11fBeaconIEs *pIes,
+		struct bss_description *bss_desc, tDot11fBeaconIEs *pIes,
 		uint8_t session_id)
 {
 	tCsrAuthList authType;
@@ -686,12 +686,12 @@ static bool csr_neighbor_roam_is_ssid_and_security_match(struct mac_context *mac
 				&pCurProfile->MFPEnabled,
 				&pCurProfile->MFPRequired,
 				&pCurProfile->MFPCapable,
-				pBssDesc, pIes, session_id);
+				bss_desc, pIes, session_id);
 #else
 		fMatch = csr_is_security_match(mac, &authType,
 				&uCEncryptionType,
 				&mCEncryptionType, NULL,
-				NULL, NULL, pBssDesc,
+				NULL, NULL, bss_desc,
 				pIes, session_id);
 #endif
 		return fMatch;
@@ -709,7 +709,7 @@ bool csr_neighbor_roam_is_new_connected_profile(struct mac_context *mac,
 	tCsrRoamConnectedProfile *pCurrProfile = NULL;
 	tCsrRoamConnectedProfile *pPrevProfile = NULL;
 	tDot11fBeaconIEs *pIes = NULL;
-	struct bss_description *pBssDesc = NULL;
+	struct bss_description *bss_desc = NULL;
 	bool fNew = true;
 
 	if (!(mac->roam.roamSession && CSR_IS_SESSION_VALID(mac, sessionId)))
@@ -723,12 +723,12 @@ bool csr_neighbor_roam_is_new_connected_profile(struct mac_context *mac,
 	if (!pPrevProfile)
 		return fNew;
 
-	pBssDesc = pPrevProfile->pBssDesc;
-	if (pBssDesc) {
+	bss_desc = pPrevProfile->bss_desc;
+	if (bss_desc) {
 		if (QDF_IS_STATUS_SUCCESS(
-		    csr_get_parsed_bss_description_ies(mac, pBssDesc, &pIes))
+		    csr_get_parsed_bss_description_ies(mac, bss_desc, &pIes))
 		    && csr_neighbor_roam_is_ssid_and_security_match(mac,
-				pCurrProfile, pBssDesc, pIes, sessionId)) {
+				pCurrProfile, bss_desc, pIes, sessionId)) {
 			fNew = false;
 		}
 		if (pIes)
@@ -747,7 +747,7 @@ bool csr_neighbor_roam_connected_profile_match(struct mac_context *mac,
 					       tDot11fBeaconIEs *pIes)
 {
 	tCsrRoamConnectedProfile *pCurProfile = NULL;
-	struct bss_description *pBssDesc = &pResult->Result.BssDescriptor;
+	struct bss_description *bss_desc = &pResult->Result.BssDescriptor;
 
 	if (!(mac->roam.roamSession && CSR_IS_SESSION_VALID(mac, sessionId)))
 		return false;
@@ -758,7 +758,7 @@ bool csr_neighbor_roam_connected_profile_match(struct mac_context *mac,
 		return false;
 
 	return csr_neighbor_roam_is_ssid_and_security_match(mac, pCurProfile,
-							    pBssDesc, pIes,
+							    bss_desc, pIes,
 							    sessionId);
 }
 

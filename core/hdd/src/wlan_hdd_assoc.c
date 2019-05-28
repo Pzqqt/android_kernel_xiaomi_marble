@@ -967,7 +967,7 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 	if (roam_info) {
 		/* Save the BSSID for the connection */
 		if (eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) {
-			QDF_ASSERT(roam_info->pBssDesc);
+			QDF_ASSERT(roam_info->bss_desc);
 			qdf_copy_macaddr(&sta_ctx->conn_info.bssid,
 					 &roam_info->bssid);
 
@@ -1225,7 +1225,7 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 			     struct csr_roam_info *roam_info)
 {
 	union iwreq_data wrqu;
-	struct bss_description *descriptor = roam_info->pBssDesc;
+	struct bss_description *descriptor = roam_info->bss_desc;
 
 	if (!descriptor) {
 		hdd_err("bss descriptor is null");
@@ -1353,7 +1353,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
 		struct oem_channel_info chan_info = {0};
 
-		if (!roam_info || !roam_info->pBssDesc) {
+		if (!roam_info || !roam_info->bss_desc) {
 			hdd_warn("STA in associated state but roam_info is null");
 			return;
 		}
@@ -1364,8 +1364,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
 		}
-		memcpy(wrqu.ap_addr.sa_data, roam_info->pBssDesc->bssId,
-		       sizeof(roam_info->pBssDesc->bssId));
+		memcpy(wrqu.ap_addr.sa_data, roam_info->bss_desc->bssId,
+		       sizeof(roam_info->bss_desc->bssId));
 
 		ucfg_p2p_status_connect(adapter->vdev);
 
@@ -2082,14 +2082,14 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
  * @sta_id: station identifier
- * @pBssDesc: pointer to BSS description
+ * @bss_desc: pointer to BSS description
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
 					uint8_t sta_id,
-					struct bss_description *pBssDesc)
+					struct bss_description *bss_desc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type txrx_desc = { 0 };
@@ -2098,7 +2098,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (!pBssDesc)
+	if (!bss_desc)
 		return QDF_STATUS_E_FAILURE;
 
 	/* Get the Station ID from the one saved during the association */
@@ -2319,7 +2319,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		goto done;
 	}
 
-	if (!roam_info || !roam_info->pBssDesc) {
+	if (!roam_info || !roam_info->bss_desc) {
 		hdd_err("Invalid CSR roam info");
 		goto done;
 	}
@@ -2360,7 +2360,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_copy(rsp_rsn_ie, assoc_rsp, len);
 	qdf_mem_zero(rsp_rsn_ie + len, IW_GENERIC_IE_MAX - len);
 
-	chan_no = roam_info->pBssDesc->channelId;
+	chan_no = roam_info->bss_desc->channelId;
 	if (chan_no <= 14)
 		freq = ieee80211_channel_to_frequency(chan_no,
 							NL80211_BAND_2GHZ);
@@ -2842,14 +2842,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			adapter->wapi_info.is_wapi_sta = false;
 		}
 #endif /* FEATURE_WLAN_WAPI */
-		hdd_debug("bss_descr[%d] devicemode[%d]", !!roam_info->pBssDesc,
-				adapter->device_mode);
+		hdd_debug("bss_descr[%d] devicemode[%d]", !!roam_info->bss_desc,
+			  adapter->device_mode);
 		if ((QDF_STA_MODE == adapter->device_mode) &&
-						roam_info->pBssDesc) {
-			ie_len = GET_IE_LEN_IN_BSS(roam_info->pBssDesc->length);
+						roam_info->bss_desc) {
+			ie_len = GET_IE_LEN_IN_BSS(roam_info->bss_desc->length);
 			sta_ctx->ap_supports_immediate_power_save =
 				wlan_hdd_is_ap_supports_immediate_power_save(
-				     (uint8_t *) roam_info->pBssDesc->ieFields,
+				     (uint8_t *)roam_info->bss_desc->ieFields,
 				     ie_len);
 			hdd_debug("ap_supports_immediate_power_save flag [%d]",
 				  sta_ctx->ap_supports_immediate_power_save);
@@ -3075,7 +3075,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			     eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384)) {
 				if (ft_carrier_on) {
 					if (!hddDisconInProgress &&
-						roam_info->pBssDesc) {
+						roam_info->bss_desc) {
 						struct cfg80211_bss *roam_bss;
 
 						/*
@@ -3106,7 +3106,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						chan =
 							ieee80211_get_channel
 								(adapter->wdev.wiphy,
-								(int)roam_info->pBssDesc->
+								(int)roam_info->bss_desc->
 								channelId);
 
 						roam_bss =
@@ -3246,7 +3246,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				qdf_status = hdd_roam_register_sta(adapter,
 						roam_info,
 						sta_ctx->conn_info.sta_id[0],
-						roam_info->pBssDesc);
+						roam_info->bss_desc);
 				hdd_debug("Enabling queues");
 				wlan_hdd_netif_queue_control(adapter,
 						WLAN_WAKE_ALL_NETIF_QUEUE,
@@ -3577,9 +3577,9 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 
 		hdd_roam_register_sta(adapter, roam_info,
 				      roam_info->staId,
-				      roam_info->pBssDesc);
+				      roam_info->bss_desc);
 
-		if (roam_info->pBssDesc) {
+		if (roam_info->bss_desc) {
 			struct cfg80211_bss *bss;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
 			struct ieee80211_channel *chan;
@@ -3590,7 +3590,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 			hdd_debug("%s: created ibss " QDF_MAC_ADDR_STR,
 				adapter->dev->name,
 				QDF_MAC_ADDR_ARRAY(
-					roam_info->pBssDesc->bssId));
+					roam_info->bss_desc->bssId));
 
 			/* we must first give cfg80211 the BSS information */
 			bss = wlan_hdd_cfg80211_update_bss_db(adapter,
@@ -3606,7 +3606,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 					WLAN_CONTROL_PATH);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-			chan_no = roam_info->pBssDesc->channelId;
+			chan_no = roam_info->bss_desc->channelId;
 
 			if (chan_no <= 14)
 				freq = ieee80211_channel_to_frequency(chan_no,
@@ -3624,7 +3624,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 			else
 				hdd_warn("%s: chanId: %d, can't find channel",
 				adapter->dev->name,
-				(int)roam_info->pBssDesc->channelId);
+				(int)roam_info->bss_desc->channelId);
 #else
 			cfg80211_ibss_joined(adapter->dev, bss->bssid,
 					     GFP_KERNEL);
@@ -3947,7 +3947,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 		qdf_status = hdd_roam_register_sta(adapter,
 						   roam_info,
 						   roam_info->staId,
-						   roam_info->pBssDesc);
+						   roam_info->bss_desc);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Cannot register STA for IBSS. qdf_status: %d [%08X]",
 				qdf_status, qdf_status);
@@ -4994,9 +4994,9 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		break;
 
 	case eCSR_ROAM_UPDATE_SCAN_RESULT:
-		if ((roam_info) && (roam_info->pBssDesc)) {
+		if ((roam_info) && (roam_info->bss_desc)) {
 			bss_status = wlan_hdd_inform_bss_frame(adapter,
-							roam_info->pBssDesc);
+							roam_info->bss_desc);
 			if (!bss_status)
 				hdd_debug("UPDATE_SCAN_RESULT returned NULL");
 			else

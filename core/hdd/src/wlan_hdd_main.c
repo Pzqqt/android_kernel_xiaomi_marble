@@ -6466,7 +6466,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
 		int freq;
-		int chan_no = roam_info->pBssDesc->channelId;
+		int chan_no = roam_info->bss_desc->channelId;
 
 		if (chan_no <= 14)
 			freq = ieee80211_channel_to_frequency(chan_no,

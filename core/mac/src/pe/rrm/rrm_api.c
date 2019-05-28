@@ -661,7 +661,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
  * @param eids - pointer to array of eids. If NULL, all ies will be populated.
  * @param numEids - number of elements in array eids.
  * @start_offset: Offset from where the IEs in the bss_desc should be parsed
- * @param pBssDesc - pointer to Bss Description.
+ * @param bss_desc - pointer to Bss Description.
  *
  * Returns: Remaining length of IEs in current bss_desc which are not included
  *	    in pIes.
@@ -670,20 +670,20 @@ static uint8_t
 rrm_fill_beacon_ies(struct mac_context *mac,
 		    uint8_t *pIes, uint8_t *pNumIes, uint8_t pIesMaxSize,
 		    uint8_t *eids, uint8_t numEids, uint8_t start_offset,
-		    struct bss_description *pBssDesc)
+		    struct bss_description *bss_desc)
 {
 	uint8_t len, *pBcnIes, count = 0, i;
 	uint16_t BcnNumIes, total_ies_len;
 	uint8_t rem_len = 0;
 
-	if ((!pIes) || (!pNumIes) || (!pBssDesc)) {
+	if ((!pIes) || (!pNumIes) || (!bss_desc)) {
 		pe_err("Invalid parameters");
 		return 0;
 	}
 	/* Make sure that if eid is null, numEids is set to zero. */
 	numEids = (!eids) ? 0 : numEids;
 
-	total_ies_len = GET_IE_LEN_IN_BSS(pBssDesc->length);
+	total_ies_len = GET_IE_LEN_IN_BSS(bss_desc->length);
 	BcnNumIes = total_ies_len;
 	if (start_offset > BcnNumIes) {
 		pe_err("Invalid start offset %d Bcn IE len %d",
@@ -691,7 +691,7 @@ rrm_fill_beacon_ies(struct mac_context *mac,
 		return 0;
 	}
 
-	pBcnIes = (uint8_t *) &pBssDesc->ieFields[0];
+	pBcnIes = (uint8_t *)&bss_desc->ieFields[0];
 	pBcnIes += start_offset;
 	BcnNumIes = BcnNumIes - start_offset;
 
@@ -703,16 +703,16 @@ rrm_fill_beacon_ies(struct mac_context *mac,
 	 * (BEACON_FRAME_IES_OFFSET) in the first fragment.
 	 */
 	if (start_offset == 0) {
-		*((uint32_t *)pIes) = pBssDesc->timeStamp[0];
+		*((uint32_t *)pIes) = bss_desc->timeStamp[0];
 		*pNumIes += sizeof(uint32_t);
 		pIes += sizeof(uint32_t);
-		*((uint32_t *)pIes) = pBssDesc->timeStamp[1];
+		*((uint32_t *)pIes) = bss_desc->timeStamp[1];
 		*pNumIes += sizeof(uint32_t);
 		pIes += sizeof(uint32_t);
-		*((uint16_t *)pIes) = pBssDesc->beaconInterval;
+		*((uint16_t *)pIes) = bss_desc->beaconInterval;
 		*pNumIes += sizeof(uint16_t);
 		pIes += sizeof(uint16_t);
-		*((uint16_t *)pIes) = pBssDesc->capabilityInfo;
+		*((uint16_t *)pIes) = bss_desc->capabilityInfo;
 		*pNumIes += sizeof(uint16_t);
 		pIes += sizeof(uint16_t);
 	}

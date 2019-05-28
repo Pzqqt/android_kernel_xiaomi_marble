@@ -154,7 +154,7 @@ void csr_release_command_wm_status_change(struct mac_context *mac,
 
 QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 					    uint32_t sessionId,
-					    struct bss_description *pBssDesc);
+					    struct bss_description *bss_desc);
 
 /*
  * Prepare a filter base on a profile for parsing the scan results.
@@ -257,7 +257,7 @@ static inline void csr_roam_stats_rsp_processor(struct mac_context *mac,
 QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    struct csr_roamstart_bssparams *pParam,
 				    struct csr_roam_profile *pProfile,
-				    struct bss_description *pBssDesc,
+				    struct bss_description *bss_desc,
 					uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
@@ -298,7 +298,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac,
 					 uint32_t sessionId,
 					 eCsrRoamBssType bssType,
 					 struct csr_roamstart_bssparams *pParam,
-					 struct bss_description *pBssDesc);
+					 struct bss_description *bss_desc);
 QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 					uint32_t sessionId);
 

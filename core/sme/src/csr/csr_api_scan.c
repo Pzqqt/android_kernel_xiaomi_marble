@@ -82,12 +82,12 @@ static QDF_STATUS csr_ll_scan_purge_result(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tListElem *pEntry;
-	struct tag_csrscan_result *pBssDesc;
+	struct tag_csrscan_result *bss_desc;
 
 	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
-		pBssDesc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
-					Link);
-		csr_free_scan_result_entry(mac, pBssDesc);
+		bss_desc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
+					 Link);
+		csr_free_scan_result_entry(mac, bss_desc);
 	}
 
 	return status;
@@ -285,7 +285,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac_ctx,
 	if (session->scan_info.roambssentry) {
 		scan_result = GET_BASE_ADDR(session->scan_info.roambssentry,
 				struct tag_csrscan_result, Link);
-		roam_info->pBssDesc = &scan_result->Result.BssDescriptor;
+		roam_info->bss_desc = &scan_result->Result.BssDescriptor;
 	}
 	roam_info->statusCode = session->joinFailStatusCode.statusCode;
 	roam_info->reasonCode = session->joinFailStatusCode.reasonCode;

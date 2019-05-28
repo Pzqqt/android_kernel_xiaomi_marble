@@ -83,7 +83,7 @@ typedef enum {
   reassoc is done
   ---------------------------------------------------------------------------*/
 typedef struct {
-	struct bss_description *pBssDesc;
+	struct bss_description *bss_desc;
 	struct csr_roam_profile *pProfile;
 } sme_QosAssocInfo;
 

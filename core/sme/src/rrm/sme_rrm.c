@@ -588,7 +588,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 				scan_results->timer, rrm_scan_timer);
 		if ((scan_results->timer >= rrm_scan_timer) ||
 		    (is_conn_bss_found == true)) {
-			roam_info->pBssDesc = &scan_results->BssDescriptor;
+			roam_info->bss_desc = &scan_results->BssDescriptor;
 			csr_roam_call_callback(mac_ctx, session_id, roam_info,
 						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
 						eCSR_ROAM_RESULT_NONE);
