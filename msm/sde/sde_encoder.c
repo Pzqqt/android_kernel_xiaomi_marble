@@ -4602,7 +4602,7 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	struct sde_encoder_phys *phys;
 	struct sde_kms *sde_kms = NULL;
 	struct msm_drm_private *priv = NULL;
-	bool needs_hw_reset = false;
+	bool needs_hw_reset = false, is_cmd_mode;
 	int ln_cnt1 = -EINVAL, i, rc, ret = 0;
 	struct msm_display_info *disp_info;
 
@@ -4629,9 +4629,10 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 		sde_connector_set_qsync_params(
 				sde_enc->cur_master->connector);
 
-
-	if (sde_enc->cur_master && sde_enc->cur_master->connector &&
-	    sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+	is_cmd_mode = sde_encoder_check_curr_mode(drm_enc,
+				MSM_DISPLAY_CMD_MODE);
+	if (sde_enc->cur_master && sde_enc->cur_master->connector
+			&& is_cmd_mode)
 		sde_enc->frame_trigger_mode = sde_connector_get_property(
 			sde_enc->cur_master->connector->state,
 			CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE);
@@ -4691,7 +4692,8 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	}
 
 	if (_sde_encoder_is_dsc_enabled(drm_enc) && sde_enc->cur_master &&
-			!sde_enc->cur_master->cont_splash_enabled) {
+		((is_cmd_mode && sde_enc->cur_master->cont_splash_enabled) ||
+			!sde_enc->cur_master->cont_splash_enabled)) {
 		rc = _sde_encoder_dsc_setup(sde_enc, params);
 		if (rc) {
 			SDE_ERROR_ENC(sde_enc, "failed to setup DSC: %d\n", rc);
