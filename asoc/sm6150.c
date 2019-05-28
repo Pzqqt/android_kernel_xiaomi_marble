@@ -5928,6 +5928,7 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		if (mi2s_intf_conf[index].msm_is_ext_mclk) {
 			pr_debug("%s: Enabling mclk, clk_freq_in_hz = %u\n",
 				__func__, mi2s_mclk[index].clk_freq_in_hz);
+			mi2s_mclk[index].enable = 1;
 			ret = afe_set_lpass_clock_v2(port_id,
 						     &mi2s_mclk[index]);
 			if (ret < 0) {
@@ -5935,7 +5936,6 @@ static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 					__func__, ret);
 				goto clk_off;
 			}
-			mi2s_mclk[index].enable = 1;
 		}
 		if (pdata->mi2s_gpio_p[index])
 			msm_cdc_pinctrl_select_active_state(
@@ -5988,12 +5988,12 @@ static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 		if (mi2s_intf_conf[index].msm_is_ext_mclk) {
 			pr_debug("%s: Disabling mclk, clk_freq_in_hz = %u\n",
 				 __func__, mi2s_mclk[index].clk_freq_in_hz);
+			mi2s_mclk[index].enable = 0;
 			ret = afe_set_lpass_clock_v2(port_id,
 						     &mi2s_mclk[index]);
 			if (ret < 0)
 				pr_err("%s: mclk disable failed for MCLK (%d); ret=%d\n",
 					__func__, index, ret);
-			mi2s_mclk[index].enable = 0;
 		}
 	}
 	mutex_unlock(&mi2s_intf_conf[index].lock);
