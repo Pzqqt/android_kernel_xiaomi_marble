@@ -66,8 +66,6 @@
 #define PMO_MAC_ACTION_VHT            21
 #define PMO_MAC_ACTION_MAX            256
 
-#define PMO_MAC_ACTION_MEASURE_REQUEST_ID      0
-#define PMO_MAC_ACTION_TPC_REQUEST_ID          2
 /*
  * ALLOWED_ACTION_FRAMES_BITMAP
  *
@@ -135,13 +133,13 @@
  * ----------------------------------+-----+------+
  *         Type                      | Bit | Drop |
  * ----------------------------------+-----+------+
- * SIR_MAC_ACTION_MEASURE_REQUEST_ID    0     1
- * SIR_MAC_ACTION_TPC_REQUEST_ID        2     1
+ * ACTION_SPCT_MSR_REQ                  0     1
+ * ACTION_SPCT_TPC_REQ                  2     1
  * ----------------------------------+-----+------+
  */
 #define DROP_SPEC_MGMT_ACTION_FRAME_BITMAP \
-		((1 << PMO_MAC_ACTION_MEASURE_REQUEST_ID) |\
-		 (1 << PMO_MAC_ACTION_TPC_REQUEST_ID))
+		((1 << ACTION_SPCT_MSR_REQ) |\
+		 (1 << ACTION_SPCT_TPC_REQ))
 #else
 /*
  * If 11H support is defined, dont drop the above action category of
