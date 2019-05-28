@@ -480,6 +480,7 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 	 */
 	sde_connector_state_get_mode_info(conn_state, &mode_info);
 	hw_res->topology = mode_info.topology;
+	hw_res->comp_info = &sde_enc->mode_info.comp_info;
 	hw_res->display_type = sde_enc->disp_info.display_type;
 }
 

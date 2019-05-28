@@ -58,6 +58,7 @@
  *                          interface
  * @display_type: Type of the display
  * @topology:   Topology of the display
+ * @comp_info: Compression parameters information
  */
 struct sde_encoder_hw_resources {
 	enum sde_intf_mode intfs[INTF_MAX];
@@ -66,6 +67,7 @@ struct sde_encoder_hw_resources {
 	u32 display_num_of_h_tiles;
 	enum sde_connector_display display_type;
 	struct msm_display_topology topology;
+	struct msm_compression_info *comp_info;
 };
 
 /**

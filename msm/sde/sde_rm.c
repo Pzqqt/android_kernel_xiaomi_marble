@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s] " fmt, __func__
@@ -1236,6 +1236,7 @@ static bool _sde_rm_check_dsc(struct sde_rm *rm,
 static int _sde_rm_reserve_dsc(
 		struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
+		struct msm_display_dsc_info *dsc_info,
 		const struct sde_rm_topology_def *top,
 		u8 *_dsc_ids)
 {
@@ -1245,18 +1246,38 @@ static int _sde_rm_reserve_dsc(
 	int num_dsc_enc = top->num_comp_enc;
 	int i;
 
-	if (!top->num_comp_enc)
+	if ((!top->num_comp_enc) || !dsc_info) {
+		SDE_DEBUG("invalid topoplogy params: %d, %d\n",
+				top->num_comp_enc,
+				!(dsc_info == NULL));
 		return 0;
+	}
 
 	sde_rm_init_hw_iter(&iter_i, 0, SDE_HW_BLK_DSC);
 
 	/* Find a first DSC */
 	while (alloc_count != num_dsc_enc &&
 			_sde_rm_get_hw_locked(rm, &iter_i)) {
+		const struct sde_hw_dsc *hw_dsc = to_sde_hw_dsc(
+				iter_i.blk->hw);
+		unsigned long features = hw_dsc->caps->features;
+		bool has_422_420_support =
+			BIT(SDE_DSC_NATIVE_422_EN) & features;
+
+		SDE_DEBUG("blk id = %d, is_422_420_req:%d ,is_supported:%d\n",
+				iter_i.blk->id,
+				(dsc_info->config.native_422 ||
+				dsc_info->config.native_420),
+				has_422_420_support);
 		memset(&dsc, 0, sizeof(dsc));
 		alloc_count = 0;
 
 		if (_dsc_ids && (iter_i.blk->id != _dsc_ids[alloc_count]))
+			continue;
+
+		/* if this hw block does not support required feature */
+		if ((dsc_info->config.native_422 ||
+			dsc_info->config.native_420) && !has_422_420_support)
 			continue;
 
 		if (!_sde_rm_check_dsc(rm, rsvp, iter_i.blk, NULL))
@@ -1540,20 +1561,27 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 		struct sde_rm_requirements *reqs,
 		struct sde_splash_display *splash_display)
 {
-	int ret, i;
+	int i;
 	u8 *hw_ids = NULL;
 
 	/* Check if splash data provided dsc_ids */
 	if (splash_display) {
 		hw_ids = splash_display->dsc_ids;
+		if (splash_display->dsc_cnt)
+			reqs->hw_res.comp_info->comp_type =
+				MSM_DISPLAY_COMPRESSION_DSC;
 		for (i = 0; i < splash_display->dsc_cnt; i++)
 			SDE_DEBUG("splash_data.dsc_ids[%d] = %d\n",
 				i, splash_display->dsc_ids[i]);
 	}
 
-	ret = _sde_rm_reserve_dsc(rm, rsvp, reqs->topology, hw_ids);
+	if ( reqs->hw_res.comp_info->comp_type ==
+			MSM_DISPLAY_COMPRESSION_DSC)
+		return  _sde_rm_reserve_dsc(rm, rsvp,
+				&reqs->hw_res.comp_info->dsc_info,
+				reqs->topology, hw_ids);
 
-	return ret;
+	return 0;
 }
 
 static int _sde_rm_make_next_rsvp(struct sde_rm *rm, struct drm_encoder *enc,
