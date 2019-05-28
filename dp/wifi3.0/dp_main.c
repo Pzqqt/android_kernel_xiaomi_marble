@@ -2341,6 +2341,38 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_ty
 }
 
 /*
+ * dp_soc_disable_mac2_intr_mask() - reset interrupt mask for WMAC2 hw rings
+ * @dp_soc - DP Soc handle
+ *
+ * Return: Return void
+ */
+static void dp_soc_disable_mac2_intr_mask(struct dp_soc *soc)
+{
+	int *grp_mask = NULL;
+	int group_number;
+
+	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_ring_mask[0];
+	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	wlan_cfg_set_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
+					  group_number, 0x0);
+
+	grp_mask = &soc->wlan_cfg_ctx->int_rx_mon_ring_mask[0];
+	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	wlan_cfg_set_rx_mon_ring_mask(soc->wlan_cfg_ctx,
+				      group_number, 0x0);
+
+	grp_mask = &soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[0];
+	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	wlan_cfg_set_rxdma2host_ring_mask(soc->wlan_cfg_ctx,
+					  group_number, 0x0);
+
+	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[0];
+	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	wlan_cfg_set_host2rxdma_mon_ring_mask(soc->wlan_cfg_ctx,
+					      group_number, 0x0);
+}
+
+/*
  * dp_soc_reset_intr_mask() - reset interrupt mask
  * @dp_soc - DP Soc handle
  *
@@ -2790,6 +2822,13 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
+	/*
+	 * Skip registering hw ring interrupts for WMAC2 on IPQ6018
+	 * WMAC2 is not there in IPQ6018 platform.
+	 */
+	if (hal_get_target_type(soc->hal_soc) == TARGET_TYPE_QCA6018) {
+		dp_soc_disable_mac2_intr_mask(soc);
+	}
 
 	/* Reset the cpu ring map if radio is NSS offloaded */
 	if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx)) {
