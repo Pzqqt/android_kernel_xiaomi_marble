@@ -1010,7 +1010,7 @@ struct dhcp_server {
 	"gActionOUISwitchTo11nMode", \
 	0, \
 	ACTION_OUI_MAX_STR_LEN, \
-	"00904C 03 0418BF E0 21 40", \
+	"00904C 05 0418BF0CB2 F8 21 40", \
 	"Used to specify action OUIs for switching to 11n")
 
 /*
