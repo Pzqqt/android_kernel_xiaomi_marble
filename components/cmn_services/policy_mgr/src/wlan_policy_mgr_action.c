@@ -470,6 +470,7 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 		switch (new_conn_mode) {
 		case QDF_STA_MODE:
 		case QDF_SAP_MODE:
+		case QDF_NDI_MODE:
 			return true;
 		default:
 			return false;
