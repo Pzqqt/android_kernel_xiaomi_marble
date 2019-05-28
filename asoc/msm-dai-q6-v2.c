@@ -3308,6 +3308,15 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		.get = msm_dai_q6_afe_enc_cfg_get,
 		.put = msm_dai_q6_afe_enc_cfg_put,
 	},
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "SLIM_7_RX APTX_AD Enc Cfg",
+		.info = msm_dai_q6_afe_enc_cfg_info,
+		.get = msm_dai_q6_afe_enc_cfg_get,
+		.put = msm_dai_q6_afe_enc_cfg_put,
+	},
 	SOC_ENUM_EXT("AFE Input Channels", afe_chs_enum[0],
 		     msm_dai_q6_afe_input_channel_get,
 		     msm_dai_q6_afe_input_channel_put),
