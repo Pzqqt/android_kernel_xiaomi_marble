@@ -253,7 +253,8 @@ void ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev,
  *
  * Return: None
  */
-void ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb);
+void ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
+			   wlan_ipa_send_to_nw cb);
 
 /**
  * ipa_set_mcc_mode() - Set MCC mode
@@ -433,6 +434,7 @@ uint32_t ipa_get_tx_buf_count(void);
 
 #else /* Not IPA_OFFLOAD */
 typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
+typedef void (*wlan_ipa_send_to_nw)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */

@@ -95,7 +95,8 @@ void ucfg_ipa_reg_sap_xmit_cb(struct wlan_objmgr_pdev *pdev,
 	return ipa_reg_sap_xmit_cb(pdev, cb);
 }
 
-void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev, void *cb)
+void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
+				wlan_ipa_send_to_nw cb)
 {
 	return ipa_reg_send_to_nw_cb(pdev, cb);
 

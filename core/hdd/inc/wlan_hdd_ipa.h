@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,16 +30,16 @@
 #ifdef IPA_OFFLOAD
 
 /**
- * hdd_ipa_send_skb_to_network() - Send skb to kernel
- * @skb: network buffer
- * @adapter: network adapter
+ * hdd_ipa_send_nbuf_to_network() - Send network buffer to kernel
+ * @nbuf: network buffer
+ * @dev: network adapter
  *
  * Called when a network buffer is received which should not be routed
  * to the IPA module.
  *
  * Return: None
  */
-void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev);
+void hdd_ipa_send_nbuf_to_network(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 
 /**
  * hdd_ipa_set_tx_flow_info() - To set TX flow info if IPA is
@@ -63,7 +63,7 @@ void hdd_ipa_set_mcc_mode(bool mcc_mode);
 
 #else
 static inline
-void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
+void hdd_ipa_send_nbuf_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 {
 }
 
