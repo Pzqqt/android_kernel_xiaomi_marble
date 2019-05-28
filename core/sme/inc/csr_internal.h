@@ -301,7 +301,7 @@ struct roam_cmd {
 struct setkey_cmd {
 	uint32_t roamId;
 	eCsrEncryptionType encType;
-	eCsrAuthType authType;
+	enum csr_akm_type authType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
 	struct qdf_mac_addr peermac;    /* Peer's MAC address. ALL 1's for group key */
 	uint8_t paeRole;        /* 0 for supplicant */

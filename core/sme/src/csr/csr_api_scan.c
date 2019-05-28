@@ -2049,7 +2049,7 @@ csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 	return candidate_chan;
 }
 
-static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
+static enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth)
 {
 	switch (auth) {
 	case eCSR_AUTH_TYPE_NONE:
@@ -2115,7 +2115,7 @@ static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
 	}
 }
 
-static eCsrAuthType csr_covert_auth_type_old(enum wlan_auth_type auth)
+static enum csr_akm_type csr_covert_auth_type_old(enum wlan_auth_type auth)
 {
 	switch (auth) {
 	case WLAN_AUTH_TYPE_OPEN_SYSTEM:

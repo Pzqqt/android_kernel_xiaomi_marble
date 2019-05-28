@@ -357,7 +357,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
 					    enum QDF_OPMODE cur_bss_persona);
 
 bool csr_is_profile11r(struct mac_context *mac, struct csr_roam_profile *pProfile);
-bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType AuthType,
+bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type AuthType,
 			 uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE
 bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
@@ -369,6 +369,6 @@ bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
  *
  * Return: true, if auth type is ese, false otherwise
  */
-bool csr_is_auth_type_ese(eCsrAuthType AuthType);
+bool csr_is_auth_type_ese(enum csr_akm_type AuthType);
 
 #endif

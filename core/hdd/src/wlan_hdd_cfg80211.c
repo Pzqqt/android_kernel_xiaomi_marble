@@ -5154,7 +5154,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb = NULL;
-	eCsrAuthType auth_type;
+	enum csr_akm_type auth_type;
 	uint32_t fils_params_len;
 	int status;
 	enum qca_roam_reason hdd_roam_reason;
@@ -16457,7 +16457,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roam_id = INVALID_ROAM_ID;
 	struct csr_roam_profile *roam_profile;
-	eCsrAuthType rsn_auth_type;
+	enum csr_akm_type rsn_auth_type;
 	struct sme_config_params *sme_config;
 	uint8_t channel = 0;
 	mac_handle_t mac_handle;

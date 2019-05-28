@@ -40,7 +40,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 				      unsigned char name_assign_type,
 				      uint8_t *name);
 
-eCsrAuthType
+enum csr_akm_type
 hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4]);
 
 int hdd_softap_set_channel_change(struct net_device *dev,
@@ -95,7 +95,7 @@ hdd_translate_rsn_to_csr_encryption_type(uint8_t cipher_suite[4]);
 eCsrEncryptionType
 hdd_translate_rsn_to_csr_encryption_type(uint8_t cipher_suite[4]);
 
-eCsrAuthType
+enum csr_akm_type
 hdd_translate_wpa_to_csr_auth_type(uint8_t auth_suite[4]);
 
 eCsrEncryptionType

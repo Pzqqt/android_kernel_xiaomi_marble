@@ -204,7 +204,7 @@ static inline QDF_STATUS csr_sae_callback(struct mac_context *mac_ctx,
 
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-enum mgmt_auth_type diag_auth_type_from_csr_type(eCsrAuthType authtype)
+enum mgmt_auth_type diag_auth_type_from_csr_type(enum csr_akm_type authtype)
 {
 	int n = AUTH_OPEN;
 
@@ -5855,7 +5855,7 @@ void csr_reset_pmkid_candidate_list(struct mac_context *mac,
  */
 static QDF_STATUS csr_roam_save_params(struct mac_context *mac_ctx,
 				struct csr_roam_session *session_ptr,
-				eCsrAuthType auth_type,
+				enum csr_akm_type auth_type,
 				tDot11fBeaconIEs *ie_ptr,
 				tDot11fBeaconIEs *ie_local)
 {
@@ -6028,7 +6028,7 @@ static QDF_STATUS csr_roam_save_params(struct mac_context *mac_ctx,
 
 static QDF_STATUS
 csr_roam_save_security_rsp_ie(struct mac_context *mac,
-			      uint32_t sessionId, eCsrAuthType authType,
+			      uint32_t sessionId, enum csr_akm_type authType,
 			      struct bss_description *pSirBssDesc,
 			      tDot11fBeaconIEs *pIes)
 {
@@ -10987,13 +10987,13 @@ static QDF_STATUS csr_send_reset_ap_caps_changed(struct mac_context *mac,
 
 #ifdef FEATURE_WLAN_ESE
 /**
- * csr_convert_ese_akm_to_ani() - Convert eCsrAuthType ESE akm value to
+ * csr_convert_ese_akm_to_ani() - Convert enum csr_akm_type ESE akm value to
  * equivalent enum ani_akm_type value
  * @akm_type: value of type enum ani_akm_type
  *
  * Return: ani_akm_type value corresponding
  */
-static enum ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
+static enum ani_akm_type csr_convert_ese_akm_to_ani(enum csr_akm_type akm_type)
 {
 	switch (akm_type) {
 	case eCSR_AUTH_TYPE_CCKM_RSN:
@@ -11004,7 +11004,7 @@ static enum ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
 }
 #else
 static inline enum
-ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
+ani_akm_type csr_convert_ese_akm_to_ani(enum csr_akm_type akm_type)
 {
 	return ANI_AKM_TYPE_UNKNOWN;
 }
@@ -11012,13 +11012,13 @@ ani_akm_type csr_convert_ese_akm_to_ani(eCsrAuthType akm_type)
 
 #ifdef WLAN_FEATURE_SAE
 /**
- * csr_convert_sae_akm_to_ani() - Convert eCsrAuthType SAE akm value to
+ * csr_convert_sae_akm_to_ani() - Convert enum csr_akm_type SAE akm value to
  * equivalent enum ani_akm_type value
  * @akm_type: value of type enum ani_akm_type
  *
  * Return: ani_akm_type value corresponding
  */
-static enum ani_akm_type csr_convert_sae_akm_to_ani(eCsrAuthType akm_type)
+static enum ani_akm_type csr_convert_sae_akm_to_ani(enum csr_akm_type akm_type)
 {
 	switch (akm_type) {
 	case eCSR_AUTH_TYPE_SAE:
@@ -11031,20 +11031,21 @@ static enum ani_akm_type csr_convert_sae_akm_to_ani(eCsrAuthType akm_type)
 }
 #else
 static inline
-enum ani_akm_type csr_convert_sae_akm_to_ani(eCsrAuthType akm_type)
+enum ani_akm_type csr_convert_sae_akm_to_ani(enum csr_akm_type akm_type)
 {
 	return ANI_AKM_TYPE_UNKNOWN;
 }
 #endif
 
 /**
- * csr_convert_csr_to_ani_akm_type() - Convert eCsrAuthType value to equivalent
- * enum ani_akm_type value
+ * csr_convert_csr_to_ani_akm_type() - Convert enum csr_akm_type value to
+ * equivalent enum ani_akm_type value
  * @akm_type: value of type enum ani_akm_type
  *
  * Return: ani_akm_type value corresponding
  */
-static enum ani_akm_type csr_convert_csr_to_ani_akm_type(eCsrAuthType akm_type)
+static enum ani_akm_type
+csr_convert_csr_to_ani_akm_type(enum csr_akm_type akm_type)
 {
 	enum ani_akm_type ani_akm;
 
@@ -11102,14 +11103,14 @@ static enum ani_akm_type csr_convert_csr_to_ani_akm_type(eCsrAuthType akm_type)
 
 /**
  * csr_translate_akm_type() - Convert ani_akm_type value to equivalent
- * eCsrAuthType
+ * enum csr_akm_type
  * @akm_type: value of type ani_akm_type
  *
- * Return: eCsrAuthType value
+ * Return: enum csr_akm_type value
  */
-static eCsrAuthType csr_translate_akm_type(enum ani_akm_type akm_type)
+static enum csr_akm_type csr_translate_akm_type(enum ani_akm_type akm_type)
 {
-	eCsrAuthType csr_akm_type;
+	enum csr_akm_type csr_akm_type;
 
 	switch (akm_type)
 	{
@@ -11315,7 +11316,7 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	struct csr_roam_info *roam_info;
 	struct assoc_ind *pAssocInd;
 	enum mac_status_code mac_status_code = eSIR_MAC_SUCCESS_STATUS;
-	eCsrAuthType csr_akm_type;
+	enum csr_akm_type csr_akm_type;
 
 	sme_debug("Receive WNI_SME_ASSOC_IND from SME");
 	pAssocInd = (struct assoc_ind *) msg_ptr;
@@ -13546,7 +13547,7 @@ static bool csr_is_encryption_in_list(struct mac_context *mac,
 }
 
 static bool csr_is_auth_in_list(struct mac_context *mac, tCsrAuthList *pAuthList,
-				eCsrAuthType authType)
+				enum csr_akm_type authType)
 {
 	bool fFound = false;
 	uint32_t idx;
@@ -15261,7 +15262,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	struct action_oui_search_attr vendor_ap_search_attr;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	bool bvalue = 0;
-	eCsrAuthType akm;
+	enum csr_akm_type akm;
 	bool force_max_nss;
 	uint8_t ap_nss;
 
@@ -19571,7 +19572,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	uint8_t i, temp_session_id;
 	uint8_t op_channel;
 	bool prev_roaming_state;
-	eCsrAuthType roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
 
 	sme_debug("RSO Command %d, Session id %d, Reason %d", command,

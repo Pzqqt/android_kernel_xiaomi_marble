@@ -249,7 +249,7 @@ typedef struct sap_StationAssocIndication_s {
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 	bool fWmmEnabled;
-	eCsrAuthType negotiatedAuthType;
+	enum csr_akm_type negotiatedAuthType;
 	eCsrEncryptionType negotiatedUCEncryptionType;
 	eCsrEncryptionType negotiatedMCEncryptionType;
 	bool fAuthRequired;

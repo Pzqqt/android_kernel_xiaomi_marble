@@ -714,7 +714,7 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
  *
  * Return: WMI RSN auth mode
  */
-A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
+A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr)
 {
 	switch (authtype) {

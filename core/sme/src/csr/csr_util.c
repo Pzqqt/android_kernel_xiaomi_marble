@@ -2542,8 +2542,8 @@ QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
  *
  * Return: true if is 11R auth type, false otherwise
  */
-bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType auth_type,
-			uint8_t mdie_present)
+bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type auth_type,
+			 uint8_t mdie_present)
 {
 	switch (auth_type) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
@@ -2572,7 +2572,7 @@ bool csr_is_profile11r(struct mac_context *mac,
 				   pProfile->mdid.mdie_present);
 }
 
-bool csr_is_auth_type_ese(eCsrAuthType AuthType)
+bool csr_is_auth_type_ese(enum csr_akm_type AuthType)
 {
 	switch (AuthType) {
 	case eCSR_AUTH_TYPE_CCKM_WPA:
@@ -3143,7 +3143,7 @@ static uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
 static void csr_is_fils_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
-	uint8_t index, eCsrAuthType *neg_authtype)
+	uint8_t index, enum csr_akm_type *neg_authtype)
 {
 	/*
 	 * TODO Always try with highest security
@@ -3182,7 +3182,7 @@ static void csr_is_fils_auth(struct mac_context *mac_ctx,
 static void csr_is_fils_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
-	uint8_t index, eCsrAuthType *neg_authtype)
+	uint8_t index, enum csr_akm_type *neg_authtype)
 {
 }
 #endif
@@ -3206,7 +3206,7 @@ csr_check_sae_auth(struct mac_context *mac_ctx,
 		   uint8_t authsuites[][CSR_RSN_OUI_SIZE],
 		   uint8_t c_auth_suites,
 		   uint8_t authentication[], tCsrAuthList *auth_type,
-		   uint8_t index, eCsrAuthType *neg_authtype)
+		   uint8_t index, enum csr_akm_type *neg_authtype)
 {
 	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
 	    csr_is_auth_ft_sae(mac_ctx, authsuites, c_auth_suites,
@@ -3227,7 +3227,7 @@ csr_check_sae_auth(struct mac_context *mac_ctx,
 static void csr_check_sae_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
-	uint8_t index, eCsrAuthType *neg_authtype)
+	uint8_t index, enum csr_akm_type *neg_authtype)
 {
 }
 #endif
@@ -3287,7 +3287,7 @@ static bool csr_get_rsn_information(struct mac_context *mac_ctx,
 				    tDot11fIERSN *rsn_ie, uint8_t *ucast_cipher,
 				    uint8_t *mcast_cipher, uint8_t *auth_suite,
 				    struct rsn_caps *capabilities,
-				    eCsrAuthType *negotiated_authtype,
+				    enum csr_akm_type *negotiated_authtype,
 				    eCsrEncryptionType *negotiated_mccipher,
 				    uint8_t *gp_mgmt_cipher,
 				    tAniEdType *mgmt_encryption_type,
@@ -3306,7 +3306,7 @@ static bool csr_get_rsn_information(struct mac_context *mac_ctx,
 	uint8_t authentication[CSR_RSN_OUI_SIZE];
 	uint8_t mccipher_arr[CSR_RSN_MAX_MULTICAST_CYPHERS][CSR_RSN_OUI_SIZE];
 	uint8_t group_mgmt_arr[CSR_RSN_MAX_MULTICAST_CYPHERS][CSR_RSN_OUI_SIZE];
-	eCsrAuthType neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
 
 	if (!rsn_ie->present)
 		goto end;
@@ -3665,7 +3665,7 @@ static bool csr_is_rsn_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthTyp
 			     bool *pMFPEnabled, uint8_t *pMFPRequired,
 			     uint8_t *pMFPCapable,
 			     tDot11fBeaconIEs *pIes,
-			     eCsrAuthType *pNegotiatedAuthType,
+			     enum csr_akm_type *negotiated_akm,
 			     eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fRSNMatch = false;
@@ -3675,7 +3675,7 @@ static bool csr_is_rsn_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthTyp
 	 */
 	fRSNMatch = csr_get_rsn_information(mac_ctx, pAuthType, enType,
 					    pEnMcType, &pIes->RSN, NULL, NULL,
-					    NULL, NULL, pNegotiatedAuthType,
+					    NULL, NULL, negotiated_akm,
 					    pNegotiatedMCCipher, NULL, NULL,
 					    false);
 #ifdef WLAN_FEATURE_11W
@@ -4010,7 +4010,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	uint8_t *pGroupMgmtCipherSuite;
 #endif
 	tDot11fBeaconIEs *pIesLocal = pIes;
-	eCsrAuthType negAuthType = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type negAuthType = eCSR_AUTH_TYPE_UNKNOWN;
 	tDot11fIERSN rsn_ie = {0};
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, sessionId);
 
@@ -4215,7 +4215,7 @@ static bool csr_get_wapi_information(struct mac_context *mac_ctx,
 				     tDot11fIEWAPI *wapi_ie,
 				     uint8_t *ucast_cipher,
 				     uint8_t *mcast_cipher, uint8_t *auth_suite,
-				     eCsrAuthType *negotiated_authtype,
+				     enum csr_akm_type *negotiated_authtype,
 				     eCsrEncryptionType *negotiated_mccipher)
 {
 	bool acceptable_cipher = false;
@@ -4227,7 +4227,7 @@ static bool csr_get_wapi_information(struct mac_context *mac_ctx,
 	uint8_t authsuites[CSR_WAPI_MAX_AUTH_SUITES][CSR_WAPI_OUI_SIZE];
 	uint8_t authentication[CSR_WAPI_OUI_SIZE];
 	uint8_t mccipher_arr[CSR_WAPI_MAX_MULTICAST_CYPHERS][CSR_WAPI_OUI_SIZE];
-	eCsrAuthType neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
 	uint8_t wapioui_idx = 0;
 
 	if (!wapi_ie->present)
@@ -4327,7 +4327,7 @@ static bool csr_is_wapi_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthTy
 			      eCsrEncryptionType enType,
 			      tCsrEncryptionList *pEnMcType,
 			      tDot11fBeaconIEs *pIes,
-			      eCsrAuthType *pNegotiatedAuthType,
+			      enum csr_akm_type *negotiated_akm,
 			      eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fWapiMatch = false;
@@ -4338,8 +4338,7 @@ static bool csr_is_wapi_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthTy
 	fWapiMatch =
 		csr_get_wapi_information(mac_ctx, pAuthType, enType, pEnMcType,
 					 &pIes->WAPI, NULL, NULL, NULL,
-					 pNegotiatedAuthType,
-					 pNegotiatedMCCipher);
+					 negotiated_akm, pNegotiatedMCCipher);
 
 	return fWapiMatch;
 }
@@ -4543,7 +4542,7 @@ static bool csr_get_wpa_cyphers(struct mac_context *mac_ctx, tCsrAuthList *auth_
 				tCsrEncryptionList *mc_encryption,
 				tDot11fIEWPA *wpa_ie, uint8_t *ucast_cipher,
 				uint8_t *mcast_cipher, uint8_t *auth_suite,
-				eCsrAuthType *negotiated_authtype,
+				enum csr_akm_type *negotiated_authtype,
 				eCsrEncryptionType *negotiated_mccipher)
 {
 	bool acceptable_cipher = false;
@@ -4556,7 +4555,7 @@ static bool csr_get_wpa_cyphers(struct mac_context *mac_ctx, tCsrAuthList *auth_
 	uint8_t mccipher_arr[1][CSR_WPA_OUI_SIZE];
 	uint8_t i;
 	uint8_t index;
-	eCsrAuthType neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
 
 	if (!wpa_ie->present)
 		goto end;
@@ -4673,7 +4672,7 @@ static bool csr_is_wpa_encryption_match(struct mac_context *mac,
 					eCsrEncryptionType enType,
 					tCsrEncryptionList *pEnMcType,
 					tDot11fBeaconIEs *pIes,
-					eCsrAuthType *pNegotiatedAuthtype,
+					enum csr_akm_type *pNegotiatedAuthtype,
 					eCsrEncryptionType *pNegotiatedMCCipher)
 {
 	bool fWpaMatch = false;
@@ -5266,7 +5265,7 @@ static bool csr_validate_any_default(struct mac_context *mac_ctx,
 				     uint8_t *mfp_required,
 				     uint8_t *mfp_capable,
 				     tDot11fBeaconIEs *ies_ptr,
-				     eCsrAuthType *neg_auth_type,
+				     enum csr_akm_type *neg_auth_type,
 				     struct bss_description *bss_desc,
 				     eCsrEncryptionType *uc_cipher,
 				     eCsrEncryptionType *mc_cipher)

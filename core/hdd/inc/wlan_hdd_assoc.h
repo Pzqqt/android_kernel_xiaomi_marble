@@ -180,7 +180,7 @@ struct hdd_connection_info {
 	tCsrSSIDInfo ssid;
 	uint8_t sta_id[MAX_PEERS];
 	struct qdf_mac_addr peer_macaddr[MAX_PEERS];
-	eCsrAuthType auth_type;
+	enum csr_akm_type auth_type;
 	eCsrEncryptionType uc_encrypt_type;
 	eCsrEncryptionType mc_encrypt_type;
 	uint8_t channel;
@@ -206,7 +206,7 @@ struct hdd_connection_info {
 	int32_t assoc_status_code;
 	uint32_t cca;
 	tCsrSSIDInfo last_ssid;
-	eCsrAuthType last_auth_type;
+	enum csr_akm_type last_auth_type;
 	char auth_time[HDD_TIME_STRING_LEN];
 	char connect_time[HDD_TIME_STRING_LEN];
 	enum phy_ch_width ch_width;
@@ -315,7 +315,7 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
-			 eCsrAuthType *rsn_auth_type);
+			 enum csr_akm_type *rsn_auth_type);
 
 /**
  * hdd_set_csr_auth_type() - set csr auth type
@@ -325,7 +325,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
-			  eCsrAuthType rsn_auth_type);
+			  enum csr_akm_type rsn_auth_type);
 
 #ifdef FEATURE_WLAN_TDLS
 /**

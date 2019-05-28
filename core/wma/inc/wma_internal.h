@@ -267,7 +267,7 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t *chan_list,
 					   uint8_t list_type, uint32_t vdev_id);
 
-A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
+A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);
 
 A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);

@@ -1634,7 +1634,7 @@ typedef struct {
 int wma_process_fw_event_handler(ol_scn_t scn_handle, void *ev,
 				 uint8_t rx_ctx);
 
-A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
+A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
 					 eCsrEncryptionType encr);
 A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 

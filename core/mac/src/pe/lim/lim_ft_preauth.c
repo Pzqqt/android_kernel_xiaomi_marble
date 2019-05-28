@@ -226,7 +226,7 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 {
 	tSirMacAuthFrameBody authFrame;
 	unsigned int session_id;
-	eCsrAuthType auth_type;
+	enum csr_akm_type auth_type;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");

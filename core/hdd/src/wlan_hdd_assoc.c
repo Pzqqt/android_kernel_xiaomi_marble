@@ -5064,12 +5064,12 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 /**
  * hdd_translate_fils_rsn_to_csr_auth() - Translate FILS RSN to CSR auth type
  * @auth_suite: auth suite
- * @auth_type: pointer to eCsrAuthType
+ * @auth_type: pointer to enum csr_akm_type
  *
  * Return: None
  */
 static void hdd_translate_fils_rsn_to_csr_auth(int8_t auth_suite[4],
-					eCsrAuthType *auth_type)
+					enum csr_akm_type *auth_type)
 {
 	if (!memcmp(auth_suite, ccp_rsn_oui_0e, 4))
 		*auth_type = eCSR_AUTH_TYPE_FILS_SHA256;
@@ -5082,7 +5082,7 @@ static void hdd_translate_fils_rsn_to_csr_auth(int8_t auth_suite[4],
 }
 #else
 static inline void hdd_translate_fils_rsn_to_csr_auth(int8_t auth_suite[4],
-					eCsrAuthType *auth_type)
+					enum csr_akm_type *auth_type)
 {
 }
 #endif
@@ -5091,12 +5091,12 @@ static inline void hdd_translate_fils_rsn_to_csr_auth(int8_t auth_suite[4],
 /**
  * hdd_translate_sae_rsn_to_csr_auth() - Translate SAE RSN to CSR auth type
  * @auth_suite: auth suite
- * @auth_type: pointer to eCsrAuthType
+ * @auth_type: pointer to enum csr_akm_type
  *
  * Return: None
  */
 static void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
-					eCsrAuthType *auth_type)
+					enum csr_akm_type *auth_type)
 {
 	if (qdf_mem_cmp(auth_suite, ccp_rsn_oui_80, 4) == 0)
 		*auth_type = eCSR_AUTH_TYPE_SAE;
@@ -5106,7 +5106,7 @@ static void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
 }
 #else
 static inline void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
-					eCsrAuthType *auth_type)
+					enum csr_akm_type *auth_type)
 {
 }
 #endif
@@ -5115,11 +5115,11 @@ static inline void hdd_translate_sae_rsn_to_csr_auth(int8_t auth_suite[4],
  * hdd_translate_rsn_to_csr_auth_type() - Translate RSN to CSR auth type
  * @auth_suite: auth suite
  *
- * Return: eCsrAuthType enumeration
+ * Return: enum csr_akm_type enumeration
  */
-eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
+enum csr_akm_type hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 {
-	eCsrAuthType auth_type = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type auth_type = eCSR_AUTH_TYPE_UNKNOWN;
 	/* is the auth type supported? */
 	if (memcmp(auth_suite, ccp_rsn_oui01, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_RSN;
@@ -5171,11 +5171,11 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
  * hdd_translate_wpa_to_csr_auth_type() - Translate WPA to CSR auth type
  * @auth_suite: auth suite
  *
- * Return: eCsrAuthType enumeration
+ * Return: enum csr_akm_type enumeration
  */
-eCsrAuthType hdd_translate_wpa_to_csr_auth_type(uint8_t auth_suite[4])
+enum csr_akm_type hdd_translate_wpa_to_csr_auth_type(uint8_t auth_suite[4])
 {
-	eCsrAuthType auth_type = eCSR_AUTH_TYPE_UNKNOWN;
+	enum csr_akm_type auth_type = eCSR_AUTH_TYPE_UNKNOWN;
 	/* is the auth type supported? */
 	if (memcmp(auth_suite, ccp_wpa_oui01, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_WPA;
@@ -5288,7 +5288,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 u8 *bssid,
 				 eCsrEncryptionType *encrypt_type,
 				 eCsrEncryptionType *mc_encrypt_type,
-				 eCsrAuthType *auth_type,
+				 enum csr_akm_type *auth_type,
 #ifdef WLAN_FEATURE_11W
 				 uint8_t *mfp_required, uint8_t *mfp_capable,
 #endif
@@ -5419,7 +5419,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
  * Return: void
  */
 static void hdd_set_def_rsne_override(
-	struct csr_roam_profile *roam_profile, eCsrAuthType *auth_type)
+	struct csr_roam_profile *roam_profile, enum csr_akm_type *auth_type)
 {
 
 	hdd_debug("Set def values in roam profile");
@@ -5444,7 +5444,7 @@ static void hdd_set_def_rsne_override(
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
-			 eCsrAuthType *rsn_auth_type)
+			 enum csr_akm_type *rsn_auth_type)
 {
 	struct csr_roam_profile *roam_profile;
 	uint8_t *security_ie;
@@ -5568,7 +5568,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
  */
 static
 bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
-					eCsrAuthType rsn_auth_type)
+					enum csr_akm_type rsn_auth_type)
 {
 	bool is_fils_rsn = false;
 
@@ -5588,7 +5588,7 @@ bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
 #else
 static
 bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
-					eCsrAuthType rsn_auth_type)
+					enum csr_akm_type rsn_auth_type)
 {
 	return false;
 }
@@ -5602,7 +5602,7 @@ bool hdd_check_fils_rsn_n_set_auth_type(struct csr_roam_profile *roam_profile,
  * Return: 0 on success, error number otherwise
  */
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
-			  eCsrAuthType rsn_auth_type)
+			  enum csr_akm_type rsn_auth_type)
 {
 	struct csr_roam_profile *roam_profile;
 	struct hdd_station_ctx *sta_ctx =

@@ -94,7 +94,7 @@ struct tag_csrscan_result {
 	eCsrEncryptionType ucEncryptionType;
 	eCsrEncryptionType mcEncryptionType;
 	/* Preferred auth type that matched with the profile. */
-	eCsrAuthType authType;
+	enum csr_akm_type authType;
 	int  bss_score;
 
 	tCsrScanResultInfo Result;
@@ -542,7 +542,7 @@ void csr_get_vdev_type_nss(struct mac_context *mac_ctx,
  *
  * Return: DIAG auth type
  */
-enum mgmt_auth_type diag_auth_type_from_csr_type(eCsrAuthType authtype);
+enum mgmt_auth_type diag_auth_type_from_csr_type(enum csr_akm_type authtype);
 /**
  * diag_enc_type_from_csr_type() - to convert CSR encr type to DIAG encr type
  * @enctype: CSR encryption type

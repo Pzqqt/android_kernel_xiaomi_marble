@@ -32,7 +32,7 @@
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 
-typedef enum {
+enum csr_akm_type {
 	/* never used */
 	eCSR_AUTH_TYPE_NONE,
 	/* MAC layer authentication types */
@@ -73,7 +73,7 @@ typedef enum {
 	eCSR_AUTH_TYPE_FAILED = 0xff,
 	eCSR_AUTH_TYPE_UNKNOWN = eCSR_AUTH_TYPE_FAILED,
 
-} eCsrAuthType;
+};
 
 typedef enum {
 	eCSR_ENCRYPT_TYPE_NONE,
@@ -245,7 +245,7 @@ typedef struct tagCsrEncryptionList {
 
 typedef struct tagCsrAuthList {
 	uint32_t numEntries;
-	eCsrAuthType authType[eCSR_NUM_OF_SUPPORT_AUTH_TYPE];
+	enum csr_akm_type authType[eCSR_NUM_OF_SUPPORT_AUTH_TYPE];
 } tCsrAuthList, *tpCsrAuthList;
 
 #ifdef FEATURE_WLAN_ESE
@@ -747,7 +747,7 @@ struct csr_roam_profile {
 	uint32_t phyMode;
 	eCsrRoamBssType BSSType;
 	tCsrAuthList AuthType;
-	eCsrAuthType negotiatedAuthType;
+	enum csr_akm_type negotiatedAuthType;
 	tCsrAuthList akm_list;
 	tCsrEncryptionList EncryptionType;
 	/* This field is for output only, not for input */
@@ -856,7 +856,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	struct qdf_mac_addr bssid;
 	uint16_t beaconInterval;
 	eCsrRoamBssType BSSType;
-	eCsrAuthType AuthType;
+	enum csr_akm_type AuthType;
 	tCsrAuthList AuthInfo;
 	tCsrAuthList akm_list;
 	eCsrEncryptionType EncryptionType;

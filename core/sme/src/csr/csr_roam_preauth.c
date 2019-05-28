@@ -582,7 +582,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info *roam_info;
-	eCsrAuthType conn_Auth_type;
+	enum csr_akm_type conn_Auth_type;
 	uint32_t session_id = preauth_rsp->smeSessionId;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				session_id);
