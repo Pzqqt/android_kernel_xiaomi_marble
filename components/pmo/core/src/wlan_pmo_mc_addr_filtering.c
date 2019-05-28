@@ -341,6 +341,12 @@ static QDF_STATUS pmo_core_mc_addr_flitering_sanity(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (vdev_ctx->vdev_mc_list_req.mc_cnt > PMO_MAX_MC_ADDR_LIST) {
+		pmo_debug("Passed more than max supported MC address count :%d",
+			  vdev_ctx->vdev_mc_list_req.mc_cnt);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 QDF_STATUS pmo_core_cache_mc_addr_list(
