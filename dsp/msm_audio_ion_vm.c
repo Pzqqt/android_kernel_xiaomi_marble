@@ -647,6 +647,31 @@ err:
 }
 EXPORT_SYMBOL(msm_audio_ion_alloc);
 
+int msm_audio_ion_phys_free(void *handle,
+			   dma_addr_t *paddr,
+			   size_t *pa_len,
+			   u8 assign_type,
+			   int id,
+			   int key)
+{
+	handle = NULL;
+	return 0;
+}
+EXPORT_SYMBOL(msm_audio_ion_phys_free);
+
+int msm_audio_ion_phys_assign(void **handle, int fd,
+		dma_addr_t *paddr, size_t *pa_len, u8 assign_type, int id)
+{
+	*handle = NULL;
+	return 0;
+}
+EXPORT_SYMBOL(msm_audio_ion_phys_assign);
+
+bool msm_audio_is_hypervisor_supported(void)
+{
+	return false;
+}
+EXPORT_SYMBOL(msm_audio_is_hypervisor_supported);
 /**
  * msm_audio_ion_import-
  *        Import ION buffer with given file descriptor
