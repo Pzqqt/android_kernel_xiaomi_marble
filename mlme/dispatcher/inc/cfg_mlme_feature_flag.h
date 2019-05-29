@@ -163,7 +163,7 @@
  * gChannelBondingMode24GHz - Configures Channel Bonding in 24 GHz
  * @Min: 0
  * @Max: 10
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set default channel bonding mode 24GHZ
  *
@@ -191,7 +191,7 @@
 	"gChannelBondingMode24GHz", \
 	0, \
 	10, \
-	0, \
+	1, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Configures Channel Bonding in 24 GHz")
 
