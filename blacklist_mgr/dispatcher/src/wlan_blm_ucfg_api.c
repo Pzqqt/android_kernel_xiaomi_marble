@@ -130,3 +130,11 @@ ucfg_blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 	return blm_add_userspace_black_list(pdev, bssid_black_list,
 					    num_of_bssid);
 }
+
+void
+ucfg_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
+				     struct qdf_mac_addr bssid,
+				     enum blm_connection_state con_state)
+{
+	blm_update_bssid_connect_params(pdev, bssid, con_state);
+}

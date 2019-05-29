@@ -121,6 +121,7 @@ struct blm_reject_ap_timestamp {
  * @bad_bssid_counter: It represent how many times data stall happened.
  * @ap_timestamp: Ap timestamp.
  * @reject_ap_type: what is the type of rejection for the AP (avoid, black etc.)
+ * @connect_timestamp: Timestamp when the STA got connected with this BSSID
  */
 struct blm_reject_ap {
 	qdf_list_node_t node;
@@ -139,6 +140,7 @@ struct blm_reject_ap {
 		};
 		uint8_t reject_ap_type;
 	};
+	qdf_time_t connect_timestamp;
 };
 
 /**
@@ -196,6 +198,25 @@ QDF_STATUS
 blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 			     struct qdf_mac_addr *bssid_black_list,
 			     uint8_t num_of_bssid);
+
+/**
+ * blm_update_bssid_connect_params() - Inform the BLM about connect/disconnect
+ * with the current AP.
+ * @pdev: pdev object
+ * @bssid: BSSID of the AP
+ * @con_state: Connection stae (connected/disconnected)
+ *
+ * This API will inform the BLM about the state with the AP so that if the AP
+ * is selected, and the connection went through, and the connection did not
+ * face any data stall till the bad bssid reset timer, BLM can remove the
+ * AP from the reject ap list maintained by it.
+ *
+ * Return: None
+ */
+void
+blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
+				struct qdf_mac_addr bssid,
+				enum blm_connection_state con_state);
 
 /**
  * blm_delete_reject_ap_list() - Clear away BSSID and destroy the reject ap list

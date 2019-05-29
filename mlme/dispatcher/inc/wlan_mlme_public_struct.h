@@ -190,6 +190,26 @@ struct wlan_mlme_dot11_mode {
 };
 
 /**
+ * enum roam_invoke_source_entity - Source of invoking roam invoke command.
+ * @USERSPACE_INITIATED: Userspace (supplicant)
+ * @CONNECTION_MGR_INITIATED: connection mgr initiated.
+ */
+enum roam_invoke_source_entity {
+	USERSPACE_INITIATED,
+	CONNECTION_MGR_INITIATED,
+};
+
+/**
+ * struct mlme_roam_after_data_stall - roam invoke entity params
+ * @roam_invoke_in_progress: is roaming already in progress.
+ * @source: source of the roam invoke command.
+ */
+struct mlme_roam_after_data_stall {
+	bool roam_invoke_in_progress;
+	enum roam_invoke_source_entity source;
+};
+
+/**
  * struct mlme_edca_ac_vi - cwmin, cwmax and  aifs value for edca_ac_vi
  *
  * @vi_cwmin: cwmin value for video
@@ -866,6 +886,17 @@ struct wlan_mlme_chain_cfg {
 };
 
 /**
+ * struct mlme_tgt_caps - mlme related capability coming from target (FW)
+ * @data_stall_recovery_fw_support: does target supports data stall recovery.
+ *
+ * Add all the mlme-tgt related capablities here, and the public API would fill
+ * the related capability in the required mlme cfg structure.
+ */
+struct mlme_tgt_caps {
+	bool data_stall_recovery_fw_support;
+};
+
+/**
  * struct wlan_mlme_rates - RATES related config items
  * @cfpPeriod: cfp period info
  * @cfpMaxDuration: cfp Max duration info
@@ -1029,6 +1060,7 @@ struct wlan_mlme_chainmask {
  * @enabled_11d: enable 11d flag
  * @enable_beacon_reception_stats: enable beacon reception stats
  * @enable_remove_time_stamp_sync_cmd: Enable remove time stamp sync cmd
+ * @data_stall_recovery_fw_support: whether FW supports Data stall recovery.
  * @enable_change_channel_bandwidth: enable/disable change channel bw in mission
  * mode
  */
@@ -1059,6 +1091,7 @@ struct wlan_mlme_generic {
 	bool enable_deauth_to_disassoc_map;
 	bool enable_beacon_reception_stats;
 	bool enable_remove_time_stamp_sync_cmd;
+	bool data_stall_recovery_fw_support;
 	bool enable_change_channel_bandwidth;
 };
 

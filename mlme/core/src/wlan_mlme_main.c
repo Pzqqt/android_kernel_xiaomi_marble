@@ -78,6 +78,21 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 	return &mlme_priv->ini_cfg;
 }
 
+struct mlme_roam_after_data_stall *
+mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return NULL;
+
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
+
+	return &mlme_priv->roam_invoke_params;
+}
+
 uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
