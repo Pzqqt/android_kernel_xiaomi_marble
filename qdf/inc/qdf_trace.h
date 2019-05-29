@@ -474,41 +474,6 @@ enum qdf_dpt_debugfs_state {
 	QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE,
 };
 
-/* Function declarations and documenation */
-
-/**
- * qdf_trace_set_level() - Set the trace level for a particular module
- * @level : trace level
- *
- * Trace level is a member of the QDF_TRACE_LEVEL enumeration indicating
- * the severity of the condition causing the trace message to be issued.
- * More severe conditions are more likely to be logged.
- *
- * This is an external API that allows trace levels to be set for each module.
- *
- * Return:  nothing
- */
-void qdf_trace_set_level(QDF_MODULE_ID module, QDF_TRACE_LEVEL level);
-
-/**
- * qdf_trace_get_level() - get the trace level
- * @level : trace level
- *
- * This is an external API that returns a bool value to signify if a
- * particular trace level is set for the specified module.
- * A member of the QDF_TRACE_LEVEL enumeration indicating the severity
- * of the condition causing the trace message to be issued.
- *
- * Note that individual trace levels are the only valid values
- * for this API.  QDF_TRACE_LEVEL_NONE and QDF_TRACE_LEVEL_ALL
- * are not valid input and will return false
- *
- * Return:
- *  false - the specified trace level for the specified module is OFF
- *  true - the specified trace level for the specified module is ON
- */
-bool qdf_trace_get_level(QDF_MODULE_ID module, QDF_TRACE_LEVEL level);
-
 typedef void (*tp_qdf_trace_cb)(void *p_mac, tp_qdf_trace_record, uint16_t);
 typedef void (*tp_qdf_state_info_cb) (char **buf, uint16_t *size);
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
@@ -951,11 +916,6 @@ void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 #endif
 
 void qdf_trace_display(void);
-
-void qdf_trace_set_value(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
-			 uint8_t on);
-
-void qdf_trace_set_module_trace_level(QDF_MODULE_ID module, uint32_t level);
 
 void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 		  char *str_format, ...);
