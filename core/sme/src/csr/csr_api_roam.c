@@ -9812,23 +9812,23 @@ csr_roam_send_disconnect_done_indication(struct mac_context *mac_ctx,
 /**
  * csr_roaming_state_msg_processor() - process roaming messages
  * @mac:       mac global context
- * @pMsgBuf:    message buffer
+ * @msg_buf:    message buffer
  *
- * We need to be careful on whether to cast pMsgBuf (pSmeRsp) to other type of
+ * We need to be careful on whether to cast msg_buf (pSmeRsp) to other type of
  * strucutres. It depends on how the message is constructed. If the message is
- * sent by lim_send_sme_rsp, the pMsgBuf is only a generic response and can only
+ * sent by lim_send_sme_rsp, the msg_buf is only a generic response and can only
  * be used as pointer to tSirSmeRsp. For the messages where sender allocates
  * memory for specific structures, then it can be cast accordingly.
  *
  * Return: status of operation
  */
-void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
+void csr_roaming_state_msg_processor(struct mac_context *mac, void *msg_buf)
 {
 	tSirSmeRsp *pSmeRsp;
 	tSmeIbssPeerInd *pIbssPeerInd;
 	struct csr_roam_info *roam_info;
 
-	pSmeRsp = (tSirSmeRsp *) pMsgBuf;
+	pSmeRsp = (tSirSmeRsp *)msg_buf;
 	sme_debug("Message %d[0x%04X] received in substate %s",
 		pSmeRsp->messageType, pSmeRsp->messageType,
 		mac_trace_getcsr_roam_sub_state(
@@ -9911,7 +9911,7 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 		break;
 	case eWNI_SME_GET_RSSI_REQ:
 	{
-		tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) pMsgBuf;
+		tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *)msg_buf;
 
 		if (pGetRssiReq->rssiCallback)
 			((tCsrRssiCallback) pGetRssiReq->rssiCallback)
@@ -9949,9 +9949,9 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 	}
 }
 
-void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
+void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *msg_buf)
 {
-	tSirSmeRsp *pSirMsg = (tSirSmeRsp *) pMsgBuf;
+	tSirSmeRsp *pSirMsg = (tSirSmeRsp *)msg_buf;
 
 	switch (pSirMsg->messageType) {
 	case eWNI_SME_GET_STATISTICS_RSP:
@@ -9968,7 +9968,7 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf)
 
 		sme_debug("ASSOCIATION confirmation can be given to upper layer ");
 		pUpperLayerAssocCnf =
-			(tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
+			(tSirSmeAssocIndToUpperLayerCnf *)msg_buf;
 		status = csr_roam_get_session_id_from_bssid(mac,
 							(struct qdf_mac_addr *)
 							   pUpperLayerAssocCnf->
@@ -20946,11 +20946,11 @@ void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
  *        received from the firmware. It will trigger a disconnect on
  *        the session which the firmware reported a hand off failure
  * param  mac global structure
- * param  pMsgBuf - Contains the session ID for which the handler should apply
+ * param  msg_buf - Contains the session ID for which the handler should apply
  */
-void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *pMsgBuf)
+void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 {
-	struct handoff_failure_ind *pSmeHOFailInd = pMsgBuf;
+	struct handoff_failure_ind *pSmeHOFailInd = msg_buf;
 	uint32_t sessionId;
 
 	if (!pSmeHOFailInd) {

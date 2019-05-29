@@ -954,7 +954,7 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 					  struct csr_config_params *pParam);
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		struct csr_config_params *pParam);
-QDF_STATUS csr_msg_processor(struct mac_context *mac, void *pMsgBuf);
+QDF_STATUS csr_msg_processor(struct mac_context *mac, void *msg_buf);
 QDF_STATUS csr_open(struct mac_context *mac);
 QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2);
 QDF_STATUS csr_close(struct mac_context *mac);
@@ -1092,7 +1092,7 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 			      struct roam_offload_synch_ind *roam_synch_ind,
 			      struct bss_description *bss_desc_ptr);
 
-void csr_process_ho_fail_ind(struct mac_context *mac, void *pMsgBuf);
+void csr_process_ho_fail_ind(struct mac_context *mac, void *msg_buf);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 void csr_roaming_report_diag_event(struct mac_context *mac_ctx,

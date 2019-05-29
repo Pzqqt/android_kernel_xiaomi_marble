@@ -766,29 +766,30 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
  *
  * @param mac      Pointer to Global MAC structure
  * @param msgType   Indicates the MLM primitive message type
- * @param *pMsgBuf  A pointer to the MLM message buffer
+ * @param *msg_buf  A pointer to the MLM message buffer
  *
  * @return None
  */
 static inline void
-lim_post_sme_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBuf)
+lim_post_sme_message(struct mac_context *mac, uint32_t msgType,
+		     uint32_t *msg_buf)
 {
 	struct scheduler_msg msg = {0};
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	msg.type = (uint16_t) msgType;
-	msg.bodyptr = pMsgBuf;
+	msg.bodyptr = msg_buf;
 	msg.bodyval = 0;
 	if (msgType > eWNI_SME_MSG_TYPES_BEGIN) {
 		MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION,
 				 msg.type));
 		lim_process_sme_req_messages(mac, &msg);
 	} else {
-		lim_process_mlm_rsp_messages(mac, msgType, pMsgBuf);
+		lim_process_mlm_rsp_messages(mac, msgType, msg_buf);
 	}
 } /*** end lim_post_sme_message() ***/
 
@@ -813,21 +814,22 @@ lim_post_sme_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBu
  *
  * @param mac      Pointer to Global MAC structure
  * @param msgType   Indicates the MLM primitive message type
- * @param *pMsgBuf  A pointer to the MLM message buffer
+ * @param *msg_buf  A pointer to the MLM message buffer
  *
  * @return None
  */
 static inline void
-lim_post_mlm_message(struct mac_context *mac, uint32_t msgType, uint32_t *pMsgBuf)
+lim_post_mlm_message(struct mac_context *mac, uint32_t msgType,
+		     uint32_t *msg_buf)
 {
 	struct scheduler_msg msg = {0};
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 	msg.type = (uint16_t) msgType;
-	msg.bodyptr = pMsgBuf;
+	msg.bodyptr = msg_buf;
 	msg.bodyval = 0;
 	MTRACE(mac_trace_msg_rx(mac, NO_SESSION, msg.type));
 	lim_process_mlm_req_messages(mac, &msg);

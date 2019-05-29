@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,14 +38,14 @@
 #include "sme_rrm_internal.h"
 
 QDF_STATUS sme_rrm_msg_processor(struct mac_context *mac, uint16_t msg_type,
-		void *pMsgBuf);
+		void *msg_buf);
 QDF_STATUS rrm_close(struct mac_context *mac);
 QDF_STATUS rrm_open(struct mac_context *mac);
 QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
 QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
-		void *pMsgBuf);
+		void *msg_buf);
 
 /**
  * rrm_start() - start the RRM module

@@ -352,7 +352,7 @@ __lim_is_defered_msg_for_radar(struct mac_context *mac_ctx,
 /**
  * __lim_process_sme_sys_ready_ind () - Process ready indication from WMA
  * @mac: Global MAC context
- * @pMsgBuf: Message from WMA
+ * @msg_buf: Message from WMA
  *
  * handles the notification from HDD. PE just forwards this message to HAL.
  *
@@ -361,14 +361,14 @@ __lim_is_defered_msg_for_radar(struct mac_context *mac_ctx,
  */
 
 static bool __lim_process_sme_sys_ready_ind(struct mac_context *mac,
-					    uint32_t *pMsgBuf)
+					    uint32_t *msg_buf)
 {
 	struct scheduler_msg msg = {0};
-	struct sme_ready_req *ready_req = (struct sme_ready_req *) pMsgBuf;
+	struct sme_ready_req *ready_req = (struct sme_ready_req *)msg_buf;
 
 	msg.type = WMA_SYS_READY_IND;
 	msg.reserved = 0;
-	msg.bodyptr = pMsgBuf;
+	msg.bodyptr = msg_buf;
 	msg.bodyval = 0;
 
 	if (ANI_DRIVER_TYPE(mac) != QDF_DRIVER_TYPE_MFG) {
@@ -2028,12 +2028,12 @@ bool send_disassoc_frame = 1;
  ***NOTE:
  *
  * @param  mac      Pointer to Global MAC structure
- * @param  *pMsgBuf  A pointer to the SME message buffer
+ * @param  *msg_buf  A pointer to the SME message buffer
  * @return None
  */
 
 static void __lim_process_sme_disassoc_req(struct mac_context *mac,
-					   uint32_t *pMsgBuf)
+					   uint32_t *msg_buf)
 {
 	uint16_t disassocTrigger, reasonCode;
 	tLimMlmDisassocReq *pMlmDisassocReq;
@@ -2043,12 +2043,12 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 	uint8_t sessionId;
 	uint8_t smesessionId;
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
-	qdf_mem_copy(&smeDisassocReq, pMsgBuf, sizeof(struct disassoc_req));
+	qdf_mem_copy(&smeDisassocReq, msg_buf, sizeof(struct disassoc_req));
 	smesessionId = smeDisassocReq.sessionId;
 	if (!lim_is_sme_disassoc_req_valid(mac,
 					   &smeDisassocReq,
@@ -2241,7 +2241,7 @@ sendDisassoc:
    \return none
    \sa
    ----------------------------------------------------------------- */
-void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
+void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 {
 	struct disassoc_cnf smeDisassocCnf;
 	uint16_t aid;
@@ -2251,7 +2251,7 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint32_t *msg = NULL;
 	QDF_STATUS status;
 
-	qdf_mem_copy(&smeDisassocCnf, pMsgBuf, sizeof(smeDisassocCnf));
+	qdf_mem_copy(&smeDisassocCnf, msg_buf, sizeof(smeDisassocCnf));
 
 	pe_session = pe_find_session_by_bssid(mac,
 				smeDisassocCnf.bssid.bytes,
@@ -2862,7 +2862,7 @@ static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 }
 
 static void
-__lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
+__lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *msg_buf)
 {
 	struct stop_bss_req stop_bss_req;
 	tLimSmeStates prevState;
@@ -2870,10 +2870,10 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint8_t smesessionId;
 	uint8_t sessionId;
 
-	qdf_mem_copy(&stop_bss_req, pMsgBuf, sizeof(stop_bss_req));
+	qdf_mem_copy(&stop_bss_req, msg_buf, sizeof(stop_bss_req));
 	smesessionId = stop_bss_req.sessionId;
 
-	if (!lim_is_sme_stop_bss_req_valid(pMsgBuf)) {
+	if (!lim_is_sme_stop_bss_req_valid(msg_buf)) {
 		pe_warn("received invalid SME_STOP_BSS_REQ message");
 		/* Send Stop BSS response to host */
 		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP,
@@ -3148,7 +3148,8 @@ end:
 	qdf_mem_free(assoc_cnf.owe_ie);
 }
 
-static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgBuf)
+static void
+__lim_process_sme_addts_req(struct mac_context *mac, uint32_t *msg_buf)
 {
 	tpDphHashNode sta;
 	tSirMacAddr peerMac;
@@ -3158,12 +3159,12 @@ static void __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *pMsgB
 	uint8_t sessionId;      /* PE sessionId */
 	uint8_t smesessionId;
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
-	pSirAddts = (tpSirAddtsReq) pMsgBuf;
+	pSirAddts = (tpSirAddtsReq) msg_buf;
 	smesessionId = pSirAddts->sessionId;
 	pe_session = pe_find_session_by_bssid(mac, pSirAddts->bssid.bytes,
 						 &sessionId);
@@ -3292,12 +3293,13 @@ send_failure_addts_rsp:
 			       smesessionId);
 }
 
-static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgBuf)
+static void
+__lim_process_sme_delts_req(struct mac_context *mac, uint32_t *msg_buf)
 {
 	tSirMacAddr peerMacAddr;
 	uint8_t ac;
 	struct mac_ts_info *pTsinfo;
-	tpSirDeltsReq pDeltsReq = (tpSirDeltsReq) pMsgBuf;
+	tpSirDeltsReq pDeltsReq = (tpSirDeltsReq) msg_buf;
 	tpDphHashNode sta = NULL;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
@@ -3436,35 +3438,31 @@ void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)
 
 #ifndef QCA_SUPPORT_CP_STATS
 /**
- * __lim_process_sme_get_statistics_request()
+ * __lim_process_sme_get_statistics_request() - Post WMA_GET_STATISTICS_REQ to
+ * wma
+ * @mac      Pointer to Global MAC structure
+ * @msg_buf  A pointer to the SME message buffer
  *
- ***FUNCTION:
- *
- *
- ***NOTE:
- *
- * @param  mac      Pointer to Global MAC structure
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return None
+ * @Return None
  */
-static void
-__lim_process_sme_get_statistics_request(struct mac_context *mac, uint32_t *pMsgBuf)
+static void __lim_process_sme_get_statistics_request(struct mac_context *mac,
+						     uint32_t *msg_buf)
 {
 	tpAniGetPEStatsReq pPEStatsReq;
 	struct scheduler_msg msgQ = {0};
 
-	pPEStatsReq = (tpAniGetPEStatsReq) pMsgBuf;
+	pPEStatsReq = (tpAniGetPEStatsReq)msg_buf;
 
 	msgQ.type = WMA_GET_STATISTICS_REQ;
 
 	msgQ.reserved = 0;
-	msgQ.bodyptr = pMsgBuf;
+	msgQ.bodyptr = msg_buf;
 	msgQ.bodyval = 0;
 	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 
 	if (QDF_STATUS_SUCCESS != (wma_post_ctrl_msg(mac, &msgQ))) {
-		qdf_mem_free(pMsgBuf);
-		pMsgBuf = NULL;
+		qdf_mem_free(msg_buf);
+		msg_buf = NULL;
 		pe_err("Unable to forward request");
 		return;
 	}
@@ -3473,7 +3471,7 @@ __lim_process_sme_get_statistics_request(struct mac_context *mac, uint32_t *pMsg
 }
 #else
 static void __lim_process_sme_get_statistics_request(
-			struct mac_context *mac_ctx, uint32_t *pMsgBuf) {}
+			struct mac_context *mac_ctx, uint32_t *msg_buf) {}
 #endif
 
 #ifdef FEATURE_WLAN_ESE
@@ -3481,24 +3479,24 @@ static void __lim_process_sme_get_statistics_request(
  * __lim_process_sme_get_tsm_stats_request() - get tsm stats request
  *
  * @mac: Pointer to Global MAC structure
- * @pMsgBuf: A pointer to the SME message buffer
+ * @msg_buf: A pointer to the SME message buffer
  *
  * Return: None
  */
-static void
-__lim_process_sme_get_tsm_stats_request(struct mac_context *mac, uint32_t *pMsgBuf)
+static void __lim_process_sme_get_tsm_stats_request(struct mac_context *mac,
+						    uint32_t *msg_buf)
 {
 	struct scheduler_msg msgQ = {0};
 
 	msgQ.type = WMA_TSM_STATS_REQ;
 	msgQ.reserved = 0;
-	msgQ.bodyptr = pMsgBuf;
+	msgQ.bodyptr = msg_buf;
 	msgQ.bodyval = 0;
 	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 
 	if (QDF_STATUS_SUCCESS != (wma_post_ctrl_msg(mac, &msgQ))) {
-		qdf_mem_free(pMsgBuf);
-		pMsgBuf = NULL;
+		qdf_mem_free(msg_buf);
+		msg_buf = NULL;
 		pe_err("Unable to forward request");
 		return;
 	}
@@ -3810,7 +3808,7 @@ static void __lim_process_sme_session_update(struct mac_context *mac_ctx,
    Update the beacon Interval dynamically if beaconInterval is different in MCC
  */
 static void __lim_process_sme_change_bi(struct mac_context *mac,
-					uint32_t *pMsgBuf)
+					uint32_t *msg_buf)
 {
 	struct change_bi_params *pChangeBIParams;
 	struct pe_session *pe_session;
@@ -3819,13 +3817,13 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 
 	pe_debug("received Update Beacon Interval message");
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
-	pChangeBIParams = (struct change_bi_params *)pMsgBuf;
+	pChangeBIParams = (struct change_bi_params *)msg_buf;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pChangeBIParams->bssid.bytes,
@@ -3870,7 +3868,7 @@ static void __lim_process_sme_change_bi(struct mac_context *mac,
 
 #ifdef QCA_HT_2040_COEX
 static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
-					      uint32_t *pMsgBuf)
+					      uint32_t *msg_buf)
 {
 	struct set_ht2040_mode *pSetHT2040Mode;
 	struct pe_session *pe_session;
@@ -3881,12 +3879,12 @@ static void __lim_process_sme_set_ht2040_mode(struct mac_context *mac,
 	tpDphHashNode sta = NULL;
 
 	pe_debug("received Set HT 20/40 mode message");
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
-	pSetHT2040Mode = (struct set_ht2040_mode *) pMsgBuf;
+	pSetHT2040Mode = (struct set_ht2040_mode *)msg_buf;
 
 	pe_session = pe_find_session_by_bssid(mac,
 				pSetHT2040Mode->bssid.bytes,
@@ -4149,19 +4147,19 @@ skip_match:
 	return;
 }
 
-static void
-__lim_process_sme_reset_ap_caps_change(struct mac_context *mac, uint32_t *pMsgBuf)
+static void __lim_process_sme_reset_ap_caps_change(struct mac_context *mac,
+						   uint32_t *msg_buf)
 {
 	tpSirResetAPCapsChange pResetCapsChange;
 	struct pe_session *pe_session;
 	uint8_t sessionId = 0;
 
-	if (!pMsgBuf) {
+	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
 		return;
 	}
 
-	pResetCapsChange = (tpSirResetAPCapsChange) pMsgBuf;
+	pResetCapsChange = (tpSirResetAPCapsChange)msg_buf;
 	pe_session =
 		pe_find_session_by_bssid(mac, pResetCapsChange->bssId.bytes,
 					 &sessionId);
@@ -4660,16 +4658,20 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
  *
  * @param  mac      Pointer to Global MAC structure
  * @param  msgType   Indicates the SME message type
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return Boolean - true - if pMsgBuf is consumed and can be freed.
- *                   false - if pMsgBuf is not to be freed.
+ * @param  *msg_buf  A pointer to the SME message buffer
+ * @return Boolean - true - if msg_buf is consumed and can be freed.
+ *                   false - if msg_buf is not to be freed.
  */
 
 bool lim_process_sme_req_messages(struct mac_context *mac,
 				  struct scheduler_msg *pMsg)
 {
-	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesn't want pMsgBuf to be freed. */
-	uint32_t *pMsgBuf = pMsg->bodyptr;
+	/*
+	 * Set this flag to false within case block of any following message,
+	 * that doesn't want msg_buf to be freed.
+	 */
+	bool bufConsumed = true;
+	uint32_t *msg_buf = pMsg->bodyptr;
 
 	pe_debug("LIM Received SME Message %s(%d) Global LimSmeState:%s(%d) Global LimMlmState: %s(%d)",
 		       lim_msg_str(pMsg->type), pMsg->type,
@@ -4680,7 +4682,7 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 
 	switch (pMsg->type) {
 	case eWNI_SME_SYS_READY_IND:
-		bufConsumed = __lim_process_sme_sys_ready_ind(mac, pMsgBuf);
+		bufConsumed = __lim_process_sme_sys_ready_ind(mac, msg_buf);
 		break;
 
 	case eWNI_SME_START_BSS_REQ:
@@ -4688,11 +4690,11 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		break;
 
 	case eWNI_SME_JOIN_REQ:
-		__lim_process_sme_join_req(mac, pMsgBuf);
+		__lim_process_sme_join_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_REASSOC_REQ:
-		__lim_process_sme_reassoc_req(mac, pMsgBuf);
+		__lim_process_sme_reassoc_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_DISASSOC_REQ:
@@ -4709,11 +4711,11 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		break;
 
 	case eWNI_SME_SEND_DISASSOC_FRAME:
-		__lim_process_send_disassoc_frame(mac, pMsgBuf);
+		__lim_process_send_disassoc_frame(mac, msg_buf);
 		break;
 
 	case eWNI_SME_SETCONTEXT_REQ:
-		__lim_process_sme_set_context_req(mac, pMsgBuf);
+		__lim_process_sme_set_context_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_STOP_BSS_REQ:
@@ -4724,17 +4726,17 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		if (pMsg->type == eWNI_SME_ASSOC_CNF)
 			pe_debug("Received ASSOC_CNF message");
 			__lim_process_sme_assoc_cnf_new(mac, pMsg->type,
-							pMsgBuf);
+							msg_buf);
 		break;
 
 	case eWNI_SME_ADDTS_REQ:
 		pe_debug("Received ADDTS_REQ message");
-		__lim_process_sme_addts_req(mac, pMsgBuf);
+		__lim_process_sme_addts_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_DELTS_REQ:
 		pe_debug("Received DELTS_REQ message");
-		__lim_process_sme_delts_req(mac, pMsgBuf);
+		__lim_process_sme_delts_req(mac, msg_buf);
 		break;
 
 	case SIR_LIM_ADDTS_RSP_TIMEOUT:
@@ -4743,35 +4745,38 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		break;
 
 	case eWNI_SME_GET_STATISTICS_REQ:
-		__lim_process_sme_get_statistics_request(mac, pMsgBuf);
-		/* HAL consumes pMsgBuf. It will be freed there. Set bufConsumed to false. */
+		__lim_process_sme_get_statistics_request(mac, msg_buf);
+		/*
+		 * HAL consumes msg_buf. It will be freed there.
+		 * Set bufConsumed to false.
+		 */
 		bufConsumed = false;
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
-		__lim_process_sme_get_tsm_stats_request(mac, pMsgBuf);
+		__lim_process_sme_get_tsm_stats_request(mac, msg_buf);
 		bufConsumed = false;
 		break;
 #endif /* FEATURE_WLAN_ESE */
 	case eWNI_SME_SESSION_UPDATE_PARAM:
-		__lim_process_sme_session_update(mac, pMsgBuf);
+		__lim_process_sme_session_update(mac, msg_buf);
 		break;
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
-		__lim_process_roam_scan_offload_req(mac, pMsgBuf);
+		__lim_process_roam_scan_offload_req(mac, msg_buf);
 		bufConsumed = false;
 		break;
 	case eWNI_SME_ROAM_INVOKE:
-		lim_process_roam_invoke(mac, pMsgBuf);
+		lim_process_roam_invoke(mac, msg_buf);
 		bufConsumed = false;
 		break;
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
-		__lim_process_sme_change_bi(mac, pMsgBuf);
+		__lim_process_sme_change_bi(mac, msg_buf);
 		break;
 
 #ifdef QCA_HT_2040_COEX
 	case eWNI_SME_SET_HT_2040_MODE:
-		__lim_process_sme_set_ht2040_mode(mac, pMsgBuf);
+		__lim_process_sme_set_ht2040_mode(mac, msg_buf);
 		break;
 #endif
 
@@ -4784,87 +4789,87 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		bufConsumed = (bool) lim_process_ft_pre_auth_req(mac, pMsg);
 		break;
 	case eWNI_SME_FT_UPDATE_KEY:
-		lim_process_ft_update_key(mac, pMsgBuf);
+		lim_process_ft_update_key(mac, msg_buf);
 		break;
 
 	case eWNI_SME_FT_AGGR_QOS_REQ:
-		lim_process_ft_aggr_qos_req(mac, pMsgBuf);
+		lim_process_ft_aggr_qos_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
-		__lim_process_sme_register_mgmt_frame_req(mac, pMsgBuf);
+		__lim_process_sme_register_mgmt_frame_req(mac, msg_buf);
 		break;
 #ifdef FEATURE_WLAN_TDLS
 	case eWNI_SME_TDLS_SEND_MGMT_REQ:
-		lim_process_sme_tdls_mgmt_send_req(mac, pMsgBuf);
+		lim_process_sme_tdls_mgmt_send_req(mac, msg_buf);
 		break;
 	case eWNI_SME_TDLS_ADD_STA_REQ:
-		lim_process_sme_tdls_add_sta_req(mac, pMsgBuf);
+		lim_process_sme_tdls_add_sta_req(mac, msg_buf);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_REQ:
-		lim_process_sme_tdls_del_sta_req(mac, pMsgBuf);
+		lim_process_sme_tdls_del_sta_req(mac, msg_buf);
 		break;
 #endif
 	case eWNI_SME_RESET_AP_CAPS_CHANGED:
-		__lim_process_sme_reset_ap_caps_change(mac, pMsgBuf);
+		__lim_process_sme_reset_ap_caps_change(mac, msg_buf);
 		break;
 
 	case eWNI_SME_CHANNEL_CHANGE_REQ:
-		lim_process_sme_channel_change_request(mac, pMsgBuf);
+		lim_process_sme_channel_change_request(mac, msg_buf);
 		break;
 
 	case eWNI_SME_START_BEACON_REQ:
-		lim_process_sme_start_beacon_req(mac, pMsgBuf);
+		lim_process_sme_start_beacon_req(mac, msg_buf);
 		break;
 
 	case eWNI_SME_DFS_BEACON_CHAN_SW_IE_REQ:
-		lim_process_sme_dfs_csa_ie_request(mac, pMsgBuf);
+		lim_process_sme_dfs_csa_ie_request(mac, msg_buf);
 		break;
 
 	case eWNI_SME_UPDATE_ADDITIONAL_IES:
-		lim_process_update_add_ies(mac, pMsgBuf);
+		lim_process_update_add_ies(mac, msg_buf);
 		break;
 
 	case eWNI_SME_MODIFY_ADDITIONAL_IES:
-		lim_process_modify_add_ies(mac, pMsgBuf);
+		lim_process_modify_add_ies(mac, msg_buf);
 		break;
 	case eWNI_SME_SET_HW_MODE_REQ:
-		lim_process_set_hw_mode(mac, pMsgBuf);
+		lim_process_set_hw_mode(mac, msg_buf);
 		break;
 	case eWNI_SME_NSS_UPDATE_REQ:
-		lim_process_nss_update_request(mac, pMsgBuf);
+		lim_process_nss_update_request(mac, msg_buf);
 		break;
 	case eWNI_SME_SET_DUAL_MAC_CFG_REQ:
-		lim_process_set_dual_mac_cfg_req(mac, pMsgBuf);
+		lim_process_set_dual_mac_cfg_req(mac, msg_buf);
 		break;
 	case eWNI_SME_SET_IE_REQ:
-		lim_process_set_ie_req(mac, pMsgBuf);
+		lim_process_set_ie_req(mac, msg_buf);
 		break;
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
-		lim_register_mgmt_frame_ind_cb(mac, pMsgBuf);
+		lim_register_mgmt_frame_ind_cb(mac, msg_buf);
 		break;
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
-		lim_process_ext_change_channel(mac, pMsgBuf);
+		lim_process_ext_change_channel(mac, msg_buf);
 		break;
 	case eWNI_SME_SET_ANTENNA_MODE_REQ:
-		lim_process_set_antenna_mode_req(mac, pMsgBuf);
+		lim_process_set_antenna_mode_req(mac, msg_buf);
 		break;
 	case eWNI_SME_PDEV_SET_HT_VHT_IE:
-		lim_process_set_pdev_IEs(mac, pMsgBuf);
+		lim_process_set_pdev_IEs(mac, msg_buf);
 		break;
 	case eWNI_SME_SET_VDEV_IES_PER_BAND:
-		lim_process_set_vdev_ies_per_band(mac, pMsgBuf);
+		lim_process_set_vdev_ies_per_band(mac, msg_buf);
 		break;
 	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
-		lim_process_sme_update_access_policy_vendor_ie(mac, pMsgBuf);
+		lim_process_sme_update_access_policy_vendor_ie(mac, msg_buf);
 		break;
 	case eWNI_SME_UPDATE_CONFIG:
 		lim_process_sme_update_config(mac,
-					(struct update_config *)pMsgBuf);
+					(struct update_config *)msg_buf);
 		break;
 	case eWNI_SME_SET_ADDBA_ACCEPT:
 		lim_process_sme_set_addba_accept(mac,
-					(struct sme_addba_accept *)pMsgBuf);
+					(struct sme_addba_accept *)msg_buf);
 		break;
 	case eWNI_SME_UPDATE_EDCA_PROFILE:
 		lim_process_sme_update_edca_params(mac, pMsg->bodyval);
@@ -4874,7 +4879,7 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		break;
 	case WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU:
 		lim_process_sme_cfg_action_frm_in_tb_ppdu(mac,
-				(struct  sir_cfg_action_frm_tb_ppdu *)pMsgBuf);
+				(struct  sir_cfg_action_frm_tb_ppdu *)msg_buf);
 		break;
 	case WNI_SME_REGISTER_BCN_REPORT_SEND_CB:
 		lim_register_bcn_report_send_cb(mac, pMsg);
@@ -4904,9 +4909,9 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
  *
  * @param  mac      Pointer to Global MAC structure
  * @param  msgType   Indicates the SME message type
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return Boolean - true - if pMsgBuf is consumed and can be freed.
- *                   false - if pMsgBuf is not to be freed.
+ * @param  *msg_buf  A pointer to the SME message buffer
+ * @return Boolean - true - if msg_buf is consumed and can be freed.
+ *                   false - if msg_buf is not to be freed.
  */
 static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *pMsg)
 {

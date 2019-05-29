@@ -65,13 +65,13 @@ static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 static void sme_disconnect_connected_sessions(struct mac_context *mac);
 
 static QDF_STATUS sme_handle_generic_change_country_code(struct mac_context *mac,
-						  void *pMsgBuf);
+						  void *msg_buf);
 
 static QDF_STATUS sme_process_nss_update_resp(struct mac_context *mac, uint8_t *msg);
 
 /* Channel Change Response Indication Handler */
 static QDF_STATUS sme_process_channel_change_resp(struct mac_context *mac,
-					   uint16_t msg_type, void *pMsgBuf);
+					   uint16_t msg_type, void *msg_buf);
 
 static QDF_STATUS sme_stats_ext_event(struct mac_context *mac,
 				      struct stats_ext_event *msg);
@@ -5303,13 +5303,13 @@ void sme_set_cc_src(mac_handle_t mac_handle, enum country_src cc_src)
  */
 static QDF_STATUS
 sme_handle_generic_change_country_code(struct mac_context *mac_ctx,
-				       void *pMsgBuf)
+				       void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	v_REGDOMAIN_t reg_domain_id = 0;
 	bool user_ctry_priority =
 		mac_ctx->mlme_cfg->sap_cfg.country_code_priority;
-	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
+	tAniGenericChangeCountryCodeReq *msg = msg_buf;
 
 	if (SOURCE_11D != mac_ctx->reg_hint_src) {
 		if (SOURCE_DRIVER != mac_ctx->reg_hint_src) {
@@ -8855,12 +8855,12 @@ QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
  * Return QDF_STATUS
  */
 static QDF_STATUS sme_process_channel_change_resp(struct mac_context *mac,
-					   uint16_t msg_type, void *pMsgBuf)
+					   uint16_t msg_type, void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_info *roam_info;
 	eCsrRoamResult roamResult;
-	tpSwitchChannelParams pChnlParams = (tpSwitchChannelParams) pMsgBuf;
+	tpSwitchChannelParams pChnlParams = (tpSwitchChannelParams) msg_buf;
 	uint32_t SessionId = pChnlParams->peSessionId;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));

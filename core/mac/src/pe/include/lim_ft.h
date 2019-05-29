@@ -132,9 +132,9 @@ static inline void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 {}
 #endif
 
-bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf);
+bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf);
 QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
-		uint32_t *pMsgBuf);
+		uint32_t *msg_buf);
 void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsg);
 void lim_ft_cleanup_all_ft_sessions(struct mac_context *mac);

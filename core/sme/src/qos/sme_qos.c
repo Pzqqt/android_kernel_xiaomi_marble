@@ -332,11 +332,11 @@ static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      enum qca_wlan_ac_type ac, uint8_t tspec_mask);
 static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac,
-						void *pMsgBuf);
+						void *msg_buf);
 static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
-						void *pMsgBuf);
+						void *msg_buf);
 static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac,
-						void *pMsgBuf);
+						void *msg_buf);
 static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac,
 					uint8_t sessionId, void *pEvent_info);
 static QDF_STATUS sme_qos_process_reassoc_req_ev(struct mac_context *mac,
@@ -361,7 +361,7 @@ static QDF_STATUS sme_qos_process_set_key_success_ind(struct mac_context *mac,
 					       uint8_t sessionId,
 						void *pEvent_info);
 static QDF_STATUS sme_qos_process_aggr_qos_rsp(struct mac_context *mac,
-						void *pMsgBuf);
+						void *msg_buf);
 static QDF_STATUS sme_qos_ft_aggr_qos_req(struct mac_context *mac, uint8_t
 					sessionId);
 static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
@@ -4045,15 +4045,16 @@ static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 
 /*
  * sme_qos_process_add_ts_rsp() - Function to process the
- *  eWNI_SME_ADDTS_RSP came from PE
+ * eWNI_SME_ADDTS_RSP came from PE
  *
- * mac - Pointer to the global MAC parameter structure.
- * pMsgBuf - Pointer to the msg buffer came from PE.
+ * @mac - Pointer to the global MAC parameter structure.
+ * @msg_buf - Pointer to the msg buffer came from PE.
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac, void *pMsgBuf)
+static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac,
+					     void *msg_buf)
 {
-	tpSirAddtsRsp paddts_rsp = (tpSirAddtsRsp) pMsgBuf;
+	tpSirAddtsRsp paddts_rsp = (tpSirAddtsRsp) msg_buf;
 	struct sme_qos_sessioninfo *pSession;
 	uint8_t sessionId = paddts_rsp->sessionId;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -4115,13 +4116,14 @@ static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac, void *pMsg
  *  eWNI_SME_DELTS_RSP came from PE
  *
  * mac - Pointer to the global MAC parameter structure.
- * pMsgBuf - Pointer to the msg buffer came from PE.
+ * msg_buf - Pointer to the msg buffer came from PE.
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac, void *pMsgBuf)
+static
+QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac, void *msg_buf)
 {
-	tpSirDeltsRsp pDeltsRsp = (tpSirDeltsRsp) pMsgBuf;
+	tpSirDeltsRsp pDeltsRsp = (tpSirDeltsRsp) msg_buf;
 	struct sme_qos_sessioninfo *pSession;
 	uint8_t sessionId = pDeltsRsp->sessionId;
 
@@ -4142,14 +4144,14 @@ static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac, void *pMsg
  * this AC about QoS release
  *
  * mac - Pointer to the global MAC parameter structure.
- * pMsgBuf - Pointer to the msg buffer came from PE.
+ * msg_buf - Pointer to the msg buffer came from PE.
  *
  * Return QDF_STATUS
  */
 static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
-					     void *pMsgBuf)
+					     void *msg_buf)
 {
-	tpSirDeltsRsp pdeltsind = (tpSirDeltsRsp) pMsgBuf;
+	tpSirDeltsRsp pdeltsind = (tpSirDeltsRsp)msg_buf;
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	uint8_t sessionId = pdeltsind->sessionId;

@@ -144,8 +144,9 @@ struct scan_result_list {
 enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 					  enum csr_roam_state NewRoamState,
 					  uint8_t sessionId);
-void csr_roaming_state_msg_processor(struct mac_context *mac, void *pMsgBuf);
-void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *pMsgBuf);
+void csr_roaming_state_msg_processor(struct mac_context *mac, void *msg_buf);
+void csr_roam_joined_state_msg_processor(struct mac_context *mac,
+					 void *msg_buf);
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 				struct scan_event *event, void *arg);
 void csr_release_command_roam(struct mac_context *mac, tSmeCmd *pCommand);

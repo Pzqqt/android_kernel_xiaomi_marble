@@ -740,7 +740,7 @@ void lim_fill_ft_session(struct mac_context *mac,
  * This function is called to process the update key request from SME
  *
  *------------------------------------------------------------------*/
-bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
+bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *msg_buf)
 {
 	tAddBssParams *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
@@ -748,14 +748,13 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 	uint8_t sessionId;
 
 	/* Sanity Check */
-	if (!mac || !pMsgBuf) {
+	if (!mac || !msg_buf)
 		return false;
-	}
 
-	pKeyInfo = (tSirFTUpdateKeyInfo *) pMsgBuf;
+	pKeyInfo = (tSirFTUpdateKeyInfo *)msg_buf;
 
 	pe_session = pe_find_session_by_bssid(mac, pKeyInfo->bssid.bytes,
-						 &sessionId);
+					      &sessionId);
 	if (!pe_session) {
 		pe_err("%s: Unable to find session for the following bssid",
 			       __func__);
@@ -927,10 +926,10 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 }
 
 QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
-				       uint32_t *pMsgBuf)
+				       uint32_t *msg_buf)
 {
 	struct scheduler_msg msg = {0};
-	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
+	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) msg_buf;
 	struct aggr_add_ts_param *pAggrAddTsParam;
 	struct pe_session *pe_session = NULL;
 	tpLimTspecInfo tspecInfo;

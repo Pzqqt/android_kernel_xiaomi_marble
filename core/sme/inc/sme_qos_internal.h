@@ -93,7 +93,7 @@ typedef struct {
 QDF_STATUS sme_qos_open(struct mac_context *mac);
 QDF_STATUS sme_qos_close(struct mac_context *mac);
 QDF_STATUS sme_qos_msg_processor(struct mac_context *mac, uint16_t msg_type,
-		void *pMsgBuf);
+		void *msg_buf);
 
 /*--------------------------------------------------------------------------
   Internal APIs for CSR
