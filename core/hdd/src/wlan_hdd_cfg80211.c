@@ -13430,9 +13430,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	uint32_t *cipher_suites;
-	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
-	bool mac_spoofing_enabled;
-
 	hdd_enter();
 
 	/* Now bind the underlying wlan device with wiphy */
@@ -13470,8 +13467,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wlan_hdd_cfg80211_set_wiphy_scan_flags(wiphy);
 
-	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
-
 	wlan_scan_cfg80211_add_connected_pno_support(wiphy);
 
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;
@@ -13487,29 +13482,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				 | BIT(NL80211_IFTYPE_AP)
 				 | BIT(NL80211_IFTYPE_MONITOR);
 
-	if (QDF_STATUS_SUCCESS !=
-	    ucfg_policy_mgr_get_allow_mcc_go_diff_bi(hdd_ctx->psoc,
-						     &allow_mcc_go_diff_bi))
-		hdd_err("can't get mcc_go_diff_bi value, use default");
-	if (QDF_STATUS_SUCCESS !=
-	    ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc))
-		hdd_err("can't get enable_mcc value, use default");
-	if (config->advertise_concurrent_operation) {
-		if (enable_mcc) {
-			int i;
-
-			for (i = 0;
-			     i < ARRAY_SIZE(wlan_hdd_iface_combination);
-			     i++) {
-				if (!allow_mcc_go_diff_bi)
-					wlan_hdd_iface_combination[i].
-					beacon_int_infra_match = true;
-			}
-		}
-		wiphy->n_iface_combinations =
-			ARRAY_SIZE(wlan_hdd_iface_combination);
-		wiphy->iface_combinations = wlan_hdd_iface_combination;
-	}
 
 	/*
 	 * In case of static linked driver at the time of driver unload,
@@ -13583,9 +13555,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	hdd_add_channel_switch_support(&wiphy->flags);
 	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
-	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
-	if (mac_spoofing_enabled)
-		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 	wlan_hdd_cfg80211_action_frame_randomization_init(wiphy);
 
 	hdd_exit();
@@ -13783,10 +13752,16 @@ static void wlan_hdd_update_lfr_wiphy(struct hdd_context *hdd_ctx)
 void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
 	int value;
-	bool fils_enabled;
+	bool fils_enabled, mac_spoofing_enabled;
 	bool dfs_master_capable = true, is_oce_sta_enabled = false;
 	QDF_STATUS status;
+	struct wiphy *wiphy = hdd_ctx->wiphy;
+	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
 
+	if (!wiphy) {
+		hdd_err("Invalid wiphy");
+		return;
+	}
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
@@ -13799,19 +13774,51 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get fils enabled info");
 	if (fils_enabled)
-		wlan_hdd_cfg80211_set_wiphy_fils_feature(hdd_ctx->wiphy);
+		wlan_hdd_cfg80211_set_wiphy_fils_feature(wiphy);
 
 	status = ucfg_mlme_get_dfs_master_capability(hdd_ctx->psoc,
 						     &dfs_master_capable);
 	if (QDF_IS_STATUS_SUCCESS(status) && dfs_master_capable)
-		wlan_hdd_cfg80211_set_dfs_offload_feature(hdd_ctx->wiphy);
+		wlan_hdd_cfg80211_set_dfs_offload_feature(wiphy);
 
 	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc,
 						    &is_oce_sta_enabled);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get OCE STA enable info");
 	if (is_oce_sta_enabled)
-		wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(hdd_ctx->wiphy);
+		wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(wiphy);
+
+	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_allow_mcc_go_diff_bi(hdd_ctx->psoc,
+						     &allow_mcc_go_diff_bi))
+		hdd_err("can't get mcc_go_diff_bi value, use default");
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc))
+		hdd_err("can't get enable_mcc value, use default");
+
+	if (hdd_ctx->config->advertise_concurrent_operation) {
+		if (enable_mcc) {
+			int i;
+
+			for (i = 0;
+			     i < ARRAY_SIZE(wlan_hdd_iface_combination);
+			     i++) {
+				if (!allow_mcc_go_diff_bi)
+					wlan_hdd_iface_combination[i].
+					beacon_int_infra_match = true;
+			}
+		}
+		wiphy->n_iface_combinations =
+			ARRAY_SIZE(wlan_hdd_iface_combination);
+		wiphy->iface_combinations = wlan_hdd_iface_combination;
+	}
+
+	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
+	if (mac_spoofing_enabled)
+		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 }
 
 /**
