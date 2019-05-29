@@ -300,6 +300,8 @@ blm_handle_avoid_list(struct blm_reject_ap *entry,
 	blm_debug("Added %pM to avoid list type %d, counter %d",
 		  entry->bssid.bytes, ap_info->reject_ap_type,
 		  entry->bad_bssid_counter);
+
+	entry->connect_timestamp = qdf_mc_timer_get_system_time();
 }
 
 static void
@@ -454,7 +456,14 @@ blm_is_oldest_entry(enum blm_reject_ap_type list_type,
 {
 	switch (list_type) {
 	case DRIVER_RSSI_REJECT_TYPE:
-		if (cur_node_delta < oldest_node_delta)
+		/*
+		 * For RSSI reject type, the lowest retry delay has to be found
+		 * out hence if oldest_node_delta is 0, mean this is the first
+		 * entry and thus return true, If oldest_node_delta is non
+		 * zero, compare the delta and return true if the cur entry
+		 * has lower retry delta.
+		 */
+		if (!oldest_node_delta || (cur_node_delta < oldest_node_delta))
 			return true;
 		break;
 	case USERSPACE_AVOID_TYPE:
@@ -482,17 +491,6 @@ blm_try_delete_bssid_in_list(qdf_list_t *reject_ap_list,
 	struct blm_reject_ap *oldest_blm_entry = NULL;
 	qdf_time_t oldest_node_delta = 0;
 	qdf_time_t cur_node_delta = 0;
-
-	/*
-	 * For RSSI reject type, the lowest retry delay has to be found out,
-	 * hence for reference oldest node delta should be max, and then the
-	 * first entry entry would always be less than oldest entry delta. For
-	 * every other case the delta is the current timestamp minus the time
-	 * when the AP was added, hence it has to be maximum, so a greater than
-	 * check has to be there, so the oldest node delta should be minimum.
-	 */
-	if (list_type == DRIVER_RSSI_REJECT_TYPE)
-		oldest_node_delta = 0xFFFFFFFFFFFFFFFF;
 
 	qdf_list_peek_front(reject_ap_list, &cur_node);
 
@@ -641,7 +639,7 @@ blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      struct blm_config *cfg)
 {
 	QDF_STATUS status;
-	struct reject_ap_params reject_params;
+	struct reject_ap_params reject_params = {0};
 
 	reject_params.bssid_list =
 			qdf_mem_malloc(sizeof(*reject_params.bssid_list) *
@@ -699,7 +697,7 @@ blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 	blm_ctx = blm_get_pdev_obj(pdev);
 	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
 
-	if (!blm_ctx || blm_psoc_obj) {
+	if (!blm_ctx || !blm_psoc_obj) {
 		blm_err("blm_ctx or blm_psoc_obj is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -893,7 +891,7 @@ blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 	blm_ctx = blm_get_pdev_obj(pdev);
 	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
 
-	if (!blm_ctx || blm_psoc_obj) {
+	if (!blm_ctx || !blm_psoc_obj) {
 		blm_err("blm_ctx or blm_psoc_obj is NULL");
 		return 0;
 	}
@@ -911,4 +909,78 @@ blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 
 	return num_of_reject_bssid;
+}
+
+void
+blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
+				struct qdf_mac_addr bssid,
+				enum blm_connection_state con_state)
+{
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+	struct blm_reject_ap *blm_entry = NULL;
+	qdf_time_t connection_age = 0;
+	bool entry_found = false;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || !blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return;
+	}
+
+	qdf_list_peek_front(&blm_ctx->reject_ap_list, &cur_node);
+
+	while (cur_node) {
+		qdf_list_peek_next(&blm_ctx->reject_ap_list, cur_node,
+				   &next_node);
+		blm_entry = qdf_container_of(cur_node, struct blm_reject_ap,
+					     node);
+
+		if (!qdf_mem_cmp(blm_entry->bssid.bytes, bssid.bytes,
+				 QDF_MAC_ADDR_SIZE)) {
+			blm_debug("%pM present in BLM reject list, updating connect info",
+				  blm_entry->bssid.bytes);
+			entry_found = true;
+			break;
+		}
+		cur_node = next_node;
+		next_node = NULL;
+	}
+
+	/* This means that the BSSID was not added in the reject list of BLM */
+	if (!entry_found) {
+		qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
+		return;
+	}
+	switch (con_state) {
+	case BLM_AP_CONNECTED:
+		blm_entry->connect_timestamp = qdf_mc_timer_get_system_time();
+		break;
+	case BLM_AP_DISCONNECTED:
+		connection_age = qdf_mc_timer_get_system_time() -
+						blm_entry->connect_timestamp;
+		if (connection_age >
+		    blm_psoc_obj->blm_cfg.bad_bssid_counter_reset_time) {
+			blm_debug("Bad Bssid timer expired, removed %pM from list",
+				  blm_entry->bssid.bytes);
+			qdf_list_remove_node(&blm_ctx->reject_ap_list,
+					     &blm_entry->node);
+			qdf_mem_free(blm_entry);
+		}
+		break;
+	default:
+		blm_debug("Invalid AP connection state recevied %d", con_state);
+	};
+
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }

@@ -68,6 +68,8 @@
 #include "wlan_hdd_nud_tracking.h"
 #include <wlan_cfg80211_crypto.h>
 #include <wlan_crypto_global_api.h>
+#include "wlan_blm_ucfg_api.h"
+
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -1798,6 +1800,12 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		ucfg_p2p_status_disconnect(adapter->vdev);
 	}
 
+	/* Inform BLM about the disconnection with the AP */
+	if (adapter->device_mode == QDF_STA_MODE)
+		ucfg_blm_update_bssid_connect_params(hdd_ctx->pdev,
+						     sta_ctx->conn_info.bssid,
+						     BLM_AP_DISCONNECTED);
+
 	hdd_wmm_adapter_clear(adapter);
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
@@ -3324,6 +3332,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
 			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 #endif
+		if (adapter->device_mode == QDF_STA_MODE)
+			ucfg_blm_update_bssid_connect_params(hdd_ctx->pdev,
+							     roam_info->bssid,
+							     BLM_AP_CONNECTED);
+
 		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(

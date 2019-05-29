@@ -57,6 +57,16 @@ enum blm_reject_ap_type {
 };
 
 /**
+ * enum blm_connection_state - State with AP (Connected, Disconnected)
+ * @BLM_AP_CONNECTED: Connected with the AP
+ * @BLM_AP_DISCONNECTED: Disconnected with the AP
+ */
+enum blm_connection_state {
+	BLM_AP_CONNECTED,
+	BLM_AP_DISCONNECTED,
+};
+
+/**
  * struct reject_ap_config_params - Structure to send reject ap list to FW
  * @bssid: BSSID of the AP
  * @reject_ap_type: Type of the rejection done with the BSSID

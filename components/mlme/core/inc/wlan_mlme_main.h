@@ -75,6 +75,7 @@ enum vdev_assoc_type {
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
  * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
+ * @roam_invoke_params: Roam invoke params
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -86,6 +87,7 @@ struct mlme_legacy_priv {
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;
 	uint8_t sta_dynamic_oce_value;
+	struct mlme_roam_after_data_stall roam_invoke_params;
 };
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
@@ -199,6 +201,15 @@ struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
  */
 struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 					struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_roam_invoke_params() - get the roam invoke params
+ * @vdev: vdev pointer
+ *
+ * Return: pointer to the vdev roam invoke config structure
+ */
+struct mlme_roam_after_data_stall *
+mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_psoc_object_created_notification(): mlme psoc create handler

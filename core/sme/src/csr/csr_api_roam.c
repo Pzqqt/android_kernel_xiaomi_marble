@@ -21611,13 +21611,35 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	struct ht_profile *src_profile = NULL;
 	tCsrRoamHTProfile *dst_profile = NULL;
 #endif
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, session_id,
+						    WLAN_LEGACY_SME_ID);
+
+	if (!vdev) {
+		sme_err("vdev is NULL, aborting roam invoke");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+
+	if (!vdev_roam_params) {
+		sme_err("Invalid vdev roam params, aborting roam invoke");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto end;
+	}
 
 	if (!session) {
 		sme_err("LFR3: Session not found");
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto end;
 	}
 
-	sme_debug("LFR3: reason: %d", reason);
+	sme_debug("LFR3: reason: %d roaming in progress %d, source %d", reason,
+		  vdev_roam_params->roam_invoke_in_progress,
+		  vdev_roam_params->source);
+
 	switch (reason) {
 	case SIR_ROAMING_DEREGISTER_STA:
 		/*
@@ -21631,11 +21653,12 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				FL("LFR3: Session not in connected state or disconnect is in progress %d"),
 				session->discon_in_progress);
-			return QDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
+			goto end;
 		}
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
-		return status;
+		goto end;
 	case SIR_ROAMING_START:
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD, session_id,
@@ -21644,23 +21667,28 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				eCSR_ROAM_START, eCSR_ROAM_RESULT_SUCCESS);
 		wlan_abort_scan(mac_ctx->pdev, INVAL_PDEV_ID,
 				session_id, INVAL_SCAN_ID, false);
-		return status;
+		goto end;
 	case SIR_ROAMING_ABORT:
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_ABORT, eCSR_ROAM_RESULT_SUCCESS);
-		return status;
+		vdev_roam_params->roam_invoke_in_progress = false;
+		goto end;
 	case SIR_ROAM_SYNCH_NAPI_OFF:
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_NAPI_OFF, eCSR_ROAM_RESULT_SUCCESS);
-		return status;
+		goto end;
 	case SIR_ROAMING_INVOKE_FAIL:
-		/* Userspace roam request failed, disconnect with current AP */
-		sme_debug("LFR3: roam invoke from user-space fail, dis cur AP");
-		csr_roam_disconnect(mac_ctx, session_id,
-				    eCSR_DISCONNECT_REASON_DEAUTH);
-		return status;
+		if (vdev_roam_params->source == USERSPACE_INITIATED) {
+			/* Userspace roam req fail, disconnect with AP */
+			sme_debug("LFR3: roam invoke from user-space fail, dis cur AP");
+			csr_roam_disconnect(mac_ctx, session_id,
+					    eCSR_DISCONNECT_REASON_DEAUTH);
+		}
+		sme_debug("Roaming Failed, clearing roam invoke in progress");
+		vdev_roam_params->roam_invoke_in_progress = false;
+		goto end;
 	case SIR_ROAM_SYNCH_PROPAGATION:
 		break;
 	case SIR_ROAM_SYNCH_COMPLETE:
@@ -21703,10 +21731,13 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				       eCSR_ROAM_SYNCH_COMPLETE,
 				       eCSR_ROAM_RESULT_SUCCESS);
-		return status;
+		vdev_roam_params->roam_invoke_in_progress = false;
+		goto end;
 	default:
 		sme_debug("LFR3: callback reason %d", reason);
-		return QDF_STATUS_E_FAILURE;
+		vdev_roam_params->roam_invoke_in_progress = false;
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
 	}
 	session->roam_synch_in_progress = true;
 	session->roam_synch_data = roam_synch_data;
@@ -21715,7 +21746,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("LFR3: fail to parse IEs");
 		session->roam_synch_in_progress = false;
-		return status;
+		goto end;
 	}
 
 	conn_profile = &session->connectedProfile;
@@ -21731,7 +21762,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	if (!roam_info) {
 		session->roam_synch_in_progress = false;
 		qdf_mem_free(ies_local);
-		return QDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
 	}
 	csr_rso_save_ap_to_scan_cache(mac_ctx, roam_synch_data, bss_desc);
 	roam_info->sessionId = session_id;
@@ -21835,7 +21867,8 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		if (roam_info)
 			qdf_mem_free(roam_info);
 		qdf_mem_free(ies_local);
-		return QDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
 	}
 	qdf_mem_copy(roam_info->pbFrames,
 			(uint8_t *)roam_synch_data +
@@ -21995,6 +22028,9 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	qdf_mem_free(roam_info->pbFrames);
 	qdf_mem_free(roam_info);
 	qdf_mem_free(ies_local);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	return status;
 }

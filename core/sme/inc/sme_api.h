@@ -2013,6 +2013,16 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 			    struct csr_roam_profile *profile,
 			    const tSirMacAddr bssid, int channel,
 			    uint8_t vdev_id, const tSirMacAddr connected_bssid);
+
+/**
+ * sme_roam_invoke_nud_fail() - invokes REASSOC command to best available bssid
+ * @mac_handle: handle returned by mac_open
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id);
+
 #else
 static inline
 QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
@@ -2022,6 +2032,13 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline
+QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 /**
  * sme_congestion_register_callback() - registers congestion callback

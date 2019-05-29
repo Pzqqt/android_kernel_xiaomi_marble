@@ -22,6 +22,7 @@
 
 #include "osif_sync.h"
 #include "wlan_hdd_main.h"
+#include "wlan_blm_ucfg_api.h"
 
 void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 			      struct qdf_mac_addr gw_mac_addr)
@@ -205,6 +206,63 @@ static void hdd_nud_set_tracking(struct hdd_adapter *adapter,
 	adapter->nud_tracking.is_gw_rx_pkt_track_enabled = capture_enabled;
 }
 
+static void
+hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
+			struct hdd_adapter *adapter)
+{
+	struct reject_ap_info ap_info;
+
+	qdf_mutex_acquire(&adapter->disconnection_status_lock);
+	if (adapter->disconnection_in_progress) {
+		qdf_mutex_release(&adapter->disconnection_status_lock);
+		hdd_debug("Disconnect is in progress");
+		return;
+	}
+	qdf_mutex_release(&adapter->disconnection_status_lock);
+
+	if (hdd_is_roaming_in_progress(hdd_ctx)) {
+		hdd_debug("Roaming already in progress, cannot trigger roam.");
+		return;
+	}
+
+	hdd_debug("nud fail detected, try roaming to better BSSID, vdev id: %d",
+		  adapter->vdev_id);
+
+	ap_info.bssid = adapter->mac_addr;
+	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev, &ap_info);
+
+	if (roaming_offload_enabled(hdd_ctx))
+		sme_roam_invoke_nud_fail(hdd_ctx->mac_handle,
+					 adapter->vdev_id);
+}
+
+static void
+hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
+{
+	int status;
+
+	qdf_mutex_acquire(&adapter->disconnection_status_lock);
+	if (adapter->disconnection_in_progress) {
+		qdf_mutex_release(&adapter->disconnection_status_lock);
+		hdd_debug("Disconnect is in progress");
+		return;
+	}
+
+	adapter->disconnection_in_progress = true;
+	qdf_mutex_release(&adapter->disconnection_status_lock);
+
+	hdd_debug("Disconnecting vdev with vdev id: %d",
+		  adapter->vdev_id);
+	/* Issue Disconnect */
+	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH);
+	if (0 != status) {
+		hdd_err("wlan_hdd_disconnect failed, status: %d",
+			status);
+		hdd_set_disconnect_status(adapter, false);
+	}
+}
+
 /**
  * __hdd_nud_failure_work() - work for nud event
  * @adapter: Pointer to hdd_adapter
@@ -240,23 +298,11 @@ static void __hdd_nud_failure_work(struct hdd_adapter *adapter)
 		return;
 	}
 
-	qdf_mutex_acquire(&adapter->disconnection_status_lock);
-	if (adapter->disconnection_in_progress) {
-		qdf_mutex_release(&adapter->disconnection_status_lock);
-		hdd_debug("Disconnect is already in progress");
+	if (adapter->device_mode == QDF_STA_MODE) {
+		hdd_handle_nud_fail_sta(hdd_ctx, adapter);
 		return;
 	}
-	adapter->disconnection_in_progress = true;
-	qdf_mutex_release(&adapter->disconnection_status_lock);
-
-	hdd_debug("Disconnecting STA with session id: %d",
-		  adapter->vdev_id);
-	/* Issue Disconnect */
-	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH);
-	if (0 != status) {
-		hdd_err("wlan_hdd_disconnect failed, status: %d", status);
-		hdd_set_disconnect_status(adapter, false);
-	}
+	hdd_handle_nud_fail_non_sta(adapter);
 
 	hdd_exit();
 }

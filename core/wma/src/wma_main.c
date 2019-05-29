@@ -5610,6 +5610,19 @@ wma_fill_chain_cfg(struct target_psoc_info *tgt_hdl,
 		mac_ctx->fw_chain_cfg.max_rx_chains_5g = num_chain;
 }
 
+static void wma_update_mlme_related_tgt_caps(struct wlan_objmgr_psoc *psoc,
+					     struct wmi_unified *wmi_handle)
+{
+	struct mlme_tgt_caps mlme_tgt_cfg;
+
+	mlme_tgt_cfg.data_stall_recovery_fw_support =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_data_stall_recovery_support);
+
+	/* Call this at last only after filling all the tgt caps */
+	wlan_mlme_update_cfg_with_tgt_caps(psoc, &mlme_tgt_cfg);
+}
+
 /**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
@@ -5649,6 +5662,7 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		return -EINVAL;
 	}
 
+	wma_update_mlme_related_tgt_caps(wma_handle->psoc, wmi_handle);
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 
 	tgt_cfg.sub_20_support = wma_handle->sub_20_support;

@@ -62,6 +62,17 @@ QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
 QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 				     uint8_t *data, enum e_edca_type edca_ac);
 
+/**
+ * wlan_mlme_update_cfg_with_tgt_caps() - Update mlme cfg with tgt caps
+ * @psoc: pointer to psoc object
+ * @tgt_caps:  Pointer to the mlme related capability structure
+ *
+ * Return: None
+ */
+void
+wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
+				   struct mlme_tgt_caps *tgt_caps);
+
 /*
  * mlme_get_wep_key() - get the wep key to process during auth frame
  * @vdev: VDEV object for which the wep key is being requested
