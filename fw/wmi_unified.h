@@ -12727,6 +12727,10 @@ typedef struct {
      *  Refer to WMI_ROAM_NOTIF_ defs to interpret the notif_params value.
      */
     A_UINT32 notif_params;
+    /** roam notification param1
+     *  Refer to WMI_ROAM_NOTIF_ defs to interpret the notif_params1 value.
+     */
+    A_UINT32 notif_params1;
 } wmi_roam_event_fixed_param;
 
 
@@ -12799,8 +12803,8 @@ typedef enum
 #define WMI_ROAM_NOTIF_DISCONNECT        0x6 /** indicate that roaming not allowed due BTM req */
 #define WMI_ROAM_NOTIF_SUBNET_CHANGED    0x7 /** indicate that subnet has changed */
 #define WMI_ROAM_NOTIF_SCAN_START        0x8 /** indicate roam scan start, notif_params to be sent as WMI_ROAM_TRIGGER_REASON_ID */
-#define WMI_ROAM_NOTIF_DEAUTH_RECV       0x9 /** indicate deauth received, notif_params to be sent as reason code */
-#define WMI_ROAM_NOTIF_DISASSOC_RECV     0xa /** indicate disassoc received, notif_params to be sent as reason code */
+#define WMI_ROAM_NOTIF_DEAUTH_RECV       0x9 /** indicate deauth received, notif_params to be sent as reason code, notif_params1 to be sent as frame length */
+#define WMI_ROAM_NOTIF_DISASSOC_RECV     0xa /** indicate disassoc received, notif_params to be sent as reason code, notif_params1 to be sent as frame length */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
