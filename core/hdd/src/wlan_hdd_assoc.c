@@ -3180,9 +3180,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							   assoc_rsp,
 							   assoc_rsp_len,
 							   WLAN_STATUS_SUCCESS,
-							   GFP_KERNEL,
-							   false,
-							   roam_info->statusCode);
+							   GFP_KERNEL, false,
+							   roam_info->status_code);
 				}
 			} else {
 				/*
@@ -3225,7 +3224,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 								   WLAN_STATUS_SUCCESS,
 								   GFP_KERNEL,
 								   false,
-								   roam_info->statusCode);
+								   roam_info->status_code);
 					}
 					cdp_hl_fc_set_td_limit(soc,
 					adapter->vdev_id,
@@ -3363,11 +3362,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		if ((eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roam_result) ||
 		   (roam_info &&
 		   ((eSIR_SME_JOIN_TIMEOUT_RESULT_CODE ==
-					roam_info->statusCode) ||
+					roam_info->status_code) ||
 		   (eSIR_SME_AUTH_TIMEOUT_RESULT_CODE ==
-					roam_info->statusCode) ||
+					roam_info->status_code) ||
 		   (eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE ==
-					roam_info->statusCode)))) {
+					roam_info->status_code)))) {
 			wlan_hdd_cfg80211_unlink_bss(adapter,
 				roam_info ?
 				roam_info->bssid.bytes :
@@ -3409,7 +3408,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					roam_result, roam_status,
 					roam_info->reasonCode);
 				sta_ctx->conn_info.assoc_status_code =
-					roam_info->statusCode;
+					roam_info->status_code;
 			} else {
 				hdd_err("connect failed: for bssid "
 				       QDF_MAC_ADDR_STR
@@ -3433,7 +3432,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						WLAN_STATUS_ASSOC_DENIED_UNSPEC,
 						GFP_KERNEL,
 						connect_timeout,
-						roam_info->statusCode);
+						roam_info->status_code);
 				else
 					hdd_connect_result(dev,
 						sta_ctx->requested_bssid.bytes,
@@ -3455,7 +3454,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL,
 						connect_timeout,
-						roam_info->statusCode);
+						roam_info->status_code);
 				else
 					hdd_connect_result(dev,
 						sta_ctx->requested_bssid.bytes,

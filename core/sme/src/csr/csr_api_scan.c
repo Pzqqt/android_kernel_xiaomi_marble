@@ -287,7 +287,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac_ctx,
 				struct tag_csrscan_result, Link);
 		roam_info->bss_desc = &scan_result->Result.BssDescriptor;
 	}
-	roam_info->statusCode = session->joinFailStatusCode.statusCode;
+	roam_info->status_code = session->joinFailStatusCode.status_code;
 	roam_info->reasonCode = session->joinFailStatusCode.reasonCode;
 
 	/* Only indicate assoc_completion if we indicate assoc_start. */

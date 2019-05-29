@@ -6589,7 +6589,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 			reason =
 				eSAP_MAC_INITATED_DISASSOC;
 			sap_event.sapevt.sapStationDisassocCompleteEvent.
-			statusCode =
+			status_code =
 				QDF_STATUS_E_RESOURCES;
 			hdd_hostapd_sap_event_cb(&sap_event,
 					sap_ctx->user_context);

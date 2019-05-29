@@ -2983,7 +2983,7 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	pAssocRsp->capabilityInfo.delayedBA = ar->Capabilities.delayedBA;
 	pAssocRsp->capabilityInfo.immediateBA = ar->Capabilities.immediateBA;
 
-	pAssocRsp->statusCode = ar->Status.status;
+	pAssocRsp->status_code = ar->Status.status;
 	pAssocRsp->aid = ar->AID.associd;
 #ifdef WLAN_FEATURE_11W
 	if (ar->TimeoutInterval.present) {

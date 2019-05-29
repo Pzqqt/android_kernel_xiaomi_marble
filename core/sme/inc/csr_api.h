@@ -1074,7 +1074,7 @@ struct csr_roam_info {
 	 * eCSR_ROAM_RESULT_IBSS_NEW_PEER or PEER_DEPARTED
 	 */
 	struct qdf_mac_addr peerMac;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	/* this'd be our own defined or sent from otherBSS(per 802.11spec) */
 	uint32_t reasonCode;
 
@@ -1192,7 +1192,7 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
 	uint8_t sessionId;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	tSirMacAddr bssId;      /* Self BSSID */
 	tSirMacAddr peerMacAddr;
 	uint16_t aid;

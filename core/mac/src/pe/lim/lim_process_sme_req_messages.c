@@ -2285,11 +2285,11 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 	if (smeDisassocCnf.messageType == eWNI_SME_DISASSOC_CNF)
 		lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_CNF_EVENT,
 				      pe_session,
-				      (uint16_t) smeDisassocCnf.statusCode, 0);
+				      (uint16_t)smeDisassocCnf.status_code, 0);
 	else if (smeDisassocCnf.messageType == eWNI_SME_DEAUTH_CNF)
 		lim_diag_event_report(mac, WLAN_PE_DIAG_DEAUTH_CNF_EVENT,
 				      pe_session,
-				      (uint16_t) smeDisassocCnf.statusCode, 0);
+				      (uint16_t)smeDisassocCnf.status_code, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
@@ -3083,7 +3083,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 	lim_deactivate_and_change_per_sta_id_timer(mac_ctx,
 			eLIM_CNF_WAIT_TIMER, sta_ds->assocId);
 
-	if (assoc_cnf.statusCode == eSIR_SME_SUCCESS) {
+	if (assoc_cnf.status_code == eSIR_SME_SUCCESS) {
 		/*
 		 * In BTAMP-AP, PE already finished the WMA_ADD_STA sequence
 		 * when it had received Assoc Request frame. Now, PE just needs
@@ -3116,7 +3116,7 @@ void __lim_process_sme_assoc_cnf_new(struct mac_context *mac_ctx, uint32_t msg_t
 		if (!sta_ds->mlmStaContext.updateContext)
 			sta_ds->mlmStaContext.updateContext = 1;
 		pe_debug("Recv Assoc Cnf, status Code : %d(assoc id=%d) Reason code: %d",
-			 assoc_cnf.statusCode, sta_ds->assocId,
+			 assoc_cnf.status_code, sta_ds->assocId,
 			 assoc_cnf.mac_status_code);
 		if (assoc_cnf.mac_status_code)
 			mac_status_code = assoc_cnf.mac_status_code;

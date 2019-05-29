@@ -169,7 +169,8 @@ static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
 void
 lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
-		     tSirResultCodes statusCode, struct pe_session *pe_session);
+		     tSirResultCodes status_code,
+		     struct pe_session *pe_session);
 
 void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId);
 void lim_delete_dph_hash_entry(struct mac_context *, tSirMacAddr, uint16_t, struct pe_session *);
@@ -191,8 +192,11 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updateEntry,
 					     struct pe_session *pe_session);
 
-void lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
-				      tSirResultCodes statusCode, struct pe_session *);
+void lim_prepare_and_send_del_sta_cnf(struct mac_context *mac,
+				      tpDphHashNode sta,
+				      tSirResultCodes status_code,
+				      struct pe_session *pe_session);
+
 QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac, uint8_t *pIE,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct);

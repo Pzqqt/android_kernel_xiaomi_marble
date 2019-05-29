@@ -904,16 +904,16 @@ void lim_activate_auth_rsp_timer(struct mac_context *mac, tLimPreAuthNode *pAuth
 void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	uint32_t statusCode;
+	uint32_t status_code;
 	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	msg.type = SIR_LIM_CNF_WAIT_TIMEOUT;
 	msg.bodyval = (uint32_t) param;
 	msg.bodyptr = NULL;
 
-	statusCode = lim_post_msg_api(mac, &msg);
-	if (statusCode != QDF_STATUS_SUCCESS)
-		pe_err("posting to LIM failed, reason: %d", statusCode);
+	status_code = lim_post_msg_api(mac, &msg);
+	if (status_code != QDF_STATUS_SUCCESS)
+		pe_err("posting to LIM failed, reason: %d", status_code);
 
 }
 

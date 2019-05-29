@@ -1610,7 +1610,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 	tpDphHashNode sta =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &pe_session->dph.dphHashTable);
-	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
+	tSirResultCodes status_code = eSIR_SME_SUCCESS;
 
 	if (!pDelBssParams) {
 		pe_err("Invalid body pointer in message");
@@ -1624,26 +1624,26 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 			    pe_session->selfMacAddr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS) {
 			pe_err("Failure in setting link state to IDLE");
-			statusCode = eSIR_SME_REFUSED;
+			status_code = eSIR_SME_REFUSED;
 			goto end;
 		}
 		if (!sta) {
 			pe_err("DPH Entry for STA 1 missing");
-			statusCode = eSIR_SME_REFUSED;
+			status_code = eSIR_SME_REFUSED;
 			goto end;
 		}
 		if (eLIM_MLM_WT_DEL_BSS_RSP_STATE !=
 		    sta->mlmStaContext.mlmState) {
 			pe_err("Received unexpected WMA_DEL_BSS_RSP in state %X",
 				       sta->mlmStaContext.mlmState);
-			statusCode = eSIR_SME_REFUSED;
+			status_code = eSIR_SME_REFUSED;
 			goto end;
 		}
 		pe_debug("STA AssocID %d MAC",	sta->assocId);
 		       lim_print_mac_addr(mac, sta->staAddr, LOGD);
 	} else {
 		pe_err("DEL BSS failed!");
-		statusCode = eSIR_SME_STOP_BSS_FAILURE;
+		status_code = eSIR_SME_STOP_BSS_FAILURE;
 	}
 end:
 	if (0 != limMsgQ->bodyptr) {
@@ -1666,7 +1666,7 @@ end:
 		lim_handle_del_bss_in_re_assoc_context(mac, sta, pe_session);
 		return;
 	}
-	lim_prepare_and_send_del_sta_cnf(mac, sta, statusCode, pe_session);
+	lim_prepare_and_send_del_sta_cnf(mac, sta, status_code, pe_session);
 	return;
 }
 
@@ -1900,7 +1900,7 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session)
 {
-	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
+	tSirResultCodes status_code = eSIR_SME_SUCCESS;
 	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
 
 	if (!pDelStaParams) {
@@ -1924,7 +1924,7 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 	if (eLIM_MLM_WT_DEL_STA_RSP_STATE != pe_session->limMlmState) {
 		pe_err("Received unexpected WDA_DELETE_STA_RSP in state %s",
 			lim_mlm_state_str(pe_session->limMlmState));
-		statusCode = eSIR_SME_REFUSED;
+		status_code = eSIR_SME_REFUSED;
 		goto end;
 	}
 	/*

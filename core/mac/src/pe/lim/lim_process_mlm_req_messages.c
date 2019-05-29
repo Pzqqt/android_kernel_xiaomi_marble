@@ -1274,7 +1274,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 			sme_disassoc_rsp->length = sizeof(*sme_disassoc_rsp);
 			sme_disassoc_rsp->sessionId =
 					mlm_disassocreq->sessionId;
-			sme_disassoc_rsp->statusCode = eSIR_SME_DEAUTH_STATUS;
+			sme_disassoc_rsp->status_code = eSIR_SME_DEAUTH_STATUS;
 
 			qdf_copy_macaddr(&sme_disassoc_rsp->peer_macaddr,
 					 &mlm_disassocreq->peer_macaddr);
@@ -1623,7 +1623,7 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 						eWNI_SME_DEAUTH_RSP;
 				sme_deauth_rsp->length =
 						sizeof(*sme_deauth_rsp);
-				sme_deauth_rsp->statusCode =
+				sme_deauth_rsp->status_code =
 						eSIR_SME_DEAUTH_STATUS;
 				sme_deauth_rsp->sessionId =
 						mlm_deauth_req->sessionId;

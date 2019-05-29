@@ -362,7 +362,7 @@ typedef struct sSirSmeRsp {
 	uint16_t messageType;   /* eWNI_SME_*_RSP */
 	uint16_t length;
 	uint8_t sessionId;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct wlan_objmgr_psoc *psoc;
 } tSirSmeRsp, *tpSirSmeRsp;
 
@@ -712,7 +712,7 @@ struct start_bss_rsp {
 	uint16_t messageType;   /* eWNI_SME_START_BSS_RSP */
 	uint16_t length;
 	uint8_t sessionId;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	enum bss_type bssType;    /* Add new type for WDS mode */
 	uint16_t beaconInterval;        /* Beacon Interval for both type */
 	uint32_t staId;         /* Station ID for Self */
@@ -987,7 +987,7 @@ struct join_rsp {
 	uint16_t messageType;   /* eWNI_SME_JOIN_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	tAniAuthType authType;
 	uint32_t vht_channel_width;
 	/* It holds reasonCode when join fails due to deauth/disassoc frame.
@@ -1129,7 +1129,7 @@ struct owe_assoc_ind {
 struct assoc_cnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;      /* Self BSSID */
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
@@ -1235,7 +1235,7 @@ struct disassoc_rsp {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t staId;
 };
@@ -1245,7 +1245,7 @@ struct disassoc_ind {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Session Identifier */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
 	uint16_t staId;
@@ -1258,7 +1258,7 @@ struct disassoc_cnf {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_CNF */
 	uint16_t length;
 	uint8_t sme_session_id;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
 };
@@ -1294,7 +1294,7 @@ struct deauth_rsp {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr peer_macaddr;
 };
 
@@ -1303,7 +1303,7 @@ struct deauth_ind {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;      /* AP BSSID */
 	struct qdf_mac_addr peer_macaddr;
 
@@ -1317,7 +1317,7 @@ struct deauth_cnf {
 	uint16_t messageType;   /* eWNI_SME_DEAUTH_CNF */
 	uint16_t length;
 	uint8_t sme_session_id;
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
 };
@@ -1377,7 +1377,7 @@ struct set_context_rsp {
 	uint16_t messageType;   /* eWNI_SME_SET_CONTEXT_RSP */
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	struct qdf_mac_addr peer_macaddr;
 };
 

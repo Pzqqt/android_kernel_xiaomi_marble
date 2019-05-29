@@ -478,7 +478,7 @@ lim_handle_assoc_reject_status(struct mac_context *mac_ctx,
 		assoc_rsp->TimeoutInterval.timeoutValue;
 
 	if (!(session_entry->limRmfEnabled &&
-		    assoc_rsp->statusCode == eSIR_MAC_TRY_AGAIN_LATER &&
+		    assoc_rsp->status_code == eSIR_MAC_TRY_AGAIN_LATER &&
 		   (assoc_rsp->TimeoutInterval.present &&
 			(assoc_rsp->TimeoutInterval.timeoutType ==
 				SIR_MAC_TI_TYPE_ASSOC_COMEBACK))))
@@ -697,7 +697,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 			sizeof(tSirMacRateSet));
 	}
 
-	assoc_cnf.protStatusCode = assoc_rsp->statusCode;
+	assoc_cnf.protStatusCode = assoc_rsp->status_code;
 	if (session_entry->assocRsp) {
 		pe_warn("session_entry->assocRsp is not NULL freeing it and setting NULL");
 		qdf_mem_free(session_entry->assocRsp);
@@ -777,7 +777,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 				       hdr->sa);
 
 	if (eSIR_MAC_XS_FRAME_LOSS_POOR_CHANNEL_RSSI_STATUS ==
-	   assoc_rsp->statusCode &&
+	   assoc_rsp->status_code &&
 	    assoc_rsp->rssi_assoc_rej.present) {
 		struct sir_rssi_disallow_lst ap_info = {{0}};
 
@@ -788,13 +788,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 					WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 	}
-	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS) {
+	if (assoc_rsp->status_code != eSIR_MAC_SUCCESS_STATUS) {
 		/*
 		 *Re/Association response was received
 		 * either with failure code.
 		*/
 		pe_err("received Re/AssocRsp frame failure code: %d",
-			 assoc_rsp->statusCode);
+			 assoc_rsp->status_code);
 		/*
 		 * Need to update 'association failure' error counter
 		 * along with STATUS CODE
@@ -870,8 +870,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 				&assoc_rsp->obss_scanparams);
 
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ROAM_ASSOC_COMP_EVENT,
-			session_entry, assoc_rsp->statusCode ? QDF_STATUS_E_FAILURE :
-			QDF_STATUS_SUCCESS, assoc_rsp->statusCode);
+			      session_entry,
+			      (assoc_rsp->status_code ? QDF_STATUS_E_FAILURE :
+			       QDF_STATUS_SUCCESS), assoc_rsp->status_code);
 
 	ap_nss = lim_get_nss_supported_by_ap(&assoc_rsp->VHTCaps,
 					     &assoc_rsp->HTCaps);

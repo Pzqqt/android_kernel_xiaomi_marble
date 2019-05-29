@@ -413,7 +413,7 @@ typedef struct sSirAssocRsp {
 
 	tSirMacCapabilityInfo capabilityInfo;
 	uint16_t aid;
-	uint16_t statusCode;
+	uint16_t status_code;
 	tSirMacRateSet supportedRates;
 	tSirMacRateSet extendedRates;
 	tSirMacEdcaParamSetIE edca;

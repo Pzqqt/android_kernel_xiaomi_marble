@@ -410,9 +410,9 @@ struct csr_channel_powerinfo {
 };
 
 struct csr_roam_joinstatus {
-	tSirResultCodes statusCode;
+	tSirResultCodes status_code;
 	/*
-	 * this is set to unspecified if statusCode indicates timeout.
+	 * this is set to unspecified if status_code indicates timeout.
 	 * Or it is the failed reason from the other BSS(per 802.11 spec)
 	 */
 	uint32_t reasonCode;

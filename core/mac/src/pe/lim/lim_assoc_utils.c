@@ -677,7 +677,7 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
  * @sta_dsaddr: sta ds address
  * @staDsAssocId: sta ds association id
  * @mlmStaContext: MLM station context
- * @statusCode: Status code
+ * @status_code: Status code
  * @pe_session: Session entry
  *
  * This function is called to send appropriate CNF message to SME.
@@ -687,15 +687,15 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 void
 lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
-		     tSirResultCodes statusCode, struct pe_session *pe_session)
+		     tSirResultCodes status_code, struct pe_session *pe_session)
 {
 	tLimMlmDisassocCnf mlmDisassocCnf;
 	tLimMlmDeauthCnf mlmDeauthCnf;
 	tLimMlmPurgeStaInd mlmPurgeStaInd;
 
-	pe_debug("Sessionid: %d staDsAssocId: %d Trigger: %d statusCode: %d sta_dsaddr: "QDF_MAC_ADDR_STR,
+	pe_debug("Sessionid: %d staDsAssocId: %d Trigger: %d status_code: %d sta_dsaddr: "QDF_MAC_ADDR_STR,
 		pe_session->peSessionId, staDsAssocId,
-		mlmStaContext.cleanupTrigger, statusCode,
+		mlmStaContext.cleanupTrigger, status_code,
 		QDF_MAC_ADDR_ARRAY(sta_dsaddr.bytes));
 
 	if (LIM_IS_STA_ROLE(pe_session)) {
@@ -729,7 +729,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 
 		qdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
 			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
-		mlmDisassocCnf.resultCode = statusCode;
+		mlmDisassocCnf.resultCode = status_code;
 		mlmDisassocCnf.disassocTrigger = mlmStaContext.cleanupTrigger;
 		/* Update PE session Id */
 		mlmDisassocCnf.sessionId = pe_session->peSessionId;
@@ -748,7 +748,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		pe_debug("Lim Posting DEAUTH_CNF to Sme. Trigger: %d",
 			mlmStaContext.cleanupTrigger);
 		qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
-		mlmDeauthCnf.resultCode = statusCode;
+		mlmDeauthCnf.resultCode = status_code;
 		mlmDeauthCnf.deauthTrigger = mlmStaContext.cleanupTrigger;
 		/* PE session Id */
 		mlmDeauthCnf.sessionId = pe_session->peSessionId;
@@ -794,7 +794,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		    || (mlmStaContext.resultCode ==
 			eSIR_SME_REASSOC_TIMEOUT_RESULT_CODE)) {
 			pe_debug("Lim Posting eWNI_SME_REASSOC_RSP to SME"
-				"resultCode: %d, statusCode: %d,"
+				"resultCode: %d, status_code: %d,"
 				"sessionId: %d",
 				mlmStaContext.resultCode,
 				mlmStaContext.protStatusCode,
@@ -813,7 +813,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 			pe_session->pLimJoinReq = NULL;
 
 			pe_debug("Lim Posting eWNI_SME_JOIN_RSP to SME."
-				"resultCode: %d,statusCode: %d,"
+				"resultCode: %d,status_code: %d,"
 				"sessionId: %d",
 				mlmStaContext.resultCode,
 				mlmStaContext.protStatusCode,
@@ -840,7 +840,7 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 
 		qdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
 			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
-		mlmDisassocCnf.resultCode = statusCode;
+		mlmDisassocCnf.resultCode = status_code;
 		mlmDisassocCnf.disassocTrigger = eLIM_DUPLICATE_ENTRY;
 		/* Update PE session Id */
 		mlmDisassocCnf.sessionId = pe_session->peSessionId;
@@ -4580,7 +4580,7 @@ returnFailure:
  *
  * @mac:          mac global context
  * @sta:        sta dph node
- * @statusCode:    status code
+ * @status_code:    status code
  * @pe_session: session context
  *
  * deletes DPH entry, changes the MLM mode for station, calls
@@ -4590,7 +4590,7 @@ returnFailure:
  */
 void
 lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
-				 tSirResultCodes statusCode,
+				 tSirResultCodes status_code,
 				 struct pe_session *pe_session)
 {
 	uint16_t staDsAssocId = 0;
@@ -4619,7 +4619,7 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				 pe_session->limMlmState));
 	}
 	lim_send_del_sta_cnf(mac, sta_dsaddr, staDsAssocId, mlmStaContext,
-			     statusCode, pe_session);
+			     status_code, pe_session);
 }
 
 /** -------------------------------------------------------------

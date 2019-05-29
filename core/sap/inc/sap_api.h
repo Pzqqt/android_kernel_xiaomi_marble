@@ -265,7 +265,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	uint8_t status;
 	uint8_t *ies;
 	uint32_t ies_len;
-	uint32_t statusCode;
+	uint32_t status_code;
 	bool wmmEnabled;
 	uint8_t timingMeasCap;
 	struct oem_channel_info chan_info;
@@ -291,7 +291,7 @@ typedef struct sap_StationDisassocCompleteEvent_s {
 	struct qdf_mac_addr staMac;
 	uint8_t staId;          /* STAID should not be used */
 	uint8_t status;
-	uint32_t statusCode;
+	uint32_t status_code;
 	uint32_t reason_code;
 	eSapDisassocReason reason;
 	int rssi;

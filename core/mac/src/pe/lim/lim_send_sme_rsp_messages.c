@@ -71,7 +71,7 @@ void lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 
 	sme_rsp->messageType = msg_type;
 	sme_rsp->length = sizeof(tSirSmeRsp);
-	sme_rsp->statusCode = result_code;
+	sme_rsp->status_code = result_code;
 	sme_rsp->sessionId = sme_session_id;
 
 	msg.type = msg_type;
@@ -483,7 +483,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 
 	sme_join_rsp->messageType = msg_type;
 	sme_join_rsp->length = (uint16_t) rsp_len;
-	sme_join_rsp->statusCode = result_code;
+	sme_join_rsp->status_code = result_code;
 	sme_join_rsp->protStatusCode = prot_status_code;
 
 	sme_join_rsp->sessionId = sme_session_id;
@@ -597,7 +597,7 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	pSirSmeRsp->messageType = msgType;
 	pSirSmeRsp->length = size;
 	pSirSmeRsp->sessionId = smesessionId;
-	pSirSmeRsp->statusCode = resultCode;
+	pSirSmeRsp->status_code = resultCode;
 	if (pe_session)
 		pSirSmeRsp->staId = pe_session->staId;       /* else it will be always zero smeRsp StaID = 0 */
 
@@ -712,7 +712,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pSirSmeDisassocRsp->messageType = eWNI_SME_DISASSOC_RSP;
 		pSirSmeDisassocRsp->length = sizeof(struct disassoc_rsp);
 		pSirSmeDisassocRsp->sessionId = smesessionId;
-		pSirSmeDisassocRsp->statusCode = reasonCode;
+		pSirSmeDisassocRsp->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDisassocRsp->peer_macaddr.bytes,
 			     peerMacAddr, sizeof(tSirMacAddr));
 
@@ -754,7 +754,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 		pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 		pSirSmeDisassocInd->sessionId = smesessionId;
 		pSirSmeDisassocInd->reasonCode = reasonCode;
-		pSirSmeDisassocInd->statusCode = reasonCode;
+		pSirSmeDisassocInd->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes,
 			     pe_session->bssId, sizeof(tSirMacAddr));
 		qdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes,
@@ -806,7 +806,7 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode sta,
 	pSirSmeDisassocInd->length = sizeof(*pSirSmeDisassocInd);
 
 	pSirSmeDisassocInd->sessionId = pe_session->smeSessionId;
-	pSirSmeDisassocInd->statusCode = eSIR_SME_DEAUTH_STATUS;
+	pSirSmeDisassocInd->status_code = eSIR_SME_DEAUTH_STATUS;
 	pSirSmeDisassocInd->reasonCode = sta->mlmStaContext.disassocReason;
 
 	qdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, pe_session->bssId,
@@ -860,11 +860,11 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode sta,
 
 	pSirSmeDeauthInd->sessionId = pe_session->smeSessionId;
 	if (eSIR_INFRA_AP_MODE == pe_session->bssType) {
-		pSirSmeDeauthInd->statusCode =
+		pSirSmeDeauthInd->status_code =
 			(tSirResultCodes) sta->mlmStaContext.cleanupTrigger;
 	} else {
 		/* Need to indicate the reason code over the air */
-		pSirSmeDeauthInd->statusCode =
+		pSirSmeDeauthInd->status_code =
 			(tSirResultCodes) sta->mlmStaContext.disassocReason;
 	}
 	/* BSSID */
@@ -1051,7 +1051,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			 reasonCode, QDF_MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthRsp->messageType = eWNI_SME_DEAUTH_RSP;
 		pSirSmeDeauthRsp->length = sizeof(*pSirSmeDeauthRsp);
-		pSirSmeDeauthRsp->statusCode = reasonCode;
+		pSirSmeDeauthRsp->status_code = reasonCode;
 		pSirSmeDeauthRsp->sessionId = smesessionId;
 
 		pBuf = (uint8_t *) pSirSmeDeauthRsp->peer_macaddr.bytes;
@@ -1091,7 +1091,7 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthInd->length = sizeof(*pSirSmeDeauthInd);
 		pSirSmeDeauthInd->reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
 		pSirSmeDeauthInd->sessionId = smesessionId;
-		pSirSmeDeauthInd->statusCode = reasonCode;
+		pSirSmeDeauthInd->status_code = reasonCode;
 		qdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, pe_session->bssId,
 			     sizeof(tSirMacAddr));
 		qdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, peerMacAddr,
@@ -1199,7 +1199,7 @@ void lim_send_sme_set_context_rsp(struct mac_context *mac,
 
 	set_context_rsp->messageType = eWNI_SME_SETCONTEXT_RSP;
 	set_context_rsp->length = sizeof(*set_context_rsp);
-	set_context_rsp->statusCode = resultCode;
+	set_context_rsp->status_code = resultCode;
 
 	qdf_copy_macaddr(&set_context_rsp->peer_macaddr, &peer_macaddr);
 

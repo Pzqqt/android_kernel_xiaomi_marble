@@ -3947,7 +3947,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 				       tpSirMacNeighborReportReq pNeighborReq,
 				       tSirMacAddr peer, struct pe_session *pe_session)
 {
-	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
+	QDF_STATUS status_code = QDF_STATUS_SUCCESS;
 	tDot11fNeighborReportRequest frm;
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
@@ -4020,7 +4020,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 			nStatus);
 
 		/* FIXME - Need to convert to QDF_STATUS */
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		goto returnAfterError;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_warn("There were warnings while packing Neighbor Report Request (0x%08x)",
@@ -4048,16 +4048,16 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 			 pe_session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		pe_err("wma_tx_frame FAILED! Status [%d]", qdf_status);
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		/* Pkt will be freed up by the callback */
-		return statusCode;
+		return status_code;
 	} else
 		return QDF_STATUS_SUCCESS;
 
 returnAfterError:
 	cds_packet_free((void *)pPacket);
 
-	return statusCode;
+	return status_code;
 } /* End lim_send_neighbor_report_request_frame. */
 
 /**
@@ -4082,7 +4082,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 				  tpSirMacLinkReport pLinkReport,
 				  tSirMacAddr peer, struct pe_session *pe_session)
 {
-	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
+	QDF_STATUS status_code = QDF_STATUS_SUCCESS;
 	tDot11fLinkMeasurementReport frm;
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
@@ -4164,7 +4164,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 		pe_err("Failed to pack an Link Report (0x%08x)", nStatus);
 
 		/* FIXME - Need to convert to QDF_STATUS */
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		goto returnAfterError;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_warn("There were warnings while packing Link Report (0x%08x)",
@@ -4192,16 +4192,16 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 			 pe_session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		pe_err("wma_tx_frame FAILED! Status [%d]", qdf_status);
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		/* Pkt will be freed up by the callback */
-		return statusCode;
+		return status_code;
 	} else
 		return QDF_STATUS_SUCCESS;
 
 returnAfterError:
 	cds_packet_free((void *)pPacket);
 
-	return statusCode;
+	return status_code;
 } /* End lim_send_link_report_action_frame. */
 
 QDF_STATUS
@@ -4213,7 +4213,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 				tSirMacAddr peer,
 				struct pe_session *pe_session)
 {
-	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
+	QDF_STATUS status_code = QDF_STATUS_SUCCESS;
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
@@ -4335,7 +4335,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 			nStatus);
 
 		/* FIXME - Need to convert to QDF_STATUS */
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		goto returnAfterError;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_warn("There were warnings while packing Radio Measure Report (0x%08x)",
@@ -4363,10 +4363,10 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 			 pe_session->peSessionId, qdf_status));
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		pe_err("wma_tx_frame FAILED! Status [%d]", qdf_status);
-		statusCode = QDF_STATUS_E_FAILURE;
+		status_code = QDF_STATUS_E_FAILURE;
 		/* Pkt will be freed up by the callback */
 		qdf_mem_free(frm);
-		return statusCode;
+		return status_code;
 	} else {
 		qdf_mem_free(frm);
 		return QDF_STATUS_SUCCESS;
@@ -4375,7 +4375,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 returnAfterError:
 	qdf_mem_free(frm);
 	cds_packet_free((void *)pPacket);
-	return statusCode;
+	return status_code;
 }
 
 #ifdef WLAN_FEATURE_11W
