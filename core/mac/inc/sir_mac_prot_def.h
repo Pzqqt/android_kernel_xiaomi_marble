@@ -165,19 +165,6 @@
 #define SIR_MAC_SA_QUERY_RSP             1
 #endif
 
-#ifdef FEATURE_WLAN_TDLS
-#define SIR_MAC_TDLS_SETUP_REQ           0
-#define SIR_MAC_TDLS_SETUP_RSP           1
-#define SIR_MAC_TDLS_SETUP_CNF           2
-#define SIR_MAC_TDLS_TEARDOWN            3
-#define SIR_MAC_TDLS_PEER_TRAFFIC_IND    4
-#define SIR_MAC_TDLS_CH_SWITCH_REQ       5
-#define SIR_MAC_TDLS_CH_SWITCH_RSP       6
-#define SIR_MAC_TDLS_PEER_TRAFFIC_RSP    9
-#define SIR_MAC_TDLS_DIS_REQ             10
-#define SIR_MAC_TDLS_DIS_RSP             14
-#endif
-
 /* WNM Action field values; IEEE Std 802.11-2012, 8.5.14.1, Table 8-250 */
 #define SIR_MAC_WNM_BSS_TM_QUERY         6
 #define SIR_MAC_WNM_BSS_TM_REQUEST       7

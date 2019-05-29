@@ -162,16 +162,16 @@ enum tdls_peer_capability {
 static const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
 {
 	switch (tdlsActionCode) {
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_SETUP_CNF);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_TEARDOWN);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_PEER_TRAFFIC_IND);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_CH_SWITCH_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_CH_SWITCH_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_PEER_TRAFFIC_RSP);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_DIS_REQ);
-		CASE_RETURN_STRING(SIR_MAC_TDLS_DIS_RSP);
+		CASE_RETURN_STRING(TDLS_SETUP_REQUEST);
+		CASE_RETURN_STRING(TDLS_SETUP_RESPONSE);
+		CASE_RETURN_STRING(TDLS_SETUP_CONFIRM);
+		CASE_RETURN_STRING(TDLS_TEARDOWN);
+		CASE_RETURN_STRING(TDLS_PEER_TRAFFIC_INDICATION);
+		CASE_RETURN_STRING(TDLS_CHANNEL_SWITCH_REQUEST);
+		CASE_RETURN_STRING(TDLS_CHANNEL_SWITCH_RESPONSE);
+		CASE_RETURN_STRING(TDLS_PEER_TRAFFIC_RESPONSE);
+		CASE_RETURN_STRING(TDLS_DISCOVERY_REQUEST);
+		CASE_RETURN_STRING(TDLS_DISCOVERY_RESPONSE);
 	}
 	return (const uint8_t *)"UNKNOWN";
 }
@@ -521,7 +521,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 	 * setup Fixed fields,
 	 */
 	tdlsDisReq.Category.category = ACTION_CATEGORY_TDLS;
-	tdlsDisReq.Action.action = SIR_MAC_TDLS_DIS_REQ;
+	tdlsDisReq.Action.action = TDLS_DISCOVERY_REQUEST;
 	tdlsDisReq.DialogToken.token = dialog;
 
 	size = sizeof(tSirMacAddr);
@@ -633,8 +633,8 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 #endif
 
 	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_DIS_REQ,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_REQ),
+		TDLS_DISCOVERY_REQUEST,
+		lim_trace_tdls_action_string(TDLS_DISCOVERY_REQUEST),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
@@ -808,7 +808,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 	 * setup Fixed fields,
 	 */
 	tdlsDisRsp.Category.category = ACTION_CATEGORY_PUBLIC;
-	tdlsDisRsp.Action.action = SIR_MAC_TDLS_DIS_RSP;
+	tdlsDisRsp.Action.action = TDLS_DISCOVERY_RESPONSE;
 	tdlsDisRsp.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
@@ -936,8 +936,8 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 			     addIeLen);
 	}
 	pe_debug("[TDLS] action: %d (%s) -DIRECT-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_DIS_RSP,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_RSP),
+		TDLS_DISCOVERY_RESPONSE,
+		lim_trace_tdls_action_string(TDLS_DISCOVERY_RESPONSE),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
@@ -1117,7 +1117,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 
 	qdf_mem_zero((uint8_t *) &tdlsSetupReq, sizeof(tDot11fTDLSSetupReq));
 	tdlsSetupReq.Category.category = ACTION_CATEGORY_TDLS;
-	tdlsSetupReq.Action.action = SIR_MAC_TDLS_SETUP_REQ;
+	tdlsSetupReq.Action.action = TDLS_SETUP_REQUEST;
 	tdlsSetupReq.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
@@ -1310,8 +1310,8 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	}
 
 	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_SETUP_REQ,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_REQ),
+		TDLS_SETUP_REQUEST,
+		lim_trace_tdls_action_string(TDLS_SETUP_REQUEST),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
@@ -1376,7 +1376,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	 */
 	qdf_mem_zero((uint8_t *) &teardown, sizeof(tDot11fTDLSTeardown));
 	teardown.Category.category = ACTION_CATEGORY_TDLS;
-	teardown.Action.action = SIR_MAC_TDLS_TEARDOWN;
+	teardown.Action.action = TDLS_TEARDOWN;
 	teardown.Reason.code = reason;
 
 	populate_dot11f_link_iden(mac, pe_session, &teardown.LinkIdentifier,
@@ -1501,8 +1501,8 @@ QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 	}
 #endif
 	pe_debug("[TDLS] action: %d (%s) -%s-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_TEARDOWN,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_TEARDOWN),
+		TDLS_TEARDOWN,
+		lim_trace_tdls_action_string(TDLS_TEARDOWN),
 		((reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE) ? "AP" :
 		    "DIRECT"),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
@@ -1577,7 +1577,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	 * setup Fixed fields,
 	 */
 	tdlsSetupRsp.Category.category = ACTION_CATEGORY_TDLS;
-	tdlsSetupRsp.Action.action = SIR_MAC_TDLS_SETUP_RSP;
+	tdlsSetupRsp.Action.action = TDLS_SETUP_RESPONSE;
 	tdlsSetupRsp.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
@@ -1762,8 +1762,8 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 	}
 
 	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_SETUP_RSP,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_RSP),
+		TDLS_SETUP_RESPONSE,
+		lim_trace_tdls_action_string(TDLS_SETUP_RESPONSE),
 		QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
@@ -1825,7 +1825,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 	 * setup Fixed fields,
 	 */
 	tdlsSetupCnf.Category.category = ACTION_CATEGORY_TDLS;
-	tdlsSetupCnf.Action.action = SIR_MAC_TDLS_SETUP_CNF;
+	tdlsSetupCnf.Action.action = TDLS_SETUP_CONFIRM;
 	tdlsSetupCnf.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(mac, pe_session,
@@ -1969,8 +1969,8 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 #endif
 
 	pe_debug("[TDLS] action: %d (%s) -AP-> OTA peer="QDF_MAC_ADDR_STR,
-		SIR_MAC_TDLS_SETUP_CNF,
-		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_CNF),
+		TDLS_SETUP_CONFIRM,
+		lim_trace_tdls_action_string(TDLS_SETUP_CONFIRM),
 	       QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	mac->lim.tdls_frm_session_id = pe_session->smeSessionId;
@@ -2838,7 +2838,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 	ie_len = send_req->length - sizeof(*send_req);
 
 	switch (send_req->req_type) {
-	case SIR_MAC_TDLS_DIS_REQ:
+	case TDLS_DISCOVERY_REQUEST:
 		pe_debug("Transmit Discovery Request Frame");
 		/* format TDLS discovery request frame and transmit it */
 		lim_send_tdls_dis_req_frame(mac_ctx, send_req->peer_mac,
@@ -2846,7 +2846,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 					    send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_DIS_RSP:
+	case TDLS_DISCOVERY_RESPONSE:
 		pe_debug("Transmit Discovery Response Frame");
 		/* Send a response mgmt action frame */
 		lim_send_tdls_dis_rsp_frame(mac_ctx, send_req->peer_mac,
@@ -2854,7 +2854,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 					    send_req->add_ie, ie_len);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_SETUP_REQ:
+	case TDLS_SETUP_REQUEST:
 		pe_debug("Transmit Setup Request Frame");
 		lim_send_tdls_link_setup_req_frame(mac_ctx,
 						   send_req->peer_mac,
@@ -2864,7 +2864,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 						   send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_SETUP_RSP:
+	case TDLS_SETUP_RESPONSE:
 		pe_debug("Transmit Setup Response Frame");
 		lim_send_tdls_setup_rsp_frame(mac_ctx,
 					      send_req->peer_mac,
@@ -2874,7 +2874,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 					      send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_SETUP_CNF:
+	case TDLS_SETUP_CONFIRM:
 		pe_debug("Transmit Setup Confirm Frame");
 		lim_send_tdls_link_setup_cnf_frame(mac_ctx,
 						   send_req->peer_mac,
@@ -2885,7 +2885,7 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 						   send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_TEARDOWN:
+	case TDLS_TEARDOWN:
 		pe_debug("Transmit Teardown Frame");
 		lim_send_tdls_teardown_frame(mac_ctx,
 					     send_req->peer_mac,
@@ -2896,13 +2896,13 @@ QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 					     send_req->ac);
 		result_code = eSIR_SME_SUCCESS;
 		break;
-	case SIR_MAC_TDLS_PEER_TRAFFIC_IND:
+	case TDLS_PEER_TRAFFIC_INDICATION:
 		break;
-	case SIR_MAC_TDLS_CH_SWITCH_REQ:
+	case TDLS_CHANNEL_SWITCH_REQUEST:
 		break;
-	case SIR_MAC_TDLS_CH_SWITCH_RSP:
+	case TDLS_CHANNEL_SWITCH_RESPONSE:
 		break;
-	case SIR_MAC_TDLS_PEER_TRAFFIC_RSP:
+	case TDLS_PEER_TRAFFIC_RESPONSE:
 		break;
 	default:
 		break;
