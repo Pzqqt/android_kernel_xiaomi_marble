@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,11 +29,11 @@
 #include <wlan_ioctl_ftm.h>
 
 static QDF_STATUS
-wlan_process_ftm_ioctl_cmd(struct wlan_objmgr_pdev *pdev,
-		uint8_t *userdata, uint32_t length)
+wlan_process_ftm_ioctl_cmd(struct wlan_objmgr_pdev *pdev, uint8_t *userdata)
 {
 	uint8_t *buffer;
 	QDF_STATUS error;
+	int length;
 
 	if (get_user(length, (uint32_t *)userdata) != 0)
 		return QDF_STATUS_E_FAILURE;
@@ -56,11 +56,11 @@ wlan_process_ftm_ioctl_cmd(struct wlan_objmgr_pdev *pdev,
 }
 
 static QDF_STATUS
-wlan_process_ftm_ioctl_rsp(struct wlan_objmgr_pdev *pdev,
-		uint8_t *userdata, uint32_t length)
+wlan_process_ftm_ioctl_rsp(struct wlan_objmgr_pdev *pdev, uint8_t *userdata)
 {
 	uint8_t *buffer;
 	QDF_STATUS error;
+	int length;
 
 	length = WLAN_FTM_DATA_MAX_LEN + sizeof(u_int32_t);
 
@@ -81,7 +81,7 @@ wlan_process_ftm_ioctl_rsp(struct wlan_objmgr_pdev *pdev,
 
 int
 wlan_ioctl_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev, int cmd,
-		uint8_t *userdata, uint32_t length)
+			    uint8_t *userdata)
 {
 	QDF_STATUS error;
 	struct wifi_ftm_pdev_priv_obj *ftm_pdev_obj;
@@ -97,12 +97,10 @@ wlan_ioctl_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev, int cmd,
 
 	switch (cmd) {
 	case FTM_IOCTL_UNIFIED_UTF_CMD:
-		error = wlan_process_ftm_ioctl_cmd(pdev,
-				userdata, length);
+		error = wlan_process_ftm_ioctl_cmd(pdev, userdata);
 		break;
 	case FTM_IOCTL_UNIFIED_UTF_RSP:
-		error = wlan_process_ftm_ioctl_rsp(pdev,
-				userdata, length);
+		error = wlan_process_ftm_ioctl_rsp(pdev, userdata);
 		break;
 	default:
 		ftm_err("FTM Unknown cmd - not supported");

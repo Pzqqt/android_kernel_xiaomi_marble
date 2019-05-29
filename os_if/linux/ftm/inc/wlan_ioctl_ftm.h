@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,11 +28,10 @@
  * @pdev: pdev object
  * @cmd: ftm command
  * @userdata: the content of the command
- * @length: the length of the userdata
  *
  * Return: 0 on success, otherwise the error code.
  */
 int wlan_ioctl_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev, int cmd,
-				uint8_t *userdata, uint32_t length);
+				uint8_t *userdata);
 
 #endif
