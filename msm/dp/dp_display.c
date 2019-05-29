@@ -1676,6 +1676,14 @@ end:
 	return 0;
 }
 
+static void dp_display_clear_colorspaces(struct dp_display *dp_display)
+{
+	struct drm_connector *connector;
+
+	connector = dp_display->base_connector;
+	connector->color_enc_fmt = 0;
+}
+
 static int dp_display_pre_disable(struct dp_display *dp_display, void *panel)
 {
 	struct dp_display_private *dp;
@@ -1731,6 +1739,8 @@ static int dp_display_pre_disable(struct dp_display *dp_display, void *panel)
 			dp_display_update_hdcp_status(dp, true);
 		}
 	}
+
+	dp_display_clear_colorspaces(dp_display);
 
 clean:
 	if (dp_panel->audio_supported)
