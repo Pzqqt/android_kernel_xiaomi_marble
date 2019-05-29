@@ -6272,102 +6272,23 @@ void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 	lim_process_channel_switch_timeout(mac_ctx);
 }
 
-void lim_remove_duplicate_bssid_node(struct sir_rssi_disallow_lst *entry,
-				     qdf_list_t *list)
-{
-	qdf_list_node_t *cur_list = NULL;
-	qdf_list_node_t *next_list = NULL;
-	struct sir_rssi_disallow_lst *cur_entry;
-	QDF_STATUS status;
-
-	qdf_list_peek_front(list, &cur_list);
-	while (cur_list) {
-		qdf_list_peek_next(list, cur_list, &next_list);
-		cur_entry = qdf_container_of(cur_list,
-					     struct sir_rssi_disallow_lst,
-					     node);
-
-		/*
-		 * Remove the node from blacklisting if the timeout is 0 and
-		 * rssi is 0 dbm i.e btm blacklisted entry
-		 */
-		if ((lim_assoc_rej_get_remaining_delta(cur_entry) == 0) &&
-		    cur_entry->expected_rssi == LIM_MIN_RSSI) {
-			status = qdf_list_remove_node(list, cur_list);
-			if (QDF_IS_STATUS_SUCCESS(status))
-				qdf_mem_free(cur_entry);
-		} else if (qdf_is_macaddr_equal(&entry->bssid,
-						&cur_entry->bssid)) {
-			/*
-			 * Remove the node if we try to add the same bssid again
-			 * Copy the old rssi value alone
-			 */
-			entry->expected_rssi = cur_entry->expected_rssi;
-			status = qdf_list_remove_node(list, cur_list);
-			if (QDF_IS_STATUS_SUCCESS(status)) {
-				qdf_mem_free(cur_entry);
-				break;
-			}
-		}
-		cur_list = next_list;
-		next_list = NULL;
-	}
-}
-
 void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 			       struct roam_blacklist_event *src_lst)
 {
 	uint32_t i;
-	struct sir_rssi_disallow_lst *entry;
+	struct sir_rssi_disallow_lst entry;
 	struct roam_blacklist_timeout *blacklist;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	blacklist = &src_lst->roam_blacklist[0];
 	for (i = 0; i < src_lst->num_entries; i++) {
-		entry = qdf_mem_malloc(sizeof(struct sir_rssi_disallow_lst));
-		if (!entry)
-			return;
 
-		qdf_copy_macaddr(&entry->bssid, &blacklist->bssid);
-		entry->retry_delay = blacklist->timeout;
-		entry->time_during_rejection = blacklist->received_time;
+		entry.bssid = blacklist->bssid;
+		entry.retry_delay = blacklist->timeout;
+		entry.time_during_rejection = blacklist->received_time;
 		/* set 0dbm as expected rssi for btm blaclisted entries */
-		entry->expected_rssi = LIM_MIN_RSSI;
+		entry.expected_rssi = LIM_MIN_RSSI;
 
-		qdf_mutex_acquire(&mac_ctx->roam.rssi_disallow_bssid_lock);
-		lim_remove_duplicate_bssid_node(
-					entry,
-					&mac_ctx->roam.rssi_disallow_bssid);
-
-		if (qdf_list_size(&mac_ctx->roam.rssi_disallow_bssid) >=
-		    MAX_RSSI_AVOID_BSSID_LIST) {
-			status = lim_rem_blacklist_entry_with_lowest_delta(
-					&mac_ctx->roam.rssi_disallow_bssid);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				qdf_mutex_release(&mac_ctx->roam.
-					rssi_disallow_bssid_lock);
-				pe_err("Failed to remove entry with lowest delta");
-				qdf_mem_free(entry);
-				return;
-			}
-		}
-
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			status = qdf_list_insert_back(
-					&mac_ctx->roam.rssi_disallow_bssid,
-					&entry->node);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				qdf_mutex_release(&mac_ctx->roam.
-					rssi_disallow_bssid_lock);
-				pe_err("Failed to enqueue bssid: %pM",
-				       entry->bssid.bytes);
-				qdf_mem_free(entry);
-				return;
-			}
-			pe_debug("Added BTM blacklisted bssid: %pM",
-				 entry->bssid.bytes);
-		}
-		qdf_mutex_release(&mac_ctx->roam.rssi_disallow_bssid_lock);
-		blacklist++;
+		/* Add this bssid to the rssi reject ap type in blacklist mgr */
+		lim_add_bssid_to_reject_list(mac_ctx->pdev, &entry);
 	}
 }

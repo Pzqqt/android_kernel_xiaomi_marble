@@ -62,6 +62,7 @@
 #include "wlan_mlme_public_struct.h"
 #include <wlan_crypto_global_api.h>
 #include "wlan_qct_sys.h"
+#include "wlan_blm_api.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -589,68 +590,6 @@ static void csr_close_stats_ll(struct mac_context *mac_ctx)
 }
 #endif
 
-/**
- * csr_assoc_rej_free_rssi_disallow_list() - Free the rssi disallowed
- * BSSID entries and destroy the list
- * @mac_ctx: MAC context
- *
- * Return: void
- */
-static void csr_assoc_rej_free_rssi_disallow_list(struct mac_context *mac)
-{
-	QDF_STATUS status;
-	struct sir_rssi_disallow_lst *cur_node;
-	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
-	qdf_list_t *list = &mac->roam.rssi_disallow_bssid;
-
-	qdf_mutex_acquire(&mac->roam.rssi_disallow_bssid_lock);
-	qdf_list_peek_front(list, &cur_lst);
-	while (cur_lst) {
-		qdf_list_peek_next(list, cur_lst, &next_lst);
-		cur_node = qdf_container_of(cur_lst,
-					    struct sir_rssi_disallow_lst, node);
-		status = qdf_list_remove_node(list, cur_lst);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			qdf_mem_free(cur_node);
-		cur_lst = next_lst;
-		next_lst = NULL;
-	}
-	qdf_list_destroy(list);
-	qdf_mutex_release(&mac->roam.rssi_disallow_bssid_lock);
-}
-
-/**
- * csr_roam_rssi_disallow_bssid_init() - Init the rssi disallowed
- * list and mutex
- * @mac_ctx: MAC context
- *
- * Return: QDF_STATUS enumeration
- */
-static QDF_STATUS csr_roam_rssi_disallow_bssid_init(
-					     struct mac_context *mac_ctx)
-{
-	qdf_list_create(&mac_ctx->roam.rssi_disallow_bssid,
-			MAX_RSSI_AVOID_BSSID_LIST);
-	qdf_mutex_create(&mac_ctx->roam.rssi_disallow_bssid_lock);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * csr_roam_rssi_disallow_bssid_deinit() - Free the rssi diallowed
- * BSSID entries and destroy the list&mutex
- * @mac_ctx: MAC context
- *
- * Return: QDF_STATUS enumeration
- */
-static QDF_STATUS csr_roam_rssi_disallow_bssid_deinit(
-					     struct mac_context *mac_ctx)
-{
-	csr_assoc_rej_free_rssi_disallow_list(mac_ctx);
-	qdf_mutex_destroy(&mac_ctx->roam.rssi_disallow_bssid_lock);
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS csr_open(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -682,8 +621,6 @@ QDF_STATUS csr_open(struct mac_context *mac)
 			csr_roam_free_globals();
 			break;
 		}
-
-		csr_roam_rssi_disallow_bssid_init(mac);
 	} while (0);
 
 	return status;
@@ -740,7 +677,6 @@ QDF_STATUS csr_close(struct mac_context *mac)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	csr_roam_close(mac);
-	csr_roam_rssi_disallow_bssid_deinit(mac);
 	csr_scan_close(mac);
 	csr_close_stats_ll(mac);
 	/* DeInit Globals */
@@ -18953,61 +18889,37 @@ static void check_allowed_ssid_list(struct roam_offload_scan_req *req_buffer,
  *
  * Return: None
  */
-static void csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
-	struct roam_ext_params *roam_params)
+static void
+csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
+			    struct roam_ext_params *roam_params)
 {
 	int i = 0;
-	struct sir_rssi_disallow_lst *cur_node;
-	qdf_list_node_t *cur_list = NULL;
-	qdf_list_node_t *next_list = NULL;
-	struct rssi_disallow_bssid *rssi_rejection_ap;
-	qdf_list_t *list = &mac_ctx->roam.rssi_disallow_bssid;
-	qdf_time_t cur_time =
-		qdf_do_div(qdf_get_monotonic_boottime(),
-		QDF_MC_TIMER_TO_MS_UNIT);
+	struct reject_ap_config_params *reject_list;
 
-	roam_params->num_rssi_rejection_ap = qdf_list_size(list);
-
-	if (!qdf_list_size(list))
+	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
+				     MAX_RSSI_AVOID_BSSID_LIST);
+	if (!reject_list)
 		return;
 
-	if (roam_params->num_rssi_rejection_ap > MAX_RSSI_AVOID_BSSID_LIST)
-		roam_params->num_rssi_rejection_ap = MAX_RSSI_AVOID_BSSID_LIST;
-
-	qdf_mutex_acquire(&mac_ctx->roam.rssi_disallow_bssid_lock);
-	qdf_list_peek_front(list, &cur_list);
-	while (cur_list) {
-		int32_t rem_time;
-
-		rssi_rejection_ap = &roam_params->rssi_rejection_ap[i];
-		cur_node = qdf_container_of(cur_list,
-				struct sir_rssi_disallow_lst, node);
-		rem_time = cur_node->retry_delay -
-			(cur_time - cur_node->time_during_rejection);
-
-		if (rem_time > 0) {
-			qdf_copy_macaddr(&rssi_rejection_ap->bssid,
-					&cur_node->bssid);
-			rssi_rejection_ap->expected_rssi =
-					cur_node->expected_rssi;
-			rssi_rejection_ap->remaining_duration = rem_time;
-			i++;
-		}
-		qdf_list_peek_next(list, cur_list, &next_list);
-		cur_list = next_list;
-		next_list = NULL;
-
-		if (i >= MAX_RSSI_AVOID_BSSID_LIST)
-			break;
+	roam_params->num_rssi_rejection_ap =
+		wlan_blm_get_bssid_reject_list(mac_ctx->pdev, reject_list,
+					       MAX_RSSI_AVOID_BSSID_LIST,
+					       DRIVER_RSSI_REJECT_TYPE);
+	if (!roam_params->num_rssi_rejection_ap) {
+		sme_debug("RSSI reject list NULL");
+		qdf_mem_free(reject_list);
+		return;
 	}
-	qdf_mutex_release(&mac_ctx->roam.rssi_disallow_bssid_lock);
 
 	for (i = 0; i < roam_params->num_rssi_rejection_ap; i++) {
+		roam_params->rssi_reject_bssid_list[i] = reject_list[i];
 		sme_debug("BSSID %pM expected rssi %d remaining duration %d",
-			roam_params->rssi_rejection_ap[i].bssid.bytes,
-			roam_params->rssi_rejection_ap[i].expected_rssi,
-			roam_params->rssi_rejection_ap[i].remaining_duration);
+		   roam_params->rssi_reject_bssid_list[i].bssid.bytes,
+		   roam_params->rssi_reject_bssid_list[i].expected_rssi,
+		   roam_params->rssi_reject_bssid_list[i].reject_duration);
 	}
+
+	qdf_mem_free(reject_list);
 }
 
 /*

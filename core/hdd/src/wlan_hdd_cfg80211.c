@@ -141,6 +141,7 @@
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_hdd_coex_config.h"
 #include "wlan_hdd_bcn_recv.h"
+#include "wlan_blm_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -3614,6 +3615,8 @@ wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID_NUM_NETWORKS
 #define PARAM_SET_BSSID \
 	QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_BSSID
+#define PARAM_SET_BSSID_HINT \
+		QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_HINT
 #define PARAM_SSID_LIST QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID_LIST
 #define PARAM_LIST_SSID  QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_WHITE_LIST_SSID
 #define MAX_ROAMING_PARAM \
@@ -3666,6 +3669,7 @@ wlan_hdd_set_roam_param_policy[MAX_ROAMING_PARAM + 1] = {
 	[PARAMS_NUM_BSSID] = {.type = NLA_U32},
 	[PARAM_ROAM_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
 	[PARAM_SET_BSSID] = {.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE},
+	[PARAM_SET_BSSID_HINT] = {.type = NLA_FLAG},
 };
 
 /**
@@ -3857,6 +3861,7 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 {
 	int rem, i;
 	uint32_t count;
+	uint8_t j = 0;
 	struct nlattr *tb2[MAX_ROAMING_PARAM + 1];
 	struct nlattr *curr_attr = NULL;
 	mac_handle_t mac_handle;
@@ -3897,11 +3902,26 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 				hdd_err("attr blacklist addr failed");
 				goto fail;
 			}
-			nla_memcpy(roam_params->bssid_avoid_list[i].bytes,
+			if (tb2[PARAM_SET_BSSID_HINT]) {
+				struct reject_ap_info ap_info;
+
+				nla_memcpy(ap_info.bssid.bytes,
+					   tb2[PARAM_SET_BSSID],
+					   QDF_MAC_ADDR_SIZE);
+				ap_info.reject_ap_type = USERSPACE_AVOID_TYPE;
+				/* This BSSID is avoided and not blacklisted */
+				ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev,
+								  &ap_info);
+				i++;
+				continue;
+			}
+			nla_memcpy(roam_params->bssid_avoid_list[j].bytes,
 				   tb2[PARAM_SET_BSSID], QDF_MAC_ADDR_SIZE);
 			hdd_debug(QDF_MAC_ADDR_STR,
-				  QDF_MAC_ADDR_ARRAY(roam_params->bssid_avoid_list[i].bytes));
+				  QDF_MAC_ADDR_ARRAY(roam_params->
+						    bssid_avoid_list[j].bytes));
 			i++;
+			j++;
 		}
 	}
 
@@ -3909,7 +3929,12 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 		hdd_warn("Num Blacklist BSSID %u less than expected %u",
 			 i, count);
 
-	roam_params->num_bssid_avoid_list = i;
+	roam_params->num_bssid_avoid_list = j;
+	/* Send the blacklist to the blacklist mgr component */
+	ucfg_blm_add_userspace_black_list(hdd_ctx->pdev,
+					  roam_params->bssid_avoid_list,
+					  roam_params->num_bssid_avoid_list);
+
 	mac_handle = hdd_ctx->mac_handle;
 	sme_update_roam_params(mac_handle, vdev_id,
 			       roam_params, REASON_ROAM_SET_BLACKLIST_BSSID);
@@ -4124,6 +4149,7 @@ fail:
 }
 #undef PARAM_NUM_NW
 #undef PARAM_SET_BSSID
+#undef PARAM_SET_BSSID_HINT
 #undef PARAM_SSID_LIST
 #undef PARAM_LIST_SSID
 #undef MAX_ROAMING_PARAM

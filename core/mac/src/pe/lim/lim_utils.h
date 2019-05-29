@@ -825,6 +825,18 @@ lim_del_pmf_sa_query_timer(struct mac_context *mac_ctx, struct pe_session *pe_se
 #endif
 
 /**
+ * lim_add_bssid_to_reject_list:- Add rssi reject Ap info to blacklist mgr.
+ * @pdev: pdev
+ * @entry: info of the BSSID to be put in rssi reject list.
+ *
+ * This API will add the passed ap info to the rssi reject list.
+ *
+ */
+void
+lim_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
+			     struct sir_rssi_disallow_lst *entry);
+
+/**
  * lim_strip_op_class_update_struct - strip sup op class IE and populate
  *				  the dot11f structure
  * @mac_ctx: global MAC context
@@ -1299,22 +1311,6 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 }
 
 #endif
-
-/**
- * lim_assoc_rej_add_to_rssi_based_reject_list() - Add BSSID to the rssi based
- * rejection list
- * @mac_ctx: mac ctx
- * @ap_info: ap's info which is to be rejected.
- *
- * Add BSSID to the rssi based rejection list. Also if number
- * of entries is greater than MAX_RSSI_AVOID_BSSID_LIST
- * remove the entry with lowest time delta
- *
- * Return: void
- */
-void lim_assoc_rej_add_to_rssi_based_reject_list(
-					struct mac_context *mac_ctx,
-					struct sir_rssi_disallow_lst *ap_info);
 
 /**
  * lim_decrement_pending_mgmt_count: Decrement mgmt frame count

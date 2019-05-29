@@ -490,15 +490,12 @@ lim_handle_assoc_reject_status(struct mac_context *mac_ctx,
 	 * which will allow the bssid to connect is retry delay.
 	 */
 	ap_info.retry_delay = timeout_value;
-	qdf_mem_copy(ap_info.bssid.bytes, source_addr,
-		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(ap_info.bssid.bytes, source_addr, QDF_MAC_ADDR_SIZE);
 	ap_info.expected_rssi = LIM_MIN_RSSI;
-	lim_assoc_rej_add_to_rssi_based_reject_list(mac_ctx,
-						    &ap_info);
+	lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 
 	pe_debug("ASSOC res with eSIR_MAC_TRY_AGAIN_LATER recvd. Add to time reject list(rssi reject in mac_ctx %d",
 		timeout_value);
-
 }
 #else
 static void
@@ -789,8 +786,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		qdf_mem_copy(ap_info.bssid.bytes, hdr->sa, QDF_MAC_ADDR_SIZE);
 		ap_info.expected_rssi = assoc_rsp->rssi_assoc_rej.delta_rssi +
 					WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
-		lim_assoc_rej_add_to_rssi_based_reject_list(mac_ctx,
-							    &ap_info);
+		lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 	}
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS) {
 		/*

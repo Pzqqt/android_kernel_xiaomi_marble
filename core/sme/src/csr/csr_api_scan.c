@@ -49,6 +49,7 @@
 #include <wlan_utility.h>
 #include "wlan_reg_services_api.h"
 #include "sch_api.h"
+#include "wlan_blm_api.h"
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint8_t *pChannelList,
@@ -2734,130 +2735,6 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
 }
 
 /**
- * csr_remove_ap_due_to_rssi() - check if bss is present in
- * list of BSSID which rejected Assoc due to RSSI
- * @list: rssi based rejected BSS list
- * @bss_descr: pointer to bss description
- *
- * Check if the time interval indicated in last Assoc reject
- * has expired OR rssi has improved by margin indicated
- * in last Assoc reject. If any of the condition match remove
- * the AP from the avoid list, else do not try to conenct
- * to the AP
- *
- * Return: true if connection cannot be tried with AP else false
- */
-static bool csr_remove_ap_due_to_rssi(qdf_list_t *list,
-				      struct bss_description *bss_descr)
-{
-	QDF_STATUS status;
-	struct sir_rssi_disallow_lst *cur_node = NULL;
-	qdf_list_node_t *cur_lst = NULL, *next_lst = NULL;
-	qdf_time_t cur_time;
-	uint32_t time_diff;
-
-	if (!qdf_list_size(list))
-		return false;
-
-	cur_time = qdf_do_div(qdf_get_monotonic_boottime(),
-		QDF_MC_TIMER_TO_MS_UNIT);
-
-	qdf_list_peek_front(list, &cur_lst);
-	while (cur_lst) {
-		cur_node = qdf_container_of(cur_lst,
-				struct sir_rssi_disallow_lst, node);
-
-		qdf_list_peek_next(list, cur_lst, &next_lst);
-
-		time_diff = cur_time - cur_node->time_during_rejection;
-		if ((time_diff > cur_node->retry_delay)) {
-			sme_debug("Remove %pM as time diff %d is greater retry delay %d",
-				cur_node->bssid.bytes, time_diff,
-				cur_node->retry_delay);
-			status = qdf_list_remove_node(list, cur_lst);
-			if (QDF_IS_STATUS_SUCCESS(status))
-				qdf_mem_free(cur_node);
-			cur_lst = next_lst;
-			next_lst = NULL;
-			cur_node = NULL;
-			continue;
-		}
-
-		if (!qdf_mem_cmp(cur_node->bssid.bytes,
-		    bss_descr->bssId, QDF_MAC_ADDR_SIZE))
-			break;
-		cur_lst = next_lst;
-		next_lst = NULL;
-		cur_node = NULL;
-	}
-
-	if (cur_node) {
-		time_diff = cur_time - cur_node->time_during_rejection;
-		if (!(time_diff > cur_node->retry_delay ||
-		   bss_descr->rssi_raw >= cur_node->expected_rssi)) {
-			sme_err("Don't Attempt to connect %pM (time diff %d retry delay %d rssi %d expected rssi %d)",
-				cur_node->bssid.bytes, time_diff,
-				cur_node->retry_delay, bss_descr->rssi_raw,
-				cur_node->expected_rssi);
-			return true;
-		}
-		sme_debug("Remove %pM as time diff %d is greater retry delay %d or RSSI %d is greater than expected %d",
-				cur_node->bssid.bytes, time_diff,
-				cur_node->retry_delay,
-				bss_descr->rssi_raw,
-				cur_node->expected_rssi);
-		status = qdf_list_remove_node(list, cur_lst);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			qdf_mem_free(cur_node);
-	}
-
-	return false;
-}
-
-/**
- * csr_filter_ap_due_to_rssi_reject() - filter the AP who has sent
- * assoc reject due to RSSI if condition has not improved
- * @mac_ctx: mac context
- * @scan_list: candidate list for the connection
- *
- * Return: void
- */
-static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
-					     struct scan_result_list *scan_list)
-{
-	tListElem *cur_entry;
-	tListElem *next_entry;
-	struct tag_csrscan_result *scan_res;
-	bool remove;
-
-	if (!scan_list ||
-	   !qdf_list_size(&mac_ctx->roam.rssi_disallow_bssid))
-		return;
-
-	cur_entry = csr_ll_peek_head(&scan_list->List, LL_ACCESS_NOLOCK);
-	while (cur_entry) {
-		scan_res = GET_BASE_ADDR(cur_entry, struct tag_csrscan_result,
-					Link);
-		next_entry = csr_ll_next(&scan_list->List,
-						cur_entry, LL_ACCESS_NOLOCK);
-
-		qdf_mutex_acquire(&mac_ctx->roam.rssi_disallow_bssid_lock);
-		remove = csr_remove_ap_due_to_rssi(
-			&mac_ctx->roam.rssi_disallow_bssid,
-			&scan_res->Result.BssDescriptor);
-		qdf_mutex_release(&mac_ctx->roam.rssi_disallow_bssid_lock);
-
-		if (remove) {
-			csr_ll_remove_entry(&scan_list->List,
-				cur_entry, LL_ACCESS_NOLOCK);
-			csr_free_scan_result_entry(mac_ctx, scan_res);
-		}
-		cur_entry = next_entry;
-		next_entry = NULL;
-	}
-}
-
-/**
  * csr_remove_ap_with_assoc_disallowed() - Remove APs with assoc
  * disallowed bit set
  * @mac_ctx: mac context
@@ -2933,8 +2810,12 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 	if (list)
 		sme_debug("num_entries %d", qdf_list_size(list));
 
+	/* Filter the scan list with the blacklist, rssi reject, avoided APs */
+	if (pFilter && pFilter->csrPersona == QDF_STA_MODE)
+		wlan_blm_filter_bssid(pdev, list);
+
 	if (!list || (list && !qdf_list_size(list))) {
-		sme_debug("get scan result failed");
+		sme_debug("scan list empty");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
@@ -2956,10 +2837,9 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (pFilter && pFilter->csrPersona == QDF_STA_MODE) {
-			csr_filter_ap_due_to_rssi_reject(mac_ctx, ret_list);
+		if (pFilter && pFilter->csrPersona == QDF_STA_MODE)
 			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
-		}
+
 		if (!csr_ll_count(&ret_list->List)) {
 			/* This mean that there is no match */
 			csr_ll_close(&ret_list->List);

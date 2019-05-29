@@ -1353,9 +1353,9 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	qdf_mem_copy(params->bssid_favored_factor,
 			roam_params->bssid_favored_factor, MAX_BSSID_FAVORED);
 	qdf_mem_copy(params->rssi_rejection_ap,
-		roam_params->rssi_rejection_ap,
+		roam_params->rssi_reject_bssid_list,
 		MAX_RSSI_AVOID_BSSID_LIST *
-		sizeof(struct rssi_disallow_bssid));
+		sizeof(struct reject_ap_config_params));
 
 	if (params->lca_disallow_config_present) {
 		params->disallow_duration

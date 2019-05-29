@@ -948,6 +948,18 @@ MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
 
 MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_vdev_mgr_interface.o
 
+
+####### BLACKLIST_MGR ########
+
+BLM_DIR := components/blacklist_mgr
+BLM_INC := -I$(WLAN_ROOT)/$(BLM_DIR)/core/inc \
+                -I$(WLAN_ROOT)/$(BLM_DIR)/dispatcher/inc
+ifeq ($(CONFIG_FEATURE_BLACKLIST_MGR), y)
+BLM_OBJS :=    $(BLM_DIR)/core/src/wlan_blm_main.o \
+                $(BLM_DIR)/core/src/wlan_blm_core.o \
+                $(BLM_DIR)/dispatcher/src/wlan_blm_ucfg_api.o \
+                $(BLM_DIR)/dispatcher/src/wlan_blm_tgt_api.o
+endif
 ########## ACTION OUI ##########
 
 ACTION_OUI_DIR := components/action_oui
@@ -993,6 +1005,11 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/disa/inc
 CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/disa/src/target_if_disa.o
+endif
+
+ifeq ($(CONFIG_FEATURE_BLACKLIST_MGR), y)
+CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/blacklist_mgr/inc
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/blacklist_mgr/src/target_if_blm.o
 endif
 
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
@@ -1828,6 +1845,7 @@ INCS +=		$(UMAC_SM_INC)
 INCS +=		$(UMAC_MLME_INC)
 INCS +=		$(MLME_INC)
 INCS +=		$(FWOL_INC)
+INCS +=		$(BLM_INC)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 INCS +=		$(PKTLOG_INC)
@@ -1912,6 +1930,7 @@ OBJS +=		$(UMAC_SM_OBJS)
 OBJS +=		$(UMAC_MLME_OBJS)
 OBJS +=		$(MLME_OBJS)
 OBJS +=		$(FWOL_OBJS)
+OBJS +=		$(BLM_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
@@ -1989,6 +2008,7 @@ cppflags-$(CONFIG_LEGACY_CHAN_ENUM) += -DCONFIG_LEGACY_CHAN_ENUM
 cppflags-$(CONFIG_WLAN_PMO_ENABLE) += -DWLAN_PMO_ENABLE
 cppflags-$(CONFIG_CONVERGED_P2P_ENABLE) += -DCONVERGED_P2P_ENABLE
 cppflags-$(CONFIG_WLAN_POLICY_MGR_ENABLE) += -DWLAN_POLICY_MGR_ENABLE
+cppflags-$(CONFIG_FEATURE_BLACKLIST_MGR) += -DFEATURE_BLACKLIST_MGR
 cppflags-$(CONFIG_SUPPORT_11AX) += -DSUPPORT_11AX
 cppflags-$(CONFIG_HDD_INIT_WITH_RTNL_LOCK) += -DCONFIG_HDD_INIT_WITH_RTNL_LOCK
 cppflags-$(CONFIG_WLAN_CONV_SPECTRAL_ENABLE) += -DWLAN_CONV_SPECTRAL_ENABLE

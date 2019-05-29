@@ -45,9 +45,11 @@
 #include "hdd_config.h"
 #include "hdd_dp_cfg.h"
 #include "cfg_legacy_dp.h"
+#include "wlan_cfg_blm.h"
 
 /* Maintain Alphabetic order here while adding components */
 #define CFG_ALL \
+	CFG_BLACKLIST_MGR_ALL \
 	CFG_CONVERGED_ALL \
 	CFG_FWOL_ALL \
 	CFG_POLICY_MGR_ALL \

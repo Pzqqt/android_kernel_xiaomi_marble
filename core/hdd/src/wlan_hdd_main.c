@@ -169,6 +169,7 @@
 #include <wlan_interop_issues_ap_ucfg_api.h>
 #include <target_type.h>
 #include <wlan_hdd_debugfs_coex.h>
+#include "wlan_blm_ucfg_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -13139,7 +13140,14 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto policy_deinit;
 
+	status = ucfg_blm_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto tdls_deinit;
+
 	return QDF_STATUS_SUCCESS;
+
+tdls_deinit:
+	ucfg_tdls_deinit();
 
 policy_deinit:
 	policy_mgr_deinit();
@@ -13181,6 +13189,7 @@ target_if_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
+	ucfg_blm_deinit();
 	ucfg_tdls_deinit();
 	policy_mgr_deinit();
 	ucfg_interop_issues_ap_deinit();
@@ -13207,6 +13216,10 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	status = ucfg_mlme_psoc_open(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
+
+	status = ucfg_blm_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_blm;
 
 	status = ucfg_fwol_psoc_open(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -13239,6 +13252,8 @@ err_plcy_mgr:
 err_pmo:
 	ucfg_fwol_psoc_close(psoc);
 err_fwol:
+	ucfg_blm_psoc_close(psoc);
+err_blm:
 	ucfg_mlme_psoc_close(psoc);
 
 	return status;
@@ -13251,6 +13266,7 @@ void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 	ucfg_policy_mgr_psoc_close(psoc);
 	ucfg_pmo_psoc_close(psoc);
 	ucfg_fwol_psoc_close(psoc);
+	ucfg_blm_psoc_close(psoc);
 	ucfg_mlme_psoc_close(psoc);
 }
 

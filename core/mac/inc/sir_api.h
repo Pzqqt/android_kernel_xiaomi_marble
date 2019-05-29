@@ -92,8 +92,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 	(QOS_MAP_LEN_MIN + 2 * QOS_MAP_MAX_EX)
 #define NUM_CHAINS_MAX  2
 
-#define MAX_RSSI_AVOID_BSSID_LIST    10
-
 /* Maximum number of realms present in fils indication element */
 #define SIR_MAX_REALM_COUNT 7
 /* Realm length */
@@ -2141,6 +2139,7 @@ typedef enum {
  * @rssi_diff:                  RSSI difference for the AP to be better over the
  *                              current AP to avoid ping pong effects
  * @good_rssi_roam:             Lazy Roam
+ * @rssi_reject_list:           RSSI reject list (APs rejected by OCE, BTM)
  * @bg_scan_bad_rssi_thresh:    Bad RSSI threshold to perform bg scan.
  * @bad_rssi_thresh_offset_2g:  Offset from Bad RSSI threshold for 2G to 5G Roam
  * @bg_scan_client_bitmap:      Bitmap to identify the client scans to snoop.
@@ -2172,7 +2171,8 @@ struct roam_ext_params {
 	int initial_dense_status;
 	int traffic_threshold;
 	uint8_t num_rssi_rejection_ap;
-	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
+	struct reject_ap_config_params
+			rssi_reject_bssid_list[MAX_RSSI_AVOID_BSSID_LIST];
 	int8_t bg_scan_bad_rssi_thresh;
 	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t bg_scan_client_bitmap;

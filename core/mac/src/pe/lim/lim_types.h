@@ -959,16 +959,6 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
 void lim_send_bcn_rsp(struct mac_context *mac_ctx, tpSendbeaconParams rsp);
 
 /**
- * lim_remove_duplicate_bssid_node() - remove duplicate bssid from the
- * @entry: entry to check for which the duplicate entry is present
- * @list:  mac_ctx->roam.rssi_disallow_bssid list
- *
- * Return: None
- */
-void lim_remove_duplicate_bssid_node(struct sir_rssi_disallow_lst *entry,
-				     qdf_list_t *list);
-
-/**
  * lim_add_roam_blacklist_ap() - handle the blacklist bssid list received from
  * firmware
  * @mac_ctx: Pointer to Global MAC structure
