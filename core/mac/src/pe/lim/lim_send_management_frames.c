@@ -1633,7 +1633,6 @@ QDF_STATUS lim_fill_adaptive_11r_ie(struct pe_session *pe_session,
  *
  * Return: Void
  */
-
 void
 lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			      tLimMlmAssocReq *mlm_assoc_req,

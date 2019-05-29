@@ -1095,6 +1095,9 @@ populate_dot11f_ext_cap(struct mac_context *mac,
 	if (pe_session && pe_session->is_mbssid_enabled)
 		p_ext_cap->multi_bssid = 1;
 
+	if (mac->mlme_cfg->btm.btm_offload_config & BTM_OFFLOAD_ENABLED_MASK)
+		p_ext_cap->bss_transition = 1;
+
 	/* Need to calculate the num_bytes based on bits set */
 	if (pDot11f->present)
 		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);
