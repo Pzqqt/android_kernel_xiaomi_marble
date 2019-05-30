@@ -1619,29 +1619,22 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 				       struct dp_vdev *vdev,
 				       qdf_nbuf_t nbuf)
 {
-	struct cdp_tid_rx_stats *tid_stats;
 	struct dp_peer *vdev_peer;
 	uint16_t len;
-	uint8_t tid;
 
 	vdev_peer = vdev->vap_bss_peer;
 	if (qdf_unlikely(!vdev_peer))
 		return nbuf;
-
-	tid = qdf_nbuf_get_priority(nbuf);
-	tid_stats = &pdev->stats.tid_stats.tid_rx_stats[tid];
 
 	qdf_mem_zero(nbuf->cb, sizeof(nbuf->cb));
 	len = qdf_nbuf_len(nbuf);
 
 	if (dp_tx_send(vdev, nbuf)) {
 		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
-		tid_stats->fail_cnt[INTRABSS_DROP]++;
 		return nbuf;
 	}
 
 	DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.pkts, 1, len);
-	tid_stats->intrabss_cnt++;
 	return NULL;
 }
 

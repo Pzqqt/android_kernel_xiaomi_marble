@@ -393,8 +393,9 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
-	struct cdp_tid_rx_stats *tid_stats =
-		&ta_peer->vdev->pdev->stats.tid_stats.tid_rx_stats[tid];
+	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+	struct cdp_tid_rx_stats *tid_stats = &ta_peer->vdev->pdev->stats.
+					tid_stats.tid_rx_stats[ring_id][tid];
 
 	/* check if the destination peer is available in peer table
 	 * and also check if the source peer and destination peer
@@ -1078,6 +1079,7 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
  */
 void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
+	uint8_t ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	int64_t current_ts = qdf_ktime_to_ms(qdf_ktime_get());
 	uint32_t to_stack = qdf_nbuf_get_timedelta_ms(nbuf);
 	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
@@ -1085,7 +1087,7 @@ void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 		(uint32_t)(current_ts - vdev->prev_rx_deliver_tstamp);
 
 	dp_update_delay_stats(vdev->pdev, to_stack, tid,
-			      CDP_DELAY_STATS_REAP_STACK);
+			      CDP_DELAY_STATS_REAP_STACK, ring_id);
 	/*
 	 * Update interframe delay stats calculated at deliver_data_ol point.
 	 * Value of vdev->prev_rx_deliver_tstamp will be 0 for 1st frame, so
@@ -1094,7 +1096,7 @@ void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	 * of vdev->prev_rx_deliver_tstamp.
 	 */
 	dp_update_delay_stats(vdev->pdev, interframe_delay, tid,
-			      CDP_DELAY_STATS_RX_INTERFRAME);
+			      CDP_DELAY_STATS_RX_INTERFRAME, ring_id);
 	vdev->prev_rx_deliver_tstamp = current_ts;
 }
 
@@ -1109,15 +1111,16 @@ static inline int dp_rx_drop_nbuf_list(struct dp_pdev *pdev,
 				       qdf_nbuf_t buf_list)
 {
 	struct cdp_tid_rx_stats *stats = NULL;
-	uint8_t tid = 0;
+	uint8_t tid = 0, ring_id = 0;
 	int num_dropped = 0;
 	qdf_nbuf_t buf, next_buf;
 
 	buf = buf_list;
 	while (buf) {
+		ring_id = QDF_NBUF_CB_RX_CTX_ID(buf);
 		next_buf = qdf_nbuf_queue_next(buf);
 		tid = qdf_nbuf_get_tid_val(buf);
-		stats = &pdev->stats.tid_stats.tid_rx_stats[tid];
+		stats = &pdev->stats.tid_stats.tid_rx_stats[ring_id][tid];
 		stats->fail_cnt[INVALID_PEER_VDEV]++;
 		stats->delivered_to_stack--;
 		qdf_nbuf_free(buf);
@@ -1816,7 +1819,8 @@ done:
 		if (qdf_unlikely(rx_pdev->delay_stats_flag))
 			qdf_nbuf_set_timestamp(nbuf);
 
-		tid_stats = &rx_pdev->stats.tid_stats.tid_rx_stats[tid];
+		tid_stats = &rx_pdev->stats.tid_stats.
+			    tid_rx_stats[ring_id][tid];
 		if (qdf_unlikely(!hal_rx_attn_msdu_done_get(rx_tlv_hdr))) {
 			dp_err("MSDU DONE failure");
 			DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);

@@ -1455,7 +1455,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		dp_err_rl("Tx_desc prepare Fail vdev %pK queue %d",
 			  vdev, tx_q->desc_pool_id);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats = &pdev->stats.tid_stats.
+			    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
 		tid_stats->swdrop_cnt[TX_DESC_ERR]++;
 		return nbuf;
 	}
@@ -1475,7 +1476,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats = &pdev->stats.tid_stats.
+			    tid_tx_stats[tx_q->ring_id][tid];
 		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
@@ -1508,7 +1510,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
 			  __func__, tx_desc, tx_q->ring_id);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats = &pdev->stats.tid_stats.
+			    tid_tx_stats[tx_q->ring_id][tid];
 		tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
@@ -1564,7 +1567,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[msdu_info->tid];
+		tid_stats = &pdev->stats.tid_stats.
+			    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
 		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		return nbuf;
@@ -1631,7 +1635,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 			dp_tx_get_tid(vdev, nbuf, msdu_info);
 			tid_stats = &pdev->stats.tid_stats.
-				tid_tx_stats[msdu_info->tid];
+				    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
 			tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 			if (tx_desc->flags & DP_TX_DESC_FLAG_ME)
 				dp_tx_me_free_buf(pdev, tx_desc->me_buffer);
@@ -2665,10 +2669,12 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
  * @vdev: pdev handle
  * @tx_desc: tx descriptor
  * @tid: tid value
+ * @ring_id: TCL or WBM ring number for transmit path
  * Return: none
  */
 static void dp_tx_compute_delay(struct dp_vdev *vdev,
-				struct dp_tx_desc_s *tx_desc, uint8_t tid)
+				struct dp_tx_desc_s *tx_desc,
+				uint8_t tid, uint8_t ring_id)
 {
 	int64_t current_timestamp, timestamp_ingress, timestamp_hw_enqueue;
 	uint32_t sw_enqueue_delay, fwhw_transmit_delay, interframe_delay;
@@ -2689,12 +2695,12 @@ static void dp_tx_compute_delay(struct dp_vdev *vdev,
 	 * Delay in software enqueue
 	 */
 	dp_update_delay_stats(vdev->pdev, sw_enqueue_delay, tid,
-			      CDP_DELAY_STATS_SW_ENQ);
+			      CDP_DELAY_STATS_SW_ENQ, ring_id);
 	/*
 	 * Delay between packet enqueued to HW and Tx completion
 	 */
 	dp_update_delay_stats(vdev->pdev, fwhw_transmit_delay, tid,
-			      CDP_DELAY_STATS_FW_HW_TRANSMIT);
+			      CDP_DELAY_STATS_FW_HW_TRANSMIT, ring_id);
 
 	/*
 	 * Update interframe delay stats calculated at hardstart receive point.
@@ -2704,22 +2710,25 @@ static void dp_tx_compute_delay(struct dp_vdev *vdev,
 	 * of !vdev->prev_tx_enq_tstamp.
 	 */
 	dp_update_delay_stats(vdev->pdev, interframe_delay, tid,
-			      CDP_DELAY_STATS_TX_INTERFRAME);
+			      CDP_DELAY_STATS_TX_INTERFRAME, ring_id);
 	vdev->prev_tx_enq_tstamp = timestamp_ingress;
 }
 
 /**
  * dp_tx_update_peer_stats() - Update peer stats from Tx completion indications
+ *				per wbm ring
+ *
  * @tx_desc: software descriptor head pointer
  * @ts: Tx completion status
  * @peer: peer handle
+ * @ring_id: ring number
  *
  * Return: None
  */
 static inline void
 dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 			struct hal_tx_completion_status *ts,
-			struct dp_peer *peer)
+			struct dp_peer *peer, uint8_t ring_id)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = NULL;
@@ -2734,7 +2743,7 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
 		tid = CDP_MAX_DATA_TIDS - 1;
 
-	tid_stats = &pdev->stats.tid_stats.tid_tx_stats[tid];
+	tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 	soc = pdev->soc;
 
 	mcs = ts->mcs;
@@ -2749,8 +2758,7 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
 
 	if (qdf_unlikely(pdev->delay_stats_flag))
-		dp_tx_compute_delay(peer->vdev, tx_desc, tid);
-	tid_stats->complete_cnt++;
+		dp_tx_compute_delay(peer->vdev, tx_desc, tid, ring_id);
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -3023,13 +3031,14 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
  * @tx_desc: software descriptor head pointer
  * @ts: Tx completion status
  * @peer: peer handle
+ * @ring_id: ring number
  *
  * Return: none
  */
 static inline
 void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				  struct hal_tx_completion_status *ts,
-				  struct dp_peer *peer)
+				  struct dp_peer *peer, uint8_t ring_id)
 {
 	uint32_t length;
 	qdf_ether_header_t *eh;
@@ -3119,7 +3128,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		}
 	}
 
-	dp_tx_update_peer_stats(tx_desc, ts, peer);
+	dp_tx_update_peer_stats(tx_desc, ts, peer, ring_id);
 
 #ifdef QCA_SUPPORT_RDK_STATS
 	if (soc->wlanstats_enabled)
@@ -3135,6 +3144,7 @@ out:
  * dp_tx_comp_process_desc_list() - Tx complete software descriptor handler
  * @soc: core txrx main context
  * @comp_head: software descriptor head pointer
+ * @ring_id: ring number
  *
  * This function will process batch of descriptors reaped by dp_tx_comp_handler
  * and release the software descriptors after processing is complete
@@ -3143,7 +3153,7 @@ out:
  */
 static void
 dp_tx_comp_process_desc_list(struct dp_soc *soc,
-			     struct dp_tx_desc_s *comp_head)
+			     struct dp_tx_desc_s *comp_head, uint8_t ring_id)
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
@@ -3156,7 +3166,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 	while (desc) {
 		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
-		dp_tx_comp_process_tx_status(desc, &ts, peer);
+		dp_tx_comp_process_tx_status(desc, &ts, peer, ring_id);
 
 		netbuf = desc->nbuf;
 		/* check tx complete notification */
@@ -3180,13 +3190,15 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
  * dp_tx_process_htt_completion() - Tx HTT Completion Indication Handler
  * @tx_desc: software descriptor head pointer
  * @status : Tx completion status from HTT descriptor
+ * @ring_id: ring number
  *
  * This function will process HTT Tx indication messages from Target
  *
  * Return: none
  */
 static
-void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
+void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
+				  uint8_t ring_id)
 {
 	uint8_t tx_status;
 	struct dp_pdev *pdev;
@@ -3238,11 +3250,10 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 		if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
 			tid = CDP_MAX_DATA_TIDS - 1;
 
-		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[tid];
+		tid_stats = &pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 
 		if (qdf_unlikely(pdev->delay_stats_flag))
-			dp_tx_compute_delay(vdev, tx_desc, tid);
-		tid_stats->complete_cnt++;
+			dp_tx_compute_delay(vdev, tx_desc, tid, ring_id);
 		if (qdf_unlikely(tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)) {
 			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;
 			tid_stats->comp_fail_cnt++;
@@ -3255,7 +3266,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 		if (qdf_likely(peer))
 			dp_peer_unref_del_find_by_id(peer);
 
-		dp_tx_comp_process_tx_status(tx_desc, &ts, peer);
+		dp_tx_comp_process_tx_status(tx_desc, &ts, peer, ring_id);
 		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
 		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 
@@ -3318,7 +3329,7 @@ static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
 #endif
 
 uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
-			    void *hal_srng, uint32_t quota)
+			    void *hal_srng, uint8_t ring_id, uint32_t quota)
 {
 	void *tx_comp_hal_desc;
 	uint8_t buffer_src;
@@ -3400,7 +3411,7 @@ more_data:
 			hal_tx_comp_get_htt_desc(tx_comp_hal_desc,
 					htt_tx_status);
 			dp_tx_process_htt_completion(tx_desc,
-					htt_tx_status);
+					htt_tx_status, ring_id);
 		} else {
 			/* Pool id is not matching. Error */
 			if (tx_desc->pool_id != pool_id) {
@@ -3460,7 +3471,7 @@ more_data:
 
 	/* Process the reaped descriptors */
 	if (head_desc)
-		dp_tx_comp_process_desc_list(soc, head_desc);
+		dp_tx_comp_process_desc_list(soc, head_desc, ring_id);
 
 	if (dp_tx_comp_enable_eol_data_check(soc)) {
 		if (!force_break &&

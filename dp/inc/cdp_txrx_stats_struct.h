@@ -71,7 +71,8 @@
 #define WME_AC_VO    3    /* voice */
 #define WME_AC_MAX   4    /* MAX AC Value */
 
-#define CDP_MAX_RX_RINGS 4
+#define CDP_MAX_RX_RINGS 4  /* max rx rings */
+#define CDP_MAX_TX_COMP_RINGS 3  /* max tx completion rings */
 
 /* TID level VoW stats macros
  * to add and get stats
@@ -291,8 +292,7 @@ struct cdp_delay_stats {
  * @hwtx_delay: delay between wifi driver exit (enqueue to HW) and tx completion
  * @intfrm_delay: interframe delay
  * @success_cnt: total successful transmit count
- * @complete_cnt: total transmit count
- * @fwdrop_cnt: firmware drop found in tx completion path
+ * @comp_fail_cnt: firmware drop found in tx completion path
  * @swdrop_cnt: software drop in tx path
  */
 struct cdp_tid_tx_stats {
@@ -300,7 +300,6 @@ struct cdp_tid_tx_stats {
 	struct cdp_delay_stats hwtx_delay;
 	struct cdp_delay_stats intfrm_delay;
 	uint64_t success_cnt;
-	uint64_t complete_cnt;
 	uint64_t comp_fail_cnt;
 	uint64_t swdrop_cnt[TX_MAX_DROP];
 };
@@ -330,14 +329,17 @@ struct cdp_tid_rx_stats {
 /*
  * struct cdp_tid_stats
  * @ingress_stack: Total packets received from linux stack
+ * @osif_drop: drops in osif layer
  * @tid_tx_stats: transmit counters per tid
  * @tid_rx_stats: receive counters per tid
  */
 struct cdp_tid_stats {
 	uint64_t ingress_stack;
 	uint64_t osif_drop;
-	struct cdp_tid_tx_stats tid_tx_stats[CDP_MAX_DATA_TIDS];
-	struct cdp_tid_rx_stats tid_rx_stats[CDP_MAX_DATA_TIDS];
+	struct cdp_tid_tx_stats tid_tx_stats[CDP_MAX_TX_COMP_RINGS]
+					    [CDP_MAX_DATA_TIDS];
+	struct cdp_tid_rx_stats tid_rx_stats[CDP_MAX_RX_RINGS]
+					    [CDP_MAX_DATA_TIDS];
 };
 
 /* struct cdp_pkt_info - packet info

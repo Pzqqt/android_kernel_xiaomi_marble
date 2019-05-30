@@ -185,6 +185,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
  * dp_tx_comp_handler() - Tx completion handler
  * @int_ctx: pointer to DP interrupt context
  * @soc: core txrx main context
+ * @hal_srng: Opaque HAL SRNG pointer
  * @ring_id: completion ring id
  * @quota: No. of packets/descriptors that can be serviced in one loop
  *
@@ -195,7 +196,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
  * Return: Number of TX completions processed
  */
 uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
-			    void *hal_srng, uint32_t quota);
+			    void *hal_srng, uint8_t ring_id, uint32_t quota);
 
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);

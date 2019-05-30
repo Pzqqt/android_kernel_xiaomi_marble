@@ -858,8 +858,19 @@ uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
 			enum _ol_ath_param_t param, uint32_t value, void *buff);
 #endif
 
+/**
+ * dp_update_delay_stats() - Update delay statistics in structure
+ *                              and fill min, max and avg delay
+ * @pdev: pdev handle
+ * @delay: delay in ms
+ * @tid: tid value
+ * @mode: type of tx delay mode
+ * @ring id: ring number
+ *
+ * Return: none
+ */
 void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
-			   uint8_t tid, uint8_t mode);
+			   uint8_t tid, uint8_t mode, uint8_t ring_id);
 
 /**
  * dp_print_ring_stats(): Print tail and head pointer

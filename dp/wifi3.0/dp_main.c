@@ -1394,7 +1394,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			work_done = dp_tx_comp_handler(int_ctx,
 						       soc,
 						       soc->tx_comp_ring[ring].hal_srng,
-						       remaining_quota);
+						       ring, remaining_quota);
 
 			if (work_done) {
 				intr_stats->num_tx_ring_masks[ring]++;
@@ -9635,19 +9635,20 @@ static uint8_t dp_bucket_index(uint32_t delay, uint16_t *array)
  *
  * @pdev: pdev handle
  * @delay: delay in ms
- * @t: tid value
+ * @tid: tid value
  * @mode: type of tx delay mode
+ * @ring_id: ring number
  * Return: pointer to cdp_delay_stats structure
  */
 static struct cdp_delay_stats *
 dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
-		      uint8_t tid, uint8_t mode)
+		      uint8_t tid, uint8_t mode, uint8_t ring_id)
 {
 	uint8_t delay_index = 0;
 	struct cdp_tid_tx_stats *tstats =
-		&pdev->stats.tid_stats.tid_tx_stats[tid];
+		&pdev->stats.tid_stats.tid_tx_stats[ring_id][tid];
 	struct cdp_tid_rx_stats *rstats =
-		&pdev->stats.tid_stats.tid_rx_stats[tid];
+		&pdev->stats.tid_stats.tid_rx_stats[ring_id][tid];
 	/*
 	 * cdp_fw_to_hw_delay_range
 	 * Fw to hw delay ranges in milliseconds
@@ -9723,10 +9724,11 @@ dp_fill_delay_buckets(struct dp_pdev *pdev, uint32_t delay,
  * @delay: delay in ms
  * @tid: tid value
  * @mode: type of tx delay mode
+ * @ring id: ring number
  * Return: none
  */
 void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
-			   uint8_t tid, uint8_t mode)
+			   uint8_t tid, uint8_t mode, uint8_t ring_id)
 {
 	struct cdp_delay_stats *dstats = NULL;
 
@@ -9734,7 +9736,7 @@ void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
 	 * Delay ranges are different for different delay modes
 	 * Get the correct index to update delay bucket
 	 */
-	dstats = dp_fill_delay_buckets(pdev, delay, tid, mode);
+	dstats = dp_fill_delay_buckets(pdev, delay, tid, mode, ring_id);
 	if (qdf_unlikely(!dstats))
 		return;
 
