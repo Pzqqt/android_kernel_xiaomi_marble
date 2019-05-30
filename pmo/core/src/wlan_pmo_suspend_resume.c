@@ -755,8 +755,7 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	if (psoc_ctx->wow.wow_state != pmo_wow_state_legacy_d0)
-		pmo_tgt_update_target_suspend_flag(psoc, true);
+	pmo_tgt_update_target_suspend_flag(psoc, true);
 
 	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
 					       PMO_TARGET_SUSPEND_TIMEOUT);
