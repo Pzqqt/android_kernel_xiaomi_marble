@@ -145,7 +145,7 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 				mas_chan_list[chan_enum].chan_flags |=
 						REGULATORY_CHAN_DISABLED;
 				mas_chan_list[chan_enum].state =
-						REGULATORY_CHAN_DISABLED;
+						CHANNEL_STATE_DISABLE;
 			}
 		}
 	}
