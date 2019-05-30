@@ -851,7 +851,7 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_RX_STBC_ENABLE);
 
 	vht_cap_info->su_bformee =
-		cfg_default(CFG_VHT_SU_BEAMFORMEE_CAP);
+		cfg_get(psoc, CFG_VHT_SU_BEAMFORMEE_CAP);
 
 	vht_cap_info->mu_bformer =
 			cfg_default(CFG_VHT_MU_BEAMFORMER_CAP);
