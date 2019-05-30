@@ -174,10 +174,7 @@ static void _sde_encoder_phys_cmd_update_intf_cfg(
 static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
-	unsigned long lock_flags;
-	int new_cnt;
-	u32 event = SDE_ENCODER_FRAME_EVENT_DONE |
-			SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE;
+	u32 event = 0;
 
 	if (!phys_enc || !phys_enc->hw_pp)
 		return;
@@ -186,16 +183,15 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 
 	/* notify all synchronous clients first, then asynchronous clients */
 	if (phys_enc->parent_ops.handle_frame_done &&
-	    atomic_read(&phys_enc->pending_kickoff_cnt))
+	    atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0)) {
+		event = SDE_ENCODER_FRAME_EVENT_DONE |
+			SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE;
 		phys_enc->parent_ops.handle_frame_done(phys_enc->parent,
 				phys_enc, event);
-
-	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
-	new_cnt = atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
-	spin_unlock_irqrestore(phys_enc->enc_spinlock, lock_flags);
+	}
 
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
-			phys_enc->hw_pp->idx - PINGPONG_0, new_cnt, event);
+			phys_enc->hw_pp->idx - PINGPONG_0, event);
 
 	/* Signal any waiting atomic commit thread */
 	wake_up_all(&phys_enc->pending_kickoff_wq);
@@ -1372,13 +1368,11 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 				SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE);
 
 	} else if ((ret == 0) &&
-	    (phys_enc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START) &&
-	    atomic_read(&phys_enc->pending_kickoff_cnt) &&
-	    ctl->ops.get_scheduler_status &&
-	    (ctl->ops.get_scheduler_status(ctl) & BIT(0)) &&
-	    phys_enc->parent_ops.handle_frame_done) {
-		atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0);
-
+		(phys_enc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START)
+		  && ctl->ops.get_scheduler_status
+		  && (ctl->ops.get_scheduler_status(ctl) & BIT(0))
+		  && atomic_add_unless(&phys_enc->pending_kickoff_cnt, -1, 0)
+		  && phys_enc->parent_ops.handle_frame_done) {
 		phys_enc->parent_ops.handle_frame_done(
 			phys_enc->parent, phys_enc,
 			SDE_ENCODER_FRAME_EVENT_DONE |
