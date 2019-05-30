@@ -29,8 +29,7 @@
 /**
  * target_if_blm_send_reject_ap_list() - API to send reject ap list to FW
  * @pdev: pdev object
- * @reject_list: reject ap list
- * @num_of_reject_bssid: num of bssids in reject ap list.
+ * @reject_params: This contains the reject ap list, and the num of BSSIDs
  *
  * This API will send the reject ap list to the target for it to handle roaming
  * case scenarios.
@@ -39,8 +38,7 @@
  */
 QDF_STATUS
 target_if_blm_send_reject_ap_list(struct wlan_objmgr_pdev *pdev,
-				  struct reject_ap_config_params *reject_list,
-				  uint8_t num_of_reject_bssid);
+				  struct reject_ap_params *reject_params);
 
 /**
  * target_if_blm_register_tx_ops() - Register blm tx ops

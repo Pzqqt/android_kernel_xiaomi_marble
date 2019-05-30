@@ -23,8 +23,26 @@
 
 QDF_STATUS
 tgt_blm_send_reject_list_to_fw(struct wlan_objmgr_pdev *pdev,
-			       struct reject_ap_config_params *reject_list,
-			       uint8_t num_of_reject_bssid)
+			       struct reject_ap_params *reject_params)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_blm_tx_ops *blm_tx_ops;
+	struct blm_pdev_priv_obj *blm_priv;
+
+	blm_priv = blm_get_pdev_obj(pdev);
+
+	if (!blm_priv) {
+		blm_err("blm_priv is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	blm_tx_ops = &blm_priv->blm_tx_ops;
+	if (!blm_tx_ops) {
+		blm_err("blm_tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (blm_tx_ops->blm_send_reject_ap_list)
+		return blm_tx_ops->blm_send_reject_ap_list(pdev, reject_params);
+	blm_err("Tx ops not registered, failed to send reject list to FW");
+
+	return QDF_STATUS_E_FAILURE;
 }

@@ -26,12 +26,25 @@
 
 QDF_STATUS
 target_if_blm_send_reject_ap_list(struct wlan_objmgr_pdev *pdev,
-				  struct reject_ap_config_params *reject_list,
-				  uint8_t num_of_reject_bssid)
+				  struct reject_ap_params *reject_params)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wmi_unified *wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_pdev(pdev);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_send_reject_ap_list(wmi_handle, reject_params);
 }
 
 void target_if_blm_register_tx_ops(struct wlan_blm_tx_ops *blm_tx_ops)
 {
+	if (!blm_tx_ops) {
+		target_if_err("blm_tx_ops is null");
+		return;
+	}
+
+	blm_tx_ops->blm_send_reject_ap_list = target_if_blm_send_reject_ap_list;
 }
