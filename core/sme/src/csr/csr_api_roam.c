@@ -3612,6 +3612,43 @@ QDF_STATUS csr_roam_issue_disassociate(struct mac_context *mac, uint32_t session
 	return status;
 }
 
+/*
+ * csr_is_deauth_disassoc_already_active() - Function to check if deauth or
+ *  disassoc is already in progress.
+ * @mac_ctx: Global MAC context
+ * @session_id: session id
+ * @peer_macaddr: Peer MAC address
+ *
+ * Return: True if deauth/disassoc indication can be dropped
+ *  else false
+ */
+static bool csr_is_deauth_disassoc_already_active(struct mac_context *mac_ctx,
+						  uint8_t session_id,
+					       struct qdf_mac_addr peer_macaddr)
+{
+	bool ret = false;
+	tSmeCmd *sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
+							     session_id,
+						 WLAN_SER_CMD_FORCE_DEAUTH_STA);
+	if (!sme_cmd)
+		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
+							    session_id,
+					       WLAN_SER_CMD_FORCE_DISASSOC_STA);
+	if (!sme_cmd)
+		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
+							    session_id,
+						 WLAN_SER_CMD_WM_STATUS_CHANGE);
+
+	if (sme_cmd && !qdf_mem_cmp(peer_macaddr.bytes,
+			sme_cmd->u.roamCmd.peerMac, QDF_MAC_ADDR_SIZE)) {
+		sme_debug("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress for %pM",
+			  peer_macaddr.bytes);
+		ret = true;
+	}
+
+	return ret;
+}
+
 /**
  * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
  * @sessionId:     Session Id for Soft AP
@@ -3631,6 +3668,9 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(struct mac_context *mac,
 	tSmeCmd *pCommand;
 
 	do {
+		if (csr_is_deauth_disassoc_already_active(mac, sessionId,
+					      p_del_sta_params->peerMacAddr))
+			break;
 		pCommand = csr_get_command_buffer(mac);
 		if (!pCommand) {
 			sme_err("fail to get command buffer");
@@ -3670,6 +3710,9 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 	tSmeCmd *pCommand;
 
 	do {
+		if (csr_is_deauth_disassoc_already_active(mac, sessionId,
+					      pDelStaParams->peerMacAddr))
+			break;
 		pCommand = csr_get_command_buffer(mac);
 		if (!pCommand) {
 			sme_err("fail to get command buffer");
@@ -11400,46 +11443,6 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	}
 
 	qdf_mem_free(roam_info);
-}
-
-/*
- * csr_is_deauth_disassoc_already_active() - Function to check if deauth or
- *  disassoc is already in progress.
- * @mac_ctx: Global MAC context
- * @session_id: session id
- * @peer_macaddr: Peer MAC address
- *
- * Return: True if deauth/disassoc indication can be dropped
- *  else false
- */
-static bool csr_is_deauth_disassoc_already_active(struct mac_context *mac_ctx,
-					       uint8_t session_id,
-					       struct qdf_mac_addr peer_macaddr)
-{
-	bool ret = false;
-	tSmeCmd *sme_cmd;
-
-	sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc, session_id,
-						 WLAN_SER_CMD_FORCE_DEAUTH_STA);
-	if (!sme_cmd) {
-		sme_cmd = wlan_serialization_get_active_cmd(mac_ctx->psoc,
-					       session_id,
-					       WLAN_SER_CMD_FORCE_DISASSOC_STA);
-		if (!sme_cmd)
-			return ret;
-	}
-
-	if ((mac_ctx->roam.curSubState[session_id] ==
-	     eCSR_ROAM_SUBSTATE_DEAUTH_REQ ||
-	     mac_ctx->roam.curSubState[session_id] ==
-	     eCSR_ROAM_SUBSTATE_DISASSOC_REQ) &&
-	    !qdf_mem_cmp(peer_macaddr.bytes, sme_cmd->u.roamCmd.peerMac,
-			 QDF_MAC_ADDR_SIZE)) {
-		sme_debug("Ignore DEAUTH_IND/DIASSOC_IND as Deauth/Disassoc already in progress");
-		ret = true;
-	}
-
-	return ret;
 }
 
 static void
