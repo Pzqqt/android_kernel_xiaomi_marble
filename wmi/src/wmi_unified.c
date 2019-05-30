@@ -1639,8 +1639,29 @@ static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
 		return false;
 	}
 }
+
+static bool wmi_is_legacy_d0wow_disable_cmd(wmi_buf_t buf, uint32_t cmd_id)
+{
+	wmi_d0_wow_enable_disable_cmd_fixed_param *cmd;
+
+	if (cmd_id == WMI_D0_WOW_ENABLE_DISABLE_CMDID) {
+		cmd = (wmi_d0_wow_enable_disable_cmd_fixed_param *)
+			wmi_buf_data(buf);
+		if (!cmd->enable)
+			return true;
+		else
+			return false;
+	}
+
+	return false;
+}
 #else
 static bool wmi_is_pm_resume_cmd(uint32_t cmd_id)
+{
+	return false;
+}
+
+static bool wmi_is_legacy_d0wow_disable_cmd(wmi_buf_t buf, uint32_t cmd_id)
 {
 	return false;
 }
@@ -1670,7 +1691,8 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		htc_tag = wmi_handle->ops->wmi_set_htc_tx_tag(wmi_handle, buf,
 							      cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
-		   !wmi_is_pm_resume_cmd(cmd_id)) {
+		   !wmi_is_pm_resume_cmd(cmd_id) &&
+		   !wmi_is_legacy_d0wow_disable_cmd(buf, cmd_id)) {
 			wmi_nofl_err("Target is suspended (via %s:%u)",
 					func, line);
 		return QDF_STATUS_E_BUSY;
