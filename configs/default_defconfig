@@ -111,6 +111,9 @@ CONFIG_WLAN_SYSFS := y
 CONFIG_FEATURE_BECN_STATS := y
 endif
 
+#Disable the Export Symbol config
+CONFIG_WLAN_DISABLE_EXPORT_SYMBOL := y
+
 CONFIG_QCACLD_FEATURE_GREEN_AP := y
 CONFIG_CRYPTO_COMPONENT := y
 #Flag to enable Android Packet Filtering
