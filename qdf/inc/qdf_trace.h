@@ -494,7 +494,7 @@ void qdf_trace_enable(uint32_t, uint8_t enable);
 void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
 QDF_STATUS qdf_trace_spin_lock_init(void);
 #else
-#ifdef CONFIG_MCL
+#ifndef QDF_TRACE_PRINT_ENABLE
 static inline
 void qdf_trace_init(void)
 {
