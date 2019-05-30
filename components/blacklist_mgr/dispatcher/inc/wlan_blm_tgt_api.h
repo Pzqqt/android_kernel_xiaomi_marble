@@ -27,8 +27,7 @@
 /**
  * tgt_blm_send_reject_list_to_fw() - API to send the reject ap list to FW.
  * @pdev: pdev object
- * @reject_list: rejct ap list pointer
- * @num_of_reject_bssid: num of reject bssids
+ * @reject_params: Reject params contains the bssid list, and num of bssids
  *
  * This API will send the reject AP list maintained by the blacklist manager
  * to the target.
@@ -37,7 +36,6 @@
  */
 QDF_STATUS
 tgt_blm_send_reject_list_to_fw(struct wlan_objmgr_pdev *pdev,
-			       struct reject_ap_config_params *reject_list,
-			       uint8_t num_of_reject_bssid);
+			       struct reject_ap_params *reject_params);
 
 #endif

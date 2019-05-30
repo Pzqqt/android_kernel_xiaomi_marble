@@ -71,14 +71,23 @@ struct reject_ap_config_params {
 };
 
 /**
+ * struct reject_ap_params - Struct to send bssid list and there num to FW
+ * @num_of_reject_bssid: num of bssid params there in bssid config.
+ * @bssid_list: Pointer to the bad bssid list
+ */
+struct reject_ap_params {
+	uint8_t num_of_reject_bssid;
+	struct reject_ap_config_params *bssid_list;
+};
+
+/**
  * struct wlan_blm_tx_ops - structure of tx operation function
  * pointers for blacklist manager component
  * @blm_send_reject_ap_list: send reject ap list to fw
  */
 struct wlan_blm_tx_ops {
 	QDF_STATUS (*blm_send_reject_ap_list)(struct wlan_objmgr_pdev *pdev,
-				  struct reject_ap_config_params *reject_list,
-				  uint8_t num_of_reject_bssid);
+					struct reject_ap_params *reject_params);
 };
 
 /**

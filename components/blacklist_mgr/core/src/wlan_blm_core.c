@@ -640,39 +640,49 @@ blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
 			      struct blm_config *cfg)
 {
-	struct reject_ap_config_params *reject_list;
-	uint8_t num_of_reject_bssid = 0;
 	QDF_STATUS status;
+	struct reject_ap_params reject_params;
 
-	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
-				     PDEV_MAX_NUM_BSSID_DISALLOW_LIST);
-	if (!reject_list)
+	reject_params.bssid_list =
+			qdf_mem_malloc(sizeof(*reject_params.bssid_list) *
+				       PDEV_MAX_NUM_BSSID_DISALLOW_LIST);
+	if (!reject_params.bssid_list)
 		return;
 
 	/* The priority for filling is as below */
-	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+	blm_fill_reject_list(reject_db_list, reject_params.bssid_list,
+			     &reject_params.num_of_reject_bssid,
 			     USERSPACE_BLACKLIST_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
-	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+	blm_fill_reject_list(reject_db_list, reject_params.bssid_list,
+			     &reject_params.num_of_reject_bssid,
 			     DRIVER_BLACKLIST_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
-	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+	blm_fill_reject_list(reject_db_list, reject_params.bssid_list,
+			     &reject_params.num_of_reject_bssid,
 			     DRIVER_RSSI_REJECT_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
-	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+	blm_fill_reject_list(reject_db_list, reject_params.bssid_list,
+			     &reject_params.num_of_reject_bssid,
 			     USERSPACE_AVOID_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
-	blm_fill_reject_list(reject_db_list, reject_list, &num_of_reject_bssid,
+	blm_fill_reject_list(reject_db_list, reject_params.bssid_list,
+			     &reject_params.num_of_reject_bssid,
 			     DRIVER_AVOID_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
 
-	status = tgt_blm_send_reject_list_to_fw(pdev, reject_list,
-						num_of_reject_bssid);
+	if (!reject_params.num_of_reject_bssid) {
+		blm_debug("no candidate present in reject ap list.");
+		qdf_mem_free(reject_params.bssid_list);
+		return;
+	}
+
+	status = tgt_blm_send_reject_list_to_fw(pdev, &reject_params);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		blm_err("failed to send the reject Ap list to FW");
 
-	qdf_mem_free(reject_list);
+	qdf_mem_free(reject_params.bssid_list);
 }
 
 QDF_STATUS
