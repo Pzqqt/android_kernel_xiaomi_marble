@@ -446,7 +446,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	header->u.meta_v1.timestamp    = tx_evt_param.timestamp_us;
 
 	qdf_mem_copy(&header->u.meta_v1.peer_addr[0],
-		     &tx_evt_param.peer_mac_addr.bytes[0], IEEE80211_ADDR_LEN);
+		     &tx_evt_param.peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
 
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_TX_EV_MODULE_ID);
