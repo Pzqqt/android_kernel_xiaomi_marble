@@ -928,7 +928,7 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
-	uint64_t tsf_sync_qtime;
+	uint64_t tsf_sync_qtime, host_time, reg_qtime, qtime;
 	ssize_t size;
 
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
@@ -955,17 +955,25 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 	tsf_sync_qtime = adapter->last_tsf_sync_soc_time;
 	do_div(tsf_sync_qtime, NSEC_PER_USEC);
 
+	reg_qtime = qdf_get_log_timestamp();
+	host_time = hdd_get_monotonic_host_time(hdd_ctx);
+
+	qtime = qdf_log_timestamp_to_usecs(reg_qtime);
+	do_div(host_time, NSEC_PER_USEC);
+
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
+		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM %llu %llu\n",
 				 buf, adapter->last_target_time,
 				 tsf_sync_qtime,
-				 hdd_sta_ctx->conn_info.bssid.bytes);
+				 hdd_sta_ctx->conn_info.bssid.bytes,
+				 qtime, host_time);
 	} else {
-		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
+		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM %llu %llu\n",
 				 buf, adapter->last_target_time,
 				 tsf_sync_qtime,
-				 adapter->mac_addr.bytes);
+				 adapter->mac_addr.bytes,
+				 qtime, host_time);
 	}
 
 	return size;
