@@ -43,6 +43,20 @@ do {                                                           \
 
 #define OCB_HEADER_VERSION	 1
 
+#ifdef TX_PER_PDEV_DESC_POOL
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
+#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
+#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->pdev->pdev_id)
+#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+	#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
+#else
+	#ifdef TX_PER_VDEV_DESC_POOL
+		#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
+		#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
+	#endif /* TX_PER_VDEV_DESC_POOL */
+#endif /* TX_PER_PDEV_DESC_POOL */
+#define DP_TX_QUEUE_MASK 0x3
 /**
  * struct dp_tx_frag_info_s
  * @vaddr: hlos vritual address for buffer
@@ -176,6 +190,14 @@ qdf_nbuf_t dp_tx_send_exception(void *data_vdev, qdf_nbuf_t nbuf,
 				struct cdp_tx_exception_metadata *tx_exc);
 qdf_nbuf_t dp_tx_send_mesh(void *data_vdev, qdf_nbuf_t nbuf);
 
+#if QDF_LOCK_STATS
+noinline qdf_nbuf_t
+dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+			 struct dp_tx_msdu_info_s *msdu_info);
+#else
+qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				    struct dp_tx_msdu_info_s *msdu_info);
+#endif
 #ifdef FEATURE_WLAN_TDLS
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
@@ -208,15 +230,55 @@ static inline void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 }
 #endif
 
-#ifdef ATH_SUPPORT_IQUE
-void dp_tx_me_exit(struct dp_pdev *pdev);
-#else
+#ifndef ATH_SUPPORT_IQUE
 static inline void dp_tx_me_exit(struct dp_pdev *pdev)
 {
 	return;
 }
 #endif
+/**
+ * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
+ * @vdev: DP Virtual device handle
+ * @nbuf: Buffer pointer
+ * @queue: queue ids container for nbuf
+ *
+ * TX packet queue has 2 instances, software descriptors id and dma ring id
+ * Based on tx feature and hardware configuration queue id combination could be
+ * different.
+ * For example -
+ * With XPS enabled,all TX descriptor pools and dma ring are assigned per cpu id
+ * With no XPS,lock based resource protection, Descriptor pool ids are different
+ * for each vdev, dma ring id will be same as single pdev id
+ *
+ * Return: None
+ */
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+static inline void dp_tx_get_queue(struct dp_vdev *vdev,
+				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
+{
+	uint16_t queue_offset = qdf_nbuf_get_queue_mapping(nbuf) &
+				DP_TX_QUEUE_MASK;
 
+	queue->desc_pool_id = queue_offset;
+	queue->ring_id = vdev->pdev->soc->tx_ring_map[queue_offset];
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s, pool_id:%d ring_id: %d",
+		  __func__, queue->desc_pool_id, queue->ring_id);
+}
+#else /* QCA_OL_TX_MULTIQ_SUPPORT */
+static inline void dp_tx_get_queue(struct dp_vdev *vdev,
+				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
+{
+	/* get flow id */
+	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
+	queue->ring_id = DP_TX_GET_RING_ID(vdev);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s, pool_id:%d ring_id: %d",
+		  __func__, queue->desc_pool_id, queue->ring_id);
+}
+#endif
 #ifdef FEATURE_PERPKT_INFO
 QDF_STATUS
 dp_get_completion_indication_for_stack(struct dp_soc *soc,

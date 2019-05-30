@@ -63,6 +63,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
+#ifdef ATH_SUPPORT_IQUE
+#include "dp_txrx_me.h"
+#endif
 #ifdef CONFIG_MCL
 extern int con_mode_monitor;
 #ifndef REMOVE_PKT_LOG

@@ -23,19 +23,6 @@
 #include "dp_tx.h"
 #include "dp_internal.h"
 
-#ifdef TX_PER_PDEV_DESC_POOL
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
-#else /* QCA_LL_TX_FLOW_CONTROL_V2 */
-#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->pdev->pdev_id)
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
-	#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
-#else
-	#ifdef TX_PER_VDEV_DESC_POOL
-		#define DP_TX_GET_DESC_POOL_ID(vdev) (vdev->vdev_id)
-		#define DP_TX_GET_RING_ID(vdev) (vdev->pdev->pdev_id)
-	#endif /* TX_PER_VDEV_DESC_POOL */
-#endif /* TX_PER_PDEV_DESC_POOL */
 
 /**
  * 21 bits cookie
