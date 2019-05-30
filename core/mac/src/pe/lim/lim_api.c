@@ -1897,7 +1897,8 @@ static void sir_parse_bcn_fixed_fields(struct mac_context *mac_ctx,
 static QDF_STATUS
 lim_roam_gen_mbssid_beacon(struct mac_context *mac,
 			   struct roam_offload_synch_ind *roam_ind,
-			   tpSirProbeRespBeacon parsed_frm)
+			   tpSirProbeRespBeacon parsed_frm,
+			   uint8_t **ie, uint32_t *ie_len)
 {
 	qdf_list_t *scan_list;
 	struct mgmt_rx_event_params rx_param;
@@ -1909,7 +1910,9 @@ lim_roam_gen_mbssid_beacon(struct mac_context *mac,
 	uint8_t *bcn_prb_ptr;
 	uint32_t nontx_bcn_prbrsp_len = 0, offset, length;
 	uint8_t *nontx_bcn_prbrsp = NULL;
+	uint8_t ie_offset;
 
+	ie_offset = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET;
 	bcn_prb_ptr = (uint8_t *)roam_ind +
 				roam_ind->beaconProbeRespOffset;
 
@@ -1991,6 +1994,14 @@ lim_roam_gen_mbssid_beacon(struct mac_context *mac,
 		}
 	}
 
+	*ie_len = nontx_bcn_prbrsp_len - ie_offset;
+	if (*ie_len) {
+		*ie = qdf_mem_malloc(*ie_len);
+		if (!*ie)
+			return QDF_STATUS_E_NOMEM;
+		qdf_mem_copy(*ie, nontx_bcn_prbrsp + ie_offset, *ie_len);
+		pe_debug("beacon/probe Ie length: %d", *ie_len);
+	}
 error:
 	for (i = 0; i < list_count; i++) {
 		status = qdf_list_remove_front(scan_list, &next_node);
@@ -2004,8 +2015,7 @@ error:
 		util_scan_free_cache_entry(scan_node->entry);
 		qdf_mem_free(scan_node);
 	}
-	if (scan_list)
-		qdf_mem_free(scan_list);
+	qdf_mem_free(scan_list);
 
 	return status;
 }
@@ -2013,15 +2023,18 @@ error:
 static QDF_STATUS
 lim_roam_gen_beacon_descr(struct mac_context *mac,
 			  struct roam_offload_synch_ind *roam_ind,
-			  tpSirProbeRespBeacon parsed_frm)
+			  tpSirProbeRespBeacon parsed_frm,
+			  uint8_t **ie, uint32_t *ie_len)
 {
 	QDF_STATUS status;
 	uint8_t *bcn_prb_ptr;
 	tpSirMacMgmtHdr mac_hdr;
+	uint8_t ie_offset;
 
 	bcn_prb_ptr = (uint8_t *)roam_ind +
 		roam_ind->beaconProbeRespOffset;
 	mac_hdr = (tpSirMacMgmtHdr)bcn_prb_ptr;
+	ie_offset = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET;
 
 	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)mac_hdr->bssId)) {
 		pe_debug("bssid is 0 in beacon/probe update it with bssId %pM in sync ind",
@@ -2041,10 +2054,10 @@ lim_roam_gen_beacon_descr(struct mac_context *mac,
 		 */
 		status = lim_roam_gen_mbssid_beacon(mac,
 						    roam_ind,
-						    parsed_frm);
+						    parsed_frm,
+						    ie, ie_len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			pe_err("failed to gen mbssid beacon");
-			qdf_mem_free(parsed_frm);
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
@@ -2057,7 +2070,6 @@ lim_roam_gen_beacon_descr(struct mac_context *mac,
 				!parsed_frm->ssidPresent) {
 				pe_err("Parse error Beacon, length: %d",
 				       roam_ind->beaconProbeRespLength);
-				qdf_mem_free(parsed_frm);
 				return QDF_STATUS_E_FAILURE;
 			}
 		} else {
@@ -2069,9 +2081,17 @@ lim_roam_gen_beacon_descr(struct mac_context *mac,
 				!parsed_frm->ssidPresent) {
 				pe_err("Parse error ProbeResponse, length: %d",
 				       roam_ind->beaconProbeRespLength);
-				qdf_mem_free(parsed_frm);
 				return QDF_STATUS_E_FAILURE;
 			}
+		}
+		/* 24 byte MAC header and 12 byte to ssid IE */
+		if (roam_ind->beaconProbeRespLength > ie_offset) {
+			*ie_len = roam_ind->beaconProbeRespLength - ie_offset;
+			*ie = qdf_mem_malloc(*ie_len);
+			if (!*ie)
+				return QDF_STATUS_E_NOMEM;
+			qdf_mem_copy(*ie, bcn_prb_ptr + ie_offset, *ie_len);
+			pe_debug("beacon/probe Ie length: %d", *ie_len);
 		}
 	}
 	/*
@@ -2095,6 +2115,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *bcn_proberesp_ptr;
 	QDF_STATUS status;
+	uint8_t *ie = NULL;
 
 	bcn_proberesp_ptr = (uint8_t *)roam_synch_ind_ptr +
 		roam_synch_ind_ptr->beaconProbeRespOffset;
@@ -2120,19 +2141,14 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 
 	status = lim_roam_gen_beacon_descr(mac,
 					   roam_synch_ind_ptr,
-					   parsed_frm_ptr);
+					   parsed_frm_ptr,
+					   &ie, &ie_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Failed to parse beacon");
 		qdf_mem_free(parsed_frm_ptr);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* 24 byte MAC header and 12 byte to ssid IE */
-	if (roam_synch_ind_ptr->beaconProbeRespLength >
-		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET)) {
-		ie_len = roam_synch_ind_ptr->beaconProbeRespLength -
-			(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
-	}
 	/*
 	 * Length of BSS desription is without length of
 	 * length itself and length of pointer
@@ -2191,13 +2207,12 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	pe_debug("LFR3: BssDescr Info:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			bss_desc_ptr->bssId, sizeof(tSirMacAddr));
-	pe_debug("chan: %d rssi: %d", bss_desc_ptr->channelId,
-			bss_desc_ptr->rssi);
+	pe_debug("chan: %d rssi: %d ie_len %d", bss_desc_ptr->channelId,
+		 bss_desc_ptr->rssi, ie_len);
 	if (ie_len) {
 		qdf_mem_copy(&bss_desc_ptr->ieFields,
-			bcn_proberesp_ptr +
-			(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET),
-			ie_len);
+			     ie, ie_len);
+		qdf_mem_free(ie);
 	}
 	qdf_mem_free(parsed_frm_ptr);
 	return QDF_STATUS_SUCCESS;
