@@ -152,10 +152,8 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_QCA_TXDESC_SANITY_CHECKS := y
 endif
 
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-	#Flag to enable NAN
-	CONFIG_QCACLD_FEATURE_NAN := y
-endif
+#Flag to disable NAN
+CONFIG_QCACLD_FEATURE_NAN := n
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
 	#Flag to enable NAN Data path
