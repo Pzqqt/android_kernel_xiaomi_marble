@@ -184,7 +184,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		if (qdf_unlikely(!rx_netbuf)) {
 			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
-			continue;
+			break;
 		}
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
@@ -241,10 +241,10 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
 	dp_verbose_debug("replenished buffers %d, rx desc added back to free list %u",
-			 num_req_buffers, num_desc_to_free);
+			 count, num_desc_to_free);
 
-	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, num_req_buffers,
-			(RX_BUFFER_SIZE * num_req_buffers));
+	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, count,
+			 (RX_BUFFER_SIZE * count));
 
 free_descs:
 	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
