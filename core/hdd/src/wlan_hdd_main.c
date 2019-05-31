@@ -9267,6 +9267,11 @@ int hdd_psoc_idle_shutdown(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
+	if (!hdd_ctx) {
+		hdd_err_rl("hdd ctx is null");
+		return -EINVAL;
+	}
+
 	if (is_mode_change_psoc_idle_shutdown)
 		return __hdd_mode_change_psoc_idle_shutdown(hdd_ctx);
 	else
@@ -9281,6 +9286,11 @@ static int __hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
 int hdd_psoc_idle_restart(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err_rl("hdd ctx is null");
+		return -EINVAL;
+	}
 
 	return __hdd_psoc_idle_restart(hdd_ctx);
 }
