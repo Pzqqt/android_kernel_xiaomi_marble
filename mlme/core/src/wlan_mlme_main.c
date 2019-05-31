@@ -1666,7 +1666,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_DELAY_BEFORE_VDEV_STOP);
 	qdf_uint8_array_parse(cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST),
 			      lfr->neighbor_scan_channel_list,
-			      CFG_VALID_CHANNEL_LIST_STRING_LEN,
+			      CFG_VALID_CHANNEL_LIST_LEN,
 			      &neighbor_scan_chan_list_num);
 	lfr->neighbor_scan_channel_list_num =
 				(uint8_t)neighbor_scan_chan_list_num;
