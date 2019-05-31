@@ -43,7 +43,7 @@ struct pdev_mlme_obj *wlan_pdev_mlme_get_cmpt_obj(struct wlan_objmgr_pdev *pdev)
 	return pdev_mlme;
 }
 
-void *wlan_pdev_mlme_get_ext_hdl(struct wlan_objmgr_pdev *pdev)
+mlme_pdev_ext_t *wlan_pdev_mlme_get_ext_hdl(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_mlme_obj *pdev_mlme;
 

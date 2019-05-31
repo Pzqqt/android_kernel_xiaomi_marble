@@ -21,6 +21,7 @@
 #ifndef _WLAN_VDEV_MLME_API_H_
 #define _WLAN_VDEV_MLME_API_H_
 
+#include <wlan_ext_mlme_obj_types.h>
 /**
  * wlan_vdev_mlme_get_cmpt_obj - Retrieves MLME component object
  * from VDEV object
@@ -42,7 +43,8 @@ struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(
  *
  * Return:
  */
-void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl);
+void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev,
+				mlme_vdev_ext_t *ext_hdl);
 
 /**
  * wlan_vdev_mlme_get_ext_hdl - Returns legacy handle
@@ -53,7 +55,7 @@ void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl);
  * Return: legacy handle on SUCCESS
  *         NULL, if it fails to retrieve
  */
-void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
+mlme_vdev_ext_t *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_vdev_mlme_sm_deliver_evt() - Delivers event to VDEV MLME SM

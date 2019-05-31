@@ -23,6 +23,7 @@
 
 /**
  * wlan_pdev_mlme_get_cmpt_obj - Returns MLME component object
+ * @pdev: PDEV object
  *
  * Retrieves MLME component object from PDEV object
  *
@@ -33,12 +34,13 @@ struct pdev_mlme_obj *wlan_pdev_mlme_get_cmpt_obj(
 						struct wlan_objmgr_pdev *pdev);
 /**
  * wlan_pdev_mlme_get_ext_hdl - Returns legacy handle
+ * @pdev: PDEV object
  *
  * Retrieves legacy handle from pdev mlme component object
  *
  * Return: legacy handle on SUCCESS
  *         NULL, if it fails to retrieve
  */
-void *wlan_pdev_mlme_get_ext_hdl(struct wlan_objmgr_pdev *pdev);
+mlme_pdev_ext_t *wlan_pdev_mlme_get_ext_hdl(struct wlan_objmgr_pdev *pdev);
 
 #endif

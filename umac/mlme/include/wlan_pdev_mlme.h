@@ -22,6 +22,7 @@
 
 #include <qdf_timer.h>
 #include <include/wlan_vdev_mlme.h>
+#include <wlan_ext_mlme_obj_types.h>
 
 /*
  * struct pdev_restart_attr - Pdev restart attributes
@@ -46,7 +47,7 @@ struct pdev_restart_attr {
  */
 struct pdev_mlme_obj {
 	struct wlan_objmgr_pdev *pdev;
-	void *ext_pdev_ptr;
+	mlme_pdev_ext_t *ext_pdev_ptr;
 	QDF_STATUS (*mlme_register_ops)(struct vdev_mlme_obj *vdev_mlme);
 	qdf_spinlock_t vdev_restart_lock;
 	qdf_timer_t restart_req_timer;

@@ -23,6 +23,7 @@
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_vdev_mlme_api.h>
+#include <wlan_ext_mlme_obj_types.h>
 
 struct vdev_mlme_obj;
 
@@ -555,7 +556,7 @@ struct vdev_mlme_obj {
 	struct wlan_sm *sm_hdl;
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
-	void *ext_vdev_ptr;
+	mlme_vdev_ext_t *ext_vdev_ptr;
 	struct vdev_response_timer vdev_rt;
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 	struct vdev_mlme_wakelock vdev_wakelock;

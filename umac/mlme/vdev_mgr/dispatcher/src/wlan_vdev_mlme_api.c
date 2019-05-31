@@ -46,7 +46,8 @@ struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *vdev)
 
 qdf_export_symbol(wlan_vdev_mlme_get_cmpt_obj);
 
-void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl)
+void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev,
+				mlme_vdev_ext_t *ext_hdl)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 
@@ -62,7 +63,7 @@ void wlan_vdev_mlme_set_ext_hdl(struct wlan_objmgr_vdev *vdev, void *ext_hdl)
 
 qdf_export_symbol(wlan_vdev_mlme_set_ext_hdl);
 
-void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev)
+mlme_vdev_ext_t *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 
