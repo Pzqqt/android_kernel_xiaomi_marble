@@ -1060,6 +1060,74 @@ end:
 	return rc;
 }
 
+static int _add_to_irq_offset_list(struct sde_mdss_cfg *sde_cfg,
+		enum sde_intr_hwblk_type blk_type, u32 instance, u32 offset)
+{
+	struct sde_intr_irq_offsets *item = NULL;
+	bool err = false;
+
+	switch (blk_type) {
+	case SDE_INTR_HWBLK_TOP:
+		if (instance >= SDE_INTR_TOP_MAX)
+			err = true;
+		break;
+	case SDE_INTR_HWBLK_INTF:
+		if (instance >= INTF_MAX)
+			err = true;
+		break;
+	case SDE_INTR_HWBLK_AD4:
+		if (instance >= AD_MAX)
+			err = true;
+		break;
+	case SDE_INTR_HWBLK_INTF_TEAR:
+		if (instance >= INTF_MAX)
+			err = true;
+		break;
+	case SDE_INTR_HWBLK_LTM:
+		if (instance >= LTM_MAX)
+			err = true;
+		break;
+	default:
+		SDE_ERROR("invalid hwblk_type: %d", blk_type);
+		return -EINVAL;
+	}
+
+	if (err) {
+		SDE_ERROR("unable to map instance %d for blk type %d",
+				instance, blk_type);
+		return -EINVAL;
+	}
+
+	/* Check for existing list entry */
+	item = sde_hw_intr_list_lookup(sde_cfg, blk_type, instance);
+	if (IS_ERR_OR_NULL(item)) {
+		SDE_DEBUG("adding intr type %d idx %d offset 0x%x\n",
+				blk_type, instance, offset);
+	} else if (item->base_offset == offset) {
+		SDE_INFO("duplicate intr %d/%d offset 0x%x, skipping\n",
+				blk_type, instance, offset);
+		return 0;
+	} else {
+		SDE_ERROR("type %d, idx %d in list with offset 0x%x != 0x%x\n",
+				blk_type, instance, item->base_offset, offset);
+		return -EINVAL;
+	}
+
+	item = kzalloc(sizeof(*item), GFP_KERNEL);
+	if (!item) {
+		SDE_ERROR("memory allocation failed!\n");
+		return -ENOMEM;
+	}
+
+	INIT_LIST_HEAD(&item->list);
+	item->type = blk_type;
+	item->instance_idx = instance;
+	item->base_offset = offset;
+	list_add_tail(&item->list, &sde_cfg->irq_offset_list);
+
+	return 0;
+}
+
 static void _sde_sspp_setup_vig(struct sde_mdss_cfg *sde_cfg,
 	struct sde_sspp_cfg *sspp, struct sde_sspp_sub_blks *sblk,
 	bool *prop_exists, struct sde_prop_value *prop_value, u32 *vig_count)
@@ -1948,6 +2016,11 @@ static int sde_intf_parse_dt(struct device_node *np,
 		if (!prop_exists[INTF_LEN])
 			intf->len = DEFAULT_SDE_HW_BLOCK_LEN;
 
+		rc = _add_to_irq_offset_list(sde_cfg, SDE_INTR_HWBLK_INTF,
+				intf->id, intf->base);
+		if (rc)
+			goto end;
+
 		intf->prog_fetch_lines_worst_case =
 				!prop_exists[INTF_PREFETCH] ?
 				sde_cfg->perf.min_prefill_lines :
@@ -1978,6 +2051,14 @@ static int sde_intf_parse_dt(struct device_node *np,
 		if (prop_exists[INTF_TE_IRQ])
 			intf->te_irq_offset = PROP_VALUE_ACCESS(prop_value,
 					INTF_TE_IRQ, i);
+
+		if (intf->te_irq_offset) {
+			rc = _add_to_irq_offset_list(sde_cfg,
+					SDE_INTR_HWBLK_INTF_TEAR,
+					intf->id, intf->te_irq_offset);
+			if (rc)
+				goto end;
+		}
 
 		if (sde_cfg->has_intf_te)
 			set_bit(SDE_INTF_TE, &intf->features);
@@ -2445,6 +2526,11 @@ static int sde_dspp_parse_dt(struct device_node *np,
 			sblk->ad.version = PROP_VALUE_ACCESS(ad_prop_value,
 				AD_VERSION, 0);
 			set_bit(SDE_DSPP_AD, &dspp->features);
+			rc = _add_to_irq_offset_list(sde_cfg,
+					SDE_INTR_HWBLK_AD4, dspp->id,
+					dspp->base + sblk->ad.base);
+			if (rc)
+				goto end;
 		}
 
 		sblk->ltm.id = SDE_DSPP_LTM;
@@ -2456,6 +2542,11 @@ static int sde_dspp_parse_dt(struct device_node *np,
 			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_prop_value,
 				LTM_VERSION, 0);
 			set_bit(SDE_DSPP_LTM, &dspp->features);
+			rc = _add_to_irq_offset_list(sde_cfg,
+					SDE_INTR_HWBLK_LTM, dspp->id,
+					dspp->base + sblk->ltm.base);
+			if (rc)
+				goto end;
 		}
 
 	}
@@ -3373,6 +3464,21 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	if (major_version < SDE_HW_MAJOR(SDE_HW_VER_500))
 		set_bit(SDE_MDP_VSYNC_SEL, &cfg->mdp[0].features);
 
+	rc = _add_to_irq_offset_list(cfg, SDE_INTR_HWBLK_TOP,
+			SDE_INTR_TOP_INTR, cfg->mdp[0].base);
+	if (rc)
+		goto end;
+
+	rc = _add_to_irq_offset_list(cfg, SDE_INTR_HWBLK_TOP,
+			SDE_INTR_TOP_INTR2, cfg->mdp[0].base);
+	if (rc)
+		goto end;
+
+	rc = _add_to_irq_offset_list(cfg, SDE_INTR_HWBLK_TOP,
+			SDE_INTR_TOP_HIST_INTR, cfg->mdp[0].base);
+	if (rc)
+		goto end;
+
 	if (prop_exists[SEC_SID_MASK]) {
 		cfg->sec_sid_mask_count = prop_count[SEC_SID_MASK];
 		for (i = 0; i < cfg->sec_sid_mask_count; i++)
@@ -4055,21 +4161,17 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 
 static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 {
-	int i, rc = 0;
+	int rc = 0;
 
 	if (!sde_cfg)
 		return -EINVAL;
 
 	/* default settings for *MOST* targets */
 	sde_cfg->has_mixer_combined_alpha = true;
-	for (i = 0; i < SDE_INTR_MAX; i++)
-		set_bit(i, sde_cfg->mdss_irqs);
 
 	/* target specific settings */
 	if (IS_MSM8996_TARGET(hw_rev)) {
 		sde_cfg->perf.min_prefill_lines = 21;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_mixer_combined_alpha = false;
 	} else if (IS_MSM8998_TARGET(hw_rev)) {
@@ -4077,8 +4179,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->perf.min_prefill_lines = 25;
 		sde_cfg->vbif_qos_nlvl = 4;
 		sde_cfg->ts_prefill_rev = 1;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_cursor = true;
 		sde_cfg->has_hdr = true;
@@ -4091,8 +4191,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->ts_prefill_rev = 2;
 		sde_cfg->sui_misr_supported = true;
 		sde_cfg->sui_block_xin_mask = 0x3F71;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4101,8 +4199,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->perf.min_prefill_lines = 24;
 		sde_cfg->vbif_qos_nlvl = 8;
 		sde_cfg->ts_prefill_rev = 2;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4125,8 +4221,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_intf_te = true;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
@@ -4137,8 +4231,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->ts_prefill_rev = 2;
 		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
 		sde_cfg->delay_prg_fetch_start = true;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4158,8 +4250,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
 		sde_cfg->has_intf_te = true;
@@ -4196,8 +4286,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(SDE_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL, &sde_cfg->mdp[0].features);
@@ -4230,8 +4318,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(SDE_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(SDE_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL, &sde_cfg->mdp[0].features);
@@ -4291,8 +4377,6 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sui_misr_supported = true;
 		sde_cfg->sui_block_xin_mask = 0x3F71;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(MDSS_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL, &sde_cfg->mdp[0].features);
@@ -4390,6 +4474,8 @@ void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg)
 	if (!sde_cfg)
 		return;
 
+	sde_hw_catalog_irq_offset_list_delete(&sde_cfg->irq_offset_list);
+
 	for (i = 0; i < sde_cfg->sspp_count; i++)
 		kfree(sde_cfg->sspp[i].sblk);
 
@@ -4450,6 +4536,7 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 		return ERR_PTR(-ENOMEM);
 
 	sde_cfg->hwversion = hw_rev;
+	INIT_LIST_HEAD(&sde_cfg->irq_offset_list);
 
 	rc = _sde_hardware_pre_caps(sde_cfg, hw_rev);
 	if (rc)

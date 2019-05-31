@@ -136,26 +136,30 @@ enum {
 #define SSPP_SYS_CACHE_NO_ALLOC	BIT(4)
 
 /**
- * SDE INTERRUPTS - maintains the possible hw irq's allowed by HW
- * The order in this enum must match the order of the irqs defined
- * by 'sde_irq_map'
+ * All INTRs relevant for a specific target should be enabled via
+ * _add_to_irq_offset_list()
  */
-enum sde_intr_enum {
-	SDE_INTR_SSPP_TOP0_INTR,
-	SDE_INTR_SSPP_TOP0_INTR2,
-	SDE_INTF_TEAR_1_INTR,
-	SDE_INTF_TEAR_2_INTR,
-	SDE_INTR_SSPP_TOP0_HIST_INTR,
-	SDE_INTR_INTF_0_INTR,
-	SDE_INTR_INTF_1_INTR,
-	SDE_INTR_INTF_2_INTR,
-	SDE_INTR_INTF_3_INTR,
-	SDE_INTR_INTF_4_INTR,
-	SDE_INTR_AD4_0_INTR,
-	SDE_INTR_AD4_1_INTR,
-	SDE_INTR_LTM_0_INTR,
-	SDE_INTR_LTM_1_INTR,
-	SDE_INTR_MAX
+enum sde_intr_hwblk_type {
+	SDE_INTR_HWBLK_TOP,
+	SDE_INTR_HWBLK_INTF,
+	SDE_INTR_HWBLK_AD4,
+	SDE_INTR_HWBLK_INTF_TEAR,
+	SDE_INTR_HWBLK_LTM,
+	SDE_INTR_HWBLK_MAX
+};
+
+enum sde_intr_top_intr {
+	SDE_INTR_TOP_INTR = 1,
+	SDE_INTR_TOP_INTR2,
+	SDE_INTR_TOP_HIST_INTR,
+	SDE_INTR_TOP_MAX
+};
+
+struct sde_intr_irq_offsets {
+	struct list_head list;
+	enum sde_intr_hwblk_type type;
+	u32 instance_idx;
+	u32 base_offset;
 };
 
 /**
@@ -1297,7 +1301,7 @@ struct sde_limit_cfg {
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @inline_rot_formats	formats supported by the inline rotator feature
- * @mdss_irqs	  bitmap with the irqs supported by the target
+ * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
@@ -1431,7 +1435,7 @@ struct sde_mdss_cfg {
 	struct sde_format_extended *virt_vig_formats;
 	struct sde_format_extended *inline_rot_formats;
 
-	DECLARE_BITMAP(mdss_irqs, SDE_INTR_MAX);
+	struct list_head irq_offset_list;
 };
 
 struct sde_mdss_hw_cfg_handler {
@@ -1484,6 +1488,22 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev);
  * @sde_cfg:      pointer returned from init function
  */
 void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg);
+
+/**
+ * sde_hw_catalog_irq_offset_list_delete - delete the irq_offset_list
+ *                                         maintained by the catalog
+ * @head:      pointer to the catalog's irq_offset_list
+ */
+static inline void sde_hw_catalog_irq_offset_list_delete(
+		struct list_head *head)
+{
+	struct sde_intr_irq_offsets *item, *tmp;
+
+	list_for_each_entry_safe(item, tmp, head, list) {
+		list_del(&item->list);
+		kfree(item);
+	}
+}
 
 /**
  * sde_hw_sspp_multirect_enabled - check multirect enabled for the sspp

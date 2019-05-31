@@ -13,27 +13,17 @@
 
 /**
  * Register offsets in MDSS register file for the interrupt registers
- * w.r.t. to the MDSS base
+ * w.r.t. base for that block. Base offsets for IRQs should come from the
+ * device tree and get stored in the catalog(irq_offset_list) until they
+ * are added to the sde_irq_tbl during the table initialization.
  */
 #define HW_INTR_STATUS			0x0010
-#define MDP_SSPP_TOP0_OFF		0x1000
-#define MDP_INTF_0_OFF			0x6B000
-#define MDP_INTF_1_OFF			0x6B800
-#define MDP_INTF_2_OFF			0x6C000
-#define MDP_INTF_3_OFF			0x6C800
-#define MDP_INTF_4_OFF			0x6D000
-#define MDP_AD4_0_OFF			0x7D000
-#define MDP_AD4_1_OFF			0x7E000
 #define MDP_AD4_INTR_EN_OFF		0x41c
 #define MDP_AD4_INTR_CLEAR_OFF		0x424
 #define MDP_AD4_INTR_STATUS_OFF		0x420
-#define MDP_INTF_TEAR_INTF_1_IRQ_OFF	0x6E800
-#define MDP_INTF_TEAR_INTF_2_IRQ_OFF	0x6E900
 #define MDP_INTF_TEAR_INTR_EN_OFF	0x0
-#define MDP_INTF_TEAR_INTR_STATUS_OFF   0x4
-#define MDP_INTF_TEAR_INTR_CLEAR_OFF    0x8
-#define MDP_LTM_0_OFF			0x7F000
-#define MDP_LTM_1_OFF			0x7F100
+#define MDP_INTF_TEAR_INTR_STATUS_OFF	0x4
+#define MDP_INTF_TEAR_INTR_CLEAR_OFF	0x8
 #define MDP_LTM_INTR_EN_OFF		0x50
 #define MDP_LTM_INTR_STATUS_OFF		0x54
 #define MDP_LTM_INTR_CLEAR_OFF		0x58
@@ -206,8 +196,6 @@
  * @clr_off:	offset to CLEAR reg
  * @en_off:	offset to ENABLE reg
  * @status_off:	offset to STATUS reg
- * @sde_irq_idx;	global index in the 'sde_irq_map' table,
- *		to know which interrupt type, instance, mask, etc. to use
  * @map_idx_start   first offset in the sde_irq_map table
  * @map_idx_end    last offset in the sde_irq_map table
  */
@@ -215,7 +203,6 @@ struct sde_intr_reg {
 	u32 clr_off;
 	u32 en_off;
 	u32 status_off;
-	int sde_irq_idx;
 	u32 map_idx_start;
 	u32 map_idx_end;
 };
@@ -226,7 +213,7 @@ struct sde_intr_reg {
  * @instance_idx:	instance index of the associated HW block in SDE
  * @irq_mask:		corresponding bit in the interrupt status reg
  * @reg_idx:		index in the 'sde_irq_tbl' table, to know which
- *		registers offsets to use. -1 = invalid offset
+ *			registers offsets to use.
  */
 struct sde_irq_type {
 	u32 intr_type;
@@ -240,11 +227,13 @@ struct sde_irq_type {
  *                     a matching interface type and instance index.
  * Each of these tables are copied to a dynamically allocated
  * table, that will be used to service each of the irqs
+ * -1 indicates an uninitialized value which should be set when copying
+ * these tables to the sde_irq_map.
  */
 static struct sde_irq_type sde_irq_intr_map[] = {
 
 	{ SDE_IRQ_TYPE_WB_ROT_COMP, WB_0, SDE_INTR_WB_0_DONE, -1},
-	{ SDE_IRQ_TYPE_WB_ROT_COMP, WB_1, SDE_INTR_WB_1_DONE, 0},
+	{ SDE_IRQ_TYPE_WB_ROT_COMP, WB_1, SDE_INTR_WB_1_DONE, -1},
 	{ SDE_IRQ_TYPE_WD_TIMER, WD_TIMER_0, SDE_INTR_WD_TIMER_0_DONE, -1},
 	{ SDE_IRQ_TYPE_WD_TIMER, WD_TIMER_1, SDE_INTR_WD_TIMER_1_DONE, -1},
 
@@ -304,7 +293,6 @@ static struct sde_irq_type sde_irq_intr2_map[] = {
 
 	{ SDE_IRQ_TYPE_PING_PONG_AUTO_REF, PINGPONG_S0,
 		SDE_INTR_PING_PONG_S0_AUTOREFRESH_DONE, -1},
-
 	{ SDE_IRQ_TYPE_PING_PONG_WR_PTR, PINGPONG_S0,
 		SDE_INTR_PING_PONG_S0_WR_PTR, -1},
 
@@ -363,15 +351,12 @@ static struct sde_irq_type sde_irq_intr2_map[] = {
 };
 
 static struct sde_irq_type sde_irq_hist_map[] = {
-
 	{ SDE_IRQ_TYPE_HIST_VIG_DONE, SSPP_VIG0, SDE_INTR_HIST_VIG_0_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_VIG_RSTSEQ, SSPP_VIG0,
 		SDE_INTR_HIST_VIG_0_RSTSEQ_DONE, -1},
-
 	{ SDE_IRQ_TYPE_HIST_VIG_DONE, SSPP_VIG1, SDE_INTR_HIST_VIG_1_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_VIG_RSTSEQ, SSPP_VIG1,
 		SDE_INTR_HIST_VIG_1_RSTSEQ_DONE, -1},
-
 	{ SDE_IRQ_TYPE_HIST_VIG_DONE, SSPP_VIG2, SDE_INTR_HIST_VIG_2_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_VIG_RSTSEQ, SSPP_VIG2,
 		SDE_INTR_HIST_VIG_2_RSTSEQ_DONE, -1},
@@ -382,11 +367,9 @@ static struct sde_irq_type sde_irq_hist_map[] = {
 	{ SDE_IRQ_TYPE_HIST_DSPP_DONE, DSPP_0, SDE_INTR_HIST_DSPP_0_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_DSPP_RSTSEQ, DSPP_0,
 		SDE_INTR_HIST_DSPP_0_RSTSEQ_DONE, -1},
-
 	{ SDE_IRQ_TYPE_HIST_DSPP_DONE, DSPP_1, SDE_INTR_HIST_DSPP_1_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_DSPP_RSTSEQ, DSPP_1,
 		SDE_INTR_HIST_DSPP_1_RSTSEQ_DONE, -1},
-
 	{ SDE_IRQ_TYPE_HIST_DSPP_DONE, DSPP_2, SDE_INTR_HIST_DSPP_2_DONE, -1},
 	{ SDE_IRQ_TYPE_HIST_DSPP_RSTSEQ, DSPP_2,
 		SDE_INTR_HIST_DSPP_2_RSTSEQ_DONE, -1},
@@ -395,167 +378,46 @@ static struct sde_irq_type sde_irq_hist_map[] = {
 		SDE_INTR_HIST_DSPP_3_RSTSEQ_DONE, -1},
 };
 
-static struct sde_irq_type sde_irq_intf0_map[] = {
-
-	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, INTF_0,
+static struct sde_irq_type sde_irq_intf_map[] = {
+	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, -1,
 		SDE_INTR_VIDEO_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, -1,
 		SDE_INTR_VIDEO_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, -1,
 		SDE_INTR_DSICMD_0_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, -1,
 		SDE_INTR_DSICMD_0_OUTOF_STATIC, -1},
 
-	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, -1,
 		SDE_INTR_DSICMD_1_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, -1,
 		SDE_INTR_DSICMD_1_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, -1,
 		SDE_INTR_DSICMD_2_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, INTF_0,
+	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, -1,
 		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
 
-	{ SDE_IRQ_TYPE_PROG_LINE, INTF_0, SDE_INTR_PROG_LINE, -1},
+	{ SDE_IRQ_TYPE_PROG_LINE, -1, SDE_INTR_PROG_LINE, -1},
 };
 
-static struct sde_irq_type sde_irq_inf1_map[] = {
-
-	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, INTF_1,
-		SDE_INTR_VIDEO_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, INTF_1,
-		SDE_INTR_VIDEO_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, INTF_1,
-		SDE_INTR_DSICMD_0_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, INTF_1,
-		SDE_INTR_DSICMD_0_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, INTF_1,
-		SDE_INTR_DSICMD_1_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, INTF_1,
-		SDE_INTR_DSICMD_1_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, INTF_1,
-		SDE_INTR_DSICMD_2_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, INTF_1,
-		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_PROG_LINE, INTF_1, SDE_INTR_PROG_LINE, -1},
+static struct sde_irq_type sde_irq_ad4_map[] = {
+	{ SDE_IRQ_TYPE_AD4_BL_DONE, -1, SDE_INTR_BACKLIGHT_UPDATED, -1},
 };
 
-static struct sde_irq_type sde_irq_intf2_map[] = {
-
-
-	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, INTF_2,
-		SDE_INTR_VIDEO_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, INTF_2,
-		SDE_INTR_VIDEO_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, INTF_2,
-		SDE_INTR_DSICMD_0_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, INTF_2,
-		SDE_INTR_DSICMD_0_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, INTF_2,
-		SDE_INTR_DSICMD_1_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, INTF_2,
-		SDE_INTR_DSICMD_1_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, INTF_2,
-		SDE_INTR_DSICMD_2_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, INTF_2,
-		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_PROG_LINE, INTF_2, SDE_INTR_PROG_LINE, -1},
-};
-
-static struct sde_irq_type sde_irq_intf3_map[] = {
-
-	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, INTF_3,
-		SDE_INTR_VIDEO_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, INTF_3,
-		SDE_INTR_VIDEO_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, INTF_3,
-		SDE_INTR_DSICMD_0_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, INTF_3,
-		SDE_INTR_DSICMD_0_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, INTF_3,
-		SDE_INTR_DSICMD_1_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, INTF_3,
-		SDE_INTR_DSICMD_1_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, INTF_3,
-		SDE_INTR_DSICMD_2_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, INTF_3,
-		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_PROG_LINE, INTF_3, SDE_INTR_PROG_LINE, -1},
-};
-
-static struct sde_irq_type sde_irq_inf4_map[] = {
-
-	{ SDE_IRQ_TYPE_SFI_VIDEO_IN, INTF_4,
-		SDE_INTR_VIDEO_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_VIDEO_OUT, INTF_4,
-		SDE_INTR_VIDEO_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_IN, INTF_4,
-		SDE_INTR_DSICMD_0_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_0_OUT, INTF_4,
-		SDE_INTR_DSICMD_0_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_SFI_CMD_1_IN, INTF_4,
-		SDE_INTR_DSICMD_1_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_1_OUT, INTF_4,
-		SDE_INTR_DSICMD_1_OUTOF_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_IN, INTF_4,
-		SDE_INTR_DSICMD_2_INTO_STATIC, -1},
-	{ SDE_IRQ_TYPE_SFI_CMD_2_OUT, INTF_4,
-		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
-
-	{ SDE_IRQ_TYPE_PROG_LINE, INTF_4, SDE_INTR_PROG_LINE, -1},
-};
-
-static struct sde_irq_type sde_irq_ad4_0_map[] = {
-
-	{ SDE_IRQ_TYPE_AD4_BL_DONE, DSPP_0, SDE_INTR_BACKLIGHT_UPDATED, -1},
-};
-
-static struct sde_irq_type sde_irq_ad4_1_map[] = {
-
-	{ SDE_IRQ_TYPE_AD4_BL_DONE, DSPP_1, SDE_INTR_BACKLIGHT_UPDATED, -1},
-};
-
-static struct sde_irq_type sde_irq_intf1_te_map[] = {
-
-	{ SDE_IRQ_TYPE_INTF_TEAR_AUTO_REF, INTF_1,
+static struct sde_irq_type sde_irq_intf_te_map[] = {
+	{ SDE_IRQ_TYPE_INTF_TEAR_AUTO_REF, -1,
 		SDE_INTR_INTF_TEAR_AUTOREFRESH_DONE, -1},
-	{ SDE_IRQ_TYPE_INTF_TEAR_WR_PTR, INTF_1,
+	{ SDE_IRQ_TYPE_INTF_TEAR_WR_PTR, -1,
 		SDE_INTR_INTF_TEAR_WR_PTR, -1},
-	{ SDE_IRQ_TYPE_INTF_TEAR_RD_PTR, INTF_1,
+	{ SDE_IRQ_TYPE_INTF_TEAR_RD_PTR, -1,
 		SDE_INTR_INTF_TEAR_RD_PTR, -1},
-	{ SDE_IRQ_TYPE_INTF_TEAR_TEAR_CHECK, INTF_1,
+	{ SDE_IRQ_TYPE_INTF_TEAR_TEAR_CHECK, -1,
 		SDE_INTR_INTF_TEAR_TEAR_DETECTED, -1},
 };
 
-static struct sde_irq_type sde_irq_intf2_te_map[] = {
-
-	{ SDE_IRQ_TYPE_INTF_TEAR_AUTO_REF, INTF_2,
-		SDE_INTR_INTF_TEAR_AUTOREFRESH_DONE, -1},
-	{ SDE_IRQ_TYPE_INTF_TEAR_WR_PTR, INTF_2,
-		SDE_INTR_INTF_TEAR_WR_PTR, -1},
-	{ SDE_IRQ_TYPE_INTF_TEAR_RD_PTR, INTF_2,
-		SDE_INTR_INTF_TEAR_RD_PTR, -1},
-
-	{ SDE_IRQ_TYPE_INTF_TEAR_TEAR_CHECK, INTF_2,
-		SDE_INTR_INTF_TEAR_TEAR_DETECTED, -1},
-};
-
-static struct sde_irq_type sde_irq_ltm_0_map[] = {
-
-	{ SDE_IRQ_TYPE_LTM_STATS_DONE, DSPP_0, SDE_INTR_LTM_STATS_DONE, -1},
-	{ SDE_IRQ_TYPE_LTM_STATS_WB_PB, DSPP_0, SDE_INTR_LTM_STATS_WB_PB, -1},
-};
-
-static struct sde_irq_type sde_irq_ltm_1_map[] = {
-
-	{ SDE_IRQ_TYPE_LTM_STATS_DONE, DSPP_1, SDE_INTR_LTM_STATS_DONE, -1},
-	{ SDE_IRQ_TYPE_LTM_STATS_WB_PB, DSPP_1, SDE_INTR_LTM_STATS_WB_PB, -1},
+static struct sde_irq_type sde_irq_ltm_map[] = {
+	{ SDE_IRQ_TYPE_LTM_STATS_DONE, -1, SDE_INTR_LTM_STATS_DONE, -1},
+	{ SDE_IRQ_TYPE_LTM_STATS_WB_PB, -1, SDE_INTR_LTM_STATS_WB_PB, -1},
 };
 
 static int sde_hw_intr_irqidx_lookup(struct sde_hw_intr *intr,
@@ -596,7 +458,6 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 	int end_idx;
 	u32 irq_status;
 	unsigned long irq_flags;
-	int sde_irq_idx;
 
 	if (!intr)
 		return;
@@ -609,11 +470,6 @@ static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 	spin_lock_irqsave(&intr->irq_lock, irq_flags);
 	for (reg_idx = 0; reg_idx < intr->sde_irq_size; reg_idx++) {
 		irq_status = intr->save_irq_status[reg_idx];
-
-		/* get the global offset in 'sde_irq_map' */
-		sde_irq_idx = intr->sde_irq_tbl[reg_idx].sde_irq_idx;
-		if (sde_irq_idx < 0)
-			continue;
 
 		/*
 		 * Each Interrupt register has dynamic range of indexes,
@@ -1017,6 +873,83 @@ static u32 sde_hw_intr_get_intr_status_nomask(struct sde_hw_intr *intr,
 	return intr_status;
 }
 
+static int _set_sde_irq_tbl_offset_top(struct sde_intr_reg *sde_irq,
+		struct sde_intr_irq_offsets *item)
+{
+	u32 base_offset;
+
+	if (!sde_irq || !item)
+		return -EINVAL;
+
+	base_offset = item->base_offset;
+	switch (item->instance_idx) {
+	case SDE_INTR_TOP_INTR:
+		sde_irq->clr_off = base_offset + INTR_CLEAR;
+		sde_irq->en_off = base_offset + INTR_EN;
+		sde_irq->status_off = base_offset + INTR_STATUS;
+		break;
+	case SDE_INTR_TOP_INTR2:
+		sde_irq->clr_off = base_offset + INTR2_CLEAR;
+		sde_irq->en_off = base_offset + INTR2_EN;
+		sde_irq->status_off = base_offset + INTR2_STATUS;
+		break;
+	case SDE_INTR_TOP_HIST_INTR:
+		sde_irq->clr_off = base_offset + HIST_INTR_CLEAR;
+		sde_irq->en_off = base_offset + HIST_INTR_EN;
+		sde_irq->status_off = base_offset + HIST_INTR_STATUS;
+		break;
+	default:
+		pr_err("invalid TOP intr for instance %d\n",
+				item->instance_idx);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int _set_sde_irq_tbl_offset(struct sde_intr_reg *sde_irq,
+		struct sde_intr_irq_offsets *item)
+{
+	u32 base_offset, rc = 0;
+
+	if (!sde_irq || !item)
+		return -EINVAL;
+
+	base_offset = item->base_offset;
+	switch (item->type) {
+	case SDE_INTR_HWBLK_TOP:
+		rc = _set_sde_irq_tbl_offset_top(sde_irq, item);
+		break;
+	case SDE_INTR_HWBLK_INTF:
+		sde_irq->clr_off = base_offset + INTF_INTR_CLEAR;
+		sde_irq->en_off = base_offset + INTF_INTR_EN;
+		sde_irq->status_off = base_offset + INTF_INTR_STATUS;
+		break;
+	case SDE_INTR_HWBLK_AD4:
+		sde_irq->clr_off = base_offset + MDP_AD4_INTR_CLEAR_OFF;
+		sde_irq->en_off = base_offset + MDP_AD4_INTR_EN_OFF;
+		sde_irq->status_off = base_offset + MDP_AD4_INTR_STATUS_OFF;
+		break;
+	case SDE_INTR_HWBLK_INTF_TEAR:
+		sde_irq->clr_off = base_offset + MDP_INTF_TEAR_INTR_CLEAR_OFF;
+		sde_irq->en_off = base_offset + MDP_INTF_TEAR_INTR_EN_OFF;
+		sde_irq->status_off = base_offset +
+				MDP_INTF_TEAR_INTR_STATUS_OFF;
+		break;
+	case SDE_INTR_HWBLK_LTM:
+		sde_irq->clr_off = base_offset + MDP_LTM_INTR_CLEAR_OFF;
+		sde_irq->en_off = base_offset + MDP_LTM_INTR_EN_OFF;
+		sde_irq->status_off = base_offset + MDP_LTM_INTR_STATUS_OFF;
+		break;
+	default:
+		pr_err("unrecognized intr blk type %d\n",
+				item->type);
+		rc = -EINVAL;
+	}
+
+	return rc;
+}
+
 static void __setup_intr_ops(struct sde_hw_intr_ops *ops)
 {
 	ops->set_mask = sde_hw_intr_set_mask;
@@ -1050,143 +983,6 @@ static struct sde_mdss_base_cfg *__intr_offset(struct sde_mdss_cfg *m,
 	return &m->mdss[0];
 }
 
-static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
-	struct sde_intr_reg *sde_irq_tbl)
-{
-	int idx;
-	struct sde_intr_reg *sde_irq;
-
-	for (idx = 0; idx < irq_tbl_size; idx++) {
-		sde_irq = &sde_irq_tbl[idx];
-
-		switch (sde_irq->sde_irq_idx) {
-		case SDE_INTR_SSPP_TOP0_INTR:
-			sde_irq->clr_off =
-				MDP_SSPP_TOP0_OFF+INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_SSPP_TOP0_OFF+INTR_EN;
-			sde_irq->status_off =
-				MDP_SSPP_TOP0_OFF+INTR_STATUS;
-			break;
-		case SDE_INTR_SSPP_TOP0_INTR2:
-			sde_irq->clr_off =
-				MDP_SSPP_TOP0_OFF+INTR2_CLEAR;
-			sde_irq->en_off =
-				MDP_SSPP_TOP0_OFF+INTR2_EN;
-			sde_irq->status_off =
-				MDP_SSPP_TOP0_OFF+INTR2_STATUS;
-			break;
-		case SDE_INTR_SSPP_TOP0_HIST_INTR:
-			sde_irq->clr_off =
-				MDP_SSPP_TOP0_OFF+HIST_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_SSPP_TOP0_OFF+HIST_INTR_EN;
-			sde_irq->status_off =
-				MDP_SSPP_TOP0_OFF+HIST_INTR_STATUS;
-			break;
-		case SDE_INTR_INTF_0_INTR:
-			sde_irq->clr_off =
-				MDP_INTF_0_OFF+INTF_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_INTF_0_OFF+INTF_INTR_EN;
-			sde_irq->status_off =
-				MDP_INTF_0_OFF+INTF_INTR_STATUS;
-			break;
-		case SDE_INTR_INTF_1_INTR:
-			sde_irq->clr_off =
-				MDP_INTF_1_OFF+INTF_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_INTF_1_OFF+INTF_INTR_EN;
-			sde_irq->status_off =
-				MDP_INTF_1_OFF+INTF_INTR_STATUS;
-			break;
-		case SDE_INTR_INTF_2_INTR:
-			sde_irq->clr_off =
-				MDP_INTF_2_OFF+INTF_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_INTF_2_OFF+INTF_INTR_EN;
-			sde_irq->status_off =
-				MDP_INTF_2_OFF+INTF_INTR_STATUS;
-			break;
-		case SDE_INTR_INTF_3_INTR:
-			sde_irq->clr_off =
-				MDP_INTF_3_OFF+INTF_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_INTF_3_OFF+INTF_INTR_EN;
-			sde_irq->status_off =
-				MDP_INTF_3_OFF+INTF_INTR_STATUS;
-			break;
-		case SDE_INTR_INTF_4_INTR:
-			sde_irq->clr_off =
-				MDP_INTF_4_OFF+INTF_INTR_CLEAR;
-			sde_irq->en_off =
-				MDP_INTF_4_OFF+INTF_INTR_EN;
-			sde_irq->status_off =
-				MDP_INTF_4_OFF+INTF_INTR_STATUS;
-			break;
-		case SDE_INTR_AD4_0_INTR:
-			sde_irq->clr_off =
-				MDP_AD4_0_OFF + MDP_AD4_INTR_CLEAR_OFF;
-			sde_irq->en_off =
-				MDP_AD4_0_OFF + MDP_AD4_INTR_EN_OFF;
-			sde_irq->status_off =
-				MDP_AD4_0_OFF + MDP_AD4_INTR_STATUS_OFF;
-			break;
-		case SDE_INTR_AD4_1_INTR:
-			sde_irq->clr_off =
-				MDP_AD4_1_OFF + MDP_AD4_INTR_CLEAR_OFF;
-			sde_irq->en_off =
-				MDP_AD4_1_OFF + MDP_AD4_INTR_EN_OFF;
-			sde_irq->status_off =
-				MDP_AD4_1_OFF + MDP_AD4_INTR_STATUS_OFF;
-			break;
-		case SDE_INTF_TEAR_1_INTR:
-			sde_irq->clr_off = MDP_INTF_TEAR_INTF_1_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_CLEAR_OFF;
-			sde_irq->en_off =
-				MDP_INTF_TEAR_INTF_1_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_EN_OFF;
-			sde_irq->status_off = MDP_INTF_TEAR_INTF_1_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_STATUS_OFF;
-			break;
-		case SDE_INTF_TEAR_2_INTR:
-			sde_irq->clr_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_CLEAR_OFF;
-			sde_irq->en_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_EN_OFF;
-			sde_irq->status_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
-				MDP_INTF_TEAR_INTR_STATUS_OFF;
-			break;
-		case SDE_INTR_LTM_0_INTR:
-			sde_irq->clr_off =
-				MDP_LTM_0_OFF + MDP_LTM_INTR_CLEAR_OFF;
-			sde_irq->en_off =
-				MDP_LTM_0_OFF + MDP_LTM_INTR_EN_OFF;
-			sde_irq->status_off =
-				MDP_LTM_0_OFF + MDP_LTM_INTR_STATUS_OFF;
-			break;
-		case SDE_INTR_LTM_1_INTR:
-			sde_irq->clr_off =
-				MDP_LTM_1_OFF + MDP_LTM_INTR_CLEAR_OFF;
-			sde_irq->en_off =
-				MDP_LTM_1_OFF + MDP_LTM_INTR_EN_OFF;
-			sde_irq->status_off =
-				MDP_LTM_1_OFF + MDP_LTM_INTR_STATUS_OFF;
-			break;
-		default:
-			pr_err("wrong irq idx %d\n",
-				sde_irq->sde_irq_idx);
-			return -EINVAL;
-		}
-
-		pr_debug("idx:%d irq_idx:%d clr:0x%x en:0x%x status:0x%x\n",
-			idx, sde_irq->sde_irq_idx, sde_irq->clr_off,
-			sde_irq->en_off, sde_irq->status_off);
-	}
-
-	return 0;
-}
-
 void sde_hw_intr_destroy(struct sde_hw_intr *intr)
 {
 	if (intr) {
@@ -1198,120 +994,110 @@ void sde_hw_intr_destroy(struct sde_hw_intr *intr)
 	}
 }
 
-static inline u32 _get_irq_map_size(int idx)
+static inline u32 _get_irq_map_size_top(enum sde_intr_top_intr inst)
 {
 	u32 ret = 0;
 
-	switch (idx) {
-	case SDE_INTR_SSPP_TOP0_INTR:
+	switch (inst) {
+	case SDE_INTR_TOP_INTR:
 		ret = ARRAY_SIZE(sde_irq_intr_map);
 		break;
-	case SDE_INTR_SSPP_TOP0_INTR2:
+	case SDE_INTR_TOP_INTR2:
 		ret = ARRAY_SIZE(sde_irq_intr2_map);
 		break;
-	case SDE_INTR_SSPP_TOP0_HIST_INTR:
+	case SDE_INTR_TOP_HIST_INTR:
 		ret = ARRAY_SIZE(sde_irq_hist_map);
 		break;
-	case SDE_INTR_INTF_0_INTR:
-		ret = ARRAY_SIZE(sde_irq_intf0_map);
-		break;
-	case SDE_INTR_INTF_1_INTR:
-		ret = ARRAY_SIZE(sde_irq_inf1_map);
-		break;
-	case SDE_INTR_INTF_2_INTR:
-		ret = ARRAY_SIZE(sde_irq_intf2_map);
-		break;
-	case SDE_INTR_INTF_3_INTR:
-		ret = ARRAY_SIZE(sde_irq_intf3_map);
-		break;
-	case SDE_INTR_INTF_4_INTR:
-		ret = ARRAY_SIZE(sde_irq_inf4_map);
-		break;
-	case SDE_INTR_AD4_0_INTR:
-		ret = ARRAY_SIZE(sde_irq_ad4_0_map);
-		break;
-	case SDE_INTR_AD4_1_INTR:
-		ret = ARRAY_SIZE(sde_irq_ad4_1_map);
-		break;
-	case SDE_INTF_TEAR_1_INTR:
-		ret = ARRAY_SIZE(sde_irq_intf1_te_map);
-		break;
-	case SDE_INTF_TEAR_2_INTR:
-		ret = ARRAY_SIZE(sde_irq_intf2_te_map);
-		break;
-	case SDE_INTR_LTM_0_INTR:
-		ret = ARRAY_SIZE(sde_irq_ltm_0_map);
-		break;
-	case SDE_INTR_LTM_1_INTR:
-		ret = ARRAY_SIZE(sde_irq_ltm_1_map);
-		break;
 	default:
-		pr_err("invalid idx:%d\n", idx);
+		pr_err("invalid top inst:%d\n", inst);
 	}
 
 	return ret;
 }
 
-static inline struct sde_irq_type *_get_irq_map_addr(int idx)
+static inline u32 _get_irq_map_size(struct sde_intr_irq_offsets *item)
+{
+	u32 ret = 0;
+
+	switch (item->type) {
+	case SDE_INTR_HWBLK_TOP:
+		ret = _get_irq_map_size_top(item->instance_idx);
+		break;
+	case SDE_INTR_HWBLK_INTF:
+		ret = ARRAY_SIZE(sde_irq_intf_map);
+		break;
+	case SDE_INTR_HWBLK_AD4:
+		ret = ARRAY_SIZE(sde_irq_ad4_map);
+		break;
+	case SDE_INTR_HWBLK_INTF_TEAR:
+		ret = ARRAY_SIZE(sde_irq_intf_te_map);
+		break;
+	case SDE_INTR_HWBLK_LTM:
+		ret = ARRAY_SIZE(sde_irq_ltm_map);
+		break;
+	default:
+		pr_err("invalid type: %d\n", item->type);
+	}
+
+	return ret;
+}
+
+static inline struct sde_irq_type *_get_irq_map_addr_top(
+		enum sde_intr_top_intr inst)
 {
 	struct sde_irq_type *ret = NULL;
 
-	switch (idx) {
-	case SDE_INTR_SSPP_TOP0_INTR:
+	switch (inst) {
+	case SDE_INTR_TOP_INTR:
 		ret = sde_irq_intr_map;
 		break;
-	case SDE_INTR_SSPP_TOP0_INTR2:
+	case SDE_INTR_TOP_INTR2:
 		ret = sde_irq_intr2_map;
 		break;
-	case SDE_INTR_SSPP_TOP0_HIST_INTR:
+	case SDE_INTR_TOP_HIST_INTR:
 		ret = sde_irq_hist_map;
 		break;
-	case SDE_INTR_INTF_0_INTR:
-		ret = sde_irq_intf0_map;
+	default:
+		pr_err("invalid top inst:%d\n", inst);
+	}
+
+	return ret;
+}
+
+static inline struct sde_irq_type *_get_irq_map_addr(
+		struct sde_intr_irq_offsets *item)
+{
+	struct sde_irq_type *ret = NULL;
+
+	switch (item->type) {
+	case SDE_INTR_HWBLK_TOP:
+		ret = _get_irq_map_addr_top(item->instance_idx);
 		break;
-	case SDE_INTR_INTF_1_INTR:
-		ret = sde_irq_inf1_map;
+	case SDE_INTR_HWBLK_INTF:
+		ret = sde_irq_intf_map;
 		break;
-	case SDE_INTR_INTF_2_INTR:
-		ret = sde_irq_intf2_map;
+	case SDE_INTR_HWBLK_AD4:
+		ret = sde_irq_ad4_map;
 		break;
-	case SDE_INTR_INTF_3_INTR:
-		ret = sde_irq_intf3_map;
+	case SDE_INTR_HWBLK_INTF_TEAR:
+		ret = sde_irq_intf_te_map;
 		break;
-	case SDE_INTR_INTF_4_INTR:
-		ret = sde_irq_inf4_map;
-		break;
-	case SDE_INTR_AD4_0_INTR:
-		ret = sde_irq_ad4_0_map;
-		break;
-	case SDE_INTR_AD4_1_INTR:
-		ret = sde_irq_ad4_1_map;
-		break;
-	case SDE_INTF_TEAR_1_INTR:
-		ret = sde_irq_intf1_te_map;
-		break;
-	case SDE_INTF_TEAR_2_INTR:
-		ret = sde_irq_intf2_te_map;
-		break;
-	case SDE_INTR_LTM_0_INTR:
-		ret = sde_irq_ltm_0_map;
-		break;
-	case SDE_INTR_LTM_1_INTR:
-		ret = sde_irq_ltm_1_map;
+	case SDE_INTR_HWBLK_LTM:
+		ret = sde_irq_ltm_map;
 		break;
 	default:
-		pr_err("invalid idx:%d\n", idx);
+		pr_err("invalid type: %d\n", item->type);
 	}
 
 	return ret;
 }
 
 static int _sde_copy_regs(struct sde_irq_type *sde_irq_map, u32 size,
-	u32 irq_idx, u32 low_idx, u32 high_idx)
+	struct sde_intr_irq_offsets *item, u32 low_idx, u32 high_idx)
 {
 	int i, j = 0;
-	struct sde_irq_type *src = _get_irq_map_addr(irq_idx);
-	u32 src_size = _get_irq_map_size(irq_idx);
+	struct sde_irq_type *src = _get_irq_map_addr(item);
+	u32 src_size = _get_irq_map_size(item);
 
 	if (!src)
 		return -EINVAL;
@@ -1332,61 +1118,60 @@ static int _sde_copy_regs(struct sde_irq_type *sde_irq_map, u32 size,
 static int _sde_hw_intr_init_irq_tables(struct sde_hw_intr *intr,
 	struct sde_mdss_cfg *m)
 {
+	struct sde_intr_irq_offsets *item;
 	int i, idx, sde_irq_tbl_idx = 0, ret = 0;
 	u32 low_idx, high_idx;
 	u32 sde_irq_map_idx = 0;
 
-	/* Initialize the offset of the irq's in the sde_irq_map table */
-	for (idx = 0; idx < SDE_INTR_MAX; idx++) {
-		if (test_bit(idx, m->mdss_irqs)) {
-			low_idx = sde_irq_map_idx;
-			high_idx = low_idx + _get_irq_map_size(idx);
+	/* Initialize offsets in the sde_irq_map & sde_irq_tbl tables */
+	list_for_each_entry(item, &m->irq_offset_list, list) {
+		low_idx = sde_irq_map_idx;
+		high_idx = low_idx + _get_irq_map_size(item);
 
-			pr_debug("init[%d]=%d low:%d high:%d\n",
-				sde_irq_tbl_idx, idx, low_idx, high_idx);
+		pr_debug("init[%d]=%d low:%d high:%d\n",
+			sde_irq_tbl_idx, idx, low_idx, high_idx);
 
-			if (sde_irq_tbl_idx >= intr->sde_irq_size ||
-				sde_irq_tbl_idx < 0) {
-				ret = -EINVAL;
-				goto exit;
-			}
-
-			/* init sde_irq_map with the global irq mapping table */
-			if (_sde_copy_regs(intr->sde_irq_map,
-					intr->sde_irq_map_size,
-					idx, low_idx, high_idx)) {
-				ret = -EINVAL;
-				goto exit;
-			}
-
-			/* init irq map with its reg idx within the irq tbl */
-			for (i = low_idx; i < high_idx; i++) {
-				intr->sde_irq_map[i].reg_idx = sde_irq_tbl_idx;
-				pr_debug("sde_irq_map[%d].reg_idx=%d\n",
-						i, sde_irq_tbl_idx);
-			}
-
-			/* track the idx of the mapping table for this irq in
-			 * sde_irq_map, this to only access the indexes of this
-			 * irq during the irq dispatch
-			 */
-			intr->sde_irq_tbl[sde_irq_tbl_idx].sde_irq_idx = idx;
-			intr->sde_irq_tbl[sde_irq_tbl_idx].map_idx_start =
-				low_idx;
-			intr->sde_irq_tbl[sde_irq_tbl_idx].map_idx_end =
-				high_idx;
-
-			/* increment idx for both tables accordingly */
-			sde_irq_tbl_idx++;
-			sde_irq_map_idx = high_idx;
+		if (sde_irq_tbl_idx >= intr->sde_irq_size ||
+			sde_irq_tbl_idx < 0) {
+			ret = -EINVAL;
+			goto exit;
 		}
+
+		/* init sde_irq_map with the global irq mapping table */
+		if (_sde_copy_regs(intr->sde_irq_map, intr->sde_irq_map_size,
+				item, low_idx, high_idx)) {
+			ret = -EINVAL;
+			goto exit;
+		}
+
+		/* init irq map with its reg & instance idxs in the irq tbl */
+		for (i = low_idx; i < high_idx; i++) {
+			intr->sde_irq_map[i].reg_idx = sde_irq_tbl_idx;
+			if (item->type != SDE_INTR_HWBLK_TOP)
+				intr->sde_irq_map[i].instance_idx =
+						item->instance_idx;
+			pr_debug("sde_irq_map[%d].reg_idx=%d .inst_idx = %d\n",
+				i, sde_irq_tbl_idx, item->instance_idx);
+		}
+
+		/* track the idx of the mapping table for this irq in
+		 * sde_irq_map, this to only access the indexes of this
+		 * irq during the irq dispatch
+		 */
+		intr->sde_irq_tbl[sde_irq_tbl_idx].map_idx_start = low_idx;
+		intr->sde_irq_tbl[sde_irq_tbl_idx].map_idx_end = high_idx;
+		ret = _set_sde_irq_tbl_offset(
+				&intr->sde_irq_tbl[sde_irq_tbl_idx], item);
+		if (ret)
+			goto exit;
+
+		/* increment idx for both tables accordingly */
+		sde_irq_tbl_idx++;
+		sde_irq_map_idx = high_idx;
 	}
 
-	/* do this after 'sde_irq_idx is initialized in sde_irq_tbl */
-	ret = _sde_hw_intr_init_sde_irq_tbl(intr->sde_irq_size,
-			intr->sde_irq_tbl);
-
 exit:
+	sde_hw_catalog_irq_offset_list_delete(&m->irq_offset_list);
 	return ret;
 }
 
@@ -1395,10 +1180,10 @@ struct sde_hw_intr *sde_hw_intr_init(void __iomem *addr,
 {
 	struct sde_hw_intr *intr = NULL;
 	struct sde_mdss_base_cfg *cfg;
+	struct sde_intr_irq_offsets *item;
 	u32 irq_regs_count = 0;
 	u32 irq_map_count = 0;
 	u32 size;
-	int idx;
 	int ret = 0;
 
 	if (!addr || !m) {
@@ -1419,33 +1204,24 @@ struct sde_hw_intr *sde_hw_intr_init(void __iomem *addr,
 	}
 	__setup_intr_ops(&intr->ops);
 
-	if (SDE_INTR_MAX >= UINT_MAX) {
-		pr_err("max intr exceeded:%d\n", SDE_INTR_MAX);
-		ret  = -EINVAL;
-		goto exit;
-	}
-
 	/* check how many irq's this target supports */
-	for (idx = 0; idx < SDE_INTR_MAX; idx++) {
-		if (test_bit(idx, m->mdss_irqs)) {
-			irq_regs_count++;
-
-			size = _get_irq_map_size(idx);
-			if (!size || irq_map_count >= UINT_MAX - size) {
-				pr_err("wrong map cnt idx:%d sz:%d cnt:%d\n",
-					idx, size, irq_map_count);
-				ret = -EINVAL;
-				goto exit;
-			}
-
-			irq_map_count += size;
+	list_for_each_entry(item, &m->irq_offset_list, list) {
+		size = _get_irq_map_size(item);
+		if (!size || irq_map_count >= UINT_MAX - size) {
+			pr_err("wrong map cnt idx:%d blk:%d/%d sz:%d cnt:%d\n",
+				irq_regs_count, item->type, item->instance_idx,
+				size, irq_map_count);
+			ret = -EINVAL;
+			goto exit;
 		}
+
+		irq_regs_count++;
+		irq_map_count += size;
 	}
 
-	if (irq_regs_count == 0 || irq_regs_count > SDE_INTR_MAX ||
-		irq_map_count == 0) {
-		pr_err("wrong mapping of supported irqs 0x%lx\n",
-			m->mdss_irqs[0]);
+	if (irq_regs_count == 0 || irq_map_count == 0) {
+		pr_err("invalid irq map: %d %d\n",
+				irq_regs_count, irq_map_count);
 		ret = -EINVAL;
 		goto exit;
 	}

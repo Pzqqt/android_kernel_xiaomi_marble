@@ -314,4 +314,23 @@ struct sde_hw_intr *sde_hw_intr_init(void __iomem *addr,
  * @intr: pointer to interrupts hw object
  */
 void sde_hw_intr_destroy(struct sde_hw_intr *intr);
+
+/**
+ * sde_hw_intr_list_lookup(): get the list entry for a given intr
+ * @sde_cfg: catalog containing the irq_offset_list
+ * @type: the sde_intr_hwblk_type to lookup
+ * @idx: the instance id to lookup for the specified hwblk_type
+ * @return: pointer to sde_intr_irq_offsets list entry, or NULL if lookup fails
+ */
+static inline struct sde_intr_irq_offsets *sde_hw_intr_list_lookup(
+	struct sde_mdss_cfg *sde_cfg, enum sde_intr_hwblk_type type, u32 idx)
+{
+	struct sde_intr_irq_offsets *item;
+
+	list_for_each_entry(item, &sde_cfg->irq_offset_list, list) {
+		if (type == item->type && idx == item->instance_idx)
+			return item;
+	}
+	return NULL;
+}
 #endif
