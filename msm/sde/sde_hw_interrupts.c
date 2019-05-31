@@ -1060,7 +1060,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 		sde_irq = &sde_irq_tbl[idx];
 
 		switch (sde_irq->sde_irq_idx) {
-		case MDSS_INTR_SSPP_TOP0_INTR:
+		case SDE_INTR_SSPP_TOP0_INTR:
 			sde_irq->clr_off =
 				MDP_SSPP_TOP0_OFF+INTR_CLEAR;
 			sde_irq->en_off =
@@ -1068,7 +1068,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_SSPP_TOP0_OFF+INTR_STATUS;
 			break;
-		case MDSS_INTR_SSPP_TOP0_INTR2:
+		case SDE_INTR_SSPP_TOP0_INTR2:
 			sde_irq->clr_off =
 				MDP_SSPP_TOP0_OFF+INTR2_CLEAR;
 			sde_irq->en_off =
@@ -1076,7 +1076,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_SSPP_TOP0_OFF+INTR2_STATUS;
 			break;
-		case MDSS_INTR_SSPP_TOP0_HIST_INTR:
+		case SDE_INTR_SSPP_TOP0_HIST_INTR:
 			sde_irq->clr_off =
 				MDP_SSPP_TOP0_OFF+HIST_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1084,7 +1084,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_SSPP_TOP0_OFF+HIST_INTR_STATUS;
 			break;
-		case MDSS_INTR_INTF_0_INTR:
+		case SDE_INTR_INTF_0_INTR:
 			sde_irq->clr_off =
 				MDP_INTF_0_OFF+INTF_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1092,7 +1092,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_INTF_0_OFF+INTF_INTR_STATUS;
 			break;
-		case MDSS_INTR_INTF_1_INTR:
+		case SDE_INTR_INTF_1_INTR:
 			sde_irq->clr_off =
 				MDP_INTF_1_OFF+INTF_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1100,7 +1100,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_INTF_1_OFF+INTF_INTR_STATUS;
 			break;
-		case MDSS_INTR_INTF_2_INTR:
+		case SDE_INTR_INTF_2_INTR:
 			sde_irq->clr_off =
 				MDP_INTF_2_OFF+INTF_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1108,7 +1108,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_INTF_2_OFF+INTF_INTR_STATUS;
 			break;
-		case MDSS_INTR_INTF_3_INTR:
+		case SDE_INTR_INTF_3_INTR:
 			sde_irq->clr_off =
 				MDP_INTF_3_OFF+INTF_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1116,7 +1116,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_INTF_3_OFF+INTF_INTR_STATUS;
 			break;
-		case MDSS_INTR_INTF_4_INTR:
+		case SDE_INTR_INTF_4_INTR:
 			sde_irq->clr_off =
 				MDP_INTF_4_OFF+INTF_INTR_CLEAR;
 			sde_irq->en_off =
@@ -1124,7 +1124,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_INTF_4_OFF+INTF_INTR_STATUS;
 			break;
-		case MDSS_INTR_AD4_0_INTR:
+		case SDE_INTR_AD4_0_INTR:
 			sde_irq->clr_off =
 				MDP_AD4_0_OFF + MDP_AD4_INTR_CLEAR_OFF;
 			sde_irq->en_off =
@@ -1132,7 +1132,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_AD4_0_OFF + MDP_AD4_INTR_STATUS_OFF;
 			break;
-		case MDSS_INTR_AD4_1_INTR:
+		case SDE_INTR_AD4_1_INTR:
 			sde_irq->clr_off =
 				MDP_AD4_1_OFF + MDP_AD4_INTR_CLEAR_OFF;
 			sde_irq->en_off =
@@ -1140,7 +1140,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_AD4_1_OFF + MDP_AD4_INTR_STATUS_OFF;
 			break;
-		case MDSS_INTF_TEAR_1_INTR:
+		case SDE_INTF_TEAR_1_INTR:
 			sde_irq->clr_off = MDP_INTF_TEAR_INTF_1_IRQ_OFF +
 				MDP_INTF_TEAR_INTR_CLEAR_OFF;
 			sde_irq->en_off =
@@ -1149,7 +1149,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off = MDP_INTF_TEAR_INTF_1_IRQ_OFF +
 				MDP_INTF_TEAR_INTR_STATUS_OFF;
 			break;
-		case MDSS_INTF_TEAR_2_INTR:
+		case SDE_INTF_TEAR_2_INTR:
 			sde_irq->clr_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
 				MDP_INTF_TEAR_INTR_CLEAR_OFF;
 			sde_irq->en_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
@@ -1157,7 +1157,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off = MDP_INTF_TEAR_INTF_2_IRQ_OFF +
 				MDP_INTF_TEAR_INTR_STATUS_OFF;
 			break;
-		case MDSS_INTR_LTM_0_INTR:
+		case SDE_INTR_LTM_0_INTR:
 			sde_irq->clr_off =
 				MDP_LTM_0_OFF + MDP_LTM_INTR_CLEAR_OFF;
 			sde_irq->en_off =
@@ -1165,7 +1165,7 @@ static inline int _sde_hw_intr_init_sde_irq_tbl(u32 irq_tbl_size,
 			sde_irq->status_off =
 				MDP_LTM_0_OFF + MDP_LTM_INTR_STATUS_OFF;
 			break;
-		case MDSS_INTR_LTM_1_INTR:
+		case SDE_INTR_LTM_1_INTR:
 			sde_irq->clr_off =
 				MDP_LTM_1_OFF + MDP_LTM_INTR_CLEAR_OFF;
 			sde_irq->en_off =
@@ -1203,46 +1203,46 @@ static inline u32 _get_irq_map_size(int idx)
 	u32 ret = 0;
 
 	switch (idx) {
-	case MDSS_INTR_SSPP_TOP0_INTR:
+	case SDE_INTR_SSPP_TOP0_INTR:
 		ret = ARRAY_SIZE(sde_irq_intr_map);
 		break;
-	case MDSS_INTR_SSPP_TOP0_INTR2:
+	case SDE_INTR_SSPP_TOP0_INTR2:
 		ret = ARRAY_SIZE(sde_irq_intr2_map);
 		break;
-	case MDSS_INTR_SSPP_TOP0_HIST_INTR:
+	case SDE_INTR_SSPP_TOP0_HIST_INTR:
 		ret = ARRAY_SIZE(sde_irq_hist_map);
 		break;
-	case MDSS_INTR_INTF_0_INTR:
+	case SDE_INTR_INTF_0_INTR:
 		ret = ARRAY_SIZE(sde_irq_intf0_map);
 		break;
-	case MDSS_INTR_INTF_1_INTR:
+	case SDE_INTR_INTF_1_INTR:
 		ret = ARRAY_SIZE(sde_irq_inf1_map);
 		break;
-	case MDSS_INTR_INTF_2_INTR:
+	case SDE_INTR_INTF_2_INTR:
 		ret = ARRAY_SIZE(sde_irq_intf2_map);
 		break;
-	case MDSS_INTR_INTF_3_INTR:
+	case SDE_INTR_INTF_3_INTR:
 		ret = ARRAY_SIZE(sde_irq_intf3_map);
 		break;
-	case MDSS_INTR_INTF_4_INTR:
+	case SDE_INTR_INTF_4_INTR:
 		ret = ARRAY_SIZE(sde_irq_inf4_map);
 		break;
-	case MDSS_INTR_AD4_0_INTR:
+	case SDE_INTR_AD4_0_INTR:
 		ret = ARRAY_SIZE(sde_irq_ad4_0_map);
 		break;
-	case MDSS_INTR_AD4_1_INTR:
+	case SDE_INTR_AD4_1_INTR:
 		ret = ARRAY_SIZE(sde_irq_ad4_1_map);
 		break;
-	case MDSS_INTF_TEAR_1_INTR:
+	case SDE_INTF_TEAR_1_INTR:
 		ret = ARRAY_SIZE(sde_irq_intf1_te_map);
 		break;
-	case MDSS_INTF_TEAR_2_INTR:
+	case SDE_INTF_TEAR_2_INTR:
 		ret = ARRAY_SIZE(sde_irq_intf2_te_map);
 		break;
-	case MDSS_INTR_LTM_0_INTR:
+	case SDE_INTR_LTM_0_INTR:
 		ret = ARRAY_SIZE(sde_irq_ltm_0_map);
 		break;
-	case MDSS_INTR_LTM_1_INTR:
+	case SDE_INTR_LTM_1_INTR:
 		ret = ARRAY_SIZE(sde_irq_ltm_1_map);
 		break;
 	default:
@@ -1257,46 +1257,46 @@ static inline struct sde_irq_type *_get_irq_map_addr(int idx)
 	struct sde_irq_type *ret = NULL;
 
 	switch (idx) {
-	case MDSS_INTR_SSPP_TOP0_INTR:
+	case SDE_INTR_SSPP_TOP0_INTR:
 		ret = sde_irq_intr_map;
 		break;
-	case MDSS_INTR_SSPP_TOP0_INTR2:
+	case SDE_INTR_SSPP_TOP0_INTR2:
 		ret = sde_irq_intr2_map;
 		break;
-	case MDSS_INTR_SSPP_TOP0_HIST_INTR:
+	case SDE_INTR_SSPP_TOP0_HIST_INTR:
 		ret = sde_irq_hist_map;
 		break;
-	case MDSS_INTR_INTF_0_INTR:
+	case SDE_INTR_INTF_0_INTR:
 		ret = sde_irq_intf0_map;
 		break;
-	case MDSS_INTR_INTF_1_INTR:
+	case SDE_INTR_INTF_1_INTR:
 		ret = sde_irq_inf1_map;
 		break;
-	case MDSS_INTR_INTF_2_INTR:
+	case SDE_INTR_INTF_2_INTR:
 		ret = sde_irq_intf2_map;
 		break;
-	case MDSS_INTR_INTF_3_INTR:
+	case SDE_INTR_INTF_3_INTR:
 		ret = sde_irq_intf3_map;
 		break;
-	case MDSS_INTR_INTF_4_INTR:
+	case SDE_INTR_INTF_4_INTR:
 		ret = sde_irq_inf4_map;
 		break;
-	case MDSS_INTR_AD4_0_INTR:
+	case SDE_INTR_AD4_0_INTR:
 		ret = sde_irq_ad4_0_map;
 		break;
-	case MDSS_INTR_AD4_1_INTR:
+	case SDE_INTR_AD4_1_INTR:
 		ret = sde_irq_ad4_1_map;
 		break;
-	case MDSS_INTF_TEAR_1_INTR:
+	case SDE_INTF_TEAR_1_INTR:
 		ret = sde_irq_intf1_te_map;
 		break;
-	case MDSS_INTF_TEAR_2_INTR:
+	case SDE_INTF_TEAR_2_INTR:
 		ret = sde_irq_intf2_te_map;
 		break;
-	case MDSS_INTR_LTM_0_INTR:
+	case SDE_INTR_LTM_0_INTR:
 		ret = sde_irq_ltm_0_map;
 		break;
-	case MDSS_INTR_LTM_1_INTR:
+	case SDE_INTR_LTM_1_INTR:
 		ret = sde_irq_ltm_1_map;
 		break;
 	default:
@@ -1337,7 +1337,7 @@ static int _sde_hw_intr_init_irq_tables(struct sde_hw_intr *intr,
 	u32 sde_irq_map_idx = 0;
 
 	/* Initialize the offset of the irq's in the sde_irq_map table */
-	for (idx = 0; idx < MDSS_INTR_MAX; idx++) {
+	for (idx = 0; idx < SDE_INTR_MAX; idx++) {
 		if (test_bit(idx, m->mdss_irqs)) {
 			low_idx = sde_irq_map_idx;
 			high_idx = low_idx + _get_irq_map_size(idx);
@@ -1419,14 +1419,14 @@ struct sde_hw_intr *sde_hw_intr_init(void __iomem *addr,
 	}
 	__setup_intr_ops(&intr->ops);
 
-	if (MDSS_INTR_MAX >= UINT_MAX) {
-		pr_err("max intr exceeded:%d\n", MDSS_INTR_MAX);
+	if (SDE_INTR_MAX >= UINT_MAX) {
+		pr_err("max intr exceeded:%d\n", SDE_INTR_MAX);
 		ret  = -EINVAL;
 		goto exit;
 	}
 
 	/* check how many irq's this target supports */
-	for (idx = 0; idx < MDSS_INTR_MAX; idx++) {
+	for (idx = 0; idx < SDE_INTR_MAX; idx++) {
 		if (test_bit(idx, m->mdss_irqs)) {
 			irq_regs_count++;
 
@@ -1442,7 +1442,7 @@ struct sde_hw_intr *sde_hw_intr_init(void __iomem *addr,
 		}
 	}
 
-	if (irq_regs_count == 0 || irq_regs_count > MDSS_INTR_MAX ||
+	if (irq_regs_count == 0 || irq_regs_count > SDE_INTR_MAX ||
 		irq_map_count == 0) {
 		pr_err("wrong mapping of supported irqs 0x%lx\n",
 			m->mdss_irqs[0]);

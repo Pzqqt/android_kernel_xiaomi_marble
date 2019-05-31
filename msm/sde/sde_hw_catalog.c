@@ -4056,14 +4056,14 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 
 	/* default settings for *MOST* targets */
 	sde_cfg->has_mixer_combined_alpha = true;
-	for (i = 0; i < MDSS_INTR_MAX; i++)
+	for (i = 0; i < SDE_INTR_MAX; i++)
 		set_bit(i, sde_cfg->mdss_irqs);
 
 	/* target specific settings */
 	if (IS_MSM8996_TARGET(hw_rev)) {
 		sde_cfg->perf.min_prefill_lines = 21;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_mixer_combined_alpha = false;
 	} else if (IS_MSM8998_TARGET(hw_rev)) {
@@ -4071,8 +4071,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->perf.min_prefill_lines = 25;
 		sde_cfg->vbif_qos_nlvl = 4;
 		sde_cfg->ts_prefill_rev = 1;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_cursor = true;
 		sde_cfg->has_hdr = true;
@@ -4085,8 +4085,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->ts_prefill_rev = 2;
 		sde_cfg->sui_misr_supported = true;
 		sde_cfg->sui_block_xin_mask = 0x3F71;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4095,8 +4095,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->perf.min_prefill_lines = 24;
 		sde_cfg->vbif_qos_nlvl = 8;
 		sde_cfg->ts_prefill_rev = 2;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4119,8 +4119,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_intf_te = true;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
@@ -4131,8 +4131,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->ts_prefill_rev = 2;
 		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
 		sde_cfg->delay_prg_fetch_start = true;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_decimation = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
@@ -4152,8 +4152,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(MDSS_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_LTM_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_vig_p010 = true;
 		sde_cfg->has_intf_te = true;
@@ -4190,8 +4190,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(MDSS_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL, &sde_cfg->mdp[0].features);
@@ -4224,8 +4224,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_qos_fl_nocalc = true;
 		sde_cfg->has_3d_merge_reset = true;
-		clear_bit(MDSS_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
-		clear_bit(MDSS_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_AD4_0_INTR, sde_cfg->mdss_irqs);
+		clear_bit(SDE_INTR_AD4_1_INTR, sde_cfg->mdss_irqs);
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL, &sde_cfg->mdp[0].features);
