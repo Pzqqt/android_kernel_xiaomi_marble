@@ -3608,6 +3608,36 @@ static int sde_dbg_debugfs_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
+/*
+ * sde_dbg_reg_base_open - debugfs open handler for reg base
+ * @inode: debugfs inode
+ * @file: file handle
+ */
+static int sde_dbg_reg_base_open(struct inode *inode, struct file *file)
+{
+	char base_name[64] = {0};
+	struct sde_dbg_reg_base *reg_base = NULL;
+
+	if (!inode || !file)
+		return -EINVAL;
+
+	snprintf(base_name, sizeof(base_name), "%s",
+		file->f_path.dentry->d_iname);
+
+	base_name[strlen(file->f_path.dentry->d_iname) - 4] = '\0';
+	reg_base = _sde_dump_get_blk_addr(base_name);
+	if (!reg_base) {
+		pr_err("error: unable to locate base %s\n",
+				base_name);
+		return -EINVAL;
+	}
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data = reg_base;
+	return 0;
+}
+
 /**
  * sde_evtlog_dump_read - debugfs read handler for evtlog dump
  * @file: file handler
@@ -4098,25 +4128,23 @@ static int sde_dbg_reg_base_release(struct inode *inode, struct file *file)
  * @cnt: memory size in bytes
  * Return: true if valid; false otherwise
  */
-static bool sde_dbg_reg_base_is_valid_range(u32 off, u32 cnt)
+static bool sde_dbg_reg_base_is_valid_range(
+	struct sde_dbg_reg_base *base,
+	u32 off, u32 cnt)
 {
-	static struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	struct sde_dbg_reg_range *node;
-	struct sde_dbg_reg_base *base;
 
 	pr_debug("check offset=0x%x cnt=0x%x\n", off, cnt);
 
-	list_for_each_entry(base, &dbg_base->reg_base_list, reg_base_head) {
-		list_for_each_entry(node, &base->sub_range_list, head) {
-			pr_debug("%s: start=0x%x end=0x%x\n", node->range_name,
-					node->offset.start, node->offset.end);
+	list_for_each_entry(node, &base->sub_range_list, head) {
+		pr_debug("%s: start=0x%x end=0x%x\n", node->range_name,
+			node->offset.start, node->offset.end);
 
-			if (node->offset.start <= off
-					&& off <= node->offset.end
-					&& off + cnt <= node->offset.end) {
-				pr_debug("valid range requested\n");
-				return true;
-			}
+		if (node->offset.start <= off
+				&& off <= node->offset.end
+				&& off + cnt <= node->offset.end) {
+			pr_debug("valid range requested\n");
+			return true;
 		}
 	}
 
@@ -4138,6 +4166,7 @@ static ssize_t sde_dbg_reg_base_offset_write(struct file *file,
 	u32 off = 0;
 	u32 cnt = DEFAULT_BASE_REG_CNT;
 	char buf[24];
+	int rc;
 
 	if (!file)
 		return -EINVAL;
@@ -4169,8 +4198,11 @@ static ssize_t sde_dbg_reg_base_offset_write(struct file *file,
 	if (cnt == 0)
 		return -EINVAL;
 
-	if (!sde_dbg_reg_base_is_valid_range(off, cnt))
-		return -EINVAL;
+	if (!list_empty(&dbg->sub_range_list)) {
+		rc = sde_dbg_reg_base_is_valid_range(dbg, off, cnt);
+		if (!rc)
+			return -EINVAL;
+	}
 
 	mutex_lock(&sde_dbg_base.mutex);
 	dbg->off = off;
@@ -4275,6 +4307,12 @@ static ssize_t sde_dbg_reg_base_reg_write(struct file *file,
 	if (off >= dbg->max_offset) {
 		mutex_unlock(&sde_dbg_base.mutex);
 		return -EFAULT;
+	}
+
+	if (!list_empty(&dbg->sub_range_list)) {
+		rc = sde_dbg_reg_base_is_valid_range(dbg, off, cnt);
+		if (!rc)
+			return -EINVAL;
 	}
 
 	rc = pm_runtime_get_sync(sde_dbg_base.dev);
@@ -4391,14 +4429,14 @@ static ssize_t sde_dbg_reg_base_reg_read(struct file *file,
 }
 
 static const struct file_operations sde_off_fops = {
-	.open = sde_dbg_debugfs_open,
+	.open = sde_dbg_reg_base_open,
 	.release = sde_dbg_reg_base_release,
 	.read = sde_dbg_reg_base_offset_read,
 	.write = sde_dbg_reg_base_offset_write,
 };
 
 static const struct file_operations sde_reg_fops = {
-	.open = sde_dbg_debugfs_open,
+	.open = sde_dbg_reg_base_open,
 	.release = sde_dbg_reg_base_release,
 	.read = sde_dbg_reg_base_reg_read,
 	.write = sde_dbg_reg_base_reg_write,
