@@ -159,7 +159,8 @@ struct tx_macro_priv {
 	int child_count;
 	int tx_swr_clk_cnt;
 	int va_swr_clk_cnt;
-	int swr_clk_type;
+	int va_clk_status;
+	int tx_clk_status;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -1477,50 +1478,53 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 		(enable ? "enable" : "disable"), tx_priv->tx_mclk_users);
 
 	if (enable) {
-		if (tx_priv->swr_clk_users == 0) {
+		if (tx_priv->swr_clk_users == 0)
 			msm_cdc_pinctrl_select_active_state(
 						tx_priv->tx_swr_gpio_p);
 
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   true);
+		if (clk_type == TX_MCLK) {
+			ret = tx_macro_mclk_enable(tx_priv, 1);
+			if (ret < 0) {
+				if (tx_priv->swr_clk_users == 0)
+					msm_cdc_pinctrl_select_sleep_state(
+							tx_priv->tx_swr_gpio_p);
+				dev_err_ratelimited(tx_priv->dev,
+					"%s: request clock enable failed\n",
+					__func__);
+				goto done;
+			}
+		}
+		if (clk_type == VA_MCLK) {
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 							   TX_CORE_CLK,
-							   TX_CORE_CLK,
+							   VA_CORE_CLK,
 							   true);
-			if (clk_type == TX_MCLK) {
-				ret = tx_macro_mclk_enable(tx_priv, 1);
-				if (ret < 0) {
+			if (ret < 0) {
+				if (tx_priv->swr_clk_users == 0)
 					msm_cdc_pinctrl_select_sleep_state(
 							tx_priv->tx_swr_gpio_p);
-					dev_err_ratelimited(tx_priv->dev,
-						"%s: request clock enable failed\n",
-						__func__);
-					goto done;
-				}
+				dev_err_ratelimited(tx_priv->dev,
+					"%s: swr request clk failed\n",
+					__func__);
+				goto done;
 			}
-			if (clk_type == VA_MCLK) {
-				ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-								   TX_CORE_CLK,
-								   VA_CORE_CLK,
-								   true);
-				if (ret < 0) {
-					msm_cdc_pinctrl_select_sleep_state(
-							tx_priv->tx_swr_gpio_p);
-					dev_err_ratelimited(tx_priv->dev,
-						"%s: swr request clk failed\n",
-						__func__);
-					goto done;
-				}
-				if (tx_priv->tx_mclk_users == 0) {
-					regmap_update_bits(regmap,
-						BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
-						0x01, 0x01);
-					regmap_update_bits(regmap,
-					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
-						0x01, 0x01);
-					regmap_update_bits(regmap,
-				      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
-						0x01, 0x01);
-				}
+			if (tx_priv->tx_mclk_users == 0) {
+				regmap_update_bits(regmap,
+					BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
+					0x01, 0x01);
+				regmap_update_bits(regmap,
+				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					0x01, 0x01);
+				regmap_update_bits(regmap,
+			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					0x01, 0x01);
 			}
+		}
+		if (tx_priv->swr_clk_users == 0) {
 			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
 				__func__, tx_priv->reset_swr);
 			if (tx_priv->reset_swr)
@@ -1534,12 +1538,12 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				regmap_update_bits(regmap,
 					BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 					0x02, 0x00);
-			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   TX_CORE_CLK,
-							   false);
 			tx_priv->reset_swr = false;
 		}
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   false);
 		tx_priv->swr_clk_users++;
 	} else {
 		if (tx_priv->swr_clk_users <= 0) {
@@ -1548,44 +1552,44 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 			tx_priv->swr_clk_users = 0;
 			return 0;
 		}
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   true);
 		tx_priv->swr_clk_users--;
-		if (tx_priv->swr_clk_users == 0) {
-			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   TX_CORE_CLK,
-							   true);
+		if (tx_priv->swr_clk_users == 0)
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x00);
-			if (clk_type == TX_MCLK)
-				tx_macro_mclk_enable(tx_priv, 0);
-			if (clk_type == VA_MCLK) {
-				if (tx_priv->tx_mclk_users == 0) {
-					regmap_update_bits(regmap,
-				      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
-						0x01, 0x00);
-					regmap_update_bits(regmap,
-					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
-						0x01, 0x00);
-				}
-				ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-								   TX_CORE_CLK,
-								   VA_CORE_CLK,
-								   false);
-				if (ret < 0) {
-					dev_err_ratelimited(tx_priv->dev,
-						"%s: swr request clk failed\n",
-						__func__);
-					goto done;
-				}
+		if (clk_type == TX_MCLK)
+			tx_macro_mclk_enable(tx_priv, 0);
+		if (clk_type == VA_MCLK) {
+			if (tx_priv->tx_mclk_users == 0) {
+				regmap_update_bits(regmap,
+			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					0x01, 0x00);
+				regmap_update_bits(regmap,
+				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					0x01, 0x00);
 			}
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 							   TX_CORE_CLK,
-							   TX_CORE_CLK,
+							   VA_CORE_CLK,
 							   false);
+			if (ret < 0) {
+				dev_err_ratelimited(tx_priv->dev,
+					"%s: swr request clk failed\n",
+					__func__);
+				goto done;
+			}
+		}
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						   TX_CORE_CLK,
+						   TX_CORE_CLK,
+						   false);
+		if (tx_priv->swr_clk_users == 0)
 			msm_cdc_pinctrl_select_sleep_state(
 						tx_priv->tx_swr_gpio_p);
-		}
 	}
 	return 0;
 
@@ -1609,53 +1613,66 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 	}
 
 	mutex_lock(&tx_priv->swr_clk_lock);
-	dev_dbg(tx_priv->dev, "%s: swrm clock %s\n",
-		__func__, (enable ? "enable" : "disable"));
+	dev_dbg(tx_priv->dev,
+		"%s: swrm clock %s tx_swr_clk_cnt: %d va_swr_clk_cnt: %d\n",
+		__func__, (enable ? "enable" : "disable"),
+		tx_priv->tx_swr_clk_cnt, tx_priv->va_swr_clk_cnt);
 
 	if (enable) {
 		pm_runtime_get_sync(tx_priv->dev);
-		/*For standalone VA usecase, enable VA macro clock */
-		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt
-			&& (tx_priv->swr_clk_type == TX_MCLK)) {
+		if (tx_priv->va_swr_clk_cnt && !tx_priv->tx_swr_clk_cnt) {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							VA_MCLK, enable);
 			if (ret)
 				goto done;
-			tx_priv->swr_clk_type = VA_MCLK;
+			tx_priv->va_clk_status++;
 		} else {
-			/* Disable VA MCLK if its already enabled */
-			if (tx_priv->swr_clk_type == VA_MCLK)
-				tx_macro_tx_va_mclk_enable(tx_priv,
-							regmap, VA_MCLK, false);
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							TX_MCLK, enable);
 			if (ret)
 				goto done;
-			tx_priv->swr_clk_type = TX_MCLK;
+			tx_priv->tx_clk_status++;
 		}
 		pm_runtime_mark_last_busy(tx_priv->dev);
 		pm_runtime_put_autosuspend(tx_priv->dev);
 	} else {
-		if (tx_priv->swr_clk_type == VA_MCLK) {
+		if (tx_priv->va_clk_status && !tx_priv->tx_clk_status) {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							VA_MCLK, enable);
 			if (ret)
 				goto done;
-			tx_priv->swr_clk_type = TX_MCLK;
-		} else {
+			--tx_priv->va_clk_status;
+		} else if (!tx_priv->va_clk_status && tx_priv->tx_clk_status) {
 			ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
 							TX_MCLK, enable);
-			if (tx_priv->va_swr_clk_cnt) {
-				ret = tx_macro_tx_va_mclk_enable(tx_priv,
-						regmap, VA_MCLK, true);
+			if (ret)
+				goto done;
+			--tx_priv->tx_clk_status;
+		} else if (tx_priv->va_clk_status && tx_priv->tx_clk_status) {
+			if (!tx_priv->va_swr_clk_cnt && tx_priv->tx_swr_clk_cnt) {
+				ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+								VA_MCLK, enable);
 				if (ret)
 					goto done;
-				tx_priv->swr_clk_type = VA_MCLK;
+				--tx_priv->va_clk_status;
+			} else {
+				ret = tx_macro_tx_va_mclk_enable(tx_priv, regmap,
+								TX_MCLK, enable);
+				if (ret)
+					goto done;
+				--tx_priv->tx_clk_status;
 			}
+
+		} else {
+			dev_dbg(tx_priv->dev,
+				"%s: Both clocks are disabled\n", __func__);
 		}
 	}
-	dev_dbg(tx_priv->dev, "%s: swrm clock users %d\n",
-		__func__, tx_priv->swr_clk_users);
+
+	dev_dbg(tx_priv->dev,
+		"%s: swrm clock users %d tx_clk_sts_cnt: %d va_clk_sts_cnt: %d\n",
+		__func__, tx_priv->swr_clk_users, tx_priv->tx_clk_status,
+		tx_priv->va_clk_status);
 done:
 	mutex_unlock(&tx_priv->swr_clk_lock);
 	return ret;
