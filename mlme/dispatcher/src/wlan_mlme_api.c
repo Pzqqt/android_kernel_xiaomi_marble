@@ -1956,6 +1956,8 @@ static void wlan_mlme_send_oce_flags_fw(struct wlan_objmgr_pdev *pdev,
 
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
 		dynamic_fw_value = mlme_get_dynamic_oce_flags(vdev);
+		if (!dynamic_fw_value)
+			return;
 		if (*updated_fw_value == *dynamic_fw_value) {
 			mlme_legacy_debug("Current FW flags matches with updated value.");
 			return;
