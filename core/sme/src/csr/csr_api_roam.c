@@ -16821,8 +16821,8 @@ static void csr_store_oce_cfg_flags_in_vdev(struct mac_context *mac,
 		return;
 
 	vdev_dynamic_oce = mlme_get_dynamic_oce_flags(vdev);
-
-	*vdev_dynamic_oce = mac->mlme_cfg->oce.feature_bitmap;
+	if (vdev_dynamic_oce)
+		*vdev_dynamic_oce = mac->mlme_cfg->oce.feature_bitmap;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
