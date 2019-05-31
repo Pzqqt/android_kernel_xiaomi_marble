@@ -71,6 +71,8 @@ struct dp_ctrl_private {
 
 	atomic_t aborted;
 
+	u8 initial_lane_count;
+
 	u32 vic;
 	u32 stream_count;
 	struct dp_mst_channel_info mst_ch_info;
@@ -254,6 +256,32 @@ static int dp_ctrl_read_link_status(struct dp_ctrl_private *ctrl,
 	return ret;
 }
 
+static int dp_ctrl_lane_count_down_shift(struct dp_ctrl_private *ctrl)
+{
+	int ret = -EAGAIN;
+	u8 lanes = ctrl->link->link_params.lane_count;
+
+	if (ctrl->panel->link_info.revision != 0x14)
+		return -EINVAL;
+
+	switch (lanes) {
+	case 4:
+		ctrl->link->link_params.lane_count = 2;
+		break;
+	case 2:
+		ctrl->link->link_params.lane_count = 1;
+		break;
+	default:
+		if (lanes != ctrl->initial_lane_count)
+			ret = -EINVAL;
+		break;
+	}
+
+	pr_debug("new lane count=%d\n", ctrl->link->link_params.lane_count);
+
+	return ret;
+}
+
 static int dp_ctrl_link_train_1(struct dp_ctrl_private *ctrl)
 {
 	int tries, old_v_level, ret = 0;
@@ -416,12 +444,19 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 		if (ret)
 			break;
 
+		/* check if CR bits still remain set */
+		if (!drm_dp_clock_recovery_ok(link_status,
+			ctrl->link->link_params.lane_count)) {
+			ret = -EINVAL;
+			break;
+		}
+
 		if (drm_dp_channel_eq_ok(link_status,
 			ctrl->link->link_params.lane_count))
 			break;
 
 		if (tries > maximum_retries) {
-			ret = -ETIMEDOUT;
+			ret = dp_ctrl_lane_count_down_shift(ctrl);
 			break;
 		}
 		tries++;
@@ -604,7 +639,8 @@ static int dp_ctrl_link_setup(struct dp_ctrl_private *ctrl, bool shallow)
 		if (!link_train_max_retries-- || atomic_read(&ctrl->aborted))
 			break;
 
-		dp_ctrl_link_rate_down_shift(ctrl);
+		if (rc != -EAGAIN)
+			dp_ctrl_link_rate_down_shift(ctrl);
 
 		dp_ctrl_configure_source_link_params(ctrl, false);
 		dp_ctrl_disable_link_clock(ctrl);
@@ -1175,6 +1211,9 @@ static int dp_ctrl_on(struct dp_ctrl *dp_ctrl, bool mst_mode,
 	pr_debug("bw_code=%d, lane_count=%d\n",
 		ctrl->link->link_params.bw_code,
 		ctrl->link->link_params.lane_count);
+
+	/* backup initial lane count */
+	ctrl->initial_lane_count = ctrl->link->link_params.lane_count;
 
 	rc = dp_ctrl_link_setup(ctrl, shallow);
 	ctrl->power_on = true;
