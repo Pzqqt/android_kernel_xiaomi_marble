@@ -1600,7 +1600,7 @@ more_data:
 	qdf_mem_zero(head, sizeof(head));
 	qdf_mem_zero(tail, sizeof(tail));
 
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_ring))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring))) {
 
 		/*
 		 * Need API to convert from hal_ring pointer to
@@ -1609,7 +1609,6 @@ more_data:
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("HAL RING Access Failed -- %pK"), hal_ring);
-		hal_srng_access_end(hal_soc, hal_ring);
 		goto done;
 	}
 
@@ -1765,7 +1764,7 @@ more_data:
 			break;
 	}
 done:
-	hal_srng_access_end(hal_soc, hal_ring);
+	dp_srng_access_end(int_ctx, soc, hal_ring);
 
 	if (nbuf_tail)
 		QDF_NBUF_CB_RX_FLUSH_IND(nbuf_tail) = 1;

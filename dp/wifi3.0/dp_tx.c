@@ -3327,7 +3327,7 @@ more_data:
 	/* Re-initialize local variables to be re-used */
 		head_desc = NULL;
 		tail_desc = NULL;
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
@@ -3446,7 +3446,7 @@ more_data:
 			break;
 	}
 
-	hal_srng_access_end(soc->hal_soc, hal_srng);
+	dp_srng_access_end(int_ctx, soc, hal_srng);
 
 	/* Process the reaped descriptors */
 	if (head_desc)

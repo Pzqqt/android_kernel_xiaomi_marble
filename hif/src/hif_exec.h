@@ -53,6 +53,7 @@ struct hif_execution_ops {
  *					hif_tasklet_exec_context
  *
  * @context: context for the handler function to use.
+ * @evt_hist: a pointer to the DP event history
  * @context_name: a pointer to a const string for debugging.
  *		this should help whenever there could be ambiguity
  *		in what type of context the void* context points to
@@ -87,6 +88,7 @@ struct hif_exec_context {
 	const char *context_name;
 	void *context;
 	ext_intr_handler handler;
+	struct hif_event_history *evt_hist;
 
 	bool (*work_complete)(struct hif_exec_context *, int work_done);
 	void (*irq_enable)(struct hif_exec_context *);

@@ -74,6 +74,21 @@ extern int con_mode_monitor;
 #endif
 #endif
 
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+/*
+ * If WLAN_CFG_INT_NUM_CONTEXTS is changed, HIF_NUM_INT_CONTEXTS
+ * also should be updated accordingly
+ */
+QDF_COMPILE_TIME_ASSERT(num_intr_grps,
+			HIF_NUM_INT_CONTEXTS == WLAN_CFG_INT_NUM_CONTEXTS);
+
+/*
+ * HIF_EVENT_HIST_MAX should always be power of 2
+ */
+QDF_COMPILE_TIME_ASSERT(hif_event_history_size,
+			(HIF_EVENT_HIST_MAX & (HIF_EVENT_HIST_MAX - 1)) == 0);
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
+
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 #include "dp_rx_mon_feature.h"
 #else
@@ -1360,6 +1375,40 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 /* TODO: Need this interface from HIF */
 void *hif_get_hal_handle(void *hif_handle);
 
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
+			 void *hal_ring)
+{
+	void *hal_soc = dp_soc->hal_soc;
+	uint32_t hp, tp;
+	uint8_t ring_id;
+
+	hal_get_sw_hptp(hal_soc, hal_ring, &tp, &hp);
+	ring_id = hal_srng_ring_id_get(hal_ring);
+
+	hif_record_event(dp_soc->hif_handle, int_ctx->dp_intr_id,
+			 ring_id, hp, tp, HIF_EVENT_SRNG_ACCESS_START);
+
+	return hal_srng_access_start(hal_soc, hal_ring);
+}
+
+void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
+			void *hal_ring)
+{
+	void *hal_soc = dp_soc->hal_soc;
+	uint32_t hp, tp;
+	uint8_t ring_id;
+
+	hal_get_sw_hptp(hal_soc, hal_ring, &tp, &hp);
+	ring_id = hal_srng_ring_id_get(hal_ring);
+
+	hif_record_event(dp_soc->hif_handle, int_ctx->dp_intr_id,
+			 ring_id, hp, tp, HIF_EVENT_SRNG_ACCESS_END);
+
+	return hal_srng_access_end(hal_soc, hal_ring);
+}
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
+
 /*
  * dp_service_srngs() - Top level interrupt handler for DP Ring interrupts
  * @dp_ctx: DP SOC handle
@@ -1418,9 +1467,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 	/* Process REO Exception ring interrupt */
 	if (rx_err_mask) {
-		work_done = dp_rx_err_process(soc,
-				soc->reo_exception_ring.hal_srng,
-				remaining_quota);
+		work_done = dp_rx_err_process(int_ctx, soc,
+					      soc->reo_exception_ring.hal_srng,
+					      remaining_quota);
 
 		if (work_done) {
 			intr_stats->num_rx_err_ring_masks++;
@@ -1437,8 +1486,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 	/* Process Rx WBM release ring interrupt */
 	if (rx_wbm_rel_mask) {
-		work_done = dp_rx_wbm_err_process(soc,
-				soc->rx_rel_ring.hal_srng, remaining_quota);
+		work_done = dp_rx_wbm_err_process(int_ctx, soc,
+						  soc->rx_rel_ring.hal_srng,
+						  remaining_quota);
 
 		if (work_done) {
 			intr_stats->num_rx_wbm_rel_ring_masks++;
@@ -1476,7 +1526,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	}
 
 	if (reo_status_mask) {
-		if (dp_reo_status_ring_handler(soc))
+		if (dp_reo_status_ring_handler(int_ctx, soc))
 			int_ctx->intr_stats.num_reo_status_ring_masks++;
 	}
 
@@ -1501,7 +1551,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 			if (int_ctx->rxdma2host_ring_mask &
 					(1 << mac_for_pdev)) {
-				work_done = dp_rxdma_err_process(soc,
+				work_done = dp_rxdma_err_process(int_ctx, soc,
 								 mac_for_pdev,
 								 remaining_quota);
 				if (work_done)

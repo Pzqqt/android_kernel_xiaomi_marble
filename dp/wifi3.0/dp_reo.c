@@ -85,7 +85,7 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t dp_reo_status_ring_handler(struct dp_soc *soc)
+uint32_t dp_reo_status_ring_handler(struct dp_intr *int_ctx, struct dp_soc *soc)
 {
 	uint32_t *reo_desc;
 	struct dp_reo_cmd_info *reo_cmd = NULL;
@@ -93,8 +93,7 @@ uint32_t dp_reo_status_ring_handler(struct dp_soc *soc)
 	int num;
 	int processed_count = 0;
 
-	if (hal_srng_access_start(soc->hal_soc,
-		soc->reo_status_ring.hal_srng)) {
+	if (dp_srng_access_start(int_ctx, soc, soc->reo_status_ring.hal_srng)) {
 		return processed_count;
 	}
 	reo_desc = hal_srng_dst_get_next(soc->hal_soc,
@@ -174,7 +173,7 @@ next:
 						soc->reo_status_ring.hal_srng);
 	} /* while */
 
-	hal_srng_access_end(soc->hal_soc, soc->reo_status_ring.hal_srng);
+	dp_srng_access_end(int_ctx, soc, soc->reo_status_ring.hal_srng);
 	return processed_count;
 }
 

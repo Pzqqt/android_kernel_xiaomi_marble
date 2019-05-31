@@ -318,6 +318,114 @@ struct hif_opaque_softc {
 };
 
 /**
+ * enum hif_event_type - Type of DP events to be recorded
+ * @HIF_EVENT_IRQ_TRIGGER: IRQ trigger event
+ * @HIF_EVENT_BH_SCHED: NAPI POLL scheduled event
+ * @HIF_EVENT_SRNG_ACCESS_START: hal ring access start event
+ * @HIF_EVENT_SRNG_ACCESS_END: hal ring access end event
+ */
+enum hif_event_type {
+	HIF_EVENT_IRQ_TRIGGER,
+	HIF_EVENT_BH_SCHED,
+	HIF_EVENT_SRNG_ACCESS_START,
+	HIF_EVENT_SRNG_ACCESS_END,
+};
+
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+
+/* HIF_EVENT_HIST_MAX should always be power of 2 */
+#define HIF_EVENT_HIST_MAX		512
+#define HIF_NUM_INT_CONTEXTS		7
+#define HIF_EVENT_HIST_DISABLE_MASK	0
+
+/**
+ * struct hif_event_record - an entry of the DP event history
+ * @hal_ring_id: ring id for which event is recorded
+ * @hp: head pointer of the ring (may not be applicable for all events)
+ * @tp: tail pointer of the ring (may not be applicable for all events)
+ * @cpu_id: cpu id on which the event occurred
+ * @timestamp: timestamp when event occurred
+ * @type: type of the event
+ *
+ * This structure represents the information stored for every datapath
+ * event which is logged in the history.
+ */
+struct hif_event_record {
+	uint8_t hal_ring_id;
+	uint32_t hp;
+	uint32_t tp;
+	int cpu_id;
+	uint64_t timestamp;
+	enum hif_event_type type;
+};
+
+/**
+ * struct hif_event_history - history for one interrupt group
+ * @index: index to store new event
+ * @event: event entry
+ *
+ * This structure represents the datapath history for one
+ * interrupt group.
+ */
+struct hif_event_history {
+	qdf_atomic_t index;
+	struct hif_event_record event[HIF_EVENT_HIST_MAX];
+};
+
+/**
+ * hif_hist_record_event() - Record one datapath event in history
+ * @hif_ctx: HIF opaque context
+ * @event: DP event entry
+ * @intr_grp_id: interrupt group ID registered with hif
+ *
+ * Return: None
+ */
+void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
+			   struct hif_event_record *event,
+			   uint8_t intr_grp_id);
+
+/**
+ * hif_record_event() - Wrapper function to form and record DP event
+ * @hif_ctx: HIF opaque context
+ * @intr_grp_id: interrupt group ID registered with hif
+ * @hal_ring_id: ring id for which event is recorded
+ * @hp: head pointer index of the srng
+ * @tp: tail pointer index of the srng
+ * @type: type of the event to be logged in history
+ *
+ * Return: None
+ */
+static inline void hif_record_event(struct hif_opaque_softc *hif_ctx,
+				    uint8_t intr_grp_id,
+				    uint8_t hal_ring_id,
+				    uint32_t hp,
+				    uint32_t tp,
+				    enum hif_event_type type)
+{
+	struct hif_event_record event;
+
+	event.hal_ring_id = hal_ring_id;
+	event.hp = hp;
+	event.tp = tp;
+	event.type = type;
+
+	return hif_hist_record_event(hif_ctx, &event,
+				     intr_grp_id);
+}
+
+#else
+
+static inline void hif_record_event(struct hif_opaque_softc *hif_ctx,
+				    uint8_t intr_grp_id,
+				    uint8_t hal_ring_id,
+				    uint32_t hp,
+				    uint32_t tp,
+				    enum hif_event_type type)
+{
+}
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
+
+/**
  * enum HIF_DEVICE_POWER_CHANGE_TYPE: Device Power change type
  *
  * @HIF_DEVICE_POWER_UP:   HIF layer should power up interface and/or module

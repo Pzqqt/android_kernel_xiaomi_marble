@@ -463,10 +463,36 @@ uint32_t
 dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint8_t reo_ring_num,
 	      uint32_t quota);
 
-uint32_t dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+/**
+ * dp_rx_err_process() - Processes error frames routed to REO error ring
+ * @int_ctx: pointer to DP interrupt context
+ * @soc: core txrx main context
+ * @hal_ring: opaque pointer to the HAL Rx Error Ring, which will be serviced
+ * @quota: No. of units (packets) that can be serviced in one shot.
+ *
+ * This function implements error processing and top level demultiplexer
+ * for all the frames routed to REO error ring.
+ *
+ * Return: uint32_t: No. of elements processed
+ */
+uint32_t dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
+			   void *hal_ring, uint32_t quota);
 
+/**
+ * dp_rx_wbm_err_process() - Processes error frames routed to WBM release ring
+ * @int_ctx: pointer to DP interrupt context
+ * @soc: core txrx main context
+ * @hal_ring: opaque pointer to the HAL Rx Error Ring, which will be serviced
+ * @quota: No. of units (packets) that can be serviced in one shot.
+ *
+ * This function implements error processing and top level demultiplexer
+ * for all the frames routed to WBM2HOST sw release ring.
+ *
+ * Return: uint32_t: No. of elements processed
+ */
 uint32_t
-dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
+dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
+		      void *hal_ring, uint32_t quota);
 
 /**
  * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
@@ -1107,9 +1133,18 @@ QDF_STATUS
 dp_rx_link_desc_return_by_addr(struct dp_soc *soc, void *link_desc_addr,
 					uint8_t bm_action);
 
+/**
+ * dp_rxdma_err_process() - RxDMA error processing functionality
+ * @soc: core txrx main contex
+ * @mac_id: mac id which is one of 3 mac_ids
+ * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @quota: No. of units (packets) that can be serviced in one shot.
+ *
+ * Return: num of buffers processed
+ */
 uint32_t
-dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
-						uint32_t quota);
+dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
+		     uint32_t mac_id, uint32_t quota);
 
 void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				uint8_t *rx_tlv_hdr, struct dp_peer *peer);

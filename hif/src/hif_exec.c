@@ -32,6 +32,65 @@
 
 static struct hif_exec_context *hif_exec_tasklet_create(void);
 
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+struct hif_event_history hif_event_desc_history[HIF_NUM_INT_CONTEXTS];
+
+static inline int hif_get_next_record_index(qdf_atomic_t *table_index,
+					    int array_size)
+{
+	int record_index = qdf_atomic_inc_return(table_index);
+
+	return record_index & (array_size - 1);
+}
+
+void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
+			   struct hif_event_record *event, uint8_t intr_grp_id)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+	struct hif_event_history *hist_ev;
+	struct hif_event_record *record;
+	int record_index;
+
+	if (!event)
+		return;
+
+	if (scn->event_disable_mask & BIT(event->type))
+		return;
+
+	if (intr_grp_id >= HIF_NUM_INT_CONTEXTS) {
+		hif_err("Invalid interrupt group id %d", intr_grp_id);
+		return;
+	}
+
+	hif_ext_group = hif_state->hif_ext_group[intr_grp_id];
+	hist_ev = hif_ext_group->evt_hist;
+
+	record_index = hif_get_next_record_index(
+			&hist_ev->index, HIF_EVENT_HIST_MAX);
+
+	record = &hist_ev->event[record_index];
+
+	record->hal_ring_id = event->hal_ring_id;
+	record->hp = event->hp;
+	record->tp = event->tp;
+	record->cpu_id = qdf_get_cpu();
+	record->timestamp = qdf_get_log_timestamp();
+	record->type = event->type;
+}
+
+static void hif_event_history_init(struct hif_exec_context *hif_ext_grp)
+{
+	hif_ext_grp->evt_hist = &hif_event_desc_history[hif_ext_grp->grp_id];
+	qdf_atomic_set(&hif_ext_grp->evt_hist->index, -1);
+}
+#else
+static inline void hif_event_history_init(struct hif_exec_context *hif_ext_grp)
+{
+}
+#endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
+
 /**
  * hif_print_napi_latency_stats() - print NAPI scheduling latency stats
  * @hif_state: hif context
@@ -449,6 +508,9 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	int shift = hif_ext_group->scale_bin_shift;
 	int cpu = smp_processor_id();
 
+	hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
+			 0, 0, 0, HIF_EVENT_BH_SCHED);
+
 	hif_ext_group->force_break = false;
 	hif_exec_update_service_start_time(hif_ext_group);
 
@@ -706,6 +768,9 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context)
 	if (hif_ext_group->irq_requested) {
 		hif_latency_profile_start(hif_ext_group);
 
+		hif_record_event(hif_ext_group->hif, hif_ext_group->grp_id,
+				 0, 0, 0, HIF_EVENT_IRQ_TRIGGER);
+
 		hif_ext_group->irq_disable(hif_ext_group);
 		/*
 		 * if private ioctl has issued fake suspend command to put
@@ -798,6 +863,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->hif = hif_ctx;
 	hif_ext_group->context_name = context_name;
 	hif_ext_group->type = type;
+	hif_event_history_init(hif_ext_group);
 
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;

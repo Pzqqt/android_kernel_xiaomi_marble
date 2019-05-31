@@ -83,8 +83,17 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
  */
 QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc, uint32_t mac_id);
 
-uint32_t dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
-	uint32_t quota);
+/**
+ * dp_rxdma_err_process() - RxDMA error processing functionality
+ * @soc: core txrx main contex
+ * @mac_id: mac id which is one of 3 mac_ids
+ * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @quota: No. of units (packets) that can be serviced in one shot.
+ *
+ * Return: num of buffers processed
+ */
+uint32_t dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
+			      uint32_t mac_id, uint32_t quota);
 
 #ifndef REMOVE_MON_DBG_STATS
 /*
