@@ -27,7 +27,6 @@
 #include "lim_global.h"
 #include "sch_global.h"
 #include "sys_global.h"
-#include "cfg_global.h"
 #include "sir_api.h"
 
 #include "csr_api.h"
@@ -751,7 +750,6 @@ struct mgmt_beacon_probe_filter {
 struct mac_context {
 	enum qdf_driver_type gDriverType;
 	struct wlan_mlme_chain_cfg fw_chain_cfg;
-	tAniSirCfg cfg;
 	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
 	struct sch_context sch;

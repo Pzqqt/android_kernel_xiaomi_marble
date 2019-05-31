@@ -584,40 +584,6 @@ struct s_ext_cap {
 	uint8_t twt_responder_support:1;
 };
 
-#define CFG_GET_INT(nStatus, mac, nItem, cfg)  do { \
-		(nStatus) = wlan_cfg_get_int((mac), (nItem), &(cfg)); \
-		if (QDF_STATUS_SUCCESS != (nStatus)) { \
-			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
-			return nStatus; \
-		} \
-} while (0)
-
-#define CFG_GET_INT_NO_STATUS(nStatus, mac, nItem, cfg) do { \
-		(nStatus) = wlan_cfg_get_int((mac), (nItem), &(cfg)); \
-		if (QDF_STATUS_SUCCESS != (nStatus)) { \
-			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
-			return; \
-		} \
-} while (0)
-
-#define CFG_GET_STR(nStatus, mac, nItem, cfg, nCfg, nMaxCfg) do { \
-		(nCfg) = (nMaxCfg); \
-		(nStatus) = wlan_cfg_get_str((mac), (nItem), (cfg), &(nCfg)); \
-		if (QDF_STATUS_SUCCESS != (nStatus)) { \
-			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
-			return nStatus; \
-		} \
-} while (0)
-
-#define CFG_GET_STR_NO_STATUS(nStatus, mac, nItem, cfg, nCfg, nMaxCfg) do { \
-		(nCfg) = (nMaxCfg); \
-		(nStatus) = wlan_cfg_get_str((mac), (nItem), (cfg), &(nCfg)); \
-		if (QDF_STATUS_SUCCESS != (nStatus)) { \
-			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
-			return; \
-		} \
-} while (0)
-
 void swap_bit_field16(uint16_t in, uint16_t *out);
 
 /* Currently implemented as "shims" between callers & the new framesc- */
