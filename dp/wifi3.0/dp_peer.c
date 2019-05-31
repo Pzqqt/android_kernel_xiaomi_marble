@@ -2299,6 +2299,32 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 		qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 }
 
+#ifdef FEATURE_PERPKT_INFO
+/*
+ * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
+{
+	qdf_mem_zero(&peer->delayed_ba_ppdu_stats,
+		     sizeof(struct cdp_delayed_tx_completion_ppdu_user));
+	peer->last_delayed_ba = false;
+	peer->last_delayed_ba_ppduid = 0;
+}
+#else
+/*
+ * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
+{
+}
+#endif
+
 /*
  * dp_peer_cleanup() – Cleanup peer information
  * @vdev: Datapath vdev

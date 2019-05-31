@@ -127,6 +127,39 @@
 	(((nssb) & CDP_TXRX_RATECODE_NSS_MASK) << CDP_TXRX_RATECODE_NSS_LSB) | \
 	(((premb) & CDP_TXRX_RATECODE_PREM_MASK) << CDP_TXRX_RATECODE_PREM_LSB))
 
+/*
+ * cdp_tx_transmit_type: Transmit type index
+ * SU: SU Transmit type index
+ * MU_MIMO: MU_MIMO Transmit type index
+ * MU_OFDMA: MU_OFDMA Transmit type index
+ * MU_MIMO_OFDMA: MU MIMO OFDMA Transmit type index
+ */
+enum cdp_tx_transmit_type {
+	SU = 0,
+	MU_MIMO,
+	MU_OFDMA,
+	MU_MIMO_OFDMA,
+};
+
+/*
+ * cdp_ru_index: Different RU index
+ *
+ * RU_26_INDEX : 26-tone Resource Unit index
+ * RU_52_INDEX : 52-tone Resource Unit index
+ * RU_106_INDEX: 106-tone Resource Unit index
+ * RU_242_INDEX: 242-tone Resource Unit index
+ * RU_484_INDEX: 484-tone Resource Unit index
+ * RU_996_INDEX: 996-tone Resource Unit index
+ */
+enum cdp_ru_index {
+	RU_26_INDEX = 0,
+	RU_52_INDEX,
+	RU_106_INDEX,
+	RU_242_INDEX,
+	RU_484_INDEX,
+	RU_996_INDEX,
+};
+
 /* Different Packet Types */
 enum cdp_packet_type {
 	DOT11_A = 0,
@@ -383,6 +416,19 @@ struct cdp_pkt_type {
 	uint32_t mcs_count[MAX_MCS];
 };
 
+/* struct cdp_tx_pkt_info - tx packet info
+ * num_msdu - successful msdu
+ * num_mpdu - successful mpdu from compltn common
+ * mpdu_tried - mpdu tried
+ *
+ * tx packet info counter field for mpdu success/tried and msdu
+ */
+struct cdp_tx_pkt_info {
+	uint32_t num_msdu;
+	uint32_t num_mpdu;
+	uint32_t mpdu_tried;
+};
+
 /* struct cdp_tx_stats - tx stats
  * @cdp_pkt_info comp_pkt: Pkt Info for which completions were received
  * @cdp_pkt_info ucast: Unicast Packet Count
@@ -452,11 +498,11 @@ struct cdp_pkt_type {
  * @failed_retry_count: packets failed due to retry above 802.11 retry limit
  * @retry_count: packets successfully send after one or more retry
  * @multiple_retry_count: packets successfully sent after more than one retry
- * @transmit_type: tx transmit type
+ * @transmit_type: pkt info for tx transmit type
  * @mu_group_id: mumimo mu group id
  * @ru_start: RU start index
  * @ru_tones: RU tones size
- * @ru_loc: RU location 26/ 52/ 106/ 242/ 484 counter
+ * @ru_loc: pkt info for RU location 26/ 52/ 106/ 242/ 484 counter
  * @num_ppdu_cookie_valid : Number of comp received with valid ppdu cookie
  */
 struct cdp_tx_stats {
@@ -538,11 +584,12 @@ struct cdp_tx_stats {
 	uint32_t multiple_retry_count;
 	uint32_t last_tx_rate_used;
 
-	uint32_t transmit_type[MAX_TRANSMIT_TYPES];
+	struct cdp_tx_pkt_info transmit_type[MAX_TRANSMIT_TYPES];
 	uint32_t mu_group_id[MAX_MU_GROUP_ID];
 	uint32_t ru_start;
 	uint32_t ru_tones;
-	uint32_t ru_loc[MAX_RU_LOCATIONS];
+	struct cdp_tx_pkt_info ru_loc[MAX_RU_LOCATIONS];
+
 	uint32_t num_ppdu_cookie_valid;
 };
 
@@ -1248,6 +1295,7 @@ struct cdp_htt_rx_pdev_stats {
  * @tx_comp_histogram: Number of Tx completions per interrupt
  * @rx_ind_histogram:  Number of Rx ring descriptors reaped per interrupt
  * @ppdu_stats_counter: ppdu stats counter
+ * @cdp_delayed_ba_not_recev: counter for delayed ba not received
  * @htt_tx_pdev_stats: htt pdev stats for tx
  * @htt_rx_pdev_stats: htt pdev stats for rx
  */
@@ -1293,6 +1341,7 @@ struct cdp_pdev_stats {
 	struct cdp_hist_tx_comp tx_comp_histogram;
 	struct cdp_hist_rx_ind rx_ind_histogram;
 	uint64_t ppdu_stats_counter[CDP_PPDU_STATS_MAX_TAG];
+	uint32_t cdp_delayed_ba_not_recev;
 
 	struct cdp_htt_tx_pdev_stats  htt_tx_pdev_stats;
 	struct cdp_htt_rx_pdev_stats  htt_rx_pdev_stats;

@@ -64,6 +64,21 @@
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
 
 /**
+ * Bitmap of HTT PPDU delayed ba TLV types for Default mode
+ */
+#define HTT_PPDU_DELAYED_BA_TLV_BITMAP \
+	(1 << HTT_PPDU_STATS_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_RATE_TLV)
+
+/**
+ * Bitmap of HTT PPDU TLV types for Delayed BA
+ */
+#define HTT_PPDU_STATUS_TLV_BITMAP \
+	(1 << HTT_PPDU_STATS_COMMON_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
+
+/**
  * Bitmap of HTT PPDU TLV types for Sniffer mode bitmap 64
  */
 #define HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP_64 \
@@ -739,6 +754,23 @@ extern void dp_peer_find_detach(struct dp_soc *soc);
 extern void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_remove(struct dp_soc *soc, struct dp_peer *peer);
 extern void dp_peer_find_hash_erase(struct dp_soc *soc);
+
+/*
+ * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer);
+
+/*
+ * dp_peer_ppdu_delayed_ba_cleanup() free ppdu allocated in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+void dp_peer_ppdu_delayed_ba_cleanup(struct dp_peer *peer);
+
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 extern void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);

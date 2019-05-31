@@ -1152,6 +1152,57 @@ struct cdp_tx_sojourn_stats {
 };
 
 /**
+ * struct cdp_delayed_tx_completion_ppdu_user - Delayed Tx PPDU completion
+ * per-user information
+ * @frame_ctrl: frame control field in 802.11 header
+ * @qos_ctrl: QoS control field in 802.11 header
+ * @mpdu_tried: number of mpdus tried
+ * @ltf_size: ltf_size
+ * @stbc: stbc
+ * @he_re: he_re (range extension)
+ * @txbf: txbf
+ * @bw: Transmission bandwidth
+ *       <enum 2 transmit_bw_20_MHz>
+ *       <enum 3 transmit_bw_40_MHz>
+ *       <enum 4 transmit_bw_80_MHz>
+ *       <enum 5 transmit_bw_160_MHz>
+ * @nss: NSS 1,2, ...8
+ * @mcs: MCS index
+ * @preamble: preamble
+ * @gi: guard interval 800/400/1600/3200 ns
+ * @dcm: dcm
+ * @ldpc: ldpc
+ * @ru_start: RU start index
+ * @ru_tones: RU tones length
+ * @is_mcast: MCAST or UCAST
+ * @user_pos: user position
+ * @mu_group_id: mu group id
+ */
+struct cdp_delayed_tx_completion_ppdu_user {
+	uint32_t frame_ctrl:16,
+		 qos_ctrl:16;
+	uint32_t mpdu_tried_ucast:16,
+		mpdu_tried_mcast:16;
+	uint32_t ltf_size:2,
+		 stbc:1,
+		 he_re:1,
+		 txbf:4,
+		 bw:4,
+		 nss:4,
+		 mcs:4,
+		 preamble:4,
+		 gi:4,
+		 dcm:1,
+		 ldpc:1,
+		 delayed_ba:1;
+	uint16_t ru_start;
+	uint16_t ru_tones;
+	bool is_mcast;
+	uint32_t user_pos;
+	uint32_t mu_group_id;
+};
+
+/**
  * struct cdp_tx_completion_ppdu_user - Tx PPDU completion per-user information
  * @completion_status: completion status - OK/Filter/Abort/Timeout
  * @tid: TID number
@@ -1354,6 +1405,7 @@ struct cdp_tx_indication_info {
  * @ppdu_id: PPDU Id
  * @ppdu_seq_id: ppdu sequence id for sojourn stats
  * @vdev_id: VAP Id
+ * @bar_num_users: BA response user count, based on completion common TLV
  * @num_users: Number of users
  * @num_mpdu: Number of MPDUs in PPDU
  * @num_msdu: Number of MSDUs in PPDU
@@ -1365,6 +1417,7 @@ struct cdp_tx_indication_info {
  * @ppdu_start_timestamp: TSF at PPDU start
  * @ppdu_end_timestamp: TSF at PPDU end
  * @ack_timestamp: TSF at the reception of ACK
+ * @delayed_ba: Delayed ba flag
  * @user: per-User stats (array of per-user structures)
  * @mpdu_q: queue of mpdu in a ppdu
  */
@@ -1372,6 +1425,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
 	uint32_t ppdu_seq_id;
 	uint16_t vdev_id;
+	uint16_t bar_num_users;
 	uint32_t num_users;
 	uint8_t last_usr_index;
 	uint32_t num_mpdu:9,
@@ -1385,6 +1439,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_start_timestamp;
 	uint32_t ppdu_end_timestamp;
 	uint32_t ack_timestamp;
+	bool delayed_ba;
 	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	qdf_nbuf_queue_t mpdu_q;
 };

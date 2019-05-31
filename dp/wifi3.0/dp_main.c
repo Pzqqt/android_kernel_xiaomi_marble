@@ -5392,6 +5392,8 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	dp_peer_rx_init(pdev, peer);
 	dp_peer_tx_init(pdev, peer);
 
+	dp_peer_ppdu_delayed_ba_init(peer);
+
 	return;
 }
 

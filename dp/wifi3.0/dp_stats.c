@@ -4864,10 +4864,10 @@ void dp_print_peer_stats(struct dp_peer *peer)
 
 	DP_PRINT_STATS("Transmit Type :");
 	DP_PRINT_STATS("SU %d, MU_MIMO %d, MU_OFDMA %d, MU_MIMO_OFDMA %d",
-		       peer->stats.tx.transmit_type[0],
-		       peer->stats.tx.transmit_type[1],
-		       peer->stats.tx.transmit_type[2],
-		       peer->stats.tx.transmit_type[3]);
+		       peer->stats.tx.transmit_type[SU].num_msdu,
+		       peer->stats.tx.transmit_type[MU_MIMO].num_msdu,
+		       peer->stats.tx.transmit_type[MU_OFDMA].num_msdu,
+		       peer->stats.tx.transmit_type[MU_MIMO_OFDMA].num_msdu);
 
 	for (i = 0; i < MAX_MU_GROUP_ID;) {
 		index = 0;
@@ -4887,12 +4887,18 @@ void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("Last Packet RU index [%d], Size [%d]",
 		       peer->stats.tx.ru_start, peer->stats.tx.ru_tones);
 	DP_PRINT_STATS("RU Locations RU[26 52 106 242 484 996]:");
-	DP_PRINT_STATS("RU_26: %d", peer->stats.tx.ru_loc[0]);
-	DP_PRINT_STATS("RU 52: %d", peer->stats.tx.ru_loc[1]);
-	DP_PRINT_STATS("RU 106: %d", peer->stats.tx.ru_loc[2]);
-	DP_PRINT_STATS("RU 242: %d", peer->stats.tx.ru_loc[3]);
-	DP_PRINT_STATS("RU 484: %d", peer->stats.tx.ru_loc[4]);
-	DP_PRINT_STATS("RU 996: %d", peer->stats.tx.ru_loc[5]);
+	DP_PRINT_STATS("RU_26:  %d",
+		       peer->stats.tx.ru_loc[RU_26_INDEX].num_msdu);
+	DP_PRINT_STATS("RU 52:  %d",
+		       peer->stats.tx.ru_loc[RU_52_INDEX].num_msdu);
+	DP_PRINT_STATS("RU 106: %d",
+		       peer->stats.tx.ru_loc[RU_106_INDEX].num_msdu);
+	DP_PRINT_STATS("RU 242: %d",
+		       peer->stats.tx.ru_loc[RU_242_INDEX].num_msdu);
+	DP_PRINT_STATS("RU 484: %d",
+		       peer->stats.tx.ru_loc[RU_484_INDEX].num_msdu);
+	DP_PRINT_STATS("RU 996: %d",
+		       peer->stats.tx.ru_loc[RU_996_INDEX].num_msdu);
 
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("Number of Msdu's Part of Amsdu = %d",
@@ -5354,6 +5360,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		DP_PRINT_STATS("	Tag[%d] = %llu", index,
 			       pdev->stats.ppdu_stats_counter[index]);
 	}
+	DP_PRINT_STATS("BA not received for delayed_ba: %d",
+		       pdev->stats.cdp_delayed_ba_not_recev);
 	DP_PRINT_STATS("tx_ppdu_proc: %llu\n",
 		       pdev->tx_ppdu_proc);
 

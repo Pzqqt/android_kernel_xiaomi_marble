@@ -67,6 +67,108 @@ dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap)
 
 #ifdef FEATURE_PERPKT_INFO
 /*
+ * dp_peer_copy_delay_stats() - copy ppdu stats to peer delayed stats.
+ * @peer: Datapath peer handle
+ * @ppdu: PPDU Descriptor
+ *
+ * Return: None
+ *
+ * on Tx data frame, we may get delayed ba set
+ * in htt_ppdu_stats_user_common_tlv. which mean we get Block Ack(BA) after we
+ * request Block Ack Request(BAR). Successful msdu is received only after Block
+ * Ack. To populate peer stats we need successful msdu(data frame).
+ * So we hold the Tx data stats on delayed_ba for stats update.
+ */
+static inline void
+dp_peer_copy_delay_stats(struct dp_peer *peer,
+			 struct cdp_tx_completion_ppdu_user *ppdu)
+{
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+
+	if (peer->last_delayed_ba) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "BA not yet recv for prev delayed ppdu[%d]\n",
+			  peer->last_delayed_ba_ppduid);
+		vdev = peer->vdev;
+		if (vdev) {
+			pdev = vdev->pdev;
+			pdev->stats.cdp_delayed_ba_not_recev++;
+		}
+	}
+
+	peer->delayed_ba_ppdu_stats.ltf_size = ppdu->ltf_size;
+	peer->delayed_ba_ppdu_stats.stbc = ppdu->stbc;
+	peer->delayed_ba_ppdu_stats.he_re = ppdu->he_re;
+	peer->delayed_ba_ppdu_stats.txbf = ppdu->txbf;
+	peer->delayed_ba_ppdu_stats.bw = ppdu->bw;
+	peer->delayed_ba_ppdu_stats.nss = ppdu->nss;
+	peer->delayed_ba_ppdu_stats.preamble = ppdu->preamble;
+	peer->delayed_ba_ppdu_stats.gi = ppdu->gi;
+	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+	peer->delayed_ba_ppdu_stats.ldpc = ppdu->ldpc;
+	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+	peer->delayed_ba_ppdu_stats.mpdu_tried_ucast = ppdu->mpdu_tried_ucast;
+	peer->delayed_ba_ppdu_stats.mpdu_tried_mcast = ppdu->mpdu_tried_mcast;
+	peer->delayed_ba_ppdu_stats.frame_ctrl = ppdu->frame_ctrl;
+	peer->delayed_ba_ppdu_stats.qos_ctrl = ppdu->qos_ctrl;
+	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+
+	peer->delayed_ba_ppdu_stats.ru_start = ppdu->ru_start;
+	peer->delayed_ba_ppdu_stats.ru_tones = ppdu->ru_tones;
+	peer->delayed_ba_ppdu_stats.is_mcast = ppdu->is_mcast;
+
+	peer->delayed_ba_ppdu_stats.user_pos = ppdu->user_pos;
+	peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
+
+	peer->last_delayed_ba = true;
+}
+
+/*
+ * dp_peer_copy_stats_to_bar() - copy delayed stats to ppdu stats.
+ * @peer: Datapath peer handle
+ * @ppdu: PPDU Descriptor
+ *
+ * Return: None
+ *
+ * For Tx BAR, PPDU stats TLV include Block Ack info. PPDU info
+ * from Tx BAR frame not required to populate peer stats.
+ * But we need successful MPDU and MSDU to update previous
+ * transmitted Tx data frame. Overwrite ppdu stats with the previous
+ * stored ppdu stats.
+ */
+static void
+dp_peer_copy_stats_to_bar(struct dp_peer *peer,
+			  struct cdp_tx_completion_ppdu_user *ppdu)
+{
+	ppdu->ltf_size = peer->delayed_ba_ppdu_stats.ltf_size;
+	ppdu->stbc = peer->delayed_ba_ppdu_stats.stbc;
+	ppdu->he_re = peer->delayed_ba_ppdu_stats.he_re;
+	ppdu->txbf = peer->delayed_ba_ppdu_stats.txbf;
+	ppdu->bw = peer->delayed_ba_ppdu_stats.bw;
+	ppdu->nss = peer->delayed_ba_ppdu_stats.nss;
+	ppdu->preamble = peer->delayed_ba_ppdu_stats.preamble;
+	ppdu->gi = peer->delayed_ba_ppdu_stats.gi;
+	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
+	ppdu->ldpc = peer->delayed_ba_ppdu_stats.ldpc;
+	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
+	ppdu->mpdu_tried_ucast = peer->delayed_ba_ppdu_stats.mpdu_tried_ucast;
+	ppdu->mpdu_tried_mcast = peer->delayed_ba_ppdu_stats.mpdu_tried_mcast;
+	ppdu->frame_ctrl = peer->delayed_ba_ppdu_stats.frame_ctrl;
+	ppdu->qos_ctrl = peer->delayed_ba_ppdu_stats.qos_ctrl;
+	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
+
+	ppdu->ru_start = peer->delayed_ba_ppdu_stats.ru_start;
+	ppdu->ru_tones = peer->delayed_ba_ppdu_stats.ru_tones;
+	ppdu->is_mcast = peer->delayed_ba_ppdu_stats.is_mcast;
+
+	ppdu->user_pos = peer->delayed_ba_ppdu_stats.user_pos;
+	ppdu->mu_group_id = peer->delayed_ba_ppdu_stats.mu_group_id;
+
+	peer->last_delayed_ba = false;
+}
+
+/*
  * dp_tx_rate_stats_update() - Update rate per-peer statistics
  * @peer: Datapath peer handle
  * @ppdu: PPDU Descriptor
@@ -139,10 +241,14 @@ dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	uint8_t preamble, mcs;
 	uint16_t num_msdu;
+	uint16_t num_mpdu;
+	uint16_t mpdu_tried;
 
 	preamble = ppdu->preamble;
 	mcs = ppdu->mcs;
 	num_msdu = ppdu->num_msdu;
+	num_mpdu = ppdu->mpdu_success;
+	mpdu_tried = ppdu->mpdu_tried_ucast + ppdu->mpdu_tried_mcast;
 
 	/* If the peer statistics are already processed as part of
 	 * per-MSDU completion handler, do not process these again in per-PPDU
@@ -176,27 +282,63 @@ dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		DP_STATS_UPD(peer, tx.ru_start, ppdu->ru_start);
 		switch (ppdu->ru_tones) {
 		case RU_26:
-			DP_STATS_INC(peer, tx.ru_loc[0], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_26_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_26_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_26_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		case RU_52:
-			DP_STATS_INC(peer, tx.ru_loc[1], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_52_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_52_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_52_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		case RU_106:
-			DP_STATS_INC(peer, tx.ru_loc[2], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_106_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_106_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_106_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		case RU_242:
-			DP_STATS_INC(peer, tx.ru_loc[3], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_242_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_242_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_242_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		case RU_484:
-			DP_STATS_INC(peer, tx.ru_loc[4], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_484_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_484_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_484_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		case RU_996:
-			DP_STATS_INC(peer, tx.ru_loc[5], num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_996_INDEX].num_msdu,
+				     num_msdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_996_INDEX].num_mpdu,
+				     num_mpdu);
+			DP_STATS_INC(peer, tx.ru_loc[RU_996_INDEX].mpdu_tried,
+				     mpdu_tried);
 		break;
 		}
 	}
 
-	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type], num_msdu);
+	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type].num_msdu,
+		     num_msdu);
+	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type].num_mpdu,
+		     num_mpdu);
+	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type].mpdu_tried,
+		     mpdu_tried);
+
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
 			num_msdu, (ppdu->success_bytes +
 				ppdu->retry_bytes + ppdu->failed_bytes));
@@ -1948,6 +2090,7 @@ static void dp_process_ppdu_stats_user_common_tlv(
 
 	if (HTT_PPDU_STATS_USER_COMMON_TLV_DELAYED_BA_GET(*tag_buf)) {
 		ppdu_user_desc->delayed_ba = 1;
+		ppdu_desc->delayed_ba = 1;
 	}
 
 	if (HTT_PPDU_STATS_USER_COMMON_TLV_MCAST_GET(*tag_buf)) {
@@ -1968,11 +2111,8 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		HTT_PPDU_STATS_USER_COMMON_TLV_FRAME_CTRL_GET(*tag_buf);
 	ppdu_desc->frame_ctrl = ppdu_user_desc->frame_ctrl;
 
-	if (ppdu_user_desc->delayed_ba) {
+	if (ppdu_user_desc->delayed_ba)
 		ppdu_user_desc->mpdu_success = 0;
-		ppdu_user_desc->mpdu_tried_mcast = 0;
-		ppdu_user_desc->mpdu_tried_ucast = 0;
-	}
 
 	tag_buf += 3;
 
@@ -2244,6 +2384,19 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_AMPDU_GET(*tag_buf);
 	ppdu_info->is_ampdu = ppdu_user_desc->is_ampdu;
 
+	/*
+	 * increase successful mpdu counter from
+	 * htt_ppdu_stats_user_cmpltn_common_tlv
+	 */
+	ppdu_info->mpdu_compltn_common_tlv += ppdu_user_desc->mpdu_success;
+
+	/*
+	 * MU BAR may send request to n users but we may received ack only from
+	 * m users. To have count of number of users respond back, we have a
+	 * separate counter bar_num_users per PPDU that get increment for every
+	 * htt_ppdu_stats_user_cmpltn_common_tlv
+	 */
+	ppdu_desc->bar_num_users++;
 }
 
 /*
@@ -2372,6 +2525,8 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	tag_buf += 2;
 	ppdu_user_desc->success_bytes = *tag_buf;
 
+	/* increase successful mpdu counter */
+	ppdu_info->mpdu_ack_ba_tlv += ppdu_user_desc->num_mpdu;
 }
 
 /*
@@ -2683,6 +2838,7 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 	uint32_t tlv_bitmap_expected;
 	uint32_t tlv_bitmap_default;
 	uint16_t i;
+	uint32_t num_users;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 		qdf_nbuf_data(ppdu_info->nbuf);
@@ -2699,7 +2855,15 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 	}
 
 	tlv_bitmap_default = tlv_bitmap_expected;
-	for (i = 0; i < ppdu_desc->num_users; i++) {
+
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
+		num_users = ppdu_desc->bar_num_users;
+		ppdu_desc->num_users = ppdu_desc->bar_num_users;
+	} else {
+		num_users = ppdu_desc->num_users;
+	}
+
+	for (i = 0; i < num_users; i++) {
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
 		ppdu_desc->num_msdu += ppdu_desc->user[i].num_msdu;
 
@@ -2717,17 +2881,31 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		    HTT_PPDU_STATS_USER_STATUS_OK)
 			tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
 
-		if (ppdu_info->tlv_bitmap != tlv_bitmap_expected) {
+		/*
+		 * different frame like DATA, BAR or CTRL has different
+		 * tlv bitmap expected. Apart from ACK_BA_STATUS TLV, we
+		 * receive other tlv in-order/sequential from fw.
+		 * Since ACK_BA_STATUS TLV come from Hardware it is
+		 * asynchronous So we need to depend on some tlv to confirm
+		 * all tlv is received for a ppdu.
+		 * So we depend on both HTT_PPDU_STATS_COMMON_TLV and
+		 * ACK_BA_STATUS_TLV.
+		 */
+		if (!(ppdu_info->tlv_bitmap &
+		      (1 << HTT_PPDU_STATS_COMMON_TLV)) ||
+		    !(ppdu_info->tlv_bitmap &
+		      (1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV))) {
 			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
+
 		/**
 		 * Update tx stats for data frames having Qos as well as
 		 * non-Qos data tid
 		 */
 		if ((ppdu_desc->user[i].tid < CDP_DATA_TID_MAX ||
 		     (ppdu_desc->user[i].tid == CDP_DATA_NON_QOS_TID)) &&
-		      (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA)) {
+		      (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL)) {
 
 			dp_tx_stats_update(pdev->soc, peer,
 					   &ppdu_desc->user[i],
@@ -2839,6 +3017,15 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 			    (1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV)))
 				return ppdu_info;
 
+			/**
+			 * apart from ACK BA STATUS TLV rest all comes in order
+			 * so if tlv type not ACK BA STATUS TLV we can deliver
+			 * ppdu_info
+			 */
+			if (tlv_type ==
+			    HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
+				return ppdu_info;
+
 			dp_ppdu_desc_deliver(pdev, ppdu_info);
 		} else {
 			return ppdu_info;
@@ -2913,6 +3100,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	uint8_t *tlv_buf;
 	struct ppdu_info *ppdu_info = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	struct dp_peer *peer;
+	uint32_t i = 0;
 
 	uint32_t *msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 
@@ -2977,18 +3166,90 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 
 	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
 
-	ppdu_desc = ppdu_info->ppdu_desc;
-	if (ppdu_desc &&
-	    ppdu_desc->user[ppdu_desc->last_usr_index].completion_status !=
-	    HTT_PPDU_STATS_USER_STATUS_OK) {
-		tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
-	}
-
 	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 		if (ppdu_info->is_ampdu)
 			tlv_bitmap_expected =
 				dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(
 					ppdu_info->tlv_bitmap);
+	}
+
+	ppdu_desc = ppdu_info->ppdu_desc;
+
+	if (!ppdu_desc)
+		return NULL;
+
+	if (ppdu_desc->user[ppdu_desc->last_usr_index].completion_status !=
+	    HTT_PPDU_STATS_USER_STATUS_OK) {
+		tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
+	}
+
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA &&
+	    (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_COMMON_TLV)) &&
+	    ppdu_desc->delayed_ba) {
+		for (i = 0; i < ppdu_desc->num_users; i++) {
+			uint32_t ppdu_id;
+
+			ppdu_id = ppdu_desc->ppdu_id;
+			peer = dp_peer_find_by_id(pdev->soc,
+						  ppdu_desc->user[i].peer_id);
+			/**
+			 * This check is to make sure peer is not deleted
+			 * after processing the TLVs.
+			 */
+			if (!peer)
+				continue;
+
+			/**
+			 * save delayed ba user info
+			 */
+			if (ppdu_desc->user[i].delayed_ba) {
+				dp_peer_copy_delay_stats(peer,
+							 &ppdu_desc->user[i]);
+				peer->last_delayed_ba_ppduid = ppdu_id;
+			}
+			dp_peer_unref_del_find_by_id(peer);
+		}
+	}
+
+	/*
+	 * when frame type is BAR and STATS_COMMON_TLV is set
+	 * copy the store peer delayed info to BAR status
+	 */
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR &&
+	    (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_COMMON_TLV))) {
+		for (i = 0; i < ppdu_desc->bar_num_users; i++) {
+			peer = dp_peer_find_by_id(pdev->soc,
+						  ppdu_desc->user[i].peer_id);
+			/**
+			 * This check is to make sure peer is not deleted
+			 * after processing the TLVs.
+			 */
+			if (!peer)
+				continue;
+
+			if (peer->last_delayed_ba) {
+				dp_peer_copy_stats_to_bar(peer,
+							  &ppdu_desc->user[i]);
+			}
+			dp_peer_unref_del_find_by_id(peer);
+		}
+	}
+
+	/*
+	 * for frame type DATA and BAR, we update stats based on MSDU,
+	 * successful msdu and mpdu are populate from ACK BA STATUS TLV
+	 * which comes out of order. successful mpdu also populated from
+	 * COMPLTN COMMON TLV which comes in order. for every ppdu_info
+	 * we store successful mpdu from both tlv and compare before delivering
+	 * to make sure we received ACK BA STATUS TLV.
+	 */
+	if (ppdu_desc->frame_type != CDP_PPDU_FTYPE_CTRL) {
+		/*
+		 * successful mpdu count should match with both tlv
+		 */
+		if (ppdu_info->mpdu_compltn_common_tlv !=
+		    ppdu_info->mpdu_ack_ba_tlv)
+			return NULL;
 	}
 
 	/**

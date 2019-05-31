@@ -1211,8 +1211,10 @@ struct dp_neighbour_peer {
  * @is_ampdu        - set if Ampdu aggregate
  * @nbuf            - ppdu descriptor payload
  * @ppdu_desc       - ppdu descriptor
- * @ppdu_info_list_elem - linked list of ppdu tlvs
+ * @ppdu_info_list_elem  - linked list of ppdu tlvs
  * @ppdu_info_queue_elem - Singly linked list (queue) of ppdu tlvs
+ * @mpdu_compltn_common_tlv  - Successful MPDU counter from COMPLTN COMMON tlv
+ * @mpdu_ack_ba_tlv	    - Successful MPDU from ACK BA tlv
  */
 struct ppdu_info {
 	uint32_t ppdu_id;
@@ -1234,6 +1236,8 @@ struct ppdu_info {
 #else
 	TAILQ_ENTRY(ppdu_info) ppdu_info_list_elem;
 #endif
+	uint16_t mpdu_compltn_common_tlv;
+	uint16_t mpdu_ack_ba_tlv;
 };
 
 /**
@@ -1959,6 +1963,14 @@ struct dp_peer {
 #ifdef PEER_CACHE_RX_PKTS
 	qdf_atomic_t flush_in_progress;
 	struct dp_peer_cached_bufq bufq_info;
+#endif
+#ifdef FEATURE_PERPKT_INFO
+	/* delayed ba ppdu stats handling */
+	struct cdp_delayed_tx_completion_ppdu_user delayed_ba_ppdu_stats;
+	/* delayed ba flag */
+	bool last_delayed_ba;
+	/* delayed ba ppdu id */
+	uint32_t last_delayed_ba_ppduid;
 #endif
 };
 
