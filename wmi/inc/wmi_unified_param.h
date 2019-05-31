@@ -582,6 +582,7 @@ typedef enum {
  * @WMI_HOST_CHAN_WIDTH_80P80: 80+80 MHz channel operating width
  * @WMI_HOST_CHAN_WIDTH_5: 5 MHz channel operating width
  * @WMI_HOST_CHAN_WIDTH_10: 10 MHz channel operating width
+ * @WMI_HOST_CHAN_WIDTH_165: 165 MHz channel operating width
  */
 typedef enum {
 	WMI_HOST_CHAN_WIDTH_20    = 0,
@@ -591,6 +592,7 @@ typedef enum {
 	WMI_HOST_CHAN_WIDTH_80P80 = 4,
 	WMI_HOST_CHAN_WIDTH_5     = 5,
 	WMI_HOST_CHAN_WIDTH_10    = 6,
+	WMI_HOST_CHAN_WIDTH_165   = 7,
 } wmi_host_channel_width;
 
 #define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
