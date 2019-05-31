@@ -1470,7 +1470,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				      struct regmap *regmap, int clk_type,
 				      bool enable)
 {
-	int ret = 0;
+	int ret = 0, clk_tx_ret = 0;
 
 	dev_dbg(tx_priv->dev,
 		"%s: clock type %s, enable: %s tx_mclk_users: %d\n",
@@ -1482,7 +1482,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 			msm_cdc_pinctrl_select_active_state(
 						tx_priv->tx_swr_gpio_p);
 
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+		clk_tx_ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   true);
@@ -1540,7 +1540,8 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 					0x02, 0x00);
 			tx_priv->reset_swr = false;
 		}
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+		if (!clk_tx_ret)
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   false);
@@ -1552,7 +1553,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 			tx_priv->swr_clk_users = 0;
 			return 0;
 		}
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+		clk_tx_ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   true);
@@ -1583,7 +1584,8 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				goto done;
 			}
 		}
-		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+		if (!clk_tx_ret)
+			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
 						   TX_CORE_CLK,
 						   false);
@@ -1594,7 +1596,8 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 	return 0;
 
 done:
-	bolero_clk_rsc_request_clock(tx_priv->dev,
+	if (!clk_tx_ret)
+		bolero_clk_rsc_request_clock(tx_priv->dev,
 				TX_CORE_CLK,
 				TX_CORE_CLK,
 				false);
