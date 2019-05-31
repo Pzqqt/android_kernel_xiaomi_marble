@@ -268,7 +268,7 @@ struct mac_ft_ie {
 	struct mac_ft_igtk_ie igtk_ie;
 };
 
-#define FILS_PMK_LEN 32
+#define FILS_PMK_LEN 48
 #define FILS_PMK_NAME_LEN 16
 #define FILS_FT_MAX_LEN 48
 #define FILS_FT_PMK_R0_SALT_LEN 16
