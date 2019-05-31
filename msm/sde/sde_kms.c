@@ -2347,9 +2347,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 			encoder = NULL;
 			continue;
 		}
-		SDE_DEBUG("info.is_connected = %s, info.is_primary = %s\n",
+		SDE_DEBUG("info.is_connected = %s, info.display_type = %d\n",
 			((info.is_connected) ? "true" : "false"),
-			((info.is_primary) ? "true" : "false"));
+			info.display_type);
 
 		if (!encoder) {
 			SDE_ERROR("encoder not initialized\n");

@@ -271,6 +271,7 @@ enum {
  * @SDE_DIM_LAYER             Layer mixer supports dim layer
  * @SDE_DISP_CWB_PREF         Layer mixer preferred for CWB
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
+ * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
  * @SDE_MIXER_MAX             maximum value
  */
 enum {
@@ -279,6 +280,7 @@ enum {
 	SDE_MIXER_GC,
 	SDE_DIM_LAYER,
 	SDE_DISP_PRIMARY_PREF,
+	SDE_DISP_SECONDARY_PREF,
 	SDE_DISP_CWB_PREF,
 	SDE_MIXER_MAX
 };
@@ -1402,8 +1404,10 @@ struct sde_mdss_hw_cfg_handler {
  *                        overwrite if exists
  * @sde_cfg:              pointer to sspp cfg
  * @num_lm:               num lms to set preference
+ * @disp_type:            is the given display primary/secondary
  */
-void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm);
+void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
+		uint32_t disp_type);
 
 /**
  * sde_hw_catalog_init - sde hardware catalog init API parses dtsi property

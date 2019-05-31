@@ -43,7 +43,7 @@
  * @needs_cdm:	Encoder requests a CDM based on pixel format conversion needs
  * @display_num_of_h_tiles: Number of horizontal tiles in case of split
  *                          interface
- * @is_primary: set to true if the display is primary display
+ * @display_type: Type of the display
  * @topology:   Topology of the display
  */
 struct sde_encoder_hw_resources {
@@ -51,20 +51,18 @@ struct sde_encoder_hw_resources {
 	enum sde_intf_mode wbs[WB_MAX];
 	bool needs_cdm;
 	u32 display_num_of_h_tiles;
-	bool is_primary;
+	bool display_type;
 	struct msm_display_topology topology;
 };
 
 /**
  * sde_encoder_kickoff_params - info encoder requires at kickoff
- * @is_primary: set to true if the display is primary display
  * @affected_displays:  bitmask, bit set means the ROI of the commit lies within
  *                      the bounds of the physical display at the bit index
  * @recovery_events_enabled: indicates status of client for recoovery events
  * @frame_trigger_mode: indicates frame trigger mode
  */
 struct sde_encoder_kickoff_params {
-	u32 is_primary;
 	unsigned long affected_displays;
 	bool recovery_events_enabled;
 	enum frame_trigger_mode_type frame_trigger_mode;

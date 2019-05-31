@@ -1533,14 +1533,19 @@ int sde_connector_helper_reset_custom_properties(
 	return 0;
 }
 
-static int _sde_connector_primary_preference(struct sde_connector *sde_conn,
-		struct sde_kms *sde_kms)
+static int _sde_connector_lm_preference(struct sde_connector *sde_conn,
+		 struct sde_kms *sde_kms, uint32_t disp_type)
 {
 	int ret = 0;
 	u32 num_lm = 0;
 
 	if (!sde_conn || !sde_kms || !sde_conn->ops.get_default_lms) {
 		SDE_DEBUG("invalid input params");
+		return -EINVAL;
+	}
+
+	if (!disp_type || disp_type >= SDE_CONNECTOR_MAX) {
+		SDE_DEBUG("invalid display_type");
 		return -EINVAL;
 	}
 
@@ -1557,7 +1562,7 @@ static int _sde_connector_primary_preference(struct sde_connector *sde_conn,
 		return -EINVAL;
 	}
 
-	sde_hw_mixer_set_preference(sde_kms->catalog, num_lm);
+	sde_hw_mixer_set_preference(sde_kms->catalog, num_lm, disp_type);
 
 	return ret;
 }
@@ -2453,8 +2458,8 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 		goto error_destroy_property;
 	}
 
-	if (display_info.is_primary)
-		_sde_connector_primary_preference(c_conn, sde_kms);
+	_sde_connector_lm_preference(c_conn, sde_kms,
+			display_info.display_type);
 
 	SDE_DEBUG("connector %d attach encoder %d\n",
 			c_conn->base.base.id, encoder->base.id);
