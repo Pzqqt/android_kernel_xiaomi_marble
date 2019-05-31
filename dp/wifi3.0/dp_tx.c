@@ -947,6 +947,26 @@ error:
 }
 
 /**
+ * dp_tx_raw_prepare_unset() - unmap the chain of nbufs belonging to RAW frame.
+ * @soc: DP soc handle
+ * @nbuf: Buffer pointer
+ *
+ * unmap the chain of nbufs that belong to this RAW frame.
+ *
+ * Return: None
+ */
+static void dp_tx_raw_prepare_unset(struct dp_soc *soc,
+				    qdf_nbuf_t nbuf)
+{
+	qdf_nbuf_t cur_nbuf = nbuf;
+
+	do {
+		qdf_nbuf_unmap(soc->osdev, cur_nbuf, QDF_DMA_TO_DEVICE);
+		cur_nbuf = qdf_nbuf_next(cur_nbuf);
+	} while (cur_nbuf);
+}
+
+/**
  * dp_tx_hw_enqueue() - Enqueue to TCL HW for transmit
  * @soc: DP Soc Handle
  * @vdev: DP vdev handle
@@ -1514,7 +1534,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	bool is_cce_classified = false;
 	QDF_STATUS status;
 	uint16_t htt_tcl_metadata = 0;
-
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
@@ -2207,6 +2226,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 send_multiple:
 	nbuf = dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
+
+	if (qdf_unlikely(nbuf && msdu_info.frm_type == dp_tx_frm_raw))
+		dp_tx_raw_prepare_unset(vdev->pdev->soc, nbuf);
 
 	return nbuf;
 }
