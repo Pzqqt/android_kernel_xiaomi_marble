@@ -386,7 +386,7 @@ QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock)
 #endif
 qdf_export_symbol(qdf_wake_lock_destroy);
 
-#ifdef CONFIG_MCL
+#ifdef FEATURE_RUNTIME_PM
 /**
  * qdf_runtime_pm_get() - do a get opperation on the device
  *
@@ -587,7 +587,7 @@ void qdf_runtime_lock_deinit(qdf_runtime_lock_t *lock)
 }
 qdf_export_symbol(qdf_runtime_lock_deinit);
 
-#endif /* CONFIG_MCL */
+#endif /* FEATURE_RUNTIME_PM */
 
 /**
  * qdf_spinlock_acquire() - acquires a spin lock
