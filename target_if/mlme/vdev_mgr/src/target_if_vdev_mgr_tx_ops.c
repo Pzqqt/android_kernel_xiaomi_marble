@@ -87,25 +87,6 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_stop(
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef VDEV_ASSERT_MANAGEMENT
-static void target_if_vdev_mgr_assert_mgmt(
-					struct wlan_objmgr_vdev *vdev,
-					struct vdev_response_timer *vdev_rsp,
-					uint8_t set_bit)
-{
-	target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
-					  set_bit);
-}
-#else
-static void target_if_vdev_mgr_assert_mgmt(
-					struct wlan_objmgr_vdev *vdev,
-					struct vdev_response_timer *vdev_rsp,
-					uint8_t set_bit)
-{
-	QDF_ASSERT(0);
-}
-#endif
-
 static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 					struct wlan_objmgr_vdev *vdev,
 					struct vdev_response_timer *vdev_rsp,
@@ -128,21 +109,26 @@ static QDF_STATUS target_if_vdev_mgr_rsp_timer_start(
 		if (rsp_pos != set_bit) {
 			if (qdf_atomic_test_bit(rsp_pos,
 						&vdev_rsp->rsp_status)) {
-				mlme_err("PSOC_%d VDEV_%d: Response bit is set %d",
+				mlme_err("PSOC_%d VDEV_%d: Request bit %d, response bit %d",
 					 wlan_psoc_get_id(psoc),
-					 vdev_id, vdev_rsp->rsp_status);
+					 vdev_id, set_bit,
+					 vdev_rsp->rsp_status);
 				target_if_vdev_mgr_assert_mgmt(vdev, vdev_rsp,
 							       rsp_pos);
+				target_if_vdev_mgr_rsp_timer_stop(vdev,
+								  vdev_rsp,
+								  set_bit);
 			}
 		}
 	}
 
 	if (qdf_atomic_test_and_set_bit(set_bit, &vdev_rsp->rsp_status)) {
-		mlme_err("PSOC_%d VDEV_%d: Response bit is set %d",
+		mlme_err("PSOC_%d VDEV_%d: Request bit: %d, response bit %d",
 			 wlan_psoc_get_id(psoc),
-			 vdev_id, vdev_rsp->rsp_status);
+			 vdev_id, set_bit, vdev_rsp->rsp_status);
 		target_if_vdev_mgr_assert_mgmt(vdev, vdev_rsp,
 					       set_bit);
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp, set_bit);
 	}
 
 	/* reference taken for timer start, will be released with stop */

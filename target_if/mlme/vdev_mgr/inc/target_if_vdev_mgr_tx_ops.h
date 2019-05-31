@@ -62,6 +62,30 @@ target_if_vdev_mgr_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS
 target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
+/**
+ * target_if_vdev_mgr_assert_mgmt() - vdev assert mgmt api
+ * @vdev: pointer to objmgr vdev
+ * @vdev_rsp: pointer to vdev mlme response timer
+ * @set_bit: bit to be set
+ *
+ * Return: NA
+ */
+#ifdef VDEV_ASSERT_MANAGEMENT
+static void target_if_vdev_mgr_assert_mgmt(
+					struct wlan_objmgr_vdev *vdev,
+					struct vdev_response_timer *vdev_rsp,
+					uint8_t set_bit)
+{
+}
+#else
+static void target_if_vdev_mgr_assert_mgmt(
+					struct wlan_objmgr_vdev *vdev,
+					struct vdev_response_timer *vdev_rsp,
+					uint8_t set_bit)
+{
+	QDF_ASSERT(0);
+}
+#endif
 #else
 
 static inline QDF_STATUS
