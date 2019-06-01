@@ -92,19 +92,7 @@ void hif_ce_war_enable(void)
 
 static const char *ce_event_type_to_str(enum hif_ce_event_type type);
 
-/**
- * get_next_record_index() - get the next record index
- * @table_index: atomic index variable to increment
- * @array_size: array size of the circular buffer
- *
- * Increment the atomic index and reserve the value.
- * Takes care of buffer wrap.
- * Guaranteed to be thread safe as long as fewer than array_size contexts
- * try to access the array.  If there are more than array_size contexts
- * trying to access the array, full locking of the recording process would
- * be needed to have sane logging.
- */
-static int get_next_record_index(qdf_atomic_t *table_index, int array_size)
+int get_next_record_index(qdf_atomic_t *table_index, int array_size)
 {
 	int record_index = qdf_atomic_inc_return(table_index);
 
@@ -113,17 +101,11 @@ static int get_next_record_index(qdf_atomic_t *table_index, int array_size)
 
 	while (record_index >= array_size)
 		record_index -= array_size;
+
 	return record_index;
 }
 
 #ifdef HIF_CE_DEBUG_DATA_BUF
-/**
- * hif_ce_desc_data_record() - Record data pointed by the CE descriptor
- * @event: structure detailing a ce event
- * @len: length of the data
- * Return:
- */
-static inline
 void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 {
 	uint8_t *data = NULL;
@@ -146,12 +128,7 @@ void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
 		event->actual_data_len = len;
 	}
 }
-#else
-static inline
-void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
-{
-}
-#endif /* HIF_CE_DEBUG_DATA_BUF */
+#endif
 
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
@@ -193,14 +170,14 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 
 	event = &hist_ev[record_index];
 
+	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
+
 	event->type = type;
 	event->time = qdf_get_log_timestamp();
 
-	if (descriptor) {
-		qdf_mem_copy(&event->descriptor, descriptor, sizeof(union ce_desc));
-	} else {
-		qdf_mem_zero(&event->descriptor, sizeof(union ce_desc));
-	}
+	if (descriptor)
+		qdf_mem_copy(&event->descriptor, descriptor,
+			     sizeof(union ce_desc));
 
 	event->memory = memory;
 	event->index = index;

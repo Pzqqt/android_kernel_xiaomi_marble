@@ -881,6 +881,20 @@ static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
 }
 
 /**
+ * hal_get_entrysize_from_srng() - Retrieve ring entry size
+ * @hal_ring: Source ring pointer
+ *
+ * Return: uint8_t
+ */
+static inline
+uint8_t hal_get_entrysize_from_srng(void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	return srng->entry_size;
+}
+
+/**
  * hal_get_sw_hptp - Get SW head and tail pointer location for any ring
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring: Source ring pointer

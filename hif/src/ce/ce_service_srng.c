@@ -15,8 +15,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include "hif.h"
 #include "hif_io32.h"
 #include "reg_struct.h"
 #include "ce_api.h"
@@ -30,6 +28,7 @@
 #include "hal_api.h"
 #include "pld_common.h"
 #include "qdf_module.h"
+#include "hif.h"
 
 /*
  * Support for Copy Engine hardware, which is mainly used for
@@ -78,6 +77,58 @@
 			(uint32_t)(((dma_addr) >> 32) & 0xFF);\
 	} while (0)
 
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
+void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
+				   enum hif_ce_event_type type,
+				   union ce_srng_desc *descriptor,
+				   void *memory, int index,
+				   int len, void *hal_ring)
+{
+	int record_index;
+	struct hif_ce_desc_event *event;
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+	struct hif_ce_desc_event *hist_ev = NULL;
+
+	if (ce_id < CE_COUNT_MAX)
+		hist_ev = (struct hif_ce_desc_event *)ce_hist->hist_ev[ce_id];
+	else
+		return;
+
+	if (ce_id >= CE_COUNT_MAX)
+		return;
+
+	if (!ce_hist->enable[ce_id])
+		return;
+
+	if (!hist_ev)
+		return;
+
+	record_index = get_next_record_index(
+			&ce_hist->history_index[ce_id], HIF_CE_HISTORY_MAX);
+
+	event = &hist_ev[record_index];
+
+	qdf_mem_zero(event, sizeof(struct hif_ce_desc_event));
+
+	event->type = type;
+	event->time = qdf_get_log_timestamp();
+
+	if (descriptor)
+		qdf_mem_copy(&event->descriptor, descriptor,
+			     hal_get_entrysize_from_srng(hal_ring));
+
+	if (hal_ring)
+		hal_get_sw_hptp(scn->hal_soc, hal_ring, &event->current_tp,
+				&event->current_hp);
+
+	event->memory = memory;
+	event->index = index;
+
+	if (ce_hist->data_enable[ce_id])
+		hif_ce_desc_data_record(event, len);
+}
+#endif
+
 static int
 ce_send_nolock_srng(struct CE_handle *copyeng,
 			   void *per_transfer_context,
@@ -104,7 +155,7 @@ ce_send_nolock_srng(struct CE_handle *copyeng,
 		return QDF_STATUS_E_FAILURE;
 	}
 	{
-		enum hif_ce_event_type event_type = HIF_TX_GATHER_DESC_POST;
+		enum hif_ce_event_type event_type = HIF_CE_SRC_RING_BUFFER_POST;
 		struct ce_srng_src_desc *src_desc;
 
 		if (hal_srng_access_start(scn->hal_soc, src_ring->srng_ctx)) {
@@ -148,9 +199,11 @@ ce_send_nolock_srng(struct CE_handle *copyeng,
 		/* src_ring->write index hasn't been updated event though
 		 * the register has allready been written to.
 		 */
-		hif_record_ce_desc_event(scn, CE_state->id, event_type,
-			(union ce_desc *) src_desc, per_transfer_context,
-			src_ring->write_index, nbytes);
+		hif_record_ce_srng_desc_event(scn, CE_state->id, event_type,
+					      (union ce_srng_desc *)src_desc,
+					      per_transfer_context,
+					      src_ring->write_index, nbytes,
+					      src_ring->srng_ctx);
 
 		src_ring->write_index = write_index;
 		status = QDF_STATUS_SUCCESS;
@@ -252,6 +305,7 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	uint64_t dma_addr = buffer;
 	struct hif_softc *scn = CE_state->scn;
+	struct ce_srng_dest_desc *dest_desc;
 
 	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	write_index = dest_ring->write_index;
@@ -269,9 +323,8 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 
 	if ((hal_srng_src_num_avail(scn->hal_soc,
 					dest_ring->srng_ctx, false) > 0)) {
-		struct ce_srng_dest_desc *dest_desc =
-				hal_srng_src_get_next(scn->hal_soc,
-							dest_ring->srng_ctx);
+		dest_desc = hal_srng_src_get_next(scn->hal_soc,
+						  dest_ring->srng_ctx);
 
 		if (!dest_desc) {
 			status = QDF_STATUS_E_FAILURE;
@@ -292,6 +345,13 @@ ce_recv_buf_enqueue_srng(struct CE_handle *copyeng,
 
 	dest_ring->write_index = write_index;
 	hal_srng_access_end(scn->hal_soc, dest_ring->srng_ctx);
+	hif_record_ce_srng_desc_event(scn, CE_state->id,
+				      HIF_CE_DEST_RING_BUFFER_POST,
+				      (union ce_srng_desc *)dest_desc,
+				      per_recv_context,
+				      dest_ring->write_index, 0,
+				      dest_ring->srng_ctx);
+
 	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 	return status;
@@ -412,6 +472,23 @@ ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 done:
 	hal_srng_access_end(scn->hal_soc, status_ring->srng_ctx);
 
+	if (status == QDF_STATUS_SUCCESS) {
+		hif_record_ce_srng_desc_event(scn, CE_state->id,
+					      HIF_CE_DEST_RING_BUFFER_REAP,
+					      NULL,
+					      dest_ring->
+					      per_transfer_context[sw_index],
+					      dest_ring->sw_index, nbytes,
+					      dest_ring->srng_ctx);
+
+		hif_record_ce_srng_desc_event(scn, CE_state->id,
+					      HIF_CE_DEST_STATUS_RING_REAP,
+					      (union ce_srng_desc *)dest_status,
+					      NULL,
+					      -1, 0,
+					      status_ring->srng_ctx);
+	}
+
 	return status;
 }
 
@@ -482,11 +559,13 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 
 	src_desc = hal_srng_src_reap_next(scn->hal_soc, src_ring->srng_ctx);
 	if (src_desc) {
-		hif_record_ce_desc_event(scn, CE_state->id,
-					HIF_TX_DESC_COMPLETION,
-					(union ce_desc *)src_desc,
-					src_ring->per_transfer_context[swi],
-					swi, src_desc->nbytes);
+		hif_record_ce_srng_desc_event(scn, CE_state->id,
+					      HIF_TX_DESC_COMPLETION,
+					      (union ce_srng_desc *)src_desc,
+					      src_ring->
+					      per_transfer_context[swi],
+					      swi, src_desc->nbytes,
+					      src_ring->srng_ctx);
 
 		/* Return data from completed source descriptor */
 		*bufferp = (qdf_dma_addr_t)

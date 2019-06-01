@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -748,9 +748,11 @@ ce_recv_buf_enqueue_legacy(struct CE_handle *copyeng,
 		dest_ring->per_transfer_context[write_index] =
 			per_recv_context;
 
-		hif_record_ce_desc_event(scn, CE_state->id, HIF_RX_DESC_POST,
-				(union ce_desc *)dest_desc, per_recv_context,
-				write_index, 0);
+		hif_record_ce_desc_event(scn, CE_state->id,
+					 HIF_RX_DESC_POST,
+					 (union ce_desc *)dest_desc,
+					 per_recv_context,
+					 write_index, 0);
 
 		/* Update Destination Ring Write Index */
 		write_index = CE_RING_IDX_INCR(nentries_mask, write_index);

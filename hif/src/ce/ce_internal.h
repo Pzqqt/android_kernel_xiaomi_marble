@@ -380,6 +380,18 @@ union ce_desc {
 };
 
 /**
+ * union ce_srng_desc - unified data type for ce srng descriptors
+ * @src_desc: ce srng Source ring descriptor
+ * @dest_desc: ce srng destination ring descriptor
+ * @dest_status_desc: ce srng status ring descriptor
+ */
+union ce_srng_desc {
+	struct ce_srng_src_desc src_desc;
+	struct ce_srng_dest_desc dest_desc;
+	struct ce_srng_dest_status_desc dest_status_desc;
+};
+
+/**
  * enum hif_ce_event_type - HIF copy engine event type
  * @HIF_RX_DESC_POST: event recorded before updating write index of RX ring.
  * @HIF_RX_DESC_COMPLETION: event recorded before updating sw index of RX ring.
@@ -408,6 +420,13 @@ union ce_desc {
  * @NAPI_POLL_ENTER: records the start of the napi poll function
  * @NAPI_COMPLETE: records when interrupts are reenabled
  * @NAPI_POLL_EXIT: records when the napi poll function returns
+ * @HIF_RX_NBUF_ALLOC_FAILURE: record the packet when nbuf fails to allocate
+ * @HIF_RX_NBUF_MAP_FAILURE: record the packet when dma map fails
+ * @HIF_RX_NBUF_ENQUEUE_FAILURE: record the packet when enqueue to ce fails
+ * @HIF_CE_SRC_RING_BUFFER_POST: record the packet when buffer is posted to ce src ring
+ * @HIF_CE_DEST_RING_BUFFER_POST: record the packet when buffer is posted to ce dst ring
+ * @HIF_CE_DEST_RING_BUFFER_REAP: record the packet when buffer is reaped from ce dst ring
+ * @HIF_CE_DEST_STATUS_RING_REAP: record the packet when status ring is reaped
  */
 enum hif_ce_event_type {
 	HIF_RX_DESC_POST,
@@ -437,6 +456,11 @@ enum hif_ce_event_type {
 	HIF_RX_NBUF_ALLOC_FAILURE = 0x20,
 	HIF_RX_NBUF_MAP_FAILURE,
 	HIF_RX_NBUF_ENQUEUE_FAILURE,
+
+	HIF_CE_SRC_RING_BUFFER_POST,
+	HIF_CE_DEST_RING_BUFFER_POST,
+	HIF_CE_DEST_RING_BUFFER_REAP,
+	HIF_CE_DEST_STATUS_RING_REAP,
 };
 
 void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size);
@@ -513,10 +537,6 @@ static inline void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
  */
 int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
 
-/*
- * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
- * for defined here
- */
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 
 #ifndef HIF_CE_HISTORY_MAX
@@ -524,10 +544,13 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
 #endif
 
 #define CE_DEBUG_MAX_DATA_BUF_SIZE 64
+
 /**
  * struct hif_ce_desc_event - structure for detailing a ce event
  * @type: what the event was
  * @time: when it happened
+ * @current_hp: holds the current ring hp value
+ * @current_tp: holds the current ring tp value
  * @descriptor: descriptor enqueued or dequeued
  * @memory: virtual address that was used
  * @index: location of the descriptor in the ce ring;
@@ -535,19 +558,77 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
  * @actual_data_len: length of the data
  */
 struct hif_ce_desc_event {
-	uint16_t index;
+	int index;
 	enum hif_ce_event_type type;
 	uint64_t time;
+#ifdef HELIUMPLUS
 	union ce_desc descriptor;
+#else
+	uint32_t current_hp;
+	uint32_t current_tp;
+	union ce_srng_desc descriptor;
+#endif
 	void *memory;
 #ifdef HIF_CE_DEBUG_DATA_BUF
 	uint8_t *data;
 	size_t actual_data_len;
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 };
+#else
+struct hif_ce_desc_event;
 #endif /*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
+/**
+ * get_next_record_index() - get the next record index
+ * @table_index: atomic index variable to increment
+ * @array_size: array size of the circular buffer
+ *
+ * Increment the atomic index and reserve the value.
+ * Takes care of buffer wrap.
+ * Guaranteed to be thread safe as long as fewer than array_size contexts
+ * try to access the array.  If there are more than array_size contexts
+ * trying to access the array, full locking of the recording process would
+ * be needed to have sane logging.
+ */
+int get_next_record_index(qdf_atomic_t *table_index, int array_size);
+
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
+/**
+ * hif_record_ce_srng_desc_event() - Record data pointed by the CE descriptor
+ * @scn: structure detailing a ce event
+ * @ce_id: length of the data
+ * @type: event_type
+ * @descriptor: ce src/dest/status ring descriptor
+ * @memory: nbuf
+ * @index: current sw/write index
+ * @len: len of the buffer
+ * @hal_ring: ce hw ring
+ *
+ * Return: None
+ */
+void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
+				   enum hif_ce_event_type type,
+				   union ce_srng_desc *descriptor,
+				   void *memory, int index,
+				   int len, void *hal_ring);
+#else
+static inline
+void hif_record_ce_srng_desc_event(struct hif_softc *scn, int ce_id,
+				   enum hif_ce_event_type type,
+				   union ce_srng_desc *descriptor,
+				   void *memory, int index,
+				   int len, void *hal_ring)
+{
+}
+#endif
 
 #ifdef HIF_CE_DEBUG_DATA_BUF
+/**
+ * hif_ce_desc_data_record() - Record data pointed by the CE descriptor
+ * @event: structure detailing a ce event
+ * @len: length of the data
+ * Return:
+ */
+void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len);
 QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 #else
@@ -559,6 +640,11 @@ QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 
 static inline
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id) { }
+
+static inline
+void hif_ce_desc_data_record(struct hif_ce_desc_event *event, int len)
+{
+}
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
