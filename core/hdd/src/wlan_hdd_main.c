@@ -14466,7 +14466,7 @@ QDF_STATUS hdd_update_score_config(
 				      hdd_ctx->num_rf_chains);
 
 	score_config->vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ];
-	score_config->vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
+	score_config->vdev_nss_5g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
 
 	sme_update_score_config(hdd_ctx->mac_handle, score_config);
 
