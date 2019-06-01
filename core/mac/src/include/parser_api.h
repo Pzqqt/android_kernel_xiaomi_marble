@@ -695,6 +695,10 @@ populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 				tDot11fIEext_chan_switch_ann *dot_11_ptr,
 				struct pe_session *session_entry);
 
+void
+populate_dot11f_vht_tx_power_env(struct mac_context *mac,
+				 tDot11fIEvht_transmit_power_env *pDot11f,
+				 enum phy_ch_width ch_width, uint8_t chan);
 /* / Populate a tDot11fIEChannelSwitchWrapper */
 void
 populate_dot11f_chan_switch_wrapper(struct mac_context *mac,

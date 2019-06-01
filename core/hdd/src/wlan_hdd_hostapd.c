@@ -4118,9 +4118,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	mac_handle = adapter->hdd_ctx->mac_handle;
 
-	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
-			      WLAN_EID_VHT_TX_POWER_ENVELOPE);
-
 	/* Extract and add the extended capabilities and interworking IE */
 	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
 			      WLAN_EID_EXT_CAPABILITY);

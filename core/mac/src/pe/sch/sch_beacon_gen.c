@@ -455,6 +455,10 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 		/*
 		populate_dot11f_vht_ext_bss_load( mac_ctx, &bcn2.VHTExtBssLoad);
 		*/
+		populate_dot11f_vht_tx_power_env(mac_ctx,
+						 &bcn_2->vht_transmit_power_env,
+						 session->ch_width,
+						 session->currentOperChannel);
 	}
 
 	if (lim_is_session_he_capable(session)) {

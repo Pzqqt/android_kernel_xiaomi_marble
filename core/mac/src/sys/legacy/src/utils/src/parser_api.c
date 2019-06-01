@@ -261,12 +261,68 @@ populate_dot11_supp_operating_classes(struct mac_context *mac_ptr,
 }
 
 void
+populate_dot11f_vht_tx_power_env(struct mac_context *mac,
+				 tDot11fIEvht_transmit_power_env *pDot11f,
+				 enum phy_ch_width ch_width, uint8_t chan)
+{
+	uint8_t num_tx_power, i, tx_power;
+	int reg_max;
+
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		/* Max Transmit Power count = 0 (20 MHz) */
+		num_tx_power = 0;
+		break;
+	case CH_WIDTH_40MHZ:
+		/* Max Transmit Power count = 1 (20, 40 MHz) */
+		num_tx_power = 1;
+		break;
+	case CH_WIDTH_80MHZ:
+		/* Max Transmit Power count = 2 (20, 40, and 80 MHz) */
+		num_tx_power = 2;
+		break;
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_80P80MHZ:
+		/* Max Transmit Power count = 3 (20, 40, 80, 160/80+80 MHz) */
+		num_tx_power = 3;
+		break;
+	default:
+		return;
+	}
+
+	reg_max = lim_get_regulatory_max_transmit_power(mac, chan);
+
+	/* in 0.5 dB steps */
+	reg_max *= 2;
+	if (reg_max > 127)
+		/* 63.5 has special meaning of 63.5 dBm or higher */
+		reg_max = 127;
+
+	if (reg_max < -128)
+		reg_max = -128;
+
+	if (reg_max < 0)
+		tx_power = 0x80 + reg_max + 128;
+	else
+		tx_power = reg_max;
+
+	/* Ignore EID field */
+	pDot11f->present = 1;
+	pDot11f->num_bytes = num_tx_power + 2;
+	/*
+	 * Max Transmit Power count and
+	 * Max Transmit Power units = 0 (EIRP)
+	 */
+	pDot11f->bytes[0] = num_tx_power;
+	for (i = 0; i <= num_tx_power; i++)
+		pDot11f->bytes[i + 1] = tx_power;
+}
+
+void
 populate_dot11f_chan_switch_wrapper(struct mac_context *mac,
 				    tDot11fIEChannelSwitchWrapper *pDot11f,
 				    struct pe_session *pe_session)
 {
-	const uint8_t *ie_ptr = NULL;
-
 	/*
 	 * The new country subelement is present only when
 	 * 1. AP performs Extended Channel switching to new country.
@@ -299,18 +355,12 @@ populate_dot11f_chan_switch_wrapper(struct mac_context *mac,
 	/*
 	 * Add the VHT Transmit power Envelope Sublement.
 	 */
-	ie_ptr = wlan_get_ie_ptr_from_eid(
-			DOT11F_EID_VHT_TRANSMIT_POWER_ENV,
-			pe_session->add_ie_params.probeRespBCNData_buff,
-			pe_session->add_ie_params.probeRespBCNDataLen);
-	if (ie_ptr) {
-		/* Ignore EID field */
-		pDot11f->vht_transmit_power_env.present = 1;
-		pDot11f->vht_transmit_power_env.num_bytes = ie_ptr[1];
-		qdf_mem_copy(pDot11f->vht_transmit_power_env.bytes,
-			&ie_ptr[2], pDot11f->vht_transmit_power_env.num_bytes);
+	if (pe_session->vhtCapability) {
+		populate_dot11f_vht_tx_power_env(mac,
+				&pDot11f->vht_transmit_power_env,
+				pe_session->gLimChannelSwitch.ch_width,
+				pe_session->gLimChannelSwitch.primaryChannel);
 	}
-
 }
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
