@@ -12620,14 +12620,14 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 	struct csr_roam_session *session;
 	QDF_STATUS status;
 
-	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
-		sme_err("CSR session not valid: %d", vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 	if (!session) {
 		sme_err("vdev_id %d not found", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("CSR session not valid: %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
