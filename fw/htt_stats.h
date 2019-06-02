@@ -779,6 +779,7 @@ typedef struct {
     A_UINT32 wal_rx_recovery_rst_no_rx_consecutive_count;
     A_UINT32 wal_rx_recovery_rst_rx_busy_count;
     A_UINT32 wal_rx_recovery_rst_phy_mac_hang_count;
+    A_UINT32 rx_flush_cnt; /* Num rx flush issued */
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
