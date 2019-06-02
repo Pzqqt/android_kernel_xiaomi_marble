@@ -277,6 +277,7 @@ enum {
 	INTF_LEN,
 	INTF_PREFETCH,
 	INTF_TYPE,
+	INTF_TE_IRQ,
 	INTF_PROP_MAX,
 };
 
@@ -709,6 +710,7 @@ static struct sde_prop_type intf_prop[] = {
 	{INTF_PREFETCH, "qcom,sde-intf-max-prefetch-lines", false,
 						PROP_TYPE_U32_ARRAY},
 	{INTF_TYPE, "qcom,sde-intf-type", false, PROP_TYPE_STRING_ARRAY},
+	{INTF_TE_IRQ, "qcom,sde-intf-tear-irq-off", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type wb_prop[] = {
@@ -1972,6 +1974,10 @@ static int sde_intf_parse_dt(struct device_node *np,
 		}
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_INTF_INPUT_CTRL, &intf->features);
+
+		if (prop_exists[INTF_TE_IRQ])
+			intf->te_irq_offset = PROP_VALUE_ACCESS(prop_value,
+					INTF_TE_IRQ, i);
 
 		if (sde_cfg->has_intf_te)
 			set_bit(SDE_INTF_TE, &intf->features);

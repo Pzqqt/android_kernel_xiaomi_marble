@@ -951,12 +951,14 @@ struct sde_cdm_cfg   {
  * @type:              Interface type(DSI, DP, HDMI)
  * @controller_id:     Controller Instance ID in case of multiple of intf type
  * @prog_fetch_lines_worst_case	Worst case latency num lines needed to prefetch
+ * @te_irq_offset:     Register offset for INTF TE IRQ block
  */
 struct sde_intf_cfg  {
 	SDE_HW_BLK_INFO;
 	u32 type;   /* interface type*/
 	u32 controller_id;
 	u32 prog_fetch_lines_worst_case;
+	u32 te_irq_offset;
 };
 
 /**
