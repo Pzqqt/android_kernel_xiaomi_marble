@@ -5495,6 +5495,12 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 
 		((tAddStaParams *)iface->addBssStaContext)->no_ptk_4_way =
 						params->no_ptk_4_way;
+
+		qdf_mem_copy(((tAddStaParams *)iface->addBssStaContext)->
+			     supportedRates.supportedMCSSet,
+			     params->supportedRates.supportedMCSSet,
+			     SIR_MAC_MAX_SUPPORTED_MCS_SET);
+
 		ret = wma_send_peer_assoc(wma,
 				iface->nwType,
 				(tAddStaParams *) iface->addBssStaContext);

@@ -389,10 +389,23 @@ QDF_STATUS lim_add_ft_sta_self(struct mac_context *mac_ctx, uint16_t assoc_id,
 	tpAddStaParams add_sta_params = NULL;
 	QDF_STATUS ret_code = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msg_q = {0};
+	tpDphHashNode sta_ds;
+
+	sta_ds = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
+				    &session_entry->dph.dphHashTable);
+
+	if (!sta_ds) {
+		pe_err("Could not get hash entry at DPH");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	add_sta_params = session_entry->ftPEContext.pAddStaReq;
 	add_sta_params->assocId = assoc_id;
 	add_sta_params->smesessionId = session_entry->smeSessionId;
+
+	qdf_mem_copy(add_sta_params->supportedRates.supportedMCSSet,
+		     sta_ds->supportedRates.supportedMCSSet,
+		     SIR_MAC_MAX_SUPPORTED_MCS_SET);
 
 	if (lim_is_fils_connection(session_entry))
 		add_sta_params->no_ptk_4_way = true;
