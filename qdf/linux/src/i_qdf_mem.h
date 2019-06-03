@@ -39,7 +39,7 @@
 #include <linux/cache.h> /* L1_CACHE_BYTES */
 
 #define __qdf_cache_line_sz L1_CACHE_BYTES
-#if CONFIG_MCL
+#if defined(CONFIG_MCL)
 #include <cds_queue.h>
 #else
 #include <sys/queue.h>
