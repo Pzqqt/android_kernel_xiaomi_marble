@@ -2282,6 +2282,7 @@ static int swrm_runtime_resume(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 	int ret = 0;
+	bool clk_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
 
@@ -2295,6 +2296,7 @@ static int swrm_runtime_resume(struct device *dev)
 			dev_err(dev, "%s:lpass core hw enable failed\n",
 				__func__);
 			ret = 0;
+			clk_err = true;
 		}
 	}
 
@@ -2342,7 +2344,7 @@ static int swrm_runtime_resume(struct device *dev)
 		swrm->state = SWR_MSTR_UP;
 	}
 exit:
-	if (swrm->lpass_core_hw_vote)
+	if (swrm->lpass_core_hw_vote && !clk_err)
 		clk_disable_unprepare(swrm->lpass_core_hw_vote);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
 	mutex_unlock(&swrm->reslock);
@@ -2354,6 +2356,7 @@ static int swrm_runtime_suspend(struct device *dev)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 	int ret = 0;
+	bool clk_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
 	int current_state = 0;
@@ -2370,6 +2373,7 @@ static int swrm_runtime_suspend(struct device *dev)
 			dev_err(dev, "%s:lpass core hw enable failed\n",
 				__func__);
 			ret = 0;
+			clk_err = true;
 		}
 	}
 
@@ -2423,7 +2427,7 @@ static int swrm_runtime_suspend(struct device *dev)
 	if (current_state != SWR_MSTR_SSR)
 		swrm->state = SWR_MSTR_DOWN;
 exit:
-	if (swrm->lpass_core_hw_vote)
+	if (swrm->lpass_core_hw_vote && !clk_err)
 		clk_disable_unprepare(swrm->lpass_core_hw_vote);
 	mutex_unlock(&swrm->reslock);
 	return ret;
