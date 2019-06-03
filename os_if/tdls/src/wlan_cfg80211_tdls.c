@@ -231,6 +231,11 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif_tdls_vdev or osif_priv is NULL for the current vdev");
+		status = -EINVAL;
+		goto error;
+	}
 	tdls_priv = osif_priv->osif_tdls;
 	add_peer_req->vdev_id = wlan_vdev_get_id(vdev);
 
