@@ -711,6 +711,7 @@ int q6asm_send_meta_data(struct audio_client *ac, uint32_t initial_samples,
 int q6asm_stream_send_meta_data(struct audio_client *ac, uint32_t stream_id,
 		uint32_t initial_samples, uint32_t trailing_samples);
 
+uint8_t q6asm_get_asm_stream_id(int session_id);
 int q6asm_get_asm_topology(int session_id);
 int q6asm_get_asm_app_type(int session_id);
 
