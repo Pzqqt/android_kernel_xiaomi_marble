@@ -13857,6 +13857,9 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 	struct hdd_config *cfg = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 
+	if (wiphy->registered)
+		return QDF_STATUS_SUCCESS;
+
 	if (!hdd_ctx->channels_2ghz)
 		return QDF_STATUS_E_NOMEM;
 	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
