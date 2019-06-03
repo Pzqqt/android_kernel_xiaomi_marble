@@ -137,7 +137,7 @@ void dfs_mark_etsi_precac_dfs(struct wlan_dfs *dfs, uint8_t *channels,
 						continue;
 		TAILQ_REMOVE(&dfs->dfs_etsiprecac_required_list,
 			     precac_entry, pe_list);
-		qdf_mem_free(tmp_precac_entry);
+		qdf_mem_free(precac_entry);
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
