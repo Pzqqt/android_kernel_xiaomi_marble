@@ -5458,6 +5458,11 @@ static uint32_t ol_txrx_get_cfg(void *soc, enum cdp_dp_cfg cfg)
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	uint32_t value = 0;
 
+	if (!pdev) {
+		qdf_print("pdev is NULL");
+		return 0;
+	}
+
 	cfg_ctx = (struct txrx_pdev_cfg_t *)(pdev->ctrl_pdev);
 	switch (cfg) {
 	case cfg_dp_enable_data_stall:
