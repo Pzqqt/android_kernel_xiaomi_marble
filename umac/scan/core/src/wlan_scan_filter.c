@@ -1140,15 +1140,12 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 {
 	int i;
 	bool match = false;
-	struct roam_filter_params *roam_params;
 	struct scan_default_params *def_param;
 	struct wlan_country_ie *cc_ie;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
 		return false;
-
-	roam_params = &def_param->roam_params;
 
 	if (filter->age_threshold && filter->age_threshold <
 					util_scan_entry_age(db_entry))
@@ -1157,16 +1154,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->p2p_results && !db_entry->is_p2p)
 		return false;
 
-	for (i = 0; i < roam_params->num_bssid_avoid_list; i++) {
-		if (qdf_is_macaddr_equal(&roam_params->bssid_avoid_list[i],
-		   &db_entry->bssid)) {
-			scm_debug("%pM : Ignore as its blacklisted",
-				  db_entry->bssid.bytes);
-			return false;
-		}
-	}
-
-	match = false;
 	if (db_entry->ssid.length) {
 		for (i = 0; i < filter->num_of_ssid; i++) {
 			if (util_is_ssid_match(&filter->ssid_list[i],

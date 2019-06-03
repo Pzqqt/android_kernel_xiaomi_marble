@@ -363,25 +363,7 @@ struct scan_cache_entry {
 };
 
 #define MAX_FAVORED_BSSID 16
-#define MAX_AVOID_LIST_BSSID 16
 #define MAX_ALLOWED_SSID_LIST 4
-
-/**
- * struct roam_filter_params - Structure holding roaming parameters
- * @num_bssid_avoid_list:       The number of BSSID's that we should
- *                              avoid connecting to. It is like a
- *                              blacklist of BSSID's.
- *                              also for roaming apart from the connected one's
- * @bssid_avoid_list:           Blacklist SSID's
- *
- * This structure holds all the key parameters related to
- * initial connection and also roaming connections.
- */
-struct roam_filter_params {
-	uint32_t num_bssid_avoid_list;
-	/* Variable params list */
-	struct qdf_mac_addr bssid_avoid_list[MAX_AVOID_LIST_BSSID];
-};
 
 /**
  * struct weight_config - weight params to calculate best candidate
