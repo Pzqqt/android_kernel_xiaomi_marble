@@ -600,7 +600,8 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 	dp_disp = display;
 	mode->vrefresh = drm_mode_vrefresh(mode);
 
-	return dp_disp->validate_mode(dp_disp, sde_conn->drv_panel, mode);
+	return dp_disp->validate_mode(dp_disp, sde_conn->drv_panel,
+			mode, avail_res);
 }
 
 int dp_connector_update_pps(struct drm_connector *connector,
