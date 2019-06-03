@@ -27,6 +27,7 @@
 #include "dp_rx_defrag.h"
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 #include "dp_rx_defrag.h"
+#include "dp_ipa.h"
 
 const struct dp_rx_defrag_cipher dp_f_ccmp = {
 	"AES-CCM",
@@ -1065,6 +1066,8 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 				"%s: nbuf map failed !", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	dp_ipa_handle_rx_buf_smmu_mapping(soc, head, true);
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
 
