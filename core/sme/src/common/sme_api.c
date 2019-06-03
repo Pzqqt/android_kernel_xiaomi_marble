@@ -926,40 +926,6 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 }
 
 /**
- * sme_update_scan_roam_params() - Update the scan roaming params
- * @mac_ctx: mac ctx
- *
- * Return: void.
- */
-static void sme_update_scan_roam_params(struct mac_context *mac_ctx)
-{
-	struct roam_filter_params scan_params = {0};
-	struct roam_ext_params *roam_params_src;
-	uint8_t i;
-	QDF_STATUS status;
-
-	roam_params_src = &mac_ctx->roam.configParam.roam_params;
-
-	scan_params.num_bssid_avoid_list =
-		roam_params_src->num_bssid_avoid_list;
-
-	if (scan_params.num_bssid_avoid_list >
-	   MAX_AVOID_LIST_BSSID)
-		scan_params.num_bssid_avoid_list =
-			MAX_AVOID_LIST_BSSID;
-
-	for (i = 0; i < scan_params.num_bssid_avoid_list; i++) {
-		qdf_copy_macaddr(&scan_params.bssid_avoid_list[i],
-				&roam_params_src->bssid_avoid_list[i]);
-	}
-
-	status = ucfg_scan_update_roam_params(mac_ctx->psoc, &scan_params);
-	if (QDF_IS_STATUS_ERROR(status))
-		sme_err("ailed to update scan roam params with status=%d",
-			status);
-}
-
-/**
  * sme_update_roam_params() - Store/Update the roaming params
  * @mac_handle: Opaque handle to the global MAC context
  * @session_id:               SME Session ID
@@ -1048,8 +1014,6 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 				      update_param);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
-
-	sme_update_scan_roam_params(mac_ctx);
 
 	return 0;
 }

@@ -116,6 +116,18 @@ QDF_STATUS
 ucfg_blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 				  struct reject_ap_info *ap_info);
 
+/**
+ * ucfg_blm_flush_reject_ap_list() - Flush the reject ap entries stored in BLM.
+ * @blm_ctx: blacklist manager pdev priv object
+ *
+ * This API will clear the BSSID info in the reject AP list maintained by the
+ * blacklist manager, and will destroy the list as well.
+ *
+ * Return: None
+ */
+void
+ucfg_blm_flush_reject_ap_list(struct wlan_objmgr_pdev *pdev);
+
 #else
 static inline
 QDF_STATUS ucfg_blm_init(void)
@@ -161,6 +173,11 @@ static inline void
 ucfg_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 				     struct qdf_mac_addr bssid,
 				     enum blm_connection_state con_state)
+{
+}
+
+static inline
+void ucfg_blm_flush_reject_ap_list(struct wlan_objmgr_pdev *pdev)
 {
 }
 

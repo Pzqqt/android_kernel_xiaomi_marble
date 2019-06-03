@@ -101,7 +101,8 @@ blm_pdev_object_destroyed_notification(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Clear away the memory allocated for the bad BSSIDs */
-	blm_delete_reject_ap_list(blm_ctx);
+	blm_flush_reject_ap_list(blm_ctx);
+	qdf_list_destroy(&blm_ctx->reject_ap_list);
 	qdf_mutex_destroy(&blm_ctx->reject_ap_list_lock);
 
 	wlan_objmgr_pdev_component_obj_detach(pdev,

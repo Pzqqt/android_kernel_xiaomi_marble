@@ -138,3 +138,17 @@ ucfg_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 {
 	blm_update_bssid_connect_params(pdev, bssid, con_state);
 }
+
+void
+ucfg_blm_flush_reject_ap_list(struct wlan_objmgr_pdev *pdev)
+{
+	struct blm_pdev_priv_obj *blm_ctx;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	if (!blm_ctx) {
+		blm_err("blm_ctx is NULL");
+		return;
+	}
+
+	blm_flush_reject_ap_list(blm_ctx);
+}

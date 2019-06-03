@@ -3224,6 +3224,21 @@ static int hdd_open(struct net_device *net_dev)
 	return errno;
 }
 
+static bool
+hdd_is_any_sta_interface_open(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_STA_MODE &&
+		   (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
+		    test_bit(SME_SESSION_OPENED, &adapter->event_flags)))
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * __hdd_stop() - HDD stop function
  * @dev:	Pointer to net_device structure
@@ -3307,6 +3322,10 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* DeInit the adapter. This ensures datapath cleanup as well */
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
+
+	/* If no STA interface is open, then flush out the BLM entries */
+	if (!hdd_is_any_sta_interface_open(hdd_ctx))
+		ucfg_blm_flush_reject_ap_list(hdd_ctx->pdev);
 
 	if (!hdd_is_any_interface_open(hdd_ctx))
 		hdd_psoc_idle_timer_start(hdd_ctx);
