@@ -1801,6 +1801,15 @@ static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->collect_misr = sde_encoder_helper_collect_misr;
 }
 
+static inline bool sde_encoder_phys_cmd_intf_te_supported(
+		const struct sde_mdss_cfg *sde_cfg, enum sde_intf idx)
+{
+	if (sde_cfg && ((idx - INTF_0) < sde_cfg->intf_count))
+		return test_bit(SDE_INTF_TE,
+				&(sde_cfg->intf[idx - INTF_0].features));
+	return false;
+}
+
 struct sde_encoder_phys *sde_encoder_phys_cmd_init(
 		struct sde_enc_phys_init_params *p)
 {
@@ -1841,10 +1850,8 @@ struct sde_encoder_phys *sde_encoder_phys_cmd_init(
 	sde_encoder_phys_cmd_init_ops(&phys_enc->ops);
 	phys_enc->comp_type = p->comp_type;
 
-	if (sde_hw_intf_te_supported(phys_enc->sde_kms->catalog))
-		phys_enc->has_intf_te = true;
-	else
-		phys_enc->has_intf_te = false;
+	phys_enc->has_intf_te = sde_encoder_phys_cmd_intf_te_supported(
+			phys_enc->sde_kms->catalog, phys_enc->intf_idx);
 
 	for (i = 0; i < INTR_IDX_MAX; i++) {
 		irq = &phys_enc->irq[i];

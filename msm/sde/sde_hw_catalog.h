@@ -1283,7 +1283,6 @@ struct sde_limit_cfg {
  * @has_decimation     Supports decimation
  * @has_qos_fl_nocalc  flag to indicate QoS fill level needs no calculation
  * @has_mixer_combined_alpha     Mixer has single register for FG & BG alpha
- * @has_intf_te        TE logic resides in INTF block
  * @vbif_disable_inner_outer_shareable     VBIF requires disabling shareables
  * @inline_disable_const_clr     Disable constant color during inline rotate
  * @sc_cfg: system cache configuration
@@ -1347,7 +1346,6 @@ struct sde_mdss_cfg {
 	bool has_decimation;
 	bool has_qos_fl_nocalc;
 	bool has_mixer_combined_alpha;
-	bool has_intf_te;
 	bool vbif_disable_inner_outer_shareable;
 	bool inline_disable_const_clr;
 
@@ -1514,10 +1512,5 @@ static inline bool sde_hw_sspp_multirect_enabled(const struct sde_sspp_cfg *cfg)
 	return test_bit(SDE_SSPP_SMART_DMA_V1, &cfg->features) ||
 			 test_bit(SDE_SSPP_SMART_DMA_V2, &cfg->features) ||
 			 test_bit(SDE_SSPP_SMART_DMA_V2p5, &cfg->features);
-}
-
-static inline bool sde_hw_intf_te_supported(const struct sde_mdss_cfg *sde_cfg)
-{
-	return test_bit(SDE_INTF_TE, &(sde_cfg->intf[0].features));
 }
 #endif /* _SDE_HW_CATALOG_H */
