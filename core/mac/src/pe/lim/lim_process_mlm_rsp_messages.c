@@ -1539,7 +1539,7 @@ void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 		mlm_assoc_cnf.resultCode = (tSirResultCodes) eSIR_SME_SUCCESS;
 		lim_send_obss_color_collision_cfg(mac_ctx, session_entry,
 					OBSS_COLOR_COLLISION_DETECTION);
-		if (lim_is_session_he_capable(session_entry)) {
+		if (lim_is_session_he_capable(session_entry) && sta_ds) {
 			if (mac_ctx->usr_cfg_mu_edca_params) {
 				pe_debug("Send user cfg MU EDCA params to FW");
 				lim_send_edca_params(mac_ctx,
