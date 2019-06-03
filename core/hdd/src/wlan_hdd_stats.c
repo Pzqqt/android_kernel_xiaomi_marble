@@ -4673,17 +4673,10 @@ static int __wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
 				int idx, u8 *mac,
 				struct station_info *sinfo)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
-
 	hdd_debug("%s: idx %d", __func__, idx);
 	if (idx != 0)
 		return -ENOENT;
-	if (hdd_ctx->num_provisioned_addr)
-		qdf_mem_copy(mac, hdd_ctx->provisioned_mac_addr[0].bytes,
-			     QDF_MAC_ADDR_SIZE);
-	else
-		qdf_mem_copy(mac, hdd_ctx->derived_mac_addr[0].bytes,
-			     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(mac, dev->dev_addr, QDF_MAC_ADDR_SIZE);
 	return __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 }
 
