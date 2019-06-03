@@ -2581,6 +2581,7 @@ static void wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac,
 		*uc_cipher = cipher;
 }
 #endif
+
 /**
  * wma_roam_update_vdev() - Update the STA and BSS
  * @wma: Global WMA Handle
@@ -2592,8 +2593,9 @@ static void wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac,
  *
  * Return: None
  */
-static void wma_roam_update_vdev(tp_wma_handle wma,
-				 struct roam_offload_synch_ind *roam_synch_ind_ptr)
+static void
+wma_roam_update_vdev(tp_wma_handle wma,
+		     struct roam_offload_synch_ind *roam_synch_ind_ptr)
 {
 	tDeleteBssParams *del_bss_params;
 	tDeleteStaParams *del_sta_params;
@@ -2605,12 +2607,28 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
 	del_bss_params = qdf_mem_malloc(sizeof(*del_bss_params));
-	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
-	set_link_params = qdf_mem_malloc(sizeof(*set_link_params));
-	add_sta_params = qdf_mem_malloc(sizeof(*add_sta_params));
-	if (!del_bss_params || !del_sta_params ||
-	    !set_link_params || !add_sta_params)
+	if (!del_bss_params)
 		return;
+
+	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
+	if (!del_sta_params) {
+		qdf_mem_free(del_bss_params);
+		return;
+	}
+
+	set_link_params = qdf_mem_malloc(sizeof(*set_link_params));
+	if (!set_link_params) {
+		qdf_mem_free(del_bss_params);
+		qdf_mem_free(del_sta_params);
+		return;
+	}
+	add_sta_params = qdf_mem_malloc(sizeof(*add_sta_params));
+	if (!add_sta_params) {
+		qdf_mem_free(del_bss_params);
+		qdf_mem_free(del_sta_params);
+		qdf_mem_free(set_link_params);
+		return;
+	}
 
 	qdf_mem_zero(del_bss_params, sizeof(*del_bss_params));
 	qdf_mem_zero(del_sta_params, sizeof(*del_sta_params));
@@ -3916,6 +3934,7 @@ int wma_extscan_operations_event_handler(void *handle,
 			WMA_LOGE("FW mesg num_buk %d more than TLV hdr %d",
 				 oprn_event->num_buckets,
 				 param_buf->num_bucket_id);
+			qdf_mem_free(oprn_ind);
 			return -EINVAL;
 		}
 
