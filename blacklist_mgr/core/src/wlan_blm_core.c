@@ -847,7 +847,7 @@ blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 }
 
 void
-blm_delete_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx)
+blm_flush_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx)
 {
 	struct blm_reject_ap *blm_entry = NULL;
 	QDF_STATUS status;
@@ -873,7 +873,7 @@ blm_delete_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx)
 		next_node = NULL;
 	}
 
-	qdf_list_destroy(&blm_ctx->reject_ap_list);
+	blm_debug("BLM reject ap list flushed");
 	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }
 

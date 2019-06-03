@@ -219,7 +219,7 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 				enum blm_connection_state con_state);
 
 /**
- * blm_delete_reject_ap_list() - Clear away BSSID and destroy the reject ap list
+ * blm_flush_reject_ap_list() - Clear away BSSID and destroy the reject ap list
  * @blm_ctx: blacklist manager pdev priv object
  *
  * This API will clear the BSSID info in the reject AP list maintained by the
@@ -228,7 +228,7 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
  * Return: None
  */
 void
-blm_delete_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx);
+blm_flush_reject_ap_list(struct blm_pdev_priv_obj *blm_ctx);
 
 /**
  * blm_get_bssid_reject_list() - Get the BSSIDs in reject list from BLM
