@@ -11290,6 +11290,10 @@ void sme_update_he_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
 		sme_err("invalid Nss value %d", nss);
 	}
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!csr_session) {
+		sme_err("No session for id %d", session_id);
+		return;
+	}
 	rx_mcs_map =
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80;
 	tx_mcs_map =
