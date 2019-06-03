@@ -359,10 +359,9 @@ static QDF_STATUS target_if_dbr_replenish_ring(struct wlan_objmgr_pdev *pdev,
 	dw_lo = (uint64_t)paddr & 0xFFFFFFFF;
 	WMI_HOST_DBR_RING_ADDR_HI_SET(dw_hi, (uint64_t)paddr >> 32);
 	WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_SET(dw_hi, cookie);
-	direct_buf_rx_info("Cookie = %d", cookie);
-	direct_buf_rx_info("dw_lo = %x dw_hi = %x", dw_lo, dw_hi);
 	*ring_entry = (uint64_t)dw_hi << 32 | dw_lo;
-	direct_buf_rx_info("Valid ring entry");
+	direct_buf_rx_debug("Valid ring entry, cookie %u, dw_lo %x, dw_hi :%x",
+			    cookie, dw_lo, dw_hi);
 	hal_srng_access_end(hal_soc, srng);
 
 	return QDF_STATUS_SUCCESS;
@@ -579,7 +578,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
 	dbr_config = &mod_param->dbr_config;
-	wmi_hdl = lmac_get_pdev_wmi_handle(pdev);
+	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_hdl) {
 		direct_buf_rx_err("WMI handle null. Can't send WMI CMD");
 		return QDF_STATUS_E_INVAL;
@@ -1127,8 +1126,8 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 		direct_buf_rx_err("dir buf rx module param is null");
 		return QDF_STATUS_E_FAILURE;
 	}
-	direct_buf_rx_info("mod_param %pK", mod_param);
-	direct_buf_rx_info("dbr_ring_cap %pK", mod_param->dbr_ring_cap);
+	direct_buf_rx_debug("mod_param %pK, dbr_ring_cap %pK",
+			    mod_param, mod_param->dbr_ring_cap);
 	target_if_dbr_deinit_srng(pdev, mod_param);
 	if (mod_param->dbr_ring_cap)
 		qdf_mem_free(mod_param->dbr_ring_cap);
