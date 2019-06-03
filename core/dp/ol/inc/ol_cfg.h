@@ -49,12 +49,6 @@ enum wlan_frm_fmt {
 #define MAX_THROUGHPUT 800
 #endif
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-#define TARGET_TX_CREDIT CFG_TGT_NUM_MSDU_DESC
-#else
-#define TARGET_TX_CREDIT 900
-#endif
-
 /* Throttle period Different level Duty Cycle values*/
 #define THROTTLE_DUTY_CYCLE_LEVEL0 (0)
 #define THROTTLE_DUTY_CYCLE_LEVEL1 (50)
