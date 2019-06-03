@@ -97,6 +97,9 @@
 #include "init_cmd_api.h"
 #include "nan_ucfg_api.h"
 #include "wma_coex.h"
+#ifdef DIRECT_BUF_RX_ENABLE
+#include <target_if_direct_buf_rx_api.h>
+#endif
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -6726,6 +6729,35 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 }
 
 /**
+ * wma_init_dbr_params() - init dbr params
+ * @wma_handle: pointer to wma global structure
+ *
+ * This API initializes params of direct buffer rx component.
+ *
+ * Return: none
+ */
+#ifdef DIRECT_BUF_RX_ENABLE
+static void wma_init_dbr_params(t_wma_handle *wma_handle)
+{
+	struct hif_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	void *hal_soc;
+
+	if (!hif_ctx) {
+		WMA_LOGE("invalid hif context");
+		return;
+	}
+
+	hal_soc = hif_get_hal_handle(hif_ctx);
+	direct_buf_rx_target_attach(wma_handle->psoc, hal_soc,
+				    wma_handle->qdf_dev);
+}
+#else
+static inline void wma_init_dbr_params(t_wma_handle *wma_handle)
+{
+}
+#endif
+
+/**
  * wma_rx_service_ready_ext_event() - evt handler for sevice ready ext event.
  * @handle: wma handle
  * @event: params of the service ready extended event
@@ -6830,6 +6862,8 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		wlan_res_cfg->tstamp64_en = false;
 		cdp_cfg_set_tx_compl_tsf64(soc, false);
 	}
+
+	wma_init_dbr_params(wma_handle);
 
 	return 0;
 }
