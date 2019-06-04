@@ -699,6 +699,7 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	struct msm_kms *kms = NULL;
 	int ret;
 	struct sched_param param = { 0 };
+	struct drm_crtc *crtc;
 
 	ddev = drm_dev_alloc(drv, dev);
 	if (!ddev) {
@@ -769,6 +770,9 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 		dev_err(dev, "failed to initialize vblank\n");
 		goto fail;
 	}
+
+	drm_for_each_crtc(crtc, ddev)
+		drm_crtc_vblank_reset(crtc);
 
 	if (kms) {
 		pm_runtime_get_sync(dev);
