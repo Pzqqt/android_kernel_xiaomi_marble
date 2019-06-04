@@ -59,6 +59,8 @@
 #ifdef FEATURE_WLAN_ESE
 #define RRM_ROAM_SCORE_NEIGHBOR_IAPP_LIST                       30
 #endif
+/* RRM SCAN DWELL TIME */
+#define RRM_SCAN_MIN_DWELL_TIME 20
 
 uint64_t rrm_scan_timer;
 
@@ -841,13 +843,13 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 		 * depending on type of scan.
 		 */
 		if (req->scan_req.scan_f_passive) {
-			if (max_chan_time > req->scan_req.dwell_time_passive)
+			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME)
 				req->scan_req.dwell_time_passive =
 								max_chan_time;
 			sme_debug("Passive Max Dwell Time(%d)",
 				  req->scan_req.dwell_time_passive);
 		} else {
-			if (max_chan_time > req->scan_req.dwell_time_active)
+			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME)
 				req->scan_req.dwell_time_active = max_chan_time;
 			sme_debug("Active Max Dwell Time(%d)",
 				  req->scan_req.dwell_time_active);
@@ -1143,9 +1145,11 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		     (uint8_t *) &pBeaconReq->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
-	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d",
+	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d measurementduration %d, rrm_ctx duration %d",
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
-		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
+		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource,
+		pBeaconReq->measurementDuration[0],
+		pSmeRrmContext->duration[0]);
 
 	return sme_rrm_issue_scan_req(mac);
 
