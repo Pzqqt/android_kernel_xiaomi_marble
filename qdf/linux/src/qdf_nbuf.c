@@ -91,7 +91,7 @@
 #define RADIOTAP_CCK_CHANNEL 0x0020
 #define RADIOTAP_OFDM_CHANNEL 0x0040
 
-#ifdef CONFIG_MCL
+#ifdef FEATURE_NBUFF_REPLENISH_TIMER
 #include <qdf_mc_timer.h>
 
 struct qdf_track_timer {
