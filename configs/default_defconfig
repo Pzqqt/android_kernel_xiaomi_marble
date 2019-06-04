@@ -756,6 +756,11 @@ ifeq ($(CONFIG_LITHIUM), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 endif
 
+ifeq ($(CONFIG_LITHIUM), y)
+	ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
+		CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY := y
+	endif
+endif
 #Flag to enable hdd memory dump feature
 CONFIG_FEATURE_MEMDUMP_ENABLE := y
 
