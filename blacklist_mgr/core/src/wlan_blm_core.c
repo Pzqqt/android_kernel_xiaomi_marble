@@ -620,7 +620,7 @@ static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 			reject_list[*num_of_reject_bssid].reject_duration =
 			       blm_get_delta_of_bssid(reject_ap_type, blm_entry);
 			reject_list[*num_of_reject_bssid].reject_ap_type =
-						blm_entry->reject_ap_type;
+								reject_ap_type;
 			reject_list[*num_of_reject_bssid].bssid =
 							blm_entry->bssid;
 			(*num_of_reject_bssid)++;
