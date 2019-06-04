@@ -4264,6 +4264,7 @@ static ssize_t sde_dbg_reg_base_offset_read(struct file *file,
 	return len;
 }
 
+#ifdef CONFIG_DYNAMIC_DEBUG
 /**
  * sde_dbg_reg_base_reg_write - write to reg base hw at offset a given value
  * @file: file handler
@@ -4332,6 +4333,7 @@ static ssize_t sde_dbg_reg_base_reg_write(struct file *file,
 
 	return count;
 }
+#endif
 
 /**
  * sde_dbg_reg_base_reg_read - read len from reg base hw at current offset
@@ -4439,7 +4441,9 @@ static const struct file_operations sde_reg_fops = {
 	.open = sde_dbg_reg_base_open,
 	.release = sde_dbg_reg_base_release,
 	.read = sde_dbg_reg_base_reg_read,
+#ifdef  CONFIG_DYNAMIC_DEBUG
 	.write = sde_dbg_reg_base_reg_write,
+#endif
 };
 
 int sde_dbg_debugfs_register(struct dentry *debugfs_root)
