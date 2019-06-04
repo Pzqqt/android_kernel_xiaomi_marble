@@ -6064,6 +6064,7 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 
 		if (status != QDF_STATUS_SUCCESS) {
 			dp_err("Failed to send tlv filter for monitor mode rings");
+			qdf_spin_unlock_bh(&pdev->mon_lock);
 			return status;
 		}
 
