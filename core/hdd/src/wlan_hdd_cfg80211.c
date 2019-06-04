@@ -14562,6 +14562,8 @@ QDF_STATUS wlan_hdd_send_sta_authorized_event(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_mem_zero(&sta_flags, sizeof(sta_flags));
+
 	sta_flags.mask |= BIT(NL80211_STA_FLAG_AUTHORIZED);
 	sta_flags.set = true;
 
