@@ -823,14 +823,35 @@ blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 	uint8_t i = 0;
 	struct reject_ap_info ap_info;
 	QDF_STATUS status;
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	struct blm_config *cfg;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || !blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Clear all the info of APs already existing in BLM first */
+	blm_clear_userspace_blacklist_info(pdev);
+	cfg = &blm_psoc_obj->blm_cfg;
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		return status;
+	}
+
+	blm_send_reject_ap_list_to_fw(pdev, &blm_ctx->reject_ap_list, cfg);
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 
 	if (!bssid_black_list || !num_of_bssid) {
 		blm_debug("Userspace blacklist/num of blacklist NULL");
 		return QDF_STATUS_SUCCESS;
 	}
-
-	/* Clear all the info of APs already existing in BLM first */
-	blm_clear_userspace_blacklist_info(pdev);
 
 	for (i = 0; i < num_of_bssid; i++) {
 		ap_info.bssid = bssid_black_list[i];
