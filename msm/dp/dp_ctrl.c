@@ -74,6 +74,7 @@ struct dp_ctrl_private {
 	atomic_t aborted;
 
 	u8 initial_lane_count;
+	u8 initial_bw_code;
 
 	u32 vic;
 	u32 stream_count;
@@ -295,6 +296,26 @@ static int dp_ctrl_lane_count_down_shift(struct dp_ctrl_private *ctrl)
 	return ret;
 }
 
+static bool dp_ctrl_is_link_rate_rbr(struct dp_ctrl_private *ctrl)
+{
+	return ctrl->link->link_params.bw_code == DP_LINK_BW_1_62;
+}
+
+static u8 dp_ctrl_get_active_lanes(struct dp_ctrl_private *ctrl,
+				u8 *link_status)
+{
+	u8 lane, count = 0;
+
+	for (lane = 0; lane < ctrl->link->link_params.lane_count; lane++) {
+		if (link_status[lane / 2] & (1 << (lane * 4)))
+			count++;
+		else
+			break;
+	}
+
+	return count;
+}
+
 static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 {
 	int tries, old_v_level, ret = -EINVAL;
@@ -343,15 +364,13 @@ static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 		else
 			break;
 
-
 		if (ctrl->link->phy_params.v_level == DP_LINK_VOLTAGE_MAX) {
 			pr_err_ratelimited("max v_level reached\n");
 			break;
 		}
 
 		if (old_v_level == ctrl->link->phy_params.v_level) {
-			tries++;
-			if (tries >= maximum_retries) {
+			if (++tries >= maximum_retries) {
 				pr_err("max tries reached\n");
 				ret = -ETIMEDOUT;
 				break;
@@ -364,6 +383,18 @@ static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 		pr_debug("clock recovery not done, adjusting vx px\n");
 
 		ctrl->link->adjust_levels(ctrl->link, link_status);
+	}
+
+	if (ret && dp_ctrl_is_link_rate_rbr(ctrl)) {
+		u8 active_lanes = dp_ctrl_get_active_lanes(ctrl, link_status);
+
+		if (active_lanes) {
+			ctrl->link->link_params.lane_count = active_lanes;
+			ctrl->link->link_params.bw_code = ctrl->initial_bw_code;
+
+			/* retry with new settings */
+			ret = -EAGAIN;
+		}
 	}
 
 	ctrl->aux->state &= ~DP_STATE_TRAIN_1_STARTED;
@@ -467,7 +498,7 @@ static int dp_ctrl_link_training_2(struct dp_ctrl_private *ctrl)
 		else
 			break;
 
-		if (tries > maximum_retries) {
+		if (tries >= maximum_retries) {
 			ret = dp_ctrl_lane_count_down_shift(ctrl);
 			break;
 		}
@@ -1227,8 +1258,9 @@ static int dp_ctrl_on(struct dp_ctrl *dp_ctrl, bool mst_mode,
 		ctrl->link->link_params.bw_code,
 		ctrl->link->link_params.lane_count);
 
-	/* backup initial lane count */
+	/* backup initial lane count and bw code */
 	ctrl->initial_lane_count = ctrl->link->link_params.lane_count;
+	ctrl->initial_bw_code = ctrl->link->link_params.bw_code;
 
 	rc = dp_ctrl_link_setup(ctrl, shallow);
 	ctrl->power_on = true;
