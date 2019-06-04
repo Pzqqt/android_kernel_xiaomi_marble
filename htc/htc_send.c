@@ -1139,14 +1139,6 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 		return result;
 	}
 
-	if (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
-		tx_resources =
-			hif_get_free_queue_number(target->hif_dev,
-						  pEndpoint->UL_PipeID);
-	} else {
-		tx_resources = 0;
-	}
-
 	LOCK_HTC_TX(target);
 
 	if (!HTC_QUEUE_EMPTY(&sendQueue)) {
@@ -1185,6 +1177,14 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	/* now drain the endpoint TX queue for transmission as long as we have
 	 * enough transmit resources
 	 */
+	if (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
+		tx_resources =
+			hif_get_free_queue_number(target->hif_dev,
+						  pEndpoint->UL_PipeID);
+	} else {
+		tx_resources = 0;
+	}
+
 	while (true) {
 
 		if (HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue) == 0)
