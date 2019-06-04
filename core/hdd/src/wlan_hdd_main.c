@@ -4801,6 +4801,16 @@ static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
 	if (wlan_hdd_mpta_helper_enable(&coex_cfg_params, &config))
 		goto err;
 
+	coex_cfg_params.config_type =
+				WMI_COEX_CONFIG_BT_SCO_ALLOW_WLAN_2G_SCAN;
+	coex_cfg_params.config_arg1 = config.bt_sco_allow_wlan_2g_scan;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex BT sco allow wlan 2g scan");
+		goto err;
+	}
+
 	return 0;
 err:
 	return -EINVAL;
