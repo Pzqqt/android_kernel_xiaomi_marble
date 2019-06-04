@@ -4069,3 +4069,17 @@ QDF_STATUS wmi_unified_send_mws_coex_req_cmd(struct wmi_unified *wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WIFI_POS_CONVERGED
+QDF_STATUS
+wmi_extract_oem_response_param(wmi_unified_t wmi_hdl, void *resp_buf,
+			       struct wmi_oem_response_param *oem_resp_param)
+{
+	if (wmi_hdl->ops->extract_oem_response_param)
+		return wmi_hdl->ops->extract_oem_response_param(wmi_hdl,
+								resp_buf,
+								oem_resp_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WIFI_POS_CONVERGED */

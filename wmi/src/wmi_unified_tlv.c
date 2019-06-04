@@ -11642,6 +11642,53 @@ static QDF_STATUS send_mws_coex_status_req_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef WIFI_POS_CONVERGED
+/**
+ * extract_oem_response_param_tlv() - Extract oem response params
+ * @wmi_handle: wmi handle
+ * @resp_buf: response buffer
+ * @oem_resp_param: pointer to hold oem response params
+ *
+ * Return: QDF_STATUS_SUCCESS on success or proper error code.
+ */
+static QDF_STATUS
+extract_oem_response_param_tlv(wmi_unified_t wmi_handle, void *resp_buf,
+			       struct wmi_oem_response_param *oem_resp_param)
+{
+	uint64_t temp_addr;
+	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf =
+		(WMI_OEM_RESPONSE_EVENTID_param_tlvs *)resp_buf;
+
+	if (!param_buf) {
+		WMI_LOGE("Invalid OEM response");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (param_buf->num_data) {
+		oem_resp_param->num_data1 = param_buf->num_data;
+		oem_resp_param->data_1    = param_buf->data;
+	}
+
+	if (param_buf->num_data2) {
+		oem_resp_param->num_data2 = param_buf->num_data2;
+		oem_resp_param->data_2    = param_buf->data2;
+	}
+
+	if (param_buf->indirect_data) {
+		oem_resp_param->indirect_data.pdev_id =
+			param_buf->indirect_data->pdev_id;
+		temp_addr = (param_buf->indirect_data->addr_hi) & 0xf;
+		oem_resp_param->indirect_data.addr =
+			param_buf->indirect_data->addr_lo +
+			((uint64_t)temp_addr << 32);
+		oem_resp_param->indirect_data.len =
+			param_buf->indirect_data->len;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WIFI_POS_CONVERGED */
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -11913,6 +11960,9 @@ struct wmi_ops tlv_ops =  {
 		send_peer_cfr_capture_cmd_tlv,
 	.extract_cfr_peer_tx_event_param = extract_cfr_peer_tx_event_param_tlv,
 #endif /* WLAN_CFR_ENABLE */
+#ifdef WIFI_POS_CONVERGED
+	.extract_oem_response_param = extract_oem_response_param_tlv,
+#endif /* WIFI_POS_CONVERGED */
 #ifdef WLAN_MWS_INFO_DEBUGFS
 	.send_mws_coex_status_req_cmd = send_mws_coex_status_req_cmd_tlv,
 #endif

@@ -84,7 +84,7 @@ static QDF_STATUS target_if_wifi_pos_replenish_ring(
 
 static QDF_STATUS target_if_wifi_pos_get_indirect_data(
 		struct wifi_pos_psoc_priv_obj *priv_obj,
-		wmi_oem_indirect_data *indirect,
+		struct wmi_host_oem_indirect_data *indirect,
 		struct oem_data_rsp *rsp, uint32_t *cookie)
 {
 	void *paddr = NULL;
@@ -127,7 +127,7 @@ static QDF_STATUS target_if_wifi_pos_replenish_ring(
 
 static QDF_STATUS target_if_wifi_pos_get_indirect_data(
 		struct wifi_pos_psoc_priv_obj *priv_obj,
-		wmi_oem_indirect_data *indirect,
+		struct wmi_host_oem_indirect_data *indirect,
 		struct oem_data_rsp *rsp, uint32_t *cookie)
 {
 	return QDF_STATUS_SUCCESS;
@@ -151,13 +151,13 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 	uint8_t ring_idx = 0;
 	QDF_STATUS status;
 	uint32_t cookie = 0;
-	wmi_oem_indirect_data *indirect;
+	struct wmi_host_oem_indirect_data *indirect;
 	struct oem_data_rsp oem_rsp = {0};
 	struct wifi_pos_psoc_priv_obj *priv_obj;
 	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
 	struct wlan_lmac_if_wifi_pos_rx_ops *wifi_pos_rx_ops = NULL;
-	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf =
-		(WMI_OEM_RESPONSE_EVENTID_param_tlvs *)data_buf;
+	struct wmi_oem_response_param oem_resp_param = {0};
+	wmi_unified_t wmi_handle;
 
 	if (!psoc) {
 		target_if_err("psoc is null");
@@ -165,6 +165,13 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 	}
 
 	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
+		return QDF_STATUS_NOT_INITIALIZED;
+	}
 
 	priv_obj = wifi_pos_get_psoc_priv_obj(psoc);
 	if (!priv_obj) {
@@ -180,15 +187,19 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	oem_rsp.rsp_len_1 = param_buf->num_data;
-	oem_rsp.data_1 = param_buf->data;
+	ret = wmi_extract_oem_response_param(wmi_handle,
+					     data_buf,
+					     &oem_resp_param);
 
-	if (param_buf->num_data2) {
-		oem_rsp.rsp_len_2 = param_buf->num_data2;
-		oem_rsp.data_2 = param_buf->data2;
+	oem_rsp.rsp_len_1 = oem_resp_param.num_data1;
+	oem_rsp.data_1    = oem_resp_param.data_1;
+
+	if (oem_resp_param.num_data2) {
+		oem_rsp.rsp_len_2 = oem_resp_param.num_data2;
+		oem_rsp.data_2    = oem_resp_param.data_2;
 	}
 
-	indirect = (wmi_oem_indirect_data *)param_buf->indirect_data;
+	indirect = &oem_resp_param.indirect_data;
 	status = target_if_wifi_pos_get_indirect_data(priv_obj, indirect,
 						      &oem_rsp, &cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {

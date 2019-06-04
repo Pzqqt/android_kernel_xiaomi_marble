@@ -1984,6 +1984,11 @@ QDF_STATUS (*send_mws_coex_status_req_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*set_rx_pkt_type_routing_tag_cmd)(
 	wmi_unified_t wmi_hdl, struct wmi_rx_pkt_protocol_routing_info *param);
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
+#ifdef WIFI_POS_CONVERGED
+QDF_STATUS (*extract_oem_response_param)
+		(wmi_unified_t wmi_hdl, void *resp_buf,
+		 struct wmi_oem_response_param *oem_resp_param);
+#endif /* WIFI_POS_CONVERGED */
 };
 
 /* Forward declartion for psoc*/

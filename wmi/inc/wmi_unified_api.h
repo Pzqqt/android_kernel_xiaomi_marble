@@ -2451,4 +2451,18 @@ wmi_extract_cfr_peer_tx_event_param(void *wmi_hdl, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event);
 
 #endif /* WLAN_CFR_ENABLE */
+
+#ifdef WIFI_POS_CONVERGED
+/**
+ * wmi_extract_oem_response_param() - WMI function to extract OEM response param
+ * @wmi_hdl: WMI handle
+ * @resp_buf: Buffer holding response data
+ * @oem_resp_param: zero-filled structure pointer to hold oem response data
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_extract_oem_response_param(wmi_unified_t wmi_hdl, void *resp_buf,
+			       struct wmi_oem_response_param *oem_resp_param);
+#endif /* WIFI_POS_CONVERGED */
 #endif /* _WMI_UNIFIED_API_H_ */

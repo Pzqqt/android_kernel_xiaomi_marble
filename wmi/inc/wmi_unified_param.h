@@ -7855,6 +7855,34 @@ typedef struct {
 } wmi_cfr_peer_tx_event_param;
 
 /**
+ * struct wmi_host_oem_indirect_data - Indirect OEM data
+ * @pdev_id: pdev id
+ * @addr: 36 bit address
+ * @len: length of data in bytes
+ */
+struct wmi_host_oem_indirect_data {
+	uint32_t pdev_id;
+	uint64_t addr;
+	uint32_t len;
+};
+
+/**
+ * struct wmi_oem_response_param - OEM response info
+ * @num_data1: First data response length
+ * @data_1: First data
+ * @num_data2: Second data response length
+ * @data_2: Second data
+ * @indirect_data: Indirect data
+ */
+struct wmi_oem_response_param {
+	uint32_t num_data1;
+	uint8_t  *data_1;
+	uint32_t num_data2;
+	uint8_t  *data_2;
+	struct wmi_host_oem_indirect_data indirect_data;
+};
+
+/**
  * struct mws_coex_state - Modem Wireless Subsystem(MWS) coex info
  * @vdev_id : vdev id
  * @coex_scheme_bitmap: LTE-WLAN coexistence scheme bitmap
