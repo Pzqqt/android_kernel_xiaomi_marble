@@ -1530,15 +1530,11 @@ void hal_get_hw_hptp_generic(struct hal_soc *soc, void *hal_ring,
 	ring_config = HAL_SRNG_CONFIG(soc, ring_type);
 	if (!ring_config->lmac_ring) {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING) {
-			*headp =
-			   (SRNG_SRC_REG_READ(srng, HP)) / srng->entry_size;
-			*tailp =
-			   (SRNG_SRC_REG_READ(srng, TP)) / srng->entry_size;
+			*headp = SRNG_SRC_REG_READ(srng, HP);
+			*tailp = SRNG_SRC_REG_READ(srng, TP);
 		} else {
-			*headp =
-			   (SRNG_DST_REG_READ(srng, HP)) / srng->entry_size;
-			*tailp =
-			   (SRNG_DST_REG_READ(srng, TP)) / srng->entry_size;
+			*headp = SRNG_DST_REG_READ(srng, HP);
+			*tailp = SRNG_DST_REG_READ(srng, TP);
 		}
 	}
 }

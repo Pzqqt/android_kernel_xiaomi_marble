@@ -895,11 +895,11 @@ static inline void hal_get_sw_hptp(void *hal_soc, void *hal_ring,
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
-		*headp = srng->u.src_ring.hp / srng->entry_size;
-		*tailp = *(srng->u.src_ring.tp_addr) / srng->entry_size;
+		*headp = srng->u.src_ring.hp;
+		*tailp = *srng->u.src_ring.tp_addr;
 	} else {
-		*tailp = srng->u.dst_ring.tp / srng->entry_size;
-		*headp = *(srng->u.dst_ring.hp_addr) / srng->entry_size;
+		*tailp = srng->u.dst_ring.tp;
+		*headp = *srng->u.dst_ring.hp_addr;
 	}
 }
 
