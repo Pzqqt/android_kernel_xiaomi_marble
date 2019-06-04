@@ -77,7 +77,6 @@
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
-
 #if defined(FEATURE_WLAN_DIAG_SUPPORT)
 /**
  * qdf_wma_wow_wakeup_stats_event()- send wow wakeup stats
@@ -87,7 +86,6 @@
  *
  * Return: void.
  */
-#ifdef QCA_SUPPORT_CP_STATS
 static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 {
 	QDF_STATUS status;
@@ -121,52 +119,6 @@ static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&wow_stats, EVENT_WLAN_POWERSAVE_WOW_STATS);
 }
-#else /* QCA_SUPPORT_CP_STATS*/
-static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
-{
-	QDF_STATUS status;
-	struct sir_wake_lock_stats stats;
-
-	WLAN_HOST_DIAG_EVENT_DEF(WowStats,
-	struct host_event_wlan_powersave_wow_stats);
-
-	status = wma_get_wakelock_stats(&stats);
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
-	qdf_mem_zero(&WowStats, sizeof(WowStats));
-
-	WowStats.wow_bcast_wake_up_count =
-		stats.wow_bcast_wake_up_count;
-	WowStats.wow_ipv4_mcast_wake_up_count =
-		stats.wow_ipv4_mcast_wake_up_count;
-	WowStats.wow_ipv6_mcast_wake_up_count =
-		stats.wow_ipv6_mcast_wake_up_count;
-	WowStats.wow_ipv6_mcast_ra_stats =
-		stats.wow_ipv6_mcast_ra_stats;
-	WowStats.wow_ipv6_mcast_ns_stats =
-		stats.wow_ipv6_mcast_ns_stats;
-	WowStats.wow_ipv6_mcast_na_stats =
-		stats.wow_ipv6_mcast_na_stats;
-	WowStats.wow_pno_match_wake_up_count =
-		stats.wow_pno_match_wake_up_count;
-	WowStats.wow_pno_complete_wake_up_count =
-		stats.wow_pno_complete_wake_up_count;
-	WowStats.wow_gscan_wake_up_count =
-		stats.wow_gscan_wake_up_count;
-	WowStats.wow_low_rssi_wake_up_count =
-		stats.wow_low_rssi_wake_up_count;
-	WowStats.wow_rssi_breach_wake_up_count =
-		stats.wow_rssi_breach_wake_up_count;
-	WowStats.wow_icmpv4_count =
-		stats.wow_icmpv4_count;
-	WowStats.wow_icmpv6_count =
-		stats.wow_icmpv6_count;
-	WowStats.wow_oem_response_wake_up_count =
-		stats.wow_oem_response_wake_up_count;
-
-	WLAN_HOST_DIAG_EVENT_REPORT(&WowStats, EVENT_WLAN_POWERSAVE_WOW_STATS);
-}
-#endif /* QCA_SUPPORT_CP_STATS */
 #else
 static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 {
@@ -4730,66 +4682,6 @@ QDF_STATUS wma_set_sw_retry_threshold(uint8_t vdev_id, uint32_t retry,
 
 	return QDF_STATUS_SUCCESS;
 }
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * wma_get_wakelock_stats() - Populates wake lock stats
- * @stats: non-null wakelock structure to populate
- *
- * This function collects wake lock stats
- *
- * Return: QDF_STATUS_SUCCESS on success, error value otherwise
- */
-QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *stats)
-{
-	t_wma_handle *wma;
-	struct sir_vdev_wow_stats *vstats;
-	int i;
-
-	if (!stats) {
-		WMA_LOGE("%s: invalid stats pointer", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: invalid WMA context", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	/* ensure counters are zeroed */
-	qdf_mem_zero(stats, sizeof(*stats));
-
-	/* populate global level stats */
-	stats->wow_unspecified_wake_up_count = wma->wow_unspecified_wake_count;
-
-	/* populate vdev level stats */
-	for (i = 0; i < wma->max_bssid; ++i) {
-		if (!wma->interfaces[i].handle)
-			continue;
-
-		vstats = &wma->interfaces[i].wow_stats;
-
-		stats->wow_ucast_wake_up_count += vstats->ucast;
-		stats->wow_bcast_wake_up_count += vstats->bcast;
-		stats->wow_ipv4_mcast_wake_up_count += vstats->ipv4_mcast;
-		stats->wow_ipv6_mcast_wake_up_count += vstats->ipv6_mcast;
-		stats->wow_ipv6_mcast_ra_stats += vstats->ipv6_mcast_ra;
-		stats->wow_ipv6_mcast_ns_stats += vstats->ipv6_mcast_ns;
-		stats->wow_ipv6_mcast_na_stats += vstats->ipv6_mcast_na;
-		stats->wow_icmpv4_count += vstats->icmpv4;
-		stats->wow_icmpv6_count += vstats->icmpv6;
-		stats->wow_rssi_breach_wake_up_count += vstats->rssi_breach;
-		stats->wow_low_rssi_wake_up_count += vstats->low_rssi;
-		stats->wow_gscan_wake_up_count += vstats->gscan;
-		stats->wow_pno_complete_wake_up_count += vstats->pno_complete;
-		stats->wow_pno_match_wake_up_count += vstats->pno_match;
-		stats->wow_oem_response_wake_up_count += vstats->oem_response;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 /**
  * wma_process_fw_test_cmd() - send unit test command to fw.
  * @handle: wma handle

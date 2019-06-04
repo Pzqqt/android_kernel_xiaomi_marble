@@ -249,9 +249,6 @@ static inline bool wma_is_p2p_lo_capable(void)
 }
 #endif
 bool wma_capability_enhanced_mcast_filter(void);
-#ifndef QCA_SUPPORT_CP_STATS
-QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *wake_lock_stats);
-#endif
 void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,

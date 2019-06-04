@@ -3174,7 +3174,6 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
  *
  * Return - length of written content, negative number on error
  */
-#ifdef QCA_SUPPORT_CP_STATS
 static int wlan_hdd_write_suspend_resume_stats(struct hdd_context *hdd_ctx,
 					       char *buffer, uint16_t max_len)
 {
@@ -3212,72 +3211,7 @@ static int wlan_hdd_write_suspend_resume_stats(struct hdd_context *hdd_ctx,
 
 	return ret;
 }
-#else
-static int wlan_hdd_write_suspend_resume_stats(struct hdd_context *hdd_ctx,
-					       char *buffer, uint16_t max_len)
-{
-	QDF_STATUS status;
-	struct suspend_resume_stats *sr_stats;
-	struct sir_wake_lock_stats wow_stats;
 
-	sr_stats = &hdd_ctx->suspend_resume_stats;
-
-	status = wma_get_wakelock_stats(&wow_stats);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get WoW stats");
-		return qdf_status_to_os_return(status);
-	}
-
-	return scnprintf(buffer, max_len,
-			"\n"
-			"Suspends: %u\n"
-			"Resumes: %u\n"
-			"\n"
-			"Suspend Fail Reasons\n"
-			"\tIPA: %u\n"
-			"\tRadar: %u\n"
-			"\tRoam: %u\n"
-			"\tScan: %u\n"
-			"\tInitial Wakeup: %u\n"
-			"\n"
-			"WoW Wake Reasons\n"
-			"\tunicast: %u\n"
-			"\tbroadcast: %u\n"
-			"\tIPv4 multicast: %u\n"
-			"\tIPv6 multicast: %u\n"
-			"\tIPv6 multicast RA: %u\n"
-			"\tIPv6 multicast NS: %u\n"
-			"\tIPv6 multicast NA: %u\n"
-			"\tICMPv4: %u\n"
-			"\tICMPv6: %u\n"
-			"\tRSSI Breach: %u\n"
-			"\tLow RSSI: %u\n"
-			"\tG-Scan: %u\n"
-			"\tPNO Complete: %u\n"
-			"\tPNO Match: %u\n",
-			sr_stats->suspends,
-			sr_stats->resumes,
-			sr_stats->suspend_fail[SUSPEND_FAIL_IPA],
-			sr_stats->suspend_fail[SUSPEND_FAIL_RADAR],
-			sr_stats->suspend_fail[SUSPEND_FAIL_ROAM],
-			sr_stats->suspend_fail[SUSPEND_FAIL_SCAN],
-			sr_stats->suspend_fail[SUSPEND_FAIL_INITIAL_WAKEUP],
-			wow_stats.wow_ucast_wake_up_count,
-			wow_stats.wow_bcast_wake_up_count,
-			wow_stats.wow_ipv4_mcast_wake_up_count,
-			wow_stats.wow_ipv6_mcast_wake_up_count,
-			wow_stats.wow_ipv6_mcast_ra_stats,
-			wow_stats.wow_ipv6_mcast_ns_stats,
-			wow_stats.wow_ipv6_mcast_na_stats,
-			wow_stats.wow_icmpv4_count,
-			wow_stats.wow_icmpv6_count,
-			wow_stats.wow_rssi_breach_wake_up_count,
-			wow_stats.wow_low_rssi_wake_up_count,
-			wow_stats.wow_gscan_wake_up_count,
-			wow_stats.wow_pno_complete_wake_up_count,
-			wow_stats.wow_pno_match_wake_up_count);
-}
-#endif
 /**
  * hdd_wlan_list_fw_profile() - Get fw profiling points
  * @length:   Size of the data copied
