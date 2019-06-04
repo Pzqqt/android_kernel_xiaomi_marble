@@ -224,6 +224,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter)
 {
 	struct reject_ap_info ap_info;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	qdf_mutex_acquire(&adapter->disconnection_status_lock);
 	if (adapter->disconnection_in_progress) {
@@ -241,7 +242,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 	hdd_debug("nud fail detected, try roaming to better BSSID, vdev id: %d",
 		  adapter->vdev_id);
 
-	ap_info.bssid = adapter->mac_addr;
+	ap_info.bssid = sta_ctx->conn_info.bssid;
 	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
 	ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev, &ap_info);
 
