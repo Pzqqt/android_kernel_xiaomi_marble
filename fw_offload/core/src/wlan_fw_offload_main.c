@@ -77,6 +77,8 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 	coex_config->bt_interference_high_ul =
 				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_UL);
 	fwol_mpta_helper_config_get(psoc, coex_config);
+	coex_config->bt_sco_allow_wlan_2g_scan =
+				cfg_get(psoc, CFG_BT_SCO_ALLOW_WLAN_2G_SCAN);
 }
 
 static void

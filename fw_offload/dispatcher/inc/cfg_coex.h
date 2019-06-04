@@ -260,6 +260,29 @@
 #define COEX_MPTA_HELPER_CFG
 #endif
 
+/*
+ * <ini>
+ * gBtScoAllowWlan2GScan - Allow wlan 2g scan when BT SCO connection is on
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * 0 - Disable
+ * 1 - Enable
+ *
+ * This ini is used to enable or disable wlan 2g scan
+ * when BT SCO connection is on.
+ *
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BT_SCO_ALLOW_WLAN_2G_SCAN CFG_INI_BOOL( \
+		"gBtScoAllowWlan2GScan", \
+		1, \
+		"Bt Sco Allow Wlan 2G Scan")
+
 #define CFG_COEX_ALL \
 	CFG(CFG_BTC_MODE) \
 	CFG(CFG_ANTENNA_ISOLATION) \
@@ -272,5 +295,6 @@
 	CFG(CFG_BT_INTERFERENCE_MEDIUM_UL) \
 	CFG(CFG_BT_INTERFERENCE_HIGH_LL) \
 	CFG(CFG_BT_INTERFERENCE_HIGH_UL) \
-	COEX_MPTA_HELPER_CFG
+	COEX_MPTA_HELPER_CFG \
+	CFG(CFG_BT_SCO_ALLOW_WLAN_2G_SCAN)
 #endif
