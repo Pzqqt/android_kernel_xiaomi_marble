@@ -4940,9 +4940,15 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 					 uint16_t data_len, void *data)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma;
 	int ret;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	ret = wma_mlme_roam_synch_event_handler_cb(wma, data, data_len);
 	if (ret != 0) {
@@ -4956,9 +4962,15 @@ QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t data_len, void *data)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (mlme_is_chan_switch_in_progress(vdev)) {
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
@@ -4986,6 +4998,11 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	wma_send_vdev_down(wma, (struct wma_target_req *)data);
 
 	return QDF_STATUS_SUCCESS;
@@ -4995,8 +5012,14 @@ QDF_STATUS
 wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 				   uint16_t data_len, void *data)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma;
 	struct wma_target_req *req = (struct wma_target_req *)data;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (req->msg_type == WMA_DELETE_BSS_HO_FAIL_REQ) {
 		tpDeleteBssParams params =
@@ -5023,8 +5046,14 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					    enum vdev_cmd_type type,
 					    uint16_t data_len, void *data)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma;
 	tpAddBssParams bss_params = (tpAddBssParams)data;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (wma_send_vdev_stop_to_fw(wma, bss_params->bss_idx))
 		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
