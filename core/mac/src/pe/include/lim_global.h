@@ -247,6 +247,7 @@ typedef struct sLimMlmStaContext {
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
 #endif
+	bool force_1x1;
 	uint8_t *owe_ie;
 	uint32_t owe_ie_len;
 } tLimMlmStaContext, *tpLimMlmStaContext;

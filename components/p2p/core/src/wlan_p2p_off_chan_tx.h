@@ -435,4 +435,15 @@ void p2p_init_random_mac_vdev(struct p2p_vdev_priv_obj *p2p_vdev_obj);
  */
 void p2p_deinit_random_mac_vdev(struct p2p_vdev_priv_obj *p2p_vdev_obj);
 
+/**
+ * p2p_get_p2pie_ptr() - get the pointer to p2p ie
+ * @ie:      source ie
+ * @ie_len:  source ie length
+ *
+ * This function finds out p2p ie by p2p oui and return the pointer.
+ *
+ * Return: pointer to p2p ie
+ */
+const uint8_t *p2p_get_p2pie_ptr(const uint8_t *ie, uint16_t ie_len);
+
 #endif /* _WLAN_P2P_OFF_CHAN_TX_H_ */

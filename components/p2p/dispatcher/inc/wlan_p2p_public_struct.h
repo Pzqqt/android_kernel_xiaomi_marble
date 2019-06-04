@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,15 @@
 #include <qdf_types.h>
 
 #define P2P_MAX_NOA_DESC 4
+
+#define HEADER_LEN_P2P_IE  6
+#define OUI_SIZE_P2P       4
+
+#define P2P_1X1_WAR_OUI   "\x00\x50\xf2\x04"
+#define P2P_1X1_OUI_LEN    4
+
+#define MAX_CONFIG_METHODS_LEN   2
+#define DEVICE_CATEGORY_MAX_LEN  1
 
 /**
  * struct p2p_ps_params - P2P powersave related params
@@ -269,4 +278,67 @@ struct p2p_protocol_callbacks {
 	bool (*is_mgmt_protected)(uint32_t vdev_id, const uint8_t *peer_addr);
 };
 
+/**
+ * enum p2p_attr_id - enum for P2P attributes ID in P2P IE
+ * @P2P_ATTR_STATUS - Attribute Status none
+ * @P2P_ATTR_MINOR_REASON_CODE: Minor reason code attribute
+ * @P2P_ATTR_CAPABILITY: Capability attribute
+ * @P2P_ATTR_DEVICE_ID: device ID attribute
+ * @P2P_ATTR_GROUP_OWNER_INTENT: Group owner intent attribute
+ * @P2P_ATTR_CONFIGURATION_TIMEOUT: Config timeout attribute
+ * @P2P_ATTR_LISTEN_CHANNEL: listen channel attribute
+ * @P2P_ATTR_GROUP_BSSID: Group BSSID attribute
+ * @P2P_ATTR_EXT_LISTEN_TIMING: Listen timing attribute
+ * @P2P_ATTR_INTENDED_INTERFACE_ADDR: Intended interface address attribute
+ * @P2P_ATTR_MANAGEABILITY:  Manageability attribute
+ * @P2P_ATTR_CHANNEL_LIST: Channel list attribute
+ * @P2P_ATTR_NOTICE_OF_ABSENCE: Notice of Absence attribute
+ * @P2P_ATTR_DEVICE_INFO: Device Info attribute
+ * @P2P_ATTR_GROUP_INFO: Group Info attribute
+ * @P2P_ATTR_GROUP_ID: Group ID attribute
+ * @P2P_ATTR_INTERFACE: Interface attribute
+ * @P2P_ATTR_OPERATING_CHANNEL: Operating channel attribute
+ * @P2P_ATTR_INVITATION_FLAGS: Invitation flags attribute
+ * @P2P_ATTR_OOB_GO_NEG_CHANNEL: GO neg channel attribute
+ * @P2P_ATTR_SERVICE_HASH: Service HASH attribute
+ * @P2P_ATTR_SESSION_INFORMATION_DATA: Session Info data attribute
+ * @P2P_ATTR_CONNECTION_CAPABILITY = Connection capability attribute
+ * @P2P_ATTR_ADVERTISEMENT_ID = Advertisement ID attribute
+ * @P2P_ATTR_ADVERTISED_SERVICE = Advertised Service attribute
+ * @P2P_ATTR_SESSION_ID = Session ID attribute
+ * @P2P_ATTR_FEATURE_CAPABILITY = Feature capability attribute
+ * @P2P_ATTR_PERSISTENT_GROUP -Persistent group attribute
+ * @P2P_ATTR_VENDOR_SPECIFIC - Vendor specific attribute
+ */
+enum p2p_attr_id {
+	P2P_ATTR_STATUS = 0,
+	P2P_ATTR_MINOR_REASON_CODE = 1,
+	P2P_ATTR_CAPABILITY = 2,
+	P2P_ATTR_DEVICE_ID = 3,
+	P2P_ATTR_GROUP_OWNER_INTENT = 4,
+	P2P_ATTR_CONFIGURATION_TIMEOUT = 5,
+	P2P_ATTR_LISTEN_CHANNEL = 6,
+	P2P_ATTR_GROUP_BSSID = 7,
+	P2P_ATTR_EXT_LISTEN_TIMING = 8,
+	P2P_ATTR_INTENDED_INTERFACE_ADDR = 9,
+	P2P_ATTR_MANAGEABILITY = 10,
+	P2P_ATTR_CHANNEL_LIST = 11,
+	P2P_ATTR_NOTICE_OF_ABSENCE = 12,
+	P2P_ATTR_DEVICE_INFO = 13,
+	P2P_ATTR_GROUP_INFO = 14,
+	P2P_ATTR_GROUP_ID = 15,
+	P2P_ATTR_INTERFACE = 16,
+	P2P_ATTR_OPERATING_CHANNEL = 17,
+	P2P_ATTR_INVITATION_FLAGS = 18,
+	P2P_ATTR_OOB_GO_NEG_CHANNEL = 19,
+	P2P_ATTR_SERVICE_HASH = 21,
+	P2P_ATTR_SESSION_INFORMATION_DATA = 22,
+	P2P_ATTR_CONNECTION_CAPABILITY = 23,
+	P2P_ATTR_ADVERTISEMENT_ID = 24,
+	P2P_ATTR_ADVERTISED_SERVICE = 25,
+	P2P_ATTR_SESSION_ID = 26,
+	P2P_ATTR_FEATURE_CAPABILITY = 27,
+	P2P_ATTR_PERSISTENT_GROUP = 28,
+	P2P_ATTR_VENDOR_SPECIFIC = 221
+};
 #endif /* _WLAN_P2P_PUBLIC_STRUCT_H_ */

@@ -118,6 +118,7 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 {
 	struct tLimPreAuthNode *sta_pre_auth_ctx;
 	struct lim_assoc_data *assoc_req;
+	bool assoc_ind_sent;
 
 	/* Extract pre-auth context for the STA and move limMlmState
 	 * of preauth node to eLIM_MLM_AUTHENTICATED_STATE
@@ -161,14 +162,16 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 
 		assoc_req->present = false;
 		pe_debug("Assoc req cached; handle it");
-		if (lim_send_assoc_ind_to_sme(mac, session,
-					      assoc_req->sub_type,
-					      &assoc_req->hdr,
-					      assoc_req->assoc_req,
-					      ANI_AKM_TYPE_SAE,
-					      assoc_req->pmf_connection,
-					      &assoc_req_copied,
-					      assoc_req->dup_entry) == false)
+		assoc_ind_sent =
+			lim_send_assoc_ind_to_sme(mac, session,
+						  assoc_req->sub_type,
+						  &assoc_req->hdr,
+						  assoc_req->assoc_req,
+						  ANI_AKM_TYPE_SAE,
+						  assoc_req->pmf_connection,
+						  &assoc_req_copied,
+						  assoc_req->dup_entry, false);
+		if (!assoc_ind_sent)
 			lim_process_assoc_cleanup(mac, session,
 						  assoc_req->assoc_req,
 						  assoc_req->sta_ds,

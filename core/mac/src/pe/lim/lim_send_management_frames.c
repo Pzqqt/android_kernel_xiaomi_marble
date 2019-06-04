@@ -1135,7 +1135,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 				frm.HTCaps.shortGI40MHz = 0;
 
 			populate_dot11f_ht_info(mac_ctx, &frm.HTInfo,
-				pe_session);
+						pe_session);
 		}
 		pe_debug("SupportedChnlWidth: %d, mimoPS: %d, GF: %d, short GI20:%d, shortGI40: %d, dsssCck: %d, AMPDU Param: %x",
 			frm.HTCaps.supportedChannelWidthSet,
@@ -1153,6 +1153,22 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_vht_operation(mac_ctx, pe_session,
 					&frm.VHTOperation);
 			is_vht = true;
+		} else if (sta->mlmStaContext.force_1x1 &&
+			   frm.HTCaps.present) {
+			/*
+			 * WAR: In P2P GO mode, if the P2P client device
+			 * is only HT capable and not VHT capable, but the P2P
+			 * GO device is VHT capable and advertises 2x2 NSS with
+			 * HT capablity client device, which results in IOT
+			 * issues.
+			 * When GO is operating in DBS mode, GO beacons
+			 * advertise 2x2 capability but include OMN IE to
+			 * indicate current operating mode of 1x1. But here
+			 * peer device is only HT capable and will not
+			 * understand OMN IE.
+			 */
+			frm.HTInfo.basicMCSSet[1] = 0;
+			frm.HTCaps.supportedMCSSet[1] = 0;
 		}
 
 		if (pe_session->vhtCapability &&

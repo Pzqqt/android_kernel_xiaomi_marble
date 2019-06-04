@@ -1553,7 +1553,9 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	wma_populate_peer_he_cap(cmd, params);
 
-	intr->nss = cmd->peer_nss;
+	if (!wma_is_vdev_in_ap_mode(wma, params->smesessionId))
+		intr->nss = cmd->peer_nss;
+
 	cmd->peer_phymode = phymode;
 	WMA_LOGD("%s: vdev_id %d associd %d rate_caps %x peer_caps %x",
 		 __func__,  cmd->vdev_id, cmd->peer_associd,

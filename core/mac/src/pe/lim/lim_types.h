@@ -1178,6 +1178,7 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
  * @pmf_connection: flag indicating pmf connection
  * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
  * @dup_entry: flag indicating if duplicate entry found
+ * @force_1x1: flag to indicate if the STA nss needs to be downgraded to 1x1
  *
  * Return: void
  */
@@ -1189,5 +1190,5 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			       enum ani_akm_type akm_type,
 			       bool pmf_connection,
 			       bool *assoc_req_copied,
-			       bool dup_entry);
+			       bool dup_entry, bool force_1x1);
 #endif /* __LIM_TYPES_H */

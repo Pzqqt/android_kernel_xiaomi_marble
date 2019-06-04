@@ -38,6 +38,7 @@
 #include "cds_packet.h"
 #include "lim_session_utils.h"
 #include "utils_parser.h"
+#include "wlan_p2p_api.h"
 
 #include "qdf_types.h"
 #include "cds_utils.h"
@@ -1424,6 +1425,8 @@ static bool lim_chk_wmm(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
  * @peer_idx: peer index
  * @qos_mode: qos mode
  * @pmf_connection: flag indicating pmf connection
+ * @force_1x1: Flag to check if the HT capable STA needs to be downgraded to 1x1
+ * nss.
  *
  * Updates ds dph entry
  *
@@ -1436,7 +1439,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      tAniAuthType auth_type,
 			      enum ani_akm_type akm_type,
 			      bool *assoc_req_copied, uint16_t peer_idx,
-			      tHalBitVal qos_mode, bool pmf_connection)
+			      tHalBitVal qos_mode, bool pmf_connection,
+			      bool force_1x1)
 {
 	tHalBitVal wme_mode, wsm_mode;
 	uint8_t *ht_cap_ie = NULL;
@@ -1498,6 +1502,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	sta_ds->mlmStaContext.authType = auth_type;
 	sta_ds->mlmStaContext.akm_type = akm_type;
 	sta_ds->staType = STA_ENTRY_PEER;
+	sta_ds->mlmStaContext.force_1x1 = force_1x1;
 
 	pe_debug("auth_type = %d, akm_type = %d", auth_type, akm_type);
 
@@ -1964,13 +1969,11 @@ static void lim_defer_sme_indication(struct mac_context *mac_ctx,
 
 bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			       struct pe_session *session,
-			       uint8_t sub_type,
-			       tpSirMacMgmtHdr hdr,
+			       uint8_t sub_type, tpSirMacMgmtHdr hdr,
 			       tpSirAssocReq assoc_req,
 			       enum ani_akm_type akm_type,
-			       bool pmf_connection,
-			       bool *assoc_req_copied,
-			       bool dup_entry)
+			       bool pmf_connection, bool *assoc_req_copied,
+			       bool dup_entry, bool force_1x1)
 {
 	uint16_t peer_idx;
 	struct tLimPreAuthNode *sta_pre_auth_ctx;
@@ -2055,7 +2058,7 @@ send_ind_to_sme:
 	if (!lim_update_sta_ds(mac_ctx, hdr, session, assoc_req,
 			       sub_type, sta_ds, auth_type, akm_type,
 			       assoc_req_copied, peer_idx, qos_mode,
-			       pmf_connection))
+			       pmf_connection, force_1x1))
 		return false;
 
 	/* BTAMP: Storing the parsed assoc request in the session array */
@@ -2112,7 +2115,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	tSirMacCapabilityInfo local_cap;
 	tpDphHashNode sta_ds = NULL;
 	tpSirAssocReq assoc_req;
-	bool dup_entry = false;
+	bool dup_entry = false, force_1x1 = false;
 	QDF_STATUS status;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
@@ -2354,10 +2357,28 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 		return;
 	}
 
+	if (session->opmode == QDF_P2P_GO_MODE) {
+		/*
+		 * WAR: In P2P GO mode, if the P2P client device
+		 * is only HT capable and not VHT capable, but the P2P
+		 * GO device is VHT capable and advertises 2x2 NSS with
+		 * HT capablity client device, which results in IOT
+		 * issues.
+		 * When GO is operating in DBS mode, GO beacons
+		 * advertise 2x2 capability but include OMN IE to
+		 * indicate current operating mode of 1x1. But here
+		 * peer device is only HT capable and will not
+		 * understand OMN IE.
+		 */
+		force_1x1 = wlan_p2p_check_oui_and_force_1x1(
+				frm_body + LIM_ASSOC_REQ_IE_OFFSET,
+				frame_len - LIM_ASSOC_REQ_IE_OFFSET);
+	}
+
 	/* Send assoc indication to SME */
 	if (!lim_send_assoc_ind_to_sme(mac_ctx, session, sub_type, hdr,
 				       assoc_req, akm_type, pmf_connection,
-				       &assoc_req_copied, dup_entry))
+				       &assoc_req_copied, dup_entry, force_1x1))
 		goto error;
 
 	return;
