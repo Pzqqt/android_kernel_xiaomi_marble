@@ -2028,8 +2028,6 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
-#ifdef CONFIG_WIN
-
 /**
  *  send_peer_based_pktlog_cmd() - Send WMI command to enable packet-log
  *  @wmi_handle: handle to WMI.
@@ -2164,53 +2162,6 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
-#else
-/**
- *  send_packet_log_enable_cmd_tlv() - Send WMI command to enable
- *  packet-log
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr	: MAC address
- *  @param param    : pointer to hold stats request parameter
- *
- *  Return: QDF_STATUS.
- */
-static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct packet_enable_params *param)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- *  send_peer_based_pktlog_cmd() - Send WMI command to enable packet-log
- *  @wmi_handle: handle to WMI.
- *  @macaddr: Peer mac address to be filter
- *  @mac_id: mac id to have radio context
- *  @enb_dsb: Enable MAC based filtering or Disable
- *
- *  Return: QDF_STATUS
- */
-static QDF_STATUS send_peer_based_pktlog_cmd(wmi_unified_t wmi_handle,
-					     uint8_t *macaddr,
-					     uint8_t mac_id,
-					     uint8_t enb_dsb)
-{
-	return QDF_STATUS_SUCCESS;
-}
-/**
- *  send_packet_log_disable_cmd_tlv() - Send WMI command to disable
- *  packet-log
- *  @param wmi_handle      : handle to WMI.
- *  @mac_id: mac id to have radio context
- *
- *  Return: QDF_STATUS.
- */
-static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #define WMI_FW_TIME_STAMP_LOW_MASK 0xffffffff
 /**
@@ -5474,12 +5425,13 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#if !defined(REMOVE_PKT_LOG) && defined(CONFIG_MCL)
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 /**
  * send_pktlog_wmi_send_cmd_tlv() - send pktlog enable/disable command to target
  * @wmi_handle: wmi handle
  * @pktlog_event: pktlog event
  * @cmd_id: pktlog cmd id
+ * @user_triggered: user triggered input for PKTLOG enable mode
  *
  * Return: CDF status
  */
@@ -5555,7 +5507,7 @@ wmi_send_failed:
 	wmi_buf_free(buf);
 	return QDF_STATUS_E_FAILURE;
 }
-#endif /* !REMOVE_PKT_LOG &&  CONFIG_MCL*/
+#endif /* !REMOVE_PKT_LOG && FEATURE_PKTLOG */
 
 /**
  * send_stats_ext_req_cmd_tlv() - request ext stats from fw
@@ -11703,9 +11655,9 @@ struct wmi_ops tlv_ops =  {
 	.send_link_status_req_cmd = send_link_status_req_cmd_tlv,
 #ifdef CONFIG_MCL
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
-#ifndef REMOVE_PKT_LOG
-	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
 #endif
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
+	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
 #endif
 #ifdef WLAN_SUPPORT_GREEN_AP
 	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,

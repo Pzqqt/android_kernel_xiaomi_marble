@@ -692,36 +692,6 @@ QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef CONFIG_MCL
-/**
- *  wmi_unified_packet_log_enable_send() - WMI request stats function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold stats request parameter
- *
- *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct packet_enable_params *param)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_packet_log_enable_cmd)
-		return wmi_handle->ops->send_packet_log_enable_cmd(wmi_handle,
-				  macaddr, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#else
-/**
- *  wmi_unified_packet_log_enable_send() - WMI request stats function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold stats request parameter
- *
- *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
 {
@@ -758,7 +728,7 @@ QDF_STATUS wmi_unified_peer_based_pktlog_send(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif
+
 /**
  *  wmi_unified_packet_log_disable__send() - WMI pktlog disable function
  *  @param wmi_handle      : handle to WMI.
@@ -1090,7 +1060,6 @@ QDF_STATUS wmi_unified_lro_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef CONFIG_MCL
 /**
  * wmi_unified_peer_rate_report_cmd() - process the peer rate report command
  * @wmi_hdl: Pointer to wmi handle
@@ -1110,7 +1079,6 @@ QDF_STATUS wmi_unified_peer_rate_report_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif
 
 /**
  * wmi_unified_process_update_edca_param() - update EDCA params
@@ -1501,16 +1469,16 @@ wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#if !defined(REMOVE_PKT_LOG)
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 /**
  * wmi_unified_pktlog_wmi_send_cmd() - send pktlog enable/disable command to target
  * @wmi_handle: wmi handle
  * @pktlog_event: pktlog event
  * @cmd_id: pktlog cmd id
+ * @user_triggered: user triggered input for PKTLOG enable mode
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-#ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   uint32_t cmd_id,
@@ -1524,8 +1492,7 @@ QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif
-#endif /* REMOVE_PKT_LOG */
+#endif /* !REMOVE_PKT_LOG && FEATURE_PKTLOG */
 
 /**
  * wmi_unified_stats_ext_req_cmd() - request ext stats from fw

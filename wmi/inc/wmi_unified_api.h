@@ -556,7 +556,14 @@ QDF_STATUS wmi_unified_wow_add_wakeup_pattern_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_wow_remove_wakeup_pattern_send(void *wmi_hdl,
 		struct wow_remove_wakeup_pattern_params *param);
 
-#ifndef CONFIG_MCL
+/**
+ *  wmi_unified_packet_log_enable_send() - WMI request stats function
+ *  @param wmi_handle : handle to WMI.
+ *  @param PKTLOG_EVENT : PKTLOG Event
+ *  @param mac_id : MAC id corresponds to pdev id
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
 
@@ -575,11 +582,6 @@ QDF_STATUS wmi_unified_peer_based_pktlog_send(void *wmi_hdl,
 					      uint8_t *macaddr,
 					      uint8_t mac_id,
 					      uint8_t enb_dsb);
-#else
-QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct packet_enable_params *param);
-#endif
 
 QDF_STATUS wmi_unified_packet_log_disable_send(void *wmi_hdl, uint8_t mac_id);
 
@@ -784,7 +786,7 @@ QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_dfs_phyerr_filter_offload_en_cmd(void *wmi_hdl,
 			bool dfs_phyerr_filter_offload);
 
-#ifdef CONFIG_MCL
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 QDF_STATUS wmi_unified_pktlog_wmi_send_cmd(void *wmi_hdl,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   uint32_t cmd_id,

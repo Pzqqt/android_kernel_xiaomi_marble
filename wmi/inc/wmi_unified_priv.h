@@ -386,14 +386,8 @@ QDF_STATUS (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
 				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct stats_request_params *param);
 
-#ifdef CONFIG_WIN
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
-#else
-QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct packet_enable_params *param);
-#endif
 
 QDF_STATUS (*send_packet_log_disable_cmd)(wmi_unified_t wmi_handle,
 	uint8_t mac_id);
@@ -788,7 +782,9 @@ QDF_STATUS (*send_config_packet_filter_cmd)(wmi_unified_t wmi_handle,
 #ifdef CONFIG_MCL
 QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
 			wmi_bcn_send_from_host_cmd_fixed_param * param);
+#endif
 
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 QDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   WMI_CMD_ID cmd_id, uint8_t user_triggered);
