@@ -94,18 +94,6 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 				sme_rsp->messageType, cur_state);
 			csr_roam_check_for_link_status_change(mac_ctx,
 					sme_rsp);
-		} else if (eWNI_SME_GET_RSSI_REQ ==
-				sme_rsp->messageType) {
-			tAniGetRssiReq *pGetRssiReq =
-				(tAniGetRssiReq *) msg_buf;
-			if (!pGetRssiReq->rssiCallback) {
-				sme_err("rssiCallback is NULL");
-				return status;
-			}
-			((tCsrRssiCallback)(pGetRssiReq->rssiCallback))(
-					pGetRssiReq->lastRSSI,
-					pGetRssiReq->staId,
-					pGetRssiReq->pDevContext);
 		} else {
 			sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
 				sme_rsp->messageType, cur_state,

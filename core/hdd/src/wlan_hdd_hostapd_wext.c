@@ -2552,12 +2552,11 @@ iw_get_softap_linkspeed(struct net_device *dev,
  * @wrqu: iwpriv command parameter
  * @extra
  *
- * This function will call wlan_hdd_get_peer_rssi
+ * This function will call wlan_cfg80211_mc_cp_stats_get_peer_rssi
  * to get rssi
  *
  * Return: 0 on success, otherwise error value
  */
-#ifdef QCA_SUPPORT_CP_STATS
 static int
 __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 		   union iwreq_data *wrqu, char *extra)
@@ -2620,84 +2619,6 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 
 	return 0;
 }
-#else
-static int
-__iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
-		   union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = netdev_priv(dev);
-	struct hdd_context *hddctx;
-	char macaddrarray[MAC_ADDRESS_STR_LEN];
-	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BCAST_INIT;
-	int ret;
-	char *rssi_info_output = extra;
-	struct sir_peer_sta_info peer_sta_info;
-	struct sir_peer_info *rssi_info;
-	int i;
-	int buf;
-	int length;
-
-	hdd_enter();
-
-	hddctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hddctx);
-	if (ret != 0)
-		return ret;
-
-	ret = hdd_check_private_wext_control(hddctx, info);
-	if (0 != ret)
-		return ret;
-
-	hdd_debug("wrqu->data.length= %d", wrqu->data.length);
-
-	if (wrqu->data.length >= MAC_ADDRESS_STR_LEN - 1) {
-		if (copy_from_user(macaddrarray,
-				   wrqu->data.pointer,
-				   MAC_ADDRESS_STR_LEN - 1)) {
-			hdd_info("failed to copy data from user buffer");
-			return -EFAULT;
-		}
-
-		macaddrarray[MAC_ADDRESS_STR_LEN - 1] = '\0';
-		hdd_debug("%s", macaddrarray);
-
-		if (!mac_pton(macaddrarray, macaddress.bytes))
-			hdd_err("String to Hex conversion Failed");
-	}
-
-	ret = wlan_hdd_get_peer_rssi(adapter, &macaddress, &peer_sta_info);
-	if (ret) {
-		hdd_err("Unable to retrieve peer rssi: %d", ret);
-		return ret;
-	}
-	/*
-	 * The iwpriv tool default print is before mac addr and rssi.
-	 * Add '\n' before first rssi item to align the first rssi item
-	 * with others
-	 *
-	 * wlan     getRSSI:
-	 * [macaddr1] [rssi1]
-	 * [macaddr2] [rssi2]
-	 * [macaddr3] [rssi3]
-	 */
-	length = scnprintf(rssi_info_output, WE_MAX_STR_LEN, "\n");
-	rssi_info = &peer_sta_info.info[0];
-	for (i = 0; i < peer_sta_info.sta_num; i++) {
-		buf = scnprintf
-			(
-			rssi_info_output + length, WE_MAX_STR_LEN - length,
-			"[%pM] [%d]\n",
-			rssi_info[i].peer_macaddr.bytes,
-			rssi_info[i].rssi
-			);
-		length += buf;
-	}
-	wrqu->data.length = length + 1;
-	hdd_exit();
-
-	return 0;
-}
-#endif
 
 /**
  * iw_get_peer_rssi() - get station's rssi

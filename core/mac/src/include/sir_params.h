@@ -622,7 +622,10 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_HIDDEN_SSID_RESTART_RSP     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 379)
 
-#define SIR_HAL_GET_PEER_INFO               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 386)
+/*
+ * Unused SIR_HAL_ITC_MSG_TYPES_BEGIN + 380 to
+ * SIR_HAL_ITC_MSG_TYPES_BEGIN + 386
+ */
 #define SIR_HAL_GET_PEER_INFO_EXT           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 387)
 
 /* ARP Debug stats */

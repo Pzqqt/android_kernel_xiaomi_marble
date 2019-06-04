@@ -240,49 +240,6 @@ static inline int wma_nan_rsp_handler_callback(void *handle, uint8_t *event,
 #endif
 
 /**
- * wma_send_snr_request() - send request to fw to get RSSI stats
- * @wma_handle: wma handle
- * @pGetRssiReq: get RSSI request
- *
- * Return: QDF status
- */
-QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
-				void *pGetRssiReq)
-{
-	tAniGetRssiReq *pRssiBkUp = NULL;
-
-	/* command is in progress */
-	if (wma_handle->pGetRssiReq)
-		return QDF_STATUS_SUCCESS;
-
-	/* create a copy of csrRssiCallback to send rssi value
-	 * after wmi event
-	 */
-	if (pGetRssiReq) {
-		pRssiBkUp = qdf_mem_malloc(sizeof(tAniGetRssiReq));
-		if (!pRssiBkUp) {
-			wma_handle->pGetRssiReq = NULL;
-			return QDF_STATUS_E_NOMEM;
-		}
-		pRssiBkUp->sessionId =
-			((tAniGetRssiReq *) pGetRssiReq)->sessionId;
-		pRssiBkUp->rssiCallback =
-			((tAniGetRssiReq *) pGetRssiReq)->rssiCallback;
-		pRssiBkUp->pDevContext =
-			((tAniGetRssiReq *) pGetRssiReq)->pDevContext;
-		wma_handle->pGetRssiReq = (void *)pRssiBkUp;
-	}
-
-	if (wmi_unified_snr_request_cmd(wma_handle->wmi_handle)) {
-		WMA_LOGE("Failed to send host stats request to fw");
-		qdf_mem_free(pRssiBkUp);
-		wma_handle->pGetRssiReq = NULL;
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_get_snr() - get RSSI from fw
  * @psnr_req: request params
  *
@@ -797,51 +754,6 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS wma_get_peer_info(WMA_HANDLE handle,
-				struct sir_peer_info_req *peer_info_req)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle)handle;
-	wmi_request_stats_cmd_fixed_param *cmd;
-	wmi_buf_t  wmi_buf;
-	uint32_t  len;
-	uint8_t *buf_ptr;
-
-	if (!wma_handle || !wma_handle->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue get rssi",
-			__func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	len  = sizeof(wmi_request_stats_cmd_fixed_param);
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf)
-		return QDF_STATUS_E_NOMEM;
-
-	buf_ptr = (uint8_t *)wmi_buf_data(wmi_buf);
-
-	cmd = (wmi_request_stats_cmd_fixed_param *)buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_request_stats_cmd_fixed_param));
-
-	cmd->stats_id = WMI_REQUEST_PEER_STAT;
-	cmd->vdev_id = peer_info_req->sessionid;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_info_req->peer_macaddr.bytes,
-				   &cmd->peer_macaddr);
-	wma_handle->get_sta_peer_info = true;
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-				WMI_REQUEST_STATS_CMDID)) {
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_mem_copy(&(wma_handle->peer_macaddr),
-					&(peer_info_req->peer_macaddr),
-					QDF_MAC_ADDR_SIZE);
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -9937,18 +9937,6 @@ void csr_roaming_state_msg_processor(struct mac_context *mac, void *msg_buf)
 		qdf_mem_free(roam_info);
 		roam_info = NULL;
 		break;
-	case eWNI_SME_GET_RSSI_REQ:
-	{
-		tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *)msg_buf;
-
-		if (pGetRssiReq->rssiCallback)
-			((tCsrRssiCallback) pGetRssiReq->rssiCallback)
-				(pGetRssiReq->lastRSSI, pGetRssiReq->staId,
-				pGetRssiReq->pDevContext);
-		else
-			sme_err("pGetRssiReq->rssiCallback is NULL");
-	}
-	break;
 	case eWNI_SME_TRIGGER_SAE:
 		sme_debug("Invoke SAE callback");
 		csr_sae_callback(mac, pSmeRsp);
@@ -10919,55 +10907,6 @@ bool csr_roam_issue_wm_status_change(struct mac_context *mac, uint32_t sessionId
 		csr_set_default_dot11_mode(mac);
 	} while (0);
 	return fCommandQueued;
-}
-
-static QDF_STATUS csr_send_snr_request(void *pGetRssiReq)
-{
-	void *wma_handle;
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"wma_handle is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (QDF_STATUS_SUCCESS !=
-		wma_send_snr_request(wma_handle, pGetRssiReq)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Failed to Trigger wma stats request");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* dont send success, otherwise call back
-	 * will released with out values
-	 */
-	return QDF_STATUS_E_BUSY;
-}
-
-static void csr_update_rssi(struct mac_context *mac, void *pMsg)
-{
-	int8_t rssi = 0;
-	tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) pMsg;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-
-	if (pGetRssiReq) {
-		qdf_status = csr_send_snr_request(pGetRssiReq);
-
-		if (pGetRssiReq->rssiCallback) {
-			if (qdf_status != QDF_STATUS_E_BUSY)
-				((tCsrRssiCallback) (pGetRssiReq->rssiCallback))
-					(rssi, pGetRssiReq->staId,
-					pGetRssiReq->pDevContext);
-			else
-				sme_debug("rssi request is posted. waiting for reply");
-		} else {
-			sme_err("GetRssiReq->rssiCallback is NULL");
-			return;
-		}
-	} else
-		sme_err("pGetRssiReq is NULL");
-
 }
 
 static void csr_update_snr(struct mac_context *mac, void *pMsg)
@@ -12448,10 +12387,6 @@ void csr_roam_check_for_link_status_change(struct mac_context *mac,
 		csr_tsm_stats_rsp_processor(mac, pSirMsg);
 		break;
 #endif /* FEATURE_WLAN_ESE */
-	case eWNI_SME_GET_RSSI_REQ:
-		sme_debug("GetRssiReq from self");
-		csr_update_rssi(mac, pSirMsg);
-		break;
 	case eWNI_SME_GET_SNR_REQ:
 		sme_debug("GetSnrReq from self");
 		csr_update_snr(mac, pSirMsg);
@@ -17714,53 +17649,6 @@ struct csr_statsclient_reqinfo *csr_roam_insert_entry_into_list(
 	return pNewStaEntry;
 }
 #endif /* QCA_SUPPORT_CP_STATS */
-
-QDF_STATUS csr_get_rssi(struct mac_context *mac,
-			tCsrRssiCallback callback,
-			uint8_t staId,
-			struct qdf_mac_addr bssId,
-			int8_t lastRSSI, void *pContext)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg msg = {0};
-	uint32_t sessionId;
-	tAniGetRssiReq *pMsg;
-
-	status = csr_roam_get_session_id_from_bssid(mac, &bssId, &sessionId);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		callback(lastRSSI, staId, pContext);
-		sme_err("Failed to get SessionId");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pMsg = qdf_mem_malloc(sizeof(tAniGetRssiReq));
-	if (!pMsg) {
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	pMsg->msgType = eWNI_SME_GET_RSSI_REQ;
-	pMsg->msgLen = (uint16_t) sizeof(tAniGetRssiReq);
-	pMsg->sessionId = sessionId;
-	pMsg->staId = staId;
-	pMsg->rssiCallback = callback;
-	pMsg->pDevContext = pContext;
-	/*
-	 * store RSSI at time of calling, so that if RSSI request cannot
-	 * be sent to firmware, this value can be used to return immediately
-	 */
-	pMsg->lastRSSI = lastRSSI;
-	msg.type = eWNI_SME_GET_RSSI_REQ;
-	msg.bodyptr = pMsg;
-	msg.reserved = 0;
-	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_SME,
-							 &msg)) {
-		qdf_mem_free((void *)pMsg);
-		status = QDF_STATUS_E_FAILURE;
-	}
-	return status;
-}
 
 QDF_STATUS csr_get_snr(struct mac_context *mac,
 		       tCsrSnrCallback callback,

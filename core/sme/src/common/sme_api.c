@@ -3484,41 +3484,6 @@ QDF_STATUS sme_roam_set_default_key_index(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-
-/**
- * sme_get_rssi() - API to retrieve current RSSI
- * @mac_handle: Opaque handle to the global MAC context
- * @callback: SME sends back the requested stats using the callback
- * @staId: The station ID for which the RSSI is requested for
- * @bssid: The bssid of the connected session
- * @lastRSSI: RSSI value at time of request. In case fw cannot provide
- *		      RSSI, do not hold up but return this value.
- * @pContext: user context to be passed back along with the callback
- *
- * A wrapper function that client calls to register a callback to get RSSI
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_get_rssi(mac_handle_t mac_handle,
-			tCsrRssiCallback callback, uint8_t staId,
-			struct qdf_mac_addr bssId, int8_t lastRSSI,
-			void *pContext)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_GET_RSSI, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_rssi(mac, callback,
-				      staId, bssId, lastRSSI,
-				      pContext);
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
 /*
  * sme_get_snr() -
  * A wrapper function that client calls to register a callback to get SNR
@@ -7484,56 +7449,6 @@ QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle,
 	mac->sme.link_speed_cb = cb;
 	status = wma_get_link_speed(wma_handle, req);
 	sme_release_global_lock(&mac->sme);
-	return status;
-}
-
-QDF_STATUS
-sme_get_peer_info(mac_handle_t mac_handle,
-		  struct sir_peer_info_req req,
-		  void *context,
-		  void (*callbackfn)(struct sir_peer_info_resp *param,
-				     void *pcontext))
-{
-
-	QDF_STATUS status;
-	QDF_STATUS qdf_status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if (!callbackfn) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: Indication Call back is NULL",
-				__func__);
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		mac->sme.pget_peer_info_ind_cb = callbackfn;
-		mac->sme.pget_peer_info_cb_context = context;
-
-		/* serialize the req through MC thread */
-		message.bodyptr = qdf_mem_malloc(sizeof(req));
-		if (!message.bodyptr) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-		qdf_mem_copy(message.bodyptr, &req, sizeof(req));
-		message.type = WMA_GET_PEER_INFO;
-		message.reserved = 0;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: Post get peer info msg fail", __func__);
-			qdf_mem_free(message.bodyptr);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
 	return status;
 }
 

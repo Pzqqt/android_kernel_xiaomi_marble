@@ -948,9 +948,6 @@ QDF_STATUS csr_get_statistics(struct mac_context *mac,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
 		uint8_t staId, void *pContext, uint8_t sessionId);
-QDF_STATUS csr_get_rssi(struct mac_context *mac, tCsrRssiCallback callback,
-		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
-		void *pContext);
 QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 QDF_STATUS csr_get_config_param(struct mac_context *mac,

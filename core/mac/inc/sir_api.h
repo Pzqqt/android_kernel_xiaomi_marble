@@ -2605,18 +2605,6 @@ struct link_speed_info {
 };
 
 /**
- * struct sir_peer_info_req - peer info request struct
- * @peer_macaddr: MAC address
- * @sessionid: vdev id
- *
- * peer info request message's struct
- */
-struct sir_peer_info_req {
-	struct qdf_mac_addr peer_macaddr;
-	uint8_t sessionid;
-};
-
-/**
  * struct sir_peer_info - peer information struct
  * @peer_macaddr: MAC address
  * @rssi: rssi
@@ -2701,17 +2689,6 @@ struct sir_peer_info_ext {
 struct sir_peer_info_ext_resp {
 	uint8_t count;
 	struct sir_peer_info_ext info[0];
-};
-
-/**
- * @sta_num: number of peer station which has valid info
- * @info: peer information
- *
- * all SAP peer station's information retrieved
- */
-struct sir_peer_sta_info {
-	uint8_t sta_num;
-	struct sir_peer_info info[MAX_PEER_STA];
 };
 
 /**

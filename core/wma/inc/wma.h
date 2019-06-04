@@ -1642,9 +1642,6 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params);
 
-/* added to get average snr for both data and beacon */
-QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle, void *pGetRssiReq);
-
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle);
 void wma_log_completion_timeout(void *data);
 
