@@ -110,16 +110,6 @@ static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
 	return to_sde_kms(priv->kms);
 }
 
-static inline struct drm_encoder *_sde_crtc_get_encoder(struct drm_crtc *crtc)
-{
-	struct drm_encoder *enc;
-
-	drm_for_each_encoder_mask(enc, crtc->dev, crtc->state->encoder_mask)
-		return enc;
-
-	return NULL;
-}
-
 /**
  * sde_crtc_calc_fps() - Calculates fps value.
  * @sde_crtc   : CRTC structure
@@ -3314,12 +3304,16 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(state);
-	enc = _sde_crtc_get_encoder(crtc);
 	sde_kms = _sde_crtc_get_kms(crtc);
+
+	if (!sde_kms) {
+		SDE_ERROR("invalid sde_kms\n");
+		return;
+	}
 
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
-	if (sde_kms && enc)
+	drm_for_each_encoder_mask(enc, crtc->dev, state->encoder_mask)
 		sde_rm_release(&sde_kms->rm, enc, true);
 
 	__drm_atomic_helper_crtc_destroy_state(state);
@@ -4248,18 +4242,18 @@ static int _sde_crtc_check_secure_blend_config(struct drm_crtc *crtc,
 }
 
 static int _sde_crtc_check_secure_single_encoder(struct drm_crtc *crtc,
-	int fb_sec_dir)
+	struct drm_crtc_state *state, int fb_sec_dir)
 {
 	struct drm_encoder *encoder;
 	int encoder_cnt = 0;
 
 	if (fb_sec_dir) {
 		drm_for_each_encoder_mask(encoder, crtc->dev,
-			crtc->state->encoder_mask)
+				state->encoder_mask)
 			encoder_cnt++;
 
 		if (encoder_cnt > MAX_ALLOWED_ENCODER_CNT_PER_SECURE_CRTC) {
-			SDE_ERROR("crtc%d, invalid virtual encoder crtc%d\n",
+			SDE_ERROR("crtc:%d invalid number of encoders:%d\n",
 				DRMID(crtc), encoder_cnt);
 			return -EINVAL;
 		}
@@ -4275,11 +4269,9 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 	struct drm_encoder *encoder;
 	int is_video_mode = false;
 
-	drm_for_each_encoder_mask(encoder, crtc->dev,
-			crtc->state->encoder_mask) {
+	drm_for_each_encoder_mask(encoder, crtc->dev, state->encoder_mask)
 		is_video_mode |= sde_encoder_check_curr_mode(encoder,
-			MSM_DISPLAY_VIDEO_MODE);
-	}
+						MSM_DISPLAY_VIDEO_MODE);
 
 	/*
 	 * In video mode check for null commit before transition
@@ -4347,7 +4339,7 @@ static int _sde_crtc_check_secure_state(struct drm_crtc *crtc,
 	 * secure_crtc is not allowed in a shared toppolgy
 	 * across different encoders.
 	 */
-	rc = _sde_crtc_check_secure_single_encoder(crtc, fb_sec_dir);
+	rc = _sde_crtc_check_secure_single_encoder(crtc, state, fb_sec_dir);
 	if (rc)
 		return rc;
 
