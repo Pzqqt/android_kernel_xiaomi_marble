@@ -466,6 +466,16 @@ QDF_STATUS p2p_msg_flush_callback(struct scheduler_msg *msg);
  */
 QDF_STATUS p2p_event_flush_callback(struct scheduler_msg *msg);
 
+/**
+ * p2p_check_oui_and_force_1x1() - Function to get P2P client device
+ * attributes from assoc request frame IE passed in.
+ * @assoc_ie:     Pointer to the IEs in the association req frame
+ * @assoc_ie_len: Total length of the IE in association req frame
+ *
+ * Return: true if the OUI is present else false
+ */
+bool p2p_check_oui_and_force_1x1(uint8_t *assoc_ie, uint32_t assoc_ie_len);
+
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * p2p_process_lo_stop() - Process lo stop event

@@ -220,7 +220,7 @@ static QDF_STATUS p2p_check_and_update_channel(struct tx_action_context *tx_ctx)
  *
  * Return: pointer to p2p ie
  */
-static const uint8_t *p2p_get_p2pie_ptr(const uint8_t *ie, uint16_t ie_len)
+const uint8_t *p2p_get_p2pie_ptr(const uint8_t *ie, uint16_t ie_len)
 {
 	return wlan_get_vendor_ie_ptr_from_oui(P2P_OUI,
 			P2P_OUI_SIZE, ie, ie_len);
