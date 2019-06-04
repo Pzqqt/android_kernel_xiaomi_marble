@@ -12,6 +12,7 @@
 #include <linux/uaccess.h>
 #include <linux/dma-buf.h>
 #include <linux/slab.h>
+#include <linux/sched/clock.h>
 
 #include "sde_dbg.h"
 #include "sde_trace.h"
@@ -74,7 +75,7 @@ void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 		goto exit;
 
 	log = &evtlog->logs[evtlog->curr];
-	log->time = ktime_to_us(ktime_get());
+	log->time = local_clock();
 	log->name = name;
 	log->line = line;
 	log->data_cnt = 0;
