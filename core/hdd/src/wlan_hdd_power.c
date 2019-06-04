@@ -2125,18 +2125,11 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	return errno;
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
 {
 	wlan_cfg80211_mc_cp_stats_get_tx_power(adapter->vdev, dbm);
 }
-#else
-static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
-{
-	wlan_hdd_get_class_astats(adapter);
-	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
-}
-#endif
+
 /**
  * __wlan_hdd_cfg80211_get_txpower() - get TX power
  * @wiphy: Pointer to wiphy
