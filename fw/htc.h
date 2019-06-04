@@ -120,6 +120,11 @@ typedef PREPACK struct _HTC_FRAME_HDR{
 #define HTC_FLAGS_SEND_BUNDLE        (1 << 1) /* start or part of bundle */
 #define HTC_FLAGS_SEQ_CHECK          (1 << 2) /* seq check on rx side */
 #define HTC_FLAGS_CRC_CHECK          (1 << 3) /* CRC check on rx side */
+/* HTC_FLAGS_PADDING_CHECK
+ * Set by the sender to inform the receiver that the HTC packet begins
+ * with continuation (block) alignment padding from the prior HTC packet.
+ */
+#define HTC_FLAGS_PADDING_CHECK      (1 << 4)
     /* receive direction */
 #define HTC_FLAGS_RECV_1MORE_BLOCK   (1 << 0) /* bit 0 bundle trailer present */
 #define HTC_FLAGS_RECV_TRAILER       (1 << 1) /* bit 1 trailer data present */
