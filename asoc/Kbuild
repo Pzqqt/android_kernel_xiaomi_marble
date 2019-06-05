@@ -86,7 +86,7 @@ endif
 # for SM6150 sound card driver
 ifdef CONFIG_SND_SOC_SM6150
 	MACHINE_OBJS += sm6150.o
-	MACHINE_OBJS += sa8155.o
+	MACHINE_OBJS += sa6155.o
 	MACHINE_OBJS += machine_615x_init.o
 endif
 

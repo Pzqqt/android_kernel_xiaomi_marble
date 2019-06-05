@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License version 2 and
@@ -19,14 +19,14 @@
 static int __init audio_machine_615x_init(void)
 {
 	sm6150_init();
-	sa8155_init();
+	sa6155_init();
 	return 0;
 }
 
 static void audio_machine_615x_exit(void)
 {
 	sm6150_exit();
-	sa8155_exit();
+	sa6155_exit();
 }
 
 module_init(audio_machine_615x_init);
