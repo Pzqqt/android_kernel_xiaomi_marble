@@ -1349,7 +1349,7 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 }
 
 static void dp_panel_dsc_populate_static_params(
-		struct msm_display_dsc_info *dsc)
+		struct msm_display_dsc_info *dsc, struct dp_panel *panel)
 {
 	int bpp, bpc;
 	int mux_words_size;
@@ -1361,6 +1361,7 @@ static void dp_panel_dsc_populate_static_params(
 	int data;
 	int final_value, final_scale;
 	int ratio_index, mod_offset;
+	int line_buf_depth_raw, line_buf_depth;
 
 	dsc->version = 0x11;
 	dsc->scr_rev = 0;
@@ -1411,7 +1412,10 @@ static void dp_panel_dsc_populate_static_params(
 	else
 		mux_words_size = 48;		/* bpc == 8/10 */
 
-	dsc->line_buf_depth = bpc + 1;
+	line_buf_depth_raw = panel->dsc_dpcd[5] & 0x0f;
+	line_buf_depth = (line_buf_depth_raw == 8) ? 8 :
+			(line_buf_depth_raw + 9);
+	dsc->line_buf_depth = min(line_buf_depth, dsc->bpc + 1);
 
 	if (bpc == 8) {
 		dsc->input_10_bits = 0;
@@ -2894,7 +2898,8 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 			return;
 		}
 
-		dp_panel_dsc_populate_static_params(&comp_info->dsc_info);
+		dp_panel_dsc_populate_static_params(&comp_info->dsc_info,
+				dp_panel);
 		dp_panel_dsc_pclk_param_calc(dp_panel,
 				&comp_info->dsc_info,
 				comp_info->comp_ratio,
