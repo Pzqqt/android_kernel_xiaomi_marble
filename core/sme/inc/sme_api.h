@@ -1585,6 +1585,7 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: SME session id
  * @nth_value: Beacon report period
+ * @do_not_resume: beacon reporting resume after a pause is completed
  *
  * This function remove beacon filter. It allow fw to send
  * all beacons from connected peer to driver.
@@ -1593,7 +1594,8 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 				     uint32_t vdev_id,
-				     uint32_t nth_value);
+				     uint32_t nth_value,
+				     bool do_not_resume);
 
 /**
  * sme_is_beacon_report_started() - Check bcn recv started
@@ -1606,6 +1608,18 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
  */
 bool sme_is_beacon_report_started(mac_handle_t mac_handle,
 				  uint32_t session_id);
+
+/**
+ * sme_is_beacon_reporting_do_not_resume() - Check auto resume allowed or not
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ *
+ * This function is to check auto resume of beacon reporting is allowed or not.
+ *
+ * Return: true on success
+ */
+bool sme_is_beacon_reporting_do_not_resume(mac_handle_t mac_handle,
+					   uint32_t session_id);
 
 /**
  * stop_beacon_report() - To stop beacon report
@@ -1623,6 +1637,13 @@ bool sme_is_beacon_report_started(mac_handle_t mac_handle,
 				  uint32_t session_id)
 {
 	return true;
+}
+
+static inline
+bool sme_is_beacon_reporting_do_not_resume(mac_handle_t mac_handle,
+					   uint32_t session_id)
+{
+	return false;
 }
 
 static inline

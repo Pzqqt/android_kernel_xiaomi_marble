@@ -567,6 +567,7 @@ struct csr_disconnect_stats {
  * struct csr_roam_session - CSR per-vdev context
  * @vdev_id: ID of the vdev for which this entry is applicable
  * @is_bcn_recv_start: Allow to process bcn recv indication
+ * @beacon_report_do_not_resume: Do not resume the beacon reporting after scan
  */
 struct csr_roam_session {
 	union {
@@ -642,6 +643,7 @@ struct csr_roam_session {
 	qdf_mc_timer_t hTimerRoaming;
 #ifdef WLAN_BCN_RECV_FEATURE
 	bool is_bcn_recv_start;
+	bool beacon_report_do_not_resume;
 #endif
 	/* the roamResult that is used when the roaming timer fires */
 	eCsrRoamResult roamResult;

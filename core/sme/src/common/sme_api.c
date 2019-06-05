@@ -12634,7 +12634,8 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 
 #ifdef WLAN_BCN_RECV_FEATURE
 QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
-				     uint32_t vdev_id, uint32_t nth_value)
+				     uint32_t vdev_id, uint32_t nth_value,
+				     bool do_not_resume)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
@@ -12660,6 +12661,7 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 			return QDF_STATUS_SUCCESS;
 		}
 		session->is_bcn_recv_start = true;
+		session->beacon_report_do_not_resume = do_not_resume;
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 
@@ -12676,6 +12678,7 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 		status = sme_acquire_global_lock(&mac_ctx->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			session->is_bcn_recv_start = false;
+			session->beacon_report_do_not_resume = false;
 			sme_release_global_lock(&mac_ctx->sme);
 		}
 		sme_err("WMI_VDEV_PARAM_NTH_BEACON_TO_HOST %d", ret);
@@ -12692,16 +12695,12 @@ void sme_stop_beacon_report(mac_handle_t mac_handle, uint32_t session_id)
 	QDF_STATUS status;
 	int ret;
 
-	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-		sme_err("CSR session not valid: %d", session_id);
-		return;
-	}
-
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!session) {
 		sme_err("vdev_id %d not found", session_id);
 		return;
 	}
+
 	ret = sme_cli_set_command(session_id,
 				  WMI_VDEV_PARAM_NTH_BEACON_TO_HOST, 0,
 				  VDEV_CMD);
@@ -12710,6 +12709,7 @@ void sme_stop_beacon_report(mac_handle_t mac_handle, uint32_t session_id)
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		session->is_bcn_recv_start = false;
+		session->beacon_report_do_not_resume = false;
 		sme_release_global_lock(&mac_ctx->sme);
 	}
 }
@@ -12719,10 +12719,25 @@ bool sme_is_beacon_report_started(mac_handle_t mac_handle, uint32_t session_id)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
 
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sme_err("vdev_id %d not found", session_id);
+		return false;
+	}
+
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("CSR session not valid: %d", session_id);
 		return false;
 	}
+
+	return session->is_bcn_recv_start;
+}
+
+bool sme_is_beacon_reporting_do_not_resume(mac_handle_t mac_handle,
+					   uint32_t session_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!session) {
@@ -12730,7 +12745,12 @@ bool sme_is_beacon_report_started(mac_handle_t mac_handle, uint32_t session_id)
 		return false;
 	}
 
-	return session->is_bcn_recv_start;
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session not valid: %d", session_id);
+		return false;
+	}
+
+	return session->beacon_report_do_not_resume;
 }
 #endif
 
