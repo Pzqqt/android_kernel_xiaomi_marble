@@ -47,6 +47,8 @@
 #define MDP_WD_TIMER_4_CTL2               0x444
 #define MDP_WD_TIMER_4_LOAD_VALUE         0x448
 
+#define LTM_SW_FUSE_OFFSET 0x10
+
 #define MDP_TICK_COUNT                    16
 #define XO_CLK_RATE                       19200
 #define MS_TICKS_IN_SEC                   1000
@@ -620,3 +622,33 @@ void sde_hw_mdp_destroy(struct sde_hw_mdp *mdp)
 	kfree(mdp);
 }
 
+struct sde_hw_sw_fuse *sde_hw_sw_fuse_init(void __iomem *addr,
+	u32 sw_fuse_len, const struct sde_mdss_cfg *m)
+{
+	struct sde_hw_sw_fuse *c;
+
+	c = kzalloc(sizeof(*c), GFP_KERNEL);
+	if (!c)
+		return ERR_PTR(-ENOMEM);
+
+	c->hw.base_off = addr;
+	c->hw.blk_off = 0;
+	c->hw.length = sw_fuse_len;
+	c->hw.hwversion = m->hwversion;
+
+	return c;
+}
+
+void sde_hw_sw_fuse_destroy(struct sde_hw_sw_fuse *sw_fuse)
+{
+	kfree(sw_fuse);
+}
+
+u32 sde_hw_get_ltm_sw_fuse_value(struct sde_hw_sw_fuse *sw_fuse)
+{
+	u32 ltm_sw_fuse = 0;
+
+	if (sw_fuse)
+		ltm_sw_fuse = SDE_REG_READ(&sw_fuse->hw, LTM_SW_FUSE_OFFSET);
+	return ltm_sw_fuse;
+}

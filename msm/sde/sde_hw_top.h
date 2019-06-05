@@ -234,6 +234,12 @@ struct sde_hw_sid {
 	struct sde_hw_blk_reg_map hw;
 };
 
+#define SW_FUSE_ENABLE 0x1
+struct sde_hw_sw_fuse {
+	/* sw fuse base */
+	struct sde_hw_blk_reg_map hw;
+};
+
 /**
  * sde_hw_sid_rotator_set - initialize the sid blk reg map
  * @addr: Mapped register io address
@@ -271,4 +277,23 @@ struct sde_hw_mdp *sde_hw_mdptop_init(enum sde_mdp idx,
 
 void sde_hw_mdp_destroy(struct sde_hw_mdp *mdp);
 
+/**
+ * sde_hw_sw_fuse_init - initialize the sw fuse blk reg map
+ * @addr: Mapped register io address
+ * @sw_fuse_len: Length of block
+ * @m: Pointer to mdss catalog data
+ */
+struct sde_hw_sw_fuse *sde_hw_sw_fuse_init(void __iomem *addr,
+		u32 sw_fuse_len, const struct sde_mdss_cfg *m);
+/**
+ * sde_hw_sw_fuse_destroy - free memory for sw fuse
+ * @sw_fuse: sde_hw_sw_fuse
+ */
+void sde_hw_sw_fuse_destroy(struct sde_hw_sw_fuse *sw_fuse);
+
+/**
+ * sde_hw_get_ltm_sw_fuse_value - read LTM sw fuse register value
+ * @sw_fuse: sde_hw_sw_fuse
+ */
+u32 sde_hw_get_ltm_sw_fuse_value(struct sde_hw_sw_fuse *sw_fuse);
 #endif /*_SDE_HW_TOP_H */
