@@ -127,12 +127,16 @@ static void sde_hw_setup_pp_split(struct sde_hw_mdp *mdp,
 	if (!mdp || !cfg)
 		return;
 
-	if (cfg->en && cfg->pp_split_slave != INTF_MAX) {
+	if (cfg->split_link_en) {
+		ppb_config |= BIT(16); /* split enable */
+		ppb_control = BIT(5); /* horz split*/
+	} else if (cfg->en && cfg->pp_split_slave != INTF_MAX) {
 		ppb_config |= (cfg->pp_split_slave - INTF_0 + 1) << 20;
 		ppb_config |= BIT(16); /* split enable */
 		ppb_control = BIT(5); /* horz split*/
 	}
-	if (cfg->pp_split_index) {
+
+	if (cfg->pp_split_index && !cfg->split_link_en) {
 		SDE_REG_WRITE(&mdp->hw, PPB0_CONFIG, 0x0);
 		SDE_REG_WRITE(&mdp->hw, PPB0_CNTL, 0x0);
 		SDE_REG_WRITE(&mdp->hw, PPB1_CONFIG, ppb_config);
@@ -430,6 +434,18 @@ static void sde_hw_intf_audio_select(struct sde_hw_mdp *mdp)
 	SDE_REG_WRITE(c, HDMI_DP_CORE_SELECT, 0x1);
 }
 
+static void sde_hw_mdp_events(struct sde_hw_mdp *mdp, bool enable)
+{
+	struct sde_hw_blk_reg_map *c;
+
+	if (!mdp)
+		return;
+
+	c = &mdp->hw;
+
+	SDE_REG_WRITE(c, HW_EVENTS_CTL, enable);
+}
+
 struct sde_hw_sid *sde_hw_sid_init(void __iomem *addr,
 	u32 sid_len, const struct sde_mdss_cfg *m)
 {
@@ -512,6 +528,7 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 	ops->setup_dce = sde_hw_setup_dce;
 	ops->reset_ubwc = sde_hw_reset_ubwc;
 	ops->intf_audio_select = sde_hw_intf_audio_select;
+	ops->set_mdp_hw_events = sde_hw_mdp_events;
 	if (cap & BIT(SDE_MDP_VSYNC_SEL))
 		ops->setup_vsync_source = sde_hw_setup_vsync_source;
 	else
