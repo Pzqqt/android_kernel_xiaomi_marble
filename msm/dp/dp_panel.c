@@ -2480,7 +2480,10 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 {
 	int rc = 0;
 	struct dp_panel_private *panel;
-	struct dp_catalog_hdr_data *hdr;
+	struct drm_msm_ext_hdr_metadata *hdr_meta;
+	struct dp_sdp_header *dhdr_vsif_sdp;
+	struct dp_sdp_header *shdr_if_sdp;
+	struct dp_catalog_vsc_sdp_colorimetry *vsc_colorimetry;
 	struct drm_connector *connector;
 	struct sde_connector_state *c_state;
 
@@ -2495,14 +2498,22 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	}
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-	hdr = &panel->catalog->hdr_data;
+	hdr_meta = &panel->catalog->hdr_meta;
+	dhdr_vsif_sdp = &panel->catalog->dhdr_vsif_sdp;
+	shdr_if_sdp = &panel->catalog->shdr_if_sdp;
+	vsc_colorimetry = &panel->catalog->vsc_colorimetry;
 
 	if (!panel->custom_edid && dp_panel->edid_ctrl->edid)
 		sde_free_edid((void **)&dp_panel->edid_ctrl);
 
 	dp_panel_set_stream_info(dp_panel, DP_STREAM_MAX, 0, 0, 0, 0);
 	memset(&dp_panel->pinfo, 0, sizeof(dp_panel->pinfo));
-	memset(&hdr->hdr_meta, 0, sizeof(hdr->hdr_meta));
+	memset(hdr_meta, 0, sizeof(struct drm_msm_ext_hdr_metadata));
+	memset(dhdr_vsif_sdp, 0, sizeof(struct dp_sdp_header));
+	memset(shdr_if_sdp, 0, sizeof(struct dp_sdp_header));
+	memset(vsc_colorimetry, 0,
+		sizeof(struct dp_catalog_vsc_sdp_colorimetry));
+
 	panel->panel_on = false;
 
 	connector = dp_panel->connector;
@@ -2646,14 +2657,76 @@ static u32 dp_panel_calc_dhdr_pkt_limit(struct dp_panel *dp_panel,
 	return calc_pkt_limit;
 }
 
+static void dp_panel_setup_colorimetry_sdp(struct dp_panel *dp_panel)
+{
+	struct dp_panel_private *panel;
+	struct dp_catalog_vsc_sdp_colorimetry *hdr_colorimetry;
+	u8 bpc;
+
+	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
+	hdr_colorimetry = &panel->catalog->vsc_colorimetry;
+
+	hdr_colorimetry->header.HB0 = 0x00;
+	hdr_colorimetry->header.HB1 = 0x07;
+	hdr_colorimetry->header.HB2 = 0x05;
+	hdr_colorimetry->header.HB3 = 0x13;
+
+	/* VSC SDP Payload for DB16 */
+	hdr_colorimetry->data[16] = (RGB << 4) | ITU_R_BT_2020_RGB;
+
+	/* VSC SDP Payload for DB17 */
+	hdr_colorimetry->data[17] = (CEA << 7);
+	bpc = (dp_panel->pinfo.bpp / 3);
+
+	switch (bpc) {
+	default:
+	case 10:
+		hdr_colorimetry->data[17] |= BIT(1);
+		break;
+	case 8:
+		hdr_colorimetry->data[17] |= BIT(0);
+		break;
+	case 6:
+		hdr_colorimetry->data[17] |= 0;
+		break;
+	}
+
+	/* VSC SDP Payload for DB18 */
+	hdr_colorimetry->data[18] = GRAPHICS;
+}
+
+static void dp_panel_setup_hdr_if(struct dp_panel_private *panel)
+{
+	struct dp_sdp_header *shdr_if;
+
+	shdr_if = &panel->catalog->shdr_if_sdp;
+
+	shdr_if->HB0 = 0x00;
+	shdr_if->HB1 = 0x87;
+	shdr_if->HB2 = 0x1D;
+	shdr_if->HB3 = 0x13 << 2;
+}
+
+static void dp_panel_setup_dhdr_vsif(struct dp_panel_private *panel)
+{
+	struct dp_sdp_header *dhdr_vsif;
+
+	dhdr_vsif = &panel->catalog->dhdr_vsif_sdp;
+
+	dhdr_vsif->HB0 = 0x00;
+	dhdr_vsif->HB1 = 0x81;
+	dhdr_vsif->HB2 = 0x1D;
+	dhdr_vsif->HB3 = 0x13 << 2;
+}
+
 static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 		struct drm_msm_ext_hdr_metadata *hdr_meta,
 		bool dhdr_update, u64 core_clk_rate)
 {
 	int rc = 0, max_pkts = 0;
 	struct dp_panel_private *panel;
-	struct dp_catalog_hdr_data *hdr;
 	struct dp_dhdr_maxpkt_calc_input input;
+	struct drm_msm_ext_hdr_metadata *catalog_hdr_meta;
 
 	if (!dp_panel) {
 		DP_ERR("invalid input\n");
@@ -2662,11 +2735,12 @@ static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 	}
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-	hdr = &panel->catalog->hdr_data;
+
+	catalog_hdr_meta = &panel->catalog->hdr_meta;
 
 	/* use cached meta data in case meta data not provided */
 	if (!hdr_meta) {
-		if (hdr->hdr_meta.hdr_state)
+		if (catalog_hdr_meta->hdr_state)
 			goto cached;
 		else
 			goto end;
@@ -2674,41 +2748,20 @@ static int dp_panel_setup_hdr(struct dp_panel *dp_panel,
 
 	panel->hdr_state = hdr_meta->hdr_state;
 
-	hdr->vsc_header_byte0 = 0x00;
-	hdr->vsc_header_byte1 = 0x07;
-	hdr->vsc_header_byte2 = 0x05;
-	hdr->vsc_header_byte3 = 0x13;
+	dp_panel_setup_colorimetry_sdp(dp_panel);
 
-	hdr->shdr_header_byte0 = 0x00;
-	hdr->shdr_header_byte1 = 0x87;
-	hdr->shdr_header_byte2 = 0x1D;
-	hdr->shdr_header_byte3 = 0x13 << 2;
+	dp_panel_setup_hdr_if(panel);
 
-	/* VSC SDP Payload for DB16 */
-	hdr->pixel_encoding = RGB;
-	hdr->colorimetry = ITU_R_BT_2020_RGB;
-
-	/* VSC SDP Payload for DB17 */
-	hdr->dynamic_range = CEA;
-
-	/* VSC SDP Payload for DB18 */
-	hdr->content_type = GRAPHICS;
-
-	hdr->bpc = dp_panel->pinfo.bpp / 3;
-
-	hdr->version = 0x01;
-	hdr->length = 0x1A;
-
-	if (panel->hdr_state)
-		memcpy(&hdr->hdr_meta, hdr_meta, sizeof(hdr->hdr_meta));
-	else
-		memset(&hdr->hdr_meta, 0, sizeof(hdr->hdr_meta));
+	if (panel->hdr_state) {
+		memcpy(catalog_hdr_meta, hdr_meta,
+			   sizeof(struct drm_msm_ext_hdr_metadata));
+	} else {
+		memset(catalog_hdr_meta, 0,
+			sizeof(struct drm_msm_ext_hdr_metadata));
+	}
 cached:
 	if (dhdr_update) {
-		hdr->vscext_header_byte0 = 0x00;
-		hdr->vscext_header_byte1 = 0x81;
-		hdr->vscext_header_byte2 = 0x1D;
-		hdr->vscext_header_byte3 = 0x13 << 2;
+		dp_panel_setup_dhdr_vsif(panel);
 
 		input.mdp_clk = core_clk_rate;
 		input.lclk = dp_panel->link_info.rate;

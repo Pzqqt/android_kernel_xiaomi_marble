@@ -6,7 +6,6 @@
 
 #include <linux/delay.h>
 #include <linux/iopoll.h>
-#include <drm/drm_dp_helper.h>
 
 #include "dp_catalog.h"
 #include "dp_reg.h"
@@ -496,11 +495,11 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 		mst_offset = MMSS_DP1_VSCEXT_0 - MMSS_DP_VSCEXT_0;
 
 	catalog = dp_catalog_get_priv(panel);
-	hdr = &panel->hdr_data.hdr_meta;
+	hdr = &panel->hdr_meta;
 	io_data = catalog->io.dp_link;
 
 	/* HEADER BYTE 1 */
-	header = panel->hdr_data.vscext_header_byte1;
+	header = panel->dhdr_vsif_sdp.HB1;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_1_BIT)
 			| (parity << PARITY_BYTE_1_BIT));
@@ -510,7 +509,7 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 	off += sizeof(data);
 
 	/* HEADER BYTE 2 */
-	header = panel->hdr_data.vscext_header_byte2;
+	header = panel->dhdr_vsif_sdp.HB2;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_2_BIT)
 			| (parity << PARITY_BYTE_2_BIT));
@@ -518,7 +517,7 @@ static void dp_catalog_panel_setup_vsif_infoframe_sdp(
 			data);
 
 	/* HEADER BYTE 3 */
-	header = panel->hdr_data.vscext_header_byte3;
+	header = panel->dhdr_vsif_sdp.HB3;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_3_BIT)
 			| (parity << PARITY_BYTE_3_BIT));
@@ -541,6 +540,8 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 	struct dp_io_data *io_data;
 	u32 header, parity, data, mst_offset = 0;
 	u8 buf[SZ_64], off = 0;
+	u32 const version = 0x01;
+	u32 const length = 0x1a;
 
 	if (panel->stream_id >= DP_STREAM_MAX) {
 		DP_ERR("invalid stream_id:%d\n", panel->stream_id);
@@ -551,11 +552,11 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 		mst_offset = MMSS_DP1_GENERIC2_0 - MMSS_DP_GENERIC2_0;
 
 	catalog = dp_catalog_get_priv(panel);
-	hdr = &panel->hdr_data.hdr_meta;
+	hdr = &panel->hdr_meta;
 	io_data = catalog->io.dp_link;
 
 	/* HEADER BYTE 1 */
-	header = panel->hdr_data.shdr_header_byte1;
+	header = panel->shdr_if_sdp.HB1;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_1_BIT)
 			| (parity << PARITY_BYTE_1_BIT));
@@ -565,7 +566,7 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 	off += sizeof(data);
 
 	/* HEADER BYTE 2 */
-	header = panel->hdr_data.shdr_header_byte2;
+	header = panel->shdr_if_sdp.HB2;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_2_BIT)
 			| (parity << PARITY_BYTE_2_BIT));
@@ -573,7 +574,7 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 			data);
 
 	/* HEADER BYTE 3 */
-	header = panel->hdr_data.shdr_header_byte3;
+	header = panel->shdr_if_sdp.HB3;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_3_BIT)
 			| (parity << PARITY_BYTE_3_BIT));
@@ -584,8 +585,8 @@ static void dp_catalog_panel_setup_hdr_infoframe_sdp(
 	memcpy(buf + off, &data, sizeof(data));
 	off += sizeof(data);
 
-	data = panel->hdr_data.version;
-	data |= panel->hdr_data.length << 8;
+	data = version;
+	data |= length << 8;
 	data |= hdr->eotf << 16;
 	dp_write(catalog->exe_mode, io_data, MMSS_DP_GENERIC2_2 + mst_offset,
 			data);
@@ -661,7 +662,7 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
 	u32 header, parity, data, mst_offset = 0;
-	u8 bpc, off = 0;
+	u8 off = 0;
 	u8 buf[SZ_128];
 
 	if (!panel) {
@@ -681,7 +682,7 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 	io_data = catalog->io.dp_link;
 
 	/* HEADER BYTE 1 */
-	header = panel->hdr_data.vsc_header_byte1;
+	header = panel->vsc_colorimetry.header.HB1;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_1_BIT)
 			| (parity << PARITY_BYTE_1_BIT));
@@ -691,7 +692,7 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 	off += sizeof(data);
 
 	/* HEADER BYTE 2 */
-	header = panel->hdr_data.vsc_header_byte2;
+	header = panel->vsc_colorimetry.header.HB2;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_2_BIT)
 			| (parity << PARITY_BYTE_2_BIT));
@@ -699,7 +700,7 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 			data);
 
 	/* HEADER BYTE 3 */
-	header = panel->hdr_data.vsc_header_byte3;
+	header = panel->vsc_colorimetry.header.HB3;
 	parity = dp_header_get_parity(header);
 	data   = ((header << HEADER_BYTE_3_BIT)
 			| (parity << PARITY_BYTE_3_BIT));
@@ -731,24 +732,9 @@ static void dp_catalog_panel_setup_vsc_sdp(struct dp_catalog_panel *panel)
 	memcpy(buf + off, &data, sizeof(data));
 	off += sizeof(data);
 
-	switch (panel->hdr_data.bpc) {
-	default:
-	case 10:
-		bpc = BIT(1);
-		break;
-	case 8:
-		bpc = BIT(0);
-		break;
-	case 6:
-		bpc = 0;
-		break;
-	}
-
-	data = (panel->hdr_data.colorimetry & 0xF) |
-		((panel->hdr_data.pixel_encoding & 0xF) << 4) |
-		(bpc << 8) |
-		((panel->hdr_data.dynamic_range & 0x1) << 15) |
-		((panel->hdr_data.content_type & 0x7) << 16);
+	data = (panel->vsc_colorimetry.data[16] & 0xFF) |
+		((panel->vsc_colorimetry.data[17] & 0xFF) << 8) |
+		((panel->vsc_colorimetry.data[18] & 0x7) << 16);
 
 	dp_write(catalog->exe_mode, io_data, MMSS_DP_GENERIC0_6 + mst_offset,
 			data);
@@ -842,7 +828,7 @@ static void dp_catalog_panel_config_hdr(struct dp_catalog_panel *panel, bool en,
 		/* indicates presence of VSC (BIT(6) of MISC1) */
 		misc |= BIT(14);
 
-		if (panel->hdr_data.hdr_meta.eotf)
+		if (panel->hdr_meta.eotf)
 			DP_DEBUG("Enabled\n");
 		else
 			DP_DEBUG("Reset\n");
