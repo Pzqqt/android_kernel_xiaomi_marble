@@ -3687,7 +3687,7 @@ static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
 	/* Update ext cap IE if present */
 	if (local_ie_len &&
 	    !lim_update_ext_cap_ie(mac_ctx, req_buffer->assoc_ie.addIEdata,
-				   local_ie_buf, &local_ie_len)) {
+				   local_ie_buf, &local_ie_len, pe_session)) {
 		if (local_ie_len <
 		    QDF_ARRAY_SIZE(req_buffer->assoc_ie.addIEdata)) {
 			req_buffer->assoc_ie.length = local_ie_len;

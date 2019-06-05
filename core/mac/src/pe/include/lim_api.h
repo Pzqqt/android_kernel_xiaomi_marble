@@ -412,8 +412,9 @@ void lim_fill_join_rsp_ht_caps(struct pe_session *session,
 			       struct join_rsp *rsp)
 {}
 #endif
-QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
-	uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len);
+QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx, uint8_t *ie_data,
+				 uint8_t *local_ie_buf, uint16_t *local_ie_len,
+				 struct pe_session *session);
 
 /**
  * lim_handle_sap_beacon(): Handle the beacon received from scan module for SAP

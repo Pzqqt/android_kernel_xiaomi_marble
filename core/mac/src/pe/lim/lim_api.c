@@ -2754,11 +2754,13 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
  * @ie_data: Default Scan IE data
  * @local_ie_buf: Local Scan IE data
  * @local_ie_len: Pointer to length of @ie_data
+ * @session: Pointer to pe session
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
-		uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len)
+QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx, uint8_t *ie_data,
+				 uint8_t *local_ie_buf, uint16_t *local_ie_len,
+				 struct pe_session *session)
 {
 	uint32_t dot11mode;
 	bool vht_enabled = false;
@@ -2806,6 +2808,13 @@ QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
 		return QDF_STATUS_SUCCESS;
 	}
 	lim_merge_extcap_struct(&driver_ext_cap, &default_scan_ext_cap, true);
+
+	if (session)
+		populate_dot11f_twt_extended_caps(mac_ctx, session,
+						  &driver_ext_cap);
+	else
+		pe_err("Session NULL, cannot set TWT caps");
+
 	local_ie_buf[*local_ie_len + 1] = driver_ext_cap.num_bytes;
 
 	if ((*local_ie_len) > (MAX_DEFAULT_SCAN_IE_LEN -
