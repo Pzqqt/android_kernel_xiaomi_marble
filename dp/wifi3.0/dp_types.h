@@ -1372,6 +1372,13 @@ struct dp_pdev {
 	 */
 	bool pdev_deinit;
 
+	/* pdev status down or up required to handle dynamic hw
+	 * mode switch between DBS and DBS_SBS.
+	 * 1 = down
+	 * 0 = up
+	 */
+	bool is_pdev_down;
+
 	/* Second ring used to replenish rx buffers */
 	struct dp_srng rx_refill_buf_ring2;
 

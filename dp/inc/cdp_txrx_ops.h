@@ -412,6 +412,8 @@ struct cdp_cmn_ops {
 	void (*map_pdev_to_lmac)(struct cdp_pdev *pdev_hdl,
 				 uint32_t lmac_id);
 
+	void (*set_pdev_status_down)(struct cdp_pdev *pdev_hdl, bool is_pdev_down);
+
 	void (*txrx_peer_reset_ast)
 		(ol_txrx_soc_handle soc, uint8_t *ast_macaddr,
 		 uint8_t *peer_macaddr, void *vdev_hdl);

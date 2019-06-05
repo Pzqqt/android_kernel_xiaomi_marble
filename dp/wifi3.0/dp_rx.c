@@ -730,9 +730,9 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 
 	pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 
-	if (!pdev) {
+	if (!pdev || qdf_unlikely(pdev->is_pdev_down)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "PDEV not found");
+			  "PDEV %s", !pdev ? "not found" : "down");
 		goto free;
 	}
 
@@ -750,7 +750,6 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 			return 0;
 		}
 	}
-
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
@@ -1733,6 +1732,7 @@ more_data:
 		 * In this case host will dump the last 128 descriptors
 		 * including the software descriptor rx_desc and assert.
 		 */
+
 		if (qdf_unlikely(!rx_desc->in_use)) {
 			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
 			dp_info_rl("Reaping rx_desc not in use!");

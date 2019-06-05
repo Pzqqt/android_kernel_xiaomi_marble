@@ -1963,6 +1963,32 @@ cdp_soc_map_pdev_to_lmac(ol_txrx_soc_handle soc, void *pdev_handle,
 }
 
 /**
+ * cdp_txrx_set_pdev_status_down() - set pdev down/up status
+ * @soc: soc opaque handle
+ * @pdev_handle: data path pdev handle
+ * @is_pdev_down: pdev down/up status
+ *
+ * return: void
+ */
+static inline void cdp_txrx_set_pdev_status_down(ol_txrx_soc_handle soc,
+						 struct cdp_pdev *pdev_handle,
+						 bool is_pdev_down)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_pdev_status_down)
+		return;
+
+	soc->ops->cmn_drv_ops->set_pdev_status_down(pdev_handle, is_pdev_down);
+}
+
+/**
  * cdp_tx_send() - enqueue frame for transmission
  * @soc: soc opaque handle
  * @vdev: VAP device

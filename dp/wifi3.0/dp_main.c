@@ -3510,7 +3510,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 			goto fail1;
 		}
 		soc->num_reo_dest_rings++;
-
 	}
 
 	ring_size =
@@ -8411,6 +8410,21 @@ dp_soc_map_pdev_to_lmac(struct cdp_pdev *pdev_hdl, uint32_t lmac_id)
 }
 
 /**
+ * dp_soc_set_pdev_status_down() - set pdev down/up status
+ * @pdev_hdl: datapath pdev handle
+ * @is_pdev_down: pdev down/up status
+ *
+ * Return: void
+ */
+static void
+dp_soc_set_pdev_status_down(struct cdp_pdev *pdev_hdl, bool is_pdev_down)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+
+	pdev->is_pdev_down = is_pdev_down;
+}
+
+/**
  * dp_get_cfg_capabilities() - get dp capabilities
  * @soc_handle: datapath soc handle
  * @dp_caps: enum for dp capabilities
@@ -9163,6 +9177,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
 	.map_pdev_to_lmac = dp_soc_map_pdev_to_lmac,
+	.set_pdev_status_down = dp_soc_set_pdev_status_down,
 	.txrx_set_ba_aging_timeout = dp_set_ba_aging_timeout,
 	.txrx_get_ba_aging_timeout = dp_get_ba_aging_timeout,
 	.tx_send = dp_tx_send,

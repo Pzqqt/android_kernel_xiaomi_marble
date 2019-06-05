@@ -3460,6 +3460,20 @@ more_data:
 			continue;
 		}
 
+		if (qdf_unlikely(tx_desc->pdev->is_pdev_down)) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_INFO,
+				  "pdev in down state %d",
+				  tx_desc_id);
+
+			num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
+			count++;
+
+			dp_tx_comp_free_buf(soc, tx_desc);
+			dp_tx_desc_release(tx_desc, tx_desc->pool_id);
+			continue;
+		}
+
 		/*
 		 * If the release source is FW, process the HTT status
 		 */
