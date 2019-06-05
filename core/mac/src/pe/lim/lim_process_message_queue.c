@@ -693,9 +693,10 @@ __lim_ext_scan_forward_bcn_probe_rsp(struct mac_context *pmac, uint8_t *rx_pkt_i
 
 	frame_len = sizeof(*bssdescr) + ie_len - sizeof(bssdescr->ieFields[1]);
 	bssdescr = qdf_mem_malloc(frame_len);
-
-	if (!bssdescr)
+	if (!bssdescr) {
+		qdf_mem_free(result);
 		return;
+	}
 
 	qdf_mem_zero(bssdescr, frame_len);
 

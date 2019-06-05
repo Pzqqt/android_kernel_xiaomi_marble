@@ -3949,8 +3949,10 @@ QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
 
 	oem_data_req->data_len = hdd_oem_req->data_len;
 	oem_data_req->data = qdf_mem_malloc(oem_data_req->data_len);
-	if (!oem_data_req->data)
+	if (!oem_data_req->data) {
+		qdf_mem_free(oem_data_req);
 		return QDF_STATUS_E_NOMEM;
+	}
 
 	qdf_mem_copy(oem_data_req->data, hdd_oem_req->data,
 		     oem_data_req->data_len);
@@ -8042,6 +8044,7 @@ QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid OP mode", __func__);
+		qdf_mem_free(pHtOpMode);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -8459,28 +8462,27 @@ QDF_STATUS sme_send_rate_update_ind(mac_handle_t mac_handle,
 			TX_RATE_HT20 | TX_RATE_SGI;
 
 	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		msg.type = WMA_RATE_UPDATE_IND;
-		msg.bodyptr = rate_upd;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, msg.type));
-		if (!QDF_IS_STATUS_SUCCESS
-			    (scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &msg))) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to post WMA_RATE_UPDATE_IND to WMA!",
-				  __func__);
-
-			sme_release_global_lock(&mac->sme);
-			qdf_mem_free(rate_upd);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		sme_release_global_lock(&mac->sme);
-		return QDF_STATUS_SUCCESS;
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(rate_upd);
+		return status;
 	}
+
+	msg.type = WMA_RATE_UPDATE_IND;
+	msg.bodyptr = rate_upd;
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
+			 NO_SESSION, msg.type));
+
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Not able to post WMA_RATE_UPDATE_IND to WMA!",
+			  __func__);
+		qdf_mem_free(rate_upd);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	sme_release_global_lock(&mac->sme);
 
 	return status;
 }
@@ -9111,8 +9113,7 @@ QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level)
 QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle,
 			     struct tx_power_limit *psmetx)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	struct scheduler_msg message = {0};
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct tx_power_limit *tx_power_limit;
@@ -9124,24 +9125,25 @@ QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle,
 	*tx_power_limit = *psmetx;
 
 	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		message.type = WMA_TX_POWER_LIMIT;
-		message.reserved = 0;
-		message.bodyptr = tx_power_limit;
-
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: not able to post WMA_TX_POWER_LIMIT",
-				  __func__);
-			status = QDF_STATUS_E_FAILURE;
-			qdf_mem_free(tx_power_limit);
-		}
-		sme_release_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(tx_power_limit);
+		return status;
 	}
+
+	message.type = WMA_TX_POWER_LIMIT;
+	message.bodyptr = tx_power_limit;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: not able to post WMA_TX_POWER_LIMIT",
+			  __func__);
+		status = QDF_STATUS_E_FAILURE;
+		qdf_mem_free(tx_power_limit);
+	}
+
+	sme_release_global_lock(&mac->sme);
+
 	return status;
 }
 
