@@ -29,8 +29,15 @@
 #include "wlan_hdd_main.h"
 #include "osif_sync.h"
 #include "wlan_hdd_bcn_recv.h"
+#include <linux/limits.h>
+
+#define SET_BIT(value, mask) ((value) |= (1 << (mask)))
 
 #define BOOTTIME QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_BOOTTIME_WHEN_RECEIVED
+
+#ifndef CHAR_BIT
+#define CHAR_BIT 8	/* Normally in <limits.h> */
+#endif
 
 static const struct nla_policy
 beacon_reporting_params[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1] = {
@@ -165,15 +172,18 @@ static void hdd_send_bcn_recv_info(hdd_handle_t hdd_handle,
  * @hdd_ctx: Pointer to hdd context
  * @adapter: Pointer to network adapter
  * @active_report: Active reporting flag
+ * @nth_value: Beacon report period
  *
  * This function process beacon reporting start operation.
  */
 static int hdd_handle_beacon_reporting_start_op(struct hdd_context *hdd_ctx,
 						struct hdd_adapter *adapter,
-						bool active_report)
+						bool active_report,
+						uint32_t nth_value)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int errno;
+	uint32_t mask = 0;
 
 	if (active_report) {
 		/* Register beacon report callback */
@@ -195,10 +205,18 @@ static int hdd_handle_beacon_reporting_start_op(struct hdd_context *hdd_ctx,
 			errno = qdf_status_to_os_return(qdf_status);
 			return errno;
 		}
+		/* Update Beacon report period in case of active reporting */
+		nth_value = 1;
+		/*
+		 * Set MSB which indicates fw to don't wakeup host in wow
+		 * mode in case of active beacon report.
+		 */
+		mask = (sizeof(uint32_t) * CHAR_BIT) - 1;
+		SET_BIT(nth_value, mask);
 	}
 	/* Handle beacon receive start indication */
 	qdf_status = sme_handle_bcn_recv_start(hdd_ctx->mac_handle,
-					       adapter->vdev_id);
+					       adapter->vdev_id, nth_value);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		hdd_err("bcn rcv start failed with status=%d", qdf_status);
 		errno = qdf_status_to_os_return(qdf_status);
@@ -276,7 +294,7 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1];
-	uint32_t bcn_report;
+	uint32_t bcn_report, nth_value = 1;
 	int errno;
 	bool active_report;
 
@@ -318,6 +336,11 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 		nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_OP_TYPE]);
 	hdd_debug("Bcn Report: OP type:%d", bcn_report);
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PERIOD])
+		nth_value =
+			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_PERIOD]);
+	hdd_debug("Beacon Report: Period: %d", nth_value);
+
 	switch (bcn_report) {
 	case QCA_WLAN_VENDOR_BEACON_REPORTING_OP_START:
 		if (sme_is_beacon_report_started(hdd_ctx->mac_handle,
@@ -327,7 +350,8 @@ static int __wlan_hdd_cfg80211_bcn_rcv_start(struct wiphy *wiphy,
 		}
 		errno = hdd_handle_beacon_reporting_start_op(hdd_ctx,
 							     adapter,
-							     active_report);
+							     active_report,
+							     nth_value);
 		break;
 	case QCA_WLAN_VENDOR_BEACON_REPORTING_OP_STOP:
 		if (sme_is_beacon_report_started(hdd_ctx->mac_handle,

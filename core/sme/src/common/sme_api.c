@@ -12634,11 +12634,12 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 
 #ifdef WLAN_BCN_RECV_FEATURE
 QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
-				     uint32_t vdev_id)
+				     uint32_t vdev_id, uint32_t nth_value)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
 	QDF_STATUS status;
+	int ret;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 	if (!session) {
@@ -12660,20 +12661,25 @@ QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
 		}
 		session->is_bcn_recv_start = true;
 		sme_release_global_lock(&mac_ctx->sme);
+	}
 
-		/*
-		 * Remove beacon filter. It allows fw to send all
-		 * beacons of connected AP to driver.
-		 */
-		status = sme_remove_beacon_filter(mac_handle, vdev_id);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			status = sme_acquire_global_lock(&mac_ctx->sme);
-			if (QDF_IS_STATUS_SUCCESS(status)) {
-				session->is_bcn_recv_start = false;
-				sme_release_global_lock(&mac_ctx->sme);
-			}
-			sme_err("sme_remove_beacon_filter() failed");
+	/*
+	 * Allows fw to send beacons of connected AP to driver.
+	 * MSB set : means fw do not wakeup host in wow mode
+	 * LSB set: Value of beacon report period (say n), Means fw sends nth
+	 * beacons of connected AP to HOST
+	 */
+	ret = sme_cli_set_command(vdev_id,
+				  WMI_VDEV_PARAM_NTH_BEACON_TO_HOST,
+				  nth_value, VDEV_CMD);
+	if (ret) {
+		status = sme_acquire_global_lock(&mac_ctx->sme);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			session->is_bcn_recv_start = false;
+			sme_release_global_lock(&mac_ctx->sme);
 		}
+		sme_err("WMI_VDEV_PARAM_NTH_BEACON_TO_HOST %d", ret);
+		status = qdf_status_from_os_return(ret);
 	}
 
 	return status;
@@ -12684,6 +12690,7 @@ void sme_stop_beacon_report(mac_handle_t mac_handle, uint32_t session_id)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
 	QDF_STATUS status;
+	int ret;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("CSR session not valid: %d", session_id);
@@ -12695,6 +12702,11 @@ void sme_stop_beacon_report(mac_handle_t mac_handle, uint32_t session_id)
 		sme_err("vdev_id %d not found", session_id);
 		return;
 	}
+	ret = sme_cli_set_command(session_id,
+				  WMI_VDEV_PARAM_NTH_BEACON_TO_HOST, 0,
+				  VDEV_CMD);
+	if (ret)
+		sme_err("WMI_VDEV_PARAM_NTH_BEACON_TO_HOST command failed to FW");
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		session->is_bcn_recv_start = false;

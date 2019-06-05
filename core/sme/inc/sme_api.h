@@ -1584,6 +1584,7 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
  * beacons of the current connected AP
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: SME session id
+ * @nth_value: Beacon report period
  *
  * This function remove beacon filter. It allow fw to send
  * all beacons from connected peer to driver.
@@ -1591,7 +1592,8 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS sme_handle_bcn_recv_start(mac_handle_t mac_handle,
-				     uint32_t vdev_id);
+				     uint32_t vdev_id,
+				     uint32_t nth_value);
 
 /**
  * sme_is_beacon_report_started() - Check bcn recv started
