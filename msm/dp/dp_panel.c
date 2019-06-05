@@ -1514,7 +1514,12 @@ struct dp_dsc_peak_throughput {
 	u32 peak_throughput;
 };
 
-struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
+struct dp_dsc_slice_caps_bit_map {
+	u32 num_slices;
+	u32 bit_index;
+};
+
+const struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
 	{0,     340,    1   },
 	{340,   680,    2   },
 	{680,   1360,   4   },
@@ -1543,13 +1548,54 @@ const struct dp_dsc_peak_throughput peak_throughput_mode_0_tbl[] = {
 	{14, 1000},
 };
 
+const struct dp_dsc_slice_caps_bit_map slice_caps_bit_map_tbl[] = {
+	{1, 0},
+	{2, 1},
+	{4, 3},
+	{6, 4},
+	{8, 5},
+	{10, 6},
+	{12, 7},
+	{16, 0},
+	{20, 1},
+	{24, 2},
+};
+
+static bool dp_panel_check_slice_support(u32 num_slices, u32 raw_data_1,
+		u32 raw_data_2)
+{
+	const struct dp_dsc_slice_caps_bit_map *bcap;
+	u32 raw_data;
+	int i;
+
+	if (num_slices <= 12)
+		raw_data = raw_data_1;
+	else
+		raw_data = raw_data_2;
+
+	for (i = 0; i < ARRAY_SIZE(slice_caps_bit_map_tbl); i++) {
+		bcap = &slice_caps_bit_map_tbl[i];
+
+		if (bcap->num_slices == num_slices) {
+			raw_data &= (1 << bcap->bit_index);
+
+			if (raw_data)
+				return true;
+			else
+				return false;
+		}
+	}
+
+	return false;
+}
+
 static int dp_panel_dsc_prepare_basic_params(
 		struct msm_compression_info *comp_info,
 		const struct dp_display_mode *dp_mode,
 		struct dp_panel *dp_panel)
 {
 	int i;
-	struct dp_dsc_slices_per_line *rec;
+	const struct dp_dsc_slices_per_line *rec;
 	const struct dp_dsc_peak_throughput *tput;
 	u32 slice_width;
 	u32 ppr = dp_mode->timing.pixel_clk_khz/1000;
@@ -1557,6 +1603,8 @@ static int dp_panel_dsc_prepare_basic_params(
 	u32 ppr_max_index;
 	u32 peak_throughput;
 	u32 ppr_per_slice;
+	u32 slice_caps_1;
+	u32 slice_caps_2;
 
 	comp_info->dsc_info.slice_per_pkt = 0;
 	for (i = 0; i < ARRAY_SIZE(slice_per_line_tbl); i++) {
@@ -1586,8 +1634,20 @@ static int dp_panel_dsc_prepare_basic_params(
 
 	ppr_per_slice = ppr/comp_info->dsc_info.slice_per_pkt;
 
+	slice_caps_1 = dp_panel->dsc_dpcd[4];
+	slice_caps_2 = dp_panel->dsc_dpcd[13] & 0x7;
+
+	/*
+	 * There are 3 conditions to check for sink support:
+	 * 1. The slice width cannot exceed the maximum.
+	 * 2. The ppr per slice cannot exceed the maximum.
+	 * 3. The number of slices must be explicitly supported.
+	 */
 	while (slice_width >= max_slice_width ||
-			ppr_per_slice > peak_throughput) {
+			ppr_per_slice > peak_throughput ||
+			!dp_panel_check_slice_support(
+			comp_info->dsc_info.slice_per_pkt, slice_caps_1,
+			slice_caps_2)) {
 		if (i == ARRAY_SIZE(slice_per_line_tbl))
 			return -EINVAL;
 
