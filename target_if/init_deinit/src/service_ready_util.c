@@ -767,6 +767,15 @@ bool init_deinit_is_preferred_hw_mode_supported(
 	if (info->preferred_hw_mode == WMI_HOST_HW_MODE_MAX)
 		return TRUE;
 
+	if (wlan_psoc_nif_feat_cap_get(psoc, WLAN_SOC_F_DYNAMIC_HW_MODE)) {
+		if (!wlan_psoc_nif_fw_ext_cap_get(psoc,
+					WLAN_SOC_CEXT_DYNAMIC_HW_MODE)) {
+			target_if_err(
+			"WMI service bit for DYNAMIC HW mode is not set!");
+			return FALSE;
+		}
+	}
+
 	for (i = 0; i < target_psoc_get_total_mac_phy_cnt(tgt_hdl); i++) {
 		if (info->mac_phy_cap[i].hw_mode_id == info->preferred_hw_mode)
 			return TRUE;

@@ -384,8 +384,12 @@ void init_deinit_derive_band_to_mac_param(
 		return;
 	}
 
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	if (!mac_phy_cap) {
+		target_if_err("mac_phy_cap is NULL");
+		return;
+	}
 	for (i = 0; i < target_psoc_get_num_radios(tgt_hdl); i++) {
-		mac_phy_cap = &info->mac_phy_cap[i];
 		if (mac_phy_cap->supported_bands ==
 			(WMI_HOST_WLAN_5G_CAPABILITY |
 					WMI_HOST_WLAN_2G_CAPABILITY)) {
@@ -409,9 +413,9 @@ void init_deinit_derive_band_to_mac_param(
 			reg_cap[mac_phy_cap->phy_id].high_5ghz_chan = 0;
 
 			target_if_debug("2G radio - pdev_id = %d start_freq = %d end_freq= %d",
-					band_to_mac[i].pdev_id,
-					band_to_mac[i].start_freq,
-					band_to_mac[i].end_freq);
+				       band_to_mac[i].pdev_id,
+				       band_to_mac[i].start_freq,
+				       band_to_mac[i].end_freq);
 
 		} else if (mac_phy_cap->supported_bands ==
 					WMI_HOST_WLAN_5G_CAPABILITY) {
@@ -425,10 +429,11 @@ void init_deinit_derive_band_to_mac_param(
 			reg_cap[mac_phy_cap->phy_id].high_2ghz_chan = 0;
 
 			target_if_debug("5G radio -pdev_id = %d start_freq = %d end_freq =%d\n",
-					band_to_mac[i].pdev_id,
-					band_to_mac[i].start_freq,
-					band_to_mac[i].end_freq);
+				       band_to_mac[i].pdev_id,
+				       band_to_mac[i].start_freq,
+				       band_to_mac[i].end_freq);
 		}
+		mac_phy_cap++;
 	}
 }
 

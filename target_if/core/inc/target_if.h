@@ -801,6 +801,35 @@ static inline uint8_t target_psoc_get_num_radios
 }
 
 /**
+ * target_psoc_get_num_radios_for_mode() - get number of radios for a hw-mode
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get number_of_radios for a HW mode
+ *
+ * Return: number of radios
+ */
+
+static inline uint8_t target_psoc_get_num_radios_for_mode
+		(struct target_psoc_info *psoc_info, uint8_t mode)
+{
+	uint8_t mac_phy_count;
+	uint8_t num_radios = 0;
+	struct tgt_info *info = &psoc_info->info;
+
+	if (!psoc_info)
+		return 0;
+
+	for (mac_phy_count = 0;
+		mac_phy_count < target_psoc_get_total_mac_phy_cnt(psoc_info);
+		mac_phy_count++) {
+		num_radios +=
+		(info->mac_phy_cap[mac_phy_count].hw_mode_id == mode);
+	}
+
+	return num_radios;
+}
+
+/**
  * target_psoc_set_service_bitmap() - set service_bitmap
  * @psoc_info:  pointer to structure target_psoc_info
  * @service_bitmap: FW service bitmap
@@ -1242,6 +1271,36 @@ static inline struct wlan_psoc_host_service_ext_param
 	return &psoc_info->info.service_ext_param;
 }
 
+/**
+ * target_psoc_get_mac_phy_cap_for_mode() - get mac_phy_cap for a hw-mode
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get mac_phy_cap for a specified hw-mode
+ *
+ * Return: structure pointer to wlan_psoc_host_mac_phy_caps
+ */
+
+static inline struct wlan_psoc_host_mac_phy_caps
+		*target_psoc_get_mac_phy_cap_for_mode
+		(struct target_psoc_info *psoc_info, uint8_t mode)
+{
+	uint8_t mac_phy_idx;
+	struct tgt_info *info = &psoc_info->info;
+
+	if (!psoc_info)
+		return NULL;
+
+	for (mac_phy_idx = 0;
+		mac_phy_idx < PSOC_MAX_MAC_PHY_CAP;
+			mac_phy_idx++)
+		if (info->mac_phy_cap[mac_phy_idx].hw_mode_id == mode)
+			break;
+
+	if (mac_phy_idx == PSOC_MAX_MAC_PHY_CAP)
+		return NULL;
+
+	return &info->mac_phy_cap[mac_phy_idx];
+}
 
 /**
  * target_psoc_get_mac_phy_cap() - get mac_phy_cap
@@ -1254,10 +1313,24 @@ static inline struct wlan_psoc_host_service_ext_param
 static inline struct wlan_psoc_host_mac_phy_caps *target_psoc_get_mac_phy_cap
 		(struct target_psoc_info *psoc_info)
 {
+	uint32_t preferred_hw_mode;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+
 	if (!psoc_info)
 		return NULL;
 
-	return psoc_info->info.mac_phy_cap;
+	preferred_hw_mode =
+		target_psoc_get_preferred_hw_mode(psoc_info);
+
+	if (preferred_hw_mode < WMI_HOST_HW_MODE_MAX) {
+		mac_phy_cap =
+			target_psoc_get_mac_phy_cap_for_mode
+			(psoc_info, preferred_hw_mode);
+	} else {
+		mac_phy_cap = psoc_info->info.mac_phy_cap;
+	}
+
+	return mac_phy_cap;
 }
 
 /**

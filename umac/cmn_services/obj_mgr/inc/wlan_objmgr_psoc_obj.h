@@ -134,6 +134,8 @@
 #define WLAN_SOC_CEXT_MBSS_IE          0x00020000
 	/* RXOLE Flow Search Support */
 #define WLAN_SOC_CEXT_RX_FSE_SUPPORT   0x00040000
+	/* Dynamic HW Mode Switch Support */
+#define WLAN_SOC_CEXT_DYNAMIC_HW_MODE  0x00080000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
@@ -190,6 +192,8 @@
 #define WLAN_SOC_F_SPECTRAL_DISABLE    0x00800000
 	/* FTM testmode enable */
 #define WLAN_SOC_F_TESTMODE_ENABLE     0x01000000
+	/* Dynamic HW mode swithch enable */
+#define WLAN_SOC_F_DYNAMIC_HW_MODE     0x02000000
 
 /* PSOC op flags */
 

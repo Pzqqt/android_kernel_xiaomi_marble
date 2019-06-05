@@ -115,6 +115,9 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_infra_mbssid))
 		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_MBSS_IE);
 
+	if (wmi_service_enabled(wmi_handle, wmi_service_dynamic_hw_mode))
+		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_DYNAMIC_HW_MODE);
+
 	target_if_debug(" TT support %d, Wide BW Scan %d, SW cal %d",
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_TT_SUPPORT),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WIDEBAND_SCAN),
@@ -194,6 +197,7 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 						uint32_t data_len)
 {
 	int err_code;
+	uint8_t num_radios;
 	struct wlan_objmgr_psoc *psoc;
 	struct target_psoc_info *tgt_hdl;
 	struct wmi_unified *wmi_handle;
@@ -238,20 +242,11 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	if (info->preferred_hw_mode != WMI_HOST_HW_MODE_MAX) {
-		struct wlan_psoc_host_hw_mode_caps *hw_cap = &info->hw_mode_cap;
-		/* prune info mac_phy cap to preferred/selected mode caps */
-		info->total_mac_phy_cnt = 0;
-		err_code = init_deinit_populate_mac_phy_capability(wmi_handle,
-								   event,
-								   hw_cap,
-								   info);
-		if (err_code)
-			goto exit;
+	num_radios = target_psoc_get_num_radios_for_mode(tgt_hdl,
+							 info->preferred_hw_mode);
 
-		info->num_radios = info->total_mac_phy_cnt;
-		target_if_debug("num radios is %d\n", info->num_radios);
-	}
+	/* set number of radios based on current mode */
+	target_psoc_set_num_radios(tgt_hdl, num_radios);
 
 	target_if_print_service_ready_ext_param(psoc, tgt_hdl);
 

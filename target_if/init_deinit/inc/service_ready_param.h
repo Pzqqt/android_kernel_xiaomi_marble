@@ -110,6 +110,23 @@ struct wlan_psoc_host_ppe_threshold {
 };
 
 /**
+ * struct wlan_psoc_host_hal_reg_cap_ext - extended regulatory capabilities
+ * recvd in EXT service
+ * @wireless_modes: REGDMN MODE
+ * @low_2ghz_chan: lower 2.4GHz channels
+ * @high_2ghz_chan: higher 2.4 GHz channels
+ * @low_5ghz_chan: lower 5 GHz channels
+ * @high_5ghz_chan: higher 5 GHz channels
+ */
+struct wlan_psoc_host_hal_reg_cap_ext {
+	uint32_t wireless_modes;
+	uint32_t low_2ghz_chan;
+	uint32_t high_2ghz_chan;
+	uint32_t low_5ghz_chan;
+	uint32_t high_5ghz_chan;
+};
+
+/**
  * struct wlan_psoc_host_mac_phy_caps - Phy caps recvd in EXT service
  *  @hw_mode_id: identify a particular set of HW characteristics,
  *        as specified by the subsequent fields. WMI_MAC_PHY_CAPABILITIES
@@ -161,6 +178,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @he_ppet5G: 5G HE PPET info
  * @chainmask_table_id: chain mask table id
  * @lmac_id: hw mac id
+ * @reg_cap_ext: extended regulatory capabilities
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -198,6 +216,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	struct wlan_psoc_host_ppe_threshold he_ppet5G;
 	uint32_t chainmask_table_id;
 	uint32_t lmac_id;
+	struct wlan_psoc_host_hal_reg_cap_ext reg_cap_ext;
 };
 
 /**
