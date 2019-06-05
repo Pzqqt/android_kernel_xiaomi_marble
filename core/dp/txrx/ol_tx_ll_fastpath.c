@@ -115,6 +115,45 @@ static inline void ol_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 }
 
 /**
+ * ol_tx_tso_adjust_pkt_dnld_len() Update download len for TSO pkt
+ *
+ * @msdu: tso mdsu for which download length is updated
+ * @msdu_info: tso msdu_info for the msdu
+ * @download_len: packet download length
+ *
+ * Return: Updated download length
+ */
+#if defined(FEATURE_TSO)
+static uint32_t
+ol_tx_tso_adjust_pkt_dnld_len(qdf_nbuf_t msdu,
+			      struct ol_txrx_msdu_info_t *msdu_info,
+			      uint32_t download_len)
+{
+	uint32_t frag0_len = 0, delta = 0, eit_hdr_len = 0;
+	uint32_t loc_download_len = download_len;
+
+	frag0_len = qdf_nbuf_get_frag_len(msdu, 0);
+	loc_download_len -= frag0_len;
+	eit_hdr_len = msdu_info->tso_info.curr_seg->seg.tso_frags[0].length;
+
+	if (eit_hdr_len < loc_download_len) {
+		delta = loc_download_len - eit_hdr_len;
+		download_len -= delta;
+	}
+
+	return download_len;
+}
+#else
+static uint32_t
+ol_tx_tso_adjust_pkt_dnld_len(qdf_nbuf_t msdu,
+			      struct ol_txrx_msdu_info_t *msdu_info,
+			      uint32_t download_len)
+{
+	return download_len;
+}
+#endif
+
+/**
  * ol_tx_prepare_ll_fast() Alloc and prepare Tx descriptor
  *
  * Allocate and prepare Tx descriptor with msdu and fragment descritor
@@ -132,7 +171,7 @@ static inline void ol_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
 static inline struct ol_tx_desc_t *
 ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 		      ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu,
-		      uint32_t pkt_download_len, uint32_t ep_id,
+		      uint32_t *pkt_download_len, uint32_t ep_id,
 		      struct ol_txrx_msdu_info_t *msdu_info)
 {
 	struct ol_tx_desc_t *tx_desc = NULL;
@@ -258,10 +297,15 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	 */
 
 	if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu))
-		pkt_download_len += sizeof(struct htt_tx_msdu_desc_ext_t);
+		*pkt_download_len += sizeof(struct htt_tx_msdu_desc_ext_t);
 
-	if (qdf_unlikely(qdf_nbuf_len(msdu) < pkt_download_len))
-		pkt_download_len = qdf_nbuf_len(msdu);
+	if (qdf_unlikely(qdf_nbuf_len(msdu) < *pkt_download_len))
+		*pkt_download_len = qdf_nbuf_len(msdu);
+
+	if (msdu_info->tso_info.curr_seg)
+		*pkt_download_len = ol_tx_tso_adjust_pkt_dnld_len(
+							msdu, msdu_info,
+							*pkt_download_len);
 
 	/* Fill the HTC header information */
 	/*
@@ -269,46 +313,16 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	 * with it for the time being, since this is not checked in f/w
 	 */
 	/* TODO : Prefill this, look at multi-fragment case */
-
 	if (ol_txrx_get_new_htt_msg_format(pdev))
-		pkt_download_len = pkt_download_len - HTC_HEADER_LEN;
-
-	HTC_TX_DESC_FILL(htc_hdr_vaddr, pkt_download_len, ep_id, 0);
+		HTC_TX_DESC_FILL(htc_hdr_vaddr,
+				 *pkt_download_len - HTC_HEADER_LEN, ep_id, 0);
+	else
+		HTC_TX_DESC_FILL(htc_hdr_vaddr, *pkt_download_len, ep_id, 0);
 
 	return tx_desc;
 }
 
 #if defined(FEATURE_TSO)
-/**
- * ol_tx_tso_adjust_pkt_dnld_len() Update download len for TSO pkt
- *
- * @msdu: tso mdsu for which download length is updated
- * @msdu_info: tso msdu_info for the msdu
- * @download_len: packet download length
- *
- * Return: Updated download length
- */
-
-static uint32_t
-ol_tx_tso_adjust_pkt_dnld_len(qdf_nbuf_t msdu,
-			      struct ol_txrx_msdu_info_t msdu_info,
-			      uint32_t download_len)
-{
-	uint32_t frag0_len = 0, delta = 0, eit_hdr_len = 0;
-	uint32_t loc_download_len = download_len;
-
-	frag0_len = qdf_nbuf_get_frag_len(msdu, 0);
-	loc_download_len -= frag0_len;
-	eit_hdr_len = msdu_info.tso_info.curr_seg->seg.tso_frags[0].length;
-
-	if (eit_hdr_len < loc_download_len) {
-		delta = loc_download_len - eit_hdr_len;
-		download_len -= delta;
-	}
-
-	return download_len;
-}
-
 /**
  * ol_tx_ll_fast() Update metadata information and send msdu to HIF/CE
  *
@@ -322,8 +336,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	uint32_t pkt_download_len =
-		((struct htt_pdev_t *)(pdev->htt_pdev))->download_len;
+	uint32_t pkt_download_len;
 	uint32_t ep_id = HTT_EPID_GET(pdev->htt_pdev);
 	struct ol_txrx_msdu_info_t msdu_info;
 	uint32_t tso_msdu_stats_idx = 0;
@@ -398,8 +411,10 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				break;
 			}
 
+			pkt_download_len = ((struct htt_pdev_t *)
+					(pdev->htt_pdev))->download_len;
 			tx_desc = ol_tx_prepare_ll_fast(pdev, vdev, msdu,
-							pkt_download_len,
+							&pkt_download_len,
 							ep_id, &msdu_info);
 
 			TXRX_STATS_MSDU_INCR(pdev, tx.from_stack, msdu);
@@ -424,11 +439,6 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				 * data being downloaded to the target via the
 				 * HTT tx descriptor.
 				 */
-				if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER
-									 (msdu))
-					pkt_download_len +=
-					  sizeof(struct htt_tx_msdu_desc_ext_t);
-
 				htt_tx_desc_display(tx_desc->htt_tx_desc);
 
 				/* mark the relevant tso_seg free-able */
@@ -437,10 +447,6 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 						sent_to_target = 1;
 					next_seg = msdu_info.tso_info.
 						curr_seg->next;
-					pkt_download_len =
-						ol_tx_tso_adjust_pkt_dnld_len(
-							msdu, msdu_info,
-							pkt_download_len);
 				} else {
 					next_seg = NULL;
 				}
@@ -506,8 +512,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	uint32_t pkt_download_len =
-		((struct htt_pdev_t *)(pdev->htt_pdev))->download_len;
+	uint32_t pkt_download_len;
 	uint32_t ep_id = HTT_EPID_GET(pdev->htt_pdev);
 	struct ol_txrx_msdu_info_t msdu_info;
 
@@ -547,8 +552,10 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			break;
 		}
 
+		pkt_download_len = ((struct htt_pdev_t *)
+				(pdev->htt_pdev))->download_len;
 		tx_desc = ol_tx_prepare_ll_fast(pdev, vdev, msdu,
-						pkt_download_len, ep_id,
+						&pkt_download_len, ep_id,
 						&msdu_info);
 
 		TXRX_STATS_MSDU_INCR(pdev, tx.from_stack, msdu);
@@ -564,10 +571,6 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 			 * If debug display is enabled, show the meta-data being
 			 * downloaded to the target via the HTT tx descriptor.
 			 */
-			if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_EXT_HEADER(msdu))
-				pkt_download_len +=
-				   sizeof(struct htt_tx_msdu_desc_ext_t);
-
 			htt_tx_desc_display(tx_desc->htt_tx_desc);
 			/*
 			 * The netbuf may get linked into a different list
