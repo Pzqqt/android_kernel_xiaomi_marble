@@ -58,6 +58,7 @@ struct bolero_priv {
 	struct work_struct bolero_add_child_devices_work;
 	u32 version;
 	struct clk *lpass_core_hw_vote;
+	struct clk *lpass_audio_hw_vote;
 
 	/* Entry for version info */
 	struct snd_info_entry *entry;

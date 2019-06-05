@@ -40,6 +40,8 @@
 #define VA_MACRO_TX_PATH_OFFSET 0x80
 #define VA_MACRO_TX_DMIC_CLK_DIV_MASK 0x0E
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
+#define VA_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
+#define VA_MACRO_ADC_MUX_CFG_OFFSET 0x2
 
 #define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
 #define MAX_RETRY_ATTEMPTS 500
@@ -78,6 +80,11 @@ enum {
 	VA_MACRO_CLK_DIV_16,
 };
 
+enum {
+	MSM_DMIC,
+	SWR_MIC,
+};
+
 struct va_mute_work {
 	struct va_macro_priv *va_priv;
 	u32 decimator;
@@ -95,6 +102,7 @@ struct va_macro_priv {
 	struct device *dev;
 	bool dec_active[VA_MACRO_NUM_DECIMATORS];
 	bool va_without_decimation;
+	struct clk *lpass_audio_hw_vote;
 	struct mutex mclk_lock;
 	struct snd_soc_component *component;
 	struct hpf_work va_hpf_work[VA_MACRO_NUM_DECIMATORS];
@@ -232,6 +240,41 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 	return 0;
 }
 
+static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
+			       struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		if (va_priv->lpass_audio_hw_vote) {
+			ret = clk_prepare_enable(va_priv->lpass_audio_hw_vote);
+			if (ret)
+				dev_err(va_dev,
+					"%s: lpass audio hw enable failed\n",
+					__func__);
+		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		if (va_priv->lpass_audio_hw_vote)
+			clk_disable_unprepare(va_priv->lpass_audio_hw_vote);
+		break;
+	default:
+		dev_err(va_priv->dev,
+			"%s: invalid DAPM event %d\n", __func__, event);
+		ret = -EINVAL;
+	}
+	return ret;
+}
+
 static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			       struct snd_kcontrol *kcontrol, int event)
 {
@@ -254,6 +297,10 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 						   true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		bolero_clk_rsc_request_clock(va_priv->dev,
+					   va_priv->default_clk_id,
+					   TX_CORE_CLK,
+					   false);
 		va_macro_mclk_enable(va_priv, 0, true);
 		break;
 	default:
@@ -272,6 +319,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct snd_soc_component *component;
 	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
+	u16 adc_mux_reg = 0, adc_n = 0, adc_reg = 0;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
@@ -287,6 +335,19 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
+	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
+	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
+		adc_n = snd_soc_component_read32(component, adc_reg) &
+				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
+		if (adc_n >= BOLERO_ADC_MAX)
+			goto va_hpf_set;
+		/* analog mic clear TX hold */
+		bolero_clear_amic_tx_hold(component->dev, adc_n);
+	}
+va_hpf_set:
 	snd_soc_component_update_bits(component,
 			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
 			hpf_cut_off_freq << 5);
@@ -366,10 +427,23 @@ static int va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 			__func__, e->reg);
 		return -EINVAL;
 	}
-	/* DMIC selected */
-	if (val != 0)
-		snd_soc_component_update_bits(component, mic_sel_reg,
-				1 << 7, 1 << 7);
+	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
+		if (val != 0) {
+			if (val < 5)
+				snd_soc_component_update_bits(component,
+							mic_sel_reg,
+							1 << 7, 0x0 << 7);
+			else
+				snd_soc_component_update_bits(component,
+							mic_sel_reg,
+							1 << 7, 0x1 << 7);
+		}
+	} else {
+		/* DMIC selected */
+		if (val != 0)
+			snd_soc_component_update_bits(component, mic_sel_reg,
+					1 << 7, 1 << 7);
+	}
 
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
 }
@@ -648,6 +722,12 @@ static int va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 						   va_priv->default_clk_id,
 						   TX_CORE_CLK,
 						   false);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   va_priv->default_clk_id,
+						   TX_CORE_CLK,
+						   true);
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -1036,15 +1116,18 @@ static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
 static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT_E("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
 		SND_SOC_NOPM, VA_MACRO_AIF1_CAP, 0,
-		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
 
 	SND_SOC_DAPM_AIF_OUT_E("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
 		SND_SOC_NOPM, VA_MACRO_AIF2_CAP, 0,
-		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
 
 	SND_SOC_DAPM_AIF_OUT_E("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
 		SND_SOC_NOPM, VA_MACRO_AIF3_CAP, 0,
-		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU),
+		va_macro_enable_tx, SND_SOC_DAPM_POST_PMU |
+		SND_SOC_DAPM_PRE_PMD),
 
 	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
 		VA_MACRO_AIF1_CAP, 0,
@@ -1164,6 +1247,10 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 			   &va_dec7_mux, va_macro_enable_dec,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY_S("VA_SWR_PWR", -1, SND_SOC_NOPM, 0, 0,
+			      va_macro_swr_pwr_event,
+			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_mclk_event,
@@ -1403,6 +1490,11 @@ static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA SMIC MUX7", "SWR_DMIC5", "VA SWR_MIC5"},
 	{"VA SMIC MUX7", "SWR_DMIC6", "VA SWR_MIC6"},
 	{"VA SMIC MUX7", "SWR_DMIC7", "VA SWR_MIC7"},
+
+	{"VA SWR_ADC0", NULL, "VA_SWR_PWR"},
+	{"VA SWR_ADC1", NULL, "VA_SWR_PWR"},
+	{"VA SWR_ADC2", NULL, "VA_SWR_PWR"},
+	{"VA SWR_ADC3", NULL, "VA_SWR_PWR"},
 };
 
 static const struct snd_kcontrol_new va_macro_snd_controls[] = {
@@ -1621,6 +1713,7 @@ static int va_macro_probe(struct platform_device *pdev)
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
 	u32 default_clk_id = 0;
+	struct clk *lpass_audio_hw_vote = NULL;
 
 	va_priv = devm_kzalloc(&pdev->dev, sizeof(struct va_macro_priv),
 			    GFP_KERNEL);
@@ -1658,6 +1751,16 @@ static int va_macro_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	va_priv->va_io_base = va_io_base;
+
+	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
+	if (IS_ERR(lpass_audio_hw_vote)) {
+		ret = PTR_ERR(lpass_audio_hw_vote);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "lpass_audio_hw_vote", ret);
+		lpass_audio_hw_vote = NULL;
+		ret = 0;
+	}
+	va_priv->lpass_audio_hw_vote = lpass_audio_hw_vote;
 
 	if (of_parse_phandle(pdev->dev.of_node, micb_supply_str, 0)) {
 		va_priv->micb_supply = devm_regulator_get(&pdev->dev,
