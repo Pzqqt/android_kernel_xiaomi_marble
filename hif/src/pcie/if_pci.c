@@ -3349,8 +3349,8 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		return ret;
 
 	scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_irq_start);
-	ret = request_irq(scn->wake_irq, hif_wake_interrupt_handler, 0,
-			  "wlan_wake_irq", scn);
+	ret = request_irq(scn->wake_irq, hif_wake_interrupt_handler,
+			  IRQF_NO_SUSPEND, "wlan_wake_irq", scn);
 	if (ret)
 		return ret;
 
