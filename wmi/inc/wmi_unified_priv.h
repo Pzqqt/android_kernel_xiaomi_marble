@@ -333,11 +333,14 @@ QDF_STATUS
 (*send_pdev_utf_cmd)(wmi_unified_t wmi_handle,
 				struct pdev_utf_params *param,
 				uint8_t mac_id);
-
 QDF_STATUS
 (*send_pdev_param_cmd)(wmi_unified_t wmi_handle,
 			   struct pdev_params *param,
 				uint8_t mac_id);
+
+QDF_STATUS
+(*send_pdev_set_hw_mode_cmd)(wmi_unified_t wmi_handle,
+			     uint32_t hw_mode_index);
 
 QDF_STATUS (*send_suspend_cmd)(wmi_unified_t wmi_handle,
 				struct suspend_params *param,
@@ -873,9 +876,6 @@ QDF_STATUS (*send_set_base_macaddr_indicate_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_pdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_pcl_chan_weights *msg);
-
-QDF_STATUS (*send_pdev_set_hw_mode_cmd)(wmi_unified_t wmi_handle,
-				uint32_t hw_mode_index);
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 QDF_STATUS (*send_pdev_set_dual_mac_config_cmd)(wmi_unified_t wmi_handle,
@@ -1992,6 +1992,10 @@ QDF_STATUS (*extract_oem_response_param)
 		(wmi_unified_t wmi_hdl, void *resp_buf,
 		 struct wmi_oem_response_param *oem_resp_param);
 #endif /* WIFI_POS_CONVERGED */
+
+QDF_STATUS (*extract_hw_mode_resp_event)(wmi_unified_t wmi_handle,
+					 void *evt_buf, uint32_t *cmd_status);
+
 };
 
 /* Forward declartion for psoc*/

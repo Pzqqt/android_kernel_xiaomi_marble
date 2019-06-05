@@ -1604,6 +1604,55 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_pdev_set_hw_mode_cmd_tlv() - Send WMI_PDEV_SET_HW_MODE_CMDID to FW
+ * @wmi_handle: wmi handle
+ * @msg: Structure containing the following parameters
+ * @hw_mode_index: The HW_Mode field is a enumerated type that is selected
+ * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
+ *
+ * Provides notification to the WLAN firmware that host driver is requesting a
+ * HardWare (HW) Mode change. This command is needed to support iHelium in the
+ * configurations that include the Dual Band Simultaneous (DBS) feature.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
+						uint32_t hw_mode_index)
+{
+	wmi_pdev_set_hw_mode_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_pdev_set_hw_mode_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_set_hw_mode_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+							WMI_HOST_PDEV_ID_SOC);
+	cmd->hw_mode_index = hw_mode_index;
+	WMI_LOGI("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
+
+	wmi_mtrace(WMI_PDEV_SET_HW_MODE_CMDID, NO_SESSION, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_SET_HW_MODE_CMDID)) {
+		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_HW_MODE_CMDID",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_suspend_cmd_tlv() - WMI suspend function
  * @param wmi_handle      : handle to WMI.
  * @param param    : pointer to hold suspend parameter
@@ -9759,6 +9808,12 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 				sizeof(param->he_ppet5G));
 	param->chainmask_table_id = mac_phy_caps->chainmask_table_id;
 	param->lmac_id = mac_phy_caps->lmac_id;
+	param->reg_cap_ext.wireless_modes = convert_wireless_modes_tlv
+						(mac_phy_caps->wireless_modes);
+	param->reg_cap_ext.low_2ghz_chan  = mac_phy_caps->low_2ghz_chan_freq;
+	param->reg_cap_ext.high_2ghz_chan = mac_phy_caps->high_2ghz_chan_freq;
+	param->reg_cap_ext.low_5ghz_chan  = mac_phy_caps->low_5ghz_chan_freq;
+	param->reg_cap_ext.high_5ghz_chan = mac_phy_caps->high_5ghz_chan_freq;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -11676,6 +11731,37 @@ extract_oem_response_param_tlv(wmi_unified_t wmi_handle, void *resp_buf,
 }
 #endif /* WIFI_POS_CONVERGED */
 
+/**
+ * extract_hw_mode_resp_event_status_tlv() - Extract HW mode change status
+ * @wmi_handle: wmi handle
+ * @event_buf: pointer to event buffer
+ * @cmd_status: status of HW mode change command
+ *
+ * Return QDF_STATUS_SUCCESS on success or proper error code.
+ */
+static QDF_STATUS
+extract_hw_mode_resp_event_status_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				      uint32_t *cmd_status)
+{
+	WMI_PDEV_SET_HW_MODE_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_set_hw_mode_response_event_fixed_param *fixed_param;
+
+	param_buf = (WMI_PDEV_SET_HW_MODE_RESP_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid mode change event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fixed_param = param_buf->fixed_param;
+	if (!fixed_param) {
+		WMI_LOGE("Invalid fixed param");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*cmd_status = fixed_param->status;
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -11697,6 +11783,7 @@ struct wmi_ops tlv_ops =  {
 		send_peer_rx_reorder_queue_remove_cmd_tlv,
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_tlv,
+	.send_pdev_set_hw_mode_cmd = send_pdev_set_hw_mode_cmd_tlv,
 	.send_suspend_cmd = send_suspend_cmd_tlv,
 	.send_resume_cmd = send_resume_cmd_tlv,
 	.send_wow_enable_cmd = send_wow_enable_cmd_tlv,
@@ -11956,6 +12043,7 @@ struct wmi_ops tlv_ops =  {
 #ifdef TGT_IF_VDEV_MGR_CONV
 	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
 #endif
+	.extract_hw_mode_resp_event = extract_hw_mode_resp_event_status_tlv,
 };
 
 /**

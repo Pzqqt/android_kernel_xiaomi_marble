@@ -54,6 +54,17 @@ static const wmi_host_channel_width mode_to_width[WMI_HOST_MODE_MAX] = {
 #endif
 };
 
+QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(wmi_unified_t wmi_handle,
+					   uint32_t hw_mode_index)
+{
+	if (wmi_handle->ops->send_pdev_set_hw_mode_cmd)
+		return wmi_handle->ops->send_pdev_set_hw_mode_cmd(
+								wmi_handle,
+								hw_mode_index);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_vdev_create_send(wmi_unified_t wmi_handle,
 					uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 					struct vdev_create_params *param)
@@ -2896,3 +2907,15 @@ wmi_extract_oem_response_param(wmi_unified_t wmi_hdl, void *resp_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WIFI_POS_CONVERGED */
+
+QDF_STATUS wmi_unified_extract_hw_mode_resp(wmi_unified_t wmi,
+					    void *evt_buf,
+					    uint32_t *cmd_status)
+{
+	if (wmi->ops->extract_hw_mode_resp_event)
+		return wmi->ops->extract_hw_mode_resp_event(wmi,
+							    evt_buf,
+							    cmd_status);
+
+	return QDF_STATUS_E_FAILURE;
+}

@@ -2099,56 +2099,6 @@ static QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * send_pdev_set_hw_mode_cmd_tlv() - Send WMI_PDEV_SET_HW_MODE_CMDID to FW
- * @wmi_handle: wmi handle
- * @msg: Structure containing the following parameters
- *
- * - hw_mode_index: The HW_Mode field is a enumerated type that is selected
- * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
- *
- * Provides notification to the WLAN firmware that host driver is requesting a
- * HardWare (HW) Mode change. This command is needed to support iHelium in the
- * configurations that include the Dual Band Simultaneous (DBS) feature.
- *
- * Return: Success if the cmd is sent successfully to the firmware
- */
-static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
-						uint32_t hw_mode_index)
-{
-	wmi_pdev_set_hw_mode_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint32_t len;
-
-	len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (wmi_pdev_set_hw_mode_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_hw_mode_cmd_fixed_param));
-
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
-							WMI_HOST_PDEV_ID_SOC);
-	cmd->hw_mode_index = hw_mode_index;
-	WMI_LOGI("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
-
-	wmi_mtrace(WMI_PDEV_SET_HW_MODE_CMDID, NO_SESSION, 0);
-	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				 WMI_PDEV_SET_HW_MODE_CMDID)) {
-		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_HW_MODE_CMDID",
-			 __func__);
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_POLICY_MGR_ENABLE
 /**
  * send_pdev_set_dual_mac_config_cmd_tlv() - Set dual mac config to FW
@@ -2587,7 +2537,6 @@ void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_process_ch_avoid_update_cmd =
 		send_process_ch_avoid_update_cmd_tlv;
 	ops->send_pdev_set_pcl_cmd = send_pdev_set_pcl_cmd_tlv;
-	ops->send_pdev_set_hw_mode_cmd = send_pdev_set_hw_mode_cmd_tlv;
 	ops->send_adapt_dwelltime_params_cmd =
 		send_adapt_dwelltime_params_cmd_tlv;
 	ops->send_dbs_scan_sel_params_cmd =

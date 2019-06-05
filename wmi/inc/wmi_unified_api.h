@@ -470,6 +470,32 @@ void wmi_process_fw_event(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf);
 uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle);
 
 /**
+ * wmi_unified_soc_set_hw_mode_cmd() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * @wmi_handle: wmi handle
+ * @hw_mode_index: The HW_Mode field is a enumerated type that is selected
+ * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
+ *
+ * Request HardWare (HW) Mode change to WLAN firmware
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(wmi_unified_t wmi_handle,
+					   uint32_t hw_mode_index);
+
+/**
+ * wmi_extract_hw_mode_resp() - function to extract HW mode change response
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Buffer holding event data
+ * @cmd_status: command status
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_unified_extract_hw_mode_resp(wmi_unified_t wmi,
+				 void *evt_buf,
+				 uint32_t *cmd_status);
+
+/**
  * wmi_unified_vdev_create_send() - send VDEV create command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold vdev create parameter

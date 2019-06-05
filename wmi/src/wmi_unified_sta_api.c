@@ -370,16 +370,6 @@ QDF_STATUS wmi_unified_pdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(wmi_unified_t wmi_handle,
-					   uint32_t hw_mode_index)
-{
-	if (wmi_handle->ops->send_pdev_set_hw_mode_cmd)
-		return wmi_handle->ops->send_pdev_set_hw_mode_cmd(wmi_handle,
-				  hw_mode_index);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 #ifdef WLAN_POLICY_MGR_ENABLE
 QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(
 		wmi_unified_t wmi_handle,

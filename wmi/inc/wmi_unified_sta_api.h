@@ -406,21 +406,6 @@ QDF_STATUS wmi_unified_process_ch_avoid_update_cmd(wmi_unified_t wmi_handle);
 QDF_STATUS wmi_unified_pdev_set_pcl_cmd(wmi_unified_t wmi_handle,
 					struct wmi_pcl_chan_weights *msg);
 
-/**
- * wmi_unified_soc_set_hw_mode_cmd() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
- * @wmi_handle: wmi handle
- * hw_mode_index: The HW_Mode field is a enumerated type that is selected
- * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
- *
- * Provides notification to the WLAN firmware that host driver is requesting a
- * HardWare (HW) Mode change. This command is needed to support iHelium in the
- * configurations that include the Dual Band Simultaneous (DBS) feature.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(wmi_unified_t wmi_handle,
-					   uint32_t hw_mode_index);
-
 #ifdef WLAN_POLICY_MGR_ENABLE
 /**
  * wmi_unified_pdev_set_dual_mac_config_cmd() - Set dual mac config to FW
