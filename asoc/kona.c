@@ -5003,16 +5003,17 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		__func__, rtd->card->num_aux_devs);
 	if (rtd->card->num_aux_devs &&
 	    !list_empty(&rtd->card->component_dev_list)) {
-		aux_comp = list_first_entry(
-				&rtd->card->component_dev_list,
-				struct snd_soc_component,
-				card_aux_list);
-		if (!strcmp(aux_comp->name, WSA8810_NAME_1) ||
-		    !strcmp(aux_comp->name, WSA8810_NAME_2)) {
-			wsa_macro_set_spkr_mode(component,
+		list_for_each_entry(aux_comp,
+				&rtd->card->aux_comp_list,
+				card_aux_list) {
+			if (aux_comp->name != NULL && (
+				!strcmp(aux_comp->name, WSA8810_NAME_1) ||
+		    		!strcmp(aux_comp->name, WSA8810_NAME_2))) {
+				wsa_macro_set_spkr_mode(component,
 						WSA_MACRO_SPKR_MODE_1);
-			wsa_macro_set_spkr_gain_offset(component,
-					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+				wsa_macro_set_spkr_gain_offset(component,
+						WSA_MACRO_GAIN_OFFSET_M1P5_DB);
+			}
 		}
 		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
 				    sm_port_map);
