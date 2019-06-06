@@ -1095,10 +1095,14 @@ static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					     WLAN_VDEV_SM_EV_START,
-					     sizeof(*reassoc_req),
-					     reassoc_req);
+	if (wlan_vdev_mlme_get_state(session->vdev) != WLAN_VDEV_S_UP) {
+		pe_err("Reassoc req in unexpected vdev SM state:%d",
+		       wlan_vdev_mlme_get_state(session->vdev));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	lim_process_mlm_reassoc_req(session->mac_ctx, reassoc_req);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1116,6 +1120,12 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 	status = mlme_set_assoc_type(session->vdev, VDEV_FT_REASSOC);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
+
+	if (wlan_vdev_mlme_get_state(session->vdev) == WLAN_VDEV_S_UP) {
+		pe_err("ft_reassoc req in unexpected vdev SM state:%d",
+		       wlan_vdev_mlme_get_state(session->vdev));
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,

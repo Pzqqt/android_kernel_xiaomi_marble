@@ -7835,6 +7835,15 @@ QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 		case LIM_SWITCH_CHANNEL_HT_WIDTH:
 			lim_ht_switch_chnl_params(session);
 			break;
+		case LIM_SWITCH_CHANNEL_REASSOC:
+			lim_set_channel(session->mac_ctx,
+					session->limReassocChannelId,
+					session->ch_center_freq_seg0,
+					session->ch_center_freq_seg1,
+					session->ch_width,
+					session->maxTxPower,
+					session->peSessionId, 0, 0);
+			break;
 		default:
 			break;
 		}
