@@ -5730,6 +5730,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (wma_is_roam_synch_in_progress(wma, del_sta->smesessionId)) {
 		WMA_LOGE("%s: roaming in progress, reject del sta!", __func__);
 		del_sta->status = QDF_STATUS_E_PERM;
+		qdf_mem_free(peer_state);
 		goto send_del_rsp;
 	}
 
