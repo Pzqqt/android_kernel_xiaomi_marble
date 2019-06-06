@@ -110,7 +110,15 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
 
 	if (peer->vdev) {
-		if (peer->bss_peer) {
+		/*
+		 * In STA mode:
+		 *	We get ucast stats as BSS peer stats.
+		 *
+		 * In AP mode:
+		 *	We get mcast stats as BSS peer stats.
+		 *	We get ucast stats as assoc peer stats.
+		 */
+		if (peer->vdev->opmode == wlan_op_mode_ap && peer->bss_peer) {
 			peer->vdev->stats.tx.mcast_last_tx_rate = ratekbps;
 			peer->vdev->stats.tx.mcast_last_tx_rate_mcs = ppdu->mcs;
 		} else {
