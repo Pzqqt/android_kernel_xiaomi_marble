@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,7 +46,6 @@ static void hal_tx_desc_set_dscp_tid_table_id_6290(void *desc,
 		  DSCP_TID_TABLE_NUM, id);
 }
 #else
-#ifdef CONFIG_MCL
 static void hal_tx_desc_set_dscp_tid_table_id_6290(void *desc,
 						   uint8_t id)
 {
@@ -55,7 +54,6 @@ static void hal_tx_desc_set_dscp_tid_table_id_6290(void *desc,
 			HAL_TX_SM(TCL_DATA_CMD_3,
 				  DSCP_TO_TID_PRIORITY_TABLE_ID, id);
 }
-#endif
 #endif
 
 

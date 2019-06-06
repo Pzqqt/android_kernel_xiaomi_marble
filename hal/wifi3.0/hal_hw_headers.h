@@ -57,7 +57,7 @@
 #include "rxpcu_ppdu_end_info.h"
 #include "phyrx_he_sig_a_su.h"
 #include "phyrx_he_sig_a_mu_dl.h"
-#if defined(CONFIG_MCL) && defined(QCA_WIFI_QCA6290_11AX)
+#if defined(QCA_WIFI_QCA6290_11AX_MU_UL) && defined(QCA_WIFI_QCA6290_11AX)
 #include "phyrx_he_sig_a_mu_ul.h"
 #endif
 #include "phyrx_he_sig_b1_mu.h"

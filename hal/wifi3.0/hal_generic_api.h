@@ -157,7 +157,7 @@ static inline void hal_tx_desc_set_buf_addr_generic(void *desc,
 		HAL_TX_SM(UNIFIED_TCL_DATA_CMD_2, BUF_OR_EXT_DESC_TYPE, type);
 }
 
-#if defined(CONFIG_MCL) && defined(QCA_WIFI_QCA6290_11AX)
+#if defined(QCA_WIFI_QCA6290_11AX_MU_UL) && defined(QCA_WIFI_QCA6290_11AX)
 /**
  * hal_rx_handle_other_tlvs() - handle special TLVs like MU_UL
  * tlv_tag: Taf of the TLVs
@@ -239,7 +239,7 @@ hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
 {
 	return false;
 }
-#endif /* CONFIG_MCL && QCA_WIFI_QCA6290_11AX */
+#endif /* QCA_WIFI_QCA6290_11AX_MU_UL && QCA_WIFI_QCA6290_11AX */
 
 #if defined(RX_PPDU_END_USER_STATS_1_OFDMA_INFO_VALID_OFFSET)
 static inline void
