@@ -6848,6 +6848,7 @@ typedef enum {
     WMI_CHAN_WIDTH_80P80 = 4,
     WMI_CHAN_WIDTH_5     = 5,
     WMI_CHAN_WIDTH_10    = 6,
+    WMI_CHAN_WIDTH_165   = 7,
 } wmi_channel_width;
 
 /*Clear stats*/
@@ -24939,15 +24940,7 @@ typedef struct {
      * [7:0]  : channel metric -  0 = unusable, 1 = worst, 100 = best
      * [11:8] : channel BW - This bit-field uses values compatible with
      *          enum definitions used internally within the target's
-     *          halphy code.  These values are specified below.
-     *              BW_20MHZ    = 0,
-     *              BW_40MHZ    = 1,
-     *              BW_80MHZ    = 2,
-     *              BW_160MHZ   = 3,
-     *              BW_80P80MHZ = 4,
-     *              BW_5MHZ     = 5,
-     *              BW_10MHZ    = 6,
-     *              BW_165MHZ   = 7,
+     *          halphy code.  This bit field uses wmi_channel_width.
      * [15:12]: Reserved
      * [31:16]: Frequency - Center frequency of the channel for which
      *          the RF characterisation info applies (MHz)
