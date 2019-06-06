@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,13 +56,13 @@ struct radar_found_info {
 /**
  * struct dfs_acs_info - acs info, ch range
  * @acs_mode: to enable/disable acs 1/0.
- * @start_ch: start channel number, ignore all channels before.
- * @end_ch: end channel number, ignore all channels after.
+ * @channel_list: channel list in acs config
+ * @num_of_channel: number of channel in ACS channel list
  */
 struct dfs_acs_info {
 	uint8_t acs_mode;
-	uint8_t start_ch;
-	uint8_t end_ch;
+	uint8_t *channel_list;
+	uint8_t num_of_channel;
 };
 
 /**

@@ -1261,6 +1261,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	bool flag_no_5g_chan  = 0;
 	bool flag_no_japan_w53 = 0;
 	int i;
+	bool found = false;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
 	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
@@ -1297,15 +1298,22 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 			}
 		}
 
-		if (acs_info && (acs_info->acs_mode == 1) &&
-		    ((chan->dfs_ch_ieee < acs_info->start_ch) ||
-		    (chan->dfs_ch_ieee > acs_info->end_ch))) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-				  "skip ch %d not in acs range (%d-%d)",
-				  chan->dfs_ch_ieee, acs_info->start_ch,
-				  acs_info->end_ch);
-			continue;
+		if (acs_info && acs_info->acs_mode) {
+			for (i = 0; i < acs_info->num_of_channel; i++) {
+				if (acs_info->channel_list[i] ==
+				    chan->dfs_ch_ieee) {
+					found = true;
+					break;
+				}
+			}
 
+			if (!found) {
+				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					  "skip ch %d not in acs range",
+					  chan->dfs_ch_ieee);
+				continue;
+			}
+			found = false;
 		}
 
 		if (flag_no_2g_chan &&
