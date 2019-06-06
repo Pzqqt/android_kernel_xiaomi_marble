@@ -30,10 +30,10 @@
 #include <htt_common.h>
 
 #include <cdp_txrx_cmn.h>
-#ifdef CONFIG_MCL
+#ifdef DP_MOB_DEFS
 #include <cds_ieee80211_common.h>
-#include <wdi_event_api.h>    /* WDI subscriber event list */
 #endif
+#include <wdi_event_api.h>    /* WDI subscriber event list */
 
 #include "hal_hw_headers.h"
 #include <hal_tx.h>

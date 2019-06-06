@@ -21,10 +21,6 @@
 
 #include "hal_rx.h"
 
-#ifdef CONFIG_MCL
-#include <cds_ieee80211_common.h>
-#endif
-
 #define DEFRAG_IEEE80211_KEY_LEN	8
 #define DEFRAG_IEEE80211_FCS_LEN	4
 

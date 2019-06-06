@@ -24,9 +24,6 @@
 #include "hal_api.h"
 #include "qdf_trace.h"
 #include "qdf_nbuf.h"
-#ifdef CONFIG_MCL
-#include <cds_ieee80211_common.h>
-#endif
 #include "dp_rx_defrag.h"
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"

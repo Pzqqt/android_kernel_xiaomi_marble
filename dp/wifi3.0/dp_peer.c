@@ -27,10 +27,6 @@
 #include "dp_rx.h"
 #include <hal_api.h>
 #include <hal_reo.h>
-#ifdef CONFIG_MCL
-#include <cds_ieee80211_common.h>
-#include <cds_api.h>
-#endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 
