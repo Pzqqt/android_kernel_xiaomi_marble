@@ -562,6 +562,7 @@ void wlan_serialization_generic_timer_cb(void *arg)
 	struct wlan_serialization_timer *timer = arg;
 	struct wlan_serialization_command *cmd = timer->cmd;
 	struct wlan_objmgr_vdev *vdev = NULL;
+	enum wlan_serialization_cmd_status status;
 
 
 	if (!cmd) {
@@ -585,10 +586,11 @@ void wlan_serialization_generic_timer_cb(void *arg)
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
 	 * dequeue command then we have to destroy the timer.
 	 */
-	wlan_serialization_dequeue_cmd(cmd, SER_TIMEOUT, true);
+	status = wlan_serialization_dequeue_cmd(cmd, SER_TIMEOUT, true);
 
 	/* Release the ref taken before the timer was started */
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
+	if (status == WLAN_SER_CMD_IN_ACTIVE_LIST)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 }
 
 static QDF_STATUS wlan_serialization_mc_flush_noop(struct scheduler_msg *msg)
