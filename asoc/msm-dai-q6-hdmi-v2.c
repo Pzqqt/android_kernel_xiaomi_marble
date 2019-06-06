@@ -20,6 +20,18 @@
 #define HDMI_RX_CA_MAX 0x32
 
 enum {
+	DP_CONTROLLER0 = 0,
+	DP_CONTROLLER1,
+	DP_CONTROLLER_MAX,
+};
+
+enum {
+	DP_STREAM0 = 0,
+	DP_STREAM1,
+	DP_STREAM_MAX,
+};
+
+enum {
 	STATUS_PORT_STARTED, /* track if AFE port has started */
 	STATUS_MAX
 };
@@ -81,6 +93,14 @@ static int msm_dai_q6_ext_disp_device_idx_put(struct snd_kcontrol *kcontrol,
 
 	if (!dai_data) {
 		pr_err("%s: dai_data is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if ((ucontrol->value.integer.value[0] > (DP_CONTROLLER_MAX - 1)) ||
+		(ucontrol->value.integer.value[1] > (DP_STREAM_MAX - 1)) ||
+		(ucontrol->value.integer.value[0] < 0) ||
+		(ucontrol->value.integer.value[1] < 0)) {
+		pr_err("%s: DP control index invalid\n", __func__);
 		return -EINVAL;
 	}
 
@@ -219,7 +239,7 @@ static const struct snd_kcontrol_new display_port_config_controls[] = {
 				 msm_dai_q6_ext_disp_ca_get,
 				 msm_dai_q6_ext_disp_ca_put),
 	SOC_SINGLE_MULTI_EXT("Display Port RX DEVICE IDX", SND_SOC_NOPM, 0,
-				 1, 0, 1,
+				 1, 0, 2,
 				 msm_dai_q6_ext_disp_device_idx_get,
 				 msm_dai_q6_ext_disp_device_idx_put),
 	{
