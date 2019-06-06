@@ -809,13 +809,13 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 				/*packet found */
 			} else if (wbm_tsf < start_tsf) {
 				/* lock here */
-				qdf_spin_lock(&tx_tid->tid_lock);
+				qdf_spin_lock_bh(&tx_tid->tid_lock);
 
 				/* remove the aged packet */
 				nbuf = qdf_nbuf_queue_remove(
 						&tx_tid->msdu_comp_q);
 
-				qdf_spin_unlock(&tx_tid->tid_lock);
+				qdf_spin_unlock_bh(&tx_tid->tid_lock);
 				qdf_nbuf_free(nbuf);
 
 				curr_msdu = qdf_nbuf_queue_first(
@@ -832,13 +832,13 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 
 			if (qdf_likely(!prev_msdu)) {
 				/* lock here */
-				qdf_spin_lock(&tx_tid->tid_lock);
+				qdf_spin_lock_bh(&tx_tid->tid_lock);
 
 				/* remove head */
 				curr_msdu = qdf_nbuf_queue_remove(
 						&tx_tid->msdu_comp_q);
 
-				qdf_spin_unlock(&tx_tid->tid_lock);
+				qdf_spin_unlock_bh(&tx_tid->tid_lock);
 				/* add msdu to head queue */
 				qdf_nbuf_queue_add(head, curr_msdu);
 				/* get next msdu from msdu_comp_q */
@@ -847,7 +847,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 				continue;
 			} else {
 				/* lock here */
-				qdf_spin_lock(&tx_tid->tid_lock);
+				qdf_spin_lock_bh(&tx_tid->tid_lock);
 
 				/* update prev_msdu next to current msdu next */
 				prev_msdu->next = curr_msdu->next;
@@ -857,7 +857,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 				((qdf_nbuf_queue_t *)(
 					&tx_tid->msdu_comp_q))->qlen--;
 
-				qdf_spin_unlock(&tx_tid->tid_lock);
+				qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 				/* add msdu to head queue */
 				qdf_nbuf_queue_add(head, curr_msdu);
@@ -960,7 +960,7 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 		}
 	}
 
-	return qdf_nbuf_expand(mpdu, 0, 0);
+	return skb_copy_expand(mpdu, MAX_MONITOR_HEADER, 0, GFP_ATOMIC);
 }
 
 /**
@@ -1143,6 +1143,12 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 
 			/* k need to be increase, if i increased more than 32 */
 
+			tx_capture_info.mpdu_nbuf =
+				qdf_nbuf_queue_remove(&ppdu_desc->mpdu_q);
+
+			if (!tx_capture_info.mpdu_nbuf)
+				continue;
+
 			mpdu_info->channel = ppdu_desc->channel;
 			mpdu_info->frame_type = ppdu_desc->frame_type;
 			mpdu_info->ppdu_start_timestamp =
@@ -1161,12 +1167,8 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 			tx_capture_info.mpdu_info.channel_num =
 				pdev->operating_channel;
 
-			tx_capture_info.mpdu_nbuf =
-				qdf_nbuf_queue_remove(&ppdu_desc->mpdu_q);
-
 			dp_tx_update_sequence_number(tx_capture_info.mpdu_nbuf,
 						     seq_no);
-
 			/*
 			 * send MPDU to osif layer
 			 * do we need to update mpdu_info before tranmit
