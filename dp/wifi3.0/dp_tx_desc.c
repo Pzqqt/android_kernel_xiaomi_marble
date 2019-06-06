@@ -107,8 +107,7 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 					  desc_size, num_elem,
 					  0, true);
 	if (!tx_desc_pool->desc_pages.num_pages) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"Multi page alloc fail, tx desc");
+		dp_err("Multi page alloc fail, tx desc");
 		goto fail_exit;
 	}
 
@@ -120,8 +119,7 @@ QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	if (qdf_mem_multi_page_link(soc->osdev,
 				    &tx_desc_pool->desc_pages,
 				    desc_size, num_elem, true)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"invalid tx desc allocation - overflow num link");
+		dp_err("invalid tx desc allocation - overflow num link");
 		goto free_tx_desc;
 	}
 
