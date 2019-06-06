@@ -249,6 +249,11 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		wlan_objmgr_vdev_obj_delete(vdev);
 		obj_mgr_err("VDEV comp objects creation failed for vdev-id:%d",
 			vdev->vdev_objmgr.vdev_id);
+		/*
+		 * Set params osifp to NULL as it is freed during vdev obj
+		 * delete, This prevents caller from performing double free.
+		 */
+		params->osifp = NULL;
 		return NULL;
 	}
 
