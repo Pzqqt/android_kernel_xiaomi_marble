@@ -330,6 +330,15 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 
 	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
+	/*
+	 * Incase of error return from here since netbuf and tx_desc would
+	 * have been freed in ol_tx_download_done_base().
+	 */
+	if (status != A_OK) {
+		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
+		return;
+	}
+
 	if ((tx_desc->pkt_type != OL_TX_FRM_NO_FREE) &&
 	    (tx_desc->pkt_type < OL_TXRX_MGMT_TYPE_BASE)) {
 		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
