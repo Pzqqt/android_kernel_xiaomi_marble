@@ -77,7 +77,6 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 		ctrl->ops.reg_dump_to_buffer =
 			dsi_ctrl_hw_14_reg_dump_to_buffer;
 		ctrl->ops.schedule_dma_cmd = NULL;
-		ctrl->ops.get_cont_splash_status = NULL;
 		ctrl->ops.kickoff_command_non_embedded_mode = NULL;
 		ctrl->ops.config_clk_gating = NULL;
 		break;
@@ -93,7 +92,6 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 		ctrl->ops.clamp_enable = NULL;
 		ctrl->ops.clamp_disable = NULL;
 		ctrl->ops.schedule_dma_cmd = NULL;
-		ctrl->ops.get_cont_splash_status = NULL;
 		ctrl->ops.kickoff_command_non_embedded_mode = NULL;
 		ctrl->ops.config_clk_gating = NULL;
 		break;
@@ -102,8 +100,6 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	case DSI_CTRL_VERSION_2_4:
 		ctrl->ops.phy_reset_config = dsi_ctrl_hw_22_phy_reset_config;
 		ctrl->ops.config_clk_gating = dsi_ctrl_hw_22_config_clk_gating;
-		ctrl->ops.get_cont_splash_status =
-			dsi_ctrl_hw_22_get_cont_splash_status;
 		ctrl->ops.setup_lane_map = dsi_ctrl_hw_20_setup_lane_map;
 		ctrl->ops.wait_for_lane_idle =
 			dsi_ctrl_hw_20_wait_for_lane_idle;

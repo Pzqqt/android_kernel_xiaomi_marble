@@ -1029,32 +1029,6 @@ static void _dsi_display_setup_misr(struct dsi_display *display)
 	}
 }
 
-/**
- * dsi_display_get_cont_splash_status - Get continuous splash status.
- * @dsi_display:         DSI display handle.
- *
- * Return: boolean to signify whether continuous splash is enabled.
- */
-static bool dsi_display_get_cont_splash_status(struct dsi_display *display)
-{
-	u32 val = 0;
-	int i;
-	struct dsi_display_ctrl *ctrl;
-	struct dsi_ctrl_hw *hw;
-
-	display_for_each_ctrl(i, display) {
-		ctrl = &(display->ctrl[i]);
-		if (!ctrl || !ctrl->ctrl)
-			continue;
-
-		hw = &(ctrl->ctrl->hw);
-		val = hw->ops.get_cont_splash_status(hw);
-		if (!val)
-			return false;
-	}
-	return true;
-}
-
 int dsi_display_set_power(struct drm_connector *connector,
 		int power_mode, void *disp)
 {
@@ -4155,13 +4129,7 @@ int dsi_display_cont_splash_config(void *dsi_display)
 
 	mutex_lock(&display->display_lock);
 
-	/* Verify whether continuous splash is enabled or not */
-	display->is_cont_splash_enabled =
-		dsi_display_get_cont_splash_status(display);
-	if (!display->is_cont_splash_enabled) {
-		pr_err("Continuous splash is not enabled\n");
-		goto splash_disabled;
-	}
+	display->is_cont_splash_enabled = true;
 
 	/* Update splash status for clock manager */
 	dsi_display_clk_mngr_update_splash_status(display->clk_mngr,
@@ -4206,8 +4174,6 @@ clk_manager_update:
 	/* Update splash status for clock manager */
 	dsi_display_clk_mngr_update_splash_status(display->clk_mngr,
 				false);
-
-splash_disabled:
 	pm_runtime_put_sync(display->drm_dev->dev);
 	display->is_cont_splash_enabled = false;
 	mutex_unlock(&display->display_lock);
