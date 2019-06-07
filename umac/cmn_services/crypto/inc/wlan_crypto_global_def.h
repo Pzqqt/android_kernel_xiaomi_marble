@@ -198,8 +198,9 @@ typedef enum wlan_crypto_key_mgmt {
 	WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384        = 21,
 	WLAN_CRYPTO_KEY_MGMT_OWE                   = 22,
 	WLAN_CRYPTO_KEY_MGMT_DPP                   = 23,
+	WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384   = 24,
 	/** Keep WLAN_CRYPTO_KEY_MGMT_MAX at the end. */
-	WLAN_CRYPTO_KEY_MGMT_MAX                   = WLAN_CRYPTO_KEY_MGMT_DPP,
+	WLAN_CRYPTO_KEY_MGMT_MAX   = WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384,
 } wlan_crypto_key_mgmt;
 
 enum wlan_crypto_key_type {

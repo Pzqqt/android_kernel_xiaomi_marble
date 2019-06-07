@@ -2259,6 +2259,8 @@ static int32_t wlan_crypto_rsn_suite_to_keymgmt(uint8_t *sel)
 		return WLAN_CRYPTO_KEY_MGMT_OWE;
 	case RSN_AUTH_KEY_MGMT_DPP:
 		return WLAN_CRYPTO_KEY_MGMT_DPP;
+	case RSN_AUTH_KEY_MGMT_FT_802_1X_SUITE_B_384:
+		return WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384;
 	}
 
 	return status;
