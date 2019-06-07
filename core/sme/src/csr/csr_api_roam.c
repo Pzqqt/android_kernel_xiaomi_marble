@@ -21762,6 +21762,11 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	ps_global_info->remain_in_power_active_till_dhcp = false;
 	session->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
 
+	/* Update the BLM that the previous profile has disconnected */
+	wlan_blm_update_bssid_connect_params(mac_ctx->pdev,
+					     session->connectedProfile.bssid,
+					     BLM_AP_DISCONNECTED);
+
 	/* Remove old BSSID mlme info from scan cache */
 	csr_update_scan_entry_associnfo(mac_ctx, session,
 					SCAN_ENTRY_CON_STATE_NONE);
