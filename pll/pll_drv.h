@@ -40,6 +40,7 @@ enum {
 	MDSS_DSI_PLL_7NM_V2,
 	MDSS_DSI_PLL_7NM_V4_1,
 	MDSS_DP_PLL_7NM,
+	MDSS_DP_PLL_7NM_V2,
 	MDSS_DSI_PLL_28LPM,
 	MDSS_DSI_PLL_14NM,
 	MDSS_DP_PLL_14NM,
@@ -89,7 +90,11 @@ struct mdss_pll_resources {
 	void __iomem	*pll_base;
 	void __iomem	*phy_base;
 	void __iomem	*ln_tx0_base;
+	void __iomem	*ln_tx0_tran_base;
+	void __iomem	*ln_tx0_vmode_base;
 	void __iomem	*ln_tx1_base;
+	void __iomem	*ln_tx1_tran_base;
+	void __iomem	*ln_tx1_vmode_base;
 	void __iomem	*gdsc_base;
 	void __iomem	*dyn_pll_base;
 

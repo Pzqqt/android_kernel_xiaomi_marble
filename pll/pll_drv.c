@@ -132,6 +132,8 @@ static int mdss_pll_resource_parse(struct platform_device *pdev,
 		pll_res->pll_interface_type = MDSS_DP_PLL_10NM;
 	else if (!strcmp(compatible_stream, "qcom,mdss_dp_pll_7nm"))
 		pll_res->pll_interface_type = MDSS_DP_PLL_7NM;
+	else if (!strcmp(compatible_stream, "qcom,mdss_dp_pll_7nm_v2"))
+		pll_res->pll_interface_type = MDSS_DP_PLL_7NM_V2;
 	else if (!strcmp(compatible_stream, "qcom,mdss_dsi_pll_7nm"))
 		pll_res->pll_interface_type = MDSS_DSI_PLL_7NM;
 	else if (!strcmp(compatible_stream, "qcom,mdss_dsi_pll_7nm_v2"))
@@ -174,6 +176,7 @@ static int mdss_pll_clock_register(struct platform_device *pdev,
 		rc = dsi_pll_clock_register_7nm(pdev, pll_res);
 		break;
 	case MDSS_DP_PLL_7NM:
+	case MDSS_DP_PLL_7NM_V2:
 		rc = dp_pll_clock_register_7nm(pdev, pll_res);
 		break;
 	case MDSS_DSI_PLL_28LPM:
@@ -303,8 +306,32 @@ static int mdss_pll_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 
+	if (mdss_pll_get_ioresurces(pdev, &pll_res->ln_tx0_tran_base,
+							"ln_tx0_tran_base")) {
+		pr_err("Unable to remap Lane TX0 base resources\n");
+		return -ENOMEM;
+	}
+
+	if (mdss_pll_get_ioresurces(pdev, &pll_res->ln_tx0_vmode_base,
+							"ln_tx0_vmode_base")) {
+		pr_err("Unable to remap Lane TX0 base resources\n");
+		return -ENOMEM;
+	}
+
 	if (mdss_pll_get_ioresurces(pdev, &pll_res->ln_tx1_base,
 							"ln_tx1_base")) {
+		pr_err("Unable to remap Lane TX1 base resources\n");
+		return -ENOMEM;
+	}
+
+	if (mdss_pll_get_ioresurces(pdev, &pll_res->ln_tx1_tran_base,
+							"ln_tx1_tran_base")) {
+		pr_err("Unable to remap Lane TX1 base resources\n");
+		return -ENOMEM;
+	}
+
+	if (mdss_pll_get_ioresurces(pdev, &pll_res->ln_tx1_vmode_base,
+							"ln_tx1_vmode_base")) {
 		pr_err("Unable to remap Lane TX1 base resources\n");
 		return -ENOMEM;
 	}
@@ -357,6 +384,7 @@ static const struct of_device_id mdss_pll_dt_match[] = {
 	{.compatible = "qcom,mdss_dsi_pll_7nm_v2"},
 	{.compatible = "qcom,mdss_dsi_pll_7nm_v4_1"},
 	{.compatible = "qcom,mdss_dp_pll_7nm"},
+	{.compatible = "qcom,mdss_dp_pll_7nm_v2"},
 	{.compatible = "qcom,mdss_dsi_pll_28lpm"},
 	{.compatible = "qcom,mdss_dsi_pll_14nm"},
 	{.compatible = "qcom,mdss_dp_pll_14nm"},

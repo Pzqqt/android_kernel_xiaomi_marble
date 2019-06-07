@@ -100,6 +100,20 @@ static struct dp_pll_vco_clk dp_vco_clk = {
 	},
 };
 
+static struct clk_fixed_factor dp_phy_pll_link_clk = {
+	.div = 10,
+	.mult = 1,
+
+	.hw.init = &(struct clk_init_data){
+		.name = "dp_phy_pll_link_clk",
+		.parent_names =
+			(const char *[]){ "dp_vco_clk" },
+		.num_parents = 1,
+		.flags = CLK_SET_RATE_PARENT,
+		.ops = &clk_fixed_factor_ops,
+	},
+};
+
 static struct clk_fixed_factor dp_link_clk_divsel_ten = {
 	.div = 10,
 	.mult = 1,
@@ -206,6 +220,25 @@ static unsigned long mux_recalc_rate(struct clk_hw *hw,
 		return (vco->rate / 2);
 }
 
+static struct clk_regmap_mux dp_phy_pll_vco_div_clk = {
+	.reg = 0x64,
+	.shift = 0,
+	.width = 2,
+
+	.clkr = {
+		.hw.init = &(struct clk_init_data){
+			.name = "dp_phy_pll_vco_div_clk",
+			.parent_names =
+				(const char *[]){"dp_vco_divsel_two_clk_src",
+					"dp_vco_divsel_four_clk_src",
+					"dp_vco_divsel_six_clk_src"},
+			.num_parents = 3,
+			.ops = &mux_clk_ops,
+			.flags = CLK_SET_RATE_PARENT,
+		},
+	},
+};
+
 static struct clk_regmap_mux dp_vco_divided_clk_src_mux = {
 	.reg = 0x64,
 	.shift = 0,
@@ -260,12 +293,26 @@ int dp_pll_clock_register_7nm(struct platform_device *pdev,
 	/* Set client data for vco, mux and div clocks */
 	regmap = devm_regmap_init(&pdev->dev, &dp_pixel_mux_regmap_ops,
 			pll_res, &dp_pll_7nm_cfg);
-	dp_vco_divided_clk_src_mux.clkr.regmap = regmap;
 	mux_clk_ops = clk_regmap_mux_closest_ops;
 	mux_clk_ops.determine_rate = clk_mux_determine_rate;
 	mux_clk_ops.recalc_rate = mux_recalc_rate;
 
 	dp_vco_clk.priv = pll_res;
+
+	/*
+	 * Consumer for the pll clock expects, the DP_LINK_CLK_DIVSEL_TEN and
+	 * DP_VCO_DIVIDED_CLK_SRC_MUX clock names to be "dp_phy_pll_link_clk"
+	 * and "dp_phy_pll_vco_div_clk" respectively for a V2 pll interface
+	 * target.
+	 */
+	if (pll_res->pll_interface_type == MDSS_DP_PLL_7NM_V2) {
+		mdss_dp_pllcc_7nm[DP_LINK_CLK_DIVSEL_TEN] =
+			&dp_phy_pll_link_clk.hw;
+		mdss_dp_pllcc_7nm[DP_VCO_DIVIDED_CLK_SRC_MUX] =
+			&dp_phy_pll_vco_div_clk.clkr.hw;
+		dp_phy_pll_vco_div_clk.clkr.regmap = regmap;
+	} else
+		dp_vco_divided_clk_src_mux.clkr.regmap = regmap;
 
 	for (i = DP_VCO_CLK; i <= DP_VCO_DIVIDED_CLK_SRC_MUX; i++) {
 		pr_debug("reg clk: %d index: %d\n", i, pll_res->index);

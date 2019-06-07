@@ -48,11 +48,6 @@
 #define TXn_TX_POL_INV				0x005C
 #define TXn_PARRATE_REC_DETECT_IDLE_EN		0x0060
 
-#define TXn_TRAN_DRVR_EMP_EN			0x00B8
-#define TXn_TX_INTERFACE_MODE			0x00BC
-
-#define TXn_VMODE_CTRL1				0x00E8
-
 /* PLL register offset */
 #define QSERDES_COM_BG_TIMER			0x000C
 #define QSERDES_COM_BIAS_EN_CLKBUFLR_EN		0x0044
@@ -89,6 +84,13 @@
 #define QSERDES_COM_CMN_CONFIG			0x017C
 
 #define QSERDES_COM_SVS_MODE_CLK_SEL		0x0184
+
+/* Tx tran offsets */
+#define DP_TRAN_DRVR_EMP_EN			0x0000
+#define DP_TX_INTERFACE_MODE			0x0004
+
+/* Tx VMODE offsets */
+#define DP_VMODE_CTRL1				0x0000
 
 #define DP_PHY_PLL_POLL_SLEEP_US		500
 #define DP_PHY_PLL_POLL_TIMEOUT_US		10000
@@ -326,30 +328,30 @@ static int dp_config_vco_rate_7nm(struct dp_pll_vco_clk *vco,
 
 	/* TX-0 register configuration */
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TRANSCEIVER_BIAS_EN, 0x1a);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_VMODE_CTRL1, 0x40);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_vmode_base, DP_VMODE_CTRL1, 0x40);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_PRE_STALL_LDO_BOOST_EN, 0x30);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_INTERFACE_SELECT, 0x3b);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_CLKBUF_ENABLE, 0x0f);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RESET_TSYNC_EN, 0x03);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TRAN_DRVR_EMP_EN,
+	MDSS_PLL_REG_W(dp_res->ln_tx0_tran_base, DP_TRAN_DRVR_EMP_EN,
 		pdb->txn_tran_drv_emp_en);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base,
 		TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_INTERFACE_MODE, 0x00);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_tran_base, DP_TX_INTERFACE_MODE, 0x00);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_BAND, 0x4);
 
 	/* TX-1 register configuration */
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TRANSCEIVER_BIAS_EN, 0x1a);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_VMODE_CTRL1, 0x40);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_vmode_base, DP_VMODE_CTRL1, 0x40);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_PRE_STALL_LDO_BOOST_EN, 0x30);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_INTERFACE_SELECT, 0x3b);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_CLKBUF_ENABLE, 0x0f);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RESET_TSYNC_EN, 0x03);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TRAN_DRVR_EMP_EN,
+	MDSS_PLL_REG_W(dp_res->ln_tx1_tran_base, DP_TRAN_DRVR_EMP_EN,
 		pdb->txn_tran_drv_emp_en);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base,
 		TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_INTERFACE_MODE, 0x00);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_tran_base, DP_TX_INTERFACE_MODE, 0x00);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_BAND, 0x4);
 	/* Make sure the PHY register writes are done */
 	wmb();
