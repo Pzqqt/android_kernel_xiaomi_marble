@@ -23,6 +23,7 @@
 
 unsigned int vow_config;
 
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /**
  * ol_tx_set_flow_control_parameters() - set flow control parameters
  * @cfg_ctx: cfg context
@@ -40,6 +41,7 @@ void ol_tx_set_flow_control_parameters(struct cdp_cfg *cfg_pdev,
 	cfg_ctx->tx_flow_stop_queue_th =
 					cfg_param->tx_flow_stop_queue_th;
 }
+#endif
 
 #ifdef CONFIG_HL_SUPPORT
 
@@ -407,6 +409,7 @@ int ol_cfg_is_rx_thread_enabled(struct cdp_cfg *cfg_pdev)
 	return cfg->enable_rxthread;
 }
 
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /**
  * ol_cfg_get_tx_flow_stop_queue_th() - return stop queue threshold
  * @pdev : handle to the physical device
@@ -432,7 +435,7 @@ int ol_cfg_get_tx_flow_start_queue_offset(struct cdp_cfg *cfg_pdev)
 
 	return cfg->tx_flow_start_queue_offset;
 }
-
+#endif
 
 #ifdef IPA_OFFLOAD
 unsigned int ol_cfg_ipa_uc_offload_enabled(struct cdp_cfg *cfg_pdev)

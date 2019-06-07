@@ -1732,7 +1732,9 @@ static uint16_t __hdd_get_queue_index(uint16_t up)
 	return hdd_linux_up_to_ac_map[up];
 }
 
-#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_HL_NETDEV_FLOW_CONTROL)
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || \
+	defined(QCA_HL_NETDEV_FLOW_CONTROL) || \
+	defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /**
  * hdd_get_queue_index() - get queue index
  * @up: user priority

@@ -255,6 +255,10 @@ endif
 
 ifeq ($(CONFIG_ARCH_QCS405), y)
 CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
+# Flag to improve TCP TX throughput for both
+# CONFIG_WLAN_TX_FLOW_CONTROL_LEGACY and CONFIG_WLAN_TX_FLOW_CONTROL_V2
+# disabled platform, avoid frame drop in driver
+CONFIG_WLAN_PDEV_TX_FLOW_CONTROL := y
 endif
 
 # Flag to enable LFR Subnet Detection

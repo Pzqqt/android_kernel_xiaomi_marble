@@ -84,8 +84,10 @@ struct cds_config_info {
 	uint8_t reorder_offload;
 	uint8_t uc_offload_enabled;
 	bool enable_rxthread;
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 	uint32_t tx_flow_stop_queue_th;
 	uint32_t tx_flow_start_queue_offset;
+#endif
 	uint8_t enable_dp_rx_threads;
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;

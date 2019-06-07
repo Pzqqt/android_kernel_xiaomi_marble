@@ -64,7 +64,7 @@
 #include "target_type.h"
 #include "wlan_hdd_object_manager.h"
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+#if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /*
  * Mapping Linux AC interpretation to SME AC.
  * Host has 5 tx queues, 4 flow-controlled queues for regular traffic and

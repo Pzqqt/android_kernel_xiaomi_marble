@@ -129,7 +129,99 @@ ol_tx_desc_count_inc(struct ol_txrx_vdev_t *vdev)
 #endif
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
+#ifdef QCA_LL_PDEV_TX_FLOW_CONTROL
+/**
+ * ol_tx_do_pdev_flow_control_pause - pause queues when stop_th reached.
+ * @pdev: pdev handle
+ *
+ * Return: void
+ */
+static void ol_tx_do_pdev_flow_control_pause(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_txrx_vdev_t *vdev;
 
+	if (qdf_unlikely(pdev->tx_desc.num_free <
+				pdev->tx_desc.stop_th &&
+			pdev->tx_desc.num_free >=
+			 pdev->tx_desc.stop_priority_th &&
+			pdev->tx_desc.status ==
+			 FLOW_POOL_ACTIVE_UNPAUSED)) {
+		pdev->tx_desc.status = FLOW_POOL_NON_PRIO_PAUSED;
+		/* pause network NON PRIORITY queues */
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			pdev->pause_cb(vdev->vdev_id,
+				       WLAN_STOP_NON_PRIORITY_QUEUE,
+				       WLAN_DATA_FLOW_CONTROL);
+		}
+	} else if (qdf_unlikely((pdev->tx_desc.num_free <
+				 pdev->tx_desc.stop_priority_th) &&
+			pdev->tx_desc.status ==
+			FLOW_POOL_NON_PRIO_PAUSED)) {
+		pdev->tx_desc.status = FLOW_POOL_ACTIVE_PAUSED;
+		/* pause priority queue */
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			pdev->pause_cb(vdev->vdev_id,
+				       WLAN_NETIF_PRIORITY_QUEUE_OFF,
+				       WLAN_DATA_FLOW_CONTROL_PRIORITY);
+		}
+	}
+}
+
+/**
+ * ol_tx_do_pdev_flow_control_unpause - unpause queues when start_th restored.
+ * @pdev: pdev handle
+ *
+ * Return: void
+ */
+static void ol_tx_do_pdev_flow_control_unpause(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_txrx_vdev_t *vdev;
+
+	switch (pdev->tx_desc.status) {
+	case FLOW_POOL_ACTIVE_PAUSED:
+		if (pdev->tx_desc.num_free >
+		    pdev->tx_desc.start_priority_th) {
+			/* unpause priority queue */
+			TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+				pdev->pause_cb(vdev->vdev_id,
+				       WLAN_NETIF_PRIORITY_QUEUE_ON,
+				       WLAN_DATA_FLOW_CONTROL_PRIORITY);
+			}
+			pdev->tx_desc.status = FLOW_POOL_NON_PRIO_PAUSED;
+		}
+		break;
+	case FLOW_POOL_NON_PRIO_PAUSED:
+		if (pdev->tx_desc.num_free > pdev->tx_desc.start_th) {
+			TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+				pdev->pause_cb(vdev->vdev_id,
+					       WLAN_WAKE_NON_PRIORITY_QUEUE,
+					       WLAN_DATA_FLOW_CONTROL);
+			}
+			pdev->tx_desc.status = FLOW_POOL_ACTIVE_UNPAUSED;
+		}
+		break;
+	case FLOW_POOL_INVALID:
+		if (pdev->tx_desc.num_free == pdev->tx_desc.pool_size)
+			ol_txrx_err("pool is INVALID State!!");
+		break;
+	case FLOW_POOL_ACTIVE_UNPAUSED:
+		break;
+	default:
+		ol_txrx_err("pool is INACTIVE State!!\n");
+		break;
+	};
+}
+#else
+static inline void
+ol_tx_do_pdev_flow_control_pause(struct ol_txrx_pdev_t *pdev)
+{
+}
+
+static inline void
+ol_tx_do_pdev_flow_control_unpause(struct ol_txrx_pdev_t *pdev)
+{
+}
+#endif
 /**
  * ol_tx_desc_alloc() - allocate descriptor from freelist
  * @pdev: pdev handle
@@ -142,7 +234,6 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 					     struct ol_txrx_vdev_t *vdev)
 {
 	struct ol_tx_desc_t *tx_desc = NULL;
-	struct ol_txrx_vdev_t *vd;
 
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 	if (pdev->tx_desc.freelist) {
@@ -152,31 +243,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 			return NULL;
 		}
 		ol_tx_desc_dup_detect_set(pdev, tx_desc);
-		if (qdf_unlikely(pdev->tx_desc.num_free <
-					pdev->tx_desc.stop_th &&
-				pdev->tx_desc.num_free >=
-				 pdev->tx_desc.stop_priority_th &&
-				pdev->tx_desc.status ==
-				 FLOW_POOL_ACTIVE_UNPAUSED)) {
-			pdev->tx_desc.status = FLOW_POOL_NON_PRIO_PAUSED;
-			/* pause network NON PRIORITY queues */
-			TAILQ_FOREACH(vd, &pdev->vdev_list, vdev_list_elem) {
-				pdev->pause_cb(vd->vdev_id,
-					       WLAN_STOP_NON_PRIORITY_QUEUE,
-					       WLAN_DATA_FLOW_CONTROL);
-			}
-		} else if (qdf_unlikely((pdev->tx_desc.num_free <
-					 pdev->tx_desc.stop_priority_th) &&
-				pdev->tx_desc.status ==
-				FLOW_POOL_NON_PRIO_PAUSED)) {
-			pdev->tx_desc.status = FLOW_POOL_ACTIVE_PAUSED;
-			/* pause priority queue */
-			TAILQ_FOREACH(vd, &pdev->vdev_list, vdev_list_elem) {
-				pdev->pause_cb(vd->vdev_id,
-					       WLAN_NETIF_PRIORITY_QUEUE_OFF,
-					       WLAN_DATA_FLOW_CONTROL_PRIORITY);
-			}
-		}
+		ol_tx_do_pdev_flow_control_pause(pdev);
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
 		ol_tx_desc_vdev_update(tx_desc, vdev);
@@ -466,47 +533,13 @@ static void ol_tx_desc_free_common(struct ol_txrx_pdev_t *pdev,
  */
 void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
-	struct ol_txrx_vdev_t *vdev;
-
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 
 	ol_tx_desc_free_common(pdev, tx_desc);
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
 	ol_tx_desc_vdev_rm(tx_desc);
-
-	switch (pdev->tx_desc.status) {
-	case FLOW_POOL_ACTIVE_PAUSED:
-		if (pdev->tx_desc.num_free > pdev->tx_desc.start_priority_th) {
-			/* unpause priority queue */
-			TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-				pdev->pause_cb(vdev->vdev_id,
-				       WLAN_NETIF_PRIORITY_QUEUE_ON,
-				       WLAN_DATA_FLOW_CONTROL_PRIORITY);
-			}
-			pdev->tx_desc.status = FLOW_POOL_NON_PRIO_PAUSED;
-		}
-		break;
-	case FLOW_POOL_NON_PRIO_PAUSED:
-		if (pdev->tx_desc.num_free > pdev->tx_desc.start_th) {
-			TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-				pdev->pause_cb(vdev->vdev_id,
-					       WLAN_WAKE_NON_PRIORITY_QUEUE,
-					       WLAN_DATA_FLOW_CONTROL);
-			}
-			pdev->tx_desc.status = FLOW_POOL_ACTIVE_UNPAUSED;
-		}
-		break;
-	case FLOW_POOL_INVALID:
-		if (pdev->tx_desc.num_free == pdev->tx_desc.pool_size)
-			ol_txrx_err("pool is INVALID State!!");
-		break;
-	case FLOW_POOL_ACTIVE_UNPAUSED:
-		break;
-	default:
-		ol_txrx_err("pool is INACTIVE State!!\n");
-		break;
-	};
+	ol_tx_do_pdev_flow_control_unpause(pdev);
 
 	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }

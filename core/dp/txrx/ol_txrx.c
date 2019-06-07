@@ -850,6 +850,41 @@ void htt_pkt_log_init(struct cdp_pdev *pdev_handle, void *ol_sc) { }
 static void htt_pktlogmod_exit(ol_txrx_pdev_handle handle)  { }
 #endif
 
+#ifdef QCA_LL_PDEV_TX_FLOW_CONTROL
+/**
+ * ol_txrx_pdev_set_threshold() - set pdev pool stop/start threshold
+ * @pdev: txrx pdev
+ *
+ * Return: void
+ */
+static void ol_txrx_pdev_set_threshold(struct ol_txrx_pdev_t *pdev)
+{
+	uint32_t stop_threshold;
+	uint32_t start_threshold;
+	uint16_t desc_pool_size = pdev->tx_desc.pool_size;
+
+	stop_threshold = ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
+	start_threshold = stop_threshold +
+		ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
+	pdev->tx_desc.start_th = (start_threshold * desc_pool_size) / 100;
+	pdev->tx_desc.stop_th = (stop_threshold * desc_pool_size) / 100;
+	pdev->tx_desc.stop_priority_th =
+		(TX_PRIORITY_TH * pdev->tx_desc.stop_th) / 100;
+	if (pdev->tx_desc.stop_priority_th >= MAX_TSO_SEGMENT_DESC)
+		pdev->tx_desc.stop_priority_th -= MAX_TSO_SEGMENT_DESC;
+
+	pdev->tx_desc.start_priority_th =
+		(TX_PRIORITY_TH * pdev->tx_desc.start_th) / 100;
+	if (pdev->tx_desc.start_priority_th >= MAX_TSO_SEGMENT_DESC)
+		pdev->tx_desc.start_priority_th -= MAX_TSO_SEGMENT_DESC;
+	pdev->tx_desc.status = FLOW_POOL_ACTIVE_UNPAUSED;
+}
+#else
+static inline void ol_txrx_pdev_set_threshold(struct ol_txrx_pdev_t *pdev)
+{
+}
+#endif
+
 /**
  * ol_txrx_pdev_post_attach() - attach txrx pdev
  * @pdev: txrx pdev
@@ -870,8 +905,6 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 	union ol_tx_desc_list_elem_t *c_element;
 	unsigned int sig_bit;
 	uint16_t desc_per_page;
-	uint32_t stop_threshold;
-	uint32_t start_threshold;
 
 	if (!osc) {
 		ret = -EINVAL;
@@ -1015,21 +1048,7 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 		    (uint32_t *)pdev->tx_desc.freelist,
 		    (uint32_t *)(pdev->tx_desc.freelist + desc_pool_size));
 
-	stop_threshold = ol_cfg_get_tx_flow_stop_queue_th(pdev->ctrl_pdev);
-	start_threshold = stop_threshold +
-		ol_cfg_get_tx_flow_start_queue_offset(pdev->ctrl_pdev);
-	pdev->tx_desc.start_th = (start_threshold * desc_pool_size) / 100;
-	pdev->tx_desc.stop_th = (stop_threshold * desc_pool_size) / 100;
-	pdev->tx_desc.stop_priority_th =
-		(TX_PRIORITY_TH * pdev->tx_desc.stop_th) / 100;
-	if (pdev->tx_desc.stop_priority_th >= MAX_TSO_SEGMENT_DESC)
-		pdev->tx_desc.stop_priority_th -= MAX_TSO_SEGMENT_DESC;
-
-	pdev->tx_desc.start_priority_th =
-		(TX_PRIORITY_TH * pdev->tx_desc.start_th) / 100;
-	if (pdev->tx_desc.start_priority_th >= MAX_TSO_SEGMENT_DESC)
-		pdev->tx_desc.start_priority_th -= MAX_TSO_SEGMENT_DESC;
-	pdev->tx_desc.status = FLOW_POOL_ACTIVE_UNPAUSED;
+	ol_txrx_pdev_set_threshold(pdev);
 
 	/* check what format of frames are expected to be delivered by the OS */
 	pdev->frame_format = ol_cfg_frame_type(pdev->ctrl_pdev);
