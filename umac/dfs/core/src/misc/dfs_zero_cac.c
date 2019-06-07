@@ -2322,7 +2322,7 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "target_psoc_info is null");
 		return;
@@ -2424,7 +2424,7 @@ uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
 		retval = 0;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 
 	info = (struct tgt_info *)(&tgt_hdl->info);
 	if (!tgt_hdl) {

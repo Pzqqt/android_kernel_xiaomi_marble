@@ -239,7 +239,7 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	target_type = target_if_cfr_get_target_type(psoc);
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 
 	if (tgt_hdl)
 		info = (&(tgt_hdl->info));
