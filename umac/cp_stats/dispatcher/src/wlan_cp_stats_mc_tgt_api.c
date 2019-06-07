@@ -849,7 +849,7 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 		tgt_mc_cp_stats_extract_station_stats(psoc, ev);
 
 	else
-		cp_stats_err("No pending request");
+		cp_stats_debug("No pending request");
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 
 	return QDF_STATUS_SUCCESS;
