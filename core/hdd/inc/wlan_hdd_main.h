@@ -58,6 +58,7 @@
 #include <wlan_hdd_wmm.h>
 #include <wlan_hdd_cfg.h>
 #include <linux/spinlock.h>
+#include <ani_system_defs.h>
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
 #endif
@@ -802,6 +803,45 @@ struct hdd_rate_info {
 };
 
 /**
+ * struct hdd_mic_info - mic error info in HDD
+ * @ta_mac_addr: transmitter mac address
+ * @multicast: Flag for multicast
+ * @key_id: Key ID
+ * @tsc: Sequence number
+ * @vdev_id: vdev id
+ *
+ */
+struct hdd_mic_error_info {
+	struct qdf_mac_addr ta_mac_addr;
+	bool multicast;
+	uint8_t key_id;
+	uint8_t tsc[SIR_CIPHER_SEQ_CTR_SIZE];
+	uint16_t vdev_id;
+};
+
+enum hdd_mic_work_status {
+	MIC_UNINITIALIZED,
+	MIC_INITIALIZED,
+	MIC_SCHEDULED,
+	MIC_DISABLED
+};
+
+/**
+ * struct hdd_mic_work - mic work info in HDD
+ * @mic_error_work: mic error work
+ * @status: sattus of mic error work
+ * @info: Pointer to mic error information
+ * @lock: lock to synchronixe mic error work
+ *
+ */
+struct hdd_mic_work {
+	qdf_work_t work;
+	enum hdd_mic_work_status status;
+	struct hdd_mic_error_info *info;
+	qdf_spinlock_t lock;
+};
+
+/**
  * struct hdd_fw_txrx_stats - fw txrx status in HDD
  *                            (refer to station_info struct in Kernel)
  * @tx_packets: packets transmitted to this station
@@ -1112,6 +1152,8 @@ struct hdd_context;
  * @vdev_lock: lock to protect vdev context access
  * @vdev_id: Unique identifier assigned to the vdev
  * @event_flags: a bitmap of hdd_adapter_flags
+ * @mic_work: mic work information
+ *
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1160,6 +1202,8 @@ struct hdd_adapter {
 #ifdef WLAN_NUD_TRACKING
 	struct hdd_nud_tracking_info nud_tracking;
 #endif
+
+	struct hdd_mic_work mic_work;
 	bool disconnection_in_progress;
 	qdf_mutex_t disconnection_status_lock;
 	unsigned long event_flags;

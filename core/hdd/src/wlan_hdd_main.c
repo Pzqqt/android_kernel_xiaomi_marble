@@ -50,6 +50,7 @@
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_osif_priv.h"
 #include <wlan_osif_request_manager.h>
 #ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
@@ -343,6 +344,191 @@ struct sock *cesium_nl_srv_sock;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 static void wlan_hdd_auto_shutdown_cb(void);
 #endif
+
+/**
+ * hdd_mic_flush_work() - disable and flush pending mic work
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_mic_flush_work(struct hdd_adapter *adapter)
+{
+	hdd_debug("Flush the MIC error work");
+
+	qdf_spin_lock_bh(&adapter->mic_work.lock);
+	if (adapter->mic_work.status == MIC_UNINITIALIZED) {
+		qdf_spin_unlock_bh(&adapter->mic_work.lock);
+		return;
+	}
+	adapter->mic_work.status = MIC_DISABLED;
+	qdf_spin_unlock_bh(&adapter->mic_work.lock);
+
+	qdf_flush_work(&adapter->mic_work.work);
+}
+
+/**
+ * hdd_mic_enable_work() - enable mic error work
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_mic_enable_work(struct hdd_adapter *adapter)
+{
+	hdd_debug("Enable the MIC error work");
+
+	qdf_spin_lock_bh(&adapter->mic_work.lock);
+	if (adapter->mic_work.status == MIC_DISABLED)
+		adapter->mic_work.status = MIC_INITIALIZED;
+	qdf_spin_unlock_bh(&adapter->mic_work.lock);
+}
+
+/**
+ * hdd_mic_deinit_work() - deinitialize mic error work
+ * @hdd_adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_mic_deinit_work(struct hdd_adapter *adapter)
+{
+	hdd_debug("DeInitialize the MIC error work");
+
+	if (adapter->mic_work.status != MIC_UNINITIALIZED) {
+		qdf_destroy_work(NULL, &adapter->mic_work.work);
+
+		qdf_spin_lock_bh(&adapter->mic_work.lock);
+		adapter->mic_work.status = MIC_UNINITIALIZED;
+		if (adapter->mic_work.info) {
+			qdf_mem_free(adapter->mic_work.info);
+			adapter->mic_work.info = NULL;
+		}
+		qdf_spin_unlock_bh(&adapter->mic_work.lock);
+		qdf_spinlock_destroy(&adapter->mic_work.lock);
+	}
+}
+
+/**
+ * hdd_process_sta_mic_error() - Indicate STA mic error to supplicant
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_process_sta_mic_error(struct hdd_adapter *adapter)
+{
+	struct hdd_station_ctx *sta_ctx;
+	struct hdd_mic_error_info *info;
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	if (eConnectionState_Associated !=
+	    sta_ctx->conn_info.conn_state)
+		return;
+
+	info = adapter->mic_work.info;
+	/* inform mic failure to nl80211 */
+	cfg80211_michael_mic_failure(adapter->dev,
+				     (uint8_t *)&info->ta_mac_addr,
+				     info->multicast ?
+				     NL80211_KEYTYPE_GROUP :
+				     NL80211_KEYTYPE_PAIRWISE,
+				     info->key_id,
+				     info->tsc,
+				     GFP_KERNEL);
+}
+
+/**
+ * hdd_process_sap_mic_error() - Indicate SAP mic error to supplicant
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_process_sap_mic_error(struct hdd_adapter *adapter)
+{
+	struct hdd_mic_error_info *info;
+
+	info = adapter->mic_work.info;
+	/* inform mic failure to nl80211 */
+	cfg80211_michael_mic_failure(adapter->dev,
+				     (uint8_t *)&info->ta_mac_addr,
+				     info->multicast ?
+				     NL80211_KEYTYPE_GROUP :
+				     NL80211_KEYTYPE_PAIRWISE,
+				     info->key_id,
+				     info->tsc,
+				     GFP_KERNEL);
+}
+
+/**
+ * __hdd_process_mic_error() - Indicate mic error to supplicant
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+__hdd_process_mic_error(struct hdd_adapter *adapter)
+{
+	if (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+		hdd_process_sta_mic_error(adapter);
+	} else if (adapter->device_mode == QDF_SAP_MODE ||
+		   adapter->device_mode == QDF_P2P_GO_MODE) {
+		hdd_process_sap_mic_error(adapter);
+	} else {
+		hdd_err("Invalid interface type:%d", adapter->device_mode);
+	}
+}
+
+/**
+ * hdd_process_mic_error() - process mic error work
+ * @data: void pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_process_mic_error(void *data)
+{
+	struct hdd_adapter *adapter = data;
+	struct osif_vdev_sync *vdev_sync;
+
+	if (hdd_validate_adapter(adapter))
+		goto exit;
+
+	if (osif_vdev_sync_op_start(adapter->dev, &vdev_sync))
+		goto exit;
+
+	__hdd_process_mic_error(adapter);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+exit:
+	qdf_spin_lock_bh(&adapter->mic_work.lock);
+	if (adapter->mic_work.info) {
+		qdf_mem_free(adapter->mic_work.info);
+		adapter->mic_work.info = NULL;
+	}
+	if (adapter->mic_work.status == MIC_SCHEDULED)
+		adapter->mic_work.status = MIC_INITIALIZED;
+	qdf_spin_unlock_bh(&adapter->mic_work.lock);
+}
+
+/**
+ * hdd_mic_init_work() - init mic error work
+ * @hdd_adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+static void
+hdd_mic_init_work(struct hdd_adapter *adapter)
+{
+	qdf_spinlock_create(&adapter->mic_work.lock);
+	qdf_create_work(0, &adapter->mic_work.work,
+			hdd_process_mic_error, adapter);
+	adapter->mic_work.status = MIC_INITIALIZED;
+	adapter->mic_work.info = NULL;
+}
 
 void hdd_start_complete(int ret)
 {
@@ -2358,12 +2544,14 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 			goto err_start_adapter;
 
 		hdd_nud_ignore_tracking(adapter, false);
+		hdd_mic_enable_work(adapter);
 		break;
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
 		ret = hdd_start_ap_adapter(adapter);
 		if (ret)
 			goto err_start_adapter;
+		hdd_mic_enable_work(adapter);
 		break;
 	case QDF_IBSS_MODE:
 		/*
@@ -4543,6 +4731,7 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_nud_deinit_tracking(adapter);
+	hdd_mic_deinit_work(adapter);
 	qdf_mutex_destroy(&adapter->disconnection_status_lock);
 	hdd_apf_context_destroy(adapter);
 	qdf_spinlock_destroy(&adapter->vdev_lock);
@@ -5264,6 +5453,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 					WLAN_CONTROL_PATH);
 
 		hdd_nud_init_tracking(adapter);
+		hdd_mic_init_work(adapter);
+
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE)
 			hdd_sysfs_create_adapter_root_obj(adapter);
@@ -5298,6 +5489,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
+
+		hdd_mic_init_work(adapter);
 
 		/*
 		 * Workqueue which gets scheduled in IPv4 notification
@@ -5524,6 +5717,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	hdd_nud_ignore_tracking(adapter, true);
 	hdd_nud_reset_tracking(adapter);
 	hdd_nud_flush_work(adapter);
+	hdd_mic_flush_work(adapter);
 	hdd_stop_tsf_sync(adapter);
 
 	hdd_debug("Disabling queues");
@@ -6007,6 +6201,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_nud_ignore_tracking(adapter, true);
 		hdd_nud_reset_tracking(adapter);
 		hdd_nud_flush_work(adapter);
+		hdd_mic_flush_work(adapter);
 
 		if (adapter->device_mode != QDF_SAP_MODE &&
 		    adapter->device_mode != QDF_P2P_GO_MODE &&
@@ -6777,6 +6972,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 			hdd_lpass_notify_start(hdd_ctx, adapter);
 			hdd_nud_ignore_tracking(adapter, false);
+			hdd_mic_enable_work(adapter);
 			break;
 
 		case QDF_SAP_MODE:
@@ -6784,6 +6980,8 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 							   &value);
 			if (value)
 				hdd_start_ap_adapter(adapter);
+
+			hdd_mic_enable_work(adapter);
 
 			break;
 
@@ -7659,6 +7857,67 @@ struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx)
 	}
 
 	return NULL;
+}
+
+/**
+ * hdd_rx_mic_error_ind() - MIC error indication handler
+ * @scn_handle: pdev handle from osif layer
+ * @info: mic failure information
+ *
+ * This function indicates the Mic failure to the supplicant
+ *
+ * Return: None
+ */
+static void
+hdd_rx_mic_error_ind(void *scn_handle,
+		     struct cdp_rx_mic_err_info *mic_failure_info)
+{
+	struct wiphy *wiphy;
+	struct pdev_osif_priv *pdev_priv;
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct hdd_mic_error_info *hdd_mic_info;
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev = (struct wlan_objmgr_pdev *)scn_handle;
+	pdev_priv = wlan_pdev_get_ospriv(pdev);
+	wiphy = pdev_priv->wiphy;
+	hdd_ctx = wiphy_priv(wiphy);
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, mic_failure_info->vdev_id);
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	hdd_mic_info = qdf_mem_malloc(sizeof(*hdd_mic_info));
+	if (!hdd_mic_info)
+		return;
+
+	qdf_copy_macaddr(&hdd_mic_info->ta_mac_addr,
+			 &mic_failure_info->ta_mac_addr);
+	hdd_mic_info->multicast = mic_failure_info->multicast;
+	hdd_mic_info->key_id = mic_failure_info->key_id;
+	qdf_mem_copy(&hdd_mic_info->tsc, &mic_failure_info->tsc,
+		     SIR_CIPHER_SEQ_CTR_SIZE);
+	hdd_mic_info->vdev_id = mic_failure_info->vdev_id;
+
+	qdf_spin_lock_bh(&adapter->mic_work.lock);
+	if (adapter->mic_work.status != MIC_INITIALIZED) {
+		qdf_spin_unlock_bh(&adapter->mic_work.lock);
+		qdf_mem_free(hdd_mic_info);
+		return;
+	}
+	/*
+	 * Store mic error info pointer in adapter
+	 * for freeing up the alocated memory in case
+	 * the work scheduled below is flushed or deinitialized.
+	 */
+	adapter->mic_work.status = MIC_SCHEDULED;
+	adapter->mic_work.info = hdd_mic_info;
+	qdf_sched_work(0, &adapter->mic_work.work);
+	qdf_spin_unlock_bh(&adapter->mic_work.lock);
 }
 
 /* wake lock APIs for HDD */
@@ -10633,6 +10892,8 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 	cdp_register_pause_cb(soc, wlan_hdd_txrx_pause_cb);
 	/* Register HL netdev flow control callback */
 	cdp_hl_fc_register(soc, wlan_hdd_txrx_pause_cb);
+	/* Register rx mic error indication handler */
+	cdp_register_rx_mic_error_ind_handler(soc, hdd_rx_mic_error_ind);
 
 	/*
 	 * Note that the cds_pre_enable() sequence triggers the cfg download.
