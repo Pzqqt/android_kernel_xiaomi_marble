@@ -5124,6 +5124,7 @@ typedef enum {
 	wmi_vdev_param_ul_stbc,
 	wmi_vdev_param_ul_fixed_rate,
 	wmi_vdev_param_rawmode_open_war,
+	wmi_vdev_param_max_mtu_size,
 } wmi_conv_vdev_param_id;
 
 /**
