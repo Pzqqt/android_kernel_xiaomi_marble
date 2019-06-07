@@ -449,17 +449,19 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		default:
 			break;
 		}
+		if (user_id < HAL_MAX_UL_MU_USERS) {
+			mon_rx_user_status =
+				&ppdu_info->rx_user_status[user_id];
 
-		mon_rx_user_status = &ppdu_info->rx_user_status[user_id];
+			mon_rx_user_status->mcs =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
+					   MCS);
+			mon_rx_user_status->nss =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
+					   NSS);
 
-		mon_rx_user_status->mcs =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-				   MCS);
-		mon_rx_user_status->nss =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-				   NSS);
-
-		hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
+			hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
+		}
 
 		ppdu_info->com_info.mpdu_cnt_fcs_ok =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
