@@ -11280,29 +11280,6 @@ end:
 	return err;
 }
 
-void hdd_update_cca_info_cb(hdd_handle_t hdd_handle, uint32_t congestion,
-			    uint32_t vdev_id)
-{
-	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
-	int status;
-	struct hdd_adapter *adapter = NULL;
-	struct hdd_station_ctx *hdd_sta_ctx;
-
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status != 0)
-		return;
-
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	if (!adapter) {
-		hdd_err("vdev_id %d does not exist with host", vdev_id);
-		return;
-	}
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	hdd_sta_ctx->conn_info.cca = congestion;
-	hdd_info("congestion:%d", congestion);
-}
-
 static const struct nla_policy qca_wlan_vendor_set_trace_level_policy[
 		QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_PARAM] = {.type = NLA_NESTED },

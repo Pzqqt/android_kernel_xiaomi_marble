@@ -119,7 +119,6 @@ hdd_get_station_policy[STATION_MAX + 1] = {
 	[STATION_REMOTE] = {.type = NLA_BINARY, .len = QDF_MAC_ADDR_SIZE},
 };
 
-#ifdef QCA_SUPPORT_CP_STATS
 static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
 				  uint32_t *congestion)
 {
@@ -133,17 +132,6 @@ static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
 	*congestion = cca_stats.congestion;
 	return 0;
 }
-#else
-static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
-				  uint32_t *congestion)
-{
-	struct hdd_station_ctx *hdd_sta_ctx;
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	*congestion = hdd_sta_ctx->conn_info.cca;
-	return 0;
-}
-#endif
 
 /**
  * hdd_get_station_assoc_fail() - Handle get station assoc fail

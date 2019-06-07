@@ -14286,22 +14286,6 @@ void sme_store_pdev(mac_handle_t mac_handle, struct wlan_objmgr_pdev *pdev)
 	pdev->pdev_nif.pdev_fw_caps |= SUPPORTED_CRYPTO_CAPS;
 }
 
-QDF_STATUS sme_congestion_register_callback(mac_handle_t mac_handle,
-					    congestion_cb congestion_cb)
-{
-	QDF_STATUS status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->sme.congestion_cb = congestion_cb;
-		sme_release_global_lock(&mac->sme);
-		sme_debug("congestion callback set");
-	}
-
-	return status;
-}
-
 QDF_STATUS sme_register_tx_queue_cb(mac_handle_t mac_handle,
 				    tx_queue_cb tx_queue_cb)
 {

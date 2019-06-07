@@ -204,7 +204,6 @@ struct hdd_connection_info {
 	uint32_t roam_count;
 	int8_t signal;
 	int32_t assoc_status_code;
-	uint32_t cca;
 	tCsrSSIDInfo last_ssid;
 	enum csr_akm_type last_auth_type;
 	char auth_time[HDD_TIME_STRING_LEN];

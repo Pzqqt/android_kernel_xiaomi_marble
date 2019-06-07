@@ -2076,15 +2076,6 @@ QDF_STATUS sme_roam_invoke_nud_fail(mac_handle_t mac_handle, uint8_t vdev_id)
 }
 
 #endif
-/**
- * sme_congestion_register_callback() - registers congestion callback
- * @mac_handle: Opaque handle to the global MAC context
- * @congestion_cb: congestion callback
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_congestion_register_callback(mac_handle_t mac_handle,
-					    congestion_cb congestion_cb);
 
 /**
  * sme_register_tx_queue_cb(): Register tx queue callback

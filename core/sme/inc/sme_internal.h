@@ -226,15 +226,6 @@ typedef void (*bt_activity_info_cb)(hdd_handle_t hdd_handle,
 				    uint32_t bt_activity);
 
 /**
- * typedef congestion_cb - congestion callback function
- * @hdd_handle: HDD handle registered with SME
- * @congestion: Current congestion value
- * @vdev_id: ID of the vdev for which congestion is being reported
- */
-typedef void (*congestion_cb)(hdd_handle_t hdd_handle, uint32_t congestion,
-			      uint32_t vdev_id);
-
-/**
  * typedef rso_cmd_status_cb - RSO command status  callback function
  * @hdd_handle: HDD handle registered with SME
  * @rso_status: Status of the operation
@@ -364,7 +355,6 @@ struct sme_context {
 	bool (*get_connection_info_cb)(uint8_t *session_id,
 			enum scan_reject_states *reason);
 	rso_cmd_status_cb rso_cmd_status_cb;
-	congestion_cb congestion_cb;
 	pwr_save_fail_cb chip_power_save_fail_cb;
 	bt_activity_info_cb bt_activity_info_cb;
 	void *get_arp_stats_context;

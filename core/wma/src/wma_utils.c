@@ -3095,7 +3095,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	uint32_t i;
 	uint32_t buf_len = 0;
 	bool excess_data = false;
-	wmi_congestion_stats *congestion_stats;
 	struct mac_context *mac;
 
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
@@ -3220,30 +3219,6 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 					temp += sizeof(wmi_rssi_stats);
 				}
 			}
-		}
-	}
-
-	congestion_stats = (wmi_congestion_stats *) param_buf->congestion_stats;
-	if (congestion_stats) {
-		if (((congestion_stats->tlv_header & 0xFFFF0000) >> 16 ==
-			  WMITLV_TAG_STRUC_wmi_congestion_stats) &&
-			  ((congestion_stats->tlv_header & 0x0000FFFF) ==
-			  WMITLV_GET_STRUCT_TLVLEN(wmi_congestion_stats))) {
-			mac = cds_get_context(QDF_MODULE_ID_PE);
-			if (!mac) {
-				WMA_LOGE("%s: Invalid mac", __func__);
-				return -EINVAL;
-			}
-			if (!mac->sme.congestion_cb) {
-				WMA_LOGE("%s: Callback not registered",
-					__func__);
-				return -EINVAL;
-			}
-			WMA_LOGI("%s: congestion %d", __func__,
-				congestion_stats->congestion);
-			mac->sme.congestion_cb(mac->hdd_handle,
-				congestion_stats->congestion,
-				congestion_stats->vdev_id);
 		}
 	}
 

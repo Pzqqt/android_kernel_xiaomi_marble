@@ -547,17 +547,6 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason);
 
 /**
- * hdd_update_cca_info_cb() - stores congestion value in station context
- * @hdd_handle: HDD handle
- * @congestion: congestion
- * @vdev_id: vdev id
- *
- * Return: None
- */
-void hdd_update_cca_info_cb(hdd_handle_t hdd_handle, uint32_t congestion,
-			    uint32_t vdev_id);
-
-/**
  * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
  * to the channel passed.
  * @chan: Channel
