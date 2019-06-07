@@ -2834,6 +2834,13 @@ static int wma_wake_event_piggybacked(
 	return errno;
 }
 
+static void wma_debug_assert_page_fault_wakeup(uint32_t reason)
+{
+	/* During DRV if page fault wake up then assert */
+	if ((WOW_REASON_PAGE_FAULT == reason) && (qdf_is_drv_connected()))
+		QDF_DEBUG_PANIC("Unexpected page fault wake up detected during DRV wow");
+}
+
 static void wma_wake_event_log_reason(t_wma_handle *wma,
 				      WOW_EVENT_INFO_fixed_param *wake_info)
 {
@@ -2847,6 +2854,7 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 			 wake_info->wake_reason,
 			 wake_info->vdev_id,
 			 wma_vdev_type_str(vdev->type));
+		wma_debug_assert_page_fault_wakeup(wake_info->wake_reason);
 	} else if (!wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
 		WMA_LOGA("Non-WLAN triggered wakeup: %s (%d)",
 			 wma_wow_wake_reason_str(wake_info->wake_reason),
