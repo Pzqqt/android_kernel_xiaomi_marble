@@ -58,6 +58,28 @@ wlan_blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * wlan_blm_update_bssid_connect_params() - Inform the BLM about connect or
+ * disconnect with the current AP.
+ * @pdev: pdev object
+ * @bssid: BSSID of the AP
+ * @con_state: Connection stae (connected/disconnected)
+ *
+ * This API will inform the BLM about the state with the AP so that if the AP
+ * is selected, and the connection went through, and the connection did not
+ * face any data stall till the bad bssid reset timer, BLM can remove the
+ * AP from the reject ap list maintained by it.
+ *
+ * Return: None
+ */
+static inline void
+wlan_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
+				     struct qdf_mac_addr bssid,
+				     enum blm_connection_state con_state)
+{
+	return blm_update_bssid_connect_params(pdev, bssid, con_state);
+}
+
+/**
  * wlan_blm_get_bssid_reject_list() - Get the BSSIDs in reject list from BLM
  * @pdev: pdev object
  * @reject_list: reject list to be filled (passed by caller)
@@ -102,6 +124,13 @@ wlan_blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 			       enum blm_reject_ap_type reject_ap_type)
 {
 	return 0;
+}
+
+static inline void
+wlan_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
+				     struct qdf_mac_addr bssid,
+				     enum blm_connection_state con_state)
+{
 }
 
 #endif

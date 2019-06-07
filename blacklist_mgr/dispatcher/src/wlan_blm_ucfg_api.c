@@ -21,6 +21,7 @@
 
 #include <wlan_blm_ucfg_api.h>
 #include <wlan_blm_core.h>
+#include <wlan_blm_api.h>
 
 QDF_STATUS ucfg_blm_init(void)
 {
@@ -136,7 +137,7 @@ ucfg_blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 				     struct qdf_mac_addr bssid,
 				     enum blm_connection_state con_state)
 {
-	blm_update_bssid_connect_params(pdev, bssid, con_state);
+	wlan_blm_update_bssid_connect_params(pdev, bssid, con_state);
 }
 
 void
