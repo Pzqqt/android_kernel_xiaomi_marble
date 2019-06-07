@@ -1528,14 +1528,13 @@ static inline int32_t target_pdev_get_phy_idx
 static inline struct wmi_unified *GET_WMI_HDL_FROM_PSOC(
 		struct wlan_objmgr_psoc *psoc)
 {
-	void *tgt_if_handle;
+	struct target_psoc_info *tgt_if_handle;
 
 	if (psoc) {
 		tgt_if_handle = psoc->tgt_if_handle;
 
 		if (tgt_if_handle)
-			return (target_psoc_get_wmi_hdl(
-				(struct target_psoc_info *)tgt_if_handle));
+			return target_psoc_get_wmi_hdl(tgt_if_handle);
 		else
 			return NULL;
 	}
@@ -1555,7 +1554,7 @@ static inline struct wmi_unified *GET_WMI_HDL_FROM_PSOC(
 static inline struct wmi_unified *GET_WMI_HDL_FROM_PDEV(
 		struct wlan_objmgr_pdev *pdev)
 {
-	void *tgt_if_handle;
+	struct target_pdev_info *tgt_if_handle;
 
 	if (pdev) {
 		tgt_if_handle =  pdev->tgt_if_handle;

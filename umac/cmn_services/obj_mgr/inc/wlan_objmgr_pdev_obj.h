@@ -24,6 +24,7 @@
 
 #include <wlan_objmgr_cmn.h>
 #include "wlan_objmgr_psoc_obj.h"
+#include <target_if_pub.h>
 
 /* STATUS: scanning */
 #define WLAN_PDEV_F_SCAN                    0x00000001
@@ -203,7 +204,7 @@ struct wlan_objmgr_pdev {
 	void *pdev_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
-	void *tgt_if_handle;
+	target_pdev_info_t *tgt_if_handle;
 	void *dp_handle;
 	qdf_spinlock_t pdev_lock;
 };
@@ -832,8 +833,9 @@ uint8_t wlan_objmgr_pdev_get_pdev_id(struct wlan_objmgr_pdev *pdev)
  *
  * Return: None
  */
-static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
-			void *tgt_if_handle)
+static inline
+void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
+				 target_pdev_info_t *tgt_if_handle)
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	if (!pdev)
@@ -850,7 +852,8 @@ static inline void wlan_pdev_set_tgt_if_handle(struct wlan_objmgr_pdev *pdev,
  *
  * Return: target interface handle
  */
-static inline void *wlan_pdev_get_tgt_if_handle(struct wlan_objmgr_pdev *pdev)
+static inline
+target_pdev_info_t *wlan_pdev_get_tgt_if_handle(struct wlan_objmgr_pdev *pdev)
 {
 	if (!pdev)
 		return NULL;

@@ -240,7 +240,7 @@ void lmac_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
 		target_if_err("psoc is null");
 		return;
 	}
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return;

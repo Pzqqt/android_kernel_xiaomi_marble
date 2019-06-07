@@ -25,6 +25,7 @@
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_debug.h"
 #include "wlan_lmac_if_def.h"
+#include <target_if_pub.h>
 
 #define REG_DMN_CH144        0x0001
 #define REG_DMN_ENTREPRISE   0x0002
@@ -332,7 +333,7 @@ struct wlan_objmgr_psoc {
 	void *soc_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
-	void *tgt_if_handle;
+	target_psoc_info_t *tgt_if_handle;
 	void *dp_handle;
 	qdf_spinlock_t psoc_lock;
 };
@@ -1224,8 +1225,9 @@ static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
  *
  * Return: None
  */
-static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
-			void *tgt_if_handle)
+static inline
+void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
+				 target_psoc_info_t *tgt_if_handle)
 {
 	if (!psoc)
 		return;
@@ -1241,7 +1243,8 @@ static inline void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
  *
  * Return: target interface handle
  */
-static inline void *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
+static inline
+target_psoc_info_t *wlan_psoc_get_tgt_if_handle(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc)
 		return NULL;

@@ -55,8 +55,7 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null in service ready ev");
 		return -EINVAL;
@@ -208,8 +207,7 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null in service ready ev");
 		return -EINVAL;
@@ -332,8 +330,7 @@ static int init_deinit_service_available_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return -EINVAL;
@@ -382,8 +379,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return -EINVAL;
@@ -534,8 +530,7 @@ QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info null in register wmi hadler");
 		return QDF_STATUS_E_FAILURE;
