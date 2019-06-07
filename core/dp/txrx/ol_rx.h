@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,6 +41,28 @@ void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer, unsigned int tid,
 	      qdf_nbuf_t head_msdu);
+
+/**
+ * ol_rx_send_mic_err_ind() - ol rx mic err handler
+ * @pdev: ol pdev
+ * @vdev_id: vdev id
+ * @peer_mac_addr: peer mac address
+ * @tid: TID
+ * @tsf32: TSF
+ * @err_type: error type
+ * @rx_frame: rx frame
+ * @pn: PN Number
+ * @key_id: key id
+ *
+ * This function handles rx error and send MIC error failure to HDD
+ *
+ * Return: none
+ */
+void
+ol_rx_send_mic_err_ind(struct ol_txrx_pdev_t *pdev, uint8_t vdev_id,
+		       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
+		       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
+		       uint64_t *pn, uint8_t key_id);
 
 void ol_rx_frames_free(htt_pdev_handle htt_pdev, qdf_nbuf_t frames);
 

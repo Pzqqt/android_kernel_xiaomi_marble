@@ -723,13 +723,14 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 							    pdev->htt_pdev,
 							    msdu),
 						    &key_id) == true) {
-						ol_rx_err(pdev->ctrl_pdev,
-							  vdev->vdev_id,
-							  peer->mac_addr.raw,
-							  tid, 0,
-							  OL_RX_ERR_TKIP_MIC,
-							  msdu, &pn.pn48,
-							  key_id);
+						ol_rx_send_mic_err_ind(
+							vdev->pdev,
+							vdev->vdev_id,
+							peer->mac_addr.raw,
+							tid, 0,
+							OL_RX_ERR_TKIP_MIC,
+							msdu, &pn.pn48,
+							key_id);
 					}
 				}
 
@@ -946,6 +947,42 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 }
 
 void
+ol_rx_send_mic_err_ind(struct ol_txrx_pdev_t *pdev, uint8_t vdev_id,
+		       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
+		       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
+		       uint64_t *pn, uint8_t key_id)
+{
+	struct cdp_rx_mic_err_info mic_failure_info;
+	qdf_ether_header_t *eth_hdr;
+	struct ol_if_ops *tops = NULL;
+	ol_txrx_soc_handle ol_txrx_soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (err_type != OL_RX_ERR_TKIP_MIC)
+		return;
+
+	if (qdf_nbuf_len(rx_frame) < sizeof(*eth_hdr))
+		return;
+
+	eth_hdr = (qdf_ether_header_t *)qdf_nbuf_data(rx_frame);
+
+	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.ta_mac_addr,
+			 (struct qdf_mac_addr *)peer_mac_addr);
+	qdf_copy_macaddr((struct qdf_mac_addr *)&mic_failure_info.da_mac_addr,
+			 (struct qdf_mac_addr *)eth_hdr->ether_dhost);
+	mic_failure_info.key_id = key_id;
+	mic_failure_info.multicast =
+		IEEE80211_IS_MULTICAST(eth_hdr->ether_dhost);
+	qdf_mem_copy(mic_failure_info.tsc, pn, SIR_CIPHER_SEQ_CTR_SIZE);
+	mic_failure_info.frame_type = cdp_rx_frame_type_802_3;
+	mic_failure_info.data = NULL;
+	mic_failure_info.vdev_id = vdev_id;
+
+	tops = ol_txrx_soc->ol_ops;
+	if (tops->rx_mic_error)
+		tops->rx_mic_error(pdev->control_pdev, &mic_failure_info);
+}
+
+void
 ol_rx_mic_error_handler(
 	ol_txrx_pdev_handle pdev,
 	u_int8_t tid,
@@ -971,11 +1008,11 @@ ol_rx_mic_error_handler(
 				if (htt_rx_msdu_desc_key_id(
 					vdev->pdev->htt_pdev, msdu_desc,
 					&key_id) == true) {
-					ol_rx_err(vdev->pdev->ctrl_pdev,
-						  vdev->vdev_id,
-						  peer->mac_addr.raw, tid, 0,
-						  OL_RX_ERR_TKIP_MIC, msdu,
-						  &pn.pn48, key_id);
+					ol_rx_send_mic_err_ind(vdev->pdev,
+						vdev->vdev_id,
+						peer->mac_addr.raw, tid, 0,
+						OL_RX_ERR_TKIP_MIC, msdu,
+						&pn.pn48, key_id);
 				}
 			}
 		}

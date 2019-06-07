@@ -31,6 +31,7 @@
 #include <htt.h>                /* HTT_T2H_MSG_TYPE, etc. */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
+#include <ol_rx.h>
 #include <ol_htt_rx_api.h>
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_htt_api.h>    /* htt_tx_status */
@@ -591,9 +592,10 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		switch (HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word)) {
 		case HTT_RX_OFLD_PKT_ERR_TYPE_MIC_ERR:
 		{
-			struct ol_error_info err_info;
 			struct ol_txrx_vdev_t *vdev;
 			struct ol_txrx_peer_t *peer;
+			uint64_t pn;
+			uint32_t key_id;
 			uint16_t peer_id =
 				 HTT_RX_OFLD_PKT_ERR_MIC_ERR_PEER_ID_GET
 				(*(msg_word + 1));
@@ -606,22 +608,14 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				break;
 			}
 			vdev = peer->vdev;
-			err_info.u.mic_err.vdev_id = vdev->vdev_id;
-			err_info.u.mic_err.key_id =
-				HTT_RX_OFLD_PKT_ERR_MIC_ERR_KEYID_GET
+			key_id = HTT_RX_OFLD_PKT_ERR_MIC_ERR_KEYID_GET
 				(*(msg_word + 1));
-			qdf_mem_copy(err_info.u.mic_err.da,
-				 (uint8_t *)(msg_word + 2),
-				 QDF_MAC_ADDR_SIZE);
-			qdf_mem_copy(err_info.u.mic_err.sa,
-				 (uint8_t *)(msg_word + 4),
-				 QDF_MAC_ADDR_SIZE);
-			qdf_mem_copy(&err_info.u.mic_err.pn,
-				 (uint8_t *)(msg_word + 6), 6);
-			qdf_mem_copy(err_info.u.mic_err.ta,
-				 peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(&pn, (uint8_t *)(msg_word + 6), 6);
 
-			wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);
+			ol_rx_send_mic_err_ind(vdev->pdev, vdev->vdev_id,
+					       peer->mac_addr.raw, 0, 0,
+					       OL_RX_ERR_TKIP_MIC, htt_t2h_msg,
+					       &pn, key_id);
 			break;
 		}
 		default:

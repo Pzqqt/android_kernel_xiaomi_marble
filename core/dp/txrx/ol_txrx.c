@@ -5314,6 +5314,22 @@ struct cdp_vdev *ol_txrx_wrapper_get_vdev_from_vdev_id(struct cdp_pdev *ppdev,
 }
 
 /**
+ * ol_txrx_pdev_set_ctrl_pdev() - set ctrl pdev handle in txrx pdev
+ * @txrx_pdev: txrx pdev handle
+ * @ctrl_pdev: UMAC ctrl pdev handle
+ *
+ * Return: void
+ */
+static void
+ol_txrx_pdev_set_ctrl_pdev(struct cdp_pdev *txrx_pdev,
+			   struct cdp_ctrl_objmgr_pdev *ctrl_pdev)
+{
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)txrx_pdev;
+
+	pdev->control_pdev = ctrl_pdev;
+}
+
+/**
  * ol_txrx_wrapper_register_peer() - register peer
  * @pdev: pdev handle
  * @sta_desc: peer description
@@ -5612,6 +5628,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get,
 	.display_stats = ol_txrx_display_stats,
 	.txrx_get_cfg = ol_txrx_get_cfg,
+	.txrx_pdev_set_ctrl_pdev = ol_txrx_pdev_set_ctrl_pdev,
 	/* TODO: Add other functions */
 };
 
@@ -5875,6 +5892,7 @@ struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
 		return NULL;
 
 	soc->ops = &ol_txrx_ops;
+	soc->ol_ops = dp_ol_if_ops;
 	return soc;
 }
 
