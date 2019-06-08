@@ -583,6 +583,14 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->limRFBand = lim_get_rf_band(
 				ft_session->currentOperChannel);
 
+	/* Assign default configured nss value in the new session */
+	if (IS_5G_CH(ft_session->currentOperChannel))
+		ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
+	else
+		ft_session->vdev_nss = mac->vdev_type_nss_2g.sta;
+
+	ft_session->nss = ft_session ->vdev_nss;
+
 	if (ft_session->limRFBand == BAND_2G) {
 		cbEnabledMode = mac->roam.configParam.channelBondingMode24GHz;
 	} else {

@@ -2381,14 +2381,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	sir_copy_mac_addr(session_ptr->limReAssocbssId, bss_desc->bssId);
 	ft_session_ptr->csaOffloadEnable = session_ptr->csaOffloadEnable;
 
-	/* Assign default configured nss value in the new session */
-	if (IS_5G_CH(ft_session_ptr->currentOperChannel))
-		ft_session_ptr->vdev_nss = mac_ctx->vdev_type_nss_5g.sta;
-	else
-		ft_session_ptr->vdev_nss = mac_ctx->vdev_type_nss_2g.sta;
-
-	ft_session_ptr->nss = ft_session_ptr->vdev_nss;
-
 	/* Next routine will update nss and vdev_nss with AP's capabilities */
 	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr, session_ptr);
 
