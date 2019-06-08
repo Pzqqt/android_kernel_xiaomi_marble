@@ -46,9 +46,6 @@
 #define WLAN_CFG_TX_FLOW_START_QUEUE_OFFSET 0
 #define WLAN_CFG_TX_FLOW_STOP_QUEUE_TH 0
 #endif
-#else
-#define WLAN_CFG_TX_FLOW_START_QUEUE_OFFSET 0
-#define WLAN_CFG_TX_FLOW_STOP_QUEUE_TH 0
 #endif
 
 #define WLAN_CFG_PER_PDEV_TX_RING_MIN 0
@@ -88,47 +85,6 @@
 #define WLAN_CFG_INT_TIMER_THRESHOLD_TX 8
 #define WLAN_CFG_INT_TIMER_THRESHOLD_RX 8
 #define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
-#else
-#define WLAN_CFG_PER_PDEV_TX_RING 0
-#define WLAN_CFG_IPA_UC_TX_BUF_SIZE 0
-#define WLAN_CFG_IPA_UC_TX_PARTITION_BASE 0
-#define WLAN_CFG_IPA_UC_RX_IND_RING_COUNT 0
-#endif
-
-#ifdef CONFIG_WIN
-#define WLAN_CFG_PER_PDEV_RX_RING 0
-#define WLAN_CFG_PER_PDEV_LMAC_RING 1
-#define WLAN_LRO_ENABLE 0
-#define WLAN_CFG_MAC_PER_TARGET 3
-/* Tx Descriptor and Tx Extension Descriptor pool sizes */
-#ifndef QCA_WIFI_QCA8074_VP
-#define WLAN_CFG_NUM_TX_DESC  0x320000
-#else
-#define WLAN_CFG_NUM_TX_DESC  (8 << 10)
-#endif
-#define WLAN_CFG_NUM_TX_EXT_DESC 0x80000
-
-/* Interrupt Mitigation - Batch threshold in terms of number of frames */
-#define WLAN_CFG_INT_BATCH_THRESHOLD_TX 256
-#define WLAN_CFG_INT_BATCH_THRESHOLD_RX 128
-#define WLAN_CFG_INT_BATCH_THRESHOLD_OTHER 1
-
-/* Interrupt Mitigation - Timer threshold in us */
-#define WLAN_CFG_INT_TIMER_THRESHOLD_TX 1000
-#define WLAN_CFG_INT_TIMER_THRESHOLD_RX 500
-#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 1000
-
-#define WLAN_CFG_TX_RING_SIZE 512
-
-/* Size the completion ring using following 2 parameters
- * - NAPI schedule latency (assuming 1 netdev competing for CPU)
- *   = 20 ms (2 jiffies)
- * - Worst case PPS requirement = 400K PPS
- *
- * Ring size = 20 * 400 = 8000
- * 8192 is nearest power of 2
- */
-#define WLAN_CFG_TX_COMP_RING_SIZE 0x80000
 #endif
 
 #define WLAN_CFG_PER_PDEV_RX_RING_MIN 0

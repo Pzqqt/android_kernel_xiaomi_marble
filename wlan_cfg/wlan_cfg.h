@@ -42,16 +42,6 @@
 #define WLAN_CFG_DST_RING_CACHED_DESC 1
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 11
-#define WLAN_CFG_RXDMA1_ENABLE 1
-/*
- * This mask defines how many transmit frames account for 1 NAPI work unit
- * 0xFFFF means each 64K tx frame completions account for 1 unit of NAPI budget
- */
-#define DP_TX_NAPI_BUDGET_DIV_MASK 0xFFFF
-
-/* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
-#define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0xFFFF
-
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #endif
 

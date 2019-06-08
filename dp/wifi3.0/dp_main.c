@@ -8922,7 +8922,7 @@ static struct cdp_raw_ops dp_ops_raw = {
 	/* TODO */
 };
 
-#ifdef CONFIG_WIN
+#ifdef PEER_FLOW_CONTROL
 static struct cdp_pflow_ops dp_ops_pflow = {
 	dp_tx_flow_ctrl_configure_pdev,
 };
@@ -9203,9 +9203,9 @@ static struct cdp_ops dp_txrx_ops = {
 	.host_stats_ops = &dp_ops_host_stats,
 	.wds_ops = &dp_ops_wds,
 	.raw_ops = &dp_ops_raw,
-#ifdef CONFIG_WIN
+#ifdef PEER_FLOW_CONTROL
 	.pflow_ops = &dp_ops_pflow,
-#endif /* CONFIG_WIN */
+#endif /* PEER_FLOW_CONTROL */
 #ifndef CONFIG_WIN
 	.misc_ops = &dp_ops_misc,
 	.cfg_ops = &dp_ops_cfg,

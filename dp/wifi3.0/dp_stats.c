@@ -3834,11 +3834,9 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 		dp_print_tx_tid_stats_tlv(tag_buf);
 		break;
 
-#ifdef CONFIG_WIN
 	case HTT_STATS_TX_TID_DETAILS_V1_TAG:
 		dp_print_tx_tid_stats_v1_tlv(tag_buf);
 		break;
-#endif
 
 	case HTT_STATS_RX_TID_DETAILS_TAG:
 		dp_print_rx_tid_stats_tlv(tag_buf);
