@@ -84,6 +84,7 @@ static int _rsc_hw_seq_memory_init_v3(struct sde_rsc_priv *rsc)
 	const u32 mode_0_start_addr = 0x0;
 	const u32 mode_1_start_addr = 0xc;
 	const u32 mode_2_start_addr = 0x18;
+	u32 br_offset = 0;
 
 	pr_debug("rsc sequencer memory init v2\n");
 
@@ -130,9 +131,12 @@ static int _rsc_hw_seq_memory_init_v3(struct sde_rsc_priv *rsc)
 						0x00209ce7, rsc->debug_mode);
 
 	/* branch address */
-	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_CFG_BR_ADDR_0_DRV0,
+	if (rsc->hw_drv_ver >= SDE_RSC_HW_MAJOR_MINOR_STEP(2,0,5))
+		br_offset = 0xf0;
+
+	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_CFG_BR_ADDR_0_DRV0 + br_offset,
 						0x34, rsc->debug_mode);
-	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_CFG_BR_ADDR_1_DRV0,
+	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_CFG_BR_ADDR_1_DRV0 + br_offset,
 						0x3c, rsc->debug_mode);
 
 	/* start address */
@@ -476,6 +480,9 @@ static int sde_rsc_state_update_v3(struct sde_rsc_priv *rsc,
 int rsc_hw_init_v3(struct sde_rsc_priv *rsc)
 {
 	int rc = 0;
+
+	rsc->hw_drv_ver = dss_reg_r(&rsc->drv_io,
+		SDE_RSCC_RSC_ID_DRV0, rsc->debug_mode);
 
 	rc = _rsc_hw_qtimer_init(rsc);
 	if (rc) {

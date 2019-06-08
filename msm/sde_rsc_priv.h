@@ -28,6 +28,11 @@
 #define SDE_RSC_REV_2			0x2
 #define SDE_RSC_REV_3			0x3
 
+#define SDE_RSC_HW_MAJOR_MINOR_STEP(major, minor, step) \
+	(((major & 0xff) << 16) |\
+	((minor & 0xff) << 8) | \
+	(step & 0xff))
+
 struct sde_rsc_priv;
 
 /**
@@ -140,6 +145,7 @@ struct sde_rsc_bw_config {
 /**
  * struct sde_rsc_priv: sde resource state coordinator(rsc) private handle
  * @version:		rsc sequence version
+ * @hw_drv_ver:		rscc hw version
  * @phandle:		module power handle for clocks
  * @fs:			"MDSS GDSC" handle
  * @sw_fs_enabled:	track "MDSS GDSC" sw vote during probe
@@ -182,6 +188,7 @@ struct sde_rsc_bw_config {
  */
 struct sde_rsc_priv {
 	u32 version;
+	u32 hw_drv_ver;
 	struct sde_power_handle phandle;
 	struct regulator *fs;
 	bool sw_fs_enabled;
