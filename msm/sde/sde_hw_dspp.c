@@ -153,6 +153,12 @@ static void dspp_gamut(struct sde_hw_dspp *c)
 			c->ops.setup_gamut = reg_dmav1_setup_dspp_3d_gamutv41;
 		else
 			c->ops.setup_gamut = sde_setup_dspp_3d_gamutv41;
+	} else if (c->cap->sblk->gamut.version ==
+			SDE_COLOR_PROCESS_VER(0x4, 2)) {
+		ret = reg_dmav1_init_dspp_op_v4(SDE_DSPP_GAMUT, c->idx);
+		c->ops.setup_gamut = NULL;
+		if (!ret)
+			c->ops.setup_gamut = reg_dmav1_setup_dspp_3d_gamutv42;
 	}
 }
 
