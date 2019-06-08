@@ -155,6 +155,8 @@ enum {
 	SDE_CP_CRTC_DSPP_LTM_HIST_THRESH,
 	SDE_CP_CRTC_DSPP_LTM_SET_BUF,
 	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF,
+	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2,
+	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3,
 	SDE_CP_CRTC_DSPP_LTM_VLUT,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
@@ -692,6 +694,8 @@ do { \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_HIST_THRESH] = set_ltm_thresh_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_SET_BUF] = set_ltm_buffers_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF] = set_ltm_queue_buf_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2] = set_ltm_queue_buf_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = set_ltm_queue_buf_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_HIST_CTL] = set_ltm_hist_crtl_feature; \
 } while (0)
 
@@ -1908,6 +1912,14 @@ static void dspp_ltm_install_property(struct drm_crtc *crtc)
 			SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF, 0, U64_MAX, 0);
 
 		sde_cp_crtc_install_range_property(crtc,
+			"SDE_DSPP_LTM_QUEUE_BUF2_V1",
+			SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2, 0, U64_MAX, 0);
+
+		sde_cp_crtc_install_range_property(crtc,
+			"SDE_DSPP_LTM_QUEUE_BUF3_V1",
+			SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3, 0, U64_MAX, 0);
+
+		sde_cp_crtc_install_range_property(crtc,
 			"SDE_DSPP_LTM_VLUT_V1",
 			SDE_CP_CRTC_DSPP_LTM_VLUT, 0, U64_MAX, 0);
 		sde_cp_create_local_blob(crtc, SDE_CP_CRTC_DSPP_LTM_VLUT,
@@ -2084,6 +2096,8 @@ static void sde_cp_update_list(struct sde_cp_node *prop_node,
 		break;
 	case SDE_CP_CRTC_DSPP_LTM_SET_BUF:
 	case SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF:
+	case SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2:
+	case SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3:
 		if (dirty_list)
 			list_add_tail(&prop_node->dirty_list,
 					&crtc->dirty_list);
