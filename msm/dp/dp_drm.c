@@ -326,6 +326,25 @@ int dp_connector_config_hdr(struct drm_connector *connector, void *display,
 			c_state->dyn_hdr_meta.dynamic_hdr_update);
 }
 
+int dp_connector_set_colorspace(struct drm_connector *connector,
+	void *display)
+{
+	struct dp_display *dp_display = display;
+	struct sde_connector *sde_conn;
+
+	if (!dp_display || !connector)
+		return -EINVAL;
+
+	sde_conn = to_sde_connector(connector);
+	if (!sde_conn->drv_panel) {
+		pr_err("invalid dp panel\n");
+		return -EINVAL;
+	}
+
+	return dp_display->set_colorspace(dp_display,
+		sde_conn->drv_panel, connector->state->colorspace);
+}
+
 int dp_connector_post_init(struct drm_connector *connector, void *display)
 {
 	int rc;
@@ -467,6 +486,32 @@ void dp_connector_post_open(struct drm_connector *connector, void *display)
 
 	if (dp->post_open)
 		dp->post_open(dp);
+}
+
+int dp_connector_atomic_check(struct drm_connector *connector,
+	void *display,
+	struct drm_connector_state *c_state)
+{
+	struct sde_connector *sde_conn;
+	struct drm_connector_state *old_state =
+		drm_atomic_get_old_connector_state(c_state->state, connector);
+
+	if (!connector || !display)
+		return -EINVAL;
+
+	sde_conn = to_sde_connector(connector);
+
+	/*
+	 * Marking the colorspace has been changed
+	 * the flag shall be checked in the pre_kickoff
+	 * to configure the new colorspace in HW
+	 */
+	if (c_state->colorspace != old_state->colorspace) {
+		DP_DEBUG("colorspace has been updated\n");
+		sde_conn->colorspace_updated = true;
+	}
+
+	return 0;
 }
 
 int dp_connector_get_modes(struct drm_connector *connector,

@@ -1352,7 +1352,7 @@ static int dp_link_get_colorimetry_config(struct dp_link *dp_link)
 	/* Only RGB_VESA nd RGB_CEA supported for now */
 	switch (dr) {
 	case DP_DYNAMIC_RANGE_RGB_CEA:
-		cc = BIT(3);
+		cc = BIT(2);
 		break;
 	case DP_DYNAMIC_RANGE_RGB_VESA:
 	default:

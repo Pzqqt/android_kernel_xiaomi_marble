@@ -1627,7 +1627,7 @@ static void dp_display_stream_post_enable(struct dp_display_private *dp,
 			struct dp_panel *dp_panel)
 {
 	dp_panel->spd_config(dp_panel);
-	dp_panel->setup_hdr(dp_panel, NULL, false, 0);
+	dp_panel->setup_hdr(dp_panel, NULL, false, 0, true);
 }
 
 static int dp_display_post_enable(struct dp_display *dp_display, void *panel)
@@ -2092,8 +2092,10 @@ static int dp_display_config_hdr(struct dp_display *dp_display, void *panel,
 			struct drm_msm_ext_hdr_metadata *hdr, bool dhdr_update)
 {
 	struct dp_panel *dp_panel;
+	struct sde_connector *sde_conn;
 	struct dp_display_private *dp;
 	u64 core_clk_rate;
+	bool flush_hdr;
 
 	if (!dp_display || !panel) {
 		DP_ERR("invalid input\n");
@@ -2102,6 +2104,7 @@ static int dp_display_config_hdr(struct dp_display *dp_display, void *panel,
 
 	dp_panel = panel;
 	dp = container_of(dp_display, struct dp_display_private, dp_display);
+	sde_conn =  to_sde_connector(dp_panel->connector);
 
 	core_clk_rate = dp->power->clk_get_rate(dp->power, "core_clk");
 	if (!core_clk_rate) {
@@ -2109,7 +2112,36 @@ static int dp_display_config_hdr(struct dp_display *dp_display, void *panel,
 		return -EINVAL;
 	}
 
-	return dp_panel->setup_hdr(dp_panel, hdr, dhdr_update, core_clk_rate);
+	/*
+	 * In rare cases where HDR metadata is updated independently
+	 * flush the HDR metadata immediately instead of relying on
+	 * the colorspace
+	 */
+	flush_hdr = !sde_conn->colorspace_updated;
+
+	if (flush_hdr)
+		DP_DEBUG("flushing the HDR metadata\n");
+	else
+		DP_DEBUG("piggy-backing with colorspace\n");
+
+	return dp_panel->setup_hdr(dp_panel, hdr, dhdr_update,
+		core_clk_rate, flush_hdr);
+}
+
+static int dp_display_setup_colospace(struct dp_display *dp_display,
+		void *panel,
+		u32 colorspace)
+{
+	struct dp_panel *dp_panel;
+
+	if (!dp_display || !panel) {
+		pr_err("invalid input\n");
+		return -EINVAL;
+	}
+
+	dp_panel = panel;
+
+	return dp_panel->set_colorspace(dp_panel, colorspace);
 }
 
 static int dp_display_create_workqueue(struct dp_display_private *dp)
@@ -2633,6 +2665,7 @@ static int dp_display_probe(struct platform_device *pdev)
 					dp_display_mst_get_fixed_topology_port;
 	g_dp_display->wakeup_phy_layer =
 					dp_display_wakeup_phy_layer;
+	g_dp_display->set_colorspace = dp_display_setup_colospace;
 
 	rc = component_add(&pdev->dev, &dp_display_comp_ops);
 	if (rc) {

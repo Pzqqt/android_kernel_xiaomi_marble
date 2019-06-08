@@ -203,7 +203,10 @@ struct dp_catalog_panel {
 
 	int (*timing_cfg)(struct dp_catalog_panel *panel);
 	void (*config_hdr)(struct dp_catalog_panel *panel, bool en,
-			u32 dhdr_max_pkts);
+		u32 dhdr_max_pkts, bool flush);
+	void (*config_sdp)(struct dp_catalog_panel *panel, bool en);
+	int (*set_colorspace)(struct dp_catalog_panel *panel,
+		 bool vsc_supported);
 	void (*tpg_config)(struct dp_catalog_panel *panel, bool enable);
 	void (*config_spd)(struct dp_catalog_panel *panel);
 	void (*config_misc)(struct dp_catalog_panel *panel);

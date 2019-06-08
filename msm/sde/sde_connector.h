@@ -169,6 +169,14 @@ struct sde_connector_ops {
 			void *display, u32 bl_lvl);
 
 	/**
+	 * set_colorspace - set colorspace for connector
+	 * @connector: Pointer to drm connector structure
+	 * @display: Pointer to private display structure
+	 */
+	int (*set_colorspace)(struct drm_connector *connector,
+			void *display);
+
+	/**
 	 * soft_reset - perform a soft reset on the connector
 	 * @display: Pointer to private display structure
 	 * Return: Zero on success, -ERROR otherwise
@@ -400,6 +408,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @allow_bl_update: Flag to indicate if BL update is allowed currently or not
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
+ * @colorspace_updated: Colorspace property was updated
  * last_cmd_tx_sts: status of the last command transfer
  * @hdr_capable: external hdr support present
  * @core_clk_rate: MDP core clk rate used for dynamic HDR packet calculation
@@ -451,6 +460,8 @@ struct sde_connector {
 
 	u32 qsync_mode;
 	bool qsync_updated;
+
+	bool colorspace_updated;
 
 	bool last_cmd_tx_sts;
 	bool hdr_capable;

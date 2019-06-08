@@ -606,6 +606,19 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 	return rc;
 }
 
+void sde_connector_set_colorspace(struct sde_connector *c_conn)
+{
+	int rc = 0;
+
+	if (c_conn->ops.set_colorspace)
+		rc = c_conn->ops.set_colorspace(&c_conn->base,
+			c_conn->display);
+
+	if (rc)
+		SDE_ERROR_CONN(c_conn, "cannot apply new colorspace %d\n", rc);
+
+}
+
 void sde_connector_set_qsync_params(struct drm_connector *connector)
 {
 	struct sde_connector *c_conn = to_sde_connector(connector);
@@ -678,6 +691,12 @@ static int _sde_connector_update_dirty_properties(
 			/* nothing to do for most properties */
 			break;
 		}
+	}
+
+	/* if colorspace needs to be updated do it first */
+	if (c_conn->colorspace_updated) {
+		c_conn->colorspace_updated = false;
+		sde_connector_set_colorspace(c_conn);
 	}
 
 	/*
@@ -2134,6 +2153,7 @@ static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
 	.get_modes =    sde_connector_get_modes,
 	.mode_valid =   sde_connector_mode_valid,
 	.best_encoder = sde_connector_best_encoder,
+	.atomic_check = sde_connector_atomic_check,
 };
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops_v2 = {
@@ -2311,6 +2331,7 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 {
 	struct dsi_display *dsi_display;
 	int rc;
+	struct drm_connector *connector;
 
 	msm_property_install_blob(&c_conn->property_info, "capabilities",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_SDE_INFO);
@@ -2322,6 +2343,8 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			"failed to setup connector info, rc = %d\n", rc);
 		return rc;
 	}
+
+	connector = &c_conn->base;
 
 	msm_property_install_blob(&c_conn->property_info, "mode_properties",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_MODE_INFO);
@@ -2366,6 +2389,11 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			      &hdr,
 			      sizeof(hdr),
 			      CONNECTOR_PROP_EXT_HDR_INFO);
+
+		/* create and attach colorspace property for DP */
+		if (!drm_mode_create_colorspace_property(connector))
+			drm_object_attach_property(&connector->base,
+				connector->colorspace_property, 0);
 	}
 
 	msm_property_install_volatile_range(&c_conn->property_info,
