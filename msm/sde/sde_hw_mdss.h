@@ -591,7 +591,6 @@ struct sde_sspp_index_info {
  * struct sde_splash_data - Struct contains details of resources and hw blocks
  * used in continuous splash on a specific display.
  * @cont_splash_enabled:  Stores the cont_splash status (enabled/disabled)
- * @single_flush_en: Stores if the single flush is enabled
  * @encoder:	Pointer to the drm encoder object used for this display
  * @splash:     Pointer to struct sde_splash_mem used for this display
  * @ctl_ids:	Stores the valid MDSS ctl block ids for the current mode
@@ -605,7 +604,6 @@ struct sde_sspp_index_info {
  */
 struct sde_splash_display {
 	bool cont_splash_enabled;
-	bool single_flush_en;
 	struct drm_encoder *encoder;
 	struct sde_splash_mem *splash;
 	u8 ctl_ids[MAX_DATA_PATH_PER_DSIPLAY];
