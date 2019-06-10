@@ -2027,6 +2027,24 @@ wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 QDF_STATUS
+wlan_sap_set_acs_with_more_param(mac_handle_t mac_handle,
+				 bool acs_with_more_param)
+{
+	struct mac_context *mac_ctx;
+
+	if (mac_handle) {
+		mac_ctx = MAC_CONTEXT(mac_handle);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SAP,
+			  QDF_TRACE_LEVEL_ERROR,
+			  FL("mac_handle or mac_ctx pointer NULL"));
+		return QDF_STATUS_E_FAULT;
+	}
+	mac_ctx->sap.acs_with_more_param = acs_with_more_param;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle)
 {
 	struct mac_context *mac = NULL;

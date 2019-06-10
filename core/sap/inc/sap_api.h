@@ -1132,6 +1132,17 @@ wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 #endif
 
 /**
+ * wlan_sap_set_acs_with_more_param() - sets acs_with_more_param ini param
+ * @mac_handle: Opaque handle to the global MAC context
+ * @acs_with_more_param: ini parameter value
+ *
+ * Return: The QDF_STATUS code.
+ */
+QDF_STATUS
+wlan_sap_set_acs_with_more_param(mac_handle_t mac_handle,
+				 bool acs_with_more_param);
+
+/**
  * wlansap_set_dfs_preferred_channel_location() - set dfs preferred channel
  * @mac_handle: Opaque handle to the global MAC context
  *
