@@ -10820,6 +10820,26 @@ int q6asm_get_apr_service_id(int session_id)
 	return ((struct apr_svc *)(session[session_id].ac)->apr)->id;
 }
 
+uint8_t q6asm_get_asm_stream_id(int session_id)
+{
+	uint8_t stream_id = 1;
+	pr_debug("%s:\n", __func__);
+
+	if (session_id <= 0 || session_id > ASM_ACTIVE_STREAMS_ALLOWED) {
+		pr_err("%s: invalid session_id = %d\n", __func__, session_id);
+		goto done;
+	}
+	if (session[session_id].ac == NULL) {
+		pr_err("%s: session not created for session id = %d\n",
+		       __func__, session_id);
+		goto done;
+	}
+	stream_id = (session[session_id].ac)->stream_id;
+
+done:
+	return stream_id;
+}
+
 int q6asm_get_asm_topology(int session_id)
 {
 	int topology = -EINVAL;
