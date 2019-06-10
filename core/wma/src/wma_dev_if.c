@@ -5520,6 +5520,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		if (iface->staKeyParams) {
 			wma_set_stakey(wma,
 				       (tpSetStaKeyParams) iface->staKeyParams);
+			iface->staKeyParams = NULL;
 		}
 	}
 	maxTxPower = params->maxTxPower;
