@@ -310,7 +310,9 @@ htt_t2h_stats_pdev_stats_print(struct wlan_dbg_stats *wlan_pdev_stats,
 	/* Num MPDUs requed by SW */
 	qdf_nofl_info("mpdus_requed      :%d", tx->mpdus_requed);
 	/* Excessive retries */
-	qdf_nofl_info("excess retries    :%d", tx->tx_ko);
+#if defined(AR900B)
+	qdf_nofl_info("excess retries    :%d", tx->tx_xretry);
+#endif
 	/* last data rate */
 	qdf_nofl_info("last rc           :%d", tx->data_rc);
 	/* scheduler self triggers */
