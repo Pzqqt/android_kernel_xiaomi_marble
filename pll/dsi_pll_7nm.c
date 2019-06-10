@@ -1746,9 +1746,9 @@ static struct regmap_bus mdss_mux_regmap_bus = {
  *                          +-----------------------------+--------+
  *                          |                             |        |
  *                  +-------v-------+                     |        |
- *                  |  bitclk_src   |                     |        |
- *                  |  DIV(1..15)   |                     |        |
- *                  +-------+-------+                     |        |
+ *                  |  bitclk_src   |
+ *                  |  DIV(1..15)   |                Not supported for DPHY
+ *                  +-------+-------+
  *                          |                             |        |
  *                          +----------+---------+        |        |
  *   Shadow Path            |          |         |        |        |
@@ -2132,15 +2132,13 @@ static struct clk_regmap_mux dsi1pll_byteclk_mux = {
 static struct clk_regmap_mux dsi0pll_pclk_src_mux = {
 	.reg = PHY_CMN_CLK_CFG1,
 	.shift = 0,
-	.width = 2,
+	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_pclk_src_mux",
 			.parent_names = (const char *[]){"dsi0pll_bitclk_src",
-					"dsi0pll_post_bit_div",
-					"dsi0pll_pll_out_div",
-					"dsi0pll_post_vco_div"},
-			.num_parents = 4,
+					"dsi0pll_post_bit_div"},
+			.num_parents = 2,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -2149,16 +2147,14 @@ static struct clk_regmap_mux dsi0pll_pclk_src_mux = {
 static struct clk_regmap_mux dsi0pll_shadow_pclk_src_mux = {
 	.reg = PHY_CMN_CLK_CFG1,
 	.shift = 0,
-	.width = 2,
+	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi0pll_shadow_pclk_src_mux",
 			.parent_names = (const char *[]){
 				"dsi0pll_shadow_bitclk_src",
-				"dsi0pll_shadow_post_bit_div",
-				"dsi0pll_shadow_pll_out_div",
-				"dsi0pll_shadow_post_vco_div"},
-			.num_parents = 4,
+				"dsi0pll_shadow_post_bit_div"},
+			.num_parents = 2,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -2167,15 +2163,13 @@ static struct clk_regmap_mux dsi0pll_shadow_pclk_src_mux = {
 static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 	.reg = PHY_CMN_CLK_CFG1,
 	.shift = 0,
-	.width = 2,
+	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1pll_pclk_src_mux",
 			.parent_names = (const char *[]){"dsi1pll_bitclk_src",
-					"dsi1pll_post_bit_div",
-					"dsi1pll_pll_out_div",
-					"dsi1pll_post_vco_div"},
-			.num_parents = 4,
+					"dsi1pll_post_bit_div"},
+			.num_parents = 2,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
@@ -2184,16 +2178,14 @@ static struct clk_regmap_mux dsi1pll_pclk_src_mux = {
 static struct clk_regmap_mux dsi1pll_shadow_pclk_src_mux = {
 	.reg = PHY_CMN_CLK_CFG1,
 	.shift = 0,
-	.width = 2,
+	.width = 1,
 	.clkr = {
 		.hw.init = &(struct clk_init_data){
 			.name = "dsi1pll_shadow_pclk_src_mux",
 			.parent_names = (const char *[]){
 				"dsi1pll_shadow_bitclk_src",
-				"dsi1pll_shadow_post_bit_div",
-				"dsi1pll_shadow_pll_out_div",
-				"dsi1pll_shadow_post_vco_div"},
-			.num_parents = 4,
+				"dsi1pll_shadow_post_bit_div"},
+			.num_parents = 2,
 			.ops = &clk_regmap_mux_closest_ops,
 		},
 	},
