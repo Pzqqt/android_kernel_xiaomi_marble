@@ -1381,23 +1381,6 @@ struct set_context_rsp {
 	struct qdf_mac_addr peer_macaddr;
 };
 
-/*******************PE Statistics*************************/
-
-/*
- * tpAniGetPEStatsReq is tied to
- * for SME ==> PE eWNI_SME_GET_STATISTICS_REQ msgId  and
- * for PE ==> HAL SIR_HAL_GET_STATISTICS_REQ msgId
- */
-typedef struct sAniGetPEStatsReq {
-	/* Common for all types are requests */
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint32_t staId;         /* Per STA stats request must contain valid */
-	/* categories of stats requested. look at ePEStatsMask */
-	uint32_t statsMask;
-	uint8_t sessionId;
-} tAniGetPEStatsReq, *tpAniGetPEStatsReq;
-
 /*
  * tpAniGetPEStatsRsp is tied to
  * for PE ==> SME eWNI_SME_GET_STATISTICS_RSP msgId  and

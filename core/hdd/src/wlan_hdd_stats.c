@@ -5583,7 +5583,6 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 	return ret;
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 {
 	int ret = 0;
@@ -5662,121 +5661,6 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 
 	return 0;
 }
-#else /* QCA_SUPPORT_CP_STATS */
-struct station_stats {
-	tCsrSummaryStatsInfo summary_stats;
-	tCsrGlobalClassAStatsInfo class_a_stats;
-	struct csr_per_chain_rssi_stats_info per_chain_rssi_stats;
-};
-
-/**
- * hdd_get_station_statistics_cb() - Get stats callback function
- * @stats: pointer to combined station stats
- * @context: user context originally registered with SME (always the
- *	cookie from the request context)
- *
- * Return: None
- */
-static void hdd_get_station_statistics_cb(void *stats, void *context)
-{
-	struct osif_request *request;
-	struct station_stats *priv;
-	tCsrSummaryStatsInfo *summary_stats;
-	tCsrGlobalClassAStatsInfo *class_a_stats;
-	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
-
-	if ((!stats) || (!context)) {
-		hdd_err("Bad param, stats [%pK] context [%pK]",
-			stats, context);
-		return;
-	}
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
-		return;
-	}
-
-	summary_stats = (tCsrSummaryStatsInfo *) stats;
-	class_a_stats = (tCsrGlobalClassAStatsInfo *) (summary_stats + 1);
-	per_chain_rssi_stats = (struct csr_per_chain_rssi_stats_info *)
-				(class_a_stats + 1);
-	priv = osif_request_priv(request);
-
-	/* copy over the stats. do so as a struct copy */
-	priv->summary_stats = *summary_stats;
-	priv->class_a_stats = *class_a_stats;
-	priv->per_chain_rssi_stats = *per_chain_rssi_stats;
-
-	osif_request_complete(request);
-	osif_request_put(request);
-}
-
-int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	QDF_STATUS status;
-	int errno;
-	void *cookie;
-	struct osif_request *request;
-	struct station_stats *priv;
-	static const struct osif_request_params params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = WLAN_WAIT_TIME_STATS,
-	};
-
-	if (!adapter) {
-		hdd_err("adapter is NULL");
-		return 0;
-	}
-
-	request = osif_request_alloc(&params);
-	if (!request) {
-		hdd_err("Request allocation failure");
-		return -ENOMEM;
-	}
-	cookie = osif_request_cookie(request);
-
-	/* query only for Summary & Class A statistics */
-	status = sme_get_statistics(adapter->hdd_ctx->mac_handle,
-				    eCSR_HDD,
-				    SME_SUMMARY_STATS |
-					    SME_GLOBAL_CLASSA_STATS |
-					    SME_PER_CHAIN_RSSI_STATS,
-				    hdd_get_station_statistics_cb,
-				    sta_ctx->conn_info.sta_id[0],
-				    cookie,
-				    adapter->vdev_id);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to retrieve statistics, status %d", status);
-		goto put_request;
-	}
-
-	/* request was sent -- wait for the response */
-	errno = osif_request_wait_for_response(request);
-	if (errno) {
-		hdd_err("Failed to wait for statistics, errno %d", errno);
-		goto put_request;
-	}
-
-	/* update the adapter with the fresh results */
-	priv = osif_request_priv(request);
-	adapter->hdd_stats.summary_stat = priv->summary_stats;
-	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
-	adapter->hdd_stats.per_chain_rssi_stats = priv->per_chain_rssi_stats;
-
-put_request:
-	/*
-	 * either we never sent a request, we sent a request and
-	 * received a response or we sent a request and timed out.
-	 * regardless we are done with the request.
-	 */
-	osif_request_put(request);
-
-	/* either callback updated adapter stats or it has cached data */
-	return 0;
-}
-#endif /* QCA_SUPPORT_CP_STATS */
 
 struct temperature_priv {
 	int temperature;

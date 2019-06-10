@@ -215,14 +215,6 @@ void lim_send_sme_delts_ind(struct mac_context *mac,
 			    struct delts_req_info *delts,
 			    uint16_t aid, struct pe_session *);
 
-#ifdef QCA_SUPPORT_CP_STATS
-static inline void lim_send_sme_pe_statistics_rsp(struct mac_context *mac,
-					uint16_t msgtype, void *stats) {}
-#else
-void lim_send_sme_pe_statistics_rsp(struct mac_context *mac, uint16_t msgtype,
-				    void *stats);
-#endif /* QCA_SUPPORT_CP_STATS */
-
 #ifdef FEATURE_WLAN_ESE
 void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac, tAniGetTsmStatsRsp *pStats);
 #endif

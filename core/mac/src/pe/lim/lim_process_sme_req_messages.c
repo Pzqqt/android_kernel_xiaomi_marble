@@ -3448,44 +3448,6 @@ void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)
 			       pe_session->smeSessionId);
 }
 
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * __lim_process_sme_get_statistics_request() - Post WMA_GET_STATISTICS_REQ to
- * wma
- * @mac      Pointer to Global MAC structure
- * @msg_buf  A pointer to the SME message buffer
- *
- * @Return None
- */
-static void __lim_process_sme_get_statistics_request(struct mac_context *mac,
-						     uint32_t *msg_buf)
-{
-	tpAniGetPEStatsReq pPEStatsReq;
-	struct scheduler_msg msgQ = {0};
-
-	pPEStatsReq = (tpAniGetPEStatsReq)msg_buf;
-
-	msgQ.type = WMA_GET_STATISTICS_REQ;
-
-	msgQ.reserved = 0;
-	msgQ.bodyptr = msg_buf;
-	msgQ.bodyval = 0;
-	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
-
-	if (QDF_STATUS_SUCCESS != (wma_post_ctrl_msg(mac, &msgQ))) {
-		qdf_mem_free(msg_buf);
-		msg_buf = NULL;
-		pe_err("Unable to forward request");
-		return;
-	}
-
-	return;
-}
-#else
-static void __lim_process_sme_get_statistics_request(
-			struct mac_context *mac_ctx, uint32_t *msg_buf) {}
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * __lim_process_sme_get_tsm_stats_request() - get tsm stats request
@@ -4784,14 +4746,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		lim_process_sme_addts_rsp_timeout(mac, pMsg->bodyval);
 		break;
 
-	case eWNI_SME_GET_STATISTICS_REQ:
-		__lim_process_sme_get_statistics_request(mac, msg_buf);
-		/*
-		 * HAL consumes msg_buf. It will be freed there.
-		 * Set bufConsumed to false.
-		 */
-		bufConsumed = false;
-		break;
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
 		__lim_process_sme_get_tsm_stats_request(mac, msg_buf);

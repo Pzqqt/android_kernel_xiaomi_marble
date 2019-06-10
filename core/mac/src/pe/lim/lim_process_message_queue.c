@@ -1722,7 +1722,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
-	case eWNI_SME_GET_STATISTICS_REQ:
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
 #endif  /* FEATURE_WLAN_ESE */
@@ -1879,10 +1878,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case WMA_SET_STAKEY_RSP:
 		lim_process_mlm_set_sta_key_rsp(mac_ctx, msg);
-		break;
-	case WMA_GET_STATISTICS_RSP:
-		lim_send_sme_pe_statistics_rsp(mac_ctx, msg->type,
-					     (void *)msg->bodyptr);
 		break;
 	case WMA_SET_MIMOPS_RSP:
 	case WMA_SET_TX_POWER_RSP:

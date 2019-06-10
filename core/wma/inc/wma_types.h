@@ -186,9 +186,6 @@
 #define WMA_ENABLE_UAPSD_REQ            SIR_HAL_ENABLE_UAPSD_REQ
 #define WMA_DISABLE_UAPSD_REQ           SIR_HAL_DISABLE_UAPSD_REQ
 
-/* / PE <-> HAL statistics messages */
-#define WMA_GET_STATISTICS_REQ         SIR_HAL_GET_STATISTICS_REQ
-#define WMA_GET_STATISTICS_RSP         SIR_HAL_GET_STATISTICS_RSP
 #define WMA_SET_KEY_DONE               SIR_HAL_SET_KEY_DONE
 
 /* / PE <-> HAL BTC messages */

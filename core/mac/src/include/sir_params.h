@@ -275,12 +275,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_GET_TX_POWER_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 72)
 /*
  * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 73) thru
- * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 87) are unused
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 89) are unused
  */
 
-/* / PE <-> HAL statistics messages */
-#define SIR_HAL_GET_STATISTICS_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 88)
-#define SIR_HAL_GET_STATISTICS_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 89)
 #define SIR_HAL_SET_KEY_DONE               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 90)
 
 /* / PE <-> HAL BTC messages */
