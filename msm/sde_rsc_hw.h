@@ -11,6 +11,7 @@
 #include <linux/sde_rsc.h>
 
 /* display rsc offset */
+#define SDE_RSCC_RSC_ID_DRV0				0x0
 #define SDE_RSCC_PDC_SEQ_START_ADDR_REG_OFFSET_DRV0	0x020
 #define SDE_RSCC_PDC_MATCH_VALUE_LO_REG_OFFSET_DRV0	0x024
 #define SDE_RSCC_PDC_MATCH_VALUE_HI_REG_OFFSET_DRV0	0x028
