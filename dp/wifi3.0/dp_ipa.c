@@ -743,8 +743,6 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *ppdev)
 	soc->reo_remapped = true;
 	qdf_spin_unlock_bh(&soc->remap_lock);
 
-	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
-
 	/* Call HAL API to remap REO rings to REO2IPA ring */
 	ix0 = HAL_REO_REMAP_VAL(REO_REMAP_TCL, REO_REMAP_TCL) |
 	      HAL_REO_REMAP_VAL(REO_REMAP_SW1, REO_REMAP_SW4) |
@@ -1545,13 +1543,18 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
  */
 QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
 {
+	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
+	struct dp_soc *soc = pdev->soc;
 	QDF_STATUS result;
+
+	dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, true);
 
 	result = qdf_ipa_wdi_enable_pipes();
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Enable WDI PIPE fail, code %d",
 			  __func__, result);
+		dp_ipa_handle_rx_buf_pool_smmu_mapping(soc, pdev, false);
 		return QDF_STATUS_E_FAILURE;
 	}
 
