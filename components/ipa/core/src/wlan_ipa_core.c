@@ -1527,6 +1527,24 @@ bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
 }
 #endif
 
+static inline
+bool wlan_sap_no_client_connected(struct wlan_ipa_priv *ipa_ctx)
+{
+	return !(ipa_ctx->sap_num_connected_sta);
+}
+
+static inline
+bool wlan_sta_is_connected(struct wlan_ipa_priv *ipa_ctx)
+{
+	return ipa_ctx->sta_connected;
+}
+
+static inline
+bool wlan_ipa_uc_is_loaded(struct wlan_ipa_priv *ipa_ctx)
+{
+	return ipa_ctx->uc_loaded;
+}
+
 /**
  * wlan_ipa_uc_offload_enable_disable() - wdi enable/disable notify to fw
  * @ipa_ctx: global IPA context
@@ -1659,10 +1677,23 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 				  ipa_ctx->resource_loading ?
 				  "load" : "unload");
 
-			if (type == QDF_IPA_AP_DISCONNECT)
+			if (type == QDF_IPA_AP_DISCONNECT) {
 				wlan_ipa_uc_offload_enable_disable(ipa_ctx,
 						SIR_AP_RX_DATA_OFFLOAD,
 						session_id, false);
+			} else if (type == QDF_IPA_CLIENT_CONNECT_EX &&
+				   wlan_sap_no_client_connected(ipa_ctx)) {
+				if (wlan_sta_is_connected(ipa_ctx) &&
+				    wlan_ipa_uc_is_loaded(ipa_ctx) &&
+				    wlan_ipa_uc_sta_is_enabled(ipa_ctx->
+							       config) &&
+				    !wlan_ipa_is_sta_only_offload_enabled()) {
+					wlan_ipa_uc_offload_enable_disable(
+							ipa_ctx,
+							SIR_STA_RX_DATA_OFFLOAD,
+							sta_session_id, true);
+				}
+			}
 
 			qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 
