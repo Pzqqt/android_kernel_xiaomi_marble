@@ -1538,6 +1538,7 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		wcd938x_reset(wcd938x->dev);
 		wcd938x_get_logical_addr(wcd938x->tx_swr_dev);
 		wcd938x_get_logical_addr(wcd938x->rx_swr_dev);
+		wcd938x_init_reg(component);
 		regcache_mark_dirty(wcd938x->regmap);
 		regcache_sync(wcd938x->regmap);
 		/* Initialize MBHC module */
@@ -2860,6 +2861,7 @@ static int wcd938x_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	dev_set_drvdata(dev, wcd938x);
+	wcd938x->dev = dev;
 
 	pdata = wcd938x_populate_dt_data(dev);
 	if (!pdata) {
