@@ -266,10 +266,11 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	}
 }
 
-uint32_t hal_get_target_type(struct hal_soc *hal)
+uint32_t hal_get_target_type(hal_soc_handle_t hal_soc_hdl)
 {
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 	struct hif_target_info *tgt_info =
-		hif_get_target_info_handle(hal->hif_handle);
+		hif_get_target_info_handle(hal_soc->hif_handle);
 
 	return tgt_info->target_type;
 }
@@ -336,7 +337,7 @@ void *hal_attach(void *hif_handle, qdf_device_t qdf_dev)
 
 	qdf_spinlock_create(&hal->register_access_lock);
 	hal->register_window = 0;
-	hal->target_type = hal_get_target_type(hal);
+	hal->target_type = hal_get_target_type(hal_soc_to_hal_soc_handle(hal));
 
 	hal_target_based_configure(hal);
 
@@ -435,10 +436,12 @@ static inline void hal_ce_dst_setup(struct hal_soc *hal, struct hal_srng *srng,
  * @ix2: pointer to store IX2 reg value
  * @ix3: pointer to store IX3 reg value
  */
-void hal_reo_read_write_ctrl_ix(struct hal_soc *hal, bool read, uint32_t *ix0,
-				uint32_t *ix1, uint32_t *ix2, uint32_t *ix3)
+void hal_reo_read_write_ctrl_ix(hal_soc_handle_t hal_soc_hdl, bool read,
+				uint32_t *ix0, uint32_t *ix1,
+				uint32_t *ix2, uint32_t *ix3)
 {
 	uint32_t reg_offset;
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
 
 	if (read) {
 		if (ix0) {

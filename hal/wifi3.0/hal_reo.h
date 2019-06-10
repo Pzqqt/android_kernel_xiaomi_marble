@@ -496,43 +496,44 @@ void hal_reo_cmd_set_descr_addr(uint32_t *reo_desc,
 				enum hal_reo_cmd_type type,
 				uint32_t paddr_lo,
 				uint8_t paddr_hi);
-int hal_reo_cmd_queue_stats(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_queue_stats(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_flush_queue(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_flush_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_unblock_cache(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 			      struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_timeout_list(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_flush_timeout_list(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 				   struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
+int hal_reo_cmd_update_rx_queue(void *reo_ring, hal_soc_handle_t hal_soc_hdl,
 				struct hal_reo_cmd_params *cmd);
 
 /* REO status ring routines */
 void hal_reo_queue_stats_status(uint32_t *reo_desc,
 				struct hal_reo_queue_status *st,
-				struct hal_soc *hal_soc);
+				hal_soc_handle_t hal_soc_hdl);
 void hal_reo_flush_queue_status(uint32_t *reo_desc,
-				    struct hal_reo_flush_queue_status *st,
-				    struct hal_soc *hal_soc);
-void hal_reo_flush_cache_status(uint32_t *reo_desc, struct hal_soc *soc,
-				    struct hal_reo_flush_cache_status *st,
-				    struct hal_soc *hal_soc);
-void hal_reo_unblock_cache_status(uint32_t *reo_desc, struct hal_soc *soc,
-				      struct hal_reo_unblk_cache_status *st);
+				struct hal_reo_flush_queue_status *st,
+				hal_soc_handle_t hal_soc_hdl);
+void hal_reo_flush_cache_status(uint32_t *reo_desc,
+				struct hal_reo_flush_cache_status *st,
+				hal_soc_handle_t hal_soc_hdl);
+void hal_reo_unblock_cache_status(uint32_t *reo_desc,
+				  hal_soc_handle_t hal_soc_hdl,
+				  struct hal_reo_unblk_cache_status *st);
 void hal_reo_flush_timeout_list_status(
 			   uint32_t *reo_desc,
 			   struct hal_reo_flush_timeout_list_status *st,
-			   struct hal_soc *hal_soc);
+			   hal_soc_handle_t hal_soc_hdl);
 void hal_reo_desc_thres_reached_status(
 				uint32_t *reo_desc,
 				struct hal_reo_desc_thres_reached_status *st,
-				struct hal_soc *hal_soc);
+				hal_soc_handle_t hal_soc_hdl);
 void hal_reo_rx_update_queue_status(uint32_t *reo_desc,
 				    struct hal_reo_update_rx_queue_status *st,
-				    struct hal_soc *hal_soc);
+				    hal_soc_handle_t hal_soc_hdl);
 
-void hal_reo_init_cmd_ring(struct hal_soc *soc, void *hal_srng);
+void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl, void *hal_srng);
 
 #endif /* _HAL_REO_H */

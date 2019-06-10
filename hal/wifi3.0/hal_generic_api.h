@@ -321,9 +321,10 @@ hal_rx_update_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
  */
 static inline uint32_t
 hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
-			   void *halsoc, qdf_nbuf_t nbuf)
+				   hal_soc_handle_t hal_soc_hdl,
+				   qdf_nbuf_t nbuf)
 {
-	struct hal_soc *hal = (struct hal_soc *)halsoc;
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
 	uint32_t tlv_tag, user_id, tlv_len, value;
 	uint8_t group_id = 0;
 	uint8_t he_dcm = 0;
@@ -1562,21 +1563,22 @@ static void hal_reo_setup_generic(void *hal_soc,
  * Return: Update tail pointer and head pointer in arguments.
  */
 static inline
-void hal_get_hw_hptp_generic(struct hal_soc *soc, void *hal_ring,
+void hal_get_hw_hptp_generic(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
 			     uint32_t *headp, uint32_t *tailp,
 			     uint8_t ring)
 {
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 	struct hal_hw_srng_config *ring_config;
 	enum hal_ring_type ring_type = (enum hal_ring_type)ring;
 
-	if (!soc  || !srng) {
+	if (!hal_soc  || !srng) {
 		QDF_TRACE(QDF_MODULE_ID_HAL, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Context is Null", __func__);
 		return;
 	}
 
-	ring_config = HAL_SRNG_CONFIG(soc, ring_type);
+	ring_config = HAL_SRNG_CONFIG(hal_soc, ring_type);
 	if (!ring_config->lmac_ring) {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 			*headp = SRNG_SRC_REG_READ(srng, HP);

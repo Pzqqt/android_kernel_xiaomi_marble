@@ -51,6 +51,11 @@ extern bool is_hal_verbose_debug_enabled;
 				   params)
 #endif
 
+/*
+ * dp_hal_soc - opaque handle for DP HAL soc
+ */
+struct hal_soc_handle;
+typedef struct hal_soc_handle *hal_soc_handle_t;
 
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
@@ -295,7 +300,7 @@ struct hal_hw_txrx_ops {
 		struct hal_srng *srng);
 	void (*hal_srng_src_hw_init)(void *hal,
 	struct hal_srng *srng);
-	void (*hal_get_hw_hptp)(struct hal_soc *hal, void *hal_ring,
+	void (*hal_get_hw_hptp)(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
 				uint32_t *headp, uint32_t *tailp,
 				uint8_t ring_type);
 	void (*hal_reo_setup)(void *hal_soc, void *reoparams);
@@ -337,8 +342,9 @@ struct hal_hw_txrx_ops {
 	void* (*hal_rx_link_desc_msdu0_ptr)(void *msdu_link_ptr);
 	void (*hal_reo_status_get_header)(uint32_t *d, int b, void *h);
 	uint32_t (*hal_rx_status_get_tlv_info)(void *rx_tlv_hdr,
-			void *ppdu_info,
-			void *hal, qdf_nbuf_t nbuf);
+					       void *ppdu_info,
+					       hal_soc_handle_t hal_soc_hdl,
+					       qdf_nbuf_t nbuf);
 	void (*hal_rx_wbm_err_info_get)(void *wbm_desc,
 				void *wbm_er_info);
 	void (*hal_rx_dump_mpdu_start_tlv)(void *mpdustart,
@@ -398,4 +404,10 @@ struct hal_soc {
 void hal_qca6390_attach(struct hal_soc *hal_soc);
 void hal_qca6290_attach(struct hal_soc *hal_soc);
 void hal_qca8074_attach(struct hal_soc *hal_soc);
+
+static inline
+hal_soc_handle_t hal_soc_to_hal_soc_handle(struct hal_soc *hal_soc)
+{
+	return (hal_soc_handle_t)hal_soc;
+}
 #endif /* _HAL_INTERNAL_H_ */

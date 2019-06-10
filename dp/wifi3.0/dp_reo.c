@@ -117,7 +117,7 @@ uint32_t dp_reo_status_ring_handler(struct dp_intr *int_ctx, struct dp_soc *soc)
 			num = reo_status.fl_queue_status.header.cmd_num;
 			break;
 		case HAL_REO_FLUSH_CACHE_STATUS_TLV:
-			hal_reo_flush_cache_status(reo_desc, soc->hal_soc,
+			hal_reo_flush_cache_status(reo_desc,
 						   &reo_status.fl_cache_status,
 						   soc->hal_soc);
 			num = reo_status.fl_cache_status.header.cmd_num;

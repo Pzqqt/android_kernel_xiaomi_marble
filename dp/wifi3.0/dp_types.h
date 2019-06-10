@@ -862,7 +862,7 @@ struct dp_soc {
 	uint8_t num_hw_dscp_tid_map;
 
 	/* HAL SOC handle */
-	void *hal_soc;
+	hal_soc_handle_t hal_soc;
 
 	/* Device ID coming from Bus sub-system */
 	uint32_t device_id;

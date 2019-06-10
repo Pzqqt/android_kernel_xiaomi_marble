@@ -493,16 +493,16 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 /**
  * hal_reo_read_write_ctrl_ix - Read or write REO_DESTINATION_RING_CTRL_IX
- * @hal: HAL SOC handle
+ * @hal_soc_hdl: HAL SOC handle
  * @read: boolean value to indicate if read or write
  * @ix0: pointer to store IX0 reg value
  * @ix1: pointer to store IX1 reg value
  * @ix2: pointer to store IX2 reg value
  * @ix3: pointer to store IX3 reg value
  */
-extern void hal_reo_read_write_ctrl_ix(struct hal_soc *hal, bool read,
-				       uint32_t *ix0, uint32_t *ix1,
-				       uint32_t *ix2, uint32_t *ix3);
+void hal_reo_read_write_ctrl_ix(hal_soc_handle_t hal_soc_hdl, bool read,
+				uint32_t *ix0, uint32_t *ix1,
+				uint32_t *ix2, uint32_t *ix3);
 
 /**
  * hal_srng_set_hp_paddr() - Set physical address to dest SRNG head pointer
@@ -561,10 +561,12 @@ void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
  *
  * Return: 0 on success; error on failire
  */
-static inline int hal_srng_access_start_unlocked(void *hal_soc, void *hal_ring)
+static inline int
+hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
+			       void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
-	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 	uint32_t *desc;
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING)
@@ -575,7 +577,7 @@ static inline int hal_srng_access_start_unlocked(void *hal_soc, void *hal_ring)
 			*(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
 
 		if (srng->flags & HAL_SRNG_CACHED_DESC) {
-			desc = hal_srng_dst_peek(hal_soc, hal_ring);
+			desc = hal_srng_dst_peek(hal_soc_hdl, hal_ring);
 			if (qdf_likely(desc)) {
 				qdf_mem_dma_cache_sync(soc->qdf_dev,
 						       qdf_mem_virt_to_phys
@@ -599,7 +601,8 @@ static inline int hal_srng_access_start_unlocked(void *hal_soc, void *hal_ring)
  *
  * Return: 0 on success; error on failire
  */
-static inline int hal_srng_access_start(void *hal_soc, void *hal_ring)
+static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
+					void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 
@@ -610,7 +613,7 @@ static inline int hal_srng_access_start(void *hal_soc, void *hal_ring)
 
 	SRNG_LOCK(&(srng->lock));
 
-	return hal_srng_access_start_unlocked(hal_soc, hal_ring);
+	return hal_srng_access_start_unlocked(hal_soc_hdl, hal_ring);
 }
 
 /**
@@ -1138,8 +1141,10 @@ static inline uint32_t hal_idle_list_scatter_buf_size(void *hal_soc)
  * @hal_soc: Opaque HAL SOC handle
  *
  */
-static inline uint32_t hal_get_link_desc_size(struct hal_soc *hal_soc)
+static inline uint32_t hal_get_link_desc_size(hal_soc_handle_t hal_soc_hdl)
 {
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
 	if (!hal_soc || !hal_soc->ops) {
 		qdf_print("Error: Invalid ops\n");
 		QDF_BUG(0);
@@ -1355,7 +1360,7 @@ extern void hal_get_meminfo(void *hal_soc,struct hal_mem_info *mem );
  *
  * @hal_soc: Opaque HAL SOC handle
  */
-uint32_t hal_get_target_type(struct hal_soc *hal);
+uint32_t hal_get_target_type(hal_soc_handle_t hal_soc_hdl);
 
 /**
  * hal_get_ba_aging_timeout - Retrieve BA aging timeout
@@ -1409,11 +1414,14 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
  *
  * Return: Update tail pointer and head pointer in arguments.
  */
-static inline void hal_get_hw_hptp(struct hal_soc *hal, void *hal_ring,
+static inline void hal_get_hw_hptp(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
 				   uint32_t *headp, uint32_t *tailp,
 				   uint8_t ring_type)
 {
-	hal->ops->hal_get_hw_hptp(hal, hal_ring, headp, tailp, ring_type);
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_get_hw_hptp(hal_soc_hdl, hal_ring,
+			headp, tailp, ring_type);
 }
 
 /**

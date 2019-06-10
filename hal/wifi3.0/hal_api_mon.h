@@ -537,12 +537,16 @@ static inline void hal_rx_proc_phyrx_other_receive_info_tlv(struct hal_soc *hal_
  */
 static inline uint32_t
 hal_rx_status_get_tlv_info(void *rx_tlv_hdr, void *ppdu_info,
-			   struct hal_soc *hal_soc,
+			   hal_soc_handle_t hal_soc_hdl,
 			   qdf_nbuf_t nbuf)
 {
-	return hal_soc->ops->hal_rx_status_get_tlv_info(rx_tlv_hdr,
-							ppdu_info, hal_soc,
-							nbuf);
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_status_get_tlv_info(
+						rx_tlv_hdr,
+						ppdu_info,
+						hal_soc_hdl,
+						nbuf);
 }
 
 static inline
