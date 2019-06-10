@@ -4336,9 +4336,9 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
-	status = sme_close_session(hdd_ctx->mac_handle, adapter->vdev_id);
+	status = sme_vdev_delete(hdd_ctx->mac_handle, adapter->vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("failed to close sme session; status:%d", status);
+		hdd_err("failed to delete vdev; status:%d", status);
 		goto release_vdev;
 	}
 
@@ -4354,11 +4354,11 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 			hdd_ndp_session_end_handler(adapter);
 
 		if (status == QDF_STATUS_E_TIMEOUT)
-			hdd_err("timed out waiting for sme close session");
+			hdd_err("timed out waiting for sme vdev delete");
 		else if (adapter->qdf_session_close_event.force_set)
-			hdd_info("SSR occurred during sme close session");
+			hdd_info("SSR occurred during sme vdev delete");
 		else
-			hdd_err("failed to wait for sme close session; status:%u",
+			hdd_err("failed to wait for sme vdev delete; status:%u",
 				status);
 	}
 

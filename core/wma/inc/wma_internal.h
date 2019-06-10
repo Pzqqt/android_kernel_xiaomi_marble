@@ -564,9 +564,15 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 struct cdp_vdev *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				    uint8_t *vdev_id);
 
+/**
+ * wma_vdev_detach() - send vdev delete command to fw
+ * @wma_handle: wma handle
+ * @pdel_vdev_req_param: del vdev params
+ *
+ * Return: QDF status
+ */
 QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
-			struct del_sta_self_params *pdel_sta_self_req_param,
-			uint8_t generateRsp);
+			struct del_vdev_params *pdel_vdev_req_param);
 
 /**
  * wma_release_vdev_and_peer_ref() - release vdev ref taken by interface txrx
@@ -1281,8 +1287,6 @@ QDF_STATUS wma_process_cfg_action_frm_tb_ppdu(tp_wma_handle wma,
 QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
-				uint32_t len);
-int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);
 
 int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,

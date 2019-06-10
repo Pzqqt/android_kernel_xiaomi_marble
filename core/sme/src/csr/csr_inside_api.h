@@ -366,9 +366,30 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					*channelTable);
 QDF_STATUS csr_roam_set_key(struct mac_context *mac, uint32_t sessionId,
 			    tCsrRoamSetKey *pSetKey, uint32_t roamId);
-QDF_STATUS csr_roam_close_session(struct mac_context *mac_ctx,
-				  uint32_t session_id, bool sync);
-void csr_cleanup_session(struct mac_context *mac, uint32_t sessionId);
+
+/*
+ * csr_roam_vdev_delete() - CSR api to delete vdev
+ * @mac_ctx: pointer to mac context
+ * @vdev_id: vdev id to be deleted.
+ * @cleanup: clean up vdev session on true
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS csr_roam_vdev_delete(struct mac_context *mac_ctx,
+				uint8_t vdev_id, bool cleanup);
+
+/*
+ * csr_cleanup_session() - CSR api to cleanup vdev
+ * @mac_ctx: pointer to mac context
+ * @vdev_id: vdev id to be deleted.
+ *
+ * This API is used to clean up vdev information gathered during
+ * vdev was enabled.
+ *
+ * Return QDF_STATUS
+ */
+void csr_cleanup_session(struct mac_context *mac, uint8_t vdev_id);
+
 QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
 						struct qdf_mac_addr *bssid,
 					      uint32_t *pSessionId);

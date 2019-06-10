@@ -916,15 +916,15 @@ struct set_dtim_params {
 #define DOT11_VHT_IE    2
 
 /**
- * struct del_sta_self_params - Del Sta Self params
+ * struct del_vdev_params - Del Sta Self params
  * @session_id: SME Session ID
  * @status: response status code
  * @sme_callback: callback to be called from WMA to SME
  * @sme_ctx: pointer to context provided by SME
  */
-struct del_sta_self_params {
+struct del_vdev_params {
 	tSirMacAddr self_mac_addr;
-	uint8_t session_id;
+	uint8_t vdev_id;
 	uint32_t status;
 	csr_session_close_cb sme_callback;
 	void *sme_ctx;
@@ -936,8 +936,7 @@ struct del_sta_self_params {
  * @generate_rsp: generate response to upper layers
  */
 struct del_sta_self_rsp_params {
-	struct del_sta_self_params *self_sta_param;
-	uint8_t generate_rsp;
+	struct del_vdev_params *self_sta_param;
 };
 
 /**

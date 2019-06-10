@@ -383,9 +383,9 @@ static void dump_csr_command_info(struct mac_context *mac, tSmeCmd *pCmd)
 			pCmd->u.wmStatusChangeCmd.Type);
 		break;
 
-	case e_sme_command_del_sta_session:
-		sme_debug("Issue del STA command for session:%d",
-			   pCmd->sessionId);
+	case e_sme_command_del_vdev:
+		sme_debug("Issue del vdev command for vdev:%d",
+			  pCmd->sessionId);
 		break;
 
 	default:
@@ -516,8 +516,8 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 		csr_roam_process_wm_status_change_command(mac_ctx,
 					sme_cmd);
 		break;
-	case e_sme_command_del_sta_session:
-		csr_process_del_sta_session_command(mac_ctx, sme_cmd);
+	case e_sme_command_del_vdev:
+		csr_process_del_vdev_command(mac_ctx, sme_cmd);
 		break;
 	case eSmeCommandAddTs:
 	case eSmeCommandDelTs:
@@ -2005,10 +2005,9 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-	case eWNI_SME_DEL_STA_SELF_RSP:
+	case eWNI_SME_VDEV_DELETE_RSP:
 		if (pMsg->bodyptr) {
-			status = csr_process_del_sta_session_rsp(mac,
-								pMsg->bodyptr);
+			status = csr_process_vdev_del_rsp(mac, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);
@@ -4525,16 +4524,16 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 	return status;
 }
 
-QDF_STATUS sme_close_session(mac_handle_t mac_handle, uint8_t session_id)
+QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, session_id, 0));
+			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, vdev_id, 0));
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_close_session(mac, session_id, false);
+		status = csr_roam_vdev_delete(mac, vdev_id, false);
 		sme_release_global_lock(&mac->sme);
 	}
 

@@ -300,7 +300,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 101) is unused */
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 102) is unused */
-#define SIR_HAL_DEL_STA_SELF_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 103)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 103) is unused */
+
 /*
  * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 104) thru
  * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 108) are unused

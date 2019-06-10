@@ -383,19 +383,19 @@ QDF_STATUS sme_create_vdev(mac_handle_t mac_handle,
 			   struct sme_session_params *params);
 
 /**
- * sme_close_session() - Close a session for given persona
+ * sme_vdev_delete() - Delete vdev for given id
  *
- * This is a synchronous API. This API needs to be called to close the session
+ * This is a synchronous API. This API needs to be called to delete vdev
  * in SME module before terminating the session completely.
  *
  * mac_handle: The handle returned by mac_open.
- * session_id: A previous opened session's ID.
+ * vdev_id: A previous created vdev id.
  *
  * Return:
- * QDF_STATUS_SUCCESS - session is closed.
- * Other status means SME is failed to open the session.
+ * QDF_STATUS_SUCCESS - vdev is deleted.
+ * Other status means SME is failed to delete vdev.
  */
-QDF_STATUS sme_close_session(mac_handle_t mac_handle, uint8_t sessionId);
+QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle, uint8_t vdev_id);
 
 /**
  * sme_set_curr_device_mode() - Sets the current operating device mode.

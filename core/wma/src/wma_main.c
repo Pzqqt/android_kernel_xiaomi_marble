@@ -97,6 +97,8 @@
 #include "init_cmd_api.h"
 #include "nan_ucfg_api.h"
 #include "wma_coex.h"
+#include "target_if_vdev_mgr_rx_ops.h"
+
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
 #endif
@@ -3554,10 +3556,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wmi_peer_assoc_conf_event_id,
 					   wma_peer_assoc_conf_handler,
 					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_vdev_delete_resp_event_id,
-					   wma_vdev_delete_handler,
-					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(
+				wma_handle->wmi_handle,
+				wmi_vdev_delete_resp_event_id,
+				target_if_vdev_mgr_delete_response_handler,
+				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_delete_response_event_id,
 					   wma_peer_delete_handler,
@@ -8447,10 +8450,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_process_tsm_stats_req(wma_handle, (void *)msg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_ESE */
-	case WMA_DEL_STA_SELF_REQ:
-		wma_vdev_detach(wma_handle,
-				(struct del_sta_self_params *) msg->bodyptr, 1);
-		break;
 	case WMA_UPDATE_CHAN_LIST_REQ:
 		wma_update_channel_list(wma_handle,
 					(tSirUpdateChanList *) msg->bodyptr);

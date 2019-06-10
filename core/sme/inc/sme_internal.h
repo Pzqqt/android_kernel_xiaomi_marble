@@ -50,7 +50,7 @@ typedef enum eSmeCommandType {
 	eSmeCsrCommandMask = 0x10000,
 	eSmeCommandRoam,
 	eSmeCommandWmStatusChange,
-	e_sme_command_del_sta_session,
+	e_sme_command_del_vdev,
 	/* QOS */
 	eSmeQosCommandMask = 0x40000,   /* To identify Qos commands */
 	eSmeCommandAddTs,

@@ -59,6 +59,8 @@
 #include "cds_ieee80211_common.h"
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_mlme_public_struct.h"
+#include "wma.h"
+#include "wma_internal.h"
 #include "../../core/src/vdev_mgr_ops.h"
 
 void lim_log_session_states(struct mac_context *mac);
@@ -1543,6 +1545,20 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 }
 
 static void
+lim_process_vdev_delete(struct mac_context *mac_ctx,
+			struct del_vdev_params *vdev_param)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		WMA_LOGE("%s: WMA context is invalid", __func__);
+		return;
+	}
+	wma_vdev_detach(wma_handle, vdev_param);
+}
+
+static void
 lim_process_vdev_create(struct mac_context *mac_ctx,
 			struct vdev_create_req_param *vdev_create_param)
 {
@@ -2154,6 +2170,11 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case eWNI_SME_VDEV_CREATE_REQ:
 		lim_process_vdev_create(mac_ctx, msg->bodyptr);
+		/* Do not free msg->bodyptr, same memory used to send resp */
+		msg->bodyptr = NULL;
+		break;
+	case eWNI_SME_VDEV_DELETE_REQ:
+		lim_process_vdev_delete(mac_ctx, msg->bodyptr);
 		/* Do not free msg->bodyptr, same memory used to send resp */
 		msg->bodyptr = NULL;
 		break;
