@@ -711,7 +711,7 @@ qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 
 	/* Terminate the (single-element) list of tx frames */
 	qdf_nbuf_set_next(skb, NULL);
-	ret = dp_tx_send((struct dp_vdev_t *)vdev, skb);
+	ret = dp_tx_send(vdev, skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to tx", __func__);
@@ -1629,7 +1629,7 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 	qdf_mem_zero(nbuf->cb, sizeof(nbuf->cb));
 	len = qdf_nbuf_len(nbuf);
 
-	if (dp_tx_send(vdev, nbuf)) {
+	if (dp_tx_send(dp_vdev_to_cdp_vdev(vdev), nbuf)) {
 		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
 		return nbuf;
 	}

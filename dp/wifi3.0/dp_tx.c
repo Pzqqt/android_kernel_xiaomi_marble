@@ -1910,8 +1910,9 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-qdf_nbuf_t dp_tx_send_exception(void *vap_dev, qdf_nbuf_t nbuf,
-		struct cdp_tx_exception_metadata *tx_exc_metadata)
+qdf_nbuf_t
+dp_tx_send_exception(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf,
+		     struct cdp_tx_exception_metadata *tx_exc_metadata)
 {
 	qdf_ether_header_t *eh = NULL;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
@@ -2016,7 +2017,7 @@ fail:
  *         nbuf when it fails to send
  */
 #ifdef MESH_MODE_SUPPORT
-qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 {
 	struct meta_hdr_s *mhdr;
 	qdf_nbuf_t nbuf_mesh = NULL;
@@ -2075,7 +2076,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 
 #else
 
-qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send_mesh(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 {
 	return dp_tx_send(vap_dev, nbuf);
 }
@@ -2094,7 +2095,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
  * Return: NULL on success,
  *         nbuf when it fails to send
  */
-qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
+qdf_nbuf_t dp_tx_send(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 {
 	qdf_ether_header_t *eh = NULL;
 	struct dp_tx_msdu_info_s msdu_info;

@@ -444,7 +444,8 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 				}
 			}
 
-			if (!dp_tx_send(ta_peer->vdev, nbuf)) {
+			if (!dp_tx_send(dp_vdev_to_cdp_vdev(ta_peer->vdev),
+					nbuf)) {
 				DP_STATS_INC_PKT(ta_peer, rx.intra_bss.pkts, 1,
 						 len);
 				return true;
@@ -473,7 +474,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 		len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 		memset(nbuf_copy->cb, 0x0, sizeof(nbuf_copy->cb));
 
-		if (dp_tx_send(ta_peer->vdev, nbuf_copy)) {
+		if (dp_tx_send(dp_vdev_to_cdp_vdev(ta_peer->vdev), nbuf_copy)) {
 			DP_STATS_INC_PKT(ta_peer, rx.intra_bss.fail, 1, len);
 			tid_stats->fail_cnt[INTRABSS_DROP]++;
 			qdf_nbuf_free(nbuf_copy);

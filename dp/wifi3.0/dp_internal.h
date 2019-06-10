@@ -1318,4 +1318,9 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 }
 #endif
 
+static inline
+struct cdp_vdev *dp_vdev_to_cdp_vdev(struct dp_vdev *vdev)
+{
+	return (struct cdp_vdev *)vdev;
+}
 #endif /* #ifndef _DP_INTERNAL_H_ */
