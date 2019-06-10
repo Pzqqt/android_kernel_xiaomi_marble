@@ -962,6 +962,7 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 	struct blm_reject_ap *blm_entry = NULL;
 	qdf_time_t connection_age = 0;
 	bool entry_found = false;
+	qdf_time_t max_entry_time;
 
 	blm_ctx = blm_get_pdev_obj(pdev);
 	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
@@ -1006,11 +1007,24 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 		blm_entry->connect_timestamp = qdf_mc_timer_get_system_time();
 		break;
 	case BLM_AP_DISCONNECTED:
+		/* Update the blm info first */
+		blm_update_ap_info(blm_entry, &blm_psoc_obj->blm_cfg, NULL);
+
+		max_entry_time = blm_entry->connect_timestamp;
+		if (blm_entry->driver_blacklist) {
+			max_entry_time =
+			   blm_entry->ap_timestamp.driver_blacklist_timestamp;
+		} else if (blm_entry->driver_avoidlist) {
+			max_entry_time =
+			 QDF_MAX(blm_entry->ap_timestamp.driver_avoid_timestamp,
+				 blm_entry->connect_timestamp);
+		}
 		connection_age = qdf_mc_timer_get_system_time() -
-						blm_entry->connect_timestamp;
-		if (connection_age >
-		    blm_psoc_obj->blm_cfg.bad_bssid_counter_reset_time) {
-			blm_debug("Bad Bssid timer expired, removed %pM from list",
+							max_entry_time;
+		if ((connection_age >
+		    blm_psoc_obj->blm_cfg.bad_bssid_counter_reset_time) ||
+		    !blm_entry->reject_ap_type) {
+			blm_debug("Bad Bssid timer expired/AP cleared from all blacklisting, removed %pM from list",
 				  blm_entry->bssid.bytes);
 			qdf_list_remove_node(&blm_ctx->reject_ap_list,
 					     &blm_entry->node);
