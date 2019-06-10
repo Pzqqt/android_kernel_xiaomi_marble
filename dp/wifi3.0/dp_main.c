@@ -5730,9 +5730,8 @@ static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
  * @peer_handle:		Datapath peer handle
  *
  */
-void dp_peer_unref_delete(void *peer_handle)
+void dp_peer_unref_delete(struct dp_peer *peer)
 {
-	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
