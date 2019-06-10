@@ -1656,6 +1656,16 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
 				cnt++;
 			}
 
+			/*
+			 * When all primary prefs have been set,
+			 * and if 2 lms are required for secondary
+			 * preference must be set with an lm pair
+			 */
+			if (cnt == num_lm && sec_cnt > 1 &&
+					!test_bit(sde_cfg->mixer[i+1].id,
+					&sde_cfg->mixer[i].lm_pair_mask))
+				continue;
+
 			/* After primary pref is set, now re apply secondary */
 			if (cnt >= num_lm && cnt < (num_lm + sec_cnt)) {
 				set_bit(SDE_DISP_SECONDARY_PREF,
@@ -1667,6 +1677,15 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
 		for (i = 0; i < sde_cfg->mixer_count; i++) {
 			clear_bit(SDE_DISP_SECONDARY_PREF,
 					&sde_cfg->mixer[i].features);
+
+			/*
+			 * If 2 lms are required for secondary
+			 * preference must be set with an lm pair
+			 */
+			if (cnt == 0 && num_lm > 1 &&
+					!test_bit(sde_cfg->mixer[i+1].id,
+					&sde_cfg->mixer[i].lm_pair_mask))
+				continue;
 
 			if (cnt < num_lm && !(sde_cfg->mixer[i].features &
 					BIT(SDE_DISP_PRIMARY_PREF))) {
