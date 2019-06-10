@@ -3442,7 +3442,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	if (dp_rx_pdev_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("dp_rx_pdev_attach failed"));
-		goto fail1;
+		goto fail2;
 	}
 
 	DP_STATS_INIT(pdev);
@@ -3465,7 +3465,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	if (dp_rx_pdev_mon_attach(pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"dp_rx_pdev_mon_attach failed");
-		goto rx_mon_attach_fail;
+		goto fail2;
 	}
 
 	if (dp_wdi_event_attach(pdev)) {
@@ -3515,7 +3515,7 @@ wdi_attach_fail:
 	 */
 	dp_rx_pdev_mon_detach(pdev);
 
-rx_mon_attach_fail:
+fail2:
 	dp_rx_pdev_detach(pdev);
 
 fail1:
