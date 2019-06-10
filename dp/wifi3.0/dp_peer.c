@@ -900,7 +900,13 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 		  peer->vdev->vdev_id, flags, ast_entry->mac_addr.raw,
 		  peer->mac_addr.raw);
 
-	if (ast_entry->delete_in_progress)
+	/* Do not send AST update in below cases
+	 *  1) Ast entry delete has already triggered
+	 *  2) Peer delete is already triggered
+	 *  3) We did not get the HTT map for create event
+	 */
+	if (ast_entry->delete_in_progress || peer->delete_in_progress ||
+	    !ast_entry->is_mapped)
 		return ret;
 
 	if ((ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) ||
