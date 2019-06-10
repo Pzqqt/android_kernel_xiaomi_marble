@@ -976,6 +976,12 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (sta_id >= HDD_MAX_ADAPTERS) {
+		hdd_err("Error: Invalid sta_id: %u", sta_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	/* Clear station in TL and then update HDD data
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
@@ -1028,6 +1034,11 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 
 	hdd_info("STA:%u, Auth:%u, Priv:%u, WMM:%u",
 		 sta_id, auth_required, privacy_required, wmm_enabled);
+
+	if (sta_id >= HDD_MAX_ADAPTERS) {
+		hdd_err("Error: Invalid sta_id: %u", sta_id);
+		return qdf_status;
+	}
 
 	/*
 	 * Clean up old entry if it is not cleaned up properly
@@ -1140,15 +1151,20 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct qdf_mac_addr broadcast_macaddr = QDF_MAC_ADDR_BCAST_INIT;
 	struct hdd_ap_ctx *ap_ctx;
+	uint8_t sta_id;
 
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	sta_id = ap_ctx->broadcast_sta_id;
 
-	hdd_ctx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = adapter;
-	hdd_ctx->sta_to_adapter[ap_ctx->broadcast_sta_id] = adapter;
-	qdf_status =
-		hdd_softap_register_sta(adapter, false, privacy_required,
-					ap_ctx->broadcast_sta_id,
-					&broadcast_macaddr, 0);
+	if (sta_id >= HDD_MAX_ADAPTERS) {
+		hdd_err("Error: Invalid sta_id: %u", sta_id);
+		return qdf_status;
+	}
+
+	hdd_ctx->sta_to_adapter[sta_id] = adapter;
+	qdf_status = hdd_softap_register_sta(adapter, false,
+					     privacy_required, sta_id,
+					     &broadcast_macaddr, 0);
 
 	return qdf_status;
 }

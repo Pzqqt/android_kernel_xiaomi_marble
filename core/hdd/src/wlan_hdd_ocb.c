@@ -232,6 +232,11 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
+	if (peer_id >= HDD_MAX_ADAPTERS) {
+		hdd_err("Error: Invalid peer_id: %u", peer_id);
+		return -EINVAL;
+	}
+
 	hdd_ctx->sta_to_adapter[peer_id] = adapter;
 
 	sta_desc.sta_id = peer_id;
