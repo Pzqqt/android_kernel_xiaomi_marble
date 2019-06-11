@@ -424,12 +424,14 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 /**
  * pmo_core_psoc_configure_suspend(): configure suspend req events
  * @psoc: objmgr psoc
+ * @is_runtime_pm: indicate if it is used by runtime PM
  *
  * Responsibility of the caller to take the psoc reference.
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
+						  bool is_runtime_pm)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
@@ -446,7 +448,13 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc)
 		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
 	}
 
-	pmo_core_set_suspend_dtim(psoc);
+	/*
+	 * For runtime PM, since system is awake, DTIM related commands
+	 * do not have to be sent with WOW sequence. They can be sent
+	 * through other paths which will just trigger a runtime resume.
+	 */
+	if (!is_runtime_pm)
+		pmo_core_set_suspend_dtim(psoc);
 
 	/*
 	 * To handle race between hif_pci_suspend and unpause/pause tx handler.
@@ -480,7 +488,7 @@ QDF_STATUS pmo_core_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 		goto dec_psoc_ref;
 	}
 
-	status = pmo_core_psoc_configure_suspend(psoc);
+	status = pmo_core_psoc_configure_suspend(psoc, false);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to configure suspend");
 
@@ -933,7 +941,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		goto resume_htc;
 
-	status = pmo_core_psoc_configure_suspend(psoc);
+	status = pmo_core_psoc_configure_suspend(psoc, true);
 	if (status != QDF_STATUS_SUCCESS)
 		goto resume_htc;
 
