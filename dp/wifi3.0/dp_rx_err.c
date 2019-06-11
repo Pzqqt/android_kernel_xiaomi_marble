@@ -401,7 +401,7 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 				mac_id, quota);
 }
 
-#ifdef CONFIG_MCL
+#ifdef DP_INVALID_PEER_ASSERT
 #define DP_PDEV_INVALID_PEER_MSDU_CHECK(head, tail) \
 		do {                                \
 			qdf_assert_always(!(head)); \

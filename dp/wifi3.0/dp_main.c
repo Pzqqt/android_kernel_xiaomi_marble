@@ -66,7 +66,7 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #ifdef ATH_SUPPORT_IQUE
 #include "dp_txrx_me.h"
 #endif
-#ifdef CONFIG_MCL
+#if defined(DP_CON_MON)
 extern int con_mode_monitor;
 #ifndef REMOVE_PKT_LOG
 #include <pktlog_ac_api.h>
@@ -306,7 +306,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 };
 
 /* MCL specific functions */
-#ifdef CONFIG_MCL
+#if defined(DP_CON_MON)
 /**
  * dp_soc_get_mon_mask_for_interrupt_mode() - get mon mode mask for intr mode
  * @soc: pointer to dp_soc handle
@@ -1707,7 +1707,7 @@ static QDF_STATUS dp_soc_attach_poll(void *txrx_soc)
 }
 
 static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
-#if defined(CONFIG_MCL)
+#if defined(DP_INTR_POLL_BOTH)
 /*
  * dp_soc_interrupt_attach_wrapper() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
@@ -9162,7 +9162,7 @@ static uint32_t dp_tx_get_success_ack_stats(struct cdp_pdev *pdev,
 	return tx_success;
 }
 
-#ifndef CONFIG_WIN
+#ifdef DP_PEER_EXTENDED_API
 static struct cdp_misc_ops dp_ops_misc = {
 #ifdef FEATURE_WLAN_TDLS
 	.tx_non_std = dp_tx_non_std,
@@ -9177,7 +9177,9 @@ static struct cdp_misc_ops dp_ops_misc = {
 	.get_num_rx_contexts = dp_get_num_rx_contexts,
 	.get_tx_ack_stats = dp_tx_get_success_ack_stats,
 };
+#endif
 
+#ifdef DP_FLOW_CTL
 static struct cdp_flowctl_ops dp_ops_flowctl = {
 	/* WIFI 3.0 DP implement as required. */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -9192,6 +9194,7 @@ static struct cdp_flowctl_ops dp_ops_flowctl = {
 static struct cdp_lflowctl_ops dp_ops_l_flowctl = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
+#endif
 
 #ifdef IPA_OFFLOAD
 static struct cdp_ipa_ops dp_ops_ipa = {
@@ -9214,6 +9217,7 @@ static struct cdp_ipa_ops dp_ops_ipa = {
 };
 #endif
 
+#ifdef DP_POWER_SAVE
 static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
@@ -9252,21 +9256,24 @@ static struct cdp_bus_ops dp_ops_bus = {
 	.bus_suspend = dp_bus_suspend,
 	.bus_resume = dp_bus_resume
 };
+#endif
 
-static struct cdp_ocb_ops dp_ops_ocb = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
-};
-
-
+#ifdef DP_FLOW_CTL
 static struct cdp_throttle_ops dp_ops_throttle = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
-static struct cdp_mob_stats_ops dp_ops_mob_stats = {
+static struct cdp_cfg_ops dp_ops_cfg = {
+	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+};
+#endif
+
+#ifdef DP_PEER_EXTENDED_API
+static struct cdp_ocb_ops dp_ops_ocb = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
-static struct cdp_cfg_ops dp_ops_cfg = {
+static struct cdp_mob_stats_ops dp_ops_mob_stats = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
@@ -9340,19 +9347,23 @@ static struct cdp_ops dp_txrx_ops = {
 #ifdef PEER_FLOW_CONTROL
 	.pflow_ops = &dp_ops_pflow,
 #endif /* PEER_FLOW_CONTROL */
-#ifndef CONFIG_WIN
+#ifdef DP_PEER_EXTENDED_API
 	.misc_ops = &dp_ops_misc,
+	.ocb_ops = &dp_ops_ocb,
+	.peer_ops = &dp_ops_peer,
+	.mob_stats_ops = &dp_ops_mob_stats,
+#endif
+#ifdef DP_FLOW_CTL
 	.cfg_ops = &dp_ops_cfg,
 	.flowctl_ops = &dp_ops_flowctl,
 	.l_flowctl_ops = &dp_ops_l_flowctl,
+	.throttle_ops = &dp_ops_throttle,
+#endif
 #ifdef IPA_OFFLOAD
 	.ipa_ops = &dp_ops_ipa,
 #endif
+#ifdef DP_POWER_SAVE
 	.bus_ops = &dp_ops_bus,
-	.ocb_ops = &dp_ops_ocb,
-	.peer_ops = &dp_ops_peer,
-	.throttle_ops = &dp_ops_throttle,
-	.mob_stats_ops = &dp_ops_mob_stats,
 #endif
 };
 

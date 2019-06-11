@@ -170,7 +170,7 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			vdev_mac_addr, vdev_id, op_mode);
 }
 
-#ifdef CONFIG_MCL
+#ifdef DP_FLOW_CTL
 /**
  * cdp_flow_pool_map() - Create flow pool for vdev
  * @soc - data path soc handle

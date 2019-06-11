@@ -920,10 +920,10 @@ struct ol_if_ops {
 			   struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
-#ifdef CONFIG_MCL
-	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
-#else
+#ifdef FEATURE_NAC_RSSI
 	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
+#else
+	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
 #endif
 	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 			uint8_t vdev_id, uint8_t *peer_mac_addr,
@@ -973,8 +973,7 @@ struct ol_if_ops {
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
-#ifdef CONFIG_MCL
-/* From here MCL specific OPs */
+#ifdef DP_PEER_EXTENDED_API
 /**
  * struct cdp_misc_ops - mcl ops not classified
  * @set_ibss_vdev_heart_beat_timer:
@@ -1039,22 +1038,95 @@ struct cdp_misc_ops {
 };
 
 /**
- * struct cdp_tx_delay_ops - mcl tx delay ops
- * @tx_delay:
- * @tx_delay_hist:
- * @tx_packet_count:
- * @tx_set_compute_interval:
+ * struct cdp_ocb_ops - mcl ocb ops
+ * @set_ocb_chan_info:
+ * @get_ocb_chan_info:
  */
-struct cdp_tx_delay_ops {
-	void (*tx_delay)(struct cdp_pdev *pdev, uint32_t *queue_delay_microsec,
-		uint32_t *tx_delay_microsec, int category);
-	void (*tx_delay_hist)(struct cdp_pdev *pdev,
-		uint16_t *bin_values, int category);
-	void (*tx_packet_count)(struct cdp_pdev *pdev,
-		uint16_t *out_packet_count,
-		uint16_t *out_packet_loss_count, int category);
-	void (*tx_set_compute_interval)(struct cdp_pdev *pdev,
-		uint32_t interval);
+struct cdp_ocb_ops {
+	void (*set_ocb_chan_info)(struct cdp_vdev *vdev,
+			struct ol_txrx_ocb_set_chan ocb_set_chan);
+	struct ol_txrx_ocb_chan_info *
+		(*get_ocb_chan_info)(struct cdp_vdev *vdev);
+};
+
+/**
+ * struct cdp_peer_ops - mcl peer related ops
+ * @register_peer:
+ * @clear_peer:
+ * @cfg_attach:
+ * @find_peer_by_addr:
+ * @find_peer_by_addr_and_vdev:
+ * @local_peer_id:
+ * @peer_find_by_local_id:
+ * @peer_state_update:
+ * @get_vdevid:
+ * @get_vdev_by_sta_id:
+ * @register_ocb_peer:
+ * @peer_get_peer_mac_addr:
+ * @get_peer_state:
+ * @get_vdev_for_peer:
+ * @update_ibss_add_peer_num_of_vdev:
+ * @remove_peers_for_vdev:
+ * @remove_peers_for_vdev_no_lock:
+ * @copy_mac_addr_raw:
+ * @add_last_real_peer:
+ * @is_vdev_restore_last_peer:
+ * @update_last_real_peer:
+ */
+struct cdp_peer_ops {
+	QDF_STATUS (*register_peer)(struct cdp_pdev *pdev,
+			struct ol_txrx_desc_type *sta_desc);
+	QDF_STATUS (*clear_peer)(struct cdp_pdev *pdev, uint8_t sta_id);
+	QDF_STATUS (*change_peer_state)(uint8_t sta_id,
+			enum ol_txrx_peer_state sta_state,
+			bool roam_synch_in_progress);
+	void * (*peer_get_ref_by_addr)(struct cdp_pdev *pdev,
+				       uint8_t *peer_addr, uint8_t *peer_id,
+				       enum peer_debug_id_type debug_id);
+	void (*peer_release_ref)(void *peer, enum peer_debug_id_type debug_id);
+	void * (*find_peer_by_addr)(struct cdp_pdev *pdev,
+			uint8_t *peer_addr, uint8_t *peer_id);
+	void * (*find_peer_by_addr_and_vdev)(struct cdp_pdev *pdev,
+			struct cdp_vdev *vdev,
+			uint8_t *peer_addr, uint8_t *peer_id);
+	uint16_t (*local_peer_id)(void *peer);
+	void * (*peer_find_by_local_id)(struct cdp_pdev *pdev,
+			uint8_t local_peer_id);
+	QDF_STATUS (*peer_state_update)(struct cdp_pdev *pdev,
+			uint8_t *peer_addr,
+			enum ol_txrx_peer_state state);
+	QDF_STATUS (*get_vdevid)(void *peer, uint8_t *vdev_id);
+	struct cdp_vdev * (*get_vdev_by_sta_id)(struct cdp_pdev *pdev,
+			uint8_t sta_id);
+	QDF_STATUS (*register_ocb_peer)(uint8_t *mac_addr, uint8_t *peer_id);
+	uint8_t * (*peer_get_peer_mac_addr)(void *peer);
+	int (*get_peer_state)(void *peer);
+	struct cdp_vdev * (*get_vdev_for_peer)(void *peer);
+	int16_t (*update_ibss_add_peer_num_of_vdev)(struct cdp_vdev *vdev,
+			int16_t peer_num_delta);
+	void (*remove_peers_for_vdev)(struct cdp_vdev *vdev,
+			ol_txrx_vdev_peer_remove_cb callback,
+			void *callback_context, bool remove_last_peer);
+	void (*remove_peers_for_vdev_no_lock)(struct cdp_vdev *vdev,
+			ol_txrx_vdev_peer_remove_cb callback,
+			void *callback_context);
+	void (*copy_mac_addr_raw)(struct cdp_vdev *vdev, uint8_t *bss_addr);
+	void (*add_last_real_peer)(struct cdp_pdev *pdev,
+		struct cdp_vdev *vdev, uint8_t *peer_id);
+	bool (*is_vdev_restore_last_peer)(void *peer);
+	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *vdev,
+			uint8_t *peer_id, bool restore_last_peer);
+	void (*peer_detach_force_delete)(void *peer);
+};
+
+/**
+ * struct cdp_ocb_ops - mcl ocb ops
+ * @clear_stats:
+ * @stats:
+ */
+struct cdp_mob_stats_ops {
+	void (*clear_stats)(uint16_t bitmap);
+	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
 };
 
 /**
@@ -1065,7 +1137,10 @@ struct cdp_pmf_ops {
 	void (*get_pn_info)(void *peer, uint8_t **last_pn_valid,
 			uint64_t **last_pn, uint32_t **rmf_pn_replays);
 };
+#endif
 
+
+#ifdef DP_FLOW_CTL
 /**
  * struct cdp_cfg_ops - mcl configuration ops
  * @set_cfg_rx_fwd_disabled: set rx_fwd_disabled flag
@@ -1168,6 +1243,18 @@ struct cdp_lflowctl_ops {
 	void (*vdev_unpause)(struct cdp_vdev *vdev, uint32_t reason);
 };
 
+/**
+ * struct cdp_ocb_ops - mcl ocb ops
+ * @throttle_init_period:
+ * @throttle_set_level:
+ */
+struct cdp_throttle_ops {
+	void (*throttle_init_period)(struct cdp_pdev *pdev, int period,
+			uint8_t *dutycycle_level);
+	void (*throttle_set_level)(struct cdp_pdev *pdev, int level);
+};
+#endif
+
 #ifdef IPA_OFFLOAD
 /**
  * struct cdp_ipa_ops - mcl ipa data path ops
@@ -1229,6 +1316,26 @@ struct cdp_ipa_ops {
 };
 #endif
 
+#ifdef DP_POWER_SAVE
+/**
+ * struct cdp_tx_delay_ops - mcl tx delay ops
+ * @tx_delay:
+ * @tx_delay_hist:
+ * @tx_packet_count:
+ * @tx_set_compute_interval:
+ */
+struct cdp_tx_delay_ops {
+	void (*tx_delay)(struct cdp_pdev *pdev, uint32_t *queue_delay_microsec,
+		uint32_t *tx_delay_microsec, int category);
+	void (*tx_delay_hist)(struct cdp_pdev *pdev,
+		uint16_t *bin_values, int category);
+	void (*tx_packet_count)(struct cdp_pdev *pdev,
+		uint16_t *out_packet_count,
+		uint16_t *out_packet_loss_count, int category);
+	void (*tx_set_compute_interval)(struct cdp_pdev *pdev,
+		uint32_t interval);
+};
+
 /**
  * struct cdp_bus_ops - mcl bus suspend/resume ops
  * @bus_suspend:
@@ -1238,110 +1345,7 @@ struct cdp_bus_ops {
 	QDF_STATUS (*bus_suspend)(struct cdp_pdev *opaque_pdev);
 	QDF_STATUS (*bus_resume)(struct cdp_pdev *opaque_pdev);
 };
-
-/**
- * struct cdp_ocb_ops - mcl ocb ops
- * @set_ocb_chan_info:
- * @get_ocb_chan_info:
- */
-struct cdp_ocb_ops {
-	void (*set_ocb_chan_info)(struct cdp_vdev *vdev,
-			struct ol_txrx_ocb_set_chan ocb_set_chan);
-	struct ol_txrx_ocb_chan_info *
-		(*get_ocb_chan_info)(struct cdp_vdev *vdev);
-};
-
-/**
- * struct cdp_peer_ops - mcl peer related ops
- * @register_peer:
- * @clear_peer:
- * @cfg_attach:
- * @find_peer_by_addr:
- * @find_peer_by_addr_and_vdev:
- * @local_peer_id:
- * @peer_find_by_local_id:
- * @peer_state_update:
- * @get_vdevid:
- * @get_vdev_by_sta_id:
- * @register_ocb_peer:
- * @peer_get_peer_mac_addr:
- * @get_peer_state:
- * @get_vdev_for_peer:
- * @update_ibss_add_peer_num_of_vdev:
- * @remove_peers_for_vdev:
- * @remove_peers_for_vdev_no_lock:
- * @copy_mac_addr_raw:
- * @add_last_real_peer:
- * @is_vdev_restore_last_peer:
- * @update_last_real_peer:
- */
-struct cdp_peer_ops {
-	QDF_STATUS (*register_peer)(struct cdp_pdev *pdev,
-			struct ol_txrx_desc_type *sta_desc);
-	QDF_STATUS (*clear_peer)(struct cdp_pdev *pdev, uint8_t sta_id);
-	QDF_STATUS (*change_peer_state)(uint8_t sta_id,
-			enum ol_txrx_peer_state sta_state,
-			bool roam_synch_in_progress);
-	void * (*peer_get_ref_by_addr)(struct cdp_pdev *pdev,
-				       uint8_t *peer_addr, uint8_t *peer_id,
-				       enum peer_debug_id_type debug_id);
-	void (*peer_release_ref)(void *peer, enum peer_debug_id_type debug_id);
-	void * (*find_peer_by_addr)(struct cdp_pdev *pdev,
-			uint8_t *peer_addr, uint8_t *peer_id);
-	void * (*find_peer_by_addr_and_vdev)(struct cdp_pdev *pdev,
-			struct cdp_vdev *vdev,
-			uint8_t *peer_addr, uint8_t *peer_id);
-	uint16_t (*local_peer_id)(void *peer);
-	void * (*peer_find_by_local_id)(struct cdp_pdev *pdev,
-			uint8_t local_peer_id);
-	QDF_STATUS (*peer_state_update)(struct cdp_pdev *pdev,
-			uint8_t *peer_addr,
-			enum ol_txrx_peer_state state);
-	QDF_STATUS (*get_vdevid)(void *peer, uint8_t *vdev_id);
-	struct cdp_vdev * (*get_vdev_by_sta_id)(struct cdp_pdev *pdev,
-			uint8_t sta_id);
-	QDF_STATUS (*register_ocb_peer)(uint8_t *mac_addr, uint8_t *peer_id);
-	uint8_t * (*peer_get_peer_mac_addr)(void *peer);
-	int (*get_peer_state)(void *peer);
-	struct cdp_vdev * (*get_vdev_for_peer)(void *peer);
-	int16_t (*update_ibss_add_peer_num_of_vdev)(struct cdp_vdev *vdev,
-			int16_t peer_num_delta);
-	void (*remove_peers_for_vdev)(struct cdp_vdev *vdev,
-			ol_txrx_vdev_peer_remove_cb callback,
-			void *callback_context, bool remove_last_peer);
-	void (*remove_peers_for_vdev_no_lock)(struct cdp_vdev *vdev,
-			ol_txrx_vdev_peer_remove_cb callback,
-			void *callback_context);
-	void (*copy_mac_addr_raw)(struct cdp_vdev *vdev, uint8_t *bss_addr);
-	void (*add_last_real_peer)(struct cdp_pdev *pdev,
-		struct cdp_vdev *vdev, uint8_t *peer_id);
-	bool (*is_vdev_restore_last_peer)(void *peer);
-	void (*update_last_real_peer)(struct cdp_pdev *pdev, void *vdev,
-			uint8_t *peer_id, bool restore_last_peer);
-	void (*peer_detach_force_delete)(void *peer);
-};
-
-/**
- * struct cdp_ocb_ops - mcl ocb ops
- * @throttle_init_period:
- * @throttle_set_level:
- */
-struct cdp_throttle_ops {
-	void (*throttle_init_period)(struct cdp_pdev *pdev, int period,
-			uint8_t *dutycycle_level);
-	void (*throttle_set_level)(struct cdp_pdev *pdev, int level);
-};
-
-/**
- * struct cdp_ocb_ops - mcl ocb ops
- * @clear_stats:
- * @stats:
- */
-struct cdp_mob_stats_ops {
-	void (*clear_stats)(uint16_t bitmap);
-	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
-};
-#endif /* CONFIG_MCL */
+#endif
 
 #ifdef RECEIVE_OFFLOAD
 /**
@@ -1364,24 +1368,28 @@ struct cdp_ops {
 	struct cdp_wds_ops          *wds_ops;
 	struct cdp_raw_ops          *raw_ops;
 	struct cdp_pflow_ops        *pflow_ops;
-#ifdef CONFIG_MCL
+#ifdef DP_PEER_EXTENDED_API
 	struct cdp_misc_ops         *misc_ops;
+	struct cdp_peer_ops         *peer_ops;
+	struct cdp_ocb_ops          *ocb_ops;
+	struct cdp_mob_stats_ops    *mob_stats_ops;
+	struct cdp_pmf_ops          *pmf_ops;
+#endif
+#ifdef DP_FLOW_CTL
 	struct cdp_cfg_ops          *cfg_ops;
 	struct cdp_flowctl_ops      *flowctl_ops;
 	struct cdp_lflowctl_ops     *l_flowctl_ops;
+	struct cdp_throttle_ops     *throttle_ops;
+#endif
+#ifdef DP_POWER_SAVE
+	struct cdp_bus_ops          *bus_ops;
+	struct cdp_tx_delay_ops     *delay_ops;
+#endif
 #ifdef IPA_OFFLOAD
 	struct cdp_ipa_ops          *ipa_ops;
 #endif
 #ifdef RECEIVE_OFFLOAD
 	struct cdp_rx_offld_ops     *rx_offld_ops;
-#endif
-	struct cdp_bus_ops          *bus_ops;
-	struct cdp_ocb_ops          *ocb_ops;
-	struct cdp_peer_ops         *peer_ops;
-	struct cdp_throttle_ops     *throttle_ops;
-	struct cdp_mob_stats_ops    *mob_stats_ops;
-	struct cdp_tx_delay_ops     *delay_ops;
-	struct cdp_pmf_ops          *pmf_ops;
 #endif
 };
 #endif

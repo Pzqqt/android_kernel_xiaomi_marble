@@ -132,7 +132,7 @@ while (0)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_##LVL,       \
 		fmt, ## args)
 
-#ifdef CONFIG_MCL
+#ifdef DP_PRINT_NO_CONSOLE
 /* Stat prints should not go to console or kernel logs.*/
 #define DP_PRINT_STATS(fmt, args ...)\
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,       \
@@ -751,7 +751,7 @@ extern void *dp_find_peer_by_addr(struct cdp_pdev *dev,
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	uint8_t *peer_mac_addr, int mac_addr_is_aligned, uint8_t vdev_id);
 
-#ifndef CONFIG_WIN
+#ifdef DP_PEER_EXTENDED_API
 QDF_STATUS dp_register_peer(struct cdp_pdev *pdev_handle,
 		struct ol_txrx_desc_type *sta_desc);
 QDF_STATUS dp_clear_peer(struct cdp_pdev *pdev_handle, uint8_t local_id);

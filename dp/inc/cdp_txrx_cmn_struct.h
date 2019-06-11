@@ -34,7 +34,7 @@
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
 #include "qdf_atomic.h"
-#ifdef CONFIG_MCL
+#ifdef DP_MOB_DEFS
 #include <cdp_txrx_mob_def.h>
 #endif
 #include <cdp_txrx_handle.h>
