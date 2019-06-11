@@ -1413,6 +1413,11 @@ int process_rx_desc_remote(void *pdev, void *data)
 	struct ath_pktlog_info *pl_info;
 	qdf_nbuf_t log_nbuf = (qdf_nbuf_t)data;
 
+	if (!pl_dev) {
+		qdf_err("Pktlog handle is NULL");
+		return -EINVAL;
+	}
+
 	pl_info = pl_dev->pl_info;
 	qdf_mem_zero(&pl_hdr, sizeof(pl_hdr));
 	pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
@@ -1427,7 +1432,7 @@ int process_rx_desc_remote(void *pdev, void *data)
 	if (!rxstat_log.rx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Rx descriptor is NULL", __func__);
-		return -EFAULT;
+		return -EINVAL;
 	}
 
 	qdf_mem_copy(rxstat_log.rx_desc, qdf_nbuf_data(log_nbuf), pl_hdr.size);
@@ -1446,6 +1451,11 @@ process_pktlog_lite(void *context, void *log_data, uint16_t log_type)
 	size_t log_size;
 	qdf_nbuf_t log_nbuf = (qdf_nbuf_t)log_data;
 
+	if (!pl_dev) {
+		qdf_err("Pktlog handle is NULL");
+		return -EINVAL;
+	}
+
 	pl_info = pl_dev->pl_info;
 	qdf_mem_zero(&pl_hdr, sizeof(pl_hdr));
 	pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
@@ -1459,7 +1469,7 @@ process_pktlog_lite(void *context, void *log_data, uint16_t log_type)
 	if (!rxstat_log.rx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 			"%s: Rx descriptor is NULL", __func__);
-		return -EFAULT;
+		return -EINVAL;
 	}
 
 	qdf_mem_copy(rxstat_log.rx_desc, qdf_nbuf_data(log_nbuf), pl_hdr.size);
