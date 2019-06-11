@@ -1445,7 +1445,6 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 	}
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 {
 	switch (reason) {
@@ -1541,124 +1540,6 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	wma_wow_stats_display(&stats);
 }
-#else
-/**
- * wma_wow_stats_display() - display wow wake up stats
- * @stats: per vdev stats counters
- *
- * Return: none
- */
-static void wma_wow_stats_display(struct sir_vdev_wow_stats *stats)
-{
-	WMA_LOGA("uc %d bc %d v4_mc %d v6_mc %d ra %d ns %d na %d pno_match %d pno_complete %d gscan %d low_rssi %d rssi_breach %d icmp %d icmpv6 %d oem %d",
-		stats->ucast,
-		stats->bcast,
-		stats->ipv4_mcast,
-		stats->ipv6_mcast,
-		stats->ipv6_mcast_ra,
-		stats->ipv6_mcast_ns,
-		stats->ipv6_mcast_na,
-		stats->pno_match,
-		stats->pno_complete,
-		stats->gscan,
-		stats->low_rssi,
-		stats->rssi_breach,
-		stats->icmpv4,
-		stats->icmpv6,
-		stats->oem_response);
-}
-
-static void wma_print_wow_stats(t_wma_handle *wma,
-				WOW_EVENT_INFO_fixed_param *wake_info)
-{
-	struct sir_vdev_wow_stats *stats;
-
-	switch (wake_info->wake_reason) {
-	case WOW_REASON_BPF_ALLOW:
-	case WOW_REASON_PATTERN_MATCH_FOUND:
-	case WOW_REASON_PACKET_FILTER_MATCH:
-	case WOW_REASON_RA_MATCH:
-	case WOW_REASON_NLOD:
-	case WOW_REASON_NLO_SCAN_COMPLETE:
-	case WOW_REASON_LOW_RSSI:
-	case WOW_REASON_EXTSCAN:
-	case WOW_REASON_RSSI_BREACH_EVENT:
-	case WOW_REASON_OEM_RESPONSE_EVENT:
-	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
-	case WOW_REASON_11D_SCAN:
-		break;
-#ifdef WLAN_FEATURE_MOTION_DETECTION
-	case WOW_REASON_WLAN_MD:
-	case WOW_REASON_WLAN_BL:
-		break;
-#endif /* WLAN_FEATURE_MOTION_DETECTION */
-	default:
-		return;
-	}
-
-	stats = &wma->interfaces[wake_info->vdev_id].wow_stats;
-	wma_wow_stats_display(stats);
-}
-
-/**
- * wma_inc_wow_stats() - maintain wow pattern match wake up stats
- * @wma: wma handle, containing the stats counters
- * @wake_info: the wake event information
- *
- * Return: none
- */
-static void wma_inc_wow_stats(t_wma_handle *wma,
-			      WOW_EVENT_INFO_fixed_param *wake_info)
-{
-	struct sir_vdev_wow_stats *stats;
-
-	if (wake_info->wake_reason == WOW_REASON_UNSPECIFIED) {
-		wma->wow_unspecified_wake_count++;
-		return;
-	}
-
-	stats = &wma->interfaces[wake_info->vdev_id].wow_stats;
-	switch (wake_info->wake_reason) {
-	case WOW_REASON_RA_MATCH:
-		stats->ipv6_mcast++;
-		stats->ipv6_mcast_ra++;
-		stats->icmpv6++;
-		break;
-	case WOW_REASON_NLOD:
-		stats->pno_match++;
-		break;
-	case WOW_REASON_NLO_SCAN_COMPLETE:
-		stats->pno_complete++;
-		break;
-	case WOW_REASON_LOW_RSSI:
-		stats->low_rssi++;
-		break;
-	case WOW_REASON_EXTSCAN:
-		stats->gscan++;
-		break;
-	case WOW_REASON_RSSI_BREACH_EVENT:
-		stats->rssi_breach++;
-		break;
-	case WOW_REASON_OEM_RESPONSE_EVENT:
-		stats->oem_response++;
-		break;
-	case WOW_REASON_11D_SCAN:
-		stats->scan_11d++;
-		break;
-	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
-		stats->pwr_save_fail_detected++;
-		break;
-#ifdef WLAN_FEATURE_MOTION_DETECTION
-	case WOW_REASON_WLAN_MD:
-		stats->motion_detect++;
-		break;
-	case WOW_REASON_WLAN_BL:
-		stats->motion_detect_bl++;
-		break;
-#endif /* WLAN_FEATURE_MOTION_DETECTION */
-	}
-}
-#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 /**
@@ -2123,7 +2004,6 @@ static void wma_log_pkt_tcpv6(uint8_t *data, uint32_t length)
 	WMA_LOGD("TCP_seq_num: %u", qdf_cpu_to_be16(seq_num));
 }
 
-#ifdef QCA_SUPPORT_CP_STATS
 static void wma_wow_inc_wake_lock_stats_by_dst_addr(t_wma_handle *wma,
 						    uint8_t vdev_id,
 						    uint8_t *dest_mac)
@@ -2140,68 +2020,6 @@ static void wma_wow_inc_wake_lock_stats_by_protocol(t_wma_handle *wma,
 							 vdev_id,
 							 proto_subtype);
 }
-#else
-static void wma_wow_inc_wake_lock_stats_by_dst_addr(t_wma_handle *wma,
-						    uint8_t vdev_id,
-						    uint8_t *dest_mac)
-{
-	struct wma_txrx_node *vdev;
-	struct sir_vdev_wow_stats *stats;
-
-	vdev = &wma->interfaces[vdev_id];
-	stats = &vdev->wow_stats;
-
-	switch (*dest_mac) {
-	case QDF_BCAST_MAC_ADDR:
-		stats->bcast++;
-		break;
-	case QDF_MCAST_IPV4_MAC_ADDR:
-		stats->ipv4_mcast++;
-		break;
-	case QDF_MCAST_IPV6_MAC_ADDR:
-		stats->ipv6_mcast++;
-		break;
-	default:
-		stats->ucast++;
-		break;
-	}
-}
-
-static void wma_wow_inc_wake_lock_stats_by_protocol(t_wma_handle *wma,
-			uint8_t vdev_id, enum qdf_proto_subtype proto_subtype)
-{
-	struct wma_txrx_node *vdev;
-	struct sir_vdev_wow_stats *stats;
-
-	vdev = &wma->interfaces[vdev_id];
-	stats = &vdev->wow_stats;
-
-	switch (proto_subtype) {
-	case QDF_PROTO_ICMP_RES:
-		stats->icmpv4++;
-		break;
-	case QDF_PROTO_ICMPV6_REQ:
-	case QDF_PROTO_ICMPV6_RES:
-	case QDF_PROTO_ICMPV6_RS:
-		stats->icmpv6++;
-		break;
-	case QDF_PROTO_ICMPV6_RA:
-		stats->icmpv6++;
-		stats->ipv6_mcast_ra++;
-		break;
-	case QDF_PROTO_ICMPV6_NS:
-		stats->icmpv6++;
-		stats->ipv6_mcast_ns++;
-		break;
-	case QDF_PROTO_ICMPV6_NA:
-		stats->icmpv6++;
-		stats->ipv6_mcast_na++;
-		break;
-	default:
-		break;
-	}
-}
-#endif
 
 /**
  * wma_wow_parse_data_pkt() - API to parse data buffer for data

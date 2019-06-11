@@ -4698,53 +4698,6 @@ struct sir_apf_get_offload {
 	uint32_t max_bytes_for_apf_inst;
 };
 
-#ifndef QCA_SUPPORT_CP_STATS
-/**
- * struct sir_vdev_wow_stats - container for per vdev wow related stat counters
- * @ucast: Unicast wakeup count
- * @bcast: Broadcast wakeup count
- * @ipv4_mcast: ipv4 multicast wakeup count
- * @ipv6_mcast: ipv6 multicast wakeup count
- * @ipv6_mcast_ra: ipv6 multicast ra stats
- * @ipv6_mcast_ns: ipv6 multicast ns stats
- * @ipv6_mcast_na: ipv6 multicast na stats
- * @icmpv4: ipv4 icmp packet count
- * @icmpv6: ipv6 icmp packet count
- * @rssi_breach: rssi breach wakeup count
- * @low_rssi: low rssi wakeup count
- * @gscan: gscan wakeup count
- * @pno_complete: pno complete wakeup count
- * @pno_match: pno match wakeup count
- * @oem_response: oem response wakeup count
- * @scan_11d: 11d scan wakeup count
- * @motion_detect: motion detection wakeup count
- * @motion_detect_bl: motion detection baselining wakeup count
- */
-struct sir_vdev_wow_stats {
-	uint32_t ucast;
-	uint32_t bcast;
-	uint32_t ipv4_mcast;
-	uint32_t ipv6_mcast;
-	uint32_t ipv6_mcast_ra;
-	uint32_t ipv6_mcast_ns;
-	uint32_t ipv6_mcast_na;
-	uint32_t icmpv4;
-	uint32_t icmpv6;
-	uint32_t rssi_breach;
-	uint32_t low_rssi;
-	uint32_t gscan;
-	uint32_t pno_complete;
-	uint32_t pno_match;
-	uint32_t oem_response;
-	uint32_t pwr_save_fail_detected;
-	uint32_t scan_11d;
-#ifdef WLAN_FEATURE_MOTION_DETECTION
-	uint32_t motion_detect;
-	uint32_t motion_detect_bl;
-#endif /* WLAN_FEATURE_MOTION_DETECTION */
-};
-#endif
-
 #ifdef WLAN_FEATURE_NAN
 #define IFACE_NAME_SIZE 64
 

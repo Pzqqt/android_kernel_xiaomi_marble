@@ -2032,7 +2032,6 @@ struct wma_version_info g_wmi_version_info;
  *
  * Return: None
  */
-#ifdef QCA_SUPPORT_CP_STATS
 static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 {
 	uint8_t vdev_id;
@@ -2134,103 +2133,6 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 	*size -= len;
 	*buf_ptr += len;
 }
-#else /* QCA_SUPPORT_CP_STATS */
-static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
-{
-	t_wma_handle *wma;
-	struct sir_vdev_wow_stats *stats;
-	uint16_t len = 0;
-	char *buf = *buf_ptr;
-	struct wma_txrx_node *iface;
-	uint8_t vdev_id;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
-		return;
-	}
-
-	WMA_LOGE("%s: size of buffer: %d", __func__, *size);
-
-	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
-		iface = &wma->interfaces[vdev_id];
-		if (!iface->handle)
-			continue;
-
-		stats = &iface->wow_stats;
-		len += qdf_scnprintf(buf + len, *size - len,
-			"\n"
-			"vdev_id %d\n"
-			"WoW Stats\n"
-			"\tpno_match %u\n"
-			"\tpno_complete %u\n"
-			"\tgscan %u\n"
-			"\tlow_rssi %u\n"
-			"\trssi_breach %u\n"
-			"\tucast %u\n"
-			"\tbcast %u\n"
-			"\ticmpv4 %u\n"
-			"\ticmpv6 %u\n"
-			"\tipv4_mcast %u\n"
-			"\tipv6_mcast %u\n"
-			"\tipv6_mcast_ra %u\n"
-			"\tipv6_mcast_ns %u\n"
-			"\tipv6_mcast_na %u\n"
-			"\toem_response %u\n"
-			"dtimPeriod %d\n"
-			"chanmode %d\n"
-			"vht_capable %d\n"
-			"ht_capable %d\n"
-			"chan_width %d\n"
-			"vdev_active %d\n"
-			"vdev_up %d\n"
-			"aid %d\n"
-			"rate_flags %d\n"
-			"nss %d\n"
-			"tx_power %d\n"
-			"max_tx_power %d\n"
-			"nwType %d\n"
-			"tx_streams %d\n"
-			"rx_streams %d\n"
-			"chain_mask %d",
-			vdev_id,
-			stats->pno_match,
-			stats->pno_complete,
-			stats->gscan,
-			stats->low_rssi,
-			stats->rssi_breach,
-			stats->ucast,
-			stats->bcast,
-			stats->icmpv4,
-			stats->icmpv6,
-			stats->ipv4_mcast,
-			stats->ipv6_mcast,
-			stats->ipv6_mcast_ra,
-			stats->ipv6_mcast_ns,
-			stats->ipv6_mcast_na,
-			stats->oem_response,
-			iface->dtimPeriod,
-			iface->chanmode,
-			iface->vht_capable,
-			iface->ht_capable,
-			iface->chan_width,
-			iface->vdev_active,
-			wma_is_vdev_up(vdev_id),
-			iface->aid,
-			iface->rate_flags,
-			iface->nss,
-			iface->tx_power,
-			iface->max_tx_power,
-			iface->nwType,
-			iface->tx_streams,
-			iface->rx_streams,
-			iface->chain_mask);
-	}
-
-	*size -= len;
-	*buf_ptr += len;
-}
-#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_register_debug_callback() - registration function for wma layer

@@ -746,7 +746,6 @@ struct roam_synch_frame_ind {
  * @wep_default_key_idx: wep default index for group key
  * @arp_offload_req: cached arp offload request
  * @ns_offload_req: cached ns offload request
- * @wow_stats: stat counters for WoW related events
  * @rcpi_req: rcpi request
  * @in_bmps: Whether bmps for this interface has been enabled
  * @vdev_start_wakelock: wakelock to protect vdev start op with firmware
@@ -816,9 +815,6 @@ struct wma_txrx_node {
 	bool roaming_in_progress;
 	int32_t roam_synch_delay;
 	uint8_t wep_default_key_idx;
-#ifndef QCA_SUPPORT_CP_STATS
-	struct sir_vdev_wow_stats wow_stats;
-#endif
 	struct sme_rcpi_req *rcpi_req;
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
