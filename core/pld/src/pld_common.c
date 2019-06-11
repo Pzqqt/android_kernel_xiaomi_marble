@@ -1414,6 +1414,13 @@ void *pld_smmu_get_domain(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 		ptr = pld_snoc_smmu_get_domain(dev);
 		break;
+	case PLD_BUS_TYPE_PCIE:
+		ptr = pld_pcie_smmu_get_domain(dev);
+		break;
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		pr_err("Not supported on type %d\n", type);
+		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
 		break;

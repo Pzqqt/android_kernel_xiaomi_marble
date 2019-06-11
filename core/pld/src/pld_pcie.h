@@ -133,10 +133,17 @@ static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
 #endif
 
 #ifndef CONFIG_PLD_PCIE_CNSS
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static inline void *pld_pcie_smmu_get_domain(struct device *dev)
+{
+	return NULL;
+}
+#else
 static inline void *pld_pcie_smmu_get_mapping(struct device *dev)
 {
 	return NULL;
 }
+#endif
 
 static inline int
 pld_pcie_smmu_map(struct device *dev,
@@ -350,10 +357,17 @@ static inline int pld_pcie_collect_rddm(struct device *dev)
 	return cnss_force_collect_rddm(dev);
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static inline void *pld_pcie_smmu_get_domain(struct device *dev)
+{
+	return cnss_smmu_get_domain(dev);
+}
+#else
 static inline void *pld_pcie_smmu_get_mapping(struct device *dev)
 {
 	return cnss_smmu_get_mapping(dev);
 }
+#endif
 
 static inline int
 pld_pcie_smmu_map(struct device *dev,
