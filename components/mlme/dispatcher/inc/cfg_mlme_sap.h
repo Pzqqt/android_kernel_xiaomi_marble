@@ -66,7 +66,7 @@
 			"CFG_11G_ONLY_POLICY")
 
 #define CFG_ASSOC_STA_LIMIT CFG_UINT( \
-			"cfg_beacon_interval", \
+			"cfg_assoc_sta_limit", \
 			1, \
 			32, \
 			10, \
