@@ -1358,7 +1358,7 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 		}
 	}
 
-	if (srng->alloc_size) {
+	if (srng->alloc_size && srng->base_vaddr_unaligned) {
 		if (!srng->cached) {
 			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 						srng->alloc_size,
@@ -1368,6 +1368,7 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 			qdf_mem_free(srng->base_vaddr_unaligned);
 		}
 		srng->alloc_size = 0;
+		srng->base_vaddr_unaligned = NULL;
 	}
 	srng->hal_srng = NULL;
 }
