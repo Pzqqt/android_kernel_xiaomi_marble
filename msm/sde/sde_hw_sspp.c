@@ -3,6 +3,7 @@
  * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
+#include "sde_hw_util.h"
 #include "sde_hwio.h"
 #include "sde_hw_catalog.h"
 #include "sde_hw_lm.h"
@@ -295,9 +296,10 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	struct sde_hw_blk_reg_map *c;
 	u32 chroma_samp, unpack, src_format;
 	u32 opmode = 0;
-	u32 alpha_en_mask = 0;
+	u32 alpha_en_mask = 0, color_en_mask = 0;
 	u32 op_mode_off, unpack_pat_off, format_off;
-	u32 idx;
+	u32 idx, core_rev;
+	bool const_color_en = true;
 
 	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx) || !fmt)
 		return;
@@ -313,6 +315,7 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	}
 
 	c = &ctx->hw;
+	core_rev = readl_relaxed(c->base_off + 0x0);
 	opmode = SDE_REG_READ(c, op_mode_off + idx);
 	opmode &= ~(MDSS_MDP_OP_FLIP_LR | MDSS_MDP_OP_FLIP_UD |
 			MDSS_MDP_OP_BWC_EN | MDSS_MDP_OP_PE_OVERRIDE);
@@ -350,6 +353,11 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		(fmt->unpack_align_msb << 18) |
 		((fmt->bpp - 1) << 9);
 
+	if(IS_SDE_MAJOR_SAME(core_rev, SDE_HW_VER_600)) {
+		if(flags & SDE_SSPP_ROT_90)
+			const_color_en = false;
+	}
+
 	if (fmt->fetch_mode != SDE_FETCH_LINEAR) {
 		if (SDE_FORMAT_IS_UBWC(fmt))
 			opmode |= MDSS_MDP_OP_BWC_EN;
@@ -371,8 +379,9 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 				alpha_en_mask | (ctx->mdp->ubwc_swizzle) |
 				(ctx->mdp->highest_bank_bit << 4));
 		} else if (IS_UBWC_30_SUPPORTED(ctx->catalog->ubwc_version)) {
+			color_en_mask = const_color_en ? BIT(30) : 0;
 			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
-				BIT(30) | (ctx->mdp->ubwc_swizzle) |
+				color_en_mask | (ctx->mdp->ubwc_swizzle) |
 				(ctx->mdp->highest_bank_bit << 4));
 		}
 	}
