@@ -94,8 +94,13 @@
  * True inline rotation supported versions
  */
 #define SDE_INLINE_ROT_VERSION_1_0_0	0x100
+#define SDE_INLINE_ROT_VERSION_2_0_0	0x200
+
 #define IS_SDE_INLINE_ROT_REV_100(rev) \
 	((rev) == SDE_INLINE_ROT_VERSION_1_0_0)
+#define IS_SDE_INLINE_ROT_REV_200(rev) \
+	((rev) == SDE_INLINE_ROT_VERSION_2_0_0)
+
 
 /*
  * UIDLE supported versions
