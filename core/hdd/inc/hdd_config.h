@@ -1354,6 +1354,11 @@ enum host_log_level {
  *   OUI Data : 0201001c0000
  *   OUI data Mask: FC
  *   Info Mask : 01 - only OUI present in Info mask
+ * OUI 3 :001018
+ *   OUI data Len : 06
+ *   OUI Data : 0200009c0000
+ *   OUI data Mask: FC
+ *   Info Mask : 01 - only OUI present in Info mask
  *
  * This ini is used to specify the AP OUIs with which max capability is
  * sent in association request even though AP advertises 1x1 capability.
@@ -1370,7 +1375,7 @@ enum host_log_level {
 			"gActionOUIForceMaxNss", \
 			0, \
 			ACTION_OUI_MAX_STR_LEN, \
-			"001018 06 0201009c0000 FC 01 001018 06 0201001c0000 FC 01", \
+			"001018 06 0201009c0000 FC 01 001018 06 0201001c0000 FC 01 001018 06 0200009c0000 FC 01", \
 			"Used to specify action OUIs for forcing max NSS connection")
 
 #define CFG_HDD_ALL \
