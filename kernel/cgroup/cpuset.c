@@ -2490,7 +2490,10 @@ static ssize_t cpuset_write_resmask(struct kernfs_open_file *of,
 	struct cpuset *trialcs;
 	int retval = -ENODEV;
 
+#ifndef CONFIG_CPUSETS_ASSIST
+	/* Don't call strstrip here because buf is read-only */
 	buf = strstrip(buf);
+#endif
 
 	/*
 	 * CPU or memory hotunplug may leave @cs w/o any execution
@@ -2546,6 +2549,41 @@ out_unlock:
 	css_put(&cs->css);
 	flush_workqueue(cpuset_migrate_mm_wq);
 	return retval ?: nbytes;
+}
+
+static ssize_t cpuset_write_resmask_wrapper(struct kernfs_open_file *of,
+					 char *buf, size_t nbytes, loff_t off)
+{
+#ifdef CONFIG_CPUSETS_ASSIST
+	int i;
+	struct cpuset *cs = css_cs(of_css(of));
+	struct c_data {
+		char *c_name;
+		char *c_cpus;
+	};
+	struct c_data c_targets[6] = {
+		/* Silver only cpusets go first */
+		{ "foreground",			"0-5"},//0-2,4-7
+		{ "background",			"0-2"},//0-1
+		{ "system-background",	"0-3"},//0-2
+		{ "restricted",			"0-5"},//0-7
+		{ "top-app",			"0-7"},//0-7
+		{ "camera-daemon",		"0-3,6-7"}};//0-7
+
+	if (!strcmp(current->comm, "init")) {
+		for (i = 0; i < ARRAY_SIZE(c_targets); i++) {
+			if (!strcmp(cs->css.cgroup->kn->name, c_targets[i].c_name)) {
+				strcpy(buf, c_targets[i].c_cpus);
+				pr_info("%s: setting to %s\n", c_targets[i].c_name, buf);
+				break;
+			}
+		}
+	}
+#endif
+
+	buf = strstrip(buf);
+
+	return cpuset_write_resmask(of, buf, nbytes, off);
 }
 
 /*
@@ -2693,7 +2731,7 @@ static struct cftype legacy_files[] = {
 	{
 		.name = "cpus",
 		.seq_show = cpuset_common_seq_show,
-		.write = cpuset_write_resmask,
+		.write = cpuset_write_resmask_wrapper,
 		.max_write_len = (100U + 6 * NR_CPUS),
 		.private = FILE_CPULIST,
 	},
