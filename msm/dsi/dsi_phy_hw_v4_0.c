@@ -170,6 +170,8 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	u32 vreg_ctrl_0 = 0;
 	u32 glbl_str_swi_cal_sel_ctrl = 0;
 	u32 glbl_hstx_str_ctrl_0 = 0;
+	u32 glbl_rescode_top_ctrl = 0;
+	u32 glbl_rescode_bot_ctrl = 0;
 
 	if (dsi_phy_hw_v4_0_is_pll_on(phy))
 		pr_warn("PLL turned on before configuring PHY\n");
@@ -182,17 +184,22 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 		return;
 	}
 
+	/* Alter PHY configurations if data rate less than 1.5GHZ*/
+	if (cfg->bit_clk_rate_hz <= 1500000000)
+		less_than_1500_mhz = true;
+
 	if (phy->version == DSI_PHY_VERSION_4_1) {
-		vreg_ctrl_0 = 0x58;
+		vreg_ctrl_0 = less_than_1500_mhz ? 0x53 : 0x52;
+		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d :  0x00;
+		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x39 :  0x3c;
 		glbl_str_swi_cal_sel_ctrl = 0x00;
 		glbl_hstx_str_ctrl_0 = 0x88;
 	} else {
-		/* Alter PHY configurations if data rate less than 1.5GHZ*/
-		if (cfg->bit_clk_rate_hz < 1500000000)
-			less_than_1500_mhz = true;
 		vreg_ctrl_0 = less_than_1500_mhz ? 0x5B : 0x59;
 		glbl_str_swi_cal_sel_ctrl = less_than_1500_mhz ? 0x03 : 0x00;
 		glbl_hstx_str_ctrl_0 = less_than_1500_mhz ? 0x66 : 0x88;
+		glbl_rescode_top_ctrl = 0x03;
+		glbl_rescode_bot_ctrl = 0x3c;
 	}
 
 	/* de-assert digital and pll power down */
@@ -222,8 +229,10 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 					glbl_str_swi_cal_sel_ctrl);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_HSTX_STR_CTRL_0, glbl_hstx_str_ctrl_0);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_PEMPH_CTRL_0, 0x00);
-	DSI_W32(phy, DSIPHY_CMN_GLBL_RESCODE_OFFSET_TOP_CTRL, 0x03);
-	DSI_W32(phy, DSIPHY_CMN_GLBL_RESCODE_OFFSET_BOT_CTRL, 0x3c);
+	DSI_W32(phy, DSIPHY_CMN_GLBL_RESCODE_OFFSET_TOP_CTRL,
+			glbl_rescode_top_ctrl);
+	DSI_W32(phy, DSIPHY_CMN_GLBL_RESCODE_OFFSET_BOT_CTRL,
+			glbl_rescode_bot_ctrl);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_LPTX_STR_CTRL, 0x55);
 
 	/* Remove power down from all blocks */
