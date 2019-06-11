@@ -794,6 +794,8 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 	connect.EpCallbacks.EpTxCompleteMultiple = NULL;
 	connect.EpCallbacks.EpRecv = htt_t2h_msg_handler;
 	connect.EpCallbacks.ep_resume_tx_queue = htt_tx_resume_handler;
+	connect.EpCallbacks.ep_padding_credit_update =
+					htt_tx_padding_credit_update_handler;
 
 	/* rx buffers currently are provided by HIF, not by EpRecvRefill */
 	connect.EpCallbacks.EpRecvRefill = NULL;

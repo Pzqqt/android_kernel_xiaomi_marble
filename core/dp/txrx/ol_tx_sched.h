@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2013, 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -157,6 +157,14 @@ static inline void ol_tx_target_credit_incr(struct ol_txrx_pdev_t *pdev,
 {
 	ol_tx_target_credit_adjust(1, pdev, msdu);
 }
+
+#ifdef QCA_TX_PADDING_CREDIT_SUPPORT
+
+#define MIN_TX_PAD_CREDIT_THRESH        4
+#define MAX_TX_PAD_CREDIT_THRESH        5
+
+#endif /* QCA_TX_PADDING_CREDIT_SUPPORT */
+
 #else
 /*
  * LL does not need to keep track of target credit.
@@ -180,5 +188,6 @@ static inline void ol_tx_target_credit_incr(struct ol_txrx_pdev_t *pdev,
 					    qdf_nbuf_t msdu)
 {
 }
+
 #endif
 #endif /* _OL_TX_SCHED__H_ */

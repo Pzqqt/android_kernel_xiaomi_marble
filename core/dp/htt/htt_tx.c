@@ -865,7 +865,42 @@ htt_tx_send_nonstd(htt_pdev_handle pdev,
 	return htt_tx_send_std(pdev, msdu, msdu_id);
 }
 
+#ifndef QCA_TX_PADDING_CREDIT_SUPPORT
+int htt_tx_padding_credit_update_handler(void *context, int pad_credit)
+{
+	return 1;
+}
+#endif
+
 #else                           /*ATH_11AC_TXCOMPACT */
+
+#ifdef QCA_TX_PADDING_CREDIT_SUPPORT
+static int htt_tx_padding_credit_update(htt_pdev_handle htt_pdev,
+					int pad_credit)
+{
+	int ret = 0;
+
+	if (pad_credit)
+		qdf_atomic_add(pad_credit,
+			       &htt_pdev->txrx_pdev->pad_reserve_tx_credit);
+
+	ret = qdf_atomic_read(&htt_pdev->txrx_pdev->pad_reserve_tx_credit);
+
+	return ret;
+}
+
+int htt_tx_padding_credit_update_handler(void *context, int pad_credit)
+{
+	struct htt_pdev_t *htt_pdev = (struct htt_pdev_t *)context;
+
+	return htt_tx_padding_credit_update(htt_pdev, pad_credit);
+}
+#else
+int htt_tx_padding_credit_update_handler(void *context, int pad_credit)
+{
+	return 1;
+}
+#endif
 
 #ifdef QCA_TX_HTT2_SUPPORT
 static inline HTC_ENDPOINT_ID

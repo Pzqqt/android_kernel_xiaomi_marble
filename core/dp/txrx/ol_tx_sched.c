@@ -1439,7 +1439,50 @@ ol_tx_sched_dispatch(
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
-	void
+#ifdef QCA_TX_PADDING_CREDIT_SUPPORT
+static void replenish_tx_pad_credit(struct ol_txrx_pdev_t *pdev)
+{
+	int replenish_credit = 0, avail_targ_tx_credit = 0;
+	int cur_tx_pad_credit = 0, grp_credit = 0, i = 0;
+	qdf_atomic_t *tx_grp_credit = NULL;
+
+	cur_tx_pad_credit = qdf_atomic_read(&pdev->pad_reserve_tx_credit);
+	if (cur_tx_pad_credit < MIN_TX_PAD_CREDIT_THRESH) {
+		replenish_credit = MAX_TX_PAD_CREDIT_THRESH - cur_tx_pad_credit;
+		avail_targ_tx_credit = qdf_atomic_read(&pdev->target_tx_credit);
+		replenish_credit = (replenish_credit < avail_targ_tx_credit) ?
+				   replenish_credit : avail_targ_tx_credit;
+		if (replenish_credit < 0) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_FATAL,
+				  "Tx Pad Credits = %d Target Tx Credits = %d",
+				  cur_tx_pad_credit,
+				  avail_targ_tx_credit);
+			qdf_assert(0);
+		}
+		qdf_atomic_add(replenish_credit, &pdev->pad_reserve_tx_credit);
+		qdf_atomic_add(-replenish_credit, &pdev->target_tx_credit);
+
+		while (replenish_credit > 0) {
+			for (i = 0; i < OL_TX_MAX_TXQ_GROUPS; i++) {
+				tx_grp_credit = &pdev->txq_grps[i].credit;
+				grp_credit = qdf_atomic_read(tx_grp_credit);
+				if (grp_credit) {
+					qdf_atomic_add(-1, tx_grp_credit);
+					replenish_credit--;
+				}
+				if (!replenish_credit)
+					break;
+			}
+		}
+	}
+}
+#else
+static void replenish_tx_pad_credit(struct ol_txrx_pdev_t *pdev)
+{
+}
+#endif
+
+void
 ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 {
 	struct ol_tx_sched_ctx sctx;
@@ -1458,6 +1501,7 @@ ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 	 *adf_os_print("BEFORE tx sched:\n");
 	 *ol_tx_queues_display(pdev);
 	 */
+	replenish_tx_pad_credit(pdev);
 	qdf_spin_unlock_bh(&pdev->tx_queue_spinlock);
 
 	TAILQ_INIT(&sctx.head);
@@ -1468,6 +1512,7 @@ ol_tx_sched(struct ol_txrx_pdev_t *pdev)
 		int num_credits;
 
 		qdf_spin_lock_bh(&pdev->tx_queue_spinlock);
+		replenish_tx_pad_credit(pdev);
 		credit = qdf_atomic_read(&pdev->target_tx_credit);
 		num_credits = ol_tx_sched_select_batch(pdev, &sctx, credit);
 		if (num_credits > 0) {

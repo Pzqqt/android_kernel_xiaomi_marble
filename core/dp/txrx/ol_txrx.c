@@ -743,6 +743,8 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 	/* initialize the counter of the target's tx buffer availability */
 	qdf_atomic_init(&pdev->target_tx_credit);
 	qdf_atomic_init(&pdev->orig_target_tx_credit);
+	qdf_atomic_init(&pdev->pad_reserve_tx_credit);
+	qdf_atomic_add(1, &pdev->pad_reserve_tx_credit);
 
 	if (ol_cfg_is_high_latency(cfg_pdev)) {
 		qdf_spinlock_create(&pdev->tx_queue_spinlock);

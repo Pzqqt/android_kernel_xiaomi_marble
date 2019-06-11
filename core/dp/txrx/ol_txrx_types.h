@@ -687,6 +687,11 @@ struct ol_txrx_pdev_t {
 	qdf_atomic_t target_tx_credit;
 	qdf_atomic_t orig_target_tx_credit;
 
+	/*
+	 * needed for SDIO HL, Genoa Adma
+	 */
+	qdf_atomic_t pad_reserve_tx_credit;
+
 	struct {
 		uint16_t pool_size;
 		struct ol_txrx_fw_stats_desc_elem_t *pool;
