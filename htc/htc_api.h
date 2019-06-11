@@ -69,6 +69,8 @@ struct ol_ath_htc_stats {
 /* To resume HTT Tx queue during runtime resume */
 typedef void (*HTC_EP_RESUME_TX_QUEUE)(void *);
 
+typedef int (*HTC_EP_PADDING_CREDIT_UPDATE) (void *, int);
+
 /* per service connection send completion */
 typedef void (*HTC_EP_SEND_PKT_COMPLETE)(void *, HTC_PACKET *);
 /* per service connection callback when a plurality of packets have been sent
@@ -175,6 +177,8 @@ struct htc_ep_callbacks {
 	HTC_EP_SEND_PKT_COMP_MULTIPLE EpTxCompleteMultiple;
 
 	HTC_EP_RESUME_TX_QUEUE ep_resume_tx_queue;
+
+	HTC_EP_PADDING_CREDIT_UPDATE ep_padding_credit_update;
 	/* if EpRecvAllocThresh is non-NULL, HTC will compare the
 	 * threshold value to the current recv packet length and invoke
 	 * the EpRecvAllocThresh callback to acquire a packet buffer
