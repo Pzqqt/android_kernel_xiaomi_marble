@@ -116,11 +116,11 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 	}
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 
-	tdls_priv = osif_priv->osif_tdls;
-	if (!tdls_priv) {
-		cfg80211_err("tdls priv is NULL");
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif priv or tdls priv is NULL");
 		goto release_ref;
 	}
+	tdls_priv = osif_priv->osif_tdls;
 
 	reinit_completion(&tdls_priv->tdls_teardown_comp);
 	status = ucfg_tdls_teardown_links(psoc);
@@ -449,6 +449,11 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 	wlan_cfg80211_tdls_extract_params(req_info, params);
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif priv or tdls priv is NULL");
+		status = -EINVAL;
+		goto error;
+	}
 	tdls_priv = osif_priv->osif_tdls;
 	req_info->vdev_id = wlan_vdev_get_id(vdev);
 	qdf_mem_copy(req_info->peer_addr, mac, QDF_MAC_ADDR_SIZE);
@@ -582,6 +587,12 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_vdev *vdev,
 		break;
 	case NL80211_TDLS_DISABLE_LINK:
 		osif_priv = wlan_vdev_get_ospriv(vdev);
+
+		if (!osif_priv || !osif_priv->osif_tdls) {
+			cfg80211_err("osif priv or tdls priv is NULL");
+			status = -EINVAL;
+			goto error;
+		}
 		tdls_priv = osif_priv->osif_tdls;
 		reinit_completion(&tdls_priv->tdls_del_peer_comp);
 		status = ucfg_tdls_oper(vdev, peer, cmd);
@@ -710,6 +721,11 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 	unsigned long rc;
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif_tdls_vdev or osif_priv is NULL for the current vdev");
+		return -EINVAL;
+	}
+
 	tdls_priv = osif_priv->osif_tdls;
 
 	wlan_cfg80211_update_tdls_peers_rssi(vdev);
@@ -763,6 +779,11 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_vdev *vdev,
 		return status;
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
+
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif priv or tdls priv is NULL");
+		return -EINVAL;
+	}
 
 	tdls_priv = osif_priv->osif_tdls;
 
@@ -863,6 +884,11 @@ int wlan_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev, uint32_t mode)
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv || !osif_priv->osif_tdls) {
+		cfg80211_err("osif priv or tdls priv is NULL");
+		ret = -EINVAL;
+		goto error;
+	}
 	tdls_priv = osif_priv->osif_tdls;
 
 	reinit_completion(&tdls_priv->tdls_antenna_switch_comp);
@@ -939,6 +965,12 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 		return;
 	}
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
+
+	if (!osif_vdev || !osif_vdev->osif_tdls) {
+		cfg80211_err("osif priv or tdls priv is NULL");
+		return;
+	}
+
 	tdls_priv = osif_vdev->osif_tdls;
 
 	switch (type) {
