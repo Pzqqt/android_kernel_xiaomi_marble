@@ -632,46 +632,31 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 				   void *obj, void *arg)
 {
-	uint32_t i;
 	QDF_STATUS status;
+	uint8_t i, num_channels;
 	struct wlan_objmgr_pdev *pdev = obj;
-	struct regulatory_channel *psoc_ch_lst = arg;
-	struct regulatory_channel pdev_ch_lst[NUM_CHANNELS];
+	struct wifi_pos_driver_caps *caps = arg;
+	struct channel_power ch_list[NUM_CHANNELS];
 
-	status = wlan_reg_get_current_chan_list(pdev, pdev_ch_lst);
+	status = wlan_reg_get_channel_list_with_power(pdev, ch_list,
+						      &num_channels);
+
 	if (QDF_IS_STATUS_ERROR(status)) {
-		wifi_pos_err("wlan_reg_get_current_chan_list_by_range failed");
+		wifi_pos_err("Failed to get valid channel list");
 		return;
 	}
-
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (pdev_ch_lst[i].state != CHANNEL_STATE_DISABLE &&
-			pdev_ch_lst[i].state != CHANNEL_STATE_INVALID)
-			psoc_ch_lst[i] = pdev_ch_lst[i];
-	}
+	for (i = 0; i < num_channels; i++)
+		caps->channel_list[i] = ch_list[i].chan_num;
+	caps->num_channels = num_channels;
 }
 
 static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
 				 struct wifi_pos_driver_caps *caps)
 {
-	uint32_t i, num_ch = 0;
-	struct regulatory_channel ch_lst[NUM_CHANNELS] = {{0}};
-
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 				     wifi_pos_pdev_iterator,
-				     ch_lst, true, WLAN_WIFI_POS_CORE_ID);
-
-	for (i = 0; i < NUM_CHANNELS && num_ch < OEM_CAP_MAX_NUM_CHANNELS;
-	     i++) {
-		if (ch_lst[i].state != CHANNEL_STATE_DISABLE &&
-		    ch_lst[i].state != CHANNEL_STATE_INVALID) {
-			num_ch++;
-			caps->channel_list[i] = ch_lst[i].chan_num;
-		}
-	}
-
-	caps->num_channels = num_ch;
-	wifi_pos_err("num channels: %d", num_ch);
+				      caps, true, WLAN_WIFI_POS_CORE_ID);
+	wifi_pos_err("num channels: %d", caps->num_channels);
 }
 
 QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
