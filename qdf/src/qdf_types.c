@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -323,8 +323,8 @@ qdf_export_symbol(qdf_uint32_parse);
 QDF_STATUS qdf_int64_parse(const char *int_str, int64_t *out_int)
 {
 	QDF_STATUS status;
-	bool negate;
-	uint64_t value;
+	bool negate = false;
+	uint64_t value = 0;
 	int64_t signed_value;
 
 	status = qdf_int_parse(int_str, &value, &negate);
@@ -350,8 +350,8 @@ qdf_export_symbol(qdf_int64_parse);
 QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int)
 {
 	QDF_STATUS status;
-	bool negate;
-	uint64_t value;
+	bool negate = false;
+	uint64_t value = 0;
 
 	status = qdf_int_parse(int_str, &value, &negate);
 	if (QDF_IS_STATUS_ERROR(status))
