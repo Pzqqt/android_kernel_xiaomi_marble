@@ -77,38 +77,38 @@ static int wlan_cfg80211_mc_cp_stats_send_wake_lock_stats(struct wiphy *wiphy,
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, nl_buf_len);
 
 	if (!skb) {
-		cfg80211_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		osif_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
 		return -ENOMEM;
 	}
 
-	cfg80211_debug("wow_ucast_wake_up_count %d",
-		       stats->ucast_wake_up_count);
-	cfg80211_debug("wow_bcast_wake_up_count %d",
-		       stats->bcast_wake_up_count);
-	cfg80211_debug("wow_ipv4_mcast_wake_up_count %d",
-		       stats->ipv4_mcast_wake_up_count);
-	cfg80211_debug("wow_ipv6_mcast_wake_up_count %d",
-		       stats->ipv6_mcast_wake_up_count);
-	cfg80211_debug("wow_ipv6_mcast_ra_stats %d",
-		       stats->ipv6_mcast_ra_stats);
-	cfg80211_debug("wow_ipv6_mcast_ns_stats %d",
-		       stats->ipv6_mcast_ns_stats);
-	cfg80211_debug("wow_ipv6_mcast_na_stats %d",
-		       stats->ipv6_mcast_na_stats);
-	cfg80211_debug("wow_icmpv4_count %d",
-		       stats->icmpv4_count);
-	cfg80211_debug("wow_icmpv6_count %d",
-		       stats->icmpv6_count);
-	cfg80211_debug("wow_rssi_breach_wake_up_count %d",
-		       stats->rssi_breach_wake_up_count);
-	cfg80211_debug("wow_low_rssi_wake_up_count %d",
-		       stats->low_rssi_wake_up_count);
-	cfg80211_debug("wow_gscan_wake_up_count %d",
-		       stats->gscan_wake_up_count);
-	cfg80211_debug("wow_pno_complete_wake_up_count %d",
-		       stats->pno_complete_wake_up_count);
-	cfg80211_debug("wow_pno_match_wake_up_count %d",
-		       stats->pno_match_wake_up_count);
+	osif_debug("wow_ucast_wake_up_count %d",
+		   stats->ucast_wake_up_count);
+	osif_debug("wow_bcast_wake_up_count %d",
+		   stats->bcast_wake_up_count);
+	osif_debug("wow_ipv4_mcast_wake_up_count %d",
+		   stats->ipv4_mcast_wake_up_count);
+	osif_debug("wow_ipv6_mcast_wake_up_count %d",
+		   stats->ipv6_mcast_wake_up_count);
+	osif_debug("wow_ipv6_mcast_ra_stats %d",
+		   stats->ipv6_mcast_ra_stats);
+	osif_debug("wow_ipv6_mcast_ns_stats %d",
+		   stats->ipv6_mcast_ns_stats);
+	osif_debug("wow_ipv6_mcast_na_stats %d",
+		   stats->ipv6_mcast_na_stats);
+	osif_debug("wow_icmpv4_count %d",
+		   stats->icmpv4_count);
+	osif_debug("wow_icmpv6_count %d",
+		   stats->icmpv6_count);
+	osif_debug("wow_rssi_breach_wake_up_count %d",
+		   stats->rssi_breach_wake_up_count);
+	osif_debug("wow_low_rssi_wake_up_count %d",
+		   stats->low_rssi_wake_up_count);
+	osif_debug("wow_gscan_wake_up_count %d",
+		   stats->gscan_wake_up_count);
+	osif_debug("wow_pno_complete_wake_up_count %d",
+		   stats->pno_complete_wake_up_count);
+	osif_debug("wow_pno_match_wake_up_count %d",
+		   stats->pno_match_wake_up_count);
 
 	ipv6_rx_multicast_addr_cnt = stats->ipv6_mcast_wake_up_count;
 	icmpv6_cnt = stats->icmpv6_count;
@@ -174,7 +174,7 @@ static int wlan_cfg80211_mc_cp_stats_send_wake_lock_stats(struct wiphy *wiphy,
 	    nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_PNO_MATCH_CNT,
 			stats->pno_match_wake_up_count)) {
-		cfg80211_err("nla put fail");
+		osif_err("nla put fail");
 		goto nla_put_failure;
 	}
 
@@ -218,7 +218,7 @@ static void get_tx_power_cb(int tx_power, void *cookie)
 
 	request = osif_request_get(cookie);
 	if (!request) {
-		cfg80211_err("Obsolete request");
+		osif_err("Obsolete request");
 		return;
 	}
 
@@ -245,7 +245,7 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 
 	request = osif_request_alloc(&params);
 	if (!request) {
-		cfg80211_err("Request allocation failure, return cached value");
+		osif_err("Request allocation failure, return cached value");
 		goto fetch_tx_power;
 	}
 
@@ -267,13 +267,13 @@ int wlan_cfg80211_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 						     TYPE_CONNECTION_TX_POWER,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_mc_cp_stats_request_tx_power status: %d",
-			     status);
+		osif_err("wlan_mc_cp_stats_request_tx_power status: %d",
+			 status);
 		ret = qdf_status_to_os_return(status);
 	} else {
 		ret = osif_request_wait_for_response(request);
 		if (ret)
-			cfg80211_err("wait failed or timed out ret: %d", ret);
+			osif_err("wait failed or timed out ret: %d", ret);
 		else
 			priv = osif_request_priv(request);
 	}
@@ -284,8 +284,8 @@ fetch_tx_power:
 	} else {
 		status = ucfg_mc_cp_stats_get_tx_power(vdev, dbm);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			cfg80211_err("ucfg_mc_cp_stats_get_tx_power status: %d",
-				     status);
+			osif_err("ucfg_mc_cp_stats_get_tx_power status: %d",
+				 status);
 			ret = qdf_status_to_os_return(status);
 		}
 	}
@@ -317,14 +317,14 @@ static void get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 
 	request = osif_request_get(cookie);
 	if (!request) {
-		cfg80211_err("Obsolete request");
+		osif_err("Obsolete request");
 		return;
 	}
 
 	priv = osif_request_priv(request);
 	rssi_size = sizeof(*ev->peer_stats) * ev->num_peer_stats;
 	if (rssi_size == 0) {
-		cfg80211_err("Invalid rssi stats");
+		osif_err("Invalid rssi stats");
 		goto get_peer_rssi_cb_fail;
 	}
 
@@ -364,7 +364,7 @@ wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 
 	request = osif_request_alloc(&params);
 	if (!request) {
-		cfg80211_err("Request allocation failure, return cached value");
+		osif_err("Request allocation failure, return cached value");
 		*errno = -ENOMEM;
 		qdf_mem_free(out);
 		return NULL;
@@ -380,20 +380,20 @@ wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_PEER_STATS,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("stats req failed: %d", status);
+		osif_err("stats req failed: %d", status);
 		*errno = qdf_status_to_os_return(status);
 		goto get_peer_rssi_fail;
 	}
 
 	*errno = osif_request_wait_for_response(request);
 	if (*errno) {
-		cfg80211_err("wait failed or timed out ret: %d", *errno);
+		osif_err("wait failed or timed out ret: %d", *errno);
 		goto get_peer_rssi_fail;
 	}
 
 	if (!priv->peer_stats || priv->num_peer_stats == 0) {
-		cfg80211_err("Invalid peer stats, count %d, data %pK",
-			     priv->num_peer_stats, priv->peer_stats);
+		osif_err("Invalid peer stats, count %d, data %pK",
+			 priv->num_peer_stats, priv->peer_stats);
 		*errno = -EINVAL;
 		goto get_peer_rssi_fail;
 	}
@@ -426,7 +426,7 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 
 	request = osif_request_get(cookie);
 	if (!request) {
-		cfg80211_err("Obsolete request");
+		osif_err("Obsolete request");
 		return;
 	}
 
@@ -436,8 +436,8 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	peer_adv_size = sizeof(*ev->peer_adv_stats) * ev->num_peer_adv_stats;
 
 	if (summary_size == 0 || rssi_size == 0) {
-		cfg80211_err("Invalid stats, summary %d rssi %d",
-			     summary_size, rssi_size);
+		osif_err("Invalid stats, summary %d rssi %d",
+			 summary_size, rssi_size);
 		goto station_stats_cb_fail;
 	}
 
@@ -510,7 +510,7 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
 	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
 	if (!peer) {
-		cfg80211_err("peer is null");
+		osif_err("peer is null");
 		*errno = -EINVAL;
 		goto get_station_stats_fail;
 	}
@@ -521,23 +521,23 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	status = ucfg_mc_cp_stats_send_stats_request(vdev, TYPE_STATION_STATS,
 						     &info);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("Failed to send stats request status: %d", status);
+		osif_err("Failed to send stats request status: %d", status);
 		*errno = qdf_status_to_os_return(status);
 		goto get_station_stats_fail;
 	}
 
 	*errno = osif_request_wait_for_response(request);
 	if (*errno) {
-		cfg80211_err("wait failed or timed out ret: %d", *errno);
+		osif_err("wait failed or timed out ret: %d", *errno);
 		goto get_station_stats_fail;
 	}
 
 	if (!priv->vdev_summary_stats || !priv->vdev_chain_rssi ||
 	    priv->num_summary_stats == 0 || priv->num_chain_rssi_stats == 0) {
-		cfg80211_err("Invalid stats");
-		cfg80211_err("summary %d:%pK, rssi %d:%pK",
-			     priv->num_summary_stats, priv->vdev_summary_stats,
-			     priv->num_chain_rssi_stats, priv->vdev_chain_rssi);
+		osif_err("Invalid stats");
+		osif_err("summary %d:%pK, rssi %d:%pK",
+			 priv->num_summary_stats, priv->vdev_summary_stats,
+			 priv->num_chain_rssi_stats, priv->vdev_chain_rssi);
 		*errno = -EINVAL;
 		goto get_station_stats_fail;
 	}

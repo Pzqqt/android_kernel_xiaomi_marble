@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,19 +32,19 @@ int wlan_cfg80211_get_peer_cp_stats(struct wlan_objmgr_peer *peer_obj,
 	QDF_STATUS status;
 
 	if (!peer_obj) {
-		cfg80211_err("Invalid input, peer obj NULL");
+		osif_err("Invalid input, peer obj NULL");
 		return -EINVAL;
 	}
 
 	if (!peer_cp_stats) {
-		cfg80211_err("Invalid input, peer cp obj is NULL");
+		osif_err("Invalid input, peer cp obj is NULL");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_peer_cp_stats(peer_obj, peer_cp_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_peer_cp_stats status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_peer_cp_stats status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -56,19 +56,19 @@ int wlan_cfg80211_get_vdev_cp_stats(struct wlan_objmgr_vdev *vdev_obj,
 	QDF_STATUS status;
 
 	if (!vdev_obj) {
-		cfg80211_err("Invalid input, vdev obj is NULL");
+		osif_err("Invalid input, vdev obj is NULL");
 		return -EINVAL;
 	}
 
 	if (!vdev_cp_stats) {
-		cfg80211_err("Invalid input, vdev cp obj is NULL");
+		osif_err("Invalid input, vdev cp obj is NULL");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_vdev_cp_stats(vdev_obj, vdev_cp_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_vdev_cp_stats status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_vdev_cp_stats status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -80,19 +80,19 @@ int wlan_cfg80211_get_pdev_cp_stats(struct wlan_objmgr_pdev *pdev_obj,
 	QDF_STATUS status;
 
 	if (!pdev_obj) {
-		cfg80211_err("Invalid input, pdev obj is NULL");
+		osif_err("Invalid input, pdev obj is NULL");
 		return -EINVAL;
 	}
 
 	if (!pdev_cp_stats) {
-		cfg80211_err("Invalid input, pdev cp obj is NULL");
+		osif_err("Invalid input, pdev cp obj is NULL");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_pdev_cp_stats(pdev_obj, pdev_cp_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_pdev_cp_stats status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_pdev_cp_stats status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -108,19 +108,19 @@ wlan_cfg80211_get_atf_peer_cp_stats(struct wlan_objmgr_peer *peer_obj,
 	QDF_STATUS status;
 
 	if (!peer_obj) {
-		cfg80211_err("Invalid input, peer obj is NULL");
+		osif_err("Invalid input, peer obj is NULL");
 		return -EINVAL;
 	}
 
 	if (!atf_cp_stats) {
-		cfg80211_err("Invalid input, ATF peer cp obj is NULL!");
+		osif_err("Invalid input, ATF peer cp obj is NULL!");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_atf_peer_cp_stats(peer_obj, atf_cp_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_atf_peer_cp_stats status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_atf_peer_cp_stats status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -134,25 +134,25 @@ int wlan_cfg80211_get_atf_peer_cp_stats_from_mac(
 	QDF_STATUS status;
 
 	if (!vdev_obj) {
-		cfg80211_err("Invalid input, vdev obj is NULL");
+		osif_err("Invalid input, vdev obj is NULL");
 		return -EINVAL;
 	}
 
 	if (!mac) {
-		cfg80211_err("Invalid input, peer mac is NULL");
+		osif_err("Invalid input, peer mac is NULL");
 		return -EINVAL;
 	}
 
 	if (!atf_cp_stats) {
-		cfg80211_err("Invalid input, ATF peer cp stats obj is NULL");
+		osif_err("Invalid input, ATF peer cp stats obj is NULL");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_atf_peer_cp_stats_from_mac(vdev_obj, mac,
 							  atf_cp_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_cp_stats_from_mac status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_cp_stats_from_mac status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);
@@ -166,19 +166,19 @@ wlan_cfg80211_get_dcs_pdev_cp_stats(struct wlan_objmgr_pdev *pdev_obj,
 	QDF_STATUS status;
 
 	if (!pdev_obj) {
-		cfg80211_err("Invalid input, pdev obj is NULL");
+		osif_err("Invalid input, pdev obj is NULL");
 		return -EINVAL;
 	}
 
 	if (!dcs_chan_stats) {
-		cfg80211_err("Invalid input, dcs chan stats is NULL");
+		osif_err("Invalid input, dcs chan stats is NULL");
 		return -EINVAL;
 	}
 
 	status = wlan_ucfg_get_dcs_chan_stats(pdev_obj, dcs_chan_stats);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		cfg80211_err("wlan_cfg80211_get_dcs_pdev_cp_stats status: %d",
-			     status);
+		osif_err("wlan_cfg80211_get_dcs_pdev_cp_stats status: %d",
+			 status);
 	}
 
 	return qdf_status_to_os_return(status);

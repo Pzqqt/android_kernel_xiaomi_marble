@@ -31,7 +31,7 @@ wlan_cfg80211_vdev_mlme_get_param_ssid(struct wlan_objmgr_vdev *vdev,
 				       uint8_t *ssid_len)
 {
 	if (!vdev) {
-		cfg80211_err("VDEV is NULL!!!!");
+		osif_err("VDEV is NULL!!!!");
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
@@ -44,7 +44,7 @@ wlan_cfg80211_vdev_mlme_get_trans_bssid(struct wlan_objmgr_vdev *vdev,
 					uint8_t *addr)
 {
 	if (!vdev) {
-		cfg80211_err("VDEV is NULL!!!!");
+		osif_err("VDEV is NULL!!!!");
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
@@ -58,7 +58,7 @@ wlan_cfg80211_vdev_mlme_set_param(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_vdev_mgr_cfg mlme_cfg)
 {
 	if (!vdev) {
-		cfg80211_err("VDEV is NULL!!!!");
+		osif_err("VDEV is NULL!!!!");
 		return;
 	}
 
@@ -71,7 +71,7 @@ wlan_cfg80211_vdev_mlme_get_param(struct wlan_objmgr_vdev *vdev,
 				  uint32_t *value)
 {
 	if (!vdev) {
-		cfg80211_err("VDEV is NULL!!!!");
+		osif_err("VDEV is NULL!!!!");
 		return;
 	}
 
