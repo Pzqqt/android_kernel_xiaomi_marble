@@ -55,32 +55,32 @@ static void wlan_p2p_rx_callback(void *user_data,
 	struct wireless_dev *wdev;
 	uint16_t freq;
 
-	cfg80211_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
-		user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
-		rx_frame->buf, rx_frame->frame_len);
+	osif_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
+		   user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
+		   rx_frame->buf, rx_frame->frame_len);
 
 	psoc = user_data;
 	if (!psoc) {
-		cfg80211_err("psoc is null");
+		osif_err("psoc is null");
 		return;
 	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 		rx_frame->vdev_id, WLAN_P2P_ID);
 	if (!vdev) {
-		cfg80211_err("vdev is null");
+		osif_err("vdev is null");
 		return;
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
-		cfg80211_err("osif_priv is null");
+		osif_err("osif_priv is null");
 		goto fail;
 	}
 
 	wdev = osif_priv->wdev;
 	if (!wdev) {
-		cfg80211_err("wdev is null");
+		osif_err("wdev is null");
 		goto fail;
 	}
 
@@ -91,7 +91,7 @@ static void wlan_p2p_rx_callback(void *user_data,
 		freq = ieee80211_channel_to_frequency(
 			rx_frame->rx_chan, NL80211_BAND_5GHZ);
 
-	cfg80211_debug("Indicate frame over nl80211, vdev id:%d, idx:%d",
+	osif_debug("Indicate frame over nl80211, vdev id:%d, idx:%d",
 		   rx_frame->vdev_id, wdev->netdev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
@@ -129,32 +129,32 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 	struct wireless_dev *wdev;
 	bool is_success;
 
-	cfg80211_debug("user data:%pK, action cookie:%llx, buf:%pK, len:%d, tx status:%d",
-		user_data, tx_cnf->action_cookie, tx_cnf->buf,
-		tx_cnf->buf_len, tx_cnf->status);
+	osif_debug("user data:%pK, action cookie:%llx, buf:%pK, len:%d, tx status:%d",
+		   user_data, tx_cnf->action_cookie, tx_cnf->buf,
+		   tx_cnf->buf_len, tx_cnf->status);
 
 	psoc = user_data;
 	if (!psoc) {
-		cfg80211_err("psoc is null");
+		osif_err("psoc is null");
 		return;
 	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 		tx_cnf->vdev_id, WLAN_P2P_ID);
 	if (!vdev) {
-		cfg80211_err("vdev is null");
+		osif_err("vdev is null");
 		return;
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
-		cfg80211_err("osif_priv is null");
+		osif_err("osif_priv is null");
 		goto fail;
 	}
 
 	wdev = osif_priv->wdev;
 	if (!wdev) {
-		cfg80211_err("wireless dev is null");
+		osif_err("wireless dev is null");
 		goto fail;
 	}
 
@@ -187,32 +187,32 @@ static void wlan_p2p_lo_event_callback(void *user_data,
 	struct wireless_dev *wdev;
 	struct sk_buff *vendor_event;
 
-	cfg80211_debug("user data:%pK, vdev id:%d, reason code:%d",
-		user_data, p2p_lo_event->vdev_id,
-		p2p_lo_event->reason_code);
+	osif_debug("user data:%pK, vdev id:%d, reason code:%d",
+		   user_data, p2p_lo_event->vdev_id,
+		   p2p_lo_event->reason_code);
 
 	psoc = user_data;
 	if (!psoc) {
-		cfg80211_err("psoc is null");
+		osif_err("psoc is null");
 		return;
 	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 		p2p_lo_event->vdev_id, WLAN_P2P_ID);
 	if (!vdev) {
-		cfg80211_err("vdev is null");
+		osif_err("vdev is null");
 		return;
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
-		cfg80211_err("osif_priv is null");
+		osif_err("osif_priv is null");
 		goto fail;
 	}
 
 	wdev = osif_priv->wdev;
 	if (!wdev) {
-		cfg80211_err("wireless dev is null");
+		osif_err("wireless dev is null");
 		goto fail;
 	}
 
@@ -221,14 +221,14 @@ static void wlan_p2p_lo_event_callback(void *user_data,
 			QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 			GFP_KERNEL);
 	if (!vendor_event) {
-		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		osif_err("cfg80211_vendor_event_alloc failed");
 		goto fail;
 	}
 
 	if (nla_put_u32(vendor_event,
 		QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_STOP_REASON,
 		p2p_lo_event->reason_code)) {
-		cfg80211_err("nla put failed");
+		osif_err("nla put failed");
 		kfree_skb(vendor_event);
 		goto fail;
 	}
@@ -269,38 +269,38 @@ static void wlan_p2p_event_callback(void *user_data,
 	struct vdev_osif_priv *osif_priv;
 	struct wireless_dev *wdev;
 
-	cfg80211_debug("user data:%pK, vdev id:%d, event type:%d",
-		user_data, p2p_event->vdev_id, p2p_event->roc_event);
+	osif_debug("user data:%pK, vdev id:%d, event type:%d",
+		   user_data, p2p_event->vdev_id, p2p_event->roc_event);
 
 	psoc = user_data;
 	if (!psoc) {
-		cfg80211_err("psoc is null");
+		osif_err("psoc is null");
 		return;
 	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 		p2p_event->vdev_id, WLAN_P2P_ID);
 	if (!vdev) {
-		cfg80211_err("vdev is null");
+		osif_err("vdev is null");
 		return;
 	}
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	if (!osif_priv) {
-		cfg80211_err("osif_priv is null");
+		osif_err("osif_priv is null");
 		goto fail;
 	}
 
 	wdev = osif_priv->wdev;
 	if (!wdev) {
-		cfg80211_err("wireless dev is null");
+		osif_err("wireless dev is null");
 		goto fail;
 	}
 
 	chan = ieee80211_get_channel(wdev->wiphy,
 				     wlan_chan_to_freq(p2p_event->chan));
 	if (!chan) {
-		cfg80211_err("channel conversion failed");
+		osif_err("channel conversion failed");
 		goto fail;
 	}
 
@@ -312,7 +312,7 @@ static void wlan_p2p_event_callback(void *user_data,
 		cfg80211_remain_on_channel_expired(wdev,
 			p2p_event->cookie, chan, GFP_KERNEL);
 	} else {
-		cfg80211_err("Invalid p2p event");
+		osif_err("Invalid p2p event");
 	}
 
 fail:
@@ -324,7 +324,7 @@ QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	struct p2p_start_param start_param;
 
 	if (!psoc) {
-		cfg80211_err("psoc null");
+		osif_err("psoc null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -342,7 +342,7 @@ QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
-		cfg80211_err("psoc null");
+		osif_err("psoc null");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -360,19 +360,19 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	int ret;
 
 	if (!vdev) {
-		cfg80211_err("invalid vdev object");
+		osif_err("invalid vdev object");
 		return -EINVAL;
 	}
 
 	if (!chan) {
-		cfg80211_err("invalid channel");
+		osif_err("invalid channel");
 		return -EINVAL;
 	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!psoc) {
-		cfg80211_err("psoc handle is NULL");
+		osif_err("psoc handle is NULL");
 		return -EINVAL;
 	}
 
@@ -382,13 +382,13 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 
 	ret = policy_mgr_is_chan_ok_for_dnbs(psoc, roc_req.chan, &ok);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		cfg80211_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
-			ret);
+		osif_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
+			 ret);
 		return -EINVAL;
 	}
 
 	if (!ok) {
-		cfg80211_err("channel%d not OK for DNBS", roc_req.chan);
+		osif_err("channel%d not OK for DNBS", roc_req.chan);
 		return -EINVAL;
 	}
 
@@ -402,13 +402,13 @@ int wlan_cfg80211_cancel_roc(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev) {
-		cfg80211_err("invalid vdev object");
+		osif_err("invalid vdev object");
 		return -EINVAL;
 	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		cfg80211_err("psoc handle is NULL");
+		osif_err("psoc handle is NULL");
 		return -EINVAL;
 	}
 
@@ -428,19 +428,19 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	uint32_t channel = 0;
 
 	if (!vdev) {
-		cfg80211_err("invalid vdev object");
+		osif_err("invalid vdev object");
 		return -EINVAL;
 	}
 
 	if (chan)
 		channel = (uint32_t)wlan_freq_to_chan(chan->center_freq);
 	else
-		cfg80211_debug("NULL chan, set channel to 0");
+		osif_debug("NULL chan, set channel to 0");
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
 	if (!psoc) {
-		cfg80211_err("psoc handle is NULL");
+		osif_err("psoc handle is NULL");
 		return -EINVAL;
 	}
 
@@ -454,13 +454,13 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 
 		ret = policy_mgr_is_chan_ok_for_dnbs(psoc, channel, &ok);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			cfg80211_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
-				ret);
+			osif_err("policy_mgr_is_chan_ok_for_dnbs():ret:%d",
+				 ret);
 			return -EINVAL;
 		}
 		if (!ok) {
-			cfg80211_err("Rejecting mgmt_tx for channel:%d as DNSC is set",
-				channel);
+			osif_err("Rejecting mgmt_tx for channel:%d as DNSC is set",
+				 channel);
 			return -EINVAL;
 		}
 	}
@@ -484,13 +484,13 @@ int wlan_cfg80211_mgmt_tx_cancel(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev) {
-		cfg80211_err("invalid vdev object");
+		osif_err("invalid vdev object");
 		return -EINVAL;
 	}
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		cfg80211_err("psoc handle is NULL");
+		osif_err("psoc handle is NULL");
 		return -EINVAL;
 	}
 

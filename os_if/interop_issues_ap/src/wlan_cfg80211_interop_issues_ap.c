@@ -66,18 +66,18 @@ wlan_cfg80211_send_interop_issues_ap_cb(
 	uint32_t index, len;
 
 	if (!data) {
-		cfg80211_err("Invalid result.");
+		osif_err("Invalid result.");
 		return;
 	}
 
 	pdev = data->pdev;
 	if (!pdev) {
-		cfg80211_err("pdev is null.");
+		osif_err("pdev is null.");
 		return;
 	}
 	os_priv = wlan_pdev_get_ospriv(pdev);
 	if (!os_priv) {
-		cfg80211_err("os_priv is null.");
+		osif_err("os_priv is null.");
 		return;
 	}
 
@@ -86,17 +86,17 @@ wlan_cfg80211_send_interop_issues_ap_cb(
 	skb = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL, len, index,
 					  GFP_KERNEL);
 	if (!skb) {
-		cfg80211_err("skb alloc failed");
+		osif_err("skb alloc failed");
 		return;
 	}
 
-	cfg80211_debug("interop issues ap mac:" QDF_MAC_ADDR_STR,
-		       QDF_MAC_ADDR_ARRAY(data->rap_addr.bytes));
+	osif_debug("interop issues ap mac:" QDF_MAC_ADDR_STR,
+		   QDF_MAC_ADDR_ARRAY(data->rap_addr.bytes));
 
 	if (nla_put(skb,
 		    QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID,
 		    QDF_MAC_ADDR_SIZE, data->rap_addr.bytes)) {
-		cfg80211_err("nla put fail");
+		osif_err("nla put fail");
 		kfree_skb(skb);
 		return;
 	}
@@ -131,7 +131,7 @@ wlan_parse_interop_issues_ap(struct qdf_mac_addr *interop_issues_ap,
 
 	nla_for_each_nested(curr_attr, attr, rem) {
 		if (i == MAX_INTEROP_ISSUES_AP_NUM) {
-			cfg80211_err("Ignoring excess");
+			osif_err("Ignoring excess");
 			break;
 		}
 
@@ -140,18 +140,18 @@ wlan_parse_interop_issues_ap(struct qdf_mac_addr *interop_issues_ap,
 				nla_data(curr_attr),
 				nla_len(curr_attr),
 				interop_issues_ap_policy)) {
-			cfg80211_err("nla_parse failed");
+			osif_err("nla_parse failed");
 			return -EINVAL;
 		}
 		if (!tb2[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID]) {
-			cfg80211_err("attr addr failed");
+			osif_err("attr addr failed");
 			return -EINVAL;
 		}
 		nla_memcpy(interop_issues_ap[i].bytes,
 			   tb2[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID],
 			   QDF_MAC_ADDR_SIZE);
-		cfg80211_debug(QDF_MAC_ADDR_STR,
-			       QDF_MAC_ADDR_ARRAY(interop_issues_ap[i].bytes));
+		osif_debug(QDF_MAC_ADDR_STR,
+			   QDF_MAC_ADDR_ARRAY(interop_issues_ap[i].bytes));
 		i++;
 	}
 
@@ -183,7 +183,7 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 				    QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX,
 				    data, data_len,
 				    interop_issues_ap_policy)) {
-		cfg80211_err("Invalid ATTR");
+		osif_err("Invalid ATTR");
 		return -EINVAL;
 	}
 
@@ -196,7 +196,7 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 			return -EINVAL;
 	}
 
-	cfg80211_debug("Num of interop issues ap: %d", count);
+	osif_debug("Num of interop issues ap: %d", count);
 	interop_issues_ap.count = count;
 
 	/*
