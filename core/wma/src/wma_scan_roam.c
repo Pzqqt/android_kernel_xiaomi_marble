@@ -5176,6 +5176,45 @@ static void wma_handle_btm_disassoc_imminent_msg(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_handle_hw_mode_in_roam_fail() - Fill hw mode info if present in policy
+ * manager.
+ * @wma: wma handle
+ * @param: roam event params
+ *
+ * Return: None
+ */
+static int wma_handle_hw_mode_transition(tp_wma_handle wma,
+					 WMI_ROAM_EVENTID_param_tlvs *param)
+{
+	struct sir_hw_mode_trans_ind *hw_mode_trans_ind;
+
+	hw_mode_trans_ind = qdf_mem_malloc(sizeof(*hw_mode_trans_ind));
+	if (!hw_mode_trans_ind)
+		return -ENOMEM;
+
+	if (param->hw_mode_transition_fixed_param) {
+		wma_process_pdev_hw_mode_trans_ind(wma,
+		    param->hw_mode_transition_fixed_param,
+		    param->wmi_pdev_set_hw_mode_response_vdev_mac_mapping,
+		    hw_mode_trans_ind);
+
+		WMA_LOGI(FL("Update HW mode"));
+		policy_mgr_hw_mode_transition_cb(
+			hw_mode_trans_ind->old_hw_mode_index,
+			hw_mode_trans_ind->new_hw_mode_index,
+			hw_mode_trans_ind->num_vdev_mac_entries,
+			hw_mode_trans_ind->vdev_mac_map,
+			wma->psoc);
+	} else {
+		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
+	}
+
+	qdf_mem_free(hw_mode_trans_ind);
+
+	return 0;
+}
+
+/**
  * wma_roam_event_callback() - roam event callback
  * @handle: wma handle
  * @event_buf: event buffer
@@ -5256,6 +5295,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	case WMI_ROAM_REASON_HO_FAILED:
 		WMA_LOGE("LFR3:Hand-Off Failed for vdevid %x",
 			 wmi_event->vdev_id);
+		wma_handle_hw_mode_transition(wma_handle, param_buf);
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id);
 		wma_handle->interfaces[wmi_event->vdev_id].
 			roaming_in_progress = false;
@@ -5289,6 +5329,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_rso_cmd_status_event_handler(wmi_event);
 		break;
 	case WMI_ROAM_REASON_INVOKE_ROAM_FAIL:
+		wma_handle_hw_mode_transition(wma_handle, param_buf);
 		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
 		if (!roam_synch_data)
 			return -ENOMEM;
