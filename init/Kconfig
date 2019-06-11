@@ -1285,6 +1285,16 @@ config RT_SOFTINT_OPTIMIZATION
 	 which may soon block preemptions, such as a CPU running a ksoftirq
 	 thread which handles slow softints.
 
+config CPUSETS_ASSIST
+	bool "Cpusets configuration helper"
+	depends on CPUSETS
+	depends on ANDROID
+	help
+	  This option enables the configuration of default cpusets
+	  parameters from kernel.
+
+	  If unsure, say N.
+
 config SYSFS_DEPRECATED
 	bool "Enable deprecated sysfs features to support old userspace tools"
 	depends on SYSFS
