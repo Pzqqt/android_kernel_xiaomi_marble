@@ -13863,13 +13863,16 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 	if (wiphy->registered)
 		return QDF_STATUS_SUCCESS;
 
-	if (!hdd_ctx->channels_2ghz)
-		return QDF_STATUS_E_NOMEM;
-	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
-	wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels = hdd_ctx->channels_2ghz;
-	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
-		     &hdd_channels_2_4_ghz[0], sizeof(hdd_channels_2_4_ghz));
-
+	if (hdd_is_2g_supported(hdd_ctx)) {
+		if (!hdd_ctx->channels_2ghz)
+			return QDF_STATUS_E_NOMEM;
+		wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
+		wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels =
+							hdd_ctx->channels_2ghz;
+		qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
+			     &hdd_channels_2_4_ghz[0],
+			     sizeof(hdd_channels_2_4_ghz));
+	}
 	if (!hdd_is_5g_supported(hdd_ctx) ||
 	    (eHDD_DOT11_MODE_11b == cfg->dot11Mode) ||
 	    (eHDD_DOT11_MODE_11g == cfg->dot11Mode) ||

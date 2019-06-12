@@ -2372,6 +2372,17 @@ hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 
 bool hdd_is_5g_supported(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_is_2g_supported() - check if 2GHz channels are supported
+ * @hdd_ctx:	Pointer to the hdd context
+ *
+ * HDD function to know if 2GHz channels are supported
+ *
+ * Return:  true if 2GHz channels are supported
+ */
+
+bool hdd_is_2g_supported(struct hdd_context *hdd_ctx);
+
 int wlan_hdd_scan_abort(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

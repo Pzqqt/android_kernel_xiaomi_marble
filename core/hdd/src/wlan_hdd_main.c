@@ -7660,6 +7660,17 @@ bool hdd_is_5g_supported(struct hdd_context *hdd_ctx)
 		return false;
 }
 
+bool hdd_is_2g_supported(struct hdd_context *hdd_ctx)
+{
+	if (!hdd_ctx)
+		return false;
+
+	if (hdd_ctx->curr_band != BAND_5G)
+		return true;
+	else
+		return false;
+}
+
 static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy;
