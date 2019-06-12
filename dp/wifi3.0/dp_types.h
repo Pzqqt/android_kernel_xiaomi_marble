@@ -1380,6 +1380,9 @@ struct dp_pdev {
 	/* Monitor mode interface and status storage */
 	struct dp_vdev *monitor_vdev;
 
+	/* Monitor mode operation channel */
+	int mon_chan_num;
+
 	/* monitor mode lock */
 	qdf_spinlock_t mon_lock;
 

@@ -4874,6 +4874,9 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 free_vdev:
+	if (wlan_op_mode_monitor == vdev->opmode)
+		pdev->monitor_vdev = NULL;
+
 	qdf_mem_free(vdev);
 
 	if (callback)
@@ -6406,6 +6409,20 @@ dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_pdev_set_monitor_channel() - set monitor channel num in pdev
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: None
+ */
+static
+void dp_pdev_set_monitor_channel(struct cdp_pdev *pdev_handle, int chan_num)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	pdev->mon_chan_num = chan_num;
 }
 
 /**
@@ -8960,6 +8977,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 	.txrx_reset_monitor_mode = dp_reset_monitor_mode,
 	/* Added support for HK advance filter */
 	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,
+	.txrx_monitor_record_channel = dp_pdev_set_monitor_channel,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {

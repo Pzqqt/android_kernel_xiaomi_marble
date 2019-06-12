@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -148,5 +148,22 @@ static inline QDF_STATUS cdp_reset_monitor_mode
 		return 0;
 
 	return soc->ops->mon_ops->txrx_reset_monitor_mode(pdev);
+}
+
+static inline void cdp_record_monitor_chan_num
+(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int chan_num)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_record_channel)
+		return;
+
+	soc->ops->mon_ops->txrx_monitor_record_channel(pdev, chan_num);
 }
 #endif

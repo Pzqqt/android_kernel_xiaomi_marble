@@ -950,6 +950,12 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		pdev->ppdu_info.rx_status.device_id = soc->device_id;
 		pdev->ppdu_info.rx_status.chan_noise_floor =
 			pdev->chan_noise_floor;
+		/*
+		 * if chan_num is not fetched correctly from ppdu RX TLV,
+		 * get it from pdev saved.
+		 */
+		if (pdev->ppdu_info.rx_status.chan_num == 0)
+			pdev->ppdu_info.rx_status.chan_num = pdev->mon_chan_num;
 
 		qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
 			mon_mpdu, sizeof(struct rx_pkt_tlvs));

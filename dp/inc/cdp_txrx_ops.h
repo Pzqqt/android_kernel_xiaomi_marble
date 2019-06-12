@@ -720,6 +720,9 @@ struct cdp_mon_ops {
 	/* HK advance monitor filter support */
 	QDF_STATUS (*txrx_set_advance_monitor_filter)
 		(struct cdp_pdev *pdev, struct cdp_monitor_filter *filter_val);
+
+	void (*txrx_monitor_record_channel)
+		(struct cdp_pdev *, int val);
 };
 
 struct cdp_host_stats_ops {
