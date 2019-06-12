@@ -327,7 +327,7 @@ QDF_STATUS init_deinit_handle_host_mem_req(
 	uint32_t i;
 	uint32_t idx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct common_wmi_handle *wmi_handle;
+	struct wmi_unified *wmi_handle;
 	struct tgt_info *info;
 
 	if (!tgt_hdl) {
@@ -438,7 +438,7 @@ void init_deinit_prepare_send_init_cmd(
 {
 	struct wmi_init_cmd_param init_param = {0};
 	struct tgt_info *info;
-	struct common_wmi_handle *wmi_handle;
+	struct wmi_unified *wmi_handle;
 	QDF_STATUS ret_val;
 
 	if (!tgt_hdl) {

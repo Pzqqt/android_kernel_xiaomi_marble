@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -117,7 +117,7 @@ bool lmac_is_target_ar900b(struct wlan_objmgr_psoc *psoc);
  *
  * Return: wmi handler
  */
-struct common_wmi_handle *lmac_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
+struct wmi_unified *lmac_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * lmac_get_wmi_unified_hdl() - get wmi handle
@@ -179,7 +179,7 @@ struct hif_opaque_softc *lmac_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: wmi handle
  */
-struct common_wmi_handle *lmac_get_pdev_wmi_handle(
+struct wmi_unified *lmac_get_pdev_wmi_handle(
 		struct wlan_objmgr_pdev *pdev);
 
 /**

@@ -593,7 +593,7 @@ QDF_STATUS init_deinit_validate_160_80p80_fw_caps(
 	bool vhtcap_160mhz_sgi = false;
 	bool valid = false;
 	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap;
-	struct common_wmi_handle *wmi_handle;
+	struct wmi_unified *wmi_handle;
 
 	if (!tgt_hdl) {
 		target_if_err(
@@ -708,7 +708,7 @@ QDF_STATUS init_deinit_is_service_ext_msg(
 		 struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_hdl)
 {
-	struct common_wmi_handle *wmi_handle;
+	struct wmi_unified *wmi_handle;
 
 	if (!tgt_hdl) {
 		target_if_err(

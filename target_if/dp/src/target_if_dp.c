@@ -31,7 +31,7 @@ target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_pdev *pdev,
 {
 	uint32_t value;
 	struct peer_set_params param;
-	struct common_wmi_handle *pdev_wmi_handle;
+	struct wmi_unified *pdev_wmi_handle;
 
 	pdev_wmi_handle =
 		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
@@ -63,7 +63,7 @@ static QDF_STATUS
 target_if_rx_reorder_queue_setup(struct scheduler_msg *msg)
 {
 	struct rx_reorder_queue_setup_params param;
-	struct common_wmi_handle *pdev_wmi_handle;
+	struct wmi_unified *pdev_wmi_handle;
 	struct reorder_q_setup *q_params;
 	struct cdp_ctrl_objmgr_pdev *pdev;
 	QDF_STATUS status;
@@ -148,7 +148,7 @@ target_if_peer_rx_reorder_queue_setup(struct cdp_ctrl_objmgr_pdev *pdev,
 				      uint16_t ba_window_size)
 {
 	struct rx_reorder_queue_setup_params param;
-	struct common_wmi_handle *pdev_wmi_handle;
+	struct wmi_unified *pdev_wmi_handle;
 
 	pdev_wmi_handle =
 		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
@@ -176,7 +176,7 @@ target_if_peer_rx_reorder_queue_remove(struct cdp_ctrl_objmgr_pdev *pdev,
 				       uint32_t peer_tid_bitmap)
 {
 	struct rx_reorder_queue_remove_params param;
-	struct common_wmi_handle *pdev_wmi_handle;
+	struct wmi_unified *pdev_wmi_handle;
 
 	pdev_wmi_handle =
 		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
@@ -196,7 +196,7 @@ target_if_lro_hash_config(struct cdp_ctrl_objmgr_pdev *pdev,
 			  struct cdp_lro_hash_config *lro_hash_cfg)
 {
 	struct wmi_lro_config_cmd_t wmi_lro_cmd = {0};
-	struct common_wmi_handle *pdev_wmi_handle;
+	struct wmi_unified *pdev_wmi_handle;
 
 	pdev_wmi_handle =
 		lmac_get_pdev_wmi_handle((struct wlan_objmgr_pdev *)pdev);
