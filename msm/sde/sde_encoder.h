@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -20,11 +20,23 @@
 #define __SDE_ENCODER_H__
 
 #include <drm/drm_crtc.h>
+#include <linux/sde_rsc.h>
 
 #include "msm_prop.h"
 #include "sde_hw_mdss.h"
 #include "sde_kms.h"
 #include "sde_connector.h"
+#include "sde_power_handle.h"
+
+/*
+ * Two to anticipate panels that can do cmd/vid dynamic switching
+ * plan is to create all possible physical encoder types, and switch between
+ * them at runtime
+ */
+#define NUM_PHYS_ENCODER_TYPES 2
+
+#define MAX_PHYS_ENCODERS_PER_VIRTUAL \
+	(MAX_H_TILES_PER_DISPLAY * NUM_PHYS_ENCODER_TYPES)
 
 #define MAX_CHANNELS_PER_ENC 2
 
@@ -69,6 +81,22 @@ struct sde_encoder_kickoff_params {
 	enum frame_trigger_mode_type frame_trigger_mode;
 };
 
+/*
+ * enum sde_enc_rc_states - states that the resource control maintains
+ * @SDE_ENC_RC_STATE_OFF: Resource is in OFF state
+ * @SDE_ENC_RC_STATE_PRE_OFF: Resource is transitioning to OFF state
+ * @SDE_ENC_RC_STATE_ON: Resource is in ON state
+ * @SDE_ENC_RC_STATE_MODESET: Resource is in modeset state
+ * @SDE_ENC_RC_STATE_IDLE: Resource is in IDLE state
+ */
+enum sde_enc_rc_states {
+	SDE_ENC_RC_STATE_OFF,
+	SDE_ENC_RC_STATE_PRE_OFF,
+	SDE_ENC_RC_STATE_ON,
+	SDE_ENC_RC_STATE_MODESET,
+	SDE_ENC_RC_STATE_IDLE
+};
+
 /**
  * struct sde_encoder_ops - callback functions for generic sde encoder
  * Individual callbacks documented below.
@@ -84,6 +112,146 @@ struct sde_encoder_ops {
 	void *(*phys_init)(enum sde_intf_type type,
 			u32 controller_id, void *phys_init_params);
 };
+
+/**
+ * struct sde_encoder_virt - virtual encoder. Container of one or more physical
+ *	encoders. Virtual encoder manages one "logical" display. Physical
+ *	encoders manage one intf block, tied to a specific panel/sub-panel.
+ *	Virtual encoder defers as much as possible to the physical encoders.
+ *	Virtual encoder registers itself with the DRM Framework as the encoder.
+ * @base:		drm_encoder base class for registration with DRM
+ * @enc_spin_lock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
+ * @bus_scaling_client:	Client handle to the bus scaling interface
+ * @te_source:		vsync source pin information
+ * @ops:		Encoder ops from init function
+ * @num_phys_encs:	Actual number of physical encoders contained.
+ * @phys_encs:		Container of physical encoders managed.
+ * @phys_vid_encs:	Video physical encoders for panel mode switch.
+ * @phys_cmd_encs:	Command physical encoders for panel mode switch.
+ * @cur_master:		Pointer to the current master in this mode. Optimization
+ *			Only valid after enable. Cleared as disable.
+ * @hw_pp		Handle to the pingpong blocks used for the display. No.
+ *			pingpong blocks can be different than num_phys_encs.
+ * @hw_dsc:		Array of DSC block handles used for the display.
+ * @dirty_dsc_ids:	Cached dsc indexes for dirty DSC blocks needing flush
+ * @intfs_swapped	Whether or not the phys_enc interfaces have been swapped
+ *			for partial update right-only cases, such as pingpong
+ *			split where virtual pingpong does not generate IRQs
+ * @qdss_status:	indicate if qdss is modified since last update
+ * @crtc_vblank_cb:	Callback into the upper layer / CRTC for
+ *			notification of the VBLANK
+ * @crtc_vblank_cb_data:	Data from upper layer for VBLANK notification
+ * @crtc_kickoff_cb:		Callback into CRTC that will flush & start
+ *				all CTL paths
+ * @crtc_kickoff_cb_data:	Opaque user data given to crtc_kickoff_cb
+ * @debugfs_root:		Debug file system root file node
+ * @enc_lock:			Lock around physical encoder create/destroy and
+				access.
+ * @frame_done_cnt:		Atomic counter for tracking which phys_enc is
+ *				done with frame processing
+ * @crtc_frame_event_cb:	callback handler for frame event
+ * @crtc_frame_event_cb_data:	callback handler private data
+ * @vsync_event_timer:		vsync timer
+ * @rsc_client:			rsc client pointer
+ * @rsc_state_init:		boolean to indicate rsc config init
+ * @disp_info:			local copy of msm_display_info struct
+ * @misr_enable:		misr enable/disable status
+ * @misr_frame_count:		misr frame count before start capturing the data
+ * @idle_pc_enabled:		indicate if idle power collapse is enabled
+ *				currently. This can be controlled by user-mode
+ * @rc_lock:			resource control mutex lock to protect
+ *				virt encoder over various state changes
+ * @rc_state:			resource controller state
+ * @delayed_off_work:		delayed worker to schedule disabling of
+ *				clks and resources after IDLE_TIMEOUT time.
+ * @vsync_event_work:		worker to handle vsync event for autorefresh
+ * @input_event_work:		worker to handle input device touch events
+ * @esd_trigger_work:		worker to handle esd trigger events
+ * @input_handler:			handler for input device events
+ * @topology:                   topology of the display
+ * @vblank_enabled:		boolean to track userspace vblank vote
+ * @idle_pc_restore:		flag to indicate idle_pc_restore happened
+ * @frame_trigger_mode:		frame trigger mode indication for command mode
+ *				display
+ * @dynamic_hdr_updated:	flag to indicate if mempool was unchanged
+ * @rsc_config:			rsc configuration for display vtotal, fps, etc.
+ * @cur_conn_roi:		current connector roi
+ * @prv_conn_roi:		previous connector roi to optimize if unchanged
+ * @crtc			pointer to drm_crtc
+ * @recovery_events_enabled:	status of hw recovery feature enable by client
+ * @elevated_ahb_vote:		increase AHB bus speed for the first frame
+ *				after power collapse
+ * @pm_qos_cpu_req:		pm_qos request for cpu frequency
+ * @mode_info:                  stores the current mode and should be used
+ *				only in commit phase
+ */
+struct sde_encoder_virt {
+	struct drm_encoder base;
+	spinlock_t enc_spinlock;
+	struct mutex vblank_ctl_lock;
+	uint32_t bus_scaling_client;
+
+	uint32_t display_num_of_h_tiles;
+	uint32_t te_source;
+
+	struct sde_encoder_ops ops;
+
+	unsigned int num_phys_encs;
+	struct sde_encoder_phys *phys_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	struct sde_encoder_phys *phys_vid_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	struct sde_encoder_phys *phys_cmd_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	struct sde_encoder_phys *cur_master;
+	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
+	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
+	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
+	enum sde_dsc dirty_dsc_ids[MAX_CHANNELS_PER_ENC];
+
+	bool intfs_swapped;
+	bool qdss_status;
+
+	void (*crtc_vblank_cb)(void *data);
+	void *crtc_vblank_cb_data;
+
+	struct dentry *debugfs_root;
+	struct mutex enc_lock;
+	atomic_t frame_done_cnt[MAX_PHYS_ENCODERS_PER_VIRTUAL];
+	void (*crtc_frame_event_cb)(void *data, u32 event);
+	struct sde_kms_frame_event_cb_data crtc_frame_event_cb_data;
+
+	struct timer_list vsync_event_timer;
+
+	struct sde_rsc_client *rsc_client;
+	bool rsc_state_init;
+	struct msm_display_info disp_info;
+	bool misr_enable;
+	u32 misr_frame_count;
+
+	bool idle_pc_enabled;
+	struct mutex rc_lock;
+	enum sde_enc_rc_states rc_state;
+	struct kthread_delayed_work delayed_off_work;
+	struct kthread_work vsync_event_work;
+	struct kthread_work input_event_work;
+	struct kthread_work esd_trigger_work;
+	struct input_handler *input_handler;
+	struct msm_display_topology topology;
+	bool vblank_enabled;
+	bool idle_pc_restore;
+	enum frame_trigger_mode_type frame_trigger_mode;
+	bool dynamic_hdr_updated;
+
+	struct sde_rsc_cmd_config rsc_config;
+	struct sde_rect cur_conn_roi;
+	struct sde_rect prv_conn_roi;
+	struct drm_crtc *crtc;
+
+	bool recovery_events_enabled;
+	bool elevated_ahb_vote;
+	struct pm_qos_request pm_qos_cpu_req;
+	struct msm_mode_info mode_info;
+};
+
+#define to_sde_encoder_virt(x) container_of(x, struct sde_encoder_virt, base)
 
 /**
  * sde_encoder_get_hw_resources - Populate table of required hardware resources

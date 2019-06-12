@@ -2078,13 +2078,13 @@ static void sde_crtc_frame_event_cb(void *data, u32 event)
 	struct sde_crtc *sde_crtc;
 	struct msm_drm_private *priv;
 	struct sde_crtc_frame_event *fevent;
-	struct sde_crtc_frame_event_cb_data *cb_data;
+	struct sde_kms_frame_event_cb_data *cb_data;
 	struct drm_plane *plane;
 	u32 ubwc_error;
 	unsigned long flags;
 	u32 crtc_id;
 
-	cb_data = (struct sde_crtc_frame_event_cb_data *)data;
+	cb_data = (struct sde_kms_frame_event_cb_data *)data;
 	if (!data) {
 		SDE_ERROR("invalid parameters\n");
 		return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -230,6 +230,16 @@ struct sde_irq {
 	atomic_t *irq_counts;
 	spinlock_t cb_lock;
 	struct dentry *debugfs_file;
+};
+
+/**
+ * struct sde_kms_frame_event_cb_data : info of drm objects of a frame event
+ * @crtc:       pointer to drm crtc object registered for frame event
+ * @connector:  pointer to drm connector which is source of frame event
+ */
+struct sde_kms_frame_event_cb_data {
+	struct drm_crtc *crtc;
+	struct drm_connector *connector;
 };
 
 struct sde_kms {

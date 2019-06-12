@@ -28,6 +28,7 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 
 msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_encoder.o \
+	sde/sde_encoder_dce.o \
 	sde/sde_encoder_phys_vid.o \
 	sde/sde_encoder_phys_cmd.o \
 	sde/sde_irq.o \

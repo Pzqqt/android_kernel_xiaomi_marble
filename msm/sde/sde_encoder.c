@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -32,14 +32,15 @@
 #include "sde_hw_intf.h"
 #include "sde_hw_ctl.h"
 #include "sde_formats.h"
+#include "sde_encoder.h"
 #include "sde_encoder_phys.h"
-#include "sde_power_handle.h"
 #include "sde_hw_dsc.h"
 #include "sde_crtc.h"
 #include "sde_trace.h"
 #include "sde_core_irq.h"
 #include "sde_hw_top.h"
 #include "sde_hw_qdss.h"
+#include "sde_encoder_dce.h"
 
 #define SDE_DEBUG_ENC(e, fmt, ...) SDE_DEBUG("enc%d " fmt,\
 		(e) ? (e)->base.base.id : -1, ##__VA_ARGS__)
@@ -59,15 +60,7 @@
 		(p) ? ((p)->hw_pp ? (p)->hw_pp->idx - PINGPONG_0 : -1) : -1, \
 		##__VA_ARGS__)
 
-/*
- * Two to anticipate panels that can do cmd/vid dynamic switching
- * plan is to create all possible physical encoder types, and switch between
- * them at runtime
- */
-#define NUM_PHYS_ENCODER_TYPES 2
 
-#define MAX_PHYS_ENCODERS_PER_VIRTUAL \
-	(MAX_H_TILES_PER_DISPLAY * NUM_PHYS_ENCODER_TYPES)
 
 #define MISR_BUFF_SIZE			256
 
@@ -142,160 +135,6 @@ enum sde_enc_rc_events {
 	SDE_ENC_RC_EVENT_ENTER_IDLE,
 	SDE_ENC_RC_EVENT_EARLY_WAKEUP,
 };
-
-/*
- * enum sde_enc_rc_states - states that the resource control maintains
- * @SDE_ENC_RC_STATE_OFF: Resource is in OFF state
- * @SDE_ENC_RC_STATE_PRE_OFF: Resource is transitioning to OFF state
- * @SDE_ENC_RC_STATE_ON: Resource is in ON state
- * @SDE_ENC_RC_STATE_MODESET: Resource is in modeset state
- * @SDE_ENC_RC_STATE_IDLE: Resource is in IDLE state
- */
-enum sde_enc_rc_states {
-	SDE_ENC_RC_STATE_OFF,
-	SDE_ENC_RC_STATE_PRE_OFF,
-	SDE_ENC_RC_STATE_ON,
-	SDE_ENC_RC_STATE_MODESET,
-	SDE_ENC_RC_STATE_IDLE
-};
-
-/**
- * struct sde_encoder_virt - virtual encoder. Container of one or more physical
- *	encoders. Virtual encoder manages one "logical" display. Physical
- *	encoders manage one intf block, tied to a specific panel/sub-panel.
- *	Virtual encoder defers as much as possible to the physical encoders.
- *	Virtual encoder registers itself with the DRM Framework as the encoder.
- * @base:		drm_encoder base class for registration with DRM
- * @enc_spin_lock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
- * @bus_scaling_client:	Client handle to the bus scaling interface
- * @te_source:		vsync source pin information
- * @ops:		Encoder ops from init function
- * @num_phys_encs:	Actual number of physical encoders contained.
- * @phys_encs:		Container of physical encoders managed.
- * @phys_vid_encs:		Video physical encoders for panel mode switch.
- * @phys_cmd_encs:		Command physical encoders for panel mode switch.
- * @cur_master:		Pointer to the current master in this mode. Optimization
- *			Only valid after enable. Cleared as disable.
- * @hw_pp		Handle to the pingpong blocks used for the display. No.
- *			pingpong blocks can be different than num_phys_encs.
- * @hw_dsc:		Array of DSC block handles used for the display.
- * @dirty_dsc_ids:	Cached dsc indexes for dirty DSC blocks needing flush
- * @intfs_swapped	Whether or not the phys_enc interfaces have been swapped
- *			for partial update right-only cases, such as pingpong
- *			split where virtual pingpong does not generate IRQs
- @qdss_status:		indicate if qdss is modified since last update
- * @crtc_vblank_cb:	Callback into the upper layer / CRTC for
- *			notification of the VBLANK
- * @crtc_vblank_cb_data:	Data from upper layer for VBLANK notification
- * @crtc_kickoff_cb:		Callback into CRTC that will flush & start
- *				all CTL paths
- * @crtc_kickoff_cb_data:	Opaque user data given to crtc_kickoff_cb
- * @debugfs_root:		Debug file system root file node
- * @enc_lock:			Lock around physical encoder create/destroy and
-				access.
- * @frame_done_cnt:		Atomic counter for tracking which phys_enc is
- *				done with frame processing.
- * @crtc_frame_event_cb:	callback handler for frame event
- * @crtc_frame_event_cb_data:	callback handler private data
- * @vsync_event_timer:		vsync timer
- * @rsc_client:			rsc client pointer
- * @rsc_state_init:		boolean to indicate rsc config init
- * @disp_info:			local copy of msm_display_info struct
- * @misr_enable:		misr enable/disable status
- * @misr_frame_count:		misr frame count before start capturing the data
- * @idle_pc_enabled:		indicate if idle power collapse is enabled
- *				currently. This can be controlled by user-mode
- * @rc_lock:			resource control mutex lock to protect
- *				virt encoder over various state changes
- * @rc_state:			resource controller state
- * @delayed_off_work:		delayed worker to schedule disabling of
- *				clks and resources after IDLE_TIMEOUT time.
- * @vsync_event_work:		worker to handle vsync event for autorefresh
- * @input_event_work:		worker to handle input device touch events
- * @esd_trigger_work:		worker to handle esd trigger events
- * @input_handler:			handler for input device events
- * @topology:                   topology of the display
- * @vblank_enabled:		boolean to track userspace vblank vote
- * @idle_pc_restore:		flag to indicate idle_pc_restore happened
- * @frame_trigger_mode:		frame trigger mode indication for command
- *				mode display
- * @dynamic_hdr_updated:	flag to indicate if mempool was programmed
- * @rsc_config:			rsc configuration for display vtotal, fps, etc.
- * @cur_conn_roi:		current connector roi
- * @prv_conn_roi:		previous connector roi to optimize if unchanged
- * @crtc			pointer to drm_crtc
- * @recovery_events_enabled:	status of hw recovery feature enable by client
- * @elevated_ahb_vote:		increase AHB bus speed for the first frame
- *				after power collapse
- * @mode_info:                  stores the current mode and should be used
- *				 only in commit phase
- */
-struct sde_encoder_virt {
-	struct drm_encoder base;
-	spinlock_t enc_spinlock;
-	struct mutex vblank_ctl_lock;
-	uint32_t bus_scaling_client;
-
-	uint32_t display_num_of_h_tiles;
-	uint32_t te_source;
-
-	struct sde_encoder_ops ops;
-
-	unsigned int num_phys_encs;
-	struct sde_encoder_phys *phys_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	struct sde_encoder_phys *phys_vid_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	struct sde_encoder_phys *phys_cmd_encs[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	struct sde_encoder_phys *cur_master;
-	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
-	enum sde_dsc dirty_dsc_ids[MAX_CHANNELS_PER_ENC];
-
-	bool intfs_swapped;
-	bool qdss_status;
-
-	void (*crtc_vblank_cb)(void *data);
-	void *crtc_vblank_cb_data;
-
-	struct dentry *debugfs_root;
-	struct mutex enc_lock;
-	atomic_t frame_done_cnt[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	void (*crtc_frame_event_cb)(void *data, u32 event);
-	struct sde_crtc_frame_event_cb_data crtc_frame_event_cb_data;
-
-	struct timer_list vsync_event_timer;
-
-	struct sde_rsc_client *rsc_client;
-	bool rsc_state_init;
-	struct msm_display_info disp_info;
-	bool misr_enable;
-	u32 misr_frame_count;
-
-	bool idle_pc_enabled;
-	struct mutex rc_lock;
-	enum sde_enc_rc_states rc_state;
-	struct kthread_delayed_work delayed_off_work;
-	struct kthread_work vsync_event_work;
-	struct kthread_work input_event_work;
-	struct kthread_work esd_trigger_work;
-	struct input_handler *input_handler;
-	struct msm_display_topology topology;
-	bool vblank_enabled;
-	bool idle_pc_restore;
-	enum frame_trigger_mode_type frame_trigger_mode;
-	bool dynamic_hdr_updated;
-
-	struct sde_rsc_cmd_config rsc_config;
-	struct sde_rect cur_conn_roi;
-	struct sde_rect prv_conn_roi;
-	struct drm_crtc *crtc;
-
-	bool recovery_events_enabled;
-	bool elevated_ahb_vote;
-	struct msm_mode_info mode_info;
-};
-
-#define to_sde_encoder_virt(x) container_of(x, struct sde_encoder_virt, base)
 
 void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable)
 {
@@ -382,30 +221,6 @@ static int _sde_encoder_wait_timeout(int32_t drm_id, int32_t hw_id,
 			(ktime_compare_safe(exp_ktime, cur_ktime) > 0));
 
 	return rc;
-}
-
-bool sde_encoder_is_dsc_merge(struct drm_encoder *drm_enc)
-{
-	enum sde_rm_topology_name topology;
-	struct sde_encoder_virt *sde_enc;
-	struct drm_connector *drm_conn;
-
-	if (!drm_enc)
-		return false;
-
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	if (!sde_enc->cur_master)
-		return false;
-
-	drm_conn = sde_enc->cur_master->connector;
-	if (!drm_conn)
-		return false;
-
-	topology = sde_connector_get_topology_name(drm_conn);
-	if (topology == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE)
-		return true;
-
-	return false;
 }
 
 bool sde_encoder_is_primary_display(struct drm_encoder *drm_enc)
@@ -1104,152 +919,6 @@ static int sde_encoder_virt_atomic_check(
 	return ret;
 }
 
-static int _sde_encoder_dsc_update_pic_dim(struct msm_display_dsc_info *dsc,
-		int pic_width, int pic_height)
-{
-	if (!dsc || !pic_width || !pic_height) {
-		SDE_ERROR("invalid input: pic_width=%d pic_height=%d\n",
-			pic_width, pic_height);
-		return -EINVAL;
-	}
-
-	if ((pic_width % dsc->slice_width) ||
-	    (pic_height % dsc->slice_height)) {
-		SDE_ERROR("pic_dim=%dx%d has to be multiple of slice=%dx%d\n",
-			pic_width, pic_height,
-			dsc->slice_width, dsc->slice_height);
-		return -EINVAL;
-	}
-
-	dsc->pic_width = pic_width;
-	dsc->pic_height = pic_height;
-
-	return 0;
-}
-
-static void _sde_encoder_dsc_pclk_param_calc(struct msm_display_dsc_info *dsc,
-		int intf_width)
-{
-	int slice_per_pkt, slice_per_intf;
-	int bytes_in_slice, total_bytes_per_intf;
-
-	if (!dsc || !dsc->slice_width || !dsc->slice_per_pkt ||
-	    (intf_width < dsc->slice_width)) {
-		SDE_ERROR("invalid input: intf_width=%d slice_width=%d\n",
-			intf_width, dsc ? dsc->slice_width : -1);
-		return;
-	}
-
-	slice_per_pkt = dsc->slice_per_pkt;
-	slice_per_intf = DIV_ROUND_UP(intf_width, dsc->slice_width);
-
-	/*
-	 * If slice_per_pkt is greater than slice_per_intf then default to 1.
-	 * This can happen during partial update.
-	 */
-	if (slice_per_pkt > slice_per_intf)
-		slice_per_pkt = 1;
-
-	bytes_in_slice = DIV_ROUND_UP(dsc->slice_width * dsc->bpp, 8);
-	total_bytes_per_intf = bytes_in_slice * slice_per_intf;
-
-	dsc->eol_byte_num = total_bytes_per_intf % 3;
-	dsc->pclk_per_line =  DIV_ROUND_UP(total_bytes_per_intf, 3);
-	dsc->bytes_in_slice = bytes_in_slice;
-	dsc->bytes_per_pkt = bytes_in_slice * slice_per_pkt;
-	dsc->pkt_per_line = slice_per_intf / slice_per_pkt;
-}
-
-static int _sde_encoder_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
-		int enc_ip_width)
-{
-	int max_ssm_delay, max_se_size, obuf_latency;
-	int input_ssm_out_latency, base_hs_latency;
-	int multi_hs_extra_latency,  mux_word_size;
-
-	/* Hardent core config */
-	int max_muxword_size = 48;
-	int output_rate = 64;
-	int rtl_max_bpc = 10;
-	int pipeline_latency = 28;
-
-	max_se_size = 4 * (rtl_max_bpc + 1);
-	max_ssm_delay = max_se_size + max_muxword_size - 1;
-	mux_word_size = (dsc->bpc >= 12 ? 64 : 48);
-	input_ssm_out_latency = pipeline_latency + (3 * (max_ssm_delay + 2));
-	obuf_latency = DIV_ROUND_UP((9 * output_rate +
-				mux_word_size), dsc->bpp) + 1;
-	base_hs_latency = dsc->initial_xmit_delay + input_ssm_out_latency
-				+ obuf_latency;
-	multi_hs_extra_latency = DIV_ROUND_UP((8 * dsc->chunk_size), dsc->bpp);
-	dsc->initial_lines = DIV_ROUND_UP((base_hs_latency +
-				multi_hs_extra_latency), dsc->slice_width);
-
-	return 0;
-}
-
-static bool _sde_encoder_dsc_ich_reset_override_needed(bool pu_en,
-		struct msm_display_dsc_info *dsc)
-{
-	/*
-	 * As per the DSC spec, ICH_RESET can be either end of the slice line
-	 * or at the end of the slice. HW internally generates ich_reset at
-	 * end of the slice line if DSC_MERGE is used or encoder has two
-	 * soft slices. However, if encoder has only 1 soft slice and DSC_MERGE
-	 * is not used then it will generate ich_reset at the end of slice.
-	 *
-	 * Now as per the spec, during one PPS session, position where
-	 * ich_reset is generated should not change. Now if full-screen frame
-	 * has more than 1 soft slice then HW will automatically generate
-	 * ich_reset at the end of slice_line. But for the same panel, if
-	 * partial frame is enabled and only 1 encoder is used with 1 slice,
-	 * then HW will generate ich_reset at end of the slice. This is a
-	 * mismatch. Prevent this by overriding HW's decision.
-	 */
-	return pu_en && dsc && (dsc->full_frame_slices > 1) &&
-		(dsc->slice_width == dsc->pic_width);
-}
-
-static void _sde_encoder_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
-		struct sde_hw_pingpong *hw_pp, struct msm_display_dsc_info *dsc,
-		u32 common_mode, bool ich_reset, bool enable,
-		struct sde_hw_pingpong *hw_dsc_pp)
-{
-	if (!enable) {
-		if (hw_dsc_pp && hw_dsc_pp->ops.disable_dsc)
-			hw_dsc_pp->ops.disable_dsc(hw_dsc_pp);
-
-		if (hw_dsc && hw_dsc->ops.dsc_disable)
-			hw_dsc->ops.dsc_disable(hw_dsc);
-
-		if (hw_dsc && hw_dsc->ops.bind_pingpong_blk)
-			hw_dsc->ops.bind_pingpong_blk(hw_dsc, false,
-					PINGPONG_MAX);
-		return;
-	}
-
-	if (!dsc || !hw_dsc || !hw_pp || !hw_dsc_pp) {
-		SDE_ERROR("invalid params %d %d %d %d\n", !dsc, !hw_dsc,
-				!hw_pp, !hw_dsc_pp);
-		return;
-	}
-
-	if (hw_dsc->ops.dsc_config)
-		hw_dsc->ops.dsc_config(hw_dsc, dsc, common_mode, ich_reset);
-
-	if (hw_dsc->ops.dsc_config_thresh)
-		hw_dsc->ops.dsc_config_thresh(hw_dsc, dsc);
-
-	if (hw_dsc_pp->ops.setup_dsc)
-		hw_dsc_pp->ops.setup_dsc(hw_dsc_pp);
-
-	if (hw_dsc->ops.bind_pingpong_blk)
-		hw_dsc->ops.bind_pingpong_blk(hw_dsc, true, hw_pp->idx);
-
-	if (hw_dsc_pp->ops.enable_dsc)
-		hw_dsc_pp->ops.enable_dsc(hw_dsc_pp);
-}
-
 static void _sde_encoder_get_connector_roi(
 		struct sde_encoder_virt *sde_enc,
 		struct sde_rect *merged_conn_roi)
@@ -1267,293 +936,6 @@ static void _sde_encoder_get_connector_roi(
 
 	c_state = to_sde_connector_state(drm_conn->state);
 	sde_kms_rect_merge_rectangles(&c_state->rois, merged_conn_roi);
-}
-
-static int _sde_encoder_dsc_n_lm_1_enc_1_intf(struct sde_encoder_virt *sde_enc)
-{
-	int this_frame_slices;
-	int intf_ip_w, enc_ip_w;
-	int ich_res, dsc_common_mode = 0;
-
-	struct sde_hw_pingpong *hw_pp = sde_enc->hw_pp[0];
-	struct sde_hw_pingpong *hw_dsc_pp = sde_enc->hw_dsc_pp[0];
-	struct sde_hw_dsc *hw_dsc = sde_enc->hw_dsc[0];
-	struct sde_encoder_phys *enc_master = sde_enc->cur_master;
-	const struct sde_rect *roi = &sde_enc->cur_conn_roi;
-	struct msm_display_dsc_info *dsc = NULL;
-	struct sde_hw_ctl *hw_ctl;
-	struct sde_ctl_dsc_cfg cfg;
-
-	if (hw_dsc == NULL || hw_pp == NULL || !enc_master) {
-		SDE_ERROR_ENC(sde_enc, "invalid params for DSC\n");
-		return -EINVAL;
-	}
-
-	hw_ctl = enc_master->hw_ctl;
-
-	memset(&cfg, 0, sizeof(cfg));
-	dsc = &sde_enc->mode_info.comp_info.dsc_info;
-	_sde_encoder_dsc_update_pic_dim(dsc, roi->w, roi->h);
-
-	this_frame_slices = roi->w / dsc->slice_width;
-	intf_ip_w = this_frame_slices * dsc->slice_width;
-	_sde_encoder_dsc_pclk_param_calc(dsc, intf_ip_w);
-
-	enc_ip_w = intf_ip_w;
-	_sde_encoder_dsc_initial_line_calc(dsc, enc_ip_w);
-
-	ich_res = _sde_encoder_dsc_ich_reset_override_needed(false, dsc);
-
-	if (enc_master->intf_mode == INTF_MODE_VIDEO)
-		dsc_common_mode = DSC_MODE_VIDEO;
-
-	SDE_DEBUG_ENC(sde_enc, "pic_w: %d pic_h: %d mode:%d\n",
-		roi->w, roi->h, dsc_common_mode);
-	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h, dsc_common_mode);
-
-	_sde_encoder_dsc_pipe_cfg(hw_dsc, hw_pp, dsc, dsc_common_mode,
-			ich_res, true, hw_dsc_pp);
-	cfg.dsc[cfg.dsc_count++] = hw_dsc->idx;
-
-	/* setup dsc active configuration in the control path */
-	if (hw_ctl->ops.setup_dsc_cfg) {
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-		SDE_DEBUG_ENC(sde_enc,
-				"setup dsc_cfg hw_ctl[%d], count:%d,dsc[0]:%d, dsc[1]:%d\n",
-				hw_ctl->idx,
-				cfg.dsc_count,
-				cfg.dsc[0],
-				cfg.dsc[1]);
-	}
-
-	if (hw_ctl->ops.update_bitmask_dsc)
-		hw_ctl->ops.update_bitmask_dsc(hw_ctl, hw_dsc->idx, 1);
-
-	return 0;
-}
-
-static int _sde_encoder_dsc_2_lm_2_enc_2_intf(struct sde_encoder_virt *sde_enc,
-		struct sde_encoder_kickoff_params *params)
-{
-	int this_frame_slices;
-	int intf_ip_w, enc_ip_w;
-	int ich_res, dsc_common_mode;
-
-	struct sde_encoder_phys *enc_master = sde_enc->cur_master;
-	const struct sde_rect *roi = &sde_enc->cur_conn_roi;
-	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
-	struct msm_display_dsc_info dsc[MAX_CHANNELS_PER_ENC];
-	bool half_panel_partial_update;
-	struct sde_hw_ctl *hw_ctl = NULL;
-	struct sde_ctl_dsc_cfg cfg;
-	int i;
-
-	if (!enc_master) {
-		SDE_ERROR_ENC(sde_enc, "invalid encoder master for DSC\n");
-		return -EINVAL;
-	}
-
-	memset(&cfg, 0, sizeof(cfg));
-
-	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		hw_pp[i] = sde_enc->hw_pp[i];
-		hw_dsc[i] = sde_enc->hw_dsc[i];
-		hw_dsc_pp[i] = sde_enc->hw_dsc_pp[i];
-
-		if (!hw_pp[i] || !hw_dsc[i] || !hw_dsc_pp[i]) {
-			SDE_ERROR_ENC(sde_enc, "invalid params for DSC\n");
-			return -EINVAL;
-		}
-	}
-
-	hw_ctl = enc_master->hw_ctl;
-
-	half_panel_partial_update =
-			hweight_long(params->affected_displays) == 1;
-
-	dsc_common_mode = 0;
-	if (!half_panel_partial_update)
-		dsc_common_mode |= DSC_MODE_SPLIT_PANEL;
-	if (enc_master->intf_mode == INTF_MODE_VIDEO)
-		dsc_common_mode |= DSC_MODE_VIDEO;
-
-	memcpy(&dsc[0], &sde_enc->mode_info.comp_info.dsc_info, sizeof(dsc[0]));
-	memcpy(&dsc[1], &sde_enc->mode_info.comp_info.dsc_info, sizeof(dsc[1]));
-
-	/*
-	 * Since both DSC use same pic dimension, set same pic dimension
-	 * to both DSC structures.
-	 */
-	_sde_encoder_dsc_update_pic_dim(&dsc[0], roi->w, roi->h);
-	_sde_encoder_dsc_update_pic_dim(&dsc[1], roi->w, roi->h);
-
-	this_frame_slices = roi->w / dsc[0].slice_width;
-	intf_ip_w = this_frame_slices * dsc[0].slice_width;
-
-	if (!half_panel_partial_update)
-		intf_ip_w /= 2;
-
-	/*
-	 * In this topology when both interfaces are active, they have same
-	 * load so intf_ip_w will be same.
-	 */
-	_sde_encoder_dsc_pclk_param_calc(&dsc[0], intf_ip_w);
-	_sde_encoder_dsc_pclk_param_calc(&dsc[1], intf_ip_w);
-
-	/*
-	 * In this topology, since there is no dsc_merge, uncompressed input
-	 * to encoder and interface is same.
-	 */
-	enc_ip_w = intf_ip_w;
-	_sde_encoder_dsc_initial_line_calc(&dsc[0], enc_ip_w);
-	_sde_encoder_dsc_initial_line_calc(&dsc[1], enc_ip_w);
-
-	/*
-	 * __is_ich_reset_override_needed should be called only after
-	 * updating pic dimension, mdss_panel_dsc_update_pic_dim.
-	 */
-	ich_res = _sde_encoder_dsc_ich_reset_override_needed(
-			half_panel_partial_update, &dsc[0]);
-
-	SDE_DEBUG_ENC(sde_enc, "pic_w: %d pic_h: %d mode:%d\n",
-			roi->w, roi->h, dsc_common_mode);
-
-	for (i = 0; i < sde_enc->num_phys_encs &&
-				i < MAX_CHANNELS_PER_ENC; i++) {
-		bool active = !!((1 << i) & params->affected_displays);
-
-		SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
-				dsc_common_mode, i, active);
-		_sde_encoder_dsc_pipe_cfg(hw_dsc[i], hw_pp[i], &dsc[i],
-				dsc_common_mode, ich_res, active, hw_dsc_pp[i]);
-
-		if (active) {
-			if (cfg.dsc_count >= MAX_DSC_PER_CTL_V1) {
-				pr_err("Invalid dsc count:%d\n",
-						cfg.dsc_count);
-				return -EINVAL;
-			}
-			cfg.dsc[cfg.dsc_count++] = hw_dsc[i]->idx;
-
-			if (hw_ctl->ops.update_bitmask_dsc)
-				hw_ctl->ops.update_bitmask_dsc(hw_ctl,
-						hw_dsc[i]->idx, 1);
-		}
-	}
-
-	/* setup dsc active configuration in the control path */
-	if (hw_ctl->ops.setup_dsc_cfg) {
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-		SDE_DEBUG_ENC(sde_enc,
-				"setup dsc_cfg hw_ctl[%d], count:%d,dsc[0]:%d, dsc[1]:%d\n",
-				hw_ctl->idx,
-				cfg.dsc_count,
-				cfg.dsc[0],
-				cfg.dsc[1]);
-	}
-	return 0;
-}
-
-static int _sde_encoder_dsc_2_lm_2_enc_1_intf(struct sde_encoder_virt *sde_enc,
-		struct sde_encoder_kickoff_params *params)
-{
-	int this_frame_slices;
-	int intf_ip_w, enc_ip_w;
-	int ich_res, dsc_common_mode;
-
-	struct sde_encoder_phys *enc_master = sde_enc->cur_master;
-	const struct sde_rect *roi = &sde_enc->cur_conn_roi;
-	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
-	struct msm_display_dsc_info *dsc = NULL;
-	bool half_panel_partial_update;
-	struct sde_hw_ctl *hw_ctl = NULL;
-	struct sde_ctl_dsc_cfg cfg;
-	int i;
-
-	if (!enc_master) {
-		SDE_ERROR_ENC(sde_enc, "invalid encoder master for DSC\n");
-		return -EINVAL;
-	}
-
-	memset(&cfg, 0, sizeof(cfg));
-
-	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		hw_pp[i] = sde_enc->hw_pp[i];
-		hw_dsc[i] = sde_enc->hw_dsc[i];
-		hw_dsc_pp[i] = sde_enc->hw_dsc_pp[i];
-
-		if (!hw_pp[i] || !hw_dsc[i] || !hw_dsc_pp[i]) {
-			SDE_ERROR_ENC(sde_enc, "invalid params for DSC\n");
-			return -EINVAL;
-		}
-	}
-
-	hw_ctl = enc_master->hw_ctl;
-
-	dsc = &sde_enc->mode_info.comp_info.dsc_info;
-
-	half_panel_partial_update =
-			hweight_long(params->affected_displays) == 1;
-
-	dsc_common_mode = 0;
-	if (!half_panel_partial_update)
-		dsc_common_mode |= DSC_MODE_SPLIT_PANEL | DSC_MODE_MULTIPLEX;
-	if (enc_master->intf_mode == INTF_MODE_VIDEO)
-		dsc_common_mode |= DSC_MODE_VIDEO;
-
-	_sde_encoder_dsc_update_pic_dim(dsc, roi->w, roi->h);
-
-	this_frame_slices = roi->w / dsc->slice_width;
-	intf_ip_w = this_frame_slices * dsc->slice_width;
-	_sde_encoder_dsc_pclk_param_calc(dsc, intf_ip_w);
-
-	/*
-	 * dsc merge case: when using 2 encoders for the same stream,
-	 * no. of slices need to be same on both the encoders.
-	 */
-	enc_ip_w = intf_ip_w / 2;
-	_sde_encoder_dsc_initial_line_calc(dsc, enc_ip_w);
-
-	ich_res = _sde_encoder_dsc_ich_reset_override_needed(
-			half_panel_partial_update, dsc);
-
-	SDE_DEBUG_ENC(sde_enc, "pic_w: %d pic_h: %d mode:%d\n",
-			roi->w, roi->h, dsc_common_mode);
-	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
-			dsc_common_mode, i, params->affected_displays);
-
-	_sde_encoder_dsc_pipe_cfg(hw_dsc[0], hw_pp[0], dsc, dsc_common_mode,
-			ich_res, true, hw_dsc_pp[0]);
-	cfg.dsc[0] = hw_dsc[0]->idx;
-	cfg.dsc_count++;
-	if (hw_ctl->ops.update_bitmask_dsc)
-		hw_ctl->ops.update_bitmask_dsc(hw_ctl, hw_dsc[0]->idx, 1);
-
-
-	_sde_encoder_dsc_pipe_cfg(hw_dsc[1], hw_pp[1], dsc, dsc_common_mode,
-			ich_res, !half_panel_partial_update, hw_dsc_pp[1]);
-	if (!half_panel_partial_update) {
-		cfg.dsc[1] = hw_dsc[1]->idx;
-		cfg.dsc_count++;
-		if (hw_ctl->ops.update_bitmask_dsc)
-			hw_ctl->ops.update_bitmask_dsc(hw_ctl, hw_dsc[1]->idx,
-					1);
-	}
-	/* setup dsc active configuration in the control path */
-	if (hw_ctl->ops.setup_dsc_cfg) {
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-		SDE_DEBUG_ENC(sde_enc,
-				"setup_dsc_cfg hw_ctl[%d], count:%d,dsc[0]:%d, dsc[1]:%d\n",
-				hw_ctl->idx,
-				cfg.dsc_count,
-				cfg.dsc[0],
-				cfg.dsc[1]);
-	}
-	return 0;
 }
 
 static int _sde_encoder_update_roi(struct drm_encoder *drm_enc)
@@ -1593,62 +975,6 @@ static int _sde_encoder_update_roi(struct drm_encoder *drm_enc)
 	memcpy(&sde_enc->cur_conn_roi, &roi, sizeof(sde_enc->cur_conn_roi));
 
 	return 0;
-}
-
-static int _sde_encoder_dsc_setup(struct sde_encoder_virt *sde_enc,
-		struct sde_encoder_kickoff_params *params)
-{
-	enum sde_rm_topology_name topology;
-	struct drm_connector *drm_conn;
-	int ret = 0;
-
-	if (!sde_enc || !params || !sde_enc->phys_encs[0] ||
-			!sde_enc->phys_encs[0]->connector)
-		return -EINVAL;
-
-	drm_conn = sde_enc->phys_encs[0]->connector;
-
-	topology = sde_connector_get_topology_name(drm_conn);
-	if (topology == SDE_RM_TOPOLOGY_NONE) {
-		SDE_ERROR_ENC(sde_enc, "topology not set yet\n");
-		return -EINVAL;
-	}
-
-	SDE_DEBUG_ENC(sde_enc, "topology:%d\n", topology);
-	SDE_EVT32(DRMID(&sde_enc->base), topology,
-			sde_enc->cur_conn_roi.x,
-			sde_enc->cur_conn_roi.y,
-			sde_enc->cur_conn_roi.w,
-			sde_enc->cur_conn_roi.h,
-			sde_enc->prv_conn_roi.x,
-			sde_enc->prv_conn_roi.y,
-			sde_enc->prv_conn_roi.w,
-			sde_enc->prv_conn_roi.h,
-			sde_enc->cur_master->cached_mode.hdisplay,
-			sde_enc->cur_master->cached_mode.vdisplay);
-
-	if (sde_kms_rect_is_equal(&sde_enc->cur_conn_roi,
-			&sde_enc->prv_conn_roi))
-		return ret;
-
-	switch (topology) {
-	case SDE_RM_TOPOLOGY_SINGLEPIPE_DSC:
-	case SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC:
-		ret = _sde_encoder_dsc_n_lm_1_enc_1_intf(sde_enc);
-		break;
-	case SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE:
-		ret = _sde_encoder_dsc_2_lm_2_enc_1_intf(sde_enc, params);
-		break;
-	case SDE_RM_TOPOLOGY_DUALPIPE_DSC:
-		ret = _sde_encoder_dsc_2_lm_2_enc_2_intf(sde_enc, params);
-		break;
-	default:
-		SDE_ERROR_ENC(sde_enc, "No DSC support for topology %d",
-				topology);
-		return -EINVAL;
-	}
-
-	return ret;
 }
 
 void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
@@ -1743,51 +1069,7 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 	}
 }
 
-static void _sde_encoder_dsc_disable(struct sde_encoder_virt *sde_enc)
-{
-	int i;
-	struct sde_hw_pingpong *hw_pp = NULL;
-	struct sde_hw_pingpong *hw_dsc_pp = NULL;
-	struct sde_hw_dsc *hw_dsc = NULL;
-	struct sde_hw_ctl *hw_ctl = NULL;
-	struct sde_ctl_dsc_cfg cfg;
 
-	if (!sde_enc || !sde_enc->phys_encs[0] ||
-			!sde_enc->phys_encs[0]->connector) {
-		SDE_ERROR("invalid params %d %d\n",
-			!sde_enc, sde_enc ? !sde_enc->phys_encs[0] : -1);
-		return;
-	}
-
-	if (sde_enc->cur_master)
-		hw_ctl = sde_enc->cur_master->hw_ctl;
-
-	/* Disable DSC for all the pp's present in this topology */
-	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		hw_pp = sde_enc->hw_pp[i];
-		hw_dsc = sde_enc->hw_dsc[i];
-		hw_dsc_pp = sde_enc->hw_dsc_pp[i];
-
-		_sde_encoder_dsc_pipe_cfg(hw_dsc, hw_pp, NULL,
-						0, 0, 0, hw_dsc_pp);
-
-		if (hw_dsc)
-			sde_enc->dirty_dsc_ids[i] = hw_dsc->idx;
-	}
-
-	/* Clear the DSC ACTIVE config for this CTL */
-	if (hw_ctl && hw_ctl->ops.setup_dsc_cfg) {
-		memset(&cfg, 0, sizeof(cfg));
-		hw_ctl->ops.setup_dsc_cfg(hw_ctl, &cfg);
-	}
-
-	/**
-	 * Since pending flushes from previous commit get cleared
-	 * sometime after this point, setting DSC flush bits now
-	 * will have no effect. Therefore dirty_dsc_ids track which
-	 * DSC blocks must be flushed for the next trigger.
-	 */
-}
 
 int sde_encoder_helper_switch_vsync(struct drm_encoder *drm_enc,
 	 bool watchdog_te)
@@ -2843,7 +2125,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		 * Disable dsc before switch the mode and after pre_modeset,
 		 * to guarantee that previous kickoff finished.
 		 */
-		_sde_encoder_dsc_disable(sde_enc);
+		sde_encoder_dsc_disable(sde_enc);
 	} else if (msm_is_mode_seamless_poms(adj_mode)) {
 		_sde_encoder_modeset_helper_locked(drm_enc,
 					SDE_ENC_RC_EVENT_PRE_MODESET);
@@ -3359,7 +2641,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	 * and after physical encoder is disabled, to make sure timing
 	 * engine is already disabled (for video mode).
 	 */
-	_sde_encoder_dsc_disable(sde_enc);
+	sde_encoder_dsc_disable(sde_enc);
 
 	sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_STOP);
 
@@ -4577,39 +3859,6 @@ static int _helper_flush_qsync(struct sde_encoder_phys *phys_enc)
 	return 0;
 }
 
-static bool _sde_encoder_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
-{
-	int i;
-
-	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		/**
-		 * This dirty_dsc_hw field is set during DSC disable to
-		 * indicate which DSC blocks need to be flushed
-		 */
-		if (sde_enc->dirty_dsc_ids[i])
-			return true;
-	}
-
-	return false;
-}
-
-static void _helper_flush_dsc(struct sde_encoder_virt *sde_enc)
-{
-	int i;
-	struct sde_hw_ctl *hw_ctl = NULL;
-	enum sde_dsc dsc_idx;
-
-	if (sde_enc->cur_master)
-		hw_ctl = sde_enc->cur_master->hw_ctl;
-
-	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		dsc_idx = sde_enc->dirty_dsc_ids[i];
-		if (dsc_idx && hw_ctl && hw_ctl->ops.update_bitmask_dsc)
-			hw_ctl->ops.update_bitmask_dsc(hw_ctl, dsc_idx, 1);
-
-		sde_enc->dirty_dsc_ids[i] = DSC_NONE;
-	}
-}
 static void _sde_encoder_helper_hdr_plus_mempool_update(
 		struct sde_encoder_virt *sde_enc)
 {
@@ -4739,15 +3988,15 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	if (_sde_encoder_is_dsc_enabled(drm_enc) && sde_enc->cur_master &&
 		((is_cmd_mode && sde_enc->cur_master->cont_splash_enabled) ||
 			!sde_enc->cur_master->cont_splash_enabled)) {
-		rc = _sde_encoder_dsc_setup(sde_enc, params);
+		rc = sde_encoder_dsc_setup(sde_enc, params);
 		if (rc) {
 			SDE_ERROR_ENC(sde_enc, "failed to setup DSC: %d\n", rc);
 			ret = rc;
 		}
 	}
 
-	if (_sde_encoder_dsc_is_dirty(sde_enc))
-		_helper_flush_dsc(sde_enc);
+	if (sde_encoder_dsc_is_dirty(sde_enc))
+		sde_encoder_dsc_helper_flush_dsc(sde_enc);
 
 	if (sde_enc->cur_master && !sde_enc->cur_master->cont_splash_enabled)
 		sde_configure_qdss(sde_enc, sde_enc->cur_master->hw_qdss,
