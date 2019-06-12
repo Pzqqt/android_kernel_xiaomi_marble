@@ -691,13 +691,18 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	{ /* CE11 unused */ 0, 0, 0, 0, 0, NULL,},
 };
 
+#if defined(QCA_LOWMEM_CONFIG) || defined(QCA_512M_CONFIG)
+#define T2H_WMI_RING_SIZE 32
+#else
+#define T2H_WMI_RING_SIZE 512
+#endif
 static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host HTT */
 	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI  + HTC control */
-	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE2 */ 2, PIPEDIR_IN,  T2H_WMI_RING_SIZE, 2048, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
 	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
