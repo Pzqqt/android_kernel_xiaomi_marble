@@ -115,7 +115,7 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 			blm_entry->rssi_reject_list = false;
 			blm_debug("Remove from rssi reject expected RSSI = %d, current RSSI = %d, retry delay required = %d ms, delay = %lu ms",
 				  blm_entry->rssi_reject_params.expected_rssi,
-				  scan_entry->rssi_raw,
+				  scan_entry ? scan_entry->rssi_raw : 0,
 				  blm_entry->rssi_reject_params.retry_delay,
 				  entry_age);
 			update_done = true;
