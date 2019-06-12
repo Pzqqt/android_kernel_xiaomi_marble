@@ -376,7 +376,13 @@ ucfg_scan_register_pno_cb(struct wlan_objmgr_psoc *psoc,
 		scm_err("null psoc");
 		return QDF_STATUS_E_INVAL;
 	}
+
 	scan = wlan_psoc_get_scan_obj(psoc);
+	if (!scan) {
+		scm_err("scan object null");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	qdf_spin_lock_bh(&scan->lock);
 	scan->pno_cfg.pno_cb.func = event_cb;
 	scan->pno_cfg.pno_cb.arg = arg;
@@ -855,7 +861,12 @@ ucfg_scan_get_scan_id(struct wlan_objmgr_psoc *psoc)
 		scm_err("null psoc");
 		return 0;
 	}
+
 	scan = wlan_psoc_get_scan_obj(psoc);
+	if (!scan) {
+		scm_err("scan object null");
+		return 0;
+	}
 
 	id = qdf_atomic_inc_return(&scan->scan_ids);
 	id =  id & WLAN_SCAN_ID_MASK;
