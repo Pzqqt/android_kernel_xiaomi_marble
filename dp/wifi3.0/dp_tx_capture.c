@@ -174,6 +174,15 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 		qdf_nbuf_free(ppdu_info->nbuf);
 		qdf_mem_free(ppdu_info);
 	}
+
+	STAILQ_FOREACH_SAFE(ppdu_info,
+			    &pdev->tx_capture.ppdu_stats_defer_queue,
+			    ppdu_info_queue_elem, tmp_ppdu_info) {
+		STAILQ_REMOVE(&pdev->tx_capture.ppdu_stats_defer_queue,
+			      ppdu_info, ppdu_info, ppdu_info_queue_elem);
+		qdf_nbuf_free(ppdu_info->nbuf);
+		qdf_mem_free(ppdu_info);
+	}
 }
 
 /**
@@ -668,10 +677,12 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 						   MAX_MONITOR_HEADER,
 						   4, FALSE);
 
-			if (!mpdu_nbuf)
+			if (!mpdu_nbuf) {
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 					  QDF_TRACE_LEVEL_FATAL,
 					  "MPDU head allocation failed !!!");
+				QDF_BUG(0);
+			}
 
 			dp_tx_update_80211_hdr(pdev, peer,
 					       ppdu_desc, mpdu_nbuf);
@@ -839,6 +850,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 						&tx_tid->msdu_comp_q);
 
 				qdf_spin_unlock_bh(&tx_tid->tid_lock);
+
 				/* add msdu to head queue */
 				qdf_nbuf_queue_add(head, curr_msdu);
 				/* get next msdu from msdu_comp_q */
@@ -1043,7 +1055,7 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 		uint32_t num_mpdu;
 		uint32_t k;
 		uint32_t i;
-		uint32_t seq_no;
+		uint32_t seq_no = 0;
 		uint32_t len;
 		qdf_nbuf_t mpdu_nbuf;
 
@@ -1187,7 +1199,12 @@ QDF_STATUS dp_send_mpdu_info_to_stack(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#define SCHED_MAX_PPDU_CNT 10
+/*
+ * number of data PPDU scheduled in a burst is 10
+ * which doesn't include BAR and other non data frame
+ * ~50 is maximum scheduled ppdu count
+ */
+#define SCHED_MAX_PPDU_CNT 50
 /**
  * dp_tx_ppdu_stats_process - Deferred PPDU stats handler
  * @context: Opaque work context (PDEV)
@@ -1317,6 +1334,13 @@ void dp_tx_ppdu_stats_process(void *context)
 
 			peer = dp_peer_find_by_id(pdev->soc,
 						  ppdu_desc->user[0].peer_id);
+			/*
+			 * peer can be NULL
+			 */
+			if (!peer) {
+				qdf_nbuf_free(nbuf);
+				continue;
+			}
 
 			/*
 			 * check whether it is bss peer,
@@ -1415,7 +1439,8 @@ dequeue_msdu_again:
 				nbuf->next =
 				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 			} else if (ppdu_desc->frame_type ==
-				   CDP_PPDU_FTYPE_CTRL) {
+				   CDP_PPDU_FTYPE_CTRL &&
+				   pdev->tx_capture_enabled) {
 				nbuf->next =
 				qdf_nbuf_queue_first(&ppdu_desc->mpdu_q);
 
