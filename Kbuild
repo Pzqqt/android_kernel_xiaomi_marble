@@ -2618,6 +2618,9 @@ cppflags-$(CONFIG_HOST_OPCLASS) += -DHOST_OPCLASS
 #Flag to enable/disable TARGET_11D_SCAN
 cppflags-$(CONFIG_TARGET_11D_SCAN) += -DTARGET_11D_SCAN
 
+#Flag to enable/disable avoid acs frequency list feature
+cppflags-$(CONFIG_SAP_AVOID_ACS_FREQ_LIST) += -DSAP_AVOID_ACS_FREQ_LIST
+
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 cppflags-$(CONFIG_WLAN_DYNAMIC_CVM) += -DFEATURE_WLAN_DYNAMIC_CVM
 

@@ -2252,6 +2252,30 @@ static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef SAP_AVOID_ACS_FREQ_LIST
+static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_reg *reg)
+{
+	qdf_size_t avoid_acs_freq_list_num = 0;
+	uint8_t i;
+
+	qdf_uint16_array_parse(cfg_get(psoc, CFG_SAP_AVOID_ACS_FREQ_LIST),
+			       reg->avoid_acs_freq_list,
+			       CFG_VALID_CHANNEL_LIST_LEN,
+			       &avoid_acs_freq_list_num);
+	reg->avoid_acs_freq_list_num = avoid_acs_freq_list_num;
+
+	for (i = 0; i < avoid_acs_freq_list_num; i++)
+		mlme_legacy_debug("avoid_acs_freq %d",
+				  reg->avoid_acs_freq_list[i]);
+}
+#else
+static void mlme_init_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_reg *reg)
+{
+}
+#endif
+
 static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
@@ -2274,6 +2298,7 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	qdf_str_lcopy(reg->country_code, cfg_default(CFG_COUNTRY_CODE),
 		      sizeof(reg->country_code));
 	reg->country_code_len = (uint8_t)sizeof(reg->country_code);
+	mlme_init_acs_avoid_freq_list(psoc, reg);
 }
 
 static void
