@@ -3660,6 +3660,30 @@ QDF_STATUS
 ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 					     bool *value);
 
+#ifdef SAP_AVOID_ACS_FREQ_LIST
+/**
+ * ucfg_mlme_get_acs_avoid_freq_list  - get acs avoid frequency list
+ * @psoc: pointer to psoc object
+ * @freq_list: Pointer to output freq list
+ * @freq_list_num: Pointer to the output number of frequencies filled
+ * in the freq_list
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
+				  uint16_t *freq_list, uint8_t *freq_list_num);
+
+#else
+static inline QDF_STATUS
+ucfg_mlme_get_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
+				  uint16_t *freq_list, uint8_t *freq_list_num)
+{
+	*freq_list_num = 0;
+	return QDF_STATUS_E_INVAL;
+}
+#endif
+
 /**
  * ucfg_mlme_get_11d_in_world_mode  - get whether 11d is enabled in world mode
  * in master mode

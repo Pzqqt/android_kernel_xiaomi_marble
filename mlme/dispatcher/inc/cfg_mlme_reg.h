@@ -95,6 +95,39 @@
 	0, \
 	"enable/disable ETSI SRD channels in master mode")
 
+#ifdef SAP_AVOID_ACS_FREQ_LIST
+#define SAP_AVOID_ACS_FREQ_LIST_DEFAULT ""
+
+/*
+ * <ini>
+ * sap_avoid_acs_freq_list - Avoid configured frequencies from acs
+ * @Default: No frequencies are configured, it means consider all
+ * the frequencies for acs
+ *
+ * This ini is to configure the frequencies which needs to be
+ * avoided during acs and sap will not come up on these channels
+ * Ex: sap_avoid_acs_freq_list=2412,2417,2422,2427,2467,2472
+ *
+ * Related: Feature flag SAP_AVOID_ACS_FREQ_LIST
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_SAP_AVOID_ACS_FREQ_LIST CFG_INI_STRING( \
+	"sap_avoid_acs_freq_list", \
+	0, \
+	CFG_VALID_CHANNEL_LIST_STRING_LEN, \
+	SAP_AVOID_ACS_FREQ_LIST_DEFAULT, \
+	"Avoid configured frequencies during acs")
+#define CFG_SAP_AVOID_ACS_FREQ_LIST_ALL CFG(CFG_SAP_AVOID_ACS_FREQ_LIST)
+#else
+#define CFG_SAP_AVOID_ACS_FREQ_LIST_ALL
+#endif
+
 /*
  * <ini>
  * restart_beaconing_on_chan_avoid_event - control the beaconing entity to move
@@ -217,6 +250,7 @@
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
 	CFG(CFG_SCAN_11D_INTERVAL) \
 	CFG(CFG_VALID_CHANNEL_LIST) \
-	CFG(CFG_COUNTRY_CODE)
+	CFG(CFG_COUNTRY_CODE) \
+	CFG_SAP_AVOID_ACS_FREQ_LIST_ALL
 
 #endif /* CFG_MLME_REG_H__ */
