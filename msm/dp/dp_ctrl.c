@@ -663,6 +663,10 @@ static int dp_ctrl_link_setup(struct dp_ctrl_private *ctrl, bool shallow)
 		if (rc)
 			break;
 
+		ctrl->catalog->late_phy_init(ctrl->catalog,
+			ctrl->link->link_params.lane_count,
+			ctrl->orientation);
+
 		dp_ctrl_configure_source_link_params(ctrl, true);
 
 		rc = dp_ctrl_setup_main_link(ctrl);

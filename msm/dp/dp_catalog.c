@@ -6,6 +6,7 @@
 #define pr_fmt(fmt)	"[drm-dp] %s: " fmt, __func__
 
 #include <linux/delay.h>
+#include <linux/iopoll.h>
 #include <drm/drm_dp_helper.h>
 
 #include "dp_catalog.h"
@@ -13,6 +14,8 @@
 
 #define DP_GET_MSB(x)	(x >> 8)
 #define DP_GET_LSB(x)	(x & 0xff)
+
+#define DP_PHY_READY BIT(1)
 
 #define dp_catalog_get_priv(x) ({ \
 	struct dp_catalog *dp_catalog; \
@@ -354,7 +357,111 @@ static void dp_catalog_aux_get_irq(struct dp_catalog_aux *aux, bool cmd_busy)
 	dp_write(catalog->exe_mode, io_data, DP_INTR_STATUS, ack);
 }
 
+static bool dp_catalog_ctrl_wait_for_phy_ready(
+		struct dp_catalog_private *catalog)
+{
+	u32 reg = DP_PHY_STATUS, state;
+	void __iomem *base = catalog->io.dp_phy->io.base;
+	bool success = true;
+	u32 const poll_sleep_us = 500;
+	u32 const pll_timeout_us = 10000;
+
+	if (readl_poll_timeout_atomic((base + reg), state,
+			((state & DP_PHY_READY) > 0),
+			poll_sleep_us, pll_timeout_us)) {
+		pr_err("PHY status failed, status=%x\n", state);
+
+		success = false;
+	}
+
+	return success;
+}
+
 /* controller related catalog functions */
+static int dp_catalog_ctrl_late_phy_init(struct dp_catalog_ctrl *ctrl,
+					u8 lane_cnt, bool flipped)
+{
+	int rc = 0;
+	u32 bias0_en, drvr0_en, bias1_en, drvr1_en;
+	struct dp_catalog_private *catalog;
+	struct dp_io_data *io_data;
+
+	if (!ctrl) {
+		pr_err("invalid input\n");
+		return -EINVAL;
+	}
+
+	catalog = dp_catalog_get_priv(ctrl);
+
+	switch (lane_cnt) {
+	case 1:
+		drvr0_en = flipped ? 0x13 : 0x10;
+		bias0_en = flipped ? 0x3E : 0x15;
+		drvr1_en = flipped ? 0x10 : 0x13;
+		bias1_en = flipped ? 0x15 : 0x3E;
+		break;
+	case 2:
+		drvr0_en = flipped ? 0x10 : 0x10;
+		bias0_en = flipped ? 0x3F : 0x15;
+		drvr1_en = flipped ? 0x10 : 0x10;
+		bias1_en = flipped ? 0x15 : 0x3F;
+		break;
+	case 4:
+	default:
+		drvr0_en = 0x10;
+		bias0_en = 0x3F;
+		drvr1_en = 0x10;
+		bias1_en = 0x3F;
+		break;
+	}
+
+	io_data = catalog->io.dp_ln_tx0;
+	dp_write(catalog->exe_mode, io_data, TXn_HIGHZ_DRVR_EN_V420, drvr0_en);
+	dp_write(catalog->exe_mode, io_data,
+			TXn_TRANSCEIVER_BIAS_EN_V420, bias0_en);
+
+	io_data = catalog->io.dp_ln_tx1;
+	dp_write(catalog->exe_mode, io_data, TXn_HIGHZ_DRVR_EN_V420, drvr1_en);
+	dp_write(catalog->exe_mode, io_data,
+			TXn_TRANSCEIVER_BIAS_EN_V420, bias1_en);
+
+	io_data = catalog->io.dp_phy;
+	dp_write(catalog->exe_mode, io_data, DP_PHY_CFG, 0x18);
+	/* add hardware recommended delay */
+	udelay(2000);
+	dp_write(catalog->exe_mode, io_data, DP_PHY_CFG, 0x19);
+
+	/*
+	 * Make sure all the register writes are completed before
+	 * doing any other operation
+	 */
+	wmb();
+
+	if (!dp_catalog_ctrl_wait_for_phy_ready(catalog)) {
+		rc = -EINVAL;
+		goto lock_err;
+	}
+
+	io_data = catalog->io.dp_ln_tx0;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_POL_INV_V420, 0x0a);
+	io_data = catalog->io.dp_ln_tx1;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_POL_INV_V420, 0x0a);
+
+	io_data = catalog->io.dp_ln_tx0;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_DRV_LVL_V420, 0x27);
+	io_data = catalog->io.dp_ln_tx1;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_DRV_LVL_V420, 0x27);
+
+	io_data = catalog->io.dp_ln_tx0;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_EMP_POST1_LVL, 0x20);
+	io_data = catalog->io.dp_ln_tx1;
+	dp_write(catalog->exe_mode, io_data, TXn_TX_EMP_POST1_LVL, 0x20);
+	/* Make sure the PHY register writes are done */
+	wmb();
+lock_err:
+	return rc;
+}
+
 static u32 dp_catalog_ctrl_read_hdcp_status(struct dp_catalog_ctrl *ctrl)
 {
 	struct dp_catalog_private *catalog;
@@ -2609,6 +2716,7 @@ struct dp_catalog *dp_catalog_get(struct device *dev, struct dp_parser *parser)
 		.channel_dealloc = dp_catalog_ctrl_channel_dealloc,
 		.fec_config = dp_catalog_ctrl_fec_config,
 		.mainlink_levels = dp_catalog_ctrl_mainlink_levels,
+		.late_phy_init = dp_catalog_ctrl_late_phy_init,
 	};
 	struct dp_catalog_hpd hpd = {
 		.config_hpd	= dp_catalog_hpd_config_hpd,

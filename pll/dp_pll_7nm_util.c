@@ -16,6 +16,7 @@
 #include "dp_pll_7nm.h"
 
 #define DP_PHY_CFG				0x0010
+#define DP_PHY_CFG_1				0x0014
 #define DP_PHY_PD_CTL				0x0018
 #define DP_PHY_MODE				0x001C
 
@@ -74,6 +75,7 @@
 #define QSERDES_COM_VCO_TUNE_CTRL		0x0108
 #define QSERDES_COM_VCO_TUNE_MAP		0x010C
 
+#define QSERDES_COM_CMN_STATUS			0x0140
 #define QSERDES_COM_CLK_SEL			0x0154
 #define QSERDES_COM_HSCLK_SEL			0x0158
 
@@ -98,6 +100,12 @@
 #define DP_VCO_RATE_8100MHZDIV1000		8100000UL
 #define DP_VCO_RATE_9720MHZDIV1000		9720000UL
 #define DP_VCO_RATE_10800MHZDIV1000		10800000UL
+
+#define DP_7NM_C_READY		BIT(0)
+#define DP_7NM_FREQ_DONE	BIT(0)
+#define DP_7NM_PLL_LOCKED	BIT(1)
+#define DP_7NM_PHY_READY	BIT(1)
+#define DP_7NM_TSYNC_DONE	BIT(0)
 
 int dp_mux_set_parent_7nm(void *context, unsigned int reg, unsigned int val)
 {
@@ -191,7 +199,6 @@ static int dp_vco_pll_init_db_7nm(struct dp_pll_db_7nm *pdb,
 	pdb->integloop_gain1_mode0 = 0x00;
 	pdb->vco_tune_map = 0x00;
 	pdb->cmn_config = 0x02;
-	pdb->txn_tran_drv_emp_en = 0xf;
 
 	switch (rate) {
 	case DP_VCO_HSCLK_RATE_1620MHZDIV1000:
@@ -258,6 +265,8 @@ static int dp_config_vco_rate_7nm(struct dp_pll_vco_clk *vco,
 		return res;
 	}
 
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG_1, 0x0F);
+
 	if (pdb->lane_cnt != 4) {
 		if (pdb->orientation == ORIENTATION_CC2)
 			MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_PD_CTL, 0x6d);
@@ -276,14 +285,20 @@ static int dp_config_vco_rate_7nm(struct dp_pll_vco_clk *vco,
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_CLK_ENABLE1, 0x0c);
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_SYSCLK_BUF_ENABLE, 0x06);
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_CLK_SEL, 0x30);
-	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_HSCLK_SEL, pdb->hsclk_sel);
+	/* Make sure the PHY register writes are done */
+	wmb();
+
+	/* PLL Optimization */
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_PLL_IVCO, 0x0f);
-	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_LOCK_CMP_EN, pdb->lock_cmp_en);
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_PLL_CCTRL_MODE0, 0x36);
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_PLL_RCTRL_MODE0, 0x16);
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_CP_CTRL_MODE0, 0x06);
+	/* Make sure the PHY register writes are done */
+	wmb();
+
+	/* link rate dependent params */
+	MDSS_PLL_REG_W(dp_res->pll_base,
+		QSERDES_COM_HSCLK_SEL, pdb->hsclk_sel);
 	MDSS_PLL_REG_W(dp_res->pll_base,
 		QSERDES_COM_DEC_START_MODE0, pdb->dec_start_mode0);
 	MDSS_PLL_REG_W(dp_res->pll_base,
@@ -293,18 +308,22 @@ static int dp_config_vco_rate_7nm(struct dp_pll_vco_clk *vco,
 	MDSS_PLL_REG_W(dp_res->pll_base,
 		QSERDES_COM_DIV_FRAC_START3_MODE0, pdb->div_frac_start3_mode0);
 	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_CMN_CONFIG, pdb->cmn_config);
-	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_INTEGLOOP_GAIN0_MODE0, pdb->integloop_gain0_mode0);
-	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_INTEGLOOP_GAIN1_MODE0, pdb->integloop_gain1_mode0);
-	MDSS_PLL_REG_W(dp_res->pll_base,
-		QSERDES_COM_VCO_TUNE_MAP, pdb->vco_tune_map);
-	MDSS_PLL_REG_W(dp_res->pll_base,
 		QSERDES_COM_LOCK_CMP1_MODE0, pdb->lock_cmp1_mode0);
 	MDSS_PLL_REG_W(dp_res->pll_base,
 		QSERDES_COM_LOCK_CMP2_MODE0, pdb->lock_cmp2_mode0);
+	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_LOCK_CMP_EN,
+		pdb->lock_cmp_en);
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_VCO_DIV, pdb->phy_vco_div);
 	/* Make sure the PLL register writes are done */
+	wmb();
+
+	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_CMN_CONFIG, 0x02);
+	MDSS_PLL_REG_W(dp_res->pll_base,
+		QSERDES_COM_INTEGLOOP_GAIN0_MODE0, 0x3f);
+	MDSS_PLL_REG_W(dp_res->pll_base,
+		QSERDES_COM_INTEGLOOP_GAIN1_MODE0, 0x00);
+	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_VCO_TUNE_MAP, 0x00);
+	/* Make sure the PHY register writes are done */
 	wmb();
 
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_BG_TIMER, 0x0a);
@@ -319,85 +338,123 @@ static int dp_config_vco_rate_7nm(struct dp_pll_vco_clk *vco,
 		MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_MODE, 0x4c);
 	else
 		MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_MODE, 0x5c);
+
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_AUX_CFG1, 0x13);
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_AUX_CFG2, 0xA4);
 	/* Make sure the PLL register writes are done */
 	wmb();
 
-	/* TX Lane configuration */
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_TX0_TX1_LANE_CTL, 0x05);
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_TX2_TX3_LANE_CTL, 0x05);
-
 	/* TX-0 register configuration */
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TRANSCEIVER_BIAS_EN, 0x1a);
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_TX0_TX1_LANE_CTL, 0x05);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_vmode_base, DP_VMODE_CTRL1, 0x40);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_PRE_STALL_LDO_BOOST_EN, 0x30);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_INTERFACE_SELECT, 0x3b);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_CLKBUF_ENABLE, 0x0f);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RESET_TSYNC_EN, 0x03);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_tran_base, DP_TRAN_DRVR_EMP_EN,
-		pdb->txn_tran_drv_emp_en);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_tran_base, DP_TRAN_DRVR_EMP_EN, 0xf);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_base,
 		TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	MDSS_PLL_REG_W(dp_res->ln_tx0_tran_base, DP_TX_INTERFACE_MODE, 0x00);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_BAND, 0x4);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
+	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_BAND, 0x04);
 
 	/* TX-1 register configuration */
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TRANSCEIVER_BIAS_EN, 0x1a);
+	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_TX2_TX3_LANE_CTL, 0x05);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_vmode_base, DP_VMODE_CTRL1, 0x40);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_PRE_STALL_LDO_BOOST_EN, 0x30);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_INTERFACE_SELECT, 0x3b);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_CLKBUF_ENABLE, 0x0f);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RESET_TSYNC_EN, 0x03);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_tran_base, DP_TRAN_DRVR_EMP_EN,
-		pdb->txn_tran_drv_emp_en);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_tran_base, DP_TRAN_DRVR_EMP_EN, 0xf);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_base,
 		TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	MDSS_PLL_REG_W(dp_res->ln_tx1_tran_base, DP_TX_INTERFACE_MODE, 0x00);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_BAND, 0x4);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
+	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_BAND, 0x04);
 	/* Make sure the PHY register writes are done */
 	wmb();
-
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_VCO_DIV, pdb->phy_vco_div);
 
 	return res;
 }
 
-static bool dp_7nm_pll_lock_status(struct mdss_pll_resources *dp_res)
-{
-	u32 status;
-	bool pll_locked;
+enum dp_7nm_pll_status {
+	C_READY,
+	FREQ_DONE,
+	PLL_LOCKED,
+	PHY_READY,
+	TSYNC_DONE,
+};
 
-	if (readl_poll_timeout_atomic((dp_res->pll_base +
-			QSERDES_COM_C_READY_STATUS),
-			status,
-			((status & BIT(0)) > 0),
-			DP_PHY_PLL_POLL_SLEEP_US,
-			DP_PHY_PLL_POLL_TIMEOUT_US)) {
-		pr_err("C_READY status is not high. Status=%x\n", status);
-		pll_locked = false;
-	} else {
-		pll_locked = true;
+char *dp_7nm_pll_get_status_name(enum dp_7nm_pll_status status)
+{
+	switch (status) {
+	case C_READY:
+		return "C_READY";
+	case FREQ_DONE:
+		return "FREQ_DONE";
+	case PLL_LOCKED:
+		return "PLL_LOCKED";
+	case PHY_READY:
+		return "PHY_READY";
+	case TSYNC_DONE:
+		return "TSYNC_DONE";
+	default:
+		return "unknown";
 	}
 
-	return pll_locked;
+
 }
 
-static bool dp_7nm_phy_rdy_status(struct mdss_pll_resources *dp_res)
+static bool dp_7nm_pll_get_status(struct mdss_pll_resources *dp_res,
+		enum dp_7nm_pll_status status)
 {
-	u32 status;
-	bool phy_ready = true;
+	u32 reg, state, bit;
+	void __iomem *base;
+	bool success = true;
 
-	/* poll for PHY ready status */
-	if (readl_poll_timeout_atomic((dp_res->phy_base +
-			DP_PHY_STATUS),
-			status,
-			((status & (BIT(1))) > 0),
-			DP_PHY_PLL_POLL_SLEEP_US,
-			DP_PHY_PLL_POLL_TIMEOUT_US)) {
-		pr_err("Phy_ready is not high. Status=%x\n", status);
-		phy_ready = false;
+	switch (status) {
+	case C_READY:
+		base = dp_res->pll_base;
+		reg = QSERDES_COM_C_READY_STATUS;
+		bit = DP_7NM_C_READY;
+		break;
+	case FREQ_DONE:
+		base = dp_res->pll_base;
+		reg = QSERDES_COM_CMN_STATUS;
+		bit = DP_7NM_FREQ_DONE;
+		break;
+	case PLL_LOCKED:
+		base = dp_res->pll_base;
+		reg = QSERDES_COM_CMN_STATUS;
+		bit = DP_7NM_PLL_LOCKED;
+		break;
+	case PHY_READY:
+		base = dp_res->phy_base;
+		reg = DP_PHY_STATUS;
+		bit = DP_7NM_PHY_READY;
+		break;
+	case TSYNC_DONE:
+		base = dp_res->phy_base;
+		reg = DP_PHY_STATUS;
+		bit = DP_7NM_TSYNC_DONE;
+		break;
+	default:
+		return false;
 	}
 
-	return phy_ready;
+	if (readl_poll_timeout_atomic((base + reg), state,
+			((state & bit) > 0),
+			DP_PHY_PLL_POLL_SLEEP_US,
+			DP_PHY_PLL_POLL_TIMEOUT_US)) {
+		pr_err("%s failed, status=%x\n",
+			dp_7nm_pll_get_status_name(status), state);
+
+		success = false;
+	}
+
+	return success;
 }
 
 static int dp_pll_enable_7nm(struct clk_hw *hw)
@@ -405,21 +462,25 @@ static int dp_pll_enable_7nm(struct clk_hw *hw)
 	int rc = 0;
 	struct dp_pll_vco_clk *vco = to_dp_vco_hw(hw);
 	struct mdss_pll_resources *dp_res = vco->priv;
-	struct dp_pll_db_7nm *pdb = (struct dp_pll_db_7nm *)dp_res->priv;
-	u32 bias_en, drvr_en;
 
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_AUX_CFG1, 0x13);
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_AUX_CFG2, 0xA4);
 	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x01);
 	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x05);
 	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x01);
 	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x09);
-	wmb(); /* Make sure the PHY register writes are done */
-
 	MDSS_PLL_REG_W(dp_res->pll_base, QSERDES_COM_RESETSM_CNTRL, 0x20);
 	wmb();	/* Make sure the PLL register writes are done */
 
-	if (!dp_7nm_pll_lock_status(dp_res)) {
+	if (!dp_7nm_pll_get_status(dp_res, C_READY)) {
+		rc = -EINVAL;
+		goto lock_err;
+	}
+
+	if (!dp_7nm_pll_get_status(dp_res, FREQ_DONE)) {
+		rc = -EINVAL;
+		goto lock_err;
+	}
+
+	if (!dp_7nm_pll_get_status(dp_res, PLL_LOCKED)) {
 		rc = -EINVAL;
 		goto lock_err;
 	}
@@ -427,75 +488,18 @@ static int dp_pll_enable_7nm(struct clk_hw *hw)
 	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x19);
 	/* Make sure the PHY register writes are done */
 	wmb();
-	/* poll for PHY ready status */
-	if (!dp_7nm_phy_rdy_status(dp_res)) {
+
+	if (!dp_7nm_pll_get_status(dp_res, TSYNC_DONE)) {
+		rc = -EINVAL;
+		goto lock_err;
+	}
+
+	if (!dp_7nm_pll_get_status(dp_res, PHY_READY)) {
 		rc = -EINVAL;
 		goto lock_err;
 	}
 
 	pr_debug("PLL is locked\n");
-
-	if (pdb->lane_cnt == 1) {
-		bias_en = 0x3e;
-		drvr_en = 0x13;
-	} else {
-		bias_en = 0x3f;
-		drvr_en = 0x10;
-	}
-
-	if (pdb->lane_cnt != 4) {
-		if (pdb->orientation == ORIENTATION_CC1) {
-			MDSS_PLL_REG_W(dp_res->ln_tx1_base,
-				TXn_HIGHZ_DRVR_EN, drvr_en);
-			MDSS_PLL_REG_W(dp_res->ln_tx1_base,
-				TXn_TRANSCEIVER_BIAS_EN, bias_en);
-		} else {
-			MDSS_PLL_REG_W(dp_res->ln_tx0_base,
-				TXn_HIGHZ_DRVR_EN, drvr_en);
-			MDSS_PLL_REG_W(dp_res->ln_tx0_base,
-				TXn_TRANSCEIVER_BIAS_EN, bias_en);
-		}
-	} else {
-		MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_HIGHZ_DRVR_EN, drvr_en);
-		MDSS_PLL_REG_W(dp_res->ln_tx0_base,
-			TXn_TRANSCEIVER_BIAS_EN, bias_en);
-		MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_HIGHZ_DRVR_EN, drvr_en);
-		MDSS_PLL_REG_W(dp_res->ln_tx1_base,
-			TXn_TRANSCEIVER_BIAS_EN, bias_en);
-	}
-
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_POL_INV, 0x0a);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_POL_INV, 0x0a);
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x18);
-	udelay(2000);
-
-	MDSS_PLL_REG_W(dp_res->phy_base, DP_PHY_CFG, 0x19);
-
-	/*
-	 * Make sure all the register writes are completed before
-	 * doing any other operation
-	 */
-	wmb();
-
-	/* poll for PHY ready status */
-	if (!dp_7nm_phy_rdy_status(dp_res)) {
-		rc = -EINVAL;
-		goto lock_err;
-	}
-
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_DRV_LVL, 0x3f);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_DRV_LVL, 0x3f);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_TX_EMP_POST1_LVL, 0x23);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_TX_EMP_POST1_LVL, 0x23);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
-	MDSS_PLL_REG_W(dp_res->ln_tx0_base, TXn_INTERFACE_SELECT, 0x3b);
-	MDSS_PLL_REG_W(dp_res->ln_tx1_base, TXn_INTERFACE_SELECT, 0x3b);
-	/* Make sure the PHY register writes are done */
-	wmb();
-
 lock_err:
 	return rc;
 }
