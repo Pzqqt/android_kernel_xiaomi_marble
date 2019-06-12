@@ -13487,6 +13487,7 @@ typedef enum wake_reason_e {
     WOW_REASON_WLAN_BL, /* baselining done */
     WOW_REASON_NTH_BCN_OFLD, /* nth beacon forward to host */
     WOW_REASON_PKT_CAPTURE_MODE_WAKE,
+    WOW_REASON_PAGE_FAULT, /* Host wake up due to page fault */
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
