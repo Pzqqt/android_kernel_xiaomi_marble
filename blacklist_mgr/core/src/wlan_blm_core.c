@@ -26,8 +26,8 @@
 #include <wlan_scan_utils_api.h>
 #include "wlan_blm_tgt_api.h"
 
-#define SECONDS_TO_MS(params)       (params * 60)
-#define MINUTES_TO_MS(params)       (SECONDS_TO_MS(params) * 1000)
+#define SECONDS_TO_MS(params)       (params * 1000)
+#define MINUTES_TO_MS(params)       (SECONDS_TO_MS(params) * 60)
 
 static void
 blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
@@ -988,8 +988,8 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 
 		if (!qdf_mem_cmp(blm_entry->bssid.bytes, bssid.bytes,
 				 QDF_MAC_ADDR_SIZE)) {
-			blm_debug("%pM present in BLM reject list, updating connect info",
-				  blm_entry->bssid.bytes);
+			blm_debug("%pM present in BLM reject list, updating connect info con_state = %d",
+				  blm_entry->bssid.bytes, con_state);
 			entry_found = true;
 			break;
 		}
@@ -1022,7 +1022,8 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 		connection_age = qdf_mc_timer_get_system_time() -
 							max_entry_time;
 		if ((connection_age >
-		    blm_psoc_obj->blm_cfg.bad_bssid_counter_reset_time) ||
+		     SECONDS_TO_MS(blm_psoc_obj->blm_cfg.
+				   bad_bssid_counter_reset_time)) ||
 		    !blm_entry->reject_ap_type) {
 			blm_debug("Bad Bssid timer expired/AP cleared from all blacklisting, removed %pM from list",
 				  blm_entry->bssid.bytes);
