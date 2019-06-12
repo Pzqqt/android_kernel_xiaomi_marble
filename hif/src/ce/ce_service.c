@@ -559,8 +559,8 @@ void ce_update_tx_ring(struct CE_handle *ce_tx_hdl, uint32_t num_htt_cmpls)
  *
  * Return: int: CE sent status
  */
-int ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
-		uint32_t transfer_id, u_int32_t len)
+QDF_STATUS ce_send_single(struct CE_handle *ce_tx_hdl, qdf_nbuf_t msdu,
+			  uint32_t transfer_id, u_int32_t len)
 {
 	struct CE_state *ce_state = (struct CE_state *)ce_tx_hdl;
 	struct hif_softc *scn = ce_state->scn;

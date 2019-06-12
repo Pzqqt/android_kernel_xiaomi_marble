@@ -1192,8 +1192,8 @@ qdf_export_symbol(hif_update_tx_ring);
  *
  * Return: msdu sent status
  */
-int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
-		transfer_id, u_int32_t len)
+QDF_STATUS hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
+			   uint32_t transfer_id, u_int32_t len)
 {
 	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
 

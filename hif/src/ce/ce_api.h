@@ -170,10 +170,10 @@ extern qdf_nbuf_t ce_batch_send(struct CE_handle *ce_tx_hdl,
 		uint32_t len,
 		uint32_t sendhead);
 
-extern int ce_send_single(struct CE_handle *ce_tx_hdl,
-		qdf_nbuf_t msdu,
-		uint32_t transfer_id,
-		uint32_t len);
+QDF_STATUS ce_send_single(struct CE_handle *ce_tx_hdl,
+			  qdf_nbuf_t msdu,
+			  uint32_t transfer_id,
+			  uint32_t len);
 /*
  * Register a Send Callback function.
  * This function is called as soon as the contents of a Send

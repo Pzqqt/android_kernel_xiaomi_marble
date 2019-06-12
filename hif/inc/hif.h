@@ -1040,8 +1040,8 @@ void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 void hif_update_tx_ring(struct hif_opaque_softc *osc, u_int32_t num_htt_cmpls);
 qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
 		uint32_t transfer_id, u_int32_t len, uint32_t sendhead);
-int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
-		transfer_id, u_int32_t len);
+QDF_STATUS hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
+			   uint32_t transfer_id, u_int32_t len);
 int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
 	uint32_t transfer_id, uint32_t download_len);
 void hif_pkt_dl_len_set(void *hif_sc, unsigned int pkt_download_len);
