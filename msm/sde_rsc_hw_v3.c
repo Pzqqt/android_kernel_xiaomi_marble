@@ -400,6 +400,10 @@ static int sde_rsc_state_update_v3(struct sde_rsc_priv *rsc,
 	case SDE_RSC_CMD_STATE:
 		pr_debug("command mode handling\n");
 
+		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_OVERRIDE_CTRL,
+							0x0, rsc->debug_mode);
+		wmb(); /* disable double buffer config before vsync select */
+
 		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_OVERRIDE_CTRL2,
 				BIT(1) | BIT(2) | BIT(3), rsc->debug_mode);
 
@@ -455,10 +459,17 @@ static int sde_rsc_state_update_v3(struct sde_rsc_priv *rsc,
 
 		reg = dss_reg_r(&rsc->wrapper_io,
 			SDE_RSCC_WRAPPER_OVERRIDE_CTRL, rsc->debug_mode);
-		reg &= ~BIT(0);
+		reg &= ~(BIT(0) | BIT(8));
 		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_OVERRIDE_CTRL,
 							reg, rsc->debug_mode);
 		wmb(); /* make sure that solver mode is disabled */
+
+		reg = dss_reg_r(&rsc->wrapper_io,
+			SDE_RSCC_WRAPPER_OVERRIDE_CTRL, rsc->debug_mode);
+		reg |= BIT(8);
+		dss_reg_w(&rsc->wrapper_io, SDE_RSCC_WRAPPER_OVERRIDE_CTRL,
+							reg, rsc->debug_mode);
+		wmb(); /* enable double buffer vsync configuration */
 		break;
 
 	case SDE_RSC_IDLE_STATE:
