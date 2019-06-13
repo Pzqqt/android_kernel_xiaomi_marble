@@ -6504,6 +6504,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
+	resource_cfg->smart_ant_cap = tgt_res_cfg->smart_ant_cap;
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -12263,6 +12264,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 #endif
 	event_ids[wmi_coex_report_antenna_isolation_event_id] =
 				WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID;
+	event_ids[wmi_peer_ratecode_list_event_id] =
+				WMI_PEER_RATECODE_LIST_EVENTID;
 }
 
 /**
@@ -12375,13 +12378,13 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mawc] = WMI_SERVICE_MAWC;
 	wmi_service[wmi_service_multiple_vdev_restart] =
 			WMI_SERVICE_MULTIPLE_VDEV_RESTART;
+	wmi_service[wmi_service_smart_antenna_sw_support] =
+				WMI_SERVICE_SMART_ANTENNA_SW_SUPPORT;
+	wmi_service[wmi_service_smart_antenna_hw_support] =
+				WMI_SERVICE_SMART_ANTENNA_HW_SUPPORT;
 
 	wmi_service[wmi_service_roam_offload] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_ratectrl] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_smart_antenna_sw_support] =
-				WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_smart_antenna_hw_support] =
-				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_enhanced_proxy_sta] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_tt] = WMI_SERVICE_THERM_THROT;
 	wmi_service[wmi_service_atf] = WMI_SERVICE_ATF;
