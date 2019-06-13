@@ -159,12 +159,6 @@
 #define SIR_MAC_ACTION_GAS_COMEBACK_REQUEST     0x0C
 #define SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE    0x0D
 
-#ifdef WLAN_FEATURE_11W
-/* 11w SA query request/response action frame category code */
-#define SIR_MAC_SA_QUERY_REQ             0
-#define SIR_MAC_SA_QUERY_RSP             1
-#endif
-
 /* WNM Action field values; IEEE Std 802.11-2012, 8.5.14.1, Table 8-250 */
 #define SIR_MAC_WNM_BSS_TM_QUERY         6
 #define SIR_MAC_WNM_BSS_TM_REQUEST       7

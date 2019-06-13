@@ -2103,14 +2103,14 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		pe_debug("SA Query Action category: %d action: %d",
 			action_hdr->category, action_hdr->actionID);
 		switch (action_hdr->actionID) {
-		case SIR_MAC_SA_QUERY_REQ:
+		case SA_QUERY_REQUEST:
 			/**11w SA query request action frame received**/
 			/* Respond directly to the incoming request in LIM */
 			__lim_process_sa_query_request_action_frame(mac_ctx,
 						(uint8_t *)rx_pkt_info,
 						session);
 			break;
-		case SIR_MAC_SA_QUERY_RSP:
+		case SA_QUERY_RESPONSE:
 			/**11w SA query response action frame received**/
 			/* Handle based on the current SA Query state */
 			__lim_process_sa_query_response_action_frame(mac_ctx,

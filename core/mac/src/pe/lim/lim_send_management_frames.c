@@ -4417,7 +4417,7 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	/* 11w action  field is :
 	   action: 0 --> SA Query Request action frame
 	   action: 1 --> SA Query Response action frame */
-	frm.Action.action = SIR_MAC_SA_QUERY_REQ;
+	frm.Action.action = SA_QUERY_REQUEST;
 	/* 11w SA Query Request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
 
@@ -4549,7 +4549,7 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 	/*11w action  field is :
 	   action: 0 --> SA query request action frame
 	   action: 1 --> SA query response action frame */
-	frm.Action.action = SIR_MAC_SA_QUERY_RSP;
+	frm.Action.action = SA_QUERY_RESPONSE;
 	/*11w SA query response transId is same as
 	   SA query request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
