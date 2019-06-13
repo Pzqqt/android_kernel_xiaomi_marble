@@ -221,7 +221,8 @@ static QDF_STATUS send_smart_ant_set_tx_ant_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(wmi_peer_smart_ant_set_tx_antenna_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		       sizeof(wmi_peer_smart_ant_set_tx_antenna_series));
+		       sizeof(wmi_peer_smart_ant_set_tx_antenna_series) *
+		       WMI_SMART_ANT_MAX_RATE_SERIES);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	ant_tx_series = (wmi_peer_smart_ant_set_tx_antenna_series *)buf_ptr;
 
