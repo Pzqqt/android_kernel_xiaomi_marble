@@ -235,7 +235,25 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_CFR_ID:                CFG Capture method
  * @WLAN_VDEV_TARGET_IF_ID:     Target interface layer
  * @WLAN_RX_PKT_TAG_ID:         RX protocol tag operations
- * @WLAN_INTEROP_ISSUES_AP_ID:           interop issues ap operation
+ * @WLAN_INTEROP_ISSUES_AP_ID:  interop issues ap operation
+ * @WLAN_WDS_ID:                WDS operations
+ * @WLAN_PROXY_ARP_ID:          AP proxy ARP
+ * @WLAN_WNM_ID:                wireless network management operations
+ * @WLAN_RRM_ID:                Radio resource management operations
+ * @WLAN_TR69_ID:               TR69 operations
+ * @WLAN_MGMT_RX_ID:            Legacy offload management frame input handler
+ * @WLAN_MGMT_TX_ID:            Legacy offload management frame output handler
+ * @WLAN_NSS_IF_ID:             NSS offload interface operations
+ * @WLAN_MBO_ID:                MBO operations
+ * @WLAN_RTT_ID:                RTT operations
+ * @WLAN_ALD_ID:                Ath Link Diagnostic operations
+ * @WLAN_ME_ID:                 Multicast enhancement operations
+ * @WLAN_MGMT_HANDLER_ID:       Management frame handler
+ * @WLAN_MLME_HANDLER_ID:       MLME handler
+ * @WLAN_DBDC_ID:               Dual Band Dual Concurrent mode operations
+ * @WLAN_MLME_OBJMGR_ID:        MLME object manager operations VAP, Node
+ * @WLAN_OFFCHAN_TX_ID:         Offchannel Tx operations
+ * @WLAN_MISC_ID:               power manager, PAPI, rate set, etc.
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -294,6 +312,24 @@ typedef enum {
 	WLAN_VDEV_TARGET_IF_ID     = 49,
 	WLAN_RX_PKT_TAG_ID         = 50,
 	WLAN_INTEROP_ISSUES_AP_ID           = 51,
+	WLAN_WDS_ID           = 52,
+	WLAN_PROXY_ARP_ID     = 53,
+	WLAN_WNM_ID           = 54,
+	WLAN_RRM_ID           = 55,
+	WLAN_TR69_ID          = 56,
+	WLAN_MGMT_RX_ID       = 57,
+	WLAN_MGMT_TX_ID       = 58,
+	WLAN_NSS_IF_ID        = 59,
+	WLAN_MBO_ID           = 60,
+	WLAN_RTT_ID           = 61,
+	WLAN_ALD_ID           = 62,
+	WLAN_ME_ID            = 63,
+	WLAN_MGMT_HANDLER_ID  = 64,
+	WLAN_MLME_HANDLER_ID  = 65,
+	WLAN_DBDC_ID          = 66,
+	WLAN_MLME_OBJMGR_ID   = 67,
+	WLAN_OFFCHAN_TX_ID    = 68,
+	WLAN_MISC_ID          = 69,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -359,6 +395,24 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_VDEV_TARGET_IF_ID",
 					"WLAN_RX_PKT_TAG_ID",
 					"WLAN_INTEROP_ISSUES_AP_ID",
+					"WLAN_WDS_ID",
+					"WLAN_PROXY_ARP_ID",
+					"WLAN_WNM_ID",
+					"WLAN_RRM_ID",
+					"WLAN_TR69_ID",
+					"WLAN_MGMT_RX_ID",
+					"WLAN_MGMT_TX_ID",
+					"WLAN_NSS_IF_ID",
+					"WLAN_MBO_ID",
+					"WLAN_RTT_ID",
+					"WLAN_ALD_ID",
+					"WLAN_ME_ID",
+					"WLAN_MGMT_HANDLER_ID",
+					"WLAN_MLME_HANDLER_ID",
+					"WLAN_DBDC_ID",
+					"WLAN_MLME_OBJMGR_ID",
+					"WLAN_OFFCHAN_TX_ID",
+					"WLAN_MISC_ID",
 					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];
