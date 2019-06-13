@@ -375,11 +375,17 @@ struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
 				goto fail;
 		}
 	} else {
+		const struct drm_format_info *info;
+
+		info = drm_format_info(mode_cmd->pixel_format);
+		if (!info || num_planes > ARRAY_SIZE(info->cpp))
+			goto fail;
+
 		for (i = 0; i < num_planes; i++) {
 			unsigned int width = mode_cmd->width / (i ? hsub : 1);
 			unsigned int height = mode_cmd->height / (i ? vsub : 1);
 			unsigned int min_size;
-			unsigned int cpp;
+			unsigned int cpp = 0;
 
 			cpp = drm_format_plane_cpp(mode_cmd->pixel_format, i);
 
