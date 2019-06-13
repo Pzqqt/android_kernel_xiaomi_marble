@@ -269,7 +269,7 @@ static QDF_STATUS wifi_pos_oem_data_req(struct wlan_objmgr_psoc *psoc,
 					struct oem_data_req *req)
 {
 	QDF_STATUS status;
-	void *wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	target_if_debug("Send oem data req to target");
 
@@ -564,7 +564,7 @@ static QDF_STATUS target_if_wifi_pos_cfg_fw(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t i;
 	QDF_STATUS status;
-	void *wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
 	wmi_oem_dma_ring_cfg_req_fixed_param cfg = {0};
 
 	if (!wmi_hdl) {
