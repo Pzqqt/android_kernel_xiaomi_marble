@@ -29,16 +29,18 @@
 static void
 wlan_peer_read_ewma_avg_rssi(struct wlan_rx_rate_stats *rx_stats)
 {
-	uint8_t ant, ht, idx;
+	uint8_t ant, ht, cache_idx;
 
-	rx_stats->avg_rssi.internal =
-		qdf_ewma_rx_rssi_read(&rx_stats->avg_rssi);
+	for (cache_idx = 0; cache_idx < WLANSTATS_CACHE_SIZE; cache_idx++) {
+		rx_stats->avg_rssi.internal =
+			qdf_ewma_rx_rssi_read(&rx_stats->avg_rssi);
 
-	for (idx = 0; idx < WLANSTATS_CACHE_SIZE; idx++) {
-		for (ant = 0; ant < MAX_RSSI_ANT; ant++) {
-			for (ht = 0; ht < MAX_RSSI_HT; ht++)
+		for (ant = 0; ant < SS_COUNT; ant++) {
+			for (ht = 0; ht < MAX_BW; ht++) {
 				rx_stats->avg_rssi_ant[ant][ht].internal =
-			qdf_ewma_rx_rssi_read(&rx_stats->avg_rssi_ant[ant][ht]);
+				qdf_ewma_rx_rssi_read(
+					&rx_stats->avg_rssi_ant[ant][ht]);
+			}
 		}
 		rx_stats += 1;
 	}
@@ -56,11 +58,21 @@ wlan_peer_flush_rx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		return;
 	rx_stats = &stats_ctx->rx;
 
+	buf.cookie = 0;
 	wlan_peer_read_ewma_avg_rssi(rx_stats->stats);
 	buf.stats = (struct wlan_rx_rate_stats *)rx_stats->stats;
 	buf.buf_len = WLANSTATS_CACHE_SIZE * sizeof(struct wlan_rx_rate_stats);
 	buf.stats_type = DP_PEER_RX_RATE_STATS;
-	buf.cookie = stats_ctx->peer_cookie;
+	/* Prepare 64 bit cookie */
+	/*-------------------|-------------------|
+	 *  32 bit target    | 32 bit peer cookie|
+	 *-------------------|-------------------|
+	 */
+	buf.cookie = ((((buf.cookie | soc_stats_ctx->is_lithium)
+		      << WLANSTATS_PEER_COOKIE_LSB) &
+		      WLANSTATS_COOKIE_PLATFORM_OFFSET) |
+		      (((buf.cookie | stats_ctx->peer_cookie) &
+		      WLANSTATS_COOKIE_PEER_COOKIE_OFFSET)));
 	qdf_mem_copy(buf.peer_mac, stats_ctx->mac_addr, WLAN_MAC_ADDR_LEN);
 	cdp_peer_flush_rate_stats(soc_stats_ctx->soc,
 				  stats_ctx->pdev, &buf);
@@ -168,10 +180,11 @@ __wlan_peer_update_rx_rate_stats(struct wlan_rx_rate_stats *__rx_stats,
 
 	qdf_ewma_rx_rssi_add(&__rx_stats->avg_rssi, cdp_rx_ppdu->rssi);
 
-	for (ant = 0; ant < MAX_RSSI_ANT; ant++) {
-		for (ht = 0; ht < MAX_RSSI_HT; ht++)
+	for (ant = 0; ant < SS_COUNT; ant++) {
+		for (ht = 0; ht < MAX_BW; ht++) {
 			qdf_ewma_rx_rssi_add(&__rx_stats->avg_rssi_ant[ant][ht],
 					     cdp_rx_ppdu->rssi_chain[ant][ht]);
+		}
 	}
 }
 
@@ -280,20 +293,20 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 				ppdu_user->cookie;
 
 		if (qdf_unlikely(!stats_ctx)) {
-			qdf_warn("peer rate stats ctx is NULL, investigate");
-			qdf_warn("peer_mac: " QDF_MAC_ADDR_STR,
+			qdf_debug("peer rate stats ctx is NULL, investigate");
+			qdf_debug("peer_mac: " QDF_MAC_ADDR_STR,
 				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
+			continue;
+		}
+
+		if (qdf_unlikely(!ppdu_user->tx_ratekbps || !ppdu_user->rix ||
+				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
 			continue;
 		}
 
 		tx_stats = &stats_ctx->tx;
 		RATE_STATS_LOCK_ACQUIRE(&tx_stats->lock);
 
-		if (qdf_unlikely(!ppdu_user->tx_ratekbps ||
-				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
-			RATE_STATS_LOCK_RELEASE(&tx_stats->lock);
-			continue;
-		}
 		if (qdf_likely(tx_stats->cur_rix == ppdu_user->rix)) {
 			__tx_stats = &tx_stats->stats[tx_stats->cur_cache_idx];
 			__wlan_peer_update_tx_rate_stats(__tx_stats, ppdu_user);

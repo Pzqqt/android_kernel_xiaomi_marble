@@ -109,6 +109,7 @@ struct wlan_soc_rate_stats_ctx {
 	uint32_t rxs_cache_hit;
 	uint32_t txs_cache_miss;
 	uint32_t rxs_cache_miss;
+	bool is_lithium;
 };
 
 /**
