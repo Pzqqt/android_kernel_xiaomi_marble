@@ -3049,6 +3049,10 @@ static void _sde_plane_update_properties(struct drm_plane *plane,
 	state = plane->state;
 
 	pstate = to_sde_plane_state(state);
+	if (!pstate) {
+		SDE_ERROR("invalid plane state for plane%d\n", DRMID(plane));
+		return;
+	}
 
 	msm_fmt = msm_framebuffer_format(fb);
 	if (!msm_fmt) {
