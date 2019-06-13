@@ -1405,7 +1405,8 @@ done:
 	while (nbuf) {
 		struct dp_peer *peer;
 		uint16_t peer_id;
-
+		uint8_t e_code;
+		uint8_t *tlv_hdr;
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
 
 		peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
@@ -1506,8 +1507,24 @@ done:
 					continue;
 
 				case HAL_RXDMA_ERR_DECRYPT:
-					if (peer)
-						DP_STATS_INC(peer, rx.err.decrypt_err, 1);
+					pool_id = wbm_err_info.pool_id;
+					e_code = wbm_err_info.rxdma_err_code;
+					tlv_hdr = rx_tlv_hdr;
+					if (peer) {
+						DP_STATS_INC(peer, rx.err.
+							     decrypt_err, 1);
+					} else {
+						dp_rx_process_rxdma_err(soc,
+									nbuf,
+									tlv_hdr,
+									NULL,
+									e_code,
+									pool_id
+									);
+						nbuf = next;
+						continue;
+					}
+
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_DEBUG,
 					"Packet received with Decrypt error");
