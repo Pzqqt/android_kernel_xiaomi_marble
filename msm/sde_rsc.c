@@ -427,7 +427,7 @@ static int sde_rsc_switch_to_cmd(struct sde_rsc_priv *rsc,
 	 */
 	if (rsc->current_state == SDE_RSC_CMD_STATE) {
 		rc = 0;
-		if (config)
+		if (config && rsc->version < SDE_RSC_REV_3)
 			goto vsync_wait;
 		else
 			goto end;
@@ -565,7 +565,7 @@ static int sde_rsc_switch_to_vid(struct sde_rsc_priv *rsc,
 	 */
 	if (rsc->current_state == SDE_RSC_VID_STATE) {
 		rc = 0;
-		if (config)
+		if (config && rsc->version < SDE_RSC_REV_3)
 			goto vsync_wait;
 		else
 			goto end;
