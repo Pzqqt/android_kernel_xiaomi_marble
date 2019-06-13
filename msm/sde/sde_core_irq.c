@@ -475,9 +475,12 @@ void sde_core_irq_preinstall(struct sde_kms *sde_kms)
 		return;
 
 	for (i = 0; i < sde_kms->irq_obj.total_irqs; i++) {
-		INIT_LIST_HEAD(&sde_kms->irq_obj.irq_cb_tbl[i]);
-		atomic_set(&sde_kms->irq_obj.enable_counts[i], 0);
-		atomic_set(&sde_kms->irq_obj.irq_counts[i], 0);
+		if (sde_kms->irq_obj.irq_cb_tbl)
+			INIT_LIST_HEAD(&sde_kms->irq_obj.irq_cb_tbl[i]);
+		if (sde_kms->irq_obj.enable_counts)
+			atomic_set(&sde_kms->irq_obj.enable_counts[i], 0);
+		if (sde_kms->irq_obj.irq_counts)
+			atomic_set(&sde_kms->irq_obj.irq_counts[i], 0);
 	}
 }
 
