@@ -472,6 +472,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
  * @mac_ctx: pointer to mac ctx
  * @ft_session: FT session
  * @pe_session: PE session
+ * @bcn: AP beacon pointer
  *
  * This API fills FT session's dot11mode either from pe session or
  * from CFG depending on the condition.
@@ -480,7 +481,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
  */
 static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			       struct pe_session *ft_session,
-			       struct pe_session *pe_session)
+			       struct pe_session *pe_session,
+			       tSchBeaconStruct *bcn)
 {
 	uint32_t self_dot11_mode;
 
@@ -488,10 +490,39 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 	    !csr_is_roam_offload_enabled(mac_ctx)) {
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
-	} else {
-		self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
-		pe_debug("selfDot11Mode: %d", self_dot11_mode);
-		ft_session->dot11mode = self_dot11_mode;
+		return;
+	}
+	self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
+	pe_debug("selfDot11Mode: %d", self_dot11_mode);
+	if (ft_session->limRFBand == BAND_2G)
+		ft_session->dot11mode = MLME_DOT11_MODE_11G;
+	else
+		ft_session->dot11mode = MLME_DOT11_MODE_11A;
+	switch (self_dot11_mode) {
+	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11AX_ONLY:
+		if (bcn->he_cap.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11AX;
+		else if (bcn->VHTCaps.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11AC;
+		else if (bcn->HTCaps.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11N;
+		break;
+	case MLME_DOT11_MODE_11AC:
+	case MLME_DOT11_MODE_11AC_ONLY:
+		if (bcn->VHTCaps.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11AC;
+		else if (bcn->HTCaps.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11N;
+		break;
+	case MLME_DOT11_MODE_11N:
+	case MLME_DOT11_MODE_11N_ONLY:
+		if (bcn->HTCaps.present)
+			ft_session->dot11mode = MLME_DOT11_MODE_11N;
+
+		break;
+	default:
+		break;
 	}
 }
 #elif defined(WLAN_FEATURE_HOST_ROAM)
@@ -500,13 +531,16 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
  * @mac_ctx: pointer to mac ctx
  * @ft_session: FT session
  * @pe_session: PE session
+ * @bcn: AP beacon pointer
  *
  * This API fills FT session's dot11mode either from pe session.
  *
  * Return: none
  */
 static void lim_fill_dot11mode(struct mac_context *mac_ctx,
-			struct pe_session *ft_session, struct pe_session *pe_session)
+			       struct pe_session *ft_session,
+			       struct pe_session *pe_session,
+			       tSchBeaconStruct *bcn)
 {
 	ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
@@ -566,7 +600,14 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->ssId.length = pBeaconStruct->ssId.length;
 	qdf_mem_copy(ft_session->ssId.ssId, pBeaconStruct->ssId.ssId,
 		     ft_session->ssId.length);
-	lim_fill_dot11mode(mac, ft_session, pe_session);
+	/* Copy The channel Id to the session Table */
+	ft_session->limReassocChannelId = pbssDescription->channelId;
+	ft_session->currentOperChannel = pbssDescription->channelId;
+
+	ft_session->limRFBand = lim_get_rf_band(
+				ft_session->currentOperChannel);
+
+	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct);
 
 	pe_debug("dot11mode: %d", ft_session->dot11mode);
 	ft_session->vhtCapability =
@@ -575,13 +616,6 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->htCapability =
 		(IS_DOT11_MODE_HT(ft_session->dot11mode)
 		 && pBeaconStruct->HTCaps.present);
-
-	/* Copy The channel Id to the session Table */
-	ft_session->limReassocChannelId = pbssDescription->channelId;
-	ft_session->currentOperChannel = pbssDescription->channelId;
-
-	ft_session->limRFBand = lim_get_rf_band(
-				ft_session->currentOperChannel);
 
 	/* Assign default configured nss value in the new session */
 	if (IS_5G_CH(ft_session->currentOperChannel))
