@@ -3865,6 +3865,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_htt_ppdu_stats_detach(pdev);
 
+	dp_tx_ppdu_stats_detach(pdev);
+
 	qdf_nbuf_free(pdev->sojourn_buf);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
@@ -3921,8 +3923,6 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	dp_mon_link_free(pdev);
-
-	dp_tx_ppdu_stats_detach(pdev);
 
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
