@@ -152,6 +152,7 @@ static inline void sde_ltm_get_phase_info(struct sde_hw_cp_cfg *hw_cfg,
 		info->merge_en = true;
 
 	info->init_h[LTM_0] = (1 << 23);
+	info->init_h[LTM_1] = (1 << 23);
 	info->init_v = (1 << 23);
 	info->inc_h = ((count_h - 1) << 24) / (hw_cfg->displayh - 1);
 	info->inc_v = ((count_v - 1) << 24) / (hw_cfg->displayv - 1);
