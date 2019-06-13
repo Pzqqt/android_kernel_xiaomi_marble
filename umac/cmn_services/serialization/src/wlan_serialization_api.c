@@ -676,6 +676,25 @@ error:
 	return cmd_type;
 }
 
+bool wlan_ser_is_vdev_queue_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_ser_vdev_obj *ser_vdev_obj;
+	struct wlan_serialization_vdev_queue *vdev_queue;
+
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+	if (!ser_vdev_obj) {
+		ser_err("invalid ser_vdev_obj");
+		return false;
+	}
+
+	vdev_queue = wlan_serialization_get_vdev_queue_obj(
+			ser_vdev_obj, WLAN_SER_CMD_NONSCAN);
+	if (vdev_queue->queue_disable)
+		return false;
+	else
+		return true;
+}
+
 QDF_STATUS
 wlan_ser_get_cmd_activation_status(struct wlan_objmgr_vdev *vdev)
 {

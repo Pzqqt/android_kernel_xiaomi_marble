@@ -589,6 +589,16 @@ QDF_STATUS
 wlan_ser_get_cmd_activation_status(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_ser_is_vdev_queue_enabled() - Return vdev queue status
+ * @vdev: vdev object
+ *
+ * This API return vdev queue enable status
+ *
+ * Return: true if vdev queue is enabled
+ */
+bool wlan_ser_is_vdev_queue_enabled(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_ser_validate_umac_cmd() - validate umac cmd data
  * @vdev: objmgr vdev pointer
  * @cmd_type: cmd type to match

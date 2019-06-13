@@ -41,6 +41,8 @@ wlan_vdev_mlme_ser_start_bss(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
 	 * a. Cancel any existing start bss cmd in the pending queue
@@ -77,6 +79,9 @@ wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 		mlme_err("Null input");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
 	 * a. Cancel any existing start/stop/restart command in the pending
@@ -112,6 +117,9 @@ wlan_vdev_mlme_ser_restart_bss(struct wlan_serialization_command *cmd)
 		mlme_err("Null input");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
 	 * a. Cancel any existing RESTART cmd in the pending queue
@@ -133,6 +141,9 @@ wlan_vdev_mlme_ser_connect(struct wlan_serialization_command *cmd)
 		mlme_err("Null input");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
 	 * a. Cancel any existing CONNECT cmd in the pending queue
@@ -165,6 +176,9 @@ wlan_vdev_mlme_ser_disconnect(struct wlan_serialization_command *cmd)
 		mlme_err("Null input");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
+
+	if (!wlan_ser_is_vdev_queue_enabled(cmd->vdev))
+		return WLAN_SER_CMD_QUEUE_DISABLED;
 	/*
 	 * Serialization command filtering logic
 	 * a.Cancel any existing CONNECT/DISCONNECT/RESTART command in the
