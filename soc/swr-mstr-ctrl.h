@@ -155,8 +155,11 @@ struct swr_mstr_ctrl {
 	u32 intr_mask;
 	struct port_params **port_param;
 	struct clk *lpass_core_hw_vote;
+	struct clk *lpass_core_audio;
 	u8 num_usecase;
 	u32 swr_irq_wakeup_capable;
+	int hw_core_clk_en;
+	int aud_core_clk_en;
 };
 
 #endif /* _SWR_WCD_CTRL_H */
