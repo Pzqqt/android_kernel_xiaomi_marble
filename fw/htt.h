@@ -188,7 +188,7 @@
  * 3.67 Add drop threshold field to HTT_H2T RX_RING_SELECTION_CFG msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 67
+#define HTT_CURRENT_VERSION_MINOR 68
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -4413,7 +4413,12 @@ PREPACK struct htt_wdi_ipa_op_request_t
  *                     Others: Reserverd
  *           b'19    - response_required:
  *                     Host needs HTT_T2H_MSG_TYPE_SRING_SETUP_DONE as response
- *           b'20:31 - reserved:  reserved for future use
+ *           b'20    - ipa_drop_flag:
+                       Indicates that host will config ipa drop threshold percentage
+ *           b'21:31 - reserved:  reserved for future use
+ * dword13 - b'0:7   - ipa drop low threshold percentage:
+ *           b'8:15  - ipa drop high threshold percentage:
+ *           b'16:31 - Reserved
  */
 PREPACK struct htt_sring_setup_t {
     A_UINT32 msg_type:  8,
@@ -4438,7 +4443,11 @@ PREPACK struct htt_sring_setup_t {
     A_UINT32 intr_low_threshold: 16,
              prefetch_timer_cfg:  3,
              response_required:   1,
-             reserved1:          12;
+             ipa_drop_flag:      1,
+             reserved1:          11;
+    A_UINT32 ipa_drop_low_threshold:    8,
+             ipa_drop_high_threshold:   8,
+             reserved:                  16;
 } POSTPACK;
 
 enum htt_srng_ring_type {
