@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -364,6 +364,9 @@ os_if_spectral_nl_unicast_msg(struct wlan_objmgr_pdev *pdev)
 				 ps->skb,
 				 ps->spectral_pid, MSG_DONTWAIT);
 
+	/* clear the local copy */
+	ps->skb = NULL;
+
 	return status;
 }
 #else
@@ -398,6 +401,9 @@ os_if_spectral_nl_unicast_msg(struct wlan_objmgr_pdev *pdev)
 			WLAN_NL_MSG_SPECTRAL_SCAN, CLD80211_MCGRP_OEM_MSGS);
 	if (status < 0)
 		spectral_err("failed to send to spectral scan app");
+
+	/* clear the local copy */
+	ps->skb = NULL;
 
 	return status;
 }
@@ -450,6 +456,9 @@ os_if_spectral_nl_bcast_msg(struct wlan_objmgr_pdev *pdev)
 	status = netlink_broadcast(ps->spectral_sock,
 				   ps->skb,
 				   0, 1, GFP_ATOMIC);
+
+	/* clear the local copy */
+	ps->skb = NULL;
 
 	return status;
 }
@@ -538,6 +547,8 @@ void os_if_spectral_netlink_deinit(struct wlan_objmgr_pdev *pdev)
 		spectral_err("Spectral context is NULL!");
 		return;
 	}
+
+	os_if_spectral_free_skb(pdev);
 
 	if (sptrl_ctx->sptrlc_deregister_netlink_cb)
 		sptrl_ctx->sptrlc_deregister_netlink_cb(pdev);

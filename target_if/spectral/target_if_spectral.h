@@ -1463,9 +1463,10 @@ init_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
  */
 static inline void
 deinit_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
-	if (spectral->spectral_report_cache)
+	if (spectral->spectral_report_cache && spectral->nl_cb.free_nbuff) {
 		spectral->nl_cb.free_nbuff(spectral->pdev_obj);
-	spectral->spectral_report_cache = NULL;
+		spectral->spectral_report_cache = NULL;
+	}
 }
 
 /**
