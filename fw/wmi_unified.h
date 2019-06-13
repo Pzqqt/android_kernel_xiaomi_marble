@@ -10127,6 +10127,7 @@ typedef struct {
 #define WMI_VDEV_START_RESPONSE_NOT_SUPPORTED  0x2  /** unsupported VDEV combination */
 #define WMI_VDEV_START_RESPONSE_DFS_VIOLATION  0x3  /** DFS_VIOLATION since channel in the NOL is selected */
 #define WMI_VDEV_START_RESPONSE_INVALID_REGDOMAIN 0x4 /** Invalid regulatory domain in VDEV start */
+#define WMI_VDEV_START_RESPONSE_INVALID_BAND   0x5    /** Band unsupported by current hw mode in VDEV start */
 
 /** Beacon processing related command and event structures */
 typedef struct {
