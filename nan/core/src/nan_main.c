@@ -403,7 +403,16 @@ ndi_remove_and_update_primary_connection(struct wlan_objmgr_psoc *psoc,
 	qdf_list_t *peer_list;
 
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("Invalid psoc nan private obj");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	vdev_nan_obj = nan_get_vdev_priv_obj(vdev);
+	if (!vdev_nan_obj) {
+		nan_err("Invalid vdev nan private obj");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
 	if (!peer_list) {
