@@ -1057,8 +1057,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
 	qdf_ipa_ep_cfg_t *tx_cfg;
 	qdf_ipa_ep_cfg_t *rx_cfg;
-	qdf_ipa_wdi_pipe_setup_info_t *tx;
-	qdf_ipa_wdi_pipe_setup_info_t *rx;
+	qdf_ipa_wdi_pipe_setup_info_t *tx = NULL;
+	qdf_ipa_wdi_pipe_setup_info_t *rx = NULL;
 	qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu;
 	qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu;
 	qdf_ipa_wdi_conn_in_params_t pipe_in;
@@ -1068,9 +1068,6 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
 
-
-	qdf_mem_zero(&tx, sizeof(qdf_ipa_wdi_pipe_setup_info_t));
-	qdf_mem_zero(&rx, sizeof(qdf_ipa_wdi_pipe_setup_info_t));
 	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
 	qdf_mem_zero(&pipe_out, sizeof(pipe_out));
 
