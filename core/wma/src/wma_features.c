@@ -1574,6 +1574,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 	case WOW_REASON_WLAN_BL:
 		return "MOTION_DETECT_BASELINE";
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+	case WOW_REASON_PAGE_FAULT:
+		return "PAGE_FAULT";
 	default:
 		return "unknown";
 	}
