@@ -2686,7 +2686,7 @@ static void dp_enable_verbose_debug(struct dp_soc *soc)
  */
 static int dp_soc_cmn_setup(struct dp_soc *soc)
 {
-	int i;
+	int i, cached;
 	struct hal_reo_params reo_params;
 	int tx_ring_size;
 	int tx_comp_ring_size;
@@ -2736,6 +2736,11 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
 				goto fail1;
 			}
+
+			/* Disable cached desc if NSS offload is enabled */
+			cached = WLAN_CFG_DST_RING_CACHED_DESC;
+			if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
+				cached = 0;
 			/*
 			 * TBD: Set IPA WBM ring size with ini IPA UC tx buffer
 			 * count
@@ -2743,7 +2748,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
 					  WBM2SW_RELEASE, i, 0,
 					  tx_comp_ring_size,
-					  WLAN_CFG_DST_RING_CACHED_DESC)) {
+					  cached)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_ERROR,
 					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
@@ -2791,10 +2796,15 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		QDF_TRACE(QDF_MODULE_ID_DP,
 			QDF_TRACE_LEVEL_INFO,
 			FL("num_reo_dest_rings %d"), soc->num_reo_dest_rings);
+
+		/* Disable cached desc if NSS offload is enabled */
+		cached = WLAN_CFG_DST_RING_CACHED_DESC;
+		if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
+			cached = 0;
+
 		for (i = 0; i < soc->num_reo_dest_rings; i++) {
 			if (dp_srng_setup(soc, &soc->reo_dest_ring[i], REO_DST,
-					  i, 0, reo_dst_ring_size,
-					  WLAN_CFG_DST_RING_CACHED_DESC)) {
+					  i, 0, reo_dst_ring_size, cached)) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL(RNG_ERR "reo_dest_ring [%d]"), i);
