@@ -2086,125 +2086,164 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 }
 
 static QDF_STATUS
+dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
+			   struct dp_pdev *dp_pdev)
+{
+	qdf_dma_addr_t paddr;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	*nbuf = qdf_nbuf_alloc(dp_soc->osdev, RX_BUFFER_SIZE,
+			      RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT,
+			      FALSE);
+	if (!(*nbuf)) {
+		dp_err("nbuf alloc failed");
+		DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
+		return ret;
+	}
+
+	ret = qdf_nbuf_map_single(dp_soc->osdev, *nbuf,
+				  QDF_DMA_FROM_DEVICE);
+	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+		qdf_nbuf_free(*nbuf);
+		dp_err("nbuf map failed");
+		DP_STATS_INC(dp_pdev, replenish.map_err, 1);
+		return ret;
+	}
+
+	paddr = qdf_nbuf_get_frag_paddr(*nbuf, 0);
+
+	ret = check_x86_paddr(dp_soc, nbuf, &paddr, dp_pdev);
+	if (ret == QDF_STATUS_E_FAILURE) {
+		qdf_nbuf_unmap_single(dp_soc->osdev, *nbuf,
+				      QDF_DMA_FROM_DEVICE);
+		qdf_nbuf_free(*nbuf);
+		dp_err("nbuf check x86 failed");
+		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
+		return ret;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
 dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			  struct dp_srng *dp_rxdma_srng,
 			  struct rx_desc_pool *rx_desc_pool,
-			  uint32_t num_req_buffers,
-			  union dp_rx_desc_list_elem_t **desc_list,
-			  union dp_rx_desc_list_elem_t **tail)
+			  uint32_t num_req_buffers)
 {
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(dp_soc, mac_id);
 	void *rxdma_srng = dp_rxdma_srng->hal_srng;
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_ring_entry;
 	qdf_dma_addr_t paddr;
-	void **rx_nbuf_arr;
-	uint32_t nr_descs;
-	uint32_t nr_nbuf;
+	qdf_nbuf_t *rx_nbuf_arr;
+	uint32_t nr_descs, nr_nbuf = 0, nr_nbuf_total = 0;
+	uint32_t buffer_index, nbuf_ptrs_per_page;
 	qdf_nbuf_t nbuf;
 	QDF_STATUS ret;
-	int i;
+	int page_idx, total_pages;
+	union dp_rx_desc_list_elem_t *desc_list = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
 
 	if (qdf_unlikely(!rxdma_srng)) {
 		DP_STATS_INC(dp_pdev, replenish.rxdma_err, num_req_buffers);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "requested %u RX buffers for driver attach", num_req_buffers);
+	dp_debug("requested %u RX buffers for driver attach", num_req_buffers);
 
 	nr_descs = dp_rx_get_free_desc_list(dp_soc, mac_id, rx_desc_pool,
-					    num_req_buffers, desc_list, tail);
+					    num_req_buffers, &desc_list, &tail);
 	if (!nr_descs) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "no free rx_descs in freelist");
+		dp_err("no free rx_descs in freelist");
 		DP_STATS_INC(dp_pdev, err.desc_alloc_fail, num_req_buffers);
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "got %u RX descs for driver attach", nr_descs);
+	dp_debug("got %u RX descs for driver attach", nr_descs);
 
-	rx_nbuf_arr = qdf_mem_malloc(nr_descs * sizeof(*rx_nbuf_arr));
+	/*
+	 * Try to allocate pointers to the nbuf one page at a time.
+	 * Take pointers that can fit in one page of memory and
+	 * iterate through the total descriptors that need to be
+	 * allocated in order of pages. Reuse the pointers that
+	 * have been allocated to fit in one page across each
+	 * iteration to index into the nbuf.
+	 */
+	total_pages = (nr_descs * sizeof(*rx_nbuf_arr)) / PAGE_SIZE;
+
+	/*
+	 * Add an extra page to store the remainder if any
+	 */
+	if ((nr_descs * sizeof(*rx_nbuf_arr)) % PAGE_SIZE)
+		total_pages++;
+	rx_nbuf_arr = qdf_mem_malloc(PAGE_SIZE);
 	if (!rx_nbuf_arr) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "failed to allocate nbuf array");
+		dp_err("failed to allocate nbuf array");
 		DP_STATS_INC(dp_pdev, replenish.rxdma_err, num_req_buffers);
+		QDF_BUG(0);
 		return QDF_STATUS_E_NOMEM;
 	}
+	nbuf_ptrs_per_page = PAGE_SIZE / sizeof(*rx_nbuf_arr);
 
-	for (nr_nbuf = 0; nr_nbuf < nr_descs; nr_nbuf++) {
-		nbuf = qdf_nbuf_alloc(dp_soc->osdev, RX_BUFFER_SIZE,
-				      RX_BUFFER_RESERVATION,
-				      RX_BUFFER_ALIGNMENT,
-				      FALSE);
-		if (!nbuf) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "nbuf alloc failed");
-			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
-			break;
+	for (page_idx = 0; page_idx < total_pages; page_idx++) {
+		qdf_mem_zero(rx_nbuf_arr, PAGE_SIZE);
+
+		for (nr_nbuf = 0; nr_nbuf < nbuf_ptrs_per_page; nr_nbuf++) {
+			/*
+			 * The last page of buffer pointers may not be required
+			 * completely based on the number of descriptors. Below
+			 * check will ensure we are allocating only the
+			 * required number of descriptors.
+			 */
+			if (nr_nbuf_total >= nr_descs)
+				break;
+			ret = dp_pdev_nbuf_alloc_and_map(dp_soc,
+							 &rx_nbuf_arr[nr_nbuf],
+							 dp_pdev);
+			if (QDF_IS_STATUS_ERROR(ret))
+				break;
+
+			nr_nbuf_total++;
 		}
 
-		ret = qdf_nbuf_map_single(dp_soc->osdev, nbuf,
-					  QDF_DMA_FROM_DEVICE);
-		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
-			qdf_nbuf_free(nbuf);
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "nbuf map failed");
-			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
-			break;
+		hal_srng_access_start(dp_soc->hal_soc, rxdma_srng);
+
+		for (buffer_index = 0; buffer_index < nr_nbuf; buffer_index++) {
+			rxdma_ring_entry =
+				hal_srng_src_get_next(dp_soc->hal_soc,
+						      rxdma_srng);
+			qdf_assert_always(rxdma_ring_entry);
+
+			next = desc_list->next;
+			nbuf = rx_nbuf_arr[buffer_index];
+			paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
+
+			dp_rx_desc_prep(&desc_list->rx_desc, nbuf);
+			desc_list->rx_desc.in_use = 1;
+
+			hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
+						     desc_list->rx_desc.cookie,
+						     rx_desc_pool->owner);
+
+			dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, nbuf, true);
+
+			desc_list = next;
 		}
 
-		paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
-
-		ret = check_x86_paddr(dp_soc, &nbuf, &paddr, dp_pdev);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			qdf_nbuf_unmap_single(dp_soc->osdev, nbuf,
-					      QDF_DMA_FROM_DEVICE);
-			qdf_nbuf_free(nbuf);
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "nbuf check x86 failed");
-			DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
-			break;
-		}
-
-		rx_nbuf_arr[nr_nbuf] = (void *)nbuf;
+		hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "allocated %u nbuf for driver attach", nr_nbuf);
-
-	hal_srng_access_start(dp_soc->hal_soc, rxdma_srng);
-
-	for (i = 0; i < nr_nbuf; i++) {
-		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-							 rxdma_srng);
-		qdf_assert_always(rxdma_ring_entry);
-
-		next = (*desc_list)->next;
-		nbuf = rx_nbuf_arr[i];
-		paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
-
-		dp_rx_desc_prep(&((*desc_list)->rx_desc), nbuf);
-		(*desc_list)->rx_desc.in_use = 1;
-
-		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
-					     (*desc_list)->rx_desc.cookie,
-					     rx_desc_pool->owner);
-
-		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, nbuf, true);
-
-		*desc_list = next;
-	}
-
-	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "filled %u RX buffers for driver attach", nr_nbuf);
-	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, nr_nbuf, RX_BUFFER_SIZE *
-			 nr_nbuf);
-
+	dp_info("filled %u RX buffers for driver attach", nr_nbuf_total);
 	qdf_mem_free(rx_nbuf_arr);
+
+	if (!nr_nbuf_total) {
+		dp_err("No nbuf's allocated");
+		QDF_BUG(0);
+		return QDF_STATUS_E_RESOURCES;
+	}
+	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, nr_nbuf,
+			 RX_BUFFER_SIZE * nr_nbuf_total);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2226,8 +2265,6 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	uint32_t rxdma_entries;
-	union dp_rx_desc_list_elem_t *desc_list = NULL;
-	union dp_rx_desc_list_elem_t *tail = NULL;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 
@@ -2252,8 +2289,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
 
 	return dp_pdev_rx_buffers_attach(soc, pdev_id, dp_rxdma_srng,
-					 rx_desc_pool, rxdma_entries - 1,
-					 &desc_list, &tail);
+					 rx_desc_pool, rxdma_entries - 1);
 }
 
 /*
