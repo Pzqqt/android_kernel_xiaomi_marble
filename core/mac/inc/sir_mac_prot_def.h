@@ -159,13 +159,6 @@
 #define SIR_MAC_ACTION_GAS_COMEBACK_REQUEST     0x0C
 #define SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE    0x0D
 
-/* WNM Action field values; IEEE Std 802.11-2012, 8.5.14.1, Table 8-250 */
-#define SIR_MAC_WNM_BSS_TM_QUERY         6
-#define SIR_MAC_WNM_BSS_TM_REQUEST       7
-#define SIR_MAC_WNM_BSS_TM_RESPONSE      8
-#define SIR_MAC_WNM_NOTIF_REQUEST        26
-#define SIR_MAC_WNM_NOTIF_RESPONSE       27
-
 /* Protected Dual of Public Action(PDPA) frames Action field */
 #define SIR_MAC_PDPA_GAS_INIT_REQ      10
 #define SIR_MAC_PDPA_GAS_INIT_RSP      11

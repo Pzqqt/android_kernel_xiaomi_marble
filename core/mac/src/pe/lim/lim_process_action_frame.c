@@ -1926,11 +1926,11 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		pe_debug("WNM Action category: %d action: %d",
 			action_hdr->category, action_hdr->actionID);
 		switch (action_hdr->actionID) {
-		case SIR_MAC_WNM_BSS_TM_QUERY:
-		case SIR_MAC_WNM_BSS_TM_REQUEST:
-		case SIR_MAC_WNM_BSS_TM_RESPONSE:
-		case SIR_MAC_WNM_NOTIF_REQUEST:
-		case SIR_MAC_WNM_NOTIF_RESPONSE:
+		case WNM_BSS_TM_QUERY:
+		case WNM_BSS_TM_REQUEST:
+		case WNM_BSS_TM_RESPONSE:
+		case WNM_NOTIF_REQUEST:
+		case WNM_NOTIF_RESPONSE:
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			/* Forward to the SME to HDD to wpa_supplicant */
