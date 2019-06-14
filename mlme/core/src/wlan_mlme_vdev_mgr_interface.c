@@ -27,6 +27,7 @@
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
+static struct vdev_mlme_ops mon_mlme_ops;
 static struct mlme_ext_ops ext_ops;
 
 bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
@@ -74,6 +75,8 @@ QDF_STATUS mlme_register_vdev_mgr_ops(struct vdev_mlme_obj *vdev_mlme)
 
 	if (mlme_is_vdev_in_beaconning_mode(vdev->vdev_mlme.vdev_opmode))
 		vdev_mlme->ops = &ap_mlme_ops;
+	else if (vdev->vdev_mlme.vdev_opmode == QDF_MONITOR_MODE)
+		vdev_mlme->ops = &mon_mlme_ops;
 	else
 		vdev_mlme->ops = &sta_mlme_ops;
 
@@ -468,6 +471,7 @@ static QDF_STATUS vdevmgr_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	return wma_ap_mlme_vdev_down_send(vdev_mlme, data_len, data);
 }
+
 /**
  * vdevmgr_notify_down_complete() - callback to indicate vdev down is completed
  * @vdev_mlme: vdev mlme object
@@ -845,6 +849,119 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * mon_mlme_vdev_start_restart_send () - send vdev start/restart req
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to initiate actions of VDEV start/restart
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_vdev_start_restart_send(
+	struct vdev_mlme_obj *vdev_mlme,
+	uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return lim_mon_mlme_vdev_start_send(vdev_mlme, data_len, data);
+}
+
+/**
+ * mon_start_continue () - vdev start rsp calback
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to handle the VDEV START/RESTART calback
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wma_mon_mlme_vdev_start_continue(vdev_mlme, data_len, data);
+}
+
+/**
+ * mon_mlme_vdev_up_send() - callback to send vdev up
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send vdev up req
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wma_mon_mlme_vdev_up_send(vdev_mlme, data_len, data);
+}
+
+/**
+ * mon_mlme_vdev_disconnect_peers() - callback to disconnect all connected peers
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * montior mode no connected peers, only do VDEV state transition.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_vdev_disconnect_peers(
+		struct vdev_mlme_obj *vdev_mlme,
+		uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wlan_vdev_mlme_sm_deliver_evt(
+				vdev_mlme->vdev,
+				WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
+				0, NULL);
+}
+
+/**
+ * mon_mlme_vdev_stop_send() - callback to send stop vdev request
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send stop vdev request
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wma_mon_mlme_vdev_stop_send(vdev_mlme, data_len, data);
+}
+
+/**
+ * mon_mlme_vdev_down_send() - callback to send vdev down req
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send vdev down req
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS mon_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data)
+{
+	mlme_legacy_debug("vdev id = %d",
+			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+	return wma_mon_mlme_vdev_down_send(vdev_mlme, data_len, data);
+}
+
+/**
  * struct sta_mlme_ops - VDEV MLME operation callbacks strucutre for sta
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
  *                                      MLME start operation
@@ -932,6 +1049,16 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_is_newchan_no_cac = ap_mlme_vdev_is_newchan_no_cac,
+};
+
+static struct vdev_mlme_ops mon_mlme_ops = {
+	.mlme_vdev_start_send = mon_mlme_vdev_start_restart_send,
+	.mlme_vdev_restart_send = mon_mlme_vdev_start_restart_send,
+	.mlme_vdev_start_continue = mon_mlme_start_continue,
+	.mlme_vdev_up_send = mon_mlme_vdev_up_send,
+	.mlme_vdev_disconnect_peers = mon_mlme_vdev_disconnect_peers,
+	.mlme_vdev_stop_send = mon_mlme_vdev_stop_send,
+	.mlme_vdev_down_send = mon_mlme_vdev_down_send,
 };
 
 /**
