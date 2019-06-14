@@ -1386,3 +1386,11 @@ bool reg_etsi13_regdmn(uint8_t reg_dmn)
 {
 	return reg_dmn == ETSI13;
 }
+
+bool reg_en302_502_regdmn(uint16_t regdmn)
+{
+	return ((regdmn == ETSI11_WORLD) ||
+		(regdmn == ETSI12_WORLD) ||
+		(regdmn == ETSI14_WORLD) ||
+		(regdmn == ETSI15_WORLD));
+}

@@ -708,3 +708,8 @@ enum channel_enum wlan_reg_get_chan_enum(uint32_t chan_num)
 {
 	return reg_get_chan_enum(chan_num);
 }
+
+bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_regdmn_en302502_applicable(pdev);
+}
