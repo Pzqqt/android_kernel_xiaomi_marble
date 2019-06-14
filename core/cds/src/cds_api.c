@@ -1803,7 +1803,7 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 
 	if (!in_interrupt() && !irqs_disabled()) {
 		ret = pld_collect_rddm(qdf->dev);
-		if (ret < 0)
+		if (ret < 0 && ret != -EOPNOTSUPP)
 			QDF_DEBUG_PANIC("Fail to collect FW ramdump %d", ret);
 	}
 
