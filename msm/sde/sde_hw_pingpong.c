@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/iopoll.h>
@@ -459,11 +459,18 @@ static void sde_hw_pp_reset_3d_merge_mode(struct sde_hw_pingpong *pp)
 	if (pp->merge_3d && pp->merge_3d->ops.reset_blend_mode)
 		pp->merge_3d->ops.reset_blend_mode(pp->merge_3d);
 }
+
+static unsigned long sde_hw_pp_get_caps(struct sde_hw_pingpong *pp)
+{
+	return !pp ? 0 : pp->caps->features;
+}
+
 static void _setup_pingpong_ops(struct sde_hw_pingpong_ops *ops,
 	const struct sde_pingpong_cfg *hw_cap)
 {
 	u32 version = 0;
 
+	ops->get_hw_caps = sde_hw_pp_get_caps;
 	if (hw_cap->features & BIT(SDE_PINGPONG_TE)) {
 		ops->setup_tearcheck = sde_hw_pp_setup_te_config;
 		ops->enable_tearcheck = sde_hw_pp_enable_te;
@@ -475,10 +482,12 @@ static void _setup_pingpong_ops(struct sde_hw_pingpong_ops *ops,
 		ops->poll_timeout_wr_ptr = sde_hw_pp_poll_timeout_wr_ptr;
 		ops->get_line_count = sde_hw_pp_get_line_count;
 	}
-	ops->setup_dsc = sde_hw_pp_setup_dsc;
-	ops->enable_dsc = sde_hw_pp_dsc_enable;
-	ops->disable_dsc = sde_hw_pp_dsc_disable;
-	ops->get_dsc_status = sde_hw_pp_get_dsc_status;
+	if (hw_cap->features & BIT(SDE_PINGPONG_DSC)) {
+		ops->setup_dsc = sde_hw_pp_setup_dsc;
+		ops->enable_dsc = sde_hw_pp_dsc_enable;
+		ops->disable_dsc = sde_hw_pp_dsc_disable;
+		ops->get_dsc_status = sde_hw_pp_get_dsc_status;
+	}
 
 	version = SDE_COLOR_PROCESS_MAJOR(hw_cap->sblk->dither.version);
 	switch (version) {

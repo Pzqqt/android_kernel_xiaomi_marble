@@ -2161,7 +2161,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 
 	/* Get PP for DSC configuration */
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-		sde_enc->hw_dsc_pp[i] = NULL;
+		struct sde_hw_pingpong *pp = NULL;
+		unsigned long features = 0;
+
 		if (!sde_enc->hw_dsc[i])
 			continue;
 
@@ -2169,8 +2171,13 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		request_hw.type = SDE_HW_BLK_PINGPONG;
 		if (!sde_rm_request_hw_blk(&sde_kms->rm, &request_hw))
 			break;
-		sde_enc->hw_dsc_pp[i] =
-			(struct sde_hw_pingpong *) request_hw.hw;
+		pp = (struct sde_hw_pingpong *) request_hw.hw;
+		features = pp->ops.get_hw_caps(pp);
+
+		if (test_bit(SDE_PINGPONG_DSC, &features))
+			sde_enc->hw_dsc_pp[i] = pp;
+		else
+			sde_enc->hw_dsc_pp[i] = NULL;
 	}
 
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {

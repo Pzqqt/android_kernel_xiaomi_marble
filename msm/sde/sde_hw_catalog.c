@@ -3181,6 +3181,7 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 	if (rc)
 		goto end;
 
+	major_version = SDE_HW_MAJOR(sde_cfg->hwversion);
 	for (i = 0; i < off_count; i++) {
 		pp = sde_cfg->pingpong + i;
 		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
@@ -3202,7 +3203,6 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		snprintf(sblk->te.name, SDE_HW_BLK_NAME_LEN, "te_%u",
 				pp->id - PINGPONG_0);
 
-		major_version = SDE_HW_MAJOR(sde_cfg->hwversion);
 		if (major_version < SDE_HW_MAJOR(SDE_HW_VER_500))
 			set_bit(SDE_PINGPONG_TE, &pp->features);
 
@@ -3218,16 +3218,20 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (PROP_VALUE_ACCESS(prop_value, PP_SLAVE, i))
 			set_bit(SDE_PINGPONG_SLAVE, &pp->features);
 
-		sblk->dsc.base = PROP_VALUE_ACCESS(prop_value, DSC_OFF, i);
-		if (sblk->dsc.base) {
-			sblk->dsc.id = SDE_PINGPONG_DSC;
-			snprintf(sblk->dsc.name, SDE_HW_BLK_NAME_LEN, "dsc_%u",
-					pp->id - PINGPONG_0);
-			set_bit(SDE_PINGPONG_DSC, &pp->features);
+		if (major_version < SDE_HW_MAJOR(SDE_HW_VER_700)) {
+			sblk->dsc.base = PROP_VALUE_ACCESS(prop_value,
+					DSC_OFF, i);
+			if (sblk->dsc.base) {
+				sblk->dsc.id = SDE_PINGPONG_DSC;
+				snprintf(sblk->dsc.name, SDE_HW_BLK_NAME_LEN,
+						"dsc_%u",
+						pp->id - PINGPONG_0);
+				set_bit(SDE_PINGPONG_DSC, &pp->features);
+			}
 		}
 
 		sblk->dither.base = PROP_VALUE_ACCESS(prop_value, DITHER_OFF,
-							i);
+				i);
 		if (sblk->dither.base) {
 			sblk->dither.id = SDE_PINGPONG_DITHER;
 			snprintf(sblk->dither.name, SDE_HW_BLK_NAME_LEN,

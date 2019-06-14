@@ -32,6 +32,7 @@ struct sde_hw_dsc_cfg {
  *  @disable_dsc : disables DSC encoder
  *  @setup_dither : function to program the dither hw block
  *  @get_line_count: obtain current vertical line counter
+ *  @get_hw_caps: returns features supported by this pp block
  */
 struct sde_hw_pingpong_ops {
 	/**
@@ -126,6 +127,11 @@ struct sde_hw_pingpong_ops {
 	 * reset 3d blend configuration
 	 */
 	void (*reset_3d_mode)(struct sde_hw_pingpong *pp);
+
+	/**
+	 * get PP features supported by this instance
+	 */
+	unsigned long (*get_hw_caps)(struct sde_hw_pingpong *pp);
 };
 
 struct sde_hw_merge_3d_ops {

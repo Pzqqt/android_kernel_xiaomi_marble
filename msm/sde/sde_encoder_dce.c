@@ -188,9 +188,9 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 		return;
 	}
 
-	if (!dsc || !hw_dsc || !hw_pp || !hw_dsc_pp) {
-		SDE_ERROR("invalid params %d %d %d %d\n", !dsc, !hw_dsc,
-				!hw_pp, !hw_dsc_pp);
+	if (!dsc || !hw_dsc || !hw_pp) {
+		SDE_ERROR("invalid params %d %d %d\n", !dsc, !hw_dsc,
+				!hw_pp);
 		return;
 	}
 
@@ -200,13 +200,13 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 	if (hw_dsc->ops.dsc_config_thresh)
 		hw_dsc->ops.dsc_config_thresh(hw_dsc, dsc);
 
-	if (hw_dsc_pp->ops.setup_dsc)
+	if (hw_dsc_pp && hw_dsc_pp->ops.setup_dsc)
 		hw_dsc_pp->ops.setup_dsc(hw_dsc_pp);
 
 	if (hw_dsc->ops.bind_pingpong_blk)
 		hw_dsc->ops.bind_pingpong_blk(hw_dsc, true, hw_pp->idx);
 
-	if (hw_dsc_pp->ops.enable_dsc)
+	if (hw_dsc_pp && hw_dsc_pp->ops.enable_dsc)
 		hw_dsc_pp->ops.enable_dsc(hw_dsc_pp);
 }
 
@@ -335,7 +335,7 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 		hw_dsc[i] = sde_enc->hw_dsc[i];
 		hw_dsc_pp[i] = sde_enc->hw_dsc_pp[i];
 
-		if (!hw_pp[i] || !hw_dsc[i] || !hw_dsc_pp[i]) {
+		if (!hw_pp[i] || !hw_dsc[i]) {
 			SDE_ERROR_DCE(sde_enc, "invalid params for DSC\n");
 			SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
 				dsc_common_mode, i, active);
