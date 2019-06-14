@@ -31,6 +31,20 @@
 #include <wlan_cp_stats_utils_api.h>
 #include "../../core/src/wlan_cp_stats_defs.h"
 
+static bool tgt_mc_cp_stats_is_last_event(struct stats_event *ev)
+{
+	bool is_last_event;
+
+	if (IS_MSB_SET(ev->last_event)) {
+		is_last_event = IS_LSB_SET(ev->last_event);
+		cp_stats_debug("is_last_event %d", is_last_event);
+	} else {
+		cp_stats_debug("FW does not support last event bit");
+		is_last_event = !!ev->peer_stats;
+	}
+	return is_last_event;
+}
+
 void tgt_cp_stats_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	rx_ops->cp_stats_rx_ops.process_stats_event =
@@ -520,8 +534,10 @@ complete:
 		return;
 
 	tgt_mc_cp_stats_extract_peer_extd_stats(psoc, ev);
-	tgt_mc_cp_stats_prepare_raw_peer_rssi(psoc, &last_req);
-	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS);
+	if (tgt_mc_cp_stats_is_last_event(ev)) {
+		tgt_mc_cp_stats_prepare_raw_peer_rssi(psoc, &last_req);
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS);
+	}
 }
 
 static void tgt_mc_cp_stats_extract_cca_stats(struct wlan_objmgr_psoc *psoc,
@@ -804,13 +820,7 @@ static void tgt_mc_cp_stats_extract_station_stats(
 				struct stats_event *ev)
 {
 	QDF_STATUS status;
-	bool is_last_event;
 	struct request_info last_req = {0};
-
-	if (IS_MSB_SET(ev->last_event))
-		is_last_event = IS_LSB_SET(ev->last_event);
-	else
-		is_last_event = !!ev->peer_stats;
 
 	status = ucfg_mc_cp_stats_get_pending_req(psoc,
 						  TYPE_STATION_STATS,
@@ -829,7 +839,7 @@ static void tgt_mc_cp_stats_extract_station_stats(
 	 * PEER stats are the last stats sent for get_station statistics.
 	 * reset type_map bit for station stats .
 	 */
-	if (is_last_event) {
+	if (tgt_mc_cp_stats_is_last_event(ev)) {
 		tgt_mc_cp_stats_prepare_n_send_raw_station_stats(psoc,
 								 &last_req);
 		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS);
