@@ -644,6 +644,7 @@ struct dp_soc_stats {
 		uint32_t added;
 		uint32_t deleted;
 		uint32_t aged_out;
+		uint32_t map_err;
 	} ast;
 
 	/* SOC level TX stats */
