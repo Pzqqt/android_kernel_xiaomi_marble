@@ -2738,6 +2738,17 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
 	psession_entry->vhtCapability = 1;
 }
 
+void lim_mon_deinit_session(struct mac_context *mac_ptr,
+			    struct sir_delete_session *msg)
+{
+	struct pe_session *session;
+
+	session = pe_find_session_by_session_id(mac_ptr, msg->vdev_id);
+
+	if (session && session->bssType == eSIR_MONITOR_MODE)
+		pe_delete_session(mac_ptr, session);
+}
+
 /**
  * lim_update_ext_cap_ie() - Update Extended capabilities IE(if present)
  *          with capabilities of Fine Time measurements(FTM) if set in driver

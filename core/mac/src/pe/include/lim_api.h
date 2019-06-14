@@ -333,6 +333,16 @@ void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *sessi
 void lim_mon_init_session(struct mac_context *mac_ptr,
 			  struct sir_create_session *msg);
 
+/**
+ * lim_mon_deinit_session() - delete PE session for monitor mode operation
+ * @mac_ptr: mac pointer
+ * @msg: Pointer to struct sir_delete_session type.
+ *
+ * Return: NONE
+ */
+void lim_mon_deinit_session(struct mac_context *mac_ptr,
+			    struct sir_delete_session *msg);
+
 #define limGetQosMode(pe_session, pVal) (*(pVal) = (pe_session)->limQosEnabled)
 #define limGetWmeMode(pe_session, pVal) (*(pVal) = (pe_session)->limWmeEnabled)
 #define limGetWsmMode(pe_session, pVal) (*(pVal) = (pe_session)->limWsmEnabled)

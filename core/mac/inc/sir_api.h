@@ -1893,6 +1893,18 @@ struct sir_create_session {
 	struct qdf_mac_addr bss_id;
 };
 
+/**
+ * struct sir_delete_session - Used for deleting session in monitor mode
+ * @type: SME host message type.
+ * @msg_len: Length of the message.
+ * @vdev_id: vdev id.
+ */
+struct sir_delete_session {
+	uint16_t type;
+	uint16_t msg_len;
+	uint8_t vdev_id;
+};
+
 /* Beacon Interval */
 struct change_bi_params {
 	uint16_t messageType;

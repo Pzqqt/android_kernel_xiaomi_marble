@@ -1746,6 +1746,11 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case eWNI_SME_MON_DEINIT_SESSION:
+		lim_mon_deinit_session(mac_ctx, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	case SIR_HAL_P2P_NOA_ATTR_IND:
 		session_entry = &mac_ctx->lim.gpSession[0];
 		pe_debug("Received message Noa_ATTR %x",

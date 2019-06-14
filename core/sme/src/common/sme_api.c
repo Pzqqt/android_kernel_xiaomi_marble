@@ -12995,6 +12995,22 @@ QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle, tSirMacAddr bss_id,
 	return status;
 }
 
+QDF_STATUS sme_delete_mon_session(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct sir_delete_session *msg;
+
+	msg = qdf_mem_malloc(sizeof(*msg));
+	if (msg) {
+		msg->type = eWNI_SME_MON_DEINIT_SESSION;
+		msg->vdev_id = vdev_id;
+		msg->msg_len = sizeof(*msg);
+		status = umac_send_mb_message_to_mac(msg);
+	}
+
+	return status;
+}
+
 void sme_set_chan_info_callback(mac_handle_t mac_handle,
 			void (*callback)(struct scan_chan_info *chan_info))
 {
