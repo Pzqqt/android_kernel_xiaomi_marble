@@ -4996,11 +4996,36 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 	}
 }
 
+static void lim_mon_change_channel(
+	struct mac_context *mac_ctx,
+	struct pe_session *session_entry)
+{
+	if (wlan_vdev_mlme_get_state(session_entry->vdev) == WLAN_VDEV_S_INIT)
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_START,
+					      sizeof(*session_entry),
+					      session_entry);
+	else if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
+		 WLAN_VDEV_S_UP) {
+		mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
+					      sizeof(*session_entry),
+					      session_entry);
+	} else {
+		pe_err("Invalid vdev state to change channel");
+	}
+}
+
 static void lim_change_channel(
 	struct mac_context *mac_ctx,
 	struct pe_session *session_entry)
 {
+	if (session_entry->bssType == eSIR_MONITOR_MODE)
+		return lim_mon_change_channel(mac_ctx, session_entry);
+
 	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+
 	if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
 	    WLAN_VDEV_S_DFS_CAC_WAIT)
 		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,

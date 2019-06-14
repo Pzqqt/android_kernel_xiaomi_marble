@@ -1682,6 +1682,20 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data);
 
+/**
+ * lim_mon_mlme_vdev_start_send() - Invokes VDEV start operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV start operation
+ *
+ * Return: SUCCESS on successful completion of start operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_mon_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *event);
+
 #ifdef CRYPTO_SET_KEY_CONVERGED
 static inline bool lim_is_set_key_req_converged(void)
 {

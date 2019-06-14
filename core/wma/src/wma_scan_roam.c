@@ -76,6 +76,7 @@
 #include "wlan_mlme_api.h"
 #include <wlan_mlme_main.h>
 #include <wlan_crypto_global_api.h>
+#include <cdp_txrx_mon.h>
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
@@ -3517,12 +3518,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		}
 	}
 
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() &&
-	    wma_is_vdev_up(vdev_id)) {
-		WMA_LOGD("%s: setting channel switch to true for vdev_id:%d",
-			 __func__, req.vdev_id);
-	}
-
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
 			WMA_TARGET_REQ_TYPE_VDEV_START, params,
 			WMA_VDEV_START_REQUEST_TIMEOUT);
@@ -3543,9 +3538,12 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		goto send_resp;
 	}
 
-	/* This is temporary, should be removed */
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
-		ol_htt_mon_note_chan(pdev, req.chan);
+	/*
+	 * Record monitor mode channel here in case HW
+	 * indicate RX PPDU TLV with invalid channel number.
+	 */
+	if (intr[vdev_id].type == WMI_VDEV_TYPE_MONITOR)
+		cdp_record_monitor_chan_num(soc, pdev, req.chan);
 
 	return;
 send_resp:

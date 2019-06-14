@@ -735,14 +735,13 @@ wma_release_vdev_ref(struct wma_txrx_node *iface)
 static void wma_handle_monitor_mode_vdev_detach(tp_wma_handle wma,
 						uint8_t vdev_id)
 {
-	if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
-		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
-		wma_remove_vdev_req(wma, vdev_id,
-				    WMA_TARGET_REQ_TYPE_VDEV_STOP);
-	}
+	struct wma_txrx_node *iface;
 
-	if (wma_send_vdev_down_to_fw(wma, vdev_id) != QDF_STATUS_SUCCESS)
-		WMA_LOGE("Failed to send vdev down cmd: vdev %d", vdev_id);
+	iface = &wma->interfaces[vdev_id];
+	wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+				      WLAN_VDEV_SM_EV_DOWN,
+				      0, NULL);
+	iface->vdev_active = false;
 }
 
 static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
@@ -1037,8 +1036,10 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 				pdel_sta_self_req_param, generateRsp);
 	}
 
-	if (QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_SUCCESS(status) &&
+	    iface->type != WMI_VDEV_TYPE_MONITOR)
 		iface->vdev_active = false;
+
 	return status;
 
 send_fail_rsp:
@@ -2636,6 +2637,7 @@ wma_handle_vdev_stop_rsp(tp_wma_handle wma,
 	struct wma_txrx_node *iface;
 
 	iface = &wma->interfaces[resp_event->vdev_id];
+
 	return wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 					     WLAN_VDEV_SM_EV_STOP_RESP,
 					     sizeof(*resp_event), resp_event);

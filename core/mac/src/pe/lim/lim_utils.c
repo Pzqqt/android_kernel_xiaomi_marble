@@ -8097,6 +8097,35 @@ QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS lim_mon_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data)
+{
+	struct mac_context *mac_ctx;
+	struct pe_session *session = (struct pe_session *)data;
+
+	if (!data) {
+		pe_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac_ctx = session->mac_ctx;
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_set_channel(mac_ctx, session->currentOperChannel,
+			session->ch_center_freq_seg0,
+			session->ch_center_freq_seg1,
+			session->ch_width,
+			session->maxTxPower,
+			session->peSessionId,
+			session->cac_duration_ms,
+			session->dfs_regdomain);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
 				tLimMlmStartCnf *start_cnf)
 {

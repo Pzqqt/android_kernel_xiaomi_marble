@@ -5064,6 +5064,103 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return wma_vdev_send_start_resp(wma, bss_params);
 }
 
+QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data)
+{
+	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
+		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+
+	wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
+				      WLAN_VDEV_SM_EV_START_SUCCESS,
+				      data_len,
+				      data);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				     uint16_t data_len, void *data)
+{
+	struct vdev_up_params param;
+	uint8_t vdev_id;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
+	param.vdev_id = vdev_id;
+	iface = &wma->interfaces[vdev_id];
+
+	status = wma_send_vdev_up_to_fw(wma, &param, iface->bssid);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
+			 __func__, vdev_id, iface->bssid);
+
+	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
+				   data, 0);
+
+	return status;
+}
+
+QDF_STATUS wma_mon_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
+{
+	uint8_t vdev_id;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
+
+	status = wma_send_vdev_stop_to_fw(wma, vdev_id);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("%s: Failed to send vdev stop cmd: vdev %d",
+			 __func__, vdev_id);
+
+	wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
+				      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+				      0,
+				      NULL);
+
+	return status;
+}
+
+QDF_STATUS wma_mon_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
+{
+	uint8_t vdev_id;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
+
+	status = wma_send_vdev_down_to_fw(wma, vdev_id);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("%s: Failed to send vdev down cmd: vdev %d",
+			 __func__, vdev_id);
+
+	wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
+				      WLAN_VDEV_SM_EV_DOWN_COMPLETE,
+				      0,
+				      NULL);
+
+	return status;
+}
+
 #ifdef FEATURE_WLM_STATS
 int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
 		      wma_wlm_stats_cb cb, void *cookie)
