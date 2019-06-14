@@ -2038,7 +2038,7 @@ done:
 		dp_peer_unref_del_find_by_id(peer);
 	}
 
-	if (deliver_list_head)
+	if (deliver_list_head && peer)
 		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
 				       deliver_list_tail);
 
