@@ -5094,6 +5094,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.rx_invalid_peer_id.num);
 		DP_PRINT_STATS("packet_len invalid %u",
 			       pdev->soc->stats.rx.err.rx_invalid_pkt_len.num);
+		DP_PRINT_STATS("sa or da idx invalid %u",
+			       pdev->soc->stats.rx.err.invalid_sa_da_idx);
 
 		DP_PRINT_STATS("Reo Statistics");
 		DP_PRINT_STATS("rbm error: %u msdus",

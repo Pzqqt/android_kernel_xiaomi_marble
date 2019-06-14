@@ -1440,9 +1440,9 @@ static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
 	if ((qdf_nbuf_is_sa_valid(nbuf) &&
 	     (hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr) >
 		wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) ||
-	    (qdf_nbuf_is_da_valid(nbuf) &&
-	     (hal_rx_msdu_end_da_idx_get(soc->hal_soc,
-					 rx_tlv_hdr) >
+	    (!qdf_nbuf_is_da_mcbc(nbuf) &&
+	     qdf_nbuf_is_da_valid(nbuf) &&
+	     (hal_rx_msdu_end_da_idx_get(soc->hal_soc, rx_tlv_hdr) >
 	      wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))))
 		return false;
 
