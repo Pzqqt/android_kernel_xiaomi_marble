@@ -4611,21 +4611,11 @@ static void _sde_encoder_helper_hdr_plus_mempool_update(
 	}
 }
 
-static void _sde_encoder_needs_hw_reset(struct drm_encoder *drm_enc,
-	int ln_cnt1)
+void sde_encoder_helper_needs_hw_reset(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	struct sde_encoder_phys *phys;
-	int ln_cnt2, i;
-
-	/* query line count before cur_master is updated */
-	if (sde_enc->cur_master && sde_enc->cur_master->ops.get_wr_line_count)
-		ln_cnt2 = sde_enc->cur_master->ops.get_wr_line_count(
-			sde_enc->cur_master);
-	else
-		ln_cnt2 = -EINVAL;
-
-	SDE_EVT32(DRMID(drm_enc), ln_cnt1, ln_cnt2);
+	int i;
 
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		phys = sde_enc->phys_encs[i];
@@ -4643,7 +4633,7 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	struct sde_crtc *sde_crtc;
 	struct msm_drm_private *priv = NULL;
 	bool needs_hw_reset = false, is_cmd_mode;
-	int ln_cnt1 = -EINVAL, i, rc, ret = 0;
+	int i, rc, ret = 0;
 	struct msm_display_info *disp_info;
 
 	if (!drm_enc || !params || !drm_enc->dev ||
@@ -4659,11 +4649,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 
 	SDE_DEBUG_ENC(sde_enc, "\n");
 	SDE_EVT32(DRMID(drm_enc));
-
-	/* save this for later, in case of errors */
-	if (sde_enc->cur_master && sde_enc->cur_master->ops.get_wr_line_count)
-		ln_cnt1 = sde_enc->cur_master->ops.get_wr_line_count(
-				sde_enc->cur_master);
 
 	/* update the qsync parameters for the current frame */
 	if (sde_enc->cur_master)
@@ -4715,7 +4700,7 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 
 	/* if any phys needs reset, reset all phys, in-order */
 	if (needs_hw_reset)
-		_sde_encoder_needs_hw_reset(drm_enc, ln_cnt1);
+		sde_encoder_helper_needs_hw_reset(drm_enc);
 
 	_sde_encoder_update_master(drm_enc, params);
 
