@@ -26,11 +26,15 @@
 #include <wlan_objmgr_peer_obj.h>
 #include "wlan_objmgr_global_obj_i.h"
 #include <qdf_mem.h>
+#include <qdf_platform.h>
 
 #define LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC   5000
 #define LOG_DEL_OBJ_DESTROY_DURATION_SEC 5
-/* The max duration for which a obj can be allowed to remain in L-state */
-#define LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC 10
+/*
+ * The max duration for which a obj can be allowed to remain in L-state
+ * The duration  should be higher than the psoc idle timeout.
+ */
+#define LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC 15
 #define LOG_DEL_OBJ_LIST_MAX_COUNT       (3 + 5 + 48 + 4096)
 
 /**
@@ -357,8 +361,10 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 		wlan_objmgr_print_pending_refs(del_obj->obj, obj_type);
 
 		if (cur_tstamp > del_obj->tstamp +
-		    LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC)
-			wlan_objmgr_debug_obj_destroyed_panic(obj_name);
+		    LOG_DEL_OBJ_DESTROY_ASSERT_DURATION_SEC) {
+			if (!qdf_is_recovering() && !qdf_is_fw_down())
+				wlan_objmgr_debug_obj_destroyed_panic(obj_name);
+		}
 
 		status = qdf_list_peek_next(log_del_obj_list, node, &node);
 
