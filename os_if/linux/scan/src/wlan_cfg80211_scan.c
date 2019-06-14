@@ -1306,11 +1306,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	}
 
 	/*
-	 * If a scan is already going on i.e the qdf_list ( scan que) is not
-	 * empty, and the simultaneous scan is disabled, dont allow 2nd scan
+	 * For a non-SAP vdevs, if a scan is already going on i.e the scan queue
+	 * is not empty, and the simultaneous scan is disabled, dont allow 2nd
+	 * scan.
 	 */
 	if (!wlan_cfg80211_allow_simultaneous_scan(psoc) &&
-	    !qdf_list_empty(&osif_priv->osif_scan->scan_req_q)) {
+	    !qdf_list_empty(&osif_priv->osif_scan->scan_req_q) &&
+	    wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE) {
 		osif_err("Simultaneous scan disabled, reject scan");
 		return -EBUSY;
 	}
