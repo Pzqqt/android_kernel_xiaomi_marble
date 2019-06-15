@@ -10056,6 +10056,12 @@ WMI_VDEV_PARAM_ROAM_FW_OFFLOAD WMI_VDEV_PARAM **/
 #define WMI_ROAM_FW_OFFLOAD_ENABLE_FLAG                          0x1
 /* Enable Roaming module in FW to do scan based on Final BMISS */
 #define WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG                    0x2
+/**
+	 * To enable/desable EAPOL_4WAY_HANDSHAKE process while roaming. 
+	 * param value = 0 --> Enable EAPOL 4way handshake
+     * param value = 1 --> Skip EAPOL 4way handshake  
+	 */
+#define WMI_VDEV_PARAM_SKIP_ROAM_EAPOL_4WAY_HANDSHAKE           0x4
 
 /** slot time long */
 #define WMI_VDEV_SLOT_TIME_LONG                                  0x1
