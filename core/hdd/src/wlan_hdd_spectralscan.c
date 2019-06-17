@@ -447,7 +447,7 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 					void *ctx, int pid)
 {
 	struct spectral_scan_msg *ss_msg = NULL;
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -456,6 +456,10 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 	if (ret)
 		return;
 
+	/*
+	 * audit note: it is ok to pass a NULL policy here since only
+	 * one attribute is parsed and it is explicitly validated
+	 */
 	if (wlan_cfg80211_nla_parse(tb, CLD80211_ATTR_MAX, data,
 				    data_len, NULL)) {
 		hdd_err("nla parse fails");
@@ -466,6 +470,12 @@ static void __spectral_scan_msg_handler(const void *data, int data_len,
 		hdd_err("attr VENDOR_DATA fails");
 		return;
 	}
+
+	if (nla_len(tb[CLD80211_ATTR_DATA]) < sizeof(*ss_msg)) {
+		hdd_err_rl("Invalid length for ATTR_DATA");
+		return;
+	}
+
 	ss_msg = (struct spectral_scan_msg *)nla_data(tb[CLD80211_ATTR_DATA]);
 
 	if (!ss_msg) {
