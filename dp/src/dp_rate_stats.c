@@ -292,6 +292,11 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		stats_ctx = (struct wlan_peer_rate_stats_ctx *)
 				ppdu_user->cookie;
 
+		if (qdf_unlikely(!ppdu_user->tx_ratekbps ||
+				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
+			continue;
+		}
+
 		if (qdf_unlikely(!stats_ctx)) {
 			qdf_debug("peer rate stats ctx is NULL, investigate");
 			qdf_debug("peer_mac: " QDF_MAC_ADDR_STR,
@@ -407,13 +412,18 @@ void wlan_peer_update_rate_stats(void *ctx,
 		cdp_tx_ppdu = (struct cdp_tx_completion_ppdu *)
 					qdf_nbuf_data(nbuf);
 		wlan_peer_update_tx_rate_stats(soc_stats_ctx, cdp_tx_ppdu);
+		qdf_nbuf_free(nbuf);
 		break;
 	case WDI_EVENT_RX_PPDU_DESC:
 		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)
 					qdf_nbuf_data(nbuf);
 		wlan_peer_update_rx_rate_stats(soc_stats_ctx, cdp_rx_ppdu);
+		qdf_nbuf_free(nbuf);
 		break;
 	case WDI_EVENT_TX_SOJOURN_STAT:
+		/* sojourn stats buffer is statically allocated buffer
+		 * at pdev level, do not free it
+		 */
 		sojourn_stats = (struct cdp_tx_sojourn_stats *)
 					qdf_nbuf_data(nbuf);
 		wlan_peer_update_sojourn_stats(soc_stats_ctx, sojourn_stats);
