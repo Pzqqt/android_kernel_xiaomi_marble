@@ -2624,7 +2624,10 @@ static int msm_lsm_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd;
+	struct msm_pcm_stream_app_type_cfg cfg_data = {0};
 	int ret = 0;
+	int be_id = 0;
+	int fe_id = 0;
 
 	if (!substream->private_data) {
 		pr_err("%s: Invalid private_data", __func__);
@@ -2690,6 +2693,37 @@ static int msm_lsm_close(struct snd_pcm_substream *substream)
 		q6lsm_close(prtd->lsm_client);
 		prtd->lsm_client->opened = false;
 	}
+
+	fe_id = prtd->lsm_client->fe_id;
+	ret = msm_pcm_routing_get_stream_app_type_cfg(fe_id, SESSION_TYPE_TX,
+						      &be_id, &cfg_data);
+	if (ret < 0)
+		dev_dbg(rtd->dev,
+			"%s: get stream app type cfg failed, err = %d\n",
+			__func__, ret);
+	/*
+	 * be_id will be 0 in case of LSM directly connects to AFE due to
+	 * last_be_id_configured[fedai_id][session_type] has not been updated.
+	 * And then the cfg_data from wrong combination would be reset without
+	 * this if check. We reset only if app_type, acdb_dev_id, and sample_rate
+	 * are valid.
+	 */
+	if (!cfg_data.app_type &&
+	    !cfg_data.acdb_dev_id && !cfg_data.sample_rate) {
+		dev_dbg(rtd->dev, "%s: no need to reset app type configs\n",
+			__func__);
+	} else {
+		memset(&cfg_data, 0, sizeof(cfg_data));
+		ret = msm_pcm_routing_reg_stream_app_type_cfg(fe_id,
+							      SESSION_TYPE_TX,
+							      be_id,
+							      &cfg_data);
+		if (ret < 0)
+			dev_dbg(rtd->dev,
+				"%s: set stream app type cfg failed, err = %d\n",
+				__func__, ret);
+	}
+
 	q6lsm_client_free(prtd->lsm_client);
 
 	spin_lock_irqsave(&prtd->event_lock, flags);
