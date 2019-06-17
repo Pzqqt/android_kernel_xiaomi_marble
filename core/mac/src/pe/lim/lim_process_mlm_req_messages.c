@@ -183,7 +183,7 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 	sta_param->staType = STA_ENTRY_SELF; /* Identifying self */
 
 	qdf_mem_copy(sta_param->bssId, bssid, sizeof(tSirMacAddr));
-	qdf_mem_copy(sta_param->staMac, session_entry->selfMacAddr,
+	qdf_mem_copy(sta_param->staMac, session_entry->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
 	/* Configuration related parameters to be changed to support BT-AMP */
@@ -312,9 +312,9 @@ lim_mlm_add_bss(struct mac_context *mac_ctx,
 	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams selfMacAddr */
-	qdf_mem_copy(addbss_param->selfMacAddr,
-		     session->selfMacAddr, sizeof(tSirMacAddr));
+	/* Fill in tAddBssParams self_mac_addr */
+	qdf_mem_copy(addbss_param->self_mac_addr,
+		     session->self_mac_addr, sizeof(tSirMacAddr));
 
 	addbss_param->bssType = mlm_start_req->bssType;
 	if (mlm_start_req->bssType == eSIR_IBSS_MODE)
@@ -653,7 +653,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	pe_session_param->session_id = session->peSessionId;
 	if (lim_set_link_state(mac_ctx, lnk_state,
 			session->pLimMlmJoinReq->bssDescription.bssId,
-			session->selfMacAddr,
+			session->self_mac_addr,
 			lim_post_join_set_link_state_callback,
 			pe_session_param) != QDF_STATUS_SUCCESS) {
 		pe_err("SessionId:%d lim_set_link_state to eSIR_LINK_PREASSOC_STATE Failed!!",
@@ -2126,7 +2126,7 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 		lim_send_probe_req_mgmt_frame(mac_ctx, &ssid,
 			session->pLimMlmJoinReq->bssDescription.bssId,
 			session->currentOperChannel /*chanNum */,
-			session->selfMacAddr, session->dot11mode,
+			session->self_mac_addr, session->dot11mode,
 			&session->pLimJoinReq->addIEScan.length,
 			session->pLimJoinReq->addIEScan.addIEdata);
 		lim_deactivate_and_change_timer(mac_ctx,

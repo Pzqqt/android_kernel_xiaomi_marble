@@ -277,8 +277,8 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	for (i = 0; i < 6; i++)
 		mac->da[i] = 0xff;
 
-	qdf_mem_copy(mac->sa, session->selfMacAddr,
-		     sizeof(session->selfMacAddr));
+	qdf_mem_copy(mac->sa, session->self_mac_addr,
+		     sizeof(session->self_mac_addr));
 	qdf_mem_copy(mac->bssId, session->bssId, sizeof(session->bssId));
 
 	mac->fc.fromDS = 0;

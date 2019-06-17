@@ -605,7 +605,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		session->ht_config = sme_start_bss_req->ht_config;
 		session->vht_config = sme_start_bss_req->vht_config;
 
-		sir_copy_mac_addr(session->selfMacAddr,
+		sir_copy_mac_addr(session->self_mac_addr,
 				  sme_start_bss_req->self_macaddr.bytes);
 
 		/* Copy SSID to session table */
@@ -1361,8 +1361,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->vht_config = sme_join_req->vht_config;
 
 		/* Copying of bssId is already done, while creating session */
-		sir_copy_mac_addr(session->selfMacAddr,
-			sme_join_req->selfMacAddr);
+		sir_copy_mac_addr(session->self_mac_addr,
+				  sme_join_req->self_mac_addr);
 		session->bssType = sme_join_req->bsstype;
 
 		session->statypeForBss = STA_ENTRY_PEER;
@@ -4049,7 +4049,7 @@ lim_send_set_max_tx_power_req(struct mac_context *mac, int8_t txPower,
 	qdf_mem_copy(pMaxTxParams->bssId.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
-			pe_session->selfMacAddr,
+			pe_session->self_mac_addr,
 			QDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;

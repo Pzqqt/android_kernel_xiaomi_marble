@@ -135,7 +135,7 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	pChnlParams->ch_center_freq_seg0 = ch_center_freq_seg0;
 	pChnlParams->ch_center_freq_seg1 = ch_center_freq_seg1;
 	pChnlParams->ch_width = ch_width;
-	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->selfMacAddr,
+	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 	pChnlParams->maxTxPower = maxTxPower;
 	qdf_mem_copy(pChnlParams->bssId, pe_session->bssId,
@@ -362,7 +362,7 @@ void lim_set_active_edca_params(struct mac_context *mac_ctx,
    \return  None
    -----------------------------------------------------------*/
 QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
-				 tSirMacAddr bssId, tSirMacAddr selfMacAddr,
+				 tSirMacAddr bssId, tSirMacAddr self_mac_addr,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg)
 {
@@ -379,7 +379,7 @@ QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
 
 	/* Copy Mac address */
 	sir_copy_mac_addr(pLinkStateParams->bssid, bssId);
-	sir_copy_mac_addr(pLinkStateParams->selfMacAddr, selfMacAddr);
+	sir_copy_mac_addr(pLinkStateParams->self_mac_addr, self_mac_addr);
 
 	msgQ.type = WMA_SET_LINK_STATE;
 	msgQ.reserved = 0;

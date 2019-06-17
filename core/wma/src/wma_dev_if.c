@@ -3698,7 +3698,7 @@ void wma_hold_req_timer(void *data)
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA(FL("WMA_ADD_BSS_REQ timed out"));
 		WMA_LOGD(FL("Sending add bss rsp to umac (mac:%pM, status:%d)"),
-			params->selfMacAddr, params->status);
+			params->self_mac_addr, params->status);
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_ADD_BSS_REQ);
@@ -4461,7 +4461,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	vdev = wma_find_vdev_by_addr(wma, add_bss->selfMacAddr, &vdev_id);
+	vdev = wma_find_vdev_by_addr(wma, add_bss->self_mac_addr, &vdev_id);
 	if (!vdev) {
 		WMA_LOGE("%s: vdev not found for vdev id %d.",
 				__func__, vdev_id);
@@ -4477,7 +4477,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 
 	/* create ibss bss peer */
-	status = wma_create_peer(wma, pdev, vdev, add_bss->selfMacAddr,
+	status = wma_create_peer(wma, pdev, vdev, add_bss->self_mac_addr,
 				 WMI_PEER_TYPE_DEFAULT, vdev_id,
 				 false);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -4485,13 +4485,13 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 	WMA_LOGA("IBSS BSS peer created with mac %pM",
-		 add_bss->selfMacAddr);
+		 add_bss->self_mac_addr);
 
 	peer = cdp_peer_find_by_addr(soc, pdev,
-			add_bss->selfMacAddr, &peer_id);
+			add_bss->self_mac_addr, &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM", __func__,
-			 add_bss->selfMacAddr);
+			 add_bss->self_mac_addr);
 		goto send_fail_resp;
 	}
 

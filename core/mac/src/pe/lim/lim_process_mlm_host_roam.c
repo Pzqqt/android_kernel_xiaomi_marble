@@ -476,8 +476,8 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		goto end;
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
-	qdf_mem_copy((uint8_t *) pAddStaParams->staMac,
-		     (uint8_t *) pe_session->selfMacAddr,
+	qdf_mem_copy((uint8_t *)pAddStaParams->staMac,
+		     (uint8_t *)pe_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
 	qdf_mem_copy((uint8_t *) pAddStaParams->bssId,
@@ -665,7 +665,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 
 	if (lim_set_link_state
 		    (mac, eSIR_LINK_PREASSOC_STATE, session->bssId,
-		    session->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {
+		    session->self_mac_addr, NULL, NULL) != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(reassoc_req);
 		return;
 	}

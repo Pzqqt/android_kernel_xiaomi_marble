@@ -884,7 +884,7 @@ struct join_req {
 	uint16_t length;
 	uint8_t sessionId;
 	tSirMacSSid ssId;
-	tSirMacAddr selfMacAddr;        /* self Mac address */
+	tSirMacAddr self_mac_addr;        /* self Mac address */
 	enum bss_type bsstype;    /* add new type for BT-AMP STA and AP Modules */
 	uint8_t dot11mode;      /* to support BT-AMP */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

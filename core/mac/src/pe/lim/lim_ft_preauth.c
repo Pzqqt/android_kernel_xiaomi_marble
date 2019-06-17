@@ -450,8 +450,8 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 			goto send_rsp;
 		}
 
-		sir_copy_mac_addr(ft_session->selfMacAddr,
-				  pe_session->selfMacAddr);
+		sir_copy_mac_addr(ft_session->self_mac_addr,
+				  pe_session->self_mac_addr);
 		sir_copy_mac_addr(ft_session->limReAssocbssId,
 				  pbssDescription->bssId);
 

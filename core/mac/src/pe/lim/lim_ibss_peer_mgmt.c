@@ -1305,7 +1305,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 	}
 
 	if (lim_set_link_state(mac, eSIR_LINK_IDLE_STATE, nullBssid,
-			       pe_session->selfMacAddr, NULL,
+			       pe_session->self_mac_addr, NULL,
 			       NULL) != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP setLinkState failed");
 		rc = eSIR_SME_REFUSED;

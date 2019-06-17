@@ -323,7 +323,7 @@ struct wmstatus_changecmd {
 
 struct delstafor_sessionCmd {
 	/* Session self mac addr */
-	tSirMacAddr selfMacAddr;
+	tSirMacAddr self_mac_addr;
 	csr_session_close_cb session_close_cb;
 	void *context;
 };
@@ -578,7 +578,7 @@ struct csr_roam_session {
 	bool sessionActive;     /* true if it is used */
 
 	/* For BT-AMP station, this serve as BSSID for self-BSS. */
-	struct qdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr self_mac_addr;
 
 	csr_session_open_cb  session_open_cb;
 	csr_session_close_cb session_close_cb;

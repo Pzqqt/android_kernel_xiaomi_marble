@@ -522,14 +522,14 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 				lim_send_probe_req_mgmt_frame(mac_ctx,
 					&session->ssId,
 					session->bssId, curr_chan,
-					session->selfMacAddr,
+					session->self_mac_addr,
 					session->dot11mode,
 					&scan_ie->length, scan_ie->addIEdata);
 			} else {
 				lim_send_probe_req_mgmt_frame(mac_ctx,
 					&session->ssId,
 					session->bssId, curr_chan,
-					session->selfMacAddr,
+					session->self_mac_addr,
 					session->dot11mode, NULL, NULL);
 			}
 		} else {

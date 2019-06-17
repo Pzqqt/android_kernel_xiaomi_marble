@@ -310,8 +310,8 @@ uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame2Hal, SIR_MAC_MGMT_FRAME,
 					     SIR_MAC_MGMT_PROBE_RSP,
-					     pe_session->selfMacAddr,
-					     pe_session->selfMacAddr);
+					     pe_session->self_mac_addr,
+					     pe_session->self_mac_addr);
 
 	pMacHdr = (tpSirMacMgmtHdr) pFrame2Hal;
 

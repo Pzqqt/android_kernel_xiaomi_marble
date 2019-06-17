@@ -1192,7 +1192,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 
 	params->status = true;
 	WMA_LOGD("%s: state %d selfmac %pM", __func__,
-		 params->state, params->selfMacAddr);
+		 params->state, params->self_mac_addr);
 	if ((params->state != eSIR_LINK_PREASSOC_STATE) &&
 	    (params->state != eSIR_LINK_DOWN_STATE)) {
 		WMA_LOGD("%s: unsupported link state %d",
@@ -1207,10 +1207,10 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		goto out;
 	}
 
-	vdev = wma_find_vdev_by_addr(wma, params->selfMacAddr, &vdev_id);
+	vdev = wma_find_vdev_by_addr(wma, params->self_mac_addr, &vdev_id);
 	if (!vdev) {
 		WMA_LOGP("%s: vdev not found for addr: %pM",
-			 __func__, params->selfMacAddr);
+			 __func__, params->self_mac_addr);
 		params->status = false;
 		goto out;
 	}

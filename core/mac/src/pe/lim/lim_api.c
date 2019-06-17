@@ -1646,7 +1646,7 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 				lim_send_probe_req_mgmt_frame(mac, &pe_session->ssId,
 					      pe_session->bssId,
 					      pe_session->currentOperChannel,
-					      pe_session->selfMacAddr,
+					      pe_session->self_mac_addr,
 					      pe_session->dot11mode,
 					      NULL, NULL);
 
@@ -2370,10 +2370,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	/* Update the beacon/probe filter in mac_ctx */
 	lim_set_bcn_probe_filter(mac_ctx, ft_session_ptr, NULL, 0);
 
-	sir_copy_mac_addr(ft_session_ptr->selfMacAddr,
-			  session_ptr->selfMacAddr);
+	sir_copy_mac_addr(ft_session_ptr->self_mac_addr,
+			  session_ptr->self_mac_addr);
 	sir_copy_mac_addr(roam_sync_ind_ptr->self_mac.bytes,
-			session_ptr->selfMacAddr);
+			session_ptr->self_mac_addr);
 	sir_copy_mac_addr(ft_session_ptr->limReAssocbssId, bss_desc->bssId);
 	session_ptr->bRoamSynchInProgress = true;
 	ft_session_ptr->bRoamSynchInProgress = true;

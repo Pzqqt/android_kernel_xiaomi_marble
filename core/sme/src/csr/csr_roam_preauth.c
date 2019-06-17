@@ -553,7 +553,7 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	qdf_mem_copy((void *)&preauth_req->preAuthbssId,
 			(void *)bss_desc->bssId, sizeof(tSirMacAddr));
 	qdf_mem_copy((void *)&preauth_req->self_mac_addr,
-		(void *)&csr_session->selfMacAddr.bytes, sizeof(tSirMacAddr));
+		(void *)&csr_session->self_mac_addr.bytes, sizeof(tSirMacAddr));
 
 	if (csr_roam_is11r_assoc(mac_ctx, session_id) &&
 	     (mac_ctx->roam.roamSession[session_id].connectedProfile.AuthType !=

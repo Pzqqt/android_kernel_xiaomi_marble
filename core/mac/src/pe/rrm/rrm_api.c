@@ -131,7 +131,7 @@ rrm_send_set_max_tx_power_req(struct mac_context *mac, int8_t txPower,
 	qdf_mem_copy(pMaxTxParams->bssId.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
-			pe_session->selfMacAddr,
+			pe_session->self_mac_addr,
 			QDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;

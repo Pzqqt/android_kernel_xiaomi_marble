@@ -13046,7 +13046,7 @@ QDF_STATUS csr_process_del_sta_session_command(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 
 	qdf_mem_copy(del_sta_self_req->self_mac_addr,
-		     sme_command->u.delStaSessionCmd.selfMacAddr,
+		     sme_command->u.delStaSessionCmd.self_mac_addr,
 		     sizeof(tSirMacAddr));
 
 	del_sta_self_req->session_id = sme_command->sessionId;
@@ -14245,7 +14245,7 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 							  &pSession->bssParams);
 		if (CSR_IS_NDI(pProfile)) {
 			qdf_copy_macaddr(&pSession->bssParams.bssid,
-				&pSession->selfMacAddr);
+				&pSession->self_mac_addr);
 		}
 	} else {
 		csr_roam_get_bss_start_parms(mac, pProfile,
@@ -15342,7 +15342,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		} else {
 			csr_join_req->ssId.length = 0;
 		}
-		qdf_mem_copy(&csr_join_req->selfMacAddr, &pSession->selfMacAddr,
+		qdf_mem_copy(&csr_join_req->self_mac_addr,
+			     &pSession->self_mac_addr,
 			     sizeof(tSirMacAddr));
 		sme_info("Connecting to ssid:%.*s bssid: "QDF_MAC_ADDR_STR" rssi: %d channel: %d country_code: %c%c",
 			 csr_join_req->ssId.length, csr_join_req->ssId.ssId,
@@ -16172,7 +16173,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 	if ((pSession->pCurRoamProfile)
 		&& (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
 		qdf_mem_copy(&pMsg->bssid.bytes,
-			     &pSession->selfMacAddr,
+			     &pSession->self_mac_addr,
 			     QDF_MAC_ADDR_SIZE);
 		qdf_mem_copy(&pMsg->peer_macaddr.bytes,
 			     bssId,
@@ -16237,7 +16238,7 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 		pMsg->messageType = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
 		pMsg->length = len;
 
-		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->bssid, &pSession->self_mac_addr);
 		sme_debug("CSR Attempting to change BI for Bssid= "
 			  QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(pMsg->bssid.bytes));
@@ -16279,7 +16280,7 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 		pMsg->messageType = eWNI_SME_SET_HT_2040_MODE;
 		pMsg->length = len;
 
-		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->bssid, &pSession->self_mac_addr);
 		sme_debug(
 			"CSR Attempting to set HT20/40 mode for Bssid= "
 			 QDF_MAC_ADDR_STR,
@@ -16316,7 +16317,7 @@ QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac,
 	if ((pSession->pCurRoamProfile)
 	     && (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
 		qdf_mem_copy(&pMsg->bssid,
-			     &pSession->selfMacAddr,
+			     &pSession->self_mac_addr,
 			     QDF_MAC_ADDR_SIZE);
 	} else {
 		qdf_mem_copy(&pMsg->bssid,
@@ -16560,8 +16561,8 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->sessionId = sessionId;
 	pMsg->length = sizeof(*pMsg);
 	qdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
-	/* selfMacAddr */
-	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->selfMacAddr);
+	/* self_mac_addr */
+	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->self_mac_addr);
 	/* beaconInterval */
 	if (bss_desc && bss_desc->beaconInterval)
 		wTmp = bss_desc->beaconInterval;
@@ -17023,7 +17024,7 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	session->callback = session_param->callback;
 	session->pContext = session_param->callback_ctx;
 
-	qdf_mem_copy(&session->selfMacAddr, session_param->self_mac_addr,
+	qdf_mem_copy(&session->self_mac_addr, session_param->self_mac_addr,
 		     sizeof(struct qdf_mac_addr));
 	status = qdf_mc_timer_init(&session->hTimerRoaming,
 				   QDF_TIMER_TYPE_SW,
@@ -17160,7 +17161,7 @@ csr_issue_del_sta_for_session_req(struct mac_context *mac_ctx, uint32_t session_
 		sme_command->sessionId = (uint8_t)session_id;
 		sme_command->u.delStaSessionCmd.session_close_cb = callback;
 		sme_command->u.delStaSessionCmd.context = context;
-		qdf_mem_copy(sme_command->u.delStaSessionCmd.selfMacAddr,
+		qdf_mem_copy(sme_command->u.delStaSessionCmd.self_mac_addr,
 			     session_mac_addr, sizeof(tSirMacAddr));
 		status = csr_queue_sme_command(mac_ctx, sme_command, false);
 		if (!QDF_IS_STATUS_SUCCESS(status))
@@ -17229,7 +17230,7 @@ QDF_STATUS csr_roam_close_session(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	status = csr_issue_del_sta_for_session_req(mac_ctx,
-			session_id, session->selfMacAddr.bytes,
+			session_id, session->self_mac_addr.bytes,
 			session->session_close_cb, NULL);
 	return status;
 }
@@ -17255,7 +17256,7 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 	csr_roam_free_connected_info(mac,
 				     &pSession->prev_assoc_ap_info);
 	csr_free_connect_bss_desc(mac, sessionId);
-	qdf_mem_zero(&pSession->selfMacAddr, sizeof(struct qdf_mac_addr));
+	qdf_mem_zero(&pSession->self_mac_addr, sizeof(struct qdf_mac_addr));
 	if (pSession->pWpaRsnReqIE) {
 		qdf_mem_free(pSession->pWpaRsnReqIE);
 		pSession->pWpaRsnReqIE = NULL;

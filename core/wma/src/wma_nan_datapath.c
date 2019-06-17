@@ -69,17 +69,18 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 
-	status = wma_create_peer(wma, pdev, vdev, add_bss->selfMacAddr,
+	status = wma_create_peer(wma, pdev, vdev, add_bss->self_mac_addr,
 				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to create peer", __func__);
 		goto send_fail_resp;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, add_bss->selfMacAddr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, add_bss->self_mac_addr,
+				     &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM", __func__,
-			 add_bss->selfMacAddr);
+			 add_bss->self_mac_addr);
 		goto send_fail_resp;
 	}
 

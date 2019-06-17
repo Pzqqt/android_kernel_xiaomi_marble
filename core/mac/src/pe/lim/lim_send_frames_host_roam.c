@@ -354,7 +354,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_REASSOC_REQ, pe_session->limReAssocbssId,
-		pe_session->selfMacAddr);
+		pe_session->self_mac_addr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	/* That done, pack the ReAssoc Request: */
 	status = dot11f_pack_re_assoc_request(mac_ctx, frm, frame +
@@ -724,7 +724,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_REASSOC_REQ, pe_session->limReAssocbssId,
-		pe_session->selfMacAddr);
+		pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* That done, pack the Probe Request: */

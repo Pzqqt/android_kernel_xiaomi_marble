@@ -848,7 +848,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
 			session_entry->bssId,
-			session_entry->selfMacAddr, NULL,
+			session_entry->self_mac_addr, NULL,
 			NULL) != QDF_STATUS_SUCCESS) {
 			pe_err("Set link state to POSTASSOC failed");
 			qdf_mem_free(beacon);

@@ -144,10 +144,10 @@ struct pe_session {
 	};
 	struct wlan_objmgr_vdev *vdev;
 
-	/* In AP role: BSSID and selfMacAddr will be the same. */
+	/* In AP role: BSSID and self_mac_addr will be the same. */
 	/* In STA role: they will be different */
 	tSirMacAddr bssId;
-	tSirMacAddr selfMacAddr;
+	tSirMacAddr self_mac_addr;
 	tSirMacSSid ssId;
 	uint8_t bss_idx;
 	uint8_t valid;

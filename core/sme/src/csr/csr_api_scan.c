@@ -1365,7 +1365,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(mac_ctx->psoc,
 				pdev_id,
-				session->selfMacAddr.bytes,
+				session->self_mac_addr.bytes,
 				WLAN_LEGACY_SME_ID);
 	ucfg_scan_init_default_params(vdev, req);
 	req->scan_req.scan_id = scan_id;

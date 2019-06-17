@@ -575,7 +575,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	/* Copy the BSSID to the session table */
 	sir_copy_mac_addr(session_ptr->bssId, bssid);
 	if (bssType == eSIR_MONITOR_MODE)
-		sir_copy_mac_addr(mac->lim.gpSession[i].selfMacAddr, bssid);
+		sir_copy_mac_addr(mac->lim.gpSession[i].self_mac_addr, bssid);
 	session_ptr->valid = true;
 	/* Initialize the SME and MLM states to IDLE */
 	session_ptr->limMlmState = eLIM_MLM_IDLE_STATE;

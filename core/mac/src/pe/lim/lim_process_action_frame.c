@@ -2009,7 +2009,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 
 		/* Check if it is a vendor specific action frame. */
 		if (LIM_IS_STA_ROLE(session) &&
-		    (!qdf_mem_cmp(session->selfMacAddr,
+		    (!qdf_mem_cmp(session->self_mac_addr,
 					&mac_hdr->da[0], sizeof(tSirMacAddr)))
 		    && IS_WES_MODE_ENABLED(mac_ctx)
 		    && !qdf_mem_cmp(vendor_specific->Oui, oui, 3)) {
@@ -2181,7 +2181,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		break;
 	case ACTION_CATEGORY_BACK:
 		pe_debug("Rcvd Block Ack for %pM; action: %d",
-			session->selfMacAddr, action_hdr->actionID);
+			session->self_mac_addr, action_hdr->actionID);
 		switch (action_hdr->actionID) {
 		case ADDBA_REQUEST:
 			lim_process_addba_req(mac_ctx, rx_pkt_info, session);

@@ -735,7 +735,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_PROBE_RSP, peer_macaddr,
-		pe_session->selfMacAddr);
+		pe_session->self_mac_addr);
 
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 
@@ -940,7 +940,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peerMacAddr, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peerMacAddr, pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	sir_copy_mac_addr(pMacHdr->bssId, pe_session->bssId);
@@ -1300,7 +1300,7 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		(LIM_ASSOC == subtype) ?
 			SIR_MAC_MGMT_ASSOC_RSP : SIR_MAC_MGMT_REASSOC_RSP,
 			peer_addr,
-			pe_session->selfMacAddr);
+			pe_session->self_mac_addr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 
 	sir_copy_mac_addr(mac_hdr->bssId, pe_session->bssId);
@@ -1446,7 +1446,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	sir_copy_mac_addr(pMacHdr->bssId, pe_session->bssId);
@@ -2071,7 +2071,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ASSOC_REQ, pe_session->bssId,
-		pe_session->selfMacAddr);
+		pe_session->self_mac_addr);
 	/* That done, pack the Assoc Request: */
 	status = dot11f_pack_assoc_request(mac_ctx, frm,
 			frame + sizeof(tSirMacMgmtHdr), payload, &payload);
@@ -2467,7 +2467,7 @@ alloc_packet:
 
 	/* Prepare BD */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_AUTH, peer_addr, session->selfMacAddr);
+		SIR_MAC_MGMT_AUTH, peer_addr, session->self_mac_addr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	if (wep_challenge_len)
 		mac_hdr->fc.wep = LIM_WEP_IN_FC;
@@ -2963,7 +2963,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_DISASSOC, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_DISASSOC, peer, pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* Prepare the BSSID */
@@ -2990,7 +2990,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		   "reason %u and waitForAck %d to " QDF_MAC_ADDR_STR " ,From "
 		   QDF_MAC_ADDR_STR, pe_session->peSessionId, nReason,
 		waitForAck, QDF_MAC_ADDR_ARRAY(pMacHdr->da),
-		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
+		QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
 	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
@@ -3144,7 +3144,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_DEAUTH, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_DEAUTH, peer, pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* Prepare the BSSID */
@@ -3170,7 +3170,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		       " ,From " QDF_MAC_ADDR_STR,
 		pe_session->peSessionId, nReason, waitForAck,
 		QDF_MAC_ADDR_ARRAY(pMacHdr->da),
-		QDF_MAC_ADDR_ARRAY(pe_session->selfMacAddr));
+		QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel)) ||
 	    (pe_session->opmode == QDF_P2P_CLIENT_MODE) ||
@@ -3582,7 +3582,7 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer,
-		pe_session->selfMacAddr);
+		pe_session->self_mac_addr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) pe_session->bssId, sizeof(tSirMacAddr));
@@ -3723,7 +3723,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 
 	/* Next, we fill out the buffer descriptor */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, session_entry->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, session_entry->self_mac_addr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 				   (uint8_t *) session_entry->bssId,
@@ -3877,7 +3877,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 
 	/* Next, fill out the buffer descriptor */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, session_entry->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, session_entry->self_mac_addr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 				   (uint8_t *) session_entry->bssId,
@@ -3999,7 +3999,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
@@ -4144,7 +4144,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
@@ -4314,7 +4314,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
@@ -4445,7 +4445,7 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
@@ -4476,7 +4476,7 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	pe_debug("Sending an SA Query Request to");
 	lim_print_mac_addr(mac, peer, LOGD);
 	pe_debug("Sending an SA Query Request from ");
-	lim_print_mac_addr(mac, pe_session->selfMacAddr, LOGD);
+	lim_print_mac_addr(mac, pe_session->self_mac_addr, LOGD);
 
 	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
@@ -4578,7 +4578,7 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, pe_session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer, pe_session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
@@ -4759,7 +4759,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("Sending a ADDBA Response from %pM to %pM",
-		session->selfMacAddr, peer_mac);
+		session->self_mac_addr, peer_mac);
 	pe_debug("tid: %d, dialog_token: %d, status: %d, buff_size: %d",
 		tid, frm.DialogToken.token, frm.Status.status,
 		frm.addba_param_set.buff_size);
@@ -4790,7 +4790,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	qdf_mem_zero(frame_ptr, num_bytes);
 
 	lim_populate_mac_header(mac_ctx, frame_ptr, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer_mac, session->selfMacAddr);
+		SIR_MAC_MGMT_ACTION, peer_mac, session->self_mac_addr);
 
 	/* Update A3 with the BSSID */
 	mgmt_hdr = (tpSirMacMgmtHdr) frame_ptr;

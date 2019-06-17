@@ -420,8 +420,8 @@ void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 	}
 
 	if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
-			session_entry->selfMacAddr,
-			session_entry->selfMacAddr, NULL, NULL)
+			session_entry->self_mac_addr,
+			session_entry->self_mac_addr, NULL, NULL)
 			!= QDF_STATUS_SUCCESS) {
 		pe_err("NDI: DEL_BSS_RSP setLinkState failed");
 		goto end;

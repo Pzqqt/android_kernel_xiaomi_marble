@@ -5494,7 +5494,7 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 	qdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
 
-	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->selfMacAddr);
+	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->self_mac_addr);
 	qdf_copy_macaddr(&request_buf->bssid,
 			 &pSession->connectedProfile.bssid);
 

@@ -1296,7 +1296,7 @@ error:
 		}
 		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
 				       session->bssId,
-				       session->selfMacAddr,
+				       session->self_mac_addr,
 				       lim_join_result_callback,
 				       link_state_arg) != QDF_STATUS_SUCCESS) {
 			qdf_mem_free(link_state_arg);
@@ -1599,7 +1599,7 @@ void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 			       pDelBssParams->bss_idx);
 		if (lim_set_link_state
 			    (mac, eSIR_LINK_IDLE_STATE, pe_session->bssId,
-			    pe_session->selfMacAddr, NULL,
+			    pe_session->self_mac_addr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS) {
 			pe_err("Failure in setting link state to IDLE");
 			status_code = eSIR_SME_REFUSED;
@@ -1689,7 +1689,7 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 		goto end;
 	}
 	status = lim_set_link_state(mac, eSIR_LINK_IDLE_STATE, nullBssid,
-				    pe_session->selfMacAddr, NULL, NULL);
+				    pe_session->self_mac_addr, NULL, NULL);
 	if (status != QDF_STATUS_SUCCESS) {
 		rc = eSIR_SME_REFUSED;
 		goto end;
@@ -2050,7 +2050,7 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 		pe_debug("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS");
 		if (lim_set_link_state
 			    (mac, eSIR_LINK_AP_STATE, pe_session->bssId,
-			    pe_session->selfMacAddr, NULL,
+			    pe_session->self_mac_addr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS)
 			goto end;
 		/* Set MLME state */
@@ -2184,7 +2184,7 @@ lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 
 		if (lim_set_link_state
 			    (mac, eSIR_LINK_IBSS_STATE, pe_session->bssId,
-			    pe_session->selfMacAddr, NULL,
+			    pe_session->self_mac_addr, NULL,
 			    NULL) != QDF_STATUS_SUCCESS)
 			goto end;
 		/* Set MLME state */
@@ -2491,7 +2491,7 @@ lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 		session_entry->limMlmState = eLIM_MLM_IDLE_STATE;
 		if (lim_set_link_state(mac_ctx, eSIR_LINK_IDLE_STATE,
 					session_entry->bssId,
-					session_entry->selfMacAddr,
+					session_entry->self_mac_addr,
 					NULL, NULL) != QDF_STATUS_SUCCESS)
 			pe_err("Failed to set the LinkState");
 		/* Update PE session Id */
@@ -3086,7 +3086,7 @@ static void lim_process_switch_channel_join_req(
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
-		session_entry->currentOperChannel, session_entry->selfMacAddr,
+		session_entry->currentOperChannel, session_entry->self_mac_addr,
 		session_entry->dot11mode,
 		&session_entry->pLimJoinReq->addIEScan.length,
 		session_entry->pLimJoinReq->addIEScan.addIEdata);

@@ -174,8 +174,9 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 				}
 				sta_ds->sta_deletion_in_progress = true;
 				pe_err("Sending Disassoc and Deleting existing STA entry:"
-					   QDF_MAC_ADDR_STR,
-					QDF_MAC_ADDR_ARRAY(session->selfMacAddr));
+				       QDF_MAC_ADDR_STR,
+				       QDF_MAC_ADDR_ARRAY(
+						session->self_mac_addr));
 				lim_send_disassoc_mgmt_frame(mac_ctx,
 					eSIR_MAC_UNSPEC_FAILURE_REASON,
 					(uint8_t *) hdr->sa, session, false);

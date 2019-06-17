@@ -2640,8 +2640,8 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
 			QDF_MAC_ADDR_SIZE);
 	set_link_params->state = eSIR_LINK_PREASSOC_STATE;
-	qdf_mem_copy(set_link_params->selfMacAddr,
-		roam_synch_ind_ptr->self_mac.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(set_link_params->self_mac_addr,
+		     roam_synch_ind_ptr->self_mac.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
 	add_sta_params->staType = STA_ENTRY_SELF;

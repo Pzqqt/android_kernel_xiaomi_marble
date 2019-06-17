@@ -310,7 +310,7 @@ static void populate_dot11f_link_iden(struct mac_context *mac,
 		     (uint8_t *) pe_session->bssId, QDF_MAC_ADDR_SIZE);
 
 	qdf_mem_copy((uint8_t *) initStaAddr,
-		     pe_session->selfMacAddr, QDF_MAC_ADDR_SIZE);
+		     pe_session->self_mac_addr, QDF_MAC_ADDR_SIZE);
 
 	qdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
 		     QDF_MAC_ADDR_SIZE);
@@ -905,7 +905,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 				SIR_MAC_MGMT_ACTION, peer_mac.bytes,
-				pe_session->selfMacAddr);
+				pe_session->self_mac_addr);
 
 	{
 		tpSirMacMgmtHdr pMacHdr;

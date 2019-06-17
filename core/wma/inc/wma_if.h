@@ -369,7 +369,7 @@ typedef struct sLimMlmSetKeysReq {
 /**
  * struct tAddBssParams - parameters required for add bss params
  * @bssId: MAC Address/BSSID
- * @selfMacAddr: Self Mac Address
+ * @self_mac_addr: Self Mac Address
  * @bssType: BSS type
  * @operMode: AP - 0; STA - 1;
  * @nwType: network type
@@ -420,7 +420,7 @@ typedef struct sLimMlmSetKeysReq {
  */
 typedef struct {
 	tSirMacAddr bssId;
-	tSirMacAddr selfMacAddr;
+	tSirMacAddr self_mac_addr;
 	enum bss_type bssType;
 	uint8_t operMode;
 	tSirNwType nwType;
@@ -790,7 +790,7 @@ typedef void (*tpSetLinkStateCallback)(struct mac_context *mac, void *msgParam,
 /**
  * struct tLinkStateParams - link state parameters
  * @bssid: BSSID
- * @selfMacAddr: self mac address
+ * @self_mac_addr: self mac address
  * @state: link state
  * @callback: callback function pointer
  * @callbackArg: callback argument
@@ -799,7 +799,7 @@ typedef void (*tpSetLinkStateCallback)(struct mac_context *mac, void *msgParam,
 typedef struct sLinkStateParams {
 	/* SIR_HAL_SET_LINK_STATE */
 	tSirMacAddr bssid;
-	tSirMacAddr selfMacAddr;
+	tSirMacAddr self_mac_addr;
 	tSirLinkState state;
 	tpSetLinkStateCallback callback;
 	void *callbackArg;

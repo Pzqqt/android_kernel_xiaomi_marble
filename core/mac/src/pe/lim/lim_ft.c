@@ -155,8 +155,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams selfMacAddr */
-	qdf_mem_copy(pAddBssParams->selfMacAddr, ft_session->selfMacAddr,
+	/* Fill in tAddBssParams self_mac_addr */
+	qdf_mem_copy(pAddBssParams->self_mac_addr, ft_session->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
 	pAddBssParams->bssType = ft_session->bssType;
@@ -671,8 +671,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->ch_center_freq_seg1 = 0;
 	}
 
-	sir_copy_mac_addr(ft_session->selfMacAddr,
-			  pe_session->selfMacAddr);
+	sir_copy_mac_addr(ft_session->self_mac_addr,
+			  pe_session->self_mac_addr);
 	sir_copy_mac_addr(ft_session->limReAssocbssId,
 			  pbssDescription->bssId);
 	sir_copy_mac_addr(ft_session->prev_ap_bssid, pe_session->bssId);

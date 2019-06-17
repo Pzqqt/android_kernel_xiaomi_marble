@@ -2130,7 +2130,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
-	sir_copy_mac_addr(sta_mac, session_entry->selfMacAddr);
+	sir_copy_mac_addr(sta_mac, session_entry->self_mac_addr);
 
 	pe_debug("sessionid: %d update_entry = %d limsystemrole = %d",
 		session_entry->smeSessionId, update_entry,
@@ -2757,7 +2757,7 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	pe_debug("Roam Channel Bonding Mode %d",
 		(int)mac->roam.configParam.uCfgDot11Mode);
 
-	sir_copy_mac_addr(staMac, pe_session->selfMacAddr);
+	sir_copy_mac_addr(staMac, pe_session->self_mac_addr);
 	pe_debug(QDF_MAC_ADDR_STR ": ", QDF_MAC_ADDR_ARRAY(staMac));
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (!pAddStaParams)
@@ -3578,9 +3578,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
-	/* Fill in tAddBssParams selfMacAddr */
-	qdf_mem_copy(pAddBssParams->selfMacAddr,
-		     pe_session->selfMacAddr, sizeof(tSirMacAddr));
+	/* Fill in tAddBssParams self_mac_addr */
+	qdf_mem_copy(pAddBssParams->self_mac_addr,
+		     pe_session->self_mac_addr, sizeof(tSirMacAddr));
 
 	pe_debug("sessionid: %d updateEntry: %d limsystemrole: %d",
 		pe_session->smeSessionId, updateEntry,
@@ -4127,9 +4127,9 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
 
-	/* Fill in tAddBssParams selfMacAddr */
-	qdf_mem_copy(pAddBssParams->selfMacAddr,
-		     pe_session->selfMacAddr, sizeof(tSirMacAddr));
+	/* Fill in tAddBssParams self_mac_addr */
+	qdf_mem_copy(pAddBssParams->self_mac_addr,
+		     pe_session->self_mac_addr, sizeof(tSirMacAddr));
 	pe_debug("sessionid: %d updateEntry = %d limsystemrole = %d",
 		pe_session->smeSessionId, updateEntry,
 		GET_LIM_SYSTEM_ROLE(pe_session));

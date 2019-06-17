@@ -495,9 +495,9 @@ uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 	   Reject Join Req if the Self Mac Address and
 	   the Ap's Mac Address is same
 	 */
-	if (!qdf_mem_cmp((uint8_t *) pJoinReq->selfMacAddr,
-			    (uint8_t *) pJoinReq->bssDescription.bssId,
-			    (uint8_t) (sizeof(tSirMacAddr)))) {
+	if (!qdf_mem_cmp((uint8_t *)pJoinReq->self_mac_addr,
+			 (uint8_t *)pJoinReq->bssDescription.bssId,
+			 (uint8_t) (sizeof(tSirMacAddr)))) {
 		/* Log the event */
 		pe_err("received SME_JOIN_REQ with Self Mac and BSSID Same");
 
