@@ -3213,6 +3213,8 @@ csr_check_sae_auth(struct mac_context *mac_ctx,
 			       authentication)) {
 		if (eCSR_AUTH_TYPE_FT_SAE == auth_type->authType[index])
 			*neg_authtype = eCSR_AUTH_TYPE_FT_SAE;
+		if (eCSR_AUTH_TYPE_OPEN_SYSTEM == auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	}
 
 	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
@@ -3220,6 +3222,8 @@ csr_check_sae_auth(struct mac_context *mac_ctx,
 				c_auth_suites, authentication)) {
 		if (eCSR_AUTH_TYPE_SAE == auth_type->authType[index])
 			*neg_authtype = eCSR_AUTH_TYPE_SAE;
+		if (eCSR_AUTH_TYPE_OPEN_SYSTEM == auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 	}
 	sme_debug("negotiated auth type is %d", *neg_authtype);
 }
