@@ -20325,7 +20325,7 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 		cmd->cmd_timeout_duration = SME_CMD_VDEV_START_BSS_TIMEOUT;
 		break;
 	case WLAN_SER_CMD_VDEV_STOP_BSS:
-		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
+		cmd->cmd_timeout_duration = SME_CMD_STOP_BSS_CMD_TIMEOUT;
 		break;
 	case WLAN_SER_CMD_FORCE_DISASSOC_STA:
 	case WLAN_SER_CMD_FORCE_DEAUTH_STA:

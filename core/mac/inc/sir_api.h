@@ -76,10 +76,10 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 
 /* FW response timeout values in milli seconds */
-#define SIR_PEER_ASSOC_TIMEOUT (2000) /* 1 seconds */
-#define SIR_DELETE_STA_TIMEOUT (2000) /* 2 seconds */
+#define SIR_PEER_ASSOC_TIMEOUT (4000) /* 4 seconds */
+#define SIR_DELETE_STA_TIMEOUT (4000) /* 4 seconds */
 #define SIR_VDEV_START_REQUEST_TIMEOUT   (6000)
-#define SIR_VDEV_STOP_REQUEST_TIMEOUT    (2000)
+#define SIR_VDEV_STOP_REQUEST_TIMEOUT    (4000)
 #define SIR_VDEV_PLCY_MGR_TIMEOUT        (2000)
 
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
