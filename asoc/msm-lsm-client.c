@@ -2484,6 +2484,7 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 		return -ENOMEM;
 	}
 	prtd->lsm_client->opened = false;
+	prtd->lsm_client->started = false;
 	prtd->lsm_client->session_state = IDLE;
 	prtd->lsm_client->poll_enable = true;
 	prtd->lsm_client->perf_mode = 0;
@@ -2613,7 +2614,6 @@ static int msm_lsm_prepare(struct snd_pcm_substream *substream)
 	}
 
 	prtd->lsm_client->session_state = RUNNING;
-	prtd->lsm_client->started = false;
 	runtime->private_data = prtd;
 	return ret;
 }
