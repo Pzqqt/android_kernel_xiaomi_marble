@@ -2749,7 +2749,9 @@ endif
 ifdef CONFIG_LOCK_STATS_ON
 ccflags-y += -DQDF_LOCK_STATS=1
 ccflags-y += -DQDF_LOCK_STATS_DESTROY_PRINT=0
+ifneq ($(CONFIG_ARCH_SDXPRAIRIE), y)
 ccflags-y += -DQDF_LOCK_STATS_BUG_ON=1
+endif
 ccflags-y += -DQDF_LOCK_STATS_LIST=1
 ccflags-y += -DQDF_LOCK_STATS_LIST_SIZE=256
 endif
