@@ -330,9 +330,7 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 			      uint32_t *freq_center)
 {
 	struct dfs_channel *curchan = dfs->dfs_curchan;
-	uint64_t flag;
 
-	flag = curchan->dfs_ch_flags;
 	if (radar_found->detector_id == AGILE_DETECTOR_ID) {
 		*freq_center = utils_dfs_chan_to_freq(
 				dfs->dfs_agile_precac_freq);
@@ -346,9 +344,21 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 		} else {
 			*freq_center = utils_dfs_chan_to_freq(
 					curchan->dfs_ch_vhtop_ch_freq_seg2);
-			if ((flag & WLAN_CHAN_VHT160) ||
-			    (flag & WLAN_CHAN_HE160))
-				*freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
+			if (WLAN_IS_CHAN_MODE_160(curchan)) {
+				/* If center frequency of entire 160 band
+				 * is less than center frequency of primary
+				 * segment, then the center frequency of
+				 * secondary segment is -40 of center
+				 * frequency of entire 160 segment.
+				 */
+				if (curchan->dfs_ch_vhtop_ch_freq_seg2 <
+				    curchan->dfs_ch_vhtop_ch_freq_seg1)
+					*freq_center -=
+						DFS_160MHZ_SECOND_SEG_OFFSET;
+				else
+					*freq_center +=
+						DFS_160MHZ_SECOND_SEG_OFFSET;
+			}
 		}
 	}
 }
