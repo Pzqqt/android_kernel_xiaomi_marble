@@ -122,9 +122,10 @@ EXPORT_SYMBOL(msm_cdc_pinctrl_select_active_state);
  * msm_cdc_pinctrl_get_state: get curren pinctrl state
  * @np: pointer to struct device_node
  *
- * Returns 0 for sleep state, 1 for active state
+ * Returns 0 for sleep state, 1 for active state,
+ * error code for failure
  */
-bool msm_cdc_pinctrl_get_state(struct device_node *np)
+int msm_cdc_pinctrl_get_state(struct device_node *np)
 {
 	struct msm_cdc_pinctrl_info *gpio_data;
 

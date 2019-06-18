@@ -2018,6 +2018,12 @@ static int tx_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EINVAL;
 	}
+	if (msm_cdc_pinctrl_get_state(tx_priv->tx_swr_gpio_p) < 0) {
+		dev_err(&pdev->dev, "%s: failed to get swr pin state\n",
+			__func__);
+		return -EPROBE_DEFER;
+	}
+
 	tx_io_base = devm_ioremap(&pdev->dev,
 				   tx_base_addr, TX_MACRO_MAX_OFFSET);
 	if (!tx_io_base) {

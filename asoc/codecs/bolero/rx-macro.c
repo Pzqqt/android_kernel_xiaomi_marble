@@ -3624,6 +3624,12 @@ static int rx_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EINVAL;
 	}
+	if (msm_cdc_pinctrl_get_state(rx_priv->rx_swr_gpio_p) < 0) {
+		dev_err(&pdev->dev, "%s: failed to get swr pin state\n",
+			__func__);
+		return -EPROBE_DEFER;
+	}
+
 	rx_io_base = devm_ioremap(&pdev->dev, rx_base_addr,
 				  RX_MACRO_MAX_OFFSET);
 	if (!rx_io_base) {
