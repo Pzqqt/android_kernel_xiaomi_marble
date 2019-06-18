@@ -1154,8 +1154,16 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	return sme_rrm_issue_scan_req(mac);
 
 cleanup:
-	if (pBeaconReq->msgSource == eRRM_MSG_SOURCE_11K)
+	if (pBeaconReq->msgSource == eRRM_MSG_SOURCE_11K) {
+		/* Copy session bssid */
+		qdf_mem_copy(pSmeRrmContext->sessionBssId.bytes,
+			     pBeaconReq->bssId, sizeof(tSirMacAddr));
+
+		/* copy measurement bssid */
+		qdf_mem_copy(pSmeRrmContext->bssId, pBeaconReq->macaddrBssid,
+			     sizeof(tSirMacAddr));
 		sme_rrm_send_beacon_report_xmit_ind(mac, NULL, true, 0);
+	}
 
 	return status;
 }
