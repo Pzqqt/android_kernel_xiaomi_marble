@@ -639,7 +639,7 @@ void tdls_ct_idle_handler(void *user_data)
 		return;
 
 	idx = tdls_info->index;
-	if (tdls_info->index == INVALID_TDLS_PEER_INDEX)
+	if (idx == INVALID_TDLS_PEER_INDEX || idx >= WLAN_TDLS_STA_MAX_NUM)
 		return;
 
 	tdls_soc_obj = qdf_container_of(tdls_info, struct tdls_soc_priv_obj,
