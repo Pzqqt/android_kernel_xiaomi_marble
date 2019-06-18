@@ -89,7 +89,7 @@ struct pdev_spectral {
 	struct wlan_objmgr_pdev *psptrl_pdev;
 	struct sock *spectral_sock;
 	void *psptrl_target_handle;
-	struct sk_buff *skb;
+	struct sk_buff *skb[SPECTRAL_MSG_TYPE_MAX];
 	uint32_t spectral_pid;
 };
 

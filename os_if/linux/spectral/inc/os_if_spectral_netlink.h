@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -56,12 +56,16 @@ void os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev);
 /**
  * os_if_spectral_prep_skb() - Prepare socket buffer
  * @pdev : Pointer to pdev
+ * @smsg_type:  Spectral scan message type
+ * @buf_type: Spectral report buffer type
  *
  * Prepare socket buffer to send the data to application layer
  *
  * Return: NLMSG_DATA of the created skb or NULL if no memory
  */
-void *os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev);
+void *os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev,
+			      enum spectral_msg_type smsg_type,
+			      enum spectral_msg_buf_type buf_type);
 
 /**
  * os_if_spectral_netlink_deinit() - De-initialize Spectral Netlink data

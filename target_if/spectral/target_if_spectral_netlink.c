@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -49,23 +49,31 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	static int samp_msg_index;
 	size_t pwr_count = 0;
 	size_t pwr_count_sec80 = 0;
+	enum spectral_msg_type msg_type;
+	QDF_STATUS ret;
 
-	if (is_primaryseg_rx_inprog(spectral)) {
+	ret = target_if_get_spectral_msg_type(params->smode, &msg_type);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return;
+
+	if ((params->smode == SPECTRAL_SCAN_MODE_AGILE) ||
+	    is_primaryseg_rx_inprog(spectral)) {
 		spec_samp_msg  = (struct spectral_samp_msg *)
-			spectral->nl_cb.get_nbuff(spectral->pdev_obj);
+		      spectral->nl_cb.get_sbuff(spectral->pdev_obj,
+						msg_type,
+						SPECTRAL_MSG_BUF_NEW);
 
 		if (!spec_samp_msg)
 			return;
 
 		samp_data = &spec_samp_msg->samp_data;
-		if (spectral->spectral_gen == SPECTRAL_GEN3)
-			save_spectral_report_skb(spectral, spec_samp_msg);
 		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 		bin_pwr_data = params->bin_pwr_data;
 
 		spec_samp_msg->signature = SPECTRAL_SIGNATURE;
 		spec_samp_msg->freq = params->freq;
 		spec_samp_msg->freq_loading = params->freq_loading;
+		samp_data->spectral_mode = params->smode;
 		samp_data->spectral_data_len = params->datalen;
 		samp_data->spectral_rssi = params->rssi;
 		samp_data->ch_width = spectral->ch_width;
@@ -150,9 +158,11 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	}
 
 	if (is_secondaryseg_rx_inprog(spectral)) {
-		if (spectral->spectral_gen == SPECTRAL_GEN3)
-			restore_spectral_report_skb(spectral,
-						    (void **)&spec_samp_msg);
+		spec_samp_msg  = (struct spectral_samp_msg *)
+		      spectral->nl_cb.get_sbuff(spectral->pdev_obj,
+						msg_type,
+						SPECTRAL_MSG_BUF_SAVED);
+
 		if (!spec_samp_msg) {
 			spectral_err("Spectral SAMP message is NULL");
 			return;
@@ -214,17 +224,18 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	}
 
 	if ((spectral->ch_width != CH_WIDTH_160MHZ) ||
+	    (params->smode == SPECTRAL_SCAN_MODE_AGILE) ||
 	    is_secondaryseg_rx_inprog(spectral)) {
-		if (spectral->send_phy_data(spectral->pdev_obj) == 0)
+		if (spectral->send_phy_data(spectral->pdev_obj,
+					    msg_type) == 0)
 			spectral->spectral_sent_msg++;
 		samp_msg_index++;
-		if (spectral->spectral_gen == SPECTRAL_GEN3)
-			clear_spectral_report_skb(spectral);
 	}
 
 	/* Take care of state transitions for 160MHz/ 80p80 */
-	if (spectral->spectral_gen == SPECTRAL_GEN3)
+	if ((spectral->spectral_gen == SPECTRAL_GEN3) &&
+	    (params->smode != SPECTRAL_SCAN_MODE_AGILE))
 		target_if_160mhz_delivery_state_change(
 				spectral,
-				SPECTRAL_REPORT_EVENT_DETECTORID_INVALID);
+				SPECTRAL_DETECTOR_INVALID);
 }

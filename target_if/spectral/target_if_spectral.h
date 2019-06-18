@@ -145,18 +145,6 @@ enum spectral_detector_id {
 };
 
 /**
- * enum spectral_160mhz_report_delivery_event - 160 MHz state machine event
- * @SPECTRAL_REPORT_EVENT_DETECTORID0: Received detector id 0
- * @SPECTRAL_REPORT_EVENT_DETECTORID1: Received detector id 1
- * @SPECTRAL_REPORT_EVENT_DETECTORID_INVALID: Received invalid detector id
- */
-enum spectral_160mhz_report_delivery_event {
-	SPECTRAL_REPORT_EVENT_DETECTORID0,
-	SPECTRAL_REPORT_EVENT_DETECTORID1,
-	SPECTRAL_REPORT_EVENT_DETECTORID_INVALID,
-};
-
-/**
  * struct spectral_search_fft_info_gen2 - spectral search fft report for gen2
  * @relpwr_db:       Total bin power in db
  * @num_str_bins_ib: Number of strong bins
@@ -788,7 +776,7 @@ struct wmi_spectral_cmd_ops {
  * generation
  * @nl_cb: Netlink callbacks
  * @use_nl_bcast: Whether to use Netlink broadcast/unicast
- * @send_phy_data: Send data to the applicaton layer
+ * @send_phy_data: Send data to the application layer for a particular msg type
  * @inband_fftbin_size_adj: Whether to carry out FFT bin size adjustment for
  * in-band report format. This would be required on some chipsets under the
  * following circumstances: In report mode 2 only the in-band bins are DMA'ed.
@@ -908,7 +896,8 @@ struct target_if_spectral {
 	struct wmi_spectral_cmd_ops param_wmi_cmd_ops;
 	struct spectral_nl_cb nl_cb;
 	bool use_nl_bcast;
-	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev);
+	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev,
+			     enum spectral_msg_type smsg_type);
 	enum spectral_fftbin_size_war          fftbin_size_war;
 	u_int8_t                               inband_fftbin_size_adj;
 	u_int8_t                               null_fftbin_adj;
@@ -997,6 +986,7 @@ struct target_if_samp_msg_params {
 	uint8_t agc_total_gain_sec80;
 	uint8_t gainchange;
 	uint8_t gainchange_sec80;
+	enum spectral_scan_mode smode;
 };
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
@@ -1375,65 +1365,25 @@ void target_if_spectral_process_phyerr(
 					tsf64, acs_stats);
 }
 
-/**
- * save_spectral_report_skb() - Save Spectral report skb
- * @spectral: Pointer to Spectral
- * @skb: Pointer to skb
- *
- * Save spectral report skb
- *
- * Return: void
- */
-static inline void
-save_spectral_report_skb(struct target_if_spectral *spectral, void *skb) {
-	if (spectral->ch_width == CH_WIDTH_160MHZ)
-		spectral->spectral_report_cache = skb;
-}
+static QDF_STATUS
+target_if_get_spectral_msg_type(enum spectral_scan_mode smode,
+				enum spectral_msg_type *msg_type) {
 
-/**
- * restore_spectral_report_skb() - Restore Spectral report skb
- * @spectral: Pointer to Spectral
- * @skb: Pointer to restore location
- *
- * Restore spectral report skb
- *
- * Return: void
- */
-static inline void
-restore_spectral_report_skb(struct target_if_spectral *spectral, void **dest) {
-	if (spectral->ch_width == CH_WIDTH_160MHZ) {
-		QDF_ASSERT(spectral->spectral_report_cache);
-		*dest = spectral->spectral_report_cache;
+	switch (smode) {
+	case SPECTRAL_SCAN_MODE_NORMAL:
+		*msg_type = SPECTRAL_MSG_NORMAL_MODE;
+		break;
+
+	case SPECTRAL_SCAN_MODE_AGILE:
+		*msg_type = SPECTRAL_MSG_AGILE_MODE;
+		break;
+
+	default:
+		spectral_err("Invalid spectral mode");
+		return QDF_STATUS_E_FAILURE;
 	}
-}
 
-/**
- * clear_spectral_report_skb() - Clear Spectral report skb
- * @spectral: Pointer to Spectral
- *
- * Clear spectral report skb
- *
- * Return: void
- */
-static inline void
-clear_spectral_report_skb(struct target_if_spectral *spectral) {
-	if (spectral->ch_width == CH_WIDTH_160MHZ)
-		spectral->spectral_report_cache = NULL;
-}
-
-/**
- * free_and_clear_spectral_report_skb() - Free and clear Spectral report skb
- * @spectral: Pointer to Spectral
- *
- * Free and clear spectral report skb
- *
- * Return: void
- */
-static inline void
-free_and_clear_spectral_report_skb(struct target_if_spectral *spectral) {
-	if (spectral->spectral_report_cache)
-		spectral->nl_cb.free_nbuff(spectral->pdev_obj);
-	spectral->spectral_report_cache = NULL;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1446,27 +1396,10 @@ free_and_clear_spectral_report_skb(struct target_if_spectral *spectral) {
  * Return: void
  */
 static inline void
-init_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
+init_160mhz_delivery_state_machine(struct target_if_spectral *spectral)
+{
 	spectral->state_160mhz_delivery =
 		SPECTRAL_REPORT_WAIT_PRIMARY80;
-	spectral->spectral_report_cache = NULL;
-}
-
-/**
- * deinit_160mhz_delivery_state_machine() - Deinitialize 160MHz Spectral
- *                                        state machine
- * @spectral: Pointer to Spectral
- *
- * Deinitialize 160MHz Spectral state machine
- *
- * Return: void
- */
-static inline void
-deinit_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
-	if (spectral->spectral_report_cache && spectral->nl_cb.free_nbuff) {
-		spectral->nl_cb.free_nbuff(spectral->pdev_obj);
-		spectral->spectral_report_cache = NULL;
-	}
 }
 
 /**
@@ -1478,11 +1411,24 @@ deinit_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
  * Return: void
  */
 static inline void
-reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral) {
+reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral,
+				    enum spectral_scan_mode smode)
+{
+	enum spectral_msg_type smsg_type;
+	QDF_STATUS ret;
+
 	if (spectral->ch_width == CH_WIDTH_160MHZ) {
 		spectral->state_160mhz_delivery =
 			SPECTRAL_REPORT_WAIT_PRIMARY80;
-		free_and_clear_spectral_report_skb(spectral);
+
+		ret = target_if_get_spectral_msg_type(smode, &smsg_type);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err("Failed to reset 160 MHz state machine");
+			return;
+		}
+
+		spectral->nl_cb.free_sbuff(spectral->pdev_obj,
+					   smsg_type);
 	}
 }
 
@@ -1871,19 +1817,6 @@ void target_if_get_spectral_capinfo(
  */
 void target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
 					     void *outdata);
-
-/*
- * target_if_spectral_send_tlv_to_host - target_if_spectral_send_tlv_to_host
- * @spectral: Send the TLV information to Host
- * @data: Pointer to the TLV
- * @datalen: tlv length
- *
- * Return: Success/Failure
- *
- */
-int target_if_spectral_send_tlv_to_host(
-	struct target_if_spectral *spectral,
-	 uint8_t *data, uint32_t datalen);
 
 void target_if_register_wmi_spectral_cmd_ops(
 	struct wlan_objmgr_pdev *pdev,

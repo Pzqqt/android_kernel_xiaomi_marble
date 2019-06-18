@@ -1824,8 +1824,6 @@ target_if_spectral_detach(struct target_if_spectral *spectral)
 	spectral_info("spectral detach");
 
 	if (spectral) {
-		if (spectral->spectral_gen == SPECTRAL_GEN3)
-			deinit_160mhz_delivery_state_machine(spectral);
 		qdf_spinlock_destroy(&spectral->param_info.osps_lock);
 
 		target_if_spectral_detach_simulation(spectral);
@@ -2891,8 +2889,10 @@ target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
 	struct target_if_spectral *spectral = NULL;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
-	msg  = (struct spectral_samp_msg *)spectral->nl_cb.get_nbuff(
-			spectral->pdev_obj);
+	msg  = (struct spectral_samp_msg *)spectral->nl_cb.get_sbuff(
+			spectral->pdev_obj,
+			SPECTRAL_MSG_INTERFERENCE_NOTIFICATION,
+			SPECTRAL_MSG_BUF_NEW);
 
 	if (msg) {
 		msg->int_type = cw_int ?
@@ -2901,7 +2901,9 @@ target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
 		msg->signature = SPECTRAL_SIGNATURE;
 		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 		p_sops->get_mac_address(spectral, msg->macaddr);
-		if (spectral->send_phy_data(pdev) == 0)
+		if (spectral->send_phy_data
+				(pdev,
+				 SPECTRAL_MSG_INTERFERENCE_NOTIFICATION) == 0)
 			spectral->spectral_sent_msg++;
 	}
 }

@@ -133,6 +133,34 @@
 /* End of temporary section for hard-coded values */
 
 /**
+ * enum spectral_msg_buf_type - Spectral message buffer type
+ * @SPECTRAL_MSG_BUF_NEW: Allocate new buffer
+ * @SPECTRAL_MSG_BUF_SAVED: Reuse last buffer, used for secondary segment report
+ *                          in case of 160 MHz.
+ */
+enum spectral_msg_buf_type {
+	SPECTRAL_MSG_BUF_NEW,
+	SPECTRAL_MSG_BUF_SAVED,
+	SPECTRAL_MSG_BUF_TYPE_MAX,
+};
+
+/**
+ * enum spectral_msg_type - Spectral SAMP message type
+ * @SPECTRAL_MSG_NORMAL_MODE: Normal mode Spectral SAMP message
+ * @SPECTRAL_MSG_AGILE_MODE: Agile mode Spectral SAMP message
+ * @SPECTRAL_MSG_INTERFERENCE_NOTIFICATION: Interference notification to
+ *                                          external auto channel selection
+ *                                          entity
+ * @SPECTRAL_MSG_TYPE_MAX: Spectral SAMP message type max
+ */
+enum spectral_msg_type {
+	SPECTRAL_MSG_NORMAL_MODE,
+	SPECTRAL_MSG_AGILE_MODE,
+	SPECTRAL_MSG_INTERFERENCE_NOTIFICATION,
+	SPECTRAL_MSG_TYPE_MAX,
+};
+
+/**
  * enum wlan_cfg80211_spectral_vendorcmd_handler_idx - Indices to cfg80211
  * spectral vendor command handlers
  * @SPECTRAL_SCAN_START_HANDLER_IDX:  Index to SPECTRAL_SCAN_START handler
@@ -260,15 +288,21 @@ struct wlan_objmgr_pdev;
 
 /**
  * struct spectral_nl_cb - Spectral Netlink callbacks
- * @get_nbuff:      Get the socket buffer to send the data to the application
+ * @get_sbuff:      Get the socket buffer to send the data to the application
  * @send_nl_bcast:  Send data to the application using netlink broadcast
  * @send_nl_unicast:  Send data to the application using netlink unicast
+ * @free_sbuff: Free the socket buffer for a particular message type
  */
 struct spectral_nl_cb {
-	void *(*get_nbuff)(struct wlan_objmgr_pdev *pdev);
-	int (*send_nl_bcast)(struct wlan_objmgr_pdev *pdev);
-	int (*send_nl_unicast)(struct wlan_objmgr_pdev *pdev);
-	void (*free_nbuff)(struct wlan_objmgr_pdev *pdev);
+	void *(*get_sbuff)(struct wlan_objmgr_pdev *pdev,
+			   enum spectral_msg_type smsg_type,
+			   enum spectral_msg_buf_type buf_type);
+	int (*send_nl_bcast)(struct wlan_objmgr_pdev *pdev,
+			     enum spectral_msg_type smsg_type);
+	int (*send_nl_unicast)(struct wlan_objmgr_pdev *pdev,
+			       enum spectral_msg_type smsg_type);
+	void (*free_sbuff)(struct wlan_objmgr_pdev *pdev,
+			   enum spectral_msg_type smsg_type);
 };
 
 /**
