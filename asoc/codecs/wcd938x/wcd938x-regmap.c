@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -494,8 +494,10 @@ static bool wcd938x_volatile_register(struct device *dev, unsigned int reg)
 {
 	if(reg <= WCD938X_BASE_ADDRESS)
 		return 0;
-	return (wcd938x_reg_access[WCD938X_REG(reg)] & RD_REG)
-		& ~(wcd938x_reg_access[WCD938X_REG(reg)] & WR_REG);
+	if ((wcd938x_reg_access[WCD938X_REG(reg)] & RD_REG)
+		&& !(wcd938x_reg_access[WCD938X_REG(reg)] & WR_REG))
+		return true;
+	return false;
 }
 
 struct regmap_config wcd938x_regmap_config = {
