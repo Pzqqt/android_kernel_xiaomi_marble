@@ -166,6 +166,12 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 				      0xC0, 0x80);
 	snd_soc_component_update_bits(component, WCD938X_DIGITAL_CDC_DMIC_CTL,
 				      0x02, 0x02);
+	snd_soc_component_update_bits(component,
+				WCD938X_TX_COM_NEW_INT_TXFE_ICTRL_STG2CASC_ULP,
+				0xFF, 0x14);
+	snd_soc_component_update_bits(component,
+				WCD938X_TX_COM_NEW_INT_TXFE_ICTRL_STG2MAIN_ULP,
+				0x1F, 0x08);
 
 	return 0;
 }
@@ -364,6 +370,8 @@ static int wcd938x_rx_clk_enable(struct snd_soc_component *component)
 				WCD938X_DIGITAL_CDC_RX2_CTL, 0x40, 0x00);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				WCD938X_AUX_AUXPA, 0x10, 0x10);
 	}
 	wcd938x->rx_clk_cnt++;
 
@@ -539,8 +547,11 @@ static int wcd938x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_COMP_CTL_0, 0x02, 0x02);
 		/* 5 msec delay as per HW requirement */
 		usleep_range(5000, 5010);
-		snd_soc_component_update_bits(component, WCD938X_FLYBACK_EN,
-				0x04, 0x00);
+		if (wcd938x->flyback_cur_det_disable == 0)
+			snd_soc_component_update_bits(component,
+					WCD938X_FLYBACK_EN,
+					0x04, 0x00);
+		wcd938x->flyback_cur_det_disable++;
 		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
 			     WCD_CLSH_EVENT_PRE_DAC,
 			     WCD_CLSH_STATE_EAR,
@@ -573,13 +584,17 @@ static int wcd938x_codec_aux_dac_event(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x04, 0x04);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_AUX_GAIN_CTL, 0x01, 0x01);
+		if (wcd938x->flyback_cur_det_disable == 0)
+			snd_soc_component_update_bits(component,
+					WCD938X_FLYBACK_EN,
+					0x04, 0x00);
+		wcd938x->flyback_cur_det_disable++;
 		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
 			     WCD_CLSH_EVENT_PRE_DAC,
 			     WCD_CLSH_STATE_AUX,
 			     wcd938x->hph_mode);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		wcd938x_rx_clk_disable(component);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x04, 0x00);
 		break;
@@ -630,7 +645,8 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_component_update_bits(component,
 				WCD938X_HPH_NEW_INT_HPH_TIMER1, 0x02, 0x02);
-		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
+		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI ||
+			hph_mode == CLS_AB_LP || hph_mode == CLS_AB_LOHIFI)
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_RX_SUPPLIES, 0x02, 0x02);
 		if (wcd938x->update_wcd_event)
@@ -706,7 +722,8 @@ static int wcd938x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_component_update_bits(component,
 				WCD938X_HPH_NEW_INT_HPH_TIMER1, 0x02, 0x02);
-		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
+		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI ||
+			hph_mode == CLS_AB_LP || hph_mode == CLS_AB_LOHIFI)
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_RX_SUPPLIES, 0x02, 0x02);
 		if (wcd938x->update_wcd_event)
@@ -762,10 +779,11 @@ static int wcd938x_codec_enable_aux_pa(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		/* 1 msec delay as per HW requirement */
 		usleep_range(1000, 1010);
-		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
+		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI ||
+			hph_mode == CLS_AB_LP || hph_mode == CLS_AB_LOHIFI)
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_RX_SUPPLIES,
-					0x20, 0x20);
+					0x02, 0x02);
 		if (wcd938x->update_wcd_event)
 			wcd938x->update_wcd_event(wcd938x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -784,6 +802,12 @@ static int wcd938x_codec_enable_aux_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_AUX,
 			     hph_mode);
+
+		wcd938x->flyback_cur_det_disable--;
+		if (wcd938x->flyback_cur_det_disable == 0)
+			snd_soc_component_update_bits(component,
+						      WCD938X_FLYBACK_EN,
+						      0x04, 0x04);
 		break;
 	};
 	return ret;
@@ -811,7 +835,8 @@ static int wcd938x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		/* 6 msec delay as per HW requirement */
 		usleep_range(6000, 6010);
-		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
+		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI ||
+			hph_mode == CLS_AB_LP || hph_mode == CLS_AB_LOHIFI)
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_RX_SUPPLIES,
 					0x02, 0x02);
@@ -833,8 +858,12 @@ static int wcd938x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_EAR,
 			     hph_mode);
-		snd_soc_component_update_bits(component, WCD938X_FLYBACK_EN,
-				0x04, 0x04);
+
+		wcd938x->flyback_cur_det_disable--;
+		if (wcd938x->flyback_cur_det_disable == 0)
+			snd_soc_component_update_bits(component,
+						      WCD938X_FLYBACK_EN,
+						      0x04, 0x04);
 		break;
 	};
 	return ret;
@@ -1796,7 +1825,7 @@ static const struct soc_enum tx_mode_mux_enum =
 
 static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_INVALID", "CLS_H_HIFI", "CLS_H_LP", "CLS_AB", "CLS_H_LOHIFI",
-	"CLS_H_ULP", "CLS_AB_HIFI",
+	"CLS_H_ULP", "CLS_AB_HIFI", "CLS_AB_LP", "CLS_AB_LOHIFI",
 };
 
 static const struct soc_enum rx_hph_mode_mux_enum =
