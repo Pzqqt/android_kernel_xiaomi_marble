@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 #ifndef WSA_MACRO_H
 #define WSA_MACRO_H
@@ -33,7 +33,7 @@ static inline int wsa_macro_set_spkr_mode(struct snd_soc_component *component,
 }
 static inline int wsa_macro_set_spkr_gain_offset(
 				struct snd_soc_component *component,
-				int offset);
+				int offset)
 {
 	return 0;
 }
