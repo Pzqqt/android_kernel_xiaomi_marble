@@ -1835,7 +1835,9 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	 * calling DFS override
 	 */
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
-	    mcc_to_scc_switch) {
+	    mcc_to_scc_switch &&
+	    !(policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) &&
+	    IS_24G_CH(sap_config->acs_cfg.end_ch))) {
 		status = wlan_hdd_sap_cfg_dfs_override(adapter);
 		if (status < 0)
 			return status;
