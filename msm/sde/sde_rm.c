@@ -166,6 +166,31 @@ static void _sde_rm_print_rsvps(
 	}
 }
 
+static void _sde_rm_print_rsvps_by_type(
+		struct sde_rm *rm,
+		enum sde_hw_blk_type type)
+{
+	struct sde_rm_hw_blk *blk;
+
+	list_for_each_entry(blk, &rm->hw_blks[type], list) {
+		if (!blk->rsvp && !blk->rsvp_nxt)
+			continue;
+
+		SDE_ERROR("rsvp[s%ue%u->s%ue%u] %d %d\n",
+			(blk->rsvp) ? blk->rsvp->seq : 0,
+			(blk->rsvp) ? blk->rsvp->enc_id : 0,
+			(blk->rsvp_nxt) ? blk->rsvp_nxt->seq : 0,
+			(blk->rsvp_nxt) ? blk->rsvp_nxt->enc_id : 0,
+			blk->type, blk->id);
+
+		SDE_EVT32((blk->rsvp) ? blk->rsvp->seq : 0,
+			(blk->rsvp) ? blk->rsvp->enc_id : 0,
+			(blk->rsvp_nxt) ? blk->rsvp_nxt->seq : 0,
+			(blk->rsvp_nxt) ? blk->rsvp_nxt->enc_id : 0,
+			blk->type, blk->id);
+	}
+}
+
 struct sde_hw_mdp *sde_rm_get_mdp(struct sde_rm *rm)
 {
 	return rm->hw_mdp;
@@ -1405,6 +1430,7 @@ static int _sde_rm_make_next_rsvp(struct sde_rm *rm, struct drm_encoder *enc,
 	ret = _sde_rm_make_lm_rsvp(rm, rsvp, reqs, splash_display);
 	if (ret) {
 		SDE_ERROR("unable to find appropriate mixers\n");
+		_sde_rm_print_rsvps_by_type(rm, SDE_HW_BLK_LM);
 		return ret;
 	}
 
