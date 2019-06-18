@@ -2923,9 +2923,10 @@ static int wcd938x_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+	mutex_init(&wcd938x->micb_lock);
 	ret = wcd938x_add_slave_components(dev, &match);
 	if (ret)
-		goto err;
+		goto err_lock_init;
 
 	wcd938x_reset(dev);
 
@@ -2934,13 +2935,19 @@ static int wcd938x_probe(struct platform_device *pdev)
 	return component_master_add_with_match(dev,
 					&wcd938x_comp_ops, match);
 
+err_lock_init:
+	mutex_destroy(&wcd938x->micb_lock);
 err:
 	return ret;
 }
 
 static int wcd938x_remove(struct platform_device *pdev)
 {
+	struct wcd938x_priv *wcd938x = NULL;
+
+	wcd938x = platform_get_drvdata(pdev);
 	component_master_del(&pdev->dev, &wcd938x_comp_ops);
+	mutex_destroy(&wcd938x->micb_lock);
 	dev_set_drvdata(&pdev->dev, NULL);
 
 	return 0;
