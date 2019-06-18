@@ -346,19 +346,22 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 
 	switch (event) {
 	case BOLERO_MACRO_EVT_SSR_DOWN:
-		swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_DEVICE_DOWN, NULL);
-		swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_DEVICE_SSR_DOWN, NULL);
+		if (tx_priv->swr_ctrl_data) {
+			swrm_wcd_notify(
+				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+				SWR_DEVICE_DOWN, NULL);
+			swrm_wcd_notify(
+				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+				SWR_DEVICE_SSR_DOWN, NULL);
+		}
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		/* reset swr after ssr/pdr */
 		tx_priv->reset_swr = true;
-		swrm_wcd_notify(
-			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_DEVICE_SSR_UP, NULL);
+		if (tx_priv->swr_ctrl_data)
+			swrm_wcd_notify(
+				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+				SWR_DEVICE_SSR_UP, NULL);
 		break;
 	}
 	return 0;
@@ -375,9 +378,10 @@ static int tx_macro_reg_wake_irq(struct snd_soc_component *component,
 	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
 		return -EINVAL;
 
-	ret = swrm_wcd_notify(
-		tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-		SWR_REGISTER_WAKE_IRQ, &ipc_wakeup);
+	if (tx_priv->swr_ctrl_data)
+		ret = swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_REGISTER_WAKE_IRQ, &ipc_wakeup);
 
 	return ret;
 }
@@ -1948,9 +1952,10 @@ static int tx_macro_set_port_map(struct snd_soc_component *component,
 	port_cfg.size = size;
 	port_cfg.params = data;
 
-	ret = swrm_wcd_notify(
-		tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-		SWR_SET_PORT_MAP, &port_cfg);
+	if (tx_priv->swr_ctrl_data)
+		ret = swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_SET_PORT_MAP, &port_cfg);
 
 	return ret;
 }
@@ -1977,6 +1982,8 @@ static int tx_macro_probe(struct platform_device *pdev)
 	char __iomem *tx_io_base = NULL;
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
+	u32 is_used_tx_swr_gpio = 1;
+	const char *is_used_tx_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
 	tx_priv = devm_kzalloc(&pdev->dev, sizeof(struct tx_macro_priv),
 			    GFP_KERNEL);
@@ -1993,9 +2000,20 @@ static int tx_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 	dev_set_drvdata(&pdev->dev, tx_priv);
+	if (of_find_property(pdev->dev.of_node, is_used_tx_swr_gpio_dt,
+			     NULL)) {
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   is_used_tx_swr_gpio_dt,
+					   &is_used_tx_swr_gpio);
+		if (ret) {
+			dev_err(&pdev->dev, "%s: error reading %s in dt\n",
+				__func__, is_used_tx_swr_gpio_dt);
+			is_used_tx_swr_gpio = 1;
+		}
+	}
 	tx_priv->tx_swr_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					"qcom,tx-swr-gpios", 0);
-	if (!tx_priv->tx_swr_gpio_p) {
+	if (!tx_priv->tx_swr_gpio_p && is_used_tx_swr_gpio) {
 		dev_err(&pdev->dev, "%s: swr_gpios handle not provided!\n",
 			__func__);
 		return -EINVAL;
@@ -2064,7 +2082,8 @@ static int tx_macro_remove(struct platform_device *pdev)
 	if (!tx_priv)
 		return -EINVAL;
 
-	kfree(tx_priv->swr_ctrl_data);
+	if (tx_priv->swr_ctrl_data)
+		kfree(tx_priv->swr_ctrl_data);
 	for (count = 0; count < tx_priv->child_count &&
 		count < TX_MACRO_CHILD_DEVICES_MAX; count++)
 		platform_device_unregister(tx_priv->pdev_child_devices[count]);
