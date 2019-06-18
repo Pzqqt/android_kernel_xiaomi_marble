@@ -10,6 +10,7 @@
 #include <linux/platform_device.h>
 #include <linux/kernel.h>
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include "bolero-cdc.h"
 #include "bolero-clk-rsc.h"
 
@@ -90,6 +91,51 @@ static char __iomem *bolero_clk_rsc_get_clk_muxsel(struct bolero_clk_rsc *priv,
 
 	return NULL;
 }
+
+int bolero_rsc_clk_reset(struct device *dev, int clk_id)
+{
+	struct device *clk_dev = NULL;
+	struct bolero_clk_rsc *priv = NULL;
+	int count = 0;
+
+	if (!dev) {
+		pr_err("%s: dev is null %d\n", __func__);
+		return -EINVAL;
+	}
+
+	if (clk_id < 0 || clk_id >= MAX_CLK - NPL_CLK_OFFSET) {
+		pr_err("%s: Invalid clk_id: %d\n",
+			__func__, clk_id);
+		return -EINVAL;
+	}
+
+	clk_dev = bolero_get_rsc_clk_device_ptr(dev->parent);
+	if (!clk_dev) {
+		pr_err("%s: Invalid rsc clk device\n", __func__);
+		return -EINVAL;
+	}
+
+	priv = dev_get_drvdata(clk_dev);
+	if (!priv) {
+		pr_err("%s: Invalid rsc clk priviate data\n", __func__);
+		return -EINVAL;
+	}
+	mutex_lock(&priv->rsc_clk_lock);
+	while (__clk_is_enabled(priv->clk[clk_id])) {
+		clk_disable_unprepare(priv->clk[clk_id + NPL_CLK_OFFSET]);
+		clk_disable_unprepare(priv->clk[clk_id]);
+		count++;
+	}
+	dev_dbg(priv->dev,
+		"%s: clock reset after ssr, count %d\n", __func__, count);
+	while (count--) {
+		clk_prepare_enable(priv->clk[clk_id]);
+		clk_prepare_enable(priv->clk[clk_id + NPL_CLK_OFFSET]);
+	}
+	mutex_unlock(&priv->rsc_clk_lock);
+	return 0;
+}
+EXPORT_SYMBOL(bolero_rsc_clk_reset);
 
 static int bolero_clk_rsc_mux0_clk_request(struct bolero_clk_rsc *priv,
 					   int clk_id,

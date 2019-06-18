@@ -928,6 +928,9 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
 				SWR_DEVICE_SSR_UP, NULL);
 		break;
+	case BOLERO_MACRO_EVT_CLK_RESET:
+		bolero_rsc_clk_reset(wsa_dev, WSA_CORE_CLK);
+		break;
 	}
 	return 0;
 }

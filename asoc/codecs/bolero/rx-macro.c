@@ -1247,6 +1247,9 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 				SWR_DEVICE_SSR_UP, NULL);
 		break;
+	case BOLERO_MACRO_EVT_CLK_RESET:
+		bolero_rsc_clk_reset(rx_dev, RX_CORE_CLK);
+		break;
 	}
 	return ret;
 }

@@ -614,11 +614,12 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 	if (priv->rsc_clk_cb)
 		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_UP);
 
-	if (priv->macro_params[VA_MACRO].event_handler)
-		priv->macro_params[VA_MACRO].event_handler(
-			priv->component,
-			BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET, 0x0);
-
+	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
+		if (priv->macro_params[macro_idx].event_handler)
+			priv->macro_params[macro_idx].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_CLK_RESET, 0x0);
+	}
 	regcache_cache_only(priv->regmap, false);
 	mutex_lock(&priv->clk_lock);
 	priv->dev_up = true;

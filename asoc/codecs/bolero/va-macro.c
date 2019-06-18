@@ -234,6 +234,9 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 				"%s: va_mclk_users is non-zero still, audio SSR fail!!\n",
 				__func__);
 		break;
+	case BOLERO_MACRO_EVT_CLK_RESET:
+		bolero_rsc_clk_reset(va_dev, VA_CORE_CLK);
+		break;
 	default:
 		break;
 	}

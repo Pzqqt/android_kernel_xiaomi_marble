@@ -18,6 +18,7 @@ int bolero_clk_rsc_request_clock(struct device *dev,
 				int default_clk_id,
 				int clk_id_req,
 				bool enable);
+int bolero_rsc_clk_reset(struct device *dev, int clk_id);
 #else
 static inline void bolero_clk_rsc_fs_gen_request(struct device *dev,
 						bool enable)
@@ -37,6 +38,9 @@ static inline int bolero_clk_rsc_request_clock(struct device *dev,
 {
 	return 0;
 }
-
+static inline int bolero_rsc_clk_reset(struct device *dev, int clk_id)
+{
+	return 0;
+}
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CLK_RSC_H */
