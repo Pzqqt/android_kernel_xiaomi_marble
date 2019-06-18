@@ -3672,6 +3672,67 @@ static int msm_pcm_channel_weight_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_pcm_channel_output_map_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = PCM_FORMAT_MAX_NUM_CHANNEL_V8;
+	/* Valid channel map value ranges from 1 to 64 */
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 64;
+
+	return 0;
+}
+
+static int msm_pcm_channel_output_map_put(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	u16 fe_id = 0;
+	int i, ch_map;
+
+	fe_id = ((struct soc_multi_mixer_control *)
+			kcontrol->private_value)->shift;
+	if (fe_id >= MSM_FRONTEND_DAI_MM_SIZE) {
+		pr_err("%s: invalid FE %d\n", __func__, fe_id);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; ++i) {
+		ch_map = ucontrol->value.integer.value[i];
+		channel_mixer[fe_id].out_ch_map[i] = ch_map;
+		pr_debug("%s: FE_ID %d, channel %d channel map %d\n",
+			__func__, fe_id, i, channel_mixer[fe_id].out_ch_map[i]);
+	}
+
+	/* Make override_out_ch_map false if ch map is reset */
+	if (channel_mixer[fe_id].out_ch_map[0] == 0)
+		channel_mixer[fe_id].override_out_ch_map = false;
+	else
+		channel_mixer[fe_id].override_out_ch_map = true;
+
+	return 0;
+}
+
+static int msm_pcm_channel_output_map_get(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_value *ucontrol)
+{
+	u16 fe_id = 0;
+	int i;
+
+	fe_id = ((struct soc_multi_mixer_control *)
+			kcontrol->private_value)->shift;
+	if (fe_id >= MSM_FRONTEND_DAI_MM_SIZE) {
+		pr_err("%s: invalid FE %d\n", __func__, fe_id);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; ++i)
+		ucontrol->value.integer.value[i] =
+			channel_mixer[fe_id].out_ch_map[i];
+
+	return 0;
+}
+
 static const struct snd_kcontrol_new channel_mixer_controls[] = {
 	SOC_SINGLE_EXT("MultiMedia1 Channel Rule", SND_SOC_NOPM,
 			MSM_FRONTEND_DAI_MULTIMEDIA1, 8, 0,
@@ -3980,7 +4041,68 @@ static const struct snd_kcontrol_new channel_mixer_controls[] = {
 	.put = msm_pcm_channel_input_be_put,
 	.private_value = (unsigned long)&(mm1_ch8_enum)
 	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia1 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA1,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia2 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA2,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia3 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA3,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia4 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA4,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia5 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA5,}
+	},
+	{
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.name = "MultiMedia6 Output Channel Map",
+	.info = msm_pcm_channel_output_map_info,
+	.get = msm_pcm_channel_output_map_get,
+	.put = msm_pcm_channel_output_map_put,
+	.private_value = (unsigned long)&(struct soc_multi_mixer_control)
+		{ .shift = MSM_FRONTEND_DAI_MULTIMEDIA6,}
+	},
 };
+
 static int msm_ec_ref_ch_get(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
