@@ -98,11 +98,26 @@ typedef unsigned long dma_addr_t;
 typedef unsigned long phys_addr_t;
 typedef unsigned long __sgtable_t;
 
+#ifndef SIOCGIWAP
 #define SIOCGIWAP       0
+#endif
+
+#ifndef IWEVCUSTOM
 #define IWEVCUSTOM      0
+#endif
+
+#ifndef IWEVREGISTERED
 #define IWEVREGISTERED  0
+#endif
+
+#ifndef IWEVEXPIRED
 #define IWEVEXPIRED     0
+#endif
+
+#ifndef SIOCGIWSCAN
 #define SIOCGIWSCAN     0
+#endif
+
 #define DMA_TO_DEVICE   0
 #define DMA_BIDIRECTIONAL 0
 #define DMA_FROM_DEVICE 0
