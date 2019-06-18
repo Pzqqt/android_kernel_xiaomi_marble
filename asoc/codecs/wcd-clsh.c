@@ -34,6 +34,10 @@ static const char *mode_to_str(int mode)
 		return WCD_CLSH_STRINGIFY(CLS_AB);
 	case CLS_AB_HIFI:
 		return WCD_CLSH_STRINGIFY(CLS_AB_HIFI);
+	case CLS_AB_LP:
+		return WCD_CLSH_STRINGIFY(CLS_AB_LP);
+	case CLS_AB_LOHIFI:
+		return WCD_CLSH_STRINGIFY(CLS_AB_LOHIFI);
 	default:
 		return WCD_CLSH_STRINGIFY(CLS_H_INVALID);
 	};
@@ -107,7 +111,7 @@ static inline void wcd_clsh_set_buck_mode(struct snd_soc_component *component,
 					  int mode)
 {
 	if (mode == CLS_H_HIFI || mode == CLS_H_LOHIFI ||
-	    mode == CLS_AB_HIFI)
+	    mode == CLS_AB_HIFI || mode == CLS_AB_LOHIFI)
 		snd_soc_component_update_bits(component,
 				WCD9XXX_ANA_RX_SUPPLIES,
 				0x08, 0x08); /* set to HIFI */
@@ -122,7 +126,7 @@ static inline void wcd_clsh_set_flyback_mode(
 				int mode)
 {
 	if (mode == CLS_H_HIFI || mode == CLS_H_LOHIFI ||
-	    mode == CLS_AB_HIFI) {
+	    mode == CLS_AB_HIFI || mode == CLS_AB_LOHIFI) {
 		snd_soc_component_update_bits(component,
 				WCD9XXX_ANA_RX_SUPPLIES,
 				0x04, 0x04);
@@ -154,7 +158,7 @@ static inline void wcd_clsh_force_iq_ctl(struct snd_soc_component *component,
 		snd_soc_component_update_bits(component,
 				WCD9XXX_CLASSH_MODE_2,
 				0xFF, 0x1C);
-		if (mode == CLS_H_LOHIFI) {
+		if (mode == CLS_H_LOHIFI || mode == CLS_AB_LOHIFI) {
 			snd_soc_component_update_bits(component,
 					WCD9XXX_HPH_NEW_INT_PA_MISC2,
 					0x20, 0x20);
@@ -258,6 +262,8 @@ static void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
 		break;
 	case CLS_H_LP:
 	case CLS_H_LOHIFI:
+	case CLS_AB_LP:
+	case CLS_AB_LOHIFI:
 		val = 0x04;
 		break;
 	default:
