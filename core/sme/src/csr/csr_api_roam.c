@@ -2292,15 +2292,37 @@ static void csr_start_bss_copy_he_cap(struct start_bss_req *req,
 		     sizeof(session->he_config));
 }
 
+void csr_init_session_twt_cap(struct csr_roam_session *session,
+			      uint32_t type_of_persona)
+{
+	if (WMI_VDEV_TYPE_AP == type_of_persona) {
+		session->he_config.twt_request = 0;
+	} else if (WMI_VDEV_TYPE_STA == type_of_persona) {
+		session->he_config.twt_responder = 0;
+	}
+}
+
 void csr_update_session_he_cap(struct mac_context *mac_ctx,
 			       struct csr_roam_session *session)
 {
+	enum QDF_OPMODE persona;
 	tDot11fIEhe_cap *he_cap = &session->he_config;
 	he_cap->present = true;
 
 	qdf_mem_copy(&session->he_config,
 		     &mac_ctx->mlme_cfg->he_caps.dot11_he_cap,
 		     sizeof(session->he_config));
+
+	/*
+	 * Do not advertise requester role for SAP & responder role
+	 * for STA
+	 */
+	persona = csr_get_session_persona(mac_ctx, session->sessionId);
+	if (QDF_SAP_MODE == persona) {
+		session->he_config.twt_request = 0;
+	} else if (QDF_STA_MODE == persona) {
+		session->he_config.twt_responder = 0;
+	}
 
 	if (he_cap->ppet_present) {
 		/* till now operating channel is not decided yet, use 5g cap */
@@ -17076,6 +17098,12 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 			vht_cap_info->ampdu_len_exponent;
 
 	csr_update_session_he_cap(mac_ctx, session);
+
+	/*
+	 * Do not advertise requester role for SAP & responder role
+	 * for STA
+	 */
+	csr_init_session_twt_cap(session, session_param->type_of_persona);
 
 	return csr_issue_add_sta_for_session_req(mac_ctx,
 				session_param->sme_session_id,
