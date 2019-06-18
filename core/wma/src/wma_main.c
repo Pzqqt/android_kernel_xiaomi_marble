@@ -8590,7 +8590,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				(struct set_ie_param *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#if !defined(REMOVE_PKT_LOG)
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 	case WMA_PKTLOG_ENABLE_REQ:
 		wma_pktlog_wmi_send_cmd(wma_handle,
 			(struct ath_pktlog_wmi_params *)msg->bodyptr);

@@ -1431,7 +1431,7 @@ QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
 }
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
-#if !defined(REMOVE_PKT_LOG)
+#if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 /**
  * wma_pktlog_wmi_send_cmd() - send pktlog enable/disable command to target
  * @handle: wma handle
@@ -1453,7 +1453,7 @@ QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* REMOVE_PKT_LOG */
+#endif /* !REMOVE_PKT_LOG && FEATURE_PKTLOG */
 
 /**
  * wma_wow_wake_reason_str() -  Converts wow wakeup reason code to text format
