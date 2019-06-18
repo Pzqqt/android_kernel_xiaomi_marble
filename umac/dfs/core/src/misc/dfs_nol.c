@@ -629,7 +629,10 @@ void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
 	uint8_t channels[NUM_CHANNELS_160MHZ];
 	int i, nchans = 0;
 
-	nchans = dfs_get_bonding_channels(dfs, &dfs->dfs_radar_found_chan, 0,
+	nchans = dfs_get_bonding_channels(dfs,
+					  &dfs->dfs_radar_found_chan,
+					  SEG_ID_PRIMARY,
+					  DETECTOR_ID_0,
 					  channels);
 
 	WLAN_DFSNOL_LOCK(dfs);

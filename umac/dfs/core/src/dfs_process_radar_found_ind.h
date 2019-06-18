@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -138,16 +138,19 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id);
 
 /**
  * dfs_get_bonding_channels() - Get bonding channels.
- * @dfs: Pointer to wlan_dfs structure.
- * @curchan: Pointer to dfs_channels to know width and primary channel.
- * @segment_id: Segment id, useful for 80+80/160 MHz operating band.
- * @channels: Pointer to save radar affected channels.
+ * @dfs:         Pointer to wlan_dfs structure.
+ * @curchan:     Pointer to dfs_channels to know width and primary channel.
+ * @segment_id:  Segment id, useful for 80+80/160 MHz operating band.
+ * @detector_id: Detector id, used to find if radar is detected on
+ *               Agile detector.
+ * @channels:    Pointer to save radar affected channels.
  *
  * Return: Number of channels.
  */
 uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
 				 struct dfs_channel *curchan,
 				 uint32_t segment_id,
+				 uint8_t detector_id,
 				 uint8_t *channels);
 
 /**

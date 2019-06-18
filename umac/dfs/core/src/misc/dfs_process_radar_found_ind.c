@@ -333,7 +333,10 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 	uint64_t flag;
 
 	flag = curchan->dfs_ch_flags;
-	if (!radar_found->segment_id) {
+	if (radar_found->detector_id == AGILE_DETECTOR_ID) {
+		*freq_center = utils_dfs_chan_to_freq(
+				dfs->dfs_agile_precac_freq);
+	} else if (!radar_found->segment_id) {
 		*freq_center = utils_dfs_chan_to_freq(
 				curchan->dfs_ch_vhtop_ch_freq_seg1);
 	} else {
@@ -384,8 +387,8 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 	sidx = DFS_FREQ_OFFSET_TO_SIDX(radar_found->freq_offset);
 
 	dfs_info(dfs, WLAN_DEBUG_DFS,
-		 "seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
-		 radar_found->segment_id, sidx,
+		 "seg=%d, det=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
+		 radar_found->segment_id, radar_found->detector_id, sidx,
 		 radar_found->freq_offset, radar_found->is_chirp,
 		 flag, freq_center);
 
@@ -419,6 +422,7 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 
 	n_cur_subchans = dfs_get_bonding_channels(dfs, curchan,
 						  radar_found->segment_id,
+						  radar_found->detector_id,
 						  cur_subchans);
 
 	for (i = 0, num_radar_subchans = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
@@ -489,12 +493,15 @@ uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
 uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
 				 struct dfs_channel *curchan,
 				 uint32_t segment_id,
+				 uint8_t detector_id,
 				 uint8_t *channels)
 {
 	uint8_t center_chan;
 	uint8_t nchannels = 0;
 
-	if (!segment_id)
+	if (detector_id == AGILE_DETECTOR_ID)
+		center_chan = dfs->dfs_agile_precac_freq;
+	else if (!segment_id)
 		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg1;
 	else {
 		/* When precac is running "dfs_ch_vhtop_ch_freq_seg2" is
@@ -515,7 +522,13 @@ uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
 		channels[0] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
 		channels[1] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
 	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
-		   WLAN_IS_CHAN_MODE_80_80(curchan)) {
+		   WLAN_IS_CHAN_MODE_80_80(curchan) ||
+		   detector_id == AGILE_DETECTOR_ID) {
+		/* If the current channel's bandwidth is 80/80+80/160Mhz,
+		 * the corresponding agile Detector's bandwidth will be 80Mhz.
+		 * Therefore, if radar is found on the agile detector find
+		 * subchannels for 80Mhz bandwidth.
+		 */
 		nchannels = 4;
 		channels[0] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
 		channels[1] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
@@ -609,6 +622,7 @@ static void dfs_prepare_nol_ie_bitmap(struct wlan_dfs *dfs,
 
 	n_cur_subchans = dfs_get_bonding_channels(dfs, dfs->dfs_curchan,
 						  radar_found->segment_id,
+						  radar_found->detector_id,
 						  cur_subchans);
 	dfs->dfs_nol_ie_bandwidth = MIN_DFS_SUBCHAN_BW;
 	dfs->dfs_nol_ie_startfreq =
@@ -680,7 +694,8 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 		num_subchans =
 			dfs_get_bonding_channels(dfs,
 						 dfs->dfs_curchan,
-						 dfs->dfs_curchan->dfs_ch_freq,
+						 SEG_ID_PRIMARY,
+						 DETECTOR_ID_0,
 						 radar_subchans);
 		should_nol_ie_be_sent = false;
 	} else {
@@ -722,10 +737,23 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Check if the current channel is a non DFS channel */
-	if (!dfs_radarevent_basic_sanity(dfs, dfs->dfs_curchan)) {
+	/* Check if the current channel is a non DFS channel
+	 * If the current channel is non-DFS and the radar is from Agile
+	 * Detector we need to process it since Agile Detector has a
+	 * different channel.
+	 */
+	if (!dfs_radarevent_basic_sanity(dfs, dfs->dfs_curchan) &&
+	    !(radar_found->detector_id == AGILE_DETECTOR_ID)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar event on a non-DFS channel");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Sanity checks for radar on Agile detector */
+	if (radar_found->detector_id == AGILE_DETECTOR_ID &&
+	    (!dfs->dfs_agile_precac_enable || !dfs->dfs_agile_precac_freq)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+			"radar on Agile detector when ADFS is not running");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -743,7 +771,11 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);
 	radarfound_freq = freq_center + radar_found->freq_offset;
 
-	if (radar_found->segment_id == SEG_ID_SECONDARY)
+	if (radar_found->detector_id == AGILE_DETECTOR_ID)
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Radar found on Agile detector freq=%d radar freq=%d",
+			  freq_center, radarfound_freq);
+	else if (radar_found->segment_id == SEG_ID_SECONDARY)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			 "Radar found on second segment.Radarfound Freq=%d MHz.Secondary Chan cfreq=%d MHz.",
 			 radarfound_freq, freq_center);
@@ -777,23 +809,14 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 								channels,
 								freq_center);
 	else
-		num_channels = dfs_get_bonding_channels(dfs,
-							dfs->dfs_curchan,
-							radar_found->segment_id,
-							channels);
+		num_channels =
+			dfs_get_bonding_channels(dfs,
+						 dfs->dfs_curchan,
+						 radar_found->segment_id,
+						 radar_found->detector_id,
+						 channels);
 
 	dfs_reset_bangradar(dfs);
-
-	if (dfs->dfs_agile_precac_enable && radar_found->detector_id ==
-			AGILE_DETECTOR_ID) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "%s: %d Radar found on agile detector:%d , STAY in Same operating Channel",
-			  __func__, __LINE__, radar_found->detector_id);
-		dfs_mark_precac_nol(dfs, dfs->is_radar_found_on_secondary_seg,
-				    radar_found->detector_id, channels,
-				    num_channels);
-		return QDF_STATUS_SUCCESS;
-	}
 
 	status = dfs_radar_add_channel_list_to_nol(dfs, channels, num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -801,8 +824,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			"radar event received on invalid channel");
 		return status;
 	}
+
 	dfs->dfs_is_nol_ie_sent = false;
-	(dfs->is_radar_during_precac) ?
+	(dfs->is_radar_during_precac ||
+	 radar_found->detector_id == AGILE_DETECTOR_ID) ?
 		(dfs->dfs_is_rcsa_ie_sent = false) :
 		(dfs->dfs_is_rcsa_ie_sent = true);
 	if (dfs->dfs_use_nol_subchannel_marking) {
@@ -857,6 +882,11 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, &wait_for_csa);
 
+	/* If radar is found on preCAC or Agile CAC, return here since
+	 * channel change is not required.
+	 */
+	if (radar_found->detector_id == AGILE_DETECTOR_ID)
+		return QDF_STATUS_SUCCESS;
 	if (!dfs->dfs_is_offload_enabled &&
 	    dfs->is_radar_found_on_secondary_seg) {
 		dfs_second_segment_radar_disable(dfs);

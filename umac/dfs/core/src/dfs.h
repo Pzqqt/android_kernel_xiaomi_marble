@@ -402,6 +402,11 @@
  * in host. NOL timer can be configured by user. NOL in FW (for FO) is disabled.
  */
 #define USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW 2
+
+/* Non Agile detector IDs */
+#define DETECTOR_ID_0 0
+#define DETECTOR_ID_1 1
+/* Agile detector ID */
 #define AGILE_DETECTOR_ID 2
 
 /**
@@ -1140,8 +1145,8 @@ struct wlan_dfs {
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
 	uint8_t dfs_psoc_idx;
-	uint8_t        dfs_agile_precac_freq;
 #endif
+	uint8_t        dfs_agile_precac_freq;
 	bool           dfs_is_offload_enabled;
 	int            dfs_use_nol;
 	qdf_spinlock_t dfs_nol_lock;

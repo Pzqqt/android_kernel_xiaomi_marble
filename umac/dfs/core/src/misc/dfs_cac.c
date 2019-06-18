@@ -282,6 +282,7 @@ bool dfs_is_subset_channel(struct wlan_dfs *dfs,
 			old_n_chans = dfs_get_bonding_channels(dfs,
 							       old_chan,
 							       SEG_ID_SECONDARY,
+							       DETECTOR_ID_0,
 							       old_subchans);
 		else
 			old_n_chans = dfs_get_bonding_channels_without_seg_info(
@@ -297,6 +298,7 @@ bool dfs_is_subset_channel(struct wlan_dfs *dfs,
 		if (WLAN_IS_CHAN_DFS(new_chan))
 			new_n_chans = dfs_get_bonding_channels(
 					dfs, new_chan, SEG_ID_SECONDARY,
+					DETECTOR_ID_0,
 					new_subchans);
 		else
 			new_n_chans = dfs_get_bonding_channels_without_seg_info(
