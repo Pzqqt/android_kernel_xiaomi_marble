@@ -24,15 +24,6 @@
 #define _WLAN_OCB_STRUCTS_H_
 #include <qdf_status.h>
 
-/* number of vdevs that can support OCB */
-#define OCB_VDEVS_NUM			1
-
-/* maximum number of channels that can do OCB */
-#define OCB_CHANNELS_NUM		2
-
-/* maximum number of channels in an OCB schedule */
-#define OCB_SCHEDULES_NUM		2
-
 /* Don't add the RX stats header to packets received on this channel */
 #define OCB_CHANNEL_FLAG_DISABLE_RX_STATS_HDR	(1 << 0)
 
@@ -41,8 +32,6 @@
 
 /* The size of the utc time error in bytes. */
 #define OCB_SIZE_UTC_TIME_ERROR                 (5)
-
-#define OCB_CHANNEL_MAX                         (5)
 
 /**
  * struct ocb_utc_param - parameters to set UTC time

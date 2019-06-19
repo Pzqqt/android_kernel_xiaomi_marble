@@ -691,9 +691,6 @@ struct wlan_ipa_priv {
 
 #define BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
-#define WLAN_IPA_DBG_DUMP_RX_LEN 84
-#define WLAN_IPA_DBG_DUMP_TX_LEN 48
-
 #define IPA_RESOURCE_COMP_WAIT_TIME	100
 
 #ifdef FEATURE_METERING
