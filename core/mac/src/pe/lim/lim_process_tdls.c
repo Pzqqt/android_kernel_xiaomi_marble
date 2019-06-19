@@ -3092,7 +3092,6 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 	size_t aid_bitmap_size = sizeof(session_entry->peerAIDBitmap);
 	struct qdf_mac_addr mac_addr;
 	QDF_STATUS status;
-
 	/*
 	 * Check all the set bit in peerAIDBitmap and delete the peer
 	 * (with that aid) entry from the hash table and add the aid
@@ -3117,17 +3116,16 @@ static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 				lim_send_deauth_mgmt_frame(p_mac,
 					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
 					stads->staAddr, session_entry, false);
-
-				/* Delete TDLS peer */
-				qdf_mem_copy(mac_addr.bytes, stads->staAddr,
-					     QDF_MAC_ADDR_SIZE);
-
-				status = lim_tdls_del_sta(p_mac, mac_addr,
-							 session_entry, false);
-				if (status != QDF_STATUS_SUCCESS)
-					pe_debug("peer "QDF_MAC_ADDR_STR" not found",
-						QDF_MAC_ADDR_ARRAY(stads->staAddr));
 			}
+			/* Delete TDLS peer */
+			qdf_mem_copy(mac_addr.bytes, stads->staAddr,
+				     QDF_MAC_ADDR_SIZE);
+
+			status = lim_tdls_del_sta(p_mac, mac_addr,
+						  session_entry, false);
+			if (status != QDF_STATUS_SUCCESS)
+				pe_debug("peer " QDF_MAC_ADDR_STR " not found",
+					 QDF_MAC_ADDR_ARRAY(stads->staAddr));
 
 			dph_delete_hash_entry(p_mac,
 				stads->staAddr, stads->assocId,
