@@ -145,7 +145,15 @@ enum htt_dbg_ext_stats_type {
      *           6 bit htt_msdu_flow_stats_tlv
      *   - config_param2: [Bit31 : Bit0] mac_addr31to0
      *   - config_param3: [Bit15 : Bit0] mac_addr47to32
-     *                    [Bit31 : Bit16] reserved
+     *                    [Bit 16] If this bit is set, reset per peer stats
+     *                             of corresponding tlv indicated by config
+     *                             param 1.
+     *                             HTT_DBG_EXT_PEER_STATS_RESET_GET will be
+     *                             used to get this bit position.
+     *                             WMI_SERVICE_PER_PEER_HTT_STATS_RESET
+     *                             indicates that FW supports per peer HTT
+     *                             stats reset.
+     *                    [Bit31 : Bit17] reserved
      * RESP MSG:
      *   - htt_peer_stats_t
      */
@@ -288,6 +296,23 @@ enum htt_dbg_ext_stats_type {
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
+
+/*
+ * Macros to get/set the bit field in config param[3] that indicates to
+ * clear corresponding per peer stats specified by config param 1
+ */
+#define HTT_DBG_EXT_PEER_STATS_RESET_M 0x00010000
+#define HTT_DBG_EXT_PEER_STATS_RESET_S 16
+
+#define HTT_DBG_EXT_PEER_STATS_RESET_GET(_var) \
+    (((_var) & HTT_DBG_EXT_PEER_STATS_RESET_M) >> \
+     HTT_DBG_EXT_PEER_STATS_RESET_S)
+
+#define HTT_DBG_EXT_PEER_STATS_RESET_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DBG_EXT_PEER_STATS_RESET, _val); \
+        ((_var) |= ((_val) << HTT_DBG_EXT_PEER_STATS_RESET_S)); \
+    } while (0)
 
 typedef enum {
     HTT_STATS_TX_PDEV_CMN_TAG                      = 0,  /* htt_tx_pdev_stats_cmn_tlv */
