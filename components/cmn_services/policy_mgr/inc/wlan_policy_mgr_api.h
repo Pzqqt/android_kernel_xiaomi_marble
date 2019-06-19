@@ -2073,6 +2073,15 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_is_dbs_scan_allowed() - Check if DBS scan is allowed or not
+ * @psoc: PSOC object information
+ * Checks if the DBS scan can be performed or not
+ *
+ * Return: true if DBS scan is allowed.
+ */
+bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_hw_sbs_capable() - Check if HW is SBS capable
  * @psoc: PSOC object information
  * Checks if the HW is SBS capable
