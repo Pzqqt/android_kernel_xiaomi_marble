@@ -257,6 +257,36 @@ struct napi_struct *dp_rx_get_napi_context(ol_txrx_soc_handle soc,
 	return dp_rx_tm_get_napi_context(&dp_ext_hdl->rx_tm_hdl, rx_ctx_id);
 }
 
+/**
+ * dp_txrx_set_cpu_mask() - set CPU mask for RX threads
+ * @soc: ol_txrx_soc_handle object
+ * @new_mask: New CPU mask pointer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+static inline
+QDF_STATUS dp_txrx_set_cpu_mask(ol_txrx_soc_handle soc, qdf_cpu_mask *new_mask)
+{
+	struct dp_txrx_handle *dp_ext_hdl;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	if (!soc) {
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto ret;
+	}
+
+	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
+	if (!dp_ext_hdl) {
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto ret;
+	}
+
+	qdf_status = dp_rx_tm_set_cpu_mask(&dp_ext_hdl->rx_tm_hdl, new_mask);
+
+ret:
+	return qdf_status;
+}
+
 #else
 
 static inline
@@ -299,5 +329,12 @@ struct napi_struct *dp_rx_get_napi_context(ol_txrx_soc_handle soc,
 {
 	return NULL;
 }
+
+static inline
+QDF_STATUS dp_txrx_set_cpu_mask(ol_txrx_soc_handle soc, qdf_cpu_mask *new_mask)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* FEATURE_WLAN_DP_RX_THREADS */
 #endif /* _DP_TXRX_H */

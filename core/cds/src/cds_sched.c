@@ -32,6 +32,7 @@
 #include "cds_sched.h"
 #include <wlan_hdd_power.h>
 #include "wma_types.h"
+#include <dp_txrx.h>
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
@@ -68,11 +69,18 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 #define CDS_CPU_CLUSTER_TYPE_PERF 1
 
 static inline
-int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
+int cds_set_cpus_allowed_ptr_with_cpu(struct task_struct *task,
+				      unsigned long cpu)
 {
 	return set_cpus_allowed_ptr(task, cpumask_of(cpu));
 }
 
+static inline
+int cds_set_cpus_allowed_ptr_with_mask(struct task_struct *task,
+				       qdf_cpu_mask *new_mask)
+{
+	return set_cpus_allowed_ptr(task, new_mask);
+}
 
 void cds_set_rx_thread_cpu_mask(uint8_t cpu_affinity_mask)
 {
@@ -109,7 +117,7 @@ static void cds_rx_thread_log_cpu_affinity_change(unsigned char core_affine_cnt,
 	cpumap_print_to_pagebuf(false, old_mask_str, old_mask);
 	cpumap_print_to_pagebuf(false, new_mask_str, new_mask);
 
-	cds_debug("num online perf cores %d, high tput req %d, Rx_thread old mask %s new mask %s",
+	cds_debug("num online cores %d, high tput req %d, Rx_thread old mask %s new mask %s",
 		  core_affine_cnt, tput_req, old_mask_str, new_mask_str);
 }
 #else
@@ -141,8 +149,9 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	bool high_throughput)
 {
 	unsigned char core_affine_count = 0;
-	struct cpumask new_mask;
+	qdf_cpu_mask new_mask;
 	unsigned long cpus;
+	struct cds_config_info *cds_cfg;
 
 	cds_debug("num possible cpu %d", num_possible_cpus());
 
@@ -180,8 +189,14 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 				&new_mask);
 
 	if (!cpumask_equal(&pSchedContext->rx_thread_cpu_mask, &new_mask)) {
+		cds_cfg = cds_get_ini_config();
 		cpumask_copy(&pSchedContext->rx_thread_cpu_mask, &new_mask);
-		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &new_mask);
+		if (cds_cfg->enable_dp_rx_threads)
+			dp_txrx_set_cpu_mask(cds_get_context(QDF_MODULE_ID_SOC),
+					     &new_mask);
+		else
+			cds_set_cpus_allowed_ptr_with_mask(pSchedContext->ol_rx_thread,
+							   &new_mask);
 	}
 
 	return 0;
@@ -335,7 +350,8 @@ static void __cds_cpu_hotplug_notify(uint32_t cpu, bool cpu_up)
 		return;
 
 	if (pSchedContext->ol_rx_thread &&
-	    !cds_set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, pref_cpu))
+	    !cds_set_cpus_allowed_ptr_with_cpu(pSchedContext->ol_rx_thread,
+					       pref_cpu))
 		affine_cpu = pref_cpu;
 }
 

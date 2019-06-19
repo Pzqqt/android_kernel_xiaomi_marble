@@ -224,4 +224,15 @@ dp_rx_thread_get_wait_queue(struct dp_rx_tm_handle_cmn *rx_tm_handle_cmn)
  */
 struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
 					      uint8_t rx_ctx_id);
+
+/**
+ * dp_rx_tm_set_cpu_mask() - set CPU mask for RX threads
+ * @soc: ol_txrx_soc_handle object
+ * @new_mask: New CPU mask pointer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+QDF_STATUS dp_rx_tm_set_cpu_mask(struct dp_rx_tm_handle *rx_tm_hdl,
+				 qdf_cpu_mask *new_mask);
+
 #endif /* __DP_RX_THREAD_H */

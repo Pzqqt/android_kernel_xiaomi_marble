@@ -761,3 +761,17 @@ struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
 
 	return &rx_tm_hdl->rx_thread[rx_ctx_id]->napi;
 }
+
+QDF_STATUS dp_rx_tm_set_cpu_mask(struct dp_rx_tm_handle *rx_tm_hdl,
+				 qdf_cpu_mask *new_mask)
+{
+	int i = 0;
+
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
+		if (!rx_tm_hdl->rx_thread[i])
+			continue;
+		qdf_thread_set_cpus_allowed_mask(rx_tm_hdl->rx_thread[i]->task,
+						 new_mask);
+	}
+	return QDF_STATUS_SUCCESS;
+}
