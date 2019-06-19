@@ -622,12 +622,14 @@ static inline void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
 /**
  * pmo_core_psoc_configure_resume(): configure events after bus resume
  * @psoc: objmgr psoc
+ * @is_runtime_pm: indicate if it is used by runtime PM
  *
  * Responsibility of the caller to take the psoc reference.
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc)
+static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc,
+						 bool is_runtime_pm)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
@@ -635,7 +637,13 @@ static QDF_STATUS pmo_core_psoc_configure_resume(struct wlan_objmgr_psoc *psoc)
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
 
-	pmo_core_set_resume_dtim(psoc);
+	/*
+	 * For runtime PM, since system is awake, DTIM related commands
+	 * do not have to be sent with WOW sequence. They can be sent
+	 * through other paths which will just trigger a runtime resume.
+	 */
+	if (!is_runtime_pm)
+		pmo_core_set_resume_dtim(psoc);
 	pmo_core_update_wow_bus_suspend(psoc, psoc_ctx, false);
 	pmo_unpause_all_vdev(psoc, psoc_ctx);
 
@@ -664,7 +672,7 @@ QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 		goto dec_psoc_ref;
 	}
 
-	status = pmo_core_psoc_configure_resume(psoc);
+	status = pmo_core_psoc_configure_resume(psoc, false);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to configure resume");
 
@@ -977,7 +985,7 @@ pmo_bus_resume:
 
 pmo_resume_configure:
 	QDF_BUG(QDF_STATUS_SUCCESS ==
-		pmo_core_psoc_configure_resume(psoc));
+		pmo_core_psoc_configure_resume(psoc, true));
 
 resume_htc:
 	QDF_BUG(QDF_STATUS_SUCCESS ==
@@ -1053,7 +1061,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		goto fail;
 
-	status = pmo_core_psoc_configure_resume(psoc);
+	status = pmo_core_psoc_configure_resume(psoc, true);
 	if (status != QDF_STATUS_SUCCESS)
 		goto fail;
 
