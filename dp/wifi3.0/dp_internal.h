@@ -91,7 +91,7 @@
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 extern uint8_t
-dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS];
+dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
 #endif
 
 #if DP_PRINT_ENABLE

@@ -1269,7 +1269,7 @@ struct cdp_pdev_stats {
 	struct cdp_tid_stats tid_stats;
 };
 
-#ifndef CONFIG_MCL
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 /*
  * Enumeration of PDEV Configuration parameter
  */

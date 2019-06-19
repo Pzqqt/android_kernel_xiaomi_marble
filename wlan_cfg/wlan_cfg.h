@@ -45,6 +45,8 @@
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #endif
 
+#define WLAN_CFG_INT_NUM_CONTEXTS_MAX 11
+
 /* Tx configuration */
 #define MAX_LINK_DESC_BANKS 8
 #define MAX_TXDESC_POOLS 4
