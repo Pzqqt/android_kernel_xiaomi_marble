@@ -72,7 +72,7 @@
  * btm_offload_config - Configure BTM
  * @Min: 0x00000000
  * @Max: 0xFFFFFFFF
- * @Default: 0x00000001
+ * @Default: 0x00000041
  *
  * This ini is used to configure BTM
  *
@@ -107,7 +107,7 @@
 	"btm_offload_config", \
 	0x00000000, \
 	0xffffffff, \
-	0x00000001, \
+	0x00000041, \
 	CFG_VALUE_OR_DEFAULT, \
 	"configure btm offload")
 
