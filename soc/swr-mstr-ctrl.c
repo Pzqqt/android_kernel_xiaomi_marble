@@ -311,7 +311,7 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 		complete(&swrm->clk_off_complete);
 	}
 	if (swrm->clk_ref_count < 0) {
-		pr_err("%s: swrm clk count mismatch\n", __func__);
+		dev_err(swrm->dev, "%s: swrm clk count mismatch\n", __func__);
 		swrm->clk_ref_count = 0;
 	}
 
