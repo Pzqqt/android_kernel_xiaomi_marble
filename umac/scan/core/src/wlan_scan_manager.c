@@ -437,7 +437,7 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
-	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+	if (!policy_mgr_is_dbs_scan_allowed(psoc)) {
 		scm_debug("dbs disabled, going for non-dbs scan");
 		scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
 		goto end;
