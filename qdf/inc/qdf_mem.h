@@ -128,6 +128,28 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line);
 #define qdf_mem_free(ptr) \
 	qdf_mem_free_debug(ptr, __func__, __LINE__)
 
+void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
+				     struct qdf_mem_multi_page_t *pages,
+				     size_t element_size, uint16_t element_num,
+				     qdf_dma_context_t memctxt, bool cacheable,
+				     const char *func, uint32_t line,
+				     void *caller);
+
+#define qdf_mem_multi_pages_alloc(osdev, pages, element_size, element_num,\
+				  memctxt, cacheable) \
+	qdf_mem_multi_pages_alloc_debug(osdev, pages, element_size, \
+					element_num, memctxt, cacheable, \
+					__func__, __LINE__, QDF_RET_IP)
+
+void qdf_mem_multi_pages_free_debug(qdf_device_t osdev,
+				    struct qdf_mem_multi_page_t *pages,
+				    qdf_dma_context_t memctxt, bool cacheable,
+				    const char *func, uint32_t line);
+
+#define qdf_mem_multi_pages_free(osdev, pages, memctxt, cacheable) \
+	qdf_mem_multi_pages_free_debug(osdev, pages, memctxt, cacheable, \
+				       __func__, __LINE__)
+
 /**
  * qdf_mem_check_for_leaks() - Assert that the current memory domain is empty
  *
@@ -256,6 +278,15 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev,
 void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
 			     qdf_size_t size, void *vaddr,
 			     qdf_dma_addr_t paddr, qdf_dma_context_t memctx);
+
+void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
+			       struct qdf_mem_multi_page_t *pages,
+			       size_t element_size, uint16_t element_num,
+			       qdf_dma_context_t memctxt, bool cacheable);
+
+void qdf_mem_multi_pages_free(qdf_device_t osdev,
+			      struct qdf_mem_multi_page_t *pages,
+			      qdf_dma_context_t memctxt, bool cacheable);
 
 #endif /* MEMORY_DEBUG */
 
@@ -504,13 +535,6 @@ void qdf_mem_dma_sync_single_for_cpu(qdf_device_t osdev,
 					qdf_size_t size,
 					__dma_data_direction direction);
 
-void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
-			       struct qdf_mem_multi_page_t *pages,
-			       size_t element_size, uint16_t element_num,
-			       qdf_dma_context_t memctxt, bool cacheable);
-void qdf_mem_multi_pages_free(qdf_device_t osdev,
-			      struct qdf_mem_multi_page_t *pages,
-			      qdf_dma_context_t memctxt, bool cacheable);
 int qdf_mem_multi_page_link(qdf_device_t osdev,
 		struct qdf_mem_multi_page_t *pages,
 		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable);

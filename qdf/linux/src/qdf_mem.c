@@ -1067,6 +1067,163 @@ void qdf_mem_check_for_leaks(void)
 		panic("%u fatal memory leaks detected!", leaks_count);
 }
 
+/**
+ * qdf_mem_multi_pages_alloc_debug() - Debug version of
+ * qdf_mem_multi_pages_alloc
+ * @osdev: OS device handle pointer
+ * @pages: Multi page information storage
+ * @element_size: Each element size
+ * @element_num: Total number of elements should be allocated
+ * @memctxt: Memory context
+ * @cacheable: Coherent memory or cacheable memory
+ * @func: Caller of this allocator
+ * @line: Line number of the caller
+ * @caller: Return address of the caller
+ *
+ * This function will allocate large size of memory over multiple pages.
+ * Large size of contiguous memory allocation will fail frequently, then
+ * instead of allocate large memory by one shot, allocate through multiple, non
+ * contiguous memory and combine pages when actual usage
+ *
+ * Return: None
+ */
+void qdf_mem_multi_pages_alloc_debug(qdf_device_t osdev,
+				     struct qdf_mem_multi_page_t *pages,
+				     size_t element_size, uint16_t element_num,
+				     qdf_dma_context_t memctxt, bool cacheable,
+				     const char *func, uint32_t line,
+				     void *caller)
+{
+	uint16_t page_idx;
+	struct qdf_mem_dma_page_t *dma_pages;
+	void **cacheable_pages = NULL;
+	uint16_t i;
+
+	pages->num_element_per_page = PAGE_SIZE / element_size;
+	if (!pages->num_element_per_page) {
+		qdf_print("Invalid page %d or element size %d",
+			  (int)PAGE_SIZE, (int)element_size);
+		goto out_fail;
+	}
+
+	pages->num_pages = element_num / pages->num_element_per_page;
+	if (element_num % pages->num_element_per_page)
+		pages->num_pages++;
+
+	if (cacheable) {
+		/* Pages information storage */
+		pages->cacheable_pages = qdf_mem_malloc_debug(
+			pages->num_pages * sizeof(pages->cacheable_pages),
+			func, line, caller, 0);
+		if (!pages->cacheable_pages)
+			goto out_fail;
+
+		cacheable_pages = pages->cacheable_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			cacheable_pages[page_idx] = qdf_mem_malloc_debug(
+					PAGE_SIZE, func, line, caller, 0);
+			if (!cacheable_pages[page_idx])
+				goto page_alloc_fail;
+		}
+		pages->dma_pages = NULL;
+	} else {
+		pages->dma_pages = qdf_mem_malloc_debug(
+			pages->num_pages * sizeof(struct qdf_mem_dma_page_t),
+			func, line, caller, 0);
+		if (!pages->dma_pages)
+			goto out_fail;
+
+		dma_pages = pages->dma_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			dma_pages->page_v_addr_start =
+				qdf_mem_alloc_consistent_debug(
+					osdev, osdev->dev, PAGE_SIZE,
+					&dma_pages->page_p_addr,
+					func, line, caller);
+			if (!dma_pages->page_v_addr_start) {
+				qdf_print("dmaable page alloc fail pi %d",
+					  page_idx);
+				goto page_alloc_fail;
+			}
+			dma_pages->page_v_addr_end =
+				dma_pages->page_v_addr_start + PAGE_SIZE;
+			dma_pages++;
+		}
+		pages->cacheable_pages = NULL;
+	}
+	return;
+
+page_alloc_fail:
+	if (cacheable) {
+		for (i = 0; i < page_idx; i++)
+			qdf_mem_free_debug(pages->cacheable_pages[i],
+					   func, line);
+		qdf_mem_free_debug(pages->cacheable_pages, func, line);
+	} else {
+		dma_pages = pages->dma_pages;
+		for (i = 0; i < page_idx; i++) {
+			qdf_mem_free_consistent_debug(
+				osdev, osdev->dev,
+				PAGE_SIZE, dma_pages->page_v_addr_start,
+				dma_pages->page_p_addr, memctxt, func, line);
+			dma_pages++;
+		}
+		qdf_mem_free_debug(pages->dma_pages, func, line);
+	}
+
+out_fail:
+	pages->cacheable_pages = NULL;
+	pages->dma_pages = NULL;
+	pages->num_pages = 0;
+}
+
+qdf_export_symbol(qdf_mem_multi_pages_alloc_debug);
+
+/**
+ * qdf_mem_multi_pages_free_debug() - Debug version of qdf_mem_multi_pages_free
+ * @osdev: OS device handle pointer
+ * @pages: Multi page information storage
+ * @memctxt: Memory context
+ * @cacheable: Coherent memory or cacheable memory
+ * @func: Caller of this allocator
+ * @line: Line number of the caller
+ *
+ * This function will free large size of memory over multiple pages.
+ *
+ * Return: None
+ */
+void qdf_mem_multi_pages_free_debug(qdf_device_t osdev,
+				    struct qdf_mem_multi_page_t *pages,
+				    qdf_dma_context_t memctxt, bool cacheable,
+				    const char *func, uint32_t line)
+{
+	unsigned int page_idx;
+	struct qdf_mem_dma_page_t *dma_pages;
+
+	if (cacheable) {
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++)
+			qdf_mem_free_debug(pages->cacheable_pages[page_idx],
+					   func, line);
+		qdf_mem_free_debug(pages->cacheable_pages, func, line);
+	} else {
+		dma_pages = pages->dma_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			qdf_mem_free_consistent_debug(
+				osdev, osdev->dev, PAGE_SIZE,
+				dma_pages->page_v_addr_start,
+				dma_pages->page_p_addr, memctxt, func, line);
+			dma_pages++;
+		}
+		qdf_mem_free_debug(pages->dma_pages, func, line);
+	}
+
+	pages->cacheable_pages = NULL;
+	pages->dma_pages = NULL;
+	pages->num_pages = 0;
+}
+
+qdf_export_symbol(qdf_mem_multi_pages_free_debug);
+
 #else
 static void qdf_mem_debug_init(void) {}
 
@@ -1136,37 +1293,6 @@ void qdf_mem_free(void *ptr)
 }
 
 qdf_export_symbol(qdf_mem_free);
-#endif
-
-void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
-			    void **vaddr_unaligned,
-			    const char *func, uint32_t line)
-{
-	void *vaddr_aligned;
-
-	*vaddr_unaligned = qdf_mem_malloc_fl(size, func, line);
-	if (!*vaddr_unaligned) {
-		qdf_warn("Failed to alloc %zuB @ %s:%d", size, func, line);
-		return NULL;
-	}
-
-	if ((unsigned long)(*vaddr_unaligned) % ring_base_align) {
-		qdf_mem_free(*vaddr_unaligned);
-		*vaddr_unaligned = qdf_mem_malloc_fl(size + ring_base_align - 1,
-						  func, line);
-		if (!*vaddr_unaligned) {
-			qdf_warn("Failed to alloc %zuB @ %s:%d",
-				 size, func, line);
-			return NULL;
-		}
-	}
-
-	vaddr_aligned = (*vaddr_unaligned) +
-		((unsigned long)(*vaddr_unaligned) % ring_base_align);
-
-	return vaddr_aligned;
-}
-qdf_export_symbol(qdf_aligned_malloc_fl);
 
 /**
  * qdf_mem_multi_pages_alloc() - allocate large size of kernel memory
@@ -1307,6 +1433,38 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 	return;
 }
 qdf_export_symbol(qdf_mem_multi_pages_free);
+#endif
+
+void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
+			    void **vaddr_unaligned,
+			    const char *func, uint32_t line)
+{
+	void *vaddr_aligned;
+
+	*vaddr_unaligned = qdf_mem_malloc_fl(size, func, line);
+	if (!*vaddr_unaligned) {
+		qdf_warn("Failed to alloc %zuB @ %s:%d", size, func, line);
+		return NULL;
+	}
+
+	if ((unsigned long)(*vaddr_unaligned) % ring_base_align) {
+		qdf_mem_free(*vaddr_unaligned);
+		*vaddr_unaligned = qdf_mem_malloc_fl(size + ring_base_align - 1,
+						  func, line);
+		if (!*vaddr_unaligned) {
+			qdf_warn("Failed to alloc %zuB @ %s:%d",
+				 size, func, line);
+			return NULL;
+		}
+	}
+
+	vaddr_aligned = (*vaddr_unaligned) +
+		((unsigned long)(*vaddr_unaligned) % ring_base_align);
+
+	return vaddr_aligned;
+}
+
+qdf_export_symbol(qdf_aligned_malloc_fl);
 
 /**
  * qdf_mem_multi_page_link() - Make links for multi page elements
