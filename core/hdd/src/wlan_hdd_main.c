@@ -13628,12 +13628,18 @@ static int hdd_mode_change_psoc_idle_shutdown(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
+	if (!hdd_ctx)
+		return -EINVAL;
+
 	return hdd_wlan_stop_modules(hdd_ctx, true);
 }
 
 static int hdd_mode_change_psoc_idle_restart(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return -EINVAL;
 
 	return hdd_wlan_start_modules(hdd_ctx, false);
 }
