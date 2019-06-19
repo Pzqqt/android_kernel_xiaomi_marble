@@ -136,7 +136,8 @@ static const char *const lpi_gpio_functions[] = {
 
 static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 {
-	int ret;
+	int ret = 0;
+	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
 
 	if (!lpi_dev_up) {
 		pr_err_ratelimited("%s: ADSP is down due to SSR, return\n",
@@ -144,11 +145,18 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
+	if (!state->core_hw_vote_status) {
+		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
+				__func__);
+		ret = -EINVAL;
+		goto err;
+	}
 
 	ret = ioread32(pad->base + pad->offset + addr);
 	if (ret < 0)
 		pr_err("%s: read 0x%x failed\n", __func__, addr);
 
+err:
 	pm_runtime_mark_last_busy(lpi_dev);
 	pm_runtime_put_autosuspend(lpi_dev);
 	return ret;
@@ -157,18 +165,27 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 			  unsigned int val)
 {
+	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
+	int ret = 0;
+
 	if (!lpi_dev_up) {
 		pr_err_ratelimited("%s: ADSP is down due to SSR, return\n",
-				   __func__);
+				  __func__);
 		return 0;
 	}
 	pm_runtime_get_sync(lpi_dev);
+	if (!state->core_hw_vote_status) {
+		pr_err_ratelimited("%s: core hw vote clk is not enabled\n",
+				__func__);
+		ret = -EINVAL;
+		goto err;
+	}
 
 	iowrite32(val, pad->base + pad->offset + addr);
-
+err:
 	pm_runtime_mark_last_busy(lpi_dev);
 	pm_runtime_put_autosuspend(lpi_dev);
-	return 0;
+	return ret;
 }
 
 static int lpi_gpio_get_groups_count(struct pinctrl_dev *pctldev)
