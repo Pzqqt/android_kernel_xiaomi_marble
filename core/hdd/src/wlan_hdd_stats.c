@@ -56,6 +56,8 @@
 #define HDD_INFO_RX_BYTES64             0
 #define HDD_INFO_INACTIVE_TIME          0
 #define HDD_INFO_CONNECTED_TIME         0
+#define HDD_INFO_RX_MPDUS               0
+#define HDD_INFO_FCS_ERROR_COUNT        0
 #else
 #define HDD_INFO_SIGNAL                 BIT(NL80211_STA_INFO_SIGNAL)
 #define HDD_INFO_SIGNAL_AVG             BIT(NL80211_STA_INFO_SIGNAL_AVG)
@@ -72,6 +74,8 @@
 #define HDD_INFO_RX_BYTES64             BIT(NL80211_STA_INFO_RX_BYTES64)
 #define HDD_INFO_INACTIVE_TIME          BIT(NL80211_STA_INFO_INACTIVE_TIME)
 #define HDD_INFO_CONNECTED_TIME         BIT(NL80211_STA_INFO_CONNECTED_TIME)
+#define HDD_INFO_RX_MPDUS               BIT(NL80211_STA_INFO_RX_MPDUS)
+#define HDD_INFO_FCS_ERROR_COUNT        BIT(NL80211_STA_INFO_FCS_ERROR_COUNT)
 #endif /* kernel version less than 4.0.0 && no_backport */
 
 /* 11B, 11G Rate table include Basic rate and Extended rate
@@ -4360,6 +4364,7 @@ static void hdd_fill_fcs_and_mpdu_count(struct hdd_adapter *adapter,
 	sinfo->fcs_err_count = adapter->hdd_stats.peer_stats.fcs_count;
 	hdd_debug("RX mpdu count %d fcs_err_count %d",
 		  sinfo->rx_mpdu_count, sinfo->fcs_err_count);
+	sinfo->filled |= HDD_INFO_FCS_ERROR_COUNT | HDD_INFO_RX_MPDUS;
 }
 #else
 static void hdd_fill_fcs_and_mpdu_count(struct hdd_adapter *adapter,
