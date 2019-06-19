@@ -4283,9 +4283,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	if (mgmt_rx_params->buf_len > data_len) {
-		WMA_LOGE("%s: Invalid rx mgmt packet, data_len %u, mgmt_rx_params->buf_len %u",
-			__func__, data_len, mgmt_rx_params->buf_len);
+	if (mgmt_rx_params->buf_len > data_len ||
+	    !mgmt_rx_params->buf_len ||
+	    !bufp) {
+		WMA_LOGE("Invalid data_len %u, buf_len %u bufp %pK",
+			 data_len, mgmt_rx_params->buf_len, bufp);
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
