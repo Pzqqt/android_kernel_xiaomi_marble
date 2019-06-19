@@ -852,6 +852,39 @@ static bool policy_mgr_find_if_hwlist_has_sbs(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t dbs_type = DISABLE_DBS_CXN_AND_SCAN;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	if (!policy_mgr_find_if_fw_supports_dbs(psoc) ||
+	    !policy_mgr_find_if_hwlist_has_dbs(psoc)) {
+		policy_mgr_debug("HW mode list has no DBS");
+		return false;
+	}
+
+	policy_mgr_get_dual_mac_feature(psoc, &dbs_type);
+	/*
+	 * If DBS support for scan is disabled through INI then DBS is not
+	 * supported for scan.
+	 *
+	 * For DBS scan check the INI value explicitly
+	 */
+	switch (dbs_type) {
+	case DISABLE_DBS_CXN_AND_SCAN:
+	case ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN:
+		return false;
+	default:
+		return true;
+	}
+}
+
 bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 {
 	if (!policy_mgr_is_dbs_enable(psoc)) {
