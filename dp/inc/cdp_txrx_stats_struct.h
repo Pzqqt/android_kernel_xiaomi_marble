@@ -1619,6 +1619,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_TBTT_CTRL = 420,
 	/* Enable/disable AP OBSS_PD_THRESHOLD */
 	OL_ATH_PARAM_SET_CMD_OBSS_PD_THRESHOLD_ENABLE = 421,
+	/* Get baseline radio level channel width */
+	OL_ATH_PARAM_RCHWIDTH = 422,
 };
 #endif
 /* Bitmasks for stats that can block */
