@@ -1128,6 +1128,50 @@ void hif_clear_napi_stats(struct hif_opaque_softc *hif_ctx);
 }
 #endif
 
+#ifdef FORCE_WAKE
+/**
+ * hif_force_wake_request() - Function to wake from power collapse
+ * @handle: HIF opaque handle
+ *
+ * Description: API to check if the device is awake or not before
+ * read/write to BAR + 4K registers. If device is awake return
+ * success otherwise write '1' to
+ * PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG which will interrupt
+ * the device and does wakeup the PCI and MHI within 50ms
+ * and then the device writes a value to
+ * PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG to complete the
+ * handshake process to let the host know the device is awake.
+ *
+ * Return: zero - success/non-zero - failure
+ */
+int hif_force_wake_request(struct hif_opaque_softc *handle);
+
+/**
+ * hif_force_wake_release() - API to release/reset the SOC wake register
+ * from interrupting the device.
+ * @handle: HIF opaque handle
+ *
+ * Description: API to set the
+ * PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG to '0'
+ * to release the interrupt line.
+ *
+ * Return: zero - success/non-zero - failure
+ */
+int hif_force_wake_release(struct hif_opaque_softc *handle);
+#else
+static inline
+int hif_force_wake_request(struct hif_opaque_softc *handle)
+{
+	return 0;
+}
+
+static inline
+int hif_force_wake_release(struct hif_opaque_softc *handle)
+{
+	return 0;
+}
+#endif /* FORCE_WAKE */
+
 void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle);
 
 /**
@@ -1224,4 +1268,24 @@ hif_softc_to_hif_opaque_softc(struct hif_softc *hif_handle)
 {
 	return (struct hif_opaque_softc *)hif_handle;
 }
+
+#ifdef FORCE_WAKE
+/**
+ * hif_srng_init_phase(): Indicate srng initialization phase
+ * to avoid force wake as UMAC power collapse is not yet
+ * enabled
+ * @hif_ctx: hif opaque handle
+ * @init_phase: initialization phase
+ *
+ * Return:  None
+ */
+void hif_srng_init_phase(struct hif_opaque_softc *hif_ctx,
+			 bool init_phase);
+#else
+static inline
+void hif_srng_init_phase(struct hif_opaque_softc *hif_ctx,
+			 bool init_phase)
+{
+}
+#endif /* FORCE_WAKE */
 #endif /* _HIF_H_ */

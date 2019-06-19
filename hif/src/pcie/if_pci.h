@@ -29,6 +29,21 @@
 #include "cepci.h"
 #include "ce_main.h"
 
+#ifdef FORCE_WAKE
+/* Register to wake the UMAC from power collapse */
+#define PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG 0x4040
+/* Register used for handshake mechanism to validate UMAC is awake */
+#define PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG 0x3004
+/* Timeout duration to validate UMAC wake status */
+#ifdef HAL_CONFIG_SLUB_DEBUG_ON
+#define FORCE_WAKE_DELAY_TIMEOUT_MS 100
+#else
+#define FORCE_WAKE_DELAY_TIMEOUT_MS 50
+#endif /* HAL_CONFIG_SLUB_DEBUG_ON */
+/* Validate UMAC status every 5ms */
+#define FORCE_WAKE_DELAY_MS 5
+#endif /* FORCE_WAKE */
+
 #ifdef QCA_HIF_HIA_EXTND
 extern int32_t frac, intval, ar900b_20_targ_clk, qca9888_20_targ_clk;
 #endif
@@ -106,6 +121,29 @@ struct hif_msi_info {
 	OS_DMA_MEM_CONTEXT(dmacontext);
 };
 
+/**
+ * struct hif_pci_stats - Account for hif pci based statistics
+ * @mhi_force_wake_request_vote: vote for mhi
+ * @mhi_force_wake_failure: mhi force wake failure
+ * @mhi_force_wake_success: mhi force wake success
+ * @soc_force_wake_register_write_success: write to soc wake
+ * @soc_force_wake_failure: soc force wake failure
+ * @soc_force_wake_success: soc force wake success
+ * @mhi_force_wake_release_success: mhi force wake release success
+ * @soc_force_wake_release_success: soc force wake release
+ */
+struct hif_pci_stats {
+	uint32_t mhi_force_wake_request_vote;
+	uint32_t mhi_force_wake_failure;
+	uint32_t mhi_force_wake_success;
+	uint32_t soc_force_wake_register_write_success;
+	uint32_t soc_force_wake_failure;
+	uint32_t soc_force_wake_success;
+	uint32_t mhi_force_wake_release_failure;
+	uint32_t mhi_force_wake_release_success;
+	uint32_t soc_force_wake_release_success;
+};
+
 struct hif_pci_softc {
 	struct HIF_CE_state ce_sc;
 	void __iomem *mem;      /* PCI address. */
@@ -152,6 +190,7 @@ struct hif_pci_softc {
 	void (*hif_pci_deinit)(struct hif_pci_softc *sc);
 	void (*hif_pci_get_soc_info)(struct hif_pci_softc *sc,
 				     struct device *dev);
+	struct hif_pci_stats stats;
 };
 
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);
@@ -195,6 +234,21 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset);
 #else
 #define OL_ATH_TX_DRAIN_WAIT_CNT       60
 #endif
+
+#ifdef FORCE_WAKE
+/**
+ * hif_print_pci_stats() - Display HIF PCI stats
+ * @hif_ctx - HIF pci handle
+ *
+ * Return: None
+ */
+void hif_print_pci_stats(struct hif_pci_softc *pci_scn);
+#else
+static inline
+void hif_print_pci_stats(struct hif_pci_softc *pci_scn)
+{
+}
+#endif /* FORCE_WAKE */
 
 #ifdef FEATURE_RUNTIME_PM
 #include <linux/pm_runtime.h>

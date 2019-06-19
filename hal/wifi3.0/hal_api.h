@@ -23,6 +23,22 @@
 #include "qdf_util.h"
 #include "qdf_atomic.h"
 #include "hal_internal.h"
+#include "hif.h"
+#include "hif_io32.h"
+
+/* calculate the register address offset from bar0 of shadow register x */
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
+#define SHADOW_REGISTER_START_ADDRESS_OFFSET 0x000008FC
+#define SHADOW_REGISTER_END_ADDRESS_OFFSET \
+	((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (MAX_SHADOW_REGISTERS)))
+#define SHADOW_REGISTER(x) ((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (x)))
+#elif defined(QCA_WIFI_QCA6290)
+#define SHADOW_REGISTER_START_ADDRESS_OFFSET 0x00003024
+#define SHADOW_REGISTER_END_ADDRESS_OFFSET \
+	((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (MAX_SHADOW_REGISTERS)))
+#define SHADOW_REGISTER(x) ((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (x)))
+#endif /* QCA_WIFI_QCA6390 || QCA_WIFI_QCA6490 */
+
 #define MAX_UNWINDOWED_ADDRESS 0x80000
 #if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCN9000)
@@ -35,21 +51,12 @@
 #define WINDOW_VALUE_MASK 0x3F
 #define WINDOW_START MAX_UNWINDOWED_ADDRESS
 #define WINDOW_RANGE_MASK 0x7FFFF
-
 /*
  * BAR + 4K is always accessible, any access outside this
  * space requires force wake procedure.
- * OFFSET = 4K - 32 bytes = 0x4063
+ * OFFSET = 4K - 32 bytes = 0xFE0
  */
-#define MAPPED_REF_OFF 0x4063
-
-#ifdef HAL_CONFIG_SLUB_DEBUG_ON
-#define FORCE_WAKE_DELAY_TIMEOUT 100
-#else
-#define FORCE_WAKE_DELAY_TIMEOUT 50
-#endif /* HAL_CONFIG_SLUB_DEBUG_ON */
-
-#define FORCE_WAKE_DELAY_MS 5
+#define MAPPED_REF_OFF 0xFE0
 
 /**
  * hal_ring_desc - opaque handle for DP ring descriptor
@@ -113,16 +120,6 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 #endif
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
-static inline int hal_force_wake_request(struct hal_soc *soc)
-{
-	return 0;
-}
-
-static inline int hal_force_wake_release(struct hal_soc *soc)
-{
-	return 0;
-}
-
 static inline void hal_lock_reg_access(struct hal_soc *soc,
 				       unsigned long *flags)
 {
@@ -134,37 +131,7 @@ static inline void hal_unlock_reg_access(struct hal_soc *soc,
 {
 	qdf_spin_unlock_irqrestore(&soc->register_access_lock);
 }
-
 #else
-static inline int hal_force_wake_request(struct hal_soc *soc)
-{
-	uint32_t timeout = 0;
-	int ret;
-
-	ret = pld_force_wake_request(soc->qdf_dev->dev);
-	if (ret) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Request send failed %d\n", __func__, ret);
-		return -EINVAL;
-	}
-
-	while (!pld_is_device_awake(soc->qdf_dev->dev) &&
-	       timeout <= FORCE_WAKE_DELAY_TIMEOUT) {
-		mdelay(FORCE_WAKE_DELAY_MS);
-		timeout += FORCE_WAKE_DELAY_MS;
-	}
-
-	if (pld_is_device_awake(soc->qdf_dev->dev) == true)
-		return 0;
-	else
-		return -ETIMEDOUT;
-}
-
-static inline int hal_force_wake_release(struct hal_soc *soc)
-{
-	return pld_force_wake_release(soc->qdf_dev->dev);
-}
-
 static inline void hal_lock_reg_access(struct hal_soc *soc,
 				       unsigned long *flags)
 {
@@ -212,10 +179,30 @@ static inline void hal_select_window(struct hal_soc *hal_soc, uint32_t offset,
 #endif
 
 /**
+ * hal_write32_mb() - Access registers to update configuration
+ * @hal_soc: hal soc handle
+ * @offset: offset address from the BAR
+ * @value: value to write
+ *
+ * Return: None
+ *
+ * Description: Register address space is split below:
+ *     SHADOW REGION       UNWINDOWED REGION    WINDOWED REGION
+ *  |--------------------|-------------------|------------------|
+ * BAR  NO FORCE WAKE  BAR+4K  FORCE WAKE  BAR+512K  FORCE WAKE
+ *
+ * 1. Any access to the shadow region, doesn't need force wake
+ *    and windowing logic to access.
+ * 2. Any access beyond BAR + 4K:
+ *    If init_phase enabled, no force wake is needed and access
+ *    should be based on windowed or unwindowed access.
+ *    If init_phase disabled, force wake is needed and access
+ *    should be based on windowed or unwindowed access.
+ *
  * note1: WINDOW_RANGE_MASK = (1 << WINDOW_SHIFT) -1
  * note2: 1 << WINDOW_SHIFT = MAX_UNWINDOWED_ADDRESS
- * note3: WINDOW_VALUE_MASK = big enough that trying to write past that window
- *				would be a bug
+ * note3: WINDOW_VALUE_MASK = big enough that trying to write past
+ *                            that window would be a bug
  */
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
@@ -248,12 +235,17 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 	int ret;
 	unsigned long flags;
 
-	if (offset > MAPPED_REF_OFF) {
-		ret = hal_force_wake_request(hal_soc);
+	/* Region < BAR + 4K can be directly accessed */
+	if (offset < MAPPED_REF_OFF) {
+		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
+		return;
+	}
+
+	/* Region greater than BAR + 4K */
+	if (!hal_soc->init_phase) {
+		ret = hif_force_wake_request(hal_soc->hif_handle);
 		if (ret) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Wake up request failed %d\n",
-				  __func__, ret);
+			hal_err("Wake up request failed");
 			QDF_BUG(0);
 			return;
 		}
@@ -278,20 +270,24 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 		hal_unlock_reg_access(hal_soc, &flags);
 	}
 
-	if ((offset > MAPPED_REF_OFF) &&
-	    hal_force_wake_release(hal_soc))
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Wake up release failed\n", __func__);
+	if (!hal_soc->init_phase) {
+		ret = hif_force_wake_release(hal_soc->hif_handle);
+		if (ret) {
+			hal_err("Wake up request failed");
+			QDF_BUG(0);
+			return;
+		}
+	}
 }
-
 #endif
 
 /**
  * hal_write_address_32_mb - write a value to a register
  *
  */
-static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
-					   void __iomem *addr, uint32_t value)
+static inline
+void hal_write_address_32_mb(struct hal_soc *hal_soc,
+			     void __iomem *addr, uint32_t value)
 {
 	uint32_t offset;
 
@@ -303,7 +299,29 @@ static inline void hal_write_address_32_mb(struct hal_soc *hal_soc,
 }
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
-static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
+/**
+ * hal_read32_mb() - Access registers to read configuration
+ * @hal_soc: hal soc handle
+ * @offset: offset address from the BAR
+ * @value: value to write
+ *
+ * Description: Register address space is split below:
+ *     SHADOW REGION       UNWINDOWED REGION    WINDOWED REGION
+ *  |--------------------|-------------------|------------------|
+ * BAR  NO FORCE WAKE  BAR+4K  FORCE WAKE  BAR+512K  FORCE WAKE
+ *
+ * 1. Any access to the shadow region, doesn't need force wake
+ *    and windowing logic to access.
+ * 2. Any access beyond BAR + 4K:
+ *    If init_phase enabled, no force wake is needed and access
+ *    should be based on windowed or unwindowed access.
+ *    If init_phase disabled, force wake is needed and access
+ *    should be based on windowed or unwindowed access.
+ *
+ * Return: < 0 for failure/>= 0 for success
+ */
+static inline
+uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
 	unsigned long flags;
@@ -321,6 +339,45 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 
 	return ret;
 }
+#else
+static
+uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
+{
+	uint32_t ret;
+	unsigned long flags;
+
+	/* Region < BAR + 4K can be directly accessed */
+	if (offset < MAPPED_REF_OFF)
+		return qdf_ioread32(hal_soc->dev_base_addr + offset);
+
+	if ((!hal_soc->init_phase) &&
+	    hif_force_wake_request(hal_soc->hif_handle)) {
+		hal_err("Wake up request failed");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!hal_soc->use_register_windowing ||
+	    offset < MAX_UNWINDOWED_ADDRESS) {
+		ret = qdf_ioread32(hal_soc->dev_base_addr + offset);
+	} else {
+		hal_lock_reg_access(hal_soc, &flags);
+		hal_select_window(hal_soc, offset, false);
+		ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
+			       (offset & WINDOW_RANGE_MASK));
+		hal_unlock_reg_access(hal_soc, &flags);
+	}
+
+	if ((!hal_soc->init_phase) &&
+	    hif_force_wake_release(hal_soc->hif_handle)) {
+		hal_err("Wake up release failed");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return ret;
+}
+#endif
 
 /**
  * hal_read_address_32_mb() - Read 32-bit value from the register
@@ -329,8 +386,9 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
  *
  * Return: 32-bit value
  */
-static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
-					      void __iomem *addr)
+static inline
+uint32_t hal_read_address_32_mb(struct hal_soc *soc,
+				void __iomem *addr)
 {
 	uint32_t offset;
 	uint32_t ret;
@@ -342,54 +400,6 @@ static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
 	ret = hal_read32_mb(soc, offset);
 	return ret;
 }
-#else
-static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
-{
-	uint32_t ret;
-	unsigned long flags;
-
-	if ((offset > MAPPED_REF_OFF) &&
-	    hal_force_wake_request(hal_soc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Wake up request failed\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!hal_soc->use_register_windowing ||
-	    offset < MAX_UNWINDOWED_ADDRESS) {
-		return qdf_ioread32(hal_soc->dev_base_addr + offset);
-	}
-
-	hal_lock_reg_access(hal_soc, &flags);
-	hal_select_window(hal_soc, offset, false);
-	ret = qdf_ioread32(hal_soc->dev_base_addr + WINDOW_START +
-		       (offset & WINDOW_RANGE_MASK));
-	hal_unlock_reg_access(hal_soc, &flags);
-
-	if ((offset > MAPPED_REF_OFF) &&
-	    hal_force_wake_release(hal_soc))
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Wake up release failed\n", __func__);
-
-	return ret;
-}
-
-static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
-					      void __iomem *addr)
-{
-	uint32_t offset;
-	uint32_t ret;
-
-	if (!soc->use_register_windowing)
-		return qdf_ioread32(addr);
-
-	offset = addr - soc->dev_base_addr;
-	ret = hal_read32_mb(soc, offset);
-	return ret;
-}
-#endif
-
-#include "hif_io32.h"
 
 /**
  * hal_attach - Initialize HAL layer
@@ -454,6 +464,24 @@ enum hal_ring_type {
 #define PN_SIZE_24 0
 #define PN_SIZE_48 1
 #define PN_SIZE_128 2
+
+#ifdef FORCE_WAKE
+/**
+ * hal_set_init_phase() - Indicate initialization of
+ *                        datapath rings
+ * @soc: hal_soc handle
+ * @init_phase: flag to indicate datapath rings
+ *              initialization status
+ *
+ * Return: None
+ */
+void hal_set_init_phase(hal_soc_handle_t soc, bool init_phase);
+#else
+static inline
+void hal_set_init_phase(hal_soc_handle_t soc, bool init_phase)
+{
+}
+#endif /* FORCE_WAKE */
 
 /**
  * hal_srng_get_entrysize - Returns size of ring entry in bytes. Should be

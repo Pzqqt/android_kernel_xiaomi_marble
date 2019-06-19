@@ -45,6 +45,11 @@
 
 #define HIF_MAX_BUDGET 0xFFFF
 
+#define HIF_STATS_INC(_handle, _field, _delta) \
+{ \
+	(_handle)->stats._field += _delta; \
+}
+
 /*
  * This macro implementation is exposed for efficiency only.
  * The implementation may change and callers should

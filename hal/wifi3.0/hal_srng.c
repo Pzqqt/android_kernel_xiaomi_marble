@@ -355,6 +355,11 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	hal->target_type = hal_get_target_type(hal_soc_to_hal_soc_handle(hal));
 
 	hal_target_based_configure(hal);
+	/**
+	 * Indicate Initialization of srngs to avoid force wake
+	 * as umac power collapse is not enabled yet
+	 */
+	hal->init_phase = true;
 
 	return (void *)hal;
 
@@ -849,3 +854,12 @@ extern void hal_get_srng_params(hal_soc_handle_t hal_soc_hdl,
 		ring_params->hwreg_base[i] = srng->hwreg_base[i];
 }
 qdf_export_symbol(hal_get_srng_params);
+
+#ifdef FORCE_WAKE
+void hal_set_init_phase(hal_soc_handle_t soc, bool init_phase)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)soc;
+
+	hal_soc->init_phase = init_phase;
+}
+#endif /* FORCE_WAKE */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,10 +28,9 @@
 static inline
 void hif_write32_mb_reg_window(void *sc,
 			       void __iomem *addr, uint32_t value);
-
-static inline uint32_t hif_read32_mb_reg_window(void *sc,
-						void __iomem *addr);
-
+static inline
+uint32_t hif_read32_mb_reg_window(void *sc,
+				  void __iomem *addr);
 #define hif_read32_mb(scn, addr) \
 	hif_read32_mb_reg_window((void *)scn, \
 				 (void __iomem *)addr)
@@ -40,11 +39,9 @@ static inline uint32_t hif_read32_mb_reg_window(void *sc,
 				  (void __iomem *)addr, value)
 
 #else
-
 #define hif_read32_mb(scn, addr)         ioread32((void __iomem *)addr)
 #define hif_write32_mb(scn, addr, value) \
 	iowrite32((u32)(value), (void __iomem *)(addr))
-
 #endif
 
 #define Q_TARGET_ACCESS_BEGIN(scn) \

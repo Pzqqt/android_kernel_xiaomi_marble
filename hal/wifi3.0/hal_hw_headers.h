@@ -83,13 +83,6 @@
 #define HAL_SRNG_REO_ALTERNATE_SELECT 0x7
 #define HAL_NON_QOS_TID 16
 
-/* calculate the register address offset from bar0 of shadow register x */
-#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
-#define SHADOW_REGISTER(x) (0x000008FC + (4 * (x)))
-#else
-#define SHADOW_REGISTER(x) (0x00003024 + (4 * (x)))
-#endif
-
 /* TODO: Check if the following can be provided directly by HW headers */
 #define SRNG_LOOP_CNT_MASK REO_DESTINATION_RING_15_LOOPING_COUNT_MASK
 #define SRNG_LOOP_CNT_LSB REO_DESTINATION_RING_15_LOOPING_COUNT_LSB

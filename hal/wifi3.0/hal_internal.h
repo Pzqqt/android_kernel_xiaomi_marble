@@ -502,6 +502,9 @@ struct hal_soc {
 	struct hal_hw_srng_config *hw_srng_table;
 	int32_t *hal_hw_reg_offset;
 	struct hal_hw_txrx_ops *ops;
+
+	/* Indicate srngs initialization */
+	bool init_phase;
 };
 
 void hal_qca6490_attach(struct hal_soc *hal_soc);

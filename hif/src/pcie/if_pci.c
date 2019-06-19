@@ -1396,6 +1396,8 @@ void hif_pci_display_stats(struct hif_softc *hif_ctx)
 		return;
 	}
 	hif_display_ce_stats(&pci_ctx->ce_sc);
+
+	hif_print_pci_stats(pci_ctx);
 }
 
 void hif_pci_clear_stats(struct hif_softc *hif_ctx)
@@ -4627,3 +4629,110 @@ bool hif_pci_needs_bmi(struct hif_softc *scn)
 {
 	return !ce_srng_based(scn);
 }
+
+#ifdef FORCE_WAKE
+int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
+{
+	uint32_t timeout = 0, value;
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	if (pld_force_wake_request(scn->qdf_dev->dev)) {
+		hif_err("force wake request send failed");
+		return -EINVAL;
+	}
+
+	HIF_STATS_INC(pci_scn, mhi_force_wake_request_vote, 1);
+	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
+	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
+		qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		timeout += FORCE_WAKE_DELAY_MS;
+	}
+
+	if (pld_is_device_awake(scn->qdf_dev->dev) <= 0) {
+		hif_err("Unable to wake up mhi");
+		HIF_STATS_INC(pci_scn, mhi_force_wake_failure, 1);
+		return -EINVAL;
+	}
+	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
+	hif_write32_mb(scn,
+		       scn->mem +
+		       PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG,
+		       0);
+	hif_write32_mb(scn,
+		       scn->mem +
+		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
+		       1);
+
+	HIF_STATS_INC(pci_scn, soc_force_wake_register_write_success, 1);
+	/*
+	 * do not reset the timeout
+	 * total_wake_time = MHI_WAKE_TIME + PCI_WAKE_TIME < 50 ms
+	 */
+	do {
+		value =
+		hif_read32_mb(scn,
+			      scn->mem +
+			      PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG);
+		if (value)
+			break;
+		qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		timeout += FORCE_WAKE_DELAY_MS;
+	} while (timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS);
+
+	if (!value) {
+		hif_err("failed handshake mechanism");
+		HIF_STATS_INC(pci_scn, soc_force_wake_failure, 1);
+		return -ETIMEDOUT;
+	}
+
+	HIF_STATS_INC(pci_scn, soc_force_wake_success, 1);
+
+	return 0;
+}
+
+int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
+{
+	int ret;
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	ret = pld_force_wake_release(scn->qdf_dev->dev);
+	if (ret) {
+		hif_err("force wake release failure");
+		HIF_STATS_INC(pci_scn, mhi_force_wake_release_failure, 1);
+		return ret;
+	}
+
+	HIF_STATS_INC(pci_scn, mhi_force_wake_release_success, 1);
+	hif_write32_mb(scn,
+		       scn->mem +
+		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
+		       0);
+	HIF_STATS_INC(pci_scn, soc_force_wake_release_success, 1);
+	return 0;
+}
+
+void hif_print_pci_stats(struct hif_pci_softc *pci_handle)
+{
+	hif_debug("mhi_force_wake_request_vote: %d",
+		  pci_handle->stats.mhi_force_wake_request_vote);
+	hif_debug("mhi_force_wake_failure: %d",
+		  pci_handle->stats.mhi_force_wake_failure);
+	hif_debug("mhi_force_wake_success: %d",
+		  pci_handle->stats.mhi_force_wake_success);
+	hif_debug("soc_force_wake_register_write_success: %d",
+		  pci_handle->stats.soc_force_wake_register_write_success);
+	hif_debug("soc_force_wake_failure: %d",
+		  pci_handle->stats.soc_force_wake_failure);
+	hif_debug("soc_force_wake_success: %d",
+		  pci_handle->stats.soc_force_wake_success);
+	hif_debug("mhi_force_wake_release_failure: %d",
+		  pci_handle->stats.mhi_force_wake_release_failure);
+	hif_debug("mhi_force_wake_release_success: %d",
+		  pci_handle->stats.mhi_force_wake_release_success);
+	hif_debug("oc_force_wake_release_success: %d",
+		  pci_handle->stats.soc_force_wake_release_success);
+}
+#endif /* FORCE_WAKE */
+
