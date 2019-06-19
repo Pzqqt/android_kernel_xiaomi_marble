@@ -3406,7 +3406,7 @@ bool sde_plane_is_cache_required(struct drm_plane *plane)
 		return false;
 }
 
-static void _sde_plane_install_non_master_properties(struct sde_plane *psde)
+static void _sde_plane_install_master_only_properties(struct sde_plane *psde)
 {
 	char feature_name[256];
 
@@ -3511,6 +3511,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	const struct sde_format_extended *format_list;
 	struct sde_kms_info *info;
 	struct sde_plane *psde = to_sde_plane(plane);
+	bool is_master;
 	int zpos_max = 255;
 	int zpos_def = 0;
 	char feature_name[256];
@@ -3528,6 +3529,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	}
 
 	psde->catalog = catalog;
+	is_master = !psde->is_virtual;
 
 	if (sde_is_custom_client()) {
 		if (catalog->mixer_count &&
@@ -3551,8 +3553,8 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	msm_property_install_range(&psde->property_info, "input_fence",
 		0x0, 0, INR_OPEN_MAX, 0, PLANE_PROP_INPUT_FENCE);
 
-	if (!master_plane_id)
-		_sde_plane_install_non_master_properties(psde);
+	if (is_master)
+		_sde_plane_install_master_only_properties(psde);
 
 	if (psde->features & BIT(SDE_SSPP_EXCL_RECT))
 		msm_property_install_volatile_range(&psde->property_info,
@@ -3587,7 +3589,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		DRM_MODE_PROP_IMMUTABLE, PLANE_PROP_INFO);
 	sde_kms_info_reset(info);
 
-	if (!master_plane_id) {
+	if (is_master) {
 		format_list = psde->pipe_sblk->format_list;
 	} else {
 		format_list = psde->pipe_sblk->virt_format_list;
@@ -3629,7 +3631,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	sde_kms_info_add_keyint(info, "max_per_pipe_bw_high",
 			psde->pipe_sblk->max_per_pipe_bw_high * 1000LL);
 
-	if ((!master_plane_id &&
+	if ((is_master &&
 		(psde->features & BIT(SDE_SSPP_INVERSE_PMA))) ||
 		(psde->features & BIT(SDE_SSPP_DGM_INVERSE_PMA))) {
 		msm_property_install_range(&psde->property_info,
@@ -4561,7 +4563,7 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 
 	/* initialize underlying h/w driver */
 	psde->pipe_hw = sde_hw_sspp_init(pipe, kms->mmio, kms->catalog,
-							master_plane_id != 0);
+							psde->is_virtual);
 	if (IS_ERR(psde->pipe_hw)) {
 		SDE_ERROR("[%u]SSPP init failed\n", pipe);
 		ret = PTR_ERR(psde->pipe_hw);
@@ -4580,10 +4582,10 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 		goto clean_sspp;
 	}
 
-	if (!master_plane_id)
-		format_list = psde->pipe_sblk->format_list;
-	else
+	if (psde->is_virtual)
 		format_list = psde->pipe_sblk->virt_format_list;
+	else
+		format_list = psde->pipe_sblk->format_list;
 
 	psde->nformats = sde_populate_formats(format_list,
 				psde->formats,
@@ -4625,7 +4627,7 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 
 	mutex_init(&psde->lock);
 
-	SDE_DEBUG("%s created for pipe:%u id:%u virtual:%u\n", psde->pipe_name,
+	SDE_DEBUG("%s created for pipe:%u id:%u master:%u\n", psde->pipe_name,
 					pipe, plane->base.id, master_plane_id);
 	return plane;
 
