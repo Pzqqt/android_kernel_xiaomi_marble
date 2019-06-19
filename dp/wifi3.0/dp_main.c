@@ -2091,8 +2091,11 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				FL("Link descriptor memory alloc failed"));
 			goto fail;
 		}
-		qdf_minidump_log((void *)(soc->link_desc_banks[i].base_vaddr),
-			soc->link_desc_banks[i].size, "link_desc_bank");
+		if (!dp_is_soc_reinit(soc)) {
+			qdf_minidump_log(soc->link_desc_banks[i].base_vaddr,
+					 soc->link_desc_banks[i].size,
+					 "link_desc_bank");
+		}
 	}
 
 	if (last_bank_size) {
@@ -2123,8 +2126,11 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			(unsigned long)(
 			soc->link_desc_banks[i].base_vaddr_unaligned));
 
-		qdf_minidump_log((void *)(soc->link_desc_banks[i].base_vaddr),
-			soc->link_desc_banks[i].size, "link_desc_bank");
+		if (!dp_is_soc_reinit(soc)) {
+			qdf_minidump_log(soc->link_desc_banks[i].base_vaddr,
+					 soc->link_desc_banks[i].size,
+					 "link_desc_bank");
+		}
 	}
 
 
@@ -2142,10 +2148,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			goto fail;
 		}
 
-		qdf_minidump_log(
-			(void *)(soc->wbm_idle_link_ring.base_vaddr_unaligned),
-			soc->wbm_idle_link_ring.alloc_size,
-			"wbm_idle_link_ring");
+		qdf_minidump_log(soc->wbm_idle_link_ring.base_vaddr_unaligned,
+				 soc->wbm_idle_link_ring.alloc_size,
+				 "wbm_idle_link_ring");
 
 		hal_srng_access_start_unlocked(soc->hal_soc,
 			soc->wbm_idle_link_ring.hal_srng);
@@ -2304,6 +2309,8 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 	int i;
 
 	if (soc->wbm_idle_link_ring.hal_srng) {
+		qdf_minidump_remove(
+			soc->wbm_idle_link_ring.base_vaddr_unaligned);
 		dp_srng_cleanup(soc, &soc->wbm_idle_link_ring,
 			WBM_IDLE_LINK, 0);
 	}
@@ -2320,6 +2327,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 
 	for (i = 0; i < MAX_LINK_DESC_BANKS; i++) {
 		if (soc->link_desc_banks[i].base_vaddr_unaligned) {
+			qdf_minidump_remove(soc->link_desc_banks[i].base_vaddr);
 			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				soc->link_desc_banks[i].size,
 				soc->link_desc_banks[i].base_vaddr_unaligned,
@@ -2756,9 +2764,9 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	qdf_minidump_log(
-		(void *)(soc->wbm_desc_rel_ring.base_vaddr_unaligned),
-		soc->wbm_desc_rel_ring.alloc_size, "wbm_desc_rel_ring");
+	qdf_minidump_log(soc->wbm_desc_rel_ring.base_vaddr_unaligned,
+			 soc->wbm_desc_rel_ring.alloc_size,
+			 "wbm_desc_rel_ring");
 
 	soc->num_tcl_data_rings = 0;
 	/* Tx data rings */
@@ -3379,17 +3387,18 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = NULL;
 
-	if (dp_is_soc_reinit(soc))
+	if (dp_is_soc_reinit(soc)) {
 		pdev = soc->pdev_list[pdev_id];
-	else
+	} else {
 		pdev = qdf_mem_malloc(sizeof(*pdev));
+		qdf_minidump_log(pdev, sizeof(*pdev), "dp_pdev");
+	}
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("DP PDEV memory allocation failed"));
 		goto fail0;
 	}
-	qdf_minidump_log((void *)pdev, sizeof(*pdev), "dp_pdev");
 
 	/*
 	 * Variable to prevent double pdev deinitialization during
@@ -3940,6 +3949,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	}
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
+	qdf_minidump_remove(pdev);
 	qdf_mem_free(pdev);
 }
 
@@ -4135,6 +4145,7 @@ static void dp_soc_detach(void *txrx_soc)
 
 	/* Free the ring memories */
 	/* Common rings */
+	qdf_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned);
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
 
 	dp_tx_soc_detach(soc);
@@ -4188,6 +4199,7 @@ static void dp_soc_detach(void *txrx_soc)
 
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 
+	qdf_minidump_remove(soc);
 	qdf_mem_free(soc);
 }
 
@@ -4543,7 +4555,7 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
 
-	qdf_minidump_log((void *)soc, sizeof(*soc), "dp_soc");
+	qdf_minidump_log(soc, sizeof(*soc), "dp_soc");
 
 	return QDF_STATUS_SUCCESS;
 }
