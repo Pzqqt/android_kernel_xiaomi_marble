@@ -1522,6 +1522,11 @@ struct dp_dsc_slices_per_line {
 	u8 num_slices;
 };
 
+struct dp_dsc_peak_throughput {
+	u32 index;
+	u32 peak_throughput;
+};
+
 struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
 	{0,     340,    1   },
 	{340,   680,    2   },
@@ -1533,6 +1538,24 @@ struct dp_dsc_slices_per_line slice_per_line_tbl[] = {
 	{8000,  9600,   24  }
 };
 
+const struct dp_dsc_peak_throughput peak_throughput_mode_0_tbl[] = {
+	{0, 0},
+	{1, 340},
+	{2, 400},
+	{3, 450},
+	{4, 500},
+	{5, 550},
+	{6, 600},
+	{7, 650},
+	{8, 700},
+	{9, 750},
+	{10, 800},
+	{11, 850},
+	{12, 900},
+	{13, 950},
+	{14, 1000},
+};
+
 static int dp_panel_dsc_prepare_basic_params(
 		struct msm_compression_info *comp_info,
 		const struct dp_display_mode *dp_mode,
@@ -1540,9 +1563,13 @@ static int dp_panel_dsc_prepare_basic_params(
 {
 	int i;
 	struct dp_dsc_slices_per_line *rec;
-	int slice_width;
+	const struct dp_dsc_peak_throughput *tput;
+	u32 slice_width;
 	u32 ppr = dp_mode->timing.pixel_clk_khz/1000;
-	int max_slice_width;
+	u32 max_slice_width;
+	u32 ppr_max_index;
+	u32 peak_throughput;
+	u32 ppr_per_slice;
 
 	comp_info->dsc_info.slice_per_pkt = 0;
 	for (i = 0; i < ARRAY_SIZE(slice_per_line_tbl); i++) {
@@ -1557,11 +1584,23 @@ static int dp_panel_dsc_prepare_basic_params(
 	if (comp_info->dsc_info.slice_per_pkt == 0)
 		return -EINVAL;
 
+	ppr_max_index = dp_panel->dsc_dpcd[11] &= 0xf;
+	if (!ppr_max_index || ppr_max_index >= 15) {
+		pr_debug("Throughput mode 0 not supported");
+		return -EINVAL;
+	}
+
+	tput = &peak_throughput_mode_0_tbl[ppr_max_index];
+	peak_throughput = tput->peak_throughput;
+
 	max_slice_width = dp_panel->dsc_dpcd[12] * 320;
 	slice_width = (dp_mode->timing.h_active /
 				comp_info->dsc_info.slice_per_pkt);
 
-	while (slice_width >= max_slice_width) {
+	ppr_per_slice = ppr/comp_info->dsc_info.slice_per_pkt;
+
+	while (slice_width >= max_slice_width ||
+			ppr_per_slice > peak_throughput) {
 		if (i == ARRAY_SIZE(slice_per_line_tbl))
 			return -EINVAL;
 
@@ -1569,6 +1608,7 @@ static int dp_panel_dsc_prepare_basic_params(
 		comp_info->dsc_info.slice_per_pkt = rec->num_slices;
 		slice_width = (dp_mode->timing.h_active /
 				comp_info->dsc_info.slice_per_pkt);
+		ppr_per_slice = ppr/comp_info->dsc_info.slice_per_pkt;
 		i++;
 	}
 
