@@ -350,8 +350,16 @@ __qdf_minidump_log(void *start_addr, size_t size, const char *name)
 			"%s: failed to log %pK (%s)\n",
 			__func__, start_addr, name);
 }
+
+static inline void
+__qdf_minidump_remove(void *addr)
+{
+	remove_minidump_segments((uintptr_t)addr);
+}
 #else
 static inline void
 __qdf_minidump_log(void *start_addr, size_t size, const char *name) {}
+static inline void
+__qdf_minidump_remove(void *addr) {}
 #endif
 #endif /* __I_QDF_TRACE_H */

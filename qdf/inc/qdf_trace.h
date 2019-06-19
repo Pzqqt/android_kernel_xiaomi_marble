@@ -1386,4 +1386,14 @@ void qdf_minidump_log(void *start_addr, size_t size, const char *name)
 	__qdf_minidump_log(start_addr, size, name);
 }
 
+/**
+ * qdf_minidump_remove() - Remove memory address from minidump
+ * @addr: Start address of the memory previously added
+ */
+static inline
+void qdf_minidump_remove(void *addr)
+{
+	__qdf_minidump_remove(addr);
+}
+
 #endif /* __QDF_TRACE_H */
