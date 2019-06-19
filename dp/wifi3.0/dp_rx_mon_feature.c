@@ -27,6 +27,7 @@
 #include "dp_rx_mon.h"
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#include "wlan_cfg.h"
 
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 
@@ -112,10 +113,88 @@ dp_rx_populate_cdp_indication_mpdu_info(
 		cdp_mpdu_info->per_chain_rssi[i] = ppdu_info->rx_status.rssi[i];
 }
 
+#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+/**
+ * dp_rx_mon_enh_capture_set_flow_tag() - Tags the actual nbuf with
+ * cached flow tag data read from TLV
+ * @pdev: pdev structure
+ * @ppdu_info: ppdu info structure from monitor status ring
+ * @user_id: user ID on which the PPDU is received
+ * @nbuf: packet buffer on which metadata have to be updated
+ *
+ * Return: None
+ */
+void dp_rx_mon_enh_capture_set_flow_tag(struct dp_pdev *pdev,
+					struct hal_rx_ppdu_info *ppdu_info,
+					uint32_t user_id, qdf_nbuf_t nbuf)
+{
+	struct dp_soc *soc = pdev->soc;
+	uint16_t fse_metadata;
+
+	if (user_id >= MAX_MU_USERS)
+		return;
+
+	if (qdf_likely(!wlan_cfg_is_rx_flow_tag_enabled(soc->wlan_cfg_ctx)))
+		return;
+
+	if (ppdu_info->rx_msdu_info[user_id].is_flow_idx_invalid)
+		return;
+
+	if (ppdu_info->rx_msdu_info[user_id].is_flow_idx_timeout)
+		return;
+
+	fse_metadata =
+	  (uint16_t)ppdu_info->rx_msdu_info[user_id].fse_metadata & 0xFFFF;
+
+	/* update the skb->cb with the user-specified tag/metadata */
+	qdf_nbuf_set_rx_flow_tag(nbuf, fse_metadata);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "Setting flow tag %u for userID %u", fse_metadata, user_id);
+
+	ppdu_info->rx_msdu_info[user_id].fse_metadata = 0;
+	ppdu_info->rx_msdu_info[user_id].flow_idx = 0;
+	ppdu_info->rx_msdu_info[user_id].is_flow_idx_timeout = false;
+	ppdu_info->rx_msdu_info[user_id].is_flow_idx_invalid = false;
+}
+
+/**
+ * dp_rx_mon_enh_capture_set_flow_tag_in_trailer - update msdu trailer
+ *                                                 with flow tag
+ * @nbuf: packet buffer on which metadata have to be updated
+ * @trailer: pointer to rx monitor-lite trailer
+ *
+ * Return: None
+ */
+static inline void dp_rx_mon_enh_capture_set_flow_tag_in_trailer(
+					qdf_nbuf_t nbuf, void *trailer)
+{
+	uint16_t flow_tag = qdf_nbuf_get_rx_flow_tag(nbuf);
+	struct dp_rx_mon_enh_trailer_data *nbuf_trailer =
+			(struct dp_rx_mon_enh_trailer_data *)trailer;
+
+	if (!flow_tag)
+		return;
+
+	nbuf_trailer->flow_tag = flow_tag;
+}
+#else
+void dp_rx_mon_enh_capture_set_flow_tag(struct dp_pdev *pdev,
+					struct hal_rx_ppdu_info *ppdu_info,
+					uint32_t user_id, qdf_nbuf_t nbuf)
+{
+}
+
+static inline void dp_rx_mon_enh_capture_set_flow_tag_in_trailer(
+					qdf_nbuf_t nbuf, void *trailer)
+{
+}
+#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /*
  * dp_rx_mon_enh_capture_set_protocol_tag() - Tags the actual nbuf with
- * cached data read from TLV
+ * cached protocol tag data read from TLV
  * @pdev: pdev structure
  * @ppdu_info: ppdu info structure from monitor status ring
  * @user_id: user ID on which the PPDU is received
@@ -162,8 +241,8 @@ dp_rx_mon_enh_capture_set_protocol_tag(struct dp_pdev *pdev,
 	 * by looking up tag value for received protocol type.
 	 */
 	protocol_tag = pdev->rx_proto_tag_map[cce_metadata].tag;
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-		  "%s: Setting ProtoID:%d Tag %u", __func__,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "Setting ProtoID:%d Tag %u in mon nbuf",
 		  cce_metadata, protocol_tag);
 	qdf_nbuf_set_rx_protocol_tag(nbuf, protocol_tag);
 }
@@ -256,6 +335,7 @@ uint16_t dp_rx_mon_enh_capture_update_trailer(struct dp_pdev *pdev,
 {
 	uint64_t trailer;
 	uint8_t  *dest;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_rx_mon_enh_trailer_data *nbuf_trailer =
 			(struct dp_rx_mon_enh_trailer_data *)&trailer;
 
@@ -264,7 +344,12 @@ uint16_t dp_rx_mon_enh_capture_update_trailer(struct dp_pdev *pdev,
 
 	trailer = RX_MON_CAP_ENH_TRAILER;
 
-	dp_rx_mon_enh_capture_set_protocol_tag_in_trailer(nbuf, nbuf_trailer);
+	if (wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(soc->wlan_cfg_ctx)) {
+		dp_rx_mon_enh_capture_set_protocol_tag_in_trailer(nbuf,
+								  nbuf_trailer);
+		dp_rx_mon_enh_capture_set_flow_tag_in_trailer(nbuf,
+							      nbuf_trailer);
+	}
 
 	/**
 	 * Overwrite last 8 bytes of data with trailer. This is ok since we
@@ -424,6 +509,7 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 	/* Tag the MSDU/MPDU if a cce_metadata is valid */
 	if ((tlv_status == HAL_TLV_STATUS_MSDU_END) &&
 	    (pdev->rx_enh_capture_mode == CDP_RX_ENH_CAPTURE_MPDU_MSDU)) {
+		bool is_rx_mon_protocol_flow_tag_en;
 		/**
 		 * Proceed only if this is a data frame.
 		 * We could also rx probes, etc.
@@ -445,12 +531,18 @@ dp_rx_mon_enh_capture_process(struct dp_pdev *pdev, uint32_t tlv_status,
 		 */
 		nbuf = msdu_list->tail;
 
-		/**
-		 * Set the protocol tag value from CCE metadata.
-		 */
-		dp_rx_mon_enh_capture_tag_protocol_type(pdev, ppdu_info,
-							user_id, nbuf);
+		is_rx_mon_protocol_flow_tag_en =
+		    wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(
+					pdev->soc->wlan_cfg_ctx);
 
+		if (is_rx_mon_protocol_flow_tag_en) {
+			 /* Set the protocol tag value from CCE metadata */
+			dp_rx_mon_enh_capture_tag_protocol_type(pdev, ppdu_info,
+								user_id, nbuf);
+			/* Set the flow tag from FSE metadata */
+			dp_rx_mon_enh_capture_set_flow_tag(pdev, ppdu_info,
+							   user_id, nbuf);
+		}
 		if (!pdev->is_rx_enh_capture_trailer_enabled)
 			return;
 		/**
