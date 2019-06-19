@@ -54,9 +54,6 @@
 #define SIR_MAC_CTRL_FRAME    0x1
 #define SIR_MAC_DATA_FRAME    0x2
 
-#define SIR_MAC_FRAME_TYPE_START   0x0
-#define SIR_MAC_FRAME_TYPE_END     0x3
-
 /* Data frame subtype definitions */
 #define SIR_MAC_DATA_DATA                 0
 #define SIR_MAC_DATA_DATA_ACK             1
@@ -74,9 +71,6 @@
 #define SIR_MAC_DATA_QOS_NULL_ACK         13
 #define SIR_MAC_DATA_QOS_NULL_POLL        14
 #define SIR_MAC_DATA_QOS_NULL_ACK_POLL    15
-
-#define SIR_MAC_FRAME_SUBTYPE_START       0
-#define SIR_MAC_FRAME_SUBTYPE_END         16
 
 #define SIR_MAC_DATA_QOS_MASK             8
 #define SIR_MAC_DATA_NULL_MASK            4
@@ -103,9 +97,7 @@
 #define SIR_MAC_ACTION_TX             1
 #define SIR_MAC_ACTION_RX             2
 
-#define SIR_MAC_BA_POLICY_DELAYED       0
 #define SIR_MAC_BA_POLICY_IMMEDIATE     1
-#define SIR_MAC_BA_AMSDU_SUPPORTED      1
 #define SIR_MAC_BA_DEFAULT_BUFF_SIZE    64
 
 #define MAX_BA_BUFF_SIZE    256
@@ -139,11 +131,6 @@
 /* HT Action Field Codes */
 #define SIR_MAC_SM_POWER_SAVE       1
 
-/* DLP action frame types */
-#define SIR_MAC_DLP_REQ             0
-#define SIR_MAC_DLP_RSP             1
-#define SIR_MAC_DLP_TEARDOWN        2
-
 /* block acknowledgment action frame types */
 #define SIR_MAC_ACTION_VENDOR_SPECIFIC 9
 #define SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY     0x7F
@@ -164,8 +151,6 @@
 #define SIR_MAC_PDPA_GAS_INIT_RSP      11
 #define SIR_MAC_PDPA_GAS_COMEBACK_REQ  12
 #define SIR_MAC_PDPA_GAS_COMEBACK_RSP  13
-
-#define SIR_MAC_MAX_RANDOM_LENGTH   2306
 
 /* ----------------------------------------------------------------------------- */
 /* EID (Element ID) definitions */
