@@ -764,6 +764,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 	ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 		CONFIG_WLAN_FEATURE_DP_EVENT_HISTORY := y
 	endif
+	CONFIG_WLAN_DP_PER_RING_TYPE_CONFIG := y
 endif
 #Flag to enable hdd memory dump feature
 CONFIG_FEATURE_MEMDUMP_ENABLE := y
