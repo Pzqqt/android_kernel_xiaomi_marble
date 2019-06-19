@@ -156,6 +156,7 @@ typedef dma_addr_t __qdf_dma_addr_t;
 typedef size_t __qdf_dma_size_t;
 typedef dma_addr_t __qdf_dma_context_t;
 typedef struct net_device *__qdf_netdev_t;
+typedef struct cpumask __qdf_cpu_mask;
 typedef __le16 __qdf_le16_t;
 typedef __le32 __qdf_le32_t;
 typedef __le64 __qdf_le64_t;

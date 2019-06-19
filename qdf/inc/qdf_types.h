@@ -158,6 +158,11 @@ typedef __qdf_mem_info_t qdf_mem_info_t;
 typedef __sgtable_t sgtable_t;
 
 /**
+ * typepdef qdf_cpu_mask - CPU Mask
+ */
+typedef __qdf_cpu_mask qdf_cpu_mask;
+
+/**
  * pointer to net device
  */
 typedef __qdf_netdev_t qdf_netdev_t;
