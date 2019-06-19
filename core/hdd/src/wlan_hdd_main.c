@@ -3225,21 +3225,6 @@ static int hdd_open(struct net_device *net_dev)
 	return errno;
 }
 
-static bool
-hdd_is_any_sta_interface_open(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter;
-
-	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (adapter->device_mode == QDF_STA_MODE &&
-		   (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
-		    test_bit(SME_SESSION_OPENED, &adapter->event_flags)))
-			return true;
-	}
-
-	return false;
-}
-
 /**
  * __hdd_stop() - HDD stop function
  * @dev:	Pointer to net_device structure
@@ -3323,10 +3308,6 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* DeInit the adapter. This ensures datapath cleanup as well */
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
-
-	/* If no STA interface is open, then flush out the BLM entries */
-	if (!hdd_is_any_sta_interface_open(hdd_ctx))
-		ucfg_blm_flush_reject_ap_list(hdd_ctx->pdev);
 
 	if (!hdd_is_any_interface_open(hdd_ctx))
 		hdd_psoc_idle_timer_start(hdd_ctx);
@@ -13072,6 +13053,17 @@ static int wlan_hdd_state_ctrl_param_open(struct inode *inode,
 	return 0;
 }
 
+static void hdd_inform_wifi_off(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("Invalid hdd/pdev context");
+		return;
+	}
+	ucfg_blm_wifi_off(hdd_ctx->pdev);
+}
+
 static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 						const char __user *user_buf,
 						size_t count,
@@ -13090,6 +13082,7 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 
 	if (strncmp(buf, wlan_off_str, strlen(wlan_off_str)) == 0) {
 		pr_debug("Wifi turning off from UI\n");
+		hdd_inform_wifi_off();
 		goto exit;
 	}
 
