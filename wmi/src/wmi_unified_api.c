@@ -53,20 +53,10 @@ static const wmi_host_channel_width mode_to_width[WMI_HOST_MODE_MAX] = {
 #endif
 };
 
-/**
- * wmi_unified_vdev_create_send() - send VDEV create command to fw
- * @wmi_handle: wmi handle
- * @param: pointer to hold vdev create parameter
- * @macaddr: vdev mac address
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_create_send(void *wmi_hdl,
-				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				 struct vdev_create_params *param)
+QDF_STATUS wmi_unified_vdev_create_send(wmi_unified_t wmi_handle,
+					uint8_t macaddr[QDF_MAC_ADDR_SIZE],
+					struct vdev_create_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_create_cmd)
 		return wmi_handle->ops->send_vdev_create_cmd(wmi_handle,
 			   macaddr, param);
@@ -74,18 +64,9 @@ QDF_STATUS wmi_unified_vdev_create_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_delete_send() - send VDEV delete command to fw
- * @wmi_handle: wmi handle
- * @if_id: vdev id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
-					  uint8_t if_id)
+QDF_STATUS wmi_unified_vdev_delete_send(wmi_unified_t wmi_handle,
+					uint8_t if_id)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_delete_cmd)
 		return wmi_handle->ops->send_vdev_delete_cmd(wmi_handle,
 			   if_id);
@@ -107,18 +88,9 @@ wmi_unified_vdev_nss_chain_params_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_stop_send() - send vdev stop command to fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_stop_send(void *wmi_hdl,
-					uint8_t vdev_id)
+QDF_STATUS wmi_unified_vdev_stop_send(wmi_unified_t  wmi_handle,
+				      uint8_t vdev_id)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_stop_cmd)
 		return wmi_handle->ops->send_vdev_stop_cmd(wmi_handle,
 			   vdev_id);
@@ -126,53 +98,28 @@ QDF_STATUS wmi_unified_vdev_stop_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_down_send() - send vdev down command to fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_down_send(void *wmi_hdl, uint8_t vdev_id)
+QDF_STATUS wmi_unified_vdev_down_send(wmi_unified_t wmi_handle,
+				      uint8_t vdev_id)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_down_cmd)
 		return wmi_handle->ops->send_vdev_down_cmd(wmi_handle, vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_start_send() - send vdev start command to fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_start_send(void *wmi_hdl,
-			struct vdev_start_params *req)
+QDF_STATUS wmi_unified_vdev_start_send(wmi_unified_t wmi_handle,
+				       struct vdev_start_params *req)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_start_cmd)
 		return wmi_handle->ops->send_vdev_start_cmd(wmi_handle, req);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_set_nac_rssi_send() - send NAC_RSSI command to fw
- * @wmi: wmi handle
- * @req: pointer to hold nac rssi request data
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_set_nac_rssi_send(void *wmi_hdl,
-			struct vdev_scan_nac_rssi_params *req)
+QDF_STATUS
+wmi_unified_vdev_set_nac_rssi_send(wmi_unified_t wmi_handle,
+				   struct vdev_scan_nac_rssi_params *req)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_set_nac_rssi_cmd)
 		return wmi_handle->ops->send_vdev_set_nac_rssi_cmd(wmi_handle, req);
 
@@ -235,20 +182,10 @@ QDF_STATUS wmi_set_peer_param_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_vdev_up_send() - send vdev up command in fw
- * @wmi: wmi handle
- * @bssid: bssid
- * @vdev_up_params: pointer to hold vdev up parameter
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_vdev_up_send(void *wmi_hdl,
-			     uint8_t bssid[QDF_MAC_ADDR_SIZE],
-				 struct vdev_up_params *params)
+QDF_STATUS wmi_unified_vdev_up_send(wmi_unified_t wmi_handle,
+				    uint8_t bssid[QDF_MAC_ADDR_SIZE],
+				    struct vdev_up_params *params)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_vdev_up_cmd)
 		return wmi_handle->ops->send_vdev_up_cmd(wmi_handle, bssid,
 					params);
@@ -1060,9 +997,8 @@ QDF_STATUS wmi_unified_log_supported_evt_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-void wmi_send_time_stamp_sync_cmd_tlv(void *wmi_hdl)
+void wmi_send_time_stamp_sync_cmd_tlv(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 	if (wmi_handle->ops->send_time_stamp_sync_cmd)
 		wmi_handle->ops->send_time_stamp_sync_cmd(wmi_handle);
 
@@ -1180,36 +1116,20 @@ wmi_extract_apf_read_memory_resp_event(wmi_unified_t wmi, void *evt_buf,
 }
 #endif /* FEATURE_WLAN_APF */
 
-/**
- *  wmi_unified_pdev_fips_cmd_send() - WMI pdev fips cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold pdev fips param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_pdev_fips_cmd_send(void *wmi_hdl,
-				struct fips_params *param)
+QDF_STATUS
+wmi_unified_pdev_fips_cmd_send(wmi_unified_t wmi_handle,
+			       struct fips_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_pdev_fips_cmd)
 		return wmi_handle->ops->send_pdev_fips_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_wlan_profile_enable_cmd_send() - WMI wlan profile enable cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold wlan profile param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_wlan_profile_enable_cmd_send(void *wmi_hdl,
-				struct wlan_profile_params *param)
+QDF_STATUS
+wmi_unified_wlan_profile_enable_cmd_send(wmi_unified_t wmi_handle,
+					 struct wlan_profile_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_wlan_profile_enable_cmd)
 		return wmi_handle->ops->send_wlan_profile_enable_cmd(wmi_handle,
 				param);
@@ -1217,37 +1137,21 @@ QDF_STATUS wmi_unified_wlan_profile_enable_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_wlan_profile_trigger_cmd_send() - WMI wlan profile trigger cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold wlan profile param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_wlan_profile_trigger_cmd_send(void *wmi_hdl,
-				struct wlan_profile_params *param)
+QDF_STATUS
+wmi_unified_wlan_profile_trigger_cmd_send(wmi_unified_t wmi_handle,
+					  struct wlan_profile_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_wlan_profile_trigger_cmd)
-		return wmi->ops->send_wlan_profile_trigger_cmd(wmi,
-				param);
+	if (wmi_handle->ops->send_wlan_profile_trigger_cmd)
+		return wmi_handle->ops->send_wlan_profile_trigger_cmd(
+					wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_chan_cmd_send() - WMI set channel cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold channel param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_chan_cmd_send(void *wmi_hdl,
-				struct channel_param *param)
+QDF_STATUS
+wmi_unified_set_chan_cmd_send(wmi_unified_t wmi_handle,
+			      struct channel_param *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_pdev_set_chan_cmd)
 		return wmi_handle->ops->send_pdev_set_chan_cmd(wmi_handle,
 				param);
@@ -1255,18 +1159,10 @@ QDF_STATUS wmi_unified_set_chan_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_ratepwr_table_cmd_send() - WMI ratepwr table cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold ratepwr table param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_ratepwr_table_cmd_send(void *wmi_hdl,
-				struct ratepwr_table_params *param)
+QDF_STATUS
+wmi_unified_set_ratepwr_table_cmd_send(wmi_unified_t wmi_handle,
+				       struct ratepwr_table_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_ratepwr_table_cmd)
 		return wmi_handle->ops->send_set_ratepwr_table_cmd(wmi_handle,
 				param);
@@ -1274,103 +1170,54 @@ QDF_STATUS wmi_unified_set_ratepwr_table_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_get_ratepwr_table_cmd_send() - WMI ratepwr table cmd function
- *  @param wmi_handle      : handle to WMI.
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_get_ratepwr_table_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_get_ratepwr_table_cmd_send(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_get_ratepwr_table_cmd)
 		return wmi_handle->ops->send_get_ratepwr_table_cmd(wmi_handle);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_ratepwr_chainmsk_cmd_send() - WMI ratepwr
- *  chainmsk cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold ratepwr chainmsk param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_ratepwr_chainmsk_cmd_send(void *wmi_hdl,
+QDF_STATUS wmi_unified_set_ratepwr_chainmsk_cmd_send(
+				wmi_unified_t wmi_handle,
 				struct ratepwr_chainmsk_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_set_ratepwr_chainmsk_cmd)
-		return wmi->ops->send_set_ratepwr_chainmsk_cmd(wmi, param);
+	if (wmi_handle->ops->send_set_ratepwr_chainmsk_cmd)
+		return wmi_handle->ops->send_set_ratepwr_chainmsk_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_macaddr_cmd_send() - WMI set macaddr cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold macaddr param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_macaddr_cmd_send(void *wmi_hdl,
-				struct macaddr_params *param)
+QDF_STATUS wmi_unified_set_macaddr_cmd_send(wmi_unified_t wmi_handle,
+					    struct macaddr_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_macaddr_cmd)
 		return wmi_handle->ops->send_set_macaddr_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_pdev_scan_start_cmd_send() - WMI pdev scan start cmd function
- *  @param wmi_handle      : handle to WMI.
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_pdev_scan_start_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_pdev_scan_start_cmd_send(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_pdev_scan_start_cmd)
 		return wmi_handle->ops->send_pdev_scan_start_cmd(wmi_handle);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_pdev_scan_end_cmd_send() - WMI pdev scan end cmd function
- *  @param wmi_handle      : handle to WMI.
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_pdev_scan_end_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_pdev_scan_end_cmd_send(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_pdev_scan_end_cmd)
 		return wmi_handle->ops->send_pdev_scan_end_cmd(wmi_handle);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_acparams_cmd_send() - WMI set acparams cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold acparams param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_acparams_cmd_send(void *wmi_hdl,
-				struct acparams_params *param)
+QDF_STATUS
+wmi_unified_set_acparams_cmd_send(wmi_unified_t wmi_handle,
+				  struct acparams_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_acparams_cmd)
 		return wmi_handle->ops->send_set_acparams_cmd(wmi_handle,
 				param);
@@ -1378,38 +1225,21 @@ QDF_STATUS wmi_unified_set_acparams_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_vap_dscp_tid_map_cmd_send() - WMI set vap dscp
- *  tid map cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold dscp param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_vap_dscp_tid_map_cmd_send(void *wmi_hdl,
-				struct vap_dscp_tid_map_params *param)
+QDF_STATUS wmi_unified_set_vap_dscp_tid_map_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct vap_dscp_tid_map_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_set_vap_dscp_tid_map_cmd)
-		return wmi->ops->send_set_vap_dscp_tid_map_cmd(wmi, param);
+	if (wmi_handle->ops->send_set_vap_dscp_tid_map_cmd)
+		return wmi_handle->ops->send_set_vap_dscp_tid_map_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_proxy_ast_reserve_cmd_send() - WMI proxy ast
- *  reserve cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold ast param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_proxy_ast_reserve_cmd_send(void *wmi_hdl,
-				struct proxy_ast_reserve_params *param)
+QDF_STATUS
+wmi_unified_proxy_ast_reserve_cmd_send(wmi_unified_t wmi_handle,
+				       struct proxy_ast_reserve_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_proxy_ast_reserve_cmd)
 		return wmi_handle->ops->send_proxy_ast_reserve_cmd(wmi_handle,
 				param);
@@ -1417,18 +1247,10 @@ QDF_STATUS wmi_unified_proxy_ast_reserve_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_bridge_mac_addr_cmd_send() - WMI set bridge mac addr cmd function
- *  @param wmi_hdl      : handle to WMI.
- *  @param param        : pointer to hold bridge mac addr param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_bridge_mac_addr_cmd_send(void *wmi_hdl,
-				struct set_bridge_mac_addr_params *param)
+QDF_STATUS wmi_unified_set_bridge_mac_addr_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct set_bridge_mac_addr_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_bridge_mac_addr_cmd)
 		return wmi_handle->ops->send_set_bridge_mac_addr_cmd(wmi_handle,
 				param);
@@ -1436,34 +1258,16 @@ QDF_STATUS wmi_unified_set_bridge_mac_addr_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_phyerr_enable_cmd_send() - WMI phyerr enable cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold phyerr enable param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_phyerr_enable_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_phyerr_enable_cmd_send(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_phyerr_enable_cmd)
 		return wmi_handle->ops->send_phyerr_enable_cmd(wmi_handle);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_phyerr_disable_cmd_send() - WMI phyerr disable cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold phyerr disable param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_phyerr_disable_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_phyerr_disable_cmd_send(wmi_unified_t wmi_handle)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_phyerr_disable_cmd)
 		return wmi_handle->ops->send_phyerr_disable_cmd(wmi_handle);
 
@@ -1526,20 +1330,13 @@ QDF_STATUS wmi_unified_vdev_spectral_enable_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_bss_chan_info_request_cmd_send() - WMI bss chan info request function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold chan info param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_bss_chan_info_request_cmd_send(void *wmi_hdl,
-				struct bss_chan_info_request_params *param)
+QDF_STATUS wmi_unified_bss_chan_info_request_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct bss_chan_info_request_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_bss_chan_info_request_cmd)
-		return wmi->ops->send_bss_chan_info_request_cmd(wmi, param);
+	if (wmi_handle->ops->send_bss_chan_info_request_cmd)
+		return wmi_handle->ops->send_bss_chan_info_request_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -1617,18 +1414,10 @@ QDF_STATUS wmi_unified_vdev_set_qdepth_thresh_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_pdev_set_regdomain_params_cmd_send() - WMI set regdomain function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold regdomain param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(void *wmi_hdl,
-				struct pdev_set_regdomain_params *param)
+QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct pdev_set_regdomain_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_pdev_set_regdomain_cmd)
 		return wmi_handle->ops->send_pdev_set_regdomain_cmd(wmi_handle,
 				param);
@@ -1636,18 +1425,11 @@ QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_beacon_filter_cmd_send() - WMI set beacon filter function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold beacon filter param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_beacon_filter_cmd_send(void *wmi_hdl,
-				struct set_beacon_filter_params *param)
+QDF_STATUS
+wmi_unified_set_beacon_filter_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct set_beacon_filter_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_beacon_filter_cmd)
 		return wmi_handle->ops->send_set_beacon_filter_cmd(wmi_handle,
 				param);
@@ -1655,20 +1437,13 @@ QDF_STATUS wmi_unified_set_beacon_filter_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_remove_beacon_filter_cmd_send() - WMI set beacon filter function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold beacon filter param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_remove_beacon_filter_cmd_send(void *wmi_hdl,
-				struct remove_beacon_filter_params *param)
+QDF_STATUS wmi_unified_remove_beacon_filter_cmd_send(
+			wmi_unified_t wmi_handle,
+			struct remove_beacon_filter_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_remove_beacon_filter_cmd)
-		return wmi->ops->send_remove_beacon_filter_cmd(wmi, param);
+	if (wmi_handle->ops->send_remove_beacon_filter_cmd)
+		return wmi_handle->ops->send_remove_beacon_filter_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -1696,20 +1471,11 @@ QDF_STATUS wmi_unified_mgmt_cmd_send(void *wmi_hdl,
 }
 #endif
 
-/**
- *  wmi_unified_addba_clearresponse_cmd_send() - WMI addba resp cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold addba resp parameter
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_addba_clearresponse_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct addba_clearresponse_params *param)
+QDF_STATUS wmi_unified_addba_clearresponse_cmd_send(
+			wmi_unified_t wmi_handle,
+			uint8_t macaddr[QDF_MAC_ADDR_SIZE],
+			struct addba_clearresponse_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_addba_clearresponse_cmd)
 		return wmi_handle->ops->send_addba_clearresponse_cmd(wmi_handle,
 				  macaddr, param);
@@ -1717,20 +1483,11 @@ QDF_STATUS wmi_unified_addba_clearresponse_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_addba_send_cmd_send() - WMI addba send function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold addba parameter
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_addba_send_cmd_send(void *wmi_hdl,
+QDF_STATUS
+wmi_unified_addba_send_cmd_send(wmi_unified_t wmi_handle,
 				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct addba_send_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_addba_send_cmd)
 		return wmi_handle->ops->send_addba_send_cmd(wmi_handle,
 				  macaddr, param);
@@ -1738,20 +1495,11 @@ QDF_STATUS wmi_unified_addba_send_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_delba_send_cmd_send() - WMI delba cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold delba parameter
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_delba_send_cmd_send(void *wmi_hdl,
+QDF_STATUS
+wmi_unified_delba_send_cmd_send(wmi_unified_t wmi_handle,
 				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct delba_send_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_delba_send_cmd)
 		return wmi_handle->ops->send_delba_send_cmd(wmi_handle,
 				  macaddr, param);
@@ -1759,20 +1507,11 @@ QDF_STATUS wmi_unified_delba_send_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_addba_setresponse_cmd_send() - WMI addba set resp cmd function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold addba set resp parameter
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_addba_setresponse_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct addba_setresponse_params *param)
+QDF_STATUS
+wmi_unified_addba_setresponse_cmd_send(wmi_unified_t wmi_handle,
+				       uint8_t macaddr[QDF_MAC_ADDR_SIZE],
+				       struct addba_setresponse_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_addba_setresponse_cmd)
 		return wmi_handle->ops->send_addba_setresponse_cmd(wmi_handle,
 				  macaddr, param);
@@ -1780,20 +1519,11 @@ QDF_STATUS wmi_unified_addba_setresponse_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_singleamsdu_cmd_send() - WMI singleamsdu function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold singleamsdu parameter
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_singleamsdu_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-				struct singleamsdu_params *param)
+QDF_STATUS
+wmi_unified_singleamsdu_cmd_send(wmi_unified_t wmi_handle,
+				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
+				 struct singleamsdu_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_singleamsdu_cmd)
 		return wmi_handle->ops->send_singleamsdu_cmd(wmi_handle,
 				  macaddr, param);
@@ -1801,90 +1531,49 @@ QDF_STATUS wmi_unified_singleamsdu_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_mu_scan_cmd_send() - WMI set mu scan function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold mu scan param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_mu_scan_cmd_send(void *wmi_hdl,
-				struct mu_scan_params *param)
+QDF_STATUS
+wmi_unified_mu_scan_cmd_send(wmi_unified_t wmi_handle,
+			     struct mu_scan_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_mu_scan_cmd)
 		return wmi_handle->ops->send_mu_scan_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_lteu_config_cmd_send() - WMI set mu scan function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold mu scan param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_lteu_config_cmd_send(void *wmi_hdl,
-				struct lteu_config_params *param)
+QDF_STATUS
+wmi_unified_lteu_config_cmd_send(wmi_unified_t wmi_handle,
+				 struct lteu_config_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_lteu_config_cmd)
 		return wmi_handle->ops->send_lteu_config_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_set_psmode_cmd_send() - WMI set mu scan function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold mu scan param
- *
- *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_set_psmode_cmd_send(void *wmi_hdl,
+QDF_STATUS
+wmi_unified_set_psmode_cmd_send(wmi_unified_t wmi_handle,
 				struct set_ps_mode_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_set_ps_mode_cmd)
 		return wmi_handle->ops->send_set_ps_mode_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_init_cmd_send() - send initialization cmd to fw
- * @wmi_handle: wmi handle
- * @param param: pointer to wmi init param
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
-				struct wmi_init_cmd_param *param)
+QDF_STATUS
+wmi_unified_init_cmd_send(wmi_unified_t wmi_handle,
+			  struct wmi_init_cmd_param *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->init_cmd_send)
 		return wmi_handle->ops->init_cmd_send(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_save_service_bitmap() - save service bitmap
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf,
+QDF_STATUS wmi_save_service_bitmap(wmi_unified_t wmi_handle, void *evt_buf,
 				   void *bitmap_buf)
 {
-	struct wmi_unified *wmi_handle = (struct wmi_unified *) wmi_hdl;
-
 	if (wmi_handle->ops->save_service_bitmap) {
 		return wmi_handle->ops->save_service_bitmap(wmi_handle, evt_buf,
 						     bitmap_buf);
@@ -2310,17 +1999,9 @@ QDF_STATUS wmi_unified_send_periodic_chan_stats_config_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_send_get_user_position_cmd() - send get user position command to fw
- * @wmi_handle: wmi handle
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
 QDF_STATUS
-wmi_send_get_user_position_cmd(void *wmi_hdl, uint32_t value)
+wmi_send_get_user_position_cmd(wmi_unified_t wmi_handle, uint32_t value)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_get_user_position_cmd)
 		return wmi_handle->ops->send_get_user_position_cmd(wmi_handle,
 								value);
@@ -2328,41 +2009,23 @@ wmi_send_get_user_position_cmd(void *wmi_hdl, uint32_t value)
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_send_get_peer_mumimo_tx_count_cmd() - send get mumio tx count
- *					     command to fw
- * @wmi_handle: wmi handle
- * @value: user pos value
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
 QDF_STATUS
-wmi_send_get_peer_mumimo_tx_count_cmd(void *wmi_hdl, uint32_t value)
+wmi_send_get_peer_mumimo_tx_count_cmd(wmi_unified_t wmi_handle, uint32_t value)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_get_peer_mumimo_tx_count_cmd)
-		return wmi->ops->send_get_peer_mumimo_tx_count_cmd(wmi, value);
+	if (wmi_handle->ops->send_get_peer_mumimo_tx_count_cmd)
+		return wmi_handle->ops->send_get_peer_mumimo_tx_count_cmd(
+							wmi_handle, value);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_send_reset_peer_mumimo_tx_count_cmd() - send reset peer mumimo
- *					       tx count to fw
- * @wmi_handle: wmi handle
- * @value:	reset tx count value
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
 QDF_STATUS
-wmi_send_reset_peer_mumimo_tx_count_cmd(void *wmi_hdl, uint32_t value)
+wmi_send_reset_peer_mumimo_tx_count_cmd(wmi_unified_t wmi_handle,
+					uint32_t value)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_reset_peer_mumimo_tx_count_cmd)
-		return wmi->ops->send_reset_peer_mumimo_tx_count_cmd(wmi,
-								value);
+	if (wmi_handle->ops->send_reset_peer_mumimo_tx_count_cmd)
+		return wmi_handle->ops->send_reset_peer_mumimo_tx_count_cmd(
+						wmi_handle, value);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -3242,43 +2905,24 @@ QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/*
- * wmi_unified_send_btcoex_wlan_priority_cmd() - send btcoex priority commands
- * @wmi_handle: wmi handle
- * @param :     wmi btcoex cfg params
- *
- * Send WMI_BTCOEX_CFG_CMDID parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_unified_send_btcoex_wlan_priority_cmd(void *wmi_hdl,
-				struct btcoex_cfg_params *param)
+QDF_STATUS
+wmi_unified_send_btcoex_wlan_priority_cmd(wmi_unified_t wmi_handle,
+					  struct btcoex_cfg_params *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->send_btcoex_wlan_priority_cmd)
-		return wmi->ops->send_btcoex_wlan_priority_cmd(wmi,
-				  param);
+	if (wmi_handle->ops->send_btcoex_wlan_priority_cmd)
+		return wmi_handle->ops->send_btcoex_wlan_priority_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
-/**
- *  wmi_unified_send_btcoex_duty_cycle_cmd() - send btcoex duty cycle commands
- * @wmi_handle: wmi handle
- * @param:      wmi btcoex cfg params
- *
- * Send WMI_BTCOEX_CFG_CMDID parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_unified_send_btcoex_duty_cycle_cmd(void *wmi_hdl,
-				struct btcoex_cfg_params *param)
-{
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
-	if (wmi->ops->send_btcoex_duty_cycle_cmd)
-		return wmi->ops->send_btcoex_duty_cycle_cmd(wmi,
-				param);
+QDF_STATUS
+wmi_unified_send_btcoex_duty_cycle_cmd(wmi_unified_t wmi_handle,
+				       struct btcoex_cfg_params *param)
+{
+	if (wmi_handle->ops->send_btcoex_duty_cycle_cmd)
+		return wmi_handle->ops->send_btcoex_duty_cycle_cmd(
+						wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -3479,20 +3123,10 @@ QDF_STATUS wmi_extract_pdev_qvit_event(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_send_coex_ver_cfg_cmd() - send coex ver cfg command
- * @wmi_handle: wmi handle
- * @param:      wmi coex ver cfg params
- *
- * Send WMI_COEX_VERSION_CFG_CMID parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_unified_send_coex_ver_cfg_cmd(void *wmi_hdl,
-				coex_ver_cfg_t *param)
+QDF_STATUS
+wmi_unified_send_coex_ver_cfg_cmd(wmi_unified_t wmi_handle,
+				  coex_ver_cfg_t *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_coex_ver_cfg_cmd)
 		return wmi_handle->ops->send_coex_ver_cfg_cmd(wmi_handle,
 			param);
@@ -3500,20 +3134,10 @@ QDF_STATUS wmi_unified_send_coex_ver_cfg_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_send_coex_config_cmd() - send coex ver cfg command
- * @wmi_handle: wmi handle
- * @param:      wmi coex cfg cmd params
- *
- * Send WMI_COEX_CFG_CMD parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_unified_send_coex_config_cmd(void *wmi_hdl,
-					    struct coex_config_params *param)
+QDF_STATUS
+wmi_unified_send_coex_config_cmd(wmi_unified_t wmi_handle,
+				 struct coex_config_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_coex_config_cmd)
 		return wmi_handle->ops->send_coex_config_cmd(wmi_handle,
 			param);
