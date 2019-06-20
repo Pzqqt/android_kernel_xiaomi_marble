@@ -5067,13 +5067,17 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS wma_mon_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
 		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
 
-	wlan_vdev_mlme_sm_deliver_evt(vdev_mlme->vdev,
-				      WLAN_VDEV_SM_EV_START_SUCCESS,
-				      data_len,
-				      data);
+	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP, data, 0);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5100,9 +5104,6 @@ QDF_STATUS wma_mon_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, vdev_id, iface->bssid);
-
-	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-				   data, 0);
 
 	return status;
 }

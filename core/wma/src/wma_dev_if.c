@@ -1283,7 +1283,8 @@ wma_handle_channel_switch_resp(tp_wma_handle wma,
 
 	/* Indicate channel switch failure to LIM */
 	if (QDF_IS_STATUS_ERROR(params->status) &&
-	    (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) ||
+	    (iface->type == WMI_VDEV_TYPE_MONITOR ||
+	     wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) ||
 	     mlme_is_chan_switch_in_progress(iface->vdev))) {
 		mlme_set_chan_switch_in_progress(iface->vdev, false);
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,

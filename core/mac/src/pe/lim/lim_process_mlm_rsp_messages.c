@@ -3121,6 +3121,24 @@ error:
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF, (uint32_t *)&join_cnf);
 }
 
+static void lim_handle_mon_switch_channel_rsp(struct pe_session *session,
+					      QDF_STATUS status)
+{
+	if (session->bssType != eSIR_MONITOR_MODE)
+		return;
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Set channel failed for monitor mode");
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_START_REQ_FAIL,
+					      0, NULL);
+		return;
+	}
+
+	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+				      WLAN_VDEV_SM_EV_START_SUCCESS, 0, NULL);
+}
+
 /**
  * lim_process_switch_channel_rsp()
  *
@@ -3204,7 +3222,6 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 		}
 		break;
 	case LIM_SWITCH_CHANNEL_SAP_DFS:
-	{
 		/* Note: This event code specific to SAP mode
 		 * When SAP session issues channel change as performing
 		 * DFS, we will come here. Other sessions, for e.g. P2P
@@ -3221,8 +3238,16 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 		policy_mgr_update_connection_info(mac->psoc,
 						pe_session->smeSessionId);
 		policy_mgr_set_do_hw_mode_change_flag(mac->psoc, true);
-	}
-	break;
+		break;
+	case LIM_SWITCH_CHANNEL_MONITOR:
+		lim_handle_mon_switch_channel_rsp(pe_session, status);
+		/*
+		 * If MCC upgrade/DBS downgrade happended during channel switch,
+		 * the policy manager connection table needs to be updated.
+		 */
+		policy_mgr_update_connection_info(mac->psoc,
+						  pe_session->smeSessionId);
+		break;
 	default:
 		break;
 	}

@@ -131,15 +131,23 @@ enum eLimDisassocTrigger {
 	eLIM_DUPLICATE_ENTRY
 };
 
-/* Reason code to determine the channel change context while sending
- * WMA_CHNL_SWITCH_REQ message to HAL
+/**
+ * enum eChannelChangeReasonCodes - Reason code to determine the channel change
+ * reason
+ * @LIM_SWITCH_CHANNEL_REASSOC: channel switch to reassoc
+ * @LIM_SWITCH_CHANNEL_JOIN: switch for connect req
+ * @LIM_SWITCH_CHANNEL_OPERATION: Generic change channel for STA
+ * @LIM_SWITCH_CHANNEL_SAP_DFS: SAP channel change req
+ * @LIM_SWITCH_CHANNEL_HT_WIDTH: HT channel width change reg
+ * @LIM_SWITCH_CHANNEL_MONITOR: Monitor mode channel change req
  */
 enum eChannelChangeReasonCodes {
 	LIM_SWITCH_CHANNEL_REASSOC,
 	LIM_SWITCH_CHANNEL_JOIN,
-	LIM_SWITCH_CHANNEL_OPERATION,   /* Generic change channel */
-	LIM_SWITCH_CHANNEL_SAP_DFS,     /* DFS channel change */
-	LIM_SWITCH_CHANNEL_HT_WIDTH     /* HT channel width change */
+	LIM_SWITCH_CHANNEL_OPERATION,
+	LIM_SWITCH_CHANNEL_SAP_DFS,
+	LIM_SWITCH_CHANNEL_HT_WIDTH,
+	LIM_SWITCH_CHANNEL_MONITOR,
 };
 
 typedef struct sLimMlmStartReq {

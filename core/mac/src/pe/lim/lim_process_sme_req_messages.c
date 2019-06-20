@@ -5093,7 +5093,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 			LIM_SWITCH_CHANNEL_SAP_DFS;
 	else
 		session_entry->channelChangeReasonCode =
-			LIM_SWITCH_CHANNEL_OPERATION;
+			LIM_SWITCH_CHANNEL_MONITOR;
 
 	pe_debug("switch old chnl %d to new chnl %d, ch_bw %d, nw_type %d, dot11mode %d",
 		 session_entry->currentOperChannel,
