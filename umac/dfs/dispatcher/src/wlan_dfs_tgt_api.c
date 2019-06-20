@@ -395,6 +395,7 @@ QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
 	if (!dfs->dfs_soc_obj->precac_state_started) {
 		for (i = 0; i < dfs->dfs_soc_obj->num_dfs_privs; i++)
 			dfs->dfs_soc_obj->dfs_priv[i].agile_precac_active = 0;
+		dfs->dfs_agile_precac_freq = 0;
 	}
 
 	return  QDF_STATUS_SUCCESS;
