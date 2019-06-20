@@ -7464,6 +7464,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
+	ipa3_ctx->ipa_mhi_proxy = resource_p->ipa_mhi_proxy;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -8511,6 +8512,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		IPADBG("uC IPA FW name = %s\n", ipa_drv_res->uc_fw_file_name);
 	else
 		IPADBG("uC IPA FW file not defined. Using default one\n");
+
+	ipa_drv_res->ipa_mhi_proxy =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,ipa-mhi-proxy");
+	IPADBG(": Use mhi proxy = %s\n",
+		ipa_drv_res->ipa_mhi_proxy
+		? "True" : "False");
 
 	/* Get IPA wrapper address */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-cfg-offset",
