@@ -2277,12 +2277,13 @@ static void dp_teardown_256_ba_sessions(struct dp_peer *peer)
 					delba_rcode = rx_tid->delba_rcode;
 
 					qdf_spin_unlock_bh(&rx_tid->tid_lock);
-					peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
-							peer->vdev->pdev->ctrl_pdev,
-							peer->ctrl_peer,
-							peer->mac_addr.raw,
-							tid, peer->vdev->ctrl_vdev,
-							delba_rcode);
+					if (peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba)
+						peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
+								peer->vdev->pdev->ctrl_pdev,
+								peer->ctrl_peer,
+								peer->mac_addr.raw,
+								tid, peer->vdev->ctrl_vdev,
+								delba_rcode);
 				} else {
 					qdf_spin_unlock_bh(&rx_tid->tid_lock);
 				}
@@ -2605,10 +2606,11 @@ int dp_delba_tx_completion_wifi3(void *peer_handle,
 			rx_tid->delba_tx_retry++;
 			rx_tid->delba_tx_status = 1;
 			qdf_spin_unlock_bh(&rx_tid->tid_lock);
-			peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
-				peer->vdev->pdev->ctrl_pdev, peer->ctrl_peer,
-				peer->mac_addr.raw, tid, peer->vdev->ctrl_vdev,
-				rx_tid->delba_rcode);
+			if (peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba)
+				peer->vdev->pdev->soc->cdp_soc.ol_ops->send_delba(
+					peer->vdev->pdev->ctrl_pdev, peer->ctrl_peer,
+					peer->mac_addr.raw, tid, peer->vdev->ctrl_vdev,
+					rx_tid->delba_rcode);
 		}
 		return QDF_STATUS_SUCCESS;
 	} else {
