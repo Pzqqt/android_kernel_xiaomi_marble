@@ -307,6 +307,10 @@
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 3
 #endif //QCA_HOST2FW_RXBUF_RING
 
+#define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE 16384
+#define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN 1
+#define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MAX 16384
+
 /* DP INI Declerations */
 #define CFG_DP_HTT_PACKET_TYPE \
 		CFG_INI_UINT("dp_htt_packet_type", \
@@ -720,6 +724,26 @@
 		WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE, \
 		CFG_VALUE_OR_DEFAULT, "DP RX SW DESC weight")
 
+#define CFG_DP_RX_FLOW_SEARCH_TABLE_SIZE \
+	CFG_INI_UINT("dp_rx_flow_search_table_size", \
+		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN, \
+		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MAX, \
+		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE, \
+		CFG_VALUE_OR_DEFAULT, \
+		"DP Rx Flow Search Table Size in number of entries")
+
+#define CFG_DP_RX_FLOW_TAG_ENABLE \
+	CFG_INI_BOOL("dp_rx_flow_tag_enable", false, \
+		     "Enable/Disable DP Rx Flow Tag")
+
+#define CFG_DP_RX_FLOW_SEARCH_TABLE_PER_PDEV \
+	CFG_INI_BOOL("dp_rx_per_pdev_flow_search", false, \
+			"DP Rx Flow Search Table Is Per PDev")
+
+#define CFG_DP_RX_MON_PROTOCOL_FLOW_TAG_ENABLE \
+	CFG_INI_BOOL("dp_rx_monitor_protocol_flow_tag_enable", true, \
+		     "Enable/Disable Rx Protocol & Flow tags in Monitor mode")
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -785,7 +809,10 @@
 		CFG(CFG_DP_REORDER_OFFLOAD_SUPPORT) \
 		CFG(CFG_DP_AP_STA_SECURITY_SEPERATION) \
 		CFG(CFG_DP_ENABLE_DATA_STALL_DETECTION) \
-		CFG(CFG_DP_RX_SW_DESC_WEIGHT)
-
+		CFG(CFG_DP_RX_SW_DESC_WEIGHT) \
+		CFG(CFG_DP_RX_FLOW_SEARCH_TABLE_SIZE) \
+		CFG(CFG_DP_RX_FLOW_TAG_ENABLE) \
+		CFG(CFG_DP_RX_FLOW_SEARCH_TABLE_PER_PDEV) \
+		CFG(CFG_DP_RX_MON_PROTOCOL_FLOW_TAG_ENABLE)
 
 #endif /* _CFG_DP_H_ */

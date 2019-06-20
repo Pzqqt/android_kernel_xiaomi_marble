@@ -74,6 +74,9 @@
 #define DP_MAX_TIDS 17
 #define DP_NON_QOS_TID 16
 
+#define WLAN_CFG_RX_FST_MAX_SEARCH 2
+#define WLAN_CFG_RX_FST_TOEPLITZ_KEYLEN 40
+
 struct wlan_cfg_dp_pdev_ctxt;
 
 /**
@@ -157,9 +160,19 @@ struct wlan_srng_cfg {
  * @rx_hp_oos_update_limit: Max # of HP OOS (out of sync) updates
  * @rx_enable_eol_data_check: flag to enable check for more ring data at end of
  *                            dp_rx_process loop
- * tx_comp_enable_eol_data_check: flag to enable/disable checking for more data
+ * @tx_comp_enable_eol_data_check: flag to enable/disable checking for more data
  *                                at end of tx_comp_handler loop.
  * @rx_sw_desc_weight: rx sw descriptor weight configuration
+ * @is_rx_mon_protocol_flow_tag_enabled: flag to enable/disable RX protocol or
+ *                                       flow tagging in monitor/mon-lite mode
+ * @is_rx_flow_tag_enabled: flag to enable/disable RX flow tagging using FSE
+ * @is_rx_flow_search_table_per_pdev: flag to indicate if a per-SOC or per-pdev
+ *                                    table should be used
+ * @rx_flow_search_table_size: indicates the number of flows in the flow search
+ *                             table
+ * @rx_flow_max_search: max skid length for each hash entry
+ * @rx_toeplitz_hash_key: toeplitz key pointer used for hash computation over
+ *                        5 tuple flow entry
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -247,6 +260,12 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool tx_comp_enable_eol_data_check;
 #endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 	int rx_sw_desc_weight;
+	bool is_rx_mon_protocol_flow_tag_enabled;
+	bool is_rx_flow_tag_enabled;
+	bool is_rx_flow_search_table_per_pdev;
+	uint16_t rx_flow_search_table_size;
+	uint16_t rx_flow_max_search;
+	uint8_t *rx_toeplitz_hash_key;
 };
 
 /**
@@ -1104,4 +1123,108 @@ int wlan_cfg_get_rx_defrag_min_timeout(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 int wlan_cfg_get_defrag_timeout_check(struct wlan_cfg_dp_soc_ctxt *cfg);
 
+/**
+ * wlan_cfg_get_rx_flow_search_table_size() - Return the size of Rx FST
+ *                                            in number of entries
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: rx_fst_size
+ */
+uint16_t
+wlan_cfg_get_rx_flow_search_table_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_rx_fst_get_max_search() - Return the max skid length for FST search
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: max_search
+ */
+uint8_t wlan_cfg_rx_fst_get_max_search(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_rx_fst_get_hash_key() - Return Toeplitz Hash Key used for FST
+ *                                  search
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: 320-bit Hash Key
+ */
+uint8_t *wlan_cfg_rx_fst_get_hash_key(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_rx_flow_tag_enabled() - set rx flow tag enabled flag in
+ *                                      DP soc context
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: Rx flow tag feature flag value
+ *
+ * Return: None
+ */
+void wlan_cfg_set_rx_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg,
+				      bool val);
+
+/**
+ * wlan_cfg_is_rx_flow_tag_enabled() - get rx flow tag enabled flag from
+ *                                     DP soc context
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: true if feature is enabled, else false
+ */
+bool wlan_cfg_is_rx_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_rx_flow_search_table_per_pdev() - Set flag to indicate that
+ *                                                Rx FST is per pdev
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: boolean flag indicating Rx FST per pdev or per SOC
+ *
+ * Return: None
+ */
+void
+wlan_cfg_set_rx_flow_search_table_per_pdev(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   bool val);
+
+/**
+ * wlan_cfg_is_rx_flow_search_table_per_pdev() - get RX FST flag for per pdev
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: true if Rx FST is per pdev, else false
+ */
+bool
+wlan_cfg_is_rx_flow_search_table_per_pdev(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_rx_flow_search_table_size() - set RX FST size in DP SoC context
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: Rx FST size in number of entries
+ *
+ * Return: None
+ */
+void
+wlan_cfg_set_rx_flow_search_table_size(struct wlan_cfg_dp_soc_ctxt *cfg,
+				       uint16_t val);
+
+/**
+ * wlan_cfg_set_rx_mon_protocol_flow_tag_enabled() - set mon rx tag enabled flag
+ *                                                   in DP soc context
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: Rx protocol or flow tag feature flag value in monitor mode from INI
+ *
+ * Return: None
+ */
+void
+wlan_cfg_set_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg,
+					      bool val);
+
+/**
+ * wlan_cfg_is_rx_mon_protocol_flow_tag_enabled() - get mon rx tag enabled flag
+ *                                                  from DP soc context
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: true if feature is enabled in monitor mode for protocol or flow
+ * tagging in INI, false otherwise
+ */
+bool
+wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif

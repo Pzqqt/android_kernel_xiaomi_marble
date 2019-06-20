@@ -279,6 +279,14 @@ void wlan_set_srng_cfg(struct wlan_srng_cfg **wlan_cfg)
 	*wlan_cfg = g_wlan_srng_cfg;
 }
 
+static const uint8_t rx_fst_toeplitz_key[WLAN_CFG_RX_FST_TOEPLITZ_KEYLEN] = {
+	0x6d, 0x5a, 0x56, 0xda, 0x25, 0x5b, 0x0e, 0xc2,
+	0x41, 0x67, 0x25, 0x3d, 0x43, 0xa3, 0x8f, 0xb0,
+	0xd0, 0xca, 0x2b, 0xcb, 0xae, 0x7b, 0x30, 0xb4,
+	0x77, 0xcb, 0x2d, 0xa3, 0x80, 0x30, 0xf2, 0x0c,
+	0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
+};
+
 /**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
  * @psoc - Object manager psoc
@@ -422,6 +430,17 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
 	wlan_cfg_ctx->rx_sw_desc_weight = cfg_get(psoc,
 						   CFG_DP_RX_SW_DESC_WEIGHT);
+	wlan_cfg_ctx->rx_toeplitz_hash_key = (uint8_t *)rx_fst_toeplitz_key;
+	wlan_cfg_ctx->rx_flow_max_search = WLAN_CFG_RX_FST_MAX_SEARCH;
+	wlan_cfg_ctx->is_rx_flow_tag_enabled =
+			cfg_get(psoc, CFG_DP_RX_FLOW_TAG_ENABLE);
+	wlan_cfg_ctx->is_rx_flow_search_table_per_pdev =
+			cfg_get(psoc, CFG_DP_RX_FLOW_SEARCH_TABLE_PER_PDEV);
+	wlan_cfg_ctx->rx_flow_search_table_size =
+			cfg_get(psoc, CFG_DP_RX_FLOW_SEARCH_TABLE_SIZE);
+	wlan_cfg_ctx->is_rx_mon_protocol_flow_tag_enabled =
+			cfg_get(psoc, CFG_DP_RX_MON_PROTOCOL_FLOW_TAG_ENABLE);
+
 	return wlan_cfg_ctx;
 }
 
@@ -1035,3 +1054,61 @@ int wlan_cfg_get_tx_flow_start_queue_offset(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->tx_flow_start_queue_offset;
 }
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+
+void wlan_cfg_set_rx_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg,
+				      bool val)
+{
+	cfg->is_rx_flow_tag_enabled = val;
+}
+
+uint8_t *wlan_cfg_rx_fst_get_hash_key(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_toeplitz_hash_key;
+}
+
+uint8_t wlan_cfg_rx_fst_get_max_search(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_flow_max_search;
+}
+
+bool wlan_cfg_is_rx_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->is_rx_flow_tag_enabled;
+}
+
+void
+wlan_cfg_set_rx_flow_search_table_per_pdev(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   bool val)
+{
+	cfg->is_rx_flow_search_table_per_pdev = val;
+}
+
+bool wlan_cfg_is_rx_flow_search_table_per_pdev(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->is_rx_flow_search_table_per_pdev;
+}
+
+void wlan_cfg_set_rx_flow_search_table_size(struct wlan_cfg_dp_soc_ctxt *cfg,
+					    uint16_t val)
+{
+	cfg->rx_flow_search_table_size = val;
+}
+
+uint16_t
+wlan_cfg_get_rx_flow_search_table_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return  cfg->rx_flow_search_table_size;
+}
+
+void
+wlan_cfg_set_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg,
+					      bool val)
+{
+	cfg->is_rx_mon_protocol_flow_tag_enabled = val;
+}
+
+bool
+wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->is_rx_mon_protocol_flow_tag_enabled;
+}
