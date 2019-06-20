@@ -1056,38 +1056,36 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 
 #if SUPPORT_11AX
 /**
- * wma_fw_to_host_phymode_11ac() - convert fw to host phymode for 11ax phymodes
+ * wma_fw_to_host_phymode_11ax() - convert fw to host phymode for 11ax phymodes
  * @wma:     wma handle
  * @phymode: phymode to convert
  *
  * Return: None
  */
-static enum wlan_phymode wma_fw_to_host_phymode_11ac(WLAN_PHY_MODE phymode)
+static enum wlan_phymode wma_fw_to_host_phymode_11ax(WLAN_PHY_MODE phymode)
 {
 	switch (phymode) {
 	default:
 		return WLAN_PHYMODE_AUTO;
 	case MODE_11AX_HE20:
-		return WLAN_PHYMODE_11AC_VHT20;
+		return WLAN_PHYMODE_11AXA_HE20;
 	case MODE_11AX_HE40:
-		return WLAN_PHYMODE_11AC_VHT40;
+		return WLAN_PHYMODE_11AXA_HE40;
 	case MODE_11AX_HE80:
-		return WLAN_PHYMODE_11AC_VHT80;
+		return WLAN_PHYMODE_11AXA_HE80;
 	case MODE_11AX_HE80_80:
-		return WLAN_PHYMODE_11AC_VHT80_80;
+		return WLAN_PHYMODE_11AXA_HE80_80;
 	case MODE_11AX_HE160:
-		return WLAN_PHYMODE_11AC_VHT160;
+		return WLAN_PHYMODE_11AXA_HE160;
 	case MODE_11AX_HE20_2G:
-		return WLAN_PHYMODE_11AC_VHT20;
+		return WLAN_PHYMODE_11AXG_HE20;
 	case MODE_11AX_HE40_2G:
-		return WLAN_PHYMODE_11AC_VHT40;
-	case MODE_11AX_HE80_2G:
-		return WLAN_PHYMODE_11AC_VHT80;
+		return WLAN_PHYMODE_11AXG_HE40;
 	}
 	return WLAN_PHYMODE_AUTO;
 }
 #else
-static enum wlan_phymode wma_fw_to_host_phymode_11ac(WLAN_PHY_MODE phymode)
+static enum wlan_phymode wma_fw_to_host_phymode_11ax(WLAN_PHY_MODE phymode)
 {
 	return WLAN_PHYMODE_AUTO;
 }
@@ -1134,7 +1132,7 @@ static enum wlan_phymode wma_fw_to_host_phymode(WLAN_PHY_MODE phymode)
 		host_phymode = wma_fw_to_host_phymode_160(phymode);
 		if (host_phymode != WLAN_PHYMODE_AUTO)
 			return host_phymode;
-		return wma_fw_to_host_phymode_11ac(phymode);
+		return wma_fw_to_host_phymode_11ax(phymode);
 	case MODE_11A:
 		return WLAN_PHYMODE_11A;
 	case MODE_11G:
@@ -1363,12 +1361,14 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 #ifdef FEATURE_WLAN_TDLS
 	    || (STA_ENTRY_TDLS_PEER == params->staType)
 #endif /* FEATURE_WLAN_TDLS */
-	    )
+	    ) {
 		qdf_mem_copy(cmd->peer_mac, params->staMac,
 						sizeof(cmd->peer_mac));
-	else
+	} else {
 		qdf_mem_copy(cmd->peer_mac, params->bssId,
 						sizeof(cmd->peer_mac));
+		wma_objmgr_set_peer_mlme_phymode(wma, params->bssId, phymode);
+	}
 
 	cmd->vdev_id = params->smesessionId;
 	cmd->peer_new_assoc = 1;

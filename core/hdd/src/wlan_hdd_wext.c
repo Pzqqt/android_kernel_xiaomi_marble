@@ -4766,6 +4766,10 @@ static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
 {
 	uint8_t preamble = 0, nss = 0, rix = 0;
 	int errno;
+	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	enum wlan_phymode peer_phymode;
+	uint8_t *peer_mac = adapter->session.station.conn_info.bssid.bytes;
 
 	hdd_debug("Rate code %d", rate_code);
 
@@ -4775,6 +4779,18 @@ static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
 			preamble = WMI_RATE_PREAMBLE_HT;
 			nss = HT_RC_2_STREAMS(rate_code) - 1;
 		} else {
+			status = ucfg_mlme_get_peer_phymode(hdd_ctx->psoc,
+							    peer_mac,
+							    &peer_phymode);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("Failed to set rate");
+				return 0;
+			}
+			if (IS_WLAN_PHYMODE_HE(peer_phymode)) {
+				hdd_err("Do not set legacy rate %d in HE mode",
+					rate_code);
+				return 0;
+			}
 			nss = 0;
 			rix = RC_2_RATE_IDX(rate_code);
 			if (rate_code & 0x10) {

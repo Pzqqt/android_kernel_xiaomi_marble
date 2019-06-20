@@ -3828,4 +3828,19 @@ ucfg_mlme_get_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 				   uint32_t value);
+
+/**
+ * ucfg_mlme_get_peer_phymode() - get phymode of peer
+ * @psoc: pointer to psoc object
+ * @mac:  Pointer to the mac addr of the peer
+ * @peer_phymode: phymode
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_peer_phymode(struct wlan_objmgr_psoc *psoc, uint8_t *mac,
+			   enum wlan_phymode *peer_phymode)
+{
+	return mlme_get_peer_phymode(psoc, mac, peer_phymode);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */
