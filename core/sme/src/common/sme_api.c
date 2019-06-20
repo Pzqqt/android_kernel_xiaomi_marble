@@ -15081,6 +15081,7 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_80_in_160_80p80Mhz = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dcm_enc_tx = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dcm_enc_rx = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ul_mu = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.max_nc = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.trigger_frm_mac_pad =
 					QCA_WLAN_HE_16US_OF_PROCESS_TIME;
