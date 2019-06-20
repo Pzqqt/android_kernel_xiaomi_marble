@@ -190,6 +190,11 @@ QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
 		reg_err("reg psoc private obj is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	if (CH_AVOID_RULE_DO_NOT_RESTART ==
+	    psoc_priv_obj->restart_beaconing) {
+		reg_debug("skipping all LTE Coex unsafe channel range");
+		return QDF_STATUS_SUCCESS;
+	}
 	/* Make unsafe channel list */
 	reg_debug("band count %d", ch_avoid_event->ch_avoid_range_cnt);
 
