@@ -53,7 +53,7 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 	struct hif_event_record *record;
 	int record_index;
 
-	if (!event)
+	if (!hif_state->hif_num_extgroup)
 		return;
 
 	if (scn->event_disable_mask & BIT(event->type))
