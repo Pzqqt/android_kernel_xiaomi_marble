@@ -169,8 +169,9 @@ int init_deinit_populate_target_cap(
 	return 0;
 }
 
-int init_deinit_populate_service_ready_ext_param(void *handle, uint8_t *evt,
-			struct wlan_psoc_host_service_ext_param *param)
+int init_deinit_populate_service_ready_ext_param(
+		wmi_unified_t handle, uint8_t *evt,
+		struct wlan_psoc_host_service_ext_param *param)
 {
 	QDF_STATUS status;
 
@@ -197,7 +198,8 @@ int init_deinit_populate_chainmask_tables(void *handle, uint8_t *evt,
 	return 0;
 }
 
-int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
+int init_deinit_populate_mac_phy_capability(
+	wmi_unified_t handle, uint8_t *evt,
 	struct wlan_psoc_host_hw_mode_caps *hw_cap, struct tgt_info *info)
 {
 	QDF_STATUS status;
@@ -236,8 +238,8 @@ int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
 	return 0;
 }
 
-static int get_hw_mode(void *handle, uint8_t *evt, uint8_t hw_idx,
-			struct wlan_psoc_host_hw_mode_caps *cap)
+static int get_hw_mode(wmi_unified_t handle, uint8_t *evt, uint8_t hw_idx,
+		       struct wlan_psoc_host_hw_mode_caps *cap)
 {
 	QDF_STATUS status;
 
@@ -251,7 +253,7 @@ static int get_hw_mode(void *handle, uint8_t *evt, uint8_t hw_idx,
 	return 0;
 }
 
-static int get_sar_version(void *handle, uint8_t *evt,
+static int get_sar_version(wmi_unified_t handle, uint8_t *evt,
 			   struct wlan_psoc_host_service_ext_param *ext_param)
 {
 	QDF_STATUS status;
@@ -335,8 +337,9 @@ select_preferred_hw_mode(struct target_psoc_info *tgt_hdl,
 	return selected_mode;
 }
 
-int init_deinit_populate_hw_mode_capability(void *wmi_handle,
-		uint8_t *event, struct target_psoc_info *tgt_hdl)
+int init_deinit_populate_hw_mode_capability(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		struct target_psoc_info *tgt_hdl)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t hw_idx;

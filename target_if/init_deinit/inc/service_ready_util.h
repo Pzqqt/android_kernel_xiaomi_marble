@@ -145,8 +145,9 @@ int init_deinit_populate_target_cap(
  *
  * Return: zero on successful parsing of service ready ext parameter or failure
  */
-int init_deinit_populate_service_ready_ext_param(void *handle, uint8_t *evt,
-			struct wlan_psoc_host_service_ext_param *param);
+int init_deinit_populate_service_ready_ext_param(
+		wmi_unified_t handle, uint8_t *evt,
+		struct wlan_psoc_host_service_ext_param *param);
 
 /**
  * init_deinit_populate_chainmask_tables() - populate chainmaks tables
@@ -172,7 +173,8 @@ int init_deinit_populate_chainmask_tables(void *handle, uint8_t *evt,
  *
  * Return: zero on successful population of mac physical capability or failure
  */
-int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
+int init_deinit_populate_mac_phy_capability(
+	wmi_unified_t handle, uint8_t *evt,
 	struct wlan_psoc_host_hw_mode_caps *hw_cap, struct tgt_info *info);
 
 /**
@@ -185,7 +187,8 @@ int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
  *
  * Return: zero on successful parsing of hw mode capability or failure
  */
-int init_deinit_populate_hw_mode_capability(void *wmi_handle,
+int init_deinit_populate_hw_mode_capability(
+		wmi_unified_t wmi_handle,
 		uint8_t *event, struct target_psoc_info *tgt_hdl);
 
 /**

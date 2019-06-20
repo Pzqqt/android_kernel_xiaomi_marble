@@ -1023,20 +1023,9 @@ QDF_STATUS wmi_unified_flush_logs_to_fw_cmd(wmi_unified_t wmi_handle)
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_fw_test_cmd() - send fw test command to fw.
- * @wmi_hdl: wmi handle
- * @wmi_fwtest: fw test command
- *
- * This function sends fw test command to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_fw_test_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_fw_test_cmd(wmi_unified_t wmi_handle,
 				   struct set_fwtest_params *wmi_fwtest)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_fw_test_cmd)
 		return wmi_handle->ops->send_fw_test_cmd(wmi_handle,
 				  wmi_fwtest);
@@ -1941,87 +1930,47 @@ wmi_extract_gpio_input_ev_param(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_pdev_reserve_ast_ev_param() - extract reserve ast entry
- * param from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param param: Pointer to hold reserve ast entry param
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_pdev_reserve_ast_ev_param(void *wmi_hdl,
-		void *evt_buf, struct wmi_host_proxy_ast_reserve_param *param)
+QDF_STATUS wmi_extract_pdev_reserve_ast_ev_param(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct wmi_host_proxy_ast_reserve_param *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_pdev_reserve_ast_ev_param)
-		return wmi->ops->extract_pdev_reserve_ast_ev_param(wmi,
-			evt_buf, param);
+	if (wmi_handle->ops->extract_pdev_reserve_ast_ev_param)
+		return wmi_handle->ops->extract_pdev_reserve_ast_ev_param(
+						wmi_handle, evt_buf, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_pdev_generic_buffer_ev_param() - extract pdev generic buffer
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param param: Pointer to generic buffer param
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(void *wmi_hdl,
-		void *evt_buf, wmi_host_pdev_generic_buffer_event *param)
+QDF_STATUS wmi_extract_pdev_generic_buffer_ev_param(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		wmi_host_pdev_generic_buffer_event *param)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_pdev_generic_buffer_ev_param)
-		return wmi->ops->extract_pdev_generic_buffer_ev_param(wmi,
-				evt_buf, param);
+	if (wmi_handle->ops->extract_pdev_generic_buffer_ev_param)
+		return wmi_handle->ops->extract_pdev_generic_buffer_ev_param(
+						wmi_handle, evt_buf, param);
 
 	return QDF_STATUS_E_FAILURE;
 
 }
 
-/**
- * wmi_extract_peer_ratecode_list_ev() - extract peer ratecode from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param peer_mac: Pointer to hold peer mac address
- * @param rate_cap: Pointer to hold ratecode
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_peer_ratecode_list_ev(void *wmi_hdl, void *evt_buf,
-	uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap)
+QDF_STATUS wmi_extract_peer_ratecode_list_ev(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		uint8_t *peer_mac, wmi_sa_rate_cap *rate_cap)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_peer_ratecode_list_ev)
-		return wmi->ops->extract_peer_ratecode_list_ev(wmi,
-			evt_buf, peer_mac, rate_cap);
+	if (wmi_handle->ops->extract_peer_ratecode_list_ev)
+		return wmi_handle->ops->extract_peer_ratecode_list_ev(
+						wmi_handle, evt_buf,
+						peer_mac, rate_cap);
 
 	return QDF_STATUS_E_FAILURE;
 
 }
 
-/**
- * wmi_extract_comb_phyerr() - extract comb phy error from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param datalen: data length of event buffer
- * @param buf_offset: Pointer to hold value of current event buffer offset
- * post extraction
- * @param phyer: Pointer to hold phyerr
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_comb_phyerr(void *wmi_hdl, void *evt_buf,
-	uint16_t datalen, uint16_t *buf_offset, wmi_host_phyerr_t *phyerr)
+QDF_STATUS
+wmi_extract_comb_phyerr(wmi_unified_t wmi_handle, void *evt_buf,
+			uint16_t datalen, uint16_t *buf_offset,
+			wmi_host_phyerr_t *phyerr)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_comb_phyerr)
 		return wmi_handle->ops->extract_comb_phyerr(wmi_handle,
 		evt_buf, datalen, buf_offset, phyerr);
@@ -2030,22 +1979,11 @@ QDF_STATUS wmi_extract_comb_phyerr(void *wmi_hdl, void *evt_buf,
 
 }
 
-/**
- * wmi_extract_single_phyerr() - extract single phy error from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param datalen: data length of event buffer
- * @param buf_offset: Pointer to hold value of current event buffer offset
- * post extraction
- * @param phyerr: Pointer to hold phyerr
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_single_phyerr(void *wmi_hdl, void *evt_buf,
-	uint16_t datalen, uint16_t *buf_offset, wmi_host_phyerr_t *phyerr)
+QDF_STATUS
+wmi_extract_single_phyerr(wmi_unified_t wmi_handle, void *evt_buf,
+			  uint16_t datalen, uint16_t *buf_offset,
+			  wmi_host_phyerr_t *phyerr)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_single_phyerr)
 		return wmi_handle->ops->extract_single_phyerr(wmi_handle,
 			evt_buf, datalen, buf_offset, phyerr);
@@ -2054,20 +1992,10 @@ QDF_STATUS wmi_extract_single_phyerr(void *wmi_hdl, void *evt_buf,
 
 }
 
-/**
- * wmi_extract_composite_phyerr() - extract composite phy error from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param datalen: Length of event buffer
- * @param phyerr: Pointer to hold phy error
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_composite_phyerr(void *wmi_hdl, void *evt_buf,
-	uint16_t datalen, wmi_host_phyerr_t *phyerr)
+QDF_STATUS
+wmi_extract_composite_phyerr(wmi_unified_t wmi_handle, void *evt_buf,
+			     uint16_t datalen, wmi_host_phyerr_t *phyerr)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_composite_phyerr)
 		return wmi_handle->ops->extract_composite_phyerr(wmi_handle,
 			evt_buf, datalen, phyerr);
@@ -2076,19 +2004,10 @@ QDF_STATUS wmi_extract_composite_phyerr(void *wmi_hdl, void *evt_buf,
 
 }
 
-/**
- * wmi_extract_stats_param() - extract all stats count from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param stats_param: Pointer to hold stats count
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_stats_param(void *wmi_hdl, void *evt_buf,
-		   wmi_host_stats_event *stats_param)
+QDF_STATUS
+wmi_extract_stats_param(wmi_unified_t wmi_handle, void *evt_buf,
+			wmi_host_stats_event *stats_param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_all_stats_count)
 		return wmi_handle->ops->extract_all_stats_count(wmi_handle,
 			evt_buf, stats_param);
@@ -2096,20 +2015,10 @@ QDF_STATUS wmi_extract_stats_param(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_pdev_stats() - extract pdev stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into pdev stats
- * @param pdev_stats: Pointer to hold pdev stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_pdev_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_pdev_stats *pdev_stats)
+QDF_STATUS
+wmi_extract_pdev_stats(wmi_unified_t wmi_handle, void *evt_buf,
+		       uint32_t index, wmi_host_pdev_stats *pdev_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_pdev_stats)
 		return wmi_handle->ops->extract_pdev_stats(wmi_handle,
 			evt_buf, index, pdev_stats);
@@ -2117,20 +2026,10 @@ QDF_STATUS wmi_extract_pdev_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * extract_unit_test() - extract unit test from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param unit_test: Pointer to hold unit-test header
- * @param maxspace: The amount of space in evt_buf
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_unit_test(void *wmi_hdl, void *evt_buf,
-		wmi_unit_test_event *unit_test, uint32_t maxspace)
+QDF_STATUS
+wmi_extract_unit_test(wmi_unified_t wmi_handle, void *evt_buf,
+		      wmi_unit_test_event *unit_test, uint32_t maxspace)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_unit_test)
 		return wmi_handle->ops->extract_unit_test(wmi_handle,
 			evt_buf, unit_test, maxspace);
@@ -2138,20 +2037,11 @@ QDF_STATUS wmi_extract_unit_test(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_pdev_ext_stats() - extract extended pdev stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into extended pdev stats
- * @param pdev_ext_stats: Pointer to hold extended pdev stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_pdev_ext_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_pdev_ext_stats *pdev_ext_stats)
+QDF_STATUS
+wmi_extract_pdev_ext_stats(wmi_unified_t wmi_handle, void *evt_buf,
+			   uint32_t index,
+			   wmi_host_pdev_ext_stats *pdev_ext_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_pdev_ext_stats)
 		return wmi_handle->ops->extract_pdev_ext_stats(wmi_handle,
 			evt_buf, index, pdev_ext_stats);
@@ -2159,20 +2049,10 @@ QDF_STATUS wmi_extract_pdev_ext_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_peer_stats() - extract peer stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into peer stats
- * @param peer_stats: Pointer to hold peer stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_peer_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_peer_stats *peer_stats)
+QDF_STATUS
+wmi_extract_peer_stats(wmi_unified_t wmi_handle, void *evt_buf,
+		       uint32_t index, wmi_host_peer_stats *peer_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_peer_stats)
 		return wmi_handle->ops->extract_peer_stats(wmi_handle,
 			evt_buf, index, peer_stats);
@@ -2180,20 +2060,10 @@ QDF_STATUS wmi_extract_peer_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_vdev_stats() - extract vdev stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into vdev stats
- * @param vdev_stats: Pointer to hold vdev stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_vdev_stats *vdev_stats)
+QDF_STATUS
+wmi_extract_vdev_stats(wmi_unified_t wmi_handle, void *evt_buf,
+		       uint32_t index, wmi_host_vdev_stats *vdev_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_vdev_stats)
 		return wmi_handle->ops->extract_vdev_stats(wmi_handle,
 			evt_buf, index, vdev_stats);
@@ -2201,20 +2071,11 @@ QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_per_chain_rssi_stats() - extract rssi stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into rssi stats
- * @param rssi_stats: Pointer to hold rssi stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_per_chain_rssi_stats(void *wmi_hdl, void *evt_buf,
-	uint32_t index, struct wmi_host_per_chain_rssi_stats *rssi_stats)
+QDF_STATUS wmi_extract_per_chain_rssi_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		uint32_t index,
+		struct wmi_host_per_chain_rssi_stats *rssi_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_per_chain_rssi_stats)
 		return wmi_handle->ops->extract_per_chain_rssi_stats(wmi_handle,
 			evt_buf, index, rssi_stats);
@@ -2222,19 +2083,9 @@ QDF_STATUS wmi_extract_per_chain_rssi_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_rtt_hdr() - extract rtt header from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold rtt header
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_rtt_hdr(void *wmi_hdl, void *evt_buf,
-	wmi_host_rtt_event_hdr *ev)
+QDF_STATUS wmi_extract_rtt_hdr(wmi_unified_t wmi_handle, void *evt_buf,
+			       wmi_host_rtt_event_hdr *ev)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_rtt_hdr)
 		return wmi_handle->ops->extract_rtt_hdr(wmi_handle,
 			evt_buf, ev);
@@ -2242,20 +2093,10 @@ QDF_STATUS wmi_extract_rtt_hdr(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_bcnflt_stats() - extract bcn fault stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into bcn fault stats
- * @param bcnflt_stats: Pointer to hold bcn fault stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_bcnflt_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_bcnflt_stats *bcnflt_stats)
+QDF_STATUS wmi_extract_bcnflt_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		uint32_t index, wmi_host_bcnflt_stats *bcnflt_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_bcnflt_stats)
 		return wmi_handle->ops->extract_bcnflt_stats(wmi_handle,
 			evt_buf, index, bcnflt_stats);
@@ -2263,21 +2104,10 @@ QDF_STATUS wmi_extract_bcnflt_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_rtt_ev() - extract rtt event
- * @wmi_handle: wmi handle
- * @param evt_buf: Pointer to event buffer
- * @param ev: Pointer to hold rtt event
- * @param hdump: Pointer to hold hex dump
- * @param hdump_len: hex dump length
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_rtt_ev(void *wmi_hdl, void *evt_buf,
-	wmi_host_rtt_meas_event *ev, uint8_t *hdump, uint16_t hdump_len)
+QDF_STATUS wmi_extract_rtt_ev(wmi_unified_t wmi_handle, void *evt_buf,
+			      wmi_host_rtt_meas_event *ev,
+			      uint8_t *hdump, uint16_t hdump_len)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_rtt_ev)
 		return wmi_handle->ops->extract_rtt_ev(wmi_handle,
 			evt_buf, ev, hdump, hdump_len);
@@ -2285,20 +2115,11 @@ QDF_STATUS wmi_extract_rtt_ev(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_peer_extd_stats() - extract extended peer stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into extended peer stats
- * @param peer_extd_stats: Pointer to hold extended peer stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_peer_extd_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_peer_extd_stats *peer_extd_stats)
+QDF_STATUS
+wmi_extract_peer_extd_stats(wmi_unified_t wmi_handle, void *evt_buf,
+			    uint32_t index,
+			    wmi_host_peer_extd_stats *peer_extd_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_peer_extd_stats)
 		return wmi_handle->ops->extract_peer_extd_stats(wmi_handle,
 			evt_buf, index, peer_extd_stats);
@@ -2306,11 +2127,10 @@ QDF_STATUS wmi_extract_peer_extd_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_extract_peer_retry_stats(void *wmi_hdl, void *evt_buf,
+QDF_STATUS wmi_extract_peer_retry_stats(
+	wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t index, struct wmi_host_peer_retry_stats *peer_retry_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
-
 	if (wmi_handle->ops->extract_peer_retry_stats)
 		return wmi_handle->ops->extract_peer_retry_stats(wmi_handle,
 			evt_buf, index, peer_retry_stats);
@@ -2318,17 +2138,9 @@ QDF_STATUS wmi_extract_peer_retry_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_peer_adv_stats() - extract advance (extd2) peer stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param peer_adv_stats: Pointer to hold extended peer stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_peer_adv_stats(wmi_unified_t wmi_handle, void *evt_buf,
-				      struct wmi_host_peer_adv_stats
-				      *peer_adv_stats)
+QDF_STATUS wmi_extract_peer_adv_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct wmi_host_peer_adv_stats *peer_adv_stats)
 {
 	if (wmi_handle->ops->extract_peer_adv_stats)
 		return wmi_handle->ops->extract_peer_adv_stats(wmi_handle,
@@ -2337,19 +2149,10 @@ QDF_STATUS wmi_extract_peer_adv_stats(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_rtt_error_report_ev() - extract rtt error report from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param wds_ev: Pointer to hold rtt error report
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_rtt_error_report_ev(void *wmi_hdl, void *evt_buf,
-	wmi_host_rtt_error_report_event *ev)
+QDF_STATUS
+wmi_extract_rtt_error_report_ev(wmi_unified_t wmi_handle, void *evt_buf,
+				wmi_host_rtt_error_report_event *ev)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_rtt_error_report_ev)
 		return wmi_handle->ops->extract_rtt_error_report_ev(wmi_handle,
 			evt_buf, ev);
@@ -2357,20 +2160,10 @@ QDF_STATUS wmi_extract_rtt_error_report_ev(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_chan_stats() - extract chan stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into chan stats
- * @param chanstats: Pointer to hold chan stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_chan_stats(void *wmi_hdl, void *evt_buf,
-		 uint32_t index, wmi_host_chan_stats *chan_stats)
+QDF_STATUS
+wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
+		       uint32_t index, wmi_host_chan_stats *chan_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_chan_stats)
 		return wmi_handle->ops->extract_chan_stats(wmi_handle,
 			evt_buf, index, chan_stats);
@@ -2378,21 +2171,10 @@ QDF_STATUS wmi_extract_chan_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_thermal_stats() - extract thermal stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: Pointer to event buffer
- * @param temp: Pointer to hold extracted temperature
- * @param level: Pointer to hold extracted level
- * @param pdev_id: Pointer to hold extracted pdev_id
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_thermal_stats(void *wmi_hdl, void *evt_buf,
-	uint32_t *temp, uint32_t *level, uint32_t *pdev_id)
+QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				     uint32_t *temp, uint32_t *level,
+				     uint32_t *pdev_id)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_thermal_stats)
 		return wmi_handle->ops->extract_thermal_stats(wmi_handle,
 			evt_buf, temp, level, pdev_id);
@@ -2400,19 +2182,10 @@ QDF_STATUS wmi_extract_thermal_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_profile_ctx() - extract profile context from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param profile_ctx: Pointer to hold profile context
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_profile_ctx(void *wmi_hdl, void *evt_buf,
-			    wmi_host_wlan_profile_ctx_t *profile_ctx)
+QDF_STATUS
+wmi_extract_profile_ctx(wmi_unified_t wmi_handle, void *evt_buf,
+			wmi_host_wlan_profile_ctx_t *profile_ctx)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_profile_ctx)
 		return wmi_handle->ops->extract_profile_ctx(wmi_handle,
 			evt_buf, profile_ctx);
@@ -2420,22 +2193,11 @@ QDF_STATUS wmi_extract_profile_ctx(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_thermal_level_stats() - extract thermal level stats from
- * event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param idx: Index to level stats
- * @param levelcount: Pointer to hold levelcount
- * @param dccount: Pointer to hold dccount
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_thermal_level_stats(void *wmi_hdl, void *evt_buf,
-	uint8_t idx, uint32_t *levelcount, uint32_t *dccount)
+QDF_STATUS
+wmi_extract_thermal_level_stats(wmi_unified_t wmi_handle, void *evt_buf,
+				uint8_t idx, uint32_t *levelcount,
+				uint32_t *dccount)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_thermal_level_stats)
 		return wmi_handle->ops->extract_thermal_level_stats(wmi_handle,
 			evt_buf, idx, levelcount, dccount);
@@ -2443,20 +2205,10 @@ QDF_STATUS wmi_extract_thermal_level_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_profile_data() - extract profile data from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @idx index: index of profile data
- * @param profile_data: Pointer to hold profile data
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf, uint8_t idx,
-			       wmi_host_wlan_profile_t *profile_data)
+QDF_STATUS
+wmi_extract_profile_data(wmi_unified_t wmi_handle, void *evt_buf, uint8_t idx,
+			 wmi_host_wlan_profile_t *profile_data)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_profile_data)
 		return wmi_handle->ops->extract_profile_data(wmi_handle,
 			evt_buf, idx, profile_data);
@@ -2464,20 +2216,10 @@ QDF_STATUS wmi_extract_profile_data(void *wmi_hdl, void *evt_buf, uint8_t idx,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_bss_chan_info_event() - extract bss channel information
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param bss_chan_info: Pointer to hold bss channel information
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_bss_chan_info_event(void *wmi_hdl, void *evt_buf,
-		    wmi_host_pdev_bss_chan_info_event *bss_chan_info)
+QDF_STATUS wmi_extract_bss_chan_info_event(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		wmi_host_pdev_bss_chan_info_event *bss_chan_info)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_bss_chan_info_event)
 		return wmi_handle->ops->extract_bss_chan_info_event(wmi_handle,
 		evt_buf, bss_chan_info);
@@ -2485,80 +2227,42 @@ QDF_STATUS wmi_extract_bss_chan_info_event(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_tx_data_traffic_ctrl_ev() - extract tx data traffic control
- * from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold data traffic control
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_tx_data_traffic_ctrl_ev(void *wmi_hdl, void *evt_buf,
-			wmi_host_tx_data_traffic_ctrl_event *ev)
+QDF_STATUS
+wmi_extract_tx_data_traffic_ctrl_ev(wmi_unified_t wmi_handle, void *evt_buf,
+				    wmi_host_tx_data_traffic_ctrl_event *ev)
 {
-	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
-
-	if (wmi->ops->extract_tx_data_traffic_ctrl_ev)
-		return wmi->ops->extract_tx_data_traffic_ctrl_ev(wmi,
-				evt_buf, ev);
+	if (wmi_handle->ops->extract_tx_data_traffic_ctrl_ev)
+		return wmi_handle->ops->extract_tx_data_traffic_ctrl_ev(
+						wmi_handle, evt_buf, ev);
 
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_vdev_extd_stats() - extract extended vdev stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param index: Index into extended vdev stats
- * @param vdev_extd_stats: Pointer to hold extended vdev stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
-		uint32_t index, wmi_host_vdev_extd_stats *vdev_extd_stats)
+QDF_STATUS
+wmi_extract_vdev_extd_stats(wmi_unified_t wmi_handle, void *evt_buf,
+			    uint32_t index,
+			    wmi_host_vdev_extd_stats *vdev_extd_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_vdev_extd_stats)
 		return wmi_handle->ops->extract_vdev_extd_stats(wmi_handle,
 				evt_buf, index, vdev_extd_stats);
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_bcn_stats() - extract beacon stats from event
- * @wmi_handle: wmi handle
- * @evt_buf: pointer to event buffer
- * @index: Index into beacon stats
- * @vdev_bcn_stats: Pointer to hold beacon stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_bcn_stats(void *wmi_hdl, void *evt_buf,
-		uint32_t index, wmi_host_bcn_stats *vdev_bcn_stats)
+QDF_STATUS
+wmi_extract_bcn_stats(wmi_unified_t wmi_handle, void *evt_buf,
+		      uint32_t index, wmi_host_bcn_stats *vdev_bcn_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_bcn_stats)
 		return wmi_handle->ops->extract_bcn_stats(wmi_handle,
 				evt_buf, index, vdev_bcn_stats);
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_vdev_nac_rssi_stats() - extract NAC_RSSI stats from event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param vdev_extd_stats: Pointer to hold nac rssi stats
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_extract_vdev_nac_rssi_stats(void *wmi_hdl, void *evt_buf,
-		 struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats)
+QDF_STATUS wmi_extract_vdev_nac_rssi_stats(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_vdev_nac_rssi_stats)
 		return wmi_handle->ops->extract_vdev_nac_rssi_stats(wmi_handle,
 				evt_buf, vdev_nac_rssi_stats);
@@ -2566,20 +2270,9 @@ QDF_STATUS wmi_extract_vdev_nac_rssi_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_send_power_dbg_cmd() - send power debug commands
- * @wmi_handle: wmi handle
- * @param: wmi power debug parameter
- *
- * Send WMI_POWER_DEBUG_CMDID parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
-				struct wmi_power_dbg_params *param)
+QDF_STATUS wmi_unified_send_power_dbg_cmd(wmi_unified_t wmi_handle,
+					  struct wmi_power_dbg_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_power_dbg_cmd)
 		return wmi_handle->ops->send_power_dbg_cmd(wmi_handle,
 				  param);
@@ -2609,19 +2302,10 @@ wmi_unified_send_btcoex_duty_cycle_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/*
- * wmi_extract_service_ready_ext() - extract extended service ready
- * @wmi_handle: wmi handle
- * @param: wmi power debug parameter
- *
- *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
- */
-QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
+QDF_STATUS wmi_extract_service_ready_ext(
+		wmi_unified_t wmi_handle, uint8_t *evt_buf,
 		struct wlan_psoc_host_service_ext_param *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_service_ready_ext)
 		return wmi_handle->ops->extract_service_ready_ext(wmi_handle,
 				evt_buf, param);
@@ -2629,22 +2313,11 @@ QDF_STATUS wmi_extract_service_ready_ext(void *wmi_hdl, uint8_t *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_sar_cap_service_ready_ext() -
- *	 extract sar cap from service ready event
- * @wmi_handle: wmi handle
- * @evt_buf: pointer to event buffer
- * @ext_param: extended target info
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
 QDF_STATUS wmi_extract_sar_cap_service_ready_ext(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
 			struct wlan_psoc_host_service_ext_param *ext_param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_sar_cap_service_ready_ext)
 		return wmi_handle->ops->extract_sar_cap_service_ready_ext(
 				wmi_handle,
@@ -2653,23 +2326,11 @@ QDF_STATUS wmi_extract_sar_cap_service_ready_ext(
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_extract_hw_mode_cap_service_ready_ext() -
- *       extract HW mode cap from service ready event
- * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param param: Pointer to hold evt buf
- * @param hw_mode_idx: hw mode idx should be less than num_mode
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
 QDF_STATUS wmi_extract_hw_mode_cap_service_ready_ext(
-			void *wmi_hdl,
+			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t hw_mode_idx,
 			struct wlan_psoc_host_hw_mode_caps *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->extract_hw_mode_cap_service_ready_ext)
 		return wmi_handle->ops->extract_hw_mode_cap_service_ready_ext(
 				wmi_handle,
