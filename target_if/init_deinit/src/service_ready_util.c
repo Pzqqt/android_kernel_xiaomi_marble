@@ -27,9 +27,9 @@
 #include <qdf_module.h>
 
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
-QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
-			uint8_t *evt,
-			struct wlan_psoc_host_service_ext_param *ser_ext_par)
+QDF_STATUS init_deinit_populate_rf_characterization_entries(
+		wmi_unified_t handle, uint8_t *evt,
+		struct wlan_psoc_host_service_ext_param *ser_ext_par)
 {
 	uint32_t alloc_size;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -128,8 +128,9 @@ QDF_STATUS init_deinit_chainmask_table_free(
 
 qdf_export_symbol(init_deinit_chainmask_table_free);
 
-int init_deinit_populate_service_bitmap(void *wmi_handle, uint8_t *event,
-				      uint32_t *service_bitmap)
+int init_deinit_populate_service_bitmap(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		uint32_t *service_bitmap)
 {
 	QDF_STATUS status;
 
@@ -184,7 +185,8 @@ int init_deinit_populate_service_ready_ext_param(
 	return 0;
 }
 
-int init_deinit_populate_chainmask_tables(void *handle, uint8_t *evt,
+int init_deinit_populate_chainmask_tables(
+		wmi_unified_t handle, uint8_t *evt,
 		struct wlan_psoc_host_chainmask_table *param)
 {
 	QDF_STATUS status;
@@ -397,7 +399,8 @@ return_exit:
 }
 
 int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
-			void *handle, uint8_t *event, struct tgt_info *info)
+				      wmi_unified_t handle, uint8_t *event,
+				      struct tgt_info *info)
 
 {
 	uint8_t cap_idx;
@@ -438,7 +441,7 @@ free_and_return:
 }
 
 int init_deinit_populate_spectral_bin_scale_params(
-			struct wlan_objmgr_psoc *psoc, void *handle,
+			struct wlan_objmgr_psoc *psoc, wmi_unified_t handle,
 			uint8_t *event, struct tgt_info *info)
 
 {

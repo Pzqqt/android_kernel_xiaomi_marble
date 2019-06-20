@@ -39,7 +39,8 @@
  *
  * Return: QDF Status
  */
-QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
+QDF_STATUS init_deinit_populate_rf_characterization_entries(
+		wmi_unified_t handle,
 		uint8_t *evt,
 		struct wlan_psoc_host_service_ext_param *service_ext_par);
 
@@ -56,9 +57,9 @@ QDF_STATUS init_deinit_rf_characterization_entries_free(
 		struct wlan_psoc_host_service_ext_param *service_ext_par);
 #else
 static inline
-QDF_STATUS init_deinit_populate_rf_characterization_entries(void *handle,
-			uint8_t *evt,
-			struct wlan_psoc_host_service_ext_param *ser_ext_par)
+QDF_STATUS init_deinit_populate_rf_characterization_entries(
+		wmi_unified_t handle, uint8_t *evt,
+		struct wlan_psoc_host_service_ext_param *ser_ext_par)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -105,8 +106,9 @@ QDF_STATUS init_deinit_chainmask_table_free(
  *
  * Return: zero on successful population of service bitmap or failure flag
  */
-int init_deinit_populate_service_bitmap(void *wmi_handle, uint8_t *event,
-				      uint32_t *service_bitmap);
+int init_deinit_populate_service_bitmap(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		uint32_t *service_bitmap);
 
 /**
  * init_deinit_populate_fw_version_cmd() - populate FW version
@@ -159,7 +161,8 @@ int init_deinit_populate_service_ready_ext_param(
  *
  * Return: zero on successful parsing of chainmaks tables or failure flag
  */
-int init_deinit_populate_chainmask_tables(void *handle, uint8_t *evt,
+int init_deinit_populate_chainmask_tables(
+		wmi_unified_t handle, uint8_t *evt,
 		struct wlan_psoc_host_chainmask_table *param);
 
 /**
@@ -203,8 +206,8 @@ int init_deinit_populate_hw_mode_capability(
  * Return: zero on successful parsing of dbr ring capability or failure
  */
 int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
-				void *handle, uint8_t *event,
-				struct tgt_info *info);
+				      wmi_unified_t handle, uint8_t *event,
+				      struct tgt_info *info);
 
 /**
  * init_deinit_populate_spectral_bin_scale_params() - populate Spectral scaling
@@ -219,7 +222,7 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
  */
 int init_deinit_populate_spectral_bin_scale_params(
 				struct wlan_objmgr_psoc *psoc,
-				void *handle, uint8_t *event,
+				wmi_unified_t handle, uint8_t *event,
 				struct tgt_info *info);
 
 /**
