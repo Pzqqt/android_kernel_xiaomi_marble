@@ -984,6 +984,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_bssid_disallow_list_config_param,
     WMITLV_TAG_STRUC_wmi_mgmt_hdr,
+    WMITLV_TAG_STRUC_wmi_muedca_params_config_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1610,6 +1611,7 @@ typedef enum {
     OP(WMI_PDEV_RAP_INFO_EVENTID) \
     OP(WMI_IFACE_COMBINATION_IND_EVENTID) \
     OP(WMI_VDEV_MGMT_OFFLOAD_EVENTID) \
+    OP(WMI_MUEDCA_PARAMS_CONFIG_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4300,6 +4302,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_KEEPALIVE_EVENTID);
 #define WMITLV_TABLE_WMI_GET_TPC_POWER_EVENTID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_tpc_power_evt_fixed_param, wmi_get_tpc_power_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_GET_TPC_POWER_EVENTID);
+
+/** Get MU EDCA report param event */
+#define WMITLV_TABLE_WMI_MUEDCA_PARAMS_CONFIG_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_muedca_params_config_event_fixed_param, wmi_muedca_params_config_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MUEDCA_PARAMS_CONFIG_EVENTID);
 
 /* GPIO Input Event */
 #define WMITLV_TABLE_WMI_GPIO_INPUT_EVENTID(id,op,buf,len)  \
