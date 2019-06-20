@@ -132,6 +132,8 @@
 #define WLAN_SOC_CEXT_OBSS_NBW_RU      0x00010000
 	/* MBSS IE support */
 #define WLAN_SOC_CEXT_MBSS_IE          0x00020000
+	/* RXOLE Flow Search Support */
+#define WLAN_SOC_CEXT_RX_FSE_SUPPORT   0x00040000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

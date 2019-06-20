@@ -137,6 +137,10 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_lteu_cfg_enable(psoc, tgt_hdl, event);
 
+	if (wmi_service_enabled(wmi_handle, wmi_service_rx_fse_support))
+		wlan_psoc_nif_fw_ext_cap_set(psoc,
+					     WLAN_SOC_CEXT_RX_FSE_SUPPORT);
+
 	/* override derived value, if it exceeds max peer count */
 	if ((wlan_psoc_get_max_peer_count(psoc) >
 		tgt_hdl->info.wlan_res_cfg.num_active_peers) &&
