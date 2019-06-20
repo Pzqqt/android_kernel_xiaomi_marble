@@ -82,6 +82,16 @@
 #define __qdf_nbuf_get_rx_protocol_tag(skb) \
 		(QDF_NBUF_CB_RX_PROTOCOL_TAG((skb)))
 
+#define QDF_NBUF_CB_RX_FLOW_TAG(skb) \
+		(((struct qdf_nbuf_cb *) \
+		((skb)->cb))->u.rx.dev.priv_cb_w.flow_tag)
+
+#define __qdf_nbuf_set_rx_flow_tag(skb, val) \
+		((QDF_NBUF_CB_RX_FLOW_TAG((skb))) = val)
+
+#define __qdf_nbuf_get_rx_flow_tag(skb) \
+		(QDF_NBUF_CB_RX_FLOW_TAG((skb)))
+
 /**
  * qdf_nbuf_cb_update_peer_local_id() - update peer local id in skb cb
  * @skb: skb pointer whose cb is updated with peer local id information

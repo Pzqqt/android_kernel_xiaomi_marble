@@ -68,10 +68,10 @@ qdf_nbuf_set_ext_cb(qdf_nbuf_t buf, void *ref)
  * qdf_nbuf_set_rx_protocol_tag() - set given value in protocol_tag
  * field of buf(skb->cb)
  * @buf: Network buffer
- * @val: Value to be set
- * Return: void
+ * @val: Value to be set in the nbuf
+ * Return: None
  */
-static inline void qdf_nbuf_set_rx_protocol_tag(qdf_nbuf_t buf, uint32_t val)
+static inline void qdf_nbuf_set_rx_protocol_tag(qdf_nbuf_t buf, uint16_t val)
 {
 	__qdf_nbuf_set_rx_protocol_tag(buf, val);
 }
@@ -80,10 +80,34 @@ static inline void qdf_nbuf_set_rx_protocol_tag(qdf_nbuf_t buf, uint32_t val)
  * qdf_nbuf_get_rx_protocol_tag() - Get the value of protocol_tag
  * field of buf(skb->cb)
  * @buf: Network buffer
- * Return: void
+ * Return: Value of Rx protocol tag in the nbuf
  */
-static inline int qdf_nbuf_get_rx_protocol_tag(qdf_nbuf_t buf)
+static inline uint16_t qdf_nbuf_get_rx_protocol_tag(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_get_rx_protocol_tag(buf);
 }
+
+/**
+ * qdf_nbuf_set_rx_flow_tag() - set given value in flow tag field
+ * of buf(skb->cb)
+ * @buf: Network buffer
+ * @val: Value of Rx flow tag to be set in the nbuf
+ * Return: None
+ */
+static inline void qdf_nbuf_set_rx_flow_tag(qdf_nbuf_t buf, uint16_t val)
+{
+	__qdf_nbuf_set_rx_flow_tag(buf, val);
+}
+
+/**
+ * qdf_nbuf_get_rx_flow_tag() - Get the value of flow_tag
+ * field of buf(skb->cb)
+ * @buf: Network buffer
+ * Return: Value of the Rx flow tag in the nbuf
+ */
+static inline uint16_t qdf_nbuf_get_rx_flow_tag(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_rx_flow_tag(buf);
+}
+
 #endif /* _QDF_NBUF_W_H */
