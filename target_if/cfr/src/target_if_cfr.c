@@ -35,7 +35,7 @@ int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 {
 	struct peer_cfr *pe;
 	struct peer_cfr_params param = {0};
-	struct common_wmi_handle *pdev_wmi_handle = NULL;
+	struct wmi_unified *pdev_wmi_handle = NULL;
 	struct wlan_objmgr_vdev *vdev = {0};
 	struct pdev_cfr *pdev_cfrobj;
 	int retv = 0;
@@ -82,7 +82,7 @@ int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 				struct cfr_capture_params *cfr_params)
 {
 	struct peer_cfr_params param = {0};
-	struct common_wmi_handle *pdev_wmi_handle = NULL;
+	struct wmi_unified *pdev_wmi_handle = NULL;
 	struct wlan_objmgr_vdev *vdev;
 	int retv = 0;
 

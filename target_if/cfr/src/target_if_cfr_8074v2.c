@@ -304,7 +304,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 {
 	QDF_STATUS retval = 0;
 	ol_ath_soc_softc_t *scn = (ol_ath_soc_softc_t *)sc;
-	struct common_wmi_handle *wmi_handle;
+	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
