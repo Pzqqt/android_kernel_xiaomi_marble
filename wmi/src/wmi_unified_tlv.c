@@ -12560,6 +12560,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_DELETE_ALL_PEER_SUPPORT;
 	wmi_service[wmi_service_three_way_coex_config_legacy] =
 			WMI_SERVICE_THREE_WAY_COEX_CONFIG_LEGACY;
+	wmi_service[wmi_service_rx_fse_support] =
+			WMI_SERVICE_RX_FSE_SUPPORT;
 }
 
 /**
