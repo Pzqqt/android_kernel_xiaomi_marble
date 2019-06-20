@@ -130,8 +130,9 @@ init_deinit_populate_fw_version_cmd(wmi_unified_t wmi_handle, uint8_t *event);
  *
  * Return: zero on successful population of target cap or failure flag
  */
-int init_deinit_populate_target_cap(void *wmi_handle, uint8_t *event,
-			       struct wlan_psoc_target_capability_info *cap);
+int init_deinit_populate_target_cap(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		struct wlan_psoc_target_capability_info *cap);
 
 /**
  * init_deinit_populate_service_ready_ext_param() - populate service ready ext
@@ -253,8 +254,9 @@ QDF_STATUS init_deinit_spectral_scaling_params_free(
  * Return: zero on successful parsing of physical reg capability or failure flag
  */
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
-				void *wmi_handle, uint8_t *event,
-				struct tgt_info *info, bool service_ready);
+				     wmi_unified_t wmi_handle, uint8_t *event,
+				     struct tgt_info *info,
+				     bool service_ready);
 
 /**
  * init_deinit_validate_160_80p80_fw_caps() - validate 160 80p80 fw caps

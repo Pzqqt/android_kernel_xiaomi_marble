@@ -154,8 +154,9 @@ int init_deinit_populate_fw_version_cmd(wmi_unified_t wmi_handle,
 	return 0;
 }
 
-int init_deinit_populate_target_cap(void *wmi_handle, uint8_t *event,
-			       struct wlan_psoc_target_capability_info *cap)
+int init_deinit_populate_target_cap(
+		wmi_unified_t wmi_handle, uint8_t *event,
+		struct wlan_psoc_target_capability_info *cap)
 {
 	QDF_STATUS status;
 
@@ -567,8 +568,9 @@ static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 #endif
 
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
-				void *handle, uint8_t *event,
-				struct tgt_info *info, bool service_ready)
+				     wmi_unified_t handle, uint8_t *event,
+				     struct tgt_info *info,
+				     bool service_ready)
 {
 	uint8_t reg_idx;
 	uint32_t num_phy_reg_cap;

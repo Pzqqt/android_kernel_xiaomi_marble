@@ -686,11 +686,11 @@ struct vdev_spectral_enable_params;
  */
 struct wmi_spectral_cmd_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
-		void *wmi_hdl,
-		struct vdev_spectral_configure_params *param);
+		    wmi_unified_t wmi_hdl,
+		    struct vdev_spectral_configure_params *param);
 	QDF_STATUS (*wmi_spectral_enable_cmd_send)(
-		void *wmi_hdl,
-		struct vdev_spectral_enable_params *param);
+		    wmi_unified_t wmi_hdl,
+		    struct vdev_spectral_enable_params *param);
 };
 
 /**
