@@ -283,8 +283,7 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 	int ret = QDF_STATUS_E_FAILURE;
 
 	if (desc->pdev->tx_capture_enabled == 1 &&
-	    (ts->status == HAL_TX_TQM_RR_REM_CMD_TX ||
-	    ts->status == HAL_TX_TQM_RR_FRAME_ACKED)) {
+	    ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
 		ret = dp_update_msdu_to_list(soc, desc->pdev,
 					     peer, ts, desc->nbuf);
 	}
@@ -681,7 +680,7 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 					  QDF_TRACE_LEVEL_FATAL,
 					  "MPDU head allocation failed !!!");
-				QDF_BUG(0);
+				goto free_ppdu_desc_mpdu_q;
 			}
 
 			dp_tx_update_80211_hdr(pdev, peer,
@@ -699,8 +698,11 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 			 * handle this case
 			 */
 			qdf_nbuf_free(curr_nbuf);
-			/* assert here if no last msdu found */
-			QDF_BUG(0);
+			/*
+			 * No last msdu found because WBM comes out
+			 * of order, free the pkt
+			 */
+			goto free_ppdu_desc_mpdu_q;
 		} else if (!first_msdu && first_msdu_not_seen) {
 			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 				  QDF_TRACE_LEVEL_FATAL,
@@ -710,8 +712,11 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 			 * handle this case
 			 */
 			qdf_nbuf_free(curr_nbuf);
-			/* assert here if no first msdu found */
-			QDF_BUG(0);
+			/*
+			 * no first msdu found beacuse WBM comes out
+			 * of order, free the pkt
+			 */
+			goto free_ppdu_desc_mpdu_q;
 		} else {
 			/* update current buffer to previous buffer next */
 			prev_nbuf->next = curr_nbuf;
@@ -733,6 +738,7 @@ dp_tx_mon_restitch_mpdu_from_msdus(struct dp_pdev *pdev,
 			/* add mpdu to mpdu queue */
 			qdf_nbuf_queue_add(mpdu, mpdu_nbuf);
 			first_nbuf = NULL;
+			mpdu_nbuf = NULL;
 
 			/* next msdu will start with first msdu */
 			first_msdu_not_seen = 1;
@@ -757,6 +763,23 @@ check_for_next_msdu:
 		curr_nbuf = qdf_nbuf_queue_remove(head_msdu);
 	}
 
+	return 0;
+
+free_ppdu_desc_mpdu_q:
+	/* free already chained msdu pkt */
+	while (first_nbuf) {
+		curr_nbuf = first_nbuf;
+		first_nbuf = first_nbuf->next;
+		qdf_nbuf_free(curr_nbuf);
+	}
+
+	/* free allocated mpdu hdr */
+	if (mpdu_nbuf)
+		qdf_nbuf_free(mpdu_nbuf);
+	/* free queued remaining msdu pkt per ppdu */
+	qdf_nbuf_queue_free(head_msdu);
+	/* free queued mpdu per ppdu */
+	qdf_nbuf_queue_free(mpdu);
 	return 0;
 }
 
@@ -1387,7 +1410,7 @@ dequeue_msdu_again:
 
 				if (!ret && (++retries < 3)) {
 					/* wait for wbm to complete */
-					qdf_sleep(100);
+					qdf_sleep(20);
 					goto dequeue_msdu_again;
 				}
 
@@ -1417,8 +1440,15 @@ dequeue_msdu_again:
 				 */
 				qdf_nbuf_queue_free(&head_msdu);
 
-				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
 				qlen = qdf_nbuf_queue_len(&ppdu_desc->mpdu_q);
+
+				if (!qlen) {
+					qdf_nbuf_free(nbuf);
+					dp_peer_unref_del_find_by_id(peer);
+					continue;
+				}
+				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
+
 				/* print ppdu_desc info for debugging purpose */
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 					  QDF_TRACE_LEVEL_INFO,
