@@ -5096,6 +5096,19 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 	osif_vdev_sync_op_stop(vdev_sync);
 }
 
+static u8 hdd_get_mode_specific_interface_count(struct hdd_context *hdd_ctx,
+						enum QDF_OPMODE mode)
+{
+	struct hdd_adapter *adapter = NULL;
+	u8 intf_count = 0;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == mode)
+			intf_count++;
+	}
+	return intf_count;
+}
+
 /**
  * hdd_open_adapter() - open and setup the hdd adatper
  * @hdd_ctx: global hdd context
@@ -5118,6 +5131,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 {
 	struct net_device *ndev = NULL;
 	struct hdd_adapter *adapter = NULL;
+	u8 intf_count = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->current_intf_count >= hdd_ctx->max_intf_count) {
@@ -5162,6 +5176,18 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 					QDF_MAC_ADDR_ARRAY(mac_addr));
 				return NULL;
 			}
+		}
+		/* Check for max no of supported VDEVs before creating
+		 * another one.
+		 */
+		intf_count = hdd_get_mode_specific_interface_count(
+								hdd_ctx,
+								session_type);
+		if (CFG_TGT_DEFAULT_MAX_STA_VDEVS &&
+		    (intf_count >= CFG_TGT_DEFAULT_MAX_STA_VDEVS)) {
+			hdd_err("Max limit reached sta vdev-current %d max %d",
+				intf_count, CFG_TGT_DEFAULT_MAX_STA_VDEVS);
+			return NULL;
 		}
 
 	/* fall through */
