@@ -446,6 +446,9 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 		pmo_core_configure_dynamic_wake_events(psoc);
 		pmo_core_update_wow_enable(psoc_ctx, true);
 		pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
+	} else {
+		pmo_debug("Non WOW PDEV Suspend");
+		pmo_core_update_wow_enable(psoc_ctx, false);
 	}
 
 	/*
@@ -1159,7 +1162,6 @@ QDF_STATUS pmo_core_psoc_disable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	if (ret != QDF_STATUS_SUCCESS)
 		goto out;
 
-	pmo_core_update_wow_enable(psoc_ctx, false);
 	pmo_core_update_wow_enable_cmd_sent(psoc_ctx, false);
 
 	/* To allow the tx pause/unpause events */
