@@ -1945,7 +1945,7 @@ QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
 #endif
 
 QDF_STATUS
-(*extract_cfr_peer_tx_event_param)(wmi_unified_t *wmi_handle, void *evt_buf,
+(*extract_cfr_peer_tx_event_param)(wmi_unified_t wmi_handle, void *evt_buf,
 				   wmi_cfr_peer_tx_event_param * peer_tx_event);
 
 #ifdef OBSS_PD

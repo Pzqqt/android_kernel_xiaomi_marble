@@ -1,6 +1,5 @@
-
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,20 +21,10 @@
 
 #include "wmi_unified_bcn_api.h"
 
-/**
- * wmi_unified_bcn_buf_ll_cmd() - prepare and send beacon buffer to fw for LL
- * @wmi_hdl: wmi handle
- * @param: bcn ll cmd parameter
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-
 QDF_STATUS
-wmi_unified_bcn_buf_ll_cmd(void *wmi_hdl,
+wmi_unified_bcn_buf_ll_cmd(wmi_unified_t wmi_handle,
 			   wmi_bcn_send_from_host_cmd_fixed_param *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
-
 	if (wmi_handle->ops->send_bcn_buf_ll_cmd)
 		return wmi_handle->ops->send_bcn_buf_ll_cmd(wmi_handle,
 						param);

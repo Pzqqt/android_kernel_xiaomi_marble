@@ -11552,7 +11552,7 @@ static void wmi_11ax_bss_color_attach_tlv(struct wmi_unified *wmi_handle)
  * Return QDF_STATUS_SUCCESS on success or proper error code.
  */
 static QDF_STATUS
-extract_cfr_peer_tx_event_param_tlv(wmi_unified_t *wmi_handle, void *evt_buf,
+extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event)
 {
 	WMI_PEER_CFR_CAPTURE_EVENTID_param_tlvs *param_buf;

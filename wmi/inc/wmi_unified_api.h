@@ -2024,7 +2024,14 @@ QDF_STATUS
 wmi_unified_init_cmd_send(wmi_unified_t wmi_handle,
 			  struct wmi_init_cmd_param *param);
 
-bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id);
+/**
+ * wmi_service_enabled() - Check if service enabled
+ * @wmi_handle: wmi handle
+ * @service_id: service identifier
+ *
+ * Return: 1 enabled, 0 disabled
+ */
+bool wmi_service_enabled(wmi_unified_t wmi_handle, uint32_t service_id);
 
 /**
  * wmi_save_service_bitmap() - save service bitmap
@@ -3207,13 +3214,13 @@ wmi_extract_offload_bcn_tx_status_evt(wmi_unified_t wmi_handle, void *evt_buf,
 				      uint32_t *vdev_id, uint32_t *tx_status);
 
 /* wmi_get_ch_width_from_phy_mode() - convert phy mode to channel width
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @phymode: phy mode
  *
  * Return: wmi channel width
  */
-wmi_host_channel_width wmi_get_ch_width_from_phy_mode(void *wmi_hdl,
-					WMI_HOST_WLAN_PHY_MODE phymode);
+wmi_host_channel_width wmi_get_ch_width_from_phy_mode(
+	wmi_unified_t wmi_handle, WMI_HOST_WLAN_PHY_MODE phymode);
 
 #ifdef QCA_SUPPORT_CP_STATS
 /**
@@ -3232,7 +3239,7 @@ QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 /**
  * wmi_unified_dfs_send_avg_params_cmd() - send average radar parameters cmd.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @params: radar found params
  *
  * This function passes the average radar parameters to fw
@@ -3240,12 +3247,12 @@ QDF_STATUS wmi_extract_cca_stats(wmi_unified_t wmi_handle, void *evt_buf,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS
-wmi_unified_dfs_send_avg_params_cmd(void *wmi_hdl,
+wmi_unified_dfs_send_avg_params_cmd(wmi_unified_t wmi_handle,
 				    struct dfs_radar_found_params *params);
 
 /**
  * wmi_extract_dfs_status_from_fw() - extract host dfs status from fw.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
  * @dfs_status_check: pointer to the host dfs status
  *
@@ -3253,46 +3260,47 @@ wmi_unified_dfs_send_avg_params_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_dfs_status_from_fw(void *wmi_hdl, void *evt_buf,
+QDF_STATUS wmi_extract_dfs_status_from_fw(wmi_unified_t wmi_handle,
+					  void *evt_buf,
 					  uint32_t  *dfs_status_check);
 #endif
 #ifdef OL_ATH_SMART_LOGGING
 /**
  * wmi_unified_send_smart_logging_enable_cmd() - send smart logging enable cmd
- * @wmi_hdl: wmi handle
- * @params: enable/disable
+ * @wmi_handle: wmi handle
+ * @param: enable/disable
  *
  * This function enables/disable the smart logging feature
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_send_smart_logging_enable_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_send_smart_logging_enable_cmd(wmi_unified_t wmi_handle,
 						     uint32_t param);
 
 /**
  * wmi_unified_send_smart_logging_fatal_cmd() - send smart logging fatal cmd
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @param:  Fatal event
  *
  * This function sends the smart log fatal events to the FW
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_send_smart_logging_fatal_cmd
-					(void *wmi_hdl,
-					struct wmi_debug_fatal_events *param);
+QDF_STATUS
+wmi_unified_send_smart_logging_fatal_cmd(wmi_unified_t wmi_handle,
+					 struct wmi_debug_fatal_events *param);
 
 /**
  * wmi_extract_smartlog_ev() - extract smartlog event info from event
  * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold fatal events
+ * @evt_buf: pointer to event buffer
+ * @ev: Pointer to hold fatal events
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_extract_smartlog_ev
-				(void *wmi_hdl, void *evt_buf,
-				struct wmi_debug_fatal_events *ev);
+QDF_STATUS
+wmi_extract_smartlog_ev(wmi_unified_t wmi_handle, void *evt_buf,
+			struct wmi_debug_fatal_events *ev);
 
 #endif /* OL_ATH_SMART_LOGGING */
 
@@ -3314,16 +3322,15 @@ void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
  * wmi_extract_ctl_failsafe_check_ev_param() - extract ctl failsafe
  * status from event
  * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold ctl status
+ * @evt_buf: pointer to event buffer
+ * @ev: Pointer to hold ctl status
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS
-wmi_extract_ctl_failsafe_check_ev_param(void *wmi_hdl,
-					void *evt_buf,
-					struct wmi_host_pdev_ctl_failsafe_event
-					*param);
+QDF_STATUS wmi_extract_ctl_failsafe_check_ev_param(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_pdev_ctl_failsafe_event *param);
 
 #ifdef OBSS_PD
 /**
@@ -3333,7 +3340,8 @@ wmi_extract_ctl_failsafe_check_ev_param(void *wmi_hdl,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_handle,
+QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(
+	wmi_unified_t wmi_handle,
 	struct wmi_host_obss_spatial_reuse_set_param *obss_spatial_reuse_param);
 
 /**
@@ -3343,7 +3351,8 @@ QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_handle,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(
+	wmi_unified_t wmi_handle,
 	struct wmi_host_obss_spatial_reuse_set_def_thresh *thresh);
 
 #endif /* OBSS_PD */
@@ -3352,20 +3361,20 @@ QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(void *wmi_hdl,
  * wmi_convert_pdev_id_host_to_target() - Convert pdev_id from host to target
  * defines. For legacy there is not conversion required. Just return pdev_id as
  * it is.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @host_pdev_id: host pdev_id to be converted.
  * @target_pdev_id: Output target pdev id.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wmi_convert_pdev_id_host_to_target(void *wmi_hdl,
+QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 					      uint32_t host_pdev_id,
 					      uint32_t *target_pdev_id);
 
 /**
  * wmi_unified_send_bss_color_change_enable_cmd() - WMI function to send bss
  *  color change enable to FW.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @vdev_id: vdev ID
  * @enable: enable or disable color change handeling within firmware
  *
@@ -3374,27 +3383,29 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(void *wmi_hdl,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wmi_unified_send_bss_color_change_enable_cmd(void *wmi_hdl,
-							uint32_t vdev_id,
-							bool enable);
+QDF_STATUS
+wmi_unified_send_bss_color_change_enable_cmd(wmi_unified_t wmi_handle,
+					     uint32_t vdev_id,
+					     bool enable);
 
 /**
  * wmi_unified_send_obss_color_collision_cfg_cmd() - WMI function to send bss
  *  color collision detection configuration to FW.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @cfg: obss color collision detection configuration
  *
  * Send WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID parameters to fw.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(void *wmi_hdl,
+QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(
+		wmi_unified_t wmi_handle,
 		struct wmi_obss_color_collision_cfg_param *cfg);
 
 /**
  * wmi_unified_extract_obss_color_collision_info() - WMI function to extract
  *  obss color collision info from FW.
- * @wmi_hdl: wmi handle
+ * @wmi_handle: wmi handle
  * @data: event data from firmware
  * @info: Pointer to hold bss color collision info
  *
@@ -3402,7 +3413,8 @@ QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(void *wmi_hdl,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wmi_unified_extract_obss_color_collision_info(void *wmi_hdl,
+QDF_STATUS wmi_unified_extract_obss_color_collision_info(
+		wmi_unified_t wmi_handle,
 		uint8_t *data, struct wmi_obss_color_collision_info *info);
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
@@ -3454,25 +3466,25 @@ wmi_unified_send_idle_trigger_monitor(wmi_unified_t wmi_handle, uint8_t val);
 /**
  * wmi_unified_send_peer_cfr_capture_cmd() - WMI function to start CFR capture
  * for a peer
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @param: configuration params for capture
  *
  * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
  */
 QDF_STATUS
-wmi_unified_send_peer_cfr_capture_cmd(void *wmi_hdl,
+wmi_unified_send_peer_cfr_capture_cmd(wmi_unified_t wmi_handle,
 				      struct peer_cfr_params *param);
 /**
  * wmi_extract_cfr_peer_tx_event_param() - WMI function to extract cfr tx event
  * for a peer
- * @wmi_hdl: WMI handle
+ * @wmi_handle: WMI handle
  * @evt_buf: Buffer holding event data
  * @peer_tx_event: pointer to hold tx event data
  *
  * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
  */
 QDF_STATUS
-wmi_extract_cfr_peer_tx_event_param(void *wmi_hdl, void *evt_buf,
+wmi_extract_cfr_peer_tx_event_param(wmi_unified_t wmi_handle, void *evt_buf,
 				    wmi_cfr_peer_tx_event_param *peer_tx_event);
 
 #endif /* WLAN_CFR_ENABLE */
