@@ -1593,6 +1593,8 @@ int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
 
 		if (rc < 0)
 			ctx->enable_refcnt = old_cnt;
+		else
+			rc = 0;
 	}
 
 	pr_debug("pid %d enable %d, refcnt %d, vote_req %d\n",
