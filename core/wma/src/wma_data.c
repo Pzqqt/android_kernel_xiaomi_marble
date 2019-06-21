@@ -3308,5 +3308,8 @@ bool wma_is_roam_in_progress(uint32_t vdev_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma)
+		return false;
+
 	return wma->interfaces[vdev_id].roaming_in_progress;
 }
