@@ -232,6 +232,16 @@ static const struct file_operations swrm_debug_ops = {
 	.read = swrm_debug_read,
 };
 
+static void swrm_reg_dump(struct swr_mstr_ctrl *swrm,
+			  u32 *reg, u32 *val, int len, const char* func)
+{
+	int i = 0;
+
+	for (i = 0; i < len; i++)
+		dev_dbg(swrm->dev, "%s: reg = 0x%x val = 0x%x\n",
+			func, reg[i], val[i]);
+}
+
 static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 {
 	int ret = 0;
@@ -941,6 +951,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		mport->ch_en = mport->req_ch;
 
 	}
+	swrm_reg_dump(swrm, reg, val, len, __func__);
 	swr_master_bulk_write(swrm, reg, val, len);
 }
 
