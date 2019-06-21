@@ -1776,7 +1776,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pNewBssDescriptor = qdf_mem_malloc(size);
-	if (pNewBssDescriptor)
+	if (!pNewBssDescriptor)
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_mem_copy(pNewBssDescriptor, pSession->pConnectBssDesc, size);
