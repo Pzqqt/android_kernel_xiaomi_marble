@@ -144,6 +144,7 @@ enum {
 	WCD_BOLERO_EVT_RX_MUTE = 1,	/* for RX mute/unmute */
 	WCD_BOLERO_EVT_IMPED_TRUE,	/* for imped true */
 	WCD_BOLERO_EVT_IMPED_FALSE,	/* for imped false */
+	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 };
 
 enum {

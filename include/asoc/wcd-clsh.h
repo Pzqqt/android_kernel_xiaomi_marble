@@ -82,15 +82,22 @@ extern void wcd_cls_h_fsm(struct snd_soc_component *component,
 		int int_mode);
 
 extern void wcd_cls_h_init(struct wcd_clsh_cdc_info *clsh);
+extern void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
+				  int mode);
 #else
-extern void wcd_cls_h_fsm(struct snd_soc_component *component,
+static inline void wcd_cls_h_fsm(struct snd_soc_component *component,
 		struct wcd_clsh_cdc_info *cdc_clsh_d,
 		u8 clsh_event, u8 req_state,
 		int int_mode)
 {
 }
 
-extern void wcd_cls_h_init(struct wcd_clsh_cdc_info *clsh)
+static inline extern void wcd_cls_h_init(struct wcd_clsh_cdc_info *clsh)
+{
+}
+
+static inline extern void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
+				  int mode)
 {
 }
 #endif /* CONFIG_SND_SOC_WCD9XXX_V2 */
