@@ -253,7 +253,7 @@ tgt_mc_cp_stats_update_peer_adv_stats(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac_addr,
 					   WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("peer is null");
+		cp_stats_debug("peer is null");
 		return QDF_STATUS_E_EXISTS;
 	}
 	peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer);
@@ -300,7 +300,7 @@ tgt_mc_cp_stats_update_peer_stats(struct wlan_objmgr_psoc *psoc,
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac_addr,
 				    WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("peer is null");
+		cp_stats_debug("peer is null");
 		return QDF_STATUS_E_EXISTS;
 	}
 
@@ -353,7 +353,7 @@ tgt_mc_cp_stats_update_peer_extd_stats(
 	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac_addr,
 					   WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("peer is null");
+		cp_stats_debug("peer is null");
 		return QDF_STATUS_E_EXISTS;
 	}
 
@@ -511,7 +511,7 @@ extd2_stats:
 	/* no matched peer */
 	if (!QDF_IS_ADDR_BROADCAST(last_req.peer_mac_addr) &&
 	    selected == ev->num_peer_adv_stats) {
-		cp_stats_err("peer not found for extd stats");
+		cp_stats_debug("peer not found for extd stats");
 		return;
 	}
 
@@ -617,7 +617,7 @@ static void tgt_mc_cp_stats_extract_vdev_summary_stats(
 	peer = wlan_objmgr_get_peer(psoc, last_req.pdev_id,
 				    last_req.peer_mac_addr, WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("peer is null %pM", last_req.peer_mac_addr);
+		cp_stats_debug("peer is null %pM", last_req.peer_mac_addr);
 		goto end;
 	}
 

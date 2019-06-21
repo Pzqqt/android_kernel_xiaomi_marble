@@ -1118,6 +1118,8 @@ struct dp_soc {
 	uint8_t pcp_tid_map[PCP_TID_MAP_MAX];
 	/* TID map priority value */
 	uint8_t tidmap_prty;
+	/* Pointer to global per ring type specific configuration table */
+	struct wlan_srng_cfg *wlan_srng_cfg;
 };
 
 #ifdef IPA_OFFLOAD
