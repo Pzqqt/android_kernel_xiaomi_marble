@@ -546,6 +546,7 @@ static void usb_hif_usb_recv_prestart_complete
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	qdf_nbuf_t buf = NULL;
 	struct HIF_USB_PIPE *pipe = urb_context->pipe;
+	struct hif_usb_softc *sc = HIF_GET_USB_SOFTC(pipe->device);
 
 	HIF_DBG("+%s: recv pipe: %d, stat:%d,len:%d urb:0x%pK",
 		__func__,
@@ -601,7 +602,7 @@ static void usb_hif_usb_recv_prestart_complete
 	usb_hif_cleanup_recv_urb(urb_context);
 
 	/* Prestart URBs runs out and now start working receive pipe. */
-	if (--pipe->urb_prestart_cnt == 0)
+	if ((--pipe->urb_prestart_cnt == 0) && !sc->suspend_state)
 		usb_hif_start_recv_pipes(pipe->device);
 
 	HIF_DBG("-%s", __func__);
