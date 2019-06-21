@@ -1208,6 +1208,17 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		snd_soc_component_update_bits(component, reg_mix,
 				0x10, val);
 		break;
+	case BOLERO_MACRO_EVT_RX_COMPANDER_SOFT_RST:
+		rx_idx = data >> 0x10;
+		if (rx_idx == INTERP_AUX)
+			goto done;
+		reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
+				(rx_idx * RX_MACRO_COMP_OFFSET);
+		snd_soc_component_update_bits(component, reg,
+				0x20, 0x20);
+		snd_soc_component_update_bits(component, reg,
+				0x20, 0x00);
+		break;
 	case BOLERO_MACRO_EVT_IMPED_TRUE:
 		rx_macro_wcd_clsh_imped_config(component, data, true);
 		break;
@@ -1251,6 +1262,7 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		bolero_rsc_clk_reset(rx_dev, RX_CORE_CLK);
 		break;
 	}
+done:
 	return ret;
 }
 
@@ -2248,6 +2260,9 @@ static int rx_macro_enable_interp_clk(struct snd_soc_component *component,
 		rx_priv->main_clk_users[interp_idx]--;
 		if (rx_priv->main_clk_users[interp_idx] <= 0) {
 			rx_priv->main_clk_users[interp_idx] = 0;
+			/* Main path PGA mute enable */
+			snd_soc_component_update_bits(component, main_reg,
+					0x10, 0x10);
 			/* Clk Disable */
 			snd_soc_component_update_bits(component, dsm_reg,
 						0x01, 0x00);
