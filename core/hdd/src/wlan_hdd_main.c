@@ -9392,6 +9392,8 @@ int hdd_psoc_idle_restart(struct device *dev)
 
 int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
 {
+	int ret;
+
 	QDF_BUG(rtnl_is_locked());
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_ENABLED) {
@@ -9400,9 +9402,9 @@ int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
 		return 0;
 	}
 
-	pld_idle_restart(hdd_ctx->parent_dev, hdd_psoc_idle_restart);
+	ret = pld_idle_restart(hdd_ctx->parent_dev, hdd_psoc_idle_restart);
 
-	return 0;
+	return ret;
 }
 
 /**
