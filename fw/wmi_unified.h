@@ -9839,6 +9839,12 @@ typedef enum {
      */
     WMI_VDEV_PARAM_PACKET_CAPTURE_MODE,         /* 0x93 */
 
+    /**
+     * To configure duration of how many seconds without tx unicast traffic is
+     * considered stale for mcast rate adaptation
+     */
+    WMI_VDEV_PARAM_MCAST_RC_STALE_PERIOD,       /* 0x94 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
