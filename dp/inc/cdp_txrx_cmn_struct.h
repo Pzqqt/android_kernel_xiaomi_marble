@@ -1294,10 +1294,12 @@ struct cdp_tx_indication_mpdu_info {
 
 /**
  * struct cdp_tx_indication_info - Tx capture information
+ * @frame_payload: 802.11 payload is present already
  * @mpdu_info: Tx MPDU completion information
  * @mpdu_nbuf: reconstructed mpdu packet
  */
 struct cdp_tx_indication_info {
+	uint8_t frame_payload;
 	struct cdp_tx_indication_mpdu_info mpdu_info;
 	qdf_nbuf_t mpdu_nbuf;
 };

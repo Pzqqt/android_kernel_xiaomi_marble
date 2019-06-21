@@ -3030,16 +3030,14 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		    (pdev, htt_t2h_msg, pdev->mgmtctrl_frm_info.ppdu_id) !=
 		    QDF_STATUS_SUCCESS)
 			free_buf = false;
-
-		if (free_buf) {
-			pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
-			pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
-			pdev->mgmtctrl_frm_info.ppdu_id = 0;
-		}
 	}
 
 	if (ppdu_info)
 		dp_ppdu_desc_deliver(pdev, ppdu_info);
+
+	pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
+	pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
+	pdev->mgmtctrl_frm_info.ppdu_id = 0;
 
 	return free_buf;
 }
