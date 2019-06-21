@@ -2178,7 +2178,7 @@ void __qdf_nbuf_queue_head_purge(struct sk_buff_head *skb_queue_head)
 	return skb_queue_purge(skb_queue_head);
 }
 
-#ifdef CONFIG_WIN
+#ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_w.h>
 #else
 #include <i_qdf_nbuf_m.h>

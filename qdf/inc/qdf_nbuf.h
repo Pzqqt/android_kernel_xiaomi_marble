@@ -3478,7 +3478,7 @@ static inline void qdf_nbuf_orphan(qdf_nbuf_t buf)
 	return __qdf_nbuf_orphan(buf);
 }
 
-#ifdef CONFIG_WIN
+#ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>
 #else
 #include <i_qdf_nbuf_api_m.h>
