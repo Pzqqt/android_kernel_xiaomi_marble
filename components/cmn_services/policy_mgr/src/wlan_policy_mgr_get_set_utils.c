@@ -3059,7 +3059,7 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct wlan_objmgr_vdev *vdev;
 
-	if (!channel || !ok) {
+	if (!ok) {
 		policy_mgr_err("Invalid parameter");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -3078,6 +3078,11 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	if (!cc_count) {
 		*ok = true;
 		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!channel) {
+		policy_mgr_err("channel is 0, cc count %d", cc_count);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	for (i = 0; i < cc_count; i++) {
