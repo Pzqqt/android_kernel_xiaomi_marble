@@ -4328,7 +4328,6 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	int8_t maxTxPower;
-	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -4409,9 +4408,6 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
-	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if (add_bss->nss == 2) {
 		req.preferred_rx_streams = 2;
@@ -4461,7 +4457,6 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	tSetBssKeyParams key_info;
-	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	vdev = wma_find_vdev_by_addr(wma, add_bss->self_mac_addr, &vdev_id);
@@ -4557,9 +4552,6 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (req.ssid.length > 0)
 		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
-	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if (add_bss->nss == 2) {
 		req.preferred_rx_streams = 2;
@@ -4618,7 +4610,6 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
-	struct policy_mgr_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -4738,10 +4729,6 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			if (req.ssid.length > 0)
 				qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 					     add_bss->ssId.length);
-			status = policy_mgr_get_current_hw_mode(wma->psoc,
-				&hw_mode);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 			if (add_bss->nss == 2) {
 				req.preferred_rx_streams = 2;

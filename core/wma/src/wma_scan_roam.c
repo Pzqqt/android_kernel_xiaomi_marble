@@ -3417,7 +3417,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	void *peer;
 	struct cdp_pdev *pdev;
 	struct wma_txrx_node *intr = wma->interfaces;
-	struct policy_mgr_hw_mode_params hw_mode = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint16_t beacon_interval_ori;
 
@@ -3457,10 +3456,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	WMA_LOGI(FL("vht_capable: %d, dot11_mode: %d"),
 		 req.vht_capable, req.dot11_mode);
-
-	status = policy_mgr_get_current_hw_mode(wma->psoc, &hw_mode);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		WMA_LOGE("policy_mgr_get_current_hw_mode failed");
 
 	if (params->nss == 2) {
 		req.preferred_rx_streams = 2;
