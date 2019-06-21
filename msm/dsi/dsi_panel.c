@@ -2135,6 +2135,13 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 		goto error;
 	}
 
+	panel->panel_test_gpio = utils->get_named_gpio(utils->data,
+					"qcom,mdss-dsi-panel-test-pin",
+					0);
+	if (!gpio_is_valid(panel->panel_test_gpio))
+		pr_debug("%s:%d panel test gpio not specified\n", __func__,
+			 __LINE__);
+
 error:
 	return rc;
 }
