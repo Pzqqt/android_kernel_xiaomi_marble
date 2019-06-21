@@ -186,9 +186,11 @@
  * 3.66 Add HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND msg.
  *      Add PKT_CAPTURE_MODE flag within HTT_T2H TX_I_ORD_PADDR_IND msg.
  * 3.67 Add drop threshold field to HTT_H2T RX_RING_SELECTION_CFG msg.
+ * 3.68 Add ipa_drop threshold fields to HTT_H2T_MSG_TYPE_SRING_SETUP
+ * 3.69 Add htt_ul_ofdma_user_info_v0 defs
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 68
+#define HTT_CURRENT_VERSION_MINOR 69
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -4299,9 +4301,9 @@ PREPACK struct htt_wdi_ipa_op_request_t
  * setup message
  *
  *    The message would appear as follows:
- *    |31            24|23    20|19|18 16|15|14          8|7                0|
- *    |--------------- +-----------------+----------------+------------------|
- *    |    ring_type   |      ring_id    |    pdev_id     |     msg_type     |
+ *    |31            24|23 21|20|19|18 16|15|14           8|7               0|
+ *    |--------------- +-----------------+-----------------+-----------------|
+ *    |    ring_type   |      ring_id    |    pdev_id      |    msg_type     |
  *    |----------------------------------------------------------------------|
  *    |                          ring_base_addr_lo                           |
  *    |----------------------------------------------------------------------|
@@ -4325,12 +4327,15 @@ PREPACK struct htt_wdi_ipa_op_request_t
  *    |----------------------------------------------------------------------|
  *    |         intr_timer_th            |IM|      intr_batch_counter_th     |
  *    |----------------------------------------------------------------------|
- *    |          reserved        |RR|PTCF|        intr_low_threshold         |
+ *    |         reserved     |ID|RR| PTCF|        intr_low_threshold         |
+ *    |----------------------------------------------------------------------|
+ *    |             reserved             |IPA drop thres hi|IPA drop thres lo|
  *    |----------------------------------------------------------------------|
  * Where
  *     IM = sw_intr_mode
  *     RR = response_required
  *     PTCF = prefetch_timer_cfg
+ *     IP = IPA drop flag
  *
  * The message is interpreted as follows:
  * dword0  - b'0:7   - msg_type: This will be set to
@@ -12327,5 +12332,250 @@ PREPACK struct htt_t2h_msg_bkpressure_event_ind_t {
      A_UINT16 tail_idx;
      A_UINT32 backpressure_time_ms; /* Time in milliseconds for which backpressure is seen continuously */
 } POSTPACK;
+
+
+/*
+ * Defines two 32 bit words that can be used by the target to indicate a per
+ * user RU allocation and rate information.
+ *
+ * This information is currently provided in the "sw_response_reference_ptr"
+ * (word 0) and "sw_response_reference_ptr_ext" (word 1) fields of the
+ * "rx_ppdu_end_user_stats" TLV.
+ *
+ * VALID:
+ *     The consumer of these words must explicitly check the valid bit,
+ *     and only attempt interpretation of any of the remaining fields if
+ *     the valid bit is set to 1.
+ *
+ * VERSION:
+ *   The consumer of these words must also explicitly check the version bit,
+ *   and only use the V0 definition if the VERSION field is set to 0.
+ *
+ * Version 1 is currently undefined, with the exception of the VALID and
+ * VERSION fields.
+ *
+ * Version 0:
+ *
+ *   The fields below are duplicated per BW.
+ *
+ *   The consumer must determine which BW field to use, based on the UL OFDMA
+ *   PPDU BW indicated by HW.
+ *
+ *     RU_START: RU26 start index for the user.
+ *               Note that this is always using the RU26 index, regardless
+ *               of the actual RU assigned to the user
+ *               (i.e. the second RU52 is RU_START 2, RU_SIZE
+ *               HTT_UL_OFDMA_V0_RU_SIZE_RU_52)
+ *
+ *     For example, 20MHz (the value in the top row is RU_START)
+ *
+ *       RU Size 0 (26):  |0|1|2|3|4|5|6|7|8|
+ *       RU Size 1 (52):  |   |   | |   |   |
+ *       RU Size 2 (106): |       | |       |
+ *       RU Size 3 (242): |                 |
+ *
+ *     RU_SIZE: Indicates the RU size, as defined by enum
+ *              htt_ul_ofdma_user_info_ru_size.
+ *
+ *     LDPC: LDPC enabled (if 0, BCC is used)
+ *
+ *     DCM: DCM enabled
+ *
+ *     |31 |   30|29 23|22     19|18   16|15           9| 8 |  7 |6  3|2 0|
+ *     |---------------------------------+--------------------------------|
+ *     |Ver|Valid|                   FW internal                          |
+ *     |---------------------------------+--------------------------------|
+ *     |   reserved    |Trig Type|RU SIZE|   RU START   |DCM|LDPC|MCS |NSS|
+ *     |---------------------------------+--------------------------------|
+ */
+
+enum htt_ul_ofdma_user_info_ru_size {
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_26,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_52,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_106,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_242,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_484,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_996,
+    HTT_UL_OFDMA_V0_RU_SIZE_RU_996x2
+};
+
+/* htt_up_ofdma_user_info_v0 provides an abstract view of the info */
+struct htt_ul_ofdma_user_info_v0 {
+    A_UINT32 word0;
+    A_UINT32 word1;
+};
+
+/* htt_up_ofdma_user_info_v0_bitmap shows what bitfields are within the info */
+PREPACK struct htt_ul_ofdma_user_info_v0_bitmap {
+    union {
+        A_UINT32 word0;
+        struct {
+            A_UINT32 w0_fw_rsvd:30;
+            A_UINT32 w0_valid:1;
+            A_UINT32 w0_version:1;
+        };
+    };
+    union {
+        A_UINT32 word1;
+        struct {
+            A_UINT32 w1_nss:3;
+            A_UINT32 w1_mcs:4;
+            A_UINT32 w1_ldpc:1;
+            A_UINT32 w1_dcm:1;
+            A_UINT32 w1_ru_start:7;
+            A_UINT32 w1_ru_size:3;
+            A_UINT32 w1_trig_type:4;
+            A_UINT32 w1_unused:9;
+        };
+    };
+} POSTPACK;
+
+enum HTT_UL_OFDMA_TRIG_TYPE {
+    HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_BASIC = 0,
+    HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_BFRP,
+    HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_MU_BAR,
+    HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_MU_RTS_CTS,
+    HTT_UL_OFDMA_USER_INFO_V0_TRIG_TYPE_BSR,
+};
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_SZ        (sizeof(struct htt_ul_ofdma_user_info_v0))
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_M  0x0000ffff
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_S  0
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M 0x40000000
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_S 30
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VER_M 0x80000000
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VER_S 31
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_M       0x00000007
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_S       0
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_M       0x00000078
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_S       3
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_M      0x00000080
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_S      7
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_M       0x00000100
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_S       8
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_M  0x0000fe00
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_S  9
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_M   0x00070000
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_S   16
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_M  0x00780000
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_S  19
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RESERVED1_M  0xff800000
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RESERVED1_S  23
+
+/*--- word 0 ---*/
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_M) >> HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W0_FW_INTERNAL_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_M) >> HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W0_VALID, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W0_VALID_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VER_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W0_VER_M) >> HTT_UL_OFDMA_USER_INFO_V0_W0_VER_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W0_VER_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W0_VER, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W0_VER_S)); \
+    } while (0)
+
+
+/*--- word 1 ---*/
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_NSS, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_NSS_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_MCS, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_MCS_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_LDPC_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_DCM, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_DCM_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_RU_START_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_RU_SIZE_S)); \
+    } while (0)
+
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_GET(word)    \
+    (((word) & HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_M) >> HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_S)
+
+#define HTT_UL_OFDMA_USER_INFO_V0_W1_TRIG_TYP_SET(word, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_UL_OFDMA_USER_INFO_V0_W1_RU_TRIG_TYP, _val); \
+        ((word) |= ((_val) << HTT_UL_OFDMA_USER_INFO_V0_W1_RU_TRIG_TYP_S)); \
+    } while (0)
+
 
 #endif
