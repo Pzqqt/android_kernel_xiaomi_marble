@@ -153,7 +153,7 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 	}
 };
 
-#ifdef CONFIG_WIN
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 const char *fw_to_hw_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"0 to 10 ms", "11 to 20 ms",
 	"21 to 30 ms", "31 to 40 ms",
@@ -3988,7 +3988,7 @@ QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_WIN
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 /**
  * dp_vow_str_fw_to_hw_delay() - Return string for a delay
  * @index: Index of delay

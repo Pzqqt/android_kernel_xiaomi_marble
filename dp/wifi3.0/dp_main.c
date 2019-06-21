@@ -8657,7 +8657,7 @@ static uint32_t dp_get_cfg(void *soc, enum cdp_dp_cfg cfg)
 	return value;
 }
 
-#ifdef CONFIG_WIN
+#ifdef PEER_FLOW_CONTROL
 /**
  * dp_tx_flow_ctrl_configure_pdev() - Configure flow control params
  * @pdev_hdl: datapath pdev handle
@@ -8685,6 +8685,7 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(void *pdev_handle,
 		return 1;
 
 	switch (param) {
+#ifdef QCA_ENH_V3_STATS_SUPPORT
 	case OL_ATH_PARAM_VIDEO_DELAY_STATS_FC:
 		if (value)
 			pdev->delay_stats_flag = true;
@@ -8697,6 +8698,7 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(void *pdev_handle,
 		qdf_print("------ Delay Stats ------\n");
 		dp_pdev_print_delay_stats(pdev);
 		break;
+#endif
 	case OL_ATH_PARAM_TOTAL_Q_SIZE:
 		{
 			uint32_t tx_min, tx_max;
