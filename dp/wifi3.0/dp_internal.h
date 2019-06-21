@@ -1520,4 +1520,21 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
 	return soc->vdev_id_map[vdev_id];
 }
 
+/**
+ * dp_get_pdev_from_soc_pdev_id_wifi3() - Returns pdev object given the pdev id
+ * @soc: core DP soc context
+ * @pdev_id: pdev id from pdev object can be retrieved
+ *
+ * Return: struct dp_pdev*: Pointer to DP pdev object
+ */
+static inline struct dp_pdev *
+dp_get_pdev_from_soc_pdev_id_wifi3(struct dp_soc *soc,
+				   uint8_t pdev_id)
+{
+	if (qdf_unlikely(pdev_id >= MAX_PDEV_CNT))
+		return NULL;
+
+	return soc->pdev_list[pdev_id];
+}
+
 #endif /* #ifndef _DP_INTERNAL_H_ */
