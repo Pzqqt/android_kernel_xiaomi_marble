@@ -854,13 +854,13 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 		 *       This is marked for future enhancements.
 		 */
 		chn_idx_highest_enabled =
-		    ((spectral->params.ss_chn_mask & 0x8) ? 3 :
-		     (spectral->params.ss_chn_mask & 0x4) ? 2 :
-		     (spectral->params.ss_chn_mask & 0x2) ? 1 : 0);
+		   ((spectral->params[params.smode].ss_chn_mask & 0x8) ? 3 :
+		    (spectral->params[params.smode].ss_chn_mask & 0x4) ? 2 :
+		    (spectral->params[params.smode].ss_chn_mask & 0x2) ? 1 : 0);
 		chn_idx_lowest_enabled =
-		    ((spectral->params.ss_chn_mask & 0x1) ? 0 :
-		     (spectral->params.ss_chn_mask & 0x2) ? 1 :
-		     (spectral->params.ss_chn_mask & 0x4) ? 2 : 3);
+		   ((spectral->params[params.smode].ss_chn_mask & 0x1) ? 0 :
+		    (spectral->params[params.smode].ss_chn_mask & 0x2) ? 1 :
+		    (spectral->params[params.smode].ss_chn_mask & 0x4) ? 2 : 3);
 		control_rssi = (uint8_t)
 		    p_rfqual->pc_rssi_info[chn_idx_highest_enabled].rssi_pri20;
 		extension_rssi = (uint8_t)
@@ -1176,6 +1176,7 @@ target_if_process_sfft_report_gen3(
 
 int
 target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
+			enum spectral_scan_mode smode,
 			struct spectral_phyerr_fft_report_gen3 *p_fft_report,
 			struct spectral_search_fft_info_gen3 *p_sfft)
 {
@@ -1188,7 +1189,7 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	int fft_bin_len_adj = 0;
 	int fft_bin_len_inband_tfer = 0;
 
-	if ((spectral->params.ss_rpt_mode == 1) &&
+	if ((spectral->params[smode].ss_rpt_mode == 1) &&
 	    spectral->null_fftbin_adj) {
 		/* fft_bin_len_adj is intentionally left at 0. */
 		fft_bin_len_to_dump = 0;
@@ -1210,7 +1211,7 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		} else
 			fft_bin_len_adj = fft_bin_len;
 
-		if ((spectral->params.ss_rpt_mode == 2) &&
+		if ((spectral->params[smode].ss_rpt_mode == 2) &&
 		    spectral->inband_fftbin_size_adj) {
 			fft_bin_len_adj >>= 1;
 			fft_bin_len_inband_tfer = fft_bin_len >> 1;
@@ -1233,10 +1234,10 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		       fft_bin_len,
 		       fft_bin_len);
 
-	if ((spectral->params.ss_rpt_mode == 1) &&
+	if ((spectral->params[smode].ss_rpt_mode == 1) &&
 	    spectral->null_fftbin_adj)
 		spectral_debug("WAR: Considering number of FFT bins as 0");
-	else if ((spectral->params.ss_rpt_mode == 2) &&
+	else if ((spectral->params[smode].ss_rpt_mode == 2) &&
 		 spectral->inband_fftbin_size_adj) {
 		spectral_debug("FW fftbins actually transferred (in-band report mode) "
 					"%d(0x%x)",
@@ -1544,7 +1545,32 @@ target_if_consume_spectral_report_gen3(
 
 		report_len = (fft_hdr_length + 8);
 
-		if ((spectral->params.ss_rpt_mode == 1) &&
+		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
+		/* It is expected to have same detector id for
+		 * summary and fft report
+		 */
+		if (detector_id != p_sfft->fft_detector_id) {
+			spectral_err_rl
+				("Different detid in ssummary(%u) and sfft(%u)",
+				 detector_id, p_sfft->fft_detector_id);
+			goto fail;
+		}
+
+		if (detector_id > SPECTRAL_DETECTOR_AGILE) {
+			spectral->diag_stats.spectral_invalid_detector_id++;
+			spectral_err("Invalid detector id %u, expected is 0/2",
+				     detector_id);
+			goto fail;
+		}
+
+		ret = target_if_get_spectral_mode(detector_id, &params.smode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to get mode from detid= %u",
+					detector_id);
+			goto fail;
+		}
+
+		if ((spectral->params[params.smode].ss_rpt_mode == 1) &&
 		    spectral->null_fftbin_adj) {
 			/*
 			 * No FFT bins are expected. Explicitly set FFT bin
@@ -1569,29 +1595,10 @@ target_if_consume_spectral_report_gen3(
 				 */
 				fft_bin_len >>= 2;
 			}
-			if ((spectral->params.ss_rpt_mode == 2) &&
+			if ((spectral->params[params.smode].ss_rpt_mode == 2) &&
 			    spectral->inband_fftbin_size_adj) {
 				fft_bin_len >>= 1;
 			}
-		}
-
-		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
-		/* It is expected to have same detector id for
-		 * summary and fft report
-		 */
-		if (detector_id != p_sfft->fft_detector_id) {
-			spectral_err_rl
-				("Different detid in ssummary(%u) and sfft(%u)",
-				 detector_id, p_sfft->fft_detector_id);
-			goto fail;
-		}
-
-		detector_id = p_sfft->fft_detector_id;
-		ret = target_if_get_spectral_mode(detector_id, &params.smode);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			spectral_err_rl("Failed to get mode from detid= %u",
-					detector_id);
-			goto fail;
 		}
 
 		if (report->reset_delay) {
@@ -1601,13 +1608,6 @@ target_if_consume_spectral_report_gen3(
 		tsf64 = p_sfft->timestamp;
 		spectral->last_fft_timestamp = p_sfft->timestamp;
 		tsf64 += spectral->timestamp_war_offset;
-
-		if (detector_id > SPECTRAL_DETECTOR_AGILE) {
-			spectral->diag_stats.spectral_invalid_detector_id++;
-			spectral_err("Invalid detector id %u, expected is 0/2",
-				     detector_id);
-			goto fail;
-		}
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
 		if (spectral->ch_width == CH_WIDTH_160MHZ) {
@@ -1619,7 +1619,7 @@ target_if_consume_spectral_report_gen3(
 		}
 
 		if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
-			target_if_dump_fft_report_gen3(spectral,
+			target_if_dump_fft_report_gen3(spectral, params.smode,
 						       p_fft_report, p_sfft);
 
 		params.rssi         = rssi;
@@ -1686,7 +1686,32 @@ target_if_consume_spectral_report_gen3(
 
 		report_len     = (fft_hdr_length + 8);
 
-		if ((spectral->params.ss_rpt_mode == 1) &&
+		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
+		/* It is expected to have same detector id for
+		 * summary and fft report
+		 */
+		if (detector_id != p_sfft->fft_detector_id) {
+			spectral_err_rl
+				("Different detid in ssummary(%u) and sfft(%u)",
+				 detector_id, p_sfft->fft_detector_id);
+			goto fail;
+		}
+
+		if (detector_id > SPECTRAL_DETECTOR_AGILE) {
+			spectral->diag_stats.spectral_invalid_detector_id++;
+			spectral_err("Invalid detector id %u, expected is 1",
+				     detector_id);
+			goto fail;
+		}
+
+		ret = target_if_get_spectral_mode(detector_id, &params.smode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err("Failed to get mode from detid= %u",
+				     detector_id);
+			goto fail;
+		}
+
+		if ((spectral->params[params.smode].ss_rpt_mode == 1) &&
 		    spectral->null_fftbin_adj) {
 			/*
 			 * No FFT bins are expected. Explicitly set FFT bin
@@ -1712,35 +1737,10 @@ target_if_consume_spectral_report_gen3(
 				fft_bin_len >>= 2;
 			}
 
-			if ((spectral->params.ss_rpt_mode == 2) &&
+			if ((spectral->params[params.smode].ss_rpt_mode == 2) &&
 			    spectral->inband_fftbin_size_adj) {
 				fft_bin_len >>= 1;
 			}
-		}
-
-		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
-		if (detector_id > SPECTRAL_DETECTOR_AGILE) {
-			spectral->diag_stats.spectral_invalid_detector_id++;
-			spectral_err("Invalid detector id %u, expected is 1",
-				     detector_id);
-			goto fail;
-		}
-
-		/* It is expected to have same detector id for
-		 * summary and fft report
-		 */
-		if (detector_id != p_sfft->fft_detector_id) {
-			spectral_err_rl
-				("Different detid in ssummary(%u) and sfft(%u)",
-				 detector_id, p_sfft->fft_detector_id);
-			goto fail;
-		}
-		detector_id = p_sfft->fft_detector_id;
-		ret = target_if_get_spectral_mode(detector_id, &params.smode);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			spectral_err("Failed to get mode from detid= %u",
-				     detector_id);
-			goto fail;
 		}
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
@@ -1752,9 +1752,9 @@ target_if_consume_spectral_report_gen3(
 				goto fail;
 		}
 
-		if (spectral_debug_level &
-		    (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
-			target_if_dump_fft_report_gen3(spectral, p_fft_report, p_sfft);
+		if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
+			target_if_dump_fft_report_gen3(spectral, params.smode,
+						       p_fft_report, p_sfft);
 
 		params.vhtop_ch_freq_seg1 = 0;
 		params.vhtop_ch_freq_seg2 = 0;

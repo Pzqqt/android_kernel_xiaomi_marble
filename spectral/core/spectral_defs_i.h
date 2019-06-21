@@ -122,29 +122,41 @@ struct wmi_spectral_cmd_ops;
 struct spectral_context {
 	struct wlan_objmgr_psoc *psoc_obj;
 	struct spectral_legacy_cbacks legacy_cbacks;
-	int (*sptrlc_spectral_control)(struct wlan_objmgr_pdev *pdev,
-				       struct spectral_cp_request *sscan_req);
+	QDF_STATUS (*sptrlc_spectral_control)
+					(struct wlan_objmgr_pdev *pdev,
+					 struct spectral_cp_request *sscan_req);
 	int (*sptrlc_ucfg_phyerr_config)(struct wlan_objmgr_pdev *pdev,
 					 void *ad);
 	void * (*sptrlc_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlc_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
-	int (*sptrlc_set_spectral_config)(struct wlan_objmgr_pdev *pdev,
-					  const uint32_t threshtype,
-					  const uint32_t value);
-	void (*sptrlc_get_spectral_config)(
-			struct wlan_objmgr_pdev *pdev,
-			struct spectral_config *sptrl_config);
-	int (*sptrlc_start_spectral_scan)(struct wlan_objmgr_pdev *pdev);
-	void (*sptrlc_stop_spectral_scan)(struct wlan_objmgr_pdev *pdev);
-	bool (*sptrlc_is_spectral_active)(struct wlan_objmgr_pdev *pdev);
-	bool (*sptrlc_is_spectral_enabled)(struct wlan_objmgr_pdev *pdev);
-	int (*sptrlc_set_debug_level)(struct wlan_objmgr_pdev *pdev,
-				       uint32_t debug_level);
+	QDF_STATUS (*sptrlc_set_spectral_config)
+				(struct wlan_objmgr_pdev *pdev,
+				 const uint32_t threshtype,
+				 const uint32_t value,
+				 const enum spectral_scan_mode smode,
+				 enum spectral_cp_error_code *err);
+	QDF_STATUS (*sptrlc_get_spectral_config)
+					(struct wlan_objmgr_pdev *pdev,
+					 struct spectral_config *sptrl_config,
+					 const enum spectral_scan_mode smode);
+	QDF_STATUS (*sptrlc_start_spectral_scan)
+					(struct wlan_objmgr_pdev *pdev,
+					 const enum spectral_scan_mode smode,
+					 enum spectral_cp_error_code *err);
+	QDF_STATUS (*sptrlc_stop_spectral_scan)(struct wlan_objmgr_pdev *pdev,
+						enum spectral_scan_mode smode);
+	bool (*sptrlc_is_spectral_active)(struct wlan_objmgr_pdev *pdev,
+					  enum spectral_scan_mode smode);
+	bool (*sptrlc_is_spectral_enabled)(struct wlan_objmgr_pdev *pdev,
+					   enum spectral_scan_mode smode);
+	QDF_STATUS (*sptrlc_set_debug_level)(struct wlan_objmgr_pdev *pdev,
+					     uint32_t debug_level);
 	uint32_t (*sptrlc_get_debug_level)(struct wlan_objmgr_pdev *pdev);
-	void (*sptrlc_get_spectral_capinfo)(struct wlan_objmgr_pdev *pdev,
-					     void *outdata);
-	void (*sptrlc_get_spectral_diagstats)(struct wlan_objmgr_pdev *pdev,
-					       void *outdata);
+	QDF_STATUS (*sptrlc_get_spectral_capinfo)(struct wlan_objmgr_pdev *pdev,
+						  struct spectral_caps *scaps);
+	QDF_STATUS (*sptrlc_get_spectral_diagstats)
+					(struct wlan_objmgr_pdev *pdev,
+					 struct spectral_diag_stats *stats);
 	void (*sptrlc_register_wmi_spectral_cmd_ops)(
 			struct wlan_objmgr_pdev *pdev,
 			struct wmi_spectral_cmd_ops *cmd_ops);

@@ -46,7 +46,7 @@ tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 	return ps->psptrl_target_handle;
 }
 
-int
+QDF_STATUS
 tgt_spectral_control(
 	struct wlan_objmgr_pdev *pdev,
 	struct spectral_cp_request *sscan_req)
@@ -84,71 +84,79 @@ tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_pdev_spectral_deinit(pdev);
 }
 
-int
-tgt_set_spectral_config(
-	struct wlan_objmgr_pdev *pdev,
-	const u_int32_t threshtype, const u_int32_t value)
+QDF_STATUS
+tgt_set_spectral_config(struct wlan_objmgr_pdev *pdev,
+			const u_int32_t threshtype, const u_int32_t value,
+			const enum spectral_scan_mode smode,
+			enum spectral_cp_error_code *err)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_spectral_config(
-		pdev, threshtype, value);
+		pdev, threshtype, value, smode, err);
 }
 
-void
-tgt_get_spectral_config(
-	struct wlan_objmgr_pdev *pdev,
-	struct spectral_config *sptrl_config)
+QDF_STATUS
+tgt_get_spectral_config(struct wlan_objmgr_pdev *pdev,
+			struct spectral_config *sptrl_config,
+			const enum spectral_scan_mode smode)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_config(
+	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_config(
 			pdev,
-			sptrl_config);
+			sptrl_config,
+			smode);
 }
 
-int
-tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
+			enum spectral_scan_mode smode,
+			enum spectral_cp_error_code *err)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_start_spectral_scan(
-		pdev);
+		pdev, smode, err);
 }
 
-void
-tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS
+tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
+		       enum spectral_scan_mode smode)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_stop_spectral_scan(pdev);
+	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_stop_spectral_scan(
+							pdev, smode);
 }
 
 bool
-tgt_is_spectral_active(struct wlan_objmgr_pdev *pdev)
+tgt_is_spectral_active(struct wlan_objmgr_pdev *pdev,
+		       enum spectral_scan_mode smode)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_is_spectral_active(
-		pdev);
+		pdev, smode);
 }
 
 bool
-tgt_is_spectral_enabled(struct wlan_objmgr_pdev *pdev)
+tgt_is_spectral_enabled(struct wlan_objmgr_pdev *pdev,
+			enum spectral_scan_mode smode)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_is_spectral_enabled(
-		pdev);
+		pdev, smode);
 }
 
-int
+QDF_STATUS
 tgt_set_debug_level(struct wlan_objmgr_pdev *pdev, u_int32_t debug_level)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
@@ -168,24 +176,26 @@ tgt_get_debug_level(struct wlan_objmgr_pdev *pdev)
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_debug_level(pdev);
 }
 
-void
-tgt_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev, void *outdata)
+QDF_STATUS
+tgt_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev,
+			 struct spectral_caps *scaps)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_capinfo(
-		pdev, outdata);
+		pdev, scaps);
 }
 
-void
-tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev, void *outdata)
+QDF_STATUS
+tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
+			   struct spectral_diag_stats *stats)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_diagstats(
-		pdev, outdata);
+		pdev, stats);
 }
 
 void

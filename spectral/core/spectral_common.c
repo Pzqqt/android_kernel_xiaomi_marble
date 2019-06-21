@@ -111,11 +111,11 @@ spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
 }
 #endif
 
-int
+QDF_STATUS
 spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		     struct spectral_cp_request *sscan_req)
 {
-	int error = 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int temp_debug;
 	struct spectral_config sp_out;
 	struct spectral_config *sp_in;
@@ -123,288 +123,313 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 	struct spectral_context *sc;
 	struct wlan_objmgr_vdev *vdev = NULL;
 	uint8_t vdev_rxchainmask = 0;
+	enum spectral_scan_mode smode = sscan_req->ss_mode;
+	enum spectral_cp_error_code *err;
+	QDF_STATUS ret;
 
 	if (!pdev) {
 		spectral_err("PDEV is NULL!");
-		error = -EINVAL;
 		goto bad;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("atf context is NULL!");
-		error = -EINVAL;
+		spectral_err("Spectral context is NULL!");
 		goto bad;
 	}
 
 	switch (sscan_req->req_id) {
 	case SPECTRAL_SET_CONFIG:
-		{
-			sp_in = &sscan_req->config_req.sscan_config;
-			if (sp_in->ss_count !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_SCAN_COUNT,
-					sp_in->ss_count))
-					error = -EINVAL;
-			}
+		err =  &sscan_req->config_req.sscan_err_code;
+		sp_in = &sscan_req->config_req.sscan_config;
+		if (sp_in->ss_count != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_SCAN_COUNT,
+						 sp_in->ss_count, smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_fft_period !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_FFT_PERIOD,
-					sp_in->ss_fft_period))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_fft_period != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_FFT_PERIOD,
+						 sp_in->ss_fft_period,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_period != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_SCAN_PERIOD,
-					sp_in->ss_period))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_period != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_SCAN_PERIOD,
+						 sp_in->ss_period, smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_short_report !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_SHORT_REPORT,
-					(uint32_t)
-					(sp_in->ss_short_report ? 1 : 0)))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_short_report != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_SHORT_REPORT,
+						 (uint32_t)
+						 sp_in->ss_short_report ? 1 : 0,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_spectral_pri !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_SPECT_PRI,
-					(uint32_t)(sp_in->ss_spectral_pri)))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_spectral_pri != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_SPECT_PRI,
+						(uint32_t)
+						(sp_in->ss_spectral_pri),
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_fft_size != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_FFT_SIZE,
-					sp_in->ss_fft_size))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_fft_size != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_FFT_SIZE,
+						 sp_in->ss_fft_size,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_gc_ena != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_GC_ENA,
-					sp_in->ss_gc_ena))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_gc_ena != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_GC_ENA,
+						 sp_in->ss_gc_ena,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_restart_ena !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_RESTART_ENA,
-					sp_in->ss_restart_ena))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_restart_ena != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_RESTART_ENA,
+						 sp_in->ss_restart_ena,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_noise_floor_ref !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_NOISE_FLOOR_REF,
-					sp_in->ss_noise_floor_ref))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_noise_floor_ref != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_NOISE_FLOOR_REF,
+						 sp_in->ss_noise_floor_ref,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_init_delay !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_INIT_DELAY,
-					sp_in->ss_init_delay))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_init_delay != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_INIT_DELAY,
+						 sp_in->ss_init_delay,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_nb_tone_thr !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_NB_TONE_THR,
-					sp_in->ss_nb_tone_thr))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_nb_tone_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_NB_TONE_THR,
+						 sp_in->ss_nb_tone_thr,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_str_bin_thr !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_STR_BIN_THR,
-					sp_in->ss_str_bin_thr))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_str_bin_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_STR_BIN_THR,
+						 sp_in->ss_str_bin_thr,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_wb_rpt_mode !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_WB_RPT_MODE,
-					sp_in->ss_wb_rpt_mode))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_wb_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_WB_RPT_MODE,
+						 sp_in->ss_wb_rpt_mode,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_rssi_rpt_mode !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_RSSI_RPT_MODE,
-					sp_in->ss_rssi_rpt_mode))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_rssi_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_RSSI_RPT_MODE,
+						 sp_in->ss_rssi_rpt_mode,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_rssi_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_RSSI_THR,
-					sp_in->ss_rssi_thr))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_rssi_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_RSSI_THR,
+						 sp_in->ss_rssi_thr,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_pwr_format !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_PWR_FORMAT,
-					sp_in->ss_pwr_format))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_pwr_format != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_PWR_FORMAT,
+						 sp_in->ss_pwr_format,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_RPT_MODE,
-					sp_in->ss_rpt_mode))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_RPT_MODE,
+						 sp_in->ss_rpt_mode,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_bin_scale !=
-			    SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_BIN_SCALE,
-					sp_in->ss_bin_scale))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_bin_scale != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_BIN_SCALE,
+						 sp_in->ss_bin_scale,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_dbm_adj != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				if (sc->sptrlc_set_spectral_config(
-					pdev,
-					SPECTRAL_PARAM_DBM_ADJ,
-					sp_in->ss_dbm_adj))
-					error = -EINVAL;
-			}
+		if (sp_in->ss_dbm_adj != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_DBM_ADJ,
+						 sp_in->ss_dbm_adj,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
 
-			if (sp_in->ss_chn_mask != SPECTRAL_PHYERR_PARAM_NOVAL) {
-				/*
-				 * Check if any of the inactive Rx antenna
-				 * chains is set active in spectral chainmask
-				 */
-				vdev = spectral_get_vdev(pdev);
-				if (!vdev) {
-					error = -ENOENT;
-					break;
-				}
+		if (sp_in->ss_chn_mask != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			/*
+			 * Check if any of the inactive Rx antenna
+			 * chains is set active in spectral chainmask
+			 */
+			vdev = spectral_get_vdev(pdev);
+			if (!vdev)
+				goto bad;
 
-				vdev_rxchainmask =
-				    wlan_vdev_mlme_get_rxchainmask(vdev);
-				wlan_objmgr_vdev_release_ref(vdev,
-							     WLAN_SPECTRAL_ID);
+			vdev_rxchainmask =
+			    wlan_vdev_mlme_get_rxchainmask(vdev);
+			wlan_objmgr_vdev_release_ref(vdev,
+						     WLAN_SPECTRAL_ID);
 
-				if (!(sp_in->ss_chn_mask & vdev_rxchainmask)) {
-					spectral_err("Invalid Spectral Chainmask - Inactive Rx antenna chain cannot be an active spectral chain");
-					error = -EINVAL;
-					break;
-				} else if (sc->sptrlc_set_spectral_config(
-						pdev,
-						SPECTRAL_PARAM_CHN_MASK,
-						sp_in->ss_chn_mask)) {
-					error = -EINVAL;
-				}
+			if (!(sp_in->ss_chn_mask & vdev_rxchainmask)) {
+				spectral_err("Invalid Spectral Chainmask - Inactive Rx antenna chain cannot be an active spectral chain");
+				goto bad;
+			} else {
+				ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_CHN_MASK,
+						 sp_in->ss_chn_mask,
+						 smode, err);
+				if (QDF_IS_STATUS_ERROR(ret))
+					goto bad;
 			}
 		}
+
+		if (sp_in->ss_frequency != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			ret = sc->sptrlc_set_spectral_config
+						(pdev,
+						 SPECTRAL_PARAM_FREQUENCY,
+						 sp_in->ss_frequency,
+						 smode, err);
+			if (QDF_IS_STATUS_ERROR(ret))
+				goto bad;
+		}
+
 		break;
 
 	case SPECTRAL_GET_CONFIG:
-		{
-			sc->sptrlc_get_spectral_config(pdev, &sp_out);
-			spectralparams = &sscan_req->config_req.sscan_config;
-			spectralparams->ss_fft_period = sp_out.ss_fft_period;
-			spectralparams->ss_period = sp_out.ss_period;
-			spectralparams->ss_count = sp_out.ss_count;
-			spectralparams->ss_short_report =
-			    sp_out.ss_short_report;
-			spectralparams->ss_spectral_pri =
-			    sp_out.ss_spectral_pri;
-			spectralparams->ss_fft_size = sp_out.ss_fft_size;
-			spectralparams->ss_gc_ena = sp_out.ss_gc_ena;
-			spectralparams->ss_restart_ena = sp_out.ss_restart_ena;
-			spectralparams->ss_noise_floor_ref =
-			    sp_out.ss_noise_floor_ref;
-			spectralparams->ss_init_delay = sp_out.ss_init_delay;
-			spectralparams->ss_nb_tone_thr = sp_out.ss_nb_tone_thr;
-			spectralparams->ss_str_bin_thr = sp_out.ss_str_bin_thr;
-			spectralparams->ss_wb_rpt_mode = sp_out.ss_wb_rpt_mode;
-			spectralparams->ss_rssi_rpt_mode =
-			    sp_out.ss_rssi_rpt_mode;
-			spectralparams->ss_rssi_thr = sp_out.ss_rssi_thr;
-			spectralparams->ss_pwr_format = sp_out.ss_pwr_format;
-			spectralparams->ss_rpt_mode = sp_out.ss_rpt_mode;
-			spectralparams->ss_bin_scale = sp_out.ss_bin_scale;
-			spectralparams->ss_dbm_adj = sp_out.ss_dbm_adj;
-			spectralparams->ss_chn_mask = sp_out.ss_chn_mask;
-		}
+		sc->sptrlc_get_spectral_config(pdev, &sp_out, smode);
+		spectralparams = &sscan_req->config_req.sscan_config;
+		spectralparams->ss_fft_period = sp_out.ss_fft_period;
+		spectralparams->ss_period = sp_out.ss_period;
+		spectralparams->ss_count = sp_out.ss_count;
+		spectralparams->ss_short_report =
+				sp_out.ss_short_report;
+		spectralparams->ss_spectral_pri =
+				sp_out.ss_spectral_pri;
+		spectralparams->ss_fft_size = sp_out.ss_fft_size;
+		spectralparams->ss_gc_ena = sp_out.ss_gc_ena;
+		spectralparams->ss_restart_ena = sp_out.ss_restart_ena;
+		spectralparams->ss_noise_floor_ref =
+				sp_out.ss_noise_floor_ref;
+		spectralparams->ss_init_delay = sp_out.ss_init_delay;
+		spectralparams->ss_nb_tone_thr = sp_out.ss_nb_tone_thr;
+		spectralparams->ss_str_bin_thr = sp_out.ss_str_bin_thr;
+		spectralparams->ss_wb_rpt_mode = sp_out.ss_wb_rpt_mode;
+		spectralparams->ss_rssi_rpt_mode =
+				sp_out.ss_rssi_rpt_mode;
+		spectralparams->ss_rssi_thr = sp_out.ss_rssi_thr;
+		spectralparams->ss_pwr_format = sp_out.ss_pwr_format;
+		spectralparams->ss_rpt_mode = sp_out.ss_rpt_mode;
+		spectralparams->ss_bin_scale = sp_out.ss_bin_scale;
+		spectralparams->ss_dbm_adj = sp_out.ss_dbm_adj;
+		spectralparams->ss_chn_mask = sp_out.ss_chn_mask;
+		spectralparams->ss_frequency = sp_out.ss_frequency;
 		break;
 
 	case SPECTRAL_IS_ACTIVE:
-		{
-			sscan_req->status_req.is_active =
-				(bool)sc->sptrlc_is_spectral_active(pdev);
-		}
+		sscan_req->status_req.is_active =
+					sc->sptrlc_is_spectral_active(pdev,
+								      smode);
 		break;
 
 	case SPECTRAL_IS_ENABLED:
-		{
-			sscan_req->status_req.is_enabled =
-				(bool)sc->sptrlc_is_spectral_enabled(pdev);
-		}
+		sscan_req->status_req.is_enabled =
+					sc->sptrlc_is_spectral_enabled(pdev,
+								       smode);
 		break;
 
 	case SPECTRAL_SET_DEBUG_LEVEL:
-		{
-			temp_debug = sscan_req->debug_req.spectral_dbg_level;
-			sc->sptrlc_set_debug_level(pdev, temp_debug);
-		}
+		temp_debug = sscan_req->debug_req.spectral_dbg_level;
+		sc->sptrlc_set_debug_level(pdev, temp_debug);
 		break;
 
 	case SPECTRAL_GET_DEBUG_LEVEL:
-		{
-			sscan_req->debug_req.spectral_dbg_level =
-				(uint32_t)sc->sptrlc_get_debug_level(pdev);
-		}
+		sscan_req->debug_req.spectral_dbg_level =
+					sc->sptrlc_get_debug_level(pdev);
 		break;
 
 	case SPECTRAL_ACTIVATE_SCAN:
-		{
-			sc->sptrlc_start_spectral_scan(pdev);
-		}
+		err = &sscan_req->action_req.sscan_err_code;
+		sc->sptrlc_start_spectral_scan(pdev, smode, err);
 		break;
 
 	case SPECTRAL_STOP_SCAN:
-		{
-			sc->sptrlc_stop_spectral_scan(pdev);
-		}
+		sc->sptrlc_stop_spectral_scan(pdev, smode);
 		break;
 
 	case SPECTRAL_GET_CAPABILITY_INFO:
@@ -431,7 +456,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 			vdev = spectral_get_vdev(pdev);
 			if (!vdev)
-				return -ENOENT;
+				goto bad;
 
 			chan_width = spectral_vdev_get_ch_width(vdev);
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
@@ -442,12 +467,13 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		break;
 
 	default:
-		error = -EINVAL;
+		goto bad;
 		break;
 	}
 
- bad:
-	return error;
+	status = QDF_STATUS_SUCCESS;
+bad:
+	return status;
 }
 
 /**

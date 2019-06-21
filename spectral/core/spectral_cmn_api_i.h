@@ -91,10 +91,10 @@ QDF_STATUS wlan_spectral_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
  * This function processes the spectral config command
  * and appropriate handlers are invoked.
  *
- * Return: 0 success else failure
+ * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
  */
-int spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
-			 struct spectral_cp_request *sscan_req);
+QDF_STATUS spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
+				struct spectral_cp_request *sscan_req);
 
 /**
  * spectral_control_ol(): Offload handler for demultiplexing requests from
