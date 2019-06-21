@@ -653,6 +653,9 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		case TARGET_TYPE_QCA8074:
 		case TARGET_TYPE_QCA8074V2:
 		case TARGET_TYPE_QCA6018:
+#ifdef QCA_WIFI_QCA6390
+		case TARGET_TYPE_QCA6390:
+#endif
 			ppdu_info->rx_status.is_stbc =
 				HAL_RX_GET(vht_sig_a_info,
 					   VHT_SIG_A_INFO_0, STBC);
@@ -679,11 +682,6 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			ppdu_info->rx_status.nss = 0;
 #endif
 			break;
-#ifdef QCA_WIFI_QCA6390
-		case TARGET_TYPE_QCA6390:
-			ppdu_info->rx_status.nss = 0;
-			break;
-#endif
 		default:
 			break;
 		}
