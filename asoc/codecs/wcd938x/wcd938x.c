@@ -1026,49 +1026,51 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 				snd_soc_dapm_to_component(w->dapm);
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	u16 dmic_clk_reg;
+	u16 dmic_clk_reg, dmic_clk_en_reg;
 	s32 *dmic_clk_cnt;
-	unsigned int dmic;
-	char *wname;
-	int ret = 0;
-
-	wname = strpbrk(w->name, "012345");
-
-	if (!wname) {
-		dev_err(component->dev, "%s: widget not found\n", __func__);
-		return -EINVAL;
-	}
-
-	ret = kstrtouint(wname, 10, &dmic);
-	if (ret < 0) {
-		dev_err(component->dev, "%s: Invalid DMIC line on the codec\n",
-			__func__);
-		return -EINVAL;
-	}
+	u8 dmic_ctl_shift = 0;
+	u8 dmic_clk_shift = 0;
+	u8 dmic_clk_mask = 0;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
 
-	switch (dmic) {
+	switch (w->shift) {
 	case 0:
 	case 1:
 		dmic_clk_cnt = &(wcd938x->dmic_0_1_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC1_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_RATE_1_2;
+		dmic_clk_en_reg = WCD938X_DIGITAL_CDC_DMIC1_CTL;
+		dmic_clk_mask = 0x0F;
+		dmic_clk_shift = 0x00;
+		dmic_ctl_shift = 0x00;
 		break;
 	case 2:
 	case 3:
 		dmic_clk_cnt = &(wcd938x->dmic_2_3_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC2_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_RATE_1_2;
+		dmic_clk_en_reg = WCD938X_DIGITAL_CDC_DMIC2_CTL;
+		dmic_clk_mask = 0xF0;
+		dmic_clk_shift = 0x04;
+		dmic_ctl_shift = 0x01;
 		break;
 	case 4:
 	case 5:
 		dmic_clk_cnt = &(wcd938x->dmic_4_5_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC3_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_RATE_3_4;
+		dmic_clk_en_reg = WCD938X_DIGITAL_CDC_DMIC3_CTL;
+		dmic_clk_mask = 0x0F;
+		dmic_clk_shift = 0x00;
+		dmic_ctl_shift = 0x02;
 		break;
 	case 6:
 	case 7:
 		dmic_clk_cnt = &(wcd938x->dmic_6_7_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC4_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_RATE_3_4;
+		dmic_clk_en_reg = WCD938X_DIGITAL_CDC_DMIC4_CTL;
+		dmic_clk_mask = 0xF0;
+		dmic_clk_shift = 0x04;
+		dmic_ctl_shift = 0x03;
 		break;
 	default:
 		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
@@ -1076,27 +1078,35 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 		return -EINVAL;
 	};
 	dev_dbg(component->dev, "%s: event %d DMIC%d dmic_clk_cnt %d\n",
-			__func__, event,  dmic, *dmic_clk_cnt);
+			__func__, event,  (w->shift +1), *dmic_clk_cnt);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
+				WCD938X_DIGITAL_CDC_AMIC_CTL,
+				(0x01 << dmic_ctl_shift), 0x00);
+		/* 250us sleep as per HW requirement */
+		usleep_range(250, 260);
+		/* Setting DMIC clock rate to 2.4MHz */
+		snd_soc_component_update_bits(component,
+					      dmic_clk_reg, dmic_clk_mask,
+					      (0x03 << dmic_clk_shift));
+		snd_soc_component_update_bits(component,
+					      dmic_clk_en_reg, 0x08, 0x08);
 		/* enable clock scaling */
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DMIC_CTL, 0x06, 0x06);
-		snd_soc_component_update_bits(component,
-						dmic_clk_reg, 0x07, 0x02);
-		snd_soc_component_update_bits(component,
-						dmic_clk_reg, 0x08, 0x08);
-		snd_soc_component_update_bits(component,
-						dmic_clk_reg, 0x70, 0x20);
 		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), false);
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_AMIC_CTL,
+				(0x01 << dmic_ctl_shift),
+				(0x01 << dmic_ctl_shift));
+		snd_soc_component_update_bits(component,
+					      dmic_clk_en_reg, 0x08, 0x00);
 		break;
-
 	};
 	return 0;
 }
