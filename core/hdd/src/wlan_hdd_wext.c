@@ -7113,50 +7113,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 	case WE_GET_CHANNEL_LIST:
 	{
-		QDF_STATUS status;
-		uint8_t i, len;
-		char *buf;
-		uint8_t ubuf[CFG_COUNTRY_CODE_LEN];
-		uint8_t ubuf_len = CFG_COUNTRY_CODE_LEN;
-		struct channel_list_info channel_list;
-
-		memset(&channel_list, 0, sizeof(channel_list));
-		status = iw_get_channel_list(dev, info, wrqu,
-						   (char *)&channel_list);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("GetChannelList Failed!!!");
+		if (0 !=
+		    iw_get_channel_list_with_cc(dev, mac_handle,
+						info, wrqu, extra))
 			return -EINVAL;
-		}
-		buf = extra;
-		/*
-		 * Maximum channels = CFG_VALID_CHANNEL_LIST_LEN.
-		 * Maximum buffer needed = 5 * number of channels.
-		 * Check ifsufficient buffer is available and then
-		 * proceed to fill the buffer.
-		 */
-		if (WE_MAX_STR_LEN <
-		    (5 * CFG_VALID_CHANNEL_LIST_LEN)) {
-			hdd_err("Insufficient Buffer to populate channel list");
-			return -EINVAL;
-		}
-		len = scnprintf(buf, WE_MAX_STR_LEN, "%u ",
-				channel_list.num_channels);
-		if (QDF_STATUS_SUCCESS == sme_get_country_code(mac_handle,
-							       ubuf,
-							       &ubuf_len)) {
-			/* Printing Country code in getChannelList */
-			for (i = 0; i < (ubuf_len - 1); i++)
-				len += scnprintf(buf + len,
-						WE_MAX_STR_LEN - len,
-						"%c", ubuf[i]);
-		}
-		for (i = 0; i < channel_list.num_channels; i++) {
-			len +=
-				scnprintf(buf + len, WE_MAX_STR_LEN - len,
-					  " %u", channel_list.channels[i]);
-		}
-		wrqu->data.length = strlen(extra) + 1;
-
 		break;
 	}
 #ifdef FEATURE_WLAN_TDLS

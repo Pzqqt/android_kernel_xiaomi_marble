@@ -1989,9 +1989,9 @@ static int iw_get_char_setnone(struct net_device *dev,
 	return errno;
 }
 
-static int __iw_get_channel_list(struct net_device *dev,
-					struct iw_request_info *info,
-					union iwreq_data *wrqu, char *extra)
+static int iw_get_channel_list(struct net_device *dev,
+			       struct iw_request_info *info,
+			       union iwreq_data *wrqu, char *extra)
 {
 	uint32_t num_channels = 0;
 	uint8_t i = 0;
@@ -2017,12 +2017,10 @@ static int __iw_get_channel_list(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (QDF_STATUS_SUCCESS != ucfg_reg_get_band(hdd_ctx->pdev,
-						    &cur_band)) {
-		hdd_err("not able get the current frequency band");
+	if (QDF_STATUS_SUCCESS != ucfg_reg_get_band(hdd_ctx->pdev, &cur_band)) {
+		hdd_err_rl("not able get the current frequency band");
 		return -EIO;
 	}
-	wrqu->data.length = sizeof(struct channel_list_info);
 
 	if (BAND_2G == cur_band) {
 		band_start_channel = CHAN_ENUM_1;
@@ -2042,14 +2040,14 @@ static int __iw_get_channel_list(struct net_device *dev,
 	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE) {
 		if (QDF_STATUS_SUCCESS != ucfg_mlme_get_dfs_master_capability(
 				hdd_ctx->psoc, &is_dfs_mode_enabled)) {
-			hdd_err("Fail to get dfs master mode capability");
+			hdd_err_rl("Fail to get dfs master mode capability");
 			return -EINVAL;
 		}
 	}
 
-	hdd_debug("curBand = %d, StartChannel = %hu, EndChannel = %hu is_dfs_mode_enabled  = %d ",
-			cur_band, band_start_channel, band_end_channel,
-			is_dfs_mode_enabled);
+	hdd_debug_rl("curBand = %d, StartChannel = %hu, EndChannel = %hu, is_dfs_mode_enabled = %d",
+		     cur_band, band_start_channel, band_end_channel,
+		     is_dfs_mode_enabled);
 
 	for (i = band_start_channel; i <= band_end_channel; i++) {
 		if ((CHANNEL_STATE_ENABLE ==
@@ -2064,30 +2062,60 @@ static int __iw_get_channel_list(struct net_device *dev,
 		}
 	}
 
-	hdd_debug("number of channels %d", num_channels);
+	hdd_debug_rl("number of channels %d", num_channels);
 
 	channel_list->num_channels = num_channels;
+	wrqu->data.length = num_channels + 1;
 	hdd_exit();
 
 	return 0;
 }
 
-int iw_get_channel_list(struct net_device *dev,
-		struct iw_request_info *info,
-		union iwreq_data *wrqu, char *extra)
+int iw_get_channel_list_with_cc(struct net_device *dev,
+				mac_handle_t mac_handle,
+				struct iw_request_info *info,
+				union iwreq_data *wrqu,
+				char *extra)
 {
-	int errno;
-	struct osif_vdev_sync *vdev_sync;
+	uint8_t i, len;
+	char *buf;
+	uint8_t ubuf[CFG_COUNTRY_CODE_LEN] = {0};
+	uint8_t ubuf_len = CFG_COUNTRY_CODE_LEN;
+	struct channel_list_info channel_list;
 
-	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
-	if (errno)
-		return errno;
+	hdd_enter_dev(dev);
 
-	errno = __iw_get_channel_list(dev, info, wrqu, extra);
+	memset(&channel_list, 0, sizeof(channel_list));
 
-	osif_vdev_sync_op_stop(vdev_sync);
+	if (0 != iw_get_channel_list(dev, info, wrqu, (char *)&channel_list)) {
+		hdd_err_rl("GetChannelList Failed!!!");
+		return -EINVAL;
+	}
+	buf = extra;
+	/*
+	 * Maximum channels = WNI_CFG_VALID_CHANNEL_LIST_LEN.
+	 * Maximum buffer needed = 5 * number of channels.
+	 * Check if sufficient buffer is available and then
+	 * proceed to fill the buffer.
+	 */
+	if (WE_MAX_STR_LEN < (5 * CFG_VALID_CHANNEL_LIST_LEN)) {
+		hdd_err_rl("Insufficient Buffer to populate channel list");
+		return -EINVAL;
+	}
+	len = scnprintf(buf, WE_MAX_STR_LEN, "%u ", channel_list.num_channels);
+	if (QDF_STATUS_SUCCESS == sme_get_country_code(mac_handle, ubuf,
+						       &ubuf_len)) {
+		/* Printing Country code in getChannelList */
+		for (i = 0; i < (ubuf_len - 1); i++)
+			len += scnprintf(buf + len, WE_MAX_STR_LEN - len, "%c", ubuf[i]);
+	}
+	for (i = 0; i < channel_list.num_channels; i++)
+		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, " %u", channel_list.channels[i]);
 
-	return errno;
+	wrqu->data.length = strlen(extra) + 1;
+
+	hdd_exit();
+	return 0;
 }
 
 static
@@ -2312,6 +2340,63 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 	hdd_exit();
 
 	return 0;
+}
+
+static int __iw_softap_get_channel_list(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu,
+					char *extra)
+{
+	int ret;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx;
+	mac_handle_t mac_handle;
+
+	hdd_enter_dev(dev);
+
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err_rl("Invalid adapter!!!");
+		return -ENODEV;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	ret = hdd_check_private_wext_control(hdd_ctx, info);
+	if (0 != ret)
+		return ret;
+
+	mac_handle = hdd_ctx->mac_handle;
+
+	ret = iw_get_channel_list_with_cc(dev, mac_handle,
+					  info, wrqu, extra);
+
+	if (0 != ret)
+		return -EINVAL;
+
+	hdd_exit();
+	return 0;
+}
+
+static int iw_softap_get_channel_list(struct net_device *dev,
+				      struct iw_request_info *info,
+				      union iwreq_data *wrqu,
+				      char *extra)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __iw_softap_get_channel_list(dev, info, wrqu, extra);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 static int __iw_softap_get_sta_info(struct net_device *dev,
@@ -3073,7 +3158,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	{
 		QCSAP_IOCTL_GET_CHANNEL_LIST,
 		0,
-		IW_PRIV_TYPE_BYTE | sizeof(struct channel_list_info),
+		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 		"getChannelList"
 	}
 	,
@@ -3231,7 +3316,7 @@ static const iw_handler hostapd_private[] = {
 	[QCSAP_IOCTL_MODIFY_ACL - SIOCIWFIRSTPRIV] =
 		iw_softap_modify_acl,
 	[QCSAP_IOCTL_GET_CHANNEL_LIST - SIOCIWFIRSTPRIV] =
-		iw_get_channel_list,
+		iw_softap_get_channel_list,
 	[QCSAP_IOCTL_GET_STA_INFO - SIOCIWFIRSTPRIV] =
 		iw_softap_get_sta_info,
 	[QCSAP_IOCTL_GET_BA_AGEING_TIMEOUT - SIOCIWFIRSTPRIV] =
