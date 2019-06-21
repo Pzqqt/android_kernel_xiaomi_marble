@@ -805,6 +805,11 @@ typedef struct {
     A_UINT32 wal_rx_recovery_rst_rx_busy_count;
     A_UINT32 wal_rx_recovery_rst_phy_mac_hang_count;
     A_UINT32 rx_flush_cnt; /* Num rx flush issued */
+    A_UINT32 phy_warm_reset_reason_tx_lifetime_expiry_cca_stuck;
+    A_UINT32 phy_warm_reset_reason_tx_consecutive_flush9_war;
+    A_UINT32 phy_warm_reset_reason_tx_hwsch_reset_war;
+    A_UINT32 phy_warm_reset_reason_hwsch_wdog_or_cca_wdog_war;
+    A_UINT32 fw_rx_rings_reset;
 } htt_hw_stats_pdev_errs_tlv;
 
 typedef struct {
