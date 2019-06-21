@@ -105,7 +105,7 @@ struct wsa881x_priv {
 
 #define SWR_SLV_MAX_REG_ADDR	0x390
 #define SWR_SLV_START_REG_ADDR	0x40
-#define SWR_SLV_MAX_BUF_LEN	20
+#define SWR_SLV_MAX_BUF_LEN	25
 #define BYTES_PER_LINE		12
 #define SWR_SLV_RD_BUF_LEN	8
 #define SWR_SLV_WR_BUF_LEN	32
@@ -393,6 +393,12 @@ static ssize_t wsa881x_swrslave_reg_show(char __user *ubuf, size_t count,
 			i, &reg_val, 1);
 		len = snprintf(tmp_buf, 25, "0x%.3x: 0x%.2x\n", i,
 			       (reg_val & 0xFF));
+		if (len < 0) {
+			pr_err("%s: fail to fill the buffer\n", __func__);
+			total = -EFAULT;
+			goto copy_err;
+		}
+
 		if ((total + len) >= count - 1)
 			break;
 		if (copy_to_user((ubuf + total), tmp_buf, len)) {
