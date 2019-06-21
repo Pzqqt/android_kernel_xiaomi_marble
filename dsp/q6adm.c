@@ -3099,6 +3099,7 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				if (this_adm.num_ec_ref_rx_chans != 0) {
 					open_v8.endpoint_id_2 =
 						this_adm.ec_ref_rx;
+					this_adm.ec_ref_rx = AFE_PORT_INVALID;
 				} else {
 					pr_err("%s: EC channels not set %d\n",
 						__func__,
