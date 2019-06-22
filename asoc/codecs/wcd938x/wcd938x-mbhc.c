@@ -239,6 +239,11 @@ static void wcd938x_mbhc_program_btn_thr(struct snd_soc_component *component,
 
 static bool wcd938x_mbhc_lock_sleep(struct wcd_mbhc *mbhc, bool lock)
 {
+	struct snd_soc_component *component = mbhc->component;
+	struct wcd938x_priv *wcd938x = dev_get_drvdata(component->dev);
+
+	wcd938x->wakeup((void*)wcd938x, lock);
+
 	return true;
 }
 
