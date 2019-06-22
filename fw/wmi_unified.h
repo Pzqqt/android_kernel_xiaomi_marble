@@ -1211,6 +1211,8 @@ typedef enum {
     WMI_TWT_DEL_DIALOG_CMDID,
     WMI_TWT_PAUSE_DIALOG_CMDID,
     WMI_TWT_RESUME_DIALOG_CMDID,
+    WMI_TWT_BTWT_INVITE_STA_CMDID,
+    WMI_TWT_BTWT_REMOVE_STA_CMDID,
 
     /** WMI commands related to motion detection **/
     WMI_MOTION_DET_CONFIG_PARAM_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -1822,6 +1824,8 @@ typedef enum {
     WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID,
     WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID,
     WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID,
+    WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID,
+    WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID,
 
     /** Events in Prototyping phase */
     WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
@@ -8373,12 +8377,6 @@ typedef struct {
 /* TWT required */
 #define WMI_HEOPS_TWT_REQUIRED_GET_D2(he_ops) WMI_GET_BITS(he_ops, 9, 1)
 #define WMI_HEOPS_TWT_REQUIRED_SET_D2(he_ops, value) WMI_SET_BITS(he_ops, 9, 1, value)
-/* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_GET instead */
-#define WMI_HEOPS_TWT_GET_D2(he_ops) \
-    WMI_HEOPS_TWT_REQUIRED_GET_D2(he_ops)
-/* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_SET instead */
-#define WMI_HEOPS_TWT_SET_D2(he_ops, value) \
-    WMI_HEOPS_TWT_REQUIRED_SET_D2(he_ops, value)
 
 /* RTS threshold in units of 32 us,0 - always use RTS 1023 - this is disabled */
 #define WMI_HEOPS_RTSTHLD_GET_D2(he_ops) WMI_GET_BITS(he_ops, 10, 10)
@@ -24082,6 +24080,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_IDLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_IDLE_TRIGGER_MONITOR_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_DSM_FILTER_CMDID);
+        WMI_RETURN_STRING(WMI_TWT_BTWT_INVITE_STA_CMDID);
+        WMI_RETURN_STRING(WMI_TWT_BTWT_REMOVE_STA_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -24820,6 +24820,10 @@ typedef enum _WMI_TWT_COMMAND_T {
 #define TWT_FLAGS_GET_PROTECTION(flag)          WMI_GET_BITS(flag, 11, 1)
 #define TWT_FLAGS_SET_PROTECTION(flag, val)     WMI_SET_BITS(flag, 11, 1, val)
 
+/* B-TWT ID 0: 0 means non-0 B-TWT ID or I-TWT, 1 means B-TWT ID 0 */
+#define TWT_FLAGS_GET_BTWT_ID0(flag)            WMI_GET_BITS(flag, 12, 1)
+#define TWT_FLAGS_SET_BTWT_ID0(flag, val)       WMI_SET_BITS(flag, 12, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
@@ -24847,6 +24851,11 @@ typedef struct {
      * Refer to 11ax spec session "9.4.2.199 TWT element" for more info.
      */
     A_UINT32 b_twt_persistence;
+
+    /* Broadcast TWT(B-TWT) Recommendation, refer to section
+     * "9.4.2.199 TWT element" of latest 11ax draft
+     */
+    A_UINT32 b_twt_recommendation;
 } wmi_twt_add_dialog_cmd_fixed_param;
 
 /* status code of adding TWT dialog */
@@ -24957,6 +24966,60 @@ typedef struct {
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_RESUME_TWT_STATUS_T */
 } wmi_twt_resume_dialog_complete_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_btwt_invite_sta_cmd_fixed_param  */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+} wmi_twt_btwt_invite_sta_cmd_fixed_param;
+
+/* status code of inviting STA to B-TWT dialog */
+typedef enum _WMI_TWT_BTWT_INVITE_STA_STATUS_T {
+    WMI_TWT_BTWT_INVITE_STA_STATUS_OK,                  /* inviting STA to B-TWT successfully completed */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_DIALOG_ID_NOT_EXIST, /* TWT dialog ID not exists */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_INVALID_PARAM,       /* invalid parameters */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_ALREADY_JOINED,      /* peer STA already joined the session */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_NO_RESOURCE,         /* FW resource exhausted */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_NO_ACK,              /* peer STA did not ACK the request/response frame */
+    WMI_TWT_BTWT_INVITE_STA_STATUS_UNKNOWN_ERROR,       /* failed with an unknown reason */
+} WMI_TWT_BTWT_INVITE_STA_STATUS_T;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_twt_btwt_invite_sta_complete_event_fixed_param */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+    A_UINT32 status;        /* refer to WMI_TWT_BTWT_INVITE_STA_STATUS_T */
+} wmi_twt_btwt_invite_sta_complete_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_twt_btwt_remove_sta_cmd_fixed_param  */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+} wmi_twt_btwt_remove_sta_cmd_fixed_param;
+
+/* status code of removing STA from B-TWT dialog */
+typedef enum _WMI_TWT_BTWT_REMOVE_STA_STATUS_T {
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_OK,                  /* removing STA from B-TWT successfully completed */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_DIALOG_ID_NOT_EXIST, /* TWT dialog ID not exists */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_INVALID_PARAM,       /* invalid parameters */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_NOT_JOINED,          /* peer STA not joined yet */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_NO_RESOURCE,         /* FW resource exhausted */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_NO_ACK,              /* peer STA did not ACK the request/response frame */
+    WMI_TWT_BTWT_REMOVE_STA_STATUS_UNKNOWN_ERROR,       /* failed with an unknown reason */
+} WMI_TWT_BTWT_REMOVE_STA_STATUS_T;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_twt_btwt_remove_sta_complete_event_fixed_param */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+    A_UINT32 status;        /* refer to WMI_TWT_BTWT_REMOVE_STA_STATUS_T */
+} wmi_twt_btwt_remove_sta_complete_event_fixed_param;
 
 typedef enum {
     WMI_DMA_RING_CONFIG_MODULE_SPECTRAL,
@@ -26328,8 +26391,6 @@ typedef struct {
   #define WMI_HEOPS_DEFPE_SET WMI_HEOPS_DEFPE_SET_D3
   #define WMI_HEOPS_TWT_REQUIRED_GET WMI_HEOPS_TWT_REQUIRED_GET_D3
   #define WMI_HEOPS_TWT_REQUIRED_SET WMI_HEOPS_TWT_REQUIRED_SET_D3
-  #define WMI_HEOPS_TWT_GET WMI_HEOPS_TWT_REQUIRED_GET_D3  /* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_GET */
-  #define WMI_HEOPS_TWT_SET WMI_HEOPS_TWT_REQUIRED_SET_D3  /* DEPRECATED, use WMI_HEOPS_TWT_REQUIRED_SET */
   #define WMI_HEOPS_RTSTHLD_GET WMI_HEOPS_RTSTHLD_GET_D3
   #define WMI_HEOPS_RTSTHLD_SET WMI_HEOPS_RTSTHLD_SET_D3
   #define WMI_HEOPS_PARTBSSCOLOR_GET WMI_HEOPS_PARTBSSCOLOR_GET_D3
@@ -26550,8 +26611,6 @@ typedef struct {
   #define WMI_HEOPS_DEFPE_SET WMI_HEOPS_DEFPE_SET_D2
   #define WMI_HEOPS_TWT_REQUIRED_GET WMI_HEOPS_TWT_REQUIRED_GET_D2
   #define WMI_HEOPS_TWT_REQUIRED_SET WMI_HEOPS_TWT_REQUIRED_SET_D2
-  #define WMI_HEOPS_TWT_GET WMI_HEOPS_TWT_GET_D2     /* Depricated */
-  #define WMI_HEOPS_TWT_SET WMI_HEOPS_TWT_SET_D2     /* Depricated */
   #define WMI_HEOPS_RTSTHLD_GET WMI_HEOPS_RTSTHLD_GET_D2
   #define WMI_HEOPS_RTSTHLD_SET WMI_HEOPS_RTSTHLD_SET_D2
   #define WMI_HEOPS_PARTBSSCOLOR_GET WMI_HEOPS_PARTBSSCOLOR_GET_D2
