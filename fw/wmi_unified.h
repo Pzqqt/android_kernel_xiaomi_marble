@@ -5901,6 +5901,20 @@ typedef enum {
     /* Parameter used for enabling/disabling non wlan coex from boot */
     WMI_PDEV_PARAM_ENABLE_NON_WLAN_COEX_FROM_BOOT,
 
+    /* Parameter used to configure OBSS Packet Detection per Access Category
+     * for Spatial Reuse feature.
+     * Based on the bits set, the corresponding Access Category Queues will have
+     * spatial reuse enabled / disabled.
+     * bit    | AC
+     * -----------
+     * 0      | BK
+     * 1      | BE
+     * 2      | VI
+     * 3      | VO
+     * 4 - 31 | Reserved
+     */
+    WMI_PDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
@@ -25659,7 +25673,7 @@ typedef struct {
 } wmi_hpcs_pulse_start_cmd_fixed_param;
 
 typedef struct {
-     /* TLV tag and len; tag equals wmi_muedca_params_config_event_fixed_param */
+     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_muedca_params_config_event_fixed_param */
      A_UINT32 tlv_header;                          /** TLV Header */
      A_UINT32 pdev_id;
      /*
