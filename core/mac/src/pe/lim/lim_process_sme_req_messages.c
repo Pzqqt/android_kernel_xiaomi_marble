@@ -1351,7 +1351,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 */
 
 		/* store the smejoin req handle in session table */
-		session->pLimJoinReq = sme_join_req;
+		session->lim_join_req = sme_join_req;
 
 		/* Store beaconInterval */
 		session->beaconParams.beaconInterval =
@@ -1529,15 +1529,17 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		}
 
 		if (sme_join_req->addIEScan.length)
-			qdf_mem_copy(&session->pLimJoinReq->addIEScan,
-				&sme_join_req->addIEScan, sizeof(tSirAddie));
+			qdf_mem_copy(&session->lim_join_req->addIEScan,
+				     &sme_join_req->addIEScan,
+				     sizeof(tSirAddie));
 
 		if (sme_join_req->addIEAssoc.length)
-			qdf_mem_copy(&session->pLimJoinReq->addIEAssoc,
-				&sme_join_req->addIEAssoc, sizeof(tSirAddie));
+			qdf_mem_copy(&session->lim_join_req->addIEAssoc,
+				     &sme_join_req->addIEAssoc,
+				     sizeof(tSirAddie));
 
 		val = sizeof(tLimMlmJoinReq) +
-			session->pLimJoinReq->bssDescription.length + 2;
+			session->lim_join_req->bssDescription.length + 2;
 		mlm_join_req = qdf_mem_malloc(val);
 		if (!mlm_join_req) {
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -1575,15 +1577,15 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			 session->supported_nss_1x1);
 
 		mlm_join_req->bssDescription.length =
-			session->pLimJoinReq->bssDescription.length;
+			session->lim_join_req->bssDescription.length;
 
 		qdf_mem_copy((uint8_t *) &mlm_join_req->bssDescription.bssId,
 			(uint8_t *)
-			&session->pLimJoinReq->bssDescription.bssId,
-			session->pLimJoinReq->bssDescription.length + 2);
+			&session->lim_join_req->bssDescription.bssId,
+			session->lim_join_req->bssDescription.length + 2);
 
 		session->limCurrentBssCaps =
-			session->pLimJoinReq->bssDescription.capabilityInfo;
+			session->lim_join_req->bssDescription.capabilityInfo;
 
 		reg_max = lim_get_regulatory_max_transmit_power(mac_ctx,
 				session->currentOperChannel);
@@ -1591,9 +1593,9 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		lim_extract_ap_capability(mac_ctx,
 			(uint8_t *)
-			session->pLimJoinReq->bssDescription.ieFields,
+			session->lim_join_req->bssDescription.ieFields,
 			lim_get_ielen_from_bss_description(
-			&session->pLimJoinReq->bssDescription),
+			&session->lim_join_req->bssDescription),
 			&session->limCurrentBssQosCaps,
 			&session->gLimCurrentBssUapsd,
 			&local_power_constraint, session);
@@ -1621,7 +1623,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		if (session->gLimCurrentBssUapsd) {
 			session->gUapsdPerAcBitmask =
-				session->pLimJoinReq->uapsdPerAcBitmask;
+				session->lim_join_req->uapsdPerAcBitmask;
 			pe_debug("UAPSD flag for all AC - 0x%2x",
 				session->gUapsdPerAcBitmask);
 
@@ -1691,7 +1693,7 @@ end:
 		qdf_mem_free(sme_join_req);
 		sme_join_req = NULL;
 		if (session)
-			session->pLimJoinReq = NULL;
+			session->lim_join_req = NULL;
 	}
 	if (ret_code != eSIR_SME_SUCCESS) {
 		if (session) {

@@ -573,7 +573,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->connected_akm = pe_session->connected_akm;
 
 	/* Fields to be filled later */
-	ft_session->pLimJoinReq = NULL;
+	ft_session->lim_join_req = NULL;
 	ft_session->smeSessionId = pe_session->smeSessionId;
 
 	lim_extract_ap_capabilities(mac, (uint8_t *) pbssDescription->ieFields,

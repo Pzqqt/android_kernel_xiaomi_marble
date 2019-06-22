@@ -809,8 +809,8 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 				pe_session = NULL;
 			}
 		} else {
-			qdf_mem_free(pe_session->pLimJoinReq);
-			pe_session->pLimJoinReq = NULL;
+			qdf_mem_free(pe_session->lim_join_req);
+			pe_session->lim_join_req = NULL;
 
 			pe_debug("Lim Posting eWNI_SME_JOIN_RSP to SME."
 				"resultCode: %d,status_code: %d,"
@@ -2709,7 +2709,7 @@ static void lim_set_mbssid_info(struct pe_session *pe_session)
 {
 	struct scan_mbssid_info *mbssid_info;
 
-	mbssid_info = &pe_session->pLimJoinReq->bssDescription.mbssid_info;
+	mbssid_info = &pe_session->lim_join_req->bssDescription.mbssid_info;
 	mlme_set_mbssid_info(pe_session->vdev, mbssid_info);
 }
 
@@ -2787,7 +2787,7 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->staIdx = staIdx;
 	pAddStaParams->updateSta = updateSta;
 	qdf_mem_copy(&pAddStaParams->mbssid_info,
-		     &pe_session->pLimJoinReq->bssDescription.mbssid_info,
+		     &pe_session->lim_join_req->bssDescription.mbssid_info,
 		     sizeof(struct scan_mbssid_info));
 
 	lim_set_mbssid_info(pe_session);
@@ -4100,7 +4100,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
 	struct bss_description *bssDescription =
-		&pe_session->pLimJoinReq->bssDescription;
+		&pe_session->lim_join_req->bssDescription;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;

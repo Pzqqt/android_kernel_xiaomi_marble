@@ -332,7 +332,7 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 	pe_debug("SessionId: %d Authenticated with BSS",
 		session_entry->peSessionId);
 
-	if (!session_entry->pLimJoinReq) {
+	if (!session_entry->lim_join_req) {
 		pe_err("Join Request is NULL");
 		/* No need to Assert. JOIN timeout will handle this error */
 		return;
@@ -352,7 +352,7 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 		pe_err("could not retrieve Capabilities value");
 
 	/* Clear spectrum management bit if AP doesn't support it */
-	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
+	if (!(session_entry->lim_join_req->bssDescription.capabilityInfo &
 		LIM_SPECTRUM_MANAGEMENT_BIT_MASK))
 		/*
 		 * AP doesn't support spectrum management
@@ -361,19 +361,19 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 		caps &= (~LIM_SPECTRUM_MANAGEMENT_BIT_MASK);
 
 	/* Clear rrm bit if AP doesn't support it */
-	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
+	if (!(session_entry->lim_join_req->bssDescription.capabilityInfo &
 		LIM_RRM_BIT_MASK))
 		caps &= (~LIM_RRM_BIT_MASK);
 
 	/* Clear short preamble bit if AP does not support it */
-	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
+	if (!(session_entry->lim_join_req->bssDescription.capabilityInfo &
 		(LIM_SHORT_PREAMBLE_BIT_MASK))) {
 		caps &= (~LIM_SHORT_PREAMBLE_BIT_MASK);
 		pe_debug("Clearing short preamble:no AP support");
 	}
 
 	/* Clear immediate block ack bit if AP does not support it */
-	if (!(session_entry->pLimJoinReq->bssDescription.capabilityInfo &
+	if (!(session_entry->lim_join_req->bssDescription.capabilityInfo &
 		(LIM_IMMEDIATE_BLOCK_ACK_MASK))) {
 		caps &= (~LIM_IMMEDIATE_BLOCK_ACK_MASK);
 		pe_debug("Clearing Immed Blk Ack:no AP support");
@@ -1262,8 +1262,8 @@ QDF_STATUS lim_sta_send_down_link(join_params *param)
 		 * to SME
 		 */
 		lim_cleanup_rx_path(mac_ctx, sta_ds, session);
-		qdf_mem_free(session->pLimJoinReq);
-		session->pLimJoinReq = NULL;
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
 		/* Cleanup if add bss failed */
 		if (session->add_bss_failed) {
 			dph_delete_hash_entry(mac_ctx,
@@ -1273,8 +1273,8 @@ QDF_STATUS lim_sta_send_down_link(join_params *param)
 		}
 		return QDF_STATUS_SUCCESS;
 	}
-	qdf_mem_free(session->pLimJoinReq);
-	session->pLimJoinReq = NULL;
+	qdf_mem_free(session->lim_join_req);
+	session->lim_join_req = NULL;
 
 error:
 	/*
@@ -2984,13 +2984,13 @@ static void lim_process_switch_channel_join_req(
 		goto error;
 	}
 
-	if ((!session_entry) || (!session_entry->pLimMlmJoinReq)
-		|| (!session_entry->pLimJoinReq)) {
+	if ((!session_entry) || (!session_entry->pLimMlmJoinReq) ||
+	    (!session_entry->lim_join_req)) {
 		pe_err("invalid pointer!!");
 		goto error;
 	}
 
-	bss = &session_entry->pLimJoinReq->bssDescription;
+	bss = &session_entry->lim_join_req->bssDescription;
 	nontx_bss_id = bss->mbssid_info.profile_num;
 
 	session_entry->limPrevMlmState = session_entry->limMlmState;
@@ -3088,8 +3088,8 @@ static void lim_process_switch_channel_join_req(
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
 		session_entry->currentOperChannel, session_entry->self_mac_addr,
 		session_entry->dot11mode,
-		&session_entry->pLimJoinReq->addIEScan.length,
-		session_entry->pLimJoinReq->addIEScan.addIEdata);
+		&session_entry->lim_join_req->addIEScan.length,
+		session_entry->lim_join_req->addIEScan.addIEdata);
 
 	if (session_entry->opmode == QDF_P2P_CLIENT_MODE) {
 		/* Activate Join Periodic Probe Req timer */
@@ -3108,9 +3108,9 @@ error:
 			qdf_mem_free(session_entry->pLimMlmJoinReq);
 			session_entry->pLimMlmJoinReq = NULL;
 		}
-		if (session_entry->pLimJoinReq) {
-			qdf_mem_free(session_entry->pLimJoinReq);
-			session_entry->pLimJoinReq = NULL;
+		if (session_entry->lim_join_req) {
+			qdf_mem_free(session_entry->lim_join_req);
+			session_entry->lim_join_req = NULL;
 		}
 		join_cnf.sessionId = session_entry->peSessionId;
 	} else {

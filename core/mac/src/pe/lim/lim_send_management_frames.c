@@ -1693,13 +1693,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	sme_sessionid = pe_session->smeSessionId;
 
 	/* check this early to avoid unncessary operation */
-	if (!pe_session->pLimJoinReq) {
-		pe_err("pe_session->pLimJoinReq is NULL");
+	if (!pe_session->lim_join_req) {
+		pe_err("pe_session->lim_join_req is NULL");
 		qdf_mem_free(mlm_assoc_req);
 		return;
 	}
-	add_ie_len = pe_session->pLimJoinReq->addIEAssoc.length;
-	add_ie = pe_session->pLimJoinReq->addIEAssoc.addIEdata;
+	add_ie_len = pe_session->lim_join_req->addIEAssoc.length;
+	add_ie = pe_session->lim_join_req->addIEAssoc.addIEdata;
 
 	frm = qdf_mem_malloc(sizeof(tDot11fAssocRequest));
 	if (!frm) {
@@ -1765,7 +1765,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		      LIM_BSS_CAPS_GET(WSM, pe_session->limCurrentBssQosCaps);
 
 	if (pe_session->lim11hEnable &&
-	    pe_session->pLimJoinReq->spectrumMgtIndicator == true) {
+	    pe_session->lim_join_req->spectrumMgtIndicator == true) {
 		power_caps = true;
 
 		populate_dot11f_power_caps(mac_ctx, &frm->PowerCaps,
@@ -1818,14 +1818,14 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	if (!wps_ie) {
 		populate_dot11f_rsn_opaque(mac_ctx,
-			&(pe_session->pLimJoinReq->rsnIE),
-			&frm->RSNOpaque);
+					   &pe_session->lim_join_req->rsnIE,
+					   &frm->RSNOpaque);
 		populate_dot11f_wpa_opaque(mac_ctx,
-			&(pe_session->pLimJoinReq->rsnIE),
-			&frm->WPAOpaque);
+					   &pe_session->lim_join_req->rsnIE,
+					   &frm->WPAOpaque);
 #if defined(FEATURE_WLAN_WAPI)
 		populate_dot11f_wapi_opaque(mac_ctx,
-			&(pe_session->pLimJoinReq->rsnIE),
+			&(pe_session->lim_join_req->rsnIE),
 			&frm->WAPIOpaque);
 #endif /* defined(FEATURE_WLAN_WAPI) */
 	}
@@ -1910,16 +1910,16 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_he_caps(mac_ctx, NULL, &frm->he_cap);
 	}
 
-	if (pe_session->pLimJoinReq->is11Rconnection) {
+	if (pe_session->lim_join_req->is11Rconnection) {
 		struct bss_description *bssdescr;
 
-		bssdescr = &pe_session->pLimJoinReq->bssDescription;
+		bssdescr = &pe_session->lim_join_req->bssDescription;
 		pe_debug("mdie = %02x %02x %02x",
 			(unsigned int) bssdescr->mdie[0],
 			(unsigned int) bssdescr->mdie[1],
 			(unsigned int) bssdescr->mdie[2]);
 		populate_mdie(mac_ctx, &frm->MobilityDomain,
-			pe_session->pLimJoinReq->bssDescription.mdie);
+			pe_session->lim_join_req->bssDescription.mdie);
 
 		/*
 		 * IEEE80211-ai [13.2.4 FT initial mobility domain association
@@ -1945,7 +1945,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_ese_version(&frm->ESEVersion);
 	/* For ESE Associations fill the ESE IEs */
 	if (pe_session->isESEconnection &&
-	    pe_session->pLimJoinReq->isESEFeatureIniEnabled) {
+	    pe_session->lim_join_req->isESEFeatureIniEnabled) {
 #ifndef FEATURE_DISABLE_RM
 		populate_dot11f_ese_rad_mgmt_cap(&frm->ESERadMgmtCap);
 #endif
@@ -2398,10 +2398,10 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		}
 
 		/* include MDIE in FILS authentication frame */
-		if (session->pLimJoinReq &&
-		    session->pLimJoinReq->is11Rconnection &&
+		if (session->lim_join_req &&
+		    session->lim_join_req->is11Rconnection &&
 		    auth_frame->authAlgoNumber == SIR_FILS_SK_WITHOUT_PFS &&
-		    session->pLimJoinReq->bssDescription.mdiePresent)
+		    session->lim_join_req->bssDescription.mdiePresent)
 			frame_len += (2 + SIR_MDIE_SIZE);
 		break;
 

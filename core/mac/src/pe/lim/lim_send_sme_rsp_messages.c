@@ -286,18 +286,18 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			ht_profile->apChanWidth = session_entry->ch_width;
 		}
 #endif
-		pe_debug("pLimJoinReq:%pK, pLimReAssocReq:%pK",
-			session_entry->pLimJoinReq,
-			session_entry->pLimReAssocReq);
+		pe_debug("lim_join_req:%pK, pLimReAssocReq:%pK",
+			 session_entry->lim_join_req,
+			 session_entry->pLimReAssocReq);
 
-		if (session_entry->pLimJoinReq)
-			join_reassoc_req = session_entry->pLimJoinReq;
+		if (session_entry->lim_join_req)
+			join_reassoc_req = session_entry->lim_join_req;
 
 		if (session_entry->pLimReAssocReq)
 			join_reassoc_req = session_entry->pLimReAssocReq;
 
 		if (!join_reassoc_req) {
-			pe_err("both  pLimJoinReq and pLimReAssocReq NULL");
+			pe_err("both  lim_join_req and pLimReAssocReq NULL");
 			return;
 		}
 

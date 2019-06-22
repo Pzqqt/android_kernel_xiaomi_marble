@@ -1309,9 +1309,9 @@ populate_dot11f_power_caps(struct mac_context *mac,
 			pe_session->pLimReAssocReq->powerCap.maxTxPower;
 	} else {
 		pCaps->minTxPower =
-			pe_session->pLimJoinReq->powerCap.minTxPower;
+			pe_session->lim_join_req->powerCap.minTxPower;
 		pCaps->maxTxPower =
-			pe_session->pLimJoinReq->powerCap.maxTxPower;
+			pe_session->lim_join_req->powerCap.maxTxPower;
 
 	}
 
@@ -1501,10 +1501,10 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 		pDot11f->num_bands =
 			pe_session->pLimReAssocReq->supportedChannels.numChnl;
 	} else {
-		p = (uint8_t *) pe_session->pLimJoinReq->supportedChannels.
+		p = (uint8_t *)pe_session->lim_join_req->supportedChannels.
 		    channelList;
 		pDot11f->num_bands =
-			pe_session->pLimJoinReq->supportedChannels.numChnl;
+			pe_session->lim_join_req->supportedChannels.numChnl;
 	}
 	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
 		pDot11f->bands[i][0] = *p;

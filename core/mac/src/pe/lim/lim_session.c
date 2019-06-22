@@ -887,9 +887,9 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		session->pLimStartBssReq = NULL;
 	}
 
-	if (session->pLimJoinReq) {
-		qdf_mem_free(session->pLimJoinReq);
-		session->pLimJoinReq = NULL;
+	if (session->lim_join_req) {
+		qdf_mem_free(session->lim_join_req);
+		session->lim_join_req = NULL;
 	}
 
 	if (session->pLimReAssocReq) {

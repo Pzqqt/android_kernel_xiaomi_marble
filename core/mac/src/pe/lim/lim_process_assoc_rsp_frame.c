@@ -1016,11 +1016,10 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	 * was received earlier
 	*/
 	ie_len = lim_get_ielen_from_bss_description(
-		&session_entry->pLimJoinReq->bssDescription);
+		&session_entry->lim_join_req->bssDescription);
 	lim_extract_ap_capabilities(mac_ctx,
-		(uint8_t *) session_entry->pLimJoinReq->bssDescription.ieFields,
-		ie_len,
-		beacon);
+		(uint8_t *)session_entry->lim_join_req->bssDescription.ieFields,
+		ie_len, beacon);
 
 	if (lim_is_session_he_capable(session_entry)) {
 		session_entry->mu_edca_present = assoc_rsp->mu_edca_present;
@@ -1069,7 +1068,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	/* Update the BSS Entry, this entry was added during preassoc. */
 	if (QDF_STATUS_SUCCESS == lim_sta_send_add_bss(mac_ctx, assoc_rsp,
 			beacon,
-			&session_entry->pLimJoinReq->bssDescription, true,
+			&session_entry->lim_join_req->bssDescription, true,
 			 session_entry)) {
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);

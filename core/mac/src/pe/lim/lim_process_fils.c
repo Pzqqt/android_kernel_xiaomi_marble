@@ -1110,10 +1110,10 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	 * MDIE to be sent in auth frame during initial
 	 * mobility domain association
 	 */
-	if (session->pLimJoinReq->is11Rconnection) {
+	if (session->lim_join_req->is11Rconnection) {
 		struct bss_description *bss_desc;
 
-		bss_desc = &session->pLimJoinReq->bssDescription;
+		bss_desc = &session->lim_join_req->bssDescription;
 
 		if (bss_desc->mdiePresent) {
 			/* Populate MDIE received from AP */
@@ -1210,7 +1210,7 @@ static QDF_STATUS lim_generate_fils_pmkr0(struct pe_session *pe_session)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pe_fils_session *fils_info = pe_session->fils_info;
 	struct bss_description *bss_desc =
-			&pe_session->pLimJoinReq->bssDescription;
+			&pe_session->lim_join_req->bssDescription;
 
 	if (!fils_info)
 		return QDF_STATUS_E_FAILURE;

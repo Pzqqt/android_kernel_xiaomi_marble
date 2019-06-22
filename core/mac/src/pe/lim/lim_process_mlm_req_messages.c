@@ -2127,8 +2127,8 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 			session->pLimMlmJoinReq->bssDescription.bssId,
 			session->currentOperChannel /*chanNum */,
 			session->self_mac_addr, session->dot11mode,
-			&session->pLimJoinReq->addIEScan.length,
-			session->pLimJoinReq->addIEScan.addIEdata);
+			&session->lim_join_req->addIEScan.length,
+			session->lim_join_req->addIEScan.addIEdata);
 		lim_deactivate_and_change_timer(mac_ctx,
 				eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 		/* Activate Join Periodic Probe Req timer */

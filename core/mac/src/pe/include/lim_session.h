@@ -160,7 +160,7 @@ struct pe_session {
 	uint8_t operMode;       /* AP - 0; STA - 1 ; */
 	tSirNwType nwType;
 	struct start_bss_req *pLimStartBssReq; /* handle to start bss req */
-	struct join_req *pLimJoinReq;    /* handle to sme join req */
+	struct join_req *lim_join_req;    /* handle to sme join req */
 	struct join_req *pLimReAssocReq; /* handle to sme reassoc req */
 	tpLimMlmJoinReq pLimMlmJoinReq; /* handle to MLM join Req */
 	void *pLimMlmReassocRetryReq;   /* keep reasoc req for retry */

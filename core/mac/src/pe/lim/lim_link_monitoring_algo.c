@@ -517,8 +517,8 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 			 */
 			pe_debug("HB missed from AP. Sending Probe Req");
 			/* for searching AP, we don't include any more IE */
-			if (session->pLimJoinReq) {
-				scan_ie = &session->pLimJoinReq->addIEScan;
+			if (session->lim_join_req) {
+				scan_ie = &session->lim_join_req->addIEScan;
 				lim_send_probe_req_mgmt_frame(mac_ctx,
 					&session->ssId,
 					session->bssId, curr_chan,
