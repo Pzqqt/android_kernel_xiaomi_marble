@@ -1205,7 +1205,7 @@ lim_send_assoc_rsp_mgmt_frame(
 		assoc_req = (tpSirAssocReq)
 			pe_session->parsedAssocReq[sta->assocId];
 		/*
-		 * populate P2P IE in AssocRsp when assocReq from the peer
+		 * populate P2P IE in AssocRsp when assoc_req from the peer
 		 * includes P2P IE
 		 */
 		if (assoc_req && assoc_req->addIEPresent)
@@ -2283,9 +2283,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		     adaptive_11r_ie, adaptive_11r_ie_len);
 	payload = payload + adaptive_11r_ie_len;
 
-	if (pe_session->assocReq) {
-		qdf_mem_free(pe_session->assocReq);
-		pe_session->assocReq = NULL;
+	if (pe_session->assoc_req) {
+		qdf_mem_free(pe_session->assoc_req);
+		pe_session->assoc_req = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
@@ -2298,13 +2298,13 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		}
 	}
 
-	pe_session->assocReq = qdf_mem_malloc(payload);
-	if (pe_session->assocReq) {
+	pe_session->assoc_req = qdf_mem_malloc(payload);
+	if (pe_session->assoc_req) {
 		/*
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
 		 */
-		qdf_mem_copy(pe_session->assocReq,
+		qdf_mem_copy(pe_session->assoc_req,
 			     frame + sizeof(tSirMacMgmtHdr), payload);
 		pe_session->assocReqLen = payload;
 	}

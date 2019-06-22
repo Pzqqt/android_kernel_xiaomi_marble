@@ -226,7 +226,7 @@ struct pe_session {
 	uint8_t *beacon;        /* Used to store last beacon / probe response before assoc. */
 
 	uint32_t assocReqLen;
-	uint8_t *assocReq;      /* Used to store association request frame sent out while associating. */
+	uint8_t *assoc_req;      /* Used to store association request frame */
 
 	uint32_t assocRspLen;
 	uint8_t *assocRsp;      /* Used to store association response received while associating */

@@ -883,9 +883,9 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		session->bcnLen = 0;
 	}
 
-	if (session->assocReq) {
-		qdf_mem_free(session->assocReq);
-		session->assocReq = NULL;
+	if (session->assoc_req) {
+		qdf_mem_free(session->assoc_req);
+		session->assoc_req = NULL;
 		session->assocReqLen = 0;
 	}
 

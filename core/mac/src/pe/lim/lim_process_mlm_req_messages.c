@@ -914,7 +914,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 end:
 	/* Update PE session Id */
 	mlm_assoc_cnf.sessionId = mlm_assoc_req->sessionId;
-	/* Free up buffer allocated for assocReq */
+	/* Free up buffer allocated for assoc_req */
 	qdf_mem_free(mlm_assoc_req);
 	lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			     (uint32_t *) &mlm_assoc_cnf);

@@ -370,9 +370,9 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	pe_debug("*** Sending Re-Assoc Request length: %d %d to",
 		       bytes, payload);
 
-	if (pe_session->assocReq) {
-		qdf_mem_free(pe_session->assocReq);
-		pe_session->assocReq = NULL;
+	if (pe_session->assoc_req) {
+		qdf_mem_free(pe_session->assoc_req);
+		pe_session->assoc_req = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
@@ -382,13 +382,13 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		payload += add_ie_len;
 	}
 
-	pe_session->assocReq = qdf_mem_malloc(payload);
-	if (pe_session->assocReq) {
+	pe_session->assoc_req = qdf_mem_malloc(payload);
+	if (pe_session->assoc_req) {
 		/*
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
 		 */
-		qdf_mem_copy(pe_session->assocReq,
+		qdf_mem_copy(pe_session->assoc_req,
 			     frame + sizeof(tSirMacMgmtHdr), payload);
 		pe_session->assocReqLen = payload;
 	}
@@ -416,22 +416,23 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		 pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (pe_session->assocReq) {
-		qdf_mem_free(pe_session->assocReq);
-		pe_session->assocReq = NULL;
+	if (pe_session->assoc_req) {
+		qdf_mem_free(pe_session->assoc_req);
+		pe_session->assoc_req = NULL;
 		pe_session->assocReqLen = 0;
 	}
 	if (ft_ies_length) {
-		pe_session->assocReq = qdf_mem_malloc(ft_ies_length);
-		if (!pe_session->assocReq) {
+		pe_session->assoc_req = qdf_mem_malloc(ft_ies_length);
+		if (!pe_session->assoc_req) {
 			pe_session->assocReqLen = 0;
 		} else {
 			/*
 			 * Store the FT IEs. This is sent to csr/hdd in
 			 * join cnf response.
 			 */
-			qdf_mem_copy(pe_session->assocReq,
-				ft_sme_context->reassoc_ft_ies, ft_ies_length);
+			qdf_mem_copy(pe_session->assoc_req,
+				     ft_sme_context->reassoc_ft_ies,
+				     ft_ies_length);
 			pe_session->assocReqLen = ft_ies_length;
 		}
 	} else {
@@ -741,9 +742,9 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 
 	pe_debug("*** Sending Re-Association Request length: %d" "to", nBytes);
 
-	if (pe_session->assocReq) {
-		qdf_mem_free(pe_session->assocReq);
-		pe_session->assocReq = NULL;
+	if (pe_session->assoc_req) {
+		qdf_mem_free(pe_session->assoc_req);
+		pe_session->assoc_req = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
@@ -753,10 +754,10 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 		nPayload += nAddIELen;
 	}
 
-	pe_session->assocReq = qdf_mem_malloc(nPayload);
-	if (pe_session->assocReq) {
+	pe_session->assoc_req = qdf_mem_malloc(nPayload);
+	if (pe_session->assoc_req) {
 		/* Store the Assocrequest. It is sent to csr in joincnfrsp */
-		qdf_mem_copy(pe_session->assocReq,
+		qdf_mem_copy(pe_session->assoc_req,
 			     pFrame + sizeof(tSirMacMgmtHdr), nPayload);
 		pe_session->assocReqLen = nPayload;
 	}

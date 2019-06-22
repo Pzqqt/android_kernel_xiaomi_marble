@@ -203,15 +203,15 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			sme_join_rsp->beaconLength);
 	}
 
-	if (session_entry->assocReq) {
+	if (session_entry->assoc_req) {
 		sme_join_rsp->assocReqLength =
 			session_entry->assocReqLen;
 		qdf_mem_copy(sme_join_rsp->frames +
 			     sme_join_rsp->beaconLength,
-			     session_entry->assocReq,
+			     session_entry->assoc_req,
 			     sme_join_rsp->assocReqLength);
-		qdf_mem_free(session_entry->assocReq);
-		session_entry->assocReq = NULL;
+		qdf_mem_free(session_entry->assoc_req);
+		session_entry->assoc_req = NULL;
 		session_entry->assocReqLen = 0;
 		pe_debug("AssocReq: %d",
 			sme_join_rsp->assocReqLength);
@@ -325,9 +325,9 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 			session_entry->beacon = NULL;
 			session_entry->bcnLen = 0;
 		}
-		if (session_entry->assocReq) {
-			qdf_mem_free(session_entry->assocReq);
-			session_entry->assocReq = NULL;
+		if (session_entry->assoc_req) {
+			qdf_mem_free(session_entry->assoc_req);
+			session_entry->assoc_req = NULL;
 			session_entry->assocReqLen = 0;
 		}
 		if (session_entry->assocRsp) {
