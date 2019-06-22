@@ -47,13 +47,19 @@
  * @PLD_BUS_TYPE_NONE: invalid bus type, only return in error cases
  * @PLD_BUS_TYPE_PCIE: PCIE bus
  * @PLD_BUS_TYPE_SNOC: SNOC bus
+ * @PLD_BUS_TYPE_SDIO: SDIO bus
+ * @PLD_BUS_TYPE_USB : USB bus
+ * @PLD_BUS_TYPE_SNOC_FW_SIM : SNOC FW SIM bus
+ * @PLD_BUS_TYPE_PCIE_FW_SIM : PCIE FW SIM bus
  */
 enum pld_bus_type {
 	PLD_BUS_TYPE_NONE = -1,
 	PLD_BUS_TYPE_PCIE = 0,
 	PLD_BUS_TYPE_SNOC,
 	PLD_BUS_TYPE_SDIO,
-	PLD_BUS_TYPE_USB
+	PLD_BUS_TYPE_USB,
+	PLD_BUS_TYPE_SNOC_FW_SIM,
+	PLD_BUS_TYPE_PCIE_FW_SIM,
 };
 
 #define PLD_MAX_FIRMWARE_SIZE (1 * 1024 * 1024)
@@ -698,7 +704,94 @@ int pld_idle_shutdown(struct device *dev,
  */
 int pld_idle_restart(struct device *dev,
 		     int (*restart_cb)(struct device *dev));
+/**
+ * pld_srng_request_irq() - Register IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ * @handler: IRQ callback function
+ * @irqflags: IRQ flags
+ * @name: IRQ name
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_srng_request_irq(struct device *dev, int irq, irq_handler_t handler,
+			 unsigned long irqflags,
+			 const char *name,
+			 void *ctx);
+/**
+ * pld_srng_free_irq() - Free IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ * @ctx: IRQ context
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_srng_free_irq(struct device *dev, int irq, void *ctx);
 
+/**
+ * pld_srng_enable_irq() - Enable IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ *
+ * Return: void
+ */
+void pld_srng_enable_irq(struct device *dev, int irq);
+
+/**
+ * pld_disable_irq() - Disable IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ *
+ * Return: void
+ */
+void pld_srng_disable_irq(struct device *dev, int irq);
+
+/**
+ * pld_pci_read_config_word() - Read PCI config
+ * @pdev: pci device
+ * @offset: Config space offset
+ * @val : Value
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pci_read_config_word(struct pci_dev *pdev, int offset, uint16_t *val);
+
+/**
+ * pld_pci_write_config_word() - Write PCI config
+ * @pdev: pci device
+ * @offset: Config space offset
+ * @val : Value
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pci_write_config_word(struct pci_dev *pdev, int offset, uint16_t val);
+
+/**
+ * pld_pci_read_config_dword() - Read PCI config
+ * @pdev: pci device
+ * @offset: Config space offset
+ * @val : Value
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pci_read_config_dword(struct pci_dev *pdev, int offset, uint32_t *val);
+
+/**
+ * pld_pci_write_config_dword() - Write PCI config
+ * @pdev: pci device
+ * @offset: Config space offset
+ * @val : Value
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_pci_write_config_dword(struct pci_dev *pdev, int offset, uint32_t val);
 #if defined(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 
 /**

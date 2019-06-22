@@ -22,6 +22,7 @@
 #ifdef CONFIG_PLD_PCIE_CNSS
 #include <net/cnss2.h>
 #endif
+#include <linux/pci.h>
 #include "pld_internal.h"
 
 #ifdef DYNAMIC_SINGLE_CHIP
@@ -36,7 +37,7 @@
 
 #endif
 
-#ifndef HIF_PCI
+#ifndef CONFIG_PLD_PCIE_CNSS
 static inline int pld_pcie_register_driver(void)
 {
 	return 0;

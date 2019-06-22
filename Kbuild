@@ -1815,12 +1815,17 @@ PLD_INC :=	-I$(WLAN_ROOT)/$(PLD_INC_DIR) \
 
 PLD_OBJS :=	$(PLD_SRC_DIR)/pld_common.o
 
-ifeq ($(CONFIG_HIF_PCI), y)
-PLD_OBJS +=	$(PLD_SRC_DIR)/pld_pcie.o
+ifeq ($(CONFIG_PCIE_FW_SIM), y)
+PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie_fw_sim.o
+else ifeq ($(CONFIG_HIF_PCI), y)
+PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie.o
 endif
-ifeq ($(CONFIG_ICNSS), y)
-PLD_OBJS +=	$(PLD_SRC_DIR)/pld_snoc.o
+ifeq ($(CONFIG_SNOC_FW_SIM),y)
+PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc_fw_sim.o
+else ifeq ($(CONFIG_ICNSS),y)
+PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc.o
 endif
+
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
 endif
@@ -2134,7 +2139,15 @@ cppflags-$(CONFIG_WLAN_FW_OFFLOAD) += -DWLAN_FW_OFFLOAD
 cppflags-$(CONFIG_WLAN_FEATURE_ELNA) += -DWLAN_FEATURE_ELNA
 
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
-cppflags-$(CONFIG_PLD_PCIE_CNSS_FLAG) += -DCONFIG_PLD_PCIE_CNSS
+
+ifeq ($(CONFIG_PLD_PCIE_CNSS_FLAG), y)
+ifeq ($(CONFIG_PCIE_FW_SIM), y)
+cppflags-y += -DCONFIG_PLD_PCIE_FW_SIM
+else
+cppflags-y += -DCONFIG_PLD_PCIE_CNSS
+endif
+endif
+
 cppflags-$(CONFIG_PLD_PCIE_INIT_FLAG) += -DCONFIG_PLD_PCIE_INIT
 cppflags-$(CONFIG_WLAN_FEATURE_DP_RX_THREADS) += -DFEATURE_WLAN_DP_RX_THREADS
 cppflags-$(CONFIG_WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT) += -DWLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
@@ -2159,7 +2172,13 @@ cppflags-y += -DFEATURE_RUNTIME_PM
 endif
 endif
 
-cppflags-$(CONFIG_ICNSS) += -DCONFIG_PLD_SNOC_ICNSS
+ifeq ($(CONFIG_ICNSS), y)
+ifeq ($(CONFIG_SNOC_FW_SIM), y)
+cppflags-y += -DCONFIG_PLD_SNOC_FW_SIM
+else
+cppflags-y += -DCONFIG_PLD_SNOC_ICNSS
+endif
+endif
 
 cppflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0_ADRASTEA
 cppflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0
