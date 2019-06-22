@@ -100,7 +100,7 @@ typedef struct sDphHashNode {
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
 	/* LIM state */
-	tLimMlmStaContext mlmStaContext;
+	struct lim_sta_context mlmStaContext;
 	/* qos parameter info */
 	tDphQosParams qos;
 	/*

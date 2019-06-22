@@ -686,7 +686,8 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
  */
 void
 lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
-		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
+		     uint16_t staDsAssocId,
+		     struct lim_sta_context mlmStaContext,
 		     tSirResultCodes status_code, struct pe_session *pe_session)
 {
 	tLimMlmDisassocCnf mlmDisassocCnf;
@@ -4319,7 +4320,7 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 {
 	uint16_t staDsAssocId = 0;
 	struct qdf_mac_addr sta_dsaddr;
-	tLimMlmStaContext mlmStaContext;
+	struct lim_sta_context mlmStaContext;
 
 	if (!sta) {
 		pe_err("sta is NULL");

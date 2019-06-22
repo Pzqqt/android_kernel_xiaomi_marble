@@ -168,7 +168,8 @@ static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
 
 void
 lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
-		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
+		     uint16_t staDsAssocId,
+		     struct lim_sta_context mlmStaContext,
 		     tSirResultCodes status_code,
 		     struct pe_session *pe_session);
 
