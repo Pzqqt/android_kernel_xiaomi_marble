@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -662,28 +662,20 @@ void dp_peer_multipass_list_remove(struct dp_peer *peer)
 /**
  * dp_peer_multipass_list_add: add to new multipass list
  * @dp_soc: soc handle
- * @dp_vdev: vdev handle
- * @peer_mac: mac address
+ * @peer: peer handle
  *
  * return: void
  */
-static void dp_peer_multipass_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
-					uint8_t *peer_mac)
+static void dp_peer_multipass_list_add(struct dp_soc *soc, struct dp_peer *peer)
 {
-	struct dp_peer *peer = dp_peer_find_hash_find(soc, peer_mac, 0,
-						      vdev->vdev_id);
-
-	if (!peer) {
-		return;
-	}
-
 	/*
 	 * Ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it when element is deleted from the list.
 	 */
-	qdf_spin_lock_bh(&vdev->mpass_peer_mutex);
-	TAILQ_INSERT_HEAD(&vdev->mpass_peer_list, peer, mpass_peer_list_elem);
-	qdf_spin_unlock_bh(&vdev->mpass_peer_mutex);
+	qdf_spin_lock_bh(&peer->vdev->mpass_peer_mutex);
+	TAILQ_INSERT_HEAD(&peer->vdev->mpass_peer_list, peer,
+			  mpass_peer_list_elem);
+	qdf_spin_unlock_bh(&peer->vdev->mpass_peer_mutex);
 }
 
 /**
@@ -695,14 +687,16 @@ static void dp_peer_multipass_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
  * return: void
  */
 void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
-		struct cdp_vdev *vdev_handle, uint8_t *peer_mac,
+		uint8_t vdev_id, uint8_t *peer_mac,
 		uint16_t vlan_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
-	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer = NULL;
+	struct dp_vdev *vdev =
+		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
+						   vdev_id);
 
-	if (!vdev->multipass_en)
+	if (!vdev || !vdev->multipass_en)
 		return;
 
 	peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev->vdev_id);
@@ -714,11 +708,12 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 
 	peer->vlan_id = vlan_id;
 
+	dp_peer_multipass_list_add(soc, peer);
+
 	/* Ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
 	dp_peer_unref_delete(peer);
-	dp_peer_multipass_list_add(soc, vdev, peer_mac);
 }
 
 /**

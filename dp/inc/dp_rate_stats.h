@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,7 +84,6 @@ struct wlan_peer_rate_stats_ctx {
 	struct wlan_peer_rx_rate_stats rx;
 	uint8_t mac_addr[WLAN_MAC_ADDR_LEN];
 	uint64_t peer_cookie;
-	struct cdp_pdev *pdev;
 	uint8_t pdev_id;
 };
 

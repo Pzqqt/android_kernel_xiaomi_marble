@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -321,15 +321,14 @@ void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
 /**
  * dp_summarize_tag_stats - sums up the given protocol type's counters
  * across all the rings and dumps the same
- * @pdev_handle: cdp_pdev handle
+ * @pdev: dp_pdev handle
  * @protocol_type: protocol type for which stats should be displayed
  *
  * Return: none
  */
-uint64_t dp_summarize_tag_stats(struct cdp_pdev *pdev_handle,
+uint64_t dp_summarize_tag_stats(struct dp_pdev *pdev,
 				uint16_t protocol_type)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	uint8_t ring_idx;
 	uint64_t total_tag_cnt = 0;
 
@@ -348,16 +347,23 @@ uint64_t dp_summarize_tag_stats(struct cdp_pdev *pdev_handle,
 /**
  * dp_dump_pdev_rx_protocol_tag_stats - dump the number of packets tagged for
  * given protocol type (RX_PROTOCOL_TAG_ALL indicates for all protocol)
- * @pdev_handle: cdp_pdev handle
+ * @soc: cdp_soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @protocol_type: protocol type for which stats should be displayed
  *
  * Return: none
  */
 void
-dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_pdev_rx_protocol_tag_stats(struct cdp_soc_t  *soc, uint8_t pdev_id,
 				   uint16_t protocol_type)
 {
 	uint16_t proto_idx;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+
+	if (!pdev)
+		return;
 
 	if (protocol_type != RX_PROTOCOL_TAG_ALL &&
 	    protocol_type >= RX_PROTOCOL_TAG_MAX) {
@@ -367,57 +373,76 @@ dp_dump_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
 
 	/* protocol_type in [0 ... RX_PROTOCOL_TAG_MAX] */
 	if (protocol_type != RX_PROTOCOL_TAG_ALL) {
-		dp_summarize_tag_stats(pdev_handle, protocol_type);
+		dp_summarize_tag_stats(pdev, protocol_type);
 		return;
 	}
 
 	/* protocol_type == RX_PROTOCOL_TAG_ALL */
 	for (proto_idx = 0; proto_idx < RX_PROTOCOL_TAG_MAX; proto_idx++)
-		dp_summarize_tag_stats(pdev_handle, proto_idx);
+		dp_summarize_tag_stats(pdev, proto_idx);
 }
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 
 #ifdef WLAN_SUPPORT_RX_TAG_STATISTICS
-/**
- * dp_reset_pdev_rx_protocol_tag_stats - resets the stats counters for
- * given protocol type
- * @pdev_handle: cdp_pdev handle
- * @protocol_type: protocol type for which stats should be reset
- *
- * Return: none
- */
-void
-dp_reset_pdev_rx_protocol_tag_stats(struct cdp_pdev *pdev_handle,
-				    uint16_t protocol_type)
+static void
+__dp_reset_pdev_rx_protocol_tag_stats(struct dp_pdev *pdev,
+				      uint16_t protocol_type)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	uint8_t ring_idx;
 
 	for (ring_idx = 0; ring_idx < MAX_REO_DEST_RINGS; ring_idx++)
 		pdev->reo_proto_tag_stats[ring_idx][protocol_type].tag_ctr = 0;
 	pdev->rx_err_proto_tag_stats[protocol_type].tag_ctr = 0;
 }
+
+/**
+ * dp_reset_pdev_rx_protocol_tag_stats - resets the stats counters for
+ * given protocol type
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
+ * @protocol_type: protocol type for which stats should be reset
+ *
+ * Return: none
+ */
+static void
+dp_reset_pdev_rx_protocol_tag_stats(struct cdp_soc_t  *soc, uint8_t pdev_id,
+				    uint16_t protocol_type)
+{
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+	if (!pdev)
+		return;
+
+	__dp_reset_pdev_rx_protocol_tag_stats(pdev, protocol_type);
+}
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 
 /**
  * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
  * applied to the desired protocol type packets
- * @txrx_pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @enable_rx_protocol_tag - bitmask that indicates what protocol types
  * are enabled for tagging. zero indicates disable feature, non-zero indicates
  * enable feature
  * @protocol_type: new protocol type for which the tag is being added
  * @tag: user configured tag for the new protocol
  *
- * Return: QDF_STATUS
+ * Return: Success
  */
 QDF_STATUS
-dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
+dp_update_pdev_rx_protocol_tag(struct cdp_soc_t  *soc, uint8_t pdev_id,
 			       uint32_t enable_rx_protocol_tag,
 			       uint16_t protocol_type,
 			       uint16_t tag)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
 	/*
 	 * dynamically enable/disable tagging based on enable_rx_protocol_tag
 	 * flag.
@@ -434,7 +459,7 @@ dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
 	}
 
 	/** Reset stats counter across all rings for given protocol */
-	dp_reset_pdev_rx_protocol_tag_stats(pdev_handle, protocol_type);
+	__dp_reset_pdev_rx_protocol_tag_stats(pdev, protocol_type);
 
 	pdev->rx_proto_tag_map[protocol_type].tag = tag;
 
@@ -445,17 +470,25 @@ dp_update_pdev_rx_protocol_tag(struct cdp_pdev *pdev_handle,
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 /**
  * dp_set_rx_flow_tag - add/delete a flow
- * @pdev_handle: cdp_pdev handle
+ * @soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow tuple that is to be added to/deleted from flow search table
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 QDF_STATUS
-dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
+dp_set_rx_flow_tag(struct cdp_soc_t *soc, uint8_t pdev_id,
 		   struct cdp_rx_flow_info *flow_info)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
+	struct wlan_cfg_dp_soc_ctxt *cfg;
+
+	if (qdf_unlikely(!pdev))
+		return QDF_STATUS_E_FAILURE;
+
+	cfg = pdev->soc->wlan_cfg_ctx;
 
 	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
 		dp_err("RX Flow tag feature disabled");
@@ -473,20 +506,27 @@ dp_set_rx_flow_tag(struct cdp_pdev *pdev_handle,
 /**
  * dp_dump_rx_flow_tag_stats - dump the number of packets tagged for
  * given flow 5-tuple
- * @pdev_handle: cdp_pdev handle
+ * @cdp_soc: soc handle
+ * @pdev_id: id of cdp_pdev handle
  * @flow_info: flow 5-tuple for which stats should be displayed
  *
- * Return: 0 for success, nonzero for failure
+ * Return: Success
  */
 QDF_STATUS
-dp_dump_rx_flow_tag_stats(struct cdp_pdev *pdev_handle,
+dp_dump_rx_flow_tag_stats(struct cdp_soc_t *soc, uint8_t pdev_id,
 			  struct cdp_rx_flow_info *flow_info)
 {
 	QDF_STATUS status;
 	struct cdp_flow_stats stats;
-	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
-	struct wlan_cfg_dp_soc_ctxt *cfg = pdev->soc->wlan_cfg_ctx;
+	struct wlan_cfg_dp_soc_ctxt *cfg;
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						   pdev_id);
 
+	if (!pdev)
+		return QDF_STATUS_E_FAILURE;
+
+	cfg = pdev->soc->wlan_cfg_ctx;
 	if (qdf_unlikely(!wlan_cfg_is_rx_flow_tag_enabled(cfg))) {
 		dp_err("RX Flow tag feature disabled");
 		return QDF_STATUS_E_NOSUPPORT;
