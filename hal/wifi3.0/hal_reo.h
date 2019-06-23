@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -492,6 +492,10 @@ union hal_reo_status {
 
 /* Prototypes */
 /* REO command ring routines */
+void hal_reo_cmd_set_descr_addr(uint32_t *reo_desc,
+				enum hal_reo_cmd_type type,
+				uint32_t paddr_lo,
+				uint8_t paddr_hi);
 int hal_reo_cmd_queue_stats(void *reo_ring, struct hal_soc *soc,
 			    struct hal_reo_cmd_params *cmd);
 int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
