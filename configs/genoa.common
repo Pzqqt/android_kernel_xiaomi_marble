@@ -221,4 +221,8 @@ CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
 endif
 
 CONFIG_SAP_DHCP_FW_IND := n
+
+#Enable FW Offload
+CONFIG_WLAN_FW_OFFLOAD := y
+
 ###################################

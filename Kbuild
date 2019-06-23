@@ -929,12 +929,25 @@ IPA_OBJS :=	$(IPA_DIR)/dispatcher/src/wlan_ipa_ucfg_api.o \
 endif
 
 ######## FWOL ##########
-FWOL_DIR := components/fw_offload
-FWOL_INC := -I$(WLAN_ROOT)/$(FWOL_DIR)/core/inc \
-		-I$(WLAN_ROOT)/$(FWOL_DIR)/dispatcher/inc
+FWOL_CORE_INC := components/fw_offload/core/inc
+FWOL_CORE_SRC := components/fw_offload/core/src
+FWOL_DISPATCHER_INC := components/fw_offload/dispatcher/inc
+FWOL_DISPATCHER_SRC := components/fw_offload/dispatcher/src
+FWOL_TARGET_IF_INC := components/target_if/fw_offload/inc
+FWOL_TARGET_IF_SRC := components/target_if/fw_offload/src
+FWOL_OS_IF_INC := os_if/fw_offload/inc
+FWOL_OS_IF_SRC := os_if/fw_offload/src
 
-FWOL_OBJS :=	$(FWOL_DIR)/core/src/wlan_fw_offload_main.o \
-		$(FWOL_DIR)/dispatcher/src/wlan_fwol_ucfg_api.o
+FWOL_INC := -I$(WLAN_ROOT)/$(FWOL_CORE_INC) \
+	    -I$(WLAN_ROOT)/$(FWOL_DISPATCHER_INC) \
+	    -I$(WLAN_ROOT)/$(FWOL_TARGET_IF_INC) \
+	    -I$(WLAN_ROOT)/$(FWOL_OS_IF_INC)
+
+FWOL_OBJS :=	$(FWOL_CORE_SRC)/wlan_fw_offload_main.o \
+		$(FWOL_DISPATCHER_SRC)/wlan_fwol_ucfg_api.o \
+		$(FWOL_DISPATCHER_SRC)/wlan_fwol_tgt_api.o \
+		$(FWOL_TARGET_IF_SRC)/target_if_fwol.o \
+		$(FWOL_OS_IF_SRC)/os_if_fwol.o
 
 ######## SM FRAMEWORK  ##############
 UMAC_SM_DIR := umac/cmn_services/sm_engine
@@ -1242,6 +1255,11 @@ endif
 ifeq ($(CONFIG_WMI_BCN_OFFLOAD), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_bcn_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_bcn_tlv.o
+endif
+
+ifeq ($(CONFIG_WLAN_FW_OFFLOAD), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_fwol_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_fwol_tlv.o
 endif
 
 ########### FWLOG ###########
@@ -1980,7 +1998,9 @@ OBJS +=		$(PLD_OBJS)
 OBJS +=		$(UMAC_SM_OBJS)
 OBJS +=		$(UMAC_MLME_OBJS)
 OBJS +=		$(MLME_OBJS)
+ifeq ($(CONFIG_WLAN_FW_OFFLOAD), y)
 OBJS +=		$(FWOL_OBJS)
+endif
 OBJS +=		$(BLM_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
@@ -2080,6 +2100,8 @@ cppflags-$(CONFIG_FEATURE_MEMDUMP_ENABLE) += -DWLAN_FEATURE_MEMDUMP_ENABLE
 cppflags-$(CONFIG_FEATURE_FW_LOG_PARSING) += -DFEATURE_FW_LOG_PARSING
 cppflags-$(CONFIG_FEATURE_OEM_DATA) += -DFEATURE_OEM_DATA
 cppflags-$(CONFIG_FEATURE_MOTION_DETECTION) += -DWLAN_FEATURE_MOTION_DETECTION
+cppflags-$(CONFIG_WLAN_FW_OFFLOAD) += -DWLAN_FW_OFFLOAD
+cppflags-$(CONFIG_WLAN_FEATURE_ELNA) += -DWLAN_FEATURE_ELNA
 
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
 cppflags-$(CONFIG_PLD_PCIE_CNSS_FLAG) += -DCONFIG_PLD_PCIE_CNSS

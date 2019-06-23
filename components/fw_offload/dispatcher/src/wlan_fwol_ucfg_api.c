@@ -20,7 +20,11 @@
  */
 
 #include "wlan_fw_offload_main.h"
+#include "wlan_fwol_public_structs.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "wlan_fwol_tgt_api.h"
+#include "target_if_fwol.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 QDF_STATUS ucfg_fwol_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -30,12 +34,16 @@ QDF_STATUS ucfg_fwol_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		fwol_err("Failed to initialize FWOL CFG");
 
+	tgt_fwol_register_ev_handler(psoc);
+
 	return status;
 }
 
 void ucfg_fwol_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	/* Clear the FWOL CFG Structure */
+
+	tgt_fwol_unregister_ev_handler(psoc);
 }
 
 /**
@@ -65,6 +73,9 @@ fwol_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc, void *arg)
 		fwol_err("Failed to attach psoc_ctx with psoc");
 		qdf_mem_free(fwol_obj);
 	}
+
+	tgt_fwol_register_rx_ops(&fwol_obj->rx_ops);
+	target_if_fwol_register_tx_ops(&fwol_obj->tx_ops);
 
 	return status;
 }
@@ -832,3 +843,71 @@ QDF_STATUS ucfg_fwol_get_adapt_dwell_wifi_act_threshold(
 			fwol_obj->cfg.dwelltime_params.wifi_act_threshold;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_ELNA
+QDF_STATUS ucfg_fwol_set_elna_bypass(struct wlan_objmgr_vdev *vdev,
+				     struct set_elna_bypass_request *req)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_tx_ops *tx_ops;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		fwol_err("NULL pointer for psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = &fwol_obj->tx_ops;
+	if (tx_ops->set_elna_bypass)
+		status = tx_ops->set_elna_bypass(psoc, req);
+	else
+		status = QDF_STATUS_E_IO;
+
+	return status;
+}
+
+QDF_STATUS ucfg_fwol_get_elna_bypass(struct wlan_objmgr_vdev *vdev,
+				     struct get_elna_bypass_request *req,
+				     void (*callback)(void *context,
+				     struct get_elna_bypass_response *response),
+				     void *context)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_tx_ops *tx_ops;
+	struct wlan_fwol_callbacks *cbs;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		fwol_err("NULL pointer for psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cbs = &fwol_obj->cbs;
+	cbs->get_elna_bypass_callback = callback;
+	cbs->get_elna_bypass_context = context;
+
+	tx_ops = &fwol_obj->tx_ops;
+	if (tx_ops->get_elna_bypass)
+		status = tx_ops->get_elna_bypass(psoc, req);
+	else
+		status = QDF_STATUS_E_IO;
+
+	return status;
+}
+#endif /* WLAN_FEATURE_ELNA */

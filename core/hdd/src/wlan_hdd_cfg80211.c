@@ -141,6 +141,7 @@
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_hw_capability.h"
 #include "wlan_hdd_oemdata.h"
+#include "os_if_fwol.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -6108,6 +6109,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GTX] = {.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ELNA_BYPASS] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST] = {
 		.type = NLA_BINARY,
@@ -7270,6 +7272,32 @@ static int hdd_config_disconnect_ies(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WLAN_FEATURE_ELNA
+/**
+ * hdd_set_elna_bypass() - Set eLNA bypass
+ * @adapter: Pointer to HDD adapter
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_set_elna_bypass(struct hdd_adapter *adapter,
+			       const struct nlattr *attr)
+{
+	int ret;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	ret = os_if_fwol_set_elna_bypass(vdev, attr);
+
+	hdd_objmgr_put_vdev(vdev);
+
+	return ret;
+}
+#endif
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -7356,7 +7384,134 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_gtx},
 	{QCA_WLAN_VENDOR_ATTR_DISCONNECT_IES,
 	 hdd_config_disconnect_ies},
+#ifdef WLAN_FEATURE_ELNA
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ELNA_BYPASS,
+	 hdd_set_elna_bypass},
+#endif
 };
+
+#ifdef WLAN_FEATURE_ELNA
+/**
+ * hdd_get_elna_bypass() - Get eLNA bypass
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_elna_bypass(struct hdd_adapter *adapter,
+			       struct sk_buff *skb,
+			       const struct nlattr *attr)
+{
+	int ret;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	ret = os_if_fwol_get_elna_bypass(vdev, skb, attr);
+
+	hdd_objmgr_put_vdev(vdev);
+
+	return ret;
+}
+#endif
+
+/**
+ * typedef config_getter_fn - get configuration handler
+ * @adapter: The adapter being configured
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: The nl80211 attribute being applied
+ *
+ * Defines the signature of functions in the attribute vtable
+ *
+ * Return: 0 if the attribute was handled successfully, otherwise an errno
+ */
+typedef int (*config_getter_fn)(struct hdd_adapter *adapter,
+				struct sk_buff *skb,
+				const struct nlattr *attr);
+
+/**
+ * struct config_getters
+ * @id: vendor attribute which this entry handles
+ * @cb: callback function to invoke to process the attribute when present
+ */
+struct config_getters {
+	uint32_t id;
+	size_t max_attr_len;
+	config_getter_fn cb;
+};
+
+/* vtable for config getters */
+static const struct config_getters config_getters[] = {
+#ifdef WLAN_FEATURE_ELNA
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ELNA_BYPASS,
+	 sizeof(uint8_t),
+	 hdd_get_elna_bypass},
+#endif
+};
+
+/**
+ * hdd_get_configuration() - Handle get configuration
+ * @adapter: adapter upon which the vendor command was received
+ * @tb: parsed attribute array
+ *
+ * This is a table-driven function which dispatches attributes
+ * in a QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_CONFIGURATION
+ * vendor command.
+ *
+ * Return: 0 if there were no issues, otherwise errno of the last issue
+ */
+static int hdd_get_configuration(struct hdd_adapter *adapter,
+				 struct nlattr **tb)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t i, id;
+	unsigned long nl_buf_len = NLMSG_HDRLEN;
+	struct sk_buff *skb;
+	struct nlattr *attr;
+	config_getter_fn cb;
+	int errno = 0;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(config_getters); i++) {
+		id = config_getters[i].id;
+		attr = tb[id];
+		if (!attr)
+			continue;
+
+		nl_buf_len += NLA_HDRLEN +
+			      NLA_ALIGN(config_getters[i].max_attr_len);
+	}
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
+	if (!skb) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(config_getters); i++) {
+		id = config_getters[i].id;
+		attr = tb[id];
+		if (!attr)
+			continue;
+
+		cb = config_getters[i].cb;
+		errno = cb(adapter, skb, attr);
+		if (errno)
+			break;
+	}
+
+	if (errno) {
+		hdd_err("Failed to get wifi configuration, errno = %d", errno);
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+
+	cfg80211_vendor_cmd_reply(skb);
+
+	return errno;
+}
 
 /**
  * hdd_set_independent_configuration() - Handle independent attributes
@@ -7529,6 +7684,88 @@ static int wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		return errno;
 
 	errno = __wlan_hdd_cfg80211_wifi_configuration_set(wiphy, wdev,
+							   data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+/**
+ * __wlan_hdd_cfg80211_wifi_configuration_get() - Wifi configuration
+ * vendor command
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_CONFIG_MAX.
+ *
+ * Return: Error code.
+ */
+static int
+__wlan_hdd_cfg80211_wifi_configuration_get(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   const void *data,
+					   int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
+	int errno;
+	int ret;
+
+	hdd_enter_dev(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_MAX, data,
+				    data_len, wlan_hdd_wifi_config_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+
+	ret = hdd_get_configuration(adapter, tb);
+	if (ret)
+		errno = ret;
+
+	return errno;
+}
+
+/**
+ * wlan_hdd_cfg80211_wifi_configuration_get() - Wifi configuration
+ * vendor command
+ *
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_CONFIG_MAX.
+ *
+ * Return: EOK or other error codes.
+ */
+static int wlan_hdd_cfg80211_wifi_configuration_get(struct wiphy *wiphy,
+						    struct wireless_dev *wdev,
+						    const void *data,
+						    int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_wifi_configuration_get(wiphy, wdev,
 							   data, data_len);
 
 	osif_vdev_sync_op_stop(vdev_sync);
@@ -13497,6 +13734,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_wifi_configuration_set
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_CONFIGURATION,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_wifi_configuration_get
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

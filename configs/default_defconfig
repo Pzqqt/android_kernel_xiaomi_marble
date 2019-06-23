@@ -905,6 +905,14 @@ CONFIG_SM_ENG_HIST := n
 #Enable OEM DATA feature
 CONFIG_FEATURE_OEM_DATA := y
 
+#Enable FW Offload
+CONFIG_WLAN_FW_OFFLOAD := y
+
+#Enable eLNA bypass feature
+ifeq ($(CONFIG_WLAN_FW_OFFLOAD), y)
+CONFIG_WLAN_FEATURE_ELNA := y
+endif
+
 ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
 CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
 endif

@@ -172,6 +172,9 @@ CONFIG_BUILD_TAG := y
 endif
 endif
 
+#Enable FW Offload
+CONFIG_WLAN_FW_OFFLOAD := y
+
 CONFIG_ENABLE_SIZE_OPTIMIZE := y
 
 # configure log buffer size
