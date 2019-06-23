@@ -3853,15 +3853,8 @@ QDF_STATUS sme_neighbor_report_request(
 }
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-/**
- * sme_oem_data_req() - send oem data request to WMA
- * @mac_handle: Opaque handle to the global MAC context
- * @hdd_oem_req: OEM data request from HDD
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
-			    struct oem_data_req *hdd_oem_req)
+QDF_STATUS sme_oem_req_cmd(mac_handle_t mac_handle,
+			   struct oem_data_req *oem_req)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct oem_data_req *oem_data_req;
@@ -3878,17 +3871,17 @@ QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
 	if (!oem_data_req)
 		return QDF_STATUS_E_NOMEM;
 
-	oem_data_req->data_len = hdd_oem_req->data_len;
+	oem_data_req->data_len = oem_req->data_len;
 	oem_data_req->data = qdf_mem_malloc(oem_data_req->data_len);
 	if (!oem_data_req->data) {
 		qdf_mem_free(oem_data_req);
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_copy(oem_data_req->data, hdd_oem_req->data,
+	qdf_mem_copy(oem_data_req->data, oem_req->data,
 		     oem_data_req->data_len);
 
-	status = wma_start_oem_data_req(wma_handle, oem_data_req);
+	status = wma_start_oem_req_cmd(wma_handle, oem_data_req);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("Post oem data request msg fail");
@@ -3904,6 +3897,29 @@ QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
 	return status;
 }
 #endif /*FEATURE_OEM_DATA_SUPPORT */
+
+#ifdef FEATURE_OEM_DATA
+QDF_STATUS sme_oem_data_cmd(mac_handle_t mac_handle,
+			    struct oem_data *oem_data)
+{
+	QDF_STATUS status;
+	void *wma_handle;
+
+	SME_ENTER();
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sme_err("wma_handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wma_start_oem_data_cmd(wma_handle, oem_data);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("fail to call wma_start_oem_data_cmd.");
+
+	SME_EXIT();
+	return status;
+}
+#endif
 
 #define STA_NSS_CHAINS_SHIFT               0
 #define SAP_NSS_CHAINS_SHIFT               3

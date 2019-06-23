@@ -16,8 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
 /**
  *  DOC: wlan_hdd_oemdata.c
  *
@@ -25,6 +23,7 @@
  *
  */
 
+#if defined(FEATURE_OEM_DATA_SUPPORT) || defined(FEATURE_OEM_DATA)
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -38,7 +37,9 @@
 #include "wma.h"
 #include "sme_api.h"
 #include "wlan_nlink_srv.h"
+#include "wlan_hdd_oemdata.h"
 
+#ifdef FEATURE_OEM_DATA_SUPPORT
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -372,7 +373,7 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 	oem_data_req.data_len = oem_data_len;
 	qdf_mem_copy(oem_data_req.data, oem_data, oem_data_len);
 
-	status = sme_oem_data_req(p_hdd_ctx->mac_handle, &oem_data_req);
+	status = sme_oem_req_cmd(p_hdd_ctx->mac_handle, &oem_data_req);
 
 	qdf_mem_free(oem_data_req.data);
 	oem_data_req.data = NULL;
@@ -1124,5 +1125,87 @@ int oem_deactivate_service(void)
 	return nl_srv_unregister(WLAN_NL_MSG_OEM, __oem_msg_callback);
 }
 
+#endif
+#endif
+
+#ifdef FEATURE_OEM_DATA
+static const struct nla_policy
+oem_data_attr_policy[QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA] = {
+						    .type = NLA_BINARY,
+						    .len = OEM_DATA_MAX_SIZE
+	},
+};
+
+/**
+ * __wlan_hdd_cfg80211_oem_data_handler() - the handler for oem data
+ * @wiphy: wiphy structure pointer
+ * @wdev: Wireless device structure pointer
+ * @data: Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Return: 0 on success; errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
+				     struct wireless_dev *wdev,
+				     const void *data, int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	QDF_STATUS status;
+	int ret;
+	struct oem_data oem_data = {0};
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX + 1];
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (wlan_cfg80211_nla_parse(tb,
+				    QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX,
+				    data, data_len, oem_data_attr_policy)) {
+		hdd_err("Invalid attributes");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA]) {
+		hdd_err("oem data is missing!");
+		return -EINVAL;
+	}
+
+	oem_data.data_len =
+			nla_len(tb[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA]);
+	if (!oem_data.data_len) {
+		hdd_err("oem data len is 0!");
+		return -EINVAL;
+	}
+
+	oem_data.vdev_id = adapter->vdev_id;
+	oem_data.data = nla_data(tb[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA]);
+
+	status = sme_oem_data_cmd(hdd_ctx->mac_handle, &oem_data);
+
+	return qdf_status_to_os_return(status);
+}
+
+int wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
+				       struct wireless_dev *wdev,
+				       const void *data, int data_len)
+{
+	struct osif_vdev_sync *vdev_sync;
+	int ret;
+
+	ret = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (ret)
+		return ret;
+
+	ret = __wlan_hdd_cfg80211_oem_data_handler(wiphy, wdev,
+						   data, data_len);
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return ret;
+}
 #endif
 #endif

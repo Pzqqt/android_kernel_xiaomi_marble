@@ -44,6 +44,7 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_policy_mgr_api.h>
 #include "wma_api.h"
+#include "wmi_unified_param.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
@@ -1881,8 +1882,27 @@ WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
 				uint8_t dot11_mode);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
-				  struct oem_data_req *oem_req);
+/**
+ * wma_start_oem_req_cmd() - send oem request command to fw
+ * @wma_handle: wma handle
+ * @oem_data_req: the pointer of oem req buf
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_start_oem_req_cmd(tp_wma_handle wma_handle,
+				 struct oem_data_req *oem_data_req);
+#endif
+
+#ifdef FEATURE_OEM_DATA
+/**
+ * wma_start_oem_data_cmd() - send oem data command to fw
+ * @wma_handle: wma handle
+ * @oem_data: the pointer of oem data buf
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_start_oem_data_cmd(tp_wma_handle wma_handle,
+				  struct oem_data *oem_data);
 #endif
 
 QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma_handle,

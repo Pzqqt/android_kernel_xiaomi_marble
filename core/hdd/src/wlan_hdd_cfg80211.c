@@ -143,6 +143,7 @@
 #include "wlan_hdd_bcn_recv.h"
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_hw_capability.h"
+#include "wlan_hdd_oemdata.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -12710,6 +12711,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 #endif
 	FEATURE_RSSI_MONITOR_VENDOR_COMMANDS
+	FEATURE_OEM_DATA_VENDOR_COMMANDS
 	FEATURE_INTEROP_ISSUES_AP_VENDOR_COMMANDS
 
 #ifdef WLAN_NS_OFFLOAD

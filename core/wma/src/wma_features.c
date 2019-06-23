@@ -1259,17 +1259,10 @@ int wma_oem_data_response_handler(void *handle,
 	return 0;
 }
 
-/**
- * wma_start_oem_data_req() - start OEM data request to target
- * @wma_handle: wma handle
- * @oem_data_req: start request params
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
-			    struct oem_data_req *oem_data_req)
+QDF_STATUS wma_start_oem_req_cmd(tp_wma_handle wma_handle,
+				 struct oem_data_req *oem_data_req)
 {
-	int ret = 0;
+	QDF_STATUS ret;
 
 	WMA_LOGD(FL("Send OEM Data Request to target"));
 
@@ -1284,9 +1277,10 @@ QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	/* legacy api, for oem data request case */
 	ret = wmi_unified_start_oem_data_cmd(wma_handle->wmi_handle,
-				   oem_data_req->data_len,
-				   oem_data_req->data);
+					     oem_data_req->data_len,
+					     oem_data_req->data);
 
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		WMA_LOGE(FL("wmi cmd send failed"));
@@ -1294,6 +1288,34 @@ QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,
 	return ret;
 }
 #endif /* FEATURE_OEM_DATA_SUPPORT */
+
+#ifdef FEATURE_OEM_DATA
+QDF_STATUS wma_start_oem_data_cmd(tp_wma_handle wma_handle,
+				  struct oem_data *oem_data)
+{
+	QDF_STATUS ret;
+
+	wma_debug("Send OEM Data to target");
+
+	if (!oem_data || !oem_data->data) {
+		wma_err("oem_data is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		wma_err("WMA - closed");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* common api, for oem data command case */
+	ret = wmi_unified_start_oemv2_data_cmd(wma_handle->wmi_handle,
+					       oem_data);
+	if (!QDF_IS_STATUS_SUCCESS(ret))
+		wma_err("call start wmi cmd failed");
+
+	return ret;
+}
+#endif
 
 #if !defined(REMOVE_PKT_LOG) && defined(FEATURE_PKTLOG)
 /**
