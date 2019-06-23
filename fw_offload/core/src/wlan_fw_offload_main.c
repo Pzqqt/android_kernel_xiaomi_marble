@@ -543,3 +543,97 @@ QDF_STATUS fwol_cfg_on_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	/* Clear the CFG structure */
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_ELNA
+/**
+ * fwol_process_get_elna_bypass_resp() - Process get eLNA bypass response
+ * @event: response event
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS
+fwol_process_get_elna_bypass_resp(struct wlan_fwol_rx_event *event)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_callbacks *cbs;
+	struct get_elna_bypass_response *resp;
+
+	if (!event) {
+		fwol_err("Event buffer is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = event->psoc;
+	if (!psoc) {
+		fwol_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cbs = &fwol_obj->cbs;
+	if (cbs->get_elna_bypass_callback) {
+		resp = &event->get_elna_bypass_response;
+		cbs->get_elna_bypass_callback(cbs->get_elna_bypass_context,
+					      resp);
+	} else {
+		fwol_err("NULL pointer for callback");
+		status = QDF_STATUS_E_IO;
+	}
+
+	return status;
+}
+#else
+static QDF_STATUS
+fwol_process_get_elna_bypass_resp(struct wlan_fwol_rx_event *event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_ELNA */
+
+QDF_STATUS fwol_process_event(struct scheduler_msg *msg)
+{
+	QDF_STATUS status;
+	struct wlan_fwol_rx_event *event;
+
+	fwol_debug("msg type %d", msg->type);
+
+	if (!(msg->bodyptr)) {
+		fwol_err("Invalid message body");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	event = msg->bodyptr;
+	msg->bodyptr = NULL;
+
+	switch (msg->type) {
+	case WLAN_FWOL_EVT_GET_ELNA_BYPASS_RESPONSE:
+		status = fwol_process_get_elna_bypass_resp(event);
+		break;
+	default:
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	fwol_release_rx_event(event);
+
+	return status;
+}
+
+void fwol_release_rx_event(struct wlan_fwol_rx_event *event)
+{
+	if (!event) {
+		fwol_err("event is NULL");
+		return;
+	}
+
+	if (event->psoc)
+		wlan_objmgr_psoc_release_ref(event->psoc, WLAN_FWOL_SB_ID);
+	qdf_mem_free(event);
+}
