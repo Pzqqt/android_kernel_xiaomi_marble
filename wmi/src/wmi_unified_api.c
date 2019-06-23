@@ -934,7 +934,7 @@ QDF_STATUS
 wmi_unified_oem_dma_ring_cfg(wmi_unified_t wmi_handle,
 			     wmi_oem_dma_ring_cfg_req_fixed_param *cfg)
 {
-	if (wmi_handle->ops->send_start_oem_data_cmd)
+	if (wmi_handle->ops->send_oem_dma_cfg_cmd)
 		return wmi_handle->ops->send_oem_dma_cfg_cmd(wmi_handle, cfg);
 
 	return QDF_STATUS_E_FAILURE;
@@ -947,10 +947,23 @@ QDF_STATUS wmi_unified_start_oem_data_cmd(wmi_unified_t wmi_handle,
 {
 	if (wmi_handle->ops->send_start_oem_data_cmd)
 		return wmi_handle->ops->send_start_oem_data_cmd(wmi_handle,
-			    data_len, data);
+								data_len,
+								data);
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef FEATURE_OEM_DATA
+QDF_STATUS wmi_unified_start_oemv2_data_cmd(wmi_unified_t wmi_handle,
+					    struct oem_data *params)
+{
+	if (wmi_handle->ops->send_start_oemv2_data_cmd)
+		return wmi_handle->ops->send_start_oemv2_data_cmd(wmi_handle,
+								  params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 QDF_STATUS
 wmi_unified_dfs_phyerr_filter_offload_en_cmd(wmi_unified_t wmi_handle,

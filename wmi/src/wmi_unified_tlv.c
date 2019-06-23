@@ -5292,13 +5292,14 @@ static QDF_STATUS send_stop_11d_scan_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_start_oem_data_cmd_tlv() - start OEM data request to target
  * @wmi_handle: wmi handle
- * @startOemDataReq: start request params
+ * @data_len: the length of @data
+ * @data: the pointer to data buf
  *
  * Return: CDF status
  */
 static QDF_STATUS send_start_oem_data_cmd_tlv(wmi_unified_t wmi_handle,
-			  uint32_t data_len,
-			  uint8_t *data)
+					      uint32_t data_len,
+					      uint8_t *data)
 {
 	wmi_buf_t buf;
 	uint8_t *cmd;
@@ -5331,6 +5332,68 @@ static QDF_STATUS send_start_oem_data_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+
+#ifdef FEATURE_OEM_DATA
+/**
+ * send_start_oemv2_data_cmd_tlv() - start OEM data to target
+ * @wmi_handle: wmi handle
+ * @oem_data: the pointer to oem data
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_start_oemv2_data_cmd_tlv(wmi_unified_t wmi_handle,
+						struct oem_data *oem_data)
+{
+	QDF_STATUS ret;
+	wmi_oem_data_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(*cmd);
+	uint16_t oem_data_len_aligned;
+	uint8_t *buf_ptr;
+
+	if (!oem_data || !oem_data->data) {
+		wmi_err_rl("oem data is not valid");
+		return QDF_STATUS_E_FAILURE;
+	}
+	oem_data_len_aligned = roundup(oem_data->data_len, sizeof(uint32_t));
+	if (oem_data_len_aligned < oem_data->data_len) {
+		wmi_err_rl("integer overflow while rounding up data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (oem_data_len_aligned > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE) {
+		wmi_err_rl("wmi_max_msg_size overflow for given data_len");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len += WMI_TLV_HDR_SIZE + oem_data_len_aligned;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_oem_data_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_oem_data_cmd_fixed_param));
+
+	cmd->vdev_id = oem_data->vdev_id;
+	cmd->data_len = oem_data->data_len;
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, oem_data_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, oem_data->data, oem_data->data_len);
+
+	wmi_mtrace(WMI_OEM_DATA_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_OEM_DATA_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err_rl("Failed with ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+#endif
 
 /**
  * send_dfs_phyerr_filter_offload_en_cmd_tlv() - enable dfs phyerr filter
@@ -11670,6 +11733,9 @@ struct wmi_ops tlv_ops =  {
 #endif
 	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,
 	.send_start_oem_data_cmd = send_start_oem_data_cmd_tlv,
+#ifdef FEATURE_OEM_DATA
+	.send_start_oemv2_data_cmd = send_start_oemv2_data_cmd_tlv,
+#endif
 #ifdef WLAN_FEATURE_CIF_CFR
 	.send_oem_dma_cfg_cmd = send_oem_dma_cfg_cmd_tlv,
 #endif

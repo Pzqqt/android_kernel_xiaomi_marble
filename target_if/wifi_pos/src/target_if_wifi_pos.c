@@ -260,7 +260,7 @@ static int wifi_pos_oem_err_rpt_ev_handler(ol_scn_t scn, uint8_t *buf,
 
 /**
  * wifi_pos_oem_data_req() - start OEM data request to target
- * @wma_handle: wma handle
+ * @psoc: the pointer to psoc object manager
  * @req: start request params
  *
  * Return: QDF_STATUS
