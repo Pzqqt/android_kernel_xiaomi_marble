@@ -110,7 +110,7 @@ dp_wdi_event_iter_sub(
 void
 dp_wdi_event_handler(
 	enum WDI_EVENT event,
-	void *soc,
+	struct dp_soc *soc,
 	void *data,
 	uint16_t peer_id,
 	int status, uint8_t pdev_id)

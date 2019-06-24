@@ -1426,7 +1426,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 }
 
 static inline bool is_sa_da_idx_valid(struct dp_soc *soc,
-				      void *rx_tlv_hdr,
+				      uint8_t *rx_tlv_hdr,
 				      qdf_nbuf_t nbuf)
 {
 	if ((qdf_nbuf_is_sa_valid(nbuf) &&

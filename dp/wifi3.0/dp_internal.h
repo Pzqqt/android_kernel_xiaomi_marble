@@ -856,10 +856,6 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 void dp_set_michael_key(struct cdp_peer *peer_handle,
 			bool is_unicast, uint32_t *key);
-#ifdef QCA_ENH_V3_STATS_SUPPORT
-uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
-			enum _ol_ath_param_t param, uint32_t value, void *buff);
-#endif
 
 /**
  * dp_check_pdev_exists() - Validate pdev before use
@@ -1100,9 +1096,9 @@ int dp_wdi_event_sub(struct cdp_pdev *txrx_pdev_handle,
 	void *event_cb_sub_handle,
 	uint32_t event);
 
-void dp_wdi_event_handler(enum WDI_EVENT event, void *soc,
-		void *data, u_int16_t peer_id,
-		int status, u_int8_t pdev_id);
+void dp_wdi_event_handler(enum WDI_EVENT event, struct dp_soc *soc,
+			  void *data, u_int16_t peer_id,
+			  int status, u_int8_t pdev_id);
 
 int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
@@ -1145,9 +1141,11 @@ static inline int dp_wdi_event_sub(struct cdp_pdev *txrx_pdev_handle,
 	return 0;
 }
 
-static inline void dp_wdi_event_handler(enum WDI_EVENT event, void *soc,
-		void *data, u_int16_t peer_id,
-		int status, u_int8_t pdev_id)
+static inline
+void dp_wdi_event_handler(enum WDI_EVENT event,
+			  struct dp_soc *soc,
+			  void *data, u_int16_t peer_id,
+			  int status, u_int8_t pdev_id)
 {
 }
 
