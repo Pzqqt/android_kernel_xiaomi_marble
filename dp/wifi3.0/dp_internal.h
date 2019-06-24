@@ -1417,6 +1417,19 @@ struct cdp_soc_t *dp_soc_to_cdp_soc_t(struct dp_soc *psoc)
 	return (struct cdp_soc_t *)psoc;
 }
 
+/**
+ * cdp_soc_t_to_dp_soc() - typecast cdp_soc_t to
+ * dp soc handle
+ * @psoc: CDP psoc handle
+ *
+ * Return: struct dp_soc pointer
+ */
+static inline
+struct dp_soc *cdp_soc_t_to_dp_soc(struct cdp_soc_t *psoc)
+{
+	return (struct dp_soc *)psoc;
+}
+
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 /**
  * dp_rx_flow_update_fse_stats() - Update a flow's statistics
