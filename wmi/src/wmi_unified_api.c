@@ -214,6 +214,16 @@ QDF_STATUS wmi_unified_peer_delete_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_peer_delete_all_send(
+				wmi_unified_t wmi_hdl,
+				struct peer_delete_all_params *param)
+{
+	if (wmi_hdl->ops->send_peer_delete_all_cmd)
+		return wmi_hdl->ops->send_peer_delete_all_cmd(wmi_hdl, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_set_peer_param_send(wmi_unified_t wmi_handle,
 				   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				   struct peer_set_params *param)

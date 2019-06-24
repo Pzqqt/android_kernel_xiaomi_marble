@@ -945,6 +945,15 @@ struct peer_flush_params {
 	uint32_t peer_tid_bitmap;
 	uint8_t vdev_id;
 };
+
+/**
+ * struct peer_delete_all_params - peer delete all request parameter
+ * @vdev_id: vdev id
+ */
+struct peer_delete_all_params {
+	uint8_t vdev_id;
+};
+
 #endif
 
 /**
@@ -4765,6 +4774,7 @@ typedef enum {
 	wmi_pdev_check_cal_version_event_id,
 	wmi_atf_peer_stats_event_id,
 	wmi_peer_delete_response_event_id,
+	wmi_peer_delete_all_response_event_id,
 	wmi_pdev_csa_switch_count_status_event_id,
 	wmi_reg_chan_list_cc_event_id,
 	wmi_offchan_data_tx_completion_event,
@@ -5321,6 +5331,7 @@ typedef enum {
 	wmi_service_adaptive_11r_support,
 	wmi_service_data_stall_recovery_support,
 	wmi_service_tx_compl_tsf64,
+	wmi_service_vdev_delete_all_peer,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -7115,6 +7126,20 @@ struct wmi_host_pdev_qvit_event {
 struct wmi_host_peer_delete_response_event {
 	uint32_t vdev_id;
 	struct qdf_mac_addr mac_address;
+};
+
+/**
+ * struct wmi_host_vdev_peer_delete_all_response_event -
+ * VDEV peer delete all response
+ * @vdev_id: vdev id
+ * @status: status of request
+ * 0 - OK; command successful
+ * 1 - EINVAL; Requested invalid vdev_id
+ * 2 - EFAILED; Delete all peer failed
+ */
+struct wmi_host_vdev_peer_delete_all_response_event {
+	uint32_t vdev_id;
+	uint32_t status;
 };
 
 /**

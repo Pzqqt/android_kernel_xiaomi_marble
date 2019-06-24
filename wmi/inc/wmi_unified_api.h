@@ -572,6 +572,17 @@ wmi_unified_peer_flush_tids_send(wmi_unified_t wmi_handle,
 				 struct peer_flush_params *param);
 
 /**
+ * wmi_unified_peer_delete_all_send() - send PEER delete all command to fw
+ * @wmi_hdl: wmi handle
+ * @param: pointer to hold peer delete all parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_delete_all_send(
+					wmi_unified_t wmi_hdl,
+					struct peer_delete_all_params *param);
+
+/**
  * wmi_set_peer_param() - set peer parameter in fw
  * @wmi_handle: wmi handle
  * @peer_addr: peer mac address

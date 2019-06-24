@@ -302,6 +302,10 @@ QDF_STATUS (*send_peer_delete_cmd)(wmi_unified_t wmi,
 				    uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 				    uint8_t vdev_id);
 
+QDF_STATUS (*send_peer_delete_all_cmd)(
+				wmi_unified_t wmi,
+				struct peer_delete_all_params *param);
+
 QDF_STATUS
 (*send_peer_unmap_conf_cmd)(wmi_unified_t wmi,
 			    uint8_t vdev_id,
@@ -1710,6 +1714,17 @@ QDF_STATUS (*extract_peer_delete_response_event)(
 			wmi_unified_t wmi_handle,
 			void *evt_buf,
 			struct wmi_host_peer_delete_response_event *param);
+
+QDF_STATUS (*extract_vdev_peer_delete_all_resp)(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event
+						*peer_delete_all_rsp);
+
+QDF_STATUS (*extract_vdev_peer_delete_all_response_event)(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event *param);
 
 bool (*is_management_record)(uint32_t cmd_id);
 bool (*is_diag_event)(uint32_t event_id);
