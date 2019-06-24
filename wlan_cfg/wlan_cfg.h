@@ -23,7 +23,7 @@
  * Temporary place holders. These should come either from target config
  * or platform configuration
  */
-#if defined(CONFIG_MCL)
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define WLAN_CFG_DST_RING_CACHED_DESC 0
 #define MAX_PDEV_CNT 1
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
@@ -56,7 +56,7 @@
 #define MAX_RX_MAC_RINGS 2
 
 /* DP process status */
-#ifdef CONFIG_MCL
+#if defined(MAX_PDEV_CNT) && (MAX_PDEV_CNT == 1)
 #define CONFIG_PROCESS_RX_STATUS 1
 #define CONFIG_PROCESS_TX_STATUS 1
 #else

@@ -90,7 +90,7 @@
 #define WLAN_CFG_HOST2RXDMA_RING_MASK_2 0x4
 #define WLAN_CFG_HOST2RXDMA_RING_MASK_3 0x0
 
-#ifdef CONFIG_MCL
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	WLAN_CFG_TX_RING_MASK_0, 0, 0, 0, 0, 0, 0};
 
@@ -201,7 +201,7 @@ static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_REO_STATUS_RING_MASK_1,
 					WLAN_CFG_REO_STATUS_RING_MASK_2,
 					WLAN_CFG_REO_STATUS_RING_MASK_3};
-#endif /*CONFIG_MCL*/
+#endif /* MAX_PDEV_CNT == 1 */
 
 /**
  * g_wlan_srng_cfg[] - Per ring_type specific configuration

@@ -71,7 +71,7 @@
 #define MAX_MON_LINK_DESC_BANKS 2
 #define DP_VDEV_ALL 0xff
 
-#if defined(CONFIG_MCL)
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define MAX_PDEV_CNT 1
 #else
 #define MAX_PDEV_CNT 3
