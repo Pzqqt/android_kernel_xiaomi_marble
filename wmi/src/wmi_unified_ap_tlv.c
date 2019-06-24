@@ -1599,6 +1599,37 @@ static QDF_STATUS extract_peer_delete_response_event_tlv(wmi_unified_t wmi_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_vdev_peer_delete_all_response_event_tlv() -
+ * extract peer delete all response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param pointer: Pointer to hold vdev_id of peer delete all response
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_vdev_peer_delete_all_response_event_tlv(
+		wmi_unified_t wmi_hdl,
+		void *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event *param)
+{
+	WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_delete_all_peer_resp_event_fixed_param *ev;
+
+	param_buf = (WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID_param_tlvs *)evt_buf;
+
+	ev = (wmi_vdev_delete_all_peer_resp_event_fixed_param *) param_buf->fixed_param;
+	if (!ev) {
+		WMI_LOGE("%s: Invalid peer_delete all response", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param->vdev_id = ev->vdev_id;
+	param->status = ev->status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_pdev_tpc_ev_param_tlv() - extract tpc param from event
  * @wmi_handle: wmi handle
@@ -2779,6 +2810,8 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv;
 	ops->extract_peer_delete_response_event =
 				extract_peer_delete_response_event_tlv;
+	ops->extract_vdev_peer_delete_all_response_event =
+				extract_vdev_peer_delete_all_response_event_tlv;
 	ops->extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv;
 	ops->extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv;
