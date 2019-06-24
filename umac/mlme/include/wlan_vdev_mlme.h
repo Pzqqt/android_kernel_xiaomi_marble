@@ -438,6 +438,8 @@ enum vdev_start_resp_type {
  * @mlme_vdev_notify_start_state_exit:  callback to notify on vdev start
  *                                      start state exit
  * @mlme_vdev_is_newchan_no_cac:        callback to check CAC is required
+ * @mlme_vdev_ext_peer_delete_all_rsp:  callback to initiate actions for
+ *                                      vdev mlme peer delete all response
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -509,6 +511,9 @@ struct vdev_mlme_ops {
 				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_is_newchan_no_cac)(
 				struct vdev_mlme_obj *vdev_mlme);
+	QDF_STATUS (*mlme_vdev_ext_peer_delete_all_rsp)(
+				struct vdev_mlme_obj *vdev_mlme,
+				struct peer_delete_all_response *rsp);
 };
 
 #ifdef FEATURE_VDEV_RSP_WAKELOCK

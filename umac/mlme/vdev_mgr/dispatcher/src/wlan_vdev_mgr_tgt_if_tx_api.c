@@ -575,3 +575,32 @@ QDF_STATUS tgt_vdev_mgr_sta_ps_param_send(
 
 	return status;
 }
+
+QDF_STATUS tgt_vdev_mgr_peer_delete_all_send(
+				struct vdev_mlme_obj *mlme_obj,
+				struct peer_delete_all_params *param)
+{
+	QDF_STATUS status;
+	struct wlan_lmac_if_mlme_tx_ops *txops;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+
+	if (!param) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = mlme_obj->vdev;
+	vdev_id = wlan_vdev_get_id(vdev);
+	txops = wlan_vdev_mlme_get_lmac_txops(vdev);
+	if (!txops || !txops->peer_delete_all_send) {
+		mlme_err("VDEV_%d: No Tx Ops", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = txops->peer_delete_all_send(vdev, param);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
+
+	return QDF_STATUS_SUCCESS;
+}

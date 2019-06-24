@@ -253,5 +253,16 @@ QDF_STATUS tgt_vdev_mgr_set_param_send(
  */
 QDF_STATUS tgt_vdev_mgr_bcn_miss_offload_send(struct vdev_mlme_obj *mlme_obj);
 
+/**
+ * tgt_vdev_mgr_peer_delete_all_send() – API to send peer delete all request
+ * @mlme_obj: pointer to vdev_mlme_obj
+ * @param: pointer to peer_delete_all_params
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS tgt_vdev_mgr_peer_delete_all_send(
+				struct vdev_mlme_obj *mlme_obj,
+				struct peer_delete_all_params *param);
+
 #endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 #endif /* __WLAN_VDEV_MGR_TX_OPS_API_H__ */

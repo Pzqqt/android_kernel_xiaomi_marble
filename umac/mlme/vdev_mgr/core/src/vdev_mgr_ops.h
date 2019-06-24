@@ -229,5 +229,13 @@ QDF_STATUS vdev_mlme_multiple_restart_send(struct wlan_objmgr_pdev *pdev,
 					   uint32_t *vdev_ids,
 					   uint32_t num_vdevs);
 
+/**
+ * vdev_mgr_peer_delete_all_send() – MLME API to send peer delete all request
+ * @mlme_obj: pointer to vdev_mlme_obj
+ *
+ * Return: QDF_STATUS - Success or Failure
+ */
+QDF_STATUS vdev_mgr_peer_delete_all_send(struct vdev_mlme_obj *mlme_obj);
+
 #endif /* CMN_VDEV_MGR_TGT_IF_ENABLE */
 #endif /* __VDEV_MGR_OPS_H__ */

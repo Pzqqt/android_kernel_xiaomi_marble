@@ -442,5 +442,13 @@ struct vdev_down_params {
 	uint8_t vdev_id;
 };
 
+/**
+ * struct peer_delete_all_params - peer delete all request parameter
+ * @vdev_id: vdev id
+ */
+struct peer_delete_all_params {
+	uint8_t vdev_id;
+};
+
 #endif
 #endif /* __WLAN_VDEV_MGR_TX_OPS_DEFS_H__ */

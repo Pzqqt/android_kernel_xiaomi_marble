@@ -526,3 +526,41 @@ QDF_STATUS vdev_mgr_set_custom_aggr_size_send(
 
 	return tgt_vdev_mgr_set_custom_aggr_size_send(vdev_mlme, &param);
 }
+
+static QDF_STATUS vdev_mgr_peer_delete_all_param_update(
+				struct vdev_mlme_obj *mlme_obj,
+				struct peer_delete_all_params *param)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = mlme_obj->vdev;
+	if (!vdev) {
+		mlme_err("VDEV is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->vdev_id = wlan_vdev_get_id(vdev);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS vdev_mgr_peer_delete_all_send(struct vdev_mlme_obj *mlme_obj)
+{
+	QDF_STATUS status;
+	struct peer_delete_all_params param = {0};
+
+	if (!mlme_obj) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = vdev_mgr_peer_delete_all_param_update(mlme_obj, &param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Param Update Error: %d", status);
+		return status;
+	}
+
+	status = tgt_vdev_mgr_peer_delete_all_send(mlme_obj, &param);
+
+	return status;
+}
+

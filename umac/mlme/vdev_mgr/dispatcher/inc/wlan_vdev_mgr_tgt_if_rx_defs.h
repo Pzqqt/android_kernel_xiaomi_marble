@@ -32,11 +32,13 @@
 #define RESTART_RESPONSE_BIT  0x2
 #define STOP_RESPONSE_BIT   0x3
 #define DELETE_RESPONSE_BIT 0x4
-#define RESPONSE_BIT_MAX DELETE_RESPONSE_BIT
+#define PEER_DELETE_ALL_RESPONSE_BIT 0x5
+#define RESPONSE_BIT_MAX PEER_DELETE_ALL_RESPONSE_BIT
 
 #define START_RESPONSE_TIMER 6000 /* 6 seconds */
 #define STOP_RESPONSE_TIMER  3000 /* 3 seconds */
 #define DELETE_RESPONSE_TIMER  3000 /* 3 seconds */
+#define PEER_DELETE_ALL_RESPONSE_TIMER 6000 /* 6 seconds */
 
 /**
  * struct vdev_response_timer - vdev mgmt response ops timer
@@ -90,6 +92,16 @@ struct vdev_stop_response {
  */
 struct vdev_delete_response {
 	uint8_t vdev_id;
+};
+
+/**
+ * struct peer_delete_all_response - peer delete all response structure
+ * @vdev_id: vdev id
+ * @status: FW status for vdev delete all peer request
+ */
+struct peer_delete_all_response {
+	uint8_t vdev_id;
+	uint8_t status;
 };
 
 #endif /* __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__ */
