@@ -526,6 +526,8 @@ static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 {
 	struct target_psoc_info *tgt_hdl;
 	enum wmi_host_hw_mode_config_type mode;
+	uint32_t num_hw_modes;
+	uint8_t idx;
 
 	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
 						psoc);
@@ -536,14 +538,24 @@ static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 
 	mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
 
-	if ((mode == WMI_HOST_HW_MODE_DBS) &&
-		(info->hw_modes.num_modes == NUM_RF_MODES)) {
-		if (reg_cap[phy0].low_5ghz_chan > reg_cap[phy2].low_5ghz_chan)
-			reg_cap[phy0].low_5ghz_chan = reg_cap[phy2].low_5ghz_chan;
-		else if (reg_cap[phy0].high_5ghz_chan < reg_cap[phy2].high_5ghz_chan)
-			reg_cap[phy0].high_5ghz_chan = reg_cap[phy2].high_5ghz_chan;
-	}
+	num_hw_modes = info->hw_modes.num_modes;
 
+	if ((mode != WMI_HOST_HW_MODE_DBS) || (num_hw_modes < NUM_RF_MODES))
+		return;
+
+	for (idx = 0; idx < num_hw_modes; idx++)
+		if (info->hw_modes.hw_mode_ids[idx] ==
+			WMI_HOST_HW_MODE_DBS_SBS) {
+			if (reg_cap[phy0].low_5ghz_chan >
+					reg_cap[phy2].low_5ghz_chan)
+				reg_cap[phy0].low_5ghz_chan =
+				    reg_cap[phy2].low_5ghz_chan;
+			else if (reg_cap[phy0].high_5ghz_chan <
+					reg_cap[phy2].high_5ghz_chan)
+				reg_cap[phy0].high_5ghz_chan =
+				    reg_cap[phy2].high_5ghz_chan;
+			break;
+		}
 }
 #else
 static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
