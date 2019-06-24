@@ -911,6 +911,37 @@ static QDF_STATUS send_peer_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_peer_delete_all_cmd_non_tlv() - send PEER delete all command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_peer_delete_all_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct peer_delete_all_params *param)
+{
+	wmi_vdev_delete_all_peer_cmd *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int len = sizeof(wmi_vdev_delete_all_peer_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_vdev_delete_all_peer_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->vdev_id;
+	ret =  wmi_unified_cmd_send(wmi_handle, buf, len,
+				    WMI_VDEV_DELETE_ALL_PEER_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_VDEV_DELETE_ALL_PEER_CMDID ");
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
  * convert_host_peer_param_id_to_target_id_non_tlv - convert host peer param_id
  * to target id.
  * @peer_param_id: host param id.
@@ -7359,6 +7390,34 @@ static QDF_STATUS extract_vdev_start_resp_non_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * extract_vdev_peer_delete_all_response_event_non_tlv() -
+ * extract peer delete all response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param pointer: Pointer to hold vdev_id of peer delete all response
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_vdev_peer_delete_all_response_event_non_tlv(
+		wmi_unified_t wmi_hdl,
+		void *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event *param)
+{
+	wmi_vdev_delete_all_peer_resp_event *ev;
+
+	ev = (wmi_vdev_delete_all_peer_resp_event *) evt_buf;
+	if (!ev) {
+		WMI_LOGE("%s: Invalid peer_delete all response", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	param->vdev_id = ev->vdev_id;
+	param->status = ev->status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_tbttoffset_num_vdevs_non_tlv() - extract tbtt offset num vdevs
  * @wmi_handle: wmi handle
@@ -9921,6 +9980,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_vdev_up_cmd = send_vdev_up_cmd_non_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_non_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_non_tlv,
+	.send_peer_delete_all_cmd = send_peer_delete_all_cmd_non_tlv,
 #ifdef WLAN_SUPPORT_GREEN_AP
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_non_tlv,
 #endif
@@ -10083,6 +10143,8 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_dcs_cw_int = extract_dcs_cw_int_non_tlv,
 	.extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_non_tlv,
 	.extract_vdev_start_resp = extract_vdev_start_resp_non_tlv,
+	.extract_vdev_peer_delete_all_response_event =
+				extract_vdev_peer_delete_all_response_event_non_tlv,
 	.extract_tbttoffset_update_params =
 			extract_tbttoffset_update_params_non_tlv,
 	.extract_tbttoffset_num_vdevs =
@@ -10375,6 +10437,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_host_dfs_check_support] =
 		WMI_SERVICE_HOST_DFS_CHECK_SUPPORT;
+	wmi_service[wmi_service_vdev_delete_all_peer] =
+		WMI_SERVICE_VDEV_DELETE_ALL_PEER;
 	wmi_service[wmi_service_cfr_capture_support] =
 		WMI_SERVICE_CFR_CAPTURE_SUPPORT;
 }
@@ -10488,6 +10552,8 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 					WMI_ESP_ESTIMATE_EVENTID;
 	event_ids[wmi_pdev_ctl_failsafe_check_event_id] =
 					WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID;
+	event_ids[wmi_peer_delete_all_response_event_id] =
+					WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID;
 }
 #endif
 
