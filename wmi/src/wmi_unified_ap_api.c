@@ -685,6 +685,31 @@ QDF_STATUS wmi_extract_peer_delete_response_event(
 }
 
 /**
+ * wmi_extract_vdev_peer_delete_all_response_event() -
+ *       extract vdev id from peer delete all response event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold evt buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(
+		void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_vdev_peer_delete_all_response_event)
+		return
+		wmi_handle->ops->extract_vdev_peer_delete_all_response_event(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_pdev_tpc_ev_param() - extract tpc param from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer

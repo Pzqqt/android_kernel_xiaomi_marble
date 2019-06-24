@@ -147,6 +147,10 @@ QDF_STATUS wmi_extract_peer_delete_response_event(void *wmi_hdl,
 		uint8_t *evt_buf,
 		struct wmi_host_peer_delete_response_event *param);
 
+QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct wmi_host_vdev_peer_delete_all_response_event *param);
+
 /**
  * wmi_send_bcn_offload_control_cmd - send beacon ofload control cmd to fw
  * @wmi_hdl: wmi handle
