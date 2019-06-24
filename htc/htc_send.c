@@ -1068,8 +1068,10 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 				/* pop off caller's queue */
 				pPacket = htc_packet_dequeue(pCallersSendQueue);
 				A_ASSERT(pPacket);
-				/* insert into local queue */
-				HTC_PACKET_ENQUEUE(&sendQueue, pPacket);
+				if (pPacket)
+					/* insert into local queue */
+					HTC_PACKET_ENQUEUE(&sendQueue,
+							   pPacket);
 			}
 
 			/* the caller's queue has all the packets that won't fit
