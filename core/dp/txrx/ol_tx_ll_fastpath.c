@@ -429,7 +429,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				 * the skb is freed only after receiving tx
 				 * completion for all segments of an nbuf.
 				 */
-				if (segments)
+				if (segments !=
+					(msdu_info.tso_info.num_segs - 1))
 					qdf_nbuf_inc_users(msdu);
 
 				ol_tx_trace_pkt(msdu, tx_desc->id,

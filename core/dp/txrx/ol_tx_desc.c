@@ -966,10 +966,6 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		}
 	} else if (had_error == htt_tx_status_download_fail) {
 		/* Failed to send to target */
-
-		/* This is to decrement skb->users count for TSO segment */
-		if (tx_desc->pkt_type == OL_TX_FRM_TSO)
-			qdf_nbuf_tx_free(tx_desc->netbuf, had_error);
 		goto free_tx_desc;
 	} else {
 		/* single regular frame, called from completion path */
