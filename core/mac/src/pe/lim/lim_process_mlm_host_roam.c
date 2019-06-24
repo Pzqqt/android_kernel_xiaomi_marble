@@ -123,7 +123,7 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		goto end;
 	}
 	/* assign the sessionId to the timer object */
-	mac_ctx->lim.limTimers.gLimReassocFailureTimer.sessionId =
+	mac_ctx->lim.lim_timers.gLimReassocFailureTimer.sessionId =
 		reassoc_req->sessionId;
 	session->limPrevMlmState = session->limMlmState;
 	session->limMlmState = eLIM_MLM_WT_REASSOC_RSP_STATE;
@@ -407,14 +407,14 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (pe_session->bRoamSynchInProgress != true) {
 #endif
-		mac->lim.limTimers.gLimReassocFailureTimer.sessionId =
+		mac->lim.lim_timers.gLimReassocFailureTimer.sessionId =
 			pe_session->peSessionId;
 		/* / Start reassociation failure timer */
 		MTRACE(mac_trace
 			(mac, TRACE_CODE_TIMER_ACTIVATE,
 			 pe_session->peSessionId, eLIM_REASSOC_FAIL_TIMER));
 		if (tx_timer_activate
-			(&mac->lim.limTimers.gLimReassocFailureTimer)
+			(&mac->lim.lim_timers.gLimReassocFailureTimer)
 			!= TX_SUCCESS) {
 			/* / Could not start reassoc failure timer. */
 			/* Log error */

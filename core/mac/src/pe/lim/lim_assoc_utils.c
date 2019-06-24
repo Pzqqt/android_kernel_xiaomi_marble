@@ -602,7 +602,7 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 		MTRACE(mac_trace
 			       (mac, TRACE_CODE_TIMER_DEACTIVATE,
 			       pe_session->peSessionId, eLIM_ADDTS_RSP_TIMER));
-		tx_timer_deactivate(&mac->lim.limTimers.gLimAddtsRspTimer);
+		tx_timer_deactivate(&mac->lim.lim_timers.gLimAddtsRspTimer);
 		pe_debug("Reset gLimAddtsSent flag and send addts timeout to SME");
 		lim_process_sme_addts_rsp_timeout(mac,
 					mac->lim.gLimAddtsRspTimerCount);
@@ -2917,7 +2917,7 @@ void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 	struct pe_session *pe_session = NULL;
 
 	pe_session = pe_find_session_by_session_id(mac,
-			mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId);
+			mac->lim.lim_timers.gpLimCnfWaitTimer[staId].sessionId);
 	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
@@ -3326,9 +3326,9 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 		       eLIM_MLM_WT_DEL_BSS_RSP_STATE));
 
 	if ((pe_session->peSessionId ==
-	     mac->lim.limTimers.gLimJoinFailureTimer.sessionId)
+	     mac->lim.lim_timers.gLimJoinFailureTimer.sessionId)
 	    && (true ==
-		tx_timer_running(&mac->lim.limTimers.gLimJoinFailureTimer))) {
+		tx_timer_running(&mac->lim.lim_timers.gLimJoinFailureTimer))) {
 		lim_deactivate_and_change_timer(mac, eLIM_JOIN_FAIL_TIMER);
 	}
 

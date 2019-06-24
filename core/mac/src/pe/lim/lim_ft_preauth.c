@@ -273,14 +273,14 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 	authFrame.authTransactionSeqNumber = SIR_MAC_AUTH_FRAME_1;
 	authFrame.authStatusCode = 0;
 
-	mac->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId =
+	mac->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
 				pe_session->peSessionId;
 
 	/* Start timer here to come back to operating channel */
-	mac->lim.limTimers.gLimFTPreAuthRspTimer.sessionId =
+	mac->lim.lim_timers.gLimFTPreAuthRspTimer.sessionId =
 		pe_session->peSessionId;
 	if (TX_SUCCESS !=
-	    tx_timer_activate(&mac->lim.limTimers.gLimFTPreAuthRspTimer)) {
+	    tx_timer_activate(&mac->lim.lim_timers.gLimFTPreAuthRspTimer)) {
 		pe_err("FT Auth Rsp Timer Start Failed");
 		goto preauth_fail;
 	}
@@ -519,7 +519,7 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	 */
 	pe_err("FT Pre-Auth Time Out!!!!");
 	session = pe_find_session_by_session_id(mac_ctx,
-			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
+		     mac_ctx->lim.lim_timers.gLimFTPreAuthRspTimer.sessionId);
 	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
@@ -537,7 +537,7 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	if (!session->ftPEContext.pFTPreAuthReq) {
 		/* Auth Rsp might already be posted to SME and ftcleanup done */
 		pe_err("pFTPreAuthReq is NULL sessionId: %d",
-			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
+		       mac_ctx->lim.lim_timers.gLimFTPreAuthRspTimer.sessionId);
 		return;
 	}
 
@@ -756,7 +756,7 @@ void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 
 	if (!session_entry) {
 		pe_err("vdev_id :%d PeSessionId:%d does not exist", vdev_id,
-			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
+			mac_ctx->lim.lim_timers.gLimFTPreAuthRspTimer.sessionId);
 		return;
 	}
 

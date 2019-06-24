@@ -3287,13 +3287,13 @@ __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *msg_buf)
 		timeout = mac->mlme_cfg->timeouts.addts_rsp_timeout;
 
 	timeout = SYS_MS_TO_TICKS(timeout);
-	if (tx_timer_change(&mac->lim.limTimers.gLimAddtsRspTimer, timeout, 0)
+	if (tx_timer_change(&mac->lim.lim_timers.gLimAddtsRspTimer, timeout, 0)
 	    != TX_SUCCESS) {
 		pe_err("AddtsRsp timer change failed!");
 		goto send_failure_addts_rsp;
 	}
 	mac->lim.gLimAddtsRspTimerCount++;
-	if (tx_timer_change_context(&mac->lim.limTimers.gLimAddtsRspTimer,
+	if (tx_timer_change_context(&mac->lim.lim_timers.gLimAddtsRspTimer,
 				    mac->lim.gLimAddtsRspTimerCount) !=
 	    TX_SUCCESS) {
 		pe_err("AddtsRsp timer change failed!");
@@ -3304,8 +3304,8 @@ __lim_process_sme_addts_req(struct mac_context *mac, uint32_t *msg_buf)
 		       eLIM_ADDTS_RSP_TIMER));
 
 	/* add the sessionId to the timer object */
-	mac->lim.limTimers.gLimAddtsRspTimer.sessionId = sessionId;
-	if (tx_timer_activate(&mac->lim.limTimers.gLimAddtsRspTimer) !=
+	mac->lim.lim_timers.gLimAddtsRspTimer.sessionId = sessionId;
+	if (tx_timer_activate(&mac->lim.lim_timers.gLimAddtsRspTimer) !=
 	    TX_SUCCESS) {
 		pe_err("AddtsRsp timer activation failed!");
 		goto send_failure_addts_rsp;
@@ -3428,7 +3428,7 @@ void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param)
 	struct pe_session *pe_session;
 
 	pe_session = pe_find_session_by_session_id(mac,
-				mac->lim.limTimers.gLimAddtsRspTimer.
+				mac->lim.lim_timers.gLimAddtsRspTimer.
 				sessionId);
 	if (!pe_session) {
 		pe_err("Session Does not exist for given sessionID");

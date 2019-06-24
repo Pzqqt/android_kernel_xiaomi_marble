@@ -82,7 +82,7 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 	pe_debug("Channel switch Mode: %d",
 		       pe_session->gLimChannelSwitch.switchMode);
 
-	mac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
+	mac->lim.lim_timers.gLimChannelSwitchTimer.sessionId = sessionId;
 	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
 				pe_session->gLimChannelSwitch.primaryChannel,
@@ -119,7 +119,7 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		       (mac, TRACE_CODE_TIMER_ACTIVATE, sessionId,
 		       eLIM_CHANNEL_SWITCH_TIMER));
 
-	if (tx_timer_activate(&mac->lim.limTimers.gLimChannelSwitchTimer) !=
+	if (tx_timer_activate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
 	    TX_SUCCESS) {
 		pe_err("tx_timer_activate failed");
 	}
@@ -156,13 +156,13 @@ QDF_STATUS lim_start_channel_switch(struct mac_context *mac,
 	MTRACE(mac_trace
 		       (mac, TRACE_CODE_TIMER_DEACTIVATE, pe_session->peSessionId,
 		       eLIM_CHANNEL_SWITCH_TIMER));
-	if (tx_timer_deactivate(&mac->lim.limTimers.gLimChannelSwitchTimer) !=
+	if (tx_timer_deactivate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("tx_timer_deactivate failed!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (tx_timer_change(&mac->lim.limTimers.gLimChannelSwitchTimer,
+	if (tx_timer_change(&mac->lim.lim_timers.gLimChannelSwitchTimer,
 			    pe_session->gLimChannelSwitch.switchTimeoutValue,
 			    0) != TX_SUCCESS) {
 		pe_err("tx_timer_change failed");

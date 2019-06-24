@@ -760,9 +760,9 @@ QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	mac->lim.limTimers.gpLimCnfWaitTimer =
+	mac->lim.lim_timers.gpLimCnfWaitTimer =
 		qdf_mem_malloc(sizeof(TX_TIMER) * (mac->lim.maxStation + 1));
-	if (!mac->lim.limTimers.gpLimCnfWaitTimer) {
+	if (!mac->lim.lim_timers.gpLimCnfWaitTimer) {
 		status = QDF_STATUS_E_NOMEM;
 		goto pe_open_timer_fail;
 	}
@@ -805,8 +805,8 @@ pe_open_lock_fail:
 	qdf_mem_free(mac->lim.gpSession);
 	mac->lim.gpSession = NULL;
 pe_open_psession_fail:
-	qdf_mem_free(mac->lim.limTimers.gpLimCnfWaitTimer);
-	mac->lim.limTimers.gpLimCnfWaitTimer = NULL;
+	qdf_mem_free(mac->lim.lim_timers.gpLimCnfWaitTimer);
+	mac->lim.lim_timers.gpLimCnfWaitTimer = NULL;
 pe_open_timer_fail:
 	pe_free_dph_node_array_buffer();
 
@@ -840,8 +840,8 @@ QDF_STATUS pe_close(struct mac_context *mac)
 		if (mac->lim.gpSession[i].valid == true)
 			pe_delete_session(mac, &mac->lim.gpSession[i]);
 	}
-	qdf_mem_free(mac->lim.limTimers.gpLimCnfWaitTimer);
-	mac->lim.limTimers.gpLimCnfWaitTimer = NULL;
+	qdf_mem_free(mac->lim.lim_timers.gpLimCnfWaitTimer);
+	mac->lim.lim_timers.gpLimCnfWaitTimer = NULL;
 
 	qdf_mem_free(mac->lim.gpSession);
 	mac->lim.gpSession = NULL;

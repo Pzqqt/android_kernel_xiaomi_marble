@@ -2011,7 +2011,7 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 
 		/* Start OLBC timer */
 		if (tx_timer_activate
-			    (&mac->lim.limTimers.gLimUpdateOlbcCacheTimer) !=
+			    (&mac->lim.lim_timers.gLimUpdateOlbcCacheTimer) !=
 		    TX_SUCCESS) {
 			pe_err("tx_timer_activate failed");
 		}
@@ -2685,7 +2685,7 @@ static void lim_process_switch_channel_re_assoc_req(struct mac_context *mac,
 	MTRACE(mac_trace
 		       (mac, TRACE_CODE_TIMER_ACTIVATE, pe_session->peSessionId,
 		       eLIM_REASSOC_FAIL_TIMER));
-	if (tx_timer_activate(&mac->lim.limTimers.gLimReassocFailureTimer)
+	if (tx_timer_activate(&mac->lim.lim_timers.gLimReassocFailureTimer)
 	    != TX_SUCCESS) {
 		pe_err("could not start Reassociation failure timer");
 		/* Return Reassoc confirm with */
@@ -2818,7 +2818,7 @@ static void lim_process_switch_channel_join_req(
 		eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 
 	/* assign appropriate sessionId to the timer object */
-	mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId =
+	mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer.sessionId =
 		session_entry->peSessionId;
 	pe_debug("Sessionid: %d Send Probe req on channel freq %d ssid:%.*s "
 		"BSSID: " QDF_MAC_ADDR_STR, session_entry->peSessionId,
@@ -2833,7 +2833,7 @@ static void lim_process_switch_channel_join_req(
 	 */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 		session_entry->peSessionId, eLIM_JOIN_FAIL_TIMER));
-	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimJoinFailureTimer) !=
+	if (tx_timer_activate(&mac_ctx->lim.lim_timers.gLimJoinFailureTimer) !=
 		TX_SUCCESS) {
 		pe_err("couldn't activate Join failure timer");
 		session_entry->limMlmState = session_entry->limPrevMlmState;
@@ -2856,7 +2856,7 @@ static void lim_process_switch_channel_join_req(
 	if (session_entry->opmode == QDF_P2P_CLIENT_MODE) {
 		/* Activate Join Periodic Probe Req timer */
 		if (tx_timer_activate
-			(&mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer)
+			(&mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer)
 			!= TX_SUCCESS) {
 			pe_err("Periodic JoinReq timer activate failed");
 			goto error;

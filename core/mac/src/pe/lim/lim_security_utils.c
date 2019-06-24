@@ -462,12 +462,12 @@ lim_restore_from_auth_state(struct mac_context *mac, tSirResultCodes resultCode,
 
 	/* Auth retry and AUth failure timers are not started for SAE */
 	/* 'Change' timer for future activations */
-	if (tx_timer_running(&mac->lim.limTimers.
+	if (tx_timer_running(&mac->lim.lim_timers.
 	    g_lim_periodic_auth_retry_timer))
 		lim_deactivate_and_change_timer(mac,
 				eLIM_AUTH_RETRY_TIMER);
 	/* 'Change' timer for future activations */
-	if (tx_timer_running(&mac->lim.limTimers.gLimAuthFailureTimer))
+	if (tx_timer_running(&mac->lim.lim_timers.gLimAuthFailureTimer))
 		lim_deactivate_and_change_timer(mac,
 				eLIM_AUTH_FAIL_TIMER);
 

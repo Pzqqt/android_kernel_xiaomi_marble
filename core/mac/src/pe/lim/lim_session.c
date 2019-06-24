@@ -860,7 +860,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	}
 
 	for (n = 0; n < (mac_ctx->lim.maxStation + 1); n++) {
-		timer_ptr = &mac_ctx->lim.limTimers.gpLimCnfWaitTimer[n];
+		timer_ptr = &mac_ctx->lim.lim_timers.gpLimCnfWaitTimer[n];
 		if (session->peSessionId == timer_ptr->sessionId)
 			if (true == tx_timer_running(timer_ptr))
 				tx_timer_deactivate(timer_ptr);

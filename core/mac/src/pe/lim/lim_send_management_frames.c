@@ -2707,7 +2707,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (deauth_req) {
 		if (tx_timer_running(
-			&mac_ctx->lim.limTimers.gLimDeauthAckTimer))
+			&mac_ctx->lim.lim_timers.gLimDeauthAckTimer))
 			lim_deactivate_and_change_timer(mac_ctx,
 							eLIM_DEAUTH_ACK_TIMER);
 
@@ -2813,7 +2813,7 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 	disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	if (disassoc_req) {
 		if (tx_timer_running(
-			&mac_ctx->lim.limTimers.gLimDisassocAckTimer))
+			&mac_ctx->lim.lim_timers.gLimDisassocAckTimer))
 			lim_deactivate_and_change_timer(mac_ctx,
 				eLIM_DISASSOC_ACK_TIMER);
 
@@ -3123,12 +3123,12 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
 		if (tx_timer_change
-			    (&mac->lim.limTimers.gLimDisassocAckTimer, val, 0)
+			    (&mac->lim.lim_timers.gLimDisassocAckTimer, val, 0)
 		    != TX_SUCCESS) {
 			pe_err("Unable to change Disassoc ack Timer val");
 			return;
 		} else if (TX_SUCCESS !=
-			   tx_timer_activate(&mac->lim.limTimers.
+			   tx_timer_activate(&mac->lim.lim_timers.
 					     gLimDisassocAckTimer)) {
 			pe_err("Unable to activate Disassoc ack Timer");
 			lim_deactivate_and_change_timer(mac,
@@ -3328,12 +3328,12 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
 		if (tx_timer_change
-			    (&mac->lim.limTimers.gLimDeauthAckTimer, val, 0)
+			    (&mac->lim.lim_timers.gLimDeauthAckTimer, val, 0)
 		    != TX_SUCCESS) {
 			pe_err("Unable to change Deauth ack Timer val");
 			return;
 		} else if (TX_SUCCESS !=
-			   tx_timer_activate(&mac->lim.limTimers.
+			   tx_timer_activate(&mac->lim.lim_timers.
 					     gLimDeauthAckTimer)) {
 			pe_err("Unable to activate Deauth ack Timer");
 			lim_deactivate_and_change_timer(mac,

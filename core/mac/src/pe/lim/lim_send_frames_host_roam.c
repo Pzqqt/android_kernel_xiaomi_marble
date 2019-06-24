@@ -489,12 +489,12 @@ void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 	}
 	/* Prepare and send Reassociation request frame */
 	/* start reassoc timer. */
-	mac->lim.limTimers.gLimReassocFailureTimer.sessionId =
+	mac->lim.lim_timers.gLimReassocFailureTimer.sessionId =
 		pe_session->peSessionId;
 	/* Start reassociation failure timer */
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TIMER_ACTIVATE,
 			 pe_session->peSessionId, eLIM_REASSOC_FAIL_TIMER));
-	if (tx_timer_activate(&mac->lim.limTimers.gLimReassocFailureTimer)
+	if (tx_timer_activate(&mac->lim.lim_timers.gLimReassocFailureTimer)
 	    != TX_SUCCESS) {
 		/* Could not start reassoc failure timer. */
 		/* Log error */

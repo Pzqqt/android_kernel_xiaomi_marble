@@ -66,7 +66,7 @@ static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 	struct pe_session *session;
 
 	session = pe_find_session_by_session_id(mac_ctx,
-			mac_ctx->lim.limTimers.sae_auth_timer.sessionId);
+			mac_ctx->lim.lim_timers.sae_auth_timer.sessionId);
 	if (!session) {
 		pe_err("Session does not exist for given session id");
 		return;
@@ -389,7 +389,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
 
 	/* assign appropriate sessionId to the timer object */
-	mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId =
+	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
 	status = wma_add_bss_peer_sta(session->self_mac_addr, session->bssId,
@@ -634,13 +634,13 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(struct mac_context *mac_ctx,
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
 		       session->limMlmState));
 
-	mac_ctx->lim.limTimers.sae_auth_timer.sessionId =
+	mac_ctx->lim.lim_timers.sae_auth_timer.sessionId =
 					session->peSessionId;
 
 	/* Activate SAE auth timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session->peSessionId, eLIM_AUTH_SAE_TIMER));
-	if (tx_timer_activate(&mac_ctx->lim.limTimers.sae_auth_timer)
+	if (tx_timer_activate(&mac_ctx->lim.lim_timers.sae_auth_timer)
 		    != TX_SUCCESS) {
 		pe_err("could not start Auth SAE timer");
 	}
@@ -786,17 +786,17 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 		LIM_NO_WEP_IN_FC, session);
 
 	/* assign appropriate session_id to the timer object */
-	mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId = session_id;
+	mac_ctx->lim.lim_timers.gLimAuthFailureTimer.sessionId = session_id;
 
 	/* assign appropriate sessionId to the timer object */
-	 mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId =
+	 mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
 								  session_id;
 	 lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
 	/* Activate Auth failure timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session->peSessionId, eLIM_AUTH_FAIL_TIMER));
 	 lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_FAIL_TIMER);
-	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)
+	if (tx_timer_activate(&mac_ctx->lim.lim_timers.gLimAuthFailureTimer)
 	    != TX_SUCCESS) {
 		pe_err("could not start Auth failure timer");
 		/* Cleanup as if auth timer expired */
@@ -806,7 +806,7 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 			   session->peSessionId, eLIM_AUTH_RETRY_TIMER));
 		/* Activate Auth Retry timer */
 		if (tx_timer_activate
-		    (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
+		    (&mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer)
 							      != TX_SUCCESS)
 			pe_err("could not activate Auth Retry timer");
 	}
@@ -886,7 +886,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	}
 
 	/* map the session entry pointer to the AssocFailureTimer */
-	mac_ctx->lim.limTimers.gLimAssocFailureTimer.sessionId =
+	mac_ctx->lim.lim_timers.gLimAssocFailureTimer.sessionId =
 		mlm_assoc_req->sessionId;
 	session_entry->limPrevMlmState = session_entry->limMlmState;
 	session_entry->limMlmState = eLIM_MLM_WT_ASSOC_RSP_STATE;
@@ -902,7 +902,7 @@ static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg
 	/* Start association failure timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session_entry->peSessionId, eLIM_ASSOC_FAIL_TIMER));
-	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAssocFailureTimer)
+	if (tx_timer_activate(&mac_ctx->lim.lim_timers.gLimAssocFailureTimer)
 	    != TX_SUCCESS) {
 		pe_warn("SessionId:%d couldn't start Assoc failure timer",
 			session_entry->peSessionId);
@@ -1183,7 +1183,7 @@ void lim_clean_up_disassoc_deauth_req(struct mac_context *mac_ctx,
 			lim_process_disassoc_ack_timeout(mac_ctx);
 		} else {
 			if (tx_timer_running(
-				&mac_ctx->lim.limTimers.gLimDisassocAckTimer)) {
+			    &mac_ctx->lim.lim_timers.gLimDisassocAckTimer)) {
 				lim_deactivate_and_change_timer(mac_ctx,
 						eLIM_DISASSOC_ACK_TIMER);
 			}
@@ -1202,7 +1202,7 @@ void lim_clean_up_disassoc_deauth_req(struct mac_context *mac_ctx,
 			lim_process_deauth_ack_timeout(mac_ctx);
 		} else {
 			if (tx_timer_running(
-				&mac_ctx->lim.limTimers.gLimDeauthAckTimer)) {
+				&mac_ctx->lim.lim_timers.gLimDeauthAckTimer)) {
 				lim_deactivate_and_change_timer(mac_ctx,
 						eLIM_DEAUTH_ACK_TIMER);
 			}
@@ -1766,7 +1766,7 @@ void lim_process_join_failure_timeout(struct mac_context *mac_ctx)
 	struct pe_session *session;
 
 	session = pe_find_session_by_session_id(mac_ctx,
-			mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId);
+			mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId);
 	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
@@ -1831,16 +1831,16 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 	tSirMacSSid ssid;
 
 	session = pe_find_session_by_session_id(mac_ctx,
-		mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.sessionId);
+	      mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer.sessionId);
 	if (!session) {
 		pe_err("session does not exist for given SessionId: %d",
-			mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer.
+			mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer.
 			sessionId);
 		return;
 	}
 
 	if ((true ==
-	    tx_timer_running(&mac_ctx->lim.limTimers.gLimJoinFailureTimer))
+	    tx_timer_running(&mac_ctx->lim.lim_timers.gLimJoinFailureTimer))
 		&& (session->limMlmState == eLIM_MLM_WT_JOIN_BEACON_STATE)) {
 		qdf_mem_copy(ssid.ssId, session->ssId.ssId,
 			     session->ssId.length);
@@ -1856,7 +1856,7 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 				eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 		/* Activate Join Periodic Probe Req timer */
 		if (tx_timer_activate(
-		    &mac_ctx->lim.limTimers.gLimPeriodicJoinProbeReqTimer) !=
+		    &mac_ctx->lim.lim_timers.gLimPeriodicJoinProbeReqTimer) !=
 		    TX_SUCCESS) {
 			pe_warn("could not activate Periodic Join req failure timer");
 			return;
@@ -1877,17 +1877,19 @@ static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 
 	session_entry =
 	  pe_find_session_by_session_id(mac_ctx,
-	  mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId);
+	  mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId);
 	if (!session_entry) {
 		pe_err("session does not exist for given SessionId: %d",
-		  mac_ctx->lim.limTimers.
+		  mac_ctx->lim.lim_timers.
 			g_lim_periodic_auth_retry_timer.sessionId);
 		return;
 	}
 
-	if (tx_timer_running(&mac_ctx->lim.limTimers.gLimAuthFailureTimer) &&
-	     (session_entry->limMlmState == eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
-	     (LIM_AUTH_ACK_RCD_SUCCESS != mac_ctx->auth_ack_status)) {
+	if (tx_timer_running(&mac_ctx->lim.lim_timers.gLimAuthFailureTimer) &&
+			     (session_entry->limMlmState ==
+			      eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
+			     (LIM_AUTH_ACK_RCD_SUCCESS !=
+			      mac_ctx->auth_ack_status)) {
 		tSirMacAuthFrameBody    auth_frame;
 
 		/*
@@ -1914,7 +1916,7 @@ static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 
 		/* Activate Auth Retry timer */
 		if (tx_timer_activate
-		     (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
+		     (&mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer)
 			 != TX_SUCCESS) {
 			pe_err("could not activate Auth Retry failure timer");
 			return;
@@ -1933,7 +1935,7 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx)
 #endif
 
 	session = pe_find_session_by_session_id(mac_ctx,
-			mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId);
+			mac_ctx->lim.lim_timers.gLimAuthFailureTimer.sessionId);
 	if (!session) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
@@ -2063,10 +2065,10 @@ void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 
 	if (msg_type == LIM_ASSOC)
 		session_id =
-		    mac_ctx->lim.limTimers.gLimAssocFailureTimer.sessionId;
+		    mac_ctx->lim.lim_timers.gLimAssocFailureTimer.sessionId;
 	else
 		session_id =
-		    mac_ctx->lim.limTimers.gLimReassocFailureTimer.sessionId;
+		    mac_ctx->lim.lim_timers.gLimReassocFailureTimer.sessionId;
 
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (!session) {

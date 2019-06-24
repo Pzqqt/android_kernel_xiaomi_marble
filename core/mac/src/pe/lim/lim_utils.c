@@ -473,7 +473,7 @@ QDF_STATUS lim_init_mlm(struct mac_context *mac)
 void lim_deactivate_timers(struct mac_context *mac_ctx)
 {
 	uint32_t n;
-	tLimTimers *lim_timer = &mac_ctx->lim.limTimers;
+	tLimTimers *lim_timer = &mac_ctx->lim.lim_timers;
 
 	lim_deactivate_timers_host_roam(mac_ctx);
 
@@ -506,7 +506,7 @@ void lim_deactivate_timers(struct mac_context *mac_ctx)
 	/* Deactivate Association failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
 
-	if (tx_timer_running(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)) {
+	if (tx_timer_running(&mac_ctx->lim.lim_timers.gLimAuthFailureTimer)) {
 		pe_err("Auth failure timer running call the timeout API");
 		/* Cleanup as if auth timer expired */
 		lim_timer_handler(mac_ctx, SIR_LIM_AUTH_FAIL_TIMEOUT);
@@ -561,7 +561,7 @@ void lim_cleanup_mlm(struct mac_context *mac_ctx)
 	tLimTimers *lim_timer = NULL;
 
 	if (mac_ctx->lim.gLimTimersCreated == 1) {
-		lim_timer = &mac_ctx->lim.limTimers;
+		lim_timer = &mac_ctx->lim.lim_timers;
 
 		lim_deactivate_timers(mac_ctx);
 
@@ -935,7 +935,7 @@ void lim_handle_update_olbc_cache(struct mac_context *mac_ctx)
 		lim_send_beacon_params(mac_ctx, &beaconParams, pe_session);
 	}
 	/* Start OLBC timer */
-	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimUpdateOlbcCacheTimer)
+	if (tx_timer_activate(&mac_ctx->lim.lim_timers.gLimUpdateOlbcCacheTimer)
 						!= TX_SUCCESS)
 		pe_err("tx_timer_activate failed");
 }
@@ -1872,7 +1872,7 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 		   (pe_session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
 			pe_err("Invalid channel! Disconnect");
 			lim_tear_down_link_with_ap(mac,
-					   mac->lim.limTimers.
+					   mac->lim.lim_timers.
 					   gLimChannelSwitchTimer.sessionId,
 					   eSIR_MAC_UNSPEC_FAILURE_REASON);
 			return;
@@ -1939,7 +1939,7 @@ void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 
 	session_entry = pe_find_session_by_session_id(
 		mac_ctx,
-		mac_ctx->lim.limTimers.gLimChannelSwitchTimer.sessionId);
+		mac_ctx->lim.lim_timers.gLimChannelSwitchTimer.sessionId);
 	if (!session_entry) {
 		pe_err("Session does not exist for given sessionID");
 		return;
@@ -2078,7 +2078,7 @@ void lim_cancel_dot11h_channel_switch(struct mac_context *mac,
 		       (mac, TRACE_CODE_TIMER_DEACTIVATE,
 		       pe_session->peSessionId, eLIM_CHANNEL_SWITCH_TIMER));
 
-	if (tx_timer_deactivate(&mac->lim.limTimers.gLimChannelSwitchTimer) !=
+	if (tx_timer_deactivate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("tx_timer_deactivate failed!");
 	}
@@ -4650,7 +4650,7 @@ void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 		(psession_entry->bssType == eSIR_INFRASTRUCTURE_MODE) &&
 			(LIM_IS_STA_ROLE(psession_entry)) &&
 				(psession_entry->LimHBFailureStatus == true)) {
-		tLimTimers *lim_timer  = &mac_ctx->lim.limTimers;
+		tLimTimers *lim_timer  = &mac_ctx->lim.lim_timers;
 		/*
 		 * Activate Probe After HeartBeat Timer incase HB
 		 * Failure detected
@@ -4801,7 +4801,7 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 	/*
 	 * Deactivate Timer ProbeAfterHB Timer -> As its a oneshot timer,
 	 * need not deactivate the timer
-	 * tx_timer_deactivate(&mac->lim.limTimers.gLimProbeAfterHBTimer);
+	 * tx_timer_deactivate(&mac->lim.lim_timers.gLimProbeAfterHBTimer);
 	 */
 }
 
