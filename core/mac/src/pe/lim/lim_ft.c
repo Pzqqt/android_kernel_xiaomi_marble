@@ -36,14 +36,9 @@
 #include <lim_assoc_utils.h>
 #include <lim_session.h>
 #include <lim_admit_control.h>
+#include <lim_security_utils.h>
 #include "wmm_apsd.h"
 #include "wma.h"
-
-extern void lim_send_set_sta_key_req(struct mac_context *mac,
-				     tLimMlmSetKeysReq * pMlmSetKeysReq,
-				     uint16_t staIdx,
-				     uint8_t defWEPIdx,
-				     struct pe_session *pe_session, bool sendRsp);
 
 /*--------------------------------------------------------------------------
    Initialize the FT variables.

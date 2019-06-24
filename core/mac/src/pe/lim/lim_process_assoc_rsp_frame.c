@@ -43,9 +43,6 @@
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
 
-extern QDF_STATUS sch_beacon_edca_process(struct mac_context *mac,
-	tSirMacEdcaParamSetIE *edca, struct pe_session *pe_session);
-
 /**
  * lim_update_stads_htcap() - Updates station Descriptor HT capability
  * @mac_ctx: Pointer to Global MAC structure
