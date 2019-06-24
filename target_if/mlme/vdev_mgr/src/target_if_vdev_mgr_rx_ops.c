@@ -43,6 +43,7 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 	struct vdev_start_response start_rsp = {0};
 	struct vdev_stop_response stop_rsp = {0};
 	struct vdev_delete_response del_rsp = {0};
+	struct peer_delete_all_response peer_del_all_rsp = {0};
 	uint8_t vdev_id;
 
 	vdev_id = wlan_vdev_get_id(vdev);
@@ -64,7 +65,10 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 	if (!qdf_atomic_test_bit(START_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(RESTART_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
 	    !qdf_atomic_test_bit(STOP_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
-	    !qdf_atomic_test_bit(DELETE_RESPONSE_BIT, &vdev_rsp->rsp_status)) {
+	    !qdf_atomic_test_bit(DELETE_RESPONSE_BIT, &vdev_rsp->rsp_status) &&
+	    !qdf_atomic_test_bit(
+			PEER_DELETE_ALL_RESPONSE_BIT,
+			&vdev_rsp->rsp_status)) {
 		mlme_debug("No response bit is set, ignoring actions");
 		return;
 	}
@@ -102,6 +106,14 @@ void target_if_vdev_mgr_rsp_timer_mgmt_cb(void *arg)
 			rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
 		}
 
+		if (qdf_atomic_test_bit(PEER_DELETE_ALL_RESPONSE_BIT,
+					&vdev_rsp->rsp_status)) {
+			peer_del_all_rsp.vdev_id = wlan_vdev_get_id(vdev);
+			rx_ops->vdev_mgr_peer_delete_all_response(
+							psoc,
+							&peer_del_all_rsp);
+		}
+
 		return;
 	}
 
@@ -135,7 +147,7 @@ static int target_if_vdev_mgr_start_response_handler(
 	wmi_host_vdev_start_resp vdev_start_resp;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 
@@ -190,7 +202,7 @@ static int target_if_vdev_mgr_stop_response_handler(
 	uint32_t vdev_id;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 
@@ -236,7 +248,7 @@ static int target_if_vdev_mgr_delete_response_handler(
 	struct wmi_host_vdev_delete_resp vdev_del_resp;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 
@@ -247,8 +259,7 @@ static int target_if_vdev_mgr_delete_response_handler(
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops || !rx_ops->vdev_mgr_stop_response ||
-	    !rx_ops->vdev_mgr_get_response_timer_info) {
+	if (!rx_ops || !rx_ops->vdev_mgr_delete_response) {
 		mlme_err("No Rx Ops");
 		return -EINVAL;
 	}
@@ -270,6 +281,56 @@ static int target_if_vdev_mgr_delete_response_handler(
 	return qdf_status_to_os_return(status);
 }
 
+static int target_if_vdev_mgr_peer_delete_all_response_handler(
+							ol_scn_t scn,
+							uint8_t *data,
+							uint32_t datalen)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+	struct peer_delete_all_response rsp = {0};
+	struct wmi_host_vdev_peer_delete_all_response_event
+						vdev_peer_del_all_resp;
+
+	if (!scn || !data) {
+		mlme_err("Invalid input");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		mlme_err("PSOC is NULL");
+		return -EINVAL;
+	}
+
+	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->vdev_mgr_peer_delete_all_response) {
+		mlme_err("No Rx Ops");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		mlme_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_vdev_peer_delete_all_response_event(
+						wmi_handle, data,
+						&vdev_peer_del_all_resp)) {
+		mlme_err("WMI extract failed");
+		return -EINVAL;
+	}
+
+	rsp.vdev_id = vdev_peer_del_all_resp.vdev_id;
+	rsp.status = vdev_peer_del_all_resp.status;
+	status = rx_ops->vdev_mgr_peer_delete_all_response(psoc, &rsp);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int target_if_vdev_mgr_offload_bcn_tx_status_handler(
 							ol_scn_t scn,
 							uint8_t *data,
@@ -282,7 +343,7 @@ static int target_if_vdev_mgr_offload_bcn_tx_status_handler(
 	uint32_t vdev_id, tx_status;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
@@ -328,7 +389,7 @@ static int target_if_vdev_mgr_tbttoffset_update_handler(
 	uint32_t num_vdevs = 0;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
@@ -354,7 +415,8 @@ static int target_if_vdev_mgr_tbttoffset_update_handler(
 		return -EINVAL;
 	}
 
-	status = rx_ops->vdev_mgr_tbttoffset_update_handle(num_vdevs, false);
+	status = rx_ops->vdev_mgr_tbttoffset_update_handle(num_vdevs,
+							   false);
 
 	return qdf_status_to_os_return(status);
 }
@@ -371,7 +433,7 @@ static int target_if_vdev_mgr_ext_tbttoffset_update_handler(
 	uint32_t num_vdevs = 0;
 
 	if (!scn || !data) {
-		mlme_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		mlme_err("Invalid input");
 		return -EINVAL;
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
@@ -398,7 +460,8 @@ static int target_if_vdev_mgr_ext_tbttoffset_update_handler(
 		return -EINVAL;
 	}
 
-	status = rx_ops->vdev_mgr_tbttoffset_update_handle(num_vdevs, true);
+	status = rx_ops->vdev_mgr_tbttoffset_update_handle(num_vdevs,
+							   true);
 
 	return qdf_status_to_os_return(status);
 }
@@ -444,6 +507,14 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_register(
 	if (retval)
 		mlme_err("failed to register for start response");
 
+	retval = wmi_unified_register_event_handler(
+			wmi_handle,
+			wmi_peer_delete_all_response_event_id,
+			target_if_vdev_mgr_peer_delete_all_response_handler,
+			WMI_RX_UMAC_CTX);
+	if (retval)
+		mlme_err("failed to register for peer delete all response");
+
 	return qdf_status_from_os_return(retval);
 }
 
@@ -472,5 +543,8 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
 	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_vdev_start_resp_event_id);
 
+	wmi_unified_unregister_event_handler(
+					wmi_handle,
+					wmi_peer_delete_all_response_event_id);
 	return QDF_STATUS_SUCCESS;
 }

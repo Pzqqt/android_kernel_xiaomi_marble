@@ -963,6 +963,58 @@ static QDF_STATUS target_if_vdev_mgr_sta_ps_param_send(
 	return status;
 }
 
+static QDF_STATUS target_if_vdev_mgr_peer_delete_all_send(
+					struct wlan_objmgr_vdev *vdev,
+					struct peer_delete_all_params *param)
+{
+	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
+	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	struct vdev_response_timer *vdev_rsp;
+	uint8_t vdev_id;
+
+	if (!vdev || !param) {
+		mlme_err("Invalid input");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = target_if_vdev_mgr_wmi_handle_get(vdev);
+	if (!wmi_handle) {
+		mlme_err("Failed to get WMI handle!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
+
+	if (!rx_ops && !rx_ops->vdev_mgr_get_response_timer_info) {
+		mlme_err("VDEV_%d: No Rx Ops", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_rsp = rx_ops->vdev_mgr_get_response_timer_info(vdev);
+	if (!vdev_rsp) {
+		mlme_err("VDEV_%d: Invalid response structure", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_rsp->expire_time = PEER_DELETE_ALL_RESPONSE_TIMER;
+	target_if_vdev_mgr_rsp_timer_start(vdev, vdev_rsp,
+					   PEER_DELETE_ALL_RESPONSE_BIT);
+
+	status = wmi_unified_peer_delete_all_send(wmi_handle, param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		vdev_rsp->expire_time = 0;
+		vdev_rsp->timer_status = QDF_STATUS_E_CANCELED;
+		target_if_vdev_mgr_rsp_timer_stop(vdev, vdev_rsp,
+						  PEER_DELETE_ALL_RESPONSE_BIT);
+	}
+
+	return status;
+}
+
 QDF_STATUS
 target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -1015,6 +1067,8 @@ target_if_vdev_mgr_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_vdev_mgr_rsp_timer_mod;
 	mlme_tx_ops->vdev_mgr_rsp_timer_stop =
 			target_if_vdev_mgr_rsp_timer_stop;
+	mlme_tx_ops->peer_delete_all_send =
+			target_if_vdev_mgr_peer_delete_all_send;
 
 	return QDF_STATUS_SUCCESS;
 }
