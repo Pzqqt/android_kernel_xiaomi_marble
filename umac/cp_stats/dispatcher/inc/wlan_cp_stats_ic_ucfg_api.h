@@ -378,6 +378,8 @@ UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_attempt);
 UCFG_VDEV_CP_STATS_SET_FUNCS(authorize_success);
 UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
+UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_all_req);
+UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
 
 #define UCFG_VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
