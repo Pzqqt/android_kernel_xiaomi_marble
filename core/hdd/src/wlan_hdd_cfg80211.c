@@ -8460,6 +8460,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		qdf_mem_free(chan_weights);
 		return -EINVAL;
 	}
+	chan_weights->saved_num_chan = POLICY_MGR_MAX_CHANNEL_LIST;
 	sme_get_valid_channels(chan_weights->saved_chan_list,
 			       &chan_weights->saved_num_chan);
 	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights);

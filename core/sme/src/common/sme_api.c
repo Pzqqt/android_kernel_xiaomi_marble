@@ -1122,14 +1122,23 @@ sme_register_bcn_report_pe_cb(mac_handle_t mac_handle, beacon_report_cb cb)
 QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len)
 {
 	struct mac_context *mac_ctx = sme_get_mac_context();
+	uint32_t num_valid_chan;
 
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid MAC context"));
+		*list_len = 0;
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*list_len = (uint32_t)mac_ctx->mlme_cfg->reg.valid_channel_list_num;
+	num_valid_chan = mac_ctx->mlme_cfg->reg.valid_channel_list_num;
+
+	if (num_valid_chan > *list_len) {
+		sme_err("list len size %d less than expected %d", *list_len,
+			num_valid_chan);
+		num_valid_chan = *list_len;
+	}
+	*list_len = num_valid_chan;
 	qdf_mem_copy(chan_list, mac_ctx->mlme_cfg->reg.valid_channel_list,
 		     *list_len);
 
