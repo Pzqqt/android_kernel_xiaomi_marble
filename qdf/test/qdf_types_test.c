@@ -161,6 +161,79 @@ static uint32_t qdf_types_ut_int64_parse(void)
 	return errors;
 }
 
+#define ut_uint16_array_pass(str, max_size, exp_arr, exp_arr_size) \
+__ut_uint16_array(str, QDF_STATUS_SUCCESS, max_size, exp_arr, exp_arr_size)
+
+#define ut_uint16_array_fail(str, max_size, exp_status, exp_arr, exp_arr_size)\
+__ut_uint16_array(str, exp_status, max_size, exp_arr, exp_arr_size)
+
+static uint32_t
+__ut_uint16_array(const char *str, QDF_STATUS exp_status,
+		  uint8_t max_array_size, uint16_t *exp_array,
+		  uint8_t exp_array_size)
+{
+	uint16_t parsed_array[10];
+	qdf_size_t parsed_array_size;
+	QDF_STATUS status;
+	uint8_t i;
+
+	status = qdf_uint16_array_parse(str, parsed_array, max_array_size,
+					&parsed_array_size);
+
+	if (status != exp_status) {
+		qdf_nofl_alert("FAIL: qdf_uint16_array_parse(\"%s\") -> status %d; expected status %d",
+			       str, status, exp_status);
+		return 1;
+	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return 0;
+
+	if (parsed_array_size != exp_array_size) {
+		qdf_nofl_alert("FAIL: qdf_uint16_array_parse(\"%s\") -> parsed_array_size %zu; exp_array_size %d",
+			       str, parsed_array_size, exp_array_size);
+		return 1;
+	}
+
+	for (i = 0; i < exp_array_size; i++)
+		if (parsed_array[i] != exp_array[i]) {
+			qdf_nofl_alert("FAIL: qdf_uint16_array_parse(\"%s\") -> parsed_array[%d] %d; exp_array[%d] %d",
+				       str, i, parsed_array[i], i,
+				       exp_array[i]);
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint32_t qdf_types_ut_uint16_array_parse(void)
+{
+	uint32_t errors = 0;
+	uint16_t exp_array_value[10] = {
+			1, 10, 2412, 2417, 100, 65535, 0, 5486, 5180, 9999};
+
+	errors += ut_uint16_array_pass(
+			"1, 10, 2412, 2417, 100, 65535, 0, 5486, 5180, 9999",
+			10, exp_array_value, 10);
+	errors += ut_uint16_array_pass(
+		"+1, +10, +2412, +2417, +100, +65535, 0, +5486, +5180, +9999",
+		10, exp_array_value, 10);
+	errors += ut_uint16_array_fail("1;", 10, QDF_STATUS_E_FAILURE,
+				       exp_array_value, 0);
+	/* Out of range test where 65536 is out of range */
+	errors += ut_uint16_array_fail(
+			"1, 10, 2412, 2417, 100, 65536, 0, 5486, 5180, 9999",
+			10, QDF_STATUS_E_RANGE, exp_array_value, 0);
+	errors += ut_uint16_array_fail(
+		"-1, -10, -2412, -2417, -100, -65535, 0, -5486, -5180, -9999",
+		10, QDF_STATUS_E_RANGE, exp_array_value, 0);
+	errors += ut_uint16_array_fail(
+			"1, 10, 2412, 2417, 100, 日本, 0, 5486, 5180, 9999",
+			10, QDF_STATUS_E_FAILURE, exp_array_value, 0);
+
+	return errors;
+}
+
 #define ut_uint32_pass(str, exp) __ut_uint32(str, QDF_STATUS_SUCCESS, exp)
 #define ut_uint32_fail(str, exp_status) __ut_uint32(str, exp_status, 0)
 
@@ -507,6 +580,7 @@ uint32_t qdf_types_unit_test(void)
 	errors += qdf_types_ut_mac_parse();
 	errors += qdf_types_ut_ipv4_parse();
 	errors += qdf_types_ut_ipv6_parse();
+	errors += qdf_types_ut_uint16_array_parse();
 
 	return errors;
 }
