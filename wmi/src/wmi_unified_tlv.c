@@ -1122,6 +1122,45 @@ static QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 }
 
 /**
+ * send_peer_delete_all_cmd_tlv() - send PEER delete all command to fw
+ * @wmi: wmi handle
+ * @param: pointer to hold peer delete all parameter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_peer_delete_all_cmd_tlv(
+				wmi_unified_t wmi,
+				struct peer_delete_all_params *param)
+{
+	wmi_vdev_delete_all_peer_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_vdev_delete_all_peer_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(
+		&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_delete_all_peer_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+				(wmi_vdev_delete_all_peer_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+
+	WMI_LOGD("%s: vdev_id %d", __func__, cmd->vdev_id);
+	wmi_mtrace(WMI_VDEV_DELETE_ALL_PEER_CMDID, cmd->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi, buf, len,
+				 WMI_VDEV_DELETE_ALL_PEER_CMDID)) {
+		WMI_LOGP("%s: Failed to send peer del all command", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * crash_on_send_peer_rx_reorder_queue_remove_cmd() - crash on reorder queue cmd
  *
  * On MCL side, we are suspecting this cmd to trigger drop of ARP
@@ -11705,6 +11744,7 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_stop_cmd = send_vdev_stop_cmd_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_tlv,
+	.send_peer_delete_all_cmd = send_peer_delete_all_cmd_tlv,
 	.send_peer_rx_reorder_queue_setup_cmd =
 		send_peer_rx_reorder_queue_setup_cmd_tlv,
 	.send_peer_rx_reorder_queue_remove_cmd =
@@ -12008,6 +12048,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_peer_state_event_id] = WMI_PEER_STATE_EVENTID;
 	event_ids[wmi_peer_delete_response_event_id] =
 					WMI_PEER_DELETE_RESP_EVENTID;
+	event_ids[wmi_peer_delete_all_response_event_id] =
+					WMI_VDEV_DELETE_ALL_PEER_RESP_EVENTID;
 	event_ids[wmi_mgmt_rx_event_id] = WMI_MGMT_RX_EVENTID;
 	event_ids[wmi_host_swba_event_id] = WMI_HOST_SWBA_EVENTID;
 	event_ids[wmi_tbttoffset_update_event_id] =
@@ -12562,6 +12604,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_TX_COMPL_TSF64;
 	wmi_service[wmi_service_data_stall_recovery_support] =
 			WMI_SERVICE_DSM_ROAM_FILTER;
+	wmi_service[wmi_service_vdev_delete_all_peer] =
+			WMI_SERVICE_DELETE_ALL_PEER_SUPPORT;
 }
 
 /**
