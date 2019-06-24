@@ -396,6 +396,7 @@ typedef  enum  {
     WMI_SERVICE_DSM_ROAM_FILTER = 211, /* FW supports data stall AP mitigation while roaming */
     WMI_SERVICE_PACKET_CAPTURE_SUPPORT = 212, /* target supports packet capture Mode (SMART MU) */
     WMI_SERVICE_PER_PEER_HTT_STATS_RESET = 213, /* FW supports HTT per peer stats reset facility */
+    WMI_SERVICE_DELETE_ALL_PEER_SUPPORT = 214, /* target supports cmd to delete all peers within a vdev */
 
     /******* ADD NEW SERVICES HERE *******/
 
