@@ -701,9 +701,11 @@ static inline void ol_txrx_debugfs_exit(ol_txrx_pdev_handle pdev)
 
 /**
  * ol_txrx_pdev_attach() - allocate txrx pdev
+ * @soc: soc handle
  * @ctrl_pdev: cfg pdev
  * @htc_pdev: HTC pdev
  * @osdev: os dev
+ * @pdev_id: pdev identifier for pdev attach
  *
  * Return: txrx pdev handle
  *		  NULL for failure
@@ -713,9 +715,13 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 		    struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 		    HTC_HANDLE htc_pdev, qdf_device_t osdev, uint8_t pdev_id)
 {
+	struct ol_txrx_soc_t *ol_soc = cdp_soc_t_to_ol_txrx_soc_t(soc);
 	struct ol_txrx_pdev_t *pdev;
 	struct cdp_cfg *cfg_pdev = (struct cdp_cfg *)ctrl_pdev;
 	int i, tid;
+
+	if (pdev_id == OL_TXRX_INVALID_PDEV_ID)
+		return NULL;
 
 	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
@@ -739,6 +745,9 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc,
 	/* store provided params */
 	pdev->ctrl_pdev = cfg_pdev;
 	pdev->osdev = osdev;
+	pdev->id = pdev_id;
+	pdev->soc = ol_soc;
+	ol_soc->pdev_list[pdev_id] = pdev;
 
 	for (i = 0; i < htt_num_sec_types; i++)
 		pdev->sec_types[i] = (enum ol_sec_type)i;
@@ -1578,9 +1587,15 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
  */
 static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 {
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_stats_req_internal *req, *temp_req;
 	int i = 0;
+
+	if (!soc)
+		ol_txrx_err("soc is NULL");
+		return;
+	}
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -1632,6 +1647,7 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 
 	ol_txrx_debugfs_exit(pdev);
 
+	soc->pdev_list[pdev->id] = NULL;
 	qdf_mem_free(pdev);
 }
 
@@ -5891,24 +5907,20 @@ static struct cdp_ops ol_txrx_ops = {
 	.pmf_ops = &ol_ops_pmf
 };
 
-/*
- * Local prototype added to temporarily address warning caused by
- * -Wmissing-prototypes. A more correct solution, namely to expose
- * a prototype in an appropriate header file, will come later.
- */
-struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
-				     struct ol_if_ops *dp_ol_if_ops);
-struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
-				     struct ol_if_ops *dp_ol_if_ops)
+ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle,
+				      struct ol_if_ops *dp_ol_if_ops)
 {
-	struct cdp_soc_t *soc = qdf_mem_malloc(sizeof(struct cdp_soc_t));
+	struct ol_txrx_soc_t *soc;
 
+	soc = qdf_mem_malloc(sizeof(*soc));
 	if (!soc)
 		return NULL;
 
-	soc->ops = &ol_txrx_ops;
-	soc->ol_ops = dp_ol_if_ops;
-	return soc;
+	soc->psoc = scn_handle;
+	soc->cdp_soc.ops = &ol_txrx_ops;
+	soc->cdp_soc.ol_ops = dp_ol_if_ops;
+
+	return ol_txrx_soc_t_to_cdp_soc_t(soc);
 }
 
 bool ol_txrx_get_new_htt_msg_format(struct ol_txrx_pdev_t *pdev)

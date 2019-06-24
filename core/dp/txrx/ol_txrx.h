@@ -75,6 +75,16 @@ int  ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 			      enum peer_debug_id_type dbg_id);
 
 /**
+ * ol_txrx_soc_attach() - initialize the soc
+ * @scn_handle: Opaque SOC handle from control plane
+ * @dp_ol_if_ops: Offload Operations
+ *
+ * Return: SOC handle on success, NULL on failure
+ */
+ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle,
+				      struct ol_if_ops *dp_ol_if_ops);
+
+/**
  * ol_tx_desc_pool_size_hl() - allocate tx descriptor pool size for HL systems
  * @ctrl_pdev: the control pdev handle
  *
@@ -307,6 +317,30 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 #endif
+
+/**
+ * cdp_soc_t_to_ol_txrx_soc_t() - typecast cdp_soc_t to ol_txrx_soc_t
+ * @soc: OL soc handle
+ *
+ * Return: struct ol_txrx_soc_t pointer
+ */
+static inline
+struct ol_txrx_soc_t *cdp_soc_t_to_ol_txrx_soc_t(ol_txrx_soc_handle soc)
+{
+	return (struct ol_txrx_soc_t *)soc;
+}
+
+/**
+ * ol_txrx_soc_t_to_cdp_soc_t() - typecast ol_txrx_soc_t to cdp_soc
+ * @soc: Opaque soc handle
+ *
+ * Return: struct cdp_soc_t pointer
+ */
+static inline
+ol_txrx_soc_handle ol_txrx_soc_t_to_cdp_soc_t(struct ol_txrx_soc_t *soc)
+{
+	return (struct cdp_soc_t *)soc;
+}
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
