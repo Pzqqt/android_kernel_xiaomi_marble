@@ -1158,6 +1158,12 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 			 eCSR_CFG_DOT11_MODE_11N_ONLY)) {
 		pChanList->ht_en = true;
 	}
+	if ((mac->roam.configParam.uCfgDot11Mode == eCSR_CFG_DOT11_MODE_AUTO) ||
+	    (mac->roam.configParam.uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX) ||
+	    (mac->roam.configParam.uCfgDot11Mode ==
+	     eCSR_CFG_DOT11_MODE_11AX_ONLY))
+		pChanList->he_en = true;
+
 	msg.type = WMA_UPDATE_CHAN_LIST_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = pChanList;

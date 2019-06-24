@@ -2582,6 +2582,7 @@ typedef struct sSirUpdateChan {
 	uint8_t ht_en;
 	uint8_t vht_en;
 	uint8_t vht_24_en;
+	bool he_en;
 	tSirUpdateChanParam chanParam[1];
 } tSirUpdateChanList, *tpSirUpdateChanList;
 
