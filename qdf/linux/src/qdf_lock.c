@@ -23,7 +23,7 @@
 
 #include <qdf_types.h>
 #include <i_host_diag_core_event.h>
-#ifdef CONFIG_MCL
+#ifdef FEATURE_RUNTIME_PM
 #include <cds_api.h>
 #include <hif.h>
 #endif
