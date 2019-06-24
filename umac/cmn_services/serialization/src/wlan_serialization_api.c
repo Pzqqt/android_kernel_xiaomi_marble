@@ -821,9 +821,11 @@ void wlan_serialization_purge_all_pdev_cmd(struct wlan_objmgr_pdev *pdev)
 	wlan_ser_cancel_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
 				 WLAN_SER_CMD_SCAN, true);
 	wlan_ser_cancel_non_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
-				     WLAN_SER_CMD_NONSCAN, false);
+				     WLAN_SER_CMD_NONSCAN, false,
+				     WLAN_SER_CMD_ATTR_NONE);
 	wlan_ser_cancel_non_scan_cmd(ser_pdev_obj, pdev, NULL, NULL,
-				     WLAN_SER_CMD_NONSCAN, true);
+				     WLAN_SER_CMD_NONSCAN, true,
+				     WLAN_SER_CMD_ATTR_NONE);
 }
 
 static inline
@@ -870,7 +872,8 @@ void wlan_serialization_purge_all_pending_cmd_by_vdev_id(
 	wlan_ser_cancel_scan_cmd(ser_pdev_obj, pdev, vdev, NULL,
 				 WLAN_SER_CMD_SCAN, false);
 	wlan_ser_cancel_non_scan_cmd(ser_pdev_obj, pdev, vdev, NULL,
-				     WLAN_SER_CMD_NONSCAN, false);
+				     WLAN_SER_CMD_NONSCAN, false,
+				     WLAN_SER_CMD_ATTR_NONE);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 }

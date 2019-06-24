@@ -547,6 +547,19 @@ bool wlan_serialization_match_cmd_pdev(qdf_list_node_t *nnode,
 				       enum wlan_serialization_node node_type);
 
 /**
+ * wlan_serialization_match_cmd_blocking() - Check for a blocking cmd
+ * @nnode: The node on which the matching has to be done
+ * @node_type: Pdev node or vdev node
+ *
+ * This API will check if the give command of nnode is a blocking command.
+ *
+ * Return: True if blocking command, false otherwise.
+ */
+bool wlan_serialization_match_cmd_blocking(
+		qdf_list_node_t *nnode,
+		enum wlan_serialization_node node_type);
+
+/**
  * wlan_serialization_find_cmd() - Find the cmd matching the given criterias
  * @cmd: Serialization command information
  * @cmd_type: Command type to be matched

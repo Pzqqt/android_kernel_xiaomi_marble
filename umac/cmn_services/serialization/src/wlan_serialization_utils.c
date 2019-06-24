@@ -775,6 +775,30 @@ bool wlan_serialization_match_cmd_pdev(qdf_list_node_t *nnode,
 	return match_found;
 }
 
+bool wlan_serialization_match_cmd_blocking(
+		qdf_list_node_t *nnode,
+		enum wlan_serialization_node node_type)
+{
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	bool match_found = false;
+
+	if (node_type == WLAN_SER_PDEV_NODE)
+		cmd_list =
+			qdf_container_of(nnode,
+					 struct wlan_serialization_command_list,
+					 pdev_node);
+	else
+		cmd_list =
+			qdf_container_of(nnode,
+					 struct wlan_serialization_command_list,
+					 vdev_node);
+
+	if (cmd_list->cmd.is_blocking)
+		match_found = true;
+
+	return match_found;
+}
+
 qdf_list_node_t *
 wlan_serialization_find_cmd(qdf_list_t *queue,
 			    enum wlan_serialization_match_type match_type,
