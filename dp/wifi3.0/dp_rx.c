@@ -40,20 +40,10 @@
 #define DP_RX_TID_SAVE(_nbuf, _tid)
 #endif
 
-#ifdef CONFIG_MCL
-static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
-{
-	if (vdev->opmode != wlan_op_mode_sta)
-		return true;
-	else
-		return false;
-}
-#else
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
 	return vdev->ap_bridge_enabled;
 }
-#endif
 
 /*
  * dp_rx_dump_info_and_assert() - dump RX Ring info and Rx Desc info

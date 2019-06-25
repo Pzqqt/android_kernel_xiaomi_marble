@@ -4684,6 +4684,14 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	pdev->vdev_count++;
 
+	if (wlan_op_mode_sta != vdev->opmode)
+		vdev->ap_bridge_enabled = true;
+	else
+		vdev->ap_bridge_enabled = false;
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "%s: wlan_cfg_ap_bridge_enabled %d",
+		  __func__, vdev->ap_bridge_enabled);
+
 	dp_tx_vdev_attach(vdev);
 
 	if (pdev->vdev_count == 1)
