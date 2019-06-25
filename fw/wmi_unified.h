@@ -23155,6 +23155,12 @@ typedef struct {
      * Refer to WMI_HE_CAP_xx_LTF_xxx_SUPPORT_GET/SET macros
      */
     A_UINT32 he_cap_info_internal;
+
+    A_UINT32 wireless_modes; /* REGDMN MODE, see REGDMN_MODE_ enum */
+    A_UINT32 low_2ghz_chan_freq;  /* units = MHz */
+    A_UINT32 high_2ghz_chan_freq; /* units = MHz */
+    A_UINT32 low_5ghz_chan_freq;  /* units = MHz */
+    A_UINT32 high_5ghz_chan_freq; /* units = MHz */
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
