@@ -26,7 +26,7 @@
 #define MAX_SV_BL_SCALE_LEVEL 65535
 #define DSI_CMD_PPS_SIZE 135
 
-#define DSI_MODE_MAX 5
+#define DSI_MODE_MAX 32
 
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
