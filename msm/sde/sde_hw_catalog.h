@@ -13,6 +13,7 @@
 #include <linux/msm-bus.h>
 #include <linux/of_fdt.h>
 #include <drm/drmP.h>
+#include "sde_hw_mdss.h"
 
 /**
  * Max hardware block count: For ex: max 12 SSPP pipes or
@@ -915,9 +916,11 @@ struct sde_pingpong_cfg  {
  * @base               register offset of this block
  * @len:               length of hardware block
  * @features           bit mask identifying sub-blocks/features
+ * @dsc_pair_mask:     Bitmask of DSCs that can be controlled by same CTL
  */
 struct sde_dsc_cfg {
 	SDE_HW_BLK_INFO;
+	DECLARE_BITMAP(dsc_pair_mask, DSC_MAX);
 };
 
 /**
