@@ -238,17 +238,20 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 		}
 		priv->clk_cnt[clk_id]--;
 		if (priv->clk_cnt[clk_id] == 0) {
-			bolero_clk_rsc_mux0_clk_request(priv, default_clk_id,
-							true);
+			ret = bolero_clk_rsc_mux0_clk_request(priv,
+						default_clk_id, true);
 
-			iowrite32(0x0, clk_muxsel);
+			if (!ret)
+				iowrite32(0x0, clk_muxsel);
+
 			if (priv->clk[clk_id + NPL_CLK_OFFSET])
 				clk_disable_unprepare(
 					priv->clk[clk_id + NPL_CLK_OFFSET]);
 			clk_disable_unprepare(priv->clk[clk_id]);
 
-			bolero_clk_rsc_mux0_clk_request(priv, default_clk_id,
-							false);
+			if (!ret)
+				bolero_clk_rsc_mux0_clk_request(priv,
+						default_clk_id, false);
 		}
 	}
 	return ret;

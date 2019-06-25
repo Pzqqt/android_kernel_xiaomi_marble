@@ -905,6 +905,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 {
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
+	int ret = 0;
 
 	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
@@ -923,6 +924,18 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 	case BOLERO_MACRO_EVT_SSR_UP:
 		/* reset swr after ssr/pdr */
 		wsa_priv->reset_swr = true;
+		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
+		ret = bolero_clk_rsc_request_clock(wsa_priv->dev,
+						wsa_priv->default_clk_id,
+						WSA_CORE_CLK, true);
+		if (ret < 0)
+			dev_err_ratelimited(wsa_priv->dev,
+				"%s, failed to enable clk, ret:%d\n",
+				__func__, ret);
+		else
+			bolero_clk_rsc_request_clock(wsa_priv->dev,
+						wsa_priv->default_clk_id,
+						WSA_CORE_CLK, false);
 		if (wsa_priv->swr_ctrl_data)
 			swrm_wcd_notify(
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
