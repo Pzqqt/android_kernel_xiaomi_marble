@@ -256,6 +256,7 @@ tgt_mc_cp_stats_update_peer_adv_stats(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t *peer_mac_addr;
 	struct wlan_objmgr_peer *peer;
+	struct peer_mc_cp_stats *peer_mc_stats;
 	struct peer_adv_mc_cp_stats *peer_adv_mc_stats;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct peer_cp_stats *peer_cp_stats_priv;
@@ -277,7 +278,8 @@ tgt_mc_cp_stats_update_peer_adv_stats(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
-	peer_adv_mc_stats = peer_cp_stats_priv->peer_adv_stats;
+	peer_mc_stats = peer_cp_stats_priv->peer_stats;
+	peer_adv_mc_stats = peer_mc_stats->adv_stats;
 
 	qdf_mem_copy(peer_adv_mc_stats->peer_macaddr,
 		     peer_adv_stats->peer_macaddr,
@@ -794,11 +796,11 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	info.tx_rate = peer_mc_stats->tx_rate / 100;
 	info.rx_rate = peer_mc_stats->rx_rate / 100;
 
-	if (peer_cp_stats_priv->peer_adv_stats) {
+	if (peer_mc_stats->adv_stats) {
 		info.num_peer_adv_stats = 1;
 		qdf_mem_copy(info.peer_adv_stats,
-			     peer_cp_stats_priv->peer_adv_stats,
-			     sizeof(peer_cp_stats_priv->peer_adv_stats));
+			     peer_mc_stats->adv_stats,
+			     sizeof(peer_mc_stats->adv_stats));
 	}
 
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);

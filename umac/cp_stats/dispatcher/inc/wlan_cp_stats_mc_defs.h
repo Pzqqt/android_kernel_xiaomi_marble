@@ -267,7 +267,8 @@ struct peer_extd_stats {
  * @rx_rate: rx rate
  * @peer_rssi: rssi
  * @peer_macaddr: mac address
- * @peer_extd_stats: Pointer to peer extended stats
+ * @extd_stats: Pointer to peer extended stats
+ * @adv_stats: Pointer to peer adv (extd2) stats
  */
 struct peer_mc_cp_stats {
 	uint32_t tx_rate;
@@ -275,6 +276,7 @@ struct peer_mc_cp_stats {
 	int8_t peer_rssi;
 	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	struct peer_extd_stats *extd_stats;
+	struct peer_adv_mc_cp_stats *adv_stats;
 };
 
 /**
