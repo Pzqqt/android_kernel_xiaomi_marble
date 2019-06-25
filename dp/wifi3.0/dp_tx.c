@@ -1881,8 +1881,9 @@ static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 {
 	bool invalid_tid = (tx_exc->tid > DP_MAX_TIDS && tx_exc->tid !=
 			    HTT_INVALID_TID);
-	bool invalid_encap_type = (tx_exc->tid > DP_MAX_TIDS && tx_exc->tid !=
-				   HTT_INVALID_TID);
+	bool invalid_encap_type =
+			(tx_exc->tx_encap_type > htt_cmn_pkt_num_types &&
+			 tx_exc->tx_encap_type != CDP_INVALID_TX_ENCAP_TYPE);
 	bool invalid_sec_type = (tx_exc->sec_type > cdp_num_sec_types &&
 				 tx_exc->sec_type != CDP_INVALID_SEC_TYPE);
 	bool invalid_cookie = (tx_exc->is_tx_sniffer == 1 &&
