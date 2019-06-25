@@ -3,7 +3,6 @@
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-phy-timing:" fmt
 #include "dsi_phy_timing_calc.h"
 
 void dsi_phy_hw_v3_0_get_default_phy_params(
@@ -88,11 +87,11 @@ void dsi_phy_hw_v3_0_update_timing_params(
 	timing->lane_v3[10] = 0x04;
 	timing->lane_v3[11] = 0x00;
 
-	pr_debug("[%d %d %d %d]\n", timing->lane_v3[0],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v3[0],
 		timing->lane_v3[1], timing->lane_v3[2], timing->lane_v3[3]);
-	pr_debug("[%d %d %d %d]\n", timing->lane_v3[4],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v3[4],
 		timing->lane_v3[5], timing->lane_v3[6], timing->lane_v3[7]);
-	pr_debug("[%d %d %d %d]\n", timing->lane_v3[8],
+	DSI_DEBUG("[%d %d %d %d]\n", timing->lane_v3[8],
 		timing->lane_v3[9], timing->lane_v3[10], timing->lane_v3[11]);
 	timing->count_per_lane = 12;
 }

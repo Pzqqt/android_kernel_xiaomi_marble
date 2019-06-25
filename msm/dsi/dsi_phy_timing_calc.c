@@ -3,8 +3,6 @@
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-phy-timing:" fmt
-
 #include "dsi_phy_timing_calc.h"
 
 static const u32 bits_per_pixel[DSI_PIXEL_FORMAT_MAX] = {
@@ -15,7 +13,7 @@ static int dsi_phy_cmn_validate_and_set(struct timing_entry *t,
 {
 	if (t->rec & 0xffffff00) {
 		/* Output value can only be 8 bits */
-		pr_err("Incorrect %s rec value - %d\n", t_name, t->rec);
+		DSI_ERR("Incorrect %s rec value - %d\n", t_name, t->rec);
 		return -EINVAL;
 	}
 	t->reg_value = t->rec;
@@ -56,9 +54,10 @@ static int calc_clk_prepare(struct dsi_phy_hw *phy,
 	div_s64_rem(temp_multiple, clk_params->bitclk_mbps, &frac);
 	clk_prep_actual = div_s64((intermediate + frac), multiplier);
 
-	pr_debug("CLK_PREPARE:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d\n",
+	DSI_PHY_DBG(phy, "CLK_PREPARE:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max);
-	pr_debug(" reg_value=%d, actual=%lld\n", t->reg_value, clk_prep_actual);
+	DSI_PHY_DBG(phy, " reg_value=%d, actual=%lld\n", t->reg_value,
+			clk_prep_actual);
 
 	*actual_frac = frac;
 	*actual_intermediate = intermediate;
@@ -103,7 +102,7 @@ static int calc_clk_zero(struct dsi_phy_hw *phy,
 		goto error;
 
 
-	pr_debug("CLK_ZERO:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "CLK_ZERO:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 error:
@@ -171,7 +170,7 @@ static int calc_clk_trail(struct dsi_phy_hw *phy,
 		goto error;
 
 	*teot_clk_lane = teot_clk_lane1;
-	pr_debug("CLK_TRAIL:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "CLK_TRAIL:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -243,7 +242,7 @@ static int calc_hs_prepare(struct dsi_phy_hw *phy,
 			clk_params->bitclk_mbps);
 
 	*temp_mul = temp_multiple;
-	pr_debug("HS_PREP:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_PREP:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 error:
@@ -290,7 +289,7 @@ static int calc_hs_zero(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("HS_ZERO:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_ZERO:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -333,7 +332,7 @@ static int calc_hs_trail(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("HS_TRAIL:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_TRAIL:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -360,7 +359,7 @@ static int calc_hs_rqst(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("HS_RQST:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_RQST:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -391,7 +390,7 @@ static int calc_hs_exit(struct dsi_phy_hw *phy,
 		goto error;
 
 
-	pr_debug("HS_EXIT:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_EXIT:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -418,7 +417,7 @@ static int calc_hs_rqst_clk(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("HS_RQST_CLK:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "HS_RQST_CLK:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 
@@ -481,7 +480,7 @@ static int calc_clk_post(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("CLK_POST:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "CLK_POST:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 error:
@@ -531,7 +530,7 @@ static int calc_clk_pre(struct dsi_phy_hw *phy,
 	if (rc)
 		goto error;
 
-	pr_debug("CLK_PRE:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
+	DSI_PHY_DBG(phy, "CLK_PRE:mipi_min=%d, mipi_max=%d, rec_min=%d, rec_max=%d, reg_val=%d\n",
 		 t->mipi_min, t->mipi_max, t->rec_min, t->rec_max,
 		 t->reg_value);
 error:
@@ -553,68 +552,70 @@ static int dsi_phy_cmn_calc_timing_params(struct dsi_phy_hw *phy,
 	rc = calc_clk_prepare(phy, clk_params, desc, &actual_frac,
 			      &actual_intermediate);
 	if (rc) {
-		pr_err("clk_prepare calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "clk_prepare calculations failed, rc=%d\n",
+				rc);
 		goto error;
 	}
 
 	rc = calc_clk_zero(phy, clk_params, desc,
 		actual_frac, actual_intermediate);
 	if (rc) {
-		pr_err("clk_zero calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "clk_zero calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_clk_trail(phy, clk_params, desc, &teot_clk_lane);
 	if (rc) {
-		pr_err("clk_trail calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "clk_trail calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_prepare(phy, clk_params, desc, &temp_multiple);
 	if (rc) {
-		pr_err("hs_prepare calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_prepare calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_zero(phy, clk_params, desc, temp_multiple);
 	if (rc) {
-		pr_err("hs_zero calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_zero calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_trail(phy, clk_params, desc, teot_clk_lane);
 	if (rc) {
-		pr_err("hs_trail calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_trail calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_rqst(phy, clk_params, desc);
 	if (rc) {
-		pr_err("hs_rqst calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_rqst calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_exit(phy, clk_params, desc);
 	if (rc) {
-		pr_err("hs_exit calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_exit calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_hs_rqst_clk(phy, clk_params, desc);
 	if (rc) {
-		pr_err("hs_rqst_clk calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "hs_rqst_clk calculations failed, rc=%d\n",
+				rc);
 		goto error;
 	}
 
 	rc = calc_clk_post(phy, clk_params, desc);
 	if (rc) {
-		pr_err("clk_post calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "clk_post calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 
 	rc = calc_clk_pre(phy, clk_params, desc);
 	if (rc) {
-		pr_err("clk_pre calculations failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "clk_pre calculations failed, rc=%d\n", rc);
 		goto error;
 	}
 error:
@@ -716,12 +717,12 @@ int dsi_phy_hw_calculate_timing_params(struct dsi_phy_hw *phy,
 			  1, (8 * clk_params.tlpx_numer_ns)),
 		1);
 
-	pr_debug("BIT CLOCK = %d, tlpx_numer_ns=%d, treot_ns=%d\n",
+	DSI_PHY_DBG(phy, "BIT CLOCK = %d, tlpx_numer_ns=%d, treot_ns=%d\n",
 	       clk_params.bitclk_mbps, clk_params.tlpx_numer_ns,
 	       clk_params.treot_ns);
 	rc = dsi_phy_cmn_calc_timing_params(phy, &clk_params, &desc);
 	if (rc) {
-		pr_err("Timing calc failed, rc=%d\n", rc);
+		DSI_PHY_ERR(phy, "Timing calc failed, rc=%d\n", rc);
 		goto error;
 	}
 
@@ -743,7 +744,7 @@ int dsi_phy_timing_calc_init(struct dsi_phy_hw *phy,
 
 	if (version == DSI_PHY_VERSION_UNKNOWN ||
 	    version >= DSI_PHY_VERSION_MAX || !phy) {
-		pr_err("Unsupported version: %d\n", version);
+		DSI_PHY_ERR(phy, "Unsupported version: %d\n", version);
 		return -ENOTSUPP;
 	}
 

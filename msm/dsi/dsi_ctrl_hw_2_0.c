@@ -3,7 +3,6 @@
  * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
-#define pr_fmt(fmt) "dsi-hw:" fmt
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 
@@ -21,7 +20,7 @@ void dsi_ctrl_hw_20_setup_lane_map(struct dsi_ctrl_hw *ctrl,
 
 	DSI_W32(ctrl, DSI_LANE_SWAP_CTRL, reg_value);
 
-	pr_debug("[DSI_%d] Lane swap setup complete\n", ctrl->index);
+	DSI_CTRL_HW_DBG(ctrl, "Lane swap setup complete\n");
 }
 
 int dsi_ctrl_hw_20_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl,
@@ -44,13 +43,13 @@ int dsi_ctrl_hw_20_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl,
 	if (lanes & DSI_DATA_LANE_3)
 		fifo_empty_mask |= BIT(28);
 
-	pr_debug("%s: polling for fifo empty, mask=0x%08x\n", __func__,
+	DSI_CTRL_HW_DBG(ctrl, "polling for fifo empty, mask=0x%08x\n",
 		fifo_empty_mask);
 	rc = readl_poll_timeout(ctrl->base + DSI_FIFO_STATUS, val,
 			(val & fifo_empty_mask), sleep_us, timeout_us);
 	if (rc) {
-		pr_err("%s: fifo not empty, FIFO_STATUS=0x%08x\n",
-				__func__, val);
+		DSI_CTRL_HW_ERR(ctrl, "fifo not empty, FIFO_STATUS=0x%08x\n",
+				val);
 		goto error;
 	}
 
@@ -220,6 +219,6 @@ ssize_t dsi_ctrl_hw_20_reg_dump_to_buffer(struct dsi_ctrl_hw *ctrl,
 	len += snprintf((buf + len), (size - len),
 			DUMP_REG_VALUE(DSI_VERSION));
 
-	pr_err("LLENGTH = %d\n", len);
+	DSI_CTRL_HW_ERR(ctrl, "LLENGTH = %d\n", len);
 	return len;
 }
