@@ -15,9 +15,15 @@ endif
 
 ifeq ($(KERNEL_BUILD), 0)
 	ifeq ($(CONFIG_ARCH_SM8150), y)
-		include $(AUDIO_ROOT)/config/sm8150auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
+		ifdef CONFIG_SND_SOC_SA8155
+			include $(AUDIO_ROOT)/config/sa8155auto.conf
+			export
+			INCS    +=  -include $(AUDIO_ROOT)/config/sa8155autoconf.h
+		else
+			include $(AUDIO_ROOT)/config/sm8150auto.conf
+			export
+			INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
+		endif
 	endif
 	ifeq ($(CONFIG_ARCH_SM6150), y)
 		include $(AUDIO_ROOT)/config/sm6150auto.conf
@@ -78,7 +84,6 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 # for SM8150 sound card driver
 ifdef CONFIG_SND_SOC_SM8150
-	MACHINE_OBJS += sa8155.o
 	MACHINE_OBJS += sm8150.o
 	MACHINE_OBJS += machine_815x_init.o
 endif
@@ -102,6 +107,11 @@ endif
 
 ifdef CONFIG_SND_SOC_LITO
 	MACHINE_OBJS += kona.o
+endif
+
+# for sa8155 sound card driver
+ifdef CONFIG_SND_SOC_SA8155
+	MACHINE_OBJS += sa8155.o
 endif
 
 ifdef CONFIG_SND_SOC_CPE
@@ -203,6 +213,9 @@ obj-$(CONFIG_SND_SOC_KONA) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_LITO) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_SA8155) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_CPE) += cpe_lsm_dlkm.o
