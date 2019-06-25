@@ -841,6 +841,8 @@ struct spectral_param_properties {
  * @dbr_ring_debug: Whether Spectral DBR ring debug is enabled
  * @dbr_buff_debug: Whether Spectral DBR buffer debug is enabled
  * @direct_dma_support: Whether Direct-DMA is supported on the current radio
+ * @prev_tstamp: Timestamp of the previously received sample, which has to be
+ * compared with the current tstamp to check descrepancy
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -958,6 +960,7 @@ struct target_if_spectral {
 	bool  dbr_ring_debug;
 	bool  dbr_buff_debug;
 	bool direct_dma_support;
+	uint32_t prev_tstamp;
 };
 
 /**

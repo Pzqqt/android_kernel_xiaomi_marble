@@ -1603,11 +1603,37 @@ static void target_if_spectral_check_buffer_poisoning(
 		target_if_spectral_fw_hang(spectral);
 	}
 }
+
+static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
+					 uint8_t *buf, uint32_t current_ts)
+{
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return;
+	}
+
+	if (!spectral->dbr_buff_debug)
+		return;
+
+	if (spectral->prev_tstamp) {
+		if (current_ts == spectral->prev_tstamp) {
+			spectral_err("Spectral timestamp(%u) in the current buffer(%pK) is equal to the previous timestamp, same report DMAed twice? Asserting the FW",
+				     current_ts, buf);
+			target_if_spectral_fw_hang(spectral);
+		}
+	}
+	spectral->prev_tstamp = current_ts;
+}
 #else
 static void target_if_spectral_check_buffer_poisoning(
 	struct target_if_spectral *spectral,
 	struct spectral_report *report,
 	int num_fft_bins, enum spectral_scan_mode smode)
+{
+}
+
+static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
+					 uint8_t *buf, uint32_t current_ts)
 {
 }
 #endif
@@ -1840,6 +1866,9 @@ target_if_consume_spectral_report_gen3(
 		params.datalen           = (fft_hdr_length * 4);
 		params.pwr_count         = fft_bin_len;
 		params.tstamp            = (tsf64 & SPECTRAL_TSMASK);
+
+		target_if_spectral_verify_ts(spectral, report->data,
+					     params.tstamp);
 	} else if (is_secondaryseg_expected(spectral)) {
 		/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
 		rssi = (sscan_report_fields.inband_pwr_db) >> 1;
