@@ -161,7 +161,7 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 			pr_debug("%s:VIRT ENABLE prev:%d, new:%d\n", __func__,
 				prev_enable_flag, virtualizer->enable_flag);
 			if (prev_enable_flag == virtualizer->enable_flag)
-				break;
+				continue;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
 					    VIRTUALIZER_ENABLE_PARAM_SZ;
@@ -340,7 +340,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 			pr_debug("%s:REVERB_ENABLE prev:%d,new:%d\n", __func__,
 					prev_enable_flag, reverb->enable_flag);
 			if (prev_enable_flag == reverb->enable_flag)
-				break;
+				continue;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
 					    REVERB_ENABLE_PARAM_SZ;
@@ -776,7 +776,7 @@ int msm_audio_effects_bass_boost_handler(struct audio_client *ac,
 				__func__, prev_enable_flag,
 				bass_boost->enable_flag);
 			if (prev_enable_flag == bass_boost->enable_flag)
-				break;
+				continue;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
 					    BASS_BOOST_ENABLE_PARAM_SZ;
@@ -931,7 +931,7 @@ int msm_audio_effects_pbe_handler(struct audio_client *ac,
 			pbe->enable_flag =
 				GET_NEXT(values, param_max_offset, rc);
 			if (prev_enable_flag == pbe->enable_flag)
-				break;
+				continue;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
 					    PBE_ENABLE_PARAM_SZ;
@@ -1125,7 +1125,7 @@ int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 			pr_debug("%s: EQ_ENABLE prev:%d new:%d\n", __func__,
 				prev_enable_flag, eq->enable_flag);
 			if (prev_enable_flag == eq->enable_flag)
-				break;
+				continue;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
 					    EQ_ENABLE_PARAM_SZ;
