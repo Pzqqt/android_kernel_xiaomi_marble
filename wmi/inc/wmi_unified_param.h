@@ -4491,6 +4491,7 @@ typedef enum {
 	wmi_host_dfs_status_check_event_id,
 #endif
 	wmi_twt_enable_complete_event_id,
+	wmi_twt_disable_complete_event_id,
 	wmi_apf_get_vdev_work_memory_resp_event_id,
 	wmi_roam_scan_stats_event_id,
 	wmi_vdev_ocac_complete_event_id,

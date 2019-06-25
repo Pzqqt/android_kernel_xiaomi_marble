@@ -12312,6 +12312,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_PDEV_DIV_RSSI_ANTID_EVENTID;
 	event_ids[wmi_twt_enable_complete_event_id] =
 		WMI_TWT_ENABLE_COMPLETE_EVENTID;
+	event_ids[wmi_twt_disable_complete_event_id] =
+		WMI_TWT_DISABLE_COMPLETE_EVENTID;
 	event_ids[wmi_apf_get_vdev_work_memory_resp_event_id] =
 		WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID;
 	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
