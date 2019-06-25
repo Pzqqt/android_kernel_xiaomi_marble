@@ -1896,11 +1896,19 @@ static int wcd938x_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 
 	dev_dbg(component->dev, "%s: mode: %d\n", __func__, mode_val);
 
-	if (mode_val == 0) {
+	if (wcd938x->variant == WCD9380) {
+		if (mode_val == CLS_H_HIFI || mode_val == CLS_AB_HIFI) {
+			dev_info(component->dev,
+				"%s:Invalid HPH Mode, default to CLS_H_ULP\n",
+				__func__);
+			mode_val = CLS_H_ULP;
+		}
+	}
+	if (mode_val == CLS_H_NORMAL) {
 		dev_info(component->dev,
 			"%s:Invalid HPH Mode, default to class_AB\n",
 			__func__);
-		mode_val = 3; /* enum will be updated later */
+		mode_val = CLS_H_ULP;
 	}
 	wcd938x->hph_mode = mode_val;
 	return 0;
@@ -1961,6 +1969,16 @@ static const struct soc_enum tx_mode_mux_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tx_mode_mux_text),
 			    tx_mode_mux_text);
 
+static const char * const rx_hph_mode_mux_text_wcd9380[] = {
+	"CLS_H_INVALID", "CLS_H_INVALID_1", "CLS_H_LP", "CLS_AB",
+	"CLS_H_LOHIFI", "CLS_H_ULP", "CLS_H_INVALID_2", "CLS_AB_LP",
+	"CLS_AB_LOHIFI",
+};
+
+static const struct soc_enum rx_hph_mode_mux_enum_wcd9380 =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(rx_hph_mode_mux_text_wcd9380),
+			    rx_hph_mode_mux_text_wcd9380);
+
 static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_INVALID", "CLS_H_HIFI", "CLS_H_LP", "CLS_AB", "CLS_H_LOHIFI",
 	"CLS_H_ULP", "CLS_AB_HIFI", "CLS_AB_LP", "CLS_AB_LOHIFI",
@@ -1971,6 +1989,9 @@ static const struct soc_enum rx_hph_mode_mux_enum =
 			    rx_hph_mode_mux_text);
 
 static const struct snd_kcontrol_new wcd9380_snd_controls[] = {
+	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum_wcd9380,
+		wcd938x_rx_hph_mode_get, wcd938x_rx_hph_mode_put),
+
 	SOC_ENUM_EXT("TX0 MODE", tx_mode_mux_enum_wcd9380,
 			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
 	SOC_ENUM_EXT("TX1 MODE", tx_mode_mux_enum_wcd9380,
@@ -1982,6 +2003,9 @@ static const struct snd_kcontrol_new wcd9380_snd_controls[] = {
 };
 
 static const struct snd_kcontrol_new wcd9385_snd_controls[] = {
+	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum,
+		wcd938x_rx_hph_mode_get, wcd938x_rx_hph_mode_put),
+
 	SOC_ENUM_EXT("TX0 MODE", tx_mode_mux_enum,
 			wcd938x_tx_mode_get, wcd938x_tx_mode_put),
 	SOC_ENUM_EXT("TX1 MODE", tx_mode_mux_enum,
@@ -1993,9 +2017,6 @@ static const struct snd_kcontrol_new wcd9385_snd_controls[] = {
 };
 
 static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
-	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum,
-		wcd938x_rx_hph_mode_get, wcd938x_rx_hph_mode_put),
-
 	SOC_SINGLE_EXT("HPHL_COMP Switch", SND_SOC_NOPM, 0, 1, 0,
 		wcd938x_get_compander, wcd938x_set_compander),
 	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
