@@ -3229,7 +3229,75 @@ typedef struct {
      *        other - reserved.
      */
     A_UINT32 ul_resp_config;
+
+    /* msdu_flow_override_config0 - contains AST enable bitmask
+     * AST0 is unconditionally enabled, unless the MSDU flow override feature
+     * is entirely disabled.
+     * AST1 through AST3 are conditionally enabled, based on bits 0-2 in
+     * msdu_flow_override_config0.
+     * If all three bits are 0, no msdu flow override feature at all in FW.
+     *
+     * The WMI_MSDU_FLOW_AST_ENABLE_GET and WMI_MSDU_FLOW_AST_ENABLE_SET
+     * macros are used to read and write these bitfields.
+     */
+    A_UINT32 msdu_flow_override_config0;
+
+     /* msdu_flow_override_config1:
+      * Bits 3:0   - AST0_FLOW_MASK(4)
+      * Bits 7:4   - AST1_FLOW_MASK(4)
+      * Bits 11:8  - AST2_FLOW_MASK(4)
+      * Bits 15:12 - AST3_FLOW_MASK(4)
+      * Bits 23:16 - TID_VALID_HI_PRI (8)
+      * Bits 31:24 - TID_VALID_LOW_PRI (8)
+      *
+      * The macros
+      * WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_GET
+      * WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET
+      * WMI_MSDU_FLOW_TID_VALID_HI_MASKS_GET
+      * WMI_MSDU_FLOW_TID_VALID_HI_MASKS_SET
+      * WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_GET
+      * WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET
+      * are used to read and write these bitfields.
+      */
+    A_UINT32 msdu_flow_override_config1;
 } wmi_resource_config;
+
+#define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
+    (((ast_x) == 0) ? 1 : ((msdu_flow_config0) & (1 << ((ast_x) - 1))))
+#define WMI_MSDU_FLOW_AST_ENABLE_SET(msdu_flow_config0, ast_x, enable) \
+    do { \
+        if ((ast_x) == 0) break;  \
+        if ((enable)) { \
+            (msdu_flow_config0) |= (1 << ((ast_x) - 1)); \
+        } else { \
+            (msdu_flow_config0) &= ~(1 << ((ast_x) - 1)); \
+        } \
+    } while(0)
+
+#define WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_GET(msdu_flow_config1, ast_x) \
+    (((msdu_flow_config1) & (0x0f << ((ast_x) * 4))) >> ((ast_x) * 4))
+#define WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET( \
+    msdu_flow_config1, ast_x, mask) \
+    do { \
+        (msdu_flow_config1) &= ~(0xF << ((ast_x) * 4)); \
+        (msdu_flow_config1) |= ((mask) << ((ast_x) * 4)); \
+    } while(0)
+
+#define WMI_MSDU_FLOW_TID_VALID_HI_MASKS_GET(msdu_flow_config1) \
+    (((msdu_flow_config1) & 0xff0000) >> 16)
+#define WMI_MSDU_FLOW_TID_VALID_HI_MASKS_SET(msdu_flow_config1, mask) \
+    do { \
+        (msdu_flow_config1) &= ~0xff0000; \
+        (msdu_flow_config1) |= ((mask) << 16); \
+    } while(0)
+
+#define WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_GET(msdu_flow_config1) \
+    ((msdu_flow_config1 & 0xff000000) >> 24)
+#define WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET(msdu_flow_config1, mask) \
+    do { \
+        (msdu_flow_config1) &= ~0xff000000; \
+        (msdu_flow_config1) |= ((mask) << 24); \
+    } while(0)
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
     do { \
@@ -9861,6 +9929,24 @@ typedef enum {
      * considered stale for mcast rate adaptation
      */
     WMI_VDEV_PARAM_MCAST_RC_STALE_PERIOD,       /* 0x94 */
+
+    /*
+     * Bits 3:0   - AST0_FLOW_MASK(4)
+     * Bits 7:4   - AST1_FLOW_MASK(4)
+     * Bits 11:8  - AST2_FLOW_MASK(4)
+     * Bits 15:12 - AST3_FLOW_MASK(4)
+     * Bits 23:16 - TID_VALID_HI_PRI(8)
+     * Bits 31:24 - TID_VALID_LOW_PRI(8)
+     *
+     * The below macros can be used to set/get the relevent fields.
+     * WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_GET(msdu_flow_config1, ast_x)
+     * WMI_MSDU_FLOW_ASTX_MSDU_FLOW_MASKS_SET(msdu_flow_config1, ast_x, mask)
+     * WMI_MSDU_FLOW_TID_VALID_HI_MASKS_GET(msdu_flow_config1)
+     * WMI_MSDU_FLOW_TID_VALID_HI_MASKS_SET(msdu_flow_config1, mask)
+     * WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_GET(msdu_flow_config1)
+     * WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET(msdu_flow_config1, mask)
+     */
+    WMI_VDEV_PARAM_MSDU_FLOW_OVERRIDE_CONFIG,  /* 0x95 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===

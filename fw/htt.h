@@ -188,9 +188,10 @@
  * 3.67 Add drop threshold field to HTT_H2T RX_RING_SELECTION_CFG msg.
  * 3.68 Add ipa_drop threshold fields to HTT_H2T_MSG_TYPE_SRING_SETUP
  * 3.69 Add htt_ul_ofdma_user_info_v0 defs
+ * 3.70 Add AST1-AST3 fields to HTT_T2H PEER_MAP_V2 msg
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 69
+#define HTT_CURRENT_VERSION_MINOR 70
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -7972,7 +7973,8 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  * to identify which peer the frame needs to be forwarded to (i.e. the
  * peer assocated with the Destination MAC Address within the packet),
  * and particularly which vdev needs to transmit the frame (for cases
- * of inter-vdev rx --> tx forwarding).
+ * of inter-vdev rx --> tx forwarding). The HW peer id here is the same
+ * meaning as AST_INDEX_0.
  * This DA-based peer ID that is provided for certain rx frames
  * (the rx frames that need to be re-transmitted as tx frames)
  * is the ID that the HW uses for referring to the peer in question,
@@ -7985,7 +7987,7 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  * |-----------------------------------------------------------------------|
  * |    MAC addr 3   |    MAC addr 2   |    MAC addr 1   |    MAC addr 0   |
  * |-----------------------------------------------------------------------|
- * |            HW peer ID             |    MAC addr 5   |    MAC addr 4   |
+ * |      HW peer ID / AST index 0     |    MAC addr 5   |    MAC addr 4   |
  * |-----------------------------------------------------------------------|
  *
  *
@@ -8115,26 +8117,34 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  * is the ID that the HW uses for referring to the peer in question,
  * rather than the peer ID that the SW+FW use to refer to the peer.
  *
+ * The HW peer id here is the same meaning as AST_INDEX_0.
+ * Some chips support up to 4 AST indices per peer: AST_INDEX_0, AST_INDEX_1,
+ * AST_INDEX_2, and AST_INDEX_3.  AST 0 is always valid; for AST 1 through
+ * AST 3, check the AST_VALID_MASK(3) to see if the corresponding extension
+ * AST is valid.
  *
- * |31             24|23             16|15              8|7               0|
+ * |31    28|27    24|23    20|19 17|16|15              8|7               0|
  * |-----------------------------------------------------------------------|
  * |            SW peer ID             |     VDEV ID     |     msg type    |
  * |-----------------------------------------------------------------------|
  * |    MAC addr 3   |    MAC addr 2   |    MAC addr 1   |    MAC addr 0   |
  * |-----------------------------------------------------------------------|
- * |            HW peer ID             |    MAC addr 5   |    MAC addr 4   |
+ * |      HW peer ID / AST index 0     |    MAC addr 5   |    MAC addr 4   |
  * |-----------------------------------------------------------------------|
- * |     Reserved_17_31     | Next Hop |          AST Hash Value           |
+ * |     Reserved_20_31       |ASTVM|NH|          AST Hash Value           |
  * |-----------------------------------------------------------------------|
- * |                               Reserved_0                              |
+ * | ASTFM3 | ASTFM2 | ASTFM1 | ASTFM0 |           AST index 1             |
  * |-----------------------------------------------------------------------|
- * |                               Reserved_1                              |
+ * |TID valid low pri| TID valid hi pri|           AST index 2             |
+ * |-----------------------------------------------------------------------|
+ * |           Reserved_1              |           AST index 3             |
  * |-----------------------------------------------------------------------|
  * |                               Reserved_2                              |
  * |-----------------------------------------------------------------------|
- * |                               Reserved_3                              |
- * |-----------------------------------------------------------------------|
- *
+ * Where:
+ *    NH = Next Hop
+ *    ASTVM = AST valid mask
+ *    ASTFM = AST flow mask
  *
  * The following field definitions describe the format of the rx peer map v2
  * messages sent from the target to the host.
@@ -8158,7 +8168,7 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  *     Bits 15:0
  *     Purpose: Identifies which peer node the peer ID is for.
  *     Value: upper 2 bytes of peer node's MAC address
- *   - HW_PEER_ID
+ *   - HW_PEER_ID / AST_INDEX_0
  *     Bits 31:16
  *     Purpose: Identifies the HW peer ID corresponding to the peer MAC
  *         address, so for rx frames marked for rx --> tx forwarding, the
@@ -8173,6 +8183,36 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
  *     Bit 16
  *     Purpose: Bit indicates that a next_hop AST entry is used for WDS
  *         (Wireless Distribution System).
+ *   - AST_VALID_MASK
+ *     Bits  19:17
+ *     Purpose: Indicate if the AST 1 through AST 3 are valid
+ *   - AST_INDEX_1
+ *     Bits 15:0
+ *     Purpose: indicate the second AST index for this peer
+ *   - AST_0_FLOW_MASK
+ *     Bits 19:16
+ *     Purpose: identify the which flow the AST 0 entry corresponds to.
+ *   - AST_1_FLOW_MASK
+ *     Bits 23:20
+ *     Purpose: identify the which flow the AST 1 entry corresponds to.
+ *   - AST_2_FLOW_MASK
+ *     Bits 27:24
+ *     Purpose: identify the which flow the AST 2 entry corresponds to.
+ *   - AST_3_FLOW_MASK
+ *     Bits 31:28
+ *     Purpose: identify the which flow the AST 3 entry corresponds to.
+ *   - AST_INDEX_2
+ *     Bits 15:0
+ *     Purpose: indicate the third AST index for this peer
+ *   - TID_VALID_HI_PRI
+ *     Bits 23:16
+ *     Purpose: identify if this peer's TIDs 0-7 support HI priority flow
+ *   - TID_VALID_LOW_PRI
+ *     Bits 31:24
+ *     Purpose: identify if this peer's TIDs 0-7 support Low priority flow
+ *   - AST_INDEX_3
+ *     Bits 15:0
+ *     Purpose: indicate the fourth AST index for this peer
  */
 #define HTT_RX_PEER_MAP_V2_VDEV_ID_M        0xff00
 #define HTT_RX_PEER_MAP_V2_VDEV_ID_S        8
@@ -8188,6 +8228,29 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
 #define HTT_RX_PEER_MAP_V2_AST_HASH_VALUE_S 0
 #define HTT_RX_PEER_MAP_V2_NEXT_HOP_M       0x00010000
 #define HTT_RX_PEER_MAP_V2_NEXT_HOP_S       16
+#define HTT_RX_PEER_MAP_V2_AST_VALID_MASK_M     0x000e0000
+#define HTT_RX_PEER_MAP_V2_AST_VALID_MASK_S     17
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_1_M        0xffff
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_1_S        0
+#define HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_M    0x000f0000
+#define HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_S    16
+#define HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_M    0x00f00000
+#define HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_S    20
+#define HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_M    0x0f000000
+#define HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_S    24
+#define HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_M    0xf0000000
+#define HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_S    28
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_2_M        0xffff
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_2_S        0
+#define HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_M   0x00ff0000
+#define HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_S   16
+#define HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_M  0xff000000
+#define HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_S  24
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_3_M        0xffff
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_3_S        0
 
 #define HTT_RX_PEER_MAP_V2_VDEV_ID_SET(word, value)           \
     do {                                                      \
@@ -8229,10 +8292,97 @@ PREPACK struct htt_tx_offload_deliver_ind_hdr_t
 #define HTT_RX_PEER_MAP_V2_NEXT_HOP_GET(word) \
     (((word) & HTT_RX_PEER_MAP_V2_NEXT_HOP_M) >> HTT_RX_PEER_MAP_V2_NEXT_HOP_S)
 
+#define HTT_RX_PEER_MAP_V2_AST_VALID_MASK_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_VALID_MASK, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_VALID_MASK_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_VALID_MASK_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_VALID_MASK_M) >> HTT_RX_PEER_MAP_V2_AST_VALID_MASK_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_1_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_INDEX_1, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_INDEX_1_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_1_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_INDEX_1_M) >> HTT_RX_PEER_MAP_V2_AST_INDEX_1_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_M) >> HTT_RX_PEER_MAP_V2_AST_0_FLOW_MASK_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_M) >> HTT_RX_PEER_MAP_V2_AST_1_FLOW_MASK_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_M) >> HTT_RX_PEER_MAP_V2_AST_2_FLOW_MASK_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_M) >> HTT_RX_PEER_MAP_V2_AST_3_FLOW_MASK_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_2_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_INDEX_2, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_INDEX_2_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_2_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_INDEX_2_M) >> HTT_RX_PEER_MAP_V2_AST_INDEX_2_S)
+#define HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_M) >> HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_S)
+
+#define HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_M) >> HTT_RX_PEER_MAP_V2_TID_VALID_LOW_PRI_S)
+
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_3_SET(word, value) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_MAP_V2_AST_INDEX_3, value); \
+        (word) |= (value)  << HTT_RX_PEER_MAP_V2_AST_INDEX_3_S; \
+    } while (0)
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_3_GET(word) \
+    (((word) & HTT_RX_PEER_MAP_V2_AST_INDEX_3_M) >> HTT_RX_PEER_MAP_V2_AST_INDEX_3_S)
+
+
 #define HTT_RX_PEER_MAP_V2_MAC_ADDR_OFFSET       4  /* bytes */
 #define HTT_RX_PEER_MAP_V2_HW_PEER_ID_OFFSET     8  /* bytes */
 #define HTT_RX_PEER_MAP_V2_AST_HASH_INDEX_OFFSET 12 /* bytes */
 #define HTT_RX_PEER_MAP_V2_NEXT_HOP_OFFSET       12 /* bytes */
+#define HTT_RX_PEER_MAP_V2_AST_VALID_MASK_OFFSET     12  /* bytes */
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_1_OFFSET        16  /* bytes */
+#define HTT_RX_PEER_MAP_V2_AST_X_FLOW_MASK_OFFSET    16  /* bytes */
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_2_OFFSET        20  /* bytes */
+#define HTT_RX_PEER_MAP_V2_TID_VALID_LO_PRI_OFFSET   20  /* bytes */
+#define HTT_RX_PEER_MAP_V2_TID_VALID_HI_PRI_OFFSET   20  /* bytes */
+#define HTT_RX_PEER_MAP_V2_AST_INDEX_3_OFFSET        24  /* bytes */
 
 #define HTT_RX_PEER_MAP_V2_BYTES 32
 
