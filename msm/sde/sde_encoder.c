@@ -4743,9 +4743,10 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 			SDE_ERROR_ENC(sde_enc, "failed to setup DSC: %d\n", rc);
 			ret = rc;
 		}
-	} else if (_sde_encoder_dsc_is_dirty(sde_enc)) {
-		_helper_flush_dsc(sde_enc);
 	}
+
+	if (_sde_encoder_dsc_is_dirty(sde_enc))
+		_helper_flush_dsc(sde_enc);
 
 	if (sde_enc->cur_master && !sde_enc->cur_master->cont_splash_enabled)
 		sde_configure_qdss(sde_enc, sde_enc->cur_master->hw_qdss,
