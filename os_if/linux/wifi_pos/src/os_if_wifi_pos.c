@@ -85,6 +85,8 @@ static int  wifi_pos_parse_req(const void *data, int len, int pid,
 {
 	tAniMsgHdr *msg_hdr;
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
+	uint32_t msg_len, id, nl_field_info_size, expected_field_info_size;
+	struct wifi_pos_field_info *field_info;
 
 	if (wlan_cfg80211_nla_parse(tb, CLD80211_ATTR_MAX, data, len, NULL)) {
 		osif_err("invalid data in request");
@@ -96,22 +98,53 @@ static int  wifi_pos_parse_req(const void *data, int len, int pid,
 		return OEM_ERR_INVALID_MESSAGE_TYPE;
 	}
 
-	msg_hdr = (tAniMsgHdr *)nla_data(tb[CLD80211_ATTR_DATA]);
-	if (!msg_hdr) {
-		osif_err("msg_hdr null");
-		return OEM_ERR_NULL_MESSAGE_HEADER;
+	msg_len = nla_len(tb[CLD80211_ATTR_DATA]);
+	if (msg_len < sizeof(*msg_hdr)) {
+		osif_err("Insufficient length for msg_hdr: %u", msg_len);
+		return OEM_ERR_INVALID_MESSAGE_LENGTH;
 	}
 
+	msg_hdr = nla_data(tb[CLD80211_ATTR_DATA]);
 	req->msg_type = msg_hdr->type;
+
+	if (msg_len < sizeof(*msg_hdr) + msg_hdr->length) {
+		osif_err("Insufficient length for msg_hdr buffer: %u",
+			 msg_len);
+		return OEM_ERR_INVALID_MESSAGE_LENGTH;
+	}
+
 	req->buf_len = msg_hdr->length;
 	req->buf = (uint8_t *)&msg_hdr[1];
 	req->pid = pid;
 
-	if (tb[CLD80211_ATTR_META_DATA]) {
-		req->field_info_buf = (struct wifi_pos_field_info *)
-					nla_data(tb[CLD80211_ATTR_META_DATA]);
-		req->field_info_buf_len = nla_len(tb[CLD80211_ATTR_META_DATA]);
+	id = CLD80211_ATTR_META_DATA;
+	if (!tb[id])
+		return 0;
+
+	nl_field_info_size = nla_len(tb[id]);
+	if (nl_field_info_size < sizeof(*field_info)) {
+		osif_err("Insufficient length for field_info_buf: %u",
+			 nl_field_info_size);
+		return OEM_ERR_INVALID_MESSAGE_LENGTH;
 	}
+
+	field_info = nla_data(tb[id]);
+	if (!field_info->count) {
+		osif_debug("field_info->count is zero, ignoring META_DATA");
+		return 0;
+	}
+
+	expected_field_info_size = sizeof(*field_info) +
+		(field_info->count - 1) * sizeof(struct wifi_pos_field);
+
+	if (nl_field_info_size < expected_field_info_size) {
+		osif_err("Insufficient len for total no.of %u fields",
+			 field_info->count);
+		return OEM_ERR_INVALID_MESSAGE_LENGTH;
+	}
+
+	req->field_info_buf = field_info;
+	req->field_info_buf_len = nl_field_info_size;
 
 	return 0;
 }
@@ -127,6 +160,12 @@ static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req)
 	if (!nlh) {
 		osif_err("Netlink header null");
 		return OEM_ERR_NULL_MESSAGE_HEADER;
+	}
+
+	if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(*msg_hdr))) {
+		osif_err("nlmsg_len(%d) and msg_hdr_size(%zu) mis-match",
+			 nlh->nlmsg_len, sizeof(*msg_hdr));
+		return OEM_ERR_INVALID_MESSAGE_LENGTH;
 	}
 
 	msg_hdr = NLMSG_DATA(nlh);

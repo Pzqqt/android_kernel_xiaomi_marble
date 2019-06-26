@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,17 +42,6 @@
 
 #define WIFI_POS_FLAG_DFS               10
 #define WIFI_POS_SET_DFS(info)          (info |=  (1 << WIFI_POS_FLAG_DFS))
-
-struct wifi_pos_field {
-	uint32_t id;
-	uint32_t offset;
-	uint32_t length;
-};
-
-struct wifi_pos_field_info {
-	uint32_t count;
-	struct wifi_pos_field fields[1];
-};
 
 /**
  * enum WMIRTT_FIELD_ID - identifies which field is being specified

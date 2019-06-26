@@ -32,6 +32,28 @@
 struct wlan_objmgr_psoc;
 struct wifi_pos_driver_caps;
 
+/**
+ * struct wifi_pos_field - wifi positioning field element
+ * @id: RTT field id
+ * @offset: data offset in field info buffer
+ * @length: length of related data in field info buffer
+ */
+struct wifi_pos_field {
+	uint32_t id;
+	uint32_t offset;
+	uint32_t length;
+};
+
+/**
+ * struct wifi_pos_field_info - wifi positioning field info buffer
+ * @count: number of @wifi_pos_field elements
+ * @fields: buffer to hold @wifi_pos_field elements
+ */
+struct wifi_pos_field_info {
+	uint32_t count;
+	struct wifi_pos_field fields[1];
+};
+
 #ifdef WIFI_POS_CONVERGED
 /**
  * enum oem_err_msg - err msg returned to user space
