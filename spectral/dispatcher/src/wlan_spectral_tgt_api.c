@@ -299,15 +299,18 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
 	struct dbr_module_config dbr_config = {0};
+	uint32_t target_type;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
 	dbr_config.num_resp_per_event = DBR_NUM_RESP_PER_EVENT_SPECTRAL;
 	dbr_config.event_timeout_in_ms = DBR_EVENT_TIMEOUT_IN_MS_SPECTRAL;
+	target_type = tgt_spectral_get_target_type(psoc);
 
-	if ((tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074) ||
-	    (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA8074V2) ||
-	    (tgt_spectral_get_target_type(psoc) == TARGET_TYPE_QCA6018))
+	if ((target_type == TARGET_TYPE_QCA8074) ||
+	    (target_type == TARGET_TYPE_QCA8074V2) ||
+	    (target_type == TARGET_TYPE_QCA6018) ||
+	    (target_type == TARGET_TYPE_QCA6390))
 		if (dbr_tx_ops->direct_buf_rx_module_register)
 			return dbr_tx_ops->direct_buf_rx_module_register
 				(pdev, 0, &dbr_config,

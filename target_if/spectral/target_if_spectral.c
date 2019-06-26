@@ -2028,7 +2028,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->fftbin_size_war =
 			SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
 	else if (target_type == TARGET_TYPE_QCA8074 ||
-		 target_type == TARGET_TYPE_QCA6018)
+		 target_type == TARGET_TYPE_QCA6018 ||
+		 target_type == TARGET_TYPE_QCA6390)
 		spectral->fftbin_size_war =
 			SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE;
 	else
@@ -2048,7 +2049,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
 	    (target_type == TARGET_TYPE_QCA6018) ||
 	    (target_type == TARGET_TYPE_QCN9000) ||
-	    (target_type == TARGET_TYPE_QCA6290)) {
+	    (target_type == TARGET_TYPE_QCA6290) ||
+	    (target_type == TARGET_TYPE_QCA6390)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
 		spectral->tag_sscan_summary_exp =
