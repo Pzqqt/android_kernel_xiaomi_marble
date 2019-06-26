@@ -1224,6 +1224,8 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 				SWR_DEVICE_SSR_DOWN, NULL);
 		}
+		if (!pm_runtime_status_suspended(rx_dev))
+			bolero_runtime_suspend(rx_dev);
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		rx_priv->dev_up = true;
