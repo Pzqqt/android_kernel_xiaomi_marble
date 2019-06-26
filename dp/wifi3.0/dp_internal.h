@@ -862,6 +862,15 @@ uint32_t dp_pdev_tid_stats_display(void *pdev_handle,
 #endif
 
 /**
+ * dp_check_pdev_exists() - Validate pdev before use
+ * @soc - dp soc handle
+ * @data - pdev handle
+ *
+ * Return: 0 - success/invalid - failure
+ */
+bool dp_check_pdev_exists(struct dp_soc *soc, struct dp_pdev *data);
+
+/**
  * dp_update_delay_stats() - Update delay statistics in structure
  *                              and fill min, max and avg delay
  * @pdev: pdev handle

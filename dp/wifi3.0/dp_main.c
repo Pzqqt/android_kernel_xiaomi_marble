@@ -6625,6 +6625,18 @@ void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 }
 #endif
 
+bool dp_check_pdev_exists(struct dp_soc *soc, struct dp_pdev *data)
+{
+	uint8_t pdev_count;
+
+	for (pdev_count = 0; pdev_count < MAX_PDEV_CNT; pdev_count++) {
+		if (soc->pdev_list[pdev_count] &&
+		    soc->pdev_list[pdev_count] == data)
+			return true;
+	}
+	return false;
+}
+
 /**
  * dp_rx_bar_stats_cb(): BAR received stats callback
  * @soc: SOC handle
@@ -6638,6 +6650,11 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)cb_ctxt;
 	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
+
+	if (!dp_check_pdev_exists(soc, pdev)) {
+		dp_err_rl("pdev doesn't exist");
+		return;
+	}
 
 	if (!qdf_atomic_read(&soc->cmn_init_done))
 		return;
