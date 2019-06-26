@@ -2799,6 +2799,7 @@ void hif_process_runtime_suspend_success(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	hif_runtime_pm_set_state_suspended(scn);
+	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 1);
 	hif_log_runtime_suspend_success(scn);
 }
 
@@ -2811,6 +2812,7 @@ void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
+	hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
 	hif_runtime_pm_set_state_inprogress(scn);
 }
 
@@ -4357,6 +4359,54 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 	}
 
 	qdf_mem_free(context);
+}
+
+/**
+ * hif_pm_runtime_is_suspended() - API to check if driver has runtime suspended
+ * @hif_ctx: HIF context
+ *
+ * Return: true for runtime suspended, otherwise false
+ */
+bool hif_pm_runtime_is_suspended(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	return qdf_atomic_read(&sc->pm_state) ==
+		HIF_PM_RUNTIME_STATE_SUSPENDED;
+}
+
+/**
+ * hif_pm_runtime_get_monitor_wake_intr() - API to get monitor_wake_intr
+ * @hif_ctx: HIF context
+ *
+ * monitor_wake_intr variable can be used to indicate if driver expects wake
+ * MSI for runtime PM
+ *
+ * Return: monitor_wake_intr variable
+ */
+int hif_pm_runtime_get_monitor_wake_intr(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	return qdf_atomic_read(&sc->monitor_wake_intr);
+}
+
+/**
+ * hif_pm_runtime_set_monitor_wake_intr() - API to set monitor_wake_intr
+ * @hif_ctx: HIF context
+ * @val: value to set
+ *
+ * monitor_wake_intr variable can be used to indicate if driver expects wake
+ * MSI for runtime PM
+ *
+ * Return: void
+ */
+void hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx,
+					  int val)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	qdf_atomic_set(&sc->monitor_wake_intr, val);
 }
 #endif /* FEATURE_RUNTIME_PM */
 

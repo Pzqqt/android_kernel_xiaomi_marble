@@ -864,6 +864,10 @@ int hif_pm_runtime_allow_suspend(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock);
 int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock, unsigned int delay);
+bool hif_pm_runtime_is_suspended(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_get_monitor_wake_intr(struct hif_opaque_softc *hif_ctx);
+void hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx,
+					  int val);
 #else
 struct hif_pm_runtime_lock {
 	const char *name;
@@ -898,6 +902,14 @@ static inline int
 hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock, unsigned int delay)
 { return 0; }
+static inline bool hif_pm_runtime_is_suspended(struct hif_opaque_softc *hif_ctx)
+{ return false; }
+static inline int
+hif_pm_runtime_get_monitor_wake_intr(struct hif_opaque_softc *hif_ctx)
+{ return 0; }
+static inline void
+hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx, int val)
+{ return; }
 #endif
 
 void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
