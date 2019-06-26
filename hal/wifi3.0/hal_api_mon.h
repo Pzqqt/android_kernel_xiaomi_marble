@@ -416,6 +416,16 @@ enum {
 	HAL_RX_MON_PPDU_END,
 };
 
+/* struct hal_rx_ppdu_common_info  - common ppdu info
+ * @ppdu_id - ppdu id number
+ * @ppdu_timestamp - timestamp at ppdu received
+ * @mpdu_cnt_fcs_ok - mpdu count in ppdu with fcs ok
+ * @mpdu_cnt_fcs_err - mpdu count in ppdu with fcs err
+ * @mpdu_fcs_ok_bitmap - fcs ok mpdu count in ppdu bitmap
+ * @last_ppdu_id - last received ppdu id
+ * @mpdu_cnt - total mpdu count
+ * @num_users - num users
+ */
 struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_id;
 	uint32_t ppdu_timestamp;
@@ -446,6 +456,7 @@ struct hal_rx_msdu_payload_info {
  * @to_ds_flag: flag indicate to_ds bit
  * @mac_addr2_valid: flag indicate if mac_addr2 is valid
  * @mac_addr2: mac address2 in wh
+ * @mcast_bcast: multicast/broadcast
  */
 struct hal_rx_nac_info {
 	uint8_t fc_valid;
@@ -453,6 +464,7 @@ struct hal_rx_nac_info {
 	uint8_t to_ds_flag;
 	uint8_t mac_addr2_valid;
 	uint8_t mac_addr2[QDF_MAC_ADDR_SIZE];
+	uint8_t mcast_bcast;
 };
 
 /**

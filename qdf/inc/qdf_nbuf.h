@@ -321,22 +321,63 @@ struct mon_rx_status {
 };
 
 /**
- * struct mon_rx_status - This will have monitor mode per user rx_status
+ * struct mon_rx_user_status - This will have monitor mode per user rx_status
  * extracted from hardware TLV.
  * @mcs: MCS index of Rx frame
  * @nss: Number of spatial streams
  * @ofdma_info_valid: OFDMA info below is valid
  * @dl_ofdma_ru_start_index: OFDMA RU start index
  * @dl_ofdma_ru_width: OFDMA total RU width
+ * @ast_index: AST table hash index
+ * @tid: QoS traffic tid number
+ * @tcp_msdu_count: tcp protocol msdu count
+ * @udp_msdu_count: udp protocol msdu count
+ * @other_msdu_count: other protocol msdu count
+ * @frame_control: frame control field
+ * @frame_control_info_valid: field indicates if fc value is valid
+ * @data_sequence_control_info_valid: field to indicate validity of seq control
+ * @first_data_seq_ctrl: Sequence ctrl field of first data frame
+ * @preamble_type: Preamble type in radio header
+ * @ht_flags: HT flags, only present for HT frames.
+ * @vht_flags: VHT flags, only present for VHT frames.
+ * @he_flags: HE (11ax) flags, only present in HE frames
+ * @rtap_flags: Bit map of available fields in the radiotap
+ * @rs_flags: Flags to indicate AMPDU or AMSDU aggregation
+ * @mpdu_cnt_fcs_ok: mpdu count received with fcs ok
+ * @mpdu_cnt_fcs_err: mpdu count received with fcs ok bitmap
+ * @mpdu_fcs_ok_bitmap: mpdu with fcs ok bitmap
+ * @mpdu_ok_byte_count: mpdu byte count with fcs ok
+ * @mpdu_err_byte_count: mpdu byte count with fcs err
  */
 struct mon_rx_user_status {
 	uint32_t mcs:4,
 		 nss:3,
 		 ofdma_info_valid:1,
 		 dl_ofdma_ru_start_index:7,
-		 dl_ofdma_ru_width:7;
+		 dl_ofdma_ru_width:7,
+		 dl_ofdma_ru_size:8;
 	uint32_t ul_ofdma_user_v0_word0;
 	uint32_t ul_ofdma_user_v0_word1;
+	uint32_t ast_index;
+	uint32_t tid;
+	uint16_t tcp_msdu_count;
+	uint16_t udp_msdu_count;
+	uint16_t other_msdu_count;
+	uint16_t frame_control;
+	uint8_t frame_control_info_valid;
+	uint8_t data_sequence_control_info_valid;
+	uint16_t first_data_seq_ctrl;
+	uint32_t preamble_type;
+	uint16_t ht_flags;
+	uint16_t vht_flags;
+	uint16_t he_flags;
+	uint8_t rtap_flags;
+	uint8_t rs_flags;
+	uint32_t mpdu_cnt_fcs_ok;
+	uint32_t mpdu_cnt_fcs_err;
+	uint64_t mpdu_fcs_ok_bitmap;
+	uint32_t mpdu_ok_byte_count;
+	uint32_t mpdu_err_byte_count;
 };
 
 /**

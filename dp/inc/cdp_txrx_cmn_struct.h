@@ -1526,6 +1526,70 @@ struct cdp_tx_completion_msdu {
 };
 
 /**
+ * struct cdp_rx_stats_ppdu_user -- per user RX stats
+ * @peer_id: Peer ID
+ * @vdev_id: VAP ID
+ * @is_ampdu: mpdu aggregate or non-aggregate?
+ * @ofdma_info_valid: RU info valid
+ * @ofdma_ru_start_index: RU index number(0-73)
+ * @ofdma_ru_width: size of RU in units of 1(26tone)RU
+ * @nss: NSS 1,2, ...8
+ * @mcs: MCS index
+ * @user_index: user ID in multi-user case
+ * @ast_index: ast index in multi-user case
+ * @tid: TID number
+ * @num_msdu: Number of MSDUs in PPDU
+ * @udp_msdu_count: Number of UDP MSDUs in PPDU
+ * @tcp_msdu_count: Number of TCP MSDUs in PPDU
+ * @other_msdu_count: Number of MSDUs other than UDP and TCP MSDUs in PPDU
+ * @frame_control: frame control field
+ * @frame_control_info_valid: frame_control valid
+ * @data_sequence_control_info_valid: data_sequence_control_info valid
+ * @first_data_seq_ctrl: Sequence control field of first data frame
+ * @preamble: preamble
+ * @ht_flag: ht flag
+ * @vht_flag: vht flag
+ * @he_re: he_re (range extension)
+ * @mpdu_cnt_fcs_ok: Number of MPDUs in PPDU with fcs ok
+ * @mpdu_cnt_fcs_err: Number of MPDUs in PPDU with fcs err
+ * @mpdu_fcs_ok_bitmap - MPDU with fcs ok bitmap
+ * @retried - number of retries
+ * @mac_addr: Peer MAC Address
+ */
+struct cdp_rx_stats_ppdu_user {
+	uint16_t peer_id;
+	uint8_t vdev_id;
+	bool is_ampdu;
+	uint32_t ofdma_info_valid:1,
+		 ofdma_ru_start_index:7,
+		 ofdma_ru_width:7,
+		 nss:4,
+		 mcs:4;
+	/* user id */
+	uint8_t  user_index;
+	uint32_t ast_index;
+	uint32_t tid;
+	uint16_t  tcp_msdu_count;
+	uint16_t  udp_msdu_count;
+	uint16_t  other_msdu_count;
+	uint16_t frame_control;
+	uint8_t  frame_control_info_valid;
+	uint8_t data_sequence_control_info_valid;
+	uint16_t first_data_seq_ctrl;
+	uint32_t preamble_type;
+	uint16_t ht_flags;
+	uint16_t vht_flags;
+	uint16_t he_flags;
+	uint32_t mpdu_cnt_fcs_ok;
+	uint32_t mpdu_cnt_fcs_err;
+	uint64_t mpdu_fcs_ok_bitmap;
+	uint32_t mpdu_ok_byte_count;
+	uint32_t mpdu_err_byte_count;
+	uint32_t retries;
+	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
+};
+
+/**
  * struct cdp_rx_indication_ppdu - Rx PPDU indication structure
  * @ppdu_id: PPDU Id
  * @is_ampdu: mpdu aggregate or non-aggregate?
@@ -1569,6 +1633,9 @@ struct cdp_tx_completion_msdu {
  * @rix: rate index
  * @rssi_chain: rssi chain per nss per bw
  * @cookie: cookie to used by upper layer
+ * @user: per user stats in MU-user case
+ * @nf: noise floor
+ * @per_chain_rssi: rssi per antenna
  */
 struct cdp_rx_indication_ppdu {
 	uint32_t ppdu_id;
@@ -1622,6 +1689,11 @@ struct cdp_rx_indication_ppdu {
 	struct cdp_stats_cookie *cookie;
 	struct cdp_rx_su_evm_info evm_info;
 	uint32_t rx_antenna;
+	uint8_t num_users;
+	struct cdp_rx_stats_ppdu_user user[CDP_MU_MAX_USERS];
+	uint32_t nf;
+	uint8_t  per_chain_rssi[MAX_CHAIN];
+	uint8_t is_mcast_bcast;
 };
 
 /**

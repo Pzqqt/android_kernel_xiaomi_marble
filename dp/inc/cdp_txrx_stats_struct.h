@@ -1267,6 +1267,9 @@ struct cdp_htt_rx_pdev_stats {
 #define RX_PROTOCOL_TAG_ALL 0xff
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
+#define OFDMA_NUM_RU_SIZE 7
+
+#define OFDMA_NUM_USERS	37
 /* struct cdp_pdev_stats - pdev stats
  * @msdu_not_done: packets dropped because msdu done bit not set
  * @mec:Multicast Echo check
@@ -1298,6 +1301,10 @@ struct cdp_htt_rx_pdev_stats {
  * @cdp_delayed_ba_not_recev: counter for delayed ba not received
  * @htt_tx_pdev_stats: htt pdev stats for tx
  * @htt_rx_pdev_stats: htt pdev stats for rx
+ * @data_rx_ru_size: UL ofdma data ru size counter array
+ * @nondata_rx_ru_size: UL ofdma non data ru size counter array
+ * @data_rx_ppdu: data rx ppdu counter
+ * @data_user: data user counter array
  */
 struct cdp_pdev_stats {
 	struct {
@@ -1349,6 +1356,14 @@ struct cdp_pdev_stats {
 	/* Received wdi messages from fw */
 	uint32_t wdi_event[CDP_WDI_NUM_EVENTS];
 	struct cdp_tid_stats tid_stats;
+
+	/* numbers of data/nondata per RU sizes */
+	struct {
+		uint32_t data_rx_ru_size[OFDMA_NUM_RU_SIZE];
+		uint32_t nondata_rx_ru_size[OFDMA_NUM_RU_SIZE];
+		uint32_t data_rx_ppdu;
+		uint32_t data_users[OFDMA_NUM_USERS];
+	} ul_ofdma;
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT

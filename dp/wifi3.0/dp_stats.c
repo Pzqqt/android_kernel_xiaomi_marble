@@ -2894,7 +2894,8 @@ fail1:
  *
  * return:void
  */
-static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
+static void dp_print_rx_pdev_rate_stats_tlv(struct dp_pdev *pdev,
+					    uint32_t *tag_buf)
 {
 	htt_rx_pdev_rate_stats_tlv *dp_stats_buf =
 		(htt_rx_pdev_rate_stats_tlv *)tag_buf;
@@ -2932,6 +2933,34 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 		}
 	}
 
+	DP_PRINT_STATS("ul_ofdma_data_rx_ppdu = %d",
+		       pdev->stats.ul_ofdma.data_rx_ppdu);
+
+	for (i = 0; i < OFDMA_NUM_USERS; i++) {
+		DP_PRINT_STATS("ul_ofdma data %d user = %d",
+			       i, pdev->stats.ul_ofdma.data_users[i]);
+	}
+
+	index = 0;
+	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
+	for (i = 0; i < OFDMA_NUM_RU_SIZE; i++) {
+		index += qdf_snprint(&str_buf[index],
+			DP_MAX_STRING_LEN - index,
+			" %u:%u,", i,
+			pdev->stats.ul_ofdma.data_rx_ru_size[i]);
+	}
+	DP_PRINT_STATS("ul_ofdma_data_rx_ru_size= %s", str_buf);
+
+	index = 0;
+	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
+	for (i = 0; i < OFDMA_NUM_RU_SIZE; i++) {
+		index += qdf_snprint(&str_buf[index],
+			DP_MAX_STRING_LEN - index,
+			" %u:%u,", i,
+			pdev->stats.ul_ofdma.nondata_rx_ru_size[i]);
+	}
+	DP_PRINT_STATS("ul_ofdma_nondata_rx_ru_size= %s", str_buf);
+
 	DP_PRINT_STATS("HTT_RX_PDEV_RATE_STATS_TLV:");
 	DP_PRINT_STATS("mac_id__word = %u",
 		       dp_stats_buf->mac_id__word);
@@ -2960,6 +2989,7 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 	DP_PRINT_STATS("txbf = %u",
 		       dp_stats_buf->txbf);
 
+	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
 	for (i = 0; i <  DP_HTT_RX_MCS_LEN; i++) {
 		index += qdf_snprint(&str_buf[index],
@@ -3592,12 +3622,14 @@ static inline void dp_print_rx_pdev_fw_stats_phy_err_tlv(uint32_t *tag_buf)
 /*
  * dp_htt_stats_print_tag: function to select the tag type and
  * print the corresponding tag structure
+ * @pdev: pdev pointer
  * @tag_type: tag type that is to be printed
  * @tag_buf: pointer to the tag structure
  *
  * return: void
  */
-void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
+void dp_htt_stats_print_tag(struct dp_pdev *pdev,
+			    uint8_t tag_type, uint32_t *tag_buf)
 {
 	switch (tag_type) {
 	case HTT_STATS_TX_PDEV_CMN_TAG:
@@ -3739,7 +3771,7 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 		break;
 
 	case HTT_STATS_RX_PDEV_RATE_STATS_TAG:
-		dp_print_rx_pdev_rate_stats_tlv(tag_buf);
+		dp_print_rx_pdev_rate_stats_tlv(pdev, tag_buf);
 		break;
 
 	case HTT_STATS_TX_PDEV_SCHEDULER_TXQ_STATS_TAG:

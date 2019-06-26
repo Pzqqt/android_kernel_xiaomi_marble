@@ -28,6 +28,8 @@
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
+#include "htt.h"
+
 #ifdef FEATURE_PERPKT_INFO
 #include "dp_ratetable.h"
 #endif
@@ -101,6 +103,170 @@ dp_rx_populate_su_evm_details(struct hal_rx_ppdu_info *ppdu_info,
 }
 
 /**
+ * dp_rx_inc_rusize_cnt() - increment pdev stats based on RU size
+ * @pdev: pdev ctx
+ * @rx_user_status: mon rx user status
+ *
+ * Return: bool
+ */
+static inline bool
+dp_rx_inc_rusize_cnt(struct dp_pdev *pdev,
+		     struct mon_rx_user_status *rx_user_status)
+{
+	uint32_t ru_size;
+	bool is_data;
+
+	ru_size = rx_user_status->dl_ofdma_ru_size;
+
+	if (dp_is_subtype_data(rx_user_status->frame_control)) {
+		DP_STATS_INC(pdev,
+			     ul_ofdma.data_rx_ru_size[ru_size], 1);
+		is_data = true;
+	} else {
+		DP_STATS_INC(pdev,
+			     ul_ofdma.nondata_rx_ru_size[ru_size], 1);
+		is_data = false;
+	}
+
+	return is_data;
+}
+
+/**
+ * dp_rx_populate_cdp_indication_ppdu_user() - Populate per user cdp indication
+ * @pdev: pdev ctx
+ * @ppdu_info: ppdu info structure from ppdu ring
+ * @ppdu_nbuf: qdf nbuf abstraction for linux skb
+ *
+ * Return: none
+ */
+static inline void
+dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
+					struct hal_rx_ppdu_info *ppdu_info,
+					qdf_nbuf_t ppdu_nbuf)
+{
+	struct dp_peer *peer;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_ast_entry *ast_entry;
+	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
+	uint32_t ast_index;
+	int i;
+	struct mon_rx_user_status *rx_user_status;
+	struct cdp_rx_stats_ppdu_user *rx_stats_peruser;
+	int ru_size;
+	bool is_data = false;
+	uint32_t num_users;
+
+	cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
+
+	num_users = ppdu_info->com_info.num_users;
+	for (i = 0; i < num_users; i++) {
+		if (i > OFDMA_NUM_USERS)
+			return;
+
+		rx_user_status =  &ppdu_info->rx_user_status[i];
+		rx_stats_peruser = &cdp_rx_ppdu->user[i];
+
+		ast_index = rx_user_status->ast_index;
+		if (ast_index >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
+			return;
+		}
+
+		ast_entry = soc->ast_table[ast_index];
+		if (!ast_entry) {
+			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
+			return;
+		}
+
+		peer = ast_entry->peer;
+		if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
+			return;
+		}
+
+		rx_stats_peruser->first_data_seq_ctrl =
+			rx_user_status->first_data_seq_ctrl;
+
+		rx_stats_peruser->frame_control =
+			rx_user_status->frame_control;
+
+		rx_stats_peruser->tcp_msdu_count =
+			rx_user_status->tcp_msdu_count;
+		rx_stats_peruser->udp_msdu_count =
+			rx_user_status->udp_msdu_count;
+		rx_stats_peruser->other_msdu_count =
+			rx_user_status->other_msdu_count;
+		rx_stats_peruser->preamble_type =
+			rx_user_status->preamble_type;
+		rx_stats_peruser->mpdu_cnt_fcs_ok =
+			rx_user_status->mpdu_cnt_fcs_ok;
+		rx_stats_peruser->mpdu_cnt_fcs_err =
+			rx_user_status->mpdu_cnt_fcs_err;
+		rx_stats_peruser->mpdu_fcs_ok_bitmap =
+			rx_user_status->mpdu_fcs_ok_bitmap;
+		rx_stats_peruser->mpdu_ok_byte_count =
+			rx_user_status->mpdu_ok_byte_count;
+		rx_stats_peruser->mpdu_err_byte_count =
+			rx_user_status->mpdu_err_byte_count;
+
+		cdp_rx_ppdu->num_mpdu += rx_user_status->mpdu_cnt_fcs_ok;
+		cdp_rx_ppdu->num_msdu +=
+			(rx_stats_peruser->tcp_msdu_count +
+			 rx_stats_peruser->udp_msdu_count +
+			 rx_stats_peruser->other_msdu_count);
+		rx_stats_peruser->retries =
+			CDP_FC_IS_RETRY_SET(rx_stats_peruser->frame_control) ?
+			rx_stats_peruser->mpdu_cnt_fcs_ok : 0;
+
+		if (rx_stats_peruser->mpdu_cnt_fcs_ok > 1)
+			rx_stats_peruser->is_ampdu = 1;
+		else
+			rx_stats_peruser->is_ampdu = 0;
+
+		rx_stats_peruser->tid = ppdu_info->rx_status.tid;
+
+		qdf_mem_copy(rx_stats_peruser->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		rx_stats_peruser->peer_id = peer->peer_ids[0];
+		cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
+		rx_stats_peruser->vdev_id = peer->vdev->vdev_id;
+
+		if (cdp_rx_ppdu->u.ppdu_type == HAL_RX_TYPE_MU_OFDMA) {
+			if (rx_user_status->ofdma_info_valid) {
+				rx_stats_peruser->nss = rx_user_status->nss;
+				rx_stats_peruser->mcs = rx_user_status->mcs;
+				rx_stats_peruser->ofdma_info_valid =
+					rx_user_status->ofdma_info_valid;
+				rx_stats_peruser->ofdma_ru_start_index =
+					rx_user_status->dl_ofdma_ru_start_index;
+				rx_stats_peruser->ofdma_ru_width =
+					rx_user_status->dl_ofdma_ru_width;
+				rx_stats_peruser->user_index = i;
+				ru_size = rx_user_status->dl_ofdma_ru_size;
+				/*
+				 * max RU size will be equal to
+				 * HTT_UL_OFDMA_V0_RU_SIZE_RU_996x2
+				 */
+				if (ru_size >= OFDMA_NUM_RU_SIZE) {
+					dp_err("invalid ru_size %d\n",
+					       ru_size);
+					return;
+				}
+				is_data = dp_rx_inc_rusize_cnt(pdev,
+							       rx_user_status);
+			} else {
+				rx_stats_peruser->ofdma_info_valid = 0;
+			}
+			if (is_data) {
+				/* counter to get number of MU OFDMA */
+				pdev->stats.ul_ofdma.data_rx_ppdu++;
+				pdev->stats.ul_ofdma.data_users[num_users]++;
+			}
+		}
+	}
+}
+
+/**
 * dp_rx_populate_cdp_indication_ppdu() - Populate cdp rx indication structure
 * @pdev: pdev ctx
 * @ppdu_info: ppdu info structure from ppdu ring
@@ -118,6 +284,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	struct dp_ast_entry *ast_entry;
 	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
 	uint32_t ast_index;
+	uint32_t i;
 
 	cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
 
@@ -125,34 +292,17 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 		ppdu_info->rx_status.first_data_seq_ctrl;
 	cdp_rx_ppdu->frame_ctrl =
 		ppdu_info->rx_status.frame_control;
-	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
-	cdp_rx_ppdu->length = ppdu_info->rx_status.ppdu_len;
-	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
-	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
 	cdp_rx_ppdu->tcp_msdu_count = ppdu_info->rx_status.tcp_msdu_count;
 	cdp_rx_ppdu->udp_msdu_count = ppdu_info->rx_status.udp_msdu_count;
 	cdp_rx_ppdu->other_msdu_count = ppdu_info->rx_status.other_msdu_count;
-	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
-	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
-	if ((ppdu_info->rx_status.sgi == VHT_SGI_NYSM) &&
-		(ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC))
-		cdp_rx_ppdu->u.gi = CDP_SGI_0_4_US;
-	else
-		cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
-	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
-	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
-	cdp_rx_ppdu->u.ltf_size = (ppdu_info->rx_status.he_data5 >>
-				   QDF_MON_STATUS_HE_LTF_SIZE_SHIFT) & 0x3;
+	/* num mpdu is consolidated and added together in num user loop */
 	cdp_rx_ppdu->num_mpdu = ppdu_info->com_info.mpdu_cnt_fcs_ok;
-	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
-	cdp_rx_ppdu->timestamp = ppdu_info->rx_status.tsft;
-	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_num;
-	cdp_rx_ppdu->beamformed = ppdu_info->rx_status.beamformed;
+	/* num msdu is consolidated and added together in num user loop */
 	cdp_rx_ppdu->num_msdu = (cdp_rx_ppdu->tcp_msdu_count +
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
-	cdp_rx_ppdu->num_bytes = ppdu_info->rx_status.ppdu_len;
+
 	cdp_rx_ppdu->retries = CDP_FC_IS_RETRY_SET(cdp_rx_ppdu->frame_ctrl) ?
 					ppdu_info->com_info.mpdu_cnt_fcs_ok : 0;
 
@@ -160,9 +310,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 		cdp_rx_ppdu->is_ampdu = 1;
 	else
 		cdp_rx_ppdu->is_ampdu = 0;
-
 	cdp_rx_ppdu->tid = ppdu_info->rx_status.tid;
-	cdp_rx_ppdu->lsig_a = ppdu_info->rx_status.rate;
+
 
 	ast_index = ppdu_info->rx_status.ast_index;
 	if (ast_index >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
@@ -185,11 +334,46 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
+
+	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
+	cdp_rx_ppdu->length = ppdu_info->rx_status.ppdu_len;
+	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
+	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
+	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
+	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
+	if ((ppdu_info->rx_status.sgi == VHT_SGI_NYSM) &&
+	    (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC))
+		cdp_rx_ppdu->u.gi = CDP_SGI_0_4_US;
+	else
+		cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
+	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
+	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
+	cdp_rx_ppdu->u.ltf_size = (ppdu_info->rx_status.he_data5 >>
+				   QDF_MON_STATUS_HE_LTF_SIZE_SHIFT) & 0x3;
+	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
+	cdp_rx_ppdu->timestamp = ppdu_info->rx_status.tsft;
+	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_num;
+	cdp_rx_ppdu->beamformed = ppdu_info->rx_status.beamformed;
+	cdp_rx_ppdu->num_bytes = ppdu_info->rx_status.ppdu_len;
+	cdp_rx_ppdu->lsig_a = ppdu_info->rx_status.rate;
 	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
 
 	dp_rx_populate_rx_rssi_chain(ppdu_info, cdp_rx_ppdu);
 	dp_rx_populate_su_evm_details(ppdu_info, cdp_rx_ppdu);
 	cdp_rx_ppdu->rx_antenna = ppdu_info->rx_status.rx_antenna;
+
+	cdp_rx_ppdu->nf = ppdu_info->rx_status.chan_noise_floor;
+	for (i = 0; i < MAX_CHAIN; i++)
+		cdp_rx_ppdu->per_chain_rssi[i] = ppdu_info->rx_status.rssi[i];
+
+	cdp_rx_ppdu->is_mcast_bcast = ppdu_info->nac_info.mcast_bcast;
+
+	cdp_rx_ppdu->num_users = ppdu_info->com_info.num_users;
+
+	cdp_rx_ppdu->num_mpdu = 0;
+	cdp_rx_ppdu->num_msdu = 0;
+
+	dp_rx_populate_cdp_indication_ppdu_user(pdev, ppdu_info, ppdu_nbuf);
 }
 #else
 static inline void

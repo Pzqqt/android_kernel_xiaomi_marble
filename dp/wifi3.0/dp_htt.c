@@ -1827,9 +1827,13 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 				}
 
 				if (copy_stats)
-					dp_htt_stats_copy_tag(pdev, tlv_type, tlv_start);
+					dp_htt_stats_copy_tag(pdev,
+							      tlv_type,
+							      tlv_start);
 				else
-					dp_htt_stats_print_tag(tlv_type, tlv_start);
+					dp_htt_stats_print_tag(pdev,
+							       tlv_type,
+							       tlv_start);
 
 				if (tlv_type == HTT_STATS_PEER_DETAILS_TAG ||
 				    tlv_type == HTT_STATS_PEER_STATS_CMN_TAG)

@@ -74,6 +74,9 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_IEEE80211_FC0_SUBTYPE_DATA  0x00
 #define QDF_IEEE80211_FC0_SUBTYPE_QOS   0x80
 
+#define QDF_IEEE80211_FC0_SUBTYPE_QOS_NULL   0xC0
+#define QDF_IEEE80211_FC0_SUBTYPE_NODATA   0x40
+
 #define QDF_NET_IS_MAC_MULTICAST(_a)   (*(_a) & 0x01)
 
 /**

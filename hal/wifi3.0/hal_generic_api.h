@@ -262,10 +262,65 @@ hal_rx_handle_ofdma_info(
 			   SW_RESPONSE_REFERENCE_PTR_EXT);
 }
 
+static inline void
+hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
+			     struct mon_rx_user_status *mon_rx_user_status)
+{
+	struct hal_rx_ppdu_info *ppdu_info =
+			(struct hal_rx_ppdu_info *)ppduinfo;
+	uint32_t mpdu_ok_byte_count;
+	uint32_t mpdu_err_byte_count;
+
+	mon_rx_user_status->ast_index = ppdu_info->rx_status.ast_index;
+	mon_rx_user_status->tid = ppdu_info->rx_status.tid;
+	mon_rx_user_status->tcp_msdu_count =
+		ppdu_info->rx_status.tcp_msdu_count;
+	mon_rx_user_status->udp_msdu_count =
+		ppdu_info->rx_status.udp_msdu_count;
+	mon_rx_user_status->other_msdu_count =
+		ppdu_info->rx_status.other_msdu_count;
+	mon_rx_user_status->frame_control = ppdu_info->rx_status.frame_control;
+	mon_rx_user_status->frame_control_info_valid =
+		ppdu_info->rx_status.frame_control_info_valid;
+	mon_rx_user_status->data_sequence_control_info_valid =
+		ppdu_info->rx_status.data_sequence_control_info_valid;
+	mon_rx_user_status->first_data_seq_ctrl =
+		ppdu_info->rx_status.first_data_seq_ctrl;
+	mon_rx_user_status->preamble_type = ppdu_info->rx_status.preamble_type;
+	mon_rx_user_status->ht_flags = ppdu_info->rx_status.ht_flags;
+	mon_rx_user_status->rtap_flags = ppdu_info->rx_status.rtap_flags;
+	mon_rx_user_status->vht_flags = ppdu_info->rx_status.vht_flags;
+	mon_rx_user_status->he_flags = ppdu_info->rx_status.he_flags;
+	mon_rx_user_status->rs_flags = ppdu_info->rx_status.rs_flags;
+
+	mon_rx_user_status->mpdu_cnt_fcs_ok =
+		ppdu_info->com_info.mpdu_cnt_fcs_ok;
+	mon_rx_user_status->mpdu_cnt_fcs_err =
+		ppdu_info->com_info.mpdu_cnt_fcs_err;
+	mon_rx_user_status->mpdu_fcs_ok_bitmap =
+		ppdu_info->com_info.mpdu_fcs_ok_bitmap;
+
+	mpdu_ok_byte_count = HAL_RX_GET(rx_tlv,
+					RX_PPDU_END_USER_STATS_17,
+					MPDU_OK_BYTE_COUNT);
+	mpdu_err_byte_count = HAL_RX_GET(rx_tlv,
+					 RX_PPDU_END_USER_STATS_19,
+					 MPDU_ERR_BYTE_COUNT);
+
+	mon_rx_user_status->mpdu_ok_byte_count = mpdu_ok_byte_count;
+	mon_rx_user_status->mpdu_err_byte_count = mpdu_err_byte_count;
+}
+
 #else
 static inline void
 hal_rx_handle_ofdma_info(void *rx_tlv,
 			 struct mon_rx_user_status *mon_rx_user_status)
+{
+}
+
+static inline void
+hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
+			     struct mon_rx_user_status *mon_rx_user_status)
 {
 }
 #endif
@@ -379,6 +434,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			com_info->mpdu_cnt = 0;
 			com_info->last_ppdu_id =
 				com_info->ppdu_id;
+			com_info->num_users = 0;
 		}
 		break;
 	}
@@ -408,6 +464,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				RX_PPDU_DURATION);
 		break;
 
+	/*
+	 * WIFIRX_PPDU_END_USER_STATS_E comes for each user received.
+	 * for MU, based on num users we see this tlv that many times.
+	 */
 	case WIFIRX_PPDU_END_USER_STATS_E:
 	{
 		unsigned long tid = 0;
@@ -471,14 +531,6 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		default:
 			break;
 		}
-		if (user_id < HAL_MAX_UL_MU_USERS) {
-			mon_rx_user_status =
-				&ppdu_info->rx_user_status[user_id];
-
-			hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
-
-			ppdu_info->com_info.num_users++;
-		}
 
 		ppdu_info->com_info.mpdu_cnt_fcs_ok =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
@@ -506,6 +558,17 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				   FCS_OK_BITMAP_31_0)) &
 				   HAL_RX_MPDU_FCS_BITMAP_0_31_OFFSET);
 
+		if (user_id < HAL_MAX_UL_MU_USERS) {
+			mon_rx_user_status =
+				&ppdu_info->rx_user_status[user_id];
+
+			hal_rx_handle_ofdma_info(rx_tlv, mon_rx_user_status);
+
+			ppdu_info->com_info.num_users++;
+
+			hal_rx_populate_mu_user_info(rx_tlv, ppdu_info,
+						     mon_rx_user_status);
+		}
 		break;
 	}
 
@@ -1185,6 +1248,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				QDF_MON_STATUS_HE_MU_FORMAT_TYPE;
 			break;
 		default:
+			ppdu_info->rx_status.reception_type =
+				HAL_RX_TYPE_SU;
 			break;
 		}
 		hal_rx_update_rssi_chain(ppdu_info, rssi_info_tlv);
@@ -1322,6 +1387,10 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		else if (filter_category == 1)
 			ppdu_info->rx_status.monitor_direct_used = 1;
 
+		ppdu_info->nac_info.mcast_bcast =
+			HAL_RX_GET(rx_mpdu_start,
+				   RX_MPDU_INFO_13,
+				   MCAST_BCAST);
 		break;
 	}
 	case WIFIRX_MPDU_END_E:
