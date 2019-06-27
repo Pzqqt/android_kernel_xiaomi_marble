@@ -690,6 +690,8 @@ struct dp_soc_stats {
 			/* Invalid PDEV error count */
 			uint32_t invalid_pdev;
 
+			/* Defrag peer uninit error count */
+			uint32_t defrag_peer_uninit;
 			/* Invalid sa_idx or da_idx*/
 			uint32_t invalid_sa_da_idx;
 			/* MSDU DONE failures */
