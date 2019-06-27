@@ -179,6 +179,12 @@ struct hal_soc;
 struct hal_ring_desc;
 typedef struct hal_ring_desc *hal_ring_desc_t;
 
+/**
+ * dp_hal_ring - opaque handle for DP HAL SRNG
+ */
+struct hal_ring_handle;
+typedef struct hal_ring_handle *hal_ring_handle_t;
+
 #define MAX_SRNG_REG_GROUPS 2
 
 /* Common SRNG ring structure for source and destination rings */
@@ -307,7 +313,8 @@ struct hal_hw_txrx_ops {
 		struct hal_srng *srng);
 	void (*hal_srng_src_hw_init)(void *hal,
 	struct hal_srng *srng);
-	void (*hal_get_hw_hptp)(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
+	void (*hal_get_hw_hptp)(hal_soc_handle_t hal_soc_hdl,
+				hal_ring_handle_t hal_ring_hdl,
 				uint32_t *headp, uint32_t *tailp,
 				uint8_t ring_type);
 	void (*hal_reo_setup)(void *hal_soc, void *reoparams);
@@ -412,9 +419,29 @@ void hal_qca6390_attach(struct hal_soc *hal_soc);
 void hal_qca6290_attach(struct hal_soc *hal_soc);
 void hal_qca8074_attach(struct hal_soc *hal_soc);
 
+/*
+ * hal_soc_to_dp_hal_roc - API to convert hal_soc to opaque
+ * dp_hal_soc handle type
+ * @hal_soc - hal_soc type
+ *
+ * Return: hal_soc_handle_t type
+ */
 static inline
 hal_soc_handle_t hal_soc_to_hal_soc_handle(struct hal_soc *hal_soc)
 {
 	return (hal_soc_handle_t)hal_soc;
+}
+
+/*
+ * hal_srng_to_hal_ring_handle - API to convert hal_srng to opaque
+ * dp_hal_ring handle type
+ * @hal_srng - hal_srng type
+ *
+ * Return: hal_ring_handle_t type
+ */
+static inline
+hal_ring_handle_t hal_srng_to_hal_ring_handle(struct hal_srng *hal_srng)
+{
+	return (hal_ring_handle_t)hal_srng;
 }
 #endif /* _HAL_INTERNAL_H_ */

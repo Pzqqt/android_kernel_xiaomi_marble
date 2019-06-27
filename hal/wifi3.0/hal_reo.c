@@ -1328,7 +1328,8 @@ qdf_export_symbol(hal_reo_rx_update_queue_status);
  *
  * Return: none
  */
-inline void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl, void *hal_srng)
+inline void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
+				  hal_ring_handle_t hal_srng_hdl)
 {
 	int cmd_num;
 	uint32_t *desc_addr;
@@ -1337,7 +1338,7 @@ inline void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl, void *hal_srng)
 	uint32_t num_desc;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_get_srng_params(soc, hal_srng, &srng_params);
+	hal_get_srng_params(soc, hal_srng_hdl, &srng_params);
 
 	desc_addr = (uint32_t *)(srng_params.ring_base_vaddr);
 	desc_addr += (sizeof(struct tlv_32_hdr) >> 2);

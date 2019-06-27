@@ -58,7 +58,7 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 	void *buf_addr_info, int mac_id)
 {
 	struct dp_srng *dp_srng;
-	void *hal_srng;
+	hal_ring_handle_t hal_ring_hdl;
 	void *hal_soc;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	void *src_srng_desc;
@@ -67,11 +67,11 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 	hal_soc = dp_pdev->soc->hal_soc;
 
 	dp_srng = &dp_pdev->rxdma_mon_desc_ring[mac_for_pdev];
-	hal_srng = dp_srng->hal_srng;
+	hal_ring_hdl = dp_srng->hal_srng;
 
-	qdf_assert(hal_srng);
+	qdf_assert(hal_ring_hdl);
 
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_srng))) {
+	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_ring_hdl))) {
 
 		/* TODO */
 		/*
@@ -81,11 +81,11 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : \
 			HAL RING Access For WBM Release SRNG Failed -- %pK",
-			__func__, __LINE__, hal_srng);
+			__func__, __LINE__, hal_ring_hdl);
 		goto done;
 	}
 
-	src_srng_desc = hal_srng_src_get_next(hal_soc, hal_srng);
+	src_srng_desc = hal_srng_src_get_next(hal_soc, hal_ring_hdl);
 
 	if (qdf_likely(src_srng_desc)) {
 		/* Return link descriptor through WBM ring (SW2WBM)*/
@@ -98,7 +98,7 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 			__func__, __LINE__);
 	}
 done:
-	hal_srng_access_end(hal_soc, hal_srng);
+	hal_srng_access_end(hal_soc, hal_ring_hdl);
 	return status;
 }
 

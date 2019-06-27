@@ -1563,12 +1563,13 @@ static void hal_reo_setup_generic(void *hal_soc,
  * Return: Update tail pointer and head pointer in arguments.
  */
 static inline
-void hal_get_hw_hptp_generic(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
+void hal_get_hw_hptp_generic(hal_soc_handle_t hal_soc_hdl,
+			     hal_ring_handle_t hal_ring_hdl,
 			     uint32_t *headp, uint32_t *tailp,
 			     uint8_t ring)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_hw_srng_config *ring_config;
 	enum hal_ring_type ring_type = (enum hal_ring_type)ring;
 

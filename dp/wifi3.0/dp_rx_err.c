@@ -1089,7 +1089,7 @@ fail:
 
 uint32_t
 dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
-		  void *hal_ring, uint32_t quota)
+		  hal_ring_handle_t hal_ring_hdl, uint32_t quota)
 {
 	void *hal_soc;
 	hal_ring_desc_t ring_desc;
@@ -1111,14 +1111,14 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	struct dp_rx_desc *rx_desc = NULL;
 
 	/* Debug -- Remove later */
-	qdf_assert(soc && hal_ring);
+	qdf_assert(soc && hal_ring_hdl);
 
 	hal_soc = soc->hal_soc;
 
 	/* Debug -- Remove later */
 	qdf_assert(hal_soc);
 
-	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 
 		/* TODO */
 		/*
@@ -1127,12 +1127,13 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		 */
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %pK"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring_hdl);
 		goto done;
 	}
 
 	while (qdf_likely(quota-- && (ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
+				hal_srng_dst_get_next(hal_soc,
+						      hal_ring_hdl)))) {
 
 		DP_STATS_INC(soc, rx.err_ring_pkts, 1);
 
@@ -1246,7 +1247,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	}
 
 done:
-	dp_srng_access_end(int_ctx, soc, hal_ring);
+	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
 	if (soc->rx.flags.defrag_timeout_check) {
 		uint32_t now_ms =
@@ -1276,7 +1277,7 @@ done:
 
 uint32_t
 dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
-		      void *hal_ring, uint32_t quota)
+		      hal_ring_handle_t hal_ring_hdl, uint32_t quota)
 {
 	void *hal_soc;
 	hal_ring_desc_t ring_desc;
@@ -1300,14 +1301,14 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint8_t tid = 0;
 
 	/* Debug -- Remove later */
-	qdf_assert(soc && hal_ring);
+	qdf_assert(soc && hal_ring_hdl);
 
 	hal_soc = soc->hal_soc;
 
 	/* Debug -- Remove later */
 	qdf_assert(hal_soc);
 
-	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 
 		/* TODO */
 		/*
@@ -1315,12 +1316,13 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %pK"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring_hdl);
 		goto done;
 	}
 
 	while (qdf_likely(quota-- && (ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
+				hal_srng_dst_get_next(hal_soc,
+						      hal_ring_hdl)))) {
 
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
@@ -1370,7 +1372,7 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		 */
 		if (qdf_unlikely(!rx_desc->in_use)) {
 			DP_STATS_INC(soc, rx.err.hal_wbm_rel_dup, 1);
-			dp_rx_dump_info_and_assert(soc, hal_ring,
+			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
 						   ring_desc, rx_desc);
 		}
 
@@ -1394,7 +1396,7 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 						rx_desc);
 	}
 done:
-	dp_srng_access_end(int_ctx, soc, hal_ring);
+	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_reaped[mac_id]) {

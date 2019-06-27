@@ -863,14 +863,15 @@ static inline void hal_tx_comp_get_htt_desc(void *hw_desc, uint8_t *htt_desc)
  *
  * Return: none
  */
-static inline void hal_tx_init_data_ring(void *hal_soc, void *hal_srng)
+static inline void hal_tx_init_data_ring(void *hal_soc,
+					 hal_ring_handle_t hal_ring_hdl)
 {
 	uint8_t *desc_addr;
 	struct hal_srng_params srng_params;
 	uint32_t desc_size;
 	uint32_t num_desc;
 
-	hal_get_srng_params(hal_soc, hal_srng, &srng_params);
+	hal_get_srng_params(hal_soc, hal_ring_hdl, &srng_params);
 
 	desc_addr = (uint8_t *)srng_params.ring_base_vaddr;
 	desc_size = sizeof(struct tcl_data_cmd);

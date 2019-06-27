@@ -474,7 +474,7 @@ struct dp_txrx_pool_stats {
 };
 
 struct dp_srng {
-	void *hal_srng;
+	hal_ring_handle_t hal_srng;
 	void *base_vaddr_unaligned;
 	qdf_dma_addr_t base_paddr_unaligned;
 	uint32_t alloc_size;

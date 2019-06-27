@@ -460,7 +460,8 @@ void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
 
 uint32_t
-dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint8_t reo_ring_num,
+dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
+	      uint8_t reo_ring_num,
 	      uint32_t quota);
 
 /**
@@ -476,7 +477,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint8_t reo_ring_num,
  * Return: uint32_t: No. of elements processed
  */
 uint32_t dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
-			   void *hal_ring, uint32_t quota);
+			   hal_ring_handle_t hal_ring_hdl, uint32_t quota);
 
 /**
  * dp_rx_wbm_err_process() - Processes error frames routed to WBM release ring
@@ -492,7 +493,7 @@ uint32_t dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
  */
 uint32_t
 dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
-		      void *hal_ring, uint32_t quota);
+		      hal_ring_handle_t hal_ring_hdl, uint32_t quota);
 
 /**
  * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
@@ -1184,7 +1185,8 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);
  *
  * Return: void
  */
-void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
+void dp_rx_dump_info_and_assert(struct dp_soc *soc,
+				hal_ring_handle_t hal_ring_hdl,
 				hal_ring_desc_t ring_desc,
 				struct dp_rx_desc *rx_desc);
 

@@ -523,11 +523,11 @@ extern void hal_srng_dst_init_hp(struct hal_srng *srng, uint32_t *vaddr);
  * @hal_soc: Opaque HAL SOC handle
  * @hal_srng: Opaque HAL SRNG pointer
  */
-extern void hal_srng_cleanup(void *hal_soc, void *hal_srng);
+void hal_srng_cleanup(void *hal_soc, hal_ring_handle_t hal_ring_hdl);
 
-static inline bool hal_srng_initialized(void *hal_ring)
+static inline bool hal_srng_initialized(hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	return !!srng->initialized;
 }
@@ -535,16 +535,16 @@ static inline bool hal_srng_initialized(void *hal_ring)
 /**
  * hal_srng_dst_peek - Check if there are any entries in the ring (peek)
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  *
  * Caller takes responsibility for any locking needs.
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
+void *hal_srng_dst_peek(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp)
 		return (void *)(&srng->ring_base_vaddr[srng->u.dst_ring.tp]);
@@ -557,15 +557,15 @@ void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
  * hal_srng_access_start if locked access is required
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  * Return: 0 on success; error on failire
  */
 static inline int
 hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
-			       void *hal_ring)
+			       hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
 	uint32_t *desc;
 
@@ -577,7 +577,7 @@ hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
 			*(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
 
 		if (srng->flags & HAL_SRNG_CACHED_DESC) {
-			desc = hal_srng_dst_peek(hal_soc_hdl, hal_ring);
+			desc = hal_srng_dst_peek(hal_soc_hdl, hal_ring_hdl);
 			if (qdf_likely(desc)) {
 				qdf_mem_dma_cache_sync(soc->qdf_dev,
 						       qdf_mem_virt_to_phys
@@ -597,23 +597,23 @@ hal_srng_access_start_unlocked(hal_soc_handle_t hal_soc_hdl,
  * hal_srng_access_start - Start (locked) ring access
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  * Return: 0 on success; error on failire
  */
 static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
-					void *hal_ring)
+					hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
-	if (qdf_unlikely(!hal_ring)) {
+	if (qdf_unlikely(!hal_ring_hdl)) {
 		qdf_print("Error: Invalid hal_ring\n");
 		return -EINVAL;
 	}
 
 	SRNG_LOCK(&(srng->lock));
 
-	return hal_srng_access_start_unlocked(hal_soc_hdl, hal_ring);
+	return hal_srng_access_start_unlocked(hal_soc_hdl, hal_ring_hdl);
 }
 
 /**
@@ -621,13 +621,15 @@ static inline int hal_srng_access_start(hal_soc_handle_t hal_soc_hdl,
  * cached tail pointer
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
+static inline
+void *hal_srng_dst_get_next(void *hal_soc,
+			    hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 	uint32_t *desc;
 	uint32_t *desc_next;
@@ -666,13 +668,15 @@ static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
  * cached head pointer
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_dst_get_next_hp(void *hal_soc, void *hal_ring)
+static inline void *
+hal_srng_dst_get_next_hp(void *hal_soc,
+			 hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 	/* TODO: Using % is expensive, but we have to do this since
 	 * size of some SRNG rings is not power of 2 (due to descriptor
@@ -695,7 +699,7 @@ static inline void *hal_srng_dst_get_next_hp(void *hal_soc, void *hal_ring)
 /**
  * hal_srng_dst_peek_sync - Check if there are any entries in the ring (peek)
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  *
  * Sync cached head pointer with HW.
  * Caller takes responsibility for any locking needs.
@@ -703,9 +707,9 @@ static inline void *hal_srng_dst_get_next_hp(void *hal_soc, void *hal_ring)
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek_sync(void *hal_soc, void *hal_ring)
+void *hal_srng_dst_peek_sync(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	srng->u.dst_ring.cached_hp =
 		*(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
@@ -719,7 +723,7 @@ void *hal_srng_dst_peek_sync(void *hal_soc, void *hal_ring)
 /**
  * hal_srng_dst_peek_sync_locked - Peek for any entries in the ring
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  *
  * Sync cached head pointer with HW.
  * This function takes up SRNG_LOCK. Should not be called with SRNG lock held.
@@ -727,19 +731,20 @@ void *hal_srng_dst_peek_sync(void *hal_soc, void *hal_ring)
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_dst_peek_sync_locked(void *hal_soc, void *hal_ring)
+void *hal_srng_dst_peek_sync_locked(void *hal_soc,
+				    hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	void *ring_desc_ptr = NULL;
 
-	if (qdf_unlikely(!hal_ring)) {
+	if (qdf_unlikely(!hal_ring_hdl)) {
 		qdf_print("Error: Invalid hal_ring\n");
 		return  NULL;
 	}
 
 	SRNG_LOCK(&srng->lock);
 
-	ring_desc_ptr = hal_srng_dst_peek_sync(hal_soc, hal_ring);
+	ring_desc_ptr = hal_srng_dst_peek_sync(hal_soc, hal_ring_hdl);
 
 	SRNG_UNLOCK(&srng->lock);
 
@@ -751,14 +756,15 @@ void *hal_srng_dst_peek_sync_locked(void *hal_soc, void *hal_ring)
  * by SW) in destination ring
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Destination ring pointer
+ * @hal_ring_hdl: Destination ring pointer
  * @sync_hw_ptr: Sync cached head pointer with HW
  *
  */
-static inline uint32_t hal_srng_dst_num_valid(void *hal_soc, void *hal_ring,
-	int sync_hw_ptr)
+static inline uint32_t hal_srng_dst_num_valid(void *hal_soc,
+					      hal_ring_handle_t hal_ring_hdl,
+					      int sync_hw_ptr)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t hp;
 	uint32_t tp = srng->u.dst_ring.tp;
 
@@ -783,13 +789,14 @@ static inline uint32_t hal_srng_dst_num_valid(void *hal_soc, void *hal_ring,
  * hal_srng_src_get_next_reaped when this function is used for reaping.
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_src_reap_next(void *hal_soc, void *hal_ring)
+static inline void *
+hal_srng_src_reap_next(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 
 	/* TODO: Using % is expensive, but we have to do this since
@@ -816,13 +823,14 @@ static inline void *hal_srng_src_reap_next(void *hal_soc, void *hal_ring)
  * the ring
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next (reaped) source ring entry; NULL on failire
  */
-static inline void *hal_srng_src_get_next_reaped(void *hal_soc, void *hal_ring)
+static inline void *
+hal_srng_src_get_next_reaped(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 
 	if (srng->u.src_ring.hp != srng->u.src_ring.reap_hp) {
@@ -842,13 +850,14 @@ static inline void *hal_srng_src_get_next_reaped(void *hal_soc, void *hal_ring)
  * associated with ring entries which are pending reap.
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_src_pending_reap_next(void *hal_soc, void *hal_ring)
+static inline void *
+hal_srng_src_pending_reap_next(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 
 	uint32_t next_reap_hp = (srng->u.src_ring.reap_hp + srng->entry_size) %
@@ -867,13 +876,14 @@ static inline void *hal_srng_src_pending_reap_next(void *hal_soc, void *hal_ring
  * hal_srng_src_done_val -
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
+static inline uint32_t
+hal_srng_src_done_val(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	/* TODO: Using % is expensive, but we have to do this since
 	 * size of some SRNG rings is not power of 2 (due to descriptor
 	 * sizes). Need to create separate API for rings used
@@ -896,14 +906,14 @@ static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
 
 /**
  * hal_get_entrysize_from_srng() - Retrieve ring entry size
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: uint8_t
  */
 static inline
-uint8_t hal_get_entrysize_from_srng(void *hal_ring)
+uint8_t hal_get_entrysize_from_srng(hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	return srng->entry_size;
 }
@@ -911,16 +921,17 @@ uint8_t hal_get_entrysize_from_srng(void *hal_ring)
 /**
  * hal_get_sw_hptp - Get SW head and tail pointer location for any ring
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  * @tailp: Tail Pointer
  * @headp: Head Pointer
  *
  * Return: Update tail pointer and head pointer in arguments.
  */
-static inline void hal_get_sw_hptp(void *hal_soc, void *hal_ring,
-				   uint32_t *tailp, uint32_t *headp)
+static inline
+void hal_get_sw_hptp(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
+		     uint32_t *tailp, uint32_t *headp)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
 		*headp = srng->u.src_ring.hp;
@@ -935,13 +946,15 @@ static inline void hal_get_sw_hptp(void *hal_soc, void *hal_ring,
  * hal_srng_src_get_next - Get next entry from a source ring and move cached tail pointer
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_src_get_next(void *hal_soc, void *hal_ring)
+static inline
+void *hal_srng_src_get_next(void *hal_soc,
+			    hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 	/* TODO: Using % is expensive, but we have to do this since
 	 * size of some SRNG rings is not power of 2 (due to descriptor
@@ -972,13 +985,14 @@ static inline void *hal_srng_src_get_next(void *hal_soc, void *hal_ring)
  * hal_srng_src_get_next should be called subsequently to move the head pointer
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_src_peek(void *hal_soc, void *hal_ring)
+static inline void *
+hal_srng_src_peek(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 
 	/* TODO: Using % is expensive, but we have to do this since
@@ -1000,14 +1014,15 @@ static inline void *hal_srng_src_peek(void *hal_soc, void *hal_ring)
  * hal_srng_src_num_avail - Returns number of available entries in src ring
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  * @sync_hw_ptr: Sync cached tail pointer with HW
  *
  */
-static inline uint32_t hal_srng_src_num_avail(void *hal_soc,
-	void *hal_ring, int sync_hw_ptr)
+static inline uint32_t
+hal_srng_src_num_avail(void *hal_soc,
+		       hal_ring_handle_t hal_ring_hdl, int sync_hw_ptr)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t tp;
 	uint32_t hp = srng->u.src_ring.hp;
 
@@ -1031,13 +1046,14 @@ static inline uint32_t hal_srng_src_num_avail(void *hal_soc,
  * access
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  * Return: 0 on success; error on failire
  */
-static inline void hal_srng_access_end_unlocked(void *hal_soc, void *hal_ring)
+static inline void
+hal_srng_access_end_unlocked(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	/* TODO: See if we need a write memory barrier here */
 	if (srng->flags & HAL_SRNG_LMAC_RING) {
@@ -1067,20 +1083,21 @@ static inline void hal_srng_access_end_unlocked(void *hal_soc, void *hal_ring)
  * This should be used only if hal_srng_access_start to start ring access
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  * Return: 0 on success; error on failire
  */
-static inline void hal_srng_access_end(void *hal_soc, void *hal_ring)
+static inline void
+hal_srng_access_end(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
-	if (qdf_unlikely(!hal_ring)) {
+	if (qdf_unlikely(!hal_ring_hdl)) {
 		qdf_print("Error: Invalid hal_ring\n");
 		return;
 	}
 
-	hal_srng_access_end_unlocked(hal_soc, hal_ring);
+	hal_srng_access_end_unlocked(hal_soc, hal_ring_hdl);
 	SRNG_UNLOCK(&(srng->lock));
 }
 
@@ -1090,13 +1107,14 @@ static inline void hal_srng_access_end(void *hal_soc, void *hal_ring)
  * and should be used only while reaping SRC ring completions
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  * Return: 0 on success; error on failire
  */
-static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
+static inline void
+hal_srng_access_end_reap(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	SRNG_UNLOCK(&(srng->lock));
 }
@@ -1295,12 +1313,14 @@ extern void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
  * hal_srng_get_hp_addr - Get head pointer physical address
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  */
-static inline qdf_dma_addr_t hal_srng_get_hp_addr(void *hal_soc, void *hal_ring)
+static inline qdf_dma_addr_t
+hal_srng_get_hp_addr(void *hal_soc,
+		     hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
@@ -1318,12 +1338,13 @@ static inline qdf_dma_addr_t hal_srng_get_hp_addr(void *hal_soc, void *hal_ring)
  * hal_srng_get_tp_addr - Get tail pointer physical address
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  *
  */
-static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
+static inline qdf_dma_addr_t
+hal_srng_get_tp_addr(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc;
 
 	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
@@ -1341,11 +1362,11 @@ static inline qdf_dma_addr_t hal_srng_get_tp_addr(void *hal_soc, void *hal_ring)
  * hal_get_srng_params - Retrieve SRNG parameters for a given ring from HAL
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Ring pointer (Source or Destination ring)
+ * @hal_ring_hdl: Ring pointer (Source or Destination ring)
  * @ring_params: SRNG parameters will be returned through this structure
  */
-extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
-	struct hal_srng_params *ring_params);
+void hal_get_srng_params(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
+			 struct hal_srng_params *ring_params);
 
 /**
  * hal_mem_info - Retrieve hal memory base address
@@ -1407,20 +1428,22 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 /**
  * hal_get_hw_hptp()  - Get HW head and tail pointer value for any ring
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  * @headp: Head Pointer
  * @tailp: Tail Pointer
  * @ring_type: Ring
  *
  * Return: Update tail pointer and head pointer in arguments.
  */
-static inline void hal_get_hw_hptp(hal_soc_handle_t hal_soc_hdl, void *hal_ring,
-				   uint32_t *headp, uint32_t *tailp,
-				   uint8_t ring_type)
+static inline
+void hal_get_hw_hptp(hal_soc_handle_t hal_soc_hdl,
+		     hal_ring_handle_t hal_ring_hdl,
+		     uint32_t *headp, uint32_t *tailp,
+		     uint8_t ring_type)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	hal_soc->ops->hal_get_hw_hptp(hal_soc_hdl, hal_ring,
+	hal_soc->ops->hal_get_hw_hptp(hal_soc_hdl, hal_ring_hdl,
 			headp, tailp, ring_type);
 }
 
@@ -1470,13 +1493,14 @@ static inline void hal_setup_link_idle_list(void *halsoc,
  * hal_srng_dump_ring_desc() - Dump ring descriptor info
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  * @ring_desc: Opaque ring descriptor handle
  */
-static inline void hal_srng_dump_ring_desc(struct hal_soc *hal, void *hal_ring,
+static inline void hal_srng_dump_ring_desc(struct hal_soc *hal,
+					   hal_ring_handle_t hal_ring_hdl,
 					   hal_ring_desc_t ring_desc)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			   ring_desc, (srng->entry_size << 2));
@@ -1486,11 +1510,12 @@ static inline void hal_srng_dump_ring_desc(struct hal_soc *hal, void *hal_ring,
  * hal_srng_dump_ring() - Dump last 128 descs of the ring
  *
  * @hal_soc: Opaque HAL SOC handle
- * @hal_ring: Source ring pointer
+ * @hal_ring_hdl: Source ring pointer
  */
-static inline void hal_srng_dump_ring(struct hal_soc *hal, void *hal_ring)
+static inline void hal_srng_dump_ring(struct hal_soc *hal,
+				      hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
 	uint32_t tp, i;
 

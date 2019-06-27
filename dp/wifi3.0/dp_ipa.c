@@ -258,7 +258,8 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	unsigned int uc_tx_buf_sz = CFG_IPA_UC_TX_BUF_SIZE_DEFAULT;
 	unsigned int alloc_size = uc_tx_buf_sz + ring_base_align - 1;
 
-	hal_get_srng_params(soc->hal_soc, (void *)wbm_srng, &srng_params);
+	hal_get_srng_params(soc->hal_soc, hal_srng_to_hal_ring_handle(wbm_srng),
+			    &srng_params);
 	num_entries = srng_params.num_entries;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -275,7 +276,8 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		return -ENOMEM;
 	}
 
-	hal_srng_access_start_unlocked(soc->hal_soc, (void *)wbm_srng);
+	hal_srng_access_start_unlocked(soc->hal_soc,
+				       hal_srng_to_hal_ring_handle(wbm_srng));
 
 	/*
 	 * Allocate Tx buffers as many as possible
@@ -290,7 +292,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			break;
 
 		ring_entry = hal_srng_dst_get_next_hp(soc->hal_soc,
-				(void *)wbm_srng);
+				hal_srng_to_hal_ring_handle(wbm_srng));
 		if (!ring_entry) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				  "%s: Failed to get WBM ring entry",
@@ -404,7 +406,8 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 
 	/* IPA TCL_DATA Ring - HAL_SRNG_SW2TCL3 */
 	hal_srng = soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, (void *)hal_srng, &srng_params);
+	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+			    &srng_params);
 
 	soc->ipa_uc_tx_rsc.ipa_tcl_ring_base_paddr =
 		srng_params.ring_base_paddr;
@@ -435,7 +438,8 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 
 	/* IPA TX COMP Ring - HAL_SRNG_WBM2SW2_RELEASE */
 	hal_srng = soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, (void *)hal_srng, &srng_params);
+	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+			    &srng_params);
 
 	soc->ipa_uc_tx_rsc.ipa_wbm_ring_base_paddr =
 						srng_params.ring_base_paddr;
@@ -459,7 +463,8 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 
 	/* IPA REO_DEST Ring - HAL_SRNG_REO2SW4 */
 	hal_srng = soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
-	hal_get_srng_params(hal_soc, (void *)hal_srng, &srng_params);
+	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+			    &srng_params);
 
 	soc->ipa_uc_rx_rsc.ipa_reo_ring_base_paddr =
 						srng_params.ring_base_paddr;
@@ -482,14 +487,16 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		soc->ipa_uc_rx_rsc.ipa_reo_ring_size);
 
 	hal_srng = pdev->rx_refill_buf_ring2.hal_srng;
-	hal_get_srng_params(hal_soc, (void *)hal_srng, &srng_params);
+	hal_get_srng_params(hal_soc, hal_srng_to_hal_ring_handle(hal_srng),
+			    &srng_params);
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_paddr =
 		srng_params.ring_base_paddr;
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_base_vaddr =
 		srng_params.ring_base_vaddr;
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_ring_size =
 		(srng_params.num_entries * srng_params.entry_size) << 2;
-	hp_addr = hal_srng_get_hp_addr(hal_soc, (void *)hal_srng);
+	hp_addr = hal_srng_get_hp_addr(hal_soc,
+				       hal_srng_to_hal_ring_handle(hal_srng));
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr =
 		qdf_mem_paddr_from_dmaaddr(soc->osdev, hp_addr);
 

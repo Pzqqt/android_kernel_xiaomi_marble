@@ -2741,9 +2741,9 @@ static inline void hal_rx_dump_pkt_hdr_tlv(struct rx_pkt_tlvs *pkt_tlvs,
  *
  * Return: ring_id
  */
-static inline uint8_t hal_srng_ring_id_get(void *hal_ring)
+static inline uint8_t hal_srng_ring_id_get(hal_ring_handle_t hal_ring_hdl)
 {
-	return ((struct hal_srng *)hal_ring)->ring_id;
+	return ((struct hal_srng *)hal_ring_hdl)->ring_id;
 }
 
 /* Rx MSDU link pointer info */

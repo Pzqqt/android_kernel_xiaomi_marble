@@ -218,7 +218,8 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
  * Return: Number of TX completions processed
  */
 uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
-			    void *hal_srng, uint8_t ring_id, uint32_t quota);
+			    hal_ring_handle_t hal_srng, uint8_t ring_id,
+			    uint32_t quota);
 
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);

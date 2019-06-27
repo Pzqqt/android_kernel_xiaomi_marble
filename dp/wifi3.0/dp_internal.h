@@ -1214,7 +1214,7 @@ static inline void dp_peer_unref_del_find_by_id(struct dp_peer *peer)
  * Return: 0 on success; error on failure
  */
 int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
-			 void *hal_ring);
+			 hal_ring_handle_t hal_ring_hdl);
 
 /**
  * dp_srng_access_end() - Wrapper function to log access end of a hal ring
@@ -1225,24 +1225,26 @@ int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
  * Return: void
  */
 void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
-			void *hal_ring);
+			hal_ring_handle_t hal_ring_hdl);
 
 #else
 
 static inline int dp_srng_access_start(struct dp_intr *int_ctx,
-				       struct dp_soc *dp_soc, void *hal_ring)
+				       struct dp_soc *dp_soc,
+				       hal_ring_handle_t hal_ring_hdl)
 {
 	void *hal_soc = dp_soc->hal_soc;
 
-	return hal_srng_access_start(hal_soc, hal_ring);
+	return hal_srng_access_start(hal_soc, hal_ring_hdl);
 }
 
 static inline void dp_srng_access_end(struct dp_intr *int_ctx,
-				      struct dp_soc *dp_soc, void *hal_ring)
+				      struct dp_soc *dp_soc,
+				      hal_ring_handle_t hal_ring_hdl)
 {
 	void *hal_soc = dp_soc->hal_soc;
 
-	return hal_srng_access_end(hal_soc, hal_ring);
+	return hal_srng_access_end(hal_soc, hal_ring_hdl);
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 

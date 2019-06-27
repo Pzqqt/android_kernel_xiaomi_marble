@@ -266,8 +266,8 @@ QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *htt_soc);
 
 void htt_soc_detach(void *soc);
 
-int htt_srng_setup(void *htt_soc, int pdev_id, void *hal_srng,
-	int hal_ring_type);
+int htt_srng_setup(void *htt_soc, int pdev_id, hal_ring_handle_t hal_ring_hdl,
+		   int hal_ring_type);
 
 int htt_soc_attach_target(void *htt_soc);
 
@@ -283,9 +283,10 @@ int htt_soc_attach_target(void *htt_soc);
  *
  * Return: 0 on success; error code on failure
  */
-int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
-	int hal_ring_type, int ring_buf_size,
-	struct htt_rx_ring_tlv_filter *htt_tlv_filter);
+int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id,
+			hal_ring_handle_t hal_ring_hdl,
+			int hal_ring_type, int ring_buf_size,
+			struct htt_rx_ring_tlv_filter *htt_tlv_filter);
 
 /*
  * htt_t2h_stats_handler() - target to host stats work handler

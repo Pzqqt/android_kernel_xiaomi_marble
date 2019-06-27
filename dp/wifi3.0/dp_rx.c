@@ -55,15 +55,16 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
 	dp_rx_desc_dump(rx_desc);
 }
 #else
-void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
+void dp_rx_dump_info_and_assert(struct dp_soc *soc,
+				hal_ring_handle_t hal_ring_hdl,
 				hal_ring_desc_t ring_desc,
 				struct dp_rx_desc *rx_desc)
 {
 	void *hal_soc = soc->hal_soc;
 
 	dp_rx_desc_dump(rx_desc);
-	hal_srng_dump_ring_desc(hal_soc, hal_ring, ring_desc);
-	hal_srng_dump_ring(hal_soc, hal_ring);
+	hal_srng_dump_ring_desc(hal_soc, hal_ring_hdl, ring_desc);
+	hal_srng_dump_ring(hal_soc, hal_ring_hdl);
 	qdf_assert_always(0);
 }
 #endif
@@ -1618,7 +1619,7 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
  *
  * Return: uint32_t: No. of elements processed
  */
-uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
+uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 		       uint8_t reo_ring_num, uint32_t quota)
 {
 	void *hal_soc;
@@ -1662,7 +1663,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 
 	DP_HIST_INIT();
 
-	qdf_assert_always(soc && hal_ring);
+	qdf_assert_always(soc && hal_ring_hdl);
 	hal_soc = soc->hal_soc;
 	qdf_assert_always(hal_soc);
 
@@ -1686,7 +1687,7 @@ more_data:
 	qdf_mem_zero(head, sizeof(head));
 	qdf_mem_zero(tail, sizeof(tail));
 
-	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 
 		/*
 		 * Need API to convert from hal_ring pointer to
@@ -1694,7 +1695,7 @@ more_data:
 		 */
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %pK"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring_hdl);
 		goto done;
 	}
 
@@ -1704,14 +1705,15 @@ more_data:
 	 * Process the received pkts in a different per vdev loop.
 	 */
 	while (qdf_likely(quota &&
-			  (ring_desc = hal_srng_dst_peek(hal_soc, hal_ring)))) {
+			  (ring_desc = hal_srng_dst_peek(hal_soc,
+							 hal_ring_hdl)))) {
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
-		ring_id = hal_srng_ring_id_get(hal_ring);
+		ring_id = hal_srng_ring_id_get(hal_ring_hdl);
 
 		if (qdf_unlikely(error == HAL_REO_ERROR_DETECTED)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING 0x%pK:error %d"), hal_ring, error);
+			FL("HAL RING 0x%pK:error %d"), hal_ring_hdl, error);
 			DP_STATS_INC(soc, rx.err.hal_reo_error[ring_id], 1);
 			/* Don't know how to deal with this -- assert */
 			qdf_assert(0);
@@ -1732,18 +1734,18 @@ more_data:
 		if (qdf_unlikely(!rx_desc->in_use)) {
 			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
 			dp_info_rl("Reaping rx_desc not in use!");
-			dp_rx_dump_info_and_assert(soc, hal_ring,
+			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
 						   ring_desc, rx_desc);
 			/* ignore duplicate RX desc and continue to process */
 			/* Pop out the descriptor */
-			hal_srng_dst_get_next(hal_soc, hal_ring);
+			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
 
 		if (qdf_unlikely(!dp_rx_desc_check_magic(rx_desc))) {
 			dp_err("Invalid rx_desc cookie=%d", rx_buf_cookie);
 			DP_STATS_INC(soc, rx.err.rx_desc_invalid_magic, 1);
-			dp_rx_dump_info_and_assert(soc, hal_ring,
+			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
 						   ring_desc, rx_desc);
 		}
 
@@ -1776,7 +1778,8 @@ more_data:
 				is_prev_msdu_last = false;
 				/* Get number of entries available in HW ring */
 				num_entries_avail =
-				hal_srng_dst_num_valid(hal_soc, hal_ring, 1);
+				hal_srng_dst_num_valid(hal_soc,
+						       hal_ring_hdl, 1);
 
 				/* For new MPDU check if we can read complete
 				 * MPDU by comparing the number of buffers
@@ -1796,7 +1799,7 @@ more_data:
 		}
 
 		/* Pop out the descriptor*/
-		hal_srng_dst_get_next(hal_soc, hal_ring);
+		hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 
 		rx_bufs_reaped[rx_desc->pool_id]++;
 		peer_mdata = mpdu_desc_info.peer_meta_data;
@@ -1855,7 +1858,7 @@ more_data:
 			break;
 	}
 done:
-	dp_srng_access_end(int_ctx, soc, hal_ring);
+	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
 	if (nbuf_tail)
 		QDF_NBUF_CB_RX_FLUSH_IND(nbuf_tail) = 1;
@@ -2133,7 +2136,7 @@ done:
 
 	if (dp_rx_enable_eol_data_check(soc)) {
 		if (quota &&
-		    hal_srng_dst_peek_sync_locked(soc, hal_ring)) {
+		    hal_srng_dst_peek_sync_locked(soc, hal_ring_hdl)) {
 			DP_STATS_INC(soc, rx.hp_oos2, 1);
 			if (!hif_exec_should_yield(scn, intr_id))
 				goto more_data;

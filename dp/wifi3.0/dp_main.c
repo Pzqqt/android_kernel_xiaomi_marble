@@ -1416,35 +1416,35 @@ void *hif_get_hal_handle(void *hif_handle);
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
-			 void *hal_ring)
+			 hal_ring_handle_t hal_ring_hdl)
 {
 	void *hal_soc = dp_soc->hal_soc;
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
-	hal_get_sw_hptp(hal_soc, hal_ring, &tp, &hp);
-	ring_id = hal_srng_ring_id_get(hal_ring);
+	hal_get_sw_hptp(hal_soc, hal_ring_hdl, &tp, &hp);
+	ring_id = hal_srng_ring_id_get(hal_ring_hdl);
 
 	hif_record_event(dp_soc->hif_handle, int_ctx->dp_intr_id,
 			 ring_id, hp, tp, HIF_EVENT_SRNG_ACCESS_START);
 
-	return hal_srng_access_start(hal_soc, hal_ring);
+	return hal_srng_access_start(hal_soc, hal_ring_hdl);
 }
 
 void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
-			void *hal_ring)
+			hal_ring_handle_t hal_ring_hdl)
 {
 	void *hal_soc = dp_soc->hal_soc;
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
-	hal_get_sw_hptp(hal_soc, hal_ring, &tp, &hp);
-	ring_id = hal_srng_ring_id_get(hal_ring);
+	hal_get_sw_hptp(hal_soc, hal_ring_hdl, &tp, &hp);
+	ring_id = hal_srng_ring_id_get(hal_ring_hdl);
 
 	hif_record_event(dp_soc->hif_handle, int_ctx->dp_intr_id,
 			 ring_id, hp, tp, HIF_EVENT_SRNG_ACCESS_END);
 
-	return hal_srng_access_end(hal_soc, hal_ring);
+	return hal_srng_access_end(hal_soc, hal_ring_hdl);
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 

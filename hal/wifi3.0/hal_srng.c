@@ -727,9 +727,9 @@ qdf_export_symbol(hal_srng_setup);
  * @hal_soc: Opaque HAL SOC handle
  * @hal_srng: Opaque HAL SRNG pointer
  */
-void hal_srng_cleanup(void *hal_soc, void *hal_srng)
+void hal_srng_cleanup(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_srng;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	SRNG_LOCK_DESTROY(&srng->lock);
 	srng->initialized = 0;
 }
@@ -806,10 +806,10 @@ void hal_srng_dump(struct hal_srng *srng)
  * @hal_ring: Ring pointer (Source or Destination ring)
  * @ring_params: SRNG parameters will be returned through this structure
  */
-extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
-	struct hal_srng_params *ring_params)
+extern void hal_get_srng_params(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
+				struct hal_srng_params *ring_params)
 {
-	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	int i =0;
 	ring_params->ring_id = srng->ring_id;
 	ring_params->ring_dir = srng->ring_dir;

@@ -534,6 +534,7 @@ void hal_reo_rx_update_queue_status(uint32_t *reo_desc,
 				    struct hal_reo_update_rx_queue_status *st,
 				    hal_soc_handle_t hal_soc_hdl);
 
-void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl, void *hal_srng);
+void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
+			   hal_ring_handle_t hal_ring_hdl);
 
 #endif /* _HAL_REO_H */

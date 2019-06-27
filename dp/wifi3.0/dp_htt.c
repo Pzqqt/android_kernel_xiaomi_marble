@@ -580,8 +580,8 @@ static int htt_h2t_ver_req_msg(struct htt_soc *soc)
  *
  * Return: 0 on success; error code on failure
  */
-int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
-	int hal_ring_type)
+int htt_srng_setup(void *htt_soc, int mac_id, hal_ring_handle_t hal_ring_hdl,
+		   int hal_ring_type)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 	struct dp_htt_htc_pkt *pkt;
@@ -604,9 +604,9 @@ int htt_srng_setup(void *htt_soc, int mac_id, void *hal_srng,
 	if (!htt_msg)
 		goto fail0;
 
-	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
-	hp_addr = hal_srng_get_hp_addr(soc->hal_soc, hal_srng);
-	tp_addr = hal_srng_get_tp_addr(soc->hal_soc, hal_srng);
+	hal_get_srng_params(soc->hal_soc, hal_ring_hdl, &srng_params);
+	hp_addr = hal_srng_get_hp_addr(soc->hal_soc, hal_ring_hdl);
+	tp_addr = hal_srng_get_tp_addr(soc->hal_soc, hal_ring_hdl);
 
 	switch (hal_ring_type) {
 	case RXDMA_BUF:
@@ -846,9 +846,10 @@ fail0:
  * @htt_tlv_filter:	Rx SRNG TLV and filter setting
  * Return: 0 on success; error code on failure
  */
-int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
-	int hal_ring_type, int ring_buf_size,
-	struct htt_rx_ring_tlv_filter *htt_tlv_filter)
+int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id,
+			hal_ring_handle_t hal_ring_hdl,
+			int hal_ring_type, int ring_buf_size,
+			struct htt_rx_ring_tlv_filter *htt_tlv_filter)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 	struct dp_htt_htc_pkt *pkt;
@@ -866,7 +867,7 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	if (!htt_msg)
 		goto fail0;
 
-	hal_get_srng_params(soc->hal_soc, hal_srng, &srng_params);
+	hal_get_srng_params(soc->hal_soc, hal_ring_hdl, &srng_params);
 
 	switch (hal_ring_type) {
 	case RXDMA_BUF:

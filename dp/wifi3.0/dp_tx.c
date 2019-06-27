@@ -1000,7 +1000,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	/* Return Buffer Manager ID */
 	uint8_t bm_id = ring_id;
-	void *hal_srng = soc->tcl_data_ring[ring_id].hal_srng;
+	hal_ring_handle_t hal_ring_hdl = soc->tcl_data_ring[ring_id].hal_srng;
 
 	hal_tx_desc_cached = (void *) cached_desc;
 	qdf_mem_zero(hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
@@ -1064,7 +1064,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
 	/* Sync cached descriptor with HW */
-	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
+	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_ring_hdl);
 
 	if (!hal_tx_desc) {
 		dp_verbose_debug("TCL ring full ring_id:%d", ring_id);
@@ -1422,7 +1422,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_desc_s *tx_desc;
 	QDF_STATUS status;
 	struct dp_tx_queue *tx_q = &(msdu_info->tx_queue);
-	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
+	hal_ring_handle_t hal_ring_hdl =
+				soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	uint16_t htt_tcl_metadata = 0;
 	uint8_t tid = msdu_info->tid;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
@@ -1450,10 +1451,10 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	dp_tx_update_tdls_flags(tx_desc);
 
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
+	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_srng);
+				__func__, __LINE__, hal_ring_hdl);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
 		tid_stats = &pdev->stats.tid_stats.
 			    tid_tx_stats[tx_q->ring_id][tid];
@@ -1501,10 +1502,10 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 fail_return:
 	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
-		hal_srng_access_end(soc->hal_soc, hal_srng);
+		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
 		hif_pm_runtime_put(soc->hif_handle);
 	} else {
-		hal_srng_access_end_reap(soc->hal_soc, hal_srng);
+		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
 	}
 
 	return nbuf;
@@ -1536,13 +1537,14 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	QDF_STATUS status;
 	uint16_t htt_tcl_metadata = 0;
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
-	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
+	hal_ring_handle_t hal_ring_hdl =
+				soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
 
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
+	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_srng);
+				__func__, __LINE__, hal_ring_hdl);
 		dp_tx_get_tid(vdev, nbuf, msdu_info);
 		tid_stats = &pdev->stats.tid_stats.
 			    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
@@ -1670,10 +1672,10 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 done:
 	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
-		hal_srng_access_end(soc->hal_soc, hal_srng);
+		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
 		hif_pm_runtime_put(soc->hif_handle);
 	} else {
-		hal_srng_access_end_reap(soc->hal_soc, hal_srng);
+		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
 	}
 
 	return nbuf;
@@ -3312,7 +3314,8 @@ static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
 #endif
 
 uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
-			    void *hal_srng, uint8_t ring_id, uint32_t quota)
+			    hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
+			    uint32_t quota)
 {
 	void *tx_comp_hal_desc;
 	uint8_t buffer_src;
@@ -3331,16 +3334,16 @@ more_data:
 	/* Re-initialize local variables to be re-used */
 		head_desc = NULL;
 		tail_desc = NULL;
-	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_srng))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_srng);
+				__func__, __LINE__, hal_ring_hdl);
 		return 0;
 	}
 
 	/* Find head descriptor from completion ring */
 	while (qdf_likely(tx_comp_hal_desc =
-			hal_srng_dst_get_next(soc->hal_soc, hal_srng))) {
+			hal_srng_dst_get_next(soc->hal_soc, hal_ring_hdl))) {
 
 		buffer_src = hal_tx_comp_get_buffer_source(tx_comp_hal_desc);
 
@@ -3450,7 +3453,7 @@ more_data:
 			break;
 	}
 
-	dp_srng_access_end(int_ctx, soc, hal_srng);
+	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
 	/* Process the reaped descriptors */
 	if (head_desc)
@@ -3458,7 +3461,7 @@ more_data:
 
 	if (dp_tx_comp_enable_eol_data_check(soc)) {
 		if (!force_break &&
-		    hal_srng_dst_peek_sync_locked(soc, hal_srng)) {
+		    hal_srng_dst_peek_sync_locked(soc, hal_ring_hdl)) {
 			DP_STATS_INC(soc, tx.hp_oos2, 1);
 			if (!hif_exec_should_yield(soc->hif_handle,
 						   int_ctx->dp_intr_id))
