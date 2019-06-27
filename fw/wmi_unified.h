@@ -6749,6 +6749,7 @@ typedef enum {
     WMI_REQUEST_BCN_STAT            = 0x0800,
     WMI_REQUEST_BCN_STAT_RESET      = 0x1000,
     WMI_REQUEST_PEER_EXTD2_STAT     = 0x2000,
+    WMI_REQUEST_MIB_EXTD_STAT       = 0x4000,
 } wmi_stats_id;
 
 /*
@@ -7442,6 +7443,8 @@ typedef struct {
      * indicate this is the final WMI_STATS_EVENT in a series.
      */
     A_UINT32 last_event;
+    /** number of extended MIB stats event structures (wmi_mib_extd_stats) */
+    A_UINT32 num_mib_extd_stats;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
@@ -7456,6 +7459,11 @@ typedef struct {
  */
 /* If WMI_REQUEST_PEER_EXTD_STAT is set in stats_id,
  * the data[] array also contains num_peer_stats * size of wmi_peer_extd_stats
+ * following the information elements listed above.
+ */
+/* If WMI_REQUEST_MIB_EXTD_STAT is set in stats_id,
+ * the data[] array also contains
+ * num_mib_extd_stats * size of(struct wmi_mib_extd_stats)
  * following the information elements listed above.
  */
 } wmi_stats_event_fixed_param;
@@ -8235,6 +8243,9 @@ typedef struct {
     A_UINT32 rx_duration_us;
 } wmi_chan_stats;
 
+/**
+ * MIB statistics.  See 802.11 spec for the meaning of each field.
+ */
 typedef struct {
     A_UINT32 tx_mpdu_grp_frag_cnt;       /*dot11TransmittedFragmentCount */
     A_UINT32 tx_msdu_grp_frm_cnt;        /*dot11GroupTransmittedFrameCount */
@@ -8286,6 +8297,20 @@ typedef struct {
     A_UINT32 reserved_3;
     A_UINT32 reserved_4;
 } wmi_mib_stats;
+
+/**
+ *  MIB extension statistics.
+ */
+typedef struct {
+    A_UINT32 tx_msdu_multi_retry_cnt;    /*dot11MultipleRetryCount*/
+    A_UINT32 tx_ack_fail_cnt;            /*dot11ACKFailureCount*/
+    A_UINT32 tx_qos_msdu_multi_retry_up; /*dot11QosMultipleRetryCount*/
+    A_UINT32 tx_qos_ack_fail_cnt_up;     /*dot11QosACKFailureCount*/
+    A_UINT32 rsna_cmac_icv_err_cnt;      /*dot11RSNAStatsCMACICVErrors*/
+    A_UINT32 rsna_cmac_replay_err_cnt;   /*dot11RSNAStatsCMACReplays*/
+    A_UINT32 rx_ampdu_deli_crc_err_cnt;  /*dot11AMPDUDelimiterCRCErrorCount*/
+    A_UINT32 reserved[8];    /* Reserve more fields for future extension */
+} wmi_mib_extd_stats;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_stats */
