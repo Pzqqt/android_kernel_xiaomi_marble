@@ -217,7 +217,13 @@ void reg_dmn_print_channels_in_opclass(uint8_t *country, uint8_t op_class)
 	uint16_t i = 0;
 
 	class = reg_get_class_from_country(country);
-	while (class && class->op_class) {
+
+	if (!class) {
+		reg_err("class is NULL");
+		return;
+	}
+
+	while (class->op_class) {
 		if (class->op_class == op_class) {
 			for (i = 0;
 			     (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
