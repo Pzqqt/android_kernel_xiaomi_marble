@@ -1454,12 +1454,11 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
  */
 
 void
-dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
+dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 		       uint16_t hw_peer_id, uint8_t vdev_id,
 		       uint8_t *peer_mac_addr, uint16_t ast_hash,
 		       uint8_t is_wds)
 {
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	struct dp_peer *peer = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
 
@@ -1562,12 +1561,11 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
  * Return: none
  */
 void
-dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
+dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			 uint8_t vdev_id, uint8_t *mac_addr,
 			 uint8_t is_wds)
 {
 	struct dp_peer *peer;
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	uint8_t i;
 
 	peer = __dp_peer_find_by_id(soc, peer_id);
@@ -2798,11 +2796,11 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 
 
 void
-dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
-	enum cdp_sec_type sec_type, int is_unicast, u_int32_t *michael_key,
-	u_int32_t *rx_pn)
+dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
+		      enum cdp_sec_type sec_type, int is_unicast,
+		      u_int32_t *michael_key,
+		      u_int32_t *rx_pn)
 {
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	struct dp_peer *peer;
 	int sec_index;
 

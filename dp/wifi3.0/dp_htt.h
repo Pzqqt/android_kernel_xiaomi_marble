@@ -115,7 +115,7 @@ struct dp_htt_htc_pkt_union {
 
 struct htt_soc {
 	struct cdp_ctrl_objmgr_psoc *ctrl_psoc;
-	void *dp_soc;
+	struct dp_soc *dp_soc;
 	void *hal_soc;
 	/* htt_logger handle */
 	struct htt_logger *htt_logger_handle;

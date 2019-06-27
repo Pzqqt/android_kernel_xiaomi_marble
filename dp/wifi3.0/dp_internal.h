@@ -1107,11 +1107,13 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 void *dp_get_pldev(struct cdp_pdev *txrx_pdev);
 void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn);
 
-static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
-	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
+static inline void
+dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
+			    void *cb_context,
+			    QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t),
+			    uint8_t pipe_id)
 {
 	struct hif_msg_callbacks hif_pipe_callbacks;
-	struct dp_soc *dp_soc = (struct dp_soc *)soc;
 
 	/* TODO: Temporary change to bypass HTC connection for this new
 	 * HIF pipe, which will be used for packet log and other high-
@@ -1169,8 +1171,11 @@ static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 {
 	return 0;
 }
-static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
-	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
+
+static inline void
+dp_hif_update_pipe_callback(struct dp_soc *dp_soc, void *cb_context,
+			    QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t),
+			    uint8_t pipe_id)
 {
 }
 

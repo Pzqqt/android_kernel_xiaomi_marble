@@ -90,16 +90,16 @@ dp_peer_find_by_id(struct dp_soc *soc,
 #endif /* PEER_LOCK_REF_PROTECT */
 
 void dp_print_ast_stats(struct dp_soc *soc);
-void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
+void dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 			    uint16_t hw_peer_id, uint8_t vdev_id,
 			    uint8_t *peer_mac_addr, uint16_t ast_hash,
 			    uint8_t is_wds);
-void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
+void dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			      uint8_t vdev_id, uint8_t *peer_mac_addr,
 			      uint8_t is_wds);
-void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
-	enum cdp_sec_type sec_type, int is_unicast,
-	u_int32_t *michael_key, u_int32_t *rx_pn);
+void dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
+			   enum cdp_sec_type sec_type, int is_unicast,
+			   u_int32_t *michael_key, u_int32_t *rx_pn);
 uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 		uint16_t peer_id, uint8_t *peer_mac);
 
